@@ -118,14 +118,16 @@ function initProduct(slug){
   const bestIdx = 2;
   const offersBox = document.getElementById("offers");
   p.offers.forEach((o,i)=>{
-    const unit = Math.round(o.price/o.qty);
-    const disc = Math.round((1 - o.price/(p.price*o.qty))*100);
+    const paid = o.qty - (o.free||0);
+    const unit = Math.round(o.price/paid);
+    const disc = Math.round((1 - o.price/(p.price*paid))*100);
     const d = document.createElement("div");
     d.className = "offer"+(i===0?" on":"");
+    const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
     d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}
-      <div class="q">${o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع"}</div>
+      <div class="q">${label}</div>
       <div class="p">${fmt(o.price)}</div>
-      <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}</div>`;
+      <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}</div>`;
     d.onclick = ()=>{
       state.offer = o;
       document.querySelectorAll(".offer").forEach(x=>x.classList.remove("on"));
@@ -135,9 +137,36 @@ function initProduct(slug){
     offersBox.appendChild(d);
   });
 
+  // العد التنازلي 48 ساعة — عرض «اشترِ 2 والثالثة مجاناً»
+  (function dealCountdown(){
+    const boxes = document.querySelectorAll(".deal-timer");
+    if(!boxes.length) return;
+    const KEY = "alyssum_deal_"+slug;
+    let end = parseInt(localStorage.getItem(KEY)||"0",10);
+    if(!end || end < Date.now()){
+      end = Date.now() + 48*3600*1000;
+      localStorage.setItem(KEY, String(end));
+    }
+    function tick(){
+      let left = end - Date.now();
+      if(left <= 0){
+        end = Date.now() + 48*3600*1000;
+        localStorage.setItem(KEY, String(end));
+        left = 48*3600*1000;
+      }
+      const h = Math.floor(left/3600000), m = Math.floor(left%3600000/60000), s = Math.floor(left%60000/1000);
+      const txt = `${String(h).padStart(2,"0")} : ${String(m).padStart(2,"0")} : ${String(s).padStart(2,"0")}`;
+      boxes.forEach(b=>b.textContent = txt);
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+
   // الولايات
   const sel = document.getElementById("wilaya");
   const communeInput = document.getElementById("commune");
+  const deskWrap = document.getElementById("desk-wrap");
+  const deskSel = document.getElementById("desk");
   let communeDL = null;
   if (communeInput){
     communeDL = document.createElement("datalist");
@@ -153,13 +182,39 @@ function initProduct(slug){
       const o = document.createElement("option"); o.value = c; communeDL.appendChild(o);
     });
   }
+  // مكاتب Stop Desk الحقيقية من Yalidine
+  function setDesks(w){
+    if(!deskSel) return;
+    deskSel.innerHTML = '<option value="">— اختر أقرب مكتب —</option>';
+    const desks = (w && w.desks) ? w.desks : [];
+    desks.forEach(d=>{
+      const o = document.createElement("option");
+      o.value = d.name;
+      o.textContent = `${d.name}${d.commune ? " — " + d.commune : ""}`;
+      deskSel.appendChild(o);
+    });
+    // إخفاء/إظهار حسب نوع التوصيل
+    if(deskWrap) deskWrap.style.display = (state.dtype==="stop" && desks.length) ? "" : "none";
+    // تعطيل خيار المكتب إذا لا توجد مكاتب في الولاية
+    document.querySelectorAll('input[name="dtype"]').forEach(r=>{
+      if(r.value === "stop"){
+        r.disabled = !desks.length;
+        r.closest("label").style.opacity = desks.length ? 1 : .45;
+        if(!desks.length && r.checked){
+          const home = document.querySelector('input[name="dtype"][value="home"]');
+          if(home){ home.checked = true; state.dtype = "home"; }
+        }
+      }
+    });
+  }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
     o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}`;
     sel.appendChild(o);
   });
-  sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); if(communeInput) communeInput.value=""; update() };
-  document.querySelectorAll('input[name="dtype"]').forEach(r=>r.onchange=()=>{ state.dtype=r.value; update() });
+  sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); if(communeInput) communeInput.value=""; setDesks(state.wilaya); update() };
+  document.querySelectorAll('input[name="dtype"]').forEach(r=>r.onchange=()=>{ state.dtype=r.value; setDesks(state.wilaya); update() });
+  if(deskSel) deskSel.onchange = ()=>{ state.desk = deskSel.value; };
 
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
   function update(){
@@ -180,18 +235,21 @@ function initProduct(slug){
     const commune = document.getElementById("commune").value.trim();
     const addr = document.getElementById("address").value.trim();
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
+    if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     const fee = state.dtype==="stop"?state.wilaya.stop:state.wilaya.home;
     const total = state.offer.price + fee;
+    const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
     // Enregistrement dans Google Sheets
     API.submitOrder({
       name, phone, wilaya: state.wilaya.name, commune,
-      dtype: state.dtype, address: addr,
-      items: [{ slug: p.slug, title: p.title, qty: state.offer.qty, price: Math.round(state.offer.price/state.offer.qty) }],
+      dtype: state.dtype, address: addr, desk,
+      items: [{ slug: p.slug, title: p.title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }],
       subtotal: state.offer.price, fee, total,
     });
-    let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n\n• ${p.title}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/state.offer.qty))} = ${fmt(state.offer.price)}`;
+    let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n\n• ${p.title}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`;
+    if(state.offer.free) msg += `\n  🎁 العرض: اشترِ 2 واحصل على الثالثة مجاناً`;
     if(p.old) msg += `\n  (السعر الأصلي: ${fmt(p.old)} ✂️)`;
-    msg += `\n\nالتوصيل (${state.dtype==="stop"?"مكتب Stop Desk":"إلى المنزل"} — ${state.wilaya.name}${commune?"، "+commune:""}): ${fmt(fee)}`;
+    msg += `\n\nالتوصيل (${state.dtype==="stop"?"مكتب Stop Desk":"إلى المنزل"} — ${state.wilaya.name}${commune?"، "+commune:""}${desk?" — المكتب: "+desk:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     if(addr) msg += `\nالعنوان: ${addr}`;
