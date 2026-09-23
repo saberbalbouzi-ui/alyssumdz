@@ -137,12 +137,28 @@ function initProduct(slug){
 
   // الولايات
   const sel = document.getElementById("wilaya");
+  const communeInput = document.getElementById("commune");
+  let communeDL = null;
+  if (communeInput){
+    communeDL = document.createElement("datalist");
+    communeDL.id = "communes-list";
+    document.body.appendChild(communeDL);
+    communeInput.setAttribute("list", communeDL.id);
+    communeInput.placeholder = "اختر البلدية";
+  }
+  function setCommunes(w){
+    if(!communeDL) return;
+    communeDL.innerHTML = "";
+    (w && w.communes ? w.communes : []).forEach(c=>{
+      const o = document.createElement("option"); o.value = c; communeDL.appendChild(o);
+    });
+  }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
     o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}`;
     sel.appendChild(o);
   });
-  sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); update() };
+  sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); if(communeInput) communeInput.value=""; update() };
   document.querySelectorAll('input[name="dtype"]').forEach(r=>r.onchange=()=>{ state.dtype=r.value; update() });
 
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
@@ -235,12 +251,26 @@ function initHome(){
 function fillCartWilayas(){
   const sel = document.getElementById("cwilaya");
   if(!sel || sel.options.length > 1) return;
+  const cInp = document.getElementById("ccommune");
+  let dl = null;
+  if(cInp){
+    dl = document.createElement("datalist");
+    dl.id = "cart-communes-list";
+    document.body.appendChild(dl);
+    cInp.setAttribute("list", dl.id);
+    cInp.placeholder = "اختر البلدية";
+  }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
     o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}`;
     sel.appendChild(o);
   });
-  sel.onchange = ()=>Cart.render();
+  sel.onchange = ()=>{
+    if(dl){ dl.innerHTML=""; const w=WILAYAS.find(x=>x.id==sel.value);
+      (w&&w.communes?w.communes:[]).forEach(c=>{ const o=document.createElement("option"); o.value=c; dl.appendChild(o); });
+      if(cInp) cInp.value=""; }
+    Cart.render();
+  };
   document.querySelectorAll('input[name="cdtype"]').forEach(r=>r.onchange=()=>Cart.render());
 }
 
