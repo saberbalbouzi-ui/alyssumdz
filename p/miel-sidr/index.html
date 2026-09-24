@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="../../assets/css/style.css">
 <link rel="icon" href="../../assets/img/favicon.png">
 <title>عسل السدر الطبيعي-250 غ — أليسوم | الدفع عند الاستلام</title><meta name="description" content="عسل السدر الطبيعي عسل فاخر 100%، يتميز بطعمه الغني وقوامه الكثيف، ويُعد من أجود أنواع العسل الطبيعي للاستخدام اليومي."></head><body>
@@ -186,13 +187,13 @@
     <button class="btn-order" onclick="Cart.checkout()">تأكيد الطلب عبر واتساب ✓</button>
   </div>
 </div><script>const REL="../../";</script>
-<script src="../../assets/js/config.js"></script>
-<script src="../../assets/js/data.js"></script>
-<script src="../../assets/js/wilayas.js"></script>
-<script src="../../assets/js/api.js"></script>
-<script src="../../assets/js/app.js"></script>
-<script src="../../assets/js/agent.js"></script>
-<script>bootStore().then(()=>{
+<script defer src="../../assets/js/config.js"></script>
+<script defer src="../../assets/js/data.js"></script>
+<script defer src="../../assets/js/wilayas.js"></script>
+<script defer src="../../assets/js/api.js"></script>
+<script defer src="../../assets/js/app.js"></script>
+<script defer src="../../assets/js/agent.js"></script>
+<script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
       initProduct("miel-sidr");
       initCartDrawer();
       fillCartWilayas();
@@ -213,4 +214,4 @@
           <div class="body"><h3>${x.title}</h3>
           <div class="price-row"><span class="price">${fmt(x.price)}</span>${x.old?`<span class="old">${fmt(x.old)}</span>`:""}</div></div>
         </a>`).join("");
-    });</script></body></html>
+    });});</script></body></html>
