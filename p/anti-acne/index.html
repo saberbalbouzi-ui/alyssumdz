@@ -118,9 +118,20 @@ body:before{
   filter:drop-shadow(0 26px 24px rgba(22,48,39,.13));
 }
 .pbox:hover .gmain img{transform:scale(1.035) translateY(-5px)}
+.product-gallery{position:relative}
+.gmain{overflow:hidden}
+.gmain img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in}
 .pthumbs{margin-top:15px}
-.gthumbs{gap:10px!important}
-.gthumbs>*{border-radius:16px!important;border:1px solid var(--line)!important;overflow:hidden}
+.gthumbs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px!important}
+.gthumbs .gallery-thumb{display:block;width:100%;aspect-ratio:1/1;border-radius:16px;border:1px solid var(--line);overflow:hidden;background:#fff;padding:0;cursor:pointer;transition:.28s ease;position:relative}
+.gthumbs .gallery-thumb:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(35,70,58,.10)}
+.gthumbs .gallery-thumb.is-active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(199,165,111,.18)}
+.gthumbs .gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.review-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start}
+.review-shot{position:relative;display:block;border-radius:24px;overflow:hidden;background:#fff;border:1px solid rgba(35,70,58,.10);box-shadow:var(--shadow-lg);transition:.3s ease}
+.review-shot:hover{transform:translateY(-5px);box-shadow:var(--shadow-xl)}
+.review-shot img{display:block;width:100%;height:auto;max-height:620px;object-fit:contain;background:#f7f3eb}
+.review-download{position:absolute;left:14px;bottom:14px;padding:9px 13px;border-radius:999px;background:rgba(24,57,47,.92);color:#fff;font-size:.78rem;font-weight:800;backdrop-filter:blur(8px)}
 .trust-strip span{
   background:rgba(255,255,255,.88)!important;
   border:1px solid var(--line)!important;
@@ -393,6 +404,11 @@ footer.site h4{color:#fff!important}
   .lp-textcard h2{font-size:29px!important}
   .lp-card{padding:20px!important}
   .lp-final{padding:42px 20px!important}
+  .gthumbs{gap:8px!important}
+  .review-gallery{grid-template-columns:1fr!important;max-width:620px;margin-inline:auto}
+}
+@media (min-width:981px){
+  .review-gallery .review-shot:nth-child(2){margin-top:22px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
@@ -416,8 +432,14 @@ footer.site h4{color:#fff!important}
   <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / كريمة ضد حب الشباب</div>
   <div class="pd2 lp-hero">
     <div class="pbox">
-      <div class="gmain"><img id="gmain" src="../../assets/img/anti-acne/0.webp" alt="كريمة ضد حب الشباب"></div>
-      <div class="pthumbs"><div class="gthumbs"></div></div>
+      <div class="product-gallery" aria-label="صور منتج كريمة ضد حب الشباب">
+        <div class="gmain">
+          <img id="gmain" src="https://alyssumdz.com/wp-content/uploads/2026/08/anti-acne-01.webp" alt="كريمة أليسوم ضد حب الشباب" loading="eager">
+        </div>
+        <div class="pthumbs">
+          <div class="gthumbs" id="galleryThumbs" role="list"></div>
+        </div>
+      </div>
       <div class="trust-strip" style="margin-top:1rem">
         <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>
       </div>
@@ -513,26 +535,24 @@ footer.site h4{color:#fff!important}
 </div></section>
 
 <section class="lp-sec alt"><div class="container">
-  <div class="lp-head"><h2>آراء بعض الزبائن</h2><p>تجارب حقيقية من زبائننا في مختلف الولايات</p></div>
-  <div class="lp-testis"><div class="lp-card">
-        <div class="stars">★★★★★</div>
-        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
-        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
-          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">أ</span>
-          <div>أمينة<br><small style="color:var(--muted);font-weight:700">ولاية الجزائر العاصمة</small></div>
-        </div></div><div class="lp-card">
-        <div class="stars">★★★★★</div>
-        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
-        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
-          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">خ</span>
-          <div>خديجة<br><small style="color:var(--muted);font-weight:700">ولاية وهران</small></div>
-        </div></div><div class="lp-card">
-        <div class="stars">★★★★★</div>
-        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
-        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
-          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">س</span>
-          <div>سارة<br><small style="color:var(--muted);font-weight:700">ولاية سطيف</small></div>
-        </div></div></div>
+  <div class="lp-head">
+    <h2>آراء بعض الزبائن</h2>
+    <p>صور من تقييمات زبائننا — اضغط على أي صورة لفتحها أو حفظها.</p>
+  </div>
+  <div class="review-gallery">
+    <a class="review-shot" href="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181510.webp" target="_blank" rel="noopener" download>
+      <img src="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181510.webp" alt="تقييم عميلة من زبائن أليسوم" loading="lazy">
+      <span class="review-download">↗ فتح / حفظ الصورة</span>
+    </a>
+    <a class="review-shot" href="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181722.webp" target="_blank" rel="noopener" download>
+      <img src="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181722.webp" alt="تقييم عميلة من زبائن أليسوم" loading="lazy">
+      <span class="review-download">↗ فتح / حفظ الصورة</span>
+    </a>
+    <a class="review-shot" href="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181807.webp" target="_blank" rel="noopener" download>
+      <img src="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181807.webp" alt="تقييم عميلة من زبائن أليسوم" loading="lazy">
+      <span class="review-download">↗ فتح / حفظ الصورة</span>
+    </a>
+  </div>
 </div></section>
 
 
@@ -557,8 +577,6 @@ footer.site h4{color:#fff!important}
   </div>
 </section>
 
-
-
 <section class="lp-sec">
   <div class="container">
     <div class="lp-head">
@@ -572,8 +590,6 @@ footer.site h4{color:#fff!important}
     </div>
   </div>
 </section>
-
-
 
 <section style="padding-top:0"><div class="container">
   <div class="lp-final">
@@ -628,6 +644,28 @@ footer.site h4{color:#fff!important}
 <script defer src="../../assets/js/agent.js"></script>
 <script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
       initProduct("anti-acne");
+      // معرض صور ثابت من 4 صور: المصغرات تغيّر الصورة الرئيسية عند الضغط.
+      const gallery = [
+        "https://alyssumdz.com/wp-content/uploads/2026/08/anti-acne-01.webp",
+        "https://alyssumdz.com/wp-content/uploads/2026/08/anti-acne-02.webp",
+        "https://alyssumdz.com/wp-content/uploads/2026/08/anti-acne-003.webp",
+        "https://alyssumdz.com/wp-content/uploads/2026/08/anti-acne-004.webp"
+      ];
+      const mainGalleryImage = document.getElementById("gmain");
+      const galleryThumbs = document.getElementById("galleryThumbs");
+      if(mainGalleryImage && galleryThumbs){
+        galleryThumbs.innerHTML = gallery.map((src,i)=>`
+          <button type="button" class="gallery-thumb${i===0?" is-active":""}" data-src="${src}" aria-label="عرض الصورة ${i+1}">
+            <img src="${src}" alt="صورة المنتج ${i+1}" loading="lazy">
+          </button>`).join("");
+        galleryThumbs.querySelectorAll(".gallery-thumb").forEach(btn=>{
+          btn.addEventListener("click",()=>{
+            mainGalleryImage.src = btn.dataset.src;
+            galleryThumbs.querySelectorAll(".gallery-thumb").forEach(x=>x.classList.remove("is-active"));
+            btn.classList.add("is-active");
+          });
+        });
+      }
       initCartDrawer();
       fillCartWilayas();
       const p = PRODUCTS.find(x=>x.slug==="anti-acne");
