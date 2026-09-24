@@ -162,45 +162,57 @@ function initProduct(slug){
     setInterval(tick, 1000);
   })();
 
-  // الولايات
+  // الولايات والبلديات — قوائم منسدلة متوافقة مع الهاتف
   const sel = document.getElementById("wilaya");
-  const communeInput = document.getElementById("commune");
   const deskWrap = document.getElementById("desk-wrap");
   const deskSel = document.getElementById("desk");
-  let communeDL = null;
+
+  // حذف حقل العنوان (غير ضروري)
+  const addrInput = document.getElementById("address");
+  if (addrInput){ const f = addrInput.closest(".field"); if(f) f.remove(); else addrInput.remove(); }
+
+  // استبدال حقل البلدية بقائمة منسدلة (الداتاليست لا يعمل جيداً على الهاتف)
+  let communeSel = null;
+  const communeInput = document.getElementById("commune");
   if (communeInput){
-    communeDL = document.createElement("datalist");
-    communeDL.id = "communes-list";
-    document.body.appendChild(communeDL);
-    communeInput.setAttribute("list", communeDL.id);
-    communeInput.placeholder = "اختر البلدية";
+    communeSel = document.createElement("select");
+    communeSel.id = "commune";
+    communeSel.innerHTML = '<option value="">— اختر البلدية —</option>';
+    communeInput.replaceWith(communeSel);
   }
   function setCommunes(w){
-    if(!communeDL) return;
-    communeDL.innerHTML = "";
+    if(!communeSel) return;
+    communeSel.innerHTML = '<option value="">— اختر البلدية —</option>';
     (w && w.communes ? w.communes : []).forEach(c=>{
-      const o = document.createElement("option"); o.value = c; communeDL.appendChild(o);
+      const o = document.createElement("option"); o.value = c; o.textContent = c; communeSel.appendChild(o);
     });
   }
-  // مكاتب Stop Desk الحقيقية من Yalidine
+  // مكاتب Stop Desk الحقيقية من Yalidine — تُرشَّح حسب البلدية المختارة
   function setDesks(w){
     if(!deskSel) return;
+    const commune = communeSel ? communeSel.value : "";
+    const allDesks = (w && w.desks) ? w.desks : [];
+    const desks = commune ? allDesks.filter(d=>d.commune===commune) : allDesks;
     deskSel.innerHTML = '<option value="">— اختر أقرب مكتب —</option>';
-    const desks = (w && w.desks) ? w.desks : [];
     desks.forEach(d=>{
       const o = document.createElement("option");
       o.value = d.name;
       o.textContent = `${d.name}${d.commune ? " — " + d.commune : ""}`;
       deskSel.appendChild(o);
     });
+    const hasDesk = desks.length > 0;
     // إخفاء/إظهار حسب نوع التوصيل
-    if(deskWrap) deskWrap.style.display = (state.dtype==="stop" && desks.length) ? "" : "none";
-    // تعطيل خيار المكتب إذا لا توجد مكاتب في الولاية
+    if(deskWrap) deskWrap.style.display = (state.dtype==="stop" && hasDesk) ? "" : "none";
+    // تعطيل خيار المكتب إذا لا يوجد مكتب في البلدية المختارة
     document.querySelectorAll('input[name="dtype"]').forEach(r=>{
       if(r.value === "stop"){
-        r.disabled = !desks.length;
-        r.closest("label").style.opacity = desks.length ? 1 : .45;
-        if(!desks.length && r.checked){
+        r.disabled = !hasDesk;
+        const lbl = r.closest("label");
+        if(lbl){
+          lbl.style.opacity = hasDesk ? 1 : .45;
+          lbl.title = hasDesk ? "" : "لا يوجد مكتب Stop Desk في هذه البلدية";
+        }
+        if(!hasDesk && r.checked){
           const home = document.querySelector('input[name="dtype"][value="home"]');
           if(home){ home.checked = true; state.dtype = "home"; }
         }
@@ -212,7 +224,8 @@ function initProduct(slug){
     o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}`;
     sel.appendChild(o);
   });
-  sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); if(communeInput) communeInput.value=""; setDesks(state.wilaya); update() };
+  sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); setDesks(state.wilaya); update() };
+  if(communeSel) communeSel.onchange = ()=>{ setDesks(state.wilaya); update() };
   document.querySelectorAll('input[name="dtype"]').forEach(r=>r.onchange=()=>{ state.dtype=r.value; setDesks(state.wilaya); update() });
   if(deskSel) deskSel.onchange = ()=>{ state.desk = deskSel.value; };
 
@@ -233,7 +246,6 @@ function initProduct(slug){
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const commune = document.getElementById("commune").value.trim();
-    const addr = document.getElementById("address").value.trim();
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
     if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     const fee = state.dtype==="stop"?state.wilaya.stop:state.wilaya.home;
@@ -242,7 +254,7 @@ function initProduct(slug){
     // Enregistrement dans Google Sheets
     API.submitOrder({
       name, phone, wilaya: state.wilaya.name, commune,
-      dtype: state.dtype, address: addr, desk,
+      dtype: state.dtype, desk,
       items: [{ slug: p.slug, title: p.title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }],
       subtotal: state.offer.price, fee, total,
     });
@@ -252,7 +264,6 @@ function initProduct(slug){
     msg += `\n\nالتوصيل (${state.dtype==="stop"?"مكتب Stop Desk":"إلى المنزل"} — ${state.wilaya.name}${commune?"، "+commune:""}${desk?" — المكتب: "+desk:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
-    if(addr) msg += `\nالعنوان: ${addr}`;
     msg += `\n\n💵 الدفع عند الاستلام`;
     open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`,"_blank");
   });
@@ -309,14 +320,36 @@ function initHome(){
 function fillCartWilayas(){
   const sel = document.getElementById("cwilaya");
   if(!sel || sel.options.length > 1) return;
+  // استبدال حقل البلدية بقائمة منسدلة (متوافقة مع الهاتف)
+  let cSel = null;
   const cInp = document.getElementById("ccommune");
-  let dl = null;
   if(cInp){
-    dl = document.createElement("datalist");
-    dl.id = "cart-communes-list";
-    document.body.appendChild(dl);
-    cInp.setAttribute("list", dl.id);
-    cInp.placeholder = "اختر البلدية";
+    cSel = document.createElement("select");
+    cSel.id = "ccommune";
+    cSel.innerHTML = '<option value="">— اختر البلدية —</option>';
+    cInp.replaceWith(cSel);
+    cSel.onchange = ()=>{ updateCartStop(); Cart.render(); };
+  }
+  // تعطيل خيار Stop Desk إذا لا يوجد مكتب في البلدية المختارة
+  function updateCartStop(){
+    const w = WILAYAS.find(x=>x.id==sel.value);
+    const commune = cSel ? cSel.value : "";
+    const allDesks = (w && w.desks) ? w.desks : [];
+    const hasDesk = (commune ? allDesks.filter(d=>d.commune===commune) : allDesks).length > 0;
+    document.querySelectorAll('input[name="cdtype"]').forEach(r=>{
+      if(r.value === "stop"){
+        r.disabled = !hasDesk;
+        const lbl = r.closest("label");
+        if(lbl){
+          lbl.style.opacity = hasDesk ? 1 : .45;
+          lbl.title = hasDesk ? "" : "لا يوجد مكتب Stop Desk في هذه البلدية";
+        }
+        if(!hasDesk && r.checked){
+          const home = document.querySelector('input[name="cdtype"][value="home"]');
+          if(home) home.checked = true;
+        }
+      }
+    });
   }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
@@ -324,9 +357,12 @@ function fillCartWilayas(){
     sel.appendChild(o);
   });
   sel.onchange = ()=>{
-    if(dl){ dl.innerHTML=""; const w=WILAYAS.find(x=>x.id==sel.value);
-      (w&&w.communes?w.communes:[]).forEach(c=>{ const o=document.createElement("option"); o.value=c; dl.appendChild(o); });
-      if(cInp) cInp.value=""; }
+    if(cSel){
+      cSel.innerHTML = '<option value="">— اختر البلدية —</option>';
+      const w = WILAYAS.find(x=>x.id==sel.value);
+      (w&&w.communes?w.communes:[]).forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; cSel.appendChild(o); });
+    }
+    updateCartStop();
     Cart.render();
   };
   document.querySelectorAll('input[name="cdtype"]').forEach(r=>r.onchange=()=>Cart.render());
