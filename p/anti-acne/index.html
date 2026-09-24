@@ -822,17 +822,7 @@
    
 
 
-  <section id="order">
-    <div class="container">
-      <div class="final-cta">
-        <h2>أعد لبشرتك مظهرها الصافي المنتعش</h2>
-        <p>كريم أليسوم للعناية بالبشرة المعرضة لحب الشباب يجمع بين زيت شجرة الشاي والخلاصات النباتية وفيتامين E في تركيبة عملية، تساعد على تحسين مظهر الشوائب ومنح بشرتك الانتعاش والراحة مع الاستعمال المنتظم.</p>
-        <div class="cta-row" style="justify-content:center">
-          <a href="#form" class="btn btn-primary">اطلب الآن</a>
-          <a href="https://wa.me/213559237239?text=أريد%20طلب%20كريم%20أليسوم%20للعناية%20بالبشرة%20المعرضة%20لحب%20الشباب" class="btn btn-secondary">اطلب عبر واتساب</a>
-        </div>
-      </div>
-    </div>
+ 
 <section style="padding-top:0"><div class="container">
   <div class="lp-final">
     <h2>🎁 اطلب الآن — اشترِ قطعتين واحصل على الثالثة مجاناً</h2>
@@ -842,6 +832,37 @@
       <a class="lp-btn lp-btn-green" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب عبر واتساب</a>
     </div>
   </div>
+ <form class="form" id="order-form" style="margin-top:1rem">
+        <h3>📝 املأ معلوماتك — الدفع عند الاستلام</h3>
+        <div class="frow">
+          <div class="field"><label>الاسم الكامل *</label><input id="name" required placeholder="مثال: أحمد بن علي"></div>
+          <div class="field"><label>رقم الهاتف *</label><input id="phone" required inputmode="tel" placeholder="05XXXXXXXX"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>الولاية *</label><select id="wilaya" required><option value="">— اختر ولايتك —</option></select></div>
+          <div class="field"><label>البلدية</label><input id="commune" placeholder="اختياري"></div>
+        </div>
+        <div class="field" id="desk-wrap" style="display:none"><label>مكتب التوصيل (Stop Desk) *</label><select id="desk"></select></div>
+        <div class="field"><label>العنوان الكامل</label><input id="address" placeholder="الحي، الشارع، رقم المنزل..."></div>
+        <div class="dtype">
+          <label><input type="radio" name="dtype" value="home" checked><span>🏠 توصيل للمنزل</span></label>
+          <label><input type="radio" name="dtype" value="stop"><span>🏢 مكتب Stop Desk (أرخص)</span></label>
+        </div>
+        <div class="total-box">
+          <div><small>رسوم التوصيل</small><span id="fee">—</span></div>
+          <div style="text-align:left"><small>الإجمالي</small><b id="grand">—</b></div>
+        </div>
+        <button type="submit" class="btn-order">✅ تأكيد الطلب — <span id="btn-total"></span></button>
+        <a class="btn-wa" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب مباشرة عبر واتساب</a>
+        <button type="button" class="btn-cart2" id="add-cart">🛒 أضف إلى السلة</button>
+        <div class="cod-note">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+  
   <div class="lp-head" style="margin-top:2.5rem"><h2 style="font-size:1.5rem">قد يعجبك أيضاً</h2></div>
   <div class="grid" id="related"></div>
 </div></section>
