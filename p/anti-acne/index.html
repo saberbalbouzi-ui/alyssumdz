@@ -3,188 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="كريمة أليسوم للعناية بالبشرة المعرضة للحبوب. تعرف على المكونات وطريقة الاستعمال، واختر العرض والتوصيل قبل تأكيد طلبك.">
-<title>كريمة أليسوم للعناية بالبشرة المعرضة للحبوب | ALYSSUM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/style.css">
 <link rel="icon" href="../../assets/img/favicon.png">
-<style>
-:root{--pilot-green:#23463a;--pilot-green2:#2f5d4f;--pilot-gold:#c7a56f;--pilot-bg:#fcfaf6;--pilot-border:#e9e3da}
-html{scroll-behavior:smooth}
-body{overflow-x:hidden}
-.pilot{background:var(--pilot-bg);color:#252a27}
-.pilot *{box-sizing:border-box}
-.pilot img{display:block;max-width:100%}
-.pilot .container{width:min(1180px,calc(100% - 28px));margin-inline:auto}
-.pilot .pilot-sec{padding:68px 0}
-.pilot .pilot-alt{background:#f4f5f0}
-.pilot .pilot-hero{padding:32px 0 66px;background:radial-gradient(circle at 80% 10%,rgba(199,165,111,.2),transparent 30%)}
-.pilot .pilot-hero-grid,.pilot .pilot-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:30px;align-items:center}
-.pilot .pilot-product,.pilot .pilot-panel,.pilot .pilot-card,.pilot .pilot-photo,.pilot .pilot-order-wrap{background:#fff;border:1px solid var(--pilot-border);border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
-.pilot .pilot-product{padding:16px}
-.pilot .pilot-main{display:grid;place-items:center;min-height:430px;background:#f6f2ea;border-radius:18px;overflow:hidden}
-.pilot .pilot-main img{width:100%;height:430px;object-fit:contain;padding:20px}
-.pilot .gthumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-.pilot .gthumbs img{width:76px;height:76px;object-fit:contain;background:#f6f2ea;border:2px solid transparent;border-radius:12px;cursor:pointer}
-.pilot .gthumbs img.on{border-color:var(--pilot-gold)}
-.pilot .pilot-eyebrow{display:inline-block;padding:6px 15px;border-radius:99px;background:#e9f0e9;color:var(--pilot-green);font-weight:800;margin-bottom:12px}
-.pilot h1,.pilot h2,.pilot h3{line-height:1.35}
-.pilot h1{font-size:clamp(2rem,4vw,3rem);color:var(--pilot-green);margin:0 0 14px}
-.pilot h2{font-size:clamp(1.65rem,3vw,2.4rem);color:var(--pilot-green);margin:0 0 12px}
-.pilot h3{font-size:1.2rem;color:var(--pilot-green);margin:0 0 8px}
-.pilot p{line-height:1.9}
-.pilot .pilot-lead{font-size:1.14rem;font-weight:700}
-.pilot .pilot-muted{color:#59615d}
-.pilot .pilot-price{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:16px 0}
-.pilot .pilot-price #pprice{font-size:2rem;font-weight:900;color:var(--pilot-green)}
-.pilot .pilot-price #pold{text-decoration:line-through;color:#818781}
-.pilot .pilot-price #psave{background:#e7f2e9;color:var(--pilot-green);border-radius:99px;padding:4px 10px;font-weight:800}
-.pilot .pilot-points{display:grid;gap:9px;margin:18px 0}
-.pilot .pilot-points span{display:block;background:#fff;border:1px solid var(--pilot-border);padding:9px 14px;border-radius:12px}
-.pilot .pilot-actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
-.pilot .pilot-link{display:inline-flex;align-items:center;justify-content:center;border-radius:99px;padding:12px 24px;font-weight:800;text-align:center;min-height:50px;text-decoration:none}
-.pilot .pilot-link-gold{background:var(--pilot-gold);color:#19231d}
-.pilot .pilot-link-plain{border:1px solid var(--pilot-border);background:#fff;color:var(--pilot-green)}
-.pilot .pilot-trust{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.pilot .pilot-trust span{border:1px solid var(--pilot-border);border-radius:99px;padding:6px 12px;background:#fff;font-size:.87rem}
-.pilot .pilot-head{text-align:center;max-width:770px;margin:0 auto 28px}
-.pilot .pilot-panel{padding:30px}
-.pilot .pilot-photo{overflow:hidden;min-height:340px;display:grid;place-items:center;background:#f6f2ea}
-.pilot .pilot-photo img{width:100%;height:360px;object-fit:contain;padding:16px}
-.pilot .pilot-list{display:grid;gap:9px;margin-top:15px}
-.pilot .pilot-list div{border:1px solid var(--pilot-border);border-radius:12px;background:#f9f7f2;padding:10px 14px}
-.pilot .pilot-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.pilot .pilot-card{padding:23px}
-.pilot .pilot-card p{margin:0;color:#59615d}
-.pilot .pilot-number{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--pilot-green);color:#fff;font-weight:900;margin-bottom:13px}
-.pilot .pilot-order-wrap{padding:clamp(18px,4vw,42px);max-width:900px;margin-inline:auto}
-.pilot #order-form{scroll-margin-top:110px}
-.pilot .pilot-order-wrap .form{max-width:none}
-.pilot .pilot-order-wrap .offers{margin:16px 0}
-.pilot .pilot-note{font-size:.9rem;color:#57625a}
-.pilot .pilot-related{padding-bottom:85px}
-.pilot .pilot-related .grid{margin-top:18px}
-@media(max-width:850px){.pilot .pilot-hero-grid,.pilot .pilot-two,.pilot .pilot-cards{grid-template-columns:1fr}.pilot .pilot-sec{padding:44px 0}.pilot .pilot-main{min-height:310px}.pilot .pilot-main img{height:310px}.pilot .pilot-photo{min-height:260px}.pilot .pilot-photo img{height:270px}.pilot .pilot-actions .pilot-link{flex:1}.pilot .pilot-related{padding-bottom:100px}}
-</style>
-</head>
-<body>
-<div class="topbar">🚚 التوصيل حسب الولاية · 💵 الدفع عند الاستلام</div>
-<header class="site"><div class="container">
-  <a class="logo" href="../../index.html">ألي<span>سوم</span></a>
-  <nav class="menu"><a href="../../index.html#products">المنتجات</a><a href="../../index.html#features">لماذا نحن؟</a><a href="../../index.html#faq">الأسئلة الشائعة</a></nav>
-  <a class="hd-wa" href="https://wa.me/213559237239" target="_blank" rel="noopener noreferrer">واتساب</a>
-  <button class="cart-btn" type="button" aria-label="السلة">🛒<span class="cart-count">0</span></button>
-</div></header>
-<main class="pilot">
-  <div class="container"><div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / كريمة ضد حب الشباب</div></div>
-  <section class="pilot-hero"><div class="container pilot-hero-grid">
-    <div class="pilot-product"><div class="pilot-main"><img id="gmain" src="../../assets/img/anti-acne/0.webp" alt="عبوة كريمة أليسوم للعناية بالبشرة المعرضة للحبوب" width="560" height="430"></div><div class="gthumbs" aria-label="صور المنتج"></div></div>
-    <div>
-      <span class="pilot-eyebrow">ALYSSUM Skin Care</span>
-      <h1>كريمة أليسوم للبشرة المعرضة للحبوب</h1>
-      <p class="pilot-lead">عناية نباتية ضمن روتين البشرة الدهنية والمختلطة.</p>
-      <p class="pilot-muted">تركيبة موصوفة بزيت شجرة الشاي والإكليل والجيرانيوم، مع خلاصات عرق السوس والميرمية وعشبة القديسين وفيتامين E. راجعي المكونات المكتوبة على العبوة للتأكد من ملاءمتها لبشرتك.</p>
-      <div class="pilot-price"><span id="pprice"></span><span id="pold"></span><span id="psave"></span></div>
-      <div class="pilot-points"><span>✓ روتين مخصص للعناية بمظهر البشرة المعرضة للشوائب.</span><span>✓ تعرفي على طريقة الاستعمال والاحتياطات قبل الطلب.</span><span>✓ اختاري عرضك ورسوم التوصيل داخل استمارة الطلب.</span></div>
-      <div class="pilot-actions"><a class="pilot-link pilot-link-gold" href="#order-form">اطلبي الآن</a><a class="pilot-link pilot-link-plain" href="#problem">اكتشفي المنتج</a></div>
-      <div class="pilot-trust"><span>الدفع عند الاستلام</span><span>اختيار التوصيل حسب الولاية</span><span>الطلب عبر واتساب</span></div>
+<title>كريمة ضد حب الشباب — أليسوم | الدفع عند الاستلام</title><meta name="description" content="كريمة نباتية للعناية بالبشرة المعرضة لحب الشباب، تحتوي على زيت شجرة الشاي والإكليل والجيرانيوم وعرق السوس والميرمية وعشبة القديسين وفيتامين E، وتساعد "></head><body>
+<div class="topbar">🚚 توصيل سريع لـ <b>58 ولاية</b> · 💵 <b>الدفع عند الاستلام</b> · 🎁 اشترِ <b>قطعتين</b> واحصل على <b>الثالثة مجاناً</b></div><header class="site"><div class="container">
+      <a class="logo" href="../../index.html">ألي<span>سوم</span></a>
+      <nav class="menu">
+        <a href="../../index.html#products">المنتجات</a>
+        <a href="../../index.html#features">لماذا نحن؟</a>
+        <a href="../../index.html#faq">الأسئلة الشائعة</a>
+      </nav>
+      <a class="hd-wa" href="https://wa.me/213559237239" target="_blank">واتساب</a>
+      <button class="cart-btn" aria-label="السلة">🛒<span class="cart-count">0</span></button>
+    </div></header>
+<div class="container">
+  <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / كريمة ضد حب الشباب</div>
+  <div class="pd2 lp-hero">
+    <div class="pbox">
+      <div class="gmain"><img id="gmain" src="../../assets/img/anti-acne/0.webp" alt="كريمة ضد حب الشباب"></div>
+      <div class="pthumbs"><div class="gthumbs"></div></div>
+      <div class="trust-strip" style="margin-top:1rem">
+        <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>🔄 استبدال مضمون</span>
+      </div>
     </div>
-  </div></section>
 
-  <section class="pilot-sec pilot-alt" id="problem"><div class="container pilot-two">
-    <div class="pilot-photo"><img src="../../assets/img/anti-acne/0.webp" alt="كريمة أليسوم المعروضة على الصفحة" loading="lazy"></div>
-    <div class="pilot-panel"><h2>هل تبحثين عن روتين أنسب لبشرتك؟</h2><p>قد تحتاج البشرة المعرضة للحبوب إلى عناية منتظمة ولطيفة تراعي إحساسها بالراحة. قبل اختيار أي مستحضر، من المفيد معرفة تركيبته وطريقة استخدامه ومدى تقبّل بشرتك له.</p><div class="pilot-list"><div>بشرة دهنية أو مختلطة معرضة لظهور الشوائب.</div><div>الرغبة في روتين بسيط وواضح.</div><div>الحاجة إلى تجربة المنتج تدريجيًا ومراقبة استجابة البشرة.</div></div></div>
-  </div></section>
+    <div class="lp-info">
+      <span class="eyebrow">ALYSSUM — العناية بالبشرة</span>
+      <h1>كريمة ضد حب الشباب</h1>
+      <div class="stars" style="margin:.3rem 0">★★★★★ <small>(+86 تقييم إيجابي)</small></div>
+      <p class="lp-sub">تركيبة نباتية فاخرة لعناية يومية لطيفة وفعّالة</p>
+      <p class="lp-desc">كريمة نباتية للعناية بالبشرة المعرضة لحب الشباب، تحتوي على زيت شجرة الشاي والإكليل والجيرانيوم وعرق السوس والميرمية وعشبة القديسين وفيتامين E، وتساعد على تحسين مظهر الشوائب ومنح البشرة إحساسًا بالانتعاش.</p>
+      <div class="pd-tags">
+        <span class="tag">🌿 طبيعي 100%</span>
+        <span class="tag">✅ أصلي ومفحص</span>
+        <span class="tag">👁️ <b id="viewers">9</b> يشاهدون الآن</span>
+      </div>
 
-  <section class="pilot-sec"><div class="container pilot-two">
-    <div class="pilot-panel"><h2>كريمة للعناية اليومية</h2><p>تجمع الكريمة، وفق وصف المنتج المقدم، بين زيوت وخلاصات نباتية وفيتامين E. يمكن إدراجها في روتين العناية بالبشرة المعرضة للحبوب وفق تعليمات العبوة، دون اعتبارها علاجًا طبيًا لحب الشباب.</p><div class="pilot-list"><div>تعرّفي على التركيبة قبل أول استعمال.</div><div>ابدئي بكمية قليلة واختبري تحمّل بشرتك.</div><div>اطلبي المشورة الطبية إذا كانت الحبوب شديدة أو مستمرة.</div></div></div>
-    <div class="pilot-photo"><img src="../../assets/img/anti-acne/0.webp" alt="صورة عبوة كريمة أليسوم" loading="lazy"></div>
-  </div></section>
+      <div class="price-box">
+        <span class="price-now" id="pprice"></span>
+        <span class="price-old" id="pold"></span>
+        <span class="save-pill" id="psave"></span>
+      </div>
 
-  <section class="pilot-sec pilot-alt"><div class="container"><div class="pilot-head"><h2>مكونات التركيبة المذكورة</h2><p>هذه الأسماء مأخوذة من وصف المنتج المقدم؛ تبقى قائمة المكونات المدونة على العبوة المرجع للتأكد من التركيبة الفعلية.</p></div><div class="pilot-cards">
-    <article class="pilot-card"><h3>زيت شجرة الشاي</h3><p>مكوّن نباتي عطري مستخدم في بعض مستحضرات العناية بالبشرة.</p></article>
-    <article class="pilot-card"><h3>الإكليل والجيرانيوم</h3><p>زيوت عطرية مذكورة ضمن وصف الكريمة؛ تحققي من تحمّل بشرتك لها.</p></article>
-    <article class="pilot-card"><h3>عرق السوس والميرمية</h3><p>خلاصات نباتية واردة في وصف التركيبة.</p></article>
-    <article class="pilot-card"><h3>عشبة القديسين</h3><p>خلاصة مذكورة في وصف المنتج؛ انتبهي للتعرّض للشمس واقرئي تعليمات العبوة.</p></article>
-    <article class="pilot-card"><h3>فيتامين E</h3><p>أحد المكونات المذكورة ضمن وصف الكريمة.</p></article>
-    <article class="pilot-card"><h3>القائمة الكاملة</h3><p>راجعي الملصق قبل الشراء، خصوصًا إذا كانت لديك حساسية من أحد المكونات.</p></article>
-  </div></div></section>
+      <div class="deal-bar">
+        <span class="gift">🎁</span>
+        <div style="flex:1;min-width:180px"><b>عرض محدود: اشترِ قطعتين واحصل على الثالثة مجاناً</b><br><small style="color:#8a6a2f">ينتهي العرض خلال:</small></div>
+        <span class="deal-timer">48:00:00</span>
+      </div>
 
-  <section class="pilot-sec"><div class="container"><div class="pilot-head"><h2>لماذا تختارينها؟</h2><p>معلومات عملية تساعدك على تقييم ملاءمة الكريمة لروتينك، دون وعود بنتيجة مضمونة.</p></div><div class="pilot-cards">
-    <article class="pilot-card"><h3>روتين واضح</h3><p>تعرفي على الاستخدام والاحتياطات قبل البدء.</p></article>
-    <article class="pilot-card"><h3>تركيبة موصوفة</h3><p>زيوت وخلاصات نباتية وفيتامين E مذكورة في وصف المنتج.</p></article>
-    <article class="pilot-card"><h3>طلب مرن</h3><p>اختاري العرض والولاية وطريقة التوصيل، ثم راجعي الإجمالي.</p></article>
-  </div></div></section>
-
-  <section class="pilot-sec pilot-alt"><div class="container"><div class="pilot-head"><h2>طريقة الاستعمال</h2><p>اتّبعي تعليمات العبوة أولاً، وابدئي تدريجيًا إذا كانت بشرتك حساسة.</p></div><div class="pilot-cards">
-    <article class="pilot-card"><span class="pilot-number">1</span><h3>نظّفي البشرة</h3><p>نظّفي المنطقة المراد العناية بها وجفّفيها بلطف.</p></article>
-    <article class="pilot-card"><span class="pilot-number">2</span><h3>اختبري كمية صغيرة</h3><p>جرّبي المنتج على مساحة صغيرة أولًا، ثم استخدميه حسب إرشادات العبوة إذا لم يظهر تهيّج.</p></article>
-    <article class="pilot-card"><span class="pilot-number">3</span><h3>راقبي استجابة بشرتك</h3><p>أوقفي الاستخدام إذا شعرتِ بتهيج، واستشيري مختصًا عند الحاجة.</p></article>
-  </div></div></section>
-
-  <section class="pilot-sec"><div class="container"><div class="pilot-head"><h2>احتياطات مهمة</h2><p>لا يغني هذا المستحضر عن استشارة مختص إذا كانت لديك مشكلة جلدية تحتاج علاجًا.</p></div><div class="pilot-cards">
-    <article class="pilot-card"><h3>للاستخدام الخارجي</h3><p>تجنبي ملامسة العينين والجلد المتشقق، واتّبعي تعليمات العبوة.</p></article>
-    <article class="pilot-card"><h3>اختبار التحسّس</h3><p>اختبريه على مساحة صغيرة قبل استخدامه على نطاق أوسع.</p></article>
-    <article class="pilot-card"><h3>عند التهيج</h3><p>أوقفي الاستعمال واطلبي المشورة المهنية عند استمرار الأعراض.</p></article>
-  </div></div></section>
-
-  <section class="pilot-sec pilot-alt" id="order"><div class="container"><div class="pilot-head"><h2>جاهزة لاختيار عرضك؟</h2><p>اختاري الكمية وطريقة التوصيل، ثم املئي بياناتك لمراجعة الإجمالي قبل إرسال الطلب.</p></div><div class="pilot-order-wrap">
-    <form class="form" id="order-form">
-      <h3>📝 معلومات الطلب — الدفع عند الاستلام</h3>
-      <p class="pilot-note">اختاري العرض المناسب لك. سعر المنتج ورسوم التوصيل والإجمالي محسوبة من بيانات المتجر.</p>
       <div class="offers" id="offers"></div>
-      <div class="frow"><div class="field"><label for="name">الاسم الكامل *</label><input id="name" name="name" required autocomplete="name" placeholder="الاسم الكامل"></div><div class="field"><label for="phone">رقم الهاتف *</label><input id="phone" name="phone" required inputmode="tel" autocomplete="tel" placeholder="05XXXXXXXX"></div></div>
-      <div class="frow"><div class="field"><label for="wilaya">الولاية *</label><select id="wilaya" name="wilaya" required><option value="">— اختر ولايتك —</option></select></div><div class="field"><label for="commune">البلدية</label><input id="commune" name="commune" placeholder="اختر البلدية"></div></div>
-      <div class="field" id="desk-wrap" style="display:none"><label for="desk">مكتب التوصيل (Stop Desk) *</label><select id="desk" name="desk"></select></div>
-      <div class="field"><label for="address">العنوان الكامل</label><input id="address" name="address" autocomplete="street-address" placeholder="الحي، الشارع، رقم المنزل..."></div>
-      <div class="dtype"><label><input type="radio" name="dtype" value="home" checked><span>🏠 توصيل للمنزل</span></label><label><input type="radio" name="dtype" value="stop"><span>🏢 مكتب Stop Desk</span></label></div>
-      <div class="total-box"><div><small>رسوم التوصيل</small><span id="fee">—</span></div><div style="text-align:left"><small>الإجمالي</small><b id="grand">—</b></div></div>
-      <button type="submit" class="btn-order">✅ تأكيد الطلب — <span id="btn-total"></span></button>
-      <a class="btn-wa" href="https://wa.me/213559237239?text=%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D9%83%D8%B1%D9%8A%D9%85%D8%A9%20%D8%A3%D9%84%D9%8A%D8%B3%D9%88%D9%85%20%D9%84%D9%84%D8%A8%D8%B4%D8%B1%D8%A9%20%D8%A7%D9%84%D9%85%D8%B9%D8%B1%D8%B6%D8%A9%20%D9%84%D9%84%D8%AD%D8%A8%D9%88%D8%A8" target="_blank" rel="noopener noreferrer">💬 استفسري عبر واتساب</a>
-      <button type="button" class="btn-cart2" id="add-cart">🛒 أضف إلى السلة</button>
-      <div class="cod-note">💵 الدفع عند الاستلام — راجعي المبلغ الإجمالي قبل التأكيد.</div>
-    </form>
-  </div></div></section>
-  <section class="pilot-sec pilot-related"><div class="container"><div class="pilot-head"><h2>قد يعجبك أيضًا</h2></div><div class="grid" id="related"></div></div></section>
-</main>
-<div class="sticky-cta"><div><small style="color:var(--muted)">الإجمالي</small><div class="p" id="sticky-price">—</div></div><a class="btn btn-gold" href="#order-form" style="flex:1">اطلبي الآن — الدفع عند الاستلام</a></div>
-<footer class="site"><div class="container"><div class="fgrid"><div><h4>أليسوم ALYSSUM</h4><p>اكتشفي منتجات أليسوم ومعلوماتها قبل الطلب.</p></div><div><h4>روابط سريعة</h4><p><a href="../../index.html#products">المنتجات</a><br><a href="../../index.html#features">المميزات</a><br><a href="../../index.html#faq">الأسئلة</a></p></div><div><h4>تواصل معنا</h4><p>📱 واتساب: <a href="https://wa.me/213559237239" target="_blank" rel="noopener noreferrer">0559 23 72 39</a><br>📍 الجزائر</p></div></div><div class="copy">© 2026 أليسوم — جميع الحقوق محفوظة</div></div></footer>
-<div class="drawer-bg" id="drawer-bg"></div><div class="drawer" id="drawer"><h3>🛒 سلة التسوق</h3><div class="items" id="cart-items"></div><div class="foot"><div class="frow" style="grid-template-columns:1fr 1fr"><div class="field"><label for="cname">الاسم الكامل</label><input id="cname" placeholder="الاسم الكامل"></div><div class="field"><label for="cphone">رقم الهاتف</label><input id="cphone" placeholder="05XXXXXXXX" inputmode="tel"></div></div><div class="frow" style="grid-template-columns:1fr 1fr"><div class="field"><label for="cwilaya">الولاية</label><select id="cwilaya"><option value="">— اختر —</option></select></div><div class="field"><label for="ccommune">البلدية</label><input id="ccommune" placeholder="اختياري"></div></div><div class="dtype"><label><input type="radio" name="cdtype" value="home" checked><span>🏠 إلى المنزل</span></label><label><input type="radio" name="cdtype" value="stop"><span>🏢 مكتب Stop Desk</span></label></div><div class="tot"><span>الإجمالي (مع التوصيل)</span><span id="cart-total">0 دج</span></div><div style="display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem;margin-bottom:.8rem"><span>رسوم التوصيل</span><span id="cart-fee">—</span></div><button class="btn-order" type="button" onclick="Cart.checkout()">تأكيد الطلب عبر واتساب ✓</button></div></div>
-<script>const REL="../../";</script>
+
+      <div class="mini-points"><div>مكونات طبيعية 100% بدون مواد كيميائية ضارة</div><div>يساعد على مظهر أنقى وأكثر إشراقاً</div><div>ترطيب متوازن دون ملمس دهني</div><div>نتائج يشهد بها آلاف الزبائن</div></div>
+
+    </div>
+  </div>
+</div>
+
+<section class="lp-sec alt"><div class="container">
+  <div class="lp-grid">
+    <div class="lp-imgcard"><img src="../../assets/img/anti-acne/0.webp" alt="كريمة ضد حب الشباب" loading="lazy"></div>
+    <div class="lp-textcard">
+      <h2>هل أثرت الحبوب والشوائب على مظهر بشرتك وثقتك؟</h2>
+      <p>عندما تتعرض البشرة للحبوب واللمعان والشوائب، يفقد الوجه نضارته وتتأثر ثقتك بنفسك. العناية اليومية الصحيحة هي الخطوة الأولى نحو بشرة صافية ومنتعشة.</p>
+      <div class="lp-bullets"><div>ظهور متكرر للحبوب والبثور</div><div>لمعان زائد ومسام واضحة</div><div>آثار وتصبغات تتركها الشوائب</div><div>بشرة تحتاج عناية لطيفة ومتوازنة</div></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="lp-sec"><div class="container">
+  <div class="lp-grid">
+    <div class="lp-textcard">
+      <h2>الحل: عناية نباتية متوازنة كل يوم</h2>
+      <p>هذا المنتج من أليسوم تركيبة مدروسة من مكونات طبيعية موثوقة، صُممت لتكون جزءاً من روتينك اليومي بخطوات بسيطة ونتائج تدريجية ملحوظة مع الاستعمال المنتظم.</p>
+      <div class="lp-bullets"><div>تركيبة طبيعية لطيفة على البشرة</div><div>يساعد على تحسين مظهر الشوائب</div><div>ترطيب خفيف دون إحساس دهني</div><div>مناسب للاستعمال اليومي المنتظم</div></div>
+    </div>
+    <div class="lp-imgcard"><img src="../../assets/img/anti-acne/0.webp" alt="كريمة ضد حب الشباب" loading="lazy"></div>
+  </div>
+</div></section>
+
+<section class="lp-sec alt"><div class="container">
+  <div class="lp-head"><h2>✨ لماذا هذا المنتج؟</h2><p>ستة أسباب تجعله الخيار الصحيح لك</p></div>
+  <div class="lp-cards"><div class="lp-card"><div class="ic">🌿</div><h3>مظهر أنقى</h3><p>يساعد على مظهر بشرة أكثر نقاءً وانتعاشاً</p></div><div class="lp-card"><div class="ic">💧</div><h3>انتعاش وراحة</h3><p>إحساس يومي بالراحة والانتعاش</p></div><div class="lp-card"><div class="ic">✨</div><h3>ترطيب متوازن</h3><p>ترطيب خفيف دون دهنية زائدة</p></div><div class="lp-card"><div class="ic">🛡</div><h3>مكونات نباتية</h3><p>خلاصات وزيوت طبيعية موثوقة</p></div><div class="lp-card"><div class="ic">️</div><h3>روتين بسيط</h3><p>خطوات سهلة تناسب انشغالك</p></div><div class="lp-card"><div class="ic">📦</div><h3>جودة مضمونة</h3><p>منتج أصلي مفحص من أليسوم</p></div></div>
+</div></section>
+
+<section class="lp-sec"><div class="container">
+  <div class="lp-head"><h2>طريقة الاستعمال</h2><p>ثلاث خطوات بسيطة للحصول على أفضل نتيجة</p></div>
+  <div class="lp-cards"><div class="lp-card"><div class="lp-stepnum">1</div><h3>نظّف بشرتك</h3><p>اغسل وجهك بغسول لطيف وجففه بلطف قبل الاستعمال</p></div><div class="lp-card"><div class="lp-stepnum">2</div><h3>طبّق الكمية المناسبة</h3><p>ضع كمية صغيرة على المناطق المراد العناية بها</p></div><div class="lp-card"><div class="lp-stepnum">3</div><h3>استمر بانتظام</h3><p>الاستعمال المنتظم صباحاً ومساءً هو سر النتائج</p></div></div>
+</div></section>
+
+<section class="lp-sec alt"><div class="container">
+  <div class="lp-head"><h2>آراء بعض الزبائن</h2><p>تجارب حقيقية من زبائننا في مختلف الولايات</p></div>
+  <div class="lp-testis"><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">أ</span>
+          <div>أمينة<br><small style="color:var(--muted);font-weight:700">ولاية الجزائر العاصمة</small></div>
+        </div></div><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">خ</span>
+          <div>خديجة<br><small style="color:var(--muted);font-weight:700">ولاية وهران</small></div>
+        </div></div><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">س</span>
+          <div>سارة<br><small style="color:var(--muted);font-weight:700">ولاية سطيف</small></div>
+        </div></div></div>
+</div></section>
+
+<section style="padding-top:0"><div class="container">
+  <div class="lp-final">
+    <h2>🎁 اطلب الآن — اشترِ قطعتين واحصل على الثالثة مجاناً</h2>
+    <p>العرض متاح لفترة محدودة فقط. املأ الاستمارة بالأعلى وسنتصل بك للتأكيد، ثم يصلك الطلب خلال 24-72 ساعة والدفع عند الاستلام.</p>
+    <div class="cta-row" style="justify-content:center">
+      <a class="lp-btn lp-btn-gold" href="#order-form">✅ اطلب الآن — الدفع عند الاستلام</a>
+      <a class="lp-btn lp-btn-green" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب عبر واتساب</a>
+    </div>
+  </div>
+  <div class="lp-head" style="margin-top:2.5rem"><h2 style="font-size:1.5rem">قد يعجبك أيضاً</h2></div>
+  <div class="grid" id="related"></div>
+</div></section>
+<section class="lp-sec"><div class="container">
+      <form class="form" id="order-form" style="margin-top:1rem">
+        <h3>📝 املأ معلوماتك — الدفع عند الاستلام</h3>
+        <div class="frow">
+          <div class="field"><label>الاسم الكامل *</label><input id="name" required placeholder="مثال: أحمد بن علي"></div>
+          <div class="field"><label>رقم الهاتف *</label><input id="phone" required inputmode="tel" placeholder="05XXXXXXXX"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>الولاية *</label><select id="wilaya" required><option value="">— اختر ولايتك —</option></select></div>
+          <div class="field"><label>البلدية</label><input id="commune" placeholder="اختياري"></div>
+        </div>
+        <div class="field" id="desk-wrap" style="display:none"><label>مكتب التوصيل (Stop Desk) *</label><select id="desk"></select></div>
+        <div class="field"><label>العنوان الكامل</label><input id="address" placeholder="الحي، الشارع، رقم المنزل..."></div>
+        <div class="dtype">
+          <label><input type="radio" name="dtype" value="home" checked><span>🏠 توصيل للمنزل</span></label>
+          <label><input type="radio" name="dtype" value="stop"><span>🏢 مكتب Stop Desk (أرخص)</span></label>
+        </div>
+        <div class="total-box">
+          <div><small>رسوم التوصيل</small><span id="fee">—</span></div>
+          <div style="text-align:left"><small>الإجمالي</small><b id="grand">—</b></div>
+        </div>
+        <button type="submit" class="btn-order">✅ تأكيد الطلب — <span id="btn-total"></span></button>
+        <a class="btn-wa" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب مباشرة عبر واتساب</a>
+        <button type="button" class="btn-cart2" id="add-cart">🛒 أضف إلى السلة</button>
+        <div class="cod-note">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>
+      </form>
+</div></section>
+<div class="sticky-cta">
+  <div><small style="color:var(--muted)">الإجمالي</small><div class="p" id="sticky-price">—</div></div>
+  <a class="btn btn-gold" href="#order-form" style="flex:1">اطلب الآن — الدفع عند الاستلام</a>
+</div>
+<footer class="site"><div class="container">
+      <div class="fgrid">
+        <div><h4>أليسوم ALYSSUM</h4><p>متجرك الجزائري للمنتجات الطبيعية الأصلية: زيوت، أعشاب، عسل فاخر ومنتجات الرقية الشرعية. جودة مضمونة والدفع عند الاستلام.</p></div>
+        <div><h4>روابط سريعة</h4><p><a href="index.html#products">المنتجات</a><br><a href="index.html#features">المميزات</a><br><a href="index.html#faq">الأسئلة</a><br><a href="admin.html">لوحة التحكم</a></p></div>
+        <div><h4>تواصل معنا</h4><p>📱 واتساب: <a href="https://wa.me/213559237239" target="_blank">0559 23 72 39</a><br>🕐 السبت – الخميس: 9ص – 6م<br>📍 الجزائر</p></div>
+      </div>
+      <div class="copy">© 2026 أليسوم — جميع الحقوق محفوظة</div>
+    </div></footer><div class="drawer-bg" id="drawer-bg"></div>
+<div class="drawer" id="drawer">
+  <h3>🛒 سلة التسوق</h3>
+  <div class="items" id="cart-items"></div>
+  <div class="foot">
+    <div class="frow" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>الاسم الكامل</label><input id="cname" placeholder="مثال: أحمد بن علي"></div>
+      <div class="field"><label>رقم الهاتف</label><input id="cphone" placeholder="05XXXXXXXX" inputmode="tel"></div>
+    </div>
+    <div class="frow" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>الولاية</label><select id="cwilaya"><option value="">— اختر —</option></select></div>
+      <div class="field"><label>البلدية</label><input id="ccommune" placeholder="اختياري"></div>
+    </div>
+    <div class="dtype">
+      <label><input type="radio" name="cdtype" value="home" checked><span>🏠 إلى المنزل</span></label>
+      <label><input type="radio" name="cdtype" value="stop"><span>🏢 مكتب Stop Desk</span></label>
+    </div>
+    <div class="tot"><span>الإجمالي (مع التوصيل)</span><span id="cart-total">0 دج</span></div>
+    <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem;margin-bottom:.8rem"><span>رسوم التوصيل</span><span id="cart-fee">—</span></div>
+    <button class="btn-order" onclick="Cart.checkout()">تأكيد الطلب عبر واتساب ✓</button>
+  </div>
+</div><script>const REL="../../";</script>
 <script src="../../assets/js/config.js"></script>
 <script src="../../assets/js/data.js"></script>
 <script src="../../assets/js/wilayas.js"></script>
 <script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/app.js"></script>
 <script src="../../assets/js/agent.js"></script>
-<script>
-bootStore().then(()=>{
-  initProduct("anti-acne");
-  initCartDrawer();
-  fillCartWilayas();
-  const p=PRODUCTS.find(x=>x.slug==="anti-acne");
-  if(p){
-    if(p.old){document.getElementById("pold").textContent=fmt(p.old);document.getElementById("psave").textContent="وفّر "+Math.round((1-p.price/p.old)*100)+"%";}
-    else{document.getElementById("pold").style.display="none";document.getElementById("psave").style.display="none";}
-    document.getElementById("pprice").textContent=fmt(p.price);
-    document.getElementById("btn-total").textContent=fmt(p.price);
-    const same=PRODUCTS.filter(x=>x.slug!==p.slug&&x.cat===p.cat).slice(0,4);
-    const others=same.length?same:PRODUCTS.filter(x=>x.slug!==p.slug).slice(0,4);
-    const box=document.getElementById("related");
-    others.forEach(x=>{
-      const link=document.createElement("a");link.className="card";link.href="../../p/"+encodeURIComponent(x.slug)+"/";
-      const thumb=document.createElement("div");thumb.className="thumb";
-      const img=document.createElement("img");img.loading="lazy";img.src="../../"+x.images[0];img.alt=x.title;thumb.appendChild(img);
-      const body=document.createElement("div");body.className="body";
-      const title=document.createElement("h3");title.textContent=x.title;body.appendChild(title);
-      const prices=document.createElement("div");prices.className="price-row";
-      const now=document.createElement("span");now.className="price";now.textContent=fmt(x.price);prices.appendChild(now);
-      if(x.old){const old=document.createElement("span");old.className="old";old.textContent=fmt(x.old);prices.appendChild(old);}
-      body.appendChild(prices);link.append(thumb,body);box.appendChild(link);
-    });
-  }
-}).catch(err=>{console.error("Erreur de chargement de la boutique",err);});
-</script>
-</body>
-</html>
+<script>bootStore().then(()=>{
+      initProduct("anti-acne");
+      initCartDrawer();
+      fillCartWilayas();
+      const p = PRODUCTS.find(x=>x.slug==="anti-acne");
+      if(p){
+        if(p.old){ document.getElementById("pold").textContent = fmt(p.old);
+          document.getElementById("psave").textContent = "وفّر " + Math.round((1-p.price/p.old)*100) + "%"; }
+        else { document.getElementById("pold").style.display="none"; document.getElementById("psave").style.display="none"; }
+        document.getElementById("pprice").textContent = fmt(p.price);
+        document.getElementById("btn-total").textContent = fmt(p.price);
+      }
+      // منتجات مشابهة
+      const rel2 = PRODUCTS.filter(x=>x.slug!=="anti-acne"&&x.cat===(p?p.cat:"")).slice(0,4);
+      const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!=="anti-acne").slice(0,4);
+      document.getElementById("related").innerHTML = others.map(x=>`
+        <a class="card" href="../../p/${x.slug}/">
+          <div class="thumb"><img loading="lazy" src="../../${x.images[0]}" alt="${x.title}"></div>
+          <div class="body"><h3>${x.title}</h3>
+          <div class="price-row"><span class="price">${fmt(x.price)}</span>${x.old?`<span class="old">${fmt(x.old)}</span>`:""}</div></div>
+        </a>`).join("");
+    });</script></body></html>
