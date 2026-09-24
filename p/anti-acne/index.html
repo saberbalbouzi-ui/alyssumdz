@@ -862,7 +862,15 @@
 </div>
 
 
-  
+<section style="padding-top:0"><div class="container">
+  <div class="lp-final">
+    <h2>🎁 اطلب الآن — اشترِ قطعتين واحصل على الثالثة مجاناً</h2>
+    <p>العرض متاح لفترة محدودة فقط. املأ الاستمارة بالأعلى وسنتصل بك للتأكيد، ثم يصلك الطلب خلال 24-72 ساعة والدفع عند الاستلام.</p>
+    <div class="cta-row" style="justify-content:center">
+      <a class="lp-btn lp-btn-gold" href="#order-form">✅ اطلب الآن — الدفع عند الاستلام</a>
+      <a class="lp-btn lp-btn-green" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب عبر واتساب</a>
+    </div>
+  </div>
   <div class="lp-head" style="margin-top:2.5rem"><h2 style="font-size:1.5rem">قد يعجبك أيضاً</h2></div>
   <div class="grid" id="related"></div>
 </div></section>
@@ -926,23 +934,4 @@
           <div class="body"><h3>${x.title}</h3>
           <div class="price-row"><span class="price">${fmt(x.price)}</span>${x.old?`<span class="old">${fmt(x.old)}</span>`:""}</div></div>
         </a>`).join("");
-    
-  </section>
-
-  <footer>
-    
-    © 2026 ALYSSUM — عناية طبيعية فاخرة بالبشرة.
-  </footer>
-
-  <script>
-    const mainImage = document.getElementById('mainProductImage');
-    const thumbs = document.querySelectorAll('.thumb img');
-
-    thumbs.forEach(img => {
-      img.addEventListener('click', () => {
-        mainImage.src = img.src;
-      });
-    });
-  </script>
-</body>
-</html>
+    });});</script></body></html>
