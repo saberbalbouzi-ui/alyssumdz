@@ -6,7 +6,6 @@
   <title>Alyssum — Dashboard Admin</title>
   <link rel="stylesheet" href="assets/css/admin.css">
   <style>
-    /* Login overlay */
     #login-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999;
       display: flex; align-items: center; justify-content: center;
@@ -25,17 +24,10 @@
     }
     #login-box button:hover { background: #0056b3; }
     #dashboard-content { display: none; }
-    /* Edit mode styles */
-    .edit-mode .editable {
-      outline: 2px dashed #007bff; outline-offset: 2px; cursor: text;
-    }
-    .edit-mode img.editable {
-      outline: 2px dashed #28a745; cursor: pointer;
-    }
     .edit-toolbar {
       position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
       background: #333; color: #fff; padding: 10px 20px; border-radius: 8px;
-      display: flex; gap: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: none; gap: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     .edit-toolbar button {
       padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;
@@ -66,7 +58,6 @@
   </style>
 </head>
 <body>
-  <!-- Login Overlay -->
   <div id="login-overlay">
     <div id="login-box">
       <h2>🔐 Authentification Admin</h2>
@@ -77,7 +68,6 @@
     </div>
   </div>
 
-  <!-- Dashboard Content -->
   <div id="dashboard-content">
     <header>
       <h1>🛠️ Dashboard Alyssum</h1>
@@ -92,41 +82,35 @@
     </nav>
 
     <main>
-      <!-- Products Tab -->
       <section id="products" class="tab-content active">
         <h2>Gestion des Produits</h2>
         <button id="add-product-btn" class="action-btn">➕ Ajouter un produit</button>
         <div id="products-list"></div>
       </section>
 
-      <!-- Categories Tab -->
       <section id="categories" class="tab-content">
         <h2>Gestion des Catégories</h2>
         <button id="add-category-btn" class="action-btn">➕ Ajouter une catégorie</button>
         <div id="categories-list"></div>
       </section>
 
-      <!-- Offers Tab -->
       <section id="offers" class="tab-content">
         <h2>Offres et Promotions</h2>
         <div id="offers-list"></div>
       </section>
 
-      <!-- Shipping Tab -->
       <section id="shipping" class="tab-content">
         <h2>Frais de Livraison par Wilaya</h2>
         <div id="shipping-list"></div>
       </section>
     </main>
 
-    <!-- Edit Toolbar (hidden by default) -->
-    <div id="edit-toolbar" class="edit-toolbar" style="display:none;">
-      <button class="btn-preview" id="toggle-preview">👁️ Aperçu</button>
+    <div id="edit-toolbar" class="edit-toolbar">
+      <button class="btn-preview" id="toggle-preview">👁️ Aperçu / Modifier</button>
       <button class="btn-save" id="save-edits">💾 Valider</button>
       <button class="btn-cancel" id="cancel-edits">❌ Annuler</button>
     </div>
 
-    <!-- Image Picker Modal -->
     <div id="image-picker" class="image-picker">
       <button class="close-btn" id="close-image-picker">&times;</button>
       <h3>📷 Choisir une image</h3>
@@ -138,7 +122,6 @@
   <script src="assets/js/data.js"></script>
   <script src="assets/js/api.js"></script>
   <script>
-    // Authentication
     const ADMIN_PASSWORD = 'ALYSSUM-ADMIN-2026';
     const loginOverlay = document.getElementById('login-overlay');
     const dashboardContent = document.getElementById('dashboard-content');
@@ -147,7 +130,6 @@
     const loginError = document.getElementById('login-error');
     const logoutBtn = document.getElementById('logout-btn');
 
-    // Check if already logged in
     if (localStorage.getItem('alyssum_admin_logged_in') === 'true') {
       loginOverlay.style.display = 'none';
       dashboardContent.style.display = 'block';
@@ -168,7 +150,6 @@
       location.reload();
     });
 
-    // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -178,13 +159,11 @@
       });
     });
 
-    // Placeholder functions - to be implemented
     function renderProducts() { console.log('Render products'); }
     function renderCategories() { console.log('Render categories'); }
     function renderOffers() { console.log('Render offers'); }
     function renderShipping() { console.log('Render shipping'); }
 
-    // Initialize
     renderProducts();
   </script>
   <script src="assets/js/admin-edit.js"></script>
