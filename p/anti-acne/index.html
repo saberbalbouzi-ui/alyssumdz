@@ -3,57 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anti-Acne — Alyssum</title>
+  <title>كريم أليسوم للعناية ببشرة نقية Anti-Acne — Alyssum</title>
+  <meta name="description" content="كريم طبيعي من أليسوم للعناية بالبشرة المعرضة لحب الشباب. تركيبة غنية بالزيوت الأساسية والعسل تساعد على تنقية البشرة وتقليل الشوائب.">
   <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="icon" type="image/png" href="../../assets/img/favicon.png">
 </head>
 <body>
-  <header>
-    <h1>منتج Anti-Acne</h1>
-  </header>
-  <main>
+  <nav class="navbar">
+    <div class="nav-brand">أليسوم ALYSSUM</div>
+    <ul class="nav-menu">
+      <li><a href="../../">الرئيسية</a></li>
+      <li><a href="../../#products">المنتجات</a></li>
+      <li><a href="../../#contact">اتصل بنا</a></li>
+    </ul>
+  </nav>
+
+  <main class="product-page">
     <section class="product-hero">
-      <img src="../../assets/img/anti-acne/presentation/main.jpg" alt="Anti-Acne">
-      <h2>علاج فعال لحب الشباب</h2>
-      <p>تركيبة طبيعية تساعد على التخلص من حب الشباب والآثار</p>
+      <div class="product-images">
+        <img id="mainProductImage" src="../../assets/img/anti-acne/presentation/main.jpg" alt="كريم Anti-Acne">
+        <div class="product-thumbnails">
+          <img class="thumb" src="../../assets/img/anti-acne/presentation/main.jpg" alt="صورة 1">
+          <img class="thumb" src="../../assets/img/anti-acne/composants/main.jpg" alt="صورة 2">
+          <img class="thumb" src="../../assets/img/anti-acne/body/main.jpg" alt="صورة 3">
+        </div>
+      </div>
+      <div class="product-info">
+        <h1>كريم أليسوم للعناية ببشرة نقية Anti-Acne</h1>
+        <p class="product-desc">كريم طبيعي من أليسوم للعناية بالبشرة المعرضة لحب الشباب. تركيبة غنية بالزيوت الأساسية والعسل تساعد على تنقية البشرة وتقليل الشوائب.</p>
+        <div class="product-price">
+          <span class="price">2400 دج</span>
+          <span class="old-price">3200 دج</span>
+          <span class="discount">-25%</span>
+        </div>
+        <button class="add-to-cart" onclick="addToCart('anti-acne')">أضف إلى السلة</button>
+      </div>
     </section>
-    <section class="product-details">
-      <h3>المكونات</h3>
-      <p>زيت شجرة الشاي، الصبار، العسل الطبيعي</p>
+
+    <section class="product-problem">
+      <h2>🔴 المشكل: بشرة دهنية مع حب شباب متكرر</h2>
+      <p>هل تعانين من بشرة دهنية لامعة مع حبوب شباب مؤلمة تظهر باستمرار؟ هل تجربتين العديد من المنتجات دون نتيجة حقيقية؟</p>
+      <img src="../../assets/img/anti-acne/body/main.jpg" alt="بشرة دهنية مع حب شباب">
+    </section>
+
+    <section class="product-solution">
+      <h2>🟢 الحل: كريم أليسوم الطبيعي</h2>
+      <p>كريم أليسوم Anti-Acne بتركيبة طبيعية 100% غنية بالزيوت الأساسية والعسل، يساعد على:</p>
+      <ul>
+        <li>تنقية البشرة بعمق</li>
+        <li>تقليل الحبوب والشوائب</li>
+        <li>تنظيم إفراز الدهون</li>
+        <li>ترطيب البشرة دون لمعان</li>
+      </ul>
+      <img src="../../assets/img/anti-acne/composants/main.jpg" alt="كريم أليسوم الطبيعي">
+    </section>
+
+    <section class="product-ingredients">
+      <h2>🌿 المكونات الطبيعية</h2>
+      <div class="ingredient-grid">
+        <div class="ingredient">
+          <img src="../../assets/img/anti-acne/composants/oil.jpg" alt="زيت شجرة الشاي">
+          <h3>زيت شجرة الشاي</h3>
+          <p>مضاد للبكتيريا والفطريات، ينقي البشرة بعمق</p>
+        </div>
+        <div class="ingredient">
+          <img src="../../assets/img/anti-acne/composants/aloe.jpg" alt="الصبار">
+          <h3>الصبار</h3>
+          <p>مرطب ومهدئ للبشرة المتهيجة</p>
+        </div>
+        <div class="ingredient">
+          <img src="../../assets/img/anti-acne/composants/honey.jpg" alt="العسل">
+          <h3>العسل الطبيعي</h3>
+          <p>مضاد للأكسدة والبكتيريا، يغذي البشرة</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="product-benefits">
+      <h2>✨ الفوائد المتوقعة</h2>
+      <ul>
+        <li>تقليل الحبوب خلال 7-14 يوم</li>
+        <li>بشرة أنقى وأكثر نعومة</li>
+        <li>تقليل اللمعان والدهون الزائدة</li>
+        <li>ترطيب عميق دون انسداد المسام</li>
+      </ul>
+    </section>
+
+    <section class="product-usage">
+      <h2>📋 طريقة الاستعمال</h2>
+      <ol>
+        <li>نظفي وجهك بغسول لطيف</li>
+        <li>ضعي كمية صغيرة من الكريم</li>
+        <li>دلكي برفق حتى الامتصاص</li>
+        <li>استخدمي صباحًا ومساءً</li>
+      </ol>
+    </section>
+
+    <section class="product-precautions">
+      <h2>⚠️ الاحتياطات</h2>
+      <ul>
+        <li>للاستعمال الخارجي فقط</li>
+        <li>تجنبي ملامسة العينين</li>
+        <li>في حالة الحكة أو الاحمرار، توقفي عن الاستعمال</li>
+        <li>يحفظ في مكان بارد وجاف</li>
+      </ul>
+    </section>
+
+    <section class="product-reviews">
+      <h2>💬 آراء العملاء</h2>
+      <div class="review">
+        <div class="stars">★★★★★</div>
+        <p>«نتيجة رائعة خلال أسبوع، البشرة أنقى والحبوب قلت بشكل ملحوظ!»</p>
+        <span class="reviewer">— سارة، الجزائر</span>
+      </div>
+      <div class="review">
+        <div class="stars">★★★★☆</div>
+        <p>«كريم خفيف وغير دهني، امتصاص سريع ورائحة جميلة.»</p>
+        <span class="reviewer">— أمينة، وهران</span>
+      </div>
+    </section>
+
+    <section class="product-order" id="order-section">
+      <h2>🛒 اطلب الآن</h2>
+      <form id="order-form">
+        <input type="text" id="name" placeholder="الاسم الكامل" required>
+        <input type="tel" id="phone" placeholder="رقم الهاتف" required>
+        <select id="wilaya" required>
+          <option value="">اختر الولاية</option>
+        </select>
+        <textarea id="address" placeholder="العنوان الكامل" required></textarea>
+        <button type="submit" class="submit-order">تأكيد الطلب عبر WhatsApp</button>
+      </form>
     </section>
   </main>
+
   <footer>
-    <p>© 2026 Alyssum</p>
+    <p>© 2026 Alyssum — جميع الحقوق محفوظة</p>
   </footer>
 
-  <!-- زر التعديل العائم -->
-  <button id="floating-edit-btn" style="position:fixed;bottom:80px;right:20px;background:#007bff;color:#fff;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;z-index:9998;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;">✏️ Modifier cette page</button>
-
-  <!-- شريط أدوات التعديل -->
-  <div id="edit-toolbar" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;display:none;gap:10px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
-    <button id="toggle-preview" style="padding:8px 16px;border:none;border-radius:4px;cursor:pointer;font-size:14px;background:#007bff;color:#fff;">👁️ Aperçu</button>
-    <button id="save-edits" style="padding:8px 16px;border:none;border-radius:4px;cursor:pointer;font-size:14px;background:#28a745;color:#fff;">💾 Valider</button>
-    <button id="cancel-edits" style="padding:8px 16px;border:none;border-radius:4px;cursor:pointer;font-size:14px;background:#dc3545;color:#fff;">❌ Annuler</button>
-  </div>
-
-  <!-- نافذة اختيار الصور -->
-  <div id="image-picker" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;border-radius:8px;z-index:1001;max-width:80vw;max-height:80vh;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,0.4);display:none;">
-    <button id="close-image-picker" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:24px;cursor:pointer;color:#666;">&times;</button>
-    <h3>📷 Choisir une image</h3>
-    <p id="image-picker-path" style="color:#666;font-size:14px;"></p>
-    <div id="image-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;"></div>
-  </div>
-
-  <script src="../../assets/js/admin-edit.js"></script>
-  <script>
-    // إظهار زر التعديل العائم فقط في صفحات المنتجات
-    document.addEventListener('DOMContentLoaded', function() {
-      const path = window.location.pathname;
-      const match = path.match(/\/p\/([^\/]+)\//);
-      if (match) {
-        const editBtn = document.getElementById('floating-edit-btn');
-        if (editBtn) editBtn.style.display = 'block';
-      }
-    });
-  </script>
+  <script src="../../assets/js/app.js"></script>
 </body>
 </html>
