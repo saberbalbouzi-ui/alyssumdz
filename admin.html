@@ -1,1 +1,733 @@
-REAL_CONTENT_ADMIN
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم — أليسوم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--green:#173F35;--green2:#0F2E26;--gold:#C8A24B;--gold2:#E4C87F;--bg:#F5F2EB;--line:#E5DFD2;--red:#D64545;--ok:#1E9E6A;--blue:#1B4F8A;--warn-bg:#FFF3D6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--bg);direction:rtl;color:#1C2420}
+.login{max-width:400px;margin:10vh auto;background:#fff;border-radius:18px;padding:2rem;box-shadow:0 20px 50px rgba(0,0,0,.08)}
+.login h1{color:var(--green);font-size:1.5rem;margin-bottom:.4rem}
+.login p{color:#6B7672;font-size:.9rem;margin-bottom:1.2rem}
+input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:.7rem .9rem;font-family:inherit;font-size:.95rem;margin-bottom:.8rem}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+button{cursor:pointer;border:none;font-family:inherit}
+.btn{background:var(--green);color:#fff;font-weight:800;border-radius:10px;padding:.8rem;width:100%;font-size:1rem}
+.tabs{display:flex;gap:.5rem;background:#fff;padding:.6rem;border-radius:14px;margin-bottom:1.2rem;flex-wrap:wrap}
+.tab{flex:1;min-width:110px;padding:.7rem;border-radius:10px;font-weight:800;color:#6B7672;background:transparent}
+.tab.on{background:var(--green);color:#fff}
+.wrap{max-width:1200px;margin:0 auto;padding:1.2rem}
+.top{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.top h1{color:var(--green);font-size:1.4rem}
+.top button.logout{margin-inline-start:auto;background:var(--red);color:#fff;padding:.5rem 1.2rem;border-radius:10px;font-weight:800}
+.card{background:#fff;border-radius:16px;padding:1.2rem;margin-bottom:1rem;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{background:var(--green);color:#fff;padding:.7rem;text-align:right;font-size:.85rem}
+td{padding:.6rem .7rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:hover td{background:#FAF7F0}
+.pill{padding:.2rem .7rem;border-radius:999px;font-size:.75rem;font-weight:800;white-space:nowrap}
+.st-nouvelle{background:#FFF3D6;color:#8A6D1B}.st-confirmee{background:#DCEBFF;color:#1B4F8A}
+.st-expediee{background:#E7D9FF;color:#5B2D8A}.st-livree{background:#D9F2E5;color:#14714B}
+.st-annulee{background:#FFE0E0;color:#A32222}
+.small{background:var(--green);color:#fff;border-radius:8px;padding:.35rem .8rem;font-size:.8rem;font-weight:800;display:inline-block;margin:.1rem;border:none;cursor:pointer}
+.small.warn{background:var(--red)}
+.small.gold{background:var(--gold)}
+.small.blue{background:var(--blue)}
+.small.gray{background:#999}
+.fee-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.8rem}
+.fee{border:1.5px solid var(--line);border-radius:12px;padding:.8rem;background:#fff}
+.fee h4{color:var(--green);font-size:.95rem;margin-bottom:.5rem}
+.fee label{font-size:.75rem;color:#6B7672}
+.fee input{padding:.4rem .6rem;margin-bottom:.4rem;font-size:.9rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.stat{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.stat div{flex:1;min-width:140px;background:#fff;border-radius:14px;padding:1rem;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.stat b{display:block;font-size:1.6rem;color:var(--green)}
+.stat span{color:#6B7672;font-size:.85rem}
+#toast2{position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:var(--green);color:#fff;padding:.7rem 1.4rem;border-radius:999px;font-weight:800;opacity:0;transition:.3s;z-index:99}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:18px;padding:1.5rem;width:min(680px,100%);max-height:88vh;overflow:auto}
+.modal.lg{width:min(900px,100%)}
+.modal h3{color:var(--green);margin-bottom:1rem}
+.hidden{display:none}
+.thumb-preview{width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--line)}
+.action-bar{display:flex;gap:.5rem;flex-wrap:wrap;padding:.8rem;background:#FDF8EC;border:1.5px dashed var(--gold);border-radius:12px;margin:1rem 0;align-items:center}
+.action-bar b{color:var(--green)}
+.badge-draft{background:var(--warn-bg);color:#8A6D1B;border:1px solid var(--gold);border-radius:8px;padding:.15rem .6rem;font-size:.75rem;font-weight:800}
+.diff-box{background:#FFF9EC;border:1px solid var(--gold2);border-radius:10px;padding:.8rem;margin:.5rem 0;font-size:.88rem}
+.diff-box .chg{padding:.2rem 0;border-bottom:1px dashed var(--line)}
+.diff-box .chg:last-child{border:none}
+.diff-old{color:var(--red);text-decoration:line-through}
+.diff-new{color:var(--ok);font-weight:800}
+.offer-row{display:grid;grid-template-columns:70px 1fr 1fr 90px 40px;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.offer-row input{margin-bottom:0;padding:.5rem .7rem;font-size:.9rem}
+.section-title{font-weight:900;color:var(--green);margin:.8rem 0 .4rem;font-size:.95rem;border-bottom:2px solid var(--gold2);padding-bottom:.3rem}
+.search-bar{display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.search-bar input,.search-bar select{margin-bottom:0;width:auto;flex:1;min-width:150px}
+.img-list{display:flex;gap:.5rem;flex-wrap:wrap;margin:.4rem 0}
+.hint{font-size:.78rem;color:#6B7672;margin-top:-.5rem;margin-bottom:.6rem}
+</style>
+</head>
+<body>
+<div id="toast2"></div>
+
+<div class="login" id="login-box">
+  <h1>🌿 لوحة تحكم أليسوم</h1>
+  <p>أدخل مفتاح الإدارة للمتابعة</p>
+  <input id="login-key" type="password" placeholder="مفتاح الإدارة" onkeydown="if(event.key==='Enter')Admin.login()">
+  <button class="btn" onclick="Admin.login()">دخول</button>
+</div>
+
+<div class="wrap hidden" id="app">
+  <div class="top">
+    <h1>🌿 لوحة تحكم أليسوم</h1>
+    <span id="pending-badge"></span>
+    <button class="logout" onclick="Admin.logout()">خروج</button>
+  </div>
+  <div class="stat" id="stats"></div>
+  <div class="tabs">
+    <button class="tab on" onclick="Admin.tab('orders',this)">📦 الطلبات</button>
+    <button class="tab" onclick="Admin.tab('products',this)">🌿 المنتجات</button>
+    <button class="tab" onclick="Admin.tab('categories',this)">🗂️ الأقسام</button>
+    <button class="tab" onclick="Admin.tab('fees',this)">🚚 رسوم التوصيل</button>
+    <button class="tab" onclick="Admin.tab('pending',this)">⏳ بانتظار التأكيد <span id="pending-count"></span></button>
+  </div>
+
+  <div id="tab-orders"><div class="card" style="overflow:auto"><table id="orders-table"></table></div></div>
+
+  <div id="tab-products" class="hidden">
+    <div class="card">
+      <div class="search-bar">
+        <b style="color:var(--green);align-self:center">المنتجات (<span id="prod-count">0</span>)</b>
+        <input id="prod-search" placeholder="🔍 بحث بالاسم أو المعرف..." oninput="Admin.renderProducts()">
+        <select id="prod-cat-filter" onchange="Admin.renderProducts()"><option value="">كل الأقسام</option></select>
+        <button class="small" onclick="Admin.editProduct(null)">+ منتج جديد</button>
+        <button class="small gold" onclick="Admin.reload()">↻ تحديث</button>
+      </div>
+      <div style="overflow:auto"><table id="products-table"></table></div>
+    </div>
+  </div>
+
+  <div id="tab-categories" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem;margin-bottom:1rem">
+        <b style="color:var(--green)">أقسام المتجر</b>
+        <button class="small" onclick="Admin.editCategory(null)">+ قسم جديد</button>
+      </div>
+      <table id="categories-table"></table>
+    </div>
+  </div>
+
+  <div id="tab-fees" class="hidden">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <b style="color:var(--green)">رسوم التوصيل لكل ولاية</b>
+        <div class="hint">التغييرات تُطبَّق على جميع المنتجات دون تغيير أسعارها — تُرسل للخادم عند «حفظ الكل»</div>
+      </div>
+      <div style="display:flex;gap:.6rem">
+        <button class="small gold" onclick="Admin.saveAllFees()">💾 حفظ الكل</button>
+        <button class="small gray" onclick="Admin.resetFees()">↩️ تراجع</button>
+        <button class="small" onclick="Admin.reload()">↻ تحديث</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="search-bar"><input id="fee-search" placeholder="🔍 بحث عن ولاية..." oninput="Admin.renderFees()"></div>
+      <div class="fee-grid" id="fees-grid"></div>
+    </div>
+  </div>
+
+  <div id="tab-pending" class="hidden">
+    <div class="card">
+      <b style="color:var(--green)">تعديلات بانتظار التأكيد</b>
+      <div class="hint">كل تعديل يبقى هنا حتى تضغط «تأكيد» — التأكيد يطبق التعديل على العنصر المعني فقط</div>
+      <div id="pending-list" style="margin-top:1rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة منتج -->
+<div class="modal-bg" id="prod-modal-bg">
+  <div class="modal lg">
+    <h3 id="prod-modal-title">منتج جديد</h3>
+    <div class="grid2">
+      <div>
+        <div class="section-title">المعلومات الأساسية</div>
+        <input id="f-slug" placeholder="المعرف (slug) — إنجليزي بدون مسافات" dir="ltr">
+        <div class="hint">يُستخدم في رابط الصفحة</div>
+        <input id="f-title" placeholder="اسم المنتج">
+        <div class="grid2">
+          <input id="f-price" type="number" placeholder="السعر (دج)">
+          <input id="f-old" type="number" placeholder="قبل التخفيض (اختياري)">
+        </div>
+        <select id="f-cat"></select>
+        <select id="f-active"><option value="1">✅ نشط — يظهر في المتجر</option><option value="0">⛔ موقوف — مخفي</option></select>
+        <textarea id="f-desc" rows="3" placeholder="وصف مختصر"></textarea>
+      </div>
+      <div>
+        <div class="section-title">الصور</div>
+        <input id="f-images" placeholder="مسارات الصور (افصل بفاصلة)" dir="ltr">
+        <div class="hint">مثال: assets/img/anti-acne/presentation/anti-acne 01.webp</div>
+        <div class="img-list" id="f-images-preview"></div>
+        <div class="section-title">العروض والأسعار</div>
+        <div id="f-offers"></div>
+        <button class="small blue" type="button" onclick="Admin.addOfferRow()">+ إضافة عرض</button>
+      </div>
+    </div>
+    <div class="action-bar">
+      <b>الإجراءات:</b>
+      <button class="small blue" onclick="Admin.previewProduct()">👁️ معاينة</button>
+      <button class="small" onclick="Admin.saveProductDraft()">📝 حفظ كمسودة</button>
+      <button class="small gold" onclick="Admin.publishProduct()">✅ تأكيد ونشر</button>
+      <button class="small gray" onclick="Admin.closeModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة قسم -->
+<div class="modal-bg" id="cat-modal-bg">
+  <div class="modal">
+    <h3 id="cat-modal-title">قسم جديد</h3>
+    <input id="c-key" placeholder="المعرف (key) — إنجليزي بدون مسافات" dir="ltr">
+    <input id="c-label" placeholder="اسم القسم (بالعربية)">
+    <div class="action-bar">
+      <button class="small" onclick="Admin.saveCategoryDraft()">📝 حفظ كمسودة</button>
+      <button class="small gold" onclick="Admin.publishCategory()">✅ تأكيد ونشر</button>
+      <button class="small gray" onclick="document.getElementById('cat-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة معاينة -->
+<div class="modal-bg" id="preview-modal-bg">
+  <div class="modal lg">
+    <h3>👁️ معاينة التعديلات</h3>
+    <div id="preview-content"></div>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.publishFromPreview()">✅ تأكيد ونشر</button>
+      <button class="small gray" onclick="document.getElementById('preview-modal-bg').classList.remove('open')">↩️ رجوع</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة معاينة صفحة المنتج -->
+<div class="modal-bg" id="page-preview-bg">
+  <div class="modal lg" style="width:min(1100px,100%)">
+    <h3>👁️ معاينة صفحة المنتج</h3>
+    <iframe id="page-preview-frame" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:12px"></iframe>
+    <div class="action-bar">
+      <button class="small gray" onclick="document.getElementById('page-preview-bg').classList.remove('open')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/wilayas.js"></script>
+<script src="assets/js/api.js"></script>
+<script>
+const $f = id => document.getElementById(id);
+
+const Admin = {
+  key: localStorage.getItem("alyssum_admin_key") || "",
+  products: [], fees: [], feesOriginal: [], orders: [], categories: {},
+  pending: JSON.parse(localStorage.getItem("alyssum_pending") || "[]"),
+  editingSlug: null, editingCatKey: null, previewData: null,
+
+  login(){
+    const k = $f("login-key").value.trim();
+    if(!k){ toast("أدخل المفتاح"); return }
+    this.key = k;
+    localStorage.setItem("alyssum_admin_key", k);
+    this.load();
+  },
+  logout(){ localStorage.removeItem("alyssum_admin_key"); location.reload() },
+  reload(){ this.load() },
+
+  async load(){
+    if(!this.key) return;
+    if(!CONFIG.API_URL){ toast("⚠️ لم يُربط الـ API بعد"); }
+    const [prods, fees, orders] = await Promise.all([
+      CONFIG.API_URL ? API.get("products") : null,
+      CONFIG.API_URL ? API.get("fees") : null,
+      CONFIG.API_URL ? API.orders(this.key) : null,
+    ]);
+    this.products = (prods && prods.ok && prods.products && prods.products.length) ? prods.products : JSON.parse(JSON.stringify(PRODUCTS));
+    this.fees = (fees && fees.ok && fees.fees && fees.fees.length) ? fees.fees : JSON.parse(JSON.stringify(WILAYAS));
+    this.feesOriginal = JSON.parse(JSON.stringify(this.fees));
+    this.orders = (orders && orders.ok) ? orders.orders : [];
+    this.categories = JSON.parse(JSON.stringify(CATEGORIES));
+    $f("login-box").classList.add("hidden");
+    $f("app").classList.remove("hidden");
+    this.renderAll();
+    toast("✓ تم التحميل");
+  },
+
+  savePending(){ localStorage.setItem("alyssum_pending", JSON.stringify(this.pending)); this.renderPendingBadge(); },
+  renderPendingBadge(){
+    const n = this.pending.length;
+    $f("pending-count").textContent = n ? "(" + n + ")" : "";
+    $f("pending-badge").innerHTML = n ? '<span class="badge-draft">⏳ ' + n + ' تعديل بانتظار التأكيد</span>' : "";
+  },
+
+  tab(t, btn){
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    btn.classList.add("on");
+    ["orders","products","categories","fees","pending"].forEach(x=>{
+      const el = $f("tab-"+x);
+      if(el) el.classList.toggle("hidden", x!==t);
+    });
+    if(t==="pending") this.renderPending();
+  },
+
+  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderPendingBadge(); },
+
+  renderStats(){
+    const today = new Date().toDateString();
+    const tOrders = this.orders.filter(o => new Date(o.date).toDateString() === today);
+    const revenue = this.orders.filter(o=>o.status!=="annulee").reduce((s,o)=>s+(Number(o.total)||0),0);
+    $f("stats").innerHTML =
+      '<div><b>' + this.orders.length + '</b><span>إجمالي الطلبات</span></div>' +
+      '<div><b>' + tOrders.length + '</b><span>طلبات اليوم</span></div>' +
+      '<div><b>' + revenue.toLocaleString("fr-DZ") + ' دج</b><span>المبيعات</span></div>' +
+      '<div><b>' + this.products.filter(p=>p.active!==false).length + '</b><span>منتج نشط</span></div>' +
+      '<div><b>' + Object.keys(this.categories).length + '</b><span>قسم</span></div>';
+  },
+
+  renderOrders(){
+    const el = $f("orders-table");
+    if(!this.orders.length){ el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد طلبات بعد — أو لم يُربط الـ API</td></tr>"; return }
+    el.innerHTML = '<tr><th>الرقم</th><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>الولاية</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th></th></tr>' +
+      this.orders.map((o,i)=>'<tr>' +
+        '<td>' + o.id + '</td>' +
+        '<td>' + new Date(o.date).toLocaleDateString("ar-DZ") + '</td>' +
+        '<td>' + o.name + '</td><td dir="ltr">' + o.phone + '</td><td>' + (o.wilaya||"") + '</td>' +
+        '<td style="max-width:260px;font-size:.8rem">' + o.items + '</td>' +
+        '<td><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
+        '<td><span class="pill st-' + o.status + '">' + o.status + '</span></td>' +
+        '<td><select onchange="API.updateOrder(Admin.key,\'' + o.id + '\',this.value);Admin.orders[' + i + '].status=this.value;Admin.renderStats()" style="width:auto;padding:.3rem">' +
+          ["nouvelle","confirmee","expediee","livree","annulee"].map(s=>'<option ' + (s===o.status?"selected":"") + '>' + s + '</option>').join("") +
+        '</select></td></tr>').join("");
+  },
+
+  /* ════════ المنتجات ════════ */
+  renderProducts(){
+    const q = ($f("prod-search").value||"").toLowerCase();
+    const catFilter = $f("prod-cat-filter").value;
+    const catSel = $f("prod-cat-filter");
+    if(catSel.options.length <= 1){
+      Object.entries(this.categories).forEach(([k,v])=>{
+        const o = document.createElement("option"); o.value = k; o.textContent = v; catSel.appendChild(o);
+      });
+    }
+    const list = this.products.filter(p=>
+      (!q || p.title.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q)) &&
+      (!catFilter || p.cat === catFilter)
+    );
+    $f("prod-count").textContent = list.length;
+    $f("products-table").innerHTML =
+      '<tr><th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      list.map(p=>{
+        const hasDraft = this.pending.some(x=>x.type==="product" && x.slug===p.slug);
+        const img = (p.images && p.images[0]) || "";
+        return '<tr>' +
+        '<td>' + (img ? '<img class="thumb-preview" src="' + img + '" onerror="this.style.display=\'none\'">' : '—') + '</td>' +
+        '<td><b>' + p.title + '</b>' + (hasDraft?' <span class="badge-draft">مسودة</span>':"") + '<br><small style="color:#999" dir="ltr">' + p.slug + '</small></td>' +
+        '<td><b>' + Number(p.price).toLocaleString("fr-DZ") + ' دج</b>' + (p.old?'<br><small style="color:#999;text-decoration:line-through">' + Number(p.old).toLocaleString("fr-DZ") + '</small>':"") + '</td>' +
+        '<td><small>' + (p.offers||[]).map(o=>o.qty + '×=' + Number(o.price).toLocaleString("fr-DZ") + (o.free?" 🎁":"")).join("<br>") + '</small></td>' +
+        '<td>' + (this.categories[p.cat]||p.cat||"-") + '</td>' +
+        '<td>' + (p.active!==false?'<span class="pill st-livree">نشط</span>':'<span class="pill st-annulee">موقوف</span>') + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="small" onclick=\'Admin.editProduct(' + JSON.stringify(p.slug) + ')\'>✏️ تعديل</button>' +
+          '<button class="small blue" onclick="Admin.duplicateProduct(\'' + p.slug + '\')">⧉ نسخ</button>' +
+          '<button class="small gold" onclick="Admin.previewPage(\'' + p.slug + '\')">👁️</button>' +
+          '<button class="small warn" onclick="Admin.delProduct(\'' + p.slug + '\')">🗑️</button>' +
+        '</td></tr>';
+      }).join("");
+    $f("f-cat").innerHTML =
+      Object.entries(this.categories).map(([k,v])=>'<option value="' + k + '">' + v + '</option>').join("");
+  },
+
+  editProduct(slug){
+    const p = slug ? this.products.find(x=>x.slug===slug) : null;
+    this.editingSlug = slug;
+    const draft = this.pending.find(x=>x.type==="product" && x.slug===slug);
+    const src = draft ? draft.data : p;
+    $f("prod-modal-title").textContent = p ? "تعديل: " + p.title : "منتج جديد";
+    $f("f-slug").value = src?src.slug:""; $f("f-slug").readOnly = !!p;
+    $f("f-title").value = src?src.title:"";
+    $f("f-price").value = src?src.price:"";
+    $f("f-old").value = src&&src.old?src.old:"";
+    $f("f-images").value = src?(src.images||[]).join(", "):"";
+    $f("f-desc").value = src?(src.desc||""):"";
+    $f("f-cat").value = src?src.cat:Object.keys(this.categories)[0];
+    $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
+    this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
+    this.renderImagesPreview();
+    $f("prod-modal-bg").classList.add("open");
+  },
+
+  renderImagesPreview(){
+    const box = $f("f-images-preview");
+    const imgs = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
+    box.innerHTML = imgs.map(src=>'<img class="thumb-preview" src="' + src + '" onerror="this.style.display=\'none\'" title="' + src + '">').join("");
+  },
+
+  renderOffersRows(offers){
+    $f("f-offers").innerHTML = offers.map((o,i)=>
+      '<div class="offer-row">' +
+        '<b>#' + (i+1) + '</b>' +
+        '<input type="number" class="of-qty" value="' + o.qty + '" placeholder="الكمية" min="1">' +
+        '<input type="number" class="of-price" value="' + o.price + '" placeholder="السعر (دج)" min="0">' +
+        '<label style="font-size:.8rem;white-space:nowrap"><input type="checkbox" class="of-free" ' + (o.free?"checked":"") + ' style="width:auto"> 🎁 مجانية</label>' +
+        '<button class="small warn" type="button" onclick="this.closest(\'.offer-row\').remove()">✕</button>' +
+      '</div>').join("");
+  },
+  addOfferRow(){
+    const box = $f("f-offers");
+    const d = document.createElement("div");
+    d.className = "offer-row";
+    d.innerHTML = '<b>#' + (box.children.length+1) + '</b>' +
+      '<input type="number" class="of-qty" value="1" placeholder="الكمية" min="1">' +
+      '<input type="number" class="of-price" value="0" placeholder="السعر (دج)" min="0">' +
+      '<label style="font-size:.8rem;white-space:nowrap"><input type="checkbox" class="of-free" style="width:auto"> 🎁 مجانية</label>' +
+      '<button class="small warn" type="button" onclick="this.closest(\'.offer-row\').remove()">✕</button>';
+    box.appendChild(d);
+  },
+
+  collectProductForm(){
+    const offers = [...document.querySelectorAll("#f-offers .offer-row")].map(r=>({
+      qty: Number(r.querySelector(".of-qty").value)||1,
+      price: Number(r.querySelector(".of-price").value)||0,
+      free: r.querySelector(".of-free").checked ? 1 : 0,
+    })).filter(o=>o.price>0);
+    return {
+      slug: $f("f-slug").value.trim(), title: $f("f-title").value.trim(),
+      price: Number($f("f-price").value)||0, old: $f("f-old").value?Number($f("f-old").value):null,
+      images: $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean),
+      desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
+      offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
+    };
+  },
+
+  diffProduct(oldP, newP){
+    const changes = [];
+    if(!oldP) return [{label:"منتج جديد", old:null, new:newP.title}];
+    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"]];
+    fields.forEach(([k,label])=>{
+      if(String(oldP[k]??"") !== String(newP[k]??""))
+        changes.push({label, old: oldP[k]??"—", new: newP[k]??"—"});
+    });
+    if(JSON.stringify(oldP.images)!==JSON.stringify(newP.images))
+      changes.push({label:"الصور", old:(oldP.images||[]).length+" صورة", new:(newP.images||[]).length+" صورة"});
+    if(JSON.stringify(oldP.offers)!==JSON.stringify(newP.offers))
+      changes.push({label:"العروض", old:(oldP.offers||[]).map(o=>o.qty+"×"+o.price).join(" / "), new:(newP.offers||[]).map(o=>o.qty+"×"+o.price).join(" / ")});
+    if((oldP.active!==false)!==(newP.active!==false))
+      changes.push({label:"الحالة", old:oldP.active!==false?"نشط":"موقوف", new:newP.active!==false?"نشط":"موقوف"});
+    return changes;
+  },
+
+  previewProduct(){
+    const p = this.collectProductForm();
+    if(!p.slug || !p.title || !p.price){ toast("املأ الحقول الأساسية"); return }
+    const oldP = this.products.find(x=>x.slug===p.slug);
+    const changes = this.diffProduct(oldP, p);
+    this.previewData = { type:"product", slug:p.slug, data:p };
+    $f("preview-content").innerHTML =
+      '<div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem">' +
+        (p.images[0]?'<img class="thumb-preview" style="width:72px;height:72px" src="' + p.images[0] + '" onerror="this.style.display=\'none\'">':"") +
+        '<div><b style="font-size:1.2rem;color:var(--green)">' + p.title + '</b><br><small dir="ltr">' + p.slug + '</small></div>' +
+      '</div>' +
+      (changes.length ? changes.map(c=>'<div class="diff-box"><div class="chg"><b>' + c.label + ':</b><br>' +
+        (c.old!==null?'<span class="diff-old">' + c.old + '</span> ← ':"") + '<span class="diff-new">' + c.new + '</span></div></div>').join("")
+        : '<div class="diff-box">لا توجد تغييرات</div>') +
+      '<div class="diff-box"><b>الأسعار والعروض:</b><br>' +
+        'السعر: <b>' + Number(p.price).toLocaleString("fr-DZ") + ' دج</b>' + (p.old?' (قبل: <span class="diff-old">' + Number(p.old).toLocaleString("fr-DZ") + '</span>)':"") + '<br>' +
+        (p.offers||[]).map(o=>'<div class="chg">' + o.qty + ' قطعة = <b>' + Number(o.price).toLocaleString("fr-DZ") + ' دج</b>' + (o.free?' 🎁 + قطعة مجانية':"") + '</div>').join("") +
+      '</div>';
+    $f("preview-modal-bg").classList.add("open");
+  },
+
+  publishFromPreview(){
+    if(this.previewData && typeof this.previewData.pendingIndex === "number"){
+      const idx = this.previewData.pendingIndex;
+      $f("preview-modal-bg").classList.remove("open");
+      this.previewData = null;
+      this.approvePending(idx);
+      return;
+    }
+    if(!this.previewData) return;
+    if(this.previewData.type === "product") this.publishProduct(this.previewData.data);
+    $f("preview-modal-bg").classList.remove("open");
+    this.previewData = null;
+  },
+
+  saveProductDraft(){
+    const p = this.collectProductForm();
+    if(!p.slug || !p.title){ toast("املأ الحقول الأساسية"); return }
+    this.pending = this.pending.filter(x=>!(x.type==="product" && x.slug===p.slug));
+    this.pending.push({ type:"product", slug:p.slug, data:p, date:Date.now() });
+    this.savePending();
+    this.closeModal();
+    this.renderProducts();
+    toast("📝 حُفظت المسودة — تظهر في تبويب «بانتظار التأكيد»");
+  },
+
+  publishProduct(data){
+    const p = data || this.collectProductForm();
+    if(!p.slug || !p.title || !p.price){ toast("املأ الحقول الأساسية"); return }
+    API.saveProduct(this.key, p);
+    const i = this.products.findIndex(x=>x.slug===p.slug);
+    if(i>=0) this.products[i]=p; else this.products.push(p);
+    this.pending = this.pending.filter(x=>!(x.type==="product" && x.slug===p.slug));
+    this.savePending();
+    this.closeModal();
+    this.renderProducts(); this.renderStats();
+    toast("✅ تم نشر «" + p.title + "» — التعديل طُبِّق على هذا المنتج فقط");
+  },
+
+  duplicateProduct(slug){
+    const p = this.products.find(x=>x.slug===slug);
+    if(!p) return;
+    let n = 2, newSlug = slug + "-" + n;
+    while(this.products.some(x=>x.slug===newSlug)){ n++; newSlug = slug + "-" + n; }
+    this.editProduct(null);
+    $f("f-slug").value = newSlug; $f("f-title").value = p.title + " (نسخة)";
+    $f("f-price").value = p.price; $f("f-old").value = p.old||"";
+    $f("f-images").value = (p.images||[]).join(", ");
+    $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
+    $f("f-active").value = "1";
+    this.renderOffersRows(p.offers||[]);
+    this.renderImagesPreview();
+    $f("prod-modal-title").textContent = "نسخة من: " + p.title;
+    toast("⧉ نسخة جاهزة — عدّل ثم احفظ");
+  },
+
+  delProduct(slug){
+    const p = this.products.find(x=>x.slug===slug);
+    if(!confirm("حذف المنتج «" + (p?p.title:slug) + "» نهائياً؟")) return;
+    API.deleteProduct(this.key, slug);
+    this.products = this.products.filter(x=>x.slug!==slug);
+    this.pending = this.pending.filter(x=>!(x.type==="product" && x.slug===slug));
+    this.savePending();
+    this.renderProducts(); this.renderStats();
+    toast("✓ تم الحذف");
+  },
+
+  previewPage(slug){
+    $f("page-preview-frame").src = "p/" + slug + "/";
+    $f("page-preview-bg").classList.add("open");
+  },
+
+  closeModal(){ $f("prod-modal-bg").classList.remove("open"); this.editingSlug = null; },
+
+  /* ════════ الأقسام ════════ */
+  renderCategories(){
+    const tbl = $f("categories-table");
+    const entries = Object.entries(this.categories);
+    tbl.innerHTML = '<tr><th>المعرف</th><th>الاسم</th><th>عدد المنتجات</th><th>إجراءات</th></tr>' +
+      entries.map(([k,v])=>{
+        const count = this.products.filter(p=>p.cat===k).length;
+        const hasDraft = this.pending.some(x=>x.type==="category" && x.catKey===k);
+        return '<tr>' +
+          '<td dir="ltr"><b>' + k + '</b></td>' +
+          '<td>' + v + (hasDraft?' <span class="badge-draft">مسودة</span>':"") + '</td>' +
+          '<td>' + count + ' منتج</td>' +
+          '<td>' +
+            '<button class="small" onclick="Admin.editCategory(\'' + k + '\')">✏️ تعديل</button>' +
+            '<button class="small blue" onclick="Admin.duplicateCategory(\'' + k + '\')">⧉ نسخ</button>' +
+            '<button class="small warn" onclick="Admin.delCategory(\'' + k + '\')">🗑️</button>' +
+          '</td></tr>';
+      }).join("");
+  },
+
+  editCategory(key){
+    this.editingCatKey = key;
+    const label = key ? this.categories[key] : "";
+    const draft = this.pending.find(x=>x.type==="category" && x.catKey===key);
+    $f("cat-modal-title").textContent = key ? "تعديل قسم: " + (draft?draft.data.label:label) : "قسم جديد";
+    $f("c-key").value = key || "";
+    $f("c-key").readOnly = !!key;
+    $f("c-label").value = draft ? draft.data.label : label;
+    $f("cat-modal-bg").classList.add("open");
+  },
+
+  duplicateCategory(key){
+    const label = this.categories[key];
+    let n = 2, newKey = key + "-" + n;
+    while(this.categories[newKey]){ n++; newKey = key + "-" + n; }
+    this.editCategory(null);
+    $f("c-key").value = newKey;
+    $f("c-label").value = label + " (نسخة)";
+  },
+
+  saveCategoryDraft(){
+    const k = $f("c-key").value.trim();
+    const label = $f("c-label").value.trim();
+    if(!k || !label){ toast("املأ المعرف والاسم"); return }
+    if(!/^[a-z0-9-]+$/.test(k)){ toast("المعرف يجب أن يكون إنجليزياً بدون مسافات"); return }
+    this.pending = this.pending.filter(x=>!(x.type==="category" && x.catKey===k));
+    this.pending.push({ type:"category", catKey:k, data:{key:k, label}, oldKey:this.editingCatKey, date:Date.now() });
+    this.savePending();
+    $f("cat-modal-bg").classList.remove("open");
+    this.renderCategories();
+    toast("📝 حُفظت مسودة القسم");
+  },
+
+  publishCategory(){
+    const k = $f("c-key").value.trim();
+    const label = $f("c-label").value.trim();
+    if(!k || !label){ toast("املأ المعرف والاسم"); return }
+    if(!/^[a-z0-9-]+$/.test(k)){ toast("المعرف يجب أن يكون إنجليزياً بدون مسافات"); return }
+    const oldKey = this.editingCatKey;
+    if(oldKey && oldKey !== k){
+      delete this.categories[oldKey];
+      this.products.forEach(p=>{ if(p.cat===oldKey) p.cat = k; });
+    }
+    this.categories[k] = label;
+    this.pending = this.pending.filter(x=>!(x.type==="category" && (x.catKey===k || x.catKey===oldKey)));
+    this.savePending();
+    API.saveCategories(this.key, this.categories);
+    $f("cat-modal-bg").classList.remove("open");
+    this.renderCategories(); this.renderProducts(); this.renderStats();
+    toast("✅ تم نشر القسم «" + label + "»");
+  },
+
+  delCategory(key){
+    const count = this.products.filter(p=>p.cat===key).length;
+    if(count > 0){ toast("⚠️ لا يمكن حذف قسم يحتوي على " + count + " منتج — انقلها أولاً"); return }
+    if(!confirm("حذف القسم «" + this.categories[key] + "»؟")) return;
+    delete this.categories[key];
+    this.pending = this.pending.filter(x=>!(x.type==="category" && x.catKey===key));
+    this.savePending();
+    API.saveCategories(this.key, this.categories);
+    this.renderCategories(); this.renderStats();
+    toast("✓ تم حذف القسم");
+  },
+
+  /* ════════ رسوم التوصيل ════════ */
+  renderFees(){
+    const q = ($f("fee-search").value||"").toLowerCase();
+    const list = this.fees.filter(w=>!q || w.name.toLowerCase().includes(q) || String(w.id).includes(q));
+    const changed = (w)=>{
+      const orig = this.feesOriginal.find(f=>f.id==w.id);
+      return orig && (orig.home!==w.home || orig.stop!==w.stop);
+    };
+    $f("fees-grid").innerHTML = list.map(w=>
+      '<div class="fee" ' + (changed(w)?'style="border-color:var(--gold);background:#FFF9EC"':"") + '>' +
+        '<h4>' + String(w.id).padStart(2,"0") + ' — ' + w.name + ' ' + (changed(w)?'<span class="badge-draft">معدّل</span>':"") + '</h4>' +
+        '<label>🏠 للمنزل (دج)</label>' +
+        '<input type="number" value="' + w.home + '" min="0" onchange="Admin.setFee(' + w.id + ',\'home\',this.value)">' +
+        '<label>🏢 مكتب Stop Desk (دج)</label>' +
+        '<input type="number" value="' + w.stop + '" min="0" onchange="Admin.setFee(' + w.id + ',\'stop\',this.value)">' +
+      '</div>').join("");
+  },
+  setFee(id, field, value){
+    const w = this.fees.find(f=>f.id==id);
+    if(w){ w[field] = Number(value)||0; this.renderFees(); }
+  },
+  resetFees(){
+    if(!confirm("التراجع عن جميع تعديلات رسوم التوصيل غير المحفوظة؟")) return;
+    this.fees = JSON.parse(JSON.stringify(this.feesOriginal));
+    this.renderFees();
+    toast("↩️ تم التراجع");
+  },
+  saveAllFees(){
+    if(!confirm("حفظ رسوم التوصيل الجديدة؟ ستُطبَّق على جميع المنتجات فوراً.")) return;
+    API.saveFees(this.key, this.fees);
+    this.feesOriginal = JSON.parse(JSON.stringify(this.fees));
+    if(window.WILAYAS) window.WILAYAS = this.fees;
+    this.renderFees();
+    toast("✓ تم حفظ رسوم التوصيل — تُطبَّق على كل المنتجات دون تغيير أسعارها");
+  },
+
+  /* ════════ بانتظار التأكيد ════════ */
+  renderPending(){
+    const box = $f("pending-list");
+    if(!this.pending.length){
+      box.innerHTML = '<p style="text-align:center;color:#999;padding:2rem">لا توجد تعديلات بانتظار التأكيد ✓</p>';
+      return;
+    }
+    box.innerHTML = this.pending.map((d,i)=>{
+      const isP = d.type === "product";
+      const title = isP ? d.data.title : d.data.label;
+      const date = new Date(d.date).toLocaleString("ar-DZ");
+      return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem;border-right:4px solid var(--gold)">' +
+        '<div>' +
+          '<span class="pill ' + (isP?'st-nouvelle':'st-confirmee') + '">' + (isP?"🌿 منتج":"🗂️ قسم") + '</span> ' +
+          '<b>' + title + '</b> <small dir="ltr" style="color:#999">(' + (d.slug||d.catKey) + ')</small>' +
+          '<br><small style="color:#999">' + date + '</small>' +
+        '</div>' +
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+          (isP?'<button class="small blue" onclick="Admin.previewPending(' + i + ')">👁️ معاينة</button>':"") +
+          '<button class="small gold" onclick="Admin.approvePending(' + i + ')">✅ تأكيد</button>' +
+          '<button class="small" onclick="Admin.editPending(' + i + ')">✏️ تعديل</button>' +
+          '<button class="small warn" onclick="Admin.rejectPending(' + i + ')">↩️ تجاهل</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  },
+
+  previewPending(i){
+    const d = this.pending[i];
+    if(!d || d.type!=="product") return;
+    this.previewData = { pendingIndex: i };
+    const oldP = this.products.find(x=>x.slug===d.slug);
+    const changes = this.diffProduct(oldP, d.data);
+    $f("preview-content").innerHTML =
+      '<b style="font-size:1.1rem;color:var(--green)">' + d.data.title + '</b> <small dir="ltr">(' + d.slug + ')</small>' +
+      (changes.length ? changes.map(c=>'<div class="diff-box"><div class="chg"><b>' + c.label + ':</b> ' +
+        (c.old!==null?'<span class="diff-old">' + c.old + '</span> ← ':"") + '<span class="diff-new">' + c.new + '</span></div></div>').join("")
+        : '<div class="diff-box">منتج جديد</div>');
+    $f("preview-modal-bg").classList.add("open");
+  },
+
+  approvePending(i){
+    const d = this.pending[i];
+    if(!d) return;
+    if(d.type === "product"){
+      this.publishProduct(d.data);
+    } else if(d.type === "category"){
+      if(d.oldKey && d.oldKey !== d.data.key){
+        delete this.categories[d.oldKey];
+        this.products.forEach(p=>{ if(p.cat===d.oldKey) p.cat = d.data.key; });
+      }
+      this.categories[d.data.key] = d.data.label;
+      this.pending = this.pending.filter((x,idx)=>idx!==i);
+      this.savePending();
+      API.saveCategories(this.key, this.categories);
+      this.renderCategories(); this.renderProducts(); this.renderPending(); this.renderStats();
+      toast("✅ تم تأكيد القسم");
+    }
+  },
+
+  editPending(i){
+    const d = this.pending[i];
+    if(!d) return;
+    if(d.type === "product") this.editProduct(d.slug);
+    else this.editCategory(d.catKey);
+  },
+
+  rejectPending(i){
+    if(!confirm("تجاهل هذه المسودة نهائياً؟")) return;
+    this.pending.splice(i,1);
+    this.savePending();
+    this.renderPending(); this.renderProducts(); this.renderCategories();
+    toast("↩️ تم التجاهل");
+  },
+};
+
+document.addEventListener("input", e=>{
+  if(e.target && e.target.id === "f-images") Admin.renderImagesPreview();
+});
+
+function toast(t){ const el=$f("toast2"); el.textContent=t; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,2500) }
+if(Admin.key) Admin.load();
+</script>
+</body>
+</html>
