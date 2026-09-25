@@ -121,6 +121,9 @@ body:before{
 .pthumbs{margin-top:15px}
 .gthumbs{gap:10px!important}
 .gthumbs>*{border-radius:16px!important;border:1px solid var(--line)!important;overflow:hidden}
+.gthumbs img{width:100%;height:84px;object-fit:cover;cursor:pointer;transition:.2s}
+.gthumbs img:hover{opacity:.8}
+.gthumbs img.active{border:2px solid var(--gold)!important;opacity:1}
 .trust-strip span{
   background:rgba(255,255,255,.88)!important;
   border:1px solid var(--line)!important;
@@ -364,6 +367,24 @@ footer.site a{color:#f0d39d!important}
 footer.site h4{color:#fff!important}
 .copy{border-top:1px solid rgba(255,255,255,.10)!important}
 
+/* Avis screenshots */
+.reviews-screenshots{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px;
+  margin-top:20px;
+}
+.reviews-screenshots img{
+  width:100%;
+  border-radius:16px;
+  box-shadow:0 12px 32px rgba(25,48,40,.12);
+  border:1px solid rgba(35,70,58,.08);
+  transition:transform .3s ease;
+}
+.reviews-screenshots img:hover{
+  transform:translateY(-4px);
+}
+
 @media (max-width:980px){
   .lp-cards[style*="repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .lp-cards[style*="repeat(3"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
@@ -393,6 +414,7 @@ footer.site h4{color:#fff!important}
   .lp-textcard h2{font-size:29px!important}
   .lp-card{padding:20px!important}
   .lp-final{padding:42px 20px!important}
+  .reviews-screenshots{grid-template-columns:1fr!important}
 }
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
@@ -416,8 +438,13 @@ footer.site h4{color:#fff!important}
   <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / كريمة ضد حب الشباب</div>
   <div class="pd2 lp-hero">
     <div class="pbox">
-      <div class="gmain"><img id="gmain" src="../../assets/img/anti-acne/anti-acne 01.webp" alt="كريمة ضد حب الشباب"></div>
-      <div class="pthumbs"><div class="gthumbs"></div></div>
+      <div class="gmain"><img id="gmain" src="../../assets/img/anti-acne/presentation/anti-acne 01.webp" alt="كريمة ضد حب الشباب"></div>
+      <div class="pthumbs"><div class="gthumbs">
+        <img src="../../assets/img/anti-acne/presentation/anti-acne 01.webp" alt="صورة 1" class="active" onclick="changeImage(this)">
+        <img src="../../assets/img/anti-acne/presentation/anti-acne 02.webp" alt="صورة 2" onclick="changeImage(this)">
+        <img src="../../assets/img/anti-acne/presentation/anti-acne 003.webp" alt="صورة 3" onclick="changeImage(this)">
+        <img src="../../assets/img/anti-acne/presentation/anti-acne 004.webp" alt="صورة 4" onclick="changeImage(this)">
+      </div></div>
       <div class="trust-strip" style="margin-top:1rem">
         <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>
       </div>
@@ -482,7 +509,7 @@ footer.site h4{color:#fff!important}
 
 <section class="lp-sec alt"><div class="container">
   <div class="lp-grid">
-    <div class="lp-imgcard"><img src="../../assets/img/anti-acne/anti-acne 06.webp" alt="كريمة ضد حب الشباب" loading="lazy"></div>
+    <div class="lp-imgcard"><img src="../../assets/img/anti-acne/body/anti-acne 06.webp" alt="كريمة ضد حب الشباب" loading="lazy"></div>
     <div class="lp-textcard">
       <h2>هل أثرت الحبوب والشوائب على مظهر بشرتك وثقتك؟</h2>
       <p>عندما تتعرض البشرة للحبوب واللمعان والشوائب، يفقد الوجه نضارته وتتأثر ثقتك بنفسك. العناية اليومية الصحيحة هي الخطوة الأولى نحو بشرة صافية ومنتعشة.</p>
@@ -498,7 +525,7 @@ footer.site h4{color:#fff!important}
       <p>هذا المنتج من أليسوم تركيبة مدروسة من مكونات طبيعية موثوقة، صُممت لتكون جزءاً من روتينك اليومي بخطوات بسيطة ونتائج تدريجية ملحوظة مع الاستعمال المنتظم.</p>
       <div class="lp-bullets"><div>تركيبة طبيعية لطيفة على البشرة</div><div>يساعد على تحسين مظهر الشوائب</div><div>ترطيب خفيف دون إحساس دهني</div><div>مناسب للاستعمال اليومي المنتظم</div></div>
     </div>
-    <div class="lp-imgcard"><img src="../../assets/img/anti-acne/anti-acne 05.webp" alt="كريمة ضد حب الشباب" loading="lazy"></div>
+    <div class="lp-imgcard"><img src="../../assets/img/anti-acne/body/anti-acne 05.webp" alt="كريمة ضد حب الشباب" loading="lazy"></div>
   </div>
 </div></section>
 
@@ -507,25 +534,11 @@ footer.site h4{color:#fff!important}
 
 <section class="lp-sec alt"><div class="container">
   <div class="lp-head"><h2>آراء بعض الزبائن</h2><p>تجارب حقيقية من زبائننا في مختلف الولايات</p></div>
-  <div class="lp-testis"><div class="lp-card">
-        <div class="stars">★★★★★</div>
-        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
-        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
-          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">أ</span>
-          <div>أمينة<br><small style="color:var(--muted);font-weight:700">ولاية الجزائر العاصمة</small></div>
-        </div></div><div class="lp-card">
-        <div class="stars">★★★★★</div>
-        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
-        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
-          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">خ</span>
-          <div>خديجة<br><small style="color:var(--muted);font-weight:700">ولاية وهران</small></div>
-        </div></div><div class="lp-card">
-        <div class="stars">★★★★★</div>
-        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
-        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
-          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">س</span>
-          <div>سارة<br><small style="color:var(--muted);font-weight:700">ولاية سطيف</small></div>
-        </div></div></div>
+  <div class="reviews-screenshots">
+    <img src="../../assets/img/anti-acne/avis/Screenshot_01.webp" alt="رأي زبون 1" loading="lazy" onerror="this.src='../../assets/img/anti-acne/avis/Screenshot_20260819-181510.webp'">
+    <img src="../../assets/img/anti-acne/avis/Screenshot_02.webp" alt="رأي زبون 2" loading="lazy" onerror="this.src='../../assets/img/anti-acne/avis/Screenshot_20260819-181722.webp'">
+    <img src="../../assets/img/anti-acne/avis/Screenshot_20260819-181807.webp" alt="رأي زبون 3" loading="lazy">
+  </div>
 </div></section>
 
 
@@ -537,10 +550,10 @@ footer.site h4{color:#fff!important}
       <p>زيوت وخلاصات نباتية وفيتامين E مجتمعة ضمن روتين بسيط للبشرة المعرضة للشوائب.</p>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/tea-tree.webp" alt="زيت شجرة الشاي" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت شجرة الشاي</h3><p>جزء أساسي من هوية التركيبة الموجهة للبشرة المعرضة للحبوب.</p></div></article>
-      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/Rosemary_bush.webp" alt="زيت الإكليل" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت الإكليل</h3><p>لمسة نباتية منعشة ضمن روتين العناية بالبشرة.</p></div></article>
-      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/licorice.webp" alt="خلاصة عرق السوس" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة عرق السوس</h3><p>تدخل في العناية بمظهر البشرة وتجانسها.</p></div></article>
-      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/vitamine-e.webp" alt="فيتامين E" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>فيتامين E</h3><p>دعم ترطيبي ومضاد للأكسدة ضمن التركيبة.</p></div></article>
+      <article class="lp-card"><img src="../../assets/img/anti-acne/composants/tea-tree.webp" alt="زيت شجرة الشاي" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت شجرة الشاي</h3><p>جزء أساسي من هوية التركيبة الموجهة للبشرة المعرضة للحبوب.</p></div></article>
+      <article class="lp-card"><img src="../../assets/img/anti-acne/composants/Rosemary_bush.webp" alt="زيت الإكليل" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت الإكليل</h3><p>لمسة نباتية منعشة ضمن روتين العناية بالبشرة.</p></div></article>
+      <article class="lp-card"><img src="../../assets/img/anti-acne/composants/licorice.webp" alt="خلاصة عرق السوس" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة عرق السوس</h3><p>تدخل في العناية بمظهر البشرة وتجانسها.</p></div></article>
+      <article class="lp-card"><img src="../../assets/img/anti-acne/composants/vitamine e.webp" alt="فيتامين E" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>فيتامين E</h3><p>دعم ترطيبي ومضاد للأكسدة ضمن التركيبة.</p></div></article>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px">
       <article class="lp-card"><div style="padding:20px"><h3>زيت الجيرانيوم</h3><p>اختيار نباتي ينسجم مع هوية أليسوم للعناية اليومية.</p></div></article>
@@ -633,7 +646,57 @@ footer.site h4{color:#fff!important}
 <script defer src="../../assets/js/wilayas.js"></script>
 <script defer src="../../assets/js/api.js"></script>
 <script defer src="../../assets/js/app.js"></script>
-<script defer src="../../assets/js/agent.js"></script>
+<script>
+// Galerie d'images - changement au clic et auto-rotation
+let currentImageIndex = 0;
+const images = [
+    "../../assets/img/anti-acne/presentation/anti-acne 01.webp",
+    "../../assets/img/anti-acne/presentation/anti-acne 02.webp",
+    "../../assets/img/anti-acne/presentation/anti-acne 003.webp",
+    "../../assets/img/anti-acne/presentation/anti-acne 004.webp"
+];
+let autoRotateInterval;
+
+function changeImage(thumb) {
+    const mainImg = document.getElementById("gmain");
+    mainImg.src = thumb.src;
+    
+    // Mettre à jour les classes actives
+    document.querySelectorAll(".gthumbs img").forEach(img => img.classList.remove("active"));
+    thumb.classList.add("active");
+    
+    // Réinitialiser l'auto-rotation
+    clearInterval(autoRotateInterval);
+    startAutoRotate();
+}
+
+function startAutoRotate() {
+    autoRotateInterval = setInterval(() => {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        const mainImg = document.getElementById("gmain");
+        const thumbs = document.querySelectorAll(".gthumbs img");
+        
+        mainImg.src = images[currentImageIndex];
+        thumbs.forEach((img, idx) => {
+            img.classList.toggle("active", idx === currentImageIndex);
+        });
+    }, 4000); // Change toutes les 4 secondes
+}
+
+// Démarrer l'auto-rotation au chargement
+document.addEventListener("DOMContentLoaded", () => {
+    startAutoRotate();
+});
+
+// Pause sur hover de la galerie
+document.querySelector(".pbox")?.addEventListener("mouseenter", () => {
+    clearInterval(autoRotateInterval);
+});
+
+document.querySelector(".pbox")?.addEventListener("mouseleave", () => {
+    startAutoRotate();
+});
+</script>
 <script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
       initProduct("anti-acne");
       initCartDrawer();
