@@ -118,20 +118,9 @@ body:before{
   filter:drop-shadow(0 26px 24px rgba(22,48,39,.13));
 }
 .pbox:hover .gmain img{transform:scale(1.035) translateY(-5px)}
-.product-gallery{position:relative}
-.gmain{overflow:hidden}
-.gmain img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in}
 .pthumbs{margin-top:15px}
-.gthumbs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px!important}
-.gthumbs .gallery-thumb{display:block;width:100%;aspect-ratio:1/1;border-radius:16px;border:1px solid var(--line);overflow:hidden;background:#fff;padding:0;cursor:pointer;transition:.28s ease;position:relative}
-.gthumbs .gallery-thumb:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(35,70,58,.10)}
-.gthumbs .gallery-thumb.is-active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(199,165,111,.18)}
-.gthumbs .gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.review-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start}
-.review-shot{position:relative;display:block;border-radius:24px;overflow:hidden;background:#fff;border:1px solid rgba(35,70,58,.10);box-shadow:var(--shadow-lg);transition:.3s ease}
-.review-shot:hover{transform:translateY(-5px);box-shadow:var(--shadow-xl)}
-.review-shot img{display:block;width:100%;height:auto;max-height:620px;object-fit:contain;background:#f7f3eb}
-.review-download{position:absolute;left:14px;bottom:14px;padding:9px 13px;border-radius:999px;background:rgba(24,57,47,.92);color:#fff;font-size:.78rem;font-weight:800;backdrop-filter:blur(8px)}
+.gthumbs{gap:10px!important}
+.gthumbs>*{border-radius:16px!important;border:1px solid var(--line)!important;overflow:hidden}
 .trust-strip span{
   background:rgba(255,255,255,.88)!important;
   border:1px solid var(--line)!important;
@@ -404,11 +393,6 @@ footer.site h4{color:#fff!important}
   .lp-textcard h2{font-size:29px!important}
   .lp-card{padding:20px!important}
   .lp-final{padding:42px 20px!important}
-  .gthumbs{gap:8px!important}
-  .review-gallery{grid-template-columns:1fr!important;max-width:620px;margin-inline:auto}
-}
-@media (min-width:981px){
-  .review-gallery .review-shot:nth-child(2){margin-top:22px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
@@ -432,14 +416,8 @@ footer.site h4{color:#fff!important}
   <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / كريمة ضد حب الشباب</div>
   <div class="pd2 lp-hero">
     <div class="pbox">
-      <div class="product-gallery" aria-label="صور منتج كريمة ضد حب الشباب">
-        <div class="gmain">
-          <img id="gmain" src="https://alyssumdz.com/wp-content/uploads/2026/08/anti-acne 01.webp" alt="كريمة أليسوم ضد حب الشباب" loading="eager">
-        </div>
-        <div class="pthumbs">
-          <div class="gthumbs" id="galleryThumbs" role="list"></div>
-        </div>
-      </div>
+      <div class="gmain"><img id="gmain" src="../../assets/img/anti-acne/0.webp" alt="كريمة ضد حب الشباب"></div>
+      <div class="pthumbs"><div class="gthumbs"></div></div>
       <div class="trust-strip" style="margin-top:1rem">
         <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>
       </div>
@@ -535,24 +513,26 @@ footer.site h4{color:#fff!important}
 </div></section>
 
 <section class="lp-sec alt"><div class="container">
-  <div class="lp-head">
-    <h2>آراء بعض الزبائن</h2>
-    <p>صور من تقييمات زبائننا — اضغط على أي صورة لفتحها أو حفظها.</p>
-  </div>
-  <div class="review-gallery">
-    <a class="review-shot" href="https://alyssumdz/tree/main/assets/img/anti-acne/Screenshot_01.webp" target="_blank" rel="noopener" download>
-      <img src="../../assets/img/anti-acne/Screenshot_01.webp" alt="تقييم عميلة من زبائن أليسوم" loading="lazy">
-      <span class="review-download">↗ فتح / حفظ الصورة</span>
-    </a>
-    <a class="review-shot" href="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181722.webp" target="_blank" rel="noopener" download>
-      <img src="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181722.webp" alt="تقييم عميلة من زبائن أليسوم" loading="lazy">
-      <span class="review-download">↗ فتح / حفظ الصورة</span>
-    </a>
-    <a class="review-shot" href="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181807.webp" target="_blank" rel="noopener" download>
-      <img src="https://alyssumdz.com/wp-content/uploads/2026/08/Screenshot_20260819-181807.webp" alt="تقييم عميلة من زبائن أليسوم" loading="lazy">
-      <span class="review-download">↗ فتح / حفظ الصورة</span>
-    </a>
-  </div>
+  <div class="lp-head"><h2>آراء بعض الزبائن</h2><p>تجارب حقيقية من زبائننا في مختلف الولايات</p></div>
+  <div class="lp-testis"><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">أ</span>
+          <div>أمينة<br><small style="color:var(--muted);font-weight:700">ولاية الجزائر العاصمة</small></div>
+        </div></div><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">خ</span>
+          <div>خديجة<br><small style="color:var(--muted);font-weight:700">ولاية وهران</small></div>
+        </div></div><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">س</span>
+          <div>سارة<br><small style="color:var(--muted);font-weight:700">ولاية سطيف</small></div>
+        </div></div></div>
 </div></section>
 
 
@@ -564,15 +544,32 @@ footer.site h4{color:#fff!important}
       <p>زيوت وخلاصات نباتية وفيتامين E مجتمعة ضمن روتين بسيط للبشرة المعرضة للشوائب.</p>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-      <article class="lp-card"><img src="../../assets/img/anti-acne/tea-tree.webp" alt="زيت شجرة الشاي" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت شجرة الشاي</h3><p>جزء أساسي من هوية التركيبة الموجهة للبشرة المعرضة للحبوب.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/anti-acne/Rosemary_bush.webp" alt="زيت الإكليل" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت الإكليل</h3><p>لمسة نباتية منعشة ضمن روتين العناية بالبشرة.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/anti-acne/licorice.webp" alt="خلاصة عرق السوس" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة عرق السوس</h3><p>تدخل في العناية بمظهر البشرة وتجانسها.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/anti-acne/vitamine e.webp" alt="فيتامين E" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>فيتامين E</h3><p>دعم ترطيبي ومضاد للأكسدة ضمن التركيبة.</p></div></article>
+      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/tea-tree.webp" alt="زيت شجرة الشاي" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت شجرة الشاي</h3><p>جزء أساسي من هوية التركيبة الموجهة للبشرة المعرضة للحبوب.</p></div></article>
+      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/Rosemary_bush.webp" alt="زيت الإكليل" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>زيت الإكليل</h3><p>لمسة نباتية منعشة ضمن روتين العناية بالبشرة.</p></div></article>
+      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/licorice.webp" alt="خلاصة عرق السوس" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة عرق السوس</h3><p>تدخل في العناية بمظهر البشرة وتجانسها.</p></div></article>
+      <article class="lp-card"><img src="https://alyssumdz.com/wp-content/uploads/2026/08/vitamine-e.webp" alt="فيتامين E" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>فيتامين E</h3><p>دعم ترطيبي ومضاد للأكسدة ضمن التركيبة.</p></div></article>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px">
       <article class="lp-card"><div style="padding:20px"><h3>زيت الجيرانيوم</h3><p>اختيار نباتي ينسجم مع هوية أليسوم للعناية اليومية.</p></div></article>
       <article class="lp-card"><div style="padding:20px"><h3>خلاصة الميرمية</h3><p>عنصر نباتي ضمن روتين العناية بالبشرة الدهنية.</p></div></article>
       <article class="lp-card"><div style="padding:20px"><h3>عشبة القديسين</h3><p>خلاصة نباتية داعمة لراحة البشرة، مع العناية بالحماية من الشمس.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="lp-sec alt">
+  <div class="container">
+    <div class="lp-head">
+      <h2>لماذا تحبين هذا الروتين؟</h2>
+      <p>نفس الرسالة الأساسية للمنتج، لكن في تجربة تصفح أكثر وضوحاً وأناقة.</p>
+    </div>
+    <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <article class="lp-card"><div style="padding:26px"><div class="ic">🌿</div><h3 style="margin-top:15px">مظهر أنقى</h3><p>يساعد على تحسين مظهر الشوائب والحبوب مع الاستعمال المنتظم.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">💧</div><h3 style="margin-top:15px">ترطيب خفيف</h3><p>إحساس متوازن دون ملمس دهني ثقيل، مناسب لروتين يومي بسيط.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">✨</div><h3 style="margin-top:15px">انتعاش وراحة</h3><p>تركيبة مصممة لتمنح البشرة إحساساً يومياً بالراحة والانتعاش.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">🧴</div><h3 style="margin-top:15px">استعمال تدريجي</h3><p>ابدأ بكمية صغيرة وراقب تحمّل البشرة قبل زيادة التكرار.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">☀️</div><h3 style="margin-top:15px">روتين صباحي واعٍ</h3><p>استخدم واقياً شمسياً صباحاً ضمن روتين العناية بالبشرة.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">📦</div><h3 style="margin-top:15px">طلب مرن</h3><p>الدفع عند الاستلام، مع إمكانية الطلب مباشرة عبر واتساب أو الاستمارة.</p></div></article>
     </div>
   </div>
 </section>
@@ -591,13 +588,28 @@ footer.site h4{color:#fff!important}
   </div>
 </section>
 
+<section class="lp-sec alt">
+  <div class="container">
+    <div class="lp-head">
+      <h2>احتياطات الاستعمال</h2>
+      <p>رسالة واضحة، مباشرة وبارزة قبل قرار الشراء.</p>
+    </div>
+    <div class="lp-cards" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+      <article class="lp-card"><div style="padding:24px"><div class="ic">⚠️</div><h3 style="margin-top:15px">للاستعمال الخارجي</h3><p>لا يوضع قرب العينين أو على الجلد المجروح.</p></div></article>
+      <article class="lp-card"><div style="padding:24px"><div class="ic">🧪</div><h3 style="margin-top:15px">اختبار رقعة</h3><p>يُجرى اختبار على جزء صغير من الجلد قبل الاستخدام.</p></div></article>
+      <article class="lp-card"><div style="padding:24px"><div class="ic">🚫</div><h3 style="margin-top:15px">ليس لكامل الوجه فوراً</h3><p>لا تستخدم على كامل الوجه قبل التأكد من ملاءمتها للبشرة.</p></div></article>
+      <article class="lp-card"><div style="padding:24px"><div class="ic">🛑</div><h3 style="margin-top:15px">أوقفها عند التهيّج</h3><p>في حالة حدوث تهيج أو حساسية، يوقف الاستعمال فوراً.</p></div></article>
+    </div>
+  </div>
+</section>
+
 <section style="padding-top:0"><div class="container">
   <div class="lp-final">
     <h2>🎁 اطلب الآن — اشترِ قطعتين واحصل على الثالثة مجاناً</h2>
     <p>العرض متاح لفترة محدودة فقط. املأ الاستمارة بالأعلى وسنتصل بك للتأكيد، ثم يصلك الطلب خلال 24-72 ساعة والدفع عند الاستلام.</p>
     <div class="cta-row" style="justify-content:center">
       <a class="lp-btn lp-btn-gold" href="#order-form">✅ اطلب الآن — الدفع عند الاستلام</a>
-      <a class="lp-btn lp-btn-green" href="https://wa.me/213541138189?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب عبر واتساب</a>
+      <a class="lp-btn lp-btn-green" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب عبر واتساب</a>
     </div>
   </div>
   <div class="lp-head" style="margin-top:2.5rem"><h2 style="font-size:1.5rem">قد يعجبك أيضاً</h2></div>
@@ -611,7 +623,7 @@ footer.site h4{color:#fff!important}
       <div class="fgrid">
         <div><h4>أليسوم ALYSSUM</h4><p>متجرك الجزائري للمنتجات الطبيعية الأصلية: زيوت، أعشاب، عسل فاخر ومنتجات الرقية الشرعية. جودة مضمونة والدفع عند الاستلام.</p></div>
         <div><h4>روابط سريعة</h4><p><a href="index.html#products">المنتجات</a><br><a href="index.html#features">المميزات</a><br><a href="index.html#faq">الأسئلة</a><br><a href="admin.html">لوحة التحكم</a></p></div>
-        <div><h4>تواصل معنا</h4><p>📱 واتساب: <a href="https://wa.me/213541138189" target="_blank">05 41 13 81 89</a><br>🕐 السبت – الخميس: 9ص – 6م<br>📍 الجزائر</p></div>
+        <div><h4>تواصل معنا</h4><p>📱 واتساب: <a href="https://wa.me/213559237239" target="_blank">0559 23 72 39</a><br>🕐 السبت – الخميس: 9ص – 6م<br>📍 الجزائر</p></div>
       </div>
       <div class="copy">© 2026 أليسوم — جميع الحقوق محفوظة</div>
     </div></footer><div class="drawer-bg" id="drawer-bg"></div>
@@ -644,28 +656,6 @@ footer.site h4{color:#fff!important}
 <script defer src="../../assets/js/agent.js"></script>
 <script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
       initProduct("anti-acne");
-      // معرض صور ثابت من 4 صور: المصغرات تغيّر الصورة الرئيسية عند الضغط.
-      const gallery = [
-        "img src="../../assets/img/anti-acne/anti-acne 01.webp",
-        "img src="../../assets/img/anti-acne/anti-acne 003.webp",
-        "img src="../../assets/img/anti-acne/anti-acne 004.webp",
-        "img src="../../assets/img/anti-acne/anti-acne 02.webp"
-      ];
-      const mainGalleryImage = document.getElementById("gmain");
-      const galleryThumbs = document.getElementById("galleryThumbs");
-      if(mainGalleryImage && galleryThumbs){
-        galleryThumbs.innerHTML = gallery.map((src,i)=>`
-          <button type="button" class="gallery-thumb${i===0?" is-active":""}" data-src="${src}" aria-label="عرض الصورة ${i+1}">
-            <img src="${src}" alt="صورة المنتج ${i+1}" loading="lazy">
-          </button>`).join("");
-        galleryThumbs.querySelectorAll(".gallery-thumb").forEach(btn=>{
-          btn.addEventListener("click",()=>{
-            mainGalleryImage.src = btn.dataset.src;
-            galleryThumbs.querySelectorAll(".gallery-thumb").forEach(x=>x.classList.remove("is-active"));
-            btn.classList.add("is-active");
-          });
-        });
-      }
       initCartDrawer();
       fillCartWilayas();
       const p = PRODUCTS.find(x=>x.slug==="anti-acne");
