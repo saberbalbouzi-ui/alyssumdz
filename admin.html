@@ -218,10 +218,45 @@ tr:hover td{background:#FAF7F0}
 <!-- نافذة معاينة صفحة المنتج -->
 <div class="modal-bg" id="page-preview-bg">
   <div class="modal lg" style="width:min(1100px,100%)">
-    <h3>👁️ معاينة صفحة المنتج</h3>
+    <h3>👁️ معاينة صفحة المنتج <span class="badge-draft hidden" id="pp-badge">✏️ وضع التعديل</span></h3>
     <iframe id="page-preview-frame" style="width:100%;height:65vh;border:1px solid var(--line);border-radius:12px"></iframe>
+    <div class="hint">اضغط «✏️ تعديل» لتحرير النصوص والصور مباشرة على الصفحة، ثم «✅ تحقق» لنشر التعديل على GitHub — أو «↩️ إلغاء» للتراجع دون حفظ.</div>
     <div class="action-bar">
-      <button class="small gray" onclick="document.getElementById('page-preview-bg').classList.remove('open')">إغلاق</button>
+      <button class="small blue" id="pp-edit-btn" onclick="Admin.enterPageEdit()">✏️ تعديل</button>
+      <button class="small gold hidden" id="pp-confirm-btn" onclick="Admin.validatePageEdit()">✅ تحقق</button>
+      <button class="small warn hidden" id="pp-cancel-btn" onclick="Admin.cancelPageEdit()">↩️ إلغاء</button>
+      <button class="small gray" onclick="Admin.openGhSettings()">⚙️ GitHub</button>
+      <button class="small gray" onclick="Admin.closePagePreview()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة ضبط GitHub -->
+<div class="modal-bg" id="gh-modal-bg">
+  <div class="modal">
+    <h3>⚙️ ربط GitHub لنشر تعديلات صفحة المنتج</h3>
+    <div class="hint">التوكن يُخزَّن فقط داخل متصفحك (localStorage) ويُستعمل للاتصال بـ GitHub مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. يُفضَّل توكن من نوع Fine-grained مع صلاحية «Contents: Read and write» على مستودع alyssumdz فقط.</div>
+    <input id="gh-token" type="password" placeholder="GitHub Personal Access Token" dir="ltr" autocomplete="off">
+    <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="saberbalbouzi-ui">
+    <input id="gh-repo" placeholder="المستودع (repo)" dir="ltr" value="alyssumdz">
+    <input id="gh-branch" placeholder="الفرع (branch)" dir="ltr" value="main">
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.saveGhSettings()">💾 حفظ</button>
+      <button class="small gray" onclick="document.getElementById('gh-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة تغيير صورة -->
+<div class="modal-bg" id="imgpick-modal-bg">
+  <div class="modal">
+    <h3>🖼️ تغيير الصورة</h3>
+    <input id="imgpick-current" placeholder="مسار أو رابط الصورة" dir="ltr">
+    <div class="hint">اختر من الصور الموجودة في هذه الصفحة، أو عدّل المسار أعلاه مباشرة</div>
+    <div id="imgpick-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.applyImagePick()">✅ تطبيق</button>
+      <button class="small gray" onclick="document.getElementById('imgpick-modal-bg').classList.remove('open')">إلغاء</button>
     </div>
   </div>
 </div>
@@ -232,6 +267,41 @@ tr:hover td{background:#FAF7F0}
 <script src="assets/js/api.js"></script>
 <script>
 const $f = id => document.getElementById(id);
+
+/* ════════ اتصال مباشر بـ GitHub لنشر تعديلات صفحات المنتجات ════════ */
+const GH = {
+  cfg(){ return JSON.parse(localStorage.getItem("alyssum_gh_cfg") || "null"); },
+  async getFile(path){
+    const c = this.cfg();
+    if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
+    const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path +
+      "?ref=" + encodeURIComponent(c.branch) + "&t=" + Date.now();
+    const r = await fetch(url, { headers:{ Authorization:"Bearer " + c.token, Accept:"application/vnd.github+json" } });
+    if(!r.ok){
+      if(r.status === 401) throw new Error("توكن غير صالح (401)");
+      if(r.status === 404) throw new Error("لم يُعثر على الملف/المستودع (404) — تحقق من owner/repo/branch");
+      throw new Error("GET فشل (" + r.status + ")");
+    }
+    return r.json();
+  },
+  async putFile(path, contentB64, sha, message){
+    const c = this.cfg();
+    if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
+    const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path;
+    const r = await fetch(url, {
+      method:"PUT",
+      headers:{ Authorization:"Bearer " + c.token, Accept:"application/vnd.github+json", "Content-Type":"application/json" },
+      body: JSON.stringify({ message, content: contentB64, sha, branch: c.branch }),
+    });
+    if(!r.ok){
+      const t = await r.text().catch(()=>"");
+      if(r.status === 409) throw new Error("تعارض (409) — الملف تغيّر في GitHub، أعد فتح المعاينة وحاول من جديد");
+      if(r.status === 401) throw new Error("توكن غير صالح أو بدون صلاحية كتابة (401/403)");
+      throw new Error("PUT فشل (" + r.status + ") " + t.slice(0,120));
+    }
+    return r.json();
+  },
+};
 
 const Admin = {
   key: localStorage.getItem("alyssum_admin_key") || "",
@@ -345,7 +415,7 @@ const Admin = {
         '<td style="white-space:nowrap">' +
           '<button class="small" onclick=\'Admin.editProduct(' + JSON.stringify(p.slug) + ')\'>✏️ تعديل</button>' +
           '<button class="small blue" onclick="Admin.duplicateProduct(\'' + p.slug + '\')">⧉ نسخ</button>' +
-          '<button class="small gold" onclick="Admin.previewPage(\'' + p.slug + '\')">👁️</button>' +
+          '<button class="small gold" onclick="Admin.previewPage(\'' + p.slug + '\')">👁️ معاينة</button>' +
           '<button class="small warn" onclick="Admin.delProduct(\'' + p.slug + '\')">🗑️</button>' +
         '</td></tr>';
       }).join("");
@@ -520,11 +590,152 @@ const Admin = {
   },
 
   previewPage(slug){
-    $f("page-preview-frame").src = "p/" + slug + "/";
+    this.previewPageSlug = slug;
+    $f("page-preview-frame").src = "p/" + slug + "/?_=" + Date.now();
+    this.exitEditUI();
     $f("page-preview-bg").classList.add("open");
   },
 
+  closePagePreview(){
+    if(this._editing && !confirm("لديك تعديلات غير محفوظة على هذه الصفحة — الإغلاق سيتجاهلها. متابعة؟")) return;
+    $f("page-preview-bg").classList.remove("open");
+    this.exitEditUI();
+  },
+
   closeModal(){ $f("prod-modal-bg").classList.remove("open"); this.editingSlug = null; },
+
+  /* ════════ تعديل مباشر لصفحة المنتج + نشر على GitHub ════════ */
+  exitEditUI(){
+    this._editing = false;
+    this._editDoc = null;
+    this._editingImg = null;
+    $f("pp-edit-btn").classList.remove("hidden");
+    $f("pp-confirm-btn").classList.add("hidden");
+    $f("pp-cancel-btn").classList.add("hidden");
+    $f("pp-badge").classList.add("hidden");
+  },
+
+  openGhSettings(){
+    const c = GH.cfg() || {};
+    $f("gh-token").value = c.token || "";
+    $f("gh-owner").value = c.owner || "saberbalbouzi-ui";
+    $f("gh-repo").value = c.repo || "alyssumdz";
+    $f("gh-branch").value = c.branch || "main";
+    $f("gh-modal-bg").classList.add("open");
+  },
+  saveGhSettings(){
+    const cfg = {
+      token: $f("gh-token").value.trim(),
+      owner: $f("gh-owner").value.trim(),
+      repo: $f("gh-repo").value.trim(),
+      branch: $f("gh-branch").value.trim() || "main",
+    };
+    if(!cfg.token || !cfg.owner || !cfg.repo){ toast("املأ التوكن واسم الحساب والمستودع"); return }
+    localStorage.setItem("alyssum_gh_cfg", JSON.stringify(cfg));
+    $f("gh-modal-bg").classList.remove("open");
+    toast("✓ تم حفظ ضبط GitHub في هذا المتصفح");
+  },
+
+  enterPageEdit(){
+    const frame = $f("page-preview-frame");
+    let doc = null;
+    try{ doc = frame.contentDocument; }catch(e){ doc = null; }
+    if(!doc || !doc.body){ toast("⚠️ انتظر تحميل الصفحة كاملة ثم أعد المحاولة"); return }
+    this._editDoc = doc;
+
+    const st = doc.createElement("style");
+    st.id = "__adm_edit_style";
+    st.textContent = ".__adm_edit{outline:1.5px dashed #C8A24B!important;outline-offset:2px;cursor:text}" +
+      ".__adm_edit:focus{outline:2px solid #173F35!important;background:rgba(200,162,75,.08)}" +
+      ".__adm_img_edit{outline:2px dashed #1B4F8A!important;cursor:pointer!important}";
+    doc.head.appendChild(st);
+
+    // نصوص: نستثني أيضاً العناصر ذات id (مرتبطة بسكربت السعر/العداد الديناميكي)
+    const EXCLUDE_TEXT = "form,.site,.topbar,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,[id]";
+    doc.querySelectorAll("h1,h2,h3,h4,p,li,span,small,b,a").forEach(el=>{
+      if(el.closest(EXCLUDE_TEXT)) return;
+      if(!el.textContent || !el.textContent.trim()) return;
+      el.setAttribute("contenteditable","true");
+      el.classList.add("__adm_edit");
+    });
+    // صور: لا نستثني بالـ id (الصورة الرئيسية #gmain لها id لأغراض المعرض، ويجب أن تبقى قابلة للتغيير)
+    const EXCLUDE_IMG = "form,.site,.topbar,.drawer,.drawer-bg,.sticky-cta,script,style";
+    doc.querySelectorAll("img").forEach(img=>{
+      if(img.closest(EXCLUDE_IMG)) return;
+      img.classList.add("__adm_img_edit");
+      img.addEventListener("click", Admin._onImgClick, {capture:true});
+    });
+
+    this._editing = true;
+    $f("pp-edit-btn").classList.add("hidden");
+    $f("pp-confirm-btn").classList.remove("hidden");
+    $f("pp-cancel-btn").classList.remove("hidden");
+    $f("pp-badge").classList.remove("hidden");
+    toast("✏️ اضغط على أي نص لتحريره، أو على صورة لتغييرها");
+  },
+
+  _onImgClick(e){
+    e.preventDefault(); e.stopPropagation();
+    Admin.openImagePicker(e.currentTarget);
+  },
+
+  openImagePicker(imgEl){
+    this._editingImg = imgEl;
+    const doc = this._editDoc;
+    const uniq = [...new Set([...doc.querySelectorAll("img")].map(i=>i.getAttribute("src")).filter(Boolean))];
+    $f("imgpick-current").value = imgEl.getAttribute("src") || "";
+    $f("imgpick-list").innerHTML = uniq.map(s=>
+      '<button type="button" class="small gray" style="text-align:right;display:flex;align-items:center;gap:.5rem" onclick=\'Admin.pickExistingImage(' + JSON.stringify(s) + ')\' title="' + s + '">' +
+        '<img src="' + s + '" style="width:26px;height:26px;object-fit:cover;border-radius:5px;flex:none" onerror="this.style.display=\'none\'">' +
+        '<span style="overflow:hidden;text-overflow:ellipsis;direction:ltr">' + s + '</span>' +
+      '</button>').join("");
+    $f("imgpick-modal-bg").classList.add("open");
+  },
+  pickExistingImage(src){ $f("imgpick-current").value = src; },
+  applyImagePick(){
+    const v = $f("imgpick-current").value.trim();
+    if(!v || !this._editingImg){ toast("أدخل مسار الصورة"); return }
+    this._editingImg.setAttribute("src", v);
+    $f("imgpick-modal-bg").classList.remove("open");
+    toast("✓ تم تغيير الصورة هنا — لم يُنشر بعد، اضغط «✅ تحقق» للنشر على GitHub");
+  },
+
+  cancelPageEdit(){
+    if(!confirm("تجاهل كل التعديلات غير المحفوظة على هذه الصفحة؟")) return;
+    $f("page-preview-frame").src = "p/" + this.previewPageSlug + "/?_=" + Date.now();
+    this.exitEditUI();
+    toast("↩️ تم التراجع عن التعديلات");
+  },
+
+  async validatePageEdit(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً من زر ⚙️"); this.openGhSettings(); return }
+    if(!this._editDoc){ toast("خطأ: لا توجد صفحة قيد التعديل"); return }
+    if(!confirm("نشر هذه التعديلات مباشرة على صفحة المنتج في GitHub؟")) return;
+
+    const doc = this._editDoc;
+    doc.querySelectorAll(".__adm_edit").forEach(el=>{ el.removeAttribute("contenteditable"); el.classList.remove("__adm_edit"); });
+    doc.querySelectorAll(".__adm_img_edit").forEach(el=>{
+      el.classList.remove("__adm_img_edit");
+      el.removeEventListener("click", Admin._onImgClick, {capture:true});
+    });
+    const st = doc.getElementById("__adm_edit_style"); if(st) st.remove();
+
+    const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+    const path = "p/" + this.previewPageSlug + "/index.html";
+    try{
+      toast("⏳ جارِ الحفظ على GitHub...");
+      const file = await GH.getFile(path);
+      const b64 = btoa(unescape(encodeURIComponent(html)));
+      await GH.putFile(path, b64, file.sha, "تعديل صفحة " + this.previewPageSlug + " عبر لوحة التحكم");
+      toast("✅ تم النشر على GitHub — يظهر التحديث على الموقع خلال دقيقة تقريباً");
+      this.exitEditUI();
+      setTimeout(()=>{ $f("page-preview-frame").src = "p/" + this.previewPageSlug + "/?_=" + Date.now(); }, 1500);
+    }catch(err){
+      console.error(err);
+      toast("❌ فشل الحفظ — تحقق من التوكن والصلاحيات (" + err.message + ")");
+    }
+  },
 
   /* ════════ الأقسام ════════ */
   renderCategories(){
