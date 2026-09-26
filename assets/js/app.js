@@ -102,7 +102,10 @@ function toast(t){
 function initProduct(slug){
   const p = PRODUCTS.find(p=>p.slug===slug);
   if(!p) return;
-  const state = { offer: p.offers[0], wilaya:null, dtype:"home" };
+  // العرض الافتراضي المُحدَّد مسبقاً هو نفسه العرض "الأكثر طلباً" (bestIdx) — قبل هذا التصحيح
+  // كان يُحدَّد افتراضياً «قطعة واحدة» بينما شارة «الأكثر طلباً 🔥» تظهر على عرض آخر، ما يُشتّت الزبون
+  const bestIdx = 2;
+  const state = { offer: p.offers[bestIdx] || p.offers[0], wilaya:null, dtype:"home" };
 
   // معرض الصور
   const main = document.getElementById("gmain");
@@ -114,15 +117,14 @@ function initProduct(slug){
     document.querySelector(".gthumbs").appendChild(th);
   });
 
-  // العروض
-  const bestIdx = 2;
+  // العروض — العرض المُحدَّد بصرياً (on) هو نفسه bestIdx المُفعَّل افتراضياً في state.offer أعلاه
   const offersBox = document.getElementById("offers");
   p.offers.forEach((o,i)=>{
     const paid = o.qty - (o.free||0);
     const unit = Math.round(o.price/paid);
     const disc = Math.round((1 - o.price/(p.price*paid))*100);
     const d = document.createElement("div");
-    d.className = "offer"+(i===0?" on":"");
+    d.className = "offer"+(i===bestIdx?" on":"");
     const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
     d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}
       <div class="q">${label}</div>
