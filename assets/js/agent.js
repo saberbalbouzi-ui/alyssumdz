@@ -110,6 +110,8 @@ const Agent = (() => {
       bestSellersIntro: () => `سؤال جميل! 🤔 منتجاتنا الأكثر طلباً الآن:`,
       askNeed: () => `أو صف لي ما تحتاجه (شعر، بشرة، صحة...) وأرشح لك الأفضل.`,
       wilayaNotFound: () => `لم أتعرّف على اسم الولاية بدقة 🤔 اكتب اسمها كما تُكتب رسمياً (مثال: البليدة، سطيف، وهران...) وسأعطيك سعر التوصيل فوراً.`,
+      safety: () => `منتجاتنا طبيعية 100% ويثق بها آلاف الزبائن في كل الولايات ✅ التركيبة مصنوعة من مكونات نباتية مختارة بعناية. وتجربتك بدون أي مخاطرة: تدفع فقط عند الاستلام بعد أن ترى المنتج بنفسك 😊`,
+      value: () => `السعر يعكس جودة المكوّنات الطبيعية 100% والنتائج التي يثق بها زبائننا 🌿 وتوفّر أكثر مع عروض الكمية (قطعتين أو 3 قطع، وأحياناً قطعة مجانية) — وتدفع فقط عند الاستلام، فلا مخاطرة في التجربة.`,
     },
     fr: {
       greet: p => p
@@ -128,6 +130,8 @@ const Agent = (() => {
       bestSellersIntro: () => `Bonne question ! 🤔 Nos produits les plus demandés actuellement :`,
       askNeed: () => `Ou décrivez votre besoin (cheveux, peau, santé...) et je vous conseille le meilleur choix.`,
       wilayaNotFound: () => `Je n'ai pas bien identifié la wilaya 🤔 Écrivez son nom (ex : Blida, Sétif, Oran...) et je vous donne le tarif de livraison immédiatement.`,
+      safety: () => `Nos produits sont 100% naturels et font confiance à des milliers de clients partout en Algérie ✅ La formule est composée d'ingrédients végétaux soigneusement sélectionnés. Votre essai est sans aucun risque : vous ne payez qu'à la réception, après avoir vu le produit 😊`,
+      value: () => `Le prix reflète la qualité des ingrédients 100% naturels et les résultats appréciés par nos clients 🌿 Vous économisez davantage avec les offres multi-pièces (2 ou 3 pièces, parfois avec une pièce gratuite) — et vous ne payez qu'à la livraison, aucun risque à essayer.`,
     },
   };
 
@@ -152,7 +156,10 @@ const Agent = (() => {
     { re: /(لحية|barbe)/i, act: "huile-a-barbe" },
     { re: /(رائحة الفم|breatyfresh|haleine)/i, act: "breatyfresh" },
     { re: /(قولون|colon)/i, act: "anti-colon" },
+    { re: /(اثار جانبية|آثار جانبية|أضرار|ضرر|خطر|خطير|حساسية|effets secondaires|danger|dangereux|allergie|risque)/i, key: "safety" },
+    { re: /(غالي|غالية|غاليه|مكلف|ثمن مرتفع|cher|chère|expensive)/i, key: "value" },
     { re: /(سعر|بكم|ثمن|بشحال|شحال|prix|combien|coûte|coute|tarif)/i, key: "price" },
+    { re: /(مكونات|مكوناته|مكوناتها|تركيبة|فيم يتكون|composition|ingrédients?|ingredient)/i, key: "ingredients" },
     { re: /(توصيل|ليفريزون|ليفريسون|توصيلة|الولايات|livraison|delivery)/i, key: "delivery" },
     { re: /(دفع|الدفع|كاش|ثقة|نصب|احتيال|paiement|payer|confiance|arnaque)/i, key: "payment" },
     { re: /(ضمان|أصلي|طبيعي|كيماوي|فعالية|نتيجة|نتائج|garantie|original|naturel|efficace)/i, key: "guarantee" },
@@ -198,6 +205,17 @@ const Agent = (() => {
     const desc = p.desc || "";
     const intro = hook || desc;
     return `${intro}${bestOfferLine(p, l)}${productCard(p, l)}<br>${T[l].askOrder()}`;
+  }
+
+  /* إجابة دقيقة عن المكوّنات: تُستخرج من الوصف الحقيقي المكتوب في صفحة المنتج نفسها (لا نص عام) */
+  function ingredientsAnswer(p, l) {
+    const desc = p.desc || "";
+    if (l === "fr") {
+      const note = desc ? `« ${desc} »` : "une sélection d'ingrédients naturels (voir la fiche produit pour le détail complet).";
+      return `Voici la composition de « ${p.title} », telle que décrite sur sa page produit :<br>${note}<br>Une formule 100% naturelle, comme sur toute la gamme ALYSSUM.${bestOfferLine(p, l)}${productCard(p, l)}`;
+    }
+    const note = desc || "مكونات طبيعية مختارة بعناية (التفاصيل الكاملة في صفحة المنتج).";
+    return `مكوّنات «${p.title}» كما هي موضّحة في صفحة المنتج:<br>${note}<br>تركيبة طبيعية 100% كعادة منتجات أليسوم.${bestOfferLine(p, l)}${productCard(p, l)}`;
   }
 
   async function reply(text) {
@@ -246,6 +264,10 @@ const Agent = (() => {
         const p = (window.PRODUCTS || []).find(p => p.old) || (window.PRODUCTS || [])[0];
         return p ? tr.priceGeneric(p) : tr.bestSellersIntro();
       }
+      if (it.key === "ingredients") {
+        const p = currentProduct() || findProductByText(t) || (window.PRODUCTS || [])[0];
+        return p ? ingredientsAnswer(p, l) : tr.askNeed();
+      }
       if (it.key === "whatsapp") return tr.whatsapp();
       if (it.key) return tr[it.key]();
       if (it.act) {
@@ -253,6 +275,11 @@ const Agent = (() => {
         if (p) return productPitch(p, l);
       }
     }
+
+    // ردّ الزبون باسم ولاية فقط (مثلاً كجواب على سؤال «أي ولاية؟») ولم يُطابق أي نية أخرى أعلاه
+    // → نعتبرها متابعة لسؤال التوصيل ونعطيه السعر الدقيق مباشرة، بدل الرجوع لتعريف عام للمنتج
+    const wFollowUp = findWilaya(t);
+    if (wFollowUp) return tr.deliveryWilaya(wFollowUp);
 
     // على صفحة منتج ولم يتطابق شيء محدَّد → نتحدث عن هذا المنتج بالذات (دقّة حسب صفحة المنتج)
     const cur = currentProduct();
