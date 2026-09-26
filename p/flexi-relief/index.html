@@ -196,7 +196,6 @@
           document.getElementById("psave").textContent = "وفّر " + Math.round((1-p.price/p.old)*100) + "%"; }
         else { document.getElementById("pold").style.display="none"; document.getElementById("psave").style.display="none"; }
         document.getElementById("pprice").textContent = fmt(p.price);
-        document.getElementById("btn-total").textContent = fmt(p.price);
       }
       // منتجات مشابهة
       const rel2 = PRODUCTS.filter(x=>x.slug!=="flexi-relief"&&x.cat===(p?p.cat:"")).slice(0,4);

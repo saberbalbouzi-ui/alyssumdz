@@ -251,7 +251,10 @@ body:before{
   border-radius:18px!important;
   border:1px solid rgba(35,70,58,.09)!important;
   background:#f8f5ed!important;
+  color:var(--ink)!important;
 }
+.total-box small{color:var(--muted)!important;font-weight:700!important}
+.total-box b,.total-box #fee{color:var(--green)!important}
 .btn-order,.btn-gold,.lp-btn-gold{
   background:linear-gradient(135deg,#d0ae78,#e7cb9b)!important;
   color:#19231f!important;
@@ -701,7 +704,6 @@ document.querySelector(".pbox")?.addEventListener("mouseleave", () => {
           document.getElementById("psave").textContent = "وفّر " + Math.round((1-p.price/p.old)*100) + "%"; }
         else { document.getElementById("pold").style.display="none"; document.getElementById("psave").style.display="none"; }
         document.getElementById("pprice").textContent = fmt(p.price);
-        document.getElementById("btn-total").textContent = fmt(p.price);
       }
       // منتجات مشابهة
       const rel2 = PRODUCTS.filter(x=>x.slug!=="anti-acne"&&x.cat===(p?p.cat:"")).slice(0,4);

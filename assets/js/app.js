@@ -239,6 +239,10 @@ function initProduct(slug){
     totEl.textContent = fmt(total);
     const st = document.getElementById("sticky-price");
     if(st) st.textContent = fmt(total);
+    // زر «تأكيد الطلب» كان يعرض دائماً سعر القطعة الواحدة الثابت (p.price) ولا يتحدّث أبداً
+    // مع تغيير العرض أو إضافة رسوم التوصيل — أصبح الآن يعكس نفس الإجمالي الحقيقي دوماً
+    const bt = document.getElementById("btn-total");
+    if(bt) bt.textContent = fmt(total);
   }
   update();
 
