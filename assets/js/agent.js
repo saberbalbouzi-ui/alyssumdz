@@ -11,6 +11,11 @@ const Agent = (() => {
   const fmtFr = n => Number(n).toLocaleString("fr-DZ") + " DA";
   const price = (n, l) => (l === "fr" ? fmtFr(n) : fmt(n));
 
+  // اختيار عشوائي من مصفوفة (لتنويع صياغة معالجة الاعتراضات فلا يبدو الرد آلياً مكرراً)
+  const randomPick = arr => arr[Math.floor(Math.random() * arr.length)];
+  // السعر اليومي التقريبي (لتأطير اعتراض السعر): علبة تكفي شهراً تقريباً = سعر ÷ 30 — مبني على سعر المنتج الحقيقي دائماً
+  const dailyPrice = price0 => Math.max(1, Math.round(price0 / 30));
+
   /* ── المنتج الحالي حسب مسار الصفحة (p/<slug>/) — يجعل الردود دقيقة حسب صفحة المنتج المفتوحة ── */
   const currentSlug = (() => {
     const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
@@ -92,13 +97,70 @@ const Agent = (() => {
     },
   };
 
+  /* ── منتجات مكمّلة حقيقية (Cross-sell) — معرّفات (slugs) موجودة فعلاً في كتالوج المنتجات
+     ومُختارة يدوياً بمنطق تكامل حقيقي (نفس الروتين أو نفس فئة الاستعمال)، وليس عشوائياً ── */
+  const COMPLEMENTS = {
+    "anti-acne": ["anti-rides-2", "creme-tachouih"],
+    "anti-chute": ["huile-a-barbe", "henna"],
+    "anti-colon": ["tarkiz", "breatyfresh"],
+    "anti-rides": ["barbarie", "anti-rides-2"],
+    "anti-rides-2": ["anti-rides", "barbarie"],
+    "barbarie": ["anti-rides-2", "anti-rides"],
+    "breatyfresh": ["anti-colon"],
+    "creme-tachouih": ["tachouih-el-jamal", "tachouih-pack"],
+    "eczema": ["anti-acne", "anti-rides-2"],
+    "flexi-relief": ["hemorroides"],
+    "hemorroides": ["flexi-relief"],
+    "henna": ["anti-chute", "huile-a-barbe"],
+    "huile-a-barbe": ["anti-chute", "henna"],
+    "ithmed": ["misk-noir"],
+    "massage-oil": ["pack4"],
+    "memory-drops": ["tarkiz"],
+    "miel-de-cresson": ["miel-oranger", "miel-de-montagne"],
+    "miel-de-montagne": ["miel-sidr", "miel-oranger"],
+    "miel-oranger": ["miel-de-cresson", "miel-sidr"],
+    "miel-sidr": ["miel-de-montagne", "miel-oranger"],
+    "misk-noir": ["ithmed"],
+    "nocturna-honey": ["uroflow"],
+    "pack-djin-el-achiq": ["pack13"],
+    "pack4": ["pack13", "massage-oil"],
+    "tachouih-el-jamal": ["creme-tachouih", "tachouih-pack"],
+    "tachouih-pack": ["creme-tachouih", "tachouih-el-jamal"],
+    "tarkiz": ["memory-drops"],
+    "uroflow": ["nocturna-honey"],
+  };
+
+  /* سطر اقتراح منتج مكمّل — يُستعمل أحياناً فقط (وليس في كل رد) حتى لا يبدو مزعجاً،
+     ويعرض دائماً منتجاً حقيقياً بسعره الحقيقي من window.PRODUCTS (لا بيانات مختلقة) */
+  function crossSellLine(slug, l) {
+    const options = COMPLEMENTS[slug];
+    if (!options || !options.length) return "";
+    const compSlug = randomPick(options);
+    const cp = (window.PRODUCTS || []).find(p => p.slug === compSlug);
+    if (!cp) return "";
+    const priceStr = l === "fr" ? fmtFr(cp.price) : fmt(cp.price);
+    return l === "fr"
+      ? `<br><br>✨ <b>Idée</b> : plusieurs clients associent ce produit à <a href="${REL}p/${cp.slug}/" style="color:var(--gold);font-weight:900">${cp.title}</a> (${priceStr}) pour de meilleurs résultats.`
+      : `<br><br>✨ <b>فكرة</b>: كثير من زبائننا يجمعون بين هذا المنتج و<a href="${REL}p/${cp.slug}/" style="color:var(--gold);font-weight:900">${cp.title}</a> (${priceStr}) للحصول على نتيجة أفضل.`;
+  }
+
   const T = {
     ar: {
       greet: p => p
         ? `أهلاً وسهلاً بك في <b>${SITE_NAME}</b> 🌿<br>أنت الآن في صفحة «<b>${p.title}</b>» — اسألني عن أي تفصيل فيه (السعر، المكوّنات، التوصيل، الدفع...) وسأجيبك بدقة.`
         : `أهلاً وسهلاً بك في <b>${SITE_NAME}</b> 🌿<br>أنا مساعدك الشخصي قبل الطلب. اسألني عن أي منتج، الأسعار، التوصيل أو الدفع — أو أخبرني بما تبحث عنه وسأرشح لك الأنسب.`,
       salam: () => `وعليكم السلام وأهلاً بك في ${SITE_NAME} 👋 أنا مساعدك الشخصي. هل تبحث عن منتج معين؟ أو أخبرني بما تشكو منه (تساقط الشعر، البشرة، آلام...) وأرشح لك الأنسب.`,
-      payment: () => `الدفع عند الاستلام 💵 تدفع فقط عندما يصلك المنتج وتتأكد منه. لا نطلب أي دفع مسبق أبداً — هذا ضمان ثقتك.`,
+      payment: () => `الدفع عند الاستلام 💵 تدفع فقط عندما يصلك المنتج وتتأكد منه. لا نطلب أي دفع مسبق أبداً. نقبل أيضاً الحوالة البريدية أو الدفع عبر بريدي موب، بعد التواصل معنا على واتساب لترتيب ذلك.`,
+      returnPolicy: () => `نعم، نسترجع المنتج في حالة وجود خطأ فيه أو تلف عند الاستلام 🔄 إذا واجهت مشكلة من هذا النوع، تواصل معنا مباشرة على واتساب وسنتكفل بطلبك فوراً.`,
+      tracking: () => `بعد تأكيد طلبك، نرسل لك رابط تتبّع مباشر عبر موقع شركة التوصيل 📦 لتتبع مسار طلبك لحظة بلحظة حتى استلامه.`,
+      pregnancy: () => `منتجاتنا طبيعية 100% ويستخدمها الكثير من الزبائن بثقة 🌿 ولكن في حالة الحمل أو الرضاعة، ننصحك دوماً بمراجعة الطبيب أو الصيدلي أولاً للتأكد من ملاءمته لحالتك الخاصة، فصحتك وصحة طفلك أولويتنا.`,
+      physicalStore: () => `نحن شركة إنتاج ونُسوّق منتجاتنا فقط عبر موقعنا الرسمي alyssumdz.com 🌿 هذا يضمن لك أفضل سعر وأحدث إنتاج مباشرة دون وسطاء.`,
+      yearsInBusiness: () => `نعمل منذ سنة 2017 📅 أي أكثر من ${new Date().getFullYear() - 2017} سنوات من الخبرة وثقة آلاف الزبائن في كل الجزائر.`,
+      pharmacyAvailability: () => `بعض منتجاتنا متوفرة في الصيدليات حسب الطلب 💊 لكن الطلب المباشر عبر موقعنا يبقى أسهل وأسرع، مع الدفع عند الاستلام وتوصيل لجميع الولايات.`,
+      regulatoryApproval: () => `نعم ✅ جميع منتجاتنا مراقبة ومصرح بها من طرف وزارة التجارة، فهي مضمونة الجودة والسلامة 100%.`,
+      phoneContact: () => `للتواصل معنا، الطريقة الأسرع هي واتساب 📱 والرد يكون فورياً وتلقائياً على مدار اليوم.<br><a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">📱 واتساب ${WA_NUMBER.replace("213","0")}</a>`,
+      socialMedia: () => `تابعنا لمزيد من العروض والنصائح 🌿<br>📸 انستغرام: <a href="https://www.instagram.com/alyssumdzofficiel" target="_blank" style="color:var(--gold);font-weight:900">@alyssumdzofficiel</a><br>📘 فيسبوك: بنفس الاسم "alyssumdzofficiel"`,
+      resultsTime: () => `مدة ظهور النتيجة تختلف حسب المنتج، وعادة تكون بين أسبوعين إلى 3 أسابيع من الاستعمال المنتظم ⏳ ونحن على ثقة أنك ستلاحظ الفرق!`,
       guarantee: () => `منتجاتنا طبيعية 100% وأصلية ✅ إذا لم تكن راضياً، تواصل معنا مباشرة وسنحل المشكلة. رضا زبائننا هو سر نجاحنا منذ سنوات.`,
       howOrder: () => `الطلب سهل جداً 👇\n1️⃣ اختر العرض (قطعة / قطعتين / 3 قطع)\n2️⃣ املأ الاسم والهاتف والولاية\n3️⃣ اضغط «تأكيد الطلب» وسنتواصل معك للتأكيد.\nالدفع عند الاستلام!`,
       whatsapp: () => `بالتأكيد! تواصل معنا مباشرة على واتساب 👇<br><a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">📱 واتساب ${WA_NUMBER.replace("213","0")}</a>`,
@@ -111,14 +173,44 @@ const Agent = (() => {
       askNeed: () => `أو صف لي ما تحتاجه (شعر، بشرة، صحة...) وأرشح لك الأفضل.`,
       wilayaNotFound: () => `لم أتعرّف على اسم الولاية بدقة 🤔 اكتب اسمها كما تُكتب رسمياً (مثال: البليدة، سطيف، وهران...) وسأعطيك سعر التوصيل فوراً.`,
       safety: () => `منتجاتنا طبيعية 100% ويثق بها آلاف الزبائن في كل الولايات ✅ التركيبة مصنوعة من مكونات نباتية مختارة بعناية. وتجربتك بدون أي مخاطرة: تدفع فقط عند الاستلام بعد أن ترى المنتج بنفسك 😊`,
-      value: () => `السعر يعكس جودة المكوّنات الطبيعية 100% والنتائج التي يثق بها زبائننا 🌿 وتوفّر أكثر مع عروض الكمية (قطعتين أو 3 قطع، وأحياناً قطعة مجانية) — وتدفع فقط عند الاستلام، فلا مخاطرة في التجربة.`,
+      // معالجة اعتراض السعر — عدة صياغات (تُختار عشوائياً فتبدو أقل آلية)، إحداها تحسب السعر اليومي
+      // من سعر المنتج الحقيقي (وليس رقماً مختلقاً)، وأخرى تُبرز عرض الكمية الفعلي إن وُجد
+      value: p => randomPick([
+        `السعر يعكس جودة المكوّنات الطبيعية 100% والنتائج التي يثق بها زبائننا 🌿 وتوفّر أكثر مع عروض الكمية (قطعتين أو 3 قطع، وأحياناً قطعة مجانية) — وتدفع فقط عند الاستلام، فلا مخاطرة في التجربة.`,
+        p ? `فهمتك تماماً 🤝 خلّينا نحسبوها معاً: «${p.title}» بـ ${fmt(p.price)} يكفيك عادةً شهراً كاملاً — يعني أقل من ${fmt(dailyPrice(p.price))} دج في اليوم. وتدفع فقط عند الاستلام بعد ما تشوف المنتج.` : null,
+        (p && p.offers || []).some(o => o.free)
+          ? `صحيح، ما هوش الأرخص، بصح عندك عرض ${(p.offers.find(o => o.free)).qty} قطع بـ ${fmt(p.offers.find(o => o.free).price)} (منها قطعة مجاناً 🎁) — يوفر لك أكثر من الشراء بالقطعة الواحدة.`
+          : null,
+      ].filter(Boolean)),
+      // اعتراض "نشري بعد / نفكر فيها" — تحفيز لطيف بدون ضغط كاذب، مبني على بيانات حقيقية (تخفيض إن وُجد)
+      objectionDelay: p => randomPick([
+        (p && p.old)
+          ? `خذ وقتك 🙂 بس اعلم أن السعر الحالي (${fmt(p.price)} بدل ${fmt(p.old)}) هو تخفيض عن السعر الأصلي — ما نقدرش نضمنلك يبقى متاحاً للأبد. تحب نأكدلك الطلب الآن؟ الدفع يبقى عند الاستلام فقط.`
+          : `ماشي مشكل خالص، خذ راحتك في القرار 🙂 وإذا حبيت، نقدر نأكدلك الطلب الآن بلا أي التزام — تدفع فقط لما يوصلك المنتج وتتأكد منه.`,
+        `فهمتك، القرار ليك 👍 بس فكّر: كل يوم تأجيل يعني تأخير بسيط في رؤية النتيجة اللي تبحث عنها. حاب نبدأ بقطعة تجريبية وتقيّمها بنفسك؟`,
+      ]),
+      // اعتراض "نشك يخدم / ما نثقش" — الطمأنة عبر الدفع عند الاستلام (تجربة بلا مخاطرة)، بدون أرقام مختلقة
+      doubtResults: () => randomPick([
+        `تشكك طبيعي جداً، وما فيه مشكل 🤝 أفضل طريقة تتأكد هي تجرب بنفسك: تطلب الآن وتدفع فقط عند الاستلام بعد ما تشوف المنتج وتتأكد منه — ما فيه أي مخاطرة عليك.`,
+        `فهمتك 🙏 منتجاتنا طبيعية 100% ويثق بها زبائننا في كل الولايات. وباش تطمئن أكثر: الدفع عند الاستلام فقط، يعني تجرب بلا أي التزام مسبق.`,
+      ]),
     },
     fr: {
       greet: p => p
         ? `Bienvenue chez <b>ALYSSUM</b> 🌿<br>Vous êtes sur la page « <b>${p.title}</b> » — posez-moi vos questions (prix, composition, livraison, paiement...) et je vous répondrai précisément.`
         : `Bienvenue chez <b>ALYSSUM</b> 🌿<br>Je suis votre assistant avant commande. Demandez-moi un produit, les prix, la livraison ou le paiement — ou décrivez votre besoin et je vous conseille.`,
       salam: () => `Bonjour et bienvenue chez ALYSSUM 👋 Je suis votre assistant personnel. Vous cherchez un produit précis ? Ou décrivez votre besoin (chute de cheveux, peau, douleurs...) et je vous conseille le plus adapté.`,
-      payment: () => `Paiement à la livraison 💵 Vous ne payez qu'à la réception du produit, une fois vérifié. Aucun paiement à l'avance n'est jamais demandé — c'est notre garantie de confiance.`,
+      payment: () => `Paiement à la livraison 💵 Vous ne payez qu'à la réception du produit, une fois vérifié. Aucun paiement à l'avance n'est jamais demandé. Nous acceptons aussi le mandat postal ou Baridimob, à organiser en nous contactant sur WhatsApp.`,
+      returnPolicy: () => `Oui, nous reprenons le produit en cas de défaut ou de dommage à la réception 🔄 Si cela vous arrive, contactez-nous directement sur WhatsApp, nous prendrons en charge votre commande immédiatement.`,
+      tracking: () => `Après confirmation de votre commande, nous vous envoyons un lien de suivi direct sur le site du transporteur 📦 pour suivre votre colis étape par étape jusqu'à la livraison.`,
+      pregnancy: () => `Nos produits sont 100% naturels et utilisés en toute confiance par de nombreux clients 🌿 Toutefois, en cas de grossesse ou d'allaitement, nous vous conseillons de consulter un médecin ou un pharmacien au préalable, pour vous assurer qu'il convient à votre situation — votre santé et celle de votre enfant sont notre priorité.`,
+      physicalStore: () => `Nous sommes une entreprise de production et commercialisons nos produits uniquement via notre site officiel alyssumdz.com 🌿 cela vous garantit le meilleur prix et une production fraîche, sans intermédiaire.`,
+      yearsInBusiness: () => `Nous sommes actifs depuis 2017 📅 soit plus de ${new Date().getFullYear() - 2017} ans d'expérience et la confiance de milliers de clients partout en Algérie.`,
+      pharmacyAvailability: () => `Certains de nos produits sont disponibles en pharmacie sur demande 💊 mais commander directement sur notre site reste plus simple et plus rapide, avec paiement à la livraison partout en Algérie.`,
+      regulatoryApproval: () => `Oui ✅ tous nos produits sont contrôlés et autorisés par le Ministère du Commerce — qualité et sécurité garanties à 100%.`,
+      phoneContact: () => `Le moyen le plus rapide de nous contacter est WhatsApp 📱 avec une réponse instantanée et automatique à toute heure.<br><a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">📱 WhatsApp ${WA_NUMBER.replace("213","0")}</a>`,
+      socialMedia: () => `Suivez-nous pour plus d'offres et de conseils 🌿<br>📸 Instagram : <a href="https://www.instagram.com/alyssumdzofficiel" target="_blank" style="color:var(--gold);font-weight:900">@alyssumdzofficiel</a><br>📘 Facebook : même nom "alyssumdzofficiel"`,
+      resultsTime: () => `Le délai d'apparition des résultats varie selon le produit, généralement entre 2 et 3 semaines d'utilisation régulière ⏳ Nous sommes confiants que vous verrez la différence !`,
       guarantee: () => `Nos produits sont 100% naturels et authentiques ✅ Si vous n'êtes pas satisfait, contactez-nous directement et nous réglerons le problème. La satisfaction de nos clients est notre priorité depuis des années.`,
       howOrder: () => `Commander est très simple 👇\n1️⃣ Choisissez l'offre (1 / 2 / 3 pièces)\n2️⃣ Renseignez nom, téléphone et wilaya\n3️⃣ Cliquez sur « Confirmer la commande », nous vous contacterons pour confirmer.\nPaiement à la livraison !`,
       whatsapp: () => `Bien sûr ! Contactez-nous directement sur WhatsApp 👇<br><a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">📱 WhatsApp ${WA_NUMBER.replace("213","0")}</a>`,
@@ -131,7 +223,23 @@ const Agent = (() => {
       askNeed: () => `Ou décrivez votre besoin (cheveux, peau, santé...) et je vous conseille le meilleur choix.`,
       wilayaNotFound: () => `Je n'ai pas bien identifié la wilaya 🤔 Écrivez son nom (ex : Blida, Sétif, Oran...) et je vous donne le tarif de livraison immédiatement.`,
       safety: () => `Nos produits sont 100% naturels et font confiance à des milliers de clients partout en Algérie ✅ La formule est composée d'ingrédients végétaux soigneusement sélectionnés. Votre essai est sans aucun risque : vous ne payez qu'à la réception, après avoir vu le produit 😊`,
-      value: () => `Le prix reflète la qualité des ingrédients 100% naturels et les résultats appréciés par nos clients 🌿 Vous économisez davantage avec les offres multi-pièces (2 ou 3 pièces, parfois avec une pièce gratuite) — et vous ne payez qu'à la livraison, aucun risque à essayer.`,
+      value: p => randomPick([
+        `Le prix reflète la qualité des ingrédients 100% naturels et les résultats appréciés par nos clients 🌿 Vous économisez davantage avec les offres multi-pièces (2 ou 3 pièces, parfois avec une pièce gratuite) — et vous ne payez qu'à la livraison, aucun risque à essayer.`,
+        p ? `Je comprends 🤝 Faisons le calcul ensemble : « ${p.title} » à ${fmtFr(p.price)} dure généralement 1 mois complet — soit moins de ${fmtFr(dailyPrice(p.price))} par jour. Et vous ne payez qu'à la réception, après avoir vu le produit.` : null,
+        (p && p.offers || []).some(o => o.free)
+          ? `C'est vrai, ce n'est pas le moins cher, mais vous avez l'offre ${(p.offers.find(o => o.free)).qty} pièces à ${fmtFr(p.offers.find(o => o.free).price)} (dont 1 gratuite 🎁) — plus avantageuse que l'achat à l'unité.`
+          : null,
+      ].filter(Boolean)),
+      objectionDelay: p => randomPick([
+        (p && p.old)
+          ? `Prenez votre temps 🙂 Sachez juste que le prix actuel (${fmtFr(p.price)} au lieu de ${fmtFr(p.old)}) est une réduction temporaire — je ne peux pas garantir qu'elle sera toujours disponible. Je confirme votre commande ? Paiement uniquement à la livraison.`
+          : `Aucun souci, prenez le temps qu'il vous faut 🙂 Si vous le souhaitez, je peux réserver votre commande sans aucun engagement — vous ne payez qu'à la réception, une fois le produit vérifié.`,
+        `Je comprends, c'est votre décision 👍 Mais réfléchissez : chaque jour d'attente retarde un peu les résultats que vous recherchez. On commence par une unité d'essai ?`,
+      ]),
+      doubtResults: () => randomPick([
+        `Votre doute est tout à fait normal 🤝 La meilleure façon de vous en assurer est d'essayer vous-même : commandez maintenant et vous ne payez qu'à la réception, après avoir vérifié le produit — aucun risque.`,
+        `Je comprends 🙏 Nos produits sont 100% naturels et font confiance à nos clients partout en Algérie. Et pour plus de tranquillité : paiement uniquement à la livraison, sans engagement préalable.`,
+      ]),
     },
   };
 
@@ -158,6 +266,18 @@ const Agent = (() => {
     { re: /(قولون|colon)/i, act: "anti-colon" },
     { re: /(اثار جانبية|آثار جانبية|أضرار|ضرر|خطر|خطير|حساسية|effets secondaires|danger|dangereux|allergie|risque)/i, key: "safety" },
     { re: /(غالي|غالية|غاليه|مكلف|ثمن مرتفع|cher|chère|expensive)/i, key: "value" },
+    { re: /(نشري بعد|نفكر فيها|نخمم فيها|بعدين نشري|لاحقاً نطلب|لاحقا نطلب|غدوة نطلب|رح نرجع|plus tard|je réfléchis|je vais réfléchir|on verra)/i, key: "objectionDelay" },
+    { re: /(نشك يخدم|ما نثقش|مانثقش|شاك في|مقتنعش|ماشي متأكد|est-ce que ça marche vraiment|ça marche vraiment|sceptique|pas convaincu|j'ai un doute)/i, key: "doubtResults" },
+    { re: /(حامل|حمل|رضاعة|مرضعة|الحمل|enceinte|grossesse|allaitement)/i, key: "pregnancy" },
+    { re: /(مدة ظهور النتيجة|متى تظهر النتيجة|متى تظهر نتيجة|كم تدوم النتيجة|كم تدوم|كم يستمر مفعول|combien de temps pour voir|délai.*résultat|delai.*résultat)/i, key: "resultsTime" },
+    { re: /(استرجاع|ارجاع|إرجاع|ترجع|رجعت|رد المنتج|إعادة المنتج|retour produit|remboursement)/i, key: "returnPolicy" },
+    { re: /(تتبع|تابع|اتابع|وين طلبي|فين طلبي|suivi|tracking)/i, key: "tracking" },
+    { re: /(محل|متجر فعلي|عندكم محل|où êtes.vous|magasin physique)/i, key: "physicalStore" },
+    { re: /(منذ متى|كم سنة|من متى تعملون|depuis quand|expérience)/i, key: "yearsInBusiness" },
+    { re: /(صيدلية|صيدليات|pharmacie)/i, key: "pharmacyAvailability" },
+    { re: /(مراقب|مصرح|مرخص|وزارة التجارة|agréé|autorisé|contrôlé)/i, key: "regulatoryApproval" },
+    { re: /(اتصال|تلفون|رقم الهاتف|هاتف|appel|téléphone|numéro)/i, key: "phoneContact" },
+    { re: /(انستغرام|انستقرام|فيسبوك|فايسبوك|فيس بوك|instagram|facebook)/i, key: "socialMedia" },
     { re: /(سعر|بكم|ثمن|بشحال|شحال|prix|combien|coûte|coute|tarif)/i, key: "price" },
     { re: /(مكونات|مكوناته|مكوناتها|تركيبة|فيم يتكون|composition|ingrédients?|ingredient)/i, key: "ingredients" },
     { re: /(توصيل|ليفريزون|ليفريسون|توصيلة|الولايات|livraison|delivery)/i, key: "delivery" },
@@ -199,12 +319,14 @@ const Agent = (() => {
     return `<span class="mini">🌿 <b>${p.title}</b><br>${l === "fr" ? fmtFr(p.price) : fmt(p.price)}${p.old ? ` <s>${l === "fr" ? fmtFr(p.old) : fmt(p.old)}</s>` : ""} · <a href="${REL}p/${p.slug}/" style="color:var(--gold);font-weight:900">${label}</a></span>`;
   }
 
-  /* وصف/تحفيز دقيق لمنتج معيّن: يستعمل بيانات المنتج الحقيقية (السعر، العروض، الوصف) وليس نصاً عاماً مختلقاً */
+  /* وصف/تحفيز دقيق لمنتج معيّن: يستعمل بيانات المنتج الحقيقية (السعر، العروض، الوصف) وليس نصاً عاماً مختلقاً
+     — يضيف أحياناً (٣٥٪ من الوقت) اقتراح منتج مكمّل حقيقي (Cross-sell) عندما يوجد له مقابل منطقي */
   function productPitch(p, l) {
     const hook = (KNOWLEDGE[p.slug] && KNOWLEDGE[p.slug][l]) || "";
     const desc = p.desc || "";
     const intro = hook || desc;
-    return `${intro}${bestOfferLine(p, l)}${productCard(p, l)}<br>${T[l].askOrder()}`;
+    const cross = Math.random() < 0.35 ? crossSellLine(p.slug, l) : "";
+    return `${intro}${bestOfferLine(p, l)}${productCard(p, l)}<br>${T[l].askOrder()}${cross}`;
   }
 
   /* إجابة دقيقة عن المكوّنات: تُستخرج من الوصف الحقيقي المكتوب في صفحة المنتج نفسها (لا نص عام) */
@@ -267,6 +389,11 @@ const Agent = (() => {
       if (it.key === "ingredients") {
         const p = currentProduct() || findProductByText(t) || (window.PRODUCTS || [])[0];
         return p ? ingredientsAnswer(p, l) : tr.askNeed();
+      }
+      // معالجة الاعتراضات (سعر / تأجيل) تحتاج المنتج الحالي لتبني حجة دقيقة (سعر يومي حقيقي، تخفيض حقيقي...)
+      if (it.key === "value" || it.key === "objectionDelay") {
+        const p = currentProduct() || findProductByText(t) || null;
+        return tr[it.key](p);
       }
       if (it.key === "whatsapp") return tr.whatsapp();
       if (it.key) return tr[it.key]();
