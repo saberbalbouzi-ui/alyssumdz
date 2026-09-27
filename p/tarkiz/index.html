@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="../../assets/css/style.css">
 <link rel="icon" href="../../assets/img/favicon.png">
-<title>عسل التركيز وتنشيط الذاكرة — أليسوم | الدفع عند الاستلام</title><meta name="description" content="عسل التركيز وتنشيط الذاكرة للأطفال من 4 إلى 18 سنة، يتكون من عسل حر مع خلاصة الجنكة وخلاصة الإكليل وخلاصة الريحان وخلاصة الزبيب وخلاصة الريحان.">
+<title>عسل التركيز وتنشيط الذاكرة للأطفال — أليسوم | الدفع عند الاستلام</title><meta name="description" content="عسل طبيعي للأطفال يساعد على دعم التركيز وتنشيط الذاكرة، ويمنح الجسم طاقة طبيعية وطعمًا لذيذًا مناسبًا للاستخدام اليومي.">
 <style id="alyssum-premium-overrides">
 :root{
   --green:#23463a;
@@ -123,7 +123,7 @@ body:before{
 .gthumbs>*{border-radius:16px!important;border:1px solid var(--line)!important;overflow:hidden}
 .gthumbs img{width:100%;height:84px;object-fit:cover;cursor:pointer;transition:.2s}
 .gthumbs img:hover{opacity:.8}
-.gthumbs img.active{border:2px solid var(--gold)!important;opacity:1}
+.gthumbs img.active,.gthumbs img.on{border:2px solid var(--gold)!important;opacity:1}
 .trust-strip span{
   background:rgba(255,255,255,.88)!important;
   border:1px solid var(--line)!important;
@@ -201,7 +201,7 @@ body:before{
 .offers{
   display:grid;gap:10px;margin:14px 0;
 }
-.offer-card{
+.offer-card,.offer{
   border:1px solid rgba(35,70,58,.08);
   border-radius:18px;
   background:#fff;
@@ -327,10 +327,12 @@ body:before{
 .lp-card .ic{
   width:54px;height:54px;border-radius:16px;display:grid;place-items:center;
   background:linear-gradient(135deg,#edf3ee,#f4ecde);
+  font-size:24px;
 }
 .lp-stepnum{
   box-shadow:0 10px 22px rgba(35,70,58,.16);
 }
+.lp-testis{gap:16px!important}
 .lp-final{
   position:relative;overflow:hidden;
   border-radius:34px!important;
@@ -370,24 +372,6 @@ footer.site a{color:#f0d39d!important}
 footer.site h4{color:#fff!important}
 .copy{border-top:1px solid rgba(255,255,255,.10)!important}
 
-/* Avis screenshots */
-.reviews-screenshots{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:16px;
-  margin-top:20px;
-}
-.reviews-screenshots img{
-  width:100%;
-  border-radius:16px;
-  box-shadow:0 12px 32px rgba(25,48,40,.12);
-  border:1px solid rgba(35,70,58,.08);
-  transition:transform .3s ease;
-}
-.reviews-screenshots img:hover{
-  transform:translateY(-4px);
-}
-
 @media (max-width:980px){
   .lp-cards[style*="repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .lp-cards[style*="repeat(3"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
@@ -417,16 +401,13 @@ footer.site h4{color:#fff!important}
   .lp-textcard h2{font-size:29px!important}
   .lp-card{padding:20px!important}
   .lp-final{padding:42px 20px!important}
-  .reviews-screenshots{grid-template-columns:1fr!important}
 }
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
 </style>
-
 </head>
 <body>
-
 <div class="topbar">🚚 توصيل سريع لـ <b>58 ولاية</b> · 💵 <b>الدفع عند الاستلام</b> · 🎁 اشترِ <b>قطعتين</b> واحصل على <b>الثالثة مجاناً</b></div><header class="site"><div class="container">
       <a class="logo" href="../../index.html">ألي<span>سوم</span></a>
       <nav class="menu">
@@ -434,34 +415,29 @@ footer.site h4{color:#fff!important}
         <a href="../../index.html#features">لماذا نحن؟</a>
         <a href="../../index.html#faq">الأسئلة الشائعة</a>
       </nav>
-      <a class="hd-wa" href="https://wa.me/21354113889" target="_blank">واتساب</a>
+      <a class="hd-wa" href="https://wa.me/213559237239" target="_blank">واتساب</a>
       <button class="cart-btn" aria-label="السلة">🛒<span class="cart-count">0</span></button>
     </div></header>
 <div class="container">
-  <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / عسل التركيز وتنشيط الذاكرة</div>
+  <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / عسل التركيز و تنشيط الذاكرة</div>
   <div class="pd2 lp-hero">
     <div class="pbox">
-      <div class="gmain"><img id="gmain" src="../../assets/img/memory-focus/presentation/memory-focus 01.webp" alt="عسل التركيز وتنشيط الذاكرة"></div>
-      <div class="pthumbs"><div class="gthumbs">
-       
-        <img src="../../assets/img/memory-focus/presentation/memory-focus 02.webp" alt="صورة 2" onclick="changeImage(this)">
-        <img src="../../assets/img/memory-focus/presentation/memory-focus 03.webp" alt="صورة 3" onclick="changeImage(this)">
-        <img src="../../assets/img/memory-focus/presentation/memory-focus 04.webp" alt="صورة 4" onclick="changeImage(this)">
-      </div></div>
+      <div class="gmain"><img id="gmain" src="../../assets/img/tarkiz/0.webp" alt="عسل التركيز وتنشيط الذاكرة للأطفال"></div>
+      <div class="pthumbs"><div class="gthumbs"></div></div>
       <div class="trust-strip" style="margin-top:1rem">
-        <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>
+        <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>🔄 استبدال مضمون</span>
       </div>
     </div>
 
     <div class="lp-info">
-      <span class="eyebrow">ALYSSUM Herbal Science — دعم التركيز والذاكرة</span>
-      <h1>عسل التركيز وتنشيط الذاكرة</h1>
-      <div class="stars" style="margin:.3rem 0">★★★★★ <small>(تجارب وتقييمات عملائنا)</small></div>
-      <p class="lp-sub">تركيبة من العسل والخلاصات النباتية مخصصة للأطفال من 4 إلى 18 سنة</p>
-      <p class="lp-desc">عسل التركيز وتنشيط الذاكرة للأطفال من 4 إلى 18 سنة، يتكون من عسل حر مع خلاصة الجنكة وخلاصة الإكليل وخلاصة الريحان وخلاصة الزبيب وخلاصة الريحان.على تحسين مظهر الشوائب ومنح البشرة إحساسًا بالانتعاش.</p>
+      <span class="eyebrow">ALYSSUM — عسل الأطفال الطبيعي</span>
+      <h1>عسل التركيز وتنشيط الذاكرة للأطفال</h1>
+      <div class="stars" style="margin:.3rem 0">★★★★★ <small>(+48 تقييم إيجابي)</small></div>
+      <p class="lp-sub">تركيبة طبيعية مميزة لدعم التركيز وتنشيط الذاكرة عند الأطفال</p>
+      <p class="lp-desc">عسل طبيعي للأطفال يساعد على دعم التركيز وتنشيط الذاكرة، ويمنح الجسم طاقة طبيعية وطعمًا محببًا في الروتين اليومي.</p>
       <div class="pd-tags">
-        <span class="tag">🍯 عسل حر</span>
-        <span class="tag">🌿 خلاصات نباتية</span>
+        <span class="tag">🌿 طبيعي 100%</span>
+        <span class="tag">✅ أصلي ومفحص</span>
         <span class="tag">👁️ <b id="viewers">9</b> يشاهدون الآن</span>
       </div>
 
@@ -479,7 +455,7 @@ footer.site h4{color:#fff!important}
 
       <div class="offers" id="offers"></div>
 
-      <div class="mini-points"><div>🍯 عسل حر مع 5 خلاصات نباتية مختارة</div><div>🧠 تركيبة موجهة لروتين التركيز والذاكرة</div><div>👧👦 مناسب للفئة العمرية من 4 إلى 18 سنة</div><div>✅ للاستعمال وفق الجرعة الموصى بها على العبوة</div></div>
+      <div class="mini-points"><div>تركيبة طبيعية 100% بمكونات مختارة بعناية</div><div>يدعم التركيز وتنشيط الذاكرة عند الأطفال</div><div>طعم محبب يسهّل إدخاله في الروتين اليومي</div><div>مناسب للأطفال من 4 إلى 18 سنة</div></div>
 
       <form class="form" id="order-form" style="margin-top:1rem">
         <h3>📝 املأ معلوماتك — الدفع عند الاستلام</h3>
@@ -502,7 +478,7 @@ footer.site h4{color:#fff!important}
           <div style="text-align:left"><small>الإجمالي</small><b id="grand">—</b></div>
         </div>
         <button type="submit" class="btn-order">✅ تأكيد الطلب — <span id="btn-total"></span></button>
-        <a class="btn-wa" href="https://wa.me/213559237239?text=أريد%20طلب:%20عسل%20التركيز%20وتنشيط%20الذاكرة" target="_blank">💬 اطلب مباشرة عبر واتساب</a>
+        <a class="btn-wa" href="https://wa.me/213559237239?text=أريد%20طلب:%20عسل%20التركيز%20و%20تنشيط%20الذاكرة" target="_blank">💬 اطلب مباشرة عبر واتساب</a>
         <button type="button" class="btn-cart2" id="add-cart">🛒 أضف إلى السلة</button>
         <div class="cod-note">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>
       </form>
@@ -512,11 +488,11 @@ footer.site h4{color:#fff!important}
 
 <section class="lp-sec alt"><div class="container">
   <div class="lp-grid">
-    <div class="lp-imgcard"><img src="../../assets/img/memory-focus/body/memory-focus 06.webp" alt="عسل التركيز وتنشيط الذاكرة" loading="lazy"></div>
+    <div class="lp-imgcard"><img src="../../assets/img/tarkiz/1.webp" alt="عسل التركيز وتنشيط الذاكرة للأطفال" loading="lazy"></div>
     <div class="lp-textcard">
-      <h2>هل تبحث عن دعم طبيعي لروتين التركيز والذاكرة لدى طفلك؟</h2>
-      <p>خلال سنوات الدراسة، يحتاج الطفل إلى روتين غذائي متوازن وعادات يومية تساعده على الحفاظ على نشاطه وتركيزه. أليسوم يقدم تركيبة تجمع بين العسل الحر وخلاصات نباتية مختارة في منتج واحد.</p>
-      <div class="lp-bullets"><div>📚 أيام الدراسة والمراجعة تحتاج إلى روتين منتظم</div><div>🧠 التركيز والذاكرة جزء من روتين التعلم اليومي</div><div>🍯 العسل الحر أساس التركيبة</div><div>🌿 مزيج من خمس خلاصات نباتية</div></div>
+      <h2>هل يواجه طفلك صعوبة في التركيز والانتباه أثناء الدراسة؟</h2>
+      <p>قلة التركيز والنسيان المتكرر قد يؤثران على المستوى الدراسي وعلى ثقة طفلك بنفسه. اختيار غذاء طبيعي داعم يوميًا هو خطوة بسيطة وفعّالة تصنع فرقًا حقيقيًا.</p>
+      <div class="lp-bullets"><div>تشتت الذهن وصعوبة التركيز في المذاكرة</div><div>نسيان متكرر للمعلومات</div><div>نقص الطاقة والنشاط خلال اليوم</div><div>رغبة الأهل في حل طبيعي وآمن</div></div>
     </div>
   </div>
 </div></section>
@@ -524,41 +500,54 @@ footer.site h4{color:#fff!important}
 <section class="lp-sec"><div class="container">
   <div class="lp-grid">
     <div class="lp-textcard">
-      <h2>الحل: عسل حر مع خلاصات نباتية مختارة</h2>
-      <p>عسل أليسوم للتركيز وتنشيط الذاكرة يتكون من عسل حر وخلاصة الجنكة والإكليل والميرمية والزبيب والريحان، ليكون جزءاً من روتين غذائي متوازن للأطفال من 4 إلى 18 سنة.</p>
-      <div class="lp-bullets"><div>🍯 عسل حر كأساس للتركيبة</div><div>🌿 خلاصة الجنكة ضمن المزيج النباتي</div><div>🌱 خلاصة الإكليل والميرمية والريحان</div><div>🍇 خلاصة الزبيب ضمن التركيبة</div></div>
+      <h2>الحل: عسل طبيعي مدروس لدعم التركيز والذاكرة</h2>
+      <p>عسل التركيز من أليسوم تركيبة طبيعية مميزة تجمع بين العسل الطبيعي وخلاصات نباتية مختارة بعناية، صُمّمت لتكون جزءًا من الروتين اليومي لطفلك بخطوات بسيطة.</p>
+      <div class="lp-bullets"><div>يدعم التركيز والانتباه عند الأطفال</div><div>يمنح الجسم طاقة طبيعية يومية للنشاط والدراسة</div><div>يساهم في دعم الذاكرة والاستيعاب كجزء من غذاء متوازن</div><div>طعم محبب للأطفال يسهّل تبنّيه ضمن الروتين الصباحي</div><div>خيار طبيعي للعائلات الباحثة عن غذاء داعم للتحصيل الدراسي</div></div>
     </div>
-    <div class="lp-imgcard"><img src="../../assets/img/memory-focus/body/memory-focus 05.webp" alt="عسل التركيز وتنشيط الذاكرة" loading="lazy"></div>
+    <div class="lp-imgcard"><img src="../../assets/img/tarkiz/0.webp" alt="عسل التركيز وتنشيط الذاكرة للأطفال" loading="lazy"></div>
   </div>
 </div></section>
-
-
-
 
 <section class="lp-sec alt"><div class="container">
   <div class="lp-head"><h2>آراء بعض الزبائن</h2><p>تجارب حقيقية من زبائننا في مختلف الولايات</p></div>
-  <div class="reviews-screenshots">
-    <img src="../../assets/img/memory-focus/avis/Screenshot_01.webp" alt="رأي زبون 1" loading="lazy" onerror="this.src='../../assets/img/memory-focus/avis/Screenshot_20260819-181510.webp'">
-    <img src="../../assets/img/memory-focus/avis/Screenshot_02.webp" alt="رأي زبون 2" loading="lazy" onerror="this.src='../../assets/img/memory-focus/avis/Screenshot_20260819-181722.webp'">
-    <img src="../../assets/img/memory-focus/avis/Screenshot_20260819-181807.webp" alt="رأي زبون 3" loading="lazy">
-  </div>
+  <div class="lp-testis"><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">س</span>
+          <div>سفيان<br><small style="color:var(--muted);font-weight:700">ولاية قسنطينة</small></div>
+        </div></div><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">ع</span>
+          <div>عبد القادر<br><small style="color:var(--muted);font-weight:700">ولاية البليدة</small></div>
+        </div></div><div class="lp-card">
+        <div class="stars">★★★★★</div>
+        <p style="color:#3A4540">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)">
+          <span style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center">ن</span>
+          <div>نور الهدى<br><small style="color:var(--muted);font-weight:700">ولاية تلمسان</small></div>
+        </div></div></div>
 </div></section>
-
 
 <section class="lp-sec">
   <div class="container">
     <div class="lp-head">
-      <span class="eyebrow" style="display:inline-block">تركيبة نباتية مع العسل</span>
-      <h2 style="margin-top:12px">مكونات عسل التركيز وتنشيط الذاكرة</h2>
-      <p>عسل حر مع خمس خلاصات نباتية مختارة بعناية ضمن تركيبة واحدة.</p>
+      <span class="eyebrow" style="display:inline-block">تركيبة مختارة بعناية</span>
+      <h2 style="margin-top:12px">المكونات التي تصنع التجربة</h2>
+      <p>عسل طبيعي وخلاصات نباتية مختارة بعناية لدعم تركيز طفلك وذاكرته يوميًا.</p>
     </div>
-    <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-      <article class="lp-card"><img src="../../assets/img/memory-focus/composants/honey.webp" alt="عسل حر" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>عسل حر</h3><p>المكوّن الأساسي في تركيبة عسل التركيز وتنشيط الذاكرة.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/memory-focus/composants/ginkgo.webp" alt="خلاصة الجنكة" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الجنكة</h3><p>خلاصة نباتية مختارة ضمن مزيج المنتج.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/memory-focus/composants/rosemary.webp" alt="خلاصة الإكليل" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الإكليل</h3><p>مكوّن نباتي ضمن تركيبة العسل.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/memory-focus/composants/sage.webp" alt="خلاصة الميرمية" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الميرمية</h3><p>خلاصة نباتية تدخل ضمن المزيج.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/memory-focus/composants/raisins.webp" alt="خلاصة الزبيب" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الزبيب</h3><p>مكوّن نباتي ضمن تركيبة المنتج.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/memory-focus/composants/basil.webp" alt="خلاصة الريحان" loading="lazy" style="width:100%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الريحان</h3><p>خلاصة نباتية مختارة ضمن المزيج.</p></div></article>
+    <div class="lp-cards" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+      <article class="lp-card"><div style="padding:22px"><div class="ic">🍯</div><h3 style="margin-top:14px">عسل طبيعي</h3><p>قاعدة التركيبة، ومصدر الطاقة الطبيعية اليومية.</p></div></article>
+      <article class="lp-card"><div style="padding:22px"><div class="ic">🥜</div><h3 style="margin-top:14px">مكسرات مطحونة</h3><p>دعم غذائي تقليدي مرتبط بالتركيز والحيوية.</p></div></article>
+      <article class="lp-card"><div style="padding:22px"><div class="ic">🌿</div><h3 style="margin-top:14px">خلاصة الجنكة</h3><p>نبتة معروفة تقليديًا بدعم النشاط الذهني.</p></div></article>
+      <article class="lp-card"><div style="padding:22px"><div class="ic">🍇</div><h3 style="margin-top:14px">خلاصة الزبيب</h3><p>لمسة طبيعية تضيف نكهة محببة للأطفال.</p></div></article>
+    </div>
+    <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px">
+      <article class="lp-card"><div style="padding:20px"><h3>خلاصة الإكليل</h3><p>لمسة نباتية ضمن التركيبة الطبيعية للعسل.</p></div></article>
+      <article class="lp-card"><div style="padding:20px"><h3>خلاصة الريحان</h3><p>خلاصة نباتية تدخل ضمن هوية التركيبة.</p></div></article>
+      <article class="lp-card"><div style="padding:20px"><h3>خلاصة الميرمية</h3><p>عنصر نباتي مكمّل للتركيبة الطبيعية.</p></div></article>
     </div>
   </div>
 </section>
@@ -566,16 +555,16 @@ footer.site h4{color:#fff!important}
 <section class="lp-sec alt">
   <div class="container">
     <div class="lp-head">
-      <h2>لماذا يناسب روتين طفلك؟</h2>
-      <p>تركيبة بسيطة وواضحة تجمع بين العسل الحر وخلاصات نباتية مختارة.</p>
+      <h2>لماذا يفضّل الأهل عسل التركيز من أليسوم؟</h2>
+      <p>ستة أسباب تجعله الخيار الصحيح لطفلك</p>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-      <article class="lp-card"><div style="padding:26px"><div class="ic">🌿</div><h3 style="margin-top:15px">🍯 عسل حر</h3><p>🌿 خلاصة الجنكة ضمن المزيج النباتي والحبوب مع الاستعمال المنتظم.</p></div></article>
-      <article class="lp-card"><div style="padding:26px"><div class="ic">💧</div><h3 style="margin-top:15px">🧠 تركيبة للتركيز والذاكرة</h3><p>مصممة لتكون جزءاً من الروتين الغذائي اليومي.</p></div></article>
-      <article class="lp-card"><div style="padding:26px"><div class="ic">✅</div><h3 style="margin-top:15px">🌿 خمس خلاصات نباتية</h3><p>الجنكة والإكليل والميرمية والزبيب والريحان.</p></div></article>
-      <article class="lp-card"><div style="padding:26px"><div class="ic">🧴</div><h3 style="margin-top:15px">👧👦 للفئة العمرية 4–18 سنة</h3><p>مخصص للفئة العمرية المذكورة على المنتج.</p></div></article>
-      <article class="lp-card"><div style="padding:26px"><div class="ic">☀️</div><h3 style="margin-top:15px">📚 مناسب لروتين الدراسة</h3><p>يمكن إدراجه ضمن نظام غذائي متوازن وروتين يومي منظم.</p></div></article>
-      <article class="lp-card"><div style="padding:26px"><div class="ic">📦</div><h3 style="margin-top:15px">📦 طلب ودفع عند الاستلام</h3><p>اطلب عبر الاستمارة أو مباشرة عبر واتساب مع الدفع عند الاستلام.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">🎯</div><h3 style="margin-top:15px">دعم التركيز</h3><p>يساعد على دعم مستوى التركيز والانتباه عند الأطفال.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">⚡</div><h3 style="margin-top:15px">طاقة طبيعية</h3><p>يمنح الجسم طاقة طبيعية للنشاط والدراسة يوميًا.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">🧠</div><h3 style="margin-top:15px">دعم الذاكرة</h3><p>يساهم كجزء من غذاء متوازن في دعم الذاكرة والاستيعاب.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">😋</div><h3 style="margin-top:15px">طعم محبب</h3><p>نكهة يحبها الأطفال، مما يسهّل الالتزام بالروتين الصباحي.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">👨‍👩‍👧</div><h3 style="margin-top:15px">خيار العائلة</h3><p>مناسب للعائلات الباحثة عن دعم طبيعي للتحصيل الدراسي.</p></div></article>
+      <article class="lp-card"><div style="padding:26px"><div class="ic">✅</div><h3 style="margin-top:15px">جودة مضمونة</h3><p>منتج طبيعي 100% مناسب للأطفال من 4 إلى 18 سنة.</p></div></article>
     </div>
   </div>
 </section>
@@ -584,25 +573,23 @@ footer.site h4{color:#fff!important}
   <div class="container">
     <div class="lp-head">
       <h2>طريقة الاستعمال</h2>
-      <p>يُستخدم وفق الجرعة وطريقة الاستعمال الموصى بهما على العبوة.</p>
+      <p>خطوات بسيطة للحصول على أفضل استفادة</p>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-      <article class="lp-card"><div style="padding:28px"><div class="lp-stepnum">1</div><h3>اقرأ التعليمات</h3><p>اقرأ الجرعة الموصى بها على العبوة قبل الاستعمال.</p></div></article>
-      <article class="lp-card"><div style="padding:28px"><div class="lp-stepnum">2</div><h3>التزم بالجرعة</h3><p>التزم بالجرعة المناسبة للفئة العمرية كما هو موضح على العبوة.</p></div></article>
-      <article class="lp-card"><div style="padding:28px"><div class="lp-stepnum">3</div><h3>استعمال منتظم</h3><p>حافظ على الاستعمال المنتظم ضمن نظام غذائي متوازن وتعليمات المنتج.</p></div></article>
+      <article class="lp-card"><div style="padding:28px"><div class="lp-stepnum">1</div><h3>ملعقتان صغيرتان يوميًا</h3><p>صباحًا ومساءً، تُعطى مباشرة أو تُمزج مع حليب دافئ.</p></div></article>
+      <article class="lp-card"><div style="padding:28px"><div class="lp-stepnum">2</div><h3>الأفضل مع وجبة الإفطار</h3><p>الاستعمال المنتظم كجزء من روتين الصباح يمنح أفضل استفادة.</p></div></article>
+      <article class="lp-card"><div style="padding:28px"><div class="lp-stepnum">3</div><h3>مناسب من 4 إلى 18 سنة</h3><p>عسل طبيعي 100% يلائم مختلف الأعمار ضمن هذه الفئة.</p></div></article>
     </div>
   </div>
 </section>
 
-
-
 <section style="padding-top:0"><div class="container">
   <div class="lp-final">
-    <h2>🎁 اطلب الآن — عسل التركيز وتنشيط الذاكرة</h2>
-    <p>املأ الاستمارة بالأعلى وسنتصل بك لتأكيد الطلب، ثم يصلك المنتج مع الدفع عند الاستلام.</p>
+    <h2>🎁 اطلب الآن — اشترِ قطعتين واحصل على الثالثة مجاناً</h2>
+    <p>العرض متاح لفترة محدودة فقط. املأ الاستمارة بالأعلى وسنتصل بك للتأكيد، ثم يصلك الطلب خلال 24-72 ساعة والدفع عند الاستلام.</p>
     <div class="cta-row" style="justify-content:center">
       <a class="lp-btn lp-btn-gold" href="#order-form">✅ اطلب الآن — الدفع عند الاستلام</a>
-      <a class="lp-btn lp-btn-green" href="https://wa.me/213559237239?text=أريد%20طلب:%20عسل%20التركيز%20وتنشيط%20الذاكرة" target="_blank">💬 اطلب عبر واتساب</a>
+      <a class="lp-btn lp-btn-green" href="https://wa.me/213559237239?text=أريد%20طلب:%20عسل%20التركيز%20و%20تنشيط%20الذاكرة" target="_blank">💬 اطلب عبر واتساب</a>
     </div>
   </div>
   <div class="lp-head" style="margin-top:2.5rem"><h2 style="font-size:1.5rem">قد يعجبك أيضاً</h2></div>
@@ -640,62 +627,11 @@ footer.site h4{color:#fff!important}
 <script defer src="../../assets/js/api.js"></script>
 <script defer src="../../assets/js/app.js"></script>
 <script defer src="../../assets/js/agent.js"></script>
-<script>
-// Galerie d'images - changement au clic et auto-rotation
-let currentImageIndex = 0;
-const images = [
-    "../../assets/img/memory-focus/presentation/memory-focus 01.webp",
-    "../../assets/img/memory-focus/presentation/memory-focus 02.webp",
-    "../../assets/img/memory-focus/presentation/memory-focus 03.webp",
-    "../../assets/img/memory-focus/presentation/memory-focus 04.webp"
-];
-let autoRotateInterval;
-
-function changeImage(thumb) {
-    const mainImg = document.getElementById("gmain");
-    mainImg.src = thumb.src;
-    
-    // Mettre à jour les classes actives
-    document.querySelectorAll(".gthumbs img").forEach(img => img.classList.remove("active"));
-    thumb.classList.add("active");
-    
-    // Réinitialiser l'auto-rotation
-    clearInterval(autoRotateInterval);
-    startAutoRotate();
-}
-
-function startAutoRotate() {
-    autoRotateInterval = setInterval(() => {
-        currentImageIndex = (currentImageIndex + 1) % images.length;
-        const mainImg = document.getElementById("gmain");
-        const thumbs = document.querySelectorAll(".gthumbs img");
-        
-        mainImg.src = images[currentImageIndex];
-        thumbs.forEach((img, idx) => {
-            img.classList.toggle("active", idx === currentImageIndex);
-        });
-    }, 4000); // Change toutes les 4 secondes
-}
-
-// Démarrer l'auto-rotation au chargement
-document.addEventListener("DOMContentLoaded", () => {
-    startAutoRotate();
-});
-
-// Pause sur hover de la galerie
-document.querySelector(".pbox")?.addEventListener("mouseenter", () => {
-    clearInterval(autoRotateInterval);
-});
-
-document.querySelector(".pbox")?.addEventListener("mouseleave", () => {
-    startAutoRotate();
-});
-</script>
 <script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
-      initProduct("memory-focus");
+      initProduct("tarkiz");
       initCartDrawer();
       fillCartWilayas();
-      const p = PRODUCTS.find(x=>x.slug==="memory-focus");
+      const p = PRODUCTS.find(x=>x.slug==="tarkiz");
       if(p){
         if(p.old){ document.getElementById("pold").textContent = fmt(p.old);
           document.getElementById("psave").textContent = "وفّر " + Math.round((1-p.price/p.old)*100) + "%"; }
@@ -703,14 +639,12 @@ document.querySelector(".pbox")?.addEventListener("mouseleave", () => {
         document.getElementById("pprice").textContent = fmt(p.price);
       }
       // منتجات مشابهة
-      const rel2 = PRODUCTS.filter(x=>x.slug!=="memory-focus"&&x.cat===(p?p.cat:"")).slice(0,4);
-      const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!=="memory-focus").slice(0,4);
+      const rel2 = PRODUCTS.filter(x=>x.slug!=="tarkiz"&&x.cat===(p?p.cat:"")).slice(0,4);
+      const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!=="tarkiz").slice(0,4);
       document.getElementById("related").innerHTML = others.map(x=>`
         <a class="card" href="../../p/${x.slug}/">
           <div class="thumb"><img loading="lazy" src="../../${x.images[0]}" alt="${x.title}"></div>
           <div class="body"><h3>${x.title}</h3>
           <div class="price-row"><span class="price">${fmt(x.price)}</span>${x.old?`<span class="old">${fmt(x.old)}</span>`:""}</div></div>
         </a>`).join("");
-    });});</script>
-</body>
-</html>
+    });});</script></body></html>
