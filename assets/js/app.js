@@ -98,6 +98,98 @@ function toast(t){
   el._t=setTimeout(()=>{el.style.opacity=0;el.style.bottom="100px"},2400);
 }
 
+/* ════════ بكسلات التتبع (فيسبوك / تيك توك / جوجل) — تُدار من لوحة التحكم admin.html ════════
+   تُقرأ من assets/data/pixels.json عند كل تحميل صفحة (رئيسية أو منتج)، ثم تُثبَّت أكواد
+   التتبع الأساسية (PageView) لكل بكسل مفعّل ومُتاح على هذه الصفحة، ويُسجَّل حدث «شراء»
+   تلقائياً عند نجاح تأكيد الطلب في صفحة أي منتج مفعّل عليه البكسل. */
+let __pixelsCache = null;
+async function loadPixels(){
+  if(__pixelsCache) return __pixelsCache;
+  try{
+    const r = await fetch((typeof REL!=="undefined"?REL:"") + "assets/data/pixels.json", {cache:"no-store"});
+    __pixelsCache = r.ok ? await r.json() : [];
+  }catch(e){ __pixelsCache = []; }
+  return __pixelsCache;
+}
+function currentProductSlugFromUrl(){
+  const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
+  return m ? m[1] : null;
+}
+function pixelApplies(px, slug){
+  if(!px || px.active===false) return false;
+  if(!px.scope || px.scope === "all") return true;
+  return Array.isArray(px.scope) && !!slug && px.scope.includes(slug);
+}
+function injectGtagBase(id){
+  if(window.__gtagBaseLoaded) return;
+  window.__gtagBaseLoaded = true;
+  const s = document.createElement("script");
+  s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function(){ dataLayer.push(arguments); };
+  gtag("js", new Date());
+}
+function injectPixelBase(px){
+  if(px.platform === "facebook"){
+    if(!window.fbq){
+      /* كود فيسبوك بكسل الرسمي (Meta Events Manager) */
+      (function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+      n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})(window,
+      document,"script","https://connect.facebook.net/en_US/fbevents.js");
+    }
+    fbq("init", px.pixelId);
+    fbq("track", "PageView");
+  } else if(px.platform === "tiktok"){
+    if(!window.ttq){
+      /* كود تيك توك بكسل الرسمي (TikTok Events Manager) */
+      (function (w, d, t) {
+        w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];
+        ttq.setAndDefer=function(tq,e){tq[e]=function(){tq.push([e].concat(Array.prototype.slice.call(arguments,0)))}};
+        for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+        ttq.instance=function(t2){for(var e=ttq._i[t2]||[],n=0;n<e.length;n++)ttq.setAndDefer(e,e.methods[n]);return e};
+        ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};
+          var o=d.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;
+          var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
+      })(window, document, "ttq");
+    }
+    ttq.load(px.pixelId);
+    ttq.page();
+  } else if(px.platform === "ga4" || px.platform === "google_ads"){
+    injectGtagBase(px.pixelId);
+    gtag("config", px.pixelId);
+  }
+}
+async function initPixels(){
+  try{
+    const pixels = await loadPixels();
+    const slug = currentProductSlugFromUrl();
+    window.__activePixels = pixels.filter(px=>pixelApplies(px, slug));
+    window.__activePixels.forEach(px=>{
+      try{ injectPixelBase(px); }catch(e){ console.error("pixel init error", px.id, e); }
+    });
+  }catch(e){ /* تجاهل — البكسلات ليست حرجة لعمل الموقع */ }
+}
+/* يُستدعى عند نجاح تأكيد الطلب (زر «تأكيد الطلب») في initProduct أدناه */
+function firePixelPurchase(p, total, qty){
+  (window.__activePixels||[]).forEach(px=>{
+    try{
+      const currency = px.currency || "DZD";
+      if(px.platform === "facebook" && window.fbq){
+        fbq("track", "Purchase", { value: total, currency, content_ids:[p.slug], content_type:"product", contents:[{id:p.slug, quantity: qty}] });
+      } else if(px.platform === "tiktok" && window.ttq){
+        ttq.track("CompletePayment", { value: total, currency, content_id: p.slug, content_type:"product", quantity: qty });
+      } else if(px.platform === "google_ads" && window.gtag){
+        gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? ("/" + px.conversionLabel) : ""), value: total, currency, transaction_id: String(Date.now()) });
+      } else if(px.platform === "ga4" && window.gtag){
+        gtag("event", "purchase", { value: total, currency, transaction_id: String(Date.now()), items:[{item_id:p.slug, item_name:p.title, quantity: qty, price: total}] });
+      }
+    }catch(e){ console.error("pixel purchase error", px.id, e); }
+  });
+}
+
 /* ── صفحة المنتج ── */
 function initProduct(slug){
   const p = PRODUCTS.find(p=>p.slug===slug);
@@ -267,6 +359,8 @@ function initProduct(slug){
       items: [{ slug: p.slug, title: p.title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }],
       subtotal: state.offer.price, fee, total,
     });
+    // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
+    firePixelPurchase(p, total, state.offer.qty);
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n\n• ${p.title}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`;
     if(state.offer.free) msg += `\n  🎁 العرض: اشترِ 2 واحصل على الثالثة مجاناً`;
     if(p.old) msg += `\n  (السعر الأصلي: ${fmt(p.old)} ✂️)`;

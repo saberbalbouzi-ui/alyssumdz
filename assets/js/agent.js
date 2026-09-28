@@ -288,6 +288,29 @@ const Agent = (() => {
     { re: /(شكرا|شكراً|مشكور|merci)/i, key: "thanks" },
   ];
 
+  /* ── أسئلة وأجوبة مخصّصة (تُدار من لوحة التحكم admin.html ⟵ الوكيل الذكي) ──
+     تُقرأ مرة واحدة من assets/data/agent-faq.json، وتُفحص أولاً قبل الردود الجاهزة الافتراضية
+     أدناه، فتُعطى الأولوية دائماً — هكذا يمكن تخصيص/تحسين رد المساعد بلا تعديل الكود. */
+  let CUSTOM_QA = [];
+  let __qaLoaded = false;
+  async function ensureCustomQA() {
+    if (__qaLoaded) return;
+    __qaLoaded = true;
+    try {
+      const r = await fetch((typeof REL !== "undefined" ? REL : "") + "assets/data/agent-faq.json", { cache: "no-store" });
+      CUSTOM_QA = r.ok ? await r.json() : [];
+    } catch (e) { CUSTOM_QA = []; }
+  }
+  function matchCustomQA(t) {
+    const low = t.toLowerCase();
+    for (const qa of CUSTOM_QA) {
+      if (!qa || qa.active === false) continue;
+      const kws = (qa.keywords || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+      if (kws.some(k => k && low.includes(k))) return qa;
+    }
+    return null;
+  }
+
   function findProductByText(text) {
     const low = text.toLowerCase();
     return (window.PRODUCTS || []).find(p => low.includes(p.slug) || low.includes(p.title.toLowerCase()));
@@ -347,6 +370,7 @@ const Agent = (() => {
     const u = document.createElement("div");
     u.className = "msg user"; u.textContent = t;
     body().appendChild(u); body().scrollTop = body().scrollHeight;
+    await ensureCustomQA();
 
     // محاولة ربط نموذج لغوي خارجي أولاً (اختياري)
     if (window.CONFIG && CONFIG.AGENT_ENDPOINT) {
@@ -368,6 +392,13 @@ const Agent = (() => {
   function fallback(t) {
     const l = lang;
     const tr = T[l];
+
+    // أسئلة/أجوبة مخصّصة من لوحة التحكم — لها الأولوية دائماً على الردود الجاهزة أدناه
+    const customQA = matchCustomQA(t);
+    if (customQA) {
+      const ans = l === "fr" ? (customQA.answer_fr || customQA.answer_ar) : (customQA.answer_ar || customQA.answer_fr);
+      if (ans) return ans;
+    }
 
     // سعر التوصيل لولاية محدَّدة: يُقرأ من بيانات الرسوم الحيّة، لا يُختلق أي رقم
     if (/(توصيل|شحن|ليفريزون|ليفريسون|livraison)/i.test(t)) {

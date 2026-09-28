@@ -88,4 +88,7 @@ const API = {
 async function bootStore() {
   // (كان هنا نداء لـ API.loadProducts()/API.loadFees() يبدّل window.PRODUCTS/WILAYAS —
   // أُزيل عمداً؛ راجع الشرح أعلاه)
+
+  // تثبيت بكسلات التتبع المفعّلة على هذه الصفحة (لا يُنتظر — لا يُبطئ عرض الصفحة)
+  if(typeof initPixels === "function") initPixels();
 }
