@@ -7,5 +7,14 @@
     "minOrder": 0,
     "expiresAt": "",
     "active": true
+  },
+  {
+    "id": "cp_1790625529227",
+    "code": "TESTFIX",
+    "type": "fixed",
+    "value": 500,
+    "minOrder": 0,
+    "expiresAt": "",
+    "active": true
   }
 ]
