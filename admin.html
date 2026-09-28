@@ -105,6 +105,7 @@ tr:hover td{background:#FAF7F0}
     <button class="tab" onclick="Admin.tab('products',this)">🌿 المنتجات</button>
     <button class="tab" onclick="Admin.tab('categories',this)">🗂️ الأقسام</button>
     <button class="tab" onclick="Admin.tab('fees',this)">🚚 رسوم التوصيل</button>
+    <button class="tab" onclick="Admin.tab('delivery',this)">🔗 شركات التوصيل</button>
     <button class="tab" onclick="Admin.tab('theme',this)">🎨 المظهر</button>
     <button class="tab" onclick="Admin.tab('pixels',this)">🎯 البكسلات</button>
     <button class="tab" onclick="Admin.tab('agent',this)">🤖 الوكيل الذكي</button>
@@ -152,6 +153,14 @@ tr:hover td{background:#FAF7F0}
       <div class="search-bar"><input id="fee-search" placeholder="🔍 بحث عن ولاية..." oninput="Admin.renderFees()"></div>
       <div class="fee-grid" id="fees-grid"></div>
     </div>
+  </div>
+
+  <div id="tab-delivery" class="hidden">
+    <div class="card">
+      <b style="color:var(--green)">ربط شركات التوصيل الجزائرية</b>
+      <div class="hint">أسعار التوصيل نفسها مفصولة تماماً عن المنتجات وتُدار من تبويب «🚚 رسوم التوصيل» أعلاه (تعديل يدوي لكل ولاية). هذا التبويب خاص فقط بربط حساب/مفاتيح API لكل شركة توصيل لإرسال الطلبات المؤكدة إليها مباشرة من لوحة التحكم. المفاتيح تُخزَّن فقط داخل متصفحك (localStorage) ولا تُنشر أبداً على GitHub لأن الموقع عام بدون تسجيل دخول.</div>
+    </div>
+    <div class="card"><div style="overflow:auto"><table id="delivery-table"></table></div></div>
   </div>
 
   <div id="tab-pending" class="hidden">
@@ -431,6 +440,22 @@ tr:hover td{background:#FAF7F0}
   </div>
 </div>
 
+<!-- نافذة إعداد شركة توصيل -->
+<div class="modal-bg" id="delivery-modal-bg">
+  <div class="modal">
+    <h3 id="delivery-modal-title">إعداد شركة التوصيل</h3>
+    <div class="hint" id="delivery-modal-note"></div>
+    <div id="delivery-modal-fields"></div>
+    <label style="display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--green);margin-bottom:.8rem">
+      <input type="checkbox" id="dlv-enabled" style="width:auto;margin:0"> مفعّلة — تظهر ضمن خيارات الإرسال في تبويب الطلبات
+    </label>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.saveDeliveryConfig()">💾 حفظ (في هذا المتصفح فقط)</button>
+      <button class="small gray" onclick="document.getElementById('delivery-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <script src="assets/js/config.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -478,6 +503,7 @@ const Admin = {
   products: [], fees: [], feesOriginal: [], orders: [], categories: {},
   pixels: [], pixelsSha: undefined, editingPixelId: null,
   theme: {}, themeSha: undefined,
+  deliveryCfg: {}, editingDeliveryKey: null,
   qaList: [], qaSha: undefined, editingQAId: null,
   pending: JSON.parse(localStorage.getItem("alyssum_pending") || "[]"),
   editingSlug: null, editingCatKey: null, previewData: null,
@@ -510,6 +536,7 @@ const Admin = {
     this.categories = JSON.parse(JSON.stringify(CATEGORIES));
     $f("login-box").classList.add("hidden");
     $f("app").classList.remove("hidden");
+    this.loadDeliveryCfg();
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme()]);
     this.renderAll();
     toast("✓ تم التحميل");
@@ -525,14 +552,14 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","products","categories","fees","theme","pixels","agent","pending"].forEach(x=>{
+    ["orders","products","categories","fees","delivery","theme","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="pending") this.renderPending();
   },
 
-  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderTheme(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
+  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderTheme(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
 
   renderStats(){
     const today = new Date().toDateString();
@@ -549,7 +576,7 @@ const Admin = {
   renderOrders(){
     const el = $f("orders-table");
     if(!this.orders.length){ el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد طلبات بعد — أو لم يُربط الـ API</td></tr>"; return }
-    el.innerHTML = '<tr><th>الرقم</th><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>الولاية</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th></th></tr>' +
+    el.innerHTML = '<tr><th>الرقم</th><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>الولاية</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th></th><th>التوصيل</th></tr>' +
       this.orders.map((o,i)=>'<tr>' +
         '<td>' + o.id + '</td>' +
         '<td>' + new Date(o.date).toLocaleDateString("ar-DZ") + '</td>' +
@@ -559,7 +586,19 @@ const Admin = {
         '<td><span class="pill st-' + o.status + '">' + o.status + '</span></td>' +
         '<td><select onchange="API.updateOrder(Admin.key,\'' + o.id + '\',this.value);Admin.orders[' + i + '].status=this.value;Admin.renderStats()" style="width:auto;padding:.3rem">' +
           ["nouvelle","confirmee","expediee","livree","annulee"].map(s=>'<option ' + (s===o.status?"selected":"") + '>' + s + '</option>').join("") +
-        '</select></td></tr>').join("");
+        '</select></td>' +
+        '<td>' + this.deliveryOrderCellHtml(i) + '</td></tr>').join("");
+  },
+
+  deliveryOrderCellHtml(i){
+    const enabled = Object.entries(this.deliveryCfg||{}).filter(([k,c])=>c && c.enabled && this.DELIVERY_COMPANIES[k]);
+    if(!enabled.length) return '<span class="hint" style="margin:0">لا توجد شركة مفعّلة — تبويب «🔗 شركات التوصيل»</span>';
+    return '<div style="display:flex;gap:.3rem;align-items:center">' +
+      '<select id="dlv-sel-' + i + '" style="width:auto;padding:.3rem">' +
+        enabled.map(([k])=>'<option value="' + k + '">' + this.DELIVERY_COMPANIES[k].name + '</option>').join("") +
+      '</select>' +
+      '<button class="small blue" type="button" style="padding:.3rem .6rem;white-space:nowrap" onclick="Admin.sendOrderToDelivery(' + i + ', $f(\'dlv-sel-' + i + '\').value)">🚚 إرسال</button>' +
+    '</div>';
   },
 
   /* ════════ المنتجات ════════ */
@@ -1645,6 +1684,257 @@ const Admin = {
     }catch(err){
       console.error(err);
       toast("❌ " + err.message);
+    }
+  },
+
+  /* ════════ ربط شركات التوصيل الجزائرية ════════
+     المفاتيح تُخزَّن فقط في localStorage (alyssum_delivery_cfg) — لا تُنشر أبداً كملف على GitHub
+     لأن صفحات الموقع عامة بدون أي تسجيل دخول ويمكن لأي شخص قراءتها. */
+  DELIVERY_COMPANIES: {
+    yalidine: {
+      name: "ياليدين Yalidine",
+      confidence: "confident",
+      note: "التكامل مبني على توثيق Yalidine API الرسمي (v1/parcels). أدخل معرّف وتوكن API من حسابك على منصة ياليدين.",
+      fields: [
+        { key:"apiId", label:"API ID", type:"text" },
+        { key:"apiToken", label:"API Token", type:"password" },
+        { key:"fromWilayaName", label:"ولاية الانطلاق (مثال: Alger)", type:"text", required:false },
+      ],
+      buildRequest(cfg, order){
+        return {
+          url: "https://api.yalidine.app/v1/parcels/",
+          method: "POST",
+          headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" },
+          body: JSON.stringify([{
+            order_id: String(order.id),
+            from_wilaya_name: cfg.fromWilayaName || "Alger",
+            firstname: order.name || "",
+            familyname: "-",
+            contact_phone: order.phone || "",
+            address: order.address || (order.wilaya||""),
+            to_commune_name: order.commune || "",
+            to_wilaya_name: order.wilaya || "",
+            product_list: order.items || "",
+            price: Number(order.total)||0,
+            do_insurance: false,
+            declared_value: Number(order.total)||0,
+            freeshipping: false,
+            is_stopdesk: false,
+          }]),
+        };
+      },
+    },
+    zrexpress: {
+      name: "ZR Express",
+      confidence: "experimental",
+      note: "⚠️ تجريبي — التوثيق العام لهذه الشركة محدود، يُرجى التحقق من صيغة الطلب الصحيحة مع دعم ZR Express قبل الاعتماد عليه فعلياً.",
+      fields: [
+        { key:"token", label:"Token", type:"password" },
+        { key:"key", label:"Key", type:"password" },
+      ],
+      buildRequest(cfg, order){
+        return {
+          url: "https://procolis.com/api_v1/add_colis",
+          method: "POST",
+          headers: { "token": cfg.token, "key": cfg.key, "Content-Type": "application/json" },
+          body: JSON.stringify({ Colis: [{
+            Tracking: String(order.id),
+            TypeLivraison: "0",
+            TypeColis: "0",
+            Confrimee: "1",
+            Client: order.name || "",
+            MobileA: order.phone || "",
+            MobileB: "",
+            Adresse: order.address || (order.wilaya||""),
+            IDWilaya: "",
+            Commune: order.commune || "",
+            Total: String(Number(order.total)||0),
+            Note: "",
+            TProduit: order.items || "",
+          }]}),
+        };
+      },
+    },
+    maystro: {
+      name: "Maystro Delivery",
+      confidence: "experimental",
+      note: "⚠️ تجريبي — يُرجى التحقق من صيغة الطلب الصحيحة مع دعم Maystro Delivery قبل الاعتماد عليه فعلياً.",
+      fields: [
+        { key:"apiKey", label:"API Key", type:"password" },
+      ],
+      buildRequest(cfg, order){
+        return {
+          url: "https://backend.maystro-delivery.com/api/stores/orders/",
+          method: "POST",
+          headers: { "Authorization": "Token " + cfg.apiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            external_order_id: String(order.id),
+            customer_name: order.name || "",
+            customer_phone: order.phone || "",
+            wilaya: order.wilaya || "",
+            commune: order.commune || "",
+            address: order.address || (order.wilaya||""),
+            product_name: order.items || "",
+            price: Number(order.total)||0,
+          }),
+        };
+      },
+    },
+    noest: {
+      name: "Noest Express",
+      confidence: "experimental",
+      note: "⚠️ تجريبي — يُرجى التحقق من صيغة الطلب الصحيحة مع دعم Noest Express قبل الاعتماد عليه فعلياً.",
+      fields: [
+        { key:"apiToken", label:"api_token", type:"password" },
+        { key:"userGuid", label:"user_guid", type:"text" },
+      ],
+      buildRequest(cfg, order){
+        return {
+          url: "https://app.noest-dz.com/api/public/create/order",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_token: cfg.apiToken,
+            user_guid: cfg.userGuid,
+            reference: String(order.id),
+            client: order.name || "",
+            phone: order.phone || "",
+            phone_2: "",
+            adresse: order.address || (order.wilaya||""),
+            wilaya_id: "",
+            commune: order.commune || "",
+            montant: Number(order.total)||0,
+            produit: order.items || "",
+            remarque: "",
+            stop_desk: 0,
+            stock: 0,
+          }),
+        };
+      },
+    },
+    ecomdelivery: {
+      name: "E-com Delivery",
+      confidence: "generic",
+      note: "⚠️ هذه الشركة أقل توثيقاً علنياً من غيرها — أدخل رابط الـ API ومفتاحه كما يزوّدك بهما الدعم الفني الخاص بـE-com Delivery. يُرسل المفتاح كترويسة Authorization: Bearer.",
+      fields: [
+        { key:"apiUrl", label:"رابط API (endpoint) الكامل", type:"text" },
+        { key:"apiKey", label:"API Key", type:"password" },
+      ],
+      buildRequest(cfg, order){
+        return {
+          url: cfg.apiUrl,
+          method: "POST",
+          headers: { "Authorization": "Bearer " + cfg.apiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: String(order.id),
+            name: order.name || "",
+            phone: order.phone || "",
+            wilaya: order.wilaya || "",
+            commune: order.commune || "",
+            address: order.address || (order.wilaya||""),
+            items: order.items || "",
+            total: Number(order.total)||0,
+          }),
+        };
+      },
+    },
+  },
+
+  loadDeliveryCfg(){
+    try{ this.deliveryCfg = JSON.parse(localStorage.getItem("alyssum_delivery_cfg") || "{}") || {}; }
+    catch(e){ this.deliveryCfg = {}; }
+  },
+  saveDeliveryCfgToStorage(){ localStorage.setItem("alyssum_delivery_cfg", JSON.stringify(this.deliveryCfg)); },
+
+  renderDelivery(){
+    const el = $f("delivery-table");
+    if(!el) return;
+    const keys = Object.keys(this.DELIVERY_COMPANIES);
+    el.innerHTML = '<tr><th>الشركة</th><th>الحالة</th><th>مفعّلة</th><th></th></tr>' +
+      keys.map(k=>{
+        const co = this.DELIVERY_COMPANIES[k];
+        const cfg = this.deliveryCfg[k] || {};
+        const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
+        const configured = requiredFields.length && requiredFields.every(f=>String(cfg[f.key]||"").trim());
+        const badge = co.confidence === "confident"
+          ? '<span class="pill st-livree">✅ توثيق رسمي موثوق</span>'
+          : co.confidence === "generic"
+            ? '<span class="pill st-nouvelle">ℹ️ عام/قابل للتخصيص</span>'
+            : '<span class="pill st-annulee">⚠️ تجريبي — يحتاج تحقق</span>';
+        return '<tr>' +
+          '<td><b>' + co.name + '</b><div class="hint" style="margin:.2rem 0 0">' + badge + '</div></td>' +
+          '<td>' + (configured ? '<span class="pill st-livree">مُعدّة</span>' : '<span class="pill st-nouvelle">غير مُعدّة بعد</span>') + '</td>' +
+          '<td><label style="display:flex;align-items:center;gap:.4rem;font-weight:700">' +
+            '<input type="checkbox" style="width:auto;margin:0" ' + (cfg.enabled?"checked":"") + (configured?"":" disabled") +
+            ' onchange="Admin.toggleDeliveryCompany(\'' + k + '\', this.checked)"> ' + (configured?"":"(أكمل الإعداد أولاً)") +
+          '</label></td>' +
+          '<td><button class="small" type="button" onclick="Admin.openDeliveryConfig(\'' + k + '\')">⚙️ إعداد المفاتيح</button></td>' +
+        '</tr>';
+      }).join("");
+  },
+
+  toggleDeliveryCompany(key, enabled){
+    this.deliveryCfg[key] = Object.assign({}, this.deliveryCfg[key], { enabled: !!enabled });
+    this.saveDeliveryCfgToStorage();
+    this.renderDelivery();
+    this.renderOrders();
+  },
+
+  openDeliveryConfig(key){
+    const co = this.DELIVERY_COMPANIES[key];
+    if(!co) return;
+    this.editingDeliveryKey = key;
+    const cfg = this.deliveryCfg[key] || {};
+    $f("delivery-modal-title").textContent = "إعداد " + co.name;
+    $f("delivery-modal-note").textContent = co.note || "";
+    $f("delivery-modal-fields").innerHTML = (co.fields||[]).map(f=>
+      '<input id="dlv-f-' + f.key + '" type="' + (f.type||"text") + '" placeholder="' + f.label + (f.required===false?" (اختياري)":"") + '" dir="ltr" value="' + (cfg[f.key]||"").toString().replace(/"/g,"&quot;") + '">'
+    ).join("");
+    $f("dlv-enabled").checked = !!cfg.enabled;
+    document.getElementById("delivery-modal-bg").classList.add("open");
+  },
+
+  saveDeliveryConfig(){
+    const key = this.editingDeliveryKey;
+    const co = this.DELIVERY_COMPANIES[key];
+    if(!co) return;
+    const cfg = {};
+    (co.fields||[]).forEach(f=>{ cfg[f.key] = ($f("dlv-f-" + f.key)||{}).value ? $f("dlv-f-" + f.key).value.trim() : ""; });
+    const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
+    const missing = requiredFields.filter(f=>!cfg[f.key]);
+    cfg.enabled = $f("dlv-enabled").checked && !missing.length;
+    if($f("dlv-enabled").checked && missing.length){
+      toast("⚠️ أكمل الحقول التالية قبل التفعيل: " + missing.map(f=>f.label).join("، "));
+    }
+    this.deliveryCfg[key] = cfg;
+    this.saveDeliveryCfgToStorage();
+    document.getElementById("delivery-modal-bg").classList.remove("open");
+    this.renderDelivery();
+    this.renderOrders();
+    toast("✅ حُفظت إعدادات " + co.name + " في هذا المتصفح فقط");
+  },
+
+  async sendOrderToDelivery(orderIndex, companyKey){
+    if(!companyKey){ toast("⚠️ لا توجد شركة توصيل مفعّلة — فعّل واحدة من تبويب «🔗 شركات التوصيل»"); return }
+    const order = this.orders[orderIndex];
+    if(!order){ toast("❌ لم يُعثر على الطلب"); return }
+    const co = this.DELIVERY_COMPANIES[companyKey];
+    const cfg = this.deliveryCfg[companyKey] || {};
+    if(!co || !cfg.enabled){ toast("⚠️ فعّل " + (co?co.name:companyKey) + " أولاً من تبويب «🔗 شركات التوصيل»"); return }
+    toast("⏳ جارِ إرسال الطلب #" + order.id + " إلى " + co.name + "...");
+    try{
+      const req = co.buildRequest(cfg, order);
+      const r = await fetch(req.url, { method: req.method||"POST", headers: req.headers||{}, body: req.body });
+      let bodyText = "";
+      try{ bodyText = await r.text(); }catch(e){}
+      if(r.ok){
+        toast("✅ أُرسل الطلب #" + order.id + " إلى " + co.name + " (استجابة " + r.status + ")");
+      }else{
+        toast("❌ رفضت " + co.name + " الطلب (رمز " + r.status + ") — تحقق من صحة المفاتيح والبيانات. " + bodyText.slice(0,150));
+      }
+    }catch(err){
+      console.error(err);
+      toast("❌ تعذّر الاتصال بـ " + co.name + " مباشرة من المتصفح — الاتصال المباشر (Browser → API) قد يُرفض من بعض الشركات لأسباب CORS، ويحتاج عندها وسيطاً خادمياً (proxy). تفاصيل الخطأ: " + err.message);
     }
   },
 };
