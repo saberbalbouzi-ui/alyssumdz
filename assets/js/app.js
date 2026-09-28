@@ -109,6 +109,8 @@ function initProduct(slug){
 
   // معرض الصور
   const main = document.getElementById("gmain");
+  const gthumbsEl = document.querySelector(".gthumbs");
+  if(gthumbsEl) gthumbsEl.innerHTML = ""; // تفريغ أي صور مصغّرة ثابتة مضمّنة في HTML (تفادي التكرار)
   p.images.forEach((src,i)=>{
     const th = document.createElement("img");
     th.src = REL+src; th.alt = p.title;
