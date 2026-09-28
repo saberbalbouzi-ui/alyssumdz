@@ -303,9 +303,9 @@ section[id]{scroll-margin-top:84px}
 @media(max-width:560px){.shop-cats{grid-template-columns:repeat(2,1fr)}}
 .shop-cat{position:relative;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background-size:cover;background-position:center;background-color:var(--card);box-shadow:var(--shadow);border:1px solid var(--line);transition:.25s;font-family:inherit;padding:0;-webkit-appearance:none;appearance:none}
 .shop-cat:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}
-.shop-cat::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(15,46,38,.82) 10%,rgba(15,46,38,.15) 60%,rgba(15,46,38,.05));transition:.25s}
-.shop-cat:hover::before{background:linear-gradient(0deg,rgba(200,162,75,.85) 10%,rgba(15,46,38,.2) 65%,rgba(15,46,38,.05))}
-.shop-cat span{position:absolute;inset-inline:0;bottom:0;padding:.9rem .5rem;color:#fff;font-weight:900;font-size:.95rem;text-align:center}
+.shop-cat::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,32,26,.92) 0%,rgba(10,32,26,.75) 32%,rgba(10,32,26,.15) 68%,rgba(10,32,26,0) 100%);transition:.25s}
+.shop-cat:hover::before{background:linear-gradient(0deg,rgba(163,124,42,.94) 0%,rgba(10,32,26,.78) 34%,rgba(10,32,26,.2) 70%,rgba(10,32,26,0) 100%)}
+.shop-cat span{position:absolute;inset-inline:0;bottom:0;padding:.9rem .5rem;color:#fff;font-weight:900;font-size:.95rem;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.55)}
 @media(max-width:560px){.shop-cat span{font-size:.85rem}}
 
 /* شريط «الأكثر مبيعاً» — يعيد استعمال .card و.grid، فقط يضيف شريط تمييز */
