@@ -91,4 +91,7 @@ async function bootStore() {
 
   // تثبيت بكسلات التتبع المفعّلة على هذه الصفحة (لا يُنتظر — لا يُبطئ عرض الصفحة)
   if(typeof initPixels === "function") initPixels();
+
+  // تطبيق مظهر الموقع المخصّص (الخطوط/الألوان/الشعار) إن وُجد (لا يُنتظر أيضاً)
+  if(typeof initTheme === "function") initTheme();
 }

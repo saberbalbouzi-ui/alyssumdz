@@ -190,6 +190,50 @@ function firePixelPurchase(p, total, qty){
   });
 }
 
+/* ════════ مظهر الموقع (الخطوط/الألوان/الشعار) — تُدار من لوحة التحكم admin.html ⟵ المظهر ════════ */
+let __themeCache = null;
+async function loadTheme(){
+  if(__themeCache) return __themeCache;
+  try{
+    const r = await fetch((typeof REL!=="undefined"?REL:"") + "assets/data/theme.json", {cache:"no-store"});
+    __themeCache = r.ok ? await r.json() : null;
+  }catch(e){ __themeCache = null; }
+  return __themeCache;
+}
+function applyTheme(theme){
+  if(!theme || typeof theme !== "object") return;
+  try{
+    if(theme.fontUrl){
+      const link = document.createElement("link");
+      link.rel = "stylesheet"; link.href = theme.fontUrl;
+      document.head.appendChild(link);
+    }
+    const c = theme.colors || {};
+    const map = { bg:"--bg", card:"--card", ink:"--ink", muted:"--muted", green:"--green", green2:"--green-2", gold:"--gold", gold2:"--gold-2", red:"--red", ok:"--ok", line:"--line" };
+    const rootVars = Object.entries(map).filter(([k])=>c[k]).map(([k,v])=>v+":"+c[k]).join(";");
+    let css = "";
+    if(rootVars) css += ":root{" + rootVars + "}";
+    if(theme.fontFamily) css += "body{font-family:" + theme.fontFamily + "!important}";
+    if(theme.fontSize) css += "body{font-size:" + theme.fontSize + "}";
+    if(theme.fontWeight) css += "body{font-weight:" + theme.fontWeight + "}";
+    if(theme.logo && theme.logo.url){
+      const w = theme.logo.width || "150px", h = theme.logo.height || "46px";
+      css += ".logo{font-size:0!important;line-height:0;background:url('" + (typeof REL!=="undefined"?REL:"") + theme.logo.url + "') no-repeat center/contain;display:inline-block;width:" + w + ";height:" + h + "}";
+    }
+    if(!css) return;
+    const st = document.createElement("style");
+    st.id = "__alyssum_theme_override";
+    st.textContent = css;
+    document.head.appendChild(st);
+  }catch(e){ /* تجاهل — المظهر ليس حرجاً لعمل الموقع */ }
+}
+async function initTheme(){
+  try{
+    const theme = await loadTheme();
+    applyTheme(theme);
+  }catch(e){ /* تجاهل */ }
+}
+
 /* ── صفحة المنتج ── */
 function initProduct(slug){
   const p = PRODUCTS.find(p=>p.slug===slug);
