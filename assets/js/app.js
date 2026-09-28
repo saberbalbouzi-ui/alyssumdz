@@ -119,6 +119,7 @@ function initProduct(slug){
 
   // العروض — العرض المُحدَّد بصرياً (on) هو نفسه bestIdx المُفعَّل افتراضياً في state.offer أعلاه
   const offersBox = document.getElementById("offers");
+  offersBox.innerHTML = ""; // تفريغ أي بطاقات عروض ثابتة مضمّنة في HTML (تفادي التكرار)
   p.offers.forEach((o,i)=>{
     const paid = o.qty - (o.free||0);
     const unit = Math.round(o.price/paid);
