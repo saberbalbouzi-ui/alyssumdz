@@ -25,5 +25,14 @@
     "minOrder": 50000,
     "expiresAt": "",
     "active": true
+  },
+  {
+    "id": "cp_1790625531263",
+    "code": "TESTOLD",
+    "type": "percent",
+    "value": 15,
+    "minOrder": 0,
+    "expiresAt": "2025-01-01",
+    "active": true
   }
 ]
