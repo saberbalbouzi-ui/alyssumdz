@@ -1,0 +1,11 @@
+[
+  {
+    "id": "cp_1790625527536",
+    "code": "TEST10",
+    "type": "percent",
+    "value": 10,
+    "minOrder": 0,
+    "expiresAt": "",
+    "active": true
+  }
+]
