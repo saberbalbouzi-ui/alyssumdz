@@ -9,11 +9,12 @@ const Cart = {
   all(){ try{ return JSON.parse(localStorage.getItem(this.key))||[] }catch(e){ return [] } },
   save(items){ localStorage.setItem(this.key, JSON.stringify(items)); Cart.render() },
   add(slug, qty, offerPrice){
+    const p = PRODUCTS.find(p=>p.slug===slug);
+    if(p && isOutOfStock(p)){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
     const items = Cart.all();
     const ex = items.find(i => i.slug===slug && i.price===offerPrice);
     if(ex) ex.qty += qty; else items.push({slug, qty, price: offerPrice});
     Cart.save(items);
-    const p = PRODUCTS.find(p=>p.slug===slug);
     toast(`تمت إضافة «${p?p.title:slug}» إلى السلة ✓`);
   },
   setQty(idx, delta){
@@ -35,16 +36,18 @@ const Cart = {
     box.innerHTML = items.length ? items.map((it,idx)=>{
       const p = PRODUCTS.find(p=>p.slug===it.slug) || it;
       const img = (p.images&&p.images[0])||"";
+      const oos = isOutOfStock(p);
       return `<div class="citem">
         <img src="${REL}${img}" alt="">
-        <div class="t">${p.title}<br><small style="color:var(--muted)">${fmt(it.price)} / وحدة</small></div>
-        <div class="qty"><button onclick="Cart.setQty(${idx},-1)">−</button><b>${it.qty}</b><button onclick="Cart.setQty(${idx},1)">+</button></div>
+        <div class="t">${p.title}${oos?' <b style="color:var(--red)">— نفدت الكمية 🚫</b>':""}<br><small style="color:var(--muted)">${fmt(it.price)} / وحدة</small></div>
+        <div class="qty"><button onclick="Cart.setQty(${idx},-1)">−</button><b>${it.qty}</b><button onclick="Cart.setQty(${idx},1)" ${oos?"disabled":""}>+</button></div>
       </div>`;
     }).join("") : `<p style="text-align:center;color:var(--muted);padding:2rem 0">السلة فارغة 🛒</p>`;
     const sub = Cart.subtotal();
     const fee = Cart.fee();
+    const discount = currentCouponDiscount(sub);
     const totEl = document.getElementById("cart-total");
-    if(totEl) totEl.textContent = fmt(sub + (items.length?fee:0));
+    if(totEl) totEl.textContent = fmt(Math.max(0, sub - discount) + (items.length?fee:0));
     const feeEl = document.getElementById("cart-fee");
     if(feeEl) feeEl.textContent = items.length ? fmt(fee) : "—";
   },
@@ -59,6 +62,8 @@ const Cart = {
   checkout(){
     const items = Cart.all();
     if(!items.length){ toast("السلة فارغة"); return }
+    const oosItem = items.map(it=>PRODUCTS.find(p=>p.slug===it.slug)).find(p=>p && isOutOfStock(p));
+    if(oosItem){ toast(`⚠️ «${oosItem.title}» نفدت كميته — يرجى إزالته من السلة`); return }
     const name = document.getElementById("cname")?.value.trim();
     const phone = document.getElementById("cphone")?.value.trim();
     const wId = document.getElementById("cwilaya")?.value;
@@ -68,12 +73,15 @@ const Cart = {
     const wl = WILAYAS.find(x=>x.id==wId);
     const sub = Cart.subtotal();
     const fee = Cart.fee();
+    const discount = currentCouponDiscount(sub);
+    const total = Math.max(0, sub - discount) + fee;
     // Enregistrement dans Google Sheets
     API.submitOrder({
       name, phone, wilaya: wl.name, commune, dtype,
       items: items.map(it => { const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
         return { slug: it.slug, title: p.title, qty: it.qty, price: it.price }; }),
-      subtotal: sub, fee, total: sub+fee,
+      subtotal: sub, fee, total,
+      coupon: discount>0 ? AppliedCoupon.code : "", discount,
     });
     let msg = `السلام عليكم ${SITE_NAME}، أريد تأكيد طلبي:\n`;
     items.forEach(it=>{
@@ -81,8 +89,9 @@ const Cart = {
       msg += `\n• ${p.title} ×${it.qty} = ${fmt(it.price*it.qty)}`;
     });
     msg += `\n\nالمجموع: ${fmt(sub)}`;
+    if(discount>0) msg += `\n🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
     msg += `\nالتوصيل (${dtype==="stop"?"مكتب":"للمنزل"} - ${wl.name}${commune?" / "+commune:""}): ${fmt(fee)}`;
-    msg += `\n*الإجمالي: ${fmt(sub+fee)}*`;
+    msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`,"_blank");
   }
@@ -234,6 +243,68 @@ async function initTheme(){
   }catch(e){ /* تجاهل */ }
 }
 
+/* ════════ أكواد الخصم (Coupons) — تُدار من لوحة التحكم admin.html ⟵ أكواد الخصم ════════
+   تُقرأ من assets/data/coupons.json (ملف عام — راجع الملاحظة في admin.html)، ويُحقن حقل إدخال
+   الكود ديناميكياً في صفحة المنتج ودرج السلة عبر الدالتين أدناه، دون الحاجة لتعديل كل صفحة HTML. */
+let __couponsCache = null;
+async function loadCoupons(){
+  if(__couponsCache) return __couponsCache;
+  try{
+    const r = await fetch((typeof REL!=="undefined"?REL:"") + "assets/data/coupons.json", {cache:"no-store"});
+    __couponsCache = r.ok ? await r.json() : [];
+  }catch(e){ __couponsCache = []; }
+  return __couponsCache;
+}
+function findValidCoupon(list, code, subtotal){
+  const c = (list||[]).find(x=>x.code && x.code.toUpperCase()===String(code||"").trim().toUpperCase());
+  if(!c) return { ok:false, msg:"⚠️ الكود غير صحيح" };
+  if(c.active===false) return { ok:false, msg:"⚠️ هذا الكود غير مفعّل حالياً" };
+  if(c.expiresAt && new Date(c.expiresAt) < new Date()) return { ok:false, msg:"⚠️ انتهت صلاحية هذا الكود" };
+  if(c.minOrder && subtotal < Number(c.minOrder)) return { ok:false, msg:"⚠️ الحد الأدنى لهذا الكود: " + fmt(Number(c.minOrder)) };
+  const discount = c.type==="percent" ? Math.round(subtotal * Number(c.value)/100) : Math.min(Number(c.value)||0, subtotal);
+  if(discount<=0) return { ok:false, msg:"⚠️ الكود غير صالح لهذا الطلب" };
+  return { ok:true, coupon:c, discount };
+}
+/* حالة الكود المُطبَّق — مشتركة بين صفحة المنتج ودرج السلة (سياق واحد نشط في كل مرة عملياً) */
+const AppliedCoupon = { code:"", record:null };
+function currentCouponDiscount(subtotal){
+  if(!AppliedCoupon.record || !subtotal) return 0;
+  const res = findValidCoupon([AppliedCoupon.record], AppliedCoupon.code, subtotal);
+  return res.ok ? res.discount : 0;
+}
+function buildCouponBoxHTML(idPrefix){
+  return '<div class="coupon-box" style="display:flex;gap:.4rem;margin:.6rem 0;align-items:center;flex-wrap:wrap">' +
+    '<input id="' + idPrefix + '-coupon-input" placeholder="🎟️ كود الخصم (إن وُجد)" style="flex:1;min-width:120px;padding:.55rem .7rem;border:1.5px solid var(--line);border-radius:8px;font-family:inherit">' +
+    '<button type="button" id="' + idPrefix + '-coupon-btn" class="btn-cart2" style="padding:.5rem .9rem;white-space:nowrap">تطبيق</button>' +
+    '</div><div id="' + idPrefix + '-coupon-msg" style="font-size:.82rem;margin:-.3rem 0 .6rem;min-height:1.1em"></div>';
+}
+/* يُدرج صندوق كود الخصم قبل عنصر مرجعي (مربع الإجمالي)، ويربط منطق التطبيق بدالة إعادة الحساب rerender */
+function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender){
+  if(!beforeEl || document.getElementById(idPrefix + "-coupon-input")) return;
+  const wrap = document.createElement("div");
+  wrap.innerHTML = buildCouponBoxHTML(idPrefix);
+  while(wrap.firstChild) beforeEl.parentNode.insertBefore(wrap.firstChild, beforeEl);
+  const input = document.getElementById(idPrefix + "-coupon-input");
+  const msg = document.getElementById(idPrefix + "-coupon-msg");
+  async function apply(){
+    const code = (input.value||"").trim();
+    if(!code){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent=""; rerender(); return; }
+    const list = await loadCoupons();
+    const res = findValidCoupon(list, code, getSubtotal());
+    if(!res.ok){
+      AppliedCoupon.code=""; AppliedCoupon.record=null;
+      msg.textContent = res.msg; msg.style.color = "var(--red)";
+    }else{
+      AppliedCoupon.code = res.coupon.code; AppliedCoupon.record = res.coupon;
+      msg.textContent = "✅ تم تطبيق الكود — خصم " + fmt(res.discount);
+      msg.style.color = "var(--ok)";
+    }
+    rerender();
+  }
+  input.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); apply(); } });
+  document.getElementById(idPrefix + "-coupon-btn").onclick = apply;
+}
+
 /* ── صفحة المنتج ── */
 function initProduct(slug){
   const p = PRODUCTS.find(p=>p.slug===slug);
@@ -242,6 +313,7 @@ function initProduct(slug){
   // كان يُحدَّد افتراضياً «قطعة واحدة» بينما شارة «الأكثر طلباً 🔥» تظهر على عرض آخر، ما يُشتّت الزبون
   const bestIdx = 2;
   const state = { offer: p.offers[bestIdx] || p.offers[0], wilaya:null, dtype:"home" };
+  const outOfStock = isOutOfStock(p);
 
   // معرض الصور
   const main = document.getElementById("gmain");
@@ -277,6 +349,26 @@ function initProduct(slug){
     };
     offersBox.appendChild(d);
   });
+
+  // نفاد الكمية — تعطيل الطلب وإظهار تنبيه (يُضبط من لوحة التحكم، حقل المخزون في تبويب المنتجات)
+  if(outOfStock){
+    const form = document.getElementById("order-form");
+    if(form){
+      const warn = document.createElement("div");
+      warn.className = "oos-warning";
+      warn.textContent = "⚠️ نفدت كمية هذا المنتج حالياً — سيتوفر قريباً";
+      form.parentNode.insertBefore(warn, form);
+      form.querySelectorAll("input,select,textarea,button").forEach(el=>el.disabled = true);
+    }
+    const addCartBtn = document.getElementById("add-cart");
+    if(addCartBtn) addCartBtn.disabled = true;
+    document.querySelectorAll(".btn-wa").forEach(a=>{
+      a.style.pointerEvents = "none"; a.style.opacity = ".5";
+    });
+    document.querySelectorAll('a[href="#order-form"]').forEach(a=>{
+      a.style.pointerEvents = "none"; a.style.opacity = ".5";
+    });
+  }
 
   // العد التنازلي 48 ساعة — عرض «اشترِ 2 والثالثة مجاناً»
   (function dealCountdown(){
@@ -374,27 +466,33 @@ function initProduct(slug){
   function update(){
     const fee = state.wilaya ? (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home) : null;
     feeEl.textContent = fee!=null ? fmt(fee) : "اختر الولاية";
-    const total = state.offer.price + (fee||0);
+    const discount = currentCouponDiscount(state.offer.price);
+    const total = Math.max(0, state.offer.price - discount) + (fee||0);
     totEl.textContent = fmt(total);
     const st = document.getElementById("sticky-price");
     if(st) st.textContent = fmt(total);
     // زر «تأكيد الطلب» كان يعرض دائماً سعر القطعة الواحدة الثابت (p.price) ولا يتحدّث أبداً
-    // مع تغيير العرض أو إضافة رسوم التوصيل — أصبح الآن يعكس نفس الإجمالي الحقيقي دوماً
+    // مع تغيير العرض أو إضافة رسوم التوصيل — أصبح الآن يعكس نفس الإجمالي الحقيقي دوماً (يشمل خصم الكوبون إن وُجد)
     const bt = document.getElementById("btn-total");
     if(bt) bt.textContent = fmt(total);
   }
   update();
+  // حقل كود الخصم — يُحقن ديناميكياً قبل مربع الإجمالي (لا حاجة لتعديل كل صفحة منتج يدوياً)
+  const totalBoxEl = feeEl.closest(".total-box");
+  if(totalBoxEl) injectCouponBox("prod", totalBoxEl, ()=>state.offer.price, update);
 
   // تأكيد الطلب — واتساب
   document.getElementById("order-form").addEventListener("submit", e=>{
     e.preventDefault();
+    if(outOfStock){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const commune = document.getElementById("commune").value.trim();
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
     if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     const fee = state.dtype==="stop"?state.wilaya.stop:state.wilaya.home;
-    const total = state.offer.price + fee;
+    const discount = currentCouponDiscount(state.offer.price);
+    const total = Math.max(0, state.offer.price - discount) + fee;
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
     // Enregistrement dans Google Sheets
     API.submitOrder({
@@ -402,12 +500,14 @@ function initProduct(slug){
       dtype: state.dtype, desk,
       items: [{ slug: p.slug, title: p.title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }],
       subtotal: state.offer.price, fee, total,
+      coupon: discount>0 ? AppliedCoupon.code : "", discount,
     });
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     firePixelPurchase(p, total, state.offer.qty);
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n\n• ${p.title}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`;
     if(state.offer.free) msg += `\n  🎁 العرض: اشترِ 2 واحصل على الثالثة مجاناً`;
     if(p.old) msg += `\n  (السعر الأصلي: ${fmt(p.old)} ✂️)`;
+    if(discount>0) msg += `\n  🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
     msg += `\n\nالتوصيل (${state.dtype==="stop"?"مكتب Stop Desk":"إلى المنزل"} — ${state.wilaya.name}${commune?"، "+commune:""}${desk?" — المكتب: "+desk:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
@@ -417,6 +517,7 @@ function initProduct(slug){
 
   // أضف إلى السلة
   document.getElementById("add-cart").onclick = ()=>{
+    if(outOfStock){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
     Cart.add(p.slug, state.offer.qty, state.offer.price);
   };
 
@@ -427,16 +528,20 @@ function initProduct(slug){
 }
 
 /* ── بطاقة منتج (مشتركة بين الشبكة الرئيسية والأكثر مبيعاً) ── */
+function isOutOfStock(p){
+  return p.stock!==undefined && p.stock!==null && Number(p.stock)<=0;
+}
 function productCardHTML(p, opts){
   opts = opts || {};
   const disc = p.old ? Math.round((1-p.price/p.old)*100) : 0;
+  const oos = isOutOfStock(p);
   return `
-    <div class="thumb">${opts.ribbon?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${disc?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.images[0]}" alt="${p.title}"></div>
+    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.images[0]}" alt="${p.title}"></div>
     <div class="body">
       <h3>${p.title}</h3>
       <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>
       <div class="price-row"><span class="price">${fmt(p.price)}</span>${p.old?`<span class="old">${fmt(p.old)}</span>`:""}</div>
-      <div class="cta">اطلب الآن — الدفع عند الاستلام</div>
+      <div class="cta">${oos?"نفدت الكمية":"اطلب الآن — الدفع عند الاستلام"}</div>
     </div>`;
 }
 
@@ -450,7 +555,7 @@ function initHome(){
     grid.innerHTML = "";
     PRODUCTS.filter(p=>filter==="all"||p.cat===filter).forEach(p=>{
       const a = document.createElement("a");
-      a.className = "card"; a.href = REL + "p/" + p.slug + "/";
+      a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = REL + "p/" + p.slug + "/";
       a.innerHTML = productCardHTML(p);
       grid.appendChild(a);
     });
@@ -489,7 +594,7 @@ function renderBestsellers(slugs){
     const p = PRODUCTS.find(x=>x.slug===slug);
     if(!p) return;
     const a = document.createElement("a");
-    a.className = "card"; a.href = REL + "p/" + p.slug + "/";
+    a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = REL + "p/" + p.slug + "/";
     a.innerHTML = productCardHTML(p, {ribbon:"🔥 الأكثر مبيعاً"});
     wrap.appendChild(a);
   });
@@ -562,4 +667,7 @@ function initCartDrawer(){
   const bg = document.getElementById("drawer-bg"), dr = document.getElementById("drawer");
   document.querySelectorAll(".cart-btn").forEach(b=>b.onclick=()=>{ dr.classList.add("open"); bg.classList.add("open"); Cart.render() });
   bg.onclick = ()=>{ dr.classList.remove("open"); bg.classList.remove("open") };
+  // حقل كود الخصم — يُحقن قبل مربع إجمالي السلة (drawer موجود في كل صفحات الموقع)
+  const totBox = document.querySelector("#drawer .tot");
+  if(totBox) injectCouponBox("cart", totBox, ()=>Cart.subtotal(), Cart.render);
 }
