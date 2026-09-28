@@ -173,6 +173,11 @@ tr:hover td{background:#FAF7F0}
         <div class="section-title">الصور</div>
         <input id="f-images" placeholder="مسارات الصور (افصل بفاصلة)" dir="ltr">
         <div class="hint">مثال: assets/img/anti-acne/presentation/anti-acne 01.webp</div>
+        <div style="display:flex;gap:.5rem;align-items:flex-start">
+          <input id="f-img-url" placeholder="أو الصق رابط صورة من الإنترنت هنا (https://...)" dir="ltr" style="margin-bottom:.8rem">
+          <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchImageFromUrl()">📥 تحميل ورفع لـ GitHub</button>
+        </div>
+        <div class="hint" style="margin-top:-.6rem">تُجلب الصورة من الرابط وتُرفع مباشرة إلى مجلد صور هذا المنتج على GitHub (assets/img/&lt;المعرف&gt;/)، ثم تُضاف تلقائياً لقائمة الصور أعلاه — يتطلب ضبط GitHub من زر ⚙️ في معاينة الصفحة، وأن يسمح مصدر الصورة بالوصول من متصفح (CORS)</div>
         <div class="img-list" id="f-images-preview"></div>
         <div class="section-title">العروض والأسعار</div>
         <div id="f-offers"></div>
@@ -253,6 +258,11 @@ tr:hover td{background:#FAF7F0}
     <h3>🖼️ تغيير الصورة</h3>
     <input id="imgpick-current" placeholder="مسار أو رابط الصورة" dir="ltr">
     <div class="hint">اختر من الصور الموجودة في هذه الصفحة، أو عدّل المسار أعلاه مباشرة</div>
+    <div style="display:flex;gap:.5rem;align-items:flex-start">
+      <input id="imgpick-url" placeholder="أو الصق رابط صورة من الإنترنت هنا (https://...)" dir="ltr" style="margin-bottom:.8rem">
+      <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchImageFromUrlForPick()">📥 تحميل ورفع</button>
+    </div>
+    <div class="hint" style="margin-top:-.6rem">تُرفع الصورة مباشرة لمجلد صور هذا المنتج على GitHub، ثم تُستخدم هنا تلقائياً — اضغط «✅ تطبيق» بعدها</div>
     <div id="imgpick-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.applyImagePick()">✅ تطبيق</button>
@@ -446,6 +456,80 @@ const Admin = {
     const box = $f("f-images-preview");
     const imgs = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
     box.innerHTML = imgs.map(src=>'<img class="thumb-preview" src="' + src + '" onerror="this.style.display=\'none\'" title="' + src + '">').join("");
+  },
+
+  /* ════════ جلب صورة من رابط خارجي ورفعها مباشرة إلى مجلد صور المنتج على GitHub ════════ */
+  async uploadExternalImage(url, slug){
+    let r;
+    try{
+      r = await fetch(url, { mode:"cors" });
+    }catch(e){
+      throw new Error("تعذّر الوصول للرابط — قد يمنع المصدر الجلب من المتصفح (CORS). حمّل الصورة يدوياً وارفعها عبر GitHub");
+    }
+    if(!r.ok) throw new Error("تعذّر جلب الصورة (رمز " + r.status + ")");
+    const blob = await r.blob();
+    if(!blob.type || !blob.type.startsWith("image/")) throw new Error("الرابط لا يشير إلى صورة صالحة");
+    let ext = "webp";
+    if(blob.type.includes("jpeg")) ext = "jpg";
+    else if(blob.type.includes("png")) ext = "png";
+    else if(blob.type.includes("gif")) ext = "gif";
+    else if(blob.type.includes("webp")) ext = "webp";
+    else if(blob.type.includes("svg")) ext = "svg";
+    else{
+      const m = url.split("?")[0].match(/\.(\w+)$/);
+      if(m) ext = m[1].toLowerCase();
+    }
+    const b64 = await new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>resolve(String(reader.result).split(",")[1] || "");
+      reader.onerror = ()=>reject(new Error("فشلت قراءة الصورة"));
+      reader.readAsDataURL(blob);
+    });
+    if(!b64) throw new Error("فشلت قراءة الصورة");
+    const path = "assets/img/" + slug + "/" + Date.now() + "." + ext;
+    await GH.putFile(path, b64, undefined, "رفع صورة خارجية لمنتج " + slug + " عبر لوحة التحكم");
+    return path;
+  },
+
+  async fetchImageFromUrl(){
+    const url = $f("f-img-url").value.trim();
+    if(!url){ toast("أدخل رابط الصورة أولاً"); return }
+    const slug = $f("f-slug").value.trim();
+    if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); return }
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
+    toast("⏳ جارِ تحميل الصورة ورفعها...");
+    try{
+      const path = await this.uploadExternalImage(url, slug);
+      const cur = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
+      cur.push(path);
+      $f("f-images").value = cur.join(", ");
+      $f("f-img-url").value = "";
+      this.renderImagesPreview();
+      toast("✅ رُفعت الصورة إلى " + path + " — لا تنسَ «✅ تأكيد ونشر» لحفظ المنتج");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  async fetchImageFromUrlForPick(){
+    const url = $f("imgpick-url").value.trim();
+    if(!url){ toast("أدخل رابط الصورة أولاً"); return }
+    const slug = this.previewPageSlug;
+    if(!slug){ toast("خطأ: لا يوجد منتج محدد"); return }
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); this.openGhSettings(); return }
+    toast("⏳ جارِ تحميل الصورة ورفعها...");
+    try{
+      const path = await this.uploadExternalImage(url, slug);
+      $f("imgpick-current").value = "../../" + path;
+      $f("imgpick-url").value = "";
+      toast("✅ رُفعت الصورة — اضغط «✅ تطبيق» لاستخدامها هنا");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
   },
 
   renderOffersRows(offers){
