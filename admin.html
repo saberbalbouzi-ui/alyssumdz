@@ -102,6 +102,7 @@ tr:hover td{background:#FAF7F0}
   <div class="stat" id="stats"></div>
   <div class="tabs">
     <button class="tab on" onclick="Admin.tab('orders',this)">📦 الطلبات</button>
+    <button class="tab" onclick="Admin.tab('analytics',this)">📊 التحليلات</button>
     <button class="tab" onclick="Admin.tab('products',this)">🌿 المنتجات</button>
     <button class="tab" onclick="Admin.tab('categories',this)">🗂️ الأقسام</button>
     <button class="tab" onclick="Admin.tab('fees',this)">🚚 رسوم التوصيل</button>
@@ -136,6 +137,22 @@ tr:hover td{background:#FAF7F0}
     </div>
     <div class="card" style="overflow:auto"><table id="orders-table"></table></div>
     <div id="orders-pagination" style="text-align:center;margin-top:1rem"></div>
+  </div>
+
+  <div id="tab-analytics" class="hidden">
+    <div class="stat" id="analytics-summary"></div>
+    <div class="grid2">
+      <div class="card">
+        <b style="color:var(--green)">🏆 الأكثر مبيعاً</b>
+        <div class="hint">حسب الكمية المباعة (من الطلبات غير الملغاة)</div>
+        <div id="analytics-bestsellers" style="margin-top:.8rem"></div>
+      </div>
+      <div class="card">
+        <b style="color:var(--green)">🗺️ توزيع الطلبات حسب الولاية</b>
+        <div class="hint">أكثر 8 ولايات طلباً</div>
+        <div id="analytics-wilayas" style="margin-top:.8rem"></div>
+      </div>
+    </div>
   </div>
 
   <div id="tab-products" class="hidden">
@@ -631,11 +648,12 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","products","categories","fees","delivery","coupons","blacklist","theme","pixels","agent","pending"].forEach(x=>{
+    ["orders","analytics","products","categories","fees","delivery","coupons","blacklist","theme","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="pending") this.renderPending();
+    if(t==="analytics") this.renderAnalytics();
   },
 
   renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderTheme(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
@@ -650,6 +668,79 @@ const Admin = {
       '<div><b>' + revenue.toLocaleString("fr-DZ") + ' دج</b><span>المبيعات</span></div>' +
       '<div><b>' + this.products.filter(p=>p.active!==false).length + '</b><span>منتج نشط</span></div>' +
       '<div><b>' + Object.keys(this.categories).length + '</b><span>قسم</span></div>';
+  },
+
+  /* ════════ التحليلات (Analytics) ════════
+     تُحسب بالكامل محلياً من this.orders/this.products المحمّلة أصلاً — لا حاجة لأي طلب إضافي. */
+  parseOrderItems(itemsStr){
+    // صيغة حقل "items" كما تُخزَّن في الشيت: "العنوان ×الكمية = السعر DA" على كل سطر
+    return String(itemsStr||"").split(/\n/).map(line=>{
+      const m = line.match(/^(.+?)\s*×\s*(\d+)\s*=/);
+      return m ? { title: m[1].trim(), qty: Number(m[2])||0 } : null;
+    }).filter(Boolean);
+  },
+
+  analyticsSales(days){
+    const since = Date.now() - days*24*3600*1000;
+    const inRange = this.orders.filter(o=>{
+      const t = new Date(o.date).getTime();
+      return !isNaN(t) && t >= since && o.status!=="annulee";
+    });
+    return { count: inRange.length, revenue: inRange.reduce((s,o)=>s+(Number(o.total)||0),0) };
+  },
+
+  analyticsConfirmationRate(){
+    if(!this.orders.length) return 0;
+    const confirmed = this.orders.filter(o=>["confirmee","expediee","livree"].includes(o.status)).length;
+    return Math.round((confirmed / this.orders.length) * 1000) / 10;
+  },
+
+  analyticsBestsellers(limit){
+    const totals = {};
+    this.orders.filter(o=>o.status!=="annulee").forEach(o=>{
+      this.parseOrderItems(o.items).forEach(it=>{
+        totals[it.title] = (totals[it.title]||0) + it.qty;
+      });
+    });
+    return Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0, limit||5);
+  },
+
+  analyticsWilayas(limit){
+    const totals = {};
+    this.orders.forEach(o=>{
+      if(!o.wilaya) return;
+      totals[o.wilaya] = (totals[o.wilaya]||0) + 1;
+    });
+    return Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0, limit||8);
+  },
+
+  analyticsBarsHtml(rows, maxLabel){
+    if(!rows.length) return '<div class="hint">لا توجد بيانات كافية بعد</div>';
+    const max = Math.max(...rows.map(r=>r[1]));
+    return rows.map(([label,val])=>{
+      const pct = max ? Math.round((val/max)*100) : 0;
+      return '<div style="margin-bottom:.6rem">' +
+        '<div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.2rem">' +
+          '<span>' + (maxLabel && label.length>maxLabel ? label.slice(0,maxLabel)+'…' : label) + '</span><b>' + val + '</b>' +
+        '</div>' +
+        '<div style="background:var(--bg);border-radius:6px;height:8px;overflow:hidden">' +
+          '<div style="width:' + pct + '%;height:100%;background:var(--gold);border-radius:6px"></div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  },
+
+  renderAnalytics(){
+    const s7 = this.analyticsSales(7), s30 = this.analyticsSales(30);
+    const rate = this.analyticsConfirmationRate();
+    $f("analytics-summary").innerHTML =
+      '<div><b>' + s7.count + '</b><span>طلبات آخر 7 أيام</span></div>' +
+      '<div><b>' + s7.revenue.toLocaleString("fr-DZ") + ' دج</b><span>مبيعات آخر 7 أيام</span></div>' +
+      '<div><b>' + s30.count + '</b><span>طلبات آخر 30 يوم</span></div>' +
+      '<div><b>' + s30.revenue.toLocaleString("fr-DZ") + ' دج</b><span>مبيعات آخر 30 يوم</span></div>' +
+      '<div><b>' + rate + '%</b><span>نسبة تأكيد الطلبات</span></div>';
+    $f("analytics-bestsellers").innerHTML = this.analyticsBarsHtml(this.analyticsBestsellers(5), 28);
+    $f("analytics-wilayas").innerHTML = this.analyticsBarsHtml(this.analyticsWilayas(8));
   },
 
   ORDER_PAGE_SIZE: 20,
