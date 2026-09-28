@@ -413,13 +413,16 @@ const Admin = {
   async load(){
     if(!this.key) return;
     if(!CONFIG.API_URL){ toast("⚠️ لم يُربط الـ API بعد"); }
-    const [prods, fees, orders] = await Promise.all([
-      CONFIG.API_URL ? API.get("products") : null,
-      CONFIG.API_URL ? API.get("fees") : null,
+    // ملاحظة: المنتجات ورسوم التوصيل تُقرأ محلياً من data.js/wilayas.js فقط (المصدر الوحيد
+    // الموثوق — يُعدَّلان مباشرة عبر لوحة التحكم وتُنشر التعديلات فوراً على GitHub)، ولا تُستبدَل
+    // بنتيجة Google Sheets القديمة: شيت الاختبار كانت تحتوي أحياناً على منتج واحد فقط، وكانت —
+    // إذا ردّت بأي بيانات ولو ناقصة — تُخفي أغلب المنتجات في لوحة التحكم بصفة عشوائية (نفس السبب
+    // الذي دفع لتعطيل هذا الاستبدال في bootStore() بملف api.js). الطلبات وحدها تبقى تُقرأ من الشيت.
+    const [orders] = await Promise.all([
       CONFIG.API_URL ? API.orders(this.key) : null,
     ]);
-    this.products = (prods && prods.ok && prods.products && prods.products.length) ? prods.products : JSON.parse(JSON.stringify(PRODUCTS));
-    this.fees = (fees && fees.ok && fees.fees && fees.fees.length) ? fees.fees : JSON.parse(JSON.stringify(WILAYAS));
+    this.products = JSON.parse(JSON.stringify(PRODUCTS));
+    this.fees = JSON.parse(JSON.stringify(WILAYAS));
     this.feesOriginal = JSON.parse(JSON.stringify(this.fees));
     this.orders = (orders && orders.ok) ? orders.orders : [];
     this.categories = JSON.parse(JSON.stringify(CATEGORIES));
