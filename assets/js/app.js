@@ -285,25 +285,32 @@ function initProduct(slug){
     setInterval(()=>{ v = Math.max(5, v + (Math.random()>.5?1:-1)); vn.textContent = v; }, 7000); }
 }
 
+/* ── بطاقة منتج (مشتركة بين الشبكة الرئيسية والأكثر مبيعاً) ── */
+function productCardHTML(p, opts){
+  opts = opts || {};
+  const disc = p.old ? Math.round((1-p.price/p.old)*100) : 0;
+  return `
+    <div class="thumb">${opts.ribbon?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${disc?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.images[0]}" alt="${p.title}"></div>
+    <div class="body">
+      <h3>${p.title}</h3>
+      <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>
+      <div class="price-row"><span class="price">${fmt(p.price)}</span>${p.old?`<span class="old">${fmt(p.old)}</span>`:""}</div>
+      <div class="cta">اطلب الآن — الدفع عند الاستلام</div>
+    </div>`;
+}
+
 /* ── الرئيسية ── */
 function initHome(){
   const grid = document.getElementById("grid");
   const chips = document.getElementById("chips");
   let filter = "all";
+  const chipBtns = {};
   function render(){
     grid.innerHTML = "";
     PRODUCTS.filter(p=>filter==="all"||p.cat===filter).forEach(p=>{
-      const disc = p.old ? Math.round((1-p.price/p.old)*100) : 0;
       const a = document.createElement("a");
       a.className = "card"; a.href = REL + "p/" + p.slug + "/";
-      a.innerHTML = `
-        <div class="thumb">${disc?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.images[0]}" alt="${p.title}"></div>
-        <div class="body">
-          <h3>${p.title}</h3>
-          <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>
-          <div class="price-row"><span class="price">${fmt(p.price)}</span>${p.old?`<span class="old">${fmt(p.old)}</span>`:""}</div>
-          <div class="cta">اطلب الآن — الدفع عند الاستلام</div>
-        </div>`;
+      a.innerHTML = productCardHTML(p);
       grid.appendChild(a);
     });
   }
@@ -311,15 +318,51 @@ function initHome(){
   all.className = "chip active"; all.textContent = "الكل";
   all.onclick = ()=>{ filter="all"; setActive(all); render() };
   chips.appendChild(all);
+  chipBtns.all = all;
   Object.entries(CATEGORIES).forEach(([k,label])=>{
     if(!PRODUCTS.some(p=>p.cat===k)) return;
     const c = document.createElement("button");
     c.className = "chip"; c.textContent = label;
     c.onclick = ()=>{ filter=k; setActive(c); render() };
     chips.appendChild(c);
+    chipBtns[k] = c;
   });
   function setActive(btn){ chips.querySelectorAll(".chip").forEach(x=>x.classList.remove("active")); btn.classList.add("active") }
   render();
+
+  /* تفعيل تصفية فئة معيّنة من خارج initHome (بطاقات «تسوّق حسب الفئة») */
+  window.goToCategory = function(key){
+    const btn = chipBtns[key] || chipBtns.all;
+    if(btn) btn.click();
+    const el = document.getElementById("products");
+    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  };
+}
+
+/* ── الأكثر مبيعاً (شريط مختار من المنتجات فوق الشبكة الكاملة) ── */
+function renderBestsellers(slugs){
+  const wrap = document.getElementById("bestsellers-grid");
+  if(!wrap) return;
+  wrap.innerHTML = "";
+  slugs.forEach(slug=>{
+    const p = PRODUCTS.find(x=>x.slug===slug);
+    if(!p) return;
+    const a = document.createElement("a");
+    a.className = "card"; a.href = REL + "p/" + p.slug + "/";
+    a.innerHTML = productCardHTML(p, {ribbon:"🔥 الأكثر مبيعاً"});
+    wrap.appendChild(a);
+  });
+}
+
+/* ── حركات الظهور عند التمرير (الصفحة الرئيسية فقط) ── */
+function initReveal(){
+  const els = document.querySelectorAll(".reveal");
+  if(!els.length) return;
+  if(!("IntersectionObserver" in window)){ els.forEach(el=>el.classList.add("show")); return; }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add("show"); io.unobserve(en.target); } });
+  }, {threshold:.14, rootMargin:"0px 0px -40px 0px"});
+  els.forEach(el=>io.observe(el));
 }
 
 /* ── السلة (درج) ── */
