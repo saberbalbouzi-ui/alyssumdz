@@ -16,5 +16,14 @@
     "minOrder": 0,
     "expiresAt": "",
     "active": true
+  },
+  {
+    "id": "cp_1790625530136",
+    "code": "TESTMIN",
+    "type": "percent",
+    "value": 20,
+    "minOrder": 50000,
+    "expiresAt": "",
+    "active": true
   }
 ]
