@@ -652,7 +652,10 @@ const Admin = {
 
     // نصوص: نستثني أيضاً العناصر ذات id (مرتبطة بسكربت السعر/العداد الديناميكي)
     const EXCLUDE_TEXT = "form,.site,.topbar,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,[id]";
-    doc.querySelectorAll("h1,h2,h3,h4,p,li,span,small,b,a").forEach(el=>{
+    doc.querySelectorAll("h1,h2,h3,h4,p,li,span,small,b,a,div").forEach(el=>{
+      // نستثني الـ div الحاوية (تحتوي عناصر أخرى بداخلها) ونسمح فقط بالـ div "الورقية"
+      // (نص مباشر بلا عناصر فرعية) — مثل نقاط قسم «المشكل والحل» اللي كانت ما تنعدلش
+      if(el.tagName === "DIV" && el.children.length > 0) return;
       if(el.closest(EXCLUDE_TEXT)) return;
       if(!el.textContent || !el.textContent.trim()) return;
       el.setAttribute("contenteditable","true");
@@ -714,12 +717,40 @@ const Admin = {
     if(!confirm("نشر هذه التعديلات مباشرة على صفحة المنتج في GitHub؟")) return;
 
     const doc = this._editDoc;
-    doc.querySelectorAll(".__adm_edit").forEach(el=>{ el.removeAttribute("contenteditable"); el.classList.remove("__adm_edit"); });
+    doc.querySelectorAll(".__adm_edit").forEach(el=>{
+      el.removeAttribute("contenteditable");
+      el.classList.remove("__adm_edit");
+      if(el.getAttribute("class") === "") el.removeAttribute("class");
+    });
     doc.querySelectorAll(".__adm_img_edit").forEach(el=>{
       el.classList.remove("__adm_img_edit");
       el.removeEventListener("click", Admin._onImgClick, {capture:true});
+      if(el.getAttribute("class") === "") el.removeAttribute("class");
     });
     const st = doc.getElementById("__adm_edit_style"); if(st) st.remove();
+
+    // إعادة المحتوى المتولّد ديناميكياً (معرض الصور، قوائم الولايات، «قد يعجبك أيضاً»، مساعد الشات)
+    // لحالته الأصلية الفارغة (القالب) قبل الحفظ — حتى لا يتجمّد بصفة ثابتة لحظة النشر
+    // (ويصبح قديماً أو خاطئاً لاحقاً)، ويبقى يتولّد من جديد تلقائياً من data.js/wilayas.js
+    // عند كل زيارة فعلية للصفحة، بدل ما يُحفظ كصورة جامدة من الصفحة وقت التعديل
+    const relatedEl = doc.getElementById("related");
+    if(relatedEl) relatedEl.innerHTML = "";
+    const gthumbsEl = doc.querySelector(".gthumbs");
+    if(gthumbsEl) gthumbsEl.innerHTML = "";
+    const wilayaEl = doc.getElementById("wilaya");
+    if(wilayaEl) wilayaEl.innerHTML = '<option value="">— اختر ولايتك —</option>';
+    const cwilayaEl = doc.getElementById("cwilaya");
+    if(cwilayaEl) cwilayaEl.innerHTML = '<option value="">— اختر —</option>';
+    const ccommuneEl = doc.getElementById("ccommune");
+    if(ccommuneEl && ccommuneEl.tagName === "SELECT"){
+      // بعض الصفحات يبدّلها الجافاسكريبت من حقل نص إلى قائمة بلديات حسب الولاية المختارة —
+      // نرجّعها لشكلها الأصلي (حقل نص بسيط) كي ما تتجمدش على بلديات ولاية معيّنة
+      const input = doc.createElement("input");
+      input.id = "ccommune"; input.setAttribute("placeholder","اختياري");
+      ccommuneEl.replaceWith(input);
+    }
+    doc.querySelectorAll("#agent-fab, #agent-panel").forEach(el=>el.remove());
+    doc.querySelectorAll('[class=""]').forEach(el=>el.removeAttribute("class"));
 
     const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
     const path = "p/" + this.previewPageSlug + "/index.html";
