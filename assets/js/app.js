@@ -240,7 +240,49 @@ async function initTheme(){
   try{
     const theme = await loadTheme();
     applyTheme(theme);
+    // إعدادات SEO الخاصة بالصفحة الرئيسية فقط (تُضبط من لوحة التحكم ⟵ المظهر) — تُطبَّق هنا لأن
+    // initTheme() يُستدعى من كل الصفحات، ونتحقق من وجود #grid (خاص بالرئيسية فقط) قبل التطبيق
+    if(theme && document.getElementById("grid")){
+      applySeoTags({
+        title: theme.seoTitle || "",
+        description: theme.seoDesc || "",
+        image: (theme.logo && theme.logo.url) ? theme.logo.url : "",
+        type: "website",
+      });
+    }
   }catch(e){ /* تجاهل */ }
+}
+
+/* ════════ حقول SEO (عنوان/وصف/صورة meta لكل صفحة) — تُحقن ديناميكياً عبر وسوم og و twitter ════════
+   العنوان والوصف الأساسيان (title/meta description) مكتوبان مسبقاً في كل صفحة HTML يدوياً؛ هذه
+   الدالة تُضيف فوقهما وسوم og/twitter (غير موجودة حالياً) لتحسين المشاركة على فيسبوك/واتساب/تويتر،
+   وتستبدل العنوان/الوصف الافتراضيين فقط إذا ضُبط حقل SEO مخصص من لوحة التحكم */
+function setMetaTag(attr, key, content){
+  if(!content) return;
+  let el = document.querySelector('meta[' + attr + '="' + key + '"]');
+  if(!el){ el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
+  el.setAttribute("content", content);
+}
+function applySeoTags(opts){
+  opts = opts || {};
+  if(opts.title) document.title = opts.title;
+  if(opts.description) setMetaTag("name", "description", opts.description);
+  const finalTitle = document.title || "";
+  const descEl = document.querySelector('meta[name="description"]');
+  const finalDesc = opts.description || (descEl ? descEl.getAttribute("content") : "") || "";
+  let finalImage = "";
+  if(opts.image){
+    try{ finalImage = new URL((typeof REL!=="undefined"?REL:"") + opts.image, location.href).href; }catch(e){ finalImage = ""; }
+  }
+  setMetaTag("property", "og:title", finalTitle);
+  setMetaTag("property", "og:description", finalDesc);
+  if(finalImage) setMetaTag("property", "og:image", finalImage);
+  setMetaTag("property", "og:type", opts.type || "website");
+  setMetaTag("property", "og:url", location.href);
+  setMetaTag("name", "twitter:card", finalImage ? "summary_large_image" : "summary");
+  setMetaTag("name", "twitter:title", finalTitle);
+  setMetaTag("name", "twitter:description", finalDesc);
+  if(finalImage) setMetaTag("name", "twitter:image", finalImage);
 }
 
 /* ════════ أكواد الخصم (Coupons) — تُدار من لوحة التحكم admin.html ⟵ أكواد الخصم ════════
@@ -314,6 +356,14 @@ function initProduct(slug){
   const bestIdx = 2;
   const state = { offer: p.offers[bestIdx] || p.offers[0], wilaya:null, dtype:"home" };
   const outOfStock = isOutOfStock(p);
+
+  // حقول SEO المخصصة لهذا المنتج (تُضبط من لوحة التحكم ⟵ تعديل منتج ⟵ SEO) — راجع applySeoTags في القسم أعلاه
+  applySeoTags({
+    title: p.seoTitle || "",
+    description: p.seoDesc || "",
+    image: (p.images && p.images[0]) || "",
+    type: "product",
+  });
 
   // معرض الصور
   const main = document.getElementById("gmain");
