@@ -112,7 +112,29 @@ tr:hover td{background:#FAF7F0}
     <button class="tab" onclick="Admin.tab('pending',this)">⏳ بانتظار التأكيد <span id="pending-count"></span></button>
   </div>
 
-  <div id="tab-orders"><div class="card" style="overflow:auto"><table id="orders-table"></table></div></div>
+  <div id="tab-orders">
+    <div class="card">
+      <div class="search-bar">
+        <input id="order-filter-q" placeholder="🔍 بحث بالاسم أو الهاتف أو رقم الطلب..." oninput="Admin.applyOrderFilters()">
+        <select id="order-filter-status" onchange="Admin.applyOrderFilters()">
+          <option value="">كل الحالات</option>
+          <option value="nouvelle">nouvelle</option>
+          <option value="confirmee">confirmee</option>
+          <option value="expediee">expediee</option>
+          <option value="livree">livree</option>
+          <option value="annulee">annulee</option>
+        </select>
+        <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
+        <input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ" style="width:auto">
+        <input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ" style="width:auto">
+        <button class="small gray" type="button" onclick="Admin.resetOrderFilters()">↩️ مسح الفلاتر</button>
+        <button class="small gold" type="button" onclick="Admin.exportOrdersCsv()">⬇️ تصدير CSV</button>
+      </div>
+      <div class="hint" id="orders-count-label" style="margin-top:.4rem"></div>
+    </div>
+    <div class="card" style="overflow:auto"><table id="orders-table"></table></div>
+    <div id="orders-pagination" style="text-align:center;margin-top:1rem"></div>
+  </div>
 
   <div id="tab-products" class="hidden">
     <div class="card">
@@ -573,21 +595,162 @@ const Admin = {
       '<div><b>' + Object.keys(this.categories).length + '</b><span>قسم</span></div>';
   },
 
+  ORDER_PAGE_SIZE: 20,
+  orderFilters: { q:"", status:"", wilaya:"", dateFrom:"", dateTo:"" },
+  orderPage: 1,
+
+  getFilteredOrders(){
+    const f = this.orderFilters;
+    const q = (f.q||"").trim().toLowerCase();
+    return this.orders
+      .map((o,i)=>({o,i}))
+      .filter(({o})=>{
+        if(f.status && o.status!==f.status) return false;
+        if(f.wilaya && o.wilaya!==f.wilaya) return false;
+        if(q && !(String(o.name||"").toLowerCase().includes(q) || String(o.phone||"").includes(q) || String(o.id||"").toLowerCase().includes(q))) return false;
+        if(f.dateFrom){ const d = new Date(o.date); if(d < new Date(f.dateFrom)) return false; }
+        if(f.dateTo){ const d = new Date(o.date); const to = new Date(f.dateTo); to.setHours(23,59,59,999); if(d > to) return false; }
+        return true;
+      });
+  },
+
+  applyOrderFilters(){
+    this.orderFilters = {
+      q: $f("order-filter-q").value,
+      status: $f("order-filter-status").value,
+      wilaya: $f("order-filter-wilaya").value,
+      dateFrom: $f("order-filter-from").value,
+      dateTo: $f("order-filter-to").value,
+    };
+    this.orderPage = 1;
+    this.renderOrders();
+  },
+
+  resetOrderFilters(){
+    $f("order-filter-q").value = "";
+    $f("order-filter-status").value = "";
+    $f("order-filter-wilaya").value = "";
+    $f("order-filter-from").value = "";
+    $f("order-filter-to").value = "";
+    this.applyOrderFilters();
+  },
+
+  changeOrderPage(delta){ this.orderPage += delta; this.renderOrders(); },
+
+  renderOrdersPagination(totalPages){
+    const box = $f("orders-pagination");
+    if(!box) return;
+    if(totalPages<=1){ box.innerHTML=""; return }
+    box.innerHTML =
+      '<button class="small" type="button" ' + (this.orderPage<=1?"disabled":"") + ' onclick="Admin.changeOrderPage(-1)">‹ السابق</button>' +
+      '<span style="margin:0 .8rem;font-weight:700">صفحة ' + this.orderPage + ' / ' + totalPages + '</span>' +
+      '<button class="small" type="button" ' + (this.orderPage>=totalPages?"disabled":"") + ' onclick="Admin.changeOrderPage(1)">التالي ›</button>';
+  },
+
+  whatsappLinkHtml(phone){
+    const digits = String(phone||"").replace(/\D/g,"");
+    if(!digits) return "";
+    const intl = digits.startsWith("0") ? "213"+digits.slice(1) : (digits.startsWith("213")?digits:"213"+digits);
+    return ' <a href="https://wa.me/' + intl + '" target="_blank" title="مراسلة عبر واتساب" style="text-decoration:none">💬</a>';
+  },
+
   renderOrders(){
     const el = $f("orders-table");
-    if(!this.orders.length){ el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد طلبات بعد — أو لم يُربط الـ API</td></tr>"; return }
-    el.innerHTML = '<tr><th>الرقم</th><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>الولاية</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th></th><th>التوصيل</th></tr>' +
-      this.orders.map((o,i)=>'<tr>' +
+    const wilayaSel = $f("order-filter-wilaya");
+    if(wilayaSel){
+      const wilayas = [...new Set(this.orders.map(o=>o.wilaya).filter(Boolean))].sort();
+      if(wilayaSel.options.length-1 !== wilayas.length || wilayas.some(w=>![...wilayaSel.options].some(o=>o.value===w))){
+        const cur = wilayaSel.value;
+        wilayaSel.innerHTML = '<option value="">كل الولايات</option>' + wilayas.map(w=>'<option value="' + w + '">' + w + '</option>').join("");
+        wilayaSel.value = cur;
+      }
+    }
+    if(!this.orders.length){
+      el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد طلبات بعد — أو لم يُربط الـ API</td></tr>";
+      $f("orders-pagination").innerHTML = ""; $f("orders-count-label").textContent = "";
+      return;
+    }
+    const filtered = this.getFilteredOrders();
+    if(!filtered.length){
+      el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد طلبات مطابقة لهذا البحث/الفلتر</td></tr>";
+      $f("orders-pagination").innerHTML = "";
+      $f("orders-count-label").textContent = "0 من أصل " + this.orders.length;
+      return;
+    }
+    const totalPages = Math.max(1, Math.ceil(filtered.length / this.ORDER_PAGE_SIZE));
+    if(this.orderPage > totalPages) this.orderPage = totalPages;
+    if(this.orderPage < 1) this.orderPage = 1;
+    const start = (this.orderPage-1) * this.ORDER_PAGE_SIZE;
+    const pageItems = filtered.slice(start, start + this.ORDER_PAGE_SIZE);
+    $f("orders-count-label").textContent = filtered.length + " من أصل " + this.orders.length + (filtered.length!==this.orders.length?" (بعد الفلترة)":"");
+
+    el.innerHTML = '<tr><th>الرقم</th><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>الولاية</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th></th><th>التوصيل</th><th></th></tr>' +
+      pageItems.map(({o,i})=>'<tr>' +
         '<td>' + o.id + '</td>' +
         '<td>' + new Date(o.date).toLocaleDateString("ar-DZ") + '</td>' +
-        '<td>' + o.name + '</td><td dir="ltr">' + o.phone + '</td><td>' + (o.wilaya||"") + '</td>' +
+        '<td>' + o.name + '</td><td dir="ltr">' + o.phone + this.whatsappLinkHtml(o.phone) + '</td><td>' + (o.wilaya||"") + '</td>' +
         '<td style="max-width:260px;font-size:.8rem">' + o.items + '</td>' +
         '<td><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
         '<td><span class="pill st-' + o.status + '">' + o.status + '</span></td>' +
         '<td><select onchange="API.updateOrder(Admin.key,\'' + o.id + '\',this.value);Admin.orders[' + i + '].status=this.value;Admin.renderStats()" style="width:auto;padding:.3rem">' +
           ["nouvelle","confirmee","expediee","livree","annulee"].map(s=>'<option ' + (s===o.status?"selected":"") + '>' + s + '</option>').join("") +
         '</select></td>' +
-        '<td>' + this.deliveryOrderCellHtml(i) + '</td></tr>').join("");
+        '<td>' + this.deliveryOrderCellHtml(i) + '</td>' +
+        '<td><button class="small gray" type="button" style="padding:.3rem .5rem" onclick="Admin.printOrderSlip(' + i + ')" title="طباعة وصل التوصيل">🖨️</button></td>' +
+      '</tr>').join("");
+
+    this.renderOrdersPagination(totalPages);
+  },
+
+  exportOrdersCsv(){
+    const filtered = this.getFilteredOrders();
+    if(!filtered.length){ toast("لا توجد طلبات لتصديرها"); return }
+    const rows = [["الرقم","التاريخ","الاسم","الهاتف","الولاية","البلدية","المنتجات","الإجمالي","الحالة"]];
+    filtered.forEach(({o})=>{
+      rows.push([o.id, new Date(o.date).toLocaleString("ar-DZ"), o.name, o.phone, o.wilaya||"", o.commune||"", String(o.items||"").replace(/\n/g," "), Number(o.total)||0, o.status]);
+    });
+    const csv = "﻿" + rows.map(r=>r.map(c=>'"' + String(c).replace(/"/g,'""') + '"').join(",")).join("\r\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "orders-" + new Date().toISOString().slice(0,10) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    toast("✅ جارِ تنزيل " + filtered.length + " طلباً");
+  },
+
+  printOrderSlip(i){
+    const o = this.orders[i];
+    if(!o) return;
+    const w = window.open("", "_blank", "width=420,height=650");
+    if(!w){ toast("⚠️ يرجى السماح بالنوافذ المنبثقة لطباعة الوصل"); return }
+    const itemsHtml = String(o.items||"").split(/\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<div>• ' + x + '</div>').join("") || ('<div>' + (o.items||"") + '</div>');
+    w.document.write('<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>وصل الطلب ' + o.id + '</title><style>' +
+      "body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;padding:20px;color:#1C2420}" +
+      'h2{margin:0 0 4px;color:#173F35}' +
+      '.muted{color:#6B7672;font-size:.85rem;margin-bottom:14px}' +
+      'table{width:100%;border-collapse:collapse;margin:10px 0}' +
+      'td{padding:6px 0;border-bottom:1px solid #EAE3D6;vertical-align:top}' +
+      'td:first-child{color:#6B7672;width:110px}' +
+      '.tot{font-size:1.2rem;font-weight:800;color:#173F35;border-top:2px solid #173F35;padding-top:10px;margin-top:10px;display:flex;justify-content:space-between}' +
+      '.items{border:1px solid #EAE3D6;border-radius:8px;padding:10px;margin:10px 0;font-size:.9rem}' +
+      '@media print{ .no-print{display:none} }' +
+      '</style></head><body>' +
+      '<h2>🌿 ALYSSUM — وصل طلب</h2>' +
+      '<div class="muted">رقم الطلب: ' + o.id + ' — ' + new Date(o.date).toLocaleString("ar-DZ") + '</div>' +
+      '<table>' +
+        '<tr><td>الزبون</td><td><b>' + (o.name||"") + '</b></td></tr>' +
+        '<tr><td>الهاتف</td><td dir="ltr"><b>' + (o.phone||"") + '</b></td></tr>' +
+        '<tr><td>الولاية</td><td>' + (o.wilaya||"") + (o.commune?" — " + o.commune:"") + '</td></tr>' +
+        '<tr><td>نوع التوصيل</td><td>' + (o.dtype==="stop" ? ("مكتب Stop Desk" + (o.desk?" — " + o.desk:"")) : "إلى المنزل") + '</td></tr>' +
+        '<tr><td>الحالة</td><td>' + o.status + '</td></tr>' +
+      '</table>' +
+      '<div class="items"><b>المنتجات:</b>' + itemsHtml + '</div>' +
+      '<div class="tot"><span>الإجمالي</span><span>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</span></div>' +
+      '<div class="muted" style="margin-top:14px">💵 الدفع عند الاستلام</div>' +
+      '<button class="no-print" onclick="print()" style="margin-top:16px;padding:.6rem 1.2rem;background:#173F35;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer">🖨️ طباعة</button>' +
+      '</body></html>');
+    w.document.close();
   },
 
   deliveryOrderCellHtml(i){
@@ -783,6 +946,47 @@ const Admin = {
     box.appendChild(d);
   },
 
+  /* ════════ نشر المنتجات/الأقسام/رسوم التوصيل فعلياً على الموقع الحي ════════
+     المصدر الوحيد الذي يقرأه الموقع الحي فعلياً هو assets/js/data.js (PRODUCTS+CATEGORIES)
+     و assets/js/wilayas.js (WILAYAS) — API.saveProduct/saveCategories/saveFees ترسل فقط إلى
+     Google Sheets وهو غير مقروء من الموقع (معطّل عمداً في bootStore، راجع تعليق api.js)، لذلك
+     يجب أيضاً إعادة كتابة data.js/wilayas.js عبر GitHub في كل مرة يُنشر فيها منتج/قسم/رسم توصيل،
+     وإلا تبقى التعديلات حبيسة لوحة التحكم ولا تصل أبداً للزوار رغم رسالة «تم النشر». */
+  async publishDataJs(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return false }
+    try{
+      const file = await GH.getFile("assets/js/data.js");
+      const content = "/* منتجات المتجر — يُعدَّل تلقائياً من لوحة التحكم admin.html، آخر تحديث: " + new Date().toISOString() + " */\n" +
+        "var CATEGORIES = " + JSON.stringify(this.categories) + ";\n" +
+        "var PRODUCTS = " + JSON.stringify(this.products) + ";\n";
+      const b64 = btoa(unescape(encodeURIComponent(content)));
+      await GH.putFile("assets/js/data.js", b64, file.sha, "تحديث المنتجات/الأقسام عبر لوحة التحكم");
+      return true;
+    }catch(err){
+      console.error(err);
+      toast("❌ تعذّر تحديث ملف المنتجات على الموقع الحي: " + err.message);
+      return false;
+    }
+  },
+  async publishWilayasJs(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return false }
+    try{
+      const file = await GH.getFile("assets/js/wilayas.js");
+      const content = "/* رسوم التوصيل ومكاتب Yalidine — يُعدَّل تلقائياً من لوحة التحكم admin.html */\n" +
+        "/* آخر تحديث: " + new Date().toISOString().slice(0,10) + " */\n" +
+        "var WILAYAS = " + JSON.stringify(this.fees) + ";\n";
+      const b64 = btoa(unescape(encodeURIComponent(content)));
+      await GH.putFile("assets/js/wilayas.js", b64, file.sha, "تحديث رسوم التوصيل عبر لوحة التحكم");
+      return true;
+    }catch(err){
+      console.error(err);
+      toast("❌ تعذّر تحديث ملف رسوم التوصيل على الموقع الحي: " + err.message);
+      return false;
+    }
+  },
+
   collectProductForm(){
     const offers = [...document.querySelectorAll("#f-offers .offer-row")].map(r=>({
       qty: Number(r.querySelector(".of-qty").value)||1,
@@ -861,17 +1065,19 @@ const Admin = {
     toast("📝 حُفظت المسودة — تظهر في تبويب «بانتظار التأكيد»");
   },
 
-  publishProduct(data){
+  async publishProduct(data){
     const p = data || this.collectProductForm();
     if(!p.slug || !p.title || !p.price){ toast("املأ الحقول الأساسية"); return }
-    API.saveProduct(this.key, p);
+    API.saveProduct(this.key, p); // سجل في Google Sheets (تاريخي فقط — المصدر الحقيقي للموقع هو data.js أدناه)
     const i = this.products.findIndex(x=>x.slug===p.slug);
     if(i>=0) this.products[i]=p; else this.products.push(p);
     this.pending = this.pending.filter(x=>!(x.type==="product" && x.slug===p.slug));
     this.savePending();
     this.closeModal();
     this.renderProducts(); this.renderStats();
-    toast("✅ تم نشر «" + p.title + "» — التعديل طُبِّق على هذا المنتج فقط");
+    toast("⏳ جارِ نشر المنتج على الموقع الحي...");
+    const ok = await this.publishDataJs();
+    if(ok) toast("✅ تم نشر «" + p.title + "» على الموقع الحي — يظهر خلال دقيقة تقريباً");
   },
 
   duplicateProduct(slug){
@@ -891,7 +1097,7 @@ const Admin = {
     toast("⧉ نسخة جاهزة — عدّل ثم احفظ");
   },
 
-  delProduct(slug){
+  async delProduct(slug){
     const p = this.products.find(x=>x.slug===slug);
     if(!confirm("حذف المنتج «" + (p?p.title:slug) + "» نهائياً؟")) return;
     API.deleteProduct(this.key, slug);
@@ -899,7 +1105,9 @@ const Admin = {
     this.pending = this.pending.filter(x=>!(x.type==="product" && x.slug===slug));
     this.savePending();
     this.renderProducts(); this.renderStats();
-    toast("✓ تم الحذف");
+    toast("⏳ جارِ تحديث الموقع الحي...");
+    const ok = await this.publishDataJs();
+    if(ok) toast("✓ تم الحذف من الموقع الحي");
   },
 
   previewPage(slug){
@@ -1178,7 +1386,7 @@ const Admin = {
     toast("📝 حُفظت مسودة القسم");
   },
 
-  publishCategory(){
+  async publishCategory(){
     const k = $f("c-key").value.trim();
     const label = $f("c-label").value.trim();
     if(!k || !label){ toast("املأ المعرف والاسم"); return }
@@ -1194,10 +1402,12 @@ const Admin = {
     API.saveCategories(this.key, this.categories);
     $f("cat-modal-bg").classList.remove("open");
     this.renderCategories(); this.renderProducts(); this.renderStats();
-    toast("✅ تم نشر القسم «" + label + "»");
+    toast("⏳ جارِ نشر القسم على الموقع الحي...");
+    const ok = await this.publishDataJs();
+    if(ok) toast("✅ تم نشر القسم «" + label + "» على الموقع الحي");
   },
 
-  delCategory(key){
+  async delCategory(key){
     const count = this.products.filter(p=>p.cat===key).length;
     if(count > 0){ toast("⚠️ لا يمكن حذف قسم يحتوي على " + count + " منتج — انقلها أولاً"); return }
     if(!confirm("حذف القسم «" + this.categories[key] + "»؟")) return;
@@ -1206,7 +1416,9 @@ const Admin = {
     this.savePending();
     API.saveCategories(this.key, this.categories);
     this.renderCategories(); this.renderStats();
-    toast("✓ تم حذف القسم");
+    toast("⏳ جارِ تحديث الموقع الحي...");
+    const ok = await this.publishDataJs();
+    if(ok) toast("✓ تم حذف القسم من الموقع الحي");
   },
 
   /* ════════ رسوم التوصيل ════════ */
@@ -1236,13 +1448,15 @@ const Admin = {
     this.renderFees();
     toast("↩️ تم التراجع");
   },
-  saveAllFees(){
-    if(!confirm("حفظ رسوم التوصيل الجديدة؟ ستُطبَّق على جميع المنتجات فوراً.")) return;
+  async saveAllFees(){
+    if(!confirm("حفظ رسوم التوصيل الجديدة؟ ستُطبَّق على جميع المنتجات فوراً على الموقع الحي.")) return;
     API.saveFees(this.key, this.fees);
     this.feesOriginal = JSON.parse(JSON.stringify(this.fees));
     if(window.WILAYAS) window.WILAYAS = this.fees;
     this.renderFees();
-    toast("✓ تم حفظ رسوم التوصيل — تُطبَّق على كل المنتجات دون تغيير أسعارها");
+    toast("⏳ جارِ نشر رسوم التوصيل على الموقع الحي...");
+    const ok = await this.publishWilayasJs();
+    if(ok) toast("✅ تم نشر رسوم التوصيل على الموقع الحي — تُطبَّق على كل المنتجات دون تغيير أسعارها");
   },
 
   /* ════════ بانتظار التأكيد ════════ */
@@ -1286,11 +1500,11 @@ const Admin = {
     $f("preview-modal-bg").classList.add("open");
   },
 
-  approvePending(i){
+  async approvePending(i){
     const d = this.pending[i];
     if(!d) return;
     if(d.type === "product"){
-      this.publishProduct(d.data);
+      await this.publishProduct(d.data);
     } else if(d.type === "category"){
       if(d.oldKey && d.oldKey !== d.data.key){
         delete this.categories[d.oldKey];
@@ -1301,7 +1515,9 @@ const Admin = {
       this.savePending();
       API.saveCategories(this.key, this.categories);
       this.renderCategories(); this.renderProducts(); this.renderPending(); this.renderStats();
-      toast("✅ تم تأكيد القسم");
+      toast("⏳ جارِ نشر القسم على الموقع الحي...");
+      const ok = await this.publishDataJs();
+      if(ok) toast("✅ تم تأكيد القسم ونشره على الموقع الحي");
     }
   },
 
