@@ -300,7 +300,7 @@ section[id]{scroll-margin-top:84px}
 .trust-strip span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:.4rem .95rem;font-size:.8rem;color:var(--muted);font-weight:800}
 
 /* بطاقات «تسوّق حسب الفئة» */
-.shop-cats{display:grid;grid-template-columns:repeat(5,1fr);gap:1.1rem}
+.shop-cats{display:grid;grid-template-columns:repeat(6,1fr);gap:1.1rem}
 @media(max-width:960px){.shop-cats{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.shop-cats{grid-template-columns:repeat(2,1fr)}}
 .shop-cat{position:relative;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background-size:cover;background-position:center;background-color:var(--card);box-shadow:var(--shadow);border:1px solid var(--line);transition:.25s;font-family:inherit;padding:0;-webkit-appearance:none;appearance:none}
