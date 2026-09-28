@@ -303,6 +303,13 @@ tr:hover td{background:#FAF7F0}
       <div id="th-logo-preview" class="hint"></div>
       <button class="small gray" type="button" onclick="Admin.clearLogo()">🗑️ إزالة الشعار (الرجوع للنص الافتراضي)</button>
     </div>
+
+    <div class="card">
+      <div class="section-title">SEO للصفحة الرئيسية (اختياري)</div>
+      <input id="th-seo-title" placeholder="عنوان SEO مخصص للصفحة الرئيسية — اتركه فارغاً لاستخدام العنوان الحالي">
+      <textarea id="th-seo-desc" rows="2" placeholder="وصف SEO مخصص للصفحة الرئيسية — اتركه فارغاً لاستخدام الوصف الحالي"></textarea>
+      <div class="hint">تُحسِّن هذه الحقول ظهور الموقع في نتائج البحث ومعاينة الرابط عند مشاركته على فيسبوك/واتساب/تويتر — تُنشَر مع باقي إعدادات المظهر عبر زر «حفظ ونشر» أعلاه.</div>
+    </div>
   </div>
 
   <div id="tab-pixels" class="hidden">
@@ -353,6 +360,10 @@ tr:hover td{background:#FAF7F0}
         <input id="f-stock" type="number" min="0" placeholder="الكمية المتوفرة في المخزون (اتركه فارغاً لعدم تتبع المخزون)">
         <div class="hint">إذا تُرك فارغاً، يبقى المنتج متاحاً دائماً بدون تتبع كمية. إذا وصلت الكمية لـ 0 يظهر "نفدت الكمية" في الموقع ويُعطَّل الطلب تلقائياً.</div>
         <textarea id="f-desc" rows="3" placeholder="وصف مختصر"></textarea>
+        <div class="section-title">SEO (اختياري)</div>
+        <input id="f-seo-title" placeholder="عنوان SEO مخصص (title) — اتركه فارغاً لاستخدام عنوان الصفحة الحالي">
+        <textarea id="f-seo-desc" rows="2" placeholder="وصف SEO مخصص (meta description) — اتركه فارغاً لاستخدام الوصف الحالي"></textarea>
+        <div class="hint">تُستخدم هذه الحقول لتحسين ظهور المنتج في نتائج البحث ومعاينة الرابط عند مشاركته على فيسبوك/واتساب/تويتر (Open Graph). صورة أول عنصر في قائمة الصور أدناه تُستخدم تلقائياً كصورة المعاينة.</div>
       </div>
       <div>
         <div class="section-title">الصور</div>
@@ -974,6 +985,8 @@ const Admin = {
     $f("f-cat").value = src?src.cat:Object.keys(this.categories)[0];
     $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
     $f("f-stock").value = (src && src.stock!==undefined && src.stock!==null) ? src.stock : "";
+    $f("f-seo-title").value = src?(src.seoTitle||""):"";
+    $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
     this.renderImagesPreview();
     $f("prod-modal-bg").classList.add("open");
@@ -1157,6 +1170,7 @@ const Admin = {
       images: $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean),
       desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
       stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
+      seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
   },
@@ -2156,6 +2170,9 @@ const Admin = {
     $f("th-logo-preview").innerHTML = logo.url ?
       ('<img src="' + logo.url + '" style="max-width:200px;max-height:80px;border:1px solid var(--line);border-radius:8px;padding:.4rem;background:#fff;display:block;margin-bottom:.4rem">شعار مرفوع حالياً: ' + logo.url) :
       "لا يوجد شعار مرفوع بعد — سيبقى النص الافتراضي «أليسوم»";
+
+    $f("th-seo-title").value = t.seoTitle || "";
+    $f("th-seo-desc").value = t.seoDesc || "";
   },
 
   onThemeFontPresetChange(){
@@ -2213,6 +2230,8 @@ const Admin = {
       colors,
     };
     if(this.theme && this.theme.logo) theme.logo = this.theme.logo;
+    theme.seoTitle = $f("th-seo-title").value.trim();
+    theme.seoDesc = $f("th-seo-desc").value.trim();
     toast("⏳ جارِ النشر على GitHub...");
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(theme, null, 2))));
