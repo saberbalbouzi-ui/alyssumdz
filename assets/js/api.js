@@ -78,9 +78,14 @@ const API = {
   updateOrder(key, id, status, note) { this.post({ type: "update_order", key, id, status, note }); },
 };
 
-/* تهيئة المنتجات والرسوم قبل عرض الصفحات */
+/* تهيئة الصفحات — data.js و wilayas.js هما المصدر الوحيد الموثوق للمنتجات ورسوم التوصيل
+   (يُعدَّلان مباشرة عبر لوحة التحكم admin.html وتُنشر التعديلات فوراً على GitHub).
+   تم تعطيل استبدالهما بنتيجة Google Sheets القديمة: كانت شيت الاختبار القديمة تحتوي على
+   منتج واحد فقط، وكانت — إذا ردّت بأي بيانات ولو ناقصة — تُخفي 28 من أصل 29 منتجاً
+   على الموقع الحي بصفة عشوائية (حسب سرعة رد الشيت). دوال القراءة/الكتابة الأخرى
+   (تسجيل الطلبات، قراءتها من لوحة التحكم) تبقى تشتغل عادي، هذا التعطيل خاص فقط
+   بتحميل قائمة المنتجات ورسوم التوصيل عند فتح الصفحة. */
 async function bootStore() {
-  const [prods, fees] = await Promise.all([API.loadProducts(), API.loadFees()]);
-  if (fees) window.WILAYAS = fees;
-  if (prods) window.PRODUCTS = prods;
+  // (كان هنا نداء لـ API.loadProducts()/API.loadFees() يبدّل window.PRODUCTS/WILAYAS —
+  // أُزيل عمداً؛ راجع الشرح أعلاه)
 }
