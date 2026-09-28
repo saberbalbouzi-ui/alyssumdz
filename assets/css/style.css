@@ -80,6 +80,9 @@ section{padding:3.6rem 0}
 .card .thumb img{width:100%;height:100%;object-fit:cover;transition:.5s}
 .card:hover .thumb img{transform:scale(1.06)}
 .badge-off{position:absolute;top:12px;right:12px;background:var(--red);color:#fff;font-weight:800;font-size:.78rem;padding:.25rem .7rem;border-radius:999px}
+.ribbon-oos{position:absolute;inset:0;background:rgba(28,36,32,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;text-align:center;z-index:2}
+.card.oos .thumb img{filter:grayscale(60%)}
+.oos-warning{background:#FBEAEA;border:1px solid var(--red);color:#8A2424;border-radius:10px;padding:.9rem 1.1rem;font-weight:700;margin:1rem 0;text-align:center}
 .card .body{padding:1.1rem 1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
 .card h3{font-size:1.02rem;font-weight:800;color:var(--ink)}
 .stars{color:var(--gold);font-size:.85rem;letter-spacing:2px}
