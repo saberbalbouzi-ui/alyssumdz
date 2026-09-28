@@ -96,6 +96,8 @@ tr:hover td{background:#FAF7F0}
     <button class="tab" onclick="Admin.tab('products',this)">🌿 المنتجات</button>
     <button class="tab" onclick="Admin.tab('categories',this)">🗂️ الأقسام</button>
     <button class="tab" onclick="Admin.tab('fees',this)">🚚 رسوم التوصيل</button>
+    <button class="tab" onclick="Admin.tab('pixels',this)">🎯 البكسلات</button>
+    <button class="tab" onclick="Admin.tab('agent',this)">🤖 الوكيل الذكي</button>
     <button class="tab" onclick="Admin.tab('pending',this)">⏳ بانتظار التأكيد <span id="pending-count"></span></button>
   </div>
 
@@ -148,6 +150,34 @@ tr:hover td{background:#FAF7F0}
       <div class="hint">كل تعديل يبقى هنا حتى تضغط «تأكيد» — التأكيد يطبق التعديل على العنصر المعني فقط</div>
       <div id="pending-list" style="margin-top:1rem"></div>
     </div>
+  </div>
+
+  <div id="tab-pixels" class="hidden">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <b style="color:var(--green)">بكسلات التتبع (فيسبوك / تيك توك / جوجل)</b>
+        <div class="hint">تُثبَّت البكسلات تلقائياً في كل صفحات الموقع، ويُسجَّل حدث «شراء» عند الضغط على «تأكيد الطلب» في صفحة المنتج المستهدف</div>
+      </div>
+      <div style="display:flex;gap:.6rem">
+        <button class="small" onclick="Admin.editPixel(null)">+ بكسل جديد</button>
+        <button class="small gray" onclick="Admin.openGhSettings()">⚙️ GitHub</button>
+      </div>
+    </div>
+    <div class="card"><div style="overflow:auto"><table id="pixels-table"></table></div></div>
+  </div>
+
+  <div id="tab-agent" class="hidden">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <b style="color:var(--green)">أسئلة وأجوبة مخصّصة للوكيل الذكي</b>
+        <div class="hint">أضف كلمات مفتاحية وإجابة جاهزة — إذا وردت إحدى الكلمات في رسالة الزبون يرد الوكيل بالإجابة المحدَّدة مباشرة قبل أي رد آخر</div>
+      </div>
+      <div style="display:flex;gap:.6rem">
+        <button class="small" onclick="Admin.editQA(null)">+ سؤال وجواب جديد</button>
+        <button class="small gray" onclick="Admin.openGhSettings()">⚙️ GitHub</button>
+      </div>
+    </div>
+    <div class="card"><div style="overflow:auto"><table id="qa-table"></table></div></div>
   </div>
 </div>
 
@@ -236,6 +266,55 @@ tr:hover td{background:#FAF7F0}
   </div>
 </div>
 
+<!-- نافذة بكسل تتبع -->
+<div class="modal-bg" id="pixel-modal-bg">
+  <div class="modal">
+    <h3 id="pixel-modal-title">بكسل جديد</h3>
+    <select id="px-platform" onchange="Admin.onPixelPlatformChange()">
+      <option value="facebook">📘 فيسبوك (Meta Pixel)</option>
+      <option value="tiktok">🎵 تيك توك (TikTok Pixel)</option>
+      <option value="ga4">📊 جوجل أناليتكس (GA4)</option>
+      <option value="google_ads">🎯 إعلانات جوجل (Google Ads)</option>
+    </select>
+    <input id="px-label" placeholder="اسم البكسل (للتمييز فقط، مثال: حملة سبتمبر)">
+    <input id="px-id" placeholder="معرف البكسل (Pixel ID)" dir="ltr">
+    <div class="hint" id="px-id-hint">مثال فيسبوك: 123456789012345</div>
+    <input id="px-conv-label" class="hidden" placeholder="Conversion Label (خاص بإعلانات جوجل)" dir="ltr">
+    <input id="px-currency" placeholder="العملة" value="DZD" dir="ltr">
+    <div class="section-title">نطاق التفعيل</div>
+    <select id="px-scope-mode" onchange="Admin.onPixelScopeModeChange()">
+      <option value="all">🌐 كل صفحات الموقع (بما فيها الرئيسية)</option>
+      <option value="specific">🎯 منتجات محددة فقط</option>
+    </select>
+    <div id="px-scope-products" class="hidden" style="max-height:180px;overflow:auto;border:1.5px solid var(--line);border-radius:10px;padding:.6rem;margin-bottom:.8rem"></div>
+    <label style="display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--green);margin-bottom:.8rem">
+      <input type="checkbox" id="px-active" checked style="width:auto;margin:0"> مفعّل
+    </label>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.savePixel()">💾 حفظ ونشر</button>
+      <button class="small gray" onclick="document.getElementById('pixel-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة سؤال وجواب للوكيل الذكي -->
+<div class="modal-bg" id="qa-modal-bg">
+  <div class="modal">
+    <h3 id="qa-modal-title">سؤال وجواب جديد</h3>
+    <input id="qa-keywords" placeholder="كلمات مفتاحية (افصل بفاصلة)" dir="rtl">
+    <div class="hint">مثال: توصيل مجاني، شحن مجاني — إن وردت إحدى هذه الكلمات في سؤال الزبون يُعطى الرد أدناه</div>
+    <textarea id="qa-answer-ar" rows="3" placeholder="الإجابة بالعربية"></textarea>
+    <textarea id="qa-answer-fr" rows="3" placeholder="الإجابة بالفرنسية (اختياري)"></textarea>
+    <label style="display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--green);margin-bottom:.8rem">
+      <input type="checkbox" id="qa-active" checked style="width:auto;margin:0"> مفعّل
+    </label>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.saveQA()">💾 حفظ ونشر</button>
+      <button class="small gray" onclick="document.getElementById('qa-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- نافذة ضبط GitHub -->
 <div class="modal-bg" id="gh-modal-bg">
   <div class="modal">
@@ -316,6 +395,8 @@ const GH = {
 const Admin = {
   key: localStorage.getItem("alyssum_admin_key") || "",
   products: [], fees: [], feesOriginal: [], orders: [], categories: {},
+  pixels: [], pixelsSha: undefined, editingPixelId: null,
+  qaList: [], qaSha: undefined, editingQAId: null,
   pending: JSON.parse(localStorage.getItem("alyssum_pending") || "[]"),
   editingSlug: null, editingCatKey: null, previewData: null,
 
@@ -344,6 +425,7 @@ const Admin = {
     this.categories = JSON.parse(JSON.stringify(CATEGORIES));
     $f("login-box").classList.add("hidden");
     $f("app").classList.remove("hidden");
+    await Promise.all([this.loadPixels(), this.loadQA()]);
     this.renderAll();
     toast("✓ تم التحميل");
   },
@@ -358,14 +440,14 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","products","categories","fees","pending"].forEach(x=>{
+    ["orders","products","categories","fees","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="pending") this.renderPending();
   },
 
-  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderPendingBadge(); },
+  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
 
   renderStats(){
     const today = new Date().toDateString();
@@ -1045,6 +1127,236 @@ const Admin = {
     this.savePending();
     this.renderPending(); this.renderProducts(); this.renderCategories();
     toast("↩️ تم التجاهل");
+  },
+
+  /* ════════ بكسلات التتبع (فيسبوك / تيك توك / جوجل) ════════ */
+  PIXEL_LABELS: { facebook:"📘 فيسبوك", tiktok:"🎵 تيك توك", ga4:"📊 GA4", google_ads:"🎯 إعلانات جوجل" },
+
+  async loadPixels(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ this.pixels = []; this.pixelsSha = undefined; return }
+    try{
+      const f = await GH.getFile("assets/data/pixels.json");
+      this.pixelsSha = f.sha;
+      this.pixels = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
+    }catch(e){
+      this.pixels = []; this.pixelsSha = undefined;
+    }
+  },
+
+  renderPixels(){
+    const el = $f("pixels-table");
+    if(!el) return;
+    if(!this.pixels.length){
+      el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد بكسلات بعد — اضغط «+ بكسل جديد»</td></tr>";
+      return;
+    }
+    el.innerHTML = '<tr><th>المنصة</th><th>الاسم</th><th>المعرف</th><th>النطاق</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      this.pixels.map(px=>{
+        const scopeText = (!px.scope || px.scope==="all") ? "🌐 كل الموقع" : "🎯 " + (Array.isArray(px.scope)?px.scope.length:0) + " منتج محدَّد";
+        return '<tr>' +
+          '<td>' + (this.PIXEL_LABELS[px.platform]||px.platform) + '</td>' +
+          '<td>' + (px.label||"—") + '</td>' +
+          '<td dir="ltr"><small>' + px.pixelId + '</small></td>' +
+          '<td>' + scopeText + '</td>' +
+          '<td>' + (px.active!==false?'<span class="pill st-livree">مفعّل</span>':'<span class="pill st-annulee">موقوف</span>') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="small" onclick="Admin.editPixel(\'' + px.id + '\')">✏️ تعديل</button>' +
+            '<button class="small gold" onclick="Admin.togglePixel(\'' + px.id + '\')">' + (px.active!==false?'⏸ إيقاف':'▶️ تفعيل') + '</button>' +
+            '<button class="small warn" onclick="Admin.delPixel(\'' + px.id + '\')">🗑️</button>' +
+          '</td></tr>';
+      }).join("");
+  },
+
+  onPixelPlatformChange(){
+    const plat = $f("px-platform").value;
+    $f("px-conv-label").classList.toggle("hidden", plat!=="google_ads");
+    const hints = {
+      facebook: "مثال فيسبوك: 123456789012345 (Pixel ID من Meta Events Manager)",
+      tiktok: "مثال تيك توك: CXXXXXXXXXXXXXXXXXXX (Pixel ID من TikTok Ads Manager)",
+      ga4: "مثال GA4: G-XXXXXXXXXX (Measurement ID)",
+      google_ads: "مثال إعلانات جوجل: AW-XXXXXXXXX (Conversion ID) + Conversion Label بالأسفل",
+    };
+    $f("px-id-hint").textContent = hints[plat] || "";
+  },
+
+  renderPixelScopeProducts(selected){
+    const sel = Array.isArray(selected) ? selected : [];
+    $f("px-scope-products").innerHTML = this.products.map(p=>
+      '<label style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0;font-size:.88rem">' +
+      '<input type="checkbox" value="' + p.slug + '" style="width:auto;margin:0" ' + (sel.includes(p.slug)?"checked":"") + '> ' +
+      p.title + ' <small style="color:#999" dir="ltr">(' + p.slug + ')</small></label>'
+    ).join("");
+  },
+
+  onPixelScopeModeChange(){
+    const mode = $f("px-scope-mode").value;
+    $f("px-scope-products").classList.toggle("hidden", mode!=="specific");
+    if(mode==="specific" && !$f("px-scope-products").innerHTML) this.renderPixelScopeProducts([]);
+  },
+
+  editPixel(id){
+    const px = id ? this.pixels.find(x=>x.id===id) : null;
+    this.editingPixelId = id;
+    $f("pixel-modal-title").textContent = px ? "تعديل بكسل: " + (px.label||px.pixelId) : "بكسل جديد";
+    $f("px-platform").value = px ? px.platform : "facebook";
+    $f("px-label").value = px ? (px.label||"") : "";
+    $f("px-id").value = px ? px.pixelId : "";
+    $f("px-conv-label").value = px ? (px.conversionLabel||"") : "";
+    $f("px-currency").value = px ? (px.currency||"DZD") : "DZD";
+    $f("px-active").checked = px ? px.active!==false : true;
+    const isSpecific = px && Array.isArray(px.scope);
+    $f("px-scope-mode").value = isSpecific ? "specific" : "all";
+    this.renderPixelScopeProducts(isSpecific ? px.scope : []);
+    $f("px-scope-products").classList.toggle("hidden", !isSpecific);
+    this.onPixelPlatformChange();
+    $f("pixel-modal-bg").classList.add("open");
+  },
+
+  async savePixel(){
+    const platform = $f("px-platform").value;
+    const pixelId = $f("px-id").value.trim();
+    if(!pixelId){ toast("أدخل معرف البكسل"); return }
+    const scopeMode = $f("px-scope-mode").value;
+    let scope = "all";
+    if(scopeMode === "specific"){
+      scope = Array.from($f("px-scope-products").querySelectorAll("input:checked")).map(c=>c.value);
+      if(!scope.length){ toast("اختر منتجاً واحداً على الأقل، أو بدّل النطاق لكل الموقع"); return }
+    }
+    const data = {
+      id: this.editingPixelId || ("px_" + Date.now()),
+      platform,
+      label: $f("px-label").value.trim(),
+      pixelId,
+      conversionLabel: platform==="google_ads" ? $f("px-conv-label").value.trim() : "",
+      currency: $f("px-currency").value.trim() || "DZD",
+      scope,
+      active: $f("px-active").checked,
+    };
+    const i = this.pixels.findIndex(x=>x.id===data.id);
+    if(i>-1) this.pixels[i] = data; else this.pixels.push(data);
+    await this.publishPixels();
+    $f("pixel-modal-bg").classList.remove("open");
+  },
+
+  async togglePixel(id){
+    const px = this.pixels.find(x=>x.id===id);
+    if(!px) return;
+    px.active = px.active===false;
+    await this.publishPixels();
+  },
+
+  async delPixel(id){
+    if(!confirm("حذف هذا البكسل نهائياً؟")) return;
+    this.pixels = this.pixels.filter(x=>x.id!==id);
+    await this.publishPixels();
+  },
+
+  async publishPixels(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ النشر على GitHub...");
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.pixels, null, 2))));
+      const res = await GH.putFile("assets/data/pixels.json", b64, this.pixelsSha, "تحديث بكسلات التتبع عبر لوحة التحكم");
+      this.pixelsSha = res && res.content ? res.content.sha : undefined;
+      this.renderPixels();
+      toast("✅ تم النشر — يظهر التحديث على الموقع خلال دقيقة تقريباً");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  /* ════════ أسئلة وأجوبة مخصّصة للوكيل الذكي ════════ */
+  async loadQA(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ this.qaList = []; this.qaSha = undefined; return }
+    try{
+      const f = await GH.getFile("assets/data/agent-faq.json");
+      this.qaSha = f.sha;
+      this.qaList = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
+    }catch(e){
+      this.qaList = []; this.qaSha = undefined;
+    }
+  },
+
+  renderQA(){
+    const el = $f("qa-table");
+    if(!el) return;
+    if(!this.qaList.length){
+      el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد أسئلة مخصّصة بعد — اضغط «+ سؤال وجواب جديد»</td></tr>";
+      return;
+    }
+    el.innerHTML = '<tr><th>الكلمات المفتاحية</th><th>الإجابة (عربي)</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      this.qaList.map(qa=>
+        '<tr>' +
+          '<td><small>' + (qa.keywords||"") + '</small></td>' +
+          '<td style="max-width:320px">' + (qa.answer_ar||"").slice(0,80) + ((qa.answer_ar||"").length>80?"…":"") + '</td>' +
+          '<td>' + (qa.active!==false?'<span class="pill st-livree">مفعّل</span>':'<span class="pill st-annulee">موقوف</span>') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="small" onclick="Admin.editQA(\'' + qa.id + '\')">✏️ تعديل</button>' +
+            '<button class="small gold" onclick="Admin.toggleQA(\'' + qa.id + '\')">' + (qa.active!==false?'⏸ إيقاف':'▶️ تفعيل') + '</button>' +
+            '<button class="small warn" onclick="Admin.delQA(\'' + qa.id + '\')">🗑️</button>' +
+          '</td></tr>'
+      ).join("");
+  },
+
+  editQA(id){
+    const qa = id ? this.qaList.find(x=>x.id===id) : null;
+    this.editingQAId = id;
+    $f("qa-modal-title").textContent = qa ? "تعديل سؤال وجواب" : "سؤال وجواب جديد";
+    $f("qa-keywords").value = qa ? (qa.keywords||"") : "";
+    $f("qa-answer-ar").value = qa ? (qa.answer_ar||"") : "";
+    $f("qa-answer-fr").value = qa ? (qa.answer_fr||"") : "";
+    $f("qa-active").checked = qa ? qa.active!==false : true;
+    $f("qa-modal-bg").classList.add("open");
+  },
+
+  async saveQA(){
+    const keywords = $f("qa-keywords").value.trim();
+    const answer_ar = $f("qa-answer-ar").value.trim();
+    if(!keywords || !answer_ar){ toast("أدخل الكلمات المفتاحية والإجابة بالعربية على الأقل"); return }
+    const data = {
+      id: this.editingQAId || ("qa_" + Date.now()),
+      keywords,
+      answer_ar,
+      answer_fr: $f("qa-answer-fr").value.trim(),
+      active: $f("qa-active").checked,
+    };
+    const i = this.qaList.findIndex(x=>x.id===data.id);
+    if(i>-1) this.qaList[i] = data; else this.qaList.push(data);
+    await this.publishQA();
+    $f("qa-modal-bg").classList.remove("open");
+  },
+
+  async toggleQA(id){
+    const qa = this.qaList.find(x=>x.id===id);
+    if(!qa) return;
+    qa.active = qa.active===false;
+    await this.publishQA();
+  },
+
+  async delQA(id){
+    if(!confirm("حذف هذا السؤال والجواب نهائياً؟")) return;
+    this.qaList = this.qaList.filter(x=>x.id!==id);
+    await this.publishQA();
+  },
+
+  async publishQA(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ النشر على GitHub...");
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.qaList, null, 2))));
+      const res = await GH.putFile("assets/data/agent-faq.json", b64, this.qaSha, "تحديث أسئلة الوكيل الذكي عبر لوحة التحكم");
+      this.qaSha = res && res.content ? res.content.sha : undefined;
+      this.renderQA();
+      toast("✅ تم النشر — يبدأ الوكيل بالرد على هذه الأسئلة خلال دقيقة تقريباً");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
   },
 };
 
