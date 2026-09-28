@@ -106,6 +106,8 @@ tr:hover td{background:#FAF7F0}
     <button class="tab" onclick="Admin.tab('categories',this)">🗂️ الأقسام</button>
     <button class="tab" onclick="Admin.tab('fees',this)">🚚 رسوم التوصيل</button>
     <button class="tab" onclick="Admin.tab('delivery',this)">🔗 شركات التوصيل</button>
+    <button class="tab" onclick="Admin.tab('coupons',this)">🎟️ أكواد الخصم</button>
+    <button class="tab" onclick="Admin.tab('blacklist',this)">🚫 القائمة السوداء</button>
     <button class="tab" onclick="Admin.tab('theme',this)">🎨 المظهر</button>
     <button class="tab" onclick="Admin.tab('pixels',this)">🎯 البكسلات</button>
     <button class="tab" onclick="Admin.tab('agent',this)">🤖 الوكيل الذكي</button>
@@ -183,6 +185,30 @@ tr:hover td{background:#FAF7F0}
       <div class="hint">أسعار التوصيل نفسها مفصولة تماماً عن المنتجات وتُدار من تبويب «🚚 رسوم التوصيل» أعلاه (تعديل يدوي لكل ولاية). هذا التبويب خاص فقط بربط حساب/مفاتيح API لكل شركة توصيل لإرسال الطلبات المؤكدة إليها مباشرة من لوحة التحكم. المفاتيح تُخزَّن فقط داخل متصفحك (localStorage) ولا تُنشر أبداً على GitHub لأن الموقع عام بدون تسجيل دخول.</div>
     </div>
     <div class="card"><div style="overflow:auto"><table id="delivery-table"></table></div></div>
+  </div>
+
+  <div id="tab-coupons" class="hidden">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <b style="color:var(--green)">أكواد الخصم (Coupons)</b>
+        <div class="hint">يظهر حقل إدخال الكود تلقائياً في صفحة كل منتج ودرج السلة — لا حاجة لتعديل كل صفحة يدوياً. ملاحظة: الأكواد تُنشر كملف عام على GitHub (assets/data/coupons.json) مثل بقية إعدادات الموقع، فهي ليست سرّية بالمعنى الأمني — مناسبة لأكواد ترويجية عادية وليست لصلاحيات حساسة.</div>
+      </div>
+      <button class="small" onclick="Admin.editCoupon(null)">+ كود جديد</button>
+    </div>
+    <div class="card"><div style="overflow:auto"><table id="coupons-table"></table></div></div>
+  </div>
+
+  <div id="tab-blacklist" class="hidden">
+    <div class="card">
+      <b style="color:var(--green)">القائمة السوداء لأرقام الهواتف</b>
+      <div class="hint">لحماية متجرك من الطلبات الوهمية أو المتكررة في الإلغاء — محفوظة فقط داخل هذا المتصفح (localStorage) مثل مفاتيح شركات التوصيل، لأنها بيانات تشغيلية خاصة بمتجرك ولا تُنشر أبداً على GitHub. رقم محظور يظهر بجانبه تنبيه 🚫 في تبويب الطلبات، لكن لا يمنع تلقائياً إرسال طلبات جديدة (الموقع عام بلا خادم) — الفائدة هنا تنبيهية عند المعالجة اليدوية.</div>
+      <div class="grid2" style="margin-top:.8rem">
+        <input id="bl-phone" placeholder="رقم الهاتف" dir="ltr">
+        <input id="bl-reason" placeholder="السبب (اختياري)">
+      </div>
+      <button class="small warn" onclick="Admin.addBlacklistEntry()">🚫 إضافة للقائمة السوداء</button>
+    </div>
+    <div class="card"><div style="overflow:auto"><table id="blacklist-table"></table></div></div>
   </div>
 
   <div id="tab-pending" class="hidden">
@@ -307,6 +333,8 @@ tr:hover td{background:#FAF7F0}
         </div>
         <select id="f-cat"></select>
         <select id="f-active"><option value="1">✅ نشط — يظهر في المتجر</option><option value="0">⛔ موقوف — مخفي</option></select>
+        <input id="f-stock" type="number" min="0" placeholder="الكمية المتوفرة في المخزون (اتركه فارغاً لعدم تتبع المخزون)">
+        <div class="hint">إذا تُرك فارغاً، يبقى المنتج متاحاً دائماً بدون تتبع كمية. إذا وصلت الكمية لـ 0 يظهر "نفدت الكمية" في الموقع ويُعطَّل الطلب تلقائياً.</div>
         <textarea id="f-desc" rows="3" placeholder="وصف مختصر"></textarea>
       </div>
       <div>
@@ -427,6 +455,32 @@ tr:hover td{background:#FAF7F0}
   </div>
 </div>
 
+<!-- نافذة كود خصم -->
+<div class="modal-bg" id="coupon-modal-bg">
+  <div class="modal">
+    <h3 id="coupon-modal-title">كود خصم جديد</h3>
+    <input id="cp-code" placeholder="الكود (مثال: WELCOME10)" dir="ltr" style="text-transform:uppercase">
+    <div class="grid2">
+      <select id="cp-type">
+        <option value="percent">نسبة مئوية %</option>
+        <option value="fixed">مبلغ ثابت (دج)</option>
+      </select>
+      <input id="cp-value" type="number" min="0" placeholder="القيمة (مثال: 10 أو 500)">
+    </div>
+    <input id="cp-min-order" type="number" min="0" placeholder="الحد الأدنى لقيمة الطلب (اختياري)">
+    <label class="hint" style="margin:0 0 .2rem">تاريخ انتهاء الصلاحية (اختياري)</label>
+    <input id="cp-expires" type="date">
+    <label style="display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--green);margin-bottom:.8rem">
+      <input type="checkbox" id="cp-active" checked style="width:auto;margin:0"> مفعّل
+    </label>
+    <div class="hint">ملاحظة: لا توجد حالياً آلية موثوقة لتحديد عدد مرات الاستخدام (لا يوجد خادم مركزي لعدّها) — الكود يبقى صالحاً لأي عدد من الطلبات حتى تُوقفه أو تنتهي صلاحيته يدوياً.</div>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.saveCoupon()">💾 حفظ ونشر</button>
+      <button class="small gray" onclick="document.getElementById('coupon-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- نافذة ضبط GitHub -->
 <div class="modal-bg" id="gh-modal-bg">
   <div class="modal">
@@ -526,6 +580,8 @@ const Admin = {
   pixels: [], pixelsSha: undefined, editingPixelId: null,
   theme: {}, themeSha: undefined,
   deliveryCfg: {}, editingDeliveryKey: null,
+  coupons: [], couponsSha: undefined, editingCouponId: null,
+  blacklist: [],
   qaList: [], qaSha: undefined, editingQAId: null,
   pending: JSON.parse(localStorage.getItem("alyssum_pending") || "[]"),
   editingSlug: null, editingCatKey: null, previewData: null,
@@ -559,7 +615,8 @@ const Admin = {
     $f("login-box").classList.add("hidden");
     $f("app").classList.remove("hidden");
     this.loadDeliveryCfg();
-    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme()]);
+    this.loadBlacklist();
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons()]);
     this.renderAll();
     toast("✓ تم التحميل");
   },
@@ -574,14 +631,14 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","products","categories","fees","delivery","theme","pixels","agent","pending"].forEach(x=>{
+    ["orders","products","categories","fees","delivery","coupons","blacklist","theme","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="pending") this.renderPending();
   },
 
-  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderTheme(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
+  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderTheme(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
 
   renderStats(){
     const today = new Date().toDateString();
@@ -688,7 +745,7 @@ const Admin = {
       pageItems.map(({o,i})=>'<tr>' +
         '<td>' + o.id + '</td>' +
         '<td>' + new Date(o.date).toLocaleDateString("ar-DZ") + '</td>' +
-        '<td>' + o.name + '</td><td dir="ltr">' + o.phone + this.whatsappLinkHtml(o.phone) + '</td><td>' + (o.wilaya||"") + '</td>' +
+        '<td>' + o.name + '</td><td dir="ltr">' + o.phone + this.whatsappLinkHtml(o.phone) + this.blacklistCellHtml(o.phone) + '</td><td>' + (o.wilaya||"") + '</td>' +
         '<td style="max-width:260px;font-size:.8rem">' + o.items + '</td>' +
         '<td><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
         '<td><span class="pill st-' + o.status + '">' + o.status + '</span></td>' +
@@ -765,6 +822,14 @@ const Admin = {
   },
 
   /* ════════ المنتجات ════════ */
+  stockBadgeHtml(p){
+    if(p.stock===undefined || p.stock===null) return '<small style="color:#999">غير محدود</small>';
+    const n = Number(p.stock)||0;
+    if(n<=0) return '<span class="pill st-annulee">نفدت الكمية</span>';
+    if(n<=5) return '<span class="pill" style="background:#F5E6C8;color:#7A5A10">' + n + ' متبقي ⚠️</span>';
+    return '<span>' + n + '</span>';
+  },
+
   renderProducts(){
     const q = ($f("prod-search").value||"").toLowerCase();
     const catFilter = $f("prod-cat-filter").value;
@@ -780,7 +845,7 @@ const Admin = {
     );
     $f("prod-count").textContent = list.length;
     $f("products-table").innerHTML =
-      '<tr><th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      '<tr><th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
       list.map(p=>{
         const hasDraft = this.pending.some(x=>x.type==="product" && x.slug===p.slug);
         const img = (p.images && p.images[0]) || "";
@@ -790,6 +855,7 @@ const Admin = {
         '<td><b>' + Number(p.price).toLocaleString("fr-DZ") + ' دج</b>' + (p.old?'<br><small style="color:#999;text-decoration:line-through">' + Number(p.old).toLocaleString("fr-DZ") + '</small>':"") + '</td>' +
         '<td><small>' + (p.offers||[]).map(o=>o.qty + '×=' + Number(o.price).toLocaleString("fr-DZ") + (o.free?" 🎁":"")).join("<br>") + '</small></td>' +
         '<td>' + (this.categories[p.cat]||p.cat||"-") + '</td>' +
+        '<td>' + this.stockBadgeHtml(p) + '</td>' +
         '<td>' + (p.active!==false?'<span class="pill st-livree">نشط</span>':'<span class="pill st-annulee">موقوف</span>') + '</td>' +
         '<td style="white-space:nowrap">' +
           '<button class="small" onclick=\'Admin.editProduct(' + JSON.stringify(p.slug) + ')\'>✏️ تعديل</button>' +
@@ -816,6 +882,7 @@ const Admin = {
     $f("f-desc").value = src?(src.desc||""):"";
     $f("f-cat").value = src?src.cat:Object.keys(this.categories)[0];
     $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
+    $f("f-stock").value = (src && src.stock!==undefined && src.stock!==null) ? src.stock : "";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
     this.renderImagesPreview();
     $f("prod-modal-bg").classList.add("open");
@@ -998,6 +1065,7 @@ const Admin = {
       price: Number($f("f-price").value)||0, old: $f("f-old").value?Number($f("f-old").value):null,
       images: $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean),
       desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
+      stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
   },
@@ -1005,7 +1073,7 @@ const Admin = {
   diffProduct(oldP, newP){
     const changes = [];
     if(!oldP) return [{label:"منتج جديد", old:null, new:newP.title}];
-    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"]];
+    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"]];
     fields.forEach(([k,label])=>{
       if(String(oldP[k]??"") !== String(newP[k]??""))
         changes.push({label, old: oldP[k]??"—", new: newP[k]??"—"});
@@ -1091,6 +1159,7 @@ const Admin = {
     $f("f-images").value = (p.images||[]).join(", ");
     $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
     $f("f-active").value = "1";
+    $f("f-stock").value = "";
     this.renderOffersRows(p.offers||[]);
     this.renderImagesPreview();
     $f("prod-modal-title").textContent = "نسخة من: " + p.title;
@@ -1764,6 +1833,187 @@ const Admin = {
       console.error(err);
       toast("❌ " + err.message);
     }
+  },
+
+  /* ════════ أكواد الخصم (Coupons) ════════
+     تُنشر إلى assets/data/coupons.json — ملف عام (كبقية pixels.json/theme.json/agent-faq.json)،
+     ويُقرأ في صفحة المنتج ودرج السلة عبر app.js دون الحاجة لتعديل كل صفحة منتج يدوياً. */
+  async loadCoupons(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ this.coupons = []; this.couponsSha = undefined; return }
+    try{
+      const f = await GH.getFile("assets/data/coupons.json");
+      this.couponsSha = f.sha;
+      this.coupons = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
+    }catch(e){
+      this.coupons = []; this.couponsSha = undefined;
+    }
+  },
+
+  renderCoupons(){
+    const el = $f("coupons-table");
+    if(!el) return;
+    if(!this.coupons.length){
+      el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد أكواد خصم بعد — اضغط «+ كود جديد»</td></tr>";
+      return;
+    }
+    const now = new Date();
+    el.innerHTML = '<tr><th>الكود</th><th>الخصم</th><th>الحد الأدنى</th><th>الصلاحية</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      this.coupons.map(c=>{
+        const expired = c.expiresAt && new Date(c.expiresAt) < now;
+        return '<tr>' +
+          '<td dir="ltr"><b>' + c.code + '</b></td>' +
+          '<td>' + (c.type==="percent" ? (Number(c.value)+"%") : (Number(c.value).toLocaleString("fr-DZ")+" دج")) + '</td>' +
+          '<td>' + (c.minOrder ? Number(c.minOrder).toLocaleString("fr-DZ")+" دج" : "—") + '</td>' +
+          '<td>' + (c.expiresAt ? (c.expiresAt + (expired?' <span class="pill st-annulee">منتهي</span>':"")) : "بدون تاريخ") + '</td>' +
+          '<td>' + (c.active!==false && !expired ? '<span class="pill st-livree">مفعّل</span>' : '<span class="pill st-annulee">موقوف</span>') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="small" onclick="Admin.editCoupon(\'' + c.id + '\')">✏️ تعديل</button>' +
+            '<button class="small gold" onclick="Admin.toggleCoupon(\'' + c.id + '\')">' + (c.active!==false?'⏸ إيقاف':'▶️ تفعيل') + '</button>' +
+            '<button class="small warn" onclick="Admin.delCoupon(\'' + c.id + '\')">🗑️</button>' +
+          '</td></tr>';
+      }).join("");
+  },
+
+  editCoupon(id){
+    const c = id ? this.coupons.find(x=>x.id===id) : null;
+    this.editingCouponId = id;
+    $f("coupon-modal-title").textContent = c ? "تعديل كود: " + c.code : "كود خصم جديد";
+    $f("cp-code").value = c ? c.code : "";
+    $f("cp-type").value = c ? c.type : "percent";
+    $f("cp-value").value = c ? c.value : "";
+    $f("cp-min-order").value = c && c.minOrder ? c.minOrder : "";
+    $f("cp-expires").value = c && c.expiresAt ? c.expiresAt : "";
+    $f("cp-active").checked = c ? c.active!==false : true;
+    $f("coupon-modal-bg").classList.add("open");
+  },
+
+  async saveCoupon(){
+    const code = $f("cp-code").value.trim().toUpperCase();
+    const value = Number($f("cp-value").value);
+    if(!code){ toast("أدخل الكود"); return }
+    if(!value || value<=0){ toast("أدخل قيمة خصم صحيحة"); return }
+    const dup = this.coupons.find(x=>x.code===code && x.id!==this.editingCouponId);
+    if(dup){ toast("⚠️ هذا الكود مستخدَم بالفعل"); return }
+    const data = {
+      id: this.editingCouponId || ("cp_" + Date.now()),
+      code, type: $f("cp-type").value, value,
+      minOrder: $f("cp-min-order").value ? Number($f("cp-min-order").value) : 0,
+      expiresAt: $f("cp-expires").value || "",
+      active: $f("cp-active").checked,
+    };
+    const i = this.coupons.findIndex(x=>x.id===data.id);
+    if(i>-1) this.coupons[i] = data; else this.coupons.push(data);
+    await this.publishCoupons();
+    $f("coupon-modal-bg").classList.remove("open");
+  },
+
+  async toggleCoupon(id){
+    const c = this.coupons.find(x=>x.id===id);
+    if(!c) return;
+    c.active = c.active===false;
+    await this.publishCoupons();
+  },
+
+  async delCoupon(id){
+    if(!confirm("حذف هذا الكود نهائياً؟")) return;
+    this.coupons = this.coupons.filter(x=>x.id!==id);
+    await this.publishCoupons();
+  },
+
+  async publishCoupons(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ النشر على GitHub...");
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.coupons, null, 2))));
+      const res = await GH.putFile("assets/data/coupons.json", b64, this.couponsSha, "تحديث أكواد الخصم عبر لوحة التحكم");
+      this.couponsSha = res && res.content ? res.content.sha : undefined;
+      this.renderCoupons();
+      toast("✅ تم نشر أكواد الخصم — تعمل على الموقع خلال دقيقة تقريباً");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  /* ════════ القائمة السوداء لأرقام الهواتف (Blacklist) ════════
+     تبقى دائماً محلية فقط (localStorage) — بيانات تشغيلية خاصة بالمتجر عن زبائن حقيقيين،
+     لا تُنشر أبداً كملف عام على GitHub (نفس مبدأ مفاتيح شركات التوصيل). تظهر فقط كتنبيه
+     بجانب رقم الهاتف في تبويب الطلبات، ولا تمنع تلقائياً إرسال طلبات جديدة عبر الموقع. */
+  normalizePhone(phone){
+    const digits = String(phone||"").replace(/\D/g,"");
+    if(!digits) return "";
+    if(digits.startsWith("213")) return "0" + digits.slice(3);
+    if(digits.startsWith("0")) return digits;
+    return "0" + digits;
+  },
+
+  loadBlacklist(){
+    try{ this.blacklist = JSON.parse(localStorage.getItem("alyssum_blacklist") || "[]") || []; }
+    catch(e){ this.blacklist = []; }
+  },
+  saveBlacklistToStorage(){ localStorage.setItem("alyssum_blacklist", JSON.stringify(this.blacklist)); },
+
+  isBlacklisted(phone){
+    const p = this.normalizePhone(phone);
+    if(!p) return null;
+    return this.blacklist.find(x=>x.phone===p) || null;
+  },
+
+  addBlacklistEntry(phoneOverride, reasonOverride){
+    const rawPhone = phoneOverride !== undefined ? phoneOverride : $f("bl-phone").value;
+    const rawReason = reasonOverride !== undefined ? reasonOverride : $f("bl-reason").value;
+    const phone = this.normalizePhone(rawPhone);
+    if(!phone){ toast("أدخل رقم هاتف صحيح"); return }
+    if(this.blacklist.some(x=>x.phone===phone)){ toast("⚠️ هذا الرقم موجود بالفعل في القائمة السوداء"); return }
+    this.blacklist.push({ phone, reason: (rawReason||"").trim(), date: new Date().toISOString() });
+    this.saveBlacklistToStorage();
+    if(phoneOverride===undefined){ $f("bl-phone").value=""; $f("bl-reason").value=""; }
+    this.renderBlacklist();
+    this.renderOrders();
+    toast("🚫 تمت إضافة الرقم للقائمة السوداء");
+  },
+
+  delBlacklistEntry(phone){
+    if(!confirm("إزالة هذا الرقم من القائمة السوداء؟")) return;
+    this.blacklist = this.blacklist.filter(x=>x.phone!==phone);
+    this.saveBlacklistToStorage();
+    this.renderBlacklist();
+    this.renderOrders();
+  },
+
+  blacklistFromOrder(phone){
+    const p = this.normalizePhone(phone);
+    if(!p) return;
+    this.addBlacklistEntry(p, "طلب من تبويب الطلبات");
+  },
+
+  blacklistCellHtml(phone){
+    const entry = this.isBlacklisted(phone);
+    if(entry){
+      return ' <span class="pill st-annulee" title="' + (entry.reason ? "السبب: " + entry.reason.replace(/"/g,"") : "بدون سبب مذكور") + '">🚫 محظور</span>';
+    }
+    const p = this.normalizePhone(phone);
+    if(!p) return "";
+    return ' <button class="small gray" type="button" style="padding:.15rem .4rem;font-size:.75rem" title="إضافة للقائمة السوداء" onclick="Admin.blacklistFromOrder(\'' + p + '\')">🚫</button>';
+  },
+
+  renderBlacklist(){
+    const el = $f("blacklist-table");
+    if(!el) return;
+    if(!this.blacklist.length){
+      el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>القائمة السوداء فارغة حالياً</td></tr>";
+      return;
+    }
+    const sorted = [...this.blacklist].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    el.innerHTML = '<tr><th>الهاتف</th><th>السبب</th><th>تاريخ الإضافة</th><th></th></tr>' +
+      sorted.map(x=>'<tr>' +
+        '<td dir="ltr"><b>' + x.phone + '</b></td>' +
+        '<td>' + (x.reason || "—") + '</td>' +
+        '<td>' + new Date(x.date).toLocaleDateString("ar-DZ") + '</td>' +
+        '<td><button class="small warn" onclick="Admin.delBlacklistEntry(\'' + x.phone + '\')">🗑️</button></td>' +
+      '</tr>').join("");
   },
 
   /* ════════ مظهر الموقع (الخطوط/الألوان/الشعار) ════════ */
