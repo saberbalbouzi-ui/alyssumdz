@@ -105,6 +105,7 @@ tr:hover td{background:#FAF7F0}
     <button class="tab" onclick="Admin.tab('products',this)">🌿 المنتجات</button>
     <button class="tab" onclick="Admin.tab('categories',this)">🗂️ الأقسام</button>
     <button class="tab" onclick="Admin.tab('fees',this)">🚚 رسوم التوصيل</button>
+    <button class="tab" onclick="Admin.tab('theme',this)">🎨 المظهر</button>
     <button class="tab" onclick="Admin.tab('pixels',this)">🎯 البكسلات</button>
     <button class="tab" onclick="Admin.tab('agent',this)">🤖 الوكيل الذكي</button>
     <button class="tab" onclick="Admin.tab('pending',this)">⏳ بانتظار التأكيد <span id="pending-count"></span></button>
@@ -158,6 +159,75 @@ tr:hover td{background:#FAF7F0}
       <b style="color:var(--green)">تعديلات بانتظار التأكيد</b>
       <div class="hint">كل تعديل يبقى هنا حتى تضغط «تأكيد» — التأكيد يطبق التعديل على العنصر المعني فقط</div>
       <div id="pending-list" style="margin-top:1rem"></div>
+    </div>
+  </div>
+
+  <div id="tab-theme" class="hidden">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <b style="color:var(--green)">مظهر الموقع — الخطوط والألوان والشعار</b>
+        <div class="hint">التغييرات تُطبَّق فوراً على كل صفحات الموقع (الرئيسية وكل صفحات المنتجات) عند النشر</div>
+      </div>
+      <div style="display:flex;gap:.6rem">
+        <button class="small gold" onclick="Admin.publishTheme()">💾 حفظ ونشر</button>
+        <button class="small gray" onclick="Admin.resetTheme()">↩️ استرجاع الافتراضي</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">الخط (Typography)</div>
+      <div class="grid2">
+        <div>
+          <label class="hint" style="margin:0 0 .2rem">عائلة الخط</label>
+          <select id="th-font-preset" onchange="Admin.onThemeFontPresetChange()">
+            <option value="Cairo">Cairo (الافتراضي)</option>
+            <option value="Tajawal">Tajawal</option>
+            <option value="Almarai">Almarai</option>
+            <option value="IBM Plex Sans Arabic">IBM Plex Sans Arabic</option>
+            <option value="Noto Kufi Arabic">Noto Kufi Arabic</option>
+            <option value="custom">خط آخر (أدخل رابط Google Fonts يدوياً)</option>
+          </select>
+          <input id="th-font-url" placeholder="رابط Google Fonts" dir="ltr">
+          <input id="th-font-name" placeholder="اسم عائلة الخط (فقط عند اختيار «خط آخر»)" dir="ltr">
+        </div>
+        <div>
+          <label class="hint" style="margin:0 0 .2rem">حجم الخط الأساسي</label>
+          <select id="th-font-size">
+            <option value="14px">صغير (14px)</option>
+            <option value="15px">صغير-متوسط (15px)</option>
+            <option value="16px" selected>متوسط — افتراضي (16px)</option>
+            <option value="17px">متوسط-كبير (17px)</option>
+            <option value="18px">كبير (18px)</option>
+          </select>
+          <label class="hint" style="margin:0 0 .2rem">سماكة الخط الأساسية</label>
+          <select id="th-font-weight">
+            <option value="400" selected>عادي (400)</option>
+            <option value="500">متوسط (500)</option>
+            <option value="600">شبه عريض (600)</option>
+            <option value="700">عريض (700)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">الألوان</div>
+      <div class="fee-grid" id="th-colors-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">الشعار (Logo)</div>
+      <div class="hint">توصيات قبل الرفع: شعار بعرض 300–600px وارتفاع 80–180px تقريباً (نسبة عرض:ارتفاع بين 2:1 و4:1)، بخلفية شفافة إن أمكن — تُحوَّل الصورة تلقائياً إلى صيغة webp مهما كانت صيغتها الأصلية (PNG, JPG, SVG...) لتصغير حجمها وتسريع الموقع.</div>
+      <div style="display:flex;gap:.5rem;align-items:flex-start">
+        <input id="th-logo-url" placeholder="رابط صورة الشعار من الإنترنت (https://...)" dir="ltr" style="margin-bottom:.8rem">
+        <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchLogoFromUrl()">📥 تحميل وتحويل webp ورفع</button>
+      </div>
+      <div class="grid2">
+        <input id="th-logo-width" placeholder="عرض الشعار المعروض (مثال: 160px)" dir="ltr">
+        <input id="th-logo-height" placeholder="ارتفاع الشعار المعروض (مثال: 48px)" dir="ltr">
+      </div>
+      <div id="th-logo-preview" class="hint"></div>
+      <button class="small gray" type="button" onclick="Admin.clearLogo()">🗑️ إزالة الشعار (الرجوع للنص الافتراضي)</button>
     </div>
   </div>
 
@@ -407,6 +477,7 @@ const Admin = {
   key: localStorage.getItem("alyssum_admin_key") || "",
   products: [], fees: [], feesOriginal: [], orders: [], categories: {},
   pixels: [], pixelsSha: undefined, editingPixelId: null,
+  theme: {}, themeSha: undefined,
   qaList: [], qaSha: undefined, editingQAId: null,
   pending: JSON.parse(localStorage.getItem("alyssum_pending") || "[]"),
   editingSlug: null, editingCatKey: null, previewData: null,
@@ -439,7 +510,7 @@ const Admin = {
     this.categories = JSON.parse(JSON.stringify(CATEGORIES));
     $f("login-box").classList.add("hidden");
     $f("app").classList.remove("hidden");
-    await Promise.all([this.loadPixels(), this.loadQA()]);
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme()]);
     this.renderAll();
     toast("✓ تم التحميل");
   },
@@ -454,14 +525,14 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","products","categories","fees","pixels","agent","pending"].forEach(x=>{
+    ["orders","products","categories","fees","theme","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="pending") this.renderPending();
   },
 
-  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
+  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderTheme(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
 
   renderStats(){
     const today = new Date().toDateString();
@@ -554,8 +625,29 @@ const Admin = {
     box.innerHTML = imgs.map(src=>'<img class="thumb-preview" src="' + src + '" onerror="this.style.display=\'none\'" title="' + src + '">').join("");
   },
 
-  /* ════════ جلب صورة من رابط خارجي ورفعها مباشرة إلى مجلد صور المنتج على GitHub ════════ */
-  async uploadExternalImage(url, slug){
+  /* ════════ جلب صورة من رابط خارجي ورفعها مباشرة إلى GitHub — مع تحويل تلقائي لصيغة webp ════════ */
+  /* تحويل أي صورة إلى webp عبر Canvas (يقلّص الحجم ويوحّد الصيغة) — يرجع null إن تعذّر (متصفح قديم مثلاً) فنستعمل الصيغة الأصلية كبديل */
+  async toWebp(blob, quality){
+    try{
+      const bitmap = await createImageBitmap(blob);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width; canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0);
+      const out = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", quality || 0.88));
+      return (out && out.size > 0) ? out : null;
+    }catch(e){ return null; }
+  },
+  blobToBase64(blob){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>resolve(String(reader.result).split(",")[1] || "");
+      reader.onerror = ()=>reject(new Error("فشلت قراءة الصورة"));
+      reader.readAsDataURL(blob);
+    });
+  },
+  /* رفع صورة من رابط خارجي إلى مجلد معيّن على GitHub — تُحوَّل تلقائياً إلى webp مهما كانت صيغتها الأصلية */
+  async uploadImageToFolder(url, folder, filenamePrefix){
     let r;
     try{
       r = await fetch(url, { mode:"cors" });
@@ -566,25 +658,27 @@ const Admin = {
     const blob = await r.blob();
     if(!blob.type || !blob.type.startsWith("image/")) throw new Error("الرابط لا يشير إلى صورة صالحة");
     let ext = "webp";
-    if(blob.type.includes("jpeg")) ext = "jpg";
-    else if(blob.type.includes("png")) ext = "png";
-    else if(blob.type.includes("gif")) ext = "gif";
-    else if(blob.type.includes("webp")) ext = "webp";
-    else if(blob.type.includes("svg")) ext = "svg";
-    else{
-      const m = url.split("?")[0].match(/\.(\w+)$/);
-      if(m) ext = m[1].toLowerCase();
+    let finalBlob = await this.toWebp(blob);
+    if(!finalBlob){
+      finalBlob = blob;
+      if(blob.type.includes("jpeg")) ext = "jpg";
+      else if(blob.type.includes("png")) ext = "png";
+      else if(blob.type.includes("gif")) ext = "gif";
+      else if(blob.type.includes("webp")) ext = "webp";
+      else if(blob.type.includes("svg")) ext = "svg";
+      else{
+        const m = url.split("?")[0].match(/\.(\w+)$/);
+        if(m) ext = m[1].toLowerCase();
+      }
     }
-    const b64 = await new Promise((resolve, reject)=>{
-      const reader = new FileReader();
-      reader.onload = ()=>resolve(String(reader.result).split(",")[1] || "");
-      reader.onerror = ()=>reject(new Error("فشلت قراءة الصورة"));
-      reader.readAsDataURL(blob);
-    });
+    const b64 = await this.blobToBase64(finalBlob);
     if(!b64) throw new Error("فشلت قراءة الصورة");
-    const path = "assets/img/" + slug + "/" + Date.now() + "." + ext;
-    await GH.putFile(path, b64, undefined, "رفع صورة خارجية لمنتج " + slug + " عبر لوحة التحكم");
+    const path = folder + "/" + (filenamePrefix || "") + Date.now() + "." + ext;
+    await GH.putFile(path, b64, undefined, "رفع صورة عبر لوحة التحكم (" + path + ")");
     return path;
+  },
+  async uploadExternalImage(url, slug){
+    return this.uploadImageToFolder(url, "assets/img/" + slug, "");
   },
 
   async fetchImageFromUrl(){
@@ -1411,6 +1505,143 @@ const Admin = {
       this.qaSha = res && res.content ? res.content.sha : undefined;
       this.renderQA();
       toast("✅ تم النشر — يبدأ الوكيل بالرد على هذه الأسئلة خلال دقيقة تقريباً");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  /* ════════ مظهر الموقع (الخطوط/الألوان/الشعار) ════════ */
+  THEME_DEFAULTS: {
+    colors: { bg:"#FBF8F2", card:"#FFFFFF", ink:"#1C2420", muted:"#6B7672", green:"#173F35", green2:"#0F2E26", gold:"#C8A24B", gold2:"#E4C87F", red:"#D64545", ok:"#1E9E6A", line:"#EAE3D6" },
+  },
+  COLOR_LABELS: { bg:"خلفية الموقع", card:"خلفية البطاقات", ink:"لون النص الأساسي", muted:"لون النص الثانوي", green:"اللون الأساسي (أخضر)", green2:"الأساسي الغامق", gold:"اللون الذهبي", gold2:"الذهبي الفاتح", red:"لون التنبيه/الأحمر", ok:"لون النجاح", line:"لون الخطوط الفاصلة" },
+  FONT_PRESETS: {
+    "Cairo": { url:"https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap", css:"'Cairo','Segoe UI',Tahoma,sans-serif" },
+    "Tajawal": { url:"https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap", css:"'Tajawal','Segoe UI',Tahoma,sans-serif" },
+    "Almarai": { url:"https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap", css:"'Almarai','Segoe UI',Tahoma,sans-serif" },
+    "IBM Plex Sans Arabic": { url:"https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap", css:"'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif" },
+    "Noto Kufi Arabic": { url:"https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;700;900&display=swap", css:"'Noto Kufi Arabic','Segoe UI',Tahoma,sans-serif" },
+  },
+
+  async loadTheme(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ this.theme = {}; this.themeSha = undefined; return }
+    try{
+      const f = await GH.getFile("assets/data/theme.json");
+      this.themeSha = f.sha;
+      this.theme = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
+    }catch(e){
+      this.theme = {}; this.themeSha = undefined;
+    }
+  },
+
+  renderTheme(){
+    if(!$f("th-colors-grid")) return;
+    const t = this.theme || {};
+    const presetNames = Object.keys(this.FONT_PRESETS);
+    let matchedPreset = presetNames.find(p=>this.FONT_PRESETS[p].url === t.fontUrl) || (t.fontUrl ? "custom" : "Cairo");
+    $f("th-font-preset").value = matchedPreset;
+    $f("th-font-url").value = t.fontUrl || this.FONT_PRESETS["Cairo"].url;
+    $f("th-font-name").value = matchedPreset === "custom" ? String(t.fontFamily||"").split(",")[0].replace(/'/g,"") : "";
+    $f("th-font-size").value = t.fontSize || "16px";
+    $f("th-font-weight").value = t.fontWeight || "400";
+
+    const colors = Object.assign({}, this.THEME_DEFAULTS.colors, t.colors || {});
+    $f("th-colors-grid").innerHTML = Object.entries(colors).map(([k,v])=>
+      '<div class="fee"><h4>' + (this.COLOR_LABELS[k]||k) + '</h4>' +
+      '<input type="color" id="th-color-' + k + '" value="' + v + '" style="height:42px;padding:.2rem;cursor:pointer">' +
+      '</div>'
+    ).join("");
+
+    const logo = t.logo || {};
+    $f("th-logo-width").value = logo.width || "";
+    $f("th-logo-height").value = logo.height || "";
+    $f("th-logo-preview").innerHTML = logo.url ?
+      ('<img src="' + logo.url + '" style="max-width:200px;max-height:80px;border:1px solid var(--line);border-radius:8px;padding:.4rem;background:#fff;display:block;margin-bottom:.4rem">شعار مرفوع حالياً: ' + logo.url) :
+      "لا يوجد شعار مرفوع بعد — سيبقى النص الافتراضي «أليسوم»";
+  },
+
+  onThemeFontPresetChange(){
+    const preset = $f("th-font-preset").value;
+    if(preset !== "custom"){
+      $f("th-font-url").value = this.FONT_PRESETS[preset].url;
+      $f("th-font-name").value = "";
+    }
+  },
+
+  async fetchLogoFromUrl(){
+    const url = $f("th-logo-url").value.trim();
+    if(!url){ toast("أدخل رابط صورة الشعار أولاً"); return }
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
+    toast("⏳ جارِ تحميل الشعار وتحويله إلى webp ورفعه...");
+    try{
+      const path = await this.uploadImageToFolder(url, "assets/img/logo", "logo-");
+      this.theme = this.theme || {};
+      this.theme.logo = Object.assign({}, this.theme.logo, { url: path });
+      $f("th-logo-url").value = "";
+      this.renderTheme();
+      toast("✅ رُفع الشعار وحُوِّل إلى webp — اضغط «💾 حفظ ونشر» لتفعيله على الموقع");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  clearLogo(){
+    this.theme = this.theme || {};
+    delete this.theme.logo;
+    this.renderTheme();
+    toast("تمت إزالة الشعار من النموذج — اضغط «💾 حفظ ونشر» لتفعيل ذلك على الموقع");
+  },
+
+  async publishTheme(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    const preset = $f("th-font-preset").value;
+    const customName = $f("th-font-name").value.trim();
+    const cssFontFamily = preset !== "custom"
+      ? this.FONT_PRESETS[preset].css
+      : (customName ? ("'" + customName + "','Segoe UI',Tahoma,sans-serif") : this.FONT_PRESETS["Cairo"].css);
+    const colors = {};
+    Object.keys(this.THEME_DEFAULTS.colors).forEach(k=>{
+      const el = $f("th-color-" + k);
+      if(el) colors[k] = el.value;
+    });
+    const theme = {
+      fontFamily: cssFontFamily,
+      fontUrl: $f("th-font-url").value.trim(),
+      fontSize: $f("th-font-size").value,
+      fontWeight: $f("th-font-weight").value,
+      colors,
+    };
+    if(this.theme && this.theme.logo) theme.logo = this.theme.logo;
+    toast("⏳ جارِ النشر على GitHub...");
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(theme, null, 2))));
+      const res = await GH.putFile("assets/data/theme.json", b64, this.themeSha, "تحديث مظهر الموقع (الخطوط/الألوان/الشعار) عبر لوحة التحكم");
+      this.themeSha = res && res.content ? res.content.sha : undefined;
+      this.theme = theme;
+      toast("✅ تم النشر — يظهر المظهر الجديد على الموقع خلال دقيقة تقريباً");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  async resetTheme(){
+    if(!confirm("استرجاع المظهر الافتراضي للموقع (حذف كل التخصيصات الحالية)؟")) return;
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ الاسترجاع...");
+    try{
+      const b64 = btoa(unescape(encodeURIComponent("{}")));
+      const res = await GH.putFile("assets/data/theme.json", b64, this.themeSha, "استرجاع مظهر الموقع الافتراضي عبر لوحة التحكم");
+      this.themeSha = res && res.content ? res.content.sha : undefined;
+      this.theme = {};
+      this.renderTheme();
+      toast("✅ تم الاسترجاع للمظهر الافتراضي");
     }catch(err){
       console.error(err);
       toast("❌ " + err.message);
