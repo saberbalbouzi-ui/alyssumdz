@@ -202,7 +202,7 @@
       const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!=="pack4").slice(0,4);
       document.getElementById("related").innerHTML = others.map(x=>`
         <a class="card" href="../../p/${x.slug}/">
-          <div class="thumb"><img loading="lazy" src="../../${x.images[0]}" alt="${x.title}"></div>
+          <div class="thumb"><img loading="lazy" src="../../${x.cover||x.images[0]}" alt="${x.title}"></div>
           <div class="body"><h3>${x.title}</h3>
           <div class="price-row"><span class="price">${fmt(x.price)}</span>${x.old?`<span class="old">${fmt(x.old)}</span>`:""}</div></div>
         </a>`).join("");
