@@ -358,39 +358,30 @@ tr:hover td{background:#FAF7F0}
     </div>
 
     <div class="card">
+      <div class="section-title">إظهار / إخفاء الأزرار والعناصر</div>
+      <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-bottom:.7rem">
+        <input type="checkbox" id="co-show-wa" style="width:auto">إظهار زر «الطلب مباشرة عبر واتساب»
+      </label>
+      <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-bottom:.7rem">
+        <input type="checkbox" id="co-show-cart" style="width:auto">إظهار زر «أضف إلى السلة»
+      </label>
+      <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+        <input type="checkbox" id="co-show-offers" style="width:auto">إظهار بطاقات العروض (قطعة / قطعتان / 3 قطع...) في صفحة المنتج
+      </label>
+      <div class="hint">عند إلغاء إظهار زر واتساب يبقى الرقم مستعملاً في رسالة تأكيد الطلب عبر زر «تأكيد الطلب» العادي. وعند إخفاء العروض يبقى العرض «الأكثر طلباً» محتسباً تلقائياً في السعر النهائي دون عرض بطاقات الاختيار.</div>
+    </div>
+
+    <div class="card">
       <div class="section-title">واتساب</div>
-      <div class="grid2">
-        <div>
-          <label class="hint" style="margin:0 0 .2rem">رقم واتساب (بدون + وبدون مسافات، مثال: 213559237239)</label>
-          <input id="co-wa-number" dir="ltr" placeholder="213559237239">
-        </div>
-        <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:1.6rem">
-          <input type="checkbox" id="co-show-wa" style="width:auto">إظهار زر «الطلب مباشرة عبر واتساب»
-        </label>
-      </div>
-      <div class="hint">عند إلغاء الإظهار يبقى رقم واتساب مستعملاً في رسالة تأكيد الطلب عبر زر «تأكيد الطلب» العادي.</div>
+      <label class="hint" style="margin:0 0 .2rem">رقم واتساب (بدون + وبدون مسافات، مثال: 213559237239)</label>
+      <input id="co-wa-number" dir="ltr" placeholder="213559237239">
     </div>
 
     <div class="card">
       <div class="section-title">أزرار الطلب والنصوص</div>
-      <div class="grid2">
-        <input id="co-order-btn-text" placeholder="نص زر «تأكيد الطلب» (مثال: ✅ تأكيد الطلب)">
-        <input id="co-wa-btn-text" placeholder="نص زر واتساب (مثال: 💬 اطلب مباشرة عبر واتساب)">
-      </div>
-      <div class="grid2">
-        <input id="co-cart-btn-text" placeholder="نص زر «أضف إلى السلة»">
-        <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:.4rem">
-          <input type="checkbox" id="co-show-cart" style="width:auto">إظهار زر «أضف إلى السلة»
-        </label>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">العروض</div>
-      <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
-        <input type="checkbox" id="co-show-offers" style="width:auto">إظهار بطاقات العروض (قطعة / قطعتان / 3 قطع...) في صفحة المنتج
-      </label>
-      <div class="hint">عند الإخفاء يبقى العرض «الأكثر طلباً» محتسباً تلقائياً في السعر النهائي دون عرض بطاقات الاختيار.</div>
+      <input id="co-order-btn-text" placeholder="نص زر «تأكيد الطلب» (مثال: ✅ تأكيد الطلب)">
+      <input id="co-wa-btn-text" placeholder="نص زر واتساب (مثال: 💬 اطلب مباشرة عبر واتساب)">
+      <input id="co-cart-btn-text" placeholder="نص زر «أضف إلى السلة»">
     </div>
 
     <div class="card">
@@ -411,7 +402,8 @@ tr:hover td{background:#FAF7F0}
 
     <div class="card">
       <div class="section-title">ألوان النموذج</div>
-      <div class="fee-grid" id="co-colors-grid"></div>
+      <div class="hint">ألوان كل زر (الخلفية والنص) مجمّعة معاً، زر تحت الآخر</div>
+      <div id="co-colors-groups" style="display:flex;flex-direction:column;gap:.8rem"></div>
     </div>
   </div>
 
@@ -2637,6 +2629,12 @@ const Admin = {
     cartBg:    { label:"خلفية زر «أضف إلى السلة»",     preview:"button" },
     cartText:  { label:"نص زر «أضف إلى السلة»",         preview:"text-main" },
   },
+  /* كل عنصر يجمع لون خلفية زر مع لون نصه معاً — تُعرض هذه المجموعات زراً تحت زر (راجع renderCheckoutSettings) */
+  CHECKOUT_COLOR_GROUPS: [
+    { key:"order", label:"زر «تأكيد الطلب»",        bg:"orderBg", text:"orderText" },
+    { key:"wa",    label:"زر واتساب",                bg:"waBg",    text:"waText" },
+    { key:"cart",  label:"زر «أضف إلى السلة»",       bg:"cartBg",  text:"cartText" },
+  ],
   CHECKOUT_DEFAULTS: {
     waNumber: "213559237239",
     showWhatsappBtn: true,
@@ -2682,49 +2680,50 @@ const Admin = {
     this.renderCheckoutExtraFields();
 
     const colors = Object.assign({}, this.CHECKOUT_DEFAULTS.colors, c.colors || {});
-    $f("co-colors-grid").innerHTML = Object.keys(this.CHECKOUT_COLOR_META).map(k=>{
-      const meta = this.CHECKOUT_COLOR_META[k];
-      const v = colors[k];
+    $f("co-colors-groups").innerHTML = this.CHECKOUT_COLOR_GROUPS.map(g=>{
+      const bg = colors[g.bg], text = colors[g.text];
       return '<div class="color-card">' +
-        '<h4>' + meta.label + '</h4>' +
-        '<div class="color-preview" id="co-color-preview-' + k + '"></div>' +
-        '<div class="color-row">' +
-          '<input type="color" id="co-color-' + k + '" value="' + v + '" oninput="Admin.onCheckoutColorInput(\'' + k + '\')">' +
-          '<input type="text" id="co-color-hex-' + k + '" value="' + v + '" dir="ltr" maxlength="7" oninput="Admin.onCheckoutColorHexInput(\'' + k + '\')">' +
+        '<h4>' + g.label + '</h4>' +
+        '<div class="color-preview" id="co-color-preview-' + g.key + '"></div>' +
+        '<div class="color-row" style="align-items:center">' +
+          '<label class="hint" style="margin:0;min-width:70px">لون الخلفية</label>' +
+          '<input type="color" id="co-color-' + g.bg + '" value="' + bg + '" oninput="Admin.onCheckoutColorInput(\'' + g.bg + '\',\'' + g.key + '\')">' +
+          '<input type="text" id="co-color-hex-' + g.bg + '" value="' + bg + '" dir="ltr" maxlength="7" oninput="Admin.onCheckoutColorHexInput(\'' + g.bg + '\',\'' + g.key + '\')">' +
+        '</div>' +
+        '<div class="color-row" style="align-items:center">' +
+          '<label class="hint" style="margin:0;min-width:70px">لون النص</label>' +
+          '<input type="color" id="co-color-' + g.text + '" value="' + text + '" oninput="Admin.onCheckoutColorInput(\'' + g.text + '\',\'' + g.key + '\')">' +
+          '<input type="text" id="co-color-hex-' + g.text + '" value="' + text + '" dir="ltr" maxlength="7" oninput="Admin.onCheckoutColorHexInput(\'' + g.text + '\',\'' + g.key + '\')">' +
         '</div>' +
       '</div>';
     }).join("");
-    Object.keys(colors).forEach(k=>this.updateCheckoutColorPreview(k, colors[k]));
+    this.CHECKOUT_COLOR_GROUPS.forEach(g=>this.updateCheckoutGroupPreview(g.key));
   },
 
-  onCheckoutColorInput(k){
+  onCheckoutColorInput(k, groupKey){
     const v = $f("co-color-" + k).value;
     if($f("co-color-hex-" + k)) $f("co-color-hex-" + k).value = v;
-    this.updateCheckoutColorPreview(k, v);
+    this.updateCheckoutGroupPreview(groupKey);
   },
 
-  onCheckoutColorHexInput(k){
+  onCheckoutColorHexInput(k, groupKey){
     let v = $f("co-color-hex-" + k).value.trim();
     if(v && v[0] !== "#") v = "#" + v;
     if(!/^#[0-9a-fA-F]{6}$/.test(v)) return;
     if($f("co-color-" + k)) $f("co-color-" + k).value = v;
-    this.updateCheckoutColorPreview(k, v);
+    this.updateCheckoutGroupPreview(groupKey);
   },
 
-  updateCheckoutColorPreview(k, v){
-    const el = $f("co-color-preview-" + k);
+  /* معاينة موحّدة تجمع لون الخلفية مع لون النص معاً على شكل الزر الفعلي — بلا خلفية سوداء مصطنعة */
+  updateCheckoutGroupPreview(groupKey){
+    const g = (this.CHECKOUT_COLOR_GROUPS || []).find(x=>x.key === groupKey);
+    if(!g) return;
+    const el = $f("co-color-preview-" + groupKey);
     if(!el) return;
-    const type = (this.CHECKOUT_COLOR_META[k] || {}).preview;
-    el.style.minHeight = "34px";
-    if(type === "button"){
-      el.style.background = "#fff";
-      el.innerHTML = '<span style="display:inline-block;background:' + v + ';color:#fff;padding:.4rem 1rem;border-radius:8px;font-weight:800">زر تجريبي</span>';
-    } else if(type === "text-main"){
-      el.style.background = "#333";
-      el.innerHTML = '<span style="color:' + v + ';font-weight:800">نص تجريبي على الزر</span>';
-    } else {
-      el.style.background = v; el.innerHTML = "";
-    }
+    const bgEl = $f("co-color-" + g.bg), textEl = $f("co-color-" + g.text);
+    const bg = bgEl ? bgEl.value : "#D4A947";
+    const text = textEl ? textEl.value : "#2b2117";
+    el.innerHTML = '<span style="display:inline-block;background:' + bg + ';color:' + text + ';padding:.55rem 1.2rem;border-radius:8px;font-weight:800">' + g.label + '</span>';
   },
 
   renderCheckoutExtraFields(){
