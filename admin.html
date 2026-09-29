@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--green:#173F35;--green2:#0F2E26;--gold:#C8A24B;--gold2:#E4C87F;--bg:#F5F2EB;--line:#E5DFD2;--red:#D64545;--ok:#1E9E6A;--blue:#1B4F8A;--warn-bg:#FFF3D6}
+html{font-size:18px}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Cairo',sans-serif;background:var(--bg);direction:rtl;color:#1C2420}
 .login{max-width:400px;margin:10vh auto;background:#fff;border-radius:18px;padding:2rem;box-shadow:0 20px 50px rgba(0,0,0,.08)}
@@ -89,8 +90,10 @@ tr:hover td{background:#FAF7F0}
 .offer-row{display:grid;grid-template-columns:70px 1fr 1fr 90px 40px;gap:.5rem;align-items:center;margin-bottom:.5rem}
 .offer-row input{margin-bottom:0;padding:.5rem .7rem;font-size:.9rem}
 .section-title{font-weight:900;color:var(--green);margin:.8rem 0 .4rem;font-size:.95rem;border-bottom:2px solid var(--gold2);padding-bottom:.3rem}
-.search-bar{display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.search-bar{display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
 .search-bar input,.search-bar select{margin-bottom:0;width:auto;flex:1;min-width:150px}
+.date-field{display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:800;color:#6B7672;white-space:nowrap}
+.date-field input{margin-bottom:0;width:auto;flex:none}
 .img-list{display:flex;gap:.5rem;flex-wrap:wrap;margin:.4rem 0}
 .hint{font-size:.78rem;color:#6B7672;margin-top:-.5rem;margin-bottom:.6rem}
 .editor-bg{position:fixed;inset:0;background:#fff;z-index:60;display:none}
@@ -136,6 +139,7 @@ tr:hover td{background:#FAF7F0}
       <button class="nav-btn" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء</b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي</b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
@@ -155,10 +159,11 @@ tr:hover td{background:#FAF7F0}
           <option value="annulee">annulee</option>
         </select>
         <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
-        <input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ" style="width:auto">
-        <input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ" style="width:auto">
+        <label class="date-field">من<input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ"></label>
+        <label class="date-field">إلى<input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ"></label>
         <button class="small gray" type="button" onclick="Admin.resetOrderFilters()">↩️ مسح الفلاتر</button>
         <button class="small gold" type="button" onclick="Admin.exportOrdersCsv()">⬇️ تصدير CSV</button>
+        <button class="small blue" type="button" onclick="Admin.exportOrdersToSheets()">📊 نسخ لـ Google Sheets</button>
       </div>
       <div class="hint" id="orders-count-label" style="margin-top:.4rem"></div>
     </div>
@@ -340,6 +345,76 @@ tr:hover td{background:#FAF7F0}
     </div>
   </div>
 
+  <div id="tab-checkout" class="hidden">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <b style="color:var(--green)">🧾 نموذج الطلب</b>
+        <div class="hint">تحكم كامل في نموذج طلب المنتج: الألوان، الحقول، الأزرار، العروض، ورقم واتساب — يُطبَّق على كل صفحات المنتجات عند النشر</div>
+      </div>
+      <div style="display:flex;gap:.6rem">
+        <button class="small gold" onclick="Admin.publishCheckout()">💾 حفظ ونشر</button>
+        <button class="small gray" onclick="Admin.resetCheckout()">↩️ استرجاع الافتراضي</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">واتساب</div>
+      <div class="grid2">
+        <div>
+          <label class="hint" style="margin:0 0 .2rem">رقم واتساب (بدون + وبدون مسافات، مثال: 213559237239)</label>
+          <input id="co-wa-number" dir="ltr" placeholder="213559237239">
+        </div>
+        <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:1.6rem">
+          <input type="checkbox" id="co-show-wa" style="width:auto">إظهار زر «الطلب مباشرة عبر واتساب»
+        </label>
+      </div>
+      <div class="hint">عند إلغاء الإظهار يبقى رقم واتساب مستعملاً في رسالة تأكيد الطلب عبر زر «تأكيد الطلب» العادي.</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">أزرار الطلب والنصوص</div>
+      <div class="grid2">
+        <input id="co-order-btn-text" placeholder="نص زر «تأكيد الطلب» (مثال: ✅ تأكيد الطلب)">
+        <input id="co-wa-btn-text" placeholder="نص زر واتساب (مثال: 💬 اطلب مباشرة عبر واتساب)">
+      </div>
+      <div class="grid2">
+        <input id="co-cart-btn-text" placeholder="نص زر «أضف إلى السلة»">
+        <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:.4rem">
+          <input type="checkbox" id="co-show-cart" style="width:auto">إظهار زر «أضف إلى السلة»
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">العروض</div>
+      <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+        <input type="checkbox" id="co-show-offers" style="width:auto">إظهار بطاقات العروض (قطعة / قطعتان / 3 قطع...) في صفحة المنتج
+      </label>
+      <div class="hint">عند الإخفاء يبقى العرض «الأكثر طلباً» محتسباً تلقائياً في السعر النهائي دون عرض بطاقات الاختيار.</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">تسميات الحقول الحالية</div>
+      <div class="grid2">
+        <input id="co-label-name" placeholder="تسمية حقل الاسم (افتراضي: الاسم الكامل)">
+        <input id="co-label-phone" placeholder="تسمية حقل الهاتف (افتراضي: رقم الهاتف)">
+      </div>
+      <input id="co-label-commune" placeholder="تسمية حقل البلدية (افتراضي: البلدية)">
+    </div>
+
+    <div class="card">
+      <div class="section-title">حقول إضافية مخصصة</div>
+      <div class="hint">تُضاف إلى نموذج الطلب في كل صفحات المنتجات، وتُرفَق قيمتها تلقائياً برسالة واتساب عند تأكيد الطلب.</div>
+      <div id="co-extra-list"></div>
+      <button class="small" type="button" onclick="Admin.addCheckoutExtraField()">+ حقل جديد</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">ألوان النموذج</div>
+      <div class="fee-grid" id="co-colors-grid"></div>
+    </div>
+  </div>
+
   <div id="tab-pixels" class="hidden">
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
       <div>
@@ -397,7 +472,21 @@ tr:hover td{background:#FAF7F0}
         <div class="hint">تُستخدم هذه الحقول لتحسين ظهور المنتج في نتائج البحث ومعاينة الرابط عند مشاركته على فيسبوك/واتساب/تويتر (Open Graph). صورة أول عنصر في قائمة الصور أدناه تُستخدم تلقائياً كصورة المعاينة.</div>
       </div>
       <div>
-        <div class="section-title">الصور</div>
+        <div class="section-title">🏠 صورة الغلاف (الصفحة الرئيسية والبطاقات)</div>
+        <div class="hint" style="margin-top:0">هذه هي الصورة الوحيدة التي تظهر في بطاقة المنتج بالصفحة الرئيسية، «الأكثر مبيعاً»، وسلة الشراء — منفصلة تماماً عن صور صفحة المنتج أدناه</div>
+        <div style="display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem">
+          <img id="f-cover-preview" class="thumb-preview" style="width:64px;height:64px;flex:none" src="" onerror="this.style.opacity=0" alt="">
+          <input id="f-cover" placeholder="مسار صورة الغلاف" dir="ltr" oninput="Admin.renderCoverPreview()" style="margin-bottom:0">
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:flex-start">
+          <input id="f-cover-url" placeholder="أو الصق رابط صورة من الإنترنت هنا (https://...)" dir="ltr" style="margin-bottom:.8rem">
+          <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchCoverFromUrl()">📥 تحميل ورفع لـ GitHub</button>
+        </div>
+        <label class="small" style="display:inline-block;cursor:pointer">📁 رفع صورة الغلاف من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchCoverFromDevice(this)"></label>
+        <div class="hint" style="margin-top:.3rem">إذا تُركت فارغة، تُستعمل أول صورة من معرض صفحة المنتج تلقائياً كغلاف احتياطي</div>
+
+        <div class="section-title">🖼️ صور صفحة المنتج (المعرض)</div>
+        <div class="hint" style="margin-top:0">هذه الصور تظهر فقط داخل صفحة المنتج الخاصة (الصورة الكبيرة والمصغّرات) — لا علاقة لها بصورة الغلاف أعلاه</div>
         <input id="f-images" placeholder="مسارات الصور (افصل بفاصلة)" dir="ltr">
         <div class="hint">مثال: assets/img/anti-acne/presentation/anti-acne 01.webp</div>
         <div style="display:flex;gap:.5rem;align-items:flex-start">
@@ -678,7 +767,7 @@ const Admin = {
     $f("app").classList.remove("hidden");
     this.loadDeliveryCfg();
     this.loadBlacklist();
-    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons()]);
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadCheckoutSettings()]);
     this.renderAll();
     toast("✓ تم التحميل");
   },
@@ -693,7 +782,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","analytics","products","categories","fees","delivery","coupons","blacklist","theme","pixels","agent","pending"].forEach(x=>{
+    ["orders","analytics","products","categories","fees","delivery","coupons","blacklist","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -701,7 +790,7 @@ const Admin = {
     if(t==="analytics") this.renderAnalytics();
   },
 
-  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderTheme(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
+  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderTheme(); this.renderCheckoutSettings(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
 
   renderStats(){
     const today = new Date().toDateString();
@@ -912,6 +1001,28 @@ const Admin = {
     toast("✅ جارِ تنزيل " + filtered.length + " طلباً");
   },
 
+  /* تصدير إلى Google Sheets: ننسخ الطلبات كجدول (TSV) للحافظة ونفتح شيت جديد فارغ —
+     يكفي لصقها مباشرة (Ctrl+V) في الخلية الأولى فيتوزّع كل عمود تلقائياً، دون الحاجة
+     لإعداد أي مفاتيح API أو صلاحيات Google إضافية */
+  async exportOrdersToSheets(){
+    const filtered = this.getFilteredOrders();
+    if(!filtered.length){ toast("لا توجد طلبات لتصديرها"); return }
+    const rows = [["الرقم","التاريخ","الاسم","الهاتف","الولاية","البلدية","المنتجات","الإجمالي","الحالة"]];
+    filtered.forEach(({o})=>{
+      rows.push([o.id, new Date(o.date).toLocaleString("ar-DZ"), o.name, o.phone, o.wilaya||"", o.commune||"", String(o.items||"").replace(/\s*\n\s*/g," | "), Number(o.total)||0, o.status]);
+    });
+    const tsv = rows.map(r=>r.map(c=>String(c).replace(/\t/g," ").replace(/\r?\n/g," ")).join("\t")).join("\n");
+    try{
+      await navigator.clipboard.writeText(tsv);
+      toast("✅ نُسخت " + filtered.length + " طلباً — افتح الشيت الجديد والصق (Ctrl+V) في الخلية الأولى");
+    }catch(err){
+      toast("⚠️ تعذّر النسخ التلقائي للحافظة — استعمل «⬇️ تصدير CSV» ثم استورده يدوياً في Google Sheets");
+      console.error(err);
+      return;
+    }
+    window.open("https://docs.google.com/spreadsheets/create", "_blank");
+  },
+
   printOrderSlip(i){
     const o = this.orders[i];
     if(!o) return;
@@ -984,7 +1095,7 @@ const Admin = {
       '<tr><th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
       list.map(p=>{
         const hasDraft = this.pending.some(x=>x.type==="product" && x.slug===p.slug);
-        const img = (p.images && p.images[0]) || "";
+        const img = p.cover || (p.images && p.images[0]) || "";
         return '<tr>' +
         '<td>' + (img ? '<img class="thumb-preview" src="' + img + '" onerror="this.style.display=\'none\'">' : '—') + '</td>' +
         '<td><b>' + p.title + '</b>' + (hasDraft?' <span class="badge-draft">مسودة</span>':"") + '<br><small style="color:#999" dir="ltr">' + p.slug + '</small></td>' +
@@ -1014,6 +1125,7 @@ const Admin = {
     $f("f-title").value = src?src.title:"";
     $f("f-price").value = src?src.price:"";
     $f("f-old").value = src&&src.old?src.old:"";
+    $f("f-cover").value = src?(src.cover||""):"";
     $f("f-images").value = src?(src.images||[]).join(", "):"";
     $f("f-desc").value = src?(src.desc||""):"";
     $f("f-cat").value = src?src.cat:Object.keys(this.categories)[0];
@@ -1023,6 +1135,7 @@ const Admin = {
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
     this.renderImagesPreview();
+    this.renderCoverPreview();
     $f("prod-modal-bg").classList.add("open");
   },
 
@@ -1030,6 +1143,14 @@ const Admin = {
     const box = $f("f-images-preview");
     const imgs = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
     box.innerHTML = imgs.map(src=>'<img class="thumb-preview" src="' + src + '" onerror="this.style.display=\'none\'" title="' + src + '">').join("");
+  },
+
+  renderCoverPreview(){
+    const el = $f("f-cover-preview");
+    if(!el) return;
+    const v = $f("f-cover").value.trim() || $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean)[0] || "";
+    el.style.opacity = v ? 1 : 0;
+    el.src = v;
   },
 
   /* ════════ جلب صورة من رابط خارجي ورفعها مباشرة إلى GitHub — مع تحويل تلقائي لصيغة webp ════════ */
@@ -1175,6 +1296,47 @@ const Admin = {
     }
   },
 
+  /* صورة الغلاف (الصفحة الرئيسية/البطاقات) — حقل مستقل عن صور صفحة المنتج أعلاه */
+  async fetchCoverFromUrl(){
+    const url = $f("f-cover-url").value.trim();
+    if(!url){ toast("أدخل رابط الصورة أولاً"); return }
+    const slug = $f("f-slug").value.trim();
+    if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); return }
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
+    toast("⏳ جارِ تحميل صورة الغلاف ورفعها...");
+    try{
+      const path = await this.uploadImageToFolder(url, "assets/img/" + slug, "cover-");
+      $f("f-cover").value = path;
+      $f("f-cover-url").value = "";
+      this.renderCoverPreview();
+      toast("✅ رُفعت صورة الغلاف إلى " + path + " — لا تنسَ «✅ تأكيد ونشر» لحفظ المنتج");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  async fetchCoverFromDevice(input){
+    const file = input.files && input.files[0];
+    if(!file) return;
+    const slug = $f("f-slug").value.trim();
+    if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); input.value=""; return }
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
+    toast("⏳ جارِ رفع صورة الغلاف من جهازك...");
+    try{
+      const path = await this.uploadImageFile(file, "assets/img/" + slug, "cover-");
+      $f("f-cover").value = path;
+      this.renderCoverPreview();
+      toast("✅ رُفعت صورة الغلاف إلى " + path + " — لا تنسَ «✅ تأكيد ونشر» لحفظ المنتج");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+    input.value = "";
+  },
+
   async fetchImageFromUrlForPick(){
     const url = $f("imgpick-url").value.trim();
     if(!url){ toast("أدخل رابط الصورة أولاً"); return }
@@ -1266,6 +1428,7 @@ const Admin = {
     return {
       slug: $f("f-slug").value.trim(), title: $f("f-title").value.trim(),
       price: Number($f("f-price").value)||0, old: $f("f-old").value?Number($f("f-old").value):null,
+      cover: $f("f-cover").value.trim(),
       images: $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean),
       desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
       stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
@@ -1282,8 +1445,10 @@ const Admin = {
       if(String(oldP[k]??"") !== String(newP[k]??""))
         changes.push({label, old: oldP[k]??"—", new: newP[k]??"—"});
     });
+    if(String(oldP.cover||"")!==String(newP.cover||""))
+      changes.push({label:"صورة الغلاف", old:oldP.cover||"— (تلقائي من المعرض)", new:newP.cover||"— (تلقائي من المعرض)"});
     if(JSON.stringify(oldP.images)!==JSON.stringify(newP.images))
-      changes.push({label:"الصور", old:(oldP.images||[]).length+" صورة", new:(newP.images||[]).length+" صورة"});
+      changes.push({label:"صور صفحة المنتج", old:(oldP.images||[]).length+" صورة", new:(newP.images||[]).length+" صورة"});
     if(JSON.stringify(oldP.offers)!==JSON.stringify(newP.offers))
       changes.push({label:"العروض", old:(oldP.offers||[]).map(o=>o.qty+"×"+o.price).join(" / "), new:(newP.offers||[]).map(o=>o.qty+"×"+o.price).join(" / ")});
     if((oldP.active!==false)!==(newP.active!==false))
@@ -1297,9 +1462,10 @@ const Admin = {
     const oldP = this.products.find(x=>x.slug===p.slug);
     const changes = this.diffProduct(oldP, p);
     this.previewData = { type:"product", slug:p.slug, data:p };
+    const previewCover = p.cover || p.images[0] || "";
     $f("preview-content").innerHTML =
       '<div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem">' +
-        (p.images[0]?'<img class="thumb-preview" style="width:72px;height:72px" src="' + p.images[0] + '" onerror="this.style.display=\'none\'">':"") +
+        (previewCover?'<img class="thumb-preview" style="width:72px;height:72px" src="' + previewCover + '" onerror="this.style.display=\'none\'">':"") +
         '<div><b style="font-size:1.2rem;color:var(--green)">' + p.title + '</b><br><small dir="ltr">' + p.slug + '</small></div>' +
       '</div>' +
       (changes.length ? changes.map(c=>'<div class="diff-box"><div class="chg"><b>' + c.label + ':</b><br>' +
@@ -1360,12 +1526,14 @@ const Admin = {
     this.editProduct(null);
     $f("f-slug").value = newSlug; $f("f-title").value = p.title + " (نسخة)";
     $f("f-price").value = p.price; $f("f-old").value = p.old||"";
+    $f("f-cover").value = p.cover||"";
     $f("f-images").value = (p.images||[]).join(", ");
     $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
     $f("f-active").value = "1";
     $f("f-stock").value = "";
     this.renderOffersRows(p.offers||[]);
     this.renderImagesPreview();
+    this.renderCoverPreview();
     $f("prod-modal-title").textContent = "نسخة من: " + p.title;
     toast("⧉ نسخة جاهزة — عدّل ثم احفظ");
   },
@@ -2459,6 +2627,198 @@ const Admin = {
     }
   },
 
+  /* ════════ نموذج الطلب (واتساب/الأزرار/الحقول الإضافية/الألوان/العروض) — assets/data/checkout.json ════════
+     تُقرأ من الملف على GitHub، وتُطبَّق على كل صفحات المنتجات عبر initCheckout() في assets/js/app.js */
+  CHECKOUT_COLOR_META: {
+    orderBg:   { label:"خلفية زر «تأكيد الطلب»",      preview:"button" },
+    orderText: { label:"نص زر «تأكيد الطلب»",          preview:"text-main" },
+    waBg:      { label:"خلفية زر واتساب",              preview:"button" },
+    waText:    { label:"نص زر واتساب",                 preview:"text-main" },
+    cartBg:    { label:"خلفية زر «أضف إلى السلة»",     preview:"button" },
+    cartText:  { label:"نص زر «أضف إلى السلة»",         preview:"text-main" },
+  },
+  CHECKOUT_DEFAULTS: {
+    waNumber: "213559237239",
+    showWhatsappBtn: true,
+    showAddToCart: true,
+    showOffers: true,
+    orderBtnText: "✅ تأكيد الطلب",
+    whatsappBtnText: "💬 اطلب مباشرة عبر واتساب",
+    cartBtnText: "🛒 أضف إلى السلة",
+    fieldLabels: { name:"الاسم الكامل", phone:"رقم الهاتف", commune:"البلدية" },
+    extraFields: [],
+    colors: { orderBg:"#D4A947", orderText:"#2b2117", waBg:"#25D366", waText:"#ffffff", cartBg:"#ffffff", cartText:"#1C2420" },
+  },
+
+  async loadCheckoutSettings(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ this.checkout = {}; this.checkoutSha = undefined; return }
+    try{
+      const f = await GH.getFile("assets/data/checkout.json");
+      this.checkoutSha = f.sha;
+      this.checkout = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
+    }catch(e){
+      this.checkout = {}; this.checkoutSha = undefined;
+    }
+  },
+
+  renderCheckoutSettings(){
+    if(!$f("co-wa-number")) return;
+    const c = Object.assign({}, this.CHECKOUT_DEFAULTS, this.checkout || {});
+    $f("co-wa-number").value = c.waNumber || "";
+    $f("co-show-wa").checked = c.showWhatsappBtn !== false;
+    $f("co-show-cart").checked = c.showAddToCart !== false;
+    $f("co-show-offers").checked = c.showOffers !== false;
+    $f("co-order-btn-text").value = c.orderBtnText || "";
+    $f("co-wa-btn-text").value = c.whatsappBtnText || "";
+    $f("co-cart-btn-text").value = c.cartBtnText || "";
+
+    const labels = Object.assign({}, this.CHECKOUT_DEFAULTS.fieldLabels, c.fieldLabels || {});
+    $f("co-label-name").value = labels.name || "";
+    $f("co-label-phone").value = labels.phone || "";
+    $f("co-label-commune").value = labels.commune || "";
+
+    this.checkoutExtraFields = JSON.parse(JSON.stringify(c.extraFields || []));
+    this.renderCheckoutExtraFields();
+
+    const colors = Object.assign({}, this.CHECKOUT_DEFAULTS.colors, c.colors || {});
+    $f("co-colors-grid").innerHTML = Object.keys(this.CHECKOUT_COLOR_META).map(k=>{
+      const meta = this.CHECKOUT_COLOR_META[k];
+      const v = colors[k];
+      return '<div class="color-card">' +
+        '<h4>' + meta.label + '</h4>' +
+        '<div class="color-preview" id="co-color-preview-' + k + '"></div>' +
+        '<div class="color-row">' +
+          '<input type="color" id="co-color-' + k + '" value="' + v + '" oninput="Admin.onCheckoutColorInput(\'' + k + '\')">' +
+          '<input type="text" id="co-color-hex-' + k + '" value="' + v + '" dir="ltr" maxlength="7" oninput="Admin.onCheckoutColorHexInput(\'' + k + '\')">' +
+        '</div>' +
+      '</div>';
+    }).join("");
+    Object.keys(colors).forEach(k=>this.updateCheckoutColorPreview(k, colors[k]));
+  },
+
+  onCheckoutColorInput(k){
+    const v = $f("co-color-" + k).value;
+    if($f("co-color-hex-" + k)) $f("co-color-hex-" + k).value = v;
+    this.updateCheckoutColorPreview(k, v);
+  },
+
+  onCheckoutColorHexInput(k){
+    let v = $f("co-color-hex-" + k).value.trim();
+    if(v && v[0] !== "#") v = "#" + v;
+    if(!/^#[0-9a-fA-F]{6}$/.test(v)) return;
+    if($f("co-color-" + k)) $f("co-color-" + k).value = v;
+    this.updateCheckoutColorPreview(k, v);
+  },
+
+  updateCheckoutColorPreview(k, v){
+    const el = $f("co-color-preview-" + k);
+    if(!el) return;
+    const type = (this.CHECKOUT_COLOR_META[k] || {}).preview;
+    el.style.minHeight = "34px";
+    if(type === "button"){
+      el.style.background = "#fff";
+      el.innerHTML = '<span style="display:inline-block;background:' + v + ';color:#fff;padding:.4rem 1rem;border-radius:8px;font-weight:800">زر تجريبي</span>';
+    } else if(type === "text-main"){
+      el.style.background = "#333";
+      el.innerHTML = '<span style="color:' + v + ';font-weight:800">نص تجريبي على الزر</span>';
+    } else {
+      el.style.background = v; el.innerHTML = "";
+    }
+  },
+
+  renderCheckoutExtraFields(){
+    const box = $f("co-extra-list");
+    if(!box) return;
+    const list = this.checkoutExtraFields || [];
+    box.innerHTML = list.length ? list.map((f,i)=>
+      '<div class="grid2" style="align-items:center;margin-bottom:.5rem">' +
+        '<input placeholder="تسمية الحقل (مثال: البريد الإلكتروني)" value="' + String(f.label||"").replace(/"/g,"&quot;") + '" oninput="Admin.updateCheckoutExtraField(' + i + ',\'label\',this.value)">' +
+        '<div style="display:flex;gap:.5rem;align-items:center">' +
+          '<input placeholder="نص توضيحي (اختياري)" value="' + String(f.placeholder||"").replace(/"/g,"&quot;") + '" oninput="Admin.updateCheckoutExtraField(' + i + ',\'placeholder\',this.value)" style="flex:1;margin-bottom:0">' +
+          '<label class="small" style="display:flex;gap:.3rem;align-items:center;white-space:nowrap;cursor:pointer;margin:0"><input type="checkbox" style="width:auto" ' + (f.required?"checked":"") + ' onchange="Admin.updateCheckoutExtraField(' + i + ',\'required\',this.checked)">إلزامي</label>' +
+          '<button class="small warn" type="button" onclick="Admin.removeCheckoutExtraField(' + i + ')">🗑️</button>' +
+        '</div>' +
+      '</div>'
+    ).join("") : '<div class="hint">لا توجد حقول إضافية بعد</div>';
+  },
+
+  addCheckoutExtraField(){
+    this.checkoutExtraFields = this.checkoutExtraFields || [];
+    this.checkoutExtraFields.push({ label:"", placeholder:"", required:false });
+    this.renderCheckoutExtraFields();
+  },
+
+  updateCheckoutExtraField(i, key, val){
+    if(!this.checkoutExtraFields || !this.checkoutExtraFields[i]) return;
+    this.checkoutExtraFields[i][key] = val;
+  },
+
+  removeCheckoutExtraField(i){
+    this.checkoutExtraFields.splice(i,1);
+    this.renderCheckoutExtraFields();
+  },
+
+  async publishCheckout(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    const waNumber = $f("co-wa-number").value.trim().replace(/[^\d]/g,"");
+    if(!waNumber){ toast("⚠️ أدخل رقم واتساب صحيح (أرقام فقط، مثال: 213559237239)"); return }
+    const colors = {};
+    Object.keys(this.CHECKOUT_COLOR_META).forEach(k=>{
+      const el = $f("co-color-" + k);
+      if(el) colors[k] = el.value;
+    });
+    const extraFields = (this.checkoutExtraFields || [])
+      .filter(f=>f.label && f.label.trim())
+      .map((f,i)=>({ id:"f"+(i+1), label:f.label.trim(), placeholder:(f.placeholder||"").trim(), required: !!f.required }));
+    const checkout = {
+      waNumber,
+      showWhatsappBtn: $f("co-show-wa").checked,
+      showAddToCart: $f("co-show-cart").checked,
+      showOffers: $f("co-show-offers").checked,
+      orderBtnText: $f("co-order-btn-text").value.trim(),
+      whatsappBtnText: $f("co-wa-btn-text").value.trim(),
+      cartBtnText: $f("co-cart-btn-text").value.trim(),
+      fieldLabels: {
+        name: $f("co-label-name").value.trim(),
+        phone: $f("co-label-phone").value.trim(),
+        commune: $f("co-label-commune").value.trim(),
+      },
+      extraFields,
+      colors,
+    };
+    toast("⏳ جارِ النشر على GitHub...");
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(checkout, null, 2))));
+      const res = await GH.putFile("assets/data/checkout.json", b64, this.checkoutSha, "تحديث إعدادات نموذج الطلب عبر لوحة التحكم");
+      this.checkoutSha = res && res.content ? res.content.sha : undefined;
+      this.checkout = checkout;
+      toast("✅ تم النشر — تظهر الإعدادات الجديدة في نموذج الطلب خلال دقيقة تقريباً");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
+  async resetCheckout(){
+    if(!confirm("استرجاع إعدادات نموذج الطلب الافتراضية (حذف كل التخصيصات الحالية)؟")) return;
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ الاسترجاع...");
+    try{
+      const b64 = btoa(unescape(encodeURIComponent("{}")));
+      const res = await GH.putFile("assets/data/checkout.json", b64, this.checkoutSha, "استرجاع إعدادات نموذج الطلب الافتراضية عبر لوحة التحكم");
+      this.checkoutSha = res && res.content ? res.content.sha : undefined;
+      this.checkout = {};
+      this.renderCheckoutSettings();
+      toast("✅ تم الاسترجاع للإعدادات الافتراضية");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+  },
+
   /* ════════ ربط شركات التوصيل الجزائرية ════════
      المفاتيح تُخزَّن فقط في localStorage (alyssum_delivery_cfg) — لا تُنشر أبداً كملف على GitHub
      لأن صفحات الموقع عامة بدون أي تسجيل دخول ويمكن لأي شخص قراءتها. */
@@ -2712,7 +3072,7 @@ const Admin = {
 };
 
 document.addEventListener("input", e=>{
-  if(e.target && e.target.id === "f-images") Admin.renderImagesPreview();
+  if(e.target && e.target.id === "f-images"){ Admin.renderImagesPreview(); Admin.renderCoverPreview(); }
 });
 
 function toast(t){ const el=$f("toast2"); el.textContent=t; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,2500) }
