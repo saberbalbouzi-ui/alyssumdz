@@ -1,5 +1,5 @@
 /* أليسوم — محرك الطلبات والسلة */
-const WA_NUMBER = "213559237239";
+let WA_NUMBER = "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
 const SITE_NAME = "أليسوم ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " دج";
 
@@ -35,7 +35,7 @@ const Cart = {
     const items = Cart.all();
     box.innerHTML = items.length ? items.map((it,idx)=>{
       const p = PRODUCTS.find(p=>p.slug===it.slug) || it;
-      const img = (p.images&&p.images[0])||"";
+      const img = p.cover || (p.images&&p.images[0]) || "";
       const oos = isOutOfStock(p);
       return `<div class="citem">
         <img src="${REL}${img}" alt="">
@@ -253,6 +253,93 @@ async function initTheme(){
   }catch(e){ /* تجاهل */ }
 }
 
+/* ════════ نموذج الطلب (واتساب/الأزرار/الحقول الإضافية/الألوان/العروض) — تُدار من لوحة التحكم ⟵ نموذج الطلب ════════
+   تُقرأ من assets/data/checkout.json وتُطبَّق على كل صفحة (رقم واتساب، إظهار/إخفاء الأزرار، النصوص، الألوان)؛
+   حقول «العروض» و«الحقول الإضافية» و«تسميات الحقول» تُطبَّق داخل initProduct() لأنها خاصة بصفحة المنتج فقط. */
+let __checkoutCache = null;
+async function loadCheckout(){
+  if(__checkoutCache) return __checkoutCache;
+  try{
+    const r = await fetch((typeof REL!=="undefined"?REL:"") + "assets/data/checkout.json", {cache:"no-store"});
+    __checkoutCache = r.ok ? await r.json() : null;
+  }catch(e){ __checkoutCache = null; }
+  return __checkoutCache;
+}
+function applyCheckoutColors(colors){
+  if(!colors || typeof colors !== "object") return;
+  try{
+    let css = "";
+    if(colors.orderBg || colors.orderText){
+      css += ".btn-order{" + (colors.orderBg?("background:"+colors.orderBg+"!important;border-color:"+colors.orderBg+"!important;"):"") + (colors.orderText?("color:"+colors.orderText+"!important;"):"") + "}";
+    }
+    if(colors.waBg || colors.waText){
+      css += ".btn-wa{" + (colors.waBg?("background:"+colors.waBg+"!important;border-color:"+colors.waBg+"!important;"):"") + (colors.waText?("color:"+colors.waText+"!important;"):"") + "}";
+    }
+    if(colors.cartBg || colors.cartText){
+      css += ".btn-cart2{" + (colors.cartBg?("background:"+colors.cartBg+"!important;border-color:"+colors.cartBg+"!important;"):"") + (colors.cartText?("color:"+colors.cartText+"!important;"):"") + "}";
+    }
+    if(!css) return;
+    const st = document.createElement("style");
+    st.id = "__alyssum_checkout_colors";
+    st.textContent = css;
+    document.head.appendChild(st);
+  }catch(e){ /* تجاهل */ }
+}
+function applyCheckout(cfg){
+  if(!cfg || typeof cfg !== "object") return;
+  try{
+    if(cfg.waNumber){
+      const digits = String(cfg.waNumber).replace(/[^\d]/g,"");
+      if(digits) WA_NUMBER = digits;
+    }
+    // إعادة كتابة كل روابط واتساب الثابتة في الصفحة بنفس الرقم الجديد (مع الحفاظ على نص الرسالة بعد الرقم)
+    document.querySelectorAll('a[href*="wa.me/"]').forEach(a=>{
+      const href = a.getAttribute("href") || "";
+      const m = href.match(/wa\.me\/\d*(.*)$/);
+      if(m) a.setAttribute("href", "https://wa.me/" + WA_NUMBER + (m[1]||""));
+    });
+    // إظهار/إخفاء زر «الطلب مباشرة عبر واتساب» (الاختصار المباشر + زر CTA الثانوي)
+    if(cfg.showWhatsappBtn === false){
+      document.querySelectorAll(".btn-wa, .lp-btn-green").forEach(a=>{ a.style.display = "none"; });
+    }
+    // إظهار/إخفاء زر «أضف إلى السلة»
+    if(cfg.showAddToCart === false){
+      document.querySelectorAll("#add-cart").forEach(b=>{ b.style.display = "none"; });
+    }
+    // نصوص الأزرار المخصصة
+    const orderBtn = document.querySelector(".btn-order");
+    if(orderBtn && cfg.orderBtnText){
+      const span = orderBtn.querySelector("#btn-total");
+      orderBtn.innerHTML = cfg.orderBtnText + ' — <span id="btn-total">' + (span?span.textContent:"") + '</span>';
+    }
+    if(cfg.whatsappBtnText){
+      document.querySelectorAll(".btn-wa").forEach(a=>{ a.textContent = cfg.whatsappBtnText; });
+    }
+    const cartBtn = document.getElementById("add-cart");
+    if(cartBtn && cfg.cartBtnText) cartBtn.textContent = cfg.cartBtnText;
+    // تسميات الحقول (الاسم/الهاتف/البلدية) — تُطبَّق هنا أيضاً لأنها ثابتة في HTML قبل استبدال initProduct لحقل البلدية
+    if(cfg.fieldLabels){
+      Object.entries(cfg.fieldLabels).forEach(([id,label])=>{
+        if(!label) return;
+        const input = document.getElementById(id);
+        const field = input ? input.closest(".field") : null;
+        const lbl = field ? field.querySelector("label") : null;
+        if(lbl){
+          const req = /\*\s*$/.test(lbl.textContent) ? " *" : "";
+          lbl.textContent = label + req;
+        }
+      });
+    }
+    applyCheckoutColors(cfg.colors);
+  }catch(e){ /* تجاهل — إعدادات نموذج الطلب ليست حرجة لعمل الموقع */ }
+}
+async function initCheckout(){
+  try{
+    const cfg = await loadCheckout();
+    applyCheckout(cfg);
+  }catch(e){ /* تجاهل */ }
+}
+
 /* ════════ حقول SEO (عنوان/وصف/صورة meta لكل صفحة) — تُحقن ديناميكياً عبر وسوم og و twitter ════════
    العنوان والوصف الأساسيان (title/meta description) مكتوبان مسبقاً في كل صفحة HTML يدوياً؛ هذه
    الدالة تُضيف فوقهما وسوم og/twitter (غير موجودة حالياً) لتحسين المشاركة على فيسبوك/واتساب/تويتر،
@@ -361,14 +448,16 @@ function initProduct(slug){
   applySeoTags({
     title: p.seoTitle || "",
     description: p.seoDesc || "",
-    image: (p.images && p.images[0]) || "",
+    image: p.cover || (p.images && p.images[0]) || "",
     type: "product",
   });
 
-  // معرض الصور
+  // معرض الصور — تُقرأ دائماً من data.js (p.images) عند كل تحميل للصفحة، ولا تُترك
+  // لتجمّد داخل HTML الثابت للصفحة، حتى تبقى متطابقة مع ما يُعدَّل من لوحة التحكم
   const main = document.getElementById("gmain");
   const gthumbsEl = document.querySelector(".gthumbs");
   if(gthumbsEl) gthumbsEl.innerHTML = ""; // تفريغ أي صور مصغّرة ثابتة مضمّنة في HTML (تفادي التكرار)
+  if(main && p.images && p.images[0]) main.src = REL + p.images[0]; // مزامنة الصورة الرئيسية مع أول صورة في المعرض (تفادي بقائها قديمة)
   p.images.forEach((src,i)=>{
     const th = document.createElement("img");
     th.src = REL+src; th.alt = p.title;
@@ -399,6 +488,9 @@ function initProduct(slug){
     };
     offersBox.appendChild(d);
   });
+  // إخفاء بطاقات العروض إن عُطِّلت من لوحة التحكم ⟵ نموذج الطلب — يبقى العرض «الأكثر طلباً» (bestIdx)
+  // محتسَباً داخلياً في state.offer لأغراض التسعير رغم إخفاء واجهة الاختيار
+  if(__checkoutCache && __checkoutCache.showOffers === false) offersBox.style.display = "none";
 
   // نفاد الكمية — تعطيل الطلب وإظهار تنبيه (يُضبط من لوحة التحكم، حقل المخزون في تبويب المنتجات)
   if(outOfStock){
@@ -512,6 +604,22 @@ function initProduct(slug){
   document.querySelectorAll('input[name="dtype"]').forEach(r=>r.onchange=()=>{ state.dtype=r.value; setDesks(state.wilaya); update() });
   if(deskSel) deskSel.onchange = ()=>{ state.desk = deskSel.value; };
 
+  // حقول إضافية مخصصة (تُضاف من لوحة التحكم ⟵ نموذج الطلب) — تُدرج قبل مربع الإجمالي وتُرفَق
+  // قيمتها في رسالة واتساب عند تأكيد الطلب (راجع معالج submit أدناه)
+  const extraFields = (__checkoutCache && Array.isArray(__checkoutCache.extraFields)) ? __checkoutCache.extraFields : [];
+  if(extraFields.length){
+    const form = document.getElementById("order-form");
+    const totalBoxRef = document.getElementById("fee") ? document.getElementById("fee").closest(".total-box") : null;
+    extraFields.forEach(f=>{
+      if(!f || !f.id) return;
+      const field = document.createElement("div");
+      field.className = "field";
+      field.innerHTML = `<label>${f.label||""}${f.required?" *":""}</label><input id="extra-${f.id}" ${f.required?"required":""} placeholder="${f.placeholder||""}">`;
+      if(totalBoxRef) totalBoxRef.parentNode.insertBefore(field, totalBoxRef);
+      else if(form) form.appendChild(field);
+    });
+  }
+
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
   function update(){
     const fee = state.wilaya ? (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home) : null;
@@ -540,6 +648,14 @@ function initProduct(slug){
     const commune = document.getElementById("commune").value.trim();
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
     if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
+    // جمع قيم الحقول الإضافية المخصّصة (لوحة التحكم ⟵ نموذج الطلب) — تُرفق في رسالة واتساب وفي الطلب المُسجَّل
+    const extraValues = {};
+    for(const f of extraFields){
+      const el = document.getElementById("extra-"+f.id);
+      const v = el ? el.value.trim() : "";
+      if(f.required && !v){ toast(`يرجى ملء حقل «${f.label||f.id}»`); if(el) el.focus(); return }
+      if(v) extraValues[f.label||f.id] = v;
+    }
     const fee = state.dtype==="stop"?state.wilaya.stop:state.wilaya.home;
     const discount = currentCouponDiscount(state.offer.price);
     const total = Math.max(0, state.offer.price - discount) + fee;
@@ -551,6 +667,7 @@ function initProduct(slug){
       items: [{ slug: p.slug, title: p.title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }],
       subtotal: state.offer.price, fee, total,
       coupon: discount>0 ? AppliedCoupon.code : "", discount,
+      extra: extraValues,
     });
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     firePixelPurchase(p, total, state.offer.qty);
@@ -561,6 +678,7 @@ function initProduct(slug){
     msg += `\n\nالتوصيل (${state.dtype==="stop"?"مكتب Stop Desk":"إلى المنزل"} — ${state.wilaya.name}${commune?"، "+commune:""}${desk?" — المكتب: "+desk:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
+    Object.entries(extraValues).forEach(([label,val])=>{ msg += `\n${label}: ${val}`; });
     msg += `\n\n💵 الدفع عند الاستلام`;
     open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`,"_blank");
   });
@@ -586,7 +704,7 @@ function productCardHTML(p, opts){
   const disc = p.old ? Math.round((1-p.price/p.old)*100) : 0;
   const oos = isOutOfStock(p);
   return `
-    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.images[0]}" alt="${p.title}"></div>
+    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.cover||p.images[0]}" alt="${p.title}"></div>
     <div class="body">
       <h3>${p.title}</h3>
       <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>

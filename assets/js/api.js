@@ -94,4 +94,8 @@ async function bootStore() {
 
   // تطبيق مظهر الموقع المخصّص (الخطوط/الألوان/الشعار) إن وُجد (لا يُنتظر أيضاً)
   if(typeof initTheme === "function") initTheme();
+
+  // تطبيق إعدادات نموذج الطلب (رقم واتساب/الأزرار/الألوان) — يُنتظر لأن initProduct() يعتمد على
+  // اكتماله (مثلاً لإخفاء بطاقات العروض) قبل رسم صفحة المنتج
+  if(typeof initCheckout === "function") await initCheckout();
 }
