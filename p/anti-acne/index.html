@@ -434,7 +434,7 @@ footer.site h4{color:#fff!important}
         <a href="../../index.html#features">لماذا نحن؟</a>
         <a href="../../index.html#faq">الأسئلة الشائعة</a>
       </nav>
-      <a class="hd-wa" href="https://wa.me/21354113889" target="_blank">واتساب</a>
+      <a class="hd-wa" href="https://wa.me/213559237239" target="_blank">واتساب</a>
       <button class="cart-btn" aria-label="السلة">🛒<span class="cart-count">0</span></button>
     </div></header>
 <div class="container">
@@ -710,7 +710,7 @@ document.querySelector(".pbox")?.addEventListener("mouseleave", () => {
       const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!=="anti-acne").slice(0,4);
       document.getElementById("related").innerHTML = others.map(x=>`
         <a class="card" href="../../p/${x.slug}/">
-          <div class="thumb"><img loading="lazy" src="../../${x.images[0]}" alt="${x.title}"></div>
+          <div class="thumb"><img loading="lazy" src="../../${x.cover||x.images[0]}" alt="${x.title}"></div>
           <div class="body"><h3>${x.title}</h3>
           <div class="price-row"><span class="price">${fmt(x.price)}</span>${x.old?`<span class="old">${fmt(x.old)}</span>`:""}</div></div>
         </a>`).join("");
