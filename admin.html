@@ -17,9 +17,21 @@ input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:10
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
 button{cursor:pointer;border:none;font-family:inherit}
 .btn{background:var(--green);color:#fff;font-weight:800;border-radius:10px;padding:.8rem;width:100%;font-size:1rem}
-.tabs{display:flex;gap:.5rem;background:#fff;padding:.6rem;border-radius:14px;margin-bottom:1.2rem;flex-wrap:wrap}
-.tab{flex:1;min-width:110px;padding:.7rem;border-radius:10px;font-weight:800;color:#6B7672;background:transparent}
-.tab.on{background:var(--green);color:#fff}
+.admin-body{display:flex;gap:1.2rem;align-items:flex-start}
+.side-nav{width:280px;flex:none;background:#fff;border-radius:16px;padding:1rem;display:flex;flex-direction:column;gap:.4rem;box-shadow:0 4px 14px rgba(0,0,0,.04);position:sticky;top:1rem}
+.side-nav-intro{padding:.3rem .4rem .9rem;border-bottom:1.5px solid var(--line);margin-bottom:.3rem}
+.side-nav-intro b{color:var(--green);font-size:1.05rem;display:block;margin-bottom:.3rem}
+.side-nav-intro p{color:#6B7672;font-size:.8rem;line-height:1.55}
+.nav-btn{display:flex;align-items:center;gap:.7rem;text-align:right;background:transparent;border-radius:12px;padding:.75rem .8rem;width:100%}
+.nav-btn:hover{background:#FAF7F0}
+.nav-btn.on{background:var(--green);color:#fff}
+.nav-btn.on .nav-txt small{color:#DCE9E3}
+.nav-ic{font-size:1.5rem;flex:none;line-height:1}
+.nav-txt{display:flex;flex-direction:column;gap:.15rem;text-align:right;min-width:0}
+.nav-txt b{font-size:.98rem;font-weight:800;white-space:nowrap}
+.nav-txt small{font-size:.72rem;color:#6B7672;font-weight:600;line-height:1.35;white-space:normal}
+.admin-main{flex:1;min-width:0}
+@media(max-width:900px){.admin-body{flex-direction:column}.side-nav{width:100%;position:static}.side-nav-intro{display:none}.nav-txt small{display:none}}
 .wrap{max-width:1200px;margin:0 auto;padding:1.2rem}
 .top{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
 .top h1{color:var(--green);font-size:1.4rem}
@@ -43,6 +55,15 @@ tr:hover td{background:#FAF7F0}
 .fee h4{color:var(--green);font-size:.95rem;margin-bottom:.5rem}
 .fee label{font-size:.75rem;color:#6B7672}
 .fee input{padding:.4rem .6rem;margin-bottom:.4rem;font-size:.9rem}
+.color-group-title{font-weight:900;color:var(--green);font-size:.95rem;margin:1.1rem 0 .6rem;display:flex;align-items:center;gap:.4rem}
+.color-group-title:first-child{margin-top:0}
+.color-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.8rem}
+.color-card{border:1.5px solid var(--line);border-radius:12px;padding:.8rem;background:#fff;display:flex;flex-direction:column;gap:.5rem}
+.color-card h4{color:var(--green);font-size:.92rem}
+.color-preview{display:flex;align-items:center;justify-content:center;border-radius:8px;padding:.5rem;border:1px solid var(--line);background:#FAFAF8;min-height:34px;overflow:hidden}
+.color-row{display:flex;gap:.5rem;align-items:center}
+.color-row input[type=color]{width:46px;height:38px;padding:.15rem;margin:0;flex:none;cursor:pointer}
+.color-row input[type=text]{margin:0;font-size:.85rem;padding:.5rem .6rem;text-transform:uppercase}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem}
 @media(max-width:640px){.grid2{grid-template-columns:1fr}}
 .stat{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem}
@@ -50,7 +71,7 @@ tr:hover td{background:#FAF7F0}
 .stat b{display:block;font-size:1.6rem;color:var(--green)}
 .stat span{color:#6B7672;font-size:.85rem}
 #toast2{position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:var(--green);color:#fff;padding:.7rem 1.4rem;border-radius:999px;font-weight:800;opacity:0;transition:.3s;z-index:99}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;display:none;align-items:center;justify-content:center;padding:1rem}
 .modal-bg.open{display:flex}
 .modal{background:#fff;border-radius:18px;padding:1.5rem;width:min(680px,100%);max-height:88vh;overflow:auto}
 .modal.lg{width:min(900px,100%)}
@@ -100,20 +121,26 @@ tr:hover td{background:#FAF7F0}
     <button class="logout" onclick="Admin.logout()">خروج</button>
   </div>
   <div class="stat" id="stats"></div>
-  <div class="tabs">
-    <button class="tab on" onclick="Admin.tab('orders',this)">📦 الطلبات</button>
-    <button class="tab" onclick="Admin.tab('analytics',this)">📊 التحليلات</button>
-    <button class="tab" onclick="Admin.tab('products',this)">🌿 المنتجات</button>
-    <button class="tab" onclick="Admin.tab('categories',this)">🗂️ الأقسام</button>
-    <button class="tab" onclick="Admin.tab('fees',this)">🚚 رسوم التوصيل</button>
-    <button class="tab" onclick="Admin.tab('delivery',this)">🔗 شركات التوصيل</button>
-    <button class="tab" onclick="Admin.tab('coupons',this)">🎟️ أكواد الخصم</button>
-    <button class="tab" onclick="Admin.tab('blacklist',this)">🚫 القائمة السوداء</button>
-    <button class="tab" onclick="Admin.tab('theme',this)">🎨 المظهر</button>
-    <button class="tab" onclick="Admin.tab('pixels',this)">🎯 البكسلات</button>
-    <button class="tab" onclick="Admin.tab('agent',this)">🤖 الوكيل الذكي</button>
-    <button class="tab" onclick="Admin.tab('pending',this)">⏳ بانتظار التأكيد <span id="pending-count"></span></button>
-  </div>
+  <div class="admin-body">
+    <nav class="side-nav">
+      <div class="side-nav-intro">
+        <b>📋 دليل الاستخدام</b>
+        <p>اختر قسماً من القائمة، ثم استعمل الأزرار داخل كل قسم لإضافة أو تعديل أو نشر التغييرات. زر «🏠 تعديل الصفحة الرئيسية» أعلى الصفحة يفتح محرراً مباشراً للموقع نفسه.</p>
+      </div>
+      <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات</b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء</b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي</b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
+    </nav>
+    <main class="admin-main">
 
   <div id="tab-orders">
     <div class="card">
@@ -296,6 +323,7 @@ tr:hover td{background:#FAF7F0}
         <input id="th-logo-url" placeholder="رابط صورة الشعار من الإنترنت (https://...)" dir="ltr" style="margin-bottom:.8rem">
         <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchLogoFromUrl()">📥 تحميل وتحويل webp ورفع</button>
       </div>
+      <label class="small" style="display:inline-block;cursor:pointer;margin-bottom:.8rem">📁 رفع الشعار من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchLogoFromDevice(this)"></label>
       <div class="grid2">
         <input id="th-logo-width" placeholder="عرض الشعار المعروض (مثال: 160px)" dir="ltr">
         <input id="th-logo-height" placeholder="ارتفاع الشعار المعروض (مثال: 48px)" dir="ltr">
@@ -339,6 +367,9 @@ tr:hover td{background:#FAF7F0}
     </div>
     <div class="card"><div style="overflow:auto"><table id="qa-table"></table></div></div>
   </div>
+
+    </main>
+  </div>
 </div>
 
 <!-- نافذة منتج -->
@@ -374,6 +405,8 @@ tr:hover td{background:#FAF7F0}
           <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchImageFromUrl()">📥 تحميل ورفع لـ GitHub</button>
         </div>
         <div class="hint" style="margin-top:-.6rem">تُجلب الصورة من الرابط وتُرفع مباشرة إلى مجلد صور هذا المنتج على GitHub (assets/img/&lt;المعرف&gt;/)، ثم تُضاف تلقائياً لقائمة الصور أعلاه — يتطلب ضبط GitHub من زر ⚙️ في معاينة الصفحة، وأن يسمح مصدر الصورة بالوصول من متصفح (CORS)</div>
+        <label class="small" style="display:inline-block;cursor:pointer">📁 رفع صورة من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchImageFromDevice(this)"></label>
+        <div class="hint" style="margin-top:.3rem">اختر صورة محفوظة على جهازك — تُحوَّل تلقائياً إلى webp وتُرفع لمجلد صور هذا المنتج، دون الحاجة لرابط إنترنت</div>
         <div class="img-list" id="f-images-preview"></div>
         <div class="section-title">العروض والأسعار</div>
         <div id="f-offers"></div>
@@ -536,7 +569,8 @@ tr:hover td{background:#FAF7F0}
       <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchImageFromUrlForPick()">📥 تحميل ورفع</button>
     </div>
     <div class="hint" style="margin-top:-.6rem">تُرفع الصورة مباشرة لمجلد صور هذا المنتج على GitHub، ثم تُستخدم هنا تلقائياً — اضغط «✅ تطبيق» بعدها</div>
-    <div id="imgpick-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
+    <label class="small" style="display:inline-block;cursor:pointer">📁 رفع صورة من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchImageFromDeviceForPick(this)"></label>
+    <div id="imgpick-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem;margin-top:.6rem"></div>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.applyImagePick()">✅ تطبيق</button>
       <button class="small gray" onclick="document.getElementById('imgpick-modal-bg').classList.remove('open')">إلغاء</button>
@@ -657,7 +691,7 @@ const Admin = {
   },
 
   tab(t, btn){
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
     ["orders","analytics","products","categories","fees","delivery","coupons","blacklist","theme","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
@@ -1054,6 +1088,71 @@ const Admin = {
     return this.uploadImageToFolder(url, "assets/img/" + slug, "");
   },
 
+  /* رفع صورة مختارة مباشرة من جهاز المستخدم (بدون رابط إنترنت) — نفس خط تحويل webp/base64/GH.putFile أعلاه */
+  async uploadImageFile(file, folder, filenamePrefix){
+    if(!file || !file.type || !file.type.startsWith("image/")) throw new Error("الملف المختار ليس صورة صالحة");
+    let ext = "webp";
+    let finalBlob = await this.toWebp(file);
+    if(!finalBlob){
+      finalBlob = file;
+      if(file.type.includes("jpeg")) ext = "jpg";
+      else if(file.type.includes("png")) ext = "png";
+      else if(file.type.includes("gif")) ext = "gif";
+      else if(file.type.includes("webp")) ext = "webp";
+      else if(file.type.includes("svg")) ext = "svg";
+      else{
+        const m = (file.name||"").match(/\.(\w+)$/);
+        if(m) ext = m[1].toLowerCase();
+      }
+    }
+    const b64 = await this.blobToBase64(finalBlob);
+    if(!b64) throw new Error("فشلت قراءة الصورة");
+    const path = folder + "/" + (filenamePrefix || "") + Date.now() + "." + ext;
+    await GH.putFile(path, b64, undefined, "رفع صورة من الجهاز عبر لوحة التحكم (" + path + ")");
+    return path;
+  },
+
+  async fetchImageFromDevice(input){
+    const file = input.files && input.files[0];
+    if(!file) return;
+    const slug = $f("f-slug").value.trim();
+    if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); input.value=""; return }
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
+    toast("⏳ جارِ رفع الصورة من جهازك...");
+    try{
+      const path = await this.uploadImageFile(file, "assets/img/" + slug, "");
+      const cur = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
+      cur.push(path);
+      $f("f-images").value = cur.join(", ");
+      this.renderImagesPreview();
+      toast("✅ رُفعت الصورة إلى " + path + " — لا تنسَ «✅ تأكيد ونشر» لحفظ المنتج");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+    input.value = "";
+  },
+
+  async fetchImageFromDeviceForPick(input){
+    const file = input.files && input.files[0];
+    if(!file) return;
+    const slug = this.previewPageSlug;
+    if(!slug){ toast("خطأ: لا يوجد منتج محدد"); input.value=""; return }
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); this.openGhSettings(); input.value=""; return }
+    toast("⏳ جارِ رفع الصورة من جهازك...");
+    try{
+      const path = await this.uploadImageFile(file, "assets/img/" + slug, "");
+      $f("imgpick-current").value = "../../" + path;
+      toast("✅ رُفعت الصورة — اضغط «✅ تطبيق» لاستخدامها هنا");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+    input.value = "";
+  },
+
   async fetchImageFromUrl(){
     const url = $f("f-img-url").value.trim();
     if(!url){ toast("أدخل رابط الصورة أولاً"); return }
@@ -1364,7 +1463,7 @@ const Admin = {
     doc.head.appendChild(st);
 
     // نصوص: نستثني أيضاً العناصر ذات id (مرتبطة بسكربت السعر/العداد الديناميكي)
-    const EXCLUDE_TEXT = "form,.site,.topbar,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,[id]";
+    const EXCLUDE_TEXT = "form,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,[id]";
     doc.querySelectorAll("h1,h2,h3,h4,p,li,span,small,b,a,div").forEach(el=>{
       // نستثني الـ div الحاوية (تحتوي عناصر أخرى بداخلها) ونسمح فقط بالـ div "الورقية"
       // (نص مباشر بلا عناصر فرعية) — مثل نقاط قسم «المشكل والحل» اللي كانت ما تنعدلش
@@ -1375,7 +1474,7 @@ const Admin = {
       el.classList.add("__adm_edit");
     });
     // صور: لا نستثني بالـ id (الصورة الرئيسية #gmain لها id لأغراض المعرض، ويجب أن تبقى قابلة للتغيير)
-    const EXCLUDE_IMG = "form,.site,.topbar,.drawer,.drawer-bg,.sticky-cta,script,style";
+    const EXCLUDE_IMG = "form,.drawer,.drawer-bg,.sticky-cta,script,style";
     doc.querySelectorAll("img").forEach(img=>{
       if(img.closest(EXCLUDE_IMG)) return;
       img.classList.add("__adm_img_edit");
@@ -2125,7 +2224,26 @@ const Admin = {
   THEME_DEFAULTS: {
     colors: { bg:"#FBF8F2", card:"#FFFFFF", ink:"#1C2420", muted:"#6B7672", green:"#173F35", green2:"#0F2E26", gold:"#C8A24B", gold2:"#E4C87F", red:"#D64545", ok:"#1E9E6A", line:"#EAE3D6" },
   },
-  COLOR_LABELS: { bg:"خلفية الموقع", card:"خلفية البطاقات", ink:"لون النص الأساسي", muted:"لون النص الثانوي", green:"اللون الأساسي (أخضر)", green2:"الأساسي الغامق", gold:"اللون الذهبي", gold2:"الذهبي الفاتح", red:"لون التنبيه/الأحمر", ok:"لون النجاح", line:"لون الخطوط الفاصلة" },
+  COLOR_META: {
+    bg:     { label:"خلفية الموقع",       usage:"الخلفية العامة خلف كل صفحات الموقع",                 group:"backgrounds", preview:"page" },
+    card:   { label:"خلفية البطاقات",     usage:"خلفية بطاقات المنتجات والصناديق البيضاء",             group:"backgrounds", preview:"card" },
+    ink:    { label:"النص الأساسي",       usage:"لون العناوين والنصوص الرئيسية في كل الصفحة",          group:"text", preview:"text-main" },
+    muted:  { label:"النص الثانوي",       usage:"لون النصوص الفرعية والوصفية الأقل أهمية",             group:"text", preview:"text-muted" },
+    green:  { label:"الأساسي (أخضر)",     usage:"لون الأزرار الأساسية والشعار وعناصر التمييز في الموقع", group:"brand", preview:"button" },
+    green2: { label:"الأساسي الغامق",     usage:"تدرّج أغمق من الأخضر يظهر عند التحويم على الأزرار",     group:"brand", preview:"button-dark" },
+    gold:   { label:"الذهبي",             usage:"لون الأزرار الثانوية والتفاصيل المميزة (نجمة العروض)", group:"brand", preview:"badge" },
+    gold2:  { label:"الذهبي الفاتح",      usage:"تدرّج فاتح من الذهبي في الخلفيات والحدود الخفيفة",     group:"brand", preview:"badge-light" },
+    red:    { label:"التنبيه/الأحمر",     usage:"رسائل الخطأ وزر الحذف وحالة «ملغاة»",                 group:"status", preview:"alert" },
+    ok:     { label:"النجاح",             usage:"رسائل التأكيد وحالة «تم التسليم»",                    group:"status", preview:"success" },
+    line:   { label:"الخطوط الفاصلة",     usage:"حدود خفيفة بين الأقسام والبطاقات",                     group:"lines", preview:"line" },
+  },
+  COLOR_GROUPS: [
+    { key:"backgrounds", title:"🖼️ الخلفيات" },
+    { key:"text", title:"✍️ النصوص" },
+    { key:"brand", title:"🎯 الهوية والأزرار" },
+    { key:"status", title:"🔔 التنبيهات والحالة" },
+    { key:"lines", title:"➖ الخطوط والحدود" },
+  ],
   FONT_PRESETS: {
     "Cairo": { url:"https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap", css:"'Cairo','Segoe UI',Tahoma,sans-serif" },
     "Tajawal": { url:"https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap", css:"'Tajawal','Segoe UI',Tahoma,sans-serif" },
@@ -2158,11 +2276,26 @@ const Admin = {
     $f("th-font-weight").value = t.fontWeight || "400";
 
     const colors = Object.assign({}, this.THEME_DEFAULTS.colors, t.colors || {});
-    $f("th-colors-grid").innerHTML = Object.entries(colors).map(([k,v])=>
-      '<div class="fee"><h4>' + (this.COLOR_LABELS[k]||k) + '</h4>' +
-      '<input type="color" id="th-color-' + k + '" value="' + v + '" style="height:42px;padding:.2rem;cursor:pointer">' +
-      '</div>'
-    ).join("");
+    $f("th-colors-grid").innerHTML = this.COLOR_GROUPS.map(g=>{
+      const keys = Object.keys(this.COLOR_META).filter(k=>this.COLOR_META[k].group===g.key);
+      return '<div class="color-group-title">' + g.title + '</div>' +
+        '<div class="color-cards-grid">' +
+        keys.map(k=>{
+          const meta = this.COLOR_META[k];
+          const v = colors[k];
+          return '<div class="color-card">' +
+            '<h4>' + meta.label + '</h4>' +
+            '<div class="hint" style="margin:0">' + meta.usage + '</div>' +
+            '<div class="color-preview" id="th-color-preview-' + k + '"></div>' +
+            '<div class="color-row">' +
+              '<input type="color" id="th-color-' + k + '" value="' + v + '" oninput="Admin.onColorInput(\'' + k + '\')">' +
+              '<input type="text" id="th-color-hex-' + k + '" value="' + v + '" dir="ltr" maxlength="7" oninput="Admin.onColorHexInput(\'' + k + '\')">' +
+            '</div>' +
+          '</div>';
+        }).join("") +
+        '</div>';
+    }).join("");
+    Object.keys(colors).forEach(k=>this.updateColorPreview(k, colors[k]));
 
     const logo = t.logo || {};
     $f("th-logo-width").value = logo.width || "";
@@ -2183,6 +2316,50 @@ const Admin = {
     }
   },
 
+  onColorInput(k){
+    const v = $f("th-color-" + k).value;
+    if($f("th-color-hex-" + k)) $f("th-color-hex-" + k).value = v;
+    this.updateColorPreview(k, v);
+  },
+
+  onColorHexInput(k){
+    let v = $f("th-color-hex-" + k).value.trim();
+    if(v && v[0] !== "#") v = "#" + v;
+    if(!/^#[0-9a-fA-F]{6}$/.test(v)) return;
+    if($f("th-color-" + k)) $f("th-color-" + k).value = v;
+    this.updateColorPreview(k, v);
+  },
+
+  updateColorPreview(k, v){
+    const el = $f("th-color-preview-" + k);
+    if(!el) return;
+    const type = (this.COLOR_META[k] || {}).preview;
+    el.style.minHeight = "34px";
+    if(type === "page" || type === "card"){
+      el.style.background = v; el.innerHTML = "";
+    } else if(type === "line"){
+      el.style.background = "#fff";
+      el.innerHTML = '<div style="height:3px;width:100%;background:' + v + ';border-radius:2px"></div>';
+    } else if(type === "text-main" || type === "text-muted"){
+      el.style.background = "#fff";
+      el.innerHTML = '<span style="color:' + v + ';font-weight:800">أليسوم — نص تجريبي</span>';
+    } else if(type === "button" || type === "button-dark"){
+      el.style.background = "#fff";
+      el.innerHTML = '<span style="display:inline-block;background:' + v + ';color:#fff;padding:.4rem 1rem;border-radius:8px;font-weight:800">زر تجريبي</span>';
+    } else if(type === "badge" || type === "badge-light"){
+      el.style.background = "#fff";
+      el.innerHTML = '<span style="display:inline-block;background:' + v + ';color:#1C2420;padding:.3rem .9rem;border-radius:999px;font-weight:800">شارة تجريبية</span>';
+    } else if(type === "alert"){
+      el.style.background = "#fff";
+      el.innerHTML = '<span style="display:inline-block;background:#FFE0E0;color:' + v + ';padding:.3rem .9rem;border-radius:999px;font-weight:800">رسالة تنبيه</span>';
+    } else if(type === "success"){
+      el.style.background = "#fff";
+      el.innerHTML = '<span style="display:inline-block;background:#D9F2E5;color:' + v + ';padding:.3rem .9rem;border-radius:999px;font-weight:800">رسالة نجاح</span>';
+    } else {
+      el.style.background = v; el.innerHTML = "";
+    }
+  },
+
   async fetchLogoFromUrl(){
     const url = $f("th-logo-url").value.trim();
     if(!url){ toast("أدخل رابط صورة الشعار أولاً"); return }
@@ -2200,6 +2377,25 @@ const Admin = {
       console.error(err);
       toast("❌ " + err.message);
     }
+  },
+
+  async fetchLogoFromDevice(input){
+    const file = input.files && input.files[0];
+    if(!file) return;
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
+    toast("⏳ جارِ رفع الشعار من جهازك وتحويله إلى webp...");
+    try{
+      const path = await this.uploadImageFile(file, "assets/img/logo", "logo-");
+      this.theme = this.theme || {};
+      this.theme.logo = Object.assign({}, this.theme.logo, { url: path });
+      this.renderTheme();
+      toast("✅ رُفع الشعار وحُوِّل إلى webp — اضغط «💾 حفظ ونشر» لتفعيله على الموقع");
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message);
+    }
+    input.value = "";
   },
 
   clearLogo(){
