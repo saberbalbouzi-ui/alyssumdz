@@ -467,6 +467,9 @@ const Agent = (() => {
   function init() {
     const fab = document.createElement("button");
     fab.className = "agent-fab"; fab.id = "agent-fab";
+    fab.type = "button";
+    fab.title = "المساعد الذكي"; // تلميح يظهر عند تمرير المؤشر فوق الأيقونة
+    fab.setAttribute("aria-label", "المساعد الذكي");
     fab.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`;
     fab.onclick = open;
     document.body.appendChild(fab);
@@ -490,8 +493,8 @@ const Agent = (() => {
     document.getElementById("agent-send").onclick = send;
     document.getElementById("agent-input").addEventListener("keydown", e => { if (e.key === "Enter") send(); });
 
-    // فتح تلقائي خفيف بعد 12 ثانية
-    setTimeout(() => { if (!greeted && !panel().classList.contains("open")) open(); }, 12000);
+    // لا فتح تلقائي: المساعد يبقى أيقونة صغيرة (مع تلميح "المساعد الذكي" عند المرور عليها)
+    // ولا يُفتح إلا عند الضغط عليها من المستخدم — كان يفتح تلقائياً بعد 12 ثانية ويغطي الصفحة
   }
 
   document.addEventListener("DOMContentLoaded", init);
