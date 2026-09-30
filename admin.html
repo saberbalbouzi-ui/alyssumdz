@@ -208,22 +208,40 @@ tr:hover td{background:#FAF7F0}
   <div id="tab-genpage" class="hidden">
     <div class="card" id="gp-form">
       <b style="color:var(--green)">✨ توليد صفحة منتج</b>
-      <div class="hint">املأ الحقول ثم اضغط «توليد» لمعاينة الصفحة. بعد «تأكيد ونشر» تُرفع الصورة وتُنشأ الصفحة p/&lt;المعرف&gt;/ ويُضاف المنتج للمتجر. يلزم ضبط GitHub (⚙️).</div>
-      <div class="frow" style="margin-top:.8rem">
-        <div class="field"><label>اسم المنتج *</label><input id="gp-name" placeholder="مثال: سيروم ضد الشيب" oninput="GenPage.suggestSlug()"></div>
-        <div class="field"><label>المعرف (slug) — أحرف لاتينية *</label><input id="gp-slug" dir="ltr" placeholder="anti-grey-serum"></div>
+      <div class="hint">تعمل فقط على منتج موجود: اختر المنتج فتُملأ كل بياناته تلقائياً (بما فيها الصورة)، عدّل ما تشاء، ثم ولّد الصفحة. عند «تأكيد ونشر» تُستبدل صفحة المنتج الحالية (p/&lt;المعرف&gt;/) بالصفحة المولّدة. يلزم ضبط GitHub (⚙️).</div>
+      <div class="field" style="margin-top:.8rem"><label>اختر المنتج *</label><select id="gp-pick" onchange="GenPage.pick(this.value)"></select></div>
+      <div id="gp-fields" class="hidden">
+        <div class="frow">
+          <div class="field"><label>اسم المنتج</label><input id="gp-name"></div>
+          <div class="field"><label>المعرف (slug)</label><input id="gp-slug" dir="ltr" readonly style="opacity:.7"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>السعر (دج)</label><input id="gp-price" type="number" min="0"></div>
+          <div class="field"><label>القسم</label><select id="gp-cat"></select></div>
+        </div>
+        <div class="field"><label>صورة المنتج</label>
+          <img id="gp-img-prev" alt="" style="display:block;width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-bottom:.5rem">
+          <input id="gp-image" type="file" accept="image/*" onchange="GenPage.onImage(this)">
+          <div class="hint">اتركها كما هي للإبقاء على الصورة الحالية، أو اختر ملفاً لاستبدالها.</div>
+        </div>
+        <div class="field"><label>المكونات (مفصولة بفاصلة)</label><textarea id="gp-comp" rows="2" placeholder="زيت شجرة الشاي، الإكليل، الجيرانيوم"></textarea></div>
+        <div class="field"><label>وصف مختصر</label><textarea id="gp-desc" rows="2"></textarea></div>
+
+        <div class="card" style="background:#faf7ef;margin:.8rem 0 0">
+          <b>🖼️ صورة إعلانية بالذكاء الاصطناعي (اختياري)</b>
+          <div class="hint">تُولَّد بنموذج Nano Banana (Gemini) انطلاقاً من صورة المنتج والمكونات، وتُضاف كقسم في الصفحة.</div>
+          <div class="field"><label>مفتاح Gemini API</label><input id="gp-gkey" type="password" dir="ltr" placeholder="AIza..." autocomplete="off">
+            <div class="hint">من أين تحصل عليه؟ افتح <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ← سجّل بحساب Google ← «Create API key». توليد الصور قد يتطلب تفعيل الفوترة في مشروع Google. يُحفظ في هذا المتصفح فقط.</div></div>
+          <div class="action-bar"><button class="small" id="gp-imggo" onclick="GenPage.genImage()">🖼️ توليد الصورة</button><button class="small gray hidden" id="gp-imgdel" onclick="GenPage.dropImage()">حذف الصورة المولّدة</button></div>
+          <img id="gp-amb-prev" alt="" style="display:none;margin-top:.6rem;width:200px;border-radius:10px;border:1px solid var(--line)">
+        </div>
+
+        <div class="field" style="margin-top:.8rem"><label>مفتاح Claude API (اختياري — لنص أفضل)</label><input id="gp-aikey" type="password" dir="ltr" placeholder="sk-ant-..." autocomplete="off">
+          <div class="hint">من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>. بدونه يُستعمل قالب نصي جاهز. يُحفظ في هذا المتصفح فقط.</div></div>
+        <div class="action-bar"><button class="small gold" id="gp-go" onclick="GenPage.generate()">✨ توليد الصفحة</button></div>
       </div>
-      <div class="frow">
-        <div class="field"><label>السعر (دج) *</label><input id="gp-price" type="number" min="0" placeholder="2400"></div>
-        <div class="field"><label>القسم</label><select id="gp-cat"></select></div>
-      </div>
-      <div class="field"><label>صورة المنتج *</label><input id="gp-image" type="file" accept="image/*" onchange="GenPage.onImage(this)"><img id="gp-img-prev" alt="" style="display:none;margin-top:.6rem;width:110px;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></div>
-      <div class="field"><label>المكونات (مفصولة بفاصلة) *</label><textarea id="gp-comp" rows="2" placeholder="زيت شجرة الشاي، الإكليل، الجيرانيوم"></textarea></div>
-      <div class="field"><label>وصف مختصر *</label><textarea id="gp-desc" rows="2" placeholder="كريمة نباتية للعناية بالبشرة..."></textarea></div>
-      <div class="field"><label>مفتاح Claude API (اختياري — لكتابة نص أفضل بالذكاء الاصطناعي)</label><input id="gp-aikey" type="password" dir="ltr" placeholder="sk-ant-..." autocomplete="off"><div class="hint">يُحفظ في هذا المتصفح فقط. بدونه يُستعمل قالب نصي جاهز مبني على المكونات والوصف.</div></div>
-      <div class="action-bar"><button class="small gold" id="gp-go" onclick="GenPage.generate()">✨ توليد الصفحة</button></div>
     </div>
-    <div class="card hidden" id="gp-wait" style="text-align:center">⏳ جارِ توليد الصفحة...</div>
+    <div class="card hidden" id="gp-wait" style="text-align:center">⏳ جارِ العمل...</div>
     <div class="card hidden" id="gp-preview">
       <b style="color:var(--green)">معاينة الصفحة</b>
       <iframe id="gp-frame" sandbox="" title="معاينة" style="width:100%;height:640px;border:1px solid var(--line);border-radius:10px;margin-top:.6rem;background:#fff"></iframe>
@@ -849,43 +867,98 @@ const GH = {
   },
 };
 
-/* ════════ توليد صفحة منتج: يبني الصفحة من صفحة مرجعية حقيقية (نفس الستايل/السلة/نموذج الطلب) ════════ */
+/* ════════ توليد صفحة منتج موجود: يبني الصفحة من صفحة مرجعية حقيقية (نفس الستايل/السلة/نموذج الطلب) ════════ */
 const GenPage = {
   REF: "p/anti-acne/index.html",
-  html: "", imgRel: "", imgFile: null, slug: "", prod: null,
+  html: "", cur: null, prod: null, mainFile: null, ambFile: null, newImgs: [],
   esc(t){ return String(t==null?"":t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); },
-  fmt(n){ return Number(n).toLocaleString("fr-FR").replace(/ | /g," ") + " دج"; },
+  fmt(n){ return Number(n).toLocaleString("fr-FR").replace(/[  ]/g," ") + " دج"; },
+  rel(p){ return "../../" + p; },
+  dataUrl(blob){ return new Promise((res,rej)=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(new Error("فشلت قراءة الصورة")); fr.readAsDataURL(blob); }); },
   init(){
-    const sel = $f("gp-cat");
-    if(!sel.options.length){
-      const cats = Admin.categories || {};
-      sel.innerHTML = Object.keys(cats).map(k=>'<option value="'+this.esc(k)+'">'+this.esc(cats[k])+'</option>').join("");
-    }
-    try{ $f("gp-aikey").value = localStorage.getItem("alyssum_gp_aikey") || ""; }catch(e){}
+    const cats = Admin.categories || {};
+    $f("gp-cat").innerHTML = Object.keys(cats).map(k=>'<option value="'+this.esc(k)+'">'+this.esc(cats[k])+'</option>').join("");
+    const cur = $f("gp-pick").value;
+    $f("gp-pick").innerHTML = '<option value="">— اختر منتجاً —</option>' + (Admin.products||[]).map(p=>'<option value="'+this.esc(p.slug)+'">'+this.esc(p.title)+' ('+this.esc(p.slug)+')</option>').join("");
+    if(cur) $f("gp-pick").value = cur;
+    try{ $f("gp-aikey").value = localStorage.getItem("alyssum_gp_aikey") || ""; $f("gp-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; }catch(e){}
   },
-  suggestSlug(){
-    const el = $f("gp-slug");
-    if(el.dataset.touched) return;
-    const v = $f("gp-name").value.trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
-    el.value = v;
+  async pick(slug){
+    this.mainFile = null; this.ambFile = null; $f("gp-image").value = "";
+    $f("gp-amb-prev").style.display = "none"; $f("gp-imgdel").classList.add("hidden");
+    const p = (Admin.products||[]).find(x=>x.slug===slug);
+    this.cur = p || null;
+    $f("gp-fields").classList.toggle("hidden", !p);
+    if(!p) return;
+    $f("gp-name").value = p.title || ""; $f("gp-slug").value = p.slug;
+    $f("gp-price").value = p.price || ""; if(p.cat) $f("gp-cat").value = p.cat;
+    $f("gp-desc").value = p.desc || "";
+    const im = $f("gp-img-prev"); im.src = (p.images && p.images[0]) ? p.images[0] : ""; im.style.display = im.src ? "block" : "none";
+    $f("gp-comp").value = "";
+    try{ // المكونات: تُستخرج من صفحة المنتج الحالية إن وُجد قسم «المكونات»
+      const r = await fetch("p/" + slug + "/index.html?t=" + Date.now());
+      if(r.ok){
+        const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+        const sec = [...doc.querySelectorAll("section")].find(x=>{ const h = x.querySelector("h2"); return h && h.textContent.includes("المكونات"); });
+        if(sec && $f("gp-pick").value === slug) $f("gp-comp").value = [...sec.querySelectorAll(".lp-card h3")].map(h=>h.textContent.trim()).filter(Boolean).join("، ");
+      }
+    }catch(e){ /* يُترك الحقل فارغاً ليملأه المستخدم */ }
   },
   onImage(input){
     const f = input.files && input.files[0];
-    this.imgFile = f || null;
-    const img = $f("gp-img-prev");
-    if(f){ img.src = URL.createObjectURL(f); img.style.display = "block"; } else img.style.display = "none";
+    this.mainFile = f || null;
+    if(f) $f("gp-img-prev").src = URL.createObjectURL(f);
+    else if(this.cur) $f("gp-img-prev").src = (this.cur.images && this.cur.images[0]) || "";
+  },
+  dropImage(){ this.ambFile = null; $f("gp-amb-prev").style.display = "none"; $f("gp-imgdel").classList.add("hidden"); },
+  async genImage(){
+    const key = $f("gp-gkey").value.trim();
+    if(!this.cur){ toast("اختر منتجاً أولاً"); return }
+    if(!key){ toast("أدخل مفتاح Gemini API (انظر الرابط تحت الحقل)"); return }
+    try{ localStorage.setItem("alyssum_gp_gkey", key); }catch(e){}
+    const btn = $f("gp-imggo"); btn.disabled = true; btn.textContent = "⏳ جارِ التوليد...";
+    try{
+      const name = $f("gp-name").value.trim(), comp = $f("gp-comp").value.trim(), desc = $f("gp-desc").value.trim();
+      const prompt = 'Create a professional marketing photo for a natural Algerian cosmetic product named "'+name+'". Description: '+desc+'. Key natural ingredients to evoke visually: '+comp+
+        '. Style: premium product photography, soft natural light, warm authentic mood, elegant Arabic/Maghrebi aesthetic, background evoking the ingredients. If a person appears: a woman wearing a hijab, modest elegant clothing, natural confident expression. Keep the product from the reference image recognizable. No text, no logo in the image. Square 1:1.';
+      const parts = [{text: prompt}];
+      try{ // صورة المنتج كمرجع
+        const src = this.mainFile || await (await fetch((this.cur.images||[])[0])).blob();
+        parts.push({inlineData:{mimeType: src.type || "image/webp", data: (await this.dataUrl(src)).split(",")[1]}});
+      }catch(e){ console.warn("بدون صورة مرجعية", e); }
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent", {
+        method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, body: JSON.stringify({contents:[{parts}]}),
+      });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error((j.error && j.error.message) || ("Gemini " + r.status));
+      const part = ((((j.candidates||[])[0]||{}).content||{}).parts||[]).find(x=>x.inlineData||x.inline_data);
+      const idt = part && (part.inlineData||part.inline_data);
+      if(!idt) throw new Error("لم يرجع النموذج صورة — جرّب من جديد أو غيّر الوصف");
+      const bin = atob(idt.data), arr = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+      this.ambFile = new Blob([arr], {type: idt.mimeType || idt.mime_type || "image/png"});
+      const im = $f("gp-amb-prev"); im.src = URL.createObjectURL(this.ambFile); im.style.display = "block";
+      $f("gp-imgdel").classList.remove("hidden");
+      toast("✅ تم توليد الصورة — ستُضاف للصفحة عند «توليد الصفحة»");
+    }catch(err){ console.error(err); toast("❌ " + err.message); }
+    finally{ btn.disabled = false; btn.textContent = "🖼️ توليد الصورة"; }
   },
   read(){
+    if(!this.cur) throw new Error("اختر منتجاً أولاً");
     const d = {
-      name: $f("gp-name").value.trim(), slug: $f("gp-slug").value.trim().toLowerCase(),
+      name: $f("gp-name").value.trim(), slug: this.cur.slug,
       price: parseInt($f("gp-price").value,10), cat: $f("gp-cat").value,
       comp: $f("gp-comp").value.split(/[,،\n]/).map(x=>x.trim()).filter(Boolean),
       desc: $f("gp-desc").value.trim(),
     };
-    if(!d.name || !d.desc || !d.comp.length || !this.imgFile) throw new Error("املأ كل الحقول المطلوبة (الاسم، الصورة، المكونات، الوصف)");
+    if(!d.name || !d.desc || !d.comp.length) throw new Error("املأ الاسم والمكونات والوصف");
     if(!(d.price>0)) throw new Error("أدخل سعراً صحيحاً");
-    if(!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(d.slug)) throw new Error("المعرف يجب أن يكون أحرفاً لاتينية صغيرة وأرقاماً وشرطات فقط");
-    if((Admin.products||[]).some(p=>p.slug===d.slug)) throw new Error("المعرف مستعمل من منتج آخر — غيّره");
+    const ts = Date.now(), dir = "assets/img/" + d.slug, imgs = (this.cur.images||[]).slice();
+    this.newImgs = [];
+    if(this.mainFile){ const path = dir + "/main-" + ts + ".webp"; this.newImgs.push({path, blob:this.mainFile}); imgs.unshift(path); }
+    d.amb = null;
+    if(this.ambFile){ d.amb = dir + "/ambiance-" + ts + ".webp"; this.newImgs.push({path:d.amb, blob:this.ambFile}); }
+    if(!imgs.length) throw new Error("هذا المنتج بلا صورة — اختر صورة");
+    d.images = imgs;
     return d;
   },
   async aiText(d, key){
@@ -898,8 +971,7 @@ const GenPage = {
     });
     if(!r.ok) throw new Error("Claude API: " + r.status);
     const j = await r.json();
-    const t = (j.content||[]).map(b=>b.text||"").join("");
-    const m = t.match(/\{[\s\S]*\}/);
+    const m = (j.content||[]).map(b=>b.text||"").join("").match(/\{[\s\S]*\}/);
     if(!m) throw new Error("ردّ غير مفهوم من Claude");
     return JSON.parse(m[0]);
   },
@@ -925,22 +997,19 @@ const GenPage = {
     if(!r.ok) throw new Error("تعذّر تحميل الصفحة المرجعية " + this.REF);
     const doc = new DOMParser().parseFromString(await r.text(), "text/html");
     const E = v => this.esc(v), q = s => doc.querySelector(s);
-    const oldSlug = "anti-acne";
-    const imgRel = "../../assets/img/" + d.slug + "/main.webp";
-    this.imgRel = imgRel;
+    const oldSlug = "anti-acne", rel = p => this.rel(p);
+    const main = rel(d.images[0]);
     const wa = "أريد%20طلب:%20" + encodeURIComponent(d.name);
 
     doc.title = d.name + " — أليسوم | الدفع عند الاستلام";
     doc.querySelectorAll('meta[property^="og:"],meta[name^="twitter:"],link[rel="canonical"]').forEach(n=>n.remove());
-    let md = q('meta[name="description"]');
-    if(md) md.setAttribute("content", d.desc.slice(0,160));
+    const md = q('meta[name="description"]'); if(md) md.setAttribute("content", d.desc.slice(0,160));
     const addMeta = (a,k,v)=>{ const m = doc.createElement("meta"); m.setAttribute(a,k); m.setAttribute("content",v); doc.head.appendChild(m); };
     addMeta("property","og:title", d.name + " — أليسوم"); addMeta("property","og:description", d.desc.slice(0,160));
-    addMeta("property","og:image","https://alyssumdz.com/assets/img/"+d.slug+"/main.webp"); addMeta("property","og:type","product");
+    addMeta("property","og:image","https://alyssumdz.com/" + d.images[0]); addMeta("property","og:type","product");
 
-    // الهيرو
     const crumbs = q(".crumbs"); if(crumbs) crumbs.lastChild.textContent = " / " + d.name;
-    const gm = q("#gmain"); if(gm){ gm.setAttribute("src", imgRel); gm.setAttribute("alt", d.name); }
+    const gm = q("#gmain"); if(gm){ gm.setAttribute("src", main); gm.setAttribute("alt", d.name); }
     const tm = (s,fn)=>{ const n = q(s); if(n) fn(n); };
     tm(".lp-info h1", n=>n.textContent = d.name);
     tm(".lp-sub", n=>n.textContent = txt.sub || "");
@@ -954,18 +1023,18 @@ const GenPage = {
     tm("#pold", n=>n.style.display="none"); tm("#psave", n=>n.style.display="none");
     doc.querySelectorAll("a.btn-wa, .lp-final a.lp-btn-green").forEach(a=>a.setAttribute("href","https://wa.me/213559237239?text="+wa));
 
-    // أقسام المحتوى: نحذف أقسام المنتج المرجعي (عدا قسم «اطلب الآن» الأخير) ونولّد الجديدة
     const all = [...doc.querySelectorAll("section")];
     const finalSec = all.find(x=>x.querySelector(".lp-final"));
     all.filter(x=>x!==finalSec && x.classList.contains("lp-sec")).forEach(x=>x.remove());
-    const grid = (alt,img,title,text,bul)=>'<section class="lp-sec'+(alt?" alt":"")+'"><div class="container"><div class="lp-grid">'+
-      '<div class="lp-imgcard"><img src="'+imgRel+'" alt="'+E(d.name)+'" loading="lazy"></div><div class="lp-textcard"><h2>'+E(title)+'</h2><p>'+E(text)+'</p>'+
+    const grid = (alt,title,text,bul)=>'<section class="lp-sec'+(alt?" alt":"")+'"><div class="container"><div class="lp-grid">'+
+      '<div class="lp-imgcard"><img src="'+E(main)+'" alt="'+E(d.name)+'" loading="lazy"></div><div class="lp-textcard"><h2>'+E(title)+'</h2><p>'+E(text)+'</p>'+
       (bul&&bul.length?'<div class="lp-bullets">'+bul.map(b=>"<div>"+E(b)+"</div>").join("")+"</div>":"")+'</div></div></div></section>';
     const comps = (txt.components&&txt.components.length?txt.components:d.comp.map(c=>({name:c,desc:""})));
     const benefits = (txt.benefits||[]).slice(0,6);
     const sections =
-      grid(true,0,txt.problemTitle||"",txt.problemText||"",txt.problemBullets) +
-      grid(false,0,txt.solutionTitle||"",txt.solutionText||"",null) +
+      grid(true,txt.problemTitle||"",txt.problemText||"",txt.problemBullets) +
+      (d.amb?'<section class="lp-sec"><div class="container"><div class="lp-imgcard" style="max-width:640px;margin:0 auto"><img src="'+E(rel(d.amb))+'" alt="'+E(d.name)+'" loading="lazy"></div></div></section>':"") +
+      grid(false,txt.solutionTitle||"",txt.solutionText||"",null) +
       '<section class="lp-sec alt"><div class="container"><div class="lp-head"><h2>المكونات التي تصنع التجربة</h2></div><div class="lp-cards" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+
         comps.map(c=>'<article class="lp-card"><div style="padding:20px"><h3>'+E(c.name)+'</h3><p>'+E(c.desc||"")+'</p></div></article>').join("")+'</div></div></section>' +
       (benefits.length?'<section class="lp-sec"><div class="container"><div class="lp-head"><h2>لماذا '+E(d.name)+'؟</h2></div><div class="lp-cards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+
@@ -979,28 +1048,28 @@ const GenPage = {
       if(fp && txt.finalText) fp.textContent = txt.finalText;
     }
 
-    // السكربتات: استبدال المعرّف وصور المعرض
+    const arr = JSON.stringify(d.images.map(rel));
     doc.querySelectorAll("script:not([src])").forEach(sc=>{
       let t = sc.textContent;
-      if(t.includes("const images")) t = t.replace(/const images\s*=\s*\[[\s\S]*?\];/, 'const images = ["'+imgRel+'"];');
+      if(t.includes("const images")) t = t.replace(/const images\s*=\s*\[[\s\S]*?\];/, ()=>"const images = "+arr+";");
       sc.textContent = t.split(oldSlug).join(d.slug);
     });
     const out = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
-    if(out.includes(oldSlug)) console.warn("GenPage: بقي أثر للمنتج المرجعي في الصفحة المولّدة");
+    if(out.includes(oldSlug) && d.slug !== oldSlug) console.warn("GenPage: بقي أثر للمنتج المرجعي في الصفحة المولّدة");
     return out;
   },
   async generate(){
     try{
       const d = this.read(); this.prod = d;
       $f("gp-form").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-wait").classList.remove("hidden");
-      let txt, key = $f("gp-aikey").value.trim();
+      let txt; const key = $f("gp-aikey").value.trim();
       try{ localStorage.setItem("alyssum_gp_aikey", key); }catch(e){}
       if(key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); toast("⚠️ تعذّر Claude ("+e.message+") — استُعمل القالب الجاهز"); } }
       if(!txt) txt = this.fallbackText(d);
       this.html = await this.build(d, txt);
-      const dataUrl = await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(this.imgFile); });
-      const prev = '<base href="https://alyssumdz.com/p/'+d.slug+'/">' ;
-      $f("gp-frame").srcdoc = this.html.replace("<head>","<head>"+prev).split(this.imgRel).join(dataUrl);
+      let prev = this.html.replace("<head>", '<head><base href="https://alyssumdz.com/p/'+d.slug+'/">');
+      for(const n of this.newImgs) prev = prev.split(this.rel(n.path)).join(await this.dataUrl(n.blob));
+      $f("gp-frame").srcdoc = prev;
       $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.remove("hidden");
     }catch(err){
       $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-form").classList.remove("hidden");
@@ -1012,33 +1081,32 @@ const GenPage = {
     $f("gp-preview").classList.add("hidden"); $f("gp-form").classList.remove("hidden");
   },
   async publish(){
-    const d = this.prod; if(!d || !this.html) return;
+    const d = this.prod; if(!d || !this.html || !this.cur) return;
     const cfg = GH.cfg();
     if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    if(!confirm("ستُستبدل صفحة «" + d.name + "» الحالية (p/" + d.slug + "/) بالصفحة المولّدة. متابعة؟")) return;
     const btn = $f("gp-ok"); btn.disabled = true;
-    const added = { done:false };
+    const snapshot = JSON.stringify(this.cur);
     try{
-      toast("⏳ جارِ رفع الصورة...");
-      const fname = this.imgRel.split("/").pop();
-      const dir = "assets/img/" + d.slug;
-      const b64img = await Admin.blobToBase64((await Admin.toWebp(this.imgFile)) || this.imgFile);
-      await GH.putFile(dir + "/" + fname, b64img, undefined, "رفع صورة منتج جديد (" + d.slug + ")");
+      for(const n of this.newImgs){
+        toast("⏳ جارِ رفع الصورة...");
+        const b64 = await Admin.blobToBase64((await Admin.toWebp(n.blob)) || n.blob);
+        await GH.putFile(n.path, b64, undefined, "رفع صورة منتج (" + d.slug + ")");
+      }
       toast("⏳ جارِ نشر الصفحة...");
-      await GH.putFile("p/" + d.slug + "/index.html", btoa(unescape(encodeURIComponent(this.html))), undefined, "إنشاء صفحة منتج جديدة: " + d.slug);
-      Admin.products.push({ slug:d.slug, title:d.name, price:d.price, old:null, images:[dir+"/"+fname], desc:d.desc, cat:d.cat, active:true, stock:null, seoTitle:"", seoDesc:"", offers:[{qty:1,price:d.price,free:0}] });
-      added.done = true;
-      if(!(await Admin.publishDataJs())){ Admin.products.pop(); throw new Error("الصفحة نُشرت لكن تعذّر تسجيل المنتج في data.js — أضفه يدوياً من تبويب المنتجات"); }
+      let sha; try{ sha = (await GH.getFile("p/" + d.slug + "/index.html")).sha; }catch(e){ sha = undefined; }
+      await GH.putFile("p/" + d.slug + "/index.html", btoa(unescape(encodeURIComponent(this.html))), sha, "توليد صفحة المنتج: " + d.slug + " عبر لوحة التحكم");
+      const imgs = d.images.slice(); if(d.amb) imgs.push(d.amb);
+      Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs });
+      if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج في data.js"); }
       Admin.renderAll();
       toast("✅ نُشرت الصفحة: alyssumdz.com/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
-      this.cancel();
-      ["gp-name","gp-slug","gp-price","gp-comp","gp-desc","gp-image"].forEach(i=>$f(i).value="");
-      $f("gp-slug").dataset.touched = ""; $f("gp-img-prev").style.display="none"; this.imgFile = null;
+      this.cancel(); this.pick($f("gp-pick").value);
     }catch(err){
       console.error(err); toast("❌ " + err.message);
     }finally{ btn.disabled = false; }
   },
 };
-$f("gp-slug").addEventListener("input", e=>{ e.target.dataset.touched = e.target.value ? "1" : ""; });
 
 const Admin = {
   key: localStorage.getItem("alyssum_admin_key") || "",
