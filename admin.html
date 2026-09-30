@@ -705,6 +705,21 @@ tr:hover td{background:#FAF7F0}
   </div>
 </div>
 
+<!-- نافذة نطاق النشر — تظهر بعد نشر صفحة منتج ناجح إن وُجدت تعديلات نص/تنسيق/حذف قابلة للمشاركة
+     (خيار تطبيقها أيضاً على بقية صفحات المنتجات، لربح الوقت بدل تكرارها يدوياً على كل صفحة) -->
+<div class="modal-bg" id="scope-modal-bg">
+  <div class="modal">
+    <h3>🌍 نطاق النشر</h3>
+    <div class="hint">تم النشر على هذه الصفحة بنجاح ✅ — التعديلات التالية موجودة أيضاً بنفس الشكل في صفحات منتجات أخرى (كالشارات وشريط التوصيل مثلاً). هل تريد تطبيقها هناك أيضاً؟</div>
+    <div id="scope-modal-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem;margin:.6rem 0"></div>
+    <div class="hint" style="margin-top:-.2rem">ملاحظة: تغييرات الصور لا تُطبَّق تلقائياً على صفحات أخرى (كل منتج له صوره الخاصة)</div>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.publishScopeChoice('all')">🌍 طبّق على كل صفحات المنتجات</button>
+      <button class="small gray" onclick="Admin.publishScopeChoice('page')">فقط هذه الصفحة</button>
+    </div>
+  </div>
+</div>
+
 <!-- نافذة إعداد شركة توصيل -->
 <div class="modal-bg" id="delivery-modal-bg">
   <div class="modal lg">
@@ -1710,6 +1725,10 @@ const Admin = {
     try{ doc = frame.contentDocument; }catch(e){ doc = null; }
     if(!doc || !doc.body){ toast("⚠️ انتظر تحميل الصفحة كاملة ثم أعد المحاولة"); return }
     this._editDoc = doc;
+    // سجلّ التعديلات المشتركة بين صفحات المنتجات (نص/تنسيق/حذف) — يُستعمل عند النشر لعرض خيار
+    // «طبّق على كل صفحات المنتجات» بدل تكرار نفس التعديل يدوياً على كل صفحة على حدة
+    this._pageEditMap = new Map();
+    this._origTextMap = new WeakMap();
 
     const st = doc.createElement("style");
     st.id = "__adm_edit_style";
@@ -1782,8 +1801,8 @@ const Admin = {
       if(!el.textContent || !el.textContent.trim()) return;
       el.setAttribute("contenteditable","true");
       el.classList.add("__adm_edit");
-      el.addEventListener("focus", ()=>showToolbarFor(el));
-      el.addEventListener("blur", ()=>hideToolbarFor(el));
+      el.addEventListener("focus", ()=>{ this._trackFocusText(el); showToolbarFor(el); });
+      el.addEventListener("blur", ()=>{ this._trackBlurText(el); hideToolbarFor(el); });
     });
     // صور: لا نستثني بالـ id (الصورة الرئيسية #gmain لها id لأغراض المعرض، ويجب أن تبقى قابلة للتغيير)
     const EXCLUDE_IMG = "form,.drawer,.drawer-bg,.sticky-cta,script,style";
@@ -1802,8 +1821,8 @@ const Admin = {
     doc.querySelectorAll(".shop-cat span").forEach(el=>{
       el.setAttribute("contenteditable","true");
       el.classList.add("__adm_edit");
-      el.addEventListener("focus", ()=>showToolbarFor(el));
-      el.addEventListener("blur", ()=>hideToolbarFor(el));
+      el.addEventListener("focus", ()=>{ this._trackFocusText(el); showToolbarFor(el); });
+      el.addEventListener("blur", ()=>{ this._trackBlurText(el); hideToolbarFor(el); });
     });
 
     this._editing = true;
@@ -1819,10 +1838,120 @@ const Admin = {
   deleteTextElement(el){
     if(!el) return;
     if(!confirm("حذف هذا النص نهائياً من الصفحة؟ لن يظهر بعد النشر.")) return;
+    const matchText = this._origTextMap && this._origTextMap.has(el) ? this._origTextMap.get(el) : el.textContent;
+    const b = this._getEditBucket(el, matchText);
+    b.deleted = true; b.text = null; b.styles = {};
     this._fmtTarget = null;
     if(this._editToolbar) this._editToolbar.style.display = "none";
     el.remove();
     toast("🗑️ حُذف النص — لا تنسَ «✅ تحقق ونشر» لحفظ هذا التغيير على الموقع الحي");
+  },
+
+  /* ════════ تتبّع التعديلات المشتركة بين صفحات المنتجات (نص/تنسيق/حذف) ════════
+     الهدف: عند النشر، نعرض خياراً لتطبيق نفس التعديل على بقية صفحات المنتجات تلقائياً إن كان
+     العنصر المعدَّل يتكرر بنفس النص/الوسم/الصنف على صفحات أخرى (كشريط التوصيل، الشارات، إلخ)،
+     بدل تكرار نفس التعديل يدوياً على كل صفحة — دون المساس بالنصوص الخاصة بمنتج واحد فقط */
+  _cleanClass(el){
+    return (el.getAttribute("class")||"").split(/\s+/).filter(c=>c && c!=="__adm_edit" && c!=="__adm_img_edit").join(" ");
+  },
+  _getEditBucket(el, matchText){
+    if(!this._pageEditMap) this._pageEditMap = new Map();
+    let b = this._pageEditMap.get(el);
+    if(!b){ b = { tag: el.tagName, cls: this._cleanClass(el), matchText, text:null, styles:{}, deleted:false }; this._pageEditMap.set(el, b); }
+    return b;
+  },
+  _pruneEditBucket(el){
+    const b = this._pageEditMap && this._pageEditMap.get(el);
+    if(b && !b.deleted && !b.text && Object.keys(b.styles).length===0) this._pageEditMap.delete(el);
+  },
+  _trackFocusText(el){
+    if(!this._origTextMap) this._origTextMap = new WeakMap();
+    if(!this._origTextMap.has(el)) this._origTextMap.set(el, el.textContent);
+  },
+  _trackBlurText(el){
+    if(!this._origTextMap || !this._origTextMap.has(el)) return;
+    const before = this._origTextMap.get(el);
+    const b = this._getEditBucket(el, before);
+    if(el.textContent !== before) b.text = { newVal: el.textContent };
+    else b.text = null;
+    this._pruneEditBucket(el);
+  },
+  /* تُبنى قائمة التعديلات المرشّحة للمشاركة عند النشر — كل عنصر عدّله المستخدم فعلياً (نص تغيّر،
+     تنسيق تغيّر، أو حُذف) يتحوّل لمجموعة واحدة {tag, cls, matchText, textNewVal?, styles?, deleted?} */
+  _buildChangeGroups(){
+    const list = [];
+    (this._pageEditMap || new Map()).forEach(b=>{
+      if(b.matchText === undefined || b.matchText === null || !String(b.matchText).trim()) return;
+      const g = { tag:b.tag, cls:b.cls, matchText:b.matchText, deleted:!!b.deleted };
+      if(!g.deleted){
+        if(b.text) g.textNewVal = b.text.newVal;
+        const props = Object.keys(b.styles);
+        if(props.length){ g.styles = {}; props.forEach(p=>{ g.styles[p] = b.styles[p].newVal; }); }
+        if(g.textNewVal === undefined && !g.styles) return; // لا تغيير فعلي محفوظ لهذا العنصر
+      }
+      list.push(g);
+    });
+    return list;
+  },
+  _escHtml(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); },
+  _truncate(s, n){ s = String(s||"").trim(); return s.length>n ? s.slice(0,n)+"…" : s; },
+
+  openScopeModal(groups){
+    const lines = groups.slice(0,6).map(g=>{
+      if(g.deleted) return "🗑️ حذف: «" + this._escHtml(this._truncate(g.matchText,40)) + "»";
+      if(g.textNewVal !== undefined) return "✏️ نص: «" + this._escHtml(this._truncate(g.matchText,26)) + "» ← «" + this._escHtml(this._truncate(g.textNewVal,26)) + "»";
+      return "🎨 تنسيق: «" + this._escHtml(this._truncate(g.matchText,40)) + "»";
+    });
+    if(groups.length > 6) lines.push("… و" + (groups.length-6) + " تعديلاً آخر");
+    $f("scope-modal-list").innerHTML = lines.map(l=>"<div>"+l+"</div>").join("");
+    $f("scope-modal-bg").classList.add("open");
+  },
+  async publishScopeChoice(mode){
+    $f("scope-modal-bg").classList.remove("open");
+    const groups = this._pendingScopeGroups, slug = this._pendingScopeSlug;
+    this._pendingScopeGroups = null; this._pendingScopeSlug = null;
+    if(mode === "all" && groups && groups.length) await this.applyChangesToOtherProductPages(groups, slug);
+  },
+  /* يبحث في كل صفحات المنتجات الأخرى عن عناصر مطابقة (نفس الوسم + نفس الصنف + نفس النص الأصلي
+     قبل التعديل) ويطبّق عليها نفس التعديل، ثم ينشر فقط الصفحات التي فعلاً تغيّر فيها شيء */
+  async applyChangesToOtherProductPages(groups, currentSlug){
+    const otherSlugs = this.products.map(p=>p.slug).filter(s=>s && s!==currentSlug);
+    if(!otherSlugs.length){ toast("لا توجد صفحات منتجات أخرى"); return }
+    toast("⏳ جارِ فحص " + otherSlugs.length + " صفحة أخرى...");
+    const targets = [];
+    for(const slug of otherSlugs){
+      const path = "p/" + slug + "/index.html";
+      let file;
+      try{ file = await GH.getFile(path); }catch(e){ continue }
+      let html;
+      try{ html = decodeURIComponent(escape(atob((file.content||"").replace(/\n/g,"")))); }catch(e){ continue }
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      let matchedCount = 0;
+      groups.forEach(g=>{
+        [...doc.querySelectorAll(g.tag)].forEach(el=>{
+          if((el.getAttribute("class")||"").trim() !== g.cls) return;
+          if(el.textContent.trim() !== String(g.matchText).trim()) return;
+          matchedCount++;
+          if(g.deleted){ el.remove(); return }
+          if(g.textNewVal !== undefined) el.textContent = g.textNewVal;
+          if(g.styles) Object.keys(g.styles).forEach(p=>el.style.setProperty(p, g.styles[p], "important"));
+        });
+      });
+      if(matchedCount > 0) targets.push({ slug, path, doc, sha: file.sha });
+    }
+    if(!targets.length){ toast("لم يُعثر على عنصر مطابق في أي صفحة أخرى — لم يتغيّر شيء هناك"); return }
+    if(!confirm("سيُطبَّق هذا التعديل أيضاً على " + targets.length + " صفحة منتج أخرى (من أصل " + otherSlugs.length + "). متابعة؟")) return;
+    toast("⏳ جارِ النشر على " + targets.length + " صفحة...");
+    let okCount = 0, failCount = 0;
+    for(const t of targets){
+      try{
+        const outHtml = "<!DOCTYPE html>\n" + t.doc.documentElement.outerHTML;
+        const b64 = btoa(unescape(encodeURIComponent(outHtml)));
+        await GH.putFile(t.path, b64, t.sha, "تطبيق تعديل مشترك من صفحة " + currentSlug + " عبر لوحة التحكم");
+        okCount++;
+      }catch(e){ console.error(e); failCount++; }
+    }
+    toast("✅ طُبِّق التعديل على " + okCount + " صفحة" + (failCount ? (" — فشل النشر على " + failCount + " صفحة") : ""));
   },
 
   _onImgClick(e){
@@ -2068,6 +2197,21 @@ const Admin = {
       this._setFmtStyle(el, "font-family", s.fontFamily);
       this._setFmtStyle(el, "font-size", s.fontSize);
       this._setFmtStyle(el, "font-weight", s.fontWeight);
+    }else if(!revert && el && this._formattingSnapshot){
+      // سجّل خصائص التنسيق التي تغيّرت فعلاً عن اللقطة الأصلية، لإتاحة تطبيقها على بقية صفحات
+      // المنتجات لاحقاً عند اختيار «طبّق على كل الصفحات» في نافذة النشر
+      const s = this._formattingSnapshot;
+      const propMap = { color:"color", fontFamily:"font-family", fontSize:"font-size", fontWeight:"font-weight" };
+      const matchText = this._origTextMap && this._origTextMap.has(el) ? this._origTextMap.get(el) : el.textContent;
+      const b = this._getEditBucket(el, matchText);
+      if(!b.deleted){
+        Object.keys(propMap).forEach(k=>{
+          const cssProp = propMap[k], oldV = s[k] || "", newV = el.style[k] || "";
+          if(oldV !== newV) b.styles[cssProp] = { newVal: newV };
+          else delete b.styles[cssProp];
+        });
+        this._pruneEditBucket(el);
+      }
     }
     document.getElementById("txtfmt-modal-bg").classList.remove("open");
     this._formattingEl = null; this._formattingSnapshot = null;
@@ -2078,6 +2222,11 @@ const Admin = {
     if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً من زر ⚙️"); this.openGhSettings(); return }
     if(!this._editDoc){ toast("خطأ: لا توجد صفحة قيد التعديل"); return }
     if(!confirm("نشر هذه التعديلات مباشرة على صفحة المنتج في GitHub؟")) return;
+
+    // نبني مجموعات التغييرات (نص/تنسيق/حذف) قبل التنظيف — تُستخدم بعد النشر الناجح
+    // لعرض نافذة «نطاق النشر» إن كانت هذه صفحة منتج (ميزة تطبيق التعديلات على كل صفحات المنتجات)
+    const groups = this.previewKind === "product" ? this._buildChangeGroups() : [];
+    const slugAtPublish = this.previewPageSlug;
 
     const doc = this._editDoc;
     doc.querySelectorAll(".__adm_edit").forEach(el=>{
@@ -2131,6 +2280,11 @@ const Admin = {
       toast("✅ تم النشر على GitHub — يظهر التحديث على الموقع خلال دقيقة تقريباً");
       this.exitEditUI();
       setTimeout(()=>{ this.refreshEditorFrame(); }, 1500);
+      if(groups.length){
+        this._pendingScopeGroups = groups;
+        this._pendingScopeSlug = slugAtPublish;
+        setTimeout(()=>{ this.openScopeModal(groups); }, 1600);
+      }
     }catch(err){
       console.error(err);
       toast("❌ فشل الحفظ — تحقق من التوكن والصلاحيات (" + err.message + ")");
