@@ -651,6 +651,7 @@ tr:hover td{background:#FAF7F0}
     <div id="imgpick-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem;margin-top:.6rem"></div>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.applyImagePick()">✅ تطبيق</button>
+      <button class="small warn" onclick="Admin.deleteEditingImage()">🗑️ حذف الصورة</button>
       <button class="small gray" onclick="document.getElementById('imgpick-modal-bg').classList.remove('open')">إلغاء</button>
     </div>
   </div>
@@ -1666,7 +1667,7 @@ const Admin = {
     this._editing = false;
     this._editDoc = null;
     this._editingImg = null;
-    this._fmtBtn = null; this._fmtTarget = null; this._formattingEl = null; this._formattingSnapshot = null;
+    this._editToolbar = null; this._fmtTarget = null; this._formattingEl = null; this._formattingSnapshot = null;
     document.getElementById("txtfmt-modal-bg").classList.remove("open");
     $f("pp-edit-btn").classList.remove("hidden");
     $f("pp-confirm-btn").classList.add("hidden");
@@ -1707,40 +1708,54 @@ const Admin = {
     st.textContent = ".__adm_edit{outline:1.5px dashed #C8A24B!important;outline-offset:2px;cursor:text}" +
       ".__adm_edit:focus{outline:2px solid #173F35!important;background:rgba(200,162,75,.08)}" +
       ".__adm_img_edit{outline:2px dashed #1B4F8A!important;cursor:pointer!important}" +
-      "#__adm_fmt_btn{position:absolute;z-index:999999;display:none;background:#173F35;color:#fff;border:none;border-radius:8px;padding:.3rem .55rem;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;font-family:inherit}" +
-      "#__adm_fmt_btn:hover{background:#0F2E26}";
+      "#__adm_edit_toolbar{position:absolute;z-index:999999;display:none;gap:4px;font-family:inherit}" +
+      "#__adm_edit_toolbar button{background:#173F35;color:#fff;border:none;border-radius:8px;padding:.3rem .55rem;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;font-family:inherit}" +
+      "#__adm_edit_toolbar button:hover{background:#0F2E26}" +
+      "#__adm_edit_toolbar button.__adm_del{background:#B3391F}" +
+      "#__adm_edit_toolbar button.__adm_del:hover{background:#8E2C18}";
     doc.head.appendChild(st);
 
-    // زر عائم "🎨 تنسيق" مشترك — يظهر بجانب أي نص عند التركيز عليه للتعديل، ويفتح نافذة
-    // تنسيق (لون/عائلة الخط/الحجم/السماكة) لذلك العنصر تحديداً مع معاينة حية فورية
-    let fmtBtn = doc.getElementById("__adm_fmt_btn");
-    if(!fmtBtn){
-      fmtBtn = doc.createElement("button");
-      fmtBtn.type = "button";
-      fmtBtn.id = "__adm_fmt_btn";
-      fmtBtn.textContent = "🎨 تنسيق";
-      doc.body.appendChild(fmtBtn);
+    // شريط عائم مشترك يظهر بجانب أي نص عند التركيز عليه للتعديل: "🎨 تنسيق" (لون/عائلة
+    // الخط/الحجم/السماكة مع معاينة حية) و"🗑️ حذف" (يحذف هذا العنصر من الصفحة مباشرة)
+    let toolbar = doc.getElementById("__adm_edit_toolbar");
+    if(!toolbar){
+      toolbar = doc.createElement("div");
+      toolbar.id = "__adm_edit_toolbar";
+      const fmtBtn = doc.createElement("button");
+      fmtBtn.type = "button"; fmtBtn.className = "__adm_fmt"; fmtBtn.textContent = "🎨 تنسيق";
+      const delBtn = doc.createElement("button");
+      delBtn.type = "button"; delBtn.className = "__adm_del"; delBtn.textContent = "🗑️ حذف";
+      toolbar.appendChild(fmtBtn); toolbar.appendChild(delBtn);
+      doc.body.appendChild(toolbar);
     }
-    this._fmtBtn = fmtBtn;
+    const fmtBtn = toolbar.querySelector(".__adm_fmt");
+    const delBtn = toolbar.querySelector(".__adm_del");
+    this._editToolbar = toolbar;
     this._fmtTarget = null;
-    const positionFmtBtn = ()=>{
-      if(!this._fmtTarget || !fmtBtn) return;
+    const positionToolbar = ()=>{
+      if(!this._fmtTarget || !toolbar) return;
       const r = this._fmtTarget.getBoundingClientRect();
       // إحداثيات فعلية (physical) من getBoundingClientRect — نستعمل left/top مباشرة
       // وليس insetInlineStart (الذي يُقرأ حسب اتجاه الصفحة RTL فيقلب الموضع للجهة الخطأ)
       const top = Math.max(4, r.top + doc.defaultView.scrollY - 34);
-      fmtBtn.style.top = top + "px";
-      fmtBtn.style.left = (r.left + doc.defaultView.scrollX) + "px";
-      fmtBtn.style.right = "auto";
+      toolbar.style.top = top + "px";
+      toolbar.style.left = (r.left + doc.defaultView.scrollX) + "px";
+      toolbar.style.right = "auto";
     };
-    this._positionFmtBtn = positionFmtBtn;
+    this._positionFmtBtn = positionToolbar;
     fmtBtn.addEventListener("mousedown", (e)=>{
       // نمنع فقدان تركيز النص (blur) قبل أن نتمكن من فتح نافذة التنسيق
       e.preventDefault(); e.stopPropagation();
       if(this._fmtTarget) this.openTextFormatPopup(this._fmtTarget);
     });
-    doc.defaultView.addEventListener("scroll", positionFmtBtn, true);
-    doc.defaultView.addEventListener("resize", positionFmtBtn);
+    delBtn.addEventListener("mousedown", (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      if(this._fmtTarget) this.deleteTextElement(this._fmtTarget);
+    });
+    doc.defaultView.addEventListener("scroll", positionToolbar, true);
+    doc.defaultView.addEventListener("resize", positionToolbar);
+    const showToolbarFor = (el)=>{ this._fmtTarget = el; positionToolbar(); toolbar.style.display = "flex"; };
+    const hideToolbarFor = (el)=>{ setTimeout(()=>{ if(this._fmtTarget===el){ toolbar.style.display = "none"; this._fmtTarget = null; } }, 150); };
 
     // نصوص: نستثني أيضاً العناصر ذات id (مرتبطة بسكربت السعر/العداد الديناميكي)
     const EXCLUDE_TEXT = "form,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,[id]";
@@ -1752,8 +1767,8 @@ const Admin = {
       if(!el.textContent || !el.textContent.trim()) return;
       el.setAttribute("contenteditable","true");
       el.classList.add("__adm_edit");
-      el.addEventListener("focus", ()=>{ this._fmtTarget = el; this._positionFmtBtn(); fmtBtn.style.display = "block"; });
-      el.addEventListener("blur", ()=>{ setTimeout(()=>{ if(this._fmtTarget===el){ fmtBtn.style.display = "none"; this._fmtTarget = null; } }, 150); });
+      el.addEventListener("focus", ()=>showToolbarFor(el));
+      el.addEventListener("blur", ()=>hideToolbarFor(el));
     });
     // صور: لا نستثني بالـ id (الصورة الرئيسية #gmain لها id لأغراض المعرض، ويجب أن تبقى قابلة للتغيير)
     const EXCLUDE_IMG = "form,.drawer,.drawer-bg,.sticky-cta,script,style";
@@ -1772,8 +1787,8 @@ const Admin = {
     doc.querySelectorAll(".shop-cat span").forEach(el=>{
       el.setAttribute("contenteditable","true");
       el.classList.add("__adm_edit");
-      el.addEventListener("focus", ()=>{ this._fmtTarget = el; this._positionFmtBtn(); fmtBtn.style.display = "block"; });
-      el.addEventListener("blur", ()=>{ setTimeout(()=>{ if(this._fmtTarget===el){ fmtBtn.style.display = "none"; this._fmtTarget = null; } }, 150); });
+      el.addEventListener("focus", ()=>showToolbarFor(el));
+      el.addEventListener("blur", ()=>hideToolbarFor(el));
     });
 
     this._editing = true;
@@ -1781,7 +1796,18 @@ const Admin = {
     $f("pp-confirm-btn").classList.remove("hidden");
     $f("pp-cancel-btn").classList.remove("hidden");
     $f("pp-badge").classList.remove("hidden");
-    toast("✏️ اضغط على أي نص لتحريره، أو على صورة لتغييرها — يظهر زر «🎨 تنسيق» بجانب النص المحدد لتغيير لونه وخطه وحجمه");
+    toast("✏️ اضغط على أي نص لتحريره، أو على صورة لتغييرها — يظهر شريط «🎨 تنسيق / 🗑️ حذف» بجانب النص المحدد");
+  },
+
+  /* حذف نص من الصفحة مباشرة — يعمل فقط على العناصر «الورقية» القابلة للتعديل أصلاً
+     (لا يشمل عناصر النظام ذات id المستثناة سلفاً من وضع التعديل) */
+  deleteTextElement(el){
+    if(!el) return;
+    if(!confirm("حذف هذا النص نهائياً من الصفحة؟ لن يظهر بعد النشر.")) return;
+    this._fmtTarget = null;
+    if(this._editToolbar) this._editToolbar.style.display = "none";
+    el.remove();
+    toast("🗑️ حُذف النص — لا تنسَ «✅ تحقق ونشر» لحفظ هذا التغيير على الموقع الحي");
   },
 
   _onImgClick(e){
@@ -1819,6 +1845,22 @@ const Admin = {
     }
     $f("imgpick-modal-bg").classList.remove("open");
     toast("✓ تم تغيير الصورة هنا — لم يُنشر بعد، اضغط «✅ تحقق ونشر» للنشر على GitHub");
+  },
+  deleteEditingImage(){
+    const el = this._editingImg;
+    if(!el) return;
+    if(el.tagName === "IMG"){
+      if(!confirm("حذف هذه الصورة نهائياً من الصفحة؟")) return;
+      el.remove();
+    }else{
+      // صورة خلفية CSS (مثل مربعات الفئات بالصفحة الرئيسية) — نُبقي المربع نفسه (عنصر تنقّل
+      // هيكلي) ونزيل فقط الصورة منه، بدل حذف المربع كاملاً وربما كسر شبكة الصفحة
+      if(!confirm("إزالة صورة الخلفية من هذا العنصر؟ سيبقى العنصر نفسه بدون صورة.")) return;
+      el.style.removeProperty("background-image");
+    }
+    this._editingImg = null;
+    $f("imgpick-modal-bg").classList.remove("open");
+    toast("🗑️ حُذفت الصورة — لا تنسَ «✅ تحقق ونشر» لحفظ هذا التغيير على الموقع الحي");
   },
 
   cancelPageEdit(){
@@ -1944,8 +1986,8 @@ const Admin = {
       if(el.getAttribute("class") === "") el.removeAttribute("class");
     });
     const st = doc.getElementById("__adm_edit_style"); if(st) st.remove();
-    const fmtBtnEl = doc.getElementById("__adm_fmt_btn"); if(fmtBtnEl) fmtBtnEl.remove();
-    this._fmtBtn = null; this._fmtTarget = null; this._formattingEl = null; this._formattingSnapshot = null;
+    const toolbarEl = doc.getElementById("__adm_edit_toolbar"); if(toolbarEl) toolbarEl.remove();
+    this._editToolbar = null; this._fmtTarget = null; this._formattingEl = null; this._formattingSnapshot = null;
 
     // إعادة المحتوى المتولّد ديناميكياً (معرض الصور، قوائم الولايات، «قد يعجبك أيضاً»، شبكة
     // المنتجات والأكثر مبيعاً بالصفحة الرئيسية، مساعد الشات) لحالته الأصلية الفارغة (القالب)
