@@ -1009,14 +1009,17 @@ const GenPage = {
         parts.push({inlineData:{mimeType: src.type || "image/webp", data: (await this.dataUrl(src)).split(",")[1]}});
       }catch(e){ console.warn("بدون صورة مرجعية", e); }
       let j = null, lastErr = "";
-      for(const model of ["gemini-3.1-flash-lite-image", "gemini-2.5-flash-image"]){
+      const imgModels = ["gemini-3.1-flash-lite-image", "gemini-2.5-flash-image", "gemini-3.1-flash-lite-image"]; // الأخير = محاولة ثانية بعد مهلة
+      for(let mi = 0; mi < imgModels.length; mi++){
+        const model = imgModels[mi];
+        if(mi === imgModels.length - 1) await new Promise(res=>setTimeout(res, 3000));
         const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
           method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, body: JSON.stringify({contents:[{parts}], generationConfig:{imageConfig:{aspectRatio:fmt}}}),
         });
         const jj = await r.json().catch(()=>({}));
         if(r.ok){ j = jj; break; }
         lastErr = (jj.error && jj.error.message) || ("Gemini " + r.status);
-        if(!(r.status === 404 || /no longer available|not found|not supported/i.test(lastErr))) throw new Error(lastErr);
+        if(!([404,429,500,503].includes(r.status) || /no longer available|not found|not supported|high demand|overloaded|quota/i.test(lastErr))) throw new Error(lastErr);
       }
       if(!j) throw new Error(lastErr || "لا يوجد نموذج صور متاح");
       const part = ((((j.candidates||[])[0]||{}).content||{}).parts||[]).find(x=>x.inlineData||x.inline_data);
@@ -1069,9 +1072,11 @@ const GenPage = {
   },
   async aiTextGemini(d, key){
     // النماذج القديمة تُسحب من Google بين حين وآخر — نجرّب الأحدث أولاً ثم نتراجع
-    const models = ["gemini-3.8-flash", "gemini-2.5-flash"];
+    const models = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-3.8-flash"]; // الأخير = محاولة ثانية بعد مهلة
     let lastErr = "";
-    for(const model of models){
+    for(let mi = 0; mi < models.length; mi++){
+      const model = models[mi];
+      if(mi === models.length - 1) await new Promise(res=>setTimeout(res, 3000));
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
         method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key},
         body: JSON.stringify({contents:[{parts:[{text:this.aiPrompt(d)}]}], generationConfig:{responseMimeType:"application/json"}}),
@@ -1079,7 +1084,7 @@ const GenPage = {
       const j = await r.json().catch(()=>({}));
       if(!r.ok){
         lastErr = (j.error && j.error.message) || ("Gemini " + r.status);
-        if(r.status === 404 || /no longer available|not found|not supported/i.test(lastErr)) continue; // جرّب النموذج التالي
+        if([404,429,500,503].includes(r.status) || /no longer available|not found|not supported|high demand|overloaded|quota/i.test(lastErr)) continue; // جرّب النموذج التالي
         throw new Error(lastErr);
       }
       const t = ((((j.candidates||[])[0]||{}).content||{}).parts||[]).map(x=>x.text||"").join("");
