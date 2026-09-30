@@ -231,9 +231,9 @@ tr:hover td{background:#FAF7F0}
         <div class="field"><label>المكونات (مفصولة بفاصلة)</label><textarea id="gp-comp" rows="2" placeholder="زيت شجرة الشاي، الإكليل، الجيرانيوم"></textarea></div>
         <div class="field"><label>وصف مختصر</label><textarea id="gp-desc" rows="2"></textarea></div>
 
-        <div class="field" style="margin-top:.8rem"><label>مفتاح Gemini API (اختياري — لكتابة نص الصفحة)</label><input id="gp-gkey" type="password" dir="ltr" placeholder="AIza..." autocomplete="off">
+        <div class="field" style="margin-top:.8rem"><label>مفتاح Gemini API (اختياري — لكتابة نص الصفحة)</label><input id="gp-gkey" type="text" dir="ltr" placeholder="AIza..." autocomplete="off" autocapitalize="off" spellcheck="false" name="gp-gkey-nofill" style="-webkit-text-security:disc">
           <div class="hint">من <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. يُحفظ في هذا المتصفح فقط. بدون أي مفتاح يُستعمل قالب نصي جاهز.</div></div>
-        <div class="field" style="margin-top:.8rem"><label>مفتاح Claude API (اختياري — بديل لـ Gemini في كتابة النص)</label><input id="gp-aikey" type="password" dir="ltr" placeholder="sk-ant-..." autocomplete="off">
+        <div class="field" style="margin-top:.8rem"><label>مفتاح Claude API (اختياري — بديل لـ Gemini في كتابة النص)</label><input id="gp-aikey" type="text" dir="ltr" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off" spellcheck="false" name="gp-aikey-nofill" style="-webkit-text-security:disc">
           <div class="hint">من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>. بدونه يُستعمل قالب نصي جاهز. يُحفظ في هذا المتصفح فقط.</div></div>
         <div class="action-bar"><button class="small gold" id="gp-go" onclick="GenPage.generate()">✨ توليد الصفحة</button></div>
       </div>
@@ -1118,7 +1118,9 @@ const GenPage = {
       GenPage.clearMsg();
       const d = this.read(); this.prod = d;
       $f("gp-form").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-wait").classList.remove("hidden");
-      let txt; const why = []; const key = $f("gp-aikey").value.trim(), gkey = $f("gp-gkey").value.trim();
+      let txt; const why = []; let key = $f("gp-aikey").value.replace(/[\s"']/g,""), gkey = $f("gp-gkey").value.replace(/[\s"']/g,"");
+      if(gkey && !/^AIza[0-9A-Za-z_-]{30,}$/.test(gkey)){ why.push("المفتاح في حقل Gemini لا يبدو مفتاح Gemini صحيحاً (يجب أن يبدأ بـ AIza) — تُرك"); gkey = ""; }
+      if(key && !/^sk-ant-/.test(key)){ why.push("المفتاح في حقل Claude لا يبدأ بـ sk-ant- — تُرك"); key = ""; }
       try{ localStorage.setItem("alyssum_gp_aikey", key); localStorage.setItem("alyssum_gp_gkey", gkey); }catch(e){}
       if(gkey){ try{ txt = await this.aiTextGemini(d,gkey); }catch(e){ console.warn(e); why.push("Gemini: "+e.message); } }
       if(!txt && key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); why.push("Claude: "+e.message); } }
