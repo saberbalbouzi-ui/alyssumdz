@@ -231,16 +231,8 @@ tr:hover td{background:#FAF7F0}
         <div class="field"><label>المكونات (مفصولة بفاصلة)</label><textarea id="gp-comp" rows="2" placeholder="زيت شجرة الشاي، الإكليل، الجيرانيوم"></textarea></div>
         <div class="field"><label>وصف مختصر</label><textarea id="gp-desc" rows="2"></textarea></div>
 
-        <div class="card" style="background:#faf7ef;margin:.8rem 0 0">
-          <b>🔑 مفتاح Gemini — للصور (Nano Banana) ولنص الصفحة</b>
-          <div class="hint">مفتاح واحد يكفي: يُستعمل لكتابة نص الصفحة (Gemini) ولتوليد الصورة الإعلانية (Nano Banana) وتُضاف كقسم في الصفحة. بدونه يُستعمل قالب نصي جاهز.</div>
-          <div class="field"><label>مفتاح Gemini API</label><input id="gp-gkey" type="password" dir="ltr" placeholder="AIza..." autocomplete="off">
-            <div class="hint">من أين تحصل عليه؟ افتح <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ← سجّل بحساب Google ← «Create API key». توليد الصور قد يتطلب تفعيل الفوترة في مشروع Google. يُحفظ في هذا المتصفح فقط.</div></div>
-          <div class="field"><label>الصيغة</label><select id="gp-format"><option value="1:1">مربع 1:1 (منشورات / صفحة المنتج)</option><option value="4:5">عمودي 4:5 (ستوري / إنستغرام)</option><option value="16:9">أفقي 16:9 (غلاف / إعلان)</option></select></div>
-          <div class="action-bar"><button class="small" id="gp-imggo" onclick="GenPage.genImage()">🖼️ توليد الصورة</button><button class="small gray hidden" id="gp-imgdel" onclick="GenPage.dropImage()">حذف الصورة المولّدة</button></div>
-          <img id="gp-amb-prev" alt="" style="display:none;margin-top:.6rem;width:200px;border-radius:10px;border:1px solid var(--line)">
-        </div>
-
+        <div class="field" style="margin-top:.8rem"><label>مفتاح Gemini API (اختياري — لكتابة نص الصفحة)</label><input id="gp-gkey" type="password" dir="ltr" placeholder="AIza..." autocomplete="off">
+          <div class="hint">من <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. يُحفظ في هذا المتصفح فقط. بدون أي مفتاح يُستعمل قالب نصي جاهز.</div></div>
         <div class="field" style="margin-top:.8rem"><label>مفتاح Claude API (اختياري — بديل لـ Gemini في كتابة النص)</label><input id="gp-aikey" type="password" dir="ltr" placeholder="sk-ant-..." autocomplete="off">
           <div class="hint">من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>. بدونه يُستعمل قالب نصي جاهز. يُحفظ في هذا المتصفح فقط.</div></div>
         <div class="action-bar"><button class="small gold" id="gp-go" onclick="GenPage.generate()">✨ توليد الصفحة</button></div>
@@ -882,7 +874,7 @@ const GH = {
 /* ════════ توليد صفحة منتج موجود: يبني الصفحة من صفحة مرجعية حقيقية (نفس الستايل/السلة/نموذج الطلب) ════════ */
 const GenPage = {
   REF: "p/anti-acne/index.html",
-  html: "", cur: null, prod: null, mainFile: null, ambFile: null, newImgs: [],
+  html: "", cur: null, prod: null, mainFile: null, newImgs: [],
   esc(t){ return String(t==null?"":t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); },
   fmt(n){ return Number(n).toLocaleString("fr-FR").replace(/[  ]/g," ") + " دج"; },
   rel(p){ return "../../" + p; },
@@ -919,8 +911,7 @@ const GenPage = {
     try{ $f("gp-aikey").value = localStorage.getItem("alyssum_gp_aikey") || ""; $f("gp-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; }catch(e){}
   },
   async pick(slug){
-    this.mainFile = null; this.ambFile = null; $f("gp-image").value = "";
-    $f("gp-amb-prev").style.display = "none"; $f("gp-imgdel").classList.add("hidden");
+    this.mainFile = null; $f("gp-image").value = "";
     const p = (Admin.products||[]).find(x=>x.slug===slug);
     this.cur = p || null;
     $f("gp-fields").classList.toggle("hidden", !p);
@@ -985,45 +976,6 @@ const GenPage = {
     if(f) $f("gp-img-prev").src = URL.createObjectURL(f);
     else if(this.cur) $f("gp-img-prev").src = (this.cur.images && this.cur.images[0]) || "";
   },
-  dropImage(){ this.ambFile = null; $f("gp-amb-prev").style.display = "none"; $f("gp-imgdel").classList.add("hidden"); },
-  async genImage(){
-    const key = $f("gp-gkey").value.trim();
-    if(!this.cur){ GenPage.say("اختر منتجاً أولاً"); return }
-    if(!key){ GenPage.say("أدخل مفتاح Gemini API (انظر الرابط تحت الحقل)"); return }
-    try{ localStorage.setItem("alyssum_gp_gkey", key); }catch(e){}
-    const btn = $f("gp-imggo"); btn.disabled = true; btn.textContent = "⏳ جارِ التوليد...";
-    try{
-      const name = $f("gp-name").value.trim(), comp = $f("gp-comp").value.trim(), desc = $f("gp-desc").value.trim();
-      const fmt = $f("gp-format").value || "1:1";
-      const fmtTxt = {"1:1":"square 1:1 (social media post)","4:5":"portrait 4:5 (story)","16:9":"landscape 16:9 (banner)"}[fmt] || "square 1:1";
-      const prompt = 'Create a professional marketing image for a natural Algerian cosmetic product named "'+name+'".\n\n'+
-        'Product description: '+desc+'\n'+
-        'Key ingredients to evoke visually: '+comp+'\n\n'+
-        'Style: high-end product photography, soft natural light, a background that evokes the listed natural ingredients (herbs, plants, organic elements matching the ingredients), warm and authentic mood, elegant Arabic/Maghrebi aesthetic.\n\n'+
-        'If a person appears in the image: a woman wearing a hijab, modest and elegant outfit, natural and confident expression.\n\n'+
-        'Use the attached reference image as the product: keep its packaging, shape, colors and label exactly as they are, without redrawing or distorting it. '+
-        'Do not include any text, letters or logo added to the image. Format: '+fmtTxt+'.';
-      const parts = [{text: prompt}];
-      try{ // صورة المنتج كمرجع
-        const src = this.mainFile || await (await fetch((this.cur.images||[])[0])).blob();
-        parts.push({inlineData:{mimeType: src.type || "image/webp", data: (await this.dataUrl(src)).split(",")[1]}});
-      }catch(e){ console.warn("بدون صورة مرجعية", e); }
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent", {
-        method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, body: JSON.stringify({contents:[{parts}], generationConfig:{imageConfig:{aspectRatio:fmt}}}),
-      });
-      const j = await r.json().catch(()=>({}));
-      if(!r.ok) throw new Error((j.error && j.error.message) || ("Gemini " + r.status));
-      const part = ((((j.candidates||[])[0]||{}).content||{}).parts||[]).find(x=>x.inlineData||x.inline_data);
-      const idt = part && (part.inlineData||part.inline_data);
-      if(!idt) throw new Error("لم يرجع النموذج صورة — جرّب من جديد أو غيّر الوصف");
-      const bin = atob(idt.data), arr = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
-      this.ambFile = new Blob([arr], {type: idt.mimeType || idt.mime_type || "image/png"});
-      const im = $f("gp-amb-prev"); im.src = URL.createObjectURL(this.ambFile); im.style.display = "block";
-      $f("gp-imgdel").classList.remove("hidden");
-      GenPage.say("✅ تم توليد الصورة — ستُضاف للصفحة عند «توليد الصفحة»");
-    }catch(err){ console.error(err); GenPage.say("❌ " + err.message); }
-    finally{ btn.disabled = false; btn.textContent = "🖼️ توليد الصورة"; }
-  },
   read(){
     if(!this.cur) throw new Error("اختر منتجاً أولاً");
     const d = {
@@ -1037,8 +989,6 @@ const GenPage = {
     const ts = Date.now(), dir = "assets/img/" + d.slug, imgs = (this.cur.images||[]).slice();
     this.newImgs = [];
     if(this.mainFile){ const path = dir + "/main-" + ts + ".webp"; this.newImgs.push({path, blob:this.mainFile}); imgs.unshift(path); }
-    d.amb = null;
-    if(this.ambFile){ d.amb = dir + "/ambiance-" + ts + ".webp"; this.newImgs.push({path:d.amb, blob:this.ambFile}); }
     if(!imgs.length) throw new Error("هذا المنتج بلا صورة — اختر صورة");
     d.images = imgs;
     return d;
@@ -1136,7 +1086,6 @@ const GenPage = {
     const benefits = (txt.benefits||[]).slice(0,6);
     const sections =
       grid(true,txt.problemTitle||"",txt.problemText||"",txt.problemBullets) +
-      (d.amb?'<section class="lp-sec"><div class="container"><div class="lp-imgcard" style="max-width:640px;margin:0 auto"><img src="'+E(rel(d.amb))+'" alt="'+E(d.name)+'" loading="lazy"></div></div></section>':"") +
       grid(false,txt.solutionTitle||"",txt.solutionText||"",null) +
       '<section class="lp-sec alt"><div class="container"><div class="lp-head"><h2>المكونات التي تصنع التجربة</h2></div><div class="lp-cards" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+
         comps.map(c=>'<article class="lp-card"><div style="padding:20px"><h3>'+E(c.name)+'</h3><p>'+E(c.desc||"")+'</p></div></article>').join("")+'</div></div></section>' +
@@ -1209,7 +1158,7 @@ const GenPage = {
       if(live && this.mode(d.slug)==="default") await this.putSlot(d.slug, "default", this.fromB64(live.b64)); // نسخة احتياطية دائمة للافتراضية
       await GH.putFile("p/" + d.slug + "/index.html", this.toB64(this.html), live ? live.sha : undefined, "توليد صفحة المنتج: " + d.slug + " عبر لوحة التحكم");
       await this.putSlot(d.slug, "generated", this.html);
-      const imgs = d.images.slice(); if(d.amb) imgs.push(d.amb);
+      const imgs = d.images.slice();
       Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs, pageMode:"generated" });
       if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج في data.js"); }
       Admin.renderAll();
