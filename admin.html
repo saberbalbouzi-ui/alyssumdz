@@ -232,6 +232,7 @@ tr:hover td{background:#FAF7F0}
           <div class="hint">تُولَّد بنموذج Nano Banana (Gemini) انطلاقاً من صورة المنتج والمكونات، وتُضاف كقسم في الصفحة.</div>
           <div class="field"><label>مفتاح Gemini API</label><input id="gp-gkey" type="password" dir="ltr" placeholder="AIza..." autocomplete="off">
             <div class="hint">من أين تحصل عليه؟ افتح <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ← سجّل بحساب Google ← «Create API key». توليد الصور قد يتطلب تفعيل الفوترة في مشروع Google. يُحفظ في هذا المتصفح فقط.</div></div>
+          <div class="field"><label>الصيغة</label><select id="gp-format"><option value="1:1">مربع 1:1 (منشورات / صفحة المنتج)</option><option value="4:5">عمودي 4:5 (ستوري / إنستغرام)</option><option value="16:9">أفقي 16:9 (غلاف / إعلان)</option></select></div>
           <div class="action-bar"><button class="small" id="gp-imggo" onclick="GenPage.genImage()">🖼️ توليد الصورة</button><button class="small gray hidden" id="gp-imgdel" onclick="GenPage.dropImage()">حذف الصورة المولّدة</button></div>
           <img id="gp-amb-prev" alt="" style="display:none;margin-top:.6rem;width:200px;border-radius:10px;border:1px solid var(--line)">
         </div>
@@ -919,15 +920,22 @@ const GenPage = {
     const btn = $f("gp-imggo"); btn.disabled = true; btn.textContent = "⏳ جارِ التوليد...";
     try{
       const name = $f("gp-name").value.trim(), comp = $f("gp-comp").value.trim(), desc = $f("gp-desc").value.trim();
-      const prompt = 'Create a professional marketing photo for a natural Algerian cosmetic product named "'+name+'". Description: '+desc+'. Key natural ingredients to evoke visually: '+comp+
-        '. Style: premium product photography, soft natural light, warm authentic mood, elegant Arabic/Maghrebi aesthetic, background evoking the ingredients. If a person appears: a woman wearing a hijab, modest elegant clothing, natural confident expression. Keep the product from the reference image recognizable. No text, no logo in the image. Square 1:1.';
+      const fmt = $f("gp-format").value || "1:1";
+      const fmtTxt = {"1:1":"square 1:1 (social media post)","4:5":"portrait 4:5 (story)","16:9":"landscape 16:9 (banner)"}[fmt] || "square 1:1";
+      const prompt = 'Create a professional marketing image for a natural Algerian cosmetic product named "'+name+'".\n\n'+
+        'Product description: '+desc+'\n'+
+        'Key ingredients to evoke visually: '+comp+'\n\n'+
+        'Style: high-end product photography, soft natural light, a background that evokes the listed natural ingredients (herbs, plants, organic elements matching the ingredients), warm and authentic mood, elegant Arabic/Maghrebi aesthetic.\n\n'+
+        'If a person appears in the image: a woman wearing a hijab, modest and elegant outfit, natural and confident expression.\n\n'+
+        'Use the attached reference image as the product: keep its packaging, shape, colors and label exactly as they are, without redrawing or distorting it. '+
+        'Do not include any text, letters or logo added to the image. Format: '+fmtTxt+'.';
       const parts = [{text: prompt}];
       try{ // صورة المنتج كمرجع
         const src = this.mainFile || await (await fetch((this.cur.images||[])[0])).blob();
         parts.push({inlineData:{mimeType: src.type || "image/webp", data: (await this.dataUrl(src)).split(",")[1]}});
       }catch(e){ console.warn("بدون صورة مرجعية", e); }
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent", {
-        method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, body: JSON.stringify({contents:[{parts}]}),
+        method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, body: JSON.stringify({contents:[{parts}], generationConfig:{imageConfig:{aspectRatio:fmt}}}),
       });
       const j = await r.json().catch(()=>({}));
       if(!r.ok) throw new Error((j.error && j.error.message) || ("Gemini " + r.status));
