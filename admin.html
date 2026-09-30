@@ -231,8 +231,8 @@ tr:hover td{background:#FAF7F0}
         <div class="field"><label>وصف مختصر</label><textarea id="gp-desc" rows="2"></textarea></div>
 
         <div class="card" style="background:#faf7ef;margin:.8rem 0 0">
-          <b>🖼️ صورة إعلانية بالذكاء الاصطناعي (اختياري)</b>
-          <div class="hint">تُولَّد بنموذج Nano Banana (Gemini) انطلاقاً من صورة المنتج والمكونات، وتُضاف كقسم في الصفحة.</div>
+          <b>🔑 مفتاح Gemini — للصور (Nano Banana) ولنص الصفحة</b>
+          <div class="hint">مفتاح واحد يكفي: يُستعمل لكتابة نص الصفحة (Gemini) ولتوليد الصورة الإعلانية (Nano Banana) وتُضاف كقسم في الصفحة. بدونه يُستعمل قالب نصي جاهز.</div>
           <div class="field"><label>مفتاح Gemini API</label><input id="gp-gkey" type="password" dir="ltr" placeholder="AIza..." autocomplete="off">
             <div class="hint">من أين تحصل عليه؟ افتح <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ← سجّل بحساب Google ← «Create API key». توليد الصور قد يتطلب تفعيل الفوترة في مشروع Google. يُحفظ في هذا المتصفح فقط.</div></div>
           <div class="field"><label>الصيغة</label><select id="gp-format"><option value="1:1">مربع 1:1 (منشورات / صفحة المنتج)</option><option value="4:5">عمودي 4:5 (ستوري / إنستغرام)</option><option value="16:9">أفقي 16:9 (غلاف / إعلان)</option></select></div>
@@ -240,7 +240,7 @@ tr:hover td{background:#FAF7F0}
           <img id="gp-amb-prev" alt="" style="display:none;margin-top:.6rem;width:200px;border-radius:10px;border:1px solid var(--line)">
         </div>
 
-        <div class="field" style="margin-top:.8rem"><label>مفتاح Claude API (اختياري — لنص أفضل)</label><input id="gp-aikey" type="password" dir="ltr" placeholder="sk-ant-..." autocomplete="off">
+        <div class="field" style="margin-top:.8rem"><label>مفتاح Claude API (اختياري — بديل لـ Gemini في كتابة النص)</label><input id="gp-aikey" type="password" dir="ltr" placeholder="sk-ant-..." autocomplete="off">
           <div class="hint">من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>. بدونه يُستعمل قالب نصي جاهز. يُحفظ في هذا المتصفح فقط.</div></div>
         <div class="action-bar"><button class="small gold" id="gp-go" onclick="GenPage.generate()">✨ توليد الصفحة</button></div>
       </div>
@@ -1047,6 +1047,22 @@ const GenPage = {
     if(!m) throw new Error("ردّ غير مفهوم من Claude");
     return JSON.parse(m[0]);
   },
+  aiPrompt(d){
+    return 'اكتب نص صفحة هبوط لمنتج عناية طبيعي جزائري لعلامة "أليسوم". الاسم: '+d.name+'. المكونات: '+d.comp.join("، ")+'. الوصف: '+d.desc+
+      '\nالتزم بالعربية، وبلا وعود طبية أو ادعاءات علاجية قاطعة. أجب بـ JSON فقط بهذا الشكل: {"sub":"جملة تسويقية قصيرة","problemTitle":"","problemText":"","problemBullets":["","",""],"solutionTitle":"","solutionText":"","components":[{"name":"","desc":"جملة قصيرة"}],"benefits":[{"ic":"emoji","title":"","text":""}],"finalText":""} — benefits من 3 إلى 6 عناصر، وcomponents بنفس ترتيب المكونات المعطاة.';
+  },
+  async aiTextGemini(d, key){
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+      method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key},
+      body: JSON.stringify({contents:[{parts:[{text:this.aiPrompt(d)}]}], generationConfig:{responseMimeType:"application/json"}}),
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error((j.error && j.error.message) || ("Gemini " + r.status));
+    const t = ((((j.candidates||[])[0]||{}).content||{}).parts||[]).map(x=>x.text||"").join("");
+    const m = t.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error("ردّ غير مفهوم من Gemini");
+    return JSON.parse(m[0]);
+  },
   fallbackText(d){
     return {
       sub: d.desc.split(/[.۔!؟]/)[0].slice(0,120),
@@ -1142,9 +1158,11 @@ const GenPage = {
     try{
       const d = this.read(); this.prod = d;
       $f("gp-form").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-wait").classList.remove("hidden");
-      let txt; const key = $f("gp-aikey").value.trim();
-      try{ localStorage.setItem("alyssum_gp_aikey", key); }catch(e){}
-      if(key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); toast("⚠️ تعذّر Claude ("+e.message+") — استُعمل القالب الجاهز"); } }
+      let txt; const key = $f("gp-aikey").value.trim(), gkey = $f("gp-gkey").value.trim();
+      try{ localStorage.setItem("alyssum_gp_aikey", key); localStorage.setItem("alyssum_gp_gkey", gkey); }catch(e){}
+      if(gkey){ try{ txt = await this.aiTextGemini(d,gkey); }catch(e){ console.warn(e); toast("⚠️ تعذّر Gemini ("+e.message+")"); } }
+      if(!txt && key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); toast("⚠️ تعذّر Claude ("+e.message+")"); } }
+      if(!txt) toast("ℹ️ استُعمل القالب النصي الجاهز");
       if(!txt) txt = this.fallbackText(d);
       this.html = await this.build(d, txt);
       if(d.reviewsFallback) toast("ℹ️ لا توجد آراء زبائن في صفحة هذا المنتج — استُعملت آراء الصفحة المرجعية، عدّلها بعد النشر من «تعديل الصفحة»");
