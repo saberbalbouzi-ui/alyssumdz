@@ -641,14 +641,17 @@ tr:hover td{background:#FAF7F0}
   <div class="modal">
     <h3>🖼️ تغيير الصورة</h3>
     <input id="imgpick-current" placeholder="مسار أو رابط الصورة" dir="ltr">
-    <div class="hint">اختر من الصور الموجودة في هذه الصفحة، أو عدّل المسار أعلاه مباشرة</div>
+    <div class="hint">اختر من الصور أدناه (المستخدمة في هذه الصفحة، أو كل صور هذا المنتج على GitHub)، أو عدّل المسار أعلاه مباشرة</div>
     <div style="display:flex;gap:.5rem;align-items:flex-start">
       <input id="imgpick-url" placeholder="أو الصق رابط صورة من الإنترنت هنا (https://...)" dir="ltr" style="margin-bottom:.8rem">
       <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchImageFromUrlForPick()">📥 تحميل ورفع</button>
     </div>
     <div class="hint" style="margin-top:-.6rem">تُرفع الصورة مباشرة لمجلد صور هذا المنتج على GitHub، ثم تُستخدم هنا تلقائياً — اضغط «✅ تطبيق» بعدها</div>
     <label class="small" style="display:inline-block;cursor:pointer">📁 رفع صورة من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchImageFromDeviceForPick(this)"></label>
-    <div id="imgpick-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem;margin-top:.6rem"></div>
+    <div class="hint" style="margin-top:.7rem;margin-bottom:.2rem;font-weight:700">🖼️ الصور المستخدمة في هذه الصفحة</div>
+    <div id="imgpick-list" style="max-height:130px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
+    <div class="hint" style="margin-top:.7rem;margin-bottom:.2rem;font-weight:700">🗂️ كل صور هذا المنتج على GitHub</div>
+    <div id="imgpick-folder-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.applyImagePick()">✅ تطبيق</button>
       <button class="small warn" onclick="Admin.deleteEditingImage()">🗑️ حذف الصورة</button>
@@ -1332,6 +1335,7 @@ const Admin = {
       const path = await this.uploadImageFile(file, "assets/img/" + slug, "");
       $f("imgpick-current").value = "../../" + path;
       toast("✅ رُفعت الصورة — اضغط «✅ تطبيق» لاستخدامها هنا");
+      this.loadFolderImages();
     }catch(err){
       console.error(err);
       toast("❌ " + err.message);
@@ -1422,6 +1426,7 @@ const Admin = {
       $f("imgpick-current").value = "../../" + path;
       $f("imgpick-url").value = "";
       toast("✅ رُفعت الصورة — اضغط «✅ تطبيق» لاستخدامها هنا");
+      this.loadFolderImages();
     }catch(err){
       console.error(err);
       toast("❌ " + err.message);
@@ -1833,8 +1838,98 @@ const Admin = {
         '<span style="overflow:hidden;text-overflow:ellipsis;direction:ltr">' + s + '</span>' +
       '</button>').join("");
     $f("imgpick-modal-bg").classList.add("open");
+    this.loadFolderImages();
   },
   pickExistingImage(src){ $f("imgpick-current").value = src; },
+
+  /* ════════ المرحلة 3: منتقي الصور الموسّع — يعرض كل صور مجلد هذا المنتج على GitHub
+     (وليس فقط الصور المستخدمة حالياً في الصفحة)، مع زر نسخ رابط مباشر لكل صورة ════════ */
+  _resolveImageFolder(){
+    // أثناء تعديل صفحة منتج: مجلد هذا المنتج بالكامل (بما فيه أي مجلدات فرعية مثل
+    // presentation/body/composants/avis)
+    if(this.previewPageSlug) return "assets/img/" + this.previewPageSlug;
+    // أثناء تعديل الصفحة الرئيسية: عناصرها تستخدم صور منتجات مختلفة، فنشتق المجلد
+    // المناسب من مسار الصورة الحالية للعنصر نفسه بدل مجلد ثابت
+    const current = $f("imgpick-current").value.trim();
+    const m = current.replace(/^(\.\.\/)+/, "").match(/^assets\/img\/([^/]+)/);
+    return m ? "assets/img/" + m[1] : null;
+  },
+  _imgPathForCurrentPage(repoPath){
+    // مسارات صفحات المنتج (p/<slug>/) تحتاج بادئة صعود مجلدين، بخلاف الصفحة الرئيسية
+    return this.previewKind === "product" ? ("../../" + repoPath) : repoPath;
+  },
+  /* بحث بعمق محدود (٥ مستويات) عن كل الصور داخل مجلد مُعطى عبر Contents API — يغطي
+     المجلدات الفرعية الموجودة فعلياً (مثل anti-acne/presentation) دون تحميل كامل شجرة المستودع */
+  async listImagesInFolder(dir, depth){
+    depth = depth || 0;
+    if(depth > 4) return [];
+    let items;
+    try{ items = await GH.getFile(dir); }
+    catch(e){ return []; } // مجلد غير موجود بعد (لم تُرفع له صور) — نتجاهله بصمت بدل إظهار خطأ
+    if(!Array.isArray(items)) return []; // المسار يشير لملف وليس مجلداً
+    const dirs = items.filter(it=>it.type==="dir");
+    const files = items.filter(it=>it.type==="file" && /\.(webp|jpe?g|png|gif|svg)$/i.test(it.name))
+      .map(it=>({ path: it.path, name: it.name, download_url: it.download_url }));
+    const nested = await Promise.all(dirs.map(d=>this.listImagesInFolder(d.path, depth+1)));
+    return files.concat(...nested);
+  },
+  async loadFolderImages(){
+    const box = $f("imgpick-folder-list");
+    if(!box) return;
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){
+      box.innerHTML = '<div class="hint">⚠️ اضبط GitHub أولاً لعرض كل صور هذا المنتج (زر ⚙️)</div>';
+      return;
+    }
+    const folder = this._resolveImageFolder();
+    if(!folder){
+      box.innerHTML = '<div class="hint">تعذّر تحديد مجلد صور هذا العنصر تلقائياً</div>';
+      return;
+    }
+    box.innerHTML = '<div class="hint">⏳ جارِ تحميل صور «' + folder + '»...</div>';
+    // حارس تزامن: إذا فُتح المنتقي لعنصر آخر (مجلد مختلف) قبل اكتمال هذا الطلب، نتجاهل
+    // نتيجته المتأخرة حتى لا تُكتب فوق قائمة المجلد الصحيح
+    const myToken = (this._folderLoadToken = (this._folderLoadToken||0) + 1);
+    let images;
+    try{ images = await this.listImagesInFolder(folder); }
+    catch(err){
+      if(myToken !== this._folderLoadToken) return;
+      box.innerHTML = '<div class="hint">❌ تعذّر تحميل الصور: ' + (err && err.message || "") + '</div>';
+      return;
+    }
+    if(myToken !== this._folderLoadToken) return;
+    if(!images.length){ box.innerHTML = '<div class="hint">لا توجد صور بعد في «' + folder + '»</div>'; return; }
+    images.sort((a,b)=>a.path.localeCompare(b.path));
+    box.innerHTML = images.map(im=>{
+      const usePath = this._imgPathForCurrentPage(im.path);
+      const label = im.path.startsWith(folder + "/") ? im.path.slice(folder.length + 1) : im.path;
+      return '<div style="display:flex;align-items:center;gap:.5rem">' +
+        '<img src="' + im.download_url + '" style="width:26px;height:26px;object-fit:cover;border-radius:5px;flex:none" onerror="this.style.display=\'none\'">' +
+        '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;font-size:12px" title="' + im.path + '">' + label + '</span>' +
+        '<button class="small gray" type="button" onclick=\'Admin.pickExistingImage(' + JSON.stringify(usePath) + ')\'>استخدام</button>' +
+        '<button class="small blue" type="button" onclick=\'Admin.copyImageUrl(' + JSON.stringify(im.path) + ')\'>🔗 نسخ</button>' +
+      '</div>';
+    }).join("");
+  },
+  copyImageUrl(repoPath){
+    const url = "https://alyssumdz.com/" + repoPath.split("/").map(encodeURIComponent).join("/");
+    const done = ()=>toast("🔗 نُسخ رابط الصورة");
+    const fallbackCopy = ()=>{
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = url; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        done();
+      }catch(e){ prompt("انسخ رابط الصورة يدوياً:", url); }
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(done).catch(fallbackCopy);
+    }else{
+      fallbackCopy();
+    }
+  },
   applyImagePick(){
     const v = $f("imgpick-current").value.trim();
     if(!v || !this._editingImg){ toast("أدخل مسار الصورة"); return }
