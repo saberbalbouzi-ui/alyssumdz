@@ -206,6 +206,7 @@ tr:hover td{background:#FAF7F0}
   </div>
 
   <div id="tab-genpage" class="hidden">
+    <div id="gp-msg" style="display:none;margin:0 0 .8rem;padding:.7rem .9rem;border-radius:10px;font-size:.9rem;line-height:1.6"></div>
     <div class="card" id="gp-form">
       <b style="color:var(--green)">✨ توليد صفحة منتج</b>
       <div class="hint">تعمل فقط على منتج موجود: اختر المنتج فتُملأ كل بياناته تلقائياً (بما فيها الصورة)، عدّل ما تشاء، ثم ولّد الصفحة. عند «تأكيد ونشر» تُفعَّل الصفحة المولّدة، وتبقى الصفحة الافتراضية محفوظة ويمكن الرجوع إليها دائماً. نموذج الطلب وآراء الزبائن حاضران دائماً، وكل عناصر الصفحة قابلة للتعديل من «تعديل الصفحة» كالصفحة الافتراضية. يلزم ضبط GitHub (⚙️).</div>
@@ -885,6 +886,15 @@ const GenPage = {
   esc(t){ return String(t==null?"":t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); },
   fmt(n){ return Number(n).toLocaleString("fr-FR").replace(/[  ]/g," ") + " دج"; },
   rel(p){ return "../../" + p; },
+  /* رسالة دائمة (لا تختفي) فوق الأداة — الـ toast وحده يختفي بسرعة فلا تُقرأ الأخطاء */
+  say(m, err){
+    toast(m);
+    const el = $f("gp-msg"); if(!el) return;
+    const bad = err !== undefined ? err : /^[❌⚠]/.test(m);
+    el.textContent = m; el.style.display = "block";
+    el.style.background = bad ? "#fdeaea" : "#eaf6ef"; el.style.color = bad ? "#8a1f1f" : "#1d5a3a";
+  },
+  clearMsg(){ const el = $f("gp-msg"); if(el) el.style.display = "none"; },
   NOINDEX: '<meta name="robots" content="noindex">',
   mode(slug){ const p = (Admin.products||[]).find(x=>x.slug===slug); return (p && p.pageMode) || "default"; },
   slot(slug, m){ return "p/" + slug + "/index." + m + ".html"; },
@@ -951,23 +961,23 @@ const GenPage = {
   /* التبديل بين الصفحة الافتراضية والمولّدة — الرجوع للافتراضية متاح دائماً */
   async switchMode(slug, target){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    if(!cfg || !cfg.token){ GenPage.say("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
     const p = (Admin.products||[]).find(x=>x.slug===slug); if(!p) return;
     const cur = this.mode(slug);
-    if(cur === target){ toast("هذه الصفحة مفعّلة بالفعل"); return }
+    if(cur === target){ GenPage.say("هذه الصفحة مفعّلة بالفعل"); return }
     try{
-      toast("⏳ جارِ التبديل...");
+      GenPage.say("⏳ جارِ التبديل...");
       const live = await this.getB64("p/" + slug + "/index.html");
       let targetHtml;
       try{ targetHtml = this.fromB64((await this.getB64(this.slot(slug,target))).b64); }
-      catch(e){ if(target==="generated"){ toast("لا توجد صفحة مولّدة لهذا المنتج بعد — استعمل «توليد صفحة»"); return } throw new Error("لا توجد نسخة للصفحة الافتراضية (" + e.message + ")"); }
+      catch(e){ if(target==="generated"){ GenPage.say("لا توجد صفحة مولّدة لهذا المنتج بعد — استعمل «توليد صفحة»"); return } throw new Error("لا توجد نسخة للصفحة الافتراضية (" + e.message + ")"); }
       await this.putSlot(slug, cur, this.fromB64(live.b64)); // نحفظ الحالية (بما فيها تعديلاتك) قبل الاستبدال
       await GH.putFile("p/" + slug + "/index.html", this.toB64(targetHtml.replace(this.NOINDEX,"")), live.sha, "تفعيل الصفحة " + (target==="default"?"الافتراضية":"المولّدة") + " للمنتج " + slug);
       const prev = p.pageMode; p.pageMode = target;
       if(!(await Admin.publishDataJs())){ p.pageMode = prev; throw new Error("تم التبديل لكن تعذّر تحديث data.js"); }
       Admin.renderAll(); this.renderStatus(); Admin.renderPageMode(slug);
-      toast("✅ فُعّلت الصفحة " + (target==="default"?"الافتراضية":"المولّدة") + " (قد يستغرق ظهورها دقيقة)");
-    }catch(err){ console.error(err); toast("❌ " + err.message); }
+      GenPage.say("✅ فُعّلت الصفحة " + (target==="default"?"الافتراضية":"المولّدة") + " (قد يستغرق ظهورها دقيقة)");
+    }catch(err){ console.error(err); GenPage.say("❌ " + err.message); }
   },
   onImage(input){
     const f = input.files && input.files[0];
@@ -978,8 +988,8 @@ const GenPage = {
   dropImage(){ this.ambFile = null; $f("gp-amb-prev").style.display = "none"; $f("gp-imgdel").classList.add("hidden"); },
   async genImage(){
     const key = $f("gp-gkey").value.trim();
-    if(!this.cur){ toast("اختر منتجاً أولاً"); return }
-    if(!key){ toast("أدخل مفتاح Gemini API (انظر الرابط تحت الحقل)"); return }
+    if(!this.cur){ GenPage.say("اختر منتجاً أولاً"); return }
+    if(!key){ GenPage.say("أدخل مفتاح Gemini API (انظر الرابط تحت الحقل)"); return }
     try{ localStorage.setItem("alyssum_gp_gkey", key); }catch(e){}
     const btn = $f("gp-imggo"); btn.disabled = true; btn.textContent = "⏳ جارِ التوليد...";
     try{
@@ -1010,8 +1020,8 @@ const GenPage = {
       this.ambFile = new Blob([arr], {type: idt.mimeType || idt.mime_type || "image/png"});
       const im = $f("gp-amb-prev"); im.src = URL.createObjectURL(this.ambFile); im.style.display = "block";
       $f("gp-imgdel").classList.remove("hidden");
-      toast("✅ تم توليد الصورة — ستُضاف للصفحة عند «توليد الصفحة»");
-    }catch(err){ console.error(err); toast("❌ " + err.message); }
+      GenPage.say("✅ تم توليد الصورة — ستُضاف للصفحة عند «توليد الصفحة»");
+    }catch(err){ console.error(err); GenPage.say("❌ " + err.message); }
     finally{ btn.disabled = false; btn.textContent = "🖼️ توليد الصورة"; }
   },
   read(){
@@ -1156,23 +1166,25 @@ const GenPage = {
   },
   async generate(){
     try{
+      GenPage.clearMsg();
       const d = this.read(); this.prod = d;
       $f("gp-form").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-wait").classList.remove("hidden");
-      let txt; const key = $f("gp-aikey").value.trim(), gkey = $f("gp-gkey").value.trim();
+      let txt; const why = []; const key = $f("gp-aikey").value.trim(), gkey = $f("gp-gkey").value.trim();
       try{ localStorage.setItem("alyssum_gp_aikey", key); localStorage.setItem("alyssum_gp_gkey", gkey); }catch(e){}
-      if(gkey){ try{ txt = await this.aiTextGemini(d,gkey); }catch(e){ console.warn(e); toast("⚠️ تعذّر Gemini ("+e.message+")"); } }
-      if(!txt && key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); toast("⚠️ تعذّر Claude ("+e.message+")"); } }
-      if(!txt) toast("ℹ️ استُعمل القالب النصي الجاهز");
+      if(gkey){ try{ txt = await this.aiTextGemini(d,gkey); }catch(e){ console.warn(e); why.push("Gemini: "+e.message); } }
+      if(!txt && key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); why.push("Claude: "+e.message); } }
+      if(!txt) GenPage.say((why.length?"⚠️ تعذّر الذكاء الاصطناعي ("+why.join(" | ")+") — ":"ℹ️ ")+"استُعمل القالب النصي الجاهز", !!why.length);
       if(!txt) txt = this.fallbackText(d);
       this.html = await this.build(d, txt);
-      if(d.reviewsFallback) toast("ℹ️ لا توجد آراء زبائن في صفحة هذا المنتج — استُعملت آراء الصفحة المرجعية، عدّلها بعد النشر من «تعديل الصفحة»");
+      if(d.reviewsFallback) GenPage.say("ℹ️ لا توجد آراء زبائن في صفحة هذا المنتج — استُعملت آراء الصفحة المرجعية، عدّلها بعد النشر من «تعديل الصفحة»");
       let prev = this.html.replace("<head>", '<head><base href="https://alyssumdz.com/p/'+d.slug+'/">');
       for(const n of this.newImgs) prev = prev.split(this.rel(n.path)).join(await this.dataUrl(n.blob));
       $f("gp-frame").srcdoc = prev;
       $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.remove("hidden");
     }catch(err){
       $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-form").classList.remove("hidden");
-      toast("❌ " + err.message);
+      GenPage.say("❌ " + err.message);
+      if(/املأ|أدخل|اختر/.test(err.message)) { const f = !$f("gp-comp").value.trim() ? "gp-comp" : (!$f("gp-desc").value.trim() ? "gp-desc" : "gp-name"); const el=$f(f); if(el){ el.style.outline="2px solid #d64545"; el.focus(); setTimeout(()=>{ el.style.outline=""; },4000); } }
     }
   },
   cancel(){
@@ -1182,17 +1194,17 @@ const GenPage = {
   async publish(){
     const d = this.prod; if(!d || !this.html || !this.cur) return;
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    if(!cfg || !cfg.token){ GenPage.say("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
     if(!confirm("ستُفعَّل الصفحة المولّدة لـ «" + d.name + "». الصفحة الحالية تُحفظ كنسخة ويمكنك الرجوع إليها دائماً من تعديل المنتج. متابعة؟")) return;
     const btn = $f("gp-ok"); btn.disabled = true;
     const snapshot = JSON.stringify(this.cur);
     try{
       for(const n of this.newImgs){
-        toast("⏳ جارِ رفع الصورة...");
+        GenPage.say("⏳ جارِ رفع الصورة...");
         const b64 = await Admin.blobToBase64((await Admin.toWebp(n.blob)) || n.blob);
         await GH.putFile(n.path, b64, undefined, "رفع صورة منتج (" + d.slug + ")");
       }
-      toast("⏳ جارِ نشر الصفحة...");
+      GenPage.say("⏳ جارِ نشر الصفحة...");
       let live; try{ live = await this.getB64("p/" + d.slug + "/index.html"); }catch(e){ live = null; }
       if(live && this.mode(d.slug)==="default") await this.putSlot(d.slug, "default", this.fromB64(live.b64)); // نسخة احتياطية دائمة للافتراضية
       await GH.putFile("p/" + d.slug + "/index.html", this.toB64(this.html), live ? live.sha : undefined, "توليد صفحة المنتج: " + d.slug + " عبر لوحة التحكم");
@@ -1201,10 +1213,10 @@ const GenPage = {
       Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs, pageMode:"generated" });
       if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج في data.js"); }
       Admin.renderAll();
-      toast("✅ نُشرت الصفحة: alyssumdz.com/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
+      GenPage.say("✅ نُشرت الصفحة: alyssumdz.com/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
       this.cancel(); this.pick($f("gp-pick").value);
     }catch(err){
-      console.error(err); toast("❌ " + err.message);
+      console.error(err); GenPage.say("❌ " + err.message);
     }finally{ btn.disabled = false; }
   },
 };
