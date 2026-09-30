@@ -311,6 +311,50 @@ const Agent = (() => {
     return null;
   }
 
+  /* ── تدريب الوكيل لكل صفحة (تُدار من لوحة التحكم ⟵ الوكيل الذكي ⟵ تدريب الوكيل) ──
+     assets/data/agent-training.json: { scopes: { home: {...}, "<slug>": {...} } }
+     الدماغ (AgentBrain) يُحمَّل عند الحاجة فقط ويبحث في: الأسئلة المدرَّبة + معلومات الصفحة + بيانات المنتج. */
+  let TRAIN = null, BRAIN_CHUNKS = null;
+  const scopeKey = () => currentSlug || "home";
+  const scopeCfg = () => (TRAIN && TRAIN.scopes && TRAIN.scopes[scopeKey()]) || null;
+  function loadScriptOnce(src) {
+    return new Promise(res => {
+      if (window.AgentBrain) return res();
+      const s = document.createElement("script"); s.src = src; s.onload = () => res(); s.onerror = () => res();
+      document.head.appendChild(s);
+    });
+  }
+  let __trainP = null;
+  function ensureTraining() {
+    if (__trainP) return __trainP;
+    __trainP = (async () => {
+      const base = (typeof REL !== "undefined" ? REL : "");
+      try {
+        const r = await fetch(base + "assets/data/agent-training.json", { cache: "no-store" });
+        TRAIN = r.ok ? await r.json() : null;
+      } catch (e) { TRAIN = null; }
+      const c = scopeCfg();
+      if (c && c.enabled !== false) await loadScriptOnce(base + "assets/js/agent-brain.js");
+      if (c && c.enabled !== false) applyIdentity();
+    })();
+    return __trainP;
+  }
+  function applyIdentity() { // اسم الوكيل الخاص بهذه الصفحة
+    const c = scopeCfg(); if (!c || !c.name) return;
+    const b = document.querySelector("#agent-panel .agent-head b");
+    if (b) b.textContent = c.name;
+  }
+  function trainedAnswer(t) {
+    const c = scopeCfg();
+    if (!c || c.enabled === false || !window.AgentBrain) return null;
+    try {
+      if (c.useContent && !BRAIN_CHUNKS) BRAIN_CHUNKS = AgentBrain.chunksFromDoc(document);
+      const facts = c.useContent ? AgentBrain.factsFromProduct(currentProduct(), fmt) : [];
+      const r = AgentBrain.answer(t, c, BRAIN_CHUNKS || [], facts, lang);
+      return r ? r.text : null;
+    } catch (e) { return null; }
+  }
+
   function findProductByText(text) {
     const low = text.toLowerCase();
     return (window.PRODUCTS || []).find(p => low.includes(p.slug) || low.includes(p.title.toLowerCase()));
@@ -371,6 +415,7 @@ const Agent = (() => {
     u.className = "msg user"; u.textContent = t;
     body().appendChild(u); body().scrollTop = body().scrollHeight;
     await ensureCustomQA();
+    await ensureTraining();
 
     // محاولة ربط نموذج لغوي خارجي أولاً (اختياري)
     if (window.CONFIG && CONFIG.AGENT_ENDPOINT) {
@@ -392,6 +437,10 @@ const Agent = (() => {
   function fallback(t) {
     const l = lang;
     const tr = T[l];
+
+    // تدريب الصفحة (أسئلة مدرَّبة + معلومات الصفحة) — الأولوية الأولى
+    const trained = trainedAnswer(t);
+    if (trained) return trained;
 
     // أسئلة/أجوبة مخصّصة من لوحة التحكم — لها الأولوية دائماً على الردود الجاهزة أدناه
     const customQA = matchCustomQA(t);
@@ -455,7 +504,10 @@ const Agent = (() => {
     document.getElementById("agent-fab").style.display = "none";
     if (!greeted) {
       greeted = true;
-      typing(() => botSay(T[lang].greet(currentProduct())), 600);
+      ensureTraining().then(() => {
+        const c = scopeCfg();
+        typing(() => botSay((c && c.enabled !== false && c.greeting) ? c.greeting : T[lang].greet(currentProduct())), 600);
+      });
     }
     setTimeout(()=>document.getElementById("agent-input")?.focus(), 300);
   }
