@@ -137,6 +137,7 @@ tr:hover td{background:#FAF7F0}
       <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات</b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('genpage',this)"><span class="nav-ic">✨</span><span class="nav-txt"><b>توليد صفحة منتج</b><small>أدخل الاسم والصورة والمكونات فتُنشأ صفحة المنتج تلقائياً</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
@@ -201,6 +202,36 @@ tr:hover td{background:#FAF7F0}
         <button class="small gold" onclick="Admin.reload()">↻ تحديث</button>
       </div>
       <div style="overflow:auto"><table id="products-table"></table></div>
+    </div>
+  </div>
+
+  <div id="tab-genpage" class="hidden">
+    <div class="card" id="gp-form">
+      <b style="color:var(--green)">✨ توليد صفحة منتج</b>
+      <div class="hint">املأ الحقول ثم اضغط «توليد» لمعاينة الصفحة. بعد «تأكيد ونشر» تُرفع الصورة وتُنشأ الصفحة p/&lt;المعرف&gt;/ ويُضاف المنتج للمتجر. يلزم ضبط GitHub (⚙️).</div>
+      <div class="frow" style="margin-top:.8rem">
+        <div class="field"><label>اسم المنتج *</label><input id="gp-name" placeholder="مثال: سيروم ضد الشيب" oninput="GenPage.suggestSlug()"></div>
+        <div class="field"><label>المعرف (slug) — أحرف لاتينية *</label><input id="gp-slug" dir="ltr" placeholder="anti-grey-serum"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>السعر (دج) *</label><input id="gp-price" type="number" min="0" placeholder="2400"></div>
+        <div class="field"><label>القسم</label><select id="gp-cat"></select></div>
+      </div>
+      <div class="field"><label>صورة المنتج *</label><input id="gp-image" type="file" accept="image/*" onchange="GenPage.onImage(this)"><img id="gp-img-prev" alt="" style="display:none;margin-top:.6rem;width:110px;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></div>
+      <div class="field"><label>المكونات (مفصولة بفاصلة) *</label><textarea id="gp-comp" rows="2" placeholder="زيت شجرة الشاي، الإكليل، الجيرانيوم"></textarea></div>
+      <div class="field"><label>وصف مختصر *</label><textarea id="gp-desc" rows="2" placeholder="كريمة نباتية للعناية بالبشرة..."></textarea></div>
+      <div class="field"><label>مفتاح Claude API (اختياري — لكتابة نص أفضل بالذكاء الاصطناعي)</label><input id="gp-aikey" type="password" dir="ltr" placeholder="sk-ant-..." autocomplete="off"><div class="hint">يُحفظ في هذا المتصفح فقط. بدونه يُستعمل قالب نصي جاهز مبني على المكونات والوصف.</div></div>
+      <div class="action-bar"><button class="small gold" id="gp-go" onclick="GenPage.generate()">✨ توليد الصفحة</button></div>
+    </div>
+    <div class="card hidden" id="gp-wait" style="text-align:center">⏳ جارِ توليد الصفحة...</div>
+    <div class="card hidden" id="gp-preview">
+      <b style="color:var(--green)">معاينة الصفحة</b>
+      <iframe id="gp-frame" sandbox="" title="معاينة" style="width:100%;height:640px;border:1px solid var(--line);border-radius:10px;margin-top:.6rem;background:#fff"></iframe>
+      <div class="action-bar">
+        <button class="small gray" onclick="GenPage.cancel()">✕ إلغاء</button>
+        <button class="small" onclick="GenPage.generate()">↻ إعادة التوليد</button>
+        <button class="small gold" id="gp-ok" onclick="GenPage.publish()">✅ تأكيد ونشر</button>
+      </div>
     </div>
   </div>
 
@@ -818,6 +849,197 @@ const GH = {
   },
 };
 
+/* ════════ توليد صفحة منتج: يبني الصفحة من صفحة مرجعية حقيقية (نفس الستايل/السلة/نموذج الطلب) ════════ */
+const GenPage = {
+  REF: "p/anti-acne/index.html",
+  html: "", imgRel: "", imgFile: null, slug: "", prod: null,
+  esc(t){ return String(t==null?"":t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); },
+  fmt(n){ return Number(n).toLocaleString("fr-FR").replace(/ | /g," ") + " دج"; },
+  init(){
+    const sel = $f("gp-cat");
+    if(!sel.options.length){
+      const cats = Admin.categories || {};
+      sel.innerHTML = Object.keys(cats).map(k=>'<option value="'+this.esc(k)+'">'+this.esc(cats[k])+'</option>').join("");
+    }
+    try{ $f("gp-aikey").value = localStorage.getItem("alyssum_gp_aikey") || ""; }catch(e){}
+  },
+  suggestSlug(){
+    const el = $f("gp-slug");
+    if(el.dataset.touched) return;
+    const v = $f("gp-name").value.trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+    el.value = v;
+  },
+  onImage(input){
+    const f = input.files && input.files[0];
+    this.imgFile = f || null;
+    const img = $f("gp-img-prev");
+    if(f){ img.src = URL.createObjectURL(f); img.style.display = "block"; } else img.style.display = "none";
+  },
+  read(){
+    const d = {
+      name: $f("gp-name").value.trim(), slug: $f("gp-slug").value.trim().toLowerCase(),
+      price: parseInt($f("gp-price").value,10), cat: $f("gp-cat").value,
+      comp: $f("gp-comp").value.split(/[,،\n]/).map(x=>x.trim()).filter(Boolean),
+      desc: $f("gp-desc").value.trim(),
+    };
+    if(!d.name || !d.desc || !d.comp.length || !this.imgFile) throw new Error("املأ كل الحقول المطلوبة (الاسم، الصورة، المكونات، الوصف)");
+    if(!(d.price>0)) throw new Error("أدخل سعراً صحيحاً");
+    if(!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(d.slug)) throw new Error("المعرف يجب أن يكون أحرفاً لاتينية صغيرة وأرقاماً وشرطات فقط");
+    if((Admin.products||[]).some(p=>p.slug===d.slug)) throw new Error("المعرف مستعمل من منتج آخر — غيّره");
+    return d;
+  },
+  async aiText(d, key){
+    const prompt = 'اكتب نص صفحة هبوط لمنتج عناية طبيعي جزائري لعلامة "أليسوم". الاسم: '+d.name+'. المكونات: '+d.comp.join("، ")+'. الوصف: '+d.desc+
+      '\nالتزم بالعربية، وبلا وعود طبية أو ادعاءات علاجية قاطعة. أجب بـ JSON فقط بهذا الشكل: {"sub":"جملة تسويقية قصيرة","problemTitle":"","problemText":"","problemBullets":["","",""],"solutionTitle":"","solutionText":"","components":[{"name":"","desc":"جملة قصيرة"}],"benefits":[{"ic":"emoji","title":"","text":""}],"finalText":""} — benefits من 3 إلى 6 عناصر، وcomponents بنفس ترتيب المكونات المعطاة.';
+    const r = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body: JSON.stringify({model:"claude-sonnet-5-5",max_tokens:1800,messages:[{role:"user",content:prompt}]}),
+    });
+    if(!r.ok) throw new Error("Claude API: " + r.status);
+    const j = await r.json();
+    const t = (j.content||[]).map(b=>b.text||"").join("");
+    const m = t.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error("ردّ غير مفهوم من Claude");
+    return JSON.parse(m[0]);
+  },
+  fallbackText(d){
+    return {
+      sub: d.desc.split(/[.۔!؟]/)[0].slice(0,120),
+      problemTitle: "هل تبحث عن عناية طبيعية تثق بها؟",
+      problemText: "كثيراً ما نبحث عن منتج بتركيبة واضحة ومكونات نباتية نعرفها. " + d.name + " مصمم ليكون جزءاً بسيطاً من روتينك اليومي.",
+      problemBullets: ["تركيبات غير واضحة المكونات","منتجات لا تناسب العناية اليومية","الحاجة لخيار طبيعي موثوق"],
+      solutionTitle: "الحل: " + d.name,
+      solutionText: d.desc,
+      components: d.comp.map(c=>({name:c,desc:"مكون نباتي ضمن تركيبة "+d.name+"."})),
+      benefits: [
+        {ic:"🌿",title:"مكونات طبيعية",text:"تركيبة مبنية على "+d.comp.slice(0,3).join("، ")+"."},
+        {ic:"✅",title:"سهل الاستعمال",text:"يندمج بسهولة في روتينك اليومي."},
+        {ic:"📦",title:"طلب مرن",text:"الدفع عند الاستلام مع توصيل لـ 58 ولاية."},
+      ],
+      finalText: "العرض متاح لفترة محدودة فقط. املأ الاستمارة بالأعلى وسنتصل بك للتأكيد، ثم يصلك الطلب خلال 24-72 ساعة والدفع عند الاستلام.",
+    };
+  },
+  async build(d, txt){
+    const r = await fetch(this.REF + "?t=" + Date.now());
+    if(!r.ok) throw new Error("تعذّر تحميل الصفحة المرجعية " + this.REF);
+    const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+    const E = v => this.esc(v), q = s => doc.querySelector(s);
+    const oldSlug = "anti-acne";
+    const imgRel = "../../assets/img/" + d.slug + "/main.webp";
+    this.imgRel = imgRel;
+    const wa = "أريد%20طلب:%20" + encodeURIComponent(d.name);
+
+    doc.title = d.name + " — أليسوم | الدفع عند الاستلام";
+    doc.querySelectorAll('meta[property^="og:"],meta[name^="twitter:"],link[rel="canonical"]').forEach(n=>n.remove());
+    let md = q('meta[name="description"]');
+    if(md) md.setAttribute("content", d.desc.slice(0,160));
+    const addMeta = (a,k,v)=>{ const m = doc.createElement("meta"); m.setAttribute(a,k); m.setAttribute("content",v); doc.head.appendChild(m); };
+    addMeta("property","og:title", d.name + " — أليسوم"); addMeta("property","og:description", d.desc.slice(0,160));
+    addMeta("property","og:image","https://alyssumdz.com/assets/img/"+d.slug+"/main.webp"); addMeta("property","og:type","product");
+
+    // الهيرو
+    const crumbs = q(".crumbs"); if(crumbs) crumbs.lastChild.textContent = " / " + d.name;
+    const gm = q("#gmain"); if(gm){ gm.setAttribute("src", imgRel); gm.setAttribute("alt", d.name); }
+    const tm = (s,fn)=>{ const n = q(s); if(n) fn(n); };
+    tm(".lp-info h1", n=>n.textContent = d.name);
+    tm(".lp-sub", n=>n.textContent = txt.sub || "");
+    tm(".lp-desc", n=>n.textContent = d.desc);
+    tm(".lp-info .stars", n=>n.remove());
+    const cats = Admin.categories || {};
+    tm(".lp-info .eyebrow", n=>n.textContent = "ALYSSUM — " + (cats[d.cat] || "منتج طبيعي"));
+    tm(".mini-points", n=>n.innerHTML = d.comp.slice(0,4).map(c=>"<div>"+E(c)+"</div>").join(""));
+    tm("#offers", n=>n.innerHTML = "");
+    ["#pprice","#grand","#btn-total","#sticky-price"].forEach(s=>tm(s,n=>n.textContent=this.fmt(d.price)));
+    tm("#pold", n=>n.style.display="none"); tm("#psave", n=>n.style.display="none");
+    doc.querySelectorAll("a.btn-wa, .lp-final a.lp-btn-green").forEach(a=>a.setAttribute("href","https://wa.me/213559237239?text="+wa));
+
+    // أقسام المحتوى: نحذف أقسام المنتج المرجعي (عدا قسم «اطلب الآن» الأخير) ونولّد الجديدة
+    const all = [...doc.querySelectorAll("section")];
+    const finalSec = all.find(x=>x.querySelector(".lp-final"));
+    all.filter(x=>x!==finalSec && x.classList.contains("lp-sec")).forEach(x=>x.remove());
+    const grid = (alt,img,title,text,bul)=>'<section class="lp-sec'+(alt?" alt":"")+'"><div class="container"><div class="lp-grid">'+
+      '<div class="lp-imgcard"><img src="'+imgRel+'" alt="'+E(d.name)+'" loading="lazy"></div><div class="lp-textcard"><h2>'+E(title)+'</h2><p>'+E(text)+'</p>'+
+      (bul&&bul.length?'<div class="lp-bullets">'+bul.map(b=>"<div>"+E(b)+"</div>").join("")+"</div>":"")+'</div></div></div></section>';
+    const comps = (txt.components&&txt.components.length?txt.components:d.comp.map(c=>({name:c,desc:""})));
+    const benefits = (txt.benefits||[]).slice(0,6);
+    const sections =
+      grid(true,0,txt.problemTitle||"",txt.problemText||"",txt.problemBullets) +
+      grid(false,0,txt.solutionTitle||"",txt.solutionText||"",null) +
+      '<section class="lp-sec alt"><div class="container"><div class="lp-head"><h2>المكونات التي تصنع التجربة</h2></div><div class="lp-cards" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+
+        comps.map(c=>'<article class="lp-card"><div style="padding:20px"><h3>'+E(c.name)+'</h3><p>'+E(c.desc||"")+'</p></div></article>').join("")+'</div></div></section>' +
+      (benefits.length?'<section class="lp-sec"><div class="container"><div class="lp-head"><h2>لماذا '+E(d.name)+'؟</h2></div><div class="lp-cards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+
+        benefits.map(b=>'<article class="lp-card"><div style="padding:26px"><div class="ic">'+E(b.ic||"🌿")+'</div><h3 style="margin-top:15px">'+E(b.title)+'</h3><p>'+E(b.text)+'</p></div></article>').join("")+'</div></div></section>':"");
+    const holder = doc.createElement("div"); holder.innerHTML = sections;
+    const parent = finalSec ? finalSec.parentNode : doc.body;
+    [...holder.children].forEach(n=>parent.insertBefore(n, finalSec||null));
+    if(finalSec){
+      const fh = finalSec.querySelector(".lp-final h2"), fp = finalSec.querySelector(".lp-final p");
+      if(fh) fh.textContent = "🎁 اطلب " + d.name + " الآن";
+      if(fp && txt.finalText) fp.textContent = txt.finalText;
+    }
+
+    // السكربتات: استبدال المعرّف وصور المعرض
+    doc.querySelectorAll("script:not([src])").forEach(sc=>{
+      let t = sc.textContent;
+      if(t.includes("const images")) t = t.replace(/const images\s*=\s*\[[\s\S]*?\];/, 'const images = ["'+imgRel+'"];');
+      sc.textContent = t.split(oldSlug).join(d.slug);
+    });
+    const out = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+    if(out.includes(oldSlug)) console.warn("GenPage: بقي أثر للمنتج المرجعي في الصفحة المولّدة");
+    return out;
+  },
+  async generate(){
+    try{
+      const d = this.read(); this.prod = d;
+      $f("gp-form").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-wait").classList.remove("hidden");
+      let txt, key = $f("gp-aikey").value.trim();
+      try{ localStorage.setItem("alyssum_gp_aikey", key); }catch(e){}
+      if(key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); toast("⚠️ تعذّر Claude ("+e.message+") — استُعمل القالب الجاهز"); } }
+      if(!txt) txt = this.fallbackText(d);
+      this.html = await this.build(d, txt);
+      const dataUrl = await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(this.imgFile); });
+      const prev = '<base href="https://alyssumdz.com/p/'+d.slug+'/">' ;
+      $f("gp-frame").srcdoc = this.html.replace("<head>","<head>"+prev).split(this.imgRel).join(dataUrl);
+      $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.remove("hidden");
+    }catch(err){
+      $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.add("hidden"); $f("gp-form").classList.remove("hidden");
+      toast("❌ " + err.message);
+    }
+  },
+  cancel(){
+    this.html = ""; this.prod = null;
+    $f("gp-preview").classList.add("hidden"); $f("gp-form").classList.remove("hidden");
+  },
+  async publish(){
+    const d = this.prod; if(!d || !this.html) return;
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    const btn = $f("gp-ok"); btn.disabled = true;
+    const added = { done:false };
+    try{
+      toast("⏳ جارِ رفع الصورة...");
+      const fname = this.imgRel.split("/").pop();
+      const dir = "assets/img/" + d.slug;
+      const b64img = await Admin.blobToBase64((await Admin.toWebp(this.imgFile)) || this.imgFile);
+      await GH.putFile(dir + "/" + fname, b64img, undefined, "رفع صورة منتج جديد (" + d.slug + ")");
+      toast("⏳ جارِ نشر الصفحة...");
+      await GH.putFile("p/" + d.slug + "/index.html", btoa(unescape(encodeURIComponent(this.html))), undefined, "إنشاء صفحة منتج جديدة: " + d.slug);
+      Admin.products.push({ slug:d.slug, title:d.name, price:d.price, old:null, images:[dir+"/"+fname], desc:d.desc, cat:d.cat, active:true, stock:null, seoTitle:"", seoDesc:"", offers:[{qty:1,price:d.price,free:0}] });
+      added.done = true;
+      if(!(await Admin.publishDataJs())){ Admin.products.pop(); throw new Error("الصفحة نُشرت لكن تعذّر تسجيل المنتج في data.js — أضفه يدوياً من تبويب المنتجات"); }
+      Admin.renderAll();
+      toast("✅ نُشرت الصفحة: alyssumdz.com/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
+      this.cancel();
+      ["gp-name","gp-slug","gp-price","gp-comp","gp-desc","gp-image"].forEach(i=>$f(i).value="");
+      $f("gp-slug").dataset.touched = ""; $f("gp-img-prev").style.display="none"; this.imgFile = null;
+    }catch(err){
+      console.error(err); toast("❌ " + err.message);
+    }finally{ btn.disabled = false; }
+  },
+};
+$f("gp-slug").addEventListener("input", e=>{ e.target.dataset.touched = e.target.value ? "1" : ""; });
+
 const Admin = {
   key: localStorage.getItem("alyssum_admin_key") || "",
   products: [], fees: [], feesOriginal: [], orders: [], categories: {},
@@ -875,11 +1097,12 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","analytics","products","categories","fees","delivery","coupons","blacklist","theme","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","analytics","products","genpage","categories","fees","delivery","coupons","blacklist","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="pending") this.renderPending();
+    if(t==="genpage") GenPage.init();
     if(t==="analytics") this.renderAnalytics();
   },
 
