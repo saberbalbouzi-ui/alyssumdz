@@ -713,9 +713,20 @@ tr:hover td{background:#FAF7F0}
     <div class="hint">تم النشر على هذه الصفحة بنجاح ✅ — التعديلات التالية موجودة أيضاً بنفس الشكل في صفحات منتجات أخرى (كالشارات وشريط التوصيل مثلاً). هل تريد تطبيقها هناك أيضاً؟</div>
     <div id="scope-modal-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem;margin:.6rem 0"></div>
     <div class="hint" style="margin-top:-.2rem">ملاحظة: تغييرات الصور لا تُطبَّق تلقائياً على صفحات أخرى (كل منتج له صوره الخاصة)</div>
-    <div class="action-bar">
+
+    <div id="scope-modal-main-actions" class="action-bar">
       <button class="small gold" onclick="Admin.publishScopeChoice('all')">🌍 طبّق على كل صفحات المنتجات</button>
+      <button class="small blue" onclick="Admin.openScopePagePicker()">🎯 اختيار صفحات معينة</button>
       <button class="small gray" onclick="Admin.publishScopeChoice('page')">فقط هذه الصفحة</button>
+    </div>
+
+    <div id="scope-modal-picker" class="hidden">
+      <div class="hint" style="margin:.6rem 0 .3rem">اختر الصفحات التي تريد تطبيق نفس التعديل عليها:</div>
+      <div id="scope-modal-picker-list" style="max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:.2rem;margin-bottom:.6rem"></div>
+      <div class="action-bar">
+        <button class="small gold" onclick="Admin.confirmScopeSelectedPages()">✅ طبّق على المحدد</button>
+        <button class="small gray" onclick="Admin.closeScopePagePicker()">رجوع</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1904,7 +1915,34 @@ const Admin = {
     });
     if(groups.length > 6) lines.push("… و" + (groups.length-6) + " تعديلاً آخر");
     $f("scope-modal-list").innerHTML = lines.map(l=>"<div>"+l+"</div>").join("");
+    this.closeScopePagePicker(); // نبدأ دائماً من شاشة الخيارات الرئيسية
     $f("scope-modal-bg").classList.add("open");
+  },
+  /* يعرض قائمة اختيار صفحات معينة بدل كل الصفحات — كل صفحات المنتجات ما عدا الصفحة الحالية */
+  openScopePagePicker(){
+    const currentSlug = this._pendingScopeSlug;
+    const others = this.products.filter(p=>p.slug && p.slug!==currentSlug);
+    if(!others.length){ toast("لا توجد صفحات منتجات أخرى"); return }
+    $f("scope-modal-picker-list").innerHTML = others.map(p=>
+      '<label class="small" style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-weight:400">' +
+        '<input type="checkbox" value="' + this._escHtml(p.slug) + '" class="scope-pick-cb"> ' +
+        this._escHtml(p.name || p.slug) +
+      '</label>'
+    ).join("");
+    $f("scope-modal-main-actions").classList.add("hidden");
+    $f("scope-modal-picker").classList.remove("hidden");
+  },
+  closeScopePagePicker(){
+    $f("scope-modal-main-actions").classList.remove("hidden");
+    $f("scope-modal-picker").classList.add("hidden");
+  },
+  async confirmScopeSelectedPages(){
+    const selected = [...document.querySelectorAll("#scope-modal-picker-list .scope-pick-cb:checked")].map(cb=>cb.value);
+    if(!selected.length){ toast("⚠️ اختر صفحة واحدة على الأقل"); return }
+    $f("scope-modal-bg").classList.remove("open");
+    const groups = this._pendingScopeGroups, slug = this._pendingScopeSlug;
+    this._pendingScopeGroups = null; this._pendingScopeSlug = null;
+    if(groups && groups.length) await this.applyChangesToOtherProductPages(groups, slug, selected);
   },
   async publishScopeChoice(mode){
     $f("scope-modal-bg").classList.remove("open");
@@ -1912,10 +1950,14 @@ const Admin = {
     this._pendingScopeGroups = null; this._pendingScopeSlug = null;
     if(mode === "all" && groups && groups.length) await this.applyChangesToOtherProductPages(groups, slug);
   },
-  /* يبحث في كل صفحات المنتجات الأخرى عن عناصر مطابقة (نفس الوسم + نفس الصنف + نفس النص الأصلي
-     قبل التعديل) ويطبّق عليها نفس التعديل، ثم ينشر فقط الصفحات التي فعلاً تغيّر فيها شيء */
-  async applyChangesToOtherProductPages(groups, currentSlug){
-    const otherSlugs = this.products.map(p=>p.slug).filter(s=>s && s!==currentSlug);
+  /* يبحث في صفحات المنتجات الأخرى (كلها، أو فقط اللائحة المحدَّدة في targetSlugs إن وُجدت) عن
+     عناصر مطابقة (نفس الوسم + نفس الصنف + نفس النص الأصلي قبل التعديل) ويطبّق عليها نفس
+     التعديل، ثم ينشر فقط الصفحات التي فعلاً تغيّر فيها شيء */
+  async applyChangesToOtherProductPages(groups, currentSlug, targetSlugs){
+    const otherSlugs = (targetSlugs && targetSlugs.length
+      ? targetSlugs
+      : this.products.map(p=>p.slug)
+    ).filter(s=>s && s!==currentSlug);
     if(!otherSlugs.length){ toast("لا توجد صفحات منتجات أخرى"); return }
     toast("⏳ جارِ فحص " + otherSlugs.length + " صفحة أخرى...");
     const targets = [];
