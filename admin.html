@@ -656,6 +656,48 @@ tr:hover td{background:#FAF7F0}
   </div>
 </div>
 
+<!-- نافذة تنسيق نص (تظهر عند الضغط على أيقونة 🎨 بجانب أي نص أثناء التعديل) -->
+<div class="modal-bg" id="txtfmt-modal-bg">
+  <div class="modal">
+    <h3>🎨 تنسيق النص</h3>
+    <div class="hint">التغييرات تُطبَّق مباشرة على النص في المعاينة أمامك — اضغط «✅ تم» لإبقائها أو «إلغاء» للتراجع عنها</div>
+    <label class="hint" style="margin:0 0 .2rem">لون النص</label>
+    <div class="color-row">
+      <input type="color" id="txtfmt-color" oninput="Admin.onFmtColorInput()">
+      <input type="text" id="txtfmt-color-hex" dir="ltr" maxlength="7" oninput="Admin.onFmtColorHexInput()">
+    </div>
+    <label class="hint" style="margin:.6rem 0 .2rem">عائلة الخط</label>
+    <select id="txtfmt-font" onchange="Admin.onFmtFontChange()">
+      <option value="">(افتراضي الموقع)</option>
+      <option value="Cairo">Cairo</option>
+      <option value="Tajawal">Tajawal</option>
+      <option value="Almarai">Almarai</option>
+      <option value="IBM Plex Sans Arabic">IBM Plex Sans Arabic</option>
+      <option value="Noto Kufi Arabic">Noto Kufi Arabic</option>
+    </select>
+    <label class="hint" style="margin:.6rem 0 .2rem">حجم الخط: <b id="txtfmt-size-label">16px</b></label>
+    <div style="display:flex;gap:.6rem;align-items:center">
+      <input type="range" id="txtfmt-size-range" min="10" max="72" step="1" oninput="Admin.onFmtSizeInput(this.value)" style="flex:1">
+      <input type="number" id="txtfmt-size-number" min="10" max="72" step="1" oninput="Admin.onFmtSizeInput(this.value)" style="width:70px">
+    </div>
+    <label class="hint" style="margin:.6rem 0 .2rem">سماكة الخط</label>
+    <select id="txtfmt-weight" onchange="Admin.onFmtWeightChange()">
+      <option value="">(افتراضي الموقع)</option>
+      <option value="400">عادي (400)</option>
+      <option value="500">متوسط (500)</option>
+      <option value="600">شبه عريض (600)</option>
+      <option value="700">عريض (700)</option>
+      <option value="800">عريض جداً (800)</option>
+      <option value="900">أسود (900)</option>
+    </select>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.closeTextFormatModal(false)">✅ تم</button>
+      <button class="small" onclick="Admin.resetTextFormat()">↩️ إعادة تعيين لتنسيق الصفحة الافتراضي</button>
+      <button class="small gray" onclick="Admin.closeTextFormatModal(true)">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- نافذة إعداد شركة توصيل -->
 <div class="modal-bg" id="delivery-modal-bg">
   <div class="modal lg">
@@ -1624,6 +1666,8 @@ const Admin = {
     this._editing = false;
     this._editDoc = null;
     this._editingImg = null;
+    this._fmtBtn = null; this._fmtTarget = null; this._formattingEl = null; this._formattingSnapshot = null;
+    document.getElementById("txtfmt-modal-bg").classList.remove("open");
     $f("pp-edit-btn").classList.remove("hidden");
     $f("pp-confirm-btn").classList.add("hidden");
     $f("pp-cancel-btn").classList.add("hidden");
@@ -1662,8 +1706,41 @@ const Admin = {
     st.id = "__adm_edit_style";
     st.textContent = ".__adm_edit{outline:1.5px dashed #C8A24B!important;outline-offset:2px;cursor:text}" +
       ".__adm_edit:focus{outline:2px solid #173F35!important;background:rgba(200,162,75,.08)}" +
-      ".__adm_img_edit{outline:2px dashed #1B4F8A!important;cursor:pointer!important}";
+      ".__adm_img_edit{outline:2px dashed #1B4F8A!important;cursor:pointer!important}" +
+      "#__adm_fmt_btn{position:absolute;z-index:999999;display:none;background:#173F35;color:#fff;border:none;border-radius:8px;padding:.3rem .55rem;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;font-family:inherit}" +
+      "#__adm_fmt_btn:hover{background:#0F2E26}";
     doc.head.appendChild(st);
+
+    // زر عائم "🎨 تنسيق" مشترك — يظهر بجانب أي نص عند التركيز عليه للتعديل، ويفتح نافذة
+    // تنسيق (لون/عائلة الخط/الحجم/السماكة) لذلك العنصر تحديداً مع معاينة حية فورية
+    let fmtBtn = doc.getElementById("__adm_fmt_btn");
+    if(!fmtBtn){
+      fmtBtn = doc.createElement("button");
+      fmtBtn.type = "button";
+      fmtBtn.id = "__adm_fmt_btn";
+      fmtBtn.textContent = "🎨 تنسيق";
+      doc.body.appendChild(fmtBtn);
+    }
+    this._fmtBtn = fmtBtn;
+    this._fmtTarget = null;
+    const positionFmtBtn = ()=>{
+      if(!this._fmtTarget || !fmtBtn) return;
+      const r = this._fmtTarget.getBoundingClientRect();
+      // إحداثيات فعلية (physical) من getBoundingClientRect — نستعمل left/top مباشرة
+      // وليس insetInlineStart (الذي يُقرأ حسب اتجاه الصفحة RTL فيقلب الموضع للجهة الخطأ)
+      const top = Math.max(4, r.top + doc.defaultView.scrollY - 34);
+      fmtBtn.style.top = top + "px";
+      fmtBtn.style.left = (r.left + doc.defaultView.scrollX) + "px";
+      fmtBtn.style.right = "auto";
+    };
+    this._positionFmtBtn = positionFmtBtn;
+    fmtBtn.addEventListener("mousedown", (e)=>{
+      // نمنع فقدان تركيز النص (blur) قبل أن نتمكن من فتح نافذة التنسيق
+      e.preventDefault(); e.stopPropagation();
+      if(this._fmtTarget) this.openTextFormatPopup(this._fmtTarget);
+    });
+    doc.defaultView.addEventListener("scroll", positionFmtBtn, true);
+    doc.defaultView.addEventListener("resize", positionFmtBtn);
 
     // نصوص: نستثني أيضاً العناصر ذات id (مرتبطة بسكربت السعر/العداد الديناميكي)
     const EXCLUDE_TEXT = "form,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,[id]";
@@ -1675,6 +1752,8 @@ const Admin = {
       if(!el.textContent || !el.textContent.trim()) return;
       el.setAttribute("contenteditable","true");
       el.classList.add("__adm_edit");
+      el.addEventListener("focus", ()=>{ this._fmtTarget = el; this._positionFmtBtn(); fmtBtn.style.display = "block"; });
+      el.addEventListener("blur", ()=>{ setTimeout(()=>{ if(this._fmtTarget===el){ fmtBtn.style.display = "none"; this._fmtTarget = null; } }, 150); });
     });
     // صور: لا نستثني بالـ id (الصورة الرئيسية #gmain لها id لأغراض المعرض، ويجب أن تبقى قابلة للتغيير)
     const EXCLUDE_IMG = "form,.drawer,.drawer-bg,.sticky-cta,script,style";
@@ -1693,6 +1772,8 @@ const Admin = {
     doc.querySelectorAll(".shop-cat span").forEach(el=>{
       el.setAttribute("contenteditable","true");
       el.classList.add("__adm_edit");
+      el.addEventListener("focus", ()=>{ this._fmtTarget = el; this._positionFmtBtn(); fmtBtn.style.display = "block"; });
+      el.addEventListener("blur", ()=>{ setTimeout(()=>{ if(this._fmtTarget===el){ fmtBtn.style.display = "none"; this._fmtTarget = null; } }, 150); });
     });
 
     this._editing = true;
@@ -1700,7 +1781,7 @@ const Admin = {
     $f("pp-confirm-btn").classList.remove("hidden");
     $f("pp-cancel-btn").classList.remove("hidden");
     $f("pp-badge").classList.remove("hidden");
-    toast("✏️ اضغط على أي نص لتحريره، أو على صورة لتغييرها");
+    toast("✏️ اضغط على أي نص لتحريره، أو على صورة لتغييرها — يظهر زر «🎨 تنسيق» بجانب النص المحدد لتغيير لونه وخطه وحجمه");
   },
 
   _onImgClick(e){
@@ -1747,6 +1828,104 @@ const Admin = {
     toast("↩️ تم التراجع عن التعديلات");
   },
 
+  /* ════════ نافذة تنسيق النص (لون/عائلة الخط/الحجم/السماكة) — تُطبَّق فوراً كمعاينة حية ════════ */
+  _rgbToHex(rgb){
+    const m = String(rgb||"").match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if(!m) return "#000000";
+    return "#" + [1,2,3].map(i=>Number(m[i]).toString(16).padStart(2,"0")).join("");
+  },
+  _ensureFontLoaded(doc, presetName){
+    const preset = this.FONT_PRESETS[presetName];
+    if(!preset) return;
+    const exists = [...doc.querySelectorAll("link[rel='stylesheet']")].some(l=>l.href===preset.url);
+    if(!exists){
+      const link = doc.createElement("link");
+      link.rel = "stylesheet"; link.href = preset.url;
+      doc.head.appendChild(link);
+    }
+  },
+
+  openTextFormatPopup(el){
+    if(!el) return;
+    this._formattingEl = el;
+    this._formattingSnapshot = {
+      color: el.style.color || "", fontFamily: el.style.fontFamily || "",
+      fontSize: el.style.fontSize || "", fontWeight: el.style.fontWeight || "",
+    };
+    const cs = (el.ownerDocument.defaultView || window).getComputedStyle(el);
+    const curColor = el.style.color ? this._rgbToHex(el.style.color) : this._rgbToHex(cs.color);
+    $f("txtfmt-color").value = curColor;
+    $f("txtfmt-color-hex").value = curColor;
+    const presetKey = Object.keys(this.FONT_PRESETS).find(k=>this.FONT_PRESETS[k].css === el.style.fontFamily) || "";
+    $f("txtfmt-font").value = presetKey;
+    const curSize = Math.round(parseFloat(el.style.fontSize || cs.fontSize) || 16);
+    $f("txtfmt-size-range").value = curSize;
+    $f("txtfmt-size-number").value = curSize;
+    $f("txtfmt-size-label").textContent = curSize + "px";
+    const curWeight = el.style.fontWeight || (String(cs.fontWeight)==="bold" ? "700" : (String(cs.fontWeight)==="normal" ? "" : String(cs.fontWeight)));
+    $f("txtfmt-weight").value = ["400","500","600","700","800","900"].includes(curWeight) ? curWeight : "";
+    document.getElementById("txtfmt-modal-bg").classList.add("open");
+  },
+  /* نلاحظ أن قوالب صفحات المنتج تستعمل !important بكثرة على خصائص مثل اللون والحجم (لضمان
+     ثباتها أمام تعارضات CSS أخرى) — لذا نطبّق تنسيقنا أيضاً بأولوية !important عبر setProperty
+     وإلا فلن يظهر أي تغيير مرئي رغم نجاح الكتابة في style الداخلي */
+  _setFmtStyle(el, prop, value){
+    if(value) el.style.setProperty(prop, value, "important");
+    else el.style.removeProperty(prop);
+  },
+  onFmtColorInput(){
+    const v = $f("txtfmt-color").value;
+    $f("txtfmt-color-hex").value = v;
+    if(this._formattingEl) this._setFmtStyle(this._formattingEl, "color", v);
+  },
+  onFmtColorHexInput(){
+    let v = $f("txtfmt-color-hex").value.trim();
+    if(v && v[0]!=="#") v = "#" + v;
+    if(!/^#[0-9a-fA-F]{6}$/.test(v)) return;
+    $f("txtfmt-color").value = v;
+    if(this._formattingEl) this._setFmtStyle(this._formattingEl, "color", v);
+  },
+  onFmtFontChange(){
+    const val = $f("txtfmt-font").value;
+    if(!this._formattingEl) return;
+    if(!val){ this._setFmtStyle(this._formattingEl, "font-family", ""); return }
+    const preset = this.FONT_PRESETS[val];
+    if(!preset) return;
+    this._ensureFontLoaded(this._formattingEl.ownerDocument, val);
+    this._setFmtStyle(this._formattingEl, "font-family", preset.css);
+  },
+  onFmtSizeInput(v){
+    const n = Math.max(10, Math.min(72, Math.round(Number(v))||16));
+    $f("txtfmt-size-range").value = n;
+    $f("txtfmt-size-number").value = n;
+    $f("txtfmt-size-label").textContent = n + "px";
+    if(this._formattingEl) this._setFmtStyle(this._formattingEl, "font-size", n + "px");
+  },
+  onFmtWeightChange(){
+    const val = $f("txtfmt-weight").value;
+    if(!this._formattingEl) return;
+    this._setFmtStyle(this._formattingEl, "font-weight", val);
+  },
+  resetTextFormat(){
+    const el = this._formattingEl;
+    if(!el) return;
+    ["color","font-family","font-size","font-weight"].forEach(p=>el.style.removeProperty(p));
+    this.openTextFormatPopup(el);
+    toast("↩️ أُعيد هذا النص لتنسيق الصفحة الافتراضي");
+  },
+  closeTextFormatModal(revert){
+    const el = this._formattingEl;
+    if(revert && el && this._formattingSnapshot){
+      const s = this._formattingSnapshot;
+      this._setFmtStyle(el, "color", s.color);
+      this._setFmtStyle(el, "font-family", s.fontFamily);
+      this._setFmtStyle(el, "font-size", s.fontSize);
+      this._setFmtStyle(el, "font-weight", s.fontWeight);
+    }
+    document.getElementById("txtfmt-modal-bg").classList.remove("open");
+    this._formattingEl = null; this._formattingSnapshot = null;
+  },
+
   async validatePageEdit(){
     const cfg = GH.cfg();
     if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً من زر ⚙️"); this.openGhSettings(); return }
@@ -1765,6 +1944,8 @@ const Admin = {
       if(el.getAttribute("class") === "") el.removeAttribute("class");
     });
     const st = doc.getElementById("__adm_edit_style"); if(st) st.remove();
+    const fmtBtnEl = doc.getElementById("__adm_fmt_btn"); if(fmtBtnEl) fmtBtnEl.remove();
+    this._fmtBtn = null; this._fmtTarget = null; this._formattingEl = null; this._formattingSnapshot = null;
 
     // إعادة المحتوى المتولّد ديناميكياً (معرض الصور، قوائم الولايات، «قد يعجبك أيضاً»، شبكة
     // المنتجات والأكثر مبيعاً بالصفحة الرئيسية، مساعد الشات) لحالته الأصلية الفارغة (القالب)
