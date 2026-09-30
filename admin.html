@@ -8,7 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--green:#173F35;--green2:#0F2E26;--gold:#C8A24B;--gold2:#E4C87F;--bg:#F5F2EB;--line:#E5DFD2;--red:#D64545;--ok:#1E9E6A;--blue:#1B4F8A;--warn-bg:#FFF3D6}
-html{font-size:18px}
+/* المهمة #25: تكبير الخط في كل لوحة التحكم والنوافذ — كل أحجام الخط في هذا الملف تقريباً
+   بوحدة rem النسبية لهذا الأساس، فرفعه يكبّر كل النصوص (بما فيها نصوص التلميحات .hint الصغيرة
+   والجداول والنوافذ المنبثقة) بشكل متناسق دفعة واحدة دون الحاجة لتعديل عشرات القواعد يدوياً */
+html{font-size:20px}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{overflow-x:hidden;max-width:100%}
 body{font-family:'Cairo',sans-serif;background:var(--bg);direction:rtl;color:#1C2420}
@@ -1762,13 +1765,20 @@ const Admin = {
     const showToolbarFor = (el)=>{ this._fmtTarget = el; positionToolbar(); toolbar.style.display = "flex"; };
     const hideToolbarFor = (el)=>{ setTimeout(()=>{ if(this._fmtTarget===el){ toolbar.style.display = "none"; this._fmtTarget = null; } }, 150); };
 
-    // نصوص: نستثني أيضاً العناصر ذات id (مرتبطة بسكربت السعر/العداد الديناميكي)
-    const EXCLUDE_TEXT = "form,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,[id]";
-    doc.querySelectorAll("h1,h2,h3,h4,p,li,span,small,b,a,div").forEach(el=>{
+    /* نصوص — تشخيص المهمة #20 ("عناصر الصفحة الرئيسية غير قابلة للتعديل بالكامل"):
+       كانت `[id]` ضمن EXCLUDE_TEXT تُستثنى عبر closest()، وهذا كان يستثني كل نص داخل أي
+       *قسم* له id (مثل <section id="categories/bestsellers/products/features/story/reviews/faq">
+       في الصفحة الرئيسية، الموجودة أصلاً لأغراض التنقّل الداخلي فقط) — أي كان يُعطّل تعديل شبه
+       كل نصوص الصفحة الرئيسية الثابتة. الإصلاح: نستثني فقط العنصر الذي يحمل id بنفسه (مرتبط
+       مباشرة بسكربت ديناميكي مثل #cart-total/#cart-fee)، دون أن يمتد الاستثناء لكل ما بداخل أي
+       حاوية أعلى منه تحمل id. أضفنا أيضاً em/i/label لتغطية عناصر نصية كانت خارج القائمة سابقاً */
+    const EXCLUDE_TEXT = "form,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option";
+    doc.querySelectorAll("h1,h2,h3,h4,p,li,span,small,b,a,div,em,i,label").forEach(el=>{
       // نستثني الـ div الحاوية (تحتوي عناصر أخرى بداخلها) ونسمح فقط بالـ div "الورقية"
       // (نص مباشر بلا عناصر فرعية) — مثل نقاط قسم «المشكل والحل» اللي كانت ما تنعدلش
       if(el.tagName === "DIV" && el.children.length > 0) return;
       if(el.closest(EXCLUDE_TEXT)) return;
+      if(el.id) return; // عنصر نصي مرتبط مباشرة بسكربت (مثل #cart-total) — يبقى مستثنى هو فقط
       if(!el.textContent || !el.textContent.trim()) return;
       el.setAttribute("contenteditable","true");
       el.classList.add("__adm_edit");
