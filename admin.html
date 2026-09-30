@@ -208,8 +208,11 @@ tr:hover td{background:#FAF7F0}
   <div id="tab-genpage" class="hidden">
     <div class="card" id="gp-form">
       <b style="color:var(--green)">✨ توليد صفحة منتج</b>
-      <div class="hint">تعمل فقط على منتج موجود: اختر المنتج فتُملأ كل بياناته تلقائياً (بما فيها الصورة)، عدّل ما تشاء، ثم ولّد الصفحة. عند «تأكيد ونشر» تُستبدل صفحة المنتج الحالية (p/&lt;المعرف&gt;/) بالصفحة المولّدة. يلزم ضبط GitHub (⚙️).</div>
+      <div class="hint">تعمل فقط على منتج موجود: اختر المنتج فتُملأ كل بياناته تلقائياً (بما فيها الصورة)، عدّل ما تشاء، ثم ولّد الصفحة. عند «تأكيد ونشر» تُفعَّل الصفحة المولّدة، وتبقى الصفحة الافتراضية محفوظة ويمكن الرجوع إليها دائماً. نموذج الطلب وآراء الزبائن حاضران دائماً، وكل عناصر الصفحة قابلة للتعديل من «تعديل الصفحة» كالصفحة الافتراضية. يلزم ضبط GitHub (⚙️).</div>
       <div class="field" style="margin-top:.8rem"><label>اختر المنتج *</label><select id="gp-pick" onchange="GenPage.pick(this.value)"></select></div>
+      <div id="gp-modebar" class="hidden" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:-.2rem 0 .8rem"><b id="gp-status" style="font-size:.85rem"></b>
+        <button class="small gray" onclick="GenPage.switchMode(GenPage.cur.slug,'default')">🏠 الرجوع للصفحة الافتراضية</button>
+        <button class="small blue" onclick="GenPage.switchMode(GenPage.cur.slug,'generated')">✨ تفعيل الصفحة المولّدة المحفوظة</button></div>
       <div id="gp-fields" class="hidden">
         <div class="frow">
           <div class="field"><label>اسم المنتج</label><input id="gp-name"></div>
@@ -541,6 +544,13 @@ tr:hover td{background:#FAF7F0}
           <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchCoverFromUrl()">📥 تحميل ورفع</button>
         </div>
         <input id="f-images" type="hidden">
+        <div class="section-title">🧩 صفحة المنتج</div>
+        <div id="f-pagemode" class="hint" style="margin-top:0"></div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
+          <button class="small gray" type="button" onclick="GenPage.switchMode(Admin.editingSlug,'default')">🏠 استعمال الصفحة الافتراضية</button>
+          <button class="small blue" type="button" onclick="GenPage.switchMode(Admin.editingSlug,'generated')">✨ استعمال الصفحة المولّدة</button>
+          <button class="small gold" type="button" onclick="GenPage.open(Admin.editingSlug)">⚙️ توليد / إعادة توليد صفحة</button>
+        </div>
         <div class="section-title">العروض والأسعار</div>
         <div id="f-offers"></div>
         <button class="small blue" type="button" onclick="Admin.addOfferRow()">+ إضافة عرض</button>
@@ -875,6 +885,20 @@ const GenPage = {
   esc(t){ return String(t==null?"":t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); },
   fmt(n){ return Number(n).toLocaleString("fr-FR").replace(/[  ]/g," ") + " دج"; },
   rel(p){ return "../../" + p; },
+  NOINDEX: '<meta name="robots" content="noindex">',
+  mode(slug){ const p = (Admin.products||[]).find(x=>x.slug===slug); return (p && p.pageMode) || "default"; },
+  slot(slug, m){ return "p/" + slug + "/index." + m + ".html"; },
+  /* نسخة «الصفحة الافتراضية» للمنتج (المصدر الذي تُؤخذ منه المكونات وآراء الزبائن) */
+  async fetchDefaultDoc(slug){
+    const url = this.mode(slug)==="generated" ? this.slot(slug,"default") : "p/" + slug + "/index.html";
+    const r = await fetch(url + "?t=" + Date.now());
+    if(!r.ok) return null;
+    return new DOMParser().parseFromString(await r.text(), "text/html");
+  },
+  reviewsSection(doc){
+    if(!doc) return null;
+    return [...doc.querySelectorAll("section")].find(x=>x.querySelector(".reviews-screenshots") || (x.querySelector("h2") && x.querySelector("h2").textContent.includes("آراء"))) || null;
+  },
   dataUrl(blob){ return new Promise((res,rej)=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(new Error("فشلت قراءة الصورة")); fr.readAsDataURL(blob); }); },
   init(){
     const cats = Admin.categories || {};
@@ -890,6 +914,7 @@ const GenPage = {
     const p = (Admin.products||[]).find(x=>x.slug===slug);
     this.cur = p || null;
     $f("gp-fields").classList.toggle("hidden", !p);
+    $f("gp-modebar").classList.toggle("hidden", !p); $f("gp-modebar").style.display = p ? "flex" : "none";
     if(!p) return;
     $f("gp-name").value = p.title || ""; $f("gp-slug").value = p.slug;
     $f("gp-price").value = p.price || ""; if(p.cat) $f("gp-cat").value = p.cat;
@@ -897,13 +922,52 @@ const GenPage = {
     const im = $f("gp-img-prev"); im.src = (p.images && p.images[0]) ? p.images[0] : ""; im.style.display = im.src ? "block" : "none";
     $f("gp-comp").value = "";
     try{ // المكونات: تُستخرج من صفحة المنتج الحالية إن وُجد قسم «المكونات»
-      const r = await fetch("p/" + slug + "/index.html?t=" + Date.now());
-      if(r.ok){
-        const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+      const doc = await this.fetchDefaultDoc(slug);
+      if(doc){
         const sec = [...doc.querySelectorAll("section")].find(x=>{ const h = x.querySelector("h2"); return h && h.textContent.includes("المكونات"); });
         if(sec && $f("gp-pick").value === slug) $f("gp-comp").value = [...sec.querySelectorAll(".lp-card h3")].map(h=>h.textContent.trim()).filter(Boolean).join("، ");
       }
     }catch(e){ /* يُترك الحقل فارغاً ليملأه المستخدم */ }
+    this.renderStatus();
+  },
+  renderStatus(){
+    const el = $f("gp-status"); if(!el || !this.cur) return;
+    el.textContent = this.mode(this.cur.slug)==="generated" ? "الصفحة المفعّلة حالياً: ✨ مولّدة" : "الصفحة المفعّلة حالياً: 🏠 افتراضية";
+  },
+  /* فتح الأداة على منتج معيّن (من نافذة تعديل المنتج) */
+  open(slug){
+    Admin.closeModal();
+    Admin.tab("genpage", [...document.querySelectorAll(".nav-btn")].find(b=>(b.getAttribute("onclick")||"").includes("'genpage'")));
+    $f("gp-pick").value = slug; this.pick(slug);
+  },
+  async getB64(path){ const f = await GH.getFile(path); return { sha:f.sha, b64:String(f.content||"").replace(/\s/g,"") }; },
+  fromB64(b64){ return decodeURIComponent(escape(atob(b64))); },
+  toB64(str){ return btoa(unescape(encodeURIComponent(str))); },
+  async putSlot(slug, m, html){
+    let sha; try{ sha = (await GH.getFile(this.slot(slug,m))).sha; }catch(e){ sha = undefined; }
+    const tagged = html.replace(this.NOINDEX,"").replace("<head>","<head>"+this.NOINDEX);
+    await GH.putFile(this.slot(slug,m), this.toB64(tagged), sha, "حفظ نسخة الصفحة (" + m + ") للمنتج " + slug);
+  },
+  /* التبديل بين الصفحة الافتراضية والمولّدة — الرجوع للافتراضية متاح دائماً */
+  async switchMode(slug, target){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    const p = (Admin.products||[]).find(x=>x.slug===slug); if(!p) return;
+    const cur = this.mode(slug);
+    if(cur === target){ toast("هذه الصفحة مفعّلة بالفعل"); return }
+    try{
+      toast("⏳ جارِ التبديل...");
+      const live = await this.getB64("p/" + slug + "/index.html");
+      let targetHtml;
+      try{ targetHtml = this.fromB64((await this.getB64(this.slot(slug,target))).b64); }
+      catch(e){ if(target==="generated"){ toast("لا توجد صفحة مولّدة لهذا المنتج بعد — استعمل «توليد صفحة»"); return } throw new Error("لا توجد نسخة للصفحة الافتراضية (" + e.message + ")"); }
+      await this.putSlot(slug, cur, this.fromB64(live.b64)); // نحفظ الحالية (بما فيها تعديلاتك) قبل الاستبدال
+      await GH.putFile("p/" + slug + "/index.html", this.toB64(targetHtml.replace(this.NOINDEX,"")), live.sha, "تفعيل الصفحة " + (target==="default"?"الافتراضية":"المولّدة") + " للمنتج " + slug);
+      const prev = p.pageMode; p.pageMode = target;
+      if(!(await Admin.publishDataJs())){ p.pageMode = prev; throw new Error("تم التبديل لكن تعذّر تحديث data.js"); }
+      Admin.renderAll(); this.renderStatus(); Admin.renderPageMode(slug);
+      toast("✅ فُعّلت الصفحة " + (target==="default"?"الافتراضية":"المولّدة") + " (قد يستغرق ظهورها دقيقة)");
+    }catch(err){ console.error(err); toast("❌ " + err.message); }
   },
   onImage(input){
     const f = input.files && input.files[0];
@@ -1001,9 +1065,9 @@ const GenPage = {
     };
   },
   async build(d, txt){
-    const r = await fetch(this.REF + "?t=" + Date.now());
-    if(!r.ok) throw new Error("تعذّر تحميل الصفحة المرجعية " + this.REF);
-    const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+    const refDoc = await this.fetchDefaultDoc("anti-acne");
+    if(!refDoc) throw new Error("تعذّر تحميل الصفحة المرجعية " + this.REF);
+    const doc = refDoc;
     const E = v => this.esc(v), q = s => doc.querySelector(s);
     const oldSlug = "anti-acne", rel = p => this.rel(p);
     const main = rel(d.images[0]);
@@ -1031,7 +1095,12 @@ const GenPage = {
     tm("#pold", n=>n.style.display="none"); tm("#psave", n=>n.style.display="none");
     doc.querySelectorAll("a.btn-wa, .lp-final a.lp-btn-green").forEach(a=>a.setAttribute("href","https://wa.me/213559237239?text="+wa));
 
+    // آراء الزبائن: تُؤخذ من صفحة المنتج الافتراضية، وإلا من الصفحة المرجعية — وجودها شرط دائم
+    const ownRev = this.reviewsSection(await this.fetchDefaultDoc(d.slug));
     const all = [...doc.querySelectorAll("section")];
+    const refRev = this.reviewsSection(doc);
+    const revHtml = (ownRev || refRev) ? (ownRev || refRev).outerHTML : "";
+    d.reviewsFallback = !ownRev;
     const finalSec = all.find(x=>x.querySelector(".lp-final"));
     all.filter(x=>x!==finalSec && x.classList.contains("lp-sec")).forEach(x=>x.remove());
     const grid = (alt,title,text,bul)=>'<section class="lp-sec'+(alt?" alt":"")+'"><div class="container"><div class="lp-grid">'+
@@ -1050,6 +1119,7 @@ const GenPage = {
     const holder = doc.createElement("div"); holder.innerHTML = sections;
     const parent = finalSec ? finalSec.parentNode : doc.body;
     [...holder.children].forEach(n=>parent.insertBefore(n, finalSec||null));
+    if(revHtml){ const rh = doc.createElement("div"); rh.innerHTML = revHtml; parent.insertBefore(rh.firstElementChild, finalSec||null); }
     if(finalSec){
       const fh = finalSec.querySelector(".lp-final h2"), fp = finalSec.querySelector(".lp-final p");
       if(fh) fh.textContent = "🎁 اطلب " + d.name + " الآن";
@@ -1062,6 +1132,8 @@ const GenPage = {
       if(t.includes("const images")) t = t.replace(/const images\s*=\s*\[[\s\S]*?\];/, ()=>"const images = "+arr+";");
       sc.textContent = t.split(oldSlug).join(d.slug);
     });
+    if(!doc.querySelector("#order-form")) throw new Error("نموذج الطلب غير موجود في الصفحة المولّدة");
+    if(!this.reviewsSection(doc)) throw new Error("آراء الزبائن غير موجودة في الصفحة المولّدة");
     const out = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
     if(out.includes(oldSlug) && d.slug !== oldSlug) console.warn("GenPage: بقي أثر للمنتج المرجعي في الصفحة المولّدة");
     return out;
@@ -1075,6 +1147,7 @@ const GenPage = {
       if(key){ try{ txt = await this.aiText(d,key); }catch(e){ console.warn(e); toast("⚠️ تعذّر Claude ("+e.message+") — استُعمل القالب الجاهز"); } }
       if(!txt) txt = this.fallbackText(d);
       this.html = await this.build(d, txt);
+      if(d.reviewsFallback) toast("ℹ️ لا توجد آراء زبائن في صفحة هذا المنتج — استُعملت آراء الصفحة المرجعية، عدّلها بعد النشر من «تعديل الصفحة»");
       let prev = this.html.replace("<head>", '<head><base href="https://alyssumdz.com/p/'+d.slug+'/">');
       for(const n of this.newImgs) prev = prev.split(this.rel(n.path)).join(await this.dataUrl(n.blob));
       $f("gp-frame").srcdoc = prev;
@@ -1092,7 +1165,7 @@ const GenPage = {
     const d = this.prod; if(!d || !this.html || !this.cur) return;
     const cfg = GH.cfg();
     if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
-    if(!confirm("ستُستبدل صفحة «" + d.name + "» الحالية (p/" + d.slug + "/) بالصفحة المولّدة. متابعة؟")) return;
+    if(!confirm("ستُفعَّل الصفحة المولّدة لـ «" + d.name + "». الصفحة الحالية تُحفظ كنسخة ويمكنك الرجوع إليها دائماً من تعديل المنتج. متابعة؟")) return;
     const btn = $f("gp-ok"); btn.disabled = true;
     const snapshot = JSON.stringify(this.cur);
     try{
@@ -1102,10 +1175,12 @@ const GenPage = {
         await GH.putFile(n.path, b64, undefined, "رفع صورة منتج (" + d.slug + ")");
       }
       toast("⏳ جارِ نشر الصفحة...");
-      let sha; try{ sha = (await GH.getFile("p/" + d.slug + "/index.html")).sha; }catch(e){ sha = undefined; }
-      await GH.putFile("p/" + d.slug + "/index.html", btoa(unescape(encodeURIComponent(this.html))), sha, "توليد صفحة المنتج: " + d.slug + " عبر لوحة التحكم");
+      let live; try{ live = await this.getB64("p/" + d.slug + "/index.html"); }catch(e){ live = null; }
+      if(live && this.mode(d.slug)==="default") await this.putSlot(d.slug, "default", this.fromB64(live.b64)); // نسخة احتياطية دائمة للافتراضية
+      await GH.putFile("p/" + d.slug + "/index.html", this.toB64(this.html), live ? live.sha : undefined, "توليد صفحة المنتج: " + d.slug + " عبر لوحة التحكم");
+      await this.putSlot(d.slug, "generated", this.html);
       const imgs = d.images.slice(); if(d.amb) imgs.push(d.amb);
-      Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs });
+      Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs, pageMode:"generated" });
       if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج في data.js"); }
       Admin.renderAll();
       toast("✅ نُشرت الصفحة: alyssumdz.com/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
@@ -1527,9 +1602,18 @@ const Admin = {
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
+    this.renderPageMode(slug);
     this.renderImagesPreview();
     this.renderCoverPreview();
     $f("prod-modal-bg").classList.add("open");
+  },
+
+  renderPageMode(slug){
+    const el = $f("f-pagemode"); if(!el) return;
+    const box = el.parentNode.querySelector("#f-pagemode + div");
+    if(!slug){ el.textContent = "احفظ المنتج أولاً ثم يمكنك توليد صفحة له."; if(box) box.style.display = "none"; return }
+    if(box) box.style.display = "flex";
+    el.textContent = "الصفحة المفعّلة: " + (GenPage.mode(slug)==="generated" ? "✨ مولّدة" : "🏠 افتراضية") + " — يمكنك الرجوع للافتراضية في أي وقت.";
   },
 
   renderImagesPreview(){
@@ -1836,7 +1920,8 @@ const Admin = {
     // صورة الغلاف كصورة وحيدة في المعرض حتى لا تبقى صفحة المنتج بلا صور
     let images = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
     if(!images.length && cover) images = [cover];
-    return {
+    const prevP = this.products.find(x=>x.slug===$f("f-slug").value.trim());
+    const out = {
       slug: $f("f-slug").value.trim(), title: $f("f-title").value.trim(),
       price: Number($f("f-price").value)||0, old: $f("f-old").value?Number($f("f-old").value):null,
       cover,
@@ -1846,6 +1931,8 @@ const Admin = {
       seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
+    if(prevP && prevP.pageMode) out.pageMode = prevP.pageMode; // نوع الصفحة (افتراضية/مولّدة) لا يُفقد عند حفظ المنتج
+    return out;
   },
 
   diffProduct(oldP, newP){
