@@ -10,6 +10,7 @@
 :root{--green:#173F35;--green2:#0F2E26;--gold:#C8A24B;--gold2:#E4C87F;--bg:#F5F2EB;--line:#E5DFD2;--red:#D64545;--ok:#1E9E6A;--blue:#1B4F8A;--warn-bg:#FFF3D6}
 html{font-size:18px}
 *{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100%}
 body{font-family:'Cairo',sans-serif;background:var(--bg);direction:rtl;color:#1C2420}
 .login{max-width:400px;margin:10vh auto;background:#fff;border-radius:18px;padding:2rem;box-shadow:0 20px 50px rgba(0,0,0,.08)}
 .login h1{color:var(--green);font-size:1.5rem;margin-bottom:.4rem}
@@ -32,7 +33,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .nav-txt b{font-size:.98rem;font-weight:800;white-space:nowrap}
 .nav-txt small{font-size:.72rem;color:#6B7672;font-weight:600;line-height:1.35;white-space:normal}
 .admin-main{flex:1;min-width:0}
-@media(max-width:900px){.admin-body{flex-direction:column}.side-nav{width:100%;position:static}.side-nav-intro{display:none}.nav-txt small{display:none}}
+@media(max-width:900px){.admin-body{flex-direction:column;align-items:stretch}.side-nav{width:100%;position:static}.side-nav-intro{display:none}.nav-txt small{display:none}}
 .wrap{max-width:1200px;margin:0 auto;padding:1.2rem}
 .top{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
 .top h1{color:var(--green);font-size:1.4rem}
@@ -229,11 +230,19 @@ tr:hover td{background:#FAF7F0}
   </div>
 
   <div id="tab-delivery" class="hidden">
-    <div class="card">
-      <b style="color:var(--green)">ربط شركات التوصيل الجزائرية</b>
-      <div class="hint">أسعار التوصيل نفسها مفصولة تماماً عن المنتجات وتُدار من تبويب «🚚 رسوم التوصيل» أعلاه (تعديل يدوي لكل ولاية). هذا التبويب خاص فقط بربط حساب/مفاتيح API لكل شركة توصيل لإرسال الطلبات المؤكدة إليها مباشرة من لوحة التحكم. المفاتيح تُخزَّن فقط داخل متصفحك (localStorage) ولا تُنشر أبداً على GitHub لأن الموقع عام بدون تسجيل دخول.</div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <b style="color:var(--green)">شركات التوصيل</b>
+        <div class="hint">يمكن تفعيل شركة واحدة فقط في نفس الوقت في المتجر. هذا التبويب خاص بربط حساب/مفاتيح API لكل شركة لإرسال الطلبات المؤكدة إليها مباشرة من لوحة التحكم. المفاتيح تُخزَّن فقط داخل متصفحك ولا تُنشر أبداً بشكل عام لأن الموقع بلا تسجيل دخول.</div>
+      </div>
+      <button class="small" onclick="Admin.openNewCustomCompany()">+ شركة جديدة</button>
     </div>
     <div class="card"><div style="overflow:auto"><table id="delivery-table"></table></div></div>
+    <div class="card">
+      <b style="color:var(--green)">🏷️ مصدر أسعار التوصيل</b>
+      <div class="hint">اختر إن كان الموقع يعتمد الأسعار المفضّلة التي تضبطها يدوياً من تبويب «🚚 رسوم التوصيل»، أو أسعار الشركة النشطة نفسها (إن كانت محفوظة لها مسبقاً من نافذة إعدادها)</div>
+      <div id="delivery-price-source"></div>
+    </div>
   </div>
 
   <div id="tab-coupons" class="hidden">
@@ -415,7 +424,7 @@ tr:hover td{background:#FAF7F0}
       </div>
       <div style="display:flex;gap:.6rem">
         <button class="small" onclick="Admin.editPixel(null)">+ بكسل جديد</button>
-        <button class="small gray" onclick="Admin.openGhSettings()">⚙️ GitHub</button>
+        <button class="small gray" onclick="Admin.openGhSettings()">⚙️ الإعدادات</button>
       </div>
     </div>
     <div class="card"><div style="overflow:auto"><table id="pixels-table"></table></div></div>
@@ -429,7 +438,7 @@ tr:hover td{background:#FAF7F0}
       </div>
       <div style="display:flex;gap:.6rem">
         <button class="small" onclick="Admin.editQA(null)">+ سؤال وجواب جديد</button>
-        <button class="small gray" onclick="Admin.openGhSettings()">⚙️ GitHub</button>
+        <button class="small gray" onclick="Admin.openGhSettings()">⚙️ الإعدادات</button>
       </div>
     </div>
     <div class="card"><div style="overflow:auto"><table id="qa-table"></table></div></div>
@@ -461,34 +470,24 @@ tr:hover td{background:#FAF7F0}
         <div class="section-title">SEO (اختياري)</div>
         <input id="f-seo-title" placeholder="عنوان SEO مخصص (title) — اتركه فارغاً لاستخدام عنوان الصفحة الحالي">
         <textarea id="f-seo-desc" rows="2" placeholder="وصف SEO مخصص (meta description) — اتركه فارغاً لاستخدام الوصف الحالي"></textarea>
-        <div class="hint">تُستخدم هذه الحقول لتحسين ظهور المنتج في نتائج البحث ومعاينة الرابط عند مشاركته على فيسبوك/واتساب/تويتر (Open Graph). صورة أول عنصر في قائمة الصور أدناه تُستخدم تلقائياً كصورة المعاينة.</div>
+        <div class="hint">تُستخدم هذه الحقول لتحسين ظهور المنتج في نتائج البحث ومعاينة الرابط عند مشاركته على فيسبوك/واتساب/تويتر (Open Graph). صورة المنتج تُستخدم تلقائياً كصورة المعاينة.</div>
       </div>
       <div>
-        <div class="section-title">🏠 صورة الغلاف (الصفحة الرئيسية والبطاقات)</div>
-        <div class="hint" style="margin-top:0">هذه هي الصورة الوحيدة التي تظهر في بطاقة المنتج بالصفحة الرئيسية، «الأكثر مبيعاً»، وسلة الشراء — منفصلة تماماً عن صور صفحة المنتج أدناه</div>
-        <div style="display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem">
-          <img id="f-cover-preview" class="thumb-preview" style="width:64px;height:64px;flex:none" src="" onerror="this.style.opacity=0" alt="">
-          <input id="f-cover" placeholder="مسار صورة الغلاف" dir="ltr" oninput="Admin.renderCoverPreview()" style="margin-bottom:0">
+        <div class="section-title">🏠 صورة المنتج</div>
+        <div class="hint" style="margin-top:0">هذه الصورة تظهر في بطاقة المنتج بالصفحة الرئيسية، «الأكثر مبيعاً»، وسلة الشراء. صور معرض صفحة المنتج الخاصة تُدار لاحقاً من محرر صفحة المنتج مباشرة</div>
+        <div style="display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem">
+          <img id="f-cover-preview" class="thumb-preview" style="width:88px;height:88px;flex:none;border-radius:12px;object-fit:cover;border:1.5px solid var(--line)" src="" onerror="this.style.opacity=0" alt="">
+          <div style="flex:1;display:flex;flex-direction:column;gap:.5rem">
+            <label class="small blue" style="display:inline-block;cursor:pointer;text-align:center">🔄 تغيير (رفع من الجهاز)<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchCoverFromDevice(this)"></label>
+            <button class="small warn" type="button" onclick="Admin.deleteCoverImage()">🗑️ حذف الصورة</button>
+          </div>
         </div>
+        <input id="f-cover" placeholder="مسار صورة الغلاف" dir="ltr" oninput="Admin.renderCoverPreview()" style="display:none">
         <div style="display:flex;gap:.5rem;align-items:flex-start">
           <input id="f-cover-url" placeholder="أو الصق رابط صورة من الإنترنت هنا (https://...)" dir="ltr" style="margin-bottom:.8rem">
-          <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchCoverFromUrl()">📥 تحميل ورفع لـ GitHub</button>
+          <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchCoverFromUrl()">📥 تحميل ورفع</button>
         </div>
-        <label class="small" style="display:inline-block;cursor:pointer">📁 رفع صورة الغلاف من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchCoverFromDevice(this)"></label>
-        <div class="hint" style="margin-top:.3rem">إذا تُركت فارغة، تُستعمل أول صورة من معرض صفحة المنتج تلقائياً كغلاف احتياطي</div>
-
-        <div class="section-title">🖼️ صور صفحة المنتج (المعرض)</div>
-        <div class="hint" style="margin-top:0">هذه الصور تظهر فقط داخل صفحة المنتج الخاصة (الصورة الكبيرة والمصغّرات) — لا علاقة لها بصورة الغلاف أعلاه</div>
-        <input id="f-images" placeholder="مسارات الصور (افصل بفاصلة)" dir="ltr">
-        <div class="hint">مثال: assets/img/anti-acne/presentation/anti-acne 01.webp</div>
-        <div style="display:flex;gap:.5rem;align-items:flex-start">
-          <input id="f-img-url" placeholder="أو الصق رابط صورة من الإنترنت هنا (https://...)" dir="ltr" style="margin-bottom:.8rem">
-          <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchImageFromUrl()">📥 تحميل ورفع لـ GitHub</button>
-        </div>
-        <div class="hint" style="margin-top:-.6rem">تُجلب الصورة من الرابط وتُرفع مباشرة إلى مجلد صور هذا المنتج على GitHub (assets/img/&lt;المعرف&gt;/)، ثم تُضاف تلقائياً لقائمة الصور أعلاه — يتطلب ضبط GitHub من زر ⚙️ في معاينة الصفحة، وأن يسمح مصدر الصورة بالوصول من متصفح (CORS)</div>
-        <label class="small" style="display:inline-block;cursor:pointer">📁 رفع صورة من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchImageFromDevice(this)"></label>
-        <div class="hint" style="margin-top:.3rem">اختر صورة محفوظة على جهازك — تُحوَّل تلقائياً إلى webp وتُرفع لمجلد صور هذا المنتج، دون الحاجة لرابط إنترنت</div>
-        <div class="img-list" id="f-images-preview"></div>
+        <input id="f-images" type="hidden">
         <div class="section-title">العروض والأسعار</div>
         <div id="f-offers"></div>
         <button class="small blue" type="button" onclick="Admin.addOfferRow()">+ إضافة عرض</button>
@@ -497,8 +496,7 @@ tr:hover td{background:#FAF7F0}
     <div class="action-bar">
       <b>الإجراءات:</b>
       <button class="small blue" onclick="Admin.previewProduct()">👁️ معاينة</button>
-      <button class="small" onclick="Admin.saveProductDraft()">📝 حفظ كمسودة</button>
-      <button class="small gold" onclick="Admin.publishProduct()">✅ تأكيد ونشر</button>
+      <button class="small gold" onclick="Admin.publishProduct()">✅ حفظ ونشر</button>
       <button class="small gray" onclick="Admin.closeModal()">إلغاء</button>
     </div>
   </div>
@@ -511,8 +509,7 @@ tr:hover td{background:#FAF7F0}
     <input id="c-key" placeholder="المعرف (key) — إنجليزي بدون مسافات" dir="ltr">
     <input id="c-label" placeholder="اسم القسم (بالعربية)">
     <div class="action-bar">
-      <button class="small" onclick="Admin.saveCategoryDraft()">📝 حفظ كمسودة</button>
-      <button class="small gold" onclick="Admin.publishCategory()">✅ تأكيد ونشر</button>
+      <button class="small gold" onclick="Admin.publishCategory()">✅ حفظ ونشر</button>
       <button class="small gray" onclick="document.getElementById('cat-modal-bg').classList.remove('open')">إلغاء</button>
     </div>
   </div>
@@ -537,12 +534,12 @@ tr:hover td{background:#FAF7F0}
       <b id="pp-title">👁️ معاينة الصفحة</b>
       <span class="badge-draft hidden" id="pp-badge">✏️ وضع التعديل</span>
     </div>
-    <div class="hint">اضغط «✏️ تعديل» لتحرير النصوص والصور مباشرة على الصفحة (بحجمها الحقيقي)، ثم «✅ تحقق ونشر» لنشر التعديل على GitHub.</div>
+    <div class="hint">اضغط «✏️ تعديل» لتحرير النصوص والصور مباشرة على الصفحة (بحجمها الحقيقي)، ثم «✅ تحقق ونشر» لنشر التعديل مباشرة على الموقع.</div>
     <button class="small blue" id="pp-edit-btn" onclick="Admin.enterPageEdit()">✏️ تعديل</button>
     <button class="small gold hidden" id="pp-confirm-btn" onclick="Admin.validatePageEdit()">✅ تحقق ونشر</button>
     <button class="small warn hidden" id="pp-cancel-btn" onclick="Admin.cancelPageEdit()">↩️ إلغاء التعديلات</button>
     <button class="small" onclick="Admin.refreshEditorFrame()">↻ تحديث المعاينة</button>
-    <button class="small gray" onclick="Admin.openGhSettings()">⚙️ إعدادات GitHub</button>
+    <button class="small gray" onclick="Admin.openGhSettings()">⚙️ الإعدادات</button>
     <button class="small warn" onclick="Admin.closePagePreview()">✕ إغلاق المحرر</button>
   </div>
   <iframe id="page-preview-frame" class="editor-frame"></iframe>
@@ -626,7 +623,7 @@ tr:hover td{background:#FAF7F0}
 <!-- نافذة ضبط GitHub -->
 <div class="modal-bg" id="gh-modal-bg">
   <div class="modal">
-    <h3>⚙️ ربط GitHub لنشر تعديلات صفحة المنتج</h3>
+    <h3>⚙️ إعدادات النشر</h3>
     <div class="hint">التوكن يُخزَّن فقط داخل متصفحك (localStorage) ويُستعمل للاتصال بـ GitHub مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. يُفضَّل توكن من نوع Fine-grained مع صلاحية «Contents: Read and write» على مستودع alyssumdz فقط.</div>
     <input id="gh-token" type="password" placeholder="GitHub Personal Access Token" dir="ltr" autocomplete="off">
     <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="saberbalbouzi-ui">
@@ -661,16 +658,45 @@ tr:hover td{background:#FAF7F0}
 
 <!-- نافذة إعداد شركة توصيل -->
 <div class="modal-bg" id="delivery-modal-bg">
-  <div class="modal">
+  <div class="modal lg">
     <h3 id="delivery-modal-title">إعداد شركة التوصيل</h3>
     <div class="hint" id="delivery-modal-note"></div>
     <div id="delivery-modal-fields"></div>
-    <label style="display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--green);margin-bottom:.8rem">
-      <input type="checkbox" id="dlv-enabled" style="width:auto;margin:0"> مفعّلة — تظهر ضمن خيارات الإرسال في تبويب الطلبات
-    </label>
+    <div class="hint" style="margin-top:-.4rem">لتفعيل هذه الشركة في المتجر استعمل الاختيار المفرد بجانبها في جدول «شركات التوصيل» — يمكن تفعيل شركة واحدة فقط في نفس الوقت</div>
+    <details style="margin:.6rem 0">
+      <summary style="cursor:pointer;font-weight:700;color:var(--green)">🏷️ جدول أسعار هذه الشركة (اختياري)</summary>
+      <div class="hint" style="margin-top:.4rem">أدخل هنا التعريفة الرسمية لهذه الشركة لكل ولاية إن رغبت باعتمادها كمصدر أسعار المتجر بدل الأسعار المفضّلة اليدوية (من خيار «مصدر أسعار التوصيل» في نفس التبويب)</div>
+      <div class="search-bar"><input id="dlv-price-search" placeholder="🔍 بحث عن ولاية..." oninput="Admin.renderDeliveryPriceGrid()"></div>
+      <div class="fee-grid" id="dlv-price-grid" style="max-height:320px;overflow:auto"></div>
+    </details>
     <div class="action-bar">
-      <button class="small gold" onclick="Admin.saveDeliveryConfig()">💾 حفظ (في هذا المتصفح فقط)</button>
+      <button class="small gold" onclick="Admin.saveDeliveryConfig()">💾 حفظ</button>
+      <button class="small warn hidden" id="dlv-delete-btn" onclick="Admin.deleteCustomCompany()">🗑️ حذف الشركة</button>
       <button class="small gray" onclick="document.getElementById('delivery-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة إضافة شركة توصيل جديدة (مخصّصة) -->
+<div class="modal-bg" id="custom-delivery-modal-bg">
+  <div class="modal lg">
+    <h3>+ شركة توصيل جديدة</h3>
+    <div class="hint">أضف شركة توصيل غير موجودة في القائمة الجاهزة عن طريق تزويد رابط API الخاص بها وطريقة تنسيق الطلب — تُرسل الطلبات المؤكدة إليها مباشرة من تبويب الطلبات بعد التفعيل</div>
+    <input id="cdc-name" placeholder="اسم الشركة">
+    <div class="hint" style="margin-top:-.4rem">الحقول التي تحتاجها الشركة (مثل API Key أو Token) — تظهر لاحقاً في نافذة إعداد الشركة</div>
+    <div id="cdc-fields-list" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem"></div>
+    <button class="small" type="button" onclick="Admin.addCustomFieldRow()">+ حقل جديد</button>
+    <div class="section-title">إعداد الطلب المُرسَل إلى API الشركة</div>
+    <input id="cdc-url" placeholder="رابط API (endpoint) الكامل" dir="ltr">
+    <select id="cdc-method"><option value="POST">POST</option><option value="PUT">PUT</option><option value="GET">GET</option></select>
+    <div class="hint" style="margin-top:-.4rem">ترويسات الطلب (Headers) — القيمة يمكن أن تحتوي {{cfg.مفتاح_الحقل}} ليُستبدل بقيمة الحقل عند الإرسال</div>
+    <div id="cdc-headers-list" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem"></div>
+    <button class="small" type="button" onclick="Admin.addCustomHeaderRow()">+ ترويسة جديدة</button>
+    <div class="hint" style="margin-top:.4rem">نص الطلب (Body JSON) — استعمل {{order.name}}، {{order.phone}}، {{order.wilaya}}، {{order.commune}}، {{order.address}}، {{order.items}}، {{order.total}}، {{order.id}} لبيانات الطلب، و{{cfg.مفتاح_الحقل}} لقيم الحقول أعلاه</div>
+    <textarea id="cdc-body" dir="ltr" rows="6" placeholder='{"name":"{{order.name}}","phone":"{{order.phone}}","total":{{order.total}}}'></textarea>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.saveCustomCompany()">💾 حفظ الشركة</button>
+      <button class="small gray" onclick="document.getElementById('custom-delivery-modal-bg').classList.remove('open')">إلغاء</button>
     </div>
   </div>
 </div>
@@ -722,7 +748,7 @@ const Admin = {
   products: [], fees: [], feesOriginal: [], orders: [], categories: {},
   pixels: [], pixelsSha: undefined, editingPixelId: null,
   theme: {}, themeSha: undefined,
-  deliveryCfg: {}, editingDeliveryKey: null,
+  deliveryCfg: {}, editingDeliveryKey: null, customDeliveryCompanies: {}, deliveryPriceSource: "manual",
   coupons: [], couponsSha: undefined, editingCouponId: null,
   blacklist: [],
   qaList: [], qaSha: undefined, editingQAId: null,
@@ -1050,11 +1076,12 @@ const Admin = {
   },
 
   deliveryOrderCellHtml(i){
-    const enabled = Object.entries(this.deliveryCfg||{}).filter(([k,c])=>c && c.enabled && this.DELIVERY_COMPANIES[k]);
-    if(!enabled.length) return '<span class="hint" style="margin:0">لا توجد شركة مفعّلة — تبويب «🔗 شركات التوصيل»</span>';
+    const all = this.allDeliveryCompanies();
+    const enabled = Object.entries(this.deliveryCfg||{}).filter(([k,c])=>c && c.enabled && all[k]);
+    if(!enabled.length) return '<span class="hint" style="margin:0">لا توجد شركة نشطة — تبويب «شركات التوصيل»</span>';
     return '<div style="display:flex;gap:.3rem;align-items:center">' +
       '<select id="dlv-sel-' + i + '" style="width:auto;padding:.3rem">' +
-        enabled.map(([k])=>'<option value="' + k + '">' + this.DELIVERY_COMPANIES[k].name + '</option>').join("") +
+        enabled.map(([k])=>'<option value="' + k + '">' + all[k].name + '</option>').join("") +
       '</select>' +
       '<button class="small blue" type="button" style="padding:.3rem .6rem;white-space:nowrap" onclick="Admin.sendOrderToDelivery(' + i + ', $f(\'dlv-sel-' + i + '\').value)">🚚 إرسال</button>' +
     '</div>';
@@ -1132,7 +1159,10 @@ const Admin = {
   },
 
   renderImagesPreview(){
+    // القائمة المرئية لصور المعرض أُزيلت من نافذة المنتج (تُدار لاحقاً من محرر صفحة المنتج) —
+    // هذه الدالة تبقى بلا أثر مرئي، فقط تحمي الاستدعاءات القديمة من الفشل
     const box = $f("f-images-preview");
+    if(!box) return;
     const imgs = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
     box.innerHTML = imgs.map(src=>'<img class="thumb-preview" src="' + src + '" onerror="this.style.display=\'none\'" title="' + src + '">').join("");
   },
@@ -1329,6 +1359,13 @@ const Admin = {
     input.value = "";
   },
 
+  deleteCoverImage(){
+    if(!confirm("حذف صورة المنتج الحالية؟")) return;
+    $f("f-cover").value = "";
+    this.renderCoverPreview();
+    toast("🗑️ حُذفت الصورة — لا تنسَ «✅ تأكيد ونشر» لحفظ المنتج");
+  },
+
   async fetchImageFromUrlForPick(){
     const url = $f("imgpick-url").value.trim();
     if(!url){ toast("أدخل رابط الصورة أولاً"); return }
@@ -1417,11 +1454,17 @@ const Admin = {
       price: Number(r.querySelector(".of-price").value)||0,
       free: r.querySelector(".of-free").checked ? 1 : 0,
     })).filter(o=>o.price>0);
+    const cover = $f("f-cover").value.trim();
+    // صور معرض صفحة المنتج (f-images) لم تعد تُعدَّل من هذه النافذة — تُدار لاحقاً من محرر صفحة
+    // المنتج مباشرة. نحافظ على معرض المنتجات الحالية كما هو، وللمنتج الجديد بلا معرض نستعمل
+    // صورة الغلاف كصورة وحيدة في المعرض حتى لا تبقى صفحة المنتج بلا صور
+    let images = $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean);
+    if(!images.length && cover) images = [cover];
     return {
       slug: $f("f-slug").value.trim(), title: $f("f-title").value.trim(),
       price: Number($f("f-price").value)||0, old: $f("f-old").value?Number($f("f-old").value):null,
-      cover: $f("f-cover").value.trim(),
-      images: $f("f-images").value.split(",").map(s=>s.trim()).filter(Boolean),
+      cover,
+      images,
       desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
       stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
       seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(),
@@ -2974,45 +3017,157 @@ const Admin = {
   loadDeliveryCfg(){
     try{ this.deliveryCfg = JSON.parse(localStorage.getItem("alyssum_delivery_cfg") || "{}") || {}; }
     catch(e){ this.deliveryCfg = {}; }
+    try{ this.customDeliveryCompanies = JSON.parse(localStorage.getItem("alyssum_custom_delivery") || "{}") || {}; }
+    catch(e){ this.customDeliveryCompanies = {}; }
+    try{ this.deliveryPriceSource = localStorage.getItem("alyssum_delivery_price_source") || "manual"; }
+    catch(e){ this.deliveryPriceSource = "manual"; }
   },
   saveDeliveryCfgToStorage(){ localStorage.setItem("alyssum_delivery_cfg", JSON.stringify(this.deliveryCfg)); },
+  saveCustomCompaniesToStorage(){ localStorage.setItem("alyssum_custom_delivery", JSON.stringify(this.customDeliveryCompanies)); },
+
+  /* تدمج الشركات الجاهزة مع الشركات المخصّصة التي أضافها المستخدم في نفس القاموس */
+  allDeliveryCompanies(){
+    const out = Object.assign({}, this.DELIVERY_COMPANIES);
+    Object.entries(this.customDeliveryCompanies||{}).forEach(([k,co])=>{
+      out[k] = Object.assign({}, co, {
+        custom: true,
+        buildRequest(cfg, order){
+          const fill = (str)=>Admin.fillDeliveryTemplate(str, cfg, order);
+          const headers = {};
+          (co.headers||[]).forEach(h=>{ if(h.key) headers[fill(h.key)] = fill(h.value||""); });
+          return { url: fill(co.url||""), method: co.method||"POST", headers, body: fill(co.bodyTemplate||"{}") };
+        },
+      });
+    });
+    return out;
+  },
+  fillDeliveryTemplate(str, cfg, order){
+    return String(str||"").replace(/\{\{\s*(order|cfg)\.([a-zA-Z0-9_]+)\s*\}\}/g, (m, ns, key)=>{
+      const src = ns==="order" ? (order||{}) : (cfg||{});
+      const v = src[key];
+      return v===undefined || v===null ? "" : String(v);
+    });
+  },
 
   renderDelivery(){
     const el = $f("delivery-table");
     if(!el) return;
-    const keys = Object.keys(this.DELIVERY_COMPANIES);
-    el.innerHTML = '<tr><th>الشركة</th><th>الحالة</th><th>مفعّلة</th><th></th></tr>' +
+    const all = this.allDeliveryCompanies();
+    const keys = Object.keys(all);
+    const activeKey = keys.find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
+    el.innerHTML = '<tr><th>الشركة</th><th>نشطة</th><th></th></tr>' +
       keys.map(k=>{
-        const co = this.DELIVERY_COMPANIES[k];
+        const co = all[k];
         const cfg = this.deliveryCfg[k] || {};
         const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
-        const configured = requiredFields.length && requiredFields.every(f=>String(cfg[f.key]||"").trim());
-        const badge = co.confidence === "confident"
-          ? '<span class="pill st-livree">✅ توثيق رسمي موثوق</span>'
-          : co.confidence === "generic"
-            ? '<span class="pill st-nouvelle">ℹ️ عام/قابل للتخصيص</span>'
-            : '<span class="pill st-annulee">⚠️ تجريبي — يحتاج تحقق</span>';
+        const configured = !requiredFields.length || requiredFields.every(f=>String(cfg[f.key]||"").trim());
+        const badge = !configured
+          ? '<span class="pill st-nouvelle">غير مُعدّة بعد</span>'
+          : co.custom
+            ? '<span class="pill st-nouvelle">✏️ مخصّصة</span>'
+            : co.confidence === "confident"
+              ? '<span class="pill st-livree">✅ موثّقة رسمياً</span>'
+              : co.confidence === "generic"
+                ? '<span class="pill st-nouvelle">ℹ️ عام</span>'
+                : '<span class="pill st-annulee">⚠️ تجريبي</span>';
         return '<tr>' +
           '<td><b>' + co.name + '</b><div class="hint" style="margin:.2rem 0 0">' + badge + '</div></td>' +
-          '<td>' + (configured ? '<span class="pill st-livree">مُعدّة</span>' : '<span class="pill st-nouvelle">غير مُعدّة بعد</span>') + '</td>' +
-          '<td><label style="display:flex;align-items:center;gap:.4rem;font-weight:700">' +
-            '<input type="checkbox" style="width:auto;margin:0" ' + (cfg.enabled?"checked":"") + (configured?"":" disabled") +
-            ' onchange="Admin.toggleDeliveryCompany(\'' + k + '\', this.checked)"> ' + (configured?"":"(أكمل الإعداد أولاً)") +
-          '</label></td>' +
-          '<td><button class="small" type="button" onclick="Admin.openDeliveryConfig(\'' + k + '\')">⚙️ إعداد المفاتيح</button></td>' +
+          '<td><input type="radio" name="dlv-active-radio" title="تفعيل ' + co.name + '" style="width:auto;margin:0" ' + (activeKey===k?"checked":"") + (configured?"":" disabled") +
+            ' onchange="Admin.setActiveDeliveryCompany(\'' + k + '\')"></td>' +
+          '<td style="display:flex;flex-direction:column;gap:.3rem">' +
+            '<button class="small" type="button" title="إعداد" onclick="Admin.openDeliveryConfig(\'' + k + '\')">⚙️ إعداد</button>' +
+            (activeKey===k ? '<button class="small gray" type="button" title="إيقاف التفعيل" onclick="Admin.setActiveDeliveryCompany(null)">❌ إيقاف</button>' : "") +
+          '</td>' +
         '</tr>';
-      }).join("");
+      }).join("") +
+      (!keys.length ? '<tr><td colspan="3" class="hint">لا توجد شركات — اضغط «+ شركة جديدة»</td></tr>' : "");
+    this.renderDeliveryPriceSourceCard();
   },
 
-  toggleDeliveryCompany(key, enabled){
-    this.deliveryCfg[key] = Object.assign({}, this.deliveryCfg[key], { enabled: !!enabled });
+  setActiveDeliveryCompany(key){
+    Object.keys(this.deliveryCfg).forEach(k=>{ if(this.deliveryCfg[k]) this.deliveryCfg[k].enabled = false; });
+    if(key) this.deliveryCfg[key] = Object.assign({}, this.deliveryCfg[key], { enabled: true });
     this.saveDeliveryCfgToStorage();
     this.renderDelivery();
     this.renderOrders();
   },
 
+  renderDeliveryPriceSourceCard(){
+    const box = $f("delivery-price-source");
+    if(!box) return;
+    const all = this.allDeliveryCompanies();
+    const activeKey = Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
+    const activeCo = activeKey ? all[activeKey] : null;
+    const activeCfg = activeKey ? (this.deliveryCfg[activeKey]||{}) : null;
+    const hasPrices = !!(activeCfg && activeCfg.prices && Object.keys(activeCfg.prices).length);
+    box.innerHTML =
+      '<label style="display:flex;align-items:center;gap:.5rem;font-weight:700;margin-bottom:.5rem">' +
+        '<input type="radio" name="dlv-price-src" style="width:auto;margin:0" ' + (this.deliveryPriceSource!=="company"?"checked":"") + ' onchange="Admin.setDeliveryPriceSource(\'manual\')"> الأسعار المفضّلة يدوياً (تبويب «🚚 رسوم التوصيل»)' +
+      '</label>' +
+      '<label style="display:flex;align-items:center;gap:.5rem;font-weight:700">' +
+        '<input type="radio" name="dlv-price-src" style="width:auto;margin:0" ' + (this.deliveryPriceSource==="company"?"checked":"") + (activeCo?"":" disabled") + ' onchange="Admin.setDeliveryPriceSource(\'company\')"> أسعار الشركة النشطة' + (activeCo?(' — ' + activeCo.name):"") +
+      '</label>' +
+      (activeCo && !hasPrices ? '<div class="hint">هذه الشركة ليس لها جدول أسعار محفوظ بعد — أضفه من «⚙️ إعداد» ثم قسم «🏷️ جدول أسعار هذه الشركة»</div>' : "") +
+      (!activeCo ? '<div class="hint">فعّل شركة أولاً من الجدول أعلاه لاستعمال أسعارها</div>' : "");
+  },
+
+  setDeliveryPriceSource(mode){
+    this.deliveryPriceSource = mode;
+    localStorage.setItem("alyssum_delivery_price_source", mode);
+    if(mode==="company"){
+      const all = this.allDeliveryCompanies();
+      const activeKey = Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
+      const cfg = activeKey ? this.deliveryCfg[activeKey] : null;
+      if(cfg && cfg.prices && Object.keys(cfg.prices).length){
+        this.fees = this.fees.map(w=>{
+          const p = cfg.prices[w.id];
+          return p ? Object.assign({}, w, { home: Number(p.home)||0, stop: Number(p.stop)||0 }) : w;
+        });
+        this.renderFees();
+        toast("✅ نُسخت أسعار " + all[activeKey].name + " إلى تبويب «رسوم التوصيل» — اضغط هناك «💾 حفظ الكل» لنشرها على الموقع الحي");
+      } else {
+        toast("⚠️ لا يوجد جدول أسعار محفوظ لهذه الشركة بعد");
+      }
+    }
+    this.renderDeliveryPriceSourceCard();
+  },
+
+  renderDeliveryPriceGrid(){
+    const grid = $f("dlv-price-grid");
+    if(!grid) return;
+    const key = this.editingDeliveryKey;
+    const cfg = (key && this.deliveryCfg[key]) || {};
+    const prices = cfg.prices || {};
+    const q = ($f("dlv-price-search").value||"").toLowerCase();
+    const list = this.fees.filter(w=>!q || w.name.toLowerCase().includes(q) || String(w.id).includes(q));
+    grid.innerHTML = list.map(w=>{
+      const p = prices[w.id] || {};
+      return '<div class="fee">' +
+        '<h4>' + String(w.id).padStart(2,"0") + ' — ' + w.name + '</h4>' +
+        '<label>🏠 للمنزل (دج)</label>' +
+        '<input type="number" min="0" data-wid="' + w.id + '" data-field="home" class="dlv-price-input" value="' + (p.home!=null?p.home:"") + '" placeholder="بدون تعريفة">' +
+        '<label>🏢 مكتب Stop Desk (دج)</label>' +
+        '<input type="number" min="0" data-wid="' + w.id + '" data-field="stop" class="dlv-price-input" value="' + (p.stop!=null?p.stop:"") + '" placeholder="بدون تعريفة">' +
+      '</div>';
+    }).join("");
+  },
+
+  collectDeliveryPriceGrid(){
+    const prices = {};
+    document.querySelectorAll("#dlv-price-grid .fee").forEach(card=>{
+      const homeInput = card.querySelector('[data-field="home"]');
+      const stopInput = card.querySelector('[data-field="stop"]');
+      if(!homeInput) return;
+      const wid = Number(homeInput.dataset.wid);
+      const home = homeInput.value===""?null:Number(homeInput.value);
+      const stop = stopInput.value===""?null:Number(stopInput.value);
+      if(home!=null || stop!=null) prices[wid] = { home: home!=null?home:0, stop: stop!=null?stop:0 };
+    });
+    return prices;
+  },
+
   openDeliveryConfig(key){
-    const co = this.DELIVERY_COMPANIES[key];
+    const co = this.allDeliveryCompanies()[key];
     if(!co) return;
     this.editingDeliveryKey = key;
     const cfg = this.deliveryCfg[key] || {};
@@ -3021,21 +3176,25 @@ const Admin = {
     $f("delivery-modal-fields").innerHTML = (co.fields||[]).map(f=>
       '<input id="dlv-f-' + f.key + '" type="' + (f.type||"text") + '" placeholder="' + f.label + (f.required===false?" (اختياري)":"") + '" dir="ltr" value="' + (cfg[f.key]||"").toString().replace(/"/g,"&quot;") + '">'
     ).join("");
-    $f("dlv-enabled").checked = !!cfg.enabled;
+    $f("dlv-price-search").value = "";
+    this.renderDeliveryPriceGrid();
+    const delBtn = $f("dlv-delete-btn");
+    if(delBtn) delBtn.classList.toggle("hidden", !this.customDeliveryCompanies[key]);
     document.getElementById("delivery-modal-bg").classList.add("open");
   },
 
   saveDeliveryConfig(){
     const key = this.editingDeliveryKey;
-    const co = this.DELIVERY_COMPANIES[key];
+    const co = this.allDeliveryCompanies()[key];
     if(!co) return;
-    const cfg = {};
+    const cfg = Object.assign({}, this.deliveryCfg[key]);
     (co.fields||[]).forEach(f=>{ cfg[f.key] = ($f("dlv-f-" + f.key)||{}).value ? $f("dlv-f-" + f.key).value.trim() : ""; });
+    cfg.prices = this.collectDeliveryPriceGrid();
     const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
     const missing = requiredFields.filter(f=>!cfg[f.key]);
-    cfg.enabled = $f("dlv-enabled").checked && !missing.length;
-    if($f("dlv-enabled").checked && missing.length){
-      toast("⚠️ أكمل الحقول التالية قبل التفعيل: " + missing.map(f=>f.label).join("، "));
+    if(cfg.enabled && missing.length){
+      toast("⚠️ أكمل الحقول التالية قبل الاستمرار: " + missing.map(f=>f.label).join("، "));
+      cfg.enabled = false;
     }
     this.deliveryCfg[key] = cfg;
     this.saveDeliveryCfgToStorage();
@@ -3045,13 +3204,87 @@ const Admin = {
     toast("✅ حُفظت إعدادات " + co.name + " في هذا المتصفح فقط");
   },
 
+  deleteCustomCompany(){
+    const key = this.editingDeliveryKey;
+    if(!key || !this.customDeliveryCompanies[key]) return;
+    if(!confirm("حذف هذه الشركة المخصّصة نهائياً من هذا المتصفح؟")) return;
+    delete this.customDeliveryCompanies[key];
+    delete this.deliveryCfg[key];
+    this.saveCustomCompaniesToStorage();
+    this.saveDeliveryCfgToStorage();
+    document.getElementById("delivery-modal-bg").classList.remove("open");
+    this.renderDelivery();
+    this.renderOrders();
+    toast("🗑️ حُذفت الشركة");
+  },
+
+  openNewCustomCompany(){
+    $f("cdc-name").value = "";
+    $f("cdc-url").value = "";
+    $f("cdc-method").value = "POST";
+    $f("cdc-body").value = "";
+    $f("cdc-fields-list").innerHTML = "";
+    $f("cdc-headers-list").innerHTML = "";
+    this.addCustomFieldRow();
+    this.addCustomHeaderRow();
+    document.getElementById("custom-delivery-modal-bg").classList.add("open");
+  },
+
+  addCustomFieldRow(label, key, type){
+    const row = document.createElement("div");
+    row.style.display = "flex"; row.style.gap = ".5rem";
+    row.className = "cdc-field-row";
+    row.innerHTML =
+      '<input placeholder="اسم الحقل (مثال: مفتاح API)" class="cdc-f-label" value="' + (label||"").toString().replace(/"/g,"&quot;") + '" style="flex:1">' +
+      '<input placeholder="key" dir="ltr" class="cdc-f-key" value="' + (key||"").toString().replace(/"/g,"&quot;") + '" style="flex:1">' +
+      '<select class="cdc-f-type" style="flex:none;width:auto"><option value="text">نص</option><option value="password">سرّي</option></select>' +
+      '<button class="small warn" type="button" onclick="this.parentElement.remove()">✕</button>';
+    $f("cdc-fields-list").appendChild(row);
+    if(type) row.querySelector(".cdc-f-type").value = type;
+  },
+  addCustomHeaderRow(key, value){
+    const row = document.createElement("div");
+    row.style.display = "flex"; row.style.gap = ".5rem";
+    row.className = "cdc-header-row";
+    row.innerHTML =
+      '<input placeholder="اسم الترويسة (مثال: Authorization)" dir="ltr" class="cdc-h-key" value="' + (key||"").toString().replace(/"/g,"&quot;") + '" style="flex:1">' +
+      '<input placeholder="القيمة (مثال: Bearer {{cfg.apiKey}})" dir="ltr" class="cdc-h-value" value="' + (value||"").toString().replace(/"/g,"&quot;") + '" style="flex:1">' +
+      '<button class="small warn" type="button" onclick="this.parentElement.remove()">✕</button>';
+    $f("cdc-headers-list").appendChild(row);
+  },
+
+  saveCustomCompany(){
+    const name = $f("cdc-name").value.trim();
+    const url = $f("cdc-url").value.trim();
+    if(!name || !url){ toast("⚠️ أدخل اسم الشركة ورابط API على الأقل"); return }
+    const fields = [...document.querySelectorAll(".cdc-field-row")].map(r=>({
+      label: r.querySelector(".cdc-f-label").value.trim(),
+      key: r.querySelector(".cdc-f-key").value.trim(),
+      type: r.querySelector(".cdc-f-type").value,
+    })).filter(f=>f.label && f.key);
+    const headers = [...document.querySelectorAll(".cdc-header-row")].map(r=>({
+      key: r.querySelector(".cdc-h-key").value.trim(),
+      value: r.querySelector(".cdc-h-value").value,
+    })).filter(h=>h.key);
+    const key = "custom_" + Date.now();
+    this.customDeliveryCompanies[key] = {
+      name, url, method: $f("cdc-method").value, headers, bodyTemplate: $f("cdc-body").value,
+      note: "شركة مخصّصة أضافها المستخدم — تحقق من صحة تنسيق الطلب مع دعم الشركة قبل الاعتماد عليها فعلياً.",
+      fields,
+    };
+    this.saveCustomCompaniesToStorage();
+    document.getElementById("custom-delivery-modal-bg").classList.remove("open");
+    this.renderDelivery();
+    toast("✅ أُضيفت " + name + " — اضغط «⚙️ إعداد» لإدخال بيانات الاتصال ثم فعّلها من الجدول");
+  },
+
   async sendOrderToDelivery(orderIndex, companyKey){
-    if(!companyKey){ toast("⚠️ لا توجد شركة توصيل مفعّلة — فعّل واحدة من تبويب «🔗 شركات التوصيل»"); return }
+    if(!companyKey){ toast("⚠️ لا توجد شركة توصيل نشطة — فعّل واحدة من تبويب «شركات التوصيل»"); return }
     const order = this.orders[orderIndex];
     if(!order){ toast("❌ لم يُعثر على الطلب"); return }
-    const co = this.DELIVERY_COMPANIES[companyKey];
+    const co = this.allDeliveryCompanies()[companyKey];
     const cfg = this.deliveryCfg[companyKey] || {};
-    if(!co || !cfg.enabled){ toast("⚠️ فعّل " + (co?co.name:companyKey) + " أولاً من تبويب «🔗 شركات التوصيل»"); return }
+    if(!co || !cfg.enabled){ toast("⚠️ فعّل " + (co?co.name:companyKey) + " أولاً من تبويب «شركات التوصيل»"); return }
     toast("⏳ جارِ إرسال الطلب #" + order.id + " إلى " + co.name + "...");
     try{
       const req = co.buildRequest(cfg, order);
