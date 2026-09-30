@@ -1643,6 +1643,8 @@ const Admin = {
     $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
     $f("f-active").value = "1";
     $f("f-stock").value = "";
+    $f("f-seo-title").value = p.seoTitle||"";
+    $f("f-seo-desc").value = p.seoDesc||"";
     this.renderOffersRows(p.offers||[]);
     this.renderImagesPreview();
     this.renderCoverPreview();
@@ -1761,12 +1763,15 @@ const Admin = {
       toolbar.id = "__adm_edit_toolbar";
       const fmtBtn = doc.createElement("button");
       fmtBtn.type = "button"; fmtBtn.className = "__adm_fmt"; fmtBtn.textContent = "🎨 تنسيق";
+      const dupBtn = doc.createElement("button");
+      dupBtn.type = "button"; dupBtn.className = "__adm_dup"; dupBtn.textContent = "🔁 تكرار";
       const delBtn = doc.createElement("button");
       delBtn.type = "button"; delBtn.className = "__adm_del"; delBtn.textContent = "🗑️ حذف";
-      toolbar.appendChild(fmtBtn); toolbar.appendChild(delBtn);
+      toolbar.appendChild(fmtBtn); toolbar.appendChild(dupBtn); toolbar.appendChild(delBtn);
       doc.body.appendChild(toolbar);
     }
     const fmtBtn = toolbar.querySelector(".__adm_fmt");
+    const dupBtn = toolbar.querySelector(".__adm_dup");
     const delBtn = toolbar.querySelector(".__adm_del");
     this._editToolbar = toolbar;
     this._fmtTarget = null;
@@ -1786,6 +1791,10 @@ const Admin = {
       e.preventDefault(); e.stopPropagation();
       if(this._fmtTarget) this.openTextFormatPopup(this._fmtTarget);
     });
+    dupBtn.addEventListener("mousedown", (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      if(this._fmtTarget) this.duplicateTextElement(this._fmtTarget);
+    });
     delBtn.addEventListener("mousedown", (e)=>{
       e.preventDefault(); e.stopPropagation();
       if(this._fmtTarget) this.deleteTextElement(this._fmtTarget);
@@ -1794,6 +1803,15 @@ const Admin = {
     doc.defaultView.addEventListener("resize", positionToolbar);
     const showToolbarFor = (el)=>{ this._fmtTarget = el; positionToolbar(); toolbar.style.display = "flex"; };
     const hideToolbarFor = (el)=>{ setTimeout(()=>{ if(this._fmtTarget===el){ toolbar.style.display = "none"; this._fmtTarget = null; } }, 150); };
+    // تُخزَّن كدالة على الكائن لإعادة استعمالها لاحقاً عند تكرار عنصر (duplicateTextElement)، لأن
+    // النسخة المكررة عنصر DOM جديد تماماً يحتاج نفس الربط (contenteditable + مستمعي التركيز)
+    const wireEditableText = (el)=>{
+      el.setAttribute("contenteditable","true");
+      el.classList.add("__adm_edit");
+      el.addEventListener("focus", ()=>{ this._trackFocusText(el); showToolbarFor(el); });
+      el.addEventListener("blur", ()=>{ this._trackBlurText(el); hideToolbarFor(el); });
+    };
+    this._wireEditableText = wireEditableText;
 
     /* نصوص — تشخيص المهمة #20 ("عناصر الصفحة الرئيسية غير قابلة للتعديل بالكامل"):
        كانت `[id]` ضمن EXCLUDE_TEXT تُستثنى عبر closest()، وهذا كان يستثني كل نص داخل أي
@@ -1802,18 +1820,17 @@ const Admin = {
        كل نصوص الصفحة الرئيسية الثابتة. الإصلاح: نستثني فقط العنصر الذي يحمل id بنفسه (مرتبط
        مباشرة بسكربت ديناميكي مثل #cart-total/#cart-fee)، دون أن يمتد الاستثناء لكل ما بداخل أي
        حاوية أعلى منه تحمل id. أضفنا أيضاً em/i/label لتغطية عناصر نصية كانت خارج القائمة سابقاً */
-    const EXCLUDE_TEXT = "form,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option";
+    const EXCLUDE_TEXT = "form,.drawer,.drawer-bg,.sticky-cta,script,style,button,select,input,textarea,option,.topbar";
     doc.querySelectorAll("h1,h2,h3,h4,p,li,span,small,b,a,div,em,i,label").forEach(el=>{
       // نستثني الـ div الحاوية (تحتوي عناصر أخرى بداخلها) ونسمح فقط بالـ div "الورقية"
       // (نص مباشر بلا عناصر فرعية) — مثل نقاط قسم «المشكل والحل» اللي كانت ما تنعدلش
       if(el.tagName === "DIV" && el.children.length > 0) return;
+      // .topbar مستثنى هنا عمداً (أُضيف إلى EXCLUDE_TEXT) — يُعالَج ككتلة واحدة كاملة أدناه
+      // بدل ترك أجزائه الغامقة (<b>) فقط قابلة للتعديل بينما النص العادي بينها غير قابل للمس
       if(el.closest(EXCLUDE_TEXT)) return;
       if(el.id) return; // عنصر نصي مرتبط مباشرة بسكربت (مثل #cart-total) — يبقى مستثنى هو فقط
       if(!el.textContent || !el.textContent.trim()) return;
-      el.setAttribute("contenteditable","true");
-      el.classList.add("__adm_edit");
-      el.addEventListener("focus", ()=>{ this._trackFocusText(el); showToolbarFor(el); });
-      el.addEventListener("blur", ()=>{ this._trackBlurText(el); hideToolbarFor(el); });
+      wireEditableText(el);
     });
     // صور: لا نستثني بالـ id (الصورة الرئيسية #gmain لها id لأغراض المعرض، ويجب أن تبقى قابلة للتغيير)
     const EXCLUDE_IMG = "form,.drawer,.drawer-bg,.sticky-cta,script,style";
@@ -1829,12 +1846,10 @@ const Admin = {
       el.addEventListener("click", Admin._onImgClick, {capture:true});
     });
     // نصوص داخل أزرار مربعات الفئات في الصفحة الرئيسية (استثناء خاص من قاعدة استبعاد النصوص داخل button)
-    doc.querySelectorAll(".shop-cat span").forEach(el=>{
-      el.setAttribute("contenteditable","true");
-      el.classList.add("__adm_edit");
-      el.addEventListener("focus", ()=>{ this._trackFocusText(el); showToolbarFor(el); });
-      el.addEventListener("blur", ()=>{ this._trackBlurText(el); hideToolbarFor(el); });
-    });
+    doc.querySelectorAll(".shop-cat span").forEach(el=>wireEditableText(el));
+    // الشريط العلوي (توصيل سريع/الدفع عند الاستلام/العرض) — يُعامَل ككتلة نص واحدة كاملة قابلة
+    // للتعديل والحذف معاً (بدل تعديل كل كلمة غامقة بداخله منفردة)، حسب طلب المستخدم
+    doc.querySelectorAll(".topbar").forEach(el=>wireEditableText(el));
 
     this._editing = true;
     $f("pp-edit-btn").classList.add("hidden");
@@ -1856,6 +1871,33 @@ const Admin = {
     if(this._editToolbar) this._editToolbar.style.display = "none";
     el.remove();
     toast("🗑️ حُذف النص — لا تنسَ «✅ تحقق ونشر» لحفظ هذا التغيير على الموقع الحي");
+  },
+
+  /* تكرار عنصر من الصفحة مباشرة — تظهر نسخة طبق الأصل تحته مباشرة، قابلة للتعديل فوراً.
+     النسخة عنصر DOM جديد تماماً (cloneNode لا ينسخ مستمعي الأحداث)، لذا نعيد ربطها بنفس آلية
+     التعديل (contenteditable + شريط تنسيق/تكرار/حذف)، وننظّف أي بقايا حالة من العنصر الأصلي
+     (سمة contenteditable وصنف __adm_edit يُعاد ضبطهما عبر wireEditableText بدل تركهما كما نُسخا) */
+  duplicateTextElement(el){
+    if(!el) return;
+    if(!this._wireEditableText){ toast("⚠️ فعّل وضع التعديل أولاً"); return }
+    const clone = el.cloneNode(true);
+    clone.removeAttribute("contenteditable");
+    clone.classList.remove("__adm_edit");
+    // تنظيف أي عناصر فرعية كانت موسومة كقابلة للتعديل/الصور داخل النسخة، لإعادة ربطها من جديد
+    // (بدل أن تحمل مستمعي أحداث العنصر الأصلي التي لا تُنسخ أصلاً مع cloneNode)
+    clone.querySelectorAll(".__adm_edit,.__adm_img_edit").forEach(sub=>{
+      sub.classList.remove("__adm_edit","__adm_img_edit");
+      sub.removeAttribute("contenteditable");
+    });
+    el.insertAdjacentElement("afterend", clone);
+    this._wireEditableText(clone);
+    clone.querySelectorAll("img").forEach(img=>{
+      img.classList.add("__adm_img_edit");
+      img.addEventListener("click", Admin._onImgClick, {capture:true});
+    });
+    this._fmtTarget = null;
+    if(this._editToolbar) this._editToolbar.style.display = "none";
+    toast("🔁 تم تكرار العنصر — اضغط على النسخة الجديدة تحته لتعديلها، ولا تنسَ «✅ تحقق ونشر» لحفظ التغيير");
   },
 
   /* ════════ تتبّع التعديلات المشتركة بين صفحات المنتجات (نص/تنسيق/حذف) ════════
