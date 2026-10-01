@@ -4,6 +4,12 @@
 import pathlib, re
 root = pathlib.Path(__file__).resolve().parent.parent
 s = (root / "p/anti-acne/index.html").read_text(encoding="utf-8")
+# تطبيع المصدر: يعمل سواء كانت anti-acne بالنموذج القديم أو محوّلة (معرض ثابت ونموذج عريض)
+s = re.sub(r'<div class="gthumbs"[^>]*>.*?</div>', '<div class="gthumbs"></div>', s, count=1, flags=re.S)
+s = re.sub(r'\s*<div class="order-wide">\s*(<form class="form" id="order-form".*?</form>)\s*</div>', lambda m: "\n      " + m.group(1), s, count=1, flags=re.S)
+if "/* نموذج الطلب العريض */" in s:
+    s = re.sub(r"\n?/\* نموذج الطلب العريض \*/.*?(?=</style>)", "", s, count=1, flags=re.S)
+s = re.sub(r"<script>\n/\* معرض الصور:.*?</script>\n", "", s, count=1, flags=re.S)
 head = s[:s.index('<div class="topbar">')]
 rest = s[s.index('<div class="topbar">'):]
 
@@ -177,6 +183,9 @@ GALLERY_JS = """<script>
 </script>
 """
 foot = re.sub(r"<script>\n// Galerie.*?</script>\n", lambda _: GALLERY_JS, foot, flags=re.S)
+if "معرض الصور" not in foot:
+    foot = foot.replace('<script>document.addEventListener("DOMContentLoaded",()=>{bootStore()', GALLERY_JS + '<script>document.addEventListener("DOMContentLoaded",()=>{bootStore()', 1)
+assert "معرض الصور" in foot
 foot = foot.replace('"anti-acne"', '"{{SLUG}}"')
 out = head + top + body + foot
 (root / "p/_template/index.html").write_text(out, encoding="utf-8")
