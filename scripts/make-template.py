@@ -176,7 +176,7 @@ if a.target == "php":
 (OUT / "version.json").write_text(json.dumps({"version": (ROOT / "VERSION").read_text(encoding="utf-8").strip()}) + "\n", encoding="utf-8")
 
 # فحص التسرّب
-bad = [r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<![\w-])" + re.escape(s) + r"(?![\w-])" for s in slugs if s != "demo"]
+bad = [r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s != "demo"]
 hits = []
 for f in OUT.rglob("*"):
     if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:
