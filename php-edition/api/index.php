@@ -382,6 +382,29 @@ switch ($route) {
         @rename($path, $path . '.used');
         out(200, ['ok' => true, 'version' => $ver]);
 
+    /* وسيط شركات التوصيل (إرسال الطرود وتتبع الحالات) — للمدير فقط. يمنع الوصول إلى عناوين داخلية (SSRF). */
+    case 'courier':
+        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $url = (string)($b['url'] ?? ''); $m = strtoupper((string)($b['method'] ?? 'GET'));
+        if (!in_array($m, ['GET', 'POST', 'PUT'], true)) out(400, ['error' => 'method']);
+        $pu = parse_url($url); $host = (string)($pu['host'] ?? ''); $sc = (string)($pu['scheme'] ?? '');
+        $localOk = !empty($cfg['allow_local_courier']) && in_array($host, ['127.0.0.1', 'localhost'], true) && $sc === 'http';
+        if ($host === '' || ($sc !== 'https' && !$localOk)) out(400, ['error' => 'insecure_url']);
+        $ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : gethostbyname($host);
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) out(400, ['error' => 'dns_failed']);
+        if (!$localOk && !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) out(400, ['error' => 'private_address']);
+        $hdr = [];
+        foreach ((array)($b['headers'] ?? []) as $k => $v) { if (is_string($k) && preg_match('/^[A-Za-z0-9-]{1,40}$/', $k) && !preg_match("/[\r\n]/", (string)$v)) $hdr[] = "$k: $v"; }
+        if (!function_exists('curl_init')) out(500, ['error' => 'curl_missing']);
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_TIMEOUT => 25, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_MAXFILESIZE => 2097152,
+            CURLOPT_USERAGENT => 'store-courier', CURLOPT_CUSTOMREQUEST => $m, CURLOPT_HTTPHEADER => $hdr, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2]);
+        if ($m !== 'GET' && isset($b['body'])) curl_setopt($ch, CURLOPT_POSTFIELDS, (string)$b['body']);
+        $resp = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE); curl_close($ch);
+        if ($resp === false) out(502, ['error' => 'upstream_failed']);
+        out(200, ['ok' => true, 'status' => $code, 'body' => substr((string)$resp, 0, 200000)]);
+
     case 'file':
         if (!$isAdmin) out(401, ['error' => 'unauthorized']);
         if ($method === 'GET') {
