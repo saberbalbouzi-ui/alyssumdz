@@ -5170,6 +5170,7 @@ const Admin = {
         { key:"fromWilayaName", label:"ولاية الانطلاق (مثال: Alger)", type:"text", required:false },
         { key:"extraJson", label:"حقول إضافية للطرد بصيغة JSON (اختياري، مثال: {\"can_open\":true})", type:"text", required:false },
         { key:"lastOrderNo", label:"آخر رقم طلب استُعمل في ياليدين (يتزايد تلقائياً)", type:"text", required:false },
+        { key:"askOrderNo", label:"اكتب «نعم» ليُسأل عن رقم الطلب قبل كل إرسال (لتعديله يدوياً)", type:"text", required:false },
       ],
       /* الحقول حسب توثيق Yalidine API v1 (POST /v1/parcels/): الأبعاد والوزن إلزامية، ومكتب Stop Desk يحتاج stopdesk_id */
       buildRequest(cfg, order){
@@ -5205,7 +5206,7 @@ const Admin = {
         return { url: this.base + "/v1/parcels/", method: "POST", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify([body]) };
       },
       /* مراكز Stop Desk الرسمية: GET /v1/centers/ ⟵ [{center_id, name, address, commune_name, wilaya_id}] */
-      lastParcelsRequest(cfg){ return { url: this.base + "/v1/parcels/?page_size=1000", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      lastParcelsRequest(cfg){ return { url: this.base + "/v1/parcels/?page_size=100", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       centersRequest(cfg, page){ return { url: this.base + "/v1/centers/?page_size=200&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       parseCenters(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r.center_id != null).map(r=>({ id: Number(r.center_id), name: String(r.name||""), address: String(r.address||""), commune: String(r.commune_name||""), wilaya_id: Number(r.wilaya_id) })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* ولايات ياليدين الرسمية (58، صفحة واحدة): GET /v1/wilayas/ ⟵ [{id, name, zone, is_deliverable}] */
@@ -5818,11 +5819,19 @@ const Admin = {
         if(!fix.ok){ this.askCommune(orderIndex, companyKey, fix); return false }
         ord = Object.assign({}, ord, { commune: fix.name });
       }
-      /* رقم الطلب في ياليدين يتبع آخر رقم عندها: الأكبر بين آخر رقم مسجَّل لدينا وآخر رقم رقمي في طرودها، +1 */
+      /* رقم الطلب في ياليدين يتبع آخر رقم عندها: «Mes colis — Total» (total_data) أو أكبر رقم رقمي ظاهر أو آخر رقم سجّلناه — الأكبر +1.
+         فإن أضفتَ طرداً يدوياً في ياليدين زاد المجموع وتلتقطه اللوحة تلقائياً. ويمكن تعديل الرقم قبل الإرسال (إعداد ياليدين ← «اسأل عن رقم الطلب»). */
       if(co.lastParcelsRequest){
-        let last = Number(cfg.lastOrderNo) || 0;
-        try{ const lr = await this.courierFetch(co.lastParcelsRequest(cfg)); if(lr.ok){ const arr = (JSON.parse(lr.text).data) || []; arr.forEach(x=>{ const n = Number(String(x.order_id||"").replace(/\D/g, "")); if(/^\d+$/.test(String(x.order_id||"")) && n > last) last = n; }); } }catch(e){}
-        ord = Object.assign({}, ord, { __ydId: String(last + 1) });
+        let last = Number(cfg.lastOrderNo) || 0, detected = 0;
+        try{ const lr = await this.courierFetch(co.lastParcelsRequest(cfg)); if(lr.ok){ const j = JSON.parse(lr.text); detected = Number(j.total_data) || 0; (j.data || []).forEach(x=>{ if(/^\d+$/.test(String(x.order_id||""))) detected = Math.max(detected, Number(x.order_id)); }); } }catch(e){}
+        let next = Math.max(last, detected) + 1;
+        if(/^(نعم|oui|yes|1|true)$/i.test(String(cfg.askOrderNo || "").trim())){
+          const v = prompt("رقم الطلب في ياليدين (الرقم التالي المقترح: " + next + ")", String(next));
+          if(v === null) return false;
+          if(!/^\d{1,12}$/.test(v.trim())){ toast("⚠️ أدخل رقماً صحيحاً"); return false }
+          next = Number(v.trim());
+        }
+        ord = Object.assign({}, ord, { __ydId: String(next) });
       }
       let cfg2 = cfg;
       if(co.wilayasRequest && cfg.fromWilayaName){                                    // ولاية الانطلاق بالاسم الرسمي
