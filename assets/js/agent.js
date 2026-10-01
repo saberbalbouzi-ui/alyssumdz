@@ -338,7 +338,7 @@ const Agent = (() => {
         TRAIN = r.ok ? await r.json() : null;
       } catch (e) { TRAIN = null; }
       const c = scopeCfg();
-      if (c && c.enabled !== false) await loadScriptOnce(base + "assets/js/agent-brain.js");
+      await loadScriptOnce(base + "assets/js/agent-brain.js");            // يلزم أيضاً لبحث المنتجات بالكلمات المفتاحية
       if (c && c.enabled !== false) applyIdentity();
     })();
     return __trainP;
@@ -357,6 +357,39 @@ const Agent = (() => {
       const r = AgentBrain.answer(t, c, BRAIN_CHUNKS || [], facts, lang);
       return r ? r.text : null;
     } catch (e) { return null; }
+  }
+
+  /* ── بحث المنتجات بالكلمات المفتاحية: يقرأ عنوان المنتج وحقل «كلمات مفتاحية للوكيل» (لوحة الإدارة ← تعديل المنتج) ووصفه،
+     ويقارن بعد تطبيع/تجذير عربي-فرنسي. لا يعتمد على قائمة ثابتة في الكود، فأي منتج جديد يُعرَف تلقائياً بكلماته. ── */
+  const PSCORE_MIN = 3;
+  let PIDX = null, PIDX_LEN = -1;
+  function productIndex() {
+    const list = (window.PRODUCTS || []).filter(p => p.active !== false && p.slug !== "test");
+    if (PIDX && PIDX_LEN === list.length) return PIDX;
+    const tk = s => new Set(AgentBrain.tokens(s || ""));
+    PIDX = list.map(p => ({ p, kw: tk(String(p.keywords || "").replace(/[,،;]/g, " ")), title: tk(p.title), slug: tk(String(p.slug).replace(/-/g, " ")), desc: tk(p.desc),
+      phrases: String(p.keywords || "").split(/[,،;\n]/).map(x => AgentBrain.norm(x)).filter(x => x.length > 3) }));
+    PIDX_LEN = list.length; return PIDX;
+  }
+  function searchProducts(text) {
+    if (!window.AgentBrain || !AgentBrain.tokens) return [];
+    const q = AgentBrain.tokens(text), nq = AgentBrain.norm(text);
+    if (!q.length) return [];
+    const scored = productIndex().map(e => {
+      let sc = 0, strong = 0;
+      new Set(q).forEach(t => { if (e.kw.has(t) || e.title.has(t)) { sc += 3; strong++; } else if (e.slug.has(t)) { sc += 2; strong++; } else if (e.desc.has(t)) sc += 1; });
+      e.phrases.forEach(ph => { if (nq.includes(ph)) sc += 4; });               // عبارة مفتاحية كاملة وردت في السؤال
+      if (currentSlug && e.p.slug === currentSlug && sc > 0) sc += 1.5;        // الأفضلية للمنتج المعروض في الصفحة
+      return { p: e.p, sc, strong };
+    }).filter(x => x.sc >= PSCORE_MIN && x.strong > 0).sort((a, b) => b.sc - a.sc);
+    return scored;
+  }
+  function productsReply(found, l) {
+    const top = found[0], rest = found.slice(1).filter(x => x.sc >= Math.max(PSCORE_MIN, top.sc * 0.65)).slice(0, 2);
+    if (!rest.length) return productPitch(top.p, l);
+    const intro = l === "fr" ? "Voici les produits qui correspondent à votre besoin :" : "هذه المنتجات المناسبة لطلبك 👇";
+    const more = l === "fr" ? "Dites-moi lequel vous intéresse et je vous explique tout 🌿" : "قل لي أيّها يهمّك وأشرح لك التفاصيل 🌿";
+    return `${intro}<br>` + [top].concat(rest).map(x => productCard(x.p, l)).join("<br>") + `<br>${more}`;
   }
 
   function findProductByText(text) {
@@ -487,6 +520,8 @@ const Agent = (() => {
       if (it.key === "whatsapp") return tr.whatsapp();
       if (it.key) return tr[it.key]();
       if (it.act) {
+        const found = searchProducts(t);                        // بحث بالكلمات المفتاحية أولاً، والنية الثابتة احتياط
+        if (found.length) return productsReply(found, l);
         const p = (window.PRODUCTS || []).find(p => p.slug === it.act);
         if (p) return productPitch(p, l);
       }
@@ -500,6 +535,10 @@ const Agent = (() => {
     // ذكر اسم منتج صراحةً → نعرّف به
     const byName = findProductByText(t);
     if (byName) return productPitch(byName, l);
+
+    // لا نية مطابقة: ابحث في كلمات المنتجات المفتاحية (مثل «عسل للأطفال» أو «شيء للذاكرة»)
+    const byKw = searchProducts(t);
+    if (byKw.length) return productsReply(byKw, l);
 
     // لم نفهم السؤال: اعتذار + أسئلة افتراضية، ويُسجَّل السؤال لتجيب عليه لاحقاً من لوحة الإدارة
     return NOT_UNDERSTOOD;

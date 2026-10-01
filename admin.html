@@ -718,6 +718,9 @@ tr:hover td{background:#FAF7F0}
         <input id="f-stock" type="number" min="0" placeholder="الكمية المتوفرة في المخزون (اتركه فارغاً لعدم تتبع المخزون)">
         <div class="hint">إذا تُرك فارغاً، يبقى المنتج متاحاً دائماً بدون تتبع كمية. إذا وصلت الكمية لـ 0 يظهر "نفدت الكمية" في الموقع ويُعطَّل الطلب تلقائياً.</div>
         <textarea id="f-desc" rows="3" placeholder="وصف مختصر"></textarea>
+        <div class="section-title">🤖 كلمات مفتاحية للوكيل الذكي</div>
+        <textarea id="f-keywords" rows="2" placeholder="كلمات وعبارات يسأل بها الزبائن عن هذا المنتج، مفصولة بفاصلة — مثال: تركيز الاطفال, ذاكرة, الدراسة, miel concentration"></textarea>
+        <div class="hint">الوكيل يقترح هذا المنتج عندما يطابق سؤال الزبون أي من هذه الكلمات (عربي/دارجة/فرنسي). كلما كانت أدق ومتنوعة كان الاقتراح أصح.</div>
         <div class="section-title">SEO (اختياري)</div>
         <input id="f-seo-title" placeholder="عنوان SEO مخصص (title) — اتركه فارغاً لاستخدام عنوان الصفحة الحالي">
         <textarea id="f-seo-desc" rows="2" placeholder="وصف SEO مخصص (meta description) — اتركه فارغاً لاستخدام الوصف الحالي"></textarea>
@@ -2254,6 +2257,7 @@ const Admin = {
     $f("f-freeship").checked = !!(src && src.freeShip);
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
+    $f("f-keywords").value = src?(src.keywords||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
     this.fillProductTypeUI(src);
     this.renderImagesPreview();
@@ -2760,7 +2764,7 @@ const Admin = {
       desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
       stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
       freeShip: $f("f-freeship").checked,
-      seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(),
+      seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(), keywords: $f("f-keywords").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
     if(prevP && prevP.pageMode) out.pageMode = prevP.pageMode; // نوع الصفحة (افتراضية/مولّدة) لا يُفقد عند حفظ المنتج
@@ -2879,6 +2883,7 @@ const Admin = {
     $f("f-stock").value = "";
     $f("f-seo-title").value = p.seoTitle||"";
     $f("f-seo-desc").value = p.seoDesc||"";
+    if($f("f-keywords")) $f("f-keywords").value = p.keywords||"";
     this.renderOffersRows(p.offers||[]);
     this.fillProductTypeUI(p);
     this.renderImagesPreview();
