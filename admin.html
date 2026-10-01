@@ -1649,6 +1649,7 @@ const Admin = {
     this.loadDeliveryCfg();
     this.loadBlacklist();
     this.startAlerts();
+    fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadCheckoutSettings()]);
     this.renderAll();
     toast("✓ تم التحميل");

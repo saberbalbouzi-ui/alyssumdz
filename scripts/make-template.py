@@ -12,9 +12,33 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--out", default="dist/template")
 ap.add_argument("--name", default="اسم متجرك")
 ap.add_argument("--wa", default="213000000000")
+ap.add_argument("--update", action="store_true", help="مع --target php: حزمة تحديث تحوي الكود فقط ولا تمسّ بيانات الزبون")
 ap.add_argument("--target", choices=["github", "php"], default="github", help="github: القالب الحالي (Supabase+GitHub) | php: حزمة للاستضافة العادية")
 a = ap.parse_args()
 OUT = (ROOT / a.out).resolve()
+if a.update:
+    if a.target != "php": sys.exit("--update يتطلب --target php")
+    import subprocess, tempfile
+    tmp = ROOT / "dist" / ("_upd_" + OUT.name)
+    r = subprocess.run([sys.executable, __file__, "--target", "php", "--out", str(tmp.relative_to(ROOT)), "--name", a.name, "--wa", a.wa], capture_output=True, text=True)
+    if r.returncode != 0: print(r.stdout, r.stderr); sys.exit("فشل توليد الحزمة (فحص التسرّب؟)")
+    if OUT.exists(): shutil.rmtree(OUT)
+    keep = ["admin.html", "assets/css/style.css", "assets/js/app.js", "assets/js/api.js", "assets/js/agent.js", "assets/js/agent-brain.js", "api/index.php", "p/_template/index.html", "version.json"]
+    for rel in keep:
+        (OUT / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(tmp / rel, OUT / rel)
+    upd = (ROOT / "php-edition/update.php").read_text(encoding="utf-8").replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
+    (OUT / "update.php").write_text(upd, encoding="utf-8")
+    shutil.rmtree(tmp)
+    ver = json.loads((OUT / "version.json").read_text())["version"]
+    (OUT / "README-UPDATE.txt").write_text(f"""تحديث الموقع إلى الإصدار {ver}
+
+1) ارفع محتوى هذا المجلد فوق ملفات الموقع في الاستضافة واقبل استبدال الملفات المتشابهة.
+2) سجّل الدخول من admin.html كمدير، ثم افتح https://نطاقك/update.php (مرة واحدة، يحذف نفسه).
+لا يمسّ هذا التحديث: كلمة المرور، الطلبات، المنتجات، الصور، الإعدادات، رسوم التوصيل.
+احتفظ بنسخة احتياطية من مجلد الموقع قبل التحديث.
+""", encoding="utf-8")
+    print(f"✅ حزمة تحديث الإصدار {ver}:", OUT, "—", len(keep) + 2, "ملفاً")
+    sys.exit(0)
 if ROOT not in OUT.parents:
     sys.exit("المسار يجب أن يكون داخل المستودع")
 
@@ -148,6 +172,8 @@ if a.target == "php":
 النسخ الاحتياطي: انسخ مجلد الموقع كاملاً (يشمل `api/_data` الذي فيه الطلبات).
 """, encoding="utf-8")
     print("🔑 رمز التثبيت (سلّمه للمشتري فقط، لا يُحفظ في أي ملف):", code)
+
+(OUT / "version.json").write_text(json.dumps({"version": (ROOT / "VERSION").read_text(encoding="utf-8").strip()}) + "\n", encoding="utf-8")
 
 # فحص التسرّب
 bad = [r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<![\w-])" + re.escape(s) + r"(?![\w-])" for s in slugs if s != "demo"]
