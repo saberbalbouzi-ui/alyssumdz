@@ -309,6 +309,7 @@ tr:hover td{background:#FAF7F0}
         <label class="hint" style="margin:0">تكلفة التوصيل الفعلية = % من رسوم الجدول<input id="fin-carrier" type="number" min="0" max="300" placeholder="100"></label>
         <label class="hint" style="margin:0">رسوم الإرجاع = % من رسم التوصيل<input id="fin-return" type="number" min="0" max="300" placeholder="100"></label>
         <label class="hint" style="margin:0">حدّ التنبيه لانخفاض المخزون (قطع)<input id="fin-low" type="number" min="0" placeholder="5"></label>
+        <label class="hint" style="margin:0">تكلفة التأمين الفعلية = % من نسبة ياليدين (فواتيرك الحالية: 0)<input id="fin-ins" type="number" min="0" max="100" placeholder="0"></label>
       </div>
       <button class="small gold" onclick="Admin.saveFinSettings()">💾 حفظ</button>
     </div>
@@ -4383,11 +4384,11 @@ const Admin = {
   /* ════════ المخزون الحي + الأرباح الحقيقية ════════
      المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
      علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
-  fin: { costs:{}, set:{ packaging:0, carrierPct:100, returnPct:100, low:5 }, cfg:{ since:null }, log:[] },
+  fin: { costs:{}, set:{ packaging:0, carrierPct:100, returnPct:100, low:5, insPct:0 }, cfg:{ since:null }, log:[] },
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
     this.ydFees = (await Priv.get("ydfees", {})) || {};
-    this.fin = { costs: costs || {}, set: Object.assign({ packaging:0, carrierPct:100, returnPct:100, low:5 }, set || {}), cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    this.fin = { costs: costs || {}, set: Object.assign({ packaging:0, carrierPct:100, returnPct:100, low:5, insPct:0 }, set || {}), cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     this.reconcileStatusChanges();
   },
@@ -4481,7 +4482,7 @@ const Admin = {
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    this.fin.set = { packaging: n("fin-pack", 0), carrierPct: n("fin-carrier", 100), returnPct: n("fin-return", 100), low: n("fin-low", 5) };
+    this.fin.set = { packaging: n("fin-pack", 0), carrierPct: n("fin-carrier", 100), returnPct: n("fin-return", 100), low: n("fin-low", 5), insPct: n("fin-ins", 0) };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
   /* تكاليف ياليدين الحقيقية لطلب (من /v1/fees المخزَّنة): توصيل بالبلدية، رسم الإرجاع، نسبة COD، نسبة التأمين. null إن لم تُجلب بعد */
@@ -4528,7 +4529,7 @@ const Admin = {
       if(!["livree","echec","confirmee","expediee"].includes(o.status)) return;
       const lines = this.orderLines(o); if(!lines.length) return;
       const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, est = this.carrierCost(o), real = this.realFees(o), price = Math.max(0, (Number(o.total) || 0) - fee), pack = S.packaging,
-        useReal = !!(real && real.delivery != null), car = useReal ? real.delivery + Math.round(price * real.cod / 100) + Math.round(price * real.ins / 100) : est,
+        useReal = !!(real && real.delivery != null), car = useReal ? real.delivery + Math.round(price * real.cod / 100) + Math.round(price * real.ins / 100 * (Number(S.insPct) || 0) / 100) : est,
         ret = useReal ? real.retour : Math.round(est * S.returnPct / 100);
       K.realN = (K.realN || 0) + (useReal ? 1 : 0); K.estN = (K.estN || 0) + (useReal ? 0 : 1);
       lines.forEach(l=>{
@@ -4549,14 +4550,14 @@ const Admin = {
     if(!$f("fin-table")) return;
     if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
     const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
-    $f("fin-pack").value = S.packaging; $f("fin-carrier").value = S.carrierPct; $f("fin-return").value = S.returnPct; $f("fin-low").value = S.low;
+    $f("fin-pack").value = S.packaging; $f("fin-carrier").value = S.carrierPct; $f("fin-return").value = S.returnPct; $f("fin-low").value = S.low; $f("fin-ins").value = S.insPct || 0;
     const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
     this.orders.forEach(o=>{ if(!["confirmee","expediee","livree"].includes(o.status) || !(new Date(o.date).getTime() >= since14)) return; this.orderLines(o).forEach(l=>{ sold14[l.p.slug] = (sold14[l.p.slug] || 0) + l.qty; }); });
     const pend = {}; this.orders.forEach(o=>{ if(o.status === "nouvelle") this.orderLines(o).forEach(l=>{ pend[l.p.slug] = (pend[l.p.slug] || 0) + l.qty; }); });
     const active = this.products.filter(p=>p.slug !== "test");
     const missing = active.filter(p=>p.active !== false && this.fin.costs[p.slug] == null).length;
     const done = K.delivered + K.failed, margin = K.revenue ? Math.round(K.real / K.revenue * 100) : 0;
-    const srcNote = (K.realN || K.estN) ? " التكاليف: " + (K.realN || 0) + " طلب بأرقام ياليدين الحقيقية (توصيل البلدية + COD + تأمين + رسم الإرجاع)" + (K.estN ? " و" + K.estN + " بتقدير من جدول الرسوم" : "") + "." : "";
+    const srcNote = (K.realN || K.estN) ? " التكاليف: " + (K.realN || 0) + " طلب بأرقام ياليدين الحقيقية (توصيل البلدية + COD + رسم الإرجاع)" + (K.estN ? " و" + K.estN + " بتقدير من جدول الرسوم" : "") + "." : "";
     $f("fin-note").textContent = srcNote + " تتبّع المخزون التلقائي للطلبات منذ " + new Date(this.fin.cfg.since).toLocaleDateString("ar-DZ") + " — الطلبات الأقدم لا تُخصم. الربح المحقق = طلبات سُلّمت − طلبات فشلت (توصيل + إرجاع + تغليف).";
     $f("fin-kpi").innerHTML = '<div><b style="color:' + (K.real >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(K.real) + ' دج</b><span>صافي الربح المحقق</span></div>' +
       '<div><b>' + nf(K.exp) + ' دج</b><span>ربح متوقع (قيد التوصيل: ' + K.open + ')</span></div>' +
