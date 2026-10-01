@@ -296,6 +296,7 @@ tr:hover td{background:#FAF7F0}
         <b style="color:var(--green)">💼 المخزون والأرباح</b>
         <select id="fin-period" onchange="Admin.renderFinance()"><option value="7">آخر 7 أيام</option><option value="30" selected>آخر 30 يوماً</option><option value="90">آخر 90 يوماً</option><option value="0">كل الفترة</option></select>
         <button class="small gold" type="button" onclick="Admin.publishStockNow()">⬆️ نشر المخزون على الموقع الآن</button>
+        <button class="small blue" type="button" onclick="Admin.ensureYdFees(Number($f('fin-period').value)||0, true)" title="يجلب من ياليدين تعريفة التوصيل والإرجاع والتأمين الحقيقية لولايات طلباتك">💰 تحديث تكاليف ياليدين</button>
       </div>
       <div class="hint" id="fin-note"></div>
     </div>
@@ -4385,6 +4386,7 @@ const Admin = {
   fin: { costs:{}, set:{ packaging:0, carrierPct:100, returnPct:100, low:5 }, cfg:{ since:null }, log:[] },
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
+    this.ydFees = (await Priv.get("ydfees", {})) || {};
     this.fin = { costs: costs || {}, set: Object.assign({ packaging:0, carrierPct:100, returnPct:100, low:5 }, set || {}), cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     this.reconcileStatusChanges();
@@ -4482,6 +4484,36 @@ const Admin = {
     this.fin.set = { packaging: n("fin-pack", 0), carrierPct: n("fin-carrier", 100), returnPct: n("fin-return", 100), low: n("fin-low", 5) };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
+  /* تكاليف ياليدين الحقيقية لطلب (من /v1/fees المخزَّنة): توصيل بالبلدية، رسم الإرجاع، نسبة COD، نسبة التأمين. null إن لم تُجلب بعد */
+  fromWilayaId(){
+    const co = this.allDeliveryCompanies().yalidine, cfg = this.deliveryCfg.yalidine || {}, want = this.normName(cfg.fromWilayaName || "Alger");
+    const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>this.normName(x.name) === want) : null; return w ? w.id : 16;
+  },
+  realFees(o){
+    const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null; if(!w || !this.ydFees) return null;
+    const f = this.ydFees[this.fromWilayaId() + "-" + w.id]; if(!f) return null;
+    const c = f.pc[this.normName(o.commune)] || null;
+    const delivery = c ? (o.dtype === "stop" && c.d != null ? c.d : c.h) : null;
+    return { delivery: delivery != null ? delivery : null, retour: f.retour, cod: f.cod, ins: f.ins };
+  },
+  async ensureYdFees(days, force){
+    const cfg = this.deliveryCfg.yalidine, co = this.allDeliveryCompanies().yalidine;
+    if(!co || !co.feesDetailRequest || !cfg || !(cfg.apiId || cfg.apiToken) || this._feesBusy) return;
+    const since = days > 0 ? Date.now() - days * 86400000 : 0, from = this.fromWilayaId(), need = new Set();
+    this.orders.forEach(o=>{ if(!["livree","echec","confirmee","expediee"].includes(o.status)) return; if(since && !(new Date(o.date).getTime() >= since)) return;
+      const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null; if(!w) return;
+      const k = from + "-" + w.id, f = this.ydFees[k]; if(force || !f || Date.now() - f.ts > 30 * 86400000) need.add(w.id); });
+    if(!need.size) return;
+    this._feesBusy = true; let got = 0;
+    try{
+      for(const to of need){
+        try{ const r = await this.courierFetch(co.feesDetailRequest(cfg, from, to)); if(r.ok){ const d = co.parseFeesDetail(JSON.parse(r.text)); if(d){ this.ydFees[from + "-" + to] = d; got++; } } }catch(e){ if(e.cors){ break } }
+        await new Promise(res=>setTimeout(res, 150));
+      }
+      if(got){ await Priv.set("ydfees", this.ydFees); }
+    } finally { this._feesBusy = false; }
+    if(got) this.renderFinance(true);
+  },
   carrierCost(o){
     const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null;
     const base = w ? (o.dtype === "stop" ? w.stop : w.home) : (Number(o.fee) || 0);
@@ -4495,11 +4527,14 @@ const Admin = {
       const t = new Date(o.date).getTime(); if(since && !(t >= since)) return;
       if(!["livree","echec","confirmee","expediee"].includes(o.status)) return;
       const lines = this.orderLines(o); if(!lines.length) return;
-      const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, car = this.carrierCost(o), pack = S.packaging, ret = Math.round(car * S.returnPct / 100);
+      const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, est = this.carrierCost(o), real = this.realFees(o), price = Math.max(0, (Number(o.total) || 0) - fee), pack = S.packaging,
+        useReal = !!(real && real.delivery != null), car = useReal ? real.delivery + Math.round(price * real.cod / 100) + Math.round(price * real.ins / 100) : est,
+        ret = useReal ? real.retour : Math.round(est * S.returnPct / 100);
+      K.realN = (K.realN || 0) + (useReal ? 1 : 0); K.estN = (K.estN || 0) + (useReal ? 0 : 1);
       lines.forEach(l=>{
         const share = (sum === lines.length && !lines.reduce((a,x)=>a + x.total, 0)) ? 1 / lines.length : l.total / sum, r = row(l.p);
         const cost = Number(this.fin.costs[l.p.slug]) || 0;
-        if(o.status === "echec"){ const loss = Math.round((car + ret + pack) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
+        if(o.status === "echec"){ const loss = Math.round(((useReal ? 0 : car) + ret + pack) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
         else{
           const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), pr = rev - cogs - del - pk;
           if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.profit += pr; K.real += pr; K.revenue += rev; }
@@ -4510,8 +4545,9 @@ const Admin = {
     });
     return { per, K };
   },
-  renderFinance(){
+  renderFinance(noFetch){
     if(!$f("fin-table")) return;
+    if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
     const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
     $f("fin-pack").value = S.packaging; $f("fin-carrier").value = S.carrierPct; $f("fin-return").value = S.returnPct; $f("fin-low").value = S.low;
     const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
@@ -4520,7 +4556,8 @@ const Admin = {
     const active = this.products.filter(p=>p.slug !== "test");
     const missing = active.filter(p=>p.active !== false && this.fin.costs[p.slug] == null).length;
     const done = K.delivered + K.failed, margin = K.revenue ? Math.round(K.real / K.revenue * 100) : 0;
-    $f("fin-note").textContent = "تتبّع المخزون التلقائي للطلبات منذ " + new Date(this.fin.cfg.since).toLocaleDateString("ar-DZ") + " — الطلبات الأقدم لا تُخصم. الربح المحقق = طلبات سُلّمت − طلبات فشلت (توصيل + إرجاع + تغليف).";
+    const srcNote = (K.realN || K.estN) ? " التكاليف: " + (K.realN || 0) + " طلب بأرقام ياليدين الحقيقية (توصيل البلدية + COD + تأمين + رسم الإرجاع)" + (K.estN ? " و" + K.estN + " بتقدير من جدول الرسوم" : "") + "." : "";
+    $f("fin-note").textContent = srcNote + " تتبّع المخزون التلقائي للطلبات منذ " + new Date(this.fin.cfg.since).toLocaleDateString("ar-DZ") + " — الطلبات الأقدم لا تُخصم. الربح المحقق = طلبات سُلّمت − طلبات فشلت (توصيل + إرجاع + تغليف).";
     $f("fin-kpi").innerHTML = '<div><b style="color:' + (K.real >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(K.real) + ' دج</b><span>صافي الربح المحقق</span></div>' +
       '<div><b>' + nf(K.exp) + ' دج</b><span>ربح متوقع (قيد التوصيل: ' + K.open + ')</span></div>' +
       '<div><b>' + (done ? Math.round(K.delivered / done * 100) : 0) + '%</b><span>نسبة التسليم (' + K.delivered + ' / ' + done + ')</span></div>' +
@@ -5214,6 +5251,14 @@ const Admin = {
       },
       /* مراكز Stop Desk الرسمية: GET /v1/centers/ ⟵ [{center_id, name, address, commune_name, wilaya_id}] */
       lastParcelsRequest(cfg){ return { url: this.base + "/v1/parcels/?page_size=100", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      /* التكاليف الحقيقية: GET /v1/fees/?from_wilaya_id=&to_wilaya_id= ⟵ {retour_fee, cod_percentage, insurance_percentage, per_commune:{id:{commune_name, express_home, express_desk}}} */
+      feesDetailRequest(cfg, fromId, toId){ return { url: this.base + "/v1/fees/?from_wilaya_id=" + fromId + "&to_wilaya_id=" + toId, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      parseFeesDetail(json){
+        if(!json || !json.per_commune) return null;
+        const pc = {}; Object.values(json.per_commune).forEach(c=>{ const h = Number(c.express_home), d = Number(c.express_desk);
+          pc[String(c.commune_name||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"")] = { h: isFinite(h) && c.express_home != null ? h : null, d: isFinite(d) && c.express_desk != null ? d : null }; });
+        return { retour: Number(json.retour_fee) || 0, cod: Number(json.cod_percentage) || 0, ins: Number(json.insurance_percentage) || 0, pc, ts: Date.now() };
+      },
       centersRequest(cfg, page){ return { url: this.base + "/v1/centers/?page_size=200&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       parseCenters(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r.center_id != null).map(r=>({ id: Number(r.center_id), name: String(r.name||""), address: String(r.address||""), commune: String(r.commune_name||""), wilaya_id: Number(r.wilaya_id) })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* ولايات ياليدين الرسمية (58، صفحة واحدة): GET /v1/wilayas/ ⟵ [{id, name, zone, is_deliverable}] */
