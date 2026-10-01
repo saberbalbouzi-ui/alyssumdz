@@ -69,18 +69,74 @@ const API = {
 
   submitOrder(order) { this.post({ type: "order", order }); },
 
-  /* ── تتبّع الزيارات والمشاهدين الآن وأسئلة الوكيل (تتطلب apps-script/Code-additions.gs في السكربت) ── */
+  /* ── تتبّع الزيارات والمشاهدين الآن وأسئلة الوكيل ──
+     الأولوية لـ Supabase إن ضُبط (SUPABASE_URL + SUPABASE_ANON_KEY)، وإلا Apps Script (apps-script/Code-additions.gs). */
   visitorId() {
     try { let v = localStorage.getItem("alyssum_vid"); if (!v) { v = Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem("alyssum_vid", v); localStorage.setItem("alyssum_vid_new", "1"); } return v; }
     catch (e) { return "anon" + Math.random().toString(36).slice(2, 8); }
   },
-  hit(page) { let isNew = false; try { isNew = localStorage.getItem("alyssum_vid_new") === "1"; localStorage.removeItem("alyssum_vid_new"); } catch (e) {} this.post({ type: "hit", page, vid: this.visitorId(), isNew }); },
-  ping(page) { this.post({ type: "ping", page, vid: this.visitorId() }); },
-  logQuestion(q, page, lang) { this.post({ type: "agent_question", q, page, lang }); },
-  questions(key) { return this.get("agent_questions", { key }); },
-  resolveQuestion(key, id) { this.post({ type: "resolve_question", key, id }); },
-  presence(key) { return this.get("presence", { key }); },
-  analytics(key) { return this.get("analytics", { key }); },
+  sb: {
+    enabled() { return typeof CONFIG !== "undefined" && !!CONFIG.SUPABASE_URL && !!CONFIG.SUPABASE_ANON_KEY; },
+    url(path) { return CONFIG.SUPABASE_URL.replace(/\/$/, "") + path; },
+    session() { try { return JSON.parse(localStorage.getItem("alyssum_sb_session") || "null"); } catch (e) { return null; } },
+    saveSession(r) { try { if (!r) { localStorage.removeItem("alyssum_sb_session"); return; } localStorage.setItem("alyssum_sb_session", JSON.stringify({ access_token: r.access_token, refresh_token: r.refresh_token, expires_at: Date.now() + (Number(r.expires_in) || 3600) * 1000 - 60000, email: (r.user && r.user.email) || "" })); } catch (e) {} },
+    headers(auth) { const h = { "Content-Type": "application/json", apikey: CONFIG.SUPABASE_ANON_KEY }; if (auth) h.Authorization = "Bearer " + auth; return h; },
+    /* استدعاء دالة للزوار (بدون تسجيل دخول) — لا ننتظر الرد ولا نكسر الصفحة أبداً */
+    publicRpc(name, args) { try { fetch(this.url("/rest/v1/rpc/" + name), { method: "POST", headers: this.headers(), body: JSON.stringify(args), keepalive: true }).catch(() => {}); } catch (e) {} },
+    async signIn(email, password) {
+      const r = await fetch(this.url("/auth/v1/token?grant_type=password"), { method: "POST", headers: this.headers(), body: JSON.stringify({ email, password }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.access_token) throw new Error(j.error_description || j.msg || ("فشل الدخول (" + r.status + ")"));
+      this.saveSession(j); return j;
+    },
+    signOut() { this.saveSession(null); },
+    async token() {                                   // توكن المدير (مع تجديد تلقائي)
+      const s = this.session(); if (!s) return null;
+      if (Date.now() < s.expires_at) return s.access_token;
+      try {
+        const r = await fetch(this.url("/auth/v1/token?grant_type=refresh_token"), { method: "POST", headers: this.headers(), body: JSON.stringify({ refresh_token: s.refresh_token }) });
+        const j = await r.json(); if (!r.ok || !j.access_token) { this.saveSession(null); return null; }
+        this.saveSession(j); return j.access_token;
+      } catch (e) { return null; }
+    },
+    async adminFetch(path, opts) {
+      const t = await this.token(); if (!t) return null;
+      try { const r = await fetch(this.url(path), Object.assign({ headers: this.headers(t) }, opts || {})); if (!r.ok) return null; const txt = await r.text(); return txt ? JSON.parse(txt) : {}; } catch (e) { return null; }
+    },
+  },
+  hit(page) {
+    let isNew = false; try { isNew = localStorage.getItem("alyssum_vid_new") === "1"; localStorage.removeItem("alyssum_vid_new"); } catch (e) {}
+    if (this.sb.enabled()) return this.sb.publicRpc("track_hit", { p_page: page, p_vid: this.visitorId(), p_new: isNew });
+    this.post({ type: "hit", page, vid: this.visitorId(), isNew });
+  },
+  ping(page) {
+    if (this.sb.enabled()) return this.sb.publicRpc("track_ping", { p_page: page, p_vid: this.visitorId() });
+    this.post({ type: "ping", page, vid: this.visitorId() });
+  },
+  logQuestion(q, page, lang) {
+    if (this.sb.enabled()) return this.sb.publicRpc("log_question", { p_q: q, p_page: page, p_lang: lang });
+    this.post({ type: "agent_question", q, page, lang });
+  },
+  /* قراءات المدير: نفس شكل الردود القديمة ({ok:true,...}) فلا تتغيّر لوحة التحكم */
+  async questions(key) {
+    if (!this.sb.enabled()) return this.get("agent_questions", { key });
+    const rows = await this.sb.adminFetch("/rest/v1/agent_questions?status=eq.new&order=count.desc&select=id,question,count,pages,lang,last_at");
+    return rows ? { ok: true, questions: rows.map(r => ({ id: r.id, q: r.question, count: r.count, pages: r.pages || [], lang: r.lang, last: r.last_at })) } : null;
+  },
+  resolveQuestion(key, id) {
+    if (!this.sb.enabled()) return this.post({ type: "resolve_question", key, id });
+    this.sb.adminFetch("/rest/v1/agent_questions?id=eq." + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ status: "done" }) });
+  },
+  async presence(key) {
+    if (!this.sb.enabled()) return this.get("presence", { key });
+    const r = await this.sb.adminFetch("/rest/v1/rpc/admin_presence", { method: "POST", body: "{}" });
+    return r ? Object.assign({ ok: true }, r) : null;
+  },
+  async analytics(key) {
+    if (!this.sb.enabled()) return this.get("analytics", { key });
+    const r = await this.sb.adminFetch("/rest/v1/rpc/admin_analytics", { method: "POST", body: "{}" });
+    return r ? Object.assign({ ok: true }, r) : null;
+  },
 
   /* ── لوحة التحكم ── */
   async orders(key) { return this.get("orders", { key }); },

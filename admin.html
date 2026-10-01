@@ -130,6 +130,7 @@ tr:hover td{background:#FAF7F0}
   <div class="top">
     <h1>🌿 لوحة تحكم أليسوم</h1>
     <span id="live-now" class="live-pill" title="المشاهدون الآن على الموقع (حقيقي)">⚪ المشاهدون الآن: …</span>
+    <button class="small gray hidden" id="sb-btn" onclick="Admin.openSb()">🔐 Supabase</button>
     <span id="pending-badge"></span>
     <button class="small blue" onclick="Admin.previewHome()">🏠 تعديل الصفحة الرئيسية</button>
     <button class="logout" onclick="Admin.logout()">خروج</button>
@@ -507,7 +508,7 @@ tr:hover td{background:#FAF7F0}
       <div id="aq-list"></div>
     </div>
     <div class="card hidden" id="aq-hint" style="background:#f7f5ef">
-      <small>ℹ️ تسجيل أسئلة الزبائن غير المفهومة غير مفعّل بعد: ألصق محتوى <code>apps-script/Code-additions.gs</code> في مشروع Apps Script (التعليمات في أعلى الملف) ثم أعد نشره.</small>
+      <small>ℹ️ تسجيل أسئلة الزبائن غير المفهومة غير مفعّل بعد: إمّا فعّل <b>Supabase</b> (شغّل <code>supabase/schema.sql</code> ثم اضغط «🔐 Supabase» أعلى اللوحة لتسجيل الدخول)، أو ألصق <code>apps-script/Code-additions.gs</code> في Apps Script.</small>
     </div>
     <div class="card" id="at-card">
       <b style="color:var(--green)">🎓 تدريب الوكيل الذكي لكل صفحة</b>
@@ -694,6 +695,22 @@ tr:hover td{background:#FAF7F0}
     <div class="action-bar">
       <button class="small gold" onclick="Admin.savePixel()">💾 حفظ ونشر</button>
       <button class="small gray" onclick="document.getElementById('pixel-modal-bg').classList.remove('open')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة دخول Supabase (مدير الإحصاءات وأسئلة الوكيل) -->
+<div class="modal-bg" id="sb-modal-bg">
+  <div class="modal">
+    <h3>🔐 دخول Supabase</h3>
+    <div class="hint" style="margin-top:0">حساب المدير الذي أنشأته في Supabase ← Authentication ← Users (وأضفت بريده لجدول admins). تُحفظ الجلسة في هذا المتصفح فقط.</div>
+    <input id="sb-email" type="email" dir="ltr" placeholder="البريد الإلكتروني" autocomplete="username">
+    <input id="sb-pass" type="password" dir="ltr" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter')Admin.sbLogin()">
+    <div id="sb-msg" class="hint" style="color:#b33"></div>
+    <div class="action-bar">
+      <button class="small gold" onclick="Admin.sbLogin()">دخول</button>
+      <button class="small warn hidden" id="sb-out" onclick="Admin.sbLogout()">تسجيل الخروج</button>
+      <button class="small gray" onclick="document.getElementById('sb-modal-bg').classList.remove('open')">إغلاق</button>
     </div>
   </div>
 </div>
@@ -1481,14 +1498,29 @@ const Admin = {
   },
   beep(){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = .06; o.start(); setTimeout(()=>{ o.stop(); a.close(); }, 220); }catch(e){} },
   setBadge(id, n){ const el = $f(id); if(!el) return; el.textContent = n > 99 ? "99+" : n; el.classList.toggle("hidden", !(n > 0)); },
+  sbSession(){ return API.sb.enabled() && !!API.sb.session(); },
+  openSb(){
+    const ses = API.sb.session();
+    $f("sb-email").value = ses ? ses.email : ""; $f("sb-pass").value = ""; $f("sb-msg").textContent = ses ? "✅ متصل كـ " + ses.email : "";
+    $f("sb-out").classList.toggle("hidden", !ses);
+    $f("sb-modal-bg").classList.add("open");
+  },
+  async sbLogin(){
+    try{ $f("sb-msg").textContent = "⏳ جارِ الدخول..."; await API.sb.signIn($f("sb-email").value.trim(), $f("sb-pass").value);
+      $f("sb-modal-bg").classList.remove("open"); toast("✅ تم الاتصال بـ Supabase"); this.refreshAlerts(); this.refreshLive();
+    }catch(err){ $f("sb-msg").textContent = "❌ " + err.message; }
+  },
+  sbLogout(){ API.sb.signOut(); $f("sb-modal-bg").classList.remove("open"); this.refreshLive(); toast("تم تسجيل الخروج من Supabase"); },
   async refreshLive(){
     const el = $f("live-now"); if(!el || !CONFIG.API_URL) return;
     const r = await API.presence(this.key);
     if(r && r.ok){ el.textContent = "🟢 " + r.now + " يشاهدون الآن"; el.classList.add("on"); this.liveNow = r; }
-    else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = "ألصق apps-script/Code-additions.gs في Apps Script لتفعيل العدّاد الحقيقي"; }
+    else if(API.sb.enabled() && !API.sb.session()){ el.textContent = "🔐 سجّل دخول Supabase"; el.classList.remove("on"); el.style.cursor = "pointer"; el.onclick = ()=>this.openSb(); }
+    else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = API.sb.enabled() ? "تعذّر قراءة Supabase — تأكد من تشغيل supabase/schema.sql وإضافة بريدك لجدول admins" : "ألصق apps-script/Code-additions.gs أو فعّل Supabase لتفعيل العدّاد الحقيقي"; }
   },
   async refreshAlerts(){
     if(!this.key || !CONFIG.API_URL) return;
+    $f('sb-btn').classList.toggle('hidden', !API.sb.enabled());
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
       const changed = o.orders.length !== this.orders.length;
@@ -1523,7 +1555,7 @@ const Admin = {
     const box = $f("analytics-visits"), tbl = $f("analytics-pages");
     box.innerHTML = '<div><b>…</b><span>جارِ التحميل</span></div>'; tbl.innerHTML = "";
     const r = await API.analytics(this.key);
-    if(!r || !r.ok){ box.innerHTML = '<div style="flex:1;font-size:.85rem;color:#6b7672;padding:.5rem">لم تُفعَّل إحصاءات الزيارات بعد: ألصق <code>apps-script/Code-additions.gs</code> في Apps Script وأعد نشره (التعليمات في أعلى الملف).</div>'; return }
+    if(!r || !r.ok){ box.innerHTML = '<div style="flex:1;font-size:.85rem;color:#6b7672;padding:.5rem">لم تُفعَّل إحصاءات الزيارات بعد: فعّل Supabase (شغّل <code>supabase/schema.sql</code> وسجّل الدخول بزر «🔐 Supabase») أو ألصق <code>apps-script/Code-additions.gs</code> في Apps Script.</div>'; return }
     const live = (this.liveNow && this.liveNow.ok) ? this.liveNow : { now: 0, byPage: {} };
     box.innerHTML = '<div><b>' + r.total.toLocaleString("fr-DZ") + '</b><span>إجمالي الزيارات</span></div>' +
       '<div><b>' + r.today.toLocaleString("fr-DZ") + '</b><span>زيارات اليوم</span></div>' +
