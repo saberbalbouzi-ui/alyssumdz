@@ -2260,12 +2260,34 @@ const Admin = {
         "var PRODUCTS = " + JSON.stringify(this.products) + ";\n";
       const b64 = btoa(unescape(encodeURIComponent(content)));
       await GH.putFile("assets/js/data.js", b64, file.sha, "تحديث المنتجات/الأقسام عبر لوحة التحكم");
+      await this.ensureProductPages();
       return true;
     }catch(err){
       console.error(err);
       toast("❌ تعذّر تحديث ملف المنتجات على الموقع الحي: " + err.message);
       return false;
     }
+  },
+  /* ينشئ صفحة p/<slug>/ لكل منتج جديد لا صفحة له (من القالب p/_template) — تُملأ بياناته ثم تُكمل نصوصها من «تعديل الصفحة» */
+  _pagesDone: new Set(),
+  async ensureProductPages(){
+    const esc = t => String(t == null ? "" : t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    let tpl = null, made = [];
+    for(const p of this.products){
+      if(!p.slug || !/^[a-z0-9][a-z0-9-]*$/.test(p.slug) || this._pagesDone.has(p.slug)) continue;
+      try{ const r = await fetch("p/" + p.slug + "/index.html", { method:"HEAD", cache:"no-store" }); if(r.ok){ this._pagesDone.add(p.slug); continue } }catch(e){ continue }
+      try{
+        if(tpl === null){ const r = await fetch("p/_template/index.html", { cache:"no-store" }); if(!r.ok) throw new Error("القالب p/_template غير موجود (" + r.status + ")"); tpl = await r.text(); }
+        const cat = (this.categories && this.categories[p.cat]) || "";
+        const desc = (p.seoDesc || p.desc || p.title || "").trim();
+        const vals = { SLUG:p.slug, TITLE:esc(p.title), TITLE_URL:encodeURIComponent(p.title || p.slug), DESC:esc(desc), SUB:esc(cat), CAT:esc(cat),
+          SITE_NAME:esc(SITE_CFG.name || SITE_CFG.domain), SITE_EN:esc(SITE_CFG.name || SITE_CFG.domain), WA:esc(SITE_CFG.waNumber), YEAR:String(new Date().getFullYear()) };
+        const html = tpl.replace(/<meta name="robots" content="noindex" data-template>\n?/, "").replace(/\{\{([A-Z_]+)\}\}/g, (m,k)=> k in vals ? vals[k] : m);
+        await GH.putFile("p/" + p.slug + "/index.html", btoa(unescape(encodeURIComponent(html))), undefined, "إنشاء صفحة المنتج " + p.slug + " عبر لوحة التحكم");
+        this._pagesDone.add(p.slug); made.push(p.slug);
+      }catch(err){ console.error(err); toast("⚠️ تعذّر إنشاء صفحة المنتج " + p.slug + ": " + err.message); }
+    }
+    if(made.length) toast("✅ أُنشئت صفحة المنتج: " + made.join("، ") + " (تظهر خلال دقيقة)");
   },
   async publishWilayasJs(){
     const cfg = GH.cfg();
