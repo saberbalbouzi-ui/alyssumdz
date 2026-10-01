@@ -379,7 +379,10 @@ switch ($route) {
 
     /* Webhook ياليدين: يحدّث حالة الطلب لحظياً. السر في الرابط (?s=) وهو محفوظ في admin_kv؛ ويُقبل أيضاً توقيع HMAC في ترويسة إن أرسلته الشركة */
     case 'webhook':
-        if ($method === 'GET') out(200, ['ok' => true, 'webhook' => 'ready']);      // فحص وصول الرابط من لوحة ياليدين
+        if ($method === 'GET') {                                                      // التحقق CRC من ياليدين: نُرجع crc_token كما هو (2xx خلال 10 ثوانٍ) — يجب أن يبقى دائماً وإلا عُطّل الـ webhook
+            if (isset($_GET['subscribe'], $_GET['crc_token'])) { http_response_code(200); header('Content-Type: text/plain; charset=utf-8'); echo (string)$_GET['crc_token']; exit; }
+            out(200, ['ok' => true, 'webhook' => 'ready']);
+        }
         if ($method !== 'POST') out(405, ['error' => 'method']);
         rateLimit('wh' . clientIp(), 600, 60);
         $d = db(); $st = $d->prepare("SELECT v FROM admin_kv WHERE k = 'webhook_secret'"); $st->execute(); $sec = json_decode((string)$st->fetchColumn(), true);
