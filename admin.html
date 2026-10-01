@@ -5204,6 +5204,9 @@ const Admin = {
         if(stop) body.stopdesk_id = deskId;
         return { url: this.base + "/v1/parcels/", method: "POST", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify([body]) };
       },
+      /* بلديات ياليدين الرسمية لولاية: GET /v1/communes/?wilaya_id=ID (صفحات) */
+      communesRequest(cfg, wilayaId, page){ return { url: this.base + "/v1/communes/?wilaya_id=" + wilayaId + "&page_size=100&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      parseCommunes(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { names: rows.map(r=>String(r.name||"")).filter(Boolean), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* رسالة الرفض من الرد: {order_id: {success:false, message}} */
       parseError(json){ try{ const v = Object.values(json || {})[0]; return v && v.message ? String(v.message) : ""; }catch(e){ return ""; } },
     },
@@ -5673,6 +5676,54 @@ const Admin = {
     API.updateOrder(this.key, o.id, undefined, o.note);
   },
 
+  /* ───── بلديات الشركة: مطابقة اسم البلدية في الطلب مع القائمة الرسمية (تجاهل الحركات والرموز، ثم تقريبية) ───── */
+  _communesCache: {},
+  normName(t){ return String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\u0600-\u06ff]/g,""); },
+  levenshtein(a, b){ const m = a.length, n = b.length; if(!m) return n; if(!n) return m; const d = []; for(let i=0;i<=m;i++) d[i] = [i]; for(let j=1;j<=n;j++) d[0][j] = j;
+    for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1)); return d[m][n]; },
+  async companyCommunes(co, cfg, wilayaId){
+    const key = (co.name||"") + ":" + wilayaId;
+    if(this._communesCache[key]) return this._communesCache[key];
+    try{ const c = JSON.parse(localStorage.getItem("alyssum_communes_" + key) || "null"); if(c && c.length){ this._communesCache[key] = c; return c; } }catch(e){}
+    let names = [];
+    for(let pg = 1; pg <= 5; pg++){
+      const r = await this.courierFetch(co.communesRequest(cfg, wilayaId, pg));
+      if(!r.ok) throw new Error("تعذّر جلب بلديات الشركة (رمز " + r.status + ")");
+      const got = co.parseCommunes(JSON.parse(r.text)); names = names.concat(got.names); if(!got.more) break;
+    }
+    if(names.length){ this._communesCache[key] = names; try{ localStorage.setItem("alyssum_communes_" + key, JSON.stringify(names)); }catch(e){} }
+    return names;
+  },
+  async resolveCommune(co, cfg, order){
+    const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null;
+    const override = (this._communeOverride||{})[order.id]; if(override) return { ok:true, name: override };
+    if(!w) return { ok:true, name: order.commune };           // لا نعرف الولاية: نتركه كما هو
+    const list = await this.companyCommunes(co, cfg, w.id);
+    if(!list.length) return { ok:true, name: order.commune };
+    const want = this.normName(order.commune);
+    let best = null, bd = 99;
+    if(want){
+      const ex = list.find(n=>this.normName(n) === want); if(ex) return { ok:true, name: ex };
+      list.forEach(n=>{ const nn = this.normName(n); let d = this.levenshtein(want, nn); if(nn.includes(want) || want.includes(nn)) d = Math.min(d, 1); if(d < bd){ bd = d; best = n; } });
+      if(best && bd <= Math.max(1, Math.floor(want.length / 5))) return { ok:true, name: best };
+    }
+    return { ok:false, list, best, wilaya: order.wilaya, commune: order.commune };
+  },
+  /* لم نجد البلدية في قائمة الشركة: اختر الصحيحة ثم يُعاد الإرسال */
+  askCommune(orderIndex, companyKey, fix){
+    const o = this.orders[orderIndex], esc = t=>String(t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+    this.showNotice("📍 اختر بلدية الطلب " + o.id,
+      "بلدية الطلب «<b>" + esc(fix.commune || "—") + "</b>» (ولاية " + esc(fix.wilaya) + ") غير موجودة بهذا الاسم في قائمة ياليدين. اختر البلدية الصحيحة ثم أرسل:<br>" +
+      "<select id='pick-commune' style='width:100%;margin:.6rem 0;padding:.5rem'>" + fix.list.map(n=>"<option" + (n===fix.best?" selected":"") + ">" + esc(n) + "</option>").join("") + "</select>" +
+      "<button class='small gold' type='button' onclick=\"Admin.pickCommune('" + o.id + "','" + companyKey + "')\">🚚 أرسل بهذه البلدية</button>");
+  },
+  pickCommune(orderId, companyKey){
+    const v = ($f("pick-commune")||{}).value; if(!v) return;
+    this._communeOverride = this._communeOverride || {}; this._communeOverride[orderId] = v;
+    document.getElementById("notice-modal-bg").classList.remove("open");
+    const i = this.orders.findIndex(x=>x.id === orderId); if(i > -1) this.sendOrderToDelivery(i, companyKey);
+  },
+
   async sendOrderToDelivery(orderIndex, companyKey){
     if(!companyKey){ toast("⚠️ لا توجد شركة توصيل نشطة — فعّل واحدة من تبويب «شركات التوصيل»"); return }
     const order = this.orders[orderIndex];
@@ -5683,7 +5734,13 @@ const Admin = {
     if(this.trackingOf(order) && !confirm("هذا الطلب أُرسل من قبل (التتبع " + this.trackingOf(order).tracking + "). إعادة الإرسال تنشئ طرداً مكرراً عند الشركة. متأكد؟")) return;
     toast("⏳ جارِ إرسال الطلب #" + order.id + " إلى " + co.name + "...");
     try{
-      const req = co.buildRequest(cfg, order);
+      let ord = order;
+      if(co.communesRequest){                               // تطبيع اسم البلدية على قائمة ياليدين الرسمية قبل الإرسال
+        const fix = await this.resolveCommune(co, cfg, order);
+        if(!fix.ok){ this.askCommune(orderIndex, companyKey, fix); return false }
+        ord = Object.assign({}, order, { commune: fix.name });
+      }
+      const req = co.buildRequest(cfg, ord);
       const r = await this.courierFetch(req);
       let json = null; try{ json = JSON.parse(r.text); }catch(e){}
       let tracking = "";
