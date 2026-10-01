@@ -12,6 +12,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--out", default="dist/template")
 ap.add_argument("--name", default="اسم متجرك")
 ap.add_argument("--wa", default="213000000000")
+ap.add_argument("--target", choices=["github", "php"], default="github", help="github: القالب الحالي (Supabase+GitHub) | php: حزمة للاستضافة العادية")
 a = ap.parse_args()
 OUT = (ROOT / a.out).resolve()
 if ROOT not in OUT.parents:
@@ -121,6 +122,32 @@ for f in OUT.rglob("*"):
 4. يُقدَّم القالب «كما هو» دون ضمان نتيجة تجارية. مسؤولية المنتجات والمحتوى والزبائن والامتثال للقوانين على المشتري.
 5. بيانات الزبائن والطلبات في مشروع Supabase الخاص بالمشتري ملك له، ولا يحتفظ البائع بأي نسخة منها.
 """, encoding="utf-8")
+
+# ── الهدف php: حزمة للرفع على أي استضافة PHP (بدون Supabase وGitHub)
+if a.target == "php":
+    import secrets
+    shutil.rmtree(OUT / "supabase", ignore_errors=True)
+    (OUT / "scripts/setup-supabase.sh").unlink(missing_ok=True)
+    shutil.copytree(ROOT / "php-edition/api", OUT / "api")
+    code = "-".join(secrets.token_hex(2).upper() for _ in range(4))
+    import subprocess
+    h = subprocess.check_output(["php", "-r", "echo password_hash($argv[1], PASSWORD_DEFAULT);", code], text=True)
+    ins = (ROOT / "php-edition/install.php").read_text(encoding="utf-8").replace("__INSTALL_CODE_HASH__", h).replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
+    (OUT / "install.php").write_text(ins, encoding="utf-8")
+    cfgp = OUT / "assets/js/config.js"; c = cfgp.read_text(encoding="utf-8")
+    c = c.replace('ORDERS_BACKEND: "supabase",', 'ORDERS_BACKEND: "sheets",\n  BACKEND: "php",')
+    cfgp.write_text(c, encoding="utf-8")
+    (OUT / "README.md").write_text("""# متجرك — دليل التثبيت
+
+1. ارفع محتويات هذا المجلد كاملة إلى مجلد الموقع في الاستضافة (public_html).
+2. افتح `https://نطاقك/install.php` وأدخل رمز التثبيت الذي سلّمه لك البائع، واختر كلمة مرور قوية.
+3. بعد النجاح يُحذف ملف التثبيت تلقائياً. ادخل إلى `https://نطاقك/admin.html` بكلمة المرور.
+4. أضف منتجاتك من اللوحة: تُنشأ صفحة كل منتج تلقائياً. احذف المنتج التجريبي `demo` بعد ذلك.
+
+المتطلبات: PHP 8.1 فأعلى مع `pdo_sqlite` و`fileinfo` و`mbstring`، وصلاحية الكتابة على المجلدات.
+النسخ الاحتياطي: انسخ مجلد الموقع كاملاً (يشمل `api/_data` الذي فيه الطلبات).
+""", encoding="utf-8")
+    print("🔑 رمز التثبيت (سلّمه للمشتري فقط، لا يُحفظ في أي ملف):", code)
 
 # فحص التسرّب
 bad = [r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<![\w-])" + re.escape(s) + r"(?![\w-])" for s in slugs if s != "demo"]
