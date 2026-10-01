@@ -8,5 +8,5 @@ const CONFIG = {
   /* Supabase (الزيارات + المشاهدون الآن + أسئلة الوكيل). الرابط والمفتاح العام (anon / publishable) آمنان للنشر العلني
      لأن الزوار لا يملكون إلا دوالّ محدودة (supabase/schema.sql). لا تضع هنا أبداً مفتاح service_role. */
   SUPABASE_URL: "https://qvdaiundlkfbmjlummni.supabase.co",
-  SUPABASE_ANON_KEY: "",             // ← الصق هنا المفتاح العام من Project Settings ← API Keys (anon / publishable)
+  SUPABASE_ANON_KEY: "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h",             // ← الصق هنا المفتاح العام من Project Settings ← API Keys (anon / publishable)
 };
