@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الصفحة غير موجودة — أليسوم</title><meta name="robots" content="noindex">
+<link rel="icon" href="/assets/img/favicon.png">
+<style>body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;background:#FBF8F2;color:#1C2420;margin:0;display:grid;place-items:center;min-height:100vh;text-align:center;padding:1.2rem}
+.b{max-width:460px}h1{color:#173F35;margin:.4rem 0}a.btn{display:inline-block;background:#173F35;color:#fff;padding:.8rem 1.6rem;border-radius:14px;font-weight:800;text-decoration:none;margin:.4rem}
+ul{list-style:none;padding:0;text-align:right}li a{display:block;padding:.6rem .9rem;margin:.3rem 0;border:1.5px solid #EAE3D6;border-radius:12px;color:#173F35;font-weight:700;text-decoration:none;background:#fff}</style></head>
+<body><div class="b"><div style="font-size:3rem">🌿</div><h1 id="t">جارِ تحويلك…</h1><p id="s" style="color:#6B7672"></p><ul id="l"></ul><a class="btn" href="/">الصفحة الرئيسية</a></div>
+<script src="/assets/js/data.js"></script>
+<script>
+/* روابط ووردبريس القديمة (مثل /takiz أو /product/takiz/) ⟵ صفحة المنتج الجديدة /p/<slug>/ ، مع مطابقة تقريبية للأخطاء الإملائية */
+(async function(){
+  var norm = function(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9؀-ۿ]/g,""); };
+  var lev = function(a,b){ var m=a.length,n=b.length,d=[],i,j; if(!m) return n; if(!n) return m; for(i=0;i<=m;i++){d[i]=[i];} for(j=1;j<=n;j++){d[0][j]=j;}
+    for(i=1;i<=m;i++) for(j=1;j<=n;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[m][n]; };
+  var go = function(slug){ location.replace("/p/" + slug + "/" + location.search + location.hash); };
+  var segs = decodeURIComponent(location.pathname).split("/").filter(Boolean);
+  while(segs.length > 1 && /^(product|produit|products|produits|shop|boutique|store|p)$/i.test(segs[0])) segs.shift();
+  if(/^(product-category|categorie|category|categories|product-tag)$/i.test(segs[0] || "")) return location.replace("/#products");
+  var key = segs[0] || "";
+  var list = (typeof PRODUCTS !== "undefined" ? PRODUCTS : []).filter(function(p){ return p.active !== false && p.slug !== "test"; });
+  var map = {}; try{ map = await (await fetch("/redirects.json", {cache:"no-store"})).json(); }catch(e){}
+  if(key && map[key] && list.some(function(p){ return p.slug === map[key]; })) return go(map[key]);
+  var k = norm(key), best = null, bd = 99;
+  if(k){
+    list.forEach(function(p){ var d = Math.min(lev(k, norm(p.slug)), lev(k, norm(p.slug).replace(/^anti/,"")));
+      if(norm(p.slug).indexOf(k) >= 0 || k.indexOf(norm(p.slug)) >= 0) d = Math.min(d, 1);
+      if(d < bd){ bd = d; best = p; } });
+    if(best && bd <= Math.max(1, Math.floor(k.length / 4))) return go(best.slug);
+  }
+  document.getElementById("t").textContent = "الصفحة غير موجودة";
+  document.getElementById("s").textContent = "ربما تبحث عن أحد منتجاتنا:";
+  var sug = list.map(function(p){ return {p:p, d:lev(k, norm(p.slug))}; }).sort(function(a,b){ return a.d-b.d; }).slice(0,5);
+  document.getElementById("l").innerHTML = sug.map(function(x){ return '<li><a href="/p/' + x.p.slug + '/">' + x.p.title + '</a></li>'; }).join("");
+})();
+</script></body></html>

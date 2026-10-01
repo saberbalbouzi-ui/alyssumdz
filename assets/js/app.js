@@ -1087,6 +1087,12 @@ const Account = {
     b.onclick = ()=>this.open();
     const cart = hd.querySelector(".cart-btn"); cart ? hd.insertBefore(b, cart) : hd.appendChild(b);
     this.mark();
+    const fl = document.querySelector("footer.site .fgrid > div:nth-child(2) p");      // روابط سريعة في ذيل الصفحة
+    if(fl && !fl.querySelector(".ft-trk")) fl.insertAdjacentHTML("beforeend", '<br><a href="#" class="ft-trk">📦 تتبّع طلبك</a><br><a href="#" class="ft-acc">👤 حسابي</a>');
+    else if(!fl){ const fc = document.querySelector("footer.site .container"); if(fc && !fc.querySelector(".ft-trk")) fc.insertAdjacentHTML("beforeend", '<div style="margin-top:.5rem;font-size:.85rem"><a href="#" class="ft-trk" style="color:#C7D3CD">📦 تتبّع طلبك</a> · <a href="#" class="ft-acc" style="color:#C7D3CD">👤 حسابي</a></div>'); }
+    const ft = document.querySelector(".ft-trk"), fa = document.querySelector(".ft-acc");
+    if(ft) ft.onclick = e=>{ e.preventDefault(); Track.open(); };
+    if(fa) fa.onclick = e=>{ e.preventDefault(); this.open(); };
     [900, 2600].forEach(t=>setTimeout(()=>this.prefill(), t));
   },
   mark(){ const b = document.querySelector(".acc-btn"); if(b) b.classList.toggle("on", !!this.profile()); },
