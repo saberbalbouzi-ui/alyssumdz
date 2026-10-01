@@ -334,16 +334,35 @@ switch ($route) {
         db()->prepare('DELETE FROM customer_sessions WHERE token_hash = ?')->execute([hash('sha256', (string)(body()['token'] ?? ''))]);
         out(200, ['ok' => true]);
 
-    /* ربط طلب سابق بالحساب: رقم الطلب + نفس هاتف الحساب */
+    /* ربط طلب سابق بالحساب: رقم الطلب أو رقم التتبع + نفس هاتف الحساب */
     case 'customer_link_order':
         if ($method !== 'POST') out(405, ['error' => 'method']);
         rateLimit('clink' . clientIp(), 30, 3600);
         $b = body(); $cid = custFromToken((string)($b['token'] ?? '')); if (!$cid) out(401, ['error' => 'unauthorized']);
-        $ph = custProfile($cid)['phone']; $d = db();
-        $st = $d->prepare('SELECT id, phone FROM orders WHERE id = ? AND customer_id IS NULL'); $st->execute([strtoupper(trim((string)($b['order_id'] ?? '')))]); $o = $st->fetch();
-        if (!$o || custPhone((string)$o['phone']) !== $ph) out(200, ['ok' => true, 'linked' => false]);
-        $d->prepare('UPDATE orders SET customer_id = ? WHERE id = ?')->execute([$cid, $o['id']]);
-        out(200, ['ok' => true, 'linked' => true]);
+        $ph = custProfile($cid)['phone']; $d = db(); $k = trim((string)($b['order_id'] ?? ''));
+        if (!preg_match('/^[A-Za-z0-9._-]{4,40}$/', $k)) out(200, ['ok' => true, 'linked' => false]);
+        $st = $d->prepare('SELECT id, phone, note, customer_id FROM orders WHERE (customer_id IS NULL OR customer_id = ?) AND (id = ? OR note LIKE ?) LIMIT 5'); $st->execute([$cid, strtoupper($k), '%' . $k . '%']);
+        foreach ($st->fetchAll() as $o) {
+            $tr = preg_match('/🚚[a-z0-9_]+:([A-Za-z0-9._-]+)/u', (string)$o['note'], $m) ? $m[1] : '';
+            if (($o['id'] === strtoupper($k) || $tr === $k) && custPhone((string)$o['phone']) === $ph) {
+                $d->prepare('UPDATE orders SET customer_id = ? WHERE id = ?')->execute([$cid, $o['id']]);
+                out(200, ['ok' => true, 'linked' => true]);
+            }
+        }
+        out(200, ['ok' => true, 'linked' => false]);
+
+    /* تتبّع عام برقم التتبع: الحالة والوجهة فقط (لا اسم ولا هاتف ولا عنوان) */
+    case 'track':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        rateLimit('trk' . clientIp(), 40, 60);
+        $t = trim((string)(body()['tracking'] ?? ''));
+        if (!preg_match('/^[A-Za-z0-9._-]{4,40}$/', $t)) out(200, ['found' => false]);
+        $st = db()->prepare('SELECT status, created_at, wilaya, commune, dtype, note FROM orders WHERE note LIKE ? LIMIT 5'); $st->execute(['%' . $t . '%']);
+        foreach ($st->fetchAll() as $o) {
+            if (preg_match('/🚚[a-z0-9_]+:([A-Za-z0-9._-]+)/u', (string)$o['note'], $m) && $m[1] === $t)
+                out(200, ['found' => true, 'status' => $o['status'], 'date' => iso((int)$o['created_at']), 'wilaya' => $o['wilaya'] ?? '', 'commune' => $o['commune'] ?? '', 'dtype' => $o['dtype'] ?? '']);
+        }
+        out(200, ['found' => false]);
 
     /* ── قراءات وتعديلات المدير ── */
     case 'orders':

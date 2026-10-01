@@ -77,10 +77,10 @@ const Cart = {
     const totEl = document.getElementById("cart-total");
     if(totEl) totEl.textContent = fmt(Math.max(0, sub - discount) + (items.length?fee:0));
     const feeEl = document.getElementById("cart-fee");
-    if(feeEl) feeEl.textContent = items.length ? ((fee===0 && items.every(cartItemFreeShip)) ? "مجاني 🚚" : fmt(fee)) : "—";
+    if(feeEl) feeEl.textContent = items.length ? ((fee===0 && (items.every(cartItemFreeShip) || couponFreeShip())) ? "مجاني 🚚" : fmt(fee)) : "—";
   },
   fee(){
-    const _all = Cart.all(); if(_all.length && _all.every(cartItemFreeShip)) return 0;   // كل منتجات السلة بشحن مجاني
+    const _all = Cart.all(); if(_all.length && (_all.every(cartItemFreeShip) || couponFreeShip())) return 0;   // كل منتجات السلة بشحن مجاني
     const w = document.getElementById("cwilaya");
     const t = document.querySelector('input[name="cdtype"]:checked');
     if(!w || !w.value) return 0;
@@ -110,8 +110,10 @@ const Cart = {
       items: items.map(it => { const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
-      coupon: discount>0 ? AppliedCoupon.code : "", discount,
+      coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount,
+      extra: couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : undefined,
     });
+    Gifts.markUsed(AppliedCoupon.record);
     let msg = `السلام عليكم ${SITE_NAME}، أريد تأكيد طلبي:\n`;
     items.forEach(it=>{
       const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
@@ -119,6 +121,8 @@ const Cart = {
     });
     msg += `\n\nالمجموع: ${fmt(sub)}`;
     if(discount>0) msg += `\n🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
+    else if(couponFreeShip()) msg += `\n🎟️ كود التوصيل المجاني (${AppliedCoupon.code})`;
+    if(couponGiftTitle()) msg += `\n🎁 هدية الكود (${AppliedCoupon.code}): ${couponGiftTitle()}`;
     msg += `\nالتوصيل (${dtype==="stop"?"مكتب":"للمنزل"} - ${wl.name}${commune?" / "+commune:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
@@ -419,12 +423,23 @@ function findValidCoupon(list, code, subtotal){
   if(c.active===false) return { ok:false, msg:"⚠️ هذا الكود غير مفعّل حالياً" };
   if(c.expiresAt && new Date(c.expiresAt) < new Date()) return { ok:false, msg:"⚠️ انتهت صلاحية هذا الكود" };
   if(c.minOrder && subtotal < Number(c.minOrder)) return { ok:false, msg:"⚠️ الحد الأدنى لهذا الكود: " + fmt(Number(c.minOrder)) };
+  if(c.type==="freeship" || c.type==="gift") return { ok:true, coupon:c, discount:0 };      // توصيل مجاني / هدية منتج: بلا مبلغ خصم
   const discount = c.type==="percent" ? Math.round(subtotal * Number(c.value)/100) : Math.min(Number(c.value)||0, subtotal);
   if(discount<=0) return { ok:false, msg:"⚠️ الكود غير صالح لهذا الطلب" };
   return { ok:true, coupon:c, discount };
 }
 /* حالة الكود المُطبَّق — مشتركة بين صفحة المنتج ودرج السلة (سياق واحد نشط في كل مرة عملياً) */
 const AppliedCoupon = { code:"", record:null };
+function couponFreeShip(){ return !!(AppliedCoupon.record && AppliedCoupon.record.type==="freeship"); }
+function couponGiftTitle(){
+  const r = AppliedCoupon.record; if(!r || r.type!=="gift") return "";
+  if(r.giftTitle) return r.giftTitle;
+  const pr = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===r.product) : null; return pr ? pr.title : (r.product||"");
+}
+function couponMsg(res){
+  const c = res.coupon;
+  return c.type==="freeship" ? "✅ تم تطبيق الكود — توصيل مجاني 🚚" : c.type==="gift" ? "✅ تم تطبيق الكود — هديتك: " + (c.giftTitle || (PRODUCTS.find(x=>x.slug===c.product)||{}).title || c.product) + " 🎁" : "✅ تم تطبيق الكود — خصم " + fmt(res.discount);
+}
 function currentCouponDiscount(subtotal){
   if(!AppliedCoupon.record || !subtotal) return 0;
   const res = findValidCoupon([AppliedCoupon.record], AppliedCoupon.code, subtotal);
@@ -438,23 +453,27 @@ function buildCouponBoxHTML(idPrefix){
 }
 /* يُدرج صندوق كود الخصم قبل عنصر مرجعي (مربع الإجمالي)، ويربط منطق التطبيق بدالة إعادة الحساب rerender */
 function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender){
-  if(!beforeEl || document.getElementById(idPrefix + "-coupon-input")) return;
-  const wrap = document.createElement("div");
-  wrap.innerHTML = buildCouponBoxHTML(idPrefix);
-  while(wrap.firstChild) beforeEl.parentNode.insertBefore(wrap.firstChild, beforeEl);
+  if(!beforeEl && !document.getElementById(idPrefix + "-coupon-input")) return;
+  /* صفحات المنتجات الثابتة تحمل صندوق الكود جاهزاً في HTML (بلا أي معالج) — نربط المعالج به بدل الخروج، وإلا لا يعمل الكود إطلاقاً */
+  if(!document.getElementById(idPrefix + "-coupon-input")){
+    const wrap = document.createElement("div");
+    wrap.innerHTML = buildCouponBoxHTML(idPrefix);
+    while(wrap.firstChild) beforeEl.parentNode.insertBefore(wrap.firstChild, beforeEl);
+  }
   const input = document.getElementById(idPrefix + "-coupon-input");
+  if(input.dataset.bound) return; input.dataset.bound = "1";
   const msg = document.getElementById(idPrefix + "-coupon-msg");
   async function apply(){
     const code = (input.value||"").trim();
     if(!code){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent=""; rerender(); return; }
-    const list = await loadCoupons();
+    const list = (await loadCoupons()).concat(await Gifts.records());      // + هدايا الحساب (ترحيب/تثبيت) غير المستعملة
     const res = findValidCoupon(list, code, getSubtotal());
     if(!res.ok){
       AppliedCoupon.code=""; AppliedCoupon.record=null;
       msg.textContent = res.msg; msg.style.color = "var(--red)";
     }else{
       AppliedCoupon.code = res.coupon.code; AppliedCoupon.record = res.coupon;
-      msg.textContent = "✅ تم تطبيق الكود — خصم " + fmt(res.discount);
+      msg.textContent = couponMsg(res);
       msg.style.color = "var(--ok)";
     }
     rerender();
@@ -739,7 +758,7 @@ function initProduct(slug){
 
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
   function update(){
-    const freeShip = offerFreeShip(p, state.offer);
+    const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
     const fee = freeShip ? 0 : (state.wilaya ? (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home) : null);
     feeEl.textContent = freeShip ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية");
     const discount = currentCouponDiscount(state.offer.price);
@@ -783,7 +802,7 @@ function initProduct(slug){
       if(f.required && !v){ toast(`يرجى ملء حقل «${f.label||f.id}»`); if(el) el.focus(); return }
       if(v) extraValues[f.label||f.id] = v;
     }
-    const fee = offerFreeShip(p, state.offer) ? 0 : (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home);
+    const fee = (offerFreeShip(p, state.offer) || couponFreeShip()) ? 0 : (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home);
     const discount = currentCouponDiscount(state.offer.price);
     const total = Math.max(0, state.offer.price - discount) + fee;
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
@@ -793,9 +812,10 @@ function initProduct(slug){
       dtype: state.dtype, desk,
       items: orderItems(),
       subtotal: state.offer.price, fee, total,
-      coupon: discount>0 ? AppliedCoupon.code : "", discount,
-      extra: extraValues,
+      coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount,
+      extra: couponGiftTitle() ? Object.assign({ "🎁 هدية": couponGiftTitle() }, extraValues) : extraValues,
     });
+    Gifts.markUsed(AppliedCoupon.record);
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     firePixelPurchase(p, total, state.offer.qty);
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n` + (type==="grouped"
@@ -804,6 +824,8 @@ function initProduct(slug){
     if(state.offer.free) msg += `\n  🎁 العرض: اشترِ 2 واحصل على الثالثة مجاناً`;
     if(p.old) msg += `\n  (السعر الأصلي: ${fmt(p.old)} ✂️)`;
     if(discount>0) msg += `\n  🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
+    else if(couponFreeShip()) msg += `\n  🎟️ كود التوصيل المجاني (${AppliedCoupon.code})`;
+    if(couponGiftTitle()) msg += `\n  🎁 هدية الكود (${AppliedCoupon.code}): ${couponGiftTitle()}`;
     msg += `\n\nالتوصيل (${state.dtype==="stop"?"مكتب Stop Desk":"إلى المنزل"} — ${state.wilaya.name}${commune?"، "+commune:""}${desk?" — المكتب: "+desk:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
@@ -1111,10 +1133,12 @@ const Account = {
         ${reg ? `<div class="acc-row"><label>الولاية<select name="wilaya">${wOpts}</select></label><label>البلدية<input name="commune" autocomplete="address-level2"></label></div>` : ""}
         <div class="acc-msg" id="acc-msg"></div>
         <button class="btn btn-gold acc-go" type="submit">${reg ? "✨ إنشاء الحساب" : "دخول"}</button>
+        <button class="acc-trk-link" type="button" id="acc-trk-link">📦 تتبّع طلب بدون حساب</button>
         ${local ? '<p class="acc-note">🔒 بياناتك محفوظة على هذا الجهاز فقط لتسريع طلباتك القادمة.</p>' : '<p class="acc-note">🔒 كلمة سرك مشفّرة ولا يراها أحد. نستعمل رقمك لتأكيد الطلبات وتتبّعها فقط.</p>'}
       </form>`);
     b.querySelectorAll(".acc-tabs button").forEach(x=>x.onclick = ()=>this.guest(x.dataset.t));
     b.querySelector("#acc-form").onsubmit = ev=>{ ev.preventDefault(); this.submit(reg, ev.target); };
+    b.querySelector("#acc-trk-link").onclick = ()=>{ this.close(); Track.open(); };
   },
   async submit(reg, f){
     const v = Object.fromEntries(new FormData(f).entries()), msg = document.getElementById("acc-msg"), btn = f.querySelector(".acc-go");
@@ -1131,7 +1155,7 @@ const Account = {
         const r = await API.cust.call(reg ? "register" : "login", reg ? { name: v.name.trim(), phone, password: v.password, wilaya: v.wilaya || "", commune: (v.commune || "").trim() } : { phone, password: v.password });
         API.cust.save({ token: r.token, profile: r.profile });
       }
-      this.mark(); this.prefill(); this.done(reg);
+      this.mark(); this.prefill(); if(reg) await Gifts.claim("reg"); Track.linkPending(); this.done(reg);
     }catch(e){ fail(this.err(e)); btn.disabled = false; }
   },
 
@@ -1149,12 +1173,12 @@ const Account = {
       else if(o === "manual"){ const s = root.querySelector("#acc-steps"); s.innerHTML = PWA.steps(); s.style.display = "block"; }
     };
   },
-  done(isNew){
-    const p = this.profile();
+  async done(isNew){
+    const p = this.profile(), gifts = await Gifts.cardsHtml();
     const b = this.body(`<div class="acc-done"><div class="acc-ok">✅</div><h3>${isNew ? "أهلاً بك" : "مرحباً بعودتك"} ${this.esc((p.name || "").split(" ")[0])}!</h3>
       <p class="acc-sub">${isNew ? "تم إنشاء حسابك، وستُملأ بياناتك تلقائياً في طلباتك القادمة." : "تم تسجيل دخولك."}</p>
-      ${this.installBox()}<button class="btn btn-ghost acc-cont" type="button">متابعة إلى حسابي ←</button></div>`);
-    this.bindInstall(b); b.querySelector(".acc-cont").onclick = ()=>this.home();
+      ${gifts}${this.installBox()}<button class="btn btn-ghost acc-cont" type="button">متابعة إلى حسابي ←</button></div>`);
+    this.bindInstall(b); Gifts.bind(b); b.querySelector(".acc-cont").onclick = ()=>this.home();
   },
 
   /* ── حسابي: الطلبات + البيانات ── */
@@ -1177,11 +1201,13 @@ const Account = {
         <div class="ao-f"><span>${new Date(o.date).toLocaleDateString("ar-DZ")}</span><b>${fmt(Number(o.total) || 0)}</b></div>
         ${o.tracking ? `<div class="ao-t">رقم التتبع: <b dir="ltr">${this.esc(o.tracking)}</b></div>` : ""}</div>`; }).join("");
     const wOpts = '<option value="">—</option>' + (typeof WILAYAS !== "undefined" ? WILAYAS.map(w=>`<option value="${this.esc(w.name)}"${w.name === pr.wilaya ? " selected" : ""}>${this.esc(w.name)}</option>`).join("") : "");
+    const gifts = await Gifts.cardsHtml();
     const b = this.body(`
       <h3>👤 ${this.esc(pr.name)}</h3><p class="acc-sub" dir="ltr" style="text-align:right">${this.esc(pr.phone)}</p>
-      ${this.installBox()}
+      ${gifts}${this.installBox()}
+      <button class="btn btn-ghost acc-trk" type="button" style="width:100%;margin-bottom:.4rem">📦 تتبّع طلب برقم التتبع</button>
       ${local ? "" : `<h4>🧾 طلباتي</h4>${offline ? '<p class="acc-sub">تعذّر تحميل الطلبات الآن — تحقق من الإنترنت.</p>' : (rows || '<p class="acc-sub">لا توجد طلبات مربوطة بحسابك بعد. كل طلب تُرسله وأنت مسجّل يظهر هنا مع حالته.</p>')}
-      <form id="acc-link" class="acc-link"><input name="oid" placeholder="رقم طلب سابق (مثال: S261001-AB12C)" dir="ltr"><button class="btn btn-ghost" type="submit">ربط</button></form><div class="acc-msg" id="acc-lmsg"></div>`}
+      <form id="acc-link" class="acc-link"><input name="oid" placeholder="رقم الطلب أو رقم التتبع (من رسالة واتساب)" dir="ltr"><button class="btn btn-ghost" type="submit">ربط</button></form><div class="acc-msg" id="acc-lmsg"></div>`}
       <details class="acc-prof"><summary>⚙️ بياناتي</summary>
         <form id="acc-edit" novalidate>
           <label>الاسم<input name="name" value="${this.esc(pr.name)}"></label>
@@ -1190,7 +1216,8 @@ const Account = {
           <div class="acc-msg" id="acc-emsg"></div><button class="btn btn-gold" type="submit">حفظ</button>
         </form></details>
       <button class="acc-out" type="button">تسجيل الخروج</button>`);
-    this.bindInstall(b);
+    this.bindInstall(b); Gifts.bind(b);
+    b.querySelector(".acc-trk").onclick = ()=>{ this.close(); Track.open(); };
     b.querySelector("#acc-edit").onsubmit = async ev=>{
       ev.preventDefault(); const v = Object.fromEntries(new FormData(ev.target).entries()), m = b.querySelector("#acc-emsg");
       try{
@@ -1214,5 +1241,148 @@ const Account = {
   },
 };
 
+
+
+/* ══════════════ هدايا الزبائن الجدد (ترحيب عند التسجيل + تثبيت التطبيق) ══════════════
+   الإعدادات في assets/data/welcome.json (تُعدَّل من لوحة الإدارة ← أكواد الخصم). تعمل كأكواد خصم من نوع:
+   percent | fixed | freeship (توصيل مجاني) | gift (منتج هدية). لا تُحتسب إلا لمن يملك حساباً، وتُستعمل مرة واحدة. */
+const Gifts = {
+  _cfg: null,
+  async cfg(){
+    if(this._cfg) return this._cfg;
+    try{ const r = await fetch(PWA.base() + "assets/data/welcome.json", { cache:"no-store" }); this._cfg = r.ok ? await r.json() : { enabled:false }; }
+    catch(e){ this._cfg = { enabled:false }; }
+    return this._cfg;
+  },
+  KINDS: { reg:"register", install:"install" },
+  all(){ try{ return JSON.parse(localStorage.getItem("alyssum_gifts") || "{}") || {}; }catch(e){ return {}; } },
+  mine(){ const p = API.cust.profile(); return p ? (this.all()[p.phone] || {}) : {}; },
+  save(v){ const p = API.cust.profile(); if(!p) return; const a = this.all(); a[p.phone] = v; try{ localStorage.setItem("alyssum_gifts", JSON.stringify(a)); }catch(e){} },
+  conf(c, kind){ const g = c && c[this.KINDS[kind]]; return (c && c.enabled !== false && g && g.enabled !== false) ? g : null; },
+  record(kind, g, st){
+    const exp = new Date(st.ts + (Number(g.days) || 14) * 86400000).toISOString();
+    const rec = { code: String(g.code || (kind === "reg" ? "WELCOME" : "APPGIFT")).toUpperCase(), type: g.type || "percent", value: Number(g.value) || 0, minOrder: Number(g.minOrder) || 0, expiresAt: exp, active: true, product: g.product || "", __gift: kind };
+    if(rec.type === "gift"){ const pr = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug === g.product) : null; rec.giftTitle = pr ? pr.title : (g.product || "هدية"); }
+    return rec;
+  },
+  status(kind, g){
+    const st = this.mine()[kind];
+    if(!st) return kind === "install" && !PWA.standalone() ? "locked" : "none";
+    if(st.used) return "used";
+    return Date.now() > st.ts + (Number(g.days) || 14) * 86400000 ? "expired" : "active";
+  },
+  async claim(kind){
+    const c = await this.cfg(), g = this.conf(c, kind); if(!g || !API.cust.profile()) return false;
+    const m = this.mine(); if(m[kind]) return false;
+    m[kind] = { ts: Date.now() }; this.save(m); return true;
+  },
+  /* تستعملها نافذة الكوبون: هدايا المستخدم الفعّالة فقط كسجلات كوبون */
+  async records(){
+    const c = await this.cfg(), out = [], m = this.mine();
+    for(const k of ["reg", "install"]){ const g = this.conf(c, k); if(g && m[k] && this.status(k, g) === "active") out.push(this.record(k, g, m[k])); }
+    return out;
+  },
+  markUsed(rec){
+    if(!rec || !rec.__gift) return;
+    const m = this.mine(); if(m[rec.__gift]){ m[rec.__gift].used = Date.now(); this.save(m); }
+  },
+  text(g){
+    const pr = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug === g.product) : null;
+    const what = g.type === "percent" ? "خصم " + (Number(g.value) || 0) + "% على طلبك" : g.type === "fixed" ? "خصم " + fmt(Number(g.value) || 0) + " على طلبك" : g.type === "freeship" ? "توصيل مجاني 🚚" : "منتج هدية: " + (pr ? pr.title : (g.product || ""));
+    return what + (Number(g.minOrder) ? " (لطلبات من " + fmt(Number(g.minOrder)) + ")" : "");
+  },
+  async cardsHtml(){
+    if(!API.cust.profile()) return "";
+    const c = await this.cfg(), esc = Account.esc.bind(Account); let h = "";
+    for(const k of ["reg", "install"]){
+      const g = this.conf(c, k); if(!g) continue;
+      const st = this.status(k, g); if(st === "none") continue;
+      const title = esc(g.title || (k === "reg" ? "🎁 هدية التسجيل" : "🎁 هدية تثبيت التطبيق")), m = this.mine()[k];
+      let body;
+      if(st === "locked") body = "🔒 تُفعَّل هديتك عندما تفتح الموقع من <b>أيقونة التطبيق</b> على هاتفك بعد التثبيت.";
+      else if(st === "used") body = "✔ استعملتَ هذه الهدية. شكراً لك!";
+      else if(st === "expired") body = "انتهت صلاحية هذه الهدية.";
+      else body = esc(this.text(g)) + '<br><span class="g-code">الكود: <b dir="ltr">' + esc(String(g.code || "").toUpperCase()) + '</b></span> · صالح حتى ' + new Date(m.ts + (Number(g.days) || 14) * 86400000).toLocaleDateString("ar-DZ") +
+        '<br><button class="btn btn-gold g-apply" type="button" data-k="' + k + '">تطبيق على طلبي</button>';
+      h += '<div class="acc-gift ' + st + '"><div class="g-t">' + title + '</div><div class="g-b">' + body + '</div></div>';
+    }
+    return h;
+  },
+  bind(root){
+    root.querySelectorAll(".g-apply").forEach(b=>b.onclick = async ()=>{
+      const c = await this.cfg(), g = this.conf(c, b.dataset.k); if(!g) return;
+      const code = String(g.code || "").toUpperCase();
+      const input = document.getElementById("prod-coupon-input") || document.getElementById("cart-coupon-input");
+      if(!input){ toast("🎁 أضف منتجاً إلى السلة ثم أدخل الكود " + code); return; }
+      input.value = code; input.closest(".coupon-box").querySelector("button").click();
+      Account.close();
+      if(input.id === "cart-coupon-input") document.querySelector(".cart-btn")?.click();
+    });
+  },
+  /* أول فتح للتطبيق المثبّت (أو حدث التثبيت) ⟵ تُمنح هدية التثبيت */
+  async checkInstall(){
+    const go = async ()=>{
+      if(!PWA.standalone()) return;
+      const p = API.cust.profile(), c = await this.cfg(), g = this.conf(c, "install"); if(!g) return;
+      if(!p){ if(!sessionStorage.getItem("alyssum_gift_hint")){ sessionStorage.setItem("alyssum_gift_hint", "1"); setTimeout(()=>toast("🎁 سجّل حسابك لتحصل على هدية تثبيت التطبيق"), 1500); } return; }
+      if(await this.claim("install")) setTimeout(()=>toast("🎁 شكراً لتثبيتك التطبيق! هديتك في «حسابي»"), 1200);
+    };
+    go(); addEventListener("appinstalled", ()=>setTimeout(go, 800));
+  },
+};
+
+/* ══════════════ تتبّع الطلب برقم التتبع (عام بلا تسجيل) ══════════════
+   الرابط ?t=TRACKING يفتح النافذة مباشرة (يرسله لك مركز إشعارات واتساب). يتطلب Supabase أو نسخة PHP. */
+const Track = {
+  STEPS: [["confirmee", "تم تسجيل الطلب ✅"], ["expediee", "في الطريق إليك 🚚"], ["livree", "تم التسليم 🎉"]],
+  cur: "",
+  fromUrl(){
+    try{ const t = new URLSearchParams(location.search).get("t"); if(t && /^[A-Za-z0-9._-]{4,40}$/.test(t)){ try{ localStorage.setItem("alyssum_pending_track", t); }catch(e){} this.open(t); } }catch(e){}
+  },
+  ensure(){
+    let bg = document.getElementById("trk-bg"); if(bg) return bg;
+    bg = document.createElement("div"); bg.id = "trk-bg"; bg.className = "acc-bg";
+    bg.innerHTML = '<div class="acc-box" role="dialog" aria-modal="true" aria-label="تتبّع الطلب"><button class="acc-x" type="button" aria-label="إغلاق">✕</button><div id="trk-body"></div></div>';
+    document.body.appendChild(bg);
+    bg.addEventListener("click", e=>{ if(e.target === bg) bg.classList.remove("open"); });
+    bg.querySelector(".acc-x").onclick = ()=>bg.classList.remove("open");
+    return bg;
+  },
+  open(t){
+    const bg = this.ensure(); bg.classList.add("open");
+    const b = document.getElementById("trk-body");
+    b.innerHTML = '<h3>📦 تتبّع طلبك</h3><p class="acc-sub">أدخل رقم التتبع الذي وصلك على واتساب.</p>' +
+      '<form id="trk-form" class="acc-link"><input name="t" placeholder="مثال: yal-123456" dir="ltr" value="' + Account.esc(t || "") + '" required><button class="btn btn-gold" type="submit">تتبّع</button></form><div id="trk-res"></div>';
+    b.querySelector("#trk-form").onsubmit = ev=>{ ev.preventDefault(); this.lookup(ev.target.t.value.trim()); };
+    if(t) this.lookup(t);
+  },
+  async lookup(t){
+    const box = document.getElementById("trk-res"); this.cur = t;
+    if(!/^[A-Za-z0-9._-]{4,40}$/.test(t)){ box.innerHTML = '<div class="acc-msg bad">رقم التتبع غير صالح.</div>'; return; }
+    box.innerHTML = '<p class="acc-sub">⏳ جارِ البحث…</p>';
+    let r = null;
+    try{ r = await API.track(t); }catch(e){ box.innerHTML = '<div class="acc-msg bad">' + (e.message === "rate_limited" ? "محاولات كثيرة — انتظر دقيقة." : "تعذّر الاتصال — أعد المحاولة.") + '</div>'; return; }
+    if(r === null){ box.innerHTML = '<div class="acc-msg bad">خدمة التتبع غير متاحة في هذا الموقع حالياً.</div>'; return; }
+    if(!r.found){ box.innerHTML = '<div class="acc-msg bad">لم نجد طلباً بهذا الرقم. تأكد منه أو تواصل معنا على واتساب.</div>'; return; }
+    const idx = this.STEPS.findIndex(x=>x[0] === r.status), bad = r.status === "annulee" || r.status === "echec";
+    const steps = bad ? '<div class="trk-bad">' + (r.status === "annulee" ? "تم إلغاء هذا الطلب." : "تعذّر توصيل الطلب — سنتواصل معك.") + '</div>'
+      : '<ol class="trk-steps">' + this.STEPS.map((x, i)=>'<li class="' + (i <= idx ? "done" : "") + (i === idx ? " now" : "") + '">' + x[1] + '</li>').join("") + '</ol>';
+    box.innerHTML = steps + '<div class="trk-meta">رقم التتبع: <b dir="ltr">' + Account.esc(t) + '</b><br>الوجهة: ' + Account.esc((r.wilaya || "") + (r.commune ? " — " + r.commune : "")) +
+      (r.dtype === "stop" ? " (مكتب)" : "") + '<br>التاريخ: ' + new Date(r.date).toLocaleDateString("ar-DZ") + '</div>' +
+      (API.cust.profile() && API.cust.mode() !== "local" ? '<button class="btn btn-ghost trk-link" type="button" style="width:100%;margin-top:.6rem">🔗 أضف هذا الطلب إلى حسابي</button>'
+        : '<button class="btn btn-gold trk-reg" type="button" style="width:100%;margin-top:.6rem">👤 سجّل حسابك لتتابع كل طلباتك</button>');
+    const lk = box.querySelector(".trk-link"); if(lk) lk.onclick = async ()=>{ lk.disabled = true; const ok = await this.link(t); lk.textContent = ok ? "✅ أُضيف إلى حسابي" : "لم نستطع ربطه (يلزم تطابق هاتف الحساب مع هاتف الطلب)"; };
+    const rg = box.querySelector(".trk-reg"); if(rg) rg.onclick = ()=>{ document.getElementById("trk-bg").classList.remove("open"); Account.open(); };
+  },
+  async link(t){
+    try{ const r = await API.cust.call("link_order", { token: API.cust.token(), order_id: t }); localStorage.removeItem("alyssum_pending_track"); return r === true || !!(r && r.linked); }catch(e){ return false; }
+  },
+  /* بعد تسجيل الدخول: ربط رقم التتبع القادم من الرابط تلقائياً */
+  async linkPending(){
+    let t = ""; try{ t = localStorage.getItem("alyssum_pending_track") || ""; }catch(e){}
+    if(t && API.cust.token()) await this.link(t);
+  },
+};
+
 PWA.init();
-(function(){ const go = ()=>{ try{ Account.init(); }catch(e){} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go(); })();
+(function(){ const go = ()=>{ try{ Account.init(); Gifts.checkInstall(); Track.fromUrl(); }catch(e){} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go(); })();

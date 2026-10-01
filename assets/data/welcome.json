@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "register": { "enabled": true, "title": "🎁 هدية التسجيل", "code": "WELCOME10", "type": "percent", "value": 10, "product": "", "minOrder": 0, "days": 14 },
+  "install": { "enabled": true, "title": "🎁 هدية تثبيت التطبيق", "code": "APPGIFT", "type": "freeship", "value": 0, "product": "", "minOrder": 0, "days": 14 }
+}
