@@ -72,7 +72,17 @@ tr:hover td{background:#FAF7F0}
 .pill{padding:.2rem .7rem;border-radius:999px;font-size:.75rem;font-weight:800;white-space:nowrap}
 .st-nouvelle{background:#FFF3D6;color:#8A6D1B}.st-confirmee{background:#DCEBFF;color:#1B4F8A}
 .st-expediee{background:#E7D9FF;color:#5B2D8A}.st-livree{background:#D9F2E5;color:#14714B}
-.st-annulee{background:#FFE0E0;color:#A32222}.st-echec{background:#FFD0D0;color:#8A1212}.st-pending{background:#FFF3D6;color:#8A6D1B}
+.st-annulee{background:#FFE0E0;color:#A32222}
+.attr-row{display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center;margin-bottom:.5rem;padding:.55rem;border:1.5px solid var(--line);border-radius:12px;background:#fcfaf6}
+.attr-row input[type=text]{margin:0;flex:1 1 130px;min-width:0}
+.attr-row label{font-size:.8rem;white-space:nowrap;display:flex;gap:.3rem;align-items:center}
+.var-row{display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center;margin-bottom:.5rem;padding:.55rem;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+.var-row .vl{flex:1 1 100%;font-weight:800;color:var(--green)}
+.var-row input[type=number]{margin:0;flex:1 1 120px;min-width:0}
+.var-row input[type=text]{margin:0;flex:2 1 160px;min-width:0}
+.var-row img{width:38px;height:38px;border-radius:8px;object-fit:cover;border:1px solid var(--line)}
+.grp-pick{max-height:220px;overflow:auto;border:1.5px solid var(--line);border-radius:12px;padding:.4rem}
+.grp-pick label{display:flex;gap:.5rem;align-items:center;padding:.3rem .4rem;font-size:.9rem;cursor:pointer}.st-echec{background:#FFD0D0;color:#8A1212}.st-pending{background:#FFF3D6;color:#8A6D1B}
 .small{background:var(--green);color:#fff;border-radius:8px;padding:.35rem .8rem;font-size:.8rem;font-weight:800;display:inline-block;margin:.1rem;border:none;cursor:pointer}
 .small.warn{background:var(--red)}
 .small.gold{background:var(--gold)}
@@ -170,6 +180,7 @@ tr:hover td{background:#FAF7F0}
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
       <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
+      <button class="nav-btn" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
@@ -384,6 +395,19 @@ tr:hover td{background:#FAF7F0}
       <button class="small" onclick="Admin.editCoupon(null)">+ كود جديد</button>
     </div>
     <div class="card"><div style="overflow:auto"><table id="coupons-table"></table></div></div>
+  </div>
+
+  <div id="tab-attributes" class="hidden">
+    <div class="card">
+      <b style="color:var(--green)">🏷️ مكتبة السمات</b>
+      <div class="hint">أنشئ السمة مرة واحدة (مثل اللون: أحمر، أزرق) ثم أضفها لأي منتج من نافذة المنتج بنقرة. تعديل المكتبة لا يغيّر المنتجات الموجودة.</div>
+      <div class="grid2" style="margin-top:.6rem">
+        <input id="al-name" placeholder="اسم السمة (مثال: اللون)">
+        <input id="al-values" placeholder="القيم مفصولة بفاصلة (أحمر، أزرق، أخضر)">
+      </div>
+      <button class="small gold" onclick="Admin.addLibAttr()">+ إضافة للمكتبة</button>
+    </div>
+    <div class="card"><div class="rtw" style="overflow:auto"><table id="attr-lib-table" class="rt"></table></div></div>
   </div>
 
   <div id="tab-blacklist" class="hidden">
@@ -640,6 +664,12 @@ tr:hover td{background:#FAF7F0}
         <input id="f-slug" placeholder="المعرف (slug) — إنجليزي بدون مسافات" dir="ltr">
         <div class="hint">يُستخدم في رابط الصفحة</div>
         <input id="f-title" placeholder="اسم المنتج">
+        <select id="f-type" onchange="Admin.onProductTypeChange()">
+          <option value="simple">📦 منتج فردي</option>
+          <option value="variable">🎛️ منتج متغيّر (ألوان / مقاسات / نكهات...)</option>
+          <option value="grouped">🧺 منتج مجمّع (عدة منتجات في صفحة واحدة)</option>
+        </select>
+        <div class="hint" id="f-type-hint" style="margin-top:0"></div>
         <div class="grid2">
           <input id="f-price" type="number" placeholder="السعر (دج)">
           <input id="f-old" type="number" placeholder="قبل التخفيض (اختياري)">
@@ -673,9 +703,31 @@ tr:hover td{background:#FAF7F0}
         <div class="section-title">العروض والأسعار</div>
         <label style="display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem;font-weight:800"><input type="checkbox" id="f-freeship" style="width:auto"> 🚚 تفعيل الشحن المجاني لهذا المنتج</label>
         <div class="hint" style="margin-top:0">عند التفعيل: إن لم تحدّد عروضاً بعينها يشمل كل العروض، وإن حدّدتَ عرضاً أو أكثر (خانة «🚚 مجاني» في صف العرض) يقتصر عليها.</div>
-        <div id="f-offers"></div>
-        <button class="small blue" type="button" onclick="Admin.addOfferRow()">+ إضافة عرض</button>
+        <div id="f-offers-box">
+          <div id="f-offers"></div>
+          <button class="small blue" type="button" onclick="Admin.addOfferRow()">+ إضافة عرض</button>
+        </div>
       </div>
+    </div>
+    <div id="f-types-wrap" style="margin-top:.4rem">
+    <div class="section-title">🏷️ السمات</div>
+    <div class="hint" style="margin-top:0" id="f-attr-hint">المواصفات التي تظهر في صفحة المنتج. في المنتج المتغيّر فعّل «للتنويعات» على السمات التي يختار منها الزبون.</div>
+    <div id="f-attrs"></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+      <button class="small blue" type="button" onclick="Admin.addAttrRow()">+ سمة</button>
+      <select id="f-attr-lib" onchange="Admin.addAttrFromLib(this)" style="margin:0;width:auto;flex:1 1 180px"><option value="">➕ من مكتبة السمات…</option></select>
+    </div>
+    <div id="f-var-section" class="hidden">
+      <div class="section-title">🎛️ التنويعات</div>
+      <div class="hint" style="margin-top:0">لكل تركيبة سعر ومخزون وصورة. العروض أعلاه تُحسب لأقل سعر وتُعدَّل نسبياً لباقي التنويعات. المخزون الفارغ = غير محدود.</div>
+      <button class="small gold" type="button" onclick="Admin.generateVariations()">⚙️ توليد التنويعات من السمات</button>
+      <div id="f-vars" style="margin-top:.5rem"></div>
+    </div>
+    <div id="f-grp-section" class="hidden">
+      <div class="section-title">🧺 المنتجات المجمّعة</div>
+      <div class="hint" style="margin-top:0">اختر المنتجات الفردية التي تظهر في هذه الصفحة؛ يحدد الزبون كمية كل منها والسعر مجموعها.</div>
+      <div id="f-grp-list" class="grp-pick"></div>
+    </div>
     </div>
     <div class="action-bar">
       <b>الإجراءات:</b>
@@ -1750,7 +1802,7 @@ const Admin = {
     this.startAlerts();
     try{ Updater.init(); Seller.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
-    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadCheckoutSettings()]);
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadAttrLib(), this.loadCheckoutSettings()]);
     this.renderAll();
     toast("✓ تم التحميل");
     try{ if(!sessionStorage.getItem("alyssum_pages_checked") && GH.cfg() && GH.cfg().token){ sessionStorage.setItem("alyssum_pages_checked","1"); this.ensureProductPages(); } }catch(e){}
@@ -1766,7 +1818,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","analytics","products","genpage","categories","fees","delivery","coupons","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -2126,6 +2178,7 @@ const Admin = {
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
+    this.fillProductTypeUI(src);
     this.renderImagesPreview();
     this.renderCoverPreview();
     $f("prod-modal-bg").classList.add("open");
@@ -2456,6 +2509,158 @@ const Admin = {
     }
   },
 
+
+  /* ════════ أنواع المنتجات والسمات والتنويعات ════════ */
+  attrLib: [], attrLibSha: undefined,
+  async loadAttrLib(){
+    try{ const f = await GH.getFile("assets/data/attributes.json"); this.attrLibSha = f.sha;
+      const j = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,""))))); this.attrLib = Array.isArray(j) ? j : []; }
+    catch(e){ this.attrLib = []; this.attrLibSha = undefined; }
+    this.renderAttrLib();
+  },
+  parseValues(t){ return [...new Set(String(t||"").split(/[,،\n]/).map(x=>x.trim()).filter(Boolean))]; },
+  async saveAttrLib(msg){
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.attrLib, null, 2))));
+      const res = await GH.putFile("assets/data/attributes.json", b64, this.attrLibSha, "مكتبة السمات عبر لوحة التحكم");
+      this.attrLibSha = res && res.content ? res.content.sha : undefined; this.renderAttrLib(); if(msg) toast(msg);
+    }catch(err){ console.error(err); toast("❌ " + err.message); }
+  },
+  addLibAttr(){
+    const name = $f("al-name").value.trim(), values = this.parseValues($f("al-values").value);
+    if(!name || !values.length){ toast("أدخل اسم السمة وقيمة واحدة على الأقل"); return }
+    const ex = this.attrLib.find(a=>a.name===name);
+    if(ex) ex.values = values; else this.attrLib.push({ name, values });
+    $f("al-name").value = ""; $f("al-values").value = "";
+    this.saveAttrLib("✅ حُفظت السمة في المكتبة");
+  },
+  delLibAttr(i){ if(!confirm("حذف هذه السمة من المكتبة؟ (لا تتأثر المنتجات)")) return; this.attrLib.splice(i,1); this.saveAttrLib("🗑️ حُذفت"); },
+  renderAttrLib(){
+    const t = $f("attr-lib-table");
+    if(t) t.innerHTML = this.attrLib.length
+      ? '<tr class="hd"><th>السمة</th><th>القيم</th><th></th></tr>' + this.attrLib.map((a,i)=>'<tr><td class="t"><b>' + a.name + '</b></td><td data-l="القيم">' + a.values.join("، ") + '</td><td class="act"><button class="small warn" onclick="Admin.delLibAttr(' + i + ')">🗑️ حذف</button></td></tr>').join("")
+      : "<tr><td style='text-align:center;padding:2rem;color:#999'>المكتبة فارغة — أضف سمة أعلاه</td></tr>";
+    const sel = $f("f-attr-lib");
+    if(sel) sel.innerHTML = '<option value="">➕ من مكتبة السمات…</option>' + this.attrLib.map((a,i)=>'<option value="' + i + '">' + a.name + ' (' + a.values.length + ')</option>').join("");
+  },
+  onProductTypeChange(){
+    const t = $f("f-type").value;
+    $f("f-var-section").classList.toggle("hidden", t !== "variable");
+    $f("f-grp-section").classList.toggle("hidden", t !== "grouped");
+    $f("f-offers-box").classList.toggle("hidden", t === "grouped");
+    $f("f-stock").style.display = t === "simple" ? "" : "none";
+    $f("f-price").readOnly = t !== "simple"; $f("f-old").readOnly = t !== "simple";
+    $f("f-price").placeholder = t === "simple" ? "السعر (دج)" : "يُحسب تلقائياً (أقل سعر)";
+    $f("f-type-hint").textContent = t === "variable" ? "السعر الأساسي = أقل سعر بين التنويعات. أضف السمات ثم ولّد التنويعات." : t === "grouped" ? "السعر المعروض = أقل سعر بين المنتجات المختارة؛ الإجمالي يتبع ما يختاره الزبون." : "";
+    document.querySelectorAll("#f-attrs .at-var").forEach(c=>{ c.disabled = t !== "variable"; if(t !== "variable") c.checked = false; c.parentNode.style.opacity = t === "variable" ? "1" : ".4"; });
+    if(t === "grouped") this.renderGroupPicker(this._grpSel || []);
+  },
+  addAttrRow(a){
+    a = (a && a.name !== undefined) ? a : { name:"", values:[], variation:false, visible:true };
+    const d = document.createElement("div"); d.className = "attr-row";
+    d.innerHTML = '<input type="text" class="at-name" placeholder="اسم السمة (اللون)">' +
+      '<input type="text" class="at-values" placeholder="القيم مفصولة بفاصلة">' +
+      '<label><input type="checkbox" class="at-var" style="width:auto"> للتنويعات</label>' +
+      '<label><input type="checkbox" class="at-vis" style="width:auto"> تظهر</label>' +
+      '<button class="small warn" type="button" onclick="this.closest(\'.attr-row\').remove()">✕</button>';
+    d.querySelector(".at-name").value = a.name || ""; d.querySelector(".at-values").value = (a.values||[]).join("، ");
+    d.querySelector(".at-var").checked = !!a.variation; d.querySelector(".at-vis").checked = a.visible !== false;
+    $f("f-attrs").appendChild(d);
+    this.onProductTypeChange.call(this);
+  },
+  addAttrFromLib(sel){
+    const a = this.attrLib[+sel.value]; sel.value = ""; if(!a) return;
+    if([...document.querySelectorAll("#f-attrs .at-name")].some(i=>i.value.trim()===a.name)){ toast("هذه السمة مضافة بالفعل"); return }
+    this.addAttrRow({ name:a.name, values:a.values, variation:$f("f-type").value === "variable", visible:true });
+  },
+  renderAttrRows(attrs){ $f("f-attrs").innerHTML = ""; (attrs||[]).forEach(a=>this.addAttrRow(a)); },
+  collectAttrs(){
+    const type = $f("f-type").value;
+    return [...document.querySelectorAll("#f-attrs .attr-row")].map(r=>({
+      name: r.querySelector(".at-name").value.trim(), values: this.parseValues(r.querySelector(".at-values").value),
+      variation: type === "variable" && r.querySelector(".at-var").checked, visible: r.querySelector(".at-vis").checked,
+    })).filter(a=>a.name && a.values.length);
+  },
+  varKey(attrs){ return Object.keys(attrs).sort().map(k=>k + "=" + attrs[k]).join("|"); },
+  generateVariations(){
+    const all = this.collectAttrs(), names = all.map(a=>a.name);
+    if(new Set(names).size !== names.length){ toast("⚠️ يوجد اسم سمة مكرر — اجعل لكل سمة اسماً مختلفاً"); return }
+    const attrs = all.filter(a=>a.variation);
+    if(!attrs.length){ toast("فعّل «للتنويعات» على سمة واحدة على الأقل (مع قيمها)"); return }
+    const old = this.collectVars(), byKey = {}; old.forEach(v=>byKey[this.varKey(v.attrs)] = v);
+    let combos = [{}]; attrs.forEach(a=>{ const n = []; combos.forEach(c=>a.values.forEach(val=>n.push(Object.assign({}, c, { [a.name]: val })))); combos = n; });
+    if(combos.length > 200){ toast("عدد التركيبات (" + combos.length + ") كبير جداً — قلّل القيم"); return }
+    const keep = new Set(combos.map(c=>this.varKey(c))), dropped = old.filter(v=>!keep.has(this.varKey(v.attrs))).length;
+    if(dropped && !confirm("سيُحذف " + dropped + " تنويع لم تعد سماته موجودة. متابعة؟")) return;
+    const base = Number($f("f-price").value) || 0;
+    const vars = combos.map((c,i)=> byKey[this.varKey(c)] || { id: "v" + Date.now().toString(36) + i, attrs: c, price: base, old: null, stock: null, image: "", active: true });
+    this.renderVarRows(vars); toast("✓ " + vars.length + " تنويع — حدّد السعر والمخزون لكل واحد");
+  },
+  renderVarRows(vars){
+    const box = $f("f-vars"); box.innerHTML = "";
+    (vars||[]).forEach(v=>{
+      const d = document.createElement("div"); d.className = "var-row"; d.dataset.id = v.id; d.dataset.attrs = JSON.stringify(v.attrs);
+      d.innerHTML = '<div class="vl">' + Object.entries(v.attrs).map(([k,x])=>k + ": " + x).join(" / ").replace(/</g,"&lt;") + '</div>' +
+        '<input type="number" class="va-price" placeholder="السعر" min="0">' +
+        '<input type="number" class="va-old" placeholder="قبل التخفيض" min="0">' +
+        '<input type="number" class="va-stock" placeholder="المخزون (فارغ=مفتوح)" min="0">' +
+        '<img class="va-prev" alt="" style="display:none">' +
+        '<input type="text" class="va-img" placeholder="مسار صورة (اختياري)" dir="ltr">' +
+        '<label class="small blue" style="cursor:pointer;margin:0">📁<input type="file" accept="image/*" style="display:none" onchange="Admin.uploadVarImage(this)"></label>' +
+        '<label style="font-size:.8rem;white-space:nowrap"><input type="checkbox" class="va-act" style="width:auto"> مفعّل</label>' +
+        '<button class="small warn" type="button" onclick="this.closest(\'.var-row\').remove()">✕</button>';
+      d.querySelector(".va-price").value = v.price ?? ""; d.querySelector(".va-old").value = v.old ?? ""; d.querySelector(".va-stock").value = (v.stock === null || v.stock === undefined) ? "" : v.stock;
+      d.querySelector(".va-img").value = v.image || ""; d.querySelector(".va-act").checked = v.active !== false;
+      if(v.image){ const im = d.querySelector(".va-prev"); im.src = v.image; im.style.display = ""; }
+      box.appendChild(d);
+    });
+  },
+  collectVars(){
+    return [...document.querySelectorAll("#f-vars .var-row")].map(r=>({
+      id: r.dataset.id, attrs: JSON.parse(r.dataset.attrs || "{}"),
+      price: Number(r.querySelector(".va-price").value) || 0,
+      old: r.querySelector(".va-old").value ? Number(r.querySelector(".va-old").value) : null,
+      stock: r.querySelector(".va-stock").value.trim() === "" ? null : Math.max(0, Number(r.querySelector(".va-stock").value) || 0),
+      image: r.querySelector(".va-img").value.trim(), active: r.querySelector(".va-act").checked,
+    }));
+  },
+  async uploadVarImage(input){
+    const file = input.files && input.files[0]; if(!file) return;
+    const slug = $f("f-slug").value.trim(); if(!slug){ toast("أدخل معرّف المنتج (slug) أولاً"); input.value = ""; return }
+    const cfg = GH.cfg(); if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); input.value = ""; return }
+    toast("⏳ جارِ رفع الصورة...");
+    try{ const path = await this.uploadImageFile(file, "assets/img/" + slug, "var-"); const r = input.closest(".var-row");
+      r.querySelector(".va-img").value = path; const im = r.querySelector(".va-prev"); im.src = path; im.style.display = ""; toast("✅ رُفعت الصورة"); }
+    catch(err){ toast("❌ " + err.message); }
+    input.value = "";
+  },
+  renderGroupPicker(selected){
+    this._grpSel = selected || [];
+    const cur = $f("f-slug").value.trim(), box = $f("f-grp-list");
+    const list = this.products.filter(p=>(p.type||"simple")==="simple" && p.slug !== cur);
+    box.innerHTML = list.length ? list.map(p=>'<label><input type="checkbox" class="gp-chk" value="' + p.slug + '" ' + (this._grpSel.includes(p.slug)?"checked":"") + ' style="width:auto"> ' + p.title.replace(/</g,"&lt;") + ' <small style="color:#999">' + Number(p.price).toLocaleString("fr-DZ") + ' دج</small></label>').join("") : "<div class='hint'>لا توجد منتجات فردية لإضافتها بعد.</div>";
+  },
+  collectChildren(){ return [...document.querySelectorAll("#f-grp-list .gp-chk:checked")].map(c=>c.value); },
+  fillProductTypeUI(src){
+    $f("f-type").value = (src && (src.type === "variable" || src.type === "grouped")) ? src.type : "simple";
+    this.renderAttrRows(src ? src.attributes : []);
+    this.renderVarRows(src && src.variations ? src.variations : []);
+    this._grpSel = (src && src.children) || [];
+    this.renderAttrLib();
+    this.onProductTypeChange();
+  },
+  validateProductType(p){
+    const _n = (p.attributes||[]).map(a=>a.name); if(new Set(_n).size !== _n.length) return "اسم سمة مكرر — اجعل لكل سمة اسماً مختلفاً";
+    if(p.type === "variable"){
+      if(!(p.attributes||[]).some(a=>a.variation)) return "المنتج المتغيّر يحتاج سمة واحدة على الأقل مفعّلة «للتنويعات»";
+      const act = (p.variations||[]).filter(v=>v.active !== false);
+      if(!act.length) return "ولّد التنويعات وحدّد أسعارها";
+      if(act.some(v=>!(v.price > 0))) return "حدّد سعراً أكبر من صفر لكل تنويع مفعّل";
+    }
+    if(p.type === "grouped" && !(p.children||[]).length) return "اختر منتجاً واحداً على الأقل للمنتج المجمّع";
+    return "";
+  },
+
   collectProductForm(){
     const offers = [...document.querySelectorAll("#f-offers .offer-row")].map(r=>({
       qty: Number(r.querySelector(".of-qty").value)||1,
@@ -2482,13 +2687,28 @@ const Admin = {
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
     if(prevP && prevP.pageMode) out.pageMode = prevP.pageMode; // نوع الصفحة (افتراضية/مولّدة) لا يُفقد عند حفظ المنتج
+    const type = $f("f-type").value, attributes = this.collectAttrs();
+    if(type !== "simple") out.type = type;
+    if(attributes.length) out.attributes = attributes;
+    if(type === "variable"){
+      out.variations = this.collectVars();
+      const act = out.variations.filter(v=>v.active !== false && v.price > 0);
+      out.price = act.length ? Math.min(...act.map(v=>v.price)) : 0; out.old = null; out.stock = null;
+      if(!offers.length) out.offers = [{qty:1, price: out.price}];
+    }
+    if(type === "grouped"){
+      out.children = this.collectChildren();
+      const ch = out.children.map(sl=>this.products.find(x=>x.slug===sl)).filter(Boolean);
+      out.price = ch.length ? Math.min(...ch.map(c=>Number(c.price)||0)) : 0; out.old = null; out.stock = null;
+      out.offers = [{qty:1, price: out.price}];
+    }
     return out;
   },
 
   diffProduct(oldP, newP){
     const changes = [];
     if(!oldP) return [{label:"منتج جديد", old:null, new:newP.title}];
-    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"],["freeShip","الشحن المجاني"]];
+    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"],["freeShip","الشحن المجاني"],["type","النوع"]];
     fields.forEach(([k,label])=>{
       if(String(oldP[k]??"") !== String(newP[k]??""))
         changes.push({label, old: oldP[k]??"—", new: newP[k]??"—"});
@@ -2553,7 +2773,8 @@ const Admin = {
 
   async publishProduct(data){
     const p = data || this.collectProductForm();
-    if(!p.slug || !p.title || !p.price){ toast("املأ الحقول الأساسية"); return }
+    if(!p.slug || !p.title || !p.price){ toast(p.type === "variable" ? "ولّد التنويعات وحدّد أسعارها" : p.type === "grouped" ? "اختر المنتجات المجمّعة" : "املأ الحقول الأساسية"); return }
+    const _terr = this.validateProductType(p); if(_terr){ toast("⚠️ " + _terr); return }
     API.saveProduct(this.key, p); // سجل في Google Sheets (تاريخي فقط — المصدر الحقيقي للموقع هو data.js أدناه)
     const i = this.products.findIndex(x=>x.slug===p.slug);
     if(i>=0) this.products[i]=p; else this.products.push(p);
@@ -2582,6 +2803,7 @@ const Admin = {
     $f("f-seo-title").value = p.seoTitle||"";
     $f("f-seo-desc").value = p.seoDesc||"";
     this.renderOffersRows(p.offers||[]);
+    this.fillProductTypeUI(p);
     this.renderImagesPreview();
     this.renderCoverPreview();
     $f("prod-modal-title").textContent = "نسخة من: " + p.title;

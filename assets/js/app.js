@@ -1,24 +1,49 @@
 /* أليسوم — محرك الطلبات والسلة */
 let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
 /* الشحن المجاني: خاصية المنتج freeShip، ويمكن حصره في عروض بعينها (offer.ship)؛ بلا عروض محددة يشمل كل العروض */
-function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; const flagged = (p.offers||[]).some(x=>x.ship); return flagged ? !!(o && o.ship) : true; }
+function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; if(productType(p)==="grouped") return true; const flagged = (p.offers||[]).some(x=>x.ship); return flagged ? !!(o && o.ship) : true; }
 function cartItemFreeShip(it){ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; if(!p || !p.freeShip) return false; const fl = (p.offers||[]).filter(x=>x.ship); return fl.length ? it.qty >= Math.min(...fl.map(x=>x.qty)) : true; }
 const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " دج";
+
+/* ── أنواع المنتجات: فردي (simple) | متغيّر (variable: سمات + تنويعات بسعر/مخزون/صورة لكل تنويع) | مجمّع (grouped: عدة منتجات فردية في صفحة واحدة) ── */
+function productType(p){ return (p && (p.type === "variable" || p.type === "grouped")) ? p.type : "simple"; }
+function activeVariations(p){ return ((p && p.variations) || []).filter(v=>v && v.active !== false); }
+function varOut(v){ return v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0; }
+function variationLabel(p, v){ return ((p && p.attributes) || []).filter(a=>a.variation && v && v.attrs && v.attrs[a.name] != null).map(a=>a.name + ": " + v.attrs[a.name]).join(" / "); }
+function groupChildren(p){ return ((p && p.children) || []).map(sl=>PRODUCTS.find(x=>x.slug===sl)).filter(x=>x && productType(x)==="simple"); }
+function minPrice(p){
+  const t = productType(p);
+  if(t==="variable"){ const vs = activeVariations(p); if(vs.length) return Math.min(...vs.map(v=>Number(v.price)||0)); }
+  if(t==="grouped"){ const cs = groupChildren(p); if(cs.length) return Math.min(...cs.map(c=>Number(c.price)||0)); }
+  return Number(p && p.price) || 0;
+}
+function hasPriceRange(p){
+  const t = productType(p), mn = minPrice(p);
+  if(t==="variable") return activeVariations(p).some(v=>(Number(v.price)||0) !== mn);
+  if(t==="grouped") return groupChildren(p).some(c=>(Number(c.price)||0) !== mn);
+  return false;
+}
+function itemOut(it){
+  const p = PRODUCTS.find(x=>x.slug===it.slug); if(!p) return false;
+  if(it.vid){ const v = (p.variations||[]).find(x=>x.id===it.vid); return !v || v.active===false || varOut(v); }
+  return isOutOfStock(p);
+}
 
 /* ── السلة ── */
 const Cart = {
   key: "alyssum_cart_v1",
   all(){ try{ return JSON.parse(localStorage.getItem(this.key))||[] }catch(e){ return [] } },
   save(items){ localStorage.setItem(this.key, JSON.stringify(items)); Cart.render() },
-  add(slug, qty, offerPrice){
+  /* unitPrice = السعر الفعلي للقطعة (إجمالي العرض ÷ عدد القطع) — كان يُمرَّر إجمالي العرض فيُضرب في الكمية ويظهر مجموع السلة مضاعفاً */
+  add(slug, qty, unitPrice, vid, vlabel){
     const p = PRODUCTS.find(p=>p.slug===slug);
-    if(p && isOutOfStock(p)){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
+    if(p && itemOut({slug, vid})){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
     const items = Cart.all();
-    const ex = items.find(i => i.slug===slug && i.price===offerPrice);
-    if(ex) ex.qty += qty; else items.push({slug, qty, price: offerPrice});
+    const ex = items.find(i => i.slug===slug && Math.abs(i.price-unitPrice) < 1e-6 && (i.vid||"")===(vid||""));
+    if(ex) ex.qty += qty; else { const it = {slug, qty, price: unitPrice}; if(vid){ it.vid = vid; it.vlabel = vlabel||""; } items.push(it); }
     Cart.save(items);
-    toast(`تمت إضافة «${p?p.title:slug}» إلى السلة ✓`);
+    toast(`تمت إضافة «${p?p.title:slug}${vlabel?" — "+vlabel:""}» إلى السلة ✓`);
   },
   setQty(idx, delta){
     const items = Cart.all();
@@ -30,7 +55,7 @@ const Cart = {
   remove(idx){ const items=Cart.all(); items.splice(idx,1); Cart.save(items) },
   clear(){ Cart.save([]) },
   count(){ return Cart.all().reduce((s,i)=>s+i.qty,0) },
-  subtotal(){ return Cart.all().reduce((s,i)=>s+i.qty*i.price,0) },
+  subtotal(){ return Cart.all().reduce((s,i)=>s+Math.round(i.qty*i.price),0) },
   render(){
     document.querySelectorAll(".cart-count").forEach(el=>el.textContent = Cart.count());
     const box = document.getElementById("cart-items");
@@ -39,10 +64,10 @@ const Cart = {
     box.innerHTML = items.length ? items.map((it,idx)=>{
       const p = PRODUCTS.find(p=>p.slug===it.slug) || it;
       const img = p.cover || (p.images&&p.images[0]) || "";
-      const oos = isOutOfStock(p);
+      const oos = itemOut(it);
       return `<div class="citem">
         <img src="${REL}${img}" alt="">
-        <div class="t">${p.title}${oos?' <b style="color:var(--red)">— نفدت الكمية 🚫</b>':""}<br><small style="color:var(--muted)">${fmt(it.price)} / وحدة</small></div>
+        <div class="t">${p.title}${it.vlabel?' — <small>'+it.vlabel+'</small>':""}${oos?' <b style="color:var(--red)">— نفدت الكمية 🚫</b>':""}<br><small style="color:var(--muted)">${fmt(Math.round(it.price))} / وحدة</small></div>
         <div class="qty"><button onclick="Cart.setQty(${idx},-1)">−</button><b>${it.qty}</b><button onclick="Cart.setQty(${idx},1)" ${oos?"disabled":""}>+</button></div>
       </div>`;
     }).join("") : `<p style="text-align:center;color:var(--muted);padding:2rem 0">السلة فارغة 🛒</p>`;
@@ -66,7 +91,7 @@ const Cart = {
   checkout(){
     const items = Cart.all();
     if(!items.length){ toast("السلة فارغة"); return }
-    const oosItem = items.map(it=>PRODUCTS.find(p=>p.slug===it.slug)).find(p=>p && isOutOfStock(p));
+    const oosItem = items.filter(itemOut).map(it=>PRODUCTS.find(p=>p.slug===it.slug))[0];
     if(oosItem){ toast(`⚠️ «${oosItem.title}» نفدت كميته — يرجى إزالته من السلة`); return }
     const name = document.getElementById("cname")?.value.trim();
     const phone = document.getElementById("cphone")?.value.trim();
@@ -83,14 +108,14 @@ const Cart = {
     API.submitOrder({
       name, phone, wilaya: wl.name, commune, dtype,
       items: items.map(it => { const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
-        return { slug: it.slug, title: p.title, qty: it.qty, price: it.price }; }),
+        return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: discount>0 ? AppliedCoupon.code : "", discount,
     });
     let msg = `السلام عليكم ${SITE_NAME}، أريد تأكيد طلبي:\n`;
     items.forEach(it=>{
       const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
-      msg += `\n• ${p.title} ×${it.qty} = ${fmt(it.price*it.qty)}`;
+      msg += `\n• ${p.title}${it.vlabel?" — "+it.vlabel:""} ×${it.qty} = ${fmt(Math.round(it.price*it.qty))}`;
     });
     msg += `\n\nالمجموع: ${fmt(sub)}`;
     if(discount>0) msg += `\n🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
@@ -474,27 +499,112 @@ function initProduct(slug){
   }
 
   // العروض — العرض المُحدَّد بصرياً (on) هو نفسه bestIdx المُفعَّل افتراضياً في state.offer أعلاه
+  // للمنتج المتغيّر تُعاد أسعار العروض بنسبة سعر التنويع المختار إلى السعر الأساسي (p.price)
   const offersBox = document.getElementById("offers");
-  offersBox.innerHTML = ""; // تفريغ أي بطاقات عروض ثابتة مضمّنة في HTML (تفادي التكرار)
-  p.offers.forEach((o,i)=>{
-    const paid = o.qty - (o.free||0);
-    const unit = Math.round(o.price/paid);
-    const disc = Math.round((1 - o.price/(p.price*paid))*100);
-    const d = document.createElement("div");
-    d.className = "offer"+(i===bestIdx?" on":"");
-    const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
-    d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}
-      <div class="q">${label}</div>
-      <div class="p">${fmt(o.price)}</div>
-      <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}${offerFreeShip(p,o)?'<br><b style="color:var(--ok)">🚚 شحن مجاني</b>':""}</div>`;
-    d.onclick = ()=>{
-      state.offer = o;
-      document.querySelectorAll(".offer").forEach(x=>x.classList.remove("on"));
-      d.classList.add("on");
-      update();
+  const type = productType(p);
+  let offerIdx = bestIdx;
+  function buildOffers(){
+    offersBox.innerHTML = ""; // تفريغ أي بطاقات عروض ثابتة مضمّنة في HTML (تفادي التكرار)
+    const sc = (type==="variable" && state.variation && Number(p.price)>0) ? state.variation.price / p.price : 1;
+    (p.offers || []).forEach((o0,i)=>{
+      const o = sc===1 ? o0 : Object.assign({}, o0, { price: Math.round(o0.price*sc) });
+      const paid = o.qty - (o.free||0);
+      const unit = Math.round(o.price/paid);
+      const disc = Math.round((1 - o.price/(p.price*sc*paid))*100);
+      const d = document.createElement("div");
+      d.className = "offer"+(i===offerIdx?" on":"");
+      const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
+      d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}
+        <div class="q">${label}</div>
+        <div class="p">${fmt(o.price)}</div>
+        <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}${offerFreeShip(p,o)?'<br><b style="color:var(--ok)">🚚 شحن مجاني</b>':""}</div>`;
+      d.onclick = ()=>{
+        offerIdx = i; state.offer = o;
+        document.querySelectorAll(".offer").forEach(x=>x.classList.remove("on"));
+        d.classList.add("on");
+        update();
+      };
+      offersBox.appendChild(d);
+      if(i===offerIdx) state.offer = o;
+    });
+  }
+  buildOffers();
+
+  /* ── منتج متغيّر: اختيار السمات (لون/مقاس...) ثم يتحدد التنويع بسعره ومخزونه وصورته ── */
+  const attrEsc = t => String(t).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+  function heroPrice(priceTxt, old){
+    const pp = document.getElementById("pprice"), po = document.getElementById("pold"), ps = document.getElementById("psave");
+    if(!pp) return;
+    pp.textContent = priceTxt;
+    const has = old && old.value > old.price;
+    if(po){ po.textContent = has ? fmt(old.value) : ""; po.style.display = has ? "" : "none"; }
+    if(ps){ ps.textContent = has ? "وفّر " + Math.round((1-old.price/old.value)*100) + "%" : ""; ps.style.display = has ? "" : "none"; }
+  }
+  function refreshHeroPrice(){
+    if(type==="variable"){
+      if(state.variation) heroPrice(fmt(state.variation.price), state.variation.old ? { value:Number(state.variation.old), price:state.variation.price } : null);
+      else heroPrice((hasPriceRange(p) ? "من " : "") + fmt(minPrice(p)), null);
+    }else if(type==="grouped"){
+      const tp = state.offer ? state.offer.price : 0;
+      heroPrice(tp>0 ? fmt(tp) : (hasPriceRange(p) ? "من " : "") + fmt(minPrice(p)), null);
+    }
+  }
+  const variantAttrs = (type==="variable") ? (p.attributes||[]).filter(a=>a.variation && (a.values||[]).length) : [];
+  const varSel = {};
+  function missingAttrs(){ return variantAttrs.filter(a=>!varSel[a.name]).map(a=>a.name); }
+  if(type==="variable"){
+    const vs = activeVariations(p);
+    const box = document.createElement("div"); box.id = "variants"; box.className = "variant-box";
+    offersBox.parentNode.insertBefore(box, offersBox);
+    const compatible = (name, val)=>vs.some(v=>!varOut(v) && v.attrs[name]===val && variantAttrs.every(a=>a.name===name || !varSel[a.name] || v.attrs[a.name]===varSel[a.name]));
+    function pickVariation(){
+      const done = variantAttrs.length && variantAttrs.every(a=>varSel[a.name]);
+      state.variation = done ? (vs.find(v=>variantAttrs.every(a=>v.attrs[a.name]===varSel[a.name])) || null) : null;
+      if(state.variation && state.variation.image){ const m = document.getElementById("gmain"); if(m) m.src = REL + state.variation.image; }
+      buildOffers(); refreshHeroPrice(); update(); renderVariants();
+    }
+    function renderVariants(){
+      box.innerHTML = variantAttrs.map(a=>`<div class="v-attr"><div class="v-name">${attrEsc(a.name)}${varSel[a.name]?`: <b>${attrEsc(varSel[a.name])}</b>`:""}</div><div class="v-vals">${a.values.map(val=>{
+          const ok = compatible(a.name, val);
+          return `<button type="button" class="v-chip${varSel[a.name]===val?" on":""}${ok?"":" off"}" data-a="${attrEsc(a.name)}" data-v="${attrEsc(val)}" ${ok?"":"disabled"}>${attrEsc(val)}</button>`; }).join("")}</div></div>`).join("") +
+        `<div class="v-hint">${state.variation ? "✅ متوفر" : (missingAttrs().length ? "اختر: " + missingAttrs().map(attrEsc).join(" و ") : "هذا الاختيار غير متوفر")}</div>`;
+    }
+    box.addEventListener("click", e=>{
+      const btn = e.target.closest(".v-chip"); if(!btn || btn.disabled) return;
+      const name = btn.dataset.a, val = btn.dataset.v;
+      varSel[name] = (varSel[name]===val) ? "" : val;
+      variantAttrs.forEach(a=>{ if(a.name!==name && varSel[a.name] && !compatible(a.name, varSel[a.name])) varSel[a.name] = ""; });
+      pickVariation();
+    });
+    if(vs.length===1) variantAttrs.forEach(a=>varSel[a.name] = vs[0].attrs[a.name]);
+    renderVariants();
+    if(vs.length===1) setTimeout(pickVariation, 0);   // بعد تعريف update()
+  }
+
+  /* ── منتج مجمّع: عدة منتجات فردية بكمية لكل منها ── */
+  if(type==="grouped"){
+    const kids = groupChildren(p), qty = kids.map(()=>0);
+    const box = document.createElement("div"); box.id = "group-box"; box.className = "group-box";
+    box.innerHTML = kids.map((c,i)=>{
+      const oos = isOutOfStock(c), img = c.cover || (c.images && c.images[0]) || "";
+      return `<div class="g-row" data-i="${i}"><img src="${REL}${img}" alt=""><div class="g-t"><b>${attrEsc(c.title)}</b><small>${fmt(c.price)}${c.old?` <s>${fmt(c.old)}</s>`:""}${oos?' · <b style="color:var(--red)">نفدت</b>':""}</small></div>
+        <div class="g-q"><button type="button" data-d="-1" ${oos?"disabled":""}>−</button><b>0</b><button type="button" data-d="1" ${oos?"disabled":""}>+</button></div></div>`;
+    }).join("");
+    offersBox.parentNode.insertBefore(box, offersBox); offersBox.style.display = "none";
+    state.group = { kids, qty };
+    const recalc = ()=>{
+      const tq = qty.reduce((a,b)=>a+b,0), tp = qty.reduce((s2,q,i)=>s2+q*(Number(kids[i].price)||0),0);
+      state.offer = { qty: tq, price: tp };
+      box.querySelectorAll(".g-row").forEach((row,i)=>row.querySelector(".g-q b").textContent = qty[i]);
+      refreshHeroPrice(); update();
     };
-    offersBox.appendChild(d);
-  });
+    box.addEventListener("click", e=>{
+      const btn = e.target.closest("button[data-d]"); if(!btn || btn.disabled) return;
+      const i = +btn.closest(".g-row").dataset.i; qty[i] = Math.max(0, Math.min(99, qty[i] + (+btn.dataset.d))); recalc();
+    });
+    state.offer = { qty:0, price:0 };
+  }
+  if(type!=="simple") setTimeout(refreshHeroPrice, 0);   // بعد سكربت الصفحة الذي يكتب سعر المنتج الأساسي
   // إخفاء بطاقات العروض إن عُطِّلت من لوحة التحكم ⟵ نموذج الطلب — يبقى العرض «الأكثر طلباً» (bestIdx)
   // محتسَباً داخلياً في state.offer لأغراض التسعير رغم إخفاء واجهة الاختيار
   if(__checkoutCache && __checkoutCache.showOffers === false) offersBox.style.display = "none";
@@ -647,6 +757,13 @@ function initProduct(slug){
   const totalBoxEl = feeEl.closest(".total-box");
   if(totalBoxEl) injectCouponBox("prod", totalBoxEl, ()=>state.offer.price, update);
 
+  // بنود الطلب حسب نوع المنتج (المتغيّر: عنوان التنويع داخل الاسم؛ المجمّع: بند لكل منتج بكمية)
+  function orderItems(){
+    if(type==="grouped") return state.group.kids.map((c,i)=>({ slug:c.slug, title:c.title, qty:state.group.qty[i], price:Number(c.price)||0 })).filter(x=>x.qty>0);
+    const title = p.title + (state.variation ? " — " + variationLabel(p, state.variation) : "");
+    return [{ slug: p.slug, title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }];
+  }
+
   // تأكيد الطلب — واتساب
   document.getElementById("order-form").addEventListener("submit", e=>{
     e.preventDefault();
@@ -654,6 +771,8 @@ function initProduct(slug){
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const commune = document.getElementById("commune").value.trim();
+    if(type==="variable" && !state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
+    if(type==="grouped" && !(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); const gb = document.getElementById("group-box"); if(gb) gb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
     if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     // جمع قيم الحقول الإضافية المخصّصة (لوحة التحكم ⟵ نموذج الطلب) — تُرفق في رسالة واتساب وفي الطلب المُسجَّل
@@ -672,14 +791,16 @@ function initProduct(slug){
     API.submitOrder({
       name, phone, wilaya: state.wilaya.name, commune,
       dtype: state.dtype, desk,
-      items: [{ slug: p.slug, title: p.title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }],
+      items: orderItems(),
       subtotal: state.offer.price, fee, total,
       coupon: discount>0 ? AppliedCoupon.code : "", discount,
       extra: extraValues,
     });
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     firePixelPurchase(p, total, state.offer.qty);
-    let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n\n• ${p.title}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`;
+    let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n` + (type==="grouped"
+      ? state.group.kids.map((c,i)=> state.group.qty[i] ? `\n• ${c.title}\n  الكمية: ${state.group.qty[i]} × ${fmt(c.price)} = ${fmt(state.group.qty[i]*c.price)}` : "").join("")
+      : `\n• ${p.title}${state.variation?" — "+variationLabel(p,state.variation):""}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`);
     if(state.offer.free) msg += `\n  🎁 العرض: اشترِ 2 واحصل على الثالثة مجاناً`;
     if(p.old) msg += `\n  (السعر الأصلي: ${fmt(p.old)} ✂️)`;
     if(discount>0) msg += `\n  🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
@@ -694,7 +815,15 @@ function initProduct(slug){
   // أضف إلى السلة
   document.getElementById("add-cart").onclick = ()=>{
     if(outOfStock){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
-    Cart.add(p.slug, state.offer.qty, state.offer.price);
+    if(type==="variable"){
+      if(!state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
+      Cart.add(p.slug, state.offer.qty, state.offer.price / state.offer.qty, state.variation.id, variationLabel(p, state.variation)); return;
+    }
+    if(type==="grouped"){
+      if(!(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); return }
+      state.group.kids.forEach((c,i)=>{ if(state.group.qty[i]>0) Cart.add(c.slug, state.group.qty[i], Number(c.price)||0); }); return;
+    }
+    Cart.add(p.slug, state.offer.qty, state.offer.price / state.offer.qty);
   };
 
   // عدد الزوار العشوائي (إلحاح خفيف)
@@ -708,18 +837,21 @@ function initProduct(slug){
 
 /* ── بطاقة منتج (مشتركة بين الشبكة الرئيسية والأكثر مبيعاً) ── */
 function isOutOfStock(p){
+  const t = productType(p);
+  if(t==="variable"){ const vs = activeVariations(p); return !vs.length || vs.every(varOut); }
+  if(t==="grouped"){ const cs = groupChildren(p); return !cs.length || cs.every(isOutOfStock); }
   return p.stock!==undefined && p.stock!==null && Number(p.stock)<=0;
 }
 function productCardHTML(p, opts){
   opts = opts || {};
-  const disc = p.old ? Math.round((1-p.price/p.old)*100) : 0;
+  const ptype = productType(p), disc = (ptype==="simple" && p.old) ? Math.round((1-p.price/p.old)*100) : 0;
   const oos = isOutOfStock(p);
   return `
     <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.cover||p.images[0]}" alt="${p.title}"></div>
     <div class="body">
       <h3>${p.title}</h3>
       <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>
-      <div class="price-row"><span class="price">${fmt(p.price)}</span>${p.old?`<span class="old">${fmt(p.old)}</span>`:""}</div>
+      <div class="price-row"><span class="price">${ptype!=="simple" && hasPriceRange(p) ? "من " : ""}${fmt(ptype==="simple" ? p.price : minPrice(p))}</span>${(ptype==="simple" && p.old)?`<span class="old">${fmt(p.old)}</span>`:""}</div>
       <div class="cta">${oos?"نفدت الكمية":"اطلب الآن — الدفع عند الاستلام"}</div>
     </div>`;
 }
