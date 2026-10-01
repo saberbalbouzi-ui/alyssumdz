@@ -15,7 +15,7 @@ const AgentBrain = (() => {
       .normalize("NFD").replace(/[̀-ͯ]/g, "")      // تشكيل/لكنات لاتينية
       .replace(/[ً-ٰٟـ]/g, "")                       // تشكيل عربي + تطويل
       .replace(/[إأآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ؤ/g, "و").replace(/ئ/g, "ي")
-      .replace(/[^a-z0-9؀-ۿ]+/g, " ").replace(/\s+/g, " ").trim();
+      .replace(/[^a-z0-9\u0621-\u064A\u066E-\u06D3\u0660-\u0669]+/g, " ").replace(/\s+/g, " ").trim();
   }
   function stem(w) {
     if (/^[a-z0-9]+$/.test(w)) {                                   // فرنسي: حذف جمع/مؤنث بسيط

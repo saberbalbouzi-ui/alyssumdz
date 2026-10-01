@@ -14,7 +14,7 @@ var AY_QUESTIONS_SHEET = "AgentQuestions";
 var AY_PRESENCE_TTL_SEC = 75;      // يُعدّ الزائر «يشاهد الآن» إن وصل نبضه خلال هذه المدة
 
 function _ayKey() { return (typeof ADMIN_KEY !== "undefined") ? ADMIN_KEY : "ALYSSUM-ADMIN-2026"; }
-function _ayNorm(s) { return String(s || "").toLowerCase().replace(/[ً-ٟـ]/g, "").replace(/[إأآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/[^a-z0-9؀-ۿ]+/g, " ").trim(); }
+function _ayNorm(s) { return String(s || "").toLowerCase().replace(/[ً-ٟـ]/g, "").replace(/[إأآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/[^a-z0-9\u0621-\u064A\u066E-\u06D3\u0660-\u0669]+/g, " ").trim(); }
 function _ayDay(d) { return Utilities.formatDate(d || new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd"); }
 function _ayOut(e, obj) {
   var json = JSON.stringify(obj), cb = e && e.parameter && e.parameter.callback;

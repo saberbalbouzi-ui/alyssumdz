@@ -9,6 +9,7 @@
 - موقع ثابت (GitHub Pages، النطاق في `CNAME`): `index.html`، صفحات المنتجات في `p/<slug>/index.html`، لوحة التحكم `admin.html`.
 - بيانات المنتجات في `assets/js/data.js` (تُكتب من لوحة التحكم عبر GitHub API)، ورسوم التوصيل في `assets/js/wilayas.js`.
 - الطلبات تُحفظ في Google Sheets عبر Google Apps Script (`assets/js/config.js` ← `API_URL`)؛ الكود الإضافي (زيارات/مشاهدون الآن/أسئلة الوكيل) في `apps-script/Code-additions.gs` ويلزم لصقه ونشره يدوياً.
+- Supabase (`https://qvdaiundlkfbmjlummni.supabase.co`): مخطط وأمان في `supabase/schema.sql` وتعليمات في `supabase/README.md`؛ الزيارات والمشاهدون الآن وأسئلة الوكيل تُرسل إليه إن ضُبط `SUPABASE_ANON_KEY` في `config.js`، وإلا تعود إلى Apps Script. لا تضع `service_role` في المستودع أبداً.
 - الوكيل الذكي: `assets/js/agent.js` (واجهة وردود افتراضية) + `assets/js/agent-brain.js` (استنتاج) + تدريبه في `assets/data/agent-training.json`.
 
 ## تنبيهات تقنية
