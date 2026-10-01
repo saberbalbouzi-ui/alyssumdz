@@ -5097,6 +5097,15 @@ const Admin = {
       /* بعد الإرسال: رقم التتبع من الاستجابة {order_id: {success, tracking}} */
       parseSent(json, order){ const r = json && (json[String(order.id)] || (Array.isArray(json.data) && json.data[0])); return (r && r.success !== false && r.tracking) ? String(r.tracking) : ""; },
       trackRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      /* جدول التعريفة من حسابك: GET /v1/deliveryfees/ (صفحات) ⟵ [{wilaya_id, home_fee, desk_fee}] */
+      feesRequest(cfg, page){ return { url: this.base + "/v1/deliveryfees/?page_size=100&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      parseFees(json){
+        const rows = Array.isArray(json && json.data) ? json.data : (Array.isArray(json) ? json : []);
+        const out = {};
+        rows.forEach(r=>{ const id = Number(r.wilaya_id != null ? r.wilaya_id : r.id); const home = Number(r.home_fee != null ? r.home_fee : r.home), stop = Number(r.desk_fee != null ? r.desk_fee : (r.stop_fee != null ? r.stop_fee : r.stop));
+          if(id && (isFinite(home) || isFinite(stop))) out[id] = { home: isFinite(home) ? home : 0, stop: isFinite(stop) ? stop : 0 }; });
+        return { prices: out, more: !!(json && (json.has_more === true || json.has_more === 1)) };
+      },
       cancelRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "DELETE", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       labelRequest(cfg, tracking){ return this.trackRequest(cfg, tracking); },
       parseLabel(json){ const d = json && (json.label || json.labels ? json : (Array.isArray(json.data) ? json.data[0] : null)); const u = d ? String(d.label || d.labels || "") : ""; return /^https:\/\//.test(u) ? u : ""; },
@@ -5351,8 +5360,42 @@ const Admin = {
       '<label style="display:flex;align-items:center;gap:.5rem;font-weight:700">' +
         '<input type="radio" name="dlv-price-src" style="width:auto;margin:0" ' + (this.deliveryPriceSource==="company"?"checked":"") + (activeCo?"":" disabled") + ' onchange="Admin.setDeliveryPriceSource(\'company\')"> أسعار الشركة النشطة' + (activeCo?(' — ' + activeCo.name):"") +
       '</label>' +
-      (activeCo && !hasPrices ? '<div class="hint">هذه الشركة ليس لها جدول أسعار محفوظ بعد — أضفه من «⚙️ إعداد» ثم قسم «🏷️ جدول أسعار هذه الشركة»</div>' : "") +
-      (!activeCo ? '<div class="hint">فعّل شركة أولاً من الجدول أعلاه لاستعمال أسعارها</div>' : "");
+      (activeCo && !hasPrices ? '<div class="hint">هذه الشركة ليس لها جدول أسعار محفوظ بعد — اجلبه تلقائياً بالزر أدناه، أو أضفه يدوياً من «⚙️ إعداد»</div>' : "") +
+      (!activeCo ? '<div class="hint">فعّل شركة أولاً من الجدول أعلاه (نقطة التفعيل) لاستعمال أسعارها</div>' : "") +
+      this.fetchPricesButtonHtml();
+  },
+
+  /* زر جلب التعريفة من حساب الشركة (للشركات التي تدعم feesRequest وفيها مفاتيح مُدخلة، ولو لم تكن مفعّلة بعد) */
+  fetchPricesButtonHtml(){
+    const all = this.allDeliveryCompanies();
+    const k = Object.keys(all).find(x=>all[x].feesRequest && this.deliveryCfg[x] && (this.deliveryCfg[x].apiId || this.deliveryCfg[x].apiToken));
+    if(!k) return Object.keys(all).some(x=>all[x].feesRequest) ? '<div class="hint">لجلب الأسعار تلقائياً: أدخل مفاتيح ياليدين من «⚙️ إعداد» أولاً</div>' : "";
+    return '<button class="small gold" type="button" style="margin-top:.6rem" onclick="Admin.fetchCompanyPrices(\'' + k + '\')">⬇️ جلب أسعار ' + all[k].name + ' من حسابي</button>';
+  },
+  async fetchCompanyPrices(key){
+    const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
+    if(!co || !co.feesRequest){ toast("هذه الشركة لا تدعم الجلب التلقائي"); return }
+    toast("⏳ جارِ جلب التعريفة من " + co.name + "...");
+    try{
+      const prices = {};
+      for(let page = 1; page <= 6; page++){
+        const r = await this.courierFetch(co.feesRequest(cfg, page));
+        if(!r.ok) throw new Error("رد الشركة " + r.status + " — تحقق من API ID/Token");
+        const got = co.parseFees(JSON.parse(r.text));
+        Object.assign(prices, got.prices);
+        if(!got.more) break;
+      }
+      const n = Object.keys(prices).length;
+      if(!n) throw new Error("لم تُرجع الشركة أي تعريفة");
+      this.deliveryCfg[key] = Object.assign({}, cfg, { prices });
+      this.saveDeliveryCfgToStorage();
+      toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name);
+      const active = this.activeCompanyKey() === key;
+      if(active){ this.setDeliveryPriceSource("company"); } else { this.renderDelivery(); toast("✅ جُلبت الأسعار — فعّل الشركة (نقطة التفعيل) ثم اختر «أسعار الشركة النشطة»"); }
+    }catch(err){
+      console.error(err);
+      toast("❌ " + err.message + (PHPAPI.on() ? "" : " — على نسخة GitHub قد يمنع المتصفح الاتصال المباشر (CORS)"));
+    }
   },
 
   setDeliveryPriceSource(mode){
