@@ -1,0 +1,21 @@
+# يعيد توليد sitemap.xml وrobots.txt ووسوم SEO وتحويلات الروابط القديمة تلقائياً عند أي تعديل في المنتجات أو redirects.json
+name: seo-refresh
+on:
+  push:
+    branches: [main]
+    paths: ["assets/js/data.js", "redirects.json", "scripts/seo.py", "assets/js/config.js"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/seo.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && { echo "لا تغييرات"; exit 0; }
+          git commit -m "تحديث SEO تلقائي (sitemap وتحويلات)"; git push

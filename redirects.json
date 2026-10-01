@@ -1,0 +1,4 @@
+{
+  "_doc": "روابط ووردبريس القديمة ⟵ slug المنتج الجديد (مثال: \"takiz\": \"tarkiz\" يحوّل alyssumdz.com/takiz إلى /p/tarkiz/). أضف كل رابط قديم هنا ثم شغّل scripts/seo.py (أو يعمل تلقائياً عند أي حفظ).",
+  "takiz": "tarkiz"
+}

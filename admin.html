@@ -4869,6 +4869,7 @@ const Admin = {
       /* بعد الإرسال: رقم التتبع من الاستجابة {order_id: {success, tracking}} */
       parseSent(json, order){ const r = json && (json[String(order.id)] || (Array.isArray(json.data) && json.data[0])); return (r && r.success !== false && r.tracking) ? String(r.tracking) : ""; },
       trackRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      cancelRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "DELETE", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       labelRequest(cfg, tracking){ return this.trackRequest(cfg, tracking); },
       parseLabel(json){ const d = json && (json.label || json.labels ? json : (Array.isArray(json.data) ? json.data[0] : null)); const u = d ? String(d.label || d.labels || "") : ""; return /^https:\/\//.test(u) ? u : ""; },
       parseStatus(json){ const d = json && (json.last_status ? json : (Array.isArray(json.data) ? json.data[0] : null)); return d ? String(d.last_status || "") : ""; },
@@ -5410,7 +5411,17 @@ const Admin = {
     this.setNoteTag(o, /📞[1-3]\s*/g, n === cur ? "" : "📞" + n);       // الضغط مرة ثانية على الرقم نفسه يلغيه
     this.renderOrders(); toast(n === cur ? "↩️ أُلغيت المحاولة" : "📞 سُجّلت المحاولة " + n);
   },
-  cancelOrder(i){ const o = this.orders[i]; if(!o || !confirm("إلغاء الطلب " + o.id + " (" + (o.name||"") + ")؟")) return; this.changeStatus(i, "annulee"); },
+  async cancelOrder(i){
+    const o = this.orders[i]; if(!o || !confirm("إلغاء الطلب " + o.id + " (" + (o.name||"") + ")؟")) return;
+    this.changeStatus(i, "annulee");
+    /* سبق إرساله لشركة التوصيل ⟵ محاولة إلغاء الطرد عندها أيضاً (تقبله الشركة عادةً قبل الاستلام فقط) */
+    const t = this.trackingOf(o); if(!t) return;
+    const co = this.allDeliveryCompanies()[t.company], cfg = this.deliveryCfg[t.company] || {};
+    if(!co || !co.cancelRequest){ toast("ℹ️ ألغِ الطرد " + t.tracking + " يدوياً من حساب الشركة"); return }
+    try{ const r = await this.courierFetch(co.cancelRequest(cfg, t.tracking));
+      toast(r.ok ? "✅ أُلغي الطرد " + t.tracking + " عند " + co.name : "⚠️ لم تقبل " + co.name + " إلغاء الطرد (رمز " + r.status + ") — ألغِه يدوياً من حسابها");
+    }catch(err){ toast("⚠️ تعذّر إلغاء الطرد عند الشركة: " + err.message + " — ألغِه يدوياً"); }
+  },
   /* تأكيد الطلب ⟵ إرسال تلقائي إلى شركة التوصيل النشطة ⟵ ينتقل إلى «الطلبات المسجلة» */
   async confirmOrder(i){
     const o = this.orders[i]; if(!o) return;
