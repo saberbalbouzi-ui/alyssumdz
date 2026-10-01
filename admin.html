@@ -122,17 +122,16 @@ tr:hover td{background:#FAF7F0}
 <div class="login" id="login-box">
   <h1>🌿 لوحة تحكم أليسوم</h1>
   <p id="login-hint">أدخل مفتاح الإدارة للمتابعة</p>
-  <input id="login-key" type="password" placeholder="مفتاح الإدارة" onkeydown="if(event.key==='Enter')Admin.login()">
-  <input id="login-email" class="hidden" type="email" dir="ltr" placeholder="البريد الإلكتروني" autocomplete="username">
+  <input id="login-email" class="hidden" type="email" dir="ltr" placeholder="البريد الإلكتروني" autocomplete="username" onkeydown="if(event.key==='Enter')Admin.login()">
   <input id="login-pass" class="hidden" type="password" dir="ltr" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter')Admin.login()">
-  <button class="btn" onclick="Admin.login()">دخول</button>
+  <input id="login-key" type="password" placeholder="مفتاح الإدارة" onkeydown="if(event.key==='Enter')Admin.login()">
+  <button class="btn" id="login-btn" onclick="Admin.login()">دخول</button>
 </div>
 
 <div class="wrap hidden" id="app">
   <div class="top">
     <h1>🌿 لوحة تحكم أليسوم</h1>
     <span id="live-now" class="live-pill" title="المشاهدون الآن على الموقع (حقيقي)">⚪ المشاهدون الآن: …</span>
-    <button class="small gray hidden" id="sb-btn" onclick="Admin.openSb()">🔐 Supabase</button>
     <span id="pending-badge"></span>
     <button class="small blue" onclick="Admin.previewHome()">🏠 تعديل الصفحة الرئيسية</button>
     <button class="logout" onclick="Admin.logout()">خروج</button>
@@ -698,22 +697,6 @@ tr:hover td{background:#FAF7F0}
     <div class="action-bar">
       <button class="small gold" onclick="Admin.savePixel()">💾 حفظ ونشر</button>
       <button class="small gray" onclick="document.getElementById('pixel-modal-bg').classList.remove('open')">إلغاء</button>
-    </div>
-  </div>
-</div>
-
-<!-- نافذة دخول Supabase (مدير الإحصاءات وأسئلة الوكيل) -->
-<div class="modal-bg" id="sb-modal-bg">
-  <div class="modal">
-    <h3>🔐 دخول Supabase</h3>
-    <div class="hint" style="margin-top:0">حساب المدير الذي أنشأته في Supabase ← Authentication ← Users (وأضفت بريده لجدول admins). تُحفظ الجلسة في هذا المتصفح فقط.</div>
-    <input id="sb-email" type="email" dir="ltr" placeholder="البريد الإلكتروني" autocomplete="username">
-    <input id="sb-pass" type="password" dir="ltr" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter')Admin.sbLogin()">
-    <div id="sb-msg" class="hint" style="color:#b33"></div>
-    <div class="action-bar">
-      <button class="small gold" onclick="Admin.sbLogin()">دخول</button>
-      <button class="small warn hidden" id="sb-out" onclick="Admin.sbLogout()">تسجيل الخروج</button>
-      <button class="small gray" onclick="document.getElementById('sb-modal-bg').classList.remove('open')">إغلاق</button>
     </div>
   </div>
 </div>
@@ -1483,20 +1466,27 @@ const Admin = {
   pending: JSON.parse(localStorage.getItem("alyssum_pending") || "[]"),
   editingSlug: null, editingCatKey: null, previewData: null,
 
-  sbOnly(){ return API.ordersBackend() === "supabase"; },       // وضع Supabase فقط: الدخول بالبريد وكلمة المرور
+  sbOnly(){ return API.ordersBackend() === "supabase"; },       // وضع Supabase فقط: لا حاجة لمفتاح الإدارة
+  sbGate(){ return API.sb.enabled(); },                          // الدخول بحساب المدير (بريد + كلمة مرور) متى فُعّل Supabase
   async login(){
-    if(this.sbOnly()){
-      try{ await API.sb.signIn($f("login-email").value.trim(), $f("login-pass").value); }
-      catch(err){ toast("❌ " + err.message); return }
-      this.key = "sb"; localStorage.setItem("alyssum_admin_key", "sb"); this.load(); return;
+    const btn = $f("login-btn"); if(btn.disabled) return;
+    let k = "sb";
+    if(!this.sbOnly()){
+      k = $f("login-key").value.trim();
+      if(!k){ toast("أدخل مفتاح الإدارة"); return }
     }
-    const k = $f("login-key").value.trim();
-    if(!k){ toast("أدخل المفتاح"); return }
-    this.key = k;
-    localStorage.setItem("alyssum_admin_key", k);
+    btn.disabled = true; btn.textContent = "⏳ جارِ التحقق...";
+    try{
+      if(this.sbGate()){
+        await API.sb.signIn($f("login-email").value.trim(), $f("login-pass").value);
+        if(!(await API.sb.isAdmin())){ API.sb.signOut(); throw new Error("هذا الحساب ليس مديراً"); }
+      }
+    }catch(err){ toast("❌ " + err.message); btn.disabled = false; btn.textContent = "دخول"; return }
+    btn.disabled = false; btn.textContent = "دخول";
+    this.key = k; localStorage.setItem("alyssum_admin_key", k);
     this.load();
   },
-  logout(){ localStorage.removeItem("alyssum_admin_key"); location.reload() },
+  logout(){ localStorage.removeItem("alyssum_admin_key"); API.sb.signOut(); location.reload() },
   /* ════════ تنبيهات حمراء + المشاهدون الآن + أسئلة الوكيل (تحديث تلقائي) ════════ */
   alerts: { orders: -1, questions: [], timer: null, liveTimer: null },
   startAlerts(){
@@ -1509,7 +1499,7 @@ const Admin = {
   setBadge(id, n){ const el = $f(id); if(!el) return; el.textContent = n > 99 ? "99+" : n; el.classList.toggle("hidden", !(n > 0)); },
   /* استيراد طلبات Google Sheets القديمة إلى Supabase (مرة واحدة) مع تفادي التكرار (نفس الرقم، أو نفس الهاتف والمبلغ خلال 10 دقائق) */
   async importOrders(){
-    if(!API.sb.enabled() || !API.sb.session()){ toast("سجّل دخول Supabase أولاً (زر 🔐)"); return }
+    if(!API.sb.enabled() || !API.sb.session()){ toast("انتهت الجلسة — سجّل الخروج ثم ادخل من جديد"); return }
     const key = prompt("أدخل مفتاح إدارة Apps Script (لقراءة الطلبات القديمة من Google Sheets):");
     if(!key) return;
     toast("⏳ جارِ قراءة الطلبات القديمة...");
@@ -1536,28 +1526,14 @@ const Admin = {
     this.refreshAlerts();
   },
   sbSession(){ return API.sb.enabled() && !!API.sb.session(); },
-  openSb(){
-    const ses = API.sb.session();
-    $f("sb-email").value = ses ? ses.email : ""; $f("sb-pass").value = ""; $f("sb-msg").textContent = ses ? "✅ متصل كـ " + ses.email : "";
-    $f("sb-out").classList.toggle("hidden", !ses);
-    $f("sb-modal-bg").classList.add("open");
-  },
-  async sbLogin(){
-    try{ $f("sb-msg").textContent = "⏳ جارِ الدخول..."; await API.sb.signIn($f("sb-email").value.trim(), $f("sb-pass").value);
-      $f("sb-modal-bg").classList.remove("open"); toast("✅ تم الاتصال بـ Supabase"); this.refreshAlerts(); this.refreshLive();
-    }catch(err){ $f("sb-msg").textContent = "❌ " + err.message; }
-  },
-  sbLogout(){ API.sb.signOut(); $f("sb-modal-bg").classList.remove("open"); this.refreshLive(); toast("تم تسجيل الخروج من Supabase"); },
   async refreshLive(){
     const el = $f("live-now"); if(!el || !CONFIG.API_URL) return;
     const r = await API.presence(this.key);
     if(r && r.ok){ el.textContent = "🟢 " + r.now + " يشاهدون الآن"; el.classList.add("on"); this.liveNow = r; }
-    else if(API.sb.enabled() && !API.sb.session()){ el.textContent = "🔐 سجّل دخول Supabase"; el.classList.remove("on"); el.style.cursor = "pointer"; el.onclick = ()=>this.openSb(); }
     else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = API.sb.enabled() ? "تعذّر قراءة Supabase — تأكد من تشغيل supabase/schema.sql وإضافة بريدك لجدول admins" : "ألصق apps-script/Code-additions.gs أو فعّل Supabase لتفعيل العدّاد الحقيقي"; }
   },
   async refreshAlerts(){
     if(!this.key || !CONFIG.API_URL) return;
-    $f('sb-btn').classList.toggle('hidden', !API.sb.enabled());
     $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
@@ -4660,10 +4636,12 @@ document.addEventListener("input", e=>{
 });
 
 function toast(t){ const el=$f("toast2"); el.textContent=t; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,2500) }
-if(Admin.sbOnly()){
-  $f("login-key").classList.add("hidden"); $f("login-email").classList.remove("hidden"); $f("login-pass").classList.remove("hidden");
-  $f("login-hint").textContent = "سجّل الدخول بحساب المدير (Supabase)";
-  if(Admin.key === "sb" && API.sb.session()) Admin.load(); else { Admin.key = ""; localStorage.removeItem("alyssum_admin_key"); }
+if(Admin.sbGate()){
+  $f("login-email").classList.remove("hidden"); $f("login-pass").classList.remove("hidden");
+  $f("login-key").classList.toggle("hidden", Admin.sbOnly());
+  $f("login-hint").textContent = Admin.sbOnly() ? "سجّل الدخول بحساب المدير" : "سجّل الدخول بحساب المدير ومفتاح الإدارة";
+  /* لا تُفتح اللوحة إلا بجلسة مدير صالحة (المفتاح المحفوظ وحده لا يكفي) */
+  API.sb.token().then(t=>{ if(t && Admin.key && (Admin.sbOnly() || Admin.key !== "sb")) Admin.load(); else { Admin.key = ""; localStorage.removeItem("alyssum_admin_key"); } });
 } else if(Admin.key) Admin.load();
 </script>
 </body>

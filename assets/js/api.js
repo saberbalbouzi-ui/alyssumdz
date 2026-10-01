@@ -96,6 +96,10 @@ const API = {
       this.saveSession(j); return j;
     },
     signOut() { this.saveSession(null); },
+    async isAdmin() {                                 // هل صاحب الجلسة مدير فعلاً؟ (جدول admins)
+      const t = await this.token(); if (!t) return false;
+      try { const r = await fetch(this.url("/rest/v1/rpc/is_admin"), { method: "POST", headers: this.headers(t), body: "{}" }); return r.ok && (await r.json()) === true; } catch (e) { return false; }
+    },
     async token() {                                   // توكن المدير (مع تجديد تلقائي)
       const s = this.session(); if (!s) return null;
       if (Date.now() < s.expires_at) return s.access_token;
