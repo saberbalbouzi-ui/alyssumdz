@@ -296,6 +296,8 @@ tr:hover td{background:#FAF7F0}
         <b style="color:var(--green)">💼 المخزون والأرباح</b>
         <select id="fin-period" onchange="Admin.renderFinance()"><option value="7">آخر 7 أيام</option><option value="30" selected>آخر 30 يوماً</option><option value="90">آخر 90 يوماً</option><option value="0">كل الفترة</option></select>
         <button class="small gold" type="button" onclick="Admin.publishStockNow()">⬆️ نشر المخزون على الموقع الآن</button>
+        <button class="small gold" type="button" onclick="document.getElementById('fin-import').click()" title="ارفع ملف exportation_paiement من ياليدين (xlsx أو csv) فتُستعمل أرقامها الفعلية لكل طرد">📥 استيراد كشف دفع ياليدين</button>
+        <input type="file" id="fin-import" accept=".xlsx,.csv" class="hidden" onchange="Admin.importYdPayment(this)">
         <button class="small blue" type="button" onclick="Admin.ensureYdFees(Number($f('fin-period').value)||0, true)" title="يجلب من ياليدين تعريفة التوصيل والإرجاع والتأمين الحقيقية لولايات طلباتك">💰 تحديث تكاليف ياليدين</button>
       </div>
       <div class="hint" id="fin-note"></div>
@@ -4388,6 +4390,7 @@ const Admin = {
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
     this.ydFees = (await Priv.get("ydfees", {})) || {};
+    this.ydActual = (await Priv.get("ydactual", {})) || {};
     this.fin = { costs: costs || {}, set: Object.assign({ packaging:0, carrierPct:100, returnPct:100, low:5, insPct:0 }, set || {}), cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     this.reconcileStatusChanges();
@@ -4485,6 +4488,72 @@ const Admin = {
     this.fin.set = { packaging: n("fin-pack", 0), carrierPct: n("fin-carrier", 100), returnPct: n("fin-return", 100), low: n("fin-low", 5), insPct: n("fin-ins", 0) };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
+  /* ════════ استيراد كشف دفع ياليدين: أرقام فعلية لكل طرد (توصيل، إرجاع، COD، تأمين) تحلّ محلّ التقدير ════════ */
+  async xlsxRows(buf){
+    const dv = new DataView(buf), u8 = new Uint8Array(buf), dec = new TextDecoder();
+    let e = -1; for(let i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--){ if(dv.getUint32(i, true) === 0x06054b50){ e = i; break; } }
+    if(e < 0) throw new Error("الملف ليس xlsx صالحاً");
+    const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const files = {};
+    for(let k = 0; k < n; k++){
+      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+      const name = dec.decode(u8.subarray(p + 46, p + 46 + nl)); p += 46 + nl + el + cl;
+      files[name] = { method, csize, off };
+    }
+    const read = async name=>{
+      const f = files[name]; if(!f) return null;
+      const lh = f.off, start = lh + 30 + dv.getUint16(lh + 26, true) + dv.getUint16(lh + 28, true), raw = u8.subarray(start, start + f.csize);
+      if(f.method === 0) return dec.decode(raw);
+      const ds = new DecompressionStream("deflate-raw"), w = ds.writable.getWriter(); w.write(raw); w.close();
+      return dec.decode(await new Response(ds.readable).arrayBuffer());
+    };
+    const parse = t=>new DOMParser().parseFromString(t, "application/xml");
+    const sst = await read("xl/sharedStrings.xml"), strs = sst ? [...parse(sst).getElementsByTagName("si")].map(si=>[...si.getElementsByTagName("t")].map(t=>t.textContent).join("")) : [];
+    const sheetName = Object.keys(files).filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k)).sort()[0];
+    const xml = parse(await read(sheetName)), rows = [];
+    const col = ref=>{ let c = 0; for(const ch of ref.replace(/\d+/g, "")) c = c * 26 + ch.charCodeAt(0) - 64; return c - 1; };
+    [...xml.getElementsByTagName("row")].forEach(r=>{
+      const row = [];
+      [...r.getElementsByTagName("c")].forEach(c=>{
+        const v = c.getElementsByTagName("v")[0], t = c.getAttribute("t"); let val = v ? v.textContent : "";
+        if(t === "s") val = strs[Number(val)] ?? ""; else if(t === "inlineStr") val = [...c.getElementsByTagName("t")].map(x=>x.textContent).join("");
+        row[col(c.getAttribute("r") || "A1")] = val;
+      });
+      rows.push(row);
+    });
+    return rows;
+  },
+  csvRows(text){
+    const first = text.split(/\r?\n/)[0] || "", sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : ",", rows = []; let row = [], cur = "", q = false;
+    for(let i = 0; i < text.length; i++){ const ch = text[i];
+      if(q){ if(ch === '"' && text[i+1] === '"'){ cur += '"'; i++; } else if(ch === '"') q = false; else cur += ch; }
+      else if(ch === '"') q = true; else if(ch === sep){ row.push(cur); cur = ""; } else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; } else if(ch !== "\r") cur += ch; }
+    if(cur || row.length){ row.push(cur); rows.push(row); } return rows;
+  },
+  async importYdPayment(inp){
+    const file = inp.files && inp.files[0]; inp.value = ""; if(!file) return;
+    try{
+      const rows = /\.csv$/i.test(file.name) ? this.csvRows(await file.text()) : await this.xlsxRows(await file.arrayBuffer());
+      const nrm = t=>String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+      const hi = rows.findIndex(r=>r.some(c=>nrm(c) === "tracking")); if(hi < 0) throw new Error("لم أجد عمود tracking — تأكد أنه كشف الدفع (exportation_paiement) من ياليدين");
+      const H = {}; rows[hi].forEach((c, i)=>{ H[nrm(c)] = i; });
+      const g = (r, k)=>{ const v = r[H[k]]; return v == null ? "" : v; }, num = v=>{ const n = Number(String(v).replace(",", ".")); return isFinite(n) ? n : 0; };
+      const act = (await Priv.get("ydactual", {})) || {}; let n = 0, matched = 0, net = 0; const unknown = [];
+      rows.slice(hi + 1).forEach(r=>{
+        const trk = String(g(r, "tracking")).trim(); if(!/^[A-Za-z0-9._-]{4,40}$/.test(trk)) return;
+        act[trk] = { st: String(g(r, "dernierstatut")), price: num(g(r, "prix")), del: Math.abs(num(g(r, "fraislivraison"))), ret: Math.abs(num(g(r, "taxeretour"))), ins: Math.abs(num(g(r, "taxedassurance"))), cod: Math.abs(num(g(r, "taxecod"))), net: num(g(r, "netclient")), ts: Date.now() };
+        n++; net += act[trk].net; if(this.orders.some(o=>(this.trackingOf(o)||{}).tracking === trk)) matched++; else unknown.push(trk);
+      });
+      if(!n) throw new Error("لا توجد طرود في الملف");
+      this.ydActual = act; await Priv.set("ydactual", act);
+      this.renderFinance(true);
+      this.showNotice("📥 استُوردت أرقام ياليدين الفعلية",
+        "<b>" + n + "</b> طرد في الكشف، منها <b>" + matched + "</b> مرتبط بطلباتك عبر رقم التتبع. صافي ما يخصّك في الكشف: <b>" + Math.round(net).toLocaleString("fr-DZ") + " دج</b>." +
+        (unknown.length ? "<br><small>" + unknown.length + " طرد لا يطابق طلباً في اللوحة (أُدخل يدوياً عند ياليدين على الأغلب) فلا يدخل في حساب المنتجات: <span dir='ltr'>" + unknown.slice(0, 6).join("، ") + (unknown.length > 6 ? "…" : "") + "</span></small>" : "") +
+        "<br><small>أرقام التوصيل والإرجاع وعمولة COD لهذه الطرود صارت تحلّ محل التقدير في حساب الأرباح.</small>");
+    }catch(err){ console.error(err); this.showNotice("❌ تعذّر استيراد الكشف", String(err.message).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))); }
+  },
+  actualFees(o){ const t = this.trackingOf(o), a = t && this.ydActual && this.ydActual[t.tracking]; return a || null; },
+
   /* تكاليف ياليدين الحقيقية لطلب (من /v1/fees المخزَّنة): توصيل بالبلدية، رسم الإرجاع، نسبة COD، نسبة التأمين. null إن لم تُجلب بعد */
   fromWilayaId(){
     const co = this.allDeliveryCompanies().yalidine, cfg = this.deliveryCfg.yalidine || {}, want = this.normName(cfg.fromWilayaName || "Alger");
@@ -4528,14 +4597,15 @@ const Admin = {
       const t = new Date(o.date).getTime(); if(since && !(t >= since)) return;
       if(!["livree","echec","confirmee","expediee"].includes(o.status)) return;
       const lines = this.orderLines(o); if(!lines.length) return;
-      const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, est = this.carrierCost(o), real = this.realFees(o), price = Math.max(0, (Number(o.total) || 0) - fee), pack = S.packaging,
-        useReal = !!(real && real.delivery != null), car = useReal ? real.delivery + Math.round(price * real.cod / 100) + Math.round(price * real.ins / 100 * (Number(S.insPct) || 0) / 100) : est,
-        ret = useReal ? real.retour : Math.round(est * S.returnPct / 100);
-      K.realN = (K.realN || 0) + (useReal ? 1 : 0); K.estN = (K.estN || 0) + (useReal ? 0 : 1);
+      const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, est = this.carrierCost(o), act = this.actualFees(o), real = this.realFees(o), price = Math.max(0, (Number(o.total) || 0) - fee), pack = S.packaging,
+        useReal = !!(real && real.delivery != null), useAct = !!act && (/livr/i.test(act.st) ? o.status === "livree" : /retour/i.test(act.st) ? o.status === "echec" : false),
+        car = useAct ? act.del + act.cod + act.ins : (useReal ? real.delivery + Math.round(price * real.cod / 100) + Math.round(price * real.ins / 100 * (Number(S.insPct) || 0) / 100) : est),
+        ret = useAct ? act.ret : (useReal ? real.retour : Math.round(est * S.returnPct / 100));
+      K.actN = (K.actN || 0) + (useAct ? 1 : 0); K.realN = (K.realN || 0) + (!useAct && useReal ? 1 : 0); K.estN = (K.estN || 0) + (!useAct && !useReal ? 1 : 0);
       lines.forEach(l=>{
         const share = (sum === lines.length && !lines.reduce((a,x)=>a + x.total, 0)) ? 1 / lines.length : l.total / sum, r = row(l.p);
         const cost = Number(this.fin.costs[l.p.slug]) || 0;
-        if(o.status === "echec"){ const loss = Math.round(((useReal ? 0 : car) + ret + pack) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
+        if(o.status === "echec"){ const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
         else{
           const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), pr = rev - cogs - del - pk;
           if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.profit += pr; K.real += pr; K.revenue += rev; }
@@ -4557,7 +4627,7 @@ const Admin = {
     const active = this.products.filter(p=>p.slug !== "test");
     const missing = active.filter(p=>p.active !== false && this.fin.costs[p.slug] == null).length;
     const done = K.delivered + K.failed, margin = K.revenue ? Math.round(K.real / K.revenue * 100) : 0;
-    const srcNote = (K.realN || K.estN) ? " التكاليف: " + (K.realN || 0) + " طلب بأرقام ياليدين الحقيقية (توصيل البلدية + COD + رسم الإرجاع)" + (K.estN ? " و" + K.estN + " بتقدير من جدول الرسوم" : "") + "." : "";
+    const srcNote = (K.actN || K.realN || K.estN) ? " التكاليف: " + (K.actN ? K.actN + " طلب بالأرقام الفعلية من كشف ياليدين، " : "") + (K.realN || 0) + " بتعريفة ياليدين الرسمية (توصيل البلدية + COD + رسم الإرجاع)" + (K.estN ? "، و" + K.estN + " بتقدير من جدول الرسوم" : "") + "." : "";
     $f("fin-note").textContent = srcNote + " تتبّع المخزون التلقائي للطلبات منذ " + new Date(this.fin.cfg.since).toLocaleDateString("ar-DZ") + " — الطلبات الأقدم لا تُخصم. الربح المحقق = طلبات سُلّمت − طلبات فشلت (توصيل + إرجاع + تغليف).";
     $f("fin-kpi").innerHTML = '<div><b style="color:' + (K.real >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(K.real) + ' دج</b><span>صافي الربح المحقق</span></div>' +
       '<div><b>' + nf(K.exp) + ' دج</b><span>ربح متوقع (قيد التوصيل: ' + K.open + ')</span></div>' +
