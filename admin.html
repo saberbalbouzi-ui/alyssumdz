@@ -37,7 +37,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .nav-txt small{font-size:.72rem;color:#6B7672;font-weight:600;line-height:1.35;white-space:normal}
 .admin-main{flex:1;min-width:0}
 @media(max-width:900px){.admin-body{flex-direction:column;align-items:stretch}.side-nav{width:100%;position:static}.side-nav-intro{display:none}.nav-txt small{display:none}}
-.wrap{max-width:1200px;margin:0 auto;padding:1.2rem}
+.wrap{max-width:min(1680px,98vw);margin:0 auto;padding:1.2rem}
 .top{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
 .nb{background:var(--red);color:#fff;border-radius:999px;padding:0 .5rem;font-size:.72rem;font-weight:900;margin-inline-start:.45rem;min-width:1.3rem;text-align:center;display:inline-block;line-height:1.35rem;animation:nbPulse 1.6s infinite}
 .nb.hidden{display:none}
@@ -52,6 +52,23 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}
 th{background:var(--green);color:#fff;padding:.7rem;text-align:right;font-size:.85rem}
 td{padding:.6rem .7rem;border-bottom:1px solid var(--line);vertical-align:middle}
 tr:hover td{background:#FAF7F0}
+/* جداول متجاوبة: تلتف الأزرار، وتتحول الصفوف إلى بطاقات عندما تضيق البطاقة نفسها (لا الشاشة) فلا حاجة لشريط تمرير أفقي */
+.rtw{container-type:inline-size}
+.rt td.act{white-space:normal}
+.rt td.act .small{margin:.15rem}
+@container (max-width: 1080px){
+  .rt,.rt tbody{display:block;width:100%}
+  .rt tr.hd{display:none}
+  .rt tr{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem 1.1rem;border:1px solid var(--line);border-radius:14px;padding:.7rem .9rem;margin-bottom:.6rem;background:#fff}
+  .rt tr:hover td{background:transparent}
+  .rt td{display:block;border:none;padding:0}
+  .rt td[data-l]::before{content:attr(data-l) ": ";color:#8a8f8c;font-size:.74rem;font-weight:700}
+  .rt td.img{flex:none}
+  .rt td.t{flex:1 1 220px;min-width:0}
+  .rt td.act{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:.3rem;border-top:1px dashed var(--line);padding-top:.5rem;margin-top:.1rem}
+  .rt td.act .small{margin:0;padding:.4rem .8rem}
+}
+
 .pill{padding:.2rem .7rem;border-radius:999px;font-size:.75rem;font-weight:800;white-space:nowrap}
 .st-nouvelle{background:#FFF3D6;color:#8A6D1B}.st-confirmee{background:#DCEBFF;color:#1B4F8A}
 .st-expediee{background:#E7D9FF;color:#5B2D8A}.st-livree{background:#D9F2E5;color:#14714B}
@@ -111,13 +128,13 @@ tr:hover td{background:#FAF7F0}
 .img-list{display:flex;gap:.5rem;flex-wrap:wrap;margin:.4rem 0}
 .hint{font-size:.78rem;color:#6B7672;margin-top:-.5rem;margin-bottom:.6rem}
 .editor-bg{position:fixed;inset:0;background:#fff;z-index:60;display:none}
-.editor-bg.open{display:flex}
-.editor-sidebar{width:280px;flex:none;background:#F5F2EB;border-inline-start:1.5px solid var(--line);padding:1rem;display:flex;flex-direction:column;gap:.55rem;overflow:auto}
-.editor-sidebar .small{width:100%;text-align:center;padding:.6rem}
-.editor-head{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.2rem}
+.editor-bg.open{display:flex;flex-direction:column}
+.editor-sidebar{width:100%;flex:none;background:#F5F2EB;border-bottom:1.5px solid var(--line);padding:.5rem .9rem;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:.5rem}
+.editor-sidebar .small{width:auto;text-align:center;padding:.5rem .9rem}
+.editor-sidebar .hint{display:none}
+.editor-head{display:flex;flex-direction:row;align-items:center;gap:.6rem;margin:0 0 0 1rem}
 .editor-head b{color:var(--green);font-size:1.05rem}
-.editor-frame{flex:1 1 auto;width:100%;height:100%;border:none;background:#fff}
-@media(max-width:760px){.editor-bg.open{flex-direction:column}.editor-sidebar{width:100%;max-height:42vh;border-inline-start:none;border-bottom:1.5px solid var(--line)}}
+.editor-frame{flex:1 1 0;min-height:0;width:100%;height:auto;border:none;background:#fff}
 </style>
 </head>
 <body>
@@ -224,7 +241,7 @@ tr:hover td{background:#FAF7F0}
         <button class="small gray" onclick="Admin.ensureProductPages(true)" title="ينشئ صفحة لأي منتج ليس له صفحة على الموقع">🛠️ إنشاء الصفحات الناقصة</button>
         <button class="small gold" onclick="Admin.reload()">↻ تحديث</button>
       </div>
-      <div style="overflow:auto"><table id="products-table"></table></div>
+      <div class="rtw" style="overflow:auto"><table id="products-table" class="rt"></table></div>
     </div>
   </div>
 
@@ -663,7 +680,7 @@ tr:hover td{background:#FAF7F0}
 <div class="editor-bg" id="page-preview-bg">
   <div class="editor-sidebar">
     <div class="editor-head">
-      <b id="pp-title">👁️ معاينة الصفحة</b>
+      <b id="pp-title" title="اضغط «✏️ تعديل» لتحرير النصوص والصور مباشرة على الصفحة بعرضها الكامل، ثم «✅ تحقق ونشر» لنشر التعديلات">👁️ معاينة الصفحة</b>
       <span class="badge-draft hidden" id="pp-badge">✏️ وضع التعديل</span>
     </div>
     <div class="hint">اضغط «✏️ تعديل» لتحرير النصوص والصور مباشرة على الصفحة (بحجمها الحقيقي)، ثم «✅ تحقق ونشر» لنشر التعديل مباشرة على الموقع.</div>
@@ -2027,19 +2044,19 @@ const Admin = {
     );
     $f("prod-count").textContent = list.length;
     $f("products-table").innerHTML =
-      '<tr><th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      '<tr class="hd"><th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
       list.map(p=>{
         const hasDraft = this.pending.some(x=>x.type==="product" && x.slug===p.slug);
         const img = p.cover || (p.images && p.images[0]) || "";
         return '<tr>' +
-        '<td>' + (img ? '<img class="thumb-preview" src="' + img + '" onerror="this.style.display=\'none\'">' : '—') + '</td>' +
-        '<td><b>' + p.title + '</b>' + (hasDraft?' <span class="badge-draft">مسودة</span>':"") + '<br><small style="color:#999" dir="ltr">' + p.slug + '</small></td>' +
-        '<td><b>' + Number(p.price).toLocaleString("fr-DZ") + ' دج</b>' + (p.old?'<br><small style="color:#999;text-decoration:line-through">' + Number(p.old).toLocaleString("fr-DZ") + '</small>':"") + '</td>' +
-        '<td><small>' + (p.offers||[]).map(o=>o.qty + '×=' + Number(o.price).toLocaleString("fr-DZ") + (o.free?" 🎁":"")).join("<br>") + '</small></td>' +
-        '<td>' + (this.categories[p.cat]||p.cat||"-") + '</td>' +
-        '<td>' + this.stockBadgeHtml(p) + '</td>' +
-        '<td>' + (p.active!==false?'<span class="pill st-livree">نشط</span>':'<span class="pill st-annulee">موقوف</span>') + '</td>' +
-        '<td style="white-space:nowrap">' +
+        '<td class="img">' + (img ? '<img class="thumb-preview" src="' + img + '" onerror="this.style.display=\'none\'">' : '—') + '</td>' +
+        '<td class="t"><b>' + p.title + '</b>' + (hasDraft?' <span class="badge-draft">مسودة</span>':"") + '<br><small style="color:#999" dir="ltr">' + p.slug + '</small></td>' +
+        '<td data-l="السعر"><b>' + Number(p.price).toLocaleString("fr-DZ") + ' دج</b>' + (p.old?'<br><small style="color:#999;text-decoration:line-through">' + Number(p.old).toLocaleString("fr-DZ") + '</small>':"") + '</td>' +
+        '<td data-l="العروض"><small>' + (p.offers||[]).map(o=>o.qty + '×=' + Number(o.price).toLocaleString("fr-DZ") + (o.free?" 🎁":"")).join("<br>") + '</small></td>' +
+        '<td data-l="القسم">' + (this.categories[p.cat]||p.cat||"-") + '</td>' +
+        '<td data-l="المخزون">' + this.stockBadgeHtml(p) + '</td>' +
+        '<td data-l="الحالة">' + (p.active!==false?'<span class="pill st-livree">نشط</span>':'<span class="pill st-annulee">موقوف</span>') + '</td>' +
+        '<td class="act">' +
           '<button class="small" onclick=\'Admin.editProduct(' + JSON.stringify(p.slug) + ')\'>✏️ تعديل</button>' +
           '<button class="small blue" onclick="Admin.duplicateProduct(\'' + p.slug + '\')">⧉ نسخ</button>' +
           '<button class="small gold" onclick="Admin.previewPage(\'' + p.slug + '\')">👁️ معاينة</button>' +
@@ -4795,7 +4812,7 @@ const Updater = {
     if(r.ok){ $f("upd-msg").style.color = "#1e6b3a"; $f("upd-msg").textContent = "✅ عدتَ إلى الإصدار " + r.j.version + " — سيُعاد تحميل الصفحة..."; setTimeout(()=>location.reload(), 1400); }
     else { $f("upd-msg").style.color = "#b33"; $f("upd-msg").textContent = "❌ " + (this.ERR[r.j.error] || r.j.error || "فشل التراجع"); }
   },
-  init(){ if(PHPAPI.on() && !sessionStorage.getItem("alyssum_upd_checked")){ sessionStorage.setItem("alyssum_upd_checked","1"); this.check(); } },
+  init(){ if(!PHPAPI.on()) return; let t = 0; try{ t = +sessionStorage.getItem("alyssum_upd_t") || 0; }catch(e){} if(Date.now() - t > 600000){ try{ sessionStorage.setItem("alyssum_upd_t", String(Date.now())); }catch(e){} this.check(); } if(!this._iv) this._iv = setInterval(()=>this.check(), 1800000); },
 };
 
 /* ════════ النشر للعملاء (البائع فقط: CONFIG.SELLER === true) ════════ */
