@@ -5425,7 +5425,8 @@ const Admin = {
       if(active){ this.setDeliveryPriceSource("company"); } else { this.renderDelivery(); toast("✅ جُلبت الأسعار — فعّل الشركة (نقطة التفعيل) ثم اختر «أسعار الشركة النشطة»"); }
     }catch(err){
       console.error(err);
-      toast("❌ " + err.message + (PHPAPI.on() ? "" : " — على نسخة GitHub قد يمنع المتصفح الاتصال المباشر (CORS)"));
+      if(err.cors){ this.explainCors(co); return }
+      toast("❌ " + err.message);
     }
   },
 
@@ -5606,9 +5607,38 @@ const Admin = {
       if(!r.ok) throw new Error(r.j && r.j.error ? ("وسيط الخادم: " + r.j.error) : ("وسيط الخادم (" + r.status + ")"));
       return { ok: r.j.status >= 200 && r.j.status < 300, status: r.j.status, text: r.j.body || "" };
     }
-    const res = await fetch(req.url, { method: req.method||"GET", headers: req.headers||{}, body: req.body });
-    let text = ""; try{ text = await res.text(); }catch(e){}
-    return { ok: res.ok, status: res.status, text };
+    /* نسخة GitHub+Supabase: عبر دالة Edge باسم courier (تتجاوز CORS وتتحقق أنك مدير)، وإلا اتصال مباشر قد يحجبه المتصفح */
+    if(API.sb.enabled() && API.ordersBackend() !== "sheets" && this._proxy !== false){
+      try{
+        const t = await API.sb.token();
+        if(t){
+          const r = await fetch(API.sb.url("/functions/v1/courier"), { method:"POST", headers: API.sb.headers(t), body: JSON.stringify({ url:req.url, method:req.method||"GET", headers:req.headers||{}, body:req.body }) });
+          if(r.ok){ const j = await r.json(); this._proxy = true; return { ok: j.status >= 200 && j.status < 300, status: j.status, text: j.body || "" }; }
+          if(r.status === 404) this._proxy = false;
+          else { const j = await r.json().catch(()=>({})); throw new Error("وسيط courier: " + (j.error || r.status) + (j.detail ? " — " + j.detail : "")); }
+        }
+      }catch(e){ if(e instanceof TypeError) this._proxy = false; else throw e; }       // TypeError = الدالة غير منشورة (لا CORS للمعاينة)
+    }
+    try{
+      const res = await fetch(req.url, { method: req.method||"GET", headers: req.headers||{}, body: req.body });
+      let text = ""; try{ text = await res.text(); }catch(e){}
+      return { ok: res.ok, status: res.status, text };
+    }catch(e){ if(e instanceof TypeError){ const err = new Error("CORS_BLOCKED"); err.cors = true; throw err; } throw e; }
+  },
+  /* رسالة تبقى على الشاشة (لا تختفي كالتنبيه) حتى تغلقها */
+  showNotice(title, html){
+    let bg = document.getElementById("notice-modal-bg");
+    if(!bg){ bg = document.createElement("div"); bg.id = "notice-modal-bg"; bg.className = "modal-bg"; bg.innerHTML = '<div class="modal"><h3 id="notice-title"></h3><div id="notice-body" style="line-height:1.9"></div><div class="action-bar"><button class="small gray" onclick="document.getElementById(\'notice-modal-bg\').classList.remove(\'open\')">فهمت، إغلاق</button></div></div>'; document.body.appendChild(bg); }
+    $f("notice-title").textContent = title; $f("notice-body").innerHTML = html; bg.classList.add("open");
+  },
+  explainCors(co){
+    this.showNotice("🚫 المتصفح حجب الاتصال بـ " + (co ? co.name : "الشركة"),
+      "موقعك الحالي (GitHub + Supabase) يتصل بياليدين مباشرة من المتصفح، وياليدين لا تسمح بذلك (قيد أمني اسمه CORS) — المفاتيح سليمة وليست هي المشكلة.<br><br>" +
+      "<b>الحل (مرة واحدة، 3 دقائق، بدون طرفية):</b><ol style='margin:.4rem 1.2rem'>" +
+      "<li>افتح لوحة Supabase ← <b>Edge Functions</b> ← <b>Deploy a new function</b>.</li>" +
+      "<li>اسم الدالة: <code>courier</code> ← الصق محتوى الملف <code>supabase/functions/courier/index.ts</code> من المستودع (يمكنني إرساله لك) ← <b>Deploy</b> (اترك Verify JWT مفعّلاً).</li>" +
+      "<li>ارجع هنا وأعد المحاولة: ستمرّ كل طلبات ياليدين عبر الدالة تلقائياً.</li></ol>" +
+      "البديل: نسخة الاستضافة (PHP) تتجاوز هذه المشكلة دون أي دالة.");
   },
   /* رقم التتبع يُحفظ داخل ملاحظة الطلب بصيغة «🚚yalidine:yal-123» فيبقى مع الطلب في أي قاعدة بيانات */
   trackingOf(o){ const m = String((o && o.note) || "").match(/🚚([a-z0-9_]+):([A-Za-z0-9._-]+)/); return m ? { company:m[1], tracking:m[2] } : null; },
@@ -5643,7 +5673,9 @@ const Admin = {
       }
     }catch(err){
       console.error(err);
-      toast("❌ تعذّر الاتصال بـ " + co.name + (PHPAPI.on() ? ": " + err.message : " مباشرة من المتصفح — الاتصال المباشر (Browser → API) قد يُرفض من بعض الشركات لأسباب CORS؛ نسخة الاستضافة (PHP) تتجاوز هذه المشكلة عبر وسيط الخادم."));
+      if(err.cors){ this.explainCors(co); return false }
+      toast("❌ تعذّر الاتصال بـ " + co.name + ": " + err.message);
+      return false;
     }
   },
 
@@ -5657,7 +5689,7 @@ const Admin = {
     const cands = this.orders.map((o,i)=>({ o, i, t: this.trackingOf(o) })).filter(x=>x.t && !["livree","echec","annulee"].includes(x.o.status));
     if(!cands.length){ toast("ℹ️ لا توجد طلبات مرسَلة إلى شركة توصيل بانتظار التتبع (أرسل طلباً بزر 🚚 أولاً)"); return }
     const btns = [$f("sync-btn"), $f("ship-sync-btn")].filter(Boolean); this._syncing = true; btns.forEach(b=>b.disabled = true);
-    const rows = []; let changed = 0, failed = 0, n = 0;
+    const rows = []; let changed = 0, failed = 0, n = 0, corsHit = null;
     for(const { o, i, t } of cands){
       n++; btns.forEach(b=>b.textContent = "⏳ " + n + "/" + cands.length);
       const co = all[t.company], cfg = this.deliveryCfg[t.company] || {};
@@ -5675,12 +5707,13 @@ const Admin = {
         else if(m === o.status){ row.result = "— بلا تغيير"; }
         else if((m === "expediee" || m === "confirmee") && (this.STATUS_RANK[m] ?? 0) <= (this.STATUS_RANK[o.status] ?? 0)){ row.result = "— بلا تغيير"; }
         else { API.updateOrder(this.key, o.id, m); this.onStatusChange(i, m); changed++; row.result = "✅ ← " + m; row.cls = m === "echec" ? "st-echec" : "st-livree"; }
-      }catch(err){ failed++; row.result = "❌ " + err.message; row.cls = "st-annulee"; }
+      }catch(err){ failed++; if(err.cors) corsHit = co; row.result = "❌ " + (err.cors ? "حجب CORS" : err.message); row.cls = "st-annulee"; }
       rows.push(row);
       await new Promise(res=>setTimeout(res, 250));   // احترام حدود طلبات الشركة
     }
     this._syncing = false; btns.forEach(b=>{ b.disabled = false; }); if($f("sync-btn")) $f("sync-btn").textContent = "🔄 تحديث حالات الشحن"; if($f("ship-sync-btn")) $f("ship-sync-btn").textContent = "🔄 تحديث الحالة";
     this._lastShipSync = Date.now();
+    if(corsHit){ this.explainCors(corsHit); }
     this.renderOrders(); this.renderStats(); this.renderShipped();
     if(opts.silent){ toast(failed ? "⚠️ فُحص " + cands.length + " طلب — تغيّرت " + changed + " وفشل " + failed + " (راجع المفاتيح/الاتصال)" : "✅ فُحص " + cands.length + " طلب — تغيّرت حالة " + changed); return }
     $f("sync-sum").innerHTML = "فُحص <b>" + cands.length + "</b> طلب — تغيّرت حالة <b>" + changed + "</b>" + (failed ? " — فشل <b>" + failed + "</b>" : "") + "." + (this.notifyCfg && this.notifyCfg.enabled && changed ? " جُهّزت إشعارات للزبائن في «📣 إشعارات الزبائن»." : "");
@@ -5814,7 +5847,7 @@ const Admin = {
       const url = co.parseLabel(JSON.parse(r.text));
       if(!url) throw new Error("لم تُرجع الشركة رابط البوردورو لهذا الطرد");
       if(w) w.location.href = url; else location.href = url;
-    }catch(err){ if(w) w.close(); toast("❌ " + err.message + " — يمكنك طباعته من حساب الشركة مباشرة برقم التتبع " + t.tracking); }
+    }catch(err){ if(w) w.close(); if(err.cors){ this.explainCors(co); return } toast("❌ " + err.message + " — يمكنك طباعته من حساب الشركة مباشرة برقم التتبع " + t.tracking); }
   },
 
   /* ════════ 📣 إشعارات الزبائن عند تغيّر الحالة ════════ */
