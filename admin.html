@@ -5204,6 +5204,9 @@ const Admin = {
         if(stop) body.stopdesk_id = deskId;
         return { url: this.base + "/v1/parcels/", method: "POST", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify([body]) };
       },
+      /* ولايات ياليدين الرسمية (58، صفحة واحدة): GET /v1/wilayas/ ⟵ [{id, name, zone, is_deliverable}] */
+      wilayasRequest(cfg){ return { url: this.base + "/v1/wilayas/?page_size=100", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      parseWilayas(json){ const rows = Array.isArray(json && json.data) ? json.data : []; const m = {}; rows.forEach(r=>{ if(r.id != null) m[Number(r.id)] = { name: String(r.name||""), ok: !(r.is_deliverable === 0 || r.is_deliverable === false) }; }); return m; },
       /* بلديات ياليدين الرسمية لولاية: GET /v1/communes/?wilaya_id=ID (صفحات) */
       communesRequest(cfg, wilayaId, page){ return { url: this.base + "/v1/communes/?wilaya_id=" + wilayaId + "&page_size=100&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       parseCommunes(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { names: rows.map(r=>String(r.name||"")).filter(Boolean), nd: rows.filter(r=>r.is_deliverable === 0 || r.is_deliverable === false).map(r=>String(r.name||"")), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
@@ -5681,6 +5684,17 @@ const Admin = {
   normName(t){ return String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\u0600-\u06ff]/g,""); },
   levenshtein(a, b){ const m = a.length, n = b.length; if(!m) return n; if(!n) return m; const d = []; for(let i=0;i<=m;i++) d[i] = [i]; for(let j=1;j<=n;j++) d[0][j] = j;
     for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1)); return d[m][n]; },
+  _wilayasCache: {},
+  async companyWilayas(co, cfg){
+    const key = (co.name||"") + ":wil";
+    if(this._wilayasCache[key]) return this._wilayasCache[key];
+    try{ const c = JSON.parse(localStorage.getItem("alyssum_wilayas_" + key) || "null"); if(c && Object.keys(c).length > 40){ this._wilayasCache[key] = c; return c; } }catch(e){}
+    const r = await this.courierFetch(co.wilayasRequest(cfg));
+    if(!r.ok) throw new Error("تعذّر جلب ولايات الشركة (رمز " + r.status + ")");
+    const m = co.parseWilayas(JSON.parse(r.text));
+    if(Object.keys(m).length){ this._wilayasCache[key] = m; try{ localStorage.setItem("alyssum_wilayas_" + key, JSON.stringify(m)); }catch(e){} }
+    return m;
+  },
   async companyCommunes(co, cfg, wilayaId){
     const key = (co.name||"") + ":v2:" + wilayaId;
     if(this._communesCache[key]) return this._communesCache[key];
@@ -5737,12 +5751,25 @@ const Admin = {
     toast("⏳ جارِ إرسال الطلب #" + order.id + " إلى " + co.name + "...");
     try{
       let ord = order;
+      if(co.wilayasRequest){                                // أسماء الولايات الرسمية (بالرقم) + هل الولاية مخدومة
+        const wl = await this.companyWilayas(co, cfg), w0 = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null;
+        const off = w0 && wl[w0.id];
+        if(off){
+          if(!off.ok){ this.showNotice("🚫 الولاية غير مخدومة", "ياليدين لا تخدم حالياً ولاية <b>" + off.name + "</b>. سلّم هذا الطلب بشركة أخرى."); return false }
+          ord = Object.assign({}, ord, { wilaya: off.name });
+        }
+      }
       if(co.communesRequest){                               // تطبيع اسم البلدية على قائمة ياليدين الرسمية قبل الإرسال
         const fix = await this.resolveCommune(co, cfg, order);
         if(!fix.ok){ this.askCommune(orderIndex, companyKey, fix); return false }
-        ord = Object.assign({}, order, { commune: fix.name });
+        ord = Object.assign({}, ord, { commune: fix.name });
       }
-      const req = co.buildRequest(cfg, ord);
+      let cfg2 = cfg;
+      if(co.wilayasRequest && cfg.fromWilayaName){                                    // ولاية الانطلاق بالاسم الرسمي
+        const wl = await this.companyWilayas(co, cfg), want = this.normName(cfg.fromWilayaName), hit = Object.values(wl).find(v=>this.normName(v.name) === want);
+        if(hit) cfg2 = Object.assign({}, cfg, { fromWilayaName: hit.name });
+      }
+      const req = co.buildRequest(cfg2, ord);
       const r = await this.courierFetch(req);
       let json = null; try{ json = JSON.parse(r.text); }catch(e){}
       let tracking = "";
