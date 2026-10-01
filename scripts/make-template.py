@@ -98,6 +98,7 @@ for f in ("checkout.json",):
 
 # الإعدادات: هوية محايدة وبلا مفاتيح
 cfg = (ROOT / "assets/js/config.js").read_text(encoding="utf-8")
+cfg = re.sub(r"^\s*SELLER:.*\n", "", cfg, flags=re.M)
 cfg = re.sub(r'API_URL:\s*"[^"]*"', 'API_URL: ""', cfg)
 cfg = re.sub(r'ORDERS_BACKEND:\s*"[^"]*"', 'ORDERS_BACKEND: "supabase"', cfg)
 cfg = re.sub(r'SUPABASE_URL:\s*"[^"]*"', 'SUPABASE_URL: ""', cfg)
@@ -188,7 +189,7 @@ if a.target == "php":
 (OUT / "version.json").write_text(json.dumps({"version": (ROOT / "VERSION").read_text(encoding="utf-8").strip()}) + "\n", encoding="utf-8")
 
 # فحص التسرّب
-bad = [r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s != "demo"]
+bad = [r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s != "demo"]
 hits = []
 for f in OUT.rglob("*"):
     if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:

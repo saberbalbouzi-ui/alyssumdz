@@ -137,6 +137,8 @@ tr:hover td{background:#FAF7F0}
     <h1>🌿 لوحة تحكم أليسوم</h1>
     <span id="live-now" class="live-pill" title="المشاهدون الآن على الموقع (حقيقي)">⚪ المشاهدون الآن: …</span>
     <span id="pending-badge"></span>
+    <button class="small gold hidden" id="upd-btn" onclick="Updater.open()">🔔 تحديث متاح</button>
+    <button class="small gray hidden" id="rel-btn" onclick="Seller.open()" title="خاص بك كبائع فقط">📡 النشر للعملاء</button>
     <button class="small blue" onclick="Admin.previewHome()">🏠 تعديل الصفحة الرئيسية</button>
     <button class="logout" onclick="Admin.logout()">خروج</button>
   </div>
@@ -703,6 +705,45 @@ tr:hover td{background:#FAF7F0}
       <button class="small gold" onclick="Admin.savePixel()">💾 حفظ ونشر</button>
       <button class="small gray" onclick="document.getElementById('pixel-modal-bg').classList.remove('open')">إلغاء</button>
     </div>
+  </div>
+</div>
+
+<!-- نافذة تحديث الموقع (نسخة الاستضافة) -->
+<div class="modal-bg" id="upd-modal-bg">
+  <div class="modal">
+    <h3>🔔 تحديث الموقع</h3>
+    <div id="upd-info" class="hint" style="margin-top:0">…</div>
+    <div id="upd-notes" style="white-space:pre-wrap;background:#faf8f3;border:1px solid var(--line);border-radius:12px;padding:.8rem;margin:.6rem 0;display:none"></div>
+    <div id="upd-msg" class="hint" style="color:#b33"></div>
+    <div class="hint">يحدّث التحديث ملفات النظام فقط (اللوحة والتصميم والبرمجة). لا يمسّ منتجاتك ولا طلباتك ولا كلمة المرور ولا إعداداتك، وتُحفظ نسخة احتياطية قبله ويمكن التراجع عنه.</div>
+    <div class="action-bar">
+      <button class="small gold hidden" id="upd-go" onclick="Updater.apply()">⬇️ تحديث الآن</button>
+      <button class="small warn hidden" id="upd-back" onclick="Updater.rollback()">↩️ تراجع عن آخر تحديث</button>
+      <button class="small gray" onclick="document.getElementById('upd-modal-bg').classList.remove('open')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة النشر للعملاء (البائع فقط) -->
+<div class="modal-bg" id="rel-modal-bg">
+  <div class="modal lg">
+    <h3>📡 النشر للعملاء</h3>
+    <div class="hint" style="margin-top:0"><b>تطبيق على موقعي فقط:</b> تعديلاتك على هذا الموقع تُنشر كالمعتاد (المستودع)، ولا تصل أي عميل. <b>النشر لجميع المواقع:</b> يبني إصداراً من الملفات المشتركة فقط، توقّعه بمفتاحك، ثم يراه كل عميل في لوحته بزر «تحديث».</div>
+    <div class="section-title">1) مفتاح التوقيع</div>
+    <div id="rel-key" class="hint"></div>
+    <div class="action-bar" id="rel-key-actions"></div>
+    <div class="section-title">2) إصدار جديد</div>
+    <div class="grid2">
+      <div><input id="rel-ver" placeholder="رقم الإصدار (مثال 1.0.2)" dir="ltr"><div class="hint" id="rel-cur"></div></div>
+      <div><textarea id="rel-notes" rows="3" placeholder="ما الجديد؟ (تراه العملاء قبل التحديث)"></textarea></div>
+    </div>
+    <div class="action-bar">
+      <button class="small gold" id="rel-go" onclick="Seller.release()">🚀 نشر الإصدار لجميع المواقع</button>
+      <button class="small gray" onclick="document.getElementById('rel-modal-bg').classList.remove('open')">إغلاق</button>
+    </div>
+    <pre id="rel-log" style="background:#101614;color:#cfe;border-radius:12px;padding:.8rem;max-height:160px;overflow:auto;font-size:.8rem;display:none;direction:ltr;text-align:left"></pre>
+    <div class="section-title">3) ما يُنشر وما يبقى خاصاً</div>
+    <div class="grid2" id="rel-layers"><div class="hint">…</div><div></div></div>
   </div>
 </div>
 
@@ -1655,6 +1696,7 @@ const Admin = {
     this.loadDeliveryCfg();
     this.loadBlacklist();
     this.startAlerts();
+    try{ Updater.init(); Seller.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadCheckoutSettings()]);
     this.renderAll();
@@ -4709,6 +4751,131 @@ const Admin = {
       console.error(err);
       toast("❌ تعذّر الاتصال بـ " + co.name + " مباشرة من المتصفح — الاتصال المباشر (Browser → API) قد يُرفض من بعض الشركات لأسباب CORS، ويحتاج عندها وسيطاً خادمياً (proxy). تفاصيل الخطأ: " + err.message);
     }
+  },
+};
+
+
+/* ════════ تحديث الموقع (الزبون، نسخة الاستضافة فقط) ════════ */
+const Updater = {
+  state: null,
+  ERR: { hash_mismatch:"الحزمة تالفة أو معدّلة — لم يتغيّر شيء", bad_signature:"توقيع التحديث غير صالح — رُفض", not_newer:"لا يوجد إصدار أحدث", forbidden_path:"التحديث يحاول تعديل ملفات غير مسموحة — رُفض",
+         php_syntax:"التحديث يحوي خطأ برمجياً — رُفض", busy:"تحديث آخر قيد التنفيذ", download_failed:"تعذّر الاتصال بقناة التحديث", bad_latest:"بيانات قناة التحديث غير صالحة", bad_manifest:"بيان التحديث غير صالح",
+         identity_unreadable:"تعذّر قراءة اسم المتجر من الإعدادات", updates_disabled:"التحديث غير مفعّل في هذا الموقع", no_backup:"لا توجد نسخة احتياطية للتراجع", write_failed:"تعذّرت الكتابة على الملفات — تحقق من الصلاحيات", zip_missing:"إضافة ZipArchive غير مفعّلة في الاستضافة" },
+  async check(){
+    if(!PHPAPI.on()) return null;
+    const r = await PHPAPI.call("update_check", { method:"GET" }).catch(()=>null);
+    this.state = (r && r.ok) ? r.j : null;
+    const b = $f("upd-btn"); if(b){ const on = !!(this.state && this.state.enabled && this.state.available); b.classList.toggle("hidden", !on); if(on) b.textContent = "🔔 تحديث متاح " + this.state.latest; }
+    return this.state;
+  },
+  async open(){
+    $f("upd-msg").textContent = ""; $f("upd-modal-bg").classList.add("open");
+    $f("upd-info").textContent = "⏳ جارِ الفحص..."; await this.check(); this.render();
+  },
+  render(){
+    const st = this.state, info = $f("upd-info"), notes = $f("upd-notes");
+    $f("upd-go").classList.add("hidden"); $f("upd-back").classList.add("hidden"); notes.style.display = "none";
+    if(!st){ info.textContent = "تعذّر الفحص."; return }
+    if(!st.enabled){ info.textContent = "الإصدار الحالي " + st.current + " — التحديث عن بُعد غير مفعّل في هذا الموقع."; return }
+    if(st.error){ info.textContent = "الإصدار الحالي " + st.current + " — " + (this.ERR[st.error] || st.error); }
+    else if(st.available){ info.innerHTML = "الإصدار الحالي <b>" + st.current + "</b> ← الجديد <b>" + st.latest + "</b>"; $f("upd-go").classList.remove("hidden"); if(st.notes){ notes.textContent = st.notes; notes.style.display = "block"; } }
+    else info.textContent = "✅ موقعك محدَّث (الإصدار " + st.current + ")";
+    if(st.canRollback) $f("upd-back").classList.remove("hidden");
+  },
+  async apply(){
+    if(!confirm("سيُحدَّث الموقع إلى الإصدار " + this.state.latest + ". متابعة؟")) return;
+    $f("upd-msg").style.color = "#555"; $f("upd-msg").textContent = "⏳ جارِ التنزيل والتحقق من التوقيع والتحديث...";
+    const r = await PHPAPI.call("update_apply", { method:"POST", body:"{}" }).catch(()=>({ ok:false, j:{ error:"download_failed" } }));
+    if(r.ok){ $f("upd-msg").style.color = "#1e6b3a"; $f("upd-msg").textContent = "✅ تم التحديث إلى " + r.j.version + " — سيُعاد تحميل الصفحة..."; setTimeout(()=>location.reload(), 1400); }
+    else { $f("upd-msg").style.color = "#b33"; $f("upd-msg").textContent = "❌ " + (this.ERR[r.j.error] || r.j.error || "فشل التحديث") + " — لم يتغيّر شيء."; }
+  },
+  async rollback(){
+    if(!confirm("التراجع عن آخر تحديث وإعادة ملفات النظام السابقة؟ (بياناتك لا تتأثر)")) return;
+    const r = await PHPAPI.call("update_rollback", { method:"POST", body:"{}" }).catch(()=>({ ok:false, j:{} }));
+    if(r.ok){ $f("upd-msg").style.color = "#1e6b3a"; $f("upd-msg").textContent = "✅ عدتَ إلى الإصدار " + r.j.version + " — سيُعاد تحميل الصفحة..."; setTimeout(()=>location.reload(), 1400); }
+    else { $f("upd-msg").style.color = "#b33"; $f("upd-msg").textContent = "❌ " + (this.ERR[r.j.error] || r.j.error || "فشل التراجع"); }
+  },
+  init(){ if(PHPAPI.on() && !sessionStorage.getItem("alyssum_upd_checked")){ sessionStorage.setItem("alyssum_upd_checked","1"); this.check(); } },
+};
+
+/* ════════ النشر للعملاء (البائع فقط: CONFIG.SELLER === true) ════════ */
+const Seller = {
+  enabled(){ return typeof CONFIG !== "undefined" && CONFIG.SELLER === true && !PHPAPI.on(); },
+  KEY: "alyssum_sign_key",
+  b64(u8){ let s = ""; new Uint8Array(u8).forEach(c=>s += String.fromCharCode(c)); return btoa(s); },
+  unb64(b){ const s = atob(b); const u = new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i] = s.charCodeAt(i); return u; },
+  pem(spki){ return "-----BEGIN PUBLIC KEY-----\n" + this.b64(spki).match(/.{1,64}/g).join("\n") + "\n-----END PUBLIC KEY-----\n"; },
+  log(t){ const l = $f("rel-log"); l.style.display = "block"; l.textContent += t + "\n"; l.scrollTop = l.scrollHeight; },
+  hasKey(){ try{ return !!localStorage.getItem(this.KEY); }catch(e){ return false; } },
+  async privKey(){ const j = JSON.parse(localStorage.getItem(this.KEY)); return crypto.subtle.importKey("pkcs8", this.unb64(j.pkcs8), { name:"ECDSA", namedCurve:"P-256" }, false, ["sign"]); },
+  init(){ if(this.enabled()) $f("rel-btn").classList.remove("hidden"); },
+  async open(){
+    $f("rel-modal-bg").classList.add("open"); this.renderKey();
+    try{ const f = await GH.getFile("releases/latest.json"); const m = JSON.parse(JSON.parse(this.fromB64(f.content)).manifest); $f("rel-cur").textContent = "آخر إصدار منشور: " + m.version;
+      const p = m.version.split(".").map(Number); if(!$f("rel-ver").value) $f("rel-ver").value = p[0] + "." + p[1] + "." + (p[2] + 1);
+    }catch(e){ $f("rel-cur").textContent = "لم يُنشر أي إصدار بعد."; if(!$f("rel-ver").value){ try{ const v = await GH.getFile("VERSION"); $f("rel-ver").value = this.fromB64(v.content).trim().replace(/(\d+)$/, n=>(+n+1)); }catch(_){ $f("rel-ver").value = "1.0.1"; } } }
+    this.renderLayers();
+  },
+  fromB64(c){ return decodeURIComponent(escape(atob((c||"").replace(/\n/g,"")))); },
+  renderKey(){
+    const has = this.hasKey();
+    $f("rel-key").innerHTML = has ? "🔑 المفتاح الخاص محفوظ في هذا المتصفح فقط. <b>احتفظ بنسخة احتياطية</b>: إن ضاع لن يقبل العملاء إصداراً جديداً أبداً." : "⚠️ لا يوجد مفتاح توقيع بعد. أنشئه مرة واحدة (أو استورد نسختك الاحتياطية).";
+    $f("rel-key-actions").innerHTML = has ? '<button class="small blue" onclick="Seller.backup()">💾 نسخة احتياطية للمفتاح</button>' : '<button class="small gold" onclick="Seller.genKey()">🔐 إنشاء مفتاح التوقيع</button><label class="small gray" style="cursor:pointer;display:inline-block">📥 استيراد نسخة احتياطية<input type="file" accept=".json" style="display:none" onchange="Seller.importKey(this)"></label>';
+  },
+  async genKey(){
+    if(this.hasKey() && !confirm("يوجد مفتاح. استبداله سيمنع العملاء الحاليين من قبول التحديثات. متأكد؟")) return;
+    const kp = await crypto.subtle.generateKey({ name:"ECDSA", namedCurve:"P-256" }, true, ["sign","verify"]);
+    const pk = this.b64(await crypto.subtle.exportKey("pkcs8", kp.privateKey)), pem = this.pem(await crypto.subtle.exportKey("spki", kp.publicKey));
+    localStorage.setItem(this.KEY, JSON.stringify({ pkcs8: pk }));
+    this.download("signing-key-backup.json", JSON.stringify({ pkcs8: pk, note:"سرّي: لا ترفعه ولا تشاركه" }));
+    let sha; try{ sha = (await GH.getFile("releases/pubkey.pem")).sha; }catch(e){}
+    await GH.putFile("releases/pubkey.pem", btoa(pem), sha, "مفتاح التوقيع العام للتحديثات");
+    this.renderKey(); toast("✅ أُنشئ المفتاح ونُشر الجزء العام. احفظ ملف النسخة الاحتياطية المُنزَّل الآن.");
+  },
+  download(name, text){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type:"application/json" })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); },
+  backup(){ this.download("signing-key-backup.json", localStorage.getItem(this.KEY)); },
+  async importKey(input){ const f = input.files[0]; if(!f) return; try{ const j = JSON.parse(await f.text()); if(!j.pkcs8) throw 0; localStorage.setItem(this.KEY, JSON.stringify({ pkcs8:j.pkcs8 })); this.renderKey(); toast("✅ استُورد المفتاح"); }catch(e){ toast("❌ ملف غير صالح"); } },
+  async renderLayers(){
+    const box = $f("rel-layers");
+    try{
+      const j = await (await fetch("shared-files.json", { cache:"no-store" })).json();
+      const li = a => "<ul style='margin:.3rem 1rem;font-size:.82rem;direction:ltr;text-align:left'>" + a.map(x=>"<li>" + String(x).replace(/</g,"&lt;") + "</li>").join("") + "</ul>";
+      box.innerHTML = "<div><b>✅ يُنشر للجميع</b>" + li(j.shared) + "</div><div><b>🔒 خاص بكل موقع (لا يُلمس)</b>" + Object.entries(j.local).map(([k,v])=>"<div class='hint' style='margin:.4rem 0 0'>" + k + "</div>" + li(v)).join("") + "</div>";
+    }catch(e){ box.innerHTML = "<div class='hint'>تعذّر قراءة shared-files.json</div><div></div>"; }
+  },
+  async release(){
+    const ver = $f("rel-ver").value.trim(), notes = $f("rel-notes").value.trim(), btn = $f("rel-go");
+    if(!/^\d+\.\d+\.\d+$/.test(ver)){ toast("رقم إصدار غير صالح (x.y.z)"); return }
+    if(!this.hasKey()){ toast("أنشئ مفتاح التوقيع أولاً"); return }
+    if(!confirm("سيُنشر الإصدار " + ver + " لجميع المواقع المثبَّتة. متابعة؟")) return;
+    const c = GH.cfg(); btn.disabled = true; $f("rel-log").textContent = "";
+    try{
+      this.log("1) بناء الإصدار على GitHub...");
+      const d = await fetch("https://api.github.com/repos/" + c.owner + "/" + c.repo + "/actions/workflows/release.yml/dispatches", { method:"POST",
+        headers:{ Authorization:"Bearer " + c.token, Accept:"application/vnd.github+json", "Content-Type":"application/json" }, body: JSON.stringify({ ref: c.branch || "main", inputs:{ version: ver, notes } }) });
+      if(d.status === 404) throw new Error("ملف release.yml غير موجود على الفرع (ادمج التعديلات أولاً)");
+      if(d.status === 403 || d.status === 401) throw new Error("التوكن بلا صلاحية Actions: Read and write — عدّلها من إعدادات التوكن في GitHub");
+      if(d.status !== 204) throw new Error("تعذّر بدء البناء (" + d.status + ")");
+      let man = null;
+      for(let i = 0; i < 60 && !man; i++){
+        await new Promise(r=>setTimeout(r, 6000));
+        try{ const f = await GH.getFile("releases/" + ver + "/manifest.json"); man = this.fromB64(f.content); }catch(e){ if(i % 3 === 2) this.log("   ...بانتظار انتهاء البناء"); }
+      }
+      if(!man) throw new Error("انتهت المهلة قبل ظهور الإصدار — راجع تبويب Actions في GitHub");
+      this.log("2) التوقيع بمفتاحك الخاص (يبقى في متصفحك)...");
+      const sig = new Uint8Array(await crypto.subtle.sign({ name:"ECDSA", hash:"SHA-256" }, await this.privKey(), new TextEncoder().encode(man)));
+      // تحقق احترازي: التوقيع يجب أن يطابق المفتاح العام المنشور في المستودع (وإلا لن يقبله أي عميل)
+      const pub = await GH.getFile("releases/pubkey.pem"), pemText = this.fromB64(pub.content);
+      const spki = this.unb64(pemText.replace(/-----[^-]+-----|\s/g,""));
+      const ok = await crypto.subtle.verify({ name:"ECDSA", hash:"SHA-256" }, await crypto.subtle.importKey("spki", spki, { name:"ECDSA", namedCurve:"P-256" }, false, ["verify"]), sig, new TextEncoder().encode(man));
+      if(!ok) throw new Error("مفتاحك الخاص لا يطابق المفتاح العام المنشور — لن يقبل العملاء هذا التوقيع. استورد النسخة الاحتياطية الصحيحة");
+      this.log("3) نشر latest.json...");
+      let sha; try{ sha = (await GH.getFile("releases/latest.json")).sha; }catch(e){}
+      await GH.putFile("releases/latest.json", btoa(unescape(encodeURIComponent(JSON.stringify({ manifest: man, sig: this.b64(sig) })))), sha, "نشر الإصدار " + ver + " للعملاء");
+      this.log("✅ نُشر الإصدار " + ver + ". سيظهر «تحديث متاح» في لوحة كل عميل خلال دقائق.");
+      toast("✅ نُشر الإصدار " + ver + " للعملاء");
+    }catch(e){ this.log("❌ " + e.message); toast("❌ " + e.message); }
+    btn.disabled = false;
   },
 };
 

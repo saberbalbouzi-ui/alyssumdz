@@ -16,7 +16,7 @@
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 
 ## نسخة الاستضافة (PHP)
-- `php-edition/api/index.php` (دخول + ملفات + طلبات/إحصاءات على SQLite) و`php-edition/install.php`؛ تُفعَّل بـ `CONFIG.BACKEND = "php"` فقط (`PHPAPI` في admin.html و`API.php` في api.js)، والوضع الافتراضي (GitHub/Supabase) لا يتغير. الحزمة: `scripts/make-template.py --target php`. الاختبار محلياً: `php -S` + Playwright. حزمة تحديث مواقع الزبائن: `make-template.py --target php --update` (انظر HANDOVER.md §7) — ارفع `VERSION` عند كل إصدار. لا تستعمل `pkill -f` في الأوامر (يقتل الصدفة).
+- `php-edition/api/index.php` (دخول + ملفات + طلبات/إحصاءات على SQLite) و`php-edition/install.php`؛ تُفعَّل بـ `CONFIG.BACKEND = "php"` فقط (`PHPAPI` في admin.html و`API.php` في api.js)، والوضع الافتراضي (GitHub/Supabase) لا يتغير. الحزمة: `scripts/make-template.py --target php`. الاختبار محلياً: `php -S` + Playwright. حزمة تحديث مواقع الزبائن: `make-template.py --target php --update` (انظر HANDOVER.md §7) — ارفع `VERSION` عند كل إصدار. التحديث عن بُعد: `shared-files.json` (المشترك/الخاص)، `scripts/release.py` + `.github/workflows/release.yml`، توقيع المتصفح في `Seller` وتحقق PHP في `api/index.php` (`update_*`)؛ لا توسّع قائمة `updAllowed` إلا بتحديث يدوي أولاً (HANDOVER.md §8). لا تستعمل `pkill -f` في الأوامر (يقتل الصدفة).
 
 ## تنبيهات تقنية
 - `const CONFIG` و`const API` ليسا خصائص على `window`؛ استعمل `typeof CONFIG !== "undefined"`.
