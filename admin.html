@@ -908,9 +908,30 @@ tr:hover td{background:#FAF7F0}
 const $f = id => document.getElementById(id);
 
 /* ════════ اتصال مباشر بـ GitHub لنشر تعديلات صفحات المنتجات ════════ */
+/* وضع الاستضافة (CONFIG.BACKEND === "php"): نفس واجهة GH لكن الملفات تُقرأ/تُكتب عبر api/index.php بعد دخول المدير */
+const PHPAPI = {
+  on(){ return typeof CONFIG !== "undefined" && CONFIG.BACKEND === "php"; },
+  url(r, q){ return ((typeof CONFIG !== "undefined" && CONFIG.PHP_API) || "api/index.php") + "?r=" + r + (q || ""); },
+  async call(r, opts, q){
+    const o = Object.assign({ credentials:"same-origin" }, opts || {});
+    o.headers = Object.assign({ "X-Requested-With":"XMLHttpRequest", "Content-Type":"application/json" }, o.headers || {});
+    const res = await fetch(this.url(r, q), o);
+    const j = await res.json().catch(()=>({}));
+    return { ok: res.ok, status: res.status, j };
+  },
+};
 const GH = {
-  cfg(){ return JSON.parse(localStorage.getItem("alyssum_gh_cfg") || "null"); },
+  cfg(){ if(PHPAPI.on()) return { token:"php", owner:"", repo:"", branch:"" }; return JSON.parse(localStorage.getItem("alyssum_gh_cfg") || "null"); },
   async getFile(path){
+    if(PHPAPI.on()){
+      const r = await PHPAPI.call("file", { method:"GET" }, "&path=" + encodeURIComponent(path) + "&t=" + Date.now());
+      if(!r.ok){
+        if(r.status === 401) throw new Error("انتهت الجلسة — سجّل الدخول من جديد (401)");
+        if(r.status === 404) throw new Error("لم يُعثر على الملف (404)");
+        throw new Error("GET فشل (" + r.status + ")");
+      }
+      return r.j;
+    }
     const c = this.cfg();
     if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
     const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path +
@@ -924,6 +945,15 @@ const GH = {
     return r.json();
   },
   async putFile(path, contentB64, sha, message){
+    if(PHPAPI.on()){
+      const r = await PHPAPI.call("file", { method:"PUT", body: JSON.stringify({ path, content: contentB64, sha, message }) });
+      if(!r.ok){
+        if(r.status === 409) throw new Error("تعارض (409) — الملف تغيّر، أعد فتح المعاينة وحاول من جديد");
+        if(r.status === 401) throw new Error("انتهت الجلسة — سجّل الدخول من جديد (401)");
+        throw new Error("PUT فشل (" + r.status + ") " + (r.j && r.j.error || ""));
+      }
+      return r.j;
+    }
     const c = this.cfg();
     if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
     const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path;
@@ -1469,8 +1499,17 @@ const Admin = {
 
   sbOnly(){ return API.ordersBackend() === "supabase"; },       // وضع Supabase فقط: لا حاجة لمفتاح الإدارة
   sbGate(){ return API.sb.enabled(); },                          // الدخول بحساب المدير (بريد + كلمة مرور) متى فُعّل Supabase
+  phpMode(){ return PHPAPI.on(); },
   async login(){
     const btn = $f("login-btn"); if(btn.disabled) return;
+    if(this.phpMode()){
+      const pw = $f("login-pass").value; if(!pw){ toast("أدخل كلمة المرور"); return }
+      btn.disabled = true; btn.textContent = "⏳ جارِ التحقق...";
+      const r = await PHPAPI.call("login", { method:"POST", body: JSON.stringify({ password: pw }) }).catch(()=>({ ok:false, status:0, j:{} }));
+      btn.disabled = false; btn.textContent = "دخول";
+      if(!r.ok){ toast(r.status === 429 ? "❌ محاولات كثيرة، حاول بعد قليل" : r.status === 503 ? "❌ لم يُثبَّت الموقع بعد" : "❌ كلمة المرور غير صحيحة"); return }
+      this.key = "php"; this.load(); return;
+    }
     let k = "sb";
     if(!this.sbOnly()){
       k = $f("login-key").value.trim();
@@ -1487,7 +1526,7 @@ const Admin = {
     this.key = k; localStorage.setItem("alyssum_admin_key", k);
     this.load();
   },
-  logout(){ localStorage.removeItem("alyssum_admin_key"); API.sb.signOut(); location.reload() },
+  logout(){ localStorage.removeItem("alyssum_admin_key"); API.sb.signOut(); if(this.phpMode()){ PHPAPI.call("logout", { method:"POST", body:"{}" }).finally(()=>location.reload()); return } location.reload() },
   /* ════════ تنبيهات حمراء + المشاهدون الآن + أسئلة الوكيل (تحديث تلقائي) ════════ */
   alerts: { orders: -1, questions: [], timer: null, liveTimer: null },
   startAlerts(){
@@ -4659,7 +4698,11 @@ document.addEventListener("input", e=>{
 });
 
 function toast(t){ const el=$f("toast2"); el.textContent=t; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,2500) }
-if(Admin.sbGate()){
+if(Admin.phpMode()){
+  $f("login-key").classList.add("hidden"); $f("login-pass").classList.remove("hidden");
+  $f("login-hint").textContent = "أدخل كلمة مرور المدير";
+  PHPAPI.call("me", { method:"GET" }).then(r=>{ if(r.ok && r.j.admin){ Admin.key = "php"; Admin.load(); } }).catch(()=>{});
+} else if(Admin.sbGate()){
   $f("login-email").classList.remove("hidden"); $f("login-pass").classList.remove("hidden");
   $f("login-key").classList.toggle("hidden", Admin.sbOnly());
   $f("login-hint").textContent = Admin.sbOnly() ? "سجّل الدخول بحساب المدير" : "سجّل الدخول بحساب المدير ومفتاح الإدارة";
