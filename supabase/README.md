@@ -39,3 +39,7 @@
 3. الصق الرابط (`…/functions/v1/yalidine-webhook?s=<السر>`) في لوحة ياليدين ← Webhooks.
 4. عند فتح اللوحة تُطبَّق على الحالات الجديدة آثارها (إشعار الزبون، القائمة السوداء عند الفشل، إعادة المخزون).
 مفتاح `service_role` يحقنه Supabase في الدالة تلقائياً ولا يوضع في المستودع.
+
+## وسيط شركات التوصيل (Edge Function `courier`) — يلزم لموقع GitHub+Supabase
+المتصفح يحجب اتصال اللوحة المباشر بياليدين (CORS)، فتمرّ الطلبات عبر دالة تتحقق أنك مدير. النشر بدون طرفية: لوحة Supabase ← Edge Functions ← Deploy a new function ← الاسم `courier` ← الصق `functions/courier/index.ts` ← Deploy (اترك Verify JWT مفعّلاً). المضيفون المسموحون افتراضياً `api.yalidine.app`؛ لإضافة شركة أخرى عرّف السر `COURIER_HOSTS` (مفصولاً بفواصل).
+الأمر نفسه ممكن لـ `yalidine-webhook` (بسر `YALIDINE_WEBHOOK_SECRET` من Edge Functions ← Secrets، وبإلغاء Verify JWT لأن ياليدين لا ترسل توكن).
