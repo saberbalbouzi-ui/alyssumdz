@@ -27,7 +27,12 @@ async function hmacOk(raw: string, sig: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "GET") return new Response(JSON.stringify({ ok: true, webhook: "ready" }), { headers: { "Content-Type": "application/json" } });
+  if (req.method === "GET") {
+    // التحقق CRC من ياليدين (عند الإنشاء والتعديل ودورياً): نُرجع crc_token كما هو. يجب أن يبقى دائماً وإلا عُطّل الـ webhook.
+    const q = new URL(req.url).searchParams;
+    if (q.has("subscribe") && q.has("crc_token")) return new Response(q.get("crc_token") ?? "", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    return new Response(JSON.stringify({ ok: true, webhook: "ready" }), { headers: { "Content-Type": "application/json" } });
+  }
   if (req.method !== "POST") return new Response("method", { status: 405 });
   const raw = (await req.text()).slice(0, 1_000_000);
   const given = new URL(req.url).searchParams.get("s") ?? "";
