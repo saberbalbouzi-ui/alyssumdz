@@ -5168,30 +5168,44 @@ const Admin = {
         { key:"apiId", label:"API ID", type:"text" },
         { key:"apiToken", label:"API Token", type:"password" },
         { key:"fromWilayaName", label:"ولاية الانطلاق (مثال: Alger)", type:"text", required:false },
+        { key:"weight", label:"وزن الطرد الافتراضي (كغ)", type:"text", required:false },
+        { key:"length", label:"الطول الافتراضي (سم)", type:"text", required:false },
+        { key:"width", label:"العرض الافتراضي (سم)", type:"text", required:false },
+        { key:"height", label:"الارتفاع الافتراضي (سم)", type:"text", required:false },
       ],
+      /* الحقول حسب توثيق Yalidine API v1 (POST /v1/parcels/): الأبعاد والوزن إلزامية، ومكتب Stop Desk يحتاج stopdesk_id */
       buildRequest(cfg, order){
-        return {
-          url: this.base + "/v1/parcels/",
-          method: "POST",
-          headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" },
-          body: JSON.stringify([{
-            order_id: String(order.id),
-            from_wilaya_name: cfg.fromWilayaName || "Alger",
-            firstname: order.name || "",
-            familyname: "-",
-            contact_phone: order.phone || "",
-            address: order.address || (order.wilaya||""),
-            to_commune_name: order.commune || "",
-            to_wilaya_name: order.wilaya || "",
-            product_list: order.items || "",
-            price: Number(order.total)||0,
-            do_insurance: false,
-            declared_value: Number(order.total)||0,
-            freeshipping: false,
-            is_stopdesk: false,
-          }]),
+        const parts = String(order.name || "").trim().split(/\s+/).filter(Boolean);
+        const first = parts[0] || "زبون", family = parts.slice(1).join(" ") || first;
+        let ph = String(order.phone || "").replace(/\D/g, ""); if(ph.startsWith("213")) ph = "0" + ph.slice(3); else if(ph.length === 9) ph = "0" + ph;
+        const stop = order.dtype === "stop";
+        let deskId = null;
+        if(stop){ const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null; const d = w && (w.desks||[]).find(x=>x.name === order.desk); deskId = d ? d.id : null;
+          if(!deskId) { const err = new Error("مكتب Stop Desk «" + (order.desk || "؟") + "» غير معروف لدى ياليدين — اختر مكتباً من القائمة أو حوّل التوصيل إلى المنزل"); throw err; } }
+        const num = (v, d)=>{ const n = Number(v); return isFinite(n) && n > 0 ? n : d; };
+        const total = Math.round(Number(order.total) || 0);
+        const body = {
+          order_id: String(order.id),
+          from_wilaya_name: cfg.fromWilayaName || "Alger",
+          firstname: first, familyname: family,
+          contact_phone: ph,
+          address: order.address || [order.commune, order.wilaya].filter(Boolean).join("، "),
+          to_commune_name: order.commune || "",
+          to_wilaya_name: order.wilaya || "",
+          product_list: String(order.items || "").replace(/\s*\n\s*/g, " | ").slice(0, 250),
+          price: total,
+          do_insurance: false,
+          declared_value: total,
+          length: num(cfg.length, 20), width: num(cfg.width, 15), height: num(cfg.height, 10), weight: num(cfg.weight, 1),
+          freeshipping: !(Number(order.fee) > 0),
+          is_stopdesk: stop,
+          has_exchange: false,
         };
+        if(stop) body.stopdesk_id = deskId;
+        return { url: this.base + "/v1/parcels/", method: "POST", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify([body]) };
       },
+      /* رسالة الرفض من الرد: {order_id: {success:false, message}} */
+      parseError(json){ try{ const v = Object.values(json || {})[0]; return v && v.message ? String(v.message) : ""; }catch(e){ return ""; } },
     },
     zrexpress: {
       name: "ZR Express",
@@ -5671,21 +5685,28 @@ const Admin = {
     try{
       const req = co.buildRequest(cfg, order);
       const r = await this.courierFetch(req);
-      if(r.ok){
-        let tracking = "";
-        try{ if(co.parseSent) tracking = co.parseSent(JSON.parse(r.text), order); }catch(e){}
-        if(tracking){ this.saveTracking(order, companyKey, tracking); this.renderOrders(); }
-        toast("✅ أُرسل الطلب #" + order.id + " إلى " + co.name + (tracking ? " — رقم التتبع " + tracking : " (استجابة " + r.status + ")"));
-        if(tracking) this.setShipRaw(order.id, "تم الإرسال للشركة");
-        return !!tracking;
-      }else{
-        toast("❌ رفضت " + co.name + " الطلب (رمز " + r.status + ") — تحقق من صحة المفاتيح والبيانات. " + r.text.slice(0,150));
-        return false;
+      let json = null; try{ json = JSON.parse(r.text); }catch(e){}
+      let tracking = "";
+      try{ if(r.ok && co.parseSent && json) tracking = co.parseSent(json, order); }catch(e){}
+      if(tracking){
+        this.saveTracking(order, companyKey, tracking); this.renderOrders();
+        toast("✅ أُرسل الطلب #" + order.id + " إلى " + co.name + " — رقم التتبع " + tracking);
+        this.setShipRaw(order.id, "تم الإرسال للشركة");
+        return true;
       }
+      /* لم يُنشأ طرد: نعرض سبب الرفض كما ردّت به الشركة، في نافذة تبقى حتى تغلقها */
+      const why = (co.parseError && json && co.parseError(json)) || "";
+      const esc = t=>String(t).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+      this.showNotice("❌ لم تُنشئ " + co.name + " الطرد للطلب " + order.id,
+        (r.ok ? "الشركة استلمت الطلب لكنها لم تُرجع رقم تتبع." : "رفضت الشركة الطلب (رمز " + r.status + ").") +
+        (why ? "<br><b>السبب:</b> " + esc(why) : "") +
+        "<br><br><small>الرد الكامل من الشركة (أرسله لي إن لم يتضح السبب):</small><pre dir='ltr' style='white-space:pre-wrap;background:#f6f3ea;padding:.6rem;border-radius:10px;font-size:.78rem;max-height:200px;overflow:auto'>" + esc((r.text || "").slice(0, 900)) + "</pre>" +
+        "<small>أسباب شائعة: اسم البلدية أو الولاية لا يطابق قائمة ياليدين، رقم الهاتف غير صالح، أو مفاتيح API خاطئة.</small>");
+      return false;
     }catch(err){
       console.error(err);
       if(err.cors){ this.explainCors(co); return false }
-      toast("❌ تعذّر الاتصال بـ " + co.name + ": " + err.message);
+      this.showNotice("❌ تعذّر إرسال الطلب " + order.id + " إلى " + co.name, String(err.message).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])));
       return false;
     }
   },
