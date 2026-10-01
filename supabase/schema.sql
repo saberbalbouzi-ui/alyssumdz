@@ -370,3 +370,13 @@ grant execute on function public.track_order(jsonb) to anon, authenticated;
 revoke all on function public._cust_from_token(text), public._cust_new_session(uuid), public._cust_profile(uuid) from public, anon, authenticated;
 revoke all on function public.customer_register(jsonb), public.customer_login(jsonb), public.customer_me(jsonb), public.customer_update(jsonb), public.customer_logout(jsonb), public.customer_link_order(jsonb) from public;
 grant execute on function public.customer_register(jsonb), public.customer_login(jsonb), public.customer_me(jsonb), public.customer_update(jsonb), public.customer_logout(jsonb), public.customer_link_order(jsonb) to anon, authenticated;
+
+-- ════════════════════════════════════════════════════════════════════
+-- تخزين خاص بالمدير (أسعار التكلفة، إعدادات الأرباح، سجل المخزون): للمدير فقط، لا يصل إليه الزوار إطلاقاً
+-- ════════════════════════════════════════════════════════════════════
+create table if not exists public.admin_kv (key text primary key, value jsonb not null default '{}'::jsonb, updated_at timestamptz not null default now());
+alter table public.admin_kv enable row level security;
+revoke all on public.admin_kv from anon, authenticated;
+grant select, insert, update on public.admin_kv to authenticated;
+drop policy if exists "admin kv" on public.admin_kv;
+create policy "admin kv" on public.admin_kv for all to authenticated using (public.is_admin()) with check (public.is_admin());

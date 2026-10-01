@@ -182,6 +182,7 @@ tr:hover td{background:#FAF7F0}
       </div>
       <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
       <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
@@ -232,6 +233,7 @@ tr:hover td{background:#FAF7F0}
   </div>
 
   <div id="tab-orders">
+    <div id="orders-banner"></div>
     <div class="card">
       <div class="search-bar">
         <input id="order-filter-q" placeholder="🔍 بحث بالاسم أو الهاتف أو رقم الطلب..." oninput="Admin.applyOrderFilters()">
@@ -262,6 +264,7 @@ tr:hover td{background:#FAF7F0}
   </div>
 
   <div id="tab-shipped" class="hidden">
+    <div id="ship-banner"></div>
     <div class="card">
       <div class="search-bar">
         <input id="ship-q" placeholder="🔍 بحث بالتتبع أو الاسم أو الهاتف أو رقم الطلب..." oninput="Admin.renderShipped()">
@@ -273,6 +276,31 @@ tr:hover td{background:#FAF7F0}
       <div class="hint" id="ship-count" style="margin-top:.4rem"></div>
     </div>
     <div class="card"><div class="rtw" style="overflow:auto"><table id="ship-table" class="rt"></table></div></div>
+  </div>
+
+  <div id="tab-finance" class="hidden">
+    <div class="card">
+      <div class="search-bar">
+        <b style="color:var(--green)">💼 المخزون والأرباح</b>
+        <select id="fin-period" onchange="Admin.renderFinance()"><option value="7">آخر 7 أيام</option><option value="30" selected>آخر 30 يوماً</option><option value="90">آخر 90 يوماً</option><option value="0">كل الفترة</option></select>
+        <button class="small gold" type="button" onclick="Admin.publishStockNow()">⬆️ نشر المخزون على الموقع الآن</button>
+      </div>
+      <div class="hint" id="fin-note"></div>
+    </div>
+    <div class="stat" id="fin-kpi"></div>
+    <div class="card">
+      <b style="color:var(--green)">⚙️ إعدادات الحساب</b>
+      <div class="hint">سعر التكلفة لكل منتج يُدخَل في الجدول أدناه، ويُحفظ مشفّراً عن الزوار (لا يظهر في ملفات الموقع العامة).</div>
+      <div class="grid2" style="margin-top:.5rem">
+        <label class="hint" style="margin:0">تكلفة التغليف لكل طلب (دج)<input id="fin-pack" type="number" min="0" placeholder="0"></label>
+        <label class="hint" style="margin:0">تكلفة التوصيل الفعلية = % من رسوم الجدول<input id="fin-carrier" type="number" min="0" max="300" placeholder="100"></label>
+        <label class="hint" style="margin:0">رسوم الإرجاع = % من رسم التوصيل<input id="fin-return" type="number" min="0" max="300" placeholder="100"></label>
+        <label class="hint" style="margin:0">حدّ التنبيه لانخفاض المخزون (قطع)<input id="fin-low" type="number" min="0" placeholder="5"></label>
+      </div>
+      <button class="small gold" onclick="Admin.saveFinSettings()">💾 حفظ</button>
+    </div>
+    <div class="card"><div class="rtw" style="overflow:auto"><table id="fin-table" class="rt"></table></div></div>
+    <div class="card"><b style="color:var(--green)">🧾 آخر حركات المخزون</b><div class="rtw" style="overflow:auto;margin-top:.5rem"><table id="fin-log" class="rt"></table></div></div>
   </div>
 
   <div id="tab-analytics" class="hidden">
@@ -1148,6 +1176,28 @@ const PHPAPI = {
     return { ok: res.ok, status: res.status, j };
   },
 };
+/* تخزين خاص بالمدير (أسعار التكلفة وإعدادات الأرباح وسجلّ المخزون): Supabase جدول admin_kv (RLS للمدير فقط) | PHP قاعدة SQLite | نسخة احتياطية محلية.
+   لا يُكتب أبداً في ملفات الموقع العامة (data.js) حتى لا يراه الزوار والمنافسون. */
+const Priv = {
+  loc(k, def){ try{ const v = localStorage.getItem("alyssum_priv_" + k); return v == null ? def : JSON.parse(v); }catch(e){ return def; } },
+  async get(k, def){
+    try{
+      if(PHPAPI.on()){ const r = await PHPAPI.call("kv", {}, "&k=" + k); if(r.ok && r.j.ok && r.j.v != null) { try{ localStorage.setItem("alyssum_priv_" + k, JSON.stringify(r.j.v)); }catch(e){} return r.j.v; } }
+      else if(API.sb.enabled() && API.ordersBackend() !== "sheets"){
+        const rows = await API.sb.adminFetch("/rest/v1/admin_kv?key=eq." + k + "&select=value");
+        if(Array.isArray(rows) && rows.length){ try{ localStorage.setItem("alyssum_priv_" + k, JSON.stringify(rows[0].value)); }catch(e){} return rows[0].value; }
+      }
+    }catch(e){}
+    return this.loc(k, def);
+  },
+  async set(k, v){
+    try{ localStorage.setItem("alyssum_priv_" + k, JSON.stringify(v)); }catch(e){}
+    try{
+      if(PHPAPI.on()) await PHPAPI.call("kv", { method:"POST", body: JSON.stringify({ k, v }) });
+      else if(API.sb.enabled() && API.ordersBackend() !== "sheets") await API.sb.adminFetch("/rest/v1/admin_kv?on_conflict=key", { method:"POST", headers:{ Prefer:"resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ key:k, value:v }) });
+    }catch(e){ console.error(e); }
+  },
+};
 const GH = {
   cfg(){ if(PHPAPI.on()) return { token:"php", owner:"", repo:"", branch:"" }; return JSON.parse(localStorage.getItem("alyssum_gh_cfg") || "null"); },
   async getFile(path){
@@ -1879,7 +1929,7 @@ const Admin = {
     this.startAlerts();
     try{ Updater.init(); Seller.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
-    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings()]);
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
     this.renderAll();
     toast("✓ تم التحميل");
     try{ if(!sessionStorage.getItem("alyssum_pages_checked") && GH.cfg() && GH.cfg().token){ sessionStorage.setItem("alyssum_pages_checked","1"); this.ensureProductPages(); } }catch(e){}
@@ -1895,10 +1945,11 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","shipped","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","shipped","finance","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
+    if(t==="finance") this.renderFinance();
     if(t==="shipped"){ this.renderShipped(); this.autoSyncShipped(); }
     if(t==="pending") this.renderPending();
     if(t==="genpage") GenPage.init();
@@ -2060,6 +2111,7 @@ const Admin = {
   },
 
   renderOrders(){
+    this.renderDeliveryBanners();
     const el = $f("orders-table");
     const wilayaSel = $f("order-filter-wilaya");
     if(wilayaSel){
@@ -4264,6 +4316,7 @@ const Admin = {
       else if(p) toast("ℹ️ هذا الرقم موجود أصلاً في القائمة السوداء");
     }
     this.enqueueNotify(o, status);
+    this.syncStockForOrder(o, status);
     this.renderStats(); this.renderLoyalty();
   },
   confirmBlacklist(phone){
@@ -4276,6 +4329,146 @@ const Admin = {
   loyalty: null, loyaltySha: undefined,
   loyaltyDefaults(){ return { threshold:3, reward:"none", percent:10, pointsPer:100, gift:"", notify:false,
     message:"مرحباً {name} 🌿\nشكراً لوفائك! أتممتَ {orders} طلبات معنا{reward}.\nنسعد بخدمتك دائماً." }; },
+  /* ════════ المخزون الحي + الأرباح الحقيقية ════════
+     المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
+     علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
+  fin: { costs:{}, set:{ packaging:0, carrierPct:100, returnPct:100, low:5 }, cfg:{ since:null }, log:[] },
+  async loadFinance(){
+    const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
+    this.fin = { costs: costs || {}, set: Object.assign({ packaging:0, carrierPct:100, returnPct:100, low:5 }, set || {}), cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
+  },
+  /* أسطر الطلب (المنتج/التنويع/الكمية/مبلغ السطر) من نص الطلب «العنوان ×الكمية = السعر DA» */
+  orderLines(o){
+    return String(o.items||"").split(/\n/).map(line=>{
+      const m = line.match(/^(.+?)\s*×\s*(\d+)\s*=\s*(\d+)/); if(!m) return null;
+      let title = m[1].trim(), vlabel = "", pr = this.products.find(x=>x.title === title);
+      if(!pr && title.includes(" — ")){ const i = title.lastIndexOf(" — "); pr = this.products.find(x=>x.title === title.slice(0, i)); vlabel = title.slice(i + 3); }
+      if(!pr) return null;
+      let v = null; if(vlabel && pr.variations) v = pr.variations.find(x=>{ const lb = ((pr.attributes||[]).filter(a=>a.variation && x.attrs && x.attrs[a.name] != null).map(a=>a.name + ": " + x.attrs[a.name]).join(" / ")); return lb === vlabel; }) || null;
+      return { p: pr, v, qty: Number(m[2])||0, total: Number(m[3])||0 };
+    }).filter(Boolean);
+  },
+  stockLog(p, delta, after, ref, why){
+    this.fin.log.unshift({ ts: new Date().toISOString(), slug: p.slug, title: p.title, delta, after, ref: ref || "", why: why || "" });
+    this.fin.log = this.fin.log.slice(0, 120); Priv.set("stocklog", this.fin.log);
+  },
+  syncStockForOrder(o, status){
+    try{
+      if(!o || !o.id) return;
+      const since = this.fin && this.fin.cfg && this.fin.cfg.since; if(since && new Date(o.date) < new Date(since)) return;
+      const tagged = /📦/.test(o.note || "");
+      const take = ["confirmee","expediee","livree"].includes(status), give = ["annulee","echec","nouvelle"].includes(status);
+      if(take && !tagged) { if(this.moveStock(o, -1)) this.setNoteTag(o, /📦\s*/g, "📦"); }
+      else if(give && tagged) { if(this.moveStock(o, +1)) this.setNoteTag(o, /📦\s*/g, ""); }
+    }catch(err){ console.error(err); }
+  },
+  moveStock(o, dir){
+    const lines = this.orderLines(o); if(!lines.length) return false;
+    let changed = false;
+    lines.forEach(l=>{
+      const tgt = (l.v && l.v.stock != null) ? l.v : (l.p.stock != null ? l.p : null);
+      if(!tgt) return;                                             // غير محدود ⟵ لا تتبّع
+      const before = Number(tgt.stock) || 0, after = Math.max(0, before + dir * l.qty);
+      tgt.stock = after; changed = true;
+      this.stockLog(l.p, after - before, after, o.id, dir < 0 ? "خصم: طلب مؤكَّد" : "إرجاع للمخزون");
+    });
+    if(changed) this.queueStockPublish();
+    return true;
+  },
+  _stockTimer: null, _stockBusy: false, _stockDirty: false,
+  queueStockPublish(){ this._stockDirty = true; clearTimeout(this._stockTimer); this._stockTimer = setTimeout(()=>this.flushStockPublish(), 5000); },
+  async flushStockPublish(){
+    if(this._stockBusy){ this._stockTimer = setTimeout(()=>this.flushStockPublish(), 3000); return }
+    if(!this._stockDirty) return;
+    const cfg = GH.cfg(); if(!cfg || !cfg.token){ if(!this._warnedGh){ this._warnedGh = true; toast("⚠️ المخزون تغيّر محلياً، اضبط GitHub لينعكس على الموقع"); } return }
+    this._stockBusy = true; this._stockDirty = false;
+    const ok = await this.publishDataJs();
+    this._stockBusy = false; if(!ok) this._stockDirty = true; else this.renderFinance();
+  },
+  async publishStockNow(){ this._stockDirty = true; await this.flushStockPublish(); toast("✅ نُشر المخزون على الموقع"); },
+  setStock(slug, val){
+    const p = this.products.find(x=>x.slug === slug); if(!p) return;
+    const before = p.stock == null ? null : Number(p.stock);
+    p.stock = String(val).trim() === "" ? null : Math.max(0, Math.floor(Number(val)) || 0);
+    this.stockLog(p, p.stock == null ? 0 : (p.stock - (before || 0)), p.stock, "يدوي", "تعديل يدوي" + (p.stock == null ? " (غير محدود)" : ""));
+    this.queueStockPublish(); this.renderFinance();
+  },
+  setCost(slug, val){
+    const v = Number(val); if(String(val).trim() === "" || !isFinite(v) || v < 0) delete this.fin.costs[slug]; else this.fin.costs[slug] = v;
+    Priv.set("costs", this.fin.costs); this.renderFinance();
+  },
+  async saveFinSettings(){
+    const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
+    this.fin.set = { packaging: n("fin-pack", 0), carrierPct: n("fin-carrier", 100), returnPct: n("fin-return", 100), low: n("fin-low", 5) };
+    await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
+  },
+  carrierCost(o){
+    const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null;
+    const base = w ? (o.dtype === "stop" ? w.stop : w.home) : (Number(o.fee) || 0);
+    return Math.round(base * (this.fin.set.carrierPct / 100));
+  },
+  /* حساب الأرباح لكل منتج في فترة: livree = محقق، echec = خسارة (توصيل + إرجاع + تغليف؛ البضاعة تعود للمخزون)، confirmee/expediee = متوقع */
+  computeFinance(days){
+    const since = days > 0 ? Date.now() - days * 86400000 : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0 };
+    const row = p=>per[p.slug] || (per[p.slug] = { p, units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 });
+    this.orders.forEach(o=>{
+      const t = new Date(o.date).getTime(); if(since && !(t >= since)) return;
+      if(!["livree","echec","confirmee","expediee"].includes(o.status)) return;
+      const lines = this.orderLines(o); if(!lines.length) return;
+      const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, car = this.carrierCost(o), pack = S.packaging, ret = Math.round(car * S.returnPct / 100);
+      lines.forEach(l=>{
+        const share = (sum === lines.length && !lines.reduce((a,x)=>a + x.total, 0)) ? 1 / lines.length : l.total / sum, r = row(l.p);
+        const cost = Number(this.fin.costs[l.p.slug]) || 0;
+        if(o.status === "echec"){ const loss = Math.round((car + ret + pack) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
+        else{
+          const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), pr = rev - cogs - del - pk;
+          if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.profit += pr; K.real += pr; K.revenue += rev; }
+          else { r.expUnits += l.qty; r.expProfit += pr; K.exp += pr; }
+        }
+      });
+      if(o.status === "livree") K.delivered++; else if(o.status === "echec") K.failed++; else K.open++;
+    });
+    return { per, K };
+  },
+  renderFinance(){
+    if(!$f("fin-table")) return;
+    const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
+    $f("fin-pack").value = S.packaging; $f("fin-carrier").value = S.carrierPct; $f("fin-return").value = S.returnPct; $f("fin-low").value = S.low;
+    const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
+    this.orders.forEach(o=>{ if(!["confirmee","expediee","livree"].includes(o.status) || !(new Date(o.date).getTime() >= since14)) return; this.orderLines(o).forEach(l=>{ sold14[l.p.slug] = (sold14[l.p.slug] || 0) + l.qty; }); });
+    const pend = {}; this.orders.forEach(o=>{ if(o.status === "nouvelle") this.orderLines(o).forEach(l=>{ pend[l.p.slug] = (pend[l.p.slug] || 0) + l.qty; }); });
+    const active = this.products.filter(p=>p.slug !== "test");
+    const missing = active.filter(p=>p.active !== false && this.fin.costs[p.slug] == null).length;
+    const done = K.delivered + K.failed, margin = K.revenue ? Math.round(K.real / K.revenue * 100) : 0;
+    $f("fin-note").textContent = "تتبّع المخزون التلقائي للطلبات منذ " + new Date(this.fin.cfg.since).toLocaleDateString("ar-DZ") + " — الطلبات الأقدم لا تُخصم. الربح المحقق = طلبات سُلّمت − طلبات فشلت (توصيل + إرجاع + تغليف).";
+    $f("fin-kpi").innerHTML = '<div><b style="color:' + (K.real >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(K.real) + ' دج</b><span>صافي الربح المحقق</span></div>' +
+      '<div><b>' + nf(K.exp) + ' دج</b><span>ربح متوقع (قيد التوصيل: ' + K.open + ')</span></div>' +
+      '<div><b>' + (done ? Math.round(K.delivered / done * 100) : 0) + '%</b><span>نسبة التسليم (' + K.delivered + ' / ' + done + ')</span></div>' +
+      '<div><b>' + margin + '%</b><span>هامش الربح على المبيعات</span></div>' +
+      '<div><b style="color:' + (missing ? "var(--red)" : "var(--ok)") + '">' + missing + '</b><span>منتجات بلا سعر تكلفة</span></div>';
+    const rows = active.map(p=>{ const r = per[p.slug] || { units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 }; return Object.assign({ p }, r); })
+      .sort((a,b)=>((b.units + b.retUnits + b.expUnits) > 0) - ((a.units + a.retUnits + a.expUnits) > 0) || b.profit - a.profit);
+    const low = Number(S.low) || 0;
+    $f("fin-table").innerHTML = '<tr class="hd"><th>المنتج</th><th>المخزون</th><th>تغطية</th><th>سعر التكلفة</th><th>سُلّم</th><th>الإيراد</th><th>تكلفة البضاعة</th><th>التوصيل+التغليف</th><th>خسارة الإرجاع</th><th>الربح</th><th>الهامش</th></tr>' +
+      rows.map(r=>{ const p = r.p, st = p.stock, avg = (sold14[p.slug] || 0) / 14, cover = st == null ? "∞" : (avg > 0 ? Math.floor(st / avg) + " يوم" : "—");
+        const stCls = st != null && st <= 0 ? "color:var(--red);font-weight:800" : (st != null && st <= low ? "color:#B26A00;font-weight:800" : "");
+        const cost = this.fin.costs[p.slug], mg = r.revenue ? Math.round(r.profit / r.revenue * 100) : null;
+        return '<tr><td class="t"><b>' + p.title + '</b>' + (pend[p.slug] ? '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>' : "") + '</td>' +
+          '<td data-l="المخزون"><input type="number" min="0" value="' + (st == null ? "" : st) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)"></td>' +
+          '<td data-l="تغطية" style="' + (cover !== "∞" && cover !== "—" && parseInt(cover) < 7 ? "color:var(--red);font-weight:800" : "") + '">' + cover + '</td>' +
+          '<td data-l="سعر التكلفة"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
+          '<td data-l="سُلّم">' + r.units + (r.retUnits ? ' <small style="color:var(--red)">(-' + r.retUnits + ')</small>' : "") + '</td>' +
+          '<td data-l="الإيراد">' + nf(r.revenue) + '</td><td data-l="تكلفة البضاعة">' + nf(r.cogs) + '</td><td data-l="التوصيل">' + nf(r.delivery + r.pack) + '</td>' +
+          '<td data-l="خسارة الإرجاع" style="color:' + (r.loss ? "var(--red)" : "inherit") + '">' + nf(r.loss) + '</td>' +
+          '<td data-l="الربح"><b style="color:' + (r.profit >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(r.profit) + '</b>' + (r.expProfit ? '<br><small style="color:#777">+' + nf(r.expProfit) + ' متوقع</small>' : "") + '</td>' +
+          '<td data-l="الهامش">' + (mg == null ? "—" : mg + "%") + '</td></tr>'; }).join("");
+    $f("fin-log").innerHTML = this.fin.log.length ? '<tr class="hd"><th>الوقت</th><th>المنتج</th><th>التغيّر</th><th>المخزون بعده</th><th>السبب</th></tr>' +
+      this.fin.log.slice(0, 15).map(l=>'<tr><td>' + new Date(l.ts).toLocaleString("ar-DZ") + '</td><td>' + l.title + '</td><td dir="ltr" style="color:' + (l.delta < 0 ? "var(--red)" : "var(--ok)") + '">' + (l.delta > 0 ? "+" : "") + l.delta + '</td><td>' + (l.after == null ? "∞" : l.after) + '</td><td>' + l.why + (l.ref ? ' <small dir="ltr" style="color:#999">' + l.ref + '</small>' : "") + '</td></tr>').join("")
+      : "<tr><td style='text-align:center;padding:1.2rem;color:#999'>لا حركات بعد — تظهر هنا عند تأكيد أو إلغاء الطلبات</td></tr>";
+    this.setBadge("nb-finance", active.filter(p=>p.active !== false && p.stock != null && p.stock <= low).length);
+  },
+
   /* ════════ هدايا الزبائن الجدد (assets/data/welcome.json) ════════ */
   welcomeDefaults(){ return { enabled:true,
     register:{ enabled:true, title:"🎁 هدية التسجيل", code:"WELCOME10", type:"percent", value:10, product:"", minOrder:0, days:14 },
@@ -5435,7 +5628,7 @@ const Admin = {
     this.renderOrders();
     const all = this.allDeliveryCompanies();
     const key = Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
-    if(!key){ toast("✅ تم التأكيد — لا توجد شركة توصيل نشطة، فعّل واحدة من «شركات التوصيل» ثم اضغط 🚚 إرسال"); return }
+    if(!key){ toast("✅ تم التأكيد — لكن لم يُرسل: فعّل ياليدين من «شركات التوصيل» ثم اضغط 🚚 إرسال"); this.renderDeliveryBanners(); return }
     const ok = await this.sendOrderToDelivery(i, key);
     if(ok){ this.enqueueNotify(o, "registered"); toast("✅ أُكّد الطلب وأُرسل إلى " + all[key].name + " — يظهر في «الطلبات المسجلة»" + (this.notifyCfg && this.notifyCfg.enabled ? "، ورسالة التتبع جاهزة في «📣 إشعارات الزبائن»" : "")); }
     this.renderShippedBadge();
@@ -5446,9 +5639,20 @@ const Admin = {
   setShipRaw(id, raw){ this.shipRaw[id] = { raw, ts: Date.now() }; try{ localStorage.setItem("alyssum_ship_raw", JSON.stringify(this.shipRaw)); }catch(e){} },
   shippedOrders(){ return this.orders.map((o,i)=>({o,i,t:this.trackingOf(o)})).filter(x=>x.t); },
   renderShippedBadge(){ this.setBadge("nb-shipped", 0); },
+  /* تتبّع الطلبات وإرسالها تلقائياً يتطلبان تفعيل شركة التوصيل (ياليدين) وإدخال مفاتيحها */
+  activeCompanyKey(){ const all = this.allDeliveryCompanies(); return Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled) || null; },
+  deliveryBannerHtml(){
+    const k = this.activeCompanyKey(), all = this.allDeliveryCompanies();
+    if(k){ const c = this.deliveryCfg[k] || {}; if(c.apiId || c.apiToken || c.token || c.apiKey) return ""; }
+    return '<div class="card" style="border-right:4px solid var(--red);background:#FFF5F5"><b style="color:var(--red)">⚠️ ' + (k ? "مفاتيح " + all[k].name + " غير مُدخلة" : "لم تُفعَّل شركة توصيل بعد") + '</b>' +
+      '<div class="hint" style="margin:.3rem 0">لتُرسَل الطلبات المؤكَّدة تلقائياً وتتبّع حالتها الحقيقية يجب تفعيل <b>ياليدين Yalidine</b> وإدخال API ID وAPI Token من حسابك لديهم.</div>' +
+      '<button class="small gold" type="button" onclick="Admin.tab(\'delivery\', [...document.querySelectorAll(\'.nav-btn\')].find(b=>(b.getAttribute(\'onclick\')||\'\').includes(\'delivery\')))">🔗 تفعيل شركة التوصيل الآن</button></div>';
+  },
+  renderDeliveryBanners(){ const h = this.deliveryBannerHtml(); ["ship-banner","orders-banner"].forEach(id=>{ const el = $f(id); if(el) el.innerHTML = h; }); },
   autoSyncShipped(){ if(!this._lastShipSync || Date.now() - this._lastShipSync > 180000) this.syncShipping({silent:true}); },
   renderShipped(){
     const el = $f("ship-table"); if(!el) return;
+    this.renderDeliveryBanners();
     const q = ($f("ship-q").value||"").trim().toLowerCase(), st = $f("ship-status").value;
     const all = this.shippedOrders();
     const rows = all.filter(({o,t})=>{

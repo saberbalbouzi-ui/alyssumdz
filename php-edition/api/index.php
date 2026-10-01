@@ -60,6 +60,7 @@ function db(): PDO {
       CREATE TABLE IF NOT EXISTS customer_sessions (token_hash TEXT PRIMARY KEY, customer_id INTEGER NOT NULL, created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS customer_fails (phone TEXT NOT NULL, at INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS customer_fails_k ON customer_fails(phone, at);
+      CREATE TABLE IF NOT EXISTS admin_kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS rl (k TEXT NOT NULL, t INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS rl_k ON rl(k, t);
     ");
@@ -363,6 +364,20 @@ switch ($route) {
                 out(200, ['found' => true, 'status' => $o['status'], 'date' => iso((int)$o['created_at']), 'wilaya' => $o['wilaya'] ?? '', 'commune' => $o['commune'] ?? '', 'dtype' => $o['dtype'] ?? '']);
         }
         out(200, ['found' => false]);
+
+    /* تخزين خاص بالمدير (أسعار التكلفة، إعدادات الأرباح، سجل المخزون) — لا يصل إليه الزوار */
+    case 'kv':
+        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        if ($method === 'GET') {
+            $k = (string)($_GET['k'] ?? ''); if (!preg_match('/^[a-z0-9_]{1,40}$/', $k)) out(400, ['error' => 'bad_key']);
+            $st = db()->prepare('SELECT v FROM admin_kv WHERE k = ?'); $st->execute([$k]); $v = $st->fetchColumn();
+            out(200, ['ok' => true, 'v' => $v === false ? null : json_decode((string)$v, true)]);
+        }
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $k = (string)($b['k'] ?? ''); if (!preg_match('/^[a-z0-9_]{1,40}$/', $k)) out(400, ['error' => 'bad_key']);
+        $j = json_encode($b['v'] ?? null, JSON_UNESCAPED_UNICODE); if (strlen($j) > 300000) out(413, ['error' => 'too_large']);
+        db()->prepare('INSERT INTO admin_kv (k, v, updated) VALUES (?,?,?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated = excluded.updated')->execute([$k, $j, time()]);
+        out(200, ['ok' => true]);
 
     /* ── قراءات وتعديلات المدير ── */
     case 'orders':
