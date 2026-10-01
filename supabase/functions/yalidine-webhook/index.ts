@@ -27,6 +27,7 @@ async function hmacOk(raw: string, sig: string) {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === "GET") return new Response(JSON.stringify({ ok: true, webhook: "ready" }), { headers: { "Content-Type": "application/json" } });
   if (req.method !== "POST") return new Response("method", { status: 405 });
   const raw = (await req.text()).slice(0, 1_000_000);
   const given = new URL(req.url).searchParams.get("s") ?? "";
@@ -38,6 +39,8 @@ Deno.serve(async (req) => {
   }
   if (!ok) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
   let j: any; try { j = JSON.parse(raw); } catch { return new Response(JSON.stringify({ error: "bad_json" }), { status: 400 }); }
+  const evt = String(j?.type ?? j?.event ?? j?.event_type ?? "");
+  if (evt && !["parcel_status_updated", "parcel_payment_updated", "parcel_edited"].includes(evt)) return new Response(JSON.stringify({ ok: true, ignored: evt }), { headers: { "Content-Type": "application/json" } });
   const items: any[] = Array.isArray(j?.data) ? j.data : (j?.data && typeof j.data === "object" ? [j.data] : (Array.isArray(j) ? j : [j]));
   let updated = 0;
   for (const it of items) {

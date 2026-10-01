@@ -27,7 +27,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $isAdmin = !empty($_SESSION['admin']);
 
 /* الكتابة والدخول تتطلب ترويسة مخصصة (تمنع الطلبات العابرة للمواقع CSRF) */
-if ($method !== 'GET' && ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') out(403, ['error' => 'bad_request']);
+if ($method !== 'GET' && $route !== 'webhook' && ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') out(403, ['error' => 'bad_request']);   // webhook ياليدين خادم-لخادم: يُصادَق عليه بالسر لا بالترويسة
 
 function body(): array {
     $max = 12 * 1024 * 1024;
@@ -379,6 +379,7 @@ switch ($route) {
 
     /* Webhook ياليدين: يحدّث حالة الطلب لحظياً. السر في الرابط (?s=) وهو محفوظ في admin_kv؛ ويُقبل أيضاً توقيع HMAC في ترويسة إن أرسلته الشركة */
     case 'webhook':
+        if ($method === 'GET') out(200, ['ok' => true, 'webhook' => 'ready']);      // فحص وصول الرابط من لوحة ياليدين
         if ($method !== 'POST') out(405, ['error' => 'method']);
         rateLimit('wh' . clientIp(), 600, 60);
         $d = db(); $st = $d->prepare("SELECT v FROM admin_kv WHERE k = 'webhook_secret'"); $st->execute(); $sec = json_decode((string)$st->fetchColumn(), true);
@@ -392,6 +393,8 @@ switch ($route) {
         }
         if (!$okAuth) out(401, ['error' => 'unauthorized']);
         $j = json_decode($raw, true); if (!is_array($j)) out(400, ['error' => 'bad_json']);
+        $evt = (string)($j['type'] ?? $j['event'] ?? $j['event_type'] ?? '');
+        if ($evt !== '' && !in_array($evt, ['parcel_status_updated', 'parcel_payment_updated', 'parcel_edited'], true)) out(200, ['ok' => true, 'ignored' => $evt]);   // parcel_created / parcel_deleted لا تغيّر الحالة
         $items = isset($j['data']) && is_array($j['data']) ? (array_is_list($j['data']) ? $j['data'] : [$j['data']]) : (array_is_list($j) ? $j : [$j]);
         $rank = ['nouvelle' => 0, 'confirmee' => 1, 'expediee' => 2, 'livree' => 3]; $upd = 0; $res = [];
         foreach ($items as $it) {
