@@ -283,7 +283,8 @@ const Agent = (() => {
     { re: /(توصيل|ليفريزون|ليفريسون|توصيلة|الولايات|livraison|delivery)/i, key: "delivery" },
     { re: /(دفع|الدفع|كاش|ثقة|نصب|احتيال|paiement|payer|confiance|arnaque)/i, key: "payment" },
     { re: /(ضمان|أصلي|طبيعي|كيماوي|فعالية|نتيجة|نتائج|garantie|original|naturel|efficace)/i, key: "guarantee" },
-    { re: /(اطلب|شراء|كيف اطلب|طريقة الطلب|تشرت|commander|acheter|comment.*command)/i, key: "howOrder" },
+    { re: /(أكثر.*(طلب|مبيع)|الأكثر|افضل منتج|أفضل منتج|best.?seller|plus demand|populaires)/i, key: "bestsellers" },
+    { re: /(اطلب|أطلب|إطلب|شراء|اشتري|أشتري|كيف اطلب|طريقة الطلب|طريقة الشراء|تشرت|commander|acheter|comment.*command)/i, key: "howOrder" },
     { re: /(واتساب|whatsapp|واتس)/i, key: "whatsapp" },
     { re: /(شكرا|شكراً|مشكور|merci)/i, key: "thanks" },
   ];
@@ -309,6 +310,50 @@ const Agent = (() => {
       if (kws.some(k => k && low.includes(k))) return qa;
     }
     return null;
+  }
+
+  /* ── تدريب الوكيل لكل صفحة (تُدار من لوحة التحكم ⟵ الوكيل الذكي ⟵ تدريب الوكيل) ──
+     assets/data/agent-training.json: { scopes: { home: {...}, "<slug>": {...} } }
+     الدماغ (AgentBrain) يُحمَّل عند الحاجة فقط ويبحث في: الأسئلة المدرَّبة + معلومات الصفحة + بيانات المنتج. */
+  let TRAIN = null, BRAIN_CHUNKS = null;
+  const scopeKey = () => currentSlug || "home";
+  const scopeCfg = () => (TRAIN && TRAIN.scopes && TRAIN.scopes[scopeKey()]) || null;
+  function loadScriptOnce(src) {
+    return new Promise(res => {
+      if (window.AgentBrain) return res();
+      const s = document.createElement("script"); s.src = src; s.onload = () => res(); s.onerror = () => res();
+      document.head.appendChild(s);
+    });
+  }
+  let __trainP = null;
+  function ensureTraining() {
+    if (__trainP) return __trainP;
+    __trainP = (async () => {
+      const base = (typeof REL !== "undefined" ? REL : "");
+      try {
+        const r = await fetch(base + "assets/data/agent-training.json", { cache: "no-store" });
+        TRAIN = r.ok ? await r.json() : null;
+      } catch (e) { TRAIN = null; }
+      const c = scopeCfg();
+      if (c && c.enabled !== false) await loadScriptOnce(base + "assets/js/agent-brain.js");
+      if (c && c.enabled !== false) applyIdentity();
+    })();
+    return __trainP;
+  }
+  function applyIdentity() { // اسم الوكيل الخاص بهذه الصفحة
+    const c = scopeCfg(); if (!c || !c.name) return;
+    const b = document.querySelector("#agent-panel .agent-head b");
+    if (b) b.textContent = c.name;
+  }
+  function trainedAnswer(t) {
+    const c = scopeCfg();
+    if (!c || c.enabled === false || !window.AgentBrain) return null;
+    try {
+      if (c.useContent && !BRAIN_CHUNKS) BRAIN_CHUNKS = AgentBrain.chunksFromDoc(document);
+      const facts = c.useContent ? AgentBrain.factsFromProduct(currentProduct(), fmt) : [];
+      const r = AgentBrain.answer(t, c, BRAIN_CHUNKS || [], facts, lang);
+      return r ? r.text : null;
+    } catch (e) { return null; }
   }
 
   function findProductByText(text) {
@@ -367,10 +412,12 @@ const Agent = (() => {
     const t = text.trim();
     if (!t) return;
     lang = detectLang(t) || lang;
+    userTalked = true;
     const u = document.createElement("div");
     u.className = "msg user"; u.textContent = t;
     body().appendChild(u); body().scrollTop = body().scrollHeight;
     await ensureCustomQA();
+    await ensureTraining();
 
     // محاولة ربط نموذج لغوي خارجي أولاً (اختياري)
     if (window.CONFIG && CONFIG.AGENT_ENDPOINT) {
@@ -381,17 +428,21 @@ const Agent = (() => {
             body: JSON.stringify({ message: t, lang, product: currentProduct(), products: (window.PRODUCTS || []).slice(0, 30) }),
           });
           const j = await r.json();
-          botSay(j.reply || fallback(t));
-        } catch (e) { botSay(fallback(t)); }
+          if (j.reply) { botSay(j.reply); addCta(); } else answerOrFallback(t);
+        } catch (e) { answerOrFallback(t); }
       }, 900);
     } else {
-      typing(() => botSay(fallback(t)), 700);
+      typing(() => answerOrFallback(t), 700);
     }
   }
 
   function fallback(t) {
     const l = lang;
     const tr = T[l];
+
+    // تدريب الصفحة (أسئلة مدرَّبة + معلومات الصفحة) — الأولوية الأولى
+    const trained = trainedAnswer(t);
+    if (trained) return trained;
 
     // أسئلة/أجوبة مخصّصة من لوحة التحكم — لها الأولوية دائماً على الردود الجاهزة أدناه
     const customQA = matchCustomQA(t);
@@ -410,6 +461,10 @@ const Agent = (() => {
 
     for (const it of INTENTS) {
       if (!it.re.test(t)) continue;
+      if (it.key === "bestsellers") {
+        const feat = (window.PRODUCTS || []).filter(p => p.old).slice(0, 3);
+        return feat.length ? `${tr.bestSellersIntro()}<br>` + feat.map(p => productCard(p, l)).join("<br>") + `<br>${tr.askNeed()}` : tr.askNeed();
+      }
       if (it.key === "delivery") return tr.deliveryGeneral();
       if (it.key === "price") {
         const cur = currentProduct();
@@ -439,23 +494,117 @@ const Agent = (() => {
     const wFollowUp = findWilaya(t);
     if (wFollowUp) return tr.deliveryWilaya(wFollowUp);
 
-    // على صفحة منتج ولم يتطابق شيء محدَّد → نتحدث عن هذا المنتج بالذات (دقّة حسب صفحة المنتج)
-    const cur = currentProduct();
+    // ذكر اسم منتج صراحةً → نعرّف به
     const byName = findProductByText(t);
     if (byName) return productPitch(byName, l);
-    if (cur) return productPitch(cur, l);
 
-    const feat = (window.PRODUCTS || []).filter(p => p.old).slice(0, 2);
-    if (!feat.length) return tr.askNeed();
-    return `${tr.bestSellersIntro()}<br>` + feat.map(p => productCard(p, l)).join("<br>") + `<br>${tr.askNeed()}`;
+    // لم نفهم السؤال: اعتذار + أسئلة افتراضية، ويُسجَّل السؤال لتجيب عليه لاحقاً من لوحة الإدارة
+    return NOT_UNDERSTOOD;
   }
 
-  function open() {
+  const NOT_UNDERSTOOD = "__NOT_UNDERSTOOD__";
+  const defaultQuestions = l => {
+    const trained = ((scopeCfg() || {}).qa || []).filter(x => x && x.active !== false && x.q).slice(0, 3).map(x => x.q);
+    const base = l === "fr"
+      ? (currentSlug ? ["Quel est le prix ?", "Paiement à la livraison ?", "Quel délai de livraison ?", "Comment commander ?"] : ["Quels sont vos produits les plus demandés ?", "Quels sont les frais de livraison ?", "Paiement à la livraison ?", "Comment commander ?"])
+      : (currentSlug ? ["ما هو سعر المنتج؟", "هل الدفع عند الاستلام؟", "كم مدة التوصيل؟", "هل المنتج أصلي وآمن؟", "كيف أطلب؟"] : ["ما هي أكثر المنتجات طلباً؟", "كم رسوم التوصيل؟", "هل الدفع عند الاستلام؟", "كيف أطلب؟"]);
+    return trained.concat(base).slice(0, 6);
+  };
+  const loggedQ = new Set();
+  function logUnanswered(t) {
+    const q = t.trim(); if (q.length < 3 || q.length > 300 || loggedQ.has(q)) return;
+    loggedQ.add(q);
+    try { if (typeof API !== "undefined" && API.logQuestion) API.logQuestion(q, scopeKey(), lang); } catch (e) {}
+  }
+  function notUnderstoodHtml() {
+    return (lang === "fr"
+      ? "Désolé, je n'ai pas compris votre question 🙏 Veuillez la reformuler, ou choisissez l'une de ces questions :"
+      : "من فضلك أعد صياغة السؤال 🙏 — اعتذر، لم أفهم سؤالك. غيّر السؤال أو استعمل أحد هذه الأسئلة:") + chipsHtml(defaultQuestions(lang));
+  }
+  function answerOrFallback(t) {                      // يُستعمل في كل مسارات الرد
+    const r = fallback(t);
+    if (r === NOT_UNDERSTOOD) { logUnanswered(t); botSay(notUnderstoodHtml()); bindChips(body()); return; }
+    botSay(r); addCta();
+  }
+
+  /* ── مبادرة الوكيل: لا يفتح اللوحة وحده (كان يغطي الصفحة)، لكن بعد مدة — إن لم يضغط الزبون على
+     الطلب ولم يبدأ ملء النموذج — تظهر رسالة ترحيب صغيرة فوق الأيقونة؛ إن ضغط عليها يبدأ نقاش إقناع بالشراء ── */
+  let engaged = false, followTimer = null, userTalked = false;
+  const nudgeCfg = () => {
+    const c = scopeCfg(), n = (c && c.nudge) || {};
+    const on = n.enabled !== undefined ? !!n.enabled : !!currentSlug;      // افتراضياً: مفعّلة في صفحات المنتجات فقط
+    return { on: on && !(c && c.enabled === false && n.enabled === undefined), delay: Math.max(5, Number(n.delaySec) || 25), message: (n.message || "").trim() };
+  };
+  const defaultNudgeText = p => {
+    const multi = p && (p.offers || []).find(o => o.qty > 1);
+    const offer = multi ? `<br>🎁 عرض خاص: ${multi.qty} قطع بـ <b>${fmt(multi.price)}</b>${multi.free ? " (منها قطعة مجانية)" : ""}.` : "";
+    return p
+      ? `👋 مرحباً بك! أنا مساعدك الشخصي. لاحظت اهتمامك بـ «<b>${p.title}</b>» — هل تود أن أجيبك عن أي سؤال قبل الطلب؟<br>💵 الدفع عند الاستلام · 🚚 توصيل لـ 58 ولاية${offer}`
+      : `👋 مرحباً بك في <b>${SITE_NAME}</b>! هل أساعدك في اختيار المنتج المناسب؟`;
+  };
+  const chipsHtml = list => `<div class="agent-chips">${list.map(q => `<button type="button" class="chip" data-q="${q}">${q}</button>`).join("")}</div>`;
+  function bindChips(root) {
+    root.querySelectorAll(".chip[data-q]").forEach(b => b.onclick = () => { b.parentNode.remove(); reply(b.dataset.q); });
+    root.querySelectorAll(".chip[data-order]").forEach(b => b.onclick = () => goOrder());
+  }
+  function goOrder() {
+    close();
+    const f = document.getElementById("order-form");
+    if (f) { f.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => document.getElementById("name")?.focus({ preventScroll: true }), 600); }
+  }
+  function addCta() {                                 // زر «اطلب الآن» بعد الردود في صفحات المنتجات
+    if (!currentSlug || !document.getElementById("order-form")) return;
+    const d = document.createElement("div"); d.className = "msg bot cta";
+    d.innerHTML = `<div class="agent-chips"><button type="button" class="chip gold" data-order="1">🛒 اطلب الآن — الدفع عند الاستلام</button></div>`;
+    body().appendChild(d); bindChips(d); body().scrollTop = body().scrollHeight;
+  }
+  function hideTeaser() { const t = document.getElementById("agent-teaser"); if (t) t.remove(); }
+  function showTeaser() {
+    if (engaged || document.getElementById("agent-teaser") || panel().classList.contains("open")) return;
+    try { if (sessionStorage.getItem("alyssum_nudged_" + scopeKey())) return; sessionStorage.setItem("alyssum_nudged_" + scopeKey(), "1"); } catch (e) {}
+    const n = nudgeCfg();
+    const t = document.createElement("div");
+    t.className = "agent-teaser"; t.id = "agent-teaser";
+    t.innerHTML = `<button type="button" class="tx" aria-label="إغلاق">✕</button><div class="tt">${n.message || defaultNudgeText(currentProduct())}</div>
+      <div class="agent-chips"><button type="button" class="chip gold" id="agent-teaser-go">💬 نعم، لدي سؤال</button></div>`;
+    document.body.appendChild(t);
+    t.querySelector(".tx").onclick = hideTeaser;
+    t.querySelector("#agent-teaser-go").onclick = () => { hideTeaser(); open({ persuade: true }); };
+    t.querySelector(".tt").onclick = () => { hideTeaser(); open({ persuade: true }); };
+  }
+  async function startNudge() {
+    await ensureTraining();
+    const n = nudgeCfg();
+    if (!n.on) return;
+    const mark = () => { engaged = true; hideTeaser(); };
+    document.addEventListener("click", e => { if (e.target.closest && e.target.closest(".btn-order, #add-cart, .btn-wa, a[href='#order-form'], .sticky-cta a, #order-form button")) mark(); }, true);
+    document.addEventListener("focusin", e => { if (e.target.closest && e.target.closest("#order-form")) mark(); });
+    document.addEventListener("submit", mark, true);
+    setTimeout(showTeaser, n.delay * 1000);
+  }
+
+  function open(opts) {
+    hideTeaser();
     panel().classList.add("open");
     document.getElementById("agent-fab").style.display = "none";
     if (!greeted) {
       greeted = true;
-      typing(() => botSay(T[lang].greet(currentProduct())), 600);
+      ensureTraining().then(() => {
+        const c = scopeCfg(), p = currentProduct();
+        typing(() => botSay((c && c.enabled !== false && c.greeting) ? c.greeting : T[lang].greet(p)), 600);
+        if (p && opts && opts.persuade) {            // نقاش الإقناع: عرض المنتج بسعره وعرضه + أسئلة سريعة تفتح الحوار
+          setTimeout(() => typing(() => {
+            botSay(productPitch(p, lang) + chipsHtml(["هل هو أصلي وآمن؟", "هل الدفع عند الاستلام؟", "كم مدة التوصيل؟", "السعر غالي قليلاً"]));
+            bindChips(body());
+          }, 900), 900);
+          // متابعة واحدة إن سكت الزبون: دفعة لطيفة نحو الطلب
+          followTimer = setTimeout(() => {
+            if (userTalked || !panel().classList.contains("open")) return;
+            botSay(`هل بقي لديك أي تردد؟ 🤝 أجيبك عنه بكل صراحة. وتذكّر أنك لا تدفع إلا عند استلام «${p.title}» والتأكد منه.`);
+            addCta();
+          }, 30000);
+        }
+      });
     }
     setTimeout(()=>document.getElementById("agent-input")?.focus(), 300);
   }
@@ -493,7 +642,8 @@ const Agent = (() => {
     document.getElementById("agent-send").onclick = send;
     document.getElementById("agent-input").addEventListener("keydown", e => { if (e.key === "Enter") send(); });
 
-    // لا فتح تلقائي: المساعد يبقى أيقونة صغيرة (مع تلميح "المساعد الذكي" عند المرور عليها)
+    startNudge();
+    // لا فتح تلقائي للوحة: المساعد يبقى أيقونة صغيرة (مع تلميح "المساعد الذكي" عند المرور عليها)
     // ولا يُفتح إلا عند الضغط عليها من المستخدم — كان يفتح تلقائياً بعد 12 ثانية ويغطي الصفحة
   }
 

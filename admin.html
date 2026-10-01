@@ -39,6 +39,12 @@ button{cursor:pointer;border:none;font-family:inherit}
 @media(max-width:900px){.admin-body{flex-direction:column;align-items:stretch}.side-nav{width:100%;position:static}.side-nav-intro{display:none}.nav-txt small{display:none}}
 .wrap{max-width:1200px;margin:0 auto;padding:1.2rem}
 .top{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.nb{background:var(--red);color:#fff;border-radius:999px;padding:0 .5rem;font-size:.72rem;font-weight:900;margin-inline-start:.45rem;min-width:1.3rem;text-align:center;display:inline-block;line-height:1.35rem;animation:nbPulse 1.6s infinite}
+.nb.hidden{display:none}
+@keyframes nbPulse{50%{box-shadow:0 0 0 5px rgba(214,69,69,.18)}}
+.live-pill{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:.3rem .9rem;font-weight:900;font-size:.9rem;color:var(--green);white-space:nowrap}
+.live-pill.on{border-color:#1E9E6A;color:#13774f}
+.alert-card{border:2px solid var(--red)!important;background:#fff7f7}
 .top h1{color:var(--green);font-size:1.4rem}
 .top button.logout{margin-inline-start:auto;background:var(--red);color:#fff;padding:.5rem 1.2rem;border-radius:10px;font-weight:800}
 .card{background:#fff;border-radius:16px;padding:1.2rem;margin-bottom:1rem;box-shadow:0 4px 14px rgba(0,0,0,.04)}
@@ -123,6 +129,7 @@ tr:hover td{background:#FAF7F0}
 <div class="wrap hidden" id="app">
   <div class="top">
     <h1>🌿 لوحة تحكم أليسوم</h1>
+    <span id="live-now" class="live-pill" title="المشاهدون الآن على الموقع (حقيقي)">⚪ المشاهدون الآن: …</span>
     <span id="pending-badge"></span>
     <button class="small blue" onclick="Admin.previewHome()">🏠 تعديل الصفحة الرئيسية</button>
     <button class="logout" onclick="Admin.logout()">خروج</button>
@@ -134,10 +141,10 @@ tr:hover td{background:#FAF7F0}
         <b>📋 دليل الاستخدام</b>
         <p>اختر قسماً من القائمة، ثم استعمل الأزرار داخل كل قسم لإضافة أو تعديل أو نشر التغييرات. زر «🏠 تعديل الصفحة الرئيسية» أعلى الصفحة يفتح محرراً مباشراً للموقع نفسه.</p>
       </div>
-      <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات</b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
+      <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('genpage',this)"><span class="nav-ic">✨</span><span class="nav-txt"><b>توليد صفحة منتج</b><small>أدخل الاسم والصورة والمكونات فتُنشأ صفحة المنتج تلقائياً</small></span></button>
+      <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
       <button class="nav-btn" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
@@ -146,7 +153,7 @@ tr:hover td{background:#FAF7F0}
       <button class="nav-btn" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي</b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي<span class="nb hidden" id="nb-agent"></span></b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
     </nav>
     <main class="admin-main">
@@ -178,6 +185,12 @@ tr:hover td{background:#FAF7F0}
 
   <div id="tab-analytics" class="hidden">
     <div class="stat" id="analytics-summary"></div>
+    <div class="card" id="analytics-visits-card">
+      <b style="color:var(--green)">👁️ الزيارات</b>
+      <div class="hint">زيارة واحدة لكل زائر في كل جلسة وصفحة. نسبة التحويل = الطلبات ÷ الزيارات لكل صفحة منتج.</div>
+      <div class="stat" id="analytics-visits" style="margin-top:.6rem"></div>
+      <div style="overflow:auto"><table id="analytics-pages"></table></div>
+    </div>
     <div class="grid2">
       <div class="card">
         <b style="color:var(--green)">🏆 الأكثر مبيعاً</b>
@@ -488,9 +501,61 @@ tr:hover td{background:#FAF7F0}
   </div>
 
   <div id="tab-agent" class="hidden">
+    <div class="card hidden" id="aq-card">
+      <b style="color:#b3261e">❓ أسئلة جديدة لم يعرف الوكيل الإجابة عنها <span id="aq-count"></span></b>
+      <div class="hint">سأل الزبائن هذه الأسئلة فلم يجد الوكيل جواباً. اضغط «أجب» لتجهيز سؤال وجواب في تدريب الصفحة المعنية ثم جرّب وانشر.</div>
+      <div id="aq-list"></div>
+    </div>
+    <div class="card hidden" id="aq-hint" style="background:#f7f5ef">
+      <small>ℹ️ تسجيل أسئلة الزبائن غير المفهومة غير مفعّل بعد: ألصق محتوى <code>apps-script/Code-additions.gs</code> في مشروع Apps Script (التعليمات في أعلى الملف) ثم أعد نشره.</small>
+    </div>
+    <div class="card" id="at-card">
+      <b style="color:var(--green)">🎓 تدريب الوكيل الذكي لكل صفحة</b>
+      <div class="hint">اختر الصفحة (الرئيسية أو أي منتج) فيصبح لها وكيلها الخاص. درّبه بالأسئلة والأجوبة وبمعلومات الصفحة، ثم جرّبه، ثم أكّد النشر.</div>
+      <div class="field" style="margin-top:.6rem"><label>الصفحة</label><select id="at-scope" onchange="AgentTrain.select(this.value)"></select></div>
+      <div id="at-body" class="hidden">
+        <div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin:.4rem 0 .8rem">
+          <label style="display:flex;align-items:center;gap:.4rem;font-weight:700;color:var(--green)"><input type="checkbox" id="at-enabled" style="width:auto;margin:0" onchange="AgentTrain.setField('enabled',this.checked)"> الوكيل المدرَّب مفعّل لهذه الصفحة</label>
+          <label style="display:flex;align-items:center;gap:.4rem;font-weight:700;color:var(--green)"><input type="checkbox" id="at-content" style="width:auto;margin:0" onchange="AgentTrain.setField('useContent',this.checked)"> استعمال معلومات الصفحة (نصوص الصفحة وسعرها وعروضها)</label>
+        </div>
+        <div class="frow">
+          <div class="field"><label>اسم الوكيل (اختياري)</label><input id="at-name" placeholder="مثال: مساعدة كريمة حب الشباب" oninput="AgentTrain.setField('name',this.value)"></div>
+          <div class="field"><label>كلمات مفتاحية للصفحة (اختياري)</label><input id="at-kw" placeholder="حب الشباب، بشرة دهنية، ..." oninput="AgentTrain.setField('keywords',this.value)"></div>
+        </div>
+        <div class="field"><label>رسالة الترحيب (اختياري — وإلا تُستعمل الافتراضية)</label><textarea id="at-greet" rows="2" oninput="AgentTrain.setField('greeting',this.value)"></textarea></div>
+
+        <div class="section-title">💬 مبادرة الوكيل (ترحيب تلقائي بعد مدة)</div>
+        <div class="hint" style="margin-top:0">لا يفتح الوكيل لوحة المحادثة وحده. إن لم يضغط الزبون على الطلب ولم يبدأ ملء النموذج خلال المدة المحددة، تظهر رسالة ترحيب صغيرة فوق أيقونة الوكيل؛ وعند الضغط عليها يبدأ نقاشاً لإقناعه بالشراء.</div>
+        <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;margin:.4rem 0">
+          <label style="display:flex;align-items:center;gap:.4rem;font-weight:700;color:var(--green)"><input type="checkbox" id="at-nudge-on" style="width:auto;margin:0" onchange="AgentTrain.setNudge('enabled',this.checked)"> إظهار رسالة الترحيب التلقائية</label>
+          <label style="display:flex;align-items:center;gap:.4rem">بعد <input id="at-nudge-delay" type="number" min="5" max="300" style="width:80px;margin:0" oninput="AgentTrain.setNudge('delaySec',Number(this.value)||25)"> ثانية</label>
+        </div>
+        <div class="field"><label>نص رسالة الترحيب (اختياري — وإلا تُستعمل رسالة افتراضية بإسم المنتج وعرضه)</label><textarea id="at-nudge-msg" rows="2" oninput="AgentTrain.setNudge('message',this.value)"></textarea></div>
+
+        <div class="section-title">الأسئلة المحتملة والأجوبة</div>
+        <div class="hint" style="margin-top:0">لكل سؤال: الجواب المحتمل وكلمات مفتاحية. الوكيل يتعلّم منها ويستنتج أيضاً أسئلة قريبة بصياغة مختلفة (تطبيع الكلمات والمرادفات وأخطاء الإملاء).</div>
+        <div id="at-qa"></div>
+        <div class="action-bar" style="margin-top:.6rem">
+          <button class="small" onclick="AgentTrain.addQA()">+ سؤال وجواب</button>
+          <button class="small blue" onclick="AgentTrain.suggest()">✨ اقتراح أسئلة من محتوى الصفحة</button>
+        </div>
+        <div id="at-suggest" class="hidden" style="margin-top:.6rem"></div>
+
+        <div class="section-title" style="margin-top:1.2rem">🧪 تجربة الوكيل</div>
+        <div class="hint" style="margin-top:0">تجربة على التعديلات الحالية قبل النشر. تظهر تحت كل جواب درجة الثقة ومصدره.</div>
+        <div id="at-chat" style="border:1px solid var(--line);border-radius:10px;background:#fff;max-height:280px;overflow:auto;padding:.6rem;margin-bottom:.5rem;font-size:.9rem"></div>
+        <div style="display:flex;gap:.5rem"><input id="at-q" placeholder="اكتب سؤال زبون للتجربة…" onkeydown="if(event.key==='Enter')AgentTrain.test()"><button class="small blue" onclick="AgentTrain.test()">➤ جرّب</button></div>
+
+        <div class="action-bar" style="margin-top:1rem">
+          <span id="at-dirty" class="hint" style="margin:0"></span>
+          <button class="small gray" onclick="AgentTrain.discard()">↩ تراجع عن التعديلات</button>
+          <button class="small gold" id="at-publish" onclick="AgentTrain.publish()">✅ تأكيد ونشر</button>
+        </div>
+      </div>
+    </div>
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
       <div>
-        <b style="color:var(--green)">أسئلة وأجوبة مخصّصة للوكيل الذكي</b>
+        <b style="color:var(--green)">أسئلة وأجوبة عامة (لكل الصفحات)</b>
         <div class="hint">أضف كلمات مفتاحية وإجابة جاهزة — إذا وردت إحدى الكلمات في رسالة الزبون يرد الوكيل بالإجابة المحدَّدة مباشرة قبل أي رد آخر</div>
       </div>
       <div style="display:flex;gap:.6rem">
@@ -545,13 +610,6 @@ tr:hover td{background:#FAF7F0}
           <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchCoverFromUrl()">📥 تحميل ورفع</button>
         </div>
         <input id="f-images" type="hidden">
-        <div class="section-title">🧩 صفحة المنتج</div>
-        <div id="f-pagemode" class="hint" style="margin-top:0"></div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
-          <button class="small gray" type="button" onclick="GenPage.switchMode(Admin.editingSlug,'default')">🏠 استعمال الصفحة الافتراضية</button>
-          <button class="small blue" type="button" onclick="GenPage.switchMode(Admin.editingSlug,'generated')">✨ استعمال الصفحة المولّدة</button>
-          <button class="small gold" type="button" onclick="GenPage.open(Admin.editingSlug)">⚙️ توليد / إعادة توليد صفحة</button>
-        </div>
         <div class="section-title">العروض والأسعار</div>
         <div id="f-offers"></div>
         <button class="small blue" type="button" onclick="Admin.addOfferRow()">+ إضافة عرض</button>
@@ -841,6 +899,7 @@ tr:hover td{background:#FAF7F0}
 <script src="assets/js/data.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
+<script src="assets/js/agent-brain.js"></script>
 <script>
 const $f = id => document.getElementById(id);
 
@@ -1244,6 +1303,154 @@ const GenPage = {
   },
 };
 
+/* ════════ تدريب الوكيل الذكي لكل صفحة (الصفحة الرئيسية + كل منتج) ════════ */
+const AgentTrain = {
+  FILE: "assets/data/agent-training.json",
+  saved: { version:1, scopes:{} }, draft: null, sha: undefined, key: "home", tested: false, chunksCache: {},
+  esc(t){ return String(t==null?"":t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); },
+  clone(o){ return JSON.parse(JSON.stringify(o)); },
+  async load(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ this.saved = {version:1,scopes:{}}; this.sha = undefined; return }
+    try{
+      const f = await GH.getFile(this.FILE);
+      this.sha = f.sha;
+      this.saved = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
+      if(!this.saved.scopes) this.saved.scopes = {};
+    }catch(e){ this.saved = {version:1,scopes:{}}; this.sha = undefined; }
+  },
+  async init(){
+    if(!this.draft){ await this.load(); this.draft = this.clone(this.saved); }
+    const cur = $f("at-scope").value || this.key;
+    const opts = [["home","🏠 الصفحة الرئيسية"]].concat((Admin.products||[]).map(p=>[p.slug, "🛍️ " + p.title + " (" + p.slug + ")"]));
+    $f("at-scope").innerHTML = opts.map(([k,l])=>{
+      const n = ((this.draft.scopes[k]||{}).qa||[]).length;
+      return '<option value="'+this.esc(k)+'">'+this.esc(l)+(n?' — '+n+' سؤال':'')+'</option>';
+    }).join("");
+    $f("at-scope").value = opts.some(o=>o[0]===cur) ? cur : "home";
+    this.select($f("at-scope").value);
+  },
+  scope(){ const s = this.draft.scopes; if(!s[this.key]) s[this.key] = {enabled:true, useContent:true, name:"", greeting:"", keywords:"", qa:[]}; return s[this.key]; },
+  select(key){
+    this.key = key; this.tested = false; $f("at-chat").innerHTML = ""; $f("at-suggest").classList.add("hidden");
+    const c = this.scope();
+    $f("at-body").classList.remove("hidden");
+    $f("at-enabled").checked = c.enabled !== false; $f("at-content").checked = !!c.useContent;
+    $f("at-name").value = c.name || ""; $f("at-kw").value = c.keywords || ""; $f("at-greet").value = c.greeting || "";
+    const n = c.nudge || {};
+    $f("at-nudge-on").checked = n.enabled !== undefined ? !!n.enabled : key !== "home";
+    $f("at-nudge-delay").value = n.delaySec || 25; $f("at-nudge-msg").value = n.message || "";
+    this.renderQA(); this.renderDirty();
+  },
+  setNudge(f, v){ const c = this.scope(); c.nudge = c.nudge || {}; c.nudge[f] = v; if(f !== "enabled" && c.nudge.enabled === undefined) c.nudge.enabled = this.key !== "home"; this.touch(); },
+  dirty(){ return JSON.stringify(this.draft) !== JSON.stringify(this.saved); },
+  renderDirty(){ $f("at-dirty").textContent = this.dirty() ? "⚠️ توجد تعديلات غير منشورة" : "لا توجد تعديلات غير منشورة"; },
+  touch(){ this.tested = false; this.renderDirty(); },
+  setField(f, v){ this.scope()[f] = v; this.touch(); },
+  renderQA(){
+    const qa = this.scope().qa;
+    $f("at-qa").innerHTML = qa.length ? qa.map((x,i)=>
+      '<div style="border:1px solid var(--line);border-radius:10px;padding:.6rem;margin-bottom:.5rem;background:#fcfaf6">' +
+        '<input placeholder="السؤال المحتمل" value="'+this.esc(x.q)+'" oninput="AgentTrain.qa('+i+',\'q\',this.value)">' +
+        '<textarea rows="2" placeholder="الجواب المحتمل (عربي)" oninput="AgentTrain.qa('+i+',\'a_ar\',this.value)">'+this.esc(x.a_ar)+'</textarea>' +
+        '<textarea rows="2" placeholder="الجواب بالفرنسية (اختياري)" oninput="AgentTrain.qa('+i+',\'a_fr\',this.value)">'+this.esc(x.a_fr||"")+'</textarea>' +
+        '<input placeholder="كلمات مفتاحية (افصل بفاصلة)" value="'+this.esc(x.keywords||"")+'" oninput="AgentTrain.qa('+i+',\'keywords\',this.value)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center"><label style="font-size:.85rem;display:flex;gap:.4rem;align-items:center"><input type="checkbox" style="width:auto;margin:0" '+(x.active!==false?"checked":"")+' onchange="AgentTrain.qa('+i+',\'active\',this.checked)"> مفعّل</label>' +
+        '<button class="small warn" onclick="AgentTrain.delQA('+i+')">🗑️ حذف</button></div></div>'
+    ).join("") : '<div class="hint">لا توجد أسئلة مدرَّبة لهذه الصفحة بعد.</div>';
+  },
+  qa(i, f, v){ this.scope().qa[i][f] = v; this.touch(); },
+  addQA(q, a, kw){ this.scope().qa.push({id:"q_"+Date.now()+"_"+Math.floor(Math.random()*1000), q:q||"", a_ar:a||"", a_fr:"", keywords:kw||"", active:true}); this.renderQA(); this.touch(); },
+  delQA(i){ if(!confirm("حذف هذا السؤال؟")) return; this.scope().qa.splice(i,1); this.renderQA(); this.touch(); },
+  pageUrl(){ return this.key === "home" ? "index.html" : "p/" + this.key + "/index.html"; },
+  async pageDoc(){
+    const r = await fetch(this.pageUrl() + "?t=" + Date.now());
+    if(!r.ok) throw new Error("تعذّر تحميل الصفحة " + this.pageUrl());
+    return new DOMParser().parseFromString(await r.text(), "text/html");
+  },
+  async chunks(){
+    if(!this.chunksCache[this.key]) this.chunksCache[this.key] = AgentBrain.chunksFromDoc(await this.pageDoc());
+    return this.chunksCache[this.key];
+  },
+  product(){ return (Admin.products||[]).find(p=>p.slug===this.key) || null; },
+  async suggest(){
+    const box = $f("at-suggest");
+    try{
+      box.classList.remove("hidden"); box.innerHTML = '<div class="hint">⏳ جارِ قراءة الصفحة...</div>';
+      delete this.chunksCache[this.key];
+      const p = this.product();
+      const list = AgentBrain.suggestFromChunks(await this.chunks(), p ? p.title : "");
+      const have = new Set(this.scope().qa.map(x=>AgentBrain.norm(x.q)));
+      this._sug = list.filter(x=>x.q && !have.has(AgentBrain.norm(x.q)));
+      if(!this._sug.length){ box.innerHTML = '<div class="hint">لا توجد اقتراحات جديدة من هذه الصفحة.</div>'; return }
+      box.innerHTML = '<div class="hint" style="margin-top:0"><b>اقتراحات من محتوى الصفحة</b> — اختر ما يناسبك ثم عدّله:</div>' +
+        this._sug.map((x,i)=>'<label style="display:flex;gap:.5rem;align-items:flex-start;padding:.4rem 0;border-bottom:1px dashed var(--line)"><input type="checkbox" style="width:auto;margin-top:.3rem" checked data-i="'+i+'"><span><b>'+this.esc(x.q)+'</b><br><small>'+this.esc(x.a_ar.slice(0,140))+'…</small></span></label>').join("") +
+        '<div class="action-bar"><button class="small gold" onclick="AgentTrain.addSuggested()">+ إضافة المحدّد</button></div>';
+    }catch(err){ box.innerHTML = '<div class="hint" style="color:#b33">❌ ' + this.esc(err.message) + '</div>'; }
+  },
+  addSuggested(){
+    const box = $f("at-suggest");
+    box.querySelectorAll("input[type=checkbox]:checked").forEach(c=>{ const x = this._sug[+c.dataset.i]; if(x) this.addQA(x.q, x.a_ar, x.keywords); });
+    box.classList.add("hidden"); toast("✅ أُضيفت الأسئلة المقترحة — عدّلها ثم جرّب الوكيل");
+  },
+  bubble(html, me){
+    const d = document.createElement("div");
+    d.style.cssText = "margin:.3rem 0;padding:.45rem .7rem;border-radius:10px;max-width:92%;line-height:1.6;" + (me ? "background:#e9f3ee;margin-inline-start:auto;width:fit-content" : "background:#f4efe4;width:fit-content");
+    d.innerHTML = html; $f("at-chat").appendChild(d); $f("at-chat").scrollTop = 1e9;
+  },
+  async test(){
+    const q = $f("at-q").value.trim(); if(!q) return;
+    $f("at-q").value = ""; this.bubble(this.esc(q), true);
+    const c = this.scope();
+    if(c.enabled === false){ this.bubble("⏸ الوكيل المدرَّب غير مفعّل لهذه الصفحة — سيستعمل الوكيل ردوده الافتراضية."); return }
+    try{
+      const chunks = c.useContent ? await this.chunks() : [];
+      const p = this.product();
+      const facts = c.useContent ? AgentBrain.factsFromProduct(p, n=>Number(n).toLocaleString("fr-DZ")+" دج") : [];
+      const r = AgentBrain.answer(q, c, chunks, facts, /[a-z]/i.test(q) && !/[؀-ۿ]/.test(q) ? "fr" : "ar");
+      this.tested = true;
+      if(!r){ this.bubble('⚠️ لا جواب مدرَّب لهذا السؤال.<br><small>سيستعمل الوكيل ردوده الافتراضية (السعر، التوصيل، المنتج…). أضف سؤالاً وجواباً لتغطيته.</small>'); return }
+      this.bubble(this.esc(r.text) + '<br><small style="color:#6b7672">الثقة ' + Math.round(r.conf*100) + '% · المصدر: ' + (r.kind==="qa" ? "سؤال مدرَّب — " : "معلومات الصفحة — ") + this.esc(r.source||"") + '</small>');
+    }catch(err){ this.bubble('❌ ' + this.esc(err.message)); }
+  },
+  pendingResolve: new Set(),
+  async answerQuestion(id){
+    const x = (Admin.alerts.questions||[]).find(q=>q.id===id); if(!x) return;
+    if(!this.draft) await this.init();
+    const pg = (x.pages && x.pages[0]) || "home";
+    await this.init(); $f("at-scope").value = pg; this.select(pg);
+    this.addQA(x.q, "", "");
+    this.pendingResolve.add(id);
+    const rows = $f("at-qa").children; const last = rows[rows.length-1];
+    if(last){ last.scrollIntoView({behavior:"smooth", block:"center"}); const ta = last.querySelector("textarea"); if(ta) ta.focus(); }
+    toast("✍️ اكتب الجواب ثم جرّب الوكيل ثم «✅ تأكيد ونشر»");
+  },
+  ignoreQuestion(id){
+    if(!confirm("تجاهل هذا السؤال (لن يظهر مجدداً)؟")) return;
+    API.resolveQuestion(Admin.key, id);
+    Admin.alerts.questions = (Admin.alerts.questions||[]).filter(q=>q.id!==id); Admin.renderQuestions();
+  },
+  discard(){ if(this.dirty() && !confirm("تجاهل كل التعديلات غير المنشورة؟")) return; this.draft = this.clone(this.saved); this.select(this.key); this.init(); },
+  async publish(){
+    const cfg = GH.cfg();
+    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    if(!this.dirty()){ toast("لا توجد تعديلات للنشر"); return }
+    if(!this.tested && !confirm("لم تجرّب الوكيل بعد تعديلاتك الأخيرة. نشر بدون تجربة؟")) return;
+    const bad = Object.keys(this.draft.scopes).filter(k=>(this.draft.scopes[k].qa||[]).some(x=>x.active!==false && (!String(x.q||"").trim() || !String(x.a_ar||"").trim() && !String(x.a_fr||"").trim())));
+    if(bad.length){ toast("⚠️ بعض الأسئلة ناقصة (سؤال أو جواب فارغ) في: " + bad.join("، ")); return }
+    try{
+      toast("⏳ جارِ النشر على GitHub...");
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.draft, null, 2))));
+      const res = await GH.putFile(this.FILE, b64, this.sha, "تدريب الوكيل الذكي عبر لوحة التحكم");
+      this.sha = res && res.content ? res.content.sha : this.sha;
+      this.saved = this.clone(this.draft); this.renderDirty(); this.init();
+      this.pendingResolve.forEach(id=>API.resolveQuestion(Admin.key, id));
+      Admin.alerts.questions = (Admin.alerts.questions||[]).filter(q=>!this.pendingResolve.has(q.id)); this.pendingResolve.clear(); Admin.renderQuestions();
+      toast("✅ نُشر تدريب الوكيل — يبدأ العمل على الموقع خلال دقيقة تقريباً");
+    }catch(err){ console.error(err); toast("❌ " + err.message); }
+  },
+};
+
 const Admin = {
   key: localStorage.getItem("alyssum_admin_key") || "",
   products: [], fees: [], feesOriginal: [], orders: [], categories: {},
@@ -1264,6 +1471,75 @@ const Admin = {
     this.load();
   },
   logout(){ localStorage.removeItem("alyssum_admin_key"); location.reload() },
+  /* ════════ تنبيهات حمراء + المشاهدون الآن + أسئلة الوكيل (تحديث تلقائي) ════════ */
+  alerts: { orders: -1, questions: [], timer: null, liveTimer: null },
+  startAlerts(){
+    if(this.alerts.timer) return;
+    this.refreshAlerts(); this.refreshLive();
+    this.alerts.timer = setInterval(()=>this.refreshAlerts(), 60000);
+    this.alerts.liveTimer = setInterval(()=>this.refreshLive(), 30000);
+  },
+  beep(){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = .06; o.start(); setTimeout(()=>{ o.stop(); a.close(); }, 220); }catch(e){} },
+  setBadge(id, n){ const el = $f(id); if(!el) return; el.textContent = n > 99 ? "99+" : n; el.classList.toggle("hidden", !(n > 0)); },
+  async refreshLive(){
+    const el = $f("live-now"); if(!el || !CONFIG.API_URL) return;
+    const r = await API.presence(this.key);
+    if(r && r.ok){ el.textContent = "🟢 " + r.now + " يشاهدون الآن"; el.classList.add("on"); this.liveNow = r; }
+    else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = "ألصق apps-script/Code-additions.gs في Apps Script لتفعيل العدّاد الحقيقي"; }
+  },
+  async refreshAlerts(){
+    if(!this.key || !CONFIG.API_URL) return;
+    const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
+    if(o && o.ok){
+      const changed = o.orders.length !== this.orders.length;
+      this.orders = o.orders;
+      if(changed){ this.renderStats(); this.renderOrders(); }
+    }
+    const fresh = this.orders.filter(x=>x.status === "nouvelle").length;
+    if(this.alerts.orders >= 0 && fresh > this.alerts.orders){ this.beep(); toast("🔔 طلب جديد!"); }
+    this.alerts.orders = fresh;
+    this.setBadge("nb-orders", fresh);
+    document.title = (fresh ? "(" + fresh + ") " : "") + "لوحة تحكم أليسوم";
+    const ok = !!(q && q.ok);
+    this.alerts.questions = ok ? q.questions : [];
+    $f("aq-hint").classList.toggle("hidden", ok);
+    this.renderQuestions();
+  },
+  renderQuestions(){
+    const list = this.alerts.questions || [];
+    this.setBadge("nb-agent", list.length);
+    $f("aq-card").classList.toggle("hidden", !list.length);
+    $f("aq-card").classList.toggle("alert-card", !!list.length);
+    $f("aq-count").textContent = list.length ? "(" + list.length + ")" : "";
+    const label = pg => pg === "home" ? "الرئيسية" : ((this.products.find(p=>p.slug===pg)||{}).title || pg);
+    $f("aq-list").innerHTML = list.map(x=>
+      '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;border-bottom:1px dashed var(--line);padding:.55rem 0">' +
+        '<div style="flex:1;min-width:200px"><b>' + AgentTrain.esc(x.q) + '</b><br><small style="color:#6b7672">× ' + x.count + ' · ' + (x.pages||[]).map(label).map(AgentTrain.esc).join("، ") + '</small></div>' +
+        '<button class="small gold" onclick="AgentTrain.answerQuestion(\'' + x.id + '\')">✍️ أجب</button>' +
+        '<button class="small gray" onclick="AgentTrain.ignoreQuestion(\'' + x.id + '\')">🗑️ تجاهل</button></div>'
+    ).join("");
+  },
+  async renderVisits(){
+    const box = $f("analytics-visits"), tbl = $f("analytics-pages");
+    box.innerHTML = '<div><b>…</b><span>جارِ التحميل</span></div>'; tbl.innerHTML = "";
+    const r = await API.analytics(this.key);
+    if(!r || !r.ok){ box.innerHTML = '<div style="flex:1;font-size:.85rem;color:#6b7672;padding:.5rem">لم تُفعَّل إحصاءات الزيارات بعد: ألصق <code>apps-script/Code-additions.gs</code> في Apps Script وأعد نشره (التعليمات في أعلى الملف).</div>'; return }
+    const live = (this.liveNow && this.liveNow.ok) ? this.liveNow : { now: 0, byPage: {} };
+    box.innerHTML = '<div><b>' + r.total.toLocaleString("fr-DZ") + '</b><span>إجمالي الزيارات</span></div>' +
+      '<div><b>' + r.today.toLocaleString("fr-DZ") + '</b><span>زيارات اليوم</span></div>' +
+      '<div><b>' + (r.unique||0).toLocaleString("fr-DZ") + '</b><span>زوار جدد</span></div>' +
+      '<div><b>' + live.now + '</b><span>يشاهدون الآن</span></div>';
+    const ordersByTitle = {};
+    this.orders.filter(o=>o.status!=="annulee").forEach(o=>{ new Set(this.parseOrderItems(o.items).map(i=>i.title)).forEach(t=>{ ordersByTitle[t] = (ordersByTitle[t]||0) + 1; }); });
+    const rows = Object.keys(r.pages).map(pg=>{
+      const p = this.products.find(x=>x.slug===pg), name = pg === "home" ? "🏠 الصفحة الرئيسية" : (p ? p.title : pg);
+      const ords = p ? (ordersByTitle[p.title]||0) : 0, v = r.pages[pg];
+      return { name, v, today: (r.todayPages||{})[pg]||0, now: live.byPage[pg]||0, ords, conv: p && v ? (ords/v*100) : null };
+    }).sort((a,b)=>b.v-a.v);
+    tbl.innerHTML = '<tr><th>الصفحة</th><th>الزيارات</th><th>اليوم</th><th>الآن</th><th>الطلبات</th><th>التحويل</th></tr>' +
+      rows.map(x=>'<tr><td>' + AgentTrain.esc(x.name) + '</td><td>' + x.v + '</td><td>' + x.today + '</td><td>' + x.now + '</td><td>' + (x.conv===null?"—":x.ords) + '</td><td>' + (x.conv===null?"—":x.conv.toFixed(1)+"%") + '</td></tr>').join("");
+  },
+
   reload(){ this.load() },
 
   async load(){
@@ -1286,6 +1562,7 @@ const Admin = {
     $f("app").classList.remove("hidden");
     this.loadDeliveryCfg();
     this.loadBlacklist();
+    this.startAlerts();
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadCheckoutSettings()]);
     this.renderAll();
     toast("✓ تم التحميل");
@@ -1307,7 +1584,8 @@ const Admin = {
     });
     if(t==="pending") this.renderPending();
     if(t==="genpage") GenPage.init();
-    if(t==="analytics") this.renderAnalytics();
+    if(t==="agent") AgentTrain.init();
+    if(t==="analytics"){ this.renderAnalytics(); this.renderVisits(); }
   },
 
   renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderTheme(); this.renderCheckoutSettings(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
@@ -1655,7 +1933,6 @@ const Admin = {
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
-    this.renderPageMode(slug);
     this.renderImagesPreview();
     this.renderCoverPreview();
     $f("prod-modal-bg").classList.add("open");

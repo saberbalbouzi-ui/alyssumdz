@@ -326,3 +326,20 @@ section[id]{scroll-margin-top:84px}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
 .reveal.show{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+/* مبادرة الوكيل: رسالة ترحيب صغيرة فوق الأيقونة (لا تغطي الصفحة) + أزرار سريعة */
+.agent-teaser{position:fixed;bottom:96px;left:22px;z-index:71;width:min(310px,calc(100vw - 44px));background:#fff;border:1px solid var(--gold-2);border-radius:18px 18px 18px 4px;box-shadow:var(--shadow-lg);padding:.9rem 1rem .8rem;animation:agentTeaserIn .4s ease;font-size:.92rem;line-height:1.65;cursor:pointer}
+.agent-teaser .tx{position:absolute;top:4px;right:8px;background:none;border:0;color:var(--muted);font-size:1rem;cursor:pointer;padding:2px 6px}
+.agent-teaser .tt{padding-top:.2rem}
+@keyframes agentTeaserIn{from{opacity:0;transform:translateY(10px)}}
+.agent-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem}
+.agent-chips .chip{background:#F4EFE4;border:1px solid var(--gold-2);color:var(--green);border-radius:999px;padding:.35rem .8rem;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer}
+.agent-chips .chip:hover{background:#fff}
+.agent-chips .chip.gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.msg.cta{background:transparent;border:0;padding:0}
+
+/* عدّاد «يشاهدون الآن» البارز في صفحة المنتج */
+.tag.live-badge{background:linear-gradient(135deg,#fff3f0,#ffe9e4);border:1.5px solid #f3b3a8;color:#b3261e;font-weight:800;font-size:1.02rem;padding:.5rem 1rem;border-radius:999px;display:inline-flex;align-items:center;gap:.5rem;box-shadow:0 6px 18px rgba(179,38,30,.12)}
+.tag.live-badge b{font-size:1.25rem;font-weight:900;color:#b3261e;min-width:1.4ch;text-align:center}
+.live-dot{width:11px;height:11px;border-radius:50%;background:#e03b2f;display:inline-block;box-shadow:0 0 0 0 rgba(224,59,47,.6);animation:liveDot 1.4s infinite}
+@keyframes liveDot{70%{box-shadow:0 0 0 9px rgba(224,59,47,0)}100%{box-shadow:0 0 0 0 rgba(224,59,47,0)}}
