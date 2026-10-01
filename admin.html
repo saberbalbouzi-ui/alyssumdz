@@ -503,6 +503,14 @@ tr:hover td{background:#FAF7F0}
         </div>
         <div class="field"><label>رسالة الترحيب (اختياري — وإلا تُستعمل الافتراضية)</label><textarea id="at-greet" rows="2" oninput="AgentTrain.setField('greeting',this.value)"></textarea></div>
 
+        <div class="section-title">💬 مبادرة الوكيل (ترحيب تلقائي بعد مدة)</div>
+        <div class="hint" style="margin-top:0">لا يفتح الوكيل لوحة المحادثة وحده. إن لم يضغط الزبون على الطلب ولم يبدأ ملء النموذج خلال المدة المحددة، تظهر رسالة ترحيب صغيرة فوق أيقونة الوكيل؛ وعند الضغط عليها يبدأ نقاشاً لإقناعه بالشراء.</div>
+        <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;margin:.4rem 0">
+          <label style="display:flex;align-items:center;gap:.4rem;font-weight:700;color:var(--green)"><input type="checkbox" id="at-nudge-on" style="width:auto;margin:0" onchange="AgentTrain.setNudge('enabled',this.checked)"> إظهار رسالة الترحيب التلقائية</label>
+          <label style="display:flex;align-items:center;gap:.4rem">بعد <input id="at-nudge-delay" type="number" min="5" max="300" style="width:80px;margin:0" oninput="AgentTrain.setNudge('delaySec',Number(this.value)||25)"> ثانية</label>
+        </div>
+        <div class="field"><label>نص رسالة الترحيب (اختياري — وإلا تُستعمل رسالة افتراضية بإسم المنتج وعرضه)</label><textarea id="at-nudge-msg" rows="2" oninput="AgentTrain.setNudge('message',this.value)"></textarea></div>
+
         <div class="section-title">الأسئلة المحتملة والأجوبة</div>
         <div class="hint" style="margin-top:0">لكل سؤال: الجواب المحتمل وكلمات مفتاحية. الوكيل يتعلّم منها ويستنتج أيضاً أسئلة قريبة بصياغة مختلفة (تطبيع الكلمات والمرادفات وأخطاء الإملاء).</div>
         <div id="at-qa"></div>
@@ -1308,8 +1316,12 @@ const AgentTrain = {
     $f("at-body").classList.remove("hidden");
     $f("at-enabled").checked = c.enabled !== false; $f("at-content").checked = !!c.useContent;
     $f("at-name").value = c.name || ""; $f("at-kw").value = c.keywords || ""; $f("at-greet").value = c.greeting || "";
+    const n = c.nudge || {};
+    $f("at-nudge-on").checked = n.enabled !== undefined ? !!n.enabled : key !== "home";
+    $f("at-nudge-delay").value = n.delaySec || 25; $f("at-nudge-msg").value = n.message || "";
     this.renderQA(); this.renderDirty();
   },
+  setNudge(f, v){ const c = this.scope(); c.nudge = c.nudge || {}; c.nudge[f] = v; if(f !== "enabled" && c.nudge.enabled === undefined) c.nudge.enabled = this.key !== "home"; this.touch(); },
   dirty(){ return JSON.stringify(this.draft) !== JSON.stringify(this.saved); },
   renderDirty(){ $f("at-dirty").textContent = this.dirty() ? "⚠️ توجد تعديلات غير منشورة" : "لا توجد تعديلات غير منشورة"; },
   touch(){ this.tested = false; this.renderDirty(); },

@@ -411,6 +411,7 @@ const Agent = (() => {
     const t = text.trim();
     if (!t) return;
     lang = detectLang(t) || lang;
+    userTalked = true;
     const u = document.createElement("div");
     u.className = "msg user"; u.textContent = t;
     body().appendChild(u); body().scrollTop = body().scrollHeight;
@@ -426,11 +427,11 @@ const Agent = (() => {
             body: JSON.stringify({ message: t, lang, product: currentProduct(), products: (window.PRODUCTS || []).slice(0, 30) }),
           });
           const j = await r.json();
-          botSay(j.reply || fallback(t));
+          botSay(j.reply || fallback(t)); addCta();
         } catch (e) { botSay(fallback(t)); }
       }, 900);
     } else {
-      typing(() => botSay(fallback(t)), 700);
+      typing(() => { botSay(fallback(t)); addCta(); }, 700);
     }
   }
 
@@ -499,14 +500,83 @@ const Agent = (() => {
     return `${tr.bestSellersIntro()}<br>` + feat.map(p => productCard(p, l)).join("<br>") + `<br>${tr.askNeed()}`;
   }
 
-  function open() {
+  /* ── مبادرة الوكيل: لا يفتح اللوحة وحده (كان يغطي الصفحة)، لكن بعد مدة — إن لم يضغط الزبون على
+     الطلب ولم يبدأ ملء النموذج — تظهر رسالة ترحيب صغيرة فوق الأيقونة؛ إن ضغط عليها يبدأ نقاش إقناع بالشراء ── */
+  let engaged = false, followTimer = null, userTalked = false;
+  const nudgeCfg = () => {
+    const c = scopeCfg(), n = (c && c.nudge) || {};
+    const on = n.enabled !== undefined ? !!n.enabled : !!currentSlug;      // افتراضياً: مفعّلة في صفحات المنتجات فقط
+    return { on: on && !(c && c.enabled === false && n.enabled === undefined), delay: Math.max(5, Number(n.delaySec) || 25), message: (n.message || "").trim() };
+  };
+  const defaultNudgeText = p => {
+    const multi = p && (p.offers || []).find(o => o.qty > 1);
+    const offer = multi ? `<br>🎁 عرض خاص: ${multi.qty} قطع بـ <b>${fmt(multi.price)}</b>${multi.free ? " (منها قطعة مجانية)" : ""}.` : "";
+    return p
+      ? `👋 مرحباً بك! أنا مساعدك الشخصي. لاحظت اهتمامك بـ «<b>${p.title}</b>» — هل تود أن أجيبك عن أي سؤال قبل الطلب؟<br>💵 الدفع عند الاستلام · 🚚 توصيل لـ 58 ولاية${offer}`
+      : `👋 مرحباً بك في <b>${SITE_NAME}</b>! هل أساعدك في اختيار المنتج المناسب؟`;
+  };
+  const chipsHtml = list => `<div class="agent-chips">${list.map(q => `<button type="button" class="chip" data-q="${q}">${q}</button>`).join("")}</div>`;
+  function bindChips(root) {
+    root.querySelectorAll(".chip[data-q]").forEach(b => b.onclick = () => { b.parentNode.remove(); reply(b.dataset.q); });
+    root.querySelectorAll(".chip[data-order]").forEach(b => b.onclick = () => goOrder());
+  }
+  function goOrder() {
+    close();
+    const f = document.getElementById("order-form");
+    if (f) { f.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => document.getElementById("name")?.focus({ preventScroll: true }), 600); }
+  }
+  function addCta() {                                 // زر «اطلب الآن» بعد الردود في صفحات المنتجات
+    if (!currentSlug || !document.getElementById("order-form")) return;
+    const d = document.createElement("div"); d.className = "msg bot cta";
+    d.innerHTML = `<div class="agent-chips"><button type="button" class="chip gold" data-order="1">🛒 اطلب الآن — الدفع عند الاستلام</button></div>`;
+    body().appendChild(d); bindChips(d); body().scrollTop = body().scrollHeight;
+  }
+  function hideTeaser() { const t = document.getElementById("agent-teaser"); if (t) t.remove(); }
+  function showTeaser() {
+    if (engaged || document.getElementById("agent-teaser") || panel().classList.contains("open")) return;
+    try { if (sessionStorage.getItem("alyssum_nudged_" + scopeKey())) return; sessionStorage.setItem("alyssum_nudged_" + scopeKey(), "1"); } catch (e) {}
+    const n = nudgeCfg();
+    const t = document.createElement("div");
+    t.className = "agent-teaser"; t.id = "agent-teaser";
+    t.innerHTML = `<button type="button" class="tx" aria-label="إغلاق">✕</button><div class="tt">${n.message || defaultNudgeText(currentProduct())}</div>
+      <div class="agent-chips"><button type="button" class="chip gold" id="agent-teaser-go">💬 نعم، لدي سؤال</button></div>`;
+    document.body.appendChild(t);
+    t.querySelector(".tx").onclick = hideTeaser;
+    t.querySelector("#agent-teaser-go").onclick = () => { hideTeaser(); open({ persuade: true }); };
+    t.querySelector(".tt").onclick = () => { hideTeaser(); open({ persuade: true }); };
+  }
+  async function startNudge() {
+    await ensureTraining();
+    const n = nudgeCfg();
+    if (!n.on) return;
+    const mark = () => { engaged = true; hideTeaser(); };
+    document.addEventListener("click", e => { if (e.target.closest && e.target.closest(".btn-order, #add-cart, .btn-wa, a[href='#order-form'], .sticky-cta a, #order-form button")) mark(); }, true);
+    document.addEventListener("focusin", e => { if (e.target.closest && e.target.closest("#order-form")) mark(); });
+    document.addEventListener("submit", mark, true);
+    setTimeout(showTeaser, n.delay * 1000);
+  }
+
+  function open(opts) {
+    hideTeaser();
     panel().classList.add("open");
     document.getElementById("agent-fab").style.display = "none";
     if (!greeted) {
       greeted = true;
       ensureTraining().then(() => {
-        const c = scopeCfg();
-        typing(() => botSay((c && c.enabled !== false && c.greeting) ? c.greeting : T[lang].greet(currentProduct())), 600);
+        const c = scopeCfg(), p = currentProduct();
+        typing(() => botSay((c && c.enabled !== false && c.greeting) ? c.greeting : T[lang].greet(p)), 600);
+        if (p && opts && opts.persuade) {            // نقاش الإقناع: عرض المنتج بسعره وعرضه + أسئلة سريعة تفتح الحوار
+          setTimeout(() => typing(() => {
+            botSay(productPitch(p, lang) + chipsHtml(["هل هو أصلي وآمن؟", "هل الدفع عند الاستلام؟", "كم مدة التوصيل؟", "السعر غالي قليلاً"]));
+            bindChips(body());
+          }, 900), 900);
+          // متابعة واحدة إن سكت الزبون: دفعة لطيفة نحو الطلب
+          followTimer = setTimeout(() => {
+            if (userTalked || !panel().classList.contains("open")) return;
+            botSay(`هل بقي لديك أي تردد؟ 🤝 أجيبك عنه بكل صراحة. وتذكّر أنك لا تدفع إلا عند استلام «${p.title}» والتأكد منه.`);
+            addCta();
+          }, 30000);
+        }
       });
     }
     setTimeout(()=>document.getElementById("agent-input")?.focus(), 300);
@@ -545,7 +615,8 @@ const Agent = (() => {
     document.getElementById("agent-send").onclick = send;
     document.getElementById("agent-input").addEventListener("keydown", e => { if (e.key === "Enter") send(); });
 
-    // لا فتح تلقائي: المساعد يبقى أيقونة صغيرة (مع تلميح "المساعد الذكي" عند المرور عليها)
+    startNudge();
+    // لا فتح تلقائي للوحة: المساعد يبقى أيقونة صغيرة (مع تلميح "المساعد الذكي" عند المرور عليها)
     // ولا يُفتح إلا عند الضغط عليها من المستخدم — كان يفتح تلقائياً بعد 12 ثانية ويغطي الصفحة
   }
 
