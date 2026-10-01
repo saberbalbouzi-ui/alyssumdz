@@ -77,6 +77,17 @@ const API = {
     if (b !== "sheets") this.sb.publicRpc("submit_order", { p: ct ? Object.assign({}, order, { ctoken: ct }) : order });
   },
 
+  /* تتبّع عام برقم التتبع: {found, status, date, wilaya, commune, dtype} | null إن لم تتوفر خلفية */
+  async track(tracking) {
+    let r;
+    if (this.php.on()) r = await fetch(this.php.url("track"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ tracking }), credentials: "same-origin" });
+    else if (this.sb.enabled() && this.ordersBackend() !== "sheets") r = await fetch(this.sb.url("/rest/v1/rpc/track_order"), { method: "POST", headers: this.sb.headers(), body: JSON.stringify({ p: { tracking } }) });
+    else return null;
+    const j = await r.json().catch(() => null);
+    if (!r.ok) throw new Error((j && (j.error || j.message)) || ("http_" + r.status));
+    return j;
+  },
+
   /* ── حساب الزبون («حسابي»): تسجيل برقم الهاتف + كلمة سر. الخلفية: php (SQLite) | sb (Supabase RPC) | local (على الجهاز فقط) ── */
   cust: {
     mode() { return API.php.on() ? "php" : ((API.sb.enabled() && API.ordersBackend() !== "sheets") ? "sb" : "local"); },

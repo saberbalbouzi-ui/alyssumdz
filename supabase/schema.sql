@@ -332,17 +332,40 @@ language sql security definer set search_path = public, extensions as $$
   delete from public.customer_sessions where token_hash = encode(extensions.digest(coalesce(p ->> 'token', ''), 'sha256'), 'hex')
 $$;
 
--- ربط طلب سابق (قبل التسجيل) بالحساب: يلزم رقم الطلب + نفس رقم هاتف الحساب
+-- ربط طلب سابق (قبل التسجيل) بالحساب: رقم الطلب أو رقم التتبع + نفس رقم هاتف الحساب
 create or replace function public.customer_link_order(p jsonb) returns boolean
 language plpgsql security definer set search_path = public as $$
-declare cid uuid := public._cust_from_token(p ->> 'token'); ph text;
+declare cid uuid := public._cust_from_token(p ->> 'token'); ph text; k text := btrim(coalesce(p ->> 'order_id', ''));
 begin
   if cid is null then raise exception 'unauthorized'; end if;
   select phone into ph from public.customers where id = cid;
   update public.orders set customer_id = cid
-   where id = upper(btrim(coalesce(p ->> 'order_id', ''))) and customer_id is null and public._cust_phone(phone) = ph;
-  return found;
+   where (id = upper(k) or substring(note from '🚚[a-z0-9_]+:([A-Za-z0-9._-]+)') = k)
+     and (customer_id is null or customer_id = cid) and public._cust_phone(phone) = ph;
+  return found;                                   -- true أيضاً إن كان مربوطاً بحسابه من قبل
 end $$;
+
+-- تتبّع عام برقم التتبع (بلا تسجيل): لا يُرجع إلا الحالة والولاية والبلدية، لا هاتف ولا عنوان ولا اسم
+create table if not exists public.track_fails (at timestamptz not null default now());
+alter table public.track_fails enable row level security;
+revoke all on public.track_fails from anon, authenticated;
+create or replace function public.track_order(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare t text := btrim(coalesce(p ->> 'tracking', '')); o record;
+begin
+  if t !~ '^[A-Za-z0-9._-]{4,40}$' then return jsonb_build_object('found', false); end if;
+  delete from public.track_fails where at < now() - interval '1 hour';
+  if (select count(*) from public.track_fails where at > now() - interval '1 minute') >= 40 then raise exception 'rate_limited'; end if;
+  select status, created_at, wilaya, commune, dtype into o from public.orders
+   where substring(note from '🚚[a-z0-9_]+:([A-Za-z0-9._-]+)') = t limit 1;
+  if not found then
+    insert into public.track_fails default values;       -- محاولة فاشلة تُحتسب (تُرجَع قيمة لا استثناء حتى لا تُلغى)
+    return jsonb_build_object('found', false);
+  end if;
+  return jsonb_build_object('found', true, 'status', o.status, 'date', o.created_at, 'wilaya', coalesce(o.wilaya, ''), 'commune', coalesce(o.commune, ''), 'dtype', coalesce(o.dtype, ''));
+end $$;
+revoke all on function public.track_order(jsonb) from public;
+grant execute on function public.track_order(jsonb) to anon, authenticated;
 
 revoke all on function public._cust_from_token(text), public._cust_new_session(uuid), public._cust_profile(uuid) from public, anon, authenticated;
 revoke all on function public.customer_register(jsonb), public.customer_login(jsonb), public.customer_me(jsonb), public.customer_update(jsonb), public.customer_logout(jsonb), public.customer_link_order(jsonb) from public;

@@ -99,7 +99,7 @@ for fn, sz in (("icon-192.png", 192), ("icon-512.png", 512), ("icon-maskable-512
     "var PRODUCTS = " + json.dumps([{"slug": "demo", "title": "منتج تجريبي", "price": 2000, "old": 2800, "images": ["assets/img/demo/0.svg"],
         "desc": "وصف المنتج التجريبي — عدّله أو احذفه من لوحة التحكم.", "cat": "general", "active": True, "stock": None, "seoTitle": "", "seoDesc": "",
         "offers": [{"qty": 1, "price": 2000}, {"qty": 2, "price": 3600}, {"qty": 3, "price": 4800, "free": 1}]}], ensure_ascii=False) + ";\n", encoding="utf-8")
-for f, v in {"coupons": "[]", "pixels": "[]", "agent-faq": "[]", "agent-training": '{"version":1,"scopes":{}}'}.items():
+for f, v in {"coupons": "[]", "pixels": "[]", "agent-faq": "[]", "agent-training": '{"version":1,"scopes":{}}', "welcome": '{"enabled":false}'}.items():
     (OUT / "assets/data" / (f + ".json")).write_text(v + "\n", encoding="utf-8")
 for f in ("checkout.json",):
     (OUT / "assets/data" / f).unlink(missing_ok=True)
