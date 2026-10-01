@@ -159,10 +159,13 @@ create table if not exists public.orders (
   subtotal numeric not null default 0, fee numeric not null default 0, total numeric not null default 0,
   coupon text, discount numeric not null default 0,
   extra jsonb not null default '{}'::jsonb,
-  status text not null default 'nouvelle' check (status in ('nouvelle', 'confirmee', 'expediee', 'livree', 'annulee')),
+  status text not null default 'nouvelle' check (status in ('nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec')),
   note text not null default '',
   source text not null default 'site'
 );
+-- حالة «echec» (فشل التوصيل): تحديث القيد على جدول موجود مسبقاً (آمن إعادة التشغيل)
+alter table public.orders drop constraint if exists orders_status_check;
+alter table public.orders add constraint orders_status_check check (status in ('nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'));
 create index if not exists orders_created_idx on public.orders (created_at desc);
 create index if not exists orders_phone_idx on public.orders (phone, created_at);
 alter table public.orders enable row level security;

@@ -72,7 +72,7 @@ tr:hover td{background:#FAF7F0}
 .pill{padding:.2rem .7rem;border-radius:999px;font-size:.75rem;font-weight:800;white-space:nowrap}
 .st-nouvelle{background:#FFF3D6;color:#8A6D1B}.st-confirmee{background:#DCEBFF;color:#1B4F8A}
 .st-expediee{background:#E7D9FF;color:#5B2D8A}.st-livree{background:#D9F2E5;color:#14714B}
-.st-annulee{background:#FFE0E0;color:#A32222}
+.st-annulee{background:#FFE0E0;color:#A32222}.st-echec{background:#FFD0D0;color:#8A1212}.st-pending{background:#FFF3D6;color:#8A6D1B}
 .small{background:var(--green);color:#fff;border-radius:8px;padding:.35rem .8rem;font-size:.8rem;font-weight:800;display:inline-block;margin:.1rem;border:none;cursor:pointer}
 .small.warn{background:var(--red)}
 .small.gold{background:var(--gold)}
@@ -118,7 +118,7 @@ tr:hover td{background:#FAF7F0}
 .diff-box .chg:last-child{border:none}
 .diff-old{color:var(--red);text-decoration:line-through}
 .diff-new{color:var(--ok);font-weight:800}
-.offer-row{display:grid;grid-template-columns:70px 1fr 1fr 90px 40px;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.offer-row{display:grid;grid-template-columns:40px 1fr 1fr auto auto 40px;gap:.5rem;align-items:center;margin-bottom:.5rem}
 .offer-row input{margin-bottom:0;padding:.5rem .7rem;font-size:.9rem}
 .section-title{font-weight:900;color:var(--green);margin:.8rem 0 .4rem;font-size:.95rem;border-bottom:2px solid var(--gold2);padding-bottom:.3rem}
 .search-bar{display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
@@ -174,7 +174,8 @@ tr:hover td{background:#FAF7F0}
       <button class="nav-btn" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء</b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
@@ -182,6 +183,37 @@ tr:hover td{background:#FAF7F0}
       <button class="nav-btn" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
     </nav>
     <main class="admin-main">
+
+  <div id="tab-loyalty" class="hidden">
+    <div class="card">
+      <b style="color:var(--green)">⭐ الزبائن الأوفياء</b>
+      <div class="hint">يُسجَّل الزبون تلقائياً بعد إتمامه العدد المحدد من الطلبات (لا تُحسب الملغاة ولا فاشلة التوصيل). يُحسب من الطلبات مباشرة، فلا يلزم إدخال شيء.</div>
+      <div class="grid2" style="margin-top:.6rem">
+        <div>
+          <label class="hint" style="margin:0">عدد الطلبات للتحول إلى زبون وفي</label>
+          <input id="ly-threshold" type="number" min="1" value="3">
+          <label class="hint" style="margin:0">نوع المكافأة</label>
+          <select id="ly-reward" onchange="Admin.loyaltyFormToggle()">
+            <option value="none">بدون مكافأة (قائمة فقط)</option>
+            <option value="points">نقاط</option>
+            <option value="discount">تخفيض على الطلب القادم</option>
+            <option value="gift">هدية</option>
+          </select>
+          <div id="ly-points-box" class="hidden"><label class="hint" style="margin:0">نقطة واحدة لكل ... دج من المشتريات</label><input id="ly-pointsper" type="number" min="1" value="100"></div>
+          <div id="ly-discount-box" class="hidden"><label class="hint" style="margin:0">نسبة التخفيض %</label><input id="ly-percent" type="number" min="1" max="100" value="10"></div>
+          <div id="ly-gift-box" class="hidden"><label class="hint" style="margin:0">وصف الهدية</label><input id="ly-gift" placeholder="مثال: عينة مجانية من منتج جديد"></div>
+        </div>
+        <div>
+          <label style="display:flex;gap:.5rem;align-items:center;font-weight:800"><input type="checkbox" id="ly-notify" style="width:auto"> 📣 تفعيل إشعار الزبون الوفي</label>
+          <div class="hint" style="margin-top:0">عند التفعيل تظهر للزبون الجديد علامة «بحاجة إشعار» وزر إرسال عبر واتساب برسالة جاهزة (الإرسال التلقائي بلا ضغط يحتاج خدمة رسائل مدفوعة).</div>
+          <textarea id="ly-msg" rows="5" placeholder="نص الرسالة"></textarea>
+          <div class="hint">المتغيرات: {name} الاسم، {orders} عدد الطلبات، {reward} المكافأة</div>
+        </div>
+      </div>
+      <button class="small gold" onclick="Admin.saveLoyalty()">💾 حفظ الإعدادات</button>
+    </div>
+    <div class="card"><div class="rtw" style="overflow:auto"><table id="loyalty-table" class="rt"></table></div></div>
+  </div>
 
   <div id="tab-orders">
     <div class="card">
@@ -194,6 +226,7 @@ tr:hover td{background:#FAF7F0}
           <option value="expediee">expediee</option>
           <option value="livree">livree</option>
           <option value="annulee">annulee</option>
+          <option value="echec">echec (فشل التوصيل)</option>
         </select>
         <button class="small gray hidden" id="import-orders-btn" onclick="Admin.importOrders()" title="ينسخ طلبات Google Sheets القديمة إلى Supabase مرة واحدة (بدون تكرار)">⬆️ استيراد الطلبات القديمة</button>
         <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
@@ -363,7 +396,7 @@ tr:hover td{background:#FAF7F0}
       </div>
       <button class="small warn" onclick="Admin.addBlacklistEntry()">🚫 إضافة للقائمة السوداء</button>
     </div>
-    <div class="card"><div style="overflow:auto"><table id="blacklist-table"></table></div></div>
+    <div class="card"><div class="rtw" style="overflow:auto"><table id="blacklist-table" class="rt"></table></div></div>
   </div>
 
   <div id="tab-pending" class="hidden">
@@ -638,6 +671,8 @@ tr:hover td{background:#FAF7F0}
         </div>
         <input id="f-images" type="hidden">
         <div class="section-title">العروض والأسعار</div>
+        <label style="display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem;font-weight:800"><input type="checkbox" id="f-freeship" style="width:auto"> 🚚 تفعيل الشحن المجاني لهذا المنتج</label>
+        <div class="hint" style="margin-top:0">عند التفعيل: إن لم تحدّد عروضاً بعينها يشمل كل العروض، وإن حدّدتَ عرضاً أو أكثر (خانة «🚚 مجاني» في صف العرض) يقتصر عليها.</div>
         <div id="f-offers"></div>
         <button class="small blue" type="button" onclick="Admin.addOfferRow()">+ إضافة عرض</button>
       </div>
@@ -1612,7 +1647,7 @@ const Admin = {
     const have = await API.sb.adminFetch("/rest/v1/orders?select=id,phone,total,created_at&limit=5000") || [];
     const ids = new Set(have.map(r=>r.id));
     const near = o => have.some(r=>String(r.phone)===String(o.phone).replace(/[^0-9+]/g,"") && Number(r.total)===Number(o.total) && Math.abs(new Date(r.created_at) - new Date(o.date)) < 600000);
-    const okStatus = ["nouvelle","confirmee","expediee","livree","annulee"];
+    const okStatus = ["nouvelle","confirmee","expediee","livree","annulee","echec"];
     const rows = old.orders.filter(o=>o.id && !ids.has(String(o.id)) && !near(o)).map(o=>({
       id: String(o.id), created_at: new Date(o.date).toISOString(), name: String(o.name||"—").slice(0,120), phone: String(o.phone||"").replace(/[^0-9+]/g,"").slice(0,20) || "000000",
       wilaya: o.wilaya||null, commune: o.commune||null, dtype: o.dtype||null, desk: o.desk||null, items: [], items_text: String(o.items||""),
@@ -1680,7 +1715,7 @@ const Admin = {
       '<div><b>' + (r.unique||0).toLocaleString("fr-DZ") + '</b><span>زوار جدد</span></div>' +
       '<div><b>' + live.now + '</b><span>يشاهدون الآن</span></div>';
     const ordersByTitle = {};
-    this.orders.filter(o=>o.status!=="annulee").forEach(o=>{ new Set(this.parseOrderItems(o.items).map(i=>i.title)).forEach(t=>{ ordersByTitle[t] = (ordersByTitle[t]||0) + 1; }); });
+    this.orders.filter(o=>!["annulee","echec"].includes(o.status)).forEach(o=>{ new Set(this.parseOrderItems(o.items).map(i=>i.title)).forEach(t=>{ ordersByTitle[t] = (ordersByTitle[t]||0) + 1; }); });
     const rows = Object.keys(r.pages).map(pg=>{
       const p = this.products.find(x=>x.slug===pg), name = pg === "home" ? "🏠 الصفحة الرئيسية" : (p ? p.title : pg);
       const ords = p ? (ordersByTitle[p.title]||0) : 0, v = r.pages[pg];
@@ -1715,7 +1750,7 @@ const Admin = {
     this.startAlerts();
     try{ Updater.init(); Seller.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
-    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadCheckoutSettings()]);
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadCheckoutSettings()]);
     this.renderAll();
     toast("✓ تم التحميل");
     try{ if(!sessionStorage.getItem("alyssum_pages_checked") && GH.cfg() && GH.cfg().token){ sessionStorage.setItem("alyssum_pages_checked","1"); this.ensureProductPages(); } }catch(e){}
@@ -1731,7 +1766,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","analytics","products","genpage","categories","fees","delivery","coupons","blacklist","theme","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","analytics","products","genpage","categories","fees","delivery","coupons","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -1739,14 +1774,18 @@ const Admin = {
     if(t==="genpage") GenPage.init();
     if(t==="agent") AgentTrain.init();
     if(t==="analytics"){ this.renderAnalytics(); this.renderVisits(); }
+    if(t==="loyalty") this.renderLoyalty();
+    /* ينتقل تلقائياً إلى بداية القسم المختار (كانت الصفحة تبقى في الأسفل فلا تظهر الإعدادات إلا بالسحب للأعلى) */
+    const target = document.getElementById("tab-" + t);
+    if(target){ const y = target.getBoundingClientRect().top + window.scrollY - 76; window.scrollTo({ top: Math.max(0, y), behavior: "smooth" }); }
   },
 
-  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderTheme(); this.renderCheckoutSettings(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
+  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderLoyalty(); this.renderTheme(); this.renderCheckoutSettings(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
 
   renderStats(){
     const today = new Date().toDateString();
     const tOrders = this.orders.filter(o => new Date(o.date).toDateString() === today);
-    const revenue = this.orders.filter(o=>o.status!=="annulee").reduce((s,o)=>s+(Number(o.total)||0),0);
+    const revenue = this.orders.filter(o=>!["annulee","echec"].includes(o.status)).reduce((s,o)=>s+(Number(o.total)||0),0);
     $f("stats").innerHTML =
       '<div><b>' + this.orders.length + '</b><span>إجمالي الطلبات</span></div>' +
       '<div><b>' + tOrders.length + '</b><span>طلبات اليوم</span></div>' +
@@ -1769,7 +1808,7 @@ const Admin = {
     const since = Date.now() - days*24*3600*1000;
     const inRange = this.orders.filter(o=>{
       const t = new Date(o.date).getTime();
-      return !isNaN(t) && t >= since && o.status!=="annulee";
+      return !isNaN(t) && t >= since && !["annulee","echec"].includes(o.status);
     });
     return { count: inRange.length, revenue: inRange.reduce((s,o)=>s+(Number(o.total)||0),0) };
   },
@@ -1782,7 +1821,7 @@ const Admin = {
 
   analyticsBestsellers(limit){
     const totals = {};
-    this.orders.filter(o=>o.status!=="annulee").forEach(o=>{
+    this.orders.filter(o=>!["annulee","echec"].includes(o.status)).forEach(o=>{
       this.parseOrderItems(o.items).forEach(it=>{
         totals[it.title] = (totals[it.title]||0) + it.qty;
       });
@@ -1925,8 +1964,8 @@ const Admin = {
         '<td style="max-width:260px;font-size:.8rem">' + o.items + '</td>' +
         '<td><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
         '<td><span class="pill st-' + o.status + '">' + o.status + '</span></td>' +
-        '<td><select onchange="API.updateOrder(Admin.key,\'' + o.id + '\',this.value);Admin.orders[' + i + '].status=this.value;Admin.renderStats()" style="width:auto;padding:.3rem">' +
-          ["nouvelle","confirmee","expediee","livree","annulee"].map(s=>'<option ' + (s===o.status?"selected":"") + '>' + s + '</option>').join("") +
+        '<td><select onchange="API.updateOrder(Admin.key,\'' + o.id + '\',this.value);Admin.onStatusChange(' + i + ',this.value)" style="width:auto;padding:.3rem">' +
+          ["nouvelle","confirmee","expediee","livree","annulee","echec"].map(s=>'<option ' + (s===o.status?"selected":"") + '>' + s + '</option>').join("") +
         '</select></td>' +
         '<td>' + this.deliveryOrderCellHtml(i) + '</td>' +
         '<td><button class="small gray" type="button" style="padding:.3rem .5rem" onclick="Admin.printOrderSlip(' + i + ')" title="طباعة وصل التوصيل">🖨️</button></td>' +
@@ -2083,6 +2122,7 @@ const Admin = {
     $f("f-cat").value = src?src.cat:Object.keys(this.categories)[0];
     $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
     $f("f-stock").value = (src && src.stock!==undefined && src.stock!==null) ? src.stock : "";
+    $f("f-freeship").checked = !!(src && src.freeShip);
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
@@ -2335,6 +2375,7 @@ const Admin = {
         '<input type="number" class="of-qty" value="' + o.qty + '" placeholder="الكمية" min="1">' +
         '<input type="number" class="of-price" value="' + o.price + '" placeholder="السعر (دج)" min="0">' +
         '<label style="font-size:.8rem;white-space:nowrap"><input type="checkbox" class="of-free" ' + (o.free?"checked":"") + ' style="width:auto"> 🎁 مجانية</label>' +
+        '<label style="font-size:.8rem;white-space:nowrap"><input type="checkbox" class="of-ship" ' + (o.ship?"checked":"") + ' style="width:auto"> 🚚 مجاني</label>' +
         '<button class="small warn" type="button" onclick="this.closest(\'.offer-row\').remove()">✕</button>' +
       '</div>').join("");
   },
@@ -2346,6 +2387,7 @@ const Admin = {
       '<input type="number" class="of-qty" value="1" placeholder="الكمية" min="1">' +
       '<input type="number" class="of-price" value="0" placeholder="السعر (دج)" min="0">' +
       '<label style="font-size:.8rem;white-space:nowrap"><input type="checkbox" class="of-free" style="width:auto"> 🎁 مجانية</label>' +
+      '<label style="font-size:.8rem;white-space:nowrap"><input type="checkbox" class="of-ship" style="width:auto"> 🚚 مجاني</label>' +
       '<button class="small warn" type="button" onclick="this.closest(\'.offer-row\').remove()">✕</button>';
     box.appendChild(d);
   },
@@ -2419,7 +2461,8 @@ const Admin = {
       qty: Number(r.querySelector(".of-qty").value)||1,
       price: Number(r.querySelector(".of-price").value)||0,
       free: r.querySelector(".of-free").checked ? 1 : 0,
-    })).filter(o=>o.price>0);
+      ship: r.querySelector(".of-ship").checked ? 1 : 0,
+    })).filter(o=>o.price>0).map(o=>{ if(!o.ship) delete o.ship; return o; });
     const cover = $f("f-cover").value.trim();
     // صور معرض صفحة المنتج (f-images) لم تعد تُعدَّل من هذه النافذة — تُدار لاحقاً من محرر صفحة
     // المنتج مباشرة. نحافظ على معرض المنتجات الحالية كما هو، وللمنتج الجديد بلا معرض نستعمل
@@ -2434,6 +2477,7 @@ const Admin = {
       images,
       desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
       stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
+      freeShip: $f("f-freeship").checked,
       seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
@@ -2444,7 +2488,7 @@ const Admin = {
   diffProduct(oldP, newP){
     const changes = [];
     if(!oldP) return [{label:"منتج جديد", old:null, new:newP.title}];
-    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"]];
+    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"],["freeShip","الشحن المجاني"]];
     fields.forEach(([k,label])=>{
       if(String(oldP[k]??"") !== String(newP[k]??""))
         changes.push({label, old: oldP[k]??"—", new: newP[k]??"—"});
@@ -3836,18 +3880,18 @@ const Admin = {
     return this.blacklist.find(x=>x.phone===p) || null;
   },
 
-  addBlacklistEntry(phoneOverride, reasonOverride){
+  addBlacklistEntry(phoneOverride, reasonOverride, state){
     const rawPhone = phoneOverride !== undefined ? phoneOverride : $f("bl-phone").value;
     const rawReason = reasonOverride !== undefined ? reasonOverride : $f("bl-reason").value;
     const phone = this.normalizePhone(rawPhone);
     if(!phone){ toast("أدخل رقم هاتف صحيح"); return }
     if(this.blacklist.some(x=>x.phone===phone)){ toast("⚠️ هذا الرقم موجود بالفعل في القائمة السوداء"); return }
-    this.blacklist.push({ phone, reason: (rawReason||"").trim(), date: new Date().toISOString() });
+    this.blacklist.push({ phone, reason: (rawReason||"").trim(), date: new Date().toISOString(), state: state || "confirmed" });
     this.saveBlacklistToStorage();
     if(phoneOverride===undefined){ $f("bl-phone").value=""; $f("bl-reason").value=""; }
     this.renderBlacklist();
     this.renderOrders();
-    toast("🚫 تمت إضافة الرقم للقائمة السوداء");
+    toast(state==="pending" ? "⏳ أُضيف الرقم للقائمة السوداء بانتظار مراجعتك (تأكيد أو حذف)" : "🚫 تمت إضافة الرقم للقائمة السوداء");
   },
 
   delBlacklistEntry(phone){
@@ -3867,7 +3911,8 @@ const Admin = {
   blacklistCellHtml(phone){
     const entry = this.isBlacklisted(phone);
     if(entry){
-      return ' <span class="pill st-annulee" title="' + (entry.reason ? "السبب: " + entry.reason.replace(/"/g,"") : "بدون سبب مذكور") + '">🚫 محظور</span>';
+      const pend = entry.state === "pending";
+      return ' <span class="pill ' + (pend?"st-pending":"st-annulee") + '" title="' + (entry.reason ? "السبب: " + entry.reason.replace(/"/g,"") : "بدون سبب مذكور") + '">' + (pend?"⏳ بانتظار المراجعة":"🚫 محظور") + '</span>';
     }
     const p = this.normalizePhone(phone);
     if(!p) return "";
@@ -3881,14 +3926,127 @@ const Admin = {
       el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>القائمة السوداء فارغة حالياً</td></tr>";
       return;
     }
-    const sorted = [...this.blacklist].sort((a,b)=>new Date(b.date)-new Date(a.date));
-    el.innerHTML = '<tr><th>الهاتف</th><th>السبب</th><th>تاريخ الإضافة</th><th></th></tr>' +
+    const sorted = [...this.blacklist].sort((a,b)=>(a.state==="pending"?0:1)-(b.state==="pending"?0:1) || new Date(b.date)-new Date(a.date));
+    el.innerHTML = '<tr class="hd"><th>الهاتف</th><th>الحالة</th><th>السبب</th><th>تاريخ الإضافة</th><th></th></tr>' +
       sorted.map(x=>'<tr>' +
-        '<td dir="ltr"><b>' + x.phone + '</b></td>' +
-        '<td>' + (x.reason || "—") + '</td>' +
-        '<td>' + new Date(x.date).toLocaleDateString("ar-DZ") + '</td>' +
-        '<td><button class="small warn" onclick="Admin.delBlacklistEntry(\'' + x.phone + '\')">🗑️</button></td>' +
+        '<td class="t" dir="ltr"><b>' + x.phone + '</b></td>' +
+        '<td data-l="الحالة">' + (x.state==="pending" ? '<span class="pill st-pending">⏳ بانتظار المراجعة</span>' : '<span class="pill st-annulee">🚫 محظور</span>') + '</td>' +
+        '<td data-l="السبب">' + (x.reason || "—") + '</td>' +
+        '<td data-l="التاريخ">' + new Date(x.date).toLocaleDateString("ar-DZ") + '</td>' +
+        '<td class="act">' + (x.state==="pending" ? '<button class="small" onclick="Admin.confirmBlacklist(\'' + x.phone + '\')">✅ تأكيد الحظر</button>' : "") + '<button class="small warn" onclick="Admin.delBlacklistEntry(\'' + x.phone + '\')">🗑️ حذف</button></td>' +
       '</tr>').join("");
+    this.setBadge("nb-blacklist", this.blacklist.filter(x=>x.state==="pending").length);
+  },
+
+
+  /* ════════ تغيير حالة الطلب: فشل التوصيل ⟵ القائمة السوداء (بانتظار المراجعة) ════════ */
+  onStatusChange(i, status){
+    const o = this.orders[i]; if(!o) return;
+    o.status = status;
+    if(status === "echec"){
+      const p = this.normalizePhone(o.phone);
+      if(p && !this.isBlacklisted(p)) this.addBlacklistEntry(p, "فشل توصيل الطلب " + o.id, "pending");
+      else if(p) toast("ℹ️ هذا الرقم موجود أصلاً في القائمة السوداء");
+    }
+    this.renderStats(); this.renderLoyalty();
+  },
+  confirmBlacklist(phone){
+    const e = this.blacklist.find(x=>x.phone===phone); if(!e) return;
+    e.state = "confirmed"; this.saveBlacklistToStorage(); this.renderBlacklist(); this.renderOrders();
+    toast("🚫 تم تأكيد الحظر");
+  },
+
+  /* ════════ الزبائن الأوفياء ════════ */
+  loyalty: null, loyaltySha: undefined,
+  loyaltyDefaults(){ return { threshold:3, reward:"none", percent:10, pointsPer:100, gift:"", notify:false,
+    message:"مرحباً {name} 🌿\nشكراً لوفائك! أتممتَ {orders} طلبات معنا{reward}.\nنسعد بخدمتك دائماً." }; },
+  async loadLoyalty(){
+    this.loyalty = this.loyaltyDefaults();
+    try{ const f = await GH.getFile("assets/data/loyalty.json"); this.loyaltySha = f.sha;
+      this.loyalty = Object.assign(this.loyaltyDefaults(), JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))))); }
+    catch(e){ this.loyaltySha = undefined; }
+    this._lyFormFilled = false;
+  },
+  loyaltyFlags(){ try{ return JSON.parse(localStorage.getItem("alyssum_loyalty_flags") || "{}") || {}; }catch(e){ return {}; } },
+  saveLoyaltyFlags(f){ try{ localStorage.setItem("alyssum_loyalty_flags", JSON.stringify(f)); }catch(e){} },
+  loyalCustomers(){
+    const L = this.loyalty || this.loyaltyDefaults(), map = {};
+    [...this.orders].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(o=>{
+      if(["annulee","echec"].includes(o.status)) return;
+      const ph = this.normalizePhone(o.phone); if(!ph) return;
+      const c = map[ph] || (map[ph] = { phone:ph, name:o.name, orders:0, total:0, since:null });
+      c.orders++; c.total += Number(o.total)||0; c.name = o.name || c.name;
+      if(c.orders === L.threshold) c.since = o.date;
+    });
+    return Object.values(map).filter(c=>c.orders >= L.threshold && !this.isBlacklisted(c.phone)).sort((a,b)=>b.orders-a.orders || b.total-a.total);
+  },
+  rewardText(c){
+    const L = this.loyalty || this.loyaltyDefaults();
+    if(L.reward === "points") return Math.floor(c.total / Math.max(1, Number(L.pointsPer)||100)) + " نقطة";
+    if(L.reward === "discount") return "تخفيض " + (Number(L.percent)||0) + "% على طلبك القادم";
+    if(L.reward === "gift") return L.gift || "هدية";
+    return "";
+  },
+  loyaltyFormToggle(){
+    const r = $f("ly-reward").value;
+    $f("ly-points-box").classList.toggle("hidden", r !== "points");
+    $f("ly-discount-box").classList.toggle("hidden", r !== "discount");
+    $f("ly-gift-box").classList.toggle("hidden", r !== "gift");
+  },
+  renderLoyalty(){
+    const tbl = $f("loyalty-table"); if(!tbl) return;
+    const L = this.loyalty || (this.loyalty = this.loyaltyDefaults());
+    if(!this._lyFormFilled){
+      $f("ly-threshold").value = L.threshold; $f("ly-reward").value = L.reward; $f("ly-percent").value = L.percent; $f("ly-pointsper").value = L.pointsPer;
+      $f("ly-gift").value = L.gift || ""; $f("ly-notify").checked = !!L.notify; $f("ly-msg").value = L.message || "";
+      this.loyaltyFormToggle(); this._lyFormFilled = true;
+    }
+    const list = this.loyalCustomers(), flags = this.loyaltyFlags();
+    if(!list.length){
+      tbl.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا يوجد زبائن أوفياء بعد (يلزم " + L.threshold + " طلبات غير ملغاة للزبون الواحد)</td></tr>";
+      this.setBadge("nb-loyalty", 0); return;
+    }
+    let need = 0;
+    tbl.innerHTML = '<tr class="hd"><th>الزبون</th><th>الطلبات</th><th>المشتريات</th><th>وفيّ منذ</th><th>المكافأة</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      list.map(c=>{
+        const f = flags[c.phone] || {}, rw = this.rewardText(c);
+        if(L.notify && !f.notified) need++;
+        const st = (L.notify ? (f.notified ? '<span class="pill st-livree">📣 أُشعر</span>' : '<span class="pill st-pending">بحاجة إشعار</span>') : "") +
+                   (L.reward !== "none" ? (f.rewarded ? ' <span class="pill st-livree">🎁 مُنحت</span>' : ' <span class="pill st-nouvelle">لم تُمنح</span>') : "");
+        return '<tr>' +
+          '<td class="t"><b>' + (c.name||"—") + '</b><br><small dir="ltr" style="color:#999">' + c.phone + '</small>' + this.whatsappLinkHtml(c.phone) + '</td>' +
+          '<td data-l="الطلبات"><b>' + c.orders + '</b></td>' +
+          '<td data-l="المشتريات">' + c.total.toLocaleString("fr-DZ") + ' دج</td>' +
+          '<td data-l="منذ">' + (c.since ? new Date(c.since).toLocaleDateString("ar-DZ") : "—") + '</td>' +
+          '<td data-l="المكافأة">' + (rw || "—") + '</td>' +
+          '<td data-l="الحالة">' + (st || "—") + '</td>' +
+          '<td class="act">' + (L.notify ? '<button class="small blue" onclick="Admin.notifyLoyal(\'' + c.phone + '\')">💬 إشعار واتساب</button>' : "") +
+            (L.reward !== "none" ? '<button class="small gold" onclick="Admin.toggleRewarded(\'' + c.phone + '\')">' + (f.rewarded ? "↩️ إلغاء «مُنحت»" : "🎁 تم منح المكافأة") + '</button>' : "") + '</td>' +
+        '</tr>';
+      }).join("");
+    this.setBadge("nb-loyalty", need);
+  },
+  async saveLoyalty(){
+    const L = { threshold: Math.max(1, Number($f("ly-threshold").value)||3), reward: $f("ly-reward").value, percent: Math.min(100, Math.max(1, Number($f("ly-percent").value)||10)),
+      pointsPer: Math.max(1, Number($f("ly-pointsper").value)||100), gift: $f("ly-gift").value.trim(), notify: $f("ly-notify").checked, message: $f("ly-msg").value };
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(L, null, 2))));
+      const res = await GH.putFile("assets/data/loyalty.json", b64, this.loyaltySha, "إعدادات الزبائن الأوفياء عبر لوحة التحكم");
+      this.loyaltySha = res && res.content ? res.content.sha : undefined; this.loyalty = L; this._lyFormFilled = true;
+      this.renderLoyalty(); toast("✅ حُفظت إعدادات الزبائن الأوفياء");
+    }catch(err){ console.error(err); toast("❌ " + err.message); }
+  },
+  notifyLoyal(phone){
+    const c = this.loyalCustomers().find(x=>x.phone===phone); if(!c) return;
+    const L = this.loyalty, rw = this.rewardText(c);
+    const msg = String(L.message || "").replace(/\{name\}/g, c.name||"").replace(/\{orders\}/g, c.orders).replace(/\{reward\}/g, rw ? " ولك " + rw : "");
+    const digits = phone.replace(/\D/g,""), intl = digits.startsWith("0") ? "213"+digits.slice(1) : digits;
+    window.open("https://wa.me/" + intl + "?text=" + encodeURIComponent(msg), "_blank");
+    const f = this.loyaltyFlags(); f[phone] = Object.assign(f[phone]||{}, { notified: new Date().toISOString() }); this.saveLoyaltyFlags(f); this.renderLoyalty();
+  },
+  toggleRewarded(phone){
+    const f = this.loyaltyFlags(); const cur = f[phone] || {};
+    cur.rewarded = cur.rewarded ? null : new Date().toISOString(); f[phone] = cur; this.saveLoyaltyFlags(f); this.renderLoyalty();
   },
 
   /* ════════ مظهر الموقع (الخطوط/الألوان/الشعار) ════════ */

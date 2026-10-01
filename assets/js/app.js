@@ -1,5 +1,8 @@
 /* أليسوم — محرك الطلبات والسلة */
 let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
+/* الشحن المجاني: خاصية المنتج freeShip، ويمكن حصره في عروض بعينها (offer.ship)؛ بلا عروض محددة يشمل كل العروض */
+function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; const flagged = (p.offers||[]).some(x=>x.ship); return flagged ? !!(o && o.ship) : true; }
+function cartItemFreeShip(it){ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; if(!p || !p.freeShip) return false; const fl = (p.offers||[]).filter(x=>x.ship); return fl.length ? it.qty >= Math.min(...fl.map(x=>x.qty)) : true; }
 const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " دج";
 
@@ -49,9 +52,10 @@ const Cart = {
     const totEl = document.getElementById("cart-total");
     if(totEl) totEl.textContent = fmt(Math.max(0, sub - discount) + (items.length?fee:0));
     const feeEl = document.getElementById("cart-fee");
-    if(feeEl) feeEl.textContent = items.length ? fmt(fee) : "—";
+    if(feeEl) feeEl.textContent = items.length ? ((fee===0 && items.every(cartItemFreeShip)) ? "مجاني 🚚" : fmt(fee)) : "—";
   },
   fee(){
+    const _all = Cart.all(); if(_all.length && _all.every(cartItemFreeShip)) return 0;   // كل منتجات السلة بشحن مجاني
     const w = document.getElementById("cwilaya");
     const t = document.querySelector('input[name="cdtype"]:checked');
     if(!w || !w.value) return 0;
@@ -482,7 +486,7 @@ function initProduct(slug){
     d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}
       <div class="q">${label}</div>
       <div class="p">${fmt(o.price)}</div>
-      <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}</div>`;
+      <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}${offerFreeShip(p,o)?'<br><b style="color:var(--ok)">🚚 شحن مجاني</b>':""}</div>`;
     d.onclick = ()=>{
       state.offer = o;
       document.querySelectorAll(".offer").forEach(x=>x.classList.remove("on"));
@@ -625,8 +629,9 @@ function initProduct(slug){
 
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
   function update(){
-    const fee = state.wilaya ? (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home) : null;
-    feeEl.textContent = fee!=null ? fmt(fee) : "اختر الولاية";
+    const freeShip = offerFreeShip(p, state.offer);
+    const fee = freeShip ? 0 : (state.wilaya ? (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home) : null);
+    feeEl.textContent = freeShip ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية");
     const discount = currentCouponDiscount(state.offer.price);
     const total = Math.max(0, state.offer.price - discount) + (fee||0);
     totEl.textContent = fmt(total);
@@ -659,7 +664,7 @@ function initProduct(slug){
       if(f.required && !v){ toast(`يرجى ملء حقل «${f.label||f.id}»`); if(el) el.focus(); return }
       if(v) extraValues[f.label||f.id] = v;
     }
-    const fee = state.dtype==="stop"?state.wilaya.stop:state.wilaya.home;
+    const fee = offerFreeShip(p, state.offer) ? 0 : (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home);
     const discount = currentCouponDiscount(state.offer.price);
     const total = Math.max(0, state.offer.price - discount) + fee;
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";

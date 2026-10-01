@@ -263,7 +263,7 @@ switch ($route) {
         if (!$isAdmin) out(401, ['error' => 'unauthorized']);
         if ($method !== 'POST') out(405, ['error' => 'method']);
         $b = body(); $id = (string)($b['id'] ?? ''); $set = []; $args = [];
-        if (isset($b['status'])) { if (!in_array($b['status'], ['nouvelle', 'confirmee', 'expediee', 'livree', 'annulee'], true)) out(422, ['error' => 'invalid_status']); $set[] = 'status = ?'; $args[] = $b['status']; }
+        if (isset($b['status'])) { if (!in_array($b['status'], ['nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'], true)) out(422, ['error' => 'invalid_status']); $set[] = 'status = ?'; $args[] = $b['status']; }
         if (isset($b['note'])) { $set[] = 'note = ?'; $args[] = cut($b['note'], 500); }
         if (!$set || $id === '') out(422, ['error' => 'nothing_to_update']);
         $args[] = $id;
