@@ -1,0 +1,8 @@
+# حماية بيانات الواجهة (قاعدة البيانات، النسخ الاحتياطية، المحاولات)
+<FilesMatch "^(config\.php|.*\.(db|sqlite|bak|json))$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^_data/ - [F,L]
+</IfModule>

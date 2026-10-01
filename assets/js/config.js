@@ -1,5 +1,14 @@
 /* ضع رابط Web App الخاص بك هنا (من Google Apps Script → Deploy → Web app → URL /exec) */
 const CONFIG = {
+  /* هوية الموقع — الملف الوحيد الذي يُعدَّل عند نقل الموقع إلى مالك جديد (انظر HANDOVER.md) */
+  SITE: {
+    name: "أليسوم ALYSSUM",
+    domain: "alyssumdz.com",
+    waNumber: "213559237239",           // رقم واتساب بالصيغة الدولية بلا + (يمكن تغييره أيضاً من اللوحة ← الدفع)
+    instagram: "alyssumdzofficiel",
+    repoOwner: "saberbalbouzi-ui",      // حساب GitHub الذي يُنشر منه الموقع (تستعمله اللوحة)
+    repoName: "alyssumdz",
+  },
   API_URL: "https://script.google.com/macros/s/AKfycbx8hfWsiB4UCn9u0Z7ySDZYVwvNXTAZMqoc-6SXFDi38m7EFGHr-eGPficx10gepj2C/exec",
   /* ملاحظة أمنية: حُذف ADMIN_KEY من هذا الملف العلني (لم يكن مستعملاً في الكود). المفتاح الذي كان هنا يجب اعتباره مكشوفاً:
      غيّره في Code.gs (Apps Script) إلى قيمة جديدة، ثم أدخل القيمة الجديدة عند تسجيل الدخول إلى لوحة التحكم. */

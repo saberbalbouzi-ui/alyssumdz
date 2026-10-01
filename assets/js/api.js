@@ -70,6 +70,7 @@ const API = {
   /* مصدر الطلبات حسب CONFIG.ORDERS_BACKEND: sheets | both | supabase */
   ordersBackend() { const b = (typeof CONFIG !== "undefined" && CONFIG.ORDERS_BACKEND) || "sheets"; return (b !== "sheets" && !this.sb.enabled()) ? "sheets" : b; },
   submitOrder(order) {
+    if (this.php.on()) return this.php.send("order", { order });
     const b = this.ordersBackend();
     if (b !== "supabase") this.post({ type: "order", order });
     if (b !== "sheets") this.sb.publicRpc("submit_order", { p: order });
@@ -80,6 +81,13 @@ const API = {
   visitorId() {
     try { let v = localStorage.getItem("alyssum_vid"); if (!v) { v = Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem("alyssum_vid", v); localStorage.setItem("alyssum_vid_new", "1"); } return v; }
     catch (e) { return "anon" + Math.random().toString(36).slice(2, 8); }
+  },
+  /* وضع الاستضافة (CONFIG.BACKEND === "php"): نفس الدوال لكن عبر api/index.php وقاعدة SQLite على الاستضافة */
+  php: {
+    on() { return typeof CONFIG !== "undefined" && CONFIG.BACKEND === "php"; },
+    url(r) { return ((typeof CONFIG !== "undefined" && CONFIG.PHP_API) || ((typeof REL !== "undefined" ? REL : "") + "api/index.php")) + "?r=" + r; },
+    send(r, body) { try { return fetch(this.url(r), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify(body || {}), keepalive: true, credentials: "same-origin" }).catch(() => {}); } catch (e) {} },
+    async get(r) { try { const x = await fetch(this.url(r), { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin", cache: "no-store" }); return x.ok ? await x.json() : null; } catch (e) { return null; } },
   },
   sb: {
     enabled() { return typeof CONFIG !== "undefined" && !!CONFIG.SUPABASE_URL && !!CONFIG.SUPABASE_ANON_KEY; },
@@ -116,33 +124,40 @@ const API = {
   },
   hit(page) {
     let isNew = false; try { isNew = localStorage.getItem("alyssum_vid_new") === "1"; localStorage.removeItem("alyssum_vid_new"); } catch (e) {}
+    if (this.php.on()) return this.php.send("hit", { page, vid: this.visitorId(), isNew });
     if (this.sb.enabled()) return this.sb.publicRpc("track_hit", { p_page: page, p_vid: this.visitorId(), p_new: isNew });
     this.post({ type: "hit", page, vid: this.visitorId(), isNew });
   },
   ping(page) {
+    if (this.php.on()) return this.php.send("ping", { page, vid: this.visitorId() });
     if (this.sb.enabled()) return this.sb.publicRpc("track_ping", { p_page: page, p_vid: this.visitorId() });
     this.post({ type: "ping", page, vid: this.visitorId() });
   },
   logQuestion(q, page, lang) {
+    if (this.php.on()) return this.php.send("question", { q, page, lang });
     if (this.sb.enabled()) return this.sb.publicRpc("log_question", { p_q: q, p_page: page, p_lang: lang });
     this.post({ type: "agent_question", q, page, lang });
   },
   /* قراءات المدير: نفس شكل الردود القديمة ({ok:true,...}) فلا تتغيّر لوحة التحكم */
   async questions(key) {
+    if (this.php.on()) return this.php.get("questions");
     if (!this.sb.enabled()) return this.get("agent_questions", { key });
     const rows = await this.sb.adminFetch("/rest/v1/agent_questions?status=eq.new&order=count.desc&select=id,question,count,pages,lang,last_at");
     return Array.isArray(rows) ? { ok: true, questions: rows.map(r => ({ id: r.id, q: r.question, count: r.count, pages: r.pages || [], lang: r.lang, last: r.last_at })) } : null;
   },
   resolveQuestion(key, id) {
+    if (this.php.on()) return this.php.send("question_resolve", { id });
     if (!this.sb.enabled()) return this.post({ type: "resolve_question", key, id });
     this.sb.adminFetch("/rest/v1/agent_questions?id=eq." + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ status: "done" }) });
   },
   async presence(key) {
+    if (this.php.on()) return this.php.get("presence");
     if (!this.sb.enabled()) return this.get("presence", { key });
     const r = await this.sb.adminFetch("/rest/v1/rpc/admin_presence", { method: "POST", body: "{}" });
     return r ? Object.assign({ ok: true }, r) : null;
   },
   async analytics(key) {
+    if (this.php.on()) return this.php.get("analytics");
     if (!this.sb.enabled()) return this.get("analytics", { key });
     const r = await this.sb.adminFetch("/rest/v1/rpc/admin_analytics", { method: "POST", body: "{}" });
     return r ? Object.assign({ ok: true }, r) : null;
@@ -150,6 +165,7 @@ const API = {
 
   /* ── لوحة التحكم ── */
   async orders(key) {
+    if (this.php.on()) return this.php.get("orders");
     if (this.ordersBackend() !== "supabase") return this.get("orders", { key });
     const rows = await this.sb.adminFetch("/rest/v1/orders?order=created_at.desc&limit=2000");
     return Array.isArray(rows) ? { ok: true, orders: rows.map(r => ({ id: r.id, date: r.created_at, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, dtype: r.dtype, desk: r.desk,
@@ -160,6 +176,7 @@ const API = {
   saveFees(key, fees) { this.post({ type: "save_fees", key, fees }); },
   saveCategories(key, categories) { this.post({ type: "save_categories", key, categories }); },
   updateOrder(key, id, status, note) {
+    if (this.php.on()) { const body = { id, status }; if (note !== undefined) body.note = note; return this.php.send("order_update", body); }
     const b = this.ordersBackend();
     if (b !== "supabase") this.post({ type: "update_order", key, id, status, note });
     if (b !== "sheets") { const body = { status }; if (note !== undefined) body.note = note; this.sb.adminFetch("/rest/v1/orders?id=eq." + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(body) }); }

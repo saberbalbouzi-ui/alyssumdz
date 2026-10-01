@@ -751,8 +751,8 @@ tr:hover td{background:#FAF7F0}
     <h3>⚙️ إعدادات النشر</h3>
     <div class="hint">التوكن يُخزَّن فقط داخل متصفحك (localStorage) ويُستعمل للاتصال بـ GitHub مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. يُفضَّل توكن من نوع Fine-grained مع صلاحية «Contents: Read and write» على مستودع alyssumdz فقط.</div>
     <input id="gh-token" type="password" placeholder="GitHub Personal Access Token" dir="ltr" autocomplete="off">
-    <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="saberbalbouzi-ui">
-    <input id="gh-repo" placeholder="المستودع (repo)" dir="ltr" value="alyssumdz">
+    <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="">
+    <input id="gh-repo" placeholder="المستودع (repo)" dir="ltr" value="">
     <input id="gh-branch" placeholder="الفرع (branch)" dir="ltr" value="main">
     <div class="action-bar">
       <button class="small gold" onclick="Admin.saveGhSettings()">💾 حفظ</button>
@@ -899,6 +899,7 @@ tr:hover td{background:#FAF7F0}
 </div>
 
 <script src="assets/js/config.js"></script>
+<script>const SITE_CFG = Object.assign({ name:"", domain:location.hostname, waNumber:"", repoOwner:"", repoName:"" }, (typeof CONFIG !== "undefined" && CONFIG.SITE) || {});</script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -907,9 +908,30 @@ tr:hover td{background:#FAF7F0}
 const $f = id => document.getElementById(id);
 
 /* ════════ اتصال مباشر بـ GitHub لنشر تعديلات صفحات المنتجات ════════ */
+/* وضع الاستضافة (CONFIG.BACKEND === "php"): نفس واجهة GH لكن الملفات تُقرأ/تُكتب عبر api/index.php بعد دخول المدير */
+const PHPAPI = {
+  on(){ return typeof CONFIG !== "undefined" && CONFIG.BACKEND === "php"; },
+  url(r, q){ return ((typeof CONFIG !== "undefined" && CONFIG.PHP_API) || "api/index.php") + "?r=" + r + (q || ""); },
+  async call(r, opts, q){
+    const o = Object.assign({ credentials:"same-origin" }, opts || {});
+    o.headers = Object.assign({ "X-Requested-With":"XMLHttpRequest", "Content-Type":"application/json" }, o.headers || {});
+    const res = await fetch(this.url(r, q), o);
+    const j = await res.json().catch(()=>({}));
+    return { ok: res.ok, status: res.status, j };
+  },
+};
 const GH = {
-  cfg(){ return JSON.parse(localStorage.getItem("alyssum_gh_cfg") || "null"); },
+  cfg(){ if(PHPAPI.on()) return { token:"php", owner:"", repo:"", branch:"" }; return JSON.parse(localStorage.getItem("alyssum_gh_cfg") || "null"); },
   async getFile(path){
+    if(PHPAPI.on()){
+      const r = await PHPAPI.call("file", { method:"GET" }, "&path=" + encodeURIComponent(path) + "&t=" + Date.now());
+      if(!r.ok){
+        if(r.status === 401) throw new Error("انتهت الجلسة — سجّل الدخول من جديد (401)");
+        if(r.status === 404) throw new Error("لم يُعثر على الملف (404)");
+        throw new Error("GET فشل (" + r.status + ")");
+      }
+      return r.j;
+    }
     const c = this.cfg();
     if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
     const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path +
@@ -923,6 +945,15 @@ const GH = {
     return r.json();
   },
   async putFile(path, contentB64, sha, message){
+    if(PHPAPI.on()){
+      const r = await PHPAPI.call("file", { method:"PUT", body: JSON.stringify({ path, content: contentB64, sha, message }) });
+      if(!r.ok){
+        if(r.status === 409) throw new Error("تعارض (409) — الملف تغيّر، أعد فتح المعاينة وحاول من جديد");
+        if(r.status === 401) throw new Error("انتهت الجلسة — سجّل الدخول من جديد (401)");
+        throw new Error("PUT فشل (" + r.status + ") " + (r.j && r.j.error || ""));
+      }
+      return r.j;
+    }
     const c = this.cfg();
     if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
     const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path;
@@ -1187,7 +1218,7 @@ const GenPage = {
     const md = q('meta[name="description"]'); if(md) md.setAttribute("content", d.desc.slice(0,160));
     const addMeta = (a,k,v)=>{ const m = doc.createElement("meta"); m.setAttribute(a,k); m.setAttribute("content",v); doc.head.appendChild(m); };
     addMeta("property","og:title", d.name + " — أليسوم"); addMeta("property","og:description", d.desc.slice(0,160));
-    addMeta("property","og:image","https://alyssumdz.com/" + d.images[0]); addMeta("property","og:type","product");
+    addMeta("property","og:image","https://" + SITE_CFG.domain + "/" + d.images[0]); addMeta("property","og:type","product");
 
     const crumbs = q(".crumbs"); if(crumbs) crumbs.lastChild.textContent = " / " + d.name;
     const gm = q("#gmain"); if(gm){ gm.setAttribute("src", main); gm.setAttribute("alt", d.name); }
@@ -1202,7 +1233,7 @@ const GenPage = {
     tm("#offers", n=>n.innerHTML = "");
     ["#pprice","#grand","#btn-total","#sticky-price"].forEach(s=>tm(s,n=>n.textContent=this.fmt(d.price)));
     tm("#pold", n=>n.style.display="none"); tm("#psave", n=>n.style.display="none");
-    doc.querySelectorAll("a.btn-wa, .lp-final a.lp-btn-green").forEach(a=>a.setAttribute("href","https://wa.me/213559237239?text="+wa));
+    doc.querySelectorAll("a.btn-wa, .lp-final a.lp-btn-green").forEach(a=>a.setAttribute("href","https://wa.me/" + SITE_CFG.waNumber + "?text="+wa));
 
     // آراء الزبائن: تُؤخذ من صفحة المنتج الافتراضية، وإلا من الصفحة المرجعية — وجودها شرط دائم
     const ownRev = this.reviewsSection(await this.fetchDefaultDoc(d.slug));
@@ -1262,7 +1293,7 @@ const GenPage = {
       if(!txt) txt = this.fallbackText(d);
       this.html = await this.build(d, txt);
       if(d.reviewsFallback) GenPage.say("ℹ️ لا توجد آراء زبائن في صفحة هذا المنتج — استُعملت آراء الصفحة المرجعية، عدّلها بعد النشر من «تعديل الصفحة»");
-      let prev = this.html.replace("<head>", '<head><base href="https://alyssumdz.com/p/'+d.slug+'/">');
+      let prev = this.html.replace("<head>", '<head><base href="https://' + SITE_CFG.domain + '/p/'+d.slug+'/">');
       for(const n of this.newImgs) prev = prev.split(this.rel(n.path)).join(await this.dataUrl(n.blob));
       $f("gp-frame").srcdoc = prev;
       $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.remove("hidden");
@@ -1298,7 +1329,7 @@ const GenPage = {
       Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs, pageMode:"generated" });
       if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج في data.js"); }
       Admin.renderAll();
-      GenPage.say("✅ نُشرت الصفحة: alyssumdz.com/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
+      GenPage.say("✅ نُشرت الصفحة: " + SITE_CFG.domain + "/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
       this.cancel(); this.pick($f("gp-pick").value);
     }catch(err){
       console.error(err); GenPage.say("❌ " + err.message);
@@ -1468,8 +1499,17 @@ const Admin = {
 
   sbOnly(){ return API.ordersBackend() === "supabase"; },       // وضع Supabase فقط: لا حاجة لمفتاح الإدارة
   sbGate(){ return API.sb.enabled(); },                          // الدخول بحساب المدير (بريد + كلمة مرور) متى فُعّل Supabase
+  phpMode(){ return PHPAPI.on(); },
   async login(){
     const btn = $f("login-btn"); if(btn.disabled) return;
+    if(this.phpMode()){
+      const pw = $f("login-pass").value; if(!pw){ toast("أدخل كلمة المرور"); return }
+      btn.disabled = true; btn.textContent = "⏳ جارِ التحقق...";
+      const r = await PHPAPI.call("login", { method:"POST", body: JSON.stringify({ password: pw }) }).catch(()=>({ ok:false, status:0, j:{} }));
+      btn.disabled = false; btn.textContent = "دخول";
+      if(!r.ok){ toast(r.status === 429 ? "❌ محاولات كثيرة، حاول بعد قليل" : r.status === 503 ? "❌ لم يُثبَّت الموقع بعد" : "❌ كلمة المرور غير صحيحة"); return }
+      this.key = "php"; this.load(); return;
+    }
     let k = "sb";
     if(!this.sbOnly()){
       k = $f("login-key").value.trim();
@@ -1486,7 +1526,7 @@ const Admin = {
     this.key = k; localStorage.setItem("alyssum_admin_key", k);
     this.load();
   },
-  logout(){ localStorage.removeItem("alyssum_admin_key"); API.sb.signOut(); location.reload() },
+  logout(){ localStorage.removeItem("alyssum_admin_key"); API.sb.signOut(); if(this.phpMode()){ PHPAPI.call("logout", { method:"POST", body:"{}" }).finally(()=>location.reload()); return } location.reload() },
   /* ════════ تنبيهات حمراء + المشاهدون الآن + أسئلة الوكيل (تحديث تلقائي) ════════ */
   alerts: { orders: -1, questions: [], timer: null, liveTimer: null },
   startAlerts(){
@@ -1527,13 +1567,13 @@ const Admin = {
   },
   sbSession(){ return API.sb.enabled() && !!API.sb.session(); },
   async refreshLive(){
-    const el = $f("live-now"); if(!el || !CONFIG.API_URL) return;
+    const el = $f("live-now"); if(!el || !(CONFIG.API_URL || PHPAPI.on())) return;
     const r = await API.presence(this.key);
     if(r && r.ok){ el.textContent = "🟢 " + r.now + " يشاهدون الآن"; el.classList.add("on"); this.liveNow = r; }
     else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = API.sb.enabled() ? "تعذّر قراءة Supabase — تأكد من تشغيل supabase/schema.sql وإضافة بريدك لجدول admins" : "ألصق apps-script/Code-additions.gs أو فعّل Supabase لتفعيل العدّاد الحقيقي"; }
   },
   async refreshAlerts(){
-    if(!this.key || !CONFIG.API_URL) return;
+    if(!this.key || !(CONFIG.API_URL || PHPAPI.on())) return;
     $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
@@ -1590,14 +1630,14 @@ const Admin = {
 
   async load(){
     if(!this.key) return;
-    if(!CONFIG.API_URL){ toast("⚠️ لم يُربط الـ API بعد"); }
+    if(!CONFIG.API_URL && !PHPAPI.on()){ toast("⚠️ لم يُربط الـ API بعد"); }
     // ملاحظة: المنتجات ورسوم التوصيل تُقرأ محلياً من data.js/wilayas.js فقط (المصدر الوحيد
     // الموثوق — يُعدَّلان مباشرة عبر لوحة التحكم وتُنشر التعديلات فوراً على GitHub)، ولا تُستبدَل
     // بنتيجة Google Sheets القديمة: شيت الاختبار كانت تحتوي أحياناً على منتج واحد فقط، وكانت —
     // إذا ردّت بأي بيانات ولو ناقصة — تُخفي أغلب المنتجات في لوحة التحكم بصفة عشوائية (نفس السبب
     // الذي دفع لتعطيل هذا الاستبدال في bootStore() بملف api.js). الطلبات وحدها تبقى تُقرأ من الشيت.
     const [orders] = await Promise.all([
-      CONFIG.API_URL ? API.orders(this.key) : null,
+      (CONFIG.API_URL || PHPAPI.on()) ? API.orders(this.key) : null,
     ]);
     this.products = JSON.parse(JSON.stringify(PRODUCTS));
     this.fees = JSON.parse(JSON.stringify(WILAYAS));
@@ -2259,12 +2299,34 @@ const Admin = {
         "var PRODUCTS = " + JSON.stringify(this.products) + ";\n";
       const b64 = btoa(unescape(encodeURIComponent(content)));
       await GH.putFile("assets/js/data.js", b64, file.sha, "تحديث المنتجات/الأقسام عبر لوحة التحكم");
+      await this.ensureProductPages();
       return true;
     }catch(err){
       console.error(err);
       toast("❌ تعذّر تحديث ملف المنتجات على الموقع الحي: " + err.message);
       return false;
     }
+  },
+  /* ينشئ صفحة p/<slug>/ لكل منتج جديد لا صفحة له (من القالب p/_template) — تُملأ بياناته ثم تُكمل نصوصها من «تعديل الصفحة» */
+  _pagesDone: new Set(),
+  async ensureProductPages(){
+    const esc = t => String(t == null ? "" : t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    let tpl = null, made = [];
+    for(const p of this.products){
+      if(!p.slug || !/^[a-z0-9][a-z0-9-]*$/.test(p.slug) || this._pagesDone.has(p.slug)) continue;
+      try{ const r = await fetch("p/" + p.slug + "/index.html", { method:"HEAD", cache:"no-store" }); if(r.ok){ this._pagesDone.add(p.slug); continue } }catch(e){ continue }
+      try{
+        if(tpl === null){ const r = await fetch("p/_template/index.html", { cache:"no-store" }); if(!r.ok) throw new Error("القالب p/_template غير موجود (" + r.status + ")"); tpl = await r.text(); }
+        const cat = (this.categories && this.categories[p.cat]) || "";
+        const desc = (p.seoDesc || p.desc || p.title || "").trim();
+        const vals = { SLUG:p.slug, TITLE:esc(p.title), TITLE_URL:encodeURIComponent(p.title || p.slug), DESC:esc(desc), SUB:esc(cat), CAT:esc(cat),
+          SITE_NAME:esc(SITE_CFG.name || SITE_CFG.domain), SITE_EN:esc(SITE_CFG.name || SITE_CFG.domain), WA:esc(SITE_CFG.waNumber), YEAR:String(new Date().getFullYear()) };
+        const html = tpl.replace(/<meta name="robots" content="noindex" data-template>\n?/, "").replace(/\{\{([A-Z_]+)\}\}/g, (m,k)=> k in vals ? vals[k] : m);
+        await GH.putFile("p/" + p.slug + "/index.html", btoa(unescape(encodeURIComponent(html))), undefined, "إنشاء صفحة المنتج " + p.slug + " عبر لوحة التحكم");
+        this._pagesDone.add(p.slug); made.push(p.slug);
+      }catch(err){ console.error(err); toast("⚠️ تعذّر إنشاء صفحة المنتج " + p.slug + ": " + err.message); }
+    }
+    if(made.length) toast("✅ أُنشئت صفحة المنتج: " + made.join("، ") + " (تظهر خلال دقيقة)");
   },
   async publishWilayasJs(){
     const cfg = GH.cfg();
@@ -2476,8 +2538,8 @@ const Admin = {
   openGhSettings(){
     const c = GH.cfg() || {};
     $f("gh-token").value = c.token || "";
-    $f("gh-owner").value = c.owner || "saberbalbouzi-ui";
-    $f("gh-repo").value = c.repo || "alyssumdz";
+    $f("gh-owner").value = c.owner || SITE_CFG.repoOwner;
+    $f("gh-repo").value = c.repo || SITE_CFG.repoName;
     $f("gh-branch").value = c.branch || "main";
     $f("gh-modal-bg").classList.add("open");
   },
@@ -2897,7 +2959,7 @@ const Admin = {
     }).join("");
   },
   copyImageUrl(repoPath){
-    const url = "https://alyssumdz.com/" + repoPath.split("/").map(encodeURIComponent).join("/");
+    const url = "https://" + SITE_CFG.domain + "/" + repoPath.split("/").map(encodeURIComponent).join("/");
     const done = ()=>toast("🔗 نُسخ رابط الصورة");
     const fallbackCopy = ()=>{
       try{
@@ -4007,7 +4069,7 @@ const Admin = {
     { key:"cart",  label:"زر «أضف إلى السلة»",       bg:"cartBg",  text:"cartText" },
   ],
   CHECKOUT_DEFAULTS: {
-    waNumber: "213559237239",
+    waNumber: SITE_CFG.waNumber,
     showWhatsappBtn: true,
     showAddToCart: true,
     showOffers: true,
@@ -4636,7 +4698,11 @@ document.addEventListener("input", e=>{
 });
 
 function toast(t){ const el=$f("toast2"); el.textContent=t; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,2500) }
-if(Admin.sbGate()){
+if(Admin.phpMode()){
+  $f("login-key").classList.add("hidden"); $f("login-pass").classList.remove("hidden");
+  $f("login-hint").textContent = "أدخل كلمة مرور المدير";
+  PHPAPI.call("me", { method:"GET" }).then(r=>{ if(r.ok && r.j.admin){ Admin.key = "php"; Admin.load(); } }).catch(()=>{});
+} else if(Admin.sbGate()){
   $f("login-email").classList.remove("hidden"); $f("login-pass").classList.remove("hidden");
   $f("login-key").classList.toggle("hidden", Admin.sbOnly());
   $f("login-hint").textContent = Admin.sbOnly() ? "سجّل الدخول بحساب المدير" : "سجّل الدخول بحساب المدير ومفتاح الإدارة";

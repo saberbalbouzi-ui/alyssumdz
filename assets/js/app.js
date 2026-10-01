@@ -1,6 +1,6 @@
 /* أليسوم — محرك الطلبات والسلة */
-let WA_NUMBER = "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
-const SITE_NAME = "أليسوم ALYSSUM";
+let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
+const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " دج";
 
 /* ── السلة ── */
@@ -849,7 +849,7 @@ function initCartDrawer(){
    لا يعمل داخل معاينة لوحة الإدارة (iframe) ولا بدون API_URL. */
 (function(){
   try{
-    if(window.parent !== window || typeof CONFIG === "undefined" || typeof API === "undefined" || !API.hit || (!CONFIG.API_URL && !(API.sb && API.sb.enabled()))) return;
+    if(window.parent !== window || typeof CONFIG === "undefined" || typeof API === "undefined" || !API.hit || (!CONFIG.API_URL && !(API.sb && API.sb.enabled()) && !(API.php && API.php.on()))) return;
     const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
     const page = m ? m[1] : (/\/(index\.html)?$/.test(location.pathname) ? "home" : "other");
     const k = "alyssum_hit_" + page;
