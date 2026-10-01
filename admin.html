@@ -86,6 +86,10 @@ tr:hover td{background:#FAF7F0}
 .modal-bg.open{display:flex}
 .modal{background:#fff;border-radius:18px;padding:1.5rem;width:min(680px,100%);max-height:88vh;overflow:auto}
 .modal.lg{width:min(900px,100%)}
+.modal.xl{width:min(1280px,96vw);max-height:94vh;padding:1.6rem 2rem 0}
+.modal.xl .grid2{gap:0 2.2rem}
+.modal.xl .action-bar{position:sticky;bottom:0;background:#fff;padding:.9rem 0;margin-top:1rem;border-top:1.5px solid var(--line);z-index:2}
+@media(max-width:760px){.modal.xl{width:100%;padding:1.2rem 1rem 0}}
 .modal h3{color:var(--green);margin-bottom:1rem}
 .hidden{display:none}
 .thumb-preview{width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--line)}
@@ -215,6 +219,7 @@ tr:hover td{background:#FAF7F0}
         <input id="prod-search" placeholder="🔍 بحث بالاسم أو المعرف..." oninput="Admin.renderProducts()">
         <select id="prod-cat-filter" onchange="Admin.renderProducts()"><option value="">كل الأقسام</option></select>
         <button class="small" onclick="Admin.editProduct(null)">+ منتج جديد</button>
+        <button class="small gray" onclick="Admin.ensureProductPages(true)" title="ينشئ صفحة لأي منتج ليس له صفحة على الموقع">🛠️ إنشاء الصفحات الناقصة</button>
         <button class="small gold" onclick="Admin.reload()">↻ تحديث</button>
       </div>
       <div style="overflow:auto"><table id="products-table"></table></div>
@@ -575,7 +580,7 @@ tr:hover td{background:#FAF7F0}
 
 <!-- نافذة منتج -->
 <div class="modal-bg" id="prod-modal-bg">
-  <div class="modal lg">
+  <div class="modal xl">
     <h3 id="prod-modal-title">منتج جديد</h3>
     <div class="grid2">
       <div>
@@ -1653,6 +1658,7 @@ const Admin = {
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadCheckoutSettings()]);
     this.renderAll();
     toast("✓ تم التحميل");
+    try{ if(!sessionStorage.getItem("alyssum_pages_checked") && GH.cfg() && GH.cfg().token){ sessionStorage.setItem("alyssum_pages_checked","1"); this.ensureProductPages(); } }catch(e){}
   },
 
   savePending(){ localStorage.setItem("alyssum_pending", JSON.stringify(this.pending)); this.renderPendingBadge(); },
@@ -2310,7 +2316,7 @@ const Admin = {
   },
   /* ينشئ صفحة p/<slug>/ لكل منتج جديد لا صفحة له (من القالب p/_template) — تُملأ بياناته ثم تُكمل نصوصها من «تعديل الصفحة» */
   _pagesDone: new Set(),
-  async ensureProductPages(){
+  async ensureProductPages(verbose){
     const esc = t => String(t == null ? "" : t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     let tpl = null, made = [];
     for(const p of this.products){
@@ -2328,6 +2334,7 @@ const Admin = {
       }catch(err){ console.error(err); toast("⚠️ تعذّر إنشاء صفحة المنتج " + p.slug + ": " + err.message); }
     }
     if(made.length) toast("✅ أُنشئت صفحة المنتج: " + made.join("، ") + " (تظهر خلال دقيقة)");
+    else if(verbose) toast("✓ كل المنتجات لها صفحات");
   },
   async publishWilayasJs(){
     const cfg = GH.cfg();
