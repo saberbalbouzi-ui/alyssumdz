@@ -5517,9 +5517,12 @@ const Admin = {
     this.deliveryCfg[key] = cfg;
     this.saveDeliveryCfgToStorage();
     document.getElementById("delivery-modal-bg").classList.remove("open");
+    /* شركة مكتملة المفاتيح ولا توجد شركة نشطة ⟵ تُفعَّل مباشرة (كان يلزم الضغط على نقطة التفعيل في الجدول فيبقى التنبيه) */
+    const complete = !missing.length;
+    if(complete && !this.activeCompanyKey()){ this.setActiveDeliveryCompany(key); toast("✅ حُفظت إعدادات " + co.name + " وفُعِّلت — تُزامَن مع أجهزتك الأخرى"); return }
     this.renderDelivery();
     this.renderOrders();
-    toast("✅ حُفظت إعدادات " + co.name + " في هذا المتصفح فقط");
+    toast("✅ حُفظت إعدادات " + co.name + " — تُزامَن مع أجهزتك الأخرى");
   },
 
   deleteCustomCompany(){
@@ -5747,6 +5750,12 @@ const Admin = {
   activeCompanyKey(){ const all = this.allDeliveryCompanies(); return Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled) || null; },
   deliveryBannerHtml(){
     const k = this.activeCompanyKey(), all = this.allDeliveryCompanies();
+    if(!k){                                                  // مُعدّة (مفاتيح مكتملة) لكن غير مفعّلة ⟵ زر تفعيل بنقرة
+      const ready = Object.keys(all).find(x=>{ const req = (all[x].fields||[]).filter(f=>f.required!==false); const c = this.deliveryCfg[x] || {}; return req.length && req.every(f=>String(c[f.key]||"").trim()); });
+      if(ready) return '<div class="card" style="border-right:4px solid #F0A53A;background:#FFFAF0"><b style="color:#B26A00">⚠️ ' + all[ready].name + ' مُعدّة لكن غير مفعّلة</b>' +
+        '<div class="hint" style="margin:.3rem 0">فعّلها لتُرسَل الطلبات المؤكَّدة تلقائياً وتُتتبَّع حالتها.</div>' +
+        '<button class="small gold" type="button" onclick="Admin.setActiveDeliveryCompany(\'' + ready + '\')">✅ فعّل ' + all[ready].name + ' الآن</button></div>';
+    }
     if(k){ const c = this.deliveryCfg[k] || {}; if(c.apiId || c.apiToken || c.token || c.apiKey) return ""; }
     return '<div class="card" style="border-right:4px solid var(--red);background:#FFF5F5"><b style="color:var(--red)">⚠️ ' + (k ? "مفاتيح " + all[k].name + " غير مُدخلة" : "لم تُفعَّل شركة توصيل بعد") + '</b>' +
       '<div class="hint" style="margin:.3rem 0">لتُرسَل الطلبات المؤكَّدة تلقائياً وتتبّع حالتها الحقيقية يجب تفعيل <b>ياليدين Yalidine</b> وإدخال API ID وAPI Token من حسابك لديهم.</div>' +
