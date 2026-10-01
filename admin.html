@@ -1196,6 +1196,14 @@ const Priv = {
     }catch(e){}
     return this.loc(k, def);
   },
+  /* القيمة من الخادم فقط (undefined إن لم توجد أو تعذّر الاتصال) */
+  async remote(k){
+    try{
+      if(PHPAPI.on()){ const r = await PHPAPI.call("kv", {}, "&k=" + k); return (r.ok && r.j.ok && r.j.v != null) ? r.j.v : undefined; }
+      if(API.sb.enabled() && API.ordersBackend() !== "sheets"){ const rows = await API.sb.adminFetch("/rest/v1/admin_kv?key=eq." + k + "&select=value"); return (Array.isArray(rows) && rows.length) ? rows[0].value : undefined; }
+    }catch(e){}
+    return undefined;
+  },
   async set(k, v){
     try{ localStorage.setItem("alyssum_priv_" + k, JSON.stringify(v)); }catch(e){}
     try{
@@ -1204,6 +1212,28 @@ const Priv = {
     }catch(e){ console.error(e); }
   },
 };
+/* مزامنة إعدادات المتصفح الحسّاسة بين الأجهزة: مفاتيح شركات التوصيل، القائمة السوداء، علامات الأوفياء، صفّ الإشعارات...
+   تبقى كما هي في localStorage، وكل كتابة تُدفع أيضاً إلى التخزين الخاص بالمدير (Priv)، وعند فتح اللوحة يُجلب الأحدث من الخادم أولاً. */
+const PrivSync = {
+  KEYS: { alyssum_delivery_cfg:"s_delivery_cfg", alyssum_custom_delivery:"s_delivery_custom", alyssum_delivery_price_source:"s_delivery_src",
+          alyssum_blacklist:"s_blacklist", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw" },
+  _raw: localStorage.setItem.bind(localStorage), _t: {}, ready: false,
+  hook(){
+    const self = this;
+    localStorage.setItem = function(k, v){ self._raw(k, v); const pk = self.KEYS[k]; if(pk && self.ready){ clearTimeout(self._t[k]); self._t[k] = setTimeout(()=>Priv.set(pk, v), 1200); } };
+  },
+  async pull(){
+    for(const [lk, pk] of Object.entries(this.KEYS)){
+      try{
+        const r = await Priv.remote(pk);
+        if(r !== undefined && r !== null) this._raw(lk, typeof r === "string" ? r : JSON.stringify(r));
+        else { const l = localStorage.getItem(lk); if(l != null) await Priv.set(pk, l); }          // أول مرة: ارفع ما في هذا المتصفح
+      }catch(e){}
+    }
+    this.ready = true;
+  },
+};
+PrivSync.hook();
 const GH = {
   cfg(){ if(PHPAPI.on()) return { token:"php", owner:"", repo:"", branch:"" }; return JSON.parse(localStorage.getItem("alyssum_gh_cfg") || "null"); },
   async getFile(path){
@@ -1915,6 +1945,7 @@ const Admin = {
 
   async load(){
     if(!this.key) return;
+    await PrivSync.pull();                                   // إعدادات المتصفح الحسّاسة تتزامن بين أجهزتك قبل قراءتها
     if(!CONFIG.API_URL && !PHPAPI.on()){ toast("⚠️ لم يُربط الـ API بعد"); }
     // ملاحظة: المنتجات ورسوم التوصيل تُقرأ محلياً من data.js/wilayas.js فقط (المصدر الوحيد
     // الموثوق — يُعدَّلان مباشرة عبر لوحة التحكم وتُنشر التعديلات فوراً على GitHub)، ولا تُستبدَل
