@@ -751,8 +751,8 @@ tr:hover td{background:#FAF7F0}
     <h3>⚙️ إعدادات النشر</h3>
     <div class="hint">التوكن يُخزَّن فقط داخل متصفحك (localStorage) ويُستعمل للاتصال بـ GitHub مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. يُفضَّل توكن من نوع Fine-grained مع صلاحية «Contents: Read and write» على مستودع alyssumdz فقط.</div>
     <input id="gh-token" type="password" placeholder="GitHub Personal Access Token" dir="ltr" autocomplete="off">
-    <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="saberbalbouzi-ui">
-    <input id="gh-repo" placeholder="المستودع (repo)" dir="ltr" value="alyssumdz">
+    <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="">
+    <input id="gh-repo" placeholder="المستودع (repo)" dir="ltr" value="">
     <input id="gh-branch" placeholder="الفرع (branch)" dir="ltr" value="main">
     <div class="action-bar">
       <button class="small gold" onclick="Admin.saveGhSettings()">💾 حفظ</button>
@@ -899,6 +899,7 @@ tr:hover td{background:#FAF7F0}
 </div>
 
 <script src="assets/js/config.js"></script>
+<script>const SITE_CFG = Object.assign({ name:"", domain:location.hostname, waNumber:"", repoOwner:"", repoName:"" }, (typeof CONFIG !== "undefined" && CONFIG.SITE) || {});</script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -1187,7 +1188,7 @@ const GenPage = {
     const md = q('meta[name="description"]'); if(md) md.setAttribute("content", d.desc.slice(0,160));
     const addMeta = (a,k,v)=>{ const m = doc.createElement("meta"); m.setAttribute(a,k); m.setAttribute("content",v); doc.head.appendChild(m); };
     addMeta("property","og:title", d.name + " — أليسوم"); addMeta("property","og:description", d.desc.slice(0,160));
-    addMeta("property","og:image","https://alyssumdz.com/" + d.images[0]); addMeta("property","og:type","product");
+    addMeta("property","og:image","https://" + SITE_CFG.domain + "/" + d.images[0]); addMeta("property","og:type","product");
 
     const crumbs = q(".crumbs"); if(crumbs) crumbs.lastChild.textContent = " / " + d.name;
     const gm = q("#gmain"); if(gm){ gm.setAttribute("src", main); gm.setAttribute("alt", d.name); }
@@ -1202,7 +1203,7 @@ const GenPage = {
     tm("#offers", n=>n.innerHTML = "");
     ["#pprice","#grand","#btn-total","#sticky-price"].forEach(s=>tm(s,n=>n.textContent=this.fmt(d.price)));
     tm("#pold", n=>n.style.display="none"); tm("#psave", n=>n.style.display="none");
-    doc.querySelectorAll("a.btn-wa, .lp-final a.lp-btn-green").forEach(a=>a.setAttribute("href","https://wa.me/213559237239?text="+wa));
+    doc.querySelectorAll("a.btn-wa, .lp-final a.lp-btn-green").forEach(a=>a.setAttribute("href","https://wa.me/" + SITE_CFG.waNumber + "?text="+wa));
 
     // آراء الزبائن: تُؤخذ من صفحة المنتج الافتراضية، وإلا من الصفحة المرجعية — وجودها شرط دائم
     const ownRev = this.reviewsSection(await this.fetchDefaultDoc(d.slug));
@@ -1262,7 +1263,7 @@ const GenPage = {
       if(!txt) txt = this.fallbackText(d);
       this.html = await this.build(d, txt);
       if(d.reviewsFallback) GenPage.say("ℹ️ لا توجد آراء زبائن في صفحة هذا المنتج — استُعملت آراء الصفحة المرجعية، عدّلها بعد النشر من «تعديل الصفحة»");
-      let prev = this.html.replace("<head>", '<head><base href="https://alyssumdz.com/p/'+d.slug+'/">');
+      let prev = this.html.replace("<head>", '<head><base href="https://' + SITE_CFG.domain + '/p/'+d.slug+'/">');
       for(const n of this.newImgs) prev = prev.split(this.rel(n.path)).join(await this.dataUrl(n.blob));
       $f("gp-frame").srcdoc = prev;
       $f("gp-wait").classList.add("hidden"); $f("gp-preview").classList.remove("hidden");
@@ -1298,7 +1299,7 @@ const GenPage = {
       Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs, pageMode:"generated" });
       if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج في data.js"); }
       Admin.renderAll();
-      GenPage.say("✅ نُشرت الصفحة: alyssumdz.com/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
+      GenPage.say("✅ نُشرت الصفحة: " + SITE_CFG.domain + "/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
       this.cancel(); this.pick($f("gp-pick").value);
     }catch(err){
       console.error(err); GenPage.say("❌ " + err.message);
@@ -2476,8 +2477,8 @@ const Admin = {
   openGhSettings(){
     const c = GH.cfg() || {};
     $f("gh-token").value = c.token || "";
-    $f("gh-owner").value = c.owner || "saberbalbouzi-ui";
-    $f("gh-repo").value = c.repo || "alyssumdz";
+    $f("gh-owner").value = c.owner || SITE_CFG.repoOwner;
+    $f("gh-repo").value = c.repo || SITE_CFG.repoName;
     $f("gh-branch").value = c.branch || "main";
     $f("gh-modal-bg").classList.add("open");
   },
@@ -2897,7 +2898,7 @@ const Admin = {
     }).join("");
   },
   copyImageUrl(repoPath){
-    const url = "https://alyssumdz.com/" + repoPath.split("/").map(encodeURIComponent).join("/");
+    const url = "https://" + SITE_CFG.domain + "/" + repoPath.split("/").map(encodeURIComponent).join("/");
     const done = ()=>toast("🔗 نُسخ رابط الصورة");
     const fallbackCopy = ()=>{
       try{
@@ -4007,7 +4008,7 @@ const Admin = {
     { key:"cart",  label:"زر «أضف إلى السلة»",       bg:"cartBg",  text:"cartText" },
   ],
   CHECKOUT_DEFAULTS: {
-    waNumber: "213559237239",
+    waNumber: SITE_CFG.waNumber,
     showWhatsappBtn: true,
     showAddToCart: true,
     showOffers: true,

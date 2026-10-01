@@ -1,6 +1,6 @@
 /* أليسوم — محرك الطلبات والسلة */
-let WA_NUMBER = "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
-const SITE_NAME = "أليسوم ALYSSUM";
+let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
+const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " دج";
 
 /* ── السلة ── */
