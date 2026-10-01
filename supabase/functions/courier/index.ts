@@ -1,6 +1,7 @@
 // وسيط شركات التوصيل لموقع GitHub+Supabase: يتجاوز حجب المتصفح (CORS) لطلبات ياليدين.
 // آمن: لا يعمل إلا لمدير مسجّل الدخول (يتحقق من دالة is_admin بتوكن جلسته)، وhttps فقط، ولمضيفين مسموحين فقط.
-// النشر من لوحة Supabase: Edge Functions ← Deploy a new function ← الاسم: courier ← الصق هذا الكود ← Deploy (اترك Verify JWT مفعّلاً).
+// النشر من لوحة Supabase: Edge Functions ← Deploy a new function ← الاسم: courier ← الصق هذا الكود ← أطفئ خيار Verify JWT ← Deploy.
+// (إطفاء Verify JWT آمن هنا: الدالة تتحقق بنفسها أنك مدير عبر is_admin بتوكن جلستك، وإطفاؤه يمنع حجب طلب الفحص المسبق CORS من بوابة Supabase.)
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const HOSTS = (Deno.env.get("COURIER_HOSTS") ?? "api.yalidine.app,yalidine.app").split(",").map((s) => s.trim()).filter(Boolean);

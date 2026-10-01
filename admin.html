@@ -5636,7 +5636,7 @@ const Admin = {
       "موقعك الحالي (GitHub + Supabase) يتصل بياليدين مباشرة من المتصفح، وياليدين لا تسمح بذلك (قيد أمني اسمه CORS) — المفاتيح سليمة وليست هي المشكلة.<br><br>" +
       "<b>الحل (مرة واحدة، 3 دقائق، بدون طرفية):</b><ol style='margin:.4rem 1.2rem'>" +
       "<li>افتح لوحة Supabase ← <b>Edge Functions</b> ← <b>Deploy a new function</b>.</li>" +
-      "<li>اسم الدالة: <code>courier</code> ← الصق محتوى الملف <code>supabase/functions/courier/index.ts</code> من المستودع (يمكنني إرساله لك) ← <b>Deploy</b> (اترك Verify JWT مفعّلاً).</li>" +
+      "<li>اسم الدالة: <code>courier</code> ← الصق محتوى الملف <code>supabase/functions/courier/index.ts</code> من المستودع (يمكنني إرساله لك) ← <b>Deploy</b> (<b>أطفئ</b> خيار Verify JWT — الدالة تتحقق بنفسها أنك مدير).</li>" +
       "<li>ارجع هنا وأعد المحاولة: ستمرّ كل طلبات ياليدين عبر الدالة تلقائياً.</li></ol>" +
       "البديل: نسخة الاستضافة (PHP) تتجاوز هذه المشكلة دون أي دالة.");
   },
