@@ -5180,7 +5180,7 @@ const Admin = {
         let ph = String(order.phone || "").replace(/\D/g, ""); if(ph.startsWith("213")) ph = "0" + ph.slice(3); else if(ph.length === 9) ph = "0" + ph;
         const stop = order.dtype === "stop";
         let deskId = null;
-        if(stop){ const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null; const d = w && (w.desks||[]).find(x=>x.name === order.desk); deskId = d ? d.id : null;
+        if(stop){ const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null; const d = w && (w.desks||[]).find(x=>x.name === order.desk); deskId = order.__deskId || (d ? d.id : null);
           if(!deskId) { const err = new Error("مكتب Stop Desk «" + (order.desk || "؟") + "» غير معروف لدى ياليدين — اختر مكتباً من القائمة أو حوّل التوصيل إلى المنزل"); throw err; } }
         const num = (v, d)=>{ const n = Number(v); return isFinite(n) && n > 0 ? n : d; };
         const total = Math.round(Number(order.total) || 0);
@@ -5204,6 +5204,9 @@ const Admin = {
         if(stop) body.stopdesk_id = deskId;
         return { url: this.base + "/v1/parcels/", method: "POST", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify([body]) };
       },
+      /* مراكز Stop Desk الرسمية: GET /v1/centers/ ⟵ [{center_id, name, address, commune_name, wilaya_id}] */
+      centersRequest(cfg, page){ return { url: this.base + "/v1/centers/?page_size=200&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      parseCenters(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r.center_id != null).map(r=>({ id: Number(r.center_id), name: String(r.name||""), address: String(r.address||""), commune: String(r.commune_name||""), wilaya_id: Number(r.wilaya_id) })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* ولايات ياليدين الرسمية (58، صفحة واحدة): GET /v1/wilayas/ ⟵ [{id, name, zone, is_deliverable}] */
       wilayasRequest(cfg){ return { url: this.base + "/v1/wilayas/?page_size=100", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       parseWilayas(json){ const rows = Array.isArray(json && json.data) ? json.data : []; const m = {}; rows.forEach(r=>{ if(r.id != null) m[Number(r.id)] = { name: String(r.name||""), ok: !(r.is_deliverable === 0 || r.is_deliverable === false) }; }); return m; },
@@ -5432,7 +5435,8 @@ const Admin = {
     const all = this.allDeliveryCompanies();
     const k = Object.keys(all).find(x=>all[x].feesRequest && this.deliveryCfg[x] && (this.deliveryCfg[x].apiId || this.deliveryCfg[x].apiToken));
     if(!k) return Object.keys(all).some(x=>all[x].feesRequest) ? '<div class="hint">لجلب الأسعار تلقائياً: أدخل مفاتيح ياليدين من «⚙️ إعداد» أولاً</div>' : "";
-    return '<button class="small gold" type="button" style="margin-top:.6rem" onclick="Admin.fetchCompanyPrices(\'' + k + '\')">⬇️ جلب أسعار ' + all[k].name + ' من حسابي</button>';
+    return '<button class="small gold" type="button" style="margin-top:.6rem" onclick="Admin.fetchCompanyPrices(\'' + k + '\')">⬇️ جلب أسعار ' + all[k].name + ' من حسابي</button> ' +
+      (all[k].centersRequest ? '<button class="small blue" type="button" style="margin-top:.6rem" onclick="Admin.syncDesksFromCompany(\'' + k + '\')">🏢 مزامنة مكاتب Stop Desk من ' + all[k].name + '</button>' : "");
   },
   async fetchCompanyPrices(key){
     const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
@@ -5684,6 +5688,46 @@ const Admin = {
   normName(t){ return String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\u0600-\u06ff]/g,""); },
   levenshtein(a, b){ const m = a.length, n = b.length; if(!m) return n; if(!n) return m; const d = []; for(let i=0;i<=m;i++) d[i] = [i]; for(let j=1;j<=n;j++) d[0][j] = j;
     for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1)); return d[m][n]; },
+  _centersCache: null,
+  async companyCenters(co, cfg){
+    if(this._centersCache) return this._centersCache;
+    try{ const c = JSON.parse(localStorage.getItem("alyssum_centers_v1") || "null"); if(c && c.length > 20){ this._centersCache = c; return c; } }catch(e){}
+    let rows = [];
+    for(let pg = 1; pg <= 5; pg++){
+      const r = await this.courierFetch(co.centersRequest(cfg, pg));
+      if(!r.ok) throw new Error("تعذّر جلب مراكز الشركة (رمز " + r.status + ")");
+      const got = co.parseCenters(JSON.parse(r.text)); rows = rows.concat(got.rows); if(!got.more) break;
+    }
+    if(rows.length){ this._centersCache = rows; try{ localStorage.setItem("alyssum_centers_v1", JSON.stringify(rows)); }catch(e){} }
+    return rows;
+  },
+  askDesk(orderIndex, companyKey, list, order){
+    const esc = t=>String(t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+    if(!list.length){ this.showNotice("🏢 لا مراكز لياليدين في هذه الولاية", "لا يوجد مركز Stop Desk لياليدين في ولاية <b>" + esc(order.wilaya) + "</b>. حوّل الطلب إلى التوصيل للمنزل أو استعمل شركة أخرى."); return }
+    this.showNotice("🏢 اختر مركز ياليدين للطلب " + order.id,
+      "المكتب «<b>" + esc(order.desk || "—") + "</b>» الذي اختاره الزبون ليس من مراكز ياليدين الرسمية. اختر أقرب مركز ثم أرسل:<br>" +
+      "<select id='pick-desk' style='width:100%;margin:.6rem 0;padding:.5rem'>" + list.map(c=>"<option value='" + c.id + "'>" + esc(c.name + " — " + c.commune) + "</option>").join("") + "</select>" +
+      "<button class='small gold' type='button' onclick=\"Admin.pickDesk('" + order.id + "','" + companyKey + "')\">🚚 أرسل لهذا المركز</button>");
+  },
+  pickDesk(orderId, companyKey){
+    const v = Number(($f("pick-desk")||{}).value); if(!v) return;
+    this._deskOverride = this._deskOverride || {}; this._deskOverride[orderId] = v;
+    document.getElementById("notice-modal-bg").classList.remove("open");
+    const i = this.orders.findIndex(x=>x.id === orderId); if(i > -1) this.sendOrderToDelivery(i, companyKey);
+  },
+  /* يستبدل مكاتب Stop Desk في جدول الرسوم بمراكز الشركة الرسمية، فلا يختار الزبائن إلا مكاتب تقبلها (ثم «💾 حفظ الكل» لنشرها) */
+  async syncDesksFromCompany(key){
+    const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
+    if(!co || !co.centersRequest){ toast("هذه الشركة لا تدعم جلب المراكز"); return }
+    try{
+      localStorage.removeItem("alyssum_centers_v1"); this._centersCache = null;
+      const centers = await this.companyCenters(co, cfg);
+      if(!centers.length) throw new Error("لم تُرجع الشركة أي مركز");
+      this.fees = this.fees.map(w=>Object.assign({}, w, { desks: centers.filter(c=>c.wilaya_id === w.id).map(c=>({ id: c.id, name: c.name, address: c.address, commune: c.commune })) }));
+      this.renderFees();
+      toast("✅ استُبدلت المكاتب بـ " + centers.length + " مركز رسمي من " + co.name + " — اضغط «💾 حفظ الكل» في «رسوم التوصيل» لنشرها");
+    }catch(err){ if(err.cors) this.explainCors(co); else this.showNotice("❌ تعذّر جلب المراكز", String(err.message).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))); }
+  },
   _wilayasCache: {},
   async companyWilayas(co, cfg){
     const key = (co.name||"") + ":wil";
@@ -5758,6 +5802,15 @@ const Admin = {
           if(!off.ok){ this.showNotice("🚫 الولاية غير مخدومة", "ياليدين لا تخدم حالياً ولاية <b>" + off.name + "</b>. سلّم هذا الطلب بشركة أخرى."); return false }
           ord = Object.assign({}, ord, { wilaya: off.name });
         }
+      }
+      if(co.centersRequest && order.dtype === "stop"){     // مكتب Stop Desk يجب أن يكون من مراكز ياليدين الرسمية
+        const centers = await this.companyCenters(co, cfg);
+        const w0 = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null;
+        const d0 = w0 && (w0.desks||[]).find(x=>x.name === order.desk);
+        const ov = (this._deskOverride||{})[order.id];
+        const id = ov || (d0 && centers.some(c=>c.id === d0.id) ? d0.id : null);
+        if(!id){ this.askDesk(orderIndex, companyKey, centers.filter(c=>w0 && c.wilaya_id === w0.id), order); return false }
+        ord = Object.assign({}, ord, { __deskId: id });
       }
       if(co.communesRequest){                               // تطبيع اسم البلدية على قائمة ياليدين الرسمية قبل الإرسال
         const fix = await this.resolveCommune(co, cfg, order);
