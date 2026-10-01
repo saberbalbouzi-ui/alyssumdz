@@ -194,6 +194,7 @@ tr:hover td{background:#FAF7F0}
       </div>
       <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('setup',this)"><span class="nav-ic">🚀</span><span class="nav-txt"><b>تجهيز المتجر<span class="nb hidden" id="nb-setup"></span></b><small>قائمة فحص جاهزية قبل التسليم أو الإطلاق</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
@@ -288,6 +289,16 @@ tr:hover td{background:#FAF7F0}
       <div class="hint" id="ship-count" style="margin-top:.4rem"></div>
     </div>
     <div class="card"><div class="rtw" style="overflow:auto"><table id="ship-table" class="rt"></table></div></div>
+  </div>
+
+  <div id="tab-setup" class="hidden">
+    <div class="card">
+      <b style="color:var(--green);display:block;margin-bottom:.35rem">🚀 تجهيز المتجر قبل التسليم</b>
+      <div class="hint">قائمة فحص تلقائية لما يلزم ليعمل المتجر كاملاً: الهوية، المنتجات، التوصيل، التكاليف، الإشعارات. كل بند يُفحص من حالة المتجر الفعلية، وبجانبه زر يأخذك لإصلاحه.</div>
+      <div style="height:10px;background:#EEE9DC;border-radius:99px;overflow:hidden;margin:.7rem 0"><div id="setup-bar" style="height:100%;width:0;background:var(--ok);transition:.3s"></div></div>
+      <div id="setup-sum" class="hint" style="margin:0"></div>
+    </div>
+    <div class="card"><div id="setup-list"></div></div>
   </div>
 
   <div id="tab-finance" class="hidden">
@@ -1999,11 +2010,12 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","shipped","finance","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","shipped","finance","setup","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="finance") this.renderFinance();
+    if(t==="setup") this.renderSetup();
     if(t==="shipped"){ this.renderShipped(); this.autoSyncShipped(); }
     if(t==="pending") this.renderPending();
     if(t==="genpage") GenPage.init();
@@ -4383,6 +4395,53 @@ const Admin = {
   loyalty: null, loyaltySha: undefined,
   loyaltyDefaults(){ return { threshold:3, reward:"none", percent:10, pointsPer:100, gift:"", notify:false,
     message:"مرحباً {name} 🌿\nشكراً لوفائك! أتممتَ {orders} طلبات معنا{reward}.\nنسعد بخدمتك دائماً." }; },
+  /* ════════ تجهيز المتجر: قائمة فحص جاهزية تُحسب من الحالة الفعلية ════════ */
+  async setupChecks(){
+    const S = (typeof SITE_CFG !== "undefined" && SITE_CFG) || {}, act = this.activeCompanyKey(), all = this.allDeliveryCompanies(), cfg = act ? (this.deliveryCfg[act] || {}) : null;
+    const active = this.products.filter(p=>p.active !== false && p.slug !== "test"), noCost = active.filter(p=>this.fin.costs[p.slug] == null);
+    const hasKeys = !!(cfg && (cfg.apiId || cfg.apiToken || cfg.token || cfg.apiKey));
+    const secret = await Priv.get("webhook_secret", null);
+    const yd = act === "yalidine";
+    const goto = id=>()=>{ const b = [...document.querySelectorAll(".nav-btn")].find(x=>(x.getAttribute("onclick")||"").includes("'" + id + "'")); if(b) this.tab(id, b); };
+    return [
+      { req:true, ok: !!(S.name && !/اسم متجرك|your store/i.test(S.name) && S.waNumber && !/^2130+$|^213550000000$/.test(String(S.waNumber))), t:"هوية المتجر (الاسم + رقم واتساب)", d: S.name ? S.name + " — " + (S.waNumber||"") : "غير مضبوطة", fix:"تُعدَّل في assets/js/config.js ← CONFIG.SITE", go:null },
+      { req:true, ok: active.length > 0 && active.every(p=>p.images && p.images.length && Number(p.price) > 0), t:"المنتجات (صورة وسعر لكل منتج)", d: active.length + " منتج نشط", fix:"المنتجات", go:goto("products") },
+      { req:true, ok: typeof WILAYAS !== "undefined" && WILAYAS.length >= 58 && WILAYAS.filter(w=>Number(w.home) > 0).length >= 50, t:"رسوم التوصيل للولايات", d: (typeof WILAYAS !== "undefined" ? WILAYAS.filter(w=>Number(w.home) > 0).length : 0) + " / 58 ولاية بسعر", fix:"رسوم التوصيل", go:goto("fees") },
+      { req:true, ok: !!(act && hasKeys), t:"شركة توصيل مفعّلة بمفاتيحها", d: act ? all[act].name + (hasKeys ? " ✓" : " — المفاتيح فارغة") : "لا توجد شركة مفعّلة", fix:"شركات التوصيل", go:goto("delivery"), test: act },
+      { req:false, ok: !!(cfg && cfg.prices && Object.keys(cfg.prices).length > 40), t:"تعريفة الشركة محمّلة من حسابها", d: cfg && cfg.prices ? Object.keys(cfg.prices).length + " ولاية" : "لم تُجلب", fix:"شركات التوصيل ← جلب الأسعار", go:goto("delivery"), skip: !yd },
+      { req:false, ok: !!localStorage.getItem("alyssum_centers_v1"), t:"مكاتب Stop Desk الرسمية للشركة", d: localStorage.getItem("alyssum_centers_v1") ? "مزامَنة" : "لم تُزامَن", fix:"شركات التوصيل ← مزامنة المكاتب", go:goto("delivery"), skip: !yd },
+      { req:true, ok: active.length > 0 && !noCost.length, t:"أسعار التكلفة لكل منتج", d: noCost.length ? noCost.length + " منتج بلا تكلفة" : "كاملة", fix:"المخزون والأرباح", go:goto("finance") },
+      { req:false, ok: active.some(p=>p.stock != null), t:"أرقام المخزون (لإغلاق المنتج عند النفاد)", d: active.filter(p=>p.stock != null).length + " منتج بمخزون محدد", fix:"المخزون والأرباح", go:goto("finance") },
+      { req:false, ok: !!(this.notifyCfg && this.notifyCfg.enabled), t:"رسائل واتساب للزبائن (التتبع والحالات)", d: this.notifyCfg && this.notifyCfg.enabled ? "مفعّلة" : "معطّلة", fix:"شركات التوصيل ← الإشعارات", go:goto("delivery") },
+      { req:false, ok: !!secret, t:"رابط Webhook (تحديث الحالات لحظياً)", d: secret ? "أُنشئ الرابط — تأكد من لصقه في ياليدين" : "لم يُنشأ", fix:"شركات التوصيل ← Webhook", go:goto("delivery"), skip: !yd },
+      { req:true, ok: this.orders.some(o=>this.trackingOf(o)), t:"طلب تجريبي وصل شركة التوصيل برقم تتبع", d: this.orders.filter(o=>this.trackingOf(o)).length + " طلب مسجّل", fix:"الطلبات ← تأكيد طلب", go:goto("orders") },
+    ].filter(c=>!c.skip);
+  },
+  async renderSetup(){
+    const box = $f("setup-list"); if(!box) return;
+    box.innerHTML = '<p class="hint">⏳ جارِ الفحص…</p>';
+    const cs = await this.setupChecks(), req = cs.filter(c=>c.req), done = req.filter(c=>c.ok).length, pct = req.length ? Math.round(done / req.length * 100) : 0;
+    this._setupGo = cs.map(c=>c.go);
+    $f("setup-bar").style.width = pct + "%"; $f("setup-bar").style.background = pct === 100 ? "var(--ok)" : "var(--gold)";
+    $f("setup-sum").innerHTML = "<b>" + done + " / " + req.length + "</b> من الأساسيات جاهزة (" + pct + "%)" + (pct === 100 ? " — ✅ المتجر جاهز للتسليم" : "") + " · الاختيارية لا تُحتسب";
+    box.innerHTML = cs.map((c,i)=>'<div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;padding:.6rem 0;border-bottom:1px solid var(--line)">' +
+      '<span style="font-size:1.2rem">' + (c.ok ? "✅" : (c.req ? "⛔" : "⚪")) + '</span>' +
+      '<div style="flex:1;min-width:180px"><b>' + c.t + '</b>' + (c.req ? "" : ' <small style="color:#999">(اختياري)</small>') + '<div class="hint" style="margin:0">' + c.d + '</div></div>' +
+      (c.test ? '<button class="small gray" type="button" onclick="Admin.testCompany(\'' + c.test + '\', this)">🔌 اختبار الاتصال</button>' : "") +
+      (!c.ok && c.go ? '<button class="small gold" type="button" onclick="Admin._setupGo[' + i + ']()">→ ' + c.fix + '</button>' : (!c.ok ? '<small style="color:#999">' + c.fix + '</small>' : "")) +
+    '</div>').join("");
+    this.setBadge("nb-setup", req.length - done);
+  },
+  async testCompany(key, btn){
+    const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {}; btn.disabled = true; const old = btn.textContent; btn.textContent = "⏳…";
+    try{
+      if(!co.wilayasRequest && !co.trackRequest) throw new Error("لا يوجد اختبار لهذه الشركة");
+      const r = await this.courierFetch(co.wilayasRequest ? co.wilayasRequest(cfg) : co.trackRequest(cfg, "test"));
+      btn.textContent = (r.ok || r.status === 404) ? "✅ المفاتيح تعمل" : (r.status === 401 || r.status === 403 ? "❌ مفاتيح خاطئة (" + r.status + ")" : "⚠️ رمز " + r.status);
+    }catch(err){ btn.textContent = "❌"; if(err.cors) this.explainCors(co); else this.showNotice("❌ فشل اختبار الاتصال", String(err.message).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))); }
+    setTimeout(()=>{ btn.disabled = false; if(btn.textContent === "⏳…") btn.textContent = old; }, 400);
+  },
+
   /* ════════ المخزون الحي + الأرباح الحقيقية ════════
      المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
      علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
