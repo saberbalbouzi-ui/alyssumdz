@@ -784,6 +784,7 @@ tr:hover td{background:#FAF7F0}
     <div id="imgpick-folder-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.applyImagePick()">✅ تطبيق</button>
+      <button class="small blue" onclick="Admin.duplicateEditingImage()" title="ينسخ هذه الصورة بجانبها (مفيد لإضافة صورة جديدة إلى المعرض)">📑 نسخ الصورة</button>
       <button class="small warn" onclick="Admin.deleteEditingImage()">🗑️ حذف الصورة</button>
       <button class="small gray" onclick="document.getElementById('imgpick-modal-bg').classList.remove('open')">إلغاء</button>
     </div>
@@ -2995,6 +2996,16 @@ const Admin = {
     }
     $f("imgpick-modal-bg").classList.remove("open");
     toast("✓ تم تغيير الصورة هنا — لم يُنشر بعد، اضغط «✅ تحقق ونشر» للنشر على GitHub");
+  },
+  duplicateEditingImage(){
+    const el = this._editingImg;
+    if(!el || el.tagName !== "IMG"){ toast("النسخ متاح للصور العادية فقط"); return }
+    const c = el.cloneNode(true);
+    c.classList.remove("on","active"); c.removeAttribute("id");
+    c.addEventListener("click", Admin._onImgClick, {capture:true});
+    el.after(c);
+    $f("imgpick-modal-bg").classList.remove("open");
+    toast("✓ نُسخت الصورة بجانب الأصلية — اضغط على النسخة لتغيير صورتها ثم «✅ تحقق ونشر»");
   },
   deleteEditingImage(){
     const el = this._editingImg;
