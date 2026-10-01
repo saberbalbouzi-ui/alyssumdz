@@ -1,0 +1,19 @@
+{
+  "_doc": "المصدر الوحيد لما يُنشر للجميع (shared) وما يبقى خاصاً بكل موقع (local). التحديث لا يكتب إلا الملفات المشتركة؛ والمحدِّث على مواقع الزبائن يحمل القائمة نفسها ويرفض أي ملف خارجها.",
+  "shared": [
+    "admin.html",
+    "assets/css/style.css",
+    "assets/js/app.js",
+    "assets/js/api.js",
+    "assets/js/agent.js",
+    "assets/js/agent-brain.js",
+    "api/index.php",
+    "p/_template/index.html"
+  ],
+  "local": {
+    "الهوية والإعدادات": ["assets/js/config.js", "api/config.php", "api/update-config.php", "api/update-key.pem"],
+    "المنتجات والرسوم": ["assets/js/data.js", "assets/js/wilayas.js", "p/<slug>/index.html (كل صفحات المنتجات ونصوصها المعدَّلة)", "index.html"],
+    "المظهر والمحتوى": ["assets/data/theme.json", "assets/data/checkout.json", "assets/data/coupons.json", "assets/data/pixels.json", "assets/data/agent-faq.json", "assets/data/agent-training.json", "assets/img/** (الصور المرفوعة)"],
+    "البيانات": ["api/_data/** (الطلبات، الزيارات، النسخ الاحتياطية)"]
+  }
+}

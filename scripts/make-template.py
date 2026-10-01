@@ -13,6 +13,9 @@ ap.add_argument("--out", default="dist/template")
 ap.add_argument("--name", default="اسم متجرك")
 ap.add_argument("--wa", default="213000000000")
 ap.add_argument("--update", action="store_true", help="مع --target php: حزمة تحديث تحوي الكود فقط ولا تمسّ بيانات الزبون")
+ap.add_argument("--remote", action="store_true", help="مع --update: حزمة للتحديث عن بُعد (الملفات المشتركة فقط، بلا update.php)")
+ap.add_argument("--channel", default="https://raw.githubusercontent.com/saberbalbouzi-ui/alyssumdz/main/releases", help="رابط قناة التحديث (مجلد releases)")
+ap.add_argument("--pubkey", default="releases/pubkey.pem", help="المفتاح العام لتوقيع التحديثات")
 ap.add_argument("--target", choices=["github", "php"], default="github", help="github: القالب الحالي (Supabase+GitHub) | php: حزمة للاستضافة العادية")
 a = ap.parse_args()
 OUT = (ROOT / a.out).resolve()
@@ -20,24 +23,28 @@ if a.update:
     if a.target != "php": sys.exit("--update يتطلب --target php")
     import subprocess, tempfile
     tmp = ROOT / "dist" / ("_upd_" + OUT.name)
-    r = subprocess.run([sys.executable, __file__, "--target", "php", "--out", str(tmp.relative_to(ROOT)), "--name", a.name, "--wa", a.wa], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, __file__, "--target", "php", "--out", str(tmp.relative_to(ROOT)), "--name", a.name, "--wa", a.wa, "--channel", a.channel, "--pubkey", a.pubkey], capture_output=True, text=True)
     if r.returncode != 0: print(r.stdout, r.stderr); sys.exit("فشل توليد الحزمة (فحص التسرّب؟)")
     if OUT.exists(): shutil.rmtree(OUT)
-    keep = ["admin.html", "assets/css/style.css", "assets/js/app.js", "assets/js/api.js", "assets/js/agent.js", "assets/js/agent-brain.js", "api/index.php", "p/_template/index.html", "version.json"]
+    keep = json.loads((ROOT / "shared-files.json").read_text(encoding="utf-8"))["shared"] + ["version.json"]
     for rel in keep:
         (OUT / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(tmp / rel, OUT / rel)
-    upd = (ROOT / "php-edition/update.php").read_text(encoding="utf-8").replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
-    (OUT / "update.php").write_text(upd, encoding="utf-8")
+    if not a.remote:
+        # تحديث يدوي: يحمل أيضاً ملفات إعداد المحدِّث لتفعيل التحديث عن بُعد في المواقع القديمة (لا تدخل القناة البعيدة)
+        for rel in ("api/update-config.php", "api/update-key.pem"):
+            if (tmp / rel).exists(): shutil.copy2(tmp / rel, OUT / rel)
+        upd = (ROOT / "php-edition/update.php").read_text(encoding="utf-8").replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
+        (OUT / "update.php").write_text(upd, encoding="utf-8")
     shutil.rmtree(tmp)
     ver = json.loads((OUT / "version.json").read_text())["version"]
-    (OUT / "README-UPDATE.txt").write_text(f"""تحديث الموقع إلى الإصدار {ver}
+    if not a.remote: (OUT / "README-UPDATE.txt").write_text(f"""تحديث الموقع إلى الإصدار {ver}
 
 1) ارفع محتوى هذا المجلد فوق ملفات الموقع في الاستضافة واقبل استبدال الملفات المتشابهة.
 2) سجّل الدخول من admin.html كمدير، ثم افتح https://نطاقك/update.php (مرة واحدة، يحذف نفسه).
 لا يمسّ هذا التحديث: كلمة المرور، الطلبات، المنتجات، الصور، الإعدادات، رسوم التوصيل.
 احتفظ بنسخة احتياطية من مجلد الموقع قبل التحديث.
 """, encoding="utf-8")
-    print(f"✅ حزمة تحديث الإصدار {ver}:", OUT, "—", len(keep) + 2, "ملفاً")
+    print(f"✅ حزمة تحديث الإصدار {ver}:", OUT, "—", sum(1 for x in OUT.rglob("*") if x.is_file()), "ملفاً")
     sys.exit(0)
 if ROOT not in OUT.parents:
     sys.exit("المسار يجب أن يكون داخل المستودع")
@@ -159,6 +166,10 @@ if a.target == "php":
     h = subprocess.check_output(["php", "-r", "echo password_hash($argv[1], PASSWORD_DEFAULT);", code], text=True)
     ins = (ROOT / "php-edition/install.php").read_text(encoding="utf-8").replace("__INSTALL_CODE_HASH__", h).replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
     (OUT / "install.php").write_text(ins, encoding="utf-8")
+    (OUT / "api/update-config.php").write_text("<?php\nreturn " + "['channel' => " + json.dumps(a.channel) + "];\n", encoding="utf-8")
+    pk = ROOT / a.pubkey
+    if pk.exists(): shutil.copy2(pk, OUT / "api/update-key.pem")
+    else: print("⚠️ لا يوجد مفتاح توقيع (" + a.pubkey + "): التحديث عن بُعد معطّل في هذه الحزمة")
     cfgp = OUT / "assets/js/config.js"; c = cfgp.read_text(encoding="utf-8")
     c = c.replace('ORDERS_BACKEND: "supabase",', 'ORDERS_BACKEND: "sheets",\n  BACKEND: "php",')
     cfgp.write_text(c, encoding="utf-8")
