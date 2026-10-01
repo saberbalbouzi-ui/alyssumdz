@@ -27,6 +27,17 @@ button{cursor:pointer;border:none;font-family:inherit}
 .side-nav-intro{padding:.3rem .4rem .9rem;border-bottom:1.5px solid var(--line);margin-bottom:.3rem}
 .side-nav-intro b{color:var(--green);font-size:1.05rem;display:block;margin-bottom:.3rem}
 .side-nav-intro p{color:#6B7672;font-size:.8rem;line-height:1.55}
+.orders-compact{width:100%;table-layout:auto;font-size:.76rem;border-collapse:collapse}
+.orders-compact th,.orders-compact td{padding:.35rem .4rem;vertical-align:middle;line-height:1.35}
+.orders-compact th{font-size:.74rem;white-space:nowrap}
+.orders-compact td.nw{white-space:nowrap}
+.orders-compact td.cut{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.orders-compact td.nm{max-width:110px}
+@container (max-width:1080px){.orders-compact .c-items{display:none}}
+@container (max-width:880px){.orders-compact .c-wil{display:none}}
+@container (max-width:800px){.orders-compact .c-date{display:none}}
+.orders-compact .pill{font-size:.7rem;padding:.12rem .45rem}
+.orders-compact .act-sel{width:auto;max-width:150px;padding:.25rem .3rem;font-size:.74rem;margin:0}
 .ob-row{display:flex;gap:.25rem;flex-wrap:wrap}
 .ob{padding:.3rem .55rem;border-radius:9px;font-size:.78rem;font-weight:800;white-space:nowrap;color:#fff}
 .ob.g{background:#1E9E6A}.ob.r{background:#D64545}
@@ -259,7 +270,7 @@ tr:hover td{background:#FAF7F0}
       </div>
       <div class="hint" id="orders-count-label" style="margin-top:.4rem"></div>
     </div>
-    <div class="card" style="overflow:auto"><table id="orders-table"></table></div>
+    <div class="card rtw" style="overflow:auto"><table id="orders-table"></table></div>
     <div id="orders-pagination" style="text-align:center;margin-top:1rem"></div>
   </div>
 
@@ -2180,18 +2191,23 @@ const Admin = {
     $f("orders-count-label").textContent = filtered.length + " من أصل " + this.orders.length + (filtered.length!==this.orders.length?" (بعد الفلترة)":"");
 
     const gdup = this.giftDupes();
-    el.innerHTML = '<tr><th>الرقم</th><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>الولاية</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th></th><th>التوصيل</th><th></th></tr>' +
-      pageItems.map(({o,i})=>'<tr>' +
-        '<td>' + o.id + '</td>' +
-        '<td>' + new Date(o.date).toLocaleDateString("ar-DZ") + '</td>' +
-        '<td>' + o.name + '</td><td dir="ltr">' + o.phone + this.whatsappLinkHtml(o.phone) + this.blacklistCellHtml(o.phone) + (gdup.has(o.id) ? ' <span class="pill st-pending" title="هذا الهاتف استعمل كود الهدية الترحيبية من قبل">⚠️ هدية مكررة</span>' : '') + '</td><td>' + (o.wilaya||"") + '</td>' +
-        '<td style="max-width:260px;font-size:.8rem">' + o.items + '</td>' +
-        '<td><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
-        '<td><span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>' + (this.attemptsOf(o) ? '<br><small style="color:#B26A00;font-weight:800">📞 محاولة ' + this.attemptsOf(o) + '</small>' : "") + (this.trackingOf(o) ? '<br><small dir="ltr" style="color:#777" title="رقم التتبع">🚚 ' + this.trackingOf(o).tracking + '</small>' : "") + '</td>' +
-        '<td>' + this.statusCellHtml(o, i) + '</td>' +
-        '<td>' + this.deliveryOrderCellHtml(i) + '</td>' +
-        '<td><button class="small gray" type="button" style="padding:.3rem .5rem" onclick="Admin.printOrderSlip(' + i + ')" title="طباعة وصل التوصيل">🖨️</button></td>' +
-      '</tr>').join("");
+    el.classList.add("orders-compact");
+    el.innerHTML = '<tr><th>الرقم</th><th class="c-date">التاريخ</th><th>الزبون</th><th>الهاتف</th><th class="c-wil">الولاية</th><th class="c-items">المنتجات</th><th>الإجمالي</th><th>الحالة</th><th>الإجراء</th><th>🚚</th></tr>' +
+      pageItems.map(({o,i})=>{
+        const items = String(o.items||"").replace(/\n/g, " • "), tr = this.trackingOf(o), at = this.attemptsOf(o);
+        return '<tr>' +
+        '<td class="nw" title="' + o.id + '"><b dir="ltr">' + String(o.id).replace(/^S\d{6}-/, "") + '</b></td>' +
+        '<td class="nw c-date">' + new Date(o.date).toLocaleDateString("fr-DZ", { day:"2-digit", month:"2-digit" }) + '</td>' +
+        '<td class="cut nm" title="' + String(o.name||"").replace(/"/g,"&quot;") + '">' + (o.name||"") + '</td>' +
+        '<td class="nw" dir="ltr">' + o.phone + this.whatsappLinkHtml(o.phone) + this.blacklistCellHtml(o.phone) + (gdup.has(o.id) ? ' <span class="pill st-pending" title="هذا الهاتف استعمل كود الهدية الترحيبية من قبل">⚠️</span>' : '') + '</td>' +
+        '<td class="nw c-wil">' + (o.wilaya||"") + '</td>' +
+        '<td class="cut c-items" title="' + items.replace(/"/g,"&quot;") + '">' + items + '</td>' +
+        '<td class="nw"><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
+        '<td class="nw"><span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>' + (at ? ' <small style="color:#B26A00;font-weight:800" title="محاولات الاتصال">📞' + at + '</small>' : "") + '</td>' +
+        '<td class="nw">' + this.statusCellHtml(o, i) + '</td>' +
+        '<td class="nw">' + (tr ? '<small dir="ltr" style="color:#777" title="رقم التتبع">' + tr.tracking + '</small> ' : this.deliveryOrderCellHtml(i)) +
+          '<button class="small gray" type="button" style="padding:.15rem .4rem" onclick="Admin.printOrderSlip(' + i + ')" title="طباعة وصل">🖨️</button></td>' +
+      '</tr>'; }).join("");
 
     this.renderOrdersPagination(totalPages);
   },
@@ -2270,15 +2286,9 @@ const Admin = {
   },
 
   deliveryOrderCellHtml(i){
-    const all = this.allDeliveryCompanies();
-    const enabled = Object.entries(this.deliveryCfg||{}).filter(([k,c])=>c && c.enabled && all[k]);
-    if(!enabled.length) return '<span class="hint" style="margin:0">لا توجد شركة نشطة — تبويب «شركات التوصيل»</span>';
-    return '<div style="display:flex;gap:.3rem;align-items:center">' +
-      '<select id="dlv-sel-' + i + '" style="width:auto;padding:.3rem">' +
-        enabled.map(([k])=>'<option value="' + k + '">' + all[k].name + '</option>').join("") +
-      '</select>' +
-      '<button class="small blue" type="button" style="padding:.3rem .6rem;white-space:nowrap" onclick="Admin.sendOrderToDelivery(' + i + ', $f(\'dlv-sel-' + i + '\').value)">🚚 إرسال</button>' +
-    '</div>';
+    const k = this.activeCompanyKey(), all = this.allDeliveryCompanies();
+    if(!k) return '<span title="فعّل شركة توصيل من تبويب «شركات التوصيل»" style="color:#999;cursor:help">—</span> ';
+    return '<button class="small blue" type="button" style="padding:.15rem .5rem" title="إرسال إلى ' + all[k].name + '" onclick="Admin.sendOrderToDelivery(' + i + ', \'' + k + '\')">🚚</button> ';
   },
 
   /* ════════ المنتجات ════════ */
@@ -5733,14 +5743,19 @@ const Admin = {
   },
   statusCellHtml(o, i){
     if(o.status === "nouvelle"){
-      const a = this.attemptsOf(o);
-      const b = (cls, fn, t, ttl)=>'<button type="button" class="ob ' + cls + '" onclick="' + fn + '" title="' + ttl + '">' + t + '</button>';
-      return '<div class="ob-row">' + b("g", "Admin.confirmOrder(" + i + ")", "✅ تأكيد", "تأكيد الطلب وإرساله مباشرة إلى شركة التوصيل") +
-        [1,2,3].map(n=>b("o" + (a >= n ? " on" : ""), "Admin.setAttempt(" + i + "," + n + ")", "محاولة " + n, "لم يرد الزبون — محاولة اتصال رقم " + n)).join("") +
-        b("r", "Admin.cancelOrder(" + i + ")", "❌ ملغاة", "إلغاء الطلب") + '</div>';
+      return '<select class="act-sel" onchange="Admin.orderAction(' + i + ',this)" title="إجراءات الطلب">' +
+        '<option value="">⚙️ إجراء…</option><option value="confirm">✅ تأكيد وإرسال للشركة</option>' +
+        [1,2,3].map(n=>'<option value="a' + n + '">📞 محاولة ' + n + '</option>').join("") +
+        '<option value="cancel">❌ إلغاء الطلب</option></select>';
     }
-    return '<select onchange="Admin.changeStatus(' + i + ',this.value)" style="width:auto;padding:.3rem">' +
+    return '<select class="act-sel" onchange="Admin.changeStatus(' + i + ',this.value)">' +
       ["nouvelle","confirmee","expediee","livree","annulee","echec"].map(st=>'<option value="' + st + '"' + (st===o.status?" selected":"") + '>' + this.ST_AR[st] + '</option>').join("") + '</select>';
+  },
+  orderAction(i, el){
+    const v = el.value; el.value = ""; if(!v) return;
+    if(v === "confirm") this.confirmOrder(i);
+    else if(v === "cancel") this.cancelOrder(i);
+    else if(/^a[123]$/.test(v)) this.setAttempt(i, Number(v[1]));
   },
   changeStatus(i, status){ const o = this.orders[i]; if(!o) return; API.updateOrder(this.key, o.id, status); this.onStatusChange(i, status); this.renderOrders(); },
   setAttempt(i, n){
