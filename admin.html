@@ -121,8 +121,10 @@ tr:hover td{background:#FAF7F0}
 
 <div class="login" id="login-box">
   <h1>🌿 لوحة تحكم أليسوم</h1>
-  <p>أدخل مفتاح الإدارة للمتابعة</p>
+  <p id="login-hint">أدخل مفتاح الإدارة للمتابعة</p>
   <input id="login-key" type="password" placeholder="مفتاح الإدارة" onkeydown="if(event.key==='Enter')Admin.login()">
+  <input id="login-email" class="hidden" type="email" dir="ltr" placeholder="البريد الإلكتروني" autocomplete="username">
+  <input id="login-pass" class="hidden" type="password" dir="ltr" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter')Admin.login()">
   <button class="btn" onclick="Admin.login()">دخول</button>
 </div>
 
@@ -171,6 +173,7 @@ tr:hover td{background:#FAF7F0}
           <option value="livree">livree</option>
           <option value="annulee">annulee</option>
         </select>
+        <button class="small gray hidden" id="import-orders-btn" onclick="Admin.importOrders()" title="ينسخ طلبات Google Sheets القديمة إلى Supabase مرة واحدة (بدون تكرار)">⬆️ استيراد الطلبات القديمة</button>
         <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
         <label class="date-field">من<input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ"></label>
         <label class="date-field">إلى<input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ"></label>
@@ -1480,7 +1483,13 @@ const Admin = {
   pending: JSON.parse(localStorage.getItem("alyssum_pending") || "[]"),
   editingSlug: null, editingCatKey: null, previewData: null,
 
-  login(){
+  sbOnly(){ return API.ordersBackend() === "supabase"; },       // وضع Supabase فقط: الدخول بالبريد وكلمة المرور
+  async login(){
+    if(this.sbOnly()){
+      try{ await API.sb.signIn($f("login-email").value.trim(), $f("login-pass").value); }
+      catch(err){ toast("❌ " + err.message); return }
+      this.key = "sb"; localStorage.setItem("alyssum_admin_key", "sb"); this.load(); return;
+    }
     const k = $f("login-key").value.trim();
     if(!k){ toast("أدخل المفتاح"); return }
     this.key = k;
@@ -1498,6 +1507,34 @@ const Admin = {
   },
   beep(){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = .06; o.start(); setTimeout(()=>{ o.stop(); a.close(); }, 220); }catch(e){} },
   setBadge(id, n){ const el = $f(id); if(!el) return; el.textContent = n > 99 ? "99+" : n; el.classList.toggle("hidden", !(n > 0)); },
+  /* استيراد طلبات Google Sheets القديمة إلى Supabase (مرة واحدة) مع تفادي التكرار (نفس الرقم، أو نفس الهاتف والمبلغ خلال 10 دقائق) */
+  async importOrders(){
+    if(!API.sb.enabled() || !API.sb.session()){ toast("سجّل دخول Supabase أولاً (زر 🔐)"); return }
+    const key = prompt("أدخل مفتاح إدارة Apps Script (لقراءة الطلبات القديمة من Google Sheets):");
+    if(!key) return;
+    toast("⏳ جارِ قراءة الطلبات القديمة...");
+    const old = await API.get("orders", { key });
+    if(!old || !old.ok){ toast("❌ تعذّرت قراءة طلبات Google Sheets (تحقق من المفتاح)"); return }
+    const have = await API.sb.adminFetch("/rest/v1/orders?select=id,phone,total,created_at&limit=5000") || [];
+    const ids = new Set(have.map(r=>r.id));
+    const near = o => have.some(r=>String(r.phone)===String(o.phone).replace(/[^0-9+]/g,"") && Number(r.total)===Number(o.total) && Math.abs(new Date(r.created_at) - new Date(o.date)) < 600000);
+    const okStatus = ["nouvelle","confirmee","expediee","livree","annulee"];
+    const rows = old.orders.filter(o=>o.id && !ids.has(String(o.id)) && !near(o)).map(o=>({
+      id: String(o.id), created_at: new Date(o.date).toISOString(), name: String(o.name||"—").slice(0,120), phone: String(o.phone||"").replace(/[^0-9+]/g,"").slice(0,20) || "000000",
+      wilaya: o.wilaya||null, commune: o.commune||null, dtype: o.dtype||null, desk: o.desk||null, items: [], items_text: String(o.items||""),
+      subtotal: Number(o.subtotal)||0, fee: Number(o.fee)||0, total: Number(o.total)||0, coupon: o.coupon||null, discount: Number(o.discount)||0,
+      status: okStatus.includes(o.status) ? o.status : "nouvelle", note: String(o.note||""), source: "sheets-import" }));
+    if(!rows.length){ toast("لا توجد طلبات جديدة للاستيراد (كلها موجودة)"); return }
+    if(!confirm("سيُستورد " + rows.length + " طلب إلى Supabase. متابعة؟")) return;
+    let done = 0;
+    for(let i = 0; i < rows.length; i += 100){
+      const r = await API.sb.adminFetch("/rest/v1/orders", { method:"POST", headers:{ Prefer:"resolution=ignore-duplicates,return=minimal" }, body: JSON.stringify(rows.slice(i, i+100)) });
+      if(r === null){ toast("❌ فشل الاستيراد عند الدفعة " + (i/100+1) + " (تُوقف العملية؛ يمكن إعادتها بأمان)"); break }
+      done = Math.min(rows.length, i + 100);
+    }
+    toast("✅ استُورد " + done + " من " + rows.length + " طلب");
+    this.refreshAlerts();
+  },
   sbSession(){ return API.sb.enabled() && !!API.sb.session(); },
   openSb(){
     const ses = API.sb.session();
@@ -1521,6 +1558,7 @@ const Admin = {
   async refreshAlerts(){
     if(!this.key || !CONFIG.API_URL) return;
     $f('sb-btn').classList.toggle('hidden', !API.sb.enabled());
+    $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
       const changed = o.orders.length !== this.orders.length;
@@ -4622,7 +4660,11 @@ document.addEventListener("input", e=>{
 });
 
 function toast(t){ const el=$f("toast2"); el.textContent=t; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,2500) }
-if(Admin.key) Admin.load();
+if(Admin.sbOnly()){
+  $f("login-key").classList.add("hidden"); $f("login-email").classList.remove("hidden"); $f("login-pass").classList.remove("hidden");
+  $f("login-hint").textContent = "سجّل الدخول بحساب المدير (Supabase)";
+  if(Admin.key === "sb" && API.sb.session()) Admin.load(); else { Admin.key = ""; localStorage.removeItem("alyssum_admin_key"); }
+} else if(Admin.key) Admin.load();
 </script>
 </body>
 </html>

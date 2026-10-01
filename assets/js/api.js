@@ -67,7 +67,13 @@ const API = {
     return (await this.loadCategories()) || CATEGORIES;
   },
 
-  submitOrder(order) { this.post({ type: "order", order }); },
+  /* مصدر الطلبات حسب CONFIG.ORDERS_BACKEND: sheets | both | supabase */
+  ordersBackend() { const b = (typeof CONFIG !== "undefined" && CONFIG.ORDERS_BACKEND) || "sheets"; return (b !== "sheets" && !this.sb.enabled()) ? "sheets" : b; },
+  submitOrder(order) {
+    const b = this.ordersBackend();
+    if (b !== "supabase") this.post({ type: "order", order });
+    if (b !== "sheets") this.sb.publicRpc("submit_order", { p: order });
+  },
 
   /* ── تتبّع الزيارات والمشاهدين الآن وأسئلة الوكيل ──
      الأولوية لـ Supabase إن ضُبط (SUPABASE_URL + SUPABASE_ANON_KEY)، وإلا Apps Script (apps-script/Code-additions.gs). */
@@ -101,7 +107,7 @@ const API = {
     },
     async adminFetch(path, opts) {
       const t = await this.token(); if (!t) return null;
-      try { const r = await fetch(this.url(path), Object.assign({ headers: this.headers(t) }, opts || {})); if (!r.ok) return null; const txt = await r.text(); return txt ? JSON.parse(txt) : {}; } catch (e) { return null; }
+      try { const o = opts || {}; const r = await fetch(this.url(path), Object.assign({}, o, { headers: Object.assign(this.headers(t), o.headers || {}) })); if (!r.ok) return null; const txt = await r.text(); return txt ? JSON.parse(txt) : {}; } catch (e) { return null; }
     },
   },
   hit(page) {
@@ -121,7 +127,7 @@ const API = {
   async questions(key) {
     if (!this.sb.enabled()) return this.get("agent_questions", { key });
     const rows = await this.sb.adminFetch("/rest/v1/agent_questions?status=eq.new&order=count.desc&select=id,question,count,pages,lang,last_at");
-    return rows ? { ok: true, questions: rows.map(r => ({ id: r.id, q: r.question, count: r.count, pages: r.pages || [], lang: r.lang, last: r.last_at })) } : null;
+    return Array.isArray(rows) ? { ok: true, questions: rows.map(r => ({ id: r.id, q: r.question, count: r.count, pages: r.pages || [], lang: r.lang, last: r.last_at })) } : null;
   },
   resolveQuestion(key, id) {
     if (!this.sb.enabled()) return this.post({ type: "resolve_question", key, id });
@@ -139,12 +145,21 @@ const API = {
   },
 
   /* ── لوحة التحكم ── */
-  async orders(key) { return this.get("orders", { key }); },
+  async orders(key) {
+    if (this.ordersBackend() !== "supabase") return this.get("orders", { key });
+    const rows = await this.sb.adminFetch("/rest/v1/orders?order=created_at.desc&limit=2000");
+    return Array.isArray(rows) ? { ok: true, orders: rows.map(r => ({ id: r.id, date: r.created_at, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, dtype: r.dtype, desk: r.desk,
+      items: r.items_text, subtotal: r.subtotal, fee: r.fee, total: Number(r.total), coupon: r.coupon, discount: r.discount, extra: r.extra, status: r.status, note: r.note })) } : null;
+  },
   saveProduct(key, product) { this.post({ type: "save_product", key, product }); },
   deleteProduct(key, slug) { this.post({ type: "delete_product", key, slug }); },
   saveFees(key, fees) { this.post({ type: "save_fees", key, fees }); },
   saveCategories(key, categories) { this.post({ type: "save_categories", key, categories }); },
-  updateOrder(key, id, status, note) { this.post({ type: "update_order", key, id, status, note }); },
+  updateOrder(key, id, status, note) {
+    const b = this.ordersBackend();
+    if (b !== "supabase") this.post({ type: "update_order", key, id, status, note });
+    if (b !== "sheets") { const body = { status }; if (note !== undefined) body.note = note; this.sb.adminFetch("/rest/v1/orders?id=eq." + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(body) }); }
+  },
 };
 
 /* تهيئة الصفحات — data.js و wilayas.js هما المصدر الوحيد الموثوق للمنتجات ورسوم التوصيل
