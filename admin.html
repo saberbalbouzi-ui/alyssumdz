@@ -5174,7 +5174,7 @@ const Admin = {
       /* الحقول حسب توثيق Yalidine API v1 (POST /v1/parcels/): الأبعاد والوزن إلزامية، ومكتب Stop Desk يحتاج stopdesk_id */
       buildRequest(cfg, order){
         const parts = String(order.name || "").trim().split(/\s+/).filter(Boolean);
-        const first = parts[0] || "زبون", family = parts.slice(1).join(" ") || first;
+        const first = parts[0] || ".", family = parts.slice(1).join(" ") || ".";      // اسم بلا لقب (أو العكس) ⟵ نقطة مكان الناقص لتقبله ياليدين
         let ph = String(order.phone || "").replace(/\D/g, ""); if(ph.startsWith("213")) ph = "0" + ph.slice(3); else if(ph.length === 9) ph = "0" + ph;
         const stop = order.dtype === "stop";
         let deskId = null;
