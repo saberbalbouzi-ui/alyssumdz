@@ -2195,7 +2195,7 @@ const Admin = {
     el.classList.add("orders-compact");
     el.innerHTML = '<tr><th>الرقم</th><th class="c-date">التاريخ</th><th>الزبون</th><th>الهاتف</th><th class="c-wil">الولاية</th><th class="c-items">المنتجات</th><th>الإجمالي</th><th>الحالة</th><th>الإجراء</th><th>🚚</th></tr>' +
       pageItems.map(({o,i})=>{
-        const items = String(o.items||"").replace(/\n/g, " • "), tr = this.trackingOf(o), at = this.attemptsOf(o);
+        const items = this.itemsDisplay(o).replace(/\n/g, " • "), tr = this.trackingOf(o), at = this.attemptsOf(o);
         return '<tr>' +
         '<td class="nw" title="' + o.id + '"><b dir="ltr">' + String(o.id).replace(/^S\d{6}-/, "") + '</b></td>' +
         '<td class="nw c-date">' + new Date(o.date).toLocaleDateString("fr-DZ", { day:"2-digit", month:"2-digit" }) + '</td>' +
@@ -2257,7 +2257,7 @@ const Admin = {
     if(!o) return;
     const w = window.open("", "_blank", "width=420,height=650");
     if(!w){ toast("⚠️ يرجى السماح بالنوافذ المنبثقة لطباعة الوصل"); return }
-    const itemsHtml = String(o.items||"").split(/\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<div>• ' + x + '</div>').join("") || ('<div>' + (o.items||"") + '</div>');
+    const itemsHtml = this.itemsDisplay(o).split(/\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<div>• ' + x + '</div>').join("") || ('<div>' + (o.items||"") + '</div>');
     w.document.write('<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>وصل الطلب ' + o.id + '</title><style>' +
       "body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;padding:20px;color:#1C2420}" +
       'h2{margin:0 0 4px;color:#173F35}' +
@@ -4410,9 +4410,16 @@ const Admin = {
     this.markStatusSeen();
   },
   markStatusSeen(){ try{ const m = {}; this.orders.forEach(o=>{ m[o.id] = o.status; }); localStorage.setItem("alyssum_status_seen", JSON.stringify(m)); }catch(e){} },
+  /* نص منتجات الطلب بمبالغ متسقة مع «سعر المنتجات»: طلبات قديمة بعرض «2+1» سُجّلت بسعر القطعة الكامل فتجاوز مجموع الأسطر المجموع الحقيقي، فنوزّع المجموع الحقيقي على الأسطر بالتناسب */
+  itemsDisplay(o){
+    const raw = String(o.items || ""), lines = raw.split(/\n/), parsed = lines.map(l=>{ const m = l.match(/^(.+?)\s*×\s*(\d+)\s*=\s*(\d+)\s*DA\s*$/i); return m ? { t: m[1].trim(), q: m[2], v: Number(m[3]) } : null; });
+    const sum = parsed.reduce((a,x)=>a + (x ? x.v : 0), 0), sub = Number(o.subtotal) || 0;
+    if(!sub || !sum || Math.abs(sum - sub) <= 1 || parsed.some(x=>!x)) return raw;
+    return parsed.map(x=>x.t + " ×" + x.q + " = " + Math.round(x.v * sub / sum) + " DA").join("\n");
+  },
   /* أسطر الطلب (المنتج/التنويع/الكمية/مبلغ السطر) من نص الطلب «العنوان ×الكمية = السعر DA» */
   orderLines(o){
-    return String(o.items||"").split(/\n/).map(line=>{
+    return this.itemsDisplay(o).split(/\n/).map(line=>{
       const m = line.match(/^(.+?)\s*×\s*(\d+)\s*=\s*(\d+)/); if(!m) return null;
       let title = m[1].trim(), vlabel = "", pr = this.products.find(x=>x.title === title);
       if(!pr && title.includes(" — ")){ const i = title.lastIndexOf(" — "); pr = this.products.find(x=>x.title === title.slice(0, i)); vlabel = title.slice(i + 3); }
@@ -6020,7 +6027,7 @@ const Admin = {
       row("الزبون", '<b>' + (o.name||"") + '</b>') + row("الهاتف", '<span dir="ltr">' + (o.phone||"") + '</span>' + this.whatsappLinkHtml(o.phone)) +
       row("العنوان", (o.wilaya||"") + (o.commune ? " — " + o.commune : "")) +
       row("التوصيل", o.dtype==="stop" ? "مكتب Stop Desk" + (o.desk ? " — " + o.desk : "") : "إلى المنزل") +
-      row("المنتجات", String(o.items||"").replace(/\n/g,"<br>")) +
+      row("المنتجات", this.itemsDisplay(o).replace(/\n/g,"<br>")) +
       row("سعر المنتجات", n(o.subtotal)) + row("سعر التوصيل", Number(o.fee) ? n(o.fee) : "مجاني") +
       (Number(o.discount) ? row("الخصم", "-" + n(o.discount) + (o.coupon ? " (" + o.coupon + ")" : "")) : "") +
       row("الإجمالي (عند الاستلام)", '<b style="color:var(--green)">' + n(o.total) + '</b>') + '</table>';

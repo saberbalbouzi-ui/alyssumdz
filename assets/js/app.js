@@ -780,7 +780,8 @@ function initProduct(slug){
   function orderItems(){
     if(type==="grouped") return state.group.kids.map((c,i)=>({ slug:c.slug, title:c.title, qty:state.group.qty[i], price:Number(c.price)||0 })).filter(x=>x.qty>0);
     const title = p.title + (state.variation ? " — " + variationLabel(p, state.variation) : "");
-    return [{ slug: p.slug, title, qty: state.offer.qty, price: Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))) }];
+    /* سعر القطعة = سعر العرض ÷ عدد القطع الكلي (بما فيها المجانية) ليكون مجموع السطر = سعر العرض تماماً (كان 3 قطع بعرض «2+1» تُسجَّل 3×سعر القطعة الكاملة فيظهر مجموع أكبر من الحقيقي) */
+    return [{ slug: p.slug, title, qty: state.offer.qty, price: Math.round(state.offer.price / state.offer.qty * 100) / 100 }];
   }
 
   // تأكيد الطلب — واتساب
