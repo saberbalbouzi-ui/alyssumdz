@@ -84,6 +84,14 @@ def png(w, h, rgb):
     return b"\x89PNG\r\n\x1a\n" + ch(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + ch(b"IDAT", zlib.compress(raw)) + ch(b"IEND", b"")
 (OUT / "assets/img/favicon.png").write_bytes(png(64, 64, (23, 63, 53)))
 
+# تثبيت الموقع على الهاتف (PWA): مانيفست باسم الزبون + عامل الخدمة + أيقونات محايدة (يستبدلها الزبون بشعاره)
+mf = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
+mf["name"] = a.name; mf["short_name"] = a.name.split()[0][:12]; mf["description"] = a.name
+(OUT / "manifest.webmanifest").write_text(json.dumps(mf, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+shutil.copy2(ROOT / "sw.js", OUT / "sw.js")
+for fn, sz in (("icon-192.png", 192), ("icon-512.png", 512), ("icon-maskable-512.png", 512), ("apple-touch-icon.png", 180)):
+    (OUT / "assets/img" / fn).write_bytes(png(sz, sz, (23, 63, 53)))
+
 # بيانات المتجر
 (OUT / "assets/js/data.js").write_text(
     "/* منتجات المتجر — يُعدَّل تلقائياً من لوحة التحكم admin.html */\n"
@@ -137,7 +145,7 @@ NAME = a.name.replace('"', "'").replace("\\", "")
 SCRUB = [("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
          ("213559237239", "213550000000"), ("anti-acne", "demo"), ("ALYSSUM DZ", NAME), ("ALYSSUM", NAME), ("أليسوم", NAME), ("alyssum", "store"), ("qvdaiundlkfbmjlummni", "YOUR_PROJECT_REF")]
 for f in OUT.rglob("*"):
-    if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".css", ".sql", ".sh", ".py"} and f.name not in ("make-template.py",):
+    if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".css", ".sql", ".sh", ".py", ".webmanifest"} and f.name not in ("make-template.py",):
         t = f.read_text(encoding="utf-8"); n = t
         for o, new in SCRUB:
             n = n.replace(o, new)

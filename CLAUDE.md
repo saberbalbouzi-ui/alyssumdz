@@ -12,6 +12,8 @@
 - Supabase (`https://qvdaiundlkfbmjlummni.supabase.co`): مخطط وأمان في `supabase/schema.sql` وتعليمات في `supabase/README.md`؛ الزيارات والمشاهدون الآن وأسئلة الوكيل تُرسل إليه إن ضُبط `SUPABASE_ANON_KEY` في `config.js`، وإلا تعود إلى Apps Script. لا تضع `service_role` في المستودع أبداً.
 - الوكيل الذكي: `assets/js/agent.js` (واجهة وردود افتراضية) + `assets/js/agent-brain.js` (استنتاج) + تدريبه في `assets/data/agent-training.json`.
 
+- حسابات الزبائن + PWA: `Account`/`PWA` في آخر `assets/js/app.js`، والخلفية `API.cust` في `api.js` (php | sb | local)؛ دوال `customer_*` في `supabase/schema.sql` ومسارات `customer_*` في `api/index.php`؛ ملفات PWA: `manifest.webmanifest` و`sw.js` وأيقونات `assets/img/icon-*.png` (خاصة بكل موقع، لا تدخل في `shared-files.json`).
+
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 

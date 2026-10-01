@@ -56,10 +56,38 @@ function db(): PDO {
         coupon TEXT, discount REAL NOT NULL DEFAULT 0, extra TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'nouvelle', note TEXT NOT NULL DEFAULT '');
       CREATE INDEX IF NOT EXISTS orders_created ON orders(created_at);
       CREATE INDEX IF NOT EXISTS orders_phone ON orders(phone, created_at);
+      CREATE TABLE IF NOT EXISTS customers (id INTEGER PRIMARY KEY, phone TEXT NOT NULL UNIQUE, name TEXT NOT NULL, wilaya TEXT, commune TEXT, pass_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS customer_sessions (token_hash TEXT PRIMARY KEY, customer_id INTEGER NOT NULL, created_at INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS customer_fails (phone TEXT NOT NULL, at INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS customer_fails_k ON customer_fails(phone, at);
       CREATE TABLE IF NOT EXISTS rl (k TEXT NOT NULL, t INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS rl_k ON rl(k, t);
     ");
+    if (!in_array('customer_id', array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name'), true)) $pdo->exec('ALTER TABLE orders ADD COLUMN customer_id INTEGER');   // ربط الطلب بحساب زبون
     return $pdo;
+}
+/* ── حسابات الزبائن: هاتف + كلمة سر؛ رمز جلسة عشوائي لا يُخزَّن منه إلا الـ sha256 ── */
+function custPhone(string $x): string {
+    $d = preg_replace('/\D/', '', $x);
+    if (str_starts_with($d, '00213')) return '0' . substr($d, 5);
+    if (str_starts_with($d, '213') && strlen($d) >= 12) return '0' . substr($d, 3);
+    if (strlen($d) === 9 && in_array($d[0], ['5', '6', '7'], true)) return '0' . $d;
+    return $d;
+}
+function custFromToken(string $t): ?int {
+    if (!preg_match('/^[0-9a-f]{48}$/', $t)) return null;
+    $st = db()->prepare('SELECT customer_id FROM customer_sessions WHERE token_hash = ? AND created_at > ?'); $st->execute([hash('sha256', $t), time() - 180 * 86400]);
+    $v = $st->fetchColumn(); return $v === false ? null : (int)$v;
+}
+function custNewSession(int $cid): string {
+    $t = bin2hex(random_bytes(24)); $d = db();
+    $d->prepare('INSERT INTO customer_sessions (token_hash, customer_id, created_at) VALUES (?,?,?)')->execute([hash('sha256', $t), $cid, time()]);
+    $d->prepare('DELETE FROM customer_sessions WHERE customer_id = ? AND created_at < ?')->execute([$cid, time() - 180 * 86400]);
+    return $t;
+}
+function custProfile(int $cid): array {
+    $st = db()->prepare('SELECT name, phone, wilaya, commune FROM customers WHERE id = ?'); $st->execute([$cid]); $r = $st->fetch() ?: [];
+    return ['name' => $r['name'] ?? '', 'phone' => $r['phone'] ?? '', 'wilaya' => $r['wilaya'] ?? '', 'commune' => $r['commune'] ?? ''];
 }
 /* حدّ معدّل بسيط لكل مفتاح (IP+نوع العملية) */
 function rateLimit(string $key, int $max, int $win): void {
@@ -243,12 +271,79 @@ switch ($route) {
             $clean[] = ['slug' => cut($i['slug'] ?? '', 80), 'title' => $title, 'qty' => $qty, 'price' => $price];
         }
         $id = 'S' . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 5));
+        $cust = custFromToken((string)($o['ctoken'] ?? ''));
         $extra = is_array($o['extra'] ?? null) ? json_encode($o['extra'], JSON_UNESCAPED_UNICODE) : '{}';
         if (strlen($extra) > 4000) $extra = '{}';
-        $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra, customer_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
           ->execute([$id, time(), $name, $phone, cut($o['wilaya'] ?? '', 80), cut($o['commune'] ?? '', 120), cut($o['dtype'] ?? '', 10), cut($o['desk'] ?? '', 160),
-            implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra]);
+            implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust]);
         out(200, ['ok' => true, 'id' => $id]);
+
+    /* ── حسابات الزبائن («حسابي») ── */
+    case 'customer_register':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        rateLimit('creg' . clientIp(), 10, 3600);
+        $b = body(); $phone = custPhone((string)($b['phone'] ?? '')); $name = cut($b['name'] ?? '', 120); $pw = (string)($b['password'] ?? '');
+        if (mb_strlen($name) < 2) out(422, ['error' => 'invalid_name']);
+        if (!preg_match('/^0\d{8,9}$/', $phone)) out(422, ['error' => 'invalid_phone']);
+        if (strlen($pw) < 6 || strlen($pw) > 72) out(422, ['error' => 'invalid_password']);
+        $d = db(); $st = $d->prepare('SELECT 1 FROM customers WHERE phone = ?'); $st->execute([$phone]);
+        if ($st->fetchColumn()) out(409, ['error' => 'phone_taken']);
+        $d->prepare('INSERT INTO customers (phone, name, wilaya, commune, pass_hash, created_at) VALUES (?,?,?,?,?,?)')
+          ->execute([$phone, $name, cut($b['wilaya'] ?? '', 80), cut($b['commune'] ?? '', 120), password_hash($pw, PASSWORD_DEFAULT), time()]);
+        $cid = (int)$d->lastInsertId();
+        out(200, ['ok' => true, 'token' => custNewSession($cid), 'profile' => custProfile($cid)]);
+
+    case 'customer_login':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $phone = custPhone((string)($b['phone'] ?? '')); $d = db();
+        $d->prepare('DELETE FROM customer_fails WHERE at < ?')->execute([time() - 86400]);
+        $st = $d->prepare('SELECT COUNT(*) FROM customer_fails WHERE phone = ? AND at > ?'); $st->execute([$phone, time() - 600]);
+        if ((int)$st->fetchColumn() >= 5) out(429, ['error' => 'too_many_attempts']);
+        $st = $d->prepare('SELECT id, pass_hash FROM customers WHERE phone = ?'); $st->execute([$phone]); $c = $st->fetch();
+        if (!$c || !password_verify((string)($b['password'] ?? ''), $c['pass_hash'])) {
+            $d->prepare('INSERT INTO customer_fails (phone, at) VALUES (?,?)')->execute([$phone, time()]);
+            usleep(300000); out(401, ['error' => 'invalid_credentials']);
+        }
+        out(200, ['ok' => true, 'token' => custNewSession((int)$c['id']), 'profile' => custProfile((int)$c['id'])]);
+
+    case 'customer_me':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $cid = custFromToken((string)(body()['token'] ?? '')); if (!$cid) out(401, ['error' => 'unauthorized']);
+        $st = db()->prepare('SELECT id, created_at, items_text, total, status, note FROM orders WHERE customer_id = ? ORDER BY created_at DESC LIMIT 50'); $st->execute([$cid]);
+        out(200, ['ok' => true, 'profile' => custProfile($cid), 'orders' => array_map(fn($r) => [
+            'id' => $r['id'], 'date' => iso((int)$r['created_at']), 'items' => $r['items_text'], 'total' => (float)$r['total'], 'status' => $r['status'],
+            'tracking' => preg_match('/🚚[a-z0-9_]+:([A-Za-z0-9._-]+)/u', (string)$r['note'], $m) ? $m[1] : ''], $st->fetchAll())]);
+
+    case 'customer_update':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $cid = custFromToken((string)($b['token'] ?? '')); if (!$cid) out(401, ['error' => 'unauthorized']);
+        $name = cut($b['name'] ?? '', 120); if (mb_strlen($name) < 2) out(422, ['error' => 'invalid_name']);
+        $d = db(); $np = (string)($b['new_password'] ?? '');
+        if ($np !== '') {
+            if (strlen($np) < 6 || strlen($np) > 72) out(422, ['error' => 'invalid_password']);
+            $st = $d->prepare('SELECT pass_hash FROM customers WHERE id = ?'); $st->execute([$cid]);
+            if (!password_verify((string)($b['old_password'] ?? ''), (string)$st->fetchColumn())) out(401, ['error' => 'invalid_credentials']);
+            $d->prepare('UPDATE customers SET pass_hash = ? WHERE id = ?')->execute([password_hash($np, PASSWORD_DEFAULT), $cid]);
+        }
+        $d->prepare('UPDATE customers SET name = ?, wilaya = ?, commune = ? WHERE id = ?')->execute([$name, cut($b['wilaya'] ?? '', 80), cut($b['commune'] ?? '', 120), $cid]);
+        out(200, ['ok' => true, 'profile' => custProfile($cid)]);
+
+    case 'customer_logout':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        db()->prepare('DELETE FROM customer_sessions WHERE token_hash = ?')->execute([hash('sha256', (string)(body()['token'] ?? ''))]);
+        out(200, ['ok' => true]);
+
+    /* ربط طلب سابق بالحساب: رقم الطلب + نفس هاتف الحساب */
+    case 'customer_link_order':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        rateLimit('clink' . clientIp(), 30, 3600);
+        $b = body(); $cid = custFromToken((string)($b['token'] ?? '')); if (!$cid) out(401, ['error' => 'unauthorized']);
+        $ph = custProfile($cid)['phone']; $d = db();
+        $st = $d->prepare('SELECT id, phone FROM orders WHERE id = ? AND customer_id IS NULL'); $st->execute([strtoupper(trim((string)($b['order_id'] ?? '')))]); $o = $st->fetch();
+        if (!$o || custPhone((string)$o['phone']) !== $ph) out(200, ['ok' => true, 'linked' => false]);
+        $d->prepare('UPDATE orders SET customer_id = ? WHERE id = ?')->execute([$cid, $o['id']]);
+        out(200, ['ok' => true, 'linked' => true]);
 
     /* ── قراءات وتعديلات المدير ── */
     case 'orders':
@@ -263,7 +358,7 @@ switch ($route) {
         if (!$isAdmin) out(401, ['error' => 'unauthorized']);
         if ($method !== 'POST') out(405, ['error' => 'method']);
         $b = body(); $id = (string)($b['id'] ?? ''); $set = []; $args = [];
-        if (isset($b['status'])) { if (!in_array($b['status'], ['nouvelle', 'confirmee', 'expediee', 'livree', 'annulee'], true)) out(422, ['error' => 'invalid_status']); $set[] = 'status = ?'; $args[] = $b['status']; }
+        if (isset($b['status'])) { if (!in_array($b['status'], ['nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'], true)) out(422, ['error' => 'invalid_status']); $set[] = 'status = ?'; $args[] = $b['status']; }
         if (isset($b['note'])) { $set[] = 'note = ?'; $args[] = cut($b['note'], 500); }
         if (!$set || $id === '') out(422, ['error' => 'nothing_to_update']);
         $args[] = $id;
@@ -381,6 +476,29 @@ switch ($route) {
         updReplaceFile("$root/version.json", json_encode(['version' => $ver]) . "\n");
         @rename($path, $path . '.used');
         out(200, ['ok' => true, 'version' => $ver]);
+
+    /* وسيط شركات التوصيل (إرسال الطرود وتتبع الحالات) — للمدير فقط. يمنع الوصول إلى عناوين داخلية (SSRF). */
+    case 'courier':
+        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $url = (string)($b['url'] ?? ''); $m = strtoupper((string)($b['method'] ?? 'GET'));
+        if (!in_array($m, ['GET', 'POST', 'PUT'], true)) out(400, ['error' => 'method']);
+        $pu = parse_url($url); $host = (string)($pu['host'] ?? ''); $sc = (string)($pu['scheme'] ?? '');
+        $localOk = !empty($cfg['allow_local_courier']) && in_array($host, ['127.0.0.1', 'localhost'], true) && $sc === 'http';
+        if ($host === '' || ($sc !== 'https' && !$localOk)) out(400, ['error' => 'insecure_url']);
+        $ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : gethostbyname($host);
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) out(400, ['error' => 'dns_failed']);
+        if (!$localOk && !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) out(400, ['error' => 'private_address']);
+        $hdr = [];
+        foreach ((array)($b['headers'] ?? []) as $k => $v) { if (is_string($k) && preg_match('/^[A-Za-z0-9-]{1,40}$/', $k) && !preg_match("/[\r\n]/", (string)$v)) $hdr[] = "$k: $v"; }
+        if (!function_exists('curl_init')) out(500, ['error' => 'curl_missing']);
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_TIMEOUT => 25, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_MAXFILESIZE => 2097152,
+            CURLOPT_USERAGENT => 'store-courier', CURLOPT_CUSTOMREQUEST => $m, CURLOPT_HTTPHEADER => $hdr, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2]);
+        if ($m !== 'GET' && isset($b['body'])) curl_setopt($ch, CURLOPT_POSTFIELDS, (string)$b['body']);
+        $resp = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE); curl_close($ch);
+        if ($resp === false) out(502, ['error' => 'upstream_failed']);
+        out(200, ['ok' => true, 'status' => $code, 'body' => substr((string)$resp, 0, 200000)]);
 
     case 'file':
         if (!$isAdmin) out(401, ['error' => 'unauthorized']);

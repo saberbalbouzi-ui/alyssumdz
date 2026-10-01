@@ -13,7 +13,7 @@
 var ADMIN_KEY = "CHANGE-ME-TO-A-LONG-RANDOM-SECRET";   // ← غيّره قبل النشر
 var ORDERS_SHEET = "Orders";
 var HEADERS = ["id", "date", "name", "phone", "wilaya", "commune", "dtype", "desk", "items", "subtotal", "fee", "total", "coupon", "discount", "extra", "status", "note"];
-var STATUSES = ["nouvelle", "confirmee", "expediee", "livree", "annulee"];
+var STATUSES = ["nouvelle", "confirmee", "expediee", "livree", "annulee", "echec"];
 var MAX_PER_PHONE = 5;          // أقصى عدد طلبات لكل هاتف
 var WINDOW_MIN = 10;            // خلال هذه المدة بالدقائق
 
