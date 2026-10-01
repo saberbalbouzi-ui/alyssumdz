@@ -849,7 +849,7 @@ function initCartDrawer(){
    لا يعمل داخل معاينة لوحة الإدارة (iframe) ولا بدون API_URL. */
 (function(){
   try{
-    if(window.parent !== window || typeof CONFIG === "undefined" || typeof API === "undefined" || !API.hit || (!CONFIG.API_URL && !(API.sb && API.sb.enabled()))) return;
+    if(window.parent !== window || typeof CONFIG === "undefined" || typeof API === "undefined" || !API.hit || (!CONFIG.API_URL && !(API.sb && API.sb.enabled()) && !(API.php && API.php.on()))) return;
     const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
     const page = m ? m[1] : (/\/(index\.html)?$/.test(location.pathname) ? "home" : "other");
     const k = "alyssum_hit_" + page;

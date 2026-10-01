@@ -1567,13 +1567,13 @@ const Admin = {
   },
   sbSession(){ return API.sb.enabled() && !!API.sb.session(); },
   async refreshLive(){
-    const el = $f("live-now"); if(!el || !CONFIG.API_URL) return;
+    const el = $f("live-now"); if(!el || !(CONFIG.API_URL || PHPAPI.on())) return;
     const r = await API.presence(this.key);
     if(r && r.ok){ el.textContent = "🟢 " + r.now + " يشاهدون الآن"; el.classList.add("on"); this.liveNow = r; }
     else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = API.sb.enabled() ? "تعذّر قراءة Supabase — تأكد من تشغيل supabase/schema.sql وإضافة بريدك لجدول admins" : "ألصق apps-script/Code-additions.gs أو فعّل Supabase لتفعيل العدّاد الحقيقي"; }
   },
   async refreshAlerts(){
-    if(!this.key || !CONFIG.API_URL) return;
+    if(!this.key || !(CONFIG.API_URL || PHPAPI.on())) return;
     $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
@@ -1630,14 +1630,14 @@ const Admin = {
 
   async load(){
     if(!this.key) return;
-    if(!CONFIG.API_URL){ toast("⚠️ لم يُربط الـ API بعد"); }
+    if(!CONFIG.API_URL && !PHPAPI.on()){ toast("⚠️ لم يُربط الـ API بعد"); }
     // ملاحظة: المنتجات ورسوم التوصيل تُقرأ محلياً من data.js/wilayas.js فقط (المصدر الوحيد
     // الموثوق — يُعدَّلان مباشرة عبر لوحة التحكم وتُنشر التعديلات فوراً على GitHub)، ولا تُستبدَل
     // بنتيجة Google Sheets القديمة: شيت الاختبار كانت تحتوي أحياناً على منتج واحد فقط، وكانت —
     // إذا ردّت بأي بيانات ولو ناقصة — تُخفي أغلب المنتجات في لوحة التحكم بصفة عشوائية (نفس السبب
     // الذي دفع لتعطيل هذا الاستبدال في bootStore() بملف api.js). الطلبات وحدها تبقى تُقرأ من الشيت.
     const [orders] = await Promise.all([
-      CONFIG.API_URL ? API.orders(this.key) : null,
+      (CONFIG.API_URL || PHPAPI.on()) ? API.orders(this.key) : null,
     ]);
     this.products = JSON.parse(JSON.stringify(PRODUCTS));
     this.fees = JSON.parse(JSON.stringify(WILAYAS));
