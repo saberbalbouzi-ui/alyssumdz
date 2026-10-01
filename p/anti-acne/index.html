@@ -421,6 +421,24 @@ footer.site h4{color:#fff!important}
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
+/* نموذج الطلب العريض */
+.order-wide{margin-top:2rem}
+.order-wide .form{max-width:none!important;margin-top:0!important}
+@media(min-width:960px){
+  .order-wide .form{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem 1.2rem;align-items:end;padding:26px 32px!important}
+  .order-wide .form>h3{grid-column:1/-1;margin:0}
+  .order-wide .form .frow{display:contents}
+  .order-wide .form .field{margin:0}
+  .order-wide .form #desk-wrap{grid-column:span 2}
+  .order-wide .form .dtype{grid-column:span 2;margin:0}
+  .order-wide .form .coupon-box{grid-column:span 2;margin:0!important;flex-wrap:nowrap!important;align-self:stretch;align-items:center}
+  .order-wide .form .coupon-box .btn-cart2{width:auto!important;flex:none;margin:0}
+  .order-wide .form #prod-coupon-msg{grid-column:1/-1;margin:0!important;min-height:0!important}
+  .order-wide .form .total-box{grid-column:span 2;margin:0;align-self:stretch}
+  .order-wide .form .btn-order{grid-column:span 2;margin:0;align-self:stretch;font-size:1.1rem}
+  .order-wide .form .btn-wa,.order-wide .form .btn-cart2#add-cart{grid-column:span 2;margin:0}
+  .order-wide .form .cod-note{grid-column:1/-1;margin:0}
+}
 </style>
 
 <meta property="og:title" content="كريمة ضد حب الشباب — أليسوم | الدفع عند الاستلام"><meta property="og:description" content="كريمة نباتية للعناية بالبشرة المعرضة لحب الشباب، تحتوي على زيت شجرة الشاي والإكليل والجيرانيوم وعرق السوس والميرمية وعشبة القديسين وفيتامين E، وتساعد "><meta property="og:image" content="https://alyssumdz.com/assets/img/anti-acne/presentation/anti-acne%2001.webp"><meta property="og:type" content="product"><meta property="og:url" content="https://alyssumdz.com/p/anti-acne/?_=1790787898406"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="كريمة ضد حب الشباب — أليسوم | الدفع عند الاستلام"><meta name="twitter:description" content="كريمة نباتية للعناية بالبشرة المعرضة لحب الشباب، تحتوي على زيت شجرة الشاي والإكليل والجيرانيوم وعرق السوس والميرمية وعشبة القديسين وفيتامين E، وتساعد "><meta name="twitter:image" content="https://alyssumdz.com/assets/img/anti-acne/presentation/anti-acne%2001.webp"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&amp;display=swap"><style id="__alyssum_theme_override">:root{--bg:#fbf8f2;--card:#ffffff;--ink:#1c2420;--muted:#6b7672;--green:#173f35;--green-2:#0f2e26;--gold:#c8a24b;--gold-2:#e4c87f;--red:#d64545;--ok:#1e9e6a;--line:#eae3d6}body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif!important}body{font-size:16px}body{font-weight:400}</style></head>
@@ -440,8 +458,8 @@ footer.site h4{color:#fff!important}
   <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / كريمة ضد حب الشباب</div>
   <div class="pd2 lp-hero">
     <div class="pbox">
-      <div class="gmain"><img id="gmain" src="../../assets/img/anti-acne/presentation/anti-acne 003.webp" alt="كريمة ضد حب الشباب"></div>
-      <div class="pthumbs"><div class="gthumbs"></div></div>
+      <div class="gmain"><img id="gmain" src="../../assets/img/anti-acne/presentation/anti-acne 01.webp" alt="كريمة ضد حب الشباب"></div>
+      <div class="pthumbs"><div class="gthumbs" data-static="1"><img src="../../assets/img/anti-acne/presentation/anti-acne 01.webp" alt="كريمة ضد حب الشباب" class="on active"><img src="../../assets/img/anti-acne/presentation/anti-acne 02.webp" alt="كريمة ضد حب الشباب"><img src="../../assets/img/anti-acne/presentation/anti-acne 003.webp" alt="كريمة ضد حب الشباب"><img src="../../assets/img/anti-acne/presentation/anti-acne 004.webp" alt="كريمة ضد حب الشباب"><img src="../../assets/img/anti-acne/1790674002315.webp" alt="كريمة ضد حب الشباب"></div></div>
       <div class="trust-strip" style="margin-top:1rem">
         <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>
       </span></div>
@@ -483,8 +501,10 @@ footer.site h4{color:#fff!important}
       <div class="u">2 400 دج للقطعة <br><b style="color:var(--ok)">مجاناً داخل العرض</b></div></div></div>
 
       <div class="mini-points"><div>مكونات طبيعية 100% بدون مواد كيميائية ضارة</div><div>يساعد على مظهر أنقى وأكثر إشراقاً</div><div>ترطيب متوازن دون ملمس دهني</div><div>نتائج يشهد بها آلاف الزبائن</div></div>
-
-      <form class="form" id="order-form" style="margin-top:1rem">
+    </div>
+  </div>
+  <div class="order-wide">
+<form class="form" id="order-form" style="margin-top:1rem">
         <h3>📝 املأ معلوماتك — الدفع عند الاستلام</h3>
         <div class="frow">
           <div class="field"><label>الاسم الكامل *</label><input id="name" required="" placeholder="مثال: أحمد بن علي"></div>
@@ -509,7 +529,6 @@ footer.site h4{color:#fff!important}
         <button type="button" class="btn-cart2" id="add-cart">🛒 أضف إلى السلة</button>
         <div class="cod-note">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>
       </form>
-    </div>
   </div>
 </div>
 
@@ -647,55 +666,22 @@ footer.site h4{color:#fff!important}
 <script defer="" src="../../assets/js/app.js"></script>
 <script defer="" src="../../assets/js/agent.js"></script>
 <script>
-// Galerie d'images - changement au clic et auto-rotation
-let currentImageIndex = 0;
-const images = [
-    "../../assets/img/anti-acne/presentation/anti-acne 01.webp",
-    "../../assets/img/anti-acne/presentation/anti-acne 02.webp",
-    "../../assets/img/anti-acne/presentation/anti-acne 003.webp",
-    "../../assets/img/anti-acne/presentation/anti-acne 004.webp"
-];
-let autoRotateInterval;
-
-function changeImage(thumb) {
-    const mainImg = document.getElementById("gmain");
-    mainImg.src = thumb.src;
-    
-    // Mettre à jour les classes actives
-    document.querySelectorAll(".gthumbs img").forEach(img => img.classList.remove("active"));
-    thumb.classList.add("active");
-    
-    // Réinitialiser l'auto-rotation
-    clearInterval(autoRotateInterval);
-    startAutoRotate();
-}
-
-function startAutoRotate() {
-    autoRotateInterval = setInterval(() => {
-        currentImageIndex = (currentImageIndex + 1) % images.length;
-        const mainImg = document.getElementById("gmain");
-        const thumbs = document.querySelectorAll(".gthumbs img");
-        
-        mainImg.src = images[currentImageIndex];
-        thumbs.forEach((img, idx) => {
-            img.classList.toggle("active", idx === currentImageIndex);
-        });
-    }, 4000); // Change toutes les 4 secondes
-}
-
-// Démarrer l'auto-rotation au chargement
-document.addEventListener("DOMContentLoaded", () => {
-    startAutoRotate();
-});
-
-// Pause sur hover de la galerie
-document.querySelector(".pbox")?.addEventListener("mouseenter", () => {
-    clearInterval(autoRotateInterval);
-});
-
-document.querySelector(".pbox")?.addEventListener("mouseleave", () => {
-    startAutoRotate();
-});
+/* معرض الصور: الصورة الكبيرة تتبع الصور المصغّرة، وتدوير تلقائي (يتوقف داخل محرر اللوحة والفأرة فوق المعرض) */
+(function(){
+  var main=document.getElementById("gmain"), box=document.querySelector(".gthumbs[data-static]");
+  if(!main||!box) return;
+  function thumbs(){ return [].slice.call(box.querySelectorAll("img")); }
+  function show(im){ main.src=im.src; thumbs().forEach(function(x){ x.classList.remove("on","active"); }); im.classList.add("on","active"); }
+  document.addEventListener("DOMContentLoaded",function(){
+    var t=thumbs(); if(t[0]) show(t[0]);
+    if(window.parent!==window) return;
+    var timer;
+    function restart(){ clearInterval(timer); timer=setInterval(function(){ var a=thumbs(); if(a.length<2) return; var i=-1; a.forEach(function(x,k){ if(x.classList.contains("on")) i=k; }); show(a[(i+1)%a.length]); },4000); }
+    box.addEventListener("click",function(e){ var im=e.target.closest("img"); if(im){ show(im); restart(); } });
+    restart();
+    var pb=document.querySelector(".pbox"); if(pb){ pb.addEventListener("mouseenter",function(){ clearInterval(timer); }); pb.addEventListener("mouseleave",restart); }
+  });
+})();
 </script>
 <script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
       initProduct("anti-acne");

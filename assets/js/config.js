@@ -1,5 +1,6 @@
 /* ضع رابط Web App الخاص بك هنا (من Google Apps Script → Deploy → Web app → URL /exec) */
 const CONFIG = {
+  SELLER: true,   /* لوحة «النشر للعملاء» في الإدارة — خاصة بموقع البائع فقط، وتُحذف تلقائياً من حزم العملاء */
   /* هوية الموقع — الملف الوحيد الذي يُعدَّل عند نقل الموقع إلى مالك جديد (انظر HANDOVER.md) */
   SITE: {
     name: "أليسوم ALYSSUM",

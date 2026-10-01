@@ -1,0 +1,27 @@
+# يبني إصدار التحديث (غير موقَّع) ويرفعه إلى releases/<الإصدار>/. التوقيع ونشر latest.json يتمّان من لوحة البائع بمفتاحه الخاص.
+name: build-release
+on:
+  workflow_dispatch:
+    inputs:
+      version: { description: "رقم الإصدار x.y.z", required: true }
+      notes: { description: "ملاحظات الإصدار", required: false, default: "" }
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - name: Build release
+        env: { VER: "${{ inputs.version }}", NOTES: "${{ inputs.notes }}" }
+        run: |
+          [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "رقم إصدار غير صالح"; exit 1; }
+          python3 scripts/release.py "$VER" "$NOTES"
+      - name: Commit
+        env: { VER: "${{ inputs.version }}" }
+        run: |
+          git config user.name "release-bot"; git config user.email "release-bot@users.noreply.github.com"
+          git add VERSION "releases/$VER"
+          git commit -m "إصدار $VER (غير موقَّع)"
+          git push origin main

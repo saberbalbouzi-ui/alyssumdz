@@ -454,17 +454,20 @@ function initProduct(slug){
 
   // معرض الصور — تُقرأ دائماً من data.js (p.images) عند كل تحميل للصفحة، ولا تُترك
   // لتجمّد داخل HTML الثابت للصفحة، حتى تبقى متطابقة مع ما يُعدَّل من لوحة التحكم
-  const main = document.getElementById("gmain");
-  const gthumbsEl = document.querySelector(".gthumbs");
-  if(gthumbsEl) gthumbsEl.innerHTML = ""; // تفريغ أي صور مصغّرة ثابتة مضمّنة في HTML (تفادي التكرار)
-  if(main && p.images && p.images[0]) main.src = REL + p.images[0]; // مزامنة الصورة الرئيسية مع أول صورة في المعرض (تفادي بقائها قديمة)
-  p.images.forEach((src,i)=>{
-    const th = document.createElement("img");
-    th.src = REL+src; th.alt = p.title;
-    if(i===0) th.classList.add("on");
-    th.onclick = ()=>{ main.src=REL+src; document.querySelectorAll(".gthumbs img").forEach(x=>x.classList.remove("on")); th.classList.add("on"); };
-    document.querySelector(".gthumbs").appendChild(th);
-  });
+  const staticGallery = !!document.querySelector(".gthumbs[data-static]");   // صفحات القالب الجديد: معرض مكتوب في الصفحة نفسها (يُعدَّل من اللوحة) ولا يتبع صور المنتج
+  if(!staticGallery){
+    const main = document.getElementById("gmain");
+    const gthumbsEl = document.querySelector(".gthumbs");
+    if(gthumbsEl) gthumbsEl.innerHTML = ""; // تفريغ أي صور مصغّرة ثابتة مضمّنة في HTML (تفادي التكرار)
+    if(main && p.images && p.images[0]) main.src = REL + p.images[0]; // مزامنة الصورة الرئيسية مع أول صورة في المعرض (تفادي بقائها قديمة)
+    p.images.forEach((src,i)=>{
+      const th = document.createElement("img");
+      th.src = REL+src; th.alt = p.title;
+      if(i===0) th.classList.add("on");
+      th.onclick = ()=>{ main.src=REL+src; document.querySelectorAll(".gthumbs img").forEach(x=>x.classList.remove("on")); th.classList.add("on"); };
+      document.querySelector(".gthumbs").appendChild(th);
+    });
+  }
 
   // العروض — العرض المُحدَّد بصرياً (on) هو نفسه bestIdx المُفعَّل افتراضياً في state.offer أعلاه
   const offersBox = document.getElementById("offers");

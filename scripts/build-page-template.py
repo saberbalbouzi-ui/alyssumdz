@@ -4,6 +4,12 @@
 import pathlib, re
 root = pathlib.Path(__file__).resolve().parent.parent
 s = (root / "p/anti-acne/index.html").read_text(encoding="utf-8")
+# تطبيع المصدر: يعمل سواء كانت anti-acne بالنموذج القديم أو محوّلة (معرض ثابت ونموذج عريض)
+s = re.sub(r'<div class="gthumbs"[^>]*>.*?</div>', '<div class="gthumbs"></div>', s, count=1, flags=re.S)
+s = re.sub(r'\s*<div class="order-wide">\s*(<form class="form" id="order-form".*?</form>)\s*</div>', lambda m: "\n      " + m.group(1), s, count=1, flags=re.S)
+if "/* نموذج الطلب العريض */" in s:
+    s = re.sub(r"\n?/\* نموذج الطلب العريض \*/.*?(?=</style>)", "", s, count=1, flags=re.S)
+s = re.sub(r"<script>\n/\* معرض الصور:.*?</script>\n", "", s, count=1, flags=re.S)
 head = s[:s.index('<div class="topbar">')]
 rest = s[s.index('<div class="topbar">'):]
 
@@ -28,6 +34,40 @@ top = re.sub(r'<div class="mini-points">.*?</div></div>\n', '<div class="mini-po
 top = re.sub(r'<div class="offers" id="offers">.*?</div></div></div>\n', '<div class="offers" id="offers"></div>\n', top, flags=re.S)
 top = re.sub(r'(id="(?:pprice|pold|psave|grand|btn-total|sticky-price)">)[^<]*', r"\1", top)
 top = re.sub(r'<span class="deal-timer">[^<]*</span>', '<span class="deal-timer">48:00:00</span>', top)
+
+# ── معرض ثابت قابل للتعديل (منفصل تماماً عن صورة الغلاف التي تظهر في الصفحة الرئيسية)
+thumbs = "".join('<img src="../../assets/img/placeholder/photo.svg" alt="صورة %d"%s>' % (i, ' class="on active"' if i == 1 else "") for i in range(1, 5))
+assert '<div class="gthumbs"></div>' in top
+top = top.replace('<div class="gthumbs"></div>', '<div class="gthumbs" data-static="1">' + thumbs + "</div>")
+# ── نموذج الطلب: يخرج من عمود المعلومات ويصير عريضاً أسفل القسم العلوي
+m = re.search(r'\s*<form class="form" id="order-form".*?</form>', top, re.S)
+assert m, "نموذج الطلب غير موجود"
+form = m.group(0).strip()
+top = top.replace(m.group(0), "")
+idx = top.rstrip().rfind("</div>")
+top = top[:idx] + '  <div class="order-wide">\n' + form + '\n  </div>\n' + top[idx:]
+# أنماط النموذج العريض على الحاسوب
+CSS = """
+/* نموذج الطلب العريض */
+.order-wide{margin-top:2rem}
+.order-wide .form{max-width:none!important;margin-top:0!important}
+@media(min-width:960px){
+  .order-wide .form{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem 1.2rem;align-items:end;padding:26px 32px!important}
+  .order-wide .form>h3{grid-column:1/-1;margin:0}
+  .order-wide .form .frow{display:contents}
+  .order-wide .form .field{margin:0}
+  .order-wide .form #desk-wrap{grid-column:span 2}
+  .order-wide .form .dtype{grid-column:span 2;margin:0}
+  .order-wide .form .coupon-box{grid-column:span 2;margin:0!important;flex-wrap:nowrap!important;align-self:stretch;align-items:center}
+  .order-wide .form .coupon-box .btn-cart2{width:auto!important;flex:none;margin:0}
+  .order-wide .form #prod-coupon-msg{grid-column:1/-1;margin:0!important;min-height:0!important}
+  .order-wide .form .total-box{grid-column:span 2;margin:0;align-self:stretch}
+  .order-wide .form .btn-order{grid-column:span 2;margin:0;align-self:stretch;font-size:1.1rem}
+  .order-wide .form .btn-wa,.order-wide .form .btn-cart2#add-cart{grid-column:span 2;margin:0}
+  .order-wide .form .cod-note{grid-column:1/-1;margin:0}
+}
+"""
+head = head.replace("</style>", CSS + "</style>", 1)
 
 # ── الأقسام التسويقية: نصوص محايدة وصور بديلة قابلة للاستبدال من اللوحة (اضغط الصورة ← رفع من الجهاز)
 def card_img(i): return '<article class="lp-card"><img src="../../assets/img/placeholder/photo.svg" alt="مكوّن %d" loading="lazy" style="width:100%%;height:210px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>اسم المكوّن %d</h3><p>وصف قصير للمكوّن أو الميزة.</p></div></article>' % (i, i)
@@ -123,12 +163,29 @@ body = f'''<section class="lp-sec alt"><div class="container">
 # ── التذييل والسلة والسكربتات: كما هي مع إزالة معرض الصور الثابت وتعويضه بتدوير يقرأ صور المنتج
 foot = rest[rest.index('<footer class="site">'):]
 foot = foot.replace("© 2026 ALYSSUM DZ", "© {{YEAR}} {{SITE_EN}}")
-foot = re.sub(r"<script>\n// Galerie.*?</script>\n", '''<script>
-/* تدوير صور المعرض تلقائياً (الصور نفسها تأتي من بيانات المنتج) */
-document.addEventListener("DOMContentLoaded",()=>{ let t; const run=()=>{ clearInterval(t); t=setInterval(()=>{ const th=[...document.querySelectorAll(".gthumbs img")]; if(th.length<2) return; const i=th.findIndex(x=>x.classList.contains("on")); th[(i+1)%th.length].click(); },4000); };
-  setTimeout(run,1500); const b=document.querySelector(".pbox"); if(b){ b.addEventListener("mouseenter",()=>clearInterval(t)); b.addEventListener("mouseleave",run); } });
+GALLERY_JS = """<script>
+/* معرض الصور: الصورة الكبيرة تتبع الصور المصغّرة، وتدوير تلقائي (يتوقف داخل محرر اللوحة والفأرة فوق المعرض) */
+(function(){
+  var main=document.getElementById("gmain"), box=document.querySelector(".gthumbs[data-static]");
+  if(!main||!box) return;
+  function thumbs(){ return [].slice.call(box.querySelectorAll("img")); }
+  function show(im){ main.src=im.src; thumbs().forEach(function(x){ x.classList.remove("on","active"); }); im.classList.add("on","active"); }
+  document.addEventListener("DOMContentLoaded",function(){
+    var t=thumbs(); if(t[0]) show(t[0]);
+    if(window.parent!==window) return;
+    var timer;
+    function restart(){ clearInterval(timer); timer=setInterval(function(){ var a=thumbs(); if(a.length<2) return; var i=-1; a.forEach(function(x,k){ if(x.classList.contains("on")) i=k; }); show(a[(i+1)%a.length]); },4000); }
+    box.addEventListener("click",function(e){ var im=e.target.closest("img"); if(im){ show(im); restart(); } });
+    restart();
+    var pb=document.querySelector(".pbox"); if(pb){ pb.addEventListener("mouseenter",function(){ clearInterval(timer); }); pb.addEventListener("mouseleave",restart); }
+  });
+})();
 </script>
-''', foot, flags=re.S)
+"""
+foot = re.sub(r"<script>\n// Galerie.*?</script>\n", lambda _: GALLERY_JS, foot, flags=re.S)
+if "معرض الصور" not in foot:
+    foot = foot.replace('<script>document.addEventListener("DOMContentLoaded",()=>{bootStore()', GALLERY_JS + '<script>document.addEventListener("DOMContentLoaded",()=>{bootStore()', 1)
+assert "معرض الصور" in foot
 foot = foot.replace('"anti-acne"', '"{{SLUG}}"')
 out = head + top + body + foot
 (root / "p/_template/index.html").write_text(out, encoding="utf-8")

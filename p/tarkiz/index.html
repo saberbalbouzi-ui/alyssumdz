@@ -421,6 +421,24 @@ footer.site h4{color:#fff!important}
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
+/* نموذج الطلب العريض */
+.order-wide{margin-top:2rem}
+.order-wide .form{max-width:none!important;margin-top:0!important}
+@media(min-width:960px){
+  .order-wide .form{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem 1.2rem;align-items:end;padding:26px 32px!important}
+  .order-wide .form>h3{grid-column:1/-1;margin:0}
+  .order-wide .form .frow{display:contents}
+  .order-wide .form .field{margin:0}
+  .order-wide .form #desk-wrap{grid-column:span 2}
+  .order-wide .form .dtype{grid-column:span 2;margin:0}
+  .order-wide .form .coupon-box{grid-column:span 2;margin:0!important;flex-wrap:nowrap!important;align-self:stretch;align-items:center}
+  .order-wide .form .coupon-box .btn-cart2{width:auto!important;flex:none;margin:0}
+  .order-wide .form #prod-coupon-msg{grid-column:1/-1;margin:0!important;min-height:0!important}
+  .order-wide .form .total-box{grid-column:span 2;margin:0;align-self:stretch}
+  .order-wide .form .btn-order{grid-column:span 2;margin:0;align-self:stretch;font-size:1.1rem}
+  .order-wide .form .btn-wa,.order-wide .form .btn-cart2#add-cart{grid-column:span 2;margin:0}
+  .order-wide .form .cod-note{grid-column:1/-1;margin:0}
+}
 </style>
 </head>
 <body>
@@ -439,7 +457,7 @@ footer.site h4{color:#fff!important}
   <div class="pd2 lp-hero">
     <div class="pbox">
       <div class="gmain"><img id="gmain" src="../../assets/img/tarkiz/presentation/01.webp" alt="عسل التركيز وتنشيط الذاكرة للأطفال"></div>
-      <div class="pthumbs"><div class="gthumbs"></div></div>
+      <div class="pthumbs"><div class="gthumbs" data-static="1"><img src="../../assets/img/tarkiz/presentation/01.webp" alt="عسل التركيز و تنشيط الذاكرة" class="on active"><img src="../../assets/img/tarkiz/presentation/02.webp" alt="عسل التركيز و تنشيط الذاكرة"><img src="../../assets/img/tarkiz/presentation/03.webp" alt="عسل التركيز و تنشيط الذاكرة"><img src="../../assets/img/tarkiz/presentation/04.webp" alt="عسل التركيز و تنشيط الذاكرة"></div></div>
       <div class="trust-strip" style="margin-top:1rem">
         <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>🔄 استبدال مضمون</span>
       </div>
@@ -472,8 +490,10 @@ footer.site h4{color:#fff!important}
       <div class="offers" id="offers"></div>
 
       <div class="mini-points"><div>تركيبة طبيعية 100% بمكونات مختارة بعناية</div><div>يدعم التركيز وتنشيط الذاكرة عند الأطفال</div><div>طعم محبب يسهّل إدخاله في الروتين اليومي</div><div>مناسب للأطفال من 4 إلى 18 سنة</div></div>
-
-      <form class="form" id="order-form" style="margin-top:1rem">
+    </div>
+  </div>
+  <div class="order-wide">
+<form class="form" id="order-form" style="margin-top:1rem">
         <h3>📝 املأ معلوماتك — الدفع عند الاستلام</h3>
         <div class="frow">
           <div class="field"><label>الاسم الكامل *</label><input id="name" required="" placeholder="مثال: أحمد بن علي"></div>
@@ -498,7 +518,6 @@ footer.site h4{color:#fff!important}
         <button type="button" class="btn-cart2" id="add-cart">🛒 أضف إلى السلة</button>
         <div class="cod-note">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>
       </form>
-    </div>
   </div>
 </div>
 
@@ -629,6 +648,24 @@ footer.site h4{color:#fff!important}
 <script defer="" src="../../assets/js/api.js"></script>
 <script defer="" src="../../assets/js/app.js"></script>
 <script defer="" src="../../assets/js/agent.js"></script>
+<script>
+/* معرض الصور: الصورة الكبيرة تتبع الصور المصغّرة، وتدوير تلقائي (يتوقف داخل محرر اللوحة والفأرة فوق المعرض) */
+(function(){
+  var main=document.getElementById("gmain"), box=document.querySelector(".gthumbs[data-static]");
+  if(!main||!box) return;
+  function thumbs(){ return [].slice.call(box.querySelectorAll("img")); }
+  function show(im){ main.src=im.src; thumbs().forEach(function(x){ x.classList.remove("on","active"); }); im.classList.add("on","active"); }
+  document.addEventListener("DOMContentLoaded",function(){
+    var t=thumbs(); if(t[0]) show(t[0]);
+    if(window.parent!==window) return;
+    var timer;
+    function restart(){ clearInterval(timer); timer=setInterval(function(){ var a=thumbs(); if(a.length<2) return; var i=-1; a.forEach(function(x,k){ if(x.classList.contains("on")) i=k; }); show(a[(i+1)%a.length]); },4000); }
+    box.addEventListener("click",function(e){ var im=e.target.closest("img"); if(im){ show(im); restart(); } });
+    restart();
+    var pb=document.querySelector(".pbox"); if(pb){ pb.addEventListener("mouseenter",function(){ clearInterval(timer); }); pb.addEventListener("mouseleave",restart); }
+  });
+})();
+</script>
 <script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
       initProduct("tarkiz");
       initCartDrawer();
