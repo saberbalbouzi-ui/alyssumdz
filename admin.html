@@ -439,6 +439,12 @@ tr:hover td{background:#FAF7F0}
       <label class="hint" style="margin:.3rem 0 0">عند فشل التوصيل (echec)</label><textarea id="nt-echec" rows="2"></textarea>
       <button class="small gold" onclick="Admin.saveNotify()">💾 حفظ</button>
     </div>
+    <div class="card" id="wh-card">
+      <b style="color:var(--green)">⚡ Webhook ياليدين (تحديث الحالات لحظياً)</b>
+      <div class="hint">بدل الضغط على «تحديث الحالات»، تُرسل ياليدين كل تغيّر حالة إلى موقعك فوراً. انسخ الرابط أدناه في لوحة ياليدين ← Webhooks (الأحداث: تغيّر حالة الطرد).</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem"><input id="wh-url" readonly dir="ltr" placeholder="اضغط «إنشاء الرابط»" style="flex:1;min-width:240px"><button class="small gold" type="button" onclick="Admin.genWebhook()">🔑 إنشاء / عرض الرابط</button><button class="small gray" type="button" onclick="Admin.copyWebhook()">📋 نسخ</button></div>
+      <div class="hint" id="wh-hint" style="margin-top:.4rem"></div>
+    </div>
     <div class="card">
       <b style="color:var(--green)">🏷️ مصدر أسعار التوصيل</b>
       <div class="hint">اختر إن كان الموقع يعتمد الأسعار المفضّلة التي تضبطها يدوياً من تبويب «🚚 رسوم التوصيل»، أو أسعار الشركة النشطة نفسها (إن كانت محفوظة لها مسبقاً من نافذة إعدادها)</div>
@@ -1855,9 +1861,10 @@ const Admin = {
     $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
-      const changed = o.orders.length !== this.orders.length;
+      const changed = o.orders.length !== this.orders.length || o.orders.some((x,i)=>{ const old = this.orders.find(y=>y.id === x.id); return old && (old.status !== x.status || old.note !== x.note); });
       this.orders = o.orders;
-      if(changed){ this.renderStats(); this.renderOrders(); }
+      this.reconcileStatusChanges();
+      if(changed){ this.renderStats(); this.renderOrders(); this.renderShipped(); }
     }
     const fresh = this.orders.filter(x=>x.status === "nouvelle").length;
     if(this.alerts.orders >= 0 && fresh > this.alerts.orders){ this.beep(); toast("🔔 طلب جديد!"); }
@@ -4317,6 +4324,7 @@ const Admin = {
     }
     this.enqueueNotify(o, status);
     this.syncStockForOrder(o, status);
+    this.markStatusSeen();
     this.renderStats(); this.renderLoyalty();
   },
   confirmBlacklist(phone){
@@ -4337,7 +4345,29 @@ const Admin = {
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
     this.fin = { costs: costs || {}, set: Object.assign({ packaging:0, carrierPct:100, returnPct:100, low:5 }, set || {}), cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
+    this.reconcileStatusChanges();
   },
+  /* رابط الـ Webhook: نسخة PHP تستقبله مباشرة (api/index.php?r=webhook)، ونسخة Supabase عبر دالة Edge باسم yalidine-webhook (انظر supabase/README.md) */
+  async genWebhook(){
+    let sec = await Priv.get("webhook_secret", null);
+    if(!sec || typeof sec !== "string"){ sec = Array.from(crypto.getRandomValues(new Uint8Array(18)), b=>b.toString(16).padStart(2,"0")).join(""); await Priv.set("webhook_secret", sec); }
+    const php = PHPAPI.on(), base = location.href.replace(/[?#].*$/, "").replace(/[^\/]*$/, "");
+    const url = php ? base + "api/index.php?r=webhook&s=" + sec : CONFIG.SUPABASE_URL.replace(/\/$/, "") + "/functions/v1/yalidine-webhook?s=" + sec;
+    $f("wh-url").value = url;
+    $f("wh-hint").innerHTML = php ? "✅ جاهز: الرابط يعمل فور لصقه في ياليدين."
+      : "⚠️ على Supabase يلزم نشر الدالة مرة واحدة وضبط السر نفسه: <code dir='ltr'>supabase secrets set YALIDINE_WEBHOOK_SECRET=" + sec + "</code> ثم <code dir='ltr'>supabase functions deploy yalidine-webhook --no-verify-jwt</code> (التفاصيل في supabase/README.md).";
+  },
+  copyWebhook(){ const v = $f("wh-url").value; if(!v){ toast("اضغط «إنشاء الرابط» أولاً"); return } navigator.clipboard.writeText(v).then(()=>toast("📋 نُسخ الرابط")).catch(()=>{ $f("wh-url").select(); }); },
+
+  /* حالات تغيّرت من خارج هذه الصفحة (ويب هوك ياليدين أو جهاز آخر): نطبّق عليها أثرها هنا — إشعار الزبون، القائمة السوداء عند الفشل، والمخزون */
+  reconcileStatusChanges(){
+    let seen = null; try{ seen = JSON.parse(localStorage.getItem("alyssum_status_seen") || "null"); }catch(e){}
+    if(seen && this.fin && this.fin.cfg){
+      this.orders.forEach((o,i)=>{ if(seen[o.id] !== undefined && seen[o.id] !== o.status) this.onStatusChange(i, o.status); });
+    }
+    this.markStatusSeen();
+  },
+  markStatusSeen(){ try{ const m = {}; this.orders.forEach(o=>{ m[o.id] = o.status; }); localStorage.setItem("alyssum_status_seen", JSON.stringify(m)); }catch(e){} },
   /* أسطر الطلب (المنتج/التنويع/الكمية/مبلغ السطر) من نص الطلب «العنوان ×الكمية = السعر DA» */
   orderLines(o){
     return String(o.items||"").split(/\n/).map(line=>{

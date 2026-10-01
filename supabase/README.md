@@ -30,3 +30,12 @@
 5. **غيّر `ADMIN_KEY` في Code.gs (Apps Script)** إلى قيمة جديدة طويلة، لأن القديمة كانت منشورة علناً في `config.js` (حُذفت من الملف الآن لكنها قد تكون قُرئت).
 - الرجوع في أي وقت: أعد `ORDERS_BACKEND` إلى `"sheets"`.
 - حماية الدالة: ترفض الطلب إن كان الاسم/الهاتف غير صالح، وتحدّ 5 طلبات لكل هاتف خلال 10 دقائق.
+
+## Webhook ياليدين (تحديث الحالات لحظياً)
+الدالة `functions/yalidine-webhook/index.ts` تستقبل أحداث ياليدين وتحدّث `orders.status` (لا تتراجع بالحالة، `livree` و`annulee` نهائيتان).
+1. من لوحة الإدارة ← شركات التوصيل ← «Webhook ياليدين» ← «إنشاء / عرض الرابط»، ويُعرض السر والأمر.
+2. ثبّت Supabase CLI ثم من مجلد المشروع:
+   `supabase secrets set YALIDINE_WEBHOOK_SECRET=<السر>` ثم `supabase functions deploy yalidine-webhook --no-verify-jwt --project-ref qvdaiundlkfbmjlummni`
+3. الصق الرابط (`…/functions/v1/yalidine-webhook?s=<السر>`) في لوحة ياليدين ← Webhooks.
+4. عند فتح اللوحة تُطبَّق على الحالات الجديدة آثارها (إشعار الزبون، القائمة السوداء عند الفشل، إعادة المخزون).
+مفتاح `service_role` يحقنه Supabase في الدالة تلقائياً ولا يوضع في المستودع.

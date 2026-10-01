@@ -27,7 +27,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $isAdmin = !empty($_SESSION['admin']);
 
 /* الكتابة والدخول تتطلب ترويسة مخصصة (تمنع الطلبات العابرة للمواقع CSRF) */
-if ($method !== 'GET' && ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') out(403, ['error' => 'bad_request']);
+if ($method !== 'GET' && $route !== 'webhook' && ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') out(403, ['error' => 'bad_request']);   // webhook ياليدين خادم-لخادم: يُصادَق عليه بالسر لا بالترويسة
 
 function body(): array {
     $max = 12 * 1024 * 1024;
@@ -61,6 +61,7 @@ function db(): PDO {
       CREATE TABLE IF NOT EXISTS customer_fails (phone TEXT NOT NULL, at INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS customer_fails_k ON customer_fails(phone, at);
       CREATE TABLE IF NOT EXISTS admin_kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS webhook_log (id INTEGER PRIMARY KEY, ts INTEGER NOT NULL, tracking TEXT, raw TEXT, result TEXT, payload TEXT);
       CREATE TABLE IF NOT EXISTS rl (k TEXT NOT NULL, t INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS rl_k ON rl(k, t);
     ");
@@ -89,6 +90,17 @@ function custNewSession(int $cid): string {
 function custProfile(int $cid): array {
     $st = db()->prepare('SELECT name, phone, wilaya, commune FROM customers WHERE id = ?'); $st->execute([$cid]); $r = $st->fetch() ?: [];
     return ['name' => $r['name'] ?? '', 'phone' => $r['phone'] ?? '', 'wilaya' => $r['wilaya'] ?? '', 'commune' => $r['commune'] ?? ''];
+}
+/* تحويل حالة ياليدين إلى حالتنا (نفس منطق admin.html): livree | echec | expediee | confirmee | null */
+function ydMap(string $raw): ?string {
+    $t = trim(strtr(mb_strtolower($raw), ['é' => 'e', 'è' => 'e', 'ê' => 'e', 'à' => 'a', 'â' => 'a', 'î' => 'i', 'ï' => 'i', 'ô' => 'o', 'ù' => 'u', 'û' => 'u', 'ç' => 'c']));
+    if ($t === '') return null;
+    if (preg_match('/^livre/', $t)) return 'livree';
+    if (preg_match('/tentative.*(echou|echec)/', $t)) return null;
+    if (preg_match('/echec livraison|^retour|retourne|echange.*(echou|echec)/', $t)) return 'echec';
+    if (preg_match('/pas encore|pret a expedier|preparation|a verifier/', $t)) return 'confirmee';
+    if (preg_match('/expedie|transfert|centre|localisation|vers wilaya|recu a wilaya|sorti en livraison|en attente du client|pret pour livreur|ramasse|en livraison/', $t)) return 'expediee';
+    return null;
 }
 /* حدّ معدّل بسيط لكل مفتاح (IP+نوع العملية) */
 function rateLimit(string $key, int $max, int $win): void {
@@ -364,6 +376,49 @@ switch ($route) {
                 out(200, ['found' => true, 'status' => $o['status'], 'date' => iso((int)$o['created_at']), 'wilaya' => $o['wilaya'] ?? '', 'commune' => $o['commune'] ?? '', 'dtype' => $o['dtype'] ?? '']);
         }
         out(200, ['found' => false]);
+
+    /* Webhook ياليدين: يحدّث حالة الطلب لحظياً. السر في الرابط (?s=) وهو محفوظ في admin_kv؛ ويُقبل أيضاً توقيع HMAC في ترويسة إن أرسلته الشركة */
+    case 'webhook':
+        if ($method === 'GET') out(200, ['ok' => true, 'webhook' => 'ready']);      // فحص وصول الرابط من لوحة ياليدين
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        rateLimit('wh' . clientIp(), 600, 60);
+        $d = db(); $st = $d->prepare("SELECT v FROM admin_kv WHERE k = 'webhook_secret'"); $st->execute(); $sec = json_decode((string)$st->fetchColumn(), true);
+        $raw = (string)file_get_contents('php://input', false, null, 0, 1048576);
+        $given = (string)($_GET['s'] ?? ''); $okAuth = is_string($sec) && $sec !== '' && hash_equals($sec, $given);
+        if (!$okAuth && is_string($sec) && $sec !== '') {
+            foreach (['HTTP_X_YALIDINE_SIGNATURE', 'HTTP_X_SIGNATURE', 'HTTP_X_HUB_SIGNATURE_256'] as $h) {
+                $sig = (string)($_SERVER[$h] ?? ''); $sig = preg_replace('/^sha256=/i', '', $sig);
+                if ($sig !== '' && hash_equals(hash_hmac('sha256', $raw, $sec), strtolower($sig))) { $okAuth = true; break; }
+            }
+        }
+        if (!$okAuth) out(401, ['error' => 'unauthorized']);
+        $j = json_decode($raw, true); if (!is_array($j)) out(400, ['error' => 'bad_json']);
+        $evt = (string)($j['type'] ?? $j['event'] ?? $j['event_type'] ?? '');
+        if ($evt !== '' && !in_array($evt, ['parcel_status_updated', 'parcel_payment_updated', 'parcel_edited'], true)) out(200, ['ok' => true, 'ignored' => $evt]);   // parcel_created / parcel_deleted لا تغيّر الحالة
+        $items = isset($j['data']) && is_array($j['data']) ? (array_is_list($j['data']) ? $j['data'] : [$j['data']]) : (array_is_list($j) ? $j : [$j]);
+        $rank = ['nouvelle' => 0, 'confirmee' => 1, 'expediee' => 2, 'livree' => 3]; $upd = 0; $res = [];
+        foreach ($items as $it) {
+            if (!is_array($it)) continue;
+            $trk = (string)($it['tracking'] ?? $it['tracking_number'] ?? ($it['parcel']['tracking'] ?? ''));
+            $rawSt = (string)($it['last_status'] ?? $it['status'] ?? $it['event_status'] ?? ($it['parcel']['last_status'] ?? $j['last_status'] ?? $j['status'] ?? ''));
+            $oid = (string)($it['order_id'] ?? '');
+            $row = null;
+            if ($trk !== '' && preg_match('/^[A-Za-z0-9._-]{4,40}$/', $trk)) {
+                $q = $d->prepare('SELECT id, status, note FROM orders WHERE note LIKE ? LIMIT 5'); $q->execute(['%' . $trk . '%']);
+                foreach ($q->fetchAll() as $r) if (preg_match('/🚚[a-z0-9_]+:([A-Za-z0-9._-]+)/u', (string)$r['note'], $m) && $m[1] === $trk) { $row = $r; break; }
+            }
+            if (!$row && $oid !== '') { $q = $d->prepare('SELECT id, status, note FROM orders WHERE id = ?'); $q->execute([$oid]); $row = $q->fetch() ?: null; }
+            $new = ydMap($rawSt); $result = 'ignored';
+            if ($row && $new) {
+                $cur = $row['status'];
+                $allowed = in_array($cur, ['livree', 'annulee'], true) ? false : (($new === 'echec') ? true : (($rank[$new] ?? 0) > ($rank[$cur] ?? 0)));
+                if ($allowed && $cur !== $new) { $d->prepare('UPDATE orders SET status = ? WHERE id = ?')->execute([$new, $row['id']]); $upd++; $result = "{$cur}→{$new}"; } else $result = 'no_change';
+            } elseif (!$row) $result = 'order_not_found';
+            $d->prepare('INSERT INTO webhook_log (ts, tracking, raw, result, payload) VALUES (?,?,?,?,?)')->execute([time(), $trk, $rawSt, $result, substr($raw, 0, 4000)]);
+            $res[] = $result;
+        }
+        $d->exec('DELETE FROM webhook_log WHERE id NOT IN (SELECT id FROM webhook_log ORDER BY id DESC LIMIT 100)');
+        out(200, ['ok' => true, 'updated' => $upd]);
 
     /* تخزين خاص بالمدير (أسعار التكلفة، إعدادات الأرباح، سجل المخزون) — لا يصل إليه الزوار */
     case 'kv':
