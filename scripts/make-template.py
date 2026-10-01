@@ -151,6 +151,7 @@ for f in OUT.rglob("*"):
 if a.target == "php":
     import secrets
     shutil.rmtree(OUT / "supabase", ignore_errors=True)
+    shutil.rmtree(OUT / "scripts", ignore_errors=True)          # أدوات البائع (Python) لا تلزم الزبون، وتمنع استيراد Hostinger للأرشيف
     (OUT / "scripts/setup-supabase.sh").unlink(missing_ok=True)
     shutil.copytree(ROOT / "php-edition/api", OUT / "api")
     code = "-".join(secrets.token_hex(2).upper() for _ in range(4))
