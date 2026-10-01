@@ -144,3 +144,61 @@ grant execute on function public.admin_analytics() to authenticated;
 
 -- 6) تنظيف اختياري (يلزم تفعيل pg_cron من Database ← Extensions): يحذف النبضات والزيارات القديمة
 -- select cron.schedule('ay-cleanup', '0 3 * * *', $$ delete from public.presence where seen_at < now() - interval '1 day'; delete from public.visits where created_at < now() - interval '400 days'; $$);
+
+-- ════════════════════════════════════════════════════════════════════
+-- 7) المرحلة 2: الطلبات (تُفعَّل من config.js بـ ORDERS_BACKEND = "both" ثم "supabase")
+-- ════════════════════════════════════════════════════════════════════
+create table if not exists public.orders (
+  id text primary key,
+  created_at timestamptz not null default now(),
+  name text not null check (char_length(name) between 2 and 120),
+  phone text not null check (char_length(phone) between 6 and 20),
+  wilaya text, commune text, dtype text, desk text,
+  items jsonb not null default '[]'::jsonb,
+  items_text text not null default '',
+  subtotal numeric not null default 0, fee numeric not null default 0, total numeric not null default 0,
+  coupon text, discount numeric not null default 0,
+  extra jsonb not null default '{}'::jsonb,
+  status text not null default 'nouvelle' check (status in ('nouvelle', 'confirmee', 'expediee', 'livree', 'annulee')),
+  note text not null default '',
+  source text not null default 'site'
+);
+create index if not exists orders_created_idx on public.orders (created_at desc);
+create index if not exists orders_phone_idx on public.orders (phone, created_at);
+alter table public.orders enable row level security;
+revoke all on public.orders from anon, authenticated;
+grant select, insert on public.orders to authenticated;
+grant update (status, note) on public.orders to authenticated;
+drop policy if exists "admin read orders" on public.orders;
+create policy "admin read orders" on public.orders for select to authenticated using (public.is_admin());
+drop policy if exists "admin import orders" on public.orders;
+create policy "admin import orders" on public.orders for insert to authenticated with check (public.is_admin());
+drop policy if exists "admin update orders" on public.orders;
+create policy "admin update orders" on public.orders for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- إرسال طلب من الموقع: تحقق + حدّ للتكرار (5 طلبات لنفس الهاتف خلال 10 دقائق) ثم يُرجع رقم الطلب
+create or replace function public.submit_order(p jsonb) returns text
+language plpgsql security definer set search_path = public as $$
+declare
+  v_id text; v_phone text; v_name text; v_items jsonb; v_text text;
+begin
+  v_name := btrim(coalesce(p ->> 'name', ''));
+  v_phone := regexp_replace(coalesce(p ->> 'phone', ''), '[^0-9+]', '', 'g');
+  v_items := coalesce(p -> 'items', '[]'::jsonb);
+  if char_length(v_name) not between 2 and 120 then raise exception 'invalid_name'; end if;
+  if char_length(v_phone) not between 6 and 20 then raise exception 'invalid_phone'; end if;
+  if jsonb_typeof(v_items) <> 'array' or jsonb_array_length(v_items) not between 1 and 50 then raise exception 'invalid_items'; end if;
+  if coalesce((p ->> 'total')::numeric, -1) not between 0 and 10000000 then raise exception 'invalid_total'; end if;
+  if (select count(*) from public.orders where phone = v_phone and created_at > now() - interval '10 minutes') >= 5 then raise exception 'rate_limited'; end if;
+
+  select string_agg((i ->> 'title') || ' ×' || coalesce(i ->> 'qty', '1') || ' = ' || round(coalesce((i ->> 'price')::numeric, 0) * coalesce((i ->> 'qty')::numeric, 1)) || ' DA', E'\n')
+    into v_text from jsonb_array_elements(v_items) i;
+  v_id := 'S' || to_char(now(), 'YYMMDD') || '-' || upper(substr(md5(gen_random_uuid()::text), 1, 5));
+  insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra)
+  values (v_id, v_name, v_phone, left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), left(p ->> 'dtype', 10), left(p ->> 'desk', 160),
+          v_items, coalesce(v_text, ''), coalesce((p ->> 'subtotal')::numeric, 0), coalesce((p ->> 'fee')::numeric, 0), (p ->> 'total')::numeric,
+          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), coalesce(p -> 'extra', '{}'::jsonb));
+  return v_id;
+end $$;
+revoke all on function public.submit_order(jsonb) from public;
+grant execute on function public.submit_order(jsonb) to anon, authenticated;
