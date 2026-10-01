@@ -337,3 +337,9 @@ section[id]{scroll-margin-top:84px}
 .agent-chips .chip:hover{background:#fff}
 .agent-chips .chip.gold{background:var(--gold);border-color:var(--gold);color:#fff}
 .msg.cta{background:transparent;border:0;padding:0}
+
+/* عدّاد «يشاهدون الآن» البارز في صفحة المنتج */
+.tag.live-badge{background:linear-gradient(135deg,#fff3f0,#ffe9e4);border:1.5px solid #f3b3a8;color:#b3261e;font-weight:800;font-size:1.02rem;padding:.5rem 1rem;border-radius:999px;display:inline-flex;align-items:center;gap:.5rem;box-shadow:0 6px 18px rgba(179,38,30,.12)}
+.tag.live-badge b{font-size:1.25rem;font-weight:900;color:#b3261e;min-width:1.4ch;text-align:center}
+.live-dot{width:11px;height:11px;border-radius:50%;background:#e03b2f;display:inline-block;box-shadow:0 0 0 0 rgba(224,59,47,.6);animation:liveDot 1.4s infinite}
+@keyframes liveDot{70%{box-shadow:0 0 0 9px rgba(224,59,47,0)}100%{box-shadow:0 0 0 0 rgba(224,59,47,0)}}

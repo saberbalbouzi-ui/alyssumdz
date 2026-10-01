@@ -69,6 +69,19 @@ const API = {
 
   submitOrder(order) { this.post({ type: "order", order }); },
 
+  /* ── تتبّع الزيارات والمشاهدين الآن وأسئلة الوكيل (تتطلب apps-script/Code-additions.gs في السكربت) ── */
+  visitorId() {
+    try { let v = localStorage.getItem("alyssum_vid"); if (!v) { v = Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem("alyssum_vid", v); localStorage.setItem("alyssum_vid_new", "1"); } return v; }
+    catch (e) { return "anon" + Math.random().toString(36).slice(2, 8); }
+  },
+  hit(page) { let isNew = false; try { isNew = localStorage.getItem("alyssum_vid_new") === "1"; localStorage.removeItem("alyssum_vid_new"); } catch (e) {} this.post({ type: "hit", page, vid: this.visitorId(), isNew }); },
+  ping(page) { this.post({ type: "ping", page, vid: this.visitorId() }); },
+  logQuestion(q, page, lang) { this.post({ type: "agent_question", q, page, lang }); },
+  questions(key) { return this.get("agent_questions", { key }); },
+  resolveQuestion(key, id) { this.post({ type: "resolve_question", key, id }); },
+  presence(key) { return this.get("presence", { key }); },
+  analytics(key) { return this.get("analytics", { key }); },
+
   /* ── لوحة التحكم ── */
   async orders(key) { return this.get("orders", { key }); },
   saveProduct(key, product) { this.post({ type: "save_product", key, product }); },

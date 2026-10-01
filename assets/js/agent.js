@@ -283,7 +283,8 @@ const Agent = (() => {
     { re: /(توصيل|ليفريزون|ليفريسون|توصيلة|الولايات|livraison|delivery)/i, key: "delivery" },
     { re: /(دفع|الدفع|كاش|ثقة|نصب|احتيال|paiement|payer|confiance|arnaque)/i, key: "payment" },
     { re: /(ضمان|أصلي|طبيعي|كيماوي|فعالية|نتيجة|نتائج|garantie|original|naturel|efficace)/i, key: "guarantee" },
-    { re: /(اطلب|شراء|كيف اطلب|طريقة الطلب|تشرت|commander|acheter|comment.*command)/i, key: "howOrder" },
+    { re: /(أكثر.*(طلب|مبيع)|الأكثر|افضل منتج|أفضل منتج|best.?seller|plus demand|populaires)/i, key: "bestsellers" },
+    { re: /(اطلب|أطلب|إطلب|شراء|اشتري|أشتري|كيف اطلب|طريقة الطلب|طريقة الشراء|تشرت|commander|acheter|comment.*command)/i, key: "howOrder" },
     { re: /(واتساب|whatsapp|واتس)/i, key: "whatsapp" },
     { re: /(شكرا|شكراً|مشكور|merci)/i, key: "thanks" },
   ];
@@ -427,11 +428,11 @@ const Agent = (() => {
             body: JSON.stringify({ message: t, lang, product: currentProduct(), products: (window.PRODUCTS || []).slice(0, 30) }),
           });
           const j = await r.json();
-          botSay(j.reply || fallback(t)); addCta();
-        } catch (e) { botSay(fallback(t)); }
+          if (j.reply) { botSay(j.reply); addCta(); } else answerOrFallback(t);
+        } catch (e) { answerOrFallback(t); }
       }, 900);
     } else {
-      typing(() => { botSay(fallback(t)); addCta(); }, 700);
+      typing(() => answerOrFallback(t), 700);
     }
   }
 
@@ -460,6 +461,10 @@ const Agent = (() => {
 
     for (const it of INTENTS) {
       if (!it.re.test(t)) continue;
+      if (it.key === "bestsellers") {
+        const feat = (window.PRODUCTS || []).filter(p => p.old).slice(0, 3);
+        return feat.length ? `${tr.bestSellersIntro()}<br>` + feat.map(p => productCard(p, l)).join("<br>") + `<br>${tr.askNeed()}` : tr.askNeed();
+      }
       if (it.key === "delivery") return tr.deliveryGeneral();
       if (it.key === "price") {
         const cur = currentProduct();
@@ -489,15 +494,37 @@ const Agent = (() => {
     const wFollowUp = findWilaya(t);
     if (wFollowUp) return tr.deliveryWilaya(wFollowUp);
 
-    // على صفحة منتج ولم يتطابق شيء محدَّد → نتحدث عن هذا المنتج بالذات (دقّة حسب صفحة المنتج)
-    const cur = currentProduct();
+    // ذكر اسم منتج صراحةً → نعرّف به
     const byName = findProductByText(t);
     if (byName) return productPitch(byName, l);
-    if (cur) return productPitch(cur, l);
 
-    const feat = (window.PRODUCTS || []).filter(p => p.old).slice(0, 2);
-    if (!feat.length) return tr.askNeed();
-    return `${tr.bestSellersIntro()}<br>` + feat.map(p => productCard(p, l)).join("<br>") + `<br>${tr.askNeed()}`;
+    // لم نفهم السؤال: اعتذار + أسئلة افتراضية، ويُسجَّل السؤال لتجيب عليه لاحقاً من لوحة الإدارة
+    return NOT_UNDERSTOOD;
+  }
+
+  const NOT_UNDERSTOOD = "__NOT_UNDERSTOOD__";
+  const defaultQuestions = l => {
+    const trained = ((scopeCfg() || {}).qa || []).filter(x => x && x.active !== false && x.q).slice(0, 3).map(x => x.q);
+    const base = l === "fr"
+      ? (currentSlug ? ["Quel est le prix ?", "Paiement à la livraison ?", "Quel délai de livraison ?", "Comment commander ?"] : ["Quels sont vos produits les plus demandés ?", "Quels sont les frais de livraison ?", "Paiement à la livraison ?", "Comment commander ?"])
+      : (currentSlug ? ["ما هو سعر المنتج؟", "هل الدفع عند الاستلام؟", "كم مدة التوصيل؟", "هل المنتج أصلي وآمن؟", "كيف أطلب؟"] : ["ما هي أكثر المنتجات طلباً؟", "كم رسوم التوصيل؟", "هل الدفع عند الاستلام؟", "كيف أطلب؟"]);
+    return trained.concat(base).slice(0, 6);
+  };
+  const loggedQ = new Set();
+  function logUnanswered(t) {
+    const q = t.trim(); if (q.length < 3 || q.length > 300 || loggedQ.has(q)) return;
+    loggedQ.add(q);
+    try { if (typeof API !== "undefined" && API.logQuestion) API.logQuestion(q, scopeKey(), lang); } catch (e) {}
+  }
+  function notUnderstoodHtml() {
+    return (lang === "fr"
+      ? "Désolé, je n'ai pas compris votre question 🙏 Veuillez la reformuler, ou choisissez l'une de ces questions :"
+      : "من فضلك أعد صياغة السؤال 🙏 — اعتذر، لم أفهم سؤالك. غيّر السؤال أو استعمل أحد هذه الأسئلة:") + chipsHtml(defaultQuestions(lang));
+  }
+  function answerOrFallback(t) {                      // يُستعمل في كل مسارات الرد
+    const r = fallback(t);
+    if (r === NOT_UNDERSTOOD) { logUnanswered(t); botSay(notUnderstoodHtml()); bindChips(body()); return; }
+    botSay(r); addCta();
   }
 
   /* ── مبادرة الوكيل: لا يفتح اللوحة وحده (كان يغطي الصفحة)، لكن بعد مدة — إن لم يضغط الزبون على

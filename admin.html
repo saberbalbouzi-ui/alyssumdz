@@ -39,6 +39,12 @@ button{cursor:pointer;border:none;font-family:inherit}
 @media(max-width:900px){.admin-body{flex-direction:column;align-items:stretch}.side-nav{width:100%;position:static}.side-nav-intro{display:none}.nav-txt small{display:none}}
 .wrap{max-width:1200px;margin:0 auto;padding:1.2rem}
 .top{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.nb{background:var(--red);color:#fff;border-radius:999px;padding:0 .5rem;font-size:.72rem;font-weight:900;margin-inline-start:.45rem;min-width:1.3rem;text-align:center;display:inline-block;line-height:1.35rem;animation:nbPulse 1.6s infinite}
+.nb.hidden{display:none}
+@keyframes nbPulse{50%{box-shadow:0 0 0 5px rgba(214,69,69,.18)}}
+.live-pill{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:.3rem .9rem;font-weight:900;font-size:.9rem;color:var(--green);white-space:nowrap}
+.live-pill.on{border-color:#1E9E6A;color:#13774f}
+.alert-card{border:2px solid var(--red)!important;background:#fff7f7}
 .top h1{color:var(--green);font-size:1.4rem}
 .top button.logout{margin-inline-start:auto;background:var(--red);color:#fff;padding:.5rem 1.2rem;border-radius:10px;font-weight:800}
 .card{background:#fff;border-radius:16px;padding:1.2rem;margin-bottom:1rem;box-shadow:0 4px 14px rgba(0,0,0,.04)}
@@ -123,6 +129,7 @@ tr:hover td{background:#FAF7F0}
 <div class="wrap hidden" id="app">
   <div class="top">
     <h1>🌿 لوحة تحكم أليسوم</h1>
+    <span id="live-now" class="live-pill" title="المشاهدون الآن على الموقع (حقيقي)">⚪ المشاهدون الآن: …</span>
     <span id="pending-badge"></span>
     <button class="small blue" onclick="Admin.previewHome()">🏠 تعديل الصفحة الرئيسية</button>
     <button class="logout" onclick="Admin.logout()">خروج</button>
@@ -134,7 +141,7 @@ tr:hover td{background:#FAF7F0}
         <b>📋 دليل الاستخدام</b>
         <p>اختر قسماً من القائمة، ثم استعمل الأزرار داخل كل قسم لإضافة أو تعديل أو نشر التغييرات. زر «🏠 تعديل الصفحة الرئيسية» أعلى الصفحة يفتح محرراً مباشراً للموقع نفسه.</p>
       </div>
-      <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات</b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
+      <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
       <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
@@ -146,7 +153,7 @@ tr:hover td{background:#FAF7F0}
       <button class="nav-btn" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي</b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي<span class="nb hidden" id="nb-agent"></span></b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
     </nav>
     <main class="admin-main">
@@ -178,6 +185,12 @@ tr:hover td{background:#FAF7F0}
 
   <div id="tab-analytics" class="hidden">
     <div class="stat" id="analytics-summary"></div>
+    <div class="card" id="analytics-visits-card">
+      <b style="color:var(--green)">👁️ الزيارات</b>
+      <div class="hint">زيارة واحدة لكل زائر في كل جلسة وصفحة. نسبة التحويل = الطلبات ÷ الزيارات لكل صفحة منتج.</div>
+      <div class="stat" id="analytics-visits" style="margin-top:.6rem"></div>
+      <div style="overflow:auto"><table id="analytics-pages"></table></div>
+    </div>
     <div class="grid2">
       <div class="card">
         <b style="color:var(--green)">🏆 الأكثر مبيعاً</b>
@@ -488,6 +501,14 @@ tr:hover td{background:#FAF7F0}
   </div>
 
   <div id="tab-agent" class="hidden">
+    <div class="card hidden" id="aq-card">
+      <b style="color:#b3261e">❓ أسئلة جديدة لم يعرف الوكيل الإجابة عنها <span id="aq-count"></span></b>
+      <div class="hint">سأل الزبائن هذه الأسئلة فلم يجد الوكيل جواباً. اضغط «أجب» لتجهيز سؤال وجواب في تدريب الصفحة المعنية ثم جرّب وانشر.</div>
+      <div id="aq-list"></div>
+    </div>
+    <div class="card hidden" id="aq-hint" style="background:#f7f5ef">
+      <small>ℹ️ تسجيل أسئلة الزبائن غير المفهومة غير مفعّل بعد: ألصق محتوى <code>apps-script/Code-additions.gs</code> في مشروع Apps Script (التعليمات في أعلى الملف) ثم أعد نشره.</small>
+    </div>
     <div class="card" id="at-card">
       <b style="color:var(--green)">🎓 تدريب الوكيل الذكي لكل صفحة</b>
       <div class="hint">اختر الصفحة (الرئيسية أو أي منتج) فيصبح لها وكيلها الخاص. درّبه بالأسئلة والأجوبة وبمعلومات الصفحة، ثم جرّبه، ثم أكّد النشر.</div>
@@ -1392,6 +1413,23 @@ const AgentTrain = {
       this.bubble(this.esc(r.text) + '<br><small style="color:#6b7672">الثقة ' + Math.round(r.conf*100) + '% · المصدر: ' + (r.kind==="qa" ? "سؤال مدرَّب — " : "معلومات الصفحة — ") + this.esc(r.source||"") + '</small>');
     }catch(err){ this.bubble('❌ ' + this.esc(err.message)); }
   },
+  pendingResolve: new Set(),
+  async answerQuestion(id){
+    const x = (Admin.alerts.questions||[]).find(q=>q.id===id); if(!x) return;
+    if(!this.draft) await this.init();
+    const pg = (x.pages && x.pages[0]) || "home";
+    await this.init(); $f("at-scope").value = pg; this.select(pg);
+    this.addQA(x.q, "", "");
+    this.pendingResolve.add(id);
+    const rows = $f("at-qa").children; const last = rows[rows.length-1];
+    if(last){ last.scrollIntoView({behavior:"smooth", block:"center"}); const ta = last.querySelector("textarea"); if(ta) ta.focus(); }
+    toast("✍️ اكتب الجواب ثم جرّب الوكيل ثم «✅ تأكيد ونشر»");
+  },
+  ignoreQuestion(id){
+    if(!confirm("تجاهل هذا السؤال (لن يظهر مجدداً)؟")) return;
+    API.resolveQuestion(Admin.key, id);
+    Admin.alerts.questions = (Admin.alerts.questions||[]).filter(q=>q.id!==id); Admin.renderQuestions();
+  },
   discard(){ if(this.dirty() && !confirm("تجاهل كل التعديلات غير المنشورة؟")) return; this.draft = this.clone(this.saved); this.select(this.key); this.init(); },
   async publish(){
     const cfg = GH.cfg();
@@ -1406,6 +1444,8 @@ const AgentTrain = {
       const res = await GH.putFile(this.FILE, b64, this.sha, "تدريب الوكيل الذكي عبر لوحة التحكم");
       this.sha = res && res.content ? res.content.sha : this.sha;
       this.saved = this.clone(this.draft); this.renderDirty(); this.init();
+      this.pendingResolve.forEach(id=>API.resolveQuestion(Admin.key, id));
+      Admin.alerts.questions = (Admin.alerts.questions||[]).filter(q=>!this.pendingResolve.has(q.id)); this.pendingResolve.clear(); Admin.renderQuestions();
       toast("✅ نُشر تدريب الوكيل — يبدأ العمل على الموقع خلال دقيقة تقريباً");
     }catch(err){ console.error(err); toast("❌ " + err.message); }
   },
@@ -1431,6 +1471,75 @@ const Admin = {
     this.load();
   },
   logout(){ localStorage.removeItem("alyssum_admin_key"); location.reload() },
+  /* ════════ تنبيهات حمراء + المشاهدون الآن + أسئلة الوكيل (تحديث تلقائي) ════════ */
+  alerts: { orders: -1, questions: [], timer: null, liveTimer: null },
+  startAlerts(){
+    if(this.alerts.timer) return;
+    this.refreshAlerts(); this.refreshLive();
+    this.alerts.timer = setInterval(()=>this.refreshAlerts(), 60000);
+    this.alerts.liveTimer = setInterval(()=>this.refreshLive(), 30000);
+  },
+  beep(){ try{ const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = .06; o.start(); setTimeout(()=>{ o.stop(); a.close(); }, 220); }catch(e){} },
+  setBadge(id, n){ const el = $f(id); if(!el) return; el.textContent = n > 99 ? "99+" : n; el.classList.toggle("hidden", !(n > 0)); },
+  async refreshLive(){
+    const el = $f("live-now"); if(!el || !CONFIG.API_URL) return;
+    const r = await API.presence(this.key);
+    if(r && r.ok){ el.textContent = "🟢 " + r.now + " يشاهدون الآن"; el.classList.add("on"); this.liveNow = r; }
+    else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = "ألصق apps-script/Code-additions.gs في Apps Script لتفعيل العدّاد الحقيقي"; }
+  },
+  async refreshAlerts(){
+    if(!this.key || !CONFIG.API_URL) return;
+    const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
+    if(o && o.ok){
+      const changed = o.orders.length !== this.orders.length;
+      this.orders = o.orders;
+      if(changed){ this.renderStats(); this.renderOrders(); }
+    }
+    const fresh = this.orders.filter(x=>x.status === "nouvelle").length;
+    if(this.alerts.orders >= 0 && fresh > this.alerts.orders){ this.beep(); toast("🔔 طلب جديد!"); }
+    this.alerts.orders = fresh;
+    this.setBadge("nb-orders", fresh);
+    document.title = (fresh ? "(" + fresh + ") " : "") + "لوحة تحكم أليسوم";
+    const ok = !!(q && q.ok);
+    this.alerts.questions = ok ? q.questions : [];
+    $f("aq-hint").classList.toggle("hidden", ok);
+    this.renderQuestions();
+  },
+  renderQuestions(){
+    const list = this.alerts.questions || [];
+    this.setBadge("nb-agent", list.length);
+    $f("aq-card").classList.toggle("hidden", !list.length);
+    $f("aq-card").classList.toggle("alert-card", !!list.length);
+    $f("aq-count").textContent = list.length ? "(" + list.length + ")" : "";
+    const label = pg => pg === "home" ? "الرئيسية" : ((this.products.find(p=>p.slug===pg)||{}).title || pg);
+    $f("aq-list").innerHTML = list.map(x=>
+      '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;border-bottom:1px dashed var(--line);padding:.55rem 0">' +
+        '<div style="flex:1;min-width:200px"><b>' + AgentTrain.esc(x.q) + '</b><br><small style="color:#6b7672">× ' + x.count + ' · ' + (x.pages||[]).map(label).map(AgentTrain.esc).join("، ") + '</small></div>' +
+        '<button class="small gold" onclick="AgentTrain.answerQuestion(\'' + x.id + '\')">✍️ أجب</button>' +
+        '<button class="small gray" onclick="AgentTrain.ignoreQuestion(\'' + x.id + '\')">🗑️ تجاهل</button></div>'
+    ).join("");
+  },
+  async renderVisits(){
+    const box = $f("analytics-visits"), tbl = $f("analytics-pages");
+    box.innerHTML = '<div><b>…</b><span>جارِ التحميل</span></div>'; tbl.innerHTML = "";
+    const r = await API.analytics(this.key);
+    if(!r || !r.ok){ box.innerHTML = '<div style="flex:1;font-size:.85rem;color:#6b7672;padding:.5rem">لم تُفعَّل إحصاءات الزيارات بعد: ألصق <code>apps-script/Code-additions.gs</code> في Apps Script وأعد نشره (التعليمات في أعلى الملف).</div>'; return }
+    const live = (this.liveNow && this.liveNow.ok) ? this.liveNow : { now: 0, byPage: {} };
+    box.innerHTML = '<div><b>' + r.total.toLocaleString("fr-DZ") + '</b><span>إجمالي الزيارات</span></div>' +
+      '<div><b>' + r.today.toLocaleString("fr-DZ") + '</b><span>زيارات اليوم</span></div>' +
+      '<div><b>' + (r.unique||0).toLocaleString("fr-DZ") + '</b><span>زوار جدد</span></div>' +
+      '<div><b>' + live.now + '</b><span>يشاهدون الآن</span></div>';
+    const ordersByTitle = {};
+    this.orders.filter(o=>o.status!=="annulee").forEach(o=>{ new Set(this.parseOrderItems(o.items).map(i=>i.title)).forEach(t=>{ ordersByTitle[t] = (ordersByTitle[t]||0) + 1; }); });
+    const rows = Object.keys(r.pages).map(pg=>{
+      const p = this.products.find(x=>x.slug===pg), name = pg === "home" ? "🏠 الصفحة الرئيسية" : (p ? p.title : pg);
+      const ords = p ? (ordersByTitle[p.title]||0) : 0, v = r.pages[pg];
+      return { name, v, today: (r.todayPages||{})[pg]||0, now: live.byPage[pg]||0, ords, conv: p && v ? (ords/v*100) : null };
+    }).sort((a,b)=>b.v-a.v);
+    tbl.innerHTML = '<tr><th>الصفحة</th><th>الزيارات</th><th>اليوم</th><th>الآن</th><th>الطلبات</th><th>التحويل</th></tr>' +
+      rows.map(x=>'<tr><td>' + AgentTrain.esc(x.name) + '</td><td>' + x.v + '</td><td>' + x.today + '</td><td>' + x.now + '</td><td>' + (x.conv===null?"—":x.ords) + '</td><td>' + (x.conv===null?"—":x.conv.toFixed(1)+"%") + '</td></tr>').join("");
+  },
+
   reload(){ this.load() },
 
   async load(){
@@ -1453,6 +1562,7 @@ const Admin = {
     $f("app").classList.remove("hidden");
     this.loadDeliveryCfg();
     this.loadBlacklist();
+    this.startAlerts();
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadCheckoutSettings()]);
     this.renderAll();
     toast("✓ تم التحميل");
@@ -1475,7 +1585,7 @@ const Admin = {
     if(t==="pending") this.renderPending();
     if(t==="genpage") GenPage.init();
     if(t==="agent") AgentTrain.init();
-    if(t==="analytics") this.renderAnalytics();
+    if(t==="analytics"){ this.renderAnalytics(); this.renderVisits(); }
   },
 
   renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderTheme(); this.renderCheckoutSettings(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },

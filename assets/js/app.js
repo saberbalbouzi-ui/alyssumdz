@@ -690,9 +690,12 @@ function initProduct(slug){
   };
 
   // عدد الزوار العشوائي (إلحاح خفيف)
+  // (عدّاد ترويجي غير حقيقي عمداً في صفحة المنتج — العدّاد الحقيقي يظهر في لوحة الإدارة فقط)
   const vn = document.getElementById("viewers");
   if(vn){ let v = 8 + Math.floor(Math.random()*10); vn.textContent = v;
-    setInterval(()=>{ v = Math.max(5, v + (Math.random()>.5?1:-1)); vn.textContent = v; }, 7000); }
+    const tag = vn.closest(".tag"); if(tag){ tag.classList.add("live-badge"); tag.innerHTML = '<i class="live-dot"></i> <b id="viewers">' + v + '</b> يشاهدون هذا المنتج الآن'; }
+    const vn2 = document.getElementById("viewers");
+    setInterval(()=>{ v = Math.max(5, v + (Math.random()>.5?1:-1)); if(vn2) vn2.textContent = v; }, 7000); }
 }
 
 /* ── بطاقة منتج (مشتركة بين الشبكة الرئيسية والأكثر مبيعاً) ── */
@@ -839,3 +842,20 @@ function initCartDrawer(){
   const totBox = document.querySelector("#drawer .tot");
   if(totBox) injectCouponBox("cart", totBox, ()=>Cart.subtotal(), Cart.render);
 }
+
+
+/* ── تتبّع الزيارات + «يشاهدون الآن» الحقيقي (يُقرأ في لوحة الإدارة) ──
+   زيارة واحدة لكل جلسة وصفحة، ونبض كل 45 ثانية فقط والصفحة ظاهرة (وبحد أقصى 20 دقيقة) لتوفير حصة Apps Script.
+   لا يعمل داخل معاينة لوحة الإدارة (iframe) ولا بدون API_URL. */
+(function(){
+  try{
+    if(window.parent !== window || typeof CONFIG === "undefined" || !CONFIG.API_URL || typeof API === "undefined" || !API.hit) return;
+    const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
+    const page = m ? m[1] : (/\/(index\.html)?$/.test(location.pathname) ? "home" : "other");
+    const k = "alyssum_hit_" + page;
+    if(!sessionStorage.getItem(k)){ sessionStorage.setItem(k, "1"); API.hit(page); }
+    let beats = 0;
+    API.ping(page);
+    const iv = setInterval(()=>{ if(document.hidden) return; if(++beats > 26){ clearInterval(iv); return; } API.ping(page); }, 45000);
+  }catch(e){ /* التتبّع لا يجب أن يعطّل الموقع أبداً */ }
+})();
