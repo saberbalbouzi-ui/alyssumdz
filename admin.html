@@ -5137,7 +5137,7 @@ const Admin = {
       confidence: "confident",
       base: "https://api.yalidine.app",
       /* بعد الإرسال: رقم التتبع من الاستجابة {order_id: {success, tracking}} */
-      parseSent(json, order){ const r = json && (json[String(order.id)] || (Array.isArray(json.data) && json.data[0])); return (r && r.success !== false && r.tracking) ? String(r.tracking) : ""; },
+      parseSent(json, order){ const r = json && (json[String(order.__ydId || order.id)] || (Array.isArray(json.data) && json.data[0])); return (r && r.success !== false && r.tracking) ? String(r.tracking) : ""; },
       trackRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       /* جدول التعريفة من حسابك: GET /v1/deliveryfees/ (صفحات) ⟵ [{wilaya_id, home_fee, desk_fee}] */
       feesRequest(cfg, page){ return { url: this.base + "/v1/deliveryfees/?page_size=100&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
@@ -5168,10 +5168,8 @@ const Admin = {
         { key:"apiId", label:"API ID", type:"text" },
         { key:"apiToken", label:"API Token", type:"password" },
         { key:"fromWilayaName", label:"ولاية الانطلاق (مثال: Alger)", type:"text", required:false },
-        { key:"weight", label:"وزن الطرد الافتراضي (كغ)", type:"text", required:false },
-        { key:"length", label:"الطول الافتراضي (سم)", type:"text", required:false },
-        { key:"width", label:"العرض الافتراضي (سم)", type:"text", required:false },
-        { key:"height", label:"الارتفاع الافتراضي (سم)", type:"text", required:false },
+        { key:"extraJson", label:"حقول إضافية للطرد بصيغة JSON (اختياري، مثال: {\"can_open\":true})", type:"text", required:false },
+        { key:"lastOrderNo", label:"آخر رقم طلب استُعمل في ياليدين (يتزايد تلقائياً)", type:"text", required:false },
       ],
       /* الحقول حسب توثيق Yalidine API v1 (POST /v1/parcels/): الأبعاد والوزن إلزامية، ومكتب Stop Desk يحتاج stopdesk_id */
       buildRequest(cfg, order){
@@ -5182,29 +5180,32 @@ const Admin = {
         let deskId = null;
         if(stop){ const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null; const d = w && (w.desks||[]).find(x=>x.name === order.desk); deskId = order.__deskId || (d ? d.id : null);
           if(!deskId) { const err = new Error("مكتب Stop Desk «" + (order.desk || "؟") + "» غير معروف لدى ياليدين — اختر مكتباً من القائمة أو حوّل التوصيل إلى المنزل"); throw err; } }
-        const num = (v, d)=>{ const n = Number(v); return isFinite(n) && n > 0 ? n : d; };
-        const total = Math.round(Number(order.total) || 0);
+        /* إعدادات صاحب المتجر: التأمين دائماً مفعّل، السعر بدون التوصيل = القيمة المصرَّح بها للتأمين، لا أبعاد ولا وزن، فتح الطرد مسموح، والمنتجات بلا أسعار */
+        const total = Math.max(0, Math.round(Number(order.total) || 0)), price = Math.max(0, total - Math.round(Number(order.fee) || 0));
+        const products = String(order.items || "").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250);
         const body = {
-          order_id: String(order.id),
+          order_id: String(order.__ydId || order.id),
           from_wilaya_name: cfg.fromWilayaName || "Alger",
           firstname: first, familyname: family,
           contact_phone: ph,
           address: order.address || [order.commune, order.wilaya].filter(Boolean).join("، "),
           to_commune_name: order.commune || "",
           to_wilaya_name: order.wilaya || "",
-          product_list: String(order.items || "").replace(/\s*\n\s*/g, " | ").slice(0, 250),
-          price: total,
-          do_insurance: false,
-          declared_value: total,
-          length: num(cfg.length, 20), width: num(cfg.width, 15), height: num(cfg.height, 10), weight: num(cfg.weight, 1),
+          product_list: products,
+          price,
+          do_insurance: true,
+          declared_value: price,
           freeshipping: !(Number(order.fee) > 0),
           is_stopdesk: stop,
           has_exchange: false,
+          can_open: true,
         };
+        if(cfg.extraJson){ try{ Object.assign(body, JSON.parse(cfg.extraJson)); }catch(e){} }          // حقول إضافية بصيغة JSON من توثيق ياليدين (اختياري)
         if(stop) body.stopdesk_id = deskId;
         return { url: this.base + "/v1/parcels/", method: "POST", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify([body]) };
       },
       /* مراكز Stop Desk الرسمية: GET /v1/centers/ ⟵ [{center_id, name, address, commune_name, wilaya_id}] */
+      lastParcelsRequest(cfg){ return { url: this.base + "/v1/parcels/?page_size=1000", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       centersRequest(cfg, page){ return { url: this.base + "/v1/centers/?page_size=200&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       parseCenters(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r.center_id != null).map(r=>({ id: Number(r.center_id), name: String(r.name||""), address: String(r.address||""), commune: String(r.commune_name||""), wilaya_id: Number(r.wilaya_id) })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* ولايات ياليدين الرسمية (58، صفحة واحدة): GET /v1/wilayas/ ⟵ [{id, name, zone, is_deliverable}] */
@@ -5817,6 +5818,12 @@ const Admin = {
         if(!fix.ok){ this.askCommune(orderIndex, companyKey, fix); return false }
         ord = Object.assign({}, ord, { commune: fix.name });
       }
+      /* رقم الطلب في ياليدين يتبع آخر رقم عندها: الأكبر بين آخر رقم مسجَّل لدينا وآخر رقم رقمي في طرودها، +1 */
+      if(co.lastParcelsRequest){
+        let last = Number(cfg.lastOrderNo) || 0;
+        try{ const lr = await this.courierFetch(co.lastParcelsRequest(cfg)); if(lr.ok){ const arr = (JSON.parse(lr.text).data) || []; arr.forEach(x=>{ const n = Number(String(x.order_id||"").replace(/\D/g, "")); if(/^\d+$/.test(String(x.order_id||"")) && n > last) last = n; }); } }catch(e){}
+        ord = Object.assign({}, ord, { __ydId: String(last + 1) });
+      }
       let cfg2 = cfg;
       if(co.wilayasRequest && cfg.fromWilayaName){                                    // ولاية الانطلاق بالاسم الرسمي
         const wl = await this.companyWilayas(co, cfg), want = this.normName(cfg.fromWilayaName), hit = Object.values(wl).find(v=>this.normName(v.name) === want);
@@ -5826,8 +5833,9 @@ const Admin = {
       const r = await this.courierFetch(req);
       let json = null; try{ json = JSON.parse(r.text); }catch(e){}
       let tracking = "";
-      try{ if(r.ok && co.parseSent && json) tracking = co.parseSent(json, order); }catch(e){}
+      try{ if(r.ok && co.parseSent && json) tracking = co.parseSent(json, ord); }catch(e){}
       if(tracking){
+        if(ord.__ydId){ this.deliveryCfg[companyKey] = Object.assign({}, this.deliveryCfg[companyKey], { lastOrderNo: ord.__ydId }); this.saveDeliveryCfgToStorage(); }
         this.saveTracking(order, companyKey, tracking); this.renderOrders();
         toast("✅ أُرسل الطلب #" + order.id + " إلى " + co.name + " — رقم التتبع " + tracking);
         this.setShipRaw(order.id, "تم الإرسال للشركة");
