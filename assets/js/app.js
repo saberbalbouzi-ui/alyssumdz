@@ -999,3 +999,220 @@ function initCartDrawer(){
     const iv = setInterval(()=>{ if(document.hidden) return; if(++beats > 26){ clearInterval(iv); return; } API.ping(page); }, 45000);
   }catch(e){ /* التتبّع لا يجب أن يعطّل الموقع أبداً */ }
 })();
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   حسابي (تسجيل الزبون) + تثبيت الموقع على الهاتف (PWA)
+   الخلفية حسب النسخة: Supabase | PHP | على الجهاز فقط (انظر API.cust في api.js). الطلب يُربط بالحساب تلقائياً عند الإرسال.
+   ══════════════════════════════════════════════════════════════════════ */
+const PWA = {
+  ev: null,
+  base(){ return typeof REL !== "undefined" ? REL : ""; },
+  standalone(){ try{ return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }catch(e){ return false; } },
+  ios(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); },
+  inApp(){ return /FBAN|FBAV|Instagram|TikTok|musical_ly|Line\//i.test(navigator.userAgent); },   // متصفحات داخل التطبيقات لا تدعم التثبيت
+  init(){
+    if(window.parent !== window) return;                                  // ليس داخل معاينة الإدارة
+    try{
+      const h = document.head, add = (tag, attrs)=>{ const e = document.createElement(tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); h.appendChild(e); };
+      if(!document.querySelector('link[rel="manifest"]')) add("link", { rel:"manifest", href: this.base() + "manifest.webmanifest" });
+      if(!document.querySelector('meta[name="theme-color"]')) add("meta", { name:"theme-color", content:"#173F35" });
+      if(!document.querySelector('link[rel="apple-touch-icon"]')) add("link", { rel:"apple-touch-icon", href: this.base() + "assets/img/apple-touch-icon.png" });
+      add("meta", { name:"apple-mobile-web-app-capable", content:"yes" });
+      add("meta", { name:"apple-mobile-web-app-title", content: SITE_NAME.split(" ")[0] });
+      if("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register(this.base() + "sw.js").catch(()=>{});
+    }catch(e){}
+    addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); PWA.ev = e; });
+    addEventListener("appinstalled", ()=>{ PWA.ev = null; try{ toast("✅ تم تثبيت الموقع على هاتفك"); }catch(e){} });
+  },
+  async install(){
+    if(!this.ev) return "manual";
+    this.ev.prompt();
+    const c = await this.ev.userChoice.catch(()=>({ outcome:"dismissed" }));
+    this.ev = null; return c.outcome;
+  },
+  /* خطوات التثبيت اليدوي بحسب الجهاز */
+  steps(){
+    if(this.inApp()) return "أنت تتصفّح من داخل تطبيق (فيسبوك/إنستغرام…): اضغط <b>⋮</b> أو <b>…</b> ثم <b>«فتح في المتصفح»</b>، وبعدها ثبّت الموقع.";
+    if(this.ios()) return "في آيفون: افتح الموقع في <b>Safari</b>، اضغط زر المشاركة <b>⬆️</b> ثم <b>«إضافة إلى الشاشة الرئيسية»</b>.";
+    return "اضغط <b>⋮</b> أعلى المتصفح ثم <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.";
+  },
+};
+
+const Account = {
+  tab: "reg",
+  mode(){ return API.cust.mode(); },
+  profile(){ return API.cust.profile(); },
+  esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c])); },
+  ERR: {
+    phone_taken: "هذا الرقم مسجّل من قبل — سجّل الدخول بدلاً من إنشاء حساب جديد.",
+    invalid_credentials: "الهاتف أو كلمة السر غير صحيحة.",
+    too_many_attempts: "محاولات كثيرة خاطئة — انتظر 10 دقائق ثم أعد المحاولة.",
+    invalid_phone: "رقم الهاتف غير صالح (مثال: 0555123456).",
+    invalid_name: "الاسم قصير جداً.",
+    invalid_password: "كلمة السر يجب ألا تقل عن 6 أحرف.",
+    rate_limited: "طلبات كثيرة — حاول لاحقاً.",
+    network: "تعذّر الاتصال — تحقق من الإنترنت وأعد المحاولة.",
+  },
+  err(e){ const m = (e && e.message) || ""; return this.ERR[m] || "حدث خطأ غير متوقع — أعد المحاولة."; },
+  STATUS: { nouvelle:["قيد المراجعة","#8a6d1d"], confirmee:["مؤكَّد","#1c6b8f"], expediee:["في الطريق إليك 🚚","#6a3fb0"], livree:["تم التسليم ✅","#1E9E6A"], annulee:["ملغى","#999"], echec:["تعذّر التوصيل","#D64545"] },
+
+  init(){
+    if(window.parent !== window) return;
+    const hd = document.querySelector("header.site .container"); if(!hd || hd.querySelector(".acc-btn")) return;
+    const b = document.createElement("button");
+    b.className = "acc-btn"; b.type = "button"; b.setAttribute("aria-label", "حسابي"); b.innerHTML = "👤";
+    b.onclick = ()=>this.open();
+    const cart = hd.querySelector(".cart-btn"); cart ? hd.insertBefore(b, cart) : hd.appendChild(b);
+    this.mark();
+    [900, 2600].forEach(t=>setTimeout(()=>this.prefill(), t));
+  },
+  mark(){ const b = document.querySelector(".acc-btn"); if(b) b.classList.toggle("on", !!this.profile()); },
+
+  /* تعبئة نموذج الطلب ببيانات الحساب (للحقول الفارغة فقط) */
+  prefill(){
+    const p = this.profile(); if(!p) return;
+    const setv = (ids, v)=>{ if(!v) return; for(const id of ids){ const el = document.getElementById(id); if(el && !el.value){ el.value = v; el.dispatchEvent(new Event("input", { bubbles:true })); } } };
+    setv(["name","cname"], p.name); setv(["phone","cphone"], p.phone);
+    try{
+      const w = p.wilaya && WILAYAS.find(x=>x.name === p.wilaya);
+      if(w) ["wilaya","cwilaya"].forEach(id=>{ const el = document.getElementById(id); if(el && !el.value && el.options && el.options.length > 1){ el.value = w.id; el.onchange && el.onchange(); el.dispatchEvent(new Event("change", { bubbles:true })); } });
+    }catch(e){}
+    if(p.commune) ["commune","ccommune"].forEach(id=>{ const el = document.getElementById(id); if(el && !el.value){ if(el.tagName === "SELECT"){ if([...el.options].some(o=>o.value === p.commune)) el.value = p.commune; } else el.value = p.commune; } });
+  },
+
+  ensure(){
+    let bg = document.getElementById("acc-bg"); if(bg) return bg;
+    bg = document.createElement("div"); bg.id = "acc-bg"; bg.className = "acc-bg";
+    bg.innerHTML = '<div class="acc-box" role="dialog" aria-modal="true" aria-label="حسابي"><button class="acc-x" type="button" aria-label="إغلاق">✕</button><div id="acc-body"></div></div>';
+    document.body.appendChild(bg);
+    bg.addEventListener("click", e=>{ if(e.target === bg) this.close(); });
+    bg.querySelector(".acc-x").onclick = ()=>this.close();
+    addEventListener("keydown", e=>{ if(e.key === "Escape") this.close(); });
+    return bg;
+  },
+  open(){ this.ensure().classList.add("open"); document.documentElement.style.overflow = "hidden"; this.profile() ? this.home() : this.guest(); },
+  close(){ const bg = document.getElementById("acc-bg"); if(bg) bg.classList.remove("open"); document.documentElement.style.overflow = ""; },
+  body(html){ const b = document.getElementById("acc-body"); b.innerHTML = html; return b; },
+
+  /* ── زائر: تسجيل جديد / دخول ── */
+  guest(tab){
+    if(tab) this.tab = tab;
+    const local = this.mode() === "local", reg = local || this.tab === "reg";
+    const wOpts = '<option value="">— الولاية (اختياري) —</option>' + (typeof WILAYAS !== "undefined" ? WILAYAS.map(w=>`<option value="${this.esc(w.name)}">${String(w.id).padStart(2,"0")} - ${this.esc(w.name)}</option>`).join("") : "");
+    const b = this.body(`
+      <h3>👤 حسابي</h3>
+      <p class="acc-sub">${reg ? "أنشئ حسابك مرة واحدة: تتبّع طلباتك وأعد الطلب ببياناتك المحفوظة، وثبّت الموقع على هاتفك." : "سجّل الدخول لمتابعة طلباتك."}</p>
+      ${local ? "" : `<div class="acc-tabs"><button type="button" data-t="reg" class="${reg ? "on" : ""}">تسجيل جديد</button><button type="button" data-t="login" class="${reg ? "" : "on"}">لدي حساب</button></div>`}
+      <form id="acc-form" novalidate>
+        ${reg ? '<label>الاسم الكامل<input name="name" autocomplete="name" required></label>' : ""}
+        <label>رقم الهاتف<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="05XXXXXXXX" required dir="ltr"></label>
+        ${local ? "" : `<label>كلمة السر${reg ? " (6 أحرف على الأقل)" : ""}<input name="password" type="password" autocomplete="${reg ? "new-password" : "current-password"}" minlength="6" required dir="ltr"></label>`}
+        ${reg ? `<div class="acc-row"><label>الولاية<select name="wilaya">${wOpts}</select></label><label>البلدية<input name="commune" autocomplete="address-level2"></label></div>` : ""}
+        <div class="acc-msg" id="acc-msg"></div>
+        <button class="btn btn-gold acc-go" type="submit">${reg ? "✨ إنشاء الحساب" : "دخول"}</button>
+        ${local ? '<p class="acc-note">🔒 بياناتك محفوظة على هذا الجهاز فقط لتسريع طلباتك القادمة.</p>' : '<p class="acc-note">🔒 كلمة سرك مشفّرة ولا يراها أحد. نستعمل رقمك لتأكيد الطلبات وتتبّعها فقط.</p>'}
+      </form>`);
+    b.querySelectorAll(".acc-tabs button").forEach(x=>x.onclick = ()=>this.guest(x.dataset.t));
+    b.querySelector("#acc-form").onsubmit = ev=>{ ev.preventDefault(); this.submit(reg, ev.target); };
+  },
+  async submit(reg, f){
+    const v = Object.fromEntries(new FormData(f).entries()), msg = document.getElementById("acc-msg"), btn = f.querySelector(".acc-go");
+    const phone = String(v.phone || "").replace(/[^\d+]/g, "");
+    const fail = t=>{ msg.textContent = t; msg.className = "acc-msg bad"; };
+    if(reg && String(v.name || "").trim().length < 2) return fail(this.ERR.invalid_name);
+    if(phone.replace(/\D/g, "").length < 9) return fail(this.ERR.invalid_phone);
+    if(this.mode() !== "local" && String(v.password || "").length < 6) return fail(this.ERR.invalid_password);
+    btn.disabled = true; msg.textContent = "⏳ لحظة…"; msg.className = "acc-msg";
+    try{
+      if(this.mode() === "local"){
+        API.cust.save({ profile: { name: v.name.trim(), phone, wilaya: v.wilaya || "", commune: (v.commune || "").trim() } });
+      }else{
+        const r = await API.cust.call(reg ? "register" : "login", reg ? { name: v.name.trim(), phone, password: v.password, wilaya: v.wilaya || "", commune: (v.commune || "").trim() } : { phone, password: v.password });
+        API.cust.save({ token: r.token, profile: r.profile });
+      }
+      this.mark(); this.prefill(); this.done(reg);
+    }catch(e){ fail(this.err(e)); btn.disabled = false; }
+  },
+
+  /* ── بعد النجاح: دعوة تثبيت الموقع على الهاتف ── */
+  installBox(){
+    if(PWA.standalone()) return "";
+    return `<div class="acc-install"><div class="ai-t">📲 ثبّت الموقع على هاتفك</div><p>أيقونة على شاشتك الرئيسية: تفتح المتجر مباشرة، وتبقى مرتبطاً بحسابك وطلباتك.</p>
+      <button class="btn btn-gold" type="button" id="acc-inst">تثبيت الآن</button><div class="ai-steps" id="acc-steps"></div></div>`;
+  },
+  bindInstall(root){
+    const b = root.querySelector("#acc-inst"); if(!b) return;
+    b.onclick = async ()=>{
+      const o = await PWA.install();
+      if(o === "accepted"){ b.closest(".acc-install").innerHTML = '<div class="ai-t">✅ جارٍ التثبيت…</div>'; }
+      else if(o === "manual"){ const s = root.querySelector("#acc-steps"); s.innerHTML = PWA.steps(); s.style.display = "block"; }
+    };
+  },
+  done(isNew){
+    const p = this.profile();
+    const b = this.body(`<div class="acc-done"><div class="acc-ok">✅</div><h3>${isNew ? "أهلاً بك" : "مرحباً بعودتك"} ${this.esc((p.name || "").split(" ")[0])}!</h3>
+      <p class="acc-sub">${isNew ? "تم إنشاء حسابك، وستُملأ بياناتك تلقائياً في طلباتك القادمة." : "تم تسجيل دخولك."}</p>
+      ${this.installBox()}<button class="btn btn-ghost acc-cont" type="button">متابعة إلى حسابي ←</button></div>`);
+    this.bindInstall(b); b.querySelector(".acc-cont").onclick = ()=>this.home();
+  },
+
+  /* ── حسابي: الطلبات + البيانات ── */
+  async home(){
+    const p = this.profile(); if(!p) return this.guest();
+    const local = this.mode() === "local";
+    this.body('<h3>👤 حسابي</h3><p class="acc-sub">⏳ جارِ التحميل…</p>');
+    let orders = [], offline = false;
+    if(!local && API.cust.token()){
+      try{ const r = await API.cust.call("me", { token: API.cust.token() }); orders = r.orders || []; API.cust.save({ token: API.cust.token(), profile: r.profile }); this.mark(); }
+      catch(e){
+        if(e.message === "unauthorized"){ API.cust.save(null); this.mark(); return this.guest("login"); }
+        offline = true;
+      }
+    }
+    const pr = this.profile() || p;
+    const rows = orders.map(o=>{ const s = this.STATUS[o.status] || [o.status, "#666"];
+      return `<div class="acc-ord"><div class="ao-h"><b dir="ltr">${this.esc(o.id)}</b><span style="color:${s[1]}">${s[0]}</span></div>
+        <div class="ao-i">${this.esc(o.items).replace(/\n/g, "<br>")}</div>
+        <div class="ao-f"><span>${new Date(o.date).toLocaleDateString("ar-DZ")}</span><b>${fmt(Number(o.total) || 0)}</b></div>
+        ${o.tracking ? `<div class="ao-t">رقم التتبع: <b dir="ltr">${this.esc(o.tracking)}</b></div>` : ""}</div>`; }).join("");
+    const wOpts = '<option value="">—</option>' + (typeof WILAYAS !== "undefined" ? WILAYAS.map(w=>`<option value="${this.esc(w.name)}"${w.name === pr.wilaya ? " selected" : ""}>${this.esc(w.name)}</option>`).join("") : "");
+    const b = this.body(`
+      <h3>👤 ${this.esc(pr.name)}</h3><p class="acc-sub" dir="ltr" style="text-align:right">${this.esc(pr.phone)}</p>
+      ${this.installBox()}
+      ${local ? "" : `<h4>🧾 طلباتي</h4>${offline ? '<p class="acc-sub">تعذّر تحميل الطلبات الآن — تحقق من الإنترنت.</p>' : (rows || '<p class="acc-sub">لا توجد طلبات مربوطة بحسابك بعد. كل طلب تُرسله وأنت مسجّل يظهر هنا مع حالته.</p>')}
+      <form id="acc-link" class="acc-link"><input name="oid" placeholder="رقم طلب سابق (مثال: S261001-AB12C)" dir="ltr"><button class="btn btn-ghost" type="submit">ربط</button></form><div class="acc-msg" id="acc-lmsg"></div>`}
+      <details class="acc-prof"><summary>⚙️ بياناتي</summary>
+        <form id="acc-edit" novalidate>
+          <label>الاسم<input name="name" value="${this.esc(pr.name)}"></label>
+          <div class="acc-row"><label>الولاية<select name="wilaya">${wOpts}</select></label><label>البلدية<input name="commune" value="${this.esc(pr.commune)}"></label></div>
+          ${local ? "" : '<label>كلمة سر جديدة (اختياري)<input name="new_password" type="password" autocomplete="new-password" dir="ltr"></label><label>كلمة السر الحالية (لتغييرها)<input name="old_password" type="password" autocomplete="current-password" dir="ltr"></label>'}
+          <div class="acc-msg" id="acc-emsg"></div><button class="btn btn-gold" type="submit">حفظ</button>
+        </form></details>
+      <button class="acc-out" type="button">تسجيل الخروج</button>`);
+    this.bindInstall(b);
+    b.querySelector("#acc-edit").onsubmit = async ev=>{
+      ev.preventDefault(); const v = Object.fromEntries(new FormData(ev.target).entries()), m = b.querySelector("#acc-emsg");
+      try{
+        if(local) API.cust.save({ profile: Object.assign({}, pr, { name: v.name.trim(), wilaya: v.wilaya, commune: v.commune.trim() }) });
+        else { const r = await API.cust.call("update", { token: API.cust.token(), name: v.name.trim(), wilaya: v.wilaya, commune: v.commune.trim(), new_password: v.new_password || "", old_password: v.old_password || "" }); API.cust.save({ token: API.cust.token(), profile: r.profile || r }); }
+        m.textContent = "✅ تم الحفظ"; m.className = "acc-msg ok"; this.mark();
+      }catch(e){ m.textContent = this.err(e); m.className = "acc-msg bad"; }
+    };
+    const lf = b.querySelector("#acc-link");
+    if(lf) lf.onsubmit = async ev=>{
+      ev.preventDefault(); const oid = lf.oid.value.trim(), m = b.querySelector("#acc-lmsg"); if(!oid) return;
+      try{ const r = await API.cust.call("link_order", { token: API.cust.token(), order_id: oid }); const ok = r === true || (r && r.linked);
+        if(ok) return this.home(); m.textContent = "لم نجد هذا الطلب برقم هاتف حسابك."; m.className = "acc-msg bad";
+      }catch(e){ m.textContent = this.err(e); m.className = "acc-msg bad"; }
+    };
+    b.querySelector(".acc-out").onclick = async ()=>{
+      const t = API.cust.token(); API.cust.save(null); this.mark();
+      if(t) { try{ await API.cust.call("logout", { token: t }); }catch(e){} }
+      this.guest("login");
+    };
+  },
+};
+
+PWA.init();
+(function(){ const go = ()=>{ try{ Account.init(); }catch(e){} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go(); })();

@@ -70,11 +70,36 @@ const API = {
   /* مصدر الطلبات حسب CONFIG.ORDERS_BACKEND: sheets | both | supabase */
   ordersBackend() { const b = (typeof CONFIG !== "undefined" && CONFIG.ORDERS_BACKEND) || "sheets"; return (b !== "sheets" && !this.sb.enabled()) ? "sheets" : b; },
   submitOrder(order) {
-    if (this.php.on()) return this.php.send("order", { order });
+    const ct = this.cust.token();                    // طلب زبون مسجّل ⟵ يُربط بحسابه (لا يُرسل الرمز إلى Google Sheets أبداً)
+    if (this.php.on()) return this.php.send("order", { order: ct ? Object.assign({}, order, { ctoken: ct }) : order });
     const b = this.ordersBackend();
     if (b !== "supabase") this.post({ type: "order", order });
-    if (b !== "sheets") this.sb.publicRpc("submit_order", { p: order });
+    if (b !== "sheets") this.sb.publicRpc("submit_order", { p: ct ? Object.assign({}, order, { ctoken: ct }) : order });
   },
+
+  /* ── حساب الزبون («حسابي»): تسجيل برقم الهاتف + كلمة سر. الخلفية: php (SQLite) | sb (Supabase RPC) | local (على الجهاز فقط) ── */
+  cust: {
+    mode() { return API.php.on() ? "php" : ((API.sb.enabled() && API.ordersBackend() !== "sheets") ? "sb" : "local"); },
+    state() { try { return JSON.parse(localStorage.getItem("alyssum_cust") || "null"); } catch (e) { return null; } },
+    save(st) { try { if (st) localStorage.setItem("alyssum_cust", JSON.stringify(st)); else localStorage.removeItem("alyssum_cust"); } catch (e) {} },
+    token() { const s = this.state(); return (s && s.token) || ""; },
+    profile() { const s = this.state(); return (s && s.profile) || null; },
+    /* يُرجع كائن الرد أو يرمي Error(code) بأحد رموز الخادم: phone_taken | invalid_credentials | too_many_attempts | unauthorized ... */
+    async call(name, body) {
+      let r, j;
+      try {
+        if (this.mode() === "php") {
+          r = await fetch(API.php.url("customer_" + name), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify(body || {}), credentials: "same-origin" });
+        } else {
+          r = await fetch(API.sb.url("/rest/v1/rpc/customer_" + name), { method: "POST", headers: API.sb.headers(), body: JSON.stringify({ p: body || {} }) });
+        }
+        j = await r.json().catch(() => null);
+      } catch (e) { throw new Error("network"); }
+      if (!r.ok || (j && j.error)) throw new Error((j && (j.error || j.message)) || ("http_" + r.status));
+      return j;
+    },
+  },
+
 
   /* ── تتبّع الزيارات والمشاهدين الآن وأسئلة الوكيل ──
      الأولوية لـ Supabase إن ضُبط (SUPABASE_URL + SUPABASE_ANON_KEY)، وإلا Apps Script (apps-script/Code-additions.gs). */

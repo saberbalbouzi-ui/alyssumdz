@@ -166,6 +166,7 @@ create table if not exists public.orders (
 -- حالة «echec» (فشل التوصيل): تحديث القيد على جدول موجود مسبقاً (آمن إعادة التشغيل)
 alter table public.orders drop constraint if exists orders_status_check;
 alter table public.orders add constraint orders_status_check check (status in ('nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'));
+alter table public.orders add column if not exists customer_id uuid;      -- ربط الطلب بحساب زبون (اختياري)
 create index if not exists orders_created_idx on public.orders (created_at desc);
 create index if not exists orders_phone_idx on public.orders (phone, created_at);
 alter table public.orders enable row level security;
@@ -183,7 +184,7 @@ create policy "admin update orders" on public.orders for update to authenticated
 create or replace function public.submit_order(p jsonb) returns text
 language plpgsql security definer set search_path = public as $$
 declare
-  v_id text; v_phone text; v_name text; v_items jsonb; v_text text;
+  v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid;
 begin
   v_name := btrim(coalesce(p ->> 'name', ''));
   v_phone := regexp_replace(coalesce(p ->> 'phone', ''), '[^0-9+]', '', 'g');
@@ -197,11 +198,152 @@ begin
   select string_agg((i ->> 'title') || ' ×' || coalesce(i ->> 'qty', '1') || ' = ' || round(coalesce((i ->> 'price')::numeric, 0) * coalesce((i ->> 'qty')::numeric, 1)) || ' DA', E'\n')
     into v_text from jsonb_array_elements(v_items) i;
   v_id := 'S' || to_char(now(), 'YYMMDD') || '-' || upper(substr(md5(gen_random_uuid()::text), 1, 5));
-  insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra)
+  v_cust := public._cust_from_token(p ->> 'ctoken');                      -- null إن لم يكن الزبون مسجّلاً
+  insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra, customer_id)
   values (v_id, v_name, v_phone, left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), left(p ->> 'dtype', 10), left(p ->> 'desk', 160),
           v_items, coalesce(v_text, ''), coalesce((p ->> 'subtotal')::numeric, 0), coalesce((p ->> 'fee')::numeric, 0), (p ->> 'total')::numeric,
-          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), coalesce(p -> 'extra', '{}'::jsonb));
+          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), coalesce(p -> 'extra', '{}'::jsonb), v_cust);
   return v_id;
 end $$;
 revoke all on function public.submit_order(jsonb) from public;
 grant execute on function public.submit_order(jsonb) to anon, authenticated;
+
+-- ════════════════════════════════════════════════════════════════════
+-- حسابات الزبائن («حسابي»): تسجيل برقم الهاتف + كلمة سر. لا يصل الزوار إلى الجداول إطلاقاً، بل إلى الدوال أدناه فقط.
+-- الطلبات المعروضة للزبون هي المربوطة بحسابه فقط (عند الطلب وهو مسجّل، أو بربط طلب سابق برقمه + رقم الطلب)،
+-- فلا يستطيع أحد رؤية طلبات رقم هاتف ليس له بمجرد تسجيله به.
+-- ════════════════════════════════════════════════════════════════════
+create extension if not exists pgcrypto with schema extensions;
+
+create table if not exists public.customers (
+  id uuid primary key default gen_random_uuid(),
+  phone text not null unique check (char_length(phone) between 9 and 10),
+  name text not null check (char_length(name) between 2 and 120),
+  wilaya text, commune text,
+  pass_hash text not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.customer_sessions (
+  token_hash text primary key,
+  customer_id uuid not null references public.customers (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.customer_fails (phone text not null, at timestamptz not null default now());
+create index if not exists customer_fails_idx on public.customer_fails (phone, at);
+alter table public.customers enable row level security;
+alter table public.customer_sessions enable row level security;
+alter table public.customer_fails enable row level security;
+revoke all on public.customers, public.customer_sessions, public.customer_fails from anon, authenticated;
+grant select on public.customers to authenticated;
+drop policy if exists "admin read customers" on public.customers;
+create policy "admin read customers" on public.customers for select to authenticated using (public.is_admin());
+
+-- رقم هاتف جزائري بصيغة موحّدة 0XXXXXXXXX (يقبل +213 / 00213 / 213)
+create or replace function public._cust_phone(x text) returns text
+language sql immutable as $$
+  select case
+    when d like '00213%' then '0' || substr(d, 6)
+    when d like '213%' and char_length(d) >= 12 then '0' || substr(d, 4)
+    when d ~ '^[567]' and char_length(d) = 9 then '0' || d
+    else d end
+  from (select regexp_replace(coalesce(x, ''), '[^0-9]', '', 'g') as d) t
+$$;
+
+create or replace function public._cust_from_token(t text) returns uuid
+language sql stable security definer set search_path = public, extensions as $$
+  select s.customer_id from public.customer_sessions s
+  where t is not null and char_length(t) = 48
+    and s.token_hash = encode(extensions.digest(t, 'sha256'), 'hex')
+    and s.created_at > now() - interval '180 days'
+$$;
+
+create or replace function public._cust_new_session(cid uuid) returns text
+language plpgsql security definer set search_path = public, extensions as $$
+declare t text := encode(extensions.gen_random_bytes(24), 'hex');
+begin
+  insert into public.customer_sessions (token_hash, customer_id) values (encode(extensions.digest(t, 'sha256'), 'hex'), cid);
+  delete from public.customer_sessions where customer_id = cid and created_at < now() - interval '180 days';
+  return t;
+end $$;
+
+create or replace function public._cust_profile(cid uuid) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('name', name, 'phone', phone, 'wilaya', coalesce(wilaya, ''), 'commune', coalesce(commune, '')) from public.customers where id = cid
+$$;
+
+create or replace function public.customer_register(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_phone text := public._cust_phone(p ->> 'phone'); v_name text := btrim(coalesce(p ->> 'name', '')); v_pw text := coalesce(p ->> 'password', ''); cid uuid;
+begin
+  if char_length(v_name) not between 2 and 120 then raise exception 'invalid_name'; end if;
+  if v_phone !~ '^0[567][0-9]{8}$' and v_phone !~ '^0[0-9]{8}$' then raise exception 'invalid_phone'; end if;
+  if char_length(v_pw) not between 6 and 72 then raise exception 'invalid_password'; end if;
+  if (select count(*) from public.customers where created_at > now() - interval '1 hour') >= 60 then raise exception 'rate_limited'; end if;
+  if exists (select 1 from public.customers where phone = v_phone) then raise exception 'phone_taken'; end if;
+  insert into public.customers (phone, name, wilaya, commune, pass_hash)
+  values (v_phone, left(v_name, 120), left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), extensions.crypt(v_pw, extensions.gen_salt('bf', 8)))
+  returning id into cid;
+  return jsonb_build_object('token', public._cust_new_session(cid), 'profile', public._cust_profile(cid));
+end $$;
+
+create or replace function public.customer_login(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_phone text := public._cust_phone(p ->> 'phone'); c public.customers;
+begin
+  delete from public.customer_fails where at < now() - interval '1 day';
+  if (select count(*) from public.customer_fails where phone = v_phone and at > now() - interval '10 minutes') >= 5 then raise exception 'too_many_attempts'; end if;
+  select * into c from public.customers where phone = v_phone;
+  if c.id is null or c.pass_hash <> extensions.crypt(coalesce(p ->> 'password', ''), c.pass_hash) then
+    insert into public.customer_fails (phone) values (v_phone);
+    return jsonb_build_object('error', 'invalid_credentials');      -- تُرجَع قيمة لا استثناء حتى لا يُلغى تسجيل المحاولة الفاشلة
+  end if;
+  return jsonb_build_object('token', public._cust_new_session(c.id), 'profile', public._cust_profile(c.id));
+end $$;
+
+create or replace function public.customer_me(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare cid uuid := public._cust_from_token(p ->> 'token');
+begin
+  if cid is null then raise exception 'unauthorized'; end if;
+  return jsonb_build_object('profile', public._cust_profile(cid), 'orders', coalesce((
+    select jsonb_agg(jsonb_build_object('id', id, 'date', created_at, 'items', items_text, 'total', total, 'status', status,
+             'tracking', coalesce(substring(note from '🚚[a-z0-9_]+:([A-Za-z0-9._-]+)'), '')) order by created_at desc)
+    from (select * from public.orders where customer_id = cid order by created_at desc limit 50) o), '[]'::jsonb));
+end $$;
+
+create or replace function public.customer_update(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare cid uuid := public._cust_from_token(p ->> 'token'); v_name text := btrim(coalesce(p ->> 'name', ''));
+begin
+  if cid is null then raise exception 'unauthorized'; end if;
+  if char_length(v_name) not between 2 and 120 then raise exception 'invalid_name'; end if;
+  update public.customers set name = v_name, wilaya = left(p ->> 'wilaya', 80), commune = left(p ->> 'commune', 120) where id = cid;
+  if coalesce(p ->> 'new_password', '') <> '' then
+    if char_length(p ->> 'new_password') not between 6 and 72 then raise exception 'invalid_password'; end if;
+    update public.customers set pass_hash = extensions.crypt(p ->> 'new_password', extensions.gen_salt('bf', 8)) where id = cid
+      and pass_hash = extensions.crypt(coalesce(p ->> 'old_password', ''), pass_hash);
+    if not found then raise exception 'invalid_credentials'; end if;
+  end if;
+  return public._cust_profile(cid);
+end $$;
+
+create or replace function public.customer_logout(p jsonb) returns void
+language sql security definer set search_path = public, extensions as $$
+  delete from public.customer_sessions where token_hash = encode(extensions.digest(coalesce(p ->> 'token', ''), 'sha256'), 'hex')
+$$;
+
+-- ربط طلب سابق (قبل التسجيل) بالحساب: يلزم رقم الطلب + نفس رقم هاتف الحساب
+create or replace function public.customer_link_order(p jsonb) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare cid uuid := public._cust_from_token(p ->> 'token'); ph text;
+begin
+  if cid is null then raise exception 'unauthorized'; end if;
+  select phone into ph from public.customers where id = cid;
+  update public.orders set customer_id = cid
+   where id = upper(btrim(coalesce(p ->> 'order_id', ''))) and customer_id is null and public._cust_phone(phone) = ph;
+  return found;
+end $$;
+
+revoke all on function public._cust_from_token(text), public._cust_new_session(uuid), public._cust_profile(uuid) from public, anon, authenticated;
+revoke all on function public.customer_register(jsonb), public.customer_login(jsonb), public.customer_me(jsonb), public.customer_update(jsonb), public.customer_logout(jsonb), public.customer_link_order(jsonb) from public;
+grant execute on function public.customer_register(jsonb), public.customer_login(jsonb), public.customer_me(jsonb), public.customer_update(jsonb), public.customer_logout(jsonb), public.customer_link_order(jsonb) to anon, authenticated;
