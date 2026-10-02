@@ -8787,7 +8787,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
         } catch (e) { log("⚠️ " + e.message); }
         if (o.refine !== false) lines = lines.map(l => Object.assign({}, l, { bbox: refineBox(ctx, W, h, l.bbox) }));
         const blocks = groupLines(lines, W).map(b => Object.assign(b, { a: analyze(ctx, W, h, { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }) })).filter(b => b.a);
-        blocks.forEach(b => { b.ok = b.a.err < (o.maxErr || 34) && b.a.contrast > 70; });
+        const tol = o.maxErr || (o.engine === "gemini" ? 52 : 38); blocks.forEach(b => { b.ok = b.a.err < tol && b.a.contrast > 70; }); o._st = o._st || { ok: 0, kept: 0 }; o._st.ok += blocks.filter(b => b.ok).length; o._st.kept += blocks.filter(b => !b.ok).length;
         // نحلل الألوان قبل المحو (analyze أعلاه)، ثم نمحو كل الكتل المقبولة
         blocks.filter(b => b.ok).forEach(b => erase(ctx, b.a.rect));
         blocks.filter(b => b.ok).forEach((b, k) => {
@@ -8810,6 +8810,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       const sec = PB.mkCanvas(); Object.assign(sec.set, { scaled: true, dw, layout: "boxed", cw: { d: dw }, mh: { d: Math.round(h * f) } }); sec.free = [bg].concat(widgets); sections.push(sec);
     }
     const page = PB.newPage(o.title || "صفحة هبوط", o.slug || ""); page.sections = sections; page.header = false; page.footer = false; page.bg = "#ffffff";
+    page._stats = o._st || { ok: 0, kept: 0 };
     return page;
   }
 
@@ -8877,7 +8878,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   </div>
 </div>`;
     try { $("gen-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-rbkey").value = localStorage.getItem("alyssum_removebg_key") || ""; } catch (e) { }
-    try { $("gen-gkey1").value = localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { }
+    try { const gk0 = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-gkey1").value = gk0; if (gk0) { $("gen-engine").value = "gemini"; engineUI(); } } catch (e) { }
     step(1);
   }
   /* المعالج: 1 البرومبت ← 2 الصورة والأقسام ← 3 التحويل */
@@ -8972,7 +8973,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       try { if (gk) localStorage.setItem("alyssum_gp_gkey", gk); if (rb) localStorage.setItem("alyssum_removebg_key", rb); } catch (e) { }
       const page = await convert({ canvas: S.canvas, cuts: S.cuts, regions: S.regions, intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: $("gen-ocr").checked, tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
       page.slug = ($("gen-title").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "lp-" + Date.now().toString(36).slice(-4);
-      msg.textContent = "✅ تم — جارِ فتح المحرر"; PBApp.open(page, "", true);
+      const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + st.ok + " نصاً صار قابلاً للتعديل" + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Gemini أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; PBApp.open(page, "", true);
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
