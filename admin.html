@@ -8704,6 +8704,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     if (/API key not valid|API_KEY_INVALID|invalid api key/i.test(msg)) return "المفتاح غير صحيح — انسخه كاملاً من aistudio.google.com/apikey بدون مسافات أو أحرف زائدة." + raw;
     if (/referer|referrer|HTTP_REFERRER/i.test(msg)) return "المفتاح مقيَّد بنطاقات معيّنة (HTTP referrers) وموقعك ليس بينها — في Google AI Studio/Cloud Console أضف نطاق موقعك أو اجعل المفتاح بلا قيود تطبيق." + raw;
     if (/not been used|disabled|SERVICE_DISABLED|accessNotConfigured/i.test(msg)) return "واجهة Generative Language API غير مفعّلة لمشروع هذا المفتاح — فعّلها من Google Cloud Console أو أنشئ مفتاحاً جديداً من AI Studio." + raw;
+    if (status === 503 || status === 500 || /high demand|overloaded|unavailable/i.test(msg)) return "النموذج مشغول مؤقتاً عند Google (ضغط طلبات مرتفع) وليس خللاً في مفتاحك — أعدنا المحاولة تلقائياً دون جدوى؛ حاول بعد دقائق، أو اختر مستوى «اقتصادي» (Flash-Lite) فهو غالباً أقل ازدحاماً." + raw;
     if (status === 429 || /quota|RESOURCE_EXHAUSTED|rate/i.test(msg)) return "تجاوز المفتاح حصة الاستعمال (مجانية/دقيقة) — انتظر دقيقة ثم أعد المحاولة، أو استعمل مفتاحاً آخر." + raw;
     if (status === 403 || /PERMISSION_DENIED/i.test(msg)) return "المفتاح لا يملك صلاحية استعمال النموذج (قد يكون محظوراً في بلدك/مشروعك أو مقيّداً)." + raw;
     if (status === 400 && /location|region/i.test(msg)) return "الخدمة غير متاحة في منطقتك لهذا المفتاح." + raw;
@@ -8756,30 +8757,33 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     return (o.lines || []).filter(l => l && l.text && Array.isArray(l.box_2d) && l.box_2d.length === 4).map(l => { const [ymin, xmin, ymax, xmax] = l.box_2d.map(Number); return { text: String(l.text).replace(/\s+/g, " ").trim(), conf: 95, bbox: { x0: xmin / 1000 * W, y0: ymin / 1000 * H, x1: xmax / 1000 * W, y1: ymax / 1000 * H } }; }).filter(l => l.text.length >= 1 && l.bbox.x1 > l.bbox.x0 && l.bbox.y1 > l.bbox.y0);
   }
   /* استدعاء Gemini بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
-  async function geminiJson(key, b64, prompt, task) {
-    const models = await gemModels(key, task || "ocr"); let last = "";
-    for (let mi = 0; mi < models.length; mi++) {
-      if (mi === models.length - 1) await new Promise(r => setTimeout(r, 3000));
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0 } }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) { const gm = (j.error && j.error.message) || ""; last = gemErr(r.status, gm); if ([404, 500, 503].includes(r.status) || (r.status === 429 && mi < models.length - 1) || /no longer available|not found|not supported|high demand|overloaded/i.test(gm)) continue; throw new Error(last); }
-      const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join(""), m = t.match(/\{[\s\S]*\}/); if (!m) throw new Error("ردّ غير مفهوم من Gemini");
-      gemTrack(j, models[mi]); return JSON.parse(m[0]);
+  /* طلب موحّد لـ Gemini: تدوير النماذج + إعادة محاولة بتأخير متزايد عند الازدحام (503) أو الحصة (429) */
+  async function gemGenerate(key, task, parts, cfg) {
+    const models = [...new Set(await gemModels(key, task))], waits = [0, 4000, 10000, 20000]; let last = "";
+    const note = t => { for (const id of ["gen-automsg", "gen-msg"]) { const el = typeof document !== "undefined" && document.getElementById(id); if (el && (!el.textContent || /^⏳|Google/.test(el.textContent))) el.textContent = t; } };
+    for (let round = 0; round < waits.length; round++) {
+      if (waits[round]) { note("⏳ Google مشغول مؤقتاً — إعادة المحاولة بعد " + waits[round] / 1000 + " ث (" + round + "/" + (waits.length - 1) + ")…"); await new Promise(r => setTimeout(r, waits[round])); }
+      let busy = false;
+      for (const m of models) {
+        const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: cfg || {} }) });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok) { gemTrack(j, m); return j; }
+        const gm = (j.error && j.error.message) || ""; last = gemErr(r.status, gm);
+        if ([500, 502, 503, 504, 429].includes(r.status) || /high demand|overloaded|unavailable|try again/i.test(gm)) { busy = true; continue; }
+        if (r.status === 404 || /no longer available|not found|not supported/i.test(gm)) continue;
+        throw new Error(last);
+      }
+      if (!busy) break;
     }
     throw new Error(last || "لا يوجد نموذج Gemini متاح لهذا المفتاح");
   }
-  /* Gemini نصّي (مع صورة اختيارية): يعيد النص الكامل للردّ */
+  async function geminiJson(key, b64, prompt, task) {
+    const j = await gemGenerate(key, task || "ocr", [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }], { responseMimeType: "application/json", temperature: 0 });
+    const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join(""), m = t.match(/\{[\s\S]*\}/); if (!m) throw new Error("ردّ غير مفهوم من Gemini"); return JSON.parse(m[0]);
+  }
   async function geminiText(key, text, b64, mime, task) {
-    const models = await gemModels(key, task || "copy"); let last = "";
-    for (let mi = 0; mi < models.length; mi++) {
-      if (mi === models.length - 1) await new Promise(r => setTimeout(r, 3000));
-      const parts = (b64 ? [{ inline_data: { mime_type: mime || "image/jpeg", data: b64 } }] : []).concat([{ text }]);
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: .7 } }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) { const gm = (j.error && j.error.message) || ""; last = gemErr(r.status, gm); if ([404, 500, 503].includes(r.status) || (r.status === 429 && mi < models.length - 1) || /no longer available|not found|not supported|high demand|overloaded/i.test(gm)) continue; throw new Error(last); }
-      gemTrack(j, models[mi]); return ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
-    }
-    throw new Error(last || "لا يوجد نموذج Gemini متاح لهذا المفتاح");
+    const j = await gemGenerate(key, task || "copy", (b64 ? [{ inline_data: { mime_type: mime || "image/jpeg", data: b64 } }] : []).concat([{ text }]), { temperature: .7 });
+    return ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
   }
   /* اكتشاف تلقائي لمناطق المنتج/الصور/الأيقونات (غير النصية) ليُقصّ كلٌّ منها كعنصر مستقل */
   async function geminiDetect(canvas, key) {
