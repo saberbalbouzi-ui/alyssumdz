@@ -4937,7 +4937,7 @@ const Admin = {
     if(!busy){ g.innerHTML = this.adEditorHtml("fin-g", this.fin.set.ad, false); this.adUI("fin-g"); }
     const box = $f("fin-ads-rows"); if(!box || (document.activeElement && box.contains(document.activeElement))) return;
     const act = this.products.filter(p=>p.slug !== "test" && p.active !== false), nf = x=>Math.round(x).toLocaleString("fr-DZ");
-    box.innerHTML = act.map((p, i)=>'<div style="display:grid;grid-template-columns:minmax(140px,.8fr) minmax(280px,2fr) auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--line)"><b>' + PB.esc(p.title) + '</b><div>' + this.adEditorHtml("fin-p" + i, this.fin.ads[p.slug], true) + '</div><small style="color:var(--green);font-weight:800;white-space:nowrap">= ' + nf((this._adNow && this._adNow[p.slug]) || 0) + ' دج/طلب</small></div>').join("");
+    box.innerHTML = act.map((p, i)=>'<div style="display:grid;grid-template-columns:minmax(140px,.8fr) minmax(280px,2fr) auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--line)"><b>' + PB.esc(p.title) + '</b><div>' + this.adEditorHtml("fin-p" + i, (this.fin.ads || {})[p.slug], true) + '</div><small style="color:var(--green);font-weight:800;white-space:nowrap">= ' + nf((this._adNow && this._adNow[p.slug]) || 0) + ' دج/طلب</small></div>').join("");
     act.forEach((p, i)=>this.adUI("fin-p" + i)); this._adProds = act.map(p=>p.slug);
   },
   async saveAds(){
