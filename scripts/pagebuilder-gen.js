@@ -226,6 +226,15 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     return bs >= .62 ? best : t;
   }
   /* دمج الأسطر المتجاورة المتشابهة (الارتفاع/المحاذاة) في كتل نصية */
+  /* تنظيف قراءة OCR للعربية: حذف الرموز اللاتينية العشوائية والأسطر التي لا تحوي عربية كافية */
+  function cleanArabic(lines) {
+    return lines.map(l => { const toks = String(l.text).replace(/[\u200e\u200f]/g, "").split(/\s+/).filter(w => /[\u0600-\u06FF]/.test(w) || /\d{2,}|%/.test(w)); return Object.assign({}, l, { text: toks.join(" ").replace(/[|©®_~<>]+/g, "").replace(/\s+/g, " ").trim() }); })
+      .filter(l => {
+        const ar = (l.text.match(/[\u0600-\u06FF]/g) || []).length, dig = /\d{3,}/.test(l.text); if (ar < 3 && !dig) return false;
+        const bb = l.bbox; if (!bb) return true; const lh = Math.max(1, bb.y1 - bb.y0), expect = (bb.x1 - bb.x0) / (lh * .45);      // عدد الحروف المتوقع لعرض السطر
+        return (ar + (l.text.match(/\d/g) || []).length) >= expect * .4;                                                          // نص أقصر بكثير من عرض السطر = قراءة ناقصة/خاطئة فيُترك مرسوماً
+      });
+  }
   function groupLines(lines, W) {
     const ls = lines.slice().sort((a, b) => a.bbox.y0 - b.bbox.y0), blocks = [];
     ls.forEach(l => { const h = l.bbox.y1 - l.bbox.y0, cx = (l.bbox.x0 + l.bbox.x1) / 2, last = blocks[blocks.length - 1];
@@ -256,6 +265,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
           const eng = PBGen.ocr || (o.engine === "gemini" && o.gkey ? (cv => geminiOcr(cv, o.gkey, o.langName || "Arabic")) : defaultOcr);
           lines = await eng(band, o.tess, m => { if (m && m.status && m.progress != null) log(`القسم ${i + 1}: ${m.status} ${Math.round(m.progress * 100)}%`); });
         } catch (e) { log("⚠️ " + e.message); }
+        if (/arab|عرب/i.test(String(o.langName || "")) && !PBGen.ocr) lines = cleanArabic(lines);
         if (o.refine !== false) lines = lines.map(l => Object.assign({}, l, { bbox: refineBox(ctx, W, h, l.bbox) }));
         const blocks = groupLines(lines, W).map(b => Object.assign(b, { a: analyze(ctx, W, h, { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }) })).filter(b => b.a);
         const tol = o.maxErr || (o.engine === "gemini" ? 52 : 38); blocks.forEach(b => { b.ok = b.a.err < tol && b.a.contrast > 70; }); o._st = o._st || { ok: 0, kept: 0 }; o._st.ok += blocks.filter(b => b.ok).length; o._st.kept += blocks.filter(b => !b.ok).length;
@@ -435,7 +445,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   async function run() {
     if (!S.canvas) return; const msg = $("gen-msg"), btn = $("gen-go"); btn.disabled = true;
     const upload = async (blob, name) => {
-      try { const f = new File([blob], name + ".webp", { type: "image/webp" }); const p = await Admin.uploadImageFile(f, "assets/img/pages", "gen-", { max: 4000, q: .92, noVariants: true }); if (window.PBApp && PBApp.mediaAdd) PBApp.mediaAdd([p]); return p; }
+      try { if (typeof PBApp !== "undefined" && PBApp.uploadBlob) return await PBApp.uploadBlob(blob, name); const f = new File([blob], name + ".webp", { type: "image/webp" }); const p = await Admin.uploadImageFile(f, "assets/img/pages", "gen-", { max: 2000, q: .86, noVariants: true }); if (typeof PBApp !== "undefined" && PBApp.mediaAdd) PBApp.mediaAdd([p]); return p; }
       catch (e) { msg.textContent = "⚠️ تعذّر الرفع إلى GitHub (" + e.message + ") — حُفظت الصور مؤقتاً داخل الصفحة؛ اضبط GitHub ثم أعد التحويل للنشر."; return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); }
     };
     try {
@@ -448,5 +458,5 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, extractIntended, snapText, auto, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
