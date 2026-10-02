@@ -395,9 +395,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <div><b>🛒 سعر الشراء</b><div class="hint" style="margin:.15rem 0 0">يُدخَل لكل منتج في عمود «سعر الشراء» بالجدول أسفله (ثمن ما دفعته لشراء القطعة).</div></div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><b id="fin-miss" style="align-self:center"></b></div>
         </div>
-        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
-          <div><b>📣 سعر الحملة الإعلانية</b><div class="hint" style="margin:.15rem 0 0">إما تكلفة الإعلان لكل طلب، أو إجمالي ما أنفقته في الفترة المعروضة (يُوزَّع على طلباتها).</div></div>
-          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ad-mode" style="min-width:250px;flex:1"><option value="order">لكل طلب (دج)</option><option value="total">إجمالي الفترة المعروضة (دج)</option></select><input id="fin-ad" type="number" min="0" placeholder="0" style="max-width:130px"></div>
+        <div style="padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <b>📣 سعر الإعلان (كم يكلّفك الطلب الواحد)</b>
+          <div class="hint" style="margin:.15rem 0 .4rem">طريقة الحساب العامة لكل المنتجات. ولكل منتج طريقته الخاصة من بطاقة «الإعلان لكل منتج» أسفله.</div>
+          <div id="fin-adbox"></div>
         </div>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
           <div><b>🚚 تكلفة التوصيل المدمجة</b><div class="hint" style="margin:.15rem 0 0">ما تدفعه لشركة التوصيل: نسبة من رسوم جدول الولايات، أو قيمة ثابتة لكل طلب.</div></div>
@@ -424,9 +425,18 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="small gold" style="margin-top:.6rem" onclick="Admin.saveFinSettings()">💾 حفظ</button>
     </div>
     <div class="card">
+      <details id="fin-ads">
+        <summary style="cursor:pointer;font-weight:800;color:var(--green)">📣 الإعلان لكل منتج — اختر طريقة الحساب لكل منتج</summary>
+        <div class="hint" style="margin:.4rem 0">الطرق الثلاث: <b>قيمة ثابتة</b> لكل طلب · <b>سعر النتيجة (Cost) × معامل</b> (مثلاً 2 أو 3 لأن ليس كل طلب ينجح؛ وإن لم تعرف الـ Cost تُحسب تلقائياً بقسمة إنفاق الحملة على عدد الطلبات الناجحة) · <b>إنفاق الحملة ÷ عدد الطلبات</b> (اترك العدد فارغاً ليُؤخذ عدد الطلبات الناجحة تلقائياً). الناتج المعروض لكل منتج هو «تكلفة الإعلان لكل طلب ناجح».</div>
+        <div id="fin-ads-rows"></div>
+        <button class="small gold" type="button" onclick="Admin.saveAds()">💾 حفظ إعلانات المنتجات</button>
+      </details>
+    </div>
+    <div class="card">
       <details>
         <summary style="cursor:pointer;font-weight:800;color:var(--green)">📖 كيف يعمل الحساب وكيف أقرأ الجدول؟</summary>
         <div style="line-height:2;font-size:.9rem;margin-top:.5rem">
+          <b>الإعلان:</b> «قيمة ثابتة» تُحسب على كل طلب (حتى الفاشل). أما «Cost × معامل» و«الإنفاق ÷ الطلبات» فتُحسب على الطلب الناجح وتتضمن كلفة الطلبات الفاشلة داخلها، فلا تُكرَّر عليها.<br>
           <b>الربح الصافي لطلب مُسلَّم</b> = ما دفعه الزبون (المنتجات بعد الخصم + التوصيل) − سعر شراء البضاعة − تكلفة التوصيل − التأمين − التغليف والمصاريف − الإعلان.<br>
           <b>طلب فشل (مرتجع)</b> = خسارة: رسم الإرجاع + التغليف + الإعلان، (+ التوصيل إن لم تتوفر أرقام فعلية). والبضاعة تعود للمخزون.<br>
           <b>ربح متوقع</b> = الطلبات المؤكدة أو المشحونة التي لم تُسلَّم بعد، بنفس القاعدة.<br>
@@ -4659,8 +4669,8 @@ const Admin = {
   /* ════════ المخزون الحي + الأرباح الحقيقية ════════
      المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
      علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
-  finDefaults(){ return { packaging:0, adMode:"order", adVal:0, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }; },
-  fin: { costs:{}, set:{ packaging:0, adMode:"order", adVal:0, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }, cfg:{ since:null }, log:[] },
+  finDefaults(){ return { packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }; },
+  fin: { costs:{}, ads:{}, set:{ packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }, cfg:{ since:null }, log:[] },
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
     this.ydFees = (await Priv.get("ydfees", {})) || {};
@@ -4668,7 +4678,8 @@ const Admin = {
     const old = set || {}, S0 = Object.assign(this.finDefaults(), old);
     if(old.delVal == null && old.carrierPct != null) S0.delVal = old.carrierPct;      // ترحيل الإعدادات القديمة
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
-    this.fin = { costs: costs || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
+    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     this.reconcileStatusChanges();
   },
@@ -4762,7 +4773,7 @@ const Admin = {
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    this.fin.set = { packaging: n("fin-pack", 0), adMode: $f("fin-ad-mode").value, adVal: n("fin-ad", 0), delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: $f("fin-prof-mode").value, profVal: n("fin-prof", 30) };
+    this.fin.set = { packaging: n("fin-pack", 0), ad: this.adRead("fin-g"), delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: $f("fin-prof-mode").value, profVal: n("fin-prof", 30) };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
   /* ════════ استيراد كشف دفع ياليدين: أرقام فعلية لكل طرد (توصيل، إرجاع، COD، تأمين) تحلّ محلّ التقدير ════════ */
@@ -4872,8 +4883,8 @@ const Admin = {
   /* حساب الأرباح لكل منتج في فترة: livree = محقق، echec = خسارة (توصيل + إرجاع + تغليف؛ البضاعة تعود للمخزون)، confirmee/expediee = متوقع */
   computeFinance(days){
     const since = days > 0 ? Date.now() - days * 86400000 : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0, adTotal:0 };
-    let nCount = 0; this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(!["livree","echec","confirmee","expediee"].includes(o.status)) return; if(this.orderLines(o).length) nCount++; });
-    const adOrder = S.adMode === "total" ? (nCount ? (Number(S.adVal) || 0) / nCount : 0) : (Number(S.adVal) || 0);
+    const succ = {}, succAll = { n:0 }; this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(o.status !== "livree") return; const ls = this.orderLines(o); if(!ls.length) return; succAll.n++; new Set(ls.map(l=>l.p.slug)).forEach(sl=>{ succ[sl] = (succ[sl] || 0) + 1; }); });
+    const adNow = {}, adFor = sl=>{ if(adNow[sl] !== undefined) return adNow[sl]; const c = this.adCfgFor(sl); return (adNow[sl] = this.adCalc(c, c === S.ad ? succAll.n : (succ[sl] || 0))); }, adFixed = sl=>this.adCfgFor(sl).method === "fixed" ? adFor(sl) : 0;   // الطرق الأخرى تحمل كلفة الطلبات الفاشلة داخلها
     const row = p=>per[p.slug] || (per[p.slug] = { p, units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, ad:0, feeIn:0, realN:0, estN:0, loss:0, profit:0, expProfit:0 });
     this.orders.forEach(o=>{
       const t = new Date(o.date).getTime(); if(since && !(t >= since)) return;
@@ -4883,27 +4894,60 @@ const Admin = {
         useReal = S.useReal !== false && !!(real && real.delivery != null), useAct = S.useReal !== false && !!act && (/livr/i.test(act.st) ? o.status === "livree" : /retour/i.test(act.st) ? o.status === "echec" : false),
         car = useAct ? act.del + act.cod + act.ins : (useReal ? real.delivery + Math.round(price * real.cod / 100) + this.insCost(price) : est + this.insCost(price)),
         ret = useAct ? act.ret : (useReal ? real.retour : this.retCost(est));
-      K.adTotal += adOrder;
       K.actN = (K.actN || 0) + (useAct ? 1 : 0); K.realN = (K.realN || 0) + (!useAct && useReal ? 1 : 0); K.estN = (K.estN || 0) + (!useAct && !useReal ? 1 : 0);
       lines.forEach(l=>{
         const share = (sum === lines.length && !lines.reduce((a,x)=>a + x.total, 0)) ? 1 / lines.length : l.total / sum, r = row(l.p);
         const cost = Number(this.fin.costs[l.p.slug]) || 0;
-        if(o.status === "echec"){ const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack + adOrder) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
+        if(o.status === "echec"){ const adF = Math.round(adFixed(l.p.slug)); K.adTotal += adF; const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share) + adF; r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
         else{
-          const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), ad = Math.round(adOrder * share), pr = rev - cogs - del - pk - ad;
+          const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), ad = Math.round(adFor(l.p.slug)), pr = rev - cogs - del - pk - ad; K.adTotal += ad;
           if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.ad += ad; r.feeIn += Math.round(fee * share); (useReal || useAct) ? r.realN++ : r.estN++; r.profit += pr; K.real += pr; K.revenue += rev; }
           else { r.expUnits += l.qty; r.expProfit += pr; K.exp += pr; }
         }
       });
       if(o.status === "livree") K.delivered++; else if(o.status === "echec") K.failed++; else K.open++;
     });
-    this._adOrder = adOrder; K.lossTotal = Object.values(per).reduce((a,x)=>a + x.loss, 0);
+    this.products.forEach(p=>adFor(p.slug)); this._adNow = adNow; K.lossTotal = Object.values(per).reduce((a,x)=>a + x.loss, 0);
     return { per, K };
+  },
+  /* ── طرق حساب سعر الإعلان: ثابتة | Cost × معامل | إنفاق ÷ عدد الطلبات ── */
+  adCfgFor(sl){ const c = this.fin.ads && this.fin.ads[sl]; return (c && c.method && c.method !== "inherit") ? c : (this.fin.set.ad || { method:"fixed", a:0 }); },
+  adCalc(c, nSucc){
+    if(!c) return 0; const a = Number(c.a) || 0, b = Number(c.b) || 0, m = Number(c.m) || 2, n = Number(c.n) || 0;
+    if(c.method === "costx"){ const cost = a > 0 ? a : (b > 0 && nSucc ? b / nSucc : 0); return cost * m; }     // Cost غير معروف ⟵ إنفاق الحملة ÷ الطلبات الناجحة
+    if(c.method === "spend"){ const d = n > 0 ? n : nSucc; return d ? a / d : 0; }
+    return a;
+  },
+  adEditorHtml(pf, c, inh){
+    c = c || {}; const m = c.method || (inh ? "inherit" : "fixed"), v = x=>(x == null || x === 0 || x === "") ? "" : x;
+    const o = (val, t)=>'<option value="' + val + '"' + (m === val ? " selected" : "") + '>' + t + '</option>';
+    const inp = (id, ph, val, extra)=>'<input id="' + pf + '-' + id + '" type="number" min="0" step="any" placeholder="' + ph + '" value="' + v(val) + '" style="max-width:190px;' + (extra || "") + '">';
+    return '<div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center"><select id="' + pf + '-method" onchange="Admin.adUI(\'' + pf + '\')" style="min-width:230px;flex:1">' + (inh ? o("inherit", "نفس الإعداد العام") : "") + o("fixed", "قيمة ثابتة لكل طلب") + o("costx", "سعر النتيجة (Cost) × معامل") + o("spend", "إنفاق الحملة ÷ عدد الطلبات") + '</select>' +
+      '<span id="' + pf + '-f-a">' + inp("a", "…", c.a) + '</span><span id="' + pf + '-f-b">' + inp("b", "إنفاق الحملة (اختياري)", c.b) + '</span>' +
+      '<span id="' + pf + '-f-m"><select id="' + pf + '-m" style="width:110px">' + [1, 1.5, 2, 2.5, 3, 4].map(x=>'<option value="' + x + '"' + (Number(c.m || 2) === x ? " selected" : "") + '>× ' + x + '</option>').join("") + '</select></span><span id="' + pf + '-f-n">' + inp("n", "عدد الطلبات (فارغ = الناجحة)", c.n) + '</span></div>';
+  },
+  adUI(pf){
+    const m = ($f(pf + "-method") || {}).value, show = (k, on)=>{ const el = $f(pf + "-f-" + k); if(el) el.style.display = on ? "" : "none"; };
+    show("a", m === "fixed" || m === "costx" || m === "spend"); show("b", m === "costx"); show("m", m === "costx"); show("n", m === "spend");
+    const a = $f(pf + "-a"); if(a) a.placeholder = m === "fixed" ? "دج لكل طلب" : m === "costx" ? "سعر النتيجة Cost (فارغ = يُحسب)" : "إنفاق الحملة (دج)";
+  },
+  adRead(pf){ const n = id=>{ const el = $f(pf + "-" + id); const x = el ? Number(el.value) : 0; return isFinite(x) ? x : 0; }; return { method: ($f(pf + "-method") || {}).value || "fixed", a: n("a"), b: n("b"), m: n("m") || 2, n: n("n") }; },
+  renderAds(){
+    const g = $f("fin-adbox"); if(!g) return; const busy = document.activeElement && g.contains(document.activeElement);
+    if(!busy){ g.innerHTML = this.adEditorHtml("fin-g", this.fin.set.ad, false); this.adUI("fin-g"); }
+    const box = $f("fin-ads-rows"); if(!box || (document.activeElement && box.contains(document.activeElement))) return;
+    const act = this.products.filter(p=>p.slug !== "test" && p.active !== false), nf = x=>Math.round(x).toLocaleString("fr-DZ");
+    box.innerHTML = act.map((p, i)=>'<div style="display:grid;grid-template-columns:minmax(140px,.8fr) minmax(280px,2fr) auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--line)"><b>' + PB.esc(p.title) + '</b><div>' + this.adEditorHtml("fin-p" + i, this.fin.ads[p.slug], true) + '</div><small style="color:var(--green);font-weight:800;white-space:nowrap">= ' + nf((this._adNow && this._adNow[p.slug]) || 0) + ' دج/طلب</small></div>').join("");
+    act.forEach((p, i)=>this.adUI("fin-p" + i)); this._adProds = act.map(p=>p.slug);
+  },
+  async saveAds(){
+    const ads = {}; (this._adProds || []).forEach((sl, i)=>{ const c = this.adRead("fin-p" + i); if(c.method !== "inherit") ads[sl] = c; });
+    this.fin.ads = ads; await Priv.set("adcfg", ads); toast("✅ حُفظت طرق حساب الإعلان لكل منتج"); this.renderFinance();
   },
   /* سعر البيع المقترح = (الشراء + التغليف + الإعلان + عبء التوصيل + احتياطي الإرجاع + الفائدة) ÷ (1 − نسبة التأمين)، مقرَّباً لأعلى إلى أقرب 50 دج */
   suggestPrice(p, r, K){
     const S = this.fin.set, buy = Number(this.fin.costs[p.slug]); if(!(buy >= 0) || this.fin.costs[p.slug] == null) return null;
-    const pack = Number(S.packaging) || 0, ad = this._adOrder || 0;
+    const pack = Number(S.packaging) || 0, ad = (this._adNow && this._adNow[p.slug]) || 0;
     const est = S.delMode === "val" ? (Number(S.delVal) || 0) : Math.round(600 * (Number(S.delVal) || 0) / 100);
     const burden = r.units > 0 ? Math.max(0, (r.delivery - r.feeIn) / r.units) : (p.freeShip ? est : 0);          // ما تتحمله من التوصيل فوق ما يدفعه الزبون
     const risk = K.delivered ? (K.lossTotal || 0) / K.delivered : 0;                                              // احتياطي الإرجاع لكل طلب مُسلَّم
@@ -4915,18 +4959,18 @@ const Admin = {
   /* مثال محسوب بإعداداتك الحالية يوضّح كيف يُحسب ربح طلب واحد */
   finExample(){
     const el = $f("fin-example"); if(!el) return; const S = this.fin.set, n = x=>Math.round(x).toLocaleString("fr-DZ");
-    const sale = 3000, fee = 600, buy = 1200, est = S.delMode === "val" ? (Number(S.delVal) || 0) : Math.round(fee * (Number(S.delVal) || 0) / 100), ins = this.insCost(sale), pack = Number(S.packaging) || 0, ad = S.adMode === "total" ? 0 : (Number(S.adVal) || 0);
+    const sale = 3000, fee = 600, buy = 1200, est = S.delMode === "val" ? (Number(S.delVal) || 0) : Math.round(fee * (Number(S.delVal) || 0) / 100), ins = this.insCost(sale), pack = Number(S.packaging) || 0, ad = S.ad && S.ad.method === "fixed" ? (Number(S.ad.a) || 0) : (S.ad && S.ad.method === "costx" ? (Number(S.ad.a) || 0) * (Number(S.ad.m) || 2) : 0);
     const profit = sale + fee - buy - est - ins - pack - ad, ret = this.retCost(est), loss = ret + pack + ad + est;
     el.innerHTML = '<b>مثال بإعداداتك الحالية:</b> زبون اشترى منتجاً بـ ' + n(sale) + ' دج ودفع توصيلاً ' + n(fee) + ' دج، وسعر شرائك للقطعة ' + n(buy) + ' دج.<br>' +
       'الربح = ' + n(sale) + ' + ' + n(fee) + ' − ' + n(buy) + ' (البضاعة) − ' + n(est) + ' (التوصيل) − ' + n(ins) + ' (التأمين) − ' + n(pack) + ' (التغليف) − ' + n(ad) + ' (الإعلان) = <b style="color:' + (profit >= 0 ? "var(--ok)" : "var(--red)") + '">' + n(profit) + ' دج</b><br>' +
-      'لو رجع الطلب: الخسارة ≈ ' + n(ret) + ' (إرجاع) + ' + n(pack) + ' (تغليف) + ' + n(ad) + ' (إعلان) + ' + n(est) + ' (توصيل تقديري) = <b style="color:var(--red)">' + n(loss) + ' دج</b>' + (S.adMode === "total" ? '<br><small>الإعلان بنمط «الإجمالي» يُوزَّع على طلبات الفترة المعروضة فلا يظهر في هذا المثال.</small>' : "");
+      'لو رجع الطلب: الخسارة ≈ ' + n(ret) + ' (إرجاع) + ' + n(pack) + ' (تغليف) + ' + n(ad) + ' (إعلان) + ' + n(est) + ' (توصيل تقديري) = <b style="color:var(--red)">' + n(loss) + ' دج</b>' + (S.ad && (S.ad.method === "spend" || (S.ad.method === "costx" && !(Number(S.ad.a) > 0))) ? '<br><small>الإعلان بطريقة «الإنفاق ÷ الطلبات» يُحسب من طلباتك الناجحة الفعلية فلا يظهر في هذا المثال.</small>' : "");
   },
   renderFinance(noFetch){
     if(!$f("fin-table")) return;
     if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
     const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
-    if(!document.activeElement || !["fin-pack","fin-ad","fin-del","fin-ret","fin-ins","fin-low","fin-prof"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-ad-mode").value = S.adMode; $f("fin-ad").value = S.adVal; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret-mode").value = S.retMode; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; $f("fin-prof-mode").value = S.profMode || "pct"; $f("fin-prof").value = S.profVal == null ? 30 : S.profVal; }
-    this.finExample();
+    if(!document.activeElement || !["fin-pack","fin-del","fin-ret","fin-ins","fin-low","fin-prof"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret-mode").value = S.retMode; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; $f("fin-prof-mode").value = S.profMode || "pct"; $f("fin-prof").value = S.profVal == null ? 30 : S.profVal; }
+    this.finExample(); this.renderAds();
     const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
     this.orders.forEach(o=>{ if(!["confirmee","expediee","livree"].includes(o.status) || !(new Date(o.date).getTime() >= since14)) return; this.orderLines(o).forEach(l=>{ sold14[l.p.slug] = (sold14[l.p.slug] || 0) + l.qty; }); });
     const pend = {}; this.orders.forEach(o=>{ if(o.status === "nouvelle") this.orderLines(o).forEach(l=>{ pend[l.p.slug] = (pend[l.p.slug] || 0) + l.qty; }); });
