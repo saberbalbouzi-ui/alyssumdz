@@ -473,7 +473,7 @@ function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender){
     /* كود شخصي (إعادة الشراء): ليس في الملف العام، يُفحص على الخادم مع رقم هاتف الطلب */
     if(!list.some(c=>String(c.code||"").toUpperCase() === code.toUpperCase())){
       const ph = (document.getElementById("phone") || document.getElementById("cphone") || {}).value || "";
-      if(/^(BACK|PR)-/i.test(code)){
+      if(/^(BACK|PR|WEL|APP)-/i.test(code)){
         if(ph.replace(/\D/g, "").length < 9){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent="📱 أدخل رقم هاتفك في النموذج أولاً — هذا الكود شخصي"; msg.style.color="var(--red)"; rerender(); return; }
         let pr = null; try{ pr = await API.promoCheck(code, ph); }catch(e){}
         if(pr && pr.ok) list = list.concat([{ code: code.toUpperCase(), type: pr.type, value: pr.value, minOrder: pr.minOrder, expiresAt: pr.expiresAt, active: true, __promo: true }]);
@@ -1293,7 +1293,13 @@ const Gifts = {
     if(st.used) return "used";
     return Date.now() > st.ts + (Number(g.days) || 14) * 86400000 ? "expired" : "active";
   },
+  /* خلفية Supabase/PHP: كل زبون يحصل من الخادم على كود شخصي (لهاتفه فقط، مرة واحدة)؛ وإلا يبقى الكود العام المحلي */
+  serverMode(){ return API.cust.mode() !== "local" && !!API.cust.token(); },
+  async serverGifts(){ try{ const r = await API.cust.call("my_gifts", { token: API.cust.token() }); return (r && r.gifts) ? r.gifts : (r && !r.ok && typeof r === "object" ? r : {}); }catch(e){ return {}; } },
   async claim(kind){
+    if(this.serverMode()){
+      try{ const r = await API.cust.call("claim_gift", { token: API.cust.token(), kind }); return !!(r && r.ok && !r.used); }catch(e){ return false; }
+    }
     const c = await this.cfg(), g = this.conf(c, kind); if(!g || !API.cust.profile()) return false;
     const m = this.mine(); if(m[kind]) return false;
     m[kind] = { ts: Date.now() }; this.save(m); return true;
@@ -1315,6 +1321,21 @@ const Gifts = {
   },
   async cardsHtml(){
     if(!API.cust.profile()) return "";
+    if(this.serverMode()){
+      const sg = await this.serverGifts(), esc = Account.esc.bind(Account), c = await this.cfg(); let h = "";
+      for(const k of ["reg", "install"]){
+        const g = sg[k], gc = this.conf(c, k);
+        const title = esc((gc && gc.title) || (k === "reg" ? "🎁 هدية التسجيل" : "🎁 هدية تثبيت التطبيق"));
+        let st, body;
+        if(!g){ if(k === "install" && gc && !PWA.standalone()){ st = "locked"; body = "🔒 تُفعَّل هديتك عندما تفتح الموقع من <b>أيقونة التطبيق</b> على هاتفك بعد التثبيت."; } else continue; }
+        else if(g.used){ st = "used"; body = "✔ استعملتَ هذه الهدية. شكراً لك!"; }
+        else if(new Date(g.expiresAt) <= new Date()){ st = "expired"; body = "انتهت صلاحية هذه الهدية."; }
+        else{ st = "active"; body = esc(this.text(g)) + '<br><span class="g-code">كودك الشخصي: <b dir="ltr">' + esc(g.code) + '</b></span> · صالح حتى ' + new Date(g.expiresAt).toLocaleDateString("ar-DZ") + ' · لك وحدك ويُستعمل مرة واحدة' +
+          '<br><button class="btn btn-gold g-apply" type="button" data-code="' + esc(g.code) + '">تطبيق على طلبي</button>'; }
+        h += '<div class="acc-gift ' + st + '"><div class="g-t">' + title + '</div><div class="g-b">' + body + '</div></div>';
+      }
+      return h;
+    }
     const c = await this.cfg(), esc = Account.esc.bind(Account); let h = "";
     for(const k of ["reg", "install"]){
       const g = this.conf(c, k); if(!g) continue;
@@ -1332,8 +1353,9 @@ const Gifts = {
   },
   bind(root){
     root.querySelectorAll(".g-apply").forEach(b=>b.onclick = async ()=>{
-      const c = await this.cfg(), g = this.conf(c, b.dataset.k); if(!g) return;
-      const code = String(g.code || "").toUpperCase();
+      let code;
+      if(b.dataset.code) code = b.dataset.code;
+      else { const c = await this.cfg(), g = this.conf(c, b.dataset.k); if(!g) return; code = String(g.code || "").toUpperCase(); }
       const input = document.getElementById("prod-coupon-input") || document.getElementById("cart-coupon-input");
       if(!input){ toast("🎁 أضف منتجاً إلى السلة ثم أدخل الكود " + code); return; }
       input.value = code; input.closest(".coupon-box").querySelector("button").click();

@@ -4913,7 +4913,9 @@ const Admin = {
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(W, null, 2))));
       const res = await GH.putFile("assets/data/welcome.json", b64, this.welcomeSha, "إعدادات هدايا الزبائن الجدد عبر لوحة التحكم");
-      this.welcomeSha = res && res.content ? res.content.sha : undefined; this.welcome = W; toast("✅ نُشرت إعدادات الهدايا");
+      this.welcomeSha = res && res.content ? res.content.sha : undefined; this.welcome = W;
+      await Priv.set("welcome", W);                              // يقرؤها الخادم ليُصدر لكل زبون كوده الشخصي (admin_kv)
+      toast("✅ نُشرت إعدادات الهدايا — لكل زبون مسجّل كود شخصي أحادي الاستعمال");
     }catch(err){ console.error(err); toast("❌ " + err.message); }
   },
   /* طلبات استعملت كود هدية ترحيبية سبق أن استعمله الهاتف نفسه */
