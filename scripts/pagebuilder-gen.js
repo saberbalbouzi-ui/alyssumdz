@@ -385,9 +385,9 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
     </div>
     <div class="grid2" style="margin-top:.4rem">
-      <label class="hint" style="margin:0">طريقة التوليد<select id="gen-mode"><option value="parts">جودة عالية: 3 أجزاء متصلة (موصى — نصوص أوضح)</option><option value="single">صورة واحدة طويلة (أسرع/أرخص، نصوصها أصغر وأقل وضوحاً)</option></select></label>
-      <label class="hint" style="margin:0">نسبة الصورة (للجزء الواحد)<select id="gen-ar"><option value="9:16">9:16 — طولي (موصى)</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option><option value="1:4">1:4 — طويل جداً</option><option value="1:8">1:8 — أطول (ضيق)</option></select></label>
-      <label class="hint" style="margin:0">الدقة<select id="gen-res"><option value="2K">2K (موصى)</option><option value="4K">4K — أعلى وأغلى</option><option value="1K">1K — أسرع وأرخص</option></select></label>
+      <label class="hint" style="margin:0">طريقة التوليد<select id="gen-mode"><option value="single">صورة واحدة طويلة (موصى — خط وأسلوب موحّدان)</option><option value="parts">3 أجزاء متصلة (تجريبي — قد يختلف الخط والوصلات)</option></select></label>
+      <label class="hint" style="margin:0">نسبة الصورة (للجزء الواحد)<select id="gen-ar"><option value="1:4">1:4 — طويل (موصى للصورة الواحدة)</option><option value="1:8">1:8 — أطول جداً (ضيق)</option><option value="9:16">9:16 — طولي (للأجزاء)</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option></select></label>
+      <label class="hint" style="margin:0">الدقة<select id="gen-res"><option value="4K">4K — أعلى وضوحاً (موصى للنصوص)</option><option value="2K">2K</option><option value="1K">1K — أسرع وأرخص</option></select></label>
       <label class="hint" style="margin:0">عدد الأجزاء المتصلة<select id="gen-parts"><option value="3">3 أجزاء</option><option value="2">جزءان (أقصر)</option><option value="4">4 أجزاء (أطول وأوضح)</option><option value="1">جزء واحد</option></select></label>
       <label class="hint" style="margin:0">نموذج الصور<select id="gen-imgq"><option value="pro">أعلى جودة نص (Nano Banana Pro) — الأغلى</option><option value="fast">أسرع وأرخص (Flash)</option></select></label>
     </div>
@@ -500,6 +500,11 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 ABSOLUTE ${L.name.toUpperCase()} TEXT ACCURACY RULES
 ==================================================
 ${L.name} typography accuracy is the highest priority. Every quoted ${L.name} string in this prompt must appear EXACTLY ONCE, copied LETTER BY LETTER. Do not rewrite, paraphrase, correct, duplicate, repeat or merge strings; do not split words incorrectly; do not add decorative letters, diacritics or extra words. Never create fake text, fake labels, fake ingredient names, fake reviews, fake logos or random characters. If there is not enough space for a line, make the font smaller while keeping it clearly readable — NEVER repeat a sentence to fill space. There must be ZERO random text anywhere; only the exact quoted strings may appear as overlay text. ${L.rtl ? "All text is RIGHT-TO-LEFT with no mirrored, reversed or duplicated letters; use a highly accurate modern Arabic display font, extremely bold, sharp, clean and professional." : "Use a clean, highly accurate, bold modern display font."} Every quoted string is a separate text element with its own dedicated empty space; leave generous negative space around it and never put several paragraphs into one block.
+
+==================================================
+TYPOGRAPHY CONSISTENCY
+==================================================
+Use ONE single consistent typeface family for ALL headlines and texts in the whole image (a modern geometric bold sans display font in the style of Cairo / Tajawal ExtraBold). Do NOT mix or change typefaces between sections; only the size and color may vary. The printed lettering on the product label must stay exactly as in the reference photo.
 ${modest ? `
 ==================================================
 MODESTY AND HUMAN FIGURES
@@ -541,7 +546,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   async function genPart(key, prompt, productB64, prevB64) {
     const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } }); if (prevB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: prevB64 } });
     const models = await imageModels(key); let lastErr = null;
-    const ic = imgCfg(); for (const cfg of [{ aspectRatio: ic.ar, imageSize: ic.size }, { aspectRatio: ic.ar }]) {
+    const ic = imgCfg(), par = ["1:4", "1:8"].includes(ic.ar) ? "9:16" : ic.ar; for (const cfg of [{ aspectRatio: par, imageSize: ic.size }, { aspectRatio: par, imageSize: "2K" }, { aspectRatio: par }]) {
       try {
         const j = await gemGenerate(key, "image", parts, { imageConfig: cfg }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
         if (!d) throw new Error("لم يُرجع النموذج صورة"); S.model = j._model; const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
@@ -565,7 +570,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   async function genLong(key, prompt, productB64) {
     const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } });
     const models = await imageModels(key); let lastErr = null;
-    const ic = imgCfg(), tries = []; [ic.ar === "9:16" ? "1:4" : ic.ar].concat(RATIOS).filter((v, i, a) => a.indexOf(v) === i).forEach(ar => { tries.push({ aspectRatio: ar, imageSize: ic.size }); tries.push({ aspectRatio: ar }); });   // النسبة المختارة أولاً ثم التراجع
+    const ic = imgCfg(), tries = []; [ic.ar === "9:16" ? "1:4" : ic.ar].concat(["1:4", "1:8", "9:16"]).filter((v, i, a) => a.indexOf(v) === i).forEach(ar => { tries.push({ aspectRatio: ar, imageSize: ic.size }); if (ic.size !== "2K") tries.push({ aspectRatio: ar, imageSize: "2K" }); tries.push({ aspectRatio: ar }); });   // النسبة المختارة أولاً ثم التراجع
     for (const cfg of tries) {
       try {
         const j = await gemGenerate(key, "image", parts, { imageConfig: cfg }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
@@ -610,7 +615,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
       if ($("gen-mode") && $("gen-mode").value === "single") { msg.textContent = "🎨 توليد الصورة…"; blob = await (PBGen.imgFn || genLong)(key, full, pb); canvas = await loadImage(blob); }
       else {
         const N = imgCfg().parts, blobs = []; let prev = null;
-        for (let k = 1; k <= N; k++) { msg.textContent = "🎨 (" + (2 + k) + "/" + (N + 2) + ") توليد الجزء " + k + " من " + N + (S.model ? " — " + S.model : "") + " (قد يستغرق دقيقة)…"; const bl = await (PBGen.imgFn || genPart)(key, full + SPLIT(k, N, imgCfg().ar), pb, prev); blobs.push(bl); prev = PBGen.imgFn ? null : await small64(bl, 900); }
+        for (let k = 1; k <= N; k++) { msg.textContent = "🎨 (" + (2 + k) + "/" + (N + 2) + ") توليد الجزء " + k + " من " + N + (S.model ? " — " + S.model : "") + " (قد يستغرق دقيقة)…"; const bl = await (PBGen.imgFn || genPart)(key, full + SPLIT(k, N, ["1:4", "1:8"].includes(imgCfg().ar) ? "9:16" : imgCfg().ar), pb, prev); blobs.push(bl); prev = PBGen.imgFn ? null : await small64(bl, 900); }
         msg.textContent = "🧩 دمج الأجزاء…"; canvas = await stackParts(blobs); blob = await new Promise(r => canvas.toBlob(r, "image/png"));
       } S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
       await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.model ? " بنموذج " + S.model : "") + " (" + canvas.width + "×" + canvas.height + ")" + " — راجعها ثم اعتمدها للتقسيم";
