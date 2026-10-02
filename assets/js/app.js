@@ -1579,3 +1579,11 @@ const PhoneDZ = {
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 }catch(e){} })();
+
+/* زر «تعديل» لصاحب المتجر عند معاينة صفحة منتج (يظهر فقط إن كان مسجّلاً الدخول في هذا المتصفح) */
+(function(){ try{
+  if(localStorage.getItem("alyssum_admin_on")!=="1" || self!==top || /[?&](preview|embed)=/.test(location.search)) return;
+  var m = /^(.*\/)p\/([^\/]+)\/?/.exec(location.pathname); if(!m) return;
+  var go=function(){ var a=document.createElement("a"); a.href=m[1]+"admin.html#product="+encodeURIComponent(m[2]); a.textContent="✏️ تعديل المنتج"; a.style.cssText="position:fixed;bottom:16px;left:16px;z-index:99999;background:#173f35;color:#fff;padding:.65rem 1.1rem;border-radius:999px;font:800 14px Cairo,system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);text-decoration:none"; document.body.appendChild(a); };
+  document.readyState==="loading"?document.addEventListener("DOMContentLoaded",go):go();
+}catch(e){} })();
