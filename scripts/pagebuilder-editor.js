@@ -889,6 +889,10 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
 const PBAdmin = {
   list: [],
+  /* قوالب جاهزة (assets/pages/templates/*.json): تُفتح كصفحة جديدة قابلة للتعديل الكامل */
+  async openTemplate(name) {
+    try { const r = await fetch("assets/pages/templates/" + name + ".json?t=" + Date.now()); if (!r.ok) throw new Error("القالب غير موجود"); const p = this.fresh(await r.json()); PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); }
+  },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },
   initGen() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } },
   async init() { await this.refresh(); },
