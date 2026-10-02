@@ -54,6 +54,17 @@ button{cursor:pointer;border:none;font-family:inherit}
 .admin-main{flex:1;min-width:0}
 @media(max-width:900px){.admin-body{flex-direction:column;align-items:stretch}.side-nav{width:100%;position:static}.side-nav-intro{display:none}.nav-txt small{display:none}}
 .wrap{max-width:min(1680px,98vw);margin:0 auto;padding:1.2rem}
+.spv{position:fixed;inset:0;background:rgba(15,30,25,.72);z-index:9999;display:none;flex-direction:column}
+.spv.on{display:flex}
+.spv-bar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.6rem .9rem;background:#fff;border-bottom:1px solid var(--line)}
+.spv-bar b{color:var(--green);margin-inline-end:.4rem}
+.spv-bar button,.spv-bar a{border:1px solid var(--line);background:#fff;border-radius:10px;padding:.4rem .8rem;font-weight:800;font-size:.85rem;cursor:pointer;text-decoration:none;color:var(--green)}
+.spv-bar button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.spv-bar .sp{margin-inline-start:auto}
+.spv-stage{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:1rem}
+.spv-frame{background:#fff;border:0;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:100%;height:100%;transition:width .25s}
+.spv-frame.tablet{width:768px;max-width:100%;border:10px solid #222;border-radius:24px}
+.spv-frame.phone{width:390px;max-width:100%;border:10px solid #222;border-radius:30px}
 .top{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
 .nb{background:var(--red);color:#fff;border-radius:999px;padding:0 .5rem;font-size:.72rem;font-weight:900;margin-inline-start:.45rem;min-width:1.3rem;text-align:center;display:inline-block;line-height:1.35rem;animation:nbPulse 1.6s infinite}
 .nb.hidden{display:none}
@@ -175,6 +186,27 @@ tr:hover td{background:#FAF7F0}
   <button class="btn" id="login-btn" onclick="Admin.login()">دخول</button>
 </div>
 
+<div class="spv" id="spv" onclick="if(event.target===this)SitePreview.close()">
+  <div class="spv-bar">
+    <b>👁️ معاينة الموقع</b>
+    <button data-d="desktop" class="on" onclick="SitePreview.dev('desktop')">🖥️ المكتب</button>
+    <button data-d="tablet" onclick="SitePreview.dev('tablet')">📱 تابلات</button>
+    <button data-d="phone" onclick="SitePreview.dev('phone')">📲 الهاتف</button>
+    <button onclick="SitePreview.reload()" title="تحديث">🔄</button>
+    <a id="spv-ext" href="./" target="_blank" rel="noopener" class="sp">↗ فتح في تبويب</a>
+    <button onclick="SitePreview.close()">✕ إغلاق</button>
+  </div>
+  <div class="spv-stage"><iframe class="spv-frame" id="spv-frame" title="معاينة الموقع"></iframe></div>
+</div>
+<script>
+const SitePreview = {
+  open(){ document.getElementById("spv").classList.add("on"); const f = document.getElementById("spv-frame"); if(!f.src || f.src === "about:blank" || !f.getAttribute("src")) f.src = "./?preview=" + Date.now(); },
+  close(){ document.getElementById("spv").classList.remove("on"); },
+  dev(d){ const f = document.getElementById("spv-frame"); f.className = "spv-frame " + (d === "desktop" ? "" : d); document.querySelectorAll(".spv-bar [data-d]").forEach(b=>b.classList.toggle("on", b.dataset.d === d)); },
+  reload(){ const f = document.getElementById("spv-frame"); f.src = "./?preview=" + Date.now(); }
+};
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.close(); });
+</script>
 <div class="wrap hidden" id="app">
   <div class="top">
     <h1>🌿 لوحة تحكم أليسوم</h1>
@@ -183,6 +215,7 @@ tr:hover td{background:#FAF7F0}
     <button class="small gold hidden" id="upd-btn" onclick="Updater.open()">🔔 تحديث متاح</button>
     <button class="small gray hidden" id="rel-btn" onclick="Seller.open()" title="خاص بك كبائع فقط">📡 النشر للعملاء</button>
     <button class="small blue" onclick="Admin.previewHome()">🏠 تعديل الصفحة الرئيسية</button>
+    <button class="small" style="background:var(--green);color:#fff" onclick="SitePreview.open()">👁️ زيارة الموقع</button>
     <button class="logout" onclick="Admin.logout()">خروج</button>
   </div>
   <div class="stat" id="stats"></div>

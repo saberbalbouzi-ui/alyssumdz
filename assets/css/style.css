@@ -22,7 +22,7 @@ button{font-family:inherit;cursor:pointer;border:none}
 header.site{position:sticky;top:0;z-index:50;background:rgba(251,248,242,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .site .container{display:flex;align-items:center;gap:1rem;padding:.7rem 0}
 .logo{font-size:1.5rem;font-weight:900;color:var(--green);letter-spacing:.5px}
-.logo span{color:var(--gold)}
+.logo span{color:#8a6a1a}
 nav.menu{display:flex;gap:1.4rem;margin-inline-start:auto;font-weight:700;font-size:.95rem}
 nav.menu a{color:var(--green);opacity:.85}
 nav.menu a:hover{opacity:1;color:var(--gold)}
