@@ -384,16 +384,53 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     </div>
     <div class="stat" id="fin-kpi"></div>
     <div class="card">
-      <b style="color:var(--green)">⚙️ إعدادات الحساب</b>
-      <div class="hint">سعر التكلفة لكل منتج يُدخَل في الجدول أدناه، ويُحفظ مشفّراً عن الزوار (لا يظهر في ملفات الموقع العامة).</div>
-      <div class="grid2" style="margin-top:.5rem">
-        <label class="hint" style="margin:0">تكلفة التغليف لكل طلب (دج)<input id="fin-pack" type="number" min="0" placeholder="0"></label>
-        <label class="hint" style="margin:0">تكلفة التوصيل الفعلية = % من رسوم الجدول<input id="fin-carrier" type="number" min="0" max="300" placeholder="100"></label>
-        <label class="hint" style="margin:0">رسوم الإرجاع = % من رسم التوصيل<input id="fin-return" type="number" min="0" max="300" placeholder="100"></label>
-        <label class="hint" style="margin:0">حدّ التنبيه لانخفاض المخزون (قطع)<input id="fin-low" type="number" min="0" placeholder="5"></label>
-        <label class="hint" style="margin:0">تكلفة التأمين الفعلية = % من نسبة ياليدين (فواتيرك الحالية: 0)<input id="fin-ins" type="number" min="0" max="100" placeholder="0"></label>
+      <b style="color:var(--green)">⚙️ مصاريفك وتكاليفك</b>
+      <div class="hint">أدخل كل بند مرة واحدة، والنظام يحسب ربح كل طلب وكل منتج تلقائياً. البنود التي تقبل «قيمة أو نسبة» تختار نوعها من القائمة.</div>
+      <div style="margin-top:.4rem">
+        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <div><b>📦 تكلفة التغليف ومصاريف أخرى</b><div class="hint" style="margin:.15rem 0 0">تُحسب على كل طلب (علبة، شريط لاصق، طباعة...). بالدينار.</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><input id="fin-pack" type="number" min="0" placeholder="0" style="max-width:140px"><span class="hint" style="margin:0;align-self:center">دج / طلب</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <div><b>🛒 سعر الشراء</b><div class="hint" style="margin:.15rem 0 0">يُدخَل لكل منتج في عمود «سعر الشراء» بالجدول أسفله (ثمن ما دفعته لشراء القطعة).</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><b id="fin-miss" style="align-self:center"></b></div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <div><b>📣 سعر الحملة الإعلانية</b><div class="hint" style="margin:.15rem 0 0">إما تكلفة الإعلان لكل طلب، أو إجمالي ما أنفقته في الفترة المعروضة (يُوزَّع على طلباتها).</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ad-mode" style="min-width:250px;flex:1"><option value="order">لكل طلب (دج)</option><option value="total">إجمالي الفترة المعروضة (دج)</option></select><input id="fin-ad" type="number" min="0" placeholder="0" style="max-width:130px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <div><b>🚚 تكلفة التوصيل المدمجة</b><div class="hint" style="margin:.15rem 0 0">ما تدفعه لشركة التوصيل: نسبة من رسوم جدول الولايات، أو قيمة ثابتة لكل طلب.</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-del-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من رسوم الجدول</option><option value="val">قيمة ثابتة لكل طلب (دج)</option></select><input id="fin-del" type="number" min="0" placeholder="100" style="max-width:130px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <div><b>↩️ تكلفة الإرجاع</b><div class="hint" style="margin:.15rem 0 0">تُخصم عند فشل التوصيل: نسبة من تكلفة التوصيل، أو قيمة ثابتة لكل طلب مُرجَع.</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ret-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من تكلفة التوصيل</option><option value="val">قيمة ثابتة لكل مرتجع (دج)</option></select><input id="fin-ret" type="number" min="0" placeholder="100" style="max-width:130px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <div><b>🛡️ التأمين</b><div class="hint" style="margin:.15rem 0 0">نسبة من قيمة الطلب، أو قيمة ثابتة لكل طلب. اتركه 0 إن لم تدفع تأميناً.</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ins-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من قيمة الطلب</option><option value="val">قيمة ثابتة لكل طلب (دج)</option></select><input id="fin-ins" type="number" min="0" placeholder="0" style="max-width:130px"></div>
+        </div>
+        <label style="display:flex;gap:.5rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid var(--line)"><input type="checkbox" id="fin-real" style="width:auto;margin-top:.25rem"><span><b>🤖 الأرقام الفعلية تلقائياً</b><span class="hint" style="display:block;margin:.15rem 0 0">عند توفر أرقام شركة التوصيل (كشف الدفع المستورد أو التعريفة الرسمية) تُستعمل بدل تقديراتك أعلاه؛ تقديراتك تُستعمل للطلبات التي لا أرقام فعلية لها.</span></span></label>
+        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
+          <div><b>🔔 حدّ تنبيه انخفاض المخزون</b><div class="hint" style="margin:.15rem 0 0">يتلوّن المخزون بالبرتقالي عند وصوله لهذا العدد.</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><input id="fin-low" type="number" min="0" placeholder="5" style="max-width:110px"><span class="hint" style="margin:0;align-self:center">قطع</span></div>
+        </div>
       </div>
-      <button class="small gold" onclick="Admin.saveFinSettings()">💾 حفظ</button>
+      <button class="small gold" style="margin-top:.6rem" onclick="Admin.saveFinSettings()">💾 حفظ</button>
+    </div>
+    <div class="card">
+      <details>
+        <summary style="cursor:pointer;font-weight:800;color:var(--green)">📖 كيف يعمل الحساب وكيف أقرأ الجدول؟</summary>
+        <div style="line-height:2;font-size:.9rem;margin-top:.5rem">
+          <b>الربح الصافي لطلب مُسلَّم</b> = ما دفعه الزبون (المنتجات بعد الخصم + التوصيل) − سعر شراء البضاعة − تكلفة التوصيل − التأمين − التغليف والمصاريف − الإعلان.<br>
+          <b>طلب فشل (مرتجع)</b> = خسارة: رسم الإرجاع + التغليف + الإعلان، (+ التوصيل إن لم تتوفر أرقام فعلية). والبضاعة تعود للمخزون.<br>
+          <b>ربح متوقع</b> = الطلبات المؤكدة أو المشحونة التي لم تُسلَّم بعد، بنفس القاعدة.<br>
+          <b>مصدر الأرقام (بالأولوية):</b> كشف الدفع الذي استوردته ← التعريفة الرسمية لشركة التوصيل ← تقديراتك في الأعلى.<br>
+          <b>أعمدة الجدول:</b> المخزون (يمكن تعديله مباشرة) · التغطية (كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً) · سعر الشراء (أدخله لكل منتج) · سُلّم (عدد القطع المُسلَّمة، وبين قوسين المُرجَعة) · الإيراد · تكلفة البضاعة · التوصيل والتأمين · التغليف والإعلان · خسارة الإرجاع · الربح · الهامش (الربح ÷ الإيراد).
+        </div>
+        <div id="fin-example" style="background:#faf6ec;border-radius:12px;padding:.8rem 1rem;margin-top:.6rem;font-size:.88rem;line-height:1.9"></div>
+      </details>
     </div>
     <div class="card"><div class="rtw" style="overflow:auto"><table id="fin-table" class="rt"></table></div></div>
     <div class="card"><b style="color:var(--green)">🧾 آخر حركات المخزون</b><div class="rtw" style="overflow:auto;margin-top:.5rem"><table id="fin-log" class="rt"></table></div></div>
@@ -4616,12 +4653,16 @@ const Admin = {
   /* ════════ المخزون الحي + الأرباح الحقيقية ════════
      المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
      علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
-  fin: { costs:{}, set:{ packaging:0, carrierPct:100, returnPct:100, low:5, insPct:0 }, cfg:{ since:null }, log:[] },
+  finDefaults(){ return { packaging:0, adMode:"order", adVal:0, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5 }; },
+  fin: { costs:{}, set:{ packaging:0, adMode:"order", adVal:0, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5 }, cfg:{ since:null }, log:[] },
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
     this.ydFees = (await Priv.get("ydfees", {})) || {};
     this.ydActual = (await Priv.get("ydactual", {})) || {};
-    this.fin = { costs: costs || {}, set: Object.assign({ packaging:0, carrierPct:100, returnPct:100, low:5, insPct:0 }, set || {}), cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    const old = set || {}, S0 = Object.assign(this.finDefaults(), old);
+    if(old.delVal == null && old.carrierPct != null) S0.delVal = old.carrierPct;      // ترحيل الإعدادات القديمة
+    if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
+    this.fin = { costs: costs || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     this.reconcileStatusChanges();
   },
@@ -4715,7 +4756,7 @@ const Admin = {
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    this.fin.set = { packaging: n("fin-pack", 0), carrierPct: n("fin-carrier", 100), returnPct: n("fin-return", 100), low: n("fin-low", 5), insPct: n("fin-ins", 0) };
+    this.fin.set = { packaging: n("fin-pack", 0), adMode: $f("fin-ad-mode").value, adVal: n("fin-ad", 0), delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5) };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
   /* ════════ استيراد كشف دفع ياليدين: أرقام فعلية لكل طرد (توصيل، إرجاع، COD، تأمين) تحلّ محلّ التقدير ════════ */
@@ -4816,29 +4857,35 @@ const Admin = {
   },
   carrierCost(o){
     const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null;
+    const S = this.fin.set; if(S.delMode === "val") return Number(S.delVal) || 0;
     const base = w ? (o.dtype === "stop" ? w.stop : w.home) : (Number(o.fee) || 0);
-    return Math.round(base * (this.fin.set.carrierPct / 100));
+    return Math.round(base * ((Number(S.delVal) || 0) / 100));
   },
+  insCost(price){ const S = this.fin.set; return S.insMode === "val" ? (Number(S.insVal) || 0) : Math.round(price * (Number(S.insVal) || 0) / 100); },
+  retCost(est){ const S = this.fin.set; return S.retMode === "val" ? (Number(S.retVal) || 0) : Math.round(est * (Number(S.retVal) || 0) / 100); },
   /* حساب الأرباح لكل منتج في فترة: livree = محقق، echec = خسارة (توصيل + إرجاع + تغليف؛ البضاعة تعود للمخزون)، confirmee/expediee = متوقع */
   computeFinance(days){
-    const since = days > 0 ? Date.now() - days * 86400000 : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0 };
-    const row = p=>per[p.slug] || (per[p.slug] = { p, units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 });
+    const since = days > 0 ? Date.now() - days * 86400000 : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0, adTotal:0 };
+    let nCount = 0; this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(!["livree","echec","confirmee","expediee"].includes(o.status)) return; if(this.orderLines(o).length) nCount++; });
+    const adOrder = S.adMode === "total" ? (nCount ? (Number(S.adVal) || 0) / nCount : 0) : (Number(S.adVal) || 0);
+    const row = p=>per[p.slug] || (per[p.slug] = { p, units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, ad:0, loss:0, profit:0, expProfit:0 });
     this.orders.forEach(o=>{
       const t = new Date(o.date).getTime(); if(since && !(t >= since)) return;
       if(!["livree","echec","confirmee","expediee"].includes(o.status)) return;
       const lines = this.orderLines(o); if(!lines.length) return;
       const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, est = this.carrierCost(o), act = this.actualFees(o), real = this.realFees(o), price = Math.max(0, (Number(o.total) || 0) - fee), pack = S.packaging,
-        useReal = !!(real && real.delivery != null), useAct = !!act && (/livr/i.test(act.st) ? o.status === "livree" : /retour/i.test(act.st) ? o.status === "echec" : false),
-        car = useAct ? act.del + act.cod + act.ins : (useReal ? real.delivery + Math.round(price * real.cod / 100) + Math.round(price * real.ins / 100 * (Number(S.insPct) || 0) / 100) : est),
-        ret = useAct ? act.ret : (useReal ? real.retour : Math.round(est * S.returnPct / 100));
+        useReal = S.useReal !== false && !!(real && real.delivery != null), useAct = S.useReal !== false && !!act && (/livr/i.test(act.st) ? o.status === "livree" : /retour/i.test(act.st) ? o.status === "echec" : false),
+        car = useAct ? act.del + act.cod + act.ins : (useReal ? real.delivery + Math.round(price * real.cod / 100) + this.insCost(price) : est + this.insCost(price)),
+        ret = useAct ? act.ret : (useReal ? real.retour : this.retCost(est));
+      K.adTotal += adOrder;
       K.actN = (K.actN || 0) + (useAct ? 1 : 0); K.realN = (K.realN || 0) + (!useAct && useReal ? 1 : 0); K.estN = (K.estN || 0) + (!useAct && !useReal ? 1 : 0);
       lines.forEach(l=>{
         const share = (sum === lines.length && !lines.reduce((a,x)=>a + x.total, 0)) ? 1 / lines.length : l.total / sum, r = row(l.p);
         const cost = Number(this.fin.costs[l.p.slug]) || 0;
-        if(o.status === "echec"){ const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
+        if(o.status === "echec"){ const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack + adOrder) * share); r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
         else{
-          const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), pr = rev - cogs - del - pk;
-          if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.profit += pr; K.real += pr; K.revenue += rev; }
+          const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), ad = Math.round(adOrder * share), pr = rev - cogs - del - pk - ad;
+          if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.ad += ad; r.profit += pr; K.real += pr; K.revenue += rev; }
           else { r.expUnits += l.qty; r.expProfit += pr; K.exp += pr; }
         }
       });
@@ -4846,11 +4893,21 @@ const Admin = {
     });
     return { per, K };
   },
+  /* مثال محسوب بإعداداتك الحالية يوضّح كيف يُحسب ربح طلب واحد */
+  finExample(){
+    const el = $f("fin-example"); if(!el) return; const S = this.fin.set, n = x=>Math.round(x).toLocaleString("fr-DZ");
+    const sale = 3000, fee = 600, buy = 1200, est = S.delMode === "val" ? (Number(S.delVal) || 0) : Math.round(fee * (Number(S.delVal) || 0) / 100), ins = this.insCost(sale), pack = Number(S.packaging) || 0, ad = S.adMode === "total" ? 0 : (Number(S.adVal) || 0);
+    const profit = sale + fee - buy - est - ins - pack - ad, ret = this.retCost(est), loss = ret + pack + ad + est;
+    el.innerHTML = '<b>مثال بإعداداتك الحالية:</b> زبون اشترى منتجاً بـ ' + n(sale) + ' دج ودفع توصيلاً ' + n(fee) + ' دج، وسعر شرائك للقطعة ' + n(buy) + ' دج.<br>' +
+      'الربح = ' + n(sale) + ' + ' + n(fee) + ' − ' + n(buy) + ' (البضاعة) − ' + n(est) + ' (التوصيل) − ' + n(ins) + ' (التأمين) − ' + n(pack) + ' (التغليف) − ' + n(ad) + ' (الإعلان) = <b style="color:' + (profit >= 0 ? "var(--ok)" : "var(--red)") + '">' + n(profit) + ' دج</b><br>' +
+      'لو رجع الطلب: الخسارة ≈ ' + n(ret) + ' (إرجاع) + ' + n(pack) + ' (تغليف) + ' + n(ad) + ' (إعلان) + ' + n(est) + ' (توصيل تقديري) = <b style="color:var(--red)">' + n(loss) + ' دج</b>' + (S.adMode === "total" ? '<br><small>الإعلان بنمط «الإجمالي» يُوزَّع على طلبات الفترة المعروضة فلا يظهر في هذا المثال.</small>' : "");
+  },
   renderFinance(noFetch){
     if(!$f("fin-table")) return;
     if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
     const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
-    $f("fin-pack").value = S.packaging; $f("fin-carrier").value = S.carrierPct; $f("fin-return").value = S.returnPct; $f("fin-low").value = S.low; $f("fin-ins").value = S.insPct || 0;
+    if(!document.activeElement || !["fin-pack","fin-ad","fin-del","fin-ret","fin-ins","fin-low"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-ad-mode").value = S.adMode; $f("fin-ad").value = S.adVal; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret-mode").value = S.retMode; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; }
+    this.finExample();
     const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
     this.orders.forEach(o=>{ if(!["confirmee","expediee","livree"].includes(o.status) || !(new Date(o.date).getTime() >= since14)) return; this.orderLines(o).forEach(l=>{ sold14[l.p.slug] = (sold14[l.p.slug] || 0) + l.qty; }); });
     const pend = {}; this.orders.forEach(o=>{ if(o.status === "nouvelle") this.orderLines(o).forEach(l=>{ pend[l.p.slug] = (pend[l.p.slug] || 0) + l.qty; }); });
@@ -4859,24 +4916,26 @@ const Admin = {
     const done = K.delivered + K.failed, margin = K.revenue ? Math.round(K.real / K.revenue * 100) : 0;
     const srcNote = (K.actN || K.realN || K.estN) ? " التكاليف: " + (K.actN ? K.actN + " طلب بالأرقام الفعلية من كشف ياليدين، " : "") + (K.realN || 0) + " بتعريفة ياليدين الرسمية (توصيل البلدية + COD + رسم الإرجاع)" + (K.estN ? "، و" + K.estN + " بتقدير من جدول الرسوم" : "") + "." : "";
     $f("fin-note").textContent = srcNote + " تتبّع المخزون التلقائي للطلبات منذ " + new Date(this.fin.cfg.since).toLocaleDateString("ar-DZ") + " — الطلبات الأقدم لا تُخصم. الربح المحقق = طلبات سُلّمت − طلبات فشلت (توصيل + إرجاع + تغليف).";
+    $f("fin-miss").innerHTML = missing ? '<span style="color:var(--red)">⚠️ ' + missing + ' منتج بلا سعر شراء — أدخله في الجدول</span>' : '<span style="color:var(--ok)">✅ كل المنتجات لها سعر شراء</span>';
     $f("fin-kpi").innerHTML = '<div><b style="color:' + (K.real >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(K.real) + ' دج</b><span>صافي الربح المحقق</span></div>' +
       '<div><b>' + nf(K.exp) + ' دج</b><span>ربح متوقع (قيد التوصيل: ' + K.open + ')</span></div>' +
       '<div><b>' + (done ? Math.round(K.delivered / done * 100) : 0) + '%</b><span>نسبة التسليم (' + K.delivered + ' / ' + done + ')</span></div>' +
       '<div><b>' + margin + '%</b><span>هامش الربح على المبيعات</span></div>' +
+      (K.adTotal ? '<div><b>' + nf(K.adTotal) + ' دج</b><span>إنفاق إعلاني محتسب</span></div>' : "") +
       '<div><b style="color:' + (missing ? "var(--red)" : "var(--ok)") + '">' + missing + '</b><span>منتجات بلا سعر تكلفة</span></div>';
     const rows = active.map(p=>{ const r = per[p.slug] || { units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 }; return Object.assign({ p }, r); })
       .sort((a,b)=>((b.units + b.retUnits + b.expUnits) > 0) - ((a.units + a.retUnits + a.expUnits) > 0) || b.profit - a.profit);
     const low = Number(S.low) || 0;
-    $f("fin-table").innerHTML = '<tr class="hd"><th>المنتج</th><th>المخزون</th><th>تغطية</th><th>سعر التكلفة</th><th>سُلّم</th><th>الإيراد</th><th>تكلفة البضاعة</th><th>التوصيل+التغليف</th><th>خسارة الإرجاع</th><th>الربح</th><th>الهامش</th></tr>' +
+    $f("fin-table").innerHTML = '<tr class="hd"><th>المنتج</th><th title="الكمية المتوفرة — عدّلها مباشرة">المخزون</th><th title="كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً">تغطية</th><th title="ثمن شراء القطعة الواحدة">سعر الشراء</th><th title="عدد القطع المُسلَّمة (وبين قوسين المُرجَعة)">سُلّم</th><th title="ما دفعه الزبائن عن المنتجات بعد الخصم">الإيراد</th><th title="سعر الشراء × القطع المُسلَّمة">تكلفة البضاعة</th><th title="تكلفة شركة التوصيل + التأمين">التوصيل والتأمين</th><th title="التغليف والمصاريف الأخرى + الإعلان">التغليف والإعلان</th><th title="خسارة الطلبات المرتجعة">خسارة الإرجاع</th><th title="الإيراد − كل التكاليف">الربح</th><th title="الربح ÷ الإيراد">الهامش</th></tr>' +
       rows.map(r=>{ const p = r.p, st = p.stock, avg = (sold14[p.slug] || 0) / 14, cover = st == null ? "∞" : (avg > 0 ? Math.floor(st / avg) + " يوم" : "—");
         const stCls = st != null && st <= 0 ? "color:var(--red);font-weight:800" : (st != null && st <= low ? "color:#B26A00;font-weight:800" : "");
         const cost = this.fin.costs[p.slug], mg = r.revenue ? Math.round(r.profit / r.revenue * 100) : null;
         return '<tr><td class="t"><b>' + p.title + '</b>' + (pend[p.slug] ? '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>' : "") + '</td>' +
           '<td data-l="المخزون"><input type="number" min="0" value="' + (st == null ? "" : st) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)"></td>' +
           '<td data-l="تغطية" style="' + (cover !== "∞" && cover !== "—" && parseInt(cover) < 7 ? "color:var(--red);font-weight:800" : "") + '">' + cover + '</td>' +
-          '<td data-l="سعر التكلفة"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
+          '<td data-l="سعر الشراء"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
           '<td data-l="سُلّم">' + r.units + (r.retUnits ? ' <small style="color:var(--red)">(-' + r.retUnits + ')</small>' : "") + '</td>' +
-          '<td data-l="الإيراد">' + nf(r.revenue) + '</td><td data-l="تكلفة البضاعة">' + nf(r.cogs) + '</td><td data-l="التوصيل">' + nf(r.delivery + r.pack) + '</td>' +
+          '<td data-l="الإيراد">' + nf(r.revenue) + '</td><td data-l="تكلفة البضاعة">' + nf(r.cogs) + '</td><td data-l="التوصيل والتأمين">' + nf(r.delivery) + '</td><td data-l="التغليف والإعلان">' + nf(r.pack + (r.ad || 0)) + '</td>' +
           '<td data-l="خسارة الإرجاع" style="color:' + (r.loss ? "var(--red)" : "inherit") + '">' + nf(r.loss) + '</td>' +
           '<td data-l="الربح"><b style="color:' + (r.profit >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(r.profit) + '</b>' + (r.expProfit ? '<br><small style="color:#777">+' + nf(r.expProfit) + ' متوقع</small>' : "") + '</td>' +
           '<td data-l="الهامش">' + (mg == null ? "—" : mg + "%") + '</td></tr>'; }).join("");
