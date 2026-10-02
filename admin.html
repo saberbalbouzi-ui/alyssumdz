@@ -8660,6 +8660,7 @@ After presenting the copywriting, output a single, consolidated READY-TO-COPY de
 5b. MASTERY & UNIQUENESS (MANDATORY): build a UNIQUENESS TABLE in your head before writing the final prompt — every headline, sub-line and bullet must be unique; no sentence may appear twice; no content word (4+ letters) may repeat inside the same string; never start two consecutive lines with the same word; keep each string 2–8 words. The visual spec must demand pixel-perfect, razor-sharp, studio-grade, high-resolution typography with perfect letter shapes and connections, correct RTL ordering, consistent font weight, no ghost letters, no duplicated glyphs, no garbled or invented words, and no text outside the quoted strings.
 6. PROOFREADING (MANDATORY, DO IT BEFORE OUTPUT): re-read every ${L.name} string you wrote, word by word, and fix any spelling mistake. NEVER repeat the same word twice in a row or the same phrase twice in one string; never write the same sentence in two sections; every headline must be unique. NEVER use letter elongation/kashida/tatweel (like "لمـاذا") or decorative stretching; no diacritics. Use only correct, common words — if unsure of a word, choose a simpler one.
 6b. SPELLING (MANDATORY): spell every ${L.name} word perfectly with correct standard orthography. Keep every quoted text SHORT (max 8 words per line, simple everyday words, no diacritics, no mixed languages). The image generator must copy each quoted string letter by letter and add NO other text anywhere (no fake labels or extra captions). Copy the brand/product name EXACTLY as printed on the product packaging.
+8. STRUCTURE (MANDATORY): number every section like "SECTION 1 — HERO", "SECTION 2 — THE PROBLEM"…; give every quoted string its own line and its own empty space; state exact counts ("exactly FOUR icons, not three, not five"); write "Each line appears ONE TIME ONLY" for repeated-risk blocks; end each section with "No additional text."; keep every section's content unique.
 7. Text Direction: ${ar ? "All text and layout direction must respect right-to-left flow." : "All text and layout direction must respect left-to-right flow."}
 
 --- USE THIS EXACT TEMPLATE FOR STEP 2 (DESIGN PROMPT) ---
@@ -8989,8 +8990,12 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     </div>
     <div class="grid2" style="margin-top:.4rem">
       <label class="hint" style="margin:0">طريقة التوليد<select id="gen-mode"><option value="parts">جودة عالية: 3 أجزاء متصلة (موصى — نصوص أوضح)</option><option value="single">صورة واحدة طويلة (أسرع/أرخص، نصوصها أصغر وأقل وضوحاً)</option></select></label>
+      <label class="hint" style="margin:0">نسبة الصورة (للجزء الواحد)<select id="gen-ar"><option value="9:16">9:16 — طولي (موصى)</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option><option value="1:4">1:4 — طويل جداً</option><option value="1:8">1:8 — أطول (ضيق)</option></select></label>
+      <label class="hint" style="margin:0">الدقة<select id="gen-res"><option value="2K">2K (موصى)</option><option value="4K">4K — أعلى وأغلى</option><option value="1K">1K — أسرع وأرخص</option></select></label>
+      <label class="hint" style="margin:0">عدد الأجزاء المتصلة<select id="gen-parts"><option value="3">3 أجزاء</option><option value="2">جزءان (أقصر)</option><option value="4">4 أجزاء (أطول وأوضح)</option><option value="1">جزء واحد</option></select></label>
       <label class="hint" style="margin:0">نموذج الصور<select id="gen-imgq"><option value="pro">أعلى جودة نص (Nano Banana Pro) — الأغلى</option><option value="fast">أسرع وأرخص (Flash)</option></select></label>
     </div>
+    <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-modest" checked style="width:auto"> مراعاة الحشمة: أي امرأة في الصورة محجّبة بالكامل (يُفضَّل تصوير البشرة عن قرب)</label>
     <button class="small gray" type="button" onclick="PBGen.testKey()" style="margin-top:.3rem">🔑 اختبار المفتاح</button>
   </details>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 .3rem">
@@ -9090,6 +9095,26 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   const keyNow = () => { const k = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })(); if (k) { try { localStorage.setItem("alyssum_gp_gkey", k); $("gen-gkey").value = k; } catch (e) { } } return k; };
   const small64 = async (file, max) => { const c = await loadImage(file), k = Math.min(1, max / Math.max(c.width, c.height)), c2 = document.createElement("canvas"); c2.width = Math.round(c.width * k); c2.height = Math.round(c.height * k); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); return c2.toDataURL("image/jpeg", .9).split(",")[1]; };
+  /* كتلة قواعد ثابتة تُضاف أول البرومبت النهائي دائماً (دقة النص، عدم تكرار، حشمة، حماية العبوة) */
+  function rulesBlock() {
+    const L = LANGS[$("gen-lang").value] || LANGS.ar, modest = !$("gen-modest") || $("gen-modest").checked;
+    return `IMPORTANT: The uploaded product image is the ONLY packaging reference. Preserve the exact product container, cap, label, logo, proportions, colors and printed wording exactly as shown in the reference image. Do NOT redesign the packaging, do NOT invent another product, do NOT change the brand name, do NOT create additional products.
+
+==================================================
+ABSOLUTE ${L.name.toUpperCase()} TEXT ACCURACY RULES
+==================================================
+${L.name} typography accuracy is the highest priority. Every quoted ${L.name} string in this prompt must appear EXACTLY ONCE, copied LETTER BY LETTER. Do not rewrite, paraphrase, correct, duplicate, repeat or merge strings; do not split words incorrectly; do not add decorative letters, diacritics or extra words. Never create fake text, fake labels, fake ingredient names, fake reviews, fake logos or random characters. If there is not enough space for a line, make the font smaller while keeping it clearly readable — NEVER repeat a sentence to fill space. There must be ZERO random text anywhere; only the exact quoted strings may appear as overlay text. ${L.rtl ? "All text is RIGHT-TO-LEFT with no mirrored, reversed or duplicated letters; use a highly accurate modern Arabic display font, extremely bold, sharp, clean and professional." : "Use a clean, highly accurate, bold modern display font."} Every quoted string is a separate text element with its own dedicated empty space; leave generous negative space around it and never put several paragraphs into one block.
+${modest ? `
+==================================================
+MODESTY AND HUMAN FIGURES
+==================================================
+ABSOLUTELY NO WOMAN WITHOUT HIJAB. If a woman appears she MUST be a modest Muslim woman wearing a clearly visible elegant hijab that completely covers her hair, with covered shoulders and neckline and modest clothing. No visible female hair, no revealing clothing. Prefer macro skin photography, hands, or product-only compositions; avoid uncovered faces.
+` : ""}
+==================================================
+FINAL TEXT SAFETY CHECK
+==================================================
+Before rendering, internally verify every text element: no duplicated sentences, words or letters; no random characters; no invented captions; no repeated headlines or product names. Every sentence is rendered once, exactly as written. NO HTML, NO CSS, NO code, NO UI, NO browser interface, NO extra text, NO fake text.`;
+  }
   /* مرحلة خفية: يكتب Gemini النصوص التسويقية والبرومبت النهائي، ثم يُدقَّق ويُخزَّن (لا يُعرض) */
   async function makeFinal(key) {
     const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/5) Gemini يكتب نصوصاً تسويقية قوية…";
@@ -9098,7 +9123,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     if (!blocks.length) throw new Error("لم يُرجع Gemini تصميماً جاهزاً — أعد المحاولة");
     const fx = localFix(blocks.join("\n\n")); $("gen-final").value = fx.text; $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = fx.text;
     msg.textContent = "⏳ (2/5) تدقيق إملائي وتكرار…"; try { await proofread(); } catch (e) { }
-    S.finalPrompt = $("gen-final").value; return S.finalPrompt;
+    const full = rulesBlock() + "\n\n" + $("gen-final").value; $("gen-final").value = full; S.finalPrompt = full; return S.finalPrompt;
   }
   async function auto() { const msg = $("gen-automsg"), key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } try { await makeFinal(key); msg.textContent = "✅ جاهز"; } catch (err) { msg.textContent = "❌ " + err.message; } }
   /* نسخ البرومبت للحافظة دون عرضه */
@@ -9114,11 +9139,13 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     const pick = pref.filter(m => names.includes(m)), any = names.filter(n => /image/i.test(n) && !pick.includes(n)); const list = pick.concat(any).slice(0, 3); return list.length ? list : pref.slice(0, 3);
   }
   /* صورة واحدة طويلة: نجرّب النسب الأطول أولاً ثم نتراجع إن لم يدعمها النموذج */
+  /* قياسات الصورة (مثل واجهة Pro): النسبة + الدقة + عدد الأجزاء */
+  const imgCfg = () => ({ ar: ($("gen-ar") || {}).value || "9:16", size: ($("gen-res") || {}).value || "2K", parts: Math.max(1, Math.min(4, Number(($("gen-parts") || {}).value) || 3)) });
   /* جودة عالية: ثلاثة أجزاء 9:16 (عرض أكبر ← نصوص أوضح بكثير من صورة 1:8 الضيقة) ثم لصقها */
   async function genPart(key, prompt, productB64, prevB64) {
     const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } }); if (prevB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: prevB64 } });
     const models = await imageModels(key); let lastErr = null;
-    for (const cfg of [{ aspectRatio: "9:16", imageSize: "2K" }, { aspectRatio: "9:16" }]) {
+    const ic = imgCfg(); for (const cfg of [{ aspectRatio: ic.ar, imageSize: ic.size }, { aspectRatio: ic.ar }]) {
       try {
         const j = await gemGenerate(key, "image", parts, { imageConfig: cfg }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
         if (!d) throw new Error("لم يُرجع النموذج صورة"); S.model = j._model; const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
@@ -9137,12 +9164,12 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     });
     return out;
   }
-  const SPLIT = (k, n) => `\n\n=== RENDER INSTRUCTION (HIGHEST PRIORITY) ===\nThe design above describes ONE continuous tall landing page. Mentally split it into ${n} equal vertical parts (top → bottom). Render ONLY part ${k} of ${n} now, as ONE image with aspect ratio 9:16 at the highest possible resolution, containing only the sections and texts that belong to this part, with large, razor-sharp, perfectly spelled typography. Every quoted text must appear exactly once. Keep the same single smooth background gradient, illustration style, typography and product rendering across all parts${k > 1 ? "; the TOP edge of this image must continue seamlessly the bottom edge of the attached previous part image (same background colour and glow), with an empty margin at the top" : ""}${k < n ? "; the BOTTOM edge must fade into the plain continuing background colour with an empty margin (no text or object touching the edge) so the next part joins seamlessly" : ""}. Copy the product from the attached product photo exactly. Do not write part numbers or any label.`;
+  const SPLIT = (k, n, ar) => `\n\n=== RENDER INSTRUCTION (HIGHEST PRIORITY) ===\nThe design above describes ONE continuous tall landing page. Mentally split it into ${n} equal vertical parts (top → bottom). Render ONLY part ${k} of ${n} now, as ONE image with aspect ratio ${ar} at the highest possible resolution, containing only the sections and texts that belong to this part, with large, razor-sharp, perfectly spelled typography. Every quoted text must appear exactly once. Keep the same single smooth background gradient, illustration style, typography and product rendering across all parts${k > 1 ? "; the TOP edge of this image must continue seamlessly the bottom edge of the attached previous part image (same background colour and glow), with an empty margin at the top" : ""}${k < n ? "; the BOTTOM edge must fade into the plain continuing background colour with an empty margin (no text or object touching the edge) so the next part joins seamlessly" : ""}. Copy the product from the attached product photo exactly. Do not write part numbers or any label.`;
   const RATIOS = ["1:8", "1:4", "9:16"];
   async function genLong(key, prompt, productB64) {
     const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } });
     const models = await imageModels(key); let lastErr = null;
-    const tries = []; RATIOS.forEach(ar => { tries.push({ aspectRatio: ar, imageSize: "2K" }); tries.push({ aspectRatio: ar }); });                // جودة 2K أولاً ثم الافتراضية
+    const ic = imgCfg(), tries = []; [ic.ar === "9:16" ? "1:4" : ic.ar].concat(RATIOS).filter((v, i, a) => a.indexOf(v) === i).forEach(ar => { tries.push({ aspectRatio: ar, imageSize: ic.size }); tries.push({ aspectRatio: ar }); });   // النسبة المختارة أولاً ثم التراجع
     for (const cfg of tries) {
       try {
         const j = await gemGenerate(key, "image", parts, { imageConfig: cfg }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
@@ -9186,8 +9213,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       let blob, canvas;
       if ($("gen-mode") && $("gen-mode").value === "single") { msg.textContent = "🎨 توليد الصورة…"; blob = await (PBGen.imgFn || genLong)(key, full, pb); canvas = await loadImage(blob); }
       else {
-        const N = 3, blobs = []; let prev = null;
-        for (let k = 1; k <= N; k++) { msg.textContent = "🎨 (" + (2 + k) + "/" + (N + 2) + ") توليد الجزء " + k + " من " + N + (S.model ? " — " + S.model : "") + " (قد يستغرق دقيقة)…"; const bl = await (PBGen.imgFn || genPart)(key, full + SPLIT(k, N), pb, prev); blobs.push(bl); prev = PBGen.imgFn ? null : await small64(bl, 900); }
+        const N = imgCfg().parts, blobs = []; let prev = null;
+        for (let k = 1; k <= N; k++) { msg.textContent = "🎨 (" + (2 + k) + "/" + (N + 2) + ") توليد الجزء " + k + " من " + N + (S.model ? " — " + S.model : "") + " (قد يستغرق دقيقة)…"; const bl = await (PBGen.imgFn || genPart)(key, full + SPLIT(k, N, imgCfg().ar), pb, prev); blobs.push(bl); prev = PBGen.imgFn ? null : await small64(bl, 900); }
         msg.textContent = "🧩 دمج الأجزاء…"; canvas = await stackParts(blobs); blob = await new Promise(r => canvas.toBlob(r, "image/png"));
       } S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
       await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.model ? " بنموذج " + S.model : "") + " (" + canvas.width + "×" + canvas.height + ")" + " — راجعها ثم اعتمدها للتقسيم";
