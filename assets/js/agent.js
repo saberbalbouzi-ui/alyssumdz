@@ -689,6 +689,6 @@ const Agent = (() => {
     // ولا يُفتح إلا عند الضغط عليها من المستخدم — كان يفتح تلقائياً بعد 12 ثانية ويغطي الصفحة
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
   return { reply, open };
 })();

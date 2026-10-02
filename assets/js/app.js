@@ -248,7 +248,7 @@ async function loadTheme(){
 function applyTheme(theme){
   if(!theme || typeof theme !== "object") return;
   try{
-    if(theme.fontUrl){
+    if(theme.fontUrl && ![...document.querySelectorAll('link[rel="stylesheet"]')].some(l=>l.href === theme.fontUrl)){   // لا تكرار إن كان الخط محمّلاً في <head>
       const link = document.createElement("link");
       link.rel = "stylesheet"; link.href = theme.fontUrl;
       document.head.appendChild(link);
@@ -702,7 +702,7 @@ function initProduct(slug){
   const communeInput = document.getElementById("commune");
   if (communeInput){
     communeSel = document.createElement("select");
-    communeSel.id = "commune";
+    communeSel.id = "commune"; communeSel.setAttribute("aria-label", "البلدية");
     communeSel.innerHTML = '<option value="">— اختر البلدية —</option>';
     communeInput.replaceWith(communeSel);
   }
@@ -888,7 +888,7 @@ function productCardHTML(p, opts){
   const ptype = productType(p), disc = (ptype==="simple" && p.old) ? Math.round((1-p.price/p.old)*100) : 0;
   const oos = isOutOfStock(p);
   return `
-    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" src="${REL}${p.cover||p.images[0]}" alt="${p.title}"></div>
+    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" decoding="async" width="500" height="500" src="${REL}${p.cover||p.images[0]}" alt="${p.title}"></div>
     <div class="body">
       <h3>${p.title}</h3>
       <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>
@@ -972,7 +972,7 @@ function fillCartWilayas(){
   const cInp = document.getElementById("ccommune");
   if(cInp){
     cSel = document.createElement("select");
-    cSel.id = "ccommune";
+    cSel.id = "ccommune"; cSel.setAttribute("aria-label", "البلدية");
     cSel.innerHTML = '<option value="">— اختر البلدية —</option>';
     cInp.replaceWith(cSel);
     cSel.onchange = ()=>{ updateCartStop(); Cart.render(); };
@@ -1096,7 +1096,7 @@ const Account = {
     network: "تعذّر الاتصال — تحقق من الإنترنت وأعد المحاولة.",
   },
   err(e){ const m = (e && e.message) || ""; return this.ERR[m] || "حدث خطأ غير متوقع — أعد المحاولة."; },
-  STATUS: { nouvelle:["قيد المراجعة","#8a6d1d"], confirmee:["مؤكَّد","#1c6b8f"], expediee:["في الطريق إليك 🚚","#6a3fb0"], livree:["تم التسليم ✅","#1E9E6A"], annulee:["ملغى","#999"], echec:["تعذّر التوصيل","#D64545"] },
+  STATUS: { nouvelle:["قيد المراجعة","#8a6d1d"], confirmee:["مؤكَّد","#1c6b8f"], expediee:["في الطريق إليك 🚚","#6a3fb0"], livree:["تم التسليم ✅","#157a55"], annulee:["ملغى","#999"], echec:["تعذّر التوصيل","#D64545"] },
 
   init(){
     if(window.parent !== window) return;
