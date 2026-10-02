@@ -68,20 +68,29 @@ const PB = (() => {
   const formatNum = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ");
 
   /* ───── شبكة المنتجات: دالة مستقلة (تُحقن كما هي داخل الصفحة المنشورة لتحديث الأسعار تلقائياً) ───── */
-  function productsHtml(s, products, base) {
+  function productsHtml(s, products, base, meta) {
     const f = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ") + " دج";
     const e = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     let list = (products || []).filter(p => p.active !== false);
-    const val = String(s.val || "").trim();
-    if (s.mode === "tag" && val) list = list.filter(p => (p.tags || []).includes(val));
-    else if (s.mode === "cat" && val) list = list.filter(p => p.cat === val);
-    else if (s.mode === "slugs" && val) { const arr = val.split(/[\s,،]+/).filter(Boolean); list = arr.map(x => list.find(p => p.slug === x)).filter(Boolean); }
+    const mode = s.mode || "all";
+    if (mode === "tag") { const t = s.tag || s.val; if (t) list = list.filter(p => (p.tags || []).includes(t)); }
+    else if (mode === "cat") { const c = s.cat || s.val; if (c) list = list.filter(p => p.cat === c); }
+    else if (mode === "slugs") { const arr = String(s.slugs || s.val || "").split(/[\s,،]+/).filter(Boolean); if (arr.length) list = arr.map(x => list.find(p => p.slug === x)).filter(Boolean); }
     const lim = Number(s.limit) || 0; if (lim > 0) list = list.slice(0, lim);
     if (!list.length) return '<div class="pb-empty-note">لا توجد منتجات مطابقة</div>';
-    return '<div class="pb-pgrid">' + list.map(p => {
+    let bar = "";
+    meta = meta || {};
+    if (s.tabs === "tags" && meta.tabs && meta.tabs.length) {
+      const have = meta.tabs.filter(c => c.enabled !== false && list.some(p => (p.tags || []).includes(c.key)));
+      if (have.length) bar = '<div class="pb-ptabs"><button type="button" class="on" data-k="">الكل</button>' + have.map(c => '<button type="button" data-k="t:' + e(c.key) + '">' + e(c.label) + '</button>').join("") + '</div>';
+    } else if (s.tabs === "cats" && meta.cats) {
+      const have = Object.keys(meta.cats).filter(k => list.some(p => p.cat === k));
+      if (have.length) bar = '<div class="pb-ptabs"><button type="button" class="on" data-k="">الكل</button>' + have.map(k => '<button type="button" data-k="c:' + e(k) + '">' + e(meta.cats[k]) + '</button>').join("") + '</div>';
+    }
+    return bar + '<div class="pb-pgrid">' + list.map(p => {
       const img = p.cover || (p.images && p.images[0]) || "";
       const disc = (p.old && p.old > p.price) ? Math.round((1 - p.price / p.old) * 100) : 0;
-      return '<a class="pb-pc" href="' + e(base) + 'p/' + e(p.slug) + '/">' +
+      return '<a class="pb-pc" data-t="' + e((p.tags || []).join(" ")) + '" data-c="' + e(p.cat || "") + '" href="' + e(base) + 'p/' + e(p.slug) + '/">' +
         '<div class="pb-pci">' + (disc ? '<span class="pb-pcd">-' + disc + '%</span>' : '') + (img ? '<img loading="lazy" decoding="async" src="' + e(base + img) + '" alt="' + e(p.title) + '">' : '') + '</div>' +
         '<h3>' + e(p.title) + '</h3><div class="pb-pcp"><b>' + f(p.price) + '</b>' + ((s.showOld !== false && p.old && p.old > p.price) ? '<s>' + f(p.old) + '</s>' : '') + '</div>' +
         '<span class="pb-pcb">' + e(s.btn || "اطلب الآن") + '</span></a>';
@@ -117,13 +126,13 @@ const PB = (() => {
       css: (c, sel, s) => emit(c, sel + " .pb-t", s, TYPO),
     },
     image: {
-      label: "صورة", ic: "🖼️", def: { src: "", alt: "", fit: "cover" },
-      ctl: [{ k: "src", l: "الصورة", t: "image", tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" }],
-      html: (s, id, ctx) => { const src = s.src ? (/^(https?:|data:|\/)/.test(s.src) ? s.src : ctx.base + s.src) : ""; const im = src ? `<img src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">` : `<div class="pb-ph">🖼️ اختر صورة من الإعدادات</div>`; return s.link ? `<a href="${esc(s.link)}">${im}</a>` : im; },
-      css: (c, sel, s) => { emit(c, sel + " img", s, [["rad", px("border-radius")], ["mh", v => `height:${num(v)}px;`]]); c.d.push(`${sel} img{width:100%;object-fit:${s.fit || "cover"};display:block}`); },
+      label: "صورة", ic: "🖼️", fit: 1, def: { src: "", alt: "", fit: "cover" },
+      ctl: [{ k: "src", l: "الصورة (انقر مرتين عليها لرفع صورة)", t: "image", tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" }],
+      html: (s, id, ctx) => { const src = s.src ? (/^(https?:|data:|\/)/.test(s.src) ? s.src : ctx.base + s.src) : ""; const im = src ? `<img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">` : `<div class="pb-ph" data-upload="1">🖼️ انقر مرتين لرفع صورة</div>`; return s.link && !ctx.edit ? `<a href="${esc(s.link)}">${im}</a>` : im; },
+      css: (c, sel, s) => { emit(c, sel + " .pb-im", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-im{width:100%;object-fit:${s.fit || "cover"};display:block}`); },
     },
     button: {
-      label: "زر", ic: "🔘", def: { text: "اطلب الآن", kind: "link", link: "#", bgc: "#157a55", color: "#ffffff", hbg: "#0f5a3e", fs: { d: 18 }, fw: "800", brad: { d: 12 }, bpad: { d: [14, 32, 14, 32] }, al: { d: "center" } },
+      label: "زر", ic: "🔘", fit: 1, def: { text: "اطلب الآن", kind: "link", link: "#", bgc: "#157a55", color: "#ffffff", hbg: "#0f5a3e", fs: { d: 18 }, fw: "800", brad: { d: 12 }, bpad: { d: [14, 32, 14, 32] }, al: { d: "center" } },
       ctl: [{ k: "text", l: "نص الزر", t: "text", tab: "c" }, { k: "kind", l: "نوع الزر", t: "select", o: [["link", "رابط"], ["whatsapp", "واتساب"], ["call", "اتصال هاتفي"]], tab: "c" }, { k: "link", l: "الرابط", t: "text", tab: "c" }, { k: "phone", l: "رقم (واتساب/اتصال) بصيغة دولية", t: "text", tab: "c" }, { k: "msg", l: "رسالة واتساب", t: "text", tab: "c" }, { k: "newTab", l: "فتح في تبويب جديد", t: "switch", tab: "c" },
         { k: "bgc", l: "لون الزر", t: "color", tab: "s" }, { k: "hbg", l: "لون الخلفية عند المرور", t: "color", tab: "s" }, { k: "color", l: "لون النص", t: "color", tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 60, tab: "s" }, { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" }, { k: "bpad", l: "حشو الزر", t: "dims", r: 1, tab: "s" }, { k: "brad", l: "تدوير زوايا الزر (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }, { k: "full", l: "عرض كامل", t: "switch", r: 1, tab: "s" }],
       html: (s, id, ctx) => { let href = s.link || "#", ex = ""; if (s.kind === "whatsapp") href = "https://wa.me/" + String(s.phone || ctx.wa || "").replace(/\D/g, "") + (s.msg ? "?text=" + encodeURIComponent(s.msg) : ""); else if (s.kind === "call") href = "tel:" + String(s.phone || "").replace(/[^\d+]/g, ""); if (s.newTab || s.kind === "whatsapp") ex = ' target="_blank" rel="noopener"'; return `<a class="pb-btn" href="${esc(href)}"${ex}><span data-edit="text">${esc(s.text)}</span></a>`; },
@@ -139,7 +148,7 @@ const PB = (() => {
       html: () => `<hr class="pb-hr">`, css: (c, sel, s) => { c.d.push(`${sel} .pb-hr{border:0;border-top:${num(s.bw) || 2}px ${s.bs || "solid"} ${s.bc || "#d9d2c3"};margin:0 auto}`); emit(c, sel + " .pb-hr", s, [["dw", pc("width")]]); },
     },
     video: {
-      label: "فيديو", ic: "▶️", def: { url: "", ratio: "16/9" },
+      label: "فيديو", ic: "▶️", fit: 1, def: { url: "", ratio: "16/9" },
       ctl: [{ k: "url", l: "رابط YouTube / Vimeo / ملف mp4", t: "text", tab: "c" }, { k: "ratio", l: "النسبة", t: "select", o: [["16/9", "16:9"], ["4/3", "4:3"], ["1/1", "1:1"], ["9/16", "9:16 (عمودي)"]], tab: "c" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }],
       html: s => { const u = String(s.url || "").trim(); let m; if (!u) return `<div class="pb-ph">▶️ ألصق رابط الفيديو في الإعدادات</div>`; if ((m = u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/))) return `<iframe class="pb-vid" src="https://www.youtube-nocookie.com/embed/${m[1]}" loading="lazy" allowfullscreen title="فيديو"></iframe>`; if ((m = u.match(/vimeo\.com\/(\d+)/))) return `<iframe class="pb-vid" src="https://player.vimeo.com/video/${m[1]}" loading="lazy" allowfullscreen title="فيديو"></iframe>`; if (/\.(mp4|webm)(\?|$)/i.test(u)) return `<video class="pb-vid" src="${esc(u)}" controls playsinline preload="metadata"></video>`; return `<div class="pb-ph">رابط فيديو غير مدعوم</div>`; },
       css: (c, sel, s) => { c.d.push(`${sel} .pb-vid{width:100%;aspect-ratio:${s.ratio || "16/9"};border:0;display:block;background:#000}`); emit(c, sel + " .pb-vid", s, [["rad", px("border-radius")]]); },
@@ -185,25 +194,53 @@ const PB = (() => {
       css: (c, sel, s) => emit(c, sel + " .pb-ts", s, [["tbg", raw("background")], ["rad", px("border-radius")]]),
     },
     gallery: {
-      label: "معرض صور", ic: "🏞️", def: { imgs: "", cols: { d: 3, t: 2, m: 2 }, gap: { d: 12 }, ratio: "1/1", rad: { d: 12 } },
-      ctl: [{ k: "imgs", l: "روابط الصور (سطر لكل صورة)", t: "gallery", tab: "c" }, { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 8, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "ratio", l: "نسبة الصورة", t: "select", o: [["1/1", "1:1"], ["4/3", "4:3"], ["3/4", "3:4"], ["16/9", "16:9"], ["auto", "أصلية"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
-      html: (s, id, ctx) => { const L = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean); return L.length ? `<div class="pb-gal">${L.map(u => `<img src="${esc(/^(https?:|data:|\/)/.test(u) ? u : ctx.base + u)}" alt="" loading="lazy" decoding="async">`).join("")}</div>` : `<div class="pb-ph">🏞️ أضف صور المعرض من الإعدادات</div>`; },
+      label: "معرض صور", ic: "🏞️", fit: 1, def: { imgs: "", cols: { d: 3, t: 2, m: 2 }, gap: { d: 12 }, ratio: "1/1", rad: { d: 12 } },
+      ctl: [{ k: "imgs", l: "الصور (سطر لكل صورة) — أو ارفعها مباشرة", t: "gallery", tab: "c" }, { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 12, tab: "c" }, { k: "rows", l: "عدد الصفوف (اتركه فارغاً لعرض كل الصور)", t: "num", r: 1, min: 1, max: 12, tab: "c" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "ratio", l: "نسبة الصورة (تُهمَل عند تغيير ارتفاع المعرض بالسحب)", t: "select", o: [["1/1", "1:1"], ["4/3", "4:3"], ["3/4", "3:4"], ["16/9", "16:9"], ["auto", "أصلية"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
+      html: (s, id, ctx) => { let L = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean); const cd = num(eff(s, "cols", "d")) || 3, rd = num(eff(s, "rows", "d")); if (rd) L = L.slice(0, cd * rd); return L.length ? `<div class="pb-gal">${L.map(u => `<img src="${esc(/^(https?:|data:|\/)/.test(u) ? u : ctx.base + u)}" alt="" loading="lazy" decoding="async">`).join("")}</div>` : `<div class="pb-ph" data-upload="1">🏞️ انقر مرتين لرفع صور المعرض</div>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-gal", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-gal img", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-gal img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}`); },
     },
-    products: {
-      label: "منتجات المتجر", ic: "🛍️", def: { mode: "all", val: "", limit: 6, btn: "اطلب الآن", showOld: true, cols: { d: 3, t: 2, m: 2 }, gap: { d: 16 }, rad: { d: 16 }, cbg: "#ffffff", bbg: "#157a55" },
-      ctl: [{ k: "mode", l: "المصدر", t: "select", o: [["all", "كل المنتجات"], ["tag", "حسب التبويب (best/hot/sale/new)"], ["cat", "حسب القسم (cat)"], ["slugs", "منتجات محددة (slugs)"]], tab: "c" }, { k: "val", l: "القيمة (وسم/قسم/قائمة slugs)", t: "text", tab: "c" }, { k: "limit", l: "الحد الأقصى للعدد (0 = الكل)", t: "num", min: 0, max: 60, tab: "c" }, { k: "btn", l: "نص الزر", t: "text", tab: "c" }, { k: "showOld", l: "إظهار السعر القديم", t: "switch", tab: "c" }, { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 6, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "cbg", l: "خلفية البطاقة", t: "color", tab: "s" }, { k: "bbg", l: "لون الزر", t: "color", tab: "s" }],
-      html: (s, id, ctx) => `<div class="pb-prod" data-pbp='${esc(JSON.stringify({ mode: s.mode, val: s.val, limit: s.limit, btn: s.btn, showOld: s.showOld }))}'>${productsHtml(s, ctx.products, ctx.base)}</div>`,
-      css: (c, sel, s) => { emit(c, sel + " .pb-pgrid", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-pc", s, [["rad", px("border-radius")]]); if (s.cbg) c.d.push(`${sel} .pb-pc{background:${s.cbg}}`); if (s.bbg) c.d.push(`${sel} .pb-pcb{background:${s.bbg}}`); },
+    slider: {
+      label: "سلايدر", ic: "🎞️", fit: 1, def: { items: [{ img: "", title: "عنوان الشريحة الأولى", cx: 50, cy: 84 }, { img: "", title: "عنوان الشريحة الثانية", cx: 50, cy: 84 }], auto: true, interval: 4, arrows: true, dots: true, loop: true, trans: "slide", fit: "cover", cap: "over", capc: "#ffffff", capbg: "#00000080", capfs: { d: 22, m: 15 }, ratio: "16/9", rad: { d: 14 } },
+      ctl: [{ k: "items", l: "الشرائح (صورة + عنوان + رابط)", t: "rep", f: [["img", "الصورة", "image"], ["title", "العنوان"], ["link", "رابط (اختياري)"]], up: "img", tab: "c" },
+        { k: "auto", l: "تغيير تلقائي", t: "switch", tab: "c" }, { k: "interval", l: "كل كم ثانية", t: "num", min: 1, max: 30, tab: "c" }, { k: "loop", l: "تكرار دائري", t: "switch", tab: "c" }, { k: "arrows", l: "إظهار الأسهم الجانبية", t: "switch", tab: "c" }, { k: "dots", l: "إظهار النقاط", t: "switch", tab: "c" },
+        { k: "trans", l: "نوع الانتقال", t: "select", o: [["slide", "انزلاق"], ["fade", "تلاشي"]], tab: "c" }, { k: "cap", l: "العنوان", t: "select", o: [["over", "فوق الصورة (قابل للتحريك بالسحب)"], ["below", "تحت الصورة"], ["none", "بدون"]], tab: "c" },
+        { k: "fit", l: "ملاءمة الصور", t: "select", o: [["cover", "تغطية"], ["contain", "احتواء"]], tab: "s" }, { k: "ratio", l: "نسبة السلايدر (تُهمَل عند تغيير الارتفاع بالسحب)", t: "select", o: [["16/9", "16:9"], ["4/3", "4:3"], ["1/1", "1:1"], ["21/9", "21:9"], ["3/4", "3:4"]], tab: "s" },
+        { k: "capc", l: "لون العنوان", t: "color", tab: "s" }, { k: "capbg", l: "خلفية العنوان", t: "color", tab: "s" }, { k: "capfs", l: "حجم العنوان (px)", t: "num", r: 1, min: 10, max: 80, tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 80, tab: "s" }],
+      html: (s, id, ctx) => {
+        const L = s.items || []; if (!L.length) return `<div class="pb-ph" data-upload="1">🎞️ انقر مرتين لرفع صور السلايدر</div>`;
+        const cur = ctx.edit ? Math.min(L.length - 1, (ctx.sl && ctx.sl[id]) || 0) : 0, fade = s.trans === "fade";
+        const slide = (it, i) => { const src = it.img ? (/^(https?:|data:|\/)/.test(it.img) ? it.img : ctx.base + it.img) : "", im = src ? `<img src="${esc(src)}" alt="${esc(it.title)}" loading="${i ? "lazy" : "eager"}" decoding="async">` : `<div class="pb-ph" style="height:100%;display:grid;place-items:center">🖼️ ارفع صورة</div>`;
+          const cap = it.title && s.cap !== "none" ? `<div class="pb-sl-cap${s.cap === "below" ? " below" : ""}"${s.cap === "over" ? ` style="left:${num(it.cx) ?? 50}%;top:${num(it.cy) ?? 84}%"` : ""} data-edit="cap" data-idx="${i}">${esc(it.title)}</div>` : "";
+          const inner = `${im}${cap}`; return `<div class="pb-sl-s${i === cur ? " on" : ""}">${it.link && !ctx.edit ? `<a href="${esc(it.link)}" style="display:contents">${inner}</a>` : inner}</div>`; };
+        return `<div class="pb-sl${fade ? " fade" : ""}" data-auto="${s.auto !== false ? 1 : 0}" data-int="${num(s.interval) || 4}" data-loop="${s.loop !== false ? 1 : 0}"><div class="pb-sl-vp"><div class="pb-sl-tr"${!fade && ctx.edit ? ` style="transform:translateX(${cur * 100}%)"` : ""}>${L.map(slide).join("")}</div></div>${s.arrows !== false ? '<button type="button" class="pb-sl-a pv" aria-label="السابق">‹</button><button type="button" class="pb-sl-a nx" aria-label="التالي">›</button>' : ""}${s.dots !== false ? `<div class="pb-sl-dots">${L.map((_, i) => `<i class="${i === cur ? "on" : ""}"></i>`).join("")}</div>` : ""}</div>`;
+      },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-sl{--fit:${s.fit || "cover"};aspect-ratio:${s.ratio || "16/9"}}${sel} .pb-sl-cap{color:${s.capc || "#fff"};background:${s.capbg || "#00000080"}}`); emit(c, sel + " .pb-sl-cap", s, [["capfs", px("font-size")]]); emit(c, sel + " .pb-sl", s, [["rad", px("border-radius")]]); },
     },
-    orderform: {
-      label: "نموذج طلب سريع", ic: "🛒", def: { prod: "", title: "اطلب الآن — الدفع عند الاستلام", btn: "تأكيد الطلب", ok: "✅ تم استلام طلبك! سنتصل بك قريباً لتأكيده.", dt: true, bbg: "#157a55", fbg: "#ffffff", rad: { d: 16 }, pad: { d: [22, 22, 22, 22] } },
-      ctl: [{ k: "prod", l: "المنتج", t: "select", o: () => [["", "— اختر المنتج —"]].concat(((typeof Admin !== "undefined" && Admin.products) || []).map(p => [p.slug, p.title])), tab: "c" }, { k: "title", l: "عنوان النموذج", t: "text", tab: "c" }, { k: "btn", l: "نص الزر", t: "text", tab: "c" }, { k: "ok", l: "رسالة النجاح", t: "textarea", tab: "c" }, { k: "dt", l: "اختيار نوع التوصيل (منزل/مكتب)", t: "switch", tab: "c" }, { k: "bbg", l: "لون الزر", t: "color", tab: "s" }, { k: "fbg", l: "خلفية النموذج", t: "color", tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
-      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === s.prod); return `<form class="pb-of" data-prod="${esc(s.prod)}" data-dt="${s.dt === false ? 0 : 1}" data-ok="${esc(s.ok)}" novalidate onsubmit="return false"><h3>${esc(s.title)}</h3><div class="pb-of-prod">${p ? `<b>${esc(p.title)}</b> — ${formatNum(p.price)} دج` : "اختر منتجاً من الإعدادات"}</div><div class="pb-of-offers"></div><input name="name" placeholder="الاسم الكامل" autocomplete="name"><input name="phone" inputmode="numeric" placeholder="رقم الهاتف 05XXXXXXXX" autocomplete="tel-national"><select name="wilaya"><option value="">اختر الولاية</option></select><input name="commune" placeholder="البلدية"><div class="pb-of-dtype"></div><div class="pb-of-sum"></div><input class="pb-hp" name="website_url" tabindex="-1" autocomplete="off" aria-hidden="true"><button type="submit" class="pb-of-btn">${esc(s.btn)}</button><div class="pb-of-msg" role="status"></div></form>`; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-of", s, [["rad", px("border-radius")]]); if (s.fbg) c.d.push(`${sel} .pb-of{background:${s.fbg}}`); if (s.bbg) c.d.push(`${sel} .pb-of-btn{background:${s.bbg}}`); },
+    products: {
+      label: "منتجات المتجر", ic: "🛍️", fit: 1, def: { mode: "all", tag: "", cat: "", slugs: "", tabs: "", limit: 0, btn: "اطلب الآن", showOld: true, cardw: { d: 220, m: 150 }, gap: { d: 16 }, rad: { d: 16 }, cbg: "#ffffff", bbg: "#157a55" },
+      ctl: [{ k: "mode", l: "عرض", t: "select", o: [["all", "كل المنتجات"], ["tag", "تبويب (الأكثر مبيعاً، التخفيضات...)"], ["cat", "تصنيف"], ["slugs", "منتجات أختارها"]], tab: "c" },
+        { k: "tag", l: "التبويب", t: "select", o: () => [["", "— اختر —"]].concat((((typeof Admin !== "undefined" && Admin.collections) || [])).map(c => [c.key, c.label])), tab: "c", showIf: ["mode", "tag"] },
+        { k: "cat", l: "التصنيف", t: "select", o: () => [["", "— اختر —"]].concat(Object.entries((typeof Admin !== "undefined" && Admin.categories) || {})), tab: "c", showIf: ["mode", "cat"] },
+        { k: "slugs", l: "المنتجات", t: "prodpick", tab: "c", showIf: ["mode", "slugs"] },
+        { k: "tabs", l: "أزرار تبديل للزائر", t: "select", o: [["", "بدون"], ["tags", "بين التبويبات"], ["cats", "بين التصنيفات"]], tab: "c" },
+        { k: "limit", l: "الحد الأقصى للعدد (0 = الكل)", t: "num", min: 0, max: 100, tab: "c" }, { k: "btn", l: "نص الزر", t: "text", tab: "c" }, { k: "showOld", l: "إظهار السعر القديم", t: "switch", tab: "c" },
+        { k: "cardw", l: "أصغر عرض للبطاقة (px) — تتغير الأعمدة تلقائياً مع حجم الشبكة", t: "num", r: 1, min: 100, max: 500, tab: "s" }, { k: "cols", l: "عدد أعمدة ثابت (اختياري)", t: "num", r: 1, min: 1, max: 8, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "cbg", l: "خلفية البطاقة", t: "color", tab: "s" }, { k: "bbg", l: "لون الزر", t: "color", tab: "s" }],
+      html: (s, id, ctx) => `<div class="pb-prod" data-pbp='${esc(JSON.stringify({ mode: s.mode, tag: s.tag, cat: s.cat, slugs: s.slugs, tabs: s.tabs, limit: s.limit, btn: s.btn, showOld: s.showOld, val: s.val }))}'>${productsHtml(s, ctx.products, ctx.base, ctx.meta)}</div>`,
+      css: (c, sel, s) => { emit(c, sel + " .pb-pgrid", s, [["cardw", v => `grid-template-columns:repeat(auto-fill,minmax(${num(v)}px,1fr));`], ["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); c.d.push(`${sel} .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(${num(eff(s, "cardw", "d")) || 220}px,1fr))}`); emit(c, sel + " .pb-pc", s, [["rad", px("border-radius")]]); if (s.cbg) c.d.push(`${sel} .pb-pc{background:${s.cbg}}`); if (s.bbg) c.d.push(`${sel} .pb-pcb{background:${s.bbg}}`); },
+    },
+    orderorig: {
+      label: "نموذج الطلب (الأصلي)", ic: "🛒", fit: 1, def: { prod: "", auto: true },
+      ctl: [{ k: "prod", l: "المنتج (يظهر نموذج طلبه الأصلي بكل عروضه وإعداداته)", t: "select", o: () => [["", "— اختر المنتج —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }, { k: "auto", l: "الارتفاع تلقائي حسب المحتوى (يتعطّل عند تغيير الارتفاع بالسحب)", t: "switch", tab: "c" }],
+      html: (s, id, ctx) => {
+        const p = (ctx.products || []).find(x => x.slug === s.prod);
+        if (ctx.edit) return `<div class="pb-ofm"><b>🛒 نموذج الطلب الأصلي${p ? " — " + esc(p.title) : ""}</b><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-b"></div><small>يظهر هنا النموذج الكامل (العروض، الولاية والبلدية، التوصيل، الكوبون...) بعد النشر ${p ? "" : "— اختر المنتج من الإعدادات"}</small></div>`;
+        if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
+        return `<iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1" loading="lazy" title="نموذج الطلب"></iframe>`;
+      },
+      css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "products", "orderform", "iconbox", "iconlist", "gallery", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "slider", "gallery", "products", "orderorig", "iconbox", "iconlist", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -221,7 +258,9 @@ const PB = (() => {
       { k: "shadow", l: "الظل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" },
       { k: "op", l: "الشفافية (0-1)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
     ];
-    if (kind === "widget") a.unshift({ k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "s" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "s", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "s" });
+    if (kind === "widget") a.unshift({ k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "s" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "s", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "s" },
+      { k: "fx", l: "الموضع الأفقي % (وضع حر)", t: "num", r: 1, min: -50, max: 150, step: .5, tab: "s", onlyFree: 1 }, { k: "fy", l: "الموضع العمودي px (وضع حر)", t: "num", r: 1, min: -500, max: 5000, tab: "s", onlyFree: 1 }, { k: "fw", l: "العرض % (وضع حر)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "s", onlyFree: 1 }, { k: "fh", l: "الارتفاع px (وضع حر)", t: "num", r: 1, min: 10, max: 5000, tab: "s", onlyFree: 1 },
+      { k: "zi", l: "الترتيب (أمام/خلف) — الأكبر أمام", t: "num", min: -20, max: 200, tab: "s" });
     return a.concat([
       { k: "hd", l: "إخفاء على المكتب", t: "switch", tab: "a" }, { k: "ht", l: "إخفاء على التابلت", t: "switch", tab: "a" }, { k: "hm", l: "إخفاء على الهاتف", t: "switch", tab: "a" },
       { k: "anim", l: "حركة الظهور", t: "select", o: ANIMS, tab: "a" }, { k: "animDur", l: "مدة الحركة (ثانية)", t: "num", min: .1, max: 3, step: .1, tab: "a" }, { k: "animDelay", l: "تأخير الحركة (ثانية)", t: "num", min: 0, max: 5, step: .1, tab: "a" },
@@ -231,17 +270,23 @@ const PB = (() => {
     ]);
   };
   const SEC_CTL = [
+    { k: "kind", l: "نوع القسم", t: "select", o: [["flow", "أعمدة (عادي)"], ["grid", "شبكة (صفوف × أعمدة)"], ["canvas", "قسم حر (قماش فارغ)"]], tab: "c" },
+    { k: "gc", l: "عدد الأعمدة الأفقية", t: "num", r: 1, min: 1, max: 12, tab: "c", showIf: ["kind", "grid"] },
+    { k: "grh", l: "أقل ارتفاع للصف (px)", t: "num", r: 1, min: 0, max: 1000, tab: "c", showIf: ["kind", "grid"] },
+    { k: "gtc", l: "نسب عرض الأعمدة (مثال: 1fr 2fr 1fr) — اختياري", t: "text", tab: "c", showIf: ["kind", "grid"] },
     { k: "layout", l: "نوع التخطيط", t: "select", o: [["boxed", "محدود العرض"], ["full", "عرض كامل"]], tab: "c" },
-    { k: "cw", l: "عرض المحتوى (px)", t: "num", r: 1, min: 280, max: 2000, tab: "c" },
-    { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1600, tab: "c" },
-    { k: "va", l: "المحاذاة العمودية للأعمدة", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"], ["stretch", "تمديد"]], tab: "c" },
+    { k: "cw", l: "عرض المحتوى (px) — اسحب جانبي القسم لتغييره", t: "num", r: 1, min: 280, max: 2400, tab: "c" },
+    { k: "mh", l: "الارتفاع (px) — اسحب حافة القسم لتغييره", t: "num", r: 1, min: 0, max: 3000, tab: "c" },
+    { k: "va", l: "المحاذاة العمودية للأعمدة", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"], ["stretch", "تمديد"]], tab: "c", showIf: ["kind", "flow"] },
     { k: "gap", l: "المسافة بين الأعمدة (px)", t: "num", r: 1, min: 0, max: 120, tab: "c" },
-    { k: "rev", l: "عكس ترتيب الأعمدة", t: "switch", r: 1, tab: "c" },
+    { k: "rev", l: "عكس ترتيب الأعمدة", t: "switch", r: 1, tab: "c", showIf: ["kind", "flow"] },
     { k: "tag", l: "وسم HTML", t: "select", o: [["section", "section"], ["div", "div"], ["header", "header"], ["footer", "footer"]], tab: "c" },
     { k: "ovl", l: "طبقة فوق الخلفية (لون)", t: "color", tab: "s" }, { k: "ovlOp", l: "شفافية الطبقة (0-1)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
   ];
   const COL_CTL = [
-    { k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "c" },
+    { k: "w", l: "العرض (%) — في الأقسام العادية", t: "num", r: 1, min: 5, max: 100, tab: "c" },
+    { k: "cs", l: "امتداد أفقي (خلايا) — في الشبكة", t: "num", r: 1, min: 1, max: 12, tab: "c" }, { k: "rs", l: "امتداد عمودي (صفوف) — في الشبكة", t: "num", r: 1, min: 1, max: 12, tab: "c" },
+    { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 3000, tab: "c" },
     { k: "va", l: "محاذاة المحتوى عمودياً", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"]], tab: "c" },
     { k: "ta", l: "محاذاة النص داخل العمود", t: "align", r: 1, tab: "c" },
   ];
@@ -259,8 +304,17 @@ const PB = (() => {
     counters: { n: "🔢 أرقام وإنجازات", f: () => mkS([mkC([mkW("counter", { n: 5000, label: "زبون سعيد" })]), mkC([mkW("counter", { n: 58, pre: "", label: "ولاية نغطيها" })]), mkC([mkW("counter", { n: 30, pre: "+", label: "منتج طبيعي" })])], { bg: "#ffffff" }) },
     cta: { n: "🔥 عرض محدود + عدّ تنازلي", f: () => mkS([mkC([mkW("heading", { text: "عرض ينتهي قريباً!", color: "#ffffff" }), mkW("countdown", { cbg: "#ffffff", color: "#173F35" }), mkW("button", { text: "احجز طلبك الآن", bgc: "#C8A24B", color: "#173F35" })])], { bg: "#b83232", pad: { d: [60, 20, 60, 20] } }) },
     faq: { n: "❓ الأسئلة الشائعة", f: () => mkS([mkC([mkW("heading", { text: "أسئلة شائعة", fs: { d: 34, m: 26 } }), mkW("accordion", {})])], { cw: { d: 820 } }) },
+    canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
+  const FREE_SIZE = { heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fw: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
+  const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
+  const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
+  /* ترقية صفحات قديمة: طبقة العناصر الحرة، النموذج السريع ⟵ النموذج الأصلي، مصادر المنتجات */
+  const migrate = page => { (page.sections || []).forEach(sec => { sec.free = sec.free || []; if (!sec.cols || !sec.cols.length) sec.cols = [mkC([])];
+    const fix = w => { if (w.type === "orderform") { w.type = "orderorig"; w.set = { prod: (w.set && w.set.prod) || "", auto: true }; } if (w.type === "products") { const st = w.set; if (st.val && !st.tag && !st.cat && !st.slugs) { if (st.mode === "tag") st.tag = st.val; else if (st.mode === "cat") st.cat = st.val; else if (st.mode === "slugs") st.slugs = st.val; } } };
+    sec.cols.forEach(c => c.widgets.forEach(fix)); sec.free.forEach(fix); }); return page; };
   const newPage = (title, slug) => ({ v: 1, title: title || "صفحة جديدة", slug: slug || "", desc: "", bg: "#ffffff", ff: "", header: true, footer: true, css: "", sections: [TPLS.hero.f()] });
 
   /* ═════════════════ المُصيِّر (Renderer): نفس الدالة للمحرر وللصفحة المنشورة ═════════════════ */
@@ -269,37 +323,55 @@ const PB = (() => {
     const edit = !!ctx.edit;
     const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;
     const common2 = (sel, s, spec) => { boxStatic(css, sel, s); emit(css, sel, s, spec); hideRules(css, sel, s, edit); customCss(css, sel, s); };
+    /* عنصر واحد: عادي (داخل عمود) أو حر (موضع مطلق فوق القسم) */
+    const renderW = (w, free) => {
+      const def = WIDGETS[w.type]; if (!def) return ""; const wsx = `.pb-w.x-${w.id}`, s2 = w.set;
+      boxStatic(css, wsx, s2);
+      const specs = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["zi", v => `z-index:${num(v)};`]];
+      if (free) specs.push(["fx", v => `left:${num(v)}%;`], ["fy", px("top")], ["fw", pc("width")], ["fh", v => `${def.fit ? "height" : "min-height"}:${num(v)}px;`]);
+      else specs.push(["w", v => `width:${num(v)}%;`], ["mh", v => `${def.fit ? "height" : "min-height"}:${num(v)}px;`],
+        ["al", v => (v === "center" ? "margin-left:auto;margin-right:auto;" : v === "end" ? "margin-inline-start:auto;margin-inline-end:0;" : "margin-inline-end:auto;margin-inline-start:0;") + `text-align:${v === "center" ? "center" : v === "end" ? "end" : "start"};`]);
+      emit(css, wsx, s2, specs);
+      if (free) css.d.push(`${wsx}{position:absolute;margin:0;max-width:none}`);
+      def.css(css, wsx, s2);
+      hideRules(css, wsx, s2, edit); customCss(css, wsx, s2);
+      const sized = free || s2.mh !== undefined || s2.w !== undefined;
+      return `<div class="pb-w x-${w.id}${free ? " pb-free" : ""}${sized ? " pb-sz" : ""}${def.fit ? " pb-fit" : ""}${s2.cls ? " " + esc(s2.cls) : ""}"${attrs(w, "widget", s2)} data-type="${w.type}"${free ? ' data-free="1"' : ""}>${def.html(s2, w.id, ctx)}</div>`;
+    };
     const html = page.sections.map(sec => {
-      const s = sec.set, sx = `.pb-sec.x-${sec.id}`, inx = `${sx}>.pb-in`;
-      common2(sx, s, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["mh", px("min-height")]]);
+      const s = sec.set, kind = s.kind === "grid" ? "grid" : s.kind === "canvas" ? "canvas" : "flow", sx = `.pb-sec.x-${sec.id}`, inx = `${sx}>.pb-in`;
+      common2(sx, s, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]].concat(kind === "canvas" ? [] : [["mh", px("min-height")]]));
       if (s.ovl) css.d.push(`${sx}>.pb-ov{position:absolute;inset:0;background:${s.ovl};opacity:${num(s.ovlOp) ?? .5};pointer-events:none}`);
-      if (s.mh) css.d.push(`${sx}{display:flex;flex-direction:column;justify-content:center}`);
-      css.d.push(`${inx}{display:flex;flex-wrap:wrap;margin:0 auto;width:100%;position:relative}`);
+      if (s.mh && kind !== "canvas") css.d.push(`${sx}{display:flex;flex-direction:column;justify-content:center}`);
+      css.d.push(`${inx}{margin:0 auto;width:100%;position:relative}`);
       css.d.push(`${inx}{max-width:${s.layout === "full" ? "none" : (num(own(s, "cw", "d")) || 1140) + "px"}}`);
       if (s.layout !== "full") emit(css, inx, s, [["cw", v => `max-width:${num(v)}px;`]]);
-      emit(css, inx, s, [["va", raw("align-items")], ["rev", (v, st, dev) => v ? (dev === "m" ? "flex-direction:column-reverse;flex-wrap:nowrap;" : "flex-direction:row-reverse;") : "flex-direction:row;flex-wrap:wrap;"]]);
-      emit(css, `${sx}>.pb-in>.pb-col`, s, [["gap", v => `padding-left:${(num(v) || 0) / 2}px;padding-right:${(num(v) || 0) / 2}px;`]]);
-      const cols = sec.cols.map(col => {
+      if (kind === "flow") {
+        css.d.push(`${inx}{display:flex;flex-wrap:wrap}`);
+        emit(css, inx, s, [["va", raw("align-items")], ["rev", (v, st, dev) => v ? (dev === "m" ? "flex-direction:column-reverse;flex-wrap:nowrap;" : "flex-direction:row-reverse;") : "flex-direction:row;flex-wrap:wrap;"]]);
+        emit(css, `${sx}>.pb-in>.pb-col`, s, [["gap", v => `padding-left:${(num(v) || 0) / 2}px;padding-right:${(num(v) || 0) / 2}px;`]]);
+      } else if (kind === "grid") {
+        css.d.push(`${inx}{display:grid;grid-template-columns:repeat(${num(own(s, "gc", "d")) || 2},minmax(0,1fr))}`);
+        if (s.gtc) css.d.push(`${inx}{grid-template-columns:${String(s.gtc).replace(/[;{}<>]/g, "")}}`);
+        emit(css, inx, s, [["gc", v => s.gtc ? "" : `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},minmax(0,1fr));`], ["gap", px("gap")], ["grh", v => `grid-auto-rows:minmax(${num(v)}px,auto);`]]);
+      } else {
+        css.d.push(`${inx}{display:block}`); emit(css, inx, s, [["mh", px("height")]]);
+      }
+      const cols = kind === "canvas" ? "" : sec.cols.map(col => {
         const cs = col.set, cx = `.pb-col.x-${col.id}`, cin = `${cx}>.pb-colin`;
-        css.d.push(`${cx}{flex:1 1 0;min-width:0;display:flex}`);
+        css.d.push(kind === "grid" ? `${cx}{min-width:0;display:flex}` : `${cx}{flex:1 1 0;min-width:0;display:flex}`);
         css.d.push(`${cin}{width:100%;display:flex;flex-direction:column}`);
-        boxStatic(css, cin, cs); emit(css, cin, cs, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["va", raw("justify-content")], ["ta", raw("text-align")]]);
-        emit(css, cx, cs, [["w", v => `flex:0 0 ${num(v)}%;width:${num(v)}%;max-width:${num(v)}%;`]]);
+        boxStatic(css, cin, cs); emit(css, cin, cs, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["va", raw("justify-content")], ["ta", raw("text-align")], ["mh", px("min-height")]]);
+        if (kind === "grid") emit(css, cx, cs, [["cs", v => `grid-column:span ${Math.max(1, num(v) || 1)};`], ["rs", v => `grid-row:span ${Math.max(1, num(v) || 1)};`]]);
+        else emit(css, cx, cs, [["w", v => `flex:0 0 ${num(v)}%;width:${num(v)}%;max-width:${num(v)}%;`]]);
         hideRules(css, cx, cs, edit); customCss(css, cx, cs);
-        const ws = col.widgets.map(w => {
-          const def = WIDGETS[w.type]; if (!def) return ""; const wsx = `.pb-w.x-${w.id}`, s2 = w.set;
-          boxStatic(css, wsx, s2);
-          emit(css, wsx, s2, [["w", v => `width:${num(v)}%;`], ["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["mh", v => (def.noMh || w.type === "image") ? "" : `min-height:${num(v)}px;`],
-            ["al", v => (v === "center" ? "margin-left:auto;margin-right:auto;" : v === "end" ? "margin-inline-start:auto;margin-inline-end:0;" : "margin-inline-end:auto;margin-inline-start:0;") + `text-align:${v === "center" ? "center" : v === "end" ? "end" : "start"};`]]);
-          def.css(css, wsx, s2);
-          if (w.type === "image") emit(css, wsx + " img", s2, [["mh", px("height")]]);
-          hideRules(css, wsx, s2, edit); customCss(css, wsx, s2);
-          return `<div class="pb-w x-${w.id}${s2.cls ? " " + esc(s2.cls) : ""}"${attrs(w, "widget", s2)} data-type="${w.type}">${def.html(s2, w.id, ctx)}</div>`;
-        }).join("");
+        const ws = col.widgets.map(w => renderW(w, false)).join("");
         return `<div class="pb-col x-${col.id}${cs.cls ? " " + esc(cs.cls) : ""}"${attrs(col, "column", cs)}><div class="pb-colin">${ws || (edit ? '<div class="pb-empty">＋ اسحب عنصراً إلى هنا</div>' : "")}</div></div>`;
       }).join("");
+      const free = (sec.free || []).map(w => renderW(w, true)).join("");
+      const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free || (edit ? '<div class="pb-empty" style="margin:40px auto;max-width:360px;pointer-events:none">اسحب العناصر إلى هذا القماش الحر وحرّكها وغيّر أحجامها بحرية</div>' : "")}</div>` : "";
       const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
-      return `<${tag} class="pb-sec x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}</div></${tag}>`;
+      return `<${tag} class="pb-sec k-${kind} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
     }).join("");
     return { html, css: finishCss(css) };
   }
@@ -309,7 +381,7 @@ const PB = (() => {
 *{box-sizing:border-box}
 .pb-page{margin:0;font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2420;line-height:1.6;-webkit-font-smoothing:antialiased}
 .pb-page img{max-width:100%}
-.pb-sec{position:relative}
+.pb-sec{position:relative;isolation:isolate}
 .pb-w{margin-bottom:16px;max-width:100%}.pb-colin>.pb-w:last-child{margin-bottom:0}
 .pb-t{margin:0}.pb-tx p{margin:0 0 .8em}.pb-tx>:last-child{margin-bottom:0}
 .pb-btn{display:inline-block;text-decoration:none;text-align:center;cursor:pointer;transition:background .2s,transform .15s}.pb-btn:hover{transform:translateY(-2px)}
@@ -322,7 +394,20 @@ const PB = (() => {
 .pb-ts{padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.07);height:100%}.pb-tss{color:#e0a800;letter-spacing:2px;margin-bottom:.4rem}.pb-ts p{margin:0 0 .8rem;line-height:1.8}.pb-tsw{display:flex;gap:.7rem;align-items:center}.pb-tsw img{width:46px;height:46px;border-radius:50%;object-fit:cover}.pb-tsw small{display:block;color:#777}
 .pb-gal{display:grid}
 .pb-pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.pb-pc{background:#fff;border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.07);transition:transform .2s}.pb-pc:hover{transform:translateY(-4px)}.pb-pci{position:relative;aspect-ratio:1/1;background:#f4efe6}.pb-pci img{width:100%;height:100%;object-fit:cover}.pb-pcd{position:absolute;top:10px;right:10px;background:#b83232;color:#fff;font-weight:800;font-size:.8rem;border-radius:999px;padding:.2rem .6rem;z-index:1}.pb-pc h3{margin:.8rem .9rem .3rem;font-size:1.02rem;font-weight:800}.pb-pcp{margin:0 .9rem .6rem}.pb-pcp b{color:#157a55;font-size:1.1rem}.pb-pcp s{color:#777;margin-inline-start:.5rem;font-size:.9rem}.pb-pcb{margin:auto .9rem .9rem;background:#157a55;color:#fff;text-align:center;border-radius:10px;padding:.55rem;font-weight:800}
-.pb-of{box-shadow:0 8px 28px rgba(0,0,0,.1);display:flex;flex-direction:column;gap:10px}.pb-of h3{margin:0 0 4px;font-size:1.25rem;font-weight:900;color:#173f35}.pb-of input,.pb-of select{width:100%;border:1.5px solid #ddd5c3;border-radius:10px;padding:.7rem .8rem;font:inherit;background:#fff}.pb-of .pb-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.pb-of-prod{background:#faf6ec;border-radius:10px;padding:.6rem .8rem;font-size:.95rem}.pb-of-offers label,.pb-of-dtype label{display:flex;gap:.5rem;align-items:center;padding:.45rem .6rem;border:1.5px solid #e6dfcf;border-radius:10px;margin-bottom:6px;cursor:pointer;font-weight:700}.pb-of-offers input,.pb-of-dtype input{width:auto}.pb-of-sum{font-weight:800;color:#173f35}.pb-of-btn{border:0;color:#fff;font:inherit;font-weight:900;padding:.85rem;border-radius:12px;cursor:pointer;font-size:1.05rem}.pb-of-btn:disabled{opacity:.6}.pb-of-msg{font-weight:800;text-align:center}.pb-of-msg.bad{color:#b83232}.pb-of-msg.good{color:#157a55}
+.pb-w{position:relative}.pb-free{overflow:visible}.pb-fz{position:absolute;inset:0;pointer-events:none}.pb-fz>.pb-w{pointer-events:auto}
+.pb-fit.pb-free,.pb-fit.pb-sz{overflow:hidden}.pb-sz.pb-fit>*{max-height:100%}
+.pb-sz .pb-im{height:100%}.pb-sz .pb-btn{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.pb-sz .pb-vid{height:100%;aspect-ratio:auto}.pb-sz .pb-prod{height:100%;overflow:auto}.pb-sz .pb-gal{height:100%;grid-auto-rows:1fr}.pb-sz .pb-gal img{height:100%;aspect-ratio:auto}
+.pb-sz .pb-sl{height:100%;aspect-ratio:auto}.pb-sz .pb-ofr{height:100%}.pb-sz .pb-ofm{height:100%}
+.pb-ptabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.pb-ptabs button{border:1.5px solid #ddd5c3;background:#fff;border-radius:999px;padding:.4rem 1rem;font:inherit;font-weight:800;cursor:pointer}.pb-ptabs button.on{background:#173f35;border-color:#173f35;color:#fff}
+.pb-sl{position:relative;width:100%;overflow:hidden;background:#f1ede2}.pb-sl-vp{width:100%;height:100%;overflow:hidden}.pb-sl-tr{display:flex;height:100%;transition:transform .5s ease;direction:rtl}
+.pb-sl-s{flex:0 0 100%;position:relative;height:100%;display:flex;flex-direction:column;min-width:0}.pb-sl-s img{width:100%;flex:1;min-height:0;height:100%;object-fit:var(--fit,cover);display:block}
+.pb-sl-cap{position:absolute;transform:translate(-50%,-50%);padding:.35rem .9rem;border-radius:10px;font-weight:800;max-width:90%;text-align:center;line-height:1.5;z-index:2}.pb-sl-cap.below{position:static;transform:none;background:none!important;color:inherit!important;padding:.5rem}
+.pb-sl-a{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;z-index:4}.pb-sl-a.pv{right:10px}.pb-sl-a.nx{left:10px}
+.pb-sl-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:7px;justify-content:center;z-index:4}.pb-sl-dots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.55);cursor:pointer;display:block}.pb-sl-dots i.on{background:#fff}
+.pb-sl.fade .pb-sl-tr{display:block;position:relative}.pb-sl.fade .pb-sl-s{position:absolute;inset:0;opacity:0;transition:opacity .6s}.pb-sl.fade .pb-sl-s.on{opacity:1;z-index:1}
+.pb-ofr{width:100%;border:0;display:block;min-height:420px;background:transparent}
+.pb-ofm{border:2px dashed #cdbfa0;border-radius:14px;padding:18px;background:#fffdf7;display:flex;flex-direction:column;gap:10px;min-height:260px}.pb-ofm b{color:#173f35}.pb-ofm-r{display:flex;gap:10px}.pb-ofm-r i{flex:1;height:38px;border-radius:10px;background:#efe9da}.pb-ofm-b{height:46px;border-radius:12px;background:#157a55;opacity:.85}.pb-ofm small{color:#8a8472}
 .pb-empty-note{padding:24px;text-align:center;color:#888}
 .pb-vid{display:block}
 .pb-hdr{background:#fff;border-bottom:1px solid #eae3d6;position:sticky;top:0;z-index:50}.pb-hdr div{max-width:1140px;margin:0 auto;padding:.8rem 20px;display:flex;align-items:center;justify-content:space-between}.pb-hdr a.lg{font-weight:900;font-size:1.4rem;color:#173f35;text-decoration:none}.pb-hdr a.wa{background:#157a55;color:#fff;border-radius:10px;padding:.45rem 1rem;text-decoration:none;font-weight:800}
@@ -337,40 +422,15 @@ var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct').forEach(function(n){io.observe(n)})}else{$('[data-anim]').forEach(function(n){n.classList.add('pb-in-view')})}
 function tick(){$('.pb-cd').forEach(function(el){var end;if(el.dataset.mode==='date'&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
 tick();setInterval(tick,1000);
-if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProducts(JSON.parse(n.getAttribute('data-pbp')),window.PRODUCTS,__pbBase)}catch(e){}})}
-})();`;
-
-  const ORDER_JS = String.raw`(function(){
-var forms=[].slice.call(document.querySelectorAll('.pb-of'));if(!forms.length)return;
-var guard={};try{fetch(__pbBase+'assets/data/checkout.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():{}}).then(function(j){guard=(j&&j.guard)||{}}).catch(function(){})}catch(e){}
-function fmt(n){return Number(n).toLocaleString('fr-FR')+' دج'}
-function normPhone(v){var d=String(v||'').replace(/\D/g,'');if(d.indexOf('00213')===0)d='0'+d.slice(5);else if(d.indexOf('213')===0&&d.length>10)d='0'+d.slice(3);return d.slice(0,10)}
-forms.forEach(function(f){
- var P=(window.PRODUCTS||[]).filter(function(x){return x.slug===f.getAttribute('data-prod')})[0],W=window.WILAYAS||[];
- var q=function(n){return f.querySelector('[name='+n+']')},ws=q('wilaya'),sum=f.querySelector('.pb-of-sum'),msg=f.querySelector('.pb-of-msg'),btn=f.querySelector('.pb-of-btn');
- if(!P){msg.textContent='اختر منتجاً للنموذج';return}
- ws.innerHTML='<option value="">اختر الولاية</option>'+W.map(function(w){return '<option value="'+w.id+'">'+w.id+' - '+w.name+'</option>'}).join('');
- var offers=(P.offers&&P.offers.length?P.offers:[{qty:1,price:P.price,free:0}]);
- var ob=f.querySelector('.pb-of-offers');if(offers.length>1){ob.innerHTML=offers.map(function(o,i){var n=o.qty+(o.free||0);return '<label><input type="radio" name="offer" value="'+i+'"'+(i===0?' checked':'')+'> '+n+' قطع'+(o.free?' (منها '+o.free+' مجاناً)':'')+' — '+fmt(o.price)+'</label>'}).join('')}
- var db=f.querySelector('.pb-of-dtype');if(f.getAttribute('data-dt')==='1'){db.innerHTML='<label><input type="radio" name="dtype" value="home" checked> توصيل للمنزل</label><label><input type="radio" name="dtype" value="stop"> استلام من مكتب التوصيل</label>'}
- function cur(){var r=f.querySelector('[name=offer]:checked'),o=offers[r?+r.value:0],w=W.filter(function(x){return String(x.id)===ws.value})[0],dt=(f.querySelector('[name=dtype]:checked')||{}).value||'home';var fee=(P.freeShip||!w)?0:(dt==='stop'?w.stop:w.home);return {o:o,w:w,dt:dt,fee:fee,total:o.price+fee}}
- function upd(){var c=cur();sum.textContent=c.w?('المنتج: '+fmt(c.o.price)+' + التوصيل: '+(c.fee?fmt(c.fee):'مجاني')+' = الإجمالي '+fmt(c.total)):'اختر الولاية لحساب التوصيل'}
- f.addEventListener('change',upd);upd();
- q('phone').addEventListener('input',function(){this.value=normPhone(this.value)});
- f.addEventListener('submit',async function(e){e.preventDefault();msg.className='pb-of-msg';
-  var name=q('name').value.trim(),phone=normPhone(q('phone').value),c=cur();
-  if(!name||!phone||!c.w){msg.className='pb-of-msg bad';msg.textContent='يرجى ملء الاسم والهاتف والولاية';return}
-  if(!/^0[567]\d{8}$/.test(phone)&&(window.CONFIG&&CONFIG.SITE&&CONFIG.SITE.country||'DZ')==='DZ'&&guard.phoneDz!==false){msg.className='pb-of-msg bad';msg.textContent='رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 05 أو 06 أو 07';return}
-  var n=c.o.qty+(c.o.free||0),order={name:name,phone:phone,wilaya:c.w.name,commune:q('commune').value.trim(),dtype:c.dt,items:[{slug:P.slug,title:P.title,qty:n,price:Math.round(c.o.price/n)}],subtotal:c.o.price,fee:c.fee,total:c.total,coupon:'',discount:0,extra:{'📄 صفحة هبوط':location.pathname}};
-  btn.disabled=true;
-  try{
-   if(guard.antibot){var t='';try{t=await API.formToken()}catch(x){}order.hp=q('website_url').value;order.ftok=t||''}
-   var r=await API.submitOrderChecked(order);
-   if(r&&r.error){msg.className='pb-of-msg bad';msg.textContent=({duplicate_order:'لقد أرسلتَ طلباً لهذا المنتج مؤخراً ✅ سنتواصل معك قريباً.',bot:'تعذّر إرسال الطلب، أعد المحاولة.',rate_limited:'محاولات كثيرة، انتظر قليلاً.',invalid_phone:'رقم الهاتف غير صالح.'})[r.error]||'تعذّر الإرسال';btn.disabled=false;return}
-   msg.className='pb-of-msg good';msg.textContent=f.getAttribute('data-ok')||'✅ تم استلام طلبك';f.querySelectorAll('input,select').forEach(function(i){i.disabled=true});
-  }catch(err){msg.className='pb-of-msg bad';msg.textContent='تعذّر الإرسال، أعد المحاولة أو راسلنا على واتساب';btn.disabled=false}
- });
-});
+$('.pb-sl').forEach(function(sl){var tr=sl.querySelector('.pb-sl-tr'),ss=[].slice.call(tr.children),n=ss.length,i=0,fade=sl.classList.contains('fade'),loop=sl.getAttribute('data-loop')==='1',dots=[].slice.call(sl.querySelectorAll('.pb-sl-dots i')),t;
+function show(k){if(k<0)k=loop?n-1:0;if(k>=n)k=loop?0:n-1;i=k;if(fade){ss.forEach(function(x,j){x.classList.toggle('on',j===i)})}else{tr.style.transform='translateX('+(i*100)+'%)'}dots.forEach(function(d,j){d.classList.toggle('on',j===i)})}
+function run(){clearInterval(t);if(sl.getAttribute('data-auto')==='1'&&n>1){t=setInterval(function(){show(i+1)},(+sl.getAttribute('data-int')||4)*1000)}}
+var pv=sl.querySelector('.pv'),nx=sl.querySelector('.nx');if(pv)pv.onclick=function(){show(i-1);run()};if(nx)nx.onclick=function(){show(i+1);run()};dots.forEach(function(d,j){d.onclick=function(){show(j);run()}});
+var x0=null;sl.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});sl.addEventListener('touchend',function(e){if(x0==null)return;var dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>40){show(i+(dx>0?-1:1));run()}x0=null});
+if(fade){ss.forEach(function(x,j){x.classList.toggle('on',j===0)})}run()});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.pb-ptabs button');if(!b)return;var box=b.closest('.pb-prod'),k=b.getAttribute('data-k');[].forEach.call(b.parentNode.children,function(x){x.classList.toggle('on',x===b)});[].forEach.call(box.querySelectorAll('.pb-pc'),function(c){var show=!k||(k.charAt(0)==='c'?c.getAttribute('data-c')===k.slice(2):(' '+c.getAttribute('data-t')+' ').indexOf(' '+k.slice(2)+' ')>-1);c.style.display=show?'':'none'})});
+window.addEventListener('message',function(e){if(e.origin!==location.origin||!e.data||!e.data.pbEmbedH)return;[].forEach.call(document.querySelectorAll('.pb-ofr'),function(f){if(f.contentWindow===e.source&&!f.closest('.pb-sz')&&f.getAttribute('data-auto')!=='0')f.style.height=Math.ceil(e.data.pbEmbedH)+'px'})});
+if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProducts(JSON.parse(n.getAttribute('data-pbp')),window.PRODUCTS,__pbBase,window.__pbMeta)}catch(e){}})}
 })();`;
 
   function fullHtml(page, ctx) {
@@ -379,7 +439,6 @@ forms.forEach(function(f){
     const hdr = page.header ? `<header class="pb-hdr"><div><a class="lg" href="${esc(ctx.base)}">${esc(site.name || "المتجر")}</a>${site.wa ? `<a class="wa" href="https://wa.me/${esc(String(site.wa).replace(/\D/g, ""))}" target="_blank" rel="noopener">واتساب</a>` : ""}</div></header>` : "";
     const ftr = page.footer ? `<footer class="pb-ftr">© ${new Date().getFullYear()} ${esc(site.name || "")} — جميع الحقوق محفوظة · <a href="${esc(ctx.base)}">العودة للمتجر</a></footer>` : "";
     const hasProd = JSON.stringify(page.sections).includes('"type":"products"');
-    const hasOrder = JSON.stringify(page.sections).includes('"type":"orderform"');
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${ctx.baseHref ? `<base href="${esc(ctx.baseHref)}">` : ""}
 <title>${esc(page.title)}${site.name ? " — " + esc(site.name) : ""}</title>
@@ -393,10 +452,10 @@ forms.forEach(function(f){
 ${r.css}
 ${page.css || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
-${(hasProd || hasOrder) ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}${hasOrder ? ["config", "wilayas", "api"].map(n => `<script src="${esc(ctx.base)}assets/js/${n}.js"><\/script>`).join("") : ""}
-<script>var __pbBase=${JSON.stringify(ctx.base)};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}${hasOrder ? ";var REL=__pbBase;" + ORDER_JS : ""}<\/script>
+${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
+<script>var __pbBase=${JSON.stringify(ctx.base)};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}<\/script>
 </body></html>`;
   }
 
-  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();

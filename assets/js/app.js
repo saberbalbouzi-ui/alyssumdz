@@ -1560,3 +1560,22 @@ const PhoneDZ = {
   const go = ()=>{ try{ if(typeof Account !== "undefined" && !Account.profile()) Account.open(); }catch(e){} };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", ()=>setTimeout(go, 1200)) : setTimeout(go, 1200);
 }catch(e){} })();
+
+/* وضع التضمين ?embed=1 (يستعمله منشئ الصفحات): يُظهر عروض المنتج ونموذج الطلب الأصلي فقط، ويبلغ الصفحة الأم بارتفاعه */
+(function(){ try{
+  if(!/[?&]embed=1/.test(location.search)) return;
+  document.documentElement.classList.add("pb-embed");
+  const st = document.createElement("style");
+  st.textContent = "html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}";
+  document.head.appendChild(st);
+  const go = ()=>{
+    const form = document.querySelector(".order-wide"); if(!form) return;
+    const wrap = document.createElement("div"); wrap.id = "pb-embed-wrap";
+    const off = document.getElementById("offers"); if(off) wrap.appendChild(off);
+    wrap.appendChild(form); document.body.appendChild(wrap);
+    const send = ()=>{ try{ parent.postMessage({ pbEmbedH: Math.ceil(wrap.getBoundingClientRect().height) + 12 }, location.origin); }catch(e){} };
+    try{ new ResizeObserver(send).observe(wrap); }catch(e){}
+    send(); setTimeout(send, 600); setTimeout(send, 2000);
+  };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
+}catch(e){} })();
