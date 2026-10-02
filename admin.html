@@ -194,6 +194,7 @@ tr:hover td{background:#FAF7F0}
       </div>
       <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('repeat',this)"><span class="nav-ic">🔁</span><span class="nav-txt"><b>إعادة الشراء<span class="nb hidden" id="nb-repeat"></span></b><small>رسائل واتساب لزبائنك السابقين مع كود تخفيض</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('setup',this)"><span class="nav-ic">🚀</span><span class="nav-txt"><b>تجهيز المتجر<span class="nb hidden" id="nb-setup"></span></b><small>قائمة فحص جاهزية قبل التسليم أو الإطلاق</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
@@ -289,6 +290,26 @@ tr:hover td{background:#FAF7F0}
       <div class="hint" id="ship-count" style="margin-top:.4rem"></div>
     </div>
     <div class="card"><div class="rtw" style="overflow:auto"><table id="ship-table" class="rt"></table></div></div>
+  </div>
+
+  <div id="tab-repeat" class="hidden">
+    <div class="card">
+      <b style="color:var(--green);display:block;margin-bottom:.35rem">🔁 إعادة الشراء عبر واتساب</b>
+      <div class="hint">يقترح عليك زبائن سُلّمت طلباتهم منذ مدة (تقارب نفاد المنتج)، ولم يطلبوا بعدها. اضغط «💬» فيفتح واتساب برسالة جاهزة فيها كود تخفيض خاص. الكود يُنشأ ويُنشر تلقائياً عند الحفظ، وكل حفظ جديد يجدد صلاحيته من اليوم.</div>
+      <div class="grid2" style="margin-top:.6rem">
+        <label class="hint" style="margin:0">أول تذكير بعد (أيام من تاريخ الطلب)<input id="rp-min" type="number" min="1" placeholder="21"></label>
+        <label class="hint" style="margin:0">آخر موعد للتذكير (أيام)<input id="rp-max" type="number" min="1" placeholder="90"></label>
+        <label class="hint" style="margin:0">كود التخفيض<input id="rp-code" dir="ltr" style="text-transform:uppercase" placeholder="BACK10"></label>
+        <label class="hint" style="margin:0">صلاحية الكود (أيام)<input id="rp-days" type="number" min="1" placeholder="14"></label>
+        <label class="hint" style="margin:0">نوع الخصم<select id="rp-type"><option value="percent">نسبة %</option><option value="fixed">مبلغ ثابت (دج)</option><option value="freeship">توصيل مجاني</option></select></label>
+        <label class="hint" style="margin:0">القيمة<input id="rp-value" type="number" min="0" placeholder="10"></label>
+      </div>
+      <label class="hint" style="margin:.6rem 0 0">نص الرسالة — {name} الاسم · {product} آخر منتج اشتراه · {code} الكود · {offer} وصف العرض · {days} صلاحية الكود</label>
+      <textarea id="rp-msg" rows="4"></textarea>
+      <button class="small gold" onclick="Admin.saveRepeat()">💾 حفظ ونشر الكود</button>
+    </div>
+    <div class="stat" id="rp-kpi"></div>
+    <div class="card"><div class="rtw" style="overflow:auto"><table id="rp-table" class="rt"></table></div></div>
   </div>
 
   <div id="tab-setup" class="hidden">
@@ -1243,7 +1264,7 @@ const Priv = {
    تبقى كما هي في localStorage، وكل كتابة تُدفع أيضاً إلى التخزين الخاص بالمدير (Priv)، وعند فتح اللوحة يُجلب الأحدث من الخادم أولاً. */
 const PrivSync = {
   KEYS: { alyssum_delivery_cfg:"s_delivery_cfg", alyssum_custom_delivery:"s_delivery_custom", alyssum_delivery_price_source:"s_delivery_src",
-          alyssum_blacklist:"s_blacklist", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw" },
+          alyssum_blacklist:"s_blacklist", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw", alyssum_repeat_sent:"s_repeat_sent" },
   _raw: localStorage.setItem.bind(localStorage), _t: {}, ready: false,
   hook(){
     const self = this;
@@ -2028,7 +2049,7 @@ const Admin = {
     this.startAlerts();
     try{ Updater.init(); Seller.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
-    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadRepeat(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
     this.renderAll();
     toast("✓ تم التحميل");
     try{ if(!sessionStorage.getItem("alyssum_pages_checked") && GH.cfg() && GH.cfg().token){ sessionStorage.setItem("alyssum_pages_checked","1"); this.ensureProductPages(); } }catch(e){}
@@ -2044,12 +2065,13 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","shipped","finance","setup","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","shipped","finance","setup","repeat","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="finance") this.renderFinance();
     if(t==="setup") this.renderSetup();
+    if(t==="repeat") this.renderRepeat();
     if(t==="shipped"){ this.renderShipped(); this.autoSyncShipped(); }
     if(t==="pending") this.renderPending();
     if(t==="genpage") GenPage.init();
@@ -4747,6 +4769,70 @@ const Admin = {
       this.fin.log.slice(0, 15).map(l=>'<tr><td>' + new Date(l.ts).toLocaleString("ar-DZ") + '</td><td>' + l.title + '</td><td dir="ltr" style="color:' + (l.delta < 0 ? "var(--red)" : "var(--ok)") + '">' + (l.delta > 0 ? "+" : "") + l.delta + '</td><td>' + (l.after == null ? "∞" : l.after) + '</td><td>' + l.why + (l.ref ? ' <small dir="ltr" style="color:#999">' + l.ref + '</small>' : "") + '</td></tr>').join("")
       : "<tr><td style='text-align:center;padding:1.2rem;color:#999'>لا حركات بعد — تظهر هنا عند تأكيد أو إلغاء الطلبات</td></tr>";
     this.setBadge("nb-finance", active.filter(p=>p.active !== false && p.stock != null && p.stock <= low).length);
+  },
+
+  /* ════════ إعادة الشراء عبر واتساب (assets/data/repeat.json + كود تخفيض يُنشأ في coupons.json) ════════ */
+  repeatDefaults(){ return { minDays:21, maxDays:90, code:"BACK10", validDays:14, type:"percent", value:10,
+    message:"مرحباً {name} 🌿\nكيف وجدت {product}؟ نتمنى أنه أعجبك.\nإن قارب على النفاد، لك عندنا {offer} بالكود {code} (صالح {days} يوماً).\nاطلب من هنا: " + location.href.replace(/[?#].*$/, "").replace(/[^\/]*$/, "") } },
+  async loadRepeat(){
+    this.repeat = this.repeatDefaults();
+    try{ const f = await GH.getFile("assets/data/repeat.json"); this.repeatSha = f.sha; this.repeat = Object.assign(this.repeatDefaults(), JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))))); }catch(e){ this.repeatSha = undefined; }
+  },
+  repeatSent(){ try{ return JSON.parse(localStorage.getItem("alyssum_repeat_sent") || "{}") || {}; }catch(e){ return {}; } },
+  repeatOffer(R){ return R.type === "freeship" ? "توصيل مجاني على طلبك" : R.type === "fixed" ? ("خصم " + Number(R.value).toLocaleString("fr-DZ") + " دج") : ("خصم " + Number(R.value) + "%"); },
+  /* زبائن سُلّم لهم طلب قبل minDays..maxDays يوماً، ولا طلب أحدث بعده، وليسوا في القائمة السوداء، ولم يُراسَلوا خلال 45 يوماً */
+  repeatCandidates(){
+    const R = this.repeat || this.repeatDefaults(), sent = this.repeatSent(), now = Date.now(), by = {};
+    this.orders.forEach(o=>{ const ph = this.normalizePhone(o.phone); if(!ph || ["annulee","echec"].includes(o.status)) return; (by[ph] = by[ph] || []).push(o); });
+    const out = [];
+    Object.entries(by).forEach(([ph, list])=>{
+      list.sort((a,b)=>new Date(b.date) - new Date(a.date));
+      const last = list[0]; if(last.status !== "livree") return;                 // آخر طلب لم يُسلَّم بعد أو لا يزال قيد المعالجة
+      const days = Math.floor((now - new Date(last.date).getTime()) / 86400000);
+      if(days < R.minDays || days > R.maxDays || this.isBlacklisted(ph)) return;
+      if(sent[ph] && now - sent[ph] < 45 * 86400000) return;
+      const lines = this.orderLines(last), prod = lines.length ? lines[0].p.title : "طلبك السابق";
+      out.push({ ph, name: last.name || "", phone: last.phone, days, orders: list.length, product: prod, total: list.reduce((a,o)=>a + (Number(o.total)||0), 0) });
+    });
+    return out.sort((a,b)=>b.orders - a.orders || a.days - b.days);
+  },
+  renderRepeat(){
+    const R = this.repeat || this.repeatDefaults(); if(!$f("rp-min")) return;
+    if(!this._rpFilled){ $f("rp-min").value = R.minDays; $f("rp-max").value = R.maxDays; $f("rp-code").value = R.code; $f("rp-days").value = R.validDays; $f("rp-type").value = R.type; $f("rp-value").value = R.value; $f("rp-msg").value = R.message; this._rpFilled = true; }
+    const cs = this.repeatCandidates(), sent = this.repeatSent(), code = String(R.code||"").toUpperCase();
+    const used = this.orders.filter(o=>String(o.coupon||"").toUpperCase() === code && !["annulee","echec"].includes(o.status));
+    $f("rp-kpi").innerHTML = '<div><b>' + cs.length + '</b><span>زبائن مرشّحون الآن</span></div><div><b>' + Object.keys(sent).length + '</b><span>راسلتَهم</span></div><div><b>' + used.length + '</b><span>طلبات بالكود ' + code + '</span></div><div><b>' + used.reduce((a,o)=>a + (Number(o.total)||0), 0).toLocaleString("fr-DZ") + ' دج</b><span>مبيعات من الحملة</span></div>';
+    $f("rp-table").innerHTML = cs.length ? '<tr class="hd"><th>الزبون</th><th>آخر منتج</th><th>منذ</th><th>طلباته</th><th></th></tr>' + cs.map((c,i)=>'<tr><td class="t"><b>' + c.name + '</b> <small dir="ltr" style="color:#999">' + c.phone + '</small></td><td data-l="المنتج">' + c.product + '</td><td data-l="منذ">' + c.days + ' يوم</td><td data-l="طلباته">' + c.orders + '</td><td class="act"><button class="small blue" type="button" onclick="Admin.sendRepeat(\'' + c.ph + '\')">💬 واتساب</button><button class="small gray" type="button" onclick="Admin.skipRepeat(\'' + c.ph + '\')">تجاهل</button></td></tr>').join("")
+      : "<tr><td style='text-align:center;padding:1.5rem;color:#999'>لا يوجد زبائن مرشّحون الآن — يظهرون بعد مرور " + R.minDays + " يوماً على تسليم طلبهم دون طلب جديد</td></tr>";
+    this.setBadge("nb-repeat", cs.length);
+  },
+  repeatText(c){
+    const R = this.repeat || this.repeatDefaults();
+    return String(R.message||"").replace(/\{name\}/g, (c.name||"").split(" ")[0]).replace(/\{product\}/g, c.product).replace(/\{code\}/g, String(R.code||"").toUpperCase()).replace(/\{offer\}/g, this.repeatOffer(R)).replace(/\{days\}/g, R.validDays);
+  },
+  sendRepeat(ph){
+    const c = this.repeatCandidates().find(x=>x.ph === ph); if(!c) return;
+    const d = ph.replace(/\D/g,""), intl = d.startsWith("0") ? "213" + d.slice(1) : (d.startsWith("213") ? d : "213" + d);
+    window.open("https://wa.me/" + intl + "?text=" + encodeURIComponent(this.repeatText(c)), "_blank");
+    const s = this.repeatSent(); s[ph] = Date.now(); localStorage.setItem("alyssum_repeat_sent", JSON.stringify(s)); this.renderRepeat();
+  },
+  skipRepeat(ph){ const s = this.repeatSent(); s[ph] = Date.now(); localStorage.setItem("alyssum_repeat_sent", JSON.stringify(s)); this.renderRepeat(); },
+  async saveRepeat(){
+    const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
+    const R = { minDays: Math.max(1, n("rp-min", 21)), maxDays: Math.max(1, n("rp-max", 90)), code: $f("rp-code").value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, ""), validDays: Math.max(1, n("rp-days", 14)), type: $f("rp-type").value, value: n("rp-value", 0), message: $f("rp-msg").value };
+    if(!R.code){ toast("أدخل كود التخفيض"); return }
+    if(R.type !== "freeship" && R.value <= 0){ toast("أدخل قيمة الخصم"); return }
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(R, null, 2))));
+      const res = await GH.putFile("assets/data/repeat.json", b64, this.repeatSha, "إعدادات إعادة الشراء عبر لوحة التحكم");
+      this.repeatSha = res && res.content ? res.content.sha : undefined; this.repeat = R;
+      /* الكود نفسه يُنشأ/يُحدَّث في أكواد الخصم بصلاحية تنتهي بعد validDays من اليوم */
+      const exp = new Date(Date.now() + R.validDays * 86400000).toISOString().slice(0, 10);
+      const rec = { id:"repeat", code:R.code, type:R.type, value: R.type === "freeship" ? 0 : R.value, minOrder:0, expiresAt:exp, active:true };
+      const i = this.coupons.findIndex(x=>x.id === "repeat"); if(i > -1) this.coupons[i] = rec; else this.coupons.push(rec);
+      await this.publishCoupons();
+      this.renderRepeat(); toast("✅ حُفظت الإعدادات ونُشر الكود " + R.code + " (ينتهي " + exp + ")");
+    }catch(err){ console.error(err); toast("❌ " + err.message); }
   },
 
   /* ════════ هدايا الزبائن الجدد (assets/data/welcome.json) ════════ */
