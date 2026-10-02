@@ -394,6 +394,13 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   </div>
   <div class="gen-step" data-s="2" style="display:none">
   <b>② الصورة والأقسام</b> <button class="small gray" type="button" onclick="PBGen.step(1)" title="غيّر المعلومات ثم أعد التوليد">🔄 إعادة التوليد</button> <button class="small gold" type="button" onclick="PBGen.downloadOrig()" title="تنزيل الصورة الأصلية كما ولّدها Gemini (دون قص أو تعديل)">⬇ تنزيل الصورة الأصلية</button>
+  <div id="gen-review" style="display:none;margin-top:.6rem">
+    <div style="font-weight:900;color:var(--green)">🔎 مراجعة الصورة المولّدة قبل التقسيم</div>
+    <div style="max-height:68vh;overflow:auto;border:1.5px solid var(--line);border-radius:10px;margin:.5rem 0;background:#222;text-align:center"><img id="gen-rimg" alt="الصورة المولّدة" style="max-width:100%;display:block;margin:0 auto"></div>
+    <div id="gen-rcheck" class="hint" style="margin:.3rem 0">⏳ جارِ فحص النصوص في الصورة…</div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" onclick="PBGen.approve()">✅ اعتمد الصورة وتابع للتقسيم</button><button class="small gray" type="button" onclick="PBGen.regen()" title="يُعيد التوليد مع تعليمات صريحة لتجنّب الأخطاء المكتشفة">🔄 أعد التوليد (مع تصحيح الأخطاء)</button></div>
+  </div>
+  <div id="gen-cuts">
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">أو ارفع صورة جاهزة بدل التوليد<input type="file" id="gen-file" accept="image/*" onchange="PBGen.onFile(this)"></label>
     <label class="hint" style="margin:0">عدد الأقسام المتوقع<input id="gen-n" type="number" min="1" max="30" value="9" onchange="PBGen.recut()"></label>
@@ -405,6 +412,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   </div>
   <div style="margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" id="gen-detect-btn" onclick="PBGen.detect()" title="يستعمل مفتاح Gemini (طبقة مجانية)">🔍 اكتشاف المنتج والصور تلقائياً</button><button class="small gray" type="button" id="gen-region-btn" onclick="PBGen.regionMode()">✂️ رسم منطقة للقص (منتج/صورة)</button><small class="hint" style="margin:0">اضغط الزر ثم اسحب مستطيلاً حول المنتج أو أي صورة في المعاينة؛ كل منطقة تصير عنصر صورة مستقلاً قابلاً للتحريك. انقر × على المنطقة لحذفها.</small></div>
   <div id="gen-prev" style="margin:.6rem 0"></div>
+  </div>
   <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(1)">→ السابق</button><button class="small gold" type="button" onclick="PBGen.step(3)">التالي ←</button></div>
   </div>
   <div class="gen-step" data-s="3" style="display:none">
@@ -432,7 +440,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     document.querySelectorAll("#gen-card .gen-step").forEach(el => { el.style.display = Number(el.dataset.s) === n ? "" : "none"; });
     document.querySelectorAll("#gen-card [data-gs]").forEach(b => { b.className = "small " + (Number(b.dataset.gs) === n ? "gold" : "gray"); });
     S.step = n;
-    if (n === 2 && S.canvas) drawPreview();
+    if (n === 2) { const rev = !!(S.generated && !S.reviewed && S.canvas); $("gen-review").style.display = rev ? "" : "none"; $("gen-cuts").style.display = rev ? "none" : ""; if (rev) { $("gen-rimg").src = URL.createObjectURL(S.blob); } else if (S.canvas) drawPreview(); }
     if (n === 3) { const t = $("gen-title"); if (t && !t.value && S.file) t.value = (S.file.name || "").replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").slice(0, 60); $("gen-sum").innerHTML = S.canvas ? `سيتحول التصميم إلى <b>${S.cuts.length + 1}</b> قسماً${S.regions.length ? " مع <b>" + S.regions.length + "</b> عنصر مقصوص" : ""}. المحرك: <b>${$("gen-engine").value === "gemini" ? "Gemini رؤية" : "Tesseract"}</b>.` : "ارفع الصورة في الخطوة ②."; }
   }
   function engineUI() { $("gen-gk-wrap").style.display = $("gen-engine").value === "gemini" ? "" : "none"; }
@@ -506,6 +514,25 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     }
     throw lastErr || new Error("تعذّر توليد الصورة");
   }
+  /* فحص الصورة المولّدة: Gemini يقرأ النصوص ← نقارنها بالنصوص المقصودة ونكشف التكرار */
+  async function checkImage() {
+    const box = $("gen-rcheck"), key = keyNow(); if (!box || !S.canvas) return; S.issues = [];
+    if (!key) { box.textContent = "أدخل مفتاح Gemini لفحص النصوص تلقائياً."; return; }
+    try {
+      const L = LANGS[$("gen-lang").value] || LANGS.ar, lines = await (PBGen.ocrFn || geminiOcr)(S.canvas, key, L.name), want = extractIntended(S.finalPrompt || ""), seen = new Set(), issues = [];
+      lines.forEach(l => {
+        const t = l.text, nt = normT(t); if (nt.length < 3) return;
+        const toks = t.split(/\s+/); for (let i = 1; i < toks.length; i++) if (toks[i] === toks[i - 1] && toks[i].length > 1) issues.push("كلمة مكرّرة: «" + t + "»");
+        let best = null, bs = 0; for (const w of want) { const nw = normT(w); if (!nw) continue; const sc = 1 - lev(nt, nw) / Math.max(nt.length, nw.length); if (sc > bs) { bs = sc; best = w; } }
+        if (best && bs >= .6 && bs < 1) issues.push("مكتوب: «" + t + "» ← المقصود: «" + best.replace(/^[^\p{L}\p{N}]+/u, "") + "»");
+        if (seen.has(nt)) issues.push("سطر مكرّر في الصورة: «" + t + "»"); seen.add(nt);
+      });
+      S.issues = [...new Set(issues)].slice(0, 14);
+      box.innerHTML = S.issues.length ? "⚠️ وجدت " + S.issues.length + " ملاحظة محتملة (قد تكون قراءة خاطئة من الفاحص):<ul style='margin:.3rem 1rem;line-height:1.9'>" + S.issues.map(x => "<li>" + esc(x) + "</li>").join("") + "</ul>إن كانت كثيرة اضغط «أعد التوليد»، وإلا اعتمد الصورة وصحّح النص في المحرر." : "✅ لم أجد أخطاء إملائية أو تكراراً واضحاً في النصوص المقروءة.";
+    } catch (err) { box.textContent = "تعذّر الفحص التلقائي: " + err.message; }
+  }
+  function approve() { S.reviewed = true; step(2); }
+  function regen() { S.avoid = (S.issues || []).length ? S.issues.join(" | ") : ""; step(1); generateImage(); }
   /* الدالة الرئيسية: نصوص تسويقية ← أجزاء الصورة ← لصق ← معاينة الأقسام */
   async function generateImage() {
     const msg = $("gen-automsg"), btn = $("gen-make"), key = keyNow(), pf = $("gen-pimg").files && $("gen-pimg").files[0];
@@ -516,8 +543,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     try {
       const fp = await makeFinal(key), pb = await small64(pf, 1400);
       msg.textContent = "🎨 (3/3) توليد الصورة الطويلة (قد يستغرق دقيقة)…";
-      const blob = await (PBGen.imgFn || genLong)(key, fp, pb), canvas = await loadImage(blob); S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
-      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — قصّها إلى أقسام ثم تابع إلى «التحويل»"; step(2);
+      const blob = await (PBGen.imgFn || genLong)(key, fp + (S.avoid ? "\n\n=== CORRECTIONS REQUIRED ===\nThe previous attempt contained these text errors. Fix them: write every quoted string EXACTLY as given, never repeat words, no extra text: " + S.avoid : ""), pb), canvas = await loadImage(blob); S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
+      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage(); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — راجعها ثم اعتمدها للتقسيم";
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
@@ -535,13 +562,13 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     if (!r || !r.blob) { el.innerHTML = ""; return; }
     el.innerHTML = `<div style="background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem .7rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><span>🕘 آخر صورة مولّدة: <b>${PB.esc(r.name || "")}</b> · ${new Date(r.t).toLocaleString("ar-DZ")}</span><button class="small gold" type="button" onclick="PBGen.restoreLast()">استعادة</button><button class="small gray" type="button" onclick="PBGen.downloadLast()">⬇ تنزيل الأصل</button></div>`;
   }
-  async function restoreLast() { const r = await loadLast(); if (!r || !r.blob) return; S.blob = r.blob; S.name = r.name; const cv = await loadImage(r.blob); await setCanvas(cv, r.name); step(2); }
+  async function restoreLast() { const r = await loadLast(); if (!r || !r.blob) return; S.generated = false; S.reviewed = true; S.blob = r.blob; S.name = r.name; const cv = await loadImage(r.blob); await setCanvas(cv, r.name); step(2); }
   async function downloadLast() { const r = await loadLast(); if (!r || !r.blob) return; S.blob = r.blob; S.name = r.name; downloadOrig(); }
   async function setCanvas(canvas, title) {
-    S.canvas = canvas; S.regions = []; $("gen-msg").textContent = ""; recut(); $("gen-go").disabled = false; if (!$("gen-title").value) $("gen-title").value = title || "";
+    S.canvas = canvas; S.regions = []; if (!S.generated || S.reviewed !== false) S.reviewed = true; $("gen-msg").textContent = ""; recut(); $("gen-go").disabled = false; if (!$("gen-title").value) $("gen-title").value = title || "";
   }
   async function onFile(inp) {
-    const f = inp.files && inp.files[0]; if (!f) return; S.file = f; S.blob = f; S.name = f.name.replace(/\.[^.]+$/, ""); $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
+    const f = inp.files && inp.files[0]; if (!f) return; S.file = f; S.blob = f; S.generated = false; S.reviewed = true; S.name = f.name.replace(/\.[^.]+$/, ""); $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
     let cv; try { cv = await loadImage(f); } catch (e) { $("gen-msg").textContent = "❌ " + e.message; return; }
     await setCanvas(cv, $("gen-name").value || f.name.replace(/\.[^.]+$/, ""));
   }
@@ -581,5 +608,5 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
