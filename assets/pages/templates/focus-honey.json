@@ -1,0 +1,1374 @@
+{
+ "v": 1,
+ "title": "عسل التركيز وتنشيط الذاكرة للأطفال",
+ "slug": "tarkiz-landing",
+ "desc": "",
+ "bg": "#ffffff",
+ "ff": "",
+ "header": false,
+ "footer": true,
+ "css": "",
+ "sections": [
+  {
+   "id": "fpag1ml",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      56,
+      20,
+      56,
+      20
+     ],
+     "m": [
+      34,
+      16,
+      34,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "grad1": "#0b7bd1",
+    "grad2": "#ff8a1f",
+    "gradAng": 150
+   },
+   "cols": [
+    {
+     "id": "eqntblv",
+     "set": {
+      "w": {
+       "d": 55
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "pnepn9o",
+       "type": "heading",
+       "set": {
+        "text": "جديد",
+        "tag": "div",
+        "fs": {
+         "d": 20
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "color": "#1a1a1a",
+        "bg": "#ffd23f",
+        "rad": {
+         "d": 10
+        },
+        "pad": {
+         "d": [
+          4,
+          16,
+          4,
+          16
+         ]
+        },
+        "w": {
+         "d": 14,
+         "m": 30
+        }
+       }
+      },
+      {
+       "id": "njycow1",
+       "type": "heading",
+       "set": {
+        "text": "عسل التركيز وتنشيط الذاكرة للأطفال",
+        "tag": "h1",
+        "fs": {
+         "d": 52,
+         "m": 34
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#ffffff"
+       }
+      },
+      {
+       "id": "l2qbrgl",
+       "type": "heading",
+       "set": {
+        "text": "الحل السحري من الطبيعة!",
+        "tag": "div",
+        "fs": {
+         "d": 30,
+         "m": 24
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#ffffff"
+       }
+      },
+      {
+       "id": "t6cwqjj",
+       "type": "text",
+       "set": {
+        "html": "<p>استعد تركيز ابنك، وضاعف طاقته، وحسّن أداءه الذهني بشكل مدهش.</p>",
+        "fs": {
+         "d": 21,
+         "m": 17
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "600",
+        "color": "#ffffff"
+       }
+      }
+     ]
+    },
+    {
+     "id": "db0pjn0",
+     "set": {
+      "w": {
+       "d": 45
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "j5i0aru",
+       "type": "image",
+       "set": {
+        "src": "assets/img/tarkiz/presentation/03.webp",
+        "alt": "عسل التركيز وتنشيط الذاكرة للأطفال",
+        "fit": "contain",
+        "rad": {
+         "d": 24
+        },
+        "shadow": "lg"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "glgyufb",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      46,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      30,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "bg": "#eceff3"
+   },
+   "cols": [
+    {
+     "id": "koujkbs",
+     "set": {
+      "w": {
+       "d": 55
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "5srlkua",
+       "type": "heading",
+       "set": {
+        "text": "مشكلة الحفظ",
+        "tag": "div",
+        "fs": {
+         "d": 42,
+         "m": 30
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#c62828"
+       }
+      },
+      {
+       "id": "jtw59yj",
+       "type": "heading",
+       "set": {
+        "text": "والمذاكرة تؤرق عائلتك؟",
+        "tag": "div",
+        "fs": {
+         "d": 36,
+         "m": 26
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#1a1a1a"
+       }
+      },
+      {
+       "id": "vi0noha",
+       "type": "text",
+       "set": {
+        "html": "<p>يشعر الطفل بتشتّت الانتباه، وضعف التركيز، وصعوبة الاستيعاب في الدراسة.</p>",
+        "fs": {
+         "d": 19,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "600",
+        "color": "#333333"
+       }
+      }
+     ]
+    },
+    {
+     "id": "zs1y26q",
+     "set": {
+      "w": {
+       "d": 45
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "1yrlxvp",
+       "type": "image",
+       "set": {
+        "src": "assets/img/tarkiz/body/01.webp",
+        "alt": "طفل متعب أثناء المذاكرة مع والدته",
+        "fit": "cover",
+        "rad": {
+         "d": 18
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ced3vz0",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      46,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      30,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "grad1": "#dff0ff",
+    "grad2": "#ffffff",
+    "gradAng": 180
+   },
+   "cols": [
+    {
+     "id": "ve31bwd",
+     "set": {
+      "w": {
+       "d": 42
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "x912t6v",
+       "type": "image",
+       "set": {
+        "src": "assets/img/tarkiz/presentation/02.webp",
+        "alt": "طفل سعيد يحمل عسل التركيز",
+        "fit": "cover",
+        "rad": {
+         "d": 18
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "j24qqvd",
+     "set": {
+      "w": {
+       "d": 58
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "ip1jy70",
+       "type": "heading",
+       "set": {
+        "text": "الحل النهائي",
+        "tag": "div",
+        "fs": {
+         "d": 44,
+         "m": 32
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#0b6fb8"
+       }
+      },
+      {
+       "id": "12wy5ls",
+       "type": "heading",
+       "set": {
+        "text": "والوحيد",
+        "tag": "div",
+        "fs": {
+         "d": 40,
+         "m": 30
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#f08a00"
+       }
+      },
+      {
+       "id": "g2tpo97",
+       "type": "heading",
+       "set": {
+        "text": "لمستقبل مشرق لطفلك!",
+        "tag": "div",
+        "fs": {
+         "d": 36,
+         "m": 26
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#1a1a1a"
+       }
+      },
+      {
+       "id": "zyb8fv8",
+       "type": "text",
+       "set": {
+        "html": "<p>استعد تركيز ابنك وثقته بنفسه مع منتج طبيعي 100%.</p>",
+        "fs": {
+         "d": 19,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "800",
+        "color": "#333333"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w646xqu",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      40,
+      20,
+      6,
+      20
+     ],
+     "m": [
+      26,
+      16,
+      4,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    }
+   },
+   "cols": [
+    {
+     "id": "g51vwjz",
+     "set": {
+      "w": {
+       "d": 100
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "zdx5jyp",
+       "type": "heading",
+       "set": {
+        "text": "ماذا سيحدث لطفلك؟ الفرق قبل وبعد!",
+        "tag": "div",
+        "fs": {
+         "d": 38,
+         "m": 26
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#1a1a1a"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "eway7ti",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      10,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      6,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    }
+   },
+   "cols": [
+    {
+     "id": "il7f32s",
+     "set": {
+      "w": {
+       "d": 50
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "bu1ppu0",
+       "type": "image",
+       "set": {
+        "src": "assets/img/tarkiz/body/02.webp",
+        "alt": "بعد: طفل سعيد ومتفوق",
+        "fit": "cover",
+        "rad": {
+         "d": 18
+        }
+       }
+      },
+      {
+       "id": "mkqh7lx",
+       "type": "text",
+       "set": {
+        "html": "<p>✅ ذاكرة قوية، تركيز مضاعف، وأداء دراسي ممتاز.</p>",
+        "fs": {
+         "d": 19,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "800",
+        "color": "#15803d"
+       }
+      }
+     ]
+    },
+    {
+     "id": "x4e4fe9",
+     "set": {
+      "w": {
+       "d": 50
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "ciw0diw",
+       "type": "image",
+       "set": {
+        "src": "assets/img/tarkiz/body/01.webp",
+        "alt": "قبل: طفل متعب ومشتّت",
+        "fit": "cover",
+        "rad": {
+         "d": 18
+        }
+       }
+      },
+      {
+       "id": "x7kw1vc",
+       "type": "text",
+       "set": {
+        "html": "<p>❌ صعوبة الحفظ، تشتت الانتباه، وتراجع دراسي.</p>",
+        "fs": {
+         "d": 19,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "800",
+        "color": "#b91c1c"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "qch7ixc",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      46,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      30,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "grad1": "#2a1707",
+    "grad2": "#7a4a12",
+    "gradAng": 120
+   },
+   "cols": [
+    {
+     "id": "jm0a7lf",
+     "set": {
+      "w": {
+       "d": 50
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "z5rfw7i",
+       "type": "image",
+       "set": {
+        "src": "assets/img/tarkiz/presentation/04.webp",
+        "alt": "مكوّنات عسل التركيز الطبيعية",
+        "fit": "cover",
+        "rad": {
+         "d": 18
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "5esai9v",
+     "set": {
+      "w": {
+       "d": 50
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "c2su6tr",
+       "type": "heading",
+       "set": {
+        "text": "مزيج أليسوم",
+        "tag": "div",
+        "fs": {
+         "d": 44,
+         "m": 32
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#ffb347"
+       }
+      },
+      {
+       "id": "uv4k64d",
+       "type": "heading",
+       "set": {
+        "text": "الطبيعي والآمن تماماً",
+        "tag": "div",
+        "fs": {
+         "d": 36,
+         "m": 26
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#ffffff"
+       }
+      },
+      {
+       "id": "3d7uphd",
+       "type": "text",
+       "set": {
+        "html": "<p>عسل حر ممتاز مع خلاصات أعشاب مختارة بعناية لنتائج ملموسة.</p>",
+        "fs": {
+         "d": 19,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "600",
+        "color": "#f3e7d3"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "1rt7v7z",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      40,
+      20,
+      6,
+      20
+     ],
+     "m": [
+      26,
+      16,
+      4,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    }
+   },
+   "cols": [
+    {
+     "id": "rh6ayg6",
+     "set": {
+      "w": {
+       "d": 100
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "86tshkw",
+       "type": "heading",
+       "set": {
+        "text": "لماذا عسل أليسوم هو الخيار الأفضل؟",
+        "tag": "div",
+        "fs": {
+         "d": 38,
+         "m": 26
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#1a1a1a"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "1pr4hs8",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      10,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      6,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    }
+   },
+   "cols": [
+    {
+     "id": "9ih4zvx",
+     "set": {
+      "w": {
+       "d": 50
+      },
+      "va": "center",
+      "bg": "#f0fbf3",
+      "bw": 2,
+      "bs": "solid",
+      "bc": "#86efac",
+      "rad": {
+       "d": 18
+      },
+      "pad": {
+       "d": [
+        22,
+        22,
+        22,
+        22
+       ]
+      }
+     },
+     "widgets": [
+      {
+       "id": "i3bq4fr",
+       "type": "heading",
+       "set": {
+        "text": "✔ عسل أليسوم",
+        "tag": "div",
+        "fs": {
+         "d": 26,
+         "m": 22
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#15803d"
+       }
+      },
+      {
+       "id": "6r88vqx",
+       "type": "iconlist",
+       "set": {
+        "items": "طبيعي 100%\nلذيذ\nآمن تماماً\nنتائج مثبتة",
+        "icon": "✔",
+        "ic_c": "#16a34a",
+        "fs": {
+         "d": 23,
+         "m": 19
+        },
+        "gap": {
+         "d": 10
+        },
+        "fw": "800"
+       }
+      }
+     ]
+    },
+    {
+     "id": "4es76wl",
+     "set": {
+      "w": {
+       "d": 50
+      },
+      "va": "center",
+      "bg": "#fff4f4",
+      "bw": 2,
+      "bs": "solid",
+      "bc": "#fecaca",
+      "rad": {
+       "d": 18
+      },
+      "pad": {
+       "d": [
+        22,
+        22,
+        22,
+        22
+       ]
+      }
+     },
+     "widgets": [
+      {
+       "id": "cj6ucmj",
+       "type": "heading",
+       "set": {
+        "text": "✖ المنتجات الأخرى",
+        "tag": "div",
+        "fs": {
+         "d": 26,
+         "m": 22
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#b91c1c"
+       }
+      },
+      {
+       "id": "6zrk8vj",
+       "type": "iconlist",
+       "set": {
+        "items": "صناعي\nطعم سيء\nغير آمن\nنتائج بطيئة",
+        "icon": "✖",
+        "ic_c": "#dc2626",
+        "fs": {
+         "d": 23,
+         "m": 19
+        },
+        "gap": {
+         "d": 10
+        },
+        "fw": "800"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "oxxf7x0",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      46,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      30,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "grad1": "#fff7e6",
+    "grad2": "#ffffff",
+    "gradAng": 180
+   },
+   "cols": [
+    {
+     "id": "0cbbvwj",
+     "set": {
+      "w": {
+       "d": 55
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "6z9sx33",
+       "type": "heading",
+       "set": {
+        "text": "دع ابنك",
+        "tag": "div",
+        "fs": {
+         "d": 38,
+         "m": 28
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#1a1a1a"
+       }
+      },
+      {
+       "id": "pn9i9qn",
+       "type": "heading",
+       "set": {
+        "text": "يلمع في المدرسة اليومية.",
+        "tag": "div",
+        "fs": {
+         "d": 40,
+         "m": 28
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#e8780a"
+       }
+      },
+      {
+       "id": "ukq18cx",
+       "type": "text",
+       "set": {
+        "html": "<p>عسل التركيز يدعم ابنك في المدرسة ويساعده على النطق بثقة وتجاوز مشاكله الدراسية.</p>",
+        "fs": {
+         "d": 19,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "600",
+        "color": "#333333"
+       }
+      }
+     ]
+    },
+    {
+     "id": "wyrthrs",
+     "set": {
+      "w": {
+       "d": 45
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "6dznz5j",
+       "type": "image",
+       "set": {
+        "src": "assets/img/tarkiz/presentation/01.webp",
+        "alt": "طفلة تدرس بتركيز",
+        "fit": "cover",
+        "rad": {
+         "d": 18
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "405f8nw",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      46,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      30,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "bg": "#ffffff"
+   },
+   "cols": [
+    {
+     "id": "gp6t0cd",
+     "set": {
+      "w": {
+       "d": 100
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "yri7p27",
+       "type": "heading",
+       "set": {
+        "text": "★★★★★",
+        "tag": "div",
+        "fs": {
+         "d": 40,
+         "m": 32
+        },
+        "fw": "800",
+        "ta": {
+         "d": "center"
+        },
+        "color": "#f5b301"
+       }
+      },
+      {
+       "id": "ldpgvkl",
+       "type": "heading",
+       "set": {
+        "text": "ثقة عملائنا",
+        "tag": "div",
+        "fs": {
+         "d": 40,
+         "m": 30
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "lh": {
+         "d": 1.35
+        },
+        "color": "#1a1a1a"
+       }
+      },
+      {
+       "id": "rejlsnq",
+       "type": "gallery",
+       "set": {
+        "imgs": "assets/img/tarkiz/avis/avis02.webp\nassets/img/tarkiz/avis/avis03.webp\nassets/img/tarkiz/avis/SmartSelect_20250225_231134_Messenger.webp",
+        "cols": {
+         "d": 3,
+         "m": 2
+        },
+        "gap": {
+         "d": 14
+        },
+        "ratio": "1/1",
+        "rad": {
+         "d": 14
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lazooao",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      46,
+      20,
+      46,
+      20
+     ],
+     "m": [
+      30,
+      16,
+      30,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "bg": "#0d0d0d"
+   },
+   "cols": [
+    {
+     "id": "2bywxq1",
+     "set": {
+      "w": {
+       "d": 100
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "n1vjlzs",
+       "type": "heading",
+       "set": {
+        "text": "2100 دج",
+        "tag": "div",
+        "fs": {
+         "d": 54,
+         "m": 40
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "color": "#ffd23f"
+       }
+      },
+      {
+       "id": "ej9m1ki",
+       "type": "text",
+       "set": {
+        "html": "<p>بدلاً من 3100 دج — الدفع عند الاستلام</p>",
+        "fs": {
+         "d": 19,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "center"
+        },
+        "fw": "700",
+        "color": "#ffffff"
+       }
+      },
+      {
+       "id": "uecr0yb",
+       "type": "text",
+       "set": {
+        "html": "<p>⚠️ الكمية المتاحة محدودة جداً، اطلب الآن!</p>",
+        "fs": {
+         "d": 22,
+         "m": 18
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "center"
+        },
+        "fw": "900",
+        "color": "#ffffff"
+       }
+      },
+      {
+       "id": "75bjgzf",
+       "type": "button",
+       "set": {
+        "text": "اطلب الآن — الدفع عند الاستلام",
+        "kind": "link",
+        "link": "#order",
+        "bgc": "#ffd23f",
+        "color": "#111111",
+        "hbg": "#ffc400",
+        "fs": {
+         "d": 24,
+         "m": 19
+        },
+        "fw": "800",
+        "brad": {
+         "d": 12
+        },
+        "bpad": {
+         "d": [
+          14,
+          32,
+          14,
+          32
+         ]
+        },
+        "al": {
+         "d": "center"
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "39rg4y6",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      6,
+      20,
+      56,
+      20
+     ],
+     "m": [
+      4,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 28
+    },
+    "va": {
+     "d": "center"
+    },
+    "bg": "#0d0d0d",
+    "cid": "order"
+   },
+   "cols": [
+    {
+     "id": "dqtv7fw",
+     "set": {
+      "w": {
+       "d": 100
+      },
+      "va": "center"
+     },
+     "widgets": [
+      {
+       "id": "gldjznt",
+       "type": "orderorig",
+       "set": {
+        "prod": "tarkiz",
+        "auto": true
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

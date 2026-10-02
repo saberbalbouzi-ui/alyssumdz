@@ -506,6 +506,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <b style="color:var(--green);align-self:center">🧱 بناء الصفحات المتقدم</b>
         <button class="small" onclick="PBAdmin.newPage()">＋ صفحة جديدة</button>
         <button class="small gold" onclick="PBAdmin.openGen()">🪄 المولّد الذكي (من صورة)</button>
+        <button class="small gray" onclick="PBAdmin.openTemplate('focus-honey')" title="صفحة هبوط كاملة مبنية بعناصر المنشئ على نمط التصميم المرجعي">📄 قالب جاهز: عسل التركيز</button>
         <button class="small gray" onclick="PBAdmin.importPage()">⬆ استيراد صفحة (JSON)</button>
         <button class="small gold" onclick="PBAdmin.refresh()">↻ تحديث</button>
       </div>
@@ -8292,6 +8293,10 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
 const PBAdmin = {
   list: [],
+  /* قوالب جاهزة (assets/pages/templates/*.json): تُفتح كصفحة جديدة قابلة للتعديل الكامل */
+  async openTemplate(name) {
+    try { const r = await fetch("assets/pages/templates/" + name + ".json?t=" + Date.now()); if (!r.ok) throw new Error("القالب غير موجود"); const p = this.fresh(await r.json()); PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); }
+  },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },
   initGen() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } },
   async init() { await this.refresh(); },
