@@ -420,3 +420,10 @@ section[id]{scroll-margin-top:84px}
 .trk-meta{font-size:.85rem;color:var(--muted);line-height:1.9;border-top:1px solid var(--line);padding-top:.7rem}
 
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+#bestsellers{transition:background .35s}
+.coll-tabs{display:flex;gap:.6rem;overflow-x:auto;scroll-snap-type:x proximity;padding:.2rem .2rem 1rem;margin-bottom:.6rem;justify-content:center;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.coll-tabs::-webkit-scrollbar{display:none}
+.coll-tabs button{flex:0 0 auto;scroll-snap-align:center;padding:.55rem 1.2rem;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-weight:800;color:var(--ink);font-family:inherit;font-size:.92rem;cursor:pointer;white-space:nowrap;transition:background .25s,color .25s,transform .15s}
+.coll-tabs button.on{color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.14)}
+@media (max-width:640px){.coll-tabs{justify-content:flex-start}}
