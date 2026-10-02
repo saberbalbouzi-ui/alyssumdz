@@ -139,6 +139,8 @@ function allowedPath(string $p): bool {
     if (in_array($p, ['assets/js/data.js', 'assets/js/wilayas.js', 'index.html'], true)) return true;
     if (preg_match('#^assets/data/[a-z0-9_-]+\.json$#i', $p)) return true;
     if (preg_match('#^p/[a-z0-9][a-z0-9-]{0,80}/index(\.[a-z0-9]+)?\.html$#', $p)) return true;
+    if (preg_match('#^lp/[a-z0-9][a-z0-9-]{0,60}/index\.html$#', $p)) return true;            // صفحات الهبوط (منشئ الصفحات)
+    if (preg_match('#^assets/pages/([a-z0-9][a-z0-9-]{0,60}|index)\.json$#', $p)) return true;
     if (preg_match('#^assets/img/[a-z0-9_-]+(/[a-z0-9_ ()-]+)*/[a-zA-Z0-9_ ()-]+\.(webp|png|jpe?g|gif)$#', $p)) return true;
     return false;
 }

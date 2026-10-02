@@ -25,6 +25,11 @@ def abs_img(rel): return f"{BASE}/" + urllib.parse.quote(rel.lstrip("/"))
 
 # ── sitemap + robots ──
 urls = [f"{BASE}/"] + [url_path(p["slug"]) for p in live]
+# صفحات الهبوط المنشورة من «بناء الصفحات المتقدم» (assets/pages/index.json)
+_pg = ROOT / "assets" / "pages" / "index.json"
+if _pg.exists():
+    try: urls += [f"{BASE}/lp/{x['slug']}/" for x in json.loads(_pg.read_text(encoding="utf-8")) if x.get("live", True) and x.get("slug")]
+    except Exception: pass
 (ROOT / "sitemap.xml").write_text(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     "".join(f"  <url><loc>{esc(u)}</loc></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")

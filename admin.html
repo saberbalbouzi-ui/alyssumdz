@@ -232,6 +232,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
+      <button class="nav-btn" onclick="Admin.tab('builder',this)"><span class="nav-ic">🧱</span><span class="nav-txt"><b>بناء الصفحات المتقدم</b><small>صفحات هبوط احترافية بالسحب والإفلات (مكتب/تابلت/هاتف)</small></span></button>
       <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
       <button class="nav-btn" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
       <button class="nav-btn" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
@@ -408,6 +409,17 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 
   <div id="tab-products" class="hidden">
     <div class="card">
+      <details id="coll-card">
+        <summary style="cursor:pointer;font-weight:800;color:var(--green)">🏷️ تبويبات الصفحة الرئيسية (الأكثر مبيعاً، التخفيضات، ...) — تسمية وترتيب وألوان</summary>
+        <div class="hint" style="margin:.5rem 0">تظهر كأزرار أفقية فوق شبكة المنتجات في الرئيسية. أي تبويب بلا منتجات يختفي. تحديد المنتجات لكل تبويب يتم من «تعديل المنتج».</div>
+        <div id="coll-rows"></div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem">
+          <button class="small gray" type="button" onclick="Admin.collAdd()">+ تبويب جديد</button>
+          <button class="small" type="button" onclick="Admin.saveCollections()">💾 حفظ ونشر</button>
+        </div>
+      </details>
+    </div>
+    <div class="card">
       <div class="search-bar">
         <b style="color:var(--green);align-self:center">المنتجات (<span id="prod-count">0</span>)</b>
         <input id="prod-search" placeholder="🔍 بحث بالاسم أو المعرف..." oninput="Admin.renderProducts()">
@@ -420,6 +432,17 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     </div>
   </div>
 
+  <div id="tab-builder" class="hidden">
+    <div class="card">
+      <div class="search-bar">
+        <b style="color:var(--green);align-self:center">🧱 بناء الصفحات المتقدم</b>
+        <button class="small" onclick="PBAdmin.newPage()">＋ صفحة جديدة</button>
+        <button class="small gold" onclick="PBAdmin.refresh()">↻ تحديث</button>
+      </div>
+      <div class="hint">صمّم صفحات هبوط بأقسام وأعمدة وعناصر (عنوان، نص، صورة، زر، منتجات، أسئلة شائعة، عدّ تنازلي، معرض...) مع إعدادات مستقلة للمكتب والتابلت والهاتف وتحرير مباشر على الصفحة. تُنشر الصفحة على الرابط <code dir="ltr">/lp/اسم-الصفحة/</code>.</div>
+      <div class="rtw" style="overflow:auto" id="pb-list"></div>
+    </div>
+  </div>
   <div id="tab-genpage" class="hidden">
     <div id="gp-msg" style="display:none;margin:0 0 .8rem;padding:.7rem .9rem;border-radius:10px;font-size:.9rem;line-height:1.6"></div>
     <div class="card" id="gp-form">
@@ -877,12 +900,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <div style="background:#faf6ec;border:1px solid var(--line);border-radius:12px;padding:.7rem .9rem;margin:.4rem 0 .6rem">
           <b style="font-size:.9rem">🏷️ تبويبات الصفحة الرئيسية</b>
           <div class="hint" style="margin:.2rem 0 .5rem">فعّل ظهور المنتج في تبويبات «الأكثر مبيعاً / الأكثر طلباً / التخفيضات / المنتجات الجديدة». إلغاء التحديد يحذفه من التبويب.</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem .8rem">
-            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="best" style="width:auto"> 🔥 الأكثر مبيعاً</label>
-            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="hot" style="width:auto"> ⚡ الأكثر طلباً</label>
-            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="sale" style="width:auto"> 🏷️ التخفيضات</label>
-            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="new" style="width:auto"> ✨ المنتجات الجديدة</label>
-          </div>
+          <div id="f-tags-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem .8rem"></div>
         </div>
         <label style="display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem;font-weight:800"><input type="checkbox" id="f-freeship" style="width:auto"> 🚚 تفعيل الشحن المجاني لهذا المنتج</label>
         <div class="hint" style="margin-top:0">عند التفعيل: إن لم تحدّد عروضاً بعينها يشمل كل العروض، وإن حدّدتَ عرضاً أو أكثر (خانة «🚚 مجاني» في صف العرض) يقتصر عليها.</div>
@@ -2108,7 +2126,7 @@ const Admin = {
     this.startAlerts();
     try{ Updater.init(); Seller.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
-    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadRepeat(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
+    await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadCollections(), this.loadRepeat(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
     this.renderAll();
     toast("✓ تم التحميل");
     try{ if(!sessionStorage.getItem("alyssum_pages_checked") && GH.cfg() && GH.cfg().token){ sessionStorage.setItem("alyssum_pages_checked","1"); this.ensureProductPages(); } }catch(e){}
@@ -2124,7 +2142,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","shipped","finance","setup","repeat","analytics","products","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","shipped","finance","setup","repeat","analytics","products","builder","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -2134,6 +2152,7 @@ const Admin = {
     if(t==="shipped"){ this.renderShipped(); this.autoSyncShipped(); }
     if(t==="pending") this.renderPending();
     if(t==="genpage") GenPage.init();
+    if(t==="builder") PBAdmin.init();
     if(t==="agent") AgentTrain.init();
     if(t==="analytics"){ this.renderAnalytics(); this.renderVisits(); }
     if(t==="loyalty") this.renderLoyalty();
@@ -2488,7 +2507,8 @@ const Admin = {
     $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
     $f("f-stock").value = (src && src.stock!==undefined && src.stock!==null) ? src.stock : "";
     $f("f-freeship").checked = !!(src && src.freeShip);
-    document.querySelectorAll("#f-tags-wrap [data-tag], [data-tag]").forEach(c=>{ c.checked = !!(src && (src.tags||[]).includes(c.dataset.tag)); });
+    this.renderTagBoxes();
+    document.querySelectorAll("input[data-tag]").forEach(c=>{ c.checked = !!(src && (src.tags||[]).includes(c.dataset.tag)); });
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     $f("f-keywords").value = src?(src.keywords||""):"";
@@ -4934,6 +4954,46 @@ const Admin = {
     }catch(err){ console.error(err); toast("❌ " + err.message); }
   },
 
+  renderTagBoxes(){ const g = $f("f-tags-grid"); if(!g) return; g.innerHTML = (this.collections || this.collDefaults()).map(c=>'<label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="' + PB.esc(c.key) + '" style="width:auto"> ' + PB.esc(c.label) + (c.enabled === false ? ' <small style="color:#999">(معطّل)</small>' : "") + '</label>').join(""); },
+  /* ════════ تبويبات الرئيسية (assets/data/collections.json) ════════ */
+  collDefaults(){ return JSON.parse("[{\"key\":\"best\",\"label\":\"🔥 الأكثر مبيعاً\",\"title\":\"الأكثر مبيعاً\",\"sub\":\"المنتجات المفضّلة لدى عملائنا\",\"ribbon\":\"🔥 الأكثر مبيعاً\",\"bg\":\"#F4EFE6\",\"accent\":\"#8a6a1a\",\"enabled\":true},{\"key\":\"hot\",\"label\":\"⚡ الأكثر طلباً\",\"title\":\"الأكثر طلباً\",\"sub\":\"الأكثر طلباً هذه الأيام\",\"ribbon\":\"⚡ الأكثر طلباً\",\"bg\":\"#FBEBDD\",\"accent\":\"#b4531a\",\"enabled\":true},{\"key\":\"sale\",\"label\":\"🏷️ التخفيضات\",\"title\":\"التخفيضات\",\"sub\":\"أسعار مخفّضة لفترة محدودة\",\"ribbon\":\"🏷️ تخفيض\",\"bg\":\"#FBE4E4\",\"accent\":\"#b83232\",\"enabled\":true},{\"key\":\"new\",\"label\":\"✨ المنتجات الجديدة\",\"title\":\"المنتجات الجديدة\",\"sub\":\"وصل حديثاً إلى المتجر\",\"ribbon\":\"✨ جديد\",\"bg\":\"#E4F1EA\",\"accent\":\"#157a55\",\"enabled\":true}]"); },
+  async loadCollections(){
+    this.collections = this.collDefaults();
+    try{ const f = await GH.getFile("assets/data/collections.json"); this.collSha = f.sha; const j = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
+      if(j && Array.isArray(j.tabs) && j.tabs.length) this.collections = j.tabs; }
+    catch(e){ this.collSha = undefined; }
+    this.renderCollections();
+  },
+  renderCollections(){
+    const box = $f("coll-rows"); if(!box) return; const T = this.collections || this.collDefaults(), n = T.length;
+    box.innerHTML = T.map((c,i)=>{
+      const q = v=>String(v||"").replace(/"/g,"&quot;"), id = f=>'cl-' + i + '-' + f;
+      return '<div style="border:1.5px dashed var(--line);border-radius:14px;padding:.7rem;margin-bottom:.6rem">' +
+        '<div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap"><label style="display:flex;gap:.3rem;align-items:center;font-weight:800"><input type="checkbox" id="' + id("enabled") + '"' + (c.enabled!==false?" checked":"") + ' style="width:auto;margin:0"> مفعّل</label>' +
+        '<small dir="ltr" style="color:#999">' + PB.esc(c.key) + '</small><span style="margin-inline-start:auto;display:flex;gap:.3rem">' +
+        '<button class="small gray" type="button"' + (i===0?" disabled":"") + ' onclick="Admin.collMove(' + i + ',-1)">▲</button><button class="small gray" type="button"' + (i===n-1?" disabled":"") + ' onclick="Admin.collMove(' + i + ',1)">▼</button>' +
+        (/^(best|hot|sale|new)$/.test(c.key) ? "" : '<button class="small" style="background:var(--red);color:#fff" type="button" onclick="Admin.collDel(' + i + ')">🗑️</button>') + '</span></div>' +
+        '<div class="grid2" style="margin-top:.4rem"><input id="' + id("label") + '" placeholder="نص الزر (مع إيموجي)" value="' + q(c.label) + '"><input id="' + id("title") + '" placeholder="عنوان القسم" value="' + q(c.title) + '"></div>' +
+        '<div class="grid2"><input id="' + id("sub") + '" placeholder="وصف قصير تحت العنوان" value="' + q(c.sub) + '"><input id="' + id("ribbon") + '" placeholder="شارة البطاقة" value="' + q(c.ribbon) + '"></div>' +
+        '<div style="display:flex;gap:1rem;align-items:center;margin-top:.3rem"><label style="font-size:.8rem">لون الزر <input type="color" id="' + id("accent") + '" value="' + q(c.accent||"#8a6a1a") + '" style="width:44px;height:30px;padding:0;vertical-align:middle"></label>' +
+        '<label style="font-size:.8rem">لون الخلفية <input type="color" id="' + id("bg") + '" value="' + q(c.bg||"#F4EFE6") + '" style="width:44px;height:30px;padding:0;vertical-align:middle"></label></div></div>';
+    }).join("");
+  },
+  collRead(){ return (this.collections || []).map((c,i)=>{ const g = f=>$f("cl-" + i + "-" + f);
+    return Object.assign({}, c, { enabled: g("enabled").checked, label: g("label").value.trim() || c.label, title: g("title").value.trim() || c.title, sub: g("sub").value.trim(), ribbon: g("ribbon").value.trim() || c.ribbon, accent: g("accent").value, bg: g("bg").value }); }); },
+  collMove(i, d){ this.collections = this.collRead(); const j = i + d; if(j < 0 || j >= this.collections.length) return; [this.collections[i], this.collections[j]] = [this.collections[j], this.collections[i]]; this.renderCollections(); },
+  collDel(i){ if(!confirm("حذف هذا التبويب؟ (يبقى وسم المنتجات لكنه لن يظهر)")) return; this.collections = this.collRead(); this.collections.splice(i, 1); this.renderCollections(); },
+  collAdd(){ this.collections = this.collRead(); this.collections.push({ key:"c" + Date.now().toString(36), label:"⭐ تبويب جديد", title:"تبويب جديد", sub:"", ribbon:"⭐ مميّز", bg:"#EEF0F6", accent:"#2d4a8a", enabled:true }); this.renderCollections(); },
+  async saveCollections(){
+    const T = this.collRead();
+    if(!T.some(c=>c.enabled)){ toast("فعّل تبويباً واحداً على الأقل"); return }
+    try{
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify({ tabs: T }, null, 2))));
+      const res = await GH.putFile("assets/data/collections.json", b64, this.collSha, "إعدادات تبويبات الرئيسية عبر لوحة التحكم");
+      this.collSha = res && res.content ? res.content.sha : undefined; this.collections = T; this.renderCollections();
+      toast("✅ نُشرت تبويبات الرئيسية");
+    }catch(err){ console.error(err); toast("❌ " + err.message); }
+  },
   /* ════════ هدايا الزبائن الجدد (assets/data/welcome.json) ════════ */
   welcomeDefaults(){ return { enabled:true,
     register:{ enabled:true, title:"🎁 هدية التسجيل", code:"WELCOME10", type:"percent", value:10, product:"", minOrder:0, days:14 },
@@ -6661,5 +6721,949 @@ if(Admin.phpMode()){
   API.sb.token().then(t=>{ if(t && Admin.key && (Admin.sbOnly() || Admin.key !== "sb")) Admin.load(); else { Admin.key = ""; localStorage.removeItem("alyssum_admin_key"); } });
 } else if(Admin.key) Admin.load();
 </script>
+<!--PB:start-->
+<script>
+/* ══════════════════════════════════════════════════════════════════════════════
+   PB — منشئ الصفحات المتقدم (مشابه لـ Elementor): أقسام ← أعمدة ← عناصر، مع إعدادات متجاوبة لكل جهاز
+   (المكتب d / التابلت t / الهاتف m)، تحرير مباشر على الصفحة، تغيير حجم بالسحب، وتصدير صفحة ثابتة سريعة.
+   المصدر الوحيد: scripts/pagebuilder.js — يُحقن داخل admin.html بين علامتي PB:start وPB:end
+   عبر scripts/build-admin-pb.py (لا تعدّل النسخة المحقونة يدوياً).
+   ══════════════════════════════════════════════════════════════════════════════ */
+const PB = (() => {
+  const DEVS = ["d", "t", "m"], BP = { t: 1024, m: 767 }, DEVNAME = { d: "المكتب", t: "التابلت", m: "الهاتف" }, DEVIC = { d: "🖥️", t: "📱", m: "📲" };
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const isObj = v => v && typeof v === "object" && !Array.isArray(v);
+  const num = v => (v === "" || v == null || isNaN(Number(v))) ? null : Number(v);
+
+  /* ───── القيم المتجاوبة: set[k] = {d,t,m}؛ التابلت يرث المكتب والهاتف يرث التابلت ───── */
+  const own = (set, k, dev) => { const v = set[k]; return isObj(v) ? v[dev] : (dev === "d" ? v : undefined); };
+  const eff = (set, k, dev) => { const v = set[k]; if (!isObj(v)) return v; if (v[dev] !== undefined) return v[dev]; if (dev === "m" && v.t !== undefined) return v.t; return v.d; };
+  const setR = (set, k, dev, val) => {
+    let v = set[k]; if (!isObj(v)) v = set[k] = (v === undefined || v === "" ? {} : { d: v });
+    if (val === undefined || val === "" || val === null) delete v[dev]; else v[dev] = val;
+    if (!Object.keys(v).length) delete set[k];
+  };
+
+  /* ───── مولّد CSS: يجمع القواعد في 3 صناديق (أساس / تابلت / هاتف) ثم يخرجها بالترتيب الصحيح ───── */
+  const newCss = () => ({ d: [], t: [], m: [] });
+  const dimsDecl = (prop, a) => !Array.isArray(a) ? "" : ["top", "right", "bottom", "left"].map((s, i) => (a[i] === "" || a[i] == null || isNaN(Number(a[i]))) ? "" : `${prop}-${s}:${Number(a[i])}px;`).join("");
+  /* specs: [مفتاح, دالة(قيمة,set) ← إعلان CSS] */
+  function emit(css, sel, set, specs) {
+    DEVS.forEach(dev => {
+      let d = "";
+      specs.forEach(([k, fn]) => { const v = own(set, k, dev); if (v !== undefined && v !== "" && v !== null) d += fn(v, set, dev) || ""; });
+      if (d) css[dev].push(`${sel}{${d}}`);
+    });
+  }
+  const px = p => v => num(v) == null ? "" : `${p}:${num(v)}px;`;
+  const pc = p => v => num(v) == null ? "" : `${p}:${num(v)}%;`;
+  const raw = p => v => `${p}:${v};`;
+  const SHADOWS = { "": "", sm: "0 2px 8px rgba(0,0,0,.12)", md: "0 8px 24px rgba(0,0,0,.16)", lg: "0 18px 48px rgba(0,0,0,.22)", glow: "0 0 24px rgba(200,162,75,.6)" };
+  const TYPO = [["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["ff", raw("font-family")], ["lh", raw("line-height")], ["ls", px("letter-spacing")], ["tt", raw("text-transform")], ["ta", raw("text-align")]];
+  const BOX = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]];
+  /* الخلفية/الحدود غير المتجاوبة (قيمة واحدة) */
+  function boxStatic(css, sel, s) {
+    let d = "";
+    if (s.bg) d += `background-color:${s.bg};`;
+    if (s.grad1 && s.grad2) d += `background-image:linear-gradient(${num(s.gradAng) ?? 135}deg,${s.grad1},${s.grad2});`;
+    if (s.bgImg) { d += `background-image:${(s.grad1 && s.grad2) ? "linear-gradient(" + (num(s.gradAng) ?? 135) + "deg," + s.grad1 + "," + s.grad2 + ")," : ""}url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}');background-size:${s.bgSize || "cover"};background-position:${s.bgPos || "center"};background-repeat:no-repeat;`; if (s.bgFixed) d += "background-attachment:fixed;"; }
+    if (num(s.bw)) d += `border:${num(s.bw)}px ${s.bs || "solid"} ${s.bc || "#ddd"};`;
+    if (s.shadow && SHADOWS[s.shadow]) d += `box-shadow:${SHADOWS[s.shadow]};`;
+    if (s.op !== undefined && s.op !== "" && num(s.op) != null) d += `opacity:${num(s.op)};`;
+    if (num(s.z)) d += `z-index:${num(s.z)};position:relative;`;
+    if (d) css.d.push(`${sel}{${d}}`);
+  }
+  function hideRules(css, sel, s, edit) {
+    DEVS.forEach(dev => { if (s["h" + dev]) css[dev].push(edit ? `${sel}{opacity:.25;outline:2px dashed #b83232}` : `${sel}{display:none!important}`); });
+  }
+  function customCss(css, sel, s) { if (s.css && String(s.css).trim()) css.d.push(String(s.css).replace(/selector/g, sel)); }
+  function finishCss(css, base) {
+    return css.d.join("\n") + `\n@media(max-width:${BP.t}px){\n${css.t.join("\n")}\n}\n@media(max-width:${BP.m}px){\n.pb-sec .pb-col{width:100%;flex:0 0 100%;max-width:100%}\n${css.m.join("\n")}\n}`;
+  }
+  const ANIMS = [["", "بدون"], ["fadeIn", "ظهور تدريجي"], ["fadeUp", "صعود"], ["fadeDown", "نزول"], ["zoomIn", "تكبير"], ["slideStart", "انزلاق من الجانب"]];
+  const animAttr = s => s.anim ? ` data-anim="${esc(s.anim)}" style="--ad:${num(s.animDur) ?? .6}s;--ade:${num(s.animDelay) ?? 0}s"` : "";
+  const cleanHtml = html => {
+    const d = new DOMParser().parseFromString("<body>" + String(html || "") + "</body>", "text/html");
+    d.body.querySelectorAll("script,style,iframe,object,embed,link,meta,form").forEach(n => n.remove());
+    d.body.querySelectorAll("*").forEach(n => [...n.attributes].forEach(a => { if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(a.value))) n.removeAttribute(a.name); }));
+    return d.body.innerHTML;
+  };
+  const formatNum = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ");
+
+  /* ───── شبكة المنتجات: دالة مستقلة (تُحقن كما هي داخل الصفحة المنشورة لتحديث الأسعار تلقائياً) ───── */
+  function productsHtml(s, products, base) {
+    const f = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ") + " دج";
+    const e = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    let list = (products || []).filter(p => p.active !== false);
+    const val = String(s.val || "").trim();
+    if (s.mode === "tag" && val) list = list.filter(p => (p.tags || []).includes(val));
+    else if (s.mode === "cat" && val) list = list.filter(p => p.cat === val);
+    else if (s.mode === "slugs" && val) { const arr = val.split(/[\s,،]+/).filter(Boolean); list = arr.map(x => list.find(p => p.slug === x)).filter(Boolean); }
+    const lim = Number(s.limit) || 0; if (lim > 0) list = list.slice(0, lim);
+    if (!list.length) return '<div class="pb-empty-note">لا توجد منتجات مطابقة</div>';
+    return '<div class="pb-pgrid">' + list.map(p => {
+      const img = p.cover || (p.images && p.images[0]) || "";
+      const disc = (p.old && p.old > p.price) ? Math.round((1 - p.price / p.old) * 100) : 0;
+      return '<a class="pb-pc" href="' + e(base) + 'p/' + e(p.slug) + '/">' +
+        '<div class="pb-pci">' + (disc ? '<span class="pb-pcd">-' + disc + '%</span>' : '') + (img ? '<img loading="lazy" decoding="async" src="' + e(base + img) + '" alt="' + e(p.title) + '">' : '') + '</div>' +
+        '<h3>' + e(p.title) + '</h3><div class="pb-pcp"><b>' + f(p.price) + '</b>' + ((s.showOld !== false && p.old && p.old > p.price) ? '<s>' + f(p.old) + '</s>' : '') + '</div>' +
+        '<span class="pb-pcb">' + e(s.btn || "اطلب الآن") + '</span></a>';
+    }).join("") + '</div>';
+  }
+
+  /* ═════════════════ تعريف العناصر (Widgets) ═════════════════ */
+  const F_FONT = [["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"], ["'Courier New',monospace", "Mono"]];
+  const F_W = [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]];
+  const AL = [["start", "⇥ بداية"], ["center", "↔ وسط"], ["end", "⇤ نهاية"]];
+  const typoCtl = (extra) => [
+    { k: "color", l: "لون النص", t: "color", tab: "s" },
+    { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 8, max: 160, tab: "s" },
+    { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" },
+    { k: "ff", l: "العائلة", t: "select", o: F_FONT, tab: "s" },
+    { k: "lh", l: "ارتفاع السطر", t: "num", r: 1, min: .8, max: 3, step: .1, tab: "s" },
+    { k: "ls", l: "تباعد الحروف (px)", t: "num", r: 1, min: -5, max: 20, step: .5, tab: "s" },
+    { k: "tt", l: "حالة الأحرف", t: "select", o: [["", "افتراضي"], ["uppercase", "كبيرة"], ["capitalize", "أول حرف"], ["none", "بدون"]], tab: "s" },
+    { k: "ta", l: "محاذاة النص", t: "align", r: 1, tab: "s" },
+  ].concat(extra || []);
+
+  const WIDGETS = {
+    heading: {
+      label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl()),
+      html: (s, id) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
+      css: (c, sel, s) => emit(c, sel + " .pb-t", s, TYPO),
+    },
+    text: {
+      label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
+      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl()),
+      html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
+      css: (c, sel, s) => emit(c, sel + " .pb-t", s, TYPO),
+    },
+    image: {
+      label: "صورة", ic: "🖼️", def: { src: "", alt: "", fit: "cover" },
+      ctl: [{ k: "src", l: "الصورة", t: "image", tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" }],
+      html: (s, id, ctx) => { const src = s.src ? (/^(https?:|data:|\/)/.test(s.src) ? s.src : ctx.base + s.src) : ""; const im = src ? `<img src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">` : `<div class="pb-ph">🖼️ اختر صورة من الإعدادات</div>`; return s.link ? `<a href="${esc(s.link)}">${im}</a>` : im; },
+      css: (c, sel, s) => { emit(c, sel + " img", s, [["rad", px("border-radius")], ["mh", v => `height:${num(v)}px;`]]); c.d.push(`${sel} img{width:100%;object-fit:${s.fit || "cover"};display:block}`); },
+    },
+    button: {
+      label: "زر", ic: "🔘", def: { text: "اطلب الآن", kind: "link", link: "#", bgc: "#157a55", color: "#ffffff", hbg: "#0f5a3e", fs: { d: 18 }, fw: "800", brad: { d: 12 }, bpad: { d: [14, 32, 14, 32] }, al: { d: "center" } },
+      ctl: [{ k: "text", l: "نص الزر", t: "text", tab: "c" }, { k: "kind", l: "نوع الزر", t: "select", o: [["link", "رابط"], ["whatsapp", "واتساب"], ["call", "اتصال هاتفي"]], tab: "c" }, { k: "link", l: "الرابط", t: "text", tab: "c" }, { k: "phone", l: "رقم (واتساب/اتصال) بصيغة دولية", t: "text", tab: "c" }, { k: "msg", l: "رسالة واتساب", t: "text", tab: "c" }, { k: "newTab", l: "فتح في تبويب جديد", t: "switch", tab: "c" },
+        { k: "bgc", l: "لون الزر", t: "color", tab: "s" }, { k: "hbg", l: "لون الخلفية عند المرور", t: "color", tab: "s" }, { k: "color", l: "لون النص", t: "color", tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 60, tab: "s" }, { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" }, { k: "bpad", l: "حشو الزر", t: "dims", r: 1, tab: "s" }, { k: "brad", l: "تدوير زوايا الزر (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }, { k: "full", l: "عرض كامل", t: "switch", r: 1, tab: "s" }],
+      html: (s, id, ctx) => { let href = s.link || "#", ex = ""; if (s.kind === "whatsapp") href = "https://wa.me/" + String(s.phone || ctx.wa || "").replace(/\D/g, "") + (s.msg ? "?text=" + encodeURIComponent(s.msg) : ""); else if (s.kind === "call") href = "tel:" + String(s.phone || "").replace(/[^\d+]/g, ""); if (s.newTab || s.kind === "whatsapp") ex = ' target="_blank" rel="noopener"'; return `<a class="pb-btn" href="${esc(href)}"${ex}><span data-edit="text">${esc(s.text)}</span></a>`; },
+      css: (c, sel, s) => { emit(c, sel + " .pb-btn", s, [["bgc", raw("background")], ["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["bpad", v => dimsDecl("padding", v)], ["brad", px("border-radius")], ["full", v => v ? "display:block;width:100%;" : "display:inline-block;width:auto;"]]); if (s.hbg) c.d.push(`${sel} .pb-btn:hover{background:${s.hbg}!important}`); },
+    },
+    spacer: {
+      label: "فراغ", ic: "↕️", def: { mh: { d: 40, m: 24 } }, ctl: [{ k: "mh", l: "الارتفاع (px)", t: "num", r: 1, min: 0, max: 600, tab: "c" }],
+      html: () => `<div class="pb-sp"></div>`, css: (c, sel, s) => emit(c, sel + " .pb-sp", s, [["mh", px("height")]]), noMh: 1,
+    },
+    divider: {
+      label: "فاصل", ic: "➖", def: { bs: "solid", bw: 2, bc: "#d9d2c3", dw: { d: 100 } },
+      ctl: [{ k: "bs", l: "النمط", t: "select", o: [["solid", "متصل"], ["dashed", "متقطع"], ["dotted", "نقطي"], ["double", "مزدوج"]], tab: "c" }, { k: "bw", l: "السماكة (px)", t: "num", min: 1, max: 20, tab: "c" }, { k: "bc", l: "اللون", t: "color", tab: "c" }, { k: "dw", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "c" }],
+      html: () => `<hr class="pb-hr">`, css: (c, sel, s) => { c.d.push(`${sel} .pb-hr{border:0;border-top:${num(s.bw) || 2}px ${s.bs || "solid"} ${s.bc || "#d9d2c3"};margin:0 auto}`); emit(c, sel + " .pb-hr", s, [["dw", pc("width")]]); },
+    },
+    video: {
+      label: "فيديو", ic: "▶️", def: { url: "", ratio: "16/9" },
+      ctl: [{ k: "url", l: "رابط YouTube / Vimeo / ملف mp4", t: "text", tab: "c" }, { k: "ratio", l: "النسبة", t: "select", o: [["16/9", "16:9"], ["4/3", "4:3"], ["1/1", "1:1"], ["9/16", "9:16 (عمودي)"]], tab: "c" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }],
+      html: s => { const u = String(s.url || "").trim(); let m; if (!u) return `<div class="pb-ph">▶️ ألصق رابط الفيديو في الإعدادات</div>`; if ((m = u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/))) return `<iframe class="pb-vid" src="https://www.youtube-nocookie.com/embed/${m[1]}" loading="lazy" allowfullscreen title="فيديو"></iframe>`; if ((m = u.match(/vimeo\.com\/(\d+)/))) return `<iframe class="pb-vid" src="https://player.vimeo.com/video/${m[1]}" loading="lazy" allowfullscreen title="فيديو"></iframe>`; if (/\.(mp4|webm)(\?|$)/i.test(u)) return `<video class="pb-vid" src="${esc(u)}" controls playsinline preload="metadata"></video>`; return `<div class="pb-ph">رابط فيديو غير مدعوم</div>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-vid{width:100%;aspect-ratio:${s.ratio || "16/9"};border:0;display:block;background:#000}`); emit(c, sel + " .pb-vid", s, [["rad", px("border-radius")]]); },
+    },
+    html: {
+      label: "HTML مخصص", ic: "🧩", def: { code: "<div style=\"padding:20px;text-align:center\">HTML مخصص</div>" }, ctl: [{ k: "code", l: "الكود", t: "rich", tab: "c" }],
+      html: s => `<div class="pb-raw">${s.code || ""}</div>`, css: () => { },
+    },
+    iconlist: {
+      label: "قائمة أيقونات", ic: "✅", def: { items: "طبيعي 100%\nدفع عند الاستلام\nتوصيل لكل الولايات", icon: "✅", ic_c: "#157a55", fs: { d: 18 }, gap: { d: 10 } },
+      ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر)", t: "textarea", tab: "c" }, { k: "icon", l: "الأيقونة (إيموجي)", t: "text", tab: "c" }, { k: "ic_c", l: "لون الأيقونة", t: "color", tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
+      html: s => `<ul class="pb-il">${String(s.items || "").split("\n").filter(x => x.trim()).map(x => `<li><i>${esc(s.icon || "✅")}</i><span>${esc(x)}</span></li>`).join("")}</ul>`,
+      css: (c, sel, s) => { emit(c, sel + " .pb-il", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-il li", s, [["gap", px("margin-bottom")]]); if (s.ic_c) c.d.push(`${sel} .pb-il i{color:${s.ic_c}}`); },
+    },
+    iconbox: {
+      label: "صندوق أيقونة", ic: "💠", def: { icon: "🌿", title: "ميزة رائعة", text: "وصف قصير يشرح الميزة للزبون.", al: { d: "center" }, isz: { d: 44 }, tc: "#173F35", xc: "#555555" },
+      ctl: [{ k: "icon", l: "الأيقونة (إيموجي أو رمز)", t: "text", tab: "c" }, { k: "title", l: "العنوان", t: "text", tab: "c" }, { k: "text", l: "الوصف", t: "textarea", tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 16, max: 140, tab: "s" }, { k: "tc", l: "لون العنوان", t: "color", tab: "s" }, { k: "xc", l: "لون الوصف", t: "color", tab: "s" }, { k: "tfs", l: "حجم العنوان (px)", t: "num", r: 1, min: 12, max: 60, tab: "s" }],
+      html: s => { const b = `<div class="pb-ib"><div class="pb-ibi">${esc(s.icon)}</div><h3 data-edit="title">${esc(s.title)}</h3><p data-edit="text">${esc(s.text)}</p></div>`; return s.link ? `<a href="${esc(s.link)}" style="color:inherit;text-decoration:none">${b}</a>` : b; },
+      css: (c, sel, s) => { emit(c, sel + " .pb-ibi", s, [["isz", px("font-size")]]); emit(c, sel + " .pb-ib h3", s, [["tfs", px("font-size")]]); if (s.tc) c.d.push(`${sel} .pb-ib h3{color:${s.tc}}`); if (s.xc) c.d.push(`${sel} .pb-ib p{color:${s.xc}}`); },
+    },
+    accordion: {
+      label: "أسئلة شائعة", ic: "❓", def: { items: [{ q: "كيف أطلب المنتج؟", a: "اضغط على زر اطلب الآن واملأ بياناتك، ونتصل بك للتأكيد." }, { q: "هل الدفع عند الاستلام؟", a: "نعم، تدفع فقط عند وصول الطلب إليك." }], first: true, qbg: "#faf6ec", qc: "#173F35", ac: "#444444" },
+      ctl: [{ k: "items", l: "الأسئلة", t: "rep", f: [["q", "السؤال"], ["a", "الجواب"]], tab: "c" }, { k: "first", l: "فتح الأول افتراضياً", t: "switch", tab: "c" }, { k: "qbg", l: "خلفية السؤال", t: "color", tab: "s" }, { k: "qc", l: "لون السؤال", t: "color", tab: "s" }, { k: "ac", l: "لون الجواب", t: "color", tab: "s" }, { k: "qfs", l: "حجم السؤال (px)", t: "num", r: 1, min: 12, max: 40, tab: "s" }],
+      html: s => `<div class="pb-acc">${(s.items || []).map((it, i) => `<details${(s.first && i === 0) ? " open" : ""}><summary>${esc(it.q)}</summary><div>${esc(it.a)}</div></details>`).join("")}</div>`,
+      css: (c, sel, s) => { if (s.qbg) c.d.push(`${sel} .pb-acc summary{background:${s.qbg}}`); if (s.qc) c.d.push(`${sel} .pb-acc summary{color:${s.qc}}`); if (s.ac) c.d.push(`${sel} .pb-acc details>div{color:${s.ac}}`); emit(c, sel + " .pb-acc summary", s, [["qfs", px("font-size")]]); },
+    },
+    counter: {
+      label: "عدّاد", ic: "🔢", def: { n: 5000, pre: "+", suf: "", label: "زبون سعيد", fs: { d: 52 }, color: "#8a6a1a", lc: "#555555" },
+      ctl: [{ k: "n", l: "الرقم", t: "num", tab: "c" }, { k: "pre", l: "قبل الرقم", t: "text", tab: "c" }, { k: "suf", l: "بعد الرقم", t: "text", tab: "c" }, { k: "label", l: "الوصف", t: "text", tab: "c" }, { k: "fs", l: "حجم الرقم (px)", t: "num", r: 1, min: 12, max: 160, tab: "s" }, { k: "color", l: "لون الرقم", t: "color", tab: "s" }, { k: "lc", l: "لون الوصف", t: "color", tab: "s" }],
+      html: s => `<div class="pb-ct"><div class="pb-ctn"><span>${esc(s.pre)}</span><b data-count="${num(s.n) || 0}">${formatNum(num(s.n) || 0)}</b><span>${esc(s.suf)}</span></div><div class="pb-ctl" data-edit="label">${esc(s.label)}</div></div>`,
+      css: (c, sel, s) => { emit(c, sel + " .pb-ctn", s, [["fs", px("font-size")], ["color", raw("color")]]); if (s.lc) c.d.push(`${sel} .pb-ctl{color:${s.lc}}`); },
+    },
+    countdown: {
+      label: "عدّ تنازلي", ic: "⏳", def: { mode: "daily", end: "", cbg: "#173F35", color: "#ffffff", fs: { d: 34 }, crad: { d: 12 } },
+      ctl: [{ k: "mode", l: "النوع", t: "select", o: [["daily", "يتجدد يومياً (حتى منتصف الليل)"], ["date", "حتى تاريخ محدد"]], tab: "c" }, { k: "end", l: "تاريخ الانتهاء", t: "datetime", tab: "c" }, { k: "cbg", l: "خلفية المربعات", t: "color", tab: "s" }, { k: "color", l: "لون الأرقام", t: "color", tab: "s" }, { k: "fs", l: "حجم الأرقام (px)", t: "num", r: 1, min: 14, max: 120, tab: "s" }, { k: "crad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
+      html: s => { const b = (l) => `<div class="pb-cdb"><b data-u="${l[0]}">00</b><small>${l[1]}</small></div>`; return `<div class="pb-cd" data-mode="${esc(s.mode)}" data-end="${esc(s.end)}">${b(["d", "يوم"])}${b(["h", "ساعة"])}${b(["m", "دقيقة"])}${b(["s", "ثانية"])}</div>`; },
+      css: (c, sel, s) => { emit(c, sel + " .pb-cdb", s, [["cbg", raw("background")], ["crad", px("border-radius")]]); emit(c, sel + " .pb-cdb b", s, [["color", raw("color")], ["fs", px("font-size")]]); },
+    },
+    testimonial: {
+      label: "رأي زبون", ic: "💬", def: { img: "", name: "اسم الزبون", role: "ولاية الجزائر", text: "منتج رائع وتوصيل سريع، أنصح به بشدة.", stars: 5, tbg: "#ffffff", rad: { d: 16 } },
+      ctl: [{ k: "img", l: "صورة الزبون", t: "image", tab: "c" }, { k: "name", l: "الاسم", t: "text", tab: "c" }, { k: "role", l: "الصفة/الولاية", t: "text", tab: "c" }, { k: "text", l: "الرأي", t: "textarea", tab: "c" }, { k: "stars", l: "النجوم (0-5)", t: "num", min: 0, max: 5, tab: "c" }, { k: "tbg", l: "الخلفية", t: "color", tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
+      html: (s, id, ctx) => `<div class="pb-ts"><div class="pb-tss">${"★".repeat(Math.max(0, Math.min(5, num(s.stars) ?? 5)))}</div><p data-edit="text">${esc(s.text)}</p><div class="pb-tsw">${s.img ? `<img src="${esc(/^(https?:|data:|\/)/.test(s.img) ? s.img : ctx.base + s.img)}" alt="" loading="lazy">` : ""}<div><b data-edit="name">${esc(s.name)}</b><small data-edit="role">${esc(s.role)}</small></div></div></div>`,
+      css: (c, sel, s) => emit(c, sel + " .pb-ts", s, [["tbg", raw("background")], ["rad", px("border-radius")]]),
+    },
+    gallery: {
+      label: "معرض صور", ic: "🏞️", def: { imgs: "", cols: { d: 3, t: 2, m: 2 }, gap: { d: 12 }, ratio: "1/1", rad: { d: 12 } },
+      ctl: [{ k: "imgs", l: "روابط الصور (سطر لكل صورة)", t: "gallery", tab: "c" }, { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 8, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "ratio", l: "نسبة الصورة", t: "select", o: [["1/1", "1:1"], ["4/3", "4:3"], ["3/4", "3:4"], ["16/9", "16:9"], ["auto", "أصلية"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
+      html: (s, id, ctx) => { const L = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean); return L.length ? `<div class="pb-gal">${L.map(u => `<img src="${esc(/^(https?:|data:|\/)/.test(u) ? u : ctx.base + u)}" alt="" loading="lazy" decoding="async">`).join("")}</div>` : `<div class="pb-ph">🏞️ أضف صور المعرض من الإعدادات</div>`; },
+      css: (c, sel, s) => { emit(c, sel + " .pb-gal", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-gal img", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-gal img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}`); },
+    },
+    products: {
+      label: "منتجات المتجر", ic: "🛍️", def: { mode: "all", val: "", limit: 6, btn: "اطلب الآن", showOld: true, cols: { d: 3, t: 2, m: 2 }, gap: { d: 16 }, rad: { d: 16 }, cbg: "#ffffff", bbg: "#157a55" },
+      ctl: [{ k: "mode", l: "المصدر", t: "select", o: [["all", "كل المنتجات"], ["tag", "حسب التبويب (best/hot/sale/new)"], ["cat", "حسب القسم (cat)"], ["slugs", "منتجات محددة (slugs)"]], tab: "c" }, { k: "val", l: "القيمة (وسم/قسم/قائمة slugs)", t: "text", tab: "c" }, { k: "limit", l: "الحد الأقصى للعدد (0 = الكل)", t: "num", min: 0, max: 60, tab: "c" }, { k: "btn", l: "نص الزر", t: "text", tab: "c" }, { k: "showOld", l: "إظهار السعر القديم", t: "switch", tab: "c" }, { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 6, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "cbg", l: "خلفية البطاقة", t: "color", tab: "s" }, { k: "bbg", l: "لون الزر", t: "color", tab: "s" }],
+      html: (s, id, ctx) => `<div class="pb-prod" data-pbp='${esc(JSON.stringify({ mode: s.mode, val: s.val, limit: s.limit, btn: s.btn, showOld: s.showOld }))}'>${productsHtml(s, ctx.products, ctx.base)}</div>`,
+      css: (c, sel, s) => { emit(c, sel + " .pb-pgrid", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-pc", s, [["rad", px("border-radius")]]); if (s.cbg) c.d.push(`${sel} .pb-pc{background:${s.cbg}}`); if (s.bbg) c.d.push(`${sel} .pb-pcb{background:${s.bbg}}`); },
+    },
+  };
+  const ORDER = ["heading", "text", "image", "button", "products", "iconbox", "iconlist", "gallery", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+
+  /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
+  const common = (kind) => {
+    const a = [
+      { k: "mar", l: "الهامش الخارجي (px)", t: "dims", r: 1, tab: "s" },
+      { k: "pad", l: "الحشو الداخلي (px)", t: "dims", r: 1, tab: "s" },
+      { k: "bg", l: "لون الخلفية", t: "color", tab: "s" },
+      { k: "grad1", l: "تدرّج: اللون الأول", t: "color", tab: "s" }, { k: "grad2", l: "تدرّج: اللون الثاني", t: "color", tab: "s" }, { k: "gradAng", l: "زاوية التدرّج", t: "num", min: 0, max: 360, tab: "s" },
+      { k: "bgImg", l: "صورة الخلفية", t: "image", tab: "s" },
+      { k: "bgSize", l: "حجم الخلفية", t: "select", o: [["cover", "تغطية"], ["contain", "احتواء"], ["auto", "أصلي"]], tab: "s" },
+      { k: "bgPos", l: "موضع الخلفية", t: "select", o: [["center", "وسط"], ["top", "أعلى"], ["bottom", "أسفل"], ["left", "يسار"], ["right", "يمين"]], tab: "s" },
+      { k: "bgFixed", l: "خلفية ثابتة (Parallax)", t: "switch", tab: "s" },
+      { k: "bw", l: "سماكة الحد (px)", t: "num", min: 0, max: 40, tab: "s" }, { k: "bs", l: "نمط الحد", t: "select", o: [["solid", "متصل"], ["dashed", "متقطع"], ["dotted", "نقطي"]], tab: "s" }, { k: "bc", l: "لون الحد", t: "color", tab: "s" },
+      { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
+      { k: "shadow", l: "الظل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" },
+      { k: "op", l: "الشفافية (0-1)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
+    ];
+    if (kind === "widget") a.unshift({ k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "s" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "s", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "s" });
+    return a.concat([
+      { k: "hd", l: "إخفاء على المكتب", t: "switch", tab: "a" }, { k: "ht", l: "إخفاء على التابلت", t: "switch", tab: "a" }, { k: "hm", l: "إخفاء على الهاتف", t: "switch", tab: "a" },
+      { k: "anim", l: "حركة الظهور", t: "select", o: ANIMS, tab: "a" }, { k: "animDur", l: "مدة الحركة (ثانية)", t: "num", min: .1, max: 3, step: .1, tab: "a" }, { k: "animDelay", l: "تأخير الحركة (ثانية)", t: "num", min: 0, max: 5, step: .1, tab: "a" },
+      { k: "z", l: "z-index", t: "num", min: 0, max: 999, tab: "a" },
+      { k: "cls", l: "CSS Class", t: "text", tab: "a" }, { k: "cid", l: "CSS ID", t: "text", tab: "a" },
+      { k: "css", l: "CSS مخصص (استعمل selector)", t: "textarea", tab: "a" },
+    ]);
+  };
+  const SEC_CTL = [
+    { k: "layout", l: "نوع التخطيط", t: "select", o: [["boxed", "محدود العرض"], ["full", "عرض كامل"]], tab: "c" },
+    { k: "cw", l: "عرض المحتوى (px)", t: "num", r: 1, min: 280, max: 2000, tab: "c" },
+    { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1600, tab: "c" },
+    { k: "va", l: "المحاذاة العمودية للأعمدة", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"], ["stretch", "تمديد"]], tab: "c" },
+    { k: "gap", l: "المسافة بين الأعمدة (px)", t: "num", r: 1, min: 0, max: 120, tab: "c" },
+    { k: "rev", l: "عكس ترتيب الأعمدة", t: "switch", r: 1, tab: "c" },
+    { k: "tag", l: "وسم HTML", t: "select", o: [["section", "section"], ["div", "div"], ["header", "header"], ["footer", "footer"]], tab: "c" },
+    { k: "ovl", l: "طبقة فوق الخلفية (لون)", t: "color", tab: "s" }, { k: "ovlOp", l: "شفافية الطبقة (0-1)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
+  ];
+  const COL_CTL = [
+    { k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "c" },
+    { k: "va", l: "محاذاة المحتوى عمودياً", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"]], tab: "c" },
+    { k: "ta", l: "محاذاة النص داخل العمود", t: "align", r: 1, tab: "c" },
+  ];
+
+  /* ═════════════════ النموذج + قوالب جاهزة ═════════════════ */
+  const mkW = (type, set) => ({ id: uid(), type, set: Object.assign(clone(WIDGETS[type].def), set || {}) });
+  const mkC = (widgets, set) => ({ id: uid(), set: set || {}, widgets: widgets || [] });
+  const mkS = (cols, set) => ({ id: uid(), set: Object.assign({ layout: "boxed", cw: { d: 1140 }, pad: { d: [60, 20, 60, 20], m: [36, 16, 36, 16] }, gap: { d: 20 } }, set || {}), cols: cols || [mkC([])] });
+  const TPLS = {
+    hero: { n: "🚀 قسم رئيسي (Hero)", f: () => mkS([mkC([mkW("heading", { text: "منتجات طبيعية أصلية توصلك حتى الباب", tag: "h1", color: "#ffffff", fs: { d: 46, m: 28 } }), mkW("text", { html: "<p>الدفع عند الاستلام · توصيل لكل الولايات</p>", color: "#f1ebdd", ta: { d: "center" }, fs: { d: 20, m: 16 } }), mkW("button", { text: "تسوّق الآن" }), ])], { grad1: "#173F35", grad2: "#2f5d4f", gradAng: 135, pad: { d: [110, 20, 110, 20], m: [64, 16, 64, 16] }, mh: { d: 480, m: 360 }, va: { d: "center" } }) },
+    features: { n: "✨ 3 مزايا", f: () => mkS([0, 1, 2].map(i => mkC([mkW("iconbox", { icon: ["🌿", "🚚", "💵"][i], title: ["طبيعي 100%", "توصيل سريع", "دفع عند الاستلام"][i] })])), {}) },
+    products: { n: "🛍️ شبكة منتجات", f: () => mkS([mkC([mkW("heading", { text: "منتجاتنا", fs: { d: 34, m: 26 } }), mkW("products", {})])], { bg: "#F4EFE6" }) },
+    testimonials: { n: "💬 آراء الزبائن", f: () => mkS([mkC([mkW("heading", { text: "ماذا قال زبائننا؟", fs: { d: 34, m: 26 } })])].concat([]), {}) },
+    reviews3: { n: "⭐ 3 آراء", f: () => mkS([0, 1, 2].map(i => mkC([mkW("testimonial", { name: ["أمينة", "كريم", "سارة"][i], role: ["الجزائر", "وهران", "قسنطينة"][i] })])), { bg: "#faf6ec" }) },
+    counters: { n: "🔢 أرقام وإنجازات", f: () => mkS([mkC([mkW("counter", { n: 5000, label: "زبون سعيد" })]), mkC([mkW("counter", { n: 58, pre: "", label: "ولاية نغطيها" })]), mkC([mkW("counter", { n: 30, pre: "+", label: "منتج طبيعي" })])], { bg: "#ffffff" }) },
+    cta: { n: "🔥 عرض محدود + عدّ تنازلي", f: () => mkS([mkC([mkW("heading", { text: "عرض ينتهي قريباً!", color: "#ffffff" }), mkW("countdown", { cbg: "#ffffff", color: "#173F35" }), mkW("button", { text: "احجز طلبك الآن", bgc: "#C8A24B", color: "#173F35" })])], { bg: "#b83232", pad: { d: [60, 20, 60, 20] } }) },
+    faq: { n: "❓ الأسئلة الشائعة", f: () => mkS([mkC([mkW("heading", { text: "أسئلة شائعة", fs: { d: 34, m: 26 } }), mkW("accordion", {})])], { cw: { d: 820 } }) },
+    split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
+  };
+  const newPage = (title, slug) => ({ v: 1, title: title || "صفحة جديدة", slug: slug || "", desc: "", bg: "#ffffff", ff: "", header: true, footer: true, css: "", sections: [TPLS.hero.f()] });
+
+  /* ═════════════════ المُصيِّر (Renderer): نفس الدالة للمحرر وللصفحة المنشورة ═════════════════ */
+  function renderSections(page, ctx) {
+    const css = newCss(); css.base = ctx.base;
+    const edit = !!ctx.edit;
+    const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;
+    const common2 = (sel, s, spec) => { boxStatic(css, sel, s); emit(css, sel, s, spec); hideRules(css, sel, s, edit); customCss(css, sel, s); };
+    const html = page.sections.map(sec => {
+      const s = sec.set, sx = `.pb-sec.x-${sec.id}`, inx = `${sx}>.pb-in`;
+      common2(sx, s, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["mh", px("min-height")]]);
+      if (s.ovl) css.d.push(`${sx}>.pb-ov{position:absolute;inset:0;background:${s.ovl};opacity:${num(s.ovlOp) ?? .5};pointer-events:none}`);
+      if (s.mh) css.d.push(`${sx}{display:flex;flex-direction:column;justify-content:center}`);
+      css.d.push(`${inx}{display:flex;flex-wrap:wrap;margin:0 auto;width:100%;position:relative}`);
+      css.d.push(`${inx}{max-width:${s.layout === "full" ? "none" : (num(own(s, "cw", "d")) || 1140) + "px"}}`);
+      if (s.layout !== "full") emit(css, inx, s, [["cw", v => `max-width:${num(v)}px;`]]);
+      emit(css, inx, s, [["va", raw("align-items")], ["rev", (v, st, dev) => v ? (dev === "m" ? "flex-direction:column-reverse;flex-wrap:nowrap;" : "flex-direction:row-reverse;") : "flex-direction:row;flex-wrap:wrap;"]]);
+      emit(css, `${sx}>.pb-in>.pb-col`, s, [["gap", v => `padding-left:${(num(v) || 0) / 2}px;padding-right:${(num(v) || 0) / 2}px;`]]);
+      const cols = sec.cols.map(col => {
+        const cs = col.set, cx = `.pb-col.x-${col.id}`, cin = `${cx}>.pb-colin`;
+        css.d.push(`${cx}{flex:1 1 0;min-width:0;display:flex}`);
+        css.d.push(`${cin}{width:100%;display:flex;flex-direction:column}`);
+        boxStatic(css, cin, cs); emit(css, cin, cs, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["va", raw("justify-content")], ["ta", raw("text-align")]]);
+        emit(css, cx, cs, [["w", v => `flex:0 0 ${num(v)}%;width:${num(v)}%;max-width:${num(v)}%;`]]);
+        hideRules(css, cx, cs, edit); customCss(css, cx, cs);
+        const ws = col.widgets.map(w => {
+          const def = WIDGETS[w.type]; if (!def) return ""; const wsx = `.pb-w.x-${w.id}`, s2 = w.set;
+          boxStatic(css, wsx, s2);
+          emit(css, wsx, s2, [["w", v => `width:${num(v)}%;`], ["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["mh", v => (def.noMh || w.type === "image") ? "" : `min-height:${num(v)}px;`],
+            ["al", v => (v === "center" ? "margin-left:auto;margin-right:auto;" : v === "end" ? "margin-inline-start:auto;margin-inline-end:0;" : "margin-inline-end:auto;margin-inline-start:0;") + `text-align:${v === "center" ? "center" : v === "end" ? "end" : "start"};`]]);
+          def.css(css, wsx, s2);
+          if (w.type === "image") emit(css, wsx + " img", s2, [["mh", px("height")]]);
+          hideRules(css, wsx, s2, edit); customCss(css, wsx, s2);
+          return `<div class="pb-w x-${w.id}${s2.cls ? " " + esc(s2.cls) : ""}"${attrs(w, "widget", s2)} data-type="${w.type}">${def.html(s2, w.id, ctx)}</div>`;
+        }).join("");
+        return `<div class="pb-col x-${col.id}${cs.cls ? " " + esc(cs.cls) : ""}"${attrs(col, "column", cs)}><div class="pb-colin">${ws || (edit ? '<div class="pb-empty">＋ اسحب عنصراً إلى هنا</div>' : "")}</div></div>`;
+      }).join("");
+      const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
+      return `<${tag} class="pb-sec x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}</div></${tag}>`;
+    }).join("");
+    return { html, css: finishCss(css) };
+  }
+
+  /* CSS الأساسي للمكوّنات (مشترك بين المحرر والصفحة المنشورة) */
+  const BASE_CSS = `
+*{box-sizing:border-box}
+.pb-page{margin:0;font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2420;line-height:1.6;-webkit-font-smoothing:antialiased}
+.pb-page img{max-width:100%}
+.pb-sec{position:relative}
+.pb-w{margin-bottom:16px;max-width:100%}.pb-colin>.pb-w:last-child{margin-bottom:0}
+.pb-t{margin:0}.pb-tx p{margin:0 0 .8em}.pb-tx>:last-child{margin-bottom:0}
+.pb-btn{display:inline-block;text-decoration:none;text-align:center;cursor:pointer;transition:background .2s,transform .15s}.pb-btn:hover{transform:translateY(-2px)}
+.pb-ph{background:#f1ede2;border:2px dashed #cfc6b0;color:#8a8472;padding:28px;text-align:center;border-radius:12px;font-size:.95rem}
+.pb-hr{height:0}.pb-il{list-style:none;margin:0;padding:0}.pb-il li{display:flex;gap:.6rem;align-items:flex-start}.pb-il li:last-child{margin-bottom:0!important}
+.pb-ib{padding:8px}.pb-ibi{line-height:1.1;margin-bottom:.4rem}.pb-ib h3{margin:0 0 .4rem;font-size:1.25rem;font-weight:800}.pb-ib p{margin:0}
+.pb-acc details{margin-bottom:10px;border:1px solid #e6dfcf;border-radius:12px;overflow:hidden;background:#fff}.pb-acc summary{cursor:pointer;padding:14px 18px;font-weight:800;list-style:none}.pb-acc summary::-webkit-details-marker{display:none}.pb-acc summary:after{content:'＋';float:inline-end}.pb-acc details[open] summary:after{content:'－'}.pb-acc details>div{padding:14px 18px;line-height:1.8}
+.pb-ct{text-align:center}.pb-ctn{font-weight:900;line-height:1.1}.pb-ctl{font-weight:700;margin-top:.3rem}
+.pb-cd{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.pb-cdb{padding:12px 16px;text-align:center;min-width:76px}.pb-cdb b{display:block;font-weight:900;line-height:1.1}.pb-cdb small{font-size:.75rem;opacity:.85}
+.pb-ts{padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.07);height:100%}.pb-tss{color:#e0a800;letter-spacing:2px;margin-bottom:.4rem}.pb-ts p{margin:0 0 .8rem;line-height:1.8}.pb-tsw{display:flex;gap:.7rem;align-items:center}.pb-tsw img{width:46px;height:46px;border-radius:50%;object-fit:cover}.pb-tsw small{display:block;color:#777}
+.pb-gal{display:grid}
+.pb-pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.pb-pc{background:#fff;border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.07);transition:transform .2s}.pb-pc:hover{transform:translateY(-4px)}.pb-pci{position:relative;aspect-ratio:1/1;background:#f4efe6}.pb-pci img{width:100%;height:100%;object-fit:cover}.pb-pcd{position:absolute;top:10px;right:10px;background:#b83232;color:#fff;font-weight:800;font-size:.8rem;border-radius:999px;padding:.2rem .6rem;z-index:1}.pb-pc h3{margin:.8rem .9rem .3rem;font-size:1.02rem;font-weight:800}.pb-pcp{margin:0 .9rem .6rem}.pb-pcp b{color:#157a55;font-size:1.1rem}.pb-pcp s{color:#777;margin-inline-start:.5rem;font-size:.9rem}.pb-pcb{margin:auto .9rem .9rem;background:#157a55;color:#fff;text-align:center;border-radius:10px;padding:.55rem;font-weight:800}
+.pb-empty-note{padding:24px;text-align:center;color:#888}
+.pb-vid{display:block}
+.pb-hdr{background:#fff;border-bottom:1px solid #eae3d6;position:sticky;top:0;z-index:50}.pb-hdr div{max-width:1140px;margin:0 auto;padding:.8rem 20px;display:flex;align-items:center;justify-content:space-between}.pb-hdr a.lg{font-weight:900;font-size:1.4rem;color:#173f35;text-decoration:none}.pb-hdr a.wa{background:#157a55;color:#fff;border-radius:10px;padding:.45rem 1rem;text-decoration:none;font-weight:800}
+.pb-ftr{background:#0f2e26;color:#c7d3cd;text-align:center;padding:24px 16px;font-size:.9rem}.pb-ftr a{color:#f0d39d}
+[data-anim]{opacity:0;transition:opacity var(--ad,.6s) ease var(--ade,0s),transform var(--ad,.6s) ease var(--ade,0s)}[data-anim=fadeUp]{transform:translateY(30px)}[data-anim=fadeDown]{transform:translateY(-30px)}[data-anim=zoomIn]{transform:scale(.88)}[data-anim=slideStart]{transform:translateX(40px)}[data-anim].pb-in-view{opacity:1;transform:none}
+@media(max-width:${BP.m}px){.pb-hdr a.wa{display:none}}
+@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}}`;
+
+  /* سكربت الصفحة المنشورة: حركات الظهور + العدّادات + العدّ التنازلي + تحديث الأسعار من data.js */
+  const RUNTIME_JS = `(function(){
+var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct').forEach(function(n){io.observe(n)})}else{$('[data-anim]').forEach(function(n){n.classList.add('pb-in-view')})}
+function tick(){$('.pb-cd').forEach(function(el){var end;if(el.dataset.mode==='date'&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
+tick();setInterval(tick,1000);
+if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProducts(JSON.parse(n.getAttribute('data-pbp')),window.PRODUCTS,__pbBase)}catch(e){}})}
+})();`;
+
+  function fullHtml(page, ctx) {
+    const r = renderSections(page, Object.assign({ base: "../../", edit: false }, ctx));
+    const site = ctx.site || {}, url = (site.domain ? "https://" + site.domain : "") + "/lp/" + page.slug + "/";
+    const hdr = page.header ? `<header class="pb-hdr"><div><a class="lg" href="${esc(ctx.base)}">${esc(site.name || "المتجر")}</a>${site.wa ? `<a class="wa" href="https://wa.me/${esc(String(site.wa).replace(/\D/g, ""))}" target="_blank" rel="noopener">واتساب</a>` : ""}</div></header>` : "";
+    const ftr = page.footer ? `<footer class="pb-ftr">© ${new Date().getFullYear()} ${esc(site.name || "")} — جميع الحقوق محفوظة · <a href="${esc(ctx.base)}">العودة للمتجر</a></footer>` : "";
+    const hasProd = JSON.stringify(page.sections).includes('"type":"products"');
+    return `<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${ctx.baseHref ? `<base href="${esc(ctx.baseHref)}">` : ""}
+<title>${esc(page.title)}${site.name ? " — " + esc(site.name) : ""}</title>
+<meta name="description" content="${esc(page.desc || "")}">
+<link rel="canonical" href="${esc(url)}"><meta property="og:type" content="website"><meta property="og:title" content="${esc(page.title)}"><meta property="og:description" content="${esc(page.desc || "")}"><meta property="og:url" content="${esc(url)}">
+<link rel="icon" href="${esc(ctx.base)}assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>${BASE_CSS}
+.pb-page{background:${esc(page.bg || "#fff")}${page.ff ? ";font-family:" + page.ff : ""}}
+${r.css}
+${page.css || ""}</style></head>
+<body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
+${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
+<script>var __pbBase=${JSON.stringify(ctx.base)};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}<\/script>
+</body></html>`;
+  }
+
+  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PBApp — واجهة المحرر: لوحة العناصر، قماش حي (iframe) بتحرير مباشر، تحديد وسحب وتغيير حجم،
+   لوحة إعدادات متجاوبة (محتوى/تنسيق/متقدم)، تراجع/إعادة، وحفظ/نشر إلى GitHub (أو PHP).
+   ══════════════════════════════════════════════════════════════════════════════ */
+const PBApp = (() => {
+  const { DEVS, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common } = PB;
+  const $ = id => document.getElementById(id);
+  const DEVW = { d: 1280, t: 820, m: 390 };
+  const E = { page: null, sel: null, dev: "d", hist: [], hi: -1, slug: "", isNew: true, dirty: false, tab: "c", ltab: "add", drag: null, scale: 1, sha: {} };
+  let frame, fdoc, root, styleEl, built = false, raf = 0, saveT = 0;
+
+  const EDIT_CSS = `
+.pb-edit [data-pb]{cursor:pointer}
+.pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
+.pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
+.pb-edit .pb-w:hover{outline:1px dashed #e67e22;outline-offset:2px}
+.pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
+[contenteditable=true]{outline:2px solid #2d6cdf!important;outline-offset:3px;cursor:text;min-width:20px}
+.pb-drop{position:absolute;background:#2d6cdf;height:4px;border-radius:2px;pointer-events:none;z-index:9999;box-shadow:0 0 0 2px rgba(45,108,223,.25)}
+.pb-edit [data-anim]{opacity:1!important;transform:none!important}
+body{overflow-x:hidden;margin:0}`;
+
+  const css = `
+#pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
+#pb-app.on{display:flex}
+.pbx-top{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#173f35;color:#fff;flex-wrap:wrap}
+.pbx-top input{background:#fff;border:0;border-radius:8px;padding:.4rem .7rem;font-weight:800;width:auto;flex:0 1 240px;min-width:120px;font-family:inherit;color:#173f35}
+.pbx-top button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:8px;padding:.42rem .75rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.85rem}
+.pbx-top button:hover{background:rgba(255,255,255,.22)}.pbx-top button.on{background:#c8a24b;color:#173f35}.pbx-top button.pub{background:#c8a24b;color:#173f35}.pbx-top button:disabled{opacity:.35;cursor:default}
+.pbx-top .sp{margin-inline-start:auto}.pbx-dirty{font-size:.78rem;opacity:.8}
+.pbx-main{flex:1;display:flex;min-height:0}
+.pbx-left{width:260px;background:#fff;border-inline-end:1px solid #ddd;display:flex;flex-direction:column;min-height:0}
+.pbx-right{width:310px;background:#fff;border-inline-start:1px solid #ddd;overflow:auto;padding:.7rem}
+.pbx-tabs{display:flex;border-bottom:1px solid #eee}.pbx-tabs button{flex:1;border:0;background:none;padding:.6rem .2rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.8rem;color:#666;border-bottom:3px solid transparent}.pbx-tabs button.on{color:#173f35;border-bottom-color:#c8a24b}
+.pbx-pane{padding:.7rem;overflow:auto;flex:1}
+.pbx-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.pbx-wi{border:1.5px solid #e6dfcf;border-radius:10px;padding:.6rem .3rem;text-align:center;cursor:grab;background:#faf6ec;font-size:.8rem;font-weight:800;color:#173f35;user-select:none}.pbx-wi:hover{border-color:#c8a24b;background:#fff3d6}.pbx-wi i{display:block;font-style:normal;font-size:1.4rem;margin-bottom:.2rem}
+.pbx-tpl{display:block;width:100%;text-align:start;border:1.5px solid #e6dfcf;border-radius:10px;padding:.65rem;margin-bottom:.5rem;background:#faf6ec;font-weight:800;color:#173f35;cursor:grab;font-family:inherit}.pbx-tpl:hover{border-color:#c8a24b}
+.pbx-stage{flex:1;position:relative;overflow:auto;background:#cfcabd;min-width:0}
+.pbx-sc{position:relative;margin:18px auto}
+.pbx-fw{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.25)}
+.pbx-fw iframe{border:0;width:100%;height:100%;display:block;background:#fff}
+#pbx-ovl{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pbx-box{position:absolute;border:2px solid #2d6cdf;pointer-events:none;box-sizing:border-box}
+.pbx-box.column{border-color:#9b59b6}.pbx-box.widget{border-color:#e67e22}
+.pbx-bar{position:absolute;top:-30px;right:-2px;display:flex;gap:2px;pointer-events:auto;white-space:nowrap}
+.pbx-bar span,.pbx-bar button{background:#2d6cdf;color:#fff;border:0;font-size:.74rem;font-weight:800;padding:.22rem .5rem;border-radius:6px 6px 0 0;cursor:pointer;font-family:inherit}.pbx-bar span{cursor:default}
+.pbx-box.column .pbx-bar *{background:#9b59b6}.pbx-box.widget .pbx-bar *{background:#e67e22}
+.pbx-bar button:hover{filter:brightness(1.15)}
+.pbx-h{position:absolute;pointer-events:auto;background:#fff;border:2px solid currentColor;border-radius:4px;color:#2d6cdf;z-index:3}
+.pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
+.pbx-h.l{left:-7px;top:50%;margin-top:-12px;width:10px;height:24px;cursor:ew-resize}
+.pbx-h.b{bottom:-7px;left:50%;margin-left:-12px;height:10px;width:24px;cursor:ns-resize}
+.pbx-tip{position:absolute;background:#173f35;color:#fff;font-size:.75rem;font-weight:800;padding:.15rem .5rem;border-radius:6px;pointer-events:none;z-index:5}
+.pbx-add{display:block;margin:0 auto 24px;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.6rem 1.4rem;font-weight:800;cursor:pointer;font-family:inherit}
+.pbx-rt{position:absolute;display:none;background:#222;border-radius:8px;padding:3px;gap:2px;pointer-events:auto;z-index:6}.pbx-rt button{background:none;border:0;color:#fff;font-weight:800;padding:.25rem .55rem;cursor:pointer;border-radius:5px;font-family:inherit}.pbx-rt button:hover{background:#444}.pbx-rt input[type=color]{width:26px;height:26px;border:0;padding:0;background:none;vertical-align:middle}
+.pbx-ih{display:flex;align-items:center;gap:.4rem;font-weight:900;color:#173f35;margin-bottom:.5rem}.pbx-ih small{color:#999;font-weight:600}
+.pbx-itabs{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-itabs button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.4rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-itabs button.on{background:#173f35;color:#fff;border-color:#173f35}
+.pbx-dv{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-dv button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.3rem;cursor:pointer;font-size:.9rem}.pbx-dv button.on{background:#c8a24b;border-color:#c8a24b}
+.pbx-f{margin-bottom:.7rem}.pbx-f>label{display:flex;align-items:center;gap:.3rem;font-size:.78rem;font-weight:800;color:#444;margin-bottom:.2rem}.pbx-f .dv{font-size:.7rem;opacity:.7}.pbx-f .rs{margin-inline-start:auto;border:0;background:none;cursor:pointer;color:#b83232;font-size:.8rem}
+.pbx-f input[type=text],.pbx-f input[type=number],.pbx-f input[type=datetime-local],.pbx-f select,.pbx-f textarea{width:100%;border:1.5px solid #e0d9c8;border-radius:8px;padding:.4rem .5rem;font-family:inherit;font-size:.85rem;background:#fff}
+.pbx-f textarea{min-height:70px;resize:vertical}.pbx-f .inh{background:#f7f5ee}
+.pbx-f input[type=color]{width:46px;height:30px;padding:0;border:1.5px solid #e0d9c8;border-radius:6px;vertical-align:middle}
+.pbx-row{display:flex;gap:.4rem;align-items:center}.pbx-row>*{flex:1}.pbx-row>.sm{flex:0 0 auto}
+.pbx-al{display:flex;gap:.3rem}.pbx-al button{flex:1;border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.3rem;cursor:pointer;font-family:inherit;font-size:.75rem}.pbx-al button.on{background:#173f35;color:#fff;border-color:#173f35}
+.pbx-dims{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem}.pbx-dims input{text-align:center;padding:.3rem!important}.pbx-dims small{display:block;text-align:center;font-size:.65rem;color:#888}
+.pbx-rep{border:1.5px dashed #e0d9c8;border-radius:10px;padding:.5rem;margin-bottom:.4rem}
+.pbx-small{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.3rem .6rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.78rem}
+.pbx-lay{font-size:.82rem}.pbx-lay div{padding:.28rem .4rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbx-lay div:hover{background:#f4efe6}.pbx-lay div.on{background:#173f35;color:#fff}
+.pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
+@media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}}`;
+
+  const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
+
+  /* ───────────────── بنية الواجهة ───────────────── */
+  function build() {
+    if (built) return; built = true;
+    const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+    const d = document.createElement("div"); d.id = "pb-app";
+    d.innerHTML = `
+<div class="pbx-top">
+  <button onclick="PBApp.close()" title="إغلاق المحرر">✕ إغلاق</button>
+  <input id="pbx-title" placeholder="عنوان الصفحة" oninput="PBApp.meta('title',this.value)">
+  <span id="pbx-url" dir="ltr" style="font-size:.78rem;opacity:.8"></span>
+  <span class="sp"></span>
+  <span class="pbx-dirty" id="pbx-dirty"></span>
+  <button data-dv="d" onclick="PBApp.setDev('d')" title="المكتب">🖥️ المكتب</button>
+  <button data-dv="t" onclick="PBApp.setDev('t')" title="التابلت">📱 تابلت</button>
+  <button data-dv="m" onclick="PBApp.setDev('m')" title="الهاتف">📲 هاتف</button>
+  <button id="pbx-undo" onclick="PBApp.undo()" title="تراجع (Ctrl+Z)">↶</button>
+  <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">↷</button>
+  <button onclick="PBApp.preview()">👁️ معاينة</button>
+  <button class="pub" onclick="PBApp.publish()">🚀 حفظ ونشر</button>
+</div>
+<div class="pbx-main">
+  <aside class="pbx-left">
+    <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">➕ عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">🧱 أقسام</button><button data-lt="lay" onclick="PBApp.ltab('lay')">📚 طبقات</button><button data-lt="pg" onclick="PBApp.ltab('pg')">⚙️ الصفحة</button></div>
+    <div class="pbx-pane" id="pbx-lpane"></div>
+  </aside>
+  <div class="pbx-stage" id="pbx-stage">
+    <div class="pbx-sc" id="pbx-sc"><div class="pbx-fw" id="pbx-fw"><iframe id="pbx-frame" title="القماش"></iframe></div></div>
+    <button class="pbx-add" onclick="PBApp.ltab('tpl')">＋ إضافة قسم جديد</button>
+    <div id="pbx-ovl"></div>
+  </div>
+  <aside class="pbx-right" id="pbx-insp"></aside>
+</div>
+<div class="pbx-msg" id="pbx-msg"></div>`;
+    document.body.appendChild(d);
+    frame = $("pbx-frame");
+    frame.srcdoc = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style></head><body class="pb-page pb-edit"><div id="pbr"></div></body></html>`;
+    frame.addEventListener("load", () => { fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
+    $("pbx-stage").addEventListener("scroll", () => positionOverlay());
+    new ResizeObserver(() => { fitStage(); positionOverlay(); }).observe($("pbx-stage"));
+    window.addEventListener("resize", () => { if ($("pb-app").classList.contains("on")) { fitStage(); positionOverlay(); } });
+    $("pbx-insp").addEventListener("input", onInspInput); $("pbx-insp").addEventListener("change", onInspChange); $("pbx-insp").addEventListener("click", onInspClick);
+    document.addEventListener("keydown", onKey);
+  }
+
+  /* ───────────────── فتح/إغلاق ───────────────── */
+  function open(page, slug, isNew) {
+    build();
+    E.page = clone(page); E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
+    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
+    $("pbx-title").value = E.page.title || ""; commitHist(true);
+    ltab("add"); setDev("d"); renderInspector(); updateTop();
+    if (fdoc) renderCanvas();
+  }
+  function close() {
+    if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
+    $("pb-app").classList.remove("on"); document.body.style.overflow = "";
+    if (window.PBAdmin) PBAdmin.refresh();
+  }
+
+  /* ───────────────── البحث في النموذج ───────────────── */
+  function find(id) {
+    const P = E.page;
+    for (let si = 0; si < P.sections.length; si++) {
+      const sec = P.sections[si]; if (sec.id === id) return { kind: "section", node: sec, set: sec.set, list: P.sections, idx: si, sec, def: null };
+      for (let ci = 0; ci < sec.cols.length; ci++) {
+        const col = sec.cols[ci]; if (col.id === id) return { kind: "column", node: col, set: col.set, list: sec.cols, idx: ci, sec, col };
+        for (let wi = 0; wi < col.widgets.length; wi++) { const w = col.widgets[wi]; if (w.id === id) return { kind: "widget", node: w, set: w.set, list: col.widgets, idx: wi, sec, col, def: WIDGETS[w.type] }; }
+      }
+    }
+    return null;
+  }
+  const selInfo = () => E.sel ? find(E.sel) : null;
+
+  /* ───────────────── التاريخ (تراجع/إعادة) ───────────────── */
+  function commitHist(first) {
+    const snap = JSON.stringify(E.page);
+    if (!first && E.hist[E.hi] === snap) return;
+    E.hist = E.hist.slice(0, E.hi + 1); E.hist.push(snap); if (E.hist.length > 80) E.hist.shift(); E.hi = E.hist.length - 1;
+    if (!first) { E.dirty = true; clearTimeout(saveT); saveT = setTimeout(saveDraft, 800); }
+    updateTop();
+  }
+  function undo() { if (E.hi <= 0) return; E.hi--; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
+  function redo() { if (E.hi >= E.hist.length - 1) return; E.hi++; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
+  function afterHist() { if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); }
+  const draftKey = () => "pb_draft_" + (E.slug || "new");
+  function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(E.page)); } catch (e) { } }
+  function updateTop() {
+    $("pbx-undo").disabled = E.hi <= 0; $("pbx-redo").disabled = E.hi >= E.hist.length - 1;
+    $("pbx-dirty").textContent = E.dirty ? "● تعديلات غير منشورة" : "";
+    document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev));
+    $("pbx-url").textContent = E.page && E.page.slug ? "/lp/" + E.page.slug + "/" : "";
+  }
+  function meta(k, v) { E.page[k] = v; if (k === "title" && E.isNew && !E.slugTouched) { E.page.slug = slugify(v); } E.dirty = true; clearTimeout(saveT); saveT = setTimeout(() => { commitHist(); saveDraft(); }, 600); if (k === "title") { updateTop(); if (E.ltab === "pg") { const s = $("pg-slug"); if (s && E.isNew && !E.slugTouched) s.value = E.page.slug; } } else renderCanvas(); }
+  const slugify = t => String(t || "").toLowerCase().trim().replace(/[^a-z0-9؀-ۿ]+/g, "-").replace(/[؀-ۿ]+/g, "").replace(/^-+|-+$/g, "") || "page-" + Date.now().toString(36).slice(-4);
+
+  /* ───────────────── اللوحة اليسرى ───────────────── */
+  function ltab(t) { E.ltab = t; renderLeft(); }
+  function renderLeft() {
+    const pane = $("pbx-lpane"); if (!pane) return;
+    document.querySelectorAll("[data-lt]").forEach(b => b.classList.toggle("on", b.dataset.lt === E.ltab));
+    if (E.ltab === "add") {
+      pane.innerHTML = `<div class="pbx-grid">${ORDER.map(t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${WIDGETS[t].ic}</i>${WIDGETS[t].label}</div>`).join("")}</div><p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته إلى العمود المحدد. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
+    } else if (E.ltab === "tpl") {
+      pane.innerHTML = Object.keys(TPLS).map(k => `<button class="pbx-tpl" draggable="true" data-tpl="${k}">${TPLS[k].n}</button>`).join("") + `<button class="pbx-tpl" data-tpl="_blank" style="background:#fff">▭ قسم فارغ (عمود واحد)</button><button class="pbx-tpl" data-tpl="_two" style="background:#fff">▭▭ قسم بعمودين</button><button class="pbx-tpl" data-tpl="_three" style="background:#fff">▭▭▭ قسم بثلاثة أعمدة</button>`;
+    } else if (E.ltab === "lay") {
+      let h = "";
+      E.page.sections.forEach((sec, i) => {
+        h += `<div data-sel="${sec.id}" class="${E.sel === sec.id ? "on" : ""}">▤ قسم ${i + 1}</div>`;
+        sec.cols.forEach((col, j) => { h += `<div data-sel="${col.id}" class="${E.sel === col.id ? "on" : ""}" style="margin-inline-start:14px">▯ عمود ${j + 1}</div>`; col.widgets.forEach(w => { h += `<div data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}" style="margin-inline-start:28px">${WIDGETS[w.type].ic} ${WIDGETS[w.type].label}</div>`; }); });
+      });
+      pane.innerHTML = `<div class="pbx-lay">${h}</div>`;
+    } else {
+      const P = E.page;
+      pane.innerHTML = `
+<div class="pbx-f"><label>عنوان الصفحة (SEO)</label><input type="text" value="${esc(P.title)}" oninput="PBApp.meta('title',this.value);document.getElementById('pbx-title').value=this.value"></div>
+<div class="pbx-f"><label>الرابط (slug) — حروف لاتينية وأرقام وشرطات</label><input type="text" dir="ltr" id="pg-slug" value="${esc(P.slug)}" ${E.isNew ? "" : "disabled"} oninput="PBApp.slugEdit(this.value)"><small style="color:#888">${E.isNew ? "سيكون: /lp/…/" : "لا يتغير بعد النشر"}</small></div>
+<div class="pbx-f"><label>وصف الصفحة (SEO)</label><textarea oninput="PBApp.meta('desc',this.value)">${esc(P.desc)}</textarea></div>
+<div class="pbx-f"><label>لون خلفية الصفحة</label><input type="color" value="${esc(P.bg || "#ffffff")}" oninput="PBApp.meta('bg',this.value)"></div>
+<div class="pbx-f"><label>الخط</label><select onchange="PBApp.meta('ff',this.value)">${[["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"]].map(o => `<option value="${esc(o[0])}"${P.ff === o[0] ? " selected" : ""}>${o[1]}</option>`).join("")}</select></div>
+<div class="pbx-f"><label><input type="checkbox" ${P.header ? "checked" : ""} onchange="PBApp.meta('header',this.checked);PBApp.renderCanvas()"> ترويسة بسيطة (الشعار + واتساب)</label></div>
+<div class="pbx-f"><label><input type="checkbox" ${P.footer ? "checked" : ""} onchange="PBApp.meta('footer',this.checked)"> تذييل بسيط</label></div>
+<div class="pbx-f"><label>CSS مخصص للصفحة كلها</label><textarea dir="ltr" oninput="PBApp.meta('css',this.value)">${esc(P.css)}</textarea></div>`;
+    }
+  }
+  function slugEdit(v) { E.slugTouched = true; E.page.slug = String(v).toLowerCase().replace(/[^a-z0-9-]/g, ""); E.dirty = true; updateTop(); }
+
+  /* ───────────────── القماش ───────────────── */
+  function ctx() { return { base: "", edit: true, products: (typeof Admin !== "undefined" && Admin.products) || [], wa: (typeof SITE_CFG !== "undefined" && SITE_CFG.waNumber) || "" }; }
+  function renderCanvas() {
+    if (!fdoc || !root || !E.page) return;
+    const r = PB.renderSections(E.page, ctx());
+    const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0;
+    styleEl.textContent = PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "");
+    root.innerHTML = r.html;
+    fixCountdown();
+    if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
+    fitStage(); positionOverlay();
+  }
+  function fixCountdown() { root.querySelectorAll(".pb-cd").forEach(el => { const v = { d: "00", h: "23", m: "59", s: "59" }; for (const k in v) { const b = el.querySelector(`[data-u=${k}]`); if (b) b.textContent = v[k]; } }); }
+  function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(renderCanvas); }
+  function setDev(d) {
+    E.dev = d; updateTop(); fitStage();
+    if (E.sel) renderInspector(); renderCanvasHeight();
+    setTimeout(positionOverlay, 30);
+  }
+  function fitStage() {
+    const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
+    const w = DEVW[E.dev], s = Math.min(1, Math.max(300, st.clientWidth - 36) / w); E.scale = s;
+    const h = Math.max(500, (root ? root.offsetHeight : 0) + 40);
+    fw.style.width = w + "px"; fw.style.height = h + "px"; fw.style.transform = `scale(${s})`; frame.style.height = h + "px";
+    sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
+  }
+  const renderCanvasHeight = () => fitStage();
+
+  /* ───────────────── الأحداث داخل القماش ───────────────── */
+  function wireFrame() {
+    fdoc.addEventListener("click", e => {
+      if (e.target.closest("[contenteditable=true]")) return;
+      const a = e.target.closest("a"); if (a) e.preventDefault();
+      const el = e.target.closest("[data-pb]"); if (el) { const w = e.target.closest('[data-kind="widget"]'); select((w || el).dataset.pb); } else select(null);
+    }, true);
+    fdoc.addEventListener("dblclick", e => { const ed = e.target.closest("[data-edit]"); if (ed) startEdit(ed); });
+    fdoc.addEventListener("dragover", onDragOver); fdoc.addEventListener("drop", onDrop); fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) hideDrop(); });
+    fdoc.addEventListener("keydown", onKey);
+    fdoc.defaultView.addEventListener("scroll", () => positionOverlay());
+    new ResizeObserver(() => { fitStage(); positionOverlay(); }).observe(root);
+  }
+
+  /* ───────────────── تحرير النص المباشر ───────────────── */
+  let editing = null;
+  function startEdit(el) {
+    const wEl = el.closest('[data-kind="widget"]'); if (!wEl) return;
+    select(wEl.dataset.pb);
+    const field = el.dataset.edit, rich = field === "html"; editing = { el, id: wEl.dataset.pb, field, rich };
+    el.setAttribute("contenteditable", "true"); el.focus();
+    const r = fdoc.createRange(); r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
+    if (rich) showRt(true);
+    el.addEventListener("blur", endEdit, { once: true });
+    el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault(); el.blur(); } if (ev.key === "Escape") el.blur(); });
+  }
+  function endEdit() {
+    if (!editing) return; const { el, id, field, rich } = editing; editing = null; showRt(false);
+    el.removeAttribute("contenteditable");
+    const inf = find(id); if (inf) { inf.set[field] = rich ? PB.cleanHtml(el.innerHTML) : el.textContent.replace(/\s+/g, " ").trim(); commitHist(); }
+    renderCanvas(); renderInspector();
+  }
+  function showRt(on) {
+    let rt = $("pbx-rt");
+    if (!rt) { rt = document.createElement("div"); rt.id = "pbx-rt"; rt.className = "pbx-rt";
+      rt.innerHTML = `<button data-c="bold"><b>B</b></button><button data-c="italic"><i>I</i></button><button data-c="underline"><u>U</u></button><button data-c="insertUnorderedList">• قائمة</button><button data-c="createLink">🔗</button><button data-c="removeFormat">✕ تنسيق</button><input type="color" data-c="foreColor" title="لون النص">`;
+      rt.addEventListener("mousedown", e => { if (e.target.tagName !== "INPUT") e.preventDefault(); });
+      rt.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; let v = null; if (b.dataset.c === "createLink") { v = prompt("الرابط:", "https://"); if (!v) return; } fdoc.execCommand(b.dataset.c, false, v); });
+      rt.addEventListener("input", e => { if (e.target.dataset.c) fdoc.execCommand(e.target.dataset.c, false, e.target.value); });
+      $("pbx-stage").appendChild(rt); }
+    rt.style.display = on ? "flex" : "none";
+    if (on && editing) { const r = editing.el.getBoundingClientRect(), s = E.scale, fr = $("pbx-fw").getBoundingClientRect(), st = $("pbx-stage").getBoundingClientRect(); rt.style.top = (fr.top - st.top + $("pbx-stage").scrollTop + r.top * s - 40) + "px"; rt.style.left = Math.max(4, fr.left - st.left + r.left * s) + "px"; }
+  }
+
+  /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
+  function select(id) {
+    if (editing) { try { editing.el.blur(); } catch (e) { } }
+    E.sel = id; renderInspector(); positionOverlay(); if (E.ltab === "lay") renderLeft();
+  }
+  function positionOverlay() {
+    const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
+    if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
+    const el = fdoc.querySelector(`[data-pb="${E.sel}"]`); if (!el) return;
+    const r = el.getBoundingClientRect(), s = E.scale, st = $("pbx-stage"), fw = $("pbx-fw"), fr = fw.getBoundingClientRect(), sr = st.getBoundingClientRect();
+    const win = fdoc.defaultView, ox = fr.left - sr.left + st.scrollLeft, oy = fr.top - sr.top + st.scrollTop;
+    const box = document.createElement("div"); box.className = "pbx-box " + inf.kind;
+    box.style.cssText = `left:${ox + r.left * s}px;top:${oy + r.top * s}px;width:${r.width * s}px;height:${r.height * s}px`;
+    const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].label : inf.kind === "column" ? "عمود" : "قسم";
+    const bar = document.createElement("div"); bar.className = "pbx-bar";
+    const btn = (t, tt, fn, drag) => { const b = document.createElement("button"); b.textContent = t; b.title = tt; if (drag) { b.draggable = true; b.addEventListener("dragstart", e => { E.drag = { move: inf.node.id }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "move"; }); b.addEventListener("dragend", hideDrop); } else b.onclick = e => { e.stopPropagation(); fn(); }; bar.appendChild(b); };
+    bar.innerHTML = `<span>${lbl}</span>`;
+    if (inf.kind === "widget") btn("✥", "اسحب لنقل العنصر", null, true);
+    btn(inf.kind === "column" ? "▶" : "↑", "تحريك", () => move(-1)); btn(inf.kind === "column" ? "◀" : "↓", "تحريك", () => move(1));
+    if (inf.kind === "widget") btn("⇆", "نقل إلى العمود المجاور", () => moveCol());
+    btn("⧉", "تكرار", dup);
+    if (inf.kind === "section") btn("＋عمود", "إضافة عمود", () => addCol(inf.node)); if (inf.kind === "column") btn("＋عمود", "إضافة عمود بعده", () => addCol(inf.sec, inf.idx + 1));
+    btn("🗑", "حذف", del);
+    box.appendChild(bar);
+    if (inf.kind !== "section" || true) {
+      if (inf.kind !== "section") { const hl = document.createElement("div"); hl.className = "pbx-h l"; hl.title = "اسحب لتغيير العرض"; hl.onmousedown = e => startResize(e, "w", inf); box.appendChild(hl); }
+      if (inf.kind !== "column") { const hb = document.createElement("div"); hb.className = "pbx-h b"; hb.title = "اسحب لتغيير الارتفاع"; hb.onmousedown = e => startResize(e, "h", inf); box.appendChild(hb); }
+    }
+    ovl.appendChild(box);
+  }
+
+  /* ───────────────── تغيير الحجم بالسحب ───────────────── */
+  function startResize(e, mode, inf) {
+    e.preventDefault(); e.stopPropagation();
+    const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, dev = E.dev, x0 = e.clientX, y0 = e.clientY;
+    const r0 = el.getBoundingClientRect(); let parentW = 0;
+    if (mode === "w") { const p = inf.kind === "column" ? el.parentElement : el.parentElement; parentW = p.getBoundingClientRect().width; }
+    const tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
+    const shield = document.createElement("div"); shield.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + (mode === "w" ? "ew-resize" : "ns-resize"); document.body.appendChild(shield);   // يلتقط الحركة فوق الـ iframe
+    const centered = inf.kind === "widget" && eff(inf.set, "al", dev) === "center";
+    let last = 0;
+    /* عند تغيير عرض عمود يتكيّف العمود المجاور (إن كان له عرض صريح) ليبقى المجموع 100% */
+    let nb = null, pair = 0;
+    if (mode === "w" && inf.kind === "column") { const sibs = inf.sec.cols, nbn = sibs[inf.idx + 1] || sibs[inf.idx - 1]; if (nbn && eff(nbn.set, "w", dev) != null && eff(inf.set, "w", dev) != null) { nb = nbn; pair = Number(eff(inf.set, "w", dev)) + Number(eff(nbn.set, "w", dev)); } }
+    const mv = ev => {
+      const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s;
+      if (mode === "w") {
+        let px = r0.width - dx * (centered ? 2 : 1); let pct = px / parentW * 100; const snap = ev.shiftKey ? 5 : 1; pct = Math.round(pct / snap) * snap; pct = Math.max(5, Math.min(100, pct));
+        setR(inf.set, "w", dev, pct); if (nb) setR(nb.set, "w", dev, Math.max(5, Math.round((pair - pct) * 10) / 10)); tip.textContent = pct + "%"; last = pct;
+      } else {
+        let h = Math.round(Math.max(0, r0.height + dy)); if (ev.shiftKey) h = Math.round(h / 10) * 10;
+        setR(inf.set, "mh", dev, h); tip.textContent = h + "px"; last = h;
+      }
+      tip.style.left = (ev.clientX - $("pbx-stage").getBoundingClientRect().left + 14) + "px"; tip.style.top = (ev.clientY - $("pbx-stage").getBoundingClientRect().top + 14) + "px";
+      renderCanvas(); positionOverlay(); $("pbx-ovl").appendChild(tip);
+    };
+    const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); shield.remove(); tip.remove(); commitHist(); renderInspector(); };
+    document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up);
+  }
+
+  /* ───────────────── عمليات على النموذج ───────────────── */
+  function afterEdit(sel) { if (sel !== undefined) E.sel = sel; commitHist(); renderCanvas(); renderInspector(); renderLeft(); }
+  function move(d) {
+    const inf = selInfo(); if (!inf) return; const j = inf.idx + d;
+    if (inf.kind === "widget" && (j < 0 || j >= inf.list.length)) { moveCol(d > 0 ? 1 : -1, true); return; }
+    if (j < 0 || j >= inf.list.length) return; [inf.list[inf.idx], inf.list[j]] = [inf.list[j], inf.list[inf.idx]]; afterEdit();
+  }
+  function moveCol(dir, atEdge) {
+    const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const cols = inf.sec.cols, ci = cols.indexOf(inf.col);
+    let to = ci + (dir || 1); if (to >= cols.length) to = 0; if (to < 0) to = cols.length - 1; if (to === ci) return;
+    inf.list.splice(inf.idx, 1); const tgt = cols[to].widgets; if (atEdge && dir < 0) tgt.push(inf.node); else tgt.splice(atEdge ? 0 : tgt.length, 0, inf.node); afterEdit();
+  }
+  function reId(n) { n.id = uid(); (n.cols || []).forEach(reId); (n.widgets || []).forEach(reId); return n; }
+  function dup() { const inf = selInfo(); if (!inf) return; const c = reId(clone(inf.node)); inf.list.splice(inf.idx + 1, 0, c); afterEdit(c.id); }
+  function del() { const inf = selInfo(); if (!inf) return; if (inf.kind === "column" && inf.sec.cols.length === 1) { toast("القسم يحتاج عموداً واحداً على الأقل — احذف القسم كله"); return; } inf.list.splice(inf.idx, 1); afterEdit(null); }
+  function addCol(sec, at) { const c = PB.mkC([]); if (at == null) sec.cols.push(c); else sec.cols.splice(at, 0, c); sec.cols.forEach(x => { if (x.set.w) delete x.set.w; }); afterEdit(c.id); }
+  function addWidget(type, col, at) {
+    const w = PB.mkW(type); col = col || targetCol(); if (at == null) col.widgets.push(w); else col.widgets.splice(at, 0, w); afterEdit(w.id);
+    setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50);
+  }
+  function targetCol() {
+    const inf = selInfo();
+    if (inf) { if (inf.kind === "widget") return inf.col; if (inf.kind === "column") return inf.node; if (inf.kind === "section") return inf.node.cols[0]; }
+    let sec = E.page.sections[E.page.sections.length - 1]; if (!sec) { sec = PB.mkS(); E.page.sections.push(sec); } return sec.cols[sec.cols.length - 1];
+  }
+  function mkTpl(k) {
+    if (TPLS[k]) return TPLS[k].f();
+    const n = { _blank: 1, _two: 2, _three: 3 }[k] || 1; return PB.mkS(Array.from({ length: n }, () => PB.mkC([])));
+  }
+  function addSection(k, at) { const s = mkTpl(k); if (at == null) { const inf = selInfo(); at = inf ? inf.sec ? E.page.sections.indexOf(inf.sec) + 1 : E.page.sections.length : E.page.sections.length; } E.page.sections.splice(at, 0, s); afterEdit(s.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${s.id}"]`); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" }); }, 50); }
+
+  /* ───────────────── السحب والإفلات ───────────────── */
+  function dropTarget(e) {
+    const t = fdoc.elementFromPoint(e.clientX, e.clientY); if (!t) return null;
+    if (E.drag && E.drag.tpl) {
+      const secs = [...root.querySelectorAll(".pb-sec")]; let at = secs.length;
+      for (let i = 0; i < secs.length; i++) { const r = secs[i].getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { at = i; break; } }
+      const ref = secs[at] || secs[secs.length - 1];
+      return { type: "sec", at, y: ref ? (secs[at] ? ref.getBoundingClientRect().top : ref.getBoundingClientRect().bottom) : 0, x: 0, w: fdoc.documentElement.clientWidth };
+    }
+    let colEl = t.closest(".pb-col"); if (!colEl) { const sec = t.closest(".pb-sec"); if (sec) colEl = sec.querySelector(".pb-col"); } if (!colEl) return null;
+    const col = find(colEl.dataset.pb); if (!col) return null;
+    const ws = [...colEl.querySelectorAll(":scope>.pb-colin>.pb-w")].filter(w => !(E.drag && E.drag.move === w.dataset.pb)); let at = ws.length, y;
+    for (let i = 0; i < ws.length; i++) { const r = ws[i].getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { at = i; break; } }
+    const cr = colEl.getBoundingClientRect();
+    y = ws.length ? (at < ws.length ? ws[at].getBoundingClientRect().top - 4 : ws[ws.length - 1].getBoundingClientRect().bottom + 4) : cr.top + 8;
+    return { type: "col", col: col.node, at, y, x: cr.left + 4, w: cr.width - 8 };
+  }
+  function onDragOver(e) {
+    if (!E.drag) return; const tg = dropTarget(e); if (!tg) { hideDrop(); return; } e.preventDefault(); e.dataTransfer.dropEffect = "move";
+    let d = fdoc.getElementById("pbdrop"); if (!d) { d = fdoc.createElement("div"); d.id = "pbdrop"; d.className = "pb-drop"; fdoc.body.appendChild(d); }
+    const sy = fdoc.defaultView.scrollY; d.style.top = (tg.y + sy - 2) + "px"; d.style.left = tg.x + "px"; d.style.width = tg.w + "px";
+  }
+  function hideDrop() { const d = fdoc && fdoc.getElementById("pbdrop"); if (d) d.remove(); }
+  function onDrop(e) {
+    if (!E.drag) return; e.preventDefault(); const tg = dropTarget(e), dr = E.drag; E.drag = null; hideDrop(); if (!tg) return;
+    if (dr.tpl) { addSection(dr.tpl, tg.at); return; }
+    if (dr.add) { addWidget(dr.add, tg.col, tg.at); return; }
+    if (dr.move) { const inf = find(dr.move); if (!inf) return; if (inf.kind === "widget") { inf.list.splice(inf.idx, 1); tg.col.widgets.splice(Math.min(tg.at, tg.col.widgets.length), 0, inf.node); afterEdit(inf.node.id); } }
+  }
+  document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest("[data-add],[data-tpl]"); if (!w) return; E.drag = w.dataset.add ? { add: w.dataset.add } : { tpl: w.dataset.tpl }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
+  document.addEventListener("dragend", () => { E.drag = null; hideDrop(); });
+  document.addEventListener("click", e => {
+    if (!$("pb-app") || !$("pb-app").contains(e.target)) return;
+    const a = e.target.closest("[data-add]"); if (a) return addWidget(a.dataset.add);
+    const t = e.target.closest("[data-tpl]"); if (t) return addSection(t.dataset.tpl);
+    const l = e.target.closest("[data-sel]"); if (l) { select(l.dataset.sel); const el = fdoc.querySelector(`[data-pb="${l.dataset.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+  });
+  function onKey(e) {
+    if (!$("pb-app").classList.contains("on")) return;
+    const tag = (e.target.tagName || "").toLowerCase(); if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+    else if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); dup(); }
+    else if (e.key === "Delete" && E.sel) { e.preventDefault(); del(); }
+    else if (e.key === "Escape") select(null);
+  }
+
+  /* ───────────────── الإعدادات (Inspector) ───────────────── */
+  function ctlsFor(inf) {
+    let base, com;
+    if (inf.kind === "widget") { base = inf.def.ctl.slice(); com = common("widget").filter(c => !(c.skipFor && c.skipFor.includes(inf.node.type))); }
+    else if (inf.kind === "column") { base = COL_CTL.slice(); com = common("column"); }
+    else { base = SEC_CTL.slice(); com = common("section"); }
+    const have = new Set(base.map(c => c.k)); return base.concat(com.filter(c => !have.has(c.k)));
+  }
+  function renderInspector() {
+    const el = $("pbx-insp"); if (!el) return; const inf = selInfo();
+    if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته.<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
+    const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].ic + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? "▯ عمود" : "▤ قسم";
+    const all = ctlsFor(inf).filter(c => c.tab === E.tab);
+    el.innerHTML = `<div class="pbx-ih">${lbl}</div>
+<div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
+<div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
+${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>'}`;
+  }
+  function field(c, set) {
+    const dev = E.dev, k = c.k, isR = !!c.r;
+    const ownV = isR ? own(set, k, dev) : set[k], effV = isR ? eff(set, k, dev) : set[k];
+    const inherited = isR && ownV === undefined && effV !== undefined;
+    const rs = (ownV !== undefined && ownV !== "" && !(c.t === "switch" && ownV === false && !isR)) ? `<button class="rs" data-rs="${k}" title="إعادة للافتراضي">↺</button>` : "";
+    const head = `<label>${esc(c.l)}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
+    const a = `data-k="${k}" data-t="${c.t}"`;
+    let b = "";
+    switch (c.t) {
+      case "text": b = `<input type="text" ${a} value="${esc(ownV ?? "")}">`; break;
+      case "textarea": case "rich": case "gallery": b = `<textarea ${a} ${c.t === "rich" ? 'dir="ltr" rows="8"' : ""}>${esc(ownV ?? "")}</textarea>` + (c.t === "gallery" ? `<button class="pbx-small" data-upadd="${k}">⬆ رفع صور وإضافتها</button>` : ""); break;
+      case "datetime": b = `<input type="datetime-local" ${a} value="${esc(ownV ?? "")}">`; break;
+      case "num": { const rng = (c.max != null && c.min != null && c.max - c.min <= 2000) ? `<input type="range" ${a} data-range="1" min="${c.min}" max="${c.max}" step="${c.step || 1}" value="${effV ?? c.min}" class="sm" style="max-width:96px">` : ""; b = `<div class="pbx-row"><input type="number" ${a} ${c.min != null ? `min="${c.min}"` : ""} ${c.max != null ? `max="${c.max}"` : ""} step="${c.step || 1}" value="${ownV ?? ""}" placeholder="${inherited ? effV : ""}" class="${inherited ? "inh" : ""}">${rng}</div>`; break; }
+      case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${c.o.map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
+      case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
+      case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
+      case "align": b = `<div class="pbx-al">${AL3.map(([v, t]) => `<button data-al="${k}" data-v="${v}" class="${(effV || "") === v ? "on" : ""}">${t}</button>`).join("")}</div>`; break;
+      case "image": b = `<div class="pbx-row"><input type="text" ${a} value="${esc(ownV ?? "")}" placeholder="مسار/رابط الصورة"><button class="pbx-small sm" data-up="${k}">⬆ رفع</button></div>${ownV ? `<img src="${esc(/^(https?:|data:|\/)/.test(ownV) ? ownV : ownV)}" style="max-width:100%;max-height:80px;margin-top:.3rem;border-radius:6px">` : ""}`; break;
+      case "dims": { const arr = (isR ? (ownV || effV) : set[k]) || []; b = `<div class="pbx-dims">${["أعلى", "يمين", "أسفل", "يسار"].map((n, i) => `<div><input type="number" data-k="${k}" data-t="dims" data-i="${i}" value="${arr[i] ?? ""}" placeholder="${isR && ownV === undefined && effV ? (effV[i] ?? "") : ""}"><small>${n}</small></div>`).join("")}</div>`; break; }
+      case "rep": { const items = set[k] || []; b = items.map((it, i) => `<div class="pbx-rep">${c.f.map(([fk, fl]) => `<input type="text" data-rep="${k}" data-i="${i}" data-f="${fk}" placeholder="${esc(fl)}" value="${esc(it[fk] || "")}" style="margin-bottom:.3rem">`).join("")}<button class="pbx-small" data-repdel="${k}" data-i="${i}">حذف</button></div>`).join("") + `<button class="pbx-small" data-repadd="${k}">＋ إضافة عنصر</button>`; break; }
+    }
+    return `<div class="pbx-f">${head}${b}</div>`;
+  }
+  const AL3 = [["start", "بداية"], ["center", "وسط"], ["end", "نهاية"]];
+
+  function applyVal(inf, c, val, idx) {
+    const set = inf.set, k = c.k;
+    if (c.t === "dims") {
+      let arr = (c.r ? (own(set, k, E.dev) || eff(set, k, E.dev)) : set[k]) || ["", "", "", ""]; arr = arr.slice(); arr[idx] = val === "" ? "" : Number(val);
+      const empty = arr.every(x => x === "" || x == null); if (c.r) setR(set, k, E.dev, empty ? undefined : arr); else { if (empty) delete set[k]; else set[k] = arr; } return;
+    }
+    if (c.t === "num") val = val === "" ? undefined : Number(val);
+    if (c.t === "switch") val = !!val;
+    if (c.r) setR(set, k, E.dev, val); else if (val === "" || val === undefined) delete set[k]; else set[k] = val;
+  }
+  const ctlByKey = (inf, k) => ctlsFor(inf).find(c => c.k === k);
+  let hT = 0;
+  function onInspInput(e) {
+    const t = e.target, inf = selInfo(); if (!inf) return;
+    if (t.dataset.rep) { const items = inf.set[t.dataset.rep] || []; items[t.dataset.i][t.dataset.f] = t.value; inf.set[t.dataset.rep] = items; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
+    if (!t.dataset.k) return; const c = ctlByKey(inf, t.dataset.k); if (!c) return;
+    if (t.dataset.range) { const n = t.parentNode.querySelector('input[type=number]'); if (n) n.value = t.value; }
+    applyVal(inf, c, t.type === "checkbox" ? t.checked : t.value, t.dataset.i != null ? Number(t.dataset.i) : undefined);
+    schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500);
+  }
+  const positionOverlaySoon = () => setTimeout(positionOverlay, 40);
+  function onInspChange(e) {
+    const t = e.target; if (t.dataset.k || t.dataset.rep) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox" || t.type === "color") { onInspInput(e); renderInspector(); } if (t.dataset.range) renderInspector(); }
+    if (t.dataset.fileFor) {}
+  }
+  async function onInspClick(e) {
+    const t = e.target.closest("button, [data-dev]"); if (!t) return; const inf = selInfo();
+    if (t.dataset.dev) { setDev(t.dataset.dev); return; }
+    if (t.dataset.itab) { E.tab = t.dataset.itab; renderInspector(); return; }
+    if (!inf) return;
+    if (t.dataset.rs) { const c = ctlByKey(inf, t.dataset.rs); if (c.r) setR(inf.set, c.k, E.dev, undefined); else delete inf.set[c.k]; afterEdit(); return; }
+    if (t.dataset.clr) { delete inf.set[t.dataset.clr]; afterEdit(); return; }
+    if (t.dataset.al) { const c = ctlByKey(inf, t.dataset.al); applyVal(inf, c, t.dataset.v); afterEdit(); return; }
+    if (t.dataset.repadd) { const arr = inf.set[t.dataset.repadd] = inf.set[t.dataset.repadd] || []; arr.push({ q: "سؤال جديد", a: "الجواب" }); afterEdit(); return; }
+    if (t.dataset.repdel) { inf.set[t.dataset.repdel].splice(Number(t.dataset.i), 1); afterEdit(); return; }
+    if (t.dataset.up || t.dataset.upadd) {
+      const multi = !!t.dataset.upadd, k = t.dataset.up || t.dataset.upadd;
+      const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.multiple = multi;
+      inp.onchange = async () => {
+        const files = [...inp.files]; if (!files.length) return; toast("⏳ جارِ رفع " + files.length + " صورة...");
+        try {
+          const paths = []; for (const f of files) paths.push(await Admin.uploadImageFile(f, "assets/img/pages", "pg-"));
+          if (multi) inf.set[k] = ((inf.set[k] || "").trim() ? inf.set[k].trim() + "\n" : "") + paths.join("\n"); else inf.set[k] = paths[0];
+          toast("✅ تم الرفع"); afterEdit();
+        } catch (err) { toast("❌ " + err.message); }
+      };
+      inp.click();
+    }
+  }
+
+  /* ───────────────── النشر والمعاينة ───────────────── */
+  const b64 = str => btoa(unescape(encodeURIComponent(str)));
+  function siteCtx() {
+    const S = (typeof SITE_CFG !== "undefined") ? SITE_CFG : {};
+    return { site: { name: S.name, domain: S.domain, wa: S.waNumber }, products: (typeof Admin !== "undefined" && Admin.products) || [] };
+  }
+  function validate() {
+    const P = E.page; if (!P.title.trim()) { toast("أدخل عنوان الصفحة"); return false; }
+    if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(P.slug || "")) { toast("الرابط (slug) يجب أن يكون حروفاً لاتينية صغيرة وأرقاماً وشرطات (حرفان على الأقل) — من تبويب ⚙️ الصفحة"); E.ltab = "pg"; renderLeft(); return false; }
+    return true;
+  }
+  function preview() {
+    const dir = location.href.replace(/[^/]*$/, "");
+    const html = PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir }, siteCtx()));
+    const w = window.open(URL.createObjectURL(new Blob([html], { type: "text/html" })), "_blank"); if (!w) toast("اسمح بالنوافذ المنبثقة للمعاينة");
+  }
+  async function putJson(path, obj, msg) {
+    let sha; try { sha = (await GH.getFile(path)).sha; } catch (e) { sha = undefined; }
+    return GH.putFile(path, b64(typeof obj === "string" ? obj : JSON.stringify(obj, null, 1)), sha, msg);
+  }
+  async function publish() {
+    if (!validate()) return;
+    const P = E.page, slug = P.slug; toast("⏳ جارِ النشر...");
+    try {
+      const html = PB.fullHtml(P, Object.assign({ base: "../../" }, siteCtx()));
+      await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);
+      await putJson("assets/pages/" + slug + ".json", P, "مصدر صفحة هبوط: " + slug);
+      let idx = []; try { const f = await GH.getFile("assets/pages/index.json"); idx = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { }
+      const row = { slug, title: P.title, updated: new Date().toISOString().slice(0, 16).replace("T", " "), live: true };
+      const i = idx.findIndex(x => x.slug === slug); if (i >= 0) idx[i] = row; else idx.push(row);
+      await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط");
+      E.isNew = false; E.dirty = false; try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
+      toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)");
+    } catch (err) { console.error(err); toast("❌ " + err.message); }
+  }
+
+  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, slugEdit, renderCanvas, E, find };
+})();
+
+/* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
+const PBAdmin = {
+  list: [],
+  async init() { await this.refresh(); },
+  async refresh() {
+    const box = document.getElementById("pb-list"); if (!box) return;
+    try { const f = await GH.getFile("assets/pages/index.json"); this.list = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { this.list = []; }
+    const dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host;
+    box.innerHTML = this.list.length ? `<table class="rt"><tr class="hd"><th>العنوان</th><th>الرابط</th><th>آخر تحديث</th><th>إجراءات</th></tr>${this.list.map(p => `<tr><td class="t"><b>${PB.esc(p.title)}</b></td><td data-l="الرابط"><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a></td><td data-l="آخر تحديث"><small>${PB.esc(p.updated || "")}</small></td><td class="act"><button class="small" onclick="PBAdmin.edit('${PB.esc(p.slug)}')">✏️ تعديل</button> <button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')">🔗 نسخ الرابط</button> <button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')">إلغاء النشر</button></td></tr>`).join("")}</table>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» لبدء التصميم.</p>';
+  },
+  newPage() {
+    const t = prompt("عنوان الصفحة الجديدة:", "عرض خاص"); if (!t) return;
+    const p = PB.newPage(t, ""); p.slug = ""; PBApp.E.slugTouched = false;
+    p.slug = (t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4);
+    PBApp.open(p, "", true);
+  },
+  async edit(slug) {
+    try { const f = await GH.getFile("assets/pages/" + slug + ".json"); const p = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); PBApp.open(p, slug, false); }
+    catch (e) { alert("تعذّر فتح الصفحة: " + e.message); }
+  },
+  copyLink(slug, dom) { const u = "https://" + dom + "/lp/" + slug + "/"; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => toast("✅ نُسخ: " + u), () => prompt("انسخ الرابط:", u)); },
+  async unpublish(slug) {
+    if (!confirm("إلغاء نشر هذه الصفحة؟ سيُحوَّل رابطها إلى الصفحة الرئيسية (المصدر يبقى محفوظاً).")) return;
+    try {
+      const stub = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=../../"><title>…</title></head><body></body></html>';
+      let sha; try { sha = (await GH.getFile("lp/" + slug + "/index.html")).sha; } catch (e) { }
+      await GH.putFile("lp/" + slug + "/index.html", btoa(unescape(encodeURIComponent(stub))), sha, "إلغاء نشر صفحة هبوط " + slug);
+      this.list = this.list.filter(x => x.slug !== slug);
+      let s2; try { s2 = (await GH.getFile("assets/pages/index.json")).sha; } catch (e) { }
+      await GH.putFile("assets/pages/index.json", btoa(unescape(encodeURIComponent(JSON.stringify(this.list, null, 1)))), s2, "فهرس صفحات الهبوط");
+      toast("✅ أُلغي النشر"); this.refresh();
+    } catch (e) { toast("❌ " + e.message); }
+  },
+};
+
+</script>
+<!--PB:end-->
 </body>
 </html>
