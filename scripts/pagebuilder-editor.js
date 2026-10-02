@@ -33,7 +33,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-top .sp{margin-inline-start:auto}.pbx-dirty{font-size:.78rem;opacity:.8}
 .pbx-main{flex:1;display:flex;min-height:0}
 .pbx-left{width:260px;background:#fff;border-inline-end:1px solid #ddd;display:flex;flex-direction:column;min-height:0}
-.pbx-right{width:310px;background:#fff;border-inline-start:1px solid #ddd;overflow:auto;padding:.7rem}
+.pbx-right{width:310px;flex:0 0 auto;max-width:60vw;background:#fff;border-inline-start:1px solid #ddd;overflow:auto;padding:.7rem}
 .pbx-tabs{display:flex;border-bottom:1px solid #eee}.pbx-tabs button{flex:1;border:0;background:none;padding:.6rem .2rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.8rem;color:#666;border-bottom:3px solid transparent}.pbx-tabs button.on{color:#173f35;border-bottom-color:#c8a24b}
 .pbx-pane{padding:.7rem;overflow:auto;flex:1}
 .pbx-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
@@ -50,10 +50,15 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-bar span,.pbx-bar button{background:#2d6cdf;color:#fff;border:0;font-size:.74rem;font-weight:800;padding:.22rem .5rem;border-radius:6px 6px 0 0;cursor:pointer;font-family:inherit}.pbx-bar span{cursor:default}
 .pbx-box.column .pbx-bar *{background:#9b59b6}.pbx-box.widget .pbx-bar *{background:#e67e22}
 .pbx-bar button:hover{filter:brightness(1.15)}
-.pbx-q{background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.45rem;margin-bottom:.6rem;display:grid;gap:.4rem}
-.pbx-qr{display:flex;flex-wrap:wrap;gap:.25rem;align-items:center}.pbx-q .pbx-small.on{background:#173f35;color:#fff}
-.pbx-crumbs{display:flex;flex-wrap:wrap;gap:.15rem;align-items:center;font-size:.72rem;color:#999}.pbx-crumb{border:0;background:#fff;border:1px solid #e0d9c8;border-radius:6px;padding:.12rem .4rem;font-size:.72rem;cursor:pointer;font-family:inherit}.pbx-crumb.on{background:#e67e22;color:#fff;border-color:#e67e22}
-.pbx-nudge{display:inline-flex;gap:.15rem;margin-inline-start:auto}
+.pbx-q{background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem;margin-bottom:.6rem;display:grid;gap:.5rem}
+.pbx-qg{display:grid;gap:.2rem}.pbx-qg>small{font-size:.66rem;color:#a08a55;font-weight:800}
+.pbx-qb{display:flex;flex-wrap:wrap;gap:.25rem}.pbx-qrow{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start}
+.pbx-qk{flex:1 1 34px;min-width:34px;border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.28rem .35rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.76rem;white-space:nowrap}
+.pbx-qk.wide{flex:2 1 80px}.pbx-qk:hover{border-color:#c8a24b}.pbx-qk.on{background:#173f35;color:#fff;border-color:#173f35}
+.pbx-dpad{display:grid;grid-template-columns:repeat(3,30px);grid-template-areas:". u ." "l d r";gap:.2rem;direction:ltr}.pbx-dpad .pbx-qk{min-width:0;padding:.2rem 0;text-align:center}.pbx-dpad .u{grid-area:u}.pbx-dpad .l{grid-area:l}.pbx-dpad .d{grid-area:d}.pbx-dpad .r{grid-area:r}
+.pbx-note{font-size:.68rem;color:#999;line-height:1.6}
+.pbx-crumbs{display:flex;flex-wrap:wrap;gap:.15rem;align-items:center}.pbx-sep{color:#bbb;font-style:normal;font-size:.8rem}.pbx-crumb{border:1px solid #e0d9c8;background:#fff;border-radius:6px;padding:.12rem .4rem;font-size:.72rem;cursor:pointer;font-family:inherit}.pbx-crumb.on{background:#e67e22;color:#fff;border-color:#e67e22}
+.pbx-rz{width:7px;flex:0 0 7px;cursor:ew-resize;background:linear-gradient(90deg,transparent 2px,#cbbf9f 2px,#cbbf9f 4px,transparent 4px);position:relative;z-index:3}.pbx-rz:hover,.pbx-rz.on{background:linear-gradient(90deg,transparent 1px,#c8a24b 1px,#c8a24b 5px,transparent 5px)}
 .pbx-h{position:absolute;pointer-events:auto;background:#fff;border:2px solid currentColor;border-radius:3px;color:#2d6cdf;z-index:3;width:11px;height:11px}
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
@@ -79,7 +84,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-small{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.3rem .6rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.78rem}
 .pbx-lay{font-size:.82rem}.pbx-lay div{padding:.28rem .4rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbx-lay div:hover{background:#f4efe6}.pbx-lay div.on{background:#173f35;color:#fff}
 .pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
-@media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}}`;
+@media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}.pbx-rz{display:none}}`;
 
   const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
 
@@ -114,6 +119,7 @@ body{overflow-x:hidden;margin:0}`;
     <button class="pbx-add" onclick="PBApp.ltab('tpl')">＋ إضافة قسم جديد</button>
     <div id="pbx-ovl"></div>
   </div>
+  <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
   <aside class="pbx-right" id="pbx-insp"></aside>
 </div>
 <div class="pbx-msg" id="pbx-msg"></div>`;
@@ -128,6 +134,7 @@ body{overflow-x:hidden;margin:0}`;
     lp.addEventListener("drop", e => { const it = e.target.closest("[data-lay]"); if (!layDrag || !it) return; e.preventDefault(); layerReorder(layDrag, it.dataset.lay); layDrag = null; });
     new ResizeObserver(() => { fitStage(); positionOverlay(); }).observe($("pbx-stage"));
     window.addEventListener("resize", () => { if ($("pb-app").classList.contains("on")) { fitStage(); positionOverlay(); } });
+    wireResizer();
     $("pbx-insp").addEventListener("input", onInspInput); $("pbx-insp").addEventListener("change", onInspChange); $("pbx-insp").addEventListener("click", onInspClick);
     document.addEventListener("keydown", onKey);
   }
@@ -644,6 +651,18 @@ body{overflow-x:hidden;margin:0}`;
     }
   }
 
+  /* توسيع الشريط الجانبي بالسحب (يُحفظ العرض في المتصفح) */
+  function wireResizer() {
+    const rz = $("pbx-rz"), side = $("pbx-insp"); if (!rz || !side) return;
+    try { const w = Number(localStorage.getItem("pbx_side_w")); if (w >= 260 && w <= 720) side.style.width = w + "px"; } catch (e) { }
+    rz.addEventListener("mousedown", e => {
+      e.preventDefault(); if (e.detail >= 2) { side.style.width = ""; try { localStorage.removeItem("pbx_side_w"); } catch (e2) { } fitStage(); positionOverlay(); return; }
+      /* نقر مزدوج = العرض الافتراضي */ const x0 = e.clientX, w0 = side.getBoundingClientRect().width, onRight = side.getBoundingClientRect().left > rz.getBoundingClientRect().left, sh = mkShield("ew-resize"); rz.classList.add("on");
+      const mv = ev => { const d = ev.clientX - x0; side.style.width = Math.max(260, Math.min(720, Math.round(w0 + (onRight ? -d : d)))) + "px"; fitStage(); positionOverlay(); };
+      const up = () => { document.removeEventListener("mousemove", mv, true); document.removeEventListener("mouseup", up, true); sh.remove(); rz.classList.remove("on"); try { localStorage.setItem("pbx_side_w", String(parseInt(side.style.width))); } catch (e) { } };
+      document.addEventListener("mousemove", mv, true); document.addEventListener("mouseup", up, true);
+    });
+  }
   /* ───────────────── تنقل سلس بين العناصر ───────────────── */
   const parentId = inf => inf.kind === "widget" ? (inf.free ? inf.sec.id : inf.col.id) : inf.kind === "column" ? inf.sec.id : null;
   function nav(d) {
@@ -661,23 +680,23 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* لوحة الإجراءات السريعة في الشريط الجانبي (بدل ازدحام الشريط فوق العنصر) */
   function quickHtml(inf) {
-    const q = (k, t, tt, on) => `<button class="pbx-small${on ? " on" : ""}" data-q="${k}" title="${esc(tt || t)}">${t}</button>`;
+    const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${esc(tt || t)}">${t}</button>`;
+    const grp = (cap, body, cls) => `<div class="pbx-qg${cls ? " " + cls : ""}"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
     const chain = []; for (let n = inf, g = 0; n && g < 4; g++) { chain.unshift(n); n = parentId(n) ? find(parentId(n)) : null; }
-    const crumbs = chain.map(n => `<button class="pbx-crumb${n.node.id === inf.node.id ? " on" : ""}" data-pick="${n.node.id}">${n.kind === "widget" ? WIDGETS[n.node.type].ic + " " + WIDGETS[n.node.type].label : n.kind === "column" ? "▯ عمود" : "▤ قسم"}</button>`).join(" ‹ ");
-    let h = `<div class="pbx-q"><div class="pbx-crumbs">${crumbs}</div><div class="pbx-qr">${q("prev", "▲ السابق", "تحديد العنصر السابق (↑)")}${q("next", "▼ التالي", "تحديد العنصر التالي (↓)")}${q("parent", "⤴ الأب", "تحديد الحاوية (Esc)")}</div>`;
+    const crumbs = chain.map(n => `<button class="pbx-crumb${n.node.id === inf.node.id ? " on" : ""}" data-pick="${n.node.id}">${n.kind === "widget" ? WIDGETS[n.node.type].ic + " " + WIDGETS[n.node.type].label : n.kind === "column" ? "▯ عمود" : "▤ قسم"}</button>`).join('<i class="pbx-sep">‹</i>');
+    let h = `<div class="pbx-q"><div class="pbx-crumbs">${crumbs}</div>`;
+    h += grp("التنقل", q("prev", "▲", "تحديد العنصر السابق (↑)") + q("next", "▼", "تحديد العنصر التالي (↓)") + q("parent", "⤴ الحاوية", "تحديد الحاوية (Esc)", false, "wide"));
     if (inf.kind === "widget") {
-      h += `<div class="pbx-qr">${q("front", "أمام", "إحضار للأمام")}${q("back", "خلف", "إرسال للخلف")}${q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free)}`;
-      if (!inf.free) h += `<button class="pbx-small" data-q="grab" draggable="true" title="اسحبه إلى عمود آخر أو قسم آخر" style="cursor:grab">✥ نقل لعمود</button>${q("up", "↑", "تقديم في الترتيب (Alt+↑)")}${q("down", "↓", "تأخير في الترتيب (Alt+↓)")}`;
-      h += `</div>`;
-      if (inf.free) h += `<div class="pbx-qr">${q("al-left", "⇤", "محاذاة لأقصى اليسار")}${q("al-center", "↔", "توسيط أفقي")}${q("al-right", "⇥", "محاذاة لأقصى اليمين")}<span class="pbx-nudge">${q("n-l", "←", "إزاحة 1px (Shift=10)")}${q("n-u", "↑")}${q("n-d", "↓")}${q("n-r", "→")}</span></div>`;
-      else h += `<small style="color:#888">اسحب العنصر بالفأرة لتحريكه بحرية (يتحول لعنصر حر) · Alt+سحب = نسخ العنصر وتحريك النسخة</small>`;
-      if (["image", "slider", "gallery"].includes(inf.node.type)) h += `<div class="pbx-qr">${q("upl", "⬆ رفع صور")}${q("lib", "📚 المكتبة")}</div>`;
+      h += grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام") + q("back", "↧ خلف", "إرسال للخلف") + q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide"));
+      if (inf.free) h += `<div class="pbx-qrow">${grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين"))}${grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`)}</div>`;
+      else h += grp("الترتيب", q("up", "↑", "تقديم في الترتيب (Alt+↑)") + q("down", "↓", "تأخير في الترتيب (Alt+↓)") + `<button class="pbx-qk wide" data-q="grab" draggable="true" title="اسحبه إلى عمود آخر أو قسم آخر" style="cursor:grab">✥ نقل لعمود</button>`) + `<small class="pbx-note">اسحب العنصر بالفأرة لتحريكه بحرية · Alt+سحب = نسخ · Ctrl+إفلات فوق عمود = إدراج</small>`;
+      if (["image", "slider", "gallery"].includes(inf.node.type)) h += grp("الصور", q("upl", "⬆ رفع", "رفع صور مباشرة") + q("lib", "📚 المكتبة", "مكتبة الصور"));
     } else {
-      h += `<div class="pbx-qr">${q("up", inf.kind === "column" ? "▶" : "↑", "تحريك")}${q("down", inf.kind === "column" ? "◀" : "↓", "تحريك")}`;
-      if (inf.kind === "section" && inf.node.set.kind !== "canvas") h += q("addcol", "＋ عمود");
-      if (inf.kind === "column") h += q("addcol", "＋ عمود بعده");
-      if (inf.kind === "section" && (inf.node.free || []).length) h += q("automob", "📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف");
-      h += `</div>`;
+      let b2 = q("up", inf.kind === "column" ? "▶" : "↑", "تحريك") + q("down", inf.kind === "column" ? "◀" : "↓", "تحريك");
+      if (inf.kind === "section" && inf.node.set.kind !== "canvas") b2 += q("addcol", "＋ عمود", "إضافة عمود", false, "wide");
+      if (inf.kind === "column") b2 += q("addcol", "＋ عمود بعده", "إضافة عمود بعده", false, "wide");
+      h += grp("الترتيب", b2);
+      if (inf.kind === "section" && (inf.node.free || []).length) h += grp("الهاتف", q("automob", "📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف", false, "wide"));
     }
     return h + `</div>`;
   }
