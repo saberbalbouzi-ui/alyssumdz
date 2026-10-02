@@ -167,6 +167,8 @@ create table if not exists public.orders (
 alter table public.orders drop constraint if exists orders_status_check;
 alter table public.orders add constraint orders_status_check check (status in ('nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'));
 alter table public.orders add column if not exists customer_id uuid;      -- ربط الطلب بحساب زبون (اختياري)
+alter table public.orders add column if not exists ip_hash text;          -- بصمة مجزّأة لعنوان IP (لا يُخزَّن العنوان نفسه) لمنع التكرار والإغراق
+create index if not exists orders_ip_idx on public.orders (ip_hash, created_at);
 create index if not exists orders_created_idx on public.orders (created_at desc);
 create index if not exists orders_phone_idx on public.orders (phone, created_at);
 alter table public.orders enable row level security;
@@ -184,7 +186,7 @@ create policy "admin update orders" on public.orders for update to authenticated
 create or replace function public.submit_order(p jsonb) returns text
 language plpgsql security definer set search_path = public as $$
 declare
-  v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid; v_promo text; v_extra jsonb;
+  v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid; v_promo text; v_extra jsonb; g jsonb; v_ip text; v_iph text; v_ts bigint; v_slugs text[];
 begin
   v_name := btrim(coalesce(p ->> 'name', ''));
   v_phone := regexp_replace(coalesce(p ->> 'phone', ''), '[^0-9+]', '', 'g');
@@ -194,6 +196,26 @@ begin
   if jsonb_typeof(v_items) <> 'array' or jsonb_array_length(v_items) not between 1 and 50 then raise exception 'invalid_items'; end if;
   if coalesce((p ->> 'total')::numeric, -1) not between 0 and 10000000 then raise exception 'invalid_total'; end if;
   if (select count(*) from public.orders where phone = v_phone and created_at > now() - interval '10 minutes') >= 5 then raise exception 'rate_limited'; end if;
+
+  -- حماية الطلبات (تُفعَّل من لوحة الإدارة ← نموذج الطلب): ضدّ الروبوتات والتكرار، بإعدادات تُقرأ من admin_kv('guard')
+  v_ip := public._client_ip(); v_iph := public._ip_hash(v_ip);
+  select coalesce(value, '{}'::jsonb) into g from public.admin_kv where key = 'guard';
+  g := coalesce(g, '{}'::jsonb);
+  if coalesce((g ->> 'antibot')::boolean, false) then
+    if btrim(coalesce(p ->> 'hp', '')) <> '' then raise exception 'bot'; end if;                         -- حقل مخفي يملؤه الروبوت فقط
+    begin v_ts := split_part(coalesce(p ->> 'ftok', ''), '.', 1)::bigint; exception when others then v_ts := null; end;
+    if v_ts is null or split_part(p ->> 'ftok', '.', 2) <> public._guard_sig(v_ts::text)
+       or extract(epoch from clock_timestamp())::bigint - v_ts not between 3 and 7200 then raise exception 'bot'; end if;   -- رمز موقَّع من الخادم، عمره بين 3 ثوانٍ وساعتين
+    if public._cust_phone(v_phone) !~ '^0[1-9][0-9]{7,8}$' or public._cust_phone(v_phone) ~ '^0?(.)\1{7,}$' or v_name !~ '[[:alpha:]]' then raise exception 'invalid_phone'; end if;
+    if v_iph is not null and (select count(*) from public.orders where ip_hash = v_iph and created_at > now() - interval '1 hour') >= 8 then raise exception 'rate_limited'; end if;
+  end if;
+  if coalesce((g ->> 'dup')::boolean, false) and v_iph is not null then
+    select array_agg(distinct i ->> 'slug') into v_slugs from jsonb_array_elements(v_items) i where coalesce(i ->> 'slug', '') <> '';
+    if v_slugs is not null and exists (
+      select 1 from public.orders o, jsonb_array_elements(o.items) it
+       where o.ip_hash = v_iph and o.status <> 'annulee' and o.created_at > now() - make_interval(hours => greatest(1, coalesce((g ->> 'hours')::int, 24)))
+         and (it ->> 'slug') = any (v_slugs)) then raise exception 'duplicate_order'; end if;
+  end if;
 
   select string_agg((i ->> 'title') || ' ×' || coalesce(i ->> 'qty', '1') || ' = ' || round(coalesce((i ->> 'price')::numeric, 0) * coalesce((i ->> 'qty')::numeric, 1)) || ' DA', E'\n')
     into v_text from jsonb_array_elements(v_items) i;
@@ -207,10 +229,10 @@ begin
     if not found then v_extra := v_extra || jsonb_build_object('promo_invalid', v_promo); end if;
   end if;
   v_cust := public._cust_from_token(p ->> 'ctoken');                      -- null إن لم يكن الزبون مسجّلاً
-  insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra, customer_id)
+  insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra, customer_id, ip_hash)
   values (v_id, v_name, v_phone, left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), left(p ->> 'dtype', 10), left(p ->> 'desk', 160),
           v_items, coalesce(v_text, ''), coalesce((p ->> 'subtotal')::numeric, 0), coalesce((p ->> 'fee')::numeric, 0), (p ->> 'total')::numeric,
-          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), v_extra, v_cust);
+          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), v_extra, v_cust, v_iph);
   return v_id;
 end $$;
 revoke all on function public.submit_order(jsonb) from public;
@@ -428,3 +450,37 @@ begin
 end $$;
 revoke all on function public.validate_promo(jsonb) from public;
 grant execute on function public.validate_promo(jsonb) to anon, authenticated;
+
+-- ════════════════════════════════════════════════════════════════════
+-- أدوات حماية الطلبات: سرّ داخلي، رمز نموذج موقَّع، وبصمة IP مجزّأة
+-- ════════════════════════════════════════════════════════════════════
+create or replace function public._guard_secret() returns text
+language plpgsql security definer set search_path = public, extensions as $$
+declare v text;
+begin
+  select value #>> '{}' into v from public.admin_kv where key = 'guard_secret';
+  if v is null then
+    v := encode(extensions.gen_random_bytes(24), 'hex');
+    insert into public.admin_kv (key, value) values ('guard_secret', to_jsonb(v)) on conflict (key) do nothing;
+    select value #>> '{}' into v from public.admin_kv where key = 'guard_secret';
+  end if;
+  return v;
+end $$;
+create or replace function public._guard_sig(t text) returns text
+language sql security definer set search_path = public, extensions as $$ select encode(extensions.hmac(t, public._guard_secret(), 'sha256'), 'hex') $$;
+create or replace function public._client_ip() returns text
+language sql stable as $$
+  select nullif(btrim(coalesce(current_setting('request.headers', true)::json ->> 'cf-connecting-ip', split_part(coalesce(current_setting('request.headers', true)::json ->> 'x-forwarded-for', ''), ',', 1), '')), '')
+$$;
+create or replace function public._ip_hash(ip text) returns text
+language sql security definer set search_path = public, extensions as $$
+  select case when ip is null then null else left(encode(extensions.hmac(ip, public._guard_secret(), 'sha256'), 'hex'), 24) end
+$$;
+-- رمز يطلبه الموقع عند فتح الصفحة؛ الطلب لا يُقبل إلا برمز موقَّع عمره بين 3 ثوانٍ وساعتين (لا يعمل مع سكربت يرسل مباشرة)
+create or replace function public.form_token() returns text
+language sql security definer set search_path = public as $$
+  select t || '.' || public._guard_sig(t) from (select extract(epoch from clock_timestamp())::bigint::text as t) x
+$$;
+revoke all on function public._guard_secret(), public._guard_sig(text), public._ip_hash(text), public._client_ip() from public, anon, authenticated;
+revoke all on function public.form_token() from public;
+grant execute on function public.form_token() to anon, authenticated;

@@ -642,6 +642,19 @@ tr:hover td{background:#FAF7F0}
     </div>
 
     <div class="card">
+      <div class="section-title">🛡️ الحماية من الطلبات الكاذبة والمكررة</div>
+      <label class="small" style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;margin-bottom:.8rem">
+        <input type="checkbox" id="co-antibot" style="width:auto;margin-top:.3rem"><span><b>منع الطلبات الكاذبة الآلية (الروبوتات)</b><br><small style="color:#777">حقل مخفي يملؤه الروبوت فقط، ورمز نموذج موقَّع من الخادم لا يُقبل قبل 3 ثوانٍ ولا بعد ساعتين، وتحقق من رقم الهاتف (أرقام وهمية مثل 0000000000) والاسم، وحدّ 8 طلبات في الساعة من نفس الجهاز.</small></span>
+      </label>
+      <label class="small" style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;margin-bottom:.5rem">
+        <input type="checkbox" id="co-dup" style="width:auto;margin-top:.3rem"><span><b>منع طلب نفس المنتج مرتين من نفس الـ IP</b><br><small style="color:#777">يُحسب من بصمة مجزّأة لعنوان الـ IP (لا يُخزَّن العنوان نفسه). يُمنع الطلب الثاني للمنتج نفسه خلال المدة أدناه، ويظهر للزبون أنه سبق أن أرسله. الطلبات الملغاة لا تُحتسب.</small></span>
+      </label>
+      <label class="hint" style="margin:0">مدة المنع (ساعات)<input id="co-dup-hours" type="number" min="1" max="720" placeholder="24" style="max-width:140px"></label>
+      <div class="hint">الفحص الحقيقي يتم على الخادم (Supabase أو PHP) فلا يمكن تجاوزه من المتصفح. بلا خلفية (Google Sheets فقط) يُكتفى بفحص على جهاز الزبون. تنبيه: عدة زبائن خلف نفس شبكة (حيّ أو مقهى) يشتركون في IP واحد، فلا تجعل المدة طويلة جداً.</div>
+      <button class="small gold" onclick="Admin.publishCheckout()">💾 حفظ ونشر</button>
+    </div>
+
+    <div class="card">
       <div class="section-title">إظهار / إخفاء الأزرار والعناصر</div>
       <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-bottom:.7rem">
         <input type="checkbox" id="co-show-wa" style="width:auto">إظهار زر «الطلب مباشرة عبر واتساب»
@@ -5290,6 +5303,7 @@ const Admin = {
     $f("co-show-wa").checked = c.showWhatsappBtn !== false;
     $f("co-show-cart").checked = c.showAddToCart !== false;
     $f("co-show-offers").checked = c.showOffers !== false;
+    const gd = c.guard || {}; $f("co-antibot").checked = !!gd.antibot; $f("co-dup").checked = !!gd.dup; $f("co-dup-hours").value = gd.hours || 24;
     $f("co-order-btn-text").value = c.orderBtnText || "";
     $f("co-wa-btn-text").value = c.whatsappBtnText || "";
     $f("co-cart-btn-text").value = c.cartBtnText || "";
@@ -5399,6 +5413,7 @@ const Admin = {
       showWhatsappBtn: $f("co-show-wa").checked,
       showAddToCart: $f("co-show-cart").checked,
       showOffers: $f("co-show-offers").checked,
+      guard: { antibot: $f("co-antibot").checked, dup: $f("co-dup").checked, hours: Math.min(720, Math.max(1, Number($f("co-dup-hours").value) || 24)) },
       orderBtnText: $f("co-order-btn-text").value.trim(),
       whatsappBtnText: $f("co-wa-btn-text").value.trim(),
       cartBtnText: $f("co-cart-btn-text").value.trim(),
@@ -5416,6 +5431,7 @@ const Admin = {
       const res = await GH.putFile("assets/data/checkout.json", b64, this.checkoutSha, "تحديث إعدادات نموذج الطلب عبر لوحة التحكم");
       this.checkoutSha = res && res.content ? res.content.sha : undefined;
       this.checkout = checkout;
+      await Priv.set("guard", checkout.guard);                    // إعدادات الحماية يقرؤها الخادم عند كل طلب (admin_kv)
       toast("✅ تم النشر — تظهر الإعدادات الجديدة في نموذج الطلب خلال دقيقة تقريباً");
     }catch(err){
       console.error(err);

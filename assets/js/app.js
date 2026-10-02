@@ -88,7 +88,7 @@ const Cart = {
     if(!wl) return 0;
     return t && t.value==="stop" ? wl.stop : wl.home;
   },
-  checkout(){
+  async checkout(){
     const items = Cart.all();
     if(!items.length){ toast("السلة فارغة"); return }
     const oosItem = items.filter(itemOut).map(it=>PRODUCTS.find(p=>p.slug===it.slug))[0];
@@ -105,14 +105,16 @@ const Cart = {
     const discount = currentCouponDiscount(sub);
     const total = Math.max(0, sub - discount) + fee;
     // Enregistrement dans Google Sheets
-    API.submitOrder({
+    const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
+    const __order = {
       name, phone, wilaya: wl.name, commune, dtype,
       items: items.map(it => { const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : undefined,
-    });
+    };
+    if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record);
     let msg = `السلام عليكم ${SITE_NAME}، أريد تأكيد طلبي:\n`;
     items.forEach(it=>{
@@ -126,7 +128,7 @@ const Cart = {
     msg += `\nالتوصيل (${dtype==="stop"?"مكتب":"للمنزل"} - ${wl.name}${commune?" / "+commune:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
-    open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`,"_blank");
+    Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
   }
 };
 
@@ -370,6 +372,7 @@ async function initCheckout(){
   try{
     const cfg = await loadCheckout();
     applyCheckout(cfg);
+    Guard.init(cfg && cfg.guard);
   }catch(e){ /* تجاهل */ }
 }
 
@@ -795,7 +798,7 @@ function initProduct(slug){
   }
 
   // تأكيد الطلب — واتساب
-  document.getElementById("order-form").addEventListener("submit", e=>{
+  document.getElementById("order-form").addEventListener("submit", async e=>{
     e.preventDefault();
     if(outOfStock){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
     const name = document.getElementById("name").value.trim();
@@ -818,14 +821,16 @@ function initProduct(slug){
     const total = Math.max(0, state.offer.price - discount) + fee;
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
     // Enregistrement dans Google Sheets
-    API.submitOrder({
+    const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
+    const __order = {
       name, phone, wilaya: state.wilaya.name, commune,
       dtype: state.dtype, desk,
       items: orderItems(),
       subtotal: state.offer.price, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: couponGiftTitle() ? Object.assign({ "🎁 هدية": couponGiftTitle() }, extraValues) : extraValues,
-    });
+    };
+    if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record);
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     firePixelPurchase(p, total, state.offer.qty);
@@ -842,7 +847,7 @@ function initProduct(slug){
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     Object.entries(extraValues).forEach(([label,val])=>{ msg += `\n${label}: ${val}`; });
     msg += `\n\n💵 الدفع عند الاستلام`;
-    open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`,"_blank");
+    Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
   });
 
   // أضف إلى السلة
@@ -1403,3 +1408,44 @@ const Track = {
 
 PWA.init();
 (function(){ const go = ()=>{ try{ Account.init(); Gifts.checkInstall(); Track.fromUrl(); }catch(e){} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go(); })();
+
+
+/* ══════════════ حماية الطلبات (تُفعَّل من لوحة الإدارة ← نموذج الطلب) ══════════════
+   antibot: حقل مخفي + رمز نموذج موقَّع من الخادم + تحقق من الهاتف والاسم + حدّ للطلبات من نفس الـ IP.
+   dup: منع طلب المنتج نفسه مرتين من نفس الـ IP خلال ساعات محددة. الفحص الحقيقي على الخادم (Supabase/PHP)،
+   وبلا خلفية يُكتفى بفحص على هذا الجهاز. لا يُخزَّن عنوان الـ IP نفسه بل بصمة مجزّأة. */
+const Guard = {
+  cfg: null, tok: "",
+  active(){ return !!(this.cfg && (this.cfg.antibot || this.cfg.dup)); },
+  MSG: { duplicate_order:"لقد أرسلتَ طلباً لهذا المنتج مؤخراً ✅ سنتواصل معك قريباً. إن أردت تعديله راسلنا على واتساب.", bot:"تعذّر إرسال الطلب. أعد تحميل الصفحة وحاول مرة أخرى.", rate_limited:"طلبات كثيرة من نفس الجهاز — حاول لاحقاً أو راسلنا على واتساب.", invalid_phone:"رقم الهاتف أو الاسم غير صالح — تأكد منهما." },
+  async init(g){
+    this.cfg = g || null; if(!this.active()) return;
+    if(this.cfg.antibot){
+      document.querySelectorAll("#order-form, #drawer").forEach(host=>{
+        if(host.querySelector(".hp-field")) return;
+        const d = document.createElement("div"); d.className = "hp-field"; d.setAttribute("aria-hidden", "true");
+        d.style.cssText = "position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden";
+        d.innerHTML = '<label>Website<input type="text" name="website_url" tabindex="-1" autocomplete="off"></label>';
+        host.appendChild(d);
+      });
+      this.refreshToken();
+    }
+  },
+  async refreshToken(){ try{ this.tok = (await API.formToken()) || ""; }catch(e){ this.tok = ""; } },
+  hp(){ const el = document.querySelector(".hp-field input"); return el ? el.value : ""; },
+  recent(){ try{ return JSON.parse(localStorage.getItem("alyssum_recent_orders") || "{}") || {}; }catch(e){ return {}; } },
+  async submit(order){
+    const slugs = (order.items || []).map(i=>i.slug).filter(Boolean), hrs = Math.max(1, Number(this.cfg.hours) || 24);
+    if(this.cfg.dup){                                              // فحص محلي (يغطي من لا خلفية له)
+      const r = this.recent(), now = Date.now();
+      if(slugs.some(sl=>r[sl] && now - r[sl] < hrs * 3600000)) return { ok:false, msg: this.MSG.duplicate_order };
+    }
+    if(this.cfg.antibot && !this.tok) await this.refreshToken();
+    const res = await API.submitOrderChecked(Object.assign({}, order, this.cfg.antibot ? { hp: this.hp(), ftok: this.tok } : {}));
+    if(res && res.error && this.MSG[res.error]) { if(res.error === "bot") this.refreshToken(); return { ok:false, msg: this.MSG[res.error] }; }
+    const r = this.recent(), now = Date.now(); slugs.forEach(sl=>{ r[sl] = now; }); try{ localStorage.setItem("alyssum_recent_orders", JSON.stringify(r)); }catch(e){}
+    if(this.cfg.antibot) this.refreshToken();
+    return { ok:true };
+  },
+  openWa(url, pre){ if(pre){ try{ pre.location.href = url; return; }catch(e){} } open(url, "_blank"); },
+};

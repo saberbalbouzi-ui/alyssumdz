@@ -97,6 +97,31 @@ const API = {
     return j;
   },
 
+  /* رمز نموذج موقَّع من الخادم لحماية الطلبات (يُطلب عند فتح الصفحة) */
+  async formToken() {
+    if (this.php.on()) { const j = await this.php.get("form_token"); return j && j.token; }
+    if (this.sb.enabled() && this.ordersBackend() !== "sheets") { const r = await fetch(this.sb.url("/rest/v1/rpc/form_token"), { method: "POST", headers: this.sb.headers(), body: "{}" }); return r.ok ? await r.json() : ""; }
+    return "";
+  },
+  /* إرسال الطلب مع انتظار ردّ الخادم (عند تفعيل الحماية): يُرجع {ok} أو {ok:false, error} بأحد رموز الحماية فقط؛ أي خطأ آخر لا يمنع الطلب */
+  async submitOrderChecked(order) {
+    const ct = this.cust.token(), o = ct ? Object.assign({}, order, { ctoken: ct }) : order, GUARD = ["duplicate_order", "bot", "rate_limited", "invalid_phone"];
+    try {
+      if (this.php.on()) {
+        const r = await fetch(this.php.url("order"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ order: o }), credentials: "same-origin" });
+        const j = await r.json().catch(() => ({}));
+        return r.ok ? { ok: true } : (GUARD.includes(j.error) ? { ok: false, error: j.error } : { ok: true });
+      }
+      const b = this.ordersBackend();
+      if (b !== "supabase") this.post({ type: "order", order });
+      if (b !== "sheets") {
+        const r = await fetch(this.sb.url("/rest/v1/rpc/submit_order"), { method: "POST", headers: this.sb.headers(), body: JSON.stringify({ p: o }) });
+        if (!r.ok) { const j = await r.json().catch(() => ({})); const m = String(j.message || ""); return GUARD.includes(m) ? { ok: false, error: m } : { ok: true }; }
+      }
+      return { ok: true };
+    } catch (e) { return { ok: true }; }        // عطل شبكة/خادم لا يمنع الطلب (يبقى يصل عبر واتساب)
+  },
+
   /* ── حساب الزبون («حسابي»): تسجيل برقم الهاتف + كلمة سر. الخلفية: php (SQLite) | sb (Supabase RPC) | local (على الجهاز فقط) ── */
   cust: {
     mode() { return API.php.on() ? "php" : ((API.sb.enabled() && API.ordersBackend() !== "sheets") ? "sb" : "local"); },
