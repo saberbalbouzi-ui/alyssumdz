@@ -295,11 +295,11 @@ tr:hover td{background:#FAF7F0}
   <div id="tab-repeat" class="hidden">
     <div class="card">
       <b style="color:var(--green);display:block;margin-bottom:.35rem">🔁 إعادة الشراء عبر واتساب</b>
-      <div class="hint">يقترح عليك زبائن سُلّمت طلباتهم منذ مدة (تقارب نفاد المنتج)، ولم يطلبوا بعدها. اضغط «💬» فيفتح واتساب برسالة جاهزة فيها كود تخفيض خاص. الكود يُنشأ ويُنشر تلقائياً عند الحفظ، وكل حفظ جديد يجدد صلاحيته من اليوم.</div>
+      <div class="hint">يقترح عليك زبائن سُلّمت طلباتهم منذ مدة (تقارب نفاد المنتج)، ولم يطلبوا بعدها. اضغط «💬» فيفتح واتساب برسالة جاهزة فيها كود تخفيض خاص. لكل زبون يُنشأ <b>كود شخصي</b> (مثل BACK-7K2F9X) مرتبط برقم هاتفه ويُستعمل مرة واحدة فقط وله صلاحية، فلا يفيد تسريبه ولا مشاركته.</div>
       <div class="grid2" style="margin-top:.6rem">
         <label class="hint" style="margin:0">أول تذكير بعد (أيام من تاريخ الطلب)<input id="rp-min" type="number" min="1" placeholder="21"></label>
         <label class="hint" style="margin:0">آخر موعد للتذكير (أيام)<input id="rp-max" type="number" min="1" placeholder="90"></label>
-        <label class="hint" style="margin:0">كود التخفيض<input id="rp-code" dir="ltr" style="text-transform:uppercase" placeholder="BACK10"></label>
+        <label class="hint" style="margin:0">الكود العام الاحتياطي (يُستعمل فقط إن لم تتوفر خلفية Supabase/PHP؛ وإلا يُنشأ كود شخصي لكل زبون)<input id="rp-code" dir="ltr" style="text-transform:uppercase" placeholder="BACK10"></label>
         <label class="hint" style="margin:0">صلاحية الكود (أيام)<input id="rp-days" type="number" min="1" placeholder="14"></label>
         <label class="hint" style="margin:0">نوع الخصم<select id="rp-type"><option value="percent">نسبة %</option><option value="fixed">مبلغ ثابت (دج)</option><option value="freeship">توصيل مجاني</option></select></label>
         <label class="hint" style="margin:0">القيمة<input id="rp-value" type="number" min="0" placeholder="10"></label>
@@ -2272,7 +2272,7 @@ const Admin = {
         '<td class="nw" title="' + o.id + '"><b dir="ltr">' + String(o.id).replace(/^S\d{6}-/, "") + '</b></td>' +
         '<td class="nw c-date">' + new Date(o.date).toLocaleDateString("fr-DZ", { day:"2-digit", month:"2-digit" }) + '</td>' +
         '<td class="cut nm" title="' + String(o.name||"").replace(/"/g,"&quot;") + '">' + (o.name||"") + '</td>' +
-        '<td class="nw" dir="ltr">' + o.phone + this.whatsappLinkHtml(o.phone) + this.blacklistCellHtml(o.phone) + (gdup.has(o.id) ? ' <span class="pill st-pending" title="هذا الهاتف استعمل كود الهدية الترحيبية من قبل">⚠️</span>' : '') + '</td>' +
+        '<td class="nw" dir="ltr">' + o.phone + this.whatsappLinkHtml(o.phone) + this.blacklistCellHtml(o.phone) + (gdup.has(o.id) ? ' <span class="pill st-pending" title="هذا الهاتف استعمل كود الهدية الترحيبية من قبل">⚠️</span>' : '') + (o.extra && o.extra.promo_invalid ? ' <span class="pill st-echec" title="كود تخفيض شخصي غير صالح أو مستعمل من قبل: ' + String(o.extra.promo_invalid).replace(/[<>&"]/g,"") + '">⚠️ كود غير صالح</span>' : '') + '</td>' +
         '<td class="nw c-wil">' + (o.wilaya||"") + '</td>' +
         '<td class="cut c-items" title="' + items.replace(/"/g,"&quot;") + '">' + items + '</td>' +
         '<td class="nw"><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
@@ -4806,14 +4806,32 @@ const Admin = {
       : "<tr><td style='text-align:center;padding:1.5rem;color:#999'>لا يوجد زبائن مرشّحون الآن — يظهرون بعد مرور " + R.minDays + " يوماً على تسليم طلبهم دون طلب جديد</td></tr>";
     this.setBadge("nb-repeat", cs.length);
   },
-  repeatText(c){
-    const R = this.repeat || this.repeatDefaults();
-    return String(R.message||"").replace(/\{name\}/g, (c.name||"").split(" ")[0]).replace(/\{product\}/g, c.product).replace(/\{code\}/g, String(R.code||"").toUpperCase()).replace(/\{offer\}/g, this.repeatOffer(R)).replace(/\{days\}/g, R.validDays);
+  /* كود شخصي لهذا الزبون (هاتفه فقط، مرة واحدة، صلاحية محدودة) — يتطلب خلفية Supabase أو PHP؛ وإلا يُستعمل الكود العام المشترك */
+  personalPromoBackend(){ return PHPAPI.on() || (API.sb.enabled() && API.ordersBackend() !== "sheets"); },
+  async createPersonalPromo(phone){
+    const R = this.repeat || this.repeatDefaults(), val = R.type === "freeship" ? 0 : Number(R.value) || 0;
+    if(PHPAPI.on()){ const r = await PHPAPI.call("promo_create", { method:"POST", body: JSON.stringify({ phone, type:R.type, value:val, days:R.validDays }) }); if(r.ok && r.j.code) return r.j.code; throw new Error("تعذّر إنشاء الكود (" + r.status + ")"); }
+    const rnd = Array.from(crypto.getRandomValues(new Uint8Array(6)), b=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join(""), code = "BACK-" + rnd;
+    const ph = this.normalizePhone(phone);
+    const res = await API.sb.adminFetch("/rest/v1/promo_codes", { method:"POST", headers:{ Prefer:"return=minimal" }, body: JSON.stringify({ code, phone: ph, type: R.type, value: val, min_order: 0, expires_at: new Date(Date.now() + R.validDays * 86400000).toISOString() }) });
+    if(res === null) throw new Error("تعذّر إنشاء الكود — شغّل supabase/schema.sql (جدول promo_codes) وتأكد أنك مسجّل الدخول");
+    return code;
   },
-  sendRepeat(ph){
+  repeatText(c, code){
+    const R = this.repeat || this.repeatDefaults();
+    return String(R.message||"").replace(/\{name\}/g, (c.name||"").split(" ")[0]).replace(/\{product\}/g, c.product).replace(/\{code\}/g, String(code || R.code || "").toUpperCase()).replace(/\{offer\}/g, this.repeatOffer(R)).replace(/\{days\}/g, R.validDays);
+  },
+  async sendRepeat(ph){
     const c = this.repeatCandidates().find(x=>x.ph === ph); if(!c) return;
     const d = ph.replace(/\D/g,""), intl = d.startsWith("0") ? "213" + d.slice(1) : (d.startsWith("213") ? d : "213" + d);
-    window.open("https://wa.me/" + intl + "?text=" + encodeURIComponent(this.repeatText(c)), "_blank");
+    const w = window.open("", "_blank");                       // يُفتح فوراً حتى لا يحجبه المتصفح أثناء إنشاء الكود
+    let code = "";
+    if(this.personalPromoBackend()){
+      try{ code = await this.createPersonalPromo(c.phone); }
+      catch(err){ if(w) w.close(); this.showNotice("❌ تعذّر إنشاء الكود الشخصي", String(err.message).replace(/[&<>]/g, x=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[x]))); return }
+    }
+    const url = "https://wa.me/" + intl + "?text=" + encodeURIComponent(this.repeatText(c, code));
+    if(w) w.location.href = url; else window.open(url, "_blank");
     const s = this.repeatSent(); s[ph] = Date.now(); localStorage.setItem("alyssum_repeat_sent", JSON.stringify(s)); this.renderRepeat();
   },
   skipRepeat(ph){ const s = this.repeatSent(); s[ph] = Date.now(); localStorage.setItem("alyssum_repeat_sent", JSON.stringify(s)); this.renderRepeat(); },
@@ -4826,7 +4844,8 @@ const Admin = {
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(R, null, 2))));
       const res = await GH.putFile("assets/data/repeat.json", b64, this.repeatSha, "إعدادات إعادة الشراء عبر لوحة التحكم");
       this.repeatSha = res && res.content ? res.content.sha : undefined; this.repeat = R;
-      /* الكود نفسه يُنشأ/يُحدَّث في أكواد الخصم بصلاحية تنتهي بعد validDays من اليوم */
+      if(this.personalPromoBackend()){ this.renderRepeat(); toast("✅ حُفظت الإعدادات — لكل زبون يُنشأ كود شخصي يُستعمل مرة واحدة عند الضغط على «واتساب»"); return }
+      /* بلا خلفية: كود عام مشترك يُنشر في أكواد الخصم بصلاحية تنتهي بعد validDays من اليوم (غير شخصي) */
       const exp = new Date(Date.now() + R.validDays * 86400000).toISOString().slice(0, 10);
       const rec = { id:"repeat", code:R.code, type:R.type, value: R.type === "freeship" ? 0 : R.value, minOrder:0, expiresAt:exp, active:true };
       const i = this.coupons.findIndex(x=>x.id === "repeat"); if(i > -1) this.coupons[i] = rec; else this.coupons.push(rec);

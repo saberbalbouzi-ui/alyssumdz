@@ -77,7 +77,16 @@ const API = {
     if (b !== "sheets") this.sb.publicRpc("submit_order", { p: ct ? Object.assign({}, order, { ctoken: ct }) : order });
   },
 
-  /* تتبّع عام برقم التتبع: {found, status, date, wilaya, commune, dtype} | null إن لم تتوفر خلفية */
+  /* كود تخفيض شخصي (إعادة الشراء): {ok, type, value, minOrder} | {ok:false, error} | null إن لم تتوفر خلفية */
+  async promoCheck(code, phone) {
+    let r;
+    if (this.php.on()) r = await fetch(this.php.url("promo_check"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ code, phone }), credentials: "same-origin" });
+    else if (this.sb.enabled() && this.ordersBackend() !== "sheets") r = await fetch(this.sb.url("/rest/v1/rpc/validate_promo"), { method: "POST", headers: this.sb.headers(), body: JSON.stringify({ p: { code, phone } }) });
+    else return null;
+    const j = await r.json().catch(() => null);
+    return r.ok ? j : null;
+  },
+    /* تتبّع عام برقم التتبع: {found, status, date, wilaya, commune, dtype} | null إن لم تتوفر خلفية */
   async track(tracking) {
     let r;
     if (this.php.on()) r = await fetch(this.php.url("track"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ tracking }), credentials: "same-origin" });
