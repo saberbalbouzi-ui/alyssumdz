@@ -14,6 +14,7 @@ const PBApp = (() => {
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
 .pb-edit .pb-w:hover{outline:1px dashed #e67e22;outline-offset:2px}
+.pb-edit .pbx-dropcol{outline:3px dashed #9b59b6!important;outline-offset:-3px;background:rgba(155,89,182,.08)}
 .pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
 [contenteditable=true]{outline:2px solid #2d6cdf!important;outline-offset:3px;cursor:text;min-width:20px}
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
@@ -263,13 +264,13 @@ body{overflow-x:hidden;margin:0}`;
       const wEl = e.target.closest('[data-kind="widget"]'); if (!wEl) return;
       const cap = e.target.closest(".pb-sl-cap:not(.below)");
       if (cap && E.sel === wEl.dataset.pb) { e.preventDefault(); return startCapDrag(e, cap, wEl); }
+      { const i0 = find(wEl.dataset.pb); if (i0 && E.dev === "m" && i0.sec.set.kind !== "canvas" && (wEl.dataset.free ? PB.autoFlowFree(i0.sec) : true)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); if (!E.mToast) { E.mToast = 1; toast("📱 في الهاتف تُرتَّب العناصر تلقائياً داخل الأقسام العادية — حرّكها من عرض سطح المكتب أو استعمل إعدادات الشريط الجانبي"); } return; } }
       if (wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots")) {
         if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
-        e.preventDefault(); const inf = find(wEl.dataset.pb); if (inf) startMove(e, inf);
+        e.preventDefault(); let inf = find(wEl.dataset.pb); if (inf && e.altKey) { dup(); inf = selInfo(); } if (inf) startMove(e, inf, false, e.altKey);
       } else if (!wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots,button,.pb-fz")) {
-        if (e.altKey) return;                                                                         // Alt = تحديد فقط
         if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
-        e.preventDefault(); const inf = find(wEl.dataset.pb); if (inf) startMove(e, inf, true);      // السحب يحوّل العنصر إلى حر عند أول حركة
+        e.preventDefault(); let inf = find(wEl.dataset.pb); if (inf && e.altKey) { dup(); inf = selInfo(); } if (inf) startMove(e, inf, true, e.altKey);      // السحب يحوّل العنصر إلى حر عند أول حركة
       }
     }, true);
     fdoc.addEventListener("dblclick", e => {
@@ -416,22 +417,38 @@ body{overflow-x:hidden;margin:0}`;
   }
 
   /* ───────────────── تحريك العنصر الحر (حر أو ملتصق) ───────────────── */
-  function startMove(e, inf, lazy) {
+  function startMove(e, inf, lazy, copy) {
     const id = inf.node.id, dev = E.dev; if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = el.getBoundingClientRect();
     let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
-    const u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top; let moved = false;
+    const u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top; let moved = false, dropCol = null, ptr = null;
+    const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
+    const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
       if (!conv) { conv = true; E.sel = id; toggleFree(); inf = find(id); ensureMobile(inf.sec); pts = snapPts(inf, fdoc.querySelector(`[data-pb="${id}"]`).closest(".pb-in")); cr = pts.cr; }
       if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }                       // Shift = حركة في محور واحد
       let X = X0 + dx, Y = Y0 + dy, guides = [];
-      if (E.snap && !ev.altKey) { const sn = snapBox(X, Y, r0.width, r0.height, pts); X = sn.x; Y = sn.y; guides = sn.guides; }
+      if (E.snap && (copy || !ev.altKey)) { const sn = snapBox(X, Y, r0.width, r0.height, pts); X = sn.x; Y = sn.y; guides = sn.guides; }
       setR(inf.set, "fx", dev, Math.round(X / cr.width * 1000) / 10); setR(inf.set, "fy", dev, Math.round(Y / u));
       if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, dev)); });
       renderCanvas(); positionOverlay(); drawGuides(guides, pts.cr);
+      ptr = { x: px0 + dx, y: py0 + dy }; const col = fdoc.elementsFromPoint(ptr.x, ptr.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);       // العمود تحت المؤشر
+      clearDrop(); dropCol = col ? col.dataset.pb : null; if (col) { const ci = col.querySelector(".pb-colin"); if (ci) ci.classList.add("pbx-dropcol"); }
+      const tp = document.createElement("div"); tp.className = "pbx-tip"; tp.textContent = col ? "اترك Ctrl مضغوطاً عند الإفلات لإدراجه داخل هذا العمود" : ""; if (col) { const st = $("pbx-stage").getBoundingClientRect(), pp = inF ? { x: f0.left + ev.clientX * E.scale, y: f0.top + ev.clientY * E.scale } : { x: ev.clientX, y: ev.clientY }; tp.style.left = (pp.x - st.left + 14) + "px"; tp.style.top = (pp.y - st.top + 14) + "px"; $("pbx-ovl").appendChild(tp); }
     };
-    dragTrack(e, "move", mv, () => { document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); if (moved) { commitHist(); renderInspector(); } });
+    dragTrack(e, "move", mv, ev => {
+      document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); clearDrop();
+      if (moved && dropCol && ev && (ev.ctrlKey || ev.metaKey)) {                                          // إفلات مع Ctrl: إدراج في العمود
+        const me = find(id), tc = find(dropCol); if (me && tc && tc.kind === "column") {
+          me.list.splice(me.idx, 1); ["fx", "fy", "fwd", "fh"].forEach(k => delete me.node.set[k]);
+          const ws = tc.node.widgets, rects = ws.map(w => { const n = fdoc.querySelector(`[data-pb="${w.id}"]`); return n ? n.getBoundingClientRect() : null; });
+          let at = ws.length; for (let i = 0; i < ws.length; i++) if (rects[i] && ptr && ptr.y < rects[i].top + rects[i].height / 2) { at = i; break; }
+          ws.splice(at, 0, me.node); afterEdit(id); return;
+        }
+      }
+      if (moved) { commitHist(); renderInspector(); }
+    });
   }
   /* سحب عنوان شريحة السلايدر بحرية فوق الصورة */
   function startCapDrag(e, cap, wEl) {
@@ -653,7 +670,7 @@ body{overflow-x:hidden;margin:0}`;
       if (!inf.free) h += `<button class="pbx-small" data-q="grab" draggable="true" title="اسحبه إلى عمود آخر أو قسم آخر" style="cursor:grab">✥ نقل لعمود</button>${q("up", "↑", "تقديم في الترتيب (Alt+↑)")}${q("down", "↓", "تأخير في الترتيب (Alt+↓)")}`;
       h += `</div>`;
       if (inf.free) h += `<div class="pbx-qr">${q("al-left", "⇤", "محاذاة لأقصى اليسار")}${q("al-center", "↔", "توسيط أفقي")}${q("al-right", "⇥", "محاذاة لأقصى اليمين")}<span class="pbx-nudge">${q("n-l", "←", "إزاحة 1px (Shift=10)")}${q("n-u", "↑")}${q("n-d", "↓")}${q("n-r", "→")}</span></div>`;
-      else h += `<small style="color:#888">اسحب العنصر بالفأرة لتحريكه بحرية (يتحول لعنصر حر) · Alt+نقر = تحديد دون سحب</small>`;
+      else h += `<small style="color:#888">اسحب العنصر بالفأرة لتحريكه بحرية (يتحول لعنصر حر) · Alt+سحب = نسخ العنصر وتحريك النسخة</small>`;
       if (["image", "slider", "gallery"].includes(inf.node.type)) h += `<div class="pbx-qr">${q("upl", "⬆ رفع صور")}${q("lib", "📚 المكتبة")}</div>`;
     } else {
       h += `<div class="pbx-qr">${q("up", inf.kind === "column" ? "▶" : "↑", "تحريك")}${q("down", inf.kind === "column" ? "◀" : "↓", "تحريك")}`;

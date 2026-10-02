@@ -333,6 +333,7 @@ const PB = (() => {
     });
     return { items, h: y + 16 };
   }
+  const autoFlowFree = sec => sec.set.kind !== "canvas" && sec.set.autoM !== false && (sec.free || []).length > 0 && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined));
   function renderSections(page, ctx) {
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
@@ -389,6 +390,12 @@ const PB = (() => {
         return `<div class="pb-col x-${col.id}${cs.cls ? " " + esc(cs.cls) : ""}"${attrs(col, "column", cs)}><div class="pb-colin">${ws || (edit ? '<div class="pb-empty">＋ اسحب عنصراً إلى هنا</div>' : "")}</div></div>`;
       }).join("");
       const free = (sec.free || []).map(w => renderW(w, true)).join("");
+      if (free && autoFlowFree(sec)) {                                                              // عناصر حرة داخل قسم عادي: تُرتَّب عمودياً تحت الأعمدة على الهاتف ما لم تُضبط قيم هاتف صريحة
+        css.m.push(`${inx}>.pb-fz{position:static;width:100%;order:99;pointer-events:auto}`);
+        (sec.free || []).slice().sort((x, y) => (Number(eff(x.set, "fy", "d")) || 0) - (Number(eff(y.set, "fy", "d")) || 0) || (Number(eff(y.set, "fx", "d")) || 0) - (Number(eff(x.set, "fx", "d")) || 0)).forEach(w => {
+          const wd = Number(eff(w.set, "fwd", "d")) || 30, small = wd < 30 || ["button", "counter", "countdown", "spacer", "divider"].includes(w.type), wm = small ? Math.min(92, Math.max(60, wd * 2.4)) : 92;
+          css.m.push(`.pb-w.x-${w.id}{position:relative;left:auto;top:auto;width:${Math.round(wm * 10) / 10}%;margin:12px auto;z-index:auto}`); });
+      }
       const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free || (edit ? '<div class="pb-empty" style="margin:40px auto;max-width:360px;pointer-events:none">اسحب العناصر إلى هذا القماش الحر وحرّكها وغيّر أحجامها بحرية</div>' : "")}</div>` : "";
       const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
       SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
@@ -478,5 +485,5 @@ ${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
 </body></html>`;
   }
 
-  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
