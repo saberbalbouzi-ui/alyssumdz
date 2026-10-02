@@ -110,7 +110,7 @@ const Cart = {
       items: items.map(it => { const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
-      coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount,
+      coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : undefined,
     });
     Gifts.markUsed(AppliedCoupon.record);
@@ -466,7 +466,17 @@ function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender){
   async function apply(){
     const code = (input.value||"").trim();
     if(!code){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent=""; rerender(); return; }
-    const list = (await loadCoupons()).concat(await Gifts.records());      // + هدايا الحساب (ترحيب/تثبيت) غير المستعملة
+    let list = (await loadCoupons()).concat(await Gifts.records());      // + هدايا الحساب (ترحيب/تثبيت) غير المستعملة
+    /* كود شخصي (إعادة الشراء): ليس في الملف العام، يُفحص على الخادم مع رقم هاتف الطلب */
+    if(!list.some(c=>String(c.code||"").toUpperCase() === code.toUpperCase())){
+      const ph = (document.getElementById("phone") || document.getElementById("cphone") || {}).value || "";
+      if(/^(BACK|PR)-/i.test(code)){
+        if(ph.replace(/\D/g, "").length < 9){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent="📱 أدخل رقم هاتفك في النموذج أولاً — هذا الكود شخصي"; msg.style.color="var(--red)"; rerender(); return; }
+        let pr = null; try{ pr = await API.promoCheck(code, ph); }catch(e){}
+        if(pr && pr.ok) list = list.concat([{ code: code.toUpperCase(), type: pr.type, value: pr.value, minOrder: pr.minOrder, expiresAt: pr.expiresAt, active: true, __promo: true }]);
+        else if(pr && pr.error){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent = pr.error === "used" ? "⚠️ هذا الكود استُعمل من قبل" : pr.error === "expired" ? "⚠️ انتهت صلاحية هذا الكود" : "⚠️ هذا الكود غير صالح لهذا الرقم"; msg.style.color="var(--red)"; rerender(); return; }
+      }
+    }
     const res = findValidCoupon(list, code, getSubtotal());
     if(!res.ok){
       AppliedCoupon.code=""; AppliedCoupon.record=null;
@@ -813,7 +823,7 @@ function initProduct(slug){
       dtype: state.dtype, desk,
       items: orderItems(),
       subtotal: state.offer.price, fee, total,
-      coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount,
+      coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: couponGiftTitle() ? Object.assign({ "🎁 هدية": couponGiftTitle() }, extraValues) : extraValues,
     });
     Gifts.markUsed(AppliedCoupon.record);

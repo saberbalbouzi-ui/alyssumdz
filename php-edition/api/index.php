@@ -62,6 +62,7 @@ function db(): PDO {
       CREATE INDEX IF NOT EXISTS customer_fails_k ON customer_fails(phone, at);
       CREATE TABLE IF NOT EXISTS admin_kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS webhook_log (id INTEGER PRIMARY KEY, ts INTEGER NOT NULL, tracking TEXT, raw TEXT, result TEXT, payload TEXT);
+      CREATE TABLE IF NOT EXISTS promo_codes (code TEXT PRIMARY KEY, phone TEXT NOT NULL, type TEXT NOT NULL, value REAL NOT NULL DEFAULT 0, min_order REAL NOT NULL DEFAULT 0, expires INTEGER NOT NULL, used_order TEXT, used_at INTEGER, created INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS rl (k TEXT NOT NULL, t INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS rl_k ON rl(k, t);
     ");
@@ -285,6 +286,13 @@ switch ($route) {
         }
         $id = 'S' . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 5));
         $cust = custFromToken((string)($o['ctoken'] ?? ''));
+        /* كود تخفيض شخصي: يُستهلك مرة واحدة ولصاحب الهاتف؛ إن لم يصلح لا يُرفض الطلب بل يُعلَّم ليراه المدير */
+        $promo = strtoupper(trim((string)($o['promo'] ?? '')));
+        if ($promo !== '') {
+            $u = $d->prepare('UPDATE promo_codes SET used_order = ?, used_at = ? WHERE code = ? AND used_order IS NULL AND expires > ? AND phone = ?');
+            $u->execute([$id, time(), $promo, time(), custPhone($phone)]);
+            if ($u->rowCount() < 1) { $ex = is_array($o['extra'] ?? null) ? $o['extra'] : []; $ex['promo_invalid'] = $promo; $o['extra'] = $ex; }
+        }
         $extra = is_array($o['extra'] ?? null) ? json_encode($o['extra'], JSON_UNESCAPED_UNICODE) : '{}';
         if (strlen($extra) > 4000) $extra = '{}';
         $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra, customer_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
@@ -363,6 +371,28 @@ switch ($route) {
             }
         }
         out(200, ['ok' => true, 'linked' => false]);
+
+    /* فحص كود تخفيض شخصي قبل تطبيقه: يخص هذا الهاتف، غير مستعمل، وصالح */
+    case 'promo_check':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        rateLimit('pchk' . clientIp(), 40, 600);
+        $b = body(); $code = strtoupper(trim((string)($b['code'] ?? ''))); $ph = custPhone((string)($b['phone'] ?? ''));
+        $st = db()->prepare('SELECT * FROM promo_codes WHERE code = ? AND phone = ?'); $st->execute([$code, $ph]); $c = $st->fetch();
+        if (!$c) out(200, ['ok' => false, 'error' => 'invalid']);
+        if ($c['used_order'] !== null) out(200, ['ok' => false, 'error' => 'used']);
+        if ((int)$c['expires'] <= time()) out(200, ['ok' => false, 'error' => 'expired']);
+        out(200, ['ok' => true, 'type' => $c['type'], 'value' => (float)$c['value'], 'minOrder' => (float)$c['min_order'], 'expiresAt' => iso((int)$c['expires'])]);
+
+    /* المدير ينشئ كوداً شخصياً لهاتف */
+    case 'promo_create':
+        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $ph = custPhone((string)($b['phone'] ?? '')); $type = (string)($b['type'] ?? 'percent');
+        if (!preg_match('/^0\d{8,9}$/', $ph) || !in_array($type, ['percent', 'fixed', 'freeship'], true)) out(422, ['error' => 'invalid']);
+        $code = 'BACK-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 6));
+        db()->prepare('INSERT INTO promo_codes (code, phone, type, value, min_order, expires, created) VALUES (?,?,?,?,?,?,?)')
+          ->execute([$code, $ph, $type, (float)($b['value'] ?? 0), (float)($b['min_order'] ?? 0), time() + max(1, (int)($b['days'] ?? 14)) * 86400, time()]);
+        out(200, ['ok' => true, 'code' => $code]);
 
     /* تتبّع عام برقم التتبع: الحالة والوجهة فقط (لا اسم ولا هاتف ولا عنوان) */
     case 'track':

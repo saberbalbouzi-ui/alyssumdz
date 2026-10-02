@@ -184,7 +184,7 @@ create policy "admin update orders" on public.orders for update to authenticated
 create or replace function public.submit_order(p jsonb) returns text
 language plpgsql security definer set search_path = public as $$
 declare
-  v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid;
+  v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid; v_promo text; v_extra jsonb;
 begin
   v_name := btrim(coalesce(p ->> 'name', ''));
   v_phone := regexp_replace(coalesce(p ->> 'phone', ''), '[^0-9+]', '', 'g');
@@ -198,11 +198,19 @@ begin
   select string_agg((i ->> 'title') || ' ×' || coalesce(i ->> 'qty', '1') || ' = ' || round(coalesce((i ->> 'price')::numeric, 0) * coalesce((i ->> 'qty')::numeric, 1)) || ' DA', E'\n')
     into v_text from jsonb_array_elements(v_items) i;
   v_id := 'S' || to_char(now(), 'YYMMDD') || '-' || upper(substr(md5(gen_random_uuid()::text), 1, 5));
+  v_extra := coalesce(p -> 'extra', '{}'::jsonb);
+  -- كود تخفيض شخصي: يُستهلك مرة واحدة فقط ولصاحب الهاتف نفسه؛ إن لم يصلح لا يُرفض الطلب بل يُعلَّم في extra ليراه المدير
+  v_promo := upper(btrim(coalesce(p ->> 'promo', '')));
+  if v_promo <> '' then
+    update public.promo_codes set used_order = v_id, used_at = now()
+     where code = v_promo and used_order is null and expires_at > now() and phone = public._cust_phone(v_phone);
+    if not found then v_extra := v_extra || jsonb_build_object('promo_invalid', v_promo); end if;
+  end if;
   v_cust := public._cust_from_token(p ->> 'ctoken');                      -- null إن لم يكن الزبون مسجّلاً
   insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra, customer_id)
   values (v_id, v_name, v_phone, left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), left(p ->> 'dtype', 10), left(p ->> 'desk', 160),
           v_items, coalesce(v_text, ''), coalesce((p ->> 'subtotal')::numeric, 0), coalesce((p ->> 'fee')::numeric, 0), (p ->> 'total')::numeric,
-          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), coalesce(p -> 'extra', '{}'::jsonb), v_cust);
+          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), v_extra, v_cust);
   return v_id;
 end $$;
 revoke all on function public.submit_order(jsonb) from public;
@@ -380,3 +388,43 @@ revoke all on public.admin_kv from anon, authenticated;
 grant select, insert, update on public.admin_kv to authenticated;
 drop policy if exists "admin kv" on public.admin_kv;
 create policy "admin kv" on public.admin_kv for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- ════════════════════════════════════════════════════════════════════
+-- أكواد تخفيض شخصية (إعادة الشراء): كل كود لرقم هاتف واحد ويُستعمل مرة واحدة وله صلاحية. لا تُنشر في ملف عام.
+-- ════════════════════════════════════════════════════════════════════
+create table if not exists public.promo_codes (
+  code text primary key,
+  phone text not null,
+  type text not null check (type in ('percent', 'fixed', 'freeship')),
+  value numeric not null default 0,
+  min_order numeric not null default 0,
+  expires_at timestamptz not null,
+  used_order text, used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists promo_codes_phone_idx on public.promo_codes (phone);
+alter table public.promo_codes enable row level security;
+revoke all on public.promo_codes from anon, authenticated;
+grant select, insert, update, delete on public.promo_codes to authenticated;
+drop policy if exists "admin promo" on public.promo_codes;
+create policy "admin promo" on public.promo_codes for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+create table if not exists public.promo_fails (at timestamptz not null default now());
+alter table public.promo_fails enable row level security;
+revoke all on public.promo_fails from anon, authenticated;
+
+-- فحص الكود قبل تطبيقه في الموقع: يُرجع نوع الخصم وقيمته فقط إن كان الكود لهذا الهاتف وغير مستعمل وصالحاً
+create or replace function public.validate_promo(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare c public.promo_codes; v_code text := upper(btrim(coalesce(p ->> 'code', ''))); v_phone text := public._cust_phone(p ->> 'phone');
+begin
+  delete from public.promo_fails where at < now() - interval '1 hour';
+  if (select count(*) from public.promo_fails where at > now() - interval '10 minutes') >= 60 then raise exception 'rate_limited'; end if;
+  select * into c from public.promo_codes where code = v_code and phone = v_phone;
+  if c.code is null then insert into public.promo_fails default values; return jsonb_build_object('ok', false, 'error', 'invalid'); end if;
+  if c.used_order is not null then return jsonb_build_object('ok', false, 'error', 'used'); end if;
+  if c.expires_at <= now() then return jsonb_build_object('ok', false, 'error', 'expired'); end if;
+  return jsonb_build_object('ok', true, 'type', c.type, 'value', c.value, 'minOrder', c.min_order, 'expiresAt', c.expires_at);
+end $$;
+revoke all on function public.validate_promo(jsonb) from public;
+grant execute on function public.validate_promo(jsonb) to anon, authenticated;
