@@ -888,7 +888,7 @@ function productCardHTML(p, opts){
   const ptype = productType(p), disc = (ptype==="simple" && p.old) ? Math.round((1-p.price/p.old)*100) : 0;
   const oos = isOutOfStock(p);
   return `
-    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" decoding="async" width="500" height="500" src="${REL}${p.cover||p.images[0]}" alt="${p.title}"></div>
+    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" decoding="async" width="500" height="500" src="${REL}${p.cover||p.images[0]}" srcset="${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w480.webp"))} 480w, ${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w720.webp"))} 720w, ${encodeURI(REL+(p.cover||p.images[0]))} 1100w" sizes="(max-width:700px) 92vw, 330px" onerror="if(this.srcset){this.removeAttribute('srcset');this.src=this.src}" alt="${p.title}"></div>
     <div class="body">
       <h3>${p.title}</h3>
       <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>

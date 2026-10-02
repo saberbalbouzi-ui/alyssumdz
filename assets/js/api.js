@@ -192,13 +192,16 @@ const API = {
       try { const o = opts || {}; const r = await fetch(this.url(path), Object.assign({}, o, { headers: Object.assign(this.headers(t), o.headers || {}) })); if (!r.ok) return null; const txt = await r.text(); return txt ? JSON.parse(txt) : {}; } catch (e) { return null; }
     },
   },
+  isPreview() { try { return /[?&]preview=/.test(location.search) && window.self !== window.top; } catch (e) { return true; } },   // معاينة داخل لوحة الإدارة: لا تُحتسب زيارة
   hit(page) {
+    if (this.isPreview()) return;
     let isNew = false; try { isNew = localStorage.getItem("alyssum_vid_new") === "1"; localStorage.removeItem("alyssum_vid_new"); } catch (e) {}
     if (this.php.on()) return this.php.send("hit", { page, vid: this.visitorId(), isNew });
     if (this.sb.enabled()) return this.sb.publicRpc("track_hit", { p_page: page, p_vid: this.visitorId(), p_new: isNew });
     this.post({ type: "hit", page, vid: this.visitorId(), isNew });
   },
   ping(page) {
+    if (this.isPreview()) return;
     if (this.php.on()) return this.php.send("ping", { page, vid: this.visitorId() });
     if (this.sb.enabled()) return this.sb.publicRpc("track_ping", { p_page: page, p_vid: this.visitorId() });
     this.post({ type: "ping", page, vid: this.visitorId() });
