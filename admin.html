@@ -7429,6 +7429,10 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-bar span,.pbx-bar button{background:#2d6cdf;color:#fff;border:0;font-size:.74rem;font-weight:800;padding:.22rem .5rem;border-radius:6px 6px 0 0;cursor:pointer;font-family:inherit}.pbx-bar span{cursor:default}
 .pbx-box.column .pbx-bar *{background:#9b59b6}.pbx-box.widget .pbx-bar *{background:#e67e22}
 .pbx-bar button:hover{filter:brightness(1.15)}
+.pbx-q{background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.45rem;margin-bottom:.6rem;display:grid;gap:.4rem}
+.pbx-qr{display:flex;flex-wrap:wrap;gap:.25rem;align-items:center}.pbx-q .pbx-small.on{background:#173f35;color:#fff}
+.pbx-crumbs{display:flex;flex-wrap:wrap;gap:.15rem;align-items:center;font-size:.72rem;color:#999}.pbx-crumb{border:0;background:#fff;border:1px solid #e0d9c8;border-radius:6px;padding:.12rem .4rem;font-size:.72rem;cursor:pointer;font-family:inherit}.pbx-crumb.on{background:#e67e22;color:#fff;border-color:#e67e22}
+.pbx-nudge{display:inline-flex;gap:.15rem;margin-inline-start:auto}
 .pbx-h{position:absolute;pointer-events:auto;background:#fff;border:2px solid currentColor;border-radius:3px;color:#2d6cdf;z-index:3;width:11px;height:11px}
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
@@ -7642,6 +7646,10 @@ body{overflow-x:hidden;margin:0}`;
       if (wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots")) {
         if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
         e.preventDefault(); const inf = find(wEl.dataset.pb); if (inf) startMove(e, inf);
+      } else if (!wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots,button,.pb-fz")) {
+        if (e.altKey) return;                                                                         // Alt = تحديد فقط
+        if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
+        e.preventDefault(); const inf = find(wEl.dataset.pb); if (inf) startMove(e, inf, true);      // السحب يحوّل العنصر إلى حر عند أول حركة
       }
     }, true);
     fdoc.addEventListener("dblclick", e => {
@@ -7736,20 +7744,9 @@ body{overflow-x:hidden;margin:0}`;
     const btn = (t, tt, fn, drag, on) => { const b = document.createElement("button"); b.textContent = t; b.title = tt; if (on) b.className = "on"; if (drag) { b.draggable = true; b.addEventListener("dragstart", e => { E.drag = { move: inf.node.id }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "move"; }); b.addEventListener("dragend", hideDrop); } else b.onclick = e => { e.stopPropagation(); fn(); }; bar.appendChild(b); };
     const colorIn = (key, tt, ic) => { const w = document.createElement("label"); w.title = tt; w.style.cssText = "background:inherit;display:flex;align-items:center;gap:2px;color:#fff;font-size:.72rem;padding:.12rem .3rem;cursor:pointer;background:inherit"; const i = document.createElement("input"); i.type = "color"; i.value = /^#[0-9a-f]{6}$/i.test(inf.set[key] || "") ? inf.set[key] : "#ffffff";
       i.oninput = () => { inf.set[key] = i.value; schedule(); }; i.onchange = () => { commitHist(); renderInspector(); }; w.append(ic, i); bar.appendChild(w); };
-    if (inf.kind === "widget") {
-      if (!inf.free) { btn("✥", "اسحب لنقل العنصر بين الأعمدة", null, true); btn("↑", "تقديم في الترتيب", () => move(-1)); btn("↓", "تأخير في الترتيب", () => move(1)); }
-      btn("أمام", "إحضار للأمام (فوق العناصر الأخرى)", () => zOrder(1)); btn("خلف", "إرسال للخلف (تحت العناصر الأخرى)", () => zOrder(-1));
-      btn("🕊️", inf.free ? "تثبيت العنصر داخل عمود (وضع عادي)" : "تحرير العنصر ليتحرك ويتغير حجمه بحرية فوق القسم", toggleFree, false, inf.free);
-      if (inf.free) { btn("⇤", "محاذاة لأقصى اليسار", () => alignFree("left")); btn("↔", "توسيط أفقي", () => alignFree("center")); btn("⇥", "محاذاة لأقصى اليمين", () => alignFree("right")); }
-      if (["image", "slider", "gallery"].includes(inf.node.type)) { btn("⬆", "رفع صور مباشرة", () => uploadFor(inf)); btn("📚", "مكتبة الصور", () => libFor(inf)); }
-      const has = k => (inf.def.ctl || []).some(c => c.k === k);
-      if (has("color")) colorIn("color", "لون النص", "🔤"); if (has("bgc")) colorIn("bgc", "لون الزر", "🎨"); else colorIn("bg", "لون الخلفية", "🎨");
-    } else {
-      btn(inf.kind === "column" ? "▶" : "↑", "تحريك", () => move(-1)); btn(inf.kind === "column" ? "◀" : "↓", "تحريك", () => move(1));
-      colorIn("bg", "لون الخلفية", "🎨");
-      if (inf.kind === "section" && (inf.node.free || []).length) btn("📲 تكييف للهاتف", "ترتيب عناصر القماش الحر عمودياً تلقائياً لشاشة الهاتف", () => autoMobile(inf.node));
-      if (inf.kind === "section" && inf.node.set.kind !== "canvas") btn("＋عمود", "إضافة عمود/خلية", () => addCol(inf.node)); if (inf.kind === "column") btn("＋عمود", "إضافة عمود بعده", () => addCol(inf.sec, inf.idx + 1));
-    }
+    const has = k => inf.kind === "widget" && (inf.def.ctl || []).some(c => c.k === k);
+    if (inf.kind === "widget") { if (has("color")) colorIn("color", "لون النص", "🔤"); if (has("bgc")) colorIn("bgc", "لون الزر", "🎨"); else colorIn("bg", "لون الخلفية", "🎨"); }
+    else colorIn("bg", "لون الخلفية", "🎨");
     btn("⧉", "تكرار", dup); btn("🗑", "حذف", del);
     box.appendChild(bar);
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
@@ -7799,12 +7796,14 @@ body{overflow-x:hidden;margin:0}`;
   }
 
   /* ───────────────── تحريك العنصر الحر (حر أو ملتصق) ───────────────── */
-  function startMove(e, inf) {
-    ensureMobile(inf.sec);
-    const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cont = el.closest(".pb-in"), s = E.scale, dev = E.dev, pts = snapPts(inf, cont), cr = pts.cr, r0 = el.getBoundingClientRect(), u = uOf(inf.sec, cr);
-    const X0 = r0.left - cr.left, Y0 = r0.top - cr.top; let moved = false;
+  function startMove(e, inf, lazy) {
+    const id = inf.node.id, dev = E.dev; if (!lazy) ensureMobile(inf.sec);
+    const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = el.getBoundingClientRect();
+    let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
+    const u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top; let moved = false;
     const mv = (dx, dy, ev) => {
-      if (!moved && Math.abs(dx) + Math.abs(dy) < 3) return; moved = true;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
+      if (!conv) { conv = true; E.sel = id; toggleFree(); inf = find(id); ensureMobile(inf.sec); pts = snapPts(inf, fdoc.querySelector(`[data-pb="${id}"]`).closest(".pb-in")); cr = pts.cr; }
       if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }                       // Shift = حركة في محور واحد
       let X = X0 + dx, Y = Y0 + dy, guides = [];
       if (E.snap && !ev.altKey) { const sn = snapBox(X, Y, r0.width, r0.height, pts); X = sn.x; Y = sn.y; guides = sn.guides; }
@@ -7996,15 +7995,61 @@ body{overflow-x:hidden;margin:0}`;
     else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); dup(); }
     else if (e.key === "Delete" && E.sel) { e.preventDefault(); del(); }
-    else if (e.key === "Escape") select(null);
+    else if (e.key === "Escape") { const inf = selInfo(); select(inf ? parentId(inf) : null); }          // Esc = تحديد الأب (عمود ثم قسم ثم لا شيء)
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
-      const inf = selInfo(); if (!inf || !inf.free) return; e.preventDefault();
+      const inf = selInfo(); if (!inf) return;
+      if (!inf.free) { e.preventDefault(); const d = (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : 0; if (d) { if (e.altKey) move(d); else nav(d); } return; }   // العناصر العادية: الأسهم تنقل التحديد (Alt = إعادة ترتيب)
       const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, st = e.shiftKey ? 10 : 1;
       let fx = Number(eff(inf.set, "fx", E.dev)) || 0, fy = Number(eff(inf.set, "fy", E.dev)) || 0;
       const u = uOf(inf.sec, { width: cw }); ensureMobile(inf.sec); fx = Number(eff(inf.set, "fx", E.dev)) || 0; fy = Number(eff(inf.set, "fy", E.dev)) || 0;
       if (e.key === "ArrowLeft") fx -= st / cw * 100; if (e.key === "ArrowRight") fx += st / cw * 100; if (e.key === "ArrowUp") fy -= st / u; if (e.key === "ArrowDown") fy += st / u;
       setR(inf.set, "fx", E.dev, Math.round(fx * 10) / 10); setR(inf.set, "fy", E.dev, Math.round(fy)); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 400);
     }
+  }
+
+  /* ───────────────── تنقل سلس بين العناصر ───────────────── */
+  const parentId = inf => inf.kind === "widget" ? (inf.free ? inf.sec.id : inf.col.id) : inf.kind === "column" ? inf.sec.id : null;
+  function nav(d) {
+    const inf = selInfo(); if (!inf) return; let j = inf.idx + d, to = null;
+    if (inf.kind === "widget" && !inf.free && (j < 0 || j >= inf.list.length)) { const c = inf.sec.cols[inf.sec.cols.indexOf(inf.col) + d]; if (c && c.widgets.length) to = c.widgets[d > 0 ? 0 : c.widgets.length - 1]; }
+    else if (inf.list[j]) to = inf.list[j];
+    if (!to) return; select(to.id); const el = fdoc.querySelector(`[data-pb="${to.id}"]`); if (el) el.scrollIntoView({ block: "nearest" });
+  }
+  function nudge(dx, dy) {
+    const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec);
+    const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, u = uOf(inf.sec, { width: cw });
+    setR(inf.set, "fx", E.dev, Math.round(((Number(eff(inf.set, "fx", E.dev)) || 0) + dx / cw * 100) * 10) / 10); setR(inf.set, "fy", E.dev, Math.round((Number(eff(inf.set, "fy", E.dev)) || 0) + dy / u));
+    if (E.dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, E.dev)); });
+    afterEdit();
+  }
+  /* لوحة الإجراءات السريعة في الشريط الجانبي (بدل ازدحام الشريط فوق العنصر) */
+  function quickHtml(inf) {
+    const q = (k, t, tt, on) => `<button class="pbx-small${on ? " on" : ""}" data-q="${k}" title="${esc(tt || t)}">${t}</button>`;
+    const chain = []; for (let n = inf, g = 0; n && g < 4; g++) { chain.unshift(n); n = parentId(n) ? find(parentId(n)) : null; }
+    const crumbs = chain.map(n => `<button class="pbx-crumb${n.node.id === inf.node.id ? " on" : ""}" data-pick="${n.node.id}">${n.kind === "widget" ? WIDGETS[n.node.type].ic + " " + WIDGETS[n.node.type].label : n.kind === "column" ? "▯ عمود" : "▤ قسم"}</button>`).join(" ‹ ");
+    let h = `<div class="pbx-q"><div class="pbx-crumbs">${crumbs}</div><div class="pbx-qr">${q("prev", "▲ السابق", "تحديد العنصر السابق (↑)")}${q("next", "▼ التالي", "تحديد العنصر التالي (↓)")}${q("parent", "⤴ الأب", "تحديد الحاوية (Esc)")}</div>`;
+    if (inf.kind === "widget") {
+      h += `<div class="pbx-qr">${q("front", "أمام", "إحضار للأمام")}${q("back", "خلف", "إرسال للخلف")}${q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free)}`;
+      if (!inf.free) h += `<button class="pbx-small" data-q="grab" draggable="true" title="اسحبه إلى عمود آخر أو قسم آخر" style="cursor:grab">✥ نقل لعمود</button>${q("up", "↑", "تقديم في الترتيب (Alt+↑)")}${q("down", "↓", "تأخير في الترتيب (Alt+↓)")}`;
+      h += `</div>`;
+      if (inf.free) h += `<div class="pbx-qr">${q("al-left", "⇤", "محاذاة لأقصى اليسار")}${q("al-center", "↔", "توسيط أفقي")}${q("al-right", "⇥", "محاذاة لأقصى اليمين")}<span class="pbx-nudge">${q("n-l", "←", "إزاحة 1px (Shift=10)")}${q("n-u", "↑")}${q("n-d", "↓")}${q("n-r", "→")}</span></div>`;
+      else h += `<small style="color:#888">اسحب العنصر بالفأرة لتحريكه بحرية (يتحول لعنصر حر) · Alt+نقر = تحديد دون سحب</small>`;
+      if (["image", "slider", "gallery"].includes(inf.node.type)) h += `<div class="pbx-qr">${q("upl", "⬆ رفع صور")}${q("lib", "📚 المكتبة")}</div>`;
+    } else {
+      h += `<div class="pbx-qr">${q("up", inf.kind === "column" ? "▶" : "↑", "تحريك")}${q("down", inf.kind === "column" ? "◀" : "↓", "تحريك")}`;
+      if (inf.kind === "section" && inf.node.set.kind !== "canvas") h += q("addcol", "＋ عمود");
+      if (inf.kind === "column") h += q("addcol", "＋ عمود بعده");
+      if (inf.kind === "section" && (inf.node.free || []).length) h += q("automob", "📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف");
+      h += `</div>`;
+    }
+    return h + `</div>`;
+  }
+  function onQuick(k, inf) {
+    const d = { prev: () => nav(-1), next: () => nav(1), parent: () => select(parentId(inf)), front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, up: () => move(-1), down: () => move(1),
+      "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right"), upl: () => uploadFor(inf), lib: () => libFor(inf),
+      addcol: () => inf.kind === "column" ? addCol(inf.sec, inf.idx + 1) : addCol(inf.node), automob: () => autoMobile(inf.node) };
+    if (k.startsWith("n-")) { const st = 1; const m = { l: [-st, 0], r: [st, 0], u: [0, -st], d: [0, st] }[k[2]]; return nudge(m[0] * 4, m[1] * 4); }
+    if (d[k]) d[k]();
   }
 
   /* ───────────────── الإعدادات (Inspector) ───────────────── */
@@ -8027,10 +8072,12 @@ body{overflow-x:hidden;margin:0}`;
     const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].ic + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? "▯ عمود" : "▤ قسم";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
     el.innerHTML = `<div class="pbx-ih">${lbl}</div>
+${quickHtml(inf)}
 <div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-cp"><small>نسخ تصميم ${DEVIC[E.dev]} ${DEVNAME[E.dev]} إلى:</small><select id="cp-scope"><option value="sel">العنصر المحدد</option><option value="sec">القسم كله</option><option value="all">الصفحة كلها</option></select>${DEVS.filter(d => d !== E.dev).map(d => `<button class="pbx-small" data-cpy="${d}" title="نسخ إلى ${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
 ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>'}`;
+    const gr = el.querySelector('[data-q="grab"]'); if (gr) { gr.addEventListener("dragstart", e => { E.drag = { move: inf.node.id }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "move"; }); gr.addEventListener("dragend", hideDrop); }
   }
   function field(c, set) {
     const dev = E.dev, k = c.k, isR = !!c.r;
@@ -8088,7 +8135,9 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
     const t = e.target.closest("button, [data-dev]"); if (!t) return; const inf = selInfo();
     if (t.dataset.dev) { setDev(t.dataset.dev); return; }
     if (t.dataset.itab) { E.tab = t.dataset.itab; renderInspector(); return; }
+    if (t.dataset.pick) { select(t.dataset.pick); return; }
     if (!inf) return;
+    if (t.dataset.q) { if (t.dataset.q !== "grab") onQuick(t.dataset.q, inf); return; }
     if (t.dataset.rs) { const c = ctlByKey(inf, t.dataset.rs); if (c.r) setR(inf.set, c.k, E.dev, undefined); else delete inf.set[c.k]; afterEdit(); return; }
     if (t.dataset.clr) { delete inf.set[t.dataset.clr]; afterEdit(); return; }
     if (t.dataset.al) { const c = ctlByKey(inf, t.dataset.al); applyVal(inf, c, t.dataset.v); afterEdit(); return; }
