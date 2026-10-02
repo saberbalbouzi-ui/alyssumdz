@@ -160,7 +160,7 @@ body{overflow-x:hidden;margin:0}`;
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
     $("pb-app").classList.remove("on"); document.body.style.overflow = "";
-    if (window.PBAdmin) PBAdmin.refresh();
+    if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
   }
 
   /* ───────────────── البحث في النموذج ───────────────── */
@@ -966,15 +966,68 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, E, find };
+  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
+const $q = (id, h) => { const el = document.getElementById(id); if (el) el.innerHTML = h; };
 const PBAdmin = {
   list: [],
   /* قوالب جاهزة (assets/pages/templates/*.json): تُفتح كصفحة جديدة قابلة للتعديل الكامل */
   async openTemplate(name) {
     try { const r = await fetch("assets/pages/templates/" + name + ".json?t=" + Date.now()); if (!r.ok) throw new Error("القالب غير موجود"); const p = this.fresh(await r.json()); PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); }
+  },
+  /* معاينة داخل نافذة بشريط علوي (المكتب/التابلت/الهاتف + تعديل + إغلاق) */
+  preview(slug) { SitePreview.openUrl("lp/" + slug + "/", { title: "معاينة الصفحة", edit: () => { SitePreview.close(); this.edit(slug); } }); },
+  previewProduct(slug) { SitePreview.openUrl("p/" + slug + "/", { title: "معاينة صفحة المنتج", edit: () => { SitePreview.close(); Admin.editProduct(slug); }, editLabel: "تعديل المنتج" }); },
+  /* ── تعديل سريع لصفحة هبوط: الاسم، الصورة، المنتج المرتبط، SEO ── */
+  async quick(slug) {
+    try {
+      const pg = await this.load(slug); this.q = { kind: "lp", slug, page: pg, cover: pg.cover || "" };
+      const prods = (typeof Admin !== "undefined" && Admin.products) || [];
+      $q("pq-title", "تعديل سريع — صفحة هبوط"); $q("pq-body", `<label>اسم الصفحة</label><input id="pq-name" value="${PB.esc(pg.title || "")}">
+${this.quickImg(pg.cover)}
+<label>المنتج المرتبط (نموذج الطلب والصفحة تخصّه)</label><select id="pq-prod"><option value="">— بدون —</option>${prods.map(x => `<option value="${PB.esc(x.slug)}"${pg.product === x.slug ? " selected" : ""}>${PB.esc(x.title)}</option>`).join("")}</select>
+<div class="section-title">SEO</div><label>عنوان SEO (اختياري — وإلا اسم الصفحة)</label><input id="pq-seot" value="${PB.esc(pg.seoTitle || "")}"><label>وصف الصفحة (Meta description)</label><textarea id="pq-desc" rows="3">${PB.esc(pg.desc || "")}</textarea><label>كلمات مفتاحية (مفصولة بفاصلة)</label><input id="pq-kw" value="${PB.esc(pg.kw || "")}"><small class="hint">الرابط: /lp/${PB.esc(slug)}/ (لا يتغير)</small>`);
+      document.getElementById("pq-bg").classList.add("open");
+    } catch (err) { toast("❌ " + err.message); }
+  },
+  quickImg(path) { return `<label>صورة الصفحة (تظهر في القائمة وعند المشاركة)</label><div class="pbx-row" style="gap:.5rem;align-items:center;margin-bottom:.8rem"><div id="pq-prev" class="pbx-pth" style="${path ? `background-image:url('${PB.esc(path)}')` : ""}">${path ? "" : "🖼️"}</div><button class="small gray" type="button" onclick="PBAdmin.quickPick('up')">⬆ رفع</button><button class="small gray" type="button" onclick="PBAdmin.quickPick('lib')">📚 المكتبة</button></div>`; },
+  async quickPick(how) {
+    try {
+      let path = "";
+      if (how === "lib") { const r = await PBApp.openLibrary(false); path = r[0] || ""; }
+      else { const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; path = await new Promise(res => { inp.onchange = async () => { const f = inp.files[0]; if (!f) return res(""); toast("⏳ جارِ رفع الصورة…"); try { res(await Admin.uploadImageFile(f, this.q.kind === "lp" ? "assets/img/pages" : "assets/img/" + this.q.slug, this.q.kind === "lp" ? "pg-" : "main-", this.q.kind === "lp" ? { max: 1200, q: .85, noVariants: true, uniq: true } : undefined)); } catch (er) { toast("❌ " + er.message); res(""); } }; inp.click(); }); }
+      if (!path) return; this.q.cover = path; const pv = document.getElementById("pq-prev"); pv.style.backgroundImage = `url('${path}')`; pv.textContent = ""; toast("✅ تم اختيار الصورة");
+    } catch (err) { toast("❌ " + err.message); }
+  },
+  quickClose() { document.getElementById("pq-bg").classList.remove("open"); this.q = null; },
+  async quickSave() {
+    const q = this.q; if (!q) return; const v = id => (document.getElementById(id) || {}).value || "";
+    try {
+      toast("⏳ جارِ الحفظ والنشر…");
+      if (q.kind === "lp") {
+        const pg = q.page, prev = pg.product || ""; pg.title = v("pq-name").trim() || pg.title; pg.seoTitle = v("pq-seot").trim(); pg.desc = v("pq-desc").trim(); pg.kw = v("pq-kw").trim(); pg.cover = q.cover || pg.cover || ""; pg.product = v("pq-prod");
+        const walk = n => { (n.cols || []).forEach(walk); (n.widgets || []).forEach(walk); (n.free || []).forEach(walk); if (n.type === "orderorig" && pg.product && (!n.set.prod || n.set.prod === prev)) n.set.prod = pg.product; };
+        pg.sections.forEach(walk);
+        const html = PB.fullHtml(pg, Object.assign({ base: "../../" }, PBApp.siteCtx()));
+        await PBApp.putJson("lp/" + q.slug + "/index.html", html, "تعديل سريع لصفحة هبوط: " + q.slug); await PBApp.putJson("assets/pages/" + q.slug + ".json", pg, "مصدر صفحة هبوط: " + q.slug);
+        const idx = this.list.slice(), i = idx.findIndex(x => x.slug === q.slug); if (i >= 0) { idx[i] = Object.assign({}, idx[i], { title: pg.title, thumb: pg.cover || idx[i].thumb, product: pg.product || "", updated: new Date().toISOString().slice(0, 16).replace("T", " ") }); await PBApp.putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط"); }
+        toast("✅ حُفظت الصفحة"); this.quickClose(); this.refresh();
+      } else {
+        const pr = Admin.products.find(x => x.slug === q.slug); if (!pr) throw new Error("المنتج غير موجود");
+        pr.title = v("pq-name").trim() || pr.title; if (q.cover) pr.cover = q.cover; pr.seoTitle = v("pq-seot").trim(); pr.seoDesc = v("pq-desc").trim(); pr.keywords = v("pq-kw").trim();
+        const ok = await Admin.publishDataJs(); if (ok) { toast("✅ حُفظ المنتج على الموقع"); this.quickClose(); this.refresh(); Admin.renderProducts(); }
+      }
+    } catch (err) { toast("❌ " + err.message); }
+  },
+  quickProduct(slug) {
+    const pr = Admin.products.find(x => x.slug === slug); if (!pr) return toast("المنتج غير موجود");
+    this.q = { kind: "product", slug, cover: pr.cover || (pr.images && pr.images[0]) || "" };
+    $q("pq-title", "تعديل سريع — صفحة منتج"); $q("pq-body", `<label>اسم الصفحة (اسم المنتج)</label><input id="pq-name" value="${PB.esc(pr.title || "")}">
+${this.quickImg(this.q.cover)}
+<div class="section-title">SEO</div><label>عنوان SEO (اختياري)</label><input id="pq-seot" value="${PB.esc(pr.seoTitle || "")}"><label>وصف الصفحة (Meta description)</label><textarea id="pq-desc" rows="3">${PB.esc(pr.seoDesc || "")}</textarea><label>كلمات مفتاحية</label><input id="pq-kw" value="${PB.esc(pr.keywords || "")}"><small class="hint">بقية إعدادات المنتج (السعر، العروض، المخزون…) داخل «المنتجات ← تعديل».</small>`);
+    document.getElementById("pq-bg").classList.add("open");
   },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },
   initGen() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } },
@@ -986,9 +1039,9 @@ const PBAdmin = {
     const dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host;
     const svg = (d, w) => `<svg width="${w || 15}" height="${w || 15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px">${d}</svg>`;
     const I = { edit: svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'), eye: svg('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'), copy: svg('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'), trash: svg('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>'), link: svg('<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>'), dl: svg('<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>') };
-    const lpHtml = this.list.length ? `<div class="pbx-pl">${this.list.map(p => `<div class="pbx-pc"><div class="pbx-pth" ${p.thumb ? `style="background-image:url('${PB.esc(p.thumb)}')"` : ""}>${p.thumb ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)}</b><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a><small>${PB.esc(p.updated || "")}</small></div><div class="pbx-pact"><button class="small" onclick="PBAdmin.edit('${PB.esc(p.slug)}')" title="تعديل في المنشئ">${I.edit} تعديل</button><a class="small gray" href="lp/${PB.esc(p.slug)}/" target="_blank" title="معاينة الصفحة المنشورة">${I.eye} معاينة</a><button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')" title="نسخ الصفحة">${I.copy} نسخ</button><button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')" title="نسخ الرابط">${I.link}</button><button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')" title="تصدير JSON">${I.dl}</button><button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')" title="حذف الصفحة (إلغاء النشر)">${I.trash} حذف</button></div></div>`).join("")}</div>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» أو افتح المولّد الذكي.</p>';
+    const lpHtml = this.list.length ? `<div class="pbx-pl">${this.list.map(p => `<div class="pbx-pc"><div class="pbx-pth" ${p.thumb ? `style="background-image:url('${PB.esc(p.thumb)}')"` : ""}>${p.thumb ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)}</b><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a><small>${PB.esc(p.updated || "")}</small></div><div class="pbx-pact"><button class="small" onclick="PBAdmin.preview('${PB.esc(p.slug)}')" title="معاينة الصفحة (ومنها زر التعديل)">${I.eye} معاينة</button><button class="small gray" onclick="PBAdmin.quick('${PB.esc(p.slug)}')" title="اسم الصفحة وصورتها وربطها بمنتج وSEO">${I.edit} تعديل سريع</button><button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')" title="نسخ الصفحة">${I.copy} نسخ</button><button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')" title="نسخ الرابط">${I.link}</button><button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')" title="تصدير JSON">${I.dl}</button><button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')" title="حذف الصفحة (إلغاء النشر)">${I.trash}</button></div></div>`).join("")}</div>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» أو افتح المولّد الذكي.</p>';
     const A = (typeof Admin !== "undefined") ? Admin : {}, prods = A.products || [], stat = p => p.active !== false ? '<span class="pill st-livree">نشط</span>' : '<span class="pill st-annulee">موقوف</span>', ic = n => (typeof AIC === "function" ? AIC(n) : "");
-    const prHtml = prods.length ? `<div class="pbx-pl">${prods.map(p => { const img = p.cover || (p.images && p.images[0]) || ""; const sl = PB.esc(p.slug); return `<div class="pbx-pc"><div class="pbx-pth" ${img ? `style="background-image:url('${PB.esc(img)}')"` : ""}>${img ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)} ${stat(p)}</b><a href="p/${sl}/" target="_blank" dir="ltr">/p/${sl}/</a><small>${Number(p.price || 0).toLocaleString("fr-DZ")} دج · ${PB.esc((A.categories && A.categories[p.cat]) || p.cat || "")}${p.pageMode === "generated" ? " · صفحة مولّدة" : ""}</small></div><div class="pbx-pact"><button class="small" onclick="Admin.editProduct('${sl}')" title="إعدادات المنتج وصفحته (الاسم، السعر، العروض، الصور، SEO…)">${ic("edit")} إعدادات</button><a class="small gray" href="p/${sl}/" target="_blank" title="معاينة صفحة المنتج">${ic("eye")} معاينة</a><button class="small gray" onclick="Admin.duplicateProduct('${sl}')" title="نسخ المنتج وصفحته">${ic("copy")} نسخ</button><button class="small" style="background:var(--red);color:#fff" onclick="Admin.delProduct('${sl}')" title="حذف المنتج">${ic("trash")}</button></div></div>`; }).join("")}</div>` : '<p class="hint">لا توجد منتجات.</p>';
+    const prHtml = prods.length ? `<div class="pbx-pl">${prods.map(p => { const img = p.cover || (p.images && p.images[0]) || ""; const sl = PB.esc(p.slug); return `<div class="pbx-pc"><div class="pbx-pth" ${img ? `style="background-image:url('${PB.esc(img)}')"` : ""}>${img ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)} ${stat(p)}</b><a href="p/${sl}/" target="_blank" dir="ltr">/p/${sl}/</a><small>${Number(p.price || 0).toLocaleString("fr-DZ")} دج · ${PB.esc((A.categories && A.categories[p.cat]) || p.cat || "")}${p.pageMode === "generated" ? " · صفحة مولّدة" : ""}</small></div><div class="pbx-pact"><button class="small" onclick="PBAdmin.previewProduct('${sl}')" title="معاينة صفحة المنتج (ومنها زر التعديل)">${ic("eye")} معاينة</button><button class="small gray" onclick="PBAdmin.quickProduct('${sl}')" title="الاسم والصورة وSEO">${ic("edit")} تعديل سريع</button><button class="small gray" onclick="Admin.duplicateProduct('${sl}')" title="نسخ المنتج وصفحته">${ic("copy")} نسخ</button><button class="small" style="background:var(--red);color:#fff" onclick="Admin.delProduct('${sl}')" title="حذف المنتج">${ic("trash")}</button></div></div>`; }).join("")}</div>` : '<p class="hint">لا توجد منتجات.</p>';
     box.innerHTML = `<h3 class="pbx-sh">صفحات الهبوط <span>${this.list.length}</span></h3>${lpHtml}<h3 class="pbx-sh">صفحات المنتجات <span>${prods.length}</span></h3>${prHtml}`;
   },
   /* تكرار صفحة، وتصدير/استيراد ملف JSON (لنقل التصاميم بين متاجرك أو بيعها كقوالب) */
