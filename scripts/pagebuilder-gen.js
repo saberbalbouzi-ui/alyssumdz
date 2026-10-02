@@ -236,7 +236,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       for (const m of models) {
         const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: cfg || {} }) });
         const j = await r.json().catch(() => ({}));
-        if (r.ok) { gemTrack(j, m); return j; }
+        if (r.ok) { gemTrack(j, m); j._model = m; return j; }
         const gm = (j.error && j.error.message) || ""; last = gemErr(r.status, gm);
         if (r.status === 429 && task === "image") { imgQuota = true; continue; }                                  // نماذج الصور غالباً بلا طبقة مجانية: لا فائدة من إعادة المحاولة
         if ([500, 502, 503, 504, 429].includes(r.status) || /high demand|overloaded|unavailable|try again/i.test(gm)) { busy = true; continue; }
@@ -383,6 +383,10 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <label class="hint" style="margin:0">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
       <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
     </div>
+    <div class="grid2" style="margin-top:.4rem">
+      <label class="hint" style="margin:0">طريقة التوليد<select id="gen-mode"><option value="parts">جودة عالية: 3 أجزاء متصلة (موصى — نصوص أوضح)</option><option value="single">صورة واحدة طويلة (أسرع/أرخص، نصوصها أصغر وأقل وضوحاً)</option></select></label>
+      <label class="hint" style="margin:0">نموذج الصور<select id="gen-imgq"><option value="pro">أعلى جودة نص (Nano Banana Pro) — الأغلى</option><option value="fast">أسرع وأرخص (Flash)</option></select></label>
+    </div>
     <button class="small gray" type="button" onclick="PBGen.testKey()" style="margin-top:.3rem">🔑 اختبار المفتاح</button>
   </details>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 .3rem">
@@ -484,12 +488,12 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   const small64 = async (file, max) => { const c = await loadImage(file), k = Math.min(1, max / Math.max(c.width, c.height)), c2 = document.createElement("canvas"); c2.width = Math.round(c.width * k); c2.height = Math.round(c.height * k); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); return c2.toDataURL("image/jpeg", .9).split(",")[1]; };
   /* مرحلة خفية: يكتب Gemini النصوص التسويقية والبرومبت النهائي، ثم يُدقَّق ويُخزَّن (لا يُعرض) */
   async function makeFinal(key) {
-    const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/3) Gemini يكتب نصوصاً تسويقية قوية…";
+    const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/5) Gemini يكتب نصوصاً تسويقية قوية…";
     const f = $("gen-pimg").files && $("gen-pimg").files[0], b64 = f ? await small64(f, 1400) : null;
     const t = await (PBGen.textFn || geminiText)(key, $("gen-out").value, b64, "image/jpeg", "copy"), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
     if (!blocks.length) throw new Error("لم يُرجع Gemini تصميماً جاهزاً — أعد المحاولة");
     const fx = localFix(blocks.join("\n\n")); $("gen-final").value = fx.text; $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = fx.text;
-    msg.textContent = "⏳ (2/3) تدقيق إملائي وتكرار…"; try { await proofread(); } catch (e) { }
+    msg.textContent = "⏳ (2/5) تدقيق إملائي وتكرار…"; try { await proofread(); } catch (e) { }
     S.finalPrompt = $("gen-final").value; return S.finalPrompt;
   }
   async function auto() { const msg = $("gen-automsg"), key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } try { await makeFinal(key); msg.textContent = "✅ جاهز"; } catch (err) { msg.textContent = "❌ " + err.message; } }
@@ -502,10 +506,34 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   /* نماذج الصور المتاحة */
   async function imageModels(key) {
-    const pref = ["gemini-3.1-flash-image", "gemini-3.1-flash-lite-image", "gemini-2.5-flash-image", "gemini-3-pro-image-preview"]; await gemModels(key, "copy"); const names = (_gemCache && _gemCache.key === key && _gemCache.names) || [];
+    const fast = ($("gen-imgq") || {}).value === "fast", pref = fast ? ["gemini-3.1-flash-image", "gemini-3.1-flash-lite-image", "gemini-2.5-flash-image", "gemini-3-pro-image-preview"] : ["gemini-3-pro-image-preview", "gemini-3.1-flash-image", "gemini-3.1-flash-lite-image", "gemini-2.5-flash-image"]; await gemModels(key, "copy"); const names = (_gemCache && _gemCache.key === key && _gemCache.names) || [];
     const pick = pref.filter(m => names.includes(m)), any = names.filter(n => /image/i.test(n) && !pick.includes(n)); const list = pick.concat(any).slice(0, 3); return list.length ? list : pref.slice(0, 3);
   }
   /* صورة واحدة طويلة: نجرّب النسب الأطول أولاً ثم نتراجع إن لم يدعمها النموذج */
+  /* جودة عالية: ثلاثة أجزاء 9:16 (عرض أكبر ← نصوص أوضح بكثير من صورة 1:8 الضيقة) ثم لصقها */
+  async function genPart(key, prompt, productB64, prevB64) {
+    const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } }); if (prevB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: prevB64 } });
+    const models = await imageModels(key); let lastErr = null;
+    for (const cfg of [{ aspectRatio: "9:16", imageSize: "2K" }, { aspectRatio: "9:16" }]) {
+      try {
+        const j = await gemGenerate(key, "image", parts, { imageConfig: cfg }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
+        if (!d) throw new Error("لم يُرجع النموذج صورة"); S.model = j._model; const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
+      } catch (e) { lastErr = e; if (!/\[400|size|invalid.argument|لم يُرجع النموذج صورة/i.test(String(e.message))) throw e; }
+    }
+    throw lastErr || new Error("تعذّر توليد الجزء");
+  }
+  async function stackParts(blobs) {
+    const cvs = []; for (const b of blobs) cvs.push(await loadImage(b)); const W = Math.max(...cvs.map(c => c.width)), ov = Math.round(W * .05), hs = cvs.map(c => Math.round(c.height * W / c.width)), H = hs.reduce((a, b) => a + b, 0) - ov * (cvs.length - 1);
+    const out = document.createElement("canvas"); out.width = W; out.height = H; const g = out.getContext("2d"); let y = 0;
+    cvs.forEach((c, i) => {
+      if (i === 0) { g.drawImage(c, 0, 0, W, hs[0]); y = hs[0]; return; }
+      const tt = document.createElement("canvas"); tt.width = W; tt.height = hs[i]; const ttg = tt.getContext("2d"); ttg.drawImage(c, 0, 0, W, hs[i]);
+      ttg.globalCompositeOperation = "destination-in"; const gr = ttg.createLinearGradient(0, 0, 0, ov); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,1)"); ttg.fillStyle = gr; ttg.fillRect(0, 0, W, hs[i]);
+      g.drawImage(tt, 0, y - ov); y += hs[i] - ov;
+    });
+    return out;
+  }
+  const SPLIT = (k, n) => `\n\n=== RENDER INSTRUCTION (HIGHEST PRIORITY) ===\nThe design above describes ONE continuous tall landing page. Mentally split it into ${n} equal vertical parts (top → bottom). Render ONLY part ${k} of ${n} now, as ONE image with aspect ratio 9:16 at the highest possible resolution, containing only the sections and texts that belong to this part, with large, razor-sharp, perfectly spelled typography. Every quoted text must appear exactly once. Keep the same single smooth background gradient, illustration style, typography and product rendering across all parts${k > 1 ? "; the TOP edge of this image must continue seamlessly the bottom edge of the attached previous part image (same background colour and glow), with an empty margin at the top" : ""}${k < n ? "; the BOTTOM edge must fade into the plain continuing background colour with an empty margin (no text or object touching the edge) so the next part joins seamlessly" : ""}. Copy the product from the attached product photo exactly. Do not write part numbers or any label.`;
   const RATIOS = ["1:8", "1:4", "9:16"];
   async function genLong(key, prompt, productB64) {
     const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } });
@@ -550,9 +578,15 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     btn.disabled = true; const N = 3;
     try {
       const fp = await makeFinal(key), pb = await small64(pf, 1400);
-      msg.textContent = "🎨 (3/3) توليد الصورة الطويلة (قد يستغرق دقيقة)…";
-      const blob = await (PBGen.imgFn || genLong)(key, fp + (S.avoid ? "\n\n=== CORRECTIONS REQUIRED ===\nThe previous attempt contained these text errors. Fix them: write every quoted string EXACTLY as given, never repeat words, no extra text: " + S.avoid : ""), pb), canvas = await loadImage(blob); S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
-      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — راجعها ثم اعتمدها للتقسيم";
+            const full = fp + (S.avoid ? "\n\n=== CORRECTIONS REQUIRED ===\nThe previous attempt contained these text errors. Fix them: write every quoted string EXACTLY as given, never repeat words, no extra text: " + S.avoid : "");
+      let blob, canvas;
+      if ($("gen-mode") && $("gen-mode").value === "single") { msg.textContent = "🎨 توليد الصورة…"; blob = await (PBGen.imgFn || genLong)(key, full, pb); canvas = await loadImage(blob); }
+      else {
+        const N = 3, blobs = []; let prev = null;
+        for (let k = 1; k <= N; k++) { msg.textContent = "🎨 (" + (2 + k) + "/" + (N + 2) + ") توليد الجزء " + k + " من " + N + (S.model ? " — " + S.model : "") + " (قد يستغرق دقيقة)…"; const bl = await (PBGen.imgFn || genPart)(key, full + SPLIT(k, N), pb, prev); blobs.push(bl); prev = PBGen.imgFn ? null : await small64(bl, 900); }
+        msg.textContent = "🧩 دمج الأجزاء…"; canvas = await stackParts(blobs); blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+      } S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
+      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.model ? " بنموذج " + S.model : "") + " (" + canvas.width + "×" + canvas.height + ")" + " — راجعها ثم اعتمدها للتقسيم";
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
