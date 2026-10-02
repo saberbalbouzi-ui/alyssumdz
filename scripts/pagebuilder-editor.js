@@ -440,7 +440,7 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
       case "textarea": case "rich": case "gallery": b = `<textarea ${a} ${c.t === "rich" ? 'dir="ltr" rows="8"' : ""}>${esc(ownV ?? "")}</textarea>` + (c.t === "gallery" ? `<button class="pbx-small" data-upadd="${k}">⬆ رفع صور وإضافتها</button>` : ""); break;
       case "datetime": b = `<input type="datetime-local" ${a} value="${esc(ownV ?? "")}">`; break;
       case "num": { const rng = (c.max != null && c.min != null && c.max - c.min <= 2000) ? `<input type="range" ${a} data-range="1" min="${c.min}" max="${c.max}" step="${c.step || 1}" value="${effV ?? c.min}" class="sm" style="max-width:96px">` : ""; b = `<div class="pbx-row"><input type="number" ${a} ${c.min != null ? `min="${c.min}"` : ""} ${c.max != null ? `max="${c.max}"` : ""} step="${c.step || 1}" value="${ownV ?? ""}" placeholder="${inherited ? effV : ""}" class="${inherited ? "inh" : ""}">${rng}</div>`; break; }
-      case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${c.o.map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
+      case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${(typeof c.o === "function" ? c.o() : c.o).map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
       case "align": b = `<div class="pbx-al">${AL3.map(([v, t]) => `<button data-al="${k}" data-v="${v}" class="${(effV || "") === v ? "on" : ""}">${t}</button>`).join("")}</div>`; break;
@@ -549,7 +549,22 @@ const PBAdmin = {
     const box = document.getElementById("pb-list"); if (!box) return;
     try { const f = await GH.getFile("assets/pages/index.json"); this.list = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { this.list = []; }
     const dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host;
-    box.innerHTML = this.list.length ? `<table class="rt"><tr class="hd"><th>العنوان</th><th>الرابط</th><th>آخر تحديث</th><th>إجراءات</th></tr>${this.list.map(p => `<tr><td class="t"><b>${PB.esc(p.title)}</b></td><td data-l="الرابط"><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a></td><td data-l="آخر تحديث"><small>${PB.esc(p.updated || "")}</small></td><td class="act"><button class="small" onclick="PBAdmin.edit('${PB.esc(p.slug)}')">✏️ تعديل</button> <button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')">🔗 نسخ الرابط</button> <button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')">إلغاء النشر</button></td></tr>`).join("")}</table>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» لبدء التصميم.</p>';
+    box.innerHTML = this.list.length ? `<table class="rt"><tr class="hd"><th>العنوان</th><th>الرابط</th><th>آخر تحديث</th><th>إجراءات</th></tr>${this.list.map(p => `<tr><td class="t"><b>${PB.esc(p.title)}</b></td><td data-l="الرابط"><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a></td><td data-l="آخر تحديث"><small>${PB.esc(p.updated || "")}</small></td><td class="act"><button class="small" onclick="PBAdmin.edit('${PB.esc(p.slug)}')">✏️ تعديل</button> <button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')">⧉ تكرار</button> <button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')">⬇ تصدير</button> <button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')">🔗 نسخ الرابط</button> <button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')">إلغاء النشر</button></td></tr>`).join("")}</table>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» لبدء التصميم.</p>';
+  },
+  /* تكرار صفحة، وتصدير/استيراد ملف JSON (لنقل التصاميم بين متاجرك أو بيعها كقوالب) */
+  async load(slug) { const f = await GH.getFile("assets/pages/" + slug + ".json"); return JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); },
+  fresh(p) { const re = n => { n.id = PB.uid(); (n.cols || []).forEach(re); (n.widgets || []).forEach(re); }; p.sections.forEach(re); return p; },
+  async duplicate(slug) {
+    const ns = prompt("رابط الصفحة الجديدة (حروف لاتينية صغيرة وأرقام وشرطات):", slug + "-copy"); if (!ns) return;
+    try { const p = this.fresh(await this.load(slug)); p.slug = ns.toLowerCase().replace(/[^a-z0-9-]/g, ""); p.title += " (نسخة)"; PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); }
+  },
+  async exportPage(slug) {
+    try { const p = await this.load(slug), a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(p, null, 1)], { type: "application/json" })); a.download = "page-" + slug + ".json"; a.click(); } catch (e) { toast("❌ " + e.message); }
+  },
+  importPage() {
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+    inp.onchange = async () => { try { const p = JSON.parse(await inp.files[0].text()); if (!p || !Array.isArray(p.sections)) throw new Error("ملف صفحة غير صالح"); this.fresh(p); p.slug = String(p.slug || "").toLowerCase().replace(/[^a-z0-9-]/g, "") || "page-" + Date.now().toString(36).slice(-4); PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); } };
+    inp.click();
   },
   newPage() {
     const t = prompt("عنوان الصفحة الجديدة:", "عرض خاص"); if (!t) return;
