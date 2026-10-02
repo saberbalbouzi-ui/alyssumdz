@@ -8415,6 +8415,11 @@ Create one continuous journey with smooth color gradients (specifically [insert 
     const W = canvas.width, H = canvas.height, c2 = document.createElement("canvas"), k = Math.min(1, 1600 / W); c2.width = Math.round(W * k); c2.height = Math.round(H * k); c2.getContext("2d").drawImage(canvas, 0, 0, c2.width, c2.height);
     const b64 = c2.toDataURL("image/jpeg", .9).split(",")[1];
     const prompt = `You are a precise OCR engine. The image is ${W}x${H} pixels and its text language is ${langName}. Read EVERY visible line of text exactly as written (keep the original script, digits, emojis and punctuation; never translate, correct or add words). Return ONLY JSON: {"lines":[{"text":"...","box_2d":[ymin,xmin,ymax,xmax]}]} where box_2d is normalized to 0-1000 relative to the image and fits tightly around that single line's glyphs. One entry per visual line, ordered top to bottom. If there is no text return {"lines":[]}.`;
+    const o = await geminiJson(key, b64, prompt);
+    return (o.lines || []).filter(l => l && l.text && Array.isArray(l.box_2d) && l.box_2d.length === 4).map(l => { const [ymin, xmin, ymax, xmax] = l.box_2d.map(Number); return { text: String(l.text).replace(/\s+/g, " ").trim(), conf: 95, bbox: { x0: xmin / 1000 * W, y0: ymin / 1000 * H, x1: xmax / 1000 * W, y1: ymax / 1000 * H } }; }).filter(l => l.text.length >= 1 && l.bbox.x1 > l.bbox.x0 && l.bbox.y1 > l.bbox.y0);
+  }
+  /* استدعاء Gemini بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
+  async function geminiJson(key, b64, prompt) {
     const models = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-3.8-flash"]; let last = "";
     for (let mi = 0; mi < models.length; mi++) {
       if (mi === models.length - 1) await new Promise(r => setTimeout(r, 3000));
@@ -8422,10 +8427,16 @@ Create one continuous journey with smooth color gradients (specifically [insert 
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { last = (j.error && j.error.message) || ("Gemini " + r.status); if ([404, 429, 500, 503].includes(r.status) || /no longer available|not found|not supported|high demand|overloaded|quota/i.test(last)) continue; throw new Error(last); }
       const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join(""), m = t.match(/\{[\s\S]*\}/); if (!m) throw new Error("ردّ غير مفهوم من Gemini");
-      const arr = (JSON.parse(m[0]).lines || []).filter(l => l && l.text && Array.isArray(l.box_2d) && l.box_2d.length === 4);
-      return arr.map(l => { const [ymin, xmin, ymax, xmax] = l.box_2d.map(Number); return { text: String(l.text).replace(/\s+/g, " ").trim(), conf: 95, bbox: { x0: xmin / 1000 * W, y0: ymin / 1000 * H, x1: xmax / 1000 * W, y1: ymax / 1000 * H } }; }).filter(l => l.text.length >= 1 && l.bbox.x1 > l.bbox.x0 && l.bbox.y1 > l.bbox.y0);
+      return JSON.parse(m[0]);
     }
     throw new Error(last || "لا يوجد نموذج Gemini متاح");
+  }
+  /* اكتشاف تلقائي لمناطق المنتج/الصور/الأيقونات (غير النصية) ليُقصّ كلٌّ منها كعنصر مستقل */
+  async function geminiDetect(canvas, key) {
+    const W = canvas.width, H = canvas.height, c2 = document.createElement("canvas"), k = Math.min(1, 1400 / W); c2.width = Math.round(W * k); c2.height = Math.round(H * k); c2.getContext("2d").drawImage(canvas, 0, 0, c2.width, c2.height);
+    const prompt = `This is a marketing landing-page image. List the distinct VISUAL objects that should be separated as independent images: the product(s) / product packaging / jars / bottles, people, food or ingredient photos, badges, seals, and standalone illustrations or icons. Do NOT include plain text, headlines, buttons, or the background. Return ONLY JSON: {"objects":[{"label":"short name","box_2d":[ymin,xmin,ymax,xmax]}]} with box_2d normalized 0-1000, fitting tightly around each object. At most 12 objects. If none, {"objects":[]}.`;
+    const o = await geminiJson(key, c2.toDataURL("image/jpeg", .85).split(",")[1], prompt);
+    return (o.objects || []).filter(x => x && Array.isArray(x.box_2d) && x.box_2d.length === 4).map(x => { const [a, b, c, d] = x.box_2d.map(Number); return { x0: Math.max(0, b / 1000 * W), y0: Math.max(0, a / 1000 * H), x1: Math.min(W, d / 1000 * W), y1: Math.min(H, c / 1000 * H), label: x.label }; }).filter(r => r.x1 - r.x0 > W * .04 && r.y1 - r.y0 > W * .04 && (r.x1 - r.x0) * (r.y1 - r.y0) < W * H * .6);
   }
   /* remove.bg: قص خلفية الصورة (PNG شفاف). قد يمنع المتصفح الاتصال المباشر (CORS) — عندها استعمل «قص كصورة» أو ارفع صورة مقصوصة يدوياً */
   async function removeBgCall(blob, key) {
@@ -8527,13 +8538,20 @@ Create one continuous journey with smooth color gradients (specifically [insert 
     <label class="hint" style="margin:0">مفتاح remove.bg (اختياري — لقص خلفية المنتج/الصور)<input id="gen-rbkey" dir="ltr" placeholder="بدونه: «قص كصورة» مستطيلة" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
   </div>
-  <div style="margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gray" type="button" id="gen-region-btn" onclick="PBGen.regionMode()">✂️ رسم منطقة للقص (منتج/صورة)</button><small class="hint" style="margin:0">اضغط الزر ثم اسحب مستطيلاً حول المنتج أو أي صورة في المعاينة؛ كل منطقة تصير عنصر صورة مستقلاً قابلاً للتحريك. انقر × على المنطقة لحذفها.</small></div>
+  <div style="margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" id="gen-detect-btn" onclick="PBGen.detect()" title="يستعمل مفتاح Gemini (طبقة مجانية)">🔍 اكتشاف المنتج والصور تلقائياً</button><button class="small gray" type="button" id="gen-region-btn" onclick="PBGen.regionMode()">✂️ رسم منطقة للقص (منتج/صورة)</button><small class="hint" style="margin:0">اضغط الزر ثم اسحب مستطيلاً حول المنتج أو أي صورة في المعاينة؛ كل منطقة تصير عنصر صورة مستقلاً قابلاً للتحريك. انقر × على المنطقة لحذفها.</small></div>
   <div id="gen-prev" style="margin:.6rem 0"></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 تحويل إلى صفحة قابلة للتعديل</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
 </details>`;
     try { $("gen-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-rbkey").value = localStorage.getItem("alyssum_removebg_key") || ""; } catch (e) { }
   }
   function engineUI() { $("gen-gk-wrap").style.display = $("gen-engine").value === "gemini" ? "" : "none"; }
+  async function detect() {
+    if (!S.canvas) return; const msg = $("gen-msg"), key = ($("gen-gkey").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
+    if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (اختر محرك Gemini ثم الصق المفتاح)"; return; }
+    msg.textContent = "⏳ Gemini يبحث عن المنتج والصور…"; try { try { localStorage.setItem("alyssum_gp_gkey", key); } catch (e) { }
+      const found = await (PBGen.detectFn || geminiDetect)(S.canvas, key), keep = found.filter(r => !S.regions.some(q => { const ix = Math.min(q.x1, r.x1) - Math.max(q.x0, r.x0), iy = Math.min(q.y1, r.y1) - Math.max(q.y0, r.y0); return ix > 0 && iy > 0 && ix * iy > .5 * Math.min((q.x1 - q.x0) * (q.y1 - q.y0), (r.x1 - r.x0) * (r.y1 - r.y0)); }));
+      S.regions.push(...keep); drawPreview(); msg.textContent = "✅ أُضيفت " + keep.length + " منطقة — احذف (×) ما لا تريده ثم حوّل"; } catch (err) { msg.textContent = "❌ " + err.message; }
+  }
   function regionMode() { S.regionMode = !S.regionMode; const b = $("gen-region-btn"); b.className = "small " + (S.regionMode ? "gold" : "gray"); b.textContent = S.regionMode ? "✂️ وضع القص مفعّل — اسحب على الصورة (انقر للإيقاف)" : "✂️ رسم منطقة للقص (منتج/صورة)"; drawPreview(); }
   function makePrompt() { $("gen-out").value = buildPrompt({ lang: $("gen-lang").value, offer: $("gen-offer").value, name: $("gen-name").value.trim(), desc: $("gen-desc").value.trim(), price: $("gen-price").value.trim(), colors: $("gen-colors").value.trim() }); }
   function copyPrompt() { if (!$("gen-out").value) makePrompt(); const t = $("gen-out").value; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت"), () => { $("gen-out").select(); document.execCommand("copy"); toast("✅ نُسخ البرومبت"); }); }
@@ -8577,7 +8595,7 @@ Create one continuous journey with smooth color gradients (specifically [insert 
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, ocr: null, removeBg: null };
 })();
 
 </script>
