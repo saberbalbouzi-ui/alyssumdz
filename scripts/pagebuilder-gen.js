@@ -389,11 +389,11 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     <button class="small gray" type="button" onclick="PBGen.copyHidden()" title="يجهّز البرومبت ويُنسخ للحافظة دون عرضه، لاستعماله في تطبيق Gemini يدوياً">📋 نسخ البرومبت (دون عرضه)</button>
     <button class="small gray" type="button" onclick="PBGen.step(2)" title="إن كانت لديك صورة جاهزة">⬆ لدي صورة جاهزة</button>
   </div>
-  <div id="gen-automsg" style="font-weight:700;color:var(--green);min-height:1.3em"></div><small id="gen-cost" style="color:#8a7a4d"></small>
+  <div id="gen-automsg" style="font-weight:700;color:var(--green);min-height:1.3em"></div><div id="gen-last" style="margin-top:.4rem"></div><small id="gen-cost" style="color:#8a7a4d"></small>
   <textarea id="gen-out" style="display:none"></textarea><textarea id="gen-final" style="display:none"></textarea><pre id="gen-copy" style="display:none"></pre>
   </div>
   <div class="gen-step" data-s="2" style="display:none">
-  <b>② الصورة والأقسام</b> <button class="small gray" type="button" onclick="PBGen.step(1)" title="غيّر المعلومات ثم أعد التوليد">🔄 إعادة التوليد</button>
+  <b>② الصورة والأقسام</b> <button class="small gray" type="button" onclick="PBGen.step(1)" title="غيّر المعلومات ثم أعد التوليد">🔄 إعادة التوليد</button> <button class="small gold" type="button" onclick="PBGen.downloadOrig()" title="تنزيل الصورة الأصلية كما ولّدها Gemini (دون قص أو تعديل)">⬇ تنزيل الصورة الأصلية</button>
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">أو ارفع صورة جاهزة بدل التوليد<input type="file" id="gen-file" accept="image/*" onchange="PBGen.onFile(this)"></label>
     <label class="hint" style="margin:0">عدد الأقسام المتوقع<input id="gen-n" type="number" min="1" max="30" value="9" onchange="PBGen.recut()"></label>
@@ -424,7 +424,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     try { $("gen-tier").value = gemTier(); } catch (e) { }
     try { if (!localStorage.getItem("alyssum_gp_gkey")) $("gen-adv").open = true; } catch (e) { }
     try { const gk0 = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-gkey1").value = gk0; if (gk0) { $("gen-engine").value = "gemini"; engineUI(); } } catch (e) { }
-    step(1);
+    step(1); showLast();
   }
   /* المعالج: 1 البرومبت ← 2 الصورة والأقسام ← 3 التحويل */
   function step(n) {
@@ -516,17 +516,32 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     try {
       const fp = await makeFinal(key), pb = await small64(pf, 1400);
       msg.textContent = "🎨 (3/3) توليد الصورة الطويلة (قد يستغرق دقيقة)…";
-      const blob = await (PBGen.imgFn || genLong)(key, fp, pb), canvas = await loadImage(blob);
-      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; msg.textContent = "✅ تمّت الصورة" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — قصّها إلى أقسام ثم تابع إلى «التحويل»"; step(2);
+      const blob = await (PBGen.imgFn || genLong)(key, fp, pb), canvas = await loadImage(blob); S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
+      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — قصّها إلى أقسام ثم تابع إلى «التحويل»"; step(2);
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
   function copyPrompt() { if (!$("gen-out").value) makePrompt(); const t = $("gen-out").value; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت"), () => { $("gen-out").select(); document.execCommand("copy"); toast("✅ نُسخ البرومبت"); }); }
+  /* حفظ آخر صورة مولّدة في IndexedDB (لا تضيع إن أُغلقت الصفحة) + تنزيلها */
+  const idb = (mode, fn) => new Promise((res, rej) => { try { const rq = indexedDB.open("pbgen", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("kv"); rq.onerror = () => rej(rq.error); rq.onsuccess = () => { const db = rq.result, tx = db.transaction("kv", mode), r = fn(tx.objectStore("kv")); tx.oncomplete = () => { res(r && r.result); db.close(); }; tx.onerror = () => rej(tx.error); }; } catch (e) { rej(e); } });
+  const saveLast = (blob, name) => idb("readwrite", st => st.put({ blob, name, t: Date.now() }, "last")).catch(() => { });
+  const loadLast = () => idb("readonly", st => st.get("last")).catch(() => null);
+  function downloadOrig() {
+    const b = S.blob; if (!b) return toast("لا توجد صورة بعد");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "landing-original-" + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "") + "." + (/jpe?g/.test(b.type) ? "jpg" : /webp/.test(b.type) ? "webp" : "png"); document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  async function showLast() {
+    const el = $("gen-last"); if (!el) return; const r = await loadLast();
+    if (!r || !r.blob) { el.innerHTML = ""; return; }
+    el.innerHTML = `<div style="background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem .7rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><span>🕘 آخر صورة مولّدة: <b>${PB.esc(r.name || "")}</b> · ${new Date(r.t).toLocaleString("ar-DZ")}</span><button class="small gold" type="button" onclick="PBGen.restoreLast()">استعادة</button><button class="small gray" type="button" onclick="PBGen.downloadLast()">⬇ تنزيل الأصل</button></div>`;
+  }
+  async function restoreLast() { const r = await loadLast(); if (!r || !r.blob) return; S.blob = r.blob; S.name = r.name; const cv = await loadImage(r.blob); await setCanvas(cv, r.name); step(2); }
+  async function downloadLast() { const r = await loadLast(); if (!r || !r.blob) return; S.blob = r.blob; S.name = r.name; downloadOrig(); }
   async function setCanvas(canvas, title) {
     S.canvas = canvas; S.regions = []; $("gen-msg").textContent = ""; recut(); $("gen-go").disabled = false; if (!$("gen-title").value) $("gen-title").value = title || "";
   }
   async function onFile(inp) {
-    const f = inp.files && inp.files[0]; if (!f) return; S.file = f; $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
+    const f = inp.files && inp.files[0]; if (!f) return; S.file = f; S.blob = f; S.name = f.name.replace(/\.[^.]+$/, ""); $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
     let cv; try { cv = await loadImage(f); } catch (e) { $("gen-msg").textContent = "❌ " + e.message; return; }
     await setCanvas(cv, $("gen-name").value || f.name.replace(/\.[^.]+$/, ""));
   }
@@ -566,5 +581,5 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
