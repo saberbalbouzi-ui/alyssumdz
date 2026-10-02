@@ -1,0 +1,1074 @@
+{
+ "v": 1,
+ "title": "عسل التركيز و تنشيط الذاكرة للاطفال",
+ "slug": "lp-7eiv",
+ "desc": "",
+ "bg": "#ffffff",
+ "ff": "",
+ "header": false,
+ "footer": false,
+ "css": "",
+ "sections": [
+  {
+   "id": "5tmqc7t",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 351
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "q5yjeer",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "sltprtp",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976506428.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 351
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "dfad7je",
+     "type": "text",
+     "set": {
+      "html": "<p>bz ad 4 | cab ‏ساعد‎<br>للتعلم والحفظ التركيز إُ ممم ٍ “0</p>",
+      "fs": {
+       "d": 107
+      },
+      "lh": {
+       "d": 1.3
+      },
+      "ta": {
+       "d": "center"
+      },
+      "color": "#fbfeff",
+      "fw": "800",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 42
+      },
+      "fwd": {
+       "d": 99.5
+      },
+      "fh": {
+       "d": 207
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "au55ty3",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976504080.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 12.7
+      },
+      "fy": {
+       "d": 67
+      },
+      "fwd": {
+       "d": 25.5
+      },
+      "fh": {
+       "d": 248
+      },
+      "zi": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "9imm560",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 260
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "pideyqe",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "geq22vu",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976513665.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 260
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "jooyrfb",
+     "type": "text",
+     "set": {
+      "html": "<p>• صعوبة في الحفظ<br>• ضعف النشاط الذهني</p>",
+      "fs": {
+       "d": 28
+      },
+      "lh": {
+       "d": 1.3
+      },
+      "ta": {
+       "d": "center"
+      },
+      "color": "#f7f5f6",
+      "fw": "800",
+      "fx": {
+       "d": 10.2
+      },
+      "fy": {
+       "d": 163
+      },
+      "fwd": {
+       "d": 89
+      },
+      "fh": {
+       "d": 95
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "s29hxqu",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976511460.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 42
+      },
+      "fwd": {
+       "d": 53.3
+      },
+      "fh": {
+       "d": 207
+      },
+      "zi": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "99sh9vs",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 271
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "e9o5sp7",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "0s6xu57",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976519798.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 271
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "bicbotm",
+     "type": "heading",
+     "set": {
+      "text": "oe 9",
+      "tag": "div",
+      "fs": {
+       "d": 25
+      },
+      "fw": "800",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#0b0007",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 76.3
+      },
+      "fy": {
+       "d": 210
+      },
+      "fwd": {
+       "d": 22.9
+      },
+      "fh": {
+       "d": 35
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "twavb2m",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976518199.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 14.9
+      },
+      "fy": {
+       "d": 48
+      },
+      "fwd": {
+       "d": 23.2
+      },
+      "fh": {
+       "d": 217
+      },
+      "zi": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "ozh18iv",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 230
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "z8fnlv6",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "405pk2x",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976527452.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 230
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "nnd55qe",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976525681.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 3.7
+      },
+      "fy": {
+       "d": 31
+      },
+      "fwd": {
+       "d": 44.8
+      },
+      "fh": {
+       "d": 189
+      },
+      "zi": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "7yjf2os",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 420
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "g8dcoev",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "o6gpp7q",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976537584.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 420
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "agnz05p",
+     "type": "heading",
+     "set": {
+      "text": "© © 5",
+      "tag": "div",
+      "fs": {
+       "d": 83
+      },
+      "fw": "800",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#f7dfc5",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 70.4
+      },
+      "fy": {
+       "d": 291
+      },
+      "fwd": {
+       "d": 24.9
+      },
+      "fh": {
+       "d": 116
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "171f8t8",
+     "type": "heading",
+     "set": {
+      "text": "دعم الأعصاب نشاط ذهني | دعم التركيز تقوية الذاكرة",
+      "tag": "div",
+      "fs": {
+       "d": 38
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#f3feff",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 4.5
+      },
+      "fy": {
+       "d": 363
+      },
+      "fwd": {
+       "d": 90.9
+      },
+      "fh": {
+       "d": 52
+      },
+      "zi": 3
+     }
+    },
+    {
+     "id": "kj6p36b",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976533598.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 7
+      },
+      "fwd": {
+       "d": 48.8
+      },
+      "fh": {
+       "d": 225
+      },
+      "zi": 1
+     }
+    },
+    {
+     "id": "8e5bz3n",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976535714.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 9.1
+      },
+      "fy": {
+       "d": 276
+      },
+      "fwd": {
+       "d": 80.4
+      },
+      "fh": {
+       "d": 119
+      },
+      "zi": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "8kgnepq",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 170
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "brq07hg",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "m9z1dfp",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976541928.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 170
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "0bn6vi0",
+     "type": "heading",
+     "set": {
+      "text": "طريقة الاستعمال",
+      "tag": "div",
+      "fs": {
+       "d": 27
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#f2c371",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 25.5
+      },
+      "fy": {
+       "d": 25
+      },
+      "fwd": {
+       "d": 49.1
+      },
+      "fh": {
+       "d": 38
+      },
+      "zi": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "ycgot19",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 281
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "1m84ifo",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "5hl87ka",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976548050.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 281
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "z9tfavh",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976546360.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 9.4
+      },
+      "fy": {
+       "d": 39
+      },
+      "fwd": {
+       "d": 40.8
+      },
+      "fh": {
+       "d": 158
+      },
+      "zi": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "rkn2utz",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 210
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "8bi8z61",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "fduj3ei",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976553574.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 210
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "39g2uks",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976551309.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 56.5
+      },
+      "fh": {
+       "d": 198
+      },
+      "zi": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "ku13hsw",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 720
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 390
+    },
+    "scaled": true,
+    "dw": 720
+   },
+   "cols": [
+    {
+     "id": "fk5meh3",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "i9iir54",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976564146.webp",
+      "alt": "",
+      "fit": "fill",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 390
+      },
+      "zi": 0
+     }
+    },
+    {
+     "id": "3bw8m5y",
+     "type": "heading",
+     "set": {
+      "text": "0 ‏نينح‎ 32 0 io",
+      "tag": "div",
+      "fs": {
+       "d": 36
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#020202",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 4.9
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 89.2
+      },
+      "fh": {
+       "d": 50
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "9ddksco",
+     "type": "heading",
+     "set": {
+      "text": "7 ‏ثقة عملاتنا 7 شرو ع‎",
+      "tag": "div",
+      "fs": {
+       "d": 53
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#010101",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 3
+      },
+      "fy": {
+       "d": 18
+      },
+      "fwd": {
+       "d": 95.9
+      },
+      "fh": {
+       "d": 74
+      },
+      "zi": 3
+     }
+    },
+    {
+     "id": "ugh75bd",
+     "type": "heading",
+     "set": {
+      "text": "Juogi ‏الدفع عند‎ 100% eub",
+      "tag": "div",
+      "fs": {
+       "d": 16
+      },
+      "fw": "800",
+      "ta": {
+       "d": "end"
+      },
+      "color": "#000101",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 7
+      },
+      "fy": {
+       "d": 38
+      },
+      "fwd": {
+       "d": 48.1
+      },
+      "fh": {
+       "d": 23
+      },
+      "zi": 4
+     }
+    },
+    {
+     "id": "o4487s3",
+     "type": "heading",
+     "set": {
+      "text": "طعم لذيذ وسهل على طفلي تناوله",
+      "tag": "div",
+      "fs": {
+       "d": 25
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#010104",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 7
+      },
+      "fy": {
+       "d": 89
+      },
+      "fwd": {
+       "d": 91.9
+      },
+      "fh": {
+       "d": 35
+      },
+      "zi": 5
+     }
+    },
+    {
+     "id": "tzpp62f",
+     "type": "heading",
+     "set": {
+      "text": "‏الآن - الدفع عند الاستلام‎ cll ١ rr",
+      "tag": "div",
+      "fs": {
+       "d": 43
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#dec381",
+      "lh": {
+       "d": 1.3
+      },
+      "fx": {
+       "d": 4.9
+      },
+      "fy": {
+       "d": 298
+      },
+      "fwd": {
+       "d": 95.1
+      },
+      "fh": {
+       "d": 60
+      },
+      "zi": 6
+     }
+    },
+    {
+     "id": "xvtf2cb",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/gen-1790976562469.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 69.2
+      },
+      "fy": {
+       "d": 140
+      },
+      "fwd": {
+       "d": 23.6
+      },
+      "fh": {
+       "d": 214
+      },
+      "zi": 1
+     }
+    }
+   ]
+  }
+ ]
+}
