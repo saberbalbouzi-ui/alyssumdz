@@ -378,7 +378,12 @@ body{overflow-x:hidden;margin:0}`;
       i.oninput = () => { inf.set[key] = i.value; schedule(); }; i.onchange = () => { commitHist(); renderInspector(); }; w.append(ic, i); bar.appendChild(w); };
     const has = k => inf.kind === "widget" && (inf.def.ctl || []).some(c => c.k === k);
     if (inf.kind === "widget") { if (has("color")) colorIn("color", "لون النص", "🔤"); if (has("bgc")) colorIn("bgc", "لون الزر", "🎨"); else colorIn("bg", "لون الخلفية", "🎨"); }
-    else colorIn("bg", "لون الخلفية", "🎨");
+    else {
+      colorIn("bg", "لون الخلفية", "🎨");
+      btn(inf.kind === "column" ? "▶" : "↑", "تحريك", () => move(-1)); btn(inf.kind === "column" ? "◀" : "↓", "تحريك", () => move(1));
+      if (inf.kind === "section" && inf.node.set.kind !== "canvas") btn("＋عمود", "إضافة عمود", () => addCol(inf.node)); if (inf.kind === "column") btn("＋عمود", "إضافة عمود بعده", () => addCol(inf.sec, inf.idx + 1));
+      if (inf.kind === "section" && (inf.node.free || []).length) btn("📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف", () => autoMobile(inf.node));
+    }
     btn("⧉", "تكرار", dup); btn("🗑", "حذف", del);
     box.appendChild(bar);
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
@@ -667,6 +672,7 @@ body{overflow-x:hidden;margin:0}`;
     else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); dup(); }
     else if (e.key === "Delete" && E.sel) { e.preventDefault(); del(); }
+    else if ((e.key === "]" || e.key === "[") && E.sel) { const i0 = selInfo(); if (i0 && i0.kind === "widget") { e.preventDefault(); zOrder(e.key === "]" ? 1 : -1); } }
     else if (e.key === "Escape") { const inf = selInfo(); select(inf ? parentId(inf) : null); }          // Esc = تحديد الأب (عمود ثم قسم ثم لا شيء)
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
       const inf = selInfo(); if (!inf) return;
@@ -706,38 +712,6 @@ body{overflow-x:hidden;margin:0}`;
     if (E.dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, E.dev)); });
     afterEdit();
   }
-  /* لوحة الإجراءات السريعة في الشريط الجانبي (بدل ازدحام الشريط فوق العنصر) */
-  function quickHtml(inf) {
-    const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${esc(tt || t)}">${t}</button>`;
-    const grp = (cap, body, cls) => `<div class="pbx-qg${cls ? " " + cls : ""}${qClosed().has(cap) ? " closed" : ""}"><small data-qtog="${cap}">${cap}</small><div class="pbx-qb">${body}</div></div>`;
-    const chain = []; for (let n = inf, g = 0; n && g < 4; g++) { chain.unshift(n); n = parentId(n) ? find(parentId(n)) : null; }
-    const crumbs = chain.map(n => `<button class="pbx-crumb${n.node.id === inf.node.id ? " on" : ""}" data-pick="${n.node.id}">${n.kind === "widget" ? WIDGETS[n.node.type].ic + " " + WIDGETS[n.node.type].label : n.kind === "column" ? "▯ عمود" : "▤ قسم"}</button>`).join('<i class="pbx-sep">‹</i>');
-    let h = `<div class="pbx-q"><div class="pbx-crumbs">${crumbs}</div>`;
-    h += grp("التنقل", q("prev", "▲", "تحديد العنصر السابق (↑)") + q("next", "▼", "تحديد العنصر التالي (↓)") + q("parent", "⤴ الحاوية", "تحديد الحاوية (Esc)", false, "wide"));
-    if (inf.kind === "widget") {
-      h += grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام") + q("back", "↧ خلف", "إرسال للخلف") + q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide"));
-      if (inf.free) h += `<div class="pbx-qrow">${grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين"))}${grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`)}</div>`;
-      else h += grp("الترتيب", q("up", "↑", "تقديم في الترتيب (Alt+↑)") + q("down", "↓", "تأخير في الترتيب (Alt+↓)") + `<button class="pbx-qk wide" data-q="grab" draggable="true" title="اسحبه إلى عمود آخر أو قسم آخر" style="cursor:grab">✥ نقل لعمود</button>`) + `<small class="pbx-note">اسحب العنصر بالفأرة لتحريكه بحرية · Alt+سحب = نسخ · Ctrl+إفلات فوق عمود = إدراج</small>`;
-      if (["image", "slider", "gallery"].includes(inf.node.type)) h += grp("الصور", q("upl", "⬆ رفع", "رفع صور مباشرة") + q("lib", "📚 المكتبة", "مكتبة الصور"));
-    } else {
-      let b2 = q("up", inf.kind === "column" ? "▶" : "↑", "تحريك") + q("down", inf.kind === "column" ? "◀" : "↓", "تحريك");
-      if (inf.kind === "section" && inf.node.set.kind !== "canvas") b2 += q("addcol", "＋ عمود", "إضافة عمود", false, "wide");
-      if (inf.kind === "column") b2 += q("addcol", "＋ عمود بعده", "إضافة عمود بعده", false, "wide");
-      h += grp("الترتيب", b2);
-      if (inf.kind === "section" && (inf.node.free || []).length) h += grp("الهاتف", q("automob", "📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف", false, "wide"));
-    }
-    return h + `</div>`;
-  }
-  const qClosed = () => { if (!E.qc) { try { E.qc = new Set(JSON.parse(localStorage.getItem("pbx_qclosed") || "[]")); } catch (e) { E.qc = new Set(); } } return E.qc; };
-  function qToggle(cap) { const c = qClosed(); c.has(cap) ? c.delete(cap) : c.add(cap); try { localStorage.setItem("pbx_qclosed", JSON.stringify([...c])); } catch (e) { } renderInspector(); }
-  function onQuick(k, inf) {
-    const d = { prev: () => nav(-1), next: () => nav(1), parent: () => select(parentId(inf)), front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, up: () => move(-1), down: () => move(1),
-      "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right"), upl: () => uploadFor(inf), lib: () => libFor(inf),
-      addcol: () => inf.kind === "column" ? addCol(inf.sec, inf.idx + 1) : addCol(inf.node), automob: () => autoMobile(inf.node) };
-    if (k.startsWith("n-")) { const st = 1; const m = { l: [-st, 0], r: [st, 0], u: [0, -st], d: [0, st] }[k[2]]; return nudge(m[0] * 4, m[1] * 4); }
-    if (d[k]) d[k]();
-  }
-
   /* ───────────────── الإعدادات (Inspector) ───────────────── */
   function ctlsFor(inf) {
     let base, com;
@@ -758,12 +732,11 @@ body{overflow-x:hidden;margin:0}`;
     const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].ic + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? "▯ عمود" : "▤ قسم";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
     el.innerHTML = `<div class="pbx-ih">${lbl}</div>
-${quickHtml(inf)}
+<p class="pbx-note" style="margin:.1rem 0 .6rem">اسحب العنصر بالفأرة لتحريكه بحرية · Alt+سحب = نسخ · Ctrl+إفلات فوق عمود = إدراجه فيه · ‎[ ]‎ خلف/أمام · الأسهم = التنقل بين العناصر</p>
 <div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-cp"><small>نسخ تصميم ${DEVIC[E.dev]} ${DEVNAME[E.dev]} إلى:</small><select id="cp-scope"><option value="sel">العنصر المحدد</option><option value="sec">القسم كله</option><option value="all">الصفحة كلها</option></select>${DEVS.filter(d => d !== E.dev).map(d => `<button class="pbx-small" data-cpy="${d}" title="نسخ إلى ${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
 ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>'}`;
-    const gr = el.querySelector('[data-q="grab"]'); if (gr) { gr.addEventListener("dragstart", e => { E.drag = { move: inf.node.id }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "move"; }); gr.addEventListener("dragend", hideDrop); }
   }
   function field(c, set) {
     const dev = E.dev, k = c.k, isR = !!c.r;
@@ -818,13 +791,10 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
     if (t.dataset.fileFor) {}
   }
   async function onInspClick(e) {
-    const tg = e.target.closest("[data-qtog]"); if (tg) { qToggle(tg.dataset.qtog); return; }
     const t = e.target.closest("button, [data-dev]"); if (!t) return; const inf = selInfo();
     if (t.dataset.dev) { setDev(t.dataset.dev); return; }
     if (t.dataset.itab) { E.tab = t.dataset.itab; renderInspector(); return; }
-    if (t.dataset.pick) { select(t.dataset.pick); return; }
     if (!inf) return;
-    if (t.dataset.q) { if (t.dataset.q !== "grab") onQuick(t.dataset.q, inf); return; }
     if (t.dataset.rs) { const c = ctlByKey(inf, t.dataset.rs); if (c.r) setR(inf.set, c.k, E.dev, undefined); else delete inf.set[c.k]; afterEdit(); return; }
     if (t.dataset.clr) { delete inf.set[t.dataset.clr]; afterEdit(); return; }
     if (t.dataset.al) { const c = ctlByKey(inf, t.dataset.al); applyVal(inf, c, t.dataset.v); afterEdit(); return; }
