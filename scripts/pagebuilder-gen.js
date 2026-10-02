@@ -251,9 +251,11 @@ Create one continuous journey with smooth color gradients (specifically [insert 
   const S = { canvas: null, cuts: [], regions: [], file: null, regionMode: false };
   function mount(host) {
     host.innerHTML = `
-<details class="card" id="gen-card" style="margin-bottom:1rem">
-  <summary style="cursor:pointer;font-weight:900;color:var(--green)">🪄 مولّد صفحة هبوط بالذكاء الاصطناعي — من صورة منتجك إلى صفحة قابلة للتعديل</summary>
+<div class="card" id="gen-card" style="margin-bottom:1rem">
+  <b style="color:var(--green);font-size:1.05rem">🪄 مولّد صفحة هبوط بالذكاء الاصطناعي — من صورة منتجك إلى صفحة قابلة للتعديل</b>
   <div class="hint" style="margin:.6rem 0">① انسخ «البرومبت السحري» وأرسله مع صورة منتجك إلى Gemini أو ChatGPT ← تحصل على نصوص بيع + برومبت تصميم. ② ضعه في Nano Banana (من Gemini) لتوليد الصفحة كصورة طويلة. ③ ارفع الصورة هنا فتتحول إلى أقسام وعناصر نصية قابلة للتعديل. لا يلزم أي مفتاح API.</div>
+  <div class="gen-steps" style="display:flex;gap:.4rem;margin:.6rem 0 1rem;flex-wrap:wrap"><button type="button" class="small gray" data-gs="1" onclick="PBGen.step(1)">① البرومبت</button><button type="button" class="small gray" data-gs="2" onclick="PBGen.step(2)">② الصورة والأقسام</button><button type="button" class="small gray" data-gs="3" onclick="PBGen.step(3)">③ التحويل</button></div>
+  <div class="gen-step" data-s="1">
   <b>① البرومبت السحري المزدوج</b>
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">لغة السوق (إجباري)<select id="gen-lang">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
@@ -266,25 +268,46 @@ Create one continuous journey with smooth color gradients (specifically [insert 
   <textarea id="gen-desc" rows="3" placeholder="الصق وصف منتجك ومميزاته إن أردت..."></textarea>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.makePrompt()">✨ توليد البرومبت</button><button class="small gray" type="button" onclick="PBGen.copyPrompt()">📋 نسخ</button><a class="small gray" style="text-decoration:none;display:inline-block" href="https://gemini.google.com/" target="_blank" rel="noopener">فتح Gemini ↗</a><a class="small gray" style="text-decoration:none;display:inline-block" href="https://chatgpt.com/" target="_blank" rel="noopener">فتح ChatGPT ↗</a></div>
   <textarea id="gen-out" rows="8" dir="ltr" readonly placeholder="سيظهر البرومبت هنا..." style="font-size:.78rem"></textarea>
-  <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0">
-  <b>② تحويل الصورة الطويلة إلى صفحة قابلة للتعديل</b>
+  <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><span></span><button class="small gold" type="button" onclick="PBGen.step(2)">التالي ←</button></div>
+  </div>
+  <div class="gen-step" data-s="2" style="display:none">
+  <b>② ارفع الصورة الطويلة وضبط الأقسام</b>
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">صورة الصفحة (من Nano Banana)<input type="file" id="gen-file" accept="image/*" onchange="PBGen.onFile(this)"></label>
     <label class="hint" style="margin:0">عدد الأقسام المتوقع<input id="gen-n" type="number" min="1" max="30" value="9" onchange="PBGen.recut()"></label>
-    <label class="hint" style="margin:0">عنوان الصفحة<input id="gen-title" placeholder="مثال: عسل التركيز"></label>
-    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (OCR داخل المتصفح)</label>
   </div>
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">Tesseract — مجاني داخل المتصفح</option><option value="gemini">Gemini رؤية — أدق للعربية (بمفتاحك)</option></select></label>
     <label class="hint" style="margin:0;display:none" id="gen-gk-wrap">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
     <label class="hint" style="margin:0">مفتاح remove.bg (اختياري — لقص خلفية المنتج/الصور)<input id="gen-rbkey" dir="ltr" placeholder="بدونه: «قص كصورة» مستطيلة" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
-    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
   </div>
   <div style="margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" id="gen-detect-btn" onclick="PBGen.detect()" title="يستعمل مفتاح Gemini (طبقة مجانية)">🔍 اكتشاف المنتج والصور تلقائياً</button><button class="small gray" type="button" id="gen-region-btn" onclick="PBGen.regionMode()">✂️ رسم منطقة للقص (منتج/صورة)</button><small class="hint" style="margin:0">اضغط الزر ثم اسحب مستطيلاً حول المنتج أو أي صورة في المعاينة؛ كل منطقة تصير عنصر صورة مستقلاً قابلاً للتحريك. انقر × على المنطقة لحذفها.</small></div>
   <div id="gen-prev" style="margin:.6rem 0"></div>
+  <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(1)">→ السابق</button><button class="small gold" type="button" onclick="PBGen.step(3)">التالي ←</button></div>
+  </div>
+  <div class="gen-step" data-s="3" style="display:none">
+  <b>③ التحويل إلى صفحة قابلة للتعديل</b>
+  <div class="grid2" style="margin-top:.4rem">
+    <label class="hint" style="margin:0">عنوان الصفحة<input id="gen-title" placeholder="مثال: عسل التركيز"></label>
+    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (OCR داخل المتصفح)</label>
+    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
+  </div>
+  <div id="gen-sum" class="hint" style="margin:.6rem 0"></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 تحويل إلى صفحة قابلة للتعديل</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
-</details>`;
+  <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(2)">→ السابق</button><span></span></div>
+  </div>
+</div>`;
     try { $("gen-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-rbkey").value = localStorage.getItem("alyssum_removebg_key") || ""; } catch (e) { }
+    step(1);
+  }
+  /* المعالج: 1 البرومبت ← 2 الصورة والأقسام ← 3 التحويل */
+  function step(n) {
+    if (n >= 2 && n === 3 && !S.canvas) { n = 2; const m = $("gen-msg"); if (m) m.textContent = "ارفع الصورة أولاً"; }
+    document.querySelectorAll("#gen-card .gen-step").forEach(el => { el.style.display = Number(el.dataset.s) === n ? "" : "none"; });
+    document.querySelectorAll("#gen-card [data-gs]").forEach(b => { b.className = "small " + (Number(b.dataset.gs) === n ? "gold" : "gray"); });
+    S.step = n;
+    if (n === 2 && S.canvas) drawPreview();
+    if (n === 3) { const t = $("gen-title"); if (t && !t.value && S.file) t.value = (S.file.name || "").replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").slice(0, 60); $("gen-sum").innerHTML = S.canvas ? `سيتحول التصميم إلى <b>${S.cuts.length + 1}</b> قسماً${S.regions.length ? " مع <b>" + S.regions.length + "</b> عنصر مقصوص" : ""}. المحرك: <b>${$("gen-engine").value === "gemini" ? "Gemini رؤية" : "Tesseract"}</b>.` : "ارفع الصورة في الخطوة ②."; }
   }
   function engineUI() { $("gen-gk-wrap").style.display = $("gen-engine").value === "gemini" ? "" : "none"; }
   async function detect() {
@@ -304,8 +327,8 @@ Create one continuous journey with smooth color gradients (specifically [insert 
   }
   function recut() { if (!S.canvas) return; S.cuts = suggestCuts(S.canvas, Number($("gen-n").value) || 9); drawPreview(); }
   function drawPreview() {
-    const C = S.canvas, host = $("gen-prev"), pw = 320, sc = pw / C.width, ph = C.height * sc, rm = S.regionMode;
-    host.innerHTML = `<div class="hint" style="margin:0 0 .3rem">${rm ? "وضع القص: اسحب مستطيلاً حول المنتج/الصورة (" + S.regions.length + " منطقة)" : "اسحب الخطوط الحمراء لضبط حدود الأقسام · انقر على الصورة لإضافة حد · انقر مرتين على خط لحذفه (" + (S.cuts.length + 1) + " أقسام)"}</div><div style="max-height:620px;overflow:auto;border:1.5px solid var(--line);border-radius:8px;width:${pw + 18}px"><div id="gen-box" style="position:relative;width:${pw}px;height:${ph}px;cursor:crosshair;background:#eee"><img src="${C.toDataURL("image/jpeg", .6)}" style="width:100%;height:100%;display:block;pointer-events:none;user-select:none">${S.cuts.map((y, k) => `<div data-cut="${k}" title="اسحب · انقر مرتين للحذف" style="position:absolute;left:0;right:0;top:${y * sc - 4}px;height:9px;cursor:ns-resize;${rm ? "pointer-events:none;opacity:.5" : ""}"><i style="display:block;height:2px;margin-top:3.5px;background:#e91e3e"></i></div>`).join("")}${S.regions.map((r, k) => `<div style="position:absolute;left:${r.x0 * sc}px;top:${r.y0 * sc}px;width:${(r.x1 - r.x0) * sc}px;height:${(r.y1 - r.y0) * sc}px;border:2px dashed #16a34a;background:rgba(22,163,74,.12)"><b data-delreg="${k}" style="position:absolute;top:-1px;right:-1px;background:#16a34a;color:#fff;padding:0 .35rem;cursor:pointer;font-size:.8rem">×</b></div>`).join("")}</div></div>`;
+    const C = S.canvas, host = $("gen-prev"), pw = Math.min(520, Math.max(300, (host.parentNode.clientWidth || 600) - 40)), sc = pw / C.width, ph = C.height * sc, rm = S.regionMode;
+    host.innerHTML = `<div class="hint" style="margin:0 0 .3rem">${rm ? "وضع القص: اسحب مستطيلاً حول المنتج/الصورة (" + S.regions.length + " منطقة)" : "اسحب الخطوط الحمراء لضبط حدود الأقسام · انقر على الصورة لإضافة حد · انقر مرتين على خط لحذفه (" + (S.cuts.length + 1) + " أقسام)"}</div><div style="max-height:78vh;overflow:auto;border:1.5px solid var(--line);border-radius:8px;width:${pw + 18}px;max-width:100%"><div id="gen-box" style="position:relative;width:${pw}px;height:${ph}px;cursor:crosshair;background:#eee"><img src="${C.toDataURL("image/jpeg", .6)}" style="width:100%;height:100%;display:block;pointer-events:none;user-select:none">${S.cuts.map((y, k) => `<div data-cut="${k}" title="اسحب · انقر مرتين للحذف" style="position:absolute;left:0;right:0;top:${y * sc - 4}px;height:9px;cursor:ns-resize;${rm ? "pointer-events:none;opacity:.5" : ""}"><i style="display:block;height:2px;margin-top:3.5px;background:#e91e3e"></i></div>`).join("")}${S.regions.map((r, k) => `<div style="position:absolute;left:${r.x0 * sc}px;top:${r.y0 * sc}px;width:${(r.x1 - r.x0) * sc}px;height:${(r.y1 - r.y0) * sc}px;border:2px dashed #16a34a;background:rgba(22,163,74,.12)"><b data-delreg="${k}" style="position:absolute;top:-1px;right:-1px;background:#16a34a;color:#fff;padding:0 .35rem;cursor:pointer;font-size:.8rem">×</b></div>`).join("")}</div></div>`;
     const box = $("gen-box");
     box.onclick = e => { const dr = e.target.closest("[data-delreg]"); if (dr) { S.regions.splice(Number(dr.dataset.delreg), 1); drawPreview(); return; } if (rm || e.target.closest("[data-cut]")) return; const y = Math.round((e.clientY - box.getBoundingClientRect().top) / sc); S.cuts.push(y); S.cuts.sort((a, b) => a - b); drawPreview(); };
     box.ondblclick = e => { const c = e.target.closest("[data-cut]"); if (c && !rm) { S.cuts.splice(Number(c.dataset.cut), 1); drawPreview(); } };
@@ -337,5 +360,5 @@ Create one continuous journey with smooth color gradients (specifically [insert 
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
