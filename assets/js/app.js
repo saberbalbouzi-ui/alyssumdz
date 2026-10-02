@@ -937,19 +937,47 @@ function initHome(){
   };
 }
 
-/* ── الأكثر مبيعاً (شريط مختار من المنتجات فوق الشبكة الكاملة) ── */
+/* ── تبويبات الرئيسية: الأكثر مبيعاً / الأكثر طلباً / التخفيضات / المنتجات الجديدة ──
+   عضوية المنتج في تبويب = p.tags (تُعدَّل من لوحة الإدارة ← تعديل المنتج). التبويب الفارغ يُخفى. */
+const COLLECTIONS = [
+  {key:"best", label:"🔥 الأكثر مبيعاً", title:"الأكثر مبيعاً", sub:"المنتجات المفضّلة لدى عملائنا", ribbon:"🔥 الأكثر مبيعاً", bg:"#F4EFE6", accent:"#8a6a1a"},
+  {key:"hot",  label:"⚡ الأكثر طلباً", title:"الأكثر طلباً", sub:"الأكثر طلباً هذه الأيام", ribbon:"⚡ الأكثر طلباً", bg:"#FBEBDD", accent:"#b4531a"},
+  {key:"sale", label:"🏷️ التخفيضات", title:"التخفيضات", sub:"أسعار مخفّضة لفترة محدودة", ribbon:"🏷️ تخفيض", bg:"#FBE4E4", accent:"#b83232"},
+  {key:"new",  label:"✨ المنتجات الجديدة", title:"المنتجات الجديدة", sub:"وصل حديثاً إلى المتجر", ribbon:"✨ جديد", bg:"#E4F1EA", accent:"#157a55"},
+];
+function collectionProducts(key){ return PRODUCTS.filter(p=>p.active!==false && (p.tags||[]).includes(key)); }
 function renderBestsellers(slugs){
   const wrap = document.getElementById("bestsellers-grid");
   if(!wrap) return;
-  wrap.innerHTML = "";
-  slugs.forEach(slug=>{
-    const p = PRODUCTS.find(x=>x.slug===slug);
-    if(!p) return;
-    const a = document.createElement("a");
-    a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = REL + "p/" + p.slug + "/";
-    a.innerHTML = productCardHTML(p, {ribbon:"🔥 الأكثر مبيعاً"});
-    wrap.appendChild(a);
-  });
+  const sec = document.getElementById("bestsellers");
+  const cols = PRODUCTS.some(p=>(p.tags||[]).length) ? COLLECTIONS.filter(c=>collectionProducts(c.key).length) : [];
+  const draw = (c, list)=>{
+    wrap.innerHTML = "";
+    list.forEach(p=>{
+      const a = document.createElement("a");
+      a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = REL + "p/" + p.slug + "/";
+      a.innerHTML = productCardHTML(p, {ribbon:c.ribbon});
+      wrap.appendChild(a);
+    });
+  };
+  if(!cols.length){   // لا وسوم بعد: السلوك القديم (قائمة ثابتة)
+    draw(COLLECTIONS[0], (slugs||[]).map(s=>PRODUCTS.find(x=>x.slug===s)).filter(Boolean));
+    return;
+  }
+  let bar = document.getElementById("coll-tabs");
+  if(!bar){
+    bar = document.createElement("div"); bar.id = "coll-tabs"; bar.className = "coll-tabs"; bar.setAttribute("role", "tablist");
+    const head = sec && sec.querySelector(".sec-title"); head ? head.insertAdjacentElement("afterend", bar) : wrap.parentNode.insertBefore(bar, wrap);
+  }
+  const show = key=>{
+    const c = cols.find(x=>x.key===key) || cols[0];
+    bar.querySelectorAll("button").forEach(b=>{ const on = b.dataset.k === c.key; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); b.style.background = on ? c.accent : ""; b.style.borderColor = on ? c.accent : ""; });
+    if(sec){ sec.style.background = c.bg; sec.style.setProperty("--coll", c.accent); const h = sec.querySelector(".sec-title h2"), sp = sec.querySelector(".sec-title p"), k = sec.querySelector(".sec-title .kicker"); if(h) h.textContent = c.title; if(sp) sp.textContent = c.sub; if(k) k.style.color = c.accent; }
+    draw(c, collectionProducts(c.key));
+  };
+  bar.innerHTML = cols.map(c=>`<button type="button" role="tab" data-k="${c.key}">${c.label}</button>`).join("");
+  bar.onclick = e=>{ const b = e.target.closest("button[data-k]"); if(b){ show(b.dataset.k); b.scrollIntoView({inline:"center", block:"nearest", behavior:"smooth"}); } };
+  show(cols[0].key);
 }
 
 /* ── حركات الظهور عند التمرير (الصفحة الرئيسية فقط) ── */

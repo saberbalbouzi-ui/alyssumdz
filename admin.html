@@ -842,7 +842,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <div class="hint" id="f-type-hint" style="margin-top:0"></div>
         <div class="grid2">
           <input id="f-price" type="number" placeholder="السعر (دج)">
-          <input id="f-old" type="number" placeholder="قبل التخفيض (اختياري)">
+          <input id="f-old" type="number" placeholder="قبل التخفيض (اختياري)" oninput="Admin.autoSaleTag()">
         </div>
         <select id="f-cat"></select>
         <select id="f-active"><option value="1">✅ نشط — يظهر في المتجر</option><option value="0">⛔ موقوف — مخفي</option></select>
@@ -874,6 +874,16 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         </div>
         <input id="f-images" type="hidden">
         <div class="section-title">العروض والأسعار</div>
+        <div style="background:#faf6ec;border:1px solid var(--line);border-radius:12px;padding:.7rem .9rem;margin:.4rem 0 .6rem">
+          <b style="font-size:.9rem">🏷️ تبويبات الصفحة الرئيسية</b>
+          <div class="hint" style="margin:.2rem 0 .5rem">فعّل ظهور المنتج في تبويبات «الأكثر مبيعاً / الأكثر طلباً / التخفيضات / المنتجات الجديدة». إلغاء التحديد يحذفه من التبويب.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem .8rem">
+            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="best" style="width:auto"> 🔥 الأكثر مبيعاً</label>
+            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="hot" style="width:auto"> ⚡ الأكثر طلباً</label>
+            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="sale" style="width:auto"> 🏷️ التخفيضات</label>
+            <label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="new" style="width:auto"> ✨ المنتجات الجديدة</label>
+          </div>
+        </div>
         <label style="display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem;font-weight:800"><input type="checkbox" id="f-freeship" style="width:auto"> 🚚 تفعيل الشحن المجاني لهذا المنتج</label>
         <div class="hint" style="margin-top:0">عند التفعيل: إن لم تحدّد عروضاً بعينها يشمل كل العروض، وإن حدّدتَ عرضاً أو أكثر (خانة «🚚 مجاني» في صف العرض) يقتصر عليها.</div>
         <div id="f-offers-box">
@@ -2460,6 +2470,7 @@ const Admin = {
       Object.entries(this.categories).map(([k,v])=>'<option value="' + k + '">' + v + '</option>').join("");
   },
 
+  autoSaleTag(){ const o = Number($f("f-old").value), pr = Number($f("f-price").value); const c = document.querySelector("input[data-tag=sale]"); if(c && o > pr && pr > 0) c.checked = true; },
   editProduct(slug){
     const p = slug ? this.products.find(x=>x.slug===slug) : null;
     this.editingSlug = slug;
@@ -2477,6 +2488,7 @@ const Admin = {
     $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
     $f("f-stock").value = (src && src.stock!==undefined && src.stock!==null) ? src.stock : "";
     $f("f-freeship").checked = !!(src && src.freeShip);
+    document.querySelectorAll("#f-tags-wrap [data-tag], [data-tag]").forEach(c=>{ c.checked = !!(src && (src.tags||[]).includes(c.dataset.tag)); });
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
     $f("f-seo-desc").value = src?(src.seoDesc||""):"";
     $f("f-keywords").value = src?(src.keywords||""):"";
@@ -2514,16 +2526,31 @@ const Admin = {
 
   /* ════════ جلب صورة من رابط خارجي ورفعها مباشرة إلى GitHub — مع تحويل تلقائي لصيغة webp ════════ */
   /* تحويل أي صورة إلى webp عبر Canvas (يقلّص الحجم ويوحّد الصيغة) — يرجع null إن تعذّر (متصفح قديم مثلاً) فنستعمل الصيغة الأصلية كبديل */
-  async toWebp(blob, quality){
+  async toWebp(blob, quality, maxSide){
     try{
       const bitmap = await createImageBitmap(blob);
+      const lim = maxSide || 1100;                       // لا حاجة لأكثر من 1100px في المتجر: يصغّر تلقائياً ويوفّر على الزائر
+      const k = Math.min(1, lim / Math.max(bitmap.width, bitmap.height));
       const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width; canvas.height = bitmap.height;
+      canvas.width = Math.max(1, Math.round(bitmap.width * k)); canvas.height = Math.max(1, Math.round(bitmap.height * k));
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(bitmap, 0, 0);
-      const out = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", quality || 0.88));
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const out = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", quality || 0.82));
       return (out && out.size > 0) ? out : null;
     }catch(e){ return null; }
+  },
+  /* نسختان صغيرتان بجانب كل صورة منتج (name.w480.webp / name.w720.webp) تستعملهما بطاقات الموقع عبر srcset؛ فشلهما لا يُفشل الرفع */
+  async uploadVariants(webpBlob, path){
+    if(!/\.webp$/i.test(path)) return;
+    for(const [w, q] of [[480, 0.76], [720, 0.78]]){
+      try{
+        const small = await this.toWebp(webpBlob, q, w);
+        if(!small) continue;
+        const b64 = await this.blobToBase64(small);
+        if(b64) await GH.putFile(path.replace(/\.webp$/i, ".w" + w + ".webp"), b64, undefined, "نسخة مصغّرة " + w + "px");
+      }catch(e){ /* تجاهل */ }
+    }
   },
   blobToBase64(blob){
     return new Promise((resolve, reject)=>{
@@ -2562,6 +2589,7 @@ const Admin = {
     if(!b64) throw new Error("فشلت قراءة الصورة");
     const path = folder + "/" + (filenamePrefix || "") + Date.now() + "." + ext;
     await GH.putFile(path, b64, undefined, "رفع صورة عبر لوحة التحكم (" + path + ")");
+    if(ext === "webp" && !/^logo-/.test(filenamePrefix || "")) await this.uploadVariants(finalBlob, path);
     return path;
   },
   async uploadExternalImage(url, slug){
@@ -2589,6 +2617,7 @@ const Admin = {
     if(!b64) throw new Error("فشلت قراءة الصورة");
     const path = folder + "/" + (filenamePrefix || "") + Date.now() + "." + ext;
     await GH.putFile(path, b64, undefined, "رفع صورة من الجهاز عبر لوحة التحكم (" + path + ")");
+    if(ext === "webp" && !/^logo-/.test(filenamePrefix || "")) await this.uploadVariants(finalBlob, path);
     return path;
   },
 
@@ -2986,6 +3015,7 @@ const Admin = {
       desc: $f("f-desc").value.trim(), cat: $f("f-cat").value, active: $f("f-active").value==="1",
       stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
       freeShip: $f("f-freeship").checked,
+      tags: [...document.querySelectorAll("input[data-tag]")].filter(c=>c.checked).map(c=>c.dataset.tag),
       seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(), keywords: $f("f-keywords").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
@@ -3011,7 +3041,7 @@ const Admin = {
   diffProduct(oldP, newP){
     const changes = [];
     if(!oldP) return [{label:"منتج جديد", old:null, new:newP.title}];
-    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"],["freeShip","الشحن المجاني"],["type","النوع"]];
+    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"],["freeShip","الشحن المجاني"],["tags","التبويبات"],["type","النوع"]];
     fields.forEach(([k,label])=>{
       if(String(oldP[k]??"") !== String(newP[k]??""))
         changes.push({label, old: oldP[k]??"—", new: newP[k]??"—"});
