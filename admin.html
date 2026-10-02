@@ -8657,6 +8657,7 @@ After presenting the copywriting, output a single, consolidated READY-TO-COPY de
 3. Visual Descriptions: Add strong, creative English visual descriptions for each section based on the uploaded image.
 4. ${L.name} Typography (MANDATORY): ALL ${L.name} text MUST be rendered in massive, extremely bold fonts, with a minimum size of 20px equivalent. Render ONLY the generated ${L.name} text inside the quotation marks " ". ABSOLUTELY DO NOT render any English structural words or labels (like Headline, Body Text, Visual Flow)${ar ? "" : " unless the target language is English"}.
 5. Brackets and Label Removal: Before providing the final code, fill all [bracketed placeholders] with the precise ${L.name} text you generated, and remove all structural labels from the output.
+5b. MASTERY & UNIQUENESS (MANDATORY): build a UNIQUENESS TABLE in your head before writing the final prompt — every headline, sub-line and bullet must be unique; no sentence may appear twice; no content word (4+ letters) may repeat inside the same string; never start two consecutive lines with the same word; keep each string 2–8 words. The visual spec must demand pixel-perfect, razor-sharp, studio-grade, high-resolution typography with perfect letter shapes and connections, correct RTL ordering, consistent font weight, no ghost letters, no duplicated glyphs, no garbled or invented words, and no text outside the quoted strings.
 6. PROOFREADING (MANDATORY, DO IT BEFORE OUTPUT): re-read every ${L.name} string you wrote, word by word, and fix any spelling mistake. NEVER repeat the same word twice in a row or the same phrase twice in one string; never write the same sentence in two sections; every headline must be unique. NEVER use letter elongation/kashida/tatweel (like "لمـاذا") or decorative stretching; no diacritics. Use only correct, common words — if unsure of a word, choose a simpler one.
 6b. SPELLING (MANDATORY): spell every ${L.name} word perfectly with correct standard orthography. Keep every quoted text SHORT (max 8 words per line, simple everyday words, no diacritics, no mixed languages). The image generator must copy each quoted string letter by letter and add NO other text anywhere (no fake labels or extra captions). Copy the brand/product name EXACTLY as printed on the product packaging.
 7. Text Direction: ${ar ? "All text and layout direction must respect right-to-left flow." : "All text and layout direction must respect left-to-right flow."}
@@ -8964,7 +8965,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 <div class="card" id="gen-card" style="margin-bottom:1rem">
   <b style="color:var(--green);font-size:1.05rem">🪄 مولّد صفحة هبوط بالذكاء الاصطناعي — من صورة منتجك إلى صفحة قابلة للتعديل</b>
   <div class="hint" style="margin:.6rem 0">① أدخل معلومات المنتج وصورته ← يكتب Gemini نصوصاً تسويقية ويولّد صورة الصفحة الطويلة تلقائياً ② راجع حدود الأقسام ③ حوّلها إلى صفحة قابلة للتعديل في المحرر. (لا يظهر لك أي برومبت؛ ويمكن نسخه دون عرضه.)</div>
-  <div class="gen-steps" style="display:flex;gap:.4rem;margin:.6rem 0 1rem;flex-wrap:wrap"><button type="button" class="small gray" data-gs="1" onclick="PBGen.step(1)">① معلومات المنتج</button><button type="button" class="small gray" data-gs="2" onclick="PBGen.step(2)">② الصورة والأقسام</button><button type="button" class="small gray" data-gs="3" onclick="PBGen.step(3)">③ التحويل</button></div>
+  <div class="gen-steps" style="display:flex;gap:.4rem;margin:.6rem 0 1rem;flex-wrap:wrap"><button type="button" class="small gray" data-gs="1" onclick="PBGen.step(1)">① معلومات المنتج</button><button type="button" class="small gray" data-gs="2" onclick="PBGen.step(2)">② المراجعة والتقسيم</button></div>
   <div class="gen-step" data-s="1">
   <b>① معلومات المنتج</b>
   <div class="hint" style="margin:.3rem 0 .6rem">أدخل معلومات المنتج وصورته، ثم اضغط «توليد الصورة الطويلة»: يكتب Gemini نصوصاً تسويقية قوية ويولّد الصورة في الخلفية (لا تظهر لك أي برومبتات). بعدها تعدّلها في المحرر.</div>
@@ -8993,6 +8994,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     <button class="small gray" type="button" onclick="PBGen.copyHidden()" title="يجهّز البرومبت ويُنسخ للحافظة دون عرضه، لاستعماله في تطبيق Gemini يدوياً">📋 نسخ البرومبت (دون عرضه)</button>
     <button class="small gray" type="button" onclick="PBGen.step(2)" title="إن كانت لديك صورة جاهزة">⬆ لدي صورة جاهزة</button>
   </div>
+  <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-autoretry" style="width:auto"> إعادة توليد تلقائية مرة واحدة إن وُجدت أخطاء كثيرة في الصورة (تُحتسب كطلب صور إضافي)</label>
   <div id="gen-automsg" style="font-weight:700;color:var(--green);min-height:1.3em"></div><div id="gen-last" style="margin-top:.4rem"></div><small id="gen-cost" style="color:#8a7a4d"></small>
   <textarea id="gen-out" style="display:none"></textarea><textarea id="gen-final" style="display:none"></textarea><pre id="gen-copy" style="display:none"></pre>
   </div>
@@ -9008,27 +9010,29 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">أو ارفع صورة جاهزة بدل التوليد<input type="file" id="gen-file" accept="image/*" onchange="PBGen.onFile(this)"></label>
     <label class="hint" style="margin:0">عدد الأقسام المتوقع<input id="gen-n" type="number" min="1" max="30" value="9" onchange="PBGen.recut()"></label>
+    <label class="hint" style="margin:0">عنوان الصفحة<input id="gen-title" placeholder="مثال: عسل التركيز"></label>
   </div>
+  <div style="display:none">
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">Tesseract — مجاني داخل المتصفح</option><option value="gemini">Gemini رؤية — أدق للعربية (بمفتاحك)</option></select></label>
     <label class="hint" style="margin:0;display:none" id="gen-gk-wrap">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
     <label class="hint" style="margin:0">مفتاح remove.bg (اختياري — لقص خلفية المنتج/الصور)<input id="gen-rbkey" dir="ltr" placeholder="بدونه: «قص كصورة» مستطيلة" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
   </div>
   <div style="margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" id="gen-detect-btn" onclick="PBGen.detect()" title="يستعمل مفتاح Gemini (طبقة مجانية)">🔍 اكتشاف المنتج والصور تلقائياً</button><button class="small gray" type="button" id="gen-region-btn" onclick="PBGen.regionMode()">✂️ رسم منطقة للقص (منتج/صورة)</button><small class="hint" style="margin:0">اضغط الزر ثم اسحب مستطيلاً حول المنتج أو أي صورة في المعاينة؛ كل منطقة تصير عنصر صورة مستقلاً قابلاً للتحريك. انقر × على المنطقة لحذفها.</small></div>
+  </div>
   <div id="gen-prev" style="margin:.6rem 0"></div>
   </div>
-  <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(1)">→ السابق</button><button class="small gold" type="button" onclick="PBGen.step(3)">التالي ←</button></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.8rem"><button class="small gold" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 إلى المحرر مباشرة</button><button class="small gray" type="button" onclick="PBGen.step(1)">→ السابق</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
   </div>
   <div class="gen-step" data-s="3" style="display:none">
   <b>③ التحويل إلى صفحة قابلة للتعديل</b>
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0">عنوان الصفحة<input id="gen-title" placeholder="مثال: عسل التركيز"></label>
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (OCR داخل المتصفح)</label>
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
   </div>
   <textarea id="gen-intended" style="display:none"></textarea>
   <div id="gen-sum" class="hint" style="margin:.6rem 0"></div>
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 تحويل إلى صفحة قابلة للتعديل</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"></div>
   <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(2)">→ السابق</button><span></span></div>
   </div>
 </div>`;
@@ -9040,7 +9044,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   /* المعالج: 1 البرومبت ← 2 الصورة والأقسام ← 3 التحويل */
   function step(n) {
-    if (n >= 2 && n === 3 && !S.canvas) { n = 2; const m = $("gen-msg"); if (m) m.textContent = "ارفع الصورة أولاً"; }
+    if (n === 3) n = 2;                                   // التحويل إلى نصوص قابلة للتعديل معطّل حالياً (S.convertText)
+    if (n === 2 && !S.canvas) { const m = $("gen-msg"); if (m) m.textContent = "ولّد الصورة أو ارفع صورة جاهزة أولاً"; }
     document.querySelectorAll("#gen-card .gen-step").forEach(el => { el.style.display = Number(el.dataset.s) === n ? "" : "none"; });
     document.querySelectorAll("#gen-card [data-gs]").forEach(b => { b.className = "small " + (Number(b.dataset.gs) === n ? "gold" : "gray"); });
     S.step = n;
@@ -9072,7 +9077,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     const key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })(); if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً"; return; }
     const L = LANGS[$("gen-lang").value] || LANGS.ar; msg.textContent = "⏳ تدقيق إملائي ولغوي…";
     try {
-      const ask = `You are a meticulous ${L.name} proofreader and copy editor. Below is an image-generation prompt. Every text inside double quotes " " will be rendered literally inside an image. Fix ONLY the quoted strings: (1) any spelling or grammar mistake, (2) any repeated word or phrase (consecutive repeats like "X X", and the same sentence reused in different sections), (3) letter elongation/kashida/tatweel, (4) diacritics, (5) strings longer than 8 words (shorten them), (6) wrong or unnatural words (use simple standard everyday ${L.name}). Keep the meaning and the persuasive tone. Do NOT touch anything outside the quotes and do NOT remove sections. Return the COMPLETE corrected prompt inside ONE code block, then after the block write a short Arabic bullet list of the corrections you made (or "لا توجد أخطاء").\n\n${cur}`;
+      const ask = `You are a meticulous ${L.name} proofreader and copy editor. Below is an image-generation prompt. Every text inside double quotes " " will be rendered literally inside an image. Fix ONLY the quoted strings: (1) any spelling or grammar mistake, (2) any repeated word or phrase (consecutive repeats like "X X", the same content word appearing twice inside one string, and the same or near-identical sentence reused in different sections — rewrite so every string is unique), (3) letter elongation/kashida/tatweel, (4) diacritics, (5) strings longer than 8 words (shorten them), (6) wrong or unnatural words (use simple standard everyday ${L.name}). Keep the meaning and the persuasive tone. Do NOT touch anything outside the quotes and do NOT remove sections. Return the COMPLETE corrected prompt inside ONE code block, then after the block write a short Arabic bullet list of the corrections you made (or "لا توجد أخطاء").\n\n${cur}`;
       const t = await (PBGen.textFn || geminiText)(key, ask, null, null, "proof"), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
       if (!blocks.length) throw new Error("لم يُرجع Gemini نصاً مصحّحاً"); const fx = localFix(blocks.join("\n\n"));
       $("gen-final").value = fx.text; $("gen-intended").value = fx.text; $("gen-copy").textContent = (($("gen-copy").textContent || "") + "\n\n— التدقيق —\n" + t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim()).trim();
@@ -9109,12 +9114,13 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   async function genLong(key, prompt, productB64) {
     const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } });
     const models = await imageModels(key); let lastErr = null;
-    for (const ar of RATIOS) {
+    const tries = []; RATIOS.forEach(ar => { tries.push({ aspectRatio: ar, imageSize: "2K" }); tries.push({ aspectRatio: ar }); });                // جودة 2K أولاً ثم الافتراضية
+    for (const cfg of tries) {
       try {
-        const j = await gemGenerate(key, "image", parts, { imageConfig: { aspectRatio: ar } }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
+        const j = await gemGenerate(key, "image", parts, { imageConfig: cfg }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
         if (!d) throw new Error("لم يُرجع النموذج صورة");
-        const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); S.ratio = ar; return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
-      } catch (e) { lastErr = e; if (!/\[400|aspect|ratio|invalid.argument|لم يُرجع النموذج صورة/i.test(String(e.message))) throw e; }      // النسبة غير مدعومة ← جرّب الأقصر
+        const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); S.ratio = cfg.aspectRatio; S.size = cfg.imageSize || ""; return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
+      } catch (e) { lastErr = e; if (!/\[400|aspect|ratio|size|invalid.argument|لم يُرجع النموذج صورة/i.test(String(e.message))) throw e; }
     }
     throw lastErr || new Error("تعذّر توليد الصورة");
   }
@@ -9135,10 +9141,12 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       box.innerHTML = S.issues.length ? "⚠️ وجدت " + S.issues.length + " ملاحظة محتملة (قد تكون قراءة خاطئة من الفاحص):<ul style='margin:.3rem 1rem;line-height:1.9'>" + S.issues.map(x => "<li>" + esc(x) + "</li>").join("") + "</ul>إن كانت كثيرة اضغط «أعد التوليد»، وإلا اعتمد الصورة وصحّح النص في المحرر." : "✅ لم أجد أخطاء إملائية أو تكراراً واضحاً في النصوص المقروءة.";
     } catch (err) { box.textContent = "تعذّر الفحص التلقائي: " + err.message; }
   }
+  async function autoRetry() { if ($("gen-autoretry") && $("gen-autoretry").checked && !S.retried && (S.issues || []).length >= 3) { S.retried = true; $("gen-rcheck").textContent += " — إعادة توليد تلقائية…"; await regen(); } }
   function approve() { S.reviewed = true; step(2); }
-  function regen() { S.avoid = (S.issues || []).length ? S.issues.join(" | ") : ""; step(1); generateImage(); }
+  function regen() { S.avoid = (S.issues || []).length ? S.issues.join(" | ") : ""; step(1); return generateImage(true); }
   /* الدالة الرئيسية: نصوص تسويقية ← أجزاء الصورة ← لصق ← معاينة الأقسام */
-  async function generateImage() {
+  async function generateImage(isRegen) {
+    if (isRegen !== true) S.retried = false;
     const msg = $("gen-automsg"), btn = $("gen-make"), key = keyNow(), pf = $("gen-pimg").files && $("gen-pimg").files[0];
     if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; }
     if (!pf) { msg.textContent = "❌ ارفع صورة المنتج أولاً"; return; }
@@ -9148,7 +9156,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       const fp = await makeFinal(key), pb = await small64(pf, 1400);
       msg.textContent = "🎨 (3/3) توليد الصورة الطويلة (قد يستغرق دقيقة)…";
       const blob = await (PBGen.imgFn || genLong)(key, fp + (S.avoid ? "\n\n=== CORRECTIONS REQUIRED ===\nThe previous attempt contained these text errors. Fix them: write every quoted string EXACTLY as given, never repeat words, no extra text: " + S.avoid : ""), pb), canvas = await loadImage(blob); S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
-      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage(); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — راجعها ثم اعتمدها للتقسيم";
+      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — راجعها ثم اعتمدها للتقسيم";
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
@@ -9204,11 +9212,11 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     };
     try {
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;
-      if ($("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Gemini أو اختر Tesseract"; btn.disabled = false; return; }
+      if (S.convertText && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Gemini أو اختر Tesseract"; btn.disabled = false; return; }
       try { if (gk) localStorage.setItem("alyssum_gp_gkey", gk); if (rb) localStorage.setItem("alyssum_removebg_key", rb); } catch (e) { }
-      const page = await convert({ canvas: S.canvas, cuts: S.cuts, regions: S.regions, intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: $("gen-ocr").checked, tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
+      const page = await convert({ canvas: S.canvas, cuts: S.cuts, regions: S.convertText ? S.regions : [], intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: !!S.convertText && $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: !!S.convertText && $("gen-ocr").checked, tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
       page.slug = ($("gen-title").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "lp-" + Date.now().toString(36).slice(-4);
-      const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + st.ok + " نصاً صار قابلاً للتعديل" + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Gemini أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; PBApp.open(page, "", true);
+      const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + (S.convertText ? st.ok + " نصاً صار قابلاً للتعديل" : "الأقسام جاهزة") + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Gemini أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; PBApp.open(page, "", true);
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
