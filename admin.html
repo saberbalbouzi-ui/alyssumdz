@@ -649,6 +649,9 @@ tr:hover td{background:#FAF7F0}
       <label class="small" style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;margin-bottom:.5rem">
         <input type="checkbox" id="co-dup" style="width:auto;margin-top:.3rem"><span><b>منع طلب نفس المنتج مرتين من نفس الـ IP</b><br><small style="color:#777">يُحسب من بصمة مجزّأة لعنوان الـ IP (لا يُخزَّن العنوان نفسه). يُمنع الطلب الثاني للمنتج نفسه خلال المدة أدناه، ويظهر للزبون أنه سبق أن أرسله. الطلبات الملغاة لا تُحتسب.</small></span>
       </label>
+      <label class="small" style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;margin-bottom:.8rem">
+        <input type="checkbox" id="co-phonedz" style="width:auto;margin-top:.3rem"><span><b>التحقق من رقم الهاتف الجزائري</b><br><small style="color:#777">الرقم 10 أرقام ويبدأ بـ 05 أو 06 أو 07، ولا يقبل الحقل حروفاً ولا رموزاً (ويُحوَّل +213 تلقائياً إلى 0). يُطبَّق في نموذج المنتج والسلة وتسجيل الحساب، ويُتحقَّق منه أيضاً على الخادم عند تفعيل منع الطلبات الآلية.</small></span>
+      </label>
       <label class="hint" style="margin:0">مدة المنع (ساعات)<input id="co-dup-hours" type="number" min="1" max="720" placeholder="24" style="max-width:140px"></label>
       <div class="hint">الفحص الحقيقي يتم على الخادم (Supabase أو PHP) فلا يمكن تجاوزه من المتصفح. بلا خلفية (Google Sheets فقط) يُكتفى بفحص على جهاز الزبون. تنبيه: عدة زبائن خلف نفس شبكة (حيّ أو مقهى) يشتركون في IP واحد، فلا تجعل المدة طويلة جداً.</div>
       <button class="small gold" onclick="Admin.publishCheckout()">💾 حفظ ونشر</button>
@@ -5305,7 +5308,7 @@ const Admin = {
     $f("co-show-wa").checked = c.showWhatsappBtn !== false;
     $f("co-show-cart").checked = c.showAddToCart !== false;
     $f("co-show-offers").checked = c.showOffers !== false;
-    const gd = c.guard || {}; $f("co-antibot").checked = !!gd.antibot; $f("co-dup").checked = !!gd.dup; $f("co-dup-hours").value = gd.hours || 24;
+    const gd = c.guard || {}; $f("co-antibot").checked = !!gd.antibot; $f("co-dup").checked = !!gd.dup; $f("co-dup-hours").value = gd.hours || 24; $f("co-phonedz").checked = c.phoneDz !== false;
     $f("co-order-btn-text").value = c.orderBtnText || "";
     $f("co-wa-btn-text").value = c.whatsappBtnText || "";
     $f("co-cart-btn-text").value = c.cartBtnText || "";
@@ -5415,7 +5418,8 @@ const Admin = {
       showWhatsappBtn: $f("co-show-wa").checked,
       showAddToCart: $f("co-show-cart").checked,
       showOffers: $f("co-show-offers").checked,
-      guard: { antibot: $f("co-antibot").checked, dup: $f("co-dup").checked, hours: Math.min(720, Math.max(1, Number($f("co-dup-hours").value) || 24)) },
+      phoneDz: $f("co-phonedz").checked,
+      guard: { antibot: $f("co-antibot").checked, dup: $f("co-dup").checked, hours: Math.min(720, Math.max(1, Number($f("co-dup-hours").value) || 24)), phoneDz: $f("co-phonedz").checked },
       orderBtnText: $f("co-order-btn-text").value.trim(),
       whatsappBtnText: $f("co-wa-btn-text").value.trim(),
       cartBtnText: $f("co-cart-btn-text").value.trim(),

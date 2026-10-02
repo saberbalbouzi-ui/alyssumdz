@@ -295,7 +295,7 @@ switch ($route) {
             $tk = explode('.', (string)($o['ftok'] ?? '')); $age = time() - (int)($tk[0] ?? 0);
             if (count($tk) !== 2 || !hash_equals(guardSig($tk[0]), $tk[1]) || $age < 3 || $age > 7200) out(422, ['error' => 'bot']);
             $pn = custPhone($phone);
-            if (!preg_match('/^0[1-9]\d{7,8}$/', $pn) || preg_match('/^0?(\d)\1{7,}$/', $pn) || !preg_match('/\pL/u', $name)) out(422, ['error' => 'invalid_phone']);
+            if (!preg_match(($g['phoneDz'] ?? true) ? '/^0[567]\d{8}$/' : '/^0[1-9]\d{7,8}$/', $pn) || preg_match('/^0?(\d)\1{7,}$/', $pn) || !preg_match('/\pL/u', $name)) out(422, ['error' => 'invalid_phone']);
             $c = $d->prepare('SELECT COUNT(*) FROM orders WHERE ip_hash = ? AND created_at > ?'); $c->execute([$iph, time() - 3600]);
             if ((int)$c->fetchColumn() >= 8) out(429, ['error' => 'rate_limited']);
         }

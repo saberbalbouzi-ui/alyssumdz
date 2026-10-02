@@ -206,7 +206,7 @@ begin
     begin v_ts := split_part(coalesce(p ->> 'ftok', ''), '.', 1)::bigint; exception when others then v_ts := null; end;
     if v_ts is null or split_part(p ->> 'ftok', '.', 2) <> public._guard_sig(v_ts::text)
        or extract(epoch from clock_timestamp())::bigint - v_ts not between 3 and 7200 then raise exception 'bot'; end if;   -- رمز موقَّع من الخادم، عمره بين 3 ثوانٍ وساعتين
-    if public._cust_phone(v_phone) !~ '^0[1-9][0-9]{7,8}$' or public._cust_phone(v_phone) ~ '^0?(.)\1{7,}$' or v_name !~ '[[:alpha:]]' then raise exception 'invalid_phone'; end if;
+    if public._cust_phone(v_phone) !~ (case when coalesce((g ->> 'phoneDz')::boolean, true) then '^0[567][0-9]{8}$' else '^0[1-9][0-9]{7,8}$' end) or public._cust_phone(v_phone) ~ '^0?(.)\1{7,}$' or v_name !~ '[[:alpha:]]' then raise exception 'invalid_phone'; end if;
     if v_iph is not null and (select count(*) from public.orders where ip_hash = v_iph and created_at > now() - interval '1 hour') >= 8 then raise exception 'rate_limited'; end if;
   end if;
   if coalesce((g ->> 'dup')::boolean, false) and v_iph is not null then

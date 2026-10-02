@@ -99,6 +99,7 @@ const Cart = {
     const commune = document.getElementById("ccommune")?.value.trim();
     const dtype = document.querySelector('input[name="cdtype"]:checked')?.value || "home";
     if(!name || !phone || !wId){ toast("يرجى ملء الاسم، الهاتف والولاية"); return }
+    if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); document.getElementById("cphone")?.focus(); return }
     const wl = WILAYAS.find(x=>x.id==wId);
     const sub = Cart.subtotal();
     const fee = Cart.fee();
@@ -373,6 +374,7 @@ async function initCheckout(){
     const cfg = await loadCheckout();
     applyCheckout(cfg);
     Guard.init(cfg && cfg.guard);
+    PhoneDZ.setup(cfg);
   }catch(e){ /* تجاهل */ }
 }
 
@@ -804,6 +806,7 @@ function initProduct(slug){
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const commune = document.getElementById("commune").value.trim();
+    if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); document.getElementById("phone").focus(); return }
     if(type==="variable" && !state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(type==="grouped" && !(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); const gb = document.getElementById("group-box"); if(gb) gb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
@@ -1164,10 +1167,11 @@ const Account = {
   },
   async submit(reg, f){
     const v = Object.fromEntries(new FormData(f).entries()), msg = document.getElementById("acc-msg"), btn = f.querySelector(".acc-go");
-    const phone = String(v.phone || "").replace(/[^\d+]/g, "");
+    const phone = PhoneDZ.on ? PhoneDZ.norm(v.phone) : String(v.phone || "").replace(/[^\d+]/g, "");
     const fail = t=>{ msg.textContent = t; msg.className = "acc-msg bad"; };
     if(reg && String(v.name || "").trim().length < 2) return fail(this.ERR.invalid_name);
     if(phone.replace(/\D/g, "").length < 9) return fail(this.ERR.invalid_phone);
+    if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))) return fail(PhoneDZ.MSG);
     if(this.mode() !== "local" && String(v.password || "").length < 6) return fail(this.ERR.invalid_password);
     btn.disabled = true; msg.textContent = "⏳ لحظة…"; msg.className = "acc-msg";
     try{
@@ -1471,3 +1475,34 @@ const Guard = {
   },
   openWa(url, pre){ if(pre){ try{ pre.location.href = url; return; }catch(e){} } open(url, "_blank"); },
 };
+
+
+/* ══════════════ رقم الهاتف الجزائري: 10 أرقام تبدأ بـ 05 أو 06 أو 07، أرقام فقط ══════════════
+   يعمل افتراضياً (CONFIG.SITE.country = "DZ" افتراضياً) ويُعطَّل من لوحة الإدارة ← نموذج الطلب أو لبلد آخر. تُحوَّل +213/00213 تلقائياً إلى 0. */
+const PhoneDZ = {
+  on: ((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.country) || "DZ") === "DZ",
+  MSG: "رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 05 أو 06 أو 07 (أرقام فقط، بلا حروف أو رموز)",
+  norm(v){ let d = String(v || "").replace(/\D/g, ""); if(d.startsWith("00213")) d = "0" + d.slice(5); else if(d.startsWith("213") && d.length > 10) d = "0" + d.slice(3); return d.slice(0, 10); },
+  ok(v){ return /^0[567]\d{8}$/.test(String(v || "")); },
+  hint(el){
+    let h = el.parentNode.querySelector(".phone-hint"); if(!h){ h = document.createElement("div"); h.className = "phone-hint"; h.style.cssText = "font-size:.78rem;min-height:1.1em;margin-top:.2rem;font-weight:700"; el.insertAdjacentElement("afterend", h); }
+    return h;
+  },
+  check(el){
+    const v = el.value, h = this.hint(el);
+    if(!v){ h.textContent = ""; return; }
+    if(v.length >= 2 && !/^0[567]/.test(v)){ h.textContent = "⚠️ يجب أن يبدأ الرقم بـ 05 أو 06 أو 07"; h.style.color = "var(--red)"; }
+    else if(v.length < 10){ h.textContent = v.length + " / 10 أرقام"; h.style.color = "var(--muted)"; }
+    else if(this.ok(v)){ h.textContent = "✓ رقم صالح"; h.style.color = "var(--ok)"; }
+  },
+  bind(){
+    ["phone", "cphone"].forEach(id=>{
+      const el = document.getElementById(id); if(!el || el.dataset.dz) return; el.dataset.dz = "1";
+      el.setAttribute("inputmode", "numeric"); el.setAttribute("autocomplete", "tel-national"); el.setAttribute("placeholder", el.getAttribute("placeholder") || "05XXXXXXXX");
+      el.addEventListener("input", ()=>{ if(!this.on) return; const n = this.norm(el.value); if(el.value !== n) el.value = n; this.check(el); });
+      el.addEventListener("blur", ()=>{ if(this.on && el.value && !this.ok(el.value)){ const h = this.hint(el); h.textContent = "⚠️ " + this.MSG; h.style.color = "var(--red)"; } });
+    });
+  },
+  setup(cfg){ this.on = ((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.country) || "DZ") === "DZ" && !(cfg && cfg.phoneDz === false); this.bind(); },
+};
+(function(){ const go = ()=>{ try{ PhoneDZ.bind(); }catch(e){} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go(); setTimeout(go, 1500); })();
