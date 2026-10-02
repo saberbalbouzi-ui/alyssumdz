@@ -9023,8 +9023,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   /* نماذج الصور المتاحة */
   async function imageModels(key) {
-    const pref = ["gemini-3.1-flash-lite-image", "gemini-2.5-flash-image", "gemini-3-pro-image-preview"]; await gemModels(key, "copy"); const names = (_gemCache && _gemCache.key === key && _gemCache.names) || [];
-    const pick = pref.filter(m => names.includes(m)), any = names.filter(n => /image/i.test(n) && !pick.includes(n)); const list = pick.concat(any).slice(0, 3); return list.length ? list : pref.slice(0, 2);
+    const pref = ["gemini-3.1-flash-image", "gemini-3.1-flash-lite-image", "gemini-2.5-flash-image", "gemini-3-pro-image-preview"]; await gemModels(key, "copy"); const names = (_gemCache && _gemCache.key === key && _gemCache.names) || [];
+    const pick = pref.filter(m => names.includes(m)), any = names.filter(n => /image/i.test(n) && !pick.includes(n)); const list = pick.concat(any).slice(0, 3); return list.length ? list : pref.slice(0, 3);
   }
   /* صورة واحدة طويلة: نجرّب النسب الأطول أولاً ثم نتراجع إن لم يدعمها النموذج */
   const RATIOS = ["1:8", "1:4", "9:16"];
