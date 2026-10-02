@@ -327,23 +327,37 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   </div>
 
   <div id="tab-repeat" class="hidden">
-    <div class="card">
+    <div class="card" oninput="Admin.rpAuto()" onchange="Admin.rpAuto()">
       <b style="color:var(--green);display:block;margin-bottom:.35rem">🔁 إعادة الشراء عبر واتساب</b>
       <div class="hint">يقترح عليك زبائن سُلّمت طلباتهم منذ مدة (تقارب نفاد المنتج)، ولم يطلبوا بعدها. اضغط «💬» فيفتح واتساب برسالة جاهزة فيها كود تخفيض خاص. لكل زبون يُنشأ <b>كود شخصي</b> (مثل BACK-7K2F9X) مرتبط برقم هاتفه ويُستعمل مرة واحدة فقط وله صلاحية، فلا يفيد تسريبه ولا مشاركته.</div>
       <div class="grid2" style="margin-top:.6rem">
-        <label class="hint" style="margin:0">أول تذكير بعد (أيام من تاريخ الطلب)<input id="rp-min" type="number" min="1" placeholder="21"></label>
-        <label class="hint" style="margin:0">آخر موعد للتذكير (أيام)<input id="rp-max" type="number" min="1" placeholder="90"></label>
-        <label class="hint" style="margin:0">الكود العام الاحتياطي (يُستعمل فقط إن لم تتوفر خلفية Supabase/PHP؛ وإلا يُنشأ كود شخصي لكل زبون)<input id="rp-code" dir="ltr" style="text-transform:uppercase" placeholder="BACK10"></label>
-        <label class="hint" style="margin:0">صلاحية الكود (أيام)<input id="rp-days" type="number" min="1" placeholder="14"></label>
         <label class="hint" style="margin:0">نوع الخصم<select id="rp-type"><option value="percent">نسبة %</option><option value="fixed">مبلغ ثابت (دج)</option><option value="freeship">توصيل مجاني</option></select></label>
         <label class="hint" style="margin:0">القيمة<input id="rp-value" type="number" min="0" placeholder="10"></label>
       </div>
-      <label class="hint" style="margin:.6rem 0 0">نص الرسالة — {name} الاسم · {product} آخر منتج اشتراه · {code} الكود · {offer} وصف العرض · {days} صلاحية الكود</label>
-      <textarea id="rp-msg" rows="4"></textarea>
-      <button class="small gold" onclick="Admin.saveRepeat()">💾 حفظ ونشر الكود</button>
+      <label class="hint" style="margin:.5rem 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="rp-invite" checked style="width:auto"> دعوة الزبون للتسجيل في الموقع تلقائياً (تُذكر فيها هدية التسجيل الحالية)</label>
+      <details style="margin:.4rem 0">
+        <summary style="cursor:pointer;font-weight:800;color:var(--green);font-size:.85rem">⚙️ إعدادات متقدمة — تُضبط تلقائياً، لا حاجة لتغييرها</summary>
+        <div class="grid2" style="margin-top:.5rem">
+          <label class="hint" style="margin:0">أول تذكير بعد (أيام من تاريخ الطلب)<input id="rp-min" type="number" min="1" placeholder="21"></label>
+          <label class="hint" style="margin:0">آخر موعد للتذكير (أيام)<input id="rp-max" type="number" min="1" placeholder="90"></label>
+          <label class="hint" style="margin:0">صلاحية الكود (أيام)<input id="rp-days" type="number" min="1" placeholder="14"></label>
+          <label class="hint" style="margin:0">كود عام احتياطي (اختياري — يُولَّد تلقائياً إن تُرك فارغاً؛ يُستعمل فقط بلا خلفية Supabase/PHP)<input id="rp-code" dir="ltr" style="text-transform:uppercase" placeholder="تلقائي"></label>
+        </div>
+      </details>
+      <label class="hint" style="margin:.6rem 0 0">نص الرسالة — يُملأ تلقائياً: {name} الاسم · {product} المنتج المختار · {link} رابط صفحة المنتج (مع الكود) · {code} الكود · {offer} وصف العرض · {days} صلاحية الكود · {register} دعوة التسجيل</label>
+      <textarea id="rp-msg" rows="7"></textarea>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="Admin.rpResetMsg()">↺ النص الذكي الافتراضي</button><button class="small gold" type="button" onclick="Admin.saveRepeat()">💾 حفظ</button><small id="rp-saved" style="color:var(--ok);font-weight:700"></small></div>
     </div>
     <div class="stat" id="rp-kpi"></div>
-    <div class="card"><div class="rtw" style="overflow:auto"><table id="rp-table" class="rt"></table></div></div>
+    <div class="card">
+      <div class="search-bar">
+        <button class="small blue" id="rp-m-due" type="button" onclick="Admin.rpMode('due')">⏰ مرشّحون الآن</button>
+        <button class="small gray" id="rp-m-all" type="button" onclick="Admin.rpMode('all')">👥 كل من اشترى</button>
+        <input id="rp-search" placeholder="🔍 بحث بالاسم أو الهاتف..." oninput="Admin.renderRepeat()">
+      </div>
+      <div class="hint">يُختار تلقائياً آخر منتج اشتراه الزبون — يمكنك تغيير المنتج من القائمة قبل الإرسال، فيتبدّل الاسم والرابط في الرسالة.</div>
+      <div class="rtw" style="overflow:auto"><table id="rp-table" class="rt"></table></div>
+    </div>
   </div>
 
   <div id="tab-setup" class="hidden">
@@ -4873,39 +4887,61 @@ const Admin = {
   },
 
   /* ════════ إعادة الشراء عبر واتساب (assets/data/repeat.json + كود تخفيض يُنشأ في coupons.json) ════════ */
-  repeatDefaults(){ return { minDays:21, maxDays:90, code:"BACK10", validDays:14, type:"percent", value:10,
-    message:"مرحباً {name} 🌿\nكيف وجدت {product}؟ نتمنى أنه أعجبك.\nإن قارب على النفاد، لك عندنا {offer} بالكود {code} (صالح {days} يوماً).\nاطلب من هنا: " + location.href.replace(/[?#].*$/, "").replace(/[^\/]*$/, "") } },
+  siteOrigin(){ return "https://" + ((typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host); },
+  repeatMsgDefault(){ return "مرحباً {name} 🌿\nكيف وجدت {product}؟ نتمنى أنه أعجبك.\nإن قارب على النفاد، لك عندنا {offer} بالكود {code} (صالح {days} يوماً).\nاطلب من هنا: {link}\n\n{register}"; },
+  repeatDefaults(){ return { minDays:21, maxDays:90, code:"", validDays:14, type:"percent", value:10, invite:true, message:this.repeatMsgDefault() }; },
   async loadRepeat(){
     this.repeat = this.repeatDefaults();
     try{ const f = await GH.getFile("assets/data/repeat.json"); this.repeatSha = f.sha; this.repeat = Object.assign(this.repeatDefaults(), JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))))); }catch(e){ this.repeatSha = undefined; }
   },
   repeatSent(){ try{ return JSON.parse(localStorage.getItem("alyssum_repeat_sent") || "{}") || {}; }catch(e){ return {}; } },
+  offerText(g){ return !g ? "" : g.type === "freeship" ? "توصيل مجاني" : g.type === "fixed" ? ("خصم " + Number(g.value).toLocaleString("fr-DZ") + " دج") : g.type === "gift" ? "منتج هدية 🎁" : ("خصم " + Number(g.value) + "%"); },
+  /* سطر دعوة التسجيل: يذكر هدية التسجيل الحالية (من إعدادات الهدايا) تلقائياً */
+  registerLine(){
+    const W = this.welcome, g = W && W.enabled !== false && W.register && W.register.enabled !== false ? W.register : null;
+    return "🎁 سجّل في موقعنا مجاناً " + (g ? ("واحصل على " + this.offerText(g) + " كهدية ترحيب مع ") : "وتمتّع بمزايا حصرية و") + "متابعة طلباتك بسهولة:\n" + this.siteOrigin() + "/?register=1";
+  },
+  _rpPick: {}, _rpMode: "due",
+  rpMode(m){ this._rpMode = m; this.renderRepeat(); },
+  rpPick(ph, slug){ this._rpPick[ph] = slug; },
+  rpResetMsg(){ $f("rp-msg").value = this.repeatMsgDefault(); this.rpAuto(); },
+  rpAuto(){ clearTimeout(this._rpT); this._rpT = setTimeout(()=>this.saveRepeat(true), 1400); },
   repeatOffer(R){ return R.type === "freeship" ? "توصيل مجاني على طلبك" : R.type === "fixed" ? ("خصم " + Number(R.value).toLocaleString("fr-DZ") + " دج") : ("خصم " + Number(R.value) + "%"); },
   /* زبائن سُلّم لهم طلب قبل minDays..maxDays يوماً، ولا طلب أحدث بعده، وليسوا في القائمة السوداء، ولم يُراسَلوا خلال 45 يوماً */
-  repeatCandidates(){
+  repeatCandidates(all){
     const R = this.repeat || this.repeatDefaults(), sent = this.repeatSent(), now = Date.now(), by = {};
     this.orders.forEach(o=>{ const ph = this.normalizePhone(o.phone); if(!ph || ["annulee","echec"].includes(o.status)) return; (by[ph] = by[ph] || []).push(o); });
     const out = [];
     Object.entries(by).forEach(([ph, list])=>{
       list.sort((a,b)=>new Date(b.date) - new Date(a.date));
-      const last = list[0]; if(last.status !== "livree") return;                 // آخر طلب لم يُسلَّم بعد أو لا يزال قيد المعالجة
+      let last = list[0];
+      if(all){ last = list.find(o=>o.status === "livree"); if(!last || this.isBlacklisted(ph)) return; }   // «كل من اشترى»: له طلب مُسلَّم واحد على الأقل
+      else{
+        if(last.status !== "livree") return;                                  // آخر طلب لم يُسلَّم بعد أو لا يزال قيد المعالجة
+        const dd = Math.floor((now - new Date(last.date).getTime()) / 86400000);
+        if(dd < R.minDays || dd > R.maxDays || this.isBlacklisted(ph)) return;
+        if(sent[ph] && now - sent[ph] < 45 * 86400000) return;
+      }
       const days = Math.floor((now - new Date(last.date).getTime()) / 86400000);
-      if(days < R.minDays || days > R.maxDays || this.isBlacklisted(ph)) return;
-      if(sent[ph] && now - sent[ph] < 45 * 86400000) return;
-      const lines = this.orderLines(last), prod = lines.length ? lines[0].p.title : "طلبك السابق";
-      out.push({ ph, name: last.name || "", phone: last.phone, days, orders: list.length, product: prod, total: list.reduce((a,o)=>a + (Number(o.total)||0), 0) });
+      const lines = this.orderLines(last), prod = lines.length ? lines[0].p.title : "طلبك السابق", slug = lines.length ? lines[0].p.slug : "";
+      out.push({ ph, name: last.name || "", phone: last.phone, days, orders: list.length, product: prod, slug, total: list.reduce((a,o)=>a + (Number(o.total)||0), 0), sentAt: sent[ph] || 0 });
     });
     return out.sort((a,b)=>b.orders - a.orders || a.days - b.days);
   },
   renderRepeat(){
     const R = this.repeat || this.repeatDefaults(); if(!$f("rp-min")) return;
-    if(!this._rpFilled){ $f("rp-min").value = R.minDays; $f("rp-max").value = R.maxDays; $f("rp-code").value = R.code; $f("rp-days").value = R.validDays; $f("rp-type").value = R.type; $f("rp-value").value = R.value; $f("rp-msg").value = R.message; this._rpFilled = true; }
-    const cs = this.repeatCandidates(), sent = this.repeatSent(), code = String(R.code||"").toUpperCase();
+    if(!this._rpFilled){ $f("rp-min").value = R.minDays; $f("rp-max").value = R.maxDays; $f("rp-code").value = R.code; $f("rp-days").value = R.validDays; $f("rp-type").value = R.type; $f("rp-value").value = R.value; $f("rp-invite").checked = R.invite !== false; $f("rp-msg").value = R.message; this._rpFilled = true; }
+    const q = ($f("rp-search").value || "").trim().toLowerCase(), all = this._rpMode === "all";
+    $f("rp-m-due").className = "small " + (all ? "gray" : "blue"); $f("rp-m-all").className = "small " + (all ? "blue" : "gray");
+    const due = this.repeatCandidates(false);
+    const cs = (all ? this.repeatCandidates(true) : due).filter(c=>!q || (c.name + " " + c.phone).toLowerCase().includes(q)), sent = this.repeatSent(), code = String(R.code||"").toUpperCase();
     const used = this.orders.filter(o=>String(o.coupon||"").toUpperCase() === code && !["annulee","echec"].includes(o.status));
-    $f("rp-kpi").innerHTML = '<div><b>' + cs.length + '</b><span>زبائن مرشّحون الآن</span></div><div><b>' + Object.keys(sent).length + '</b><span>راسلتَهم</span></div><div><b>' + used.length + '</b><span>طلبات بالكود ' + code + '</span></div><div><b>' + used.reduce((a,o)=>a + (Number(o.total)||0), 0).toLocaleString("fr-DZ") + ' دج</b><span>مبيعات من الحملة</span></div>';
-    $f("rp-table").innerHTML = cs.length ? '<tr class="hd"><th>الزبون</th><th>آخر منتج</th><th>منذ</th><th>طلباته</th><th></th></tr>' + cs.map((c,i)=>'<tr><td class="t"><b>' + c.name + '</b> <small dir="ltr" style="color:#999">' + c.phone + '</small></td><td data-l="المنتج">' + c.product + '</td><td data-l="منذ">' + c.days + ' يوم</td><td data-l="طلباته">' + c.orders + '</td><td class="act"><button class="small blue" type="button" onclick="Admin.sendRepeat(\'' + c.ph + '\')">💬 واتساب</button><button class="small gray" type="button" onclick="Admin.skipRepeat(\'' + c.ph + '\')">تجاهل</button></td></tr>').join("")
-      : "<tr><td style='text-align:center;padding:1.5rem;color:#999'>لا يوجد زبائن مرشّحون الآن — يظهرون بعد مرور " + R.minDays + " يوماً على تسليم طلبهم دون طلب جديد</td></tr>";
-    this.setBadge("nb-repeat", cs.length);
+    $f("rp-kpi").innerHTML = '<div><b>' + due.length + '</b><span>زبائن مرشّحون الآن</span></div><div><b>' + Object.keys(sent).length + '</b><span>راسلتَهم</span></div><div><b>' + used.length + '</b><span>طلبات بالكود ' + code + '</span></div><div><b>' + used.reduce((a,o)=>a + (Number(o.total)||0), 0).toLocaleString("fr-DZ") + ' دج</b><span>مبيعات من الحملة</span></div>';
+    const prods = this.products.filter(p=>p.active !== false);
+    const opts = sel=>prods.map(p=>'<option value="' + PB.esc(p.slug) + '"' + (p.slug === sel ? " selected" : "") + '>' + PB.esc(p.title) + '</option>').join("");
+    $f("rp-table").innerHTML = cs.length ? '<tr class="hd"><th>الزبون</th><th>المنتج (يمكن تغييره)</th><th>منذ</th><th>طلباته</th><th></th></tr>' + cs.map(c=>'<tr><td class="t"><b>' + PB.esc(c.name) + '</b> <small dir="ltr" style="color:#999">' + PB.esc(c.phone) + '</small>' + (c.sentAt ? '<br><small style="color:var(--ok)">راسلتَه منذ ' + Math.floor((Date.now() - c.sentAt) / 86400000) + ' يوم</small>' : "") + '</td><td data-l="المنتج"><select onchange="Admin.rpPick(\'' + c.ph + '\',this.value)" style="min-width:150px">' + opts(this._rpPick[c.ph] || c.slug) + '</select></td><td data-l="منذ">' + c.days + ' يوم</td><td data-l="طلباته">' + c.orders + '</td><td class="act"><button class="small blue" type="button" onclick="Admin.sendRepeat(\'' + c.ph + '\')">💬 واتساب</button>' + (all ? "" : '<button class="small gray" type="button" onclick="Admin.skipRepeat(\'' + c.ph + '\')">تجاهل</button>') + '</td></tr>').join("")
+      : "<tr><td style='text-align:center;padding:1.5rem;color:#999'>" + (all ? "لا يوجد زبائن مُسلَّمة طلباتهم بعد" : "لا يوجد زبائن مرشّحون الآن — يظهرون بعد مرور " + R.minDays + " يوماً على تسليم طلبهم دون طلب جديد، أو اعرض «كل من اشترى»") + "</td></tr>";
+    this.setBadge("nb-repeat", due.length);
   },
   /* كود شخصي لهذا الزبون (هاتفه فقط، مرة واحدة، صلاحية محدودة) — يتطلب خلفية Supabase أو PHP؛ وإلا يُستعمل الكود العام المشترك */
   personalPromoBackend(){ return PHPAPI.on() || (API.sb.enabled() && API.ordersBackend() !== "sheets"); },
@@ -4919,11 +4955,16 @@ const Admin = {
     return code;
   },
   repeatText(c, code){
-    const R = this.repeat || this.repeatDefaults();
-    return String(R.message||"").replace(/\{name\}/g, (c.name||"").split(" ")[0]).replace(/\{product\}/g, c.product).replace(/\{code\}/g, String(code || R.code || "").toUpperCase()).replace(/\{offer\}/g, this.repeatOffer(R)).replace(/\{days\}/g, R.validDays);
+    const R = this.repeat || this.repeatDefaults(), slug = this._rpPick[c.ph] || c.slug, pr = this.products.find(p=>p.slug === slug), title = pr ? pr.title : c.product, o = this.siteOrigin();
+    let msg = String(R.message || this.repeatMsgDefault()).replace(/https?:\/\/[^\s\/]+\/?\s*$/, "{link}");   // رسالة قديمة تنتهي برابط الرئيسية العاري ⟵ رابط المنتج تلقائياً
+    const hasReg = msg.includes("{register}") || msg.includes("?register");
+    const cd = String(code || R.code || "").toUpperCase(), link = slug ? (o + "/p/" + slug + "/" + (cd ? "?code=" + encodeURIComponent(cd) : "")) : (o + "/");
+    msg = msg.replace(/\{name\}/g, (c.name||"").split(" ")[0]).replace(/\{product\}/g, title).replace(/\{link\}/g, link).replace(/\{code\}/g, cd).replace(/\{offer\}/g, this.repeatOffer(R)).replace(/\{days\}/g, R.validDays).replace(/\{register\}/g, R.invite === false ? "" : this.registerLine());
+    if(R.invite !== false && !hasReg) msg += "\n\n" + this.registerLine();
+    return msg.trim();
   },
   async sendRepeat(ph){
-    const c = this.repeatCandidates().find(x=>x.ph === ph); if(!c) return;
+    const c = this.repeatCandidates(true).find(x=>x.ph === ph) || this.repeatCandidates(false).find(x=>x.ph === ph); if(!c) return;
     const d = ph.replace(/\D/g,""), intl = d.startsWith("0") ? "213" + d.slice(1) : (d.startsWith("213") ? d : "213" + d);
     const w = window.open("", "_blank");                       // يُفتح فوراً حتى لا يحجبه المتصفح أثناء إنشاء الكود
     let code = "";
@@ -4936,22 +4977,23 @@ const Admin = {
     const s = this.repeatSent(); s[ph] = Date.now(); localStorage.setItem("alyssum_repeat_sent", JSON.stringify(s)); this.renderRepeat();
   },
   skipRepeat(ph){ const s = this.repeatSent(); s[ph] = Date.now(); localStorage.setItem("alyssum_repeat_sent", JSON.stringify(s)); this.renderRepeat(); },
-  async saveRepeat(){
+  async saveRepeat(silent){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    const R = { minDays: Math.max(1, n("rp-min", 21)), maxDays: Math.max(1, n("rp-max", 90)), code: $f("rp-code").value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, ""), validDays: Math.max(1, n("rp-days", 14)), type: $f("rp-type").value, value: n("rp-value", 0), message: $f("rp-msg").value };
-    if(!R.code){ toast("أدخل كود التخفيض"); return }
-    if(R.type !== "freeship" && R.value <= 0){ toast("أدخل قيمة الخصم"); return }
+    const R = { minDays: Math.max(1, n("rp-min", 21)), maxDays: Math.max(1, n("rp-max", 90)), code: $f("rp-code").value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, ""), validDays: Math.max(1, n("rp-days", 14)), type: $f("rp-type").value, value: n("rp-value", 0), invite: $f("rp-invite").checked, message: $f("rp-msg").value };
+    if(R.type !== "freeship" && R.value <= 0){ if(!silent) toast("أدخل قيمة الخصم"); return }
+    if(!R.code) R.code = R.type === "freeship" ? "BACKSHIP" : ("BACK" + R.value);        // يُولَّد تلقائياً
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(R, null, 2))));
       const res = await GH.putFile("assets/data/repeat.json", b64, this.repeatSha, "إعدادات إعادة الشراء عبر لوحة التحكم");
       this.repeatSha = res && res.content ? res.content.sha : undefined; this.repeat = R;
-      if(this.personalPromoBackend()){ this.renderRepeat(); toast("✅ حُفظت الإعدادات — لكل زبون يُنشأ كود شخصي يُستعمل مرة واحدة عند الضغط على «واتساب»"); return }
+      const mark = ()=>{ const el = $f("rp-saved"); if(el){ el.textContent = "✓ حُفظ تلقائياً"; setTimeout(()=>{ el.textContent = ""; }, 3000); } };
+      if(this.personalPromoBackend()){ this.renderRepeat(); mark(); if(!silent) toast("✅ حُفظت الإعدادات — لكل زبون يُنشأ كود شخصي يُستعمل مرة واحدة عند الضغط على «واتساب»"); return }
       /* بلا خلفية: كود عام مشترك يُنشر في أكواد الخصم بصلاحية تنتهي بعد validDays من اليوم (غير شخصي) */
       const exp = new Date(Date.now() + R.validDays * 86400000).toISOString().slice(0, 10);
       const rec = { id:"repeat", code:R.code, type:R.type, value: R.type === "freeship" ? 0 : R.value, minOrder:0, expiresAt:exp, active:true };
       const i = this.coupons.findIndex(x=>x.id === "repeat"); if(i > -1) this.coupons[i] = rec; else this.coupons.push(rec);
       await this.publishCoupons();
-      this.renderRepeat(); toast("✅ حُفظت الإعدادات ونُشر الكود " + R.code + " (ينتهي " + exp + ")");
+      this.renderRepeat(); mark(); if(!silent) toast("✅ حُفظت الإعدادات ونُشر الكود " + R.code + " (ينتهي " + exp + ")");
     }catch(err){ console.error(err); toast("❌ " + err.message); }
   },
 

@@ -495,6 +495,18 @@ function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender){
   }
   input.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); apply(); } });
   document.getElementById(idPrefix + "-coupon-btn").onclick = apply;
+  /* رابط يحمل ?code=XXXX (رسائل إعادة الشراء): يملأ الكود تلقائياً؛ الكود الشخصي BACK-/WEL-... يُطبَّق بعد إدخال الهاتف */
+  try{
+    const qc = (new URLSearchParams(location.search).get("code") || "").trim();
+    if(qc && /^[A-Za-z0-9_-]{3,30}$/.test(qc) && !input.value){
+      input.value = qc.toUpperCase();
+      if(/^(BACK|PR|WEL|APP)-/i.test(qc)){
+        const ph = document.getElementById("phone") || document.getElementById("cphone");
+        if(ph){ const go = ()=>{ if(!AppliedCoupon.code && ph.value.replace(/\D/g, "").length >= 10){ ph.removeEventListener("input", go); apply(); } }; ph.addEventListener("input", go); go(); }
+        msg.textContent = "🎟️ كودك الشخصي جاهز — أدخل رقم هاتفك ليُطبَّق تلقائياً"; msg.style.color = "var(--ok)";
+      } else setTimeout(apply, 400);
+    }
+  }catch(e){}
 }
 
 /* ── صفحة المنتج ── */
@@ -1541,3 +1553,10 @@ const PhoneDZ = {
   setup(cfg){ this.on = ((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.country) || "DZ") === "DZ" && !(cfg && cfg.phoneDz === false); this.bind(); },
 };
 (function(){ const go = ()=>{ try{ PhoneDZ.bind(); }catch(e){} }; document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go(); setTimeout(go, 1500); })();
+
+/* رابط الدعوة ?register=1 (رسائل واتساب): يفتح نافذة إنشاء الحساب تلقائياً لمن لم يسجّل بعد */
+(function(){ try{
+  if(!/[?&]register=1/.test(location.search)) return;
+  const go = ()=>{ try{ if(typeof Account !== "undefined" && !Account.profile()) Account.open(); }catch(e){} };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", ()=>setTimeout(go, 1200)) : setTimeout(go, 1200);
+}catch(e){} })();
