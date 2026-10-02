@@ -51,7 +51,8 @@ After presenting the copywriting, output a single, consolidated READY-TO-COPY de
 3. Visual Descriptions: Add strong, creative English visual descriptions for each section based on the uploaded image.
 4. ${L.name} Typography (MANDATORY): ALL ${L.name} text MUST be rendered in massive, extremely bold fonts, with a minimum size of 20px equivalent. Render ONLY the generated ${L.name} text inside the quotation marks " ". ABSOLUTELY DO NOT render any English structural words or labels (like Headline, Body Text, Visual Flow)${ar ? "" : " unless the target language is English"}.
 5. Brackets and Label Removal: Before providing the final code, fill all [bracketed placeholders] with the precise ${L.name} text you generated, and remove all structural labels from the output.
-6. Text Direction: ${ar ? "All text and layout direction must respect right-to-left flow." : "All text and layout direction must respect left-to-right flow."}
+6. SPELLING (MANDATORY): spell every ${L.name} word perfectly with correct standard orthography. Keep every quoted text SHORT (max 8 words per line, simple everyday words, no diacritics, no mixed languages). The image generator must copy each quoted string letter by letter and add NO other text anywhere (no fake labels or extra captions). Copy the brand/product name EXACTLY as printed on the product packaging.
+7. Text Direction: ${ar ? "All text and layout direction must respect right-to-left flow." : "All text and layout direction must respect left-to-right flow."}
 
 --- USE THIS EXACT TEMPLATE FOR STEP 2 (DESIGN PROMPT) ---
 
@@ -173,6 +174,19 @@ Create one continuous journey with smooth color gradients (specifically [insert 
     }
     throw new Error(last || "لا يوجد نموذج Gemini متاح");
   }
+  /* Gemini نصّي (مع صورة اختيارية): يعيد النص الكامل للردّ */
+  async function geminiText(key, text, b64, mime) {
+    const models = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-3.8-flash"]; let last = "";
+    for (let mi = 0; mi < models.length; mi++) {
+      if (mi === models.length - 1) await new Promise(r => setTimeout(r, 3000));
+      const parts = (b64 ? [{ inline_data: { mime_type: mime || "image/jpeg", data: b64 } }] : []).concat([{ text }]);
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: .7 } }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { last = (j.error && j.error.message) || ("Gemini " + r.status); if ([404, 429, 500, 503].includes(r.status) || /no longer available|not found|not supported|high demand|overloaded|quota/i.test(last)) continue; throw new Error(last); }
+      return ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
+    }
+    throw new Error(last || "لا يوجد نموذج Gemini متاح");
+  }
   /* اكتشاف تلقائي لمناطق المنتج/الصور/الأيقونات (غير النصية) ليُقصّ كلٌّ منها كعنصر مستقل */
   async function geminiDetect(canvas, key) {
     const W = canvas.width, H = canvas.height, c2 = document.createElement("canvas"), k = Math.min(1, 1400 / W); c2.width = Math.round(W * k); c2.height = Math.round(H * k); c2.getContext("2d").drawImage(canvas, 0, 0, c2.width, c2.height);
@@ -189,6 +203,18 @@ Create one continuous journey with smooth color gradients (specifically [insert 
   }
   const cropBlob = (canvas, r, type) => new Promise(res => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(r.x1 - r.x0)); c.height = Math.max(1, Math.round(r.y1 - r.y0)); c.getContext("2d").drawImage(canvas, Math.round(r.x0), Math.round(r.y0), c.width, c.height, 0, 0, c.width, c.height); c.toBlob(res, type || "image/png"); });
 
+  /* تصحيح إملاء النص المقروء من الصورة بمطابقته مع النصوص المقصودة (المقتبسة في البرومبت النهائي) */
+  const lev = (a, b) => { const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[m][n]; };
+  const normT = x => String(x).replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+  function extractIntended(txt) {
+    const out = []; String(txt || "").replace(/"([^"]{2,300})"/g, (_, q) => { if (/^\s*\[/.test(q)) return; q.split(/\\n|\n/).forEach(l => { l = l.trim(); if (normT(l).length >= 3) out.push(l); }); return ""; });
+    return [...new Set(out)];
+  }
+  function snapText(t, list) {
+    const nt = normT(t); if (!list || !list.length || nt.length < 3) return t; let best = null, bs = 0;
+    for (const c of list) { const nc = normT(c); if (!nc) continue; const sc = 1 - lev(nt, nc) / Math.max(nt.length, nc.length); if (sc > bs) { bs = sc; best = c; } }
+    return bs >= .62 ? best : t;
+  }
   /* دمج الأسطر المتجاورة المتشابهة (الارتفاع/المحاذاة) في كتل نصية */
   function groupLines(lines, W) {
     const ls = lines.slice().sort((a, b) => a.bbox.y0 - b.bbox.y0), blocks = [];
@@ -226,6 +252,7 @@ Create one continuous journey with smooth color gradients (specifically [insert 
         // نحلل الألوان قبل المحو (analyze أعلاه)، ثم نمحو كل الكتل المقبولة
         blocks.filter(b => b.ok).forEach(b => erase(ctx, b.a.rect));
         blocks.filter(b => b.ok).forEach((b, k) => {
+          if (o.intended && o.intended.length) b.lines = b.lines.map(l => snapText(l, o.intended));
           const bw = b.x1 - b.x0, padX = W * .04, n = b.lines.length, fsImg = Math.max(8, b.lineH * .72), centered = Math.abs(b.cx - W / 2) < W * .1, align = centered ? "center" : (b.cx > W / 2 ? "start" : "end");
           const x0 = Math.max(0, b.x0 - padX), x1 = Math.min(W, b.x1 + padX), type = n === 1 ? "heading" : "text";
           const wdg = PB.mkW(type, type === "heading" ? { text: b.lines[0], tag: "div" } : { html: "<p>" + b.lines.map(esc).join("<br>") + "</p>" });
@@ -267,7 +294,19 @@ Create one continuous journey with smooth color gradients (specifically [insert 
   <label class="hint" style="margin:.4rem 0 0">وصف أو مميزات العرض (اختياري)</label>
   <textarea id="gen-desc" rows="3" placeholder="الصق وصف منتجك ومميزاته إن أردت..."></textarea>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.makePrompt()">✨ توليد البرومبت</button><button class="small gray" type="button" onclick="PBGen.copyPrompt()">📋 نسخ</button><a class="small gray" style="text-decoration:none;display:inline-block" href="https://gemini.google.com/" target="_blank" rel="noopener">فتح Gemini ↗</a><a class="small gray" style="text-decoration:none;display:inline-block" href="https://chatgpt.com/" target="_blank" rel="noopener">فتح ChatGPT ↗</a></div>
-  <textarea id="gen-out" rows="8" dir="ltr" readonly placeholder="سيظهر البرومبت هنا..." style="font-size:.78rem"></textarea>
+  <textarea id="gen-out" rows="5" dir="ltr" readonly placeholder="هذا طلب لكتابة البرومبت (يُستعمل يدوياً أو تلقائياً بالزر أدناه)..." style="font-size:.78rem"></textarea>
+  <div style="background:#faf6ec;border:1.5px solid #eadfc4;border-radius:12px;padding:.8rem;margin-top:.8rem">
+    <b>⚡ توليد البرومبت النهائي تلقائياً (بدل نسخ الطلب إلى Gemini ثم أخذ الناتج)</b>
+    <div class="grid2" style="margin-top:.4rem">
+      <label class="hint" style="margin:0">صورة المنتج<input type="file" id="gen-pimg" accept="image/*"></label>
+      <label class="hint" style="margin:0">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.auto()">⚡ إنتاج البرومبت النهائي</button><small id="gen-automsg" style="font-weight:700;color:var(--green)"></small></div>
+    <label class="hint" style="margin:0">البرومبت النهائي — انسخه مع صورة المنتج إلى Gemini (Nano Banana) لتوليد الصورة</label>
+    <textarea id="gen-final" rows="8" dir="ltr" placeholder="سيظهر هنا جاهزاً للّصق..." style="font-size:.78rem"></textarea>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="PBGen.copyFinal()">📋 نسخ البرومبت النهائي</button></div>
+    <details style="margin-top:.5rem"><summary style="cursor:pointer;font-weight:800">📝 نصوص البيع التي كتبها Gemini (للمراجعة)</summary><pre id="gen-copy" style="white-space:pre-wrap;font-family:inherit;font-size:.82rem;line-height:1.8"></pre></details>
+  </div>
   <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><span></span><button class="small gold" type="button" onclick="PBGen.step(2)">التالي ←</button></div>
   </div>
   <div class="gen-step" data-s="2" style="display:none">
@@ -292,12 +331,14 @@ Create one continuous journey with smooth color gradients (specifically [insert 
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (OCR داخل المتصفح)</label>
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
   </div>
+  <label class="hint" style="margin:.6rem 0 0">البرومبت النهائي (اختياري) — يُقارَن به النص المقروء من الصورة فتُصحَّح الأخطاء الإملائية تلقائياً<textarea id="gen-intended" rows="3" dir="ltr" placeholder="الصق هنا البرومبت النهائي الذي ولّدت به الصورة..." style="font-size:.78rem"></textarea></label>
   <div id="gen-sum" class="hint" style="margin:.6rem 0"></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 تحويل إلى صفحة قابلة للتعديل</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
   <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(2)">→ السابق</button><span></span></div>
   </div>
 </div>`;
     try { $("gen-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-rbkey").value = localStorage.getItem("alyssum_removebg_key") || ""; } catch (e) { }
+    try { $("gen-gkey1").value = localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { }
     step(1);
   }
   /* المعالج: 1 البرومبت ← 2 الصورة والأقسام ← 3 التحويل */
@@ -319,6 +360,19 @@ Create one continuous journey with smooth color gradients (specifically [insert 
   }
   function regionMode() { S.regionMode = !S.regionMode; const b = $("gen-region-btn"); b.className = "small " + (S.regionMode ? "gold" : "gray"); b.textContent = S.regionMode ? "✂️ وضع القص مفعّل — اسحب على الصورة (انقر للإيقاف)" : "✂️ رسم منطقة للقص (منتج/صورة)"; drawPreview(); }
   function makePrompt() { $("gen-out").value = buildPrompt({ lang: $("gen-lang").value, offer: $("gen-offer").value, name: $("gen-name").value.trim(), desc: $("gen-desc").value.trim(), price: $("gen-price").value.trim(), colors: $("gen-colors").value.trim() }); }
+  async function auto() {
+    const msg = $("gen-automsg"); let key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
+    if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً"; return; } try { localStorage.setItem("alyssum_gp_gkey", key); $("gen-gkey").value = key; } catch (e) { }
+    makePrompt(); msg.textContent = "⏳ Gemini يكتب نصوص البيع والبرومبت…";
+    try {
+      let b64 = null, mime = null; const f = $("gen-pimg").files && $("gen-pimg").files[0];
+      if (f) { const c = await loadImage(f), k = Math.min(1, 1400 / Math.max(c.width, c.height)), c2 = document.createElement("canvas"); c2.width = Math.round(c.width * k); c2.height = Math.round(c.height * k); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); b64 = c2.toDataURL("image/jpeg", .88).split(",")[1]; mime = "image/jpeg"; }
+      const t = await (PBGen.textFn || geminiText)(key, $("gen-out").value, b64, mime), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
+      if (!blocks.length) throw new Error("لم يُرجع Gemini برومبت جاهزاً — أعد المحاولة");
+      $("gen-final").value = blocks.join("\n\n"); $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = $("gen-final").value; msg.textContent = "✅ جاهز — انسخ البرومبت النهائي مع صورة المنتج إلى Gemini";
+    } catch (err) { msg.textContent = "❌ " + err.message; }
+  }
+  function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
   function copyPrompt() { if (!$("gen-out").value) makePrompt(); const t = $("gen-out").value; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت"), () => { $("gen-out").select(); document.execCommand("copy"); toast("✅ نُسخ البرومبت"); }); }
   async function onFile(inp) {
     const f = inp.files && inp.files[0]; if (!f) return; S.file = f; S.regions = []; $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
@@ -354,11 +408,11 @@ Create one continuous journey with smooth color gradients (specifically [insert 
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;
       if ($("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Gemini أو اختر Tesseract"; btn.disabled = false; return; }
       try { if (gk) localStorage.setItem("alyssum_gp_gkey", gk); if (rb) localStorage.setItem("alyssum_removebg_key", rb); } catch (e) { }
-      const page = await convert({ canvas: S.canvas, cuts: S.cuts, regions: S.regions, rbKey: rb, eraseOrig: $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: $("gen-ocr").checked, tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
+      const page = await convert({ canvas: S.canvas, cuts: S.cuts, regions: S.regions, intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: $("gen-ocr").checked, tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
       page.slug = ($("gen-title").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "lp-" + Date.now().toString(36).slice(-4);
       msg.textContent = "✅ تم — جارِ فتح المحرر"; PBApp.open(page, "", true);
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
