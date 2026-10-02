@@ -30,6 +30,8 @@ const PBGen = (() => {
     if (o.name) det.push("- Product Name: " + o.name);
     if (o.desc) det.push("- Product Description/Benefits: " + o.desc);
     if (o.price) det.push("- Price: " + o.price);
+    if (o.ing) det.push("- Ingredients / Components (feature them prominently as selling points, spelled exactly): " + o.ing);
+    if (o.aud) det.push("- Target audience: " + o.aud);
     if (o.colors) det.push("- Design Colors: " + o.colors);
     if (det.length) out.push("=== SPECIFIC PRODUCT DETAILS PROVIDED BY THE USER ===\nPlease strictly use the following details in your copywriting instead of guessing them:\n" + det.join("\n") + "\n=====================================================\n");
     if (o.colors) out.push("=== CRITICAL INSTRUCTION: DESIGN COLORS ===\nThe user specified the following color palette: \"" + o.colors + "\".\nIn Step 2 (Design Prompt), you MUST replace \"[insert dynamic colors matching product image]\" with these specific colors.\n===========================================\n");
@@ -38,7 +40,7 @@ const PBGen = (() => {
 ### YOUR MISSION HAS TWO CRITICAL STEPS:
 
 ### STEP 1: TEXT GENERATION (COPYWRITING)
-First, write highly persuasive ${L.name} sales copy for this specific product based on the structure and instructions required below. Present this copy clearly in your response so I can read it, review it, and use it.
+First, write highly persuasive ${L.name} sales copy for this specific product based on the structure and instructions required below. Use proven direct-response marketing formulas to maximize the purchase rate: a strong emotional hook, benefit-led headlines with specific numbers where honest, the PAS (Problem-Agitate-Solve) and AIDA structures, vivid before/after contrast, social proof, urgency and scarcity, risk reversal (cash on delivery, fast delivery) and a clear irresistible call to action. Speak directly to the buyer ("طفلك"/"بشرتك"... as fits the product) and keep every line punchy. Avoid absolute medical or curative claims — prefer verbs like "يدعم", "يساعد على". Use every ingredient and detail provided in the product details above. Present this copy clearly in your response so I can read it, review it, and use it.
 
 ### STEP 2: NANO BANANA PRO DESIGN PROMPT
 After presenting the copywriting, output a single, consolidated READY-TO-COPY design prompt for the "Nano Banana Pro" image generator.
@@ -224,8 +226,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   /* استدعاء Gemini بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
   /* طلب موحّد لـ Gemini: تدوير النماذج + إعادة محاولة بتأخير متزايد عند الازدحام (503) أو الحصة (429) */
-  async function gemGenerate(key, task, parts, cfg) {
-    const models = [...new Set(await gemModels(key, task))], waits = [0, 4000, 10000, 20000]; let last = "";
+  async function gemGenerate(key, task, parts, cfg, modelsOverride) {
+    const models = [...new Set(modelsOverride || await gemModels(key, task))], waits = [0, 4000, 10000, 20000]; let last = "";
     const note = t => { for (const id of ["gen-automsg", "gen-msg"]) { const el = typeof document !== "undefined" && document.getElementById(id); if (el && (!el.textContent || /^⏳|Google/.test(el.textContent))) el.textContent = t; } };
     for (let round = 0; round < waits.length; round++) {
       if (waits[round]) { note("⏳ Google مشغول مؤقتاً — إعادة المحاولة بعد " + waits[round] / 1000 + " ث (" + round + "/" + (waits.length - 1) + ")…"); await new Promise(r => setTimeout(r, waits[round])); }
@@ -355,40 +357,43 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     host.innerHTML = `
 <div class="card" id="gen-card" style="margin-bottom:1rem">
   <b style="color:var(--green);font-size:1.05rem">🪄 مولّد صفحة هبوط بالذكاء الاصطناعي — من صورة منتجك إلى صفحة قابلة للتعديل</b>
-  <div class="hint" style="margin:.6rem 0">① انسخ «البرومبت السحري» وأرسله مع صورة منتجك إلى Gemini أو ChatGPT ← تحصل على نصوص بيع + برومبت تصميم. ② ضعه في Nano Banana (من Gemini) لتوليد الصفحة كصورة طويلة. ③ ارفع الصورة هنا فتتحول إلى أقسام وعناصر نصية قابلة للتعديل. لا يلزم أي مفتاح API.</div>
-  <div class="gen-steps" style="display:flex;gap:.4rem;margin:.6rem 0 1rem;flex-wrap:wrap"><button type="button" class="small gray" data-gs="1" onclick="PBGen.step(1)">① البرومبت</button><button type="button" class="small gray" data-gs="2" onclick="PBGen.step(2)">② الصورة والأقسام</button><button type="button" class="small gray" data-gs="3" onclick="PBGen.step(3)">③ التحويل</button></div>
+  <div class="hint" style="margin:.6rem 0">① أدخل معلومات المنتج وصورته ← يكتب Gemini نصوصاً تسويقية ويولّد صورة الصفحة الطويلة تلقائياً ② راجع حدود الأقسام ③ حوّلها إلى صفحة قابلة للتعديل في المحرر. (لا يظهر لك أي برومبت؛ ويمكن نسخه دون عرضه.)</div>
+  <div class="gen-steps" style="display:flex;gap:.4rem;margin:.6rem 0 1rem;flex-wrap:wrap"><button type="button" class="small gray" data-gs="1" onclick="PBGen.step(1)">① معلومات المنتج</button><button type="button" class="small gray" data-gs="2" onclick="PBGen.step(2)">② الصورة والأقسام</button><button type="button" class="small gray" data-gs="3" onclick="PBGen.step(3)">③ التحويل</button></div>
   <div class="gen-step" data-s="1">
-  <b>① البرومبت السحري المزدوج</b>
+  <b>① معلومات المنتج</b>
+  <div class="hint" style="margin:.3rem 0 .6rem">أدخل معلومات المنتج وصورته، ثم اضغط «توليد الصورة الطويلة»: يكتب Gemini نصوصاً تسويقية قوية ويولّد الصورة في الخلفية (لا تظهر لك أي برومبتات). بعدها تعدّلها في المحرر.</div>
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0">لغة السوق (إجباري)<select id="gen-lang">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
-    <label class="hint" style="margin:0">نوع العرض (إجباري)<select id="gen-offer"><option value="single">منتج واحد (Single Product)</option><option value="bundle">باك / مجموعة منتجات (Bundle)</option></select></label>
-    <label class="hint" style="margin:0">اسم المنتج (اختياري)<input id="gen-name" placeholder="يقرؤه الذكاء الاصطناعي من الصورة إن تُرك فارغاً"></label>
-    <label class="hint" style="margin:0">السعر (اختياري)<input id="gen-price" placeholder="مثال: 2100 دج"></label>
-    <label class="hint" style="margin:0">ألوان التصميم (اختياري)<input id="gen-colors" placeholder="مثال: أزرق، برتقالي"></label>
+    <label class="hint" style="margin:0">صورة المنتج (إجباري)<input type="file" id="gen-pimg" accept="image/*"></label>
+    <label class="hint" style="margin:0">اسم المنتج<input id="gen-name" placeholder="مثال: عسل التركيز وتنشيط الذاكرة"></label>
+    <label class="hint" style="margin:0">لغة السوق<select id="gen-lang">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
+    <label class="hint" style="margin:0">نوع العرض<select id="gen-offer"><option value="single">منتج واحد</option><option value="bundle">باك / مجموعة منتجات</option></select></label>
+    <label class="hint" style="margin:0">السعر<input id="gen-price" placeholder="مثال: 2100 دج"></label>
+    <label class="hint" style="margin:0">ألوان التصميم (اختياري)<input id="gen-colors" placeholder="مثال: أزرق، برتقالي (وإلا من ألوان المنتج)"></label>
   </div>
-  <label class="hint" style="margin:.4rem 0 0">وصف أو مميزات العرض (اختياري)</label>
-  <textarea id="gen-desc" rows="3" placeholder="الصق وصف منتجك ومميزاته إن أردت..."></textarea>
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.makePrompt()">✨ توليد البرومبت</button><button class="small gray" type="button" onclick="PBGen.copyPrompt()">📋 نسخ</button><a class="small gray" style="text-decoration:none;display:inline-block" href="https://gemini.google.com/" target="_blank" rel="noopener">فتح Gemini ↗</a><a class="small gray" style="text-decoration:none;display:inline-block" href="https://chatgpt.com/" target="_blank" rel="noopener">فتح ChatGPT ↗</a></div>
-  <textarea id="gen-out" rows="5" dir="ltr" readonly placeholder="هذا طلب لكتابة البرومبت (يُستعمل يدوياً أو تلقائياً بالزر أدناه)..." style="font-size:.78rem"></textarea>
-  <div style="background:#faf6ec;border:1.5px solid #eadfc4;border-radius:12px;padding:.8rem;margin-top:.8rem">
-    <b>⚡ توليد البرومبت النهائي تلقائياً (بدل نسخ الطلب إلى Gemini ثم أخذ الناتج)</b>
+  <label class="hint" style="margin:.4rem 0 0">المكونات (تظهر كنقاط قوة في الصفحة)</label>
+  <textarea id="gen-ing" rows="2" placeholder="مثال: عسل حر، زبيب، جنكة، ريحان، لوز…"></textarea>
+  <label class="hint" style="margin:.4rem 0 0">الوصف والمميزات والفئة المستهدفة</label>
+  <textarea id="gen-desc" rows="3" placeholder="الصق وصف منتجك ومميزاته: لمن هو، ما يميّزه، العروض…"></textarea>
+  <input id="gen-aud" type="hidden">
+  <details id="gen-adv" style="margin-top:.5rem"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات متقدمة (المفتاح والتكلفة)</summary>
     <div class="grid2" style="margin-top:.4rem">
-      <label class="hint" style="margin:0">صورة المنتج<input type="file" id="gen-pimg" accept="image/*"></label>
-      <label class="hint" style="margin:0">مستوى التكلفة/الجودة<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى): الأرخص للمهام البسيطة</option><option value="eco">اقتصادي: Flash-Lite دائماً (≈0.10$/مليون رمز)</option><option value="best">أعلى جودة: Flash الأحدث/Pro</option></select></label>
       <label class="hint" style="margin:0">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
+      <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
     </div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.auto()">⚡ إنتاج البرومبت النهائي</button><button class="small gray" type="button" onclick="PBGen.testKey()" title="يفحص المفتاح ويعرض سبب الفشل إن وُجد">🔑 اختبار المفتاح</button><small id="gen-automsg" style="font-weight:700;color:var(--green)"></small><small id="gen-cost" style="color:#8a7a4d"></small></div>
-    <label class="hint" style="margin:0">البرومبت النهائي — انسخه مع صورة المنتج إلى Gemini (Nano Banana) لتوليد الصورة</label>
-    <textarea id="gen-final" rows="8" dir="ltr" placeholder="سيظهر هنا جاهزاً للّصق..." style="font-size:.78rem"></textarea>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="PBGen.copyFinal()">📋 نسخ البرومبت النهائي</button><button class="small gold" type="button" onclick="PBGen.proofread()" title="يراجع كل النصوص المقتبسة: إملاء، تكرار، تطويل، نصوص طويلة">🔍 تدقيق إملائي وتكرار</button><label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-autoproof" checked style="width:auto"> تدقيق تلقائي بعد التوليد</label></div>
-    <details style="margin-top:.5rem"><summary style="cursor:pointer;font-weight:800">📝 نصوص البيع التي كتبها Gemini (للمراجعة)</summary><pre id="gen-copy" style="white-space:pre-wrap;font-family:inherit;font-size:.82rem;line-height:1.8"></pre></details>
+    <button class="small gray" type="button" onclick="PBGen.testKey()" style="margin-top:.3rem">🔑 اختبار المفتاح</button>
+  </details>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 .3rem">
+    <button class="small gold" type="button" id="gen-make" onclick="PBGen.generateImage()">🎨 توليد الصورة الطويلة</button>
+    <button class="small gray" type="button" onclick="PBGen.copyHidden()" title="يجهّز البرومبت ويُنسخ للحافظة دون عرضه، لاستعماله في تطبيق Gemini يدوياً">📋 نسخ البرومبت (دون عرضه)</button>
+    <button class="small gray" type="button" onclick="PBGen.step(2)" title="إن كانت لديك صورة جاهزة">⬆ لدي صورة جاهزة</button>
   </div>
-  <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><span></span><button class="small gold" type="button" onclick="PBGen.step(2)">التالي ←</button></div>
+  <div id="gen-automsg" style="font-weight:700;color:var(--green);min-height:1.3em"></div><small id="gen-cost" style="color:#8a7a4d"></small>
+  <textarea id="gen-out" style="display:none"></textarea><textarea id="gen-final" style="display:none"></textarea><pre id="gen-copy" style="display:none"></pre>
   </div>
   <div class="gen-step" data-s="2" style="display:none">
-  <b>② ارفع الصورة الطويلة وضبط الأقسام</b>
+  <b>② الصورة والأقسام</b> <button class="small gray" type="button" onclick="PBGen.step(1)" title="غيّر المعلومات ثم أعد التوليد">🔄 إعادة التوليد</button>
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0">صورة الصفحة (من Nano Banana)<input type="file" id="gen-file" accept="image/*" onchange="PBGen.onFile(this)"></label>
+    <label class="hint" style="margin:0">أو ارفع صورة جاهزة بدل التوليد<input type="file" id="gen-file" accept="image/*" onchange="PBGen.onFile(this)"></label>
     <label class="hint" style="margin:0">عدد الأقسام المتوقع<input id="gen-n" type="number" min="1" max="30" value="9" onchange="PBGen.recut()"></label>
   </div>
   <div class="grid2" style="margin-top:.4rem">
@@ -407,7 +412,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (OCR داخل المتصفح)</label>
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
   </div>
-  <label class="hint" style="margin:.6rem 0 0">البرومبت النهائي (اختياري) — يُقارَن به النص المقروء من الصورة فتُصحَّح الأخطاء الإملائية تلقائياً<textarea id="gen-intended" rows="3" dir="ltr" placeholder="الصق هنا البرومبت النهائي الذي ولّدت به الصورة..." style="font-size:.78rem"></textarea></label>
+  <textarea id="gen-intended" style="display:none"></textarea>
   <div id="gen-sum" class="hint" style="margin:.6rem 0"></div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 تحويل إلى صفحة قابلة للتعديل</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
   <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(2)">→ السابق</button><span></span></div>
@@ -415,6 +420,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 </div>`;
     try { $("gen-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-rbkey").value = localStorage.getItem("alyssum_removebg_key") || ""; } catch (e) { }
     try { $("gen-tier").value = gemTier(); } catch (e) { }
+    try { if (!localStorage.getItem("alyssum_gp_gkey")) $("gen-adv").open = true; } catch (e) { }
     try { const gk0 = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-gkey1").value = gk0; if (gk0) { $("gen-engine").value = "gemini"; engineUI(); } } catch (e) { }
     step(1);
   }
@@ -436,7 +442,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       S.regions.push(...keep); drawPreview(); msg.textContent = "✅ أُضيفت " + keep.length + " منطقة — احذف (×) ما لا تريده ثم حوّل"; } catch (err) { msg.textContent = "❌ " + err.message; }
   }
   function regionMode() { S.regionMode = !S.regionMode; const b = $("gen-region-btn"); b.className = "small " + (S.regionMode ? "gold" : "gray"); b.textContent = S.regionMode ? "✂️ وضع القص مفعّل — اسحب على الصورة (انقر للإيقاف)" : "✂️ رسم منطقة للقص (منتج/صورة)"; drawPreview(); }
-  function makePrompt() { $("gen-out").value = buildPrompt({ lang: $("gen-lang").value, offer: $("gen-offer").value, name: $("gen-name").value.trim(), desc: $("gen-desc").value.trim(), price: $("gen-price").value.trim(), colors: $("gen-colors").value.trim() }); }
+  function makePrompt() { $("gen-out").value = buildPrompt({ lang: $("gen-lang").value, offer: $("gen-offer").value, name: $("gen-name").value.trim(), desc: $("gen-desc").value.trim(), price: $("gen-price").value.trim(), colors: $("gen-colors").value.trim(), ing: ($("gen-ing") || {}).value ? $("gen-ing").value.trim() : "", aud: ($("gen-aud") || {}).value || "" }); }
   /* فحص محلي مجاني لنصوص البرومبت المقتبسة: يحذف التطويل (ـ) والتكرار المتتالي للكلمة ويحذّر من النصوص الطويلة */
   function localFix(txt) {
     const issues = []; const out = String(txt).replace(/"([^"\n]{2,400})"/g, (m, q) => {
@@ -459,26 +465,78 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       msg.textContent = "✅ تم التدقيق" + (fx.issues.length ? " (وإصلاح محلي لـ " + fx.issues.length + ")" : "");
     } catch (err) { msg.textContent = "❌ " + err.message; }
   }
-  async function auto() {
-    const msg = $("gen-automsg"); let key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
-    if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً"; return; } try { localStorage.setItem("alyssum_gp_gkey", key); $("gen-gkey").value = key; } catch (e) { }
-    makePrompt(); msg.textContent = "⏳ Gemini يكتب نصوص البيع والبرومبت…";
+  const keyNow = () => { const k = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })(); if (k) { try { localStorage.setItem("alyssum_gp_gkey", k); $("gen-gkey").value = k; } catch (e) { } } return k; };
+  const small64 = async (file, max) => { const c = await loadImage(file), k = Math.min(1, max / Math.max(c.width, c.height)), c2 = document.createElement("canvas"); c2.width = Math.round(c.width * k); c2.height = Math.round(c.height * k); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); return c2.toDataURL("image/jpeg", .9).split(",")[1]; };
+  /* مرحلة خفية: يكتب Gemini النصوص التسويقية والبرومبت النهائي، ثم يُدقَّق ويُخزَّن (لا يُعرض) */
+  async function makeFinal(key) {
+    const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/5) Gemini يكتب نصوصاً تسويقية قوية…";
+    const f = $("gen-pimg").files && $("gen-pimg").files[0], b64 = f ? await small64(f, 1400) : null;
+    const t = await (PBGen.textFn || geminiText)(key, $("gen-out").value, b64, "image/jpeg", "copy"), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
+    if (!blocks.length) throw new Error("لم يُرجع Gemini تصميماً جاهزاً — أعد المحاولة");
+    const fx = localFix(blocks.join("\n\n")); $("gen-final").value = fx.text; $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = fx.text;
+    msg.textContent = "⏳ (2/5) تدقيق إملائي وتكرار…"; try { await proofread(); } catch (e) { }
+    S.finalPrompt = $("gen-final").value; return S.finalPrompt;
+  }
+  async function auto() { const msg = $("gen-automsg"), key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } try { await makeFinal(key); msg.textContent = "✅ جاهز"; } catch (err) { msg.textContent = "❌ " + err.message; } }
+  /* نسخ البرومبت للحافظة دون عرضه */
+  async function copyHidden() {
+    const msg = $("gen-automsg"); try {
+      if (!S.finalPrompt) { const key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } await makeFinal(key); }
+      await navigator.clipboard.writeText(S.finalPrompt); msg.textContent = "✅ نُسخ البرومبت للحافظة — الصقه في Gemini مع صورة المنتج"; toast("✅ نُسخ البرومبت");
+    } catch (e) { msg.innerHTML = '✅ البرومبت جاهز — <button class="small gold" type="button" onclick="PBGen.copyFinal()">اضغط هنا للنسخ</button>'; }
+  }
+  /* نماذج الصور المتاحة */
+  async function imageModels(key) {
+    const pref = ["gemini-3.1-flash-lite-image", "gemini-2.5-flash-image", "gemini-3-pro-image-preview"]; await gemModels(key, "copy"); const names = (_gemCache && _gemCache.key === key && _gemCache.names) || [];
+    const pick = pref.filter(m => names.includes(m)), any = names.filter(n => /image/i.test(n) && !pick.includes(n)); const list = pick.concat(any).slice(0, 3); return list.length ? list : pref.slice(0, 2);
+  }
+  async function genPart(key, prompt, productB64, prevB64) {
+    const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } }); if (prevB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: prevB64 } });
+    const j = await gemGenerate(key, "image", parts, { imageConfig: { aspectRatio: "9:16" } }, await imageModels(key)), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
+    if (!d) throw new Error("لم يُرجع النموذج صورة — أعد المحاولة أو غيّر وصف المنتج");
+    const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
+  }
+  /* لصق الأجزاء عمودياً مع تلاشي في الوصلات */
+  async function stackParts(blobs) {
+    const cvs = []; for (const b of blobs) cvs.push(await loadImage(b)); const W = Math.max(...cvs.map(c => c.width)), ov = Math.round(W * .05), hs = cvs.map(c => Math.round(c.height * W / c.width)), H = hs.reduce((a, b) => a + b, 0) - ov * (cvs.length - 1);
+    const out = document.createElement("canvas"); out.width = W; out.height = H; const g = out.getContext("2d"); let y = 0;
+    cvs.forEach((c, i) => {
+      if (i === 0) { g.drawImage(c, 0, 0, W, hs[0]); y = hs[0]; return; }
+      const tt = document.createElement("canvas"); tt.width = W; tt.height = hs[i]; const ttg = tt.getContext("2d"); ttg.drawImage(c, 0, 0, W, hs[i]);
+      ttg.globalCompositeOperation = "destination-in"; const gr = ttg.createLinearGradient(0, 0, 0, ov); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,1)"); ttg.fillStyle = gr; ttg.fillRect(0, 0, W, hs[i]);   // تلاشي أعلى الجزء فوق أسفل السابق
+      g.drawImage(tt, 0, y - ov); y += hs[i] - ov;
+    });
+    return out;
+  }
+  const SPLIT = (k, n) => `\n\n=== RENDER INSTRUCTION (HIGHEST PRIORITY) ===\nThe design above describes ONE continuous tall landing page. Mentally split it into ${n} equal vertical parts (top → bottom). Render ONLY part ${k} of ${n} now, as ONE image with aspect ratio 9:16 at the highest possible resolution, containing only the sections and texts that belong to this part. Every quoted text must be spelled exactly and appear only once. Keep the same single smooth background gradient, the same illustration style, typography and product rendering for all parts${k > 1 ? "; the TOP edge of this image must continue seamlessly the bottom edge of the attached previous part image (same background colour and glow) with an empty margin at the top" : ""}${k < n ? "; the BOTTOM edge must fade into the plain continuing background colour with an empty margin (no text or object touching the edge) so the next part joins seamlessly" : ""}. Copy the product from the attached product photo exactly (never redraw its label). Do not write part numbers or any label.`;
+  /* الدالة الرئيسية: نصوص تسويقية ← أجزاء الصورة ← لصق ← معاينة الأقسام */
+  async function generateImage() {
+    const msg = $("gen-automsg"), btn = $("gen-make"), key = keyNow(), pf = $("gen-pimg").files && $("gen-pimg").files[0];
+    if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; }
+    if (!pf) { msg.textContent = "❌ ارفع صورة المنتج أولاً"; return; }
+    if (!$("gen-name").value.trim() && !$("gen-desc").value.trim() && !($("gen-ing").value || "").trim()) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه أو مكوناته"; return; }
+    btn.disabled = true; const N = 3;
     try {
-      let b64 = null, mime = null; const f = $("gen-pimg").files && $("gen-pimg").files[0];
-      if (f) { const c = await loadImage(f), k = Math.min(1, 1400 / Math.max(c.width, c.height)), c2 = document.createElement("canvas"); c2.width = Math.round(c.width * k); c2.height = Math.round(c.height * k); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); b64 = c2.toDataURL("image/jpeg", .88).split(",")[1]; mime = "image/jpeg"; }
-      const t = await (PBGen.textFn || geminiText)(key, $("gen-out").value, b64, mime), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
-      if (!blocks.length) throw new Error("لم يُرجع Gemini برومبت جاهزاً — أعد المحاولة");
-      const fxa = localFix(blocks.join("\n\n")); $("gen-final").value = fxa.text; $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = $("gen-final").value; msg.textContent = "✅ جاهز" + (fxa.issues.length ? " (أُصلح تلقائياً " + fxa.issues.length + ": تطويل/تكرار)" : "");
-      if ($("gen-autoproof") && $("gen-autoproof").checked) await proofread();
-    } catch (err) { msg.textContent = "❌ " + err.message; }
+      const fp = await makeFinal(key), pb = await small64(pf, 1400), blobs = []; let prev = null;
+      for (let k = 1; k <= N; k++) {
+        msg.textContent = "🎨 (" + (2 + k) + "/5) توليد الجزء " + k + " من " + N + " (قد يستغرق دقيقة)…";
+        const blob = await (PBGen.imgFn || genPart)(key, fp + SPLIT(k, N), pb, prev); blobs.push(blob); prev = PBGen.imgFn ? null : (await small64(blob, 900));
+      }
+      msg.textContent = "🧩 دمج الأجزاء…"; const canvas = await stackParts(blobs);
+      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; msg.textContent = "✅ تمّت الصورة — راجع الأقسام ثم تابع إلى «التحويل»"; step(2);
+    } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
   function copyPrompt() { if (!$("gen-out").value) makePrompt(); const t = $("gen-out").value; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت"), () => { $("gen-out").select(); document.execCommand("copy"); toast("✅ نُسخ البرومبت"); }); }
-  async function onFile(inp) {
-    const f = inp.files && inp.files[0]; if (!f) return; S.file = f; S.regions = []; $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
-    try { S.canvas = await loadImage(f); } catch (e) { $("gen-msg").textContent = "❌ " + e.message; return; }
-    $("gen-msg").textContent = ""; recut(); $("gen-go").disabled = false; if (!$("gen-title").value) $("gen-title").value = $("gen-name").value || f.name.replace(/\.[^.]+$/, "");
+  async function setCanvas(canvas, title) {
+    S.canvas = canvas; S.regions = []; $("gen-msg").textContent = ""; recut(); $("gen-go").disabled = false; if (!$("gen-title").value) $("gen-title").value = title || "";
   }
+  async function onFile(inp) {
+    const f = inp.files && inp.files[0]; if (!f) return; S.file = f; $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
+    let cv; try { cv = await loadImage(f); } catch (e) { $("gen-msg").textContent = "❌ " + e.message; return; }
+    await setCanvas(cv, $("gen-name").value || f.name.replace(/\.[^.]+$/, ""));
+  }
+
   function recut() { if (!S.canvas) return; S.cuts = suggestCuts(S.canvas, Number($("gen-n").value) || 9); drawPreview(); }
   function drawPreview() {
     const C = S.canvas, host = $("gen-prev"), pw = Math.min(520, Math.max(300, (host.parentNode.clientWidth || 600) - 40)), sc = pw / C.width, ph = C.height * sc, rm = S.regionMode;
@@ -514,5 +572,5 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, extractIntended, snapText, auto, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, copyHidden, makeFinal, stackParts, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
