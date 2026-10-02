@@ -39,13 +39,26 @@ const PB = (() => {
   const raw = p => v => `${p}:${v};`;
   const SHADOWS = { "": "", sm: "0 2px 8px rgba(0,0,0,.12)", md: "0 8px 24px rgba(0,0,0,.16)", lg: "0 18px 48px rgba(0,0,0,.22)", glow: "0 0 24px rgba(200,162,75,.6)" };
   const TYPO = [["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["ff", raw("font-family")], ["lh", raw("line-height")], ["ls", px("letter-spacing")], ["tt", raw("text-transform")], ["ta", raw("text-align")]];
+  /* تدرّج متقدم: {t:linear|radial|conic, a:زاوية, x,y:موضع, sh:circle|ellipse, rep:تكرار, s:[{c:لون,p:%,o:شفافية 0-1}]} */
+  const rgba = (c, o) => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m || o === undefined || o === "" || num(o) == null || num(o) >= 1) return c; const n = parseInt(m[1], 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${Math.max(0, num(o))})`; };
+  const gradCss = g => {
+    if (!g || !Array.isArray(g.s) || g.s.length < 2) return "";
+    const st = g.s.map(x => `${rgba(x.c || "#000000", x.o)} ${num(x.p) ?? 0}%`).join(","), t = g.t || "linear", a = num(g.a) ?? 135, pos = `${num(g.x) ?? 50}% ${num(g.y) ?? 50}%`, rp = g.rep ? "repeating-" : "";
+    if (t === "radial") return `${rp}radial-gradient(${g.sh === "circle" ? "circle" : "ellipse"} at ${pos},${st})`;
+    if (t === "conic") return `${rp}conic-gradient(from ${a}deg at ${pos},${st})`;
+    return `${rp}linear-gradient(${a}deg,${st})`;
+  };
+  const GRAD_PRESETS = [["غروب", { t: "linear", a: 135, s: [{ c: "#ff512f", p: 0 }, { c: "#f09819", p: 100 }] }], ["محيط", { t: "linear", a: 160, s: [{ c: "#0b7bd1", p: 0 }, { c: "#4fc3f7", p: 100 }] }], ["غابة", { t: "linear", a: 135, s: [{ c: "#0f5a3e", p: 0 }, { c: "#43a047", p: 100 }] }], ["ذهبي", { t: "linear", a: 120, s: [{ c: "#8a6a1c", p: 0 }, { c: "#f5d77a", p: 50 }, { c: "#b8860b", p: 100 }] }], ["أرجواني", { t: "linear", a: 135, s: [{ c: "#6a11cb", p: 0 }, { c: "#2575fc", p: 100 }] }], ["ليل", { t: "linear", a: 180, s: [{ c: "#0f2027", p: 0 }, { c: "#203a43", p: 50 }, { c: "#2c5364", p: 100 }] }], ["وردي", { t: "linear", a: 135, s: [{ c: "#ff758c", p: 0 }, { c: "#ff7eb3", p: 100 }] }], ["توهج", { t: "radial", x: 50, y: 40, sh: "circle", s: [{ c: "#ffffff", p: 0, o: .9 }, { c: "#ffd23f", p: 45 }, { c: "#ff8a1f", p: 100 }] }], ["قوس قزح", { t: "conic", a: 0, x: 50, y: 50, s: [{ c: "#ff3b30", p: 0 }, { c: "#ffcc00", p: 25 }, { c: "#34c759", p: 50 }, { c: "#007aff", p: 75 }, { c: "#ff3b30", p: 100 }] }]];
+  const TGR = { k: "tgr", l: "تدرّج لون النص (degradé)", t: "grad", tab: "s" };
+  const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); };
   const BOX = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]];
   /* الخلفية/الحدود غير المتجاوبة (قيمة واحدة) */
   function boxStatic(css, sel, s) {
     let d = "";
     if (s.bg) d += `background-color:${s.bg};`;
-    if (s.grad1 && s.grad2) d += `background-image:linear-gradient(${num(s.gradAng) ?? 135}deg,${s.grad1},${s.grad2});`;
-    if (s.bgImg) { d += `background-image:${(s.grad1 && s.grad2) ? "linear-gradient(" + (num(s.gradAng) ?? 135) + "deg," + s.grad1 + "," + s.grad2 + ")," : ""}url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}');background-size:${s.bgSize || "cover"};background-position:${s.bgPos || "center"};background-repeat:no-repeat;`; if (s.bgFixed) d += "background-attachment:fixed;"; }
+    const gl = gradCss(s.gr) || ((s.grad1 && s.grad2) ? `linear-gradient(${num(s.gradAng) ?? 135}deg,${s.grad1},${s.grad2})` : "");
+    if (gl) d += `background-image:${gl};`;
+    if (s.bgImg) { d += `background-image:${gl ? gl + "," : ""}url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}');background-size:${s.bgSize || "cover"};background-position:${s.bgPos || "center"};background-repeat:no-repeat;`; if (s.bgFixed) d += "background-attachment:fixed;"; }
     if (num(s.bw)) d += `border:${num(s.bw)}px ${s.bs || "solid"} ${s.bc || "#ddd"};`;
     if (s.shadow && SHADOWS[s.shadow]) d += `box-shadow:${SHADOWS[s.shadow]};`;
     if (s.op !== undefined && s.op !== "" && num(s.op) != null) d += `opacity:${num(s.op)};`;
@@ -99,6 +112,44 @@ const PB = (() => {
     }).join("") + '</div>';
   }
 
+  /* ───── الأشكال الهندسية: مكتبة SVG (viewBox 100×100) ───── */
+  const polyPts = (n, r, rot) => Array.from({ length: n }, (_, i) => { const a = (rot + 360 * i / n) * Math.PI / 180; return (50 + r * Math.cos(a)).toFixed(1) + "," + (50 + r * Math.sin(a)).toFixed(1); }).join(" ");
+  const starPts = (n, ri, ro, rot) => Array.from({ length: n * 2 }, (_, i) => { const r = i % 2 ? ro * ri : ro, a = (rot + 180 * i / n) * Math.PI / 180; return (50 + r * Math.cos(a)).toFixed(1) + "," + (50 + r * Math.sin(a)).toFixed(1); }).join(" ");
+  /* [التسمية, النوع (poly|path|rect|ellipse|line), البيانات, تمديد دائم, مجموعة] */
+  const SHAPES = {
+    rect: ["مستطيل / مربع", "rect", "", 1, "أساسية"], ellipse: ["دائرة / بيضاوي", "ellipse", "", 1, "أساسية"], triangle: ["مثلث", "poly", "50,4 96,96 4,96", 0, "أساسية"], rtriangle: ["مثلث قائم", "poly", "4,4 96,96 4,96", 0, "أساسية"],
+    diamond: ["معين", "poly", "50,2 98,50 50,98 2,50", 0, "أساسية"], pentagon: ["خماسي", "poly", polyPts(5, 48, -90), 0, "أساسية"], hexagon: ["سداسي", "poly", polyPts(6, 48, 0), 0, "أساسية"], octagon: ["ثماني", "poly", polyPts(8, 48, 22.5), 0, "أساسية"],
+    parallelogram: ["متوازي أضلاع", "poly", "22,10 98,10 78,90 2,90", 1, "أساسية"], trapezoid: ["شبه منحرف", "poly", "22,10 78,10 98,90 2,90", 1, "أساسية"], semicircle: ["نصف دائرة", "path", "M2 96 A48 48 0 0 1 98 96 Z", 0, "أساسية"], ring: ["حلقة", "path", "M50 2 A48 48 0 1 1 49.9 2 Z M50 20 A30 30 0 1 0 50.1 20 Z", 0, "أساسية", "evenodd"],
+    star4: ["نجمة رباعية", "poly", starPts(4, .38, 48, -90), 0, "نجوم"], star5: ["نجمة خماسية", "poly", starPts(5, .42, 48, -90), 0, "نجوم"], star6: ["نجمة سداسية", "poly", starPts(6, .56, 48, -90), 0, "نجوم"], star8: ["نجمة ثمانية", "poly", starPts(8, .62, 48, -90), 0, "نجوم"],
+    burst: ["انفجار", "poly", starPts(12, .78, 48, -90), 0, "نجوم"], seal: ["ختم / شارة", "poly", starPts(20, .9, 48, -90), 0, "نجوم"], sparkle: ["لمعة", "path", "M50 2 C54 34 66 46 98 50 C66 54 54 66 50 98 C46 66 34 54 2 50 C34 46 46 34 50 2 Z", 0, "نجوم"],
+    arrowR: ["سهم يمين", "poly", "2,38 58,38 58,12 98,50 58,88 58,62 2,62", 0, "أسهم"], arrowL: ["سهم يسار", "poly", "98,38 42,38 42,12 2,50 42,88 42,62 98,62", 0, "أسهم"], arrowU: ["سهم أعلى", "poly", "38,98 38,42 12,42 50,2 88,42 62,42 62,98", 0, "أسهم"], arrowD: ["سهم أسفل", "poly", "38,2 38,58 12,58 50,98 88,58 62,58 62,2", 0, "أسهم"],
+    arrowLR: ["سهم مزدوج", "poly", "2,50 30,16 30,36 70,36 70,16 98,50 70,84 70,64 30,64 30,84", 0, "أسهم"], chevR: ["شيفرون يمين", "poly", "20,4 70,4 98,50 70,96 20,96 48,50", 0, "أسهم"], chevL: ["شيفرون يسار", "poly", "80,4 30,4 2,50 30,96 80,96 52,50", 0, "أسهم"],
+    chevDbl: ["شيفرون مزدوج", "path", "M2 6 H30 L58 50 L30 94 H2 L30 50 Z M42 6 H70 L98 50 L70 94 H42 L70 50 Z", 0, "أسهم"], arrowBent: ["سهم منحنٍ", "path", "M8 94 C8 42 36 24 70 24 L70 6 L98 32 L70 58 L70 40 C46 40 30 54 30 94 Z", 0, "أسهم"], arrowCirc: ["سهم دائري", "path", "M78 22 A40 40 0 1 0 90 56 L74 50 A24 24 0 1 1 66 34 L78 46 L96 14 L58 14 Z", 0, "أسهم"],
+    arrowThinR: ["سهم رفيع يمين", "stroke", "M4 50 H94 M64 20 L94 50 L64 80", 0, "أسهم"], arrowThinL: ["سهم رفيع يسار", "stroke", "M96 50 H6 M36 20 L6 50 L36 80", 0, "أسهم"], arrowThinU: ["سهم رفيع أعلى", "stroke", "M50 96 V6 M20 36 L50 6 L80 36", 0, "أسهم"], arrowThinD: ["سهم رفيع أسفل", "stroke", "M50 4 V94 M20 64 L50 94 L80 64", 0, "أسهم"],
+    arrowCurve: ["سهم منحنٍ رفيع", "stroke", "M6 84 C6 30 40 14 90 20 M66 4 L92 20 L70 40", 0, "أسهم"],
+    heart: ["قلب", "path", "M50 90 C10 60 2 38 2 28 C2 14 14 4 28 4 C38 4 46 10 50 18 C54 10 62 4 72 4 C86 4 98 14 98 28 C98 38 90 60 50 90 Z", 0, "رموز"], drop: ["قطرة", "path", "M50 3 C50 3 88 44 88 64 A38 38 0 0 1 12 64 C12 44 50 3 50 3 Z", 0, "رموز"], moon: ["هلال", "path", "M64 4 A46 46 0 1 0 96 70 A38 38 0 1 1 64 4 Z", 0, "رموز"],
+    bolt: ["صاعقة", "poly", "58,2 14,56 46,56 38,98 86,40 54,40", 0, "رموز"], cross: ["علامة زائد", "poly", "35,4 65,4 65,35 96,35 96,65 65,65 65,96 35,96 35,65 4,65 4,35 35,35", 0, "رموز"], check: ["علامة صح", "stroke", "M10 54 L38 82 L90 22", 0, "رموز"], xmark: ["علامة خطأ", "stroke", "M16 16 L84 84 M84 16 L16 84", 0, "رموز"],
+    shield: ["درع", "path", "M50 3 L92 16 V50 C92 76 72 92 50 98 C28 92 8 76 8 50 V16 Z", 0, "رموز"], bubble: ["فقاعة حوار", "path", "M8 8 H92 V70 H42 L22 94 L26 70 H8 Z", 1, "رموز"], ribbon: ["شريط / لافتة", "poly", "2,20 98,20 86,50 98,80 2,80 14,50", 1, "رموز"], crown: ["تاج", "poly", "4,84 4,26 28,50 50,12 72,50 96,26 96,84", 0, "رموز"],
+    lineH: ["خط أفقي", "line", "0,50,100,50", 1, "خطوط"], lineV: ["خط عمودي", "line", "50,0,50,100", 1, "خطوط"], lineD: ["خط مائل", "line", "0,100,100,0", 1, "خطوط"],
+    wave: ["خط متموّج", "stroke", "M0 50 Q12.5 5 25 50 T50 50 T75 50 T100 50", 1, "خطوط"], zigzag: ["خط متعرّج", "stroke", "M0 70 L12.5 30 L25 70 L37.5 30 L50 70 L62.5 30 L75 70 L87.5 30 L100 70", 1, "خطوط"], curve: ["منحنى", "stroke", "M0 92 C30 0 70 0 100 92", 1, "خطوط"], bracket: ["قوس { }", "stroke", "M30 4 C10 4 40 50 10 50 C40 50 10 96 30 96", 0, "خطوط"]
+  };
+  const SHAPE_GROUPS = ["أساسية", "نجوم", "أسهم", "رموز", "خطوط"];
+  function svgShape(s, id) {
+    const sh = SHAPES[s.shape] || SHAPES.star5, kind = sh[1], st = !!sh[3] || s.keep === false, uid2 = "s" + String(id || "x").replace(/\W/g, "");
+    const stroke = s.stroke || ((kind === "stroke" || kind === "line") ? (s.fill || "#c8a24b") : ""), sw = num(s.sw) ?? ((kind === "stroke" || kind === "line") ? 4 : 0), sline = kind === "stroke" || kind === "line";
+    const g = gradCss(s.fgr) ? s.fgr : null; let defs = "", fill = "none";
+    if (!sline && !s.outline) { fill = s.fill || "#c8a24b"; if (g) { const stops = g.s.map(x => `<stop offset="${num(x.p) ?? 0}%" stop-color="${esc(x.c || "#000")}" stop-opacity="${num(x.o) ?? 1}"/>`).join(""); const gid = "g" + uid2;
+        defs = g.t === "radial" || g.t === "conic" ? `<radialGradient id="${gid}" cx="${num(g.x) ?? 50}%" cy="${num(g.y) ?? 50}%" r="70%">${stops}</radialGradient>` : `<linearGradient id="${gid}" gradientTransform="rotate(${(num(g.a) ?? 135) - 90} .5 .5)" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient>`; fill = `url(#${gid})`; } }
+    const lw = sw || ((kind === "stroke" || kind === "line") ? 4 : 0), attrs = ` fill="${fill}"${(stroke && lw) ? ` stroke="${esc(stroke)}" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"${s.dash ? ` stroke-dasharray="${esc(s.dash)}"` : ""}` : ""}${sh[5] ? ` fill-rule="${sh[5]}"` : ""}`;
+    let el;
+    if (kind === "rect") el = `<rect x="${lw ? 1 : 0}" y="${lw ? 1 : 0}" width="${lw ? 98 : 100}" height="${lw ? 98 : 100}" rx="${num(s.rx) || 0}" ry="${num(s.rx) || 0}"${attrs}/>`;
+    else if (kind === "ellipse") el = `<ellipse cx="50" cy="50" rx="${lw ? 49 : 50}" ry="${lw ? 49 : 50}"${attrs}/>`;
+    else if (kind === "poly") el = sh[2].includes("|") ? sh[2].split("|").map(p => `<polygon points="${p}"${attrs}/>`).join("") : `<polygon points="${sh[2]}"${attrs}/>`;
+    else if (kind === "line") { const [x1, y1, x2, y2] = sh[2].split(","); el = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${attrs.replace(/fill="[^"]*"/, 'fill="none"')} vector-effect="non-scaling-stroke"/>`; }
+    else if (kind === "stroke") el = `<path d="${sh[2]}"${attrs.replace(/fill="[^"]*"/, 'fill="none"')}/>`;
+    else el = `<path d="${sh[2]}"${attrs}/>`;
+    return `<svg class="pb-svg" viewBox="0 0 100 100" preserveAspectRatio="${st ? "none" : "xMidYMid meet"}" aria-hidden="true">${defs ? "<defs>" + defs + "</defs>" : ""}${el}</svg>`;
+  }
   /* ═════════════════ تعريف العناصر (Widgets) ═════════════════ */
   const F_FONT = [["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"], ["'Courier New',monospace", "Mono"]];
   const F_W = [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]];
@@ -117,15 +168,15 @@ const PB = (() => {
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
-      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl()),
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl(), [TGR]),
       html: (s, id) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
-      css: (c, sel, s) => emit(c, sel + " .pb-t", s, TYPO),
+      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     text: {
       label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
-      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl()),
+      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl(), [TGR]),
       html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
-      css: (c, sel, s) => emit(c, sel + " .pb-t", s, TYPO),
+      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     image: {
       label: "صورة", ic: "🖼️", fit: 1, def: { src: "", alt: "", fit: "cover" },
@@ -136,9 +187,9 @@ const PB = (() => {
     button: {
       label: "زر", ic: "🔘", fit: 1, def: { text: "اطلب الآن", kind: "link", link: "#", bgc: "#157a55", color: "#ffffff", hbg: "#0f5a3e", fs: { d: 18 }, fw: "800", brad: { d: 12 }, bpad: { d: [14, 32, 14, 32] }, al: { d: "center" } },
       ctl: [{ k: "text", l: "نص الزر", t: "text", tab: "c" }, { k: "kind", l: "نوع الزر", t: "select", o: [["link", "رابط"], ["whatsapp", "واتساب"], ["call", "اتصال هاتفي"]], tab: "c" }, { k: "link", l: "الرابط", t: "text", tab: "c" }, { k: "phone", l: "رقم (واتساب/اتصال) بصيغة دولية", t: "text", tab: "c" }, { k: "msg", l: "رسالة واتساب", t: "text", tab: "c" }, { k: "newTab", l: "فتح في تبويب جديد", t: "switch", tab: "c" },
-        { k: "bgc", l: "لون الزر", t: "color", tab: "s" }, { k: "hbg", l: "لون الخلفية عند المرور", t: "color", tab: "s" }, { k: "color", l: "لون النص", t: "color", tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 60, tab: "s" }, { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" }, { k: "bpad", l: "حشو الزر", t: "dims", r: 1, tab: "s" }, { k: "brad", l: "تدوير زوايا الزر (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }, { k: "full", l: "عرض كامل", t: "switch", r: 1, tab: "s" }],
+        { k: "bgc", l: "لون الزر", t: "color", tab: "s" }, { k: "bgr", l: "تدرّج الزر (degradé)", t: "grad", tab: "s" }, { k: "hbg", l: "لون الخلفية عند المرور", t: "color", tab: "s" }, { k: "color", l: "لون النص", t: "color", tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 60, tab: "s" }, { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" }, { k: "bpad", l: "حشو الزر", t: "dims", r: 1, tab: "s" }, { k: "brad", l: "تدوير زوايا الزر (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }, { k: "full", l: "عرض كامل", t: "switch", r: 1, tab: "s" }],
       html: (s, id, ctx) => { let href = s.link || "#", ex = ""; if (s.kind === "whatsapp") href = "https://wa.me/" + String(s.phone || ctx.wa || "").replace(/\D/g, "") + (s.msg ? "?text=" + encodeURIComponent(s.msg) : ""); else if (s.kind === "call") href = "tel:" + String(s.phone || "").replace(/[^\d+]/g, ""); if (s.newTab || s.kind === "whatsapp") ex = ' target="_blank" rel="noopener"'; return `<a class="pb-btn" href="${esc(href)}"${ex}><span data-edit="text">${esc(s.text)}</span></a>`; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-btn", s, [["bgc", raw("background")], ["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["bpad", v => dimsDecl("padding", v)], ["brad", px("border-radius")], ["full", v => v ? "display:block;width:100%;" : "display:inline-block;width:auto;"]]); if (s.hbg) c.d.push(`${sel} .pb-btn:hover{background:${s.hbg}!important}`); },
+      css: (c, sel, s) => { emit(c, sel + " .pb-btn", s, [["bgc", raw("background")], ["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["bpad", v => dimsDecl("padding", v)], ["brad", px("border-radius")], ["full", v => v ? "display:block;width:100%;" : "display:inline-block;width:auto;"]]); const bg = gradCss(s.bgr); if (bg) c.d.push(`${sel} .pb-btn{background-image:${bg}}`); if (s.hbg) c.d.push(`${sel} .pb-btn:hover{background:${s.hbg}!important${bg ? ";background-image:none!important" : ""}}`); },
     },
     spacer: {
       label: "فراغ", ic: "↕️", def: { mh: { d: 40, m: 24 } }, ctl: [{ k: "mh", l: "الارتفاع (px)", t: "num", r: 1, min: 0, max: 600, tab: "c" }],
@@ -154,6 +205,15 @@ const PB = (() => {
       ctl: [{ k: "url", l: "رابط YouTube / Vimeo / ملف mp4", t: "text", tab: "c" }, { k: "ratio", l: "النسبة", t: "select", o: [["16/9", "16:9"], ["4/3", "4:3"], ["1/1", "1:1"], ["9/16", "9:16 (عمودي)"]], tab: "c" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }],
       html: s => { const u = String(s.url || "").trim(); let m; if (!u) return `<div class="pb-ph">▶️ ألصق رابط الفيديو في الإعدادات</div>`; if ((m = u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/))) return `<iframe class="pb-vid" src="https://www.youtube-nocookie.com/embed/${m[1]}" loading="lazy" allowfullscreen title="فيديو"></iframe>`; if ((m = u.match(/vimeo\.com\/(\d+)/))) return `<iframe class="pb-vid" src="https://player.vimeo.com/video/${m[1]}" loading="lazy" allowfullscreen title="فيديو"></iframe>`; if (/\.(mp4|webm)(\?|$)/i.test(u)) return `<video class="pb-vid" src="${esc(u)}" controls playsinline preload="metadata"></video>`; return `<div class="pb-ph">رابط فيديو غير مدعوم</div>`; },
       css: (c, sel, s) => { c.d.push(`${sel} .pb-vid{width:100%;aspect-ratio:${s.ratio || "16/9"};border:0;display:block;background:#000}`); emit(c, sel + " .pb-vid", s, [["rad", px("border-radius")]]); },
+    },
+    shape: {
+      label: "شكل / خط", ic: "⬟", fit: 1, def: { shape: "star5", fill: "#c8a24b", outline: false, stroke: "", sw: 0, dash: "", rx: 0, keep: true, flip: "", mh: { d: 160 }, w: { d: 30 }, al: { d: "center" } },
+      ctl: [{ k: "shape", l: "الشكل", t: "shapepick", tab: "c" }, { k: "fill", l: "لون التعبئة (امسحه للاكتفاء بالكونتور)", t: "color", tab: "c" }, { k: "fgr", l: "تعبئة بتدرّج (degradé)", t: "grad", tab: "c" }, { k: "outline", l: "كونتور فقط (بدون تعبئة)", t: "switch", tab: "c" },
+        { k: "stroke", l: "لون الخط/الكونتور", t: "color", tab: "c" }, { k: "sw", l: "سماكة الخط (px)", t: "num", min: 0, max: 40, tab: "c" }, { k: "dash", l: "نمط الخط", t: "select", o: [["", "متصل"], ["10 7", "متقطع"], ["2 8", "منقّط"], ["22 8 4 8", "شرطة ونقطة"]], tab: "c" },
+        { k: "rx", l: "تدوير زوايا المستطيل (%)", t: "num", min: 0, max: 50, tab: "c", showIf: ["shape", "rect"] }, { k: "keep", l: "حفظ النسبة (بدل التمدد مع الحجم)", t: "switch", tab: "c" }, { k: "flip", l: "قلب", t: "select", o: [["", "بدون"], ["x", "أفقي"], ["y", "عمودي"], ["xy", "الاثنان"]], tab: "c" },
+        { k: "sh", l: "ظل الشكل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" }],
+      html: (s, id) => svgShape(s, id),
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-svg{width:100%;height:100%;display:block;overflow:visible}`); if (s.sh) c.d.push(`${sel} .pb-svg{filter:${{ sm: "drop-shadow(0 2px 4px rgba(0,0,0,.25))", md: "drop-shadow(0 8px 14px rgba(0,0,0,.3))", lg: "drop-shadow(0 16px 28px rgba(0,0,0,.35))", glow: "drop-shadow(0 0 14px rgba(255,200,60,.9))" }[s.sh] || "none"}}`); const f = { x: "scaleX(-1)", y: "scaleY(-1)", xy: "scale(-1,-1)" }[s.flip]; if (f) c.d.push(`${sel} .pb-svg{transform:${f}}`); },
     },
     html: {
       label: "HTML مخصص", ic: "🧩", def: { code: "<div style=\"padding:20px;text-align:center\">HTML مخصص</div>" }, ctl: [{ k: "code", l: "الكود", t: "rich", tab: "c" }],
@@ -242,7 +302,7 @@ const PB = (() => {
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "slider", "gallery", "products", "orderorig", "iconbox", "iconlist", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "iconbox", "iconlist", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -250,7 +310,8 @@ const PB = (() => {
       { k: "mar", l: "الهامش الخارجي (px)", t: "dims", r: 1, tab: "s" },
       { k: "pad", l: "الحشو الداخلي (px)", t: "dims", r: 1, tab: "s" },
       { k: "bg", l: "لون الخلفية", t: "color", tab: "s" },
-      { k: "grad1", l: "تدرّج: اللون الأول", t: "color", tab: "s" }, { k: "grad2", l: "تدرّج: اللون الثاني", t: "color", tab: "s" }, { k: "gradAng", l: "زاوية التدرّج", t: "num", min: 0, max: 360, tab: "s" },
+      { k: "gr", l: "تدرّج متقدم (degradé) — ألوان متعددة، خطي/دائري/مخروطي", t: "grad", tab: "s" },
+      { k: "grad1", l: "تدرّج بسيط: اللون الأول", t: "color", tab: "s" }, { k: "grad2", l: "تدرّج بسيط: اللون الثاني", t: "color", tab: "s" }, { k: "gradAng", l: "زاوية التدرّج", t: "num", min: 0, max: 360, tab: "s" },
       { k: "bgImg", l: "صورة الخلفية", t: "image", tab: "s" },
       { k: "bgSize", l: "حجم الخلفية", t: "select", o: [["cover", "تغطية"], ["contain", "احتواء"], ["auto", "أصلي"]], tab: "s" },
       { k: "bgPos", l: "موضع الخلفية", t: "select", o: [["center", "وسط"], ["top", "أعلى"], ["bottom", "أسفل"], ["left", "يسار"], ["right", "يمين"]], tab: "s" },
@@ -260,7 +321,7 @@ const PB = (() => {
       { k: "shadow", l: "الظل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" },
       { k: "op", l: "الشفافية (0-1)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
     ];
-    if (kind === "widget") a.unshift({ k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "s" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "s", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "s" },
+    if (kind === "widget") a.unshift({ k: "rot", l: "تدوير العنصر (درجة)", t: "num", r: 1, min: -360, max: 360, tab: "s" }, { k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "s" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "s", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "s" },
       { k: "fx", l: "الموضع الأفقي % (وضع حر)", t: "num", r: 1, min: -50, max: 150, step: .5, tab: "s", onlyFree: 1 }, { k: "fy", l: "الموضع العمودي px (وضع حر)", t: "num", r: 1, min: -500, max: 5000, tab: "s", onlyFree: 1 }, { k: "fwd", l: "العرض % (وضع حر)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "s", onlyFree: 1 }, { k: "fh", l: "الارتفاع px (وضع حر)", t: "num", r: 1, min: 10, max: 5000, tab: "s", onlyFree: 1 },
       { k: "zi", l: "الترتيب (أمام/خلف) — الأكبر أمام", t: "num", min: -20, max: 200, tab: "s" });
     return a.concat([
@@ -311,7 +372,7 @@ const PB = (() => {
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
-  const FREE_SIZE = { heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
   const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
@@ -343,7 +404,7 @@ const PB = (() => {
     const renderW = (w, free) => {
       const def = WIDGETS[w.type]; if (!def) return ""; const wsx = `.pb-w.x-${w.id}`, s2 = w.set;
       boxStatic(css, wsx, s2);
-      const specs = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["zi", v => `z-index:${num(v)};`]];
+      const specs = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["rot", v => `rotate:${num(v) ?? 0}deg;`], ["zi", v => `z-index:${num(v)};`]];
       if (free) specs.push(["fx", v => `left:${num(v)}%;`], ["fy", px("top")], ["fwd", pc("width")], ["fh", v => `${def.fit ? "height" : "min-height"}:${U(num(v))};`]);
       else specs.push(["w", v => `width:${num(v)}%;`], ["mh", v => `${def.fit ? "height" : "min-height"}:${U(num(v))};`],
         ["al", v => (v === "center" ? "margin-left:auto;margin-right:auto;" : v === "end" ? "margin-inline-start:auto;margin-inline-end:0;" : "margin-inline-end:auto;margin-inline-start:0;") + `text-align:${v === "center" ? "center" : v === "end" ? "end" : "start"};`]);
@@ -446,6 +507,7 @@ const PB = (() => {
 
   /* سكربت الصفحة المنشورة: حركات الظهور + العدّادات + العدّ التنازلي + تحديث الأسعار من data.js */
   const RUNTIME_JS = `(function(){
+try{if(localStorage.getItem('alyssum_admin_on')==='1'&&self===top&&__pbSlug&&!/[?&](preview|embed)=/.test(location.search)){var ea=document.createElement('a');ea.href=__pbBase+'admin.html#edit='+encodeURIComponent(__pbSlug);ea.textContent='✏️ تعديل هذه الصفحة';ea.style.cssText='position:fixed;bottom:16px;left:16px;z-index:99999;background:#173f35;color:#fff;padding:.65rem 1.1rem;border-radius:999px;font:800 14px Cairo,system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);text-decoration:none';document.body.appendChild(ea)}}catch(e){}
 var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct').forEach(function(n){io.observe(n)})}else{$('[data-anim]').forEach(function(n){n.classList.add('pb-in-view')})}
 function tick(){$('.pb-cd').forEach(function(el){var end;if(el.dataset.mode==='date'&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
@@ -481,9 +543,9 @@ ${r.css}
 ${page.css || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
 ${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
-<script>var __pbBase=${JSON.stringify(ctx.base)};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}<\/script>
+<script>var __pbBase=${JSON.stringify(ctx.base)};var __pbSlug=${JSON.stringify(page.slug || "")};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}<\/script>
 </body></html>`;
   }
 
-  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();

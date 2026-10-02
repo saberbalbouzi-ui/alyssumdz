@@ -61,36 +61,43 @@ Act as a world-class Mobile E-commerce Designer. Generate an ultra-long vertical
 CRITICAL FORMAT RULE: DO NOT write any HTML, CSS, UI code, or text-based code. You MUST generate a purely visual, single continuous graphical IMAGE.
 
 AESTHETIC & FLOW INSTRUCTIONS:
-Create one continuous journey with smooth color gradients (specifically [insert dynamic colors matching product image]) and subtle kinetic lines. No hard dividing lines. Use a dynamic background matching the [insert product vibe]. Feature the product repeatedly.
+BACKGROUND (MANDATORY): ONE single unified background for the ENTIRE image — a single smooth, harmonious vertical degradé (gradient) built from 2–3 tones taken from the product's own colours ([insert dynamic colors matching product image]) that flows seamlessly from the top to the bottom of the image. DO NOT split the image into visible parts: NO cards, NO boxes, NO panels, NO horizontal bands, NO colour blocks, NO frames, NO divider lines and NO change of background between topics. Everything must read as ONE cohesive, harmonious composition where the content floats directly on the same gradient and topics are separated only by generous empty space. Subtle soft glow and light particles matching the [insert product vibe] are allowed. Feature the product repeatedly.
 
-* Dynamic background with particle effects. Product is prominent. Small Yellow Text: "${ph("اكتب: الأكثر مبيعاً أو جديد", "write: Best Seller or New")}"
+* Opening area: product prominent at the top with soft glow and particle effects. Small Yellow Text: "${ph("اكتب: الأكثر مبيعاً أو جديد", "write: Best Seller or New")}"
 * HUGE WHITE BOLD TEXT: "${ph("عنوان رئيسي جذاب وقوي جداً", "very strong, catchy main headline")}"
 * Large Text: "${ph("جملة تشرح الفائدة الكبرى للمنتج", "one sentence explaining the product's biggest benefit")}"
+* Medium Text, 3 short benefit lines each starting with a check mark: "✔ ${ph("فائدة 1", "benefit 1")}\n✔ ${ph("فائدة 2", "benefit 2")}\n✔ ${ph("فائدة 3", "benefit 3")}"
 
-* Smooth transition to a muted area. Feature a negative color shift and problem icons. Large Bold Red Text: "${ph("سؤال يلمس مشكلة العميل", "a question touching the customer's problem")}"
-* Medium Black Text: "${ph("اشرح المشكلة باختصار", "briefly explain the problem")}"
+* Same background, slightly calmer mood. Feature problem icons floating freely (no box). Large Bold Red Text: "${ph("سؤال يلمس مشكلة العميل", "a question touching the customer's problem")}"
+* Medium Text: "${ph("اشرح المشكلة باختصار", "briefly explain the problem")}"
+* Small Text, 3 short problem bullets: "• ${ph("معاناة 1", "pain 1")}\n• ${ph("معاناة 2", "pain 2")}\n• ${ph("معاناة 3", "pain 3")}"
 
-* Burst of bright light transitioning to a clean background. Product appears triumphantly with glowing effects. HUGE BOLD COLORED TEXT: "${ph("عنوان يقدم المنتج كحل نهائي", "headline presenting the product as the final solution")}"
+* A soft burst of light behind the product, which appears triumphantly with glowing effects (same background). HUGE BOLD COLORED TEXT: "${ph("عنوان يقدم المنتج كحل نهائي", "headline presenting the product as the final solution")}"
 * Large Black Text: "${ph("جملة تؤكد قوة الحل", "sentence confirming the power of the solution")}"
 
-* Side-by-side layout with a clear visual contrast. Left side is dark/dull showing [describe problem visually]. Right side is bright/vibrant showing [describe happy state]. LARGE BOLD COLORED TEXT: "${ph("عنوان جذاب للفرق قبل وبعد", "catchy before/after headline")}"
+* Two free-floating rounded photos side by side (no frame, soft edges blending into the background) with a clear visual contrast: left shows [describe problem visually], right shows [describe happy state]. LARGE BOLD COLORED TEXT: "${ph("عنوان جذاب للفرق قبل وبعد", "catchy before/after headline")}"
 * Medium Red Text: "❌ ${ph("قبل: وصف قصير للمعاناة", "Before: short description of the struggle")}"
 * Medium Green Text: "✅ ${ph("بعد: وصف قصير للراحة", "After: short description of the relief")}"
 
 * Extreme close-up on [describe feature visually]. Use glowing effects. LARGE BOLD COLORED TEXT: "${ph("عنوان الميزة الأولى", "first feature headline")}"
-* Large Black Text: "${ph("شرح قوي للميزة", "strong explanation of the feature")}"
+* Large Text: "${ph("شرح قوي للميزة", "strong explanation of the feature")}"
 
-* 2-Column Split Layout. Left Column is glowing OUR PRODUCT. Right Column is dull Gray generic competitor. LARGE BOLD COLORED TEXT: "${ph("عنوان يقارن ويثبت التفوق", "headline comparing and proving superiority")}"
+* A free-floating row of 4 round glowing icons each with a 2-word label under it (key benefits): "${ph("ميزة قصيرة 1", "short benefit 1")}" · "${ph("ميزة قصيرة 2", "short benefit 2")}" · "${ph("ميزة قصيرة 3", "short benefit 3")}" · "${ph("ميزة قصيرة 4", "short benefit 4")}". LARGE BOLD COLORED TEXT above it: "${ph("عنوان فوائد المنتج", "benefits headline")}"
+
+* Three numbered glowing circles 1-2-3 connected by a thin curved line (how to use). LARGE BOLD COLORED TEXT: "${ph("عنوان طريقة الاستعمال", "how-to-use headline")}"
+* Medium Text: "1 ${ph("الخطوة الأولى", "step 1")}\n2 ${ph("الخطوة الثانية", "step 2")}\n3 ${ph("الخطوة الثالثة", "step 3")}"
+
+* Two columns without any dividing line or box: left is glowing OUR PRODUCT, right is a dull gray generic competitor product. LARGE BOLD COLORED TEXT: "${ph("عنوان يقارن ويثبت التفوق", "headline comparing and proving superiority")}"
 * Medium Green Text: "✔️ ${ph("ميزة 1", "advantage 1")}\\n✔️ ${ph("ميزة 2", "advantage 2")}"
 * Medium Red Text: "❌ ${ph("عيب 1", "drawback 1")}\\n❌ ${ph("عيب 2", "drawback 2")}"
 
 * Lifestyle visual of [describe a scene with the product in use]. LARGE BOLD COLORED TEXT: "${ph("عنوان عن فائدة المنتج يومياً", "headline about the daily benefit")}"
 * Large Black Text: "${ph("كيف يحسن المنتج حياة الزبون", "how the product improves the customer's life")}"
 
-* 5 large glowing stars ★★★★★ centered. Customer icons. LARGE BOLD BLACK TEXT: "${L.trust}"
+* A row of 3 small glowing trust badges (icon + two words each): "${ph("طبيعي 100%", "100% natural")}" · "${ph("الدفع عند الاستلام", "cash on delivery")}" · "${ph("توصيل لكل الولايات", "nationwide delivery")}". Then 5 large glowing stars ★★★★★ centered. Customer icons. LARGE BOLD BLACK TEXT: "${L.trust}"
 * Medium Black Text: "${ph("مراجعة إيجابية قصيرة بلسان زبون", "short positive review in a customer's voice")}"
 
-* Solid, high-contrast footer. Product prominent next to CTA button. LARGE BOLD TEXT: "${ph("اذكر السعر بوضوح", "state the price clearly")}"
+* Closing area on the same background (no separate footer block). Product prominent next to the CTA button. LARGE BOLD TEXT: "${ph("اذكر السعر بوضوح", "state the price clearly")}"
 * Large White Bold Text: "${L.limited}"
 * HUGE BLACK TEXT on YELLOW Button: "${L.cta}"`);
     return out.join("\n");
