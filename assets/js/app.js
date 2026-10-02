@@ -939,14 +939,21 @@ function initHome(){
 
 /* ── تبويبات الرئيسية: الأكثر مبيعاً / الأكثر طلباً / التخفيضات / المنتجات الجديدة ──
    عضوية المنتج في تبويب = p.tags (تُعدَّل من لوحة الإدارة ← تعديل المنتج). التبويب الفارغ يُخفى. */
-const COLLECTIONS = [
-  {key:"best", label:"🔥 الأكثر مبيعاً", title:"الأكثر مبيعاً", sub:"المنتجات المفضّلة لدى عملائنا", ribbon:"🔥 الأكثر مبيعاً", bg:"#F4EFE6", accent:"#8a6a1a"},
-  {key:"hot",  label:"⚡ الأكثر طلباً", title:"الأكثر طلباً", sub:"الأكثر طلباً هذه الأيام", ribbon:"⚡ الأكثر طلباً", bg:"#FBEBDD", accent:"#b4531a"},
-  {key:"sale", label:"🏷️ التخفيضات", title:"التخفيضات", sub:"أسعار مخفّضة لفترة محدودة", ribbon:"🏷️ تخفيض", bg:"#FBE4E4", accent:"#b83232"},
-  {key:"new",  label:"✨ المنتجات الجديدة", title:"المنتجات الجديدة", sub:"وصل حديثاً إلى المتجر", ribbon:"✨ جديد", bg:"#E4F1EA", accent:"#157a55"},
-];
+const COLLECTIONS_DEFAULT = [{"key": "best", "label": "🔥 الأكثر مبيعاً", "title": "الأكثر مبيعاً", "sub": "المنتجات المفضّلة لدى عملائنا", "ribbon": "🔥 الأكثر مبيعاً", "bg": "#F4EFE6", "accent": "#8a6a1a", "enabled": true}, {"key": "hot", "label": "⚡ الأكثر طلباً", "title": "الأكثر طلباً", "sub": "الأكثر طلباً هذه الأيام", "ribbon": "⚡ الأكثر طلباً", "bg": "#FBEBDD", "accent": "#b4531a", "enabled": true}, {"key": "sale", "label": "🏷️ التخفيضات", "title": "التخفيضات", "sub": "أسعار مخفّضة لفترة محدودة", "ribbon": "🏷️ تخفيض", "bg": "#FBE4E4", "accent": "#b83232", "enabled": true}, {"key": "new", "label": "✨ المنتجات الجديدة", "title": "المنتجات الجديدة", "sub": "وصل حديثاً إلى المتجر", "ribbon": "✨ جديد", "bg": "#E4F1EA", "accent": "#157a55", "enabled": true}];
+let __collCache = null;
+async function loadCollections(){      // assets/data/collections.json (تُعدَّل من لوحة الإدارة ← المنتجات ← تبويبات الرئيسية)
+  if(__collCache) return __collCache;
+  try{
+    const r = await fetch((typeof REL!=="undefined"?REL:"") + "assets/data/collections.json", {cache:"no-store"});
+    const j = r.ok ? await r.json() : null;
+    __collCache = (j && Array.isArray(j.tabs) && j.tabs.length) ? j.tabs : COLLECTIONS_DEFAULT;
+  }catch(e){ __collCache = COLLECTIONS_DEFAULT; }
+  return __collCache;
+}
+function inkOn(hex){ const m = /^#?([0-9a-f]{6})$/i.exec(hex||""); if(!m) return "#fff"; const n = parseInt(m[1],16), f = c=>{ c/=255; return c<=.03928 ? c/12.92 : Math.pow((c+.055)/1.055,2.4); }; const L = .2126*f(n>>16&255)+.7152*f(n>>8&255)+.0722*f(n&255); return L > .4 ? "#1C2420" : "#fff"; }
 function collectionProducts(key){ return PRODUCTS.filter(p=>p.active!==false && (p.tags||[]).includes(key)); }
-function renderBestsellers(slugs){
+async function renderBestsellers(slugs){
+  const COLLECTIONS = (await loadCollections()).filter(c=>c.enabled!==false);
   const wrap = document.getElementById("bestsellers-grid");
   if(!wrap) return;
   const sec = document.getElementById("bestsellers");
@@ -961,7 +968,7 @@ function renderBestsellers(slugs){
     });
   };
   if(!cols.length){   // لا وسوم بعد: السلوك القديم (قائمة ثابتة)
-    draw(COLLECTIONS[0], (slugs||[]).map(s=>PRODUCTS.find(x=>x.slug===s)).filter(Boolean));
+    draw(COLLECTIONS[0] || COLLECTIONS_DEFAULT[0], (slugs||[]).map(s=>PRODUCTS.find(x=>x.slug===s)).filter(Boolean));
     return;
   }
   let bar = document.getElementById("coll-tabs");
@@ -971,7 +978,7 @@ function renderBestsellers(slugs){
   }
   const show = key=>{
     const c = cols.find(x=>x.key===key) || cols[0];
-    bar.querySelectorAll("button").forEach(b=>{ const on = b.dataset.k === c.key; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); b.style.background = on ? c.accent : ""; b.style.borderColor = on ? c.accent : ""; });
+    bar.querySelectorAll("button").forEach(b=>{ const on = b.dataset.k === c.key; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); b.style.background = on ? c.accent : ""; b.style.borderColor = on ? c.accent : ""; b.style.color = on ? inkOn(c.accent) : ""; });
     if(sec){ sec.style.background = c.bg; sec.style.setProperty("--coll", c.accent); const h = sec.querySelector(".sec-title h2"), sp = sec.querySelector(".sec-title p"), k = sec.querySelector(".sec-title .kicker"); if(h) h.textContent = c.title; if(sp) sp.textContent = c.sub; if(k) k.style.color = c.accent; }
     draw(c, collectionProducts(c.key));
   };
