@@ -163,6 +163,40 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
         if (e > 110) { n++; if (x < mnx) mnx = x; if (x > mxx) mxx = x; if (y < mny) mny = y; if (y > mxy) mxy = y; } } }
     if (n < 12 || mxx < 0) return b; return { x0: x0 + mnx, x1: x0 + mxx + 1, y0: y0 + mny, y1: y0 + mxy + 1 };
   }
+  /* ───── Gemini: اختيار نموذج متاح تلقائياً + تفسير الأخطاء بالعربية ───── */
+  const GEM_PREF = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+  function gemErr(status, msg) {
+    msg = String(msg || ""); const raw = " [" + (status || "?") + (msg ? ": " + msg.slice(0, 160) : "") + "]";
+    if (/API key not valid|API_KEY_INVALID|invalid api key/i.test(msg)) return "المفتاح غير صحيح — انسخه كاملاً من aistudio.google.com/apikey بدون مسافات أو أحرف زائدة." + raw;
+    if (/referer|referrer|HTTP_REFERRER/i.test(msg)) return "المفتاح مقيَّد بنطاقات معيّنة (HTTP referrers) وموقعك ليس بينها — في Google AI Studio/Cloud Console أضف نطاق موقعك أو اجعل المفتاح بلا قيود تطبيق." + raw;
+    if (/not been used|disabled|SERVICE_DISABLED|accessNotConfigured/i.test(msg)) return "واجهة Generative Language API غير مفعّلة لمشروع هذا المفتاح — فعّلها من Google Cloud Console أو أنشئ مفتاحاً جديداً من AI Studio." + raw;
+    if (status === 429 || /quota|RESOURCE_EXHAUSTED|rate/i.test(msg)) return "تجاوز المفتاح حصة الاستعمال (مجانية/دقيقة) — انتظر دقيقة ثم أعد المحاولة، أو استعمل مفتاحاً آخر." + raw;
+    if (status === 403 || /PERMISSION_DENIED/i.test(msg)) return "المفتاح لا يملك صلاحية استعمال النموذج (قد يكون محظوراً في بلدك/مشروعك أو مقيّداً)." + raw;
+    if (status === 400 && /location|region/i.test(msg)) return "الخدمة غير متاحة في منطقتك لهذا المفتاح." + raw;
+    return (msg || ("Gemini " + status)) + raw;
+  }
+  let _gemCache = null;
+  async function gemModels(key) {
+    if (_gemCache && _gemCache.key === key) return _gemCache.list;
+    let list = GEM_PREF.slice(0, 2).concat([GEM_PREF[0]]);
+    try {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
+      if (r.ok) { const j = await r.json(), names = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent")).map(m => String(m.name).replace(/^models\//, "")), pick = GEM_PREF.filter(m => names.includes(m)); const any = names.filter(n => /flash/i.test(n) && !/image|tts|live|embedding|thinking|lite-preview/i.test(n));
+        const base = pick.concat(any.filter(n => !pick.includes(n)).slice(0, 3)); if (base.length) list = base.concat([base[0]]); _gemCache = { key, list, names }; }
+    } catch (e) { }
+    return list;
+  }
+  /* اختبار المفتاح: يعرض النماذج المتاحة ويجرّب طلباً صغيراً ويفسّر الخطأ */
+  async function testKey() {
+    const msg = $("gen-automsg"), key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
+    if (!key) { msg.textContent = "❌ أدخل المفتاح أولاً"; return; } msg.textContent = "⏳ اختبار المفتاح…"; _gemCache = null;
+    try {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } }), j = await r.json().catch(() => ({}));
+      if (!r.ok) { msg.textContent = "❌ " + gemErr(r.status, (j.error && j.error.message) || ""); return; }
+      const models = await gemModels(key), t = await (PBGen.textFn || geminiText)(key, "Reply with exactly: OK");
+      msg.textContent = "✅ المفتاح يعمل — النموذج المستعمل: " + models[0] + (t ? "" : " (ردّ فارغ)");
+    } catch (err) { msg.textContent = "❌ " + err.message; }
+  }
   /* Gemini رؤية: يقرأ النص بدقة أعلى للعربية ويعيد صناديقه (box_2d مُطبَّعة 0-1000)؛ المفتاح مفتاحك المخزَّن في المتصفح فقط */
   async function geminiOcr(canvas, key, langName) {
     const W = canvas.width, H = canvas.height, c2 = document.createElement("canvas"), k = Math.min(1, 1600 / W); c2.width = Math.round(W * k); c2.height = Math.round(H * k); c2.getContext("2d").drawImage(canvas, 0, 0, c2.width, c2.height);
@@ -173,29 +207,29 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   /* استدعاء Gemini بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
   async function geminiJson(key, b64, prompt) {
-    const models = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-3.8-flash"]; let last = "";
+    const models = await gemModels(key); let last = "";
     for (let mi = 0; mi < models.length; mi++) {
       if (mi === models.length - 1) await new Promise(r => setTimeout(r, 3000));
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0 } }) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { last = (j.error && j.error.message) || ("Gemini " + r.status); if ([404, 429, 500, 503].includes(r.status) || /no longer available|not found|not supported|high demand|overloaded|quota/i.test(last)) continue; throw new Error(last); }
+      if (!r.ok) { const gm = (j.error && j.error.message) || ""; last = gemErr(r.status, gm); if ([404, 500, 503].includes(r.status) || (r.status === 429 && mi < models.length - 1) || /no longer available|not found|not supported|high demand|overloaded/i.test(gm)) continue; throw new Error(last); }
       const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join(""), m = t.match(/\{[\s\S]*\}/); if (!m) throw new Error("ردّ غير مفهوم من Gemini");
       return JSON.parse(m[0]);
     }
-    throw new Error(last || "لا يوجد نموذج Gemini متاح");
+    throw new Error(last || "لا يوجد نموذج Gemini متاح لهذا المفتاح");
   }
   /* Gemini نصّي (مع صورة اختيارية): يعيد النص الكامل للردّ */
   async function geminiText(key, text, b64, mime) {
-    const models = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-3.8-flash"]; let last = "";
+    const models = await gemModels(key); let last = "";
     for (let mi = 0; mi < models.length; mi++) {
       if (mi === models.length - 1) await new Promise(r => setTimeout(r, 3000));
       const parts = (b64 ? [{ inline_data: { mime_type: mime || "image/jpeg", data: b64 } }] : []).concat([{ text }]);
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: .7 } }) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { last = (j.error && j.error.message) || ("Gemini " + r.status); if ([404, 429, 500, 503].includes(r.status) || /no longer available|not found|not supported|high demand|overloaded|quota/i.test(last)) continue; throw new Error(last); }
+      if (!r.ok) { const gm = (j.error && j.error.message) || ""; last = gemErr(r.status, gm); if ([404, 500, 503].includes(r.status) || (r.status === 429 && mi < models.length - 1) || /no longer available|not found|not supported|high demand|overloaded/i.test(gm)) continue; throw new Error(last); }
       return ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
     }
-    throw new Error(last || "لا يوجد نموذج Gemini متاح");
+    throw new Error(last || "لا يوجد نموذج Gemini متاح لهذا المفتاح");
   }
   /* اكتشاف تلقائي لمناطق المنتج/الصور/الأيقونات (غير النصية) ليُقصّ كلٌّ منها كعنصر مستقل */
   async function geminiDetect(canvas, key) {
@@ -322,7 +356,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <label class="hint" style="margin:0">صورة المنتج<input type="file" id="gen-pimg" accept="image/*"></label>
       <label class="hint" style="margin:0">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
     </div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.auto()">⚡ إنتاج البرومبت النهائي</button><small id="gen-automsg" style="font-weight:700;color:var(--green)"></small></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.auto()">⚡ إنتاج البرومبت النهائي</button><button class="small gray" type="button" onclick="PBGen.testKey()" title="يفحص المفتاح ويعرض سبب الفشل إن وُجد">🔑 اختبار المفتاح</button><small id="gen-automsg" style="font-weight:700;color:var(--green)"></small></div>
     <label class="hint" style="margin:0">البرومبت النهائي — انسخه مع صورة المنتج إلى Gemini (Nano Banana) لتوليد الصورة</label>
     <textarea id="gen-final" rows="8" dir="ltr" placeholder="سيظهر هنا جاهزاً للّصق..." style="font-size:.78rem"></textarea>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="PBGen.copyFinal()">📋 نسخ البرومبت النهائي</button><button class="small gold" type="button" onclick="PBGen.proofread()" title="يراجع كل النصوص المقتبسة: إملاء، تكرار، تطويل، نصوص طويلة">🔍 تدقيق إملائي وتكرار</button><label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-autoproof" checked style="width:auto"> تدقيق تلقائي بعد التوليد</label></div>
@@ -458,5 +492,5 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, extractIntended, snapText, auto, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, testKey, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
