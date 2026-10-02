@@ -425,6 +425,11 @@ create table if not exists public.promo_codes (
   created_at timestamptz not null default now()
 );
 create index if not exists promo_codes_phone_idx on public.promo_codes (phone);
+alter table public.promo_codes add column if not exists kind text;       -- reg | install: هدايا الترحيب (كود واحد لكل زبون ونوع)
+alter table public.promo_codes add column if not exists product text;    -- منتج الهدية عندما يكون النوع gift
+alter table public.promo_codes drop constraint if exists promo_codes_type_check;
+alter table public.promo_codes add constraint promo_codes_type_check check (type in ('percent', 'fixed', 'freeship', 'gift'));
+create unique index if not exists promo_codes_kind_uq on public.promo_codes (phone, kind) where kind is not null;
 alter table public.promo_codes enable row level security;
 revoke all on public.promo_codes from anon, authenticated;
 grant select, insert, update, delete on public.promo_codes to authenticated;
@@ -446,7 +451,7 @@ begin
   if c.code is null then insert into public.promo_fails default values; return jsonb_build_object('ok', false, 'error', 'invalid'); end if;
   if c.used_order is not null then return jsonb_build_object('ok', false, 'error', 'used'); end if;
   if c.expires_at <= now() then return jsonb_build_object('ok', false, 'error', 'expired'); end if;
-  return jsonb_build_object('ok', true, 'type', c.type, 'value', c.value, 'minOrder', c.min_order, 'expiresAt', c.expires_at);
+  return jsonb_build_object('ok', true, 'type', c.type, 'value', c.value, 'minOrder', c.min_order, 'expiresAt', c.expires_at, 'product', coalesce(c.product, ''));
 end $$;
 revoke all on function public.validate_promo(jsonb) from public;
 grant execute on function public.validate_promo(jsonb) to anon, authenticated;
@@ -484,3 +489,41 @@ $$;
 revoke all on function public._guard_secret(), public._guard_sig(text), public._ip_hash(text), public._client_ip() from public, anon, authenticated;
 revoke all on function public.form_token() from public;
 grant execute on function public.form_token() to anon, authenticated;
+
+-- ════════════════════════════════════════════════════════════════════
+-- هدايا الترحيب كأكواد شخصية: عند التسجيل (reg) أو أول فتح للتطبيق المثبّت (install)، لكل زبون كود واحد من كل نوع.
+-- الإعدادات من admin_kv('welcome') (تحفظها لوحة الإدارة). الكود لهاتف صاحب الحساب فقط ويُستعمل مرة واحدة.
+-- ════════════════════════════════════════════════════════════════════
+create or replace function public.customer_claim_gift(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare cid uuid := public._cust_from_token(p ->> 'token'); ph text; k text := coalesce(p ->> 'kind', ''); w jsonb; g jsonb; c public.promo_codes; v_code text;
+begin
+  if cid is null then raise exception 'unauthorized'; end if;
+  if k not in ('reg', 'install') then raise exception 'invalid_kind'; end if;
+  select phone into ph from public.customers where id = cid;
+  select value into w from public.admin_kv where key = 'welcome';
+  g := case k when 'reg' then w -> 'register' else w -> 'install' end;
+  if w is null or coalesce((w ->> 'enabled')::boolean, true) = false or g is null or coalesce((g ->> 'enabled')::boolean, true) = false then return jsonb_build_object('ok', false, 'error', 'disabled'); end if;
+  select * into c from public.promo_codes where phone = ph and kind = k;
+  if c.code is null then
+    v_code := case k when 'reg' then 'WEL-' else 'APP-' end || upper(substr(encode(extensions.gen_random_bytes(6), 'hex'), 1, 6));
+    insert into public.promo_codes (code, phone, type, value, min_order, expires_at, kind, product)
+    values (v_code, ph, coalesce(g ->> 'type', 'percent'), coalesce((g ->> 'value')::numeric, 0), coalesce((g ->> 'minOrder')::numeric, 0),
+            now() + make_interval(days => greatest(1, coalesce((g ->> 'days')::int, 14))), k, nullif(g ->> 'product', ''))
+    on conflict do nothing;
+    select * into c from public.promo_codes where phone = ph and kind = k;
+  end if;
+  return jsonb_build_object('ok', true, 'code', c.code, 'type', c.type, 'value', c.value, 'minOrder', c.min_order, 'product', coalesce(c.product, ''), 'expiresAt', c.expires_at, 'used', c.used_order is not null);
+end $$;
+
+create or replace function public.customer_my_gifts(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare cid uuid := public._cust_from_token(p ->> 'token'); ph text;
+begin
+  if cid is null then raise exception 'unauthorized'; end if;
+  select phone into ph from public.customers where id = cid;
+  return coalesce((select jsonb_object_agg(kind, jsonb_build_object('code', code, 'type', type, 'value', value, 'minOrder', min_order, 'product', coalesce(product, ''), 'expiresAt', expires_at, 'used', used_order is not null))
+                     from public.promo_codes where phone = ph and kind is not null), '{}'::jsonb);
+end $$;
+revoke all on function public.customer_claim_gift(jsonb), public.customer_my_gifts(jsonb) from public;
+grant execute on function public.customer_claim_gift(jsonb), public.customer_my_gifts(jsonb) to anon, authenticated;

@@ -68,6 +68,8 @@ function db(): PDO {
     ");
     $ocols = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name');
     if (!in_array('customer_id', $ocols, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN customer_id INTEGER');   // ربط الطلب بحساب زبون
+    $pcols = array_column($pdo->query('PRAGMA table_info(promo_codes)')->fetchAll(), 'name');
+    if (!in_array('kind', $pcols, true)) { $pdo->exec('ALTER TABLE promo_codes ADD COLUMN kind TEXT'); $pdo->exec('ALTER TABLE promo_codes ADD COLUMN product TEXT'); $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS promo_kind_uq ON promo_codes(phone, kind) WHERE kind IS NOT NULL'); }   // هدايا الترحيب الشخصية
     if (!in_array('ip_hash', $ocols, true)) { $pdo->exec('ALTER TABLE orders ADD COLUMN ip_hash TEXT'); $pdo->exec('CREATE INDEX IF NOT EXISTS orders_ip ON orders(ip_hash, created_at)'); }   // بصمة IP مجزّأة
     return $pdo;
 }
@@ -411,7 +413,31 @@ switch ($route) {
         if (!$c) out(200, ['ok' => false, 'error' => 'invalid']);
         if ($c['used_order'] !== null) out(200, ['ok' => false, 'error' => 'used']);
         if ((int)$c['expires'] <= time()) out(200, ['ok' => false, 'error' => 'expired']);
-        out(200, ['ok' => true, 'type' => $c['type'], 'value' => (float)$c['value'], 'minOrder' => (float)$c['min_order'], 'expiresAt' => iso((int)$c['expires'])]);
+        out(200, ['ok' => true, 'type' => $c['type'], 'value' => (float)$c['value'], 'minOrder' => (float)$c['min_order'], 'expiresAt' => iso((int)$c['expires']), 'product' => (string)($c['product'] ?? '')]);
+
+    /* هدايا الترحيب الشخصية: كود واحد لكل زبون ونوع (reg عند التسجيل، install عند أول فتح للتطبيق المثبّت)، إعداداتها من admin_kv('welcome') */
+    case 'customer_claim_gift':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $cid = custFromToken((string)($b['token'] ?? '')); if (!$cid) out(401, ['error' => 'unauthorized']);
+        $k = (string)($b['kind'] ?? ''); if (!in_array($k, ['reg', 'install'], true)) out(422, ['error' => 'invalid_kind']);
+        $w = kvGet('welcome'); $gg = is_array($w) ? ($w[$k === 'reg' ? 'register' : 'install'] ?? null) : null;
+        if (!is_array($w) || (($w['enabled'] ?? true) === false) || !is_array($gg) || (($gg['enabled'] ?? true) === false)) out(200, ['ok' => false, 'error' => 'disabled']);
+        $ph = custProfile($cid)['phone']; $d = db();
+        $st = $d->prepare('SELECT * FROM promo_codes WHERE phone = ? AND kind = ?'); $st->execute([$ph, $k]); $c = $st->fetch();
+        if (!$c) {
+            $code = ($k === 'reg' ? 'WEL-' : 'APP-') . strtoupper(substr(bin2hex(random_bytes(4)), 0, 6));
+            $d->prepare('INSERT OR IGNORE INTO promo_codes (code, phone, type, value, min_order, expires, created, kind, product) VALUES (?,?,?,?,?,?,?,?,?)')
+              ->execute([$code, $ph, in_array(($gg['type'] ?? ''), ['percent', 'fixed', 'freeship', 'gift'], true) ? $gg['type'] : 'percent', (float)($gg['value'] ?? 0), (float)($gg['minOrder'] ?? 0), time() + max(1, (int)($gg['days'] ?? 14)) * 86400, time(), $k, ($gg['product'] ?? '') ?: null]);
+            $st->execute([$ph, $k]); $c = $st->fetch();
+        }
+        out(200, ['ok' => true, 'code' => $c['code'], 'type' => $c['type'], 'value' => (float)$c['value'], 'minOrder' => (float)$c['min_order'], 'product' => (string)($c['product'] ?? ''), 'expiresAt' => iso((int)$c['expires']), 'used' => $c['used_order'] !== null]);
+
+    case 'customer_my_gifts':
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $cid = custFromToken((string)(body()['token'] ?? '')); if (!$cid) out(401, ['error' => 'unauthorized']);
+        $st = db()->prepare('SELECT * FROM promo_codes WHERE phone = ? AND kind IS NOT NULL'); $st->execute([custProfile($cid)['phone']]); $res = [];
+        foreach ($st->fetchAll() as $c) $res[$c['kind']] = ['code' => $c['code'], 'type' => $c['type'], 'value' => (float)$c['value'], 'minOrder' => (float)$c['min_order'], 'product' => (string)($c['product'] ?? ''), 'expiresAt' => iso((int)$c['expires']), 'used' => $c['used_order'] !== null];
+        out(200, ['ok' => true, 'gifts' => $res ?: new stdClass]);
 
     /* المدير ينشئ كوداً شخصياً لهاتف */
     case 'promo_create':
