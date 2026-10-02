@@ -32,7 +32,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-top button:hover{background:rgba(255,255,255,.22)}.pbx-top button.on{background:#c8a24b;color:#173f35}.pbx-top button.pub{background:#c8a24b;color:#173f35}.pbx-top button:disabled{opacity:.35;cursor:default}
 .pbx-top .sp{margin-inline-start:auto}.pbx-dirty{font-size:.78rem;opacity:.8}
 .pbx-main{flex:1;display:flex;min-height:0}
-.pbx-left{width:260px;background:#fff;border-inline-end:1px solid #ddd;display:flex;flex-direction:column;min-height:0}
+.pbx-left{width:260px;flex:0 0 auto;max-width:50vw;background:#fff;border-inline-end:1px solid #ddd;display:flex;flex-direction:column;min-height:0}
 .pbx-right{width:310px;flex:0 0 auto;max-width:60vw;background:#fff;border-inline-start:1px solid #ddd;overflow:auto;padding:.7rem}
 .pbx-tabs{display:flex;border-bottom:1px solid #eee}.pbx-tabs button{flex:1;border:0;background:none;padding:.6rem .2rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.8rem;color:#666;border-bottom:3px solid transparent}.pbx-tabs button.on{color:#173f35;border-bottom-color:#c8a24b}
 .pbx-pane{padding:.7rem;overflow:auto;flex:1}
@@ -50,8 +50,8 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-bar span,.pbx-bar button{background:#2d6cdf;color:#fff;border:0;font-size:.74rem;font-weight:800;padding:.22rem .5rem;border-radius:6px 6px 0 0;cursor:pointer;font-family:inherit}.pbx-bar span{cursor:default}
 .pbx-box.column .pbx-bar *{background:#9b59b6}.pbx-box.widget .pbx-bar *{background:#e67e22}
 .pbx-bar button:hover{filter:brightness(1.15)}
-.pbx-q{background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem;margin-bottom:.6rem;display:grid;gap:.5rem}
-.pbx-qg{display:grid;gap:.2rem}.pbx-qg>small{font-size:.66rem;color:#a08a55;font-weight:800}
+.pbx-q{background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem;margin-bottom:.6rem;display:grid;gap:.5rem;position:sticky;top:-.7rem;z-index:6;max-height:46vh;overflow:auto;box-shadow:0 6px 10px -8px rgba(0,0,0,.35)}
+.pbx-qg{display:grid;gap:.2rem}.pbx-qg>small{font-size:.66rem;color:#a08a55;font-weight:800;cursor:pointer;user-select:none}.pbx-qg>small:before{content:"▾ "}.pbx-qg.closed>small:before{content:"◂ "}.pbx-qg.closed>.pbx-qb,.pbx-qg.closed>.pbx-note{display:none}
 .pbx-qb{display:flex;flex-wrap:wrap;gap:.25rem}.pbx-qrow{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start}
 .pbx-qk{flex:1 1 34px;min-width:34px;border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.28rem .35rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.76rem;white-space:nowrap}
 .pbx-qk.wide{flex:2 1 80px}.pbx-qk:hover{border-color:#c8a24b}.pbx-qk.on{background:#173f35;color:#fff;border-color:#173f35}
@@ -110,10 +110,11 @@ body{overflow-x:hidden;margin:0}`;
   <button class="pub" onclick="PBApp.publish()">🚀 حفظ ونشر</button>
 </div>
 <div class="pbx-main">
-  <aside class="pbx-left">
+  <aside class="pbx-left" id="pbx-lside">
     <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">➕ عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">🧱 أقسام</button><button data-lt="lay" onclick="PBApp.ltab('lay')">📚 طبقات</button><button data-lt="pg" onclick="PBApp.ltab('pg')">⚙️ الصفحة</button></div>
     <div class="pbx-pane" id="pbx-lpane"></div>
   </aside>
+  <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
   <div class="pbx-stage" id="pbx-stage">
     <div class="pbx-sc" id="pbx-sc"><div class="pbx-fw" id="pbx-fw"><iframe id="pbx-frame" title="القماش"></iframe></div></div>
     <button class="pbx-add" onclick="PBApp.ltab('tpl')">＋ إضافة قسم جديد</button>
@@ -134,7 +135,7 @@ body{overflow-x:hidden;margin:0}`;
     lp.addEventListener("drop", e => { const it = e.target.closest("[data-lay]"); if (!layDrag || !it) return; e.preventDefault(); layerReorder(layDrag, it.dataset.lay); layDrag = null; });
     new ResizeObserver(() => { fitStage(); positionOverlay(); }).observe($("pbx-stage"));
     window.addEventListener("resize", () => { if ($("pb-app").classList.contains("on")) { fitStage(); positionOverlay(); } });
-    wireResizer();
+    wireResizer("pbx-rz", "pbx-insp", "pbx_side_w", 260); wireResizer("pbx-rz2", "pbx-lside", "pbx_left_w", 200);
     $("pbx-insp").addEventListener("input", onInspInput); $("pbx-insp").addEventListener("change", onInspChange); $("pbx-insp").addEventListener("click", onInspClick);
     document.addEventListener("keydown", onKey);
   }
@@ -231,8 +232,8 @@ body{overflow-x:hidden;margin:0}`;
     if (!fdoc || !root || !E.page) return;
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0;
-    styleEl.textContent = PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "");
-    root.innerHTML = r.html;
+    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || ""));
+    root.innerHTML = localize(r.html);
     fixCountdown();
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
     fitStage(); positionOverlay();
@@ -556,7 +557,7 @@ body{overflow-x:hidden;margin:0}`;
   function addGrid() { const r = Math.max(1, Math.min(10, Number(($("gb-r") || {}).value) || 2)), c = Math.max(1, Math.min(12, Number(($("gb-c") || {}).value) || 3)), s = PB.mkGrid(r, c), inf = selInfo(), at = inf ? E.page.sections.indexOf(inf.sec) + 1 : E.page.sections.length; E.page.sections.splice(at, 0, s); afterEdit(s.id); }
 
   /* ───────────────── رفع الصور مباشرة من الصفحة (جودة عالية بلا تصغير مفرط) ───────────────── */
-  const HQ = { max: 2400, q: .92, noVariants: true };
+  const HQ = { max: 1920, q: .84, noVariants: true, uniq: true };       // جودة عالية لكن بحجم خفيف (≈150–400KB) ليظهر بسرعة للزائر
   const pickFiles = multi => new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.multiple = !!multi; i.onchange = () => res([...i.files]); i.click(); });
   async function mediaList() { try { const f = await GH.getFile("assets/pages/media.json"); return JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { return []; } }
   async function mediaAdd(paths) { try { const L = await mediaList(); paths.forEach(p => { if (!L.some(x => x.p === p)) L.unshift({ p, t: Date.now() }); }); await putJson("assets/pages/media.json", L.slice(0, 400), "مكتبة صور منشئ الصفحات"); } catch (e) { } }
@@ -566,7 +567,7 @@ body{overflow-x:hidden;margin:0}`;
       const A = (typeof Admin !== "undefined") ? Admin : {}, up = await mediaList(), prod = []; (A.products || []).forEach(p => [p.cover].concat(p.images || []).forEach(i => { if (i && !prod.includes(i)) prod.push(i); }));
       let tab = "up"; const sel = new Set(), m = document.createElement("div"); m.id = "pbx-lib"; m.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10003;display:flex;align-items:center;justify-content:center;direction:rtl";
       const draw = () => { const list = tab === "up" ? up.map(x => x.p) : prod;
-        m.innerHTML = `<div style="background:#fff;border-radius:16px;width:min(900px,94vw);max-height:86vh;display:flex;flex-direction:column;overflow:hidden"><div style="display:flex;gap:.5rem;padding:.8rem;border-bottom:1px solid #eee;align-items:center"><b>📚 مكتبة الصور</b><button class="pbx-small" data-t="up" style="${tab === "up" ? "background:#173f35;color:#fff" : ""}">المرفوعة (${up.length})</button><button class="pbx-small" data-t="prod" style="${tab === "prod" ? "background:#173f35;color:#fff" : ""}">صور المنتجات (${prod.length})</button><span style="margin-inline-start:auto"></span><button class="pbx-small" data-x="ok" ${sel.size ? "" : "disabled"}>إدراج (${sel.size})</button><button class="pbx-small" data-x="no">إغلاق</button></div><div style="padding:.8rem;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.6rem">${list.map(pth => `<div data-p="${esc(pth)}" style="aspect-ratio:1;border:3px solid ${sel.has(pth) ? "#c8a24b" : "transparent"};border-radius:10px;overflow:hidden;cursor:pointer;background:#f4efe6"><img src="${esc(pth)}" loading="lazy" style="width:100%;height:100%;object-fit:cover"></div>`).join("") || '<p style="color:#888">لا توجد صور بعد — ارفع صوراً من الصفحة وستظهر هنا.</p>'}</div></div>`; };
+        m.innerHTML = `<div style="background:#fff;border-radius:16px;width:min(900px,94vw);max-height:86vh;display:flex;flex-direction:column;overflow:hidden"><div style="display:flex;gap:.5rem;padding:.8rem;border-bottom:1px solid #eee;align-items:center"><b>📚 مكتبة الصور</b><button class="pbx-small" data-t="up" style="${tab === "up" ? "background:#173f35;color:#fff" : ""}">المرفوعة (${up.length})</button><button class="pbx-small" data-t="prod" style="${tab === "prod" ? "background:#173f35;color:#fff" : ""}">صور المنتجات (${prod.length})</button><span style="margin-inline-start:auto"></span><button class="pbx-small" data-x="ok" ${sel.size ? "" : "disabled"}>إدراج (${sel.size})</button><button class="pbx-small" data-x="no">إغلاق</button></div><div style="padding:.8rem;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.6rem">${list.map(pth => `<div data-p="${esc(pth)}" style="aspect-ratio:1;border:3px solid ${sel.has(pth) ? "#c8a24b" : "transparent"};border-radius:10px;overflow:hidden;cursor:pointer;background:#f4efe6"><img src="${esc(localize(pth))}" loading="lazy" style="width:100%;height:100%;object-fit:cover"></div>`).join("") || '<p style="color:#888">لا توجد صور بعد — ارفع صوراً من الصفحة وستظهر هنا.</p>'}</div></div>`; };
       m.addEventListener("click", e => { const t = e.target.closest("[data-t]"), x = e.target.closest("[data-x]"), pi = e.target.closest("[data-p]");
         if (t) { tab = t.dataset.t; draw(); } else if (x) { m.remove(); res(x.dataset.x === "ok" ? [...sel] : []); } else if (pi) { const pth = pi.dataset.p; if (multi) { sel.has(pth) ? sel.delete(pth) : sel.add(pth); draw(); } else { m.remove(); res([pth]); } } else if (e.target === m) { m.remove(); res([]); } });
       document.body.appendChild(m); draw();
@@ -580,7 +581,18 @@ body{overflow-x:hidden;margin:0}`;
     afterEdit();
   }
   async function libFor(inf) { const paths = await openLibrary(inf.node.type !== "image"); if (paths.length) applyPaths(inf, paths); }
-  async function uploadFiles(files) { toast("⏳ جارِ رفع " + files.length + " صورة بجودة عالية..."); const out = []; for (const f of files) out.push(await Admin.uploadImageFile(f, "assets/img/pages", "pg-", HQ)); toast("✅ تم الرفع"); mediaAdd(out); return out; }
+  /* الرفع بالتحضير الفوري: تُضغط الصورة وتظهر في المحرر محلياً حالاً، ويكمل الرفع إلى GitHub في الخلفية بالتتابع */
+  async function uploadFiles(files) {
+    const out = [], A = Admin; A.localImg = A.localImg || {};
+    for (const f of files) { const p = await A.prepareImage(f, "assets/img/pages", "pg-", HQ); A.localImg[p.path] = URL.createObjectURL(p.blob); out.push(p.path); queueCommit(p); }
+    return out;
+  }
+  function queueCommit(p) {
+    E.upN = (E.upN || 0) + 1; E.upFail = E.upFail || []; toast("⬆ الصورة ظاهرة الآن — يجري حفظها في الموقع بالخلفية (" + E.upN + ")");
+    E.upq = (E.upq || Promise.resolve()).then(() => Admin.commitImage(p, "pg-", HQ)).then(() => { mediaAdd([p.path]); }, err => { E.upFail.push(p.path); toast("❌ تعذّر حفظ صورة في الموقع: " + err.message); }).then(() => { E.upN--; if (!E.upN) toast(E.upFail.length ? "⚠ بعض الصور لم تُحفظ — أعد رفعها" : "✅ حُفظت كل الصور في الموقع"); });
+  }
+  /* استبدال مسارات الصور المرفوعة حديثاً بروابط محلية في معاينة المحرر */
+  function localize(str) { const L = (typeof Admin !== "undefined" && Admin.localImg) || {}; for (const k in L) if (str.indexOf(k) >= 0) str = str.split(k).join(L[k]); return str; }
   async function uploadFor(inf) {
     const files = await pickFiles(inf.node.type !== "image"); if (!files.length) return;
     try { applyPaths(inf, await uploadFiles(files)); } catch (err) { toast("❌ " + err.message); }
@@ -652,14 +664,14 @@ body{overflow-x:hidden;margin:0}`;
   }
 
   /* توسيع الشريط الجانبي بالسحب (يُحفظ العرض في المتصفح) */
-  function wireResizer() {
-    const rz = $("pbx-rz"), side = $("pbx-insp"); if (!rz || !side) return;
-    try { const w = Number(localStorage.getItem("pbx_side_w")); if (w >= 260 && w <= 720) side.style.width = w + "px"; } catch (e) { }
+  function wireResizer(rzId, sideId, key, min) {
+    const rz = $(rzId), side = $(sideId); if (!rz || !side) return;
+    try { const w = Number(localStorage.getItem(key)); if (w >= min && w <= 720) side.style.width = w + "px"; } catch (e) { }
     rz.addEventListener("mousedown", e => {
-      e.preventDefault(); if (e.detail >= 2) { side.style.width = ""; try { localStorage.removeItem("pbx_side_w"); } catch (e2) { } fitStage(); positionOverlay(); return; }
+      e.preventDefault(); if (e.detail >= 2) { side.style.width = ""; try { localStorage.removeItem(key); } catch (e2) { } fitStage(); positionOverlay(); return; }
       /* نقر مزدوج = العرض الافتراضي */ const x0 = e.clientX, w0 = side.getBoundingClientRect().width, onRight = side.getBoundingClientRect().left > rz.getBoundingClientRect().left, sh = mkShield("ew-resize"); rz.classList.add("on");
-      const mv = ev => { const d = ev.clientX - x0; side.style.width = Math.max(260, Math.min(720, Math.round(w0 + (onRight ? -d : d)))) + "px"; fitStage(); positionOverlay(); };
-      const up = () => { document.removeEventListener("mousemove", mv, true); document.removeEventListener("mouseup", up, true); sh.remove(); rz.classList.remove("on"); try { localStorage.setItem("pbx_side_w", String(parseInt(side.style.width))); } catch (e) { } };
+      const mv = ev => { const d = ev.clientX - x0; side.style.width = Math.max(min, Math.min(720, Math.round(w0 + (onRight ? -d : d)))) + "px"; fitStage(); positionOverlay(); };
+      const up = () => { document.removeEventListener("mousemove", mv, true); document.removeEventListener("mouseup", up, true); sh.remove(); rz.classList.remove("on"); try { localStorage.setItem(key, String(parseInt(side.style.width))); } catch (e) { } };
       document.addEventListener("mousemove", mv, true); document.addEventListener("mouseup", up, true);
     });
   }
@@ -681,7 +693,7 @@ body{overflow-x:hidden;margin:0}`;
   /* لوحة الإجراءات السريعة في الشريط الجانبي (بدل ازدحام الشريط فوق العنصر) */
   function quickHtml(inf) {
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${esc(tt || t)}">${t}</button>`;
-    const grp = (cap, body, cls) => `<div class="pbx-qg${cls ? " " + cls : ""}"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
+    const grp = (cap, body, cls) => `<div class="pbx-qg${cls ? " " + cls : ""}${qClosed().has(cap) ? " closed" : ""}"><small data-qtog="${cap}">${cap}</small><div class="pbx-qb">${body}</div></div>`;
     const chain = []; for (let n = inf, g = 0; n && g < 4; g++) { chain.unshift(n); n = parentId(n) ? find(parentId(n)) : null; }
     const crumbs = chain.map(n => `<button class="pbx-crumb${n.node.id === inf.node.id ? " on" : ""}" data-pick="${n.node.id}">${n.kind === "widget" ? WIDGETS[n.node.type].ic + " " + WIDGETS[n.node.type].label : n.kind === "column" ? "▯ عمود" : "▤ قسم"}</button>`).join('<i class="pbx-sep">‹</i>');
     let h = `<div class="pbx-q"><div class="pbx-crumbs">${crumbs}</div>`;
@@ -700,6 +712,8 @@ body{overflow-x:hidden;margin:0}`;
     }
     return h + `</div>`;
   }
+  const qClosed = () => { if (!E.qc) { try { E.qc = new Set(JSON.parse(localStorage.getItem("pbx_qclosed") || "[]")); } catch (e) { E.qc = new Set(); } } return E.qc; };
+  function qToggle(cap) { const c = qClosed(); c.has(cap) ? c.delete(cap) : c.add(cap); try { localStorage.setItem("pbx_qclosed", JSON.stringify([...c])); } catch (e) { } renderInspector(); }
   function onQuick(k, inf) {
     const d = { prev: () => nav(-1), next: () => nav(1), parent: () => select(parentId(inf)), front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, up: () => move(-1), down: () => move(1),
       "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right"), upl: () => uploadFor(inf), lib: () => libFor(inf),
@@ -752,9 +766,9 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
       case "align": b = `<div class="pbx-al">${AL3.map(([v, t]) => `<button data-al="${k}" data-v="${v}" class="${(effV || "") === v ? "on" : ""}">${t}</button>`).join("")}</div>`; break;
-      case "image": b = `<div class="pbx-row"><input type="text" ${a} value="${esc(ownV ?? "")}" placeholder="مسار/رابط الصورة"><button class="pbx-small sm" data-up="${k}">⬆ رفع</button><button class="pbx-small sm" data-lib="${k}">📚</button></div>${ownV ? `<img src="${esc(/^(https?:|data:|\/)/.test(ownV) ? ownV : ownV)}" style="max-width:100%;max-height:80px;margin-top:.3rem;border-radius:6px">` : ""}`; break;
+      case "image": b = `<div class="pbx-row"><input type="text" ${a} value="${esc(ownV ?? "")}" placeholder="مسار/رابط الصورة"><button class="pbx-small sm" data-up="${k}">⬆ رفع</button><button class="pbx-small sm" data-lib="${k}">📚</button></div>${ownV ? `<img src="${esc(localize(ownV))}" style="max-width:100%;max-height:80px;margin-top:.3rem;border-radius:6px">` : ""}`; break;
       case "dims": { const arr = (isR ? (ownV || effV) : set[k]) || []; b = `<div class="pbx-dims">${["أعلى", "يمين", "أسفل", "يسار"].map((n, i) => `<div><input type="number" data-k="${k}" data-t="dims" data-i="${i}" value="${arr[i] ?? ""}" placeholder="${isR && ownV === undefined && effV ? (effV[i] ?? "") : ""}"><small>${n}</small></div>`).join("")}</div>`; break; }
-      case "rep": { const items = set[k] || []; b = items.map((it, i) => `<div class="pbx-rep">${c.f.map(([fk, fl, ft]) => ft === "image" ? `<div class="pbx-row" style="margin-bottom:.3rem"><input type="text" data-rep="${k}" data-i="${i}" data-f="${fk}" placeholder="${esc(fl)}" value="${esc(it[fk] || "")}">${it[fk] ? `<img src="${esc(it[fk])}" style="width:38px;height:38px;object-fit:cover;border-radius:6px" class="sm">` : ""}<button class="pbx-small sm" data-repup="${k}" data-i="${i}" data-f="${fk}">⬆</button></div>` : `<input type="text" data-rep="${k}" data-i="${i}" data-f="${fk}" placeholder="${esc(fl)}" value="${esc(it[fk] || "")}" style="margin-bottom:.3rem">`).join("")}<button class="pbx-small" data-repdel="${k}" data-i="${i}">حذف</button></div>`).join("") + `<div class="pbx-row"><button class="pbx-small" data-repadd="${k}">＋ إضافة</button>${c.up ? `<button class="pbx-small" data-repmulti="${k}" data-f="${c.up}">⬆ رفع عدة صور</button>` : ""}</div>`; break; }
+      case "rep": { const items = set[k] || []; b = items.map((it, i) => `<div class="pbx-rep">${c.f.map(([fk, fl, ft]) => ft === "image" ? `<div class="pbx-row" style="margin-bottom:.3rem"><input type="text" data-rep="${k}" data-i="${i}" data-f="${fk}" placeholder="${esc(fl)}" value="${esc(it[fk] || "")}">${it[fk] ? `<img src="${esc(localize(it[fk]))}" style="width:38px;height:38px;object-fit:cover;border-radius:6px" class="sm">` : ""}<button class="pbx-small sm" data-repup="${k}" data-i="${i}" data-f="${fk}">⬆</button></div>` : `<input type="text" data-rep="${k}" data-i="${i}" data-f="${fk}" placeholder="${esc(fl)}" value="${esc(it[fk] || "")}" style="margin-bottom:.3rem">`).join("")}<button class="pbx-small" data-repdel="${k}" data-i="${i}">حذف</button></div>`).join("") + `<div class="pbx-row"><button class="pbx-small" data-repadd="${k}">＋ إضافة</button>${c.up ? `<button class="pbx-small" data-repmulti="${k}" data-f="${c.up}">⬆ رفع عدة صور</button>` : ""}</div>`; break; }
       case "prodpick": { const sel = new Set(String(set[k] || "").split(/[\s,،]+/).filter(Boolean)); b = '<div style="max-height:200px;overflow:auto;border:1.5px solid #e0d9c8;border-radius:8px;padding:.4rem">' + (((typeof Admin !== "undefined" && Admin.products) || []).map(p => `<label style="display:flex;gap:.4rem;align-items:center;font-weight:600;font-size:.82rem;margin-bottom:.2rem"><input type="checkbox" data-pp="${k}" data-v="${esc(p.slug)}" style="width:auto"${sel.has(p.slug) ? " checked" : ""}> ${esc(p.title)}</label>`).join("") || "لا منتجات") + "</div>"; break; }
     }
     return `<div class="pbx-f">${head}${b}</div>`;
@@ -788,6 +802,7 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
     if (t.dataset.fileFor) {}
   }
   async function onInspClick(e) {
+    const tg = e.target.closest("[data-qtog]"); if (tg) { qToggle(tg.dataset.qtog); return; }
     const t = e.target.closest("button, [data-dev]"); if (!t) return; const inf = selInfo();
     if (t.dataset.dev) { setDev(t.dataset.dev); return; }
     if (t.dataset.itab) { E.tab = t.dataset.itab; renderInspector(); return; }
@@ -814,9 +829,9 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
       inp.onchange = async () => {
         const files = [...inp.files]; if (!files.length) return; toast("⏳ جارِ رفع " + files.length + " صورة...");
         try {
-          const paths = []; for (const f of files) paths.push(await Admin.uploadImageFile(f, "assets/img/pages", "pg-", HQ));
+          const paths = await uploadFiles(files);
           if (multi) inf.set[k] = ((inf.set[k] || "").trim() ? inf.set[k].trim() + "\n" : "") + paths.join("\n"); else inf.set[k] = paths[0];
-          toast("✅ تم الرفع"); afterEdit();
+          afterEdit();
         } catch (err) { toast("❌ " + err.message); }
       };
       inp.click();
@@ -847,6 +862,7 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
     if (!validate()) return;
     const P = E.page, slug = P.slug; toast("⏳ جارِ النشر...");
     try {
+      if (E.upq) { if (E.upN) toast("⏳ بانتظار انتهاء رفع الصور..."); await E.upq; if ((E.upFail || []).some(pth => JSON.stringify(P).includes(pth))) { toast("❌ صور لم تُرفع إلى الموقع — أعد رفعها قبل النشر"); return; } }
       const html = PB.fullHtml(P, Object.assign({ base: "../../" }, siteCtx()));
       await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);
       await putJson("assets/pages/" + slug + ".json", P, "مصدر صفحة هبوط: " + slug);
