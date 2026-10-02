@@ -7453,8 +7453,8 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-bar span,.pbx-bar button{background:#2d6cdf;color:#fff;border:0;font-size:.74rem;font-weight:800;padding:.22rem .5rem;border-radius:6px 6px 0 0;cursor:pointer;font-family:inherit}.pbx-bar span{cursor:default}
 .pbx-box.column .pbx-bar *{background:#9b59b6}.pbx-box.widget .pbx-bar *{background:#e67e22}
 .pbx-bar button:hover{filter:brightness(1.15)}
-.pbx-q{background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem;margin-bottom:.6rem;display:grid;gap:.5rem;position:sticky;top:-.7rem;z-index:6;max-height:46vh;overflow:auto;box-shadow:0 6px 10px -8px rgba(0,0,0,.35)}
-.pbx-qg{display:grid;gap:.2rem}.pbx-qg>small{font-size:.66rem;color:#a08a55;font-weight:800;cursor:pointer;user-select:none}.pbx-qg>small:before{content:"▾ "}.pbx-qg.closed>small:before{content:"◂ "}.pbx-qg.closed>.pbx-qb,.pbx-qg.closed>.pbx-note{display:none}
+.pbx-q{background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem;margin-bottom:.6rem;display:grid;gap:.5rem}
+.pbx-qg{display:grid;gap:.2rem}.pbx-qg>small{font-size:.66rem;color:#a08a55;font-weight:800}
 .pbx-qb{display:flex;flex-wrap:wrap;gap:.25rem}.pbx-qrow{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:start}
 .pbx-qk{flex:1 1 34px;min-width:34px;border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.28rem .35rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.76rem;white-space:nowrap}
 .pbx-qk.wide{flex:2 1 80px}.pbx-qk:hover{border-color:#c8a24b}.pbx-qk.on{background:#173f35;color:#fff;border-color:#173f35}
@@ -8115,6 +8115,27 @@ body{overflow-x:hidden;margin:0}`;
     if (E.dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, E.dev)); });
     afterEdit();
   }
+  /* لوحة صغيرة للعناصر: الطبقة والوضع، وللعنصر الحر المحاذاة والإزاحة */
+  function quickHtml(inf) {
+    if (inf.kind !== "widget") return "";
+    const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
+    const grp = (cap, body) => `<div class="pbx-qg"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
+    let h = `<div class="pbx-q">` + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide"));
+    if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;
+    return h + `</div>`;
+  }
+  function onQuick(k) {
+    const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
+    if (k.startsWith("n-")) { const m = { l: [-4, 0], r: [4, 0], u: [0, -4], d: [0, 4] }[k[2]]; return nudge(m[0], m[1]); }
+    if (d[k]) d[k]();
+  }
+  function nudge(dx, dy) {
+    const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec);
+    const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, u = uOf(inf.sec, { width: cw });
+    setR(inf.set, "fx", E.dev, Math.round(((Number(eff(inf.set, "fx", E.dev)) || 0) + dx / cw * 100) * 10) / 10); setR(inf.set, "fy", E.dev, Math.round((Number(eff(inf.set, "fy", E.dev)) || 0) + dy / u));
+    if (E.dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, E.dev)); });
+    afterEdit();
+  }
   /* ───────────────── الإعدادات (Inspector) ───────────────── */
   function ctlsFor(inf) {
     let base, com;
@@ -8135,7 +8156,7 @@ body{overflow-x:hidden;margin:0}`;
     const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].ic + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? "▯ عمود" : "▤ قسم";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
     el.innerHTML = `<div class="pbx-ih">${lbl}</div>
-<p class="pbx-note" style="margin:.1rem 0 .6rem">اسحب العنصر بالفأرة لتحريكه بحرية · Alt+سحب = نسخ · Ctrl+إفلات فوق عمود = إدراجه فيه · ‎[ ]‎ خلف/أمام · الأسهم = التنقل بين العناصر</p>
+${quickHtml(inf)}
 <div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-cp"><small>نسخ تصميم ${DEVIC[E.dev]} ${DEVNAME[E.dev]} إلى:</small><select id="cp-scope"><option value="sel">العنصر المحدد</option><option value="sec">القسم كله</option><option value="all">الصفحة كلها</option></select>${DEVS.filter(d => d !== E.dev).map(d => `<button class="pbx-small" data-cpy="${d}" title="نسخ إلى ${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
@@ -8198,6 +8219,7 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
     if (t.dataset.dev) { setDev(t.dataset.dev); return; }
     if (t.dataset.itab) { E.tab = t.dataset.itab; renderInspector(); return; }
     if (!inf) return;
+    if (t.dataset.q) { onQuick(t.dataset.q); return; }
     if (t.dataset.rs) { const c = ctlByKey(inf, t.dataset.rs); if (c.r) setR(inf.set, c.k, E.dev, undefined); else delete inf.set[c.k]; afterEdit(); return; }
     if (t.dataset.clr) { delete inf.set[t.dataset.clr]; afterEdit(); return; }
     if (t.dataset.al) { const c = ctlByKey(inf, t.dataset.al); applyVal(inf, c, t.dataset.v); afterEdit(); return; }
