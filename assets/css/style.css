@@ -1,14 +1,15 @@
 /* أليسوم — ALYSSUM Store · Design System */
 :root{
-  --bg:#FBF8F2; --card:#FFFFFF; --ink:#1C2420; --muted:#6B7672;
+  --bg:#FBF8F2; --card:#FFFFFF; --ink:#1C2420; --muted:#566360;
   --green:#173F35; --green-2:#0F2E26; --gold:#C8A24B; --gold-2:#E4C87F;
-  --red:#D64545; --ok:#1E9E6A; --line:#EAE3D6; --r:18px;
+  --red:#D64545; --ok:#157A55; --line:#EAE3D6; --r:18px;
   --shadow:0 10px 30px rgba(23,63,53,.08); --shadow-lg:0 24px 60px rgba(23,63,53,.16);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;overflow-x:hidden;width:100%}
 body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--ink);direction:rtl;line-height:1.7;overflow-x:hidden;width:100%}
 img{max-width:100%;display:block}
+:where(img[width][height]){height:auto}
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer;border:none}
 .container{width:min(1180px,92%);margin-inline:auto}
@@ -79,7 +80,7 @@ section{padding:3.6rem 0}
 .card .thumb{position:relative;aspect-ratio:1;background:#F4EFE6;overflow:hidden}
 .card .thumb img{width:100%;height:100%;object-fit:cover;transition:.5s}
 .card:hover .thumb img{transform:scale(1.06)}
-.badge-off{position:absolute;top:12px;right:12px;background:var(--red);color:#fff;font-weight:800;font-size:.78rem;padding:.25rem .7rem;border-radius:999px}
+.badge-off{position:absolute;top:12px;right:12px;background:#b83232;color:#fff;font-weight:800;font-size:.78rem;padding:.25rem .7rem;border-radius:999px}
 .ribbon-oos{position:absolute;inset:0;background:rgba(28,36,32,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;text-align:center;z-index:2}
 .card.oos .thumb img{filter:grayscale(60%)}
 .oos-warning{background:#FBEAEA;border:1px solid var(--red);color:#8A2424;border-radius:10px;padding:.9rem 1.1rem;font-weight:700;margin:1rem 0;text-align:center}
@@ -125,7 +126,7 @@ section{padding:3.6rem 0}
 .offer .q{font-weight:900;font-size:1.05rem;color:var(--green)}
 .offer .p{font-weight:900;color:var(--ink);margin-top:.15rem}
 .offer .u{font-size:.75rem;color:var(--muted)}
-.offer .best{position:absolute;top:-11px;right:50%;transform:translateX(50%);background:var(--gold);color:#fff;font-size:.68rem;font-weight:800;padding:.14rem .6rem;border-radius:999px;white-space:nowrap}
+.offer .best{position:absolute;top:-11px;right:50%;transform:translateX(50%);background:var(--gold);color:#1C2420;font-size:.68rem;font-weight:800;padding:.14rem .6rem;border-radius:999px;white-space:nowrap}
 
 .form{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.6rem;box-shadow:var(--shadow);margin-top:1.4rem}
 .form h3{font-weight:900;color:var(--green);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
@@ -214,7 +215,7 @@ section{padding:3.6rem 0}
 
 /* ── Footer ── */
 footer.site{background:var(--green-2);color:#C7D3CD;padding:3rem 0 1.5rem;margin-top:3rem}
-footer.site h4{color:#fff;font-weight:900;margin-bottom:.8rem}
+footer.site h4,footer.site .ft-h{color:#fff;font-weight:900;margin-bottom:.8rem;font-size:1rem}
 .fgrid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:2rem}
 @media(max-width:760px){.fgrid{grid-template-columns:1fr}}
 footer a:hover{color:var(--gold-2)}
@@ -417,3 +418,5 @@ section[id]{scroll-margin-top:84px}
 .trk-steps li.now{background:var(--green);color:#fff;border-color:var(--green)}
 .trk-bad{margin:1rem 0;padding:.8rem;border-radius:12px;background:#FDECEC;color:var(--red);font-weight:800}
 .trk-meta{font-size:.85rem;color:var(--muted);line-height:1.9;border-top:1px solid var(--line);padding-top:.7rem}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

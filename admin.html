@@ -3790,6 +3790,7 @@ const Admin = {
       ccommuneEl.replaceWith(input);
     }
     doc.querySelectorAll("#agent-fab, #agent-panel").forEach(el=>el.remove());
+    doc.querySelectorAll("#__alyssum_theme_override, link[rel=stylesheet][href*=\"fonts.googleapis.com\"]:not([media])").forEach(el=>el.remove());   // أثر تطبيق السمة وقت التشغيل: لا يُحفظ في HTML (يحجب التصيير)
     doc.querySelectorAll('[class=""]').forEach(el=>el.removeAttribute("class"));
 
     const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
@@ -5023,7 +5024,7 @@ const Admin = {
 
   /* ════════ مظهر الموقع (الخطوط/الألوان/الشعار) ════════ */
   THEME_DEFAULTS: {
-    colors: { bg:"#FBF8F2", card:"#FFFFFF", ink:"#1C2420", muted:"#6B7672", green:"#173F35", green2:"#0F2E26", gold:"#C8A24B", gold2:"#E4C87F", red:"#D64545", ok:"#1E9E6A", line:"#EAE3D6" },
+    colors: { bg:"#FBF8F2", card:"#FFFFFF", ink:"#1C2420", muted:"#566360", green:"#173F35", green2:"#0F2E26", gold:"#C8A24B", gold2:"#E4C87F", red:"#D64545", ok:"#157A55", line:"#EAE3D6" },
   },
   COLOR_META: {
     bg:     { label:"خلفية الموقع",       usage:"الخلفية العامة خلف كل صفحات الموقع",                 group:"backgrounds", preview:"page" },

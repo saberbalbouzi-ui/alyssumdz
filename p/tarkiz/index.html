@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&amp;display=swap" rel="stylesheet" media="all" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="../../assets/css/style.css">
 <link rel="icon" href="../../assets/img/favicon.png">
 <title>عسل التركيز وتنشيط الذاكرة للأطفال — أليسوم | الدفع عند الاستلام</title><meta name="description" content="عسل طبيعي للأطفال يساعد على دعم التركيز وتنشيط الذاكرة، ويمنح الجسم طاقة طبيعية وطعمًا لذيذًا مناسبًا للاستخدام اليومي.">
@@ -16,7 +16,7 @@
   --gold-2:#e8d0a3;
   --cream:#fbf8f2;
   --ink:#17201c;
-  --muted:#66716b;
+  --muted:#4f5a55;
   --line:rgba(35,70,58,.10);
   --glass:rgba(255,255,255,.72);
   --shadow-xl:0 28px 80px rgba(25,48,40,.14);
@@ -456,13 +456,13 @@ footer.site h4{color:#fff!important}
         <a href="../../index.html#faq">الأسئلة الشائعة</a>
       </nav>
       <a class="hd-wa" href="https://wa.me/213559237239" target="_blank">واتساب</a>
-      <button class="cart-btn" aria-label="السلة">🛒<span class="cart-count">0</span></button>
-    </div></header>
+      <button class="cart-btn"><span aria-hidden="true">🛒</span><span class="cart-count">0</span><span class="sr-only"> السلة</span></button>
+    </div></header><main id="main">
 <div class="container">
   <div class="crumbs"><a href="../../index.html">الرئيسية</a> / <a href="../../index.html#products">المنتجات</a> / عسل التركيز و تنشيط الذاكرة</div>
   <div class="pd2 lp-hero">
     <div class="pbox">
-      <div class="gmain"><img id="gmain" src="../../assets/img/tarkiz/presentation/01.webp" alt="عسل التركيز وتنشيط الذاكرة للأطفال"></div>
+      <div class="gmain"><img id="gmain" fetchpriority="high" decoding="async" src="../../assets/img/tarkiz/presentation/01.webp" alt="عسل التركيز وتنشيط الذاكرة للأطفال"></div>
       <div class="pthumbs"><div class="gthumbs" data-static="1"><img src="../../assets/img/tarkiz/presentation/01.webp" alt="عسل التركيز و تنشيط الذاكرة" class="on active"><img src="../../assets/img/tarkiz/presentation/02.webp" alt="عسل التركيز و تنشيط الذاكرة"><img src="../../assets/img/tarkiz/presentation/03.webp" alt="عسل التركيز و تنشيط الذاكرة"><img src="../../assets/img/tarkiz/presentation/04.webp" alt="عسل التركيز و تنشيط الذاكرة"></div></div>
       <div class="trust-strip" style="margin-top:1rem">
         <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>🔄 استبدال مضمون</span>
@@ -500,16 +500,16 @@ footer.site h4{color:#fff!important}
   </div>
   <div class="order-wide">
 <form class="form" id="order-form" style="margin-top:1rem">
-        <h3>📝 املأ معلوماتك — الدفع عند الاستلام</h3>
+        <h3 role="heading" aria-level="2">📝 املأ معلوماتك — الدفع عند الاستلام</h3>
         <div class="frow">
           <div class="field"><label>الاسم الكامل *</label><input id="name" required="" placeholder="مثال: أحمد بن علي"></div>
           <div class="field"><label>رقم الهاتف *</label><input id="phone" required="" inputmode="tel" placeholder="05XXXXXXXX"></div>
         </div>
         <div class="frow">
-          <div class="field"><label>الولاية *</label><select id="wilaya" required=""><option value="">— اختر ولايتك —</option></select></div>
-          <div class="field"><label>البلدية</label><select id="commune"><option value="">— اختر البلدية —</option></select></div>
+          <div class="field"><label>الولاية *</label><select id="wilaya" required="" aria-label="الولاية"><option value="">— اختر ولايتك —</option></select></div>
+          <div class="field"><label>البلدية</label><select id="commune" aria-label="البلدية"><option value="">— اختر البلدية —</option></select></div>
         </div>
-        <div class="field" id="desk-wrap" style="display:none"><label>مكتب التوصيل (Stop Desk) *</label><select id="desk"></select></div>
+        <div class="field" id="desk-wrap" style="display:none"><label>مكتب التوصيل (Stop Desk) *</label><select id="desk" aria-label="مكتب التوصيل"></select></div>
         
         <div class="dtype">
           <label><input type="radio" name="dtype" value="home" checked=""><span>🏠 توصيل للمنزل</span></label>
@@ -529,7 +529,7 @@ footer.site h4{color:#fff!important}
 
 <section class="lp-sec alt"><div class="container">
   <div class="lp-grid">
-    <div class="lp-imgcard"><img src="../../assets/img/tarkiz/body/01.webp" alt="طفل يعاني من صعوبة التركيز أثناء المذاكرة" loading="lazy"></div>
+    <div class="lp-imgcard"><img width="1100" height="1100" src="../../assets/img/tarkiz/body/01.webp" alt="طفل يعاني من صعوبة التركيز أثناء المذاكرة" loading="lazy"></div>
     <div class="lp-textcard">
       <h2>هل يواجه طفلك صعوبة في التركيز والانتباه أثناء الدراسة؟</h2>
       <p>قلة التركيز والنسيان المتكرر قد يؤثران على المستوى الدراسي وعلى ثقة طفلك بنفسه. اختيار غذاء طبيعي داعم يوميًا هو خطوة بسيطة وفعّالة تصنع فرقًا حقيقيًا.</p>
@@ -545,16 +545,16 @@ footer.site h4{color:#fff!important}
       <p>عسل التركيز من أليسوم تركيبة طبيعية مميزة تجمع بين العسل الطبيعي وخلاصات نباتية مختارة بعناية، صُمّمت لتكون جزءًا من الروتين اليومي لطفلك بخطوات بسيطة.</p>
       <div class="lp-bullets"><div>يدعم التركيز والانتباه عند الأطفال</div><div>يمنح الجسم طاقة طبيعية يومية للنشاط والدراسة</div><div>يساهم في دعم الذاكرة والاستيعاب كجزء من غذاء متوازن</div><div>طعم محبب للأطفال يسهّل تبنّيه ضمن الروتين الصباحي</div><div>خيار طبيعي للعائلات الباحثة عن غذاء داعم للتحصيل الدراسي</div></div>
     </div>
-    <div class="lp-imgcard"><img src="../../assets/img/tarkiz/body/02.webp" alt="أم تقدم ملعقة عسل التركيز لطفلتها" loading="lazy"></div>
+    <div class="lp-imgcard"><img width="1100" height="1100" src="../../assets/img/tarkiz/body/02.webp" alt="أم تقدم ملعقة عسل التركيز لطفلتها" loading="lazy"></div>
   </div>
 </div></section>
 
 <section class="lp-sec alt"><div class="container">
   <div class="lp-head"><h2>آراء بعض الزبائن</h2><p>تجارب حقيقية من زبائننا في مختلف الولايات</p></div>
   <div class="reviews-screenshots">
-    <img src="../../assets/img/tarkiz/avis/SmartSelect_20250225_231134_Messenger.webp" alt="رأي زبون 1" loading="lazy">
-    <img src="../../assets/img/tarkiz/avis/avis02.webp" alt="رأي زبون 2" loading="lazy">
-    <img src="../../assets/img/tarkiz/avis/avis03.webp" alt="رأي زبون 3" loading="lazy">
+    <img width="873" height="623" src="../../assets/img/tarkiz/avis/SmartSelect_20250225_231134_Messenger.webp" alt="رأي زبون 1" loading="lazy">
+    <img width="975" height="270" src="../../assets/img/tarkiz/avis/avis02.webp" alt="رأي زبون 2" loading="lazy">
+    <img width="1021" height="628" src="../../assets/img/tarkiz/avis/avis03.webp" alt="رأي زبون 3" loading="lazy">
   </div>
 </div></section>
 
@@ -566,15 +566,15 @@ footer.site h4{color:#fff!important}
       <p>عسل طبيعي وخلاصات نباتية مختارة بعناية لدعم تركيز طفلك وذاكرته يوميًا.</p>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-      <article class="lp-card"><img src="../../assets/img/tarkiz/composants/العسل الطبيعي.webp" alt="عسل طبيعي" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>عسل طبيعي</h3><p>قاعدة التركيبة، ومصدر الطاقة الطبيعية اليومية.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/tarkiz/composants/مكسرات مطحونة.webp" alt="مكسرات مطحونة" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>مكسرات مطحونة</h3><p>دعم غذائي تقليدي مرتبط بالتركيز والحيوية.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/tarkiz/composants/الجنكة.webp" alt="خلاصة الجنكة" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الجنكة</h3><p>نبتة معروفة تقليديًا بدعم النشاط الذهني.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/tarkiz/composants/خلاصة الزبيب.webp" alt="خلاصة الزبيب" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الزبيب</h3><p>لمسة طبيعية تضيف نكهة محببة للأطفال.</p></div></article>
+      <article class="lp-card"><img width="586" height="800" src="../../assets/img/tarkiz/composants/العسل الطبيعي.webp" alt="عسل طبيعي" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>عسل طبيعي</h3><p>قاعدة التركيبة، ومصدر الطاقة الطبيعية اليومية.</p></div></article>
+      <article class="lp-card"><img width="800" height="426" src="../../assets/img/tarkiz/composants/مكسرات مطحونة.webp" alt="مكسرات مطحونة" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>مكسرات مطحونة</h3><p>دعم غذائي تقليدي مرتبط بالتركيز والحيوية.</p></div></article>
+      <article class="lp-card"><img width="800" height="426" src="../../assets/img/tarkiz/composants/الجنكة.webp" alt="خلاصة الجنكة" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الجنكة</h3><p>نبتة معروفة تقليديًا بدعم النشاط الذهني.</p></div></article>
+      <article class="lp-card"><img width="800" height="426" src="../../assets/img/tarkiz/composants/خلاصة الزبيب.webp" alt="خلاصة الزبيب" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الزبيب</h3><p>لمسة طبيعية تضيف نكهة محببة للأطفال.</p></div></article>
     </div>
     <div class="lp-cards" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px">
-      <article class="lp-card"><img src="../../assets/img/tarkiz/composants/الاكليل.webp" alt="خلاصة الإكليل" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الإكليل</h3><p>لمسة نباتية ضمن التركيبة الطبيعية للعسل.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/tarkiz/composants/الريحان.webp" alt="خلاصة الريحان" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الريحان</h3><p>خلاصة نباتية تدخل ضمن هوية التركيبة.</p></div></article>
-      <article class="lp-card"><img src="../../assets/img/tarkiz/composants/الزبيب.webp" alt="خلاصة الميرمية" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الميرمية</h3><p>عنصر نباتي مكمّل للتركيبة الطبيعية.</p></div></article>
+      <article class="lp-card"><img width="1100" height="734" src="../../assets/img/tarkiz/composants/الاكليل.webp" alt="خلاصة الإكليل" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الإكليل</h3><p>لمسة نباتية ضمن التركيبة الطبيعية للعسل.</p></div></article>
+      <article class="lp-card"><img width="800" height="426" src="../../assets/img/tarkiz/composants/الريحان.webp" alt="خلاصة الريحان" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الريحان</h3><p>خلاصة نباتية تدخل ضمن هوية التركيبة.</p></div></article>
+      <article class="lp-card"><img width="225" height="225" src="../../assets/img/tarkiz/composants/الزبيب.webp" alt="خلاصة الميرمية" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:22px 22px 0 0"><div style="padding:18px"><h3>خلاصة الميرمية</h3><p>عنصر نباتي مكمّل للتركيبة الطبيعية.</p></div></article>
     </div>
   </div>
 </section>
@@ -626,7 +626,7 @@ footer.site h4{color:#fff!important}
   <div><small style="color:var(--muted)">الإجمالي</small><div class="p" id="sticky-price">4 200 دج</div></div>
   <a class="btn btn-gold" href="#order-form" style="flex:1">اطلب الآن — الدفع عند الاستلام</a>
 </div>
-<footer class="site"><div class="container" style="text-align:center;padding:1.6rem 0"><span style="color:#C7D3CD;font-size:.85rem">© 2026 ALYSSUM DZ — جميع الحقوق محفوظة</span></div></footer><div class="drawer-bg" id="drawer-bg"></div>
+</main><footer class="site"><div class="container" style="text-align:center;padding:1.6rem 0"><span style="color:#C7D3CD;font-size:.85rem">© 2026 ALYSSUM DZ — جميع الحقوق محفوظة</span></div></footer><div class="drawer-bg" id="drawer-bg"></div>
 <div class="drawer" id="drawer">
   <h3>🛒 سلة التسوق</h3>
   <div class="items" id="cart-items"></div>
@@ -636,7 +636,7 @@ footer.site h4{color:#fff!important}
       <div class="field"><label>رقم الهاتف</label><input id="cphone" placeholder="05XXXXXXXX" inputmode="tel"></div>
     </div>
     <div class="frow" style="grid-template-columns:1fr 1fr">
-      <div class="field"><label>الولاية</label><select id="cwilaya"><option value="">— اختر —</option></select></div>
+      <div class="field"><label>الولاية</label><select id="cwilaya" aria-label="الولاية"><option value="">— اختر —</option></select></div>
       <div class="field"><label>البلدية</label><input id="ccommune" placeholder="اختياري"></div>
     </div>
     <div class="dtype">
@@ -653,7 +653,7 @@ footer.site h4{color:#fff!important}
 <script defer="" src="../../assets/js/wilayas.js"></script>
 <script defer="" src="../../assets/js/api.js"></script>
 <script defer="" src="../../assets/js/app.js"></script>
-<script defer="" src="../../assets/js/agent.js"></script>
+<script>addEventListener("load",function(){setTimeout(function(){var s=document.createElement("script");s.src="../../assets/js/agent.js";document.body.appendChild(s)},600)})</script>
 <script>
 /* معرض الصور: الصورة الكبيرة تتبع الصور المصغّرة، وتدوير تلقائي (يتوقف داخل محرر اللوحة والفأرة فوق المعرض) */
 (function(){
