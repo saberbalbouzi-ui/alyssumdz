@@ -4,7 +4,7 @@
 // (إطفاء Verify JWT آمن هنا: الدالة تتحقق بنفسها أنك مدير عبر is_admin بتوكن جلستك، وإطفاؤه يمنع حجب طلب الفحص المسبق CORS من بوابة Supabase.)
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-const HOSTS = (Deno.env.get("COURIER_HOSTS") ?? "api.yalidine.app,yalidine.app").split(",").map((s) => s.trim()).filter(Boolean);
+const HOSTS = (Deno.env.get("COURIER_HOSTS") ?? "api.yalidine.app,yalidine.app,ecotrack.dz,procolis.com").split(",").map((s) => s.trim()).filter(Boolean);
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

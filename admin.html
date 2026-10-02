@@ -1826,6 +1826,40 @@ const AgentTrain = {
   },
 };
 
+/* شركات منصة Ecotrack (DHD وغيرها): API موحّد بترويسة Bearer. ⚠️ مبنيّ على الشكل العام للمنصة ولم يُجرَّب بحساب؛ يُراجَع مع توثيق الشركة عند أول تجربة */
+function ecotrackCompany(name, defaultBase){
+  const baseOf = cfg=>String((cfg && cfg.baseUrl) || defaultBase || "").replace(/\/+$/, "");
+  const norm = t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  return {
+    name, confidence: "experimental",
+    note: "⚠️ تجريبي — يعتمد الشكل العام لمنصة Ecotrack ولم يُجرَّب بعد. أدخل رابط المنصة (مثل https://dhd.ecotrack.dz) والتوكن من حسابك، وأرسل طلباً واحداً للاختبار قبل الاعتماد عليه. إن رُفض الطلب فنافذة السبب تعرض ردّ الشركة لنعدّل الحقول.",
+    fields: [
+      { key:"baseUrl", label:"رابط المنصة (مثال: " + (defaultBase || "https://xxx.ecotrack.dz") + ")", type:"text", required:false },
+      { key:"token", label:"API Token (Bearer)", type:"password" },
+      { key:"boutique", label:"اسم المتجر عند الشركة (اختياري)", type:"text", required:false },
+    ],
+    buildRequest(cfg, order){
+      const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null, stop = order.dtype === "stop";
+      const price = Math.max(0, Math.round(Number(order.total) || 0));
+      return { url: baseOf(cfg) + "/api/v1/create/order", method: "POST", headers: { "Authorization": "Bearer " + cfg.token, "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ reference: String(order.id), nom_client: order.name || "", telephone: String(order.phone||"").replace(/\D/g, ""), adresse: order.address || [order.commune, order.wilaya].filter(Boolean).join("، "),
+          code_postal: "", commune: order.commune || "", code_wilaya: w ? w.id : "", montant: price, remarque: "", produit: String(order.items||"").replace(/\s*=\s*\d+\s*DA/gi, "").replace(/\n/g, "، ").slice(0, 250),
+          boutique: cfg.boutique || "", type: 1, stop_desk: stop ? 1 : 0, quantite: 1 }) };
+    },
+    parseSent(json){ const t = json && (json.tracking || json.tracking_number || (json.data && json.data.tracking)); return t ? String(t) : ""; },
+    parseError(json){ try{ if(json && json.message) return String(json.message) + (json.errors ? " — " + JSON.stringify(json.errors) : ""); }catch(e){} return ""; },
+    trackRequest(cfg, tracking){ return { url: baseOf(cfg) + "/api/v1/get/tracking/info?tracking=" + encodeURIComponent(tracking), method: "GET", headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" } }; },
+    parseStatus(json){ const d = json && (json.activity ? json : (json.data || json)); const a = d && (d.activity || d.history); const last = Array.isArray(a) ? a[a.length - 1] : null; return String((last && (last.status || last.event)) || (d && (d.status || d.last_status)) || ""); },
+    mapStatus(raw){
+      const t = norm(raw); if(!t) return null;
+      if(/livr|delivered|encaisse/.test(t)) return "livree";
+      if(/retour|return|echec|annul|refus/.test(t)) return "echec";
+      if(/pret a expedier|en preparation|prepar/.test(t)) return "confirmee";
+      if(/expedi|transit|centre|sorti|livraison|ramass|arriv|dispatch|en cours/.test(t)) return "expediee";
+      return null;
+    },
+  };
+}
 const Admin = {
   key: localStorage.getItem("alyssum_admin_key") || "",
   products: [], fees: [], feesOriginal: [], orders: [], categories: {},
@@ -5488,6 +5522,8 @@ const Admin = {
         };
       },
     },
+    dhd: ecotrackCompany("DHD Express (Ecotrack)", "https://dhd.ecotrack.dz"),
+    ecotrack: ecotrackCompany("منصة Ecotrack (شركات أخرى: Anderson وغيرها)", ""),
     ecomdelivery: {
       name: "E-com Delivery",
       confidence: "generic",
@@ -5867,6 +5903,11 @@ const Admin = {
     API.updateOrder(this.key, o.id, undefined, o.note);
   },
 
+  /* شركات بلا مُحلِّل خاص: نبحث عن رقم التتبع تحت أسماء الحقول الشائعة */
+  genericTracking(json){
+    const pick = o=>{ if(!o || typeof o !== "object") return ""; for(const k of ["tracking","tracking_number","trackingNumber","tracking_id","tracking_code","code_suivi","colis_id"]) if(o[k]) return String(o[k]); return ""; };
+    return pick(json) || pick(json.data) || pick(Array.isArray(json.data) ? json.data[0] : null) || pick(json.colis) || pick(json.result) || pick(json.order) || "";
+  },
   /* ───── بلديات الشركة: مطابقة اسم البلدية في الطلب مع القائمة الرسمية (تجاهل الحركات والرموز، ثم تقريبية) ───── */
   _communesCache: {},
   normName(t){ return String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\u0600-\u06ff]/g,""); },
@@ -6024,7 +6065,7 @@ const Admin = {
       const r = await this.courierFetch(req);
       let json = null; try{ json = JSON.parse(r.text); }catch(e){}
       let tracking = "";
-      try{ if(r.ok && co.parseSent && json) tracking = co.parseSent(json, ord); }catch(e){}
+      try{ if(r.ok && json) tracking = co.parseSent ? co.parseSent(json, ord) : this.genericTracking(json); }catch(e){}
       if(tracking){
         if(ord.__ydId){ this.deliveryCfg[companyKey] = Object.assign({}, this.deliveryCfg[companyKey], { lastOrderNo: ord.__ydId }); this.saveDeliveryCfgToStorage(); }
         this.saveTracking(order, companyKey, tracking); this.renderOrders();
@@ -6033,7 +6074,7 @@ const Admin = {
         return true;
       }
       /* لم يُنشأ طرد: نعرض سبب الرفض كما ردّت به الشركة، في نافذة تبقى حتى تغلقها */
-      const why = (co.parseError && json && co.parseError(json)) || "";
+      const why = (json && (co.parseError ? co.parseError(json) : "")) || (json && (json.message || json.error || json.msg) ? String(json.message || json.error || json.msg) : "");
       const esc = t=>String(t).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
       this.showNotice("❌ لم تُنشئ " + co.name + " الطرد للطلب " + order.id,
         (r.ok ? "الشركة استلمت الطلب لكنها لم تُرجع رقم تتبع." : "رفضت الشركة الطلب (رمز " + r.status + ").") +
