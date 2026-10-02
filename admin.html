@@ -437,6 +437,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div class="search-bar">
         <b style="color:var(--green);align-self:center">🧱 بناء الصفحات المتقدم</b>
         <button class="small" onclick="PBAdmin.newPage()">＋ صفحة جديدة</button>
+        <button class="small gray" onclick="PBAdmin.importPage()">⬆ استيراد صفحة (JSON)</button>
         <button class="small gold" onclick="PBAdmin.refresh()">↻ تحديث</button>
       </div>
       <div class="hint">صمّم صفحات هبوط بأقسام وأعمدة وعناصر (عنوان، نص، صورة، زر، منتجات، أسئلة شائعة، عدّ تنازلي، معرض...) مع إعدادات مستقلة للمكتب والتابلت والهاتف وتحرير مباشر على الصفحة. تُنشر الصفحة على الرابط <code dir="ltr">/lp/اسم-الصفحة/</code>.</div>
@@ -6921,8 +6922,14 @@ const PB = (() => {
       html: (s, id, ctx) => `<div class="pb-prod" data-pbp='${esc(JSON.stringify({ mode: s.mode, val: s.val, limit: s.limit, btn: s.btn, showOld: s.showOld }))}'>${productsHtml(s, ctx.products, ctx.base)}</div>`,
       css: (c, sel, s) => { emit(c, sel + " .pb-pgrid", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-pc", s, [["rad", px("border-radius")]]); if (s.cbg) c.d.push(`${sel} .pb-pc{background:${s.cbg}}`); if (s.bbg) c.d.push(`${sel} .pb-pcb{background:${s.bbg}}`); },
     },
+    orderform: {
+      label: "نموذج طلب سريع", ic: "🛒", def: { prod: "", title: "اطلب الآن — الدفع عند الاستلام", btn: "تأكيد الطلب", ok: "✅ تم استلام طلبك! سنتصل بك قريباً لتأكيده.", dt: true, bbg: "#157a55", fbg: "#ffffff", rad: { d: 16 }, pad: { d: [22, 22, 22, 22] } },
+      ctl: [{ k: "prod", l: "المنتج", t: "select", o: () => [["", "— اختر المنتج —"]].concat(((typeof Admin !== "undefined" && Admin.products) || []).map(p => [p.slug, p.title])), tab: "c" }, { k: "title", l: "عنوان النموذج", t: "text", tab: "c" }, { k: "btn", l: "نص الزر", t: "text", tab: "c" }, { k: "ok", l: "رسالة النجاح", t: "textarea", tab: "c" }, { k: "dt", l: "اختيار نوع التوصيل (منزل/مكتب)", t: "switch", tab: "c" }, { k: "bbg", l: "لون الزر", t: "color", tab: "s" }, { k: "fbg", l: "خلفية النموذج", t: "color", tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
+      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === s.prod); return `<form class="pb-of" data-prod="${esc(s.prod)}" data-dt="${s.dt === false ? 0 : 1}" data-ok="${esc(s.ok)}" novalidate onsubmit="return false"><h3>${esc(s.title)}</h3><div class="pb-of-prod">${p ? `<b>${esc(p.title)}</b> — ${formatNum(p.price)} دج` : "اختر منتجاً من الإعدادات"}</div><div class="pb-of-offers"></div><input name="name" placeholder="الاسم الكامل" autocomplete="name"><input name="phone" inputmode="numeric" placeholder="رقم الهاتف 05XXXXXXXX" autocomplete="tel-national"><select name="wilaya"><option value="">اختر الولاية</option></select><input name="commune" placeholder="البلدية"><div class="pb-of-dtype"></div><div class="pb-of-sum"></div><input class="pb-hp" name="website_url" tabindex="-1" autocomplete="off" aria-hidden="true"><button type="submit" class="pb-of-btn">${esc(s.btn)}</button><div class="pb-of-msg" role="status"></div></form>`; },
+      css: (c, sel, s) => { emit(c, sel + " .pb-of", s, [["rad", px("border-radius")]]); if (s.fbg) c.d.push(`${sel} .pb-of{background:${s.fbg}}`); if (s.bbg) c.d.push(`${sel} .pb-of-btn{background:${s.bbg}}`); },
+    },
   };
-  const ORDER = ["heading", "text", "image", "button", "products", "iconbox", "iconlist", "gallery", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "products", "orderform", "iconbox", "iconlist", "gallery", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -7041,6 +7048,7 @@ const PB = (() => {
 .pb-ts{padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.07);height:100%}.pb-tss{color:#e0a800;letter-spacing:2px;margin-bottom:.4rem}.pb-ts p{margin:0 0 .8rem;line-height:1.8}.pb-tsw{display:flex;gap:.7rem;align-items:center}.pb-tsw img{width:46px;height:46px;border-radius:50%;object-fit:cover}.pb-tsw small{display:block;color:#777}
 .pb-gal{display:grid}
 .pb-pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.pb-pc{background:#fff;border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.07);transition:transform .2s}.pb-pc:hover{transform:translateY(-4px)}.pb-pci{position:relative;aspect-ratio:1/1;background:#f4efe6}.pb-pci img{width:100%;height:100%;object-fit:cover}.pb-pcd{position:absolute;top:10px;right:10px;background:#b83232;color:#fff;font-weight:800;font-size:.8rem;border-radius:999px;padding:.2rem .6rem;z-index:1}.pb-pc h3{margin:.8rem .9rem .3rem;font-size:1.02rem;font-weight:800}.pb-pcp{margin:0 .9rem .6rem}.pb-pcp b{color:#157a55;font-size:1.1rem}.pb-pcp s{color:#777;margin-inline-start:.5rem;font-size:.9rem}.pb-pcb{margin:auto .9rem .9rem;background:#157a55;color:#fff;text-align:center;border-radius:10px;padding:.55rem;font-weight:800}
+.pb-of{box-shadow:0 8px 28px rgba(0,0,0,.1);display:flex;flex-direction:column;gap:10px}.pb-of h3{margin:0 0 4px;font-size:1.25rem;font-weight:900;color:#173f35}.pb-of input,.pb-of select{width:100%;border:1.5px solid #ddd5c3;border-radius:10px;padding:.7rem .8rem;font:inherit;background:#fff}.pb-of .pb-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.pb-of-prod{background:#faf6ec;border-radius:10px;padding:.6rem .8rem;font-size:.95rem}.pb-of-offers label,.pb-of-dtype label{display:flex;gap:.5rem;align-items:center;padding:.45rem .6rem;border:1.5px solid #e6dfcf;border-radius:10px;margin-bottom:6px;cursor:pointer;font-weight:700}.pb-of-offers input,.pb-of-dtype input{width:auto}.pb-of-sum{font-weight:800;color:#173f35}.pb-of-btn{border:0;color:#fff;font:inherit;font-weight:900;padding:.85rem;border-radius:12px;cursor:pointer;font-size:1.05rem}.pb-of-btn:disabled{opacity:.6}.pb-of-msg{font-weight:800;text-align:center}.pb-of-msg.bad{color:#b83232}.pb-of-msg.good{color:#157a55}
 .pb-empty-note{padding:24px;text-align:center;color:#888}
 .pb-vid{display:block}
 .pb-hdr{background:#fff;border-bottom:1px solid #eae3d6;position:sticky;top:0;z-index:50}.pb-hdr div{max-width:1140px;margin:0 auto;padding:.8rem 20px;display:flex;align-items:center;justify-content:space-between}.pb-hdr a.lg{font-weight:900;font-size:1.4rem;color:#173f35;text-decoration:none}.pb-hdr a.wa{background:#157a55;color:#fff;border-radius:10px;padding:.45rem 1rem;text-decoration:none;font-weight:800}
@@ -7058,12 +7066,46 @@ tick();setInterval(tick,1000);
 if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProducts(JSON.parse(n.getAttribute('data-pbp')),window.PRODUCTS,__pbBase)}catch(e){}})}
 })();`;
 
+  const ORDER_JS = String.raw`(function(){
+var forms=[].slice.call(document.querySelectorAll('.pb-of'));if(!forms.length)return;
+var guard={};try{fetch(__pbBase+'assets/data/checkout.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():{}}).then(function(j){guard=(j&&j.guard)||{}}).catch(function(){})}catch(e){}
+function fmt(n){return Number(n).toLocaleString('fr-FR')+' دج'}
+function normPhone(v){var d=String(v||'').replace(/\D/g,'');if(d.indexOf('00213')===0)d='0'+d.slice(5);else if(d.indexOf('213')===0&&d.length>10)d='0'+d.slice(3);return d.slice(0,10)}
+forms.forEach(function(f){
+ var P=(window.PRODUCTS||[]).filter(function(x){return x.slug===f.getAttribute('data-prod')})[0],W=window.WILAYAS||[];
+ var q=function(n){return f.querySelector('[name='+n+']')},ws=q('wilaya'),sum=f.querySelector('.pb-of-sum'),msg=f.querySelector('.pb-of-msg'),btn=f.querySelector('.pb-of-btn');
+ if(!P){msg.textContent='اختر منتجاً للنموذج';return}
+ ws.innerHTML='<option value="">اختر الولاية</option>'+W.map(function(w){return '<option value="'+w.id+'">'+w.id+' - '+w.name+'</option>'}).join('');
+ var offers=(P.offers&&P.offers.length?P.offers:[{qty:1,price:P.price,free:0}]);
+ var ob=f.querySelector('.pb-of-offers');if(offers.length>1){ob.innerHTML=offers.map(function(o,i){var n=o.qty+(o.free||0);return '<label><input type="radio" name="offer" value="'+i+'"'+(i===0?' checked':'')+'> '+n+' قطع'+(o.free?' (منها '+o.free+' مجاناً)':'')+' — '+fmt(o.price)+'</label>'}).join('')}
+ var db=f.querySelector('.pb-of-dtype');if(f.getAttribute('data-dt')==='1'){db.innerHTML='<label><input type="radio" name="dtype" value="home" checked> توصيل للمنزل</label><label><input type="radio" name="dtype" value="stop"> استلام من مكتب التوصيل</label>'}
+ function cur(){var r=f.querySelector('[name=offer]:checked'),o=offers[r?+r.value:0],w=W.filter(function(x){return String(x.id)===ws.value})[0],dt=(f.querySelector('[name=dtype]:checked')||{}).value||'home';var fee=(P.freeShip||!w)?0:(dt==='stop'?w.stop:w.home);return {o:o,w:w,dt:dt,fee:fee,total:o.price+fee}}
+ function upd(){var c=cur();sum.textContent=c.w?('المنتج: '+fmt(c.o.price)+' + التوصيل: '+(c.fee?fmt(c.fee):'مجاني')+' = الإجمالي '+fmt(c.total)):'اختر الولاية لحساب التوصيل'}
+ f.addEventListener('change',upd);upd();
+ q('phone').addEventListener('input',function(){this.value=normPhone(this.value)});
+ f.addEventListener('submit',async function(e){e.preventDefault();msg.className='pb-of-msg';
+  var name=q('name').value.trim(),phone=normPhone(q('phone').value),c=cur();
+  if(!name||!phone||!c.w){msg.className='pb-of-msg bad';msg.textContent='يرجى ملء الاسم والهاتف والولاية';return}
+  if(!/^0[567]\d{8}$/.test(phone)&&(window.CONFIG&&CONFIG.SITE&&CONFIG.SITE.country||'DZ')==='DZ'&&guard.phoneDz!==false){msg.className='pb-of-msg bad';msg.textContent='رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 05 أو 06 أو 07';return}
+  var n=c.o.qty+(c.o.free||0),order={name:name,phone:phone,wilaya:c.w.name,commune:q('commune').value.trim(),dtype:c.dt,items:[{slug:P.slug,title:P.title,qty:n,price:Math.round(c.o.price/n)}],subtotal:c.o.price,fee:c.fee,total:c.total,coupon:'',discount:0,extra:{'📄 صفحة هبوط':location.pathname}};
+  btn.disabled=true;
+  try{
+   if(guard.antibot){var t='';try{t=await API.formToken()}catch(x){}order.hp=q('website_url').value;order.ftok=t||''}
+   var r=await API.submitOrderChecked(order);
+   if(r&&r.error){msg.className='pb-of-msg bad';msg.textContent=({duplicate_order:'لقد أرسلتَ طلباً لهذا المنتج مؤخراً ✅ سنتواصل معك قريباً.',bot:'تعذّر إرسال الطلب، أعد المحاولة.',rate_limited:'محاولات كثيرة، انتظر قليلاً.',invalid_phone:'رقم الهاتف غير صالح.'})[r.error]||'تعذّر الإرسال';btn.disabled=false;return}
+   msg.className='pb-of-msg good';msg.textContent=f.getAttribute('data-ok')||'✅ تم استلام طلبك';f.querySelectorAll('input,select').forEach(function(i){i.disabled=true});
+  }catch(err){msg.className='pb-of-msg bad';msg.textContent='تعذّر الإرسال، أعد المحاولة أو راسلنا على واتساب';btn.disabled=false}
+ });
+});
+})();`;
+
   function fullHtml(page, ctx) {
     const r = renderSections(page, Object.assign({ base: "../../", edit: false }, ctx));
     const site = ctx.site || {}, url = (site.domain ? "https://" + site.domain : "") + "/lp/" + page.slug + "/";
     const hdr = page.header ? `<header class="pb-hdr"><div><a class="lg" href="${esc(ctx.base)}">${esc(site.name || "المتجر")}</a>${site.wa ? `<a class="wa" href="https://wa.me/${esc(String(site.wa).replace(/\D/g, ""))}" target="_blank" rel="noopener">واتساب</a>` : ""}</div></header>` : "";
     const ftr = page.footer ? `<footer class="pb-ftr">© ${new Date().getFullYear()} ${esc(site.name || "")} — جميع الحقوق محفوظة · <a href="${esc(ctx.base)}">العودة للمتجر</a></footer>` : "";
     const hasProd = JSON.stringify(page.sections).includes('"type":"products"');
+    const hasOrder = JSON.stringify(page.sections).includes('"type":"orderform"');
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${ctx.baseHref ? `<base href="${esc(ctx.baseHref)}">` : ""}
 <title>${esc(page.title)}${site.name ? " — " + esc(site.name) : ""}</title>
@@ -7077,8 +7119,8 @@ if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProduc
 ${r.css}
 ${page.css || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
-${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
-<script>var __pbBase=${JSON.stringify(ctx.base)};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}<\/script>
+${(hasProd || hasOrder) ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}${hasOrder ? ["config", "wilayas", "api"].map(n => `<script src="${esc(ctx.base)}assets/js/${n}.js"><\/script>`).join("") : ""}
+<script>var __pbBase=${JSON.stringify(ctx.base)};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}${hasOrder ? ";var REL=__pbBase;" + ORDER_JS : ""}<\/script>
 </body></html>`;
   }
 
@@ -7527,7 +7569,7 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
       case "textarea": case "rich": case "gallery": b = `<textarea ${a} ${c.t === "rich" ? 'dir="ltr" rows="8"' : ""}>${esc(ownV ?? "")}</textarea>` + (c.t === "gallery" ? `<button class="pbx-small" data-upadd="${k}">⬆ رفع صور وإضافتها</button>` : ""); break;
       case "datetime": b = `<input type="datetime-local" ${a} value="${esc(ownV ?? "")}">`; break;
       case "num": { const rng = (c.max != null && c.min != null && c.max - c.min <= 2000) ? `<input type="range" ${a} data-range="1" min="${c.min}" max="${c.max}" step="${c.step || 1}" value="${effV ?? c.min}" class="sm" style="max-width:96px">` : ""; b = `<div class="pbx-row"><input type="number" ${a} ${c.min != null ? `min="${c.min}"` : ""} ${c.max != null ? `max="${c.max}"` : ""} step="${c.step || 1}" value="${ownV ?? ""}" placeholder="${inherited ? effV : ""}" class="${inherited ? "inh" : ""}">${rng}</div>`; break; }
-      case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${c.o.map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
+      case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${(typeof c.o === "function" ? c.o() : c.o).map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
       case "align": b = `<div class="pbx-al">${AL3.map(([v, t]) => `<button data-al="${k}" data-v="${v}" class="${(effV || "") === v ? "on" : ""}">${t}</button>`).join("")}</div>`; break;
@@ -7636,7 +7678,22 @@ const PBAdmin = {
     const box = document.getElementById("pb-list"); if (!box) return;
     try { const f = await GH.getFile("assets/pages/index.json"); this.list = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { this.list = []; }
     const dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host;
-    box.innerHTML = this.list.length ? `<table class="rt"><tr class="hd"><th>العنوان</th><th>الرابط</th><th>آخر تحديث</th><th>إجراءات</th></tr>${this.list.map(p => `<tr><td class="t"><b>${PB.esc(p.title)}</b></td><td data-l="الرابط"><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a></td><td data-l="آخر تحديث"><small>${PB.esc(p.updated || "")}</small></td><td class="act"><button class="small" onclick="PBAdmin.edit('${PB.esc(p.slug)}')">✏️ تعديل</button> <button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')">🔗 نسخ الرابط</button> <button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')">إلغاء النشر</button></td></tr>`).join("")}</table>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» لبدء التصميم.</p>';
+    box.innerHTML = this.list.length ? `<table class="rt"><tr class="hd"><th>العنوان</th><th>الرابط</th><th>آخر تحديث</th><th>إجراءات</th></tr>${this.list.map(p => `<tr><td class="t"><b>${PB.esc(p.title)}</b></td><td data-l="الرابط"><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a></td><td data-l="آخر تحديث"><small>${PB.esc(p.updated || "")}</small></td><td class="act"><button class="small" onclick="PBAdmin.edit('${PB.esc(p.slug)}')">✏️ تعديل</button> <button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')">⧉ تكرار</button> <button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')">⬇ تصدير</button> <button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')">🔗 نسخ الرابط</button> <button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')">إلغاء النشر</button></td></tr>`).join("")}</table>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» لبدء التصميم.</p>';
+  },
+  /* تكرار صفحة، وتصدير/استيراد ملف JSON (لنقل التصاميم بين متاجرك أو بيعها كقوالب) */
+  async load(slug) { const f = await GH.getFile("assets/pages/" + slug + ".json"); return JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); },
+  fresh(p) { const re = n => { n.id = PB.uid(); (n.cols || []).forEach(re); (n.widgets || []).forEach(re); }; p.sections.forEach(re); return p; },
+  async duplicate(slug) {
+    const ns = prompt("رابط الصفحة الجديدة (حروف لاتينية صغيرة وأرقام وشرطات):", slug + "-copy"); if (!ns) return;
+    try { const p = this.fresh(await this.load(slug)); p.slug = ns.toLowerCase().replace(/[^a-z0-9-]/g, ""); p.title += " (نسخة)"; PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); }
+  },
+  async exportPage(slug) {
+    try { const p = await this.load(slug), a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(p, null, 1)], { type: "application/json" })); a.download = "page-" + slug + ".json"; a.click(); } catch (e) { toast("❌ " + e.message); }
+  },
+  importPage() {
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+    inp.onchange = async () => { try { const p = JSON.parse(await inp.files[0].text()); if (!p || !Array.isArray(p.sections)) throw new Error("ملف صفحة غير صالح"); this.fresh(p); p.slug = String(p.slug || "").toLowerCase().replace(/[^a-z0-9-]/g, "") || "page-" + Date.now().toString(36).slice(-4); PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); } };
+    inp.click();
   },
   newPage() {
     const t = prompt("عنوان الصفحة الجديدة:", "عرض خاص"); if (!t) return;
