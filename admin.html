@@ -8580,7 +8580,8 @@ After presenting the copywriting, output a single, consolidated READY-TO-COPY de
 3. Visual Descriptions: Add strong, creative English visual descriptions for each section based on the uploaded image.
 4. ${L.name} Typography (MANDATORY): ALL ${L.name} text MUST be rendered in massive, extremely bold fonts, with a minimum size of 20px equivalent. Render ONLY the generated ${L.name} text inside the quotation marks " ". ABSOLUTELY DO NOT render any English structural words or labels (like Headline, Body Text, Visual Flow)${ar ? "" : " unless the target language is English"}.
 5. Brackets and Label Removal: Before providing the final code, fill all [bracketed placeholders] with the precise ${L.name} text you generated, and remove all structural labels from the output.
-6. SPELLING (MANDATORY): spell every ${L.name} word perfectly with correct standard orthography. Keep every quoted text SHORT (max 8 words per line, simple everyday words, no diacritics, no mixed languages). The image generator must copy each quoted string letter by letter and add NO other text anywhere (no fake labels or extra captions). Copy the brand/product name EXACTLY as printed on the product packaging.
+6. PROOFREADING (MANDATORY, DO IT BEFORE OUTPUT): re-read every ${L.name} string you wrote, word by word, and fix any spelling mistake. NEVER repeat the same word twice in a row or the same phrase twice in one string; never write the same sentence in two sections; every headline must be unique. NEVER use letter elongation/kashida/tatweel (like "لمـاذا") or decorative stretching; no diacritics. Use only correct, common words — if unsure of a word, choose a simpler one.
+6b. SPELLING (MANDATORY): spell every ${L.name} word perfectly with correct standard orthography. Keep every quoted text SHORT (max 8 words per line, simple everyday words, no diacritics, no mixed languages). The image generator must copy each quoted string letter by letter and add NO other text anywhere (no fake labels or extra captions). Copy the brand/product name EXACTLY as printed on the product packaging.
 7. Text Direction: ${ar ? "All text and layout direction must respect right-to-left flow." : "All text and layout direction must respect left-to-right flow."}
 
 --- USE THIS EXACT TEMPLATE FOR STEP 2 (DESIGN PROMPT) ---
@@ -8591,6 +8592,8 @@ CRITICAL FORMAT RULE: DO NOT write any HTML, CSS, UI code, or text-based code. Y
 
 AESTHETIC & FLOW INSTRUCTIONS:
 BACKGROUND (MANDATORY): ONE single unified background for the ENTIRE image — a single smooth, harmonious vertical degradé (gradient) built from 2–3 tones taken from the product's own colours ([insert dynamic colors matching product image]) that flows seamlessly from the top to the bottom of the image. DO NOT split the image into visible parts: NO cards, NO boxes, NO panels, NO horizontal bands, NO colour blocks, NO frames, NO divider lines and NO change of background between topics. Everything must read as ONE cohesive, harmonious composition where the content floats directly on the same gradient and topics are separated only by generous empty space. Subtle soft glow and light particles matching the [insert product vibe] are allowed. Feature the product repeatedly.
+
+COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, NOT a template): do NOT place the image on one side and the text on the other in every section. Vary the composition from section to section and break the grid: let the product overlap and partly cover the headline area, let giant headline words sit behind or in front of the product, bleed images off the edges, use diagonal and curved flows, circular cut-out photos, and floating layered elements with depth, soft shadows and glows. Vary scale dramatically (a huge hero product, then medium, then a small detail close-up), alternate left / right / centre alignment, and highlight ONE KEY WORD of each headline in a contrasting accent colour at a larger size than the other words. Use a clear visual hierarchy (huge headline, medium sub-line, small details) with generous spacing, like a high-end advertising poster.
 
 * Opening area: product prominent at the top with soft glow and particle effects. Small Yellow Text: "${ph("اكتب: الأكثر مبيعاً أو جديد", "write: Best Seller or New")}"
 * HUGE WHITE BOLD TEXT: "${ph("عنوان رئيسي جذاب وقوي جداً", "very strong, catchy main headline")}"
@@ -8616,7 +8619,7 @@ BACKGROUND (MANDATORY): ONE single unified background for the ENTIRE image — a
 * Three numbered glowing circles 1-2-3 connected by a thin curved line (how to use). LARGE BOLD COLORED TEXT: "${ph("عنوان طريقة الاستعمال", "how-to-use headline")}"
 * Medium Text: "1 ${ph("الخطوة الأولى", "step 1")}\n2 ${ph("الخطوة الثانية", "step 2")}\n3 ${ph("الخطوة الثالثة", "step 3")}"
 
-* Two columns without any dividing line or box: left is glowing OUR PRODUCT, right is a dull gray generic competitor product. LARGE BOLD COLORED TEXT: "${ph("عنوان يقارن ويثبت التفوق", "headline comparing and proving superiority")}"
+* Comparison without any dividing line or box: a glowing, larger OUR PRODUCT overlapping a smaller dull gray generic competitor product, with the lists curving around them. LARGE BOLD COLORED TEXT: "${ph("عنوان يقارن ويثبت التفوق", "headline comparing and proving superiority")}"
 * Medium Green Text: "✔️ ${ph("ميزة 1", "advantage 1")}\\n✔️ ${ph("ميزة 2", "advantage 2")}"
 * Medium Red Text: "❌ ${ph("عيب 1", "drawback 1")}\\n❌ ${ph("عيب 2", "drawback 2")}"
 
@@ -8840,7 +8843,7 @@ BACKGROUND (MANDATORY): ONE single unified background for the ENTIRE image — a
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.5rem 0"><button class="small gold" type="button" onclick="PBGen.auto()">⚡ إنتاج البرومبت النهائي</button><small id="gen-automsg" style="font-weight:700;color:var(--green)"></small></div>
     <label class="hint" style="margin:0">البرومبت النهائي — انسخه مع صورة المنتج إلى Gemini (Nano Banana) لتوليد الصورة</label>
     <textarea id="gen-final" rows="8" dir="ltr" placeholder="سيظهر هنا جاهزاً للّصق..." style="font-size:.78rem"></textarea>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="PBGen.copyFinal()">📋 نسخ البرومبت النهائي</button></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="PBGen.copyFinal()">📋 نسخ البرومبت النهائي</button><button class="small gold" type="button" onclick="PBGen.proofread()" title="يراجع كل النصوص المقتبسة: إملاء، تكرار، تطويل، نصوص طويلة">🔍 تدقيق إملائي وتكرار</button><label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-autoproof" checked style="width:auto"> تدقيق تلقائي بعد التوليد</label></div>
     <details style="margin-top:.5rem"><summary style="cursor:pointer;font-weight:800">📝 نصوص البيع التي كتبها Gemini (للمراجعة)</summary><pre id="gen-copy" style="white-space:pre-wrap;font-family:inherit;font-size:.82rem;line-height:1.8"></pre></details>
   </div>
   <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><span></span><button class="small gold" type="button" onclick="PBGen.step(2)">التالي ←</button></div>
@@ -8896,6 +8899,28 @@ BACKGROUND (MANDATORY): ONE single unified background for the ENTIRE image — a
   }
   function regionMode() { S.regionMode = !S.regionMode; const b = $("gen-region-btn"); b.className = "small " + (S.regionMode ? "gold" : "gray"); b.textContent = S.regionMode ? "✂️ وضع القص مفعّل — اسحب على الصورة (انقر للإيقاف)" : "✂️ رسم منطقة للقص (منتج/صورة)"; drawPreview(); }
   function makePrompt() { $("gen-out").value = buildPrompt({ lang: $("gen-lang").value, offer: $("gen-offer").value, name: $("gen-name").value.trim(), desc: $("gen-desc").value.trim(), price: $("gen-price").value.trim(), colors: $("gen-colors").value.trim() }); }
+  /* فحص محلي مجاني لنصوص البرومبت المقتبسة: يحذف التطويل (ـ) والتكرار المتتالي للكلمة ويحذّر من النصوص الطويلة */
+  function localFix(txt) {
+    const issues = []; const out = String(txt).replace(/"([^"\n]{2,400})"/g, (m, q) => {
+      if (/^\s*\[/.test(q)) return m; let r = q.replace(/\u0640/g, ""); if (r !== q) issues.push("تطويل: " + q.slice(0, 24));
+      const r2 = r.replace(/(^|[\s،,.:؛!؟?\n])([^\s،,.:؛!؟?]{2,})(\s+)\2(?=$|[\s،,.:؛!؟?])/gu, (mm, pre, w) => { issues.push("تكرار: " + w); return pre + w; });
+      r = r2.replace(/[\u064C-\u0652]/g, ""); if (r.split(/\s+/).length > 12) issues.push("نص طويل: " + r.slice(0, 24));
+      return '"' + r + '"'; });
+    return { text: out, issues };
+  }
+  /* تدقيق إملائي ولغوي بـ Gemini على النصوص المقتبسة فقط (يمسح التكرار والأخطاء) */
+  async function proofread() {
+    const msg = $("gen-automsg"), cur = $("gen-final").value; if (!cur.trim()) { msg.textContent = "❌ لا يوجد برومبت نهائي للتدقيق"; return; }
+    const key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })(); if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً"; return; }
+    const L = LANGS[$("gen-lang").value] || LANGS.ar; msg.textContent = "⏳ تدقيق إملائي ولغوي…";
+    try {
+      const ask = `You are a meticulous ${L.name} proofreader and copy editor. Below is an image-generation prompt. Every text inside double quotes " " will be rendered literally inside an image. Fix ONLY the quoted strings: (1) any spelling or grammar mistake, (2) any repeated word or phrase (consecutive repeats like "X X", and the same sentence reused in different sections), (3) letter elongation/kashida/tatweel, (4) diacritics, (5) strings longer than 8 words (shorten them), (6) wrong or unnatural words (use simple standard everyday ${L.name}). Keep the meaning and the persuasive tone. Do NOT touch anything outside the quotes and do NOT remove sections. Return the COMPLETE corrected prompt inside ONE code block, then after the block write a short Arabic bullet list of the corrections you made (or "لا توجد أخطاء").\n\n${cur}`;
+      const t = await (PBGen.textFn || geminiText)(key, ask), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
+      if (!blocks.length) throw new Error("لم يُرجع Gemini نصاً مصحّحاً"); const fx = localFix(blocks.join("\n\n"));
+      $("gen-final").value = fx.text; $("gen-intended").value = fx.text; $("gen-copy").textContent = (($("gen-copy").textContent || "") + "\n\n— التدقيق —\n" + t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim()).trim();
+      msg.textContent = "✅ تم التدقيق" + (fx.issues.length ? " (وإصلاح محلي لـ " + fx.issues.length + ")" : "");
+    } catch (err) { msg.textContent = "❌ " + err.message; }
+  }
   async function auto() {
     const msg = $("gen-automsg"); let key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
     if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً"; return; } try { localStorage.setItem("alyssum_gp_gkey", key); $("gen-gkey").value = key; } catch (e) { }
@@ -8905,7 +8930,8 @@ BACKGROUND (MANDATORY): ONE single unified background for the ENTIRE image — a
       if (f) { const c = await loadImage(f), k = Math.min(1, 1400 / Math.max(c.width, c.height)), c2 = document.createElement("canvas"); c2.width = Math.round(c.width * k); c2.height = Math.round(c.height * k); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); b64 = c2.toDataURL("image/jpeg", .88).split(",")[1]; mime = "image/jpeg"; }
       const t = await (PBGen.textFn || geminiText)(key, $("gen-out").value, b64, mime), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
       if (!blocks.length) throw new Error("لم يُرجع Gemini برومبت جاهزاً — أعد المحاولة");
-      $("gen-final").value = blocks.join("\n\n"); $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = $("gen-final").value; msg.textContent = "✅ جاهز — انسخ البرومبت النهائي مع صورة المنتج إلى Gemini";
+      const fxa = localFix(blocks.join("\n\n")); $("gen-final").value = fxa.text; $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = $("gen-final").value; msg.textContent = "✅ جاهز" + (fxa.issues.length ? " (أُصلح تلقائياً " + fxa.issues.length + ": تطويل/تكرار)" : "");
+      if ($("gen-autoproof") && $("gen-autoproof").checked) await proofread();
     } catch (err) { msg.textContent = "❌ " + err.message; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
@@ -8950,7 +8976,7 @@ BACKGROUND (MANDATORY): ONE single unified background for the ENTIRE image — a
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, extractIntended, snapText, auto, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
 
 </script>
