@@ -83,6 +83,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-cp{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem;font-size:.75rem;color:#666}.pbx-cp select{flex:1;min-width:90px;border:1.5px solid #e0d9c8;border-radius:8px;padding:.25rem;font-family:inherit;font-size:.75rem}
 .pbx-small{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.3rem .6rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.78rem}
 .pbx-lay{font-size:.82rem}.pbx-lay div{padding:.28rem .4rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbx-lay div:hover{background:#f4efe6}.pbx-lay div.on{background:#173f35;color:#fff}
+.pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
 .pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
 @media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}.pbx-rz{display:none}}`;
 
@@ -100,6 +101,8 @@ body{overflow-x:hidden;margin:0}`;
   <span id="pbx-url" dir="ltr" style="font-size:.78rem;opacity:.8"></span>
   <span class="sp"></span>
   <span class="pbx-dirty" id="pbx-dirty"></span>
+  <span id="pbx-upb" class="pbx-upb" style="display:none"></span>
+  <button onclick="PBApp.slim()" title="إعادة ضغط صور هذه الصفحة المرفوعة سابقاً لتصير أخف وأسرع">🪶 تخفيف الصور</button>
   <button data-dv="d" onclick="PBApp.setDev('d')" title="المكتب">🖥️ المكتب</button>
   <button data-dv="t" onclick="PBApp.setDev('t')" title="التابلت">📱 تابلت</button>
   <button data-dv="m" onclick="PBApp.setDev('m')" title="الهاتف">📲 هاتف</button>
@@ -588,8 +591,21 @@ body{overflow-x:hidden;margin:0}`;
     return out;
   }
   function queueCommit(p) {
-    E.upN = (E.upN || 0) + 1; E.upFail = E.upFail || []; toast("⬆ الصورة ظاهرة الآن — يجري حفظها في الموقع بالخلفية (" + E.upN + ")");
-    E.upq = (E.upq || Promise.resolve()).then(() => Admin.commitImage(p, "pg-", HQ)).then(() => { mediaAdd([p.path]); }, err => { E.upFail.push(p.path); toast("❌ تعذّر حفظ صورة في الموقع: " + err.message); }).then(() => { E.upN--; if (!E.upN) toast(E.upFail.length ? "⚠ بعض الصور لم تُحفظ — أعد رفعها" : "✅ حُفظت كل الصور في الموقع"); });
+    E.upN = (E.upN || 0) + 1; E.upFail = E.upFail || []; upBadge(); toast("⬆ الصورة ظاهرة الآن — يجري حفظها في الموقع بالخلفية (" + E.upN + ")");
+    E.upq = (E.upq || Promise.resolve()).then(() => Admin.commitImage(p, "pg-", HQ)).then(() => { mediaAdd([p.path]); }, err => { E.upFail.push(p.path); toast("❌ تعذّر حفظ صورة في الموقع: " + err.message); }).then(() => { E.upN--; upBadge(); if (!E.upN) toast(E.upFail.length ? "⚠ بعض الصور لم تُحفظ — أعد رفعها" : "✅ حُفظت كل الصور في الموقع"); });
+  }
+  function upBadge() { const b = $("pbx-upb"); if (!b) return; b.style.display = E.upN ? "inline-block" : "none"; b.textContent = "⬆ " + (E.upN || 0) + " صورة تُحفظ في الموقع…"; }
+  /* إعادة ضغط صور الصفحة المرفوعة سابقاً (أكبر من 1600px أو ثقيلة) وتبديل مساراتها */
+  async function slim() {
+    if (!E.page || typeof Admin === "undefined") return; const paths = [...new Set((JSON.stringify(E.page).match(/assets\/img\/pages\/[^"\\\s]+?\.(?:webp|jpe?g|png)/gi) || []))];
+    if (!paths.length) return toast("لا توجد صور مرفوعة في هذه الصفحة"); toast("⏳ فحص " + paths.length + " صورة…"); let saved = 0, n = 0, json = JSON.stringify(E.page);
+    for (const pth of paths) {
+      try { const r = await fetch(pth + "?t=" + Date.now()); if (!r.ok) continue; const blob = await r.blob(); if (blob.size < 150 * 1024) continue;
+        const p = await Admin.prepareImage(new File([blob], "x." + (blob.type.split("/")[1] || "png"), { type: blob.type }), "assets/img/pages", "pg-", { max: 1600, q: .8, noVariants: true, uniq: true });
+        if (p.blob.size > blob.size * .85) continue; saved += blob.size - p.blob.size; n++; Admin.localImg = Admin.localImg || {}; Admin.localImg[p.path] = URL.createObjectURL(p.blob); json = json.split(pth).join(p.path); queueCommit(p); } catch (e) { }
+    }
+    if (!n) return toast("✅ الصور خفيفة أصلاً — لا حاجة للتخفيف");
+    E.page = JSON.parse(json); afterEdit(); toast("🪶 خُفّفت " + n + " صورة، وفّرت ‎" + Math.round(saved / 1024) + " ك.ب — انشر الصفحة لتطبيق ذلك");
   }
   /* استبدال مسارات الصور المرفوعة حديثاً بروابط محلية في معاينة المحرر */
   function localize(str) { const L = (typeof Admin !== "undefined" && Admin.localImg) || {}; for (const k in L) if (str.indexOf(k) >= 0) str = str.split(k).join(L[k]); return str; }
@@ -875,12 +891,13 @@ ${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.8
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, slugEdit, renderCanvas, toggleSnap, mediaAdd, E, find };
+  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, E, find };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
 const PBAdmin = {
   list: [],
+  openGen() { const c = document.getElementById("gen-card"); if (!c) return; c.open = true; c.scrollIntoView({ behavior: "smooth", block: "start" }); },
   async init() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } await this.refresh(); },
   async refresh() {
     const box = document.getElementById("pb-list"); if (!box) return;
