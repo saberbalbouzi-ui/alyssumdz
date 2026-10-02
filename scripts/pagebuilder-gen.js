@@ -471,12 +471,12 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   const small64 = async (file, max) => { const c = await loadImage(file), k = Math.min(1, max / Math.max(c.width, c.height)), c2 = document.createElement("canvas"); c2.width = Math.round(c.width * k); c2.height = Math.round(c.height * k); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); return c2.toDataURL("image/jpeg", .9).split(",")[1]; };
   /* مرحلة خفية: يكتب Gemini النصوص التسويقية والبرومبت النهائي، ثم يُدقَّق ويُخزَّن (لا يُعرض) */
   async function makeFinal(key) {
-    const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/5) Gemini يكتب نصوصاً تسويقية قوية…";
+    const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/3) Gemini يكتب نصوصاً تسويقية قوية…";
     const f = $("gen-pimg").files && $("gen-pimg").files[0], b64 = f ? await small64(f, 1400) : null;
     const t = await (PBGen.textFn || geminiText)(key, $("gen-out").value, b64, "image/jpeg", "copy"), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
     if (!blocks.length) throw new Error("لم يُرجع Gemini تصميماً جاهزاً — أعد المحاولة");
     const fx = localFix(blocks.join("\n\n")); $("gen-final").value = fx.text; $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = fx.text;
-    msg.textContent = "⏳ (2/5) تدقيق إملائي وتكرار…"; try { await proofread(); } catch (e) { }
+    msg.textContent = "⏳ (2/3) تدقيق إملائي وتكرار…"; try { await proofread(); } catch (e) { }
     S.finalPrompt = $("gen-final").value; return S.finalPrompt;
   }
   async function auto() { const msg = $("gen-automsg"), key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } try { await makeFinal(key); msg.textContent = "✅ جاهز"; } catch (err) { msg.textContent = "❌ " + err.message; } }
@@ -492,25 +492,20 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     const pref = ["gemini-3.1-flash-lite-image", "gemini-2.5-flash-image", "gemini-3-pro-image-preview"]; await gemModels(key, "copy"); const names = (_gemCache && _gemCache.key === key && _gemCache.names) || [];
     const pick = pref.filter(m => names.includes(m)), any = names.filter(n => /image/i.test(n) && !pick.includes(n)); const list = pick.concat(any).slice(0, 3); return list.length ? list : pref.slice(0, 2);
   }
-  async function genPart(key, prompt, productB64, prevB64) {
-    const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } }); if (prevB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: prevB64 } });
-    const j = await gemGenerate(key, "image", parts, { imageConfig: { aspectRatio: "9:16" } }, await imageModels(key)), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
-    if (!d) throw new Error("لم يُرجع النموذج صورة — أعد المحاولة أو غيّر وصف المنتج");
-    const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
+  /* صورة واحدة طويلة: نجرّب النسب الأطول أولاً ثم نتراجع إن لم يدعمها النموذج */
+  const RATIOS = ["1:8", "1:4", "9:16"];
+  async function genLong(key, prompt, productB64) {
+    const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } });
+    const models = await imageModels(key); let lastErr = null;
+    for (const ar of RATIOS) {
+      try {
+        const j = await gemGenerate(key, "image", parts, { imageConfig: { aspectRatio: ar } }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
+        if (!d) throw new Error("لم يُرجع النموذج صورة");
+        const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); S.ratio = ar; return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
+      } catch (e) { lastErr = e; if (!/\[400|aspect|ratio|invalid.argument|لم يُرجع النموذج صورة/i.test(String(e.message))) throw e; }      // النسبة غير مدعومة ← جرّب الأقصر
+    }
+    throw lastErr || new Error("تعذّر توليد الصورة");
   }
-  /* لصق الأجزاء عمودياً مع تلاشي في الوصلات */
-  async function stackParts(blobs) {
-    const cvs = []; for (const b of blobs) cvs.push(await loadImage(b)); const W = Math.max(...cvs.map(c => c.width)), ov = Math.round(W * .05), hs = cvs.map(c => Math.round(c.height * W / c.width)), H = hs.reduce((a, b) => a + b, 0) - ov * (cvs.length - 1);
-    const out = document.createElement("canvas"); out.width = W; out.height = H; const g = out.getContext("2d"); let y = 0;
-    cvs.forEach((c, i) => {
-      if (i === 0) { g.drawImage(c, 0, 0, W, hs[0]); y = hs[0]; return; }
-      const tt = document.createElement("canvas"); tt.width = W; tt.height = hs[i]; const ttg = tt.getContext("2d"); ttg.drawImage(c, 0, 0, W, hs[i]);
-      ttg.globalCompositeOperation = "destination-in"; const gr = ttg.createLinearGradient(0, 0, 0, ov); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,1)"); ttg.fillStyle = gr; ttg.fillRect(0, 0, W, hs[i]);   // تلاشي أعلى الجزء فوق أسفل السابق
-      g.drawImage(tt, 0, y - ov); y += hs[i] - ov;
-    });
-    return out;
-  }
-  const SPLIT = (k, n) => `\n\n=== RENDER INSTRUCTION (HIGHEST PRIORITY) ===\nThe design above describes ONE continuous tall landing page. Mentally split it into ${n} equal vertical parts (top → bottom). Render ONLY part ${k} of ${n} now, as ONE image with aspect ratio 9:16 at the highest possible resolution, containing only the sections and texts that belong to this part. Every quoted text must be spelled exactly and appear only once. Keep the same single smooth background gradient, the same illustration style, typography and product rendering for all parts${k > 1 ? "; the TOP edge of this image must continue seamlessly the bottom edge of the attached previous part image (same background colour and glow) with an empty margin at the top" : ""}${k < n ? "; the BOTTOM edge must fade into the plain continuing background colour with an empty margin (no text or object touching the edge) so the next part joins seamlessly" : ""}. Copy the product from the attached product photo exactly (never redraw its label). Do not write part numbers or any label.`;
   /* الدالة الرئيسية: نصوص تسويقية ← أجزاء الصورة ← لصق ← معاينة الأقسام */
   async function generateImage() {
     const msg = $("gen-automsg"), btn = $("gen-make"), key = keyNow(), pf = $("gen-pimg").files && $("gen-pimg").files[0];
@@ -519,13 +514,10 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     if (!$("gen-name").value.trim() && !$("gen-desc").value.trim() && !($("gen-ing").value || "").trim()) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه أو مكوناته"; return; }
     btn.disabled = true; const N = 3;
     try {
-      const fp = await makeFinal(key), pb = await small64(pf, 1400), blobs = []; let prev = null;
-      for (let k = 1; k <= N; k++) {
-        msg.textContent = "🎨 (" + (2 + k) + "/5) توليد الجزء " + k + " من " + N + " (قد يستغرق دقيقة)…";
-        const blob = await (PBGen.imgFn || genPart)(key, fp + SPLIT(k, N), pb, prev); blobs.push(blob); prev = PBGen.imgFn ? null : (await small64(blob, 900));
-      }
-      msg.textContent = "🧩 دمج الأجزاء…"; const canvas = await stackParts(blobs);
-      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; msg.textContent = "✅ تمّت الصورة — راجع الأقسام ثم تابع إلى «التحويل»"; step(2);
+      const fp = await makeFinal(key), pb = await small64(pf, 1400);
+      msg.textContent = "🎨 (3/3) توليد الصورة الطويلة (قد يستغرق دقيقة)…";
+      const blob = await (PBGen.imgFn || genLong)(key, fp, pb), canvas = await loadImage(blob);
+      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; msg.textContent = "✅ تمّت الصورة" + (S.ratio && S.ratio !== "1:8" ? " (نسبة " + S.ratio + " — أقصى طول يدعمه النموذج)" : "") + " — قصّها إلى أقسام ثم تابع إلى «التحويل»"; step(2);
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
@@ -574,5 +566,5 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, copyHidden, makeFinal, stackParts, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
