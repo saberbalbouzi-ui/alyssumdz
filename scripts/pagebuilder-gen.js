@@ -231,16 +231,18 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     const note = t => { for (const id of ["gen-automsg", "gen-msg"]) { const el = typeof document !== "undefined" && document.getElementById(id); if (el && (!el.textContent || /^⏳|Google/.test(el.textContent))) el.textContent = t; } };
     for (let round = 0; round < waits.length; round++) {
       if (waits[round]) { note("⏳ Google مشغول مؤقتاً — إعادة المحاولة بعد " + waits[round] / 1000 + " ث (" + round + "/" + (waits.length - 1) + ")…"); await new Promise(r => setTimeout(r, waits[round])); }
-      let busy = false;
+      let busy = false, imgQuota = false;
       for (const m of models) {
         const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: cfg || {} }) });
         const j = await r.json().catch(() => ({}));
         if (r.ok) { gemTrack(j, m); return j; }
         const gm = (j.error && j.error.message) || ""; last = gemErr(r.status, gm);
+        if (r.status === 429 && task === "image") { imgQuota = true; continue; }                                  // نماذج الصور غالباً بلا طبقة مجانية: لا فائدة من إعادة المحاولة
         if ([500, 502, 503, 504, 429].includes(r.status) || /high demand|overloaded|unavailable|try again/i.test(gm)) { busy = true; continue; }
         if (r.status === 404 || /no longer available|not found|not supported/i.test(gm)) continue;
         throw new Error(last);
       }
+      if (imgQuota) throw new Error("🖼️ نماذج توليد الصور في Gemini غير مشمولة عادةً بالطبقة المجانية، ومفتاحك تجاوز/لا يملك حصة لها. الحل: فعّل الفوترة (Billing) لمشروع المفتاح في Google AI Studio، أو ولّد الصورة يدوياً بزر «نسخ البرومبت» في تطبيق Gemini ثم ارفعها بزر «لدي صورة جاهزة». (نصوص التسويق تعمل بالمجان وقد اكتملت.) " + last);
       if (!busy) break;
     }
     throw new Error(last || "لا يوجد نموذج Gemini متاح لهذا المفتاح");
