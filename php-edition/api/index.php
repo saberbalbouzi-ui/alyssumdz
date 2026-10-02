@@ -66,7 +66,9 @@ function db(): PDO {
       CREATE TABLE IF NOT EXISTS rl (k TEXT NOT NULL, t INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS rl_k ON rl(k, t);
     ");
-    if (!in_array('customer_id', array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name'), true)) $pdo->exec('ALTER TABLE orders ADD COLUMN customer_id INTEGER');   // ربط الطلب بحساب زبون
+    $ocols = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name');
+    if (!in_array('customer_id', $ocols, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN customer_id INTEGER');   // ربط الطلب بحساب زبون
+    if (!in_array('ip_hash', $ocols, true)) { $pdo->exec('ALTER TABLE orders ADD COLUMN ip_hash TEXT'); $pdo->exec('CREATE INDEX IF NOT EXISTS orders_ip ON orders(ip_hash, created_at)'); }   // بصمة IP مجزّأة
     return $pdo;
 }
 /* ── حسابات الزبائن: هاتف + كلمة سر؛ رمز جلسة عشوائي لا يُخزَّن منه إلا الـ sha256 ── */
@@ -103,6 +105,15 @@ function ydMap(string $raw): ?string {
     if (preg_match('/expedie|transfert|centre|localisation|vers wilaya|recu a wilaya|sorti en livraison|en attente du client|pret pour livreur|ramasse|en livraison/', $t)) return 'expediee';
     return null;
 }
+/* ── حماية الطلبات (إعداداتها في admin_kv: guard / guard_secret) ── */
+function kvGet(string $k) { $st = db()->prepare('SELECT v FROM admin_kv WHERE k = ?'); $st->execute([$k]); $v = $st->fetchColumn(); return $v === false ? null : json_decode((string)$v, true); }
+function guardSecret(): string {
+    $s = kvGet('guard_secret'); if (is_string($s) && $s !== '') return $s;
+    $s = bin2hex(random_bytes(24)); db()->prepare('INSERT OR IGNORE INTO admin_kv (k, v, updated) VALUES (?,?,?)')->execute(['guard_secret', json_encode($s), time()]);
+    $s2 = kvGet('guard_secret'); return is_string($s2) ? $s2 : $s;
+}
+function guardSig(string $t): string { return hash_hmac('sha256', $t, guardSecret()); }
+function ipHash(): string { return substr(hash_hmac('sha256', clientIp(), guardSecret()), 0, 24); }
 /* حدّ معدّل بسيط لكل مفتاح (IP+نوع العملية) */
 function rateLimit(string $key, int $max, int $win): void {
     $d = db(); $now = time();
@@ -275,6 +286,25 @@ switch ($route) {
         if (count($items) < 1) out(422, ['error' => 'invalid_items']);
         if ($total < 0 || $total > 10000000) out(422, ['error' => 'invalid_total']);
         $d = db();
+        /* حماية الطلبات: روبوتات وتكرار حسب IP — تُفعَّل من لوحة الإدارة ← نموذج الطلب */
+        $g = kvGet('guard') ?: []; $iph = ipHash();
+        if (!empty($g['antibot'])) {
+            if (trim((string)($o['hp'] ?? '')) !== '') out(422, ['error' => 'bot']);
+            $tk = explode('.', (string)($o['ftok'] ?? '')); $age = time() - (int)($tk[0] ?? 0);
+            if (count($tk) !== 2 || !hash_equals(guardSig($tk[0]), $tk[1]) || $age < 3 || $age > 7200) out(422, ['error' => 'bot']);
+            $pn = custPhone($phone);
+            if (!preg_match('/^0[1-9]\d{7,8}$/', $pn) || preg_match('/^0?(\d)\1{7,}$/', $pn) || !preg_match('/\pL/u', $name)) out(422, ['error' => 'invalid_phone']);
+            $c = $d->prepare('SELECT COUNT(*) FROM orders WHERE ip_hash = ? AND created_at > ?'); $c->execute([$iph, time() - 3600]);
+            if ((int)$c->fetchColumn() >= 8) out(429, ['error' => 'rate_limited']);
+        }
+        if (!empty($g['dup'])) {
+            $slugs = array_values(array_filter(array_map(fn($i) => is_array($i) ? cut($i['slug'] ?? '', 80) : '', $items)));
+            if ($slugs) {
+                $hrs = max(1, (int)($g['hours'] ?? 24));
+                $c = $d->prepare("SELECT items FROM orders WHERE ip_hash = ? AND status <> 'annulee' AND created_at > ?"); $c->execute([$iph, time() - $hrs * 3600]);
+                foreach ($c->fetchAll() as $r) foreach ((json_decode((string)$r['items'], true) ?: []) as $it) if (in_array($it['slug'] ?? '', $slugs, true)) out(409, ['error' => 'duplicate_order']);
+            }
+        }
         $st = $d->prepare('SELECT COUNT(*) FROM orders WHERE phone = ? AND created_at > ?'); $st->execute([$phone, time() - 600]);
         if ((int)$st->fetchColumn() >= 5) out(429, ['error' => 'rate_limited']);
         $lines = []; $clean = [];
@@ -295,9 +325,9 @@ switch ($route) {
         }
         $extra = is_array($o['extra'] ?? null) ? json_encode($o['extra'], JSON_UNESCAPED_UNICODE) : '{}';
         if (strlen($extra) > 4000) $extra = '{}';
-        $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra, customer_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra, customer_id, ip_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
           ->execute([$id, time(), $name, $phone, cut($o['wilaya'] ?? '', 80), cut($o['commune'] ?? '', 120), cut($o['dtype'] ?? '', 10), cut($o['desk'] ?? '', 160),
-            implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust]);
+            implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust, $iph]);
         out(200, ['ok' => true, 'id' => $id]);
 
     /* ── حسابات الزبائن («حسابي») ── */
@@ -393,6 +423,10 @@ switch ($route) {
         db()->prepare('INSERT INTO promo_codes (code, phone, type, value, min_order, expires, created) VALUES (?,?,?,?,?,?,?)')
           ->execute([$code, $ph, $type, (float)($b['value'] ?? 0), (float)($b['min_order'] ?? 0), time() + max(1, (int)($b['days'] ?? 14)) * 86400, time()]);
         out(200, ['ok' => true, 'code' => $code]);
+
+    /* رمز نموذج موقَّع: يطلبه الموقع عند فتح الصفحة، ولا يُقبل الطلب (عند تفعيل الحماية) إلا برمز عمره بين 3 ثوانٍ وساعتين */
+    case 'form_token':
+        $t = (string)time(); out(200, ['token' => $t . '.' . guardSig($t)]);
 
     /* تتبّع عام برقم التتبع: الحالة والوجهة فقط (لا اسم ولا هاتف ولا عنوان) */
     case 'track':
