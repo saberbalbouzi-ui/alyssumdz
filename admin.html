@@ -197,7 +197,7 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(200,162,75,.22
 button.small,.small{border-radius:10px;font-weight:800;letter-spacing:0;transition:filter .15s,transform .1s}
 button.small:hover{filter:brightness(1.06)}button.small:active{transform:translateY(1px)}
 .rt{border-collapse:separate;border-spacing:0 6px}.rt th{font-size:.72rem;color:#7a8580;font-weight:800;letter-spacing:.02em}
-::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#D9D1BC;border-radius:10px;border:2px solid transparent;background-clip:content-box}::-webkit-scrollbar-thumb:hover{background:#C8A24B;background-clip:content-box}
+::-webkit-scrollbar{width:21px;height:21px}::-webkit-scrollbar-thumb{background:#D9D1BC;border-radius:12px;border:1px solid transparent;background-clip:content-box}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:#E8923A;background-clip:content-box}
 
 /* الهيدر والفوتر (ChromeAdmin) */
 .ca-pv{width:100%;height:150px;border:1px solid var(--line);border-radius:12px;background:#fff}#ca-pv-footer{height:360px}.ca-pvbox{position:sticky;top:0;z-index:5}
@@ -7864,6 +7864,7 @@ const PBApp = (() => {
   let frame, fdoc, root, styleEl, built = false, raf = 0, saveT = 0;
 
   const EDIT_CSS = `
+::-webkit-scrollbar{width:21px;height:21px}::-webkit-scrollbar-thumb{background:#E8923A;border-radius:12px;border:1px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:#f3ece0}
 .pb-edit [data-pb]{cursor:pointer}
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}

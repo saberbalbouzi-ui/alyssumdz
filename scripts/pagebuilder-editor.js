@@ -10,6 +10,7 @@ const PBApp = (() => {
   let frame, fdoc, root, styleEl, built = false, raf = 0, saveT = 0;
 
   const EDIT_CSS = `
+::-webkit-scrollbar{width:21px;height:21px}::-webkit-scrollbar-thumb{background:#E8923A;border-radius:12px;border:1px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:#f3ece0}
 .pb-edit [data-pb]{cursor:pointer}
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
