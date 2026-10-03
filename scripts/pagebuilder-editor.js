@@ -274,6 +274,7 @@ body{overflow-x:hidden;margin:0}`;
     styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || ""));
     root.innerHTML = localize(r.html);
     fixCountdown();
+    if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
     fitStage(); positionOverlay();
   }
@@ -1052,7 +1053,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       try { await slim(true); } catch (e) { }                                                         // تخفيف تلقائي للصور الثقيلة فقط (>450KB)
       if (E.upq) await E.upq;
       P = E.page;
-      if (mode === "direct") { await PBConvert.saveDirect(P, siteCtx()); E.dirty = false; try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); return; }
+      if (mode === "direct") { await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); return; }
       const html = PB.fullHtml(P, Object.assign({ base: "../../" }, siteCtx()));
       await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);
       await putJson("assets/pages/" + slug + ".json", P, "مصدر صفحة هبوط: " + slug);
@@ -1060,6 +1061,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       const th = (JSON.stringify(P).match(/(?:assets\/img\/[^"\\\s]+?\.(?:webp|jpe?g|png))/i) || [])[0] || "", row = { slug, thumb: th, title: P.title, updated: new Date().toISOString().slice(0, 16).replace("T", " "), live: true };
       const i = idx.findIndex(x => x.slug === slug); if (i >= 0) idx[i] = row; else idx.push(row);
       await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط");
+      if (typeof PBBind !== "undefined") await PBBind.commit();
       E.isNew = false; E.dirty = false; try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
       toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)");
     } catch (err) { console.error(err); toast("❌ " + err.message); }
