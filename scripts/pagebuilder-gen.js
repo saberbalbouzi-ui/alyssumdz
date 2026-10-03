@@ -617,7 +617,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
         const N = imgCfg().parts, blobs = []; let prev = null;
         for (let k = 1; k <= N; k++) { msg.textContent = "🎨 (" + (2 + k) + "/" + (N + 2) + ") توليد الجزء " + k + " من " + N + (S.model ? " — " + S.model : "") + " (قد يستغرق دقيقة)…"; const bl = await (PBGen.imgFn || genPart)(key, full + SPLIT(k, N, ["1:4", "1:8"].includes(imgCfg().ar) ? "9:16" : imgCfg().ar), pb, prev); blobs.push(bl); prev = PBGen.imgFn ? null : await small64(bl, 900); }
         msg.textContent = "🧩 دمج الأجزاء…"; canvas = await stackParts(blobs); blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-      } S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name);
+      } S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name); saveOriginalToSite(blob, S.name);
       await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.model ? " بنموذج " + S.model : "") + " (" + canvas.width + "×" + canvas.height + ")" + " — راجعها ثم اعتمدها للتقسيم";
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
@@ -627,6 +627,13 @@ Before rendering, internally verify every text element: no duplicated sentences,
   const idb = (mode, fn) => new Promise((res, rej) => { try { const rq = indexedDB.open("pbgen", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("kv"); rq.onerror = () => rej(rq.error); rq.onsuccess = () => { const db = rq.result, tx = db.transaction("kv", mode), r = fn(tx.objectStore("kv")); tx.oncomplete = () => { res(r && r.result); db.close(); }; tx.onerror = () => rej(tx.error); }; } catch (e) { rej(e); } });
   const saveLast = (blob, name) => idb("readwrite", st => st.put({ blob, name, t: Date.now() }, "last")).catch(() => { });
   const loadLast = () => idb("readonly", st => st.get("last")).catch(() => null);
+  /* حفظ تلقائي للصورة المولّدة في مكتبة الموقع (assets/img/pages) فلا تضيع حتى لو تغيّر المتصفح */
+  async function saveOriginalToSite(blob, name) {
+    try {
+      if (typeof PBApp === "undefined" || !PBApp.uploadBlob) return; const path = await PBApp.uploadBlob(blob, "orig-" + Date.now().toString(36), { max: 3200, q: .92 });
+      S.savedPath = path; const el = $("gen-automsg"); if (el) el.dataset.saved = path; toast("💾 حُفظت الصورة تلقائياً في مكتبة الصور: " + path); const rec = await loadLast(); if (rec) idb("readwrite", st => st.put(Object.assign(rec, { path }), "last")).catch(() => { });
+    } catch (e) { }
+  }
   function downloadOrig() {
     const b = S.blob; if (!b) return toast("لا توجد صورة بعد");
     const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "landing-original-" + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "") + "." + (/jpe?g/.test(b.type) ? "jpg" : /webp/.test(b.type) ? "webp" : "png"); document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
@@ -666,6 +673,12 @@ Before rendering, internally verify every text element: no duplicated sentences,
       document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up);
     };
   }
+  /* تدرّج رأسي من لون حواف الصورة (يمين/يسار) ليكون خلفية الصفحة خلف الصورة العريضة */
+  function edgeGradient(cv) {
+    try { const n = 40, W = cv.width, H = cv.height, g = cv.getContext("2d", { willReadFrequently: true }), stops = [];
+      for (let i = 0; i < n; i++) { const y = Math.min(H - 1, Math.round((i + .5) * H / n)), a = g.getImageData(0, y, 4, 1).data, b = g.getImageData(W - 4, y, 4, 1).data; let r = 0, gg = 0, bb = 0; for (let k = 0; k < 4; k++) { r += a[k * 4] + b[k * 4]; gg += a[k * 4 + 1] + b[k * 4 + 1]; bb += a[k * 4 + 2] + b[k * 4 + 2]; } stops.push(`rgb(${Math.round(r / 8)},${Math.round(gg / 8)},${Math.round(bb / 8)}) ${Math.round(i * 100 / (n - 1))}%`); }
+      return `\n.pb-page{background:linear-gradient(180deg,${stops.join(",")})}`; } catch (e) { return ""; }
+  }
   async function run() {
     if (!S.canvas) return; const msg = $("gen-msg"), btn = $("gen-go"); btn.disabled = true;
     const upload = async (blob, name) => {
@@ -676,7 +689,8 @@ Before rendering, internally verify every text element: no duplicated sentences,
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;
       if (S.convertText && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Gemini أو اختر Tesseract"; btn.disabled = false; return; }
       try { if (gk) localStorage.setItem("alyssum_gp_gkey", gk); if (rb) localStorage.setItem("alyssum_removebg_key", rb); } catch (e) { }
-      const page = await convert({ canvas: S.canvas, cuts: S.cuts, regions: S.convertText ? S.regions : [], intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: !!S.convertText && $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: !!S.convertText && $("gen-ocr").checked, tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
+      const page = await convert({ dw: 1100, canvas: S.canvas, cuts: S.cuts, regions: S.convertText ? S.regions : [], intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: !!S.convertText && $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: !!S.convertText && $("gen-ocr").checked, tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
+      page.css = (page.css || "") + edgeGradient(S.canvas);        // خلفية الصفحة تمتد بنفس تدرّج حواف الصورة فلا تظهر هوامش بيضاء
       page.slug = ($("gen-title").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "lp-" + Date.now().toString(36).slice(-4);
       const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + (S.convertText ? st.ok + " نصاً صار قابلاً للتعديل" : "الأقسام جاهزة") + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Gemini أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; PBApp.open(page, "", true);
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
