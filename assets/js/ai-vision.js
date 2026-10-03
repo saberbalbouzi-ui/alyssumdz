@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=4", BASE).href;
   const SAMSZ = 1024, DETSZ = 960, W8 = {};
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -138,19 +138,40 @@ window.AIVision = (function () {
     /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
     let localErr = null, gem = [], src = "local", note = ""; const pLoc = localDetect(cv, prog("det")).catch(e => { localErr = e; return []; });
     if (o.key) { try { step("⏳ Gemini يتعرّف على العناصر…"); gem = await geminiDetect(cv, o.key); src = "gemini"; } catch (e) { note = e.message; } }
-    const loc = await pLoc; if (!gem.length && !loc.length && localErr) throw localErr;
+    const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label)); if (!gem.length && !loc.length && localErr) throw localErr;
     const dets = gem.concat(loc.filter(d => !gem.some(g => iou(g.box, d.box) > .5)).map(d => gem.length ? Object.assign(d, { score: d.score * .7 }) : d));
     step("⏳ تحليل الصورة…"); const S = await pS, items = [];
     for (let i = 0; i < dets.length; i++) {
       step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…"); const d = dets[i], m = await maskFor(S, { box: d.box }); if (!m.area) continue;
       items.push(Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src }));
     }
-    const out = mergeItems(items, S); out.forEach((it, i) => { it.id = i; fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets };
+    const out = mergeItems(items, S);
+    await heldItems(S, out, step);
+    out.forEach((it, i) => { it.id = i; fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets };
   }
   /* دمج عناصر يختارها المستخدم في عنصر واحد (يأخذ اسم أكبرها) */
   function joinItems(S, items, list) {
     const a = list.slice().sort((p, q) => q.area - p.area)[0], lb = a.label; list.forEach(b => { if (b === a) return; unite(a, b, S); const i = items.indexOf(b); if (i >= 0) items.splice(i, 1); });
     a.label = lb; a.manual = true; a.v = null; return a;
+  }
+  /* احتياط: ما يمسكه شخص أو يقف أمامه (منتج في اليد) ولم يكشفه الكاشف = فراغ محاط بقناع الشخص ← نقرة SAM عنده تعطي العنصر */
+  async function heldItems(S, out, step) {
+    const { lw, lh } = S, N = lw * lh, any = new Uint8Array(N); out.forEach(o => { for (let i = 0; i < N; i++) if (o.lo[i] > 0) any[i] = 1; });
+    for (const P of out.filter(o => PERSON.test(o.label)).slice(0, 3)) {
+      const bx0 = Math.floor(P.x0 * S.fx), by0 = Math.floor(P.y0 * S.fy), bx1 = Math.ceil(P.x1 * S.fx), by1 = Math.ceil(P.y1 * S.fy), st = Math.max(3, Math.round(Math.min(bx1 - bx0, by1 - by0) / 9)), R = Math.max(4, st), seeds = [];
+      const inP = (x, y) => x >= 0 && y >= 0 && x < lw && y < lh && P.lo[y * lw + x] > 0;
+      for (let y = by0 + st; y < by1 - st / 2; y += st) for (let x = bx0 + st; x < bx1 - st / 2; x += st) { if (any[y * lw + x]) continue;
+        let sides = 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { for (let r = 1; r <= R * 3; r++) if (inP(x + dx * r, y + dy * r)) { sides++; break; } } if (sides >= 3) seeds.push([x, y]); }
+      for (const [x, y] of seeds.slice(0, 8)) {
+        if (any[y * lw + x]) continue; step("⏳ البحث عمّا في اليد…");
+        const m = await maskFor(S, { pts: [[(x + .5) / S.fx, (y + .5) / S.fy, 1]] }); if (!m.area || m.score < .6) continue;
+        const fr = m.area / N; let ov = 0; for (let i = 0; i < N; i++) if (m.lo[i] > 0 && any[i]) ov++;
+        if (fr < .002 || fr > .2 || ov / m.area > .3 || m.area > P.area * .6) continue;
+        let ring = 0, rp = 0; for (let yy = 0; yy < lh; yy++) for (let xx = 0; xx < lw; xx++) { const i = yy * lw + xx; if (m.lo[i] > 0) continue; let nb = false; for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) { const q = (yy + dy) * lw + xx + dx; if (xx + dx >= 0 && xx + dx < lw && yy + dy >= 0 && yy + dy < lh && m.lo[q] > 0) { nb = true; break; } } if (nb) { ring++; if (P.lo[i] > 0) rp++; } }
+        if (!ring || rp / ring < .5) continue;                       // محاط بالشخص من أغلب الجهات (في يده/أمامه)، لا شيء في الخلفية بجانبه
+        carve(P, m, S); m.label = "عنصر"; m.det = .5; m.held = true; out.push(m); for (let i = 0; i < N; i++) if (m.lo[i] > 0) any[i] = 1;
+      }
+    }
   }
   /* عنصر يضيفه المستخدم: نقرة (pts) أو مستطيل (box) */
   async function addItem(S, p, items) {
