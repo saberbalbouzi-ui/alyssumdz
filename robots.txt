@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /editor/
 
 Sitemap: https://alyssumdz.com/sitemap.xml

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>محرر التصميم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&family=Almarai:wght@400;700;800&family=Inter:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="stylesheet" href="editor.css">
+</head>
+<body>
+<header id="top">
+  <b class="logo">🎨 محرر أليسوم</b>
+  <div class="grp">
+    <button id="b-new" title="تصميم جديد">جديد</button>
+    <button id="b-open" title="فتح ملف تصميم">فتح</button>
+    <button id="b-save" title="حفظ كملف JSON (Ctrl+S)">حفظ</button>
+  </div>
+  <div class="grp">
+    <button id="b-undo" title="تراجع (Ctrl+Z)">↶</button>
+    <button id="b-redo" title="إعادة (Ctrl+Shift+Z)">↷</button>
+  </div>
+  <div class="grp">
+    <button id="b-zout" title="تصغير">−</button><span id="zoomlbl">100%</span><button id="b-zin" title="تكبير">+</button><button id="b-fit" title="ملاءمة العرض">ملاءمة</button>
+  </div>
+  <div class="grp sp">
+    <button id="b-prev">معاينة</button>
+    <button id="b-png">PNG</button><button id="b-jpg">JPEG</button>
+  </div>
+  <span id="savestate" class="muted">—</span>
+</header>
+<main id="work">
+  <aside id="tools">
+    <button class="tool on" data-tool="select" title="تحديد">⬚<small>تحديد</small></button>
+    <button class="tool" data-tool="text" title="نص">T<small>نص</small></button>
+    <button class="tool" data-tool="image" title="صورة / رفع">🖼<small>صورة</small></button>
+    <div class="menu"><button class="tool" data-menu="shape" title="أشكال">◼<small>شكل</small></button>
+      <div class="pop" id="pop-shape"><button data-shape="rect">▭ مستطيل</button><button data-shape="rounded">▢ مدوّر</button><button data-shape="circle">● دائرة</button><button data-shape="triangle">▲ مثلث</button><button data-shape="line">— خط</button><button data-shape="star">★ نجمة</button></div></div>
+    <div class="menu"><button class="tool" data-menu="icon" title="أيقونات">✦<small>أيقونة</small></button>
+      <div class="pop" id="pop-icon"></div></div>
+    <button class="tool" data-tool="button" title="زر دعوة للشراء">▬<small>زر</small></button>
+    <hr>
+    <button class="tool" id="t-dup" title="تكرار (Ctrl+D)">⧉<small>تكرار</small></button>
+    <button class="tool" id="t-del" title="حذف (Delete)">🗑<small>حذف</small></button>
+    <hr>
+    <button class="tool ai" id="t-decomp" disabled title="المرحلة 3 — قريباً">✨<small>تفكيك</small></button>
+  </aside>
+  <section id="stage"><div id="paper"><canvas id="cv"></canvas></div></section>
+  <aside id="side">
+    <div id="props" class="panel"></div>
+    <div class="panel layers"><div class="ph">الطبقات <span id="lcount"></span></div><div id="layers"></div></div>
+  </aside>
+</main>
+<input type="file" id="f-img" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" hidden>
+<input type="file" id="f-rep" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+<input type="file" id="f-open" accept=".json,application/json" hidden>
+<div id="toast"></div>
+<script src="vendor/fabric.min.js"></script>
+<script src="core/canvas.js"></script>
+<script src="core/layers.js"></script>
+<script src="core/history.js"></script>
+<script src="core/serializer.js"></script>
+<script src="core/selection.js"></script>
+<script src="core/exporter.js"></script>
+<script src="ui/dialogs.js"></script>
+<script src="ui/layers-panel.js"></script>
+<script src="ui/properties-panel.js"></script>
+<script src="ui/toolbar.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>
