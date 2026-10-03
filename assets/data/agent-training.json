@@ -1,1 +1,16 @@
-{"version":1,"scopes":{}}
+{
+  "version": 1,
+  "scopes": {
+    "home": {
+      "enabled": true,
+      "useContent": true,
+      "name": "",
+      "greeting": "",
+      "keywords": "",
+      "qa": []
+    }
+  },
+  "display": {
+    "mode": "avatar"
+  }
+}
