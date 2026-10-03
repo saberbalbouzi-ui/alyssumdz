@@ -113,7 +113,7 @@ const Cart = {
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : undefined,
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record);
@@ -843,7 +843,7 @@ function initProduct(slug){
       items: orderItems(),
       subtotal: state.offer.price, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: couponGiftTitle() ? Object.assign({ "🎁 هدية": couponGiftTitle() }, extraValues) : extraValues,
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record);
@@ -895,8 +895,21 @@ function isOutOfStock(p){
   if(t==="grouped"){ const cs = groupChildren(p); return !cs.length || cs.every(isOutOfStock); }
   return p.stock!==undefined && p.stock!==null && Number(p.stock)<=0;
 }
-/* رابط المنتج في البطاقات: صفحة «المسار» المختارة للمنتج (صفحة هبوط) إن وُجدت، وإلا صفحته الرسمية */
-function productHref(p){ return REL + (p.route ? "lp/" + p.route + "/" : "p/" + p.slug + "/"); }
+/* مصدر الطلب (أي صفحة جاء منها): من ?src= أو ?utm_content= ويُحفظ للجلسة؛ يُسجَّل في حقل «📄 الصفحة» داخل extra لمقارنة صفحات المنتج في الإحصاءات */
+const PageSrc = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("src") || q.get("utm_content"); if(s) sessionStorage.setItem("alyssum_src", s); return sessionStorage.getItem("alyssum_src") || ""; }catch(e){ return ""; } })();
+/* رابط المنتج في البطاقات: صفحة «المسار» المختارة (صفحة هبوط) إن وُجدت وإلا صفحته الرسمية؛ ومع اختبار A/B (p.ab = {b, pct}) يُوزَّع الزوار على النسختين بنسبة pct% للثانية ويثبت اختيار كل زائر؛ ويُضاف رمز تتبع UTM */
+function productHref(p){
+  let page = p.route || "", v = "";
+  if(p.ab && p.ab.b){
+    const k = "alyssum_ab_" + p.slug; let g = "";
+    try{ g = localStorage.getItem(k) || ""; }catch(e){}
+    if(g !== "A" && g !== "B"){ g = Math.random()*100 < (Number(p.ab.pct)||50) ? "B" : "A"; try{ localStorage.setItem(k, g); }catch(e){} }
+    if(g === "B") page = p.ab.b;
+    v = g;
+  }
+  const src = page ? "lp/" + page : "p/" + p.slug;
+  return REL + src + "/?utm_source=home&utm_medium=product-card&utm_campaign=" + encodeURIComponent(p.slug) + "&utm_content=" + encodeURIComponent(src) + (v ? "&ab=" + v : "");
+}
 function productCardHTML(p, opts){
   opts = opts || {};
   const ptype = productType(p), disc = (ptype==="simple" && p.old) ? Math.round((1-p.price/p.old)*100) : 0;
