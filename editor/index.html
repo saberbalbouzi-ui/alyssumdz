@@ -25,6 +25,7 @@
   <div class="grp">
     <button id="b-zout" title="تصغير">−</button><span id="zoomlbl">100%</span><button id="b-zin" title="تكبير">+</button><button id="b-fit" title="ملاءمة العرض">ملاءمة</button>
   </div>
+  <div class="grp"><button id="b-cloud" title="مشاريعي في السحابة">☁ المشاريع</button><button id="b-csave" title="حفظ نسخة في السحابة">☁ حفظ</button><button id="b-cver" title="نسخ المشروع">النسخ</button><span id="projname" class="muted"></span></div>
   <div class="grp sp">
     <button id="b-prev">معاينة</button>
     <button id="b-png">PNG</button><button id="b-jpg">JPEG</button>
@@ -57,6 +58,7 @@
 <input type="file" id="f-rep" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
 <input type="file" id="f-open" accept=".json,application/json" hidden>
 <div id="toast"></div>
+<script src="../assets/js/config.js"></script>
 <script src="vendor/fabric.min.js"></script>
 <script src="core/canvas.js"></script>
 <script src="core/layers.js"></script>
@@ -64,10 +66,12 @@
 <script src="core/serializer.js"></script>
 <script src="core/selection.js"></script>
 <script src="core/exporter.js"></script>
+<script src="core/cloud.js"></script>
 <script src="ui/dialogs.js"></script>
 <script src="ui/layers-panel.js"></script>
 <script src="ui/properties-panel.js"></script>
 <script src="ui/toolbar.js"></script>
+<script src="ui/cloud-ui.js"></script>
 <script src="editor.js"></script>
 </body>
 </html>
