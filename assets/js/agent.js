@@ -666,7 +666,7 @@ const Agent = (() => {
   const Avatar = (() => {
     const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} return null; };
     const DEF_VOICE = "21m00Tcm4TlvDq8ikWAM";
-    let root, bubble, token = 0, speaking = false, muted = LS("alyssum_av_mute") === "1", ctx = null, analyser = null, buf = null, curAudio = null, pulse = 0, mouth = 0, manifest = null, lastChips = null;
+    let noVoice = false, root, bubble, token = 0, speaking = false, muted = LS("alyssum_av_mute") === "1", ctx = null, analyser = null, buf = null, curAudio = null, pulse = 0, mouth = 0, manifest = null, lastChips = null;
     const clean = s => (window.AvatarScript ? AvatarScript.clean(s) : String(s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
     const css = `#agent-avatar{position:fixed;right:14px;bottom:92px;z-index:72;font-family:inherit;direction:rtl}
 #agent-avatar .av-btn{width:78px;height:78px;border-radius:50%;border:2px solid var(--gold,#c8a24b);background:#f7f4ed;padding:0;cursor:pointer;box-shadow:0 10px 26px rgba(23,63,53,.35);overflow:hidden;display:block;position:relative}
@@ -735,12 +735,20 @@ const Agent = (() => {
       const url = URL.createObjectURL(await r.blob()); if (tk !== token) { URL.revokeObjectURL(url); return true; }
       try { return await playUrl(url, tk); } finally { URL.revokeObjectURL(url); }
     }
-    function playSpeech(text, l) {
+    function voicesReady() {                           // Chrome يحمّل الأصوات متأخراً: ننتظر حتى ثانية
+      return new Promise(res => { try { if ((speechSynthesis.getVoices() || []).length) return res(); const t = setTimeout(res, 1000); speechSynthesis.addEventListener("voiceschanged", () => { clearTimeout(t); res(); }, { once: true }); } catch (e) { res(); } });
+    }
+    async function playSpeech(text, l) {                // يجرّب صوتاً عربياً، وإلا يترك المتصفح يختار صوت اللغة؛ يعيد false إن لم يُسمع شيء
+      if (!("speechSynthesis" in window)) return false;
+      await voicesReady();
+      const v = pickVoice(l);
       return new Promise(res => {
-        const v = pickVoice(l); if (!v || !("speechSynthesis" in window)) return res(false);
-        const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = 0.95; u.pitch = 1.05;
-        u.onboundary = () => { pulse = performance.now(); }; u.onend = () => res(true); u.onerror = () => res(true);
-        try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { res(false); }
+        const u = new SpeechSynthesisUtterance(text); if (v) u.voice = v; u.lang = v ? v.lang : (l === "fr" ? "fr-FR" : "ar-SA"); u.rate = 0.95; u.pitch = 1.05;
+        let started = false; const guard = setTimeout(() => { if (!started) { try { speechSynthesis.cancel(); } catch (e) {} res(false); } }, 2500);
+        u.onstart = () => { started = true; clearTimeout(guard); };
+        u.onboundary = () => { pulse = performance.now(); started = true; };
+        u.onend = () => { clearTimeout(guard); res(started); }; u.onerror = () => { clearTimeout(guard); res(false); };
+        try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { clearTimeout(guard); res(false); }
       });
     }
     const silent = text => new Promise(res => setTimeout(res, Math.min(9000, 1400 + text.length * 55)));
@@ -776,7 +784,7 @@ const Agent = (() => {
       let ok = false;
       if (file) { try { ok = await playUrl(file, tk); } catch (e) {} }
       if (!ok && key && tk === token) { try { ok = await playEleven(text, key, tk); } catch (e) {} }
-      if (!ok && tk === token) ok = await playSpeech(text, l);
+      if (!ok && tk === token && !noVoice) { ok = await playSpeech(text, l); if (!ok) noVoice = true; }
       if (!ok && tk === token) await silent(text);
     }
     async function start() {
@@ -788,7 +796,7 @@ const Agent = (() => {
       const rec = mf && mf.items && mf.items[scopeKey()], useRec = rec && rec.lang === l && rec.lines && rec.files && rec.lines.length === rec.files.length;
       const b = useRec ? { lines: rec.lines, cta: rec.lines.length - 1 } : AvatarScript.build({ product: currentProduct(), scope: sc, lang: l, siteName: SITE_NAME, h1: (document.querySelector("h1") || {}).textContent, products: window.PRODUCTS });
       let note = "";
-      if (!muted && !useRec && !(LS("alyssum_el_key") || "").trim() && !pickVoice(l)) note = l === "fr" ? "(Pas de voix dans ce navigateur — lisez le texte.) " : "(لا يوجد صوت عربي في متصفحك — اقرأ النص مكتوباً.) ";
+      noVoice = false;
       speaking = true; root.classList.add("talk");
       for (let i = 0; i < b.lines.length; i++) {
         if (tk !== token) return; show(b.lines[i]);
@@ -797,6 +805,7 @@ const Agent = (() => {
       }
       if (tk !== token) return;
       speaking = false; root.classList.remove("talk");
+      if (noVoice && !muted) note = l === "fr" ? "(Aucune voix disponible dans ce navigateur — le texte est affiché.) " : "(متصفحك لا يملك صوتاً عربياً، فعُرض النص مكتوباً. جرّب متصفح Chrome على الجوال.) ";
       show(note + (l === "fr" ? "Une question ? Écrivez-la ci-dessous." : "هل لديك سؤال؟ اكتبه لي في الأسفل وسأجيبك."));
       const q = defaultQuestions(l).slice(0, 3); const box = bubble.querySelector(".av-chips");
       q.forEach(t => { const bt = document.createElement("button"); bt.type = "button"; bt.textContent = t; bt.onclick = () => ask(t); box.appendChild(bt); });
