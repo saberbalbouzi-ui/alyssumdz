@@ -21,8 +21,17 @@ function getMigan(id) {
 }
 const prog = id => p => { if (p && p.status === "progress" && p.total) postMessage({ id, progress: { file: String(p.file || ""), loaded: p.loaded || 0, total: p.total } }); };
 const raw = a => new T.RawImage(new Uint8ClampedArray(a.data), a.w, a.h, 4);
-function getSam(id) { if (!sam) sam = Promise.all([T.Sam2Model.from_pretrained(M.sam, { dtype: "int8", progress_callback: prog(id) }), T.AutoProcessor.from_pretrained(M.sam)]).catch(e => { sam = null; throw e; }); return sam; }
-function getDet(k, id) { if (!dets[k]) dets[k] = T.pipeline("object-detection", M[k], { dtype: "int8", progress_callback: prog(id) }).catch(e => { dets[k] = null; throw e; }); return dets[k]; }
+/* كرت الشاشة (WebGPU) إن توفّر: نسخة q4f16 أصغر وأسرع بكثير؛ وإلا المعالج (WASM int8). أي فشل ← رجوع تلقائي للمعالج */
+let gpuOk = null, dev = "wasm";
+let f16 = false;
+async function hasGPU() { if (gpuOk !== null) return gpuOk; try { const ad = self.navigator && navigator.gpu && await navigator.gpu.requestAdapter(); const inf = (ad && ad.info) || {}; gpuOk = !!ad && !ad.isFallbackAdapter && !/swiftshader|llvmpipe|software/i.test((inf.vendor || "") + " " + (inf.architecture || "") + " " + (inf.description || "")); f16 = !!(ad && ad.features && ad.features.has("shader-f16")); } catch (e) { gpuOk = false; } return gpuOk; }
+function loadSam(id, gpu) { return Promise.all([T.Sam2Model.from_pretrained(M.sam, gpu ? { device: "webgpu", dtype: f16 ? "q4f16" : "q4", progress_callback: prog(id) } : { device: "wasm", dtype: "int8", progress_callback: prog(id) }), T.AutoProcessor.from_pretrained(M.sam)]); }
+function getSam(id, noGpu) {
+  if (!sam) sam = (async () => { if (!noGpu && await hasGPU()) { try { const r = await loadSam(id, true); dev = "webgpu"; return r; } catch (e) { console.warn("webgpu → wasm", e); gpuOk = false; } } dev = "wasm"; return loadSam(id, false); })().catch(e => { sam = null; throw e; });
+  return sam;
+}
+const finite = t => { const d = t.data; for (let i = 0; i < Math.min(d.length, 4096); i += 7) if (!Number.isFinite(d[i])) return false; return true; };
+function getDet(k, id) { if (!dets[k]) dets[k] = T.pipeline("object-detection", M[k], { device: "wasm", dtype: "int8", progress_callback: prog(id) }).catch(e => { dets[k] = null; throw e; }); return dets[k]; }
 const ops = {
   async load(a, id) { if (a.sam) await getSam(id); for (const k of a.det || []) await getDet(k, id); return true; },
   /* كشف: [{src, label, score, box:[x0,y0,x1,y1]}] بإحداثيات الصورة المُرسلة */
@@ -40,7 +49,12 @@ const ops = {
     return { masks: out };
   },
   /* ترميز الصورة مرة واحدة (أثقل خطوة)، ثم كل نقرة/صندوق سريع */
-  async embed(a, id) { const [m, p] = await getSam(id), inp = await p(raw(a)), emb = await m.get_image_embeddings(inp); cur = { m, emb, W: a.w, H: a.h, rs: inp.reshaped_input_sizes[0] }; return { rs: cur.rs }; },
+  async embed(a, id) {
+    let [m, p] = await getSam(id), inp = await p(raw(a)), emb = null;
+    try { emb = await m.get_image_embeddings(inp); if (dev === "webgpu" && !Object.values(emb).every(finite)) throw new Error("nan"); }
+    catch (e) { if (dev !== "webgpu") throw e; console.warn("webgpu embed → wasm", e); sam = null; gpuOk = false; [m, p] = await getSam(id, true); inp = await p(raw(a)); emb = await m.get_image_embeddings(inp); }      // كرت الشاشة فشل ← المعالج
+    cur = { m, emb, W: a.w, H: a.h, rs: inp.reshaped_input_sizes[0] }; return { rs: cur.rs, dev };
+  },
   /* قناع لصندوق و/أو نقاط [x,y,label(1 داخل، 0 خارج)] ← 3 أقنعة منخفضة الدقة (logits) + درجاتها */
   async prompt(a) {
     if (!cur) throw new Error("no-image"); const { m, emb, W, H, rs } = cur, sx = rs[1] / W, sy = rs[0] / H, inp = {};
