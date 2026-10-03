@@ -7211,6 +7211,12 @@ const PB = (() => {
     else if (kind === "line") { const [x1, y1, x2, y2] = sh[2].split(","); el = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${attrs.replace(/fill="[^"]*"/, 'fill="none"')} vector-effect="non-scaling-stroke"/>`; }
     else if (kind === "stroke") el = `<path d="${sh[2]}"${attrs.replace(/fill="[^"]*"/, 'fill="none"')}/>`;
     else el = `<path d="${sh[2]}"${attrs}/>`;
+    if (s.sym) {                                                                                                  // التناظر: نسخ مصغّرة مرآوية أو دوّارة
+      const mk = t => `<g transform="${t}">${el}</g>`, n = { r4: 4, r6: 6, r8: 8 }[s.sym];
+      if (s.sym === "h") el = mk("scale(.5 1)") + mk("translate(100 0) scale(-.5 1)"); else if (s.sym === "v") el = mk("scale(1 .5)") + mk("translate(0 100) scale(1 -.5)");
+      else if (s.sym === "hv") el = mk("scale(.5 .5)") + mk("translate(100 0) scale(-.5 .5)") + mk("translate(0 100) scale(.5 -.5)") + mk("translate(100 100) scale(-.5 -.5)");
+      else if (n) { let o = ""; for (let i = 0; i < n; i++) o += mk(`rotate(${Math.round(360 / n * i * 100) / 100} 50 50) translate(27.5 0) scale(.45)`); el = o; }
+    }
     return `<svg class="pb-svg" viewBox="0 0 100 100" preserveAspectRatio="${st ? "none" : "xMidYMid meet"}" aria-hidden="true">${defs ? "<defs>" + defs + "</defs>" : ""}${el}</svg>`;
   }
   /* ═════════════════ تعريف العناصر (Widgets) ═════════════════ */
@@ -7238,6 +7244,7 @@ const PB = (() => {
     ["الجزائر والمناسبات", "🇩🇿 🕌 ☪️ 🕋 📿 🤲 🌙 ⭐ 🏠 🏡 👨‍👩‍👧 👶 🎓 💍 🎂 🍰 🎈".split(" ")],
   ];
   const BMARKS = [["disc", "● نقطة"], ["circle", "○ دائرة"], ["square", "■ مربع"], ["check", "✔ علامة صح"], ["checkbox", "☑ مربع صح"], ["arrow", "◀ سهم"], ["chev", "‹ سهم صغير"], ["star", "★ نجمة"], ["diamond", "◆ معين"], ["dash", "– شرطة"], ["heart", "❤ قلب"], ["leaf", "🌿 ورقة"], ["dec", "1. أرقام"], ["ar", "١. أرقام عربية"], ["alpha", "a. حروف لاتينية"], ["roman", "i. أرقام رومانية"], ["custom", "✎ رمز مخصص"]];
+  const BANIMS = [["", "بدون"], ["pulse", "نبض"], ["bounce", "قفز"], ["shake", "اهتزاز"], ["wobble", "تمايل"], ["float", "طفو"], ["heart", "نبضة قلب"], ["tada", "تادا"], ["jelly", "جيلي"]];
   const IANIMS = [["", "بدون"], ["zin", "تقريب للأمام (Zoom In)"], ["zout", "ابتعاد للخلف (Zoom Out)"], ["pulse", "نبض (تقريب وابتعاد)"], ["kb", "كين بيرنز (تقريب مع انزياح)"], ["float", "طفو للأعلى والأسفل"], ["sway", "تأرجح"], ["spin", "دوران مستمر"], ["blink", "وميض"], ["shake", "اهتزاز"]];
   /* حركة الصورة: الحاوية تقصّ التكبير (overflow) والصورة نفسها تتحرك */
   function imgAnim(c, sel, s) {
@@ -7270,9 +7277,39 @@ const PB = (() => {
     button: {
       label: "زر", ic: "🔘", fit: 1, def: { text: "اطلب الآن", kind: "link", link: "#", bgc: "#157a55", color: "#ffffff", hbg: "#0f5a3e", fs: { d: 18 }, fw: "800", brad: { d: 12 }, bpad: { d: [14, 32, 14, 32] }, al: { d: "center" } },
       ctl: [{ k: "text", l: "نص الزر", t: "text", tab: "c" }, { k: "kind", l: "نوع الزر", t: "select", o: [["link", "رابط"], ["whatsapp", "واتساب"], ["call", "اتصال هاتفي"]], tab: "c" }, { k: "link", l: "الرابط", t: "text", tab: "c" }, { k: "phone", l: "رقم (واتساب/اتصال) بصيغة دولية", t: "text", tab: "c" }, { k: "msg", l: "رسالة واتساب", t: "text", tab: "c" }, { k: "newTab", l: "فتح في تبويب جديد", t: "switch", tab: "c" },
-        { k: "bgc", l: "لون الزر", t: "color", tab: "s" }, { k: "bgr", l: "تدرّج الزر (degradé)", t: "grad", tab: "s" }, { k: "hbg", l: "لون الخلفية عند المرور", t: "color", tab: "s" }, { k: "color", l: "لون النص", t: "color", tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 60, tab: "s" }, { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" }, { k: "bpad", l: "حشو الزر", t: "dims", r: 1, tab: "s" }, { k: "brad", l: "تدوير زوايا الزر (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }, { k: "full", l: "عرض كامل", t: "switch", r: 1, tab: "s" }],
-      html: (s, id, ctx) => { let href = s.link || "#", ex = ""; if (s.kind === "whatsapp") href = "https://wa.me/" + String(s.phone || ctx.wa || "").replace(/\D/g, "") + (s.msg ? "?text=" + encodeURIComponent(s.msg) : ""); else if (s.kind === "call") href = "tel:" + String(s.phone || "").replace(/[^\d+]/g, ""); if (s.newTab || s.kind === "whatsapp") ex = ' target="_blank" rel="noopener"'; return `<a class="pb-btn" href="${esc(href)}"${ex}><span data-edit="text">${esc(s.text)}</span></a>`; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-btn", s, [["bgc", raw("background")], ["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["bpad", v => dimsDecl("padding", v)], ["brad", px("border-radius")], ["full", v => v ? "display:block;width:100%;" : "display:inline-block;width:auto;"]]); const bg = gradCss(s.bgr); if (bg) c.d.push(`${sel} .pb-btn{background-image:${bg}}`); if (s.hbg) c.d.push(`${sel} .pb-btn:hover{background:${s.hbg}!important${bg ? ";background-image:none!important" : ""}}`); },
+        { k: "bgc", l: "لون الزر", t: "color", tab: "s" }, { k: "bgr", l: "تدرّج الزر (degradé)", t: "grad", tab: "s" }, { k: "hbg", l: "لون الخلفية عند المرور", t: "color", tab: "s" }, { k: "color", l: "لون النص", t: "color", tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 60, tab: "s" }, { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" }, { k: "bpad", l: "حشو الزر", t: "dims", r: 1, tab: "s" }, { k: "brad", l: "تدوير زوايا الزر (px)", t: "num", r: 1, min: 0, max: 100, tab: "s" }, { k: "full", l: "عرض كامل", t: "switch", r: 1, tab: "s" },
+        { k: "bgHide", l: "إخفاء خلفية الزر (شفاف — يبقى النص والإطار)", t: "switch", tab: "s" }, { k: "bgOp", l: "شفافية خلفية الزر (0 شفاف — 1 معتم) — للون الواحد", t: "num", min: 0, max: 1, step: .05, tab: "s" }, { k: "bblur", l: "حجب ما خلف الزر: تمويه زجاجي (px)", t: "num", min: 0, max: 40, tab: "s" }, { k: "bdw", l: "سماكة إطار الزر (px)", t: "num", min: 0, max: 12, tab: "s" }, { k: "bdc", l: "لون إطار الزر", t: "color", tab: "s" },
+        { k: "banim", l: "🎬 حركة الزر (أنيميشن)", t: "select", o: BANIMS, tab: "a" }, { k: "banimOn", l: "متى تعمل الحركة؟", t: "select", o: [["", "دائماً"], ["hover", "عند المرور بالماوس فقط"]], tab: "a", showIf: ["banim", "*"] }, { k: "banimDur", l: "مدة الدورة (ثانية — أقل = أسرع)", t: "num", min: .3, max: 10, step: .1, tab: "a", showIf: ["banim", "*"] }, { k: "banimIter", l: "التكرار", t: "select", o: [["infinite", "مستمر ∞"], ["1", "مرة واحدة"], ["2", "مرتان"], ["3", "3 مرات"], ["5", "5 مرات"]], tab: "a", showIf: ["banim", "*"] }, { k: "banimDelay", l: "تأخير البدء (ثانية)", t: "num", min: 0, max: 10, step: .1, tab: "a", showIf: ["banim", "*"] },
+        { k: "fxShine", l: "✨ ضوء يمرّ على الزر", t: "switch", tab: "a" }, { k: "fxShineC", l: "لون الضوء", t: "color", tab: "a", showIf: ["fxShine", true] },
+        { k: "fxBord", l: "🟡 خط متحرك حول الزر", t: "select", o: [["", "بدون"], ["gold", "ذهبي"], ["white", "أبيض"], ["custom", "لون مخصص"]], tab: "a" }, { k: "fxBordC", l: "لون الخط المتحرك", t: "color", tab: "a", showIf: ["fxBord", "custom"] }, { k: "fxBordW", l: "سماكة الخط المتحرك (px)", t: "num", min: 1, max: 8, tab: "a", showIf: ["fxBord", "*"] },
+        { k: "fxStars", l: "⭐ نجوم لامعة داخل الزر", t: "switch", tab: "a" }, { k: "fxStarsC", l: "لون النجوم", t: "color", tab: "a", showIf: ["fxStars", true] },
+        { k: "fxRays", l: "📡 إشعاع / موجات تتوسّع حول الزر", t: "switch", tab: "a" }, { k: "fxRaysC", l: "لون الإشعاع", t: "color", tab: "a", showIf: ["fxRays", true] },
+        { k: "fxShadow", l: "🌑 ظل / توهّج", t: "select", o: [["", "بدون"], ["soft", "ظل ناعم"], ["lg", "ظل كبير"], ["glow", "توهّج بلون"], ["neon", "نيون"], ["pulse", "توهّج نابض"]], tab: "a" }, { k: "fxShadowC", l: "لون الظل/التوهّج", t: "color", tab: "a", showIf: ["fxShadow", "*"] }, { k: "fxDur", l: "سرعة المؤثرات (ثانية للدورة)", t: "num", min: .6, max: 10, step: .1, tab: "a" }],
+      html: (s, id, ctx) => { let href = s.link || "#", ex = ""; if (s.kind === "whatsapp") href = "https://wa.me/" + String(s.phone || ctx.wa || "").replace(/\D/g, "") + (s.msg ? "?text=" + encodeURIComponent(s.msg) : ""); else if (s.kind === "call") href = "tel:" + String(s.phone || "").replace(/[^\d+]/g, ""); if (s.newTab || s.kind === "whatsapp") ex = ' target="_blank" rel="noopener"'; const fx = [s.fxShine && "fx-shine", s.fxBord && "fx-bord", s.fxStars && "fx-stars", s.fxRays && "fx-rays", s.fxShadow === "pulse" && "fx-glowp"].filter(Boolean).join(" "); return `<a class="pb-btn${fx ? " " + fx : ""}" href="${esc(href)}"${ex}><span data-edit="text">${esc(s.text)}</span></a>`; },
+      css: (c, sel, s) => {
+        emit(c, sel + " .pb-btn", s, [["bgc", raw("background")], ["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["bpad", v => dimsDecl("padding", v)], ["brad", px("border-radius")], ["full", v => v ? "display:block;width:100%;" : "display:inline-block;width:auto;"]]);
+        const bg = gradCss(s.bgr), hex2 = (h, a) => { const m = /^#([0-9a-f]{6})$/i.exec(h || ""); return m ? `rgba(${parseInt(m[1].slice(0, 2), 16)},${parseInt(m[1].slice(2, 4), 16)},${parseInt(m[1].slice(4, 6), 16)},${a})` : h; };
+        const base = s.bgHide ? "transparent" : (num(s.bgOp) != null && !bg ? hex2(s.bgc || "#157a55", Math.max(0, Math.min(1, num(s.bgOp)))) : (s.bgc || "#157a55")), layer1 = s.bgHide ? "linear-gradient(transparent,transparent)" : (bg || `linear-gradient(${base},${base})`);
+        c.d.push(`${sel} .pb-btn{position:relative;overflow:hidden}`);
+        if (bg && !s.bgHide) c.d.push(`${sel} .pb-btn{background-image:${bg}}`);
+        if (s.bgHide) c.d.push(`${sel} .pb-btn{background:transparent!important;background-image:none!important}`); else if (num(s.bgOp) != null && !bg) c.d.push(`${sel} .pb-btn{background:${base}!important}`);
+        if (num(s.bblur)) c.d.push(`${sel} .pb-btn{-webkit-backdrop-filter:blur(${num(s.bblur)}px);backdrop-filter:blur(${num(s.bblur)}px)}`);
+        if (num(s.bdw) && !s.fxBord) c.d.push(`${sel} .pb-btn{border:${num(s.bdw)}px solid ${s.bdc || s.color || "#fff"}}`);
+        if (s.hbg && !s.bgHide) c.d.push(`${sel} .pb-btn:hover{background-color:${s.hbg}!important${bg && !s.fxBord ? ";background-image:none!important" : ""}}`);
+        /* المؤثرات */
+        const dur = Math.max(.6, Math.min(10, num(s.fxDur) ?? 2.6)), anims = [], v = [`--fxd:${dur}s`];
+        if (s.fxShine) v.push(`--fxs:${s.fxShineC || "rgba(255,255,255,.7)"}`);
+        if (s.fxStars) v.push(`--fxt:${s.fxStarsC || "#ffffff"}`);
+        if (s.fxRays) { v.push(`--fxr:${s.fxRaysC || s.bgc || "#157a55"}`); anims.push(`pbB-ray ${dur * .7}s ease-out infinite`); }
+        if (s.fxShadow) { const col = s.fxShadowC || s.bgc || "#157a55"; v.push(`--fxg:${col}`); const sh = { soft: "0 6px 16px rgba(0,0,0,.28)", lg: "0 16px 38px rgba(0,0,0,.4)", glow: `0 0 18px 3px ${col}`, neon: `0 0 6px ${col},0 0 18px ${col},0 0 36px ${col}`, pulse: `0 0 8px ${col}` }[s.fxShadow]; if (sh && !s.fxRays) c.d.push(`${sel} .pb-btn{box-shadow:${sh}}`); if (s.fxShadow === "pulse" && !s.fxRays) anims.push(`pbB-glow ${dur * .7}s ease-in-out infinite`); }
+        if (s.fxBord) { const bc = s.fxBord === "gold" ? "#f5c542" : s.fxBord === "white" ? "#ffffff" : (s.fxBordC || "#f5c542"), bw = Math.max(1, Math.min(8, num(s.fxBordW) ?? 3)); v.push(`--fxb:${bc}`);
+          c.d.push(`${sel} .pb-btn.fx-bord{border:${bw}px solid transparent;background-image:${layer1},conic-gradient(from var(--pba,0deg),transparent 0 55%,${bc} 80%,#fff 90%,${bc} 96%,transparent)!important;background-origin:border-box!important;background-clip:padding-box,border-box!important;background-color:transparent!important}`); anims.push(`pbB-spin ${dur}s linear infinite`); }
+        c.d.push(`${sel} .pb-btn{${v.join(";")}}`);
+        const ba = s.banim && BANIMS.some(x => x[0] === s.banim) ? s.banim : "", bd = Math.max(.3, Math.min(10, num(s.banimDur) ?? 1.6)), bit = ["1", "2", "3", "5"].includes(String(s.banimIter)) ? s.banimIter : "infinite", bdl = Math.max(0, Math.min(10, num(s.banimDelay) ?? 0)), bo = `pbB-${ba} ${bd}s ease-in-out ${bdl}s ${bit} both`;
+        if (ba && s.banimOn === "hover") c.d.push(`${sel} .pb-btn:hover{animation:${[bo].concat(anims).join(",")}}`);
+        if (ba && s.banimOn !== "hover") anims.unshift(bo);
+        if (anims.length) c.d.push(`${sel} .pb-btn{animation:${anims.join(",")}}`);
+      },
     },
     spacer: {
       label: "فراغ", ic: "↕️", def: { mh: { d: 40, m: 24 } }, ctl: [{ k: "mh", l: "الارتفاع (px)", t: "num", r: 1, min: 0, max: 600, tab: "c" }],
@@ -7293,7 +7330,7 @@ const PB = (() => {
       label: "شكل / خط", ic: "⬟", fit: 1, def: { shape: "star5", fill: "#c8a24b", outline: false, stroke: "", sw: 0, dash: "", rx: 0, keep: true, flip: "", mh: { d: 160 }, w: { d: 30 }, al: { d: "center" } },
       ctl: [{ k: "shape", l: "الشكل", t: "shapepick", tab: "c" }, { k: "fill", l: "لون التعبئة (امسحه للاكتفاء بالكونتور)", t: "color", tab: "c" }, { k: "fgr", l: "تعبئة بتدرّج (degradé)", t: "grad", tab: "c" }, { k: "outline", l: "كونتور فقط (بدون تعبئة)", t: "switch", tab: "c" },
         { k: "stroke", l: "لون الخط/الكونتور", t: "color", tab: "c" }, { k: "sw", l: "سماكة الخط (px)", t: "num", min: 0, max: 40, tab: "c" }, { k: "dash", l: "نمط الخط", t: "select", o: [["", "متصل"], ["10 7", "متقطع"], ["2 8", "منقّط"], ["22 8 4 8", "شرطة ونقطة"]], tab: "c" },
-        { k: "rx", l: "تدوير زوايا المستطيل (%)", t: "num", min: 0, max: 50, tab: "c", showIf: ["shape", "rect"] }, { k: "keep", l: "حفظ النسبة (بدل التمدد مع الحجم)", t: "switch", tab: "c" }, { k: "flip", l: "قلب", t: "select", o: [["", "بدون"], ["x", "أفقي"], ["y", "عمودي"], ["xy", "الاثنان"]], tab: "c" },
+        { k: "rx", l: "تدوير زوايا المستطيل (%)", t: "num", min: 0, max: 50, tab: "c", showIf: ["shape", "rect"] }, { k: "keep", l: "حفظ النسبة (بدل التمدد مع الحجم)", t: "switch", tab: "c" }, { k: "flip", l: "قلب", t: "select", o: [["", "بدون"], ["x", "أفقي"], ["y", "عمودي"], ["xy", "الاثنان"]], tab: "c" }, { k: "sym", l: "التناظر (يكرّر الشكل متناظراً داخل الإطار)", t: "select", o: [["", "بدون"], ["h", "أفقي (يمين / يسار)"], ["v", "عمودي (أعلى / أسفل)"], ["hv", "رباعي (4 أرباع)"], ["r4", "دوراني ×4 (زهرة)"], ["r6", "دوراني ×6"], ["r8", "دوراني ×8"]], tab: "c" },
         { k: "sh", l: "ظل الشكل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" }],
       html: (s, id) => svgShape(s, id),
       css: (c, sel, s) => { c.d.push(`${sel} .pb-svg{width:100%;height:100%;display:block;overflow:visible}`); if (s.sh) c.d.push(`${sel} .pb-svg{filter:${{ sm: "drop-shadow(0 2px 4px rgba(0,0,0,.25))", md: "drop-shadow(0 8px 14px rgba(0,0,0,.3))", lg: "drop-shadow(0 16px 28px rgba(0,0,0,.35))", glow: "drop-shadow(0 0 14px rgba(255,200,60,.9))" }[s.sh] || "none"}}`); const f = { x: "scaleX(-1)", y: "scaleY(-1)", xy: "scale(-1,-1)" }[s.flip]; if (f) c.d.push(`${sel} .pb-svg{transform:${f}}`); },
@@ -7624,11 +7661,18 @@ const PB = (() => {
 .pb-vid{display:block}
 .pb-hdr{background:#fff;border-bottom:1px solid #eae3d6;position:sticky;top:0;z-index:50}.pb-hdr div{max-width:1140px;margin:0 auto;padding:.8rem 20px;display:flex;align-items:center;justify-content:space-between}.pb-hdr a.lg{font-weight:900;font-size:1.4rem;color:#173f35;text-decoration:none}.pb-hdr a.wa{background:#157a55;color:#fff;border-radius:10px;padding:.45rem 1rem;text-decoration:none;font-weight:800}
 .pb-ftr{background:#0f2e26;color:#c7d3cd;text-align:center;padding:24px 16px;font-size:.9rem}.pb-ftr a{color:#f0d39d}
+@property --pba{syntax:'<angle>';initial-value:0deg;inherits:false}
+@keyframes pbB-spin{to{--pba:360deg}}@keyframes pbB-ray{0%{box-shadow:0 0 0 0 var(--fxr,#157a55),0 0 0 0 var(--fxr,#157a55)}100%{box-shadow:0 0 0 16px transparent,0 0 0 36px transparent}}@keyframes pbB-glow{0%,100%{box-shadow:0 0 8px 0 var(--fxg,#157a55)}50%{box-shadow:0 0 28px 8px var(--fxg,#157a55)}}
+@keyframes pbB-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}@keyframes pbB-bounce{0%,20%,50%,80%,100%{transform:translateY(0)}40%{transform:translateY(-14px)}60%{transform:translateY(-7px)}}@keyframes pbB-shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px)}30%{transform:translateX(7px)}45%{transform:translateX(-5px)}60%{transform:translateX(5px)}75%{transform:translateX(-2px)}}@keyframes pbB-wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}@keyframes pbB-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes pbB-heart{0%,100%{transform:scale(1)}14%{transform:scale(1.12)}28%{transform:scale(1)}42%{transform:scale(1.12)}70%{transform:scale(1)}}@keyframes pbB-tada{0%,100%{transform:scale(1) rotate(0)}10%,20%{transform:scale(.92) rotate(-3deg)}30%,50%,70%{transform:scale(1.1) rotate(3deg)}40%,60%{transform:scale(1.1) rotate(-3deg)}80%{transform:scale(1) rotate(0)}}@keyframes pbB-jelly{0%,100%{transform:scale(1,1)}30%{transform:scale(1.2,.8)}40%{transform:scale(.85,1.15)}50%{transform:scale(1.1,.9)}65%{transform:scale(.97,1.03)}}
+@keyframes pbB-shine{0%{inset-inline-start:-70%}55%,100%{inset-inline-start:140%}}@keyframes pbB-twinkle{0%{opacity:.2;transform:scale(.88)}100%{opacity:1;transform:scale(1.06)}}
+.pb-btn.fx-shine:after{content:"";position:absolute;top:0;bottom:0;width:38%;inset-inline-start:-70%;background:linear-gradient(100deg,transparent,var(--fxs,rgba(255,255,255,.7)),transparent);transform:skewX(-20deg);pointer-events:none;animation:pbB-shine var(--fxd,2.6s) ease-in-out infinite}
+.pb-btn.fx-stars:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 28%,var(--fxt,#fff) 0 1.5px,transparent 2.6px),radial-gradient(circle at 24% 72%,var(--fxt,#fff) 0 1.2px,transparent 2.2px),radial-gradient(circle at 38% 22%,var(--fxt,#fff) 0 1px,transparent 2px),radial-gradient(circle at 55% 78%,var(--fxt,#fff) 0 1.6px,transparent 2.8px),radial-gradient(circle at 68% 30%,var(--fxt,#fff) 0 1.2px,transparent 2.3px),radial-gradient(circle at 82% 68%,var(--fxt,#fff) 0 1.5px,transparent 2.6px),radial-gradient(circle at 92% 24%,var(--fxt,#fff) 0 1px,transparent 2px),radial-gradient(circle at 47% 48%,var(--fxt,#fff) 0 .9px,transparent 1.9px);animation:pbB-twinkle calc(var(--fxd,2.6s)*.6) ease-in-out infinite alternate}
+.pb-btn>span{position:relative;z-index:1}
 @keyframes pbI-zin{from{transform:scale(1)}to{transform:scale(var(--is,1.2))}}@keyframes pbI-zout{from{transform:scale(var(--is,1.2))}to{transform:scale(1)}}@keyframes pbI-pulse{0%,100%{transform:scale(1)}50%{transform:scale(var(--is,1.2))}}@keyframes pbI-kb{from{transform:scale(1) translate(0,0)}to{transform:scale(var(--is,1.2)) translate(-3%,-2%)}}
 @keyframes pbI-float{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--ip,12px)*-1))}}@keyframes pbI-sway{0%,100%{transform:rotate(calc(var(--ir,6deg)*-1))}50%{transform:rotate(var(--ir,6deg))}}@keyframes pbI-spin{to{transform:rotate(360deg)}}@keyframes pbI-blink{0%,100%{opacity:1}50%{opacity:.2}}@keyframes pbI-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 [data-anim]{opacity:0;transition:opacity var(--ad,.6s) ease var(--ade,0s),transform var(--ad,.6s) ease var(--ade,0s)}[data-anim=fadeUp]{transform:translateY(30px)}[data-anim=fadeDown]{transform:translateY(-30px)}[data-anim=zoomIn]{transform:scale(.88)}[data-anim=slideStart]{transform:translateX(40px)}[data-anim].pb-in-view{opacity:1;transform:none}
 @media(max-width:${BP.m}px){.pb-hdr a.wa{display:none}}
-@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}.pb-im{animation:none!important}}`;
+@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}.pb-im,.pb-btn,.pb-btn:before,.pb-btn:after{animation:none!important}}`;
 
   /* سكربت الصفحة المنشورة: حركات الظهور + العدّادات + العدّ التنازلي + تحديث الأسعار من data.js */
   const RUNTIME_JS = `(function(){
@@ -7702,7 +7746,7 @@ ${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
 </body></html>`;
   }
 
-  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -8524,6 +8568,15 @@ body{overflow-x:hidden;margin:0}`;
     else if (inf.list[j]) to = inf.list[j];
     if (!to) return; select(to.id); const el = fdoc.querySelector(`[data-pb="${to.id}"]`); if (el) el.scrollIntoView({ block: "nearest" });
   }
+  /* نسخة متناظرة: مرآة العنصر الحر حول محور القسم الأفقي (x) أو العمودي (y) مع قلب الشكل وعكس التدوير */
+  function mirrorDup(axis) {
+    const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec); const c = reId(clone(inf.node)), dev = E.dev, g = k => Number(eff(inf.set, k, dev)) || 0;
+    if (axis === "h") setR(c.set, "fx", dev, Math.round((100 - g("fx") - (g("fwd") || 30)) * 10) / 10); else setR(c.set, "fy", dev, Math.max(0, secHeight(inf) - g("fy") - g("fh")));
+    if (c.type === "shape") { const f = c.set.flip || "", ch = axis === "h" ? "x" : "y"; c.set.flip = f.includes(ch) ? f.replace(ch, "") : f + ch; }
+    const r = g("rot"); if (r) setR(c.set, "rot", dev, axis === "h" ? -r : 180 - r);
+    if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(c.set, k, "d") === undefined) setR(c.set, k, "d", eff(c.set, k, dev)); });
+    c.set.zi = (Number(c.set.zi) || 0) + 1; inf.list.splice(inf.idx + 1, 0, c); afterEdit(c.id); toast(axis === "h" ? "↔ أُنشئت نسخة متناظرة أفقياً" : "↕ أُنشئت نسخة متناظرة عمودياً");
+  }
   function nudge(dx, dy) {
     const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, u = uOf(inf.sec, { width: cw });
@@ -8541,6 +8594,7 @@ body{overflow-x:hidden;margin:0}`;
     let h = `<div class="pbx-q">` + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide"));
     { const rv = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); h += grp("التدوير", `<div class="pbx-qr" style="width:100%"><button class="pbx-qk" data-q="rot-m" title="تدوير -15°" style="flex:0 0 auto">↺</button><input type="range" min="-180" max="180" step="1" value="${rv}" data-qrot="1" title="اسحب لتدوير العنصر"><button class="pbx-qk" data-q="rot-p" title="تدوير +15°" style="flex:0 0 auto">↻</button><b>${rv}°</b><button class="pbx-qk" data-q="rot-0" title="إعادة التدوير" style="flex:0 0 auto">⟲</button></div>`); }
     { const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 5); if (cks.length) h += grp("الألوان", `<div class="pbx-qc">` + cks.map(c => { const v = inf.set[c.k]; return `<label title="${esc(c.l)}">${esc(c.l.replace(/^لون\s*/, "").replace(/\s*\(.*$/, "")).slice(0, 14)}<input type="color" data-qc="${c.k}" value="${/^#[0-9a-f]{6}$/i.test(v || "") ? v : "#ffffff"}"></label>`; }).join("") + `</div>`); }
+    if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
     if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;
     if (inf.node.type === "image" && inf.free && inf.sec.set.kind === "canvas") h += `<div class="pbx-qg"><small>أدوات القماش (الصور)</small><div class="pbx-magic"><button type="button" data-q="smart-text" title="يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل">${ico("t_text", 22)} التقاط النص</button><button type="button" data-q="smart-magic" title="يفصل العناصر (أشخاص، منتجات…) كصور شفافة">${ico("t_magic", 22)} التقاط سحري</button></div><label class="pbx-gem"><input type="checkbox" data-gem="1" ${gemOn() ? "checked" : ""}> استعانة اختيارية بمفتاح Gemini (بدونه تعمل الأدوات مجاناً)</label></div>`;
     return h + `</div>`;
@@ -8548,6 +8602,7 @@ body{overflow-x:hidden;margin:0}`;
   function onQuick(k) {
     if (k === "smart-text") return PBSmart.capture(); if (k === "smart-magic") return PBSmart.captureElements(); if (k === "smart-import") return PBSmart.importImages();
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
+    if (k === "mir-h" || k === "mir-v") return mirrorDup(k === "mir-h" ? "h" : "v");
     if (k === "rot-p" || k === "rot-m" || k === "rot-0") { const inf = selInfo(); if (!inf) return; const cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); const v = k === "rot-0" ? undefined : ((cur + (k === "rot-p" ? 15 : -15) + 540) % 360) - 180; setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); afterEdit(); return; }
     if (k.startsWith("n-")) { const m = { l: [-4, 0], r: [4, 0], u: [0, -4], d: [0, 4] }[k[2]]; return nudge(m[0], m[1]); }
     if (d[k]) d[k]();
