@@ -239,7 +239,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       let rs = 0; for (const p of ring) rs += Math.abs(p[2] - at(p[0], p[1], 0)) + Math.abs(p[3] - at(p[0], p[1], 1)) + Math.abs(p[4] - at(p[0], p[1], 2)); const cx = rs / ring.length / 3;
       const T = Math.max(opt.thresh || 42, 5 * cx * 3), T2 = Math.max(7, 2.4 * cx * 3), mask = new Uint8Array(pw * ph), weak = new Uint8Array(pw * ph), rad2 = Math.max(6, Math.round(hh * .24)); let cnt = 0;
       for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) { const i = (y * pw + x) * 4, d = Math.abs(D[i] - at(x, y, 0)) + Math.abs(D[i + 1] - at(x, y, 1)) + Math.abs(D[i + 2] - at(x, y, 2)); if (inR(x, y) && d > T) { mask[y * pw + x] = 1; cnt++; } else if (d > T2) weak[y * pw + x] = 1; }
-      if (cnt < 6) { out.push({ rect: r0, masked: 0, complex: cx > 22 }); continue; }
+      if (opt.skipComplex && cx > (opt.skipComplex === true ? 16 : opt.skipComplex)) { out.push({ rect: r0, masked: 0, complex: true, skipped: true }); continue; }      // نص على صورة/ملمس: نتركه (مثل كتابة عبوة المنتج)
+      if (cnt < 6) { out.push({ rect: r0, masked: 0, complex: cx > 22, cx }); continue; }
       const dil = (src, r, round) => { const t = new Uint8Array(pw * ph), o = new Uint8Array(pw * ph);          // توسيع مربع قابل للفصل (سريع)
         for (let y = 0; y < ph; y++) { let last = -1e9; for (let x = 0; x < pw; x++) { if (src[y * pw + x]) last = x; if (x - last <= r) t[y * pw + x] = 1; } last = 1e9; for (let x = pw - 1; x >= 0; x--) { if (src[y * pw + x]) last = x; if (last - x <= r) t[y * pw + x] = 1; } }
         for (let x = 0; x < pw; x++) { let last = -1e9; for (let y = 0; y < ph; y++) { if (t[y * pw + x]) last = y; if (y - last <= r) o[y * pw + x] = 1; } last = 1e9; for (let y = ph - 1; y >= 0; y--) { if (t[y * pw + x]) last = y; if (last - y <= r) o[y * pw + x] = 1; } } return o; };
@@ -254,9 +255,57 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
         const gr = Math.min(7, cx * .8); if (gr > .6) for (let i = 0; i < pw * ph; i++) if (m2[i]) { const n = (Math.random() + Math.random() + Math.random() - 1.5) * gr * 1.6; v[i * 3] += n; v[i * 3 + 1] += n; v[i * 3 + 2] += n; }
       }
       for (let i = 0; i < pw * ph; i++) if (m2[i]) { const x = i % pw, y = (i / pw) | 0; for (let k = 0; k < 3; k++) D[i * 4 + k] = Math.max(0, Math.min(255, Math.round(usedG ? v[i * 3 + k] : v[i * 3 + k] + at(x, y, k)))); D[i * 4 + 3] = 255; }
-      ctx.putImageData(img, px0, py0); out.push({ rect: r0, masked: unk, complex: cx > 22, gemini: usedG });
+      ctx.putImageData(img, px0, py0); out.push({ rect: r0, masked: unk, complex: cx > 22, gemini: usedG, cx });
     }
     return out;
+  }
+  /* ───── كشف النصوص بالصورة فقط (بلا OCR وبلا مفتاح) ─────
+     الحبر = بكسلات تبعُد عن خلفيتها المحلية (تمويه واسع)؛ نجمعها في مكوّنات متصلة (حروف/كلمات) ثم نربط ما تقاطع رأسياً وتقارب أفقياً في أسطر.
+     نرفض الصناديق الشبيهة بالصور (كبيرة جداً أو كثيفة التفاصيل). لا نحتاج قراءة الحروف لأن المسح لا يحتاج معرفة المكتوب. */
+  function detectText(cv, opt) {
+    opt = opt || {}; const W0 = cv.width, H0 = cv.height, sc = Math.min(1, 800 / W0), w = Math.max(8, Math.round(W0 * sc)), h = Math.max(8, Math.round(H0 * sc));
+    const c2 = document.createElement("canvas"); c2.width = w; c2.height = h; const g2 = c2.getContext("2d", { willReadFrequently: true }); g2.drawImage(cv, 0, 0, w, h); const D = g2.getImageData(0, 0, w, h).data;
+    const R = Math.max(5, Math.round(10 * Math.max(.6, Math.min(1.4, w / 800)))), N = w * h, S = new Float64Array((w + 1) * (h + 1) * 3);
+    for (let y = 0; y < h; y++) { let r = 0, g = 0, b = 0; for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; r += D[i]; g += D[i + 1]; b += D[i + 2]; const j = ((y + 1) * (w + 1) + x + 1) * 3, k = (y * (w + 1) + x + 1) * 3; S[j] = S[k] + r; S[j + 1] = S[k + 1] + g; S[j + 2] = S[k + 2] + b; } }
+    const res = new Float32Array(N); let sum = 0;
+    for (let y = 0; y < h; y++) { const ya = Math.max(0, y - R), yb = Math.min(h, y + R + 1); for (let x = 0; x < w; x++) { const xa = Math.max(0, x - R), xb = Math.min(w, x + R + 1), cnt = (xb - xa) * (yb - ya), i = (y * w + x) * 4; let d = 0;
+      for (let k = 0; k < 3; k++) { const m = (S[(yb * (w + 1) + xb) * 3 + k] - S[(ya * (w + 1) + xb) * 3 + k] - S[(yb * (w + 1) + xa) * 3 + k] + S[(ya * (w + 1) + xa) * 3 + k]) / cnt; d += Math.abs(D[i + k] - m); } res[y * w + x] = d; sum += d; } }
+    const TS = 48, tw = Math.ceil(w / TS), th = Math.ceil(h / TS), Tt = new Float32Array(tw * th), ink = new Uint8Array(N), T = opt.thresh || 34;      // عتبة لكل بلاط: تتشدد في المناطق المليئة بالتفاصيل (صور) وتبقى حساسة على الخلفيات الناعمة
+    for (let ty = 0; ty < th; ty++) for (let tx = 0; tx < tw; tx++) { const v = []; for (let y = ty * TS; y < Math.min(h, (ty + 1) * TS); y += 2) for (let x = tx * TS; x < Math.min(w, (tx + 1) * TS); x += 2) v.push(res[y * w + x]); v.sort((p, q) => p - q); Tt[ty * tw + tx] = Math.max(T, Math.min(110, 2.6 * (v[v.length >> 1] || 0) + 26)); }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) ink[y * w + x] = res[y * w + x] > Tt[((y / TS) | 0) * tw + ((x / TS) | 0)] ? 1 : 0;
+    /* مكوّنات متصلة (اتصال 8) بـ union-find */
+    const lab = new Int32Array(N), par = [0]; const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; }; let nl = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (!ink[i]) continue; const nb = []; if (x > 0 && lab[i - 1]) nb.push(lab[i - 1]); if (y > 0) { if (lab[i - w]) nb.push(lab[i - w]); if (x > 0 && lab[i - w - 1]) nb.push(lab[i - w - 1]); if (x < w - 1 && lab[i - w + 1]) nb.push(lab[i - w + 1]); }
+      if (!nb.length) { par.push(++nl); lab[i] = nl; } else { let m = nb[0]; for (const q of nb) if (q < m) m = q; lab[i] = m; for (const q of nb) { const a = find(q), b = find(m); if (a !== b) par[Math.max(a, b)] = Math.min(a, b); } } }
+    const comp = new Map(); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (!lab[i]) continue; const id = find(lab[i]); let c = comp.get(id); if (!c) { c = { x0: x, x1: x, y0: y, y1: y, n: 0 }; comp.set(id, c); } if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y; c.n++; }
+    const letters = [], dots = []; for (const c of comp.values()) { c.w = c.x1 - c.x0 + 1; c.h = c.y1 - c.y0 + 1; if (c.n < 3) continue; if (c.h > Math.min(0.28 * h, 0.16 * w) || c.w > 0.9 * w) continue; if (c.w > 30 * c.h && c.h < 4) continue; if (c.h >= 6 && c.n / (c.w * c.h) > .03) letters.push(c); else dots.push(c); }
+    letters.sort((a, b) => a.y0 - b.y0); const lp = letters.map((_, i) => i), lf = a => { while (lp[a] !== a) { lp[a] = lp[lp[a]]; a = lp[a]; } return a; };
+    for (let i = 0; i < letters.length; i++) { const a = letters[i]; for (let j = i + 1; j < letters.length; j++) { const b = letters[j]; if (b.y0 > a.y1) break;
+      const ov = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) + 1, mh = Math.min(a.h, b.h), Mh = Math.max(a.h, b.h), gap = Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1);
+      if (ov >= .5 * mh && gap <= .9 * mh + 6 && Mh <= 2.4 * mh + 6) lp[lf(j)] = lf(i); } }
+    const groups = new Map(); letters.forEach((c, i) => { const id = lf(i); let g = groups.get(id); if (!g) { g = { x0: 1e9, y0: 1e9, x1: -1, y1: -1, n: 0, ink: 0, mh: 0, hs: [] }; groups.set(id, g); } g.mh = Math.max(g.mh, c.h); g.hs.push(c.h); g.x0 = Math.min(g.x0, c.x0); g.x1 = Math.max(g.x1, c.x1); g.y0 = Math.min(g.y0, c.y0); g.y1 = Math.max(g.y1, c.y1); g.n++; g.ink += c.n; });
+    const out = []; for (const g of groups.values()) {
+      let gh = g.y1 - g.y0 + 1; const gw = g.x1 - g.x0 + 1;
+      if (g.n < 3 && gw < 3 * gh) continue; if (gw < 1.8 * gh) continue; if (gh > 0.22 * h || gh < 6) continue; if (gh > 1.4 * g.mh + 8) continue;      // سطر واحد: ارتفاعه قريب من أطول حرف فيه (يرفض دمج سطرين أو كتلة صورة)
+      const my = gh * .38; for (const d of dots) { const cx = (d.x0 + d.x1) / 2, cy = (d.y0 + d.y1) / 2; if (cx >= g.x0 - 2 && cx <= g.x1 + 2 && cy >= g.y0 - my && cy <= g.y1 + my) { g.y0 = Math.min(g.y0, d.y0); g.y1 = Math.max(g.y1, d.y1); } }      // نقاط وحركات الحروف
+      gh = g.y1 - g.y0 + 1; const dens = g.ink / (gw * gh); if (dens < .04 || dens > .92 || g.n > 160) continue;
+      const k = 1 / sc, p = 3; out.push({ x0: Math.max(0, Math.floor(g.x0 * k) - p), y0: Math.max(0, Math.floor(g.y0 * k) - p), x1: Math.min(W0, Math.ceil((g.x1 + 1) * k) + p), y1: Math.min(H0, Math.ceil((g.y1 + 1) * k) + p), n: g.n });
+    }
+    out.sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0); return out;
+  }
+  /* فرشاة (مثل Magic Eraser): تمسح كل ما تحت الضربات بترميم «المتبقي عن سطح الخلفية» المقدَّر من محيطها */
+  function eraseBrush(ctx, pts, rad) {
+    const CW = ctx.canvas.width, CH = ctx.canvas.height; let mnx = 1e9, mny = 1e9, mxx = -1, mxy = -1; pts.forEach(p => { mnx = Math.min(mnx, p[0]); mny = Math.min(mny, p[1]); mxx = Math.max(mxx, p[0]); mxy = Math.max(mxy, p[1]); });
+    const pad = Math.max(12, Math.round(rad * 2)), px0 = Math.max(0, Math.floor(mnx - rad - pad)), py0 = Math.max(0, Math.floor(mny - rad - pad)), px1 = Math.min(CW, Math.ceil(mxx + rad + pad)), py1 = Math.min(CH, Math.ceil(mxy + rad + pad)), pw = px1 - px0, ph = py1 - py0; if (pw < 4 || ph < 4) return 0;
+    const mc = document.createElement("canvas"); mc.width = pw; mc.height = ph; const mg = mc.getContext("2d"); mg.strokeStyle = mg.fillStyle = "#000"; mg.lineWidth = rad * 2; mg.lineCap = mg.lineJoin = "round"; mg.beginPath(); pts.forEach((p, i) => { i ? mg.lineTo(p[0] - px0, p[1] - py0) : mg.moveTo(p[0] - px0, p[1] - py0); }); if (pts.length === 1) { mg.arc(pts[0][0] - px0, pts[0][1] - py0, rad, 0, 7); mg.fill(); } else mg.stroke();
+    const ma = mg.getImageData(0, 0, pw, ph).data, m2 = new Uint8Array(pw * ph); let cnt = 0; for (let i = 0; i < pw * ph; i++) if (ma[i * 4 + 3] > 70) { m2[i] = 1; cnt++; } if (!cnt) return 0;
+    const img = ctx.getImageData(px0, py0, pw, ph), D = img.data, ring = [], step = Math.max(1, Math.floor(Math.sqrt(pw * ph / 2500)));
+    for (let y = 0; y < ph; y += step) for (let x = 0; x < pw; x += step) if (!m2[y * pw + x]) { const i = (y * pw + x) * 4; ring.push([x, y, D[i], D[i + 1], D[i + 2]]); }
+    if (ring.length < 12) return 0; const pl = [0, 1, 2].map(ch => fitPlane(ring, ch)), at = (x, y, ch) => pl[ch][0] + pl[ch][1] * x + pl[ch][2] * y;
+    const known = new Uint8Array(pw * ph), v = new Float32Array(pw * ph * 3); for (let i = 0; i < pw * ph; i++) { known[i] = m2[i] ? 0 : 1; const x = i % pw, y = (i / pw) | 0; for (let k = 0; k < 3; k++) v[i * 3 + k] = D[i * 4 + k] - at(x, y, k); }
+    pushPull(v, known, pw, ph);
+    for (let i = 0; i < pw * ph; i++) if (m2[i]) { const x = i % pw, y = (i / pw) | 0; for (let k = 0; k < 3; k++) D[i * 4 + k] = Math.max(0, Math.min(255, Math.round(v[i * 3 + k] + at(x, y, k)))); D[i * 4 + 3] = 255; }
+    ctx.putImageData(img, px0, py0); return cnt;
   }
   /* إعادة رسم مناطق معقدة بـ Gemini (تحرير صورة): نرسل القصاصة، ونأخذ بكسلات الناتج داخل القناع فقط فيبقى الباقي مطابقاً للأصل */
   async function geminiEraseRegion(key, ctx, P, m2, v) {
@@ -515,13 +564,16 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div id="gen-cuts">
   <div class="card" style="margin:.5rem 0;background:#f7faf7;border:1.5px solid #cfe3d3">
     <b style="color:var(--green)">🧽 ممحاة النصوص (مثل Canva)</b>
-    <div class="hint" style="margin:.2rem 0 .5rem">تكتشف النصوص في الصورة وتمسحها وتعيد رسم الخلفية (تدرّجات ظلال وتوهّج). ممتازة على الخلفيات الناعمة؛ للخلفيات المعقدة فعّل «Gemini للمناطق المعقدة». الصورة الممسوحة تصبح هي الأصل للتفكيك.</div>
+    <div class="hint" style="margin:.2rem 0 .5rem">تكتشف النصوص بتحليل الصورة نفسها (بلا مفتاح ولا إنترنت) وتمسحها وتعيد رسم الخلفية بتدرّجها وظلالها. تعمل على كل قسم على حدة ثم تُعيد تركيب الصورة. للنصوص التي فاتتها استعمل الفرشاة أو المستطيل. الصورة الممسوحة تصبح الأصل للتفكيك.</div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
       <button class="small gold" type="button" id="gen-erase-all" onclick="PBGen.eraseAll()">🔎 اكتشف النصوص وامسحها</button>
+      <button class="small gray" type="button" id="gen-brush-btn" onclick="PBGen.brushMode()">🖌 فرشاة المسح</button>
+      <label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center">الحجم <input type="range" id="gen-brush" min="10" max="90" value="28" style="width:90px"></label>
       <button class="small gray" type="button" id="gen-erase-btn" onclick="PBGen.eraseMode()">✋ امسح منطقة بالسحب</button>
       <button class="small gray" type="button" id="gen-erase-undo" onclick="PBGen.eraseUndo()" disabled>↶ تراجع</button>
       <button class="small gray" type="button" onclick="PBGen.downloadClean()">⬇ تنزيل الصورة</button>
-      <label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-erase-gem" style="width:auto"> Gemini للمناطق المعقدة (يستهلك رصيداً)</label>
+      <label class="hint" style="margin:0">الكشف <select id="gen-erase-det"><option value="pix">تلقائي بالصورة — بلا مفتاح</option><option value="ocr">بقراءة النص (OCR)</option></select></label>
+      <label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-erase-gem" style="width:auto"> Gemini للمناطق المعقدة (اختياري، يستهلك رصيداً)</label>
     </div>
     <div id="gen-erase-msg" class="hint" style="margin-top:.4rem;min-height:1.2em"></div>
   </div>
@@ -750,6 +802,10 @@ Before rendering, internally verify every text element: no duplicated sentences,
     box.ondblclick = e => { const c = e.target.closest("[data-cut]"); if (c && !rm) { S.cuts.splice(Number(c.dataset.cut), 1); drawPreview(); } };
     box.onmousedown = e => {
       const r0 = box.getBoundingClientRect();
+      if (S.brushMode) { e.preventDefault(); const rad = Math.max(2, (Number(($("gen-brush") || {}).value) || 24) / 2 / sc), pts = [], ov = document.createElement("canvas"); ov.width = box.clientWidth; ov.height = box.clientHeight; ov.style.cssText = "position:absolute;left:0;top:0;pointer-events:none"; box.appendChild(ov); const og = ov.getContext("2d"); og.fillStyle = "rgba(220,38,38,.4)";
+        const add = ev => { const x = ev.clientX - r0.left, y = ev.clientY - r0.top; pts.push([x / sc, y / sc]); og.beginPath(); og.arc(x, y, rad * sc, 0, 7); og.fill(); };
+        add(e); const mv = ev => add(ev), up = async () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); ov.remove(); pushUndo(); const n = eraseBrush(S.canvas.getContext("2d", { willReadFrequently: true }), pts, rad); drawPreview(); eMsg(n ? "✅ مُسحت المنطقة المرسومة" : "لم يتغير شيء"); };
+        document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); return; }
       if (S.eraseMode) { e.preventDefault(); const sx = e.clientX, sy = e.clientY, el = document.createElement("div"); el.style.cssText = "position:absolute;border:2px dashed #dc2626;background:rgba(220,38,38,.12);pointer-events:none"; box.appendChild(el);
         const mv = ev => { el.style.cssText += `;left:${Math.min(sx, ev.clientX) - r0.left}px;top:${Math.min(sy, ev.clientY) - r0.top}px;width:${Math.abs(ev.clientX - sx)}px;height:${Math.abs(ev.clientY - sy)}px`; };
         const up = ev => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); el.remove(); const a = { x0: (Math.min(sx, ev.clientX) - r0.left) / sc, x1: (Math.max(sx, ev.clientX) - r0.left) / sc, y0: (Math.min(sy, ev.clientY) - r0.top) / sc, y1: (Math.max(sy, ev.clientY) - r0.top) / sc }; if ((a.x1 - a.x0) * sc > 8 && (a.y1 - a.y0) * sc > 8) eraseDrag(a); };
@@ -787,16 +843,19 @@ Before rendering, internally verify every text element: no duplicated sentences,
       for (let i = 0; i < bounds.length - 1; i++) {
         const y0 = bounds[i], h = bounds[i + 1] - y0; if (h < 20) continue; eMsg(`⏳ القسم ${i + 1} من ${bounds.length - 1}: قراءة النصوص…`);
         const band = document.createElement("canvas"); band.width = W; band.height = h; const g = band.getContext("2d", { willReadFrequently: true }); g.drawImage(C, 0, y0, W, h, 0, 0, W, h);
-        let lines = []; try { lines = await ocrLines(band, L, key, null); } catch (e) { eMsg("⚠️ " + e.message); }
-        const rects = lines.map(l => refineBox(g, W, h, l.bbox));
-        eMsg(`⏳ القسم ${i + 1}: مسح ${rects.length} سطراً…`); const st = await eraseRects(g, rects, opt); total += st.filter(x => x.masked).length; cplx += st.filter(x => x.complex && !x.gemini).length;
+        const det = ($("gen-erase-det") || {}).value || "pix"; let rects = [];
+        if (det === "pix") rects = detectText(band);                                   // بلا مفتاح ولا OCR: كشف بالصورة فقط
+        else { let lines = []; try { lines = await ocrLines(band, L, key, null); } catch (e) { eMsg("⚠️ " + e.message); } rects = lines.map(l => refineBox(g, W, h, l.bbox)); }
+        rects = rects.filter(r => !S.regions.some(q => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 + y0 < q.y1 && r.y1 + y0 > q.y0));      // لا نمسح داخل مناطق المنتج المقصوصة
+        eMsg(`⏳ القسم ${i + 1}: مسح ${rects.length} سطراً…`); const st = await eraseRects(g, rects, Object.assign({ skipComplex: !opt.gemini }, opt)); total += st.filter(x => x.masked).length; cplx += st.filter(x => x.skipped || (x.complex && !x.gemini)).length;
         C.getContext("2d").drawImage(band, 0, y0);
       }
-      drawPreview(); eMsg(`✅ مُسح ${total} سطراً` + (cplx ? ` — ${cplx} منها على خلفية معقدة قد تبقى فيها آثار؛ فعّل «Gemini للمناطق المعقدة» أو استعمل «امسح منطقة بالسحب»` : "") + " · يمكنك التراجع.");
+      drawPreview(); eMsg(`✅ مُسح ${total} سطراً` + (cplx ? ` — تُركت ${cplx} مناطق على صور/ملمس (مثل كتابة عبوة المنتج)؛ امسحها بالفرشاة إن أردت` : "") + " · يمكنك التراجع.");
     } catch (e) { console.error(e); eMsg("❌ " + e.message); }
     btn.disabled = false;
   }
-  function eraseMode() { S.eraseMode = !S.eraseMode; S.regionMode = false; const b = $("gen-erase-btn"); b.className = "small " + (S.eraseMode ? "gold" : "gray"); b.textContent = S.eraseMode ? "✋ وضع المسح مفعّل — اسحب مستطيلاً (انقر للإيقاف)" : "✋ امسح منطقة بالسحب"; drawPreview(); }
+  function brushMode() { S.brushMode = !S.brushMode; S.eraseMode = false; S.regionMode = false; const b = $("gen-brush-btn"); b.className = "small " + (S.brushMode ? "gold" : "gray"); b.textContent = S.brushMode ? "🖌 الفرشاة مفعّلة — ارسم فوق ما تريد مسحه (انقر للإيقاف)" : "🖌 فرشاة المسح"; const e = $("gen-erase-btn"); e.className = "small gray"; e.textContent = "✋ امسح منطقة بالسحب"; drawPreview(); }
+  function eraseMode() { S.eraseMode = !S.eraseMode; S.brushMode = false; S.regionMode = false; const bb = $("gen-brush-btn"); if (bb) { bb.className = "small gray"; bb.textContent = "🖌 فرشاة المسح"; } const b = $("gen-erase-btn"); b.className = "small " + (S.eraseMode ? "gold" : "gray"); b.textContent = S.eraseMode ? "✋ وضع المسح مفعّل — اسحب مستطيلاً (انقر للإيقاف)" : "✋ امسح منطقة بالسحب"; drawPreview(); }
   function eraseUndo() { const c = (S.undo || []).pop(); if (!c) return; S.canvas.width = c.width; S.canvas.height = c.height; S.canvas.getContext("2d").drawImage(c, 0, 0); if (!S.undo.length) $("gen-erase-undo").disabled = true; drawPreview(); eMsg("↶ تم التراجع"); }
   async function eraseDrag(a) {
     pushUndo(); eMsg("⏳ جارِ المسح…"); const g = S.canvas.getContext("2d", { willReadFrequently: true }), st = await eraseRects(g, [a], geminiOpt()); drawPreview();
@@ -822,5 +881,5 @@ Before rendering, internally verify every text element: no duplicated sentences,
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
