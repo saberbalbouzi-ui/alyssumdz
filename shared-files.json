@@ -9,6 +9,8 @@
     "assets/js/agent-brain.js",
     "assets/js/image-tools.js",
     "assets/js/text-capture.js",
+    "assets/js/ai-vision.js",
+    "assets/js/ai-vision-worker.js",
     "assets/js/avatar-script.js",
     "api/index.php",
     "p/_template/index.html"
