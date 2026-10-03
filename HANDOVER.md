@@ -281,3 +281,9 @@ python3 scripts/make-template.py --target php --out dist/php-client1 --name "ا�
 - قص الصورة بمستطيل (يدعم التدوير)، استبدال يحفظ الموضع/الحجم/الزاوية/الترتيب، قلب، محاذاة، تجميع، تراجع/إعادة (100 خطوة)، تكبير/تحريك (Ctrl+عجلة، مسافة+سحب).
 - خارج `shared-files.json` عمداً (لا يدخل حزم التحديث) إلى أن يستقر. `robots.txt` يمنع فهرسته.
 - المراحل التالية: 2 Supabase (projects/designs/assets + RLS + Storage)، 3 تفكيك (يعيد استعمال `PBGen.detectText/eraseRects`)، 4 استخراج/إزالة كائنات، 5 أقنعة يدوية (الفرشاة موجودة في المولّد)، 6 تصدير HTML/ZIP.
+
+### محرر التصميم — المرحلة 2 (Supabase بمفتاح خاص)
+- `supabase/editor.sql` (اختُبر على Postgres 16 محلياً بأدوار anon/authenticated: القراءة المباشرة مرفوضة، المفتاح الخاطئ مرفوض ومُبطَّأ، الإصدارات تُقلَّم عند 30، الرفع لمسار غير مأذون مرفوض) + `editor/core/cloud.js` + `editor/ui/cloud-ui.js`.
+- الصور: `Ed.cloud.uploadAssets` يحوّل أصول `data:` إلى روابط Storage عامة (إعادة ترميز WebP إن >4MB)؛ التصميم المحفوظ لا يحوي بكسلات. الحفظ السحابي صريح (زر) + دوري كل دقيقتين لمشروع مفتوح فقط.
+- لم يُجرَّب على Supabase الحقيقي من البيئة السحابية (الشبكة الخارجية محجوبة): الاختبار ضد خادم وهمي يحاكي RPC وStorage. أول تشغيل حقيقي = شغّل editor.sql ثم set_key.
+- احتمال: مفتاح `sb_publishable_…` مع Storage يحتاج رأس apikey فقط؛ إن رفض Storage الطلب جرّب مفتاح anon JWT القديم في config.js.

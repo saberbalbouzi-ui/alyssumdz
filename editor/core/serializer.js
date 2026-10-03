@@ -16,7 +16,7 @@
       if (!doc || doc.format !== "alyssum-editor" || !Array.isArray(doc.objects)) return reject(new Error("ملف تصميم غير صالح"));
       if (doc.assets) Object.keys(doc.assets).forEach(id => Ed.assets.set(id, doc.assets[id]));
       const objs = JSON.parse(JSON.stringify(doc.objects)), missing = [];
-      objs.forEach(o => walk(o, x => { if (x.type === "image" && /^asset:/.test(x.src || "")) { const a = Ed.assets.get(x.src.slice(6)); if (a) x.src = a.src; else missing.push(x.src); } }));
+      objs.forEach(o => walk(o, x => { if (x.type === "image" && /^asset:/.test(x.src || "")) { const a = Ed.assets.get(x.src.slice(6)); if (a) { x.src = a.src; if (/^https?:/.test(a.src)) x.crossOrigin = "anonymous"; } else missing.push(x.src); } }));
       if (missing.length) return reject(new Error("أصول مفقودة: " + missing.length));
       Ed.doc = { width: doc.width, height: doc.height, bg: doc.bg || "#ffffff" };
       Ed.c.discardActiveObject();

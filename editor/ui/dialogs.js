@@ -6,6 +6,16 @@
     return new Promise(res => { const m = modal("<h3>تأكيد</h3><p>" + msg + '</p><div class="acts"><button data-r="0">إلغاء</button><button class="pri" data-r="1">' + (okText || "موافق") + "</button></div>");
       m.addEventListener("click", e => { const b = e.target.closest("[data-r]"); if (b) { m.remove(); res(b.dataset.r === "1"); } }); });
   };
+  Ed.modal = modal;
+  Ed.promptDialog = function (title, label, value, opt) {
+    opt = opt || {};
+    return new Promise(res => {
+      const m = modal("<h3>" + title + '</h3><label class="fld">' + label + '<input id="pd-v" type="' + (opt.password ? "password" : "text") + '" value="' + String(value || "").replace(/"/g, "&quot;") + '" autocomplete="off"></label>' + (opt.remember ? '<label style="display:flex;gap:.4rem;align-items:center;margin-top:.5rem;font-size:12px"><input type="checkbox" id="pd-r" style="width:auto"> تذكّر على هذا الجهاز</label>' : "") + (opt.note ? '<p class="muted">' + opt.note + "</p>" : "") + '<div class="acts"><button data-r="0">إلغاء</button><button class="pri" data-r="1">موافق</button></div>');
+      const inp = m.querySelector("#pd-v"); inp.focus(); inp.select();
+      const done = ok => { const v = inp.value, r = !!(m.querySelector("#pd-r") || {}).checked; m.remove(); res(ok ? { value: v, remember: r } : null); };
+      m.addEventListener("click", e => { const b = e.target.closest("[data-r]"); if (b) done(b.dataset.r === "1"); }); inp.addEventListener("keydown", e => { if (e.key === "Enter") done(true); if (e.key === "Escape") done(false); });
+    });
+  };
   Ed.newDocDialog = function () {
     return new Promise(res => {
       const m = modal('<h3>تصميم جديد</h3><div class="pgrid"><label class="fld">العرض (px)<input id="nd-w" type="number" value="1080" min="200" max="4000"></label><label class="fld">الارتفاع (px)<select id="nd-h"><option>3000</option><option>4000</option><option>6000</option><option>8000</option></select></label><label class="fld">لون الخلفية<input id="nd-bg" type="color" value="#ffffff"></label></div><p class="muted">صفحة هبوط طويلة بعرض 1080 للجوال. يمكن تغيير الأبعاد لاحقاً.</p><div class="acts"><button data-r="0">إلغاء</button><button class="pri" data-r="1">إنشاء</button></div>');
