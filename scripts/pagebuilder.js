@@ -423,7 +423,7 @@ const PB = (() => {
         if (ctx.edit) return `<div class="pb-ofm"><b>🛒 نموذج الطلب الأصلي${p ? " — " + esc(p.title) : ""}</b><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-b"></div><small>يظهر هنا النموذج الكامل (العروض، الولاية والبلدية، التوصيل، الكوبون...) بعد النشر ${p ? "" : "— اختر المنتج من الإعدادات"}</small></div>`;
         if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
         if (ctx.inlineOrder && s.raw) return `<div class="pb-ofraw">${s.raw}</div>`;      // على صفحة المنتج نفسها: نموذج الطلب الأصلي كما هو (دون تضمين الصفحة في نفسها)
-        return `<iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1" loading="lazy" title="نموذج الطلب"></iframe>`;
+        return `<iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}" loading="lazy" title="نموذج الطلب"></iframe>`;
       },
       css: () => { },
     },
@@ -523,7 +523,7 @@ const PB = (() => {
   const autoFlowFree = sec => sec.set.kind !== "canvas" && sec.set.autoM !== false && (sec.free || []).length > 0 && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined));
   function renderSections(page, ctx) {
     if (!ctx.wa && ctx.site && ctx.site.wa) ctx = Object.assign({}, ctx, { wa: ctx.site.wa });      // رقم واتساب المتجر للأزرار والنماذج
-    if (page.product && !ctx.pageProduct) ctx = Object.assign({}, ctx, { pageProduct: page.product });
+    if ((page.product && !ctx.pageProduct) || page.slug) ctx = Object.assign({}, ctx, { pageProduct: ctx.pageProduct || page.product, pageSlug: ctx.pageSlug || page.slug });
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
     const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;

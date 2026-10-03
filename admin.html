@@ -507,6 +507,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div class="stat" id="analytics-visits" style="margin-top:.6rem"></div>
       <div style="overflow:auto"><table id="analytics-pages"></table></div>
     </div>
+    <div class="card" id="analytics-src-card">
+      <b style="color:var(--green)">📄 مقارنة صفحات المنتج (أي صفحة تبيع أكثر)</b>
+      <div class="hint">يُسجَّل مصدر كل طلب جديد (الصفحة التي جاء منها الزبون). تظهر المقارنة لكل منتج له أكثر من صفحة، ومعها نتيجة اختبار A/B إن فعّلته.</div>
+      <div id="analytics-src"></div>
+    </div>
     <div class="grid2">
       <div class="card">
         <b style="color:var(--green)">🏆 الأكثر مبيعاً</b>
@@ -1070,6 +1075,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <select id="f-official"></select>
         <label>🧭 مسار المنتج (الصفحة التي تُفتح عند الضغط على المنتج في الرئيسية)</label>
         <select id="f-route"></select>
+        <label>🧪 اختبار A/B تلقائي (اختياري): توزيع زوار الرئيسية بين صفحة المسار (أ) وصفحة أخرى (ب)</label>
+        <div style="display:flex;gap:.5rem;align-items:center"><select id="f-abb" style="flex:1"></select><input id="f-abpct" type="number" min="1" max="99" placeholder="% للنسخة ب" style="max-width:120px" title="نسبة الزوار الذين يرون النسخة ب"></div>
         <label style="display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem;font-weight:800"><input type="checkbox" id="f-freeship" style="width:auto"> 🚚 تفعيل الشحن المجاني لهذا المنتج</label>
         <div class="hint" style="margin-top:0">عند التفعيل: إن لم تحدّد عروضاً بعينها يشمل كل العروض، وإن حدّدتَ عرضاً أو أكثر (خانة «🚚 مجاني» في صف العرض) يقتصر عليها.</div>
         <div id="f-offers-box">
@@ -2513,6 +2520,24 @@ const Admin = {
       '<div><b>' + rate + '%</b><span>نسبة تأكيد الطلبات</span></div>';
     $f("analytics-bestsellers").innerHTML = this.analyticsBarsHtml(this.analyticsBestsellers(5), 28);
     $f("analytics-wilayas").innerHTML = this.analyticsBarsHtml(this.analyticsWilayas(8));
+    this.renderSrcCompare();
+  },
+  /* مقارنة صفحات المنتج: الطلبات والمبيعات لكل مصدر (extra["📄 الصفحة"]) مجمّعة حسب المنتج */
+  renderSrcCompare(){
+    const box = $f("analytics-src"); if(!box) return;
+    const byTitle = {}; (this.products||[]).forEach(p=>{ byTitle[p.title] = p; });
+    const g = {};       // slug → source → {n, rev}
+    this.orders.filter(o=>!["annulee","echec"].includes(o.status)).forEach(o=>{
+      let ex = o.extra; if(typeof ex === "string"){ try{ ex = JSON.parse(ex); }catch(e){ ex = {}; } }
+      const src = ex && ex["📄 الصفحة"]; if(!src) return;
+      const seen = new Set();
+      this.parseOrderItems(o.items).forEach(it=>{ const p = byTitle[it.title] || (this.products||[]).find(x=>it.title.indexOf(x.title) === 0); if(!p || seen.has(p.slug)) return; seen.add(p.slug); const r = ((g[p.slug] = g[p.slug] || {})[src] = g[p.slug][src] || { n:0, rev:0 }); r.n++; r.rev += Number(o.total)||0; });
+    });
+    const rows = Object.entries(g).filter(([slug,m])=>Object.keys(m).length > 1 || (this.products||[]).some(p=>p.slug === slug && (p.ab || p.route)));
+    if(!rows.length){ box.innerHTML = '<p class="hint" style="margin:.6rem 0 0">لا توجد بعد بيانات كافية — تظهر هنا حين يأتي طلبات لمنتج واحد من أكثر من صفحة (مثل «تركيز 1» و«تركيز 2»).</p>'; return; }
+    box.innerHTML = rows.map(([slug,m])=>{ const p = (this.products||[]).find(x=>x.slug===slug), tot = Object.values(m).reduce((a,b)=>a+b.n,0), best = Object.entries(m).sort((a,b)=>b[1].n-a[1].n)[0][0];
+      return '<div style="margin-top:.8rem"><b>' + (p ? p.title : slug) + (p && p.ab ? ' <span class="pill st-pending">🧪 A/B ' + (p.ab.pct||50) + '% ← ' + p.ab.b + '</span>' : '') + '</b><div style="overflow:auto"><table><tr><th>الصفحة</th><th>الطلبات</th><th>النسبة</th><th>المبيعات</th></tr>' +
+        Object.entries(m).sort((a,b)=>b[1].n-a[1].n).map(([k,v])=>'<tr><td dir="ltr" style="text-align:right">' + k + (k===best ? ' 🏆' : '') + '</td><td>' + v.n + '</td><td>' + Math.round(v.n*100/tot) + '%</td><td>' + v.rev.toLocaleString("fr-DZ") + ' دج</td></tr>').join("") + '</table></div></div>'; }).join("");
   },
 
   ORDER_PAGE_SIZE: 20,
@@ -2776,6 +2801,7 @@ const Admin = {
     $f("f-freeship").checked = !!(src && src.freeShip);
     const pgOpts = sel => '<option value="">الصفحة الافتراضية للمنتج (/p/' + (src?src.slug:"…") + '/)</option>' + ((typeof PBAdmin !== "undefined" && PBAdmin.list) || []).map(x=>'<option value="'+x.slug+'"'+(sel===x.slug?" selected":"")+'>'+(x.title||x.slug).replace(/</g,"&lt;")+' — /lp/'+x.slug+'/'+(x.product && src && x.product===src.slug ? " ✓ مرتبطة" : "")+'</option>').join("");
     $f("f-official").innerHTML = pgOpts(src && src.officialPage); $f("f-route").innerHTML = pgOpts(src && src.route);
+    $f("f-abb").innerHTML = pgOpts(src && src.ab && src.ab.b).replace(/<option value="">[^<]*<\/option>/, '<option value="">— بدون اختبار —</option>'); $f("f-abpct").value = (src && src.ab && src.ab.pct) || "";
     this.renderTagBoxes();
     document.querySelectorAll("input[data-tag]").forEach(c=>{ c.checked = !!(src && (src.tags||[]).includes(c.dataset.tag)); });
     $f("f-seo-title").value = src?(src.seoTitle||""):"";
@@ -3315,6 +3341,7 @@ const Admin = {
       stock: $f("f-stock").value.trim()==="" ? null : Math.max(0, Number($f("f-stock").value)||0),
       freeShip: $f("f-freeship").checked,
       officialPage: $f("f-official").value || undefined, route: $f("f-route").value || undefined,
+      ab: $f("f-abb").value ? { b: $f("f-abb").value, pct: Math.min(99, Math.max(1, Number($f("f-abpct").value) || 50)) } : undefined,
       tags: [...document.querySelectorAll("input[data-tag]")].filter(c=>c.checked).map(c=>c.dataset.tag),
       seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(), keywords: $f("f-keywords").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
@@ -7531,7 +7558,7 @@ const PB = (() => {
         if (ctx.edit) return `<div class="pb-ofm"><b>🛒 نموذج الطلب الأصلي${p ? " — " + esc(p.title) : ""}</b><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-b"></div><small>يظهر هنا النموذج الكامل (العروض، الولاية والبلدية، التوصيل، الكوبون...) بعد النشر ${p ? "" : "— اختر المنتج من الإعدادات"}</small></div>`;
         if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
         if (ctx.inlineOrder && s.raw) return `<div class="pb-ofraw">${s.raw}</div>`;      // على صفحة المنتج نفسها: نموذج الطلب الأصلي كما هو (دون تضمين الصفحة في نفسها)
-        return `<iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1" loading="lazy" title="نموذج الطلب"></iframe>`;
+        return `<iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}" loading="lazy" title="نموذج الطلب"></iframe>`;
       },
       css: () => { },
     },
@@ -7631,7 +7658,7 @@ const PB = (() => {
   const autoFlowFree = sec => sec.set.kind !== "canvas" && sec.set.autoM !== false && (sec.free || []).length > 0 && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined));
   function renderSections(page, ctx) {
     if (!ctx.wa && ctx.site && ctx.site.wa) ctx = Object.assign({}, ctx, { wa: ctx.site.wa });      // رقم واتساب المتجر للأزرار والنماذج
-    if (page.product && !ctx.pageProduct) ctx = Object.assign({}, ctx, { pageProduct: page.product });
+    if ((page.product && !ctx.pageProduct) || page.slug) ctx = Object.assign({}, ctx, { pageProduct: ctx.pageProduct || page.product, pageSlug: ctx.pageSlug || page.slug });
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
     const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;
