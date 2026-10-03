@@ -105,7 +105,7 @@ const PB = (() => {
     return bar + '<div class="pb-pgrid">' + list.map(p => {
       const img = p.cover || (p.images && p.images[0]) || "";
       const disc = (p.old && p.old > p.price) ? Math.round((1 - p.price / p.old) * 100) : 0;
-      return '<a class="pb-pc" data-t="' + e((p.tags || []).join(" ")) + '" data-c="' + e(p.cat || "") + '" href="' + e(base) + 'p/' + e(p.slug) + '/">' +
+      return '<a class="pb-pc" data-t="' + e((p.tags || []).join(" ")) + '" data-c="' + e(p.cat || "") + '" href="' + e(base) + (p.route ? 'lp/' + e(p.route) : 'p/' + e(p.slug)) + '/">' +
         '<div class="pb-pci">' + (disc ? '<span class="pb-pcd">-' + disc + '%</span>' : '') + (img ? '<img loading="lazy" decoding="async" src="' + e(base + img) + '" alt="' + e(p.title) + '">' : '') + '</div>' +
         '<h3>' + e(p.title) + '</h3><div class="pb-pcp"><b>' + f(p.price) + '</b>' + ((s.showOld !== false && p.old && p.old > p.price) ? '<s>' + f(p.old) + '</s>' : '') + '</div>' +
         '<span class="pb-pcb">' + e(s.btn || "اطلب الآن") + '</span></a>';
@@ -675,7 +675,7 @@ if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProduc
     const site = ctx.site || {}, url = (site.domain ? "https://" + site.domain : "") + "/" + (ctx.path != null ? ctx.path : "lp/" + page.slug + "/");
     const hdr = page.header ? `<header class="pb-hdr"><div><a class="lg" href="${esc(ctx.base)}">${esc(site.name || "المتجر")}</a>${site.wa ? `<a class="wa" href="https://wa.me/${esc(String(site.wa).replace(/\D/g, ""))}" target="_blank" rel="noopener">واتساب</a>` : ""}</div></header>` : "";
     const ftr = page.footer ? `<footer class="pb-ftr">© ${new Date().getFullYear()} ${esc(site.name || "")} — جميع الحقوق محفوظة · <a href="${esc(ctx.base)}">العودة للمتجر</a></footer>` : "";
-    const hasProd = JSON.stringify(page.sections).includes('"type":"products"'), hasContact = JSON.stringify(page.sections).includes('"type":"contact"');
+    const bindProd = !!page.product && /id=\\"(pprice|pold|psave)\\"/.test(JSON.stringify(page.sections)), hasProd = JSON.stringify(page.sections).includes('"type":"products"'), hasContact = JSON.stringify(page.sections).includes('"type":"contact"');
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${ctx.baseHref ? `<base href="${esc(ctx.baseHref)}">` : ""}
 <title>${esc(page.seoTitle || page.title)}${site.name ? " — " + esc(site.name) : ""}</title>
@@ -689,7 +689,7 @@ if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProduc
 ${r.css}
 ${page.css || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
-${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
+${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}${bindProd ? `<script>(function(){var p=(window.PRODUCTS||[]).filter(function(x){return x.slug===${JSON.stringify(page.product)}})[0];if(!p)return;var f=function(n){return Number(n).toLocaleString("fr-DZ")+" دج"},g=function(i){return document.getElementById(i)},a=g("pprice"),b=g("pold"),c=g("psave"),has=p.old&&p.old>p.price;if(a)a.textContent=f(p.price);if(b){b.textContent=has?f(p.old):"";b.style.display=has?"":"none"}if(c){c.textContent=has?"وفّر "+Math.round((1-p.price/p.old)*100)+"%":"";c.style.display=has?"":"none"}})();<\/script>` : ""}
 <script>var __pbBase=${JSON.stringify(ctx.base)};var __pbSlug=${JSON.stringify(page.slug || "")};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}${hasContact ? "(" + contactRuntime.toString() + ")();" : ""}<\/script>
 </body></html>`;
   }
