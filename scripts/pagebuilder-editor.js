@@ -655,8 +655,8 @@ body{overflow-x:hidden;margin:0}`;
     E.page = JSON.parse(json); afterEdit(); toast("🪶 خُفّفت " + n + " صورة تلقائياً (وفّرت ‎" + Math.round(saved / 1024) + " ك.ب)"); return true;
   }
   /* رفع صورة (Blob) من المولّد: تظهر محلياً فوراً ويكمل الحفظ في الموقع بالخلفية */
-  async function uploadBlob(blob, name) {
-    const A = Admin; A.localImg = A.localImg || {}; const f = new File([blob], name + ".webp", { type: "image/webp" }), p = await A.prepareImage(f, "assets/img/pages", "gen-", { max: 2000, q: .86, noVariants: true, uniq: true });
+  async function uploadBlob(blob, name, opt) {
+    const A = Admin; A.localImg = A.localImg || {}; const f = new File([blob], name + ".webp", { type: "image/webp" }), p = await A.prepareImage(f, "assets/img/pages", "gen-", Object.assign({ max: 2000, q: .86, noVariants: true, uniq: true }, opt || {}));
     A.localImg[p.path] = URL.createObjectURL(p.blob); queueCommit(p); return p.path;
   }
   /* استبدال مسارات الصور المرفوعة حديثاً بروابط محلية في معاينة المحرر */
@@ -937,10 +937,11 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(P.slug || "")) { toast("الرابط (slug) يجب أن يكون حروفاً لاتينية صغيرة وأرقاماً وشرطات (حرفان على الأقل) — من تبويب ⚙️ الصفحة"); E.ltab = "pg"; renderLeft(); return false; }
     return true;
   }
+  /* معاينة داخل نافذة بشريط علوي (المكتب/التابلت/الهاتف + عودة للتعديل + إغلاق) مع صور الرفع الحديث */
   function preview() {
     const dir = location.href.replace(/[^/]*$/, "");
-    const html = PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir }, siteCtx()));
-    const w = window.open(URL.createObjectURL(new Blob([html], { type: "text/html" })), "_blank"); if (!w) toast("اسمح بالنوافذ المنبثقة للمعاينة");
+    const html = localize(PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir }, siteCtx())));
+    SitePreview.openHtml(html, { title: "معاينة قبل النشر", edit: () => SitePreview.close(), editLabel: "عودة للتعديل" });
   }
   async function putJson(path, obj, msg) {
     let sha; try { sha = (await GH.getFile(path)).sha; } catch (e) { sha = undefined; }
