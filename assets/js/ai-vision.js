@@ -46,7 +46,7 @@ window.AIVision = (function () {
     const c = all.filter(d => { const en = d.en2 || d.en, a = bArea(d.b); if (DROP.has(en) || DROP.has(d.en)) return false; if (a > W * H * .85 || a < W * H * .0012) return false; return d.score >= (PRODUCT.test(en) ? .2 : .3); });
     c.sort((p, q) => q.score - p.score); const keep = [];
     c.forEach(d => { const en = d.en2 || d.en; if (!keep.some(k => iou(k.b, d.b) > .6 || ((k.en2 || k.en) === en && bInter(k.b, d.b) / Math.max(1, bArea(d.b)) > .85))) keep.push(d); });
-    return keep.slice(0, 24).map(d => ({ label: arName(d.en2 || d.en), en: d.en2 || d.en, score: d.score, box: d.b, src: d.src }));
+    return keep.slice(0, 24).map(d => ({ label: (d.en2 || d.en) === "cup" && (d.b[3] - d.b[1]) > (d.b[2] - d.b[0]) * 1.1 ? "عبوة" : arName(d.en2 || d.en), en: d.en2 || d.en, score: d.score, box: d.b, src: d.src }));
   }
   /* كشف بـ Gemini: صناديق + أسماء عربية (يُرسل الصورة مصغّرة إلى Google بمفتاحك فقط) */
   async function geminiDetect(cv, key) {
@@ -119,7 +119,9 @@ window.AIVision = (function () {
       const hit = out.find(o => both(o, it) / Math.min(o.area, it.area) > .6); if (!hit) return out.push(it);
       if (both(hit, it) / Math.max(hit.area, it.area) > .5) return unite(hit, it, S);                     // نفس العنصر
       const small = hit.area < it.area ? hit : it, big = small === hit ? it : hit;
-      if ((small.det || 0) > (big.det || 0) || (small.src === "gemini" && big.src === "gemini")) { carve(big, small, S); if (it.area) out.push(it); return; }      // عنصر فوق آخر (Gemini لا يذكر أجزاء العناصر)
+      const CONT = /عبوة|كوب|إناء|قارورة|علبة|إبريق|مستحضر/, related = (FAM[small.label] || small.label) === (FAM[big.label] || big.label) || (CONT.test(small.label) && CONT.test(big.label));
+      /* عنصر داخل شخص (منتج في اليد) أو من نوع مختلف = عنصر مستقل فوقه يُقتطع منه؛ «الجزء» فقط بين متقاربين (غطاء داخل عبوة) */
+      if (PERSON.test(big.label) || !related || (small.det || 0) > (big.det || 0) || (small.src === "gemini" && big.src === "gemini")) { carve(big, small, S); if (it.area) out.push(it); return; }      // عنصر فوق آخر (Gemini لا يذكر أجزاء العناصر)
       const lb = big.label; unite(hit, it, S); hit.label = lb;                                                // جزء من العنصر
     });
     const fam = l => FAM[l] || l;
