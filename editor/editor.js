@@ -26,6 +26,16 @@
       await Ed.deserialize(doc); return true;
     } catch (e) { console.warn("restore", e); return false; }
   }
+  /* ───── استيراد صفحة مولَّدة من لوحة التحكم (مقسَّمة إلى أقسام): تُوضع كطبقات صور متراصّة بعرض 1080 ───── */
+  async function importHandoff() {
+    const h = await idb.get("handoff"); if (!h || !h.sections || !h.sections.length) throw new Error("لا توجد صفحة مولَّدة بانتظار التحرير");
+    const W = 1080, sc = W / h.width; Ed.newDoc(W, Math.round(h.height * sc), "#ffffff"); Ed.projectName = h.name || "صفحة مولّدة";
+    for (let i = 0; i < h.sections.length; i++) {
+      const sec = h.sections[i], src = await Ed.readFile(sec.blob), el = await Ed.loadEl(src), id = Ed.registerAsset(src, el.naturalWidth, el.naturalHeight, "section-" + (i + 1));
+      Ed.add(new fabric.Image(el, { left: W / 2, top: (sec.y0 + sec.y1) / 2 * sc, scaleX: (sec.y1 - sec.y0) * sc / el.naturalHeight, scaleY: (sec.y1 - sec.y0) * sc / el.naturalHeight, assetId: id, layerType: "image", name: "قسم " + (i + 1) }), { select: false });
+    }
+    await idb.set("handoff", null); Ed.setZoom(Ed.fitZoom()); Ed.toast("استُوردت الصفحة (" + h.sections.length + " أقسام) — اضغط 🪄 المسح الذكي لتحويلها إلى عناصر", 6000); return true;
+  }
   /* ───── اختصارات ───── */
   function typing(e) { const t = e.target; if (t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return true; const a = Ed.c.getActiveObject(); return !!(a && a.isEditing); }
   window.addEventListener("keydown", e => {
@@ -46,7 +56,9 @@
   document.addEventListener("DOMContentLoaded", async () => {
     Ed.init(document.getElementById("cv")); Ed.initPanZoom(document.getElementById("stage"));
     if (document.fonts) { try { await Promise.race([Promise.all(["400", "700", "800"].map(w => document.fonts.load(w + " 20px Cairo"))), new Promise(r => setTimeout(r, 1500))]); } catch (e) { } }
-    const ok = await restore(); if (!ok) Ed.newDoc(1080, 3000, "#ffffff"); else Ed.toast("استُعيد آخر تصميم تلقائياً");
+    let imp = false; try { if (/[?&]import=1/.test(location.search)) imp = await importHandoff(); } catch (e) { console.warn("import", e); Ed.toast("⚠️ تعذّر استيراد الصفحة من المولّد: " + e.message, 4500); }
+    const ok = imp ? true : await restore(); if (!ok) Ed.newDoc(1080, 3000, "#ffffff"); else if (!imp) Ed.toast("استُعيد آخر تصميم تلقائياً");
+    if (imp) { try { history.replaceState(null, "", location.pathname); } catch (e) { } }
     Ed.history.reset(); Ed.emit("layers"); state("جاهز");
     window.__editorReady = true;
   });

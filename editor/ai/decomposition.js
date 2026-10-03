@@ -55,7 +55,7 @@
         for (const { o, cut } of cuts) ImageTools.eraseObject(cg, o, cut, 5, F);
         objects = cuts.map(({ o, cut }, i) => {
           const w = o.x1 - o.x0, h = o.y1 - o.y0, fill = cut.filled / (w * h), icon = Math.max(w, h) < W * .12;
-          return { id: "image_" + String(i + 1).padStart(3, "0"), type: "image", role: icon ? "icon" : (fill > .85 ? "photo" : "object"), bbox: { x: o.x0, y: o.y0, width: w, height: h }, canvas: cut.canvas };
+          return { id: "image_" + String(i + 1).padStart(3, "0"), type: "image", role: icon ? "icon" : (fill > .85 ? "photo" : "object"), bbox: { x: cut.x0, y: cut.y0, width: cut.w, height: cut.h }, canvas: cut.canvas };
         }).sort((p, q) => q.bbox.width * q.bbox.height - p.bbox.width * p.bbox.height);
       } catch (e) { console.warn("objects", e); objNote = e.message; }
       /* فقرات + أحجام + أدوار */
@@ -90,25 +90,32 @@
       Ed.c.discardActiveObject(); Ed.c.requestRenderAll(); Ed.emit("layers"); Ed.emit("changed", "decompose"); return { texts: sel.length, objects: (res.objects || []).length };
     },
     /* واجهة: نافذة تقدّم + معالجة أخطاء + إعادة محاولة */
+    /* واجهة: نافذة تقدّم + معالجة أخطاء + إعادة محاولة. تعالج الصورة المحدّدة، أو كل أقسام الصور غير المفكَّكة (صور الاستيراد من المولّد) */
     async runUI() {
-      const img = (() => { const a = Ed.selected(); if (a && a.type === "image") return a; const imgs = Ed.c.getObjects().filter(o => o.type === "image" && o.visible !== false); return imgs.sort((p, q) => q.getScaledWidth() * q.getScaledHeight() - p.getScaledWidth() * p.getScaledHeight())[0]; })();
-      if (!img) return Ed.toast("أضف صورة التصميم أولاً ثم اضغط تفكيك");
+      const sel = Ed.selected(); let targets = sel && sel.type === "image" ? [sel] : Ed.c.getObjects().filter(o => o.type === "image" && o.visible !== false && !o.role);
+      targets = targets.filter(o => o.visible !== false); if (!targets.length) return Ed.toast("أضف صورة التصميم أولاً ثم اضغط المسح الذكي");
+      targets.sort((p, q) => p.top - q.top);
       if (!Ed.ocr.key()) {
-        const a = await Ed.promptDialog("الالتقاط السحري — قراءة النصوص", "مفتاح Gemini (اختياري)", "", { password: true, note: "بدون مفتاح تُستعمل قراءة Tesseract المجانية وهي ضعيفة بالعربية، وإن تعذّرت تُوضع نصوص بديلة تكتبها أنت. المفتاح يبقى في هذا المتصفح فقط." });
+        const a = await Ed.promptDialog("المسح الذكي — قراءة النصوص", "مفتاح Gemini (اختياري)", "", { password: true, note: "بدون مفتاح تُستعمل قراءة Tesseract المجانية وهي ضعيفة بالعربية، وإن تعذّرت تُوضع نصوص بديلة تكتبها أنت. المفتاح يبقى في هذا المتصفح فقط." });
         if (a === null) return; if (a.value.trim()) Ed.ocr.setKey(a.value.trim());
       }
-      const m = Ed.modal("<h3>🪄 الالتقاط السحري</h3><div id='dc-steps'>" + STEPS.map((s, i) => "<div class='dcs' data-i='" + i + "' style='padding:.25rem 0;color:#9ca3af'>○ " + s + "</div>").join("") + "</div><div id='dc-msg' class='muted' style='margin-top:.5rem'></div><div class='acts' id='dc-acts' style='display:none'></div>");
+      const m = Ed.modal("<h3>🪄 المسح الذكي</h3><div id='dc-sec' class='muted'></div><div id='dc-steps'>" + STEPS.map((s, i) => "<div class='dcs' data-i='" + i + "' style='padding:.25rem 0;color:#9ca3af'>○ " + s + "</div>").join("") + "</div><div id='dc-msg' class='muted' style='margin-top:.5rem'></div><div class='acts' id='dc-acts' style='display:none'></div>");
       const mark = i => m.querySelectorAll(".dcs").forEach(e => { const k = +e.dataset.i; e.style.color = k < i ? "#16a34a" : k === i ? "#111827" : "#9ca3af"; e.textContent = (k < i ? "✓ " : k === i ? "⏳ " : "○ ") + STEPS[k]; });
       const acts = m.querySelector("#dc-acts"), say = t => { m.querySelector("#dc-msg").innerHTML = t; };
-      try {
-        await Ed.loadFont("Cairo"); const res = await this.analyze(img, mark); mark(6); const r = this.apply(img, res); mark(7);
-        const st = res.json.stats; say("تم: <b>" + r.objects + "</b> عنصراً مستخرجاً بشفافية (صور/منتجات/أيقونات) و<b>" + r.texts + "</b> نصاً قابلاً للتعديل" + (st.objNote ? "<br>⚠️ كشف العناصر: " + esc(st.objNote) : "") + (res.json.elements.some(e => e.placeholder) ? "<br>⚠️ لم تُقرأ النصوص (" + esc(res.ocrNote || "بلا قراءة") + ") فوُضع نص بديل «نص» فوق كل سطر: انقر مرتين واكتب النص الصحيح." : "") + (st.unmatchedOcr ? "<br>ℹ️ " + st.unmatchedOcr + " سطراً مقروءاً لم يُطابق نصاً مكتشفاً (بقي في الخلفية)." : "") + "<br><span class='muted'>الأصل محفوظ مخفياً في الطبقات. للتراجع: Ctrl+Z.</span>");
-        acts.style.display = "flex"; acts.innerHTML = "<button class='pri'>تمام</button>"; acts.firstChild.onclick = () => m.remove();
-      } catch (e) {
-        console.error(e); say("<span style='color:#b91c1c'>⚠️ تعذّر التفكيك: " + esc(e.message) + "</span><br>لم يتغير تصميمك.");
-        acts.style.display = "flex"; acts.innerHTML = "<button data-x>إغلاق</button><button class='pri' data-r>إعادة المحاولة</button>";
-        acts.querySelector("[data-x]").onclick = () => m.remove(); acts.querySelector("[data-r]").onclick = () => { m.remove(); Ed.decomp.runUI(); };
+      await Ed.loadFont("Cairo"); let tot = { texts: 0, objects: 0 }, fails = [], placeholders = false, notes = [];
+      for (let i = 0; i < targets.length; i++) {
+        m.querySelector("#dc-sec").textContent = targets.length > 1 ? "القسم " + (i + 1) + " من " + targets.length : ""; mark(0);
+        try { const res = await this.analyze(targets[i], mark); mark(6); const r = this.apply(targets[i], res); tot.texts += r.texts; tot.objects += r.objects; if (res.json.elements.some(e => e.placeholder)) { placeholders = true; if (res.ocrNote) notes.push(res.ocrNote); } if (res.json.stats.objNote) notes.push(res.json.stats.objNote); }
+        catch (e) { console.error(e); fails.push((targets.length > 1 ? "القسم " + (i + 1) + ": " : "") + e.message); }
       }
+      mark(7);
+      if (fails.length === targets.length) {
+        say("<span style='color:#b91c1c'>⚠️ تعذّر المسح الذكي: " + esc(fails[0]) + "</span><br>لم يتغير تصميمك.");
+        acts.style.display = "flex"; acts.innerHTML = "<button data-x>إغلاق</button><button class='pri' data-r>إعادة المحاولة</button>";
+        acts.querySelector("[data-x]").onclick = () => m.remove(); acts.querySelector("[data-r]").onclick = () => { m.remove(); Ed.decomp.runUI(); }; return;
+      }
+      say("تم: <b>" + tot.objects + "</b> عنصراً مستقلاً (منتجات/أعشاب/أشكال بظلالها) و<b>" + tot.texts + "</b> نصاً قابلاً للتعديل، والخلفية باقية." + (placeholders ? "<br>⚠️ لم تُقرأ بعض النصوص (" + esc([...new Set(notes)].join("؛ ") || "بلا قراءة") + ") فوُضع نص بديل «نص»: انقر مرتين واكتب الصحيح." : "") + (fails.length ? "<br>⚠️ تعذّر: " + esc(fails.join(" · ")) : "") + "<br><span class='muted'>الأصل محفوظ مخفياً في الطبقات. Ctrl+Z للتراجع. ما فاتك: استعمل أدوات التحديد اليدوي (فرشاة/لاسو).</span>");
+      acts.style.display = "flex"; acts.innerHTML = "<button class='pri'>تمام</button>"; acts.firstChild.onclick = () => m.remove();
     }
   };
 })();

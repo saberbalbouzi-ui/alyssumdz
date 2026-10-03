@@ -390,18 +390,29 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   function mount(host) {
     host.innerHTML = `
 <div class="card" id="gen-card" style="margin-bottom:1rem">
-  <b style="color:var(--green);font-size:1.05rem">🪄 مولّد صفحة هبوط بالذكاء الاصطناعي — من صورة منتجك إلى صفحة قابلة للتعديل</b>
-  <div class="hint" style="margin:.6rem 0">① أدخل معلومات المنتج وصورته ← يكتب Gemini نصوصاً تسويقية ويولّد صورة الصفحة الطويلة تلقائياً ② راجع حدود الأقسام ③ حوّلها إلى صفحة قابلة للتعديل في المحرر. (لا يظهر لك أي برومبت؛ ويمكن نسخه دون عرضه.)</div>
-  <div class="gen-steps" style="display:flex;gap:.4rem;margin:.6rem 0 1rem;flex-wrap:wrap"><button type="button" class="small gray" data-gs="1" onclick="PBGen.step(1)">① معلومات المنتج</button><button type="button" class="small gray" data-gs="2" onclick="PBGen.step(2)">② المراجعة والتقسيم</button></div>
+  <b style="color:var(--green);font-size:1.1rem">🪄 توليد الصفحة بالذكاء الاصطناعي</b>
+  <div class="hint" style="margin:.4rem 0 .6rem">اضبط <b>إعدادات التوليد</b> (المفتاح والجودة) ← أدخل معلومات المنتج ← «توليد الصفحة». بعد النتيجة: <b>💾 حفظ</b> · <b>✏️ تحرير الصفحة</b> (يفتحها في المحرر مقسَّمة، وهناك «🪄 المسح الذكي» يحوّلها إلى عناصر مستقلة) · <b>🔄 إعادة التوليد</b>.</div>
   <div class="gen-step" data-s="1">
-  <b>① معلومات المنتج</b>
-  <div class="hint" style="margin:.3rem 0 .6rem">أدخل معلومات المنتج وصورته، ثم اضغط «توليد الصورة الطويلة»: يكتب Gemini نصوصاً تسويقية قوية ويولّد الصورة في الخلفية (لا تظهر لك أي برومبتات). بعدها تعدّلها في المحرر.</div>
+  <details id="gen-adv" style="margin:.5rem 0 .8rem;padding:.6rem .8rem;background:#f7faf7;border:1.5px solid #cfe3d3;border-radius:10px"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات التوليد (المفتاح، الجودة، الهيكل)</summary>
+    <div class="grid2" style="margin-top:.4rem">
+      <label class="hint" style="margin:0">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
+      <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
+    </div>
+    <div class="grid2" style="margin-top:.4rem">
+      <label class="hint" style="margin:0">لغة السوق<select id="gen-lang">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
+      <label class="hint" style="margin:0">نوع العرض<select id="gen-offer"><option value="single">منتج واحد</option><option value="bundle">باك / مجموعة منتجات</option></select></label>
+      <label class="hint" style="margin:0">هيكل الصفحة<select id="gen-tpl"><option value="11">قالب 11 قسماً (Anti Acne الناجح — موصى)</option><option value="free">حر (يقرّر Gemini الأقسام)</option></select></label>
+      <label class="hint" style="margin:0">نسبة الصورة<select id="gen-ar"><option value="1:4">1:4 — طويل (موصى للصورة الواحدة)</option><option value="1:8">1:8 — أطول جداً (ضيق)</option><option value="9:16">9:16 — طولي</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option></select></label>
+      <label class="hint" style="margin:0">الدقة<select id="gen-res"><option value="4K">4K — أعلى وضوحاً (موصى للنصوص)</option><option value="2K">2K</option><option value="1K">1K — أسرع وأرخص</option></select></label>
+      <label class="hint" style="margin:0">نموذج الصور<select id="gen-imgq"><option value="pro">أعلى جودة نص (Nano Banana Pro) — الأغلى</option><option value="fast">أسرع وأرخص (Flash)</option></select></label>
+    </div>
+    <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-modest" checked style="width:auto"> مراعاة الحشمة: أي امرأة في الصورة محجّبة بالكامل (يُفضَّل تصوير البشرة عن قرب)</label>
+    <button class="small gray" type="button" onclick="PBGen.testKey()" style="margin-top:.3rem">🔑 اختبار المفتاح</button>
+  </details>
+  <b>معلومات المنتج</b>
   <div class="grid2" style="margin-top:.4rem">
     <label class="hint" style="margin:0">صورة المنتج (إجباري)<input type="file" id="gen-pimg" accept="image/*"></label>
     <label class="hint" style="margin:0">اسم المنتج<input id="gen-name" placeholder="مثال: عسل التركيز وتنشيط الذاكرة"></label>
-    <label class="hint" style="margin:0">لغة السوق<select id="gen-lang">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
-    <label class="hint" style="margin:0">نوع العرض<select id="gen-offer"><option value="single">منتج واحد</option><option value="bundle">باك / مجموعة منتجات</option></select></label>
-    <label class="hint" style="margin:0">هيكل الصفحة<select id="gen-tpl"><option value="11">قالب 11 قسماً (Anti Acne الناجح — موصى)</option><option value="free">حر (يقرّر Gemini الأقسام)</option></select></label>
     <label class="hint" style="margin:0">السعر<input id="gen-price" placeholder="مثال: 2100 دج"></label>
     <label class="hint" style="margin:0">ألوان التصميم (اختياري)<input id="gen-colors" placeholder="مثال: أزرق، برتقالي (وإلا من ألوان المنتج)"></label>
   </div>
@@ -410,36 +421,29 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <label class="hint" style="margin:.4rem 0 0">الوصف والمميزات والفئة المستهدفة</label>
   <textarea id="gen-desc" rows="3" placeholder="الصق وصف منتجك ومميزاته: لمن هو، ما يميّزه، العروض…"></textarea>
   <input id="gen-aud" type="hidden">
-  <details id="gen-adv" style="margin-top:.5rem"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات متقدمة (المفتاح والتكلفة)</summary>
-    <div class="grid2" style="margin-top:.4rem">
-      <label class="hint" style="margin:0">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
-      <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
-    </div>
-    <div class="grid2" style="margin-top:.4rem">
-      <label class="hint" style="margin:0">نسبة الصورة<select id="gen-ar"><option value="1:4">1:4 — طويل (موصى للصورة الواحدة)</option><option value="1:8">1:8 — أطول جداً (ضيق)</option><option value="9:16">9:16 — طولي</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option></select></label>
-      <label class="hint" style="margin:0">الدقة<select id="gen-res"><option value="4K">4K — أعلى وضوحاً (موصى للنصوص)</option><option value="2K">2K</option><option value="1K">1K — أسرع وأرخص</option></select></label>
-      <label class="hint" style="margin:0">نموذج الصور<select id="gen-imgq"><option value="pro">أعلى جودة نص (Nano Banana Pro) — الأغلى</option><option value="fast">أسرع وأرخص (Flash)</option></select></label>
-    </div>
-    <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-modest" checked style="width:auto"> مراعاة الحشمة: أي امرأة في الصورة محجّبة بالكامل (يُفضَّل تصوير البشرة عن قرب)</label>
-    <button class="small gray" type="button" onclick="PBGen.testKey()" style="margin-top:.3rem">🔑 اختبار المفتاح</button>
-  </details>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 .3rem">
-    <button class="small gold" type="button" id="gen-make" onclick="PBGen.generateImage()">🎨 توليد الصورة الطويلة</button>
+    <button class="small gold" type="button" id="gen-make" onclick="PBGen.generateImage()">🎨 توليد الصفحة</button>
     <button class="small gray" type="button" onclick="PBGen.copyHidden()" title="يجهّز البرومبت ويُنسخ للحافظة دون عرضه، لاستعماله في تطبيق Gemini يدوياً">📋 نسخ البرومبت (دون عرضه)</button>
-    <button class="small gray" type="button" onclick="PBGen.step(2)" title="إن كانت لديك صورة جاهزة">⬆ لدي صورة جاهزة</button>
+    <button class="small gray" type="button" onclick="document.getElementById('gen-file1').click()" title="إن كانت لديك صورة صفحة جاهزة">⬆ لدي صورة جاهزة</button><input type="file" id="gen-file1" accept="image/*" hidden onchange="PBGen.onFile(this)">
   </div>
   <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-autoretry" style="width:auto"> إعادة توليد تلقائية مرة واحدة إن وُجدت أخطاء كثيرة في الصورة (تُحتسب كطلب صور إضافي)</label>
+  <div id="gen-result" style="display:none;margin-top:.8rem;padding:.8rem;border:1.5px solid #cfe3d3;border-radius:12px;background:#fbfdfb">
+    <div style="font-weight:900;color:var(--green)">✅ الصفحة المولّدة</div>
+    <div style="max-height:62vh;overflow:auto;border:1.5px solid var(--line);border-radius:10px;margin:.5rem 0;background:#222;text-align:center"><img id="gen-rimg" alt="الصفحة المولّدة" style="max-width:100%;display:block;margin:0 auto"></div>
+    <div id="gen-rcheck" class="hint" style="margin:.3rem 0"></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+      <button class="small gold" type="button" id="gen-save" onclick="PBGen.savePage()">💾 حفظ الصفحة</button>
+      <button class="small gold" type="button" onclick="PBGen.editPage()" title="يفتح المحرر والصفحة مقسَّمة إلى أقسام، وفيه المسح الذكي">✏️ تحرير الصفحة</button>
+      <button class="small gray" type="button" onclick="PBGen.regen()" title="يُعيد التوليد مع تعليمات لتجنّب الأخطاء المكتشفة">🔄 إعادة التوليد</button>
+      <button class="small gray" type="button" onclick="PBGen.downloadOrig()">⬇ تنزيل الأصل</button>
+    </div>
+    <details style="margin-top:.6rem"><summary style="cursor:pointer;color:#6b7280;font-size:.85rem">خيارات متقدمة: التقسيم والتحرير بمنشئ الصفحات القديم</summary><button class="small gray" type="button" onclick="PBGen.step(2)" style="margin-top:.4rem">فتح التقسيم والمحرر القديم</button></details>
+  </div>
   <div id="gen-automsg" style="font-weight:700;color:var(--green);min-height:1.3em"></div><div id="gen-last" style="margin-top:.4rem"></div><small id="gen-cost" style="color:#8a7a4d"></small>
   <textarea id="gen-out" style="display:none"></textarea><textarea id="gen-final" style="display:none"></textarea><pre id="gen-copy" style="display:none"></pre>
   </div>
   <div class="gen-step" data-s="2" style="display:none">
-  <b>② الصورة والأقسام</b> <button class="small gray" type="button" onclick="PBGen.step(1)" title="غيّر المعلومات ثم أعد التوليد">🔄 إعادة التوليد</button> <button class="small gold" type="button" onclick="PBGen.downloadOrig()" title="تنزيل الصورة الأصلية كما ولّدها Gemini (دون قص أو تعديل)">⬇ تنزيل الصورة الأصلية</button>
-  <div id="gen-review" style="display:none;margin-top:.6rem">
-    <div style="font-weight:900;color:var(--green)">🔎 مراجعة الصورة المولّدة قبل التقسيم</div>
-    <div style="max-height:68vh;overflow:auto;border:1.5px solid var(--line);border-radius:10px;margin:.5rem 0;background:#222;text-align:center"><img id="gen-rimg" alt="الصورة المولّدة" style="max-width:100%;display:block;margin:0 auto"></div>
-    <div id="gen-rcheck" class="hint" style="margin:.3rem 0">⏳ جارِ فحص النصوص في الصورة…</div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" onclick="PBGen.approve()">✅ اعتمد الصورة وتابع للتقسيم</button><button class="small gray" type="button" onclick="PBGen.regen()" title="يُعيد التوليد مع تعليمات صريحة لتجنّب الأخطاء المكتشفة">🔄 أعد التوليد (مع تصحيح الأخطاء)</button></div>
-  </div>
+  <b>② التقسيم والتحرير بمنشئ الصفحات (متقدم)</b> <button class="small gray" type="button" onclick="PBGen.step(1)">→ رجوع للنتيجة</button> <button class="small gold" type="button" onclick="PBGen.downloadOrig()">⬇ تنزيل الصورة الأصلية</button>
   <div id="gen-cuts">
   <div class="card" style="margin:.5rem 0;background:#f7faf7;border:1.5px solid #cfe3d3">
     <b style="color:var(--green)">🧽 ممحاة النصوص (مثل Canva)</b>
@@ -472,7 +476,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div id="gen-prev" style="margin:.6rem 0"></div>
   </div>
   <label class="hint" style="margin:.6rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-conv" checked style="width:auto"> فكّك النصوص إلى طبقات قابلة للتعديل (تُمسح من الصورة بالممحاة وتُعاد كنص حقيقي) — يلزم مفتاح Gemini للدقة بالعربية</label>
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.4rem"><button class="small gold" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 إلى المحرر مباشرة</button><button class="small gray" type="button" onclick="PBGen.step(1)">→ السابق</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.4rem"><button class="small gold" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 إلى المحرر مباشرة</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
   </div>
   <div class="gen-step" data-s="3" style="display:none">
   <b>③ التحويل إلى صفحة قابلة للتعديل</b>
@@ -499,7 +503,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     document.querySelectorAll("#gen-card .gen-step").forEach(el => { el.style.display = Number(el.dataset.s) === n ? "" : "none"; });
     document.querySelectorAll("#gen-card [data-gs]").forEach(b => { b.className = "small " + (Number(b.dataset.gs) === n ? "gold" : "gray"); });
     S.step = n;
-    if (n === 2) { const rev = !!(S.generated && !S.reviewed && S.canvas); $("gen-review").style.display = rev ? "" : "none"; $("gen-cuts").style.display = rev ? "none" : ""; if (rev) { $("gen-rimg").src = URL.createObjectURL(S.blob); } else if (S.canvas) drawPreview(); }
+    if (n === 2 && S.canvas) drawPreview();
     if (n === 3) { const t = $("gen-title"); if (t && !t.value && S.file) t.value = (S.file.name || "").replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").slice(0, 60); $("gen-sum").innerHTML = S.canvas ? `سيتحول التصميم إلى <b>${S.cuts.length + 1}</b> قسماً${S.regions.length ? " مع <b>" + S.regions.length + "</b> عنصر مقصوص" : ""}. المحرك: <b>${$("gen-engine").value === "gemini" ? "Gemini رؤية" : "Tesseract"}</b>.` : "ارفع الصورة في الخطوة ②."; }
   }
   function engineUI() { $("gen-gk-wrap").style.display = $("gen-engine").value === "gemini" ? "" : "none"; }
@@ -621,7 +625,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   }
   async function autoRetry() { if ($("gen-autoretry") && $("gen-autoretry").checked && !S.retried && (S.issues || []).length >= 3) { S.retried = true; $("gen-rcheck").textContent += " — إعادة توليد تلقائية…"; await regen(); } }
   function approve() { S.reviewed = true; step(2); }
-  function regen() { S.avoid = (S.issues || []).length ? S.issues.join(" | ") : ""; step(1); return generateImage(true); }
+  function regen() { S.avoid = (S.issues || []).length ? S.issues.join(" | ") : ""; return generateImage(true); }
   /* الدالة الرئيسية: نصوص تسويقية ← أجزاء الصورة ← لصق ← معاينة الأقسام */
   async function generateImage(isRegen) {
     if (isRegen !== true) S.retried = false;
@@ -635,8 +639,8 @@ Before rendering, internally verify every text element: no duplicated sentences,
             const full = fp + (S.avoid ? "\n\n=== CORRECTIONS REQUIRED ===\nThe previous attempt contained these text errors. Fix them: write every quoted string EXACTLY as given, never repeat words, no extra text: " + S.avoid : "");
       let blob, canvas;
       msg.textContent = "🎨 توليد الصورة…"; blob = await (PBGen.imgFn || genLong)(key, full, pb); canvas = await loadImage(blob);
-      S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name); saveOriginalToSite(blob, S.name);
-      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.model ? " بنموذج " + S.model : "") + " (" + canvas.width + "×" + canvas.height + ")" + " — راجعها ثم اعتمدها للتقسيم";
+      S.reviewed = false; S.generated = true; S.avoid = ""; S.savedPath = null; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name); saveOriginalToSite(blob, S.name);
+      await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); showResult(); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصفحة (محفوظة تلقائياً)" + (S.model ? " بنموذج " + S.model : "") + " (" + canvas.width + "×" + canvas.height + ")" + "";
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
   function copyFinal() { const t = $("gen-final").value; if (!t) return toast("أنتج البرومبت النهائي أولاً"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ البرومبت النهائي"), () => { $("gen-final").select(); document.execCommand("copy"); toast("✅ نُسخ"); }); }
@@ -661,7 +665,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
     if (!r || !r.blob) { el.innerHTML = ""; return; }
     el.innerHTML = `<div style="background:#faf6ec;border:1.5px solid #eadfc4;border-radius:10px;padding:.5rem .7rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><span>🕘 آخر صورة مولّدة: <b>${PB.esc(r.name || "")}</b> · ${new Date(r.t).toLocaleString("ar-DZ")}</span><button class="small gold" type="button" onclick="PBGen.restoreLast()">استعادة</button><button class="small gray" type="button" onclick="PBGen.downloadLast()">⬇ تنزيل الأصل</button></div>`;
   }
-  async function restoreLast() { const r = await loadLast(); if (!r || !r.blob) return; S.generated = false; S.reviewed = true; S.blob = r.blob; S.name = r.name; const cv = await loadImage(r.blob); await setCanvas(cv, r.name); step(2); }
+  async function restoreLast() { const r = await loadLast(); if (!r || !r.blob) return; S.generated = false; S.reviewed = true; S.blob = r.blob; S.name = r.name; const cv = await loadImage(r.blob); await setCanvas(cv, r.name); showResult(); }
   async function downloadLast() { const r = await loadLast(); if (!r || !r.blob) return; S.blob = r.blob; S.name = r.name; downloadOrig(); }
   async function setCanvas(canvas, title) {
     S.canvas = canvas; S.regions = []; if (!S.generated || S.reviewed !== false) S.reviewed = true; $("gen-msg").textContent = ""; recut(); $("gen-go").disabled = false; if (!$("gen-title").value) $("gen-title").value = title || "";
@@ -669,7 +673,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   async function onFile(inp) {
     const f = inp.files && inp.files[0]; if (!f) return; S.file = f; S.blob = f; S.generated = false; S.reviewed = true; S.name = f.name.replace(/\.[^.]+$/, ""); $("gen-msg").textContent = "⏳ جارِ قراءة الصورة…";
     let cv; try { cv = await loadImage(f); } catch (e) { $("gen-msg").textContent = "❌ " + e.message; return; }
-    await setCanvas(cv, $("gen-name").value || f.name.replace(/\.[^.]+$/, ""));
+    await setCanvas(cv, $("gen-name").value || f.name.replace(/\.[^.]+$/, "")); showResult();
   }
 
   function recut() { if (!S.canvas) return; S.cuts = suggestCuts(S.canvas, Number($("gen-n").value) || 9); drawPreview(); }
@@ -743,6 +747,23 @@ Before rendering, internally verify every text element: no duplicated sentences,
   function downloadClean() { if (!S.canvas) return; S.canvas.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "clean-" + (S.name || "landing") + ".png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, "image/png"); }
 
   const CONV = () => $("gen-conv") ? $("gen-conv").checked : false;
+  /* ───── النتيجة: حفظ / تحرير في المحرر / إعادة ───── */
+  function showResult() {
+    const r = $("gen-result"); if (!r || !S.blob) return; r.style.display = ""; const im = $("gen-rimg"); if (S.rurl) URL.revokeObjectURL(S.rurl); S.rurl = URL.createObjectURL(S.blob); im.src = S.rurl;
+    const sv = $("gen-save"); if (sv) sv.textContent = S.savedPath ? "✓ محفوظة" : "💾 حفظ الصفحة"; try { r.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) { }
+  }
+  async function savePage() {
+    if (!S.blob) return toast("لا توجد صفحة بعد"); const sv = $("gen-save"); sv.disabled = true;
+    try { await saveLast(S.blob, S.name || "landing"); if (!S.savedPath) await saveOriginalToSite(S.blob, S.name || "landing"); sv.textContent = S.savedPath ? "✓ محفوظة" : "✓ محفوظة محلياً"; toast(S.savedPath ? "💾 حُفظت الصفحة في مكتبة الصور: " + S.savedPath : "💾 حُفظت محلياً في هذا المتصفح (اضبط GitHub لحفظها في الموقع)"); }
+    catch (e) { toast("⚠️ " + e.message); } sv.disabled = false;
+  }
+  /* تحرير الصفحة: نسلّم الصورة مقسَّمة (حسب حدود الأقسام) إلى المحرر عبر IndexedDB المشترك ثم نفتحه */
+  async function editPage() {
+    if (!S.canvas) return toast("ولّد الصفحة أولاً"); const C = S.canvas, bounds = [0].concat(S.cuts.slice().sort((a, b) => a - b), [C.height]), sections = [];
+    for (let i = 0; i < bounds.length - 1; i++) { const y0 = bounds[i], y1 = bounds[i + 1]; if (y1 - y0 < 20) continue; const c = document.createElement("canvas"); c.width = C.width; c.height = y1 - y0; c.getContext("2d").drawImage(C, 0, y0, C.width, y1 - y0, 0, 0, C.width, y1 - y0); sections.push({ blob: await new Promise(r => c.toBlob(r, "image/png")), y0, y1 }); }
+    await new Promise((res, rej) => { const rq = indexedDB.open("alyssum-editor", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("kv"); rq.onerror = () => rej(rq.error); rq.onsuccess = () => { const db = rq.result, tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put({ name: S.name || "صفحة مولّدة", width: C.width, height: C.height, sections, t: Date.now() }, "handoff"); tx.oncomplete = () => { db.close(); res(); }; tx.onerror = () => rej(tx.error); }; });
+    const w = window.open("editor/?import=1", "_blank"); if (!w) toast("اسمح بالنوافذ المنبثقة ثم اضغط «تحرير الصفحة» مجدداً");
+  }
   async function run() {
     if (!S.canvas) return; const msg = $("gen-msg"), btn = $("gen-go"); btn.disabled = true;
     const upload = async (blob, name) => {
@@ -760,5 +781,5 @@ Before rendering, internally verify every text element: no duplicated sentences,
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { showResult, savePage, editPage, brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
