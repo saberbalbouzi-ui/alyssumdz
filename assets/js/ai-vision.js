@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=5", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=6", BASE).href;
   const SAMSZ = 1024, DETSZ = 960, W8 = {};
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -69,7 +69,7 @@ window.AIVision = (function () {
   }
   /* ───── الأقنعة (SAM) ─────
      كل عنصر يحفظ قناعه منخفض الدقة (logits 256×256) ونحوّله عند الحاجة: عرض سريع، أو دقة كاملة مع تنعيم الحافة */
-  async function embed(cv, onp) { const im = pix(cv, SAMSZ), S = { W: cv.width, H: cv.height, k: im.k, sw: im.w, sh: im.h }; await worker("sam").call("embed", { data: im.data, w: im.w, h: im.h }, onp, [im.data]); curS = S; return S; }
+  async function embed(cv, onp) { const im = pix(cv, SAMSZ), S = { W: cv.width, H: cv.height, k: im.k, sw: im.w, sh: im.h }; const r = await worker("sam").call("embed", { data: im.data, w: im.w, h: im.h }, onp, [im.data]), rs = (r && r.rs) || [SAMSZ, SAMSZ]; S.lw = S.lh = 256; S.rs = rs; S.fx = S.k * (rs[1] / S.sw) * (256 / SAMSZ); S.fy = S.k * (rs[0] / S.sh) * (256 / SAMSZ); curS = S; return S; }
   function cleanLo(lo, lw, lh) {                                     // إزالة الجزر الصغيرة البعيدة (تشويش) والإبقاء على أجزاء العنصر الحقيقية
     const lab = new Int32Array(lw * lh), sizes = [0], st = []; let n = 0;
     for (let i = 0; i < lw * lh; i++) { if (lo[i] <= 0 || lab[i]) continue; n++; let c = 0; st.push(i); lab[i] = n; while (st.length) { const j = st.pop(), x = j % lw; c++; for (const q of [j - 1, j + 1, j - lw, j + lw]) { if (q < 0 || q >= lw * lh || (q === j - 1 && x === 0) || (q === j + 1 && x === lw - 1) || lo[q] <= 0 || lab[q]) continue; lab[q] = n; st.push(q); } } sizes.push(c); }
@@ -102,7 +102,7 @@ window.AIVision = (function () {
     return stats({ lo, lw, lh, score: r.scores[bi], obj: r.obj }, S);
   }
   const both = (a, b) => { let c = 0; for (let i = 0; i < a.lo.length; i++) if (a.lo[i] > 0 && b.lo[i] > 0) c++; return c; };
-  function unite(a, b, S) { for (let i = 0; i < a.lo.length; i++) if (b.lo[i] > a.lo[i]) a.lo[i] = b.lo[i]; a.parts = (a.parts || 1) + (b.parts || 1); a.det = Math.max(a.det || 0, b.det || 0); stats(a, S); }
+  function unite(a, b, S) { for (let i = 0; i < a.lo.length; i++) if (b.lo[i] > a.lo[i]) a.lo[i] = b.lo[i]; a.parts = (a.parts || 1) + (b.parts || 1); a.poly = null; a.zone = false; a.det = Math.max(a.det || 0, b.det || 0); stats(a, S); }
   function touching(a, b, r) {
     const { lw, lh } = a, d = new Uint8Array(lw * lh);
     for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) if (a.lo[y * lw + x] > 0) for (let dy = -r; dy <= r; dy++) { const yy = y + dy; if (yy < 0 || yy >= lh) continue; for (let dx = -r; dx <= r; dx++) { const xx = x + dx; if (xx >= 0 && xx < lw) d[yy * lw + xx] = 1; } }
@@ -174,6 +174,21 @@ window.AIVision = (function () {
       }
     }
   }
+  /* مضلّع (بإحداثيات الصورة) ← ألفا ناعمة الحافة لنافذة (x0,y0,w,h) بمقياس k */
+  function polyAlpha(poly, x0, y0, w, h, k) {
+    const c = document.createElement("canvas"); c.width = Math.max(1, w); c.height = Math.max(1, h); const g = c.getContext("2d", { willReadFrequently: true });
+    g.fillStyle = "#000"; g.beginPath(); poly.forEach((p, i) => { const X = p[0] * k - x0, Y = p[1] * k - y0; i ? g.lineTo(X, Y) : g.moveTo(X, Y); }); g.closePath(); g.fill();
+    const d = g.getImageData(0, 0, c.width, c.height).data, a = new Float32Array(c.width * c.height); for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3] / 255; return a;
+  }
+  /* «منطقة» (مثل Zone في Canva): يرسم المستخدم حدّاً حرّاً فتُلتقط المنطقة كما هي بالضبط */
+  function zoneItem(S, poly, items) {
+    if (!poly || poly.length < 3) return null; const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+    const it = { poly, zone: true, manual: true, label: "منطقة", det: 1, score: 1, obj: 1, lw: S.lw, lh: S.lh, x0: Math.max(0, Math.floor(Math.min(...xs))), y0: Math.max(0, Math.floor(Math.min(...ys))), x1: Math.min(S.W, Math.ceil(Math.max(...xs))), y1: Math.min(S.H, Math.ceil(Math.max(...ys))) };
+    if (it.x1 - it.x0 < 6 || it.y1 - it.y0 < 6) return null;
+    const a = polyAlpha(poly, 0, 0, S.lw, S.lh, 1), lo = new Float32Array(S.lw * S.lh); let n = 0;      // نسخة منخفضة الدقة للدمج والتعارض
+    const lp = poly.map(p => [p[0] * S.fx, p[1] * S.fy]), b = polyAlpha(lp, 0, 0, S.lw, S.lh, 1); for (let i = 0; i < lo.length; i++) { lo[i] = b[i] > .5 ? 8 : -8; if (b[i] > .5) n++; }
+    it.lo = lo; it.area = Math.max(1, n); it.id = Math.max(-1, ...items.map(o => o.id)) + 1; items.push(it); return it;
+  }
   /* عنصر يضيفه المستخدم: نقرة (pts) أو مستطيل (box) */
   async function addItem(S, p, items) {
     const m = await maskFor(S, p); if (!m.area) return null; m.manual = true; m.label = p.label || "عنصر"; m.det = 1;
@@ -188,6 +203,9 @@ window.AIVision = (function () {
   }
   /* قناع للعرض بمقياس k (بكسل عرض لكل بكسل أصلي) ← {a, dx, dy, dw, dh} */
   function viewMask(S, it, k) {
+    if (it.poly) { const dx = Math.floor(it.x0 * k), dy = Math.floor(it.y0 * k), dw = Math.max(2, Math.ceil(it.x1 * k) - dx), dh = Math.max(2, Math.ceil(it.y1 * k) - dy), p = polyAlpha(it.poly, dx, dy, dw, dh, k), a = new Uint8Array(dw * dh); let cx = 0, cy = 0, n = 0, ly = -1, sx = 0, nx = 0;
+      for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) if (p[y * dw + x] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } }
+      return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (n ? cx / n : dw / 2), cy: dy + (n ? cy / n : dh / 2) }; }
     const f = sampler(S, it), dx = Math.floor(it.x0 * k), dy = Math.floor(it.y0 * k), dw = Math.max(2, Math.ceil(it.x1 * k) - dx), dh = Math.max(2, Math.ceil(it.y1 * k) - dy), a = new Uint8Array(dw * dh);
     let ly = -1, sx = 0, nx = 0, cnt = 0, cx = 0, cy = 0;
     for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) if (f((dx + x + .5) / k, (dy + y + .5) / k) > 0) { a[y * dw + x] = 1; cnt++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } }
@@ -209,6 +227,7 @@ window.AIVision = (function () {
   /* ألفا العنصر بالدقة الكاملة داخل نافذته ← {a: Float32Array, x0, y0, w, h} */
   function fullAlpha(S, it, D, opt) {
     opt = opt || {}; const W = S.W, H = S.H, pad = Math.max(4, Math.ceil(1.5 / S.fx)), x0 = Math.max(0, it.x0 - pad), y0 = Math.max(0, it.y0 - pad), x1 = Math.min(W, it.x1 + pad), y1 = Math.min(H, it.y1 + pad), w = x1 - x0, h = y1 - y0, N = w * h;
+    if (it.poly) return { a: polyAlpha(it.poly, x0, y0, w, h, 1), x0, y0, w, h };      // المنطقة تُلتقط كما رُسمت
     const f = sampler(S, it), p = new Float32Array(N), I = new Float32Array(N), Bm = new Uint8Array(N), inv = new Uint8Array(N);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4, v = f(x0 + x, y0 + y) > 0 ? 1 : 0; Bm[i] = v; inv[i] = 1 - v; p[i] = v; I[i] = (D[gi] * .299 + D[gi + 1] * .587 + D[gi + 2] * .114) / 255; }
     if (opt.refine === false) return { a: p, x0, y0, w, h };
@@ -241,7 +260,7 @@ window.AIVision = (function () {
     const order = chosen.slice().sort((a, b) => b.y1 - a.y1 || a.area - b.area), A = order.map(it => fullAlpha(S, it, D, opt)), out = [];
     order.forEach((it, n) => {
       const a = A[n], m = new Float32Array(a.a); for (let q = 0; q < n; q++) { const b = A[q]; for (let y = Math.max(a.y0, b.y0); y < Math.min(a.y0 + a.h, b.y0 + b.h); y++) for (let x = Math.max(a.x0, b.x0); x < Math.min(a.x0 + a.w, b.x0 + b.w); x++) { const v = b.a[(y - b.y0) * b.w + x - b.x0]; if (v > 0) { const i = (y - a.y0) * a.w + x - a.x0; m[i] *= 1 - v; } } }
-      const sh = opt.shadow === false ? null : shadowOf(S, a, D, A.filter((_, q) => q !== n)), X0 = sh ? sh.x0 : a.x0, Y0 = sh ? sh.y0 : a.y0, w = sh ? sh.w : a.w, h = sh ? sh.h : a.h;
+      const sh = opt.shadow === false || it.zone ? null : shadowOf(S, a, D, A.filter((_, q) => q !== n)), X0 = sh ? sh.x0 : a.x0, Y0 = sh ? sh.y0 : a.y0, w = sh ? sh.w : a.w, h = sh ? sh.h : a.h;
       const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"), im = g.createImageData(w, h), er = new Uint8Array(w * h); let px = 0;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const gx = X0 + x, gy = Y0 + y, i = y * w + x, lx = gx - a.x0, ly = gy - a.y0, al = lx >= 0 && ly >= 0 && lx < a.w && ly < a.h ? m[ly * a.w + lx] : 0, gi = (gy * W + gx) * 4;
@@ -313,5 +332,5 @@ window.AIVision = (function () {
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco", "o365"] }).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, addItem, joinItems, viewMask, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
+  return { supported, analyze, addItem, zoneItem, joinItems, viewMask, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
 })();

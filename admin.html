@@ -1434,7 +1434,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/data.js"></script>
 <script src="assets/js/image-tools.js"></script>
 <script src="assets/js/text-capture.js"></script>
-<script src="assets/js/ai-vision.js?v=5"></script>
+<script src="assets/js/ai-vision.js?v=6"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -9606,7 +9606,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     const close = () => { S.closed = true; host.remove(); }; $("pbs-x").onclick = $("pbs-back").onclick = close;
     return { host, $, S, close };
   }
-  function bindSeg(sh, repaint) { sh.host.querySelectorAll("#pbs-seg button").forEach(b => b.onclick = () => { sh.S.mode = b.dataset.m; sh.S.onMode && sh.S.onMode(); sh.host.querySelectorAll("#pbs-seg button").forEach(x => { const on = x === b; x.style.background = on ? "#fff" : "transparent"; x.style.boxShadow = on ? "0 1px 4px rgba(0,0,0,.15)" : "none"; }); sh.$("pbs-hint").textContent = sh.S.mode === "one" ? sh.S.hintOne : sh.S.hintAll; repaint(); }); }
+  function bindSeg(sh, repaint) { sh.host.querySelectorAll("#pbs-seg button").forEach(b => b.onclick = () => { sh.S.mode = b.dataset.m; sh.S.onMode && sh.S.onMode(); sh.host.querySelectorAll("#pbs-seg button").forEach(x => { const on = x === b; x.style.background = on ? "#fff" : "transparent"; x.style.boxShadow = on ? "0 1px 4px rgba(0,0,0,.15)" : "none"; }); sh.$("pbs-hint").textContent = sh.S.mode === "all" ? sh.S.hintAll : sh.S.hintOne; repaint(); }); }
   function viewSize(sh, W, H) { const view = sh.$("pbs-view"), vw = Math.max(260, Math.min(W, view.clientWidth - 24)), k = vw / W; return { vw, vh: Math.round(H * k), k }; }
 
   /* ═══ التقاط النص ═══ */
@@ -9691,7 +9691,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     function list() {
       const nm = names(), on = it => sh.S.mode === "all" || sel.has(it.id);
       const html = items.map(it => `<button type="button" data-id="${it.id}" style="border:1.5px solid #7c3aed;border-radius:999px;padding:.22rem .6rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;background:${on(it) ? "#7c3aed" : "#fff"};color:${on(it) ? "#fff" : "#7c3aed"}">${on(it) ? "✓ " : ""}${esc(nm[it.id])}</button>`).join("");
-      $("pbs-merge").style.display = sh.S.mode === "one" && sel.size > 1 ? "block" : "none"; if (html === list.last) return; list.last = html; $("pbs-list").innerHTML = html;      // لا نعيد البناء عند مجرد التمرير
+      $("pbs-merge").style.display = sh.S.mode !== "all" && sel.size > 1 ? "block" : "none"; if (html === list.last) return; list.last = html; $("pbs-list").innerHTML = html;      // لا نعيد البناء عند مجرد التمرير
       $("pbs-list").querySelectorAll("button").forEach(b => { b.onclick = () => { const id = +b.dataset.id; if (sh.S.mode === "all") setMode("one"); sel.has(id) ? sel.delete(id) : sel.add(id); paint(); }; b.onmouseenter = () => { hov = +b.dataset.id; paint(); }; b.onmouseleave = () => { hov = -1; paint(); }; });
     }
     function paint() {
@@ -9713,15 +9713,20 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
       try { const it = await AIVision.addItem(S, p, items); busy = false; if (!it) { $("pbs-msg").textContent = "لم أجد عنصراً هنا — جرّب النقر في وسطه أو رسم مستطيل حوله."; return paint(); } if (!it.v) prep(it); if (sh.S.mode === "one") sel.add(it.id); hov = -1; paint(); $("pbs-msg").textContent = "✅ أُضيف «" + names()[it.id] + "»."; }
       catch (e) { busy = false; $("pbs-msg").textContent = "⚠️ " + e.message; paint(); }
     }
-    let drag = null;
+    let drag = null; const zone = () => sh.S.mode === "zone";
     ov.onmousemove = e => { if (drag) return; const [x, y] = pos(e), h = at(x, y); if (h !== hov) { hov = h; paint(); } };
-    ov.onmousedown = e => { const [x, y] = pos(e); drag = { x, y, moved: false }; };
-    const mm = ev => { if (!drag || sh.S.closed) return; const [x, y] = pos(ev); if (Math.abs(x - drag.x) + Math.abs(y - drag.y) > 8) drag.moved = true; if (drag.moved) { paint(); const g = ov.getContext("2d"); g.setLineDash([5, 3]); g.strokeStyle = "#16a34a"; g.lineWidth = 2; g.strokeRect(Math.min(drag.x, x), Math.min(drag.y, y), Math.abs(x - drag.x), Math.abs(y - drag.y)); g.setLineDash([]); } };
+    ov.onmousedown = e => { const [x, y] = pos(e); drag = { x, y, moved: false, pts: [[x, y]] }; };
+    const mm = ev => { if (!drag || sh.S.closed) return; const [x, y] = pos(ev); if (Math.abs(x - drag.x) + Math.abs(y - drag.y) > 8) drag.moved = true;
+      if (zone()) { const l = drag.pts[drag.pts.length - 1]; if (Math.abs(l[0] - x) + Math.abs(l[1] - y) > 2) drag.pts.push([x, y]); if (drag.moved) { paint(); const g = ov.getContext("2d"); g.beginPath(); drag.pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = "rgba(124,58,237,.25)"; g.fill(); g.setLineDash([5, 3]); g.strokeStyle = "#7c3aed"; g.lineWidth = 2; g.stroke(); g.setLineDash([]); } return; }
+      if (drag.moved) { paint(); const g = ov.getContext("2d"); g.setLineDash([5, 3]); g.strokeStyle = "#16a34a"; g.lineWidth = 2; g.strokeRect(Math.min(drag.x, x), Math.min(drag.y, y), Math.abs(x - drag.x), Math.abs(y - drag.y)); g.setLineDash([]); } };
     const mu = ev => { if (!drag || sh.S.closed) return; const d = drag, [x, y] = pos(ev); drag = null;
+      if (zone() && d.moved) { const it = AIVision.zoneItem(S, d.pts.map(p => [Math.max(0, Math.min(W, p[0] / k)), Math.max(0, Math.min(H, p[1] / k))]), items); if (!it) return paint(); prep(it); sel.add(it.id); paint(); $("pbs-msg").textContent = "✅ حُدّدت منطقة. ارسم أخرى أو اضغط «التقاط»."; return; }
       if (d.moved) { const b = [Math.max(0, Math.min(d.x, x) / k), Math.max(0, Math.min(d.y, y) / k), Math.min(W, Math.max(d.x, x) / k), Math.min(H, Math.max(d.y, y) / k)]; if (b[2] - b[0] < 8 || b[3] - b[1] < 8) return paint(); return add({ box: b }, "تحديد العنصر داخل المستطيل…"); }
-      const h = at(x, y); if (h >= 0) { if (sh.S.mode === "one") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
-      add({ pts: [[x / k, y / k, 1]] }, "تحديد العنصر تحت النقرة…"); };
+      const h = at(x, y); if (h >= 0) { if (sh.S.mode !== "all") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
+      if (zone()) return; add({ pts: [[x / k, y / k, 1]] }, "تحديد العنصر تحت النقرة…"); };
     window.addEventListener("mousemove", mm); window.addEventListener("mouseup", mu); const cl0 = sh.close; sh.close = () => { window.removeEventListener("mousemove", mm); window.removeEventListener("mouseup", mu); cl0(); };
+    { const zb = document.createElement("button"); zb.dataset.m = "zone"; zb.textContent = "✏️ منطقة"; zb.title = "ارسم حدّاً حرّاً حول أي جزء لالتقاطه كما هو"; zb.style.cssText = "flex:1;border:0;border-radius:9px;padding:.55rem;cursor:pointer;font-weight:700;background:transparent;font-family:inherit"; $("pbs-seg").appendChild(zb); }
+    const hint0 = sh.S.hintOne; sh.S.onMode = () => { sh.S.hintOne = zone() ? "ارسم بالسحب حدّاً حرّاً حول المنطقة التي تريد التقاطها (مثل «Zone» في Canva)؛ يمكنك رسم أكثر من منطقة." : hint0; ov.style.cursor = zone() ? "crosshair" : "pointer"; };
     $("pbs-x").onclick = $("pbs-back").onclick = () => sh.close(); bindSeg(sh, () => { sel = new Set(); paint(); });
     $("pbs-merge").onclick = () => { const L = items.filter(it => sel.has(it.id)); if (L.length < 2) return; const it = AIVision.joinItems(S, items, L); prep(it); sel = new Set([it.id]); paint(); $("pbs-msg").textContent = "✅ دُمجت العناصر في «" + names()[it.id] + "»."; };
     $("pbs-msg").style.color = "#173f35"; paint();
