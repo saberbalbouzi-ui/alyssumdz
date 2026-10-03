@@ -7,6 +7,8 @@
     "assets/js/api.js",
     "assets/js/agent.js",
     "assets/js/agent-brain.js",
+    "assets/js/image-tools.js",
+    "assets/js/avatar-script.js",
     "api/index.php",
     "p/_template/index.html"
   ],
