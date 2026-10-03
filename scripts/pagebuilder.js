@@ -303,6 +303,14 @@ const PB = (() => {
         emit(c, sel + " .pb-bl li:before", s, [["ms", px("font-size")]]);
       },
     },
+    social: {
+      label: "أيقونات التواصل", ic: "🔗", def: { items: [{ id: "facebook", url: "" }, { id: "instagram", url: "" }, { id: "whatsapp", url: "" }], sty: "brand", shp: "round", isz: 22, gap: 10, jc: "center" },
+      ctl: [{ k: "items", l: "الحسابات (الأيقونات رسمية بألوان كل شبكة)", t: "rep", f: [["id", "الشبكة", "select", (typeof SocialIcons !== "undefined" ? SocialIcons.list : []).map(i => [i.id, i.label])], ["url", "الرابط الكامل"]], mv: 1, tab: "c" },
+        { k: "sty", l: "نمط الأيقونة", t: "select", o: [["brand", "خلفية بلون العلامة"], ["color", "رمز بلون العلامة"], ["soft", "خلفية فاتحة"], ["outline", "إطار"], ["mono", "لون واحد (النص)"]], tab: "s" }, { k: "shp", l: "الشكل", t: "select", o: [["round", "دائري"], ["square", "مربع مدوَّر"], ["none", "بلا خلفية"]], tab: "s" },
+        { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 12, max: 80, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "jc", l: "المحاذاة", t: "select", o: [["flex-start", "يمين"], ["center", "وسط"], ["flex-end", "يسار"]], tab: "s" }, { k: "ic", l: "لون الرمز (للنمط «لون واحد»)", t: "color", tab: "s" }],
+      html: s => { const L = (Array.isArray(s.items) ? s.items : []).map(x => ({ id: (x && x.id) || "facebook", url: x && x.url })).filter(x => typeof SocialIcons !== "undefined" && SocialIcons.byId[x.id]); return L.length ? `<div class="pb-so">${L.map(x => SocialIcons.link(x.id, x.url || "#", { size: num(s.isz) || 22, style: s.sty || "brand", shape: s.shp || "round" })).join("")}</div>` : '<div class="pb-so" style="opacity:.5">أضف حساباً من الإعدادات</div>'; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-so{display:flex;flex-wrap:wrap;align-items:center;justify-content:${s.jc || "center"};gap:${num(s.gap) ?? 10}px}${sel} .pb-so .si-a{display:inline-flex;transition:transform .15s}${sel} .pb-so .si-a:hover{transform:translateY(-2px)}`); if (s.ic) c.d.push(`${sel} .pb-so .si-ic{color:${s.ic}!important}`); },
+    },
     contact: {
       label: "نموذج اتصال", ic: "✉️", def: { title: "تواصل معنا", desc: "اترك رسالتك وسنردّ عليك في أقرب وقت.", fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "full" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "البريد الإلكتروني", type: "email", ph: "example@mail.com", req: false, w: "half" }, { label: "رسالتك", type: "textarea", ph: "اكتب رسالتك هنا", req: true, w: "full" }], btn: "إرسال الرسالة", dest: "whatsapp", dzPhone: true, ok: "✅ تم إرسال رسالتك بنجاح، شكراً لك!", subject: "رسالة من نموذج الاتصال", fbg: "#ffffff", fbc: "#e6dfcf", frad: { d: 16 }, fpad: { d: [24, 24, 24, 24] }, tcol: "#173f35", lcol: "#444444", ibg: "#faf6ec", ibc: "#e0d9c8", irad: { d: 10 }, ifs: { d: 16 }, bbg: "#157a55", bcol: "#ffffff", brad: { d: 12 }, bfull: true, cd: 20 },
       ctl: [{ k: "title", l: "عنوان النموذج", t: "text", tab: "c" }, { k: "desc", l: "وصف قصير", t: "textarea", tab: "c" },
@@ -401,7 +409,7 @@ const PB = (() => {
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -471,7 +479,7 @@ const PB = (() => {
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
-  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], contact: [50, 520], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
   const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
