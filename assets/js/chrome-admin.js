@@ -1,0 +1,160 @@
+/* لوحة التحكم ← «الهيدر» و«الفوتر»: تعديل كل مكوّنات الهيدر والفوتر وحسابات التواصل وإعدادات المشاركة، مع معاينة حيّة.
+   تُحفظ في assets/data/chrome.json (GitHub أو نسخة PHP عبر GH.putFile) وتطبّقها assets/js/chrome.js على كل صفحات الموقع. */
+window.ChromeAdmin = (function () {
+  const C = () => window.Chrome, SI = () => window.SocialIcons, esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const site = () => (typeof SITE_CFG !== "undefined" && SITE_CFG) || (typeof CONFIG !== "undefined" && CONFIG.SITE) || {};
+  const HN = { logo: "الشعار", menu: "قائمة الروابط", social: "أيقونات التواصل", share: "زر المشاركة", wa: "زر واتساب", account: "زر الحساب 👤", cart: "زر السلة 🛒" };
+  const FN = { about: "نبذة عن المتجر", links: "روابط سريعة", contact: "تواصل معنا", social: "أيقونات التواصل", custom: "قسم نصي حرّ" };
+  const SN = { whatsapp: "واتساب", facebook: "فيسبوك", messenger: "ماسنجر", telegram: "تيليغرام", x: "إكس", linkedin: "لينكدإن", pinterest: "بنترست", viber: "فايبر", reddit: "ريديت", email: "بريد إلكتروني", sms: "رسالة نصية" };
+  const STY = [["brand", "خلفية بلون العلامة"], ["color", "رمز بلون العلامة"], ["soft", "خلفية فاتحة"], ["outline", "إطار"], ["mono", "لون النص"]], SHP = [["round", "دائري"], ["square", "مربع مدوَّر"], ["none", "بلا خلفية"]];
+  /* بادئات تُكمَل بها المعرّفات المكتوبة بلا رابط كامل */
+  const PRE = { facebook: "https://facebook.com/", instagram: "https://instagram.com/", tiktok: "https://tiktok.com/@", youtube: "https://youtube.com/@", x: "https://x.com/", telegram: "https://t.me/", snapchat: "https://snapchat.com/add/", pinterest: "https://pinterest.com/", linkedin: "https://linkedin.com/in/", threads: "https://threads.net/@", messenger: "https://m.me/", twitch: "https://twitch.tv/", github: "https://github.com/", reddit: "https://reddit.com/user/", vimeo: "https://vimeo.com/", medium: "https://medium.com/@", behance: "https://behance.net/", dribbble: "https://dribbble.com/", discord: "https://discord.gg/", kick: "https://kick.com/", soundcloud: "https://soundcloud.com/", spotify: "https://open.spotify.com/user/", tumblr: "https://tumblr.com/" };
+  const S = { cfg: null, sha: undefined, tab: "header", pv: null };
+
+  const get = (p) => p.split(".").reduce((o, k) => (o == null ? o : o[k]), S.cfg);
+  const put = (p, v) => { const ks = p.split("."), last = ks.pop(); let o = S.cfg; ks.forEach(k => { if (o[k] == null || typeof o[k] !== "object") o[k] = {}; o = o[k]; }); o[last] = v; };
+  /* حقول: كلها تكتب في المسار p عبر ChromeAdmin.set */
+  const F = {
+    t: (p, l, o) => '<label class="ca-f"><span>' + l + '</span><input data-p="' + p + '" value="' + esc(get(p)) + '" placeholder="' + esc((o && o.ph) || "") + '"' + (o && o.ltr ? ' dir="ltr"' : "") + "></label>",
+    a: (p, l, o) => '<label class="ca-f"><span>' + l + '</span><textarea data-p="' + p + '" rows="' + ((o && o.rows) || 3) + '" placeholder="' + esc((o && o.ph) || "") + '">' + esc(get(p)) + "</textarea></label>",
+    c: (p, l) => '<label class="ca-c"><input type="checkbox" data-p="' + p + '"' + (get(p) ? " checked" : "") + "><span>" + l + "</span></label>",
+    n: (p, l, mn, mx) => '<label class="ca-f"><span>' + l + '</span><input type="number" data-p="' + p + '" min="' + mn + '" max="' + mx + '" value="' + esc(get(p)) + '"></label>',
+    s: (p, l, opts) => '<label class="ca-f"><span>' + l + '</span><select data-p="' + p + '">' + opts.map(o => '<option value="' + o[0] + '"' + (get(p) === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></label>",
+    col: (p, l) => { const v = get(p) || ""; return '<div class="ca-f"><span>' + l + '</span><div class="ca-col"><input type="color" data-p="' + p + '" value="' + (/^#[0-9a-f]{6}$/i.test(v) ? v : "#ffffff") + '"><button type="button" class="small gray" data-clr="' + p + '">افتراضي</button><i>' + (v || "افتراضي") + "</i></div></div>"; }
+  };
+  const cardH = (title, tools, on) => '<div class="ca-h"><b>' + title + '</b><span class="ca-tools">' + (tools || "") + "</span></div>";
+  const mv = (kind, i) => '<button type="button" class="small gray" data-mv="' + kind + ':' + i + ':-1" title="أعلى">▲</button><button type="button" class="small gray" data-mv="' + kind + ':' + i + ':1" title="أسفل">▼</button>';
+  /* قائمة روابط (عنوان + رابط) */
+  function linkList(path, label) {
+    const L = get(path) || [];
+    return '<div class="ca-list">' + L.map((it, i) => '<div class="ca-row"><input data-p="' + path + "." + i + '.label" value="' + esc(it.label) + '" placeholder="العنوان"><input data-p="' + path + "." + i + '.url" value="' + esc(it.url) + '" dir="ltr" placeholder="index.html#products أو https://…"><span class="ca-tools">' + mv(path + "|", i) + '<button type="button" class="small red" data-del="' + path + ":" + i + '">✕</button></span></div>').join("") + '</div><button type="button" class="small" data-add="' + path + '">+ ' + label + "</button>";
+  }
+  function orderCard(kind, names) {
+    const ord = get(kind + ".order");
+    return '<div class="card"><div class="section-title">ترتيب المكوّنات</div><div class="hint">رتّب ظهور المكوّنات (الأول يظهر أولاً من جهة اليمين). كل مكوّن له إعداداته أدناه.</div><div class="ca-ord">' + ord.map((id, i) => '<span class="ca-chip">' + names[id] + (get(kind + "." + id + ".show") === false ? " <small>(مخفي)</small>" : "") + mv(kind + ".order", i) + "</span>").join("") + "</div></div>";
+  }
+  /* لوحة حسابات التواصل (مشتركة بين الهيدر والفوتر) */
+  function socialCard() {
+    const L = S.cfg.social || [], hs = S.cfg.header.social.show, fs = S.cfg.footer.social.show;
+    return '<div class="card"><div class="section-title">حسابات التواصل الاجتماعي (للهيدر والفوتر معاً)</div><div class="hint">اضغط على الأيقونة لإضافتها ثم اكتب الرابط أو اسم الحساب فقط. الحالة الآن: ' + (hs ? "✔ ظاهرة في الهيدر" : "✖ غير ظاهرة في الهيدر") + " · " + (fs ? "✔ ظاهرة في الفوتر" : "✖ غير ظاهرة في الفوتر") + "</div>" +
+      '<div class="ca-pal">' + SI().list.map(i => '<button type="button" class="ca-pi" data-addsoc="' + i.id + '" title="' + i.label + '">' + SI().icon(i.id, { size: 18, style: "brand", shape: "round" }) + "<small>" + i.label + "</small></button>").join("") + "</div>" +
+      '<div class="ca-list">' + L.map((s, i) => '<div class="ca-row ca-soc">' + SI().icon(s.id, { size: 18, style: "brand", shape: "round" }) + "<b>" + esc((SI().byId[s.id] || {}).label || s.id) + '</b><input data-p="social.' + i + '.url" data-soc="' + s.id + '" value="' + esc(s.url) + '" dir="ltr" placeholder="https://… أو اسم الحساب فقط"><span class="ca-tools">' + mv("social|", i) + '<button type="button" class="small red" data-del="social:' + i + '">✕</button></span></div>').join("") + "</div>" +
+      '<div class="ca-chk">' + F.c("header.social.show", "إظهار الأيقونات في الهيدر") + F.c("footer.social.show", "إظهار الأيقونات في الفوتر") + "</div></div>";
+  }
+  function socialStyle(kind) {
+    return '<div class="grid2">' + F.s(kind + ".social.style", "نمط الأيقونات", STY) + F.s(kind + ".social.shape", "الشكل", SHP) + F.n(kind + ".social.size", "الحجم (بكسل)", 12, 40) + "</div>";
+  }
+  function shareCard() {
+    const sh = S.cfg.share;
+    return '<div class="card"><div class="section-title">نافذة المشاركة (للرئيسية وصفحات المنتجات)</div><div class="hint">تفتح من أيقونة المشاركة فتعرض نسخ الرابط وأدوات المشاركة المختارة.</div><div class="ca-chk">' + F.c("header.share.show", "أيقونة المشاركة في الهيدر") + F.c("footer.share.show", "زر «شارك الموقع» في الفوتر") + F.c("share.float", "زر عائم على الصفحة") + "</div>" +
+      '<div class="grid2">' + F.s("share.pos", "مكان الزر العائم", [["bottom-left", "أسفل اليسار"], ["bottom-right", "أسفل اليمين"]]) + F.s("header.share.style", "نمط أيقونة الهيدر", STY) + "</div>" + F.t("share.text", "نص يرافق الرابط عند المشاركة (اختياري)", { ph: "مثال: اكتشف منتجات أليسوم الطبيعية 🌿" }) +
+      '<div class="section-title">أدوات المشاركة الظاهرة</div><div class="ca-pal">' + C().SHARE_ALL.map(id => '<label class="ca-pi' + (sh.channels.includes(id) ? " on" : "") + '"><input type="checkbox" data-ch="' + id + '"' + (sh.channels.includes(id) ? " checked" : "") + ">" + SI().icon(id, { size: 16, style: "brand", shape: "round" }) + "<small>" + SN[id] + "</small></label>").join("") + "</div></div>";
+  }
+  function headerTab() {
+    const h = S.cfg.header;
+    return '<div class="card"><div class="section-title">عام</div><div class="ca-chk">' + F.c("header.sticky", "الهيدر ثابت أعلى الصفحة عند التمرير") + '</div><div class="grid2">' + F.col("header.bg", "لون خلفية الهيدر") + F.col("header.color", "لون الشعار والروابط") + F.n("header.pad", "التباعد الرأسي (بكسل)", 0, 40) + "</div></div>" +
+      '<div class="card">' + cardH("📢 الشريط العلوي") + '<div class="ca-chk">' + F.c("header.topbar.show", "إظهار الشريط العلوي") + "</div>" + F.a("header.topbar.text", "النص (**كلمة** لتغميقها)", { rows: 2 }) + '<div class="grid2">' + F.t("header.topbar.link", "رابط عند الضغط (اختياري)", { ltr: 1 }) + F.col("header.topbar.bg", "لون الخلفية") + F.col("header.topbar.color", "لون النص") + "</div></div>" +
+      orderCard("header", HN) +
+      '<div class="card">' + cardH("🏷️ الشعار") + F.c("header.logo.show", "إظهار الشعار") + '<div class="hint">صورة الشعار وحجمه من تبويب «المظهر».</div></div>' +
+      '<div class="card">' + cardH("☰ قائمة الروابط") + F.c("header.menu.show", "إظهار القائمة (على الشاشات الكبيرة)") + F.col("header.menu.color", "لون الروابط") + linkList("header.menu.items", "رابط") + "</div>" +
+      '<div class="card">' + cardH("🔗 أيقونات التواصل في الهيدر") + F.c("header.social.show", "إظهار") + socialStyle("header") + '<div class="hint">الحسابات نفسها تُدار من القسم التالي.</div></div>' +
+      socialCard() + shareCard() +
+      '<div class="card">' + cardH("💬 زر واتساب") + F.c("header.wa.show", "إظهار") + F.t("header.wa.label", "نص الزر") + '<div class="hint">الرقم من «نموذج الطلب».</div></div>' +
+      '<div class="card">' + cardH("👤 زر الحساب و🛒 السلة") + '<div class="ca-chk">' + F.c("header.account.show", "إظهار زر الحساب") + F.c("header.cart.show", "إظهار زر السلة") + "</div></div>";
+  }
+  function footerTab() {
+    const f = S.cfg.footer;
+    return '<div class="card"><div class="section-title">عام</div><div class="ca-chk">' + F.c("footer.show", "إظهار الفوتر") + '</div><div class="grid2">' + F.col("footer.bg", "لون الخلفية") + F.col("footer.color", "لون النص") + F.col("footer.headColor", "لون العناوين") + "</div></div>" +
+      orderCard("footer", FN) +
+      '<div class="card">' + cardH("ℹ️ نبذة عن المتجر") + F.c("footer.about.show", "إظهار") + F.t("footer.about.title", "العنوان") + F.a("footer.about.text", "النص") + "</div>" +
+      '<div class="card">' + cardH("🔗 روابط سريعة") + F.c("footer.links.show", "إظهار") + F.t("footer.links.title", "العنوان") + F.c("footer.links.tracking", "إضافة «تتبّع طلبك» و«حسابي»") + linkList("footer.links.items", "رابط") + "</div>" +
+      '<div class="card">' + cardH("📞 تواصل معنا") + F.c("footer.contact.show", "إظهار") + F.t("footer.contact.title", "العنوان") + F.c("footer.contact.wa", "إظهار رقم واتساب المتجر") + '<div class="grid2">' + F.t("footer.contact.phone", "هاتف إضافي", { ltr: 1, ph: "0555 00 00 00" }) + F.t("footer.contact.email", "البريد الإلكتروني", { ltr: 1 }) + F.t("footer.contact.hours", "ساعات العمل") + F.t("footer.contact.address", "العنوان / الولاية") + "</div></div>" +
+      '<div class="card">' + cardH("🔗 أيقونات التواصل") + F.c("footer.social.show", "إظهار") + F.t("footer.social.title", "العنوان") + socialStyle("footer") + "</div>" +
+      socialCard() +
+      '<div class="card">' + cardH("📝 قسم نصي حرّ") + F.c("footer.custom.show", "إظهار") + F.t("footer.custom.title", "العنوان") + F.a("footer.custom.text", "النص (**غامق**، سطر جديد = Enter)") + "</div>" +
+      '<div class="card">' + cardH("📤 المشاركة وحقوق النشر") + '<div class="ca-chk">' + F.c("footer.share.show", "زر «شارك الموقع»") + F.c("footer.copy.show", "إظهار سطر الحقوق") + "</div>" + F.t("footer.copy.text", "نص الحقوق") + '<div class="hint">إعدادات نافذة المشاركة في تبويب «الهيدر».</div></div>';
+  }
+  /* معاينة حيّة داخل iframe بأنماط الموقع نفسها */
+  function preview() {
+    const fr = document.getElementById("ca-pv-" + S.tab); if (!fr) return;
+    const cfg = S.cfg, ctx = { rel: "", wa: site().waNumber || "", site: site() }, th = (typeof Admin !== "undefined" && Admin.theme) || {};
+    const base = location.href.replace(/[^/]*$/, ""), nm = esc(site().name || "المتجر");
+    const keep = { logo: '<a class="logo" href="#">' + nm + "</a>", cart: '<button class="cart-btn" type="button"><span>🛒</span><span class="cart-count">0</span></button>', account: '<button class="acc-btn" type="button">👤</button>' };
+    const tb = C().topbarHtml(cfg, ctx);
+    const body = S.tab === "header" ? (tb ? '<div class="topbar">' + tb + "</div>" : "") + '<header class="site"><div class="container">' + C().headerHtml(cfg, ctx, keep) + "</div></header>" : '<footer class="site" style="margin:0"><div class="container">' + (cfg.footer.show ? C().footerHtml(cfg, ctx) : "<p>الفوتر مخفي</p>") + "</div></footer>";
+    const font = th.fontUrl ? '<link rel="stylesheet" href="' + esc(th.fontUrl) + '">' : "";
+    fr.srcdoc = '<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><base href="' + esc(base) + '">' + font + '<link rel="stylesheet" href="assets/css/style.css"><style>body{margin:0;font-family:' + (th.fontFamily || "Cairo,Tahoma,sans-serif") + '}header.site{position:static!important}.acc-btn{background:#fff;border:1px solid #ddd;border-radius:12px;width:44px;height:44px}' + C().css(cfg, ctx) + "</style></head><body>" + body + "</body></html>";
+  }
+  let pvT = 0; const pvLater = () => { clearTimeout(pvT); pvT = setTimeout(preview, 160); };
+
+  function render() {
+    const box = document.getElementById("ca-body-" + S.tab); if (!box || !S.cfg) return;
+    const y = box.scrollTop; box.innerHTML = S.tab === "header" ? headerTab() : footerTab(); preview();
+  }
+  function bind(root) {
+    if (root._b) return; root._b = true;
+    root.addEventListener("input", e => {
+      const el = e.target, p = el.dataset && el.dataset.p; if (!p || el.type === "checkbox" || el.tagName === "SELECT") return;
+      put(p, el.type === "number" ? (el.value === "" ? "" : +el.value) : el.value); if (el.type === "color") { const i = el.parentNode.querySelector("i"); if (i) i.textContent = el.value; } pvLater();
+    });
+    root.addEventListener("change", e => {
+      const el = e.target;
+      if (el.dataset.ch) { const a = S.cfg.share.channels; el.checked ? (!a.includes(el.dataset.ch) && a.push(el.dataset.ch)) : a.splice(a.indexOf(el.dataset.ch), 1); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
+      const p = el.dataset.p; if (!p) return;
+      if (el.type === "checkbox") { put(p, el.checked); render(); }
+      else if (el.tagName === "SELECT") { put(p, el.value); preview(); }
+      else if (el.dataset.soc) {                // إكمال الرابط من اسم الحساب
+        let v = el.value.trim(), id = el.dataset.soc;
+        if (v && !/^(https?:|mailto:|tel:)/i.test(v)) {
+          v = v.replace(/^@/, "");
+          if (id === "whatsapp" && /^[\d+\s]+$/.test(v)) v = "https://wa.me/" + v.replace(/\D/g, "").replace(/^0/, "213");
+          else if (id === "gmail") v = "mailto:" + v;
+          else if (PRE[id] && !/[./]/.test(v)) v = PRE[id] + v; else if (!/^[\w-]+\.[a-z]{2,}/i.test(v)) v = PRE[id] ? PRE[id] + v : v; else v = "https://" + v;
+        }
+        el.value = v; put(p, v); preview();
+      }
+    });
+    root.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.clr) { put(b.dataset.clr, ""); render(); }
+      else if (b.dataset.addsoc) { S.cfg.social.push({ id: b.dataset.addsoc, url: "" }); render(); setTimeout(() => { const ins = root.querySelectorAll("[data-soc]"); ins[ins.length - 1] && ins[ins.length - 1].focus(); }, 30); }
+      else if (b.dataset.del) { const [p, i] = b.dataset.del.split(":"); get(p).splice(+i, 1); render(); }
+      else if (b.dataset.add) { get(b.dataset.add).push({ label: "", url: "" }); render(); }
+      else if (b.dataset.mv) { let [k, i, d] = b.dataset.mv.split(":"); k = k.replace("|", ""); i = +i; d = +d; const a = get(k), j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; render(); }
+    });
+  }
+
+  async function load() {
+    if (S.cfg) return;
+    let cfg = null; const g = (typeof GH !== "undefined" && GH.cfg && GH.cfg());
+    if (g && g.token) { try { const f = await GH.getFile("assets/data/chrome.json"); S.sha = f.sha; cfg = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { S.sha = undefined; } }
+    else { try { const r = await fetch("assets/data/chrome.json", { cache: "no-store" }); if (r.ok) cfg = await r.json(); } catch (e) { } }
+    if (cfg && cfg.off) cfg = null;
+    S.cfg = C().norm(cfg, site());
+  }
+  const out = {
+    async open(tab) {
+      S.tab = tab; await load();
+      ["header", "footer"].forEach(t => { const r = document.getElementById("ca-body-" + t); if (r) bind(r); });
+      render();
+    },
+    async save() {
+      toast("⏳ جارِ النشر على GitHub...");
+      try {
+        const cfg = C().norm(S.cfg, site()), b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cfg, null, 2))));
+        const res = await GH.putFile("assets/data/chrome.json", b64, S.sha, "تحديث الهيدر والفوتر وأيقونات التواصل والمشاركة عبر لوحة التحكم");
+        S.sha = res && res.content ? res.content.sha : S.sha; toast("✅ تم النشر — يظهر على الموقع خلال دقيقة تقريباً");
+      } catch (err) { console.error(err); toast("❌ " + err.message); }
+    },
+    async reset() {
+      if (!confirm("استرجاع الهيدر والفوتر الأصليين للموقع (إلغاء كل التخصيصات)؟")) return;
+      try {
+        const b64 = btoa(unescape(encodeURIComponent('{"off":true}\n')));
+        const res = await GH.putFile("assets/data/chrome.json", b64, S.sha, "استرجاع الهيدر والفوتر الافتراضيين");
+        S.sha = res && res.content ? res.content.sha : S.sha; S.cfg = C().norm(null, site()); render(); toast("✅ تم الاسترجاع");
+      } catch (err) { toast("❌ " + err.message); }
+    },
+    state: S
+  };
+  return out;
+})();

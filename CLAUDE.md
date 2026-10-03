@@ -15,6 +15,8 @@
 
 - حسابات الزبائن + PWA: `Account`/`PWA` في آخر `assets/js/app.js`، والخلفية `API.cust` في `api.js` (php | sb | local)؛ دوال `customer_*` في `supabase/schema.sql` ومسارات `customer_*` في `api/index.php`؛ ملفات PWA: `manifest.webmanifest` و`sw.js` وأيقونات `assets/img/icon-*.png` (خاصة بكل موقع، لا تدخل في `shared-files.json`).
 
+- الهيدر والفوتر وزر المشاركة: `assets/js/chrome.js` (يحمّله آخر `app.js` على كل صفحة) + أيقونات التواصل الرسمية `assets/js/social-icons.js` (مسارات Simple Icons)؛ الإعداد في `assets/data/chrome.json` (بلا ملف = يبقى الموقع كما هو عدا أيقونة المشاركة، و`{"off":true}` = استرجاع) وتُحرَّر من تبويبَي «الهيدر» و«الفوتر» في admin.html عبر `assets/js/chrome-admin.js`؛ وعنصر `social` في منشئ الصفحات.
+
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 

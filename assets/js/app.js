@@ -1587,3 +1587,16 @@ const PhoneDZ = {
   var go=function(){ var a=document.createElement("a"); a.href=m[1]+"admin.html#product="+encodeURIComponent(m[2]); a.textContent="✏️ تعديل المنتج"; a.style.cssText="position:fixed;bottom:16px;left:16px;z-index:99999;background:#173f35;color:#fff;padding:.65rem 1.1rem;border-radius:999px;font:800 14px Cairo,system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);text-decoration:none"; document.body.appendChild(a); };
   document.readyState==="loading"?document.addEventListener("DOMContentLoaded",go):go();
 }catch(e){} })();
+
+/* ════════ الهيدر/الفوتر وزر المشاركة — assets/js/chrome.js (+ social-icons.js)؛ تُدار من لوحة التحكم ← الهيدر / الفوتر ════════ */
+(function(){
+  if(window.parent !== window) return;       // لا شيء داخل الإطارات (معاينة اللوحة)
+  const go = ()=>{
+    try{
+      const rel = typeof REL!=="undefined" ? REL : "";
+      const ld = (f, cb)=>{ const s = document.createElement("script"); s.src = rel + "assets/js/" + f + "?v=1"; s.onload = cb; document.head.appendChild(s); };
+      ld("social-icons.js", ()=>ld("chrome.js", ()=>{ try{ Chrome.init(); }catch(e){} }));
+    }catch(e){}
+  };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", ()=>setTimeout(go, 50)) : setTimeout(go, 50);
+})();
