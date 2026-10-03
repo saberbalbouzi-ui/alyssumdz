@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=12", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=14", BASE).href;
   const SAMSZ = 1024, DETSZ = 960, W8 = {};
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -107,7 +107,7 @@ window.AIVision = (function () {
       const B = [p.box[0] * S.fx, p.box[1] * S.fy, p.box[2] * S.fx, p.box[3] * S.fy]; let bv = -1e9;
       for (let i = 0; i < n; i++) { let x0 = lw, y0 = lh, x1 = -1, y1 = -1; for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) if (r.masks[i * N + y * lw + x] > 0) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
         const v = x1 < 0 ? -1 : r.scores[i] + .8 * iou([x0, y0, x1 + 1, y1 + 1], B); if (v > bv) { bv = v; bi = i; } }
-    } else { let ba = -1; const top = r.scores[bi]; for (let i = 0; i < n; i++) if (r.scores[i] >= top - .06) { let a = 0; for (let j = i * N; j < (i + 1) * N; j++) if (r.masks[j] > 0) a++; if (a > ba) { ba = a; bi = i; } } }      // نقرة: العنصر كاملاً لا جزءاً منه
+    } else { let ba = -1; const top = r.scores[bi]; for (let i = 0; i < n; i++) if (r.scores[i] >= Math.max(.5, top - (p.whole ? .25 : .06))) { let a = 0; for (let j = i * N; j < (i + 1) * N; j++) if (r.masks[j] > 0) a++; if (p.whole && a > N * .45) continue; if (a > ba) { ba = a; bi = i; } } }      // نقرة: العنصر كاملاً لا جزءاً منه
     const lo = r.masks.slice(bi * N, (bi + 1) * N); cleanLo(lo, lw, lh);
     return stats({ lo, lw, lh, score: r.scores[bi], obj: r.obj }, S);
   }
@@ -147,8 +147,8 @@ window.AIVision = (function () {
     step("⏳ تجهيز نموذج الذكاء…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
     /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
-    let localErr = null, gem = [], src = "local", note = ""; const pLoc = localDetect(cv, prog("det"), o.zone).catch(e => { localErr = e; return []; });
-    if (o.key) { try { step("⏳ Gemini يتعرّف على العناصر…"); gem = await geminiDetect(cv, o.key); src = "gemini"; } catch (e) { note = e.message; } }
+    let localErr = null, gem = [], src = "local", note = ""; const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null, pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone).catch(e => { localErr = e; return []; });      // وضع الماوس: بلا كشف، الترميز فقط
+    if (o.key && !o.noDetect) { try { step("⏳ Gemini يتعرّف على العناصر…"); gem = await geminiDetect(cv, o.key); src = "gemini"; } catch (e) { note = e.message; } }
     const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label)); if (!gem.length && !loc.length && localErr) throw localErr;
     const dets = gem.concat(loc.filter(d => !gem.some(g => iou(g.box, d.box) > .5)).map(d => gem.length ? Object.assign(d, { score: d.score * .7 }) : d));
     if (o.zone) {                                                     // «منطقة»: ما رسمه المستخدم حول العنصر هو صندوقه (الأدق)، واسمه من أكبر كشف يطابقه
@@ -168,7 +168,7 @@ window.AIVision = (function () {
     }
     await heldItems(S, out, step);
     await occlusions(S, out, step);
-    out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets };
+    out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets, later };
   }
   /* دمج عناصر يختارها المستخدم في عنصر واحد (يأخذ اسم أكبرها) */
   function joinItems(S, items, list) {
@@ -230,8 +230,13 @@ window.AIVision = (function () {
     }
   }
   /* عنصر يضيفه المستخدم: نقرة (pts) أو مستطيل (box) */
-  async function addItem(S, p, items) {
-    const m = await maskFor(S, p); if (!m.area) return null; m.manual = true; m.label = p.label || "عنصر"; m.det = 1; fillHoles(m, items); stats(m, S);
+  /* معاينة فورية للعنصر تحت الماوس (مثل أداة اختيار الكائن في فوتوشوب): قناع نقطة بلا إضافة */
+  async function pointMask(S, x, y, items, boxes) {
+    /* «مكتشف الأجسام» كفوتوشوب: أصغر صندوق كشف يحوي الماوس ← صندوقه + النقطة = الجسم كاملاً لا جزءاً منه */
+    const inB = (boxes || []).filter(d => x >= d.box[0] && x <= d.box[2] && y >= d.box[1] && y <= d.box[3]).sort((a, b) => bArea(a.box) - bArea(b.box))[0];
+    const m = await maskFor(S, inB ? { box: inB.box, pts: [[x, y, 1]] } : { pts: [[x, y, 1]], whole: true }); if (!m.area) return null; m.manual = true; m.label = inB ? inB.label : "عنصر"; m.det = 1; fillHoles(m, items || []); stats(m, S); return m; }
+  async function addItem(S, p, items, pre) {
+    const m = pre || await maskFor(S, p); if (!m.area) return null; m.manual = true; m.label = p.label || (pre && pre.label) || "عنصر"; m.det = 1; fillHoles(m, items); stats(m, S);
     const hit = items.find(o => both(o, m) / Math.min(o.area, m.area) > .85 && Math.abs(o.area - m.area) / Math.max(o.area, m.area) < .25); if (hit) return hit;
     m.id = Math.max(-1, ...items.map(o => o.id)) + 1; items.push(m); return m;
   }
@@ -403,5 +408,5 @@ window.AIVision = (function () {
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco", "o365"] }).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
+  return { supported, analyze, pointMask, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
 })();
