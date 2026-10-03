@@ -672,7 +672,7 @@ if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProduc
   }
   function fullHtml(page, ctx) {
     const r = renderSections(page, Object.assign({ base: "../../", edit: false }, ctx));
-    const site = ctx.site || {}, url = (site.domain ? "https://" + site.domain : "") + "/lp/" + page.slug + "/";
+    const site = ctx.site || {}, url = (site.domain ? "https://" + site.domain : "") + "/" + (ctx.path != null ? ctx.path : "lp/" + page.slug + "/");
     const hdr = page.header ? `<header class="pb-hdr"><div><a class="lg" href="${esc(ctx.base)}">${esc(site.name || "المتجر")}</a>${site.wa ? `<a class="wa" href="https://wa.me/${esc(String(site.wa).replace(/\D/g, ""))}" target="_blank" rel="noopener">واتساب</a>` : ""}</div></header>` : "";
     const ftr = page.footer ? `<footer class="pb-ftr">© ${new Date().getFullYear()} ${esc(site.name || "")} — جميع الحقوق محفوظة · <a href="${esc(ctx.base)}">العودة للمتجر</a></footer>` : "";
     const hasProd = JSON.stringify(page.sections).includes('"type":"products"'), hasContact = JSON.stringify(page.sections).includes('"type":"contact"');

@@ -17,6 +17,8 @@
 
 - الهيدر والفوتر وزر المشاركة: `assets/js/chrome.js` (يحمّله آخر `app.js` على كل صفحة) + أيقونات التواصل الرسمية `assets/js/social-icons.js` (مسارات Simple Icons)؛ الإعداد في `assets/data/chrome.json` (بلا ملف = يبقى الموقع كما هو عدا أيقونة المشاركة، و`{"off":true}` = استرجاع) وتُحرَّر من تبويبَي «الهيدر» و«الفوتر» في admin.html عبر `assets/js/chrome-admin.js`؛ وعنصر `social` في منشئ الصفحات.
 
+- تحويل المنتج/الرئيسية إلى المطوّر: `scripts/pagebuilder-convert.js` (`PBConvert`)؛ زر «تعديل» في معاينة الصفحة وزر «تعديل» في قائمة الصفحات يفتحان صفحة المنتج/الرئيسية في المطوّر. «حفظ ونشر» ← حفظ مباشر (يستبدل الأصل بعد نسخه إلى `assets/pages/_conv/<key>.orig.html`، وللمنتج يبقى الأصل في `p/<slug>/classic/` ليُضمَّن نموذج الطلب) أو نسخة جديدة `/lp/…` أو استرجاع.
+
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 
