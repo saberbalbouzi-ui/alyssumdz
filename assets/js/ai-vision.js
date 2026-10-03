@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=14", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=16", BASE).href;
   const SAMSZ = 1024, DETSZ = 960, W8 = {};
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -69,7 +69,7 @@ window.AIVision = (function () {
   }
   /* ───── الأقنعة (SAM) ─────
      كل عنصر يحفظ قناعه منخفض الدقة (logits 256×256) ونحوّله عند الحاجة: عرض سريع، أو دقة كاملة مع تنعيم الحافة */
-  async function embed(cv, onp) { const im = pix(cv, SAMSZ), S = { W: cv.width, H: cv.height, k: im.k, sw: im.w, sh: im.h }; const r = await worker("sam").call("embed", { data: im.data, w: im.w, h: im.h }, onp, [im.data]), rs = (r && r.rs) || [SAMSZ, SAMSZ]; S.lw = S.lh = 256; S.rs = rs; S.fx = S.k * (rs[1] / S.sw) * (256 / SAMSZ); S.fy = S.k * (rs[0] / S.sh) * (256 / SAMSZ); curS = S; return S; }
+  async function embed(cv, onp) { const im = pix(cv, SAMSZ), S = { W: cv.width, H: cv.height, k: im.k, sw: im.w, sh: im.h }; const r = await worker("sam").call("embed", { data: im.data, w: im.w, h: im.h }, onp, [im.data]), rs = (r && r.rs) || [SAMSZ, SAMSZ]; S.dev = (r && r.dev) || "wasm"; S.lw = S.lh = 256; S.rs = rs; S.fx = S.k * (rs[1] / S.sw) * (256 / SAMSZ); S.fy = S.k * (rs[0] / S.sh) * (256 / SAMSZ); curS = S; return S; }
   function cleanLo(lo, lw, lh) {                                     // إزالة الجزر الصغيرة البعيدة (تشويش) والإبقاء على أجزاء العنصر الحقيقية
     const lab = new Int32Array(lw * lh), sizes = [0], st = []; let n = 0;
     for (let i = 0; i < lw * lh; i++) { if (lo[i] <= 0 || lab[i]) continue; n++; let c = 0; st.push(i); lab[i] = n; while (st.length) { const j = st.pop(), x = j % lw; c++; for (const q of [j - 1, j + 1, j - lw, j + lw]) { if (q < 0 || q >= lw * lh || (q === j - 1 && x === 0) || (q === j + 1 && x === lw - 1) || lo[q] <= 0 || lab[q]) continue; lab[q] = n; st.push(q); } } sizes.push(c); }

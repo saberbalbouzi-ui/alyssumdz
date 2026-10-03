@@ -154,7 +154,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
   /* الواجهة الذكية: حدود ملوّنة تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
   function elementsAI(sh, cv, inf, w, res, key, Z, mouse) {
     const $ = sh.$, W = cv.width, H = cv.height, S = res.S, items = res.items; $("pbs-load").style.display = "none";
-    $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · كشف: " + (res.src === "gemini" ? "Gemini+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
+    $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · " + (S.dev === "webgpu" ? "⚡ كرت الشاشة" : "المعالج") + " · كشف: " + (res.src === "gemini" ? "Gemini+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
