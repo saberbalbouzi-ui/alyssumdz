@@ -277,7 +277,7 @@ const PB = (() => {
     },
     html: {
       label: "HTML مخصص", ic: "🧩", def: { code: "<div style=\"padding:20px;text-align:center\">HTML مخصص</div>" }, ctl: [{ k: "code", l: "الكود", t: "rich", tab: "c" }],
-      html: s => `<div class="pb-raw">${s.code || ""}</div>`, css: () => { },
+      html: (s, id, ctx) => `<div class="pb-raw">${ctx && ctx.edit ? String(s.code || "").replace(/<script[\s\S]*?<\/script>/gi, "") : (s.code || "")}</div>`, css: () => { },
     },
     iconlist: {
       label: "قائمة أيقونات", ic: "✅", def: { items: "طبيعي 100%\nدفع عند الاستلام\nتوصيل لكل الولايات", icon: "✅", ic_c: "#157a55", fs: { d: 18 }, gap: { d: 10 } },

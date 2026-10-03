@@ -1036,8 +1036,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   /* معاينة داخل نافذة بشريط علوي (المكتب/التابلت/الهاتف + عودة للتعديل + إغلاق) مع صور الرفع الحديث */
   function preview() {
     const dir = location.href.replace(/[^/]*$/, "");
-    let html = localize(PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir }, siteCtx())));
-    const og = E.page.origin; if (og && og.kind === "product" && og.direct) html = html.split("p/" + og.slug + "/?embed=1").join("p/" + og.slug + "/classic/?embed=1");
+    const html = localize(PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir }, siteCtx())));
     SitePreview.openHtml(html, { title: "معاينة قبل النشر", edit: () => SitePreview.close(), editLabel: "عودة للتعديل" });
   }
   async function putJson(path, obj, msg) {
