@@ -157,7 +157,7 @@ const PBBind = (() => {
     const mk = (el, slug) => { if (el && o.mark) { el.setAttribute("data-pbbind", slug); el.classList.add("pbbind"); } };
     if (o.kind === "product") {
       const p = get(o.slug); if (!p) return;
-      const h1 = root.querySelector("h1"); if (h1 && p.title) { h1.textContent = p.title; mk(h1, o.slug); }
+      const h1 = o.noTitle ? null : root.querySelector("h1"); if (h1 && p.title) { h1.textContent = p.title; mk(h1, o.slug); }
       if (simple(p)) {
         const pp = root.querySelector("#pprice"), po = root.querySelector("#pold"), ps = root.querySelector("#psave"), has = p.old && p.old > p.price;
         if (pp) { pp.textContent = fmt(p.price); mk(pp, o.slug); }
@@ -173,10 +173,12 @@ const PBBind = (() => {
       ids.forEach(([sel, f]) => { const g = root.querySelector(sel); if (!g) return; const list = f(prods().map(x => get(x.slug)).filter(x => x && x.active !== false)); g.innerHTML = ""; list.forEach(p => { const a = document.createElement("div"); a.className = "card"; a.innerHTML = card(p, o.rel); if (o.mark) { a.setAttribute("data-pbbind", p.slug); a.classList.add("pbbind"); } g.appendChild(a); }); });
     }
   }
+  /* أي صفحة مرتبطة بمنتج (أصلية مفتوحة من المنتج/الرئيسية، أو صفحة هبوط «مرتبطة بمنتج») تُربط عناصرها ببيانات ذلك المنتج */
+  const bindOf = page => { if (!page) return null; if (page.origin && page.origin.raw) return page.origin; if (page.product) return { kind: "product", slug: page.product, raw: true, noTitle: true }; return null; };
   /* بعد كل رسم للقماش */
   function after(root, page) {
-    const og = page && page.origin; if (!og || !og.raw) return;
-    applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true });
+    const og = bindOf(page); if (!og) return;
+    applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true, noTitle: og.noTitle });
     const d = root.ownerDocument;
     if (!d.getElementById("pbbind-css")) { const st = d.createElement("style"); st.id = "pbbind-css"; st.textContent = ".pbbind{outline:2px dashed #0e9f8e!important;outline-offset:3px;cursor:pointer!important;position:relative}.pbbind:hover{outline-color:#f59e0b!important;background-image:linear-gradient(rgba(14,159,142,.07),rgba(14,159,142,.07))}"; d.head.appendChild(st); }
     if (!root._pbb) { root._pbb = true; root.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-pbbind]"); if (!b) return; e.preventDefault(); e.stopPropagation(); openModal(b.getAttribute("data-pbbind")); }, true); }
@@ -184,8 +186,9 @@ const PBBind = (() => {
   /* تثبيت القيم الحالية داخل كود قسم (عند الحفظ) كي يطابق الملف بيانات المنتج */
   function bake(code, og) {
     if (!og || !og.raw) return code;
+    if (/^(?:(?!id="(?:pprice|pold|psave|offers|gmain|grid|bestsellers-grid)").)*$/s.test(code) && !/<h1/.test(code)) return code;
     const d = new DOMParser().parseFromString("<body>" + code + "</body>", "text/html");
-    applyTo(d.body, { kind: og.kind, slug: og.slug, rel: og.kind === "home" ? "" : "../../", mark: false });
+    applyTo(d.body, { kind: og.kind, slug: og.slug, rel: og.kind === "home" ? "" : "../../", mark: false, noTitle: og.noTitle });
     return d.body.innerHTML;
   }
   /* نافذة بيانات المنتج */
@@ -222,5 +225,11 @@ const PBBind = (() => {
     Object.keys(cache).forEach(slug => { orig[slug] = JSON.stringify(cache[slug]); });
   }
   const reset = () => { cache = {}; orig = {}; };
-  return { after, bake, commit, reset, openModal };
+  /* نسخة من الصفحة بقيم المنتج مثبّتة داخل أكواد HTML (لنشر صفحات الهبوط المرتبطة بمنتج) */
+  function bakePage(P) {
+    const og = bindOf(P); if (!og || P.origin) return P; const c = JSON.parse(JSON.stringify(P));
+    (c.sections || []).forEach(sec => (sec.cols || []).forEach(col => (col.widgets || []).forEach(w => { if (w.type === "html" && w.set && w.set.code) w.set.code = bake(w.set.code, Object.assign({}, og, { kind: "product" })); })));
+    return c;
+  }
+  return { after, bake, bakePage, commit, reset, openModal };
 })();
