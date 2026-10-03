@@ -1,6 +1,6 @@
 /* عامل الخدمة: يجعل الموقع قابلاً للتثبيت على الهاتف ويفتح آخر نسخة محفوظة عند انقطاع الإنترنت.
    الشبكة أولاً دائماً (حتى لا يرى الزبون سعراً قديماً)، والصور تُخدم من الذاكرة المؤقتة أولاً. لا يمسّ طلبات الـ API ولا غير GET. */
-const CACHE = "store-v1";
+const CACHE = "store-v2";
 self.addEventListener("install", e => { self.skipWaiting(); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -11,6 +11,11 @@ self.addEventListener("fetch", e => {
   if (r.method !== "GET" || u.origin !== location.origin || /\/api\//.test(u.pathname)) return;
   if (isImg(u)) {
     e.respondWith(caches.open(CACHE).then(c => c.match(r).then(hit => hit || fetch(r).then(res => { if (res.ok) c.put(r, res.clone()); return res; }))));
+    return;
+  }
+  /* لوحة التحكم والمحرر: الشبكة دائماً (النسخة المحفوظة فقط عند انقطاع الإنترنت) حتى لا تُعرض أدوات قديمة على اتصال بطيء */
+  if (/(^|\/)(admin\.html|editor\/)/.test(u.pathname) || /admin\.html|\/editor\//.test(r.referrer || "")) {
+    e.respondWith(caches.open(CACHE).then(c => fetch(r, { cache: "no-cache" }).then(res => { if (res.ok) c.put(r, res.clone()); return res; }).catch(() => c.match(r).then(h => h || Response.error()))));
     return;
   }
   e.respondWith(
