@@ -605,6 +605,7 @@ const Agent = (() => {
     if (engaged || document.getElementById("agent-teaser") || panel().classList.contains("open")) return;
     try { if (sessionStorage.getItem("alyssum_nudged_" + scopeKey())) return; sessionStorage.setItem("alyssum_nudged_" + scopeKey(), "1"); } catch (e) {}
     const n = nudgeCfg();
+    if (avatarOn) { Avatar.tease(n.message || defaultNudgeText(currentProduct())); return; }
     const t = document.createElement("div");
     t.className = "agent-teaser"; t.id = "agent-teaser";
     t.innerHTML = `<button type="button" class="tx" aria-label="إغلاق">✕</button><div class="tt">${n.message || defaultNudgeText(currentProduct())}</div>
@@ -626,6 +627,7 @@ const Agent = (() => {
   }
 
   function open(opts) {
+    if (avatarOn) return Avatar.start();
     hideTeaser();
     panel().classList.add("open");
     document.getElementById("agent-fab").style.display = "none";
@@ -655,6 +657,221 @@ const Agent = (() => {
     document.getElementById("agent-fab").style.display = "grid";
   }
 
+  /* ══════════════ الأفاتار الناطق (واجهة بديلة للمحادثة النصية — يُعرض أحدهما فقط حسب الإعدادات) ══════════════
+     نفس عقل الوكيل ونفس تدريبه: أسئلة الزبون تمرّ عبر reply() نفسها (agent-brain + التدريب) ثم تُنطَق ردودها.
+     يقرأ أعلى الصفحة (AvatarScript) فيقنع بالشراء ويشير إلى «اطلب الآن». الصوت بالأولوية:
+     ملفات جاهزة (assets/data/avatar-audio.json) ← ElevenLabs إن وُجد مفتاحه في هذا المتصفح ← Web Speech ← نص صامت.
+     قاعدة العلامة: امرأة محجّبة بلباس محتشم دائماً. */
+  let avatarOn = false;
+  const Avatar = (() => {
+    const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} return null; };
+    const DEF_VOICE = "21m00Tcm4TlvDq8ikWAM";
+    let root, bubble, token = 0, speaking = false, muted = LS("alyssum_av_mute") === "1", ctx = null, analyser = null, buf = null, curAudio = null, pulse = 0, mouth = 0, manifest = null, lastChips = null;
+    const clean = s => (window.AvatarScript ? AvatarScript.clean(s) : String(s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+    const css = `#agent-avatar{position:fixed;right:14px;bottom:92px;z-index:72;font-family:inherit;direction:rtl}
+#agent-avatar .av-btn{width:78px;height:78px;border-radius:50%;border:2px solid var(--gold,#c8a24b);background:#f7f4ed;padding:0;cursor:pointer;box-shadow:0 10px 26px rgba(23,63,53,.35);overflow:hidden;display:block;position:relative}
+#agent-avatar .av-btn svg{width:100%;height:100%;display:block}
+#agent-avatar.idle .av-btn::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(200,162,75,.55);animation:avPulse 2.2s infinite}
+#agent-avatar.talk .av-btn{box-shadow:0 0 0 4px rgba(47,107,87,.35),0 10px 26px rgba(23,63,53,.35)}
+#agent-avatar .av-tag{position:absolute;right:50%;transform:translateX(50%);bottom:-8px;background:var(--green,#173f35);color:#fff;font-size:.68rem;font-weight:800;padding:.1rem .55rem;border-radius:999px;white-space:nowrap}
+#agent-avatar .av-bub{position:absolute;right:0;bottom:94px;width:min(310px,calc(100vw - 28px));background:#fff;border:1px solid var(--gold-2,#d9c28a);border-radius:16px 16px 4px 16px;box-shadow:0 14px 34px rgba(23,63,53,.25);padding:.8rem .9rem;font-size:.92rem;line-height:1.7;display:none}
+#agent-avatar.open .av-bub{display:block}
+#agent-avatar .av-bub .av-x{position:absolute;top:2px;left:6px;background:none;border:0;font-size:1rem;cursor:pointer;color:#777}
+#agent-avatar .av-txt{padding-top:.2rem;min-height:3.2em;max-height:34vh;overflow:auto}
+#agent-avatar .av-tools,#agent-avatar .av-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem}
+#agent-avatar .av-tools button,#agent-avatar .av-chips button{font-family:inherit;font-size:.8rem;font-weight:800;border-radius:999px;padding:.35rem .8rem;cursor:pointer;border:1px solid var(--gold-2,#d9c28a);background:#f4efe4;color:var(--green,#173f35)}
+#agent-avatar .av-tools .gold{background:var(--gold,#c8a24b);color:#1d1d1d;border-color:var(--gold,#c8a24b)}
+#agent-avatar.point .av-order{animation:avHl 1s infinite}
+#agent-avatar .av-in{display:flex;gap:.4rem;margin-top:.55rem}
+#agent-avatar .av-in input{flex:1;min-width:0;border:1.5px solid var(--line,#e5dfd0);border-radius:999px;padding:.4rem .8rem;font-family:inherit;font-size:.88rem}
+#agent-avatar .av-in button{width:36px;height:36px;border-radius:50%;background:var(--green,#173f35);color:#fff;border:0;cursor:pointer}
+#agent-avatar .av-hand{position:absolute;right:58px;bottom:62px;width:46px;height:64px;display:none;pointer-events:none;transform-origin:50% 100%}
+#agent-avatar.point .av-hand{display:block;animation:avPoint .9s ease-in-out infinite}
+#agent-avatar .av-eye{transform-box:fill-box;transform-origin:center;animation:avBlink 4.6s infinite}
+#agent-avatar .av-eye.e2{animation-delay:.03s}
+#agent-avatar .m1,#agent-avatar .m2{display:none}
+#agent-avatar[data-m="0"] .m0,#agent-avatar[data-m="1"] .m1,#agent-avatar[data-m="2"] .m2{display:inline}
+.av-hl{outline:3px solid #c8a24b!important;outline-offset:3px;animation:avHl 1s infinite}
+@keyframes avBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes avPulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+@keyframes avPoint{0%,100%{transform:translateY(0) rotate(-14deg)}50%{transform:translateY(-9px) rotate(-14deg)}}
+@keyframes avHl{0%,100%{box-shadow:0 0 0 0 rgba(200,162,75,.7)}50%{box-shadow:0 0 0 9px rgba(200,162,75,0)}}
+@media (prefers-reduced-motion:reduce){#agent-avatar .av-eye,#agent-avatar.idle .av-btn::after,#agent-avatar.point .av-hand,.av-hl,#agent-avatar.point .av-order{animation:none}}
+@media (max-width:640px){#agent-avatar{right:10px;bottom:84px}#agent-avatar .av-btn{width:64px;height:64px}#agent-avatar .av-bub{bottom:80px}#agent-avatar .av-hand{right:46px;bottom:50px}}`;
+    const FACE = `<svg viewBox="0 0 120 140" aria-hidden="true">
+<path d="M6 140Q8 106 60 102Q112 106 114 140Z" fill="#2c6552"/>
+<path d="M14 124Q2 70 30 34Q60 4 90 34Q118 70 106 124Q60 138 14 124Z" fill="#3d8a6f"/>
+<ellipse cx="60" cy="66" rx="27" ry="33" fill="#f2cfae"/>
+<path d="M30 60Q32 28 60 26Q88 28 90 60Q84 40 60 38Q36 40 30 60Z" fill="#3d8a6f"/>
+<path d="M27 92Q60 128 93 92L100 132Q60 144 20 132Z" fill="#33785f"/>
+<path d="M40 52Q48 47 55 51M65 51Q72 47 80 52" stroke="#5b3a29" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<g class="av-eye"><ellipse cx="48" cy="63" rx="4.2" ry="5" fill="#2a1d16"/><circle cx="49.4" cy="61.2" r="1.3" fill="#fff"/></g>
+<g class="av-eye e2"><ellipse cx="72" cy="63" rx="4.2" ry="5" fill="#2a1d16"/><circle cx="73.4" cy="61.2" r="1.3" fill="#fff"/></g>
+<path d="M60 68Q57 76 61 77" stroke="#c99a78" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+<circle cx="41" cy="77" r="5" fill="#f1a99b" opacity=".5"/><circle cx="79" cy="77" r="5" fill="#f1a99b" opacity=".5"/>
+<g class="m0"><path d="M51 85Q60 91 69 85" stroke="#a63d3d" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+<g class="m1"><path d="M52 84Q60 94 68 84Q60 87 52 84Z" fill="#8b2c2c"/></g>
+<g class="m2"><ellipse cx="60" cy="87" rx="8" ry="7" fill="#8b2c2c"/><ellipse cx="60" cy="91" rx="4.5" ry="2.6" fill="#d9707a"/></g>
+</svg>`;
+    /* ذراع بكُمّ محتشم ويد تشير بالسبّابة إلى الأعلى (نحو زر «اطلب الآن» في الفقاعة) */
+    const HAND = `<svg viewBox="0 0 46 64" aria-hidden="true"><path d="M12 64L14 34Q23 30 32 34L34 64Z" fill="#2c6552"/><path d="M13 36Q12 26 16 24L16 8Q16 3 20 3Q24 3 24 8L24 22Q27 20 29 22Q32 21 33 24Q36 24 36 28L35 38Q30 42 23 42Q16 42 13 36Z" fill="#f2cfae" stroke="#d9a982" stroke-width="1"/></svg>`;
+
+    const pickVoice = l => { try { return (speechSynthesis.getVoices() || []).find(v => v.lang && v.lang.toLowerCase().startsWith(l)) || null; } catch (e) { return null; } };
+    function ensureCtx() {
+      if (ctx) return ctx;
+      try { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); analyser = ctx.createAnalyser(); analyser.fftSize = 512; buf = new Uint8Array(analyser.fftSize); analyser.connect(ctx.destination); } catch (e) { ctx = null; }
+      return ctx;
+    }
+    async function playUrl(url, tk) {                  // ملف صوتي (جاهز أو ناتج ElevenLabs) مع قياس الشدة للفم
+      const a = new Audio(url); curAudio = a;
+      if (ensureCtx()) { try { if (ctx.state === "suspended") await ctx.resume(); ctx.createMediaElementSource(a).connect(analyser); } catch (e) {} }
+      await new Promise((res, rej) => { a.onended = res; a.onerror = () => rej(new Error("audio")); a.play().catch(rej); });
+      curAudio = null; return true;
+    }
+    async function playEleven(text, key, tk) {
+      const voice = LS("alyssum_el_voice") || DEF_VOICE;
+      const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voice) + "?output_format=mp3_44100_128", { method: "POST", headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" }, body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }) });
+      if (!r.ok) throw new Error("eleven " + r.status);
+      const url = URL.createObjectURL(await r.blob()); if (tk !== token) { URL.revokeObjectURL(url); return true; }
+      try { return await playUrl(url, tk); } finally { URL.revokeObjectURL(url); }
+    }
+    function playSpeech(text, l) {
+      return new Promise(res => {
+        const v = pickVoice(l); if (!v || !("speechSynthesis" in window)) return res(false);
+        const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = 0.95; u.pitch = 1.05;
+        u.onboundary = () => { pulse = performance.now(); }; u.onend = () => res(true); u.onerror = () => res(true);
+        try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { res(false); }
+      });
+    }
+    const silent = text => new Promise(res => setTimeout(res, Math.min(9000, 1400 + text.length * 55)));
+    function loop() {
+      let lvl = 0;
+      if (speaking) {
+        if (curAudio && analyser && buf) { analyser.getByteTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) { const x = (buf[i] - 128) / 128; s += x * x; } const rms = Math.sqrt(s / buf.length); lvl = rms > 0.13 ? 2 : rms > 0.035 ? 1 : 0; }
+        else if (!muted) { const t = performance.now(); lvl = (t - pulse < 140) ? (Math.floor(t / 70) % 2 ? 2 : 1) : (Math.floor(t / 110) % 3 === 0 ? 0 : 1 + (Math.floor(t / 90) % 2)); }
+        else lvl = Math.floor(performance.now() / 160) % 3 === 0 ? 1 : 0;
+      }
+      if (lvl !== mouth) { mouth = lvl; root.dataset.m = String(lvl); }
+      requestAnimationFrame(loop);
+    }
+    async function loadManifest() {
+      if (manifest) return manifest;
+      try { const r = await fetch((typeof REL !== "undefined" ? REL : "") + "assets/data/avatar-audio.json"); manifest = r.ok ? await r.json() : {}; } catch (e) { manifest = {}; }
+      return manifest;
+    }
+    const show = t => { bubble.querySelector(".av-txt").textContent = t; };
+    const setPoint = on => {
+      root.classList.toggle("point", on);
+      document.querySelectorAll(".btn-order, a[href='#order-form']").forEach(b => b.classList.toggle("av-hl", on));
+      if (on) bubble.querySelector(".av-order").style.display = (currentSlug && document.getElementById("order-form")) ? "" : "none";
+    };
+    function chipsFrom(node) {                          // أزرار الاقتراحات في ردّ الوكيل تظهر في فقاعة الأفاتار
+      const box = bubble.querySelector(".av-chips"); box.innerHTML = "";
+      if (!node) return;
+      node.querySelectorAll(".chip[data-q]").forEach(c => { const b = document.createElement("button"); b.type = "button"; b.textContent = c.textContent; b.onclick = () => ask(c.dataset.q); box.appendChild(b); });
+    }
+    async function say(text, tk, file) {                // ينطق جملة بأفضل مصدر متاح
+      const l = lang === "fr" ? "fr" : "ar", key = (LS("alyssum_el_key") || "").trim();
+      if (muted) return silent(text);
+      let ok = false;
+      if (file) { try { ok = await playUrl(file, tk); } catch (e) {} }
+      if (!ok && key && tk === token) { try { ok = await playEleven(text, key, tk); } catch (e) {} }
+      if (!ok && tk === token) ok = await playSpeech(text, l);
+      if (!ok && tk === token) await silent(text);
+    }
+    async function start() {
+      try { hideTeaser(); } catch (e) {} stop(true); const tk = token; root.classList.add("open"); root.classList.remove("idle");
+      bubble.querySelector(".av-chips").innerHTML = ""; setPoint(false);
+      ensureCtx(); if (ctx && ctx.state === "suspended") try { ctx.resume(); } catch (e) {}
+      await ensureTraining(); const mf = await loadManifest(); if (tk !== token) return;
+      const l = lang === "fr" ? "fr" : "ar", sc = scopeCfg() || {};
+      const rec = mf && mf.items && mf.items[scopeKey()], useRec = rec && rec.lang === l && rec.lines && rec.files && rec.lines.length === rec.files.length;
+      const b = useRec ? { lines: rec.lines, cta: rec.lines.length - 1 } : AvatarScript.build({ product: currentProduct(), scope: sc, lang: l, siteName: SITE_NAME, h1: (document.querySelector("h1") || {}).textContent, products: window.PRODUCTS });
+      let note = "";
+      if (!muted && !useRec && !(LS("alyssum_el_key") || "").trim() && !pickVoice(l)) note = l === "fr" ? "(Pas de voix dans ce navigateur — lisez le texte.) " : "(لا يوجد صوت عربي في متصفحك — اقرأ النص مكتوباً.) ";
+      speaking = true; root.classList.add("talk");
+      for (let i = 0; i < b.lines.length; i++) {
+        if (tk !== token) return; show(b.lines[i]);
+        if (i === b.cta && currentSlug) setPoint(true);
+        await say(b.lines[i], tk, useRec ? (typeof REL !== "undefined" ? REL : "") + rec.files[i] : null);
+      }
+      if (tk !== token) return;
+      speaking = false; root.classList.remove("talk");
+      show(note + (l === "fr" ? "Une question ? Écrivez-la ci-dessous." : "هل لديك سؤال؟ اكتبه لي في الأسفل وسأجيبك."));
+      const q = defaultQuestions(l).slice(0, 3); const box = bubble.querySelector(".av-chips");
+      q.forEach(t => { const bt = document.createElement("button"); bt.type = "button"; bt.textContent = t; bt.onclick = () => ask(t); box.appendChild(bt); });
+    }
+    function stop(keepOpen) {
+      token++; speaking = false; if (root) { root.classList.remove("talk"); root.dataset.m = "0"; } mouth = 0;
+      try { speechSynthesis.cancel(); } catch (e) {}
+      if (curAudio) { try { curAudio.pause(); } catch (e) {} curAudio = null; }
+      if (!keepOpen && root) { root.classList.remove("open"); root.classList.add("idle"); setPoint(false); }
+    }
+    /* أسئلة الزبون: نفس reply() للوكيل (دماغ + تدريب)؛ نلتقط ردّ الوكيل ونعرضه وننطقه */
+    let obs = null, waiting = 0;
+    function watchBody() {
+      if (obs) return;
+      obs = new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => {
+        if (!waiting || !n.classList || !n.classList.contains("msg") || !n.classList.contains("bot") || n.classList.contains("typing")) return;
+        if (n.classList.contains("cta")) { setPoint(true); return; }
+        const text = clean(n.innerHTML.replace(/<br\s*\/?>/gi, ". ")); if (!text) return;
+        waiting = 0; answer(text, n);
+      })));
+      obs.observe(body(), { childList: true });
+    }
+    async function answer(text, node) {
+      stop(true); const tk = token; root.classList.add("open"); root.classList.remove("idle"); speaking = true; root.classList.add("talk");
+      show(text); chipsFrom(node);
+      const spoken = text.length > 420 ? text.slice(0, 420).replace(/\s\S*$/, "") : text;
+      await say(spoken, tk, null); if (tk === token) { speaking = false; root.classList.remove("talk"); }
+    }
+    function ask(text) {
+      text = String(text || "").trim(); if (!text) return;
+      stop(true); root.classList.add("open"); root.classList.remove("idle"); show("…"); bubble.querySelector(".av-chips").innerHTML = ""; setPoint(false);
+      waiting = 1; Promise.resolve(reply(text)).catch(() => { waiting = 0; });
+    }
+    function setMute(m) { muted = m; LS("alyssum_av_mute", m ? "1" : "0"); bubble.querySelector(".av-mute").textContent = m ? "🔇 صامت" : "🔊 الصوت"; if (m) { try { speechSynthesis.cancel(); } catch (e) {} if (curAudio) try { curAudio.pause(); } catch (e) {} } }
+    function tease(msg) {
+      if (!root || root.classList.contains("open")) return;
+      root.classList.add("open"); show(msg); const a = bubble.querySelector(".av-again"); a.textContent = "▶ اسمع الشرح";
+    }
+    function init() {
+      if (document.getElementById("agent-avatar")) return;
+      const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+      root = document.createElement("div"); root.id = "agent-avatar"; root.className = "idle"; root.dataset.m = "0";
+      root.innerHTML = `<div class="av-bub" role="dialog" aria-live="polite"><button type="button" class="av-x" aria-label="إغلاق">✕</button><div class="av-txt"></div><div class="av-chips"></div>
+<div class="av-in"><input placeholder="اكتب سؤالك… / Votre question" aria-label="سؤالك"><button type="button" aria-label="إرسال">➤</button></div>
+<div class="av-tools"><button type="button" class="gold av-order" style="display:none">🛒 اطلب الآن</button><button type="button" class="av-again">↻ أعد الشرح</button><button type="button" class="av-mute"></button></div></div>
+<div class="av-hand">${HAND}</div>
+<button type="button" class="av-btn" aria-label="اسمع شرح المنتج من المساعدة">${FACE}<span class="av-tag">🔊 اسمعيني</span></button>`;
+      document.body.appendChild(root); bubble = root.querySelector(".av-bub");
+      root.querySelector(".av-btn").onclick = () => { root.classList.contains("open") ? stop() : start(); };
+      bubble.querySelector(".av-x").onclick = () => stop();
+      bubble.querySelector(".av-order").onclick = () => { stop(); goOrder(); };
+      bubble.querySelector(".av-again").onclick = () => { bubble.querySelector(".av-again").textContent = "↻ أعد الشرح"; start(); };
+      bubble.querySelector(".av-mute").onclick = () => setMute(!muted);
+      const inp = bubble.querySelector(".av-in input"), go = () => { const v = inp.value; inp.value = ""; ask(v); };
+      bubble.querySelector(".av-in button").onclick = go; inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+      setMute(muted); watchBody(); loop();
+      try { speechSynthesis.getVoices(); } catch (e) {}
+    }
+    return { init, start, stop, tease, ask, hide: () => { if (root) { stop(); root.style.display = "none"; } }, show: () => { if (root) root.style.display = ""; } };
+  })();
+
+  /* أي واجهة تظهر للزبون؟ الإعداد العام training.display.mode ('chat' | 'avatar') وقد تُلغيه الصفحة بـ scope.display؛
+     وعلى الجوال تبقى المحادثة النصية إن فُعّل display.mobileChat. يظهر واحد منهما فقط. */
+  function loadAvatarScript() {
+    return new Promise(res => { if (window.AvatarScript) return res(); const e = document.createElement("script"); e.src = (typeof REL !== "undefined" ? REL : "") + "assets/js/avatar-script.js"; e.onload = () => res(); e.onerror = () => res(); document.head.appendChild(e); });
+  }
+  async function decideUi() {
+    const g = (TRAIN && TRAIN.display) || {}, sc = scopeCfg() || {};
+    let mode = sc.display && sc.display !== "default" ? sc.display : (g.mode || "chat");
+    if (mode === "avatar" && g.mobileChat && window.innerWidth <= 640) mode = "chat";
+    avatarOn = mode === "avatar";
+    const fab = document.getElementById("agent-fab");
+    if (avatarOn) { await loadAvatarScript(); if (!window.AvatarScript) { avatarOn = false; fab.style.display = "grid"; return; } fab.style.display = "none"; Avatar.init(); } else fab.style.display = "grid";
+  }
+
   function init() {
     const fab = document.createElement("button");
     fab.className = "agent-fab"; fab.id = "agent-fab";
@@ -662,7 +879,7 @@ const Agent = (() => {
     fab.title = "المساعد الذكي"; // تلميح يظهر عند تمرير المؤشر فوق الأيقونة
     fab.setAttribute("aria-label", "المساعد الذكي");
     fab.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`;
-    fab.onclick = open;
+    fab.onclick = open; fab.style.display = "none";           // يظهر بعد قراءة الإعداد (محادثة أم أفاتار)
     document.body.appendChild(fab);
 
     const p = document.createElement("div");
@@ -685,10 +902,11 @@ const Agent = (() => {
     document.getElementById("agent-input").addEventListener("keydown", e => { if (e.key === "Enter") send(); });
 
     startNudge();
+    ensureTraining().then(() => { try { decideUi().catch(e => { console.log("DUI", e.message); document.getElementById("agent-fab").style.display = "grid"; }); } catch (e) { document.getElementById("agent-fab").style.display = "grid"; } }, () => { document.getElementById("agent-fab").style.display = "grid"; });
     // لا فتح تلقائي للوحة: المساعد يبقى أيقونة صغيرة (مع تلميح "المساعد الذكي" عند المرور عليها)
     // ولا يُفتح إلا عند الضغط عليها من المستخدم — كان يفتح تلقائياً بعد 12 ثانية ويغطي الصفحة
   }
 
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { reply, open };
+  return { reply, open, avatar: Avatar };
 })();
