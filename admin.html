@@ -8700,7 +8700,7 @@ body{overflow-x:hidden;margin:0}`;
     { const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 5); if (cks.length) h += grp("الألوان", `<div class="pbx-qc">` + cks.map(c => { const v = inf.set[c.k]; return `<label title="${esc(c.l)}">${esc(c.l.replace(/^لون\s*/, "").replace(/\s*\(.*$/, "")).slice(0, 14)}<input type="color" data-qc="${c.k}" value="${/^#[0-9a-f]{6}$/i.test(v || "") ? v : "#ffffff"}"></label>`; }).join("") + `</div>`); }
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
     if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;
-    if (inf.node.type === "image" && inf.free && inf.sec.set.kind === "canvas") h += `<div class="pbx-qg"><small>أدوات القماش (الصور)</small><div class="pbx-magic"><button type="button" data-q="smart-text" title="يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل">${ico("t_text", 22)} التقاط النص</button><button type="button" data-q="smart-magic" title="يفصل العناصر (أشخاص، منتجات…) كصور شفافة">${ico("t_magic", 22)} التقاط سحري</button></div><label class="pbx-gem"><input type="checkbox" data-gem="1" ${gemOn() ? "checked" : ""}> استعانة اختيارية بمفتاح Gemini (بدونه تعمل الأدوات مجاناً)</label></div>`;
+    if (inf.node.type === "image" && inf.node.set.src) h += `<div class="pbx-qg"><small>أدوات القماش (كانفاس) — تعمل على أي صورة</small><div class="pbx-magic"><button type="button" data-q="smart-text" title="يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل">${ico("t_text", 22)} التقاط النص</button><button type="button" data-q="smart-magic" title="يفصل العناصر (أشخاص، منتجات…) كصور شفافة">${ico("t_magic", 22)} التقاط سحري</button></div><label class="pbx-gem"><input type="checkbox" data-gem="1" ${gemOn() ? "checked" : ""}> استعانة اختيارية بمفتاح Gemini (بدونه تعمل الأدوات مجاناً)</label></div>`;
     return h + `</div>`;
   }
   function onQuick(k) {
@@ -9913,10 +9913,19 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
       im.onerror = () => rej(new Error("تعذّر تحميل الصورة (" + src + ")")); im.src = url;
     });
   }
+  /* صورة خارج قسم الكانفاس ← تُنسخ إلى قسم كانفاس جديد تحتها (الأصل يبقى كما هو) لتعمل عليها أدوات الالتقاط */
+  function toCanvas(inf) {
+    const E = A().E, DW = 1100, fd = (document.getElementById("pbx-frame") || {}).contentDocument, im = fd && fd.querySelector(`[data-pb="${inf.node.id}"] img`);
+    const nw = (im && im.naturalWidth) || 1100, nh = (im && im.naturalHeight) || 1100, h = Math.round(nh * DW / nw);
+    const bg = PB.mkFree("image", 0, 0, 0); Object.assign(bg.set, { src: inf.node.set.src, alt: inf.node.set.alt || "", fit: "fill", fx: { d: 0 }, fy: { d: 0 }, fwd: { d: 100 }, fh: { d: h }, zi: 0 });
+    const sec = PB.mkCanvas(); Object.assign(sec.set, { scaled: true, dw: DW, layout: "boxed", cw: { d: DW }, mh: { d: h } }); sec.free = [bg];
+    const i = E.page.sections.findIndex(x => x.id === inf.sec.id); E.page.sections.splice(i < 0 ? E.page.sections.length : i + 1, 0, sec);
+    E.sel = bg.id; A().renderCanvas(); A().commitAfter(bg.id); return A().find(bg.id);
+  }
   function target() {
-    const inf = A().E && A().E.sel ? A().find(A().E.sel) : null;
-    if (!inf || inf.kind !== "widget" || inf.node.type !== "image" || !inf.node.set.src) return { err: "حدّد صورة داخل قسم كانفاس (انقر عليها) ثم اضغط الأداة من إعداداتها." };
-    if (!inf.free || inf.sec.set.kind !== "canvas") return { err: "التقاط النص يعمل على الصور داخل أقسام الكانفاس (الصفحات المولَّدة بالذكاء الاصطناعي)." };
+    let inf = A().E && A().E.sel ? A().find(A().E.sel) : null;
+    if (!inf || inf.kind !== "widget" || inf.node.type !== "image" || !inf.node.set.src) return { err: "حدّد صورة (انقر عليها) ثم اضغط الأداة من إعداداتها." };
+    if (!inf.free || inf.sec.set.kind !== "canvas") inf = toCanvas(inf);      // تحويل تلقائي إلى قسم كانفاس
     return { inf };
   }
   /* هيكل النافذة المشترك (يشبه لوحة Canva): صورة ملوّنة الإطارات + لوحة خيارات «عنصر / الكل» + زر التقاط */
