@@ -109,10 +109,10 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     const t = target(); if (t.err) return alert(t.err);
     const inf = t.inf, w = inf.node, sh = shell("التقاط العناصر", "عنصر", "كل العناصر", HINT_EL1, HINT_EL2), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
-    await new Promise(r => setTimeout(r, 40)); let res = null, note = "";
+    await new Promise(r => setTimeout(r, 40)); let res = null, note = !window.AIVision ? "نسخة قديمة من لوحة التحكم محمّلة — اضغط Ctrl+Shift+R لتحديثها" : !AIVision.supported() ? "متصفحك لا يدعم تشغيل النماذج (Web Worker) — جرّب Chrome على الحاسوب" : "";
     if (window.AIVision && AIVision.supported()) {
       const key = gemOn() ? TextCapture.ocr.key() : "";
-      try { res = await AIVision.analyze(cv, { key, onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); } catch (e) { console.warn("AIVision", e); note = e.message; }
+      try { res = await AIVision.analyze(cv, { key, onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); } catch (e) { console.warn("AIVision", e); note = (e && e.message) || String(e) || "خطأ غير معروف"; }
       if (sh.S.closed) return; if (res) return elementsAI(sh, cv, inf, w, res, key);
     }
     return elementsBasic(sh, cv, inf, w, note);
@@ -209,13 +209,13 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
       const g = ov.getContext("2d"), mode = sh.S.mode; g.clearRect(0, 0, vw, vh);
       items.forEach(it => { const on = mode === "all" || sel.has(it.id); if (on) g.drawImage(it.fill, it.dx, it.dy); else if (hov === it.id) { g.globalAlpha = .45; g.drawImage(it.fill, it.dx, it.dy); g.globalAlpha = 1; } g.drawImage(it.out, it.dx, it.dy); if (on || hov === it.id) g.drawImage(it.out, it.dx, it.dy); });
       const n = mode === "all" ? items.length : sel.size; $("pbs-go").disabled = !n; $("pbs-go").textContent = mode === "all" ? "التقاط " + items.length + " عنصراً" : "التقاط";
-      $("pbs-msg").textContent = items.length ? (mode === "all" ? "سيُلتقط كل العناصر المحاطة (" + items.length + ") ويبقى الخلفية." : sel.size ? "عنصر محدّد." : "") : "لم أجد عناصر قابلة للفصل في هذه الصورة (الخلفية قد تكون معقدة).";
+      if (!note) $("pbs-msg").textContent = items.length ? (mode === "all" ? "سيُلتقط كل العناصر المحاطة (" + items.length + ") ويبقى الخلفية." : sel.size ? "عنصر محدّد." : "") : "لم أجد عناصر قابلة للفصل في هذه الصورة (الخلفية قد تكون معقدة).";
     }
     const at = e => { const r = ov.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let best = -1, ba = 1e18; items.forEach(it => { const lx = Math.round(x - it.dx), ly = Math.round(y - it.dy); if (lx >= 0 && ly >= 0 && lx < it.dw && ly < it.dh && it.a[ly * it.dw + lx] && it.area < ba) { ba = it.area; best = it.id; } }); return best; };
     ov.onmousemove = e => { const h = at(e); if (h !== hov) { hov = h; paint(); } };
     ov.onclick = e => { if (sh.S.mode !== "one") return; const h = at(e); if (h < 0) return; sel = new Set([h]); paint(); };
     bindSeg(sh, () => { sel = new Set(); paint(); }); paint();
-    if (note) $("pbs-msg").textContent = "ℹ️ تعذّر تشغيل الكشف الذكي (" + note.slice(0, 100) + ") — استُعمل الكشف البسيط بالحواف.";
+    if (note) { $("pbs-msg").style.color = "#b45309"; $("pbs-msg").textContent = "⚠️ لم يعمل الكشف الذكي: " + note.slice(0, 140) + " — هذه الطريقة البسيطة القديمة (لا تصلح للصور الفوتوغرافية)."; }
     $("pbs-go").onclick = async () => {
       const chosen = sh.S.mode === "all" ? items.slice() : items.filter(it => sel.has(it.id)); if (!chosen.length) return; $("pbs-go").disabled = true;
       try {
