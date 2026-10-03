@@ -390,8 +390,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   function mount(host) {
     host.innerHTML = `
 <div class="card" id="gen-card" style="margin-bottom:1rem">
-  <b style="color:var(--green);font-size:1.1rem">🪄 توليد الصفحة بالذكاء الاصطناعي</b>
-  <div class="hint" style="margin:.4rem 0 .6rem">اضبط <b>إعدادات التوليد</b> (المفتاح والجودة) ← أدخل معلومات المنتج ← «توليد الصفحة». بعد النتيجة: <b>💾 حفظ</b> · <b>✏️ تحرير الصفحة</b> (يفتحها في المحرر مقسَّمة، وهناك «🪄 المسح الذكي» يحوّلها إلى عناصر مستقلة) · <b>🔄 إعادة التوليد</b>.</div>
+  <b style="color:var(--green);font-size:1.15rem">✨ توليد صفحة جديدة</b>
+  <div class="hint" style="margin:.4rem 0 .6rem">اضبط <b>إعدادات التوليد</b> (المفتاح والجودة) ← أدخل معلومات المنتج ← «توليد الصفحة». بعد النتيجة: <b>✏️ تحرير الصفحة</b> (تُقسَّم إلى أقسام وتُفتح في منشئ الصفحات حيث تجد «أدوات ذكية» لالتقاط النص والعناصر) · <b>⬇ تحميل للجهاز</b> · <b>🗂 حفظ في ملفات المنتج</b> · <b>🔄 إعادة التوليد</b> — مع خيار تقسيم الصفحة قبل التحميل/الحفظ أو أخذها كاملة.</div>
   <div class="gen-step" data-s="1">
   <details id="gen-adv" style="margin:.5rem 0 .8rem;padding:.6rem .8rem;background:#f7faf7;border:1.5px solid #cfe3d3;border-radius:10px"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات التوليد (المفتاح، الجودة، الهيكل)</summary>
     <div class="grid2" style="margin-top:.4rem">
@@ -431,13 +431,23 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     <div style="font-weight:900;color:var(--green)">✅ الصفحة المولّدة</div>
     <div style="max-height:62vh;overflow:auto;border:1.5px solid var(--line);border-radius:10px;margin:.5rem 0;background:#222;text-align:center"><img id="gen-rimg" alt="الصفحة المولّدة" style="max-width:100%;display:block;margin:0 auto"></div>
     <div id="gen-rcheck" class="hint" style="margin:.3rem 0"></div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-      <button class="small gold" type="button" id="gen-save" onclick="PBGen.savePage()">💾 حفظ الصفحة</button>
-      <button class="small gold" type="button" onclick="PBGen.editPage()" title="يفتح المحرر والصفحة مقسَّمة إلى أقسام، وفيه المسح الذكي">✏️ تحرير الصفحة</button>
-      <button class="small gray" type="button" onclick="PBGen.regen()" title="يُعيد التوليد مع تعليمات لتجنّب الأخطاء المكتشفة">🔄 إعادة التوليد</button>
-      <button class="small gray" type="button" onclick="PBGen.downloadOrig()">⬇ تنزيل الأصل</button>
+    <div style="background:#f7faf7;border:1.5px solid #cfe3d3;border-radius:10px;padding:.55rem .7rem;margin:.4rem 0">
+      <div style="font-weight:800;margin-bottom:.3rem">التقسيم (للتحميل والحفظ)</div>
+      <label style="display:inline-flex;gap:.3rem;align-items:center;margin-inline-end:1rem"><input type="radio" name="gen-split" value="full" checked style="width:auto"> الصفحة كاملة (صورة واحدة)</label>
+      <label style="display:inline-flex;gap:.3rem;align-items:center"><input type="radio" name="gen-split" value="parts" style="width:auto"> مقسّمة إلى <input type="number" id="gen-nparts" min="2" max="30" value="9" style="width:62px" onchange="PBGen.setParts(this.value)"> قسماً</label>
+      <small class="hint" style="display:block;margin-top:.25rem">«تحرير الصفحة» يقسّمها دائماً إلى أقسام ليسهل العمل عليها.</small>
     </div>
-    <details style="margin-top:.6rem"><summary style="cursor:pointer;color:#6b7280;font-size:.85rem">خيارات متقدمة: التقسيم والتحرير بمنشئ الصفحات القديم</summary><button class="small gray" type="button" onclick="PBGen.step(2)" style="margin-top:.4rem">فتح التقسيم والمحرر القديم</button></details>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+      <button class="small gold" type="button" id="gen-edit" onclick="PBGen.editPage()" title="يقسّم الصفحة إلى أقسام ويفتحها في منشئ الصفحات حيث الأدوات الذكية">✏️ تحرير الصفحة</button>
+      <button class="small gray" type="button" onclick="PBGen.downloadPage()">⬇ تحميل للجهاز</button>
+      <button class="small gray" type="button" onclick="PBGen.regen()" title="يُعيد التوليد مع تعليمات لتجنّب الأخطاء المكتشفة">🔄 إعادة التوليد</button>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.5rem">
+      <select id="gen-prod" style="min-width:200px"><option value="">— اختر المنتج لحفظ الصفحة في ملفاته —</option></select>
+      <button class="small gray" type="button" id="gen-save" onclick="PBGen.savePage()" title="يرفع الصورة (أو الأقسام) إلى مجلد المنتج assets/img/&lt;المنتج&gt;/landing/">🗂 حفظ في ملفات المنتج</button>
+    </div>
+    <details style="margin-top:.6rem"><summary style="cursor:pointer;color:#6b7280;font-size:.85rem">خيارات متقدمة</summary>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="PBGen.step(2)">ضبط حدود الأقسام والمحرر القديم</button><button class="small gray" type="button" onclick="PBGen.editAdvanced()" title="يفتح محرر التصميم المستقل /editor/">فتح في محرر التصميم المستقل</button><button class="small gray" type="button" onclick="PBGen.downloadOrig()">⬇ تنزيل الأصل</button></div></details>
   </div>
   <div id="gen-automsg" style="font-weight:700;color:var(--green);min-height:1.3em"></div><div id="gen-last" style="margin-top:.4rem"></div><small id="gen-cost" style="color:#8a7a4d"></small>
   <textarea id="gen-out" style="display:none"></textarea><textarea id="gen-final" style="display:none"></textarea><pre id="gen-copy" style="display:none"></pre>
@@ -746,19 +756,61 @@ Before rendering, internally verify every text element: no duplicated sentences,
   }
   function downloadClean() { if (!S.canvas) return; S.canvas.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "clean-" + (S.name || "landing") + ".png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, "image/png"); }
 
-  const CONV = () => $("gen-conv") ? $("gen-conv").checked : false;
+  const CONV = () => S.noConv ? false : ($("gen-conv") ? $("gen-conv").checked : false);
   /* ───── النتيجة: حفظ / تحرير في المحرر / إعادة ───── */
   function showResult() {
     const r = $("gen-result"); if (!r || !S.blob) return; r.style.display = ""; const im = $("gen-rimg"); if (S.rurl) URL.revokeObjectURL(S.rurl); S.rurl = URL.createObjectURL(S.blob); im.src = S.rurl;
-    const sv = $("gen-save"); if (sv) sv.textContent = S.savedPath ? "✓ محفوظة" : "💾 حفظ الصفحة"; try { r.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) { }
+    const sel = $("gen-prod"); if (sel && typeof Admin !== "undefined") { const cur = sel.value; sel.innerHTML = '<option value="">— اختر المنتج لحفظ الصفحة في ملفاته —</option>' + (Admin.products || []).filter(p => p.slug && p.slug !== "test").map(p => '<option value="' + PB.esc(p.slug) + '">' + PB.esc(p.title) + ' (' + PB.esc(p.slug) + ')</option>').join(""); sel.value = cur; }
+    const np = $("gen-nparts"); if (np && $("gen-n")) np.value = $("gen-n").value; const sv = $("gen-save"); if (sv) { sv.textContent = "🗂 حفظ في ملفات المنتج"; sv.disabled = false; } try { r.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) { }
   }
+  const splitMode = () => { const r = document.querySelector('input[name="gen-split"]:checked'); return r ? r.value : "full"; };
+  function setParts(v) { const n = Math.max(2, Math.min(30, Number(v) || 9)); $("gen-n").value = n; $("gen-nparts").value = n; recut(); const r = document.querySelector('input[name="gen-split"][value="parts"]'); if (r) r.checked = true; }
+  const slugName = () => String(S.name || "landing").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "landing";
+  /* أجزاء الصورة حسب حدود الأقسام الحالية */
+  async function sectionBlobs(type) {
+    const C = S.canvas, bounds = [0].concat(S.cuts.slice().sort((a, b) => a - b), [C.height]), out = [];
+    for (let i = 0; i < bounds.length - 1; i++) { const y0 = bounds[i], y1 = bounds[i + 1]; if (y1 - y0 < 20) continue; const c = document.createElement("canvas"); c.width = C.width; c.height = y1 - y0; c.getContext("2d").drawImage(C, 0, y0, C.width, y1 - y0, 0, 0, C.width, y1 - y0); out.push({ blob: await new Promise(r => c.toBlob(r, type || "image/png")), y0, y1 }); }
+    return out;
+  }
+  /* ZIP بسيط بدون ضغط (store) — لا مكتبات */
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return u8 => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = t[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }; })();
+  async function zipStore(files) {
+    const enc = new TextEncoder(), parts = [], cen = []; let off = 0; const d = new Date(), dt = ((d.getFullYear() - 1980) << 9 | (d.getMonth() + 1) << 5 | d.getDate()) & 0xFFFF, tm = (d.getHours() << 11 | d.getMinutes() << 5 | (d.getSeconds() >> 1)) & 0xFFFF;
+    for (const f of files) {
+      const data = new Uint8Array(await f.blob.arrayBuffer()), name = enc.encode(f.name), crc = CRC(data), h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, tm, true); h.setUint16(12, dt, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(h.buffer, name, data); const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, tm, true); c.setUint16(14, dt, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+      cen.push(c.buffer, name); off += 30 + name.length + data.length;
+    }
+    const cs = cen.reduce((a, b) => a + b.byteLength, 0), e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cs, true); e.setUint32(16, off, true);
+    return new Blob(parts.concat(cen, [e.buffer]), { type: "application/zip" });
+  }
+  function dlBlob(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800); }
+  async function downloadPage() {
+    if (!S.blob || !S.canvas) return toast("لا توجد صفحة بعد");
+    if (splitMode() === "full") return downloadOrig();
+    const secs = await sectionBlobs("image/png"), nm = slugName(); const zip = await zipStore(secs.map((x, i) => ({ name: nm + "-" + String(i + 1).padStart(2, "0") + ".png", blob: x.blob })));
+    dlBlob(zip, nm + "-sections.zip"); toast("⬇ نُزّل ملف ZIP يضم " + secs.length + " قسماً");
+  }
+  /* حفظ داخل ملفات المنتج: assets/img/<slug>/landing/ (كاملة أو أقساماً) */
   async function savePage() {
-    if (!S.blob) return toast("لا توجد صفحة بعد"); const sv = $("gen-save"); sv.disabled = true;
-    try { await saveLast(S.blob, S.name || "landing"); if (!S.savedPath) await saveOriginalToSite(S.blob, S.name || "landing"); sv.textContent = S.savedPath ? "✓ محفوظة" : "✓ محفوظة محلياً"; toast(S.savedPath ? "💾 حُفظت الصفحة في مكتبة الصور: " + S.savedPath : "💾 حُفظت محلياً في هذا المتصفح (اضبط GitHub لحفظها في الموقع)"); }
-    catch (e) { toast("⚠️ " + e.message); } sv.disabled = false;
+    if (!S.blob || !S.canvas) return toast("لا توجد صفحة بعد"); const slug = ($("gen-prod") || {}).value; if (!slug) return toast("اختر المنتج أولاً من القائمة");
+    const cfg = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (!cfg || !cfg.token) return toast("⚠️ اضبط GitHub أولاً (زر ⚙️) لحفظ الملفات في المنتج");
+    const sv = $("gen-save"); sv.disabled = true; const ts = Date.now().toString(36);
+    try {
+      const folder = "assets/img/" + slug + "/landing", items = splitMode() === "full" ? [{ blob: S.blob }] : await sectionBlobs("image/png"), paths = [];
+      for (let i = 0; i < items.length; i++) { sv.textContent = "⏳ " + (i + 1) + "/" + items.length; const f = new File([items[i].blob], "p.png", { type: "image/png" }); paths.push(await Admin.uploadImageFile(f, folder, "page-" + ts + (items.length > 1 ? "-" + String(i + 1).padStart(2, "0") + "-" : "-"), { max: 4096, q: .95, noVariants: true, uniq: true })); }
+      sv.textContent = "✓ حُفظت"; toast("🗂 حُفظت " + paths.length + " صورة في مجلد المنتج: " + folder + "/"); try { saveLast(S.blob, S.name || "landing"); } catch (e) { }
+    } catch (e) { toast("⚠️ " + e.message); sv.textContent = "🗂 حفظ في ملفات المنتج"; }
+    sv.disabled = false;
+  }
+  /* تحرير الصفحة: تُقسَّم إلى أقسام وتُفتح في منشئ الصفحات (فيه «أدوات ذكية») دون تحويل النصوص تلقائياً */
+  async function editPage() {
+    if (!S.canvas) return toast("ولّد الصفحة أولاً"); S.noConv = true;
+    try { await run(); } finally { S.noConv = false; }
   }
   /* تحرير الصفحة: نسلّم الصورة مقسَّمة (حسب حدود الأقسام) إلى المحرر عبر IndexedDB المشترك ثم نفتحه */
-  async function editPage() {
+  async function editAdvanced() {
     if (!S.canvas) return toast("ولّد الصفحة أولاً"); const C = S.canvas, bounds = [0].concat(S.cuts.slice().sort((a, b) => a - b), [C.height]), sections = [];
     for (let i = 0; i < bounds.length - 1; i++) { const y0 = bounds[i], y1 = bounds[i + 1]; if (y1 - y0 < 20) continue; const c = document.createElement("canvas"); c.width = C.width; c.height = y1 - y0; c.getContext("2d").drawImage(C, 0, y0, C.width, y1 - y0, 0, 0, C.width, y1 - y0); sections.push({ blob: await new Promise(r => c.toBlob(r, "image/png")), y0, y1 }); }
     await new Promise((res, rej) => { const rq = indexedDB.open("alyssum-editor", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("kv"); rq.onerror = () => rej(rq.error); rq.onsuccess = () => { const db = rq.result, tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put({ name: S.name || "صفحة مولّدة", width: C.width, height: C.height, sections, t: Date.now() }, "handoff"); tx.oncomplete = () => { db.close(); res(); }; tx.onerror = () => rej(tx.error); }; });
@@ -781,5 +833,5 @@ Before rendering, internally verify every text element: no duplicated sentences,
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { showResult, savePage, editPage, brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { showResult, savePage, editPage, editAdvanced, downloadPage, setParts, brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();

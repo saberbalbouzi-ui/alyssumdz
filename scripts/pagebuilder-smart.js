@@ -10,6 +10,7 @@ const PBSmart = (function () {
     const card = (ic, title, desc, fn) => `<div style="border:1.5px solid #e4dfd2;border-radius:12px;padding:.7rem;background:#fff;margin-bottom:.6rem"><div style="font-weight:800">${ic} ${title}</div><div style="font-size:.78rem;color:#6b6556;line-height:1.7;margin:.3rem 0 .6rem">${desc}</div><button type="button" style="width:100%;background:#7c3aed;color:#fff;border:0;border-radius:10px;padding:.55rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="PBSmart.${fn}()">${title} من الصورة المحدّدة</button></div>`;
     return `<div class="pbx-f"><div style="font-weight:900;color:#173f35;margin-bottom:.2rem">🪄 أدوات ذكية</div>
 <div style="font-size:.76rem;color:#6b6556;line-height:1.7;margin-bottom:.6rem">حدّد صورة داخل قسم كانفاس (الصفحات المولَّدة)، ثم اختر الأداة: تمسح الصورة وتحيط بما يمكن فصله بخط بنفسجي، وتختار <b>عنصراً</b> أو <b>الكل</b> ثم «التقاط».</div>
+<div style="border:1.5px dashed #c9bfa6;border-radius:12px;padding:.7rem;background:#fffdf7;margin-bottom:.6rem"><div style="font-weight:800">📥 جلب صورة جاهزة</div><div style="font-size:.78rem;color:#6b6556;line-height:1.7;margin:.3rem 0 .6rem">لديك صفحة/تصميم من خارج الموقع؟ اجلب <b>صورة واحدة</b> أو <b>عدة صور مقسَّمة</b> (بالترتيب من الأعلى للأسفل): تُوضع كل صورة في قسم كانفاس جاهز، ثم تُجرّب عليها الأداتين أدناه.</div><button type="button" style="width:100%;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.55rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="PBSmart.importImages()">اختيار صورة / صور من الجهاز</button></div>
 ${card("🔤", "التقاط النص", "يفصل النصوص عن الصورة بدقة ويحوّلها إلى نصوص قابلة للتعديل، وتُمسح من الصورة وتبقى خلفيتها.", "capture")}
 ${card("🖼️", "التقاط العناصر", "يفصل المنتجات والأعشاب والمكوّنات والأشكال <b>مع ظلالها</b> (والعناصر الصغيرة المتجمعة عنصراً واحداً) كصور شفافة مستقلة، وتبقى الخلفية.", "captureElements")}
 </div>`;
@@ -165,5 +166,22 @@ ${card("🖼️", "التقاط العناصر", "يفصل المنتجات وا
     });
     s.src = path; A().E.sel = w.id; A().renderCanvas(); A().commitAfter(w.id); return made;
   }
-  return { pane, capture, captureElements };
+  /* جلب صور جاهزة: كل صورة ← قسم كانفاس مُحجَّم بعرض مرجعي 1100 (كما يفعل المولّد)، بترتيب الأسماء */
+  function importImages() {
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/png,image/jpeg,image/webp"; inp.multiple = true;
+    inp.onchange = async () => {
+      const files = [...inp.files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })); if (!files.length) return; const E = A().E, DW = 1100, made = [];
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i]; if (f.size > 25 * 1024 * 1024) throw new Error(f.name + ": أكبر من 25MB");
+          const cv = await new Promise((res, rej) => { const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { URL.revokeObjectURL(u); res({ w: im.naturalWidth, h: im.naturalHeight }); }; im.onerror = () => rej(new Error(f.name + ": ليست صورة صالحة")); im.src = u; });
+          const path = await A().uploadBlob(f, "imp-" + Date.now().toString(36) + "-" + i, { max: 3200, q: .95 }), kf = DW / cv.w, h = Math.round(cv.h * kf);
+          const bg = PB.mkFree("image", 0, 0, 0); Object.assign(bg.set, { src: path, fit: "fill", fx: { d: 0 }, fy: { d: 0 }, fwd: { d: 100 }, fh: { d: h }, zi: 0 });
+          const sec = PB.mkCanvas(); Object.assign(sec.set, { scaled: true, dw: DW, layout: "boxed", cw: { d: DW }, mh: { d: h } }); sec.free = [bg]; E.page.sections.push(sec); made.push(bg.id);
+        }
+        A().commitAfter(made[0]); alert("✅ أُضيفت " + made.length + " صورة كأقسام كانفاس جاهزة. حدّد أي صورة ثم استعمل «التقاط النص» أو «التقاط العناصر».");
+      } catch (e) { alert("⚠️ " + e.message); }
+    }; inp.click();
+  }
+  return { pane, capture, captureElements, importImages };
 })();
