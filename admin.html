@@ -1434,7 +1434,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/data.js"></script>
 <script src="assets/js/image-tools.js"></script>
 <script src="assets/js/text-capture.js"></script>
-<script src="assets/js/ai-vision.js?v=10"></script>
+<script src="assets/js/ai-vision.js?v=11"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -9555,7 +9555,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
 })();
 
 /* ═══ أدوات ذكية في منشئ الصفحات: «التقاط النص» (مثل Canva) ═══
-   تفحص الصورة المحدّدة، تحيط النصوص المكتشفة بمستطيلات بنفسجية، وتعرض نافذة بخيارين: «عنصر» (نص واحد تنقر عليه) أو «كل النصوص».
+   تفحص الصورة المحدّدة، تحيط النصوص المكتشفة بمستطيلات ملوّنة، وتعرض نافذة بخيارين: «عنصر» (نص واحد تنقر عليه) أو «كل النصوص».
    عند «التقاط» تُقرأ النصوص (Gemini إن وُجد مفتاحه وإلا Tesseract)، تُمسح من الصورة بدقة مع إعادة رسم الخلفية، وتصير عناصر نص قابلة للتعديل فوق الصورة.
    تعمل على صورة داخل قسم «كانفاس» (الصفحات المولَّدة). تعتمد على assets/js/text-capture.js و image-tools.js. */
 const PBSmart = (function () {
@@ -9563,9 +9563,9 @@ const PBSmart = (function () {
   const FSK = { ar: 1.15, lat: .74 }, ARABIC = /[؀-ۿ]/;
   const A = () => PBApp;
   function pane() {
-    const card = (ic, title, desc, fn) => `<div style="border:1.5px solid #e4dfd2;border-radius:12px;padding:.7rem;background:#fff;margin-bottom:.6rem"><div style="font-weight:800">${ic} ${title}</div><div style="font-size:.78rem;color:#6b6556;line-height:1.7;margin:.3rem 0 .6rem">${desc}</div><button type="button" style="width:100%;background:#7c3aed;color:#fff;border:0;border-radius:10px;padding:.55rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="PBSmart.${fn}()"${fn === "captureElements" ? ' onmouseenter="PBSmart.warm()"' : ""}>${title} من الصورة المحدّدة</button></div>`;
+    const card = (ic, title, desc, fn) => `<div style="border:1.5px solid #e4dfd2;border-radius:12px;padding:.7rem;background:#fff;margin-bottom:.6rem"><div style="font-weight:800">${ic} ${title}</div><div style="font-size:.78rem;color:#6b6556;line-height:1.7;margin:.3rem 0 .6rem">${desc}</div><button type="button" style="width:100%;background:#0d9488;color:#fff;border:0;border-radius:10px;padding:.55rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="PBSmart.${fn}()"${fn === "captureElements" ? ' onmouseenter="PBSmart.warm()"' : ""}>${title} من الصورة المحدّدة</button></div>`;
     return `<div class="pbx-f"><div style="font-weight:900;color:#173f35;margin-bottom:.2rem">🪄 أدوات ذكية</div>
-<div style="font-size:.76rem;color:#6b6556;line-height:1.7;margin-bottom:.6rem">حدّد صورة داخل قسم كانفاس (الصفحات المولَّدة)، ثم اختر الأداة: تمسح الصورة وتحيط بما يمكن فصله بخط بنفسجي، وتختار <b>عنصراً</b> أو <b>الكل</b> ثم «التقاط».</div>
+<div style="font-size:.76rem;color:#6b6556;line-height:1.7;margin-bottom:.6rem">حدّد صورة داخل قسم كانفاس (الصفحات المولَّدة)، ثم اختر الأداة: تمسح الصورة وتحيط بما يمكن فصله بخط ملوّن، وتختار <b>عنصراً</b> أو <b>الكل</b> ثم «التقاط».</div>
 <div style="border:1.5px dashed #c9bfa6;border-radius:12px;padding:.7rem;background:#fffdf7;margin-bottom:.6rem"><div style="font-weight:800">📥 جلب صورة جاهزة</div><div style="font-size:.78rem;color:#6b6556;line-height:1.7;margin:.3rem 0 .6rem">لديك صفحة/تصميم من خارج الموقع؟ اجلب <b>صورة واحدة</b> أو <b>عدة صور مقسَّمة</b> (بالترتيب من الأعلى للأسفل): تُوضع كل صورة في قسم كانفاس جاهز، ثم تُجرّب عليها الأداتين أدناه.</div><button type="button" style="width:100%;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.55rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="PBSmart.importImages()">اختيار صورة / صور من الجهاز</button></div>
 ${card("🔤", "التقاط النص", "يفصل النصوص عن الصورة بدقة ويحوّلها إلى نصوص قابلة للتعديل، وتُمسح من الصورة وتبقى خلفيتها.", "capture")}
 ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط السحري» في Canva: يتعرّف على العناصر بأسمائها (أشخاص، منتجات، أطباق، أقلام، أعشاب…) ويقصّها بحدود دقيقة <b>مع ظلالها</b> كصور شفافة مستقلة، وتبقى الخلفية. يعمل بلا مفتاح داخل متصفحك (أول مرة تُنزَّل النماذج ~110MB ثم تُحفظ).", "captureElements")}
@@ -9586,19 +9586,19 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     if (!inf.free || inf.sec.set.kind !== "canvas") return { err: "التقاط النص يعمل على الصور داخل أقسام الكانفاس (الصفحات المولَّدة بالذكاء الاصطناعي)." };
     return { inf };
   }
-  /* هيكل النافذة المشترك (يشبه لوحة Canva): صورة بنفسجية الإطارات + لوحة خيارات «عنصر / الكل» + زر التقاط */
+  /* هيكل النافذة المشترك (يشبه لوحة Canva): صورة ملوّنة الإطارات + لوحة خيارات «عنصر / الكل» + زر التقاط */
   function shell(title, oneLabel, allLabel, hintOne, hintAll) {
     const host = document.createElement("div"); host.id = "pbs-modal";
     host.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(15,15,20,.72);display:flex;align-items:center;justify-content:center;padding:14px;direction:rtl;font-family:inherit";
     host.innerHTML = `<div style="background:#fff;border-radius:16px;display:flex;gap:0;max-width:1100px;width:100%;max-height:94vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-  <div id="pbs-view" style="flex:1;min-width:0;background:repeating-conic-gradient(#3a3a42 0% 25%,#33333a 0% 50%) 50%/20px 20px;overflow:auto;position:relative"><div id="pbs-stage" style="position:relative;margin:0 auto;width:fit-content"></div><div id="pbs-load" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;background:rgba(0,0,0,.35)">⏳ جارِ مسح الصورة…</div></div>
+  <div id="pbs-view" style="flex:1;min-width:0;background:repeating-conic-gradient(#3a3a42 0% 25%,#33333a 0% 50%) 50%/20px 20px;overflow:auto;position:relative"><div id="pbs-stage" style="position:relative;margin:0 auto;width:fit-content"></div><div id="pbs-load" style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:.4rem;color:#fff;font-weight:800;font-size:.85rem;background:rgba(15,23,25,.78);padding:.45rem 1rem;border-radius:999px;white-space:nowrap;z-index:3;box-shadow:0 4px 18px rgba(0,0,0,.35)">⏳ جارِ مسح الصورة…</div></div>
   <div style="width:320px;flex:0 0 320px;padding:1.1rem;display:flex;flex-direction:column;gap:.9rem;overflow:auto">
     <div style="display:flex;align-items:center;gap:.6rem"><button id="pbs-back" title="رجوع" style="border:0;background:none;font-size:1.3rem;cursor:pointer">→</button><b style="font-size:1.05rem;flex:1">${title}</b><button id="pbs-x" title="إغلاق" style="border:0;background:none;font-size:1.4rem;cursor:pointer">✕</button></div>
     <div style="font-weight:800;line-height:1.6">حدّد ما تريد التقاطه.</div>
     <div id="pbs-seg" style="display:flex;background:#f3f2f6;border-radius:12px;padding:4px"><button data-m="one" style="flex:1;border:0;border-radius:9px;padding:.55rem;cursor:pointer;font-weight:700;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)">✨ ${oneLabel}</button><button data-m="all" style="flex:1;border:0;border-radius:9px;padding:.55rem;cursor:pointer;font-weight:700;background:transparent">${allLabel}</button></div>
     <div id="pbs-hint" style="font-size:.8rem;color:#6b6556;line-height:1.7">${hintOne}</div>
     <div id="pbs-extra" style="display:flex;flex-direction:column;gap:.5rem"></div>
-    <button id="pbs-go" disabled style="border:0;border-radius:12px;padding:.8rem;font-weight:800;font-size:1rem;cursor:pointer;background:#7c3aed;color:#fff">التقاط</button>
+    <button id="pbs-go" disabled style="border:0;border-radius:12px;padding:.8rem;font-weight:800;font-size:1rem;cursor:pointer;background:#0d9488;color:#fff">التقاط</button>
     <div id="pbs-msg" style="font-size:.78rem;line-height:1.7;color:#173f35;min-height:3em"></div>
     <div style="font-size:.74rem;color:#8a8472;border-top:1px solid #eee;padding-top:.6rem">تعمل الأداة داخل متصفحك. الصورة الأصلية لا تتغير إلا عند «التقاط».<div id="pbs-ver" style="margin-top:.35rem;font-size:.68rem;color:#a8a294;direction:rtl"></div></div>
   </div></div>`;
@@ -9607,17 +9607,24 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     return { host, $, S, close };
   }
   function bindSeg(sh, repaint) { sh.host.querySelectorAll("#pbs-seg button").forEach(b => b.onclick = () => { sh.S.mode = b.dataset.m; sh.S.onMode && sh.S.onMode(); sh.host.querySelectorAll("#pbs-seg button").forEach(x => { const on = x === b; x.style.background = on ? "#fff" : "transparent"; x.style.boxShadow = on ? "0 1px 4px rgba(0,0,0,.15)" : "none"; }); sh.$("pbs-hint").textContent = sh.S.mode === "all" ? sh.S.hintAll : sh.S.hintOne; repaint(); }); }
+  /* أثناء التحليل: الصورة ظاهرة وخط مضيء يمسحها ذهاباً وإياباً حتى ينتهي المسح ← يعيد دالة الإيقاف */
+  function scanFx(sh, cv) {
+    if (!document.getElementById("pbs-scan-css")) { const st = document.createElement("style"); st.id = "pbs-scan-css"; st.textContent = "@keyframes pbsScan{0%{top:0}100%{top:calc(100% - 4px)}}#pbs-scanline{position:absolute;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,#2dd4bf 15%,#ccfbf1 50%,#2dd4bf 85%,transparent);box-shadow:0 0 18px 6px rgba(45,212,191,.55),0 0 60px 18px rgba(13,148,136,.25);animation:pbsScan 1.7s ease-in-out infinite alternate;pointer-events:none}"; document.head.appendChild(st); }
+    const stage = sh.$("pbs-stage"); stage.innerHTML = ""; const { vw, vh } = viewSize(sh, cv.width, cv.height), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff;filter:saturate(.85)"; stage.appendChild(img);
+    const ln = document.createElement("div"); ln.id = "pbs-scanline"; stage.appendChild(ln); sh.$("pbs-load").style.display = "flex"; sh.$("pbs-go").disabled = true; sh.$("pbs-go").textContent = "⏳ جارِ المسح…";
+    return () => { stage.innerHTML = ""; };
+  }
   function viewSize(sh, W, H) { const view = sh.$("pbs-view"), vw = Math.max(260, Math.min(W, view.clientWidth - 24)), k = vw / W; return { vw, vh: Math.round(H * k), k }; }
 
   /* ═══ التقاط النص ═══ */
   async function capture() {
     const t = target(); if (t.err) return alert(t.err);
-    const inf = t.inf, w = inf.node, sh = shell("التقاط النص", "عنصر", "كل النصوص", "انقر على أحد المستطيلات البنفسجية لاختيار نص واحد. فاتك نص؟ ارسم مستطيلاً حوله بالسحب.", "ستُلتقط كل النصوص المكتشفة دفعة واحدة."), $ = sh.$;
+    const inf = t.inf, w = inf.node, sh = shell("التقاط النص", "عنصر", "كل النصوص", "انقر على أحد المستطيلات الملوّنة لاختيار نص واحد. فاتك نص؟ ارسم مستطيلاً حوله بالسحب.", "ستُلتقط كل النصوص المكتشفة دفعة واحدة."), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
-    const W = cv.width, H = cv.height; await new Promise(r => setTimeout(r, 40));
+    const W = cv.width, H = cv.height, stopScan = scanFx(sh, cv); await new Promise(r => setTimeout(r, 40));
     /* مسح الصورة: كشف بالصورة (+ قراءة إن وُجد مفتاح Gemini ليكون الكشف أدق وتُستبعد الصناديق غير النصية) */
     let sc; try { sc = await TextCapture.scan(cv, { ocr: !!TextCapture.ocr.key() }); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
-    if (sh.S.closed) return; $("pbs-load").style.display = "none"; const items = sc.items; items.forEach((b, i) => b.i = i);
+    if (sh.S.closed) return; stopScan(); $("pbs-load").style.display = "none"; const items = sc.items; items.forEach((b, i) => b.i = i);
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
@@ -9625,9 +9632,9 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     const R = b => { const c = b.core || b; return { x: Math.max(0, c.x0 - 3) * k, y: Math.max(0, c.y0 - 3) * k, w: (c.x1 - c.x0 + 6) * k, h: (c.y1 - c.y0 + 6) * k }; };
     function paint() {
       const g = ov.getContext("2d"), mode = sh.S.mode; g.clearRect(0, 0, vw, vh);
-      items.forEach(b => { const r = R(b), on = mode === "all" || sel.has(b.i); g.lineWidth = on || hov === b.i ? 3 : 2; g.strokeStyle = "#7c3aed"; if (on) { g.fillStyle = "rgba(124,58,237,.22)"; g.fillRect(r.x, r.y, r.w, r.h); } else if (hov === b.i) { g.fillStyle = "rgba(124,58,237,.1)"; g.fillRect(r.x, r.y, r.w, r.h); } g.setLineDash(on ? [] : [6, 3]); g.strokeRect(r.x, r.y, r.w, r.h); });
+      items.forEach(b => { const r = R(b), on = mode === "all" || sel.has(b.i); g.lineWidth = on || hov === b.i ? 3 : 2; g.strokeStyle = "#0d9488"; if (on) { g.fillStyle = "rgba(13,148,136,.22)"; g.fillRect(r.x, r.y, r.w, r.h); } else if (hov === b.i) { g.fillStyle = "rgba(13,148,136,.1)"; g.fillRect(r.x, r.y, r.w, r.h); } g.setLineDash(on ? [] : [6, 3]); g.strokeRect(r.x, r.y, r.w, r.h); });
       const n = mode === "all" ? items.length : sel.size; $("pbs-go").disabled = !n; $("pbs-go").textContent = mode === "all" ? "التقاط " + items.length + " نصاً" : "التقاط";
-      $("pbs-msg").textContent = items.length ? (mode === "all" ? "سيُلتقط كل النصوص المحيطة بمستطيلات بنفسجية (" + items.length + ")." : sel.size ? "نص محدّد." : "") : "لم أجد نصوصاً في هذه الصورة.";
+      $("pbs-msg").textContent = items.length ? (mode === "all" ? "سيُلتقط كل النصوص المحيطة بمستطيلات ملوّنة (" + items.length + ")." : sel.size ? "نص محدّد." : "") : "لم أجد نصوصاً في هذه الصورة.";
     }
     const at = e => { const r = ov.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let hit = -1; items.forEach(b => { const q = R(b); if (x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h) hit = b.i; }); return hit; };
     let drag = null;
@@ -9657,7 +9664,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
   /* ═══ التقاط العناصر (مثل «الالتقاط السحري» في Canva) ═══
      الذكاء داخل المتصفح (assets/js/ai-vision.js): كشف العناصر بأسمائها (امرأة، طفل، عبوة، صحن، ملعقة، قلم، إبريق، كتب…) وحدود دقيقة بالبكسل،
      واختيار عنصر أو أكثر أو الكل، وإضافة ما فات الكشف بنقرة أو مستطيل. إن تعذّر تحميل النموذج نعود إلى الكشف البسيط بالحواف. */
-  const HINT_EL1 = "انقر على عنصر محاط بالبنفسجي لاختياره (وانقر على غيره لإضافته). فاتك عنصر؟ انقر عليه مباشرة أو ارسم مستطيلاً حوله.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
+  const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره (وانقر على غيره لإضافته). فاتك عنصر؟ انقر عليه مباشرة أو ارسم مستطيلاً حوله.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Gemini اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
   function warm() { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } } catch (e) { } }
@@ -9669,15 +9676,15 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     if (window.AIVision && AIVision.supported()) {                     // «منطقة» قبل التحليل: مستطيل حول العنصر ← تحليل ذلك الجزء وحده بدقة أعلى
       const z = await pickZone(sh, cv); if (sh.S.closed) return;
       if (z) { const c = document.createElement("canvas"); c.width = z[2] - z[0]; c.height = z[3] - z[1]; c.getContext("2d", { willReadFrequently: true }).drawImage(cv, z[0], z[1], c.width, c.height, 0, 0, c.width, c.height); Z = { full: cv, ox: z[0], oy: z[1] }; cv = c; }
-      $("pbs-load").style.display = "flex";
     }
+    const stopScan = scanFx(sh, cv);
     let res = null, note = !window.AIVision ? "نسخة قديمة من لوحة التحكم محمّلة — اضغط Ctrl+Shift+R لتحديثها" : !AIVision.supported() ? "متصفحك لا يدعم تشغيل النماذج (Web Worker) — جرّب Chrome على الحاسوب" : "";
     if (window.AIVision && AIVision.supported()) {
       const key = gemOn() ? TextCapture.ocr.key() : "";
       try { res = await AIVision.analyze(cv, { key, zone: Z ? { margin: .053 } : null, onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); } catch (e) { console.warn("AIVision", e); note = (e && e.message) || String(e) || "خطأ غير معروف"; }
-      if (sh.S.closed) return; if (res) return elementsAI(sh, cv, inf, w, res, key, Z);
+      if (sh.S.closed) return; if (res) { stopScan(); return elementsAI(sh, cv, inf, w, res, key, Z); }
     }
-    return elementsBasic(sh, cv, inf, w, note);
+    stopScan(); return elementsBasic(sh, cv, inf, w, note);
   }
   /* الخطوة الأولى: الصورة كاملة + «حلّل الصورة كاملة» أو ارسم مستطيلاً حول العنصر (منطقة) ← [x0,y0,x1,y1] أو null */
   function pickZone(sh, cv) {
@@ -9688,7 +9695,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:crosshair"; stage.appendChild(ov);
     return new Promise(res => {
       let d = null; const pos = e => { const r = ov.getBoundingClientRect(); return [Math.max(0, Math.min(vw, e.clientX - r.left)), Math.max(0, Math.min(vh, e.clientY - r.top))]; };
-      const draw = (a, b) => { const g = ov.getContext("2d"); g.clearRect(0, 0, vw, vh); if (!a) return; const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]); g.fillStyle = "rgba(15,15,20,.45)"; g.fillRect(0, 0, vw, vh); g.clearRect(x, y, w, h); g.setLineDash([6, 4]); g.strokeStyle = "#7c3aed"; g.lineWidth = 2.5; g.strokeRect(x, y, w, h); };
+      const draw = (a, b) => { const g = ov.getContext("2d"); g.clearRect(0, 0, vw, vh); if (!a) return; const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]); g.fillStyle = "rgba(15,15,20,.45)"; g.fillRect(0, 0, vw, vh); g.clearRect(x, y, w, h); g.setLineDash([6, 4]); g.strokeStyle = "#0d9488"; g.lineWidth = 2.5; g.strokeRect(x, y, w, h); };
       const done = z => { window.removeEventListener("mousemove", mm); window.removeEventListener("mouseup", mu); stage.innerHTML = ""; $("pbs-seg").style.display = "flex"; $("pbs-hint").textContent = sh.S.hintOne; $("pbs-go").onclick = null; res(z); };
       ov.onmousedown = e => { d = { a: pos(e) }; };
       const mm = e => { if (!d) return; d.b = pos(e); draw(d.a, d.b); };
@@ -9699,7 +9706,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
       $("pbs-go").onclick = () => done(null); const c0 = sh.close; sh.close = () => { window.removeEventListener("mousemove", mm); window.removeEventListener("mouseup", mu); c0(); res(null); };
     });
   }
-  /* الواجهة الذكية: حدود بنفسجية تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
+  /* الواجهة الذكية: حدود ملوّنة تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
   function elementsAI(sh, cv, inf, w, res, key, Z) {
     const $ = sh.$, W = cv.width, H = cv.height, S = res.S, items = res.items; $("pbs-load").style.display = "none";
     $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · كشف: " + (res.src === "gemini" ? "Gemini+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
@@ -9707,17 +9714,17 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
     const prep = it => { it.v = (Z || it.sil) && AIVision.fineView ? AIVision.fineView(S, cv, it, k) : AIVision.viewMask(S, it, k);      // المنطقة والأشياء في اليد: حدود بالدقة الكاملة
-      const o = AIVision.overlays(it.v, [124, 58, 237]); it.out = o.out; it.fill = o.fill; };
+      const o = AIVision.overlays(it.v, [13, 148, 136]); it.out = o.out; it.fill = o.fill; };
     items.forEach(prep);
     let sel = new Set(), hov = -1, busy = false; const AIF = "alyssum_pbs_aifill"; if (Z) items.forEach(i => { if (i.zoneMain) sel.add(i.id); });      // العنصر داخل المنطقة محدَّد مسبقاً
     const names = () => { const c = {}, n = {}; items.forEach(it => c[it.label] = (c[it.label] || 0) + 1); const out = {}; items.slice().sort((a, b) => a.v.cx - b.v.cx).forEach(it => { n[it.label] = (n[it.label] || 0) + 1; out[it.id] = c[it.label] > 1 ? it.label + " " + n[it.label] : it.label; }); return out; };
     const ex = $("pbs-extra"); let aiFill = false; try { aiFill = !!key && localStorage.getItem(AIF) !== "0"; } catch (e) { aiFill = !!key; }
-    ex.innerHTML = `<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #7c3aed;background:#fff;color:#7c3aed;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button>` +
+    ex.innerHTML = `<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button>` +
       (key ? `<label style="font-size:.78rem;display:flex;gap:.4rem;align-items:flex-start;line-height:1.6;cursor:pointer"><input type="checkbox" id="pbs-aifill" ${aiFill ? "checked" : ""}> <span>إعادة رسم الخلفية بـ Gemini بدل النموذج المحلي (يستهلك طلب صورة).</span></label>` : `<div style="font-size:.74rem;color:#8a8472;line-height:1.6">🪄 مكان العناصر في الخلفية يُعاد رسمه بنموذج ذكي داخل متصفحك (بلا مفتاح).</div>`);
     if ($("pbs-aifill")) $("pbs-aifill").onchange = e => { aiFill = e.target.checked; try { localStorage.setItem(AIF, aiFill ? "1" : "0"); } catch (er) { } };
     function list() {
       const nm = names(), on = it => sh.S.mode === "all" || sel.has(it.id);
-      const html = items.map(it => `<button type="button" data-id="${it.id}" style="border:1.5px solid #7c3aed;border-radius:999px;padding:.22rem .6rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;background:${on(it) ? "#7c3aed" : "#fff"};color:${on(it) ? "#fff" : "#7c3aed"}">${on(it) ? "✓ " : ""}${esc(nm[it.id])}</button>`).join("");
+      const html = items.map(it => `<button type="button" data-id="${it.id}" style="border:1.5px solid #0d9488;border-radius:999px;padding:.22rem .6rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;background:${on(it) ? "#0d9488" : "#fff"};color:${on(it) ? "#fff" : "#0d9488"}">${on(it) ? "✓ " : ""}${esc(nm[it.id])}</button>`).join("");
       $("pbs-merge").style.display = sh.S.mode !== "all" && sel.size > 1 ? "block" : "none"; if (html === list.last) return; list.last = html; $("pbs-list").innerHTML = html;      // لا نعيد البناء عند مجرد التمرير
       $("pbs-list").querySelectorAll("button").forEach(b => { b.onclick = () => { const id = +b.dataset.id; if (sh.S.mode === "all") setMode("one"); sel.has(id) ? sel.delete(id) : sel.add(id); paint(); }; b.onmouseenter = () => { hov = +b.dataset.id; paint(); }; b.onmouseleave = () => { hov = -1; paint(); }; });
     }
@@ -9727,7 +9734,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
       g.font = "bold 12px Cairo, Tahoma, sans-serif"; g.textBaseline = "middle"; g.textAlign = "center"; g.direction = "rtl"; const boxes = [];
       items.forEach(it => { const on = mode === "all" || sel.has(it.id), t = nm[it.id], tw = g.measureText(t).width + 12, th = 20; let x = Math.max(2, Math.min(vw - tw - 2, it.v.lx - tw / 2)), y = Math.max(2, it.v.ly - th - 4);
         for (let n = 0; n < 8 && boxes.some(b => x < b[0] + b[2] && x + tw > b[0] && y < b[1] + b[3] && y + th > b[1]); n++) y += th + 2; boxes.push([x, y, tw, th]);
-        g.fillStyle = on || hov === it.id ? "#7c3aed" : "rgba(255,255,255,.92)"; g.beginPath(); if (g.roundRect) g.roundRect(x, y, tw, th, 10); else g.rect(x, y, tw, th); g.fill(); g.strokeStyle = "#7c3aed"; g.lineWidth = 1; g.stroke(); g.fillStyle = on || hov === it.id ? "#fff" : "#5b21b6"; g.fillText(t, x + tw / 2, y + th / 2 + 1); });
+        g.fillStyle = on || hov === it.id ? "#0d9488" : "rgba(255,255,255,.92)"; g.beginPath(); if (g.roundRect) g.roundRect(x, y, tw, th, 10); else g.rect(x, y, tw, th); g.fill(); g.strokeStyle = "#0d9488"; g.lineWidth = 1; g.stroke(); g.fillStyle = on || hov === it.id ? "#fff" : "#115e59"; g.fillText(t, x + tw / 2, y + th / 2 + 1); });
       const n = mode === "all" ? items.length : sel.size; $("pbs-go").disabled = !n || busy; $("pbs-go").textContent = mode === "all" ? "التقاط " + items.length + " عنصراً" : n > 1 ? "التقاط " + n + " عناصر" : "التقاط";
       if (!busy) $("pbs-msg").textContent = items.length ? (mode === "all" ? "سيُلتقط كل العناصر (" + items.length + ") وتبقى الخلفية." : sel.size ? "محدّد: " + [...sel].map(id => nm[id]).join("، ") : "") : "لم أجد عناصر — انقر على أي عنصر في الصورة أو ارسم مستطيلاً حوله لإضافته.";
       list();
@@ -9744,7 +9751,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     ov.onmousemove = e => { if (drag) return; const [x, y] = pos(e), h = at(x, y); if (h !== hov) { hov = h; paint(); } };
     ov.onmousedown = e => { const [x, y] = pos(e); drag = { x, y, moved: false, pts: [[x, y]] }; };
     const mm = ev => { if (!drag || sh.S.closed) return; const [x, y] = pos(ev); if (Math.abs(x - drag.x) + Math.abs(y - drag.y) > 8) drag.moved = true;
-      if (zone()) { const l = drag.pts[drag.pts.length - 1]; if (Math.abs(l[0] - x) + Math.abs(l[1] - y) > 2) drag.pts.push([x, y]); if (drag.moved) { paint(); const g = ov.getContext("2d"); g.beginPath(); drag.pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = "rgba(124,58,237,.25)"; g.fill(); g.setLineDash([5, 3]); g.strokeStyle = "#7c3aed"; g.lineWidth = 2; g.stroke(); g.setLineDash([]); } return; }
+      if (zone()) { const l = drag.pts[drag.pts.length - 1]; if (Math.abs(l[0] - x) + Math.abs(l[1] - y) > 2) drag.pts.push([x, y]); if (drag.moved) { paint(); const g = ov.getContext("2d"); g.beginPath(); drag.pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = "rgba(13,148,136,.25)"; g.fill(); g.setLineDash([5, 3]); g.strokeStyle = "#0d9488"; g.lineWidth = 2; g.stroke(); g.setLineDash([]); } return; }
       if (drag.moved) { paint(); const g = ov.getContext("2d"); g.setLineDash([5, 3]); g.strokeStyle = "#16a34a"; g.lineWidth = 2; g.strokeRect(Math.min(drag.x, x), Math.min(drag.y, y), Math.abs(x - drag.x), Math.abs(y - drag.y)); g.setLineDash([]); } };
     const mu = ev => { if (!drag || sh.S.closed) return; const d = drag, [x, y] = pos(ev); drag = null;
       if (zone() && d.moved) { const it = AIVision.zoneItem(S, d.pts.map(p => [Math.max(0, Math.min(W, p[0] / k)), Math.max(0, Math.min(H, p[1] / k))]), items); if (!it) return paint(); prep(it); sel.add(it.id); paint(); $("pbs-msg").textContent = "✅ حُدّدت منطقة. ارسم أخرى أو اضغط «التقاط»."; return; }
@@ -9752,7 +9759,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
       const h = at(x, y); if (h >= 0) { if (sh.S.mode !== "all") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
       if (zone()) return; add({ pts: [[x / k, y / k, 1]] }, "تحديد العنصر تحت النقرة…"); };
     window.addEventListener("mousemove", mm); window.addEventListener("mouseup", mu); const cl0 = sh.close; sh.close = () => { window.removeEventListener("mousemove", mm); window.removeEventListener("mouseup", mu); cl0(); };
-    { const zb = document.createElement("button"); zb.type = "button"; zb.textContent = "✏️ منطقة أخرى"; zb.title = "ارسم مستطيلاً حول عنصر آخر لتحليله بدقة أعلى"; zb.style.cssText = "border:1.5px dashed #7c3aed;background:#fff;color:#7c3aed;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit"; zb.onclick = () => { sh.close(); captureElements(); }; $("pbs-extra").appendChild(zb); }
+    { const zb = document.createElement("button"); zb.type = "button"; zb.textContent = "✏️ منطقة أخرى"; zb.title = "ارسم مستطيلاً حول عنصر آخر لتحليله بدقة أعلى"; zb.style.cssText = "border:1.5px dashed #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit"; zb.onclick = () => { sh.close(); captureElements(); }; $("pbs-extra").appendChild(zb); }
     const hint0 = sh.S.hintOne; sh.S.onMode = () => { sh.S.hintOne = zone() ? "ارسم بالسحب حدّاً حرّاً حول المنطقة التي تريد التقاطها (مثل «Zone» في Canva)؛ يمكنك رسم أكثر من منطقة." : hint0; ov.style.cursor = zone() ? "crosshair" : "pointer"; };
     $("pbs-x").onclick = $("pbs-back").onclick = () => sh.close(); bindSeg(sh, () => { sel = new Set(); paint(); });
     $("pbs-merge").onclick = () => { const L = items.filter(it => sel.has(it.id)); if (L.length < 2) return; const it = AIVision.joinItems(S, items, L); prep(it); sel = new Set([it.id]); paint(); $("pbs-msg").textContent = "✅ دُمجت العناصر في «" + names()[it.id] + "»."; };
@@ -9780,13 +9787,13 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
   /* الكشف البسيط بالحواف (بلا شبكة): للتصاميم ذات الخلفية الناعمة — يُستعمل إن تعذّر تحميل النموذج الذكي */
   function elementsBasic(sh, cv, inf, w, note) {
     const $ = sh.$, W = cv.width, H = cv.height; $("pbs-ver").textContent = "تشخيص v3 · الطريقة البسيطة (بلا نماذج)";
-    $("pbs-hint").textContent = sh.S.hintOne = "انقر على أحد العناصر المحاطة بالبنفسجي لاختياره (منتج، عشبة، مكوّنات…).";
+    $("pbs-hint").textContent = sh.S.hintOne = "انقر على أحد العناصر المحاطة بخط ملوّن لاختياره (منتج، عشبة، مكوّنات…).";
     let sc; try { sc = ImageTools.scanElements(cv); } catch (e) { console.error(e); $("pbs-load").textContent = "⚠️ " + e.message; return; }
     if (sh.S.closed) return; $("pbs-load").style.display = "none"; const items = sc.items;
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
-    /* حدود كل عنصر بدقة البكسل (بدقة العرض): قناع ألفا مصغَّر + خط خارجي بنفسجي + تعبئة شفافة عند الاختيار */
+    /* حدود كل عنصر بدقة البكسل (بدقة العرض): قناع ألفا مصغَّر + خط خارجي ملوّن + تعبئة شفافة عند الاختيار */
     items.forEach(it => {
       const dw = Math.max(2, Math.round(it.cut.w * k)), dh = Math.max(2, Math.round(it.cut.h * k)), c = document.createElement("canvas"); c.width = dw; c.height = dh; c.getContext("2d").drawImage(it.cut.canvas, 0, 0, dw, dh);
       const d = c.getContext("2d").getImageData(0, 0, dw, dh).data, a = new Uint8Array(dw * dh); for (let i = 0; i < dw * dh; i++) a[i] = d[i * 4 + 3] > 90 ? 1 : 0;
