@@ -626,7 +626,7 @@ const Agent = (() => {
   }
 
   function open(opts) {
-    hideTeaser();
+    hideTeaser(); try { Avatar.hide(); } catch (e) {}
     panel().classList.add("open");
     document.getElementById("agent-fab").style.display = "none";
     if (!greeted) {
@@ -652,8 +652,174 @@ const Agent = (() => {
   }
   function close() {
     panel().classList.remove("open");
-    document.getElementById("agent-fab").style.display = "grid";
+    document.getElementById("agent-fab").style.display = "grid"; try { Avatar.show(); } catch (e) {}
   }
+
+  /* ══════════════ الأفاتار الناطق (إضافي — لا يعوّض الوكيل ولا يلمس agent-brain.js) ══════════════
+     يقرأ معلومات أعلى الصفحة (العنوان + بيانات المنتج الحقيقية) ثم يعرضها بأسلوب مقنع بصوت وفم متحرك،
+     ويختم بزر «اطلب الآن» وزر فتح المحادثة مع الوكيل. الصوت: ElevenLabs إن وُجد مفتاحه في هذا المتصفح، وإلا Web Speech.
+     قاعدة العلامة: الأفاتار امرأة محجّبة بلباس محتشم دائماً. */
+  const Avatar = (() => {
+    const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} return null; };
+    const DEF_VOICE = "21m00Tcm4TlvDq8ikWAM";           // صوت ElevenLabs متعدد اللغات افتراضي (يمكن تغييره من لوحة التحكم)
+    let root, bubble, token = 0, speaking = false, muted = LS("alyssum_av_mute") === "1", ctx = null, analyser = null, buf = null, curAudio = null, pulse = 0, raf = 0, mouth = 0;
+    const clean = s => String(s || "").replace(/<[^>]*>/g, " ").replace(/[\u{1F000}-\u{1FFFF}☀-➿⬀-⯿✔✅❌⚠★•]/gu, " ").replace(/\s+/g, " ").trim();
+    const cut = (s, n) => { s = clean(s); if (s.length <= n) return s; const k = s.slice(0, n), i = Math.max(k.lastIndexOf("."), k.lastIndexOf("،"), k.lastIndexOf(" ")); return k.slice(0, i > 40 ? i : n).trim(); };
+    const css = `#agent-avatar{position:fixed;right:14px;bottom:92px;z-index:72;font-family:inherit;direction:rtl}
+#agent-avatar .av-btn{width:78px;height:78px;border-radius:50%;border:2px solid var(--gold,#c8a24b);background:#f7f4ed;padding:0;cursor:pointer;box-shadow:0 10px 26px rgba(23,63,53,.35);overflow:hidden;display:block;position:relative}
+#agent-avatar .av-btn svg{width:100%;height:100%;display:block}
+#agent-avatar.idle .av-btn::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(200,162,75,.55);animation:avPulse 2.2s infinite}
+#agent-avatar.talk .av-btn{box-shadow:0 0 0 4px rgba(47,107,87,.35),0 10px 26px rgba(23,63,53,.35)}
+#agent-avatar .av-tag{position:absolute;right:50%;transform:translateX(50%);bottom:-8px;background:var(--green,#173f35);color:#fff;font-size:.68rem;font-weight:800;padding:.1rem .55rem;border-radius:999px;white-space:nowrap}
+#agent-avatar .av-bub{position:absolute;right:0;bottom:94px;width:min(300px,calc(100vw - 28px));background:#fff;border:1px solid var(--gold-2,#d9c28a);border-radius:16px 16px 4px 16px;box-shadow:0 14px 34px rgba(23,63,53,.25);padding:.8rem .9rem;font-size:.92rem;line-height:1.7;display:none}
+#agent-avatar.open .av-bub{display:block}
+#agent-avatar .av-bub .av-x{position:absolute;top:2px;left:6px;background:none;border:0;font-size:1rem;cursor:pointer;color:#777}
+#agent-avatar .av-bub .av-txt{padding-top:.2rem;min-height:3.2em}
+#agent-avatar .av-tools{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem}
+#agent-avatar .av-tools button{font-family:inherit;font-size:.8rem;font-weight:800;border-radius:999px;padding:.35rem .8rem;cursor:pointer;border:1px solid var(--gold-2,#d9c28a);background:#f4efe4;color:var(--green,#173f35)}
+#agent-avatar .av-tools .gold{background:var(--gold,#c8a24b);color:#1d1d1d;border-color:var(--gold,#c8a24b)}
+#agent-avatar .av-eye{transform-box:fill-box;transform-origin:center;animation:avBlink 4.6s infinite}
+#agent-avatar .av-eye.e2{animation-delay:.03s}
+#agent-avatar .m1,#agent-avatar .m2{display:none}
+#agent-avatar[data-m="0"] .m0,#agent-avatar[data-m="1"] .m1,#agent-avatar[data-m="2"] .m2{display:inline}
+@keyframes avBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes avPulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+@media (prefers-reduced-motion:reduce){#agent-avatar .av-eye,#agent-avatar.idle .av-btn::after{animation:none}}
+@media (max-width:640px){#agent-avatar{right:10px;bottom:84px}#agent-avatar .av-btn{width:64px;height:64px}#agent-avatar .av-bub{bottom:80px}}`;
+    const SVG = `<svg viewBox="0 0 120 140" aria-hidden="true">
+<path d="M6 140Q8 106 60 102Q112 106 114 140Z" fill="#2c6552"/>
+<path d="M14 124Q2 70 30 34Q60 4 90 34Q118 70 106 124Q60 138 14 124Z" fill="#3d8a6f"/>
+<ellipse cx="60" cy="66" rx="27" ry="33" fill="#f2cfae"/>
+<path d="M30 60Q32 28 60 26Q88 28 90 60Q84 40 60 38Q36 40 30 60Z" fill="#3d8a6f"/>
+<path d="M27 92Q60 128 93 92L100 132Q60 144 20 132Z" fill="#33785f"/>
+<path d="M40 52Q48 47 55 51M65 51Q72 47 80 52" stroke="#5b3a29" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<g class="av-eye"><ellipse cx="48" cy="63" rx="4.2" ry="5" fill="#2a1d16"/><circle cx="49.4" cy="61.2" r="1.3" fill="#fff"/></g>
+<g class="av-eye e2"><ellipse cx="72" cy="63" rx="4.2" ry="5" fill="#2a1d16"/><circle cx="73.4" cy="61.2" r="1.3" fill="#fff"/></g>
+<path d="M60 68Q57 76 61 77" stroke="#c99a78" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+<circle cx="41" cy="77" r="5" fill="#f1a99b" opacity=".5"/><circle cx="79" cy="77" r="5" fill="#f1a99b" opacity=".5"/>
+<g class="m0"><path d="M51 85Q60 91 69 85" stroke="#a63d3d" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+<g class="m1"><path d="M52 84Q60 94 68 84Q60 87 52 84Z" fill="#8b2c2c"/></g>
+<g class="m2"><ellipse cx="60" cy="87" rx="8" ry="7" fill="#8b2c2c"/><ellipse cx="60" cy="91" rx="4.5" ry="2.6" fill="#d9707a"/></g>
+</svg>`;
+
+    /* ── الصوت ── */
+    function pickVoice(l) {
+      try { const vs = speechSynthesis.getVoices() || []; return vs.find(v => v.lang && v.lang.toLowerCase().startsWith(l)) || null; } catch (e) { return null; }
+    }
+    function ensureCtx() {
+      if (ctx) return ctx;
+      try { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); analyser = ctx.createAnalyser(); analyser.fftSize = 512; buf = new Uint8Array(analyser.fftSize); analyser.connect(ctx.destination); } catch (e) { ctx = null; }
+      return ctx;
+    }
+    async function playEleven(text, key, tk) {         // يعيد true عند النجاح
+      const voice = LS("alyssum_el_voice") || DEF_VOICE;
+      const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voice) + "?output_format=mp3_44100_128", { method: "POST", headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" }, body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }) });
+      if (!r.ok) throw new Error("eleven " + r.status);
+      const blob = await r.blob(); if (tk !== token) return true;
+      const url = URL.createObjectURL(blob), a = new Audio(url); curAudio = a;
+      if (ensureCtx()) { try { if (ctx.state === "suspended") await ctx.resume(); ctx.createMediaElementSource(a).connect(analyser); } catch (e) {} }
+      await new Promise((res, rej) => { a.onended = res; a.onerror = () => rej(new Error("audio")); a.play().catch(rej); });
+      URL.revokeObjectURL(url); curAudio = null; return true;
+    }
+    function playSpeech(text, l, tk) {
+      return new Promise(res => {
+        const v = pickVoice(l); if (!v || !("speechSynthesis" in window)) return res(false);
+        const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = 0.95; u.pitch = 1.05;
+        u.onboundary = () => { pulse = performance.now(); };
+        u.onend = () => res(true); u.onerror = () => res(true);
+        try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { res(false); }
+      });
+    }
+    const silent = (text) => new Promise(res => setTimeout(res, Math.min(9000, 1400 + text.length * 55)));
+    /* ── حركة الفم: من شدة الصوت (ElevenLabs عبر AnalyserNode)، أو من أحداث النطق/نبض عشوائي (Web Speech لا يتيح تيار الصوت) ── */
+    function loop() {
+      let lvl = 0;
+      if (speaking) {
+        if (curAudio && analyser && buf) { analyser.getByteTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) { const x = (buf[i] - 128) / 128; s += x * x; } const rms = Math.sqrt(s / buf.length); lvl = rms > 0.13 ? 2 : rms > 0.035 ? 1 : 0; }
+        else if (!muted) { const t = performance.now(); lvl = (t - pulse < 140) ? (Math.floor(t / 70) % 2 ? 2 : 1) : (Math.floor(t / 110) % 3 === 0 ? 0 : 1 + (Math.floor(t / 90) % 2)); }
+        else lvl = Math.floor(performance.now() / 160) % 3 === 0 ? 1 : 0;
+      }
+      if (lvl !== mouth) { mouth = lvl; root.dataset.m = String(lvl); }
+      raf = requestAnimationFrame(loop);
+    }
+
+    /* ── قراءة أعلى الصفحة وبناء نص إقناعي من بيانات حقيقية فقط ── */
+    function script() {
+      const l = lang === "fr" ? "fr" : "ar", p = currentProduct(), h1 = clean((document.querySelector("h1") || {}).textContent);
+      const S = [];
+      if (l === "fr") {
+        S.push(`Bonjour et bienvenue chez ${SITE_NAME}.`);
+        if (p) { S.push(`Vous êtes sur la page ${p.title}.`); if (p.desc) S.push(cut(p.desc, 200)); S.push(`Son prix est de ${p.price} dinars seulement.`);
+          const m = (p.offers || []).find(o => o.qty > 1); if (m) S.push(`Et avec l'offre de ${m.qty} pièces, vous payez ${m.price} dinars${m.free ? ", dont une pièce gratuite" : ""}.`);
+          S.push("Vous payez à la livraison, seulement après avoir reçu et vérifié le produit."); S.push("Cliquez sur commander maintenant et remplissez le formulaire."); }
+        else { if (h1) S.push(cut(h1, 120) + "."); S.push("Choisissez le produit qui vous convient, ou posez-moi votre question."); }
+        return S;
+      }
+      S.push(`مرحباً بك في ${SITE_NAME.split(" ")[0]}.`);
+      if (p) {
+        S.push(`أنت الآن في صفحة ${p.title}.`);
+        if (p.desc) S.push(cut(p.desc, 220).replace(/[.،\s]+$/, "") + ".");
+        S.push(`سعره ${p.price} دينار جزائري فقط${p.old && p.old > p.price ? `، بدل ${p.old}` : ""}.`);
+        const m = (p.offers || []).find(o => o.qty > 1);
+        if (m) S.push(`وإن اخترت عرض ${m.qty === 2 ? "قطعتين" : m.qty + " قطع"} تدفع ${m.price} دينار${m.free ? "، ومنها قطعة مجانية" : ""}، فيصبح سعر القطعة أقل.`);
+        S.push("والدفع عند الاستلام: لا تدفع شيئاً إلا بعد أن يصلك المنتج وتتأكد منه.");
+        S.push("اضغط على اطلب الآن، واملأ الاستمارة، وسنتصل بك لتأكيد طلبك.");
+      } else {
+        if (h1) S.push(cut(h1, 140).replace(/[.،\s]+$/, "") + ".");
+        const top = (window.PRODUCTS || []).filter(x => x && x.title && x.price).slice(0, 3);
+        if (top.length) S.push("من منتجاتنا: " + top.map(x => `${x.title} بسعر ${x.price} دينار`).join("، ") + ".");
+        S.push("كل منتجاتنا بالدفع عند الاستلام. اختر ما يناسبك، أو اسأل المساعد الذكي عن أي تفصيل.");
+      }
+      return S;
+    }
+    function show(text) { bubble.querySelector(".av-txt").textContent = text; }
+    async function start() {
+      try { hideTeaser(); } catch (e) {} stop(true); const tk = token; root.classList.add("open"); root.classList.remove("idle");
+      bubble.querySelector(".av-tools").style.display = "none";
+      ensureCtx(); if (ctx && ctx.state === "suspended") try { ctx.resume(); } catch (e) {}
+      const l = lang === "fr" ? "fr" : "ar", key = (LS("alyssum_el_key") || "").trim(), lines = script();
+      let useEleven = !!key && !muted, useSpeech = !muted && !!pickVoice(l), note = "";
+      if (!muted && !useEleven && !useSpeech) note = l === "fr" ? "(Pas de voix disponible dans ce navigateur — lisez le texte.)" : "(لا يوجد صوت عربي في متصفحك — اقرأ النص مكتوباً.)";
+      speaking = true; root.classList.add("talk");
+      for (const s of lines) {
+        if (tk !== token) return; show(s);
+        let ok = false;
+        if (useEleven) { try { ok = await playEleven(s, key, tk); } catch (e) { useEleven = false; if (!muted && pickVoice(l)) useSpeech = true; } }
+        if (!ok && useSpeech && tk === token) ok = await playSpeech(s, l, tk);
+        if (!ok && tk === token) await silent(s);
+      }
+      if (tk !== token) return;
+      speaking = false; root.classList.remove("talk");
+      show((note ? note + " " : "") + (l === "fr" ? "Une question ? Je suis là." : "هل لديك سؤال؟ أنا هنا لمساعدتك."));
+      const t = bubble.querySelector(".av-tools"); t.style.display = "flex";
+      t.querySelector(".av-order").style.display = (currentSlug && document.getElementById("order-form")) ? "" : "none";
+    }
+    function stop(keepOpen) {
+      token++; speaking = false; if (root) root.classList.remove("talk"); mouth = 0; if (root) root.dataset.m = "0";
+      try { speechSynthesis.cancel(); } catch (e) {}
+      if (curAudio) { try { curAudio.pause(); } catch (e) {} curAudio = null; }
+      if (!keepOpen && root) { root.classList.remove("open"); root.classList.add("idle"); }
+    }
+    function setMute(m) { muted = m; LS("alyssum_av_mute", m ? "1" : "0"); const b = bubble.querySelector(".av-mute"); b.textContent = m ? "🔇 صامت" : "🔊 الصوت"; if (m) { try { speechSynthesis.cancel(); } catch (e) {} if (curAudio) try { curAudio.pause(); } catch (e) {} } }
+    function init() {
+      if (document.getElementById("agent-avatar")) return;
+      const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+      root = document.createElement("div"); root.id = "agent-avatar"; root.className = "idle"; root.dataset.m = "0";
+      root.innerHTML = `<div class="av-bub" role="dialog" aria-live="polite"><button type="button" class="av-x" aria-label="إغلاق">✕</button><div class="av-txt"></div>
+<div class="av-tools"><button type="button" class="gold av-order">🛒 اطلب الآن</button><button type="button" class="av-chat">💬 اسأل المساعد</button><button type="button" class="av-again">↻ أعد</button><button type="button" class="av-mute"></button></div></div>
+<button type="button" class="av-btn" aria-label="اسمع شرح المنتج من المساعدة">${SVG}<span class="av-tag">🔊 اسمعيني</span></button>`;
+      document.body.appendChild(root); bubble = root.querySelector(".av-bub");
+      root.querySelector(".av-btn").onclick = () => { root.classList.contains("open") ? stop() : start(); };
+      bubble.querySelector(".av-x").onclick = () => stop();
+      bubble.querySelector(".av-order").onclick = () => { stop(); goOrder(); };
+      bubble.querySelector(".av-chat").onclick = () => { stop(); open({ persuade: !!currentSlug }); };
+      bubble.querySelector(".av-again").onclick = () => start();
+      bubble.querySelector(".av-mute").onclick = () => setMute(!muted);
+      setMute(muted); loop();
+      try { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", () => {}); } catch (e) {}
+    }
+    return { init, start, stop, hide: () => { if (root) { stop(); root.style.display = "none"; } }, show: () => { if (root) root.style.display = ""; }, script };
+  })();
 
   function init() {
     const fab = document.createElement("button");
@@ -684,11 +850,11 @@ const Agent = (() => {
     document.getElementById("agent-send").onclick = send;
     document.getElementById("agent-input").addEventListener("keydown", e => { if (e.key === "Enter") send(); });
 
-    startNudge();
+    startNudge(); try { Avatar.init(); } catch (e) {}
     // لا فتح تلقائي للوحة: المساعد يبقى أيقونة صغيرة (مع تلميح "المساعد الذكي" عند المرور عليها)
     // ولا يُفتح إلا عند الضغط عليها من المستخدم — كان يفتح تلقائياً بعد 12 ثانية ويغطي الصفحة
   }
 
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { reply, open };
+  return { reply, open, avatar: Avatar };
 })();

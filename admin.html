@@ -894,6 +894,15 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card hidden" id="aq-hint" style="background:#f7f5ef">
       <small>ℹ️ تسجيل أسئلة الزبائن غير المفهومة غير مفعّل بعد: إمّا فعّل <b>Supabase</b> (شغّل <code>supabase/schema.sql</code> ثم اضغط «🔐 Supabase» أعلى اللوحة لتسجيل الدخول)، أو ألصق <code>apps-script/Code-additions.gs</code> في Apps Script.</small>
     </div>
+    <div class="card" id="av-card">
+      <b style="color:var(--green)">🗣️ صوت الأفاتار الناطق</b>
+      <div class="hint">الأفاتار إضافي: يقرأ معلومات أعلى الصفحة ويقنع الزبون بالشراء ثم يحيله إلى الوكيل. بدون مفتاح يستعمل صوت المتصفح (Web Speech) إن توفّر صوت عربي.</div>
+      <div class="field" style="margin-top:.6rem"><label>مفتاح ElevenLabs API (اختياري — صوت أوضح)</label><input id="av-elkey" type="text" dir="ltr" placeholder="sk_..." autocomplete="off" autocapitalize="off" spellcheck="false" name="av-elkey-nofill" style="-webkit-text-security:disc" oninput="try{localStorage.setItem('alyssum_el_key',this.value.replace(/[\s&quot;']/g,''))}catch(e){}">
+        <div class="hint">يُحفظ في هذا المتصفح فقط (لا يُرفع للمستودع). ⚠️ الزبائن لا يملكون المفتاح في متصفحاتهم، فيسمعون صوت المتصفح؛ المفتاح يفيد في التجربة هنا.</div></div>
+      <div class="field"><label>معرّف الصوت Voice ID (اختياري)</label><input id="av-elvoice" type="text" dir="ltr" placeholder="21m00Tcm4TlvDq8ikWAM" autocomplete="off" spellcheck="false" oninput="try{localStorage.setItem('alyssum_el_voice',this.value.trim())}catch(e){}"></div>
+      <div class="action-bar"><button class="small gray" onclick="try{var u=new SpeechSynthesisUtterance('مرحباً بك في أليسوم');var v=(speechSynthesis.getVoices()||[]).find(function(x){return /^ar/i.test(x.lang)});if(!v){alert('لا يوجد صوت عربي في هذا المتصفح');return}u.voice=v;u.lang=v.lang;speechSynthesis.speak(u)}catch(e){alert('غير مدعوم')}">🔊 جرّب صوت المتصفح</button></div>
+    </div>
+    <script>try{document.getElementById("av-elkey").value=localStorage.getItem("alyssum_el_key")||"";document.getElementById("av-elvoice").value=localStorage.getItem("alyssum_el_voice")||""}catch(e){}</script>
     <div class="card" id="at-card">
       <b style="color:var(--green)">🎓 تدريب الوكيل الذكي لكل صفحة</b>
       <div class="hint">اختر الصفحة (الرئيسية أو أي منتج) فيصبح لها وكيلها الخاص. درّبه بالأسئلة والأجوبة وبمعلومات الصفحة، ثم جرّبه، ثم أكّد النشر.</div>
