@@ -165,6 +165,15 @@ const PB = (() => {
     { k: "ta", l: "محاذاة النص", t: "align", r: 1, tab: "s" },
   ].concat(extra || []);
 
+  const IANIMS = [["", "بدون"], ["zin", "تقريب للأمام (Zoom In)"], ["zout", "ابتعاد للخلف (Zoom Out)"], ["pulse", "نبض (تقريب وابتعاد)"], ["kb", "كين بيرنز (تقريب مع انزياح)"], ["float", "طفو للأعلى والأسفل"], ["sway", "تأرجح"], ["spin", "دوران مستمر"], ["blink", "وميض"], ["shake", "اهتزاز"]];
+  /* حركة الصورة: الحاوية تقصّ التكبير (overflow) والصورة نفسها تتحرك */
+  function imgAnim(c, sel, s) {
+    const a = s.ianim; if (!a || !IANIMS.some(x => x[0] === a)) return;
+    const amt = Math.max(2, Math.min(100, num(s.ianimAmt) ?? 20)), dur = Math.max(.2, Math.min(60, num(s.ianimDur) ?? 3)), dl = Math.max(0, Math.min(20, num(s.ianimDelay) ?? 0)), it = ["1", "2", "3", "5", "10"].includes(String(s.ianimIter)) ? s.ianimIter : "infinite";
+    const ease = ["linear", "ease-in", "ease-out"].includes(s.ianimEase) ? s.ianimEase : "ease-in-out", back = s.ianimBack !== false && a !== "spin" && a !== "shake";
+    if (["zin", "zout", "pulse", "kb"].includes(a)) c.d.push(`${sel}{overflow:hidden}`);
+    c.d.push(`${sel} .pb-im{animation:pbI-${a} ${dur}s ${ease} ${dl}s ${it} ${back ? "alternate" : "normal"} both;--is:${Math.round((1 + amt / 100) * 100) / 100};--ip:${Math.round(amt * .6)}px;--ir:${Math.round(amt * .3)}deg;will-change:transform}`);
+  }
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
@@ -180,9 +189,10 @@ const PB = (() => {
     },
     image: {
       label: "صورة", ic: "🖼️", fit: 1, def: { src: "", alt: "", fit: "cover" },
-      ctl: [{ k: "src", l: "الصورة (انقر مرتين عليها لرفع صورة)", t: "image", tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" }],
+      ctl: [{ k: "src", l: "الصورة (انقر مرتين عليها لرفع صورة) — أو GIF متحرك", t: "image", gif: 1, tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
+        { k: "ianim", l: "🎬 حركة الصورة (أنيميشن)", t: "select", o: IANIMS, tab: "s" }, { k: "ianimAmt", l: "شدة الحركة % (مقدار التقريب/الإزاحة/الميل)", t: "num", min: 2, max: 100, tab: "s", showIf: ["ianim", "*"] }, { k: "ianimDur", l: "السرعة: مدة الدورة الواحدة (ثانية — أقل = أسرع)", t: "num", min: .2, max: 60, step: .1, tab: "s", showIf: ["ianim", "*"] }, { k: "ianimIter", l: "التكرار", t: "select", o: [["infinite", "مستمر ∞"], ["1", "مرة واحدة"], ["2", "مرتان"], ["3", "3 مرات"], ["5", "5 مرات"], ["10", "10 مرات"]], tab: "s", showIf: ["ianim", "*"] }, { k: "ianimBack", l: "ذهاب وإياب (تعود الحركة إلى بدايتها)", t: "switch", tab: "s", showIf: ["ianim", "*"] }, { k: "ianimEase", l: "نمط التسارع", t: "select", o: [["ease-in-out", "ناعم"], ["linear", "منتظم"], ["ease-in", "بطيء ثم سريع"], ["ease-out", "سريع ثم بطيء"]], tab: "s", showIf: ["ianim", "*"] }, { k: "ianimDelay", l: "تأخير البدء (ثانية)", t: "num", min: 0, max: 20, step: .1, tab: "s", showIf: ["ianim", "*"] }],
       html: (s, id, ctx) => { const src = s.src ? (/^(https?:|data:|\/)/.test(s.src) ? s.src : ctx.base + s.src) : ""; const im = src ? `<img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">` : `<div class="pb-ph" data-upload="1">🖼️ انقر مرتين لرفع صورة</div>`; return s.link && !ctx.edit ? `<a href="${esc(s.link)}">${im}</a>` : im; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-im", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-im{width:100%;object-fit:${s.fit || "cover"};display:block}`); },
+      css: (c, sel, s) => { emit(c, sel + " .pb-im", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-im{width:100%;object-fit:${s.fit || "cover"};display:block}`); imgAnim(c, sel, s); },
     },
     button: {
       label: "زر", ic: "🔘", fit: 1, def: { text: "اطلب الآن", kind: "link", link: "#", bgc: "#157a55", color: "#ffffff", hbg: "#0f5a3e", fs: { d: 18 }, fw: "800", brad: { d: 12 }, bpad: { d: [14, 32, 14, 32] }, al: { d: "center" } },
@@ -501,9 +511,11 @@ const PB = (() => {
 .pb-vid{display:block}
 .pb-hdr{background:#fff;border-bottom:1px solid #eae3d6;position:sticky;top:0;z-index:50}.pb-hdr div{max-width:1140px;margin:0 auto;padding:.8rem 20px;display:flex;align-items:center;justify-content:space-between}.pb-hdr a.lg{font-weight:900;font-size:1.4rem;color:#173f35;text-decoration:none}.pb-hdr a.wa{background:#157a55;color:#fff;border-radius:10px;padding:.45rem 1rem;text-decoration:none;font-weight:800}
 .pb-ftr{background:#0f2e26;color:#c7d3cd;text-align:center;padding:24px 16px;font-size:.9rem}.pb-ftr a{color:#f0d39d}
+@keyframes pbI-zin{from{transform:scale(1)}to{transform:scale(var(--is,1.2))}}@keyframes pbI-zout{from{transform:scale(var(--is,1.2))}to{transform:scale(1)}}@keyframes pbI-pulse{0%,100%{transform:scale(1)}50%{transform:scale(var(--is,1.2))}}@keyframes pbI-kb{from{transform:scale(1) translate(0,0)}to{transform:scale(var(--is,1.2)) translate(-3%,-2%)}}
+@keyframes pbI-float{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--ip,12px)*-1))}}@keyframes pbI-sway{0%,100%{transform:rotate(calc(var(--ir,6deg)*-1))}50%{transform:rotate(var(--ir,6deg))}}@keyframes pbI-spin{to{transform:rotate(360deg)}}@keyframes pbI-blink{0%,100%{opacity:1}50%{opacity:.2}}@keyframes pbI-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 [data-anim]{opacity:0;transition:opacity var(--ad,.6s) ease var(--ade,0s),transform var(--ad,.6s) ease var(--ade,0s)}[data-anim=fadeUp]{transform:translateY(30px)}[data-anim=fadeDown]{transform:translateY(-30px)}[data-anim=zoomIn]{transform:scale(.88)}[data-anim=slideStart]{transform:translateX(40px)}[data-anim].pb-in-view{opacity:1;transform:none}
 @media(max-width:${BP.m}px){.pb-hdr a.wa{display:none}}
-@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}}`;
+@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}.pb-im{animation:none!important}}`;
 
   /* سكربت الصفحة المنشورة: حركات الظهور + العدّادات + العدّ التنازلي + تحديث الأسعار من data.js */
   const RUNTIME_JS = `(function(){
