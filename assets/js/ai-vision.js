@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=6", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=7", BASE).href;
   const SAMSZ = 1024, DETSZ = 960, W8 = {};
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -76,11 +76,21 @@ window.AIVision = (function () {
     const big = Math.max(0, ...sizes); for (let i = 0; i < lw * lh; i++) if (lab[i] && sizes[lab[i]] < Math.max(12, big * .04)) lo[i] = -8;
   }
   /* سدّ الثقوب الصغيرة داخل العنصر (عيون/ظلال على الوجه) مع إبقاء الفراغات الحقيقية (مقبض كوب، ما بين الذراع والجسم) وما يشغله عنصر آخر (قلم في اليد) */
+  const SOLID = /عبوة|كوب|إناء|قارورة|علبة|إبريق|مستحضر|منتج|صابون|شمعة|كتاب|كتب|صحن|وعاء/;      // أشياء صلبة: صورتها الخارجية كاملة (الملصق والكتابة جزء منها)
   function fillHoles(it, others) {
-    const { lo, lw, lh } = it, N = lw * lh, seen = new Uint8Array(N); let area = 0; for (let i = 0; i < N; i++) if (lo[i] > 0) area++; const lim = Math.max(6, area * .012);
+    const { lo, lw, lh } = it, N = lw * lh, seen = new Uint8Array(N), solid = it.manual || SOLID.test(it.label || ""); let area = 0; for (let i = 0; i < N; i++) if (lo[i] > 0) area++; const lim = solid ? Infinity : Math.max(6, area * .012);
     for (let s = 0; s < N; s++) { if (lo[s] > 0 || seen[s]) continue; const comp = [s]; seen[s] = 1; let edge = false;
       for (let q = 0; q < comp.length; q++) { const j = comp[q], x = j % lw, y = (j / lw) | 0; if (x === 0 || y === 0 || x === lw - 1 || y === lh - 1) edge = true; for (const t of [x > 0 ? j - 1 : -1, x < lw - 1 ? j + 1 : -1, y > 0 ? j - lw : -1, y < lh - 1 ? j + lw : -1]) if (t >= 0 && !seen[t] && lo[t] <= 0) { seen[t] = 1; comp.push(t); } }
-      if (edge || comp.length > lim) continue; const occ = comp.filter(j => others.some(o => o.lo[j] > 0)).length; if (occ < comp.length * .3) comp.forEach(j => { lo[j] = 4; }); }
+      if (edge || comp.length > lim) continue;
+      if (solid) { comp.forEach(j => { if (!others.some(o => o.lo[j] > 0)) lo[j] = 4; }); continue; }      // كل الثقوب تُسدّ إلا ما يغطيه عنصر أمامه (الأصابع)
+      const occ = comp.filter(j => others.some(o => o.lo[j] > 0)).length; if (occ < comp.length * .3) comp.forEach(j => { lo[j] = 4; }); }
+    if (solid) closeLo(it, others, 2);
+  }
+  /* إغلاق مورفولوجي (توسيع ثم تآكل) يملأ التعرّجات والشقوق في حافة الشيء الصلب، دون أن يأخذ بكسلات عنصر أمامه (أصابع اليد) */
+  function closeLo(it, others, r) {
+    const { lo, lw, lh } = it, N = lw * lh, B = new Uint8Array(N); for (let i = 0; i < N; i++) B[i] = lo[i] > 0 ? 1 : 0;
+    const D = ImageTools.sqDilate(B, lw, lh, r), inv = new Uint8Array(N); for (let i = 0; i < N; i++) inv[i] = D[i] ? 0 : 1;
+    const E = ImageTools.sqDilate(inv, lw, lh, r); for (let i = 0; i < N; i++) if (!B[i] && !E[i] && !others.some(o => o.lo[i] > 0)) lo[i] = 3;
   }
   function stats(it, S) {
     const { lo, lw, lh } = it; let a = 0, x0 = lw, y0 = lh, x1 = -1, y1 = -1; for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) if (lo[y * lw + x] > 0) { a++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
@@ -148,7 +158,8 @@ window.AIVision = (function () {
     }
     const out = mergeItems(items, S);
     await heldItems(S, out, step);
-    out.forEach((it, i) => { it.id = i; fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets };
+    await occlusions(S, out, step);
+    out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets };
   }
   /* دمج عناصر يختارها المستخدم في عنصر واحد (يأخذ اسم أكبرها) */
   function joinItems(S, items, list) {
@@ -189,9 +200,29 @@ window.AIVision = (function () {
     const lp = poly.map(p => [p[0] * S.fx, p[1] * S.fy]), b = polyAlpha(lp, 0, 0, S.lw, S.lh, 1); for (let i = 0; i < lo.length; i++) { lo[i] = b[i] > .5 ? 8 : -8; if (b[i] > .5) n++; }
     it.lo = lo; it.area = Math.max(1, n); it.id = Math.max(-1, ...items.map(o => o.id)) + 1; items.push(it); return it;
   }
+  /* شيء صلب في يد شخص (عبوة): صورته الخارجية كاملة، والأصابع فقط تُستثنى منه.
+     ① الصورة الكاملة = القناع بعد سدّ كل ثقوبه وإغلاق حافته ② نعيد قناع الشخص بنقاط سالبة على الشيء فيأخذ يده/أصابعه فقط
+     ③ الشيء = الصورة الكاملة − الأصابع، والشخص يستعيد أصابعه ويخسر ما تبقّى من الشيء */
+  async function occlusions(S, out, step) {
+    const { lw, lh } = S, N = lw * lh;
+    for (const P of out.filter(o => PERSON.test(o.label))) for (const J of out.filter(o => o !== P && SOLID.test(o.label || ""))) {
+      if (bInter([P.x0, P.y0, P.x1, P.y1], [J.x0, J.y0, J.x1, J.y1]) < .6 * bArea([J.x0, J.y0, J.x1, J.y1])) continue;
+      step("⏳ فصل الأصابع عن العبوة…");
+      const sil = { lo: Float32Array.from(J.lo), lw, lh, label: J.label }; fillHoles(sil, []); closeLo(sil, [], 3);
+      const pts = []; let mnx = lw, mxx = -1, mny = lh, mxy = -1; for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) if (J.lo[y * lw + x] > 0) { if (x < mnx) mnx = x; if (x > mxx) mxx = x; if (y < mny) mny = y; if (y > mxy) mxy = y; }
+      for (const fy of [.2, .4, .6, .8]) for (const fx of [.3, .5, .7]) { const x = Math.round(mnx + (mxx - mnx) * fx), y = Math.round(mny + (mxy - mny) * fy); if (J.lo[y * lw + x] > 2) pts.push([(x + .5) / S.fx, (y + .5) / S.fy, 0]); }
+      if (!pts.length) continue;
+      const P2 = await maskFor(S, { box: [P.x0, P.y0, P.x1, P.y1], pts: pts.slice(0, 8) }); if (!P2.area || P2.area < P.area * .5) continue;
+      let occ = 0, jn = 0; for (let i = 0; i < N; i++) { const inS = sil.lo[i] > 0, isP = P2.lo[i] > 0; if (inS && isP) occ++; if (inS && !isP) jn++; }
+      if (jn < J.area * .7) continue;                                 // إعادة القناع لم تنجح ← نُبقي القديم
+      J.orig = Float32Array.from(J.lo); J.sil = sil.lo; J.hand = P2.lo; J.holder = P;
+      for (let i = 0; i < N; i++) { if (sil.lo[i] <= 0) continue; if (P2.lo[i] > 0) { J.lo[i] = -6; P.lo[i] = Math.max(P.lo[i], 4); } else { J.lo[i] = Math.max(J.lo[i], 4); P.lo[i] = Math.min(P.lo[i], -6); } }
+      J.occFixed = true; stats(J, S); stats(P, S);
+    }
+  }
   /* عنصر يضيفه المستخدم: نقرة (pts) أو مستطيل (box) */
   async function addItem(S, p, items) {
-    const m = await maskFor(S, p); if (!m.area) return null; m.manual = true; m.label = p.label || "عنصر"; m.det = 1;
+    const m = await maskFor(S, p); if (!m.area) return null; m.manual = true; m.label = p.label || "عنصر"; m.det = 1; fillHoles(m, items); stats(m, S);
     const hit = items.find(o => both(o, m) / Math.min(o.area, m.area) > .85 && Math.abs(o.area - m.area) / Math.max(o.area, m.area) < .25); if (hit) return hit;
     m.id = Math.max(-1, ...items.map(o => o.id)) + 1; items.push(m); return m;
   }
@@ -228,12 +259,35 @@ window.AIVision = (function () {
   function fullAlpha(S, it, D, opt) {
     opt = opt || {}; const W = S.W, H = S.H, pad = Math.max(4, Math.ceil(1.5 / S.fx)), x0 = Math.max(0, it.x0 - pad), y0 = Math.max(0, it.y0 - pad), x1 = Math.min(W, it.x1 + pad), y1 = Math.min(H, it.y1 + pad), w = x1 - x0, h = y1 - y0, N = w * h;
     if (it.poly) return { a: polyAlpha(it.poly, x0, y0, w, h, 1), x0, y0, w, h };      // المنطقة تُلتقط كما رُسمت
+    if (it.sil && !opt.inner) return heldAlpha(S, it, D, opt);
     const f = sampler(S, it), p = new Float32Array(N), I = new Float32Array(N), Bm = new Uint8Array(N), inv = new Uint8Array(N);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4, v = f(x0 + x, y0 + y) > 0 ? 1 : 0; Bm[i] = v; inv[i] = 1 - v; p[i] = v; I[i] = (D[gi] * .299 + D[gi + 1] * .587 + D[gi + 2] * .114) / 255; }
     if (opt.refine === false) return { a: p, x0, y0, w, h };
     /* داخل العنصر معتم تماماً وخارجه شفاف؛ الشريط الضيق حول الحدّ فقط يُعاد حسابه بالمرشّح الموجَّه ليلتصق بحافة الصورة */
     const rb = Math.max(2, Math.round(.9 / S.fx)), dil = ImageTools.sqDilate(Bm, w, h, rb), ero = ImageTools.sqDilate(inv, w, h, rb), q = guided(I, p, w, h, rb, opt.eps || 4e-4), a = new Float32Array(N);
     for (let i = 0; i < N; i++) { if (!(dil[i] && ero[i])) { a[i] = Bm[i]; continue; } const v = (q[i] - .5) * 1.6 + .5; a[i] = v < .06 ? 0 : v > .94 ? 1 : v; }
+    return { a, x0, y0, w, h };
+  }
+  /* شيء في اليد بالدقة الكاملة: صورته الخارجية كاملة، ثم تُطرح الأصابع بتصنيف لوني (جلد اليد من ذراع الشخص نفسه، ولون الشيء من الشيء) قرب اليد فقط، وحافة ناعمة بالمرشّح الموجَّه */
+  function heldAlpha(S, it, D, opt) {
+    const W = S.W, base = fullAlpha(S, { lo: it.sil, lw: it.lw, lh: it.lh, x0: it.x0, y0: it.y0, x1: it.x1, y1: it.y1 }, D, Object.assign({}, opt, { inner: true })), { x0, y0, w, h } = base, N = w * h;
+    const lw = it.lw, lh = it.lh, at = (arr, x, y) => { const u = Math.min(lw - 1, Math.max(0, Math.floor((x + .5) * S.fx))), v = Math.min(lh - 1, Math.max(0, Math.floor((y + .5) * S.fy))); return arr[v * lw + u]; };
+    const handN = new Uint8Array(lw * lh); for (let i = 0; i < lw * lh; i++) handN[i] = it.hand[i] > 0 ? 1 : 0; const gate = ImageTools.sqDilate(handN, lw, lh, 2);
+    const px = (x, y) => { const gi = (y * W + x) * 4; return [D[gi], D[gi + 1], D[gi + 2]]; }, skinLike = c => c[0] > 90 && c[0] > c[1] && c[1] > c[2] && c[0] - c[2] > 25 && c[0] - c[1] > 10;
+    const sk = [], jr = [], P = it.holder, ex = Math.round(Math.max(w, h) * .3), st = Math.max(1, Math.round(Math.sqrt(w * h / 6000)));
+    for (let y = Math.max(0, y0 - ex); y < Math.min(S.H, y0 + h + ex); y += st) for (let x = Math.max(0, x0 - ex); x < Math.min(W, x0 + w + ex); x += st) {
+      const inS = at(it.sil, x, y) > 0, c = px(x, y);
+      if (!inS && P && at(P.lo, x, y) > 0 && skinLike(c)) sk.push(c);                 // يد/ذراع ظاهرة خارج الشيء
+      else if (inS && at(it.orig, x, y) > 3 && !at(gate, x, y)) jr.push(c);          // الشيء بعيداً عن اليد
+    }
+    if (sk.length < 40) for (let y = y0; y < y0 + h; y += st) for (let x = x0; x < x0 + w; x += st) if (at(it.sil, x, y) > 0 && at(it.hand, x, y) > 0) sk.push(px(x, y));
+    if (sk.length < 20 || jr.length < 20) { const a = new Float32Array(base.a); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (at(it.hand, x0 + x, y0 + y) > 0) a[y * w + x] = 0; return { a, x0, y0, w, h }; }
+    const km = (P0, K) => { let C = []; for (let i = 0; i < K; i++) C.push(P0[Math.floor((i + .5) * P0.length / K)].slice()); for (let t = 0; t < 8; t++) { const sm = C.map(() => [0, 0, 0, 0]); P0.forEach(p => { let b = 0, bd = 1e9; C.forEach((c, j) => { const d = (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2; if (d < bd) { bd = d; b = j; } }); sm[b][0] += p[0]; sm[b][1] += p[1]; sm[b][2] += p[2]; sm[b][3]++; }); C = C.map((c, j) => sm[j][3] ? [sm[j][0] / sm[j][3], sm[j][1] / sm[j][3], sm[j][2] / sm[j][3]] : c); } return C; };
+    const CS = km(sk.slice(0, 4000), 6), CJ = km(jr.slice(0, 4000), 8), dmin = (C, c) => Math.min(...C.map(q => (c[0] - q[0]) ** 2 + (c[1] - q[1]) ** 2 + (c[2] - q[2]) ** 2));
+    const ps = new Float32Array(N), I = new Float32Array(N);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gx = x0 + x, gy = y0 + y, c = px(gx, gy); I[i] = (c[0] * .299 + c[1] * .587 + c[2] * .114) / 255; if (base.a[i] <= 0 || !at(gate, gx, gy)) continue; const ds = Math.sqrt(dmin(CS, c)), dj = Math.sqrt(dmin(CJ, c)); ps[i] = dj / (ds + dj + 1e-6) > .5 ? 1 : 0; }
+    const q = guided(I, ps, w, h, Math.max(2, Math.round(Math.max(w, h) / 220)), 1e-3), a = new Float32Array(N);
+    for (let i = 0; i < N; i++) { const o = Math.max(0, Math.min(1, (q[i] - .5) * 2 + .5)); a[i] = base.a[i] * (1 - o); }
     return { a, x0, y0, w, h };
   }
   /* ظل العنصر على خلفية ناعمة (تصاميم المنتجات): تعتيم محايد اللون قرب العنصر ← أسود شفاف. الصور الفوتوغرافية (خلفية بملمس) بلا ظل */
@@ -257,7 +311,7 @@ window.AIVision = (function () {
   /* قصّ العناصر المختارة: الأمامي (أسفل الصورة) يحتفظ بالبكسلات المشتركة. يعيد [{canvas, x0, y0, w, h, label, front, erase:{m,x0,y0,w,h}}] */
   function cutouts(S, cv, chosen, opt) {
     opt = opt || {}; const W = S.W, H = S.H, D = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, H).data;
-    const order = chosen.slice().sort((a, b) => b.y1 - a.y1 || a.area - b.area), A = order.map(it => fullAlpha(S, it, D, opt)), out = [];
+    const fy = it => it.holder && chosen.includes(it.holder) ? it.holder.y1 + 1 : it.y1, order = chosen.slice().sort((a, b) => fy(b) - fy(a) || a.area - b.area), A = order.map(it => fullAlpha(S, it, D, opt)), out = [];
     order.forEach((it, n) => {
       const a = A[n], m = new Float32Array(a.a); for (let q = 0; q < n; q++) { const b = A[q]; for (let y = Math.max(a.y0, b.y0); y < Math.min(a.y0 + a.h, b.y0 + b.h); y++) for (let x = Math.max(a.x0, b.x0); x < Math.min(a.x0 + a.w, b.x0 + b.w); x++) { const v = b.a[(y - b.y0) * b.w + x - b.x0]; if (v > 0) { const i = (y - a.y0) * a.w + x - a.x0; m[i] *= 1 - v; } } }
       const sh = opt.shadow === false || it.zone ? null : shadowOf(S, a, D, A.filter((_, q) => q !== n)), X0 = sh ? sh.x0 : a.x0, Y0 = sh ? sh.y0 : a.y0, w = sh ? sh.w : a.w, h = sh ? sh.h : a.h;
