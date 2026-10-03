@@ -1,7 +1,9 @@
 /* ═════════════════════════════════════════════════════════════════
-   تحويل صفحة المنتج أو الصفحة الرئيسية إلى صفحة في «مطوّر الصفحات» (PBConvert)
-   • زر «تعديل» في شريط المعاينة العلوي ← يُحمِّل الصفحة، يحوّل محتواها المرئي إلى أقسام وعناصر قابلة للتحرير، ويفتحها في المطوّر.
-   • «حفظ ونشر» ← خياران: حفظ مباشر (يستبدل الصفحة الأصلية بعد حفظ نسخة منها للاسترجاع) أو نسخة جديدة (/lp/…).
+   فتح صفحة المنتج أو الصفحة الرئيسية في «مطوّر الصفحات» بشكلها الأصلي (PBConvert)
+   • زر «تعديل» في شريط المعاينة وفي قائمة الصفحات ← تُفتح الصفحة كما هي: كل كتلة من الصفحة (الشريط العلوي، الهيدر، أقسام المحتوى، الفوتر)
+     قسم في المطوّر يحمل HTML الأصل نفسه وأنماطه، فيطابق الشكل الأصلي، ويمكن تحريك الأقسام وحذفها وتعديل كودها وإضافة عناصر المطوّر بينها.
+   • «حفظ ونشر» ← حفظ مباشر (يُعاد بناء الصفحة الأصلية نفسها بالأقسام المعدَّلة مع بقاء رأسها وسكربتاتها: السلة والمعرض وغيرها)
+     أو نسخة جديدة /lp/… أو استرجاع الأصل.
    ═════════════════════════════════════════════════════════════════ */
 const PBConvert = (() => {
   const { mkW, mkC, mkS, newPage, esc } = PB;
@@ -12,86 +14,37 @@ const PBConvert = (() => {
   const key = (kind, slug) => kind === "home" ? "home" : "p-" + slug;
   const path = (kind, slug) => kind === "home" ? "index.html" : "p/" + slug + "/index.html";
 
-  /* ── التحويل: DOM مرسوم (داخل iframe خفي بعرض الحاسوب) ← صفحة مطوّر ── */
-  function convert(doc, o) {
-    const win = doc.defaultView, cs = el => win.getComputedStyle(el);
-    const hidden = el => { const s = cs(el); return s.display === "none" || s.visibility === "hidden" || el.hidden || (+s.opacity === 0 && !el.querySelector("img")); };
-    const skip = el => el.matches(SKIP) || hidden(el);
-    const kids = el => [...el.children].filter(c => !skip(c));
-    const rel = u => { try { const x = new URL(u, doc.baseURI); if (x.origin !== new URL(doc.baseURI).origin) return x.href; return decodeURIComponent(x.pathname.replace(/^\//, "")) + x.search; } catch (e) { return u; } };
-    const ta = el => { const a = cs(el).textAlign; return a === "center" ? "center" : (a === "left" || a === "end") ? "end" : "start"; };
-    const px = (el, d) => Math.round(parseFloat(cs(el).fontSize) || d);
-    const inline = el => { const c = el.cloneNode(true); c.querySelectorAll("script,style,svg,img,button,input,select,textarea,iframe").forEach(x => x.remove()); c.querySelectorAll("*").forEach(x => { [...x.attributes].forEach(a => { if (!(x.tagName === "A" && a.name === "href")) x.removeAttribute(a.name); }); if (!/^(A|B|STRONG|EM|I|U|BR|P|UL|OL|LI|SPAN|SMALL|MARK|DEL|S)$/.test(x.tagName)) x.replaceWith(...x.childNodes); }); return c.innerHTML.trim(); };
-    const txt = el => (el.textContent || "").replace(/\s+/g, " ").trim();
-    const hasBlock = el => [...el.children].some(c => !skip(c) && /^(DIV|SECTION|ARTICLE|UL|OL|H[1-6]|FORM|TABLE|DETAILS|FIGURE|IMG|PICTURE|VIDEO|IFRAME|P|BLOCKQUOTE|ASIDE)$/.test(c.tagName));
-    const colorOf = el => { const h = hex(cs(el).color); return h; };
-    const isOrder = el => (el.matches("form,[id*=order i],[class*=order i]") && el.querySelector("input,select,textarea")) || (el.querySelector && el.querySelector("#name,#phone,#cname,input[type=tel]") && el.querySelector("button") && !el.querySelector("h1,h2") && el.querySelectorAll("input").length >= 2);
-    let sawOrder = false; const seen = new Set();
-
-    function widgetsOf(el, out) {
-      if (skip(el)) return;
-      const tag = el.tagName;
-      if (o.kind === "product" && isOrder(el)) { if (!sawOrder) { sawOrder = true; out.push(mkW("orderorig", { prod: o.slug })); } return; }
-      if (/^H[1-6]$/.test(tag)) { const t = txt(el); if (!t) return; const w = mkW("heading", { text: t, tag: tag.toLowerCase(), fs: { d: px(el, 32), m: Math.max(18, Math.round(px(el, 32) * (px(el, 32) > 30 ? .72 : .9))) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return; }
-      if (tag === "IMG") { const r = el.getBoundingClientRect(); const src = el.currentSrc || el.src || ""; if (!src || r.width < 110 || el.closest("[class*=thumb]") || seen.has(src) || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(src)) return; seen.add(src); out.push(mkW("image", { src: rel(src), alt: el.alt || "", fit: "cover" })); return; }
-      if (tag === "PICTURE") { const i = el.querySelector("img"); if (i) widgetsOf(i, out); return; }
-      if (tag === "VIDEO" || (tag === "IFRAME" && /youtube|vimeo/i.test(el.src))) { const u = el.src || (el.querySelector("source") || {}).src || ""; if (u) out.push(mkW("video", { url: u, ratio: "16/9" })); return; }
-      if (tag === "UL" || tag === "OL") { const li = [...el.children].filter(c => c.tagName === "LI" && txt(c)); if (li.length && li.every(x => !hasBlock(x))) { out.push(mkW("bullets", { items: li.map(txt).join("\n"), mk: tag === "OL" ? "dec" : "check", fs: { d: px(li[0], 17) } })); return; } }
-      if (tag === "DETAILS" || tag === "TABLE") { if (tag === "DETAILS") { const q = txt(el.querySelector("summary") || {}), a = txt({ textContent: [...el.childNodes].filter(n => !(n.tagName === "SUMMARY")).map(n => n.textContent).join(" ") }); if (q) { const last = out[out.length - 1]; const it = { q, a }; if (last && last.type === "accordion" && last._auto) last.set.items.push(it); else { const w = mkW("accordion", { items: [it], first: false }); w._auto = true; out.push(w); } } return; } }
-      if ((tag === "A" || tag === "BUTTON") && (el.matches("[class*=btn]") || tag === "BUTTON")) { const t = txt(el); if (!t || el.matches(".cart-btn,.btn-order,[onclick*=Cart]") || el.closest("[class*=tab],[class*=pill],[class*=chip],[id*=tab]") || t.length > 60) return; const s = cs(el); const w = mkW("button", { text: t, kind: "link", link: tag === "A" ? (el.getAttribute("href") || "#") : "#", fs: { d: px(el, 18) }, brad: { d: parseInt(s.borderTopLeftRadius) || 10 } }); const bg = hex(s.backgroundColor), c = hex(s.color); if (bg) w.set.bgc = bg; if (c) w.set.color = c; if (!bg) w.set.bgHide = true; out.push(w); return; }
-      if (o.kind === "home" && (el.id === "grid" || el.matches(".grid") && el.querySelector("[data-slug],.card,.pcard"))) { out.push(mkW("products", { mode: "all" })); return; }
-      if (tag === "P" || tag === "BLOCKQUOTE" || tag === "SPAN" || tag === "SMALL" || tag === "LI" || tag === "A" || tag === "B" || tag === "STRONG" || tag === "LABEL" || ((tag === "DIV" || tag === "FIGCAPTION" || tag === "TD") && !hasBlock(el) && !el.querySelector("a[class*=btn],button"))) {
-        if (el.querySelector("img") && !txt(el)) { [...el.querySelectorAll("img")].forEach(i => widgetsOf(i, out)); return; }
-        const h = inline(el), t = txt(el); if (!t) return;
-        const w = mkW("text", { html: /^<p[ >]/.test(h) ? h : "<p>" + h + "</p>", fs: { d: px(el, 17) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return;
-      }
-      kids(el).forEach(c => widgetsOf(c, out));
+  const dec = f => decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))));
+  const siteBase = () => location.href.replace(/[?#].*$/, "").replace(/[^/]*$/, "");
+  const absCss = (css, from) => css.replace(/url\(\s*(['"]?)(?!data:|https?:|\/\/|#)([^)'"]+?)\1\s*\)/g, (m, q, u) => { try { return "url(" + new URL(u, from).href + ")"; } catch (e) { return m; } });
+  const GROUP = el => el.matches(".topbar,header") ? "top" : el.matches("footer") ? "bot" : "";
+  /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحوّلها إلى صفحة مطوّر: قسم لكل كتلة بنفس HTML الأصل + أنماطها */
+  async function build(kind, slug, title) {
+    const pth = path(kind, slug), f = await GH.getFile(pth), text = dec(f), doc = new DOMParser().parseFromString(text, "text/html"), from = siteBase() + pth;
+    let css = "";
+    doc.head.querySelectorAll("style").forEach(st => { css += absCss(st.textContent, from) + "\n"; });
+    for (const l of doc.head.querySelectorAll('link[rel="stylesheet"]')) {
+      const h = l.getAttribute("href") || ""; if (!h || /^(https?:)?\/\//.test(h)) continue;
+      try { const u = new URL(h, from).href, r = await fetch(u); if (r.ok) css += absCss(await r.text(), u) + "\n"; } catch (e) { }
     }
-    /* حاوية بأعمدة (grid / flex أفقي) ← أعمدة في القسم */
-    function columnsOf(el) {
-      const s = cs(el), k = kids(el);
-      if (k.length < 2 || k.length > 4) return null;
-      const row = (s.display === "grid" && s.gridTemplateColumns.split(" ").length >= 2) || (s.display === "flex" && !/column/.test(s.flexDirection));
-      if (!row) return null;
-      const cols = k.map(c => { const w = []; widgetsOf(c, w); return w; }).filter(w => w.length);
-      return cols.length >= 2 ? cols : null;
-    }
-    function sectionOf(el, hint) {
-      let inner = el, safe = 0;
-      while (safe++ < 4) { const k = kids(inner); if (k.length === 1 && !/^(IMG|H[1-6]|P|UL|OL|FORM)$/.test(k[0].tagName) && !isOrder(k[0])) inner = k[0]; else break; }
-      const cols = columnsOf(inner); let cs_;
-      if (cols) cs_ = cols.map(w => mkC(w)); else { const w = []; widgetsOf(inner, w); if (!w.length) return null; cs_ = [mkC(w)]; }
-      const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
-      if (b2) set.bg = b2;
-      const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
-      return mkS(cs_, set);
-    }
-    const root = doc.querySelector("main") || doc.body, secs = [];
-    let loose = [];
-    const flush = () => { if (!loose.length) return; const w = []; loose.forEach(c => widgetsOf(c, w)); if (w.length) secs.push(mkS([mkC(w)], {})); loose = []; };
-    const top = kids(root).flatMap(c => (c.matches(".container,#main,div") && kids(c).length > 1 && kids(c).every(x => x.matches("section,.hero,div[class*=sec],.container")) ) ? kids(c) : [c]);
-    top.forEach(c => { if (c.matches("section") || hex(cs(c).backgroundColor) || /gradient/.test(cs(c).backgroundImage) || c.matches(".hero,[class*=hero]")) { flush(); const s = sectionOf(c); if (s) secs.push(s); } else loose.push(c); });
-    flush();
-    if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug })])], {}));
-    const page = newPage(o.title || o.slug || "الصفحة الرئيسية", o.kind === "home" ? "home" : o.slug);
-    page.sections = secs.length ? secs : [mkS([mkC([mkW("heading", { text: o.title || "صفحة" })])], {})];
-    page.header = false; page.footer = false; page.bg = hex(cs(doc.body).backgroundColor) || "#ffffff";
-    const ff = cs(doc.body).fontFamily; if (ff) page.ff = ff;
-    const t = doc.title || ""; if (t) { page.seoTitle = t.replace(/\s+—.*$/, ""); }
+    const AG = "#agent,[id^=agent],[class*=agent],#avatar,.avatar-bubble";      // الوكيل الذكي يُستثنى من المطوّر (يُحقن بالجافاسكربت ويبقى كما هو)
+    const raw = (grp, el) => { const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = grp; return sec; };
+    const secs = [];
+    [...doc.body.children].forEach(el => {
+      if (el.matches("script,style,link,noscript,template")) return;
+      if (el.matches("main")) { [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
+      if (el.matches(AG)) return;
+      const g = GROUP(el); if (g) secs.push(raw(g, el));
+    });
+    const page = newPage(title || "الصفحة الرئيسية", kind === "home" ? "home" : slug);
+    page.sections = secs.length ? secs : [mkS([mkC([mkW("heading", { text: title || "صفحة" })])], {})];
+    page.header = false; page.footer = false; page.css = css; page.bg = "transparent";
+    const t = doc.title || ""; if (t) page.seoTitle = t.replace(/\s+—.*$/, "");
     const md = doc.querySelector('meta[name="description"]'); if (md) page.desc = md.content || "";
-    if (o.kind === "product") page.product = o.slug;
-    page.sections.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; })));
-    page.origin = { kind: o.kind, slug: o.slug || "", direct: false };
+    if (kind === "product") page.product = slug;
+    page.shell = text; page.origin = { kind, slug: kind === "home" ? "" : slug, direct: false, raw: true };
     return page;
   }
-  /* يرسم الصفحة في iframe خفي بعرض الحاسوب (لتشغيل جافاسكربتها وقراءة الأنماط المحسوبة) */
-  async function render(url) {
-    const fr = document.createElement("iframe"); fr.setAttribute("aria-hidden", "true"); fr.style.cssText = "position:fixed;left:-12000px;top:0;width:1280px;height:900px;border:0;visibility:hidden";
-    document.body.appendChild(fr);
-    try { await new Promise((res, rej) => { fr.onload = res; fr.onerror = rej; fr.src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); setTimeout(res, 12000); }); await new Promise(r => setTimeout(r, 2200)); fr.style.visibility = "visible"; fr.style.visibility = "hidden"; return fr; }
-    catch (e) { fr.remove(); throw e; }
-  }
-  const dec = f => decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))));
   /* زر «تعديل» ← يفتح الصفحة في المطوّر */
   async function edit(kind, slug) {
     if (kind === "home") slug = "";
@@ -99,15 +52,14 @@ const PBConvert = (() => {
     toast("⏳ جارِ فتح الصفحة في المطوّر…");
     try {
       const k = key(kind, slug); let page = null;
-      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
+      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.shell) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
       if (!page) {
         const pr = kind === "product" ? (Admin.products || []).find(x => x.slug === slug) : null;
         if (kind === "product" && !pr) throw new Error("المنتج غير موجود");
-        const url = kind === "home" ? "index.html" : "p/" + slug + "/", fr = await render(url);
-        try { page = convert(fr.contentDocument, { kind, slug, title: pr ? pr.title : "الصفحة الرئيسية" }); } finally { fr.remove(); }
+        page = await build(kind, slug, pr ? pr.title : "الصفحة الرئيسية");
       }
       PBApp.open(page, page.slug, true); PBApp.E.dirty = true;
-      toast("✅ فُتحت في المطوّر — عدّل ما تشاء ثم «حفظ ونشر»");
+      toast("✅ فُتحت بشكلها الأصلي في المطوّر — عدّل ما تشاء ثم «حفظ ونشر»");
     } catch (e) { console.error(e); toast("❌ تعذّر فتح الصفحة: " + e.message); }
   }
   /* ── نافذة «حفظ ونشر» لصفحة قادمة من المنتج/الرئيسية ── */
@@ -135,23 +87,39 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       if (m === "restore") return restore(o.kind, o.slug);
     });
   }
-  /* ── حفظ مباشر: يستبدل الصفحة الأصلية (بعد نسخها احتياطياً أول مرة) ── */
+  /* ── حفظ مباشر: يُعاد بناء الصفحة الأصلية نفسها بأقسام المطوّر (بعد نسخها احتياطياً أول مرة) ── */
   async function saveDirect(P, ctx) {
     const o = P.origin, k = key(o.kind, o.slug), pth = path(o.kind, o.slug), put = PBApp.putJson;
     let cur = null; try { cur = await GH.getFile(pth); } catch (e) { }
     if (!o.direct && cur) {
       let has = false; try { await GH.getFile("assets/pages/_conv/" + k + ".orig.html"); has = true; } catch (e) { }
       if (!has) await GH.putFile("assets/pages/_conv/" + k + ".orig.html", cur.content.replace(/\n/g, ""), undefined, "نسخة احتياطية من الأصل قبل التحرير بالمطوّر: " + pth);
-      if (o.kind === "product") {
-        let cl = false; try { await GH.getFile("p/" + o.slug + "/classic/index.html"); cl = true; } catch (e) { }
-        if (!cl) { const orig = dec(cur).replace(/(["'(])\.\.\/\.\.\//g, "$1../../../").replace("<head>", '<head><meta name="robots" content="noindex">'); await GH.putFile("p/" + o.slug + "/classic/index.html", btoa(unescape(encodeURIComponent(orig))), undefined, "الصفحة الأصلية للمنتج (تُضمَّن نموذج الطلب): " + o.slug); }
-      }
     }
     P.origin = Object.assign({}, o, { direct: true });
-    let html = PB.fullHtml(P, Object.assign({ base: o.kind === "home" ? "" : "../../", path: o.kind === "home" ? "" : "p/" + o.slug + "/" }, ctx));
-    if (o.kind === "product") html = html.split("p/" + o.slug + "/?embed=1").join("p/" + o.slug + "/classic/?embed=1");
+    const doc = new DOMParser().parseFromString(P.shell, "text/html"), out = { top: [], main: [], bot: [] };
+    let last = "main", native = false;
+    (P.sections || []).forEach(sec => {
+      const g = sec.grp || last; last = g;
+      const ws = (sec.cols || []).flatMap(c => c.widgets || []), isRaw = sec.grp && (sec.cols || []).length === 1 && ws.length === 1 && ws[0].type === "html" && !(sec.free || []).length;
+      if (isRaw) { out[g].push(ws[0].set.code || ""); return; }
+      native = true; const r = PB.renderSections({ sections: [sec] }, Object.assign({ base: o.kind === "home" ? "" : "../../", edit: false }, ctx));
+      out[g].push("<style>" + r.css + "</style>" + r.html);
+    });
+    const place = (grp, sel) => {
+      const els = [...doc.body.children].filter(el => sel(el)); const html = out[grp].join("\n");
+      if (!els.length) { if (html) (grp === "bot" ? doc.body.insertAdjacentHTML("beforeend", html) : doc.body.insertAdjacentHTML("afterbegin", html)); return; }
+      els[0].insertAdjacentHTML("beforebegin", html); els.forEach(el => el.remove());
+    };
+    place("top", el => GROUP(el) === "top");
+    const main = doc.querySelector("main"); if (main) main.innerHTML = out.main.join("\n"); else doc.body.insertAdjacentHTML("afterbegin", "<main>" + out.main.join("\n") + "</main>");
+    place("bot", el => GROUP(el) === "bot");
+    if (native) {
+      const st = doc.createElement("style"); st.id = "pb-native"; st.textContent = PB.BASE_CSS; doc.head.appendChild(st);
+      const sc = doc.createElement("script"); sc.textContent = "var __pbBase=" + JSON.stringify(o.kind === "home" ? "" : "../../") + ";var __pbSlug=\"\";var __pbMeta={};" + PB.RUNTIME_JS; doc.body.appendChild(sc);
+    }
+    const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
     await GH.putFile(pth, btoa(unescape(encodeURIComponent(html))), cur && cur.sha, "نشر " + (o.kind === "home" ? "الصفحة الرئيسية" : "صفحة المنتج " + o.slug) + " من المطوّر");
-    await put("assets/pages/_conv/" + k + ".json", P, "مصدر تصميم المطوّر: " + k);
+    await put("assets/pages/_conv/" + k + ".json", P, "مصدر تحرير المطوّر: " + k);
   }
   async function restore(kind, slug) {
     if (!confirm("استرجاع الصفحة الأصلية؟ سيُستبدل تصميم المطوّر الحالي (يبقى مصدره محفوظاً).")) return;
@@ -164,5 +132,5 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       toast("✅ استُرجعت الصفحة الأصلية (قد يستغرق ظهورها دقيقة)");
     } catch (e) { toast("❌ " + e.message); }
   }
-  return { convert, render, edit, ask, saveDirect, restore };
+  return { build, edit, ask, saveDirect, restore };
 })();
