@@ -165,6 +165,16 @@ const PB = (() => {
     { k: "ta", l: "محاذاة النص", t: "align", r: 1, tab: "s" },
   ].concat(extra || []);
 
+  /* قائمة الأيقونات المنسدلة (إيموجي ورموز) */
+  const ICON_GROUPS = [
+    ["علامات وقوائم", "✅ ✔️ ☑️ ✓ ✔ ❌ ✖️ ❎ ➕ ➖ • ● ○ ◆ ◇ ■ □ ▪ ▫ ▶ ► ➤ ➜ ➔ → ← ⬅️ ➡️ ✦ ✧ ★ ☆ ⭐ 🌟 ✨ 💫 ⚡ 🔥 💥 ❗ ❓ ⚠️ ℹ️ 💡 🔔 📌 📍 🔖 🏷️".split(" ")],
+    ["قلوب وتقييم", "❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💖 💝 💕 👍 👏 🙌 🤝 🎉 🎊 🥳 😍 😊 🌈 🏅 🥇 🏆 🎖️ 👑 💎".split(" ")],
+    ["طبيعة وأعشاب", "🌿 🍃 🌱 🍀 🌾 🌴 🌳 🌸 🌼 🌻 🌹 🌺 🍯 🐝 🥥 🍋 🍎 🍇 🍓 🍊 🫒 🌰 🧄 🌶️ 🍵 ☕ 💧 🌊 ☀️ 🌙 ⛰️ 🐑 🐪".split(" ")],
+    ["صحة وجمال", "💊 💉 🩺 🧴 🧪 🧬 🩹 🦷 👁️ 🧠 💪 🦴 🫀 🫁 💆 💇 🧖 🛁 🧼 🪥 🧘 🏃 😴 🥗 🍽️ ⚖️ 🌡️".split(" ")],
+    ["تجارة وتوصيل", "🛒 🛍️ 🚚 🚛 📦 📮 💵 💰 💳 🧾 🎁 🏪 🏬 🧾 🏷️ 📞 ☎️ 📱 💬 📧 ✉️ 🌐 ⏰ ⏱️ 🕒 📅 🗓️ 🔒 🛡️ ♻️ 📈 🔄".split(" ")],
+    ["الجزائر والمناسبات", "🇩🇿 🕌 ☪️ 🕋 📿 🤲 🌙 ⭐ 🏠 🏡 👨‍👩‍👧 👶 🎓 💍 🎂 🍰 🎈".split(" ")],
+  ];
+  const BMARKS = [["disc", "● نقطة"], ["circle", "○ دائرة"], ["square", "■ مربع"], ["check", "✔ علامة صح"], ["checkbox", "☑ مربع صح"], ["arrow", "◀ سهم"], ["chev", "‹ سهم صغير"], ["star", "★ نجمة"], ["diamond", "◆ معين"], ["dash", "– شرطة"], ["heart", "❤ قلب"], ["leaf", "🌿 ورقة"], ["dec", "1. أرقام"], ["ar", "١. أرقام عربية"], ["alpha", "a. حروف لاتينية"], ["roman", "i. أرقام رومانية"], ["custom", "✎ رمز مخصص"]];
   const IANIMS = [["", "بدون"], ["zin", "تقريب للأمام (Zoom In)"], ["zout", "ابتعاد للخلف (Zoom Out)"], ["pulse", "نبض (تقريب وابتعاد)"], ["kb", "كين بيرنز (تقريب مع انزياح)"], ["float", "طفو للأعلى والأسفل"], ["sway", "تأرجح"], ["spin", "دوران مستمر"], ["blink", "وميض"], ["shake", "اهتزاز"]];
   /* حركة الصورة: الحاوية تقصّ التكبير (overflow) والصورة نفسها تتحرك */
   function imgAnim(c, sel, s) {
@@ -231,21 +241,60 @@ const PB = (() => {
     },
     iconlist: {
       label: "قائمة أيقونات", ic: "✅", def: { items: "طبيعي 100%\nدفع عند الاستلام\nتوصيل لكل الولايات", icon: "✅", ic_c: "#157a55", fs: { d: 18 }, gap: { d: 10 } },
-      ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر)", t: "textarea", tab: "c" }, { k: "icon", l: "الأيقونة (إيموجي)", t: "text", tab: "c" }, { k: "ic_c", l: "لون الأيقونة", t: "color", tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
-      html: s => `<ul class="pb-il">${String(s.items || "").split("\n").filter(x => x.trim()).map(x => `<li><i>${esc(s.icon || "✅")}</i><span>${esc(x)}</span></li>`).join("")}</ul>`,
-      css: (c, sel, s) => { emit(c, sel + " .pb-il", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-il li", s, [["gap", px("margin-bottom")]]); if (s.ic_c) c.d.push(`${sel} .pb-il i{color:${s.ic_c}}`); },
+      ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "icon", l: "الأيقونة (اختر من القائمة أو اكتب أي رمز) — أو انقر الأيقونة في الصفحة", t: "iconpick", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "ic_c", l: "لون الأيقونة", t: "color", tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
+      html: s => `<ul class="pb-il">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li><i data-icon="icon">${esc(s.icon || "✅")}</i><span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`,
+      css: (c, sel, s) => { emit(c, sel + " .pb-il", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-il li", s, [["gap", px("margin-bottom")]]); emit(c, sel + " .pb-il i", s, [["isz", px("font-size")]]); if (s.ic_c) c.d.push(`${sel} .pb-il i{color:${s.ic_c}}`); },
     },
     iconbox: {
       label: "صندوق أيقونة", ic: "💠", def: { icon: "🌿", title: "ميزة رائعة", text: "وصف قصير يشرح الميزة للزبون.", al: { d: "center" }, isz: { d: 44 }, tc: "#173F35", xc: "#555555" },
-      ctl: [{ k: "icon", l: "الأيقونة (إيموجي أو رمز)", t: "text", tab: "c" }, { k: "title", l: "العنوان", t: "text", tab: "c" }, { k: "text", l: "الوصف", t: "textarea", tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 16, max: 140, tab: "s" }, { k: "tc", l: "لون العنوان", t: "color", tab: "s" }, { k: "xc", l: "لون الوصف", t: "color", tab: "s" }, { k: "tfs", l: "حجم العنوان (px)", t: "num", r: 1, min: 12, max: 60, tab: "s" }],
-      html: s => { const b = `<div class="pb-ib"><div class="pb-ibi">${esc(s.icon)}</div><h3 data-edit="title">${esc(s.title)}</h3><p data-edit="text">${esc(s.text)}</p></div>`; return s.link ? `<a href="${esc(s.link)}" style="color:inherit;text-decoration:none">${b}</a>` : b; },
+      ctl: [{ k: "icon", l: "الأيقونة (اختر من القائمة أو اكتب أي رمز) — أو انقر الأيقونة في الصفحة", t: "iconpick", tab: "c" }, { k: "title", l: "العنوان", t: "text", tab: "c" }, { k: "text", l: "الوصف", t: "textarea", tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 16, max: 140, tab: "s" }, { k: "tc", l: "لون العنوان", t: "color", tab: "s" }, { k: "xc", l: "لون الوصف", t: "color", tab: "s" }, { k: "tfs", l: "حجم العنوان (px)", t: "num", r: 1, min: 12, max: 60, tab: "s" }],
+      html: s => { const b = `<div class="pb-ib"><div class="pb-ibi" data-icon="icon">${esc(s.icon)}</div><h3 data-edit="title">${esc(s.title)}</h3><p data-edit="text">${esc(s.text)}</p></div>`; return s.link ? `<a href="${esc(s.link)}" style="color:inherit;text-decoration:none">${b}</a>` : b; },
       css: (c, sel, s) => { emit(c, sel + " .pb-ibi", s, [["isz", px("font-size")]]); emit(c, sel + " .pb-ib h3", s, [["tfs", px("font-size")]]); if (s.tc) c.d.push(`${sel} .pb-ib h3{color:${s.tc}}`); if (s.xc) c.d.push(`${sel} .pb-ib p{color:${s.xc}}`); },
+    },
+    bullets: {
+      label: "علامات القائمة", ic: "•", def: { items: "ميزة أولى للمنتج\nميزة ثانية للمنتج\nميزة ثالثة للمنتج", mk: "disc", mchar: "★", mc: "#157a55", ms: { d: 18 }, gap: { d: 8 }, fs: { d: 18 } },
+      ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "mk", l: "نوع العلامة (اختر واحداً)", t: "select", o: BMARKS.map(m => [m[0], m[1]]), tab: "c" }, { k: "mchar", l: "الرمز المخصص (أي رمز أو إيموجي)", t: "iconpick", tab: "c", showIf: ["mk", "custom"] },
+        { k: "mc", l: "لون العلامة", t: "color", tab: "s" }, { k: "ms", l: "حجم العلامة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "gap", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
+      html: s => `<ul class="pb-bl">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li><span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`,
+      css: (c, sel, s) => {
+        emit(c, sel + " .pb-bl", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-bl li", s, [["gap", px("margin-bottom")], ["ms", v => `padding-inline-start:calc(${U(num(v) || 18)}*1.9);`]]);
+        const mk = BMARKS.some(m => m[0] === s.mk) ? s.mk : "disc", num2 = { dec: "decimal", ar: "arabic-indic", alpha: "lower-alpha", roman: "lower-roman" }[mk], txt = { disc: "●", circle: "○", square: "■", check: "✔", checkbox: "☑", arrow: "◀", chev: "‹", star: "★", diamond: "◆", dash: "–", heart: "❤", leaf: "🌿", custom: String(s.mchar || "•").slice(0, 4) }[mk];
+        c.d.push(`${sel} .pb-bl{counter-reset:pbn}${sel} .pb-bl li{position:relative;counter-increment:pbn;padding-inline-start:1.9em}${sel} .pb-bl li:before{position:absolute;inset-inline-start:0;top:0;line-height:inherit;font-weight:800;content:${num2 ? `counter(pbn,${num2}) "."` : JSON.stringify(txt).replace(/</g, "\\3c ")};${s.mc ? "color:" + s.mc + ";" : ""}}`);
+        emit(c, sel + " .pb-bl li:before", s, [["ms", px("font-size")]]);
+      },
+    },
+    contact: {
+      label: "نموذج اتصال", ic: "✉️", def: { title: "تواصل معنا", desc: "اترك رسالتك وسنردّ عليك في أقرب وقت.", fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "full" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "البريد الإلكتروني", type: "email", ph: "example@mail.com", req: false, w: "half" }, { label: "رسالتك", type: "textarea", ph: "اكتب رسالتك هنا", req: true, w: "full" }], btn: "إرسال الرسالة", dest: "whatsapp", dzPhone: true, ok: "✅ تم إرسال رسالتك بنجاح، شكراً لك!", subject: "رسالة من نموذج الاتصال", fbg: "#ffffff", fbc: "#e6dfcf", frad: { d: 16 }, fpad: { d: [24, 24, 24, 24] }, tcol: "#173f35", lcol: "#444444", ibg: "#faf6ec", ibc: "#e0d9c8", irad: { d: 10 }, ifs: { d: 16 }, bbg: "#157a55", bcol: "#ffffff", brad: { d: 12 }, bfull: true, cd: 20 },
+      ctl: [{ k: "title", l: "عنوان النموذج", t: "text", tab: "c" }, { k: "desc", l: "وصف قصير", t: "textarea", tab: "c" },
+        { k: "fields", l: "الحقول", t: "rep", f: [["label", "اسم الحقل"], ["type", "النوع", "select", [["text", "نص قصير"], ["tel", "هاتف"], ["email", "بريد إلكتروني"], ["number", "رقم"], ["textarea", "نص طويل"], ["select", "قائمة اختيار"], ["checkbox", "مربع موافقة"], ["date", "تاريخ"]]], ["ph", "نص إرشادي داخل الحقل"], ["opts", "خيارات القائمة (مفصولة بفاصلة) — للقائمة فقط"], ["w", "العرض", "select", [["full", "كامل"], ["half", "نصف"]]], ["req", "إجباري", "bool"]], mv: 1, tab: "c" },
+        { k: "btn", l: "نص زر الإرسال", t: "text", tab: "c" }, { k: "consent", l: "نص الموافقة (اختياري، يظهر كمربع إجباري)", t: "text", tab: "c" },
+        { k: "dest", l: "وجهة الإرسال", t: "select", o: [["whatsapp", "واتساب (يفتح محادثة بالرسالة جاهزة)"], ["email", "بريد إلكتروني (mailto)"], ["webhook", "رابط استقبال (Formspree / Google Apps Script / Zapier…)"]], tab: "c" },
+        { k: "phone", l: "رقم واتساب بصيغة دولية (فارغ = رقم المتجر)", t: "text", tab: "c", showIf: ["dest", "whatsapp"] }, { k: "email", l: "البريد المستلِم", t: "text", tab: "c", showIf: ["dest", "email"] }, { k: "url", l: "رابط الاستقبال (POST بصيغة JSON)", t: "text", tab: "c", showIf: ["dest", "webhook"] },
+        { k: "subject", l: "عنوان الرسالة", t: "text", tab: "c" }, { k: "ok", l: "رسالة النجاح", t: "text", tab: "c" }, { k: "redir", l: "رابط يُفتح بعد النجاح (اختياري، مثل صفحة شكر)", t: "text", tab: "c" },
+        { k: "dzPhone", l: "التحقق من أرقام الهاتف الجزائرية (05/06/07 + 8 أرقام)", t: "switch", tab: "c" }, { k: "cd", l: "مهلة بين إرسالين من نفس الجهاز (ثانية) — ضد الإزعاج", t: "num", min: 0, max: 600, tab: "c" },
+        { k: "fbg", l: "خلفية النموذج", t: "color", tab: "s" }, { k: "fbc", l: "لون إطار النموذج", t: "color", tab: "s" }, { k: "frad", l: "تدوير زوايا النموذج (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "fpad", l: "حشو النموذج", t: "dims", r: 1, tab: "s" },
+        { k: "tcol", l: "لون العنوان", t: "color", tab: "s" }, { k: "lcol", l: "لون أسماء الحقول", t: "color", tab: "s" }, { k: "ibg", l: "خلفية الحقول", t: "color", tab: "s" }, { k: "ibc", l: "إطار الحقول", t: "color", tab: "s" }, { k: "irad", l: "تدوير الحقول (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "ifs", l: "حجم خط الحقول (px)", t: "num", r: 1, min: 11, max: 28, tab: "s" },
+        { k: "bbg", l: "لون زر الإرسال", t: "color", tab: "s" }, { k: "bcol", l: "لون نص الزر", t: "color", tab: "s" }, { k: "brad", l: "تدوير الزر (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "bfull", l: "الزر بعرض النموذج كاملاً", t: "switch", tab: "s" }],
+      html: (s, id, ctx) => {
+        const F = Array.isArray(s.fields) ? s.fields : [], T = ["text", "tel", "email", "number", "textarea", "select", "checkbox", "date"];
+        const fld = (f, i) => { const ty = T.includes(f.type) ? f.type : "text", nm = "f" + i, lb = `<label for="${esc(id)}-${nm}">${esc(f.label)}${f.req ? ' <b class="rq">*</b>' : ""}</label>`, at = `id="${esc(id)}-${nm}" name="${nm}" data-f="1" data-l="${esc(f.label)}"${f.req ? " data-req=\"1\"" : ""}`; let el;
+          if (ty === "textarea") el = `<textarea ${at} rows="4" placeholder="${esc(f.ph)}"></textarea>`; else if (ty === "select") el = `<select ${at}><option value="">${esc(f.ph || "اختر…")}</option>${String(f.opts || "").split(/[,،]/).map(x => x.trim()).filter(Boolean).map(x => `<option>${esc(x)}</option>`).join("")}</select>`;
+          else if (ty === "checkbox") return `<div class="pb-cf-f full chk"><label class="ck"><input type="checkbox" ${at}> ${esc(f.label)}${f.req ? ' <b class="rq">*</b>' : ""}</label></div>`; else el = `<input type="${ty}" ${at} placeholder="${esc(f.ph)}"${ty === "tel" ? ' inputmode="tel" dir="ltr"' : ""}${ty === "email" ? ' dir="ltr"' : ""}>`;
+          return `<div class="pb-cf-f ${f.w === "half" ? "half" : "full"}">${lb}${el}</div>`; };
+        const cons = s.consent ? `<div class="pb-cf-f full chk"><label class="ck"><input type="checkbox" data-f="1" data-req="1" data-l="${esc(s.consent)}"> ${esc(s.consent)} <b class="rq">*</b></label></div>` : "";
+        const dest = ["whatsapp", "email", "webhook"].includes(s.dest) ? s.dest : "whatsapp", wa = String(s.phone || ctx.wa || "").replace(/\D/g, "");
+        return `<form class="pb-cf" novalidate data-dest="${dest}" data-wa="${esc(wa)}" data-email="${esc(s.email)}" data-url="${esc(ctx.edit ? "" : s.url)}" data-subject="${esc(s.subject)}" data-ok="${esc(s.ok)}" data-redir="${esc(s.redir)}" data-dz="${s.dzPhone === false ? 0 : 1}" data-cd="${num(s.cd) ?? 20}"${ctx.edit ? ' onsubmit="return false"' : ""}>${s.title ? `<h3 class="pb-cf-t" data-edit="title">${esc(s.title)}</h3>` : ""}${s.desc ? `<p class="pb-cf-d" data-edit="desc">${esc(s.desc)}</p>` : ""}<div class="pb-cf-g">${F.map(fld).join("")}${cons}</div><input class="pb-cf-hp" type="text" name="pbhp" tabindex="-1" autocomplete="off" aria-hidden="true"><button type="submit" class="pb-cf-b"><span data-edit="btn">${esc(s.btn || "إرسال")}</span></button><div class="pb-cf-msg" role="status" style="display:none"></div></form>`;
+      },
+      css: (c, sel, s) => {
+        c.d.push(`${sel} .pb-cf{box-sizing:border-box;width:100%;border:1.5px solid ${s.fbc || "#e6dfcf"};background:${s.fbg || "#fff"}}${sel} .pb-cf-t{margin:0 0 .3rem;font-size:1.4rem;font-weight:900;color:${s.tcol || "#173f35"}}${sel} .pb-cf-d{margin:0 0 1rem;color:${s.lcol || "#444"};opacity:.85}${sel} .pb-cf-g{display:flex;flex-wrap:wrap;gap:12px}${sel} .pb-cf-f.full{flex:1 1 100%}${sel} .pb-cf-f.half{flex:1 1 calc(50% - 6px);min-width:150px}${sel} .pb-cf label{display:block;margin-bottom:.3rem;font-weight:800;font-size:.92rem;color:${s.lcol || "#444"}}${sel} .pb-cf .rq{color:#c0392b}${sel} .pb-cf label.ck{display:flex;gap:.5rem;align-items:flex-start;font-weight:600}${sel} .pb-cf label.ck input{width:auto;margin-top:.25rem}${sel} .pb-cf input:not([type=checkbox]),${sel} .pb-cf textarea,${sel} .pb-cf select{width:100%;box-sizing:border-box;font:inherit;padding:.65rem .8rem;background:${s.ibg || "#faf6ec"};border:1.5px solid ${s.ibc || "#e0d9c8"}}${sel} .pb-cf input.bad,${sel} .pb-cf textarea.bad,${sel} .pb-cf select.bad{border-color:#c0392b}${sel} .pb-cf-hp{position:absolute!important;inset-inline-start:0!important;top:0!important;width:1px!important;height:1px!important;padding:0!important;border:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;opacity:0!important;pointer-events:none!important}${sel} .pb-cf-b{margin-top:14px;border:0;cursor:pointer;font:inherit;font-weight:900;padding:.8rem 1.6rem;background:${s.bbg || "#157a55"};color:${s.bcol || "#fff"};${s.bfull === false ? "" : "width:100%;"}transition:filter .2s,transform .15s}${sel} .pb-cf-b:hover{filter:brightness(1.08);transform:translateY(-1px)}${sel} .pb-cf-b[disabled]{opacity:.6;cursor:wait}${sel} .pb-cf-msg{margin-top:12px;padding:.7rem 1rem;border-radius:10px;font-weight:800}${sel} .pb-cf-msg.ok{background:#e7f6ee;color:#12663f}${sel} .pb-cf-msg.bad{background:#fdecea;color:#a12622}`);
+        emit(c, sel + " .pb-cf", s, [["frad", px("border-radius")], ["fpad", v => dimsDecl("padding", v)]]); [" .pb-cf input:not([type=checkbox])", " .pb-cf textarea", " .pb-cf select"].forEach(q => emit(c, sel + q, s, [["irad", px("border-radius")], ["ifs", px("font-size")]])); emit(c, sel + " .pb-cf-b", s, [["brad", px("border-radius")], ["ifs", px("font-size")]]);
+      },
     },
     accordion: {
       label: "أسئلة شائعة", ic: "❓", def: { items: [{ q: "كيف أطلب المنتج؟", a: "اضغط على زر اطلب الآن واملأ بياناتك، ونتصل بك للتأكيد." }, { q: "هل الدفع عند الاستلام؟", a: "نعم، تدفع فقط عند وصول الطلب إليك." }], first: true, qbg: "#faf6ec", qc: "#173F35", ac: "#444444" },
       ctl: [{ k: "items", l: "الأسئلة", t: "rep", f: [["q", "السؤال"], ["a", "الجواب"]], tab: "c" }, { k: "first", l: "فتح الأول افتراضياً", t: "switch", tab: "c" }, { k: "qbg", l: "خلفية السؤال", t: "color", tab: "s" }, { k: "qc", l: "لون السؤال", t: "color", tab: "s" }, { k: "ac", l: "لون الجواب", t: "color", tab: "s" }, { k: "qfs", l: "حجم السؤال (px)", t: "num", r: 1, min: 12, max: 40, tab: "s" }],
-      html: s => `<div class="pb-acc">${(s.items || []).map((it, i) => `<details${(s.first && i === 0) ? " open" : ""}><summary>${esc(it.q)}</summary><div>${esc(it.a)}</div></details>`).join("")}</div>`,
-      css: (c, sel, s) => { if (s.qbg) c.d.push(`${sel} .pb-acc summary{background:${s.qbg}}`); if (s.qc) c.d.push(`${sel} .pb-acc summary{color:${s.qc}}`); if (s.ac) c.d.push(`${sel} .pb-acc details>div{color:${s.ac}}`); emit(c, sel + " .pb-acc summary", s, [["qfs", px("font-size")]]); },
+      html: (s, id, ctx) => `<div class="pb-acc">${(s.items || []).map((it, i) => ctx && ctx.edit ? `<details open><div class="pb-sum"><span data-edit="aq" data-idx="${i}">${esc(it.q)}</span></div><div data-edit="aa" data-idx="${i}">${esc(it.a)}</div></details>` : `<details${s.first && i === 0 ? " open" : ""}><summary>${esc(it.q)}</summary><div>${esc(it.a)}</div></details>`).join("")}</div>`,
+      css: (c, sel, s) => { if (s.qbg) c.d.push(`${sel} .pb-acc summary,${sel} .pb-acc .pb-sum{background:${s.qbg}}`); if (s.qc) c.d.push(`${sel} .pb-acc summary,${sel} .pb-acc .pb-sum{color:${s.qc}}`); if (s.ac) c.d.push(`${sel} .pb-acc details>div{color:${s.ac}}`); emit(c, sel + " .pb-acc summary", s, [["qfs", px("font-size")]]); emit(c, sel + " .pb-acc .pb-sum", s, [["qfs", px("font-size")]]); },
     },
     counter: {
       label: "عدّاد", ic: "🔢", def: { n: 5000, pre: "+", suf: "", label: "زبون سعيد", fs: { d: 52 }, color: "#8a6a1a", lc: "#555555" },
@@ -312,7 +361,7 @@ const PB = (() => {
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "iconbox", "iconlist", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -382,7 +431,7 @@ const PB = (() => {
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
-  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], contact: [50, 520], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
   const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
@@ -406,6 +455,7 @@ const PB = (() => {
   }
   const autoFlowFree = sec => sec.set.kind !== "canvas" && sec.set.autoM !== false && (sec.free || []).length > 0 && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined));
   function renderSections(page, ctx) {
+    if (!ctx.wa && ctx.site && ctx.site.wa) ctx = Object.assign({}, ctx, { wa: ctx.site.wa });      // رقم واتساب المتجر للأزرار والنماذج
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
     const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;
@@ -484,9 +534,9 @@ const PB = (() => {
 .pb-t{margin:0}.pb-tx p{margin:0 0 .8em}.pb-tx>:last-child{margin-bottom:0}
 .pb-btn{display:inline-block;text-decoration:none;text-align:center;cursor:pointer;transition:background .2s,transform .15s}.pb-btn:hover{transform:translateY(-2px)}
 .pb-ph{background:#f1ede2;border:2px dashed #cfc6b0;color:#8a8472;padding:28px;text-align:center;border-radius:12px;font-size:.95rem}
-.pb-hr{height:0}.pb-il{list-style:none;margin:0;padding:0}.pb-il li{display:flex;gap:.6rem;align-items:flex-start}.pb-il li:last-child{margin-bottom:0!important}
+.pb-hr{height:0}.pb-bl{list-style:none;margin:0;padding:0}.pb-bl li{list-style:none}.pb-il{list-style:none;margin:0;padding:0}.pb-il li{display:flex;gap:.6rem;align-items:flex-start}.pb-il li:last-child{margin-bottom:0!important}
 .pb-ib{padding:8px}.pb-ibi{line-height:1.1;margin-bottom:.4rem}.pb-ib h3{margin:0 0 .4rem;font-size:1.25rem;font-weight:800}.pb-ib p{margin:0}
-.pb-acc details{margin-bottom:10px;border:1px solid #e6dfcf;border-radius:12px;overflow:hidden;background:#fff}.pb-acc summary{cursor:pointer;padding:14px 18px;font-weight:800;list-style:none}.pb-acc summary::-webkit-details-marker{display:none}.pb-acc summary:after{content:'＋';float:inline-end}.pb-acc details[open] summary:after{content:'－'}.pb-acc details>div{padding:14px 18px;line-height:1.8}
+.pb-acc details{margin-bottom:10px;border:1px solid #e6dfcf;border-radius:12px;overflow:hidden;background:#fff}.pb-acc summary,.pb-acc .pb-sum{cursor:pointer;padding:14px 18px;font-weight:800;list-style:none}.pb-acc .pb-sum:after{content:'－';float:inline-end}.pb-acc summary::-webkit-details-marker{display:none}.pb-acc summary:after{content:'＋';float:inline-end}.pb-acc details[open] summary:after{content:'－'}.pb-acc details>div{padding:14px 18px;line-height:1.8}
 .pb-ct{text-align:center}.pb-ctn{font-weight:900;line-height:1.1}.pb-ctl{font-weight:700;margin-top:.3rem}
 .pb-cd{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.pb-cdb{padding:12px 16px;text-align:center;min-width:76px}.pb-cdb b{display:block;font-weight:900;line-height:1.1}.pb-cdb small{font-size:.75rem;opacity:.85}
 .pb-ts{padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.07);height:100%}.pb-tss{color:#e0a800;letter-spacing:2px;margin-bottom:.4rem}.pb-ts p{margin:0 0 .8rem;line-height:1.8}.pb-tsw{display:flex;gap:.7rem;align-items:center}.pb-tsw img{width:46px;height:46px;border-radius:50%;object-fit:cover}.pb-tsw small{display:block;color:#777}
@@ -535,12 +585,42 @@ window.addEventListener('message',function(e){if(e.origin!==location.origin||!e.
 if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProducts(JSON.parse(n.getAttribute('data-pbp')),window.PRODUCTS,__pbBase,window.__pbMeta)}catch(e){}})}
 })();`;
 
+  /* تشغيل نماذج الاتصال في الصفحة المنشورة (يُحقن نصه كما هو): تحقق، إرسال إلى واتساب/بريد/رابط استقبال، حماية Honeypot + مهلة */
+  function contactRuntime() {
+    [].forEach.call(document.querySelectorAll(".pb-cf"), function (f) {
+      f.addEventListener("submit", function (e) {
+        e.preventDefault(); var msg = f.querySelector(".pb-cf-msg"), btn = f.querySelector("button[type=submit]"), NL = String.fromCharCode(10), ok = f.getAttribute("data-ok") || "OK";
+        function show(t, good) { msg.textContent = t; msg.className = "pb-cf-msg " + (good ? "ok" : "bad"); msg.style.display = "block"; }
+        var hp = f.querySelector("[name=pbhp]"); if (hp && hp.value) { show(ok, true); return; }
+        var key = "pbcf_" + (f.closest("[class*='x-']") ? f.closest("[class*='x-']").className : "f"), cd = +f.getAttribute("data-cd") || 0, last = 0; try { last = +sessionStorage.getItem(key) || 0; } catch (x) { }
+        if (cd && Date.now() - last < cd * 1000) { show("يرجى الانتظار قليلاً قبل إرسال رسالة أخرى.", false); return; }
+        var rows = [], bad = null; [].forEach.call(f.querySelectorAll("[data-f]"), function (el) {
+          var v = el.type === "checkbox" ? (el.checked ? "نعم" : "") : String(el.value || "").replace(/^\s+|\s+$/g, ""), lb = el.getAttribute("data-l") || "", err = false; el.className = el.className.replace(/\s*bad/, "");
+          if (el.hasAttribute("data-req") && !v) err = true;
+          if (v && el.type === "email" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) err = true;
+          if (v && el.type === "tel" && f.getAttribute("data-dz") === "1" && !/^(\+213|00213|0)?[567]\d{8}$/.test(v.replace(/[\s.-]/g, ""))) err = true;
+          if (err) { el.className += " bad"; if (!bad) bad = lb; } rows.push([lb, v]);
+        });
+        if (bad) { show("يرجى تعبئة الحقل بشكل صحيح: " + bad, false); return; }
+        var subj = f.getAttribute("data-subject") || "", text = subj + NL + rows.filter(function (r) { return r[1]; }).map(function (r) { return r[0] + ": " + r[1]; }).join(NL), dest = f.getAttribute("data-dest");
+        function done() { try { sessionStorage.setItem(key, Date.now()); } catch (x) { } show(ok, true); f.reset(); btn.disabled = false; var rd = f.getAttribute("data-redir"); if (rd) setTimeout(function () { location.href = rd; }, 900); }
+        if (dest === "whatsapp") { var wa = f.getAttribute("data-wa"); if (!wa) { show("رقم واتساب غير مضبوط في إعدادات النموذج.", false); return; } window.open("https://wa.me/" + wa + "?text=" + encodeURIComponent(text), "_blank"); done(); }
+        else if (dest === "email") { var em = f.getAttribute("data-email"); if (!em) { show("البريد غير مضبوط في إعدادات النموذج.", false); return; } location.href = "mailto:" + em + "?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(text); done(); }
+        else {
+          var url = f.getAttribute("data-url"); if (!url) { show("رابط الاستقبال غير مضبوط في إعدادات النموذج.", false); return; } btn.disabled = true;
+          var obj = { subject: subj, page: location.href, fields: {} }; rows.forEach(function (r) { obj.fields[r[0]] = r[1]; });
+          fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(obj) }).then(function (r) { if (r.ok) done(); else { btn.disabled = false; show(f.getAttribute("data-err") || "تعذّر الإرسال، حاول مرة أخرى.", false); } })
+            .catch(function () { fetch(url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(obj) }).then(done, function () { btn.disabled = false; show("تعذّر الإرسال، تحقّق من الاتصال.", false); }); });
+        }
+      });
+    });
+  }
   function fullHtml(page, ctx) {
     const r = renderSections(page, Object.assign({ base: "../../", edit: false }, ctx));
     const site = ctx.site || {}, url = (site.domain ? "https://" + site.domain : "") + "/lp/" + page.slug + "/";
     const hdr = page.header ? `<header class="pb-hdr"><div><a class="lg" href="${esc(ctx.base)}">${esc(site.name || "المتجر")}</a>${site.wa ? `<a class="wa" href="https://wa.me/${esc(String(site.wa).replace(/\D/g, ""))}" target="_blank" rel="noopener">واتساب</a>` : ""}</div></header>` : "";
     const ftr = page.footer ? `<footer class="pb-ftr">© ${new Date().getFullYear()} ${esc(site.name || "")} — جميع الحقوق محفوظة · <a href="${esc(ctx.base)}">العودة للمتجر</a></footer>` : "";
-    const hasProd = JSON.stringify(page.sections).includes('"type":"products"');
+    const hasProd = JSON.stringify(page.sections).includes('"type":"products"'), hasContact = JSON.stringify(page.sections).includes('"type":"contact"');
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${ctx.baseHref ? `<base href="${esc(ctx.baseHref)}">` : ""}
 <title>${esc(page.seoTitle || page.title)}${site.name ? " — " + esc(site.name) : ""}</title>
@@ -555,9 +635,9 @@ ${r.css}
 ${page.css || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
 ${hasProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}
-<script>var __pbBase=${JSON.stringify(ctx.base)};var __pbSlug=${JSON.stringify(page.slug || "")};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}<\/script>
+<script>var __pbBase=${JSON.stringify(ctx.base)};var __pbSlug=${JSON.stringify(page.slug || "")};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}${hasContact ? "(" + contactRuntime.toString() + ")();" : ""}<\/script>
 </body></html>`;
   }
 
-  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
