@@ -255,9 +255,9 @@ python3 scripts/make-template.py --target php --out dist/php-client1 --name "ا�
 - `TPL11` في `pagebuilder-gen.js`: هيكل 11 قسماً (Hero، المشكلة، الحل، قبل/بعد، ميزة، 4 أيقونات مكونات، الاستعمال، المقارنة، نمط الحياة، الثقة، العرض) مستخلص من برومبت Anti Acne الناجح؛ يُحقن في تعليمات Gemini عند `#gen-tpl=11` (الافتراضي)، و`free` يعيد السلوك القديم. النص الكامل الأصلي محفوظ في `assets/data/landing-template-anti-acne.txt`.
 - أُزيل وضع «3 أجزاء متصلة» وخيار «عدد الأجزاء» (و`genPart`/`stackParts`/`SPLIT`): التوليد دائماً صورة واحدة.
 
-### الأفاتار الناطق (في `assets/js/agent.js`، قسم `Avatar`) — غير منشور بعد
-- أفاتار SVG لامرأة محجّبة بلباس محتشم (قاعدة العلامة)، يغمز كل ~4.6ث، وفمه 3 أشكال (`data-m` 0/1/2).
-- يقرأ أعلى الصفحة (h1 + بيانات `PRODUCTS`: الوصف، السعر، العرض) ويبني نصاً إقناعياً من بيانات حقيقية فقط، ثم أزرار «اطلب الآن» و«اسأل المساعد».
-- الصوت: ElevenLabs إن وُجد `alyssum_el_key` في localStorage (+`alyssum_el_voice`) ويُقاس السعة عبر `AudioContext`/`AnalyserNode`؛ وإلا Web Speech (صوت عربي إن وُجد، وإلا تعليق نصي صامت). Web Speech لا يتيح تيار الصوت فتُحرَّك الفم بأحداث `boundary` ونبض.
-- حقول المفتاح/الصوت في تبويب «الوكيل الذكي» (`av-elkey`, `av-elvoice`). المفتاح يبقى في متصفح المدير فقط؛ الزبائن يسمعون صوت المتصفح.
-- لم يُلمس `agent-brain.js`.
+### الأفاتار الناطق (`assets/js/agent.js` قسم `Avatar` + `assets/js/avatar-script.js`) — غير منشور بعد
+- واجهة **بديلة** للمحادثة (يظهر أحدهما فقط): `agent-training.json` ← `display:{mode:"chat"|"avatar", mobileChat:bool}` عاماً، و`scopes[x].display` ("default"/"chat"/"avatar") لكل صفحة. الافتراضي `chat` (لا تغيير). تُضبط من تبويب «الوكيل الذكي» وتُنشر بزر «تأكيد ونشر».
+- نفس عقل الوكيل وتدريبه: أسئلة الزبون تمرّ عبر `reply()` (الدماغ + التدريب) داخل لوحة محادثة مخفية، ويلتقط `MutationObserver` ردّ الوكيل فيعرضه الأفاتار وينطقه. لم يُلمس `agent-brain.js`.
+- نص الأفاتار من `AvatarScript.build` (مشترك مع لوحة التحكم): بيانات المنتج + رسالة الترحيب المدرَّبة، أو `scopes[x].avatarScript` يدوياً. آخر جملة تدعو للطلب فيرفع الأفاتار يداً تشير إلى زر «اطلب الآن» ويُبرز أزرار الطلب (`.av-hl`).
+- الصوت بالأولوية: ملفات جاهزة `assets/data/avatar-audio.json` (+`assets/audio/avatar/<scope>-<n>.mp3`، تُولَّد من لوحة التحكم بـ`AvatarAudio` عبر ElevenLabs) ← مفتاح ElevenLabs في متصفح الزائر ← Web Speech ← نص صامت. الفم: AnalyserNode مع الملفات، ونبض أحداث النطق مع Web Speech.
+- اختبار Playwright يحتاج `serviceWorkers:"block"` لأن `sw.js` يتجاوز `route()`.
