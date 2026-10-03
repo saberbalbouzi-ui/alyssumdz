@@ -44,7 +44,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     <div id="pbs-extra" style="display:flex;flex-direction:column;gap:.5rem"></div>
     <button id="pbs-go" disabled style="border:0;border-radius:12px;padding:.8rem;font-weight:800;font-size:1rem;cursor:pointer;background:#7c3aed;color:#fff">التقاط</button>
     <div id="pbs-msg" style="font-size:.78rem;line-height:1.7;color:#173f35;min-height:3em"></div>
-    <div style="font-size:.74rem;color:#8a8472;border-top:1px solid #eee;padding-top:.6rem">تعمل الأداة داخل متصفحك. الصورة الأصلية لا تتغير إلا عند «التقاط».</div>
+    <div style="font-size:.74rem;color:#8a8472;border-top:1px solid #eee;padding-top:.6rem">تعمل الأداة داخل متصفحك. الصورة الأصلية لا تتغير إلا عند «التقاط».<div id="pbs-ver" style="margin-top:.35rem;font-size:.68rem;color:#a8a294;direction:rtl"></div></div>
   </div></div>`;
     document.body.appendChild(host); const $ = id => host.querySelector("#" + id), S = { mode: "one", closed: false, hintOne, hintAll };
     const close = () => { S.closed = true; host.remove(); }; $("pbs-x").onclick = $("pbs-back").onclick = close;
@@ -120,6 +120,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
   /* الواجهة الذكية: حدود بنفسجية تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
   function elementsAI(sh, cv, inf, w, res, key) {
     const $ = sh.$, W = cv.width, H = cv.height, S = res.S, items = res.items; $("pbs-load").style.display = "none";
+    $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · كشف: " + (res.src === "gemini" ? "Gemini+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
@@ -189,7 +190,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
   }
   /* الكشف البسيط بالحواف (بلا شبكة): للتصاميم ذات الخلفية الناعمة — يُستعمل إن تعذّر تحميل النموذج الذكي */
   function elementsBasic(sh, cv, inf, w, note) {
-    const $ = sh.$, W = cv.width, H = cv.height;
+    const $ = sh.$, W = cv.width, H = cv.height; $("pbs-ver").textContent = "تشخيص v3 · الطريقة البسيطة (بلا نماذج)";
     $("pbs-hint").textContent = sh.S.hintOne = "انقر على أحد العناصر المحاطة بالبنفسجي لاختياره (منتج، عشبة، مكوّنات…).";
     let sc; try { sc = ImageTools.scanElements(cv); } catch (e) { console.error(e); $("pbs-load").textContent = "⚠️ " + e.message; return; }
     if (sh.S.closed) return; $("pbs-load").style.display = "none"; const items = sc.items;
