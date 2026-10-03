@@ -24,10 +24,19 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
       im.onerror = () => rej(new Error("تعذّر تحميل الصورة (" + src + ")")); im.src = url;
     });
   }
+  /* صورة خارج قسم الكانفاس ← تُنسخ إلى قسم كانفاس جديد تحتها (الأصل يبقى كما هو) لتعمل عليها أدوات الالتقاط */
+  function toCanvas(inf) {
+    const E = A().E, DW = 1100, fd = (document.getElementById("pbx-frame") || {}).contentDocument, im = fd && fd.querySelector(`[data-pb="${inf.node.id}"] img`);
+    const nw = (im && im.naturalWidth) || 1100, nh = (im && im.naturalHeight) || 1100, h = Math.round(nh * DW / nw);
+    const bg = PB.mkFree("image", 0, 0, 0); Object.assign(bg.set, { src: inf.node.set.src, alt: inf.node.set.alt || "", fit: "fill", fx: { d: 0 }, fy: { d: 0 }, fwd: { d: 100 }, fh: { d: h }, zi: 0 });
+    const sec = PB.mkCanvas(); Object.assign(sec.set, { scaled: true, dw: DW, layout: "boxed", cw: { d: DW }, mh: { d: h } }); sec.free = [bg];
+    const i = E.page.sections.findIndex(x => x.id === inf.sec.id); E.page.sections.splice(i < 0 ? E.page.sections.length : i + 1, 0, sec);
+    E.sel = bg.id; A().renderCanvas(); A().commitAfter(bg.id); return A().find(bg.id);
+  }
   function target() {
-    const inf = A().E && A().E.sel ? A().find(A().E.sel) : null;
-    if (!inf || inf.kind !== "widget" || inf.node.type !== "image" || !inf.node.set.src) return { err: "حدّد صورة داخل قسم كانفاس (انقر عليها) ثم اضغط الأداة من إعداداتها." };
-    if (!inf.free || inf.sec.set.kind !== "canvas") return { err: "التقاط النص يعمل على الصور داخل أقسام الكانفاس (الصفحات المولَّدة بالذكاء الاصطناعي)." };
+    let inf = A().E && A().E.sel ? A().find(A().E.sel) : null;
+    if (!inf || inf.kind !== "widget" || inf.node.type !== "image" || !inf.node.set.src) return { err: "حدّد صورة (انقر عليها) ثم اضغط الأداة من إعداداتها." };
+    if (!inf.free || inf.sec.set.kind !== "canvas") inf = toCanvas(inf);      // تحويل تلقائي إلى قسم كانفاس
     return { inf };
   }
   /* هيكل النافذة المشترك (يشبه لوحة Canva): صورة ملوّنة الإطارات + لوحة خيارات «عنصر / الكل» + زر التقاط */
