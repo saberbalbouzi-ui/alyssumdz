@@ -26,7 +26,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
   }
   function target() {
     const inf = A().E && A().E.sel ? A().find(A().E.sel) : null;
-    if (!inf || inf.kind !== "widget" || inf.node.type !== "image" || !inf.node.set.src) return { err: "حدّد صورة أولاً (انقر عليها في الصفحة) ثم افتح «أدوات ذكية»." };
+    if (!inf || inf.kind !== "widget" || inf.node.type !== "image" || !inf.node.set.src) return { err: "حدّد صورة داخل قسم كانفاس (انقر عليها) ثم اضغط الأداة من إعداداتها." };
     if (!inf.free || inf.sec.set.kind !== "canvas") return { err: "التقاط النص يعمل على الصور داخل أقسام الكانفاس (الصفحات المولَّدة بالذكاء الاصطناعي)." };
     return { inf };
   }
