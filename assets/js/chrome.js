@@ -157,17 +157,26 @@ window.Chrome = (function () {
         '#ch-share .chs-pv{display:flex;gap:.7rem;align-items:center;background:#faf8f3;border:1px solid #eae3d6;border-radius:12px;padding:.55rem;margin-bottom:.9rem}#ch-share .chs-pv img{width:52px;height:52px;object-fit:cover;border-radius:8px;flex:none}#ch-share .chs-pv span{font-weight:700;font-size:.92rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}' +
         '#ch-share .chs-url{display:flex;gap:.4rem;margin-bottom:1rem}#ch-share .chs-url input{flex:1;min-width:0;border:1px solid #d9d2c2;border-radius:10px;padding:.6rem .7rem;font:inherit;font-size:.85rem;direction:ltr;background:#fff;color:#1c2420}' +
         '#ch-share .chs-url button,#ch-share .chs-nat{border:0;border-radius:10px;background:#173f35;color:#fff;font:inherit;font-weight:800;padding:.6rem 1rem;cursor:pointer;white-space:nowrap}#ch-share .chs-url button.ok{background:#157a55}' +
-        '#ch-share .chs-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:.7rem .4rem}#ch-share .chs-t{display:flex;flex-direction:column;align-items:center;gap:.35rem;text-decoration:none;color:#1c2420;font-size:.78rem;font-weight:700}#ch-share .chs-t:hover .si-ic{transform:scale(1.08)}#ch-share .si-ic{transition:transform .15s}#ch-share .chs-nat{width:100%;margin-bottom:.9rem;display:none}</style>' +
+        '#ch-share .chs-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:.7rem .4rem}#ch-share .chs-t{display:flex;flex-direction:column;align-items:center;gap:.35rem;text-decoration:none;color:#1c2420;font-size:.78rem;font-weight:700}#ch-share .chs-t:hover .si-ic{transform:scale(1.08)}#ch-share .si-ic{transition:transform .15s}#ch-share .chs-nat{width:100%;margin-bottom:.9rem;display:none}#ch-share .chs-qrb{width:100%;margin-top:1rem;border:1.5px dashed #d9d2c2;background:#faf8f3;border-radius:10px;padding:.55rem;font:inherit;font-weight:800;color:#173f35;cursor:pointer}#ch-share .chs-qr{text-align:center;margin-top:.8rem}#ch-share .chs-qr svg{width:180px;height:180px;background:#fff;padding:8px;border:1px solid #eae3d6;border-radius:12px}</style>' +
         '<div class="chs-box"><div class="chs-h"><b>مشاركة</b><button class="chs-x" type="button" aria-label="إغلاق">×</button></div>' +
         '<div class="chs-pv">' + (d.image ? '<img src="' + esc(d.image) + '" alt="">' : "") + "<span>" + esc(d.title) + "</span></div>" +
         '<button class="chs-nat" type="button">📤 مشاركة عبر تطبيقات الجهاز</button>' +
         '<div class="chs-url"><input readonly value="' + esc(d.url) + '" aria-label="رابط الصفحة"><button type="button" class="chs-cp">نسخ الرابط</button></div>' +
-        '<div class="chs-g">' + ch.map(tile).join("") + "</div></div>";
+        '<div class="chs-g">' + ch.map(tile).join("") + '</div><button type="button" class="chs-qrb">▦ رمز QR للمسح بالهاتف</button><div class="chs-qr" hidden></div></div>';
       document.body.appendChild(m);
       m.addEventListener("click", e => { if (e.target === m || e.target.closest(".chs-x")) this.close(); });
       const inp = m.querySelector("input"), cp = m.querySelector(".chs-cp"); inp.onfocus = () => inp.select();
       cp.onclick = async () => { const ok = await this.copy(d.url); cp.textContent = ok ? "تم النسخ ✓" : "انسخ يدوياً"; cp.classList.toggle("ok", ok); if (!ok) inp.select(); setTimeout(() => { cp.textContent = "نسخ الرابط"; cp.classList.remove("ok"); }, 2200); };
       if (navigator.share) { const n = m.querySelector(".chs-nat"); n.style.display = "block"; n.onclick = () => navigator.share({ title: d.title, text: d.text || d.title, url: d.url }).catch(() => { }); }
+      const qb = m.querySelector(".chs-qrb"), qa = m.querySelector(".chs-qr");
+      qb.onclick = async () => {
+        if (!qa.hidden) { qa.hidden = true; return; }
+        qa.hidden = false; qa.textContent = "جارِ التوليد…";
+        try {
+          if (!window.qrcode) await new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+          const q = qrcode(0, "M"); q.addData(d.url); q.make(); qa.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+        } catch (e) { qa.textContent = "تعذّر توليد الرمز (تحقق من الإنترنت)"; }
+      };
       this._k = e => { if (e.key === "Escape") Share.close(); }; document.addEventListener("keydown", this._k);
       (m.querySelector(".chs-cp")).focus();
     }
