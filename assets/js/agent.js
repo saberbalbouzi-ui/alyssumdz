@@ -143,8 +143,8 @@ const Agent = (() => {
     if (!cp) return "";
     const priceStr = l === "fr" ? fmtFr(cp.price) : fmt(cp.price);
     return l === "fr"
-      ? `<br><br>✨ <b>Idée</b> : plusieurs clients associent ce produit à <a href="${REL}p/${cp.slug}/" style="color:var(--gold);font-weight:900">${cp.title}</a> (${priceStr}) pour de meilleurs résultats.`
-      : `<br><br>✨ <b>فكرة</b>: كثير من زبائننا يجمعون بين هذا المنتج و<a href="${REL}p/${cp.slug}/" style="color:var(--gold);font-weight:900">${cp.title}</a> (${priceStr}) للحصول على نتيجة أفضل.`;
+      ? `<br><br>✨ <b>Idée</b> : plusieurs clients associent ce produit à <a href="${REL}${cp.route?"lp/"+cp.route:"p/"+cp.slug}/" style="color:var(--gold);font-weight:900">${cp.title}</a> (${priceStr}) pour de meilleurs résultats.`
+      : `<br><br>✨ <b>فكرة</b>: كثير من زبائننا يجمعون بين هذا المنتج و<a href="${REL}${cp.route?"lp/"+cp.route:"p/"+cp.slug}/" style="color:var(--gold);font-weight:900">${cp.title}</a> (${priceStr}) للحصول على نتيجة أفضل.`;
   }
 
   const T = {
@@ -420,7 +420,7 @@ const Agent = (() => {
 
   function productCard(p, l) {
     const label = l === "fr" ? "Commander →" : "اطلبه الآن ←";
-    return `<span class="mini">🌿 <b>${p.title}</b><br>${l === "fr" ? fmtFr(p.price) : fmt(p.price)}${p.old ? ` <s>${l === "fr" ? fmtFr(p.old) : fmt(p.old)}</s>` : ""} · <a href="${REL}p/${p.slug}/" style="color:var(--gold);font-weight:900">${label}</a></span>`;
+    return `<span class="mini">🌿 <b>${p.title}</b><br>${l === "fr" ? fmtFr(p.price) : fmt(p.price)}${p.old ? ` <s>${l === "fr" ? fmtFr(p.old) : fmt(p.old)}</s>` : ""} · <a href="${REL}${p.route?"lp/"+p.route:"p/"+p.slug}/" style="color:var(--gold);font-weight:900">${label}</a></span>`;
   }
 
   /* وصف/تحفيز دقيق لمنتج معيّن: يستعمل بيانات المنتج الحقيقية (السعر، العروض، الوصف) وليس نصاً عاماً مختلقاً

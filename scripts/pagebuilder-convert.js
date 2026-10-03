@@ -146,6 +146,8 @@ const PBBind = (() => {
   const prods = () => (typeof Admin !== "undefined" && Admin.products) || [];
   const get = slug => cache[slug] || prods().find(x => x.slug === slug);
   const draft = slug => { if (!cache[slug]) { const p = prods().find(x => x.slug === slug); if (!p) return null; orig[slug] = JSON.stringify(p); cache[slug] = JSON.parse(orig[slug]); } return cache[slug]; };
+  /* هل هذه الصفحة هي الصفحة الرسمية للمنتج؟ (وحدها تُغيّر المنتج وتتغيّر به؛ غيرها تعرض بياناته للقراءة) */
+  const official = (slug, page) => { const p = get(slug); if (!p || !page) return true; if (page.origin) return page.origin.kind === "home" ? true : !p.officialPage; return p.officialPage === page.slug; };
   const simple = p => !p.type || p.type === "simple" || (!(p.variations || []).length && !(p.attributes || []).some(a => a.variation));
   const img = (p, rel) => { const s = p.cover || (p.images || [])[0] || ""; return s ? rel + encodeURI(s) : ""; };
   const card = (p, rel) => { const d = simple(p) && p.old ? Math.round((1 - p.price / p.old) * 100) : 0;
@@ -154,7 +156,7 @@ const PBBind = (() => {
     return `<div class="offer${i === 2 ? " on" : ""}">${i === 2 ? '<span class="best">الأكثر طلباً 🔥</span>' : ""}<div class="q">${label}</div><div class="p">${fmt(o.price)}</div><div class="u">${fmt(unit)} للقطعة ${disc > 0 ? "· وفر " + disc + "%" : ""}${o.free ? '<br><b style="color:var(--ok)">مجاناً داخل العرض</b>' : ""}</div></div>`; }).join("");
   /* يملأ العناصر المرتبطة داخل root (مرسوم في المطوّر mark=true، أو DOM مؤقت للتثبيت في الملف mark=false) */
   function applyTo(root, o) {
-    const mk = (el, slug) => { if (el && o.mark) { el.setAttribute("data-pbbind", slug); el.classList.add("pbbind"); } };
+    const mk = (el, slug) => { if (el && o.mark) { el.setAttribute("data-pbbind", slug); el.classList.add("pbbind"); if (o.ro) el.classList.add("pbbind-ro"); } };
     if (o.kind === "product") {
       const p = get(o.slug); if (!p) return;
       const h1 = o.noTitle ? null : root.querySelector("h1"); if (h1 && p.title) { h1.textContent = p.title; mk(h1, o.slug); }
@@ -170,7 +172,7 @@ const PBBind = (() => {
       else if (main && (p.images || [])[0] && !(th && th.hasAttribute("data-static"))) { main.src = o.rel + encodeURI(p.images[0]); mk(main, o.slug); }
     } else {
       const ids = [["#bestsellers-grid", ps => ps.filter(p => (p.tags || []).includes("best")).slice(0, 8)], ["#grid", ps => ps]];
-      ids.forEach(([sel, f]) => { const g = root.querySelector(sel); if (!g) return; const list = f(prods().map(x => get(x.slug)).filter(x => x && x.active !== false)); g.innerHTML = ""; list.forEach(p => { const a = document.createElement("div"); a.className = "card"; a.innerHTML = card(p, o.rel); if (o.mark) { a.setAttribute("data-pbbind", p.slug); a.classList.add("pbbind"); } g.appendChild(a); }); });
+      ids.forEach(([sel, f]) => { const g = root.querySelector(sel); if (!g) return; const list = f(prods().map(x => get(x.slug)).filter(x => x && x.active !== false)); g.innerHTML = ""; list.forEach(p => { const a = document.createElement("div"); a.className = "card"; a.innerHTML = card(p, o.rel); if (o.mark) { a.setAttribute("data-pbbind", p.slug); a.classList.add("pbbind"); if (o.ro) a.classList.add("pbbind-ro"); } g.appendChild(a); }); });
     }
   }
   /* أي صفحة مرتبطة بمنتج (أصلية مفتوحة من المنتج/الرئيسية، أو صفحة هبوط «مرتبطة بمنتج») تُربط عناصرها ببيانات ذلك المنتج */
@@ -178,9 +180,9 @@ const PBBind = (() => {
   /* بعد كل رسم للقماش */
   function after(root, page) {
     const og = bindOf(page); if (!og) return;
-    applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true, noTitle: og.noTitle });
+    applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true, noTitle: og.noTitle, ro: og.kind === "product" && !official(og.slug, page) });
     const d = root.ownerDocument;
-    if (!d.getElementById("pbbind-css")) { const st = d.createElement("style"); st.id = "pbbind-css"; st.textContent = ".pbbind{outline:2px dashed #0e9f8e!important;outline-offset:3px;cursor:pointer!important;position:relative}.pbbind:hover{outline-color:#f59e0b!important;background-image:linear-gradient(rgba(14,159,142,.07),rgba(14,159,142,.07))}"; d.head.appendChild(st); }
+    if (!d.getElementById("pbbind-css")) { const st = d.createElement("style"); st.id = "pbbind-css"; st.textContent = ".pbbind{outline:2px dashed #0e9f8e!important;outline-offset:3px;cursor:pointer!important;position:relative}.pbbind-ro{outline-color:#9ca3af!important}.pbbind:hover{outline-color:#f59e0b!important;background-image:linear-gradient(rgba(14,159,142,.07),rgba(14,159,142,.07))}"; d.head.appendChild(st); }
     if (!root._pbb) { root._pbb = true; root.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-pbbind]"); if (!b) return; e.preventDefault(); e.stopPropagation(); openModal(b.getAttribute("data-pbbind")); }, true); }
   }
   /* تثبيت القيم الحالية داخل كود قسم (عند الحفظ) كي يطابق الملف بيانات المنتج */
@@ -197,8 +199,10 @@ const PBBind = (() => {
     document.getElementById("pbb-m") && document.getElementById("pbb-m").remove();
     const m = document.createElement("div"); m.id = "pbb-m"; m.style.cssText = "position:fixed;inset:0;z-index:2147483100;background:rgba(10,20,16,.55);display:grid;place-items:center;padding:14px;direction:rtl;font-family:inherit";
     const inp = "width:100%;border:1.5px solid #d9d2c2;border-radius:8px;padding:.5rem;font:inherit;box-sizing:border-box";
-    const draw = () => {
-      m.innerHTML = `<div style="background:#fff;border-radius:18px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:1.2rem;box-shadow:0 30px 80px rgba(0,0,0,.4)">
+    const pg = PBApp.E.page, isHome = pg && pg.origin && pg.origin.kind === "home";
+    let draw = () => {
+      const ok = isHome || official(slug, pg);
+      m.innerHTML = `<div style="background:#fff;border-radius:18px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:1.2rem;box-shadow:0 30px 80px rgba(0,0,0,.4)">${ok ? "" : `<div style="background:#fff4e5;border:1px solid #f5d199;border-radius:10px;padding:.6rem .8rem;margin-bottom:.7rem;font-size:.85rem">⚠️ هذه ليست الصفحة الرسمية للمنتج، فتُعرض بياناته للقراءة فقط.<br><button data-a="mkoff" style="margin-top:.4rem;border:0;background:#173f35;color:#fff;border-radius:8px;padding:.35rem .8rem;font:inherit;font-weight:800;cursor:pointer">📄 اجعل هذه الصفحة هي الرسمية</button></div>`}
 <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0;color:#173f35">🔗 بيانات المنتج</h3><button data-a="done" style="border:0;background:#173f35;color:#fff;border-radius:10px;padding:.45rem 1rem;font:inherit;font-weight:800;cursor:pointer">تم ✓</button></div>
 <p style="margin:.3rem 0 .8rem;color:#666;font-size:.82rem">هذه بيانات المنتج نفسه: ما تغيّره هنا يظهر في الصفحة فوراً، وعند «حفظ ونشر» يتغيّر المنتج في المتجر والطلبات وكل مكان.</p>
 <label style="font-weight:700;font-size:.85rem">الاسم</label><input data-f="title" value="${esc(p.title)}" style="${inp};margin-bottom:.6rem">
@@ -210,10 +214,12 @@ const PBBind = (() => {
     m.addEventListener("input", e => { const t = e.target; if (t.dataset.f) { p[t.dataset.f] = t.type === "number" ? (t.value === "" ? "" : +t.value) : t.value; if (t.dataset.f === "old" && t.value === "") delete p.old; } else if (t.dataset.o !== undefined) { p.offers[+t.dataset.o][t.dataset.k] = +t.value; } else return; if (t.dataset.f === "price" || t.dataset.f === "title" || t.dataset.f === "old" || t.dataset.o !== undefined) refresh(); });
     m.addEventListener("click", async e => { const b = e.target.closest("button"); if (!b) { if (e.target === m) m.remove(); return; } const a = b.dataset.a, i = +b.dataset.i;
       if (a === "done") { m.remove(); return; }
+      if (a === "mkoff") { if (pg.origin) delete p.officialPage; else p.officialPage = pg.slug; draw(); refresh(); return; }
       if (a === "oadd") (p.offers = p.offers || []).push({ qty: 1, price: p.price }); else if (a === "odel") p.offers.splice(i, 1);
       else if (a === "idel") p.images.splice(i, 1); else if (a === "imv") { const j = i + +b.dataset.d; if (j >= 0 && j < p.images.length) [p.images[i], p.images[j]] = [p.images[j], p.images[i]]; }
       else if (a === "iadd") { const r = await PBApp.openLibrary(true); (r || []).forEach(x => { (p.images = p.images || []).push(x); }); }
       if (a !== "iadd" || true) { p.cover = (p.images || [])[0] || p.cover; draw(); refresh(); } });
+    const draw0 = draw; draw = () => { draw0(); if (!(isHome || official(slug, pg))) m.querySelectorAll("input,[data-a=oadd],[data-a=odel],[data-a=iadd],[data-a=imv],[data-a=idel]").forEach(x => { x.disabled = true; x.style.opacity = ".55"; }); };
     document.body.appendChild(m); draw();
   }
   /* عند الحفظ: يكتب التغييرات في المنتج نفسه (data.js) */

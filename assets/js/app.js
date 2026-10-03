@@ -895,6 +895,8 @@ function isOutOfStock(p){
   if(t==="grouped"){ const cs = groupChildren(p); return !cs.length || cs.every(isOutOfStock); }
   return p.stock!==undefined && p.stock!==null && Number(p.stock)<=0;
 }
+/* رابط المنتج في البطاقات: صفحة «المسار» المختارة للمنتج (صفحة هبوط) إن وُجدت، وإلا صفحته الرسمية */
+function productHref(p){ return REL + (p.route ? "lp/" + p.route + "/" : "p/" + p.slug + "/"); }
 function productCardHTML(p, opts){
   opts = opts || {};
   const ptype = productType(p), disc = (ptype==="simple" && p.old) ? Math.round((1-p.price/p.old)*100) : 0;
@@ -919,7 +921,7 @@ function initHome(){
     grid.innerHTML = "";
     PRODUCTS.filter(p=>filter==="all"||p.cat===filter).forEach(p=>{
       const a = document.createElement("a");
-      a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = REL + "p/" + p.slug + "/";
+      a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = productHref(p);
       a.innerHTML = productCardHTML(p);
       grid.appendChild(a);
     });
@@ -974,7 +976,7 @@ async function renderBestsellers(slugs){
     wrap.innerHTML = "";
     list.forEach(p=>{
       const a = document.createElement("a");
-      a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = REL + "p/" + p.slug + "/";
+      a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = productHref(p);
       a.innerHTML = productCardHTML(p, {ribbon:c.ribbon});
       wrap.appendChild(a);
     });
