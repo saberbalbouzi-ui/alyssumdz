@@ -143,5 +143,81 @@ window.ImageTools = (function () {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4, di = Math.abs(d[i] - I[0]) + Math.abs(d[i + 1] - I[1]) + Math.abs(d[i + 2] - I[2]); if (di < full * .38) { n++; if (x < mnx) mnx = x; if (x > mxx) mxx = x; if (y < mny) mny = y; if (y > mxy) mxy = y; } }
     return n < 8 ? b : { x0: x0 + mnx, x1: x0 + mxx + 1, y0: y0 + mny, y1: y0 + mxy + 1 };
   }
-  return { fitPlane, pushPull, eraseRects, detectText, eraseBrush, inkColor, coreBox };
+
+  /* ───── الالتقاط السحري: كشف العناصر (صور/منتجات/أيقونات/زخارف) وقصّها بشفافية ─────
+     نكشف «الحواف الحادة» (التوهّج والتدرّج والظلال الناعمة لا حواف لها) ← نغلق الخطوط بتوسيع طفيف ← ما لا يصله الخارج من حدود الصورة = داخل عنصر
+     (فيُملأ حتى لو شابه لون الخلفية) ← مكوّنات متصلة = عناصر. ثم نقصّ كل عنصر RGBA بحافة ناعمة ونزيل تلوّث لون الخلفية عن الحواف. */
+  function bandModels(cv, bandH) {
+    const W = cv.width, H = cv.height, g = cv.getContext("2d", { willReadFrequently: true }), models = [];
+    for (let y0 = 0; y0 < H; y0 += bandH) {
+      const h = Math.min(bandH, H - y0), d = g.getImageData(0, y0, W, h).data, S = [], st = Math.max(1, Math.floor(Math.sqrt(W * h / 3500)));
+      for (let y = 0; y < h; y += st) for (let x = 0; x < W; x += st) { const i = (y * W + x) * 4; S.push([x, y, d[i], d[i + 1], d[i + 2]]); }
+      models.push({ y0, h, pl: [0, 1, 2].map(ch => fitPlane(S, ch)) });
+    }
+    return models;
+  }
+  function sqDilate(src, w, h, r) {                                // توسيع مربع قابل للفصل
+    const t = new Uint8Array(w * h), o = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) { let last = -1e9; for (let x = 0; x < w; x++) { if (src[y * w + x]) last = x; if (x - last <= r) t[y * w + x] = 1; } last = 1e9; for (let x = w - 1; x >= 0; x--) { if (src[y * w + x]) last = x; if (last - x <= r) t[y * w + x] = 1; } }
+    for (let x = 0; x < w; x++) { let last = -1e9; for (let y = 0; y < h; y++) { if (t[y * w + x]) last = y; if (y - last <= r) o[y * w + x] = 1; } last = 1e9; for (let y = h - 1; y >= 0; y--) { if (t[y * w + x]) last = y; if (last - y <= r) o[y * w + x] = 1; } }
+    return o;
+  }
+  function findObjects(cv, opt) {
+    opt = opt || {}; const W = cv.width, H = cv.height, N = W * H, g = cv.getContext("2d", { willReadFrequently: true }), D = g.getImageData(0, 0, W, H).data, Te = opt.edge || 10;
+    const models = bandModels(cv, 160), bgc = new Uint8ClampedArray(N * 3);
+    for (const m of models) for (let y = 0; y < m.h; y++) for (let x = 0; x < W; x++) { const i = (m.y0 + y) * W + x; for (let k = 0; k < 3; k++) bgc[i * 3 + k] = m.pl[k][0] + m.pl[k][1] * x + m.pl[k][2] * y; }
+    const edge = new Uint8Array(N);
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; let gx = 0, gy = 0; for (let k = 0; k < 3; k++) { const a = Math.abs(D[(i + 1) * 4 + k] - D[(i - 1) * 4 + k]), b = Math.abs(D[(i + W) * 4 + k] - D[(i - W) * 4 + k]); if (a > gx) gx = a; if (b > gy) gy = b; } if ((gx + gy) / 2 > Te) edge[i] = 1; }
+    const E2 = sqDilate(edge, W, H, opt.close || 2), vis = new Uint8Array(N), stack = new Int32Array(N); let sp = 0;      // الخارج = ما يصله حدّ الصورة عبر غير الحواف
+    const push = i => { if (!vis[i] && !E2[i]) { vis[i] = 1; stack[sp++] = i; } };
+    for (let x = 0; x < W; x++) { push(x); push((H - 1) * W + x); } for (let y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }
+    while (sp) { const i = stack[--sp], x = i % W; if (x > 0) push(i - 1); if (x < W - 1) push(i + 1); if (i >= W) push(i - W); if (i < N - W) push(i + W); }
+    const inside = new Uint8Array(N); for (let i = 0; i < N; i++) inside[i] = vis[i] ? 0 : 1;
+    const k = Math.max(1, Math.ceil(W / 540)), sw = Math.ceil(W / k), sh = Math.ceil(H / k), sm = new Uint8Array(sw * sh);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (inside[y * W + x]) sm[((y / k) | 0) * sw + ((x / k) | 0)] = 1;
+    const dil = sqDilate(sm, sw, sh, opt.gap || 4), lab = new Int32Array(sw * sh), par = [0]; const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; }; let nl = 0;
+    for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) { const i = y * sw + x; if (!dil[i]) continue; const nb = []; if (x > 0 && lab[i - 1]) nb.push(lab[i - 1]); if (y > 0) { if (lab[i - sw]) nb.push(lab[i - sw]); if (x > 0 && lab[i - sw - 1]) nb.push(lab[i - sw - 1]); if (x < sw - 1 && lab[i - sw + 1]) nb.push(lab[i - sw + 1]); }
+      if (!nb.length) { par.push(++nl); lab[i] = nl; } else { let m = nb[0]; for (const q of nb) if (q < m) m = q; lab[i] = m; for (const q of nb) { const a = find(q), b = find(m); if (a !== b) par[Math.max(a, b)] = Math.min(a, b); } } }
+    const comps = new Map(); for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) { const i = y * sw + x; if (!lab[i]) continue; const id = find(lab[i]); lab[i] = id; let c = comps.get(id); if (!c) { c = { id, x0: x, x1: x, y0: y, y1: y, n: 0 }; comps.set(id, c); } c.x0 = Math.min(c.x0, x); c.x1 = Math.max(c.x1, x); c.y0 = Math.min(c.y0, y); c.y1 = Math.max(c.y1, y); if (sm[i]) c.n++; }
+    const minA = (opt.minArea || .0008) * sw * sh, out = [];
+    for (const c of comps.values()) {
+      const bw = (c.x1 - c.x0 + 1) * k, bh = (c.y1 - c.y0 + 1) * k; if (c.n < minA || bw < 24 || bh < 24) continue; if (bw > W * .97 && bh > H * .6) continue;
+      out.push({ id: c.id, x0: Math.max(0, c.x0 * k), y0: Math.max(0, c.y0 * k), x1: Math.min(W, (c.x1 + 1) * k), y1: Math.min(H, (c.y1 + 1) * k), area: c.n });
+    }
+    out.sort((a, b) => b.area - a.area); return { objects: out.slice(0, opt.max || 40), W, H, k, sw, lab, inside, bgc, D };
+  }
+  /* يقصّ عنصراً RGBA: ألفا = داخل العنصر مع تنعيم 3×3 للحافة + إزالة تلوّث الخلفية؛ يعيد {canvas, mask} */
+  function cutObject(F, o) {
+    const W = F.W, w = o.x1 - o.x0, h = o.y1 - o.y0, a0 = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const gx = o.x0 + x, gy = o.y0 + y; if (F.inside[gy * W + gx] && F.lab[((gy / F.k) | 0) * F.sw + ((gx / F.k) | 0)] === o.id) a0[y * w + x] = 1; }
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const cg = cv.getContext("2d"), img = cg.createImageData(w, h), m = new Uint8Array(w * h); let cnt = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let s = 0, n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) { n++; continue; } s += a0[yy * w + xx]; n++; }
+      const al = a0[y * w + x] ? Math.max(.5, s / n) : s / n * .5; if (al < .08) continue; const li = y * w + x, gi = (o.y0 + y) * W + (o.x0 + x); m[li] = 1; cnt++;
+      for (let c = 0; c < 3; c++) { const p = F.D[gi * 4 + c], b = F.bgc[gi * 3 + c]; img.data[li * 4 + c] = al < .98 ? Math.max(0, Math.min(255, b + (p - b) / al)) : p; } img.data[li * 4 + 3] = Math.round(Math.min(1, al) * 255);
+    }
+    cg.putImageData(img, 0, 0); return { canvas: cv, mask: m, w, h, filled: cnt };
+  }
+  /* يملأ منطقة مقنّعة بترميم «المتبقي عن سطح الخلفية» (نفس منطق الفرشاة) */
+  function fillMask(ctx, px0, py0, pw, ph, m2) {
+    const img = ctx.getImageData(px0, py0, pw, ph), D = img.data, ring = [], step = Math.max(1, Math.floor(Math.sqrt(pw * ph / 3000)));
+    for (let y = 0; y < ph; y += step) for (let x = 0; x < pw; x += step) if (!m2[y * pw + x]) { const i = (y * pw + x) * 4; ring.push([x, y, D[i], D[i + 1], D[i + 2]]); }
+    if (ring.length < 12) return false; const pl = [0, 1, 2].map(ch => fitPlane(ring, ch)), at = (x, y, ch) => pl[ch][0] + pl[ch][1] * x + pl[ch][2] * y;
+    const known = new Uint8Array(pw * ph), v = new Float32Array(pw * ph * 3); for (let i = 0; i < pw * ph; i++) { known[i] = m2[i] ? 0 : 1; const x = i % pw, y = (i / pw) | 0; for (let k = 0; k < 3; k++) v[i * 3 + k] = D[i * 4 + k] - at(x, y, k); }
+    pushPull(v, known, pw, ph);
+    for (let i = 0; i < pw * ph; i++) if (m2[i]) { const x = i % pw, y = (i / pw) | 0; for (let k = 0; k < 3; k++) D[i * 4 + k] = Math.max(0, Math.min(255, Math.round(v[i * 3 + k] + at(x, y, k)))); D[i * 4 + 3] = 255; }
+    ctx.putImageData(img, px0, py0); return true;
+  }
+  /* يمسح عنصراً مقتطعاً من الخلفية: قناعه موسَّع قليلاً (هالة/ظل) داخل نافذة بهامش كافٍ */
+  function eraseObject(ctx, o, cut, grow, F) {
+    grow = grow == null ? 5 : grow; const reach = 44, CW = ctx.canvas.width, CH = ctx.canvas.height, pad = Math.max(reach + 8, Math.round(Math.max(cut.w, cut.h) * .12)), px0 = Math.max(0, o.x0 - pad), py0 = Math.max(0, o.y0 - pad), px1 = Math.min(CW, o.x1 + pad), py1 = Math.min(CH, o.y1 + pad), pw = px1 - px0, ph = py1 - py0;
+    const base = new Uint8Array(pw * ph); for (let y = 0; y < cut.h; y++) for (let x = 0; x < cut.w; x++) if (cut.mask[y * cut.w + x]) base[(o.y0 - py0 + y) * pw + (o.x0 - px0 + x)] = 1;
+    const m2 = sqDilate(base, pw, ph, grow);
+    if (F) {                                                       // الظل/التوهّج الملاصق: ما يبعد عن سطح الخلفية ويقع قرب العنصر يُمسح معه
+      const near = sqDilate(base, pw, ph, reach), W = F.W;
+      for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) { const i = y * pw + x; if (m2[i] || !near[i]) continue; const gi = (py0 + y) * W + (px0 + x); if (Math.abs(F.D[gi * 4] - F.bgc[gi * 3]) + Math.abs(F.D[gi * 4 + 1] - F.bgc[gi * 3 + 1]) + Math.abs(F.D[gi * 4 + 2] - F.bgc[gi * 3 + 2]) > 9) m2[i] = 1; }
+    }
+    return fillMask(ctx, px0, py0, pw, ph, m2);
+  }
+  return { fitPlane, pushPull, eraseRects, detectText, eraseBrush, inkColor, coreBox, findObjects, cutObject, eraseObject, fillMask };
 })();
