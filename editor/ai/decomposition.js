@@ -2,7 +2,7 @@
    هذه المرحلة الوحيدة التي قد تستعمل خدمة خارجية (قراءة النص)؛ بعدها يعمل المحرر محلياً بالكامل.
    لا تُمسّ الصورة الأصلية قبل نجاح كل الخطوات: عند أي فشل يبقى التصميم كما هو ويمكن إعادة المحاولة. */
 (function () {
-  const Ed = window.Ed; const STEPS = ["تحليل الصورة…", "كشف النصوص…", "قراءة النصوص…", "تنظيف الخلفية…", "إنشاء الطبقات…"];
+  const Ed = window.Ed; const STEPS = ["تحليل الصورة…", "كشف النصوص…", "قراءة النصوص…", "مسح النصوص من الخلفية…", "كشف العناصر (منتجات، صور، أيقونات، زخارف)…", "استخراج العناصر بشفافية…", "إنشاء الطبقات…"];
   const FSK = { ar: 1.15, lat: .74 };      // نسبة ارتفاع حبر السطر إلى حجم الخط (تقريب لخط Cairo)
   const ARABIC = /[؀-ۿ]/, esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   function srcCanvas(img) { const w = img.width, h = img.height, c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }).drawImage(img.getElement(), img.cropX || 0, img.cropY || 0, w, h, 0, 0, w, h); return c; }
@@ -47,6 +47,17 @@
       ready(3); await new Promise(r => setTimeout(r, 30));
       const clean = document.createElement("canvas"); clean.width = W; clean.height = H; const cg = clean.getContext("2d", { willReadFrequently: true }); cg.drawImage(src, 0, 0);
       await ImageTools.eraseRects(cg, items.map(b => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 })), { skipComplex: true });
+      /* العناصر: تُكشف على الخلفية الخالية من النص، تُقصّ بشفافية، ثم تُمسح من الخلفية */
+      ready(4); await new Promise(r => setTimeout(r, 30)); let objects = [], objNote = "";
+      try {
+        const F = ImageTools.findObjects(clean); ready(5); await new Promise(r => setTimeout(r, 30));
+        const cuts = F.objects.map(o => ({ o, cut: ImageTools.cutObject(F, o) }));
+        for (const { o, cut } of cuts) ImageTools.eraseObject(cg, o, cut, 5, F);
+        objects = cuts.map(({ o, cut }, i) => {
+          const w = o.x1 - o.x0, h = o.y1 - o.y0, fill = cut.filled / (w * h), icon = Math.max(w, h) < W * .12;
+          return { id: "image_" + String(i + 1).padStart(3, "0"), type: "image", role: icon ? "icon" : (fill > .85 ? "photo" : "object"), bbox: { x: o.x0, y: o.y0, width: w, height: h }, canvas: cut.canvas };
+        }).sort((p, q) => q.bbox.width * q.bbox.height - p.bbox.width * p.bbox.height);
+      } catch (e) { console.warn("objects", e); objNote = e.message; }
       /* فقرات + أحجام + أدوار */
       const paras = Ed.detect.paragraphs(items, W).map((g, i) => {
         const L = g.lines, C = l => l.core || l, x0 = Math.min(...L.map(l => C(l).x0)), x1 = Math.max(...L.map(l => C(l).x1)), y0 = Math.min(...L.map(l => C(l).y0)), y1 = Math.max(...L.map(l => C(l).y1)), text = L.map(l => l.text).join("\n"), rtl = ARABIC.test(text);
@@ -55,7 +66,7 @@
       });
       const sizes = paras.map(p => p.fontSize).sort((a, b) => a - b), med = sizes[sizes.length >> 1] || 1;
       paras.forEach(p => { p.role = /اطلب|order|commander|buy/i.test(p.text) ? "cta" : /\d+\s*(دج|DA|DZD|دينار)/i.test(p.text) ? "price" : p.fontSize >= 1.35 * med ? "headline" : p.fontSize >= 1.1 * med ? "subtitle" : /^[✔✓✅❌•]/.test(p.text.trim()) ? "list" : "body"; });
-      return { json: { canvas: { width: W, height: H }, elements: paras, stats: { detected: boxes.length, read: items.length, unmatchedOcr: unmatched, ocrNote } }, clean, ocrNote };
+      return { json: { canvas: { width: W, height: H }, elements: objects.map(o => ({ id: o.id, type: o.type, role: o.role, bbox: o.bbox })).concat(paras), stats: { detected: boxes.length, read: items.length, unmatchedOcr: unmatched, ocrNote, objects: objects.length, objNote } }, clean, ocrNote, objects };
     },
     /* التطبيق على المستند: خلفية نظيفة + طبقات نص، ويُخفى الأصل ويُقفل (للأمان) */
     apply(img, res) {
@@ -63,29 +74,35 @@
       const url = res.clean.toDataURL("image/webp", .95), id = Ed.registerAsset(url, res.clean.width, res.clean.height, "خلفية-نظيفة");
       const bg = new fabric.Image(res.clean, { left: img.left, top: img.top, scaleX: img.scaleX, scaleY: img.scaleY, assetId: id, layerType: "image", role: "background", name: "خلفية نظيفة (بدون نصوص)" });
       const idx = Ed.c.getObjects().indexOf(img); Ed.c.add(bg); bg.moveTo(idx + 1); img.name = "الأصل (مخفي)"; img.visible = false; Ed.applyLock(img, true);
-      const sel = []; j.elements.forEach(e => {
+      let z = idx + 2; const names = { icon: "أيقونة", photo: "صورة", object: "عنصر" }; let ni = 0;
+      (res.objects || []).forEach(o => {
+        const oid = Ed.registerAsset(o.canvas.toDataURL("image/webp", .92), o.canvas.width, o.canvas.height, o.id), kx2 = img.scaleX, ky2 = img.scaleY;
+        const im = new fabric.Image(o.canvas, { left: L0 + (o.bbox.x + o.bbox.width / 2) * kx, top: T0 + (o.bbox.y + o.bbox.height / 2) * ky, scaleX: kx2, scaleY: ky2, assetId: oid, layerType: o.role === "icon" ? "icon" : "image", role: o.role, id: o.id, name: names[o.role] + " " + (++ni) });
+        Ed.c.add(im); im.moveTo(z++);
+      });
+      const sel = []; j.elements.filter(e => e.type === "text").forEach(e => {
         const w = (e.bbox.width * 1.06 + 12) * kx, cxm = e.bbox.x + e.bbox.width / 2, centered = Math.abs(cxm - W / 2) < W * .08, align = centered ? "center" : (cxm > W / 2 ? "right" : "left");
         const cx = centered ? L0 + cxm * kx : (align === "right" ? L0 + (e.bbox.x + e.bbox.width) * kx - w / 2 + 6 * kx : L0 + e.bbox.x * kx + w / 2 - 6 * kx), cy = T0 + (e.bbox.y + e.bbox.height / 2) * ky;
         let fs = Math.max(8, e.fontSize * ky); { const target = e.bbox.width * kx, wide = Math.max(...e.text.split("\n").map(ln => new fabric.Text(ln, { fontFamily: "Cairo", fontSize: fs, fontWeight: e.fontSize > 40 ? "800" : "700" }).width)); if (wide > 0 && target > 0) fs = Math.max(fs * .75, Math.min(fs * 1.25, fs * target / wide)); }      // يطابق عرض النص الأصلي (الخط يختلف) فلا يلتف السطر
         const t = new fabric.Textbox(e.text, { left: cx, top: cy, width: w, fontFamily: "Cairo", fontSize: fs, fontWeight: e.fontSize > 40 ? "800" : "700", fill: e.color, textAlign: align, direction: e.rtl ? "rtl" : "ltr", lineHeight: e.lineHeight, layerType: "text", role: e.role, id: e.id });
         t.name = ({ headline: "عنوان", subtitle: "عنوان فرعي", body: "نص", cta: "زر/دعوة", price: "السعر", list: "نقطة" })[e.role] + ": " + e.text.replace(/\s+/g, " ").slice(0, 18) + (e.placeholder ? " (اكتب النص)" : ""); Ed.c.add(t); sel.push(t);
       });
-      Ed.c.discardActiveObject(); Ed.c.requestRenderAll(); Ed.emit("layers"); Ed.emit("changed", "decompose"); return { texts: sel.length };
+      Ed.c.discardActiveObject(); Ed.c.requestRenderAll(); Ed.emit("layers"); Ed.emit("changed", "decompose"); return { texts: sel.length, objects: (res.objects || []).length };
     },
     /* واجهة: نافذة تقدّم + معالجة أخطاء + إعادة محاولة */
     async runUI() {
       const img = (() => { const a = Ed.selected(); if (a && a.type === "image") return a; const imgs = Ed.c.getObjects().filter(o => o.type === "image" && o.visible !== false); return imgs.sort((p, q) => q.getScaledWidth() * q.getScaledHeight() - p.getScaledWidth() * p.getScaledHeight())[0]; })();
       if (!img) return Ed.toast("أضف صورة التصميم أولاً ثم اضغط تفكيك");
       if (!Ed.ocr.key()) {
-        const a = await Ed.promptDialog("قراءة النصوص بدقة", "مفتاح Gemini (اختياري)", "", { password: true, note: "بدون مفتاح تُستعمل قراءة Tesseract المجانية وهي ضعيفة بالعربية، وإن تعذّرت تُوضع نصوص بديلة تكتبها أنت. المفتاح يبقى في هذا المتصفح فقط." });
+        const a = await Ed.promptDialog("الالتقاط السحري — قراءة النصوص", "مفتاح Gemini (اختياري)", "", { password: true, note: "بدون مفتاح تُستعمل قراءة Tesseract المجانية وهي ضعيفة بالعربية، وإن تعذّرت تُوضع نصوص بديلة تكتبها أنت. المفتاح يبقى في هذا المتصفح فقط." });
         if (a === null) return; if (a.value.trim()) Ed.ocr.setKey(a.value.trim());
       }
-      const m = Ed.modal("<h3>✨ تفكيك التصميم</h3><div id='dc-steps'>" + STEPS.map((s, i) => "<div class='dcs' data-i='" + i + "' style='padding:.25rem 0;color:#9ca3af'>○ " + s + "</div>").join("") + "</div><div id='dc-msg' class='muted' style='margin-top:.5rem'></div><div class='acts' id='dc-acts' style='display:none'></div>");
+      const m = Ed.modal("<h3>🪄 الالتقاط السحري</h3><div id='dc-steps'>" + STEPS.map((s, i) => "<div class='dcs' data-i='" + i + "' style='padding:.25rem 0;color:#9ca3af'>○ " + s + "</div>").join("") + "</div><div id='dc-msg' class='muted' style='margin-top:.5rem'></div><div class='acts' id='dc-acts' style='display:none'></div>");
       const mark = i => m.querySelectorAll(".dcs").forEach(e => { const k = +e.dataset.i; e.style.color = k < i ? "#16a34a" : k === i ? "#111827" : "#9ca3af"; e.textContent = (k < i ? "✓ " : k === i ? "⏳ " : "○ ") + STEPS[k]; });
       const acts = m.querySelector("#dc-acts"), say = t => { m.querySelector("#dc-msg").innerHTML = t; };
       try {
-        await Ed.loadFont("Cairo"); const res = await this.analyze(img, mark); mark(4); const r = this.apply(img, res); mark(5);
-        const st = res.json.stats; say("تم: <b>" + r.texts + "</b> نصاً صار طبقة قابلة للتعديل" + (res.json.elements.some(e => e.placeholder) ? "<br>⚠️ لم تُقرأ النصوص (" + esc(res.ocrNote || "بلا قراءة") + ") فوُضع نص بديل «نص» فوق كل سطر: انقر مرتين واكتب النص الصحيح." : "") + (st.unmatchedOcr ? "<br>ℹ️ " + st.unmatchedOcr + " سطراً مقروءاً لم يُطابق نصاً مكتشفاً (بقي في الخلفية)." : "") + "<br><span class='muted'>الأصل محفوظ مخفياً في الطبقات. للتراجع: Ctrl+Z.</span>");
+        await Ed.loadFont("Cairo"); const res = await this.analyze(img, mark); mark(6); const r = this.apply(img, res); mark(7);
+        const st = res.json.stats; say("تم: <b>" + r.objects + "</b> عنصراً مستخرجاً بشفافية (صور/منتجات/أيقونات) و<b>" + r.texts + "</b> نصاً قابلاً للتعديل" + (st.objNote ? "<br>⚠️ كشف العناصر: " + esc(st.objNote) : "") + (res.json.elements.some(e => e.placeholder) ? "<br>⚠️ لم تُقرأ النصوص (" + esc(res.ocrNote || "بلا قراءة") + ") فوُضع نص بديل «نص» فوق كل سطر: انقر مرتين واكتب النص الصحيح." : "") + (st.unmatchedOcr ? "<br>ℹ️ " + st.unmatchedOcr + " سطراً مقروءاً لم يُطابق نصاً مكتشفاً (بقي في الخلفية)." : "") + "<br><span class='muted'>الأصل محفوظ مخفياً في الطبقات. للتراجع: Ctrl+Z.</span>");
         acts.style.display = "flex"; acts.innerHTML = "<button class='pri'>تمام</button>"; acts.firstChild.onclick = () => m.remove();
       } catch (e) {
         console.error(e); say("<span style='color:#b91c1c'>⚠️ تعذّر التفكيك: " + esc(e.message) + "</span><br>لم يتغير تصميمك.");
