@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=7", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=10", BASE).href;
   const SAMSZ = 1024, DETSZ = 960, W8 = {};
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -37,13 +37,13 @@ window.AIVision = (function () {
   const arName = en => AR[en] || en;
   const bArea = b => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]), bInter = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
   const iou = (a, b) => { const i = bInter(a, b); return i / Math.max(1, bArea(a) + bArea(b) - i); };
-  async function localDetect(cv, onp) {
+  async function localDetect(cv, onp, zone) {
     const im = pix(cv, DETSZ), W = cv.width, H = cv.height, K = 1 / im.k;
     const raw = await worker("det").call("detect", { data: im.data, w: im.w, h: im.h, thr: .1 }, onp, [im.data]);
     const all = raw.map(d => ({ src: d.src, en: String(d.label).toLowerCase(), score: d.score, b: d.box.map((v, i) => Math.max(0, Math.min(i % 2 ? H : W, v * K))) }));
     const o365 = all.filter(d => d.src === "o365");
     all.forEach(d => { if (d.src !== "coco") return; let bi = .45; o365.forEach(q => { const v = iou(d.b, q.b); if (v > bi) { bi = v; d.en2 = q.en; } }); });      // اسم Objects365 أدق (قلم بدل «سكين»، صحن بدل «وعاء»)
-    const c = all.filter(d => { const en = d.en2 || d.en, a = bArea(d.b); if (DROP.has(en) || DROP.has(d.en)) return false; if (a > W * H * .85 || a < W * H * .0012) return false; return d.score >= (PRODUCT.test(en) ? .2 : .3); });
+    const c = all.filter(d => { const en = d.en2 || d.en, a = bArea(d.b); if (DROP.has(en) || DROP.has(d.en)) return false; if ((!zone && a > W * H * .85) || a < W * H * .0012) return false; return d.score >= (PRODUCT.test(en) ? .2 : .3); });
     c.sort((p, q) => q.score - p.score); const keep = [];
     const per = {}; c.forEach(d => { const en = d.en2 || d.en; if ((per[en] || 0) >= (PRODUCT.test(en) ? 8 : 6)) return; if (!keep.some(k => iou(k.b, d.b) > .6 || ((k.en2 || k.en) === en && bInter(k.b, d.b) / Math.max(1, bArea(d.b)) > .85))) { keep.push(d); per[en] = (per[en] || 0) + 1; } });      // لا يستأثر صنف واحد (كتب كثيرة) بكل الأماكن
     const persons = keep.filter(k => (k.en2 || k.en) === "person"), held = d => persons.some(p => bInter(p.b, d.b) / Math.max(1, bArea(d.b)) > .8);      // وعاء/كوب في يد شخص = منتج (عبوة)
@@ -78,7 +78,7 @@ window.AIVision = (function () {
   /* سدّ الثقوب الصغيرة داخل العنصر (عيون/ظلال على الوجه) مع إبقاء الفراغات الحقيقية (مقبض كوب، ما بين الذراع والجسم) وما يشغله عنصر آخر (قلم في اليد) */
   const SOLID = /عبوة|كوب|إناء|قارورة|علبة|إبريق|مستحضر|منتج|صابون|شمعة|كتاب|كتب|صحن|وعاء/;      // أشياء صلبة: صورتها الخارجية كاملة (الملصق والكتابة جزء منها)
   function fillHoles(it, others) {
-    const { lo, lw, lh } = it, N = lw * lh, seen = new Uint8Array(N), solid = it.manual || SOLID.test(it.label || ""); let area = 0; for (let i = 0; i < N; i++) if (lo[i] > 0) area++; const lim = solid ? Infinity : Math.max(6, area * .012);
+    const { lo, lw, lh } = it, N = lw * lh, seen = new Uint8Array(N), solid = it.manual || it.zoneMain || SOLID.test(it.label || ""); let area = 0; for (let i = 0; i < N; i++) if (lo[i] > 0) area++; const lim = solid ? Infinity : Math.max(6, area * .012);
     for (let s = 0; s < N; s++) { if (lo[s] > 0 || seen[s]) continue; const comp = [s]; seen[s] = 1; let edge = false;
       for (let q = 0; q < comp.length; q++) { const j = comp[q], x = j % lw, y = (j / lw) | 0; if (x === 0 || y === 0 || x === lw - 1 || y === lh - 1) edge = true; for (const t of [x > 0 ? j - 1 : -1, x < lw - 1 ? j + 1 : -1, y > 0 ? j - lw : -1, y < lh - 1 ? j + lw : -1]) if (t >= 0 && !seen[t] && lo[t] <= 0) { seen[t] = 1; comp.push(t); } }
       if (edge || comp.length > lim) continue;
@@ -126,7 +126,7 @@ window.AIVision = (function () {
   function mergeItems(items, S) {
     const out = [], N = S.lw * S.lh;
     items.forEach(it => {
-      if (!it.area || (it.obj < 0 && !it.manual) || (it.score < (it.src === "gemini" ? .35 : .5) && !it.manual)) return; const fr = it.area / N; if (!it.manual && (fr > .62 || fr < .0012)) return;
+      if (!it.area || (it.obj < 0 && !it.manual) || (it.score < (it.src === "gemini" ? .35 : .5) && !it.manual)) return; const fr = it.area / N; if (!it.manual && ((fr > .62 && !it.zoneMain) || fr < .0012)) return;
       const hit = out.find(o => both(o, it) / Math.min(o.area, it.area) > .6); if (!hit) return out.push(it);
       if (both(hit, it) / Math.max(hit.area, it.area) > .5) return unite(hit, it, S);                     // نفس العنصر
       const small = hit.area < it.area ? hit : it, big = small === hit ? it : hit;
@@ -147,16 +147,25 @@ window.AIVision = (function () {
     step("⏳ تجهيز نموذج الذكاء…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
     /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
-    let localErr = null, gem = [], src = "local", note = ""; const pLoc = localDetect(cv, prog("det")).catch(e => { localErr = e; return []; });
+    let localErr = null, gem = [], src = "local", note = ""; const pLoc = localDetect(cv, prog("det"), o.zone).catch(e => { localErr = e; return []; });
     if (o.key) { try { step("⏳ Gemini يتعرّف على العناصر…"); gem = await geminiDetect(cv, o.key); src = "gemini"; } catch (e) { note = e.message; } }
     const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label)); if (!gem.length && !loc.length && localErr) throw localErr;
     const dets = gem.concat(loc.filter(d => !gem.some(g => iou(g.box, d.box) > .5)).map(d => gem.length ? Object.assign(d, { score: d.score * .7 }) : d));
+    if (o.zone) {                                                     // «منطقة»: ما رسمه المستخدم حول العنصر هو صندوقه (الأدق)، واسمه من أكبر كشف يطابقه
+      const W = cv.width, H = cv.height, m = o.zone.margin || 0, zb = [W * m, H * m, W * (1 - m), H * (1 - m)], best = dets.filter(d => d.label && !PERSON.test(d.label)).sort((a, b) => iou(b.box, zb) - iou(a.box, zb))[0];
+      dets.unshift({ label: best && iou(best.box, zb) > .3 ? best.label : "عنصر", score: 1.01, box: zb, src: "zone", zoneMain: true });
+    }
     step("⏳ تحليل الصورة…"); const S = await pS, items = [];
     for (let i = 0; i < dets.length; i++) {
       step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…"); const d = dets[i], m = await maskFor(S, { box: d.box }); if (!m.area) continue;
-      items.push(Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src }));
+      items.push(Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src, zoneMain: !!d.zoneMain }));
     }
-    const out = mergeItems(items, S);
+    const out = mergeItems(items, S), main = out.find(i => i.zoneMain);
+    if (main) {                                                       // «منطقة»: أجزاء الشيء نفسه (شرائح كشف داخل المستطيل) تُضمّ إليه؛ الأشخاص/الأيدي تبقى منفصلة لتُطرح الأصابع
+      const mb = [main.x0, main.y0, main.x1, main.y1], ex = .1 * Math.max(mb[2] - mb[0], mb[3] - mb[1]), eb = [mb[0] - ex, mb[1] - ex, mb[2] + ex, mb[3] + ex];
+      for (let i = out.length - 1; i >= 0; i--) { const o = out[i]; if (o === main || PERSON.test(o.label)) continue; const ob = [o.x0, o.y0, o.x1, o.y1]; if (bInter(ob, eb) > .7 * bArea(ob)) { unite(main, o, S); out.splice(i, 1); } }
+      if (main.label === "عنصر") { const n = dets.find(d => d.label && !PERSON.test(d.label) && d !== dets[0] && bInter(d.box, mb) > .5 * bArea(d.box)); if (n) main.label = n.label; }
+    }
     await heldItems(S, out, step);
     await occlusions(S, out, step);
     out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets };
@@ -205,7 +214,7 @@ window.AIVision = (function () {
      ③ الشيء = الصورة الكاملة − الأصابع، والشخص يستعيد أصابعه ويخسر ما تبقّى من الشيء */
   async function occlusions(S, out, step) {
     const { lw, lh } = S, N = lw * lh;
-    for (const P of out.filter(o => PERSON.test(o.label))) for (const J of out.filter(o => o !== P && SOLID.test(o.label || ""))) {
+    for (const P of out.filter(o => PERSON.test(o.label))) for (const J of out.filter(o => o !== P && (o.zoneMain || SOLID.test(o.label || "")))) {
       if (bInter([P.x0, P.y0, P.x1, P.y1], [J.x0, J.y0, J.x1, J.y1]) < .6 * bArea([J.x0, J.y0, J.x1, J.y1])) continue;
       step("⏳ فصل الأصابع عن العبوة…");
       const sil = { lo: Float32Array.from(J.lo), lw, lh, label: J.label }; fillHoles(sil, []); closeLo(sil, [], 3);
@@ -241,6 +250,13 @@ window.AIVision = (function () {
     let ly = -1, sx = 0, nx = 0, cnt = 0, cx = 0, cy = 0;
     for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) if (f((dx + x + .5) / k, (dy + y + .5) / k) > 0) { a[y * dw + x] = 1; cnt++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } }
     return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (cnt ? cx / cnt : dw / 2), cy: dy + (cnt ? cy / cnt : dh / 2) };      // lx/ly: أعلى العنصر (لاسمه)، cx/cy: مركزه
+  }
+  /* معاينة بالدقة الكاملة (نفس قصّ «التقاط») مصغّرة للعرض: للحواف الدقيقة كالأصابع */
+  function fineView(S, cv, it, k) {
+    const D = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, S.W, S.H).data, A = fullAlpha(S, it, D, {});
+    const dx = Math.floor(A.x0 * k), dy = Math.floor(A.y0 * k), dw = Math.max(2, Math.ceil((A.x0 + A.w) * k) - dx), dh = Math.max(2, Math.ceil((A.y0 + A.h) * k) - dy), a = new Uint8Array(dw * dh); let ly = -1, sx = 0, nx = 0, n = 0, cx = 0, cy = 0;
+    for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const gx = Math.min(A.w - 1, Math.floor((dx + x + .5) / k) - A.x0), gy = Math.min(A.h - 1, Math.floor((dy + y + .5) / k) - A.y0); if (gx >= 0 && gy >= 0 && A.a[gy * A.w + gx] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } } }
+    return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (n ? cx / n : dw / 2), cy: dy + (n ? cy / n : dh / 2) };
   }
   /* ───── الدقة الكاملة: مرشّح موجَّه (Guided Filter) يلصق حافة القناع بحواف الصورة ───── */
   function boxMean(src, w, h, r) {
@@ -386,5 +402,5 @@ window.AIVision = (function () {
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco", "o365"] }).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, addItem, zoneItem, joinItems, viewMask, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
+  return { supported, analyze, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
 })();
