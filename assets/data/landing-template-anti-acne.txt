@@ -1,0 +1,524 @@
+Act as a world-class Arabic mobile e-commerce art director and premium product advertising designer.
+
+Create ONE ultra-long vertical infographic landing-page IMAGE in 9:32 aspect ratio for the SINGLE skincare product shown in the reference image:
+
+ALYSSUM Anti Acne Cream
+
+IMPORTANT: The uploaded product image is the ONLY packaging reference.
+Preserve the exact product jar, silver cap, label, ALYSSUM logo, proportions, colors and printed wording exactly as shown in the reference image.
+Do NOT redesign the packaging.
+Do NOT invent another product.
+Do NOT change the brand name.
+Do NOT create additional products.
+
+==================================================
+ABSOLUTE ARABIC TEXT ACCURACY RULES
+==================================================
+
+Arabic typography accuracy is the highest priority.
+
+Every Arabic sentence below must appear EXACTLY ONCE.
+
+COPY EACH QUOTED ARABIC STRING LETTER BY LETTER.
+
+Do not rewrite.
+Do not paraphrase.
+Do not correct.
+Do not duplicate.
+Do not repeat.
+Do not merge two text strings.
+Do not split words incorrectly.
+Do not add decorative letters.
+Do not add diacritics.
+Do not add any extra Arabic words.
+Do not create fake Arabic text anywhere.
+
+IMPORTANT:
+If there is not enough space for a text line, make the font smaller while keeping it clearly readable.
+NEVER repeat the same sentence to fill space.
+
+There must be ZERO random text anywhere in the image.
+
+Do not generate fake labels, fake ingredient names, fake reviews, fake logos, fake captions or random Arabic characters.
+
+Only the exact Arabic strings specified in this prompt may appear as overlay text.
+
+All Arabic must be RIGHT-TO-LEFT.
+
+Use a highly accurate modern Arabic display font.
+Extremely bold.
+Sharp.
+Clean.
+Professional.
+High resolution.
+No distorted Arabic characters.
+No connected letters incorrectly separated.
+No mirrored Arabic.
+No reversed Arabic.
+No duplicated letters.
+
+Every quoted text string is a separate text element with its own dedicated empty space.
+
+==================================================
+MODESTY AND HUMAN FIGURES
+==================================================
+
+ABSOLUTELY NO WOMAN WITHOUT HIJAB.
+
+If a woman appears anywhere in the image, she MUST be a modest Muslim woman wearing a clearly visible elegant hijab that completely covers her hair.
+
+No uncovered hair.
+No sleeveless clothing.
+No revealing clothing.
+No neckline.
+No exposed shoulders.
+
+For maximum safety, prefer:
+- close-up skin photography without a full human face
+- hands applying cream
+- modest hijabi woman only when a human lifestyle scene is necessary.
+
+The before/after section should preferably use realistic skin macro photography rather than an uncovered woman's face.
+
+==================================================
+BACKGROUND
+==================================================
+
+ONE SINGLE CONTINUOUS BACKGROUND from the very top to the very bottom.
+
+Use a luxurious seamless vertical gradient combining:
+
+pale olive green
+warm stone beige
+soft botanical white
+subtle warm amber
+
+No separate backgrounds.
+
+NO cards.
+NO boxes.
+NO panels.
+NO horizontal bands.
+NO frames.
+NO divider lines.
+NO UI elements.
+
+The entire landing page must look like ONE continuous premium botanical composition.
+
+Use floating rosemary leaves and yellow St. John's wort flowers naturally throughout the composition.
+
+Use realistic botanical photography, soft sunlight, subtle particles, elegant shadows and premium skincare advertising aesthetics.
+
+==================================================
+PRODUCT PRESENTATION
+==================================================
+
+The exact ALYSSUM Anti Acne Cream jar from the reference image must appear repeatedly.
+
+Every appearance must remain visually identical to the original jar.
+
+Use realistic product photography:
+glass jar
+silver metallic cap
+original ALYSSUM label
+natural reflections
+soft shadows
+micro-water droplets
+premium studio lighting.
+
+Never create a different package.
+
+==================================================
+SECTION 1 — HERO
+==================================================
+
+Place the original ALYSSUM Anti Acne Cream jar prominently on the left side.
+
+Botanical rosemary and yellow flowers around the jar.
+
+Soft sunlit glow behind the product.
+
+On the right side place the Arabic text.
+
+Small yellow badge:
+
+"الأكثر مبيعا"
+
+Huge white bold headline:
+
+"استعيدي صفاء ونضارة بشرتك"
+
+Large dark botanical-green text:
+
+"تركيبة نباتية فاخرة لعناية متوازنة"
+
+Three separate benefit lines:
+
+"✔ بشرة نقية من الشوائب"
+
+"✔ ترطيب متوازن بدون لمعان"
+
+"✔ تركيبة طبيعية 100%"
+
+IMPORTANT:
+Each line appears ONE TIME ONLY.
+Never repeat these sentences elsewhere.
+
+==================================================
+SECTION 2 — THE PROBLEM
+==================================================
+
+Keep the exact same continuous background.
+
+Use floating realistic skin macro images showing:
+redness
+oiliness
+visible pores
+blemishes.
+
+Do NOT show an uncovered woman.
+
+Large bold red headline:
+
+"هل تعانين من ظهور البثور؟"
+
+Medium dark text:
+
+"الدهون الزائدة والشوائب تفقدك ثقتك"
+
+Three separate problem lines:
+
+"• لمعان دهني ومسام واسعة"
+
+"• ظهور متكرر للحبوب"
+
+"• آثار وتصبغات مزعجة"
+
+No additional text.
+
+==================================================
+SECTION 3 — THE SOLUTION
+==================================================
+
+Show the original ALYSSUM jar heroically with an elegant emerald botanical glow.
+
+Large orange headline:
+
+"الحل الطبيعي لبشرة نقية"
+
+Large dark botanical-green text:
+
+"عناية متكاملة بسبعة مستخلصات عشبية"
+
+Do not add ingredient names here.
+
+==================================================
+SECTION 4 — BEFORE AND AFTER
+==================================================
+
+Create two realistic circular skin macro photographs.
+
+LEFT:
+realistic close-up of oily irritated skin with visible blemishes and redness.
+
+RIGHT:
+realistic close-up of smoother, more radiant-looking skin.
+
+Do NOT show a woman's uncovered face.
+
+Large orange headline:
+
+"الفرق قبل وبعد الاستعمال"
+
+Red text:
+
+"❌ مسام واسعة وبثور"
+
+Green text:
+
+"✅ مظهر صاف وملمس ناعم"
+
+Do not add any other text.
+
+==================================================
+SECTION 5 — BOTANICAL FEATURE
+==================================================
+
+Create a luxurious macro still-life.
+
+Show the ALYSSUM jar near realistic botanical ingredients and golden oil droplets.
+
+Visually emphasize tea tree and rosemary.
+
+Large orange headline:
+
+"قوة الطبيعة الفعالة"
+
+Large dark-green text:
+
+"زيت الشاي والإكليل وعرق السوس"
+
+No other ingredient text in this section.
+
+==================================================
+SECTION 6 — INGREDIENT ICONS
+==================================================
+
+Create exactly FOUR circular glowing botanical icons.
+
+Exactly four.
+Not three.
+Not five.
+
+Each icon has ONLY ONE Arabic label underneath.
+
+Icon 1:
+tea tree botanical image
+
+Text:
+
+"شجرة الشاي"
+
+Icon 2:
+vitamin E visual
+
+Text:
+
+"فيتامين E"
+
+Icon 3:
+licorice root botanical image
+
+Text:
+
+"عرق السوس"
+
+Icon 4:
+St. John's wort flower
+
+Text:
+
+"عشبة القديسين"
+
+Large headline above the four icons:
+
+"مكونات نقية مختارة"
+
+IMPORTANT:
+Do not repeat these four labels anywhere else.
+
+==================================================
+SECTION 7 — DAILY USE
+==================================================
+
+Create exactly THREE large glowing circles numbered:
+
+1
+2
+3
+
+Connect them with one elegant organic botanical vine.
+
+Large orange headline:
+
+"طريقة الاستعمال اليومية"
+
+Under circle 1:
+
+"1 نظفي وجهك وجففيه بلطف"
+
+Under circle 2:
+
+"2 ضعي كمية مناسبة من الكريم"
+
+Under circle 3:
+
+"3 دلكي بلطف حتى الامتصاص"
+
+Each instruction appears exactly once.
+
+Do not repeat the instructions anywhere else.
+
+==================================================
+SECTION 8 — PRODUCT COMPARISON
+==================================================
+
+Show the original ALYSSUM jar clearly on one side.
+
+Beside it show ONE completely generic gray skincare container with NO readable label.
+
+Do not create another brand.
+
+Large orange headline:
+
+"لماذا تختارين أليسوم؟"
+
+Under the ALYSSUM product:
+
+"✔️ تركيبة سريعة الامتصاص"
+
+"✔️ نتائج واضحة دون جفاف"
+
+Under the generic product:
+
+"❌ منتجات قاسية تزيد الجفاف"
+
+"❌ ملمس دهني ثقيل"
+
+No other text.
+
+==================================================
+SECTION 9 — LIFESTYLE
+==================================================
+
+Show a modest Muslim woman wearing a beautiful elegant hijab.
+
+Her hair MUST be completely covered.
+
+She is wearing modest clothing with covered shoulders and neckline.
+
+She is gently touching her cheek in a natural skincare lifestyle scene.
+
+Premium realistic photography.
+
+Large orange headline:
+
+"ثقة متجددة وإشراقة طبيعية"
+
+Large dark-green text:
+
+"بشرة منتعشة ومرتاحة"
+
+Do NOT show any uncovered woman.
+
+Do NOT show exposed hair.
+
+==================================================
+SECTION 10 — TRUST
+==================================================
+
+Create exactly THREE elegant floating trust icons.
+
+Icon 1:
+
+"طبيعي 100%"
+
+Icon 2:
+
+"دفع عند الاستلام"
+
+Icon 3:
+
+"توصيل سريع"
+
+Below them place exactly five golden stars:
+
+"★★★★★"
+
+Large black headline:
+
+"ثقة عملائنا"
+
+Medium black testimonial:
+
+"أفضل عناية، فرقت معي في أيام!"
+
+Do not add any other customer comments.
+
+Do not create multiple reviews.
+
+==================================================
+SECTION 11 — FINAL OFFER
+==================================================
+
+Continue the same single unified background.
+
+Place the original ALYSSUM jar prominently next to a bright yellow CTA button.
+
+Large bold price:
+
+"2400 دج بدل 3400 دج"
+
+Large white bold offer:
+
+"⚠️ عرض محدود: اشتر 2 واحصل على 1 مجانا!"
+
+Huge black text inside the yellow CTA:
+
+"اطلب الآن - الدفع عند الاستلام"
+
+This CTA must appear EXACTLY ONCE.
+
+==================================================
+FINAL TEXT SAFETY CHECK
+==================================================
+
+Before rendering the final image, internally verify every Arabic text element.
+
+There must be:
+
+NO duplicated sentences.
+NO duplicated words.
+NO repeated letters.
+NO random Arabic characters.
+NO fake Arabic writing.
+NO invented captions.
+NO additional labels.
+NO repeated product names.
+NO repeated headlines.
+
+Every Arabic sentence must be rendered only once and exactly as written.
+
+Do not generate any text outside the exact quoted strings.
+
+==================================================
+VISUAL QUALITY
+==================================================
+
+Premium pharmaceutical-inspired natural skincare advertising.
+
+Ultra-realistic product photography.
+
+Luxury botanical atmosphere.
+
+Pale olive green + warm beige + botanical white + subtle amber.
+
+Elegant rosemary leaves.
+
+Yellow St. John's wort flowers.
+
+Realistic skin macro photography.
+
+Natural sunlight.
+
+Soft depth of field.
+
+High-end commercial photography.
+
+Strong visual hierarchy.
+
+Excellent mobile readability.
+
+Generous negative space around every Arabic text element.
+
+Never overcrowd text.
+
+Never put multiple paragraphs into one text block.
+
+Every text element should have enough empty space around it to prevent Arabic character distortion.
+
+The final image must look like a professionally designed premium Arabic mobile landing page, not an AI-generated poster.
+
+NO HTML.
+NO CSS.
+NO code.
+NO UI.
+NO browser interface.
+NO extra text.
+NO fake text.
+NO uncovered women.
+NO visible female hair.
+NO duplicate Arabic.
+NO distorted Arabic.
+NO repeated letters.
+NO repeated words.
