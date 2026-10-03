@@ -157,7 +157,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
-    const prep = it => { it.v = (Z || it.sil) && AIVision.fineView ? AIVision.fineView(S, cv, it, k) : AIVision.viewMask(S, it, k);      // المنطقة والأشياء في اليد: حدود بالدقة الكاملة
+    const prep = it => { it.v = (Z || it.sil) && AIVision.fineView ? AIVision.fineView(S, cv, it, k, items) : AIVision.viewMask(S, it, k);      // المنطقة والأشياء في اليد: حدود بالدقة الكاملة
       const o = AIVision.overlays(it.v, [13, 148, 136]); it.out = o.out; it.fill = o.fill; };
     items.forEach(prep);
     let sel = new Set(), hov = -1, busy = false; const AIF = "alyssum_pbs_aifill"; if (Z) items.forEach(i => { if (i.zoneMain) sel.add(i.id); });      // العنصر داخل المنطقة محدَّد مسبقاً
@@ -209,6 +209,18 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
     $("pbs-merge").onclick = () => { const L = items.filter(it => sel.has(it.id)); if (L.length < 2) return; const it = AIVision.joinItems(S, items, L); prep(it); sel = new Set([it.id]); paint(); $("pbs-msg").textContent = "✅ دُمجت العناصر في «" + names()[it.id] + "»."; };
     $("pbs-msg").style.color = "#173f35"; paint();
     if (res.note) $("pbs-msg").textContent = "ℹ️ تعذّر كشف Gemini (" + res.note.slice(0, 90) + ") — استُعمل الكشف المحلي.";
+    /* معاينة نتيجة المسح قبل الحفظ: الخلفية المرمَّمة + العناصر المفصولة مرفوعة قليلاً بظل، وزرّا «حفظ» و«إلغاء» */
+    function preview(bgCanvas, cuts) {
+      return new Promise(res => {
+        const kids = [...stage.childNodes]; kids.forEach(n => n.remove()); const c = document.createElement("canvas"); c.width = vw; c.height = vh; c.style.cssText = "display:block;background:#fff"; stage.appendChild(c); const g = c.getContext("2d");
+        let t = 0, on = true; const draw = () => { if (!on) return; g.clearRect(0, 0, vw, vh); g.drawImage(bgCanvas, 0, 0, vw, vh); const lift = 6 + 4 * Math.sin(t / 12); t++;
+          cuts.slice().sort((a, b) => a.front - b.front).forEach(q => { g.save(); g.shadowColor = "rgba(0,0,0,.45)"; g.shadowBlur = 16; g.shadowOffsetY = lift; g.drawImage(q.canvas, q.x0 * k, q.y0 * k - lift, q.w * k, q.h * k); g.restore(); }); requestAnimationFrame(draw); }; draw();
+        const bar = document.createElement("div"); bar.style.cssText = "display:flex;gap:.5rem"; bar.innerHTML = '<button type="button" id="pbs-ok" style="flex:1;border:0;border-radius:12px;padding:.75rem;font-weight:800;cursor:pointer;background:#0d9488;color:#fff;font-family:inherit">💾 حفظ</button><button type="button" id="pbs-no" style="flex:1;border:1.5px solid #d6d3cb;border-radius:12px;padding:.75rem;font-weight:800;cursor:pointer;background:#fff;color:#44403c;font-family:inherit">✖ إلغاء</button>';
+        $("pbs-go").style.display = "none"; $("pbs-go").after(bar); $("pbs-msg").textContent = "👀 هذه نتيجة المسح: العناصر مفصولة (مرفوعة قليلاً) والخلفية أُعيد رسمها. احفظها أو ألغِها.";
+        const end = ok => { on = false; bar.remove(); $("pbs-go").style.display = ""; if (!ok) { stage.innerHTML = ""; kids.forEach(n => stage.appendChild(n)); $("pbs-go").disabled = false; } res(ok); };
+        bar.querySelector("#pbs-ok").onclick = () => end(true); bar.querySelector("#pbs-no").onclick = () => end(false);
+      });
+    }
     $("pbs-go").onclick = async () => {
       const chosen = sh.S.mode === "all" ? items.slice() : items.filter(it => sel.has(it.id)); if (!chosen.length || busy) return; busy = true; $("pbs-go").disabled = true;
       try {
@@ -219,6 +231,7 @@ ${card("🖼️", "التقاط العناصر", "مثل «الالتقاط ال
         const gen = aiFill && key && typeof PBGen !== "undefined" && PBGen.gemGenerate ? async parts => PBGen.gemGenerate(key, "image", parts, {}, await PBGen.imageModels(key)) : null;
         const how = await AIVision.eraseBg(part, cuts, { gen, onNote: m => { fillNote = m; }, onStep: m => { $("pbs-msg").textContent = m; } });
         const FW = Z ? Z.full.width : W, FH = Z ? Z.full.height : H, ox = Z ? Z.ox : 0, oy = Z ? Z.oy : 0, base = document.createElement("canvas"); base.width = FW; base.height = FH; const bg = base.getContext("2d"); if (Z) bg.drawImage(Z.full, 0, 0); bg.drawImage(part, ox, oy);      // المنطقة المرمَّمة تعود لمكانها في الصورة الكاملة
+        if (!(await preview(part, cuts))) { busy = false; paint(); return; }      // معاينة: حفظ أو إلغاء
         $("pbs-msg").textContent = "⏳ رفع الصور…"; const stamp = Date.now().toString(36);
         const basePath = await A().uploadBlob(await new Promise(r => base.toBlob(r, "image/png")), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
         for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await new Promise(r => cuts[i].canvas.toBlob(r, "image/png")), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
