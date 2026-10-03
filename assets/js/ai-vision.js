@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=11", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=12", BASE).href;
   const SAMSZ = 1024, DETSZ = 960, W8 = {};
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -215,7 +215,7 @@ window.AIVision = (function () {
   async function occlusions(S, out, step) {
     const { lw, lh } = S, N = lw * lh;
     for (const P of out.filter(o => PERSON.test(o.label))) for (const J of out.filter(o => o !== P && (o.zoneMain || SOLID.test(o.label || "")))) {
-      if (bInter([P.x0, P.y0, P.x1, P.y1], [J.x0, J.y0, J.x1, J.y1]) < .6 * bArea([J.x0, J.y0, J.x1, J.y1])) continue;
+      if (bInter([P.x0, P.y0, P.x1, P.y1], [J.x0, J.y0, J.x1, J.y1]) < .2 * bArea([J.x0, J.y0, J.x1, J.y1])) continue;      // يد تغطي جزءاً من الشيء (ولو من الأسفل فقط)
       step("⏳ فصل الأصابع عن العبوة…");
       const sil = { lo: Float32Array.from(J.lo), lw, lh, label: J.label }; fillHoles(sil, []); closeLo(sil, [], 3);
       const pts = []; let mnx = lw, mxx = -1, mny = lh, mxy = -1; for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) if (J.lo[y * lw + x] > 0) { if (x < mnx) mnx = x; if (x > mxx) mxx = x; if (y < mny) mny = y; if (y > mxy) mxy = y; }
@@ -223,7 +223,7 @@ window.AIVision = (function () {
       if (!pts.length) continue;
       const P2 = await maskFor(S, { box: [P.x0, P.y0, P.x1, P.y1], pts: pts.slice(0, 8) }); if (!P2.area || P2.area < P.area * .5) continue;
       let occ = 0, jn = 0; for (let i = 0; i < N; i++) { const inS = sil.lo[i] > 0, isP = P2.lo[i] > 0; if (inS && isP) occ++; if (inS && !isP) jn++; }
-      if (jn < J.area * .7) continue;                                 // إعادة القناع لم تنجح ← نُبقي القديم
+      if (jn < J.area * .5) continue;                                 // إعادة القناع لم تنجح ← نُبقي القديم
       J.orig = Float32Array.from(J.lo); J.sil = sil.lo; J.hand = P2.lo; J.holder = P;
       for (let i = 0; i < N; i++) { if (sil.lo[i] <= 0) continue; if (P2.lo[i] > 0) { J.lo[i] = -6; P.lo[i] = Math.max(P.lo[i], 4); } else { J.lo[i] = Math.max(J.lo[i], 4); P.lo[i] = Math.min(P.lo[i], -6); } }
       J.occFixed = true; stats(J, S); stats(P, S);
@@ -252,8 +252,9 @@ window.AIVision = (function () {
     return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (cnt ? cx / cnt : dw / 2), cy: dy + (cnt ? cy / cnt : dh / 2) };      // lx/ly: أعلى العنصر (لاسمه)، cx/cy: مركزه
   }
   /* معاينة بالدقة الكاملة (نفس قصّ «التقاط») مصغّرة للعرض: للحواف الدقيقة كالأصابع */
-  function fineView(S, cv, it, k) {
+  function fineView(S, cv, it, k, items) {
     const D = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, S.W, S.H).data, A = fullAlpha(S, it, D, {});
+    (items || []).filter(J => J.holder === it).forEach(J => { const B = fullAlpha(S, J, D, {}); for (let y = Math.max(A.y0, B.y0); y < Math.min(A.y0 + A.h, B.y0 + B.h); y++) for (let x = Math.max(A.x0, B.x0); x < Math.min(A.x0 + A.w, B.x0 + B.w); x++) A.a[(y - A.y0) * A.w + x - A.x0] *= 1 - B.a[(y - B.y0) * B.w + x - B.x0]; });      // اليد = حدودها ناقص الشيء الذي تمسكه
     const dx = Math.floor(A.x0 * k), dy = Math.floor(A.y0 * k), dw = Math.max(2, Math.ceil((A.x0 + A.w) * k) - dx), dh = Math.max(2, Math.ceil((A.y0 + A.h) * k) - dy), a = new Uint8Array(dw * dh); let ly = -1, sx = 0, nx = 0, n = 0, cx = 0, cy = 0;
     for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const gx = Math.min(A.w - 1, Math.floor((dx + x + .5) / k) - A.x0), gy = Math.min(A.h - 1, Math.floor((dy + y + .5) / k) - A.y0); if (gx >= 0 && gy >= 0 && A.a[gy * A.w + gx] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } } }
     return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (n ? cx / n : dw / 2), cy: dy + (n ? cy / n : dh / 2) };
