@@ -46,7 +46,7 @@
     <button class="tool" id="t-dup" title="تكرار (Ctrl+D)">⧉<small>تكرار</small></button>
     <button class="tool" id="t-del" title="حذف (Delete)">🗑<small>حذف</small></button>
     <hr>
-    <button class="tool ai" id="t-decomp" disabled title="المرحلة 3 — قريباً">✨<small>تفكيك</small></button>
+    <button class="tool ai" id="t-decomp" title="تفكيك صورة مسطحة إلى طبقات">✨<small>تفكيك</small></button>
   </aside>
   <section id="stage"><div id="paper"><canvas id="cv"></canvas></div></section>
   <aside id="side">
@@ -59,6 +59,7 @@
 <input type="file" id="f-open" accept=".json,application/json" hidden>
 <div id="toast"></div>
 <script src="../assets/js/config.js"></script>
+<script src="../assets/js/image-tools.js"></script>
 <script src="vendor/fabric.min.js"></script>
 <script src="core/canvas.js"></script>
 <script src="core/layers.js"></script>
@@ -67,6 +68,9 @@
 <script src="core/selection.js"></script>
 <script src="core/exporter.js"></script>
 <script src="core/cloud.js"></script>
+<script src="ai/ocr.js"></script>
+<script src="ai/detection.js"></script>
+<script src="ai/decomposition.js"></script>
 <script src="ui/dialogs.js"></script>
 <script src="ui/layers-panel.js"></script>
 <script src="ui/properties-panel.js"></script>

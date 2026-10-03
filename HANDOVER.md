@@ -287,3 +287,9 @@ python3 scripts/make-template.py --target php --out dist/php-client1 --name "ا�
 - الصور: `Ed.cloud.uploadAssets` يحوّل أصول `data:` إلى روابط Storage عامة (إعادة ترميز WebP إن >4MB)؛ التصميم المحفوظ لا يحوي بكسلات. الحفظ السحابي صريح (زر) + دوري كل دقيقتين لمشروع مفتوح فقط.
 - لم يُجرَّب على Supabase الحقيقي من البيئة السحابية (الشبكة الخارجية محجوبة): الاختبار ضد خادم وهمي يحاكي RPC وStorage. أول تشغيل حقيقي = شغّل editor.sql ثم set_key.
 - احتمال: مفتاح `sb_publishable_…` مع Storage يحتاج رأس apikey فقط؛ إن رفض Storage الطلب جرّب مفتاح anon JWT القديم في config.js.
+
+### محرر التصميم — المرحلة 3: زر «✨ تفكيك»
+- `assets/js/image-tools.js` (مشترك مع لوحة التحكم، في `shared-files.json`): `detectText`, `eraseRects`, `eraseBrush`, `inkColor`, `coreBox` — نُقلت إليه ممحاة المولّد دون تغيير سلوك.
+- `editor/ai/`: `ocr.js` (Gemini إن وُجد `alyssum_gp_gkey` في المتصفح وإلا Tesseract CDN وإلا نصوص بديلة)، `detection.js` (فقرات)، `decomposition.js` (تحليل ← JSON وصفي `{canvas, elements[{id,type,role,text,bbox,fontSize,color}]}` ← تطبيق).
+- التطبيق: خلفية نظيفة كطبقة صورة + طبقات Textbox (Cairo، لون الحبر، عرض مطابق للأصل)، والأصل يُخفى ويُقفل؛ خطوة تراجع واحدة. الفشل لا يمس التصميم ويعرض «إعادة المحاولة».
+- حدود: لا استخراج منتجات/أشخاص بعد (المرحلة 4)؛ حجم الخط تقريبي؛ نص فوق صور معقدة يُترك؛ سطر قصير وحيد قد يفوت الكشف فيُؤخذ من صندوق القراءة.

@@ -13,6 +13,7 @@
       if (t === "text") { await Ed.loadFont("Cairo"); Ed.addText(); } else if (t === "image") $("f-img").click(); else if (t === "button") { await Ed.loadFont("Cairo"); Ed.addButton(); }
       else if (t === "select") { Ed.c.discardActiveObject(); Ed.c.requestRenderAll(); }
     })));
+    $("t-decomp").onclick = guard(async () => Ed.decomp.runUI());
     $("t-dup").onclick = () => { const o = Ed.selected(); if (o) Ed.layers.duplicate(o); };
     $("t-del").onclick = () => { const l = Ed.selectedList(); if (l.length) Ed.layers.remove(l); };
     $("f-img").addEventListener("change", guard(async e => { for (const f of e.target.files) await Ed.addImageFile(f); e.target.value = ""; }));
