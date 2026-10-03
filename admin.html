@@ -7302,8 +7302,8 @@ const PB = (() => {
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
-      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl(), [TGR]),
-      html: (s, id) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl(), [TGR]),
+      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     text: {
@@ -7419,6 +7419,24 @@ const PB = (() => {
       html: s => { const L = (Array.isArray(s.items) ? s.items : []).map(x => ({ id: (x && x.id) || "facebook", url: x && x.url })).filter(x => typeof SocialIcons !== "undefined" && SocialIcons.byId[x.id]); return L.length ? `<div class="pb-so">${L.map(x => SocialIcons.link(x.id, x.url || "#", { size: num(s.isz) || 22, style: s.sty || "brand", shape: s.shp || "round" })).join("")}</div>` : '<div class="pb-so" style="opacity:.5">أضف حساباً من الإعدادات</div>'; },
       css: (c, sel, s) => { c.d.push(`${sel} .pb-so{display:flex;flex-wrap:wrap;align-items:center;justify-content:${s.jc || "center"};gap:${num(s.gap) ?? 10}px}${sel} .pb-so .si-a{display:inline-flex;transition:transform .15s}${sel} .pb-so .si-a:hover{transform:translateY(-2px)}`); if (s.ic) c.d.push(`${sel} .pb-so .si-ic{color:${s.ic}!important}`); },
     },
+    pprice: {
+      label: "سعر المنتج (مرتبط)", ic: "💰", def: { prod: "", pc: "", fs: { d: 34 }, ta: { d: "start" } },
+      ctl: [{ k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }, { k: "pc", l: "لون السعر", t: "color", tab: "s" }, { k: "fs", l: "حجم السعر (px)", t: "num", r: 1, min: 14, max: 90, tab: "s" }],
+      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const f = n => Number(n || 0).toLocaleString("fr-DZ") + " دج", has = p.old && p.old > p.price; return `<div class="pb-pp${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبط بسعر المنتج — انقر للتعديل"` : ""}><span class="price-now" id="pprice">${f(p.price)}</span><span class="price-old" id="pold"${has ? "" : ' style="display:none"'}>${has ? f(p.old) : ""}</span><span class="save-pill" id="psave"${has ? "" : ' style="display:none"'}>${has ? "وفّر " + Math.round((1 - p.price / p.old) * 100) + "%" : ""}</span></div>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-pp{display:flex;gap:.7rem;align-items:baseline;flex-wrap:wrap}:where(${sel} .price-now){font-weight:900;color:${s.pc || "#157a55"}}:where(${sel} .price-old){text-decoration:line-through;color:#999}:where(${sel} .save-pill){background:#fde8e8;color:#b83232;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:800}`); emit(c, sel + " .price-now", s, [["fs", px("font-size")]]); if (s.pc) c.d.push(`${sel} .price-now{color:${s.pc}}`); },
+    },
+    poffers: {
+      label: "عروض المنتج (مرتبطة)", ic: "🏷️", def: { prod: "" },
+      ctl: [{ k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }],
+      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const f = n => Number(n || 0).toLocaleString("fr-DZ") + " دج"; const cards = (p.offers || []).map((o, i) => { const paid = o.qty - (o.free || 0), unit = Math.round(o.price / Math.max(1, paid)), disc = Math.round((1 - o.price / (p.price * Math.max(1, paid))) * 100), label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty === 1 ? "قطعة واحدة" : o.qty === 2 ? "قطعتان" : o.qty + " قطع"); return `<div class="offer${i === 2 ? " on" : ""}">${i === 2 ? '<span class="best">الأكثر طلباً 🔥</span>' : ""}<div class="q">${label}</div><div class="p">${f(o.price)}</div><div class="u">${f(unit)} للقطعة ${disc > 0 ? "· وفر " + disc + "%" : ""}</div></div>`; }).join(""); return `<div class="offers pb-po${ctx.edit ? " pbbind" : ""}" id="offers"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبطة بعروض المنتج — انقر للتعديل"` : ""}>${cards}</div>`; },
+      css: (c, sel) => { c.d.push(`${sel} .pb-po{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}:where(${sel} .offer){border:1.5px solid #e1dac8;border-radius:12px;padding:.7rem;text-align:center;background:#fff;position:relative}:where(${sel} .offer.on){border-color:#157a55;background:#f1faf5}:where(${sel} .offer .best){position:absolute;top:-10px;inset-inline-start:8px;background:#c8a24b;color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:0 .5rem}:where(${sel} .offer .p){font-weight:900;font-size:1.15rem}:where(${sel} .offer .u){font-size:.72rem;color:#777}`); },
+    },
+    pgallery: {
+      label: "معرض صور المنتج (مرتبط)", ic: "🖼️", def: { prod: "" },
+      ctl: [{ k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }],
+      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const im = (p.images && p.images.length) ? p.images : (p.cover ? [p.cover] : []), u = x => (/^(https?:|data:|\/)/.test(x) ? x : ctx.base + x); return `<div class="pbox pb-pg${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبط بصور المنتج — انقر للتعديل"` : ""}><div class="gmain"><img id="gmain" src="${esc(u(im[0] || ""))}" alt="${esc(p.title)}"></div><div class="pthumbs"><div class="gthumbs">${im.map((x, i) => `<img src="${esc(u(x))}" alt="${esc(p.title)}"${i === 0 ? ' class="on"' : ""}>`).join("")}</div></div></div>`; },
+      css: (c, sel) => { c.d.push(`:where(${sel} .gmain img){width:100%;display:block;border-radius:16px}:where(${sel} .gthumbs){display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}:where(${sel} .gthumbs img){width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid transparent}:where(${sel} .gthumbs img.on){border-color:#157a55}`); },
+    },
     contact: {
       label: "نموذج اتصال", ic: "✉️", def: { title: "تواصل معنا", desc: "اترك رسالتك وسنردّ عليك في أقرب وقت.", fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "full" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "البريد الإلكتروني", type: "email", ph: "example@mail.com", req: false, w: "half" }, { label: "رسالتك", type: "textarea", ph: "اكتب رسالتك هنا", req: true, w: "full" }], btn: "إرسال الرسالة", dest: "whatsapp", dzPhone: true, ok: "✅ تم إرسال رسالتك بنجاح، شكراً لك!", subject: "رسالة من نموذج الاتصال", fbg: "#ffffff", fbc: "#e6dfcf", frad: { d: 16 }, fpad: { d: [24, 24, 24, 24] }, tcol: "#173f35", lcol: "#444444", ibg: "#faf6ec", ibc: "#e0d9c8", irad: { d: 10 }, ifs: { d: 16 }, bbg: "#157a55", bcol: "#ffffff", brad: { d: 12 }, bfull: true, cd: 20 },
       ctl: [{ k: "title", l: "عنوان النموذج", t: "text", tab: "c" }, { k: "desc", l: "وصف قصير", t: "textarea", tab: "c" },
@@ -7512,12 +7530,13 @@ const PB = (() => {
         const p = (ctx.products || []).find(x => x.slug === s.prod);
         if (ctx.edit) return `<div class="pb-ofm"><b>🛒 نموذج الطلب الأصلي${p ? " — " + esc(p.title) : ""}</b><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-b"></div><small>يظهر هنا النموذج الكامل (العروض، الولاية والبلدية، التوصيل، الكوبون...) بعد النشر ${p ? "" : "— اختر المنتج من الإعدادات"}</small></div>`;
         if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
+        if (ctx.inlineOrder && s.raw) return `<div class="pb-ofraw">${s.raw}</div>`;      // على صفحة المنتج نفسها: نموذج الطلب الأصلي كما هو (دون تضمين الصفحة في نفسها)
         return `<iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1" loading="lazy" title="نموذج الطلب"></iframe>`;
       },
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "pprice", "poffers", "pgallery", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -7587,7 +7606,7 @@ const PB = (() => {
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
-  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], pprice: [30, 80], poffers: [80, 260], pgallery: [200, 700], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
   const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
@@ -7612,6 +7631,7 @@ const PB = (() => {
   const autoFlowFree = sec => sec.set.kind !== "canvas" && sec.set.autoM !== false && (sec.free || []).length > 0 && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined));
   function renderSections(page, ctx) {
     if (!ctx.wa && ctx.site && ctx.site.wa) ctx = Object.assign({}, ctx, { wa: ctx.site.wa });      // رقم واتساب المتجر للأزرار والنماذج
+    if (page.product && !ctx.pageProduct) ctx = Object.assign({}, ctx, { pageProduct: page.product });
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
     const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;
@@ -8073,7 +8093,7 @@ body{overflow-x:hidden;margin:0}`;
   function slugEdit(v) { E.slugTouched = true; E.page.slug = String(v).toLowerCase().replace(/[^a-z0-9-]/g, ""); E.dirty = true; updateTop(); }
 
   /* ───────────────── القماش ───────────────── */
-  function ctx() { const A = (typeof Admin !== "undefined") ? Admin : {}; return { base: "", edit: true, products: A.products || [], wa: (typeof SITE_CFG !== "undefined" && SITE_CFG.waNumber) || "", meta: { tabs: A.collections || [], cats: A.categories || {} }, sl: E.sl }; }
+  function ctx() { const A = (typeof Admin !== "undefined") ? Admin : {}; return { base: "", edit: true, products: (typeof PBBind !== "undefined" ? PBBind.list() : (A.products || [])), wa: (typeof SITE_CFG !== "undefined" && SITE_CFG.waNumber) || "", meta: { tabs: A.collections || [], cats: A.categories || {} }, sl: E.sl }; }
   function renderCanvas() {
     if (!fdoc || !root || !E.page) return;
     const r = PB.renderSections(E.page, ctx());
@@ -8833,7 +8853,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   const b64 = str => btoa(unescape(encodeURIComponent(str)));
   function siteCtx() {
     const S = (typeof SITE_CFG !== "undefined") ? SITE_CFG : {};
-    return { site: { name: S.name, domain: S.domain, wa: S.waNumber }, products: (typeof Admin !== "undefined" && Admin.products) || [], meta: { tabs: (typeof Admin !== "undefined" && Admin.collections) || [], cats: (typeof Admin !== "undefined" && Admin.categories) || {} } };
+    return { site: { name: S.name, domain: S.domain, wa: S.waNumber }, products: (typeof PBBind !== "undefined" ? PBBind.list() : ((typeof Admin !== "undefined" && Admin.products) || [])), meta: { tabs: (typeof Admin !== "undefined" && Admin.collections) || [], cats: (typeof Admin !== "undefined" && Admin.categories) || {} } };
   }
   function validate(direct) {
     const P = E.page; if (!P.title.trim()) { toast("أدخل عنوان الصفحة"); return false; }
@@ -10206,6 +10226,95 @@ const PBConvert = (() => {
   const absCss = (css, from) => css.replace(/url\(\s*(['"]?)(?!data:|https?:|\/\/|#)([^)'"]+?)\1\s*\)/g, (m, q, u) => { try { return "url(" + new URL(u, from).href + ")"; } catch (e) { return m; } });
   const GROUP = el => el.matches(".topbar,header") ? "top" : el.matches("footer") ? "bot" : "";
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحوّلها إلى صفحة مطوّر: قسم لكل كتلة بنفس HTML الأصل + أنماطها */
+  /* يرسم الصفحة في iframe خفي بعرض الحاسوب (لتشغيل جافاسكربتها وقراءة الأنماط المحسوبة) */
+  async function render(url) {
+    const fr = document.createElement("iframe"); fr.setAttribute("aria-hidden", "true"); fr.style.cssText = "position:fixed;left:-12000px;top:0;width:1280px;height:900px;border:0;visibility:hidden";
+    document.body.appendChild(fr);
+    try { await new Promise((res, rej) => { fr.onload = res; fr.onerror = rej; fr.src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); setTimeout(res, 12000); }); await new Promise(r => setTimeout(r, 2200)); return fr; }
+    catch (e) { fr.remove(); throw e; }
+  }
+  function convertMain(doc, o, fdoc) {
+    const win = doc.defaultView, cs = el => win.getComputedStyle(el);
+    const hidden = el => { const s = cs(el); return s.display === "none" || s.visibility === "hidden" || el.hidden || (+s.opacity === 0 && !el.querySelector("img")); };
+    const skip = el => el.matches(SKIP) || hidden(el);
+    const kids = el => [...el.children].filter(c => !skip(c));
+    const rel = u => { try { const x = new URL(u, doc.baseURI); if (x.origin !== new URL(doc.baseURI).origin) return x.href; return decodeURIComponent(x.pathname.replace(/^\//, "")) + x.search; } catch (e) { return u; } };
+    const ta = el => { const a = cs(el).textAlign; return a === "center" ? "center" : (a === "left" || a === "end") ? "end" : "start"; };
+    const px = (el, d) => Math.round(parseFloat(cs(el).fontSize) || d);
+    const inline = el => { const c = el.cloneNode(true); c.querySelectorAll("script,style,svg,img,button,input,select,textarea,iframe").forEach(x => x.remove()); c.querySelectorAll("*").forEach(x => { [...x.attributes].forEach(a => { if (!(x.tagName === "A" && a.name === "href")) x.removeAttribute(a.name); }); if (!/^(A|B|STRONG|EM|I|U|BR|P|UL|OL|LI|SPAN|SMALL|MARK|DEL|S)$/.test(x.tagName)) x.replaceWith(...x.childNodes); }); return c.innerHTML.trim(); };
+    const txt = el => (el.textContent || "").replace(/\s+/g, " ").trim();
+    const hasBlock = el => [...el.children].some(c => !skip(c) && /^(DIV|SECTION|ARTICLE|UL|OL|H[1-6]|FORM|TABLE|DETAILS|FIGURE|IMG|PICTURE|VIDEO|IFRAME|P|BLOCKQUOTE|ASIDE)$/.test(c.tagName));
+    const colorOf = el => { const h = hex(cs(el).color); return h; };
+    const isOrder = el => (el.matches("form,[id*=order i],[class*=order i]") && el.querySelector("input,select,textarea")) || (el.querySelector && el.querySelector("#name,#phone,#cname,input[type=tel]") && el.querySelector("button") && !el.querySelector("h1,h2") && el.querySelectorAll("input").length >= 2);
+    let sawOrder = false; const seen = new Set();
+    /* نموذج الطلب الأصلي كما هو في ملف الصفحة (يُستعمل عند الحفظ المباشر على صفحة المنتج نفسها فلا يتضمّن نفسه) */
+    const rawOrder = (() => { if (o.kind !== "product" || !fdoc) return ""; const inp = fdoc.querySelector("#cname,#name,#phone,input[type=tel]"); const el = inp && (inp.closest("form,[id*=order i],[class*=order i]") || inp.parentElement); return el ? el.outerHTML : ""; })();
+    const rawKeep = c => !!c.querySelector("#grid,#bestsellers-grid,.shop-cats");
+
+    function widgetsOf(el, out) {
+      if (skip(el)) return;
+      const tag = el.tagName;
+      if (o.kind === "product" && isOrder(el)) { if (!sawOrder) { sawOrder = true; out.push(mkW("orderorig", { prod: o.slug, raw: rawOrder })); } return; }
+      if (o.kind === "product") {
+        if (el.id === "offers" || (el.querySelector("#offers") && !el.querySelector("h1,h2,form,#gmain,#pprice") && txt(el).length < 400)) { out.push(mkW("poffers", { prod: o.slug })); return; }
+        if (el.id === "pprice" || (el.querySelector("#pprice") && !el.querySelector("h1,h2,img,#offers,form") && txt(el).length < 120)) { out.push(mkW("pprice", { prod: o.slug })); return; }
+        if (el.querySelector("#gmain") && !el.querySelector("h1,h2,form,#offers,#pprice")) { out.push(mkW("pgallery", { prod: o.slug })); return; }
+      }
+      if (/^H[1-6]$/.test(tag)) { const t = txt(el); if (!t) return; const w = mkW("heading", { text: t, tag: tag.toLowerCase(), bindTitle: o.kind === "product" && tag === "H1", prod: o.kind === "product" ? o.slug : "", fs: { d: px(el, 32), m: Math.max(18, Math.round(px(el, 32) * (px(el, 32) > 30 ? .72 : .9))) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return; }
+      if (tag === "IMG") { const r = el.getBoundingClientRect(); const src = el.currentSrc || el.src || ""; if (!src || r.width < 110 || el.closest("[class*=thumb]") || seen.has(src) || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(src)) return; seen.add(src); out.push(mkW("image", { src: rel(src), alt: el.alt || "", fit: "cover" })); return; }
+      if (tag === "PICTURE") { const i = el.querySelector("img"); if (i) widgetsOf(i, out); return; }
+      if (tag === "VIDEO" || (tag === "IFRAME" && /youtube|vimeo/i.test(el.src))) { const u = el.src || (el.querySelector("source") || {}).src || ""; if (u) out.push(mkW("video", { url: u, ratio: "16/9" })); return; }
+      if (tag === "UL" || tag === "OL") { const li = [...el.children].filter(c => c.tagName === "LI" && txt(c)); if (li.length && li.every(x => !hasBlock(x))) { out.push(mkW("bullets", { items: li.map(txt).join("\n"), mk: tag === "OL" ? "dec" : "check", fs: { d: px(li[0], 17) } })); return; } }
+      if (tag === "DETAILS" || tag === "TABLE") { if (tag === "DETAILS") { const q = txt(el.querySelector("summary") || {}), a = txt({ textContent: [...el.childNodes].filter(n => !(n.tagName === "SUMMARY")).map(n => n.textContent).join(" ") }); if (q) { const last = out[out.length - 1]; const it = { q, a }; if (last && last.type === "accordion" && last._auto) last.set.items.push(it); else { const w = mkW("accordion", { items: [it], first: false }); w._auto = true; out.push(w); } } return; } }
+      if ((tag === "A" || tag === "BUTTON") && (el.matches("[class*=btn]") || tag === "BUTTON")) { const t = txt(el); if (!t || el.matches(".cart-btn,.btn-order,[onclick*=Cart]") || el.closest("[class*=tab],[class*=pill],[class*=chip],[id*=tab]") || t.length > 60) return; const s = cs(el); const w = mkW("button", { text: t, kind: "link", link: tag === "A" ? (el.getAttribute("href") || "#") : "#", fs: { d: px(el, 18) }, brad: { d: parseInt(s.borderTopLeftRadius) || 10 } }); const bg = hex(s.backgroundColor), c = hex(s.color); if (bg) w.set.bgc = bg; if (c) w.set.color = c; if (!bg) w.set.bgHide = true; out.push(w); return; }
+      if (o.kind === "home" && (el.id === "grid" || el.matches(".grid") && el.querySelector("[data-slug],.card,.pcard"))) { out.push(mkW("products", { mode: "all" })); return; }
+      if (tag === "P" || tag === "BLOCKQUOTE" || tag === "SPAN" || tag === "SMALL" || tag === "LI" || tag === "A" || tag === "B" || tag === "STRONG" || tag === "LABEL" || ((tag === "DIV" || tag === "FIGCAPTION" || tag === "TD") && !hasBlock(el) && !el.querySelector("a[class*=btn],button"))) {
+        if (el.querySelector("img") && !txt(el)) { [...el.querySelectorAll("img")].forEach(i => widgetsOf(i, out)); return; }
+        const h = inline(el), t = txt(el); if (!t) return;
+        const w = mkW("text", { html: /^<p[ >]/.test(h) ? h : "<p>" + h + "</p>", fs: { d: px(el, 17) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return;
+      }
+      kids(el).forEach(c => widgetsOf(c, out));
+    }
+    /* حاوية بأعمدة (grid / flex أفقي) ← أعمدة في القسم */
+    function columnsOf(el) {
+      const s = cs(el), k = kids(el);
+      if (k.length < 2 || k.length > 4) return null;
+      const row = (s.display === "grid" && s.gridTemplateColumns.split(" ").length >= 2) || (s.display === "flex" && !/column/.test(s.flexDirection));
+      if (!row) return null;
+      const cols = k.map(c => { const w = []; widgetsOf(c, w); return w; }).filter(w => w.length);
+      return cols.length >= 2 ? cols : null;
+    }
+    function sectionOf(el, hint) {
+      let inner = el, safe = 0;
+      while (safe++ < 4) { const k = kids(inner); if (k.length === 1 && !/^(IMG|H[1-6]|P|UL|OL|FORM)$/.test(k[0].tagName) && !isOrder(k[0])) inner = k[0]; else break; }
+      let cols = columnsOf(inner); let cs_;
+      if (!cols) { let found = null; const ks = kids(inner), gi = ks.findIndex(k => (found = columnsOf(k))); if (gi >= 0 && ks.length > 1) {      // قسم يضم كتلة أعمدة بين عناصر أخرى ← أقسام متتالية: ما قبلها، الأعمدة، ما بعدها
+        const mk = (list) => { const w = []; list.forEach(c => widgetsOf(c, w)); return w.length ? mkS([mkC(w)], {}) : null; };
+        const secsOut = [mk(ks.slice(0, gi)), mkS(found.map(w => mkC(w)), {}), mk(ks.slice(gi + 1))].filter(Boolean);
+        const bg0 = hex(cs(el).backgroundColor); if (bg0) secsOut.forEach(x => { x.set.bg = bg0; }); return secsOut; } }
+      if (cols) cs_ = cols.map(w => mkC(w)); else { const w = []; widgetsOf(inner, w); if (!w.length) return null; cs_ = [mkC(w)]; }
+      const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
+      if (b2) set.bg = b2;
+      const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
+      return mkS(cs_, set);
+    }
+    const root = doc.querySelector("main") || doc.body, secs = [];
+    const rawSec = (c, idx) => { let el = c.id ? fdoc.getElementById(c.id) : null; if (!el) { const m = fdoc.querySelector("main"); el = m && m.children[idx]; } if (!el) return null; const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = "main"; return sec; };
+    let loose = [];
+    const flush = () => { if (!loose.length) return; const w = []; loose.forEach(c => widgetsOf(c, w)); if (w.length) secs.push(mkS([mkC(w)], {})); loose = []; };
+    const all = [...root.children], top = all.flatMap(c => (c.matches(".container,#main,div") && kids(c).length > 1 && kids(c).every(x => x.matches("section,.hero,div[class*=sec],.container"))) ? kids(c) : [c]);
+    top.forEach(c => {
+      if (skip(c)) return;
+      if (o.kind === "home" && rawKeep(c)) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
+      if (c.matches("section,.container") || hex(cs(c).backgroundColor) || /gradient/.test(cs(c).backgroundImage) || c.matches(".hero,[class*=hero]")) { flush(); const s = sectionOf(c); if (s) secs.push(...[].concat(s)); } else loose.push(c);
+    });
+    flush();
+    if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug, raw: rawOrder })])], {}));
+    secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; })));
+    return secs;
+  }
+
+  /* يقرأ الصفحة الأصلية: الشريط العلوي والهيدر والفوتر كتل HTML أصلية (تبقى بسلتها وقائمتها)، وأقسام المحتوى تُحوَّل إلى عناصر المطوّر القابلة للتعديل (مع ربطها ببيانات المنتج) */
   async function build(kind, slug, title) {
     const pth = path(kind, slug), f = await GH.getFile(pth), text = dec(f), doc = new DOMParser().parseFromString(text, "text/html"), from = siteBase() + pth;
     let css = "";
@@ -10214,22 +10323,20 @@ const PBConvert = (() => {
       const h = l.getAttribute("href") || ""; if (!h || /^(https?:)?\/\//.test(h)) continue;
       try { const u = new URL(h, from).href, r = await fetch(u); if (r.ok) css += absCss(await r.text(), u) + "\n"; } catch (e) { }
     }
-    const AG = "#agent,[id^=agent],[class*=agent],#avatar,.avatar-bubble";      // الوكيل الذكي يُستثنى من المطوّر (يُحقن بالجافاسكربت ويبقى كما هو)
+    const AG = "#agent,[id^=agent],[class*=agent],#avatar,.avatar-bubble";      // الوكيل الذكي يُستثنى من المطوّر
     const raw = (grp, el) => { const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = grp; return sec; };
-    const secs = [];
-    [...doc.body.children].forEach(el => {
-      if (el.matches("script,style,link,noscript,template")) return;
-      if (el.matches("main")) { [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
-      if (el.matches(AG)) return;
-      const g = GROUP(el); if (g) secs.push(raw(g, el));
-    });
+    const top = [], bot = [];
+    [...doc.body.children].forEach(el => { if (el.matches("script,style,link,noscript,template," + AG)) return; const g = GROUP(el); if (g === "top") top.push(raw("top", el)); else if (g === "bot") bot.push(raw("bot", el)); });
+    const fr = await render(kind === "home" ? "index.html" : "p/" + slug + "/");
+    let main = []; try { main = convertMain(fr.contentDocument, { kind, slug }, doc); } finally { fr.remove(); }
+    main.forEach(s => { s.grp = s.grp || "main"; });
     const page = newPage(title || "الصفحة الرئيسية", kind === "home" ? "home" : slug);
-    page.sections = secs.length ? secs : [mkS([mkC([mkW("heading", { text: title || "صفحة" })])], {})];
+    page.sections = top.concat(main, bot); if (!page.sections.length) page.sections = [mkS([mkC([mkW("heading", { text: title || "صفحة" })])], {})];
     page.header = false; page.footer = false; page.css = css; page.bg = "transparent";
     const t = doc.title || ""; if (t) page.seoTitle = t.replace(/\s+—.*$/, "");
     const md = doc.querySelector('meta[name="description"]'); if (md) page.desc = md.content || "";
     if (kind === "product") page.product = slug;
-    page.shell = text; page.origin = { kind, slug: kind === "home" ? "" : slug, direct: false, raw: true };
+    page.shell = text; page.origin = { kind, slug: kind === "home" ? "" : slug, direct: false, raw: false, native: true };
     return page;
   }
   /* زر «تعديل» ← يفتح الصفحة في المطوّر */
@@ -10289,7 +10396,7 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       const g = sec.grp || last; last = g;
       const ws = (sec.cols || []).flatMap(c => c.widgets || []), isRaw = sec.grp && (sec.cols || []).length === 1 && ws.length === 1 && ws[0].type === "html" && !(sec.free || []).length;
       if (isRaw) { out[g].push(PBBind.bake(ws[0].set.code || "", o)); return; }
-      native = true; const r = PB.renderSections({ sections: [sec] }, Object.assign({ base: o.kind === "home" ? "" : "../../", edit: false }, ctx));
+      native = true; const r = PB.renderSections({ sections: [sec], product: o.kind === "product" ? o.slug : (P.product || "") }, Object.assign({ base: o.kind === "home" ? "" : "../../", edit: false, inlineOrder: o.kind === "product" }, ctx));
       out[g].push("<style>" + r.css + "</style>" + r.html);
     });
     const place = (grp, sel) => {
@@ -10362,11 +10469,11 @@ const PBBind = (() => {
     }
   }
   /* أي صفحة مرتبطة بمنتج (أصلية مفتوحة من المنتج/الرئيسية، أو صفحة هبوط «مرتبطة بمنتج») تُربط عناصرها ببيانات ذلك المنتج */
-  const bindOf = page => { if (!page) return null; if (page.origin && page.origin.raw) return page.origin; if (page.product) return { kind: "product", slug: page.product, raw: true, noTitle: true }; return null; };
+  const bindOf = page => { if (!page) return null; if (page.origin && (page.origin.raw || page.origin.native)) return page.origin; if (page.product) return { kind: "product", slug: page.product, raw: true, noTitle: true }; return null; };
   /* بعد كل رسم للقماش */
   function after(root, page) {
     const og = bindOf(page); if (!og) return;
-    applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true, noTitle: og.noTitle, ro: og.kind === "product" && !official(og.slug, page) });
+    if (og.raw !== false) applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true, noTitle: og.noTitle, ro: og.kind === "product" && !official(og.slug, page) });
     const d = root.ownerDocument;
     if (!d.getElementById("pbbind-css")) { const st = d.createElement("style"); st.id = "pbbind-css"; st.textContent = ".pbbind{outline:2px dashed #0e9f8e!important;outline-offset:3px;cursor:pointer!important;position:relative}.pbbind-ro{outline-color:#9ca3af!important}.pbbind:hover{outline-color:#f59e0b!important;background-image:linear-gradient(rgba(14,159,142,.07),rgba(14,159,142,.07))}"; d.head.appendChild(st); }
     if (!root._pbb) { root._pbb = true; root.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-pbbind]"); if (!b) return; e.preventDefault(); e.stopPropagation(); openModal(b.getAttribute("data-pbbind")); }, true); }
@@ -10417,13 +10524,14 @@ const PBBind = (() => {
     Object.keys(cache).forEach(slug => { orig[slug] = JSON.stringify(cache[slug]); });
   }
   const reset = () => { cache = {}; orig = {}; };
+  const list = () => prods().map(x => cache[x.slug] || x);
   /* نسخة من الصفحة بقيم المنتج مثبّتة داخل أكواد HTML (لنشر صفحات الهبوط المرتبطة بمنتج) */
   function bakePage(P) {
     const og = bindOf(P); if (!og || P.origin) return P; const c = JSON.parse(JSON.stringify(P));
     (c.sections || []).forEach(sec => (sec.cols || []).forEach(col => (col.widgets || []).forEach(w => { if (w.type === "html" && w.set && w.set.code) w.set.code = bake(w.set.code, Object.assign({}, og, { kind: "product" })); })));
     return c;
   }
-  return { after, bake, bakePage, commit, reset, openModal };
+  return { after, bake, bakePage, commit, reset, openModal, list };
 })();
 
 </script>

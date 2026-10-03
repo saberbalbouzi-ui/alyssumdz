@@ -266,7 +266,7 @@ body{overflow-x:hidden;margin:0}`;
   function slugEdit(v) { E.slugTouched = true; E.page.slug = String(v).toLowerCase().replace(/[^a-z0-9-]/g, ""); E.dirty = true; updateTop(); }
 
   /* ───────────────── القماش ───────────────── */
-  function ctx() { const A = (typeof Admin !== "undefined") ? Admin : {}; return { base: "", edit: true, products: A.products || [], wa: (typeof SITE_CFG !== "undefined" && SITE_CFG.waNumber) || "", meta: { tabs: A.collections || [], cats: A.categories || {} }, sl: E.sl }; }
+  function ctx() { const A = (typeof Admin !== "undefined") ? Admin : {}; return { base: "", edit: true, products: (typeof PBBind !== "undefined" ? PBBind.list() : (A.products || [])), wa: (typeof SITE_CFG !== "undefined" && SITE_CFG.waNumber) || "", meta: { tabs: A.collections || [], cats: A.categories || {} }, sl: E.sl }; }
   function renderCanvas() {
     if (!fdoc || !root || !E.page) return;
     const r = PB.renderSections(E.page, ctx());
@@ -1026,7 +1026,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   const b64 = str => btoa(unescape(encodeURIComponent(str)));
   function siteCtx() {
     const S = (typeof SITE_CFG !== "undefined") ? SITE_CFG : {};
-    return { site: { name: S.name, domain: S.domain, wa: S.waNumber }, products: (typeof Admin !== "undefined" && Admin.products) || [], meta: { tabs: (typeof Admin !== "undefined" && Admin.collections) || [], cats: (typeof Admin !== "undefined" && Admin.categories) || {} } };
+    return { site: { name: S.name, domain: S.domain, wa: S.waNumber }, products: (typeof PBBind !== "undefined" ? PBBind.list() : ((typeof Admin !== "undefined" && Admin.products) || [])), meta: { tabs: (typeof Admin !== "undefined" && Admin.collections) || [], cats: (typeof Admin !== "undefined" && Admin.categories) || {} } };
   }
   function validate(direct) {
     const P = E.page; if (!P.title.trim()) { toast("أدخل عنوان الصفحة"); return false; }

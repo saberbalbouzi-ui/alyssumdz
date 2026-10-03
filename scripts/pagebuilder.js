@@ -194,8 +194,8 @@ const PB = (() => {
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
-      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl(), [TGR]),
-      html: (s, id) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl(), [TGR]),
+      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     text: {
@@ -311,6 +311,24 @@ const PB = (() => {
       html: s => { const L = (Array.isArray(s.items) ? s.items : []).map(x => ({ id: (x && x.id) || "facebook", url: x && x.url })).filter(x => typeof SocialIcons !== "undefined" && SocialIcons.byId[x.id]); return L.length ? `<div class="pb-so">${L.map(x => SocialIcons.link(x.id, x.url || "#", { size: num(s.isz) || 22, style: s.sty || "brand", shape: s.shp || "round" })).join("")}</div>` : '<div class="pb-so" style="opacity:.5">أضف حساباً من الإعدادات</div>'; },
       css: (c, sel, s) => { c.d.push(`${sel} .pb-so{display:flex;flex-wrap:wrap;align-items:center;justify-content:${s.jc || "center"};gap:${num(s.gap) ?? 10}px}${sel} .pb-so .si-a{display:inline-flex;transition:transform .15s}${sel} .pb-so .si-a:hover{transform:translateY(-2px)}`); if (s.ic) c.d.push(`${sel} .pb-so .si-ic{color:${s.ic}!important}`); },
     },
+    pprice: {
+      label: "سعر المنتج (مرتبط)", ic: "💰", def: { prod: "", pc: "", fs: { d: 34 }, ta: { d: "start" } },
+      ctl: [{ k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }, { k: "pc", l: "لون السعر", t: "color", tab: "s" }, { k: "fs", l: "حجم السعر (px)", t: "num", r: 1, min: 14, max: 90, tab: "s" }],
+      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const f = n => Number(n || 0).toLocaleString("fr-DZ") + " دج", has = p.old && p.old > p.price; return `<div class="pb-pp${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبط بسعر المنتج — انقر للتعديل"` : ""}><span class="price-now" id="pprice">${f(p.price)}</span><span class="price-old" id="pold"${has ? "" : ' style="display:none"'}>${has ? f(p.old) : ""}</span><span class="save-pill" id="psave"${has ? "" : ' style="display:none"'}>${has ? "وفّر " + Math.round((1 - p.price / p.old) * 100) + "%" : ""}</span></div>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-pp{display:flex;gap:.7rem;align-items:baseline;flex-wrap:wrap}:where(${sel} .price-now){font-weight:900;color:${s.pc || "#157a55"}}:where(${sel} .price-old){text-decoration:line-through;color:#999}:where(${sel} .save-pill){background:#fde8e8;color:#b83232;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:800}`); emit(c, sel + " .price-now", s, [["fs", px("font-size")]]); if (s.pc) c.d.push(`${sel} .price-now{color:${s.pc}}`); },
+    },
+    poffers: {
+      label: "عروض المنتج (مرتبطة)", ic: "🏷️", def: { prod: "" },
+      ctl: [{ k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }],
+      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const f = n => Number(n || 0).toLocaleString("fr-DZ") + " دج"; const cards = (p.offers || []).map((o, i) => { const paid = o.qty - (o.free || 0), unit = Math.round(o.price / Math.max(1, paid)), disc = Math.round((1 - o.price / (p.price * Math.max(1, paid))) * 100), label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty === 1 ? "قطعة واحدة" : o.qty === 2 ? "قطعتان" : o.qty + " قطع"); return `<div class="offer${i === 2 ? " on" : ""}">${i === 2 ? '<span class="best">الأكثر طلباً 🔥</span>' : ""}<div class="q">${label}</div><div class="p">${f(o.price)}</div><div class="u">${f(unit)} للقطعة ${disc > 0 ? "· وفر " + disc + "%" : ""}</div></div>`; }).join(""); return `<div class="offers pb-po${ctx.edit ? " pbbind" : ""}" id="offers"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبطة بعروض المنتج — انقر للتعديل"` : ""}>${cards}</div>`; },
+      css: (c, sel) => { c.d.push(`${sel} .pb-po{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}:where(${sel} .offer){border:1.5px solid #e1dac8;border-radius:12px;padding:.7rem;text-align:center;background:#fff;position:relative}:where(${sel} .offer.on){border-color:#157a55;background:#f1faf5}:where(${sel} .offer .best){position:absolute;top:-10px;inset-inline-start:8px;background:#c8a24b;color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:0 .5rem}:where(${sel} .offer .p){font-weight:900;font-size:1.15rem}:where(${sel} .offer .u){font-size:.72rem;color:#777}`); },
+    },
+    pgallery: {
+      label: "معرض صور المنتج (مرتبط)", ic: "🖼️", def: { prod: "" },
+      ctl: [{ k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }],
+      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const im = (p.images && p.images.length) ? p.images : (p.cover ? [p.cover] : []), u = x => (/^(https?:|data:|\/)/.test(x) ? x : ctx.base + x); return `<div class="pbox pb-pg${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبط بصور المنتج — انقر للتعديل"` : ""}><div class="gmain"><img id="gmain" src="${esc(u(im[0] || ""))}" alt="${esc(p.title)}"></div><div class="pthumbs"><div class="gthumbs">${im.map((x, i) => `<img src="${esc(u(x))}" alt="${esc(p.title)}"${i === 0 ? ' class="on"' : ""}>`).join("")}</div></div></div>`; },
+      css: (c, sel) => { c.d.push(`:where(${sel} .gmain img){width:100%;display:block;border-radius:16px}:where(${sel} .gthumbs){display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}:where(${sel} .gthumbs img){width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid transparent}:where(${sel} .gthumbs img.on){border-color:#157a55}`); },
+    },
     contact: {
       label: "نموذج اتصال", ic: "✉️", def: { title: "تواصل معنا", desc: "اترك رسالتك وسنردّ عليك في أقرب وقت.", fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "full" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "البريد الإلكتروني", type: "email", ph: "example@mail.com", req: false, w: "half" }, { label: "رسالتك", type: "textarea", ph: "اكتب رسالتك هنا", req: true, w: "full" }], btn: "إرسال الرسالة", dest: "whatsapp", dzPhone: true, ok: "✅ تم إرسال رسالتك بنجاح، شكراً لك!", subject: "رسالة من نموذج الاتصال", fbg: "#ffffff", fbc: "#e6dfcf", frad: { d: 16 }, fpad: { d: [24, 24, 24, 24] }, tcol: "#173f35", lcol: "#444444", ibg: "#faf6ec", ibc: "#e0d9c8", irad: { d: 10 }, ifs: { d: 16 }, bbg: "#157a55", bcol: "#ffffff", brad: { d: 12 }, bfull: true, cd: 20 },
       ctl: [{ k: "title", l: "عنوان النموذج", t: "text", tab: "c" }, { k: "desc", l: "وصف قصير", t: "textarea", tab: "c" },
@@ -404,12 +422,13 @@ const PB = (() => {
         const p = (ctx.products || []).find(x => x.slug === s.prod);
         if (ctx.edit) return `<div class="pb-ofm"><b>🛒 نموذج الطلب الأصلي${p ? " — " + esc(p.title) : ""}</b><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-r"><i></i><i></i></div><div class="pb-ofm-b"></div><small>يظهر هنا النموذج الكامل (العروض، الولاية والبلدية، التوصيل، الكوبون...) بعد النشر ${p ? "" : "— اختر المنتج من الإعدادات"}</small></div>`;
         if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
+        if (ctx.inlineOrder && s.raw) return `<div class="pb-ofraw">${s.raw}</div>`;      // على صفحة المنتج نفسها: نموذج الطلب الأصلي كما هو (دون تضمين الصفحة في نفسها)
         return `<iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1" loading="lazy" title="نموذج الطلب"></iframe>`;
       },
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "pprice", "poffers", "pgallery", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -479,7 +498,7 @@ const PB = (() => {
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
-  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], pprice: [30, 80], poffers: [80, 260], pgallery: [200, 700], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
   const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
@@ -504,6 +523,7 @@ const PB = (() => {
   const autoFlowFree = sec => sec.set.kind !== "canvas" && sec.set.autoM !== false && (sec.free || []).length > 0 && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined));
   function renderSections(page, ctx) {
     if (!ctx.wa && ctx.site && ctx.site.wa) ctx = Object.assign({}, ctx, { wa: ctx.site.wa });      // رقم واتساب المتجر للأزرار والنماذج
+    if (page.product && !ctx.pageProduct) ctx = Object.assign({}, ctx, { pageProduct: page.product });
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
     const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;
