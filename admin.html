@@ -9126,7 +9126,6 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 .3rem">
     <button class="small gold" type="button" id="gen-make" onclick="PBGen.generateImage()">🎨 توليد الصفحة</button>
     <button class="small gray" type="button" onclick="PBGen.copyHidden()" title="يجهّز البرومبت ويُنسخ للحافظة دون عرضه، لاستعماله في تطبيق Gemini يدوياً">📋 نسخ البرومبت (دون عرضه)</button>
-    <button class="small gray" type="button" onclick="document.getElementById('gen-file1').click()" title="إن كانت لديك صورة صفحة جاهزة">⬆ لدي صورة جاهزة</button><input type="file" id="gen-file1" accept="image/*" hidden onchange="PBGen.onFile(this)">
   </div>
   <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-autoretry" style="width:auto"> إعادة توليد تلقائية مرة واحدة إن وُجدت أخطاء كثيرة في الصورة (تُحتسب كطلب صور إضافي)</label>
   <div id="gen-result" style="display:none;margin-top:.8rem;padding:.8rem;border:1.5px solid #cfe3d3;border-radius:12px;background:#fbfdfb">
