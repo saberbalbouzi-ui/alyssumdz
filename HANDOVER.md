@@ -271,3 +271,13 @@ python3 scripts/make-template.py --target php --out dist/php-client1 --name "ا�
 - `detectText(canvas)`: كشف أسطر النص بلا OCR ولا Gemini: بقايا اللون عن تمويه الخلفية بعتبة لكل بلاط ← مكوّنات متصلة ← ربط الحروف في أسطر (تقاطع رأسي + قرب أفقي نسبةً للأصغر) ← استيعاب نقاط الحروف ← رفض الصناديق الشبيهة بالصور. `eraseRects(..., {skipComplex:true})` يترك النص فوق الصور/الملمس (كتابة عبوة المنتج).
 - `eraseBrush(ctx, pts, rad)`: فرشاة تمسح كل ما تحت الضربات (ترميم المتبقي عن سطح الخلفية).
 - زر «اكتشف النصوص وامسحها» يعمل لكل قسم ثم يعيد تركيب الصورة؛ خيار «الكشف» (تلقائي/OCR). الحدود: لا يحل مشكلة نص على صورة معقدة (الفرشاة أو Gemini الاختياري).
+
+### محرر التصميم المستقل `/editor/` (المرحلة 1 من 6) — Fabric.js 5.3 محلّي (`editor/vendor/`)
+- **فصل المرحلتين**: التحرير (هذه المرحلة) محلي 100% بلا شبكة ولا ذكاء اصطناعي (اختُبر: 0 طلبات أثناء التحرير)؛ التفكيك بالـAI مرحلة 3–5 لاحقاً عبر PHP فقط. زر «✨ تفكيك» معطّل الآن.
+- البنية: `core/` (canvas، layers، history، serializer، selection، exporter) و`ui/` (dialogs، layers-panel، properties-panel، toolbar) و`editor.js` (إقلاع، IndexedDB للحفظ التلقائي، اختصارات). نطاق عام `window.Ed`.
+- المستند JSON: `{format:"alyssum-editor", version, width, height, bg, objects, assets}`؛ الصور تُحفظ كـ`asset:ID` (جدول `Ed.assets` → dataURL الآن، وروابط Supabase Storage في المرحلة 2) فلا تتضخم لقطات التراجع. `Ed.layers.describeAll()` يعيد الطبقات بصيغة المواصفة.
+- الطبقات = ترتيب Fabric (الفهرس 0 = الخلفية المقفلة). أنواع: background/text/image/shape/svg/group/button/icon. نص حقيقي (Textbox) RTL، خط Cairo محلي (`vendor/fonts`) وبقية الخطوط من Google إن توفر الإنترنت.
+- الحفظ: تلقائي IndexedDB (مستند + أصول) واستعادة عند الفتح؛ «حفظ» ينزّل `.alyssum.json` مضمَّنة الأصول؛ «فتح» يقرؤه. التصدير PNG/JPEG بأبعاد المستند الأصلية.
+- قص الصورة بمستطيل (يدعم التدوير)، استبدال يحفظ الموضع/الحجم/الزاوية/الترتيب، قلب، محاذاة، تجميع، تراجع/إعادة (100 خطوة)، تكبير/تحريك (Ctrl+عجلة، مسافة+سحب).
+- خارج `shared-files.json` عمداً (لا يدخل حزم التحديث) إلى أن يستقر. `robots.txt` يمنع فهرسته.
+- المراحل التالية: 2 Supabase (projects/designs/assets + RLS + Storage)، 3 تفكيك (يعيد استعمال `PBGen.detectText/eraseRects`)، 4 استخراج/إزالة كائنات، 5 أقنعة يدوية (الفرشاة موجودة في المولّد)، 6 تصدير HTML/ZIP.
