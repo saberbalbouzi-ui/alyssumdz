@@ -10,6 +10,7 @@
 - بيانات المنتجات في `assets/js/data.js` (تُكتب من لوحة التحكم عبر GitHub API)، ورسوم التوصيل في `assets/js/wilayas.js`.
 - الطلبات تُحفظ في Google Sheets عبر Google Apps Script (`assets/js/config.js` ← `API_URL`)؛ الكود الإضافي (زيارات/مشاهدون الآن/أسئلة الوكيل) في `apps-script/Code-additions.gs` ويلزم لصقه ونشره يدوياً.
 - Supabase (`https://qvdaiundlkfbmjlummni.supabase.co`): مخطط وأمان في `supabase/schema.sql` وتعليمات في `supabase/README.md`؛ الزيارات والمشاهدون الآن وأسئلة الوكيل تُرسل إليه إن ضُبط `SUPABASE_ANON_KEY` في `config.js`، وإلا تعود إلى Apps Script. لا تضع `service_role` في المستودع أبداً.
+- التقاط العناصر الذكي (بلا مفتاح): `assets/js/ai-vision.js` + `ai-vision-worker.js` (D-FINE + SAM2 + MI-GAN في Web Worker من jsDelivr/Hugging Face)؛ Gemini اختياري ومُطفأ افتراضياً.
 - الوكيل الذكي: `assets/js/agent.js` (واجهة وردود افتراضية) + `assets/js/agent-brain.js` (استنتاج) + تدريبه في `assets/data/agent-training.json`.
 
 - حسابات الزبائن + PWA: `Account`/`PWA` في آخر `assets/js/app.js`، والخلفية `API.cust` في `api.js` (php | sb | local)؛ دوال `customer_*` في `supabase/schema.sql` ومسارات `customer_*` في `api/index.php`؛ ملفات PWA: `manifest.webmanifest` و`sw.js` وأيقونات `assets/img/icon-*.png` (خاصة بكل موقع، لا تدخل في `shared-files.json`).

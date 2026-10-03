@@ -245,5 +245,5 @@ window.ImageTools = (function () {
   function eraseRectsSync(ctx, rects) { let done; eraseRects(ctx, rects, { skipComplex: true }).then(() => { done = true; }); return done; }
   /* يمسح عناصر مختارة من قماش (ويُبقي بقية الصورة بما فيها النصوص) */
   function eraseElements(canvas, F, items) { const g = canvas.getContext("2d", { willReadFrequently: true }); items.forEach(it => eraseObject(g, it.o, it.cut, 5, F)); return canvas; }
-  return { fitPlane, pushPull, eraseRects, detectText, eraseBrush, inkColor, coreBox, findObjects, cutObject, eraseObject, fillMask, scanElements, eraseElements };
+  return { fitPlane, pushPull, eraseRects, detectText, eraseBrush, inkColor, coreBox, findObjects, cutObject, eraseObject, fillMask, scanElements, eraseElements, sqDilate };
 })();
