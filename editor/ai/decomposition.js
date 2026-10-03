@@ -6,44 +6,13 @@
   const FSK = { ar: 1.15, lat: .74 };      // نسبة ارتفاع حبر السطر إلى حجم الخط (تقريب لخط Cairo)
   const ARABIC = /[؀-ۿ]/, esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   function srcCanvas(img) { const w = img.width, h = img.height, c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }).drawImage(img.getElement(), img.cropX || 0, img.cropY || 0, w, h, 0, 0, w, h); return c; }
-  /* شرائح للقراءة: تُقطع في فراغات بين الأسطر حتى لا يُشطر سطر */
-  function strips(H, boxes, target) {
-    const out = []; let y = 0;
-    while (y < H) {
-      let end = Math.min(H, y + target); if (end < H) {
-        let best = null; const ys = boxes.map(b => [b.y0, b.y1]).sort((p, q) => p[0] - q[0]); let prev = y;
-        for (const [a, b] of ys) { if (a > prev && prev > y + target * .5 && prev < y + target * 1.25) { if (!best || a - prev > best.gap) best = { gap: a - prev, at: (a + prev) / 2 }; } prev = Math.max(prev, b); }
-        if (best) end = Math.min(H, Math.round(best.at));
-      }
-      out.push([y, end]); y = end;
-    }
-    return out;
-  }
-  const inter = (a, b) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
-  const area = a => Math.max(1, (a.x1 - a.x0) * (a.y1 - a.y0));
-
   Ed.decomp = {
     /* التحليل: يعيد JSON وصفياً + قماش الخلفية النظيفة (لا يغيّر المستند) */
     async analyze(img, log) {
       const ready = n => log && log(n); ready(0);
       if (Math.abs(img.angle || 0) > .01 || img.flipX || img.flipY) throw new Error("أعد ضبط الصورة بدون تدوير/قلب قبل التفكيك");
       const src = srcCanvas(img), W = src.width, H = src.height, sx = src.getContext("2d", { willReadFrequently: true }); await new Promise(r => setTimeout(r, 30));
-      ready(1); const boxes = Ed.detect.texts(src); await new Promise(r => setTimeout(r, 30));
-      boxes.forEach(b => { Object.assign(b, ImageTools.inkColor(sx, b)); b.core = ImageTools.coreBox(sx, b, b.ink, b.bg); });                                  // ألوان الحبر قبل أي مسح
-      ready(2); let lines = null, ocrNote = "";
-      try {
-        lines = []; for (const [a, b] of strips(H, boxes, 1500)) {
-          const part = document.createElement("canvas"); part.width = W; part.height = b - a; part.getContext("2d").drawImage(src, 0, a, W, b - a, 0, 0, W, b - a);
-          (await Ed.ocr.read(part)).forEach(l => lines.push({ text: l.text, box: { x0: l.box.x0, x1: l.box.x1, y0: l.box.y0 + a, y1: l.box.y1 + a } }));
-        }
-      } catch (e) { console.warn("ocr", e); lines = null; ocrNote = e.message; }
-      /* مطابقة أسطر القراءة بصناديق الكشف */
-      let items = [], unmatched = 0; const extra = [];
-      if (lines && lines.length) {
-        boxes.forEach(b => b.lines = []); lines.forEach(l => { let best = null, bi = 0; boxes.forEach(b => { const i = inter(l.box, b); if (i > bi) { bi = i; best = b; } }); if (best && bi / area(l.box) >= .25) best.lines.push(l); else extra.push(l); });
-        boxes.forEach(b => { if (b.lines.length) { b.lines.sort((p, q) => p.box.y0 - q.box.y0 || q.box.x1 - p.box.x1); b.text = b.lines.map(l => l.text).join("\n"); items.push(b); } });
-        extra.forEach(l => { const bx = { x0: Math.max(0, l.box.x0 - 4), y0: Math.max(0, l.box.y0 - 4), x1: Math.min(W, l.box.x1 + 4), y1: Math.min(H, l.box.y1 + 4) }, c = ImageTools.inkColor(sx, bx); Object.assign(bx, c, { text: l.text, core: ImageTools.coreBox(sx, bx, c.ink, c.bg) }); items.push(bx); });      // أسطر قصيرة فاتت الكشف: نأخذ صندوق القراءة
-      } else items = boxes.map(b => Object.assign(b, { text: "نص", placeholder: true }));
+      const sc = await TextCapture.scan(src, { onStep: st => ready(st === "detect" ? 1 : 2) }), items = sc.items, unmatched = sc.unmatched, ocrNote = sc.note, boxes = items;
       ready(3); await new Promise(r => setTimeout(r, 30));
       const clean = document.createElement("canvas"); clean.width = W; clean.height = H; const cg = clean.getContext("2d", { willReadFrequently: true }); cg.drawImage(src, 0, 0);
       await ImageTools.eraseRects(cg, items.map(b => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 })), { skipComplex: true });

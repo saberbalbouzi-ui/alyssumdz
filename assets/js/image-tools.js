@@ -232,5 +232,18 @@ window.ImageTools = (function () {
     }
     return fillMask(ctx, px0, py0, pw, ph, m2);
   }
-  return { fitPlane, pushPull, eraseRects, detectText, eraseBrush, inkColor, coreBox, findObjects, cutObject, eraseObject, fillMask };
+
+  /* ───── مسح العناصر القابلة للفصل (لأداة «التقاط العناصر») ─────
+     نُخفي النصوص أولاً على نسخة عمل (حتى لا تُحسب عناصر)، ثم نكشف العناصر ونقصّ كلاً منها RGBA بظله. لا يتغير القماش الأصلي. */
+  function scanElements(cv, opt) {
+    opt = opt || {}; const W = cv.width, H = cv.height, work = document.createElement("canvas"); work.width = W; work.height = H; const g = work.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0);
+    if (opt.removeText !== false) { const boxes = detectText(work); if (boxes.length) eraseRectsSync(g, boxes); }
+    const F = findObjects(work, opt), items = F.objects.map((o, i) => { const cut = cutObject(F, o), w = o.x1 - o.x0, h = o.y1 - o.y0; return { id: i, o, cut, x0: cut.x0, y0: cut.y0, x1: cut.x0 + cut.w, y1: cut.y0 + cut.h, area: cut.filled, role: Math.max(w, h) < W * .12 ? "icon" : (cut.filled / (w * h) > .85 ? "photo" : "object") }; });
+    return { work, F, items };
+  }
+  /* نسخة متزامنة من eraseRects للنصوص عند التحضير (eraseRects غير متزامنة لدعم Gemini فقط) */
+  function eraseRectsSync(ctx, rects) { let done; eraseRects(ctx, rects, { skipComplex: true }).then(() => { done = true; }); return done; }
+  /* يمسح عناصر مختارة من قماش (ويُبقي بقية الصورة بما فيها النصوص) */
+  function eraseElements(canvas, F, items) { const g = canvas.getContext("2d", { willReadFrequently: true }); items.forEach(it => eraseObject(g, it.o, it.cut, 5, F)); return canvas; }
+  return { fitPlane, pushPull, eraseRects, detectText, eraseBrush, inkColor, coreBox, findObjects, cutObject, eraseObject, fillMask, scanElements, eraseElements };
 })();
