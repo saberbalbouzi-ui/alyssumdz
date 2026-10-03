@@ -8626,6 +8626,23 @@ const PBGen = (() => {
     it: { label: "الإيطالية (السوق الإيطالي)", name: "Italian", rtl: false, tess: "ita+eng", trust: "La fiducia dei nostri clienti", limited: "⚠️ Quantità molto limitata, ordina ora!", cta: "ORDINA ORA - PAGAMENTO ALLA CONSEGNA" },
     de: { label: "الألمانية (السوق الألماني وأوروبا الوسطى)", name: "German", rtl: false, tess: "deu+eng", trust: "Das Vertrauen unserer Kunden", limited: "⚠️ Nur begrenzte Menge verfügbar, jetzt bestellen!", cta: "JETZT BESTELLEN - ZAHLUNG BEI LIEFERUNG" },
   };
+  /* قالب «11 قسماً» — مبني على برومبت Anti Acne الذي أعطى نتيجة ممتازة بلا أخطاء (النص الكامل في assets/data/landing-template-anti-acne.txt) */
+  const TPL11 = `=== MANDATORY 11-SECTION STRUCTURE (proven template — follow it exactly) ===
+The design prompt in STEP 2 MUST contain EXACTLY these 11 numbered sections, in this order, each with its own visual description and its own quoted strings (each string on its own line, each appears ONE TIME ONLY, end every section with "No additional text."). Keep ONE continuous background (no cards/boxes/bands/dividers) and ONE typeface family everywhere. Adapt every section to THIS product and category; never copy another product's claims, never invent ingredients or medical claims.
+SECTION 1 — HERO: the original product prominently on one side with themed natural elements and a soft glow; a small badge (best seller), a huge headline (the main promise), a large sub-line, and THREE separate benefit lines each starting with a check mark.
+SECTION 2 — THE PROBLEM: realistic imagery of the problem the customer faces (no uncovered women; prefer macro/close-up or objects); a large red question headline, one medium line, and THREE separate problem lines starting with a bullet.
+SECTION 3 — THE SOLUTION: the original product shown heroically with an elegant glow; a large headline "the natural/effective solution" and one large line summarising the formula; no ingredient names here.
+SECTION 4 — BEFORE AND AFTER: two realistic circular close-up photographs (before on the left, after on the right; never an uncovered woman's face); headline "the difference before and after use", one red ✘ line (before) and one green ✔ line (after).
+SECTION 5 — KEY FEATURE: a luxurious macro still-life of the product beside its key natural ingredients; a large headline about the power of the formula and one large line naming the 2–3 hero ingredients.
+SECTION 6 — INGREDIENT ICONS: exactly FOUR circular glowing icons (exactly four, not three, not five), each with ONLY ONE short label underneath, plus a headline above them; labels not repeated anywhere else.
+SECTION 7 — DAILY USE: exactly THREE large glowing numbered circles (1, 2, 3) connected by one organic vine/line; a headline "how to use" and ONE short instruction under each circle, starting with its number.
+SECTION 8 — PRODUCT COMPARISON: the original product on one side and ONE completely generic gray container with NO readable label on the other; headline "why choose us"; TWO ✔ lines under our product and TWO ✘ lines under the generic one; no other text and no other brand.
+SECTION 9 — LIFESTYLE: a natural lifestyle scene with a modest Muslim woman wearing an elegant hijab that fully covers her hair, covered shoulders and neckline (or hands only); a large headline about renewed confidence and one short line; never an uncovered woman.
+SECTION 10 — TRUST: exactly THREE floating trust icons with short labels (100% natural / cash on delivery / fast delivery), exactly five golden stars, a headline "our customers' trust" and ONE short testimonial (no other reviews).
+SECTION 11 — FINAL OFFER: the original product next to a bright yellow CTA button; the price line (new price instead of old price, only if provided), one urgency offer line, and the CTA text inside the button — the CTA appears EXACTLY ONCE.
+Typography inside every section: large, extremely bold, razor-sharp, right-to-left (when Arabic), generous empty space around each text element, never two paragraphs in one block.
+=======================================================================
+`;
   function buildPrompt(o) {
     const L = LANGS[o.lang] || LANGS.ar, bundle = o.offer === "bundle", ar = L.rtl;
     const ph = (arText, enText) => "[" + (ar ? arText : enText + " in " + L.name) + "]";
@@ -8642,6 +8659,7 @@ const PBGen = (() => {
     if (o.colors) det.push("- Design Colors: " + o.colors);
     if (det.length) out.push("=== SPECIFIC PRODUCT DETAILS PROVIDED BY THE USER ===\nPlease strictly use the following details in your copywriting instead of guessing them:\n" + det.join("\n") + "\n=====================================================\n");
     if (o.colors) out.push("=== CRITICAL INSTRUCTION: DESIGN COLORS ===\nThe user specified the following color palette: \"" + o.colors + "\".\nIn Step 2 (Design Prompt), you MUST replace \"[insert dynamic colors matching product image]\" with these specific colors.\n===========================================\n");
+    if (o.tpl === "11") out.push(TPL11);
     out.push(`Analyze the uploaded product image. Identify the product, its key features, target audience, and best color palette. Act as a world-class ${L.name} Direct Response Copywriter and AI Prompt Engineer specializing in image-based mobile-first landing pages generated by 'Nano Banana Pro'.
 
 ### YOUR MISSION HAS TWO CRITICAL STEPS:
@@ -8978,6 +8996,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     <label class="hint" style="margin:0">اسم المنتج<input id="gen-name" placeholder="مثال: عسل التركيز وتنشيط الذاكرة"></label>
     <label class="hint" style="margin:0">لغة السوق<select id="gen-lang">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
     <label class="hint" style="margin:0">نوع العرض<select id="gen-offer"><option value="single">منتج واحد</option><option value="bundle">باك / مجموعة منتجات</option></select></label>
+    <label class="hint" style="margin:0">هيكل الصفحة<select id="gen-tpl"><option value="11">قالب 11 قسماً (Anti Acne الناجح — موصى)</option><option value="free">حر (يقرّر Gemini الأقسام)</option></select></label>
     <label class="hint" style="margin:0">السعر<input id="gen-price" placeholder="مثال: 2100 دج"></label>
     <label class="hint" style="margin:0">ألوان التصميم (اختياري)<input id="gen-colors" placeholder="مثال: أزرق، برتقالي (وإلا من ألوان المنتج)"></label>
   </div>
@@ -8992,10 +9011,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
     </div>
     <div class="grid2" style="margin-top:.4rem">
-      <label class="hint" style="margin:0">طريقة التوليد<select id="gen-mode"><option value="single">صورة واحدة طويلة (موصى — خط وأسلوب موحّدان)</option><option value="parts">3 أجزاء متصلة (تجريبي — قد يختلف الخط والوصلات)</option></select></label>
-      <label class="hint" style="margin:0">نسبة الصورة (للجزء الواحد)<select id="gen-ar"><option value="1:4">1:4 — طويل (موصى للصورة الواحدة)</option><option value="1:8">1:8 — أطول جداً (ضيق)</option><option value="9:16">9:16 — طولي (للأجزاء)</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option></select></label>
+      <label class="hint" style="margin:0">نسبة الصورة<select id="gen-ar"><option value="1:4">1:4 — طويل (موصى للصورة الواحدة)</option><option value="1:8">1:8 — أطول جداً (ضيق)</option><option value="9:16">9:16 — طولي</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option></select></label>
       <label class="hint" style="margin:0">الدقة<select id="gen-res"><option value="4K">4K — أعلى وضوحاً (موصى للنصوص)</option><option value="2K">2K</option><option value="1K">1K — أسرع وأرخص</option></select></label>
-      <label class="hint" style="margin:0">عدد الأجزاء المتصلة<select id="gen-parts"><option value="3">3 أجزاء</option><option value="2">جزءان (أقصر)</option><option value="4">4 أجزاء (أطول وأوضح)</option><option value="1">جزء واحد</option></select></label>
       <label class="hint" style="margin:0">نموذج الصور<select id="gen-imgq"><option value="pro">أعلى جودة نص (Nano Banana Pro) — الأغلى</option><option value="fast">أسرع وأرخص (Flash)</option></select></label>
     </div>
     <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-modest" checked style="width:auto"> مراعاة الحشمة: أي امرأة في الصورة محجّبة بالكامل (يُفضَّل تصوير البشرة عن قرب)</label>
@@ -9073,7 +9090,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       S.regions.push(...keep); drawPreview(); msg.textContent = "✅ أُضيفت " + keep.length + " منطقة — احذف (×) ما لا تريده ثم حوّل"; } catch (err) { msg.textContent = "❌ " + err.message; }
   }
   function regionMode() { S.regionMode = !S.regionMode; const b = $("gen-region-btn"); b.className = "small " + (S.regionMode ? "gold" : "gray"); b.textContent = S.regionMode ? "✂️ وضع القص مفعّل — اسحب على الصورة (انقر للإيقاف)" : "✂️ رسم منطقة للقص (منتج/صورة)"; drawPreview(); }
-  function makePrompt() { $("gen-out").value = buildPrompt({ lang: $("gen-lang").value, offer: $("gen-offer").value, name: $("gen-name").value.trim(), desc: $("gen-desc").value.trim(), price: $("gen-price").value.trim(), colors: $("gen-colors").value.trim(), ing: ($("gen-ing") || {}).value ? $("gen-ing").value.trim() : "", aud: ($("gen-aud") || {}).value || "" }); }
+  function makePrompt() { $("gen-out").value = buildPrompt({ lang: $("gen-lang").value, offer: $("gen-offer").value, name: $("gen-name").value.trim(), desc: $("gen-desc").value.trim(), price: $("gen-price").value.trim(), colors: $("gen-colors").value.trim(), ing: ($("gen-ing") || {}).value ? $("gen-ing").value.trim() : "", aud: ($("gen-aud") || {}).value || "", tpl: ($("gen-tpl") || {}).value || "11" }); }
   /* فحص محلي مجاني لنصوص البرومبت المقتبسة: يحذف التطويل (ـ) والتكرار المتتالي للكلمة ويحذّر من النصوص الطويلة */
   function localFix(txt) {
     const issues = []; const out = String(txt).replace(/"([^"\n]{2,400})"/g, (m, q) => {
@@ -9148,31 +9165,8 @@ Before rendering, internally verify every text element: no duplicated sentences,
   }
   /* صورة واحدة طويلة: نجرّب النسب الأطول أولاً ثم نتراجع إن لم يدعمها النموذج */
   /* قياسات الصورة (مثل واجهة Pro): النسبة + الدقة + عدد الأجزاء */
-  const imgCfg = () => ({ ar: ($("gen-ar") || {}).value || "9:16", size: ($("gen-res") || {}).value || "2K", parts: Math.max(1, Math.min(4, Number(($("gen-parts") || {}).value) || 3)) });
+  const imgCfg = () => ({ ar: ($("gen-ar") || {}).value || "9:16", size: ($("gen-res") || {}).value || "2K" });
   /* جودة عالية: ثلاثة أجزاء 9:16 (عرض أكبر ← نصوص أوضح بكثير من صورة 1:8 الضيقة) ثم لصقها */
-  async function genPart(key, prompt, productB64, prevB64) {
-    const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } }); if (prevB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: prevB64 } });
-    const models = await imageModels(key); let lastErr = null;
-    const ic = imgCfg(), par = ["1:4", "1:8"].includes(ic.ar) ? "9:16" : ic.ar; for (const cfg of [{ aspectRatio: par, imageSize: ic.size }, { aspectRatio: par, imageSize: "2K" }, { aspectRatio: par }]) {
-      try {
-        const j = await gemGenerate(key, "image", parts, { imageConfig: cfg }, models), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
-        if (!d) throw new Error("لم يُرجع النموذج صورة"); S.model = j._model; const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" });
-      } catch (e) { lastErr = e; if (!/\[400|size|invalid.argument|لم يُرجع النموذج صورة/i.test(String(e.message))) throw e; }
-    }
-    throw lastErr || new Error("تعذّر توليد الجزء");
-  }
-  async function stackParts(blobs) {
-    const cvs = []; for (const b of blobs) cvs.push(await loadImage(b)); const W = Math.max(...cvs.map(c => c.width)), ov = Math.round(W * .05), hs = cvs.map(c => Math.round(c.height * W / c.width)), H = hs.reduce((a, b) => a + b, 0) - ov * (cvs.length - 1);
-    const out = document.createElement("canvas"); out.width = W; out.height = H; const g = out.getContext("2d"); let y = 0;
-    cvs.forEach((c, i) => {
-      if (i === 0) { g.drawImage(c, 0, 0, W, hs[0]); y = hs[0]; return; }
-      const tt = document.createElement("canvas"); tt.width = W; tt.height = hs[i]; const ttg = tt.getContext("2d"); ttg.drawImage(c, 0, 0, W, hs[i]);
-      ttg.globalCompositeOperation = "destination-in"; const gr = ttg.createLinearGradient(0, 0, 0, ov); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,1)"); ttg.fillStyle = gr; ttg.fillRect(0, 0, W, hs[i]);
-      g.drawImage(tt, 0, y - ov); y += hs[i] - ov;
-    });
-    return out;
-  }
-  const SPLIT = (k, n, ar) => `\n\n=== RENDER INSTRUCTION (HIGHEST PRIORITY) ===\nThe design above describes ONE continuous tall landing page. Mentally split it into ${n} equal vertical parts (top → bottom). Render ONLY part ${k} of ${n} now, as ONE image with aspect ratio ${ar} at the highest possible resolution, containing only the sections and texts that belong to this part, with large, razor-sharp, perfectly spelled typography. Every quoted text must appear exactly once. Keep the same single smooth background gradient, illustration style, typography and product rendering across all parts${k > 1 ? "; the TOP edge of this image must continue seamlessly the bottom edge of the attached previous part image (same background colour and glow), with an empty margin at the top" : ""}${k < n ? "; the BOTTOM edge must fade into the plain continuing background colour with an empty margin (no text or object touching the edge) so the next part joins seamlessly" : ""}. Copy the product from the attached product photo exactly. Do not write part numbers or any label.`;
   const RATIOS = ["1:8", "1:4", "9:16"];
   async function genLong(key, prompt, productB64) {
     const parts = [{ text: prompt }]; if (productB64) parts.push({ inline_data: { mime_type: "image/jpeg", data: productB64 } });
@@ -9214,17 +9208,13 @@ Before rendering, internally verify every text element: no duplicated sentences,
     if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; }
     if (!pf) { msg.textContent = "❌ ارفع صورة المنتج أولاً"; return; }
     if (!$("gen-name").value.trim() && !$("gen-desc").value.trim() && !($("gen-ing").value || "").trim()) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه أو مكوناته"; return; }
-    btn.disabled = true; const N = 3;
+    btn.disabled = true;
     try {
       const fp = await makeFinal(key), pb = await small64(pf, 1400);
             const full = fp + (S.avoid ? "\n\n=== CORRECTIONS REQUIRED ===\nThe previous attempt contained these text errors. Fix them: write every quoted string EXACTLY as given, never repeat words, no extra text: " + S.avoid : "");
       let blob, canvas;
-      if ($("gen-mode") && $("gen-mode").value === "single") { msg.textContent = "🎨 توليد الصورة…"; blob = await (PBGen.imgFn || genLong)(key, full, pb); canvas = await loadImage(blob); }
-      else {
-        const N = imgCfg().parts, blobs = []; let prev = null;
-        for (let k = 1; k <= N; k++) { msg.textContent = "🎨 (" + (2 + k) + "/" + (N + 2) + ") توليد الجزء " + k + " من " + N + (S.model ? " — " + S.model : "") + " (قد يستغرق دقيقة)…"; const bl = await (PBGen.imgFn || genPart)(key, full + SPLIT(k, N, ["1:4", "1:8"].includes(imgCfg().ar) ? "9:16" : imgCfg().ar), pb, prev); blobs.push(bl); prev = PBGen.imgFn ? null : await small64(bl, 900); }
-        msg.textContent = "🧩 دمج الأجزاء…"; canvas = await stackParts(blobs); blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-      } S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name); saveOriginalToSite(blob, S.name);
+      msg.textContent = "🎨 توليد الصورة…"; blob = await (PBGen.imgFn || genLong)(key, full, pb); canvas = await loadImage(blob);
+      S.reviewed = false; S.generated = true; S.avoid = ""; S.blob = blob; S.name = $("gen-name").value.trim() || "landing"; saveLast(blob, S.name); saveOriginalToSite(blob, S.name);
       await setCanvas(canvas, $("gen-name").value.trim() || "صفحة هبوط"); S.generated = true; showLast(); step(2); checkImage().then(autoRetry); msg.textContent = "✅ تمّت الصورة (محفوظة تلقائياً — يمكنك تنزيل الأصل من الخطوة ②)" + (S.model ? " بنموذج " + S.model : "") + " (" + canvas.width + "×" + canvas.height + ")" + " — راجعها ثم اعتمدها للتقسيم";
     } catch (err) { msg.textContent = "❌ " + err.message; } finally { btn.disabled = false; }
   }
