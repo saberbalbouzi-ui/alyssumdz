@@ -119,7 +119,7 @@ body{overflow-x:hidden;margin:0}`;
 </div>
 <div class="pbx-main">
   <aside class="pbx-left" id="pbx-lside">
-    <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">${ico('tab_add',16)} عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">${ico('tab_tpl',16)} أقسام</button><button data-lt="lay" onclick="PBApp.ltab('lay')">${ico('tab_lay',16)} طبقات</button><button data-lt="pg" onclick="PBApp.ltab('pg')">${ico('tab_pg',16)} الصفحة</button></div>
+    <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">${ico('tab_add',16)} عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">${ico('tab_tpl',16)} أقسام</button><button data-lt="lay" onclick="PBApp.ltab('lay')">${ico('tab_lay',16)} طبقات</button><button data-lt="smart" onclick="PBApp.ltab('smart')">${ico('tab_smart',16)} أدوات ذكية</button><button data-lt="pg" onclick="PBApp.ltab('pg')">${ico('tab_pg',16)} الصفحة</button></div>
     <div class="pbx-pane" id="pbx-lpane"></div>
   </aside>
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
@@ -213,7 +213,7 @@ body{overflow-x:hidden;margin:0}`;
     tab_add: '<path d="M12 5v14M5 12h14"/>', tab_tpl: '<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/>', tab_lay: '<path d="M12 2l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5M3 17l9 5 9-5"/>', tab_pg: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>' };
   const ico = (t, sz) => `<svg class="pbx-ic" width="${sz || 22}" height="${sz || 22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[t] || '<rect x="4" y="4" width="16" height="16" rx="3"/>'}</svg>`;
   IC.dev_d = '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'; IC.dev_t = '<rect x="4" y="2" width="16" height="20" rx="2.5"/><path d="M11 18h2"/>'; IC.dev_m = '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/>';
-  IC.close = '<path d="M18 6L6 18M6 6l12 12"/>'; IC.snap = '<path d="M6 15a6 6 0 0012 0V3h-4v12a2 2 0 01-4 0V3H6z"/><path d="M6 8h4M14 8h4"/>'; IC.undo = '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/>'; IC.redo = '<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0115-6.7L21 13"/>'; IC.eye = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'; IC.rocket = '<path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2a2.1 2.1 0 00-3-3zM12 15l-3-3a22 22 0 012-4 12.9 12.9 0 0111-6c0 2.7-.8 7.5-6 11a22 22 0 01-4 2z"/>';
+  IC.tab_smart = '<path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M19 15l.8 1.8L21.5 17.5l-1.7.7L19 20l-.8-1.8-1.7-.7 1.7-.7z"/>'; IC.close = '<path d="M18 6L6 18M6 6l12 12"/>'; IC.snap = '<path d="M6 15a6 6 0 0012 0V3h-4v12a2 2 0 01-4 0V3H6z"/><path d="M6 8h4M14 8h4"/>'; IC.undo = '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/>'; IC.redo = '<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0115-6.7L21 13"/>'; IC.eye = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'; IC.rocket = '<path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2a2.1 2.1 0 00-3-3zM12 15l-3-3a22 22 0 012-4 12.9 12.9 0 0111-6c0 2.7-.8 7.5-6 11a22 22 0 01-4 2z"/>';
   const DEVIC = { d: ico("dev_d", 16), t: ico("dev_t", 16), m: ico("dev_m", 16) };
   /* ───────────────── اللوحة اليسرى ───────────────── */
   function ltab(t) { E.ltab = t; renderLeft(); }
@@ -224,6 +224,8 @@ body{overflow-x:hidden;margin:0}`;
       pane.innerHTML = `<div class="pbx-grid">${ORDER.map(t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`).join("")}</div><p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته إلى العمود المحدد. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
     } else if (E.ltab === "tpl") {
       pane.innerHTML = `<div class="pbx-gb"><b>${ico('grid',17)} قسم شبكي مخصص</b><div class="pbx-row" style="margin:.4rem 0"><label style="font-size:.8rem">صفوف <input id="gb-r" type="number" min="1" max="10" value="2"></label><label style="font-size:.8rem">أعمدة <input id="gb-c" type="number" min="1" max="12" value="3"></label></div><button class="pbx-small" data-grid="1" type="button">＋ إضافة القسم الشبكي</button></div>` + Object.keys(TPLS).map(k => `<button class="pbx-tpl" draggable="true" data-tpl="${k}">${ico("t_" + k, 18)} ${TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, "")}</button>`).join("") + `<button class="pbx-tpl" data-tpl="_blank" style="background:#fff">${ico('blank1',18)} قسم فارغ (عمود واحد)</button><button class="pbx-tpl" data-tpl="_two" style="background:#fff">${ico('blank2',18)} قسم بعمودين</button><button class="pbx-tpl" data-tpl="_three" style="background:#fff">${ico('blank3',18)} قسم بثلاثة أعمدة</button>`;
+    } else if (E.ltab === "smart") {
+      pane.innerHTML = PBSmart.pane();
     } else if (E.ltab === "lay") {
       let h = "";
       E.page.sections.forEach((sec, i) => {
@@ -967,7 +969,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find };
+  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, commitAfter: id => afterEdit(id) };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
