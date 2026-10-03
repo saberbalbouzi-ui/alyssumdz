@@ -46,8 +46,15 @@
     <button class="tool" id="t-dup" title="تكرار (Ctrl+D)">⧉<small>تكرار</small></button>
     <button class="tool" id="t-del" title="حذف (Delete)">🗑<small>حذف</small></button>
     <hr>
-    <button class="tool ai" id="t-decomp" title="الالتقاط السحري: يفحص الصورة ويفكّك النصوص والعناصر إلى طبقات">🪄<small>التقاط سحري</small></button>
+    <div class="tgrp">تحديد يدوي</div>
+    <button class="tool" data-mask="brush" title="فرشاة تحديد: ارسم فوق ما تريد استخراجه أو إزالته">🖌<small>فرشاة</small></button>
+    <button class="tool" data-mask="erase" title="ممحاة القناع: امسح جزءاً من التحديد (استعادة)">🧽<small>ممحاة</small></button>
+    <button class="tool" data-mask="rect" title="تحديد مستطيل">⬚<small>مستطيل</small></button>
+    <button class="tool" data-mask="lasso" title="لاسو: ارسم حدود الشكل بيدك">➰<small>لاسو</small></button>
+    <hr>
+    <button class="tool ai" id="t-decomp" title="المسح الذكي: يفحص الصورة ويحوّل النصوص والمنتجات والأعشاب والأشكال إلى عناصر مستقلة (تبقى الخلفية)">🪄<small>مسح ذكي</small></button>
   </aside>
+  <div id="maskbar"><b>تحديد يدوي</b><label>الحجم <input type="range" id="mk-size" min="8" max="160" value="40"> <span id="mk-sz">40</span></label><button id="mk-extract" class="pri">⬆ استخراج كعنصر</button><button id="mk-remove">🗑 إزالة من الخلفية</button><button id="mk-clear">مسح التحديد</button><button id="mk-exit">إنهاء ✕</button></div>
   <section id="stage"><div id="paper"><canvas id="cv"></canvas></div></section>
   <aside id="side">
     <div id="props" class="panel"></div>
@@ -70,12 +77,14 @@
 <script src="core/cloud.js"></script>
 <script src="ai/ocr.js"></script>
 <script src="ai/detection.js"></script>
+<script src="ai/extraction.js"></script>
 <script src="ai/decomposition.js"></script>
 <script src="ui/dialogs.js"></script>
 <script src="ui/layers-panel.js"></script>
 <script src="ui/properties-panel.js"></script>
 <script src="ui/toolbar.js"></script>
 <script src="ui/cloud-ui.js"></script>
+<script src="ui/smart-tools.js"></script>
 <script src="editor.js"></script>
 </body>
 </html>

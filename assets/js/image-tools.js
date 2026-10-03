@@ -179,6 +179,13 @@ window.ImageTools = (function () {
     for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) { const i = y * sw + x; if (!dil[i]) continue; const nb = []; if (x > 0 && lab[i - 1]) nb.push(lab[i - 1]); if (y > 0) { if (lab[i - sw]) nb.push(lab[i - sw]); if (x > 0 && lab[i - sw - 1]) nb.push(lab[i - sw - 1]); if (x < sw - 1 && lab[i - sw + 1]) nb.push(lab[i - sw + 1]); }
       if (!nb.length) { par.push(++nl); lab[i] = nl; } else { let m = nb[0]; for (const q of nb) if (q < m) m = q; lab[i] = m; for (const q of nb) { const a = find(q), b = find(m); if (a !== b) par[Math.max(a, b)] = Math.min(a, b); } } }
     const comps = new Map(); for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) { const i = y * sw + x; if (!lab[i]) continue; const id = find(lab[i]); lab[i] = id; let c = comps.get(id); if (!c) { c = { id, x0: x, x1: x, y0: y, y1: y, n: 0 }; comps.set(id, c); } c.x0 = Math.min(c.x0, x); c.x1 = Math.max(c.x1, x); c.y0 = Math.min(c.y0, y); c.y1 = Math.max(c.y1, y); if (sm[i]) c.n++; }
+    /* عناصر صغيرة متقاربة (أعشاب/حبيبات/زخارف متناثرة) تُعدّ عنصراً واحداً */
+    { const arr = [...comps.values()].filter(c => c.n > 0).sort((a, b) => b.n - a.n).slice(0, 300), small = c => Math.max(c.x1 - c.x0 + 1, c.y1 - c.y0 + 1) * k < W * (opt.smallFrac || .14), up = arr.map((_, i) => i), uf = a => { while (up[a] !== a) { up[a] = up[up[a]]; a = up[a]; } return a; };
+      for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) { const a = arr[i], b = arr[j]; if (!small(a) || !small(b)) continue;
+        const dx = Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1)) * k, dy = Math.max(0, Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1)) * k, sa = Math.max(a.x1 - a.x0, a.y1 - a.y0) * k, sb = Math.max(b.x1 - b.x0, b.y1 - b.y0) * k;
+        if (Math.max(dx, dy) <= Math.max(opt.cluster || 40, .8 * Math.min(sa, sb)) && Math.hypot(dx, dy) <= Math.max(opt.cluster || 40, .8 * Math.max(sa, sb))) up[uf(j)] = uf(i); }
+      const remap = new Map(); arr.forEach((c, i) => { const r = arr[uf(i)]; if (r !== c) { remap.set(c.id, r.id); r.x0 = Math.min(r.x0, c.x0); r.x1 = Math.max(r.x1, c.x1); r.y0 = Math.min(r.y0, c.y0); r.y1 = Math.max(r.y1, c.y1); r.n += c.n; comps.delete(c.id); } });
+      if (remap.size) for (let i = 0; i < lab.length; i++) { const m = remap.get(lab[i]); if (m) lab[i] = m; } }
     const minA = (opt.minArea || .0008) * sw * sh, out = [];
     for (const c of comps.values()) {
       const bw = (c.x1 - c.x0 + 1) * k, bh = (c.y1 - c.y0 + 1) * k; if (c.n < minA || bw < 24 || bh < 24) continue; if (bw > W * .97 && bh > H * .6) continue;
@@ -186,17 +193,23 @@ window.ImageTools = (function () {
     }
     out.sort((a, b) => b.area - a.area); return { objects: out.slice(0, opt.max || 40), W, H, k, sw, lab, inside, bgc, D };
   }
-  /* يقصّ عنصراً RGBA: ألفا = داخل العنصر مع تنعيم 3×3 للحافة + إزالة تلوّث الخلفية؛ يعيد {canvas, mask} */
+  /* يقصّ عنصراً RGBA: ألفا = داخل العنصر مع تنعيم 3×3 للحافة + إزالة تلوّث الخلفية + ظلّه الملاصق (أسود شبه شفاف)؛
+     يعيد {canvas, mask, x0, y0, w, h}: النافذة أوسع قليلاً من العنصر لتشمل الظل، فضع الصورة عند (x0,y0) */
   function cutObject(F, o) {
-    const W = F.W, w = o.x1 - o.x0, h = o.y1 - o.y0, a0 = new Uint8Array(w * h);
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const gx = o.x0 + x, gy = o.y0 + y; if (F.inside[gy * W + gx] && F.lab[((gy / F.k) | 0) * F.sw + ((gx / F.k) | 0)] === o.id) a0[y * w + x] = 1; }
-    const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const cg = cv.getContext("2d"), img = cg.createImageData(w, h), m = new Uint8Array(w * h); let cnt = 0;
+    const W = F.W, H = F.H, reach = 44, x0 = Math.max(0, o.x0 - reach), y0 = Math.max(0, o.y0 - reach), x1 = Math.min(W, o.x1 + reach), y1 = Math.min(H, o.y1 + reach), w = x1 - x0, h = y1 - y0, a0 = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const gx = x0 + x, gy = y0 + y; if (F.inside[gy * W + gx] && F.lab[((gy / F.k) | 0) * F.sw + ((gx / F.k) | 0)] === o.id) a0[y * w + x] = 1; }
+    const near = sqDilate(a0, w, h, reach), cv = document.createElement("canvas"); cv.width = w; cv.height = h; const cg = cv.getContext("2d"), img = cg.createImageData(w, h), m = new Uint8Array(w * h); let cnt = 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      let s = 0, n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) { n++; continue; } s += a0[yy * w + xx]; n++; }
-      const al = a0[y * w + x] ? Math.max(.5, s / n) : s / n * .5; if (al < .08) continue; const li = y * w + x, gi = (o.y0 + y) * W + (o.x0 + x); m[li] = 1; cnt++;
-      for (let c = 0; c < 3; c++) { const p = F.D[gi * 4 + c], b = F.bgc[gi * 3 + c]; img.data[li * 4 + c] = al < .98 ? Math.max(0, Math.min(255, b + (p - b) / al)) : p; } img.data[li * 4 + 3] = Math.round(Math.min(1, al) * 255);
+      const li = y * w + x, gi = (y0 + y) * W + (x0 + x);
+      let s = 0, n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; n++; if (xx >= 0 && yy >= 0 && xx < w && yy < h) s += a0[yy * w + xx]; else n--; }
+      const al = a0[li] ? Math.max(.5, s / n) : s / n * .5;
+      if (al >= .08) { m[li] = 1; cnt++; for (let c = 0; c < 3; c++) { const p = F.D[gi * 4 + c], b = F.bgc[gi * 3 + c]; img.data[li * 4 + c] = al < .98 ? Math.max(0, Math.min(255, b + (p - b) / al)) : p; } img.data[li * 4 + 3] = Math.round(Math.min(1, al) * 255); continue; }
+      if (near[li] && !F.inside[gi]) {                                 // ظل: تعتيم عن سطح الخلفية ← أسود بشفافية = 1 - p/bg
+        let q = 0; for (let c = 0; c < 3; c++) q += F.D[gi * 4 + c] / Math.max(1, F.bgc[gi * 3 + c]); const sa = Math.min(.85, 1 - q / 3);
+        if (sa > .035) { img.data[li * 4 + 3] = Math.round(sa * 255); m[li] = 1; cnt++; }
+      }
     }
-    cg.putImageData(img, 0, 0); return { canvas: cv, mask: m, w, h, filled: cnt };
+    cg.putImageData(img, 0, 0); return { canvas: cv, mask: m, x0, y0, w, h, filled: cnt };
   }
   /* يملأ منطقة مقنّعة بترميم «المتبقي عن سطح الخلفية» (نفس منطق الفرشاة) */
   function fillMask(ctx, px0, py0, pw, ph, m2) {
@@ -210,8 +223,8 @@ window.ImageTools = (function () {
   }
   /* يمسح عنصراً مقتطعاً من الخلفية: قناعه موسَّع قليلاً (هالة/ظل) داخل نافذة بهامش كافٍ */
   function eraseObject(ctx, o, cut, grow, F) {
-    grow = grow == null ? 5 : grow; const reach = 44, CW = ctx.canvas.width, CH = ctx.canvas.height, pad = Math.max(reach + 8, Math.round(Math.max(cut.w, cut.h) * .12)), px0 = Math.max(0, o.x0 - pad), py0 = Math.max(0, o.y0 - pad), px1 = Math.min(CW, o.x1 + pad), py1 = Math.min(CH, o.y1 + pad), pw = px1 - px0, ph = py1 - py0;
-    const base = new Uint8Array(pw * ph); for (let y = 0; y < cut.h; y++) for (let x = 0; x < cut.w; x++) if (cut.mask[y * cut.w + x]) base[(o.y0 - py0 + y) * pw + (o.x0 - px0 + x)] = 1;
+    grow = grow == null ? 5 : grow; const reach = 44, CW = ctx.canvas.width, CH = ctx.canvas.height, pad = Math.max(reach + 8, Math.round(Math.max(cut.w, cut.h) * .12)), px0 = Math.max(0, cut.x0 - pad), py0 = Math.max(0, cut.y0 - pad), px1 = Math.min(CW, cut.x0 + cut.w + pad), py1 = Math.min(CH, cut.y0 + cut.h + pad), pw = px1 - px0, ph = py1 - py0;
+    const base = new Uint8Array(pw * ph); for (let y = 0; y < cut.h; y++) for (let x = 0; x < cut.w; x++) if (cut.mask[y * cut.w + x]) base[(cut.y0 - py0 + y) * pw + (cut.x0 - px0 + x)] = 1;
     const m2 = sqDilate(base, pw, ph, grow);
     if (F) {                                                       // الظل/التوهّج الملاصق: ما يبعد عن سطح الخلفية ويقع قرب العنصر يُمسح معه
       const near = sqDilate(base, pw, ph, reach), W = F.W;
