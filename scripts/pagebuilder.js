@@ -587,7 +587,7 @@ const PB = (() => {
       }
       const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free || (edit ? '<div class="pb-empty" style="margin:40px auto;max-width:360px;pointer-events:none">اسحب العناصر إلى هذا القماش الحر وحرّكها وغيّر أحجامها بحرية</div>' : "")}</div>` : "";
       const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
-      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
+      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""}${s.bgImg ? " pb-hasbg" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
     }).join("");
     return { html, css: finishCss(css) };
   }
