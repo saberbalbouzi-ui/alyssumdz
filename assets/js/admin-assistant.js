@@ -6,20 +6,23 @@ const AdminHelp = (() => {
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   /* تطبيع عربي: إزالة التشكيل والتطويل، توحيد الألف والتاء المربوطة والياء، حذف «ال» والسوابق الشائعة */
   const norm = s => String(s || "").toLowerCase().replace(/[ً-ٟـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي");
-  const STOP = new Set("ما هو هي هل كيف اين متى لماذا عن في من الى على مع هذا هذه ذلك التي الذي ان او و يا لي لك انا اريد اود ممكن يمكن استطيع كم اي شرح اشرح لي علي يعني بس".split(" "));
+  const STOP = new Set("ما هو هي هل كيف اين متى لماذا عن في من الى على مع هذا هذه ذلك التي الذي ان او و يا لي لك انا اريد اود ممكن يمكن استطيع كم اي شرح اشرح لي علي يعني بس وش ايش شو ماهو ماهي ماذا شنو كيفاش علاش هاد هاذا هادي".split(" "));
   const stem = w => { w = w.replace(/^(وال|بال|كال|فال|لل|ال)/, ""); w = w.replace(/(ات|ون|ين|ان|ه|ها|هم|ي)$/, m => w.length > 4 ? "" : m); return w; };
-  const toks = s => norm(s).split(/[^a-z0-9؀-ۿ]+/).filter(w => w && w.length > 1 && !STOP.has(w)).map(stem).filter(w => w.length > 1).flatMap(w => (/^[انيت]/.test(w) && w.length > 3) ? [w, w.slice(1)] : [w]);      // صيغة الفعل المضارع (انقل/اضيف/احرك) تُطابق المصدر (نقل/اضافه/تحريك)
+  const wordGroups = s => norm(s).split(/[^a-z0-9\u0600-\u06FF]+/).filter(w => w && w.length > 1 && !STOP.has(w)).map(stem).filter(w => w.length > 1).map(w => (/^[انيت]/.test(w) && w.length > 3) ? [w, w.slice(1)] : [w]);      // صيغة الفعل المضارع (انقل/اضيف/احرك) تُطابق المصدر (نقل/اضافه/تحريك)
+  const toks = s => wordGroups(s).flat();
   let IDX = null;
   function index() {
     const df = {}; IDX = KB.map(e => { const t = toks(e.t), k = toks(e.k), a = toks(e.a), all = new Set([...t, ...k, ...a]); all.forEach(w => { df[w] = (df[w] || 0) + 1; }); return { e, t: new Set(t), k: new Set(k), a: new Set(a) }; });
     IDX.df = df; IDX.n = KB.length;
   }
   function search(q, n) {
-    const qs = [...new Set(toks(q))]; if (!qs.length) return [];
+    const qs = [...new Set(toks(q))]; if (!qs.length) return []; const groups = wordGroups(q);
     const nq = norm(q);
     return IDX.map(it => { let sc = 0; qs.forEach(w => { const idf = Math.log(1 + IDX.n / (1 + (IDX.df[w] || 0))); const pre = s => { for (const x of s) if (x.startsWith(w) || w.startsWith(x)) return true; return false; };
         if (it.t.has(w)) sc += 3 * idf; else if (pre(it.t)) sc += 1.6 * idf; if (it.k.has(w)) sc += 2 * idf; else if (pre(it.k)) sc += 1 * idf; if (it.a.has(w)) sc += .6 * idf; });
-      if (norm(it.e.t) && nq.includes(norm(it.e.t))) sc += 4; return { e: it.e, sc }; }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, n || 3);
+      if (norm(it.e.t) && nq.includes(norm(it.e.t))) sc += 4;
+      const hit = w => { for (const S of [it.t, it.k, it.a]) { if (S.has(w)) return true; for (const x of S) if (x.length > 3 && w.length > 3 && (x.startsWith(w) || w.startsWith(x))) return true; } return false; };
+      const cov = groups.length ? groups.filter(g => g.some(hit)).length / groups.length : 0; return { e: it.e, sc, cov }; }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, n || 3);
   }
   const fmt = a => esc(a).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>");
   const curTab = () => { const b = document.querySelector(".nav-btn.on"), m = b && /Admin\.tab\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""); return m ? m[1] : ""; };
@@ -54,7 +57,10 @@ const AdminHelp = (() => {
     if (!KB) return bubble("a", "تعذّر تحميل قاعدة المعرفة. تأكد من الاتصال ثم أعد المحاولة.");
     if (/^(اشرح|ماذا يفعل|ما هذا).*(القسم|الصفحه|هذا)/.test(norm(q)) || /هذا القسم|هذه الصفحه/.test(norm(q))) { const t = curTab(), e = KB.find(x => x.go === t && x.id === t) || KB.find(x => x.id === t); if (e) return answer(e); }
     const r = search(q, 4);
-    if (!r.length || r[0].sc < 1.2) { const d = bubble("a", "لم أجد جواباً دقيقاً لهذا السؤال. جرّب صياغة أخرى بأسماء الأدوات (مثل: الهيرو، الطبقات، التحريك الحر، رسوم التوصيل)، أو اختر موضوعاً:"); chips(SUGG.map(s => [s, () => ask(s)]), d); return; }
+    /* الأفضل ألا أجيب بجواب خاطئ: إن لم يكن السؤال واضحاً أطلب إعادة الصياغة باسم الإعداد/العنصر */
+    if (!r.length || r[0].sc < 6 || r[0].cov < .6) { const d = bubble("a", "أعد طرح السؤال رجاءً مع ذكر اسم الإعداد أو العنصر الذي تريده 🙏 (مثل: الهيرو، الطبقات، التحريك الحر، رسوم التوصيل، الشارات). أو اختر موضوعاً:"); chips(SUGG.map(s => [s, () => ask(s)]), d); return; }
+    const close = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01);
+    if (close.length) { const d = bubble("a", "سؤالك يحتمل أكثر من موضوع — أيها تقصد؟"); chips([r[0]].concat(close).slice(0, 4).map(x => [x.e.t, () => { bubble("u", esc(x.e.t)); answer(x.e); }]), d); return; }
     answer(r[0].e, r.slice(1, 4).filter(x => x.sc > r[0].sc * .45));
   }
   function build() {
@@ -73,5 +79,5 @@ const AdminHelp = (() => {
   function send(ev) { ev.preventDefault(); const i = $("ah-in"), v = i.value; i.value = ""; ask(v); }
   const init = () => { const tryB = () => { if (document.querySelector("#app .top")) { build(); load(); } else setTimeout(tryB, 400); }; tryB(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { ask, send, close, toggle, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };
+  return { ask, send, close, toggle, decide: q => { const r = KB ? search(q, 4) : []; if (!r.length || r[0].sc < 6 || r[0].cov < .6) return 'REPHRASE'; const c = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01); return c.length ? 'AMBIG:' + [r[0]].concat(c).map(x => x.e.id).join('+') : 'OK:' + r[0].e.id; }, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };
 })();

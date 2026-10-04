@@ -560,8 +560,8 @@ const Agent = (() => {
   }
   function notUnderstoodHtml() {
     return (lang === "fr"
-      ? "Désolé, je n'ai pas compris votre question 🙏 Veuillez la reformuler, ou choisissez l'une de ces questions :"
-      : "من فضلك أعد صياغة السؤال 🙏 — اعتذر، لم أفهم سؤالك. غيّر السؤال أو استعمل أحد هذه الأسئلة:") + chipsHtml(defaultQuestions(lang));
+      ? "Je préfère ne pas vous donner une mauvaise réponse 🙏 Pourriez-vous reformuler votre question en précisant le nom du produit ou du sujet (prix, livraison, commande…) ? Ou choisissez l'une de ces questions :"
+      : "أعد طرح السؤال رجاءً مع ذكر اسم المنتج أو الموضوع الذي تريده 🙏 (مثل: السعر، التوصيل، طريقة الطلب) — أفضّل ألا أجيبك بجواب خاطئ. أو اختر أحد هذه الأسئلة:") + chipsHtml(defaultQuestions(lang));
   }
   function answerOrFallback(t) {                      // يُستعمل في كل مسارات الرد
     const r = fallback(t);
