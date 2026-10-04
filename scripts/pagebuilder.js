@@ -545,6 +545,8 @@ const PB = (() => {
     { k: "scaled", l: "تحجيم تلقائي: يكبر ويصغر المحتوى كله مع عرض الشاشة (مناسب للتصاميم الجاهزة)", t: "switch", tab: "c" },
     { k: "dw", l: "عرض التصميم المرجعي (px) عند التحجيم", t: "num", min: 300, max: 2000, tab: "c", showIf: ["scaled", true] },
     { k: "layout", l: "نوع التخطيط", t: "select", o: [["boxed", "محدود العرض"], ["full", "عرض كامل"]], tab: "c" },
+    { k: "pz", l: "تكبير/تصغير تناسبي: اسحب إطار القسم فتتبع كل عناصره الداخلية الحجم الجديد (خطوط وصور وتباعد)", t: "switch", tab: "c" },
+    { k: "scl", l: "حجم المحتوى % (يتغير بسحب إطار القسم)", t: "num", r: 1, min: 30, max: 300, tab: "c", showIf: ["pz", true] },
     { k: "cw", l: "عرض المحتوى (px) — اسحب جانبي القسم لتغييره", t: "num", r: 1, min: 40, max: 2400, tab: "c" },
     { k: "mh", l: "الارتفاع (px) — اسحب حافة القسم لتغييره", t: "num", r: 1, min: 0, max: 3000, tab: "c" },
     { k: "va", l: "المحاذاة العمودية للأعمدة", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"], ["stretch", "تمديد"]], tab: "c", showIf: ["kind", "flow"] },
@@ -665,6 +667,10 @@ const PB = (() => {
       css.d.push(`${inx}{margin:0 auto;width:100%;position:relative}`);
       css.d.push(`${inx}{max-width:${s.layout === "full" ? "none" : (num(own(s, "cw", "d")) || 1140) + "px"}}`);
       if (s.layout !== "full") emit(css, inx, s, [["cw", v => `max-width:${num(v)}px;`]]);
+      if (s.pz && !SC) {      /* تكبير تناسبي: zoom على حاوية المحتوى فتتبعه الخطوط والصور والتباعد؛ يُلغى على الجهاز الذي لم يُضبط له حجم */
+        emit(css, inx, s, [["scl", v => `zoom:${Math.max(.3, Math.min(3, (num(v) || 100) / 100))};`]]);
+        ["t", "m"].forEach(dv => { if (own(s, "scl", dv) === undefined && own(s, "scl", "d") !== undefined) css[dv].push(`${inx}{zoom:1}`); });
+      }
       if (kind === "flow") {
         css.d.push(`${inx}{display:flex;flex-wrap:wrap}`);
         emit(css, inx, s, [["va", raw("align-items")], ["rev", (v, st, dev) => v ? (dev === "m" ? "flex-direction:column-reverse;flex-wrap:nowrap;" : "flex-direction:row-reverse;") : "flex-direction:row;flex-wrap:wrap;"]]);
