@@ -10358,10 +10358,11 @@ const PBConvert = (() => {
     /* عناصر وظيفية حسّاسة تبقى كتلة HTML أصلية محمية (لا تُفكَّك): المعرض التفاعلي، العناصر المرتبطة بالسلة/الطلب، وأقسام تملؤها سكربتات الصفحة */
     const dyn = new Set(); (fdoc ? fdoc.querySelectorAll("script:not([src])") : []).forEach(sc => (sc.textContent.match(/getElementById\(["']([\w-]+)["']\)/g) || []).forEach(m => dyn.add(m.replace(/^.*\(["']|["']\)$/g, ""))));
     const dynEmpty = [...dyn].filter(id => { const e = fdoc && fdoc.getElementById(id); return e && !e.children.length && !(e.textContent || "").trim() && !["offers", "pprice", "pold", "psave", "name", "phone", "commune", "wilaya", "gmain", "gthumbs"].includes(id) && !/^(input|select|textarea|button)$/i.test(e.tagName); });
-    const PROT = "[data-cart],.gallery,.order-form,.pbox,.gthumbs,#gmain" + (dynEmpty.length ? "," + dynEmpty.map(i => "#" + i).join(",") : "");
+    const homeRaw = o.kind === "home" ? ".shop-cats,#chips,#grid,#bestsellers-grid,[onclick]" : "";      // الرئيسية: ما تملؤه السكربتات (فئات/شرائح/شبكات المنتجات) وأي عنصر بحدث نقر يبقى كتلة أصلية
+    const PROT = "[data-cart],.gallery,.order-form,.pbox,.gthumbs,#gmain" + (dynEmpty.length ? "," + dynEmpty.map(i => "#" + i).join(",") : "") + (homeRaw ? "," + homeRaw : "");
     const mainD = doc.querySelector("main") || doc.body, fmainD = fdoc && (fdoc.querySelector("main") || fdoc.body);
     const fileEl = el => { if (!fdoc) return null; if (el.id) { const e = fdoc.getElementById(el.id); if (e && e.tagName === el.tagName) return e; } const p = []; let x = el; while (x && x !== mainD) { const par = x.parentElement; if (!par) return null; p.unshift([...par.children].indexOf(x)); x = par; } let f = fmainD; for (const i of p) { f = f && f.children[i]; } return f && f.tagName === el.tagName ? f : null; };
-    const rawKeep = c => !!(dynEmpty.length && c.querySelector(dynEmpty.map(i => "#" + i).join(",")));
+    const rawKeep = c => !!(((dynEmpty.length ? dynEmpty.map(i => "#" + i).join(",") : "") + (homeRaw ? (dynEmpty.length ? "," : "") + homeRaw : "")) && c.querySelector((dynEmpty.length ? dynEmpty.map(i => "#" + i).join(",") : "") + (homeRaw ? (dynEmpty.length ? "," : "") + homeRaw : "")));
     const protect = el => !!(el.matches(PROT) && !el.matches("body,main"));
     const rawW = el => { const f = fileEl(el); return mkW("html", { code: (f || el).outerHTML, src: "orig" }); };
 
@@ -10425,6 +10426,7 @@ const PBConvert = (() => {
     function columnsOf(el) {
       const q = cs(el), k = kids(el);
       if (k.length < 2 || k.length > 4) return null;
+      if (k.some(c => hasBlock(c) && [...c.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()))) return null;      // خلية فيها نص مباشر بجانب عناصر: تفكيكها يُضيع النص فتبقى البطاقة كما هي
       const row = (q.display === "grid" && q.gridTemplateColumns.split(" ").length >= 2) || (q.display === "flex" && !/column/.test(q.flexDirection));
       if (!row) return null;
       const cols = k.map(c => { const w = [], leaf = /^(IMG|PICTURE|H[1-6]|P|UL|OL|A|BUTTON|DETAILS|FORM|VIDEO|IFRAME)$/.test(c.tagName) || !hasBlock(c); if (leaf) widgetsOf(c, w); else kids(c).forEach(x => widgetsOf(x, w)); return { w, set: leaf ? {} : Object.assign(boxSet(c, "col"), { ta: { d: ta(c) } }) }; }).filter(x => x.w.length);
@@ -10453,7 +10455,7 @@ const PBConvert = (() => {
     const all = [...root.children], top = all.flatMap(c => (c.matches(".container,#main,div") && kids(c).length > 1 && kids(c).every(x => x.matches("section,.hero,div[class*=sec],.container"))) ? kids(c) : [c]);
     top.forEach(c => {
       if (skip(c)) return;
-      if (rawKeep(c)) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
+      if (rawKeep(c) || (o.kind === "home" && c.matches(".hero,[class*=hero]"))) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
       if (c.matches("section,.container") || hex(cs(c).backgroundColor) || /gradient/.test(cs(c).backgroundImage) || c.matches(".hero,[class*=hero]")) { flush(); const s = sectionOf(c); if (s) secs.push(...[].concat(s)); } else loose.push(c);
     });
     flush();
@@ -10474,7 +10476,7 @@ const PBConvert = (() => {
     }
     const AG = "#agent,[id^=agent],[class*=agent],#avatar,.avatar-bubble";      // الوكيل الذكي يُستثنى من المطوّر
     const raw = (grp, el) => { const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = grp; return sec; };
-    const secs = [], top = [], bot = [], native = kind === "product";
+    const secs = [], top = [], bot = [], native = true;
     [...doc.body.children].forEach(el => {
       if (el.matches("script,style,link,noscript,template")) return;
       if (el.matches("main")) { if (!native) [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
@@ -10482,8 +10484,8 @@ const PBConvert = (() => {
       const g = GROUP(el); if (g === "top") top.push(raw("top", el)); else if (g === "bot") bot.push(raw("bot", el));
     });
     if (native) {      // صفحة المنتج: تُفكَّك إلى عناصر المطوّر الحقيقية (عنوان/نص/صورة/زر/أعمدة…) وتبقى الأجزاء الوظيفية كتلاً أصلية محمية
-      const fr = await render("p/" + slug + "/");
-      let main = []; try { main = convertMain(fr.contentDocument, { kind, slug }, doc); } finally { fr.remove(); }
+      const fr = await render(kind === "home" ? "index.html" : "p/" + slug + "/");
+      let main = []; try { const st = fr.contentDocument.createElement("style"); st.textContent = ".reveal{opacity:1!important;transform:none!important;transition:none!important}"; fr.contentDocument.head.appendChild(st); main = convertMain(fr.contentDocument, { kind, slug }, doc); } finally { fr.remove(); }
       main.forEach(x => { x.grp = x.grp || "main"; });
       secs.push(...top, ...main, ...bot);
     } else { const m = secs.splice(0); secs.push(...top, ...m, ...bot); }
@@ -10503,7 +10505,7 @@ const PBConvert = (() => {
     toast("⏳ جارِ فتح الصفحة في المطوّر…");
     try {
       PBBind.reset(); PBEd.hide(); const k = key(kind, slug); let page = null;
-      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.shell && !!p.origin.native === (kind === "product")) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
+      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.shell && p.origin.native) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
       if (!page) {
         const pr = kind === "product" ? (Admin.products || []).find(x => x.slug === slug) : null;
         if (kind === "product" && !pr) throw new Error("المنتج غير موجود");
