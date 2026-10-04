@@ -7577,6 +7577,9 @@ const PB = (() => {
       { k: "bgSize", l: "حجم الخلفية", t: "select", o: [["cover", "تغطية"], ["contain", "احتواء"], ["auto", "أصلي"]], tab: "s" },
       { k: "bgPos", l: "موضع الخلفية", t: "select", o: [["center", "وسط"], ["top", "أعلى"], ["bottom", "أسفل"], ["left", "يسار"], ["right", "يمين"]], tab: "s" },
       { k: "bgFixed", l: "خلفية ثابتة (Parallax)", t: "switch", tab: "s" },
+      { k: "bgOp", l: "شفافية صورة الخلفية (0 = شفافة، 1 = معتمة)", t: "num", min: 0, max: 1, step: .05, tab: "s", showIf: ["bgImg", "*"] },
+      { k: "bgBlur", l: "تمويه صورة الخلفية (px)", t: "num", min: 0, max: 40, tab: "s", showIf: ["bgImg", "*"] },
+      { k: "bgDark", l: "تعتيم الخلفية بطبقة داكنة (0 – 0.9) ليظهر النص فوقها أوضح", t: "num", min: 0, max: .9, step: .05, tab: "s", showIf: ["bgImg", "*"] },
       { k: "bw", l: "سماكة الحد (px)", t: "num", min: 0, max: 40, tab: "s" }, { k: "bs", l: "نمط الحد", t: "select", o: [["solid", "متصل"], ["dashed", "متقطع"], ["dotted", "نقطي"]], tab: "s" }, { k: "bc", l: "لون الحد", t: "color", tab: "s" },
       { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
       { k: "shadow", l: "الظل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" },
@@ -7685,8 +7688,11 @@ const PB = (() => {
       if (kind === "canvas" && !s.scaled && s.autoM !== false && (sec.free || []).length && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined)) && own(s, "mh", "m") === undefined) curAuto = autoMobileLayout(sec);
       if (SC) { css.d.push(`${sx}{container-type:inline-size}`); css.d.push(`${inx}{--u:calc(${s.layout === "full" ? "100cqw" : "min(100cqw," + dw + "px)"}/${dw})}`); }
       if (curAuto) css.m.push(`${inx}{height:${curAuto.h}px}`);
-      common2(sx, s, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]].concat(kind === "canvas" ? [] : [["mh", px("min-height")]]));
-      if (s.ovl) css.d.push(`${sx}>.pb-ov{position:absolute;inset:0;background:${s.ovl};opacity:${num(s.ovlOp) ?? .5};pointer-events:none}`);
+      /* شفافية/تمويه صورة الخلفية: تُرسم الصورة في ::before فتتأثر هي وحدها لا محتوى القسم */
+      const bgo = num(s.bgOp), bgb = num(s.bgBlur) || 0, usePs = !!s.bgImg && ((bgo != null && bgo < 1) || bgb > 0), sBox = usePs ? Object.assign({}, s, { bgImg: "" }) : s;
+      common2(sx, sBox, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]].concat(kind === "canvas" ? [] : [["mh", px("min-height")]]));
+      if (usePs) css.d.push(`${sx}{position:relative;${bgb > 0 ? "overflow:hidden;" : ""}}${sx}::before{content:"";position:absolute;inset:${bgb > 0 ? -(bgb * 2) + "px" : "0"};border-radius:inherit;pointer-events:none;background:url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}') ${s.bgPos || "center"}/${s.bgSize || "cover"} no-repeat;opacity:${bgo ?? 1};${bgb > 0 ? "filter:blur(" + bgb + "px);" : ""}${s.bgFixed ? "background-attachment:fixed;" : ""}}`);
+      if (s.ovl || num(s.bgDark) > 0) css.d.push(`${sx}>.pb-ov{position:absolute;inset:0;background:${s.ovl || "#000"};opacity:${s.ovl ? (num(s.ovlOp) ?? .5) : num(s.bgDark)};pointer-events:none}`);
       if (s.mh && kind !== "canvas") css.d.push(`${sx}{display:flex;flex-direction:column;justify-content:center}`);
       css.d.push(`${inx}{margin:0 auto;width:100%;position:relative}`);
       css.d.push(`${inx}{max-width:${s.layout === "full" ? "none" : (num(own(s, "cw", "d")) || 1140) + "px"}}`);
@@ -7722,7 +7728,7 @@ const PB = (() => {
       }
       const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free || (edit ? '<div class="pb-empty" style="margin:40px auto;max-width:360px;pointer-events:none">اسحب العناصر إلى هذا القماش الحر وحرّكها وغيّر أحجامها بحرية</div>' : "")}</div>` : "";
       const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
-      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""}${s.bgImg ? " pb-hasbg" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
+      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""}${s.bgImg ? " pb-hasbg" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl || num(s.bgDark) > 0 ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
     }).join("");
     return { html, css: finishCss(css) };
   }
