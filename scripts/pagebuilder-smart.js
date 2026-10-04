@@ -7,13 +7,15 @@ const PBSmart = (function () {
   const FSK = { ar: 1.15, lat: .74 }, ARABIC = /[؀-ۿ]/;
   const A = () => PBApp;
   function pane() {
-    const card = (ic, title, desc, fn) => `<div style="border:1.5px solid #e4dfd2;border-radius:12px;padding:.7rem;background:#fff;margin-bottom:.6rem"><div style="font-weight:800">${ic} ${title}</div><div style="font-size:.78rem;color:#6b6556;line-height:1.7;margin:.3rem 0 .6rem">${desc}</div><button type="button" style="width:100%;background:#0d9488;color:#fff;border:0;border-radius:10px;padding:.55rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="PBSmart.${fn}()"${fn === "captureElements" ? ' onmouseenter="PBSmart.warm()"' : ""}>${title} من الصورة المحدّدة</button></div>`;
-    return `<div class="pbx-f"><div style="font-weight:900;color:#173f35;margin-bottom:.2rem">🪄 أدوات ذكية</div>
-<div style="font-size:.76rem;color:#6b6556;line-height:1.7;margin-bottom:.6rem">أدوات الكانفاس: <b>اجلب صورة</b> من جهازك، أو <b>حدّد أي صورة</b> في الصفحة (حتى لو في قسم عادي — تُنسخ تلقائياً إلى قسم كانفاس جديد) ثم اختر الأداة. تمسح الصورة وتحيط بما يمكن فصله بخط ملوّن، وتختار <b>عنصراً</b> أو <b>الكل</b> ثم «التقاط».</div>
-<div style="border:1.5px dashed #c9bfa6;border-radius:12px;padding:.7rem;background:#fffdf7;margin-bottom:.6rem"><div style="font-weight:800">📥 جلب صورة جاهزة</div><div style="font-size:.78rem;color:#6b6556;line-height:1.7;margin:.3rem 0 .6rem">لديك صفحة/تصميم من خارج الموقع؟ اجلب <b>صورة واحدة</b> أو <b>عدة صور مقسَّمة</b> (بالترتيب من الأعلى للأسفل): تُوضع كل صورة في قسم كانفاس جاهز، ثم تُجرّب عليها الأداتين أدناه.</div><button type="button" style="width:100%;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.55rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="PBSmart.importImages()">رفع صورة / صور من الجهاز</button></div>
-${card("🔤", "التقاط النص", "يفصل النصوص عن الصورة بدقة ويحوّلها إلى نصوص قابلة للتعديل، وتُمسح من الصورة وتبقى خلفيتها.", "capture")}
-${card("🖼️", "التقاط العناصر", "مثل «الالتقاط السحري» في Canva: يتعرّف على العناصر بأسمائها (أشخاص، منتجات، أطباق، أقلام، أعشاب…) ويقصّها بحدود دقيقة <b>مع ظلالها</b> كصور شفافة مستقلة، وتبقى الخلفية. يعمل بلا مفتاح داخل متصفحك (أول مرة تُنزَّل النماذج ~110MB ثم تُحفظ).", "captureElements")}
-<label style="display:flex;gap:.4rem;align-items:flex-start;font-size:.74rem;color:#6b6556;line-height:1.6;margin-top:-.2rem;cursor:pointer"><input type="checkbox" ${gemOn() ? "checked" : ""} onchange="PBSmart.setGem(this.checked)"> <span>اختياري: الاستعانة بمفتاح Gemini (أسماء أدق وإعادة رسم بالسحابة). بدونه تعمل الأداة كاملة داخل متصفحك مجاناً.</span></label>
+    const svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+    const tool = (d, label, tip, fn, extra) => `<button type="button" class="pbx-it" title="${tip}" onclick="PBSmart.${fn}()"${extra || ""}>${svg(d)}<span>${label}</span></button>`;
+    return `<div class="pbx-f"><div class="pbx-it-row">
+${tool('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>', "رفع صورة", "رفع صورة أو عدة صور من الجهاز، كل صورة في قسم كانفاس جاهز", "importImages")}
+${tool('<path d="M4 7V5h16v2M12 5v14M9 19h6"/><path d="M3 21h18" stroke-dasharray="2 3"/>', "التقاط النص", "يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل — حدّد صورة أولاً", "capture")}
+${tool('<path d="M4 20L16 8"/><path d="M14 4l.9 2.1L17 7l-2.1.9L14 10l-.9-2.1L11 7l2.1-.9z"/><path d="M19 12l.6 1.4L21 14l-1.4.6L19 16l-.6-1.4L17 14l1.4-.6z"/>', "التقاط العناصر", "الالتقاط السحري: يقصّ الأشخاص والمنتجات كصور شفافة — حدّد صورة أولاً", "captureElements", ' onmouseenter="PBSmart.warm()"')}
+</div>
+<div style="font-size:.72rem;color:#6b6556;line-height:1.7;margin:.55rem 0">حدّد صورة في الصفحة (حتى في قسم عادي — تُنسخ تلقائياً إلى قسم كانفاس) ثم اضغط أداة الالتقاط.</div>
+<label style="display:flex;gap:.4rem;align-items:flex-start;font-size:.72rem;color:#6b6556;line-height:1.6;cursor:pointer"><input type="checkbox" ${gemOn() ? "checked" : ""} onchange="PBSmart.setGem(this.checked)"> <span>اختياري: الاستعانة بمفتاح Gemini لأسماء أدق. بدونه تعمل الأدوات كاملة داخل متصفحك مجاناً.</span></label>
 </div>`;
   }
   /* تحميل صورة الودجت كقماش بالحجم الطبيعي */
