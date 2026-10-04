@@ -530,6 +530,7 @@ const PB = (() => {
       { k: "fx", l: "الموضع الأفقي % (وضع حر)", t: "num", r: 1, min: -50, max: 150, step: .5, tab: "s", onlyFree: 1 }, { k: "fy", l: "الموضع العمودي px (وضع حر)", t: "num", r: 1, min: -500, max: 5000, tab: "s", onlyFree: 1 }, { k: "fwd", l: "العرض % (وضع حر)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "s", onlyFree: 1 }, { k: "fh", l: "الارتفاع px (وضع حر)", t: "num", r: 1, min: 10, max: 5000, tab: "s", onlyFree: 1 },
       { k: "zi", l: "الترتيب (أمام/خلف) — الأكبر أمام", t: "num", min: -20, max: 200, tab: "s" });
     return a.concat([
+      { k: "wsc", l: "حجم محتوى العنصر % — يتغير بسحب زواياه (فأرة/إصبع) فيكبر المحتوى مع الإطار", t: "num", r: 1, min: 20, max: 500, tab: "a" },
       { k: "hd", l: "إخفاء على المكتب", t: "switch", tab: "a" }, { k: "ht", l: "إخفاء على التابلت", t: "switch", tab: "a" }, { k: "hm", l: "إخفاء على الهاتف", t: "switch", tab: "a" },
       { k: "anim", l: "حركة الظهور", t: "select", o: ANIMS, tab: "a" }, { k: "animDur", l: "مدة الحركة (ثانية)", t: "num", min: .1, max: 3, step: .1, tab: "a" }, { k: "animDelay", l: "تأخير الحركة (ثانية)", t: "num", min: 0, max: 5, step: .1, tab: "a" },
       { k: "z", l: "z-index", t: "num", min: 0, max: 999, tab: "a" },
@@ -545,8 +546,8 @@ const PB = (() => {
     { k: "scaled", l: "تحجيم تلقائي: يكبر ويصغر المحتوى كله مع عرض الشاشة (مناسب للتصاميم الجاهزة)", t: "switch", tab: "c" },
     { k: "dw", l: "عرض التصميم المرجعي (px) عند التحجيم", t: "num", min: 300, max: 2000, tab: "c", showIf: ["scaled", true] },
     { k: "layout", l: "نوع التخطيط", t: "select", o: [["boxed", "محدود العرض"], ["full", "عرض كامل"]], tab: "c" },
-    { k: "pz", l: "تكبير/تصغير تناسبي: اسحب إطار القسم فتتبع كل عناصره الداخلية الحجم الجديد (خطوط وصور وتباعد)", t: "switch", tab: "c" },
-    { k: "scl", l: "حجم المحتوى % (يتغير بسحب إطار القسم)", t: "num", r: 1, min: 30, max: 300, tab: "c", showIf: ["pz", true] },
+    { k: "scl", l: "حجم المحتوى % — يتغير تلقائياً بسحب إطار القسم (فأرة/إصبع) فتتبعه كل العناصر الداخلية", t: "num", r: 1, min: 30, max: 300, tab: "c" },
+    { k: "pzoff", l: "تعطيل التكبير التناسبي لهذا القسم (السحب يغيّر العرض/الارتفاع فقط)", t: "switch", tab: "c" },
     { k: "cw", l: "عرض المحتوى (px) — اسحب جانبي القسم لتغييره", t: "num", r: 1, min: 40, max: 2400, tab: "c" },
     { k: "mh", l: "الارتفاع (px) — اسحب حافة القسم لتغييره", t: "num", r: 1, min: 0, max: 3000, tab: "c" },
     { k: "va", l: "المحاذاة العمودية للأعمدة", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"], ["stretch", "تمديد"]], tab: "c", showIf: ["kind", "flow"] },
@@ -648,6 +649,9 @@ const PB = (() => {
       else specs.push(["w", v => `width:${num(v)}%;`], ["mh", v => `${def.fit ? "height" : "min-height"}:${U(num(v))};`],
         ["al", v => (v === "center" ? "margin-left:auto;margin-right:auto;" : v === "end" ? "margin-inline-start:auto;margin-inline-end:0;" : "margin-inline-end:auto;margin-inline-start:0;") + `text-align:${v === "center" ? "center" : v === "end" ? "end" : "start"};`]);
       emit(css, wsx, s2, specs);
+      /* تكبير تناسبي للعنصر: يُضبط بسحب زواياه فيكبر محتواه كله مع إطاره */
+      emit(css, wsx + ">*", s2, [["wsc", v => `zoom:${Math.max(.2, Math.min(5, (num(v) || 100) / 100))};`]]);
+      ["t", "m"].forEach(dv => { if (own(s2, "wsc", dv) === undefined && own(s2, "wsc", "d") !== undefined) css[dv].push(`${wsx}>*{zoom:1}`); });
       if (free) css.d.push(`${wsx}{position:absolute;margin:0;max-width:none}`);
       if (free && curAuto && curAuto.items[w.id]) { const a = curAuto.items[w.id]; css.m.push(`${wsx}{left:${a.fx}%;top:${a.fy}px;width:${a.fwd}%;height:${a.fh}px}`); }
       def.css(css, wsx, s2);
@@ -670,7 +674,7 @@ const PB = (() => {
       css.d.push(`${inx}{margin:0 auto;width:100%;position:relative}`);
       css.d.push(`${inx}{max-width:${s.layout === "full" ? "none" : (num(own(s, "cw", "d")) || 1140) + "px"}}`);
       if (s.layout !== "full") emit(css, inx, s, [["cw", v => `max-width:${num(v)}px;`]]);
-      if (s.pz && !SC) {      /* تكبير تناسبي: zoom على حاوية المحتوى فتتبعه الخطوط والصور والتباعد؛ يُلغى على الجهاز الذي لم يُضبط له حجم */
+      if (!s.pzoff && !SC) {      /* تكبير تناسبي: zoom على حاوية المحتوى فتتبعه الخطوط والصور والتباعد؛ يُلغى على الجهاز الذي لم يُضبط له حجم */
         emit(css, inx, s, [["scl", v => `zoom:${Math.max(.3, Math.min(3, (num(v) || 100) / 100))};`]]);
         ["t", "m"].forEach(dv => { if (own(s, "scl", dv) === undefined && own(s, "scl", "d") !== undefined) css[dv].push(`${inx}{zoom:1}`); });
       }
