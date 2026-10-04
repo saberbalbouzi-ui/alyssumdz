@@ -1,0 +1,488 @@
+{
+ "v": 1,
+ "title": "عرض خاص",
+ "slug": "page-p3kg",
+ "desc": "",
+ "bg": "#ffffff",
+ "ff": "",
+ "header": true,
+ "footer": true,
+ "css": "",
+ "sections": [
+  {
+   "id": "dey11jx",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      40,
+      20,
+      40,
+      20
+     ],
+     "m": [
+      24,
+      14,
+      24,
+      14
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "bg": "#fbf8f2"
+   },
+   "cols": [
+    {
+     "id": "qigrutf",
+     "set": {
+      "bg": "#ffffff",
+      "rad": {
+       "d": 24
+      },
+      "pad": {
+       "d": [
+        22,
+        22,
+        22,
+        22
+       ]
+      },
+      "shadow": "md",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#eadfc4"
+     },
+     "widgets": [
+      {
+       "id": "iivirl0",
+       "type": "pgal",
+       "set": {
+        "imgs": "assets/img/pages/pg-1791138746993-1.webp\nassets/img/pages/pg-1791138778920-2.webp\nassets/img/pages/pg-1791138795369-3.webp\nassets/img/pages/pg-1791138824687-4.webp",
+        "ratio": "1/1",
+        "rad": {
+         "d": 20
+        },
+        "trad": {
+         "d": 12
+        },
+        "tsz": {
+         "d": 72
+        },
+        "gap": {
+         "d": 10
+        },
+        "auto": 0,
+        "ac": "#c8a24b"
+       }
+      }
+     ]
+    },
+    {
+     "id": "vas3y8f",
+     "set": {
+      "pad": {
+       "d": [
+        0,
+        0,
+        0,
+        0
+       ]
+      }
+     },
+     "widgets": [
+      {
+       "id": "ulj6ove",
+       "type": "text",
+       "set": {
+        "html": "<p>🌿 ALYSSUM — العناية بالبشرة</p>",
+        "fs": {
+         "d": 13
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "800",
+        "color": "#173f35",
+        "bg": "#fbf4e6",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#eadfc4",
+        "rad": {
+         "d": 999
+        },
+        "pad": {
+         "d": [
+          6,
+          14,
+          6,
+          14
+         ]
+        },
+        "w": {
+         "d": 60
+        }
+       }
+      },
+      {
+       "id": "1jhg75h",
+       "type": "heading",
+       "set": {
+        "text": "عسل التركيز وتنشيط الذاكرة للأطفال",
+        "tag": "h1",
+        "fs": {
+         "d": 46,
+         "m": 30
+        },
+        "fw": "900",
+        "ta": {
+         "d": "start"
+        },
+        "color": "#173f35",
+        "lh": {
+         "d": 1.15
+        }
+       }
+      },
+      {
+       "id": "flstlqr",
+       "type": "text",
+       "set": {
+        "html": "<p>★★★★★ <small>(+86 تقييم إيجابي)</small></p>",
+        "fs": {
+         "d": 14
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#b78b2d"
+       }
+      },
+      {
+       "id": "wdcracj",
+       "type": "text",
+       "set": {
+        "html": "تركيبة طبيعية مميزة لدعم التركيز وتنشيط الذاكرة عند الأطفال\n\n",
+        "fs": {
+         "d": 22
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "800",
+        "color": "#1c2420",
+        "al": {
+         "d": "start"
+        },
+        "w": {
+         "d": 95.6
+        }
+       }
+      },
+      {
+       "id": "hnc67y1",
+       "type": "text",
+       "set": {
+        "html": "عسل طبيعي للأطفال يساعد على دعم التركيز وتنشيط الذاكرة، ويمنح الجسم طاقة طبيعية وطعمًا محببًا في الروتين اليومي.\n\n",
+        "fs": {
+         "d": 17
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#566360",
+        "al": {
+         "d": "start"
+        },
+        "w": {
+         "d": 100
+        }
+       }
+      },
+      {
+       "id": "b2wknsv",
+       "type": "tbadges",
+       "set": {
+        "items": "🌿 طبيعي 100%\n✅ أصلي ومفحوص",
+        "live": true,
+        "liveText": "يشاهدون هذا المنتج الآن",
+        "lmin": 8,
+        "lmax": 18,
+        "dot": "#d64545",
+        "cbg": "#ffffff",
+        "cc": "#566360",
+        "cbc": "#eadfc4",
+        "crad": {
+         "d": 999
+        },
+        "cfs": {
+         "d": 13
+        },
+        "gap": {
+         "d": 10
+        },
+        "jc": "flex-start"
+       }
+      },
+      {
+       "id": "exmsvxa",
+       "type": "pprice",
+       "set": {
+        "prod": "tarkiz",
+        "pc": "",
+        "fs": {
+         "d": 34
+        },
+        "ta": {
+         "d": "start"
+        }
+       }
+      },
+      {
+       "id": "70bewpa",
+       "type": "countdown",
+       "set": {
+        "mode": "daily",
+        "end": "",
+        "cbg": "#173f35",
+        "color": "#ffffff",
+        "fs": {
+         "d": 34
+        },
+        "crad": {
+         "d": 12
+        }
+       }
+      },
+      {
+       "id": "l8iqga7",
+       "type": "poffers",
+       "set": {
+        "prod": "tarkiz"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "qxikkfj",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      110,
+      20,
+      110,
+      20
+     ],
+     "m": [
+      64,
+      16,
+      64,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "grad1": "#173F35",
+    "grad2": "#2f5d4f",
+    "gradAng": 135,
+    "mh": {
+     "d": 480,
+     "m": 360
+    },
+    "va": {
+     "d": "center"
+    }
+   },
+   "cols": [
+    {
+     "id": "cfr9vke",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": []
+  },
+  {
+   "id": "q18hvy2",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 760
+    },
+    "pad": {
+     "d": [
+      20,
+      20,
+      20,
+      20
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "p9x27s8",
+     "set": {},
+     "widgets": [
+      {
+       "id": "zbnofub",
+       "type": "text",
+       "set": {
+        "html": "✓ تركيبة طبيعية 100% بمكونات مختارة بعناية\n",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "700",
+        "color": "#333",
+        "bg": "#f7f3ea",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#e6dfcf",
+        "rad": {
+         "d": 14
+        },
+        "pad": {
+         "d": [
+          12,
+          16,
+          12,
+          16
+         ]
+        }
+       }
+      },
+      {
+       "id": "3fsyp48",
+       "type": "text",
+       "set": {
+        "html": "✓ يدعم التركيز وتنشيط الذاكرة عند الأطفال\n",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "700",
+        "color": "#333",
+        "bg": "#f7f3ea",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#e6dfcf",
+        "rad": {
+         "d": 14
+        },
+        "pad": {
+         "d": [
+          12,
+          16,
+          12,
+          16
+         ]
+        }
+       }
+      },
+      {
+       "id": "2f02plg",
+       "type": "text",
+       "set": {
+        "html": "✓ طعم محبب يسهّل إدخاله في الروتين اليومي\n",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "700",
+        "color": "#333",
+        "bg": "#f7f3ea",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#e6dfcf",
+        "rad": {
+         "d": 14
+        },
+        "pad": {
+         "d": [
+          12,
+          16,
+          12,
+          16
+         ]
+        }
+       }
+      },
+      {
+       "id": "ky9v7t8",
+       "type": "text",
+       "set": {
+        "html": "✓ مناسب للأطفال من 4 إلى 18 سنة\n",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "start"
+        },
+        "fw": "700",
+        "color": "#333",
+        "bg": "#f7f3ea",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#e6dfcf",
+        "rad": {
+         "d": 14
+        },
+        "pad": {
+         "d": [
+          12,
+          16,
+          12,
+          16
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
