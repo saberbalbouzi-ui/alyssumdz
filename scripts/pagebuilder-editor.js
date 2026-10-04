@@ -617,12 +617,10 @@ body{overflow-x:hidden;margin:0}`;
     if (inf.kind === "widget") { if (has("color")) colorIn("color", "لون النص", "🔤"); if (has("bgc")) colorIn("bgc", "لون الزر", "🎨"); else colorIn("bg", "لون الخلفية", "🎨"); }
     else {
       colorIn("bg", "لون الخلفية", "🎨");
-      if (inf.kind === "section") btn("✥ اسحب", "اسحب القسم كله (كبلوك واحد) لنقله بين الأقسام", null, true);
       btn(inf.kind === "column" ? "▶" : "↑", "تحريك", () => move(-1)); btn(inf.kind === "column" ? "◀" : "↓", "تحريك", () => move(1));
       if (inf.kind === "section" && inf.node.set.kind !== "canvas") btn("＋عمود", "إضافة عمود", () => addCol(inf.node)); if (inf.kind === "column") btn("＋عمود", "إضافة عمود بعده", () => addCol(inf.sec, inf.idx + 1));
       if (inf.kind === "section" && (inf.node.free || []).length) btn("📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف", () => autoMobile(inf.node));
     }
-    if (inf.kind !== "section" && inf.sec) btn("▣ الكتلة", "حدّد القسم كله لتحريكه كبلوك وتغيير حجمه (يتبعه كل ما بداخله)", () => select(inf.sec.id));
     btn("⧉", "تكرار", dup); btn("🗑", "حذف", del);
     box.appendChild(bar);
     /* مقبض تقويس الزوايا (داخل الزاوية العليا) ومقبض التدوير (أسفل العنصر) */
