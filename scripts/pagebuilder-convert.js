@@ -87,6 +87,11 @@ const PBConvert = (() => {
         if (el.id === "offers" || (el.querySelector("#offers") && !el.querySelector("h1,h2,form,#gmain,#pprice") && txt(el).length < 400)) { out.push(mkW("poffers", { prod: o.slug })); return; }
         if (el.id === "pprice" || (el.querySelector("#pprice") && !el.querySelector("h1,h2,img,#offers,form") && txt(el).length < 120)) { out.push(mkW("pprice", { prod: o.slug })); return; }
       }
+      if (el.matches(".pd-tags") && kids(el).length && kids(el).every(c => c.matches(".tag"))) {      // صف شارات الثقة ← عنصر «شارات الثقة» (مع الشارة الحيّة)
+        const ks = kids(el), live = ks.find(c => c.matches(".live-badge") || c.querySelector("#viewers")), plain = ks.filter(c => c !== live), q0 = cs(plain[0] || live);
+        const set = { items: plain.map(txt).join("\n"), live: !!live, liveText: live ? txt(live).replace(/[\d٠-٩]+/g, "").replace(/\s+/g, " ").trim() : "", cbg: hex(q0.backgroundColor) || "#ffffff", cc: hex(q0.color) || "#566360", cbc: hex(q0.borderTopColor) || "#eadfc4", crad: { d: Math.round(parseFloat(q0.borderTopLeftRadius)) || 999 }, cfs: { d: Math.round(parseFloat(q0.fontSize)) || 13 }, gap: { d: Math.round(parseFloat(cs(el).columnGap) || 10) } };
+        out.push(mkW("tbadges", set)); return;
+      }
       if (/^H[1-6]$/.test(tag)) { const t = txt(el); if (!t) return; const w = mkW("heading", { text: t, tag: tag.toLowerCase(), bindTitle: o.kind === "product" && tag === "H1", prod: o.kind === "product" ? o.slug : "", fs: { d: px(el, 32), m: Math.max(18, Math.round(px(el, 32) * (px(el, 32) > 30 ? .72 : .9))) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return; }
       if (tag === "IMG") { const r = el.getBoundingClientRect(); const src = el.currentSrc || el.src || ""; if (!src || r.width < 110 || el.closest("[class*=thumb]") || seen.has(src) || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(src)) return; seen.add(src); out.push(mkW("image", { src: rel(src), alt: el.alt || "", fit: "cover" })); return; }
       if (tag === "PICTURE") { const i = el.querySelector("img"); if (i) widgetsOf(i, out); return; }

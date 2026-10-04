@@ -7464,6 +7464,20 @@ const PB = (() => {
       html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const im = (p.images && p.images.length) ? p.images : (p.cover ? [p.cover] : []), u = x => (/^(https?:|data:|\/)/.test(x) ? x : ctx.base + x); return `<div class="pbox pb-pg${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبط بصور المنتج — انقر للتعديل"` : ""}><div class="gmain"><img id="gmain" src="${esc(u(im[0] || ""))}" alt="${esc(p.title)}"></div><div class="pthumbs"><div class="gthumbs">${im.map((x, i) => `<img src="${esc(u(x))}" alt="${esc(p.title)}"${i === 0 ? ' class="on"' : ""}>`).join("")}</div></div></div>`; },
       css: (c, sel) => { c.d.push(`:where(${sel} .gmain img){width:100%;display:block;border-radius:16px}:where(${sel} .gthumbs){display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}:where(${sel} .gthumbs img){width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid transparent}:where(${sel} .gthumbs img.on){border-color:#157a55}`); },
     },
+    tbadges: {
+      label: "شارات الثقة", ic: "🏷️", def: { items: "🌿 طبيعي 100%\n✅ أصلي ومفحوص", live: true, liveText: "يشاهدون هذا المنتج الآن", lmin: 8, lmax: 18, dot: "#d64545", cbg: "#ffffff", cc: "#566360", cbc: "#eadfc4", crad: { d: 999 }, cfs: { d: 13 }, gap: { d: 10 }, jc: "flex-start" },
+      ctl: [{ k: "items", l: "الشارات (سطر لكل شارة) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "live", l: "شارة «يشاهدون الآن» (عدّاد متحرك)", t: "switch", tab: "c" }, { k: "liveText", l: "نص الشارة الحيّة", t: "text", tab: "c", showIf: ["live", true] }, { k: "lmin", l: "أقل عدد", t: "num", min: 1, max: 500, tab: "c", showIf: ["live", true] }, { k: "lmax", l: "أكبر عدد", t: "num", min: 1, max: 500, tab: "c", showIf: ["live", true] },
+        { k: "cbg", l: "خلفية الشارة", t: "color", tab: "s" }, { k: "cc", l: "لون النص", t: "color", tab: "s" }, { k: "cbc", l: "لون الإطار", t: "color", tab: "s" }, { k: "dot", l: "لون نقطة الشارة الحيّة", t: "color", tab: "s" }, { k: "crad", l: "تدوير الشارة (px)", t: "num", r: 1, min: 0, max: 999, tab: "s" }, { k: "cfs", l: "حجم الخط (px)", t: "num", r: 1, min: 9, max: 30, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "jc", l: "المحاذاة", t: "select", o: [["flex-start", "يمين"], ["center", "وسط"], ["flex-end", "يسار"]], tab: "s" }],
+      html: s => { const L = String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()); return `<div class="pb-tb">${L.map(([x, i]) => `<span class="pb-tbc" data-edit="items" data-idx="${i}">${esc(x)}</span>`).join("")}${s.live ? `<span class="pb-tbc pb-tbl"><i class="pb-tbd"></i> <b data-live data-min="${num(s.lmin) || 8}" data-max="${num(s.lmax) || 18}">${Math.round(((num(s.lmin) || 8) + (num(s.lmax) || 18)) / 2)}</b> ${esc(s.liveText || "")}</span>` : ""}</div>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-tb{display:flex;flex-wrap:wrap;align-items:center;justify-content:${s.jc || "flex-start"};gap:${num(s.gap) ?? 10}px}${sel} .pb-tbc{display:inline-flex;align-items:center;gap:.4em;background:${s.cbg || "#fff"};color:${s.cc || "#566360"};border:1px solid ${s.cbc || "#eadfc4"};padding:.45em .95em;font-weight:700;box-shadow:0 4px 14px rgba(23,63,53,.06);white-space:nowrap}${sel} .pb-tbl{color:#b83232;border-color:#f0c4c0;background:#fff7f6}${sel} .pb-tbd{width:9px;height:9px;border-radius:50%;background:${s.dot || "#d64545"};display:inline-block;animation:pbtb 1.4s infinite}@keyframes pbtb{50%{opacity:.35;transform:scale(1.4)}}`); emit(c, sel + " .pb-tbc", s, [["crad", px("border-radius")], ["cfs", px("font-size")]]); },
+    },
+    pgal: {
+      label: "معرض المنتج (رئيسية + مصغّرات)", ic: "🖼️", fit: 1, def: { imgs: "", ratio: "1/1", rad: { d: 20 }, trad: { d: 12 }, tsz: { d: 72 }, gap: { d: 10 }, auto: 0, ac: "#c8a24b" },
+      ctl: [{ k: "imgs", l: "الصور (سطر لكل صورة) — أو ارفعها مباشرة. الأولى هي الرئيسية", t: "gallery", tab: "c" }, { k: "auto", l: "تبديل تلقائي كل (ثانية) — 0 = بلا", t: "num", min: 0, max: 30, tab: "c" },
+        { k: "ratio", l: "نسبة الصورة الرئيسية", t: "select", o: [["1/1", "مربعة"], ["4/3", "4:3"], ["3/4", "طولية 3:4"], ["16/9", "عريضة"]], tab: "s" }, { k: "rad", l: "تدوير الصورة الرئيسية (px)", t: "num", r: 1, min: 0, max: 80, tab: "s" }, { k: "tsz", l: "حجم المصغّرة (px)", t: "num", r: 1, min: 30, max: 160, tab: "s" }, { k: "trad", l: "تدوير المصغّرات (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "ac", l: "لون إطار المصغّرة النشطة", t: "color", tab: "s" }],
+      html: (s, id, ctx) => { const L = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean), u = x => /^(https?:|data:|\/)/.test(x) ? x : (ctx.base || "") + x; if (!L.length) return '<div class="pb-ph" data-upload="1">🖼️ أضف صور المعرض من إعدادات العنصر</div>'; return `<div class="pb-pgl" data-auto="${num(s.auto) || 0}"><div class="pb-pgm"><img src="${esc(u(L[0]))}" alt="" loading="lazy"></div><div class="pb-pgt">${L.map((x, i) => `<img src="${esc(u(x))}" alt=""${i === 0 ? ' class="on"' : ""}>`).join("")}</div></div>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-pgm img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}${sel} .pb-pgt{display:flex;flex-wrap:wrap;gap:${num(s.gap) ?? 10}px;margin-top:${num(s.gap) ?? 10}px}${sel} .pb-pgt img{object-fit:cover;cursor:pointer;border:2px solid transparent;opacity:.85;transition:.2s}${sel} .pb-pgt img.on,${sel} .pb-pgt img:hover{opacity:1;border-color:${s.ac || "#c8a24b"}}`); emit(c, sel + " .pb-pgm img", s, [["rad", px("border-radius")]]); emit(c, sel + " .pb-pgt img", s, [["tsz", v => `width:${num(v)}px;height:${num(v)}px;`], ["trad", px("border-radius")]]); },
+    },
     contact: {
       label: "نموذج اتصال", ic: "✉️", def: { title: "تواصل معنا", desc: "اترك رسالتك وسنردّ عليك في أقرب وقت.", fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "full" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "البريد الإلكتروني", type: "email", ph: "example@mail.com", req: false, w: "half" }, { label: "رسالتك", type: "textarea", ph: "اكتب رسالتك هنا", req: true, w: "full" }], btn: "إرسال الرسالة", dest: "whatsapp", dzPhone: true, ok: "✅ تم إرسال رسالتك بنجاح، شكراً لك!", subject: "رسالة من نموذج الاتصال", fbg: "#ffffff", fbc: "#e6dfcf", frad: { d: 16 }, fpad: { d: [24, 24, 24, 24] }, tcol: "#173f35", lcol: "#444444", ibg: "#faf6ec", ibc: "#e0d9c8", irad: { d: 10 }, ifs: { d: 16 }, bbg: "#157a55", bcol: "#ffffff", brad: { d: 12 }, bfull: true, cd: 20 },
       ctl: [{ k: "title", l: "عنوان النموذج", t: "text", tab: "c" }, { k: "desc", l: "وصف قصير", t: "textarea", tab: "c" },
@@ -7563,7 +7577,7 @@ const PB = (() => {
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "pprice", "poffers", "pgallery", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "tbadges", "pgal", "pprice", "poffers", "pgallery", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -7636,7 +7650,7 @@ const PB = (() => {
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
-  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], pprice: [30, 80], poffers: [80, 260], pgallery: [200, 700], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], tbadges: [26, 300], pgal: [200, 600], pprice: [30, 80], poffers: [80, 260], pgallery: [200, 700], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
   const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
@@ -7644,6 +7658,28 @@ const PB = (() => {
   const migrate = page => { (page.sections || []).forEach(sec => { sec.free = sec.free || []; if (!sec.cols || !sec.cols.length) sec.cols = [mkC([])];
     const fix = w => { if (isObj(w.set.fw)) { w.set.fwd = w.set.fw; delete w.set.fw; } if (w.type === "orderform") { w.type = "orderorig"; w.set = { prod: (w.set && w.set.prod) || "", auto: true }; } if (w.type === "products") { const st = w.set; if (st.val && !st.tag && !st.cat && !st.slugs) { if (st.mode === "tag") st.tag = st.val; else if (st.mode === "cat") st.cat = st.val; else if (st.mode === "slugs") st.slugs = st.val; } } };
     sec.cols.forEach(c => c.widgets.forEach(fix)); sec.free.forEach(fix); }); return page; };
+  /* ═════════ عناصر افتراضية: عناصر وأقسام جاهزة بتنسيق صفحة المنتج (ألوان/حدود/ظلال/خطوط) لاستعمالها في صفحات جديدة ═════════ */
+  const DK = { green: "#173f35", gold: "#c8a24b", sand: "#f7f3ea", line: "#eadfc4", ink: "#1c2420", muted: "#566360" };
+  const DCARD = { bg: "#ffffff", rad: { d: 24 }, pad: { d: [22, 22, 22, 22] }, shadow: "md", bw: 1, bs: "solid", bc: DK.line };
+  const dEyebrow = () => mkW("text", { html: "<p>🌿 ALYSSUM — العناية بالبشرة</p>", fs: { d: 13 }, fw: "800", color: DK.green, bg: "#fbf4e6", bw: 1, bs: "solid", bc: DK.line, rad: { d: 999 }, pad: { d: [6, 14, 6, 14] }, w: { d: 60 }, ta: { d: "start" } });
+  const dTitle = () => mkW("heading", { text: "اسم المنتج هنا", tag: "h1", fs: { d: 46, m: 30 }, fw: "900", color: DK.green, lh: { d: 1.15 }, ta: { d: "start" } });
+  const dStars = () => mkW("text", { html: "<p>★★★★★ <small>(+86 تقييم إيجابي)</small></p>", fs: { d: 14 }, color: "#b78b2d", ta: { d: "start" } });
+  const dSub = () => mkW("text", { html: "<p>عنوان فرعي يلخّص فائدة المنتج</p>", fs: { d: 22 }, fw: "800", color: DK.ink, ta: { d: "start" } });
+  const dDesc = () => mkW("text", { html: "<p>وصف قصير للمنتج: المكوّنات، الفائدة، وطريقة الاستعمال.</p>", fs: { d: 17 }, lh: { d: 1.9 }, color: DK.muted, ta: { d: "start" } });
+  const dPill = (t) => mkW("text", { html: "<p>✓ " + t + "</p>", fs: { d: 15 }, fw: "700", color: "#333", bg: DK.sand, bw: 1, bs: "solid", bc: "#e6dfcf", rad: { d: 14 }, pad: { d: [12, 16, 12, 16] }, ta: { d: "start" } });
+  const dDeal = () => mkW("countdown", { cbg: DK.green, color: "#ffffff" });
+  const DFLT = [
+    { k: "hero", n: "قسم المنتج الأول (معرض + معلومات)", ic: "🛍️", d: "عمودان: بطاقة المعرض، ومعلومات المنتج بالأسعار والعروض", f: () => mkS([mkC([mkW("pgal", {})], DCARD), mkC([dEyebrow(), dTitle(), dStars(), dSub(), dDesc(), mkW("tbadges", {}), mkW("pprice", {}), dDeal(), mkW("poffers", {})], { pad: { d: [0, 0, 0, 0] } })], { bg: "#fbf8f2", pad: { d: [40, 20, 40, 20], m: [24, 14, 24, 14] } }) },
+    { k: "gallery", n: "معرض المنتج (رئيسية + مصغّرات)", ic: "🖼️", d: "صورة كبيرة تتبدّل بالنقر على المصغّرات، مع تبديل تلقائي اختياري", f: () => mkS([mkC([mkW("pgal", {})], DCARD)], { cw: { d: 640 }, pad: { d: [30, 20, 30, 20] } }) },
+    { k: "trust", n: "شارات الثقة (+ يشاهدون الآن)", ic: "🏷️", d: "شارات صغيرة وشارة حيّة بعدّاد متحرك", f: () => mkS([mkC([mkW("tbadges", {})])], { pad: { d: [16, 20, 16, 20] } }) },
+    { k: "head", n: "كتلة عنوان المنتج", ic: "🔠", d: "شارة علوية + عنوان + تقييم + عنوان فرعي + وصف", f: () => mkS([mkC([dEyebrow(), dTitle(), dStars(), dSub(), dDesc()])], { pad: { d: [30, 20, 20, 20] } }) },
+    { k: "price", n: "السعر + العروض (مرتبطة بالمنتج)", ic: "💰", d: "سعر المنتج وعروض الكميات من بياناته", f: () => mkS([mkC([mkW("pprice", {}), mkW("poffers", {})])], { pad: { d: [20, 20, 20, 20] } }) },
+    { k: "deal", n: "شريط العرض المحدود + عدّاد", ic: "⏳", d: "نص العرض وعدّاد تنازلي بتنسيق المتجر", f: () => mkS([mkC([mkW("text", { html: "<p>🎁 <b>عرض محدّد:</b> اشترِ قطعتين واحصل على الثالثة مجاناً</p>", fs: { d: 18 }, color: DK.green, ta: { d: "start" } }), dDeal()], { bg: "#fffdf7", bw: 1, bs: "solid", bc: DK.line, rad: { d: 20 }, pad: { d: [18, 22, 18, 22] } })], { cw: { d: 760 }, pad: { d: [20, 20, 20, 20] } }) },
+    { k: "pills", n: "قائمة مزايا بشارات ✓", ic: "✅", d: "أربع بطاقات مزايا بنمط المتجر", f: () => mkS([mkC(["مكوّنات طبيعية 100% بدون مواد كيميائية ضارة", "يساعد على مظهر أنقى وأكثر إشراقاً", "ترطيب متوازن دون ملمس دهني", "نتائج يشهد بها آلاف الزبائن"].map(dPill))], { cw: { d: 760 }, pad: { d: [20, 20, 20, 20] } }) },
+    { k: "split", n: "بطاقة نص + صورة", ic: "🪟", d: "بطاقتان بيضاوان مدوّرتان: نص ومزايا، وصورة", f: () => mkS([mkC([mkW("heading", { text: "عنوان القسم", fs: { d: 34, m: 26 }, fw: "900", color: DK.green, ta: { d: "start" } }), dDesc(), dPill("ميزة أولى"), dPill("ميزة ثانية")], DCARD), mkC([mkW("image", { rad: { d: 24 } })], { pad: { d: [0, 0, 0, 0] } })], { bg: "#f6f1e8", pad: { d: [50, 20, 50, 20], m: [30, 14, 30, 14] } }) },
+    { k: "order", n: "نموذج الطلب (الأصلي)", ic: "🛒", d: "نموذج الطلب الكامل بكل عروضه، يتغيّر حجمه ولا تظهر تفاصيله في المحرر", f: () => mkS([mkC([mkW("orderorig", {})])], { pad: { d: [30, 20, 30, 20] } }) },
+    { k: "cta", n: "زر الطلب الذهبي", ic: "🔘", d: "زر كبير بتدرّج ذهبي", f: () => mkS([mkC([mkW("button", { text: "🛍️ اطلب الآن — الدفع عند الاستلام", bgc: DK.gold, color: DK.green, hbg: "#b8923c", fs: { d: 20 }, brad: { d: 16 }, fw: "900" })])], { pad: { d: [20, 20, 20, 20] } }) },
+  ];
   const newPage = (title, slug) => ({ v: 1, title: title || "صفحة جديدة", slug: slug || "", desc: "", bg: "#ffffff", ff: "", header: true, footer: true, css: "", sections: [TPLS.hero.f()] });
 
   /* ═════════════════ المُصيِّر (Renderer): نفس الدالة للمحرر وللصفحة المنشورة ═════════════════ */
@@ -7790,6 +7826,8 @@ var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct').forEach(function(n){io.observe(n)})}else{$('[data-anim]').forEach(function(n){n.classList.add('pb-in-view')})}
 function tick(){$('.pb-cd').forEach(function(el){var end;if(el.dataset.mode==='date'&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
 tick();setInterval(tick,1000);
+$('.pb-pgl').forEach(function(g){var m=g.querySelector('.pb-pgm img'),ts=[].slice.call(g.querySelectorAll('.pb-pgt img')),i=0,t;function show(k){i=k;ts.forEach(function(x,j){x.classList.toggle('on',j===k)});if(m)m.src=ts[k].src}function run(){clearInterval(t);var a=+g.getAttribute('data-auto')||0;if(a>0&&ts.length>1)t=setInterval(function(){show((i+1)%ts.length)},a*1000)}ts.forEach(function(x,j){x.onclick=function(){show(j);run()}});run()});
+$('[data-live]').forEach(function(b){var lo=+b.getAttribute('data-min')||8,hi=+b.getAttribute('data-max')||18,v=lo+Math.floor(Math.random()*(hi-lo+1));b.textContent=v;setInterval(function(){v=Math.max(lo-3,Math.min(hi+4,v+(Math.random()>.5?1:-1)));b.textContent=v},7000)});
 $('.pb-sl').forEach(function(sl){var tr=sl.querySelector('.pb-sl-tr'),ss=[].slice.call(tr.children),n=ss.length,i=0,fade=sl.classList.contains('fade'),loop=sl.getAttribute('data-loop')==='1',dots=[].slice.call(sl.querySelectorAll('.pb-sl-dots i')),t;
 function P(){return Math.max(1,Math.min(3,Math.round(parseFloat(getComputedStyle(sl).getPropertyValue('--per')))||1))}function show(k){var mx=Math.max(0,n-P());if(k<0)k=loop?mx:0;if(k>mx)k=loop?0:mx;i=k;if(fade){ss.forEach(function(x,j){x.classList.toggle('on',j===i)})}else{tr.style.transform='translateX(calc('+i+' * 100% / var(--per,1)))'}dots.forEach(function(d,j){d.classList.toggle('on',j===i);d.style.display=j>mx?'none':''})}window.addEventListener('resize',function(){show(i)});show(0);
 function run(){clearInterval(t);if(sl.getAttribute('data-auto')==='1'&&n>1){t=setInterval(function(){show(i+1)},(+sl.getAttribute('data-int')||4)*1000)}}
@@ -7855,7 +7893,7 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -7982,7 +8020,7 @@ body{overflow-x:hidden;margin:0}`;
 </div>
 <div class="pbx-main">
   <aside class="pbx-left" id="pbx-lside">
-    <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">${ico('tab_add',16)} عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">${ico('tab_tpl',16)} أقسام</button><button data-lt="smart" onclick="PBApp.ltab('smart')" title="جلب صورة، التقاط النص، التقاط العناصر (سحري)">${ico('t_magic',16)} ذكية</button><button data-lt="lay" onclick="PBApp.ltab('lay')">${ico('tab_lay',16)} طبقات</button><button data-lt="pg" onclick="PBApp.ltab('pg')">${ico('tab_pg',16)} الصفحة</button></div>
+    <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">${ico('tab_add',16)} عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">${ico('tab_tpl',16)} أقسام</button><button data-lt="def" onclick="PBApp.ltab('def')" title="عناصر وأقسام جاهزة بتنسيق صفحة المنتج">${ico('tab_tpl',16)} افتراضية</button><button data-lt="smart" onclick="PBApp.ltab('smart')" title="جلب صورة، التقاط النص، التقاط العناصر (سحري)">${ico('t_magic',16)} ذكية</button><button data-lt="lay" onclick="PBApp.ltab('lay')">${ico('tab_lay',16)} طبقات</button><button data-lt="pg" onclick="PBApp.ltab('pg')">${ico('tab_pg',16)} الصفحة</button></div>
     <div class="pbx-pane" id="pbx-lpane"></div>
   </aside>
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
@@ -8087,6 +8125,8 @@ body{overflow-x:hidden;margin:0}`;
       pane.innerHTML = `<div class="pbx-grid">${ORDER.map(t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`).join("")}</div><p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته إلى العمود المحدد. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
     } else if (E.ltab === "tpl") {
       pane.innerHTML = `<div class="pbx-gb"><b>${ico('grid',17)} قسم شبكي مخصص</b><div class="pbx-row" style="margin:.4rem 0"><label style="font-size:.8rem">صفوف <input id="gb-r" type="number" min="1" max="10" value="2"></label><label style="font-size:.8rem">أعمدة <input id="gb-c" type="number" min="1" max="12" value="3"></label></div><button class="pbx-small" data-grid="1" type="button">＋ إضافة القسم الشبكي</button></div>` + Object.keys(TPLS).map(k => `<button class="pbx-tpl" draggable="true" data-tpl="${k}">${ico("t_" + k, 18)} ${TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, "")}</button>`).join("") + `<button class="pbx-tpl" data-tpl="_blank" style="background:#fff">${ico('blank1',18)} قسم فارغ (عمود واحد)</button><button class="pbx-tpl" data-tpl="_two" style="background:#fff">${ico('blank2',18)} قسم بعمودين</button><button class="pbx-tpl" data-tpl="_three" style="background:#fff">${ico('blank3',18)} قسم بثلاثة أعمدة</button>`;
+    } else if (E.ltab === "def") {
+      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 عناصر افتراضية</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">أقسام وعناصر جاهزة بتنسيق صفحة المنتج (ألوان وحدود وظلال وخطوط). انقر لإضافتها بعد القسم المحدد.</div>` + PB.DFLT.map(x => `<div class="pbx-dfl" data-dflt="${x.k}" style="border:1.5px solid #e4dfd2;border-radius:12px;padding:.6rem .7rem;background:#fff;margin-bottom:.5rem;cursor:pointer"><div style="font-weight:800">${x.ic} ${x.n}</div><div style="font-size:.72rem;color:#6b6556;line-height:1.6;margin-top:.15rem">${x.d}</div></div>`).join("");
     } else if (E.ltab === "smart") {
       pane.innerHTML = PBSmart.pane();
     } else if (E.ltab === "lay") {
@@ -8522,6 +8562,13 @@ body{overflow-x:hidden;margin:0}`;
     if (sec.set.kind === "canvas") { const need = (Number(w.set.fy.d) || 0) + (Number(w.set.fh.d) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); }   // يكبر القماش ليتسع للعنصر
     afterEdit(w.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50);
   }
+  /* إضافة عنصر/قسم افتراضي بعد القسم المحدد (أو في آخر الصفحة) */
+  function addDefault(k) {
+    const d = PB.DFLT.find(x => x.k === k); if (!d) return; const sec = d.f(), inf = selInfo(); let i = E.page.sections.length;
+    if (inf && inf.sec) { const j = E.page.sections.findIndex(x => x.id === inf.sec.id); if (j >= 0) i = j + 1; }
+    E.page.sections.splice(i, 0, sec); afterEdit(sec.id);
+    setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف: " + d.n);
+  }
   function addWidget(type, col, at) {
     const t = col ? { col } : target();
     if (t.sec) return addFree(type, t.sec);
@@ -8644,6 +8691,7 @@ body{overflow-x:hidden;margin:0}`;
     const a = e.target.closest("[data-add]"); if (a) return addWidget(a.dataset.add);
     if (e.target.closest("[data-grid]")) return addGrid();
     const t = e.target.closest("[data-tpl]"); if (t) return addSection(t.dataset.tpl);
+    const df = e.target.closest("[data-dflt]"); if (df) return addDefault(df.dataset.dflt);
     const l = e.target.closest("[data-sel]"); if (l) { select(l.dataset.sel); const el = fdoc.querySelector(`[data-pb="${l.dataset.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
   });
   function toggleSnap() { E.snap = !E.snap; updateTop(); toast(E.snap ? "🧲 الالتصاق مفعّل: يلتصق العنصر بحواف وأوسط العناصر الأخرى" : "التحريك حر تماماً بلا التصاق"); }
@@ -10348,6 +10396,11 @@ const PBConvert = (() => {
       if (o.kind === "product") {
         if (el.id === "offers" || (el.querySelector("#offers") && !el.querySelector("h1,h2,form,#gmain,#pprice") && txt(el).length < 400)) { out.push(mkW("poffers", { prod: o.slug })); return; }
         if (el.id === "pprice" || (el.querySelector("#pprice") && !el.querySelector("h1,h2,img,#offers,form") && txt(el).length < 120)) { out.push(mkW("pprice", { prod: o.slug })); return; }
+      }
+      if (el.matches(".pd-tags") && kids(el).length && kids(el).every(c => c.matches(".tag"))) {      // صف شارات الثقة ← عنصر «شارات الثقة» (مع الشارة الحيّة)
+        const ks = kids(el), live = ks.find(c => c.matches(".live-badge") || c.querySelector("#viewers")), plain = ks.filter(c => c !== live), q0 = cs(plain[0] || live);
+        const set = { items: plain.map(txt).join("\n"), live: !!live, liveText: live ? txt(live).replace(/[\d٠-٩]+/g, "").replace(/\s+/g, " ").trim() : "", cbg: hex(q0.backgroundColor) || "#ffffff", cc: hex(q0.color) || "#566360", cbc: hex(q0.borderTopColor) || "#eadfc4", crad: { d: Math.round(parseFloat(q0.borderTopLeftRadius)) || 999 }, cfs: { d: Math.round(parseFloat(q0.fontSize)) || 13 }, gap: { d: Math.round(parseFloat(cs(el).columnGap) || 10) } };
+        out.push(mkW("tbadges", set)); return;
       }
       if (/^H[1-6]$/.test(tag)) { const t = txt(el); if (!t) return; const w = mkW("heading", { text: t, tag: tag.toLowerCase(), bindTitle: o.kind === "product" && tag === "H1", prod: o.kind === "product" ? o.slug : "", fs: { d: px(el, 32), m: Math.max(18, Math.round(px(el, 32) * (px(el, 32) > 30 ? .72 : .9))) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return; }
       if (tag === "IMG") { const r = el.getBoundingClientRect(); const src = el.currentSrc || el.src || ""; if (!src || r.width < 110 || el.closest("[class*=thumb]") || seen.has(src) || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(src)) return; seen.add(src); out.push(mkW("image", { src: rel(src), alt: el.alt || "", fit: "cover" })); return; }

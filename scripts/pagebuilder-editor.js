@@ -122,7 +122,7 @@ body{overflow-x:hidden;margin:0}`;
 </div>
 <div class="pbx-main">
   <aside class="pbx-left" id="pbx-lside">
-    <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">${ico('tab_add',16)} عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">${ico('tab_tpl',16)} أقسام</button><button data-lt="smart" onclick="PBApp.ltab('smart')" title="جلب صورة، التقاط النص، التقاط العناصر (سحري)">${ico('t_magic',16)} ذكية</button><button data-lt="lay" onclick="PBApp.ltab('lay')">${ico('tab_lay',16)} طبقات</button><button data-lt="pg" onclick="PBApp.ltab('pg')">${ico('tab_pg',16)} الصفحة</button></div>
+    <div class="pbx-tabs"><button data-lt="add" onclick="PBApp.ltab('add')">${ico('tab_add',16)} عناصر</button><button data-lt="tpl" onclick="PBApp.ltab('tpl')">${ico('tab_tpl',16)} أقسام</button><button data-lt="def" onclick="PBApp.ltab('def')" title="عناصر وأقسام جاهزة بتنسيق صفحة المنتج">${ico('tab_tpl',16)} افتراضية</button><button data-lt="smart" onclick="PBApp.ltab('smart')" title="جلب صورة، التقاط النص، التقاط العناصر (سحري)">${ico('t_magic',16)} ذكية</button><button data-lt="lay" onclick="PBApp.ltab('lay')">${ico('tab_lay',16)} طبقات</button><button data-lt="pg" onclick="PBApp.ltab('pg')">${ico('tab_pg',16)} الصفحة</button></div>
     <div class="pbx-pane" id="pbx-lpane"></div>
   </aside>
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
@@ -227,6 +227,8 @@ body{overflow-x:hidden;margin:0}`;
       pane.innerHTML = `<div class="pbx-grid">${ORDER.map(t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`).join("")}</div><p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته إلى العمود المحدد. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
     } else if (E.ltab === "tpl") {
       pane.innerHTML = `<div class="pbx-gb"><b>${ico('grid',17)} قسم شبكي مخصص</b><div class="pbx-row" style="margin:.4rem 0"><label style="font-size:.8rem">صفوف <input id="gb-r" type="number" min="1" max="10" value="2"></label><label style="font-size:.8rem">أعمدة <input id="gb-c" type="number" min="1" max="12" value="3"></label></div><button class="pbx-small" data-grid="1" type="button">＋ إضافة القسم الشبكي</button></div>` + Object.keys(TPLS).map(k => `<button class="pbx-tpl" draggable="true" data-tpl="${k}">${ico("t_" + k, 18)} ${TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, "")}</button>`).join("") + `<button class="pbx-tpl" data-tpl="_blank" style="background:#fff">${ico('blank1',18)} قسم فارغ (عمود واحد)</button><button class="pbx-tpl" data-tpl="_two" style="background:#fff">${ico('blank2',18)} قسم بعمودين</button><button class="pbx-tpl" data-tpl="_three" style="background:#fff">${ico('blank3',18)} قسم بثلاثة أعمدة</button>`;
+    } else if (E.ltab === "def") {
+      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 عناصر افتراضية</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">أقسام وعناصر جاهزة بتنسيق صفحة المنتج (ألوان وحدود وظلال وخطوط). انقر لإضافتها بعد القسم المحدد.</div>` + PB.DFLT.map(x => `<div class="pbx-dfl" data-dflt="${x.k}" style="border:1.5px solid #e4dfd2;border-radius:12px;padding:.6rem .7rem;background:#fff;margin-bottom:.5rem;cursor:pointer"><div style="font-weight:800">${x.ic} ${x.n}</div><div style="font-size:.72rem;color:#6b6556;line-height:1.6;margin-top:.15rem">${x.d}</div></div>`).join("");
     } else if (E.ltab === "smart") {
       pane.innerHTML = PBSmart.pane();
     } else if (E.ltab === "lay") {
@@ -662,6 +664,13 @@ body{overflow-x:hidden;margin:0}`;
     if (sec.set.kind === "canvas") { const need = (Number(w.set.fy.d) || 0) + (Number(w.set.fh.d) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); }   // يكبر القماش ليتسع للعنصر
     afterEdit(w.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50);
   }
+  /* إضافة عنصر/قسم افتراضي بعد القسم المحدد (أو في آخر الصفحة) */
+  function addDefault(k) {
+    const d = PB.DFLT.find(x => x.k === k); if (!d) return; const sec = d.f(), inf = selInfo(); let i = E.page.sections.length;
+    if (inf && inf.sec) { const j = E.page.sections.findIndex(x => x.id === inf.sec.id); if (j >= 0) i = j + 1; }
+    E.page.sections.splice(i, 0, sec); afterEdit(sec.id);
+    setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف: " + d.n);
+  }
   function addWidget(type, col, at) {
     const t = col ? { col } : target();
     if (t.sec) return addFree(type, t.sec);
@@ -784,6 +793,7 @@ body{overflow-x:hidden;margin:0}`;
     const a = e.target.closest("[data-add]"); if (a) return addWidget(a.dataset.add);
     if (e.target.closest("[data-grid]")) return addGrid();
     const t = e.target.closest("[data-tpl]"); if (t) return addSection(t.dataset.tpl);
+    const df = e.target.closest("[data-dflt]"); if (df) return addDefault(df.dataset.dflt);
     const l = e.target.closest("[data-sel]"); if (l) { select(l.dataset.sel); const el = fdoc.querySelector(`[data-pb="${l.dataset.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
   });
   function toggleSnap() { E.snap = !E.snap; updateTop(); toast(E.snap ? "🧲 الالتصاق مفعّل: يلتصق العنصر بحواف وأوسط العناصر الأخرى" : "التحريك حر تماماً بلا التصاق"); }
