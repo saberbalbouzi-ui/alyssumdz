@@ -51,10 +51,37 @@ const PBConvert = (() => {
     const protect = el => !!(el.matches(PROT) && !el.matches("body,main"));
     const rawW = el => { const f = fileEl(el); return mkW("html", { code: (f || el).outerHTML, src: "orig" }); };
 
+    /* ── نقل تنسيق الصفحة إلى إعدادات المطوّر نفسها: خلفية/تدرّج/حدّ/تدوير/ظل/حشو/هامش وخط (ارتفاع سطر، سماكة، تباعد، عائلة) ── */
+    const bodyFont = cs(doc.body).fontFamily;
+    /* المسافة الرأسية بين عناصر العمود = الفراغ الحقيقي بينها في الصفحة الأصلية */
+    const spaced = ws => { ws.forEach((w, i) => { const nx = ws[i + 1]; const g = w._r && nx && nx._r ? Math.max(0, Math.round(nx._r.t - w._r.b)) : 0; w.set.mar = { d: [0, 0, g, 0] }; }); return ws; };
+    const mkCol = (ws, set) => mkC(spaced(ws), set);
+    const boxSet = (el, type) => {
+      const q = cs(el), r = {}, n4 = pfx => ["Top", "Right", "Bottom", "Left"].map(d => Math.round(parseFloat(q[pfx + d]) || 0));
+      const bgc = hex(q.backgroundColor); if (bgc && type !== "button") r.bg = bgc;
+      if (type !== "button" && type !== "image" && /linear-gradient\(/.test(q.backgroundImage)) { const cols = [...q.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => hex(m[0])).filter(Boolean); if (cols.length >= 2) { r.grad1 = cols[0]; r.grad2 = cols[cols.length - 1]; const a = /(\d+)deg/.exec(q.backgroundImage); r.gradAng = a ? +a[1] : 180; } }
+      const bw = parseFloat(q.borderTopWidth) || 0, bAll = ["Right", "Bottom", "Left"].every(d => (parseFloat(q["border" + d + "Width"]) || 0) === bw); if (bw > 0 && bAll && q.borderTopStyle !== "none" && type !== "button") { r.bw = bw; r.bs = /^(solid|dashed|dotted)$/.test(q.borderTopStyle) ? q.borderTopStyle : "solid"; r.bc = hex(q.borderTopColor) || "#ddd"; }
+      const rad = parseFloat(q.borderTopLeftRadius) || 0; if (rad > 0 && type !== "button") r.rad = { d: Math.round(rad) };
+      if (type !== "image" && type !== "button") { const pd = n4("padding"); if (pd.some(x => x > 0)) r.pad = { d: pd }; }
+      if (q.boxShadow && q.boxShadow !== "none") { const nums = (q.boxShadow.replace(/rgba?\([^)]*\)/g, "").match(/-?[\d.]+px/g) || []).map(parseFloat); const blur = nums[2] || 0; r.shadow = blur >= 24 ? "lg" : blur >= 10 ? "md" : "sm"; }
+      return r;
+    };
+    const hasVisual = el => { const q = cs(el); return !!(hex(q.backgroundColor) || (parseFloat(q.borderTopWidth) > 0 && q.borderTopStyle !== "none") || (q.boxShadow && q.boxShadow !== "none") || /gradient\(/.test(q.backgroundImage)); };
+    const pseudoBefore = el => { try { let c = win.getComputedStyle(el, "::before").content; if (!c || c === "none" || c === "normal" || /^(url|counter|attr)/.test(c)) return ""; c = c.replace(/^["']|["']$/g, ""); return c.length && c.length < 6 ? c + " " : ""; } catch (e) { return ""; } };
+    const BOUND = "#pprice,#pold,#psave,#offers,h1,#gmain,form,input,select,button,[data-cart],.order-form";
     function widgetsOf(el, out) {
+      const n0 = out.length; widgetsOf0(el, out);
+      if (out.length === n0 + 1) { const w = out[n0], ty = w.type; if (!w._r) { const rr = el.getBoundingClientRect(); w._r = { t: rr.top, b: rr.bottom }; }
+        if (/^(heading|text|image)$/.test(ty)) { Object.assign(w.set, boxSet(el, ty)); }
+        if (/^(heading|text)$/.test(ty) && (w.set.bg || w.set.bw || w.set.shadow) && el.parentElement) { const pr = el.parentElement.getBoundingClientRect().width, er = el.getBoundingClientRect().width; if (pr > 0 && er / pr < .94) w.set.w = { d: Math.max(8, Math.round(er / pr * 100)) }; }      // شارات/أزرار نصية بعرضها الأصلي لا بعرض العمود
+        if (/^(heading|text)$/.test(ty)) { const q = cs(el), fs0 = parseFloat(q.fontSize) || 16, lh = parseFloat(q.lineHeight); if (lh) w.set.lh = { d: Math.round(lh / fs0 * 100) / 100 }; const ls = parseFloat(q.letterSpacing); if (ls) w.set.ls = { d: ls }; if (ty === "text") { const fw = q.fontWeight; if (fw && fw !== "400") w.set.fw = fw; } if (q.fontFamily && q.fontFamily !== bodyFont) w.set.ff = q.fontFamily; if (ty === "text") { const pb = pseudoBefore(el); if (pb && w.set.html) w.set.html = w.set.html.replace(/^<p([^>]*)>/, "<p$1>" + pb); } }
+      }
+    }
+    function widgetsOf0(el, out) {
       if (skip(el)) return;
       const tag = el.tagName;
       if (protect(el) && !(o.kind === "product" && isOrder(el))) { out.push(rawW(el)); return; }
+      if (!/^(H[1-6]|P|IMG|A|BUTTON|SPAN|LI|SMALL|B|STRONG|LABEL|DETAILS|UL|OL)$/.test(tag) && hasVisual(el) && hasBlock(el) && !el.querySelector(BOUND) && !isOrder(el)) { out.push(rawW(el)); return; }      // بطاقة مزخرفة متعددة العناصر: تبقى كما هي حرفياً (تنسيقها محفوظ) وتُعدَّل عناصرها بالنقر
       if (o.kind === "product" && isOrder(el)) { if (!sawOrder) { sawOrder = true; out.push(mkW("orderorig", { prod: o.slug, raw: rawOrder })); } return; }
       if (o.kind === "product") {
         if (el.id === "offers" || (el.querySelector("#offers") && !el.querySelector("h1,h2,form,#gmain,#pprice") && txt(el).length < 400)) { out.push(mkW("poffers", { prod: o.slug })); return; }
@@ -64,7 +91,7 @@ const PBConvert = (() => {
       if (tag === "IMG") { const r = el.getBoundingClientRect(); const src = el.currentSrc || el.src || ""; if (!src || r.width < 110 || el.closest("[class*=thumb]") || seen.has(src) || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(src)) return; seen.add(src); out.push(mkW("image", { src: rel(src), alt: el.alt || "", fit: "cover" })); return; }
       if (tag === "PICTURE") { const i = el.querySelector("img"); if (i) widgetsOf(i, out); return; }
       if (tag === "VIDEO" || (tag === "IFRAME" && /youtube|vimeo/i.test(el.src))) { const u = el.src || (el.querySelector("source") || {}).src || ""; if (u) out.push(mkW("video", { url: u, ratio: "16/9" })); return; }
-      if (tag === "UL" || tag === "OL") { const li = [...el.children].filter(c => c.tagName === "LI" && txt(c)); if (li.length && li.every(x => !hasBlock(x))) { out.push(mkW("bullets", { items: li.map(txt).join("\n"), mk: tag === "OL" ? "dec" : "check", fs: { d: px(li[0], 17) } })); return; } }
+      if (tag === "UL" || tag === "OL") { const li = [...el.children].filter(c => c.tagName === "LI" && txt(c)); if (li.length && li.every(x => !hasBlock(x)) && !hasVisual(li[0])) { out.push(mkW("bullets", { items: li.map(txt).join("\n"), mk: tag === "OL" ? "dec" : "check", fs: { d: px(li[0], 17) } })); return; } }
       if (tag === "DETAILS" || tag === "TABLE") { if (tag === "DETAILS") { const q = txt(el.querySelector("summary") || {}), a = txt({ textContent: [...el.childNodes].filter(n => !(n.tagName === "SUMMARY")).map(n => n.textContent).join(" ") }); if (q) { const last = out[out.length - 1]; const it = { q, a }; if (last && last.type === "accordion" && last._auto) last.set.items.push(it); else { const w = mkW("accordion", { items: [it], first: false }); w._auto = true; out.push(w); } } return; } }
       if ((tag === "A" || tag === "BUTTON") && (el.matches("[class*=btn]") || tag === "BUTTON")) { const t = txt(el); if (!t || el.matches(".cart-btn,.btn-order,[onclick*=Cart]") || el.closest("[class*=tab],[class*=pill],[class*=chip],[id*=tab]") || t.length > 60) return; const s = cs(el); const w = mkW("button", { text: t, kind: "link", link: tag === "A" ? (el.getAttribute("href") || "#") : "#", fs: { d: px(el, 18) }, brad: { d: parseInt(s.borderTopLeftRadius) || 10 } }); const bg = hex(s.backgroundColor), c = hex(s.color); if (bg) w.set.bgc = bg; if (c) w.set.color = c; if (!bg) w.set.bgHide = true; out.push(w); return; }
       if (o.kind === "home" && (el.id === "grid" || el.matches(".grid") && el.querySelector("[data-slug],.card,.pcard"))) { out.push(mkW("products", { mode: "all" })); return; }
@@ -77,11 +104,11 @@ const PBConvert = (() => {
     }
     /* حاوية بأعمدة (grid / flex أفقي) ← أعمدة في القسم */
     function columnsOf(el) {
-      const s = cs(el), k = kids(el);
+      const q = cs(el), k = kids(el);
       if (k.length < 2 || k.length > 4) return null;
-      const row = (s.display === "grid" && s.gridTemplateColumns.split(" ").length >= 2) || (s.display === "flex" && !/column/.test(s.flexDirection));
+      const row = (q.display === "grid" && q.gridTemplateColumns.split(" ").length >= 2) || (q.display === "flex" && !/column/.test(q.flexDirection));
       if (!row) return null;
-      const cols = k.map(c => { const w = []; widgetsOf(c, w); return w; }).filter(w => w.length);
+      const cols = k.map(c => { const w = [], leaf = /^(IMG|PICTURE|H[1-6]|P|UL|OL|A|BUTTON|DETAILS|FORM|VIDEO|IFRAME)$/.test(c.tagName) || !hasBlock(c); if (leaf) widgetsOf(c, w); else kids(c).forEach(x => widgetsOf(x, w)); return { w, set: leaf ? {} : Object.assign(boxSet(c, "col"), { ta: { d: ta(c) } }) }; }).filter(x => x.w.length);
       return cols.length >= 2 ? cols : null;
     }
     function sectionOf(el, hint) {
@@ -89,19 +116,21 @@ const PBConvert = (() => {
       while (safe++ < 4) { const k = kids(inner); if (k.length === 1 && !/^(IMG|H[1-6]|P|UL|OL|FORM)$/.test(k[0].tagName) && !isOrder(k[0])) inner = k[0]; else break; }
       let cols = columnsOf(inner); let cs_;
       if (!cols) { let found = null; const ks = kids(inner), gi = ks.findIndex(k => (found = columnsOf(k))); if (gi >= 0 && ks.length > 1) {      // قسم يضم كتلة أعمدة بين عناصر أخرى ← أقسام متتالية: ما قبلها، الأعمدة، ما بعدها
-        const mk = (list) => { const w = []; list.forEach(c => widgetsOf(c, w)); return w.length ? mkS([mkC(w)], {}) : null; };
-        const secsOut = [mk(ks.slice(0, gi)), mkS(found.map(w => mkC(w)), {}), mk(ks.slice(gi + 1))].filter(Boolean);
+        const mk = (list) => { const w = []; list.forEach(c => widgetsOf(c, w)); return w.length ? mkS([mkCol(w)], {}) : null; };
+        const secsOut = [mk(ks.slice(0, gi)), mkS(found.map(x => mkCol(x.w, x.set)), {}), mk(ks.slice(gi + 1))].filter(Boolean);
         const bg0 = hex(cs(el).backgroundColor); if (bg0) secsOut.forEach(x => { x.set.bg = bg0; }); return secsOut; } }
-      if (cols) cs_ = cols.map(w => mkC(w)); else { const w = []; widgetsOf(inner, w); if (!w.length) return null; cs_ = [mkC(w)]; }
+      if (cols) cs_ = cols.map(x => mkCol(x.w, x.set)); else { const w = []; if (hasBlock(inner)) kids(inner).forEach(x => widgetsOf(x, w)); else widgetsOf(inner, w); if (!w.length) return null; cs_ = [mkCol(w, inner !== el ? boxSet(inner, "col") : {})]; }
       const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
       if (b2) set.bg = b2;
       const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
+      { const iw = Math.round(inner.getBoundingClientRect().width); if (iw > 300 && iw < 1500 && iw < (doc.documentElement.clientWidth || 1280) - 8) set.cw = { d: iw }; }
+      { const bx = boxSet(el, "section"); ["bw", "bs", "bc", "rad", "shadow", "grad1", "grad2", "gradAng"].forEach(k => { if (bx[k] != null) set[k] = bx[k]; }); }
       return mkS(cs_, set);
     }
     const root = doc.querySelector("main") || doc.body, secs = [];
     const rawSec = (c, idx) => { let el = c.id ? fdoc.getElementById(c.id) : null; if (!el) { const m = fdoc.querySelector("main"); el = m && m.children[idx]; } if (!el) return null; const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = "main"; return sec; };
     let loose = [];
-    const flush = () => { if (!loose.length) return; const w = []; loose.forEach(c => widgetsOf(c, w)); if (w.length) secs.push(mkS([mkC(w)], {})); loose = []; };
+    const flush = () => { if (!loose.length) return; const w = []; loose.forEach(c => widgetsOf(c, w)); if (w.length) secs.push(mkS([mkCol(w)], {})); loose = []; };
     const all = [...root.children], top = all.flatMap(c => (c.matches(".container,#main,div") && kids(c).length > 1 && kids(c).every(x => x.matches("section,.hero,div[class*=sec],.container"))) ? kids(c) : [c]);
     top.forEach(c => {
       if (skip(c)) return;
@@ -110,7 +139,7 @@ const PBConvert = (() => {
     });
     flush();
     if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug, raw: rawOrder })])], {}));
-    secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; })));
+    secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; delete w._r; })));
     return secs;
   }
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحوّلها إلى صفحة مطوّر: قسم لكل كتلة بنفس HTML الأصل + أنماطها */
