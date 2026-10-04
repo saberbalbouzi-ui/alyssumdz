@@ -251,8 +251,23 @@ const PBBind = (() => {
 const PBEd = (() => {
   const A = () => PBApp, esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const INL = /^(B|STRONG|I|EM|U|SPAN|SMALL|MARK|BR|S|DEL|SUB|SUP|CODE|LABEL)$/, toast = m => { try { window.toast(m); } catch (e) { } };
-  let sel = null, root = null, panel = null, hv = null, tm = 0, guard = 0;
-  const kidsOf = el => [...el.children].filter(c => c.tagName !== "SCRIPT");
+  let sel = null, root = null, panel = null, hv = null, tm = 0, guard = 0, mob = false;
+  /* «الجوال فقط»: تُكتب القيمة في قاعدة @media داخل <style data-pbm-css> في كتلة الصفحة، وتُربط بالعنصر عبر data-pbm */
+  const kebab = k => k.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
+  const mobMap = tpl => { const st = tpl.querySelector(":scope > style[data-pbm-css]"); let m = {}; if (st) { try { m = JSON.parse(st.getAttribute("data-map") || "{}"); } catch (e) { } } return m; };
+  const mobSave = (tpl, m) => {
+    let st = tpl.querySelector(":scope > style[data-pbm-css]"); Object.keys(m).forEach(id => { if (!Object.keys(m[id]).length) delete m[id]; });
+    if (!Object.keys(m).length) { if (st) st.remove(); return; }
+    if (!st) { st = document.createElement("style"); st.setAttribute("data-pbm-css", ""); tpl.appendChild(st); }
+    st.setAttribute("data-map", JSON.stringify(m));
+    st.textContent = "@media(max-width:" + PB.BP.m + "px){" + Object.entries(m).map(([id, p]) => `html body [data-pbm="${id}"][data-pbm="${id}"][data-pbm="${id}"]{` + Object.entries(p).map(([k, v]) => k + ":" + v + "!important").join(";") + "}").join("") + "}";
+  };
+  const mobSet = (el, tpl, css, val) => {
+    const m = mobMap(tpl); let id = el.getAttribute("data-pbm"); if (!id) { id = "m" + Math.random().toString(36).slice(2, 7); el.setAttribute("data-pbm", id); }
+    m[id] = m[id] || {}; val === "" || val == null ? delete m[id][css] : m[id][css] = val; if (!Object.keys(m[id]).length) el.removeAttribute("data-pbm"); mobSave(tpl, m);
+  };
+  const mobGet = (el, tpl, css) => { const id = el.getAttribute("data-pbm"); return id ? ((mobMap(tpl)[id] || {})[css] || "") : ""; };
+  const kidsOf = el => [...el.children].filter(c => c.tagName !== "SCRIPT" && !c.hasAttribute("data-pbm-css"));
   const rawOf = el => el.closest && el.closest(".pb-raw");
   const widOf = r => { const w = r.closest("[data-pb]"); return w ? w.getAttribute("data-pb") : null; };
   const isOrig = wid => { const inf = wid && A().find(wid); return !!(inf && inf.node.type === "html"); };      // أي كتلة HTML (أصلية أو منسوخة أو مضافة) تُعدَّل عناصرها بالنقر
@@ -277,23 +292,25 @@ const PBEd = (() => {
   const colorRow = (k, lbl, val, def) => `<div class="pe-f"><span>${lbl}</span><div class="pe-c"><input type="color" data-k="${k}" value="${/^#[0-9a-f]{6}$/i.test(val || def) ? (val || def) : "#000000"}"><button type="button" data-clr="${k}" title="إرجاع الافتراضي">افتراضي</button><i>${val || "—"}</i></div></div>`;
   function show() {
     if (!sel) return; const c = codeDom(sel.wid); const el = c && resolve(c.tpl, sel.path); if (!el) return hide();
-    const ce = canvasEl(), cs = ce ? ce.ownerDocument.defaultView.getComputedStyle(ce) : null, tag = el.tagName, st = el.style;
+    const sv = k => mob ? mobGet(el, c.tpl, kebab(k)) : el.style[k];
+    const ce = canvasEl(), cs = ce ? ce.ownerDocument.defaultView.getComputedStyle(ce) : null, tag = el.tagName;
     const isImg = tag === "IMG", isA = tag === "A", textual = !isImg && inlineOnly(el) && (el.textContent || "").trim().length > 0 && tag !== "INPUT" && tag !== "SELECT" && tag !== "TEXTAREA";
     const crumbs = []; { let p = sel.path.slice(); const names = []; let cur = c.tpl; names.push("كتلة"); p.forEach(i => { cur = kidsOf(cur)[i]; names.push(cur ? cur.tagName.toLowerCase() : "?"); }); crumbs.push(names.slice(-4).join(" › ")); }
     const html = `<div class="pe-h"><b>🎯 العنصر المحدد</b><code dir="ltr">${esc(crumbs[0])}</code><button type="button" data-a="x" title="إغلاق">✕</button></div>
-${textual ? `<label class="pe-l">النص (يقبل <b>غامق</b> وروابط)<textarea data-k="html" rows="3">${esc(el.innerHTML)}</textarea></label>` : ""}
-${isImg ? `<label class="pe-l">الصورة<input data-k="src" dir="ltr" value="${esc(el.getAttribute("src") || "")}"></label><div class="pe-r"><button type="button" data-a="lib">📚 المكتبة</button><button type="button" data-a="up">⬆ رفع صورة</button></div><label class="pe-l">نص بديل (SEO)<input data-k="alt" value="${esc(el.getAttribute("alt") || "")}"></label>` : ""}
-${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">الرابط<input data-k="href" dir="ltr" value="${esc(el.getAttribute("href") || "")}"></label>` : ""}
-<div class="pe-g">${colorRow("color", "لون النص", st.color ? hex(st.color) || st.color : "", cs ? hex(cs.color) : "#000000")}${colorRow("backgroundColor", "لون الخلفية", st.backgroundColor ? hex(st.backgroundColor) || st.backgroundColor : "", cs ? hex(cs.backgroundColor) : "#ffffff")}</div>
-<div class="pe-g"><label class="pe-l">حجم الخط (px)<input data-k="fontSize" type="number" min="8" max="120" value="${parseFloat(st.fontSize) || ""}" placeholder="${cs ? Math.round(parseFloat(cs.fontSize)) : ""}"></label>
-<label class="pe-l">السماكة<select data-k="fontWeight">${[["", "—"], ["400", "عادي"], ["600", "شبه عريض"], ["700", "عريض"], ["900", "أسود"]].map(o => `<option value="${o[0]}"${st.fontWeight === o[0] ? " selected" : ""}>${o[1]}</option>`).join("")}</select></label>
-<label class="pe-l">المحاذاة<select data-k="textAlign">${[["", "—"], ["start", "بداية"], ["center", "وسط"], ["end", "نهاية"]].map(o => `<option value="${o[0]}"${st.textAlign === o[0] ? " selected" : ""}>${o[1]}</option>`).join("")}</select></label>
-<label class="pe-l">تدوير الزوايا (px)<input data-k="borderRadius" type="number" min="0" max="200" value="${parseFloat(st.borderRadius) || ""}"></label>
-<label class="pe-l">العرض (مثل 320px أو 60%)<input data-k="width" dir="ltr" value="${esc(st.width)}" placeholder="${ce ? Math.round(ce.getBoundingClientRect().width) + "px" : ""}"></label>
-<label class="pe-l">الارتفاع<input data-k="height" dir="ltr" value="${esc(st.height)}" placeholder="${ce ? Math.round(ce.getBoundingClientRect().height) + "px" : ""}"></label>
-<label class="pe-l">مسافة داخلية (px)<input data-k="padding" type="number" min="0" max="200" value="${parseFloat(st.padding) || ""}"></label>
-<label class="pe-l">مسافة خارجية علوية (px)<input data-k="marginTop" type="number" min="-100" max="300" value="${st.marginTop ? parseFloat(st.marginTop) : ""}"></label></div>
-<label class="pe-k"><input type="checkbox" data-k="hide"${st.display === "none" ? " checked" : ""}> إخفاء هذا العنصر</label>
+<label class="pe-k pe-mob${mob ? " on" : ""}"><input type="checkbox" data-mob${mob ? " checked" : ""}> 📱 تغيير على الجوال فقط</label>${mob ? '<div class="pe-n" style="margin:-.2rem 0 .3rem">الألوان والأحجام والإخفاء التي تغيّرها الآن تنطبق على شاشة الجوال وحدها؛ النص والصورة والرابط يبقون واحداً للجميع.</div>' : ""}
+${textual ? `<label class="pe-l">النص (يقبل <b>غامق</b> وروابط)<textarea data-k="html" rows="3"${mob ? " disabled" : ""}>${esc(el.innerHTML)}</textarea></label>` : ""}
+${isImg ? `<label class="pe-l">الصورة<input data-k="src"${mob ? " disabled" : ""} dir="ltr" value="${esc(el.getAttribute("src") || "")}"></label><div class="pe-r"><button type="button" data-a="lib">📚 المكتبة</button><button type="button" data-a="up">⬆ رفع صورة</button></div><label class="pe-l">نص بديل (SEO)<input data-k="alt"${mob ? " disabled" : ""} value="${esc(el.getAttribute("alt") || "")}"></label>` : ""}
+${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">الرابط<input data-k="href"${mob ? " disabled" : ""} dir="ltr" value="${esc(el.getAttribute("href") || "")}"></label>` : ""}
+<div class="pe-g">${colorRow("color", "لون النص", sv("color") ? hex(sv("color")) || sv("color") : "", cs ? hex(cs.color) : "#000000")}${colorRow("backgroundColor", "لون الخلفية", sv("backgroundColor") ? hex(sv("backgroundColor")) || sv("backgroundColor") : "", cs ? hex(cs.backgroundColor) : "#ffffff")}</div>
+<div class="pe-g"><label class="pe-l">حجم الخط (px)<input data-k="fontSize" type="number" min="8" max="120" value="${parseFloat(sv("fontSize")) || ""}" placeholder="${cs ? Math.round(parseFloat(cs.fontSize)) : ""}"></label>
+<label class="pe-l">السماكة<select data-k="fontWeight">${[["", "—"], ["400", "عادي"], ["600", "شبه عريض"], ["700", "عريض"], ["900", "أسود"]].map(o => `<option value="${o[0]}"${sv("fontWeight") === o[0] ? " selected" : ""}>${o[1]}</option>`).join("")}</select></label>
+<label class="pe-l">المحاذاة<select data-k="textAlign">${[["", "—"], ["start", "بداية"], ["center", "وسط"], ["end", "نهاية"]].map(o => `<option value="${o[0]}"${sv("textAlign") === o[0] ? " selected" : ""}>${o[1]}</option>`).join("")}</select></label>
+<label class="pe-l">تدوير الزوايا (px)<input data-k="borderRadius" type="number" min="0" max="200" value="${parseFloat(sv("borderRadius")) || ""}"></label>
+<label class="pe-l">العرض (مثل 320px أو 60%)<input data-k="width" dir="ltr" value="${esc(sv("width"))}" placeholder="${ce ? Math.round(ce.getBoundingClientRect().width) + "px" : ""}"></label>
+<label class="pe-l">الارتفاع<input data-k="height" dir="ltr" value="${esc(sv("height"))}" placeholder="${ce ? Math.round(ce.getBoundingClientRect().height) + "px" : ""}"></label>
+<label class="pe-l">مسافة داخلية (px)<input data-k="padding" type="number" min="0" max="200" value="${parseFloat(sv("padding")) || ""}"></label>
+<label class="pe-l">مسافة خارجية علوية (px)<input data-k="marginTop" type="number" min="-100" max="300" value="${sv("marginTop") ? parseFloat(sv("marginTop")) : ""}"></label></div>
+<label class="pe-k"><input type="checkbox" data-k="hide"${sv("display") === "none" ? " checked" : ""}> إخفاء هذا العنصر</label>
 <div class="pe-r"><button type="button" data-a="up1" title="تحريك لأعلى (قبل الأخ السابق)">▲</button><button type="button" data-a="dn1" title="تحريك لأسفل">▼</button><button type="button" data-a="dup" title="تكرار">⧉ تكرار</button><button type="button" data-a="par" title="تحديد العنصر الأب">⬆ الأب</button><button type="button" data-a="del" class="red" title="حذف">🗑 حذف</button></div>
 <div class="pe-n">نقرتان على النص = تعديله مباشرة. العناصر المرتبطة بالمنتج (الاسم والسعر والعروض) تفتح «بيانات المنتج».</div>`;
     if (!panel) { panel = document.createElement("div"); panel.id = "pbed"; document.body.appendChild(panel); wire(); }
@@ -304,24 +321,27 @@ ${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">�
 #pbed .pe-h{display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem}#pbed .pe-h code{flex:1;font-size:.66rem;color:#0e9f8e;background:#e8f7f5;border-radius:6px;padding:.1rem .35rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#pbed .pe-h button{border:0;background:#f1efe9;border-radius:50%;width:26px;height:26px;cursor:pointer}
 #pbed .pe-l{display:block;font-weight:700;color:#173f35;margin:.3rem 0 0;font-size:.74rem}#pbed .pe-l input,#pbed .pe-l textarea,#pbed .pe-l select{display:block;width:100%;box-sizing:border-box;border:1.5px solid #d9d2c2;border-radius:7px;padding:.3rem .4rem;font:inherit;font-weight:400;margin-top:.12rem}
 #pbed .pe-g{display:grid;grid-template-columns:1fr 1fr;gap:0 .5rem}#pbed .pe-f{margin-top:.3rem;grid-column:span 2}#pbed .pe-f>span{font-weight:700;color:#173f35;font-size:.74rem;display:block}#pbed .pe-c{display:flex;align-items:center;gap:.4rem}#pbed .pe-c input{width:42px;height:28px;padding:0;border:1px solid #d9d2c2;border-radius:6px}#pbed .pe-c button{border:0;background:#f1efe9;border-radius:6px;padding:.2rem .5rem;cursor:pointer;font:inherit;font-size:.7rem}#pbed .pe-c i{font-size:.68rem;color:#888;font-style:normal;direction:ltr}
-#pbed .pe-k{display:flex;gap:.4rem;align-items:center;margin:.5rem 0;font-weight:700}#pbed .pe-r{display:flex;flex-wrap:wrap;gap:.3rem;margin:.35rem 0}#pbed .pe-r button{flex:1;border:1.5px solid #d9d2c2;background:#faf8f3;border-radius:8px;padding:.3rem .4rem;cursor:pointer;font:inherit;font-weight:700;white-space:nowrap}#pbed .pe-r button.red{color:#b3261e;border-color:#f0c4c0;background:#fdf1f0}#pbed .pe-n{font-size:.68rem;color:#8a8472;line-height:1.6;margin-top:.3rem}`; document.head.appendChild(st); }
+#pbed .pe-k{display:flex;gap:.4rem;align-items:center;margin:.5rem 0;font-weight:700}#pbed .pe-r{display:flex;flex-wrap:wrap;gap:.3rem;margin:.35rem 0}#pbed .pe-r button{flex:1;border:1.5px solid #d9d2c2;background:#faf8f3;border-radius:8px;padding:.3rem .4rem;cursor:pointer;font:inherit;font-weight:700;white-space:nowrap}#pbed .pe-r button.red{color:#b3261e;border-color:#f0c4c0;background:#fdf1f0}#pbed .pe-mob{background:#eef6ff;border-radius:8px;padding:.35rem .5rem}#pbed .pe-mob.on{background:#ffe9cc}#pbed .pe-n{font-size:.68rem;color:#8a8472;line-height:1.6;margin-top:.3rem}`; document.head.appendChild(st); }
     const dbn = (fn) => { clearTimeout(tm); tm = setTimeout(fn, 350); };
+    panel.addEventListener("change", e => { if (e.target.dataset && e.target.dataset.mob !== undefined) { mob = e.target.checked; try { A().setDev(mob ? "m" : "d"); } catch (x) { } show(); } });
     panel.addEventListener("input", e => {
       const t = e.target, k = t.dataset && t.dataset.k; if (!k) return;
       if (t.type === "color") { const i = t.parentNode.querySelector("i"); if (i) i.textContent = t.value; }
-      const run = () => mutate((el) => {
+      const run = () => mutate((el, tpl) => {
         if (k === "html") el.innerHTML = clean(t.value);
         else if (k === "src") { el.setAttribute("src", t.value.trim()); el.removeAttribute("srcset"); el.removeAttribute("sizes"); const pic = el.parentElement; if (pic && pic.tagName === "PICTURE") pic.querySelectorAll("source").forEach(s => s.remove()); }
         else if (k === "alt") el.setAttribute("alt", t.value);
         else if (k === "href") el.setAttribute("href", t.value.trim());
+        else if (mob && k === "hide") { mobSet(el, tpl, "display", t.checked ? "none" : ""); }
         else if (k === "hide") { t.checked ? el.style.setProperty("display", "none") : el.style.removeProperty("display"); }
+        else if (mob) { let v = t.value; if (["fontSize", "borderRadius", "padding", "marginTop"].includes(k) && v !== "") v += "px"; mobSet(el, tpl, kebab(k), v); }
         else { let v = t.value; if (["fontSize", "borderRadius", "padding", "marginTop"].includes(k) && v !== "") v += "px"; const css = k.replace(/[A-Z]/g, m => "-" + m.toLowerCase()); v === "" ? el.style.removeProperty(css) : el.style.setProperty(css, v); if (!el.getAttribute("style")) el.removeAttribute("style"); }
       }, true);
       t.tagName === "SELECT" || t.type === "checkbox" || t.type === "color" ? run() : dbn(run);
     });
     panel.addEventListener("click", async e => {
       const b = e.target.closest("button"); if (!b) return;
-      if (b.dataset.clr) { const css = b.dataset.clr.replace(/[A-Z]/g, m => "-" + m.toLowerCase()); mutate(el => { el.style.removeProperty(css); if (!el.getAttribute("style")) el.removeAttribute("style"); }); return; }
+      if (b.dataset.clr) { const css = b.dataset.clr.replace(/[A-Z]/g, m => "-" + m.toLowerCase()); mutate((el, tpl) => { if (mob) return mobSet(el, tpl, css, ""); el.style.removeProperty(css); if (!el.getAttribute("style")) el.removeAttribute("style"); }); return; }
       const a = b.dataset.a; if (!a) return;
       if (a === "x") return hide();
       if (a === "lib") { const r = await A().openLibrary(false); if (r && r[0]) mutate(el => { el.setAttribute("src", r[0]); el.removeAttribute("srcset"); el.removeAttribute("sizes"); const pic = el.parentElement; if (pic && pic.tagName === "PICTURE") pic.querySelectorAll("source").forEach(s => s.remove()); }); return; }
