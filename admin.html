@@ -8249,7 +8249,7 @@ body{overflow-x:hidden;margin:0}`;
     } else if (E.ltab === "tpl") {
       pane.innerHTML = `<div class="pbx-gb"><b>${ico('grid',17)} قسم شبكي مخصص</b><div class="pbx-row" style="margin:.4rem 0"><label style="font-size:.8rem">صفوف <input id="gb-r" type="number" min="1" max="10" value="2"></label><label style="font-size:.8rem">أعمدة <input id="gb-c" type="number" min="1" max="12" value="3"></label></div><button class="pbx-small" data-grid="1" type="button">＋ إضافة القسم الشبكي</button></div>` + Object.keys(TPLS).map(k => `<button class="pbx-tpl" draggable="true" data-tpl="${k}">${ico("t_" + k, 18)} ${TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, "")}</button>`).join("") + `<button class="pbx-tpl" data-tpl="_blank" style="background:#fff">${ico('blank1',18)} قسم فارغ (عمود واحد)</button><button class="pbx-tpl" data-tpl="_two" style="background:#fff">${ico('blank2',18)} قسم بعمودين</button><button class="pbx-tpl" data-tpl="_three" style="background:#fff">${ico('blank3',18)} قسم بثلاثة أعمدة</button>`;
     } else if (E.ltab === "def") {
-      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 عناصر افتراضية</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">أقسام وعناصر جاهزة بتنسيق الموقع. انقر الأيقونة لإضافتها بعد القسم المحدد.</div><div class="pbx-dgrid">` + PB.DFLT.map(x => `<button type="button" class="pbx-dfc" data-dflt="${x.k}" title="${esc(x.d)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${DIC[x.k] || '<rect x="8" y="8" width="48" height="28" rx="5" fill="#e6dfcf"/>'}</svg><span>${esc(x.n.replace(/\s*\(.*$/, ""))}</span></button>`).join("") + `</div>`;
+      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 عناصر افتراضية</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">أقسام وعناصر جاهزة بتنسيق الموقع. انقر الأيقونة لإضافتها بعد القسم المحدد.</div><div class="pbx-dgrid">` + PB.DFLT.map(x => `<button type="button" class="pbx-dfc" draggable="true" data-dflt="${x.k}" title="${esc(x.d)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${DIC[x.k] || '<rect x="8" y="8" width="48" height="28" rx="5" fill="#e6dfcf"/>'}</svg><span>${esc(x.n.replace(/\s*\(.*$/, ""))}</span></button>`).join("") + `</div>`;
     } else if (E.ltab === "smart") {
       pane.innerHTML = PBSmart.pane();
     } else if (E.ltab === "lay") {
@@ -8536,10 +8536,12 @@ body{overflow-x:hidden;margin:0}`;
     if (inf.kind === "widget") { if (has("color")) colorIn("color", "لون النص", "🔤"); if (has("bgc")) colorIn("bgc", "لون الزر", "🎨"); else colorIn("bg", "لون الخلفية", "🎨"); }
     else {
       colorIn("bg", "لون الخلفية", "🎨");
+      if (inf.kind === "section") btn("✥ اسحب", "اسحب القسم كله (كبلوك واحد) لنقله بين الأقسام", null, true);
       btn(inf.kind === "column" ? "▶" : "↑", "تحريك", () => move(-1)); btn(inf.kind === "column" ? "◀" : "↓", "تحريك", () => move(1));
       if (inf.kind === "section" && inf.node.set.kind !== "canvas") btn("＋عمود", "إضافة عمود", () => addCol(inf.node)); if (inf.kind === "column") btn("＋عمود", "إضافة عمود بعده", () => addCol(inf.sec, inf.idx + 1));
       if (inf.kind === "section" && (inf.node.free || []).length) btn("📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف", () => autoMobile(inf.node));
     }
+    if (inf.kind !== "section" && inf.sec) btn("▣ الكتلة", "حدّد القسم كله لتحريكه كبلوك وتغيير حجمه (يتبعه كل ما بداخله)", () => select(inf.sec.id));
     btn("⧉", "تكرار", dup); btn("🗑", "حذف", del);
     box.appendChild(bar);
     /* مقبض تقويس الزوايا (داخل الزاوية العليا) ومقبض التدوير (أسفل العنصر) */
@@ -8728,9 +8730,9 @@ body{overflow-x:hidden;margin:0}`;
     afterEdit(w.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50);
   }
   /* إضافة عنصر/قسم افتراضي بعد القسم المحدد (أو في آخر الصفحة) */
-  function addDefault(k) {
+  function addDefault(k, atIdx) {
     const d = PB.DFLT.find(x => x.k === k); if (!d) return; const sec = d.f(), inf = selInfo(); let i = E.page.sections.length; sec.set.pz = true;      // العنصر الافتراضي: سحب إطاره يكبّر/يصغّر كل ما بداخله
-    if (inf && inf.sec) { const j = E.page.sections.findIndex(x => x.id === inf.sec.id); if (j >= 0) i = j + 1; }
+    if (atIdx != null) i = Math.max(0, Math.min(atIdx, E.page.sections.length)); else if (inf && inf.sec) { const j = E.page.sections.findIndex(x => x.id === inf.sec.id); if (j >= 0) i = j + 1; }
     E.page.sections.splice(i, 0, sec); afterEdit(sec.id); if (isMob()) panel("l", false);
     setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف: " + d.n);
   }
@@ -8819,8 +8821,9 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── السحب والإفلات من اللوحة ───────────────── */
   function dropTarget(e) {
     const t = fdoc.elementFromPoint(e.clientX, e.clientY); if (!t) return null;
-    if (E.drag && E.drag.tpl) {
-      const secs = [...root.querySelectorAll(".pb-sec")]; let at = secs.length;
+    const secMove = E.drag && E.drag.move && (() => { const q = find(E.drag.move); return q && q.kind === "section"; })();
+    if (E.drag && (E.drag.tpl || E.drag.dflt || secMove)) {
+      const secs = [...root.querySelectorAll(".pb-sec")].filter(x => !(secMove && x.dataset.pb === E.drag.move)); let at = secs.length;
       for (let i = 0; i < secs.length; i++) { const r = secs[i].getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { at = i; break; } }
       const ref = secs[at] || secs[secs.length - 1];
       return { type: "sec", at, y: ref ? (secs[at] ? ref.getBoundingClientRect().top : ref.getBoundingClientRect().bottom) : 0, x: 0, w: fdoc.documentElement.clientWidth };
@@ -8844,6 +8847,8 @@ body{overflow-x:hidden;margin:0}`;
   function onDrop(e) {
     if (!E.drag) return; e.preventDefault(); const tg = dropTarget(e), dr = E.drag; E.drag = null; hideDrop(); if (!tg) return;
     if (dr.tpl) { addSection(dr.tpl, tg.at); return; }
+    if (dr.dflt) { addDefault(dr.dflt, tg.at); return; }
+    if (dr.move) { const q = find(dr.move); if (q && q.kind === "section") { const list = E.page.sections, from = list.indexOf(q.node); list.splice(from, 1); list.splice(Math.min(tg.at, list.length), 0, q.node); afterEdit(q.node.id); return; } }
     if (tg.type === "free") {
       if (dr.add) { addFree(dr.add, tg.sec, Math.max(0, Math.round(tg.px)), Math.max(0, Math.round(tg.py))); return; }
       if (dr.move) { const inf = find(dr.move); if (inf && inf.kind === "widget" && !inf.free) { E.sel = inf.node.id; const secBak = tg.sec; toggleFree(); const nw = find(dr.move); if (nw && nw.sec !== secBak) { nw.list.splice(nw.idx, 1); (secBak.free = secBak.free || []).push(nw.node); } const w2 = find(dr.move); if (w2) { setR(w2.set, "fx", E.dev, Math.max(0, Math.round(tg.px))); setR(w2.set, "fy", E.dev, Math.max(0, Math.round(tg.py))); afterEdit(dr.move); } } return; }
@@ -8851,7 +8856,7 @@ body{overflow-x:hidden;margin:0}`;
     if (dr.add) { addWidget(dr.add, tg.col, tg.at); return; }
     if (dr.move) { const inf = find(dr.move); if (!inf) return; if (inf.kind === "widget") { inf.list.splice(inf.idx, 1); tg.col.widgets.splice(Math.min(tg.at, tg.col.widgets.length), 0, inf.node); afterEdit(inf.node.id); } }
   }
-  document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest("[data-add],[data-tpl]"); if (!w) return; E.drag = w.dataset.add ? { add: w.dataset.add } : { tpl: w.dataset.tpl }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
+  document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest("[data-add],[data-tpl],[data-dflt]"); if (!w) return; E.drag = w.dataset.add ? { add: w.dataset.add } : w.dataset.dflt ? { dflt: w.dataset.dflt } : { tpl: w.dataset.tpl }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
   document.addEventListener("dragend", () => { E.drag = null; hideDrop(); });
   document.addEventListener("click", e => {
     if (!$("pb-app") || !$("pb-app").contains(e.target)) return;
