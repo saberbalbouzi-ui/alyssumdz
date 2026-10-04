@@ -7315,7 +7315,7 @@ const PB = (() => {
     ["تجارة وتوصيل", "🛒 🛍️ 🚚 🚛 📦 📮 💵 💰 💳 🧾 🎁 🏪 🏬 🧾 🏷️ 📞 ☎️ 📱 💬 📧 ✉️ 🌐 ⏰ ⏱️ 🕒 📅 🗓️ 🔒 🛡️ ♻️ 📈 🔄".split(" ")],
     ["الجزائر والمناسبات", "🇩🇿 🕌 ☪️ 🕋 📿 🤲 🌙 ⭐ 🏠 🏡 👨‍👩‍👧 👶 🎓 💍 🎂 🍰 🎈".split(" ")],
   ];
-  const BMARKS = [["disc", "● نقطة"], ["circle", "○ دائرة"], ["square", "■ مربع"], ["check", "✔ علامة صح"], ["checkbox", "☑ مربع صح"], ["arrow", "◀ سهم"], ["chev", "‹ سهم صغير"], ["star", "★ نجمة"], ["diamond", "◆ معين"], ["dash", "– شرطة"], ["heart", "❤ قلب"], ["leaf", "🌿 ورقة"], ["dec", "1. أرقام"], ["ar", "١. أرقام عربية"], ["alpha", "a. حروف لاتينية"], ["roman", "i. أرقام رومانية"], ["custom", "✎ رمز مخصص"]];
+  const BMARKS = [["disc", "● نقطة"], ["circle", "○ دائرة"], ["square", "■ مربع"], ["check", "✔ علامة صح"], ["checkbox", "☑ مربع صح"], ["arrow", "◀ سهم"], ["chev", "‹ سهم صغير"], ["star", "★ نجمة"], ["diamond", "◆ معين"], ["dash", "– شرطة"], ["heart", "❤ قلب"], ["leaf", "🌿 ورقة"], ["dec", "1. أرقام"], ["ar", "١. أرقام عربية"], ["alpha", "a. حروف لاتينية"], ["roman", "i. أرقام رومانية"], ["bdc", "🟢 شارة دائرية ✔ (ملوّنة)"], ["bdn", "🔢 شارة دائرية برقم (ملوّنة)"], ["bsq", "🟩 شارة مربعة ✔ (ملوّنة)"], ["bst", "⭐ شارة دائرية نجمة (ملوّنة)"], ["bdd", "⚫ نقطة ملوّنة مليئة"], ["custom", "✎ رمز مخصص"]];
   const BANIMS = [["", "بدون"], ["pulse", "نبض"], ["bounce", "قفز"], ["shake", "اهتزاز"], ["wobble", "تمايل"], ["float", "طفو"], ["heart", "نبضة قلب"], ["tada", "تادا"], ["jelly", "جيلي"]];
   const IANIMS = [["", "بدون"], ["zin", "تقريب للأمام (Zoom In)"], ["zout", "ابتعاد للخلف (Zoom Out)"], ["pulse", "نبض (تقريب وابتعاد)"], ["kb", "كين بيرنز (تقريب مع انزياح)"], ["float", "طفو للأعلى والأسفل"], ["sway", "تأرجح"], ["spin", "دوران مستمر"], ["blink", "وميض"], ["shake", "اهتزاز"]];
   /* حركة الصورة: الحاوية تقصّ التكبير (overflow) والصورة نفسها تتحرك */
@@ -7427,13 +7427,20 @@ const PB = (() => {
       css: (c, sel, s) => { emit(c, sel + " .pb-ibi", s, [["isz", px("font-size")]]); emit(c, sel + " .pb-ib h3", s, [["tfs", px("font-size")]]); if (s.tc) c.d.push(`${sel} .pb-ib h3{color:${s.tc}}`); if (s.xc) c.d.push(`${sel} .pb-ib p{color:${s.xc}}`); },
     },
     bullets: {
-      label: "علامات القائمة", ic: "•", def: { items: "ميزة أولى للمنتج\nميزة ثانية للمنتج\nميزة ثالثة للمنتج", mk: "disc", mchar: "★", mc: "#157a55", ms: { d: 18 }, gap: { d: 8 }, fs: { d: 18 } },
+      label: "علامات القائمة", ic: "•", fit: 1, def: { items: "ميزة أولى للمنتج\nميزة ثانية للمنتج\nميزة ثالثة للمنتج", mk: "disc", mchar: "★", mc: "#157a55", ms: { d: 18 }, gap: { d: 8 }, fs: { d: 18 } },
       ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "mk", l: "نوع العلامة (اختر واحداً)", t: "select", o: BMARKS.map(m => [m[0], m[1]]), tab: "c" }, { k: "mchar", l: "الرمز المخصص (أي رمز أو إيموجي)", t: "iconpick", tab: "c", showIf: ["mk", "custom"] },
-        { k: "mc", l: "لون العلامة", t: "color", tab: "s" }, { k: "ms", l: "حجم العلامة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "gap", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
+        { k: "mc", l: "لون العلامة", t: "color", tab: "s" }, { k: "mcs", l: "ألوان الشارات المختلفة — افصل بفاصلة (#157a55,#c8a24b,#d64545) وتتناوب على العناصر", t: "text", tab: "s" }, { k: "ms", l: "حجم العلامة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "gap", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
       html: s => `<ul class="pb-bl">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li><span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`,
       css: (c, sel, s) => {
         emit(c, sel + " .pb-bl", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-bl li", s, [["gap", px("margin-bottom")], ["ms", v => `padding-inline-start:calc(${U(num(v) || 18)}*1.9);`]]);
-        const mk = BMARKS.some(m => m[0] === s.mk) ? s.mk : "disc", num2 = { dec: "decimal", ar: "arabic-indic", alpha: "lower-alpha", roman: "lower-roman" }[mk], txt = { disc: "●", circle: "○", square: "■", check: "✔", checkbox: "☑", arrow: "◀", chev: "‹", star: "★", diamond: "◆", dash: "–", heart: "❤", leaf: "🌿", custom: String(s.mchar || "•").slice(0, 4) }[mk];
+        const mk = BMARKS.some(m => m[0] === s.mk) ? s.mk : "disc", BG = { bdc: ["✔", "50%"], bdn: ["", "50%"], bsq: ["✔", "28%"], bst: ["★", "50%"], bdd: ["", "50%"] }[mk];
+        if (BG) {      /* شارات ملوّنة: خلفية بلون الشارة (تتناوب الألوان بين العناصر) */
+          const cols = String(s.mcs || "").split(/[,،\s]+/).filter(x => /^#[0-9a-f]{3,8}$/i.test(x)), base = s.mc || "#157a55";
+          c.d.push(`${sel} .pb-bl{counter-reset:pbn}${sel} .pb-bl li{position:relative;counter-increment:pbn;padding-inline-start:2.1em}${sel} .pb-bl li:before{content:${BG[0] ? JSON.stringify(BG[0]) : mk === "bdn" ? "counter(pbn)" : '""'};position:absolute;inset-inline-start:0;top:.12em;width:1.45em;height:1.45em;border-radius:${BG[1]};background:${base};color:#fff;display:grid;place-items:center;font-size:.78em;font-weight:900;line-height:1}`);
+          cols.forEach((col, i) => c.d.push(`${sel} .pb-bl li:nth-child(${cols.length}n+${i + 1}):before{background:${col}}`));
+          emit(c, sel + " .pb-bl li:before", s, [["ms", v => `font-size:calc(${U(num(v) || 18)}*.78);`]]); return;
+        }
+        const num2 = { dec: "decimal", ar: "arabic-indic", alpha: "lower-alpha", roman: "lower-roman" }[mk], txt = { disc: "●", circle: "○", square: "■", check: "✔", checkbox: "☑", arrow: "◀", chev: "‹", star: "★", diamond: "◆", dash: "–", heart: "❤", leaf: "🌿", custom: String(s.mchar || "•").slice(0, 4) }[mk];
         c.d.push(`${sel} .pb-bl{counter-reset:pbn}${sel} .pb-bl li{position:relative;counter-increment:pbn;padding-inline-start:1.9em}${sel} .pb-bl li:before{position:absolute;inset-inline-start:0;top:0;line-height:inherit;font-weight:800;content:${num2 ? `counter(pbn,${num2}) "."` : JSON.stringify(txt).replace(/</g, "\\3c ")};${s.mc ? "color:" + s.mc + ";" : ""}}`);
         emit(c, sel + " .pb-bl li:before", s, [["ms", px("font-size")]]);
       },
@@ -7465,7 +7472,7 @@ const PB = (() => {
       css: (c, sel) => { c.d.push(`:where(${sel} .gmain img){width:100%;display:block;border-radius:16px}:where(${sel} .gthumbs){display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}:where(${sel} .gthumbs img){width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid transparent}:where(${sel} .gthumbs img.on){border-color:#157a55}`); },
     },
     tbadges: {
-      label: "شارات الثقة", ic: "🏷️", def: { items: "🌿 طبيعي 100%\n✅ أصلي ومفحوص", live: true, liveText: "يشاهدون هذا المنتج الآن", lmin: 8, lmax: 18, dot: "#d64545", cbg: "#ffffff", cc: "#566360", cbc: "#eadfc4", crad: { d: 999 }, cfs: { d: 13 }, gap: { d: 10 }, jc: "flex-start" },
+      label: "شارات الثقة", ic: "🏷️", fit: 1, def: { items: "🌿 طبيعي 100%\n✅ أصلي ومفحوص", live: true, liveText: "يشاهدون هذا المنتج الآن", lmin: 8, lmax: 18, dot: "#d64545", cbg: "#ffffff", cc: "#566360", cbc: "#eadfc4", crad: { d: 999 }, cfs: { d: 13 }, gap: { d: 10 }, jc: "flex-start" },
       ctl: [{ k: "items", l: "الشارات (سطر لكل شارة) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "live", l: "شارة «يشاهدون الآن» (عدّاد متحرك)", t: "switch", tab: "c" }, { k: "liveText", l: "نص الشارة الحيّة", t: "text", tab: "c", showIf: ["live", true] }, { k: "lmin", l: "أقل عدد", t: "num", min: 1, max: 500, tab: "c", showIf: ["live", true] }, { k: "lmax", l: "أكبر عدد", t: "num", min: 1, max: 500, tab: "c", showIf: ["live", true] },
         { k: "cbg", l: "خلفية الشارة", t: "color", tab: "s" }, { k: "cc", l: "لون النص", t: "color", tab: "s" }, { k: "cbc", l: "لون الإطار", t: "color", tab: "s" }, { k: "dot", l: "لون نقطة الشارة الحيّة", t: "color", tab: "s" }, { k: "crad", l: "تدوير الشارة (px)", t: "num", r: 1, min: 0, max: 999, tab: "s" }, { k: "cfs", l: "حجم الخط (px)", t: "num", r: 1, min: 9, max: 30, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "jc", l: "المحاذاة", t: "select", o: [["flex-start", "يمين"], ["center", "وسط"], ["flex-end", "يسار"]], tab: "s" }],
       html: s => { const L = String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()); return `<div class="pb-tb">${L.map(([x, i]) => `<span class="pb-tbc" data-edit="items" data-idx="${i}">${esc(x)}</span>`).join("")}${s.live ? `<span class="pb-tbc pb-tbl"><i class="pb-tbd"></i> <b data-live data-min="${num(s.lmin) || 8}" data-max="${num(s.lmax) || 18}">${Math.round(((num(s.lmin) || 8) + (num(s.lmax) || 18)) / 2)}</b> ${esc(s.liveText || "")}</span>` : ""}</div>`; },
@@ -8338,9 +8345,15 @@ body{overflow-x:hidden;margin:0}`;
     delete sec.set.bgImg; delete sec.set.bgSize; delete sec.set.bgPos; delete sec.set.bgOrig; afterEdit(E.sel); toast("↩ رجعت الصورة إلى مكانها كصورة عادية");
   }
   function showCtx(e) {
-    const wEl = e.target.closest('[data-kind="widget"]'); hideCtx(); if (!wEl) return; e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
-    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale, x = f0.left + e.clientX * s, y = f0.top + e.clientY * s, img = inf.node.type === "image", canvas = inf.sec.set.kind === "canvas", cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0);
-    const items = [["↥", "إلى الأمام", () => zOrder(1), "]"], ["↧", "إلى الخلف", () => zOrder(-1), "["], img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], ["⧉", "نسخ", () => dup(), "Ctrl+D"], "-",
+    if (e.target.closest && e.target.closest("[contenteditable=true]")) { hideCtx(); return; }      // أثناء تحرير نص: تظهر قائمة المتصفح الأصلية (نسخ/قص/لصق للنص المحدَّد) لا قائمة العنصر
+    const wEl = e.target.closest('[data-kind="widget"]'); hideCtx(); if (!wEl) return; e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
+    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; openCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
+  }
+  /* قائمة العنصر المحدد عند الإحداثيات (x,y) على الشاشة — تُفتح بالزر الأيمن على العنصر أو على إطاره/شريطه */
+  function openCtx(x, y) {
+    hideCtx(); const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
+    const img = inf.node.type === "image", canvas = inf.sec.set.kind === "canvas", cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0);
+    const items = [["↥", "إلى الأمام", () => zOrder(1), "]"], ["↧", "إلى الخلف", () => zOrder(-1), "["], img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], ["⧉", "نسخ العنصر", () => dup(), "Ctrl+D"], "-",
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
       img && canvas ? "-" : null, img && canvas ? ["🔤", "التقاط النص", () => PBSmart.capture()] : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null, "-", ["🗑", "حذف", () => del(), "Del", 1]].filter(Boolean);
     const m = document.createElement("div"); m.id = "pbx-ctx"; m.className = "pbx-ctx";
@@ -8435,7 +8448,7 @@ body{overflow-x:hidden;margin:0}`;
     const box = document.createElement("div"); box.className = "pbx-box " + inf.kind;
     box.style.cssText = `left:${o.ox + r.left * s}px;top:${o.oy + r.top * s}px;width:${r.width * s}px;height:${r.height * s}px${rotV ? `;transform:rotate(${rotV}deg)` : ""}`;
     const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].label + (inf.free ? " ✦" : "") : inf.kind === "column" ? "عمود" : "قسم" + ({ grid: " شبكي", canvas: " حر" }[inf.set.kind] || "");
-    const bar = document.createElement("div"); bar.className = "pbx-bar"; bar.innerHTML = `<span>${lbl}</span>`;
+    const bar = document.createElement("div"); bar.className = "pbx-bar"; bar.innerHTML = `<span>${lbl}</span>`; bar.addEventListener("contextmenu", ev => { ev.preventDefault(); ev.stopPropagation(); if (inf.kind === "widget") openCtx(ev.clientX, ev.clientY); });
     const btn = (t, tt, fn, drag, on) => { const b = document.createElement("button"); b.textContent = t; b.title = tt; if (on) b.className = "on"; if (drag) { b.draggable = true; b.addEventListener("dragstart", e => { E.drag = { move: inf.node.id }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "move"; }); b.addEventListener("dragend", hideDrop); } else b.onclick = e => { e.stopPropagation(); fn(); }; bar.appendChild(b); };
     const colorIn = (key, tt, ic) => { const w = document.createElement("label"); w.title = tt; w.style.cssText = "background:inherit;display:flex;align-items:center;gap:2px;color:#fff;font-size:.72rem;padding:.12rem .3rem;cursor:pointer;background:inherit"; const i = document.createElement("input"); i.type = "color"; i.value = /^#[0-9a-f]{6}$/i.test(inf.set[key] || "") ? inf.set[key] : "#ffffff";
       i.oninput = () => { inf.set[key] = i.value; schedule(); }; i.onchange = () => { commitHist(); renderInspector(); }; w.append(ic, i); bar.appendChild(w); };
