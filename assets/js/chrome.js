@@ -192,15 +192,15 @@ window.Chrome = (function () {
       let st = document.getElementById("__ch_css"); if (!st) { st = document.createElement("style"); st.id = "__ch_css"; document.head.appendChild(st); }
       st.textContent = css(has ? cfg : { header: { sticky: true }, footer: {} }, ctx);
       if (has) {
-        const hd = document.querySelector("header.site .container");
+        const hd = document.querySelector("header.site:not([data-pbw]) .container");
         if (hd) {
           const keep = { logo: hd.querySelector(".logo"), cart: hd.querySelector(".cart-btn"), account: hd.querySelector(".acc-btn") };
           hd.innerHTML = headerHtml(cfg, ctx, { logo: '<i data-keep="logo"></i>', cart: '<i data-keep="cart"></i>', account: '<i data-keep="account"></i>' });
           hd.querySelectorAll("[data-keep]").forEach(ph => { const n = keep[ph.dataset.keep]; n ? ph.replaceWith(n) : ph.remove(); });
         }
         let tb = document.querySelector(".topbar");
-        const th = topbarHtml(cfg, ctx);
-        if (th) { if (!tb) { tb = document.createElement("div"); tb.className = "topbar"; document.body.insertBefore(tb, document.body.firstChild); } tb.innerHTML = th; tb.style.display = ""; } else if (tb) tb.style.display = "none";
+        const th = tb && tb.hasAttribute("data-pbw") ? "" : topbarHtml(cfg, ctx);      /* شريط من عنصر المطوّر: لا يُستبدل */
+        if (tb && tb.hasAttribute("data-pbw")) { /* يبقى كما صممته */ } else if (th) { if (!tb) { tb = document.createElement("div"); tb.className = "topbar"; document.body.insertBefore(tb, document.body.firstChild); } tb.innerHTML = th; tb.style.display = ""; } else if (tb) tb.style.display = "none";
         const ft = document.querySelector("footer.site");
         if (ft) {
           if (!c.footer.show) ft.style.display = "none";
@@ -214,7 +214,7 @@ window.Chrome = (function () {
         try { if (typeof Account !== "undefined") Account.init(); } catch (e) { }
       }
       if (!has) {      /* بلا إعداد محفوظ: يبقى الهيدر كما هو وتُضاف أيقونة المشاركة قبل زر السلة */
-        const hd = document.querySelector("header.site .container");
+        const hd = document.querySelector("header.site:not([data-pbw]) .container");
         if (hd && !hd.querySelector(".ch-share-btn")) { const t = document.createElement("div"); t.innerHTML = headerHtml({ header: { logo: { show: false }, menu: { show: false }, wa: { show: false }, account: { show: false }, cart: { show: false } } }, ctx); const b = t.querySelector(".ch-share-btn"); if (b) { const cart = hd.querySelector(".cart-btn"); cart ? hd.insertBefore(b, cart) : hd.appendChild(b); } }
       }
       /* الأزرار الظاهرة */

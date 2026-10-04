@@ -7502,10 +7502,29 @@ const PB = (() => {
       ctl: [{ k: "cols", l: "الأعمدة (في النص: [نص](رابط) لإضافة رابط، وسطر جديد = سطر)", t: "rep", f: [["h", "عنوان العمود"], ["b", "المحتوى", "textarea"]], mv: 1, tab: "c" }, { k: "copy", l: "سطر الحقوق", t: "text", tab: "c" },
         { k: "sbg", l: "لون الخلفية", t: "color", tab: "s" }, { k: "tc", l: "لون النص", t: "color", tab: "s" }, { k: "hc", l: "لون العناوين", t: "color", tab: "s" }, { k: "lc", l: "لون الروابط", t: "color", tab: "s" }, { k: "lh", l: "لون الرابط عند التمرير", t: "color", tab: "s" }, { k: "w1", l: "عرض العمود الأول (نسبة)", t: "num", min: 1, max: 4, tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 30, tab: "s" }, { k: "spad", l: "حشو الفوتر", t: "dims", r: 1, tab: "s" }, { k: "cw", l: "أقصى عرض للمحتوى (px)", t: "num", r: 1, min: 600, max: 1920, tab: "s" }],
       html: s => { const body = t => String(t || "").split("\n").map(l => esc(l).replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, a, h) => `<a href="${h}"${/^https?:/.test(h) ? ' target="_blank" rel="noopener"' : ""}>${a}</a>`)).join("<br>"), C = (Array.isArray(s.cols) ? s.cols : []).filter(x => x && (x.h || x.b));
-        return `<footer class="pb-sf"><div class="pb-sf-in"><div class="pb-sf-g">${C.map(x => `<div>${x.h ? `<h3 class="pb-sf-h">${esc(x.h)}</h3>` : ""}<p>${body(x.b)}</p></div>`).join("")}</div>${s.copy ? `<div class="pb-sf-c" data-edit="copy">${esc(s.copy)}</div>` : ""}</div></footer>`; },
+        return `<footer class="pb-sf"><div class="pb-sf-in">${C.length ? `<div class="pb-sf-g">${C.map(x => `<div>${x.h ? `<h3 class="pb-sf-h">${esc(x.h)}</h3>` : ""}<p>${body(x.b)}</p></div>`).join("")}</div>` : ""}${s.copy ? `<div class="pb-sf-c" data-edit="copy">${esc(s.copy)}</div>` : ""}</div></footer>`; },
       css: (c, sel, s) => { const n = (Array.isArray(s.cols) ? s.cols : []).filter(x => x && (x.h || x.b)).length || 1;
-        c.d.push(`${sel} .pb-sf{background:${s.sbg || "#0F2E26"};color:${s.tc || "#C7D3CD"};box-sizing:border-box}${sel} .pb-sf-in{max-width:${num(s.cw) || 1200}px;margin:0 auto;padding:0 20px}${sel} .pb-sf-g{display:grid;grid-template-columns:${num(s.w1) || 2}fr repeat(${Math.max(0, n - 1)},1fr);gap:2rem}${sel} .pb-sf-h{color:${s.hc || "#fff"};font-weight:900;margin:0 0 .8rem;font-size:1.05em}${sel} .pb-sf p{margin:0;line-height:1.9}${sel} .pb-sf a{color:${s.lc || "#C7D3CD"};text-decoration:none}${sel} .pb-sf a:hover{color:${s.lh || "#E4C87F"}}${sel} .pb-sf-c{text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:2rem;padding-top:1.2rem;font-size:.85em}@media(max-width:760px){${sel} .pb-sf-g{grid-template-columns:1fr}}`);
+        c.d.push(`${sel} .pb-sf{background:${s.sbg || "#0F2E26"};color:${s.tc || "#C7D3CD"};box-sizing:border-box}${sel} .pb-sf-in{max-width:${num(s.cw) || 1200}px;margin:0 auto;padding:0 20px}${sel} .pb-sf-g{display:grid;grid-template-columns:${num(s.w1) || 2}fr repeat(${Math.max(0, n - 1)},1fr);gap:2rem}${sel} .pb-sf-h{color:${s.hc || "#fff"};font-weight:900;margin:0 0 .8rem;font-size:1.05em}${sel} .pb-sf p{margin:0;line-height:1.9}${sel} .pb-sf a{color:${s.lc || "#C7D3CD"};text-decoration:none}${sel} .pb-sf a:hover{color:${s.lh || "#E4C87F"}}${sel} .pb-sf-c{text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:2rem;padding-top:1.2rem;font-size:.85em}${(Array.isArray(s.cols) ? s.cols : []).length ? "" : `${sel} .pb-sf-c{border:0;margin:0;padding:0}`}@media(max-width:760px){${sel} .pb-sf-g{grid-template-columns:1fr}}`);
         emit(c, sel + " .pb-sf", s, [["spad", v => dimsDecl("padding", v)], ["fs", px("font-size")]]); },
+    },
+    sbar: {
+      label: "الشريط العلوي (إعلان)", ic: "📢", def: { txt: "🚚 توصيل سريع لـ **58 ولاية** · 💵 **الدفع عند الاستلام** · 🎁 اشترِ **قطعتين** واحصل على **الثالثة مجاناً**", link: "", tbg: "#173F35", ttc: "#F3E9D2", tbc: "#E4C87F", tfs: { d: 14 }, tpd: { d: [7, 16, 7, 16] }, tal: "center" },
+      ctl: [{ k: "txt", l: "نص الإعلان — اجعل الكلمة **بين نجمتين** لتظهر بلون مميّز", t: "textarea", tab: "c" }, { k: "link", l: "رابط عند النقر (اختياري)", t: "text", tab: "c" },
+        { k: "tbg", l: "لون الخلفية", t: "color", tab: "s" }, { k: "ttc", l: "لون النص", t: "color", tab: "s" }, { k: "tbc", l: "لون الكلمات المميّزة", t: "color", tab: "s" }, { k: "tfs", l: "حجم الخط (px)", t: "num", r: 1, min: 9, max: 30, tab: "s" }, { k: "tpd", l: "الحشو", t: "dims", r: 1, tab: "s" }, { k: "tal", l: "المحاذاة", t: "select", o: [["center", "وسط"], ["start", "يمين"], ["end", "يسار"]], tab: "s" }],
+      html: s => { const t = esc(s.txt || "").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>"), inner = s.link ? `<a href="${esc(s.link)}">${t}</a>` : t; return `<div class="topbar pb-tp" data-pbw="1"><span data-edit="txt">${inner}</span></div>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-tp{background:${s.tbg || "#173F35"};color:${s.ttc || "#F3E9D2"};text-align:${s.tal || "center"};position:relative;overflow:hidden;box-sizing:border-box;letter-spacing:.1px}${sel} .pb-tp a{color:inherit}${sel} .pb-tp b{color:${s.tbc || "#E4C87F"}}`); emit(c, sel + " .pb-tp", s, [["tfs", px("font-size")], ["tpd", v => dimsDecl("padding", v)]]); },
+    },
+    shdr: {
+      label: "الهيدر (رأس الموقع)", ic: "🔝", def: { la: "ألي", lb: "سوم", llink: "index.html", menu: [{ t: "الفئات", l: "index.html#categories" }, { t: "المنتجات", l: "index.html#products" }, { t: "لماذا نحن؟", l: "index.html#features" }, { t: "الأسئلة الشائعة", l: "index.html#faq" }], wa: true, wat: "واتساب", wal: "", cart: true, hbg: "#FBF8F2", hbr: "#EAE3D6", lc: "#173F35", lac: "#8a6a1a", mc: "#173F35", wbg: "#157A55", wtc: "#ffffff", cbg: "#173F35", stk: true, lfs: { d: 24 }, hcw: { d: 1240 }, hpd: { d: [11, 0, 11, 0] } },
+      ctl: [{ k: "la", l: "الشعار — الجزء الأول", t: "text", tab: "c" }, { k: "lb", l: "الشعار — الجزء الملوّن", t: "text", tab: "c" }, { k: "llink", l: "رابط الشعار", t: "text", tab: "c" },
+        { k: "menu", l: "القائمة", t: "rep", f: [["t", "النص"], ["l", "الرابط"]], mv: 1, tab: "c" },
+        { k: "wa", l: "زر واتساب", t: "switch", tab: "c" }, { k: "wat", l: "نص الزر", t: "text", tab: "c", showIf: ["wa", true] }, { k: "wal", l: "رابطه (فارغ = واتساب المتجر)", t: "text", tab: "c", showIf: ["wa", true] }, { k: "cart", l: "زر السلة", t: "switch", tab: "c" },
+        { k: "stk", l: "تثبيت الهيدر أثناء التمرير", t: "switch", tab: "s" }, { k: "hbg", l: "لون الخلفية", t: "color", tab: "s" }, { k: "hbr", l: "لون الخط السفلي", t: "color", tab: "s" }, { k: "lc", l: "لون الشعار", t: "color", tab: "s" }, { k: "lac", l: "لون جزء الشعار الملوّن", t: "color", tab: "s" }, { k: "mc", l: "لون القائمة", t: "color", tab: "s" }, { k: "wbg", l: "لون زر واتساب", t: "color", tab: "s" }, { k: "wtc", l: "لون نص زر واتساب", t: "color", tab: "s" }, { k: "cbg", l: "لون زر السلة", t: "color", tab: "s" },
+        { k: "lfs", l: "حجم الشعار (px)", t: "num", r: 1, min: 14, max: 60, tab: "s" }, { k: "hcw", l: "أقصى عرض (px)", t: "num", r: 1, min: 600, max: 1920, tab: "s" }, { k: "hpd", l: "الحشو الرأسي", t: "dims", r: 1, tab: "s" }],
+      html: (s, id, ctx) => { const wa = String(ctx.wa || "").replace(/\D/g, ""), M = (Array.isArray(s.menu) ? s.menu : []).filter(x => x && x.t);
+        return `<header class="site pb-hd" data-pbw="1"><div class="container"><a class="logo" href="${esc(s.llink || "#")}">${esc(s.la)}${s.lb ? `<span>${esc(s.lb)}</span>` : ""}</a>${M.length ? `<nav class="menu">${M.map(x => `<a href="${esc(x.l || "#")}">${esc(x.t)}</a>`).join("")}</nav>` : ""}${s.wa !== false ? `<a class="hd-wa" href="${esc(s.wal || (wa ? "https://wa.me/" + wa : "#"))}" target="_blank" rel="noopener">${esc(s.wat || "واتساب")}</a>` : ""}${s.cart !== false ? '<button class="cart-btn" type="button"><span aria-hidden="true">🛒</span><span class="cart-count">0</span><span class="sr-only"> السلة</span></button>' : ""}</div></header>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-hd{position:${s.stk === false ? "static" : "sticky"};top:0;z-index:50;background:${s.hbg || "#FBF8F2"};backdrop-filter:blur(12px);border-bottom:1px solid ${s.hbr || "#EAE3D6"};box-sizing:border-box}${sel} .pb-hd .container{display:flex;align-items:center;gap:1rem;width:auto;max-width:${num(s.hcw) || 1240}px;margin:0 auto;padding:0 16px}${sel} .pb-hd .logo{font-weight:900;color:${s.lc || "#173F35"};letter-spacing:.5px;text-decoration:none}${sel} .pb-hd .logo span{color:${s.lac || "#8a6a1a"}}${sel} .pb-hd nav.menu{display:flex;gap:1.4rem;margin-inline-start:auto;font-weight:700;font-size:.95rem}${sel} .pb-hd nav.menu a{color:${s.mc || "#173F35"};opacity:.85;text-decoration:none}${sel} .pb-hd nav.menu a:hover{opacity:1}${sel} .pb-hd .hd-wa{background:${s.wbg || "#157A55"};color:${s.wtc || "#fff"};padding:.5rem 1.1rem;border-radius:999px;font-weight:800;display:flex;align-items:center;gap:.4rem;text-decoration:none;margin-inline-start:auto}${sel} .pb-hd nav.menu~.hd-wa{margin-inline-start:0}${sel} .pb-hd .cart-btn{position:relative;background:${s.cbg || "#173F35"};color:#fff;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;border:0;cursor:pointer}${sel} .pb-hd .cart-count{position:absolute;top:-6px;left:-6px;background:#D64545;color:#fff;font-size:.7rem;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:grid;place-items:center;padding:0 4px}${sel} .pb-hd .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}@media(max-width:860px){${sel} .pb-hd nav.menu{display:none}}`);
+        emit(c, sel + " .pb-hd .container", s, [["hpd", v => dimsDecl("padding", v).replace(/padding-(right|left):[^;]*;/g, "")]]); emit(c, sel + " .pb-hd .logo", s, [["lfs", px("font-size")]]); },
     },
     pgal: {
       label: "معرض المنتج (رئيسية + مصغّرات)", ic: "🖼️", fit: 1, def: { imgs: "", ratio: "1/1", rad: { d: 20 }, trad: { d: 12 }, tsz: { d: 72 }, gap: { d: 10 }, auto: 0, ac: "#c8a24b" },
@@ -7613,7 +7632,7 @@ const PB = (() => {
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "tbadges", "pgal", "shopcats", "herow", "sfoot", "pprice", "poffers", "pgallery", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "tbadges", "pgal", "shopcats", "herow", "sfoot", "sbar", "shdr", "pprice", "poffers", "pgallery", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -7709,6 +7728,8 @@ const PB = (() => {
     { k: "sitehero", n: "الهيرو (قسم واجهة الموقع)", ic: "🚀", d: "قسم الواجهة كما في الرئيسية: شارة، عنوان بكلمة مميّزة، أزرار، شارات، إحصاءات، صورة وبطاقتان عائمتان — كله قابل للتعديل", f: () => mkS([mkC([mkW("herow", {})])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }) },
     { k: "sitecats", n: "فئات المتجر", ic: "🗂️", d: "بطاقات «تسوّق حسب الفئة» باختيار الفئة وصورتها", f: () => mkS([mkC([mkW("shopcats", {})])], { pad: { d: [40, 20, 40, 20] } }) },
     { k: "sitefoot", n: "الفوتر (تذييل الموقع)", ic: "🔻", d: "أعمدة نص وروابط وسطر الحقوق بألوانك", f: () => mkS([mkC([mkW("sfoot", {})])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }) },
+    { k: "sitebar", n: "الشريط العلوي (إعلان)", ic: "📢", d: "شريط إعلان بلون وكلمات مميّزة ورابط", f: () => mkS([mkC([mkW("sbar", {})])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }) },
+    { k: "sitehead", n: "الهيدر (رأس الموقع)", ic: "🔝", d: "الشعار والقائمة وزرّا واتساب والسلة", f: () => mkS([mkC([mkW("shdr", {})])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }) },
     { k: "gallery", n: "معرض المنتج (رئيسية + مصغّرات)", ic: "🖼️", d: "صورة كبيرة تتبدّل بالنقر على المصغّرات، مع تبديل تلقائي اختياري", f: () => mkS([mkC([mkW("pgal", {})], DCARD)], { cw: { d: 640 }, pad: { d: [30, 20, 30, 20] } }) },
     { k: "trust", n: "شارات الثقة (+ يشاهدون الآن)", ic: "🏷️", d: "شارات صغيرة وشارة حيّة بعدّاد متحرك", f: () => mkS([mkC([mkW("tbadges", {})])], { pad: { d: [16, 20, 16, 20] } }) },
     { k: "head", n: "كتلة عنوان المنتج", ic: "🔠", d: "شارة علوية + عنوان + تقييم + عنوان فرعي + وصف", f: () => mkS([mkC([dEyebrow(), dTitle(), dStars(), dSub(), dDesc()])], { pad: { d: [30, 20, 20, 20] } }) },
@@ -8144,6 +8165,7 @@ body{overflow-x:hidden;margin:0}`;
   /* أيقونات SVG موحّدة بدل الإيموجي */
   const IC = { heading: '<path d="M6 4v16M18 4v16M6 12h12"/>', text: '<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', button: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>',
     shape: '<path d="M12 3l2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.2 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/>', slider: '<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M2 9v6M22 9v6"/>', gallery: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+    sbar: '<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h12"/>', shdr: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20M6 6.5h3M15 6.5h3"/>',
     shopcats: '<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/>', herow: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 10h7M6 14h4"/><rect x="15" y="8" width="4" height="8" rx="1"/>', sfoot: '<rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 15h20M6 18h4M14 18h4"/>', tbadges: '<path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z"/>', pgal: '<rect x="3" y="3" width="18" height="12" rx="2"/><rect x="3" y="18" width="4" height="3" rx="1"/><rect x="10" y="18" width="4" height="3" rx="1"/><rect x="17" y="18" width="4" height="3" rx="1"/>',
     products: '<path d="M6 2L4 6v14a2 2 0 002 2h12a2 2 0 002-2V6l-2-4z"/><path d="M4 6h16M16 10a4 4 0 01-8 0"/>', orderorig: '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 002 1.6h8.1a2 2 0 002-1.5L21 8H6"/>', iconbox: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>',
     iconlist: '<path d="M10 6h11M10 12h11M10 18h11"/><path d="M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/>', video: '<rect x="2" y="5" width="20" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/>', accordion: '<rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/>', testimonial: '<path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 9h8M8 13h5"/>',
@@ -8961,7 +8983,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     }
     if (t.dataset.lib) { const paths = await openLibrary(false); if (paths.length) { inf.set[t.dataset.lib] = paths[0]; afterEdit(); } return; }
     if (t.dataset.cpy) { copyDevice(t.dataset.cpy, ($("cp-scope") || {}).value || "sel"); return; }
-    if (t.dataset.repadd) { const arr = inf.set[t.dataset.repadd] = inf.set[t.dataset.repadd] || []; arr.push(inf.node.type === "slider" ? { img: "", title: "عنوان جديد", cx: 50, cy: 84 } : inf.node.type === "contact" ? { label: "حقل جديد", type: "text", ph: "", req: false, w: "full" } : inf.node.type === "shopcats" ? { cat: Object.keys((typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : { skin: 1 }))[0] || "", label: "", img: "" } : inf.node.type === "herow" ? (t.dataset.repadd === "btns" ? { t: "زر جديد", l: "#", s: "gold" } : { v: "0", l: "وصف" }) : inf.node.type === "sfoot" ? { h: "عنوان جديد", b: "النص هنا" } : { q: "سؤال جديد", a: "الجواب" }); afterEdit(); return; }
+    if (t.dataset.repadd) { const arr = inf.set[t.dataset.repadd] = inf.set[t.dataset.repadd] || []; arr.push(inf.node.type === "slider" ? { img: "", title: "عنوان جديد", cx: 50, cy: 84 } : inf.node.type === "contact" ? { label: "حقل جديد", type: "text", ph: "", req: false, w: "full" } : inf.node.type === "shopcats" ? { cat: Object.keys((typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : { skin: 1 }))[0] || "", label: "", img: "" } : inf.node.type === "herow" ? (t.dataset.repadd === "btns" ? { t: "زر جديد", l: "#", s: "gold" } : { v: "0", l: "وصف" }) : inf.node.type === "shdr" ? { t: "رابط جديد", l: "#" } : inf.node.type === "sfoot" ? { h: "عنوان جديد", b: "النص هنا" } : { q: "سؤال جديد", a: "الجواب" }); afterEdit(); return; }
     if (t.dataset.repup || t.dataset.repmulti) {
       const multi = !!t.dataset.repmulti, k = t.dataset.repup || t.dataset.repmulti, f = t.dataset.f, files = await pickFiles(multi); if (!files.length) return;
       try { const paths = await uploadFiles(files), arr = inf.set[k] = inf.set[k] || [];
@@ -10441,13 +10463,33 @@ const PBConvert = (() => {
       return mkS([mkC([mkW("herow", set)])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } });
     };
     const footSec = ft => {
-      const cols = [...ft.querySelectorAll(".fgrid > div")]; if (!cols.length) return null;
+      const cols = [...ft.querySelectorAll(".fgrid > div")];
+      if (!cols.length) { const t = txt(ft); if (!t) return null; const q = cs(ft), ct = ft.querySelector(".container") || ft, sp = ft.querySelector("span"), set = { cols: [], copy: t, spad: { d: [Math.round(parseFloat(cs(ct).paddingTop) || 0) + Math.round(parseFloat(q.paddingTop) || 0), 0, Math.round(parseFloat(cs(ct).paddingBottom) || 0) + Math.round(parseFloat(q.paddingBottom) || 0), 0], m: [16, 0, 16, 0] } }, bg = hex(q.backgroundColor), tc = hex(cs(sp || ft).color); if (bg) set.sbg = bg; if (tc) set.tc = tc; return fullSec(mkW("sfoot", set), "bot"); }
       const md = n => [...n.childNodes].map(x => x.nodeType === 3 ? x.textContent.replace(/\s+/g, " ") : x.tagName === "BR" ? "\n" : x.tagName === "A" ? "[" + txt(x) + "](" + (x.getAttribute("href") || "#") + ")" : md(x)).join("");
       const set = { cols: cols.map(c => { const hh = c.querySelector(".ft-h,h3,h4"); const cl = c.cloneNode(true); const h2 = cl.querySelector(".ft-h,h3,h4"); if (h2) h2.remove(); return { h: hh ? txt(hh) : "", b: md(cl).replace(/^\s+|\s+$/g, "").replace(/ *\n */g, "\n") }; }) };
       const cp = ft.querySelector(".copy"); set.copy = cp ? txt(cp) : ""; const q = cs(ft), bg = hex(q.backgroundColor), tc = hex(q.color); if (bg) set.sbg = bg; if (tc) { set.tc = tc; set.lc = tc; }
       const hh = ft.querySelector(".ft-h"); if (hh) { const c = hex(cs(hh).color); if (c) set.hc = c; } const a = ft.querySelector("a"); if (a) { const c = hex(cs(a).color); if (c) set.lc = c; }
       const gc = cs(ft.querySelector(".fgrid")).gridTemplateColumns.split(" ").map(parseFloat); if (gc.length > 1 && gc[1] > 0) set.w1 = Math.max(1, Math.min(4, Math.round(gc[0] / gc[1]))); 
-      const sec = mkS([mkC([mkW("sfoot", set)])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = "bot"; return sec;
+      return fullSec(mkW("sfoot", set), "bot");
+    };
+    const fullSec = (w, grp) => { const sec = mkS([mkC([w])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = grp; return sec; };
+    const barSec = el => {
+      const md = n => [...n.childNodes].map(x => x.nodeType === 3 ? x.textContent.replace(/\s+/g, " ") : x.tagName === "B" || x.tagName === "STRONG" ? "**" + txt(x) + "**" : x.tagName === "BR" ? " " : md(x)).join("");
+      const t = md(el).trim(); if (!t) return null; const q = cs(el), set = { txt: t }, bg = hex(q.backgroundColor), tc = hex(q.color), b = el.querySelector("b,strong"), a = el.querySelector("a");
+      if (bg) set.tbg = bg; else { const m = /rgba?\([^)]+\)/.exec(q.backgroundImage || ""); const g = m && hex(m[0]); if (g) set.tbg = g; } if (tc) set.ttc = tc; if (b) { const c = hex(cs(b).color); if (c) set.tbc = c; } if (a) set.link = a.getAttribute("href") || "";
+      set.tfs = { d: px(el, 14) }; set.tpd = { d: ["Top", "Right", "Bottom", "Left"].map(d => Math.round(parseFloat(q["padding" + d]) || 0)) }; set.tal = q.textAlign === "center" ? "center" : (q.textAlign === "left" || q.textAlign === "end") ? "end" : "start";
+      return fullSec(mkW("sbar", set), "top");
+    };
+    const headSec = el => {
+      const ct = el.querySelector(".container"), lg = el.querySelector(".logo"); if (!ct || !lg) return null;
+      const sp = lg.querySelector("span"), set = { llink: lg.getAttribute("href") || "index.html" };
+      set.la = [...lg.childNodes].filter(n => n !== sp).map(n => n.textContent).join(""); set.lb = sp ? sp.textContent : "";
+      set.menu = [...el.querySelectorAll("nav.menu a")].map(a => ({ t: txt(a), l: a.getAttribute("href") || "#" })); const wa = el.querySelector(".hd-wa");
+      set.wa = !!wa; if (wa) { set.wat = txt(wa); set.wal = /wa\.me/.test(wa.href) ? "" : (wa.getAttribute("href") || ""); } set.cart = !!el.querySelector(".cart-btn");
+      const q = cs(el), bg = hex(q.backgroundColor); if (bg) set.hbg = bg; const bc = hex(q.borderBottomColor); if (bc && parseFloat(q.borderBottomWidth) > 0) set.hbr = bc; set.stk = q.position === "sticky" || q.position === "fixed";
+      let c = hex(cs(lg).color); if (c) set.lc = c; if (sp) { c = hex(cs(sp).color); if (c) set.lac = c; } const m1 = el.querySelector("nav.menu a"); if (m1) { c = hex(cs(m1).color); if (c) set.mc = c; } if (wa) { c = hex(cs(wa).backgroundColor); if (c) set.wbg = c; c = hex(cs(wa).color); if (c) set.wtc = c; } const cb = el.querySelector(".cart-btn"); if (cb) { c = hex(cs(cb).backgroundColor); if (c) set.cbg = c; }
+      set.lfs = { d: px(lg, 24) }; const cq = cs(ct); set.hpd = { d: [Math.round(parseFloat(cq.paddingTop) || 0), 0, Math.round(parseFloat(cq.paddingBottom) || 0), 0] }; const cw = Math.round(ct.getBoundingClientRect().width); if (cw > 600) set.hcw = { d: Math.min(1920, cw) };
+      return fullSec(mkW("shdr", set), "top");
     };
     function widgetsOf(el, out) {
       const n0 = out.length; widgetsOf0(el, out);
@@ -10528,7 +10570,8 @@ const PBConvert = (() => {
     flush();
     if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug, raw: rawOrder })])], {}));
     secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; delete w._r; })));
-    if (o.kind === "home") { const ft = doc.querySelector("footer.site"); if (ft) { try { secs._foot = footSec(ft); } catch (e) { } } }
+    { const ft = doc.querySelector("footer.site"); if (ft) { try { secs._foot = footSec(ft); } catch (e) { } } }
+    { const tb = doc.querySelector(".topbar"), hd = doc.querySelector("header.site"); try { if (tb) secs._bar = barSec(tb); } catch (e) { } try { if (hd) secs._head = headSec(hd); } catch (e) { } }
     return secs;
   }
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحوّلها إلى صفحة مطوّر: قسم لكل كتلة بنفس HTML الأصل + أنماطها */
@@ -10549,13 +10592,14 @@ const PBConvert = (() => {
       if (el.matches("script,style,link,noscript,template")) return;
       if (el.matches("main")) { if (!native) [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
       if (el.matches(AG)) return;
-      const g = GROUP(el); if (g === "top") top.push(raw("top", el)); else if (g === "bot") bot.push(raw("bot", el));
+      const g = GROUP(el); if (g === "top") { const r = raw("top", el); r._isBar = el.matches(".topbar"); top.push(r); } else if (g === "bot") bot.push(raw("bot", el));
     });
     if (native) {      // صفحة المنتج: تُفكَّك إلى عناصر المطوّر الحقيقية (عنوان/نص/صورة/زر/أعمدة…) وتبقى الأجزاء الوظيفية كتلاً أصلية محمية
       const fr = await render(kind === "home" ? "index.html" : "p/" + slug + "/");
       let main = []; try { const st = fr.contentDocument.createElement("style"); st.textContent = ".reveal{opacity:1!important;transform:none!important;transition:none!important}"; fr.contentDocument.head.appendChild(st); main = convertMain(fr.contentDocument, { kind, slug }, doc); } finally { fr.remove(); }
       main.forEach(x => { x.grp = x.grp || "main"; });
       if (main._foot && bot.length) bot.splice(0, bot.length, main._foot);
+      top.forEach((r, i) => { const c = r._isBar ? main._bar : main._head; if (c) top[i] = c; });
       secs.push(...top, ...main, ...bot);
     } else { const m = secs.splice(0); secs.push(...top, ...m, ...bot); }
     const page = newPage(title || "الصفحة الرئيسية", kind === "home" ? "home" : slug);
@@ -10626,7 +10670,8 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       const ws = (sec.cols || []).flatMap(c => c.widgets || []), isRaw = sec.grp && (sec.cols || []).length === 1 && ws.length === 1 && ws[0].type === "html" && !(sec.free || []).length;
       if (isRaw) { out[g].push(PBBind.bake(ws[0].set.code || "", o)); return; }
       native = true; const r = PB.renderSections({ sections: [sec], product: o.kind === "product" ? o.slug : (P.product || "") }, Object.assign({ base: o.kind === "home" ? "" : "../../", edit: false, inlineOrder: o.kind === "product" }, ctx));
-      out[g].push("<style>" + r.css + "</style>" + r.html);
+      let hh = r.html; if (sec.grp && ws.length === 1 && /^(shdr|sbar|sfoot)$/.test(ws[0].type)) { const dd = new DOMParser().parseFromString("<body>" + hh + "</body>", "text/html"), w0 = dd.body.querySelector("[data-pbw],.pb-sf"); if (w0) { let q = w0.parentElement; while (q && q !== dd.body) { q.classList.add("pb-dc"); q = q.parentElement; } hh = dd.body.innerHTML; } }      // يبقى الهيدر/الشريط/الفوتر عنصراً مباشراً في الصفحة (لا يعيق التثبيت sticky)
+      out[g].push("<style>.pb-dc{display:contents!important}" + r.css + "</style>" + hh);
     });
     const place = (grp, sel) => {
       const els = [...doc.body.children].filter(el => sel(el)); const html = out[grp].join("\n");
