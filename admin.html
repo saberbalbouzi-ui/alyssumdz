@@ -10517,7 +10517,7 @@ const PBEd = (() => {
   const kidsOf = el => [...el.children].filter(c => c.tagName !== "SCRIPT");
   const rawOf = el => el.closest && el.closest(".pb-raw");
   const widOf = r => { const w = r.closest("[data-pb]"); return w ? w.getAttribute("data-pb") : null; };
-  const isOrig = wid => { const inf = wid && A().find(wid); return !!(inf && inf.node.type === "html" && inf.node.set.src === "orig"); };
+  const isOrig = wid => { const inf = wid && A().find(wid); return !!(inf && inf.node.type === "html"); };      // أي كتلة HTML (أصلية أو منسوخة أو مضافة) تُعدَّل عناصرها بالنقر
   const pathOf = (el, r) => { const p = []; while (el && el !== r) { const par = el.parentElement; p.unshift(kidsOf(par).indexOf(el)); el = par; } return p; };
   const resolve = (base, path) => { let el = base; for (const i of path) { el = kidsOf(el)[i]; if (!el) return null; } return el; };
   const inlineOnly = el => [...el.children].every(c => INL.test(c.tagName) || c.tagName === "A");
@@ -10609,7 +10609,7 @@ ${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">�
   }
   function onOver(e) { const x = target(e); if (hv) { hv.classList.remove("pbed-hv"); hv = null; } if (!x) return; const el = pick(x.t, x.r); if (el && !el.classList.contains("pbed-sel")) { el.classList.add("pbed-hv"); hv = el; } }
   function after(rt, page) {
-    const og = page && page.origin; if (!og || !og.raw) { if (panel) hide(); return; }
+    if (!page) { if (panel) hide(); return; }
     root = rt; const d = rt.ownerDocument;
     if (!d.getElementById("pbed-css")) { const st = d.createElement("style"); st.id = "pbed-css"; st.textContent = ".pbed-sel{outline:2px solid #0e9f8e!important;outline-offset:2px;position:relative}.pbed-hv{outline:1.5px dashed #f59e0b!important;outline-offset:1px;cursor:pointer}[contenteditable=true]{outline:2px solid #f59e0b!important;background:rgba(245,158,11,.08)!important;cursor:text!important}"; d.head.appendChild(st); }
     if (!rt._ped) { rt._ped = true; rt.addEventListener("click", onClick, true); rt.addEventListener("dblclick", onDbl, true); rt.addEventListener("mouseover", onOver); }
