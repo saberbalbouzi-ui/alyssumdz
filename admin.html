@@ -7722,7 +7722,7 @@ const PB = (() => {
       }
       const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free || (edit ? '<div class="pb-empty" style="margin:40px auto;max-width:360px;pointer-events:none">اسحب العناصر إلى هذا القماش الحر وحرّكها وغيّر أحجامها بحرية</div>' : "")}</div>` : "";
       const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
-      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
+      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""}${s.bgImg ? " pb-hasbg" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
     }).join("");
     return { html, css: finishCss(css) };
   }
@@ -7872,6 +7872,7 @@ const PBApp = (() => {
 .pb-edit .pbx-dropcol{outline:3px dashed #9b59b6!important;outline-offset:-3px;background:rgba(155,89,182,.08)}
 .pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
 [contenteditable=true]{outline:2px solid #2d6cdf!important;outline-offset:3px;cursor:text;min-width:20px}
+.pb-edit .k-canvas.pb-hasbg .pb-in{background-image:none!important}
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
 .pb-edit .pb-sl-cap:not(.below){cursor:move}
 .pb-drop{position:absolute;background:#2d6cdf;height:4px;border-radius:2px;pointer-events:none;z-index:9999;box-shadow:0 0 0 2px rgba(45,108,223,.25)}
@@ -8213,7 +8214,16 @@ body{overflow-x:hidden;margin:0}`;
     afterEdit();
   }
   function asBackground(inf) {
-    if (inf.node.type !== "image" || !inf.set.src) return; const sec = inf.sec; sec.set.bgImg = inf.set.src; sec.set.bgSize = "cover"; sec.set.bgPos = "center"; inf.list.splice(inf.idx, 1); afterEdit(null); toast("🖼️ صارت الصورة خلفية للقسم");
+    if (inf.node.type !== "image" || !inf.set.src) return; const sec = inf.sec;
+    sec.set.bgOrig = { node: clone(inf.node), colId: inf.col ? inf.col.id : null, free: !!inf.free, idx: inf.idx };      // لإرجاع الصورة إلى أصلها لاحقاً
+    sec.set.bgImg = inf.set.src; sec.set.bgSize = "cover"; sec.set.bgPos = "center"; inf.list.splice(inf.idx, 1); afterEdit(null); toast("🖼️ صارت الصورة خلفية للقسم — حدّد القسم واضغط «إرجاع الخلفية كصورة» للتراجع");
+  }
+  /* إرجاع خلفية القسم إلى صورة عادية في مكانها الأصلي */
+  function restoreBackground(sec) {
+    const o = sec.set.bgOrig;
+    if (o && o.node) { const w = o.node; if (o.free) sec.free.splice(Math.min(o.idx, sec.free.length), 0, w); else { const col = sec.cols.find(c => c.id === o.colId) || sec.cols[0]; col.widgets.splice(Math.min(o.idx, col.widgets.length), 0, w); } E.sel = w.id; }
+    else if (sec.set.bgImg) { const w = PB.mkW("image", { src: sec.set.bgImg }); sec.cols[0].widgets.push(w); E.sel = w.id; }
+    delete sec.set.bgImg; delete sec.set.bgSize; delete sec.set.bgPos; delete sec.set.bgOrig; afterEdit(E.sel); toast("↩ رجعت الصورة إلى مكانها كصورة عادية");
   }
   function showCtx(e) {
     const wEl = e.target.closest('[data-kind="widget"]'); hideCtx(); if (!wEl) return; e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
@@ -8692,7 +8702,9 @@ body{overflow-x:hidden;margin:0}`;
   /* لوحة صغيرة للعناصر: الطبقة والوضع، وللعنصر الحر المحاذاة والإزاحة */
   const gemOn = () => { try { return localStorage.getItem("alyssum_pbs_gem") === "1"; } catch (e) { return false; } };
   function quickHtml(inf) {
-    if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q"><div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
+    const bgBtn = inf.kind === "section" && inf.node.set.bgImg ? `<div class="pbx-qg"><small>خلفية القسم</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="bg-restore" title="تعيد الصورة إلى مكانها كصورة عادية">↩ إرجاع الخلفية كصورة</button></div></div>` : "";
+    if (inf.kind === "section" && inf.node.set.kind !== "canvas" && bgBtn) return `<div class="pbx-q">${bgBtn}</div>`;
+    if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q">${bgBtn}<div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
     if (inf.kind !== "widget") return "";
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
     const grp = (cap, body) => `<div class="pbx-qg"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
@@ -8705,6 +8717,7 @@ body{overflow-x:hidden;margin:0}`;
     return h + `</div>`;
   }
   function onQuick(k) {
+    if (k === "bg-restore") { const inf = selInfo(); if (inf && inf.kind === "section") restoreBackground(inf.node); return; }
     if (k === "smart-text") return PBSmart.capture(); if (k === "smart-magic") return PBSmart.captureElements(); if (k === "smart-import") return PBSmart.importImages();
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
     if (k === "mir-h" || k === "mir-v") return mirrorDup(k === "mir-h" ? "h" : "v");
