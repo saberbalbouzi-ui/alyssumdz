@@ -10281,6 +10281,100 @@ const PBConvert = (() => {
   const siteBase = () => location.href.replace(/[?#].*$/, "").replace(/[^/]*$/, "");
   const absCss = (css, from) => css.replace(/url\(\s*(['"]?)(?!data:|https?:|\/\/|#)([^)'"]+?)\1\s*\)/g, (m, q, u) => { try { return "url(" + new URL(u, from).href + ")"; } catch (e) { return m; } });
   const GROUP = el => el.matches(".topbar,header") ? "top" : el.matches("footer") ? "bot" : "";
+  async function render(url) {
+    const fr = document.createElement("iframe"); fr.setAttribute("aria-hidden", "true"); fr.style.cssText = "position:fixed;left:-12000px;top:0;width:1280px;height:900px;border:0;visibility:hidden";
+    document.body.appendChild(fr);
+    try { await new Promise((res, rej) => { fr.onload = res; fr.onerror = rej; fr.src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); setTimeout(res, 12000); }); await new Promise(r => setTimeout(r, 2200)); return fr; }
+    catch (e) { fr.remove(); throw e; }
+  }
+  function convertMain(doc, o, fdoc) {
+    const win = doc.defaultView, cs = el => win.getComputedStyle(el);
+    const hidden = el => { const s = cs(el); return s.display === "none" || s.visibility === "hidden" || el.hidden || (+s.opacity === 0 && !el.querySelector("img")); };
+    const skip = el => el.matches(SKIP) || hidden(el);
+    const kids = el => [...el.children].filter(c => !skip(c));
+    const dom = String((typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || "").replace(/^www\./, ""), rel = u => { try { const x = new URL(u, doc.baseURI); if (x.origin !== new URL(doc.baseURI).origin && !(dom && x.hostname.replace(/^www\./, "") === dom)) return x.href; return decodeURIComponent(x.pathname.replace(/^\//, "")) + x.search; } catch (e) { return u; } };
+    const ta = el => { const a = cs(el).textAlign; return a === "center" ? "center" : (a === "left" || a === "end") ? "end" : "start"; };
+    const px = (el, d) => Math.round(parseFloat(cs(el).fontSize) || d);
+    const inline = el => { const c = el.cloneNode(true); c.querySelectorAll("script,style,svg,img,button,input,select,textarea,iframe").forEach(x => x.remove()); c.querySelectorAll("*").forEach(x => { [...x.attributes].forEach(a => { if (!(x.tagName === "A" && a.name === "href")) x.removeAttribute(a.name); }); if (!/^(A|B|STRONG|EM|I|U|BR|P|UL|OL|LI|SPAN|SMALL|MARK|DEL|S)$/.test(x.tagName)) x.replaceWith(...x.childNodes); }); return c.innerHTML.trim(); };
+    const txt = el => (el.textContent || "").replace(/\s+/g, " ").trim();
+    const hasBlock = el => [...el.children].some(c => !skip(c) && /^(DIV|SECTION|ARTICLE|UL|OL|H[1-6]|FORM|TABLE|DETAILS|FIGURE|IMG|PICTURE|VIDEO|IFRAME|P|BLOCKQUOTE|ASIDE)$/.test(c.tagName));
+    const colorOf = el => { const h = hex(cs(el).color); return h; };
+    const isOrder = el => (el.matches("form,[id*=order i],[class*=order i]") && el.querySelector("input,select,textarea")) || (el.querySelector && el.querySelector("#name,#phone,#cname,input[type=tel]") && el.querySelector("button") && !el.querySelector("h1,h2") && el.querySelectorAll("input").length >= 2);
+    let sawOrder = false; const seen = new Set();
+    /* نموذج الطلب الأصلي كما هو في ملف الصفحة (يُستعمل عند الحفظ المباشر على صفحة المنتج نفسها فلا يتضمّن نفسه) */
+    const rawOrder = (() => { if (o.kind !== "product" || !fdoc) return ""; const inp = fdoc.querySelector("#cname,#name,#phone,input[type=tel]"); const el = inp && (inp.closest("form,[id*=order i],[class*=order i]") || inp.parentElement); return el ? el.outerHTML : ""; })();
+    /* عناصر وظيفية حسّاسة تبقى كتلة HTML أصلية محمية (لا تُفكَّك): المعرض التفاعلي، العناصر المرتبطة بالسلة/الطلب، وأقسام تملؤها سكربتات الصفحة */
+    const dyn = new Set(); (fdoc ? fdoc.querySelectorAll("script:not([src])") : []).forEach(sc => (sc.textContent.match(/getElementById\(["']([\w-]+)["']\)/g) || []).forEach(m => dyn.add(m.replace(/^.*\(["']|["']\)$/g, ""))));
+    const dynEmpty = [...dyn].filter(id => { const e = fdoc && fdoc.getElementById(id); return e && !e.children.length && !(e.textContent || "").trim() && !["offers", "pprice", "pold", "psave", "name", "phone", "commune", "wilaya", "gmain", "gthumbs"].includes(id) && !/^(input|select|textarea|button)$/i.test(e.tagName); });
+    const PROT = "[data-cart],.gallery,.order-form,.pbox,.gthumbs,#gmain" + (dynEmpty.length ? "," + dynEmpty.map(i => "#" + i).join(",") : "");
+    const mainD = doc.querySelector("main") || doc.body, fmainD = fdoc && (fdoc.querySelector("main") || fdoc.body);
+    const fileEl = el => { if (!fdoc) return null; if (el.id) { const e = fdoc.getElementById(el.id); if (e && e.tagName === el.tagName) return e; } const p = []; let x = el; while (x && x !== mainD) { const par = x.parentElement; if (!par) return null; p.unshift([...par.children].indexOf(x)); x = par; } let f = fmainD; for (const i of p) { f = f && f.children[i]; } return f && f.tagName === el.tagName ? f : null; };
+    const rawKeep = c => !!(dynEmpty.length && c.querySelector(dynEmpty.map(i => "#" + i).join(",")));
+    const protect = el => !!(el.matches(PROT) && !el.matches("body,main"));
+    const rawW = el => { const f = fileEl(el); return mkW("html", { code: (f || el).outerHTML, src: "orig" }); };
+
+    function widgetsOf(el, out) {
+      if (skip(el)) return;
+      const tag = el.tagName;
+      if (protect(el) && !(o.kind === "product" && isOrder(el))) { out.push(rawW(el)); return; }
+      if (o.kind === "product" && isOrder(el)) { if (!sawOrder) { sawOrder = true; out.push(mkW("orderorig", { prod: o.slug, raw: rawOrder })); } return; }
+      if (o.kind === "product") {
+        if (el.id === "offers" || (el.querySelector("#offers") && !el.querySelector("h1,h2,form,#gmain,#pprice") && txt(el).length < 400)) { out.push(mkW("poffers", { prod: o.slug })); return; }
+        if (el.id === "pprice" || (el.querySelector("#pprice") && !el.querySelector("h1,h2,img,#offers,form") && txt(el).length < 120)) { out.push(mkW("pprice", { prod: o.slug })); return; }
+      }
+      if (/^H[1-6]$/.test(tag)) { const t = txt(el); if (!t) return; const w = mkW("heading", { text: t, tag: tag.toLowerCase(), bindTitle: o.kind === "product" && tag === "H1", prod: o.kind === "product" ? o.slug : "", fs: { d: px(el, 32), m: Math.max(18, Math.round(px(el, 32) * (px(el, 32) > 30 ? .72 : .9))) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return; }
+      if (tag === "IMG") { const r = el.getBoundingClientRect(); const src = el.currentSrc || el.src || ""; if (!src || r.width < 110 || el.closest("[class*=thumb]") || seen.has(src) || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(src)) return; seen.add(src); out.push(mkW("image", { src: rel(src), alt: el.alt || "", fit: "cover" })); return; }
+      if (tag === "PICTURE") { const i = el.querySelector("img"); if (i) widgetsOf(i, out); return; }
+      if (tag === "VIDEO" || (tag === "IFRAME" && /youtube|vimeo/i.test(el.src))) { const u = el.src || (el.querySelector("source") || {}).src || ""; if (u) out.push(mkW("video", { url: u, ratio: "16/9" })); return; }
+      if (tag === "UL" || tag === "OL") { const li = [...el.children].filter(c => c.tagName === "LI" && txt(c)); if (li.length && li.every(x => !hasBlock(x))) { out.push(mkW("bullets", { items: li.map(txt).join("\n"), mk: tag === "OL" ? "dec" : "check", fs: { d: px(li[0], 17) } })); return; } }
+      if (tag === "DETAILS" || tag === "TABLE") { if (tag === "DETAILS") { const q = txt(el.querySelector("summary") || {}), a = txt({ textContent: [...el.childNodes].filter(n => !(n.tagName === "SUMMARY")).map(n => n.textContent).join(" ") }); if (q) { const last = out[out.length - 1]; const it = { q, a }; if (last && last.type === "accordion" && last._auto) last.set.items.push(it); else { const w = mkW("accordion", { items: [it], first: false }); w._auto = true; out.push(w); } } return; } }
+      if ((tag === "A" || tag === "BUTTON") && (el.matches("[class*=btn]") || tag === "BUTTON")) { const t = txt(el); if (!t || el.matches(".cart-btn,.btn-order,[onclick*=Cart]") || el.closest("[class*=tab],[class*=pill],[class*=chip],[id*=tab]") || t.length > 60) return; const s = cs(el); const w = mkW("button", { text: t, kind: "link", link: tag === "A" ? (el.getAttribute("href") || "#") : "#", fs: { d: px(el, 18) }, brad: { d: parseInt(s.borderTopLeftRadius) || 10 } }); const bg = hex(s.backgroundColor), c = hex(s.color); if (bg) w.set.bgc = bg; if (c) w.set.color = c; if (!bg) w.set.bgHide = true; out.push(w); return; }
+      if (o.kind === "home" && (el.id === "grid" || el.matches(".grid") && el.querySelector("[data-slug],.card,.pcard"))) { out.push(mkW("products", { mode: "all" })); return; }
+      if (tag === "P" || tag === "BLOCKQUOTE" || tag === "SPAN" || tag === "SMALL" || tag === "LI" || tag === "A" || tag === "B" || tag === "STRONG" || tag === "LABEL" || ((tag === "DIV" || tag === "FIGCAPTION" || tag === "TD") && !hasBlock(el) && !el.querySelector("a[class*=btn],button"))) {
+        if (el.querySelector("img") && !txt(el)) { [...el.querySelectorAll("img")].forEach(i => widgetsOf(i, out)); return; }
+        const h = inline(el), t = txt(el); if (!t) return;
+        const w = mkW("text", { html: /^<p[ >]/.test(h) ? h : "<p>" + h + "</p>", fs: { d: px(el, 17) }, ta: { d: ta(el) } }); const c = colorOf(el); if (c) w.set.color = c; out.push(w); return;
+      }
+      kids(el).forEach(c => widgetsOf(c, out));
+    }
+    /* حاوية بأعمدة (grid / flex أفقي) ← أعمدة في القسم */
+    function columnsOf(el) {
+      const s = cs(el), k = kids(el);
+      if (k.length < 2 || k.length > 4) return null;
+      const row = (s.display === "grid" && s.gridTemplateColumns.split(" ").length >= 2) || (s.display === "flex" && !/column/.test(s.flexDirection));
+      if (!row) return null;
+      const cols = k.map(c => { const w = []; widgetsOf(c, w); return w; }).filter(w => w.length);
+      return cols.length >= 2 ? cols : null;
+    }
+    function sectionOf(el, hint) {
+      let inner = el, safe = 0;
+      while (safe++ < 4) { const k = kids(inner); if (k.length === 1 && !/^(IMG|H[1-6]|P|UL|OL|FORM)$/.test(k[0].tagName) && !isOrder(k[0])) inner = k[0]; else break; }
+      let cols = columnsOf(inner); let cs_;
+      if (!cols) { let found = null; const ks = kids(inner), gi = ks.findIndex(k => (found = columnsOf(k))); if (gi >= 0 && ks.length > 1) {      // قسم يضم كتلة أعمدة بين عناصر أخرى ← أقسام متتالية: ما قبلها، الأعمدة، ما بعدها
+        const mk = (list) => { const w = []; list.forEach(c => widgetsOf(c, w)); return w.length ? mkS([mkC(w)], {}) : null; };
+        const secsOut = [mk(ks.slice(0, gi)), mkS(found.map(w => mkC(w)), {}), mk(ks.slice(gi + 1))].filter(Boolean);
+        const bg0 = hex(cs(el).backgroundColor); if (bg0) secsOut.forEach(x => { x.set.bg = bg0; }); return secsOut; } }
+      if (cols) cs_ = cols.map(w => mkC(w)); else { const w = []; widgetsOf(inner, w); if (!w.length) return null; cs_ = [mkC(w)]; }
+      const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
+      if (b2) set.bg = b2;
+      const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
+      return mkS(cs_, set);
+    }
+    const root = doc.querySelector("main") || doc.body, secs = [];
+    const rawSec = (c, idx) => { let el = c.id ? fdoc.getElementById(c.id) : null; if (!el) { const m = fdoc.querySelector("main"); el = m && m.children[idx]; } if (!el) return null; const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = "main"; return sec; };
+    let loose = [];
+    const flush = () => { if (!loose.length) return; const w = []; loose.forEach(c => widgetsOf(c, w)); if (w.length) secs.push(mkS([mkC(w)], {})); loose = []; };
+    const all = [...root.children], top = all.flatMap(c => (c.matches(".container,#main,div") && kids(c).length > 1 && kids(c).every(x => x.matches("section,.hero,div[class*=sec],.container"))) ? kids(c) : [c]);
+    top.forEach(c => {
+      if (skip(c)) return;
+      if (rawKeep(c)) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
+      if (c.matches("section,.container") || hex(cs(c).backgroundColor) || /gradient/.test(cs(c).backgroundImage) || c.matches(".hero,[class*=hero]")) { flush(); const s = sectionOf(c); if (s) secs.push(...[].concat(s)); } else loose.push(c);
+    });
+    flush();
+    if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug, raw: rawOrder })])], {}));
+    secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; })));
+    return secs;
+  }
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحوّلها إلى صفحة مطوّر: قسم لكل كتلة بنفس HTML الأصل + أنماطها */
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحافظ على هيكلها كاملاً: كل كتلة (الشريط العلوي، الهيدر، أقسام المحتوى، الفوتر) قسم في المطوّر بنفس HTML الأصل وأنماطه؛
      تُعدَّل عناصرها (نصوص، صور، روابط، ألوان، أحجام…) مباشرة بالنقر عليها (PBEd) دون أن يتغيّر الهيكل */
@@ -10294,20 +10388,26 @@ const PBConvert = (() => {
     }
     const AG = "#agent,[id^=agent],[class*=agent],#avatar,.avatar-bubble";      // الوكيل الذكي يُستثنى من المطوّر
     const raw = (grp, el) => { const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = grp; return sec; };
-    const secs = [];
+    const secs = [], top = [], bot = [], native = kind === "product";
     [...doc.body.children].forEach(el => {
       if (el.matches("script,style,link,noscript,template")) return;
-      if (el.matches("main")) { [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
+      if (el.matches("main")) { if (!native) [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
       if (el.matches(AG)) return;
-      const g = GROUP(el); if (g) secs.push(raw(g, el));
+      const g = GROUP(el); if (g === "top") top.push(raw("top", el)); else if (g === "bot") bot.push(raw("bot", el));
     });
+    if (native) {      // صفحة المنتج: تُفكَّك إلى عناصر المطوّر الحقيقية (عنوان/نص/صورة/زر/أعمدة…) وتبقى الأجزاء الوظيفية كتلاً أصلية محمية
+      const fr = await render("p/" + slug + "/");
+      let main = []; try { main = convertMain(fr.contentDocument, { kind, slug }, doc); } finally { fr.remove(); }
+      main.forEach(x => { x.grp = x.grp || "main"; });
+      secs.push(...top, ...main, ...bot);
+    } else { const m = secs.splice(0); secs.push(...top, ...m, ...bot); }
     const page = newPage(title || "الصفحة الرئيسية", kind === "home" ? "home" : slug);
     page.sections = secs.length ? secs : [mkS([mkC([mkW("heading", { text: title || "صفحة" })])], {})];
     page.header = false; page.footer = false; page.css = css; page.bg = "transparent";
     const t = doc.title || ""; if (t) page.seoTitle = t.replace(/\s+—.*$/, "");
     const md = doc.querySelector('meta[name="description"]'); if (md) page.desc = md.content || "";
     if (kind === "product") page.product = slug;
-    page.shell = text; page.origin = { kind, slug: kind === "home" ? "" : slug, direct: false, raw: true };
+    page.shell = text; page.origin = { kind, slug: kind === "home" ? "" : slug, direct: false, raw: !native, native };
     return page;
   }
   /* زر «تعديل» ← يفتح الصفحة في المطوّر */
@@ -10317,7 +10417,7 @@ const PBConvert = (() => {
     toast("⏳ جارِ فتح الصفحة في المطوّر…");
     try {
       PBBind.reset(); PBEd.hide(); const k = key(kind, slug); let page = null;
-      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.origin.raw && p.shell) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
+      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.shell && !!p.origin.native === (kind === "product")) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
       if (!page) {
         const pr = kind === "product" ? (Admin.products || []).find(x => x.slug === slug) : null;
         if (kind === "product" && !pr) throw new Error("المنتج غير موجود");
@@ -10379,6 +10479,10 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
     place("top", el => GROUP(el) === "top");
     const main = doc.querySelector("main"); if (main) main.innerHTML = out.main.join("\n"); else doc.body.insertAdjacentHTML("afterbegin", "<main>" + out.main.join("\n") + "</main>");
     place("bot", el => GROUP(el) === "bot");
+    if (o.kind === "product") {      // عناصر لا غنى عنها لسكربت صفحة المنتج: تُضاف مخفية إن حذفها المستخدم كي لا يتعطّل نموذج الطلب
+      const mm = doc.querySelector("main");
+      if (mm) { if (!doc.getElementById("offers")) mm.insertAdjacentHTML("beforeend", '<div id="offers" class="offers" style="display:none"></div>'); if (!doc.getElementById("gmain")) mm.insertAdjacentHTML("beforeend", '<img id="gmain" alt="" style="display:none">'); if (!doc.querySelector(".gthumbs")) mm.insertAdjacentHTML("beforeend", '<div class="gthumbs" data-static="1" style="display:none"></div>'); }
+    }
     if (native) {
       const st = doc.createElement("style"); st.id = "pb-native"; st.textContent = PB.BASE_CSS; doc.head.appendChild(st);
       const sc = doc.createElement("script"); sc.textContent = "var __pbBase=" + JSON.stringify(o.kind === "home" ? "" : "../../") + ";var __pbSlug=\"\";var __pbMeta={};" + PB.RUNTIME_JS; doc.body.appendChild(sc);
@@ -10442,9 +10546,16 @@ const PBBind = (() => {
   }
   /* أي صفحة مرتبطة بمنتج (أصلية مفتوحة من المنتج/الرئيسية، أو صفحة هبوط «مرتبطة بمنتج») تُربط عناصرها ببيانات ذلك المنتج */
   const bindOf = page => { if (!page) return null; if (page.origin && (page.origin.raw || page.origin.native)) return page.origin; if (page.product) return { kind: "product", slug: page.product, raw: true, noTitle: true }; return null; };
+  /* صفحة المنتج المفكَّكة: المعرض المحمي يملؤه سكربت الصفحة وقت التشغيل، فيُعرض هنا (للمعاينة فقط، ولا يُكتب في الملف) بصور المنتج من إعداداته */
+  function fillGallery(root, page) {
+    const og = page && page.origin; if (!og || !og.native || og.kind !== "product") return; const p = get(og.slug); if (!p || !(p.images || []).length) return;
+    const m = root.querySelector("#gmain"); if (m && (!m.getAttribute("src") || /placeholder/.test(m.getAttribute("src")))) m.setAttribute("src", p.images[0]);
+    const t = root.querySelector(".gthumbs:not([data-fixed])"); if (t && !t.children.length) { t.innerHTML = p.images.map((x, i) => `<img src="${esc(x)}" alt=""${i === 0 ? ' class="on"' : ""}>`).join(""); t.setAttribute("data-fixed", "1"); }
+  }
   /* بعد كل رسم للقماش */
   function after(root, page) {
     const og = bindOf(page); if (!og) return;
+    fillGallery(root, page);
     if (og.raw !== false) applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true, noTitle: og.noTitle, ro: og.kind === "product" && !official(og.slug, page) });
     const d = root.ownerDocument;
     if (!d.getElementById("pbbind-css")) { const st = d.createElement("style"); st.id = "pbbind-css"; st.textContent = ".pbbind{outline:2px dashed #0e9f8e!important;outline-offset:3px;cursor:pointer!important;position:relative}.pbbind-ro{outline-color:#9ca3af!important}.pbbind:hover{outline-color:#f59e0b!important;background-image:linear-gradient(rgba(14,159,142,.07),rgba(14,159,142,.07))}"; d.head.appendChild(st); }
