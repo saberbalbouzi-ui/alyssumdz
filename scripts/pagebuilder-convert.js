@@ -44,7 +44,7 @@ const PBConvert = (() => {
     /* عناصر وظيفية حسّاسة تبقى كتلة HTML أصلية محمية (لا تُفكَّك): المعرض التفاعلي، العناصر المرتبطة بالسلة/الطلب، وأقسام تملؤها سكربتات الصفحة */
     const dyn = new Set(); (fdoc ? fdoc.querySelectorAll("script:not([src])") : []).forEach(sc => (sc.textContent.match(/getElementById\(["']([\w-]+)["']\)/g) || []).forEach(m => dyn.add(m.replace(/^.*\(["']|["']\)$/g, ""))));
     const dynEmpty = [...dyn].filter(id => { const e = fdoc && fdoc.getElementById(id); return e && !e.children.length && !(e.textContent || "").trim() && !["offers", "pprice", "pold", "psave", "name", "phone", "commune", "wilaya", "gmain", "gthumbs"].includes(id) && !/^(input|select|textarea|button)$/i.test(e.tagName); });
-    const homeRaw = o.kind === "home" ? ".shop-cats,#chips,#grid,#bestsellers-grid,[onclick]" : "";      // الرئيسية: ما تملؤه السكربتات (فئات/شرائح/شبكات المنتجات) وأي عنصر بحدث نقر يبقى كتلة أصلية
+    const homeRaw = o.kind === "home" ? "#chips,#grid,#bestsellers-grid,[onclick]:not(.shop-cat)" : "";      // الرئيسية: ما تملؤه السكربتات (فئات/شرائح/شبكات المنتجات) وأي عنصر بحدث نقر يبقى كتلة أصلية
     const PROT = "[data-cart],.gallery,.order-form,.pbox,.gthumbs,#gmain" + (dynEmpty.length ? "," + dynEmpty.map(i => "#" + i).join(",") : "") + (homeRaw ? "," + homeRaw : "");
     const mainD = doc.querySelector("main") || doc.body, fmainD = fdoc && (fdoc.querySelector("main") || fdoc.body);
     const fileEl = el => { if (!fdoc) return null; if (el.id) { const e = fdoc.getElementById(el.id); if (e && e.tagName === el.tagName) return e; } const p = []; let x = el; while (x && x !== mainD) { const par = x.parentElement; if (!par) return null; p.unshift([...par.children].indexOf(x)); x = par; } let f = fmainD; for (const i of p) { f = f && f.children[i]; } return f && f.tagName === el.tagName ? f : null; };
@@ -70,6 +70,51 @@ const PBConvert = (() => {
     const hasVisual = el => { const q = cs(el); return !!(hex(q.backgroundColor) || (parseFloat(q.borderTopWidth) > 0 && q.borderTopStyle !== "none") || (q.boxShadow && q.boxShadow !== "none") || /gradient\(/.test(q.backgroundImage)); };
     const pseudoBefore = el => { try { let c = win.getComputedStyle(el, "::before").content; if (!c || c === "none" || c === "normal" || /^(url|counter|attr)/.test(c)) return ""; c = c.replace(/^["']|["']$/g, ""); return c.length && c.length < 6 ? c + " " : ""; } catch (e) { return ""; } };
     const BOUND = "#pprice,#pold,#psave,#offers,h1,#gmain,form,input,select,button,[data-cart],.order-form";
+    /* عناصر الموقع الجاهزة: الفئات، الهيرو، الفوتر ← عناصر مطوّر كاملة الإعدادات */
+    const bgUrl = el => { const m = /url\(["']?([^"')]+)["']?\)/.exec(cs(el).backgroundImage || ""); return m ? rel(m[1]) : ""; };
+    const catsW = el => { const items = [...el.querySelectorAll(".shop-cat")].map(b => { const m = /goToCategory\(['"]([^'"]+)['"]\)/.exec(b.getAttribute("onclick") || ""); return m ? { cat: m[1], label: txt(b.querySelector("span") || b), img: bgUrl(b) } : null; }).filter(Boolean); if (!items.length) return null; const q = cs(el), n = (q.gridTemplateColumns || "").split(" ").length; return mkW("shopcats", { items, cols: { d: n >= 2 ? n : 6, t: 3, m: 2 } }); };
+    const heroSec = el => {
+      const h1 = el.querySelector("h1"), cp = el.querySelector(".hero-copy"); if (!h1 || !cp) return null;
+      const em = h1.querySelector("em"), set = {}; const nodes = [...h1.childNodes]; const ei = em ? nodes.indexOf(em) : -1;
+      set.t1 = ei >= 0 ? nodes.slice(0, ei).map(n => n.textContent).join("") : h1.textContent; set.th = em ? em.textContent : ""; set.t2 = ei >= 0 ? nodes.slice(ei + 1).map(n => n.textContent).join("") : "";
+      const eb = cp.querySelector(".eyebrow"); set.eyebrow = eb ? txt(eb) : ""; const sp = cp.querySelector(":scope > p"); set.sub = sp ? txt(sp) : "";
+      set.btns = [...cp.querySelectorAll(".hero-cta a")].map(a => ({ t: txt(a), l: (/wa\.me/.test(a.href) ? "" : (a.getAttribute("href") || "#")), s: a.matches(".btn-ghost") ? "ghost" : "gold" }));
+      const pl = [...cp.querySelectorAll(".hero-trust span")]; set.showPills = pl.length > 0; set.pills = pl.map(txt).join("\n");
+      const st = [...cp.querySelectorAll(".hero-stats > div")]; set.showStats = st.length > 0; set.stats = st.map(d => ({ v: txt(d.querySelector("b") || {}), l: txt(d.querySelector("small") || {}) }));
+      const im = el.querySelector(".hero-imgbox img"); if (im) { set.img = rel(im.currentSrc || im.src); set.imgAlt = im.alt || ""; }
+      const bd = (sel) => { const b = el.querySelector(sel); return b ? [txt({ textContent: [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join("") }), txt(b.querySelector("b") || {}), txt(b.querySelector("small") || {})] : null; };
+      const b1 = bd(".hero-badge.b1"), b2 = bd(".hero-badge.b2"); set.showBadges = !!(b1 || b2); if (b1) { set.b1 = b1[0]; set.b1t = b1[1]; set.b1s = b1[2]; } if (b2) { set.b2 = b2[0]; set.b2t = b2[1]; set.b2s = b2[2]; }
+      return mkS([mkC([mkW("herow", set)])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } });
+    };
+    const footSec = ft => {
+      const cols = [...ft.querySelectorAll(".fgrid > div")];
+      if (!cols.length) { const t = txt(ft); if (!t) return null; const q = cs(ft), ct = ft.querySelector(".container") || ft, sp = ft.querySelector("span"), set = { cols: [], copy: t, spad: { d: [Math.round(parseFloat(cs(ct).paddingTop) || 0) + Math.round(parseFloat(q.paddingTop) || 0), 0, Math.round(parseFloat(cs(ct).paddingBottom) || 0) + Math.round(parseFloat(q.paddingBottom) || 0), 0], m: [16, 0, 16, 0] } }, bg = hex(q.backgroundColor), tc = hex(cs(sp || ft).color); if (bg) set.sbg = bg; if (tc) set.tc = tc; return fullSec(mkW("sfoot", set), "bot"); }
+      const md = n => [...n.childNodes].map(x => x.nodeType === 3 ? x.textContent.replace(/\s+/g, " ") : x.tagName === "BR" ? "\n" : x.tagName === "A" ? "[" + txt(x) + "](" + (x.getAttribute("href") || "#") + ")" : md(x)).join("");
+      const set = { cols: cols.map(c => { const hh = c.querySelector(".ft-h,h3,h4"); const cl = c.cloneNode(true); const h2 = cl.querySelector(".ft-h,h3,h4"); if (h2) h2.remove(); return { h: hh ? txt(hh) : "", b: md(cl).replace(/^\s+|\s+$/g, "").replace(/ *\n */g, "\n") }; }) };
+      const cp = ft.querySelector(".copy"); set.copy = cp ? txt(cp) : ""; const q = cs(ft), bg = hex(q.backgroundColor), tc = hex(q.color); if (bg) set.sbg = bg; if (tc) { set.tc = tc; set.lc = tc; }
+      const hh = ft.querySelector(".ft-h"); if (hh) { const c = hex(cs(hh).color); if (c) set.hc = c; } const a = ft.querySelector("a"); if (a) { const c = hex(cs(a).color); if (c) set.lc = c; }
+      const gc = cs(ft.querySelector(".fgrid")).gridTemplateColumns.split(" ").map(parseFloat); if (gc.length > 1 && gc[1] > 0) set.w1 = Math.max(1, Math.min(4, Math.round(gc[0] / gc[1]))); 
+      return fullSec(mkW("sfoot", set), "bot");
+    };
+    const fullSec = (w, grp) => { const sec = mkS([mkC([w])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = grp; return sec; };
+    const barSec = el => {
+      const md = n => [...n.childNodes].map(x => x.nodeType === 3 ? x.textContent.replace(/\s+/g, " ") : x.tagName === "B" || x.tagName === "STRONG" ? "**" + txt(x) + "**" : x.tagName === "BR" ? " " : md(x)).join("");
+      const t = md(el).trim(); if (!t) return null; const q = cs(el), set = { txt: t }, bg = hex(q.backgroundColor), tc = hex(q.color), b = el.querySelector("b,strong"), a = el.querySelector("a");
+      if (bg) set.tbg = bg; else { const m = /rgba?\([^)]+\)/.exec(q.backgroundImage || ""); const g = m && hex(m[0]); if (g) set.tbg = g; } if (tc) set.ttc = tc; if (b) { const c = hex(cs(b).color); if (c) set.tbc = c; } if (a) set.link = a.getAttribute("href") || "";
+      set.tfs = { d: px(el, 14) }; set.tpd = { d: ["Top", "Right", "Bottom", "Left"].map(d => Math.round(parseFloat(q["padding" + d]) || 0)) }; set.tal = q.textAlign === "center" ? "center" : (q.textAlign === "left" || q.textAlign === "end") ? "end" : "start";
+      return fullSec(mkW("sbar", set), "top");
+    };
+    const headSec = el => {
+      const ct = el.querySelector(".container"), lg = el.querySelector(".logo"); if (!ct || !lg) return null;
+      const sp = lg.querySelector("span"), set = { llink: lg.getAttribute("href") || "index.html" };
+      set.la = [...lg.childNodes].filter(n => n !== sp).map(n => n.textContent).join(""); set.lb = sp ? sp.textContent : "";
+      set.menu = [...el.querySelectorAll("nav.menu a")].map(a => ({ t: txt(a), l: a.getAttribute("href") || "#" })); const wa = el.querySelector(".hd-wa");
+      set.wa = !!wa; if (wa) { set.wat = txt(wa); set.wal = /wa\.me/.test(wa.href) ? "" : (wa.getAttribute("href") || ""); } set.cart = !!el.querySelector(".cart-btn");
+      const q = cs(el), bg = hex(q.backgroundColor); if (bg) set.hbg = bg; const bc = hex(q.borderBottomColor); if (bc && parseFloat(q.borderBottomWidth) > 0) set.hbr = bc; set.stk = q.position === "sticky" || q.position === "fixed";
+      let c = hex(cs(lg).color); if (c) set.lc = c; if (sp) { c = hex(cs(sp).color); if (c) set.lac = c; } const m1 = el.querySelector("nav.menu a"); if (m1) { c = hex(cs(m1).color); if (c) set.mc = c; } if (wa) { c = hex(cs(wa).backgroundColor); if (c) set.wbg = c; c = hex(cs(wa).color); if (c) set.wtc = c; } const cb = el.querySelector(".cart-btn"); if (cb) { c = hex(cs(cb).backgroundColor); if (c) set.cbg = c; }
+      set.lfs = { d: px(lg, 24) }; const cq = cs(ct); set.hpd = { d: [Math.round(parseFloat(cq.paddingTop) || 0), 0, Math.round(parseFloat(cq.paddingBottom) || 0), 0] }; const cw = Math.round(ct.getBoundingClientRect().width); if (cw > 600) set.hcw = { d: Math.min(1920, cw) };
+      return fullSec(mkW("shdr", set), "top");
+    };
     function widgetsOf(el, out) {
       const n0 = out.length; widgetsOf0(el, out);
       if (out.length === n0 + 1) { const w = out[n0], ty = w.type; if (!w._r) { const rr = el.getBoundingClientRect(); w._r = { t: rr.top, b: rr.bottom }; }
@@ -81,6 +126,7 @@ const PBConvert = (() => {
     function widgetsOf0(el, out) {
       if (skip(el)) return;
       const tag = el.tagName;
+      if (o.kind === "home" && el.matches(".shop-cats")) { const w = catsW(el); if (w) { out.push(w); return; } }
       if (protect(el) && !(o.kind === "product" && isOrder(el))) { out.push(rawW(el)); return; }
       if (!/^(H[1-6]|P|IMG|A|BUTTON|SPAN|LI|SMALL|B|STRONG|LABEL|DETAILS|UL|OL)$/.test(tag) && hasVisual(el) && hasBlock(el) && !el.querySelector(BOUND) && !isOrder(el)) { out.push(rawW(el)); return; }      // بطاقة مزخرفة متعددة العناصر: تبقى كما هي حرفياً (تنسيقها محفوظ) وتُعدَّل عناصرها بالنقر
       if (o.kind === "product" && isOrder(el)) { if (!sawOrder) { sawOrder = true; out.push(mkW("orderorig", { prod: o.slug, raw: rawOrder })); } return; }
@@ -141,12 +187,15 @@ const PBConvert = (() => {
     const all = [...root.children], top = all.flatMap(c => (c.matches(".container,#main,div") && kids(c).length > 1 && kids(c).every(x => x.matches("section,.hero,div[class*=sec],.container"))) ? kids(c) : [c]);
     top.forEach(c => {
       if (skip(c)) return;
+      if (o.kind === "home" && c.matches(".hero")) { const hs = heroSec(c); if (hs) { flush(); secs.push(hs); return; } }
       if (rawKeep(c) || (o.kind === "home" && c.matches(".hero,[class*=hero]"))) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
       if (c.matches("section,.container") || hex(cs(c).backgroundColor) || /gradient/.test(cs(c).backgroundImage) || c.matches(".hero,[class*=hero]")) { flush(); const s = sectionOf(c); if (s) secs.push(...[].concat(s)); } else loose.push(c);
     });
     flush();
     if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug, raw: rawOrder })])], {}));
     secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; delete w._r; })));
+    { const ft = doc.querySelector("footer.site"); if (ft) { try { secs._foot = footSec(ft); } catch (e) { } } }
+    { const tb = doc.querySelector(".topbar"), hd = doc.querySelector("header.site"); try { if (tb) secs._bar = barSec(tb); } catch (e) { } try { if (hd) secs._head = headSec(hd); } catch (e) { } }
     return secs;
   }
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحوّلها إلى صفحة مطوّر: قسم لكل كتلة بنفس HTML الأصل + أنماطها */
@@ -167,12 +216,14 @@ const PBConvert = (() => {
       if (el.matches("script,style,link,noscript,template")) return;
       if (el.matches("main")) { if (!native) [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
       if (el.matches(AG)) return;
-      const g = GROUP(el); if (g === "top") top.push(raw("top", el)); else if (g === "bot") bot.push(raw("bot", el));
+      const g = GROUP(el); if (g === "top") { const r = raw("top", el); r._isBar = el.matches(".topbar"); top.push(r); } else if (g === "bot") bot.push(raw("bot", el));
     });
     if (native) {      // صفحة المنتج: تُفكَّك إلى عناصر المطوّر الحقيقية (عنوان/نص/صورة/زر/أعمدة…) وتبقى الأجزاء الوظيفية كتلاً أصلية محمية
       const fr = await render(kind === "home" ? "index.html" : "p/" + slug + "/");
       let main = []; try { const st = fr.contentDocument.createElement("style"); st.textContent = ".reveal{opacity:1!important;transform:none!important;transition:none!important}"; fr.contentDocument.head.appendChild(st); main = convertMain(fr.contentDocument, { kind, slug }, doc); } finally { fr.remove(); }
       main.forEach(x => { x.grp = x.grp || "main"; });
+      if (main._foot && bot.length) bot.splice(0, bot.length, main._foot);
+      top.forEach((r, i) => { const c = r._isBar ? main._bar : main._head; if (c) top[i] = c; });
       secs.push(...top, ...main, ...bot);
     } else { const m = secs.splice(0); secs.push(...top, ...m, ...bot); }
     const page = newPage(title || "الصفحة الرئيسية", kind === "home" ? "home" : slug);
@@ -243,7 +294,8 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       const ws = (sec.cols || []).flatMap(c => c.widgets || []), isRaw = sec.grp && (sec.cols || []).length === 1 && ws.length === 1 && ws[0].type === "html" && !(sec.free || []).length;
       if (isRaw) { out[g].push(PBBind.bake(ws[0].set.code || "", o)); return; }
       native = true; const r = PB.renderSections({ sections: [sec], product: o.kind === "product" ? o.slug : (P.product || "") }, Object.assign({ base: o.kind === "home" ? "" : "../../", edit: false, inlineOrder: o.kind === "product" }, ctx));
-      out[g].push("<style>" + r.css + "</style>" + r.html);
+      let hh = r.html; if (sec.grp && ws.length === 1 && /^(shdr|sbar|sfoot)$/.test(ws[0].type)) { const dd = new DOMParser().parseFromString("<body>" + hh + "</body>", "text/html"), w0 = dd.body.querySelector("[data-pbw],.pb-sf"); if (w0) { let q = w0.parentElement; while (q && q !== dd.body) { q.classList.add("pb-dc"); q = q.parentElement; } hh = dd.body.innerHTML; } }      // يبقى الهيدر/الشريط/الفوتر عنصراً مباشراً في الصفحة (لا يعيق التثبيت sticky)
+      out[g].push("<style>.pb-dc{display:contents!important}" + r.css + "</style>" + hh);
     });
     const place = (grp, sel) => {
       const els = [...doc.body.children].filter(el => sel(el)); const html = out[grp].join("\n");
