@@ -551,7 +551,7 @@ body{overflow-x:hidden;margin:0}`;
     const parentW = el.parentElement ? el.parentElement.getBoundingClientRect().width : r0.width;
     const gridCell = inf.kind === "column" && inf.sec.set.kind === "grid";
     const m0 = ((own(set, "mar", dev) || eff(set, "mar", dev)) || [0, 0, 0, 0]).slice();
-    let nb = null, pair = 0;
+    let nb = null, pair = 0, sc0 = null;
     if (inf.kind === "column" && hasW && !gridCell) { const sibs = inf.sec.cols, nbn = dir.includes("w") ? (sibs[inf.idx + 1] || sibs[inf.idx - 1]) : (sibs[inf.idx - 1] || sibs[inf.idx + 1]); if (nbn && eff(nbn.set, "w", dev) != null && eff(set, "w", dev) != null) { nb = nbn; pair = Number(eff(set, "w", dev)) + Number(eff(nbn.set, "w", dev)); } }
     const mv = (dx, dy, ev) => {
       let label = "", guides = [];
@@ -572,8 +572,14 @@ body{overflow-x:hidden;margin:0}`;
         if (hasW && !gridCell) { const W = r0.width + (dir.includes("e") ? dx : -dx), pct = Math.max(5, Math.min(100, Math.round(W / parentW * 100))); setR(set, "w", dev, pct); if (nb) setR(nb.set, "w", dev, Math.max(5, Math.round((pair - pct) * 10) / 10)); label = pct + "%"; }
         if (hasH) { const H = Math.max(0, Math.round(r0.height + (dir.includes("s") ? dy : -dy))); setR(set, "mh", dev, H); label += (label ? " × " : "") + H + "px"; }
       } else {
+        if (set.pz) {      /* قسم تناسبي: السحب يغيّر نسبة تكبير المحتوى كله (يتبعه كل ما بداخله) */
+          if (sc0 == null) sc0 = Number(eff(set, "scl", dev)) || 100;
+          const f = hasW ? (r0.width + (dir.includes("e") ? 1 : -1) * 2 * dx) / r0.width : (r0.height + (dir.includes("s") ? 1 : -1) * dy) / r0.height, v = Math.max(30, Math.min(300, Math.round(sc0 * Math.max(.1, f))));
+          setR(set, "scl", dev, v); if (dev !== "d" && own(set, "scl", "d") === undefined) setR(set, "scl", "d", sc0); label = "المحتوى " + v + "%";
+        } else {
         if (hasH) { const H = Math.max(40, Math.round(r0.height + (dir.includes("s") ? dy : -dy))); setR(set, "mh", dev, H); label = H + "px"; }
         if (hasW) { const inner = el.querySelector(".pb-in").getBoundingClientRect().width, W = Math.max(40, Math.round(inner + (dir.includes("e") ? 2 : -2) * dx)); set.layout = "boxed"; setR(set, "cw", dev, W); label += (label ? " × " : "") + "عرض " + W + "px"; }
+        }
       }
       tip.textContent = label; const st = $("pbx-stage").getBoundingClientRect(); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
       renderCanvas(); positionOverlay(); $("pbx-ovl").appendChild(tip); if (free) drawGuides(guides, pts.cr);
@@ -695,7 +701,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* إضافة عنصر/قسم افتراضي بعد القسم المحدد (أو في آخر الصفحة) */
   function addDefault(k) {
-    const d = PB.DFLT.find(x => x.k === k); if (!d) return; const sec = d.f(), inf = selInfo(); let i = E.page.sections.length;
+    const d = PB.DFLT.find(x => x.k === k); if (!d) return; const sec = d.f(), inf = selInfo(); let i = E.page.sections.length; sec.set.pz = true;      // العنصر الافتراضي: سحب إطاره يكبّر/يصغّر كل ما بداخله
     if (inf && inf.sec) { const j = E.page.sections.findIndex(x => x.id === inf.sec.id); if (j >= 0) i = j + 1; }
     E.page.sections.splice(i, 0, sec); afterEdit(sec.id);
     setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف: " + d.n);
