@@ -96,6 +96,9 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
 .pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
 .pbx-tg{display:inline-flex}
+.pbx-mbar{display:none;position:absolute;bottom:10px;inset-inline:10px;z-index:25;background:#173f35;border-radius:14px;padding:.35rem;gap:.3rem;justify-content:space-around;box-shadow:0 6px 22px rgba(0,0,0,.4)}
+.pbx-mbar button{flex:1;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;padding:.5rem 0;font-size:1.05rem;font-weight:800;cursor:pointer;font-family:inherit}
+.pbx-mbar button.dng{background:#b83232}.pbx-mbar small{display:block;font-size:.6rem;font-weight:700;opacity:.85}
 #pb-app.pbx-hl .pbx-left,#pb-app.pbx-hl #pbx-rz2,#pb-app.pbx-hr .pbx-right,#pb-app.pbx-hr #pbx-rz{display:none}
 .pbx-tg.off{opacity:.55}
 @media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}.pbx-rz{display:none}}
@@ -106,7 +109,8 @@ body{overflow-x:hidden;margin:0}`;
  .pbx-main{position:relative}
  .pbx-left,.pbx-right{position:absolute;top:0;bottom:0;z-index:30;width:min(86vw,340px)!important;max-width:none;box-shadow:0 0 24px rgba(0,0,0,.35)}
  .pbx-left{inset-inline-start:0}.pbx-right{inset-inline-end:0}.pbx-rz{display:none!important}
- .pbx-stage{width:100%}.pbx-add{margin-bottom:60px}
+ .pbx-stage{width:100%;touch-action:pan-x pan-y;padding-bottom:84px}.pbx-add{margin-bottom:60px}
+ #pb-app.pbx-ms .pbx-mbar{display:flex}
  .pbx-h{width:22px;height:22px}.pbx-bar button,.pbx-bar span{padding:.4rem .6rem;font-size:.82rem}
  .pbx-ah{padding:.9rem .8rem!important}
 }
@@ -151,10 +155,15 @@ body{overflow-x:hidden;margin:0}`;
   <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
   <aside class="pbx-right" id="pbx-insp"></aside>
 </div>
+<div class="pbx-mbar" id="pbx-mbar">
+  <button onclick="PBApp.mact('up')" title="للأعلى">▲<small>أعلى</small></button><button onclick="PBApp.mact('down')" title="للأسفل">▼<small>أسفل</small></button>
+  <button onclick="PBApp.mact('dup')" title="نسخ العنصر">⧉<small>نسخ</small></button><button onclick="PBApp.mact('set')" title="إعدادات العنصر">⚙<small>إعدادات</small></button>
+  <button onclick="PBApp.mact('undo')" title="تراجع">↩<small>تراجع</small></button><button class="dng" onclick="PBApp.mact('del')" title="حذف">🗑<small>حذف</small></button>
+</div>
 <div class="pbx-msg" id="pbx-msg"></div>`;
     document.body.appendChild(d);
     frame = $("pbx-frame");
-    frame.srcdoc = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style></head><body class="pb-page pb-edit"><div id="pbr"></div></body></html>`;
+    frame.srcdoc = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style></head><body class="pb-page pb-edit"><div id="pbr"></div></body></html>`;
     frame.addEventListener("load", () => { fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
     $("pbx-stage").addEventListener("scroll", () => positionOverlay());
     const lp = $("pbx-lpane"); let layDrag = null;
@@ -176,7 +185,7 @@ body{overflow-x:hidden;margin:0}`;
     $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
     $("pbx-title").value = E.page.title || ""; commitHist(true);
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
-    ltab("add"); setDev(isMob() ? "m" : "d"); renderInspector(); updateTop();
+    E.zoom = 1; ltab("add"); setDev(isMob() ? "m" : "d"); renderInspector(); updateTop();
     if (fdoc) renderCanvas();
   }
   function close() {
@@ -338,10 +347,17 @@ body{overflow-x:hidden;margin:0}`;
     if (isMob() && !hide) app.classList.add(w === "l" ? "pbx-hr" : "pbx-hl");      // على الجوال شريط واحد فقط في كل مرة
     syncPanels(); setTimeout(() => { fitStage(); positionOverlay(); }, 30);
   }
+  function mact(a) { if (a === "up") move(-1); else if (a === "down") move(1); else if (a === "dup") dup(); else if (a === "del") del(); else if (a === "undo") undo(); else if (a === "set") panel("r", true); }
+  function updateMbar() { const app = $("pb-app"); if (app) app.classList.toggle("pbx-ms", !!E.sel && !!selInfo()); }
+  function setZoom(z) { E.zoom = Math.max(.4, Math.min(3, z)); fitStage(); positionOverlay(); }
   function syncPanels() { const app = $("pb-app"); [["l", "pbx-hl"], ["r", "pbx-hr"]].forEach(([w, c]) => { const b = $("pbx-tg" + w); if (b) b.classList.toggle("off", app.classList.contains(c)); }); }
   /* اللمس: السحب بالإصبع على مقابض التحجيم/التدوير وعلى العنصر المحدد يُترجم إلى أحداث فأرة (تمرير الصفحة يبقى طبيعياً في بقية المواضع) */
   function touchBridge(doc, isFrame) {
-    let on = false; const mk = (type, t) => new MouseEvent(type, { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView });
+    let on = false, pin = null; const dist = (t, k) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) * k;
+    doc.addEventListener("touchstart", e => { if (e.touches.length === 2) { on = false; const k = isFrame ? E.scale : 1; pin = { k, d: dist(e.touches, k), z: E.zoom || 1 }; } }, { passive: true });
+    doc.addEventListener("touchmove", e => { if (pin && e.touches.length === 2) { e.preventDefault(); setZoom(pin.z * dist(e.touches, pin.k) / pin.d); } }, { passive: false });
+    doc.addEventListener("touchend", e => { if (e.touches.length < 2) pin = null; });
+    const mk = (type, t) => new MouseEvent(type, { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView });
     doc.addEventListener("touchstart", e => {
       if (e.touches.length !== 1) return; const tg = e.target; if (!tg || !tg.closest) return;
       const ok = isFrame ? (E.sel && tg.closest('[data-pb="' + E.sel + '"]') && !tg.closest("[contenteditable=true]")) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz");
@@ -353,7 +369,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   function fitStage() {
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
-    const w = DEVW[E.dev], s = Math.min(1, Math.max(300, st.clientWidth - 36) / w); E.scale = s;
+    const w = DEVW[E.dev], s = Math.min(1, Math.max(300, st.clientWidth - 36) / w) * (E.zoom || 1); E.scale = s;
     const h = Math.max(500, (root ? root.offsetHeight : 0) + 40);
     fw.style.width = w + "px"; fw.style.height = h + "px"; fw.style.transform = `scale(${s})`; frame.style.height = h + "px";
     sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
@@ -980,6 +996,7 @@ body{overflow-x:hidden;margin:0}`;
     });
   }
   function renderInspector() {
+    updateMbar();
     const el = $("pbx-insp"); if (!el) return; const inf = selInfo();
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته.<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
@@ -1168,7 +1185,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, ltoggle, addBlank, panel, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
+  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, ltoggle, addBlank, panel, mact, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
