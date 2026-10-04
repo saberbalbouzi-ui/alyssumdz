@@ -264,6 +264,7 @@ body{overflow-x:hidden;margin:0}`;
     order: rc(4, 3, 56, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(4, 13, 56, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(4, 23, 27, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(33, 23, 27, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(4, 33, 56, 8, Y, 4),
     assure: [0, 1, 2, 3].map(i => rc(2 + i * 15.5, 10, 14, 24, W, 4).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + ci(9 + i * 15.5, 18, 3.2, i === 2 ? Y : "#157a55") + ln(5 + i * 15.5, 25, 8, G, 2.2) + ln(5.5 + i * 15.5, 29, 7, B, 1.8)).join(""),
     cta: rc(6, 12, 52, 20, Y, 10) + ln(18, 20, 28, W, 4) + ci(51, 22, 0, W) } })();
+  const TPL_DUP = ["hero", "features", "cta", "split"];      // قوالب مكررة لعناصر «افتراضية» (الهيرو، المزايا، زر الطلب، نص+صورة) فلا تُعرض في «أقسام»
   /* رسوم مصغّرة لتبويب «أقسام» */
   const TIC = (() => { const G = "#173f35", Y = "#c8a24b", B = "#e6dfcf", W = "#fff", C = "#cdbf98", rc = (x, y, w, h, f, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 2 : r}" fill="${f}"/>`, ln = (x, y, w, f, h) => rc(x, y, w, h || 2.4, f || B, 1.2), ci = (x, y, r, f) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>`, bd = (x, y, w, h) => rc(x, y, w, h, W, 4).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"'); return {
     _blank: bd(4, 5, 56, 34) + ln(10, 16, 30, B, 3) + ln(10, 23, 44) + ln(10, 29, 36),
@@ -298,7 +299,7 @@ body{overflow-x:hidden;margin:0}`;
       pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">📐 أقسام</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">انقر الأيقونة لإضافة القسم أو اسحبها إلى مكانه في الصفحة.</div><div class="pbx-dgrid">`
         + card("_blank", "قسم واحد (عمود)") + card("_two", "قسمان (عمودان)") + card("_three", "ثلاثة أقسام (3 أعمدة)")
         + `<div class="pbx-dfc" style="cursor:default" title="قسم شبكي مخصص"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC.grid}</svg><span>القسم الشبكي</span><div class="pbx-row" style="gap:.25rem"><label style="font-size:.66rem">صفوف <input id="gb-r" type="number" min="1" max="10" value="2" style="width:100%;padding:.15rem"></label><label style="font-size:.66rem">أعمدة <input id="gb-c" type="number" min="1" max="12" value="3" style="width:100%;padding:.15rem"></label></div><button class="pbx-small" data-grid="1" type="button" style="width:100%">＋ إضافة</button></div>`
-        + Object.keys(TPLS).map(k => card(k, TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, ""))).join("") + `</div>`;
+        + Object.keys(TPLS).filter(k => !TPL_DUP.includes(k)).map(k => card(k, TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, ""))).join("") + `</div>`;
     } else if (E.ltab === "def") {
       pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 عناصر افتراضية</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">أقسام وعناصر جاهزة بتنسيق الموقع. انقر الأيقونة لإضافتها بعد القسم المحدد.</div><div class="pbx-dgrid">` + PB.DFLT.map(x => `<button type="button" class="pbx-dfc" draggable="true" data-dflt="${x.k}" title="${esc(x.d)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${DIC[x.k] || '<rect x="8" y="8" width="48" height="28" rx="5" fill="#e6dfcf"/>'}</svg><span>${esc(x.n.replace(/\s*\(.*$/, ""))}</span></button>`).join("") + `</div>`;
     } else if (E.ltab === "smart") {
@@ -661,7 +662,7 @@ body{overflow-x:hidden;margin:0}`;
     const parentW = el.parentElement ? el.parentElement.getBoundingClientRect().width : r0.width;
     const gridCell = inf.kind === "column" && inf.sec.set.kind === "grid";
     const m0 = ((own(set, "mar", dev) || eff(set, "mar", dev)) || [0, 0, 0, 0]).slice();
-    let nb = null, pair = 0, sc0 = null, ws0 = null;
+    let nb = null, pair = 0, sc0 = null, ws0 = null, cc0 = null;
     if (inf.kind === "column" && hasW && !gridCell) { const sibs = inf.sec.cols, nbn = dir.includes("w") ? (sibs[inf.idx + 1] || sibs[inf.idx - 1]) : (sibs[inf.idx - 1] || sibs[inf.idx + 1]); if (nbn && eff(nbn.set, "w", dev) != null && eff(set, "w", dev) != null) { nb = nbn; pair = Number(eff(set, "w", dev)) + Number(eff(nbn.set, "w", dev)); } }
     const mv = (dx, dy, ev) => {
       let label = "", guides = [];
@@ -687,6 +688,11 @@ body{overflow-x:hidden;margin:0}`;
         if (hasH) { let H = r0.height + (dir.includes("s") ? dy : -dy); H = Math.max(10, Math.round(H)); setR(set, "mh", dev, H); if (dir.includes("n")) { const m = m0.slice(); m[0] = (Number(m0[0]) || 0) + dy; setR(set, "mar", dev, m); } label += (label ? " × " : "") + H + "px"; }
         }
       } else if (inf.kind === "column") {
+        if (!set.pzoff && (hasW || hasH)) {      /* تكبير تناسبي: عناصر العمود تتبع حجم إطاره الجديد من الجهات الأربع */
+          if (cc0 == null) cc0 = Number(eff(set, "ccl", dev)) || 100;
+          const f = hasW ? (r0.width + (dir.includes("e") ? dx : -dx)) / r0.width : (r0.height + (dir.includes("s") ? dy : -dy)) / r0.height, v = Math.max(30, Math.min(300, Math.round(cc0 * Math.max(.1, f))));
+          setR(set, "ccl", dev, v); if (dev !== "d" && own(set, "ccl", "d") === undefined) setR(set, "ccl", "d", cc0); label = "المحتوى " + v + "%";
+        }
         if (hasW && !gridCell) { const W = r0.width + (dir.includes("e") ? dx : -dx), pct = Math.max(5, Math.min(100, Math.round(W / parentW * 100))); setR(set, "w", dev, pct); if (nb) setR(nb.set, "w", dev, Math.max(5, Math.round((pair - pct) * 10) / 10)); label = pct + "%"; }
         if (hasH) { const H = Math.max(0, Math.round(r0.height + (dir.includes("s") ? dy : -dy))); setR(set, "mh", dev, H); label += (label ? " × " : "") + H + "px"; }
       } else {
@@ -710,7 +716,7 @@ body{overflow-x:hidden;margin:0}`;
     const id = inf.node.id, dev = E.dev; if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
     let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
-    const u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top; let moved = false, dropCol = null, ptr = null;
+    const u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top; let moved = false, dropCol = null, ptr = null; const origCol = lazy && inf.col ? inf.col.id : null;
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
@@ -724,11 +730,11 @@ body{overflow-x:hidden;margin:0}`;
       renderCanvas(); positionOverlay(); drawGuides(guides, pts.cr);
       ptr = { x: px0 + dx, y: py0 + dy }; const col = fdoc.elementsFromPoint(ptr.x, ptr.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);       // العمود تحت المؤشر
       clearDrop(); dropCol = col ? col.dataset.pb : null; if (col) { const ci = col.querySelector(".pb-colin"); if (ci) ci.classList.add("pbx-dropcol"); }
-      const tp = document.createElement("div"); tp.className = "pbx-tip"; tp.textContent = col ? "اترك Ctrl مضغوطاً عند الإفلات لإدراجه داخل هذا العمود" : ""; if (col) { const st = $("pbx-stage").getBoundingClientRect(), pp = inF ? { x: f0.left + ev.clientX * E.scale, y: f0.top + ev.clientY * E.scale } : { x: ev.clientX, y: ev.clientY }; tp.style.left = (pp.x - st.left + 14) + "px"; tp.style.top = (pp.y - st.top + 14) + "px"; $("pbx-ovl").appendChild(tp); }
+      const tp = document.createElement("div"); tp.className = "pbx-tip"; tp.textContent = col ? "أفلته هنا ليدخل العمود (Ctrl = يبقى حراً)" : ""; if (col) { const st = $("pbx-stage").getBoundingClientRect(), pp = inF ? { x: f0.left + ev.clientX * E.scale, y: f0.top + ev.clientY * E.scale } : { x: ev.clientX, y: ev.clientY }; tp.style.left = (pp.x - st.left + 14) + "px"; tp.style.top = (pp.y - st.top + 14) + "px"; $("pbx-ovl").appendChild(tp); }
     };
     dragTrack(e, "move", mv, ev => {
       document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); clearDrop();
-      if (moved && dropCol && ev && (ev.ctrlKey || ev.metaKey)) {                                          // إفلات مع Ctrl: إدراج في العمود
+      if (moved && dropCol && ev && !(ev.ctrlKey || ev.metaKey) && dropCol !== origCol) {      // إفلات فوق عمود: يمتص العنصر تلقائياً (Ctrl يُبقيه حراً؛ ولا يُمتص فوراً في عموده الأصلي أثناء أول سحب)
         const me = find(id), tc = find(dropCol); if (me && tc && tc.kind === "column") {
           me.list.splice(me.idx, 1); ["fx", "fy", "fwd", "fh"].forEach(k => delete me.node.set[k]);
           const ws = tc.node.widgets, rects = ws.map(w => { const n = fdoc.querySelector(`[data-pb="${w.id}"]`); return n ? n.getBoundingClientRect() : null; });

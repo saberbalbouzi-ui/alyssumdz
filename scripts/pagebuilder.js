@@ -558,6 +558,8 @@ const PB = (() => {
   ];
   const COL_CTL = [
     { k: "w", l: "العرض (%) — في الأقسام العادية", t: "num", r: 1, min: 5, max: 100, tab: "c" },
+    { k: "ccl", l: "حجم محتوى العمود % — يتغير تلقائياً بسحب إطار العمود من أي جهة فتتبعه عناصره", t: "num", r: 1, min: 30, max: 300, tab: "c" },
+    { k: "pzoff", l: "تعطيل التكبير التناسبي لهذا العمود", t: "switch", tab: "c" },
     { k: "cs", l: "امتداد أفقي (خلايا) — في الشبكة", t: "num", r: 1, min: 1, max: 12, tab: "c" }, { k: "rs", l: "امتداد عمودي (صفوف) — في الشبكة", t: "num", r: 1, min: 1, max: 12, tab: "c" },
     { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 3000, tab: "c" },
     { k: "va", l: "محاذاة المحتوى عمودياً", t: "select", r: 1, o: [["flex-start", "أعلى"], ["center", "وسط"], ["flex-end", "أسفل"]], tab: "c" },
@@ -694,6 +696,7 @@ const PB = (() => {
         css.d.push(kind === "grid" ? `${cx}{min-width:0;display:flex}` : `${cx}{flex:1 1 0;min-width:0;display:flex}`);
         css.d.push(`${cin}{width:100%;display:flex;flex-direction:column}`);
         boxStatic(css, cin, cs); emit(css, cin, cs, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["va", raw("justify-content")], ["ta", raw("text-align")], ["mh", px("min-height")]]);
+        if (!cs.pzoff) { emit(css, cin, cs, [["ccl", v => `zoom:${Math.max(.3, Math.min(3, (num(v) || 100) / 100))};`]]); ["t", "m"].forEach(dv => { if (own(cs, "ccl", dv) === undefined && own(cs, "ccl", "d") !== undefined) css[dv].push(`${cin}{zoom:1}`); }); }      // تكبير تناسبي للعمود: كل عناصره تتبع حجم إطاره
         if (kind === "grid") emit(css, cx, cs, [["cs", v => `grid-column:span ${Math.max(1, num(v) || 1)};`], ["rs", v => `grid-row:span ${Math.max(1, num(v) || 1)};`]]);
         else emit(css, cx, cs, [["w", v => `flex:0 0 ${num(v)}%;width:${num(v)}%;max-width:${num(v)}%;`]]);
         hideRules(css, cx, cs, edit); customCss(css, cx, cs);
