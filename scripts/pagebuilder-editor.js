@@ -73,7 +73,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
 .pbx-h.d-ne{top:-7px;right:-7px;cursor:nesw-resize}.pbx-h.d-nw{top:-7px;left:-7px;cursor:nwse-resize}.pbx-h.d-se{bottom:-7px;right:-7px;cursor:nwse-resize}.pbx-h.d-sw{bottom:-7px;left:-7px;cursor:nesw-resize}
-.pbx-guide{position:absolute;background:#e91e63;pointer-events:none;z-index:4}
+.pbx-guide{position:absolute;background:repeating-linear-gradient(var(--gd,180deg),#e91e63 0 6px,transparent 6px 10px);pointer-events:none;z-index:4}
 .pbx-bar input[type=color]{width:26px;height:22px;padding:0;border:0;border-radius:4px;background:none;cursor:pointer;vertical-align:middle}.pbx-bar button.on{outline:2px solid #fff}
 .pbx-gb{border:1.5px dashed #cdbfa0;border-radius:10px;padding:.6rem;margin-bottom:.6rem;background:#fff}.pbx-gb input{width:64px;border:1.5px solid #e0d9c8;border-radius:8px;padding:.3rem;font-family:inherit}
 .pbx-tip{position:absolute;background:#173f35;color:#fff;font-size:.75rem;font-weight:800;padding:.15rem .5rem;border-radius:6px;pointer-events:none;z-index:5}
@@ -175,7 +175,7 @@ body{overflow-x:hidden;margin:0}`;
     window.addEventListener("resize", () => { if ($("pb-app").classList.contains("on")) { fitStage(); positionOverlay(); } });
     wireResizer("pbx-rz", "pbx-insp", "pbx_side_w", 260); wireResizer("pbx-rz2", "pbx-lside", "pbx_left_w", 200);
     $("pbx-insp").addEventListener("input", onInspInput); $("pbx-insp").addEventListener("change", onInspChange); $("pbx-insp").addEventListener("click", onInspClick);
-    document.addEventListener("keydown", onKey); touchBridge(document, false);
+    document.addEventListener("keydown", onKey); touchBridge(document, false); listTouchDrag();
   }
 
   /* ───────────────── فتح/إغلاق ───────────────── */
@@ -260,6 +260,7 @@ body{overflow-x:hidden;margin:0}`;
     pills: [0, 1, 2].map(i => ci(8, 9 + i * 12, 4, "#157a55") + ln(7, 8.5 + i * 12, 3, W, 1.6) + ln(16, 8 + i * 12, 40 - i * 6, G, 3)).join(""),
     split: rc(2, 6, 60, 32, W, 5).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + ln(8, 12, 20, G, 4) + ln(8, 19, 26) + ln(8, 24, 22) + rc(8, 30, 12, 4, Y, 2) + rc(38, 10, 20, 24, "#cdbf98", 4) + ci(48, 19, 4, B),
     order: rc(4, 3, 56, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(4, 13, 56, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(4, 23, 27, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(33, 23, 27, 7, W, 3).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + rc(4, 33, 56, 8, Y, 4),
+    assure: [0, 1, 2, 3].map(i => rc(2 + i * 15.5, 10, 14, 24, W, 4).replace('fill="#fff"', 'fill="#fff" stroke="#d9d2c2"') + ci(9 + i * 15.5, 18, 3.2, i === 2 ? Y : "#157a55") + ln(5 + i * 15.5, 25, 8, G, 2.2) + ln(5.5 + i * 15.5, 29, 7, B, 1.8)).join(""),
     cta: rc(6, 12, 52, 20, Y, 10) + ln(18, 20, 28, W, 4) + ci(51, 22, 0, W) } })();
   const ico = (t, sz) => `<svg class="pbx-ic" width="${sz || 22}" height="${sz || 22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[t] || '<rect x="4" y="4" width="16" height="16" rx="3"/>'}</svg>`;
   IC.dev_d = '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'; IC.dev_t = '<rect x="4" y="2" width="16" height="20" rx="2.5"/><path d="M11 18h2"/>'; IC.dev_m = '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/>';
@@ -366,6 +367,30 @@ body{overflow-x:hidden;margin:0}`;
     doc.addEventListener("touchmove", e => { if (!on) return; e.preventDefault(); doc.documentElement.dispatchEvent(mk("mousemove", e.touches[0])); }, { passive: false });
     const end = e => { if (!on) return; on = false; doc.documentElement.dispatchEvent(mk("mouseup", e.changedTouches[0])); };
     doc.addEventListener("touchend", end); doc.addEventListener("touchcancel", end);
+  }
+  /* الجوال: ضغط مطوّل على أيقونة في قائمة الأدوات ثم سحب إلى مكانها في الصفحة (السحب الأصلي لا يعمل باللمس) */
+  function listTouchDrag() {
+    let timer = null, p0 = null, ghost = null, active = false;
+    const sel = "[data-add],[data-tpl],[data-dflt]", fake = (x, y) => { const f0 = $("pbx-fw").getBoundingClientRect(); return { clientX: (x - f0.left) / E.scale, clientY: (y - f0.top) / E.scale, preventDefault() { }, dataTransfer: {} }; };
+    const stop = () => { clearTimeout(timer); timer = null; if (ghost) { ghost.remove(); ghost = null; } active = false; };
+    document.addEventListener("touchstart", e => {
+      const it = e.target.closest && e.target.closest(sel); if (!it || e.touches.length !== 1) return; const t0 = e.touches[0]; p0 = { x: t0.clientX, y: t0.clientY };
+      timer = setTimeout(() => {
+        active = true; E.drag = it.dataset.add ? { add: it.dataset.add } : it.dataset.dflt ? { dflt: it.dataset.dflt } : { tpl: it.dataset.tpl };
+        try { navigator.vibrate && navigator.vibrate(18); } catch (x) { }
+        ghost = document.createElement("div"); ghost.style.cssText = "position:fixed;z-index:10050;pointer-events:none;background:#173f35;color:#fff;border-radius:10px;padding:.4rem .8rem;font-weight:800;font-size:.8rem;box-shadow:0 6px 20px rgba(0,0,0,.4);transform:translate(-50%,-130%)";
+        ghost.textContent = (it.querySelector("span") || it).textContent.trim().slice(0, 28) + " ⇢ اسحب إلى الصفحة"; ghost.style.left = p0.x + "px"; ghost.style.top = p0.y + "px"; document.body.appendChild(ghost);
+        if (isMob()) panel("l", false);
+      }, 450);
+    }, { passive: true });
+    document.addEventListener("touchmove", e => {
+      const t0 = e.touches[0]; if (!active) { if (timer && p0 && Math.hypot(t0.clientX - p0.x, t0.clientY - p0.y) > 10) { clearTimeout(timer); timer = null; } return; }
+      e.preventDefault(); ghost.style.left = t0.clientX + "px"; ghost.style.top = t0.clientY + "px";
+      const st = $("pbx-stage"); if (t0.clientY < 110) st.scrollTop -= 14; else if (t0.clientY > innerHeight - 110) st.scrollTop += 14;
+      try { onDragOver(fake(t0.clientX, t0.clientY)); } catch (x) { }
+    }, { passive: false });
+    const end = e => { if (active) { const t0 = e.changedTouches[0]; try { onDrop(fake(t0.clientX, t0.clientY)); } catch (x) { } E.drag = null; hideDrop(); } stop(); };
+    document.addEventListener("touchend", end); document.addEventListener("touchcancel", () => { E.drag = null; hideDrop(); stop(); });
   }
   function fitStage() {
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
@@ -530,14 +555,16 @@ body{overflow-x:hidden;margin:0}`;
     document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); if (!list || !list.length) return;
     const o = ovlOrigin(), ovl = $("pbx-ovl");
     list.forEach(g => { const d = document.createElement("div"); d.className = "pbx-guide";
-      if (g.x != null) d.style.cssText = `left:${o.ox + (cr.left + g.x) * o.s}px;top:${o.oy + cr.top * o.s}px;width:1px;height:${cr.height * o.s}px`;
-      else d.style.cssText = `top:${o.oy + (cr.top + g.y) * o.s}px;left:${o.ox + cr.left * o.s}px;height:1px;width:${cr.width * o.s}px`;
+      const PH = Math.max(fdoc.documentElement.scrollHeight, cr.height) * o.s, PW = fdoc.documentElement.clientWidth * o.s;      // خطوط طويلة على كامل الصفحة (عمودياً/أفقياً)
+      if (g.x != null) d.style.cssText = `left:${o.ox + (cr.left + g.x) * o.s}px;top:${o.oy}px;width:1px;height:${PH}px`;
+      else { d.style.cssText = `top:${o.oy + (cr.top + g.y) * o.s}px;left:${o.ox}px;height:1px;width:${PW}px`; d.style.setProperty("--gd", "90deg"); }
       ovl.appendChild(d); });
   }
   /* نقاط الالتصاق (بكسل نسبة لحاوية القسم): الحواف والمنتصف + حواف ومنتصفات العناصر الحرة الأخرى */
   function snapPts(inf, cont) {
     const cr = cont.getBoundingClientRect(), xs = [0, cr.width / 2, cr.width], ys = [0, cr.height / 2, cr.height];
-    (inf.sec.free || []).forEach(w => { if (w.id === inf.node.id) return; const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (!el) return; const r = el.getBoundingClientRect(), l = r.left - cr.left, t = r.top - cr.top; xs.push(l, l + r.width / 2, l + r.width); ys.push(t, t + r.height / 2, t + r.height); });
+    const self = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), seen = new Set();      // حواف ومنتصفات كل العناصر في الصفحة (ليس عناصر القسم فقط) ليتراص ما يُحرَّك مع غيره على استقامة
+    fdoc.querySelectorAll('[data-kind="widget"]').forEach(el => { if (el === self || (self && self.contains(el)) || (self && el.contains(self))) return; const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return; const l = r.left - cr.left, t = r.top - cr.top, k = Math.round(l) + "," + Math.round(t) + "," + Math.round(r.width) + "," + Math.round(r.height); if (seen.has(k)) return; seen.add(k); xs.push(l, l + r.width / 2, l + r.width); ys.push(t, t + r.height / 2, t + r.height); });
     return { xs, ys, cr };
   }
   function snapBox(x, y, w, h, pts) {
