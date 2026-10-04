@@ -6,6 +6,8 @@
     "assets/js/app.js",
     "assets/js/chrome.js",
     "assets/js/chrome-admin.js",
+    "assets/js/admin-assistant.js",
+    "assets/data/admin-help.json",
     "assets/js/social-icons.js",
     "assets/js/api.js",
     "assets/js/agent.js",
