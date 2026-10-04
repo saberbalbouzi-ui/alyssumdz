@@ -8142,8 +8142,10 @@ body{overflow-x:hidden;margin:0}`;
 <div class="pbx-msg" id="pbx-msg"></div>`;
     document.body.appendChild(d);
     frame = $("pbx-frame");
-    frame.srcdoc = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style></head><body class="pb-page pb-edit"><div id="pbr"></div></body></html>`;
-    frame.addEventListener("load", () => { fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
+    const FRAMEDOC = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style></head><body class="pb-page pb-edit"><div id="pbr"></div></body></html>`;
+    frame.srcdoc = FRAMEDOC;
+    frame.addEventListener("load", () => { let off = false; try { off = frame.contentWindow.location.href !== "about:srcdoc"; } catch (x) { off = true; } if (off) { frame.srcdoc = FRAMEDOC; return; }      // حماية: إن انتقل الإطار إلى صفحة أخرى يُعاد إلى إطار المحرر تلقائياً
+      fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
     $("pbx-stage").addEventListener("scroll", () => positionOverlay());
     const lp = $("pbx-lpane"); let layDrag = null;
     lp.addEventListener("click", e => { const b = e.target.closest("[data-lmv]"); if (!b) return; e.stopPropagation(); const row = b.closest("[data-sel]"); if (!row) return; E.sel = row.dataset.sel; move(Number(b.dataset.lmv)); const el = fdoc && fdoc.querySelector(`[data-pb="${E.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, true);
@@ -8406,8 +8408,8 @@ body{overflow-x:hidden;margin:0}`;
   function wireFrame() {
     touchBridge(fdoc, true);
     fdoc.addEventListener("click", e => {
+      const a = e.target.closest("a"); if (a) e.preventDefault();      // لا تنتقل الصفحة أبداً بالنقر على رابط/زر داخل المحرر (حتى أثناء تحرير نصه) وإلا فُتحت لوحة الإدارة داخل الإطار
       if (e.target.closest("[contenteditable=true]")) return;
-      const a = e.target.closest("a"); if (a) e.preventDefault();
       const sa = e.target.closest(".pb-sl-a, .pb-sl-dots i");
       if (sa) {
         e.preventDefault(); const wEl = sa.closest('[data-kind="widget"]'), inf = find(wEl.dataset.pb), L = ((inf && inf.set.items) || []).length || 1; let i = E.sl[wEl.dataset.pb] || 0;
@@ -8418,6 +8420,7 @@ body{overflow-x:hidden;margin:0}`;
       const ed = e.target.closest("[data-edit]"); if (ed && !(E.md && E.md.moved)) { const wE = ed.closest('[data-kind="widget"]'); if (wE && E.md && E.md.sel === wE.dataset.pb) { e.preventDefault(); return startEdit(ed); } }      // نقرة على نص داخل عنصر محدَّد = تحرير مباشر
       const el = e.target.closest("[data-pb]"); if (el) { const w = e.target.closest('[data-kind="widget"]'); select((w || el).dataset.pb); } else select(null);
     }, true);
+    fdoc.addEventListener("submit", e => e.preventDefault(), true);
     fdoc.addEventListener("mousemove", e => { if (E.md && !E.md.moved && (e.buttons & 1) && Math.abs(e.clientX - E.md.x) + Math.abs(e.clientY - E.md.y) > 4) E.md.moved = true; }, true);
     fdoc.addEventListener("mousedown", e => {
       E.md = { x: e.clientX, y: e.clientY, moved: false, sel: E.sel };
@@ -8601,8 +8604,8 @@ body{overflow-x:hidden;margin:0}`;
     btn("⧉", "تكرار", dup); btn("🗑", "حذف", del);
     box.appendChild(bar);
     /* مقبض تقويس الزوايا (داخل الزاوية العليا) ومقبض التدوير (أسفل العنصر) */
-    { const rk = (inf.kind === "widget" && inf.node.type === "button") ? "brad" : "rad", rv = Math.max(0, num(eff(inf.set, rk, E.dev)) || 0);
-      const rh = document.createElement("div"); rh.className = "pbx-rad"; rh.title = "اسحب لتقويس الزوايا (Shift = دائري كامل)"; rh.style.left = Math.min(Math.max(rv * s, 0), Math.max(0, r.width * s / 2 - 6)) + 6 + "px"; rh.onmousedown = ev => startRadius(ev, inf, rk, rh); box.appendChild(rh);
+    { const rk = (inf.kind === "widget" && inf.node.type === "button") ? "brad" : "rad", rv = Math.max(0, num(eff(inf.set, rk, E.dev)) || 0);      // مقبض التقويس يُخفى في العناصر الصغيرة كي لا يغطي العنصر ويمنع مسكه
+      if (r.height * s >= 64 && r.width * s >= 90) { const rh = document.createElement("div"); rh.className = "pbx-rad"; rh.title = "اسحب لتقويس الزوايا (Shift = دائري كامل)"; rh.style.left = Math.min(Math.max(rv * s, 0), Math.max(0, r.width * s / 2 - 6)) + 6 + "px"; rh.onmousedown = ev => startRadius(ev, inf, rk, rh); box.appendChild(rh); }  /* مقبض التقويس يُخفى في العناصر الصغيرة كي لا يغطي العنصر ويمنع مسكه */
       if (inf.kind === "widget") { const ro = document.createElement("div"); ro.className = "pbx-rot"; ro.title = "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)"; ro.onmousedown = ev => startRotate(ev, inf, box); ro.ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }; box.appendChild(ro); } }
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
     dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = "اسحب لتغيير الحجم"; h.onmousedown = ev => startResize(ev, d, inf); box.appendChild(h); });
