@@ -380,9 +380,15 @@ body{overflow-x:hidden;margin:0}`;
     delete sec.set.bgImg; delete sec.set.bgSize; delete sec.set.bgPos; delete sec.set.bgOrig; afterEdit(E.sel); toast("↩ رجعت الصورة إلى مكانها كصورة عادية");
   }
   function showCtx(e) {
-    const wEl = e.target.closest('[data-kind="widget"]'); hideCtx(); if (!wEl) return; e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
-    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale, x = f0.left + e.clientX * s, y = f0.top + e.clientY * s, img = inf.node.type === "image", canvas = inf.sec.set.kind === "canvas", cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0);
-    const items = [["↥", "إلى الأمام", () => zOrder(1), "]"], ["↧", "إلى الخلف", () => zOrder(-1), "["], img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], ["⧉", "نسخ", () => dup(), "Ctrl+D"], "-",
+    if (e.target.closest && e.target.closest("[contenteditable=true]")) { hideCtx(); return; }      // أثناء تحرير نص: تظهر قائمة المتصفح الأصلية (نسخ/قص/لصق للنص المحدَّد) لا قائمة العنصر
+    const wEl = e.target.closest('[data-kind="widget"]'); hideCtx(); if (!wEl) return; e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
+    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; openCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
+  }
+  /* قائمة العنصر المحدد عند الإحداثيات (x,y) على الشاشة — تُفتح بالزر الأيمن على العنصر أو على إطاره/شريطه */
+  function openCtx(x, y) {
+    hideCtx(); const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
+    const img = inf.node.type === "image", canvas = inf.sec.set.kind === "canvas", cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0);
+    const items = [["↥", "إلى الأمام", () => zOrder(1), "]"], ["↧", "إلى الخلف", () => zOrder(-1), "["], img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], ["⧉", "نسخ العنصر", () => dup(), "Ctrl+D"], "-",
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
       img && canvas ? "-" : null, img && canvas ? ["🔤", "التقاط النص", () => PBSmart.capture()] : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null, "-", ["🗑", "حذف", () => del(), "Del", 1]].filter(Boolean);
     const m = document.createElement("div"); m.id = "pbx-ctx"; m.className = "pbx-ctx";
@@ -477,7 +483,7 @@ body{overflow-x:hidden;margin:0}`;
     const box = document.createElement("div"); box.className = "pbx-box " + inf.kind;
     box.style.cssText = `left:${o.ox + r.left * s}px;top:${o.oy + r.top * s}px;width:${r.width * s}px;height:${r.height * s}px${rotV ? `;transform:rotate(${rotV}deg)` : ""}`;
     const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].label + (inf.free ? " ✦" : "") : inf.kind === "column" ? "عمود" : "قسم" + ({ grid: " شبكي", canvas: " حر" }[inf.set.kind] || "");
-    const bar = document.createElement("div"); bar.className = "pbx-bar"; bar.innerHTML = `<span>${lbl}</span>`;
+    const bar = document.createElement("div"); bar.className = "pbx-bar"; bar.innerHTML = `<span>${lbl}</span>`; bar.addEventListener("contextmenu", ev => { ev.preventDefault(); ev.stopPropagation(); if (inf.kind === "widget") openCtx(ev.clientX, ev.clientY); });
     const btn = (t, tt, fn, drag, on) => { const b = document.createElement("button"); b.textContent = t; b.title = tt; if (on) b.className = "on"; if (drag) { b.draggable = true; b.addEventListener("dragstart", e => { E.drag = { move: inf.node.id }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "move"; }); b.addEventListener("dragend", hideDrop); } else b.onclick = e => { e.stopPropagation(); fn(); }; bar.appendChild(b); };
     const colorIn = (key, tt, ic) => { const w = document.createElement("label"); w.title = tt; w.style.cssText = "background:inherit;display:flex;align-items:center;gap:2px;color:#fff;font-size:.72rem;padding:.12rem .3rem;cursor:pointer;background:inherit"; const i = document.createElement("input"); i.type = "color"; i.value = /^#[0-9a-f]{6}$/i.test(inf.set[key] || "") ? inf.set[key] : "#ffffff";
       i.oninput = () => { inf.set[key] = i.value; schedule(); }; i.onchange = () => { commitHist(); renderInspector(); }; w.append(ic, i); bar.appendChild(w); };
