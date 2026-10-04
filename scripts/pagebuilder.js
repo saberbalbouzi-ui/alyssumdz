@@ -514,7 +514,7 @@ const PB = (() => {
   /* ═════════════════ المُصيِّر (Renderer): نفس الدالة للمحرر وللصفحة المنشورة ═════════════════ */
   /* تكييف الهاتف التلقائي لقسم حر: ترتيب عمودي بحسب القراءة (من الأعلى للأسفل ثم من اليمين) بعرض كامل تقريباً مع حفظ نسب الصور */
   function autoMobileLayout(sec) {
-    const fr = (sec.free || []).filter(w => !(w.type === "shape" && w.set.hm)).slice().sort((a, b) => (Number(eff(a.set, "fy", "d")) || 0) - (Number(eff(b.set, "fy", "d")) || 0) || (Number(eff(b.set, "fx", "d")) || 0) - (Number(eff(a.set, "fx", "d")) || 0));
+    const fr = (sec.free || []).slice().sort((a, b) => (Number(eff(a.set, "fy", "d")) || 0) - (Number(eff(b.set, "fy", "d")) || 0) || (Number(eff(b.set, "fx", "d")) || 0) - (Number(eff(a.set, "fx", "d")) || 0));
     let y = 16; const DW = 1140, MW = 358, items = {};
     fr.forEach(w => {
       const wd = Number(eff(w.set, "fwd", "d")) || 30, hd = Number(eff(w.set, "fh", "d")) || 100, small = wd < 30 || ["button", "counter", "countdown", "spacer", "divider"].includes(w.type), wm = small ? Math.min(92, Math.max(60, wd * 2.4)) : 92;
