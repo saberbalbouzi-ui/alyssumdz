@@ -92,7 +92,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-rep{border:1.5px dashed #e0d9c8;border-radius:10px;padding:.5rem;margin-bottom:.4rem}
 .pbx-cp{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem;font-size:.75rem;color:#666}.pbx-cp select{flex:1;min-width:90px;border:1.5px solid #e0d9c8;border-radius:8px;padding:.25rem;font-family:inherit;font-size:.75rem}
 .pbx-small{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.3rem .6rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.78rem}
-.pbx-lay{font-size:.82rem}.pbx-lay div{display:flex;align-items:center;gap:.35rem;padding:.28rem .4rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbx-lay div:hover{background:#f4efe6}.pbx-lay div.on{background:#173f35;color:#fff}
+.pbx-lay{font-size:.82rem}.pbx-lay div{display:flex;align-items:center;gap:.35rem;padding:.28rem .4rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbx-lay div:hover{background:#f4efe6}.pbx-lm{margin-inline-start:auto;display:flex;gap:2px;flex:none}.pbx-lm b{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:rgba(200,162,75,.22);font-size:.7rem;cursor:pointer;color:inherit}.pbx-lm b:hover{background:#c8a24b;color:#173f35}.pbx-lm b.off{opacity:.25;pointer-events:none}.pbx-lay div.on{background:#173f35;color:#fff}
 .pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
 .pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
 @media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}.pbx-rz{display:none}}`;
@@ -128,7 +128,7 @@ body{overflow-x:hidden;margin:0}`;
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
   <div class="pbx-stage" id="pbx-stage">
     <div class="pbx-sc" id="pbx-sc"><div class="pbx-fw" id="pbx-fw"><iframe id="pbx-frame" title="القماش"></iframe></div></div>
-    <button class="pbx-add" onclick="PBApp.ltab('tpl')">＋ إضافة قسم جديد</button>
+    <button class="pbx-add" onclick="PBApp.addBlank()">＋ إضافة قسم جديد</button>
     <div id="pbx-ovl"></div>
   </div>
   <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
@@ -141,6 +141,7 @@ body{overflow-x:hidden;margin:0}`;
     frame.addEventListener("load", () => { fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
     $("pbx-stage").addEventListener("scroll", () => positionOverlay());
     const lp = $("pbx-lpane"); let layDrag = null;
+    lp.addEventListener("click", e => { const b = e.target.closest("[data-lmv]"); if (!b) return; e.stopPropagation(); const row = b.closest("[data-sel]"); if (!row) return; E.sel = row.dataset.sel; move(Number(b.dataset.lmv)); const el = fdoc && fdoc.querySelector(`[data-pb="${E.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, true);
     lp.addEventListener("dragstart", e => { const it = e.target.closest("[data-lay]"); if (it) { layDrag = it.dataset.lay; e.dataTransfer.setData("text/plain", "lay"); } });
     lp.addEventListener("dragover", e => { if (layDrag && e.target.closest("[data-lay]")) e.preventDefault(); });
     lp.addEventListener("drop", e => { const it = e.target.closest("[data-lay]"); if (!layDrag || !it) return; e.preventDefault(); layerReorder(layDrag, it.dataset.lay); layDrag = null; });
@@ -238,10 +239,11 @@ body{overflow-x:hidden;margin:0}`;
     } else if (E.ltab === "lay") {
       let h = "";
       E.page.sections.forEach((sec, i) => {
-        h += `<div data-sel="${sec.id}" class="${E.sel === sec.id ? "on" : ""}">${ico('section',16)} قسم ${i + 1}</div>`;
+        const lm = (k, n) => `<span class="pbx-lm"><b data-lmv="-1" class="${k === 0 ? "off" : ""}" title="نقل للأعلى">▲</b><b data-lmv="1" class="${k === n - 1 ? "off" : ""}" title="نقل للأسفل">▼</b></span>`;
+        h += `<div data-sel="${sec.id}" class="${E.sel === sec.id ? "on" : ""}">${ico('section',16)} قسم ${i + 1}${lm(i, E.page.sections.length)}</div>`;
         const fz = (sec.free || []).slice().sort((a, b) => (Number(b.set.zi) || 0) - (Number(a.set.zi) || 0));
         if (fz.length) { h += `<div style="margin-inline-start:14px;color:#8a8472;font-size:.72rem;cursor:default">طبقات حرة — اسحب لتغيير الأمام/الخلف (الأعلى = الأمام)</div>` + fz.map(w => `<div draggable="true" data-lay="${w.id}" data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}" style="margin-inline-start:28px">${ico('grip',14)} ${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`).join(""); }
-        sec.cols.forEach((col, j) => { if (sec.set.kind === "canvas") return; h += `<div data-sel="${col.id}" class="${E.sel === col.id ? "on" : ""}" style="margin-inline-start:14px">${ico('column',16)} عمود ${j + 1}</div>`; col.widgets.forEach(w => { h += `<div data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}" style="margin-inline-start:28px">${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`; }); });
+        sec.cols.forEach((col, j) => { if (sec.set.kind === "canvas") return; h += `<div data-sel="${col.id}" class="${E.sel === col.id ? "on" : ""}" style="margin-inline-start:14px">${ico('column',16)} عمود ${j + 1}</div>`; col.widgets.forEach((w, wi) => { h += `<div data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}" style="margin-inline-start:28px">${ico(w.type,16)} ${WIDGETS[w.type].label}${lm(wi, col.widgets.length)}</div>`; }); });
       });
       pane.innerHTML = `<div class="pbx-lay">${h}</div>`;
     } else {
@@ -693,6 +695,8 @@ body{overflow-x:hidden;margin:0}`;
     const n = { _blank: 1, _two: 2, _three: 3 }[k] || 1; return PB.mkS(Array.from({ length: n }, () => PB.mkC([])));
   }
   function addSection(k, at) { const s = mkTpl(k); if (at == null) { const inf = selInfo(); at = inf ? inf.sec ? E.page.sections.indexOf(inf.sec) + 1 : E.page.sections.length : E.page.sections.length; } E.page.sections.splice(at, 0, s); afterEdit(s.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${s.id}"]`); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" }); }, 50); }
+  /* قسم فارغ جديد يُضاف أسفل آخر قسم ويُحدَّد ليُنقل بأزرار الطبقات أو شريط القسم */
+  function addBlank() { addSection("_blank", E.page.sections.length); toast("✅ أُضيف قسم فارغ في الأسفل — انقله من «الطبقات» بالأسهم ▲▼"); }
   function addGrid() { const r = Math.max(1, Math.min(10, Number(($("gb-r") || {}).value) || 2)), c = Math.max(1, Math.min(12, Number(($("gb-c") || {}).value) || 3)), s = PB.mkGrid(r, c), inf = selInfo(), at = inf ? E.page.sections.indexOf(inf.sec) + 1 : E.page.sections.length; E.page.sections.splice(at, 0, s); afterEdit(s.id); }
 
   /* ───────────────── رفع الصور مباشرة من الصفحة (جودة عالية بلا تصغير مفرط) ───────────────── */
@@ -1095,7 +1099,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, ltoggle, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
+  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, ltoggle, addBlank, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
