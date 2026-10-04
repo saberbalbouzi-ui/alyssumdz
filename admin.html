@@ -7649,7 +7649,7 @@ const PB = (() => {
   /* ═════════════════ المُصيِّر (Renderer): نفس الدالة للمحرر وللصفحة المنشورة ═════════════════ */
   /* تكييف الهاتف التلقائي لقسم حر: ترتيب عمودي بحسب القراءة (من الأعلى للأسفل ثم من اليمين) بعرض كامل تقريباً مع حفظ نسب الصور */
   function autoMobileLayout(sec) {
-    const fr = (sec.free || []).slice().sort((a, b) => (Number(eff(a.set, "fy", "d")) || 0) - (Number(eff(b.set, "fy", "d")) || 0) || (Number(eff(b.set, "fx", "d")) || 0) - (Number(eff(a.set, "fx", "d")) || 0));
+    const fr = (sec.free || []).filter(w => !(w.type === "shape" && w.set.hm)).slice().sort((a, b) => (Number(eff(a.set, "fy", "d")) || 0) - (Number(eff(b.set, "fy", "d")) || 0) || (Number(eff(b.set, "fx", "d")) || 0) - (Number(eff(a.set, "fx", "d")) || 0));
     let y = 16; const DW = 1140, MW = 358, items = {};
     fr.forEach(w => {
       const wd = Number(eff(w.set, "fwd", "d")) || 30, hd = Number(eff(w.set, "fh", "d")) || 100, small = wd < 30 || ["button", "counter", "countdown", "spacer", "divider"].includes(w.type), wm = small ? Math.min(92, Math.max(60, wd * 2.4)) : 92;
@@ -9027,7 +9027,7 @@ ${this.quickImg(this.q.cover)}
     const I = { edit: svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'), eye: svg('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'), copy: svg('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'), trash: svg('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>'), link: svg('<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>'), dl: svg('<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>') };
     const lpHtml = this.list.length ? `<div class="pbx-pl">${this.list.map(p => `<div class="pbx-pc"><div class="pbx-pth" ${p.thumb ? `style="background-image:url('${PB.esc(p.thumb)}')"` : ""}>${p.thumb ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)}${((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x.officialPage === p.slug || x.route === p.slug).map(x => (x.officialPage === p.slug ? ' <span class="pill st-livree" title="الصفحة الرسمية للمنتج ' + PB.esc(x.title) + '">📄 رسمية</span>' : "") + (x.route === p.slug ? ' <span class="pill st-confirmee" title="تُفتح من الرئيسية للمنتج ' + PB.esc(x.title) + '">🧭 مسار</span>' : "")).join("")}</b><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a><small>${PB.esc(p.updated || "")}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBAdmin.edit('${PB.esc(p.slug)}')" title="فتح الصفحة مباشرة في المطوّر">${I.edit} تعديل</button><button class="small" onclick="PBAdmin.preview('${PB.esc(p.slug)}')" title="معاينة الصفحة (ومنها زر التعديل)">${I.eye} معاينة</button><button class="small gray" onclick="PBAdmin.quick('${PB.esc(p.slug)}')" title="اسم الصفحة وصورتها وربطها بمنتج وSEO">${I.edit} تعديل سريع</button><button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')" title="نسخ الصفحة">${I.copy} نسخ</button><button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')" title="نسخ الرابط">${I.link}</button><button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')" title="تصدير JSON">${I.dl}</button><button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')" title="حذف الصفحة (إلغاء النشر)">${I.trash}</button></div></div>`).join("")}</div>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» أو افتح المولّد الذكي.</p>';
     const A = (typeof Admin !== "undefined") ? Admin : {}, prods = A.products || [], stat = p => p.active !== false ? '<span class="pill st-livree">نشط</span>' : '<span class="pill st-annulee">موقوف</span>', ic = n => (typeof AIC === "function" ? AIC(n) : "");
-    const prHtml = prods.length ? `<div class="pbx-pl">${prods.map(p => { const img = p.cover || (p.images && p.images[0]) || ""; const sl = PB.esc(p.slug); return `<div class="pbx-pc"><div class="pbx-pth" ${img ? `style="background-image:url('${PB.esc(img)}')"` : ""}>${img ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)} ${stat(p)}</b><a href="p/${sl}/" target="_blank" dir="ltr">/p/${sl}/</a><small>${Number(p.price || 0).toLocaleString("fr-DZ")} دج · ${PB.esc((A.categories && A.categories[p.cat]) || p.cat || "")}${p.pageMode === "generated" ? " · صفحة مولّدة" : ""}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBConvert.edit('product','${sl}')" title="فتح صفحة المنتج مباشرة في مطوّر الصفحات">${ic("edit")} تعديل</button><button class="small" onclick="PBAdmin.previewProduct('${sl}')" title="معاينة صفحة المنتج (ومنها زر التعديل)">${ic("eye")} معاينة</button><button class="small gray" onclick="PBAdmin.quickProduct('${sl}')" title="الاسم والصورة وSEO">${ic("edit")} تعديل سريع</button><button class="small gray" onclick="Admin.duplicateProduct('${sl}')" title="نسخ المنتج وصفحته">${ic("copy")} نسخ</button><button class="small" style="background:var(--red);color:#fff" onclick="Admin.delProduct('${sl}')" title="حذف المنتج">${ic("trash")}</button></div></div>`; }).join("")}</div>` : '<p class="hint">لا توجد منتجات.</p>';
+    const prHtml = prods.length ? `<div class="pbx-pl">${prods.map(p => { const img = p.cover || (p.images && p.images[0]) || ""; const sl = PB.esc(p.slug); return `<div class="pbx-pc"><div class="pbx-pth" ${img ? `style="background-image:url('${PB.esc(img)}')"` : ""}>${img ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)} ${stat(p)}</b><a href="p/${sl}/" target="_blank" dir="ltr">/p/${sl}/</a><small>${Number(p.price || 0).toLocaleString("fr-DZ")} دج · ${PB.esc((A.categories && A.categories[p.cat]) || p.cat || "")}${p.pageMode === "generated" ? " · صفحة مولّدة" : ""}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBConvert.edit('product','${sl}')" title="فتح صفحة المنتج مباشرة في مطوّر الصفحات">${ic("edit")} تعديل</button><button class="small gray" onclick="PBConvert.editRaw('product','${sl}')" title="فتح الصفحة بأكوادها الأصلية (HTML) مع تعديل العناصر بالنقر">HTML</button><button class="small" onclick="PBAdmin.previewProduct('${sl}')" title="معاينة صفحة المنتج (ومنها زر التعديل)">${ic("eye")} معاينة</button><button class="small gray" onclick="PBAdmin.quickProduct('${sl}')" title="الاسم والصورة وSEO">${ic("edit")} تعديل سريع</button><button class="small gray" onclick="Admin.duplicateProduct('${sl}')" title="نسخ المنتج وصفحته">${ic("copy")} نسخ</button><button class="small" style="background:var(--red);color:#fff" onclick="Admin.delProduct('${sl}')" title="حذف المنتج">${ic("trash")}</button></div></div>`; }).join("")}</div>` : '<p class="hint">لا توجد منتجات.</p>';
     box.innerHTML = `<h3 class="pbx-sh">صفحات الهبوط <span>${this.list.length}</span></h3>${lpHtml}<h3 class="pbx-sh">صفحات المنتجات <span>${prods.length}</span></h3>${prHtml}`;
   },
   /* تكرار صفحة، وتصدير/استيراد ملف JSON (لنقل التصاميم بين متاجرك أو بيعها كقوالب) */
@@ -10281,10 +10281,106 @@ const PBConvert = (() => {
   const siteBase = () => location.href.replace(/[?#].*$/, "").replace(/[^/]*$/, "");
   const absCss = (css, from) => css.replace(/url\(\s*(['"]?)(?!data:|https?:|\/\/|#)([^)'"]+?)\1\s*\)/g, (m, q, u) => { try { return "url(" + new URL(u, from).href + ")"; } catch (e) { return m; } });
   const GROUP = el => el.matches(".topbar,header") ? "top" : el.matches("footer") ? "bot" : "";
+
+  /* يرسم الصفحة في iframe خفي بعرض الحاسوب (لتشغيل جافاسكربتها وقراءة المواضع والأنماط المحسوبة) */
+  async function render(url) {
+    const fr = document.createElement("iframe"); fr.setAttribute("aria-hidden", "true"); fr.style.cssText = "position:fixed;left:-12000px;top:0;width:1280px;height:900px;border:0;visibility:hidden";
+    document.body.appendChild(fr);
+    try { await new Promise((res, rej) => { fr.onload = res; fr.onerror = rej; fr.src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); setTimeout(res, 12000); }); await new Promise(r => setTimeout(r, 2200)); return fr; }
+    catch (e) { fr.remove(); throw e; }
+  }
+  /* ── تحويل حر: كل قسم من الصفحة ← قسم «كانفاس»، وكل عنصر (عنوان/نص/صورة/زر/قائمة/أسئلة/صندوق) عنصر حر بموضعه وحجمه الفعليين،
+     يُحرَّك ويُكبَّر ويُصغَّر من الجوانب كلها؛ نموذج الطلب كتلة واحدة تتغيّر أحجامها ولا تظهر تفاصيلها ── */
+  function convertFree(doc, o, fdoc) {
+    const win = doc.defaultView, cs = el => win.getComputedStyle(el), W = doc.documentElement.clientWidth || 1280;
+    const hidden = el => { const q = cs(el); return q.display === "none" || q.visibility === "hidden" || el.hidden || (+q.opacity === 0 && !el.querySelector("img")); };
+    const skip = el => el.matches(SKIP) || hidden(el);
+    const kids = el => [...el.children].filter(c => !skip(c));
+    const txt = el => (el.textContent || "").replace(/\s+/g, " ").trim();
+    const dom = String((typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || "").replace(/^www\./, ""), relu = u => { try { const x = new URL(u, doc.baseURI); if (x.origin !== new URL(doc.baseURI).origin && !(dom && x.hostname.replace(/^www\./, "") === dom)) return x.href; return decodeURIComponent(x.pathname.replace(/^\//, "")) + x.search; } catch (e) { return u; } };
+    const ta = el => { const a = cs(el).textAlign; return a === "center" ? "center" : (a === "left" || a === "end") ? "end" : "start"; };
+    const fpx = (el, d) => Math.round(parseFloat(cs(el).fontSize) || d);
+    const inline = el => { const c = el.cloneNode(true); c.querySelectorAll("script,style,svg,img,button,input,select,textarea,iframe").forEach(x => x.remove()); c.querySelectorAll("*").forEach(x => { [...x.attributes].forEach(a => { if (!(x.tagName === "A" && a.name === "href")) x.removeAttribute(a.name); }); if (!/^(A|B|STRONG|EM|I|U|BR|P|UL|OL|LI|SPAN|SMALL|MARK|DEL|S)$/.test(x.tagName)) x.replaceWith(...x.childNodes); }); return c.innerHTML.trim(); };
+    const hasBlock = el => [...el.children].some(c => !skip(c) && /^(DIV|SECTION|ARTICLE|UL|OL|H[1-6]|FORM|TABLE|DETAILS|FIGURE|IMG|PICTURE|VIDEO|IFRAME|P|BLOCKQUOTE|ASIDE)$/.test(c.tagName));
+    const isOrder = el => (el.matches("form,[id*=order i],[class*=order i]") && el.querySelector("input,select,textarea")) || (el.querySelector && el.querySelector("#name,#phone,#cname,input[type=tel]") && el.querySelector("button") && !el.querySelector("h1,h2") && el.querySelectorAll("input").length >= 2);
+    const rawOrder = (() => { if (o.kind !== "product" || !fdoc) return ""; const inp = fdoc.querySelector("#cname,#name,#phone,input[type=tel]"); const el = inp && (inp.closest("form,[id*=order i],[class*=order i]") || inp.parentElement); return el ? el.outerHTML : ""; })();
+    /* أقسام تملؤها سكربتات الصفحة (حاويات فارغة يُشير إليها getElementById في السكربتات المضمّنة) ← تبقى كتلة HTML أصلية كي تعمل */
+    const dyn = new Set(); (fdoc ? fdoc.querySelectorAll("script:not([src])") : []).forEach(sc => (sc.textContent.match(/getElementById\(["']([\w-]+)["']\)/g) || []).forEach(m => dyn.add(m.replace(/^.*\(["']|["']\)$/g, ""))));
+    const dynEmpty = [...dyn].filter(id => { const e = fdoc.getElementById(id); return e && !e.children.length && !(e.textContent || "").trim() && !["offers", "pprice", "pold", "psave", "gmain", "name", "phone", "commune", "wilaya"].includes(id) && !/^(input|select|textarea|button)$/i.test(e.tagName); });
+    const rawKeep = c => !!c.querySelector("#grid,#bestsellers-grid,.shop-cats" + (dynEmpty.length ? "," + dynEmpty.map(i => "#" + i).join(",") : ""));
+    const colorOf = el => hex(cs(el).color);
+    const r1 = n => Math.round(n * 10) / 10;
+    let sawOrder = false; const seen = new Set();
+    const main = doc.querySelector("main") || doc.body, all = [...main.children];
+    const top = all.flatMap(c => (c.matches(".container,#main,div") && kids(c).length > 1 && kids(c).every(x => x.matches("section,.hero,div[class*=sec],.container"))) ? kids(c) : [c]);
+    const secs = [];
+    function freeSection(c) {
+      const r0 = c.getBoundingClientRect(); if (r0.height < 8) return null;
+      const q = cs(c), sec = mkS([mkC([])], { kind: "canvas", layout: "full", mh: { d: Math.ceil(r0.height) }, pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] } }), free = []; let z = 0;
+      const gi = /gradient\(/.test(q.backgroundImage) ? ([...q.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(x => hex(x)).pop() || "") : "";
+      const bg = hex(q.backgroundColor) || hex(gi); if (bg) sec.set.bg = bg;
+      const bi = (q.backgroundImage.match(/url\(["']?([^"')]+)["']?\)/) || [])[1]; if (bi && !/gradient/.test(q.backgroundImage.split("url")[0])) { sec.set.bgImg = relu(bi); sec.set.bgSize = q.backgroundSize === "contain" ? "contain" : "cover"; }
+      const put = (type, set, el) => {
+        const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return null;
+        const w = PB.mkFree(type, 0, 0, z++); Object.assign(w.set, set, { fx: { d: r1((r.left - r0.left) / W * 100) }, fy: { d: Math.round(r.top - r0.top) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.round(r.height) } }); free.push(w); return w;
+      };
+      function boxOf(el) {
+        const s2 = cs(el), bgc = hex(s2.backgroundColor), bw = parseFloat(s2.borderTopWidth) || 0, bc = bw > 0 ? hex(s2.borderTopColor) : "", sh = s2.boxShadow && s2.boxShadow !== "none";
+        const bgi = (s2.backgroundImage.match(/url\(["']?([^"')]+)["']?\)/) || [])[1];
+        if (bgi) { const w = put("image", { src: relu(bgi), alt: "", fit: s2.backgroundSize === "contain" ? "contain" : "cover" }, el); if (w) { const rad = parseFloat(s2.borderTopLeftRadius) || 0; if (rad) w.set.rad = { d: rad }; } return; }
+        if (!bgc && !bc && !sh) return;
+        const r = el.getBoundingClientRect(), rad = parseFloat(s2.borderTopLeftRadius) || 0;
+        put("shape", { shape: "rect", fill: bgc || "transparent", outline: !bgc, stroke: bc, sw: bw, keep: false, rx: Math.min(50, Math.round(rad / Math.max(1, Math.min(r.width, r.height)) * 100)), sh: sh ? "sm" : "", hm: true }, el);      // صناديق الزينة تُخفى على الجوال (التخطيط التلقائي للجوال يرصّ العناصر في عمود)
+      }
+      function walk(el) {
+        if (skip(el)) return; const tag = el.tagName;
+        if (o.kind === "product" && isOrder(el)) { if (!sawOrder) { sawOrder = true; put("orderorig", { prod: o.slug, raw: rawOrder }, el); } return; }
+        if (o.kind === "product") {
+          if (el.id === "offers" || (el.querySelector("#offers") && !el.querySelector("h1,h2,form,#gmain,#pprice") && txt(el).length < 400)) { put("poffers", { prod: o.slug }, el); return; }
+          if (el.id === "pprice" || (el.querySelector("#pprice") && !el.querySelector("h1,h2,img,#offers,form") && txt(el).length < 120)) { put("pprice", { prod: o.slug }, el); return; }
+        }
+        if (/^H[1-6]$/.test(tag)) { const t = txt(el); if (!t) return; const f = fpx(el, 32), w = put("heading", { text: t, tag: tag.toLowerCase(), bindTitle: o.kind === "product" && tag === "H1", prod: o.kind === "product" ? o.slug : "", fs: { d: f, m: Math.max(18, Math.round(f * (f > 30 ? .72 : .9))) }, ta: { d: ta(el) }, fw: String(cs(el).fontWeight || 800), lh: { d: Math.round((parseFloat(cs(el).lineHeight) / (parseFloat(cs(el).fontSize) || 16)) * 100) / 100 || 1.25 } }, el); if (w) { const c2 = colorOf(el); if (c2) w.set.color = c2; } return; }
+        if (tag === "IMG") { const src = el.currentSrc || el.src || ""; if (!src || /placeholder|data:image\/svg/i.test(src) || seen.has(src + "@" + Math.round(el.getBoundingClientRect().left) + "," + Math.round(el.getBoundingClientRect().top))) return; seen.add(src + "@" + Math.round(el.getBoundingClientRect().left) + "," + Math.round(el.getBoundingClientRect().top)); const w = put("image", { src: relu(src), alt: el.alt || "", fit: cs(el).objectFit === "contain" ? "contain" : "cover" }, el); if (w) { const rad = parseFloat(cs(el).borderTopLeftRadius) || 0; if (rad) w.set.rad = { d: rad }; } return; }
+        if (tag === "PICTURE") { const i = el.querySelector("img"); if (i) walk(i); return; }
+        if (tag === "VIDEO" || (tag === "IFRAME" && /youtube|vimeo/i.test(el.src))) { const u = el.src || (el.querySelector("source") || {}).src || ""; if (u) put("video", { url: u, ratio: "16/9" }, el); return; }
+        if (tag === "UL" || tag === "OL") { const li = [...el.children].filter(x => x.tagName === "LI" && txt(x)); if (li.length && li.every(x => !hasBlock(x))) { put("bullets", { items: li.map(txt).join("\n"), mk: tag === "OL" ? "dec" : "check", fs: { d: fpx(li[0], 17) } }, el); return; } }
+        if ((tag === "A" || tag === "BUTTON") && (el.matches("[class*=btn]") || tag === "BUTTON")) {
+          const t = txt(el); if (!t || el.matches(".cart-btn,.btn-order,[onclick*=Cart]") || el.closest("[class*=tab],[class*=pill],[class*=chip],[id*=tab]") || t.length > 60) return;
+          const s2 = cs(el), w = put("button", { text: t, kind: "link", link: tag === "A" ? (el.getAttribute("href") || "#") : "#", fs: { d: fpx(el, 18) }, brad: { d: parseInt(s2.borderTopLeftRadius) || 10 } }, el); if (w) { const bgc = hex(s2.backgroundColor), c2 = hex(s2.color); if (bgc) w.set.bgc = bgc; if (c2) w.set.color = c2; if (!bgc) w.set.bgHide = true; } return;
+        }
+        if (tag === "P" || tag === "BLOCKQUOTE" || tag === "SPAN" || tag === "SMALL" || tag === "LI" || tag === "A" || tag === "B" || tag === "STRONG" || tag === "LABEL" || ((tag === "DIV" || tag === "FIGCAPTION" || tag === "TD") && !hasBlock(el) && !el.querySelector("a[class*=btn],button"))) {
+          if (el.querySelector("img") && !txt(el)) { boxOf(el); [...el.querySelectorAll("img")].forEach(i => walk(i)); return; }
+          const t = txt(el); if (!t) { boxOf(el); return; }
+          boxOf(el); const h = inline(el), w = put("text", { html: /^<p[ >]/.test(h) ? h : "<p>" + h + "</p>", fs: { d: fpx(el, 17) }, ta: { d: ta(el) }, lh: { d: Math.round((parseFloat(cs(el).lineHeight) / (parseFloat(cs(el).fontSize) || 16)) * 100) / 100 || 1.6 } }, el); if (w) { const c2 = colorOf(el); if (c2) w.set.color = c2; } return;
+        }
+        boxOf(el);
+        const ks = kids(el);
+        for (let i = 0; i < ks.length; i++) {
+          if (ks[i].tagName === "DETAILS") {       // أسئلة متتالية ← عنصر «أسئلة شائعة» واحد
+            const grp = [ks[i]]; while (ks[i + 1] && ks[i + 1].tagName === "DETAILS") grp.push(ks[++i]);
+            const items = grp.map(d => ({ q: txt(d.querySelector("summary") || { textContent: "" }), a: txt({ textContent: [...d.childNodes].filter(n => n.tagName !== "SUMMARY").map(n => n.textContent).join(" ") }) })).filter(x => x.q);
+            const a = grp[0].getBoundingClientRect(), b = grp[grp.length - 1].getBoundingClientRect(); if (!items.length) continue;
+            const w = PB.mkFree("accordion", 0, 0, z++); Object.assign(w.set, { items, first: false, fx: { d: r1((a.left - r0.left) / W * 100) }, fy: { d: Math.round(a.top - r0.top) }, fwd: { d: r1(a.width / W * 100) }, fh: { d: Math.round(b.bottom - a.top) } }); free.push(w); continue;
+          }
+          walk(ks[i]);
+        }
+      }
+      boxOf(c); kids(c).forEach(walk);
+      if (!free.length && !sec.set.bg && !sec.set.bgImg) return null;
+      sec.free = free; return sec;
+    }
+    top.forEach(c => {
+      if (skip(c)) return;
+      if (rawKeep(c)) { const el = c.id ? fdoc.getElementById(c.id) : (fdoc.querySelector("main") || {}).children && fdoc.querySelector("main").children[all.indexOf(c)]; if (el) { const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); secs.push(sec); } return; }
+      const sec = freeSection(c); if (sec) secs.push(sec);
+    });
+    if (o.kind === "product" && !sawOrder) { const sec = mkS([mkC([])], { kind: "canvas", layout: "full", mh: { d: 640 }, pad: { d: [0, 0, 0, 0] } }), w = PB.mkFree("orderorig", 10, 20, 1); Object.assign(w.set, { prod: o.slug, raw: rawOrder, fx: { d: 10 }, fy: { d: 20 }, fwd: { d: 80 }, fh: { d: 600 } }); sec.free = [w]; secs.push(sec); }
+    return secs;
+  }
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحوّلها إلى صفحة مطوّر: قسم لكل كتلة بنفس HTML الأصل + أنماطها */
   /* يقرأ الصفحة الأصلية (ملفها كما هو) ويحافظ على هيكلها كاملاً: كل كتلة (الشريط العلوي، الهيدر، أقسام المحتوى، الفوتر) قسم في المطوّر بنفس HTML الأصل وأنماطه؛
      تُعدَّل عناصرها (نصوص، صور، روابط، ألوان، أحجام…) مباشرة بالنقر عليها (PBEd) دون أن يتغيّر الهيكل */
-  async function build(kind, slug, title, srcText) {
+  async function build(kind, slug, title, srcText, mode) {
     const pth = path(kind, slug), text = srcText || dec(await GH.getFile(pth)), doc = new DOMParser().parseFromString(text, "text/html"), from = siteBase() + pth;
     let css = "";
     doc.head.querySelectorAll("style").forEach(st => { css += absCss(st.textContent, from) + "\n"; });
@@ -10294,38 +10390,44 @@ const PBConvert = (() => {
     }
     const AG = "#agent,[id^=agent],[class*=agent],#avatar,.avatar-bubble";      // الوكيل الذكي يُستثنى من المطوّر
     const raw = (grp, el) => { const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = grp; return sec; };
-    const secs = [];
+    const secs = [], top = [], bot = [];
     [...doc.body.children].forEach(el => {
       if (el.matches("script,style,link,noscript,template")) return;
-      if (el.matches("main")) { [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
+      if (el.matches("main")) { if (mode !== "free") [...el.children].forEach(c => { if (!c.matches("script,style,link,noscript,template," + AG)) secs.push(raw("main", c)); }); return; }
       if (el.matches(AG)) return;
-      const g = GROUP(el); if (g) secs.push(raw(g, el));
+      const g = GROUP(el); if (g === "top") top.push(raw("top", el)); else if (g === "bot") bot.push(raw("bot", el));
     });
+    if (mode === "free") {
+      const fr = await render(kind === "home" ? "index.html" : "p/" + slug + "/");
+      try { convertFree(fr.contentDocument, { kind, slug }, doc).forEach(x => { x.grp = "main"; secs.push(x); }); } finally { fr.remove(); }
+      secs.unshift(...top); secs.push(...bot);
+    } else { const m = secs.splice(0); secs.push(...top, ...m, ...bot); }
     const page = newPage(title || "الصفحة الرئيسية", kind === "home" ? "home" : slug);
     page.sections = secs.length ? secs : [mkS([mkC([mkW("heading", { text: title || "صفحة" })])], {})];
     page.header = false; page.footer = false; page.css = css; page.bg = "transparent";
     const t = doc.title || ""; if (t) page.seoTitle = t.replace(/\s+—.*$/, "");
     const md = doc.querySelector('meta[name="description"]'); if (md) page.desc = md.content || "";
     if (kind === "product") page.product = slug;
-    page.shell = text; page.origin = { kind, slug: kind === "home" ? "" : slug, direct: false, raw: true };
+    page.shell = text; page.origin = { kind, slug: kind === "home" ? "" : slug, direct: false, raw: mode !== "free", native: mode === "free", mode: mode === "free" ? "free" : "raw" };
     return page;
   }
   /* زر «تعديل» ← يفتح الصفحة في المطوّر */
-  async function edit(kind, slug) {
+  async function edit(kind, slug, mode) {
+    mode = mode || "free";
     if (kind === "home") slug = "";
     try { SitePreview.close(); } catch (e) { }
     toast("⏳ جارِ فتح الصفحة في المطوّر…");
     try {
       PBBind.reset(); PBEd.hide(); const k = key(kind, slug); let page = null;
-      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.origin.raw && p.shell) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
+      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.shell && (p.origin.mode || "raw") === mode) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
       if (!page) {
         const pr = kind === "product" ? (Admin.products || []).find(x => x.slug === slug) : null;
         if (kind === "product" && !pr) throw new Error("المنتج غير موجود");
         let src = ""; try { src = dec(await GH.getFile("assets/pages/_conv/" + k + ".orig.html")); } catch (e) { }      // إن وُجد الأصل المحفوظ نبني منه (تفادي بناء من نسخة سبق استبدالها)
-        page = await build(kind, slug, pr ? pr.title : "الصفحة الرئيسية", src);
+        page = await build(kind, slug, pr ? pr.title : "الصفحة الرئيسية", src, mode);
       }
       PBApp.open(page, page.slug, true); PBApp.E.dirty = true;
-      toast("✅ فُتحت بشكلها الأصلي في المطوّر — عدّل ما تشاء ثم «حفظ ونشر»");
+      toast(mode === "free" ? "✅ فُتحت للتحرير الحر — اسحب أي عنصر وغيّر حجمه من جوانبه، ثم «حفظ ونشر»" : "✅ فُتحت بشكلها الأصلي (HTML) — انقر أي عنصر لتعديله");
     } catch (e) { console.error(e); toast("❌ تعذّر فتح الصفحة: " + e.message); }
   }
   /* ── نافذة «حفظ ونشر» لصفحة قادمة من المنتج/الرئيسية ── */
@@ -10379,6 +10481,10 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
     place("top", el => GROUP(el) === "top");
     const main = doc.querySelector("main"); if (main) main.innerHTML = out.main.join("\n"); else doc.body.insertAdjacentHTML("afterbegin", "<main>" + out.main.join("\n") + "</main>");
     place("bot", el => GROUP(el) === "bot");
+    if (o.kind === "product") {      // عناصر لا غنى عنها لسكربت صفحة المنتج (تُضاف مخفية إن حذفها المستخدم) كي لا يتعطّل نموذج الطلب
+      const mm = doc.querySelector("main");
+      if (mm) { if (!doc.getElementById("offers")) mm.insertAdjacentHTML("beforeend", '<div id="offers" class="offers" style="display:none"></div>'); if (!doc.getElementById("gmain")) mm.insertAdjacentHTML("beforeend", '<img id="gmain" alt="" style="display:none">'); if (!doc.querySelector(".gthumbs")) mm.insertAdjacentHTML("beforeend", '<div class="gthumbs" data-static="1" style="display:none"></div>'); }
+    }
     if (native) {
       const st = doc.createElement("style"); st.id = "pb-native"; st.textContent = PB.BASE_CSS; doc.head.appendChild(st);
       const sc = doc.createElement("script"); sc.textContent = "var __pbBase=" + JSON.stringify(o.kind === "home" ? "" : "../../") + ";var __pbSlug=\"\";var __pbMeta={};" + PB.RUNTIME_JS; doc.body.appendChild(sc);
@@ -10398,7 +10504,7 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       toast("✅ استُرجعت الصفحة الأصلية (قد يستغرق ظهورها دقيقة)");
     } catch (e) { toast("❌ " + e.message); }
   }
-  return { build, edit, ask, saveDirect, restore, after: PBBind_after };
+  return { build, edit, editRaw: (k, sl) => edit(k, sl, "raw"), ask, saveDirect, restore, after: PBBind_after };
 })();
 
 /* ═════════════════════════════════════════════════════════════════
