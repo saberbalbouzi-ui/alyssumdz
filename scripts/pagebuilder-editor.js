@@ -96,6 +96,9 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
 .pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
 .pbx-tg{display:inline-flex}
+.pbx-histbox{position:fixed;top:56px;inset-inline-start:12px;width:min(360px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 80px));background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.4);z-index:10040;flex-direction:column;overflow:hidden;direction:rtl}
+.pbx-hh{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .6rem;padding:.6rem .8rem;background:#173f35;color:#fff}.pbx-hh small{flex:1 1 100%;opacity:.8;font-size:.7rem}.pbx-hh button{margin-inline-start:auto;background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer}
+.pbx-hl2{overflow:auto;padding:.3rem}.pbx-hi{display:flex;align-items:center;gap:.5rem;width:100%;text-align:start;border:0;background:#fff;border-bottom:1px solid #f1ede1;padding:.5rem .6rem;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-hi:hover{background:#faf6ec}.pbx-hi .n{flex:none;width:24px;height:24px;border-radius:50%;background:#efe8d8;display:grid;place-items:center;font-size:.7rem;font-weight:800;color:#173f35}.pbx-hi .l{flex:1;font-weight:700;color:#2a3430}.pbx-hi .t{flex:none;color:#999;font-size:.72rem;direction:ltr}.pbx-hi.cur{background:#eaf5ef}.pbx-hi.cur .n{background:#157a55;color:#fff}.pbx-hi em{flex:none;font-style:normal;font-size:.66rem;background:#157a55;color:#fff;border-radius:999px;padding:.05rem .45rem}
 .pbx-mbar{display:none;position:absolute;bottom:10px;inset-inline:10px;z-index:25;background:#173f35;border-radius:14px;padding:.35rem;gap:.3rem;justify-content:space-around;box-shadow:0 6px 22px rgba(0,0,0,.4)}
 .pbx-mbar button{flex:1;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;padding:.5rem 0;font-size:1.05rem;font-weight:800;cursor:pointer;font-family:inherit}
 .pbx-mbar button.dng{background:#b83232}.pbx-mbar small{display:block;font-size:.6rem;font-weight:700;opacity:.85}
@@ -116,6 +119,7 @@ body{overflow-x:hidden;margin:0}`;
 }
 @media(pointer:coarse){.pbx-h{width:20px;height:20px}.pbx-rot,.pbx-rad{transform:scale(1.25)}}`;
 
+  const toastUndo = m => { const t = $("pbx-msg"); if (!t) return; t.innerHTML = esc(m) + ' <button type="button" id="pbx-tu" style="margin-inline-start:.6rem;background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.2rem .7rem;font-weight:800;cursor:pointer;font-family:inherit">↩ إلغاء النسخ</button>'; t.style.display = "block"; $("pbx-tu").onclick = () => { undo(); t.style.display = "none"; toast("↩ أُلغي النسخ"); }; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 9000); };
   const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
 
   /* ───────────────── بنية الواجهة ───────────────── */
@@ -139,6 +143,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-snap" onclick="PBApp.toggleSnap()" title="الالتصاق بحواف العناصر الأخرى والمنتصف (اضغط Alt أثناء السحب لتعطيله مؤقتاً)">${ico('snap',16)} التصاق</button>
   <button id="pbx-undo" onclick="PBApp.undo()" title="تراجع (Ctrl+Z)">${ico('undo',16)}</button>
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
+  <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
   <button class="pub" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
 </div>
@@ -160,6 +165,7 @@ body{overflow-x:hidden;margin:0}`;
   <button onclick="PBApp.mact('dup')" title="نسخ العنصر">⧉<small>نسخ</small></button><button onclick="PBApp.mact('set')" title="إعدادات العنصر">⚙<small>إعدادات</small></button>
   <button onclick="PBApp.mact('undo')" title="تراجع">↩<small>تراجع</small></button><button class="dng" onclick="PBApp.mact('del')" title="حذف">🗑<small>حذف</small></button>
 </div>
+<div class="pbx-histbox" id="pbx-hist" style="display:none"></div>
 <div class="pbx-msg" id="pbx-msg"></div>`;
     document.body.appendChild(d);
     frame = $("pbx-frame");
@@ -185,7 +191,7 @@ body{overflow-x:hidden;margin:0}`;
     build();
     E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
     $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
-    $("pbx-title").value = E.page.title || ""; commitHist(true);
+    $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
     E.zoom = 1; ltab("add"); setDev(isMob() ? "m" : "d"); renderInspector(); updateTop();
     if (fdoc) renderCanvas();
@@ -213,13 +219,34 @@ body{overflow-x:hidden;margin:0}`;
   const selInfo = () => E.sel ? find(E.sel) : null;
 
   /* ───────────────── التاريخ (تراجع/إعادة) ───────────────── */
+  /* سجل التغييرات (Historique): كل مرحلة بوصف تلقائي ووقتها؛ يُحفظ كاملاً ولا يُمسح بالتراجع ويمكن الرجوع لأي مرحلة منه */
+  const kindLbl = (k, t) => k === "section" ? "قسم" : k === "column" ? "عمود" : ((WIDGETS[t] || {}).label || "عنصر");
+  function flat(page) { const m = new Map(); (page.sections || []).forEach((sec, si) => { m.set(sec.id, { k: "section", sig: JSON.stringify(sec.set), pos: "p:" + si }); (sec.cols || []).forEach((c, ci) => { m.set(c.id, { k: "column", sig: JSON.stringify(c.set), pos: sec.id + ":" + ci }); (c.widgets || []).forEach((w, wi) => m.set(w.id, { k: "widget", t: w.type, sig: JSON.stringify(w.set), pos: c.id + ":" + wi })); }); (sec.free || []).forEach((w, wi) => m.set(w.id, { k: "widget", t: w.type, free: 1, sig: JSON.stringify(w.set), pos: sec.id + ":f" + wi })); }); return m; }
+  function describe(prevSnap, cur) {
+    try {
+      const a = flat(JSON.parse(prevSnap)), b = flat(cur), add = [], del = [], chg = [], mov = [];
+      b.forEach((v, id) => { const o = a.get(id); if (!o) add.push(v); else if (o.sig !== v.sig) chg.push(v); else if (o.pos !== v.pos) mov.push(v); });
+      a.forEach((v, id) => { if (!b.has(id)) del.push(v); });
+      const nm = L => { const n = L[0]; return kindLbl(n.k, n.t) + (L.length > 1 ? " (+" + (L.length - 1) + ")" : ""); };
+      if (add.length) return "إضافة " + nm(add); if (del.length) return "حذف " + nm(del); if (chg.length) return "تعديل " + nm(chg); if (mov.length) return "نقل " + nm(mov);
+    } catch (e) { }
+    return "تغيير في الصفحة";
+  }
   function commitHist(first) {
     const snap = JSON.stringify(E.page);
     if (!first && E.hist[E.hi] === snap) return;
+    { E.log = E.log || []; const prev = E.log.length ? E.log[E.log.length - 1].snap : null; E.log.push({ t: Date.now(), label: E.nextLabel || (first ? "فتح الصفحة" : describe(prev || E.hist[E.hi] || snap, E.page)), snap }); E.nextLabel = null; if (E.log.length > 150) E.log.shift(); if (E.histOpen) renderHist(); }
     E.hist = E.hist.slice(0, E.hi + 1); E.hist.push(snap); if (E.hist.length > 80) E.hist.shift(); E.hi = E.hist.length - 1;
     if (!first) { E.dirty = true; clearTimeout(saveT); saveT = setTimeout(saveDraft, 800); }
     updateTop();
   }
+  function renderHist() {
+    const box = $("pbx-hist"); if (!box) return; const L = E.log || [], cur = E.hist[E.hi], curIdx = (() => { for (let i = L.length - 1; i >= 0; i--) if (L[i].snap === cur) return i; return -1; })();
+    const hm = t => new Date(t).toLocaleTimeString("fr-DZ", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    box.innerHTML = `<div class="pbx-hh"><b>🕘 السجل (Historique)</b><small>${L.length} مرحلة — انقر أي مرحلة للرجوع إليها</small><button type="button" onclick="PBApp.hist(false)">✕</button></div><div class="pbx-hl2">` + (L.length ? L.map((e, i) => ({ e, i })).reverse().map(({ e, i }) => `<button type="button" class="pbx-hi${i === curIdx ? " cur" : ""}" onclick="PBApp.histGo(${i})"><span class="n">${i + 1}</span><span class="l">${esc(e.label)}</span><span class="t">${hm(e.t)}</span>${i === curIdx ? '<em>الحالية</em>' : ""}</button>`).join("") : '<div style="padding:1rem;color:#888">لا تغييرات بعد.</div>') + `</div>`;
+  }
+  function hist(on) { const box = $("pbx-hist"); if (!box) return; E.histOpen = on === undefined ? !E.histOpen : !!on; box.style.display = E.histOpen ? "flex" : "none"; if (E.histOpen) { renderHist(); const l = box.querySelector(".pbx-hl2"); if (l) l.scrollTop = 0; } }
+  function histGo(i) { const en = (E.log || [])[i]; if (!en) return; E.page = JSON.parse(en.snap); E.nextLabel = "رجوع إلى المرحلة " + (i + 1) + ": " + en.label; E.dirty = true; if (E.sel && !find(E.sel)) E.sel = null; commitHist(); afterHist(); toast("↩ رُجع إلى المرحلة " + (i + 1) + " — «" + en.label + "» (يمكنك التراجع عن هذا الرجوع أيضاً)"); }
   function undo() { if (E.hi <= 0) return; E.hi--; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
   function redo() { if (E.hi >= E.hist.length - 1) return; E.hi++; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
   function afterHist() { if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); }
@@ -771,7 +798,7 @@ body{overflow-x:hidden;margin:0}`;
     if (scope === "all") E.page.sections.forEach(walk); else if (scope === "sec" && inf) walk(inf.sec); else if (inf) walk(inf.node); else return toast("اختر عنصراً أولاً");
     if (scope === "all" && !confirm("نسخ إعدادات " + DEVNAME[E.dev] + " إلى " + DEVNAME[to] + " لكل عناصر الصفحة؟ ستُستبدل إعدادات " + DEVNAME[to] + " الحالية لهذه الخصائص.")) return;
     let n = 0; nodes.forEach(nd => { Object.keys(nd.set || {}).forEach(k => { const v = nd.set[k]; if (isObj(v) && ("d" in v || "t" in v || "m" in v)) { const val = eff(nd.set, k, E.dev); if (val !== undefined) { setR(nd.set, k, to, clone(val)); n++; } } }); });
-    afterEdit(); toast("📋 نُسخت " + n + " خاصية إلى " + DEVNAME[to]);
+    E.nextLabel = "نسخ تصميم " + DEVNAME[E.dev] + " إلى " + DEVNAME[to]; afterEdit(); toastUndo("📋 نُسخت " + n + " خاصية إلى " + DEVNAME[to]);
   }
   function reId(n) { n.id = uid(); (n.cols || []).forEach(reId); (n.widgets || []).forEach(reId); (n.free || []).forEach(reId); return n; }
   function dup() {
@@ -1254,7 +1281,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { open, close, meta, setDev, undo, redo, preview, publish, ltab, ltoggle, addBlank, panel, mact, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
+  return { open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
