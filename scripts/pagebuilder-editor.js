@@ -96,6 +96,8 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
 .pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
 .pbx-tg{display:inline-flex}
+.pbx-lay [data-lk]{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.pbx-ls{opacity:.45}.pbx-lt{box-shadow:inset 0 3px 0 #c8a24b}.pbx-lb{box-shadow:inset 0 -3px 0 #c8a24b}
+.pbx-lghost{position:fixed;z-index:10060;pointer-events:none;background:#173f35;color:#fff;border-radius:10px;padding:.35rem .8rem;font-size:.78rem;font-weight:800;transform:translate(-50%,-140%);box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .pbx-histbox{position:fixed;top:56px;inset-inline-start:12px;width:min(360px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 80px));background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.4);z-index:10040;flex-direction:column;overflow:hidden;direction:rtl}
 .pbx-hh{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .6rem;padding:.6rem .8rem;background:#173f35;color:#fff}.pbx-hh small{flex:1 1 100%;opacity:.8;font-size:.7rem}.pbx-hh button{margin-inline-start:auto;background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer}
 .pbx-hl2{overflow:auto;padding:.3rem}.pbx-hi{display:flex;align-items:center;gap:.5rem;width:100%;text-align:start;border:0;background:#fff;border-bottom:1px solid #f1ede1;padding:.5rem .6rem;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-hi:hover{background:#faf6ec}.pbx-hi .n{flex:none;width:24px;height:24px;border-radius:50%;background:#efe8d8;display:grid;place-items:center;font-size:.7rem;font-weight:800;color:#173f35}.pbx-hi .l{flex:1;font-weight:700;color:#2a3430}.pbx-hi .t{flex:none;color:#999;font-size:.72rem;direction:ltr}.pbx-hi.cur{background:#eaf5ef}.pbx-hi.cur .n{background:#157a55;color:#fff}.pbx-hi em{flex:none;font-style:normal;font-size:.66rem;background:#157a55;color:#fff;border-radius:999px;padding:.05rem .45rem}
@@ -149,7 +151,7 @@ body{overflow-x:hidden;margin:0}`;
 </div>
 <div class="pbx-main">
   <aside class="pbx-left" id="pbx-lside">
-    <div class="pbx-tabs"><button class="pbx-ah" data-lt="add" onclick="PBApp.ltoggle('add')">${ico('tab_add',17)} عناصر</button><button class="pbx-ah" data-lt="tpl" onclick="PBApp.ltoggle('tpl')">${ico('tab_tpl',17)} أقسام</button><button class="pbx-ah" data-lt="def" onclick="PBApp.ltoggle('def')" title="عناصر وأقسام جاهزة بتنسيق صفحة المنتج">${ico('tab_tpl',17)} عناصر افتراضية</button><button class="pbx-ah" data-lt="smart" onclick="PBApp.ltoggle('smart')" title="رفع صورة، التقاط النص، التقاط العناصر">${ico('t_magic',17)} أدوات ذكية</button><button class="pbx-ah" data-lt="lay" onclick="PBApp.ltoggle('lay')">${ico('tab_lay',17)} الطبقات</button><button class="pbx-ah" data-lt="pg" onclick="PBApp.ltoggle('pg')">${ico('tab_pg',17)} إعدادات الصفحة</button><div class="pbx-pane" id="pbx-lpane"></div></div>
+    <div class="pbx-tabs"><button class="pbx-ah" data-lt="add" onclick="PBApp.ltoggle('add')">${ico('tab_add',17)} عناصر</button><button class="pbx-ah" data-lt="def" onclick="PBApp.ltoggle('def')" title="أقسام وعناصر جاهزة: فارغة، شبكية، وبتنسيق الموقع">${ico('tab_tpl',17)} أقسام وعناصر جاهزة</button><button class="pbx-ah" data-lt="smart" onclick="PBApp.ltoggle('smart')" title="رفع صورة، التقاط النص، التقاط العناصر">${ico('t_magic',17)} أدوات ذكية</button><button class="pbx-ah" data-lt="lay" onclick="PBApp.ltoggle('lay')">${ico('tab_lay',17)} الطبقات</button><button class="pbx-ah" data-lt="pg" onclick="PBApp.ltoggle('pg')">${ico('tab_pg',17)} إعدادات الصفحة</button><div class="pbx-pane" id="pbx-lpane"></div></div>
   </aside>
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
   <div class="pbx-stage" id="pbx-stage">
@@ -175,7 +177,7 @@ body{overflow-x:hidden;margin:0}`;
       fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
     $("pbx-stage").addEventListener("scroll", () => positionOverlay());
     const lp = $("pbx-lpane"); let layDrag = null;
-    lp.addEventListener("click", e => { const b = e.target.closest("[data-lmv]"); if (!b) return; e.stopPropagation(); const row = b.closest("[data-sel]"); if (!row) return; E.sel = row.dataset.sel; move(Number(b.dataset.lmv)); const el = fdoc && fdoc.querySelector(`[data-pb="${E.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, true);
+    layLongPress(lp);
     lp.addEventListener("dragstart", e => { const it = e.target.closest("[data-lay]"); if (it) { layDrag = it.dataset.lay; e.dataTransfer.setData("text/plain", "lay"); } });
     lp.addEventListener("dragover", e => { if (layDrag && e.target.closest("[data-lay]")) e.preventDefault(); });
     lp.addEventListener("drop", e => { const it = e.target.closest("[data-lay]"); if (!layDrag || !it) return; e.preventDefault(); layerReorder(layDrag, it.dataset.lay); layDrag = null; });
@@ -313,34 +315,32 @@ body{overflow-x:hidden;margin:0}`;
   IC.t_text = '<path d="M4 7V5h16v2M12 5v14M9 19h6"/><path d="M3 21h18" stroke-dasharray="2 3"/>'; IC.t_magic = '<path d="M4 20L16 8"/><path d="M14 4l.9 2.1L17 7l-2.1.9L14 10l-.9-2.1L11 7l2.1-.9z"/><path d="M19 12l.6 1.4L21 14l-1.4.6L19 16l-.6-1.4L17 14l1.4-.6z"/>'; IC.t_import = '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>'; IC.bullets = '<circle cx="5" cy="6" r="1.6"/><circle cx="5" cy="12" r="1.6"/><circle cx="5" cy="18" r="1.6"/><path d="M10 6h11M10 12h11M10 18h11"/>'; IC.contact = '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 8l9 6 9-6"/>'; IC.tab_smart = '<path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M19 15l.8 1.8L21.5 17.5l-1.7.7L19 20l-.8-1.8-1.7-.7 1.7-.7z"/>'; IC.close = '<path d="M18 6L6 18M6 6l12 12"/>'; IC.snap = '<path d="M6 15a6 6 0 0012 0V3h-4v12a2 2 0 01-4 0V3H6z"/><path d="M6 8h4M14 8h4"/>'; IC.undo = '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/>'; IC.redo = '<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0115-6.7L21 13"/>'; IC.eye = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'; IC.rocket = '<path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2a2.1 2.1 0 00-3-3zM12 15l-3-3a22 22 0 012-4 12.9 12.9 0 0111-6c0 2.7-.8 7.5-6 11a22 22 0 01-4 2z"/>';
   const DEVIC = { d: ico("dev_d", 16), t: ico("dev_t", 16), m: ico("dev_m", 16) };
   /* ───────────────── اللوحة اليسرى ───────────────── */
-  function ltab(t) { E.ltab = t; renderLeft(); }
-  function ltoggle(t) { E.ltab = E.ltab === t ? "" : t; renderLeft(); }
+  function ltab(t) { E.ltab = t === "tpl" ? "def" : t; renderLeft(); }
+  function ltoggle(t) { if (t === "tpl") t = "def"; E.ltab = E.ltab === t ? "" : t; renderLeft(); }
   function renderLeft() {
     const pane = $("pbx-lpane"); if (!pane) return;
     document.querySelectorAll("[data-lt]").forEach(b => b.classList.toggle("on", b.dataset.lt === E.ltab));
     const hb = E.ltab && document.querySelector(`[data-lt="${E.ltab}"]`); if (!hb) { pane.style.display = "none"; pane.innerHTML = ""; return; } pane.style.display = ""; hb.after(pane);      // أدوات كل عنوان تُفتح تحته (نمط ووردبريس)
     if (E.ltab === "add") {
       pane.innerHTML = `<div class="pbx-grid">${ORDER.map(t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`).join("")}</div><p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته إلى العمود المحدد. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
-    } else if (E.ltab === "tpl") {
-      const card = (key, name, extra) => `<button type="button" class="pbx-dfc" draggable="true" data-tpl="${key}" title="${esc(name)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC[key] || ""}</svg><span>${esc(name)}</span></button>`;
-      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">📐 أقسام</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">انقر الأيقونة لإضافة القسم أو اسحبها إلى مكانه في الصفحة.</div><div class="pbx-dgrid">`
+    } else if (E.ltab === "def") {
+      const card = (key, name) => `<button type="button" class="pbx-dfc" draggable="true" data-tpl="${key}" title="${esc(name)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC[key] || ""}</svg><span>${esc(name)}</span></button>`;
+      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 أقسام وعناصر جاهزة</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">انقر الأيقونة لإضافتها بعد القسم المحدد، أو اسحبها إلى مكانها في الصفحة (على الجوال: ضغط مطوّل ثم سحب).</div><div class="pbx-dgrid">`
         + card("_blank", "قسم واحد (عمود)") + card("_two", "قسمان (عمودان)") + card("_three", "ثلاثة أقسام (3 أعمدة)")
         + `<div class="pbx-dfc" style="cursor:default" title="قسم شبكي مخصص"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC.grid}</svg><span>القسم الشبكي</span><div class="pbx-row" style="gap:.25rem"><label style="font-size:.66rem">صفوف <input id="gb-r" type="number" min="1" max="10" value="2" style="width:100%;padding:.15rem"></label><label style="font-size:.66rem">أعمدة <input id="gb-c" type="number" min="1" max="12" value="3" style="width:100%;padding:.15rem"></label></div><button class="pbx-small" data-grid="1" type="button" style="width:100%">＋ إضافة</button></div>`
-        + Object.keys(TPLS).filter(k => !TPL_DUP.includes(k)).map(k => card(k, TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, ""))).join("") + `</div>`;
-    } else if (E.ltab === "def") {
-      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 عناصر افتراضية</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">أقسام وعناصر جاهزة بتنسيق الموقع. انقر الأيقونة لإضافتها بعد القسم المحدد.</div><div class="pbx-dgrid">` + PB.DFLT.map(x => `<button type="button" class="pbx-dfc" draggable="true" data-dflt="${x.k}" title="${esc(x.d)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${DIC[x.k] || '<rect x="8" y="8" width="48" height="28" rx="5" fill="#e6dfcf"/>'}</svg><span>${esc(x.n.replace(/\s*\(.*$/, ""))}</span></button>`).join("") + `</div>`;
+        + Object.keys(TPLS).filter(k => !TPL_DUP.includes(k)).map(k => card(k, TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, ""))).join("")
+        + PB.DFLT.map(x => `<button type="button" class="pbx-dfc" draggable="true" data-dflt="${x.k}" title="${esc(x.d)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${DIC[x.k] || '<rect x="8" y="8" width="48" height="28" rx="5" fill="#e6dfcf"/>'}</svg><span>${esc(x.n.replace(/\s*\(.*$/, ""))}</span></button>`).join("") + `</div>`;
     } else if (E.ltab === "smart") {
       pane.innerHTML = PBSmart.pane();
     } else if (E.ltab === "lay") {
       let h = "";
       E.page.sections.forEach((sec, i) => {
-        const lm = (k, n) => `<span class="pbx-lm"><b data-lmv="-1" class="${k === 0 ? "off" : ""}" title="نقل للأعلى">▲</b><b data-lmv="1" class="${k === n - 1 ? "off" : ""}" title="نقل للأسفل">▼</b></span>`;
-        h += `<div data-sel="${sec.id}" class="${E.sel === sec.id ? "on" : ""}">${ico('section',16)} قسم ${i + 1}${lm(i, E.page.sections.length)}</div>`;
+        h += `<div data-sel="${sec.id}" data-lk="s" class="${E.sel === sec.id ? "on" : ""}">${ico('section',16)} قسم ${i + 1}</div>`;
         const fz = (sec.free || []).slice().sort((a, b) => (Number(b.set.zi) || 0) - (Number(a.set.zi) || 0));
         if (fz.length) { h += `<div style="margin-inline-start:14px;color:#8a8472;font-size:.72rem;cursor:default">طبقات حرة — اسحب لتغيير الأمام/الخلف (الأعلى = الأمام)</div>` + fz.map(w => `<div draggable="true" data-lay="${w.id}" data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}" style="margin-inline-start:28px">${ico('grip',14)} ${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`).join(""); }
-        sec.cols.forEach((col, j) => { if (sec.set.kind === "canvas") return; h += `<div data-sel="${col.id}" class="${E.sel === col.id ? "on" : ""}" style="margin-inline-start:14px">${ico('column',16)} عمود ${j + 1}</div>`; col.widgets.forEach((w, wi) => { h += `<div data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}" style="margin-inline-start:28px">${ico(w.type,16)} ${WIDGETS[w.type].label}${lm(wi, col.widgets.length)}</div>`; }); });
+        sec.cols.forEach((col, j) => { if (sec.set.kind === "canvas") return; h += `<div data-sel="${col.id}" data-lk="c" class="${E.sel === col.id ? "on" : ""}" style="margin-inline-start:14px">${ico('column',16)} عمود ${j + 1}</div>`; col.widgets.forEach((w, wi) => { h += `<div data-sel="${w.id}" data-lk="w" class="${E.sel === w.id ? "on" : ""}" style="margin-inline-start:28px">${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`; }); });
       });
-      pane.innerHTML = `<div class="pbx-lay">${h}</div>`;
+      pane.innerHTML = `<div style="font-size:.7rem;color:#8a8472;padding:.1rem .4rem .4rem;line-height:1.6">انقر لتحديد العنصر في الصفحة. <b>اضغط مطوّلاً</b> على قسم أو عنصر ثم اسحبه لأعلى أو أسفل لنقله.</div><div class="pbx-lay">${h}</div>`;
     } else {
       const P = E.page;
       pane.innerHTML = `
@@ -443,6 +443,34 @@ body{overflow-x:hidden;margin:0}`;
     }, { passive: false });
     const end = e => { if (active) { const t0 = e.changedTouches[0]; try { onDrop(fake(t0.clientX, t0.clientY)); } catch (x) { } E.drag = null; hideDrop(); } stop(); };
     document.addEventListener("touchend", end); document.addEventListener("touchcancel", () => { E.drag = null; hideDrop(); stop(); });
+  }
+  /* الطبقات: ضغط مطوّل (فأرة أو إصبع) على قسم/عنصر ثم سحب لأعلى أو أسفل ينقله؛ النقر العادي يحدده في الصفحة */
+  function layLongPress(lp) {
+    let timer = null, p0 = null, drag = null, ghost = null, suppress = false;
+    const rowAt = (x, y) => { const el = document.elementFromPoint(x, y), r = el && el.closest && el.closest("[data-lk]"); return r && lp.contains(r) ? r : null; };
+    const clear = () => lp.querySelectorAll(".pbx-lt,.pbx-lb,.pbx-ls").forEach(r => r.classList.remove("pbx-lt", "pbx-lb", "pbx-ls"));
+    const start = (row, x, y) => { drag = { id: row.dataset.sel, k: row.dataset.lk }; row.classList.add("pbx-ls"); try { navigator.vibrate && navigator.vibrate(15); } catch (e) { }
+      ghost = document.createElement("div"); ghost.className = "pbx-lghost"; ghost.textContent = row.textContent.trim(); document.body.appendChild(ghost); ghost.style.left = x + "px"; ghost.style.top = y + "px"; };
+    const over = (x, y) => { if (!drag) return; ghost.style.left = x + "px"; ghost.style.top = y + "px"; clear(); const src = lp.querySelector(`[data-sel="${drag.id}"]`); if (src) src.classList.add("pbx-ls"); const r = rowAt(x, y); if (!r || r === src) { drag.tg = null; return; }
+      const b = r.getBoundingClientRect(), after = y > b.top + b.height / 2; drag.tg = { id: r.dataset.sel, k: r.dataset.lk, after }; r.classList.add(after ? "pbx-lb" : "pbx-lt");
+      const st = lp.closest(".pbx-tabs"); if (st) { const sb = st.getBoundingClientRect(); if (y < sb.top + 40) st.scrollTop -= 12; else if (y > sb.bottom - 40) st.scrollTop += 12; } };
+    const drop = () => { const d = drag; drag = null; clear(); if (ghost) { ghost.remove(); ghost = null; } if (!d || !d.tg) return; suppress = true; setTimeout(() => suppress = false, 50); layMoveTo(d, d.tg); };
+    const cancel = () => { clearTimeout(timer); timer = null; drag = null; clear(); if (ghost) { ghost.remove(); ghost = null; } };
+    lp.addEventListener("mousedown", e => { const r = e.target.closest("[data-lk]"); if (!r || e.button !== 0) return; p0 = { x: e.clientX, y: e.clientY }; timer = setTimeout(() => start(r, p0.x, p0.y), 380); });
+    document.addEventListener("mousemove", e => { if (drag) { e.preventDefault(); over(e.clientX, e.clientY); } else if (timer && p0 && Math.hypot(e.clientX - p0.x, e.clientY - p0.y) > 6) { clearTimeout(timer); timer = null; } });
+    document.addEventListener("mouseup", () => { clearTimeout(timer); timer = null; if (drag) drop(); });
+    lp.addEventListener("touchstart", e => { const r = e.target.closest("[data-lk]"); if (!r || e.touches.length !== 1) return; const t = e.touches[0]; p0 = { x: t.clientX, y: t.clientY }; timer = setTimeout(() => start(r, p0.x, p0.y), 420); }, { passive: true });
+    lp.addEventListener("touchmove", e => { const t = e.touches[0]; if (drag) { e.preventDefault(); over(t.clientX, t.clientY); } else if (timer && p0 && Math.hypot(t.clientX - p0.x, t.clientY - p0.y) > 8) { clearTimeout(timer); timer = null; } }, { passive: false });
+    lp.addEventListener("touchend", () => { clearTimeout(timer); timer = null; if (drag) drop(); }); lp.addEventListener("touchcancel", cancel);
+    lp.addEventListener("click", e => { if (suppress) { e.stopPropagation(); e.preventDefault(); } }, true);
+  }
+  function layMoveTo(d, t) {
+    const P = E.page, sIdx = id => P.sections.findIndex(x => x.id === id);
+    if (d.k === "s") { const target = t.k === "s" ? t.id : (find(t.id) || {}).sec && find(t.id).sec.id; if (!target || target === d.id) return; const from = sIdx(d.id), node = P.sections[from]; P.sections.splice(from, 1); let to = sIdx(target); if (t.k === "s" && t.after) to++; else if (t.k !== "s") to++; P.sections.splice(Math.max(0, to), 0, node); E.nextLabel = "نقل قسم"; afterEdit(d.id); return; }
+    if (d.k === "w") { const me = find(d.id); if (!me || me.free) return; const tg = find(t.id); if (!tg) return;
+      let col, at; if (t.k === "w" && !tg.free) { col = tg.col.node || tg.col; at = tg.idx; } else if (t.k === "c") { col = tg.node; at = null; } else return;
+      const sameList = me.list === col.widgets, myIdx = me.idx; me.list.splice(me.idx, 1); const arr = col.widgets; if (at == null) arr.push(me.node); else { if (t.k === "w" && t.after) at++; if (sameList && myIdx < at) at--; arr.splice(Math.min(at, arr.length), 0, me.node); }
+      E.nextLabel = "نقل عنصر"; afterEdit(d.id); return; }
   }
   function fitStage() {
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
