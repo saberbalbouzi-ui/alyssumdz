@@ -218,32 +218,19 @@
     {
      "id": "8zgcmz4",
      "set": {},
-     "widgets": []
+     "widgets": [
+      {
+       "id": "h4s6gtj",
+       "type": "orderorig",
+       "set": {
+        "prod": "tarkiz",
+        "auto": true
+       }
+      }
+     ]
     }
    ],
-   "free": [
-    {
-     "id": "5nanhs0",
-     "type": "orderorig",
-     "set": {
-      "prod": "tarkiz",
-      "auto": true,
-      "fx": {
-       "d": 0.9
-      },
-      "fy": {
-       "d": -58
-      },
-      "fwd": {
-       "d": 98.2
-      },
-      "fh": {
-       "d": 260
-      },
-      "zi": 1
-     }
-    }
-   ]
+   "free": []
   }
  ]
 }
