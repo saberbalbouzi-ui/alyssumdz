@@ -1,0 +1,249 @@
+{
+ "v": 1,
+ "title": "عسل التركيز وتنشيط الذاكرة 01",
+ "slug": "01",
+ "desc": "",
+ "bg": "#ffffff",
+ "ff": "",
+ "header": true,
+ "footer": true,
+ "css": "",
+ "sections": [
+  {
+   "id": "7ykazj8",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      110,
+      20,
+      110,
+      20
+     ],
+     "m": [
+      64,
+      16,
+      64,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "grad1": "#0c2c52",
+    "grad2": "#3675af",
+    "gradAng": 135,
+    "mh": {
+     "d": 480,
+     "m": 360
+    },
+    "va": {
+     "d": "center"
+    },
+    "bg": "#1d6aae",
+    "ovlOp": 0,
+    "gr": {
+     "t": "linear",
+     "a": 135,
+     "s": [
+      {
+       "c": "#1a65ab",
+       "p": 0
+      },
+      {
+       "c": "#ff8a1f",
+       "p": 100
+      }
+     ]
+    }
+   },
+   "cols": [
+    {
+     "id": "dui2nmw",
+     "set": {
+      "ccl": {
+       "d": 94
+      },
+      "mh": {
+       "d": 292
+      },
+      "w": {
+       "d": 100
+      }
+     },
+     "widgets": [
+      {
+       "id": "zkzhvur",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1791197011640-1.webp",
+        "alt": "",
+        "fit": "cover",
+        "al": {
+         "d": "start"
+        },
+        "w": {
+         "d": 100
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "free": [
+    {
+     "id": "p3jd2jy",
+     "type": "button",
+     "set": {
+      "text": "أطلبه الآن -  لدفع عند الاستلام ",
+      "kind": "link",
+      "link": "#",
+      "bgc": "#f4b82c",
+      "color": "#ffffff",
+      "hbg": "#0f5a3e",
+      "fs": {
+       "d": 25
+      },
+      "fw": "800",
+      "brad": {
+       "d": 31
+      },
+      "bpad": {
+       "d": [
+        14,
+        32,
+        14,
+        32
+       ]
+      },
+      "zi": 1,
+      "wsc": {
+       "d": 158
+      },
+      "fx": {
+       "d": 5.5
+      },
+      "fy": {
+       "d": 3873
+      },
+      "fwd": {
+       "d": 57.5
+      },
+      "fh": {
+       "d": 103
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "hkcljnt",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      20,
+      20,
+      20,
+      20
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "pz": true
+   },
+   "cols": [
+    {
+     "id": "eh65j7o",
+     "set": {},
+     "widgets": [
+      {
+       "id": "64tgs0q",
+       "type": "pprice",
+       "set": {
+        "prod": "tarkiz",
+        "pc": "",
+        "fs": {
+         "d": 34
+        },
+        "ta": {
+         "d": "start"
+        }
+       }
+      },
+      {
+       "id": "lzwe151",
+       "type": "poffers",
+       "set": {
+        "prod": "tarkiz"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3r1btak",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      60,
+      20,
+      60,
+      20
+     ],
+     "m": [
+      36,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "8zgcmz4",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "5nanhs0",
+     "type": "orderorig",
+     "set": {
+      "prod": "tarkiz",
+      "auto": true,
+      "fx": {
+       "d": 0.9
+      },
+      "fy": {
+       "d": -58
+      },
+      "fwd": {
+       "d": 98.2
+      },
+      "fh": {
+       "d": 260
+      },
+      "zi": 1
+     }
+    }
+   ]
+  }
+ ]
+}
