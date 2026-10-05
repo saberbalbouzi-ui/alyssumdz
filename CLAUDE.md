@@ -21,6 +21,8 @@
 
 - مساعد لوحة الإدارة «اسألني»: `assets/js/admin-assistant.js` + قاعدة معرفته `assets/data/admin-help.json`؛ **حدّث القاعدة مع كل أداة أو إعداد جديد** كي يجيب عنه.
 
+- تحديث اللوحة: `assets/js/admin-update.js` يقارن `<meta name="admin-version">` بملف `VERSION` على الخادم؛ **بعد رفع `VERSION` شغّل `python3 scripts/build-admin-pb.py`** (يختم النسخة داخل admin.html ويكسر كاش السكربتات).
+
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 

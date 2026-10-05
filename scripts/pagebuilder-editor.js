@@ -96,6 +96,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
 .pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
 .pbx-tg{display:inline-flex}
+.pbx-top button.au-new{background:#c8a24b;color:#173f35}
 .pbx-bcg{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:.35rem}.pbx-bcr{display:flex;align-items:center;gap:.3rem;background:#faf6ec;border:1px solid #eadfc4;border-radius:9px;padding:.2rem .35rem}.pbx-bcr .n{flex:none;width:22px;height:22px;border-radius:50%;background:#173f35;color:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:800}.pbx-bcr input[type=color]{width:34px!important;height:26px;padding:0;border:0;background:none;flex:none}
 .pbx-lay [data-lk]{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.pbx-ls{opacity:.45}.pbx-lt{box-shadow:inset 0 3px 0 #c8a24b}.pbx-lb{box-shadow:inset 0 -3px 0 #c8a24b}
 .pbx-lghost{position:fixed;z-index:10060;pointer-events:none;background:#173f35;color:#fff;border-radius:10px;padding:.35rem .8rem;font-size:.78rem;font-weight:800;transform:translate(-50%,-140%);box-shadow:0 6px 20px rgba(0,0,0,.4)}
@@ -110,7 +111,7 @@ body{overflow-x:hidden;margin:0}`;
 @media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}.pbx-rz{display:none}}
 @media(max-width:820px){
  .pbx-top{gap:.3rem;padding:.4rem .5rem}
- .pbx-top input{flex:1 1 110px;min-width:90px}.pbx-top #pbx-url,.pbx-top .pbx-dirty{display:none}
+ .pbx-top input{flex:1 1 110px;min-width:90px}.pbx-top .pbx-dirty{display:none}.pbx-top button.au-new{background:#c8a24b;color:#173f35}
  .pbx-top button:not(.pub):not(.pbx-tg){font-size:0;gap:0;padding:.5rem .6rem}.pbx-top button:not(.pub) svg{font-size:initial}
  .pbx-main{position:relative}
  .pbx-left,.pbx-right{position:absolute;top:0;bottom:0;z-index:30;width:min(86vw,340px)!important;max-width:none;box-shadow:0 0 24px rgba(0,0,0,.35)}
@@ -136,7 +137,7 @@ body{overflow-x:hidden;margin:0}`;
   <button class="pbx-tg" id="pbx-tgl" onclick="PBApp.panel('l')" title="إظهار/إخفاء شريط الأدوات">${ico('tab_add',16)} الأدوات</button>
   <button class="pbx-tg" id="pbx-tgr" onclick="PBApp.panel('r')" title="إظهار/إخفاء شريط الإعدادات">${ico('tab_pg',16)} الإعدادات</button>
   <input id="pbx-title" placeholder="عنوان الصفحة" oninput="PBApp.meta('title',this.value)">
-  <span id="pbx-url" dir="ltr" style="font-size:.78rem;opacity:.8"></span>
+  <button id="pbx-upd" data-au="1" type="button" onclick="AdminUpdate.check(true).then(()=>{ if (AdminUpdate.latest && AdminUpdate.latest !== AdminUpdate.current) AdminUpdate.apply(); })" title="تحديث الصفحة لآخر نسخة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg> <span class="au-t">تحديث</span></button>
   <span class="sp"></span>
   <span class="pbx-dirty" id="pbx-dirty"></span>
   <span id="pbx-upb" class="pbx-upb" style="display:none"></span>
@@ -195,6 +196,7 @@ body{overflow-x:hidden;margin:0}`;
     E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
     $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
+    try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
     E.zoom = 1; ltab("add"); setDev(isMob() ? "m" : "d"); renderInspector(); updateTop();
     if (fdoc) renderCanvas();
@@ -254,12 +256,12 @@ body{overflow-x:hidden;margin:0}`;
   function redo() { if (E.hi >= E.hist.length - 1) return; E.hi++; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
   function afterHist() { if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); }
   const draftKey = () => "pb_draft_" + (E.slug || "new");
+  function saveDraftNow() { saveDraft(); }
   function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(E.page)); } catch (e) { } }
   function updateTop() {
     $("pbx-undo").disabled = E.hi <= 0; $("pbx-redo").disabled = E.hi >= E.hist.length - 1;
     $("pbx-dirty").textContent = E.dirty ? "● تعديلات غير منشورة" : "";
     document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap);
-    $("pbx-url").textContent = E.page && E.page.slug ? "/lp/" + E.page.slug + "/" : "";
   }
   function meta(k, v) { E.page[k] = v; if (k === "title" && E.isNew && !E.slugTouched) { E.page.slug = slugify(v); } E.dirty = true; clearTimeout(saveT); saveT = setTimeout(() => { commitHist(); saveDraft(); }, 600); if (k === "title") { updateTop(); if (E.ltab === "pg") { const s = $("pg-slug"); if (s && E.isNew && !E.slugTouched) s.value = E.page.slug; } } else renderCanvas(); }
   const slugify = t => String(t || "").toLowerCase().trim().replace(/[^a-z0-9؀-ۿ]+/g, "-").replace(/[؀-ۿ]+/g, "").replace(/^-+|-+$/g, "") || "page-" + Date.now().toString(36).slice(-4);
@@ -1320,7 +1322,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
+  return { saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id) };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
