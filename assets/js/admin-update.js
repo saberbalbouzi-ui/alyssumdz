@@ -23,11 +23,22 @@ const AdminUpdate = (() => {
     try { if (typeof PBApp !== "undefined" && document.getElementById("pb-app") && document.getElementById("pb-app").classList.contains("on") && PBApp.E && PBApp.E.dirty) { PBApp.saveDraftNow && PBApp.saveDraftNow(); sessionStorage.setItem("pb_after_update", PBApp.E.slug || "new"); } } catch (e) { }
     const u = new URL(location.href); u.searchParams.set("v", latest); location.replace(u.toString());
   }
+  /* مسح الكاش: يحذف Cache Storage ويلغي عمّال الخدمة (PWA) ويُجبر المتصفح على إعادة جلب الصفحة وسكربتاتها وأنماطها، ثم يعيد التحميل.
+     لا يمسّ localStorage (تسجيل الدخول، المفاتيح، المسودات). */
+  async function clearCache() {
+    if (!confirm("مسح الكاش وإعادة تحميل الصفحة؟\nلن تُحذف بياناتك ولا مفاتيحك ولا تسجيل دخولك. تعديلات المطوّر غير المنشورة تُحفظ كمسودة وتُستعاد.")) return;
+    try { if (typeof PBApp !== "undefined" && document.getElementById("pb-app") && document.getElementById("pb-app").classList.contains("on") && PBApp.E && PBApp.E.dirty) { PBApp.saveDraftNow && PBApp.saveDraftNow(); sessionStorage.setItem("pb_after_update", PBApp.E.slug || "new"); } } catch (e) { }
+    toast("⏳ جارٍ مسح الكاش…");
+    try { if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (e) { }
+    try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister())); } } catch (e) { }
+    try { const urls = [location.pathname, "VERSION", ...[...document.scripts].map(x => x.src), ...[...document.querySelectorAll('link[rel="stylesheet"]')].map(x => x.href)].filter(Boolean); await Promise.all(urls.map(u => fetch(u, { cache: "reload" }).catch(() => 0))); } catch (e) { }
+    const u = new URL(location.href); u.searchParams.set("cc", Date.now().toString(36)); if (latest) u.searchParams.set("v", latest); location.replace(u.toString());
+  }
   const init = () => {
-    const add = () => { const top = document.querySelector("#app .top"); if (!top || document.getElementById("au-btn")) return; const b = document.createElement("button"); b.id = "au-btn"; b.type = "button"; b.className = "small gold au-b"; b.setAttribute("data-au", "1"); b.innerHTML = '<span class="au-i">🔄</span> <span class="au-t">تحديث</span>'; b.onclick = () => (avail ? apply() : check(true)); const lg = top.querySelector(".logout"); lg ? top.insertBefore(b, lg) : top.appendChild(b); paint(); };
+    const add = () => { const top = document.querySelector("#app .top"); if (!top || document.getElementById("au-btn")) return; const b = document.createElement("button"); b.id = "au-btn"; b.type = "button"; b.className = "small gold au-b"; b.setAttribute("data-au", "1"); b.innerHTML = '<span class="au-i">🔄</span> <span class="au-t">تحديث</span>'; b.onclick = () => (avail ? apply() : check(true)); const lg = top.querySelector(".logout"); lg ? top.insertBefore(b, lg) : top.appendChild(b); const c = document.createElement("button"); c.id = "au-cc"; c.type = "button"; c.className = "small gray"; c.title = "مسح كاش المتصفح لهذا الموقع وإعادة تحميل الصفحة"; c.innerHTML = "🧹 مسح الكاش"; c.onclick = clearCache; b.after(c); paint(); };
     const st = document.createElement("style"); st.textContent = ".au-new{position:relative;animation:aupulse 1.6s infinite}.au-new::after{content:\"\";position:absolute;top:-3px;inset-inline-end:-3px;width:10px;height:10px;border-radius:50%;background:#e53935;border:2px solid #fff}@keyframes aupulse{50%{box-shadow:0 0 0 6px rgba(200,162,75,.35)}}"; document.head.appendChild(st);
     add(); setInterval(add, 1500); check(false); setInterval(() => check(false), 5 * 60 * 1000); document.addEventListener("visibilitychange", () => { if (!document.hidden) check(false); });
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { check, apply, paint, get current() { return cur; }, get latest() { return latest; } };
+  return { check, apply, clearCache, paint, get current() { return cur; }, get latest() { return latest; } };
 })();
