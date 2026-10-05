@@ -294,7 +294,7 @@ const PB = (() => {
     bullets: {
       label: "قائمة مزايا", ic: "•", fit: 1, def: { items: "ميزة أولى للمنتج\nميزة ثانية للمنتج\nميزة ثالثة للمنتج", mk: "disc", mchar: "★", mc: "#157a55", ms: { d: 18 }, gap: { d: 8 }, fs: { d: 18 } },
       ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "micon", l: "أيقونة المزايا — اختر من القائمة (تتفوق على نوع العلامة؛ اتركها «اختر أيقونة» لاستعمال النوع)", t: "iconpick", tab: "c" }, { k: "mk", l: "نوع العلامة (اختر واحداً)", t: "select", o: BMARKS.map(m => [m[0], m[1]]), tab: "c" }, { k: "mchar", l: "الرمز المخصص (أي رمز أو إيموجي)", t: "iconpick", tab: "c", showIf: ["mk", "custom"] },
-        { k: "mc", l: "لون العلامة", t: "color", tab: "s" }, { k: "mcs", l: "ألوان الشارات المختلفة — افصل بفاصلة (#157a55,#c8a24b,#d64545) وتتناوب على العناصر", t: "text", tab: "s" }, { k: "ms", l: "حجم العلامة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "gap", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
+        { k: "mc", l: "لون العلامة", t: "color", tab: "s" }, { k: "mcols", l: "ألوان الشارات — لكل شارة رقمها بجانبها خانة اللون (يتغير العدد تلقائياً مع عدد العناصر)", t: "badgecolors", tab: "s" }, { k: "ms", l: "حجم العلامة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "gap", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
       html: s => `<ul class="pb-bl">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li><span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`,
       css: (c, sel, s) => {
         emit(c, sel + " .pb-bl", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-bl li", s, [["gap", px("margin-bottom")], ["ms", v => `padding-inline-start:calc(${U(num(v) || 18)}*1.9);`]]);
@@ -303,6 +303,7 @@ const PB = (() => {
           const cols = String(s.mcs || "").split(/[,،\s]+/).filter(x => /^#[0-9a-f]{3,8}$/i.test(x)), base = s.mc || "#157a55";
           c.d.push(`${sel} .pb-bl{counter-reset:pbn}${sel} .pb-bl li{position:relative;counter-increment:pbn;padding-inline-start:2.1em}${sel} .pb-bl li:before{content:${BG[0] ? JSON.stringify(BG[0]) : mk === "bdn" ? "counter(pbn)" : '""'};position:absolute;inset-inline-start:0;top:.12em;width:1.45em;height:1.45em;border-radius:${BG[1]};background:${base};color:#fff;display:grid;place-items:center;font-size:.78em;font-weight:900;line-height:1}`);
           cols.forEach((col, i) => c.d.push(`${sel} .pb-bl li:nth-child(${cols.length}n+${i + 1}):before{background:${col}}`));
+          (Array.isArray(s.mcols) ? s.mcols : []).forEach((col, i) => { if (/^#[0-9a-f]{3,8}$/i.test(col || "")) c.d.push(`${sel} .pb-bl li:nth-child(${i + 1}):before{background:${col}}`); });
           emit(c, sel + " .pb-bl li:before", s, [["ms", v => `font-size:calc(${U(num(v) || 18)}*.78);`]]); return;
         }
         const num2 = { dec: "decimal", ar: "arabic-indic", alpha: "lower-alpha", roman: "lower-roman" }[mk], txt = { disc: "●", circle: "○", square: "■", check: "✔", checkbox: "☑", arrow: "◀", chev: "‹", star: "★", diamond: "◆", dash: "–", heart: "❤", leaf: "🌿", custom: String(s.micon || s.mchar || "•").slice(0, 4) }[mk];
