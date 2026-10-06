@@ -38,7 +38,8 @@ const PB = (() => {
   const pc = p => v => num(v) == null ? "" : `${p}:${num(v)}%;`;
   const raw = p => v => `${p}:${v};`;
   const SHADOWS = { "": "", sm: "0 2px 8px rgba(0,0,0,.12)", md: "0 8px 24px rgba(0,0,0,.16)", lg: "0 18px 48px rgba(0,0,0,.22)", glow: "0 0 24px rgba(200,162,75,.6)" };
-  const TYPO = [["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["ff", raw("font-family")], ["lh", raw("line-height")], ["ls", px("letter-spacing")], ["tt", raw("text-transform")], ["ta", raw("text-align")]];
+  const TSH = { soft: "2px 2px 4px rgba(0,0,0,.35)", strong: "3px 4px 0 rgba(0,0,0,.28)", lift: "0 8px 18px rgba(0,0,0,.4)", glow: "0 0 10px currentColor,0 0 22px currentColor" };
+  const TYPO = [["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["ff", raw("font-family")], ["lh", raw("line-height")], ["ls", px("letter-spacing")], ["tt", raw("text-transform")], ["ta", raw("text-align")], ["fst", raw("font-style")], ["td", raw("text-decoration")], ["tsh", v => TSH[v] ? `text-shadow:${TSH[v]};` : ""]];
   /* تدرّج متقدم: {t:linear|radial|conic, a:زاوية, x,y:موضع, sh:circle|ellipse, rep:تكرار, s:[{c:لون,p:%,o:شفافية 0-1}]} */
   const rgba = (c, o) => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m || o === undefined || o === "" || num(o) == null || num(o) >= 1) return c; const n = parseInt(m[1], 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${Math.max(0, num(o))})`; };
   const gradCss = g => {
@@ -177,6 +178,9 @@ const PB = (() => {
     { k: "ls", l: "تباعد الحروف (px)", t: "num", r: 1, min: -5, max: 20, step: .5, tab: "s" },
     { k: "tt", l: "حالة الأحرف", t: "select", o: [["", "افتراضي"], ["uppercase", "كبيرة"], ["capitalize", "أول حرف"], ["none", "بدون"]], tab: "s" },
     { k: "ta", l: "محاذاة النص", t: "align", r: 1, tab: "s" },
+    { k: "fst", l: "الميل", t: "select", o: [["", "عادي"], ["italic", "مائل"]], tab: "s" },
+    { k: "td", l: "خط على النص", t: "select", o: [["", "بدون"], ["underline", "تحته خط"], ["line-through", "يتوسطه خط"]], tab: "s" },
+    { k: "tsh", l: "ظل النص", t: "select", o: [["", "بدون"], ["soft", "خفيف"], ["strong", "قوي"], ["lift", "مرتفع"], ["glow", "توهج"]], tab: "s" },
   ].concat(extra || []);
 
   /* قائمة الأيقونات المنسدلة (إيموجي ورموز) */
@@ -672,6 +676,7 @@ const PB = (() => {
       if (free) css.d.push(`${wsx}{position:absolute;margin:0;max-width:none}`);
       if (free && curAuto && curAuto.items[w.id]) { const a = curAuto.items[w.id]; css.m.push(`${wsx}{left:${a.fx}%;top:${a.fy}px;width:${a.fwd}%;height:${a.fh}px}`); }
       def.css(css, wsx, s2);
+      if (s2.flx || s2.fly) css.d.push(`${wsx}{scale:${s2.flx ? -1 : 1} ${s2.fly ? -1 : 1}}`);      // قلب أفقي/عمودي
       hideRules(css, wsx, s2, edit); customCss(css, wsx, s2);
       const sized = free || s2.mh !== undefined || s2.w !== undefined;
       return `<div class="pb-w x-${w.id}${free ? " pb-free" : ""}${sized ? " pb-sz" : ""}${def.fit ? " pb-fit" : ""}${s2.cls ? " " + esc(s2.cls) : ""}"${attrs(w, "widget", s2)} data-type="${w.type}"${free ? ' data-free="1"' : ""}>${def.html(s2, w.id, ctx)}</div>`;
