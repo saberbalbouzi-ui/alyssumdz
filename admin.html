@@ -1550,10 +1550,6 @@ const PrivSync = {
       try{
         const r = await Priv.remote(pk);
         if(r !== undefined && r !== null){
-          if(lk === "alyssum_mw_cache"){          // ذاكرة الكتابة السحرية: دمج (الأجهزة كلها تتشارك الإجابات المحفوظة)
-            let a = {}, b = {}; try{ a = typeof r === "string" ? JSON.parse(r) : r; }catch(e){} try{ b = JSON.parse(localStorage.getItem(lk) || "{}"); }catch(e){}
-            const m = Object.assign({}, b, a); this._raw(lk, JSON.stringify(m)); if(Object.keys(b).some(k => !(k in a))) await Priv.set(pk, JSON.stringify(m)); continue;
-          }
           this._raw(lk, typeof r === "string" ? r : JSON.stringify(r));
         }
         else { const l = localStorage.getItem(lk); if(l != null) await Priv.set(pk, l); }          // أول مرة: ارفع ما في هذا المتصفح
@@ -8241,6 +8237,10 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
+.pbx-pop .mwlib{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem}
+.pbx-pop .mwi{border:1px solid #e3e5ec;border-radius:10px;padding:.45rem .55rem;background:#fafbfd;display:flex;flex-direction:column;gap:.15rem}
+.pbx-pop .mwi b{font-size:.82rem;color:#1f2430}.pbx-pop .mwi small{font-size:.7rem;color:#6b7280}.pbx-pop .mwi em{font-style:normal;font-size:.74rem;color:#4b5563;line-height:1.5}
+.pbx-pop .mwi .mwb{display:flex;gap:.3rem;margin-top:.2rem}.pbx-pop .mwi .mwb button{flex:1;border:0;border-radius:8px;padding:.3rem;font-family:inherit;font-weight:700;font-size:.75rem;cursor:pointer;background:#ede9fe;color:#6d28d9}.pbx-pop .mwi .mwb button.dg{background:#fee2e2;color:#b83232}
 .pbx-mwbar{position:absolute;display:flex;gap:4px;align-items:center;background:#fff;border-radius:12px;padding:5px 8px;box-shadow:0 4px 16px rgba(124,58,237,.35),0 0 0 2px #a855f7;pointer-events:auto;z-index:8;white-space:nowrap;font-family:inherit}
 .pbx-mwbar span{font-size:.78rem;font-weight:800;color:#7c3aed;padding:0 .3rem}
 .pbx-mwbar button{border:0;border-radius:9px;padding:.4rem .65rem;font-family:inherit;font-weight:800;font-size:.82rem;cursor:pointer;background:#f1f2f6;color:#1f2430}
@@ -9140,14 +9140,30 @@ body{overflow-x:hidden;margin:0}`;
   const MWC = "alyssum_mw_cache";
   const mwCache = () => { try { return JSON.parse(localStorage.getItem(MWC) || "{}"); } catch (e) { return {}; } };
   const mwCsave = (C, key) => { try { const v = C[key]; delete C[key]; C[key] = v; const ks = Object.keys(C); if (ks.length > 200) ks.slice(0, ks.length - 200).forEach(k => delete C[k]); localStorage.setItem(MWC, JSON.stringify(C)); } catch (e) { } };
-  const mwKeyOf = o => [o.pslug || "", String(o.words || "").trim().toLowerCase().replace(/\s+/g, " "), o.style, o.len, o.lang].join("|");
+  const mwKeyOf = o => [o.pslug || "", String(o.words || "").trim(), o.style, o.len, o.lang].join("|");      // الكلمات تُحفظ كما كُتبت حرفياً: أي تغيير في أي عنصر = طلب جديد
+  /* عرض المحفوظات: لكل عنصر (منتج/كلمات + النوع + الطول + اللغة) إجاباته، مع استعمال أو حذف */
+  const mwMeta = (k, en) => { const a = k.split("|"); return { p: en.p !== undefined ? en.p : a[0], w: en.w !== undefined ? en.w : a[1], s: en.s || a[2], n: en.n || a[3], g: en.g || a[4] }; };
+  function mwSavedHtml(m) {
+    const C = mwCache(), ks = Object.keys(C).reverse(), LN = { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" };
+    if (!ks.length) return `<p style="margin:.4rem 0;font-size:.78rem;color:#6b7280">لا توجد إجابات محفوظة بعد.</p>`;
+    return `<div class="mwlib">` + ks.map((k, i) => { const e = C[k], d = mwMeta(k, e), P = mwProd(d.p), nm = P ? P.title + (d.w ? " — " + d.w : "") : d.w || "—", ln = (mwLangs()[d.g] || {}).label;
+      return `<div class="mwi"><b title="${esc(nm)}">${esc(nm.length > 70 ? nm.slice(0, 70) + "…" : nm)}</b><small>${esc((MW_STYLE[d.s] || "") + " · " + (LN[d.n] || "") + " · " + String(ln || d.g).split("(")[0].trim() + " · " + e.l.length + (e.l.length > 1 ? " إجابتان" : " إجابة"))}</small><em>${esc(String(e.l[e.i % (e.l.length || 1)] || "").slice(0, 90))}</em><div class="mwb"><button type="button" data-mwu="${i}">استعمال</button><button type="button" data-mwd="${i}" class="dg">🗑 حذف</button></div></div>`; }).join("") + `<button type="button" class="pb2" data-mwda="1" style="width:100%;color:#b83232">🗑 حذف كل المحفوظات</button></div>`;
+  }
+  function mwLib(act, i) {
+    const C = mwCache(), ks = Object.keys(C).reverse();
+    if (act === "all") { if (!confirm("حذف كل الإجابات المحفوظة؟")) return; try { localStorage.setItem(MWC, "{}"); } catch (e) { } mwRefresh(); return; }
+    const k = ks[i], en = C[k]; if (!en) return;
+    if (act === "del") { delete C[k]; try { localStorage.setItem(MWC, JSON.stringify(C)); } catch (e) { } mwRefresh(); return; }
+    const inf = selInfo(), m = E.mw, d = mwMeta(k, en); if (!inf || inf.kind !== "widget") return;
+    Object.assign(m, { pslug: d.p, words: d.w, style: d.s, len: d.n, lang: d.g, res: en.l[en.i % en.l.length], kind: "ai", msg: "من المحفوظات — مجاناً بلا استهلاك API." }); mwCsave(C, k); mwPreview(inf, m.res); mwRefresh();
+  }
   async function mwRun(kind, extra) {
     const m = E.mw, inf = selInfo(); if (!inf || inf.kind !== "widget") return; mwRead(); const o = Object.assign({}, m, extra || {});
     if (!o.pslug && !String(o.words).trim()) { m.msg = "اكتب اسم المنتج أو فكرته، أو اختر منتجاً من المتجر."; mwRefresh(); return; }
     if (kind !== "tpl" && !o.pslug && mwWords(o.words) < 6) { m.msg = "اكتب أكثر من 5 كلمات (الاسم، الخامة أو المكوّنات، الاستعمال، لمن؟…) ليكون الوصف دقيقاً."; toast("✍️ " + m.msg); mwRefresh(); return; }      // يوفّر طلبات API على أوصاف غامضة
     const arabic = o.lang === "ar" || o.lang === "ma", tplOne = () => { const a = mwTemplates(o); m.ti = (m.ti + 1) % a.length; return a[m.ti]; };
     if (kind === "tpl") { if (!arabic) m.msg = "القوالب الجاهزة بالعربية فقط."; else { m.res = tplOne(); m.kind = "tpl"; m.msg = "ظهر القالب في العنصر — اختر إدراج أو إلغاء أو إعادة من الشريط تحته."; mwPreview(inf, m.res); } mwRefresh(); return; }
-    const key = mwKeyOf(o), C = mwCache(), en = C[key] || (C[key] = { l: [], i: 0 }), redo = !!(extra && extra.redo);
+    const key = mwKeyOf(o), C = mwCache(), en = C[key] || (C[key] = { l: [], i: 0, p: o.pslug || "", w: String(o.words || "").trim(), s: o.style, n: o.len, g: o.lang, d: Date.now() }), redo = !!(extra && extra.redo);
     if ((!redo && en.l.length) || (redo && en.l.length >= 2)) {      // من المحفوظات: مجاناً
       if (redo) en.i = (en.i + 1) % en.l.length; m.res = en.l[en.i % en.l.length]; m.kind = "ai"; mwCsave(C, key);
       m.msg = "من المحفوظات — مجاناً بلا استهلاك API (" + (en.i + 1) + "/" + en.l.length + ")."; mwPreview(inf, m.res); mwRefresh(); return;
@@ -9174,9 +9190,12 @@ body{overflow-x:hidden;margin:0}`;
       <div class="pg" style="grid-template-columns:1fr 1fr 1fr">${sel("style", MW_STYLE, m.style)}${sel("len", { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" }, m.len)}${sel("lang", Object.fromEntries(Object.entries(mwLangs()).map(([k, v]) => [k, String(v.label).split("(")[0].trim()])), m.lang)}</div>
       <div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-mwa="go"${m.busy ? " disabled" : ""} title="يستعمل Gemini (طلب API واحد) ويكتب نصاً جديداً بحسب كلماتك">${m.busy ? "⏳ جارٍ الكتابة…" : "✨ حرر"}</button><button type="button" class="pb2" data-mwa="tpl" title="جمل جاهزة تُركَّب محلياً من بيانات المنتج: فوري، بلا إنترنت وبلا استهلاك API">🧩 قالب جاهز (مجاني)</button></div>
       <p style="margin:.2rem 0 .1rem;font-size:.72rem;line-height:1.6;color:#6b7280"><b>✨ حرر</b>: ذكاء اصطناعي يصيغ نصاً جديداً مختلفاً في كل مرة، ويستهلك طلب API واحداً. <b>🧩 قالب</b>: صياغة جاهزة من بيانات المنتج، مجانية وفورية لكنها أبسط وأقل تنوعاً.</p>
-      <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>`;
+      <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>
+      <button type="button" class="pb2" data-mwa="lib" style="width:100%">📚 المحفوظات (${Object.keys(mwCache()).length}) ${m.saved ? "▲" : "▼"}</button>${m.saved ? mwSavedHtml(m) : ""}`;
     qPop(btn, html, p => {
       const read = () => p.querySelectorAll("[data-mw]").forEach(el => { m[el.dataset.mw] = el.value; });
+      p.querySelector('[data-mwa="lib"]').onclick = () => { m.saved = !m.saved; read(); mwPanel(selInfo() || inf, btn); };
+      p.querySelectorAll("[data-mwu]").forEach(b => b.onclick = () => mwLib("use", +b.dataset.mwu)); p.querySelectorAll("[data-mwd]").forEach(b => b.onclick = () => mwLib("del", +b.dataset.mwd)); const da = p.querySelector("[data-mwda]"); if (da) da.onclick = () => mwLib("all");
       p.querySelector('[data-mwa="go"]').onclick = () => mwRun("ai"); p.querySelector('[data-mwa="tpl"]').onclick = () => mwRun("tpl");
       p.querySelector('[data-mw="pslug"]').onchange = () => { read(); mwPanel(selInfo() || inf, btn); };
       p.querySelector('[data-mw="lang"]').addEventListener("change", e => { try { localStorage.setItem("alyssum_pb_lang", e.target.value); } catch (x) { } });      // يُحفظ كلغة السوق (مشتركة مع مولّد الصفحات)
