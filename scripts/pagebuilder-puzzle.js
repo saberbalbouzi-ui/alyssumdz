@@ -170,7 +170,7 @@ ${S.pat === "jigsaw" || S.pat === "wave" ? `<label class="pz-r">${S.pat === "jig
       return `<div class="pbx-pz"><p>🧩 قطعة من بازل (${n} قطعة). اسحبها لتفصلها عن البقية؛ وعند اقترابها من موضعها الصحيح بجوار قطعة أخرى تنجذب إليه.</p>
 <label class="pz-sw"><input type="checkbox" data-pzk="snap" ${st.pzs !== false ? "checked" : ""}> 🧲 التجاذب بين القطع</label>
 <div class="pz-btns"><button type="button" class="pbx-small" data-pz="gather">↺ تجميع كل القطع</button><button type="button" class="pbx-small" data-pz="scatter">🎲 بعثرة كل القطع</button></div>
-${st.pzo ? `<div class="pz-sep">نوع البازل (يستبدل القطع الحالية)</div>${shapeUi(true)}<button type="button" class="pbx-small" data-pz="merge">↩ إرجاع الصورة كاملة</button>` : ""}</div>`; }
+<div class="pz-sep">نوع البازل (يستبدل القطع الحالية)</div>${shapeUi(true)}<button type="button" class="pbx-small" data-pz="merge">↩ إرجاع الصورة كاملة</button></div>`; }
     if (!st.src) return `<div class="pbx-pz"><p>ارفع صورة أولاً ثم قسّمها إلى بازل.</p></div>`;
     return `<div class="pbx-pz"><p>قسّم الصورة إلى قطع منفصلة تتجاذب عند اقترابها. اختر الشكل:</p>${shapeUi(false)}
 <p class="pz-h">يمكن التراجع بـ Ctrl+Z. القطع عناصر حرة يمكن تحريك كل واحدة وإعادة ترتيبها.</p></div>`;
@@ -179,6 +179,17 @@ ${st.pzo ? `<div class="pz-sep">نوع البازل (يستبدل القطع ا�
   function opt(k, v) {
     if (k === "snap") { const inf = A().find(A().E.sel); if (inf && inf.set.pz) { group(inf).forEach(w => { w.set.pzs = !!v; }); A().E.nextLabel = "تجاذب البازل"; A().commitAfter(); } return false; }
     if (k === "pat") { S.pat = v; return true; } S[k] = Number(v) || S[k]; return false;
+  }
+  /* قطع قديمة بلا أصل محفوظ: يُشتقّ الأصل (إطار الصورة وقصّها) من مواضع القطع الأصلية وأقصاصها */
+  function ensureOrig(inf) {
+    if (inf.set.pzo) return true; const g = group(inf); if (!g.length) return false; const have = g.find(w => w.set.pzo); if (have) { g.forEach(w => { w.set.pzo = have.set.pzo; }); return true; }
+    const f = g[0].set, cp = f.crop; if (!cp || !cp.w || !f.src) return false; const o = { src: f.src, alt: f.alt || "", link: f.link || "", fit: "fill", crop: null, zi: Number(f.zi) || 1, g: {} }, cr = {};
+    for (const dev of ["d", "m"]) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, ok = true;
+      g.forEach(w => { const h = w.set.pzh && w.set.pzh[dev], fw = Number(PB.eff(w.set, "fwd", dev)), fh = Number(PB.eff(w.set, "fh", dev)); if (!h || !(fw > 0) || !(fh > 0)) { ok = false; return; } x0 = Math.min(x0, h[0]); y0 = Math.min(y0, h[1]); x1 = Math.max(x1, h[0] + fw); y1 = Math.max(y1, h[1] + fh); });
+      if (!ok) { if (dev === "d") return false; continue; }
+      o.g[dev] = [r2(x0), r2(y0), r2(x1 - x0), r2(y1 - y0)]; const h0 = f.pzh[dev], fw0 = Number(PB.eff(f, "fwd", dev)), fh0 = Number(PB.eff(f, "fh", dev));
+      if (dev === "d") { cr.x = (h0[0] + cp.x / 100 * fw0 - x0) / (x1 - x0) * 100; cr.y = (h0[1] + cp.y / 100 * fh0 - y0) / (y1 - y0) * 100; cr.w = cp.w / 100 * fw0 / (x1 - x0) * 100; } }
+    o.crop = { x: r2(cr.x), y: r2(cr.y), w: r2(cr.w) }; g.forEach(w => { w.set.pzo = o; }); return true;
   }
   /* يدمج قطع المجموعة في عنصر الصورة الأصلي (بأصله المحفوظ) ويعيده */
   function restore(inf) {
@@ -193,7 +204,7 @@ ${st.pzo ? `<div class="pz-sep">نوع البازل (يستبدل القطع ا�
     if (name === "split") { const L = A().layoutOf(inf.node.id); if (!L) return; build(inf, patternPolys(L.width / L.height)); return; }
     if (name === "draw") return startDraw(inf);
     if (name === "merge" || name === "resplit") {
-      if (E.dev !== "d") { toast("غيّر البازل من عرض الحاسوب (المكتب)"); return; } const w = restore(inf); if (!w) { toast("لا يوجد أصل محفوظ لهذه القطع"); return; }
+      if (E.dev !== "d") { toast("غيّر البازل من عرض الحاسوب (المكتب)"); return; } ensureOrig(inf); const w = restore(inf); if (!w) { toast("لا يوجد أصل محفوظ لهذه القطع"); return; }
       if (name === "merge") { E.nextLabel = "إرجاع الصورة كاملة"; A().commitAfter(w.id); toast("↩ عادت الصورة كاملة"); return; }
       A().renderCanvas(); const i2 = A().find(w.id); if (!i2) return;
       if (S.pat === "free") { E.nextLabel = "إرجاع الصورة للتقسيم"; A().commitAfter(w.id); setTimeout(() => startDraw(A().find(w.id)), 60); return; }
