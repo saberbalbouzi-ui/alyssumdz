@@ -7201,11 +7201,14 @@ const PB = (() => {
     if (s.bgImg) { bgd += `background-image:${gl ? gl + "," : ""}url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}');background-size:${s.bgSize || "cover"};background-position:${s.bgPos || "center"};background-repeat:no-repeat;`; if (s.bgFixed) bgd += "background-attachment:fixed;"; }
     /* الإطار: سماكة عامة أو لكل جهة، نمط، لون بشفافية، وتدوير كل زاوية */
     const bws = Array.isArray(s.bws) ? s.bws : [], bwA = [0, 1, 2, 3].map(i => (bws[i] === "" || bws[i] == null || isNaN(Number(bws[i]))) ? (num(s.bw) || 0) : Number(bws[i]));
-    if (bwA.some(x => x > 0)) { const col = hexA(s.bc || "#ddd", s.bco), st = s.bs || "solid"; d += bwA.every(x => x === bwA[0]) ? `border:${bwA[0]}px ${st} ${col};` : `border-style:${st};border-color:${col};border-width:${bwA.map(x => x + "px").join(" ")};`; }
+    /* الإطار يزيد للخارج ولا يغيّر حجم العنصر: outline للسماكة الموحّدة، وطبقة ::before خارجية عند اختلاف سماكة الجهات */
+    if (bwA.some(x => x > 0)) { const col = hexA(s.bc || "#ddd", s.bco), st = s.bs || "solid";
+      if (bwA.every(x => x === bwA[0])) d += `outline:${bwA[0]}px ${st} ${col};outline-offset:0;`;
+      else { d += "position:relative;"; css.d.push(`${sel}::before{content:"";position:absolute;inset:${bwA.map(x => -x + "px").join(" ")};border-style:${st};border-color:${col};border-width:${bwA.map(x => x + "px").join(" ")};border-radius:inherit;pointer-events:none}`); } }
     if (Array.isArray(s.radc) && s.radc.some(x => x !== "" && x != null && !isNaN(Number(x)))) d += `border-radius:${[0, 1, 2, 3].map(i => (num(s.radc[i]) || 0) + "px").join(" ")}!important;`;
     /* الخلفية في طبقة مستقلة (::after) عند ضبط شفافية الخلفية أو تدوير زواياها: لا تتأثر بها الحدود ولا المحتوى */
     const bga = num(s.bga), layer = !!bgd && ((bga != null && bga < 1) || DEVS.some(dv => own(s, "bgrad", dv) !== undefined));
-    if (layer) { d += "position:relative;isolation:isolate;"; css.d.push(`${sel}::after{content:"";position:absolute;inset:${bwA.map(x => -x + "px").join(" ")};z-index:-1;pointer-events:none;border-radius:inherit;${bgd}${bga != null && bga < 1 ? `opacity:${Math.max(0, bga)};` : ""}}`); emit(css, sel + "::after", s, [["bgrad", px("border-radius")]]); }
+    if (layer) { d += "position:relative;isolation:isolate;"; css.d.push(`${sel}::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;${bgd}${bga != null && bga < 1 ? `opacity:${Math.max(0, bga)};` : ""}}`); emit(css, sel + "::after", s, [["bgrad", px("border-radius")]]); }
     else d += bgd;
     if (s.shadow && SHADOWS[s.shadow]) d += `box-shadow:${SHADOWS[s.shadow]};`;
     if (s.op !== undefined && s.op !== "" && num(s.op) != null) d += `opacity:${num(s.op)};`;
@@ -7679,7 +7682,7 @@ const PB = (() => {
       { k: "bgDark", l: "تعتيم الخلفية بطبقة داكنة (0 – 0.9) ليظهر النص فوقها أوضح", t: "num", min: 0, max: .9, step: .05, tab: "s", showIf: ["bgImg", "*"] },
       { k: "bga", l: "شفافية الخلفية % (0 = شفافة، 100 = معتمة) — لون/تدرّج/صورة الخلفية فقط، لا النص ولا الإطار", t: "num", pct: 1, min: 0, max: 1, step: .05, tab: "s" },
       { k: "bgrad", l: "تدوير زوايا الخلفية (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
-      { k: "bw", l: "سماكة الإطار (px) — لكل الجهات", t: "num", min: 0, max: 40, tab: "s" }, { k: "bws", l: "سماكة كل جهة (px) — تتجاوز السماكة العامة", t: "dims", tab: "s" },
+      { k: "bw", l: "سماكة الإطار (px) — تزيد للخارج ولا تغيّر حجم العنصر", t: "num", min: 0, max: 40, tab: "s" }, { k: "bws", l: "سماكة كل جهة (px) — تتجاوز السماكة العامة", t: "dims", tab: "s" },
       { k: "bs", l: "نمط الإطار", t: "select", o: [["solid", "متصل"], ["dashed", "متقطع"], ["dotted", "نقطي"], ["double", "مزدوج"], ["groove", "محفور"], ["ridge", "بارز"], ["inset", "غائر"], ["outset", "ناتئ"]], tab: "s" }, { k: "bc", l: "لون الإطار", t: "color", tab: "s" },
       { k: "bco", l: "شفافية الإطار % (0 = شفاف، 100 = معتم)", t: "num", pct: 1, min: 0, max: 1, step: .05, tab: "s" },
       { k: "rad", l: "تدوير زوايا الإطار (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
