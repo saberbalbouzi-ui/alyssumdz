@@ -135,7 +135,13 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره (وانقر على غيره لإضافته). فاتك عنصر؟ انقر عليه مباشرة أو ارسم مستطيلاً حوله.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Gemini اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
-  function warm() { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } } catch (e) { } }
+  function warm(inf) { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
+  /* تحضير مسبق: بعد تحديد صورة بثانيتين يُحلَّل في الخلفية (الحاسوب فقط) فيجد «التقاط العناصر» و«نزع الخلفية» النتيجة جاهزة؛ طلب مماثل أثناء التحليل ينتظره */
+  const PF = {}; let pfT = 0;
+  function prefetch(inf) {
+    clearTimeout(pfT); const src = inf && inf.node && inf.node.set && inf.node.set.src; if (!src || PF[src] || LITE() || !window.AIVision || !AIVision.supported()) return;
+    pfT = setTimeout(async () => { if (PF[src]) return; PF[src] = 1; try { const cv = capCanvas(await loadCanvas(src), 2200); await Promise.all([AIVision.analyze(cv, { lite: false, zone: null }), AIVision.depth ? AIVision.depth(cv, null, 448).catch(() => null) : null]); } catch (e) { PF[src] = 0; } }, 2500);
+  }
   const LITE = () => { try { return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
   function capCanvas(cv, max) { const m = Math.max(cv.width, cv.height); if (m <= max) return cv; const r = max / m, c = document.createElement("canvas"); c.width = Math.round(cv.width * r); c.height = Math.round(cv.height * r); c.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, c.width, c.height); return c; }
   async function captureElements() {

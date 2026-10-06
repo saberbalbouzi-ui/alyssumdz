@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.23.2">
+<meta name="admin-version" content="1.24.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1481,10 +1481,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/text-capture.js"></script>
 <script src="assets/js/social-icons.js?v=1"></script>
 <script src="assets/js/chrome.js?v=1"></script>
-<script src="assets/js/chrome-admin.js?v=1.23.2"></script>
-<script src="assets/js/admin-assistant.js?v=1.23.2"></script>
-<script src="assets/js/admin-update.js?v=1.23.2"></script>
-<script src="assets/js/ai-vision.js?v=25"></script>
+<script src="assets/js/chrome-admin.js?v=1.24.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.24.0"></script>
+<script src="assets/js/admin-update.js?v=1.24.0"></script>
+<script src="assets/js/ai-vision.js?v=27"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -8867,7 +8867,7 @@ body{overflow-x:hidden;margin:0}`;
   function select(id) {
     if (editing) { try { editing.el.blur(); } catch (e) { } }
     E.sel = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
-    { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
+    { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
      positionOverlay(); if (E.ltab === "lay") renderLeft();
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
@@ -11318,7 +11318,13 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره (وانقر على غيره لإضافته). فاتك عنصر؟ انقر عليه مباشرة أو ارسم مستطيلاً حوله.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Gemini اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
-  function warm() { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } } catch (e) { } }
+  function warm(inf) { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
+  /* تحضير مسبق: بعد تحديد صورة بثانيتين يُحلَّل في الخلفية (الحاسوب فقط) فيجد «التقاط العناصر» و«نزع الخلفية» النتيجة جاهزة؛ طلب مماثل أثناء التحليل ينتظره */
+  const PF = {}; let pfT = 0;
+  function prefetch(inf) {
+    clearTimeout(pfT); const src = inf && inf.node && inf.node.set && inf.node.set.src; if (!src || PF[src] || LITE() || !window.AIVision || !AIVision.supported()) return;
+    pfT = setTimeout(async () => { if (PF[src]) return; PF[src] = 1; try { const cv = capCanvas(await loadCanvas(src), 2200); await Promise.all([AIVision.analyze(cv, { lite: false, zone: null }), AIVision.depth ? AIVision.depth(cv, null, 448).catch(() => null) : null]); } catch (e) { PF[src] = 0; } }, 2500);
+  }
   const LITE = () => { try { return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
   function capCanvas(cv, max) { const m = Math.max(cv.width, cv.height); if (m <= max) return cv; const r = max / m, c = document.createElement("canvas"); c.width = Math.round(cv.width * r); c.height = Math.round(cv.height * r); c.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, c.width, c.height); return c; }
   async function captureElements() {
@@ -12294,7 +12300,7 @@ const PBBgRemove = (function () {
   async function aiCut(srcC, o) {
     const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }), t0 = performance.now(), tm = [], mark = l => { tm.push(l + " " + ((performance.now() - t0) / 1000).toFixed(1)); o.timing = tm.join(" · "); }; step("⏳ تجهيز أداة القص داخل متصفحك (أول مرة أطول)…");
     const pDep = o.noDepth || !AIVision.depth ? null : AIVision.depth(cv, null, lite ? 392 : 448).catch(e => { console.warn("depth", e); return null; });      /* العمق يعمل بالتوازي مع التحليل */
-    const res = await AIVision.analyze(cv, { lite, noHeld: true, fastDet: true, maxItems: 10, onStep: step }), S = res.S, items = res.items; mark("تحليل"); o.pDep = pDep; let best = null, tbl = null, persLo = []; if (o.variant !== "all") { const pre = pickMain(S, items); if (pre && PERS.test(pre.label)) { try { tbl = await tableItem(S, items, cv); if (tbl) extendTable(S, tbl, items); } catch (e) { console.warn("table", e); } } }      // مشهد بأشخاص: الطاولة أمامهم تبقى (يُحذف ما وراءهم فقط)
+    const full = AIVision.cachedFor && AIVision.cachedFor(cv, { lite }), res = await AIVision.analyze(cv, full ? { lite, onStep: step } : { lite, noHeld: true, fastDet: true, maxItems: 10, onStep: step }), S = res.S, items = res.items; mark("تحليل"); o.pDep = pDep; let best = null, tbl = null, persLo = []; if (o.variant !== "all") { const pre = pickMain(S, items); if (pre && PERS.test(pre.label)) { try { tbl = await tableItem(S, items, cv); if (tbl) extendTable(S, tbl, items); } catch (e) { console.warn("table", e); } } }      // مشهد بأشخاص: الطاولة أمامهم تبقى (يُحذف ما وراءهم فقط)
     let grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items, tbl); if (grp && !grp.length) grp = null;
     mark("طاولة+مجموعة");
     if (!grp) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];

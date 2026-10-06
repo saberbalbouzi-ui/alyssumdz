@@ -30,7 +30,12 @@ window.AIVision = (function () {
     return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط) " + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
   }
   /* خريطة عمق نسبية (أكبر = أقرب) لصورة بحجم ≤640 ← {w,h,data} */
-  async function depth(cv, onp, max) { const im = pix(cv, max || 518); return worker("dep").call("depth", { data: im.data, w: im.w, h: im.h }, onp, [im.data]); }
+  const DC = new Map();      // ذاكرة قصيرة لخرائط العمق (للتحضير المسبق)
+  function depth(cv, onp, max) {
+    let key = ""; try { key = fingerprint(cv) + "|" + (max || 518); } catch (e) { } if (key && DC.has(key)) return DC.get(key);
+    const im = pix(cv, max || 518), p = worker("dep").call("depth", { data: im.data, w: im.w, h: im.h }, onp, [im.data]);
+    if (key) { DC.set(key, p); if (DC.size > 3) DC.delete(DC.keys().next().value); p.catch(() => DC.delete(key)); } return p;
+  }
   /* ───── الكشف ───── */
   const AR = { globe: "مجسم الكرة الأرضية", "pencil case": "مقلمة", person: "شخص", book: "كتاب", spoon: "ملعقة", "pen/pencil": "قلم", marker: "قلم", plate: "صحن", bowl: "صحن", "bowl/basin": "وعاء", "tea pot": "إبريق", kettle: "إبريق", jug: "إبريق", bottle: "عبوة", cup: "كوب", vase: "إناء", "wine glass": "كأس", fork: "شوكة", knife: "سكين", "cell phone": "هاتف", laptop: "حاسوب", clock: "ساعة", "potted plant": "نبتة", pottedplant: "نبتة", flower: "زهور", "green vegetables": "أعشاب", apple: "تفاح", orange: "برتقال", "orange/tangerine": "برتقال", banana: "موز", lemon: "ليمون", garlic: "ثوم", nuts: "مكسرات", bread: "خبز", cake: "كعكة", cookies: "بسكويت", dessert: "حلوى", cosmetics: "مستحضر", toiletry: "عبوة", canned: "علبة", "storage box": "علبة", basket: "سلة", handbag: "حقيبة", "handbag/satchel": "حقيبة", backpack: "حقيبة", luggage: "حقيبة", "teddy bear": "دمية", "stuffed toy": "دمية", candle: "شمعة", "cutting/chopping board": "لوح تقطيع", scissors: "مقص", "paint brush": "فرشاة", brush: "فرشاة", "pencil case": "مقلمة", notepaper: "ورقة", folder: "ملف", towel: "منشفة", dog: "كلب", cat: "قطة", bird: "طائر", "wild bird": "طائر", horse: "حصان", carrot: "جزر", broccoli: "بروكلي", tomato: "طماطم", pepper: "فلفل", egg: "بيض", mushroom: "فطر", flask: "قارورة", "barrel/bucket": "دلو", lantern: "فانوس", lamp: "مصباح", tablet: "لوحي", camera: "كاميرا", "head phone": "سماعة", remote: "جهاز تحكم", keyboard: "لوحة مفاتيح", mouse: "فأرة", umbrella: "مظلة", "sports ball": "كرة", soap: "صابون", lipstick: "أحمر شفاه", comb: "مشط", "hair dryer": "مجفف شعر", toothbrush: "فرشاة أسنان", strawberry: "فراولة", grape: "عنب", pear: "إجاص", peach: "خوخ", pomegranate: "رمان", watermelon: "بطيخ", "kiwi fruit": "كيوي", mango: "مانجو", coconut: "جوز الهند", avocado: "أفوكادو", cucumber: "خيار", onion: "بصل", potato: "بطاطا", lettuce: "خس", cheese: "جبن" };
   const DROP = new Set(["dining table", "diningtable", "dinning table", "couch", "sofa", "chair", "bed", "bench", "toilet", "sink", "refrigerator", "oven", "tv", "tvmonitor", "monitor/tv", "desk", "coffee table", "side table", "cabinet/shelf", "nightstand", "stool", "pillow", "carpet", "picture/frame", "mirror", "ring", "necklace", "bracelet", "glasses", "hat", "watch", "belt", "tie", "bow tie", "mask", "gloves", "other shoes", "sneakers", "boots", "leather shoes", "sandals", "slippers", "high heels", "power outlet", "air conditioner", "radiator", "faucet", "awning", "street lights", "traffic light", "traffic sign", "stop sign", "speed limit sign", "crosswalk sign", "trash bin can", "bathtub", "blackboard/whiteboard", "carriage", "extension cord", "converter"]);
@@ -149,9 +154,17 @@ window.AIVision = (function () {
   const fingerprint = cv => { const g = cv.getContext("2d", { willReadFrequently: true }), W = cv.width, H = cv.height; let h = 2166136261; for (let j = 0; j < 12; j++) for (let i = 0; i < 12; i++) { const d = g.getImageData(Math.min(W - 1, Math.floor((i + .5) * W / 12)), Math.min(H - 1, Math.floor((j + .5) * H / 12)), 1, 1).data; for (let k = 0; k < 3; k++) h = Math.imul(h ^ d[k], 16777619); } return W + "x" + H + ":" + (h >>> 0); };
   const cloneItems = list => { const m = new Map(), out = list.map(it => { const c = {}; for (const k in it) { const v = it[k]; c[k] = ArrayBuffer.isView(v) ? v.slice() : Array.isArray(v) ? JSON.parse(JSON.stringify(v)) : v; } m.set(it, c); return c; }); out.forEach(c => { if (c.holder) c.holder = m.get(c.holder) || null; }); return out; };
   /* تحليل كامل: كشف (Gemini أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
+  const fpOf = (cv, o) => { try { return fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0) + "|" + (o.noHeld ? 1 : 0) + "|" + (o.maxItems || 0) + "|" + (o.fastDet ? 1 : 0); } catch (e) { return ""; } };
+  let INF = null;      /* تحليل جارٍ لصورة بعينها (تحضير مسبق في الخلفية): طلب مماثل ينتظره بدل أن يكرّره فيتلف حالة SAM */
+  function cachedFor(cv, o) { const fp = fpOf(cv, o || {}); return !!fp && ((AC && AC.fp === fp && curS === AC.S) || (INF && INF.fp === fp)); }
   async function analyze(cv, o) {
+    o = o || {}; const fp0 = fpOf(cv, o);
+    if (fp0 && INF && INF.fp === fp0) { (o.onStep || (() => { }))("⏳ إكمال التحليل الجاري…"); const r = await INF.p; return Object.assign({}, r, { items: cloneItems(r.items) }); }
+    const p = analyze0(cv, o); if (fp0) { INF = { fp: fp0, p }; const done = () => { if (INF && INF.p === p) INF = null; }; p.then(done, done); } return p;
+  }
+  async function analyze0(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
-    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0) + "|" + (o.noHeld ? 1 : 0) + "|" + (o.maxItems || 0) + "|" + (o.fastDet ? 1 : 0); } catch (e) { }
+    let fp = fpOf(cv, o);
     if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحلي المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: "local", note: "", dets: AC.dets, later: null }; }
     step("⏳ تجهيز أداة القص…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
@@ -300,18 +313,18 @@ window.AIVision = (function () {
     if (it.poly) { const dx = Math.floor(it.x0 * k), dy = Math.floor(it.y0 * k), dw = Math.max(2, Math.ceil(it.x1 * k) - dx), dh = Math.max(2, Math.ceil(it.y1 * k) - dy), p = polyAlpha(it.poly, dx, dy, dw, dh, k), a = new Uint8Array(dw * dh); let cx = 0, cy = 0, n = 0, ly = -1, sx = 0, nx = 0;
       for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) if (p[y * dw + x] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } }
       return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (n ? cx / n : dw / 2), cy: dy + (n ? cy / n : dh / 2) }; }
-    const f = sampler(S, it), dx = Math.floor(it.x0 * k), dy = Math.floor(it.y0 * k), dw = Math.max(2, Math.ceil(it.x1 * k) - dx), dh = Math.max(2, Math.ceil(it.y1 * k) - dy), a = new Uint8Array(dw * dh);
+    const f = sampler(S, it), dx = Math.floor(it.x0 * k), dy = Math.floor(it.y0 * k), dw = Math.max(2, Math.ceil(it.x1 * k) - dx), dh = Math.max(2, Math.ceil(it.y1 * k) - dy), a = new Uint8Array(dw * dh), fv = new Float32Array(dw * dh);
     let ly = -1, sx = 0, nx = 0, cnt = 0, cx = 0, cy = 0;
-    for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) if (f((dx + x + .5) / k, (dy + y + .5) / k) > 0) { a[y * dw + x] = 1; cnt++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } }
-    return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (cnt ? cx / cnt : dw / 2), cy: dy + (cnt ? cy / cnt : dh / 2) };      // lx/ly: أعلى العنصر (لاسمه)، cx/cy: مركزه
+    for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) if ((fv[y * dw + x] = f((dx + x + .5) / k, (dy + y + .5) / k)) > 0) { a[y * dw + x] = 1; cnt++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } }
+    return { a, f: fv, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (cnt ? cx / cnt : dw / 2), cy: dy + (cnt ? cy / cnt : dh / 2) };      // lx/ly: أعلى العنصر (لاسمه)، cx/cy: مركزه
   }
   /* معاينة بالدقة الكاملة (نفس قصّ «التقاط») مصغّرة للعرض: للحواف الدقيقة كالأصابع */
   function fineView(S, cv, it, k, items) {
     const D = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, S.W, S.H).data, A = fullAlpha(S, it, D, { matte: false });
     (items || []).filter(J => J.holder === it).forEach(J => { const B = fullAlpha(S, J, D, { matte: false }); for (let y = Math.max(A.y0, B.y0); y < Math.min(A.y0 + A.h, B.y0 + B.h); y++) for (let x = Math.max(A.x0, B.x0); x < Math.min(A.x0 + A.w, B.x0 + B.w); x++) A.a[(y - A.y0) * A.w + x - A.x0] *= 1 - B.a[(y - B.y0) * B.w + x - B.x0]; });      // اليد = حدودها ناقص الشيء الذي تمسكه
-    const dx = Math.floor(A.x0 * k), dy = Math.floor(A.y0 * k), dw = Math.max(2, Math.ceil((A.x0 + A.w) * k) - dx), dh = Math.max(2, Math.ceil((A.y0 + A.h) * k) - dy), a = new Uint8Array(dw * dh); let ly = -1, sx = 0, nx = 0, n = 0, cx = 0, cy = 0;
-    for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const gx = Math.min(A.w - 1, Math.floor((dx + x + .5) / k) - A.x0), gy = Math.min(A.h - 1, Math.floor((dy + y + .5) / k) - A.y0); if (gx >= 0 && gy >= 0 && A.a[gy * A.w + gx] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } } }
-    return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (n ? cx / n : dw / 2), cy: dy + (n ? cy / n : dh / 2) };
+    const dx = Math.floor(A.x0 * k), dy = Math.floor(A.y0 * k), dw = Math.max(2, Math.ceil((A.x0 + A.w) * k) - dx), dh = Math.max(2, Math.ceil((A.y0 + A.h) * k) - dy), a = new Uint8Array(dw * dh), fv = new Float32Array(dw * dh).fill(-4); let ly = -1, sx = 0, nx = 0, n = 0, cx = 0, cy = 0;
+    for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const gx = Math.min(A.w - 1, Math.floor((dx + x + .5) / k) - A.x0), gy = Math.min(A.h - 1, Math.floor((dy + y + .5) / k) - A.y0); if (gx >= 0 && gy >= 0) fv[y * dw + x] = (A.a[gy * A.w + gx] - .5) * 8; if (gx >= 0 && gy >= 0 && A.a[gy * A.w + gx] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } } }
+    return { a, f: fv, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (n ? cx / n : dw / 2), cy: dy + (n ? cy / n : dh / 2) };
   }
   /* ───── الدقة الكاملة: مرشّح موجَّه (Guided Filter) يلصق حافة القناع بحواف الصورة ───── */
   function boxMean(src, w, h, r) {
@@ -458,12 +471,17 @@ window.AIVision = (function () {
     bd.putImageData(B, 0, 0);
   }
   /* خطوط الحدود للعرض: حافة القناع ← قماش بنفسجي + تعبئة شفافة */
+  /* حدّ العنصر: خط رفيع (~1px) مُنعَّم يتبع الحافة الفعلية بدقة جزء من البكسل (مسافة موقَّعة من حقل القناع f) بدل حلقة سميكة؛ وتعبئة خفيفة داخل العنصر */
   function overlays(v, rgb) {
-    const { a, dw, dh } = v, o = new Uint8Array(dw * dh), O = 2;
-    for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { if (a[y * dw + x]) continue; let near = false; for (let dy = -O; dy <= O && !near; dy++) for (let dx = -O; dx <= O; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < dw && yy < dh && a[yy * dw + xx]) { near = true; break; } } if (near) o[y * dw + x] = 1; }
-    const mk = fn => { const c = document.createElement("canvas"); c.width = dw; c.height = dh; const g = c.getContext("2d"), im = g.createImageData(dw, dh); for (let i = 0; i < dw * dh; i++) { const al = fn(i); if (al) { im.data[i * 4] = rgb[0]; im.data[i * 4 + 1] = rgb[1]; im.data[i * 4 + 2] = rgb[2]; im.data[i * 4 + 3] = al; } } g.putImageData(im, 0, 0); return c; };
-    return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
+    const { a, f, dw, dh } = v, lineA = new Uint8Array(dw * dh), fillA = new Uint8Array(dw * dh);
+    if (f) {
+      for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const i = y * dw + x, c = f[i], l = x > 0 ? f[i - 1] : c, r = x < dw - 1 ? f[i + 1] : c, u = y > 0 ? f[i - dw] : c, d = y < dh - 1 ? f[i + dw] : c, gx = (r - l) / 2, gy = (d - u) / 2, mg = Math.hypot(gx, gy);
+        const sd = mg > 1e-3 ? c / mg : (c > 0 ? 9 : -9);      // مسافة تقريبية (بكسل) إلى الحافة، موجبة داخل العنصر
+        const la = 1 - (Math.abs(sd) - .15) / .65; lineA[i] = la <= 0 ? 0 : la >= 1 ? 255 : Math.round(la * 255); const fa = sd + .5; fillA[i] = fa <= 0 ? 0 : fa >= 1 ? 85 : Math.round(fa * 85); }
+    } else { for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const i = y * dw + x; if (!a[i]) continue; fillA[i] = 85; if (x === 0 || y === 0 || x === dw - 1 || y === dh - 1 || !a[i - 1] || !a[i + 1] || !a[i - dw] || !a[i + dw]) lineA[i] = 255; } }
+    const mk = arr => { const c = document.createElement("canvas"); c.width = dw; c.height = dh; const g = c.getContext("2d"), im = g.createImageData(dw, dh); for (let i = 0; i < dw * dh; i++) { const al = arr[i]; if (al) { im.data[i * 4] = rgb[0]; im.data[i * 4 + 1] = rgb[1]; im.data[i * 4 + 2] = rgb[2]; im.data[i * 4 + 3] = al; } } g.putImageData(im, 0, 0); return c; };
+    return { out: mk(lineA), fill: mk(fillA) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, warm };
+  return { supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
 })();
