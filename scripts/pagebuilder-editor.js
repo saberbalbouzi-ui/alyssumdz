@@ -982,52 +982,66 @@ body{overflow-x:hidden;margin:0}`;
     E.nextLabel = "قائمة النص"; afterEdit();
   }
 
-  /* ───────────────── الكتابة السحرية: كلمات ⟵ نص جاهز (Gemini بمفتاح المتجر، وإلا قوالب من بيانات المنتج) ───────────────── */
-  const MW_TONE = { mk: "تسويقية جذابة", fm: "رسمية مهنية", fr: "ودّية قريبة من القلب", ur: "عاجلة تحفّز على الشراء الآن" };
-  const MW_LEN = { s: "جملة واحدة قصيرة (حتى 12 كلمة)", p: "فقرة قصيرة (من 30 إلى 45 كلمة)", l: "فقرة (من 70 إلى 90 كلمة)", b: "قائمة من 4 إلى 6 نقاط قصيرة، كل نقطة في سطر مستقل" };
-  const mwProd = inf => { const slug = inf.set.prod || E.page.product; return ((ctx().products) || []).find(x => x.slug === slug) || null; };
+  /* ───────────────── الكتابة السحرية: وصف فقط (علمي أو تسويقي) — يطوّر وصف منتج المتجر بمعلوماته، أو ينشئ وصف منتج من خارج المتجر ───────────────── */
+  const MW_STYLE = { mk: "تسويقي", sc: "علمي" };
+  const MW_LEN = { s: "جملة واحدة قصيرة (حتى 15 كلمة)", p: "فقرة قصيرة (من 30 إلى 45 كلمة)", l: "فقرة (من 70 إلى 90 كلمة)", b: "قائمة من 4 إلى 6 نقاط قصيرة، كل نقطة في سطر مستقل" };
+  const mwProd = slug => ((ctx().products) || []).find(x => x.slug === slug) || null;
   const mwKey = () => { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } };
   const mwClean = t => String(t || "").replace(/\*\*?/g, "").replace(/^\s*(?:[-•▪●]|\d+[.)])\s+/gm, "").replace(/\r/g, "").trim();
-  function mwPrompt(o, inf) {
-    const P = o.useProd ? mwProd(inf) : null, fr = o.lang === "fr";
-    const prod = P ? `معلومات المنتج (لا تخرج عنها ولا تخترع فوائد أو أرقاماً أو نتائج طبية):\\nالاسم: ${P.title}\\nالوصف: ${P.desc || "-"}\\nالسعر: ${P.price} دج${P.old ? " (قبل التخفيض " + P.old + " دج)" : ""}\\n` : "";
-    const base = o.prev ? `هذا نص سابق:\\n"""${o.prev}"""\\nالمطلوب: ${o.instr}.` : `الطلب: ${o.words}`;
-    return `أنت كاتب إعلانات محترف لمتجر إلكتروني جزائري يبيع بالدفع عند الاستلام. اكتب ${fr ? "بالفرنسية" : "بالعربية الفصحى المبسّطة"}.\\n${prod}${base}\\nالنبرة: ${MW_TONE[o.tone]}.\\nالطول: ${MW_LEN[o.len]}.\\nقواعد: لا تعد بالشفاء أو بنتائج مؤكدة؛ لا تذكر معلومات غير واردة؛ بلا عناوين ولا رموز تنسيق ولا شرح.\\nاكتب ٣ صيغ مختلفة، وافصل بينها بسطر فيه --- فقط.`;
+  function mwPrompt(o) {
+    const P = mwProd(o.pslug), fr = o.lang === "fr", cat = P && P.cat ? (((ctx().meta || {}).cats || {})[P.cat] || "") : "";
+    const info = P ? `معلومات المنتج الموجود في المتجر (اعتمد عليها وحدها ولا تخترع غيرها):\nالاسم: ${P.title}\nالوصف الحالي: ${P.desc || "-"}\n${cat ? "الفئة: " + cat + "\n" : ""}${P.keywords ? "كلمات مفتاحية: " + P.keywords + "\n" : ""}` : "";
+    const task = o.prev ? `هذا وصف سابق:\n"""${o.prev}"""\nالمطلوب: ${o.instr}.` : P ? "طوّر وصف هذا المنتج: أعد كتابته بشكل أغنى وأوضح وأقوى اعتماداً على معلوماته فقط." : `أنشئ وصفاً لمنتج غير موجود في المتجر بحسب هذه الفكرة: ${o.words}`;
+    const notes = P && o.words ? `\nملاحظات المستخدم: ${o.words}` : "";
+    const sty = o.style === "sc" ? "علمي مبسّط: يشرح المكوّنات أو الخصائص المعروفة وسبب فائدتها بلغة دقيقة وهادئة، دون ادعاءات علاجية قطعية" : "تسويقي جذّاب: يبرز المزايا والإحساس والقيمة بأسلوب مقنع وحيّ";
+    return `أنت كاتب محتوى محترف لمتجر إلكتروني جزائري. اكتب ${fr ? "بالفرنسية" : "بالعربية الفصحى المبسّطة"}.\n${info}${task}${notes}\nنوع الوصف: ${sty}.\nالطول: ${MW_LEN[o.len]}.\nقواعد: اكتب وصفاً فقط؛ لا تذكر السعر ولا العروض ولا التوصيل ولا دعوة للشراء؛ لا تعد بالشفاء ولا تخترع أرقاماً أو شهادات أو دراسات؛ بلا عناوين ولا رموز تنسيق ولا شرح.\nاكتب ٣ صيغ مختلفة، وافصل بينها بسطر فيه --- فقط.`;
   }
-  async function mwGemini(o, inf) {
+  async function mwGemini(o) {
     const key = mwKey(); if (!key) throw new Error("NOKEY"); if (typeof PBGen === "undefined") throw new Error("أداة Gemini غير محمّلة");
-    const j = await PBGen.gemGenerate(key, "copy", [{ text: mwPrompt(o, inf).replace(/\\n/g, "\n") }], { temperature: .85 });
+    const j = await PBGen.gemGenerate(key, "copy", [{ text: mwPrompt(o) }], { temperature: .85 });
     const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
     const v = t.split(/\n\s*-{3,}\s*\n?/).map(mwClean).filter(Boolean); if (!v.length) throw new Error("ردّ فارغ من Gemini"); return v.slice(0, 3);
   }
-  /* قوالب بلا إنترنت: تُملأ من بيانات المنتج (أو من الكلمات المكتوبة) */
-  function mwTemplates(o, inf) {
-    const P = o.useProd ? mwProd(inf) : null, name = P ? P.title : (o.words || "منتجنا").trim(), desc = P && P.desc ? P.desc : "", sents = desc.split(/[.。]\s*/).map(x => x.trim()).filter(Boolean), s1 = sents[0] || "", feats = desc.replace(/^[^،]*تحتوي على|^.*?(?:غني|غنية) بـ?/, "").split(/[،,]| و(?=\S)/).map(x => x.trim()).filter(x => x.length > 2 && x.length < 40).slice(0, 5);
-    const sp = x => x && !/[.!؟?]$/.test(x) ? x + "." : x, S1 = sp(s1), price = P ? P.price + " دج" : "", old = P && P.old ? " بدل " + P.old + " دج" : "", cta = { mk: "اطلبه الآن", fm: "يمكنكم الطلب الآن", fr: "جرّبه اليوم", ur: "اطلبه قبل نفاد الكمية" }[o.tone], tail = price ? `${cta} بسعر ${price}${old} — توصيل 58 ولاية والدفع عند الاستلام.` : `${cta} — توصيل 58 ولاية والدفع عند الاستلام.`;
-    const hook = { mk: `اكتشف ${name}`, fm: `${name}`, fr: `${name}… رفيقك اليومي`, ur: `عرض خاص على ${name}` }[o.tone];
-    const mk = L => ({ s: [`${hook} — ${cta} الآن.`, `${name}: جودة تثق بها.`, `${cta}: ${name}${price ? " بـ " + price : ""}.`], p: [`${hook}. ${S1 || "منتج طبيعي مختار بعناية."} ${tail}`, `${name} — ${S1 || "اختيارك الأفضل."} ${tail}`, `${S1 || name + "."} ${tail}`], l: [`${hook}. ${sp(sents.slice(0, 2).join(". ")) || "منتج طبيعي مختار بعناية ليمنحك الراحة والثقة."} ${tail}`, `${name}: ${sp(sents.join(". ")) || "جودة وثقة في كل استعمال."} ${tail}`, `${hook}. ${S1} ${tail}`], b: [feats.concat([price ? "السعر: " + price : "جودة مضمونة", "توصيل 58 ولاية", "الدفع عند الاستلام"]).slice(0, 6).join("\n"), ["طبيعي ومختار بعناية", ...feats.slice(0, 3), "الدفع عند الاستلام"].join("\n"), [name, ...feats.slice(0, 3), tail].join("\n")] }[L]);
-    return mk(o.len).map(x => x.replace(/\s+\./g, ".").replace(/\.\s*\./g, ".").trim());
+  /* قوالب بلا إنترنت (وصف فقط): تُملأ من بيانات المنتج أو من الفكرة المكتوبة */
+  function mwTemplates(o) {
+    const P = mwProd(o.pslug), name = P ? P.title : (o.words || "").trim() || "هذا المنتج", desc = P && P.desc ? P.desc : "", sp = x => x && !/[.!؟?]$/.test(x) ? x + "." : x, sents = desc.split(/[.。]\s*/).map(x => x.trim()).filter(Boolean), s1 = sp(sents[0] || "");
+    const feats = desc.replace(/^[^،]*تحتوي على|^.*?(?:غني|غنية) بـ?/, "").split(/[،,]| و(?=\S)/).map(x => x.trim()).filter(x => x.length > 2 && x.length < 40).slice(0, 5), fl = feats.length ? feats.join("، ") : "";
+    const mk = { s: [`${name}: ${s1 || "منتج طبيعي مختار بعناية."}`, `${name} — جودة تثق بها.`, `${s1 || name + " منتج مميّز."}`],
+      p: [`${name} منتج طبيعي مختار بعناية. ${s1}${fl ? " يتميّز بتركيبته التي تجمع " + fl + "." : ""}`, `يمنحك ${name} إحساساً بالجودة والثقة. ${s1}`, `${s1 || name + " اختيار موثوق."} ${fl ? "من أبرز مكوّناته: " + fl + "." : ""}`],
+      l: [`${name} منتج طبيعي مختار بعناية ليمنحك الراحة والثقة في كل استعمال. ${sp(sents.slice(0, 2).join(". "))}${fl ? " تعتمد تركيبته على " + fl + "." : ""} صُمّم ليكون سهل الاستعمال ومناسباً لروتينك اليومي.`, `${name}: ${sp(sents.join(". ")) || "جودة وثقة في كل استعمال."}${fl ? " من مكوّناته: " + fl + "." : ""}`, `${s1} ${fl ? "يجمع " + name + " بين " + fl + "، " : ""}ليكون خياراً متكاملاً يناسب احتياجك.`],
+      b: [[`${name}`, ...feats.slice(0, 4), "منتج طبيعي مختار بعناية"].join("\n"), [s1 || name, ...feats.slice(0, 3), "سهل الاستعمال"].join("\n"), ["طبيعي ومختار بعناية", ...feats.slice(0, 4), "مناسب للاستعمال اليومي"].join("\n")] }[o.len];
+    const sc = { s: [`${name}: ${s1 || "تركيبة مدروسة لخصائص مكوّناتها المعروفة."}`, `${name} — مكوّنات معروفة بخصائصها.`, `${s1 || "تركيبة مدروسة."}`],
+      p: [`${name} تركيبة مدروسة تعتمد على ${fl || "مكوّنات طبيعية معروفة بخصائصها"}. ${s1}`, `تقوم فكرة ${name} على الجمع بين ${fl || "مكوّنات طبيعية"} لدعم الغرض من الاستعمال، مع ضرورة الالتزام بالتعليمات.`, `${s1} ${fl ? "ومن أبرز مكوّناته: " + fl + "، وهي معروفة بخصائصها المتداولة." : ""}`],
+      l: [`${name} منتج يعتمد على ${fl || "مكوّنات طبيعية معروفة"}. ${sp(sents.join(". "))} تُعرف هذه المكوّنات بخصائصها المتداولة، ولا يُغني المنتج عن استشارة المختص عند الحاجة، ويُنصح بقراءة التعليمات قبل الاستعمال.`, `من الناحية التركيبية يضمّ ${name} ${fl || "مكوّنات طبيعية"}. ${sp(sents.slice(0, 2).join(". "))} وتختلف الاستجابة من شخص لآخر.`, `${s1} يعتمد ${name} على ${fl || "مكوّنات طبيعية"} وفق تركيبة مدروسة، ويُستعمل حسب الإرشادات.`],
+      b: [[`المنتج: ${name}`, ...feats.slice(0, 4).map(f => "مكوّن: " + f), "يُستعمل حسب الإرشادات"].join("\n"), [s1 || name, ...feats.slice(0, 3).map(f => "يحتوي على " + f), "لا يغني عن استشارة المختص"].join("\n"), ["تركيبة مدروسة", ...feats.slice(0, 4), "يُنصح بقراءة التعليمات"].join("\n")] }[o.len];
+    return (o.style === "sc" ? sc : mk).map(x => x.replace(/\s+\./g, ".").replace(/\.\s*\./g, ".").replace(/ {2,}/g, " ").trim());
   }
   function mwInsert(inf, text, add) {
     const set = inf.set, lines = String(text).split("\n").map(x => x.trim()).filter(Boolean), cur = inf.node.type === "heading";
     if (cur) set.text = add && set.text ? set.text + "\n" + lines.join("\n") : lines.join("\n");
-    else { const isL = /<[uo]l/i.test(set.html || ""), body = (isL || lines.length > 1 && E.mw.len === "b") ? "<ul>" + lines.map(l => `<li>${esc(l)}</li>`).join("") + "</ul>" : lines.map(l => `<p>${esc(l)}</p>`).join(""); if (!isL && lines.length > 1 && E.mw.len === "b" && !set.lm) set.lm = "•"; set.html = add && set.html ? set.html + body : body; }
+    else { const isL = /<[uo]l/i.test(set.html || ""), list = isL || (lines.length > 1 && E.mw.len === "b"), body = list ? "<ul>" + lines.map(l => `<li>${esc(l)}</li>`).join("") + "</ul>" : lines.map(l => `<p>${esc(l)}</p>`).join(""); if (!isL && list && !set.lm) set.lm = "•"; set.html = add && set.html ? set.html + body : body; }
     E.nextLabel = "كتابة سحرية"; afterEdit();
   }
   function mwPanel(inf, btn) {
-    const m = E.mw = E.mw || {}; Object.entries({ words: "", tone: "mk", len: "p", lang: "ar", useProd: true, res: [], msg: "", busy: false }).forEach(([k, v]) => { if (!(k in m)) m[k] = v; }); const P = mwProd(inf), sel = (id, o, v) => `<select data-mw="${id}">${Object.entries(o).map(([k, n]) => `<option value="${k}"${v === k ? " selected" : ""}>${n}</option>`).join("")}</select>`;
-    const html = `<h6>✨ الكتابة السحرية</h6><textarea data-mw="words" rows="3" placeholder="اكتب كلمات أو فكرة… مثل: عسل يساعد على التركيز لأطفال المدارس" style="width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.5rem;font-family:inherit;margin-bottom:.5rem">${esc(m.words)}</textarea>
-      <div class="pg" style="grid-template-columns:1fr 1fr">${sel("tone", { mk: "تسويقية", fm: "رسمية", fr: "ودّية", ur: "عاجلة" }, m.tone)}${sel("len", { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" }, m.len)}</div>
-      ${sel("lang", { ar: "العربية", fr: "Français" }, m.lang)}<label class="lmfx"><input type="checkbox" data-mw="useProd"${m.useProd ? " checked" : ""}${P ? "" : " disabled"}> استعمال بيانات المنتج${P ? " («" + esc(P.title) + "»)" : " (اربط الصفحة بمنتج من إعدادات الصفحة)"}</label>
+    const m = E.mw = E.mw || {}; Object.entries({ words: "", style: "mk", len: "p", lang: "ar", pslug: inf.set.prod || E.page.product || "", res: [], msg: "", busy: false }).forEach(([k, v]) => { if (!(k in m)) m[k] = v; });
+    const prods = (ctx().products) || [], sel = (id, o, v) => `<select data-mw="${id}">${Object.entries(o).map(([k, n]) => `<option value="${esc(k)}"${v === k ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`, P = mwProd(m.pslug);
+    const html = `<h6>✨ الكتابة السحرية — وصف فقط</h6>
+      <h6>المنتج</h6>${sel("pslug", Object.assign({ "": "— منتج خارج المتجر / بدون منتج —" }, Object.fromEntries(prods.map(x => [x.slug, x.title]))), m.pslug)}
+      <p style="margin:-.2rem 0 .5rem">${P ? "منتج من المتجر: يُطوَّر وصفه بمعلوماته." : "منتج من خارج المتجر: يُنشأ الوصف من كلماتك."}</p>
+      <textarea data-mw="words" rows="3" placeholder="${P ? "ملاحظات اختيارية (مثل: ركّز على فائدة معيّنة)" : "اكتب اسم المنتج أو فكرته… مثل: صابون طبيعي بزيت الزيتون"}" style="width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.5rem;font-family:inherit;margin-bottom:.5rem">${esc(m.words)}</textarea>
+      <div class="pg" style="grid-template-columns:1fr 1fr 1fr">${sel("style", MW_STYLE, m.style)}${sel("len", { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" }, m.len)}${sel("lang", { ar: "العربية", fr: "Français" }, m.lang)}</div>
       <div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-mwa="go"${m.busy ? " disabled" : ""}>${m.busy ? "⏳ جارٍ الكتابة…" : "✨ اكتب"}</button><button type="button" class="pb2" data-mwa="tpl">🧩 قالب جاهز</button></div>
-      <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>${m.res.map((t, i) => `<div class="mwc"><div>${esc(t).replace(/\\n/g, "<br>")}</div><div class="mwb"><button type="button" data-mwi="${i}">إدراج</button><button type="button" data-mwp="${i}">إضافة</button><button type="button" data-mwr="${i}:أطول">أطول</button><button type="button" data-mwr="${i}:أقصر">أقصر</button><button type="button" data-mwr="${i}:أعد الصياغة بأسلوب مختلف">↻ صياغة</button></div></div>`).join("")}`;
+      <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>${m.res.map((t, i) => `<div class="mwc"><div>${esc(t).replace(/\n/g, "<br>")}</div><div class="mwb"><button type="button" data-mwi="${i}">إدراج</button><button type="button" data-mwp="${i}">إضافة</button><button type="button" data-mwr="${i}:أطول">أطول</button><button type="button" data-mwr="${i}:أقصر">أقصر</button><button type="button" data-mwr="${i}:أعد الصياغة بأسلوب مختلف">↻ صياغة</button></div></div>`).join("")}`;
     qPop(btn, html, p => {
-      const read = () => p.querySelectorAll("[data-mw]").forEach(el => { m[el.dataset.mw] = el.type === "checkbox" ? el.checked : el.value; });
-      const run = async (kind, extra) => { read(); const o = Object.assign({}, m, extra || {}); m.busy = true; m.msg = ""; mwPanel(selInfo() || inf, btn);
-        try { m.res = kind === "tpl" ? mwTemplates(o, inf) : await mwGemini(o, inf); m.msg = kind === "tpl" ? "قوالب جاهزة من بيانات المنتج — راجعها قبل الإدراج." : "مسوّدات من Gemini — راجعها قبل الإدراج."; }
-        catch (e) { if (e.message === "NOKEY") { m.res = mwTemplates(o, inf); m.msg = "لا يوجد مفتاح Gemini (يُضاف من «مولّد الصفحات الذكي»)، فاستُعملت قوالب جاهزة."; } else { m.res = mwTemplates(o, inf); m.msg = "تعذّر Gemini (" + e.message + ")، فاستُعملت قوالب جاهزة."; } }
+      const read = () => p.querySelectorAll("[data-mw]").forEach(el => { m[el.dataset.mw] = el.value; });
+      const run = async (kind, extra) => { read(); const o = Object.assign({}, m, extra || {});
+        if (!o.pslug && !String(o.words).trim() && !o.prev) { m.msg = "اكتب اسم المنتج أو فكرته، أو اختر منتجاً من المتجر."; mwPanel(selInfo() || inf, btn); return; }
+        m.busy = true; m.msg = ""; mwPanel(selInfo() || inf, btn);
+        try { m.res = kind === "tpl" ? mwTemplates(o) : await mwGemini(o); m.msg = kind === "tpl" ? "قوالب جاهزة بلا إنترنت — راجعها قبل الإدراج." : "مسوّدات من Gemini — راجعها قبل الإدراج."; }
+        catch (e) { m.res = mwTemplates(o); m.msg = e.message === "NOKEY" ? "لا يوجد مفتاح Gemini (يُضاف من «مولّد الصفحات الذكي»)، فاستُعملت قوالب جاهزة." : "تعذّر Gemini (" + e.message + ")، فاستُعملت قوالب جاهزة."; }
         m.busy = false; mwPanel(selInfo() || inf, btn); };
       p.querySelector('[data-mwa="go"]').onclick = () => run("ai"); p.querySelector('[data-mwa="tpl"]').onclick = () => run("tpl");
+      p.querySelector('[data-mw="pslug"]').onchange = () => { read(); mwPanel(selInfo() || inf, btn); };
       p.querySelectorAll("[data-mwi]").forEach(b => b.onclick = () => { mwInsert(inf, m.res[b.dataset.mwi], false); });
       p.querySelectorAll("[data-mwp]").forEach(b => b.onclick = () => { mwInsert(inf, m.res[b.dataset.mwp], true); mwPanel(selInfo() || inf, btn); });
       p.querySelectorAll("[data-mwr]").forEach(b => b.onclick = () => { const [i, ins] = b.dataset.mwr.split(":"); read(); run("ai", { prev: m.res[+i], instr: ins }); });
