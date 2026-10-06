@@ -384,7 +384,7 @@ const PBBind = (() => {
     fillGallery(root, page);
     if (og.raw !== false) applyTo(root, { kind: og.kind, slug: og.slug, rel: "", mark: true, noTitle: og.noTitle, ro: og.kind === "product" && !official(og.slug, page) });
     const d = root.ownerDocument;
-    if (!d.getElementById("pbbind-css")) { const st = d.createElement("style"); st.id = "pbbind-css"; st.textContent = ".pbbind{outline:2px dashed #0e9f8e!important;outline-offset:3px;cursor:pointer!important;position:relative}.pbbind-ro{outline-color:#9ca3af!important}.pbbind:hover{outline-color:#f59e0b!important;background-image:linear-gradient(rgba(14,159,142,.07),rgba(14,159,142,.07))}"; d.head.appendChild(st); }
+    if (!d.getElementById("pbbind-css")) { const st = d.createElement("style"); st.id = "pbbind-css"; st.textContent = ".pbbind{outline:2px dashed #8b3dff!important;outline-offset:3px;cursor:pointer!important;position:relative}.pbbind-ro{outline-color:#9ca3af!important}.pbbind:hover{outline-color:#8b3dff!important;background-image:linear-gradient(rgba(14,159,142,.07),rgba(14,159,142,.07))}"; d.head.appendChild(st); }
     if (!root._pbb) { root._pbb = true; root.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-pbbind]"); if (!b) return; e.preventDefault(); e.stopPropagation(); openModal(b.getAttribute("data-pbbind")); }, true); }
   }
   /* تثبيت القيم الحالية داخل كود قسم (عند الحفظ) كي يطابق الملف بيانات المنتج */
@@ -568,7 +568,7 @@ ${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">�
   function after(rt, page) {
     if (!page) { if (panel) hide(); return; }
     root = rt; const d = rt.ownerDocument;
-    if (!d.getElementById("pbed-css")) { const st = d.createElement("style"); st.id = "pbed-css"; st.textContent = ".pbed-sel{outline:2px solid #0e9f8e!important;outline-offset:2px;position:relative}.pbed-hv{outline:1.5px dashed #f59e0b!important;outline-offset:1px;cursor:pointer}[contenteditable=true]{outline:2px solid #f59e0b!important;background:rgba(245,158,11,.08)!important;cursor:text!important}"; d.head.appendChild(st); }
+    if (!d.getElementById("pbed-css")) { const st = d.createElement("style"); st.id = "pbed-css"; st.textContent = ".pbed-sel{outline:2px solid #8b3dff!important;outline-offset:2px;position:relative}.pbed-hv{outline:1.5px dashed #8b3dff!important;outline-offset:1px;cursor:pointer}[contenteditable=true]{outline:none!important;background:transparent!important;cursor:text!important}"; d.head.appendChild(st); }
     if (!rt._ped) { rt._ped = true; rt.addEventListener("click", onClick, true); rt.addEventListener("dblclick", onDbl, true); rt.addEventListener("mouseover", onOver); }
     if (sel) { if (!isOrig(sel.wid)) hide(); else mark(); }
   }

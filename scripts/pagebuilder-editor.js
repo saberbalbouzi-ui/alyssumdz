@@ -16,10 +16,10 @@ const PBApp = (() => {
 .pb-edit [data-pb]{cursor:pointer}
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
-.pb-edit .pb-w:hover{outline:1px dashed #e67e22;outline-offset:2px}
+.pb-edit .pb-w:hover{outline:1px dashed #8b3dff;outline-offset:2px}
 .pb-edit .pbx-dropcol{outline:3px dashed #9b59b6!important;outline-offset:-3px;background:rgba(155,89,182,.08)}
 .pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
-[contenteditable=true]{outline:2px solid #2d6cdf!important;outline-offset:3px;cursor:text;min-width:20px}
+[contenteditable=true]{outline:none!important;cursor:text;min-width:20px}
 .pb-edit .k-canvas.pb-hasbg .pb-in{background-image:none!important}
 .pb-edit.pbx-nogrid .k-canvas .pb-in{background-image:none!important}
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
@@ -683,12 +683,13 @@ body{overflow-x:hidden;margin:0}`;
     const r = fdoc.createRange(); r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
-    el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault(); el.blur(); } if (ev.key === "Escape") el.blur(); });
+    const multi = field === "text" && wEl.dataset.type === "heading";      // العنوان: Enter ينتقل إلى السطر الموالي (و Ctrl+Enter أو Esc أو النقر خارجه ينهي التحرير)
+    el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault(); if (multi && !(ev.ctrlKey || ev.metaKey)) fdoc.execCommand("insertLineBreak"); else el.blur(); } if (ev.key === "Escape") el.blur(); });
   }
   function endEdit() {
     if (!editing) return; const { el, id, field, rich, idx } = editing; editing = null; showRt(false);
     el.removeAttribute("contenteditable");
-    const inf = find(id), val = rich ? PB.cleanHtml(el.innerHTML) : el.textContent.replace(/\s+/g, " ").trim();
+    const inf0 = find(id), inf = inf0, val = rich ? PB.cleanHtml(el.innerHTML) : (field === "text" && inf0 && inf0.node.type === "heading" ? el.innerText.replace(/\u00a0/g, " ").replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim() : el.textContent.replace(/\s+/g, " ").trim());
     if (inf) {
       if (field === "cap") { const it = (inf.set.items || [])[Number(idx)]; if (it) it.title = val; }
       else if (field === "aq" || field === "aa") { const it = (inf.set.items || [])[Number(idx)]; if (it) it[field === "aq" ? "q" : "a"] = val; }
@@ -1061,6 +1062,7 @@ body{overflow-x:hidden;margin:0}`;
     const gridCell = inf.kind === "column" && inf.sec.set.kind === "grid";
     const m0 = ((own(set, "mar", dev) || eff(set, "mar", dev)) || [0, 0, 0, 0]).slice();
     let nb = null, pair = 0, sc0 = null, ws0 = null, cc0 = null;
+    let minW = 24; if (free && (inf.node.type === "heading" || inf.node.type === "text")) { try { const t = el.querySelector(".pb-t"), cs = fdoc.defaultView.getComputedStyle(t), c2 = document.createElement("canvas").getContext("2d"); c2.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; const lw = Math.max(0, ...(t.innerText || t.textContent || "").split(/\s+/).map(w => c2.measureText(w).width)); minW = Math.max(24, Math.ceil(lw + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 6)); } catch (x) { } }      // لا يضيق إطار النص عن أطول كلمة فلا تتكسّر الحروف عمودياً
     let ic = null; if (free && inf.node.type === "image") { const im = el.querySelector("img.pb-im"); if (im && im.naturalWidth) {      /* قصّ الصورة: مستطيل الصورة داخل الإطار (px) */
       const q = im.naturalHeight / im.naturalWidth, c = set.crop, W0 = r0.width, H0 = r0.height;
       if (c && c.w) ic = { x: c.x / 100 * W0, y: c.y / 100 * H0, w: c.w / 100 * W0, q };
@@ -1074,7 +1076,7 @@ body{overflow-x:hidden;margin:0}`;
         const lockK = ev.ctrlKey || ev.metaKey || ev.shiftKey, prop = hasW && hasH && (ic ? lockK : !ev.shiftKey);      // الصورة: الزاوية حرة (قصّ) وCtrl/Shift = تكبير منسجم؛ بقية العناصر: الزاوية منسجمة وShift = حر
         if (prop) { let w = R - L, h = B - T; if (Math.abs(dx) > Math.abs(dy)) h = w * H0 / W0; else w = h * W0 / H0; if (dir.includes("w")) L = R - w; else R = L + w; if (dir.includes("n")) T = B - h; else B = T + h; }
         else if (snap) { let g; if (dir.includes("e")) { [R, g] = snapEdge(R, pts.xs); if (g != null) guides.push({ x: g }); } if (dir.includes("w")) { [L, g] = snapEdge(L, pts.xs); if (g != null) guides.push({ x: g }); } if (dir.includes("s")) { [B, g] = snapEdge(B, pts.ys); if (g != null) guides.push({ y: g }); } if (dir.includes("n")) { [T, g] = snapEdge(T, pts.ys); if (g != null) guides.push({ y: g }); } }
-        if (R - L < 24) { if (dir.includes("w")) L = R - 24; else R = L + 24; } if (B - T < 14) { if (dir.includes("n")) T = B - 14; else B = T + 14; }
+        if (R - L < minW) { if (dir.includes("w")) L = R - minW; else R = L + minW; } if (B - T < 14) { if (dir.includes("n")) T = B - 14; else B = T + 14; }
         if (ic && !prop) {      // قصّ: حافة الإطار تتحرك والصورة ثابتة؛ وإن انكشف فراغ تكبر الصورة في نفس الاتجاه لتملأ الإطار
           const L0 = r0.left - cr.left, T0 = r0.top - cr.top, Wn = R - L, Hn = B - T, w = ic.w, h = ic.w * ic.q; let x = L0 - L + ic.x, y = T0 - T + ic.y, k = 1;
           const ax = dir.includes("e") ? 0 : dir.includes("w") ? Wn : Wn / 2, ay = dir.includes("s") ? 0 : dir.includes("n") ? Hn : Hn / 2;

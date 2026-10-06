@@ -91,7 +91,7 @@ const PB = (() => {
   function curveSvg(s, id) {
     const cv = Math.max(-100, Math.min(100, num(s.tcurve) || 0)), fs = num(eff(s, "fs", "d")) || 38, fwd = num(eff(s, "fwd", "d")), Wv = 1000, Wpx = fwd ? fwd / 100 * 1140 : 700, k = Wv / Wpx, fsv = Math.round(fs * k), sag = Math.abs(cv) / 100 * 230, top = fsv * 1.15;
     const ye = cv > 0 ? top + sag : top, ym = cv > 0 ? top : top + sag, yc = 2 * ym - ye, H = Math.round(top + sag + fsv * .55 + 10), pid = "pbtc-" + id;
-    return `<svg class="pb-tc" viewBox="0 0 ${Wv} ${H}" style="display:block;width:100%;height:auto;overflow:visible" role="img" aria-label="${esc(s.text)}"><path id="${pid}" d="M 30 ${Math.round(ye)} Q ${Wv / 2} ${Math.round(yc)} ${Wv - 30} ${Math.round(ye)}" fill="none"/><text style="font-size:${fsv}px;fill:currentColor;font-family:inherit;font-weight:inherit;letter-spacing:inherit"><textPath href="#${pid}" startOffset="50%" text-anchor="middle">${esc(s.text)}</textPath></text></svg>`;
+    return `<svg class="pb-tc" viewBox="0 0 ${Wv} ${H}" style="display:block;width:100%;height:auto;overflow:visible" role="img" aria-label="${esc(String(s.text).replace(/\n+/g, " "))}"><path id="${pid}" d="M 30 ${Math.round(ye)} Q ${Wv / 2} ${Math.round(yc)} ${Wv - 30} ${Math.round(ye)}" fill="none"/><text style="font-size:${fsv}px;fill:currentColor;font-family:inherit;font-weight:inherit;letter-spacing:inherit"><textPath href="#${pid}" startOffset="50%" text-anchor="middle">${esc(String(s.text).replace(/\n+/g, " "))}</textPath></text></svg>`;
   }
   /* رموز القائمة النقطية في عنصر النص */
   const LMARKS = ["•", "●", "○", "◉", "▪", "■", "◆", "◇", "✔", "✓", "✅", "☑", "★", "✦", "➜", "➤", "❯", "»"];
@@ -805,7 +805,7 @@ const PB = (() => {
 .pb-page img{max-width:100%}
 .pb-sec{position:relative;isolation:isolate}
 .pb-w{margin-bottom:16px;max-width:100%}.pb-colin>.pb-w:last-child{margin-bottom:0}
-.pb-t{margin:0}.pb-tx p{margin:0 0 .8em}.pb-tx>:last-child{margin-bottom:0}
+.pb-t{margin:0;overflow-wrap:normal;word-break:normal}.pb-hd{white-space:pre-line}.pb-tx p{margin:0 0 .8em}.pb-tx>:last-child{margin-bottom:0}
 .pb-btn{display:inline-block;text-decoration:none;text-align:center;cursor:pointer;transition:background .2s,transform .15s}.pb-btn:hover{transform:translateY(-2px)}
 .pb-ph{background:#f1ede2;border:2px dashed #cfc6b0;color:#8a8472;padding:28px;text-align:center;border-radius:12px;font-size:.95rem}
 .pb-hr{height:0}.pb-bl{list-style:none;margin:0;padding:0}.pb-bl li{list-style:none}.pb-il{list-style:none;margin:0;padding:0}.pb-il li{display:flex;gap:.6rem;align-items:flex-start}.pb-il li:last-child{margin-bottom:0!important}
