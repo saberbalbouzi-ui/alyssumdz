@@ -1283,7 +1283,12 @@ body{overflow-x:hidden;margin:0}`;
   function zOrder(dir) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
     const sibs = inf.sec.cols.reduce((a, c) => a.concat(c.widgets), []).concat(inf.sec.free || []).filter(w => w !== inf.node), zs = sibs.map(w => Number(w.set.zi) || 0), cur = Number(inf.set.zi) || 0;
-    inf.set.zi = dir > 0 ? Math.max(cur, ...(zs.length ? zs : [0])) + 1 : Math.min(cur, ...(zs.length ? zs : [0])) - 1; afterEdit();
+    if (dir > 0) inf.set.zi = Math.max(cur, ...(zs.length ? zs : [0])) + 1;
+    else {      // إلى الخلف: لا قيم سالبة أبداً (العنصر ذو z-index سالب يختفي خلف خلفية القسم فلا يُحدَّد ولا يتحرك)؛ نرفع بقية العناصر الحرة درجة واحدة ونضع هذا العنصر عند 0
+      const fr = (inf.sec.free || []).filter(w => w !== inf.node), mn = fr.length ? Math.min(...fr.map(w => Number(w.set.zi) || 0)) : 1;
+      if (mn >= 1) inf.set.zi = mn - 1; else { fr.forEach(w => { w.set.zi = (Number(w.set.zi) || 0) + 1 - mn; }); inf.set.zi = 0; }
+    }
+    afterEdit();
   }
   /* إعادة ترتيب الطبقات بالسحب في اللوحة: العنصر المسحوب يوضع قبل (أمام) العنصر الهدف ثم تُعاد أرقام zi */
   function layerReorder(dragId, targetId) {

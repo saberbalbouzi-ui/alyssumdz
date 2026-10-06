@@ -673,7 +673,8 @@ const PB = (() => {
   /* ترقية صفحات قديمة: طبقة العناصر الحرة، النموذج السريع ⟵ النموذج الأصلي، مصادر المنتجات */
   const migrate = page => { (page.sections || []).forEach(sec => { sec.free = sec.free || []; if (!sec.cols || !sec.cols.length) sec.cols = [mkC([])];
     const fix = w => { if (isObj(w.set.fw)) { w.set.fwd = w.set.fw; delete w.set.fw; } if (w.type === "orderform") { w.type = "orderorig"; w.set = { prod: (w.set && w.set.prod) || "", auto: true }; } if (w.type === "products") { const st = w.set; if (st.val && !st.tag && !st.cat && !st.slugs) { if (st.mode === "tag") st.tag = st.val; else if (st.mode === "cat") st.cat = st.val; else if (st.mode === "slugs") st.slugs = st.val; } } };
-    sec.cols.forEach(c => c.widgets.forEach(fix)); sec.free.forEach(fix); }); return page; };
+    sec.cols.forEach(c => c.widgets.forEach(fix)); sec.free.forEach(fix);
+    const mnz = Math.min(0, ...sec.free.map(w => Number(w.set.zi) || 0)); if (mnz < 0) sec.free.forEach(w => { w.set.zi = (Number(w.set.zi) || 0) - mnz; }); }); return page; };      // إصلاح صفحات فيها z-index سالب (عنصر مخفي خلف الخلفية)
   /* ═════════ عناصر افتراضية: عناصر وأقسام جاهزة بتنسيق صفحة المنتج (ألوان/حدود/ظلال/خطوط) لاستعمالها في صفحات جديدة ═════════ */
   const DK = { green: "#173f35", gold: "#c8a24b", sand: "#f7f3ea", line: "#eadfc4", ink: "#1c2420", muted: "#566360" };
   const DCARD = { bg: "#ffffff", rad: { d: 24 }, pad: { d: [22, 22, 22, 22] }, shadow: "md", bw: 1, bs: "solid", bc: DK.line };
