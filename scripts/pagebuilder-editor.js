@@ -951,7 +951,7 @@ body{overflow-x:hidden;margin:0}`;
   function qPop(btn, html, bind, opt) {
     closePop(); const p = document.createElement("div"); p.id = "pbx-pop"; p.className = "pbx-pop"; p.innerHTML = html;
     if (opt && opt.dock) {      /* لوحة مثبّتة فوق الشريط الجانبي (خارج الصفحة) حتى لا تحجب الرؤية؛ تبقى مفتوحة حتى ✕ أو تغيير العنصر */
-      document.body.appendChild(p); const a = $("pbx-lside"), ar = a && a.offsetParent ? a.getBoundingClientRect() : null; p.classList.add(ar && !isMob() ? "dock" : "sheet");
+      document.body.appendChild(p); const a = [$("pbx-insp"), $("pbx-lside")].find(x => x && x.offsetParent), ar = a ? a.getBoundingClientRect() : null;      // فوق الشريط الجانبي الأيسر (الإعدادات)، وإلا الأيمن إن كان الأيسر مخفياً p.classList.add(ar && !isMob() ? "dock" : "sheet");
       if (ar && !isMob()) { p.style.left = ar.left + "px"; p.style.top = ar.top + "px"; p.style.width = ar.width + "px"; p.style.height = ar.height + "px"; }
       const x = document.createElement("button"); x.type = "button"; x.className = "dk-x"; x.textContent = "✕"; x.title = "إغلاق"; x.onclick = closePop; p.prepend(x); if (bind) bind(p); return;
     }
