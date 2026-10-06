@@ -64,8 +64,25 @@ const PB = (() => {
     neon: ["نيون", "#c64bff", (C, f) => `color:#fff;-webkit-text-fill-color:#fff;text-shadow:0 0 ${rr(4 * f)}px #fff,0 0 ${rr(10 * f)}px ${C},0 0 ${rr(20 * f)}px ${C},0 0 ${rr(38 * f)}px ${C};`],
     glitch: ["خلل", "#ff2bd6", (C, f) => `text-shadow:${rr(3 * f)}px 0 ${C},-${rr(3 * f)}px 0 #00e5ff;`]
   };
+  /* تأثيرات متطورة (قوالب جاهزة): [الاسم، خط Google، لون التمييز الافتراضي، دالة تصريحات CSS (اللون C، الشدة f)] */
+  const TPRE = {
+    neon2: ["نيون وردي", "Tilt Neon", "#ff5ce1", (C, f) => `color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:${rr(2 * f)}px ${C};text-shadow:0 0 ${rr(6 * f)}px ${C},0 0 ${rr(16 * f)}px ${C},0 0 ${rr(34 * f)}px ${al(C, .8)};`],
+    tv: ["تشويش التلفاز", "Rubik Glitch", "#ff2bd6", (C, f) => `color:#1d1650;text-shadow:${rr(3 * f)}px 0 ${C},-${rr(3 * f)}px 0 #00e5ff,0 ${rr(2 * f)}px 0 rgba(0,0,0,.25);`],
+    s70: ["السبعينات", "Shrikhand", "#b55a14", (C, f) => `color:#f6b800;text-shadow:${rr(2 * f)}px ${rr(2 * f)}px 0 ${C},${rr(4 * f)}px ${rr(4 * f)}px 0 ${al(C, .75)},${rr(6 * f)}px ${rr(6 * f)}px 0 ${al(C, .5)};`],
+    scifi: ["خيال علمي", "Orbitron", "#c8ff3d", (C, f) => `color:${C};font-weight:700;letter-spacing:.08em;text-shadow:0 0 ${rr(6 * f)}px ${C},0 0 ${rr(18 * f)}px ${al(C, .7)},0 0 ${rr(34 * f)}px ${al(C, .4)};`],
+    silk: ["طباعة حريرية", "Alfa Slab One", "#f2a4c7", (C, f) => `color:#fff;-webkit-text-stroke:${rr(2 * f)}px #7b1e4a;paint-order:stroke fill;text-shadow:${rr(4 * f)}px ${rr(4 * f)}px 0 ${C},${rr(8 * f)}px ${rr(8 * f)}px 0 ${al(C, .6)},${rr(12 * f)}px ${rr(12 * f)}px 0 ${al(C, .3)};`],
+    west: ["الغرب الأمريكي", "Rye", "#7a2e1d", (C, f) => `color:#d9674a;text-shadow:${rr(1.5 * f)}px ${rr(1.5 * f)}px 0 ${C},${rr(3 * f)}px ${rr(3 * f)}px 0 ${al(C, .5)};`],
+    graffiti: ["غرافيتي", "Bangers", "#12352c", (C, f) => `color:#e9ebe8;-webkit-text-stroke:${rr(3.5 * f)}px ${C};paint-order:stroke fill;text-shadow:${rr(3 * f)}px ${rr(3 * f)}px 0 ${C};letter-spacing:.04em;`],
+    bubble: ["فقاعة", "Lilita One", "#17536b", (C, f) => `color:#6fe0ee;-webkit-text-stroke:${rr(6 * f)}px ${C};paint-order:stroke fill;text-shadow:0 ${rr(4 * f)}px 0 ${al(C, .75)},0 ${rr(8 * f)}px ${rr(8 * f)}px rgba(0,0,0,.2);`],
+    aero: ["إيروبيك", "Pacifico", "#b48cff", (C, f) => `color:rgba(255,255,255,.9);text-shadow:0 0 ${rr(6 * f)}px ${C},0 0 ${rr(16 * f)}px ${C},0 0 ${rr(32 * f)}px ${al(C, .8)};`],
+    arcade: ["أركيد", "Press Start 2P", "#00e5ff", (C, f) => `color:#35ff3a;text-shadow:${rr(3 * f)}px ${rr(3 * f)}px 0 ${C},-${rr(3 * f)}px -${rr(3 * f)}px 0 #ff2bd6;line-height:1.5;`],
+    cosmic: ["كوني", "Dancing Script", "#7d78ff", (C, f) => `color:#fff;font-weight:700;text-shadow:0 0 ${rr(8 * f)}px ${C},0 0 ${rr(22 * f)}px ${C},0 0 ${rr(44 * f)}px ${al(C, .7)};`],
+    pixel: ["بكسل", "Press Start 2P", "#ff2bd6", (C, f) => `color:#2a1a5e;text-shadow:${rr(3 * f)}px 0 ${C},-${rr(3 * f)}px 0 #00e5ff;line-height:1.5;`]
+  };
+  const tprePreview = k => TPRE[k] ? `font-family:'${TPRE[k][1]}','Cairo',sans-serif;` + TPRE[k][3](TPRE[k][2], .8) : "";
   const tfxStyle = (k, C, f) => TFX[k] ? TFX[k][2](C || TFX[k][1], f == null ? 1 : f) : "";
   function textFx(c, sel, s) {
+    const P = TPRE[s.tpre]; if (P) { const C = s.tfxc || P[2], f = Math.max(0, (num(s.tfxi) ?? 50) / 50); c.d.push(`${sel} .pb-t{font-family:'${P[1]}','Cairo',sans-serif;${P[3](C, f)}}`); return; }
     const T = TFX[s.tfx]; if (!T) return; const C = s.tfxc || (s.tfx === "outline" ? (s.color || "#173f35") : T[1]), f = Math.max(0, (num(s.tfxi) ?? 50) / 50);
     if (s.tfx === "bg") { c.d.push(`${sel} .pb-t>span,${sel} .pb-t>a>span{${T[2](C, f)}}${sel} .pb-tx{background:${C};padding:.3em .6em;border-radius:.4em}`); return; }
     c.d.push(`${sel} .pb-t{${T[2](C, f)}}`);
@@ -77,7 +94,7 @@ const PB = (() => {
     return `<svg class="pb-tc" viewBox="0 0 ${Wv} ${H}" style="display:block;width:100%;height:auto;overflow:visible" role="img" aria-label="${esc(s.text)}"><path id="${pid}" d="M 30 ${Math.round(ye)} Q ${Wv / 2} ${Math.round(yc)} ${Wv - 30} ${Math.round(ye)}" fill="none"/><text style="font-size:${fsv}px;fill:currentColor;font-family:inherit;font-weight:inherit;letter-spacing:inherit"><textPath href="#${pid}" startOffset="50%" text-anchor="middle">${esc(s.text)}</textPath></text></svg>`;
   }
   /* رموز القائمة النقطية في عنصر النص */
-  const LMARKS = ["•", "●", "■", "◆", "✔", "✓", "✅", "★", "☆", "✦", "❖", "➜", "➤", "»", "♥", "✿", "⚡", "🔥", "👍", "🌿", "🍯", "📌", "💎", "🎁"];
+  const LMARKS = ["•", "●", "○", "◉", "▪", "■", "◆", "◇", "✔", "✓", "✅", "☑", "★", "✦", "➜", "➤", "❯", "»"];
   function listFx(c, sel, s) {
     if (!s.lm) return; const m = String(s.lm), css = x => String(x).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " "), col = /^#[0-9a-f]{3,8}$/i.test(s.lmc || "") ? s.lmc : "inherit";
     c.d.push(`${sel} .pb-tx ul,${sel} .pb-tx ol{list-style:none;margin:0 0 .8em;padding:0;${m === "num" ? "counter-reset:pbl;" : ""}}${sel} .pb-tx li{position:relative;padding-inline-start:1.7em;margin:.3em 0;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-tx li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
@@ -201,10 +218,11 @@ const PB = (() => {
   }
   /* ═════════════════ تعريف العناصر (Widgets) ═════════════════ */
   /* خطوط Google: [الاسم, الأوزان المطلوبة, الاسم العربي] — تُحمَّل في المحرر كلها، وفي الصفحة المنشورة المستعمل منها فقط */
-  const FONT_FAMS = [["Tajawal", "400;700", "تجوّال"], ["Almarai", "400;700", "المراعي"], ["Amiri", "400;700", "أميري"], ["Lateef", "400;700", "لطيف"], ["Noto Kufi Arabic", "400;700", "نوتو كوفي"], ["Noto Naskh Arabic", "400;700", "نوتو نسخ"], ["Reem Kufi", "400;700", "ريم كوفي"], ["El Messiri", "400;700", "المسيري"], ["Changa", "400;700", "تشانغا"], ["Harmattan", "400;700", "هرمتان"], ["Scheherazade New", "400;700", "شهرزاد"], ["Markazi Text", "400;700", "مركزي"], ["Lalezar", "", "لاله زار"], ["Aref Ruqaa", "400;700", "عارف رقعة"], ["Mada", "400;700", "مدى"], ["Readex Pro", "400;700", "ريدكس"], ["IBM Plex Sans Arabic", "400;700", "IBM بلكس"], ["Rakkas", "", "رقّاص"], ["Baloo Bhaijaan 2", "400;700", "بالو بهيجان"], ["Lemonada", "400;700", "ليمونادا"], ["Poppins", "400;700", "Poppins"], ["Montserrat", "400;700", "Montserrat"], ["Open Sans", "400;700", "Open Sans"], ["Roboto", "400;700", "Roboto"], ["Playfair Display", "400;700", "Playfair Display"], ["Lora", "400;700", "Lora"]];
-  const F_FONT = [["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"], ["'Courier New',monospace", "Mono"]].concat(FONT_FAMS.map(([n, w, l]) => [`'${n}','Cairo',sans-serif`, l === n ? n : l + " (" + n + ")"]));
+  const FONT_FAMS = [["Tajawal", "400;700", "تجوّال"], ["Almarai", "400;700", "المراعي"], ["Amiri", "400;700", "أميري"], ["Lateef", "400;700", "لطيف"], ["Noto Kufi Arabic", "400;700", "نوتو كوفي"], ["Noto Naskh Arabic", "400;700", "نوتو نسخ"], ["Reem Kufi", "400;700", "ريم كوفي"], ["El Messiri", "400;700", "المسيري"], ["Changa", "400;700", "تشانغا"], ["Harmattan", "400;700", "هرمتان"], ["Scheherazade New", "400;700", "شهرزاد"], ["Markazi Text", "400;700", "مركزي"], ["Lalezar", "", "لاله زار"], ["Aref Ruqaa", "400;700", "عارف رقعة"], ["Mada", "400;700", "مدى"], ["Readex Pro", "400;700", "ريدكس"], ["IBM Plex Sans Arabic", "400;700", "IBM بلكس"], ["Rakkas", "", "رقّاص"], ["Baloo Bhaijaan 2", "400;700", "بالو بهيجان"], ["Lemonada", "400;700", "ليمونادا"], ["Poppins", "400;700", "Poppins"], ["Montserrat", "400;700", "Montserrat"], ["Open Sans", "400;700", "Open Sans"], ["Roboto", "400;700", "Roboto"], ["Playfair Display", "400;700", "Playfair Display"], ["Lora", "400;700", "Lora"],
+    ["Tilt Neon", "", "", 1], ["Rubik Glitch", "", "", 1], ["Shrikhand", "", "", 1], ["Orbitron", "400;700", "", 1], ["Alfa Slab One", "", "", 1], ["Rye", "", "", 1], ["Bangers", "", "", 1], ["Lilita One", "", "", 1], ["Pacifico", "", "", 1], ["Press Start 2P", "", "", 1], ["Dancing Script", "400;700", "", 1]];
+  const F_FONT = [["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"], ["'Courier New',monospace", "Mono"]].concat(FONT_FAMS.filter(x => !x[3]).map(([n, w, l]) => [`'${n}','Cairo',sans-serif`, l === n ? n : l + " (" + n + ")"]));
   const fontsHref = names => names.length ? "https://fonts.googleapis.com/css2?" + names.map(n => { const f = FONT_FAMS.find(x => x[0] === n); return "family=" + n.replace(/ /g, "+") + (f && f[1] ? ":wght@" + f[1] : ""); }).join("&") + "&display=swap" : "";
-  const usedFonts = obj => { const str = JSON.stringify(obj || ""); return FONT_FAMS.filter(([n]) => str.includes("'" + n + "'")).map(x => x[0]); };
+  const usedFonts = obj => { const str = JSON.stringify(obj || ""), pf = Object.keys(TPRE).filter(k => str.includes('"tpre":"' + k + '"')).map(k => TPRE[k][1]); return FONT_FAMS.filter(([n]) => str.includes("'" + n + "'") || pf.includes(n)).map(x => x[0]); };
   const F_W = [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]];
   const AL = [["start", "⇥ بداية"], ["center", "↔ وسط"], ["end", "⇤ نهاية"]];
   const typoCtl = (extra) => [
@@ -220,8 +238,9 @@ const PB = (() => {
     { k: "td", l: "خط على النص", t: "select", o: [["", "بدون"], ["underline", "تحته خط"], ["line-through", "يتوسطه خط"]], tab: "s" },
     { k: "tsh", l: "ظل النص", t: "select", o: [["", "بدون"], ["soft", "خفيف"], ["strong", "قوي"], ["lift", "مرتفع"], ["glow", "توهج"]], tab: "s" },
     { k: "tfx", l: "تأثير النص", t: "select", o: [["", "بدون"]].concat(Object.keys(TFX).map(k => [k, TFX[k][0]])), tab: "s" },
-    { k: "tfxc", l: "لون التأثير", t: "color", tab: "s", showIf: ["tfx", "*"] },
-    { k: "tfxi", l: "شدة التأثير", t: "num", min: 0, max: 100, step: 1, tab: "s", showIf: ["tfx", "*"] },
+    { k: "tpre", l: "تأثير متطور", t: "select", o: [["", "بدون"]].concat(Object.keys(TPRE).map(k => [k, TPRE[k][0]])), tab: "s" },
+    { k: "tfxc", l: "لون التأثير", t: "color", tab: "s" },
+    { k: "tfxi", l: "شدة التأثير", t: "num", min: 0, max: 100, step: 1, tab: "s" },
   ].concat(extra || []);
 
   /* قائمة الأيقونات المنسدلة (إيموجي ورموز) */
@@ -904,5 +923,5 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
