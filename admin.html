@@ -8498,7 +8498,7 @@ body{overflow-x:hidden;margin:0}`;
   function fitStage() {
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
     const w = DEVW[E.dev], s = Math.min(1, Math.max(300, st.clientWidth - 36) / w) * (E.zoom || 1); E.scale = s;
-    const h = Math.max(500, (root ? root.offsetHeight : 0) + 40);
+    const h = FREE_ONLY ? Math.max(200, root ? root.offsetHeight : 0) : Math.max(500, (root ? root.offsetHeight : 0) + 40);      // بلا أقسام عادية: لا شريط أبيض تحت آخر قسم
     fw.style.width = w + "px"; fw.style.height = h + "px"; fw.style.transform = `scale(${s})`; frame.style.height = h + "px";
     sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
   }
