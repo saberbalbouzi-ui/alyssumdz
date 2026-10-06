@@ -94,6 +94,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-dims{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem}.pbx-dims input{text-align:center;padding:.3rem!important}.pbx-dims small{display:block;text-align:center;font-size:.65rem;color:#888}
 .pbx-rep{border:1.5px dashed #e0d9c8;border-radius:10px;padding:.5rem;margin-bottom:.4rem}
 .pbx-cp{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;margin-bottom:.6rem;font-size:.75rem;color:#666}.pbx-cp select{flex:1;min-width:90px;border:1.5px solid #e0d9c8;border-radius:8px;padding:.25rem;font-family:inherit;font-size:.75rem}
+.pbx-gcg{display:grid;gap:4px}.pbx-gcg .gc{position:relative;aspect-ratio:1/1}.pbx-gcg .gc>button{width:100%;height:100%;border:1.5px dashed #c9bfa4;background:#f6f2e8;border-radius:7px;cursor:pointer;padding:0;overflow:hidden;font-size:1.05rem;font-weight:800;color:#a39a80;font-family:inherit}.pbx-gcg .gc.has>button{border:1.5px solid #d9d2bd}.pbx-gcg .gc>button:hover{border-color:#7c3aed;color:#7c3aed}.pbx-gcg .gc img{width:100%;height:100%;object-fit:cover;display:block}.pbx-gcg .gc i{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#b83232;color:#fff;font-size:.6rem;line-height:16px;text-align:center;font-style:normal;cursor:pointer;opacity:0}.pbx-gcg .gc:hover i{opacity:1}
 .pbx-small{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.3rem .6rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.78rem}
 .pbx-dgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}.pbx-dfc{display:flex;flex-direction:column;align-items:center;gap:.25rem;border:1.5px solid #e4dfd2;border-radius:12px;background:#fff;padding:.5rem .35rem .45rem;cursor:pointer;font-family:inherit}.pbx-dfc:hover{border-color:#c8a24b;background:#fffaf0}.pbx-dfc span{font-size:.72rem;font-weight:800;color:#173f35;line-height:1.35;text-align:center}.pbx-lay{font-size:.82rem}.pbx-lay div{display:flex;align-items:center;gap:.35rem;padding:.28rem .4rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbx-lay div:hover{background:#f4efe6}.pbx-lm{margin-inline-start:auto;display:flex;gap:2px;flex:none}.pbx-lm b{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:rgba(200,162,75,.22);font-size:.7rem;cursor:pointer;color:inherit}.pbx-lm b:hover{background:#c8a24b;color:#173f35}.pbx-lm b.off{opacity:.25;pointer-events:none}.pbx-lay div.on{background:#173f35;color:#fff}
 .pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
@@ -593,7 +594,8 @@ body{overflow-x:hidden;margin:0}`;
     fdoc.addEventListener("dblclick", e => {
       const ed = e.target.closest("[data-edit]"); if (ed) return startEdit(ed);
       const wEl = e.target.closest('[data-kind="widget"]'); if (!wEl) return;
-      const inf = find(wEl.dataset.pb); if (inf && ["image", "slider", "gallery"].includes(inf.node.type)) uploadFor(inf);
+      const inf = find(wEl.dataset.pb); if (inf && inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); if (ce) galUpload(inf, Number(ce.dataset.cell)); else { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); } }
+      else if (inf && ["image", "slider", "gallery"].includes(inf.node.type)) uploadFor(inf);
     });
     fdoc.addEventListener("contextmenu", showCtx); fdoc.addEventListener("scroll", hideCtx, true);
     fdoc.addEventListener("dragover", onDragOver); fdoc.addEventListener("drop", onDrop); fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) hideDrop(); });
@@ -1467,6 +1469,7 @@ body{overflow-x:hidden;margin:0}`;
   function applyPaths(inf, paths) {
     const t = inf.node.type;
     if (t === "image") inf.set.src = paths[0];
+    else if (t === "gallery" && inf.set.grid) galFill(inf, paths, 0);
     else if (t === "gallery") inf.set.imgs = ((inf.set.imgs || "").trim() ? inf.set.imgs.trim() + "\n" : "") + paths.join("\n");
     else if (t === "slider") { const L = inf.set.items = inf.set.items || []; const empty = L.filter(x => !x.img); paths.forEach((pth, i) => { if (empty[i]) empty[i].img = pth; else L.push({ img: pth, title: "", cx: 50, cy: 84 }); }); }
     afterEdit();
@@ -1502,6 +1505,17 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* استبدال مسارات الصور المرفوعة حديثاً بروابط محلية في معاينة المحرر */
   function localize(str) { const L = (typeof Admin !== "undefined" && Admin.localImg) || {}; for (const k in L) if (str.indexOf(k) >= 0) str = str.split(k).join(L[k]); return str; }
+  /* معرض الشبكة: ضمان مصفوفة الخلايا بحجم الشبكة (مع ترحيل قائمة imgs القديمة)، وملء الخلايا */
+  function galArr(inf) { const s = inf.set, n = PB.galDims(s).reduce((a, b) => a * b), L = PB.galCells(s).slice(); while (L.length < n) L.push(""); s.cells = L; return L; }
+  function galFill(inf, paths, start) {      // أول صورة في الخلية المحدّدة والباقي في الخلايا الفارغة التي بعدها (ثم من البداية)
+    const L = galArr(inf), n = L.length; let i = Math.max(0, Math.min(n - 1, start || 0));
+    paths.forEach((pth, k) => { if (k === 0) { L[i] = pth; return; } let j = -1; for (let q = 1; q <= n; q++) { const x = (i + q) % n; if (!L[x]) { j = x; break; } } if (j >= 0) { L[j] = pth; i = j; } else toast("⚠ لا توجد خلايا فارغة كافية — زِد الأعمدة أو الصفوف"); });
+    afterEdit();
+  }
+  async function galUpload(inf, idx) {
+    const files = await pickFiles(true); if (!files.length) return;
+    try { galFill(inf, await uploadFiles(files), idx); } catch (err) { toast("❌ " + err.message); }
+  }
   async function uploadFor(inf) {
     const files = await pickFiles(inf.node.type !== "image"); if (!files.length) return;
     try { applyPaths(inf, await uploadFiles(files)); } catch (err) { toast("❌ " + err.message); }
@@ -1685,7 +1699,7 @@ body{overflow-x:hidden;margin:0}`;
       if (c.onlyFree && !inf.free) return false;
       if (FREE_ONLY && inf.free && ["w", "mh", "al"].includes(c.k)) return false;      // إعدادات العمود (عرض %/ارتفاع أدنى/موضع داخل العمود) لا معنى لها مع الأعمدة المعطّلة؛ الحجم والموضع من الحقول الحرة
       if (inf.free && (c.k === "w" || c.k === "al" || c.k === "mh") && c.tab === "s") return false;                       // العنصر الحر يُدار بالموضع والحجم
-      if (c.showIf) { const cur = inf.set[c.showIf[0]] === undefined ? (c.showIf[0] === "kind" ? "flow" : c.showIf[0] === "mode" ? "all" : undefined) : inf.set[c.showIf[0]]; if (c.showIf[1] === "*" ? !cur : cur !== c.showIf[1]) return false; }
+      if (c.showIf) { const cur = inf.set[c.showIf[0]] === undefined ? (c.showIf[0] === "kind" ? "flow" : c.showIf[0] === "mode" ? "all" : undefined) : inf.set[c.showIf[0]]; if (c.showIf[1] === "*" ? !cur : c.showIf[1] === "!" ? !!cur : cur !== c.showIf[1]) return false; }
       return true;
     });
   }
@@ -1749,6 +1763,7 @@ ${inspGroups(all, inf)}`;
       case "datetime": b = `<input type="datetime-local" ${a} value="${esc(ownV ?? "")}">`; break;
       case "num": { const P = c.pct ? (v => (v === undefined || v === "" || v === null) ? v : Math.round(Number(v) * 100)) : (v => v), mn = c.pct ? 0 : c.min, mx = c.pct ? 100 : c.max, stp = c.pct ? 1 : (c.step || 1); const rng = (mx != null && mn != null && mx - mn <= 2000) ? `<input type="range" ${a} data-range="1" min="${mn}" max="${mx}" step="${stp}" value="${P(effV) ?? mn}" class="sm" style="max-width:96px">` : ""; b = `<div class="pbx-row"><input type="number" ${a} ${mn != null ? `min="${mn}"` : ""} ${mx != null ? `max="${mx}"` : ""} step="${stp}" value="${P(ownV) ?? ""}" placeholder="${inherited ? P(effV) : ""}" class="${inherited ? "inh" : ""}">${rng}</div>`; break; }
       case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${(typeof c.o === "function" ? c.o() : c.o).map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
+      case "gcells": { const L = PB.galCells(set), D = PB.galDims(set); b = `<div class="pbx-gcg" style="grid-template-columns:repeat(${D[0]},minmax(0,1fr))">` + Array.from({ length: D[0] * D[1] }, (_, i) => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-gcu="${i}" title="${L[i] ? "استبدال صورة هذا الجزء" : "رفع صورة لهذا الجزء"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] ? `<i data-gcx="${i}" title="مسح صورة هذا الجزء">✕</i>` : ""}</div>`).join("") + `</div><button class="pbx-small" data-gcm="1" style="margin-top:.35rem">⬆ رفع عدّة صور وتوزيعها على الخلايا الفارغة</button>`; break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
@@ -1826,6 +1841,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     const t = e.target; if (t.dataset && t.dataset.gem) { PBSmart.setGem(t.checked); return; }
     if (t.dataset && t.dataset.pp) { const inf = selInfo(); if (!inf) return; const cur = new Set(String(inf.set[t.dataset.pp] || "").split(/[\s,،]+/).filter(Boolean)); t.checked ? cur.add(t.dataset.v) : cur.delete(t.dataset.v); inf.set[t.dataset.pp] = [...cur].join(","); afterEdit(); return; } if (t.dataset.gk) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox") { gradInput(t, selInfo()); renderInspector(); } else renderInspector(); return; } if (t.dataset.k || t.dataset.rep) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox" || t.type === "color") { onInspInput(e); renderInspector(); } if (t.dataset.range) renderInspector(); }
     if (t.dataset.fileFor) {}
+    if (t.dataset.k === "gcols" || t.dataset.k === "grows") { clearTimeout(hT); commitHist(); renderInspector(); }      // شبكة خلايا الصور في الإعدادات تتبع الأعمدة والصفوف
   }
   async function onInspClick(e) {
     const t = e.target.closest("button, [data-dev]"); if (!t) return; const inf = selInfo();
@@ -1857,6 +1873,9 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       try { const ps = await uploadFiles([f]); inf.set[t.dataset.gif] = ps[0]; afterEdit(); } catch (err) { toast("❌ " + err.message); }
       return;
     }
+    if (t.dataset.gcu) { galUpload(inf, Number(t.dataset.gcu)); return; }
+    if (t.dataset.gcx) { const L = galArr(inf); L[Number(t.dataset.gcx)] = ""; afterEdit(); return; }
+    if (t.dataset.gcm) { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); return; }
     if (t.dataset.lib) { const paths = await openLibrary(false); if (paths.length) { inf.set[t.dataset.lib] = paths[0]; afterEdit(); } return; }
     if (t.dataset.cpy) { copyDevice(t.dataset.cpy, ($("cp-scope") || {}).value || "sel"); return; }
     if (t.dataset.repadd) { const arr = inf.set[t.dataset.repadd] = inf.set[t.dataset.repadd] || []; arr.push(inf.node.type === "slider" ? { img: "", title: "عنوان جديد", cx: 50, cy: 84 } : inf.node.type === "contact" ? { label: "حقل جديد", type: "text", ph: "", req: false, w: "full" } : inf.node.type === "shopcats" ? { cat: Object.keys((typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : { skin: 1 }))[0] || "", label: "", img: "" } : inf.node.type === "herow" ? (t.dataset.repadd === "btns" ? { t: "زر جديد", l: "#", s: "gold" } : { v: "0", l: "وصف" }) : inf.node.type === "shdr" ? { t: "رابط جديد", l: "#" } : inf.node.type === "sfoot" ? { h: "عنوان جديد", b: "النص هنا" } : { q: "سؤال جديد", a: "الجواب" }); afterEdit(); return; }

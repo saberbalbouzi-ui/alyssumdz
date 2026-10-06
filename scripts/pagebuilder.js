@@ -268,6 +268,9 @@ const PB = (() => {
     if (["zin", "zout", "pulse", "kb"].includes(a)) c.d.push(`${sel}{overflow:hidden}`);
     c.d.push(`${sel} .pb-im{animation:pbI-${a} ${dur}s ${ease} ${dl}s ${it} ${back ? "alternate" : "normal"} both;--is:${Math.round((1 + amt / 100) * 100) / 100};--ip:${Math.round(amt * .6)}px;--ir:${Math.round(amt * .3)}deg;will-change:transform}`);
   }
+  /* معرض الشبكة: أبعاد الشبكة وقائمة الخلايا (الخلايا الفارغة "")؛ إن لم توجد cells تُؤخذ من قائمة imgs القديمة */
+  const galDims = s => [Math.max(1, Math.min(12, Math.round(num(s.gcols)) || 4)), Math.max(1, Math.min(12, Math.round(num(s.grows)) || 4))];
+  const galCells = s => Array.isArray(s.cells) && s.cells.length ? s.cells.map(x => String(x || "").trim()) : String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean);
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
@@ -536,10 +539,18 @@ const PB = (() => {
       css: (c, sel, s) => emit(c, sel + " .pb-ts", s, [["tbg", raw("background")], ["rad", px("border-radius")]]),
     },
     gallery: {
-      label: "معرض صور", ic: "🏞️", fit: 1, def: { imgs: "", cols: { d: 3, t: 2, m: 2 }, gap: { d: 12 }, ratio: "1/1", rad: { d: 12 } },
-      ctl: [{ k: "imgs", l: "الصور (سطر لكل صورة) — أو ارفعها مباشرة", t: "gallery", tab: "c" }, { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 12, tab: "c" }, { k: "rows", l: "عدد الصفوف (اتركه فارغاً لعرض كل الصور)", t: "num", r: 1, min: 1, max: 12, tab: "c" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "ratio", l: "نسبة الصورة (تُهمَل عند تغيير ارتفاع المعرض بالسحب)", t: "select", o: [["1/1", "1:1"], ["4/3", "4:3"], ["3/4", "3:4"], ["16/9", "16:9"], ["auto", "أصلية"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
-      html: (s, id, ctx) => { let L = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean); const cd = num(eff(s, "cols", "d")) || 3, rd = num(eff(s, "rows", "d")); if (rd) L = L.slice(0, cd * rd); return L.length ? `<div class="pb-gal">${L.map(u => `<img src="${esc(/^(https?:|data:|\/)/.test(u) ? u : ctx.base + u)}" alt="" loading="lazy" decoding="async">`).join("")}</div>` : `<div class="pb-ph" data-upload="1">🏞️ انقر مرتين لرفع صور المعرض</div>`; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-gal", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-gal img", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-gal img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}`); },
+      label: "معرض صور", ic: "🏞️", fit: 1, def: { grid: true, gcols: 4, grows: 4, cells: [], gfit: "cover", imgs: "", cols: { d: 3, t: 2, m: 2 }, gap: { d: 8 }, ratio: "1/1", rad: { d: 10 } },
+      ctl: [{ k: "grid", l: "شبكة بخلايا (تغطي كل المعرض، ولكل خلية صورتها)", t: "switch", tab: "c" }, { k: "gcols", l: "عدد الأعمدة (أفقياً)", t: "num", min: 1, max: 12, tab: "c", showIf: ["grid", "*"] }, { k: "grows", l: "عدد الصفوف (عمودياً)", t: "num", min: 1, max: 12, tab: "c", showIf: ["grid", "*"] }, { k: "cells", l: "تحميل الصور في كل جزء (انقر الخلية لرفع صورتها)", t: "gcells", tab: "c", showIf: ["grid", "*"] }, { k: "gfit", l: "ملاءمة الصورة داخل الخلية", t: "select", o: [["cover", "تغطية"], ["contain", "احتواء"]], tab: "s", showIf: ["grid", "*"] },
+        { k: "imgs", l: "الصور (سطر لكل صورة) — أو ارفعها مباشرة", t: "gallery", tab: "c", showIf: ["grid", "!"] }, { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 12, tab: "c", showIf: ["grid", "!"] }, { k: "rows", l: "عدد الصفوف (اتركه فارغاً لعرض كل الصور)", t: "num", r: 1, min: 1, max: 12, tab: "c", showIf: ["grid", "!"] }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "ratio", l: "نسبة الصورة (تُهمَل عند تغيير ارتفاع المعرض بالسحب)", showIf: ["grid", "!"], t: "select", o: [["1/1", "1:1"], ["4/3", "4:3"], ["3/4", "3:4"], ["16/9", "16:9"], ["auto", "أصلية"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
+      html: (s, id, ctx) => {
+        if (s.grid) { const C = galDims(s), cl = galCells(s), u = x => /^(https?:|data:|\/)/.test(x) ? x : (ctx.base || "") + x, ed = !!(ctx && ctx.edit); let h = "";
+          for (let i = 0; i < C[0] * C[1]; i++) { const v = cl[i]; h += `<div class="pb-gc"${ed ? ` data-cell="${i}"` : ""}>${v ? `<img src="${esc(u(v))}" alt="" loading="lazy" decoding="async">` : ed ? '<span class="pb-gp">＋</span>' : ""}</div>`; }
+          return `<div class="pb-gal gg">${h}</div>`; }
+        let L = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean); const cd = num(eff(s, "cols", "d")) || 3, rd = num(eff(s, "rows", "d")); if (rd) L = L.slice(0, cd * rd); return L.length ? `<div class="pb-gal">${L.map(u => `<img src="${esc(/^(https?:|data:|\/)/.test(u) ? u : ctx.base + u)}" alt="" loading="lazy" decoding="async">`).join("")}</div>` : `<div class="pb-ph" data-upload="1">🏞️ انقر مرتين لرفع صور المعرض</div>`; },
+      css: (c, sel, s) => {
+        if (s.grid) { const C = galDims(s); c.d.push(`${sel} .pb-gal.gg{display:grid;grid-template-columns:repeat(${C[0]},minmax(0,1fr));grid-template-rows:repeat(${C[1]},minmax(0,1fr));height:100%;min-height:80px}${sel} .pb-gc{position:relative;overflow:hidden;min-width:0;min-height:0}${sel} .pb-gc img{position:absolute;inset:0;width:100%;height:100%;object-fit:${s.gfit === "contain" ? "contain" : "cover"};display:block}${sel} .pb-gp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border:1.5px dashed #c9bfa4;background:#f3efe4;color:#a39a80;font-size:1.3rem;font-weight:800;border-radius:inherit}`);
+          emit(c, sel + " .pb-gal.gg", s, [["gap", px("gap")]]); emit(c, sel + " .pb-gc", s, [["rad", px("border-radius")]]); return; }
+        emit(c, sel + " .pb-gal", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-gal img", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-gal img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}`); },
     },
     slider: {
       label: "سلايدر", ic: "🎞️", fit: 1, def: { items: [{ img: "", title: "عنوان الشريحة الأولى", cx: 50, cy: 84 }, { img: "", title: "عنوان الشريحة الثانية", cx: 50, cy: 84 }], auto: true, interval: 4, arrows: true, dots: true, loop: true, trans: "slide", fit: "cover", cap: "over", capc: "#ffffff", capbg: "#00000080", capfs: { d: 22, m: 15 }, ratio: "16/9", rad: { d: 14 } },
@@ -929,5 +940,5 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
