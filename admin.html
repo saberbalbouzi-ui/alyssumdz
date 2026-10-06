@@ -7235,8 +7235,9 @@ const PB = (() => {
   const LMARKS = ["•", "●", "○", "◉", "▪", "■", "◆", "◇", "✔", "✓", "✅", "☑", "★", "✦", "➜", "➤", "❯", "»"];
   function listFx(c, sel, s) {
     if (!s.lm) return; const m = String(s.lm), css = x => String(x).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " "), col = /^#[0-9a-f]{3,8}$/i.test(s.lmc || "") ? s.lmc : "inherit";
-    c.d.push(`${sel} .pb-t{counter-reset:pbl}${sel} .pb-li{display:block;position:relative;padding-inline-start:1.5em;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
-    c.d.push(`${sel} .pb-tx ul,${sel} .pb-tx ol{list-style:none;margin:0 0 .8em;padding:0;${m === "num" ? "counter-reset:pbl;" : ""}}${sel} .pb-tx li{position:relative;padding-inline-start:1.7em;margin:.3em 0;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-tx li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
+    const gap = Math.max(0.3, Math.min(8, num(s.lmd) || 1.6));      // المسافة بين الرمز والنص (em)
+    c.d.push(`${sel} .pb-t{counter-reset:pbl}${sel} .pb-li{display:block;position:relative;padding-inline-start:${gap}em;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
+    c.d.push(`${sel} .pb-tx ul,${sel} .pb-tx ol{list-style:none;margin:0 0 .8em;padding:0;${m === "num" ? "counter-reset:pbl;" : ""}}${sel} .pb-tx li{position:relative;padding-inline-start:${gap}em;margin:.3em 0;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-tx li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
   }
   const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); textFx(c, sel, s); listFx(c, sel, s); };
   const BOX = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]];
@@ -7406,13 +7407,13 @@ const PB = (() => {
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
-      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص", t: "num", min: -100, max: 100, step: 1, tab: "s" }, { k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }]), [TGR]),
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص", t: "num", min: -100, max: 100, step: 1, tab: "s" }, { k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }]), [TGR]),
       html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = num(s.tcurve) ? curveSvg(s, id) : s.lm ? `<span data-edit="text">${String(s.text).split("\n").map(l => `<span class="pb-li">${esc(l)}</span>`).join("")}</span>` : `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     text: {
       label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
-      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }]), [TGR]),
+      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }]), [TGR]),
       html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
@@ -8752,7 +8753,13 @@ body{overflow-x:hidden;margin:0}`;
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
     const multi = field === "text" && wEl.dataset.type === "heading";      // العنوان: Enter ينتقل إلى السطر الموالي (و Ctrl+Enter أو Esc أو النقر خارجه ينهي التحرير)
-    el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault(); if (multi && !(ev.ctrlKey || ev.metaKey)) fdoc.execCommand("insertLineBreak"); else el.blur(); } if (ev.key === "Escape") el.blur(); });
+    const listH = multi && !!(find(wEl.dataset.pb) || { set: {} }).set.lm;
+    el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault();
+        if (listH && !(ev.ctrlKey || ev.metaKey)) {      // قائمة العنوان: بند جديد بنفس الرمز (يحمل ما بعد المؤشر)
+          const sl = fdoc.getSelection(), r0 = sl.rangeCount ? sl.getRangeAt(0) : null, an = r0 && (r0.endContainer.nodeType === 1 ? r0.endContainer : r0.endContainer.parentElement), li = an && an.closest(".pb-li"), nw = fdoc.createElement("span"); nw.className = "pb-li";
+          if (li && r0) { const tail = fdoc.createRange(); tail.setStart(r0.endContainer, r0.endOffset); tail.setEnd(li, li.childNodes.length); nw.appendChild(tail.extractContents()); if (!li.textContent) li.appendChild(fdoc.createElement("br")); li.after(nw); } else el.appendChild(nw);
+          if (!nw.textContent) nw.appendChild(fdoc.createElement("br")); const rg = fdoc.createRange(); rg.setStart(nw, 0); rg.collapse(true); sl.removeAllRanges(); sl.addRange(rg);
+        } else if (multi && !(ev.ctrlKey || ev.metaKey)) fdoc.execCommand("insertLineBreak"); else el.blur(); } if (ev.key === "Escape") el.blur(); });
   }
   function endEdit() {
     if (!editing) return; const { el, id, field, rich, idx } = editing; editing = null; showRt(false);
@@ -9056,8 +9063,8 @@ body{overflow-x:hidden;margin:0}`;
       const isH = inf.node.type === "heading", listed = isH ? !!set.lm : /<[uo]l/i.test(set.html || "");
       if (!re && !listed) { qList(inf, E.lastLm || "•"); }      // النقر على «قائمة» يحوّل النص إلى قائمة فوراً برمز افتراضي، ثم تظهر الرموز للاختيار
       const isL = isH ? !!set.lm : /<[uo]l/i.test(set.html || ""), cur = set.lm || "", mk = PB.LMARKS, curC = /^#[0-9a-f]{6}$/i.test(set.lmc || "");
-      return qPop(btn, `<h6>رمز القائمة</h6><div class="pg lmg"><button type="button" class="pb2${!isL ? " on" : ""}" data-lm="__none" style="grid-column:span 3">بدون قائمة</button><button type="button" class="pb2${isL && !cur ? " on" : ""}" data-lm="__def">نقطة عادية</button><button type="button" class="pb2${cur === "num" ? " on" : ""}" data-lm="num">1 2 3</button><span></span>${mk.map(m => `<button type="button" class="pb2 lmt${cur === m ? " on" : ""}" data-lm="${m}">${m}</button>`).join("")}</div>${curC ? '<button type="button" class="rst" data-rc>↺ لون الرمز = لون النص</button>' : ""}`,
-        p => { p.querySelectorAll("[data-lm]").forEach(b => b.onclick = () => { qList(inf, b.dataset.lm); if (b.dataset.lm !== "__none" && b.dataset.lm !== "__def") E.lastLm = b.dataset.lm; qAct("list", btn, true); }); const rc = p.querySelector("[data-rc]"); if (rc) rc.onclick = () => { delete set.lmc; afterEdit(); qAct("list", btn, true); }; }, { dock: true }); }
+      return qPop(btn, `<h6>رمز القائمة</h6><div class="pg lmg"><button type="button" class="pb2${!isL ? " on" : ""}" data-lm="__none" style="grid-column:span 3">بدون قائمة</button><button type="button" class="pb2${isL && !cur ? " on" : ""}" data-lm="__def">نقطة عادية</button><button type="button" class="pb2${cur === "num" ? " on" : ""}" data-lm="num">1 2 3</button><span></span>${mk.map(m => `<button type="button" class="pb2 lmt${cur === m ? " on" : ""}" data-lm="${m}">${m}</button>`).join("")}</div>` + qRange(inf, null, "lmd", "المسافة بين الرمز والنص", 0.3, 6, 0.1, Number(set.lmd) || 1.6) + `${curC ? '<button type="button" class="rst" data-rc>↺ لون الرمز = لون النص</button>' : ""}`,
+        p => { p.querySelectorAll("[data-lm]").forEach(b => b.onclick = () => { qList(inf, b.dataset.lm); if (b.dataset.lm !== "__none" && b.dataset.lm !== "__def") E.lastLm = b.dataset.lm; qAct("list", btn, true); }); const rc = p.querySelector("[data-rc]"); if (rc) rc.onclick = () => { delete set.lmc; afterEdit(); qAct("list", btn, true); }; bindRanges(p, inf, (kk, v) => qLive(inf, kk, v)); }, { dock: true }); }
     if (k === "spacing") { const cs = qFont(inf), ls = Number(eff(set, "ls", dev)) || 0, lh = Number(eff(set, "lh", dev)) || (cs ? Math.round(parseFloat(cs.lineHeight) / parseFloat(cs.fontSize) * 10) / 10 || 1.4 : 1.4);
       return qPop(btn, qRange(inf, null, "ls", "التباعد بين الحروف (px)", -5, 20, .5, ls) + qRange(inf, null, "lh", "التباعد بين الأسطر", .8, 3, .1, lh), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)), { dock: true }); }
     if (k === "opacity") { const v = Math.round((num(set.op) ?? 1) * 100); return qPop(btn, qRange(inf, null, "op", "شفافية العنصر %", 0, 100, 1, v), p => bindRanges(p, inf, (kk, val) => qLive(inf, "op", val >= 100 ? "" : val / 100))); }

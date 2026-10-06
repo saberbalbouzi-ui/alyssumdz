@@ -684,7 +684,13 @@ body{overflow-x:hidden;margin:0}`;
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
     const multi = field === "text" && wEl.dataset.type === "heading";      // العنوان: Enter ينتقل إلى السطر الموالي (و Ctrl+Enter أو Esc أو النقر خارجه ينهي التحرير)
-    el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault(); if (multi && !(ev.ctrlKey || ev.metaKey)) fdoc.execCommand("insertLineBreak"); else el.blur(); } if (ev.key === "Escape") el.blur(); });
+    const listH = multi && !!(find(wEl.dataset.pb) || { set: {} }).set.lm;
+    el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault();
+        if (listH && !(ev.ctrlKey || ev.metaKey)) {      // قائمة العنوان: بند جديد بنفس الرمز (يحمل ما بعد المؤشر)
+          const sl = fdoc.getSelection(), r0 = sl.rangeCount ? sl.getRangeAt(0) : null, an = r0 && (r0.endContainer.nodeType === 1 ? r0.endContainer : r0.endContainer.parentElement), li = an && an.closest(".pb-li"), nw = fdoc.createElement("span"); nw.className = "pb-li";
+          if (li && r0) { const tail = fdoc.createRange(); tail.setStart(r0.endContainer, r0.endOffset); tail.setEnd(li, li.childNodes.length); nw.appendChild(tail.extractContents()); if (!li.textContent) li.appendChild(fdoc.createElement("br")); li.after(nw); } else el.appendChild(nw);
+          if (!nw.textContent) nw.appendChild(fdoc.createElement("br")); const rg = fdoc.createRange(); rg.setStart(nw, 0); rg.collapse(true); sl.removeAllRanges(); sl.addRange(rg);
+        } else if (multi && !(ev.ctrlKey || ev.metaKey)) fdoc.execCommand("insertLineBreak"); else el.blur(); } if (ev.key === "Escape") el.blur(); });
   }
   function endEdit() {
     if (!editing) return; const { el, id, field, rich, idx } = editing; editing = null; showRt(false);
@@ -988,8 +994,8 @@ body{overflow-x:hidden;margin:0}`;
       const isH = inf.node.type === "heading", listed = isH ? !!set.lm : /<[uo]l/i.test(set.html || "");
       if (!re && !listed) { qList(inf, E.lastLm || "•"); }      // النقر على «قائمة» يحوّل النص إلى قائمة فوراً برمز افتراضي، ثم تظهر الرموز للاختيار
       const isL = isH ? !!set.lm : /<[uo]l/i.test(set.html || ""), cur = set.lm || "", mk = PB.LMARKS, curC = /^#[0-9a-f]{6}$/i.test(set.lmc || "");
-      return qPop(btn, `<h6>رمز القائمة</h6><div class="pg lmg"><button type="button" class="pb2${!isL ? " on" : ""}" data-lm="__none" style="grid-column:span 3">بدون قائمة</button><button type="button" class="pb2${isL && !cur ? " on" : ""}" data-lm="__def">نقطة عادية</button><button type="button" class="pb2${cur === "num" ? " on" : ""}" data-lm="num">1 2 3</button><span></span>${mk.map(m => `<button type="button" class="pb2 lmt${cur === m ? " on" : ""}" data-lm="${m}">${m}</button>`).join("")}</div>${curC ? '<button type="button" class="rst" data-rc>↺ لون الرمز = لون النص</button>' : ""}`,
-        p => { p.querySelectorAll("[data-lm]").forEach(b => b.onclick = () => { qList(inf, b.dataset.lm); if (b.dataset.lm !== "__none" && b.dataset.lm !== "__def") E.lastLm = b.dataset.lm; qAct("list", btn, true); }); const rc = p.querySelector("[data-rc]"); if (rc) rc.onclick = () => { delete set.lmc; afterEdit(); qAct("list", btn, true); }; }, { dock: true }); }
+      return qPop(btn, `<h6>رمز القائمة</h6><div class="pg lmg"><button type="button" class="pb2${!isL ? " on" : ""}" data-lm="__none" style="grid-column:span 3">بدون قائمة</button><button type="button" class="pb2${isL && !cur ? " on" : ""}" data-lm="__def">نقطة عادية</button><button type="button" class="pb2${cur === "num" ? " on" : ""}" data-lm="num">1 2 3</button><span></span>${mk.map(m => `<button type="button" class="pb2 lmt${cur === m ? " on" : ""}" data-lm="${m}">${m}</button>`).join("")}</div>` + qRange(inf, null, "lmd", "المسافة بين الرمز والنص", 0.3, 6, 0.1, Number(set.lmd) || 1.6) + `${curC ? '<button type="button" class="rst" data-rc>↺ لون الرمز = لون النص</button>' : ""}`,
+        p => { p.querySelectorAll("[data-lm]").forEach(b => b.onclick = () => { qList(inf, b.dataset.lm); if (b.dataset.lm !== "__none" && b.dataset.lm !== "__def") E.lastLm = b.dataset.lm; qAct("list", btn, true); }); const rc = p.querySelector("[data-rc]"); if (rc) rc.onclick = () => { delete set.lmc; afterEdit(); qAct("list", btn, true); }; bindRanges(p, inf, (kk, v) => qLive(inf, kk, v)); }, { dock: true }); }
     if (k === "spacing") { const cs = qFont(inf), ls = Number(eff(set, "ls", dev)) || 0, lh = Number(eff(set, "lh", dev)) || (cs ? Math.round(parseFloat(cs.lineHeight) / parseFloat(cs.fontSize) * 10) / 10 || 1.4 : 1.4);
       return qPop(btn, qRange(inf, null, "ls", "التباعد بين الحروف (px)", -5, 20, .5, ls) + qRange(inf, null, "lh", "التباعد بين الأسطر", .8, 3, .1, lh), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)), { dock: true }); }
     if (k === "opacity") { const v = Math.round((num(set.op) ?? 1) * 100); return qPop(btn, qRange(inf, null, "op", "شفافية العنصر %", 0, 100, 1, v), p => bindRanges(p, inf, (kk, val) => qLive(inf, "op", val >= 100 ? "" : val / 100))); }
