@@ -265,6 +265,28 @@ window.AIVision = (function () {
     const hit = items.find(o => both(o, m) / Math.min(o.area, m.area) > .85 && Math.abs(o.area - m.area) / Math.max(o.area, m.area) < .25); if (hit) return hit;
     m.id = Math.max(-1, ...items.map(o => o.id)) + 1; items.push(m); return m;
   }
+  /* تحسين قناع عنصر موجود محلياً: نقاط + / - تعيد استعمال embedding نفسه، بلا إعادة كشف الصورة. */
+  async function refineItem(S, it, p, mode, items) {
+    if (!it || !it.lo || !it.area) return null;
+    const box = [it.x0, it.y0, it.x1, it.y1], pts = [[p[0], p[1], mode === "add" ? 1 : 0]];
+    const m = await maskFor(S, { box, pts });
+    if (!m || !m.area) return it;
+    const N = it.lo.length;
+    if (mode === "add") {
+      /* الإضافة لا تسمح لـSAM بالقفز بعيداً عن العنصر: نأخذ فقط القناع داخل صندوق موسّع قليلاً. */
+      const padX = Math.max(8, (it.x1 - it.x0) * .22), padY = Math.max(8, (it.y1 - it.y0) * .22);
+      const bx0 = Math.max(0, it.x0 - padX), by0 = Math.max(0, it.y0 - padY), bx1 = Math.min(S.W, it.x1 + padX), by1 = Math.min(S.H, it.y1 + padY);
+      for (let y = 0; y < S.lh; y++) for (let x = 0; x < S.lw; x++) {
+        const gx = (x + .5) / S.fx, gy = (y + .5) / S.fy, j = y * S.lw + x;
+        if (m.lo[j] > 0 && gx >= bx0 && gx <= bx1 && gy >= by0 && gy <= by1) it.lo[j] = Math.max(it.lo[j], m.lo[j]);
+      }
+    } else {
+      for (let j = 0; j < N; j++) if (m.lo[j] > 0) it.lo[j] = -Math.max(4, Math.abs(it.lo[j]));
+    }
+    cleanLo(it.lo, it.lw, it.lh);
+    stats(it, S); it.manual = true; it.v = null;
+    return it;
+  }
   /* قيمة القناع عند بكسل كامل (x,y) بالاستيفاء الخطي */
   function sampler(S, it) {
     const { lo, lw, lh } = it, fx = S.fx, fy = S.fy;
@@ -441,5 +463,5 @@ window.AIVision = (function () {
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, pointMask, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, warm };
+  return { supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, warm };
 })();
