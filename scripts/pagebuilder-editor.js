@@ -1226,9 +1226,18 @@ body{overflow-x:hidden;margin:0}`;
   /* أنماط النص الافتراضية (عنوان / عنوان فرعي / نص عادي) تُطبَّق على عنصر العنوان أو النص المحدد */
   const TEXT_PRESETS = { title: { fs: { d: 44, m: 30 }, fw: "800", lh: { d: 1.25 }, tag: "h2" }, sub: { fs: { d: 28, m: 22 }, fw: "700", lh: { d: 1.35 }, tag: "h3" }, body: { fs: { d: 17, m: 16 }, fw: "400", lh: { d: 1.8 }, tag: "p" } };
   function textPreset(k) {
-    const inf = selInfo(), pr = TEXT_PRESETS[k]; if (!inf || inf.kind !== "widget" || !pr || !["heading", "text"].includes(inf.node.type)) return;
-    ["fs", "fw", "lh"].forEach(x => { inf.set[x] = clone(pr[x]); }); if (inf.node.type === "heading") inf.set.tag = pr.tag;
-    E.nextLabel = "نمط نص"; afterEdit();
+    const inf = selInfo(), pr = TEXT_PRESETS[k]; if (!inf || inf.kind !== "widget" || !pr) return;
+    const body = k === "body", type = body ? "text" : "heading", txt = { title: "إضافة عنوان", sub: "إضافة عنوان فرعي", body: "إضافة أسطر في متن النص" }[k];
+    const over = { fs: clone(pr.fs), fw: pr.fw, lh: clone(pr.lh) }; if (body) over.html = "<p>" + txt + "</p>"; else { over.text = txt; over.tag = pr.tag; }
+    if (inf.set.ta) over.ta = clone(inf.set.ta); if (inf.set.color) over.color = inf.set.color;
+    let w;
+    if (inf.free) {      // عنصر جديد حر تحت المحدد مباشرة بنفس الموضع الأفقي والعرض
+      const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), u = uOf(inf.sec, el.closest(".pb-in").getBoundingClientRect()), h = Math.max(Number(eff(inf.set, "fh", E.dev)) || 0, Math.round(el.offsetHeight / u));
+      w = PB.mkFree(type, Number(eff(inf.set, "fx", E.dev)) || 0, (Number(eff(inf.set, "fy", E.dev)) || 0) + h + 12, Math.max(0, ...(inf.sec.free || []).map(q => Number(q.set.zi) || 0)) + 1);
+      Object.assign(w.set, over); w.set.fwd = { d: Number(eff(inf.set, "fwd", E.dev)) || 40 }; w.set.fh = { d: { title: 64, sub: 46, body: 38 }[k] };
+      (inf.sec.free = inf.sec.free || []).push(w); growCanvas(inf.sec);
+    } else { w = PB.mkW(type, over); inf.list.splice(inf.idx + 1, 0, w); }
+    E.nextLabel = "إضافة نص"; afterEdit(w.id);
   }
   function onQuick(k) {
     if (k.startsWith("tx-")) { textPreset(k.slice(3)); return; }
