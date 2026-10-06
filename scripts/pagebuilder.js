@@ -51,7 +51,32 @@ const PB = (() => {
   };
   const GRAD_PRESETS = [["غروب", { t: "linear", a: 135, s: [{ c: "#ff512f", p: 0 }, { c: "#f09819", p: 100 }] }], ["محيط", { t: "linear", a: 160, s: [{ c: "#0b7bd1", p: 0 }, { c: "#4fc3f7", p: 100 }] }], ["غابة", { t: "linear", a: 135, s: [{ c: "#0f5a3e", p: 0 }, { c: "#43a047", p: 100 }] }], ["ذهبي", { t: "linear", a: 120, s: [{ c: "#8a6a1c", p: 0 }, { c: "#f5d77a", p: 50 }, { c: "#b8860b", p: 100 }] }], ["أرجواني", { t: "linear", a: 135, s: [{ c: "#6a11cb", p: 0 }, { c: "#2575fc", p: 100 }] }], ["ليل", { t: "linear", a: 180, s: [{ c: "#0f2027", p: 0 }, { c: "#203a43", p: 50 }, { c: "#2c5364", p: 100 }] }], ["وردي", { t: "linear", a: 135, s: [{ c: "#ff758c", p: 0 }, { c: "#ff7eb3", p: 100 }] }], ["توهج", { t: "radial", x: 50, y: 40, sh: "circle", s: [{ c: "#ffffff", p: 0, o: .9 }, { c: "#ffd23f", p: 45 }, { c: "#ff8a1f", p: 100 }] }], ["قوس قزح", { t: "conic", a: 0, x: 50, y: 50, s: [{ c: "#ff3b30", p: 0 }, { c: "#ffcc00", p: 25 }, { c: "#34c759", p: 50 }, { c: "#007aff", p: 75 }, { c: "#ff3b30", p: 100 }] }]];
   const TGR = { k: "tgr", l: "تدرّج لون النص (degradé)", t: "grad", tab: "s" };
-  const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); };
+  /* تأثيرات النص (نمط Canva): [الاسم، لون افتراضي، دالة تعيد تصريحات CSS لـ(اللون C، الشدة f)] */
+  const rr = v => Math.round(v * 10) / 10, al = (c, a) => hexA(c, a);
+  const TFX = {
+    shadow: ["ظل منفصل", "#000000", (C, f) => `text-shadow:${rr(5 * f)}px ${rr(5 * f)}px ${rr(8 * f)}px ${al(C, .5)};`],
+    glow: ["بريق", "#a974ff", (C, f) => `text-shadow:0 0 ${rr(8 * f)}px ${C},0 0 ${rr(22 * f)}px ${al(C, .8)};`],
+    echo: ["صدى", "#a974ff", (C, f) => `text-shadow:${rr(5 * f)}px ${rr(5 * f)}px 0 ${al(C, .6)},${rr(10 * f)}px ${rr(10 * f)}px 0 ${al(C, .3)};`],
+    stroke: ["حدّ", "#8b3dff", (C, f) => `-webkit-text-stroke:${rr(2.5 * f)}px ${C};paint-order:stroke fill;`],
+    bg: ["خلفية", "#e6d9ff", (C, f) => `background:${C};padding:.08em ${rr(.35 * f)}em;border-radius:.25em;-webkit-box-decoration-break:clone;box-decoration-break:clone;`],
+    bevel: ["نقش", "#000000", (C, f) => `text-shadow:${rr(1.5 * f)}px ${rr(1.5 * f)}px 0 rgba(255,255,255,.7),-${rr(1.5 * f)}px -${rr(1.5 * f)}px 0 ${al(C, .45)};`],
+    outline: ["مفرّغ", "#8b3dff", (C, f) => `-webkit-text-stroke:${rr(1.6 * f)}px ${C};-webkit-text-fill-color:transparent;color:transparent;`],
+    neon: ["نيون", "#c64bff", (C, f) => `color:#fff;-webkit-text-fill-color:#fff;text-shadow:0 0 ${rr(4 * f)}px #fff,0 0 ${rr(10 * f)}px ${C},0 0 ${rr(20 * f)}px ${C},0 0 ${rr(38 * f)}px ${C};`],
+    glitch: ["خلل", "#ff2bd6", (C, f) => `text-shadow:${rr(3 * f)}px 0 ${C},-${rr(3 * f)}px 0 #00e5ff;`]
+  };
+  const tfxStyle = (k, C, f) => TFX[k] ? TFX[k][2](C || TFX[k][1], f == null ? 1 : f) : "";
+  function textFx(c, sel, s) {
+    const T = TFX[s.tfx]; if (!T) return; const C = s.tfxc || (s.tfx === "outline" ? (s.color || "#173f35") : T[1]), f = Math.max(0, (num(s.tfxi) ?? 50) / 50);
+    if (s.tfx === "bg") { c.d.push(`${sel} .pb-t>span,${sel} .pb-t>a>span{${T[2](C, f)}}${sel} .pb-tx{background:${C};padding:.3em .6em;border-radius:.4em}`); return; }
+    c.d.push(`${sel} .pb-t{${T[2](C, f)}}`);
+  }
+  /* نص منحنٍ على قوس (SVG textPath يحفظ اتصال الحروف العربية) */
+  function curveSvg(s, id) {
+    const cv = Math.max(-100, Math.min(100, num(s.tcurve) || 0)), fs = num(eff(s, "fs", "d")) || 38, fwd = num(eff(s, "fwd", "d")), Wv = 1000, Wpx = fwd ? fwd / 100 * 1140 : 700, k = Wv / Wpx, fsv = Math.round(fs * k), sag = Math.abs(cv) / 100 * 230, top = fsv * 1.15;
+    const ye = cv > 0 ? top + sag : top, ym = cv > 0 ? top : top + sag, yc = 2 * ym - ye, H = Math.round(top + sag + fsv * .55 + 10), pid = "pbtc-" + id;
+    return `<svg class="pb-tc" viewBox="0 0 ${Wv} ${H}" style="display:block;width:100%;height:auto;overflow:visible" role="img" aria-label="${esc(s.text)}"><path id="${pid}" d="M 30 ${Math.round(ye)} Q ${Wv / 2} ${Math.round(yc)} ${Wv - 30} ${Math.round(ye)}" fill="none"/><text style="font-size:${fsv}px;fill:currentColor;font-family:inherit;font-weight:inherit;letter-spacing:inherit"><textPath href="#${pid}" startOffset="50%" text-anchor="middle">${esc(s.text)}</textPath></text></svg>`;
+  }
+  const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); textFx(c, sel, s); };
   const BOX = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]];
   /* الخلفية/الحدود غير المتجاوبة (قيمة واحدة) */
   const hexA = (c, a) => { a = num(a); if (a == null || a >= 1) return c; const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (m) { const n = parseInt(m[1], 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; } return `color-mix(in srgb,${c} ${Math.round(a * 100)}%,transparent)`; };
@@ -188,6 +213,9 @@ const PB = (() => {
     { k: "fst", l: "الميل", t: "select", o: [["", "عادي"], ["italic", "مائل"]], tab: "s" },
     { k: "td", l: "خط على النص", t: "select", o: [["", "بدون"], ["underline", "تحته خط"], ["line-through", "يتوسطه خط"]], tab: "s" },
     { k: "tsh", l: "ظل النص", t: "select", o: [["", "بدون"], ["soft", "خفيف"], ["strong", "قوي"], ["lift", "مرتفع"], ["glow", "توهج"]], tab: "s" },
+    { k: "tfx", l: "تأثير النص (Effets)", t: "select", o: [["", "بدون"]].concat(Object.keys(TFX).map(k => [k, TFX[k][0]])), tab: "s" },
+    { k: "tfxc", l: "لون التأثير", t: "color", tab: "s", showIf: ["tfx", "*"] },
+    { k: "tfxi", l: "شدة التأثير (0–100)", t: "num", min: 0, max: 100, step: 1, tab: "s", showIf: ["tfx", "*"] },
   ].concat(extra || []);
 
   /* قائمة الأيقونات المنسدلة (إيموجي ورموز) */
@@ -213,8 +241,8 @@ const PB = (() => {
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
-      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl(), [TGR]),
-      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص (Courber): موجب = قوس لأعلى، سالب = لأسفل", t: "num", min: -100, max: 100, step: 1, tab: "s" }]), [TGR]),
+      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = num(s.tcurve) ? curveSvg(s, id) : `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     text: {
@@ -870,5 +898,5 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();

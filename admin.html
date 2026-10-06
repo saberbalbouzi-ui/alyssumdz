@@ -7189,7 +7189,32 @@ const PB = (() => {
   };
   const GRAD_PRESETS = [["غروب", { t: "linear", a: 135, s: [{ c: "#ff512f", p: 0 }, { c: "#f09819", p: 100 }] }], ["محيط", { t: "linear", a: 160, s: [{ c: "#0b7bd1", p: 0 }, { c: "#4fc3f7", p: 100 }] }], ["غابة", { t: "linear", a: 135, s: [{ c: "#0f5a3e", p: 0 }, { c: "#43a047", p: 100 }] }], ["ذهبي", { t: "linear", a: 120, s: [{ c: "#8a6a1c", p: 0 }, { c: "#f5d77a", p: 50 }, { c: "#b8860b", p: 100 }] }], ["أرجواني", { t: "linear", a: 135, s: [{ c: "#6a11cb", p: 0 }, { c: "#2575fc", p: 100 }] }], ["ليل", { t: "linear", a: 180, s: [{ c: "#0f2027", p: 0 }, { c: "#203a43", p: 50 }, { c: "#2c5364", p: 100 }] }], ["وردي", { t: "linear", a: 135, s: [{ c: "#ff758c", p: 0 }, { c: "#ff7eb3", p: 100 }] }], ["توهج", { t: "radial", x: 50, y: 40, sh: "circle", s: [{ c: "#ffffff", p: 0, o: .9 }, { c: "#ffd23f", p: 45 }, { c: "#ff8a1f", p: 100 }] }], ["قوس قزح", { t: "conic", a: 0, x: 50, y: 50, s: [{ c: "#ff3b30", p: 0 }, { c: "#ffcc00", p: 25 }, { c: "#34c759", p: 50 }, { c: "#007aff", p: 75 }, { c: "#ff3b30", p: 100 }] }]];
   const TGR = { k: "tgr", l: "تدرّج لون النص (degradé)", t: "grad", tab: "s" };
-  const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); };
+  /* تأثيرات النص (نمط Canva): [الاسم، لون افتراضي، دالة تعيد تصريحات CSS لـ(اللون C، الشدة f)] */
+  const rr = v => Math.round(v * 10) / 10, al = (c, a) => hexA(c, a);
+  const TFX = {
+    shadow: ["ظل منفصل", "#000000", (C, f) => `text-shadow:${rr(5 * f)}px ${rr(5 * f)}px ${rr(8 * f)}px ${al(C, .5)};`],
+    glow: ["بريق", "#a974ff", (C, f) => `text-shadow:0 0 ${rr(8 * f)}px ${C},0 0 ${rr(22 * f)}px ${al(C, .8)};`],
+    echo: ["صدى", "#a974ff", (C, f) => `text-shadow:${rr(5 * f)}px ${rr(5 * f)}px 0 ${al(C, .6)},${rr(10 * f)}px ${rr(10 * f)}px 0 ${al(C, .3)};`],
+    stroke: ["حدّ", "#8b3dff", (C, f) => `-webkit-text-stroke:${rr(2.5 * f)}px ${C};paint-order:stroke fill;`],
+    bg: ["خلفية", "#e6d9ff", (C, f) => `background:${C};padding:.08em ${rr(.35 * f)}em;border-radius:.25em;-webkit-box-decoration-break:clone;box-decoration-break:clone;`],
+    bevel: ["نقش", "#000000", (C, f) => `text-shadow:${rr(1.5 * f)}px ${rr(1.5 * f)}px 0 rgba(255,255,255,.7),-${rr(1.5 * f)}px -${rr(1.5 * f)}px 0 ${al(C, .45)};`],
+    outline: ["مفرّغ", "#8b3dff", (C, f) => `-webkit-text-stroke:${rr(1.6 * f)}px ${C};-webkit-text-fill-color:transparent;color:transparent;`],
+    neon: ["نيون", "#c64bff", (C, f) => `color:#fff;-webkit-text-fill-color:#fff;text-shadow:0 0 ${rr(4 * f)}px #fff,0 0 ${rr(10 * f)}px ${C},0 0 ${rr(20 * f)}px ${C},0 0 ${rr(38 * f)}px ${C};`],
+    glitch: ["خلل", "#ff2bd6", (C, f) => `text-shadow:${rr(3 * f)}px 0 ${C},-${rr(3 * f)}px 0 #00e5ff;`]
+  };
+  const tfxStyle = (k, C, f) => TFX[k] ? TFX[k][2](C || TFX[k][1], f == null ? 1 : f) : "";
+  function textFx(c, sel, s) {
+    const T = TFX[s.tfx]; if (!T) return; const C = s.tfxc || (s.tfx === "outline" ? (s.color || "#173f35") : T[1]), f = Math.max(0, (num(s.tfxi) ?? 50) / 50);
+    if (s.tfx === "bg") { c.d.push(`${sel} .pb-t>span,${sel} .pb-t>a>span{${T[2](C, f)}}${sel} .pb-tx{background:${C};padding:.3em .6em;border-radius:.4em}`); return; }
+    c.d.push(`${sel} .pb-t{${T[2](C, f)}}`);
+  }
+  /* نص منحنٍ على قوس (SVG textPath يحفظ اتصال الحروف العربية) */
+  function curveSvg(s, id) {
+    const cv = Math.max(-100, Math.min(100, num(s.tcurve) || 0)), fs = num(eff(s, "fs", "d")) || 38, fwd = num(eff(s, "fwd", "d")), Wv = 1000, Wpx = fwd ? fwd / 100 * 1140 : 700, k = Wv / Wpx, fsv = Math.round(fs * k), sag = Math.abs(cv) / 100 * 230, top = fsv * 1.15;
+    const ye = cv > 0 ? top + sag : top, ym = cv > 0 ? top : top + sag, yc = 2 * ym - ye, H = Math.round(top + sag + fsv * .55 + 10), pid = "pbtc-" + id;
+    return `<svg class="pb-tc" viewBox="0 0 ${Wv} ${H}" style="display:block;width:100%;height:auto;overflow:visible" role="img" aria-label="${esc(s.text)}"><path id="${pid}" d="M 30 ${Math.round(ye)} Q ${Wv / 2} ${Math.round(yc)} ${Wv - 30} ${Math.round(ye)}" fill="none"/><text style="font-size:${fsv}px;fill:currentColor;font-family:inherit;font-weight:inherit;letter-spacing:inherit"><textPath href="#${pid}" startOffset="50%" text-anchor="middle">${esc(s.text)}</textPath></text></svg>`;
+  }
+  const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); textFx(c, sel, s); };
   const BOX = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]];
   /* الخلفية/الحدود غير المتجاوبة (قيمة واحدة) */
   const hexA = (c, a) => { a = num(a); if (a == null || a >= 1) return c; const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (m) { const n = parseInt(m[1], 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; } return `color-mix(in srgb,${c} ${Math.round(a * 100)}%,transparent)`; };
@@ -7326,6 +7351,9 @@ const PB = (() => {
     { k: "fst", l: "الميل", t: "select", o: [["", "عادي"], ["italic", "مائل"]], tab: "s" },
     { k: "td", l: "خط على النص", t: "select", o: [["", "بدون"], ["underline", "تحته خط"], ["line-through", "يتوسطه خط"]], tab: "s" },
     { k: "tsh", l: "ظل النص", t: "select", o: [["", "بدون"], ["soft", "خفيف"], ["strong", "قوي"], ["lift", "مرتفع"], ["glow", "توهج"]], tab: "s" },
+    { k: "tfx", l: "تأثير النص (Effets)", t: "select", o: [["", "بدون"]].concat(Object.keys(TFX).map(k => [k, TFX[k][0]])), tab: "s" },
+    { k: "tfxc", l: "لون التأثير", t: "color", tab: "s", showIf: ["tfx", "*"] },
+    { k: "tfxi", l: "شدة التأثير (0–100)", t: "num", min: 0, max: 100, step: 1, tab: "s", showIf: ["tfx", "*"] },
   ].concat(extra || []);
 
   /* قائمة الأيقونات المنسدلة (إيموجي ورموز) */
@@ -7351,8 +7379,8 @@ const PB = (() => {
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
-      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl(), [TGR]),
-      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص (Courber): موجب = قوس لأعلى، سالب = لأسفل", t: "num", min: -100, max: 100, step: 1, tab: "s" }]), [TGR]),
+      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = num(s.tcurve) ? curveSvg(s, id) : `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     text: {
@@ -8008,7 +8036,7 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -8165,6 +8193,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-qbar .qsep{flex:none;width:1px;height:22px;background:#d9dbe3;margin:0 5px}
 .pbx-qbar label.qa b{font-size:1.15rem;line-height:1}.pbx-qbar label.qa i{position:absolute;left:8px;right:8px;bottom:5px;height:4px;border-radius:2px}.pbx-qbar label.qa input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:0}
 .pbx-pop{position:fixed;z-index:10002;background:#fff;border-radius:14px;box-shadow:0 10px 36px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);padding:.8rem;min-width:230px;max-width:300px;direction:rtl;font-family:inherit;color:#0e1318}
+.pbx-pop.wide{max-width:344px;min-width:320px}.pbx-pop .fxg{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-bottom:.6rem}.pbx-pop .fxt{display:flex;flex-direction:column;align-items:center;gap:.25rem;border:0;background:none;cursor:pointer;font-family:inherit;padding:0}.pbx-pop .fxt .fxs{display:flex;align-items:center;justify-content:center;width:100%;height:62px;border:1.5px solid #e0d9c8;border-radius:10px;font:800 1.7rem/1 'Cairo',sans-serif;background:#fff}.pbx-pop .fxt:hover .fxs{border-color:#8b3dff}.pbx-pop .fxt.on .fxs{border-color:#8b3dff;box-shadow:0 0 0 2px #e8dcff}.pbx-pop .fxt small{font-size:.72rem;color:#444}
 .pbx-pop h6{margin:0 0 .45rem;font-size:.78rem;color:#6b6556;font-weight:800}.pbx-pop .pr{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}.pbx-pop .pr input[type=range]{flex:1;min-width:0}.pbx-pop .pr b{min-width:40px;text-align:center;font-size:.8rem}
 .pbx-pop .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;margin-bottom:.5rem}.pbx-pop button.pb2{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.4rem .3rem;cursor:pointer;font-family:inherit;font-weight:700;font-size:.78rem}.pbx-pop button.pb2:hover{border-color:#8b3dff;background:#faf6ff}.pbx-pop button.pb2.on{background:#e8dcff;border-color:#8b3dff}
 .pbx-pop select,.pbx-pop input[type=color]{width:100%;height:34px;border:1px solid #d9dbe3;border-radius:8px;font-family:inherit;margin-bottom:.5rem}.pbx-pop p{margin:.2rem 0 0;font-size:.72rem;color:#888;line-height:1.6}
@@ -8981,8 +9010,15 @@ body{overflow-x:hidden;margin:0}`;
     if (k === "spacing") { const cs = qFont(inf), ls = Number(eff(set, "ls", dev)) || 0, lh = Number(eff(set, "lh", dev)) || (cs ? Math.round(parseFloat(cs.lineHeight) / parseFloat(cs.fontSize) * 10) / 10 || 1.4 : 1.4);
       return qPop(btn, qRange(inf, null, "ls", "التباعد بين الحروف (px)", -5, 20, .5, ls) + qRange(inf, null, "lh", "التباعد بين الأسطر", .8, 3, .1, lh), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true))); }
     if (k === "opacity") { const v = Math.round((num(set.op) ?? 1) * 100); return qPop(btn, qRange(inf, null, "op", "شفافية العنصر % (0 = شفاف، 100 = معتم)", 0, 100, 1, v), p => bindRanges(p, inf, (kk, val) => qLive(inf, "op", val >= 100 ? "" : val / 100))); }
-    if (k === "effects") { const sh = (qDef(inf, "tsh") || { o: [] }).o, bs = (qDef(inf, "shadow") || { o: [] }).o;
-      return qPop(btn, `<h6>ظل النص</h6><div class="pg">${sh.map(([v, n]) => `<button type="button" class="pb2${(set.tsh || "") === v ? " on" : ""}" data-v="${v}" data-t="tsh">${n}</button>`).join("")}</div><h6>ظل العنصر</h6><div class="pg">${bs.map(([v, n]) => `<button type="button" class="pb2${(set.shadow || "") === v ? " on" : ""}" data-v="${v}" data-t="shadow">${n}</button>`).join("")}</div>`, p => p.querySelectorAll("button[data-t]").forEach(b => b.onclick = () => { qDone(inf, b.dataset.t, b.dataset.v); closePop(); })); }
+    if (k === "effects") {
+      const bs = (qDef(inf, "shadow") || { o: [] }).o, T = PB.TFX, cur = set.tfx || "", curve = Number(set.tcurve) || 0, isH = inf.node.type === "heading";
+      const tiles = Object.keys(T).map(key => `<button type="button" class="fxt${cur === key ? " on" : ""}" data-fx="${key}"><span class="fxs" style="${key === "bg" ? "" : ""}${PB.tfxStyle(key)}${key === "outline" ? "" : "color:#2a1a5e"}">Ag</span><small>${T[key][0]}</small></button>`).join("");
+      return qPop(btn, `<h6>التأثيرات (Effets)</h6><div class="fxg"><button type="button" class="fxt${cur === "" ? " on" : ""}" data-fx=""><span class="fxs" style="color:#2a1a5e">Ag</span><small>بدون</small></button>${tiles}</div>`
+        + (cur ? `<h6>لون التأثير</h6><input type="color" data-fc value="${/^#[0-9a-f]{6}$/i.test(set.tfxc || "") ? set.tfxc : (/^#[0-9a-f]{6}$/i.test(T[cur][1]) ? T[cur][1] : "#8b3dff")}">` + qRange(inf, null, "tfxi", "شدة التأثير", 0, 100, 1, Number(set.tfxi ?? 50)) : "")
+        + (isH ? qRange(inf, null, "tcurve", "الشكل: انحناء النص (0 = مستقيم)", -100, 100, 1, curve) + `<p>النص المنحني يُعدَّل من خانة «النص» في الإعدادات الجانبية.</p>` : "")
+        + `<h6>ظل العنصر</h6><div class="pg">${bs.map(([v, n]) => `<button type="button" class="pb2${(set.shadow || "") === v ? " on" : ""}" data-v="${v}" data-t="shadow">${n}</button>`).join("")}</div>`,
+      p => { p.classList.add("wide"); p.querySelectorAll("[data-fx]").forEach(b => b.onclick = () => { qDone(inf, "tfx", b.dataset.fx); qAct("effects", btn); }); p.querySelectorAll("button[data-t]").forEach(b => b.onclick = () => { qDone(inf, b.dataset.t, b.dataset.v); closePop(); });
+        const fc = p.querySelector("[data-fc]"); if (fc) { fc.oninput = () => qLive(inf, "tfxc", fc.value); fc.onchange = () => { commitHist(); renderInspector(); }; } bindRanges(p, inf, (kk, v) => qLive(inf, kk, kk === "tcurve" && v === 0 ? "" : v)); }); }
     if (k === "anim") { const o = (qDef(inf, "anim") || { o: [] }).o; return qPop(btn, `<h6>حركة الظهور</h6><select data-pa>${o.map(([v, n]) => `<option value="${v}"${(set.anim || "") === v ? " selected" : ""}>${n}</option>`).join("")}</select>` + qRange(inf, null, "animDur", "مدة الحركة (ثانية)", .1, 3, .1, Number(set.animDur) || .6), p => { p.querySelector("[data-pa]").onchange = e => qDone(inf, "anim", e.target.value); bindRanges(p, inf, (kk, v) => qLive(inf, kk, v)); }); }
     if (k === "pos") return qPop(btn, `<h6>الترتيب</h6><div class="pg"><button type="button" class="pb2" data-a="front">↥ أمام</button><button type="button" class="pb2" data-a="back">↧ خلف</button><button type="button" class="pb2" data-a="fit">📐 بحجم الصفحة</button></div><h6>المحاذاة على الصفحة</h6><div class="pg"><button type="button" class="pb2" data-a="left">⇤ يسار</button><button type="button" class="pb2" data-a="center">↔ وسط</button><button type="button" class="pb2" data-a="right">⇥ يمين</button><button type="button" class="pb2" data-a="top">⤒ أعلى</button><button type="button" class="pb2" data-a="middle">↕ وسط</button><button type="button" class="pb2" data-a="bottom">⤓ أسفل</button></div>`,
       p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { const a = b.dataset.a; closePop(); if (a === "front") zOrder(1); else if (a === "back") zOrder(-1); else if (a === "fit") fitPage(inf); else alignPage(a); }));
@@ -9497,18 +9533,18 @@ body{overflow-x:hidden;margin:0}`;
   /* تبويب «تنسيق»: ثلاث مجموعات تُفتح وتُغلق — تنسيق العنصر، تنسيق الخلفية (لون بسيط ثم تدرّج متعدد الألوان ثم صورة)، باقي الإعدادات */
   const BG_KEYS = ["bg", "gr", "grad1", "grad2", "gradAng", "bga", "bgrad", "bgImg", "bgSize", "bgPos", "bgFixed", "bgOp", "bgBlur", "bgDark"], BD_KEYS = ["bw", "bws", "bs", "bc", "bco", "rad", "radc"];
   function styleGroups(all, inf) {
-    const own = new Set(((inf.def && inf.def.ctl) || []).map(c => c.k)), L = { el: [], bd: [], bg: [], rest: [] };
+    const own = new Set(((inf.def && inf.def.ctl) || []).map(c => c.k)), L = { el: [], fx: [], bd: [], bg: [], rest: [] };
     all.forEach(c => {
       if (c.k === "bgOp" && !own.has("bgOp") && inf.set.bgOp === undefined) return;      // شفافية صورة الخلفية القديمة تُخفى (تغني عنها «شفافية الخلفية») ما لم تكن مستعملة
       if (["grad1", "grad2", "gradAng"].includes(c.k) && inf.set.grad1 === undefined && inf.set.grad2 === undefined) return;      // التدرّج البسيط القديم يُستبدل بالتدرّج متعدد الألوان (يبقى ظاهراً فقط إن كان مستعملاً)
-      const g = BG_KEYS.includes(c.k) && !(c.k === "bgOp" && own.has("bgOp")) ? "bg" : BD_KEYS.includes(c.k) ? "bd" : (/^(ianim|fx|anim|hov|hvr)/.test(c.k) || c.k === "shadow") ? "rest" : "el";
+      const g = BG_KEYS.includes(c.k) && !(c.k === "bgOp" && own.has("bgOp")) ? "bg" : BD_KEYS.includes(c.k) ? "bd" : (/^tfx/.test(c.k) || c.k === "tcurve" || c.k === "tsh") ? "fx" : (/^(ianim|fx|anim|hov|hvr)/.test(c.k) || c.k === "shadow") ? "rest" : "el";
       L[g].push(c);
     });
     L.bg.sort((a, b) => BG_KEYS.indexOf(a.k) - BG_KEYS.indexOf(b.k)); L.bd.sort((a, b) => BD_KEYS.indexOf(a.k) - BD_KEYS.indexOf(b.k)); L.el.sort((a, b) => (b.k === "op") - (a.k === "op"));
     const LBL = { bg: "لون بسيط", gr: "لون تدرّج متعدد الألوان (الافتراضي لونان — أضف المزيد بزر ＋ لون)" };
     const kindN = inf.kind === "widget" ? "العنصر" : inf.kind === "column" ? "العمود" : "القسم";
     E.acc = E.acc || { el: true };
-    return [["el", "تنسيق " + kindN], ["bd", "الإطار"], ["bg", "تنسيق الخلفية"], ["rest", "باقي الإعدادات"]].filter(([k]) => L[k].length).map(([k, n]) => {
+    return [["el", "تنسيق " + kindN], ["fx", "تأثيرات النص"], ["bd", "الإطار"], ["bg", "تنسيق الخلفية"], ["rest", "باقي الإعدادات"]].filter(([k]) => L[k].length).map(([k, n]) => {
       const open = !!E.acc[k];
       return `<div class="pbx-ac"><button type="button" class="pbx-ach${open ? " on" : ""}" data-ac="${k}"><span>${n}</span><i>${open ? "▴" : "▾"}</i></button>${open ? `<div class="pbx-acb">${L[k].map(c => field(LBL[c.k] && k === "bg" ? Object.assign({}, c, { l: LBL[c.k] }) : c, inf.set)).join("")}</div>` : ""}</div>`;
     }).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>';
