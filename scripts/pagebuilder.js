@@ -39,7 +39,7 @@ const PB = (() => {
   const raw = p => v => `${p}:${v};`;
   const SHADOWS = { "": "", sm: "0 2px 8px rgba(0,0,0,.12)", md: "0 8px 24px rgba(0,0,0,.16)", lg: "0 18px 48px rgba(0,0,0,.22)", glow: "0 0 24px rgba(200,162,75,.6)" };
   const TSH = { soft: "2px 2px 4px rgba(0,0,0,.35)", strong: "3px 4px 0 rgba(0,0,0,.28)", lift: "0 8px 18px rgba(0,0,0,.4)", glow: "0 0 10px currentColor,0 0 22px currentColor" };
-  const TYPO = [["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["ff", raw("font-family")], ["lh", raw("line-height")], ["ls", px("letter-spacing")], ["tt", raw("text-transform")], ["ta", raw("text-align")], ["fst", raw("font-style")], ["td", raw("text-decoration")], ["tsh", v => TSH[v] ? `text-shadow:${TSH[v]};` : ""]];
+  const TYPO = [["color", raw("color")], ["fs", px("font-size")], ["fw", raw("font-weight")], ["ff", raw("font-family")], ["lh", raw("line-height")], ["ls", px("letter-spacing")], ["tt", raw("text-transform")], ["ta", raw("text-align")], ["fst", raw("font-style")], ["tdir", raw("direction")], ["td", raw("text-decoration")], ["tsh", v => TSH[v] ? `text-shadow:${TSH[v]};` : ""]];
   /* تدرّج متقدم: {t:linear|radial|conic, a:زاوية, x,y:موضع, sh:circle|ellipse, rep:تكرار, s:[{c:لون,p:%,o:شفافية 0-1}]} */
   const rgba = (c, o) => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m || o === undefined || o === "" || num(o) == null || num(o) >= 1) return c; const n = parseInt(m[1], 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${Math.max(0, num(o))})`; };
   const gradCss = g => {
@@ -97,6 +97,7 @@ const PB = (() => {
   const LMARKS = ["•", "●", "○", "◉", "▪", "■", "◆", "◇", "✔", "✓", "✅", "☑", "★", "✦", "➜", "➤", "❯", "»"];
   function listFx(c, sel, s) {
     if (!s.lm) return; const m = String(s.lm), css = x => String(x).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " "), col = /^#[0-9a-f]{3,8}$/i.test(s.lmc || "") ? s.lmc : "inherit";
+    c.d.push(`${sel} .pb-t{counter-reset:pbl}${sel} .pb-li{display:block;position:relative;padding-inline-start:1.5em;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
     c.d.push(`${sel} .pb-tx ul,${sel} .pb-tx ol{list-style:none;margin:0 0 .8em;padding:0;${m === "num" ? "counter-reset:pbl;" : ""}}${sel} .pb-tx li{position:relative;padding-inline-start:1.7em;margin:.3em 0;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-tx li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
   }
   const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); textFx(c, sel, s); listFx(c, sel, s); };
@@ -234,6 +235,7 @@ const PB = (() => {
     { k: "ls", l: "تباعد الحروف (px)", t: "num", r: 1, min: -5, max: 20, step: .5, tab: "s" },
     { k: "tt", l: "حالة الأحرف", t: "select", o: [["", "افتراضي"], ["uppercase", "كبيرة"], ["capitalize", "أول حرف"], ["none", "بدون"]], tab: "s" },
     { k: "ta", l: "محاذاة النص", t: "align", r: 1, tab: "s" },
+    { k: "tdir", l: "اتجاه النص", t: "select", o: [["", "تلقائي"], ["rtl", "من اليمين لليسار"], ["ltr", "من اليسار لليمين"]], tab: "s" },
     { k: "fst", l: "الميل", t: "select", o: [["", "عادي"], ["italic", "مائل"]], tab: "s" },
     { k: "td", l: "خط على النص", t: "select", o: [["", "بدون"], ["underline", "تحته خط"], ["line-through", "يتوسطه خط"]], tab: "s" },
     { k: "tsh", l: "ظل النص", t: "select", o: [["", "بدون"], ["soft", "خفيف"], ["strong", "قوي"], ["lift", "مرتفع"], ["glow", "توهج"]], tab: "s" },
@@ -266,8 +268,8 @@ const PB = (() => {
   const WIDGETS = {
     heading: {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
-      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص", t: "num", min: -100, max: 100, step: 1, tab: "s" }]), [TGR]),
-      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = num(s.tcurve) ? curveSvg(s, id) : `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
+      ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص", t: "num", min: -100, max: 100, step: 1, tab: "s" }, { k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }]), [TGR]),
+      html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = num(s.tcurve) ? curveSvg(s, id) : s.lm ? `<span data-edit="text">${String(s.text).split("\n").map(l => `<span class="pb-li">${esc(l)}</span>`).join("")}</span>` : `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
     text: {

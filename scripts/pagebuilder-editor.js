@@ -902,6 +902,7 @@ body{overflow-x:hidden;margin:0}`;
     replace: SVG('<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>'), textcap: SVG('<path d="M4 7V4h16v3M12 4v16M9 20h6"/>'), magic: SVG('<path d="M5 19L19 5M14 4l1 3 3 1-3 1-1 3-1-3-3-1 3-1zM6 12l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>'),
     effects: SVG('<path d="M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4z"/>'), anim: SVG('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z" fill="currentColor"/>'), pos: SVG('<path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/>'),
     curve: SVG('<path d="M3 17C5 6 19 6 21 17"/><path d="M8 11.5l1.2 2.2M12 10.3v3M16 11.5l-1.2 2.2" stroke-width="2.4"/>'),
+    rtl: SVG('<path d="M13 4v13M17 4v13M17 4h-5a3.5 3.5 0 000 7h1"/><path d="M20 21H6M6 21l3-3M6 21l3 3" transform="translate(0 -2)"/>'), ltr: SVG('<path d="M11 4v13M7 4v13M7 4h5a3.5 3.5 0 010 7h-1"/><path d="M4 19h14M18 19l-3-3M18 19l-3 3"/>'),
     eraser: SVG('<path d="M20 20H9L3.5 14.5a2 2 0 010-2.8L12 3.2a2 2 0 012.8 0l5.7 5.7a2 2 0 010 2.8L13 19M7.5 10.5l6 6"/>')
   });
   const qDef = (inf, k) => { const c = ctlsFor(inf).find(x => x.k === k); return c; };
@@ -922,7 +923,7 @@ body{overflow-x:hidden;margin:0}`;
         + `<span class="qn"><button type="button" data-qb="fs-" title="تصغير الخط">−</button><input type="number" data-qi="fs" min="8" max="160" value="${fs}" title="حجم الخط"><button type="button" data-qb="fs+" title="تكبير الخط">+</button></span>`
         + `<label class="qa" title="لون النص"><b>A</b><i style="background:${col}"></i><input type="color" data-qi="color" value="${col}"></label>` + sep
         + btn("bold", QI.B, "عريض", fw >= 600) + btn("italic", QI.I, "مائل", set.fst === "italic") + btn("under", QI.U, "تحته خط", set.td === "underline") + btn("strike", QI.S, "يتوسطه خط", set.td === "line-through") + btn("case", QI.case, "حالة الأحرف: كبيرة / أول حرف / عادي", !!set.tt && set.tt !== "none")
-        + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + (t === "text" ? btn("list", QI.list, "قائمة بنقطة أو أيقونة", /<[uo]l/i.test(set.html || "")) + `<label class="qa" title="لون رمز القائمة (الافتراضي: لون النص)"><b>${esc(set.lm && set.lm !== "num" ? set.lm : "•")}</b><i style="background:${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></i><input type="color" data-qi="lmc" value="${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></label>` : "") + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
+        + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + btn("dir", set.tdir === "ltr" ? QI.ltr : QI.rtl, "اتجاه النص: من اليمين لليسار / من اليسار لليمين") + btn("list", QI.list, "قائمة بنقطة أو أيقونة", t === "text" ? /<[uo]l/i.test(set.html || "") : !!set.lm) + `<label class="qa" title="لون رمز القائمة (الافتراضي: لون النص)"><b>${esc(set.lm && set.lm !== "num" ? set.lm : "•")}</b><i style="background:${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></i><input type="color" data-qi="lmc" value="${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></label>` + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
     } else if (isImg) {
       h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") + tb("textcap", "التقاط النص", "يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل") + tb("magic", "التقاط سحري", "يفصل العناصر (أشخاص، منتجات…) كصور شفافة") + sep
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + btn("crop", QI.crop, "قصّ الصورة", !!set.crop) + tb("flip", "قلب", "قلب الصورة أفقياً أو عمودياً", !!(set.flx || set.fly)) + sep;
@@ -967,6 +968,7 @@ body{overflow-x:hidden;margin:0}`;
   function bindRanges(p, inf, fn) { p.querySelectorAll("input[data-pr]").forEach(r => { r.oninput = () => { r.parentNode.querySelector("b").textContent = r.value; fn(r.dataset.pr, Number(r.value)); }; r.onchange = () => { commitHist(); renderInspector(); }; }); }
   /* تحويل نص العنصر إلى قائمة (أو إزالتها) وضبط رمزها */
   function qList(inf, m) {
+    if (inf.node.type === "heading") { const st = inf.set; if (m === "__none") { delete st.lm; delete st.lmc; } else st.lm = m === "__def" ? "•" : m; E.nextLabel = "قائمة العنوان"; afterEdit(); return; }      // العنوان: كل سطر بند برمزه
     const set = inf.set, h = set.html || "", isL = /<[uo]l/i.test(h);
     if (m === "__none") { if (isL) set.html = h.replace(/<\/?[uo]l[^>]*>/gi, "").replace(/<li[^>]*>/gi, "<p>").replace(/<\/li>/gi, "</p>"); delete set.lm; delete set.lmc; }
     else { if (!isL) set.html = "<ul>" + (h.match(/<p[\s>]/i) ? h.replace(/<p[^>]*>/gi, "<li>").replace(/<\/p>/gi, "</li>") : "<li>" + h + "</li>") + "</ul>"; if (m === "__def") delete set.lm; else set.lm = m; }
@@ -976,14 +978,16 @@ body{overflow-x:hidden;margin:0}`;
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
     if (k === "fs-" || k === "fs+") { const cs = qFont(inf), cur = Number(eff(set, "fs", dev)) || (cs ? Math.round(parseFloat(cs.fontSize)) : 17); return qDone(inf, "fs", Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
     if (k === "bold") { const cs = qFont(inf), cur = Number(set.fw || (cs && cs.fontWeight) || 400); return qDone(inf, "fw", cur >= 600 ? "400" : (inf.node.type === "heading" ? "800" : "700")); }
+    if (k === "dir") return qDone(inf, "tdir", set.tdir === "ltr" ? "rtl" : "ltr");
     if (k === "italic") return qDone(inf, "fst", set.fst === "italic" ? "" : "italic");
     if (k === "under") return qDone(inf, "td", set.td === "underline" ? "" : "underline");
     if (k === "strike") return qDone(inf, "td", set.td === "line-through" ? "" : "line-through");
     if (k === "case") return qDone(inf, "tt", !set.tt || set.tt === "none" ? "uppercase" : set.tt === "uppercase" ? "capitalize" : "");
     if (k === "align") { const o = ["start", "center", "end"], c = eff(set, "ta", dev) || "start"; return qDone(inf, "ta", o[(o.indexOf(c) + 1) % 3], true); }
     if (k === "list") {
-      if (!re && !/<[uo]l/i.test(set.html || "")) { qList(inf, E.lastLm || "•"); }      // النقر على «قائمة» يحوّل النص إلى قائمة فوراً برمز افتراضي، ثم تظهر الرموز للاختيار
-      const isL = /<[uo]l/i.test(set.html || ""), cur = set.lm || "", mk = PB.LMARKS, curC = /^#[0-9a-f]{6}$/i.test(set.lmc || "");
+      const isH = inf.node.type === "heading", listed = isH ? !!set.lm : /<[uo]l/i.test(set.html || "");
+      if (!re && !listed) { qList(inf, E.lastLm || "•"); }      // النقر على «قائمة» يحوّل النص إلى قائمة فوراً برمز افتراضي، ثم تظهر الرموز للاختيار
+      const isL = isH ? !!set.lm : /<[uo]l/i.test(set.html || ""), cur = set.lm || "", mk = PB.LMARKS, curC = /^#[0-9a-f]{6}$/i.test(set.lmc || "");
       return qPop(btn, `<h6>رمز القائمة</h6><div class="pg lmg"><button type="button" class="pb2${!isL ? " on" : ""}" data-lm="__none" style="grid-column:span 3">بدون قائمة</button><button type="button" class="pb2${isL && !cur ? " on" : ""}" data-lm="__def">نقطة عادية</button><button type="button" class="pb2${cur === "num" ? " on" : ""}" data-lm="num">1 2 3</button><span></span>${mk.map(m => `<button type="button" class="pb2 lmt${cur === m ? " on" : ""}" data-lm="${m}">${m}</button>`).join("")}</div>${curC ? '<button type="button" class="rst" data-rc>↺ لون الرمز = لون النص</button>' : ""}`,
         p => { p.querySelectorAll("[data-lm]").forEach(b => b.onclick = () => { qList(inf, b.dataset.lm); if (b.dataset.lm !== "__none" && b.dataset.lm !== "__def") E.lastLm = b.dataset.lm; qAct("list", btn, true); }); const rc = p.querySelector("[data-rc]"); if (rc) rc.onclick = () => { delete set.lmc; afterEdit(); qAct("list", btn, true); }; }, { dock: true }); }
     if (k === "spacing") { const cs = qFont(inf), ls = Number(eff(set, "ls", dev)) || 0, lh = Number(eff(set, "lh", dev)) || (cs ? Math.round(parseFloat(cs.lineHeight) / parseFloat(cs.fontSize) * 10) / 10 || 1.4 : 1.4);
