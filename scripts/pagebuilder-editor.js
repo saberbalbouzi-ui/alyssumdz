@@ -157,6 +157,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-pop h6{margin:0 0 .45rem;font-size:.78rem;color:#6b6556;font-weight:800}.pbx-pop .pr{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}.pbx-pop .pr input[type=range]{flex:1;min-width:0}.pbx-pop .pr b{min-width:40px;text-align:center;font-size:.8rem}
 .pbx-pop .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;margin-bottom:.5rem}.pbx-pop button.pb2{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.4rem .3rem;cursor:pointer;font-family:inherit;font-weight:700;font-size:.78rem}.pbx-pop button.pb2:hover{border-color:#8b3dff;background:#faf6ff}.pbx-pop button.pb2.on{background:#e8dcff;border-color:#8b3dff}
 .pbx-pop select{padding:0 .5rem!important;font-size:.82rem;color:#0e1318;background:#fff}.pbx-pop select,.pbx-pop input[type=color]{width:100%;height:34px;border:1px solid #d9dbe3;border-radius:8px;font-family:inherit;margin-bottom:.5rem}.pbx-pop p{margin:.2rem 0 0;font-size:.72rem;color:#888;line-height:1.6}
+.pbx-cov{position:absolute;border:2px dashed #e5484d;background:rgba(229,72,77,.12);pointer-events:none;box-sizing:border-box}.pbx-lcv{display:flex;flex-wrap:wrap;gap:.3rem;padding:.2rem .3rem .5rem}.pbx-lcv>div{flex:1 1 100%}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
@@ -387,8 +388,9 @@ body{overflow-x:hidden;margin:0}`;
       E.page.sections.forEach((sec, i) => {
         if (FREE_ONLY) {      // بلا أعمدة: كل العناصر في قائمة واحدة (الحرة مرتبة بالأمام/الخلف ثم ما بقي داخل أعمدة قديمة)
           const fz = (sec.free || []).slice().sort((a, b) => (Number(b.set.zi) || 0) - (Number(a.set.zi) || 0));
+          if (i === 0) h += `<div class="pbx-lcv"><div style="color:#8a8472;font-size:.72rem;line-height:1.6">اسحب أي عنصر لأعلى أو أسفل: الأعلى = الأمام</div><button type="button" class="pbx-small" data-cover>🔍 اكشف العناصر المغطاة</button>${E.covered && E.covered.size ? `<button type="button" class="pbx-small" data-covfwd>⬆ أحضر المغطاة للأمام (${E.covered.size})</button><button type="button" class="pbx-small" data-covclr>إخفاء الإشارات</button>` : ""}</div>`;
           if (E.page.sections.length > 1) h += `<div data-hs="${sec.id}" style="font-weight:800;color:#8a8472;cursor:pointer;${E.hs === sec.id ? "background:#f1ebdd;" : ""}">▤ قسم ${i + 1}${sec.set.off ? " (مخفي)" : ""}${sec.set.locked ? " 🔒" : ""}</div>`;
-          h += fz.map(w => `<div draggable="true" data-lay="${w.id}" data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}">${ico('grip',14)} ${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`).join("");
+          h += fz.map(w => `<div draggable="true" data-lay="${w.id}" data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}">${ico('grip',14)} ${ico(w.type,16)} ${WIDGETS[w.type].label}${E.covered && E.covered.has(w.id) ? ' <b style="color:#b83232" title="مغطّى بعناصر أخرى">⚠ مغطّى</b>' : ""}</div>`).join("");
           sec.cols.forEach(col => col.widgets.forEach(w => { h += `<div data-sel="${w.id}" data-lk="w" class="${E.sel === w.id ? "on" : ""}">${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`; })); return;
         }
         h += `<div data-sel="${sec.id}" data-lk="s" class="${E.sel === sec.id ? "on" : ""}">${ico('section',16)} قسم ${i + 1}</div>`;
@@ -636,7 +638,7 @@ body{overflow-x:hidden;margin:0}`;
     const A = [["⇤", "يسار", () => alignPage("left")], ["↔", "وسط أفقياً", () => alignPage("center")], ["⇥", "يمين", () => alignPage("right")], "-", ["⤒", "أعلى", () => alignPage("top")], ["↕", "وسط عمودياً", () => alignPage("middle")], ["⤓", "أسفل", () => alignPage("bottom")]];
     const items = [["⧉", "نسخ", copyEl, "Ctrl+C"], ["🖌️", "نسخ النمط", copyStyle, "Ctrl+Alt+C"], E.styleClip ? ["🎨", "لصق النمط", pasteStyle, "Ctrl+Alt+V"] : null, ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", () => dup(), "Ctrl+D"], ["🗑", "حذف", () => del(), "Del", 1], "-",
       ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
-      ["↥", "إلى الأمام", () => zOrder(1), "]"], ["↧", "إلى الخلف", () => zOrder(-1), "["], "-",
+      ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
       img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)],
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
@@ -763,6 +765,7 @@ body{overflow-x:hidden;margin:0}`;
   function positionOverlay() {
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
     try { drawSecBar(ovl); markThumbs(); } catch (x) { console.warn(x); }
+    if (E.covered && E.covered.size && fdoc) { const o0 = ovlOrigin(); E.covered.forEach(id => { const el = fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return; const r = layoutRect(el), d = document.createElement("div"); d.className = "pbx-cov"; d.style.cssText = `left:${o0.ox + r.left * o0.s}px;top:${o0.oy + r.top * o0.s}px;width:${r.width * o0.s}px;height:${r.height * o0.s}px`; ovl.appendChild(d); }); }
     if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
     const el = fdoc.querySelector(`[data-pb="${E.sel}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, rotV = inf.kind === "widget" ? (num(eff(inf.set, "rot", E.dev)) || 0) : 0;
@@ -1089,8 +1092,8 @@ body{overflow-x:hidden;margin:0}`;
         const fc = p.querySelector("[data-fc]"); if (fc) { fc.oninput = () => qLive(inf, "tfxc", fc.value); fc.onchange = () => { commitHist(); renderInspector(); }; } bindRanges(p, inf, (kk, v) => qLive(inf, kk, v)); }, { dock: true }); }
     if (k === "curve") { const cv = Number(set.tcurve) || 0; return qPop(btn, qRange(inf, null, "tcurve", "انحناء النص (سطر واحد)", -100, 100, 1, cv) + `<button type="button" class="rst" data-rst>↺ الرجوع إلى الأصل (مستقيم)</button>`, p => { p.querySelector("[data-rst]").onclick = () => { delete set.tcurve; E.nextLabel = "إلغاء انحناء النص"; closePop(); afterEdit(); }; bindRanges(p, inf, (kk, v) => qLive(inf, kk, v || "")); }); }
     if (k === "anim") { const o = (qDef(inf, "anim") || { o: [] }).o; return qPop(btn, `<h6>حركة الظهور</h6><select data-pa>${o.map(([v, n]) => `<option value="${v}"${(set.anim || "") === v ? " selected" : ""}>${n}</option>`).join("")}</select>` + qRange(inf, null, "animDur", "مدة الحركة (ثانية)", .1, 3, .1, Number(set.animDur) || .6), p => { p.querySelector("[data-pa]").onchange = e => qDone(inf, "anim", e.target.value); bindRanges(p, inf, (kk, v) => qLive(inf, kk, v)); }, { dock: true }); }
-    if (k === "pos") return qPop(btn, `<h6>الترتيب</h6><div class="pg"><button type="button" class="pb2" data-a="front">↥ أمام</button><button type="button" class="pb2" data-a="back">↧ خلف</button><button type="button" class="pb2" data-a="fit">📐 بحجم الصفحة</button></div><h6>المحاذاة على الصفحة</h6><div class="pg"><button type="button" class="pb2" data-a="left">⇤ يسار</button><button type="button" class="pb2" data-a="center">↔ وسط</button><button type="button" class="pb2" data-a="right">⇥ يمين</button><button type="button" class="pb2" data-a="top">⤒ أعلى</button><button type="button" class="pb2" data-a="middle">↕ وسط</button><button type="button" class="pb2" data-a="bottom">⤓ أسفل</button></div>`,
-      p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { const a = b.dataset.a; if (a === "front") zOrder(1); else if (a === "back") zOrder(-1); else if (a === "fit") fitPage(inf); else alignPage(a); }), { dock: true });
+    if (k === "pos") return qPop(btn, `<h6>الترتيب</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-a="front">⬆ أول الواجهة</button><button type="button" class="pb2" data-a="back">⬇ آخر الواجهة</button><button type="button" class="pb2" data-a="up">↥ تقديم درجة</button><button type="button" class="pb2" data-a="down">↧ تأخير درجة</button></div><div class="pg" style="grid-template-columns:1fr"><button type="button" class="pb2" data-a="fit">📐 بحجم الصفحة</button></div><h6>المحاذاة على الصفحة</h6><div class="pg"><button type="button" class="pb2" data-a="left">⇤ يسار</button><button type="button" class="pb2" data-a="center">↔ وسط</button><button type="button" class="pb2" data-a="right">⇥ يمين</button><button type="button" class="pb2" data-a="top">⤒ أعلى</button><button type="button" class="pb2" data-a="middle">↕ وسط</button><button type="button" class="pb2" data-a="bottom">⤓ أسفل</button></div>`,
+      p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { const a = b.dataset.a; if (a === "front" || a === "back" || a === "up" || a === "down") zMove(a); else if (a === "fit") fitPage(inf); else alignPage(a); }), { dock: true });
     if (k === "style") return qPop(btn, `<h6>نمط العنصر</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-a="copy">🖌️ نسخ النمط</button><button type="button" class="pb2"${E.styleClip ? "" : " disabled style=\"opacity:.4\""} data-a="paste">🎨 لصق النمط</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { b.dataset.a === "copy" ? copyStyle() : pasteStyle(); qAct("style", btn); }), { dock: true });
     if (k === "border") { const bw = Number(set.bw) || 0, bs = (qDef(inf, "bs") || { o: [] }).o; return qPop(btn, qRange(inf, null, "bw", "سماكة الإطار (px)", 0, 40, 1, bw) + `<h6>النمط</h6><select data-pa>${bs.map(([v, n]) => `<option value="${v}"${(set.bs || "solid") === v ? " selected" : ""}>${n}</option>`).join("")}</select><h6>اللون</h6><input type="color" data-pc value="${/^#[0-9a-f]{6}$/i.test(set.bc || "") ? set.bc : "#333333"}">`, p => { p.querySelector("[data-pa]").onchange = e => qDone(inf, "bs", e.target.value); p.querySelector("[data-pc]").oninput = e => qLive(inf, "bc", e.target.value); p.querySelector("[data-pc]").onchange = () => { commitHist(); renderInspector(); }; bindRanges(p, inf, (kk, v) => qLive(inf, kk, v || "")); }, { dock: true }); }
     if (k === "radius") return qPop(btn, qRange(inf, null, "rad", "تدوير الزوايا (px)", 0, 200, 1, Number(eff(set, "rad", dev)) || 0), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)));
@@ -1250,10 +1253,10 @@ body{overflow-x:hidden;margin:0}`;
   }
 
   /* ───────────────── عمليات على النموذج ───────────────── */
-  function afterEdit(sel) { if (sel !== undefined) E.sel = sel; commitHist(); renderCanvas(); renderInspector(); renderLeft(); }
+  function afterEdit(sel) { E.covered = null; if (sel !== undefined) E.sel = sel; commitHist(); renderCanvas(); renderInspector(); renderLeft(); }
   function move(d) {
     const inf = selInfo(); if (!inf) return; const j = inf.idx + d;
-    if (inf.kind === "widget" && inf.free) { zOrder(-d); return; }
+    if (inf.kind === "widget" && inf.free) { zMove(d < 0 ? "up" : "down"); return; }
     if (inf.kind === "widget" && (j < 0 || j >= inf.list.length)) { moveCol(d > 0 ? 1 : -1, true); return; }
     if (j < 0 || j >= inf.list.length) return; [inf.list[inf.idx], inf.list[j]] = [inf.list[j], inf.list[inf.idx]]; afterEdit();
   }
@@ -1280,15 +1283,24 @@ body{overflow-x:hidden;margin:0}`;
   function del() { const inf = selInfo(); if (!inf) return; if (inf.kind === "column" && inf.sec.cols.length === 1) { toast("القسم يحتاج عموداً واحداً على الأقل — احذف القسم كله"); return; } inf.list.splice(inf.idx, 1); afterEdit(null); }
   function addCol(sec, at) { const c = PB.mkC([]); if (at == null) sec.cols.push(c); else sec.cols.splice(at, 0, c); if (sec.set.kind !== "grid") sec.cols.forEach(x => { if (x.set.w) delete x.set.w; }); afterEdit(c.id); }
   /* مرتبة الطبقات: أمام/خلف نسبةً لبقية عناصر القسم */
-  function zOrder(dir) {
-    const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
-    const sibs = inf.sec.cols.reduce((a, c) => a.concat(c.widgets), []).concat(inf.sec.free || []).filter(w => w !== inf.node), zs = sibs.map(w => Number(w.set.zi) || 0), cur = Number(inf.set.zi) || 0;
-    if (dir > 0) inf.set.zi = Math.max(cur, ...(zs.length ? zs : [0])) + 1;
-    else {      // إلى الخلف: لا قيم سالبة أبداً (العنصر ذو z-index سالب يختفي خلف خلفية القسم فلا يُحدَّد ولا يتحرك)؛ نرفع بقية العناصر الحرة درجة واحدة ونضع هذا العنصر عند 0
-      const fr = (inf.sec.free || []).filter(w => w !== inf.node), mn = fr.length ? Math.min(...fr.map(w => Number(w.set.zi) || 0)) : 1;
-      if (mn >= 1) inf.set.zi = mn - 1; else { fr.forEach(w => { w.set.zi = (Number(w.set.zi) || 0) + 1 - mn; }); inf.set.zi = 0; }
-    }
-    afterEdit();
+  const zList = sec => (sec.free || []).map((w, i) => [w, i]).sort((x, y) => (Number(x[0].set.zi) || 0) - (Number(y[0].set.zi) || 0) || x[1] - y[1]).map(x => x[0]);
+  const zApply = L => L.forEach((w, i) => { w.set.zi = i; });      // ترتيب متصل من 0 (لا قيم سالبة تخفي العنصر خلف القسم)
+  function zMove(how) {
+    const inf = selInfo(); if (!inf || inf.kind !== "widget") return; if (!inf.free) { toast("حرّك العنصر أولاً ليصير حراً ثم رتّب طبقته"); return; }
+    const L = zList(inf.sec), i = L.indexOf(inf.node); let j = how === "front" ? L.length - 1 : how === "back" ? 0 : Math.max(0, Math.min(L.length - 1, i + (how === "up" ? 1 : -1)));
+    if (j === i) { toast(how === "front" || how === "up" ? "العنصر في أول الواجهة بالفعل" : "العنصر في آخر الواجهة بالفعل"); zApply(L); return; }
+    L.splice(i, 1); L.splice(j, 0, inf.node); zApply(L); E.nextLabel = { front: "إلى أول الواجهة", back: "إلى آخر الواجهة", up: "تقديم درجة", down: "تأخير درجة" }[how]; afterEdit();
+  }
+  function zOrder(dir) { zMove(dir > 0 ? "front" : "back"); }
+  /* العناصر المغطاة: عنصر لا تقع أي نقطة من نقاط عيّنته عليه (يغطيه غيره) */
+  function detectCovered() {
+    const out = []; E.page.sections.forEach(sec => (sec.free || []).forEach(w => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (!el) return; const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return;
+      const vis = [[.5, .5], [.15, .15], [.85, .15], [.15, .85], [.85, .85], [.5, .15], [.5, .85]].some(([a, b]) => { const t = fdoc.elementFromPoint(r.left + r.width * a, r.top + r.height * b); return t && (t === el || el.contains(t)); }); if (!vis) out.push(w.id); })); return out;
+  }
+  function showCovered() { const ids = detectCovered(); E.covered = new Set(ids); renderLeft(); positionOverlay(); toast(ids.length ? "🔍 وُجد " + ids.length + " عنصر مغطّى — معلَّم بـ ⚠ في الطبقات وبإطار متقطع في الصفحة" : "✅ لا توجد عناصر مغطّاة بالكامل"); }
+  function coveredFront() {
+    const ids = E.covered; if (!ids || !ids.size) return; E.page.sections.forEach(sec => { const L = zList(sec), cov = L.filter(w => ids.has(w.id)); if (cov.length) zApply(L.filter(w => !ids.has(w.id)).concat(cov)); });
+    const n = ids.size; E.covered = null; E.nextLabel = "إحضار المغطاة للأمام"; afterEdit(); toast("⬆ أُحضر " + n + " عنصر مغطّى إلى أول الواجهة");
   }
   /* إعادة ترتيب الطبقات بالسحب في اللوحة: العنصر المسحوب يوضع قبل (أمام) العنصر الهدف ثم تُعاد أرقام zi */
   function layerReorder(dragId, targetId) {
@@ -1471,6 +1483,7 @@ body{overflow-x:hidden;margin:0}`;
     if (e.target.closest("[data-grid]")) return addGrid();
     const t = e.target.closest("[data-tpl]"); if (t) return addSection(t.dataset.tpl);
     const df = e.target.closest("[data-dflt]"); if (df) return addDefault(df.dataset.dflt);
+    if (e.target.closest("[data-cover]")) return showCovered(); if (e.target.closest("[data-covfwd]")) return coveredFront(); if (e.target.closest("[data-covclr]")) { E.covered = null; renderLeft(); positionOverlay(); return; }
     const hs = e.target.closest("[data-hs]"); if (hs) { E.hs = hs.dataset.hs; positionOverlay(); renderLeft(); const el = fdoc.querySelector(`[data-pb="${E.hs}"]`); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
     const l = e.target.closest("[data-sel]"); if (l) { select(l.dataset.sel); const el = fdoc.querySelector(`[data-pb="${l.dataset.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
   });
@@ -1489,7 +1502,7 @@ body{overflow-x:hidden;margin:0}`;
     else if (mod && !e.altKey && e.key.toLowerCase() === "c" && E.sel && selInfo() && selInfo().kind === "widget") { e.preventDefault(); copyEl(); }
     else if (mod && !e.altKey && e.key.toLowerCase() === "v" && E.clip) { e.preventDefault(); pasteEl(); }
     else if (e.key === "Delete" && E.sel) { e.preventDefault(); del(); }
-    else if ((e.key === "]" || e.key === "[") && E.sel) { const i0 = selInfo(); if (i0 && i0.kind === "widget") { e.preventDefault(); zOrder(e.key === "]" ? 1 : -1); } }
+    else if ((e.key === "]" || e.key === "[") && E.sel) { const i0 = selInfo(); if (i0 && i0.kind === "widget") { e.preventDefault(); zMove(mod ? (e.key === "]" ? "front" : "back") : (e.key === "]" ? "up" : "down")); } }
     else if (e.key === "Escape") { const inf = selInfo(); select(inf ? parentId(inf) : null); }          // Esc = تحديد الأب (عمود ثم قسم ثم لا شيء)
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
       const inf = selInfo(); if (!inf) return; if (isLocked(inf)) return;
