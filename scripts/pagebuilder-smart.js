@@ -264,7 +264,6 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         const nm = names(), cuts = AIVision.cutouts(S, cv, chosen, { matteMax: lite ? 1.2e6 : 3.2e6 }); cuts.forEach(c => c.label = nm[c.item.id] || c.label);
         $("pbs-msg").textContent = "⏳ إعادة رسم الخلفية محلياً مكان العناصر…"; await new Promise(r => setTimeout(r, 30));
         const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0); let fillNote = "";
-        const gen = aiFill && key && typeof PBGen !== "undefined" && PBGen.gemGenerate ? async parts => PBGen.gemGenerate(key, "image", parts, {}, await PBGen.imageModels(key)) : null;
         const how = await AIVision.eraseBg(part, cuts, { local: !lite, onNote: m => { fillNote = m; }, onStep: m => { $("pbs-msg").textContent = m; } });
         const FW = Z ? Z.full.width : W, FH = Z ? Z.full.height : H, ox = Z ? Z.ox : 0, oy = Z ? Z.oy : 0, base = document.createElement("canvas"); base.width = FW; base.height = FH; const bg = base.getContext("2d"); if (Z) bg.drawImage(Z.full, 0, 0); bg.drawImage(part, ox, oy);      // المنطقة المرمَّمة تعود لمكانها في الصورة الكاملة
         if (!(await preview(part, cuts))) { busy = false; paint(); return; }      // معاينة: حفظ أو إلغاء
