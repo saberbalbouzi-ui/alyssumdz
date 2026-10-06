@@ -107,9 +107,9 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-histbox{position:fixed;top:56px;inset-inline-start:12px;width:min(360px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 80px));background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.4);z-index:10040;flex-direction:column;overflow:hidden;direction:rtl}
 .pbx-hh{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .6rem;padding:.6rem .8rem;background:#173f35;color:#fff}.pbx-hh small{flex:1 1 100%;opacity:.8;font-size:.7rem}.pbx-hh button{margin-inline-start:auto;background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer}
 .pbx-hl2{overflow:auto;padding:.3rem}.pbx-hi{display:flex;align-items:center;gap:.5rem;width:100%;text-align:start;border:0;background:#fff;border-bottom:1px solid #f1ede1;padding:.5rem .6rem;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-hi:hover{background:#faf6ec}.pbx-hi .n{flex:none;width:24px;height:24px;border-radius:50%;background:#efe8d8;display:grid;place-items:center;font-size:.7rem;font-weight:800;color:#173f35}.pbx-hi .l{flex:1;font-weight:700;color:#2a3430}.pbx-hi .t{flex:none;color:#999;font-size:.72rem;direction:ltr}.pbx-hi.cur{background:#eaf5ef}.pbx-hi.cur .n{background:#157a55;color:#fff}.pbx-hi em{flex:none;font-style:normal;font-size:.66rem;background:#157a55;color:#fff;border-radius:999px;padding:.05rem .45rem}
-.pbx-mbar{display:none;position:absolute;bottom:10px;inset-inline:10px;z-index:25;background:#173f35;border-radius:14px;padding:.35rem;gap:.3rem;justify-content:space-around;box-shadow:0 6px 22px rgba(0,0,0,.4)}
-.pbx-mbar button{flex:1;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;padding:.5rem 0;font-size:1.05rem;font-weight:800;cursor:pointer;font-family:inherit}
-.pbx-mbar button.dng{background:#b83232}.pbx-mbar small{display:block;font-size:.6rem;font-weight:700;opacity:.85}
+.pbx-mbar,.pbx-mbar2{display:none;position:absolute;bottom:10px;inset-inline:10px;z-index:25;background:#173f35;border-radius:14px;padding:.35rem;gap:.3rem;justify-content:space-around;box-shadow:0 6px 22px rgba(0,0,0,.4)}
+.pbx-mbar button,.pbx-mbar2 button{flex:1;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;padding:.5rem 0;font-size:1.05rem;font-weight:800;cursor:pointer;font-family:inherit}
+.pbx-mbar button.dng,.pbx-mbar2 button.dng{background:#b83232}.pbx-mbar small,.pbx-mbar2 small{display:block;font-size:.6rem;font-weight:700;opacity:.85}
 #pb-app.pbx-hl .pbx-left,#pb-app.pbx-hl #pbx-rz2,#pb-app.pbx-hr .pbx-right,#pb-app.pbx-hr #pbx-rz{display:none}
 .pbx-tg.off{opacity:.55}
 @media(max-width:1100px){.pbx-left{width:200px}.pbx-right{width:260px}.pbx-rz{display:none}}
@@ -122,6 +122,7 @@ body{overflow-x:hidden;margin:0}`;
  .pbx-left{inset-inline-start:0}.pbx-right{inset-inline-end:0}.pbx-rz{display:none!important}
  .pbx-stage{width:100%;touch-action:pan-x pan-y;padding-bottom:84px}.pbx-add{margin-bottom:60px}
  #pb-app.pbx-ms .pbx-mbar{display:flex}
+ #pb-app.pbx-mm .pbx-mbar2{display:flex}
  .pbx-h{width:22px;height:22px}.pbx-bar button,.pbx-bar span{padding:.4rem .6rem;font-size:.82rem}
  .pbx-ah{padding:.9rem .8rem!important}
 }
@@ -177,6 +178,16 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-sb{position:absolute;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:7}
 .pbx-sb button{border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);cursor:grab}.pbx-sb button:hover{background:#f3ecff;color:#8b3dff}.pbx-sb button:active{cursor:grabbing}
 .pbx-ft svg,.pbx-sb svg{width:20px;height:20px;display:block}
+.pbx-box.multi{border:2px solid #8b3dff;background:rgba(139,61,255,.07)}
+.pbx-mbox{position:absolute;border:1.5px dashed #8b3dff;pointer-events:none;box-sizing:border-box}
+.pbx-marqw{position:absolute;inset:0;pointer-events:none;z-index:9}
+.pbx-marq{position:absolute;border:1.5px dashed #2d6cdf;background:rgba(45,108,223,.12);box-sizing:border-box}
+.pbx-mhit{position:absolute;border:2px solid #8b3dff;background:rgba(139,61,255,.1);box-sizing:border-box}
+.pbx-mt{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:rtl}
+.pbx-mt b{background:#8b3dff;color:#fff;border-radius:8px;padding:.2rem .5rem;font-size:.76rem;margin-inline-end:3px}
+.pbx-mt button{border:0;background:none;border-radius:9px;cursor:pointer;padding:.35rem .5rem;display:flex;gap:.25rem;align-items:center;font-family:inherit;font-weight:700;font-size:.76rem;color:#0e1318;white-space:nowrap}
+.pbx-mt button:hover{background:#ebeef2}.pbx-mt button.dng:hover{color:#b83232}.pbx-mt button:disabled{opacity:.35;cursor:default}
+#pbx-mbar2 b{flex:none;align-self:center;color:#fff;font-size:.78rem;padding:0 .35rem}
 .pbx-tsx{display:grid;gap:.4rem}.pbx-tsx button{border:1.5px solid #e0d9c8;background:#fff;border-radius:12px;padding:.55rem .8rem;text-align:start;cursor:pointer;font-family:inherit;color:#111;line-height:1.3}.pbx-tsx button:hover{border-color:#8b3dff;background:#faf6ff}
 .pbx-ctx2{z-index:10004}.pbx-ctx button.has-sub:after{content:"‹";margin-inline-start:auto;font-size:1.1rem;color:#999}.pbx-ctx button.off{opacity:.4;cursor:default}
 @media(pointer:coarse){.pbx-box.widget .pbx-h{width:20px;height:20px}.pbx-box.widget .pbx-h.d-n,.pbx-box.widget .pbx-h.d-s{width:34px;height:14px}.pbx-box.widget .pbx-h.d-e,.pbx-box.widget .pbx-h.d-w{width:14px;height:34px}.pbx-ft button,.pbx-sb button{width:40px;height:40px}}
@@ -225,10 +236,15 @@ body{overflow-x:hidden;margin:0}`;
   <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
   <aside class="pbx-right" id="pbx-insp"></aside>
 </div>
+<div class="pbx-mbar2" id="pbx-mbar2">
+  <b id="pbx-mmn">☑ 0</b><button onclick="PBApp.ma('copy')" title="نسخ المحدّد">⧉<small>نسخ</small></button><button onclick="PBApp.ma('dup')" title="تكرار المحدّد">➕<small>تكرار</small></button>
+  <button onclick="PBApp.ma('group')" title="ربط العناصر ببعضها">🔗<small>ربط</small></button><button onclick="PBApp.ma('ungroup')" title="تفكيك الربط">⛓<small>تفكيك</small></button>
+  <button class="dng" onclick="PBApp.ma('del')" title="حذف المحدّد">🗑<small>حذف</small></button><button onclick="PBApp.ma('done')" title="إنهاء التحديد المتعدد">✓<small>تم</small></button>
+</div>
 <div class="pbx-mbar" id="pbx-mbar">
   <button onclick="PBApp.mact('up')" title="للأعلى">▲<small>أعلى</small></button><button onclick="PBApp.mact('down')" title="للأسفل">▼<small>أسفل</small></button>
   <button onclick="PBApp.mact('dup')" title="نسخ العنصر">⧉<small>نسخ</small></button><button onclick="PBApp.mact('set')" title="إعدادات العنصر">⚙<small>إعدادات</small></button>
-  <button onclick="PBApp.mact('undo')" title="تراجع">↩<small>تراجع</small></button><button class="dng" onclick="PBApp.mact('del')" title="حذف">🗑<small>حذف</small></button>
+  <button onclick="PBApp.mact('undo')" title="تراجع">↩<small>تراجع</small></button><button onclick="PBApp.mact('multi')" title="تحديد عدة عناصر معاً">☑<small>تحديد</small></button><button class="dng" onclick="PBApp.mact('del')" title="حذف">🗑<small>حذف</small></button>
 </div>
 <div class="pbx-histbox" id="pbx-hist" style="display:none"></div>
 <div class="pbx-msg" id="pbx-msg"></div>`;
@@ -254,7 +270,7 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── فتح/إغلاق ───────────────── */
   function open(page, slug, isNew) {
     build();
-    E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
+    E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
     $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
@@ -471,8 +487,8 @@ body{overflow-x:hidden;margin:0}`;
     if (isMob() && !hide) app.classList.add(w === "l" ? "pbx-hr" : "pbx-hl");      // على الجوال شريط واحد فقط في كل مرة
     syncPanels(); setTimeout(() => { fitStage(); positionOverlay(); }, 30);
   }
-  function mact(a) { if (a === "up") move(-1); else if (a === "down") move(1); else if (a === "dup") dup(); else if (a === "del") del(); else if (a === "undo") undo(); else if (a === "set") panel("r", true); }
-  function updateMbar() { const app = $("pb-app"); if (app) app.classList.toggle("pbx-ms", !!E.sel && !!selInfo()); }
+  function mact(a) { if (a === "up") move(-1); else if (a === "down") move(1); else if (a === "dup") dup(); else if (a === "del") del(); else if (a === "undo") undo(); else if (a === "multi") toggleMM(); else if (a === "set") panel("r", true); }
+  function updateMbar() { const app = $("pb-app"); if (!app) return; const mo = multiOn(); app.classList.toggle("pbx-ms", !!E.sel && !!selInfo() && !mo && !E.mm); app.classList.toggle("pbx-mm", !!E.mm || mo); const n = $("pbx-mmn"); if (n) n.textContent = "☑ " + selIds().length; }
   function setZoom(z) { E.zoom = Math.max(.4, Math.min(3, z)); fitStage(); positionOverlay(); }
   function syncPanels() { const app = $("pb-app"); [["l", "pbx-hl"], ["r", "pbx-hr"]].forEach(([w, c]) => { const b = $("pbx-tg" + w); if (b) b.classList.toggle("off", app.classList.contains(c)); }); }
   /* اللمس: السحب بالإصبع على مقابض التحجيم/التدوير وعلى العنصر المحدد يُترجم إلى أحداث فأرة (تمرير الصفحة يبقى طبيعياً في بقية المواضع) */
@@ -486,11 +502,21 @@ body{overflow-x:hidden;margin:0}`;
       const t0 = e.target; if (t0 && t0.addEventListener) { const done = ev => { pinchEnd(ev); if (ev.touches.length < 2) { t0.removeEventListener("touchmove", pinchMove); t0.removeEventListener("touchend", done); t0.removeEventListener("touchcancel", done); } }; t0.addEventListener("touchmove", pinchMove, { passive: false }); t0.addEventListener("touchend", done); t0.addEventListener("touchcancel", done); } } }, { passive: true });      // قرصة إصبعين على العنصر المحدد: تكبير تناسب (والمستمعون على العنصر نفسه لأن الصفحة تُعاد رسمها أثناء القرصة)
     doc.addEventListener("touchmove", pinchMove, { passive: false });
     doc.addEventListener("touchend", pinchEnd);
+    /* الهاتف + وضع التحديد المتعدد: ضغطة مطوّلة على فراغ ثم سحب = مستطيل تحديد (السحب السريع يبقى تمريراً للصفحة) */
+    if (isFrame) doc.addEventListener("touchstart", e => {
+      if (!E.mm || e.touches.length !== 1) return; const tg = e.target; if (!tg || !tg.closest || tg.closest('[data-kind="widget"]') || tg.closest("[contenteditable=true]")) return;
+      const t0 = e.touches[0], p0 = { clientX: t0.clientX, clientY: t0.clientY }; let go = false, last = p0;
+      const tm = setTimeout(() => { go = true; try { navigator.vibrate && navigator.vibrate(15); } catch (x) { } tg.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true, clientX: p0.clientX, clientY: p0.clientY, button: 0, view: doc.defaultView })); }, 380);
+      const mv = ev => { const t = ev.touches[0]; if (!go) { if (Math.hypot(t.clientX - p0.clientX, t.clientY - p0.clientY) > 10) clean(); return; } ev.preventDefault(); last = t; doc.documentElement.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView })); };
+      const fin = () => { if (go) doc.documentElement.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true, clientX: last.clientX, clientY: last.clientY, button: 0, view: doc.defaultView })); clean(); };
+      const clean = () => { clearTimeout(tm); tg.removeEventListener("touchmove", mv); tg.removeEventListener("touchend", fin); tg.removeEventListener("touchcancel", fin); };
+      tg.addEventListener("touchmove", mv, { passive: false }); tg.addEventListener("touchend", fin); tg.addEventListener("touchcancel", fin);
+    }, { passive: true });
     const mk = (type, t) => new MouseEvent(type, { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView });
     /* أحداث اللمس تبقى موجّهة إلى العنصر الذي بدأ عنده اللمس حتى لو أُعيد رسم الصفحة وحُذف من المستند أثناء السحب؛ لذا نربط الحركة والنهاية بالعنصر نفسه لا بالمستند (وإلا يتوقف السحب بعد أول حركة ويبقى المحرر «مشغولاً» فتتعطل الإعدادات) */
     doc.addEventListener("touchstart", e => {
       if (e.touches.length !== 1) return; const tg = e.target; if (!tg || !tg.closest) return;
-      const ok = isFrame ? (E.sel && tg.closest('[data-pb="' + E.sel + '"]') && !tg.closest("[contenteditable=true]")) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz,.pbx-ft,.pbx-sb,.pbx-sbar");
+      const wid = isFrame && tg.closest('[data-kind="widget"]'), ok = isFrame ? (!E.mm && !tg.closest("[contenteditable=true]") && ((E.sel && tg.closest('[data-pb="' + E.sel + '"]')) || (wid && selIds().includes(wid.dataset.pb)))) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz,.pbx-ft,.pbx-sb,.pbx-sbar");
       if (!ok || (!isFrame && tg.closest(".pbx-bar button,.pbx-bar label,.pbx-ft button,.pbx-sbar button"))) return; on = true; e.preventDefault(); tg.dispatchEvent(mk("mousedown", e.touches[0]));
       const move = ev => { if (!on) return; if (ev.touches.length > 1) return; ev.preventDefault(); doc.documentElement.dispatchEvent(mk("mousemove", ev.touches[0])); };
       const fin = ev => { tg.removeEventListener("touchmove", move); tg.removeEventListener("touchend", fin); tg.removeEventListener("touchcancel", fin); if (!on) return; on = false; doc.documentElement.dispatchEvent(mk("mouseup", (ev.changedTouches && ev.changedTouches[0]) || { clientX: 0, clientY: 0 })); };
@@ -565,6 +591,7 @@ body{overflow-x:hidden;margin:0}`;
   function wireFrame() {
     touchBridge(fdoc, true);
     fdoc.addEventListener("click", e => {
+      if (E.skipClick && Date.now() - E.skipClick < 700) { E.skipClick = 0; e.preventDefault(); e.stopPropagation(); return; }      // نقرة انتهت بتحديد متعدد/مستطيل: لا تُغيّر التحديد
       const a = e.target.closest("a"); if (a) e.preventDefault();      // لا تنتقل الصفحة أبداً بالنقر على رابط/زر داخل المحرر (حتى أثناء تحرير نصه) وإلا فُتحت لوحة الإدارة داخل الإطار
       if (e.target.closest("[contenteditable=true]")) return;
       const sa = e.target.closest(".pb-sl-a, .pb-sl-dots i");
@@ -583,10 +610,12 @@ body{overflow-x:hidden;margin:0}`;
     fdoc.addEventListener("mousedown", e => {
       E.md = { x: e.clientX, y: e.clientY, moved: false, sel: E.sel };
       if (e.button !== 0 || e.target.closest("[contenteditable=true]")) return;
-      const wEl = e.target.closest('[data-kind="widget"]'); if (!wEl) return;
+      const wEl = e.target.closest('[data-kind="widget"]'); if (!wEl) { if (!e.target.closest("input,select,textarea,button,a")) startMarquee(e); return; }
+      if (e.shiftKey || e.ctrlKey || e.metaKey || E.mm) { e.preventDefault(); E.skipClick = Date.now(); toggleMulti(wEl.dataset.pb); return; }      // Shift/Ctrl+نقر (أو وضع التحديد المتعدد في الهاتف) = إضافة/إزالة
       const cap = e.target.closest(".pb-sl-cap:not(.below)");
       if (cap && E.sel === wEl.dataset.pb) { e.preventDefault(); return startCapDrag(e, cap, wEl); }
       { const i1 = find(wEl.dataset.pb); if (i1 && isLocked(i1)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); return; } }      // العنصر المقفل يُحدَّد فقط
+      if ((E.multi && E.multi.length > 1 && E.multi.includes(wEl.dataset.pb)) || grpOf(wEl.dataset.pb)) { const gi = find(wEl.dataset.pb); if (gi && !(E.dev === "m" && gi.sec.set.kind !== "canvas" && PB.autoFlowFree(gi.sec))) { if (!E.multi.includes(wEl.dataset.pb)) select(wEl.dataset.pb); if (E.multi.length > 1) { e.preventDefault(); return startMoveMulti(e); } } }      // سحب مجموعة/عدة عناصر معاً
       { const i0 = find(wEl.dataset.pb); if (i0 && E.dev === "m" && i0.sec.set.kind !== "canvas" && (wEl.dataset.free ? PB.autoFlowFree(i0.sec) : true)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); if (!E.mToast) { E.mToast = 1; toast("📱 في الهاتف تُرتَّب العناصر تلقائياً داخل الأقسام العادية — حرّكها من عرض سطح المكتب أو استعمل إعدادات الشريط الجانبي"); } return; } }
       if (wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots")) {
         if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
@@ -654,8 +683,9 @@ body{overflow-x:hidden;margin:0}`;
     if (e.target.closest && e.target.closest("[contenteditable=true]")) { hideCtx(); return; }      // أثناء تحرير نص: تظهر قائمة المتصفح الأصلية (نسخ/قص/لصق للنص المحدَّد) لا قائمة العنصر
     const wEl = e.target.closest('[data-kind="widget"]'); hideCtx();
     if (!wEl) { const se = e.target.closest && e.target.closest(".pb-sec"), si = se && find(se.dataset.pb); if (si && si.kind === "section" && (FREE_ONLY || si.set.bgImg)) { e.preventDefault(); const f1 = $("pbx-fw").getBoundingClientRect(), k = E.scale; openBgMenu(f1.left + e.clientX * k, f1.top + e.clientY * k, si.node); } return; }
-    e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
-    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; openCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
+    e.preventDefault(); if (E.sel !== wEl.dataset.pb && !selIds().includes(wEl.dataset.pb)) select(wEl.dataset.pb);
+    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; if (selIds().length > 1) return openMultiCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
+    openCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
   }
   /* قائمة العنصر المحدد (زر ⋯ في الشريط العائم أو الزر الأيمن): نسخ، نمط، لصق، محاذاة على الصفحة، قفل، رابط... تُفتح عند (x,y) أو أسفل/أعلى الزر anchor */
   function openCtx(x, y, anchor, custom) {
@@ -749,7 +779,8 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
   function select(id) {
     if (editing) { try { editing.el.blur(); } catch (e) { } }
-    E.sel = id; { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
+    E.sel = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
+    { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
      positionOverlay(); if (E.ltab === "lay") renderLeft();
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
@@ -795,7 +826,9 @@ body{overflow-x:hidden;margin:0}`;
     if (E.mwp && E.mwp.id !== E.sel) { mwRestore(); toast("↩ أُلغيت مسوّدة الكتابة السحرية"); setTimeout(() => { renderCanvas(); renderInspector(); }, 0); }      // تغيير التحديد قبل الإدراج = إلغاء
     try { drawSecBar(ovl); markThumbs(); } catch (x) { console.warn(x); }
     if (E.covered && E.covered.size && fdoc) { const o0 = ovlOrigin(); E.covered.forEach(id => { const el = fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return; const r = layoutRect(el), d = document.createElement("div"); d.className = "pbx-cov"; d.style.cssText = `left:${o0.ox + r.left * o0.s}px;top:${o0.oy + r.top * o0.s}px;width:${r.width * o0.s}px;height:${r.height * o0.s}px`; ovl.appendChild(d); }); }
+    if (E.marqEl) ovl.appendChild(E.marqEl);
     if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
+    if (inf.kind === "widget" && selIds().length > 1) { drawMulti(ovl); return; }
     const el = fdoc.querySelector(`[data-pb="${E.sel}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, rotV = inf.kind === "widget" ? (num(eff(inf.set, "rot", E.dev)) || 0) : 0;
     const isW = inf.kind === "widget", locked = isW && isLocked(inf);
@@ -986,7 +1019,7 @@ body{overflow-x:hidden;margin:0}`;
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
       bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qDone(inf, "fs", Math.max(8, Math.min(160, Number(t.value) || 17)), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
     if (!document.getElementById("pbfonts-a")) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
-    const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget"; if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه bar.style.display = show ? "flex" : "none"; if (!show) return;
+    const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget" && !multiOn(); if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null; bar.style.display = show ? "flex" : "none"; if (!show) return;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه
     bar.innerHTML = qbarHtml(inf); placeQbar();
   }
   function qPop(btn, html, bind, opt) {
@@ -1198,16 +1231,17 @@ body{overflow-x:hidden;margin:0}`;
   const isLocked = inf => !!(inf && inf.kind === "widget" && (inf.set.locked || (inf.sec && inf.sec.set.locked)));
   function toggleLock() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; if (inf.sec.set.locked) { toast("🔒 القسم مقفل — افتح قفله من شريط القسم"); return; } if (inf.set.locked) delete inf.set.locked; else inf.set.locked = true; E.nextLabel = inf.set.locked ? "قفل عنصر" : "فتح قفل"; afterEdit(); toast(inf.set.locked ? "🔒 العنصر مقفل" : "🔓 فُتح القفل"); }
   /* نسخ/لصق العنصر ونمطه */
-  function copyEl() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; E.clip = clone(inf.node); toast("📋 نُسخ العنصر — الصقه بـ Ctrl+V"); }
+  function copyEl() { if (multiOn()) return copyMulti(); const inf = selInfo(); if (!inf || inf.kind !== "widget") return; E.clipM = null; E.clip = clone(inf.node); toast("📋 نُسخ العنصر — الصقه بـ Ctrl+V"); }
   function pasteEl() {
     if (!E.clip) { toast("لا يوجد عنصر منسوخ"); return; }
-    const c = reId(clone(E.clip)); delete c.set.locked; const t = target();
-    if (t.sec) { const sec = t.sec, fr = sec.free || [];
-      if (c.set.fx && c.set.fy) { setR(c.set, "fx", E.dev, (Number(eff(c.set, "fx", E.dev)) || 0) + 3); setR(c.set, "fy", E.dev, (Number(eff(c.set, "fy", E.dev)) || 0) + 30); c.set.zi = Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1; }
-      else { const f = PB.mkFree(c.type, 6, 24, Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1); ["fx", "fy", "fwd", "fh", "zi"].forEach(k => { c.set[k] = f.set[k]; }); delete c.set.w; delete c.set.mh; }
-      (sec.free = sec.free || []).push(c); if (sec.set.kind === "canvas") { const need = (Number(eff(c.set, "fy", "d")) || 0) + (Number(eff(c.set, "fh", "d")) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); } }
-    else { ["fx", "fy", "fwd", "fh", "zi", "rot"].forEach(k => delete c.set[k]); t.col.widgets.push(c); }
-    E.nextLabel = "لصق عنصر"; afterEdit(c.id);
+    const list = E.clipM && E.clipM.length > 1 && E.clipM[0] === E.clip ? E.clipM : [E.clip], gm = {}, ids = [], t = target();
+    list.forEach(src => { const c = reId(clone(src), gm); delete c.set.locked; ids.push(c.id);
+      if (t.sec) { const sec = t.sec, fr = sec.free || [];
+        if (c.set.fx && c.set.fy) { setR(c.set, "fx", E.dev, (Number(eff(c.set, "fx", E.dev)) || 0) + 3); setR(c.set, "fy", E.dev, (Number(eff(c.set, "fy", E.dev)) || 0) + 30); c.set.zi = Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1; }
+        else { const f = PB.mkFree(c.type, 6, 24, Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1); ["fx", "fy", "fwd", "fh", "zi"].forEach(k => { c.set[k] = f.set[k]; }); delete c.set.w; delete c.set.mh; }
+        (sec.free = sec.free || []).push(c); if (sec.set.kind === "canvas") { const need = (Number(eff(c.set, "fy", "d")) || 0) + (Number(eff(c.set, "fh", "d")) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); } }
+      else { ["fx", "fy", "fwd", "fh", "zi", "rot"].forEach(k => delete c.set[k]); t.col.widgets.push(c); } });
+    E.nextLabel = ids.length > 1 ? "لصق " + ids.length + " عناصر" : "لصق عنصر"; afterEdit(ids[ids.length - 1]); if (ids.length > 1) setMulti(ids);
   }
   const STYLE_SKIP = ["w", "mh", "al", "mar", "fx", "fy", "fwd", "fh", "zi", "rot", "locked"];
   const styleKeys = inf => ctlsFor(inf).filter(c => c.tab === "s" && !STYLE_SKIP.includes(c.k)).map(c => c.k);
@@ -1344,7 +1378,7 @@ body{overflow-x:hidden;margin:0}`;
   }
 
   /* ───────────────── عمليات على النموذج ───────────────── */
-  function afterEdit(sel) { E.covered = null; if (sel !== undefined) E.sel = sel; commitHist(); renderCanvas(); renderInspector(); renderLeft(); }
+  function afterEdit(sel) { E.covered = null; if (sel !== undefined) { E.sel = sel; E.multi = []; } commitHist(); renderCanvas(); renderInspector(); renderLeft(); }
   function move(d) {
     const inf = selInfo(); if (!inf) return; const j = inf.idx + d;
     if (inf.kind === "widget" && inf.free) { zMove(d < 0 ? "up" : "down"); return; }
@@ -1365,13 +1399,13 @@ body{overflow-x:hidden;margin:0}`;
     let n = 0; nodes.forEach(nd => { Object.keys(nd.set || {}).forEach(k => { const v = nd.set[k]; if (isObj(v) && ("d" in v || "t" in v || "m" in v)) { const val = eff(nd.set, k, E.dev); if (val !== undefined) { setR(nd.set, k, to, clone(val)); n++; } } }); });
     E.nextLabel = "نسخ تصميم " + DEVNAME[E.dev] + " إلى " + DEVNAME[to]; afterEdit(); toastUndo("📋 نُسخت " + n + " خاصية إلى " + DEVNAME[to]);
   }
-  function reId(n) { n.id = uid(); (n.cols || []).forEach(reId); (n.widgets || []).forEach(reId); (n.free || []).forEach(reId); return n; }
+  function reId(n, m) { m = m || {}; n.id = uid(); if (n.set && n.set.grp) n.set.grp = m[n.set.grp] = m[n.set.grp] || "g" + uid(); const r = c => reId(c, m); (n.cols || []).forEach(r); (n.widgets || []).forEach(r); (n.free || []).forEach(r); return n; }      // الروابط (grp) تُنسخ كمجموعة جديدة مستقلة
   function dup() {
-    const inf = selInfo(); if (!inf) return; const c = reId(clone(inf.node));
+    if (multiOn()) return dupMulti(); const inf = selInfo(); if (!inf) return; const c = reId(clone(inf.node)); if (c.set) delete c.set.grp;
     if (inf.kind === "widget" && inf.free) { setR(c.set, "fx", E.dev, (Number(eff(c.set, "fx", E.dev)) || 0) + 3); setR(c.set, "fy", E.dev, (Number(eff(c.set, "fy", E.dev)) || 0) + 30); c.set.zi = (Number(c.set.zi) || 0) + 1; }
     inf.list.splice(inf.idx + 1, 0, c); afterEdit(c.id);
   }
-  function del() { const inf = selInfo(); if (!inf) return; if (inf.kind === "column" && inf.sec.cols.length === 1) { toast("القسم يحتاج عموداً واحداً على الأقل — احذف القسم كله"); return; } inf.list.splice(inf.idx, 1); afterEdit(null); }
+  function del() { if (multiOn()) return delMulti(); const inf = selInfo(); if (!inf) return; if (inf.kind === "column" && inf.sec.cols.length === 1) { toast("القسم يحتاج عموداً واحداً على الأقل — احذف القسم كله"); return; } inf.list.splice(inf.idx, 1); afterEdit(null); }
   function addCol(sec, at) { const c = PB.mkC([]); if (at == null) sec.cols.push(c); else sec.cols.splice(at, 0, c); if (sec.set.kind !== "grid") sec.cols.forEach(x => { if (x.set.w) delete x.set.w; }); afterEdit(c.id); }
   /* مرتبة الطبقات: أمام/خلف نسبةً لبقية عناصر القسم */
   const zList = sec => (sec.free || []).map((w, i) => [w, i]).sort((x, y) => (Number(x[0].set.zi) || 0) - (Number(y[0].set.zi) || 0) || x[1] - y[1]).map(x => x[0]);
@@ -1594,6 +1628,110 @@ body{overflow-x:hidden;margin:0}`;
     const l = e.target.closest("[data-sel]"); if (l) { select(l.dataset.sel); const el = fdoc.querySelector(`[data-pb="${l.dataset.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
   });
   function toggleSnap() { E.snap = !E.snap; updateTop(); toast(E.snap ? "🧲 الالتصاق مفعّل: يلتصق العنصر بحواف وأوسط العناصر الأخرى" : "التحريك حر تماماً بلا التصاق"); }
+
+  /* ───────────────── التحديد المتعدد: مستطيل تحديد، Shift/Ctrl+نقر، ربط/تفكيك، نسخ/تكرار/حذف/محاذاة (وفي الهاتف زر «تحديد») ───────────────── */
+  const widgetsOf = () => { const out = []; E.page.sections.forEach(sec => { (sec.free || []).forEach(w => out.push(w)); (sec.cols || []).forEach(c => (c.widgets || []).forEach(w => out.push(w))); }); return out; };
+  const grpOf = id => { const i = find(id); if (!i || i.kind !== "widget" || !i.set.grp) return null; return widgetsOf().filter(w => w.set.grp === i.set.grp).map(w => w.id); };
+  const selIds = () => { if (E.multi && E.multi.length > 1) { const L = E.multi.filter(id => { const i = find(id); return i && i.kind === "widget"; }); if (L.length > 1) return L; } const i = E.sel && find(E.sel); return i && i.kind === "widget" ? [E.sel] : []; };
+  const multiOn = () => selIds().length > 1;
+  function setMulti(ids) {
+    ids = [...new Set(ids)].filter(id => { const i = find(id); return i && i.kind === "widget"; });
+    if (ids.length < 2) { select(ids[0] || null); return; }
+    E.multi = ids; E.sel = ids.includes(E.sel) ? E.sel : ids[ids.length - 1]; renderInspector(); positionOverlay(); if (E.ltab === "lay") renderLeft();
+  }
+  function toggleMulti(id) {
+    const g = grpOf(id) || [id], cur = selIds(), has = cur.includes(id);
+    setMulti(has ? cur.filter(x => !g.includes(x)) : cur.concat(g));
+  }
+  function toggleMM() { E.mm = !E.mm; updateMbar(); if (E.mm) toast("☑ انقر العناصر لتحديدها · اضغط مطولاً على فراغ واسحب لمستطيل"); else toast("✓ انتهى التحديد المتعدد"); positionOverlay(); }
+  function selectAllSec() { const sec = actSec(); if (!sec) return; const ids = (sec.free || []).map(w => w.id).concat((sec.cols || []).flatMap(c => (c.widgets || []).map(w => w.id))); if (!ids.length) return; setMulti(ids); toast("☑ حُدّد " + ids.length + " عنصراً في القسم"); }
+  /* مستطيل التحديد: السحب على فراغ يحدّد كل عنصر يلامسه المستطيل (Shift/Ctrl أو وضع الهاتف = إضافة للمحدَّد) */
+  function startMarquee(e) {
+    if (e.button !== 0 || !fdoc) return; const x0 = e.clientX, y0 = e.clientY, add = e.shiftKey || e.ctrlKey || e.metaKey || E.mm, base = add ? selIds() : []; let moved = false, hits = [];
+    const wrap = document.createElement("div"); wrap.className = "pbx-marqw"; E.marqEl = wrap; e.preventDefault();
+    dragTrack(e, "crosshair", (dx, dy) => {
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 5) return; moved = true; const o = ovlOrigin(), s = o.s, L = Math.min(x0, x0 + dx), T = Math.min(y0, y0 + dy), R = Math.max(x0, x0 + dx), B = Math.max(y0, y0 + dy);
+      const ovl = $("pbx-ovl"); if (wrap.parentNode !== ovl) ovl.appendChild(wrap); wrap.innerHTML = ""; hits = [];
+      const q = document.createElement("div"); q.className = "pbx-marq"; q.style.cssText = `left:${o.ox + L * s}px;top:${o.oy + T * s}px;width:${(R - L) * s}px;height:${(B - T) * s}px`; wrap.appendChild(q);
+      fdoc.querySelectorAll('[data-kind="widget"]').forEach(el => { const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || r.right < L || r.left > R || r.bottom < T || r.top > B) return; hits.push(el.dataset.pb);
+        const h = document.createElement("div"); h.className = "pbx-mhit"; h.style.cssText = `left:${o.ox + r.left * s}px;top:${o.oy + r.top * s}px;width:${r.width * s}px;height:${r.height * s}px`; wrap.appendChild(h); });
+    }, () => { wrap.remove(); E.marqEl = null; if (!moved) return; E.skipClick = Date.now(); const all = base.slice(); hits.forEach(id => { (grpOf(id) || [id]).forEach(g => { if (!all.includes(g)) all.push(g); }); }); setMulti(all); if (all.length > 1) toast("☑ حُدّد " + all.length + " عناصر — Delete للحذف، Ctrl+G للربط، زر الفأرة الأيمن للمزيد"); });
+  }
+  /* سحب عدة عناصر حرة معاً (أو مجموعة مربوطة) */
+  function startMoveMulti(e) {
+    const dev = E.dev, infs = selIds().map(find).filter(i => i && i.free && !isLocked(i)); if (!infs.length) return; infs.forEach(i => ensureMobile(i.sec));
+    const st = infs.map(i => { const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width; return { i, fx: Number(eff(i.set, "fx", dev)) || 0, fy: Number(eff(i.set, "fy", dev)) || 0, cw, u: uOf(i.sec, { width: cw }) }; });
+    let moved = false;
+    dragTrack(e, "move", (dx, dy, ev) => {
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return; moved = true; if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
+      st.forEach(q => { setR(q.i.set, "fx", dev, Math.round((q.fx + dx / q.cw * 100) * 10) / 10); setR(q.i.set, "fy", dev, Math.max(0, Math.round(q.fy + dy / q.u))); if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(q.i.set, k, "d") === undefined) setR(q.i.set, k, "d", eff(q.i.set, k, dev)); }); });
+      new Set(st.map(q => q.i.sec)).forEach(growCanvas); renderCanvas(); positionOverlay();
+    }, () => { if (moved) { E.nextLabel = "نقل " + st.length + " عناصر"; commitHist(); renderInspector(); } });
+  }
+  function nudgeMulti(dx, dy) {
+    const dev = E.dev, infs = selIds().map(find).filter(i => i && i.free && !isLocked(i)); if (!infs.length) return;
+    infs.forEach(i => { ensureMobile(i.sec); const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, u = uOf(i.sec, { width: cw });
+      setR(i.set, "fx", dev, Math.round(((Number(eff(i.set, "fx", dev)) || 0) + dx / cw * 100) * 10) / 10); setR(i.set, "fy", dev, Math.max(0, Math.round((Number(eff(i.set, "fy", dev)) || 0) + dy / u)));
+      if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(i.set, k, "d") === undefined) setR(i.set, k, "d", eff(i.set, k, dev)); }); });
+    schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 400);
+  }
+  function copyMulti() { const L = selIds().map(find).filter(Boolean); if (!L.length) return; E.clipM = L.map(i => clone(i.node)); E.clip = E.clipM[0]; toast("📋 نُسخ " + L.length + " عناصر — الصقها بـ Ctrl+V"); }
+  function dupMulti() {
+    const L = selIds().map(find).filter(Boolean), gm = {}, ids = [];
+    L.forEach(i => { const c = reId(clone(i.node), gm); delete c.set.locked; if (i.free) { setR(c.set, "fx", E.dev, (Number(eff(c.set, "fx", E.dev)) || 0) + 3); setR(c.set, "fy", E.dev, (Number(eff(c.set, "fy", E.dev)) || 0) + 30); c.set.zi = (Number(c.set.zi) || 0) + 1; } i.list.splice(i.list.indexOf(i.node) + 1, 0, c); ids.push(c.id); });
+    E.nextLabel = "تكرار " + ids.length + " عناصر"; afterEdit(ids[0]); setMulti(ids);
+  }
+  function delMulti() {
+    const L = selIds().map(find).filter(Boolean), ok = L.filter(i => !isLocked(i)); if (!ok.length) { toast("🔒 العناصر المحدّدة مقفلة"); return; }
+    ok.forEach(i => { const k = i.list.indexOf(i.node); if (k >= 0) i.list.splice(k, 1); }); E.nextLabel = "حذف " + ok.length + " عناصر"; afterEdit(null); toastUndo("🗑 حُذف " + ok.length + " عناصر" + (ok.length < L.length ? " (تُركت المقفلة)" : ""));
+  }
+  function groupSel() {
+    const L = selIds().map(find).filter(Boolean); if (L.length < 2) { toast("حدّد عنصرين أو أكثر لربطهم"); return; } const g = "g" + uid(); L.forEach(i => { i.set.grp = g; });
+    E.nextLabel = "ربط " + L.length + " عناصر"; afterEdit(); toast("🔗 رُبط " + L.length + " عناصر: يتحركون ويُحدَّدون معاً — للفك: Ctrl+Shift+G");
+  }
+  function ungroupSel() {
+    const L = selIds().map(find).filter(Boolean); let n = 0; L.forEach(i => { if (i.set.grp) { delete i.set.grp; n++; } }); if (!n) { toast("لا يوجد ربط لتفكيكه"); return; }
+    E.nextLabel = "تفكيك ربط"; afterEdit(); toast("⛓ فُكّ الربط — صارت العناصر مستقلة");
+  }
+  /* محاذاة العناصر المحدّدة (في القسم نفسه) إلى حدودها المشتركة */
+  function alignMulti(how) {
+    const infs = selIds().map(find).filter(i => i && i.free && !isLocked(i)); if (infs.length < 2) { toast("المحاذاة للعناصر الحرة غير المقفلة"); return; } if (new Set(infs.map(i => i.sec.id)).size > 1) { toast("حدّد عناصر من القسم نفسه للمحاذاة"); return; }
+    const dev = E.dev, sec = infs[0].sec; ensureMobile(sec); const R = infs.map(i => { const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`), cont = el.closest(".pb-in"), cr = cont.getBoundingClientRect(), r = layoutRect(el); return { i, cr, X: r.left - cr.left, Y: r.top - cr.top, W: r.width, H: r.height }; });
+    const cr = R[0].cr, u = uOf(sec, cr), minX = Math.min(...R.map(q => q.X)), maxX = Math.max(...R.map(q => q.X + q.W)), minY = Math.min(...R.map(q => q.Y)), maxY = Math.max(...R.map(q => q.Y + q.H));
+    R.forEach(q => { let X = q.X, Y = q.Y; if (how === "left") X = minX; else if (how === "right") X = maxX - q.W; else if (how === "center") X = (minX + maxX) / 2 - q.W / 2; else if (how === "top") Y = minY; else if (how === "bottom") Y = maxY - q.H; else if (how === "middle") Y = (minY + maxY) / 2 - q.H / 2;
+      setR(q.i.set, "fx", dev, Math.round(X / cr.width * 1000) / 10); setR(q.i.set, "fy", dev, Math.max(0, Math.round(Y / u))); if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(q.i.set, k, "d") === undefined) setR(q.i.set, k, "d", eff(q.i.set, k, dev)); }); });
+    E.nextLabel = "محاذاة عناصر"; afterEdit();
+  }
+  const alignItems = () => [["⇤", "يسار", () => alignMulti("left")], ["↔", "وسط أفقياً", () => alignMulti("center")], ["⇥", "يمين", () => alignMulti("right")], "-", ["⤒", "أعلى", () => alignMulti("top")], ["↕", "وسط عمودياً", () => alignMulti("middle")], ["⤓", "أسفل", () => alignMulti("bottom")]];
+  const grpState = () => { const L = selIds().map(find).filter(Boolean), gs = L.map(i => i.set.grp || ""); return { any: gs.some(Boolean), all: gs.every(Boolean) && new Set(gs).size === 1 }; };
+  function openMultiCtx(x, y) {
+    const n = selIds().length, g = grpState();
+    showMenu([["⧉", "نسخ (" + n + ")", copyMulti, "Ctrl+C"], ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", dupMulti, "Ctrl+D"], "-",
+      ["🔗", "ربط العناصر ببعضها", groupSel, "Ctrl+G", 0, 0, g.all], ["⛓", "تفكيك الربط", ungroupSel, "Ctrl+Shift+G", 0, 0, !g.any], "-",
+      ["⊞", "محاذاة", null, "", 0, alignItems()], "-", ["🗑", "حذف (" + n + ")", delMulti, "Del", 1]], x, y);
+  }
+  const MA = { copy: () => copyMulti(), dup: () => dupMulti(), group: () => groupSel(), ungroup: () => ungroupSel(), del: () => delMulti(), done: () => { E.mm = false; updateMbar(); positionOverlay(); }, cancel: () => { E.mm = false; select(null); } };
+  function ma(a) { if (MA[a]) MA[a](); }
+  function multiPanel(el) {
+    const n = selIds().length, g = grpState();
+    el.innerHTML = `<div class="pbx-ih">☑ ${n} عناصر محدّدة</div><p style="color:#666;font-size:.82rem;line-height:1.8;margin:0 0 .7rem">اسحب أي عنصر منها لتحريكها معاً. <b>Shift/Ctrl+نقر</b> يضيف أو يزيل عنصراً، وسحب على فراغ يرسم مستطيل تحديد.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">${[["copy", "⧉ نسخ"], ["dup", "➕ تكرار"], ["group", "🔗 ربط", g.all], ["ungroup", "⛓ تفكيك", !g.any], ["left", "⇤ يسار"], ["right", "⇥ يمين"], ["center", "↔ وسط أفقياً"], ["middle", "↕ وسط عمودياً"], ["top", "⤒ أعلى"], ["bottom", "⤓ أسفل"], ["del", "🗑 حذف"]].map(([k, t, d]) => `<button type="button" data-ma="${k}" ${d ? "disabled" : ""} style="padding:.55rem;border:1.5px solid ${k === "del" ? "#b83232" : "#d6d3cb"};background:#fff;color:${k === "del" ? "#b83232" : "#173f35"};border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;${d ? "opacity:.4" : ""}">${t}</button>`).join("")}</div>
+<p style="color:#8a8472;font-size:.74rem;line-height:1.8;margin-top:.8rem">اختصارات: Delete حذف · Ctrl+C/V نسخ/لصق · Ctrl+D تكرار · Ctrl+G ربط · Ctrl+Shift+G تفكيك · Ctrl+A تحديد كل القسم · Esc إلغاء.</p>`;
+    el.querySelectorAll("[data-ma]").forEach(b => { b.onclick = () => { const k = b.dataset.ma; if (["left", "right", "center", "middle", "top", "bottom"].includes(k)) alignMulti(k); else ma(k); }; });
+  }
+  function drawMulti(ovl) {
+    const ids = selIds(), o = ovlOrigin(), s = o.s; let L = 1e9, T = 1e9, R = -1e9, B = -1e9, n = 0;
+    ids.forEach(id => { const el = fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return; const r = layoutRect(el), l = o.ox + r.left * s, t = o.oy + r.top * s, w = r.width * s, h = r.height * s, b = document.createElement("div"); b.className = "pbx-box widget multi" + (find(id) && isLocked(find(id)) ? " lk" : "");
+      b.style.cssText = `left:${l}px;top:${t}px;width:${w}px;height:${h}px`; ovl.appendChild(b); L = Math.min(L, l); T = Math.min(T, t); R = Math.max(R, l + w); B = Math.max(B, t + h); n++; });
+    if (!n) return; const mb = document.createElement("div"); mb.className = "pbx-mbox"; mb.style.cssText = `left:${L - 4}px;top:${T - 4}px;width:${R - L + 8}px;height:${B - T + 8}px`; ovl.appendChild(mb);
+    if (E.busy || isMob()) return;      // الهاتف: شريط الأسفل بدل الشريط العائم
+    const g = grpState(), bar = document.createElement("div"); bar.className = "pbx-mt";
+    bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"], ["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]].forEach(([k, t, tt, dis, dng]) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.title = tt; if (dis) b.disabled = true; if (dng) b.className = "dng";
+      b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else ma(k); }; bar.appendChild(b); });
+    ovl.appendChild(bar); const st = $("pbx-stage"), W = ovl.clientWidth, fw = bar.offsetWidth, fh = bar.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight;
+    let top = T - fh - 14; if (top < vt + 4) { top = B + 18; if (top + fh > vb - 4) top = Math.max(vt + 4, T + 8); } bar.style.top = top + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4, (L + R) / 2 - fw / 2)) + "px";
+  }
   function onKey(e) {
     if (e.key === "Escape") hideCtx();
     if (!$("pb-app").classList.contains("on")) return;
@@ -1607,9 +1745,13 @@ body{overflow-x:hidden;margin:0}`;
     else if (mod && e.altKey && e.code === "KeyV" && E.sel) { e.preventDefault(); pasteStyle(); }
     else if (mod && !e.altKey && e.key.toLowerCase() === "c" && E.sel && selInfo() && selInfo().kind === "widget") { e.preventDefault(); copyEl(); }
     else if (mod && !e.altKey && e.key.toLowerCase() === "v" && E.clip) { e.preventDefault(); pasteEl(); }
+    else if (mod && e.key.toLowerCase() === "g" && selIds().length > 1) { e.preventDefault(); e.shiftKey ? ungroupSel() : groupSel(); }
+    else if (mod && e.key.toLowerCase() === "a" && (E.sel || E.hs)) { e.preventDefault(); selectAllSec(); }
     else if (e.key === "Delete" && E.sel) { e.preventDefault(); del(); }
     else if ((e.key === "]" || e.key === "[") && E.sel) { const i0 = selInfo(); if (i0 && i0.kind === "widget") { e.preventDefault(); zMove(mod ? (e.key === "]" ? "front" : "back") : (e.key === "]" ? "up" : "down")); } }
+    else if (e.key === "Escape" && (multiOn() || E.mm)) { E.mm = false; select(null); }
     else if (e.key === "Escape") { const inf = selInfo(); select(inf ? parentId(inf) : null); }          // Esc = تحديد الأب (عمود ثم قسم ثم لا شيء)
+    else if (/^Arrow/.test(e.key) && multiOn()) { e.preventDefault(); const st = e.shiftKey ? 10 : 1; nudgeMulti((e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0), (e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0)); }
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
       const inf = selInfo(); if (!inf) return; if (isLocked(inf)) return;
       if (!inf.free) { e.preventDefault(); const d = (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : 0; if (d) { if (e.altKey) move(d); else nav(d); } return; }   // العناصر العادية: الأسهم تنقل التحديد (Alt = إعادة ترتيب)
@@ -1758,7 +1900,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   function renderInspector() {
     updateMbar(); try { drawQbar(); } catch (x) { console.warn(x); }
-    const el = $("pbx-insp"); if (!el) return; const inf = selInfo(), newSel = E.inspSel !== E.sel; E.inspSel = E.sel; if (newSel) setTimeout(() => { el.scrollTop = 0; }, 0);      // التحوّل لعنصر آخر: الإعدادات من أعلى القائمة، واسم العنصر ثابت أعلاها
+    const el = $("pbx-insp"); if (!el) return; if (multiOn()) { multiPanel(el); return; } const inf = selInfo(), newSel = E.inspSel !== E.sel; E.inspSel = E.sel; if (newSel) setTimeout(() => { el.scrollTop = 0; }, 0);      // التحوّل لعنصر آخر: الإعدادات من أعلى القائمة، واسم العنصر ثابت أعلاها
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
@@ -1980,7 +2122,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
