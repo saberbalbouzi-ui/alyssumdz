@@ -9547,7 +9547,7 @@ body{overflow-x:hidden;margin:0}`;
     return [["el", "تنسيق " + kindN], ["fx", "تأثيرات النص"], ["bd", "الإطار"], ["bg", "تنسيق الخلفية"], ["rest", "باقي الإعدادات"]].filter(([k]) => L[k].length).map(([k, n]) => {
       const open = !!E.acc[k];
       return `<div class="pbx-ac"><button type="button" class="pbx-ach${open ? " on" : ""}" data-ac="${k}"><span>${n}</span><i>${open ? "▴" : "▾"}</i></button>${open ? `<div class="pbx-acb">${L[k].map(c => field(LBL[c.k] && k === "bg" ? Object.assign({}, c, { l: LBL[c.k] }) : c, inf.set)).join("")}</div>` : ""}</div>`;
-    }).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>';
+    }).join("") + '<div style="height:55vh" aria-hidden="true"></div>' || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>';
   }
   function renderInspector() {
     updateMbar(); try { drawQbar(); } catch (x) { console.warn(x); }
@@ -9657,7 +9657,10 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     const t = e.target.closest("button, [data-dev]"); if (!t) return; const inf = selInfo();
     if (t.dataset.dev) { setDev(t.dataset.dev); return; }
     if (t.dataset.itab) { E.tab = t.dataset.itab; renderInspector(); return; }
-    if (t.dataset.ac) { E.acc = E.acc || { el: true }; E.acc[t.dataset.ac] = !E.acc[t.dataset.ac]; renderInspector(); return; }
+    if (t.dataset.ac) {      // مجموعة واحدة مفتوحة فقط: فتح مجموعة يغلق غيرها ويرفعها إلى أعلى القائمة
+      const k = t.dataset.ac, was = !!(E.acc && E.acc[k]); E.acc = was ? {} : { [k]: true }; renderInspector();
+      if (!was) { const ip = $("pbx-insp"), b = ip.querySelector(`[data-ac="${k}"]`), ih = ip.querySelector(".pbx-ih"); if (b) ip.scrollTop += b.getBoundingClientRect().top - ip.getBoundingClientRect().top - (ih ? ih.offsetHeight : 0) - 4 + (-0.7 * 16 * 0); }
+      return; }
     if (!inf) return;
     if (t.dataset.q) { onQuick(t.dataset.q); return; }
     if (t.dataset.shp) { inf.set.shape = t.dataset.shp; if (["stroke", "line"].includes(PB.SHAPES[t.dataset.shp][1]) && !inf.set.stroke) inf.set.stroke = inf.set.fill || "#c8a24b"; afterEdit(); return; }
