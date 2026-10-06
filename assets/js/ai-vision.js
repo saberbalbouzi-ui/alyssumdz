@@ -44,7 +44,7 @@ window.AIVision = (function () {
     const all = raw.map(d => ({ src: d.src, en: String(d.label).toLowerCase(), score: d.score, b: d.box.map((v, i) => Math.max(0, Math.min(i % 2 ? H : W, v * K))) }));
     const o365 = all.filter(d => d.src === "o365");
     all.forEach(d => { if (d.src !== "coco") return; let bi = .45; o365.forEach(q => { const v = iou(d.b, q.b); if (v > bi) { bi = v; d.en2 = q.en; } }); });      // اسم Objects365 أدق (قلم بدل «سكين»، صحن بدل «وعاء»)
-    const c = all.filter(d => { const en = d.en2 || d.en, a = bArea(d.b); if (DROP.has(en) || DROP.has(d.en)) return false; if ((!zone && a > W * H * .85) || a < W * H * .0012) return false; return d.score >= (PRODUCT.test(en) ? .2 : .3); });
+    const c = all.filter(d => { const en = d.en2 || d.en, a = bArea(d.b); if (DROP.has(en) || DROP.has(d.en)) return false; if ((!zone && a > W * H * .85) || a < W * H * .0012) return false; return d.score >= (PRODUCT.test(en) || en === "person" ? .2 : .3); });
     c.sort((p, q) => q.score - p.score); const keep = [];
     const per = {}; c.forEach(d => { const en = d.en2 || d.en; if ((per[en] || 0) >= (PRODUCT.test(en) ? 8 : 6)) return; if (!keep.some(k => iou(k.b, d.b) > .6 || ((k.en2 || k.en) === en && bInter(k.b, d.b) / Math.max(1, bArea(d.b)) > .85))) { keep.push(d); per[en] = (per[en] || 0) + 1; } });      // لا يستأثر صنف واحد (كتب كثيرة) بكل الأماكن
     const persons = keep.filter(k => (k.en2 || k.en) === "person"), held = d => persons.some(p => bInter(p.b, d.b) / Math.max(1, bArea(d.b)) > .8);      // وعاء/كوب في يد شخص = منتج (عبوة)
@@ -169,11 +169,11 @@ window.AIVision = (function () {
        مع إبقاء ترتيب النتائج ثابتاً حتى لا تتغير أولوية الدمج/التعارض. */
     const maskJobs = dets.map((d, i) => ({ d, i }));
     const masked = new Array(maskJobs.length); let nextMask = 0;
-    const workers = Math.min(2, Math.max(1, maskJobs.length));
+    const workers = 1;      /* متتابعة: عامل SAM يحمل حالة طلب واحد، والتوازي يتلف المدخلات فتفشل كل الأقنعة (أخطاء input_points/input_boxes) */
     await Promise.all(Array.from({ length: workers }, async () => {
       while (true) {
         const i = nextMask++; if (i >= maskJobs.length) return;
-        const d = maskJobs[i];
+        const d = maskJobs[i].d;
         step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…");
         try {
           const m = await maskFor(S, { box: d.box });

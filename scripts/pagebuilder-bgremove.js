@@ -253,7 +253,7 @@ const PBBgRemove = (function () {
       best = await AIVision.addItem(S, { pts: [[W / 2, H / 2, 1]].concat(e.map(p => [W * p[0], H * p[1], 0])), label: "الموضوع" }, items); }
     else {
       best = grp.length > 1 ? AIVision.joinItems(S, items, grp) : grp[0]; }
-    if (!best) return null;
+    if (!best) return null; o.diag = "v2.4 · " + (S.dev || "") + (lite ? " · خفيف" : "") + " · " + cv.width + "×" + cv.height + " · مكتشف: " + (items.map(i => i.label).join("، ") || "لا شيء") + " · الطاولة: " + (tbl ? "نعم" : "لا") + " · مجموعة: " + (grp ? grp.length : 0);
     step("⏳ قصّ الحواف بدقة (شعر وتفاصيل)…"); await tick();
     const cuts = AIVision.cutouts(S, cv, [best], { shadow: false, matteMax: lite ? 1.2e6 : 3.2e6 }); if (!cuts.length) return null;
     const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; out.getContext("2d").drawImage(cuts[0].canvas, cuts[0].x0, cuts[0].y0); return fillHolesC(out, cv, .03);
@@ -277,6 +277,7 @@ const PBBgRemove = (function () {
   <div style="display:flex;align-items:center;gap:.5rem"><b style="flex:1">✂️ نزع الخلفية</b></div>
   <div id="bg-vw" style="position:relative;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/18px 18px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;max-height:68vh"><canvas id="bg-cv" style="max-width:100%;max-height:68vh;display:block"></canvas><div class="ln" id="bg-ln"></div></div>
   <div id="bg-msg" style="font-size:.84rem;line-height:1.7;color:#173f35;min-height:1.7em"></div>
+  <div id="bg-dg" style="font-size:.66rem;color:#8a8472;line-height:1.5;direction:ltr;text-align:left;word-break:break-word"></div>
   <div id="bg-bar" style="display:flex;gap:.45rem"><button id="bg-save" type="button" disabled style="flex:2;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.7rem;font-weight:800;cursor:pointer">💾 حفظ</button><button id="bg-again" type="button" disabled style="flex:1;background:#fff;color:#173f35;border:1.5px solid #d6d3cb;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer">🔁 إعادة</button><button id="bg-x" type="button" style="flex:1;background:#fff;color:#b83232;border:1.5px solid #e6c4c4;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer">✕ إلغاء</button></div>
 </div>`;
     document.body.appendChild(ov); const $ = i => ov.querySelector("#" + i), cv = $("bg-cv"), cg = cv.getContext("2d"), msg = t => { $("bg-msg").textContent = t; };
@@ -285,8 +286,8 @@ const PBBgRemove = (function () {
     const show = (c, bgOnly) => { cv.width = c ? c.width : srcC.width; cv.height = c ? c.height : srcC.height; cg.clearRect(0, 0, cv.width, cv.height); cg.drawImage(c || srcC, 0, 0, cv.width, cv.height); };
     const run = async methods => {
       if (S.busy) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
-      try { const r = await autoCut(srcC, { methods, onStep: m => { if (!S.closed) msg(m); } }); if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
-        msg("✅ تمّ. إن لم تعجبك النتيجة اضغط «إعادة» لتجربة طريقة أخرى.");
+      try { const oo = { methods, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diag || ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
+        msg("✅ تمّ. إن لم تعجبك النتيجة اضغط «إعادة» لتجربة طريقة أخرى."); $("bg-dg").textContent = r.method + (r.diag ? " · " + r.diag : "");
         $("bg-save").disabled = $("bg-again").disabled = false; }
       catch (e) { if (!S.closed) { $("bg-ln").style.display = "none"; const er = e && e.message || e; if (S.res) { show(S.res.canvas); msg("⚠️ فشلت هذه الطريقة (" + er + ") — عدتُ للنتيجة السابقة."); } else { msg("⚠️ " + er); S.res = null; }
         $("bg-again").disabled = false; $("bg-save").disabled = !S.res; } console.error(e); } S.busy = false;
