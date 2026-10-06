@@ -399,7 +399,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
     </div>
     <div class="grid2" style="margin-top:.4rem">
-      <label class="hint" style="margin:0">لغة السوق<select id="gen-lang">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
+      <label class="hint" style="margin:0">لغة السوق<select id="gen-lang" onchange="try{localStorage.setItem('alyssum_pb_lang',this.value)}catch(e){}">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
       <label class="hint" style="margin:0">نوع العرض<select id="gen-offer"><option value="single">منتج واحد</option><option value="bundle">باك / مجموعة منتجات</option></select></label>
       <label class="hint" style="margin:0">هيكل الصفحة<select id="gen-tpl"><option value="11">قالب 11 قسماً (Anti Acne الناجح — موصى)</option><option value="free">حر (يقرّر Gemini الأقسام)</option></select></label>
       <label class="hint" style="margin:0">نسبة الصورة<select id="gen-ar"><option value="1:4">1:4 — طويل (موصى للصورة الواحدة)</option><option value="1:8">1:8 — أطول جداً (ضيق)</option><option value="9:16">9:16 — طولي</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option></select></label>
@@ -499,6 +499,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:space-between"><button class="small gray" type="button" onclick="PBGen.step(2)">→ السابق</button><span></span></div>
   </div>
 </div>`;
+    try { const lg = localStorage.getItem("alyssum_pb_lang"); if (lg && LANGS[lg]) $("gen-lang").value = lg; } catch (e) { }      // لغة السوق المحفوظة (تشاركها الكتابة السحرية)
     try { $("gen-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-rbkey").value = localStorage.getItem("alyssum_removebg_key") || ""; } catch (e) { }
     try { $("gen-tier").value = gemTier(); } catch (e) { }
     try { if (!localStorage.getItem("alyssum_gp_gkey")) $("gen-adv").open = true; } catch (e) { }

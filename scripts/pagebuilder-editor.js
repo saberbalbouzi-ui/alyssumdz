@@ -986,19 +986,22 @@ body{overflow-x:hidden;margin:0}`;
   const MW_STYLE = { mk: "تسويقي", sc: "علمي" };
   const MW_LEN = { s: "جملة واحدة قصيرة (حتى 15 كلمة)", p: "فقرة قصيرة (من 30 إلى 45 كلمة)", l: "فقرة (من 70 إلى 90 كلمة)", b: "قائمة من 4 إلى 6 نقاط قصيرة، كل نقطة في سطر مستقل" };
   const mwProd = slug => ((ctx().products) || []).find(x => x.slug === slug) || null;
+  const mwLangs = () => (typeof PBGen !== "undefined" && PBGen.LANGS) || { ar: { label: "العربية", name: "Arabic" } };
+  const mwLang0 = () => { try { const v = localStorage.getItem("alyssum_pb_lang"); return v && mwLangs()[v] ? v : "ar"; } catch (e) { return "ar"; } };      // لغة السوق المحفوظة في إعدادات المولّد
   const mwKey = () => { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } };
   const mwClean = t => String(t || "").replace(/\*\*?/g, "").replace(/^\s*(?:[-•▪●]|\d+[.)])\s+/gm, "").replace(/\r/g, "").trim();
   function mwPrompt(o) {
-    const P = mwProd(o.pslug), fr = o.lang === "fr", cat = P && P.cat ? (((ctx().meta || {}).cats || {})[P.cat] || "") : "";
+    const P = mwProd(o.pslug), L = mwLangs()[o.lang] || mwLangs().ar, cat = P && P.cat ? (((ctx().meta || {}).cats || {})[P.cat] || "") : "";
     const info = P ? `معلومات المنتج الموجود في المتجر (اعتمد عليها وحدها ولا تخترع غيرها):\nالاسم: ${P.title}\nالوصف الحالي: ${P.desc || "-"}\n${cat ? "الفئة: " + cat + "\n" : ""}${P.keywords ? "كلمات مفتاحية: " + P.keywords + "\n" : ""}` : "";
     const task = o.prev ? `هذا وصف سابق:\n"""${o.prev}"""\nالمطلوب: ${o.instr}.` : P ? "طوّر وصف هذا المنتج: أعد كتابته بشكل أغنى وأوضح وأقوى اعتماداً على معلوماته فقط." : `أنشئ وصفاً لمنتج غير موجود في المتجر بحسب هذه الفكرة: ${o.words}`;
     const notes = P && o.words ? `\nملاحظات المستخدم: ${o.words}` : "";
     const sty = o.style === "sc" ? "علمي مبسّط: يشرح المكوّنات أو الخصائص المعروفة وسبب فائدتها بلغة دقيقة وهادئة، دون ادعاءات علاجية قطعية" : "تسويقي جذّاب: يبرز المزايا والإحساس والقيمة بأسلوب مقنع وحيّ";
-    return `أنت كاتب محتوى محترف لمتجر إلكتروني جزائري. اكتب ${fr ? "بالفرنسية" : "بالعربية الفصحى المبسّطة"}.\n${info}${task}${notes}\nنوع الوصف: ${sty}.\nالطول: ${MW_LEN[o.len]}.\nقواعد: اكتب وصفاً فقط؛ لا تذكر السعر ولا العروض ولا التوصيل ولا دعوة للشراء؛ لا تعد بالشفاء ولا تخترع أرقاماً أو شهادات أو دراسات؛ بلا عناوين ولا رموز تنسيق ولا شرح.\nاكتب ٣ صيغ مختلفة، وافصل بينها بسطر فيه --- فقط.`;
+    const lim = P ? "قيد صارم: هذا منتج موجود في المتجر، فاكتب في حدود معلوماته أعلاه فقط؛ طوّر الصياغة والترتيب والوضوح، ولا تضف أي مكوّن أو خاصية أو فائدة أو طريقة استعمال أو مقدار غير مذكور فيها، ولا تذكر معلومات عامة عن مكوّنات لم ترد." : "اكتب ما يناسب الفكرة بلا أرقام أو شهادات أو دراسات مخترعة.";
+    return `أنت كاتب محتوى محترف لمتجر إلكتروني. اكتب بلغة: ${L.name}${o.lang === "ar" ? " (عربية فصحى مبسّطة)" : ""}.\n${info}${task}${notes}\nنوع الوصف: ${sty}.\nالطول: ${MW_LEN[o.len]}.\n${lim}\nقواعد: اكتب وصفاً فقط؛ لا تذكر السعر ولا العروض ولا التوصيل ولا دعوة للشراء؛ لا تعد بالشفاء؛ بلا عناوين ولا رموز تنسيق ولا شرح.\nاكتب ٣ صيغ مختلفة، وافصل بينها بسطر فيه --- فقط.`;
   }
   async function mwGemini(o) {
     const key = mwKey(); if (!key) throw new Error("NOKEY"); if (typeof PBGen === "undefined") throw new Error("أداة Gemini غير محمّلة");
-    const j = await PBGen.gemGenerate(key, "copy", [{ text: mwPrompt(o) }], { temperature: .85 });
+    const j = await PBGen.gemGenerate(key, "copy", [{ text: mwPrompt(o) }], { temperature: o.pslug ? .45 : .85 });
     const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
     const v = t.split(/\n\s*-{3,}\s*\n?/).map(mwClean).filter(Boolean); if (!v.length) throw new Error("ردّ فارغ من Gemini"); return v.slice(0, 3);
   }
@@ -1023,13 +1026,13 @@ body{overflow-x:hidden;margin:0}`;
     E.nextLabel = "كتابة سحرية"; afterEdit();
   }
   function mwPanel(inf, btn) {
-    const m = E.mw = E.mw || {}; Object.entries({ words: "", style: "mk", len: "p", lang: "ar", pslug: inf.set.prod || E.page.product || "", res: [], msg: "", busy: false }).forEach(([k, v]) => { if (!(k in m)) m[k] = v; });
+    const m = E.mw = E.mw || {}; Object.entries({ words: "", style: "mk", len: "p", lang: mwLang0(), pslug: inf.set.prod || E.page.product || "", res: [], msg: "", busy: false }).forEach(([k, v]) => { if (!(k in m)) m[k] = v; });
     const prods = (ctx().products) || [], sel = (id, o, v) => `<select data-mw="${id}">${Object.entries(o).map(([k, n]) => `<option value="${esc(k)}"${v === k ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`, P = mwProd(m.pslug);
     const html = `<h6>✨ الكتابة السحرية — وصف فقط</h6>
       <h6>المنتج</h6>${sel("pslug", Object.assign({ "": "— منتج خارج المتجر / بدون منتج —" }, Object.fromEntries(prods.map(x => [x.slug, x.title]))), m.pslug)}
       <p style="margin:-.2rem 0 .5rem">${P ? "منتج من المتجر: يُطوَّر وصفه بمعلوماته." : "منتج من خارج المتجر: يُنشأ الوصف من كلماتك."}</p>
       <textarea data-mw="words" rows="3" placeholder="${P ? "ملاحظات اختيارية (مثل: ركّز على فائدة معيّنة)" : "اكتب اسم المنتج أو فكرته… مثل: صابون طبيعي بزيت الزيتون"}" style="width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.5rem;font-family:inherit;margin-bottom:.5rem">${esc(m.words)}</textarea>
-      <div class="pg" style="grid-template-columns:1fr 1fr 1fr">${sel("style", MW_STYLE, m.style)}${sel("len", { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" }, m.len)}${sel("lang", { ar: "العربية", fr: "Français" }, m.lang)}</div>
+      <div class="pg" style="grid-template-columns:1fr 1fr 1fr">${sel("style", MW_STYLE, m.style)}${sel("len", { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" }, m.len)}${sel("lang", Object.fromEntries(Object.entries(mwLangs()).map(([k, v]) => [k, String(v.label).split("(")[0].trim()])), m.lang)}</div>
       <div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-mwa="go"${m.busy ? " disabled" : ""}>${m.busy ? "⏳ جارٍ الكتابة…" : "✨ اكتب"}</button><button type="button" class="pb2" data-mwa="tpl">🧩 قالب جاهز</button></div>
       <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>${m.res.map((t, i) => `<div class="mwc"><div>${esc(t).replace(/\n/g, "<br>")}</div><div class="mwb"><button type="button" data-mwi="${i}">إدراج</button><button type="button" data-mwp="${i}">إضافة</button><button type="button" data-mwr="${i}:أطول">أطول</button><button type="button" data-mwr="${i}:أقصر">أقصر</button><button type="button" data-mwr="${i}:أعد الصياغة بأسلوب مختلف">↻ صياغة</button></div></div>`).join("")}`;
     qPop(btn, html, p => {
@@ -1037,11 +1040,13 @@ body{overflow-x:hidden;margin:0}`;
       const run = async (kind, extra) => { read(); const o = Object.assign({}, m, extra || {});
         if (!o.pslug && !String(o.words).trim() && !o.prev) { m.msg = "اكتب اسم المنتج أو فكرته، أو اختر منتجاً من المتجر."; mwPanel(selInfo() || inf, btn); return; }
         m.busy = true; m.msg = ""; mwPanel(selInfo() || inf, btn);
-        try { m.res = kind === "tpl" ? mwTemplates(o) : await mwGemini(o); m.msg = kind === "tpl" ? "قوالب جاهزة بلا إنترنت — راجعها قبل الإدراج." : "مسوّدات من Gemini — راجعها قبل الإدراج."; }
-        catch (e) { m.res = mwTemplates(o); m.msg = e.message === "NOKEY" ? "لا يوجد مفتاح Gemini (يُضاف من «مولّد الصفحات الذكي»)، فاستُعملت قوالب جاهزة." : "تعذّر Gemini (" + e.message + ")، فاستُعملت قوالب جاهزة."; }
+        const arabic = o.lang === "ar" || o.lang === "ma";
+        try { if (kind === "tpl" && !arabic) throw new Error("القوالب الجاهزة بالعربية فقط"); m.res = kind === "tpl" ? mwTemplates(o) : await mwGemini(o); m.msg = kind === "tpl" ? "قوالب جاهزة بلا إنترنت — راجعها قبل الإدراج." : "مسوّدات من Gemini — راجعها قبل الإدراج."; }
+        catch (e) { m.res = arabic ? mwTemplates(o) : []; m.msg = !arabic ? "تعذّرت الكتابة بهذه اللغة: " + (e.message === "NOKEY" ? "تحتاج مفتاح Gemini (القوالب الجاهزة بالعربية فقط)." : e.message) : e.message === "NOKEY" ? "لا يوجد مفتاح Gemini (يُضاف من «مولّد الصفحات الذكي»)، فاستُعملت قوالب جاهزة." : "تعذّر Gemini (" + e.message + ")، فاستُعملت قوالب جاهزة."; }
         m.busy = false; mwPanel(selInfo() || inf, btn); };
       p.querySelector('[data-mwa="go"]').onclick = () => run("ai"); p.querySelector('[data-mwa="tpl"]').onclick = () => run("tpl");
       p.querySelector('[data-mw="pslug"]').onchange = () => { read(); mwPanel(selInfo() || inf, btn); };
+      p.querySelector('[data-mw="lang"]').addEventListener("change", e => { try { localStorage.setItem("alyssum_pb_lang", e.target.value); } catch (x) { } });      // يُحفظ كلغة السوق (مشتركة مع مولّد الصفحات)
       p.querySelectorAll("[data-mwi]").forEach(b => b.onclick = () => { mwInsert(inf, m.res[b.dataset.mwi], false); });
       p.querySelectorAll("[data-mwp]").forEach(b => b.onclick = () => { mwInsert(inf, m.res[b.dataset.mwp], true); mwPanel(selInfo() || inf, btn); });
       p.querySelectorAll("[data-mwr]").forEach(b => b.onclick = () => { const [i, ins] = b.dataset.mwr.split(":"); read(); run("ai", { prev: m.res[+i], instr: ins }); });
