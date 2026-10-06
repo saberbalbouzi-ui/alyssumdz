@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=16", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=17", BASE).href;
   const SAMSZ = 1024, DETSZ = 736, W8 = {};      // 736 بدل 960: كشف أسرع بنحو الضعف بلا فقد يُذكر لعناصر بحجم مفيد
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
