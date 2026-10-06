@@ -2,6 +2,14 @@ name: Smart Selection Smoke Test
 on:
   push:
     branches: [feature/smart-element-selection-v2]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'admin.html'
+      - 'scripts/pagebuilder-smart.js'
+      - 'assets/js/ai-vision.js'
+      - 'assets/js/ai-vision-worker.js'
+      - 'scripts/smart-selection-smoke.spec.js'
   workflow_dispatch:
 
 jobs:
@@ -18,32 +26,11 @@ jobs:
           node --check assets/js/ai-vision.js
           node --check assets/js/ai-vision-worker.js
           node --check scripts/pagebuilder-smart.js
-      - name: Install browser
+      - name: Install Playwright
         run: npx --yes playwright@1.55.0 install --with-deps chromium
       - name: Browser smoke
         run: |
           python3 -m http.server 4173 >/tmp/http.log 2>&1 &
           SERVER=$!
           trap 'kill $SERVER || true' EXIT
-          node <<'NODE'
-          const { chromium } = require('/opt/hostedtoolcache/node/22.*/x64/lib/node_modules/npm/node_modules/playwright');
-          (async () => {
-            const browser = await chromium.launch({headless:true});
-            const page = await browser.newPage();
-            const errors = [];
-            page.on('pageerror', e => errors.push(String(e)));
-            page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-            await page.goto('http://127.0.0.1:4173/admin.html', {waitUntil:'domcontentloaded', timeout:60000});
-            await page.waitForTimeout(3000);
-            const checks = await page.evaluate(() => ({
-              title: document.title,
-              smartGlobal: typeof window.PBSmart === 'object',
-              visionGlobal: typeof window.AIVision === 'object',
-              captureButton: [...document.querySelectorAll('button')].some(b => /التقاط العناصر/.test(b.textContent || ''))
-            }));
-            console.log(JSON.stringify(checks));
-            if (!checks.smartGlobal || !checks.visionGlobal) throw new Error('Smart selection globals missing');
-            if (errors.length) throw new Error('Browser console errors: ' + errors.slice(0,10).join(' | '));
-            await browser.close();
-          })().catch(e => { console.error(e); process.exit(1); });
-          NODE
+          npx --yes playwright@1.55.0 test scripts/smart-selection-smoke.spec.js --reporter=line
