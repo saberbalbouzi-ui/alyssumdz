@@ -478,20 +478,24 @@ body{overflow-x:hidden;margin:0}`;
   /* اللمس: السحب بالإصبع على مقابض التحجيم/التدوير وعلى العنصر المحدد يُترجم إلى أحداث فأرة (تمرير الصفحة يبقى طبيعياً في بقية المواضع) */
   function touchBridge(doc, isFrame) {
     let on = false, pin = null; const dist = (t, k) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) * k;
-    doc.addEventListener("touchstart", e => { if (e.touches.length === 2) { on = false; const k = isFrame ? E.scale : 1; pin = { k, d: dist(e.touches, k), z: E.zoom || 1 };
-      if (isFrame && E.sel && e.target.closest && e.target.closest('[data-pb="' + E.sel + '"]')) { const inf = selInfo(); if (inf && (inf.kind === "widget" || inf.kind === "section")) { const key = inf.kind === "section" ? "scl" : "wsc"; pin.el = { inf, key, v0: Number(eff(inf.set, key, E.dev)) || 100 }; } } } }, { passive: true });      // قرصة إصبعين على العنصر المحدد: تكبير تناسبي له بدل تكبير الصفحة
-    doc.addEventListener("touchmove", e => { if (pin && e.touches.length === 2) { e.preventDefault(); const f = dist(e.touches, pin.k) / pin.d;
-      if (pin.el) { const v = Math.max(pin.el.key === "scl" ? 30 : 20, Math.min(pin.el.key === "scl" ? 300 : 500, Math.round(pin.el.v0 * f))); setR(pin.el.inf.set, pin.el.key, E.dev, v); if (E.dev !== "d" && own(pin.el.inf.set, pin.el.key, "d") === undefined) setR(pin.el.inf.set, pin.el.key, "d", pin.el.v0); pin.moved = true; schedule(); } else setZoom(pin.z * f); } }, { passive: false });
-    doc.addEventListener("touchend", e => { if (e.touches.length < 2) { if (pin && pin.el && pin.moved) { commitHist(); renderInspector(); positionOverlay(); } pin = null; } });
+    const pinchMove = e => { if (pin && e.touches.length === 2) { e.preventDefault(); const f = dist(e.touches, pin.k) / pin.d;
+      if (pin.el) { const v = Math.max(pin.el.key === "scl" ? 30 : 20, Math.min(pin.el.key === "scl" ? 300 : 500, Math.round(pin.el.v0 * f))); setR(pin.el.inf.set, pin.el.key, E.dev, v); if (E.dev !== "d" && own(pin.el.inf.set, pin.el.key, "d") === undefined) setR(pin.el.inf.set, pin.el.key, "d", pin.el.v0); pin.moved = true; schedule(); } else setZoom(pin.z * f); } };
+    const pinchEnd = e => { if (e.touches.length < 2) { if (pin && pin.el && pin.moved) { commitHist(); renderInspector(); positionOverlay(); } pin = null; } };
+    doc.addEventListener("touchstart", e => { if (e.touches.length === 2) { if (on) { on = false; doc.documentElement.dispatchEvent(mk("mouseup", e.touches[0])); } const k = isFrame ? E.scale : 1; pin = { k, d: dist(e.touches, k), z: E.zoom || 1 };
+      if (isFrame && E.sel && e.target.closest && e.target.closest('[data-pb="' + E.sel + '"]')) { const inf = selInfo(); if (inf && (inf.kind === "widget" || inf.kind === "section")) { const key = inf.kind === "section" ? "scl" : "wsc"; pin.el = { inf, key, v0: Number(eff(inf.set, key, E.dev)) || 100 }; } }
+      const t0 = e.target; if (t0 && t0.addEventListener) { const done = ev => { pinchEnd(ev); if (ev.touches.length < 2) { t0.removeEventListener("touchmove", pinchMove); t0.removeEventListener("touchend", done); t0.removeEventListener("touchcancel", done); } }; t0.addEventListener("touchmove", pinchMove, { passive: false }); t0.addEventListener("touchend", done); t0.addEventListener("touchcancel", done); } } }, { passive: true });      // قرصة إصبعين على العنصر المحدد: تكبير تناسب (والمستمعون على العنصر نفسه لأن الصفحة تُعاد رسمها أثناء القرصة)
+    doc.addEventListener("touchmove", pinchMove, { passive: false });
+    doc.addEventListener("touchend", pinchEnd);
     const mk = (type, t) => new MouseEvent(type, { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView });
+    /* أحداث اللمس تبقى موجّهة إلى العنصر الذي بدأ عنده اللمس حتى لو أُعيد رسم الصفحة وحُذف من المستند أثناء السحب؛ لذا نربط الحركة والنهاية بالعنصر نفسه لا بالمستند (وإلا يتوقف السحب بعد أول حركة ويبقى المحرر «مشغولاً» فتتعطل الإعدادات) */
     doc.addEventListener("touchstart", e => {
       if (e.touches.length !== 1) return; const tg = e.target; if (!tg || !tg.closest) return;
       const ok = isFrame ? (E.sel && tg.closest('[data-pb="' + E.sel + '"]') && !tg.closest("[contenteditable=true]")) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz,.pbx-ft,.pbx-sb,.pbx-sbar");
       if (!ok || (!isFrame && tg.closest(".pbx-bar button,.pbx-bar label,.pbx-ft button,.pbx-sbar button"))) return; on = true; e.preventDefault(); tg.dispatchEvent(mk("mousedown", e.touches[0]));
+      const move = ev => { if (!on) return; if (ev.touches.length > 1) return; ev.preventDefault(); doc.documentElement.dispatchEvent(mk("mousemove", ev.touches[0])); };
+      const fin = ev => { tg.removeEventListener("touchmove", move); tg.removeEventListener("touchend", fin); tg.removeEventListener("touchcancel", fin); if (!on) return; on = false; doc.documentElement.dispatchEvent(mk("mouseup", (ev.changedTouches && ev.changedTouches[0]) || { clientX: 0, clientY: 0 })); };
+      tg.addEventListener("touchmove", move, { passive: false }); tg.addEventListener("touchend", fin); tg.addEventListener("touchcancel", fin);
     }, { passive: false });
-    doc.addEventListener("touchmove", e => { if (!on) return; e.preventDefault(); doc.documentElement.dispatchEvent(mk("mousemove", e.touches[0])); }, { passive: false });
-    const end = e => { if (!on) return; on = false; doc.documentElement.dispatchEvent(mk("mouseup", e.changedTouches[0])); };
-    doc.addEventListener("touchend", end); doc.addEventListener("touchcancel", end);
   }
   /* الجوال: ضغط مطوّل على أيقونة في قائمة الأدوات ثم سحب إلى مكانها في الصفحة (السحب الأصلي لا يعمل باللمس) */
   function listTouchDrag() {
