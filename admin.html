@@ -8128,6 +8128,7 @@ body{overflow-x:hidden;margin:0}`;
 .pb-edit .pb-off{opacity:.3;outline:2px dashed #999;outline-offset:-2px}
 .pbx-sbar{position:absolute;display:flex;flex-direction:column;gap:2px;pointer-events:auto;z-index:6;background:#fff;border-radius:12px;padding:5px;box-shadow:0 3px 14px rgba(14,19,24,.25),0 0 0 1px rgba(64,87,109,.08)}
 .pbx-sbar button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0}.pbx-sbar button:hover{background:#ebeef2}.pbx-sbar button[disabled]{opacity:.3;cursor:default;background:none}.pbx-sbar button.on{background:#ebeef2;color:#8b3dff}.pbx-sbar button.add{background:#f1f2f6}.pbx-sbar button.dng:hover{color:#b83232}.pbx-sbar svg{width:20px;height:20px;display:block}
+.pbx-ac{border:1.5px solid #eadfc4;border-radius:10px;margin-bottom:.55rem;background:#fff;overflow:hidden}.pbx-ach{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:#faf6ec;padding:.55rem .7rem;font-family:inherit;font-weight:800;font-size:.86rem;color:#173f35;cursor:pointer}.pbx-ach.on{background:#f1ebdd}.pbx-ach i{font-style:normal;color:#a08a55}.pbx-acb{padding:.6rem .6rem .2rem}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
@@ -8677,7 +8678,7 @@ body{overflow-x:hidden;margin:0}`;
       rt.addEventListener("input", e => { if (e.target.dataset.c) fdoc.execCommand(e.target.dataset.c, false, e.target.value); });
       $("pbx-stage").appendChild(rt); }
     rt.style.display = on ? "flex" : "none";
-    if (on && editing) { const r = editing.el.getBoundingClientRect(), s = E.scale, fr = $("pbx-fw").getBoundingClientRect(), st = $("pbx-stage").getBoundingClientRect(); rt.style.top = (fr.top - st.top + $("pbx-stage").scrollTop + r.top * s - 40) + "px"; rt.style.left = Math.max(4, fr.left - st.left + r.left * s) + "px"; }
+    if (on && editing) { const r = editing.el.getBoundingClientRect(), o = ovlOrigin(), k = E.scale; rt.style.top = (o.oy + r.top * k - 40) + "px"; rt.style.left = Math.max(4, o.ox + r.left * k) + "px"; }
   }
 
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
@@ -8698,7 +8699,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* مستطيل التخطيط (قبل التدوير): المركز من getBoundingClientRect والأبعاد من offsetWidth/Height */
   function layoutRect(el) { const r = el.getBoundingClientRect(); if (!el.offsetWidth) return r; const w = el.offsetWidth, h = el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + r.height / 2; return { left: cx - w / 2, top: cy - h / 2, width: w, height: h, right: cx + w / 2, bottom: cy + h / 2 }; }
-  function ovlOrigin() { const st = $("pbx-stage"), fw = $("pbx-fw"), fr = fw.getBoundingClientRect(), sr = st.getBoundingClientRect(); return { ox: fr.left - sr.left + st.scrollLeft, oy: fr.top - sr.top + st.scrollTop, s: E.scale }; }
+  function ovlOrigin() { const fw = $("pbx-fw"), fr = fw.getBoundingClientRect(), or = $("pbx-ovl").getBoundingClientRect(); return { ox: fr.left - or.left, oy: fr.top - or.top, s: E.scale }; }      // نسبة لطبقة الغطاء نفسها (تتحرك مع التمرير وتستثني شريط التمرير الذي قد يكون يسار المنطقة)
   function drawGuides(list, cr) {
     document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); if (!list || !list.length) return;
     const o = ovlOrigin(), ovl = $("pbx-ovl");
@@ -8762,7 +8763,7 @@ body{overflow-x:hidden;margin:0}`;
     e.preventDefault(); e.stopPropagation(); const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), r0 = layoutRect(el), max = Math.min(r0.width, r0.height) / 2, dev = E.dev, box = handle.parentNode.getBoundingClientRect(), tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
     const mv = (dx, dy, ev) => {
       const x = (ev.clientX - box.left) / 1, rv = ev.shiftKey ? max : Math.max(0, Math.min(max, Math.round((x - 6) / E.scale / 1)));
-      setR(inf.set, key, dev, rv); if (key === "brad") setR(inf.set, "rad", dev, undefined); tip.textContent = Math.round(rv) + "px"; renderCanvas(); positionOverlay(); const st = $("pbx-stage").getBoundingClientRect(); $("pbx-ovl").appendChild(tip); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
+      setR(inf.set, key, dev, rv); if (key === "brad") setR(inf.set, "rad", dev, undefined); tip.textContent = Math.round(rv) + "px"; renderCanvas(); positionOverlay(); const st = $("pbx-ovl").getBoundingClientRect(); $("pbx-ovl").appendChild(tip); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
     };
     dragTrack(e, "nwse-resize", mv, () => { tip.remove(); commitHist(); renderInspector(); });
   }
@@ -8772,7 +8773,7 @@ body{overflow-x:hidden;margin:0}`;
     const mv = (dx, dy, ev) => {
       const px = (ev.target && ev.target.ownerDocument === fdoc) ? f0.left + ev.clientX * s : ev.clientX, py = (ev.target && ev.target.ownerDocument === fdoc) ? f0.top + ev.clientY * s : ev.clientY;
       let a = rot0 + (ang(px, py) - a0); a = ((a + 540) % 360) - 180; if (ev.shiftKey) a = Math.round(a / 15) * 15; a = Math.round(a); setR(inf.set, "rot", dev, a || undefined);
-      renderCanvas(); positionOverlay(); const st = $("pbx-stage").getBoundingClientRect(); tip.textContent = a + "°"; $("pbx-ovl").appendChild(tip); tip.style.left = (px - st.left + 14) + "px"; tip.style.top = (py - st.top + 14) + "px";
+      renderCanvas(); positionOverlay(); const st = $("pbx-ovl").getBoundingClientRect(); tip.textContent = a + "°"; $("pbx-ovl").appendChild(tip); tip.style.left = (px - st.left + 14) + "px"; tip.style.top = (py - st.top + 14) + "px";
     };
     dragTrack(e, "grabbing", mv, () => { tip.remove(); commitHist(); renderInspector(); });
   }
@@ -8955,7 +8956,7 @@ body{overflow-x:hidden;margin:0}`;
         if (hasW) { const inner = el.querySelector(".pb-in").getBoundingClientRect().width, W = Math.max(40, Math.round(inner + (dir.includes("e") ? 2 : -2) * dx)); set.layout = "boxed"; setR(set, "cw", dev, W); label += (label ? " × " : "") + "عرض " + W + "px"; }
         }
       }
-      tip.textContent = label; const st = $("pbx-stage").getBoundingClientRect(); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
+      tip.textContent = label; const st = $("pbx-ovl").getBoundingClientRect(); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
       renderCanvas(); positionOverlay(); $("pbx-ovl").appendChild(tip); if (free) drawGuides(guides, pts.cr);
     };
     dragTrack(e, cursor, mv, () => { tip.remove(); document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); commitHist(); renderInspector(); });
@@ -8981,7 +8982,7 @@ body{overflow-x:hidden;margin:0}`;
       ptr = { x: px0 + dx, y: py0 + dy }; let col = fdoc.elementsFromPoint(ptr.x, ptr.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);       // العمود تحت المؤشر
       if (FREE_ONLY) col = null;
       clearDrop(); dropCol = col ? col.dataset.pb : null; if (col) { const ci = col.querySelector(".pb-colin"); if (ci) ci.classList.add("pbx-dropcol"); }
-      const tp = document.createElement("div"); tp.className = "pbx-tip"; tp.textContent = col ? "أفلته هنا ليدخل العمود (Ctrl = يبقى حراً)" : ""; if (col) { const st = $("pbx-stage").getBoundingClientRect(), pp = inF ? { x: f0.left + ev.clientX * E.scale, y: f0.top + ev.clientY * E.scale } : { x: ev.clientX, y: ev.clientY }; tp.style.left = (pp.x - st.left + 14) + "px"; tp.style.top = (pp.y - st.top + 14) + "px"; $("pbx-ovl").appendChild(tp); }
+      const tp = document.createElement("div"); tp.className = "pbx-tip"; tp.textContent = col ? "أفلته هنا ليدخل العمود (Ctrl = يبقى حراً)" : ""; if (col) { const st = $("pbx-ovl").getBoundingClientRect(), pp = inF ? { x: f0.left + ev.clientX * E.scale, y: f0.top + ev.clientY * E.scale } : { x: ev.clientX, y: ev.clientY }; tp.style.left = (pp.x - st.left + 14) + "px"; tp.style.top = (pp.y - st.top + 14) + "px"; $("pbx-ovl").appendChild(tp); }
     };
     dragTrack(e, "move", mv, ev => {
       document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); clearDrop();
@@ -9356,6 +9357,24 @@ body{overflow-x:hidden;margin:0}`;
       return true;
     });
   }
+  /* تبويب «تنسيق»: ثلاث مجموعات تُفتح وتُغلق — تنسيق العنصر، تنسيق الخلفية (لون بسيط ثم تدرّج متعدد الألوان ثم صورة)، باقي الإعدادات */
+  const BG_KEYS = ["bg", "gr", "grad1", "grad2", "gradAng", "bgImg", "bgSize", "bgPos", "bgFixed", "bgOp", "bgBlur", "bgDark"];
+  function styleGroups(all, inf) {
+    const own = new Set(((inf.def && inf.def.ctl) || []).map(c => c.k)), L = { el: [], bg: [], rest: [] };
+    all.forEach(c => {
+      if (["grad1", "grad2", "gradAng"].includes(c.k) && inf.set.grad1 === undefined && inf.set.grad2 === undefined) return;      // التدرّج البسيط القديم يُستبدل بالتدرّج متعدد الألوان (يبقى ظاهراً فقط إن كان مستعملاً)
+      const g = BG_KEYS.includes(c.k) && !(c.k === "bgOp" && own.has("bgOp")) ? "bg" : (/^(ianim|fx|anim|hov|hvr)/.test(c.k) || ["shadow", "op"].includes(c.k)) ? "rest" : "el";
+      L[g].push(c);
+    });
+    L.bg.sort((a, b) => BG_KEYS.indexOf(a.k) - BG_KEYS.indexOf(b.k));
+    const LBL = { bg: "لون بسيط", gr: "لون تدرّج متعدد الألوان (الافتراضي لونان — أضف المزيد بزر ＋ لون)" };
+    const kindN = inf.kind === "widget" ? "العنصر" : inf.kind === "column" ? "العمود" : "القسم";
+    E.acc = E.acc || { el: true };
+    return [["el", "تنسيق " + kindN], ["bg", "تنسيق الخلفية"], ["rest", "باقي الإعدادات"]].filter(([k]) => L[k].length).map(([k, n]) => {
+      const open = !!E.acc[k];
+      return `<div class="pbx-ac"><button type="button" class="pbx-ach${open ? " on" : ""}" data-ac="${k}"><span>${n}</span><i>${open ? "▴" : "▾"}</i></button>${open ? `<div class="pbx-acb">${L[k].map(c => field(LBL[c.k] && k === "bg" ? Object.assign({}, c, { l: LBL[c.k] }) : c, inf.set)).join("")}</div>` : ""}</div>`;
+    }).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>';
+  }
   function renderInspector() {
     updateMbar();
     const el = $("pbx-insp"); if (!el) return; const inf = selInfo();
@@ -9367,7 +9386,7 @@ ${quickHtml(inf)}
 <div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-cp"><small>نسخ تصميم ${DEVIC[E.dev]} ${DEVNAME[E.dev]} إلى:</small><select id="cp-scope"><option value="sel">العنصر المحدد</option>${FREE_ONLY ? "" : '<option value="sec">القسم كله</option>'}<option value="all">الصفحة كلها</option></select>${DEVS.filter(d => d !== E.dev).map(d => `<button class="pbx-small" data-cpy="${d}" title="نسخ إلى ${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
-${all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>'}`;
+${E.tab === "s" ? styleGroups(all, inf) : (all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>')}`;
   }
   function field(c, set) {
     const dev = E.dev, k = c.k, isR = !!c.r;
@@ -9464,6 +9483,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     const t = e.target.closest("button, [data-dev]"); if (!t) return; const inf = selInfo();
     if (t.dataset.dev) { setDev(t.dataset.dev); return; }
     if (t.dataset.itab) { E.tab = t.dataset.itab; renderInspector(); return; }
+    if (t.dataset.ac) { E.acc = E.acc || { el: true }; E.acc[t.dataset.ac] = !E.acc[t.dataset.ac]; renderInspector(); return; }
     if (!inf) return;
     if (t.dataset.q) { onQuick(t.dataset.q); return; }
     if (t.dataset.shp) { inf.set.shape = t.dataset.shp; if (["stroke", "line"].includes(PB.SHAPES[t.dataset.shp][1]) && !inf.set.stroke) inf.set.stroke = inf.set.fill || "#c8a24b"; afterEdit(); return; }
