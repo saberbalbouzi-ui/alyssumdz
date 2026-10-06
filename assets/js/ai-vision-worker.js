@@ -4,7 +4,7 @@
    لا يُستدعى إلا من assets/js/ai-vision.js. */
 import * as T from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js";
 T.env.allowLocalModels = false;
-const M = { sam: "onnx-community/sam2.1-hiera-tiny-ONNX", coco: "onnx-community/dfine_s_coco-ONNX", o365: "onnx-community/dfine_s_obj365-ONNX" };
+const M = { depth: "onnx-community/depth-anything-v2-small", sam: "onnx-community/sam2.1-hiera-tiny-ONNX", coco: "onnx-community/dfine_s_coco-ONNX", o365: "onnx-community/dfine_s_obj365-ONNX" };
 const MIGAN = "https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx", ORT = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/";
 let sam = null, cur = null, mg = null; const dets = {};
 /* ترميم الخلفية محلياً: MI-GAN (رخصة MIT، ~27MB) يرسم ما خلف العنصر المحذوف. يُحفظ في ذاكرة المتصفح بعد أول تنزيل */
@@ -32,7 +32,11 @@ function getSam(id, noGpu) {
 }
 const finite = t => { const d = t.data; for (let i = 0; i < Math.min(d.length, 4096); i += 7) if (!Number.isFinite(d[i])) return false; return true; };
 function getDet(k, id) { if (!dets[k]) dets[k] = T.pipeline("object-detection", M[k], { device: "wasm", dtype: "int8", progress_callback: prog(id) }).catch(e => { dets[k] = null; throw e; }); return dets[k]; }
+/* العمق (Depth Anything V2 صغير، رخصة Apache-2.0، ~27MB int8): تقدير عمق نسبي لكل بكسل — أساس «فصل ما وراء الأشخاص» كما تفعل أدوات التصميم */
+let dpth = null;
+function getDepth(id) { if (!dpth) dpth = T.pipeline("depth-estimation", M.depth, { device: "wasm", dtype: "int8", progress_callback: prog(id) }).catch(e => { dpth = null; throw e; }); return dpth; }
 const ops = {
+  async depth(a, id) { const p = await getDepth(id), r = await p(raw(a)), t = r.predicted_depth, d = t.dims; return { w: d[d.length - 1], h: d[d.length - 2], data: Float32Array.from(t.data) }; },
   async load(a, id) { if (a.sam) await getSam(id); for (const k of a.det || []) await getDet(k, id); return true; },
   /* كشف: [{src, label, score, box:[x0,y0,x1,y1]}] بإحداثيات الصورة المُرسلة */
   async detect(a, id) {

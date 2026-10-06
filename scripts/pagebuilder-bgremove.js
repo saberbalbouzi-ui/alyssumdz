@@ -251,18 +251,35 @@ const PBBgRemove = (function () {
     const r0 = Math.max(0, Math.floor(yB * S.fy)), r1 = Math.min(t.lh, Math.ceil(t.y0 * S.fy) + 1); for (let y = r0; y < r1; y++) for (let x = 0; x < t.lw; x++) t.lo[y * t.lw + x] = Math.max(t.lo[y * t.lw + x], 6);
     t.x0 = 0; t.x1 = S.W; t.y0 = yB; let a = 0; for (let i = 0; i < t.lo.length; i++) if (t.lo[i] > 0) a++; t.area = a;
   }
+  /* فصل «ما وراء» الأشخاص بالعمق (كما تفعل أدوات التصميم): خريطة عمق نسبية (Depth Anything V2) ← يبقى كل ما هو بقرب الأشخاص أو أمامهم (طاولة، كرسي، كرة أرضية، كتب…) ويُحذف الجدار والنافذة والستائر خلفهم.
+     القناع النهائي = اتحاد قناع SAM للأشخاص وقناع العمق، ثم ألفا دقيقة للحواف (نفس ماتينغ الشعر) ← لوحة بحجم المعالجة. تُرجع null إن لم تعطِ نتيجة معقولة. */
+  async function depthFuse(cv, out, S, persons, lite, step) {
+    step("⏳ تقدير العمق لفصل ما وراء الأشخاص…"); const dm = await AIVision.depth(cv, null), dw = dm.w, dh = dm.h, n = dw * dh, D = new Float32Array(dm.data);
+    let mn = 1e9, mx = -1e9; for (let i = 0; i < n; i++) { if (D[i] < mn) mn = D[i]; if (D[i] > mx) mx = D[i]; } const rg = mx - mn || 1; for (let i = 0; i < n; i++) D[i] = (D[i] - mn) / rg;
+    const vals = []; persons.forEach(it => { for (let v = 0; v < dh; v++) for (let u = 0; u < dw; u++) { const x = (u + .5) / dw * S.W, y = (v + .5) / dh * S.H, lx = Math.min(it.lw - 1, Math.floor(x * S.fx)), ly = Math.min(it.lh - 1, Math.floor(y * S.fy)); if (it.lo[ly * it.lw + lx] > 0) vals.push(D[v * dw + u]); } });
+    if (vals.length < 50) return null; vals.sort((a, b) => a - b); const ds = vals[vals.length >> 1], K = .12, soft = new Float32Array(n); for (let i = 0; i < n; i++) soft[i] = clamp((D[i] - (ds - K)) / .05 + .5, 0, 1);
+    const clean = cleanMask(soft, dw, dh, new Uint8Array(n)), W = cv.width, H = cv.height, lim = lite ? 1.2e6 : 3.2e6, sc = Math.min(1, Math.sqrt(lim / (W * H))), pw = Math.max(8, Math.round(W * sc)), ph = Math.max(8, Math.round(H * sc));
+    const dep = resizeF(clean, dw, dh, pw, ph), sam = (() => { const t = document.createElement("canvas"); t.width = pw; t.height = ph; const g = t.getContext("2d", { willReadFrequently: true }); g.imageSmoothingQuality = "high"; g.drawImage(out, 0, 0, pw, ph); return g.getImageData(0, 0, pw, ph).data; })(), M = new Float32Array(pw * ph); let fg = 0;
+    for (let i = 0; i < pw * ph; i++) { M[i] = Math.max(dep[i], sam[i * 4 + 3] / 255); if (M[i] > .5) fg++; } const fr = fg / (pw * ph); if (fr < .06 || fr > .96) return null;
+    step("⏳ حواف دقيقة لكل العناصر…"); const base = scaledCanvas(cv, pw, ph), r = matteCore(rgbOf(base), M, { detail: 1.5, decon: true }), c = document.createElement("canvas"); c.width = pw; c.height = ph;
+    for (let i = 0; i < pw * ph; i++) { const a = clamp(r.alpha[i], 0, 1) * 255; r.data[i * 4 + 3] = a < 2 ? 0 : a; } c.getContext("2d").putImageData(new ImageData(r.data, pw, ph), 0, 0); return c;
+  }
   async function aiCut(srcC, o) {
     const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز أداة القص داخل متصفحك (أول مرة أطول)…");
-    const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, tbl = null; if (o.variant !== "all") { const pre = pickMain(S, items); if (pre && PERS.test(pre.label)) { try { tbl = await tableItem(S, items, cv); if (tbl) extendTable(S, tbl, items); } catch (e) { console.warn("table", e); } } }      // مشهد بأشخاص: الطاولة أمامهم تبقى (يُحذف ما وراءهم فقط)
+    const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, tbl = null, persLo = []; if (o.variant !== "all") { const pre = pickMain(S, items); if (pre && PERS.test(pre.label)) { try { tbl = await tableItem(S, items, cv); if (tbl) extendTable(S, tbl, items); } catch (e) { console.warn("table", e); } } }      // مشهد بأشخاص: الطاولة أمامهم تبقى (يُحذف ما وراءهم فقط)
     let grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items, tbl); if (grp && !grp.length) grp = null;
     if (!grp) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];
       best = await AIVision.addItem(S, { pts: [[W / 2, H / 2, 1]].concat(e.map(p => [W * p[0], H * p[1], 0])), label: "الموضوع" }, items); }
     else {
+      persLo = grp.filter(g => PERS.test(g.label) && !g.holder && g.lo).map(g => ({ lo: g.lo.slice(), lw: g.lw, lh: g.lh }));      /* نسخة قبل الدمج (الدمج يعدّل قناع أكبر عنصر) */
       best = grp.length > 1 ? AIVision.joinItems(S, items, grp) : grp[0]; }
-    if (!best) return null; o.diag = "v2.4 · " + (S.dev || "") + (lite ? " · خفيف" : "") + " · " + cv.width + "×" + cv.height + " · مكتشف: " + (items.map(i => i.label).join("، ") || "لا شيء") + " · الطاولة: " + (tbl ? "نعم" : "لا") + " · مجموعة: " + (grp ? grp.length : 0);
+    if (!best) return null; o.diagBase = "v2.5 · " + (S.dev || "") + (lite ? " · خفيف" : "") + " · " + cv.width + "×" + cv.height + " · مكتشف: " + (items.map(i => i.label).join("، ") || "لا شيء") + " · الطاولة: " + (tbl ? "نعم" : "لا") + " · مجموعة: " + (grp ? grp.length : 0);
     step("⏳ قصّ الحواف بدقة (شعر وتفاصيل)…"); await tick();
     const cuts = AIVision.cutouts(S, cv, [best], { shadow: false, matteMax: lite ? 1.2e6 : 3.2e6 }); if (!cuts.length) return null;
-    const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; out.getContext("2d").drawImage(cuts[0].canvas, cuts[0].x0, cuts[0].y0); return fillHolesC(out, cv, .03);
+    const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; out.getContext("2d").drawImage(cuts[0].canvas, cuts[0].x0, cuts[0].y0); fillHolesC(out, cv, .03);
+    const pers = o.variant !== "all" ? persLo : []; o.depthUsed = "لا";
+    if (pers.length && AIVision.depth && !o.noDepth) { try { const fz = await depthFuse(cv, out, S, pers, lite, step); if (fz) { o.depthUsed = "نعم"; return fz; } o.depthUsed = "رُفض"; } catch (e) { console.warn("depth", e); o.depthUsed = "فشل"; } }      // العمق تحسين: أي فشل ← النتيجة السابقة
+    return out;
   }
   const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
@@ -292,7 +309,7 @@ const PBBgRemove = (function () {
     const show = (c, bgOnly) => { cv.width = c ? c.width : srcC.width; cv.height = c ? c.height : srcC.height; cg.clearRect(0, 0, cv.width, cv.height); cg.drawImage(c || srcC, 0, 0, cv.width, cv.height); };
     const run = async methods => {
       if (S.busy) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
-      try { const oo = { methods, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diag || ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
+      try { const oo = { methods, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diagBase ? oo.diagBase + " · عمق: " + (oo.depthUsed || "—") : ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
         msg("✅ تمّ. إن لم تعجبك النتيجة اضغط «إعادة» لتجربة طريقة أخرى."); $("bg-dg").textContent = r.method + (r.diag ? " · " + r.diag : "");
         $("bg-save").disabled = $("bg-again").disabled = false; }
       catch (e) { if (!S.closed) { $("bg-ln").style.display = "none"; const er = e && e.message || e; if (S.res) { show(S.res.canvas); msg("⚠️ فشلت هذه الطريقة (" + er + ") — عدتُ للنتيجة السابقة."); } else { msg("⚠️ " + er); S.res = null; }
