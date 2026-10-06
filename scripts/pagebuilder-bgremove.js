@@ -229,12 +229,19 @@ const PBBgRemove = (function () {
       if (!held && ((i.det || 1) < .3 || bA(bx(i)) < .004 * px || ![...grp].some(g => bI(bx(i), bx(g)) >= .5 * bA(bx(i))))) return; grp.add(i); grew = true; }); }
     return [...grp];
   }
+  /* سطح الطاولة/المكتب أسفل المشهد: نقاط موجبة في أسفل الصورة وسالبة في أعلاها؛ يُقبل إن كان أسفل الصورة وبحجم معقول */
+  async function tableItem(S, items, cv) {
+    const W = cv.width, H = cv.height, P = (x, y, l) => [W * x, H * y, l], t = await AIVision.addItem(S, { pts: [P(.5, .95, 1), P(.2, .95, 1), P(.8, .95, 1), P(.5, .03, 0), P(.1, .15, 0), P(.9, .15, 0)], label: "طاولة" }, items);
+    if (!t) return null; const fr = (t.x1 - t.x0) * (t.y1 - t.y0) / (W * H); return t.y0 > H * .3 && t.y1 > H * .9 && fr > .05 && fr < .7 && t.area > 0 ? t : null;
+  }
   async function aiCut(srcC, o) {
     const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز نموذج الذكاء داخل المتصفح (أول مرة أطول)…");
     const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items); if (grp && !grp.length) grp = null;
     if (!grp) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];
       best = await AIVision.addItem(S, { pts: [[W / 2, H / 2, 1]].concat(e.map(p => [W * p[0], H * p[1], 0])), label: "الموضوع" }, items); }
-    else best = grp.length > 1 ? AIVision.joinItems(S, items, grp) : grp[0];
+    else {
+      if (grp.some(g => PERS.test(g.label)) && o.variant !== "all") { try { const t = await tableItem(S, items, cv); if (t) grp.push(t); } catch (e) { console.warn("table", e); } }      // مشهد بأشخاص: الطاولة أمامهم تبقى (يُحذف ما وراءهم فقط)
+      best = grp.length > 1 ? AIVision.joinItems(S, items, grp) : grp[0]; }
     if (!best) return null;
     step("⏳ قصّ الحواف بدقة (شعر وتفاصيل)…"); await tick();
     const cuts = AIVision.cutouts(S, cv, [best], { shadow: false, matteMax: lite ? 1.2e6 : 3.2e6 }); if (!cuts.length) return null;
