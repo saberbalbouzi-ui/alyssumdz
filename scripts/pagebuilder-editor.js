@@ -21,6 +21,7 @@ const PBApp = (() => {
 .pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
 [contenteditable=true]{outline:2px solid #2d6cdf!important;outline-offset:3px;cursor:text;min-width:20px}
 .pb-edit .k-canvas.pb-hasbg .pb-in{background-image:none!important}
+.pb-edit.pbx-nogrid .k-canvas .pb-in{background-image:none!important}
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
 .pb-edit .pb-sl-cap:not(.below){cursor:move}
 .pb-drop{position:absolute;background:#2d6cdf;height:4px;border-radius:2px;pointer-events:none;z-index:9999;box-shadow:0 0 0 2px rgba(45,108,223,.25)}
@@ -581,7 +582,7 @@ body{overflow-x:hidden;margin:0}`;
   function asBackground(inf) {
     if (inf.node.type !== "image" || !inf.set.src) return; const sec = inf.sec;
     sec.set.bgOrig = { node: clone(inf.node), colId: inf.col ? inf.col.id : null, free: !!inf.free, idx: inf.idx };      // لإرجاع الصورة إلى أصلها لاحقاً
-    sec.set.bgImg = inf.set.src; sec.set.bgSize = "cover"; sec.set.bgPos = "center"; inf.list.splice(inf.idx, 1); afterEdit(null); toast("🖼️ صارت الصورة خلفية للقسم — حدّد القسم واضغط «إرجاع الخلفية كصورة» للتراجع");
+    sec.set.bgImg = inf.set.src; sec.set.bgSize = "cover"; sec.set.bgPos = "center"; inf.list.splice(inf.idx, 1); afterEdit(null); toast("🖼️ صارت الصورة خلفية — للتراجع: زر الفأرة الأيمن على الخلفية ← «فصل الصورة عن الخلفية»");
   }
   /* إرجاع خلفية القسم إلى صورة عادية في مكانها الأصلي */
   function restoreBackground(sec) {
@@ -592,12 +593,15 @@ body{overflow-x:hidden;margin:0}`;
   }
   function showCtx(e) {
     if (e.target.closest && e.target.closest("[contenteditable=true]")) { hideCtx(); return; }      // أثناء تحرير نص: تظهر قائمة المتصفح الأصلية (نسخ/قص/لصق للنص المحدَّد) لا قائمة العنصر
-    const wEl = e.target.closest('[data-kind="widget"]'); hideCtx(); if (!wEl) return; e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
+    const wEl = e.target.closest('[data-kind="widget"]'); hideCtx();
+    if (!wEl) { const se = e.target.closest && e.target.closest(".pb-sec"), si = se && find(se.dataset.pb); if (si && si.kind === "section" && (FREE_ONLY || si.set.bgImg)) { e.preventDefault(); const f1 = $("pbx-fw").getBoundingClientRect(), k = E.scale; openBgMenu(f1.left + e.clientX * k, f1.top + e.clientY * k, si.node); } return; }
+    e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
     const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; openCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
   }
   /* قائمة العنصر المحدد (زر ⋯ في الشريط العائم أو الزر الأيمن): نسخ، نمط، لصق، محاذاة على الصفحة، قفل، رابط... تُفتح عند (x,y) أو أسفل/أعلى الزر anchor */
-  function openCtx(x, y, anchor) {
-    hideCtx(); const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
+  function openCtx(x, y, anchor, custom) {
+    hideCtx(); if (custom) return showMenu(custom, x, y, anchor);
+    const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
     const img = inf.node.type === "image", canvas = inf.sec.set.kind === "canvas", cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0), lk = !!inf.set.locked, ctl = k => (inf.def.ctl || []).some(c => c.k === k);
     const A = [["⇤", "يسار", () => alignPage("left")], ["↔", "وسط أفقياً", () => alignPage("center")], ["⇥", "يمين", () => alignPage("right")], "-", ["⤒", "أعلى", () => alignPage("top")], ["↕", "وسط عمودياً", () => alignPage("middle")], ["⤓", "أسفل", () => alignPage("bottom")]];
     const items = [["⧉", "نسخ", copyEl, "Ctrl+C"], ["🖌️", "نسخ النمط", copyStyle, "Ctrl+Alt+C"], E.styleClip ? ["🎨", "لصق النمط", pasteStyle, "Ctrl+Alt+V"] : null, ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", () => dup(), "Ctrl+D"], ["🗑", "حذف", () => del(), "Del", 1], "-",
@@ -607,6 +611,10 @@ body{overflow-x:hidden;margin:0}`;
       img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)],
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
       img && canvas ? "-" : null, img && canvas ? ["🔤", "التقاط النص", () => PBSmart.capture()] : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null].filter(Boolean);
+    showMenu(items, x, y, anchor);
+  }
+  /* يعرض قائمة عائمة من عناصر [أيقونة، نص، دالة، اختصار، خطر، قائمة فرعية، معطّل] */
+  function showMenu(items, x, y, anchor) {
     const place = (m, ax, ay, ar) => { document.body.appendChild(m); const w = m.offsetWidth, h = m.offsetHeight; let l = ax, t = ay; if (ar && t + h > innerHeight - 6) t = ar.top - h - 6; m.style.left = Math.max(6, Math.min(l, innerWidth - w - 6)) + "px"; m.style.top = Math.max(6, Math.min(t, innerHeight - h - 6)) + "px"; };
     const build = (list, id) => { const m = document.createElement("div"); m.id = id; m.className = "pbx-ctx" + (id === "pbx-ctx2" ? " pbx-ctx2" : "");
       list.forEach(it => { if (it === "-") { m.appendChild(document.createElement("hr")); return; } const b = document.createElement("button"); b.type = "button"; if (it[4]) b.className = "dng"; if (it[6]) b.classList.add("off"); if (it[5]) b.classList.add("has-sub");
@@ -616,6 +624,23 @@ body{overflow-x:hidden;margin:0}`;
         m.appendChild(b); }); return m; };
     place(build(items, "pbx-ctx"), x, y, anchor);
     setTimeout(() => { const off = ev => { if (!ev.target.closest || !ev.target.closest("#pbx-ctx,#pbx-ctx2")) { hideCtx(); document.removeEventListener("mousedown", off, true); fdoc.removeEventListener("mousedown", off, true); } }; document.addEventListener("mousedown", off, true); fdoc.addEventListener("mousedown", off, true); }, 0);
+  }
+
+
+  /* ───────────────── قائمة خلفية الصفحة/القسم (الزر الأيمن على الخلفية، نمط Canva) ───────────────── */
+  function setGrid(on) { E.nogrid = !on; if (fdoc && fdoc.body) fdoc.body.classList.toggle("pbx-nogrid", !on); }
+  function openBgMenu(x, y, sec) {
+    const set = sec.set, has = !!set.bgImg, lk = !!set.bgLocked, canvas = set.kind === "canvas";
+    const items = [["⧉", "نسخ", () => { if (!has) return toast("لا توجد صورة خلفية لنسخها"); E.clip = PB.mkW("image", { src: set.bgImg, alt: "" }); toast("📋 نُسخت صورة الخلفية — الصقها بـ Ctrl+V كعنصر"); }, "Ctrl+C", 0, 0, !has],
+      ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip],
+      FREE_ONLY ? null : ["➕", "إضافة قسم", () => { const i = E.page.sections.indexOf(sec); addSection("_blank", i + 1); }, "Ctrl+Shift+Enter"],
+      FREE_ONLY ? null : ["⧉", "تكرار القسم", () => { const c = reId(clone(sec)); E.page.sections.splice(E.page.sections.indexOf(sec) + 1, 0, c); afterEdit(c.id); }, "Ctrl+D"],
+      has ? ["🗑", "حذف الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); ["bgImg", "bgSize", "bgPos", "bgOrig"].forEach(k => delete set[k]); E.nextLabel = "حذف الخلفية"; afterEdit(); }, "Del", 1, 0, lk] : null, "-",
+      has ? [lk ? "🔓" : "🔒", lk ? "فتح قفل الخلفية" : "قفل الخلفية", () => { if (lk) delete set.bgLocked; else set.bgLocked = true; afterEdit(); toast(lk ? "🔓 فُتحت الخلفية" : "🔒 الخلفية مقفلة"); }] : null,
+      canvas ? ["↕", "تغيير حجم الصفحة (الارتفاع)", () => { const v = Number(prompt("ارتفاع الصفحة بالبكسل:", Number(eff(set, "mh", E.dev)) || 520)); if (v >= 100) { setR(set, "mh", E.dev, Math.round(v)); afterEdit(); } }] : null,
+      ["#", "الدلائل", null, "", 0, [[E.nogrid ? "▦" : "▧", E.nogrid ? "إظهار الشبكة" : "إخفاء الشبكة", () => setGrid(!!E.nogrid)], ["🧲", E.snap ? "إيقاف الالتصاق" : "تفعيل الالتصاق", toggleSnap]]],
+      has ? ["⛓", "فصل الصورة عن الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); restoreBackground(sec); }, "", 0, 0, lk] : null].filter(Boolean);
+    openCtx(x, y, null, items);
   }
 
   /* ───────────────── تحرير النص المباشر ───────────────── */
