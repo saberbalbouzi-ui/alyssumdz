@@ -9028,7 +9028,7 @@ body{overflow-x:hidden;margin:0}`;
       h += cks.map(c => { const v = /^#[0-9a-f]{6}$/i.test(set[c.k] || "") ? set[c.k] : "#ffffff"; return `<label class="qa" title="${esc(c.l)}"><b style="font-size:.78rem">${esc(c.l.replace(/^لون\s*/, "").replace(/\s*\(.*$/, "").slice(0, 10))}</b><i style="background:${v}"></i><input type="color" data-qi="${c.k}" value="${v}"></label>`; }).join("") + (cks.length ? sep : "")
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + sep;
     }
-    h += btn("opacity", QI.op, "الشفافية") + (isTx ? tb("effects", "تأثيرات", "تأثيرات النص (Effets) وظل العنصر") : "") + (t === "heading" ? tb("curve", "انحناء", "انحناء النص — لسطر واحد فقط", !!Number(set.tcurve)) : "") + tb("anim", "حركة", "حركة الظهور") + tb("pos", "الموضع", "الترتيب والمحاذاة على الصفحة") + sep + btn("style", QI.paint, "نسخ النمط ولصقه");
+    h += btn("opacity", QI.op, "الشفافية") + (isTx ? tb("effects", "تأثيرات", "تأثيرات النص (Effets) وظل العنصر") : "") + sep + btn("style", QI.paint, "نسخ النمط ولصقه");
     return h;
   }
   function placeQbar() {
