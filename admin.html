@@ -11555,13 +11555,15 @@ const PBPuzzle = (function () {
     if (na) { if (cp) { iw = cp.w / 100; ih = iw * fa / na; ix = cp.x / 100; iy = cp.y / 100; } else { const fit = set0.fit || "cover";
       if (fit === "fill") { iw = 1; ih = 1; } else { const wide = fa > na, cover = fit !== "contain"; if (wide === cover) { iw = 1; ih = fa / na; } else { ih = 1; iw = na / fa; } ix = (1 - iw) / 2; iy = (1 - ih) / 2; } } }
     const gid = PB.uid(), G = { d: geom(set0, "d"), m: geom(set0, "m") }; if (!G.d) { toast("تعذّر قراءة موضع الصورة"); return; }
+    const ORIG = { src: set0.src, alt: set0.alt || "", link: set0.link || "", fit: set0.fit || "cover", crop: set0.crop ? JSON.parse(JSON.stringify(set0.crop)) : null, zi: Number(set0.zi) || 1, g: {} };
+    ["d", "m"].forEach(dev => { const g = G[dev]; if (g) ORIG.g[dev] = [g.fx, g.fy, g.fwd, g.fh]; });      // الأصل لإعادة التقسيم أو إرجاع الصورة كاملة
     const pieces = polys.map(poly => {
       const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]), bx = Math.min(...xs), by = Math.min(...ys), bw = Math.max(...xs) - bx, bh = Math.max(...ys) - by; if (bw < .004 || bh < .004) return null;
       const w = PB.mkFree("image", 0, 0, Number(set0.zi) || 1), st = w.set;
       st.src = set0.src; st.alt = set0.alt || ""; if (set0.link) st.link = set0.link; st.fit = "fill";
       st.crop = { x: r2((ix - bx) / bw * 100), y: r2((iy - by) / bh * 100), w: r2(iw / bw * 100), h: r2(ih / bh * 100) };
       st.clip = "M" + poly.map(p => (+((p[0] - bx) / bw).toFixed(4)) + " " + (+((p[1] - by) / bh).toFixed(4))).join("L") + "Z";
-      st.pz = gid; st.pzh = {}; st.pzs = true; st.zi = Number(set0.zi) || 1;
+      st.pz = gid; st.pzh = {}; st.pzs = true; st.zi = Number(set0.zi) || 1; st.pzo = ORIG;
       ["d", "m"].forEach(dev => { const g = G[dev]; if (!g) return; const fx = g.fx + bx * g.fwd, fy = g.fy + by * g.fh; PB.setR(st, "fx", dev, r2(fx)); PB.setR(st, "fy", dev, r2(fy)); PB.setR(st, "fwd", dev, r2(bw * g.fwd)); PB.setR(st, "fh", dev, r2(bh * g.fh)); st.pzh[dev] = [r2(fx), r2(fy)]; });
       return w; }).filter(Boolean);
     if (pieces.length < 2) { toast("لم تتكوّن قطع كافية"); return; }
@@ -11572,20 +11574,24 @@ const PBPuzzle = (function () {
   /* ───────── اللوحة في الإعدادات ───────── */
   const group = inf => (inf.sec.free || []).filter(w => w.set.pz && w.set.pz === inf.set.pz);
   const home = (st, dev) => st.pzh && (st.pzh[dev] || st.pzh.d);
+  function shapeUi(resplit) {
+    const free = S.pat === "free", num = (k, mx) => `<input type="number" data-pzk="${k}" min="1" max="${mx}" value="${esc(S[k])}">`;
+    return `<select data-pzk="pat">${PATS.map(([k, n]) => `<option value="${k}"${S.pat === k ? " selected" : ""}>${n}</option>`).join("")}</select>
+${free ? `<p class="pz-h">ارسم على الصورة خطوطاً مستقيمة أو منحنية تقطعها من حافة إلى حافة؛ تتحوّل المناطق الناتجة إلى قطع.</p><button type="button" class="pbx-small pz-go" data-pz="${resplit ? "resplit" : "draw"}">✏️ ${resplit ? "أعد التقسيم: ارسم خطوطاً جديدة" : "ارسم خطوط التقسيم"}</button>`
+      : `<div class="pz-g"><label>الأعمدة (أفقياً)${num("cols", 12)}</label>${S.pat === "hex" ? "" : `<label>الصفوف (عمودياً)${num("rows", 12)}</label>`}</div>
+${S.pat === "jigsaw" || S.pat === "wave" ? `<label class="pz-r">${S.pat === "jigsaw" ? "حجم البروزات" : "عمق التموّج"} <input type="range" data-pzk="knob" min="60" max="150" value="${esc(S.knob)}"></label>` : ""}
+<button type="button" class="pbx-small pz-go" data-pz="${resplit ? "resplit" : "split"}">🧩 ${resplit ? "أعد التقسيم بهذا الشكل" : "قسّم الصورة"}</button>`}`;
+  }
   function panel(inf) {
     if (!inf || inf.kind !== "widget") return "";
     const st = inf.set;
     if (st.pz) { const n = group(inf).length;
       return `<div class="pbx-pz"><p>🧩 قطعة من بازل (${n} قطعة). اسحبها لتفصلها عن البقية؛ وعند اقترابها من موضعها الصحيح بجوار قطعة أخرى تنجذب إليه.</p>
 <label class="pz-sw"><input type="checkbox" data-pzk="snap" ${st.pzs !== false ? "checked" : ""}> 🧲 التجاذب بين القطع</label>
-<div class="pz-btns"><button type="button" class="pbx-small" data-pz="gather">↺ تجميع كل القطع</button><button type="button" class="pbx-small" data-pz="scatter">🎲 بعثرة القطع</button></div></div>`; }
-    const free = S.pat === "free", num = (k, mx) => `<input type="number" data-pzk="${k}" min="1" max="${mx}" value="${esc(S[k])}">`;
-    return `<div class="pbx-pz"><p>قسّم الصورة إلى قطع منفصلة تتجاذب عند اقترابها. اختر الشكل:</p>
-<select data-pzk="pat">${PATS.map(([k, n]) => `<option value="${k}"${S.pat === k ? " selected" : ""}>${n}</option>`).join("")}</select>
-${free ? `<p class="pz-h">ارسم على الصورة خطوطاً مستقيمة أو منحنية تقطعها من حافة إلى حافة؛ تتحوّل المناطق الناتجة إلى قطع.</p><button type="button" class="pbx-small pz-go" data-pz="draw">✏️ ارسم خطوط التقسيم</button>`
-      : `<div class="pz-g"><label>الأعمدة (أفقياً)${num("cols", 12)}</label>${S.pat === "hex" ? "" : `<label>الصفوف (عمودياً)${num("rows", 12)}</label>`}</div>
-${S.pat === "jigsaw" || S.pat === "wave" ? `<label class="pz-r">${S.pat === "jigsaw" ? "حجم البروزات" : "عمق التموّج"} <input type="range" data-pzk="knob" min="60" max="150" value="${esc(S.knob)}"></label>` : ""}
-<button type="button" class="pbx-small pz-go" data-pz="split">🧩 قسّم الصورة</button>`}
+<div class="pz-btns"><button type="button" class="pbx-small" data-pz="gather">↺ تجميع كل القطع</button><button type="button" class="pbx-small" data-pz="scatter">🎲 بعثرة كل القطع</button></div>
+${st.pzo ? `<div class="pz-sep">نوع البازل (يستبدل القطع الحالية)</div>${shapeUi(true)}<button type="button" class="pbx-small" data-pz="merge">↩ إرجاع الصورة كاملة</button>` : ""}</div>`; }
+    if (!st.src) return `<div class="pbx-pz"><p>ارفع صورة أولاً ثم قسّمها إلى بازل.</p></div>`;
+    return `<div class="pbx-pz"><p>قسّم الصورة إلى قطع منفصلة تتجاذب عند اقترابها. اختر الشكل:</p>${shapeUi(false)}
 <p class="pz-h">يمكن التراجع بـ Ctrl+Z. القطع عناصر حرة يمكن تحريك كل واحدة وإعادة ترتيبها.</p></div>`;
   }
   /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة */
@@ -11593,14 +11599,34 @@ ${S.pat === "jigsaw" || S.pat === "wave" ? `<label class="pz-r">${S.pat === "jig
     if (k === "snap") { const inf = A().find(A().E.sel); if (inf && inf.set.pz) { group(inf).forEach(w => { w.set.pzs = !!v; }); A().E.nextLabel = "تجاذب البازل"; A().commitAfter(); } return false; }
     if (k === "pat") { S.pat = v; return true; } S[k] = Number(v) || S[k]; return false;
   }
+  /* يدمج قطع المجموعة في عنصر الصورة الأصلي (بأصله المحفوظ) ويعيده */
+  function restore(inf) {
+    const o = inf.set.pzo; if (!o || !o.src) return null; const g = group(inf), L = inf.sec.free; if (!g.length) return null;
+    const w = PB.mkFree("image", 0, 0, o.zi || 1), st = w.set; st.src = o.src; st.alt = o.alt || ""; if (o.link) st.link = o.link; st.fit = o.fit || "cover"; if (o.crop) st.crop = JSON.parse(JSON.stringify(o.crop)); st.zi = o.zi || 1;
+    ["d", "m"].forEach(dev => { const q = o.g && o.g[dev]; if (q) { PB.setR(st, "fx", dev, q[0]); PB.setR(st, "fy", dev, q[1]); PB.setR(st, "fwd", dev, q[2]); PB.setR(st, "fh", dev, q[3]); } });
+    const pos = L.slice(0, L.indexOf(g[0])).filter(x => !g.includes(x)).length, rest = L.filter(x => !g.includes(x)); rest.splice(pos, 0, w); L.length = 0; L.push(...rest);
+    A().E.sel = w.id; return w;
+  }
   function act(name, inf) {
+    const E = A().E;
     if (name === "split") { const L = A().layoutOf(inf.node.id); if (!L) return; build(inf, patternPolys(L.width / L.height)); return; }
     if (name === "draw") return startDraw(inf);
-    if (!inf.set.pz) return; const g = group(inf), E = A().E, sec = inf.sec;
-    if (name === "gather") { g.forEach(w => ["d", "m"].forEach(dev => { const h = w.set.pzh && w.set.pzh[dev]; if (h) { PB.setR(w.set, "fx", dev, h[0]); PB.setR(w.set, "fy", dev, h[1]); } })); E.nextLabel = "تجميع البازل"; A().commitAfter(); return; }
-    if (name === "scatter") { const dev = E.dev, cw = 100, mh = Number(PB.eff(sec.set, "mh", dev)) || 600, rr = rnd((Math.random() * 1e9) | 0);
-      g.forEach(w => { const wd = Number(PB.eff(w.set, "fwd", dev)) || 20, hh = Number(PB.eff(w.set, "fh", dev)) || 100; PB.setR(w.set, "fx", dev, r2(Math.max(0, rr() * (cw - wd)))); PB.setR(w.set, "fy", dev, r2(Math.max(0, rr() * (mh - hh)))); if (dev !== "d" && PB.own(w.set, "fx", "d") === undefined) { const h = home(w.set, "d"); PB.setR(w.set, "fx", "d", h[0]); PB.setR(w.set, "fy", "d", h[1]); } });
-      E.nextLabel = "بعثرة البازل"; A().commitAfter(); }
+    if (name === "merge" || name === "resplit") {
+      if (E.dev !== "d") { toast("غيّر البازل من عرض الحاسوب (المكتب)"); return; } const w = restore(inf); if (!w) { toast("لا يوجد أصل محفوظ لهذه القطع"); return; }
+      if (name === "merge") { E.nextLabel = "إرجاع الصورة كاملة"; A().commitAfter(w.id); toast("↩ عادت الصورة كاملة"); return; }
+      A().renderCanvas(); const i2 = A().find(w.id); if (!i2) return;
+      if (S.pat === "free") { E.nextLabel = "إرجاع الصورة للتقسيم"; A().commitAfter(w.id); setTimeout(() => startDraw(A().find(w.id)), 60); return; }
+      const L = A().layoutOf(w.id); if (!L) return; build(i2, patternPolys(L.width / L.height)); return;
+    }
+    if (!inf.set.pz) return; const g = group(inf), sec = inf.sec;
+    if (name === "gather") { g.forEach(w => ["d", "m"].forEach(dev => { const h = w.set.pzh && w.set.pzh[dev]; if (h) { PB.setR(w.set, "fx", dev, h[0]); PB.setR(w.set, "fy", dev, h[1]); } })); E.nextLabel = "تجميع البازل"; A().commitAfter(); toast("↺ جُمعت " + g.length + " قطعة في مواضعها"); return; }
+    if (name === "scatter") {      // بعثرة كل القطع حول منطقة الصورة (لا تبقى أي قطعة في مكانها)
+      const dev = E.dev, mh = Number(PB.eff(sec.set, "mh", dev)) || 600, rr = rnd((Math.random() * 1e9) | 0), hy = g.map(w => Number(PB.eff(w.set, "fy", dev)) || 0), hh = g.map(w => Number(PB.eff(w.set, "fh", dev)) || 100);
+      const y0 = Math.max(0, Math.min(...hy) - 60), y1 = Math.min(mh, Math.max(...hy.map((v, i) => v + hh[i])) + 240);
+      g.forEach((w, i) => { const wd = Number(PB.eff(w.set, "fwd", dev)) || 20, ox = Number(PB.eff(w.set, "fx", dev)) || 0, oy = hy[i], H = hh[i]; let nx = ox, ny = oy;
+        for (let k = 0; k < 14; k++) { nx = r2(rr() * Math.max(0, 100 - wd)); ny = r2(y0 + rr() * Math.max(0, y1 - y0 - H)); if (Math.abs(nx - ox) > 8 || Math.abs(ny - oy) > 40) break; }
+        PB.setR(w.set, "fx", dev, nx); PB.setR(w.set, "fy", dev, ny); if (dev !== "d" && PB.own(w.set, "fx", "d") === undefined) { const h = home(w.set, "d"); if (h) { PB.setR(w.set, "fx", "d", h[0]); PB.setR(w.set, "fy", "d", h[1]); } } });
+      E.nextLabel = "بعثرة البازل"; A().commitAfter(); toast("🎲 بُعثرت " + g.length + " قطعة"); }
   }
   /* تجاذب أثناء السحب: يعيد الموضع الصحيح إن قرُبت القطعة من موضعها الصحيح نسبةً إلى قطعة أخرى من المجموعة */
   function snap(inf, X, Y, cw, u, dev) {
@@ -11615,7 +11641,7 @@ ${S.pat === "jigsaw" || S.pat === "wave" ? `<label class="pz-r">${S.pat === "jig
   function css() {
     if (document.getElementById("pz-css")) return; const st = document.createElement("style"); st.id = "pz-css";
     st.textContent = `.pbx-pz{display:flex;flex-direction:column;gap:.45rem;font-size:.8rem}.pbx-pz p{margin:0;color:#6b6556;line-height:1.7}.pbx-pz .pz-h{font-size:.72rem}.pbx-pz select,.pbx-pz input[type=number]{width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.35rem;font-family:inherit}
-.pz-g{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}.pz-g label,.pz-r{display:flex;flex-direction:column;gap:.2rem;font-weight:700;font-size:.74rem}.pz-sw{display:flex;gap:.4rem;align-items:center;font-weight:700;cursor:pointer}.pz-btns{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.pz-sep{font-weight:800;font-size:.76rem;color:#6d28d9;border-top:1px solid #e3e0f0;padding-top:.5rem;margin-top:.15rem}.pz-g{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}.pz-g label,.pz-r{display:flex;flex-direction:column;gap:.2rem;font-weight:700;font-size:.74rem}.pz-sw{display:flex;gap:.4rem;align-items:center;font-weight:700;cursor:pointer}.pz-btns{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
 .pbx-pz .pz-go{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:0;padding:.55rem;font-size:.85rem}
 .pz-layer{position:fixed;z-index:10050;cursor:crosshair;touch-action:none;outline:2px dashed #7c3aed;background:rgba(124,58,237,.06)}.pz-layer svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .pz-bar{position:fixed;z-index:10051;display:flex;gap:4px;align-items:center;background:#fff;border-radius:12px;padding:5px 8px;box-shadow:0 4px 16px rgba(124,58,237,.35),0 0 0 2px #a855f7;direction:rtl;font-family:inherit}.pz-bar button{border:0;border-radius:9px;padding:.4rem .6rem;font-family:inherit;font-weight:800;font-size:.8rem;cursor:pointer;background:#f1f2f6;color:#1f2430}.pz-bar button.on{background:#ede9fe;color:#6d28d9;box-shadow:inset 0 0 0 1.5px #7c3aed}.pz-bar button.ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pz-bar button.no{color:#b83232}.pz-bar button:disabled{opacity:.45}.pz-bar span{font-size:.74rem;color:#6d28d9;font-weight:800;padding:0 .3rem}`;
