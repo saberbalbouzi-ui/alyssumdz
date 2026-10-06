@@ -163,10 +163,26 @@ window.AIVision = (function () {
       dets.unshift({ label: best && iou(best.box, zb) > .3 ? best.label : "عنصر", score: 1.01, box: zb, src: "zone", zoneMain: true });
     }
     step("⏳ تحليل الصورة…"); const S = await pS, items = [];
-    for (let i = 0; i < dets.length; i++) {
-      step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…"); const d = dets[i], m = await maskFor(S, { box: d.box }); if (!m.area) continue;
-      items.push(Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src, zoneMain: !!d.zoneMain }));
-    }
+    /* بعد ترميز SAM مرة واحدة، طلبات الأقنعة مستقلة؛ ننفذ اثنتين معاً لتقليل زمن الانتظار
+       مع إبقاء ترتيب النتائج ثابتاً حتى لا تتغير أولوية الدمج/التعارض. */
+    const maskJobs = dets.map((d, i) => ({ d, i }));
+    const masked = new Array(maskJobs.length); let nextMask = 0;
+    const workers = Math.min(2, Math.max(1, maskJobs.length));
+    await Promise.all(Array.from({ length: workers }, async () => {
+      while (true) {
+        const i = nextMask++; if (i >= maskJobs.length) return;
+        const d = maskJobs[i];
+        step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…");
+        try {
+          const m = await maskFor(S, { box: d.box });
+          masked[i] = m && m.area ? Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src, zoneMain: !!d.zoneMain }) : null;
+        } catch (e) {
+          masked[i] = null;
+          console.warn("SAM mask", i, e);
+        }
+      }
+    }));
+    masked.forEach(m => { if (m) items.push(m); });
     const out = mergeItems(items, S), main = out.find(i => i.zoneMain);
     if (main) {                                                       // «منطقة»: أجزاء الشيء نفسه (شرائح كشف داخل المستطيل) تُضمّ إليه؛ الأشخاص/الأيدي تبقى منفصلة لتُطرح الأصابع
       const mb = [main.x0, main.y0, main.x1, main.y1], ex = .1 * Math.max(mb[2] - mb[0], mb[3] - mb[1]), eb = [mb[0] - ex, mb[1] - ex, mb[2] + ex, mb[3] + ex];
