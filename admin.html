@@ -8034,7 +8034,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-sc{position:relative;margin:18px auto}
 .pbx-fw{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.25)}
 .pbx-fw iframe{border:0;width:100%;height:100%;display:block;background:#fff}
-#pbx-ovl{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#pbx-ovl{position:absolute;inset:0;pointer-events:none;overflow:visible}
 .pbx-box{position:absolute;border:2px solid #2d6cdf;pointer-events:none;box-sizing:border-box}
 .pbx-box.column{border-color:#9b59b6}.pbx-box.widget{border-color:#e67e22}
 .pbx-bar{position:absolute;top:-30px;right:-2px;display:flex;gap:2px;pointer-events:auto;white-space:nowrap}
@@ -8108,7 +8108,24 @@ body{overflow-x:hidden;margin:0}`;
  .pbx-h{width:22px;height:22px}.pbx-bar button,.pbx-bar span{padding:.4rem .6rem;font-size:.82rem}
  .pbx-ah{padding:.9rem .8rem!important}
 }
-@media(pointer:coarse){.pbx-h{width:20px;height:20px}.pbx-rot,.pbx-rad{transform:scale(1.25)}}`;
+@media(pointer:coarse){.pbx-h{width:20px;height:20px}.pbx-rot,.pbx-rad{transform:scale(1.25)}}
+/* ── عناصر على نمط Canva: إطار بنفسجي، مقابض دائرية، شريط عائم، زرّا تدوير/تحريك ── */
+.pbx-box.widget{border-color:#8b3dff}.pbx-box.widget.lk{border-style:dashed}
+.pbx-box.widget .pbx-h{color:#8b3dff;width:13px;height:13px;border:1.5px solid #8b3dff;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.28)}
+.pbx-box.widget .pbx-h.d-n{top:-7px;width:24px;height:9px;margin-left:-12px;border-radius:6px}.pbx-box.widget .pbx-h.d-s{bottom:-7px;width:24px;height:9px;margin-left:-12px;border-radius:6px}
+.pbx-box.widget .pbx-h.d-e{right:-6px;width:9px;height:24px;margin-top:-12px;border-radius:6px}.pbx-box.widget .pbx-h.d-w{left:-6px;width:9px;height:24px;margin-top:-12px;border-radius:6px}
+.pbx-box.widget .pbx-h.d-nw{width:15px;height:15px;top:-8px;left:-8px;background:#8b3dff;border-color:#fff;box-shadow:0 0 0 1.5px #8b3dff,0 1px 4px rgba(0,0,0,.3)}
+.pbx-box.widget .pbx-h.d-ne{top:-7px;right:-7px}.pbx-box.widget .pbx-h.d-se{bottom:-7px;right:-7px}.pbx-box.widget .pbx-h.d-sw{bottom:-7px;left:-7px}
+.pbx-box.widget .pbx-rad{border-color:#8b3dff}
+.pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
+.pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
+.pbx-ft button:hover,.pbx-ft button.on{background:#ebeef2}.pbx-ft button.dng:hover{color:#b83232}
+.pbx-sb{position:absolute;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:7}
+.pbx-sb button{border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);cursor:grab}.pbx-sb button:hover{background:#f3ecff;color:#8b3dff}.pbx-sb button:active{cursor:grabbing}
+.pbx-ft svg,.pbx-sb svg{width:20px;height:20px;display:block}
+.pbx-ctx2{z-index:10004}.pbx-ctx button.has-sub:after{content:"‹";margin-inline-start:auto;font-size:1.1rem;color:#999}.pbx-ctx button.off{opacity:.4;cursor:default}
+@media(pointer:coarse){.pbx-box.widget .pbx-h{width:20px;height:20px}.pbx-box.widget .pbx-h.d-n,.pbx-box.widget .pbx-h.d-s{width:34px;height:14px}.pbx-box.widget .pbx-h.d-e,.pbx-box.widget .pbx-h.d-w{width:14px;height:34px}.pbx-ft button,.pbx-sb button{width:40px;height:40px}}
+`;
 
   const toastUndo = m => { const t = $("pbx-msg"); if (!t) return; t.innerHTML = esc(m) + ' <button type="button" id="pbx-tu" style="margin-inline-start:.6rem;background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.2rem .7rem;font-weight:800;cursor:pointer;font-family:inherit">↩ إلغاء النسخ</button>'; t.style.display = "block"; $("pbx-tu").onclick = () => { undo(); t.style.display = "none"; toast("↩ أُلغي النسخ"); }; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 9000); };
   const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
@@ -8410,8 +8427,8 @@ body{overflow-x:hidden;margin:0}`;
     const mk = (type, t) => new MouseEvent(type, { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView });
     doc.addEventListener("touchstart", e => {
       if (e.touches.length !== 1) return; const tg = e.target; if (!tg || !tg.closest) return;
-      const ok = isFrame ? (E.sel && tg.closest('[data-pb="' + E.sel + '"]') && !tg.closest("[contenteditable=true]")) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz");
-      if (!ok || (!isFrame && tg.closest(".pbx-bar button,.pbx-bar label"))) return; on = true; e.preventDefault(); tg.dispatchEvent(mk("mousedown", e.touches[0]));
+      const ok = isFrame ? (E.sel && tg.closest('[data-pb="' + E.sel + '"]') && !tg.closest("[contenteditable=true]")) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz,.pbx-ft,.pbx-sb");
+      if (!ok || (!isFrame && tg.closest(".pbx-bar button,.pbx-bar label,.pbx-ft button"))) return; on = true; e.preventDefault(); tg.dispatchEvent(mk("mousedown", e.touches[0]));
     }, { passive: false });
     doc.addEventListener("touchmove", e => { if (!on) return; e.preventDefault(); doc.documentElement.dispatchEvent(mk("mousemove", e.touches[0])); }, { passive: false });
     const end = e => { if (!on) return; on = false; doc.documentElement.dispatchEvent(mk("mouseup", e.changedTouches[0])); };
@@ -8502,6 +8519,7 @@ body{overflow-x:hidden;margin:0}`;
       const wEl = e.target.closest('[data-kind="widget"]'); if (!wEl) return;
       const cap = e.target.closest(".pb-sl-cap:not(.below)");
       if (cap && E.sel === wEl.dataset.pb) { e.preventDefault(); return startCapDrag(e, cap, wEl); }
+      { const i1 = find(wEl.dataset.pb); if (i1 && i1.set.locked) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); return; } }      // العنصر المقفل يُحدَّد فقط
       { const i0 = find(wEl.dataset.pb); if (i0 && E.dev === "m" && i0.sec.set.kind !== "canvas" && (wEl.dataset.free ? PB.autoFlowFree(i0.sec) : true)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); if (!E.mToast) { E.mToast = 1; toast("📱 في الهاتف تُرتَّب العناصر تلقائياً داخل الأقسام العادية — حرّكها من عرض سطح المكتب أو استعمل إعدادات الشريط الجانبي"); } return; } }
       if (wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots")) {
         if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
@@ -8536,7 +8554,7 @@ body{overflow-x:hidden;margin:0}`;
     setTimeout(() => { const off = ev => { if (!ev.target.closest || !ev.target.closest("#pbx-ip")) { hideIp(); document.removeEventListener("mousedown", off, true); fdoc.removeEventListener("mousedown", off, true); } }; document.addEventListener("mousedown", off, true); fdoc.addEventListener("mousedown", off, true); }, 0);
   }
   /* ───────────────── قائمة النقر بيمين الفأرة ───────────────── */
-  function hideCtx() { const m = $("pbx-ctx"); if (m) m.remove(); }
+  function hideCtx() { ["pbx-ctx", "pbx-ctx2"].forEach(i => { const m = $(i); if (m) m.remove(); }); }
   function secHeight(inf) { const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), inEl = el && el.closest(".pb-in"); if (!inEl) return 600; const r = inEl.getBoundingClientRect(); return Math.round(r.height / uOf(inf.sec, r)); }
   function fitPage(inf) {
     if (inf.free) { ensureMobile(inf.sec); const h = secHeight(inf); setR(inf.set, "fx", E.dev, 0); setR(inf.set, "fy", E.dev, 0); setR(inf.set, "fwd", E.dev, 100); setR(inf.set, "fh", E.dev, h); if (E.dev !== "d") ["fx", "fy", "fwd", "fh"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, E.dev)); }); if (inf.node.type === "image") inf.set.fit = "cover"; }
@@ -8560,17 +8578,27 @@ body{overflow-x:hidden;margin:0}`;
     const wEl = e.target.closest('[data-kind="widget"]'); hideCtx(); if (!wEl) return; e.preventDefault(); if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
     const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; openCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
   }
-  /* قائمة العنصر المحدد عند الإحداثيات (x,y) على الشاشة — تُفتح بالزر الأيمن على العنصر أو على إطاره/شريطه */
-  function openCtx(x, y) {
+  /* قائمة العنصر المحدد (زر ⋯ في الشريط العائم أو الزر الأيمن): نسخ، نمط، لصق، محاذاة على الصفحة، قفل، رابط... تُفتح عند (x,y) أو أسفل/أعلى الزر anchor */
+  function openCtx(x, y, anchor) {
     hideCtx(); const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
-    const img = inf.node.type === "image", canvas = inf.sec.set.kind === "canvas", cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0);
-    const items = [["↥", "إلى الأمام", () => zOrder(1), "]"], ["↧", "إلى الخلف", () => zOrder(-1), "["], img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], ["⧉", "نسخ العنصر", () => dup(), "Ctrl+D"], "-",
+    const img = inf.node.type === "image", canvas = inf.sec.set.kind === "canvas", cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0), lk = !!inf.set.locked, ctl = k => (inf.def.ctl || []).some(c => c.k === k);
+    const A = [["⇤", "يسار", () => alignPage("left")], ["↔", "وسط أفقياً", () => alignPage("center")], ["⇥", "يمين", () => alignPage("right")], "-", ["⤒", "أعلى", () => alignPage("top")], ["↕", "وسط عمودياً", () => alignPage("middle")], ["⤓", "أسفل", () => alignPage("bottom")]];
+    const items = [["⧉", "نسخ", copyEl, "Ctrl+C"], ["🖌️", "نسخ النمط", copyStyle, "Ctrl+Alt+C"], E.styleClip ? ["🎨", "لصق النمط", pasteStyle, "Ctrl+Alt+V"] : null, ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", () => dup(), "Ctrl+D"], ["🗑", "حذف", () => del(), "Del", 1], "-",
+      ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
+      ["↥", "إلى الأمام", () => zOrder(1), "]"], ["↧", "إلى الخلف", () => zOrder(-1), "["], "-",
+      [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
+      img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)],
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
-      img && canvas ? "-" : null, img && canvas ? ["🔤", "التقاط النص", () => PBSmart.capture()] : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null, "-", ["🗑", "حذف", () => del(), "Del", 1]].filter(Boolean);
-    const m = document.createElement("div"); m.id = "pbx-ctx"; m.className = "pbx-ctx";
-    items.forEach(it => { if (it === "-") { m.appendChild(document.createElement("hr")); return; } const b = document.createElement("button"); b.type = "button"; if (it[4]) b.className = "dng"; b.innerHTML = `<span style="width:18px;text-align:center">${it[0]}</span>${esc(it[1])}${it[3] ? `<kbd>${esc(it[3])}</kbd>` : ""}`; b.onclick = ev => { ev.stopPropagation(); hideCtx(); it[2](); }; m.appendChild(b); });
-    document.body.appendChild(m); const w = m.offsetWidth, h = m.offsetHeight; m.style.left = Math.max(6, Math.min(x, innerWidth - w - 6)) + "px"; m.style.top = Math.max(6, Math.min(y, innerHeight - h - 6)) + "px";
-    setTimeout(() => { const off = ev => { if (!ev.target.closest || !ev.target.closest("#pbx-ctx")) { hideCtx(); document.removeEventListener("mousedown", off, true); fdoc.removeEventListener("mousedown", off, true); } }; document.addEventListener("mousedown", off, true); fdoc.addEventListener("mousedown", off, true); }, 0);
+      img && canvas ? "-" : null, img && canvas ? ["🔤", "التقاط النص", () => PBSmart.capture()] : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null].filter(Boolean);
+    const place = (m, ax, ay, ar) => { document.body.appendChild(m); const w = m.offsetWidth, h = m.offsetHeight; let l = ax, t = ay; if (ar && t + h > innerHeight - 6) t = ar.top - h - 6; m.style.left = Math.max(6, Math.min(l, innerWidth - w - 6)) + "px"; m.style.top = Math.max(6, Math.min(t, innerHeight - h - 6)) + "px"; };
+    const build = (list, id) => { const m = document.createElement("div"); m.id = id; m.className = "pbx-ctx" + (id === "pbx-ctx2" ? " pbx-ctx2" : "");
+      list.forEach(it => { if (it === "-") { m.appendChild(document.createElement("hr")); return; } const b = document.createElement("button"); b.type = "button"; if (it[4]) b.className = "dng"; if (it[6]) b.classList.add("off"); if (it[5]) b.classList.add("has-sub");
+        b.innerHTML = `<span style="width:18px;text-align:center">${it[0]}</span>${esc(it[1])}${it[3] ? `<kbd>${esc(it[3])}</kbd>` : ""}`;
+        if (it[5]) { const open = () => { const o = $("pbx-ctx2"); if (o) o.remove(); const sm = build(it[5], "pbx-ctx2"), r = b.getBoundingClientRect(); document.body.appendChild(sm); const w = sm.offsetWidth; place(sm, r.right + w + 6 > innerWidth ? r.left - w - 4 : r.right + 4, r.top - 6); }; b.onmouseenter = open; b.onclick = ev => { ev.stopPropagation(); open(); }; }
+        else { b.onmouseenter = () => { const o = $("pbx-ctx2"); if (o && id === "pbx-ctx") o.remove(); }; b.onclick = ev => { ev.stopPropagation(); if (it[6]) return; hideCtx(); it[2](); }; }
+        m.appendChild(b); }); return m; };
+    place(build(items, "pbx-ctx"), x, y, anchor);
+    setTimeout(() => { const off = ev => { if (!ev.target.closest || !ev.target.closest("#pbx-ctx,#pbx-ctx2")) { hideCtx(); document.removeEventListener("mousedown", off, true); fdoc.removeEventListener("mousedown", off, true); } }; document.addEventListener("mousedown", off, true); fdoc.addEventListener("mousedown", off, true); }, 0);
   }
 
   /* ───────────────── تحرير النص المباشر ───────────────── */
@@ -8621,7 +8649,8 @@ body{overflow-x:hidden;margin:0}`;
   function dragTrack(e, cursor, onMove, onEnd) {
     const s = E.scale, inF = ev => ev.target && ev.target.ownerDocument === fdoc, f0 = $("pbx-fw").getBoundingClientRect();
     const P = ev => inF(ev) ? { x: f0.left + ev.clientX * s, y: f0.top + ev.clientY * s } : { x: ev.clientX, y: ev.clientY };
-    const p0 = P(e), shield = inF(e) ? null : mkShield(cursor);
+    const p0 = P(e), shield = inF(e) ? null : mkShield(cursor); E.busy = true;      // أثناء السحب يختفي الشريط العائم وأزرار الجانب
+    const onEnd0 = onEnd; onEnd = ev => { E.busy = false; try { onEnd0(ev); } finally { positionOverlay(); } };
     const mv = ev => { const p = P(ev); onMove((p.x - p0.x) / s, (p.y - p0.y) / s, ev); };
     const up = ev => { [document, fdoc].forEach(d => { d.removeEventListener("mousemove", mv, true); d.removeEventListener("mouseup", up, true); }); if (shield) shield.remove(); onEnd(ev); };
     [document, fdoc].forEach(d => { d.addEventListener("mousemove", mv, true); d.addEventListener("mouseup", up, true); });
@@ -8658,7 +8687,8 @@ body{overflow-x:hidden;margin:0}`;
     if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
     const el = fdoc.querySelector(`[data-pb="${E.sel}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, rotV = inf.kind === "widget" ? (num(eff(inf.set, "rot", E.dev)) || 0) : 0;
-    const box = document.createElement("div"); box.className = "pbx-box " + inf.kind;
+    const isW = inf.kind === "widget", locked = isW && !!inf.set.locked;
+    const box = document.createElement("div"); box.className = "pbx-box " + inf.kind + (locked ? " lk" : "");
     box.style.cssText = `left:${o.ox + r.left * s}px;top:${o.oy + r.top * s}px;width:${r.width * s}px;height:${r.height * s}px${rotV ? `;transform:rotate(${rotV}deg)` : ""}`;
     const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].label + (inf.free ? " ✦" : "") : inf.kind === "column" ? "عمود" : "قسم" + ({ grid: " شبكي", canvas: " حر" }[inf.set.kind] || "");
     const bar = document.createElement("div"); bar.className = "pbx-bar"; bar.innerHTML = `<span>${lbl}</span>`; bar.addEventListener("contextmenu", ev => { ev.preventDefault(); ev.stopPropagation(); if (inf.kind === "widget") openCtx(ev.clientX, ev.clientY); });
@@ -8674,14 +8704,15 @@ body{overflow-x:hidden;margin:0}`;
       if (inf.kind === "section" && (inf.node.free || []).length) btn("📲 تكييف للهاتف", "ترتيب عناصر القماش الحر تلقائياً للهاتف", () => autoMobile(inf.node));
     }
     btn("⧉", "تكرار", dup); btn("🗑", "حذف", del);
-    box.appendChild(bar);
+    if (!isW) box.appendChild(bar);      // العناصر لها شريط عائم بنمط Canva (drawFloat)
     /* مقبض تقويس الزوايا (داخل الزاوية العليا) ومقبض التدوير (أسفل العنصر) */
     { const rk = (inf.kind === "widget" && inf.node.type === "button") ? "brad" : "rad", rv = Math.max(0, num(eff(inf.set, rk, E.dev)) || 0);      // مقبض التقويس يُخفى في العناصر الصغيرة كي لا يغطي العنصر ويمنع مسكه
-      if (r.height * s >= 64 && r.width * s >= 90) { const rh = document.createElement("div"); rh.className = "pbx-rad"; rh.title = "اسحب لتقويس الزوايا (Shift = دائري كامل)"; rh.style.left = Math.min(Math.max(rv * s, 0), Math.max(0, r.width * s / 2 - 6)) + 6 + "px"; rh.onmousedown = ev => startRadius(ev, inf, rk, rh); box.appendChild(rh); }  /* مقبض التقويس يُخفى في العناصر الصغيرة كي لا يغطي العنصر ويمنع مسكه */
-      if (inf.kind === "widget") { const ro = document.createElement("div"); ro.className = "pbx-rot"; ro.title = "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)"; ro.onmousedown = ev => startRotate(ev, inf, box); ro.ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }; box.appendChild(ro); } }
+      if (!locked && r.height * s >= 64 && r.width * s >= 90) { const rh = document.createElement("div"); rh.className = "pbx-rad"; rh.title = "اسحب لتقويس الزوايا (Shift = دائري كامل)"; rh.style.left = Math.min(Math.max(rv * s, 0), Math.max(0, r.width * s / 2 - 6)) + 6 + "px"; rh.onmousedown = ev => startRadius(ev, inf, rk, rh); box.appendChild(rh); }  /* مقبض التقويس يُخفى في العناصر الصغيرة كي لا يغطي العنصر ويمنع مسكه */
+}
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
-    dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = "اسحب لتغيير الحجم"; h.onmousedown = ev => startResize(ev, d, inf); box.appendChild(h); });
+    if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => startResize(ev, d, inf); box.appendChild(h); });
     ovl.appendChild(box);
+    if (isW && !E.busy) drawFloat(inf, box, ovl, locked);
   }
 
   function startRadius(e, inf, key, handle) {
@@ -8694,13 +8725,71 @@ body{overflow-x:hidden;margin:0}`;
   }
   function startRotate(e, inf, boxEl) {
     e.preventDefault(); e.stopPropagation(); const dev = E.dev, el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), f0 = $("pbx-fw").getBoundingClientRect(), r = layoutRect(el), s = E.scale, cx = f0.left + (r.left + r.width / 2) * s, cy = f0.top + (r.top + r.height / 2) * s, tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
+    const ang = (x, y) => Math.atan2(x - cx, -(y - cy)) * 180 / Math.PI, rot0 = Number(eff(inf.set, "rot", dev)) || 0, inE = e.target && e.target.ownerDocument === fdoc, a0 = ang(inE ? f0.left + e.clientX * s : e.clientX, inE ? f0.top + e.clientY * s : e.clientY);      // دوران نسبي: لا قفزة عند الإمساك بالزر
     const mv = (dx, dy, ev) => {
       const px = (ev.target && ev.target.ownerDocument === fdoc) ? f0.left + ev.clientX * s : ev.clientX, py = (ev.target && ev.target.ownerDocument === fdoc) ? f0.top + ev.clientY * s : ev.clientY;
-      let a = Math.atan2(px - cx, -(py - cy)) * 180 / Math.PI; if (ev.shiftKey) a = Math.round(a / 15) * 15; a = Math.round(a); setR(inf.set, "rot", dev, a);
+      let a = rot0 + (ang(px, py) - a0); a = ((a + 540) % 360) - 180; if (ev.shiftKey) a = Math.round(a / 15) * 15; a = Math.round(a); setR(inf.set, "rot", dev, a || undefined);
       renderCanvas(); positionOverlay(); const st = $("pbx-stage").getBoundingClientRect(); tip.textContent = a + "°"; $("pbx-ovl").appendChild(tip); tip.style.left = (px - st.left + 14) + "px"; tip.style.top = (py - st.top + 14) + "px";
     };
     dragTrack(e, "grabbing", mv, () => { tip.remove(); commitHist(); renderInspector(); });
   }
+
+  /* ───────────────── الشريط العائم وأزرار الجانب (نمط Canva) ───────────────── */
+  const SVG = (b, f) => `<svg viewBox="0 0 24 24" fill="${f ? "currentColor" : "none"}" stroke="${f ? "none" : "currentColor"}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`;
+  const FIC = {
+    lock: SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'), unlock: SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 017.6-1.7"/>'),
+    dup: SVG('<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M14 11v6M11 14h6"/><path d="M5 15V6.5A2.5 2.5 0 017.5 4H16"/>'), del: SVG('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/>'),
+    more: SVG('<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>', 1), rot: SVG('<path d="M20 11a8 8 0 10-2.2 5.8"/><path d="M20 4v7h-7"/>'),
+    move: SVG('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')
+  };
+  function drawFloat(inf, box, ovl, locked) {
+    const O = ovl.getBoundingClientRect(), R = box.getBoundingClientRect(), st = $("pbx-stage"), W = ovl.clientWidth;
+    const bx = { l: R.left - O.left, t: R.top - O.top, r: R.right - O.left, b: R.bottom - O.top };      // أبعاد الإطار بعد التدوير (نسبة لطبقة الغطاء)
+    const mk = (cls, items) => { const d = document.createElement("div"); d.className = cls; items.forEach(([k, ic, tt, fn, on, extra]) => { const b = document.createElement("button"); b.type = "button"; b.innerHTML = ic; b.title = tt; if (on) b.classList.add("on"); if (extra) b.classList.add(extra); b.dataset.k = k; if (fn) b.onclick = ev => { ev.stopPropagation(); fn(b); }; d.appendChild(b); }); ovl.appendChild(d); return d; };
+    const ft = mk("pbx-ft", [["lock", locked ? FIC.unlock : FIC.lock, locked ? "فتح القفل" : "قفل العنصر (لا يتحرك ولا يتغير حجمه)", toggleLock, locked], ["dup", FIC.dup, "تكرار (Ctrl+D)", dup], ["del", FIC.del, "حذف (Delete)", del, 0, "dng"], ["more", FIC.more, "المزيد", b => openMenuFor(b)]]);
+    const fw = ft.offsetWidth, fh = ft.offsetHeight, vt = st.scrollTop, vb = st.scrollTop + st.clientHeight, GAP = 16;
+    let top = bx.t - fh - GAP; if (top < vt + 4) { top = bx.b + GAP + 6; if (top + fh > vb - 4) top = Math.max(vt + 4, bx.t + 8); }      // فوق العنصر إن اتسع المكان وإلا تحته
+    let left = (bx.l + bx.r) / 2 - fw / 2; left = Math.max(4, Math.min(W - fw - 4, left));
+    ft.style.top = top + "px"; ft.style.left = left + "px";
+    if (locked) return;
+    const sb = mk("pbx-sb", [["rot", FIC.rot, "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)", null], ["move", FIC.move, "اسحب لتحريك العنصر", null]]);
+    sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
+    sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMove(ev, inf, !inf.free, false); };
+    const sw = sb.offsetWidth; let sl = bx.r + 12; if (sl + sw > W - 4) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
+    sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, bx.t) + "px";
+  }
+  function openMenuFor(btn) { const r = btn.getBoundingClientRect(); openCtx(r.left, r.bottom + 6, r); }
+  /* قفل العنصر */
+  function toggleLock() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; if (inf.set.locked) delete inf.set.locked; else inf.set.locked = true; E.nextLabel = inf.set.locked ? "قفل عنصر" : "فتح قفل"; afterEdit(); toast(inf.set.locked ? "🔒 العنصر مقفل" : "🔓 فُتح القفل"); }
+  /* نسخ/لصق العنصر ونمطه */
+  function copyEl() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; E.clip = clone(inf.node); toast("📋 نُسخ العنصر — الصقه بـ Ctrl+V"); }
+  function pasteEl() {
+    if (!E.clip) { toast("لا يوجد عنصر منسوخ"); return; }
+    const c = reId(clone(E.clip)); delete c.set.locked; const t = target();
+    if (t.sec) { const sec = t.sec, fr = sec.free || [];
+      if (c.set.fx && c.set.fy) { setR(c.set, "fx", E.dev, (Number(eff(c.set, "fx", E.dev)) || 0) + 3); setR(c.set, "fy", E.dev, (Number(eff(c.set, "fy", E.dev)) || 0) + 30); c.set.zi = Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1; }
+      else { const f = PB.mkFree(c.type, 6, 24, Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1); ["fx", "fy", "fwd", "fh", "zi"].forEach(k => { c.set[k] = f.set[k]; }); delete c.set.w; delete c.set.mh; }
+      (sec.free = sec.free || []).push(c); if (sec.set.kind === "canvas") { const need = (Number(eff(c.set, "fy", "d")) || 0) + (Number(eff(c.set, "fh", "d")) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); } }
+    else { ["fx", "fy", "fwd", "fh", "zi", "rot"].forEach(k => delete c.set[k]); t.col.widgets.push(c); }
+    E.nextLabel = "لصق عنصر"; afterEdit(c.id);
+  }
+  const STYLE_SKIP = ["w", "mh", "al", "mar", "fx", "fy", "fwd", "fh", "zi", "rot", "locked"];
+  const styleKeys = inf => ctlsFor(inf).filter(c => c.tab === "s" && !STYLE_SKIP.includes(c.k)).map(c => c.k);
+  function copyStyle() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const keys = styleKeys(inf), st = {}; keys.forEach(k => { if (inf.set[k] !== undefined) st[k] = clone(inf.set[k]); }); E.styleClip = { keys, st }; toast("🎨 نُسخ نمط العنصر — حدّد عنصراً آخر وانقر «لصق النمط»"); }
+  function pasteStyle() {
+    const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf));
+    E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else delete inf.set[k]; }); E.nextLabel = "لصق نمط"; afterEdit();
+  }
+  /* محاذاة العنصر على القسم/الصفحة: أفقياً (يسار/وسط/يمين) أو عمودياً (أعلى/وسط/أسفل) */
+  function alignPage(how) {
+    let inf = selInfo(); if (!inf || inf.kind !== "widget") return; if (!inf.free) { toggleFree(); inf = selInfo(); if (!inf || !inf.free) return; }
+    ensureMobile(inf.sec); const dev = E.dev, el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cont = el.closest(".pb-in"), cr = cont.getBoundingClientRect(), u = uOf(inf.sec, cr);
+    if (how === "left" || how === "center" || how === "right") { alignFree(how); return; }
+    const h = Number(eff(inf.set, "fh", dev)) || Math.round(el.offsetHeight / u), H = Math.round(cr.height / u);
+    setR(inf.set, "fy", dev, how === "top" ? 0 : how === "bottom" ? Math.max(0, H - h) : Math.max(0, Math.round((H - h) / 2)));
+    if (dev !== "d" && own(inf.set, "fy", "d") === undefined) setR(inf.set, "fy", "d", eff(inf.set, "fy", dev)); afterEdit();
+  }
+  function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
   function startResize(e, dir, inf) {
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
@@ -9032,11 +9121,15 @@ body{overflow-x:hidden;margin:0}`;
     if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
     else if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); dup(); }
+    else if (mod && e.altKey && e.code === "KeyC" && E.sel) { e.preventDefault(); copyStyle(); }
+    else if (mod && e.altKey && e.code === "KeyV" && E.sel) { e.preventDefault(); pasteStyle(); }
+    else if (mod && !e.altKey && e.key.toLowerCase() === "c" && E.sel && selInfo() && selInfo().kind === "widget") { e.preventDefault(); copyEl(); }
+    else if (mod && !e.altKey && e.key.toLowerCase() === "v" && E.clip) { e.preventDefault(); pasteEl(); }
     else if (e.key === "Delete" && E.sel) { e.preventDefault(); del(); }
     else if ((e.key === "]" || e.key === "[") && E.sel) { const i0 = selInfo(); if (i0 && i0.kind === "widget") { e.preventDefault(); zOrder(e.key === "]" ? 1 : -1); } }
     else if (e.key === "Escape") { const inf = selInfo(); select(inf ? parentId(inf) : null); }          // Esc = تحديد الأب (عمود ثم قسم ثم لا شيء)
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
-      const inf = selInfo(); if (!inf) return;
+      const inf = selInfo(); if (!inf) return; if (inf.set.locked) return;
       if (!inf.free) { e.preventDefault(); const d = (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : 0; if (d) { if (e.altKey) move(d); else nav(d); } return; }   // العناصر العادية: الأسهم تنقل التحديد (Alt = إعادة ترتيب)
       const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, st = e.shiftKey ? 10 : 1;
       let fx = Number(eff(inf.set, "fx", E.dev)) || 0, fy = Number(eff(inf.set, "fy", E.dev)) || 0;
