@@ -163,6 +163,11 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
+.pbx-mwbar{position:absolute;display:flex;gap:4px;align-items:center;background:#fff;border-radius:12px;padding:5px 8px;box-shadow:0 4px 16px rgba(124,58,237,.35),0 0 0 2px #a855f7;pointer-events:auto;z-index:8;white-space:nowrap;font-family:inherit}
+.pbx-mwbar span{font-size:.78rem;font-weight:800;color:#7c3aed;padding:0 .3rem}
+.pbx-mwbar button{border:0;border-radius:9px;padding:.4rem .65rem;font-family:inherit;font-weight:800;font-size:.82rem;cursor:pointer;background:#f1f2f6;color:#1f2430}
+.pbx-mwbar button:hover:not(:disabled){background:#e4e6ee}.pbx-mwbar button:disabled{opacity:.5;cursor:default}
+.pbx-mwbar button.ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pbx-mwbar button.no{color:#b83232}
 .pbx-ft button:hover,.pbx-ft button.on{background:#ebeef2}.pbx-ft button.dng:hover{color:#b83232}
 .pbx-sb{position:absolute;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:7}
 .pbx-sb button{border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);cursor:grab}.pbx-sb button:hover{background:#f3ecff;color:#8b3dff}.pbx-sb button:active{cursor:grabbing}
@@ -304,7 +309,7 @@ body{overflow-x:hidden;margin:0}`;
   function histGo(i) { const en = (E.log || [])[i]; if (!en) return; E.page = JSON.parse(en.snap); E.nextLabel = "رجوع إلى المرحلة " + (i + 1) + ": " + en.label; E.dirty = true; if (E.sel && !find(E.sel)) E.sel = null; commitHist(); afterHist(); toast("↩ رُجع إلى المرحلة " + (i + 1) + " — «" + en.label + "» (يمكنك التراجع عن هذا الرجوع أيضاً)"); }
   function undo() { if (E.hi <= 0) return; E.hi--; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
   function redo() { if (E.hi >= E.hist.length - 1) return; E.hi++; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
-  function afterHist() { if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); }
+  function afterHist() { E.mwp = null; if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); }
   const draftKey = () => "pb_draft_" + (E.slug || "new");
   function saveDraftNow() { saveDraft(); }
   function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(E.page)); } catch (e) { } }
@@ -766,6 +771,7 @@ body{overflow-x:hidden;margin:0}`;
 
   function positionOverlay() {
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
+    if (E.mwp && E.mwp.id !== E.sel) { mwRestore(); toast("↩ أُلغيت مسوّدة الكتابة السحرية"); setTimeout(() => { renderCanvas(); renderInspector(); }, 0); }      // تغيير التحديد قبل الإدراج = إلغاء
     try { drawSecBar(ovl); markThumbs(); } catch (x) { console.warn(x); }
     if (E.covered && E.covered.size && fdoc) { const o0 = ovlOrigin(); E.covered.forEach(id => { const el = fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return; const r = layoutRect(el), d = document.createElement("div"); d.className = "pbx-cov"; d.style.cssText = `left:${o0.ox + r.left * o0.s}px;top:${o0.oy + r.top * o0.s}px;width:${r.width * o0.s}px;height:${r.height * o0.s}px`; ovl.appendChild(d); }); }
     if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
@@ -835,7 +841,7 @@ body{overflow-x:hidden;margin:0}`;
     const fw = ft.offsetWidth, fh = ft.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight, GAP = 16;
     let top = bx.t - fh - GAP; if (top < vt + 4) { top = bx.b + GAP + 6; if (top + fh > vb - 4) top = Math.max(vt + 4, bx.t + 8); }      // فوق العنصر إن اتسع المكان وإلا تحته
     let left = (bx.l + bx.r) / 2 - fw / 2; left = Math.max(4, Math.min(W - fw - 4, left));
-    ft.style.top = top + "px"; ft.style.left = left + "px";
+    ft.style.top = top + "px"; ft.style.left = left + "px"; drawMwBar(inf, bx, ovl, ft);
     if (locked) return;
     const sb = mk("pbx-sb", [["rot", FIC.rot, "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)", null], ["move", FIC.move, "اسحب لتحريك العنصر", null]]);
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
@@ -1024,11 +1030,47 @@ body{overflow-x:hidden;margin:0}`;
       b: [[`المنتج: ${name}`, ...feats.slice(0, 4).map(f => "مكوّن: " + f), "يُستعمل حسب الإرشادات"].join("\n"), [s1 || name, ...feats.slice(0, 3).map(f => "يحتوي على " + f), "لا يغني عن استشارة المختص"].join("\n"), ["تركيبة مدروسة", ...feats.slice(0, 4), "يُنصح بقراءة التعليمات"].join("\n")] }[o.len];
     return (o.style === "sc" ? sc : mk).map(x => x.replace(/\s+\./g, ".").replace(/\.\s*\./g, ".").replace(/ {2,}/g, " ").trim());
   }
-  function mwInsert(inf, text, add) {
-    const set = inf.set, lines = String(text).split("\n").map(x => x.trim()).filter(Boolean), cur = inf.node.type === "heading";
-    if (cur) set.text = add && set.text ? set.text + "\n" + lines.join("\n") : lines.join("\n");
-    else { const isL = /<[uo]l/i.test(set.html || ""), list = isL || (lines.length > 1 && E.mw.len === "b"), body = list ? "<ul>" + lines.map(l => `<li>${esc(l)}</li>`).join("") + "</ul>" : lines.map(l => `<p>${esc(l)}</p>`).join(""); if (!isL && list && !set.lm) set.lm = "•"; set.html = add && set.html ? set.html + body : body; }
-    E.nextLabel = "كتابة سحرية"; afterEdit();
+  /* المعاينة المباشرة: يظهر النص في العنصر نفسه وتحته شريط (إدراج / إلغاء / إعادة)؛ لا يُسجَّل في السجل إلا عند «إدراج» */
+  const MWK = ["html", "text", "lm", "lmc"];
+  function mwApplyText(inf, text) {
+    const set = inf.set, lines = String(text).split("\n").map(x => x.trim()).filter(Boolean);
+    if (inf.node.type === "heading") set.text = lines.join("\n");
+    else { const isL = /<[uo]l/i.test(set.html || ""), list = isL || (lines.length > 1 && E.mw.len === "b"); set.html = list ? "<ul>" + lines.map(l => `<li>${esc(l)}</li>`).join("") + "</ul>" : lines.map(l => `<p>${esc(l)}</p>`).join(""); if (!isL && list && !set.lm) set.lm = "•"; }
+  }
+  function mwPreview(inf, text) {
+    if (!E.mwp || E.mwp.id !== inf.node.id) E.mwp = { id: inf.node.id, orig: Object.fromEntries(MWK.map(k => [k, inf.set[k]])) };
+    mwApplyText(inf, text); renderCanvas();
+  }
+  function mwRestore() { const w = E.mwp; if (!w) return; E.mwp = null; const inf = find(w.id); if (inf) MWK.forEach(k => { if (w.orig[k] === undefined) delete inf.set[k]; else inf.set[k] = w.orig[k]; }); }
+  function mwAccept() { if (!E.mwp) return; E.mwp = null; E.nextLabel = "كتابة سحرية"; afterEdit(); }
+  function mwCancel() { if (!E.mwp) return; mwRestore(); if (E.mw) { E.mw.res = ""; E.mw.msg = ""; } renderCanvas(); renderInspector(); mwRefresh(); }
+  /* شريط الخيارات تحت العنصر */
+  function drawMwBar(inf, bx, ovl, ft) {
+    const w = E.mwp, m = E.mw; if (!w || w.id !== inf.node.id) return; const W = ovl.clientWidth, busy = !!(m && m.busy);
+    const d = document.createElement("div"); d.className = "pbx-mwbar"; d.dir = "rtl";
+    d.innerHTML = `<span>${busy ? "⏳ جارٍ الكتابة…" : m && m.kind === "tpl" ? "🧩 قالب جاهز" : "✨ مسوّدة"}</span><button type="button" data-a="ok" class="ok"${busy ? " disabled" : ""}>✓ إدراج</button><button type="button" data-a="re"${busy ? " disabled" : ""}>↻ إعادة</button><button type="button" data-a="lg"${busy ? " disabled" : ""}>أطول</button><button type="button" data-a="sh"${busy ? " disabled" : ""}>أقصر</button><button type="button" data-a="no" class="no">✕ إلغاء</button>`;
+    d.onmousedown = ev => ev.stopPropagation(); d.onclick = ev => { const b = ev.target.closest("[data-a]"); if (!b || b.disabled) return; ev.stopPropagation(); const a = b.dataset.a; if (a === "ok") mwAccept(); else if (a === "no") mwCancel(); else mwRedo(a === "lg" ? "أطول" : a === "sh" ? "أقصر" : ""); };
+    ovl.appendChild(d); const dw = d.offsetWidth, dh = d.offsetHeight, st = $("pbx-stage"), vb = st.scrollTop + st.clientHeight;
+    let top = bx.b + 10; if (ft && ft.offsetTop > bx.b - 2) top = ft.offsetTop + ft.offsetHeight + 8;      // لا يتراكب مع الشريط العائم إن نزل تحت العنصر
+    if (top + dh > vb - 4) top = Math.max(st.scrollTop + 4, bx.t - dh - 70);
+    d.style.top = top + "px"; d.style.left = Math.max(4, Math.min(W - dw - 4, (bx.l + bx.r) / 2 - dw / 2)) + "px";
+  }
+  function mwRefresh() { const p = $("pbx-pop"); if (p && p.querySelector("[data-mwa]")) { const i = selInfo(); if (i) mwPanel(i, document.body); } }
+  const mwRead = () => document.querySelectorAll("#pbx-pop [data-mw]").forEach(el => { E.mw[el.dataset.mw] = el.value; });
+  async function mwRun(kind, extra) {
+    const m = E.mw, inf = selInfo(); if (!inf || inf.kind !== "widget") return; mwRead(); const o = Object.assign({}, m, extra || {});
+    if (!o.pslug && !String(o.words).trim() && !o.prev) { m.msg = "اكتب اسم المنتج أو فكرته، أو اختر منتجاً من المتجر."; mwRefresh(); return; }
+    const arabic = o.lang === "ar" || o.lang === "ma", tplOne = () => { const a = mwTemplates(o); m.ti = (m.ti + 1) % a.length; return a[m.ti]; };
+    if (kind === "tpl") { if (!arabic) m.msg = "القوالب الجاهزة بالعربية فقط."; else { m.res = tplOne(); m.kind = "tpl"; m.msg = "ظهر القالب في العنصر — اختر إدراج أو إلغاء أو إعادة من الشريط تحته."; mwPreview(inf, m.res); } mwRefresh(); return; }
+    m.busy = true; m.msg = ""; mwRefresh(); positionOverlay();
+    try { m.res = await mwGemini(o); m.kind = "ai"; m.msg = "ظهرت المسوّدة في العنصر — اختر إدراج أو إلغاء أو إعادة من الشريط تحته."; }
+    catch (e) { if (arabic) { m.res = tplOne(); m.kind = "tpl"; } m.msg = !arabic ? "تعذّرت الكتابة بهذه اللغة: " + (e.message === "NOKEY" ? "تحتاج مفتاح Gemini (القوالب الجاهزة بالعربية فقط)." : e.message) : e.message === "NOKEY" ? "لا يوجد مفتاح Gemini (يُضاف من «مولّد الصفحات الذكي»)، فظهر قالب جاهز." : "تعذّر Gemini (" + e.message + ")، فظهر قالب جاهز."; }
+    m.busy = false; const i2 = selInfo(); if (i2 && i2.node.id === inf.node.id && m.res && (m.kind === "ai" || arabic)) mwPreview(i2, m.res); else positionOverlay(); mwRefresh();
+  }
+  function mwRedo(ins) {      // أطول/أقصر/إعادة: القالب مجاني (يبدّل الطول محلياً)، وGemini طلب واحد
+    const m = E.mw; mwRead();
+    if (m.kind === "tpl") { const ord = ["s", "p", "l"], i = ord.indexOf(m.len); if (ins === "أطول" && i >= 0 && i < 2) m.len = ord[i + 1]; else if (ins === "أقصر" && i > 0) m.len = ord[i - 1]; mwRun("tpl"); }
+    else mwRun("ai", { prev: m.res, instr: ins || "أعد الصياغة بأسلوب مختلف" });
   }
   function mwPanel(inf, btn) {
     const m = E.mw = E.mw || {}; Object.entries({ words: "", style: "mk", len: "p", lang: mwLang0(), pslug: inf.set.prod || E.page.product || "", res: "", kind: "", ti: 0, msg: "", busy: false }).forEach(([k, v]) => { if (!(k in m)) m[k] = v; });
@@ -1040,28 +1082,16 @@ body{overflow-x:hidden;margin:0}`;
       <div class="pg" style="grid-template-columns:1fr 1fr 1fr">${sel("style", MW_STYLE, m.style)}${sel("len", { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" }, m.len)}${sel("lang", Object.fromEntries(Object.entries(mwLangs()).map(([k, v]) => [k, String(v.label).split("(")[0].trim()])), m.lang)}</div>
       <div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-mwa="go"${m.busy ? " disabled" : ""} title="يستعمل Gemini (طلب API واحد) ويكتب نصاً جديداً بحسب كلماتك">${m.busy ? "⏳ جارٍ الكتابة…" : "✨ اكتب (Gemini)"}</button><button type="button" class="pb2" data-mwa="tpl" title="جمل جاهزة تُركَّب محلياً من بيانات المنتج: فوري، بلا إنترنت وبلا استهلاك API">🧩 قالب جاهز (مجاني)</button></div>
       <p style="margin:.2rem 0 .1rem;font-size:.72rem;line-height:1.6;color:#6b7280"><b>✨ اكتب</b>: ذكاء اصطناعي يصيغ نصاً جديداً مختلفاً في كل مرة، ويستهلك طلب API واحداً. <b>🧩 قالب</b>: صياغة جاهزة من بيانات المنتج، مجانية وفورية لكنها أبسط وأقل تنوعاً.</p>
-      <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>${m.res ? `<div class="mwc"><div>${esc(m.res).replace(/\n/g, "<br>")}</div><div class="mwb"><button type="button" data-mwi="1">إدراج</button><button type="button" data-mwp="1">إضافة</button><button type="button" data-mwr="أطول">أطول</button><button type="button" data-mwr="أقصر">أقصر</button><button type="button" data-mwr="">↻ إعادة</button></div></div>` : ""}`;
+      <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>`;
     qPop(btn, html, p => {
       const read = () => p.querySelectorAll("[data-mw]").forEach(el => { m[el.dataset.mw] = el.value; });
-      const run = async (kind, extra) => { read(); const o = Object.assign({}, m, extra || {});
-        if (!o.pslug && !String(o.words).trim() && !o.prev) { m.msg = "اكتب اسم المنتج أو فكرته، أو اختر منتجاً من المتجر."; mwPanel(selInfo() || inf, btn); return; }
-        const arabic = o.lang === "ar" || o.lang === "ma", tplOne = () => { const a = mwTemplates(o); m.ti = (m.ti + 1) % a.length; return a[m.ti]; };
-        if (kind === "tpl") { if (!arabic) m.msg = "القوالب الجاهزة بالعربية فقط."; else { m.res = tplOne(); m.kind = "tpl"; m.msg = "قالب جاهز بلا إنترنت — راجعه قبل الإدراج."; } mwPanel(selInfo() || inf, btn); return; }
-        m.busy = true; m.msg = ""; mwPanel(selInfo() || inf, btn);
-        try { m.res = await mwGemini(o); m.kind = "ai"; m.msg = "مسوّدة من Gemini — راجعها قبل الإدراج."; }
-        catch (e) { if (arabic) { m.res = tplOne(); m.kind = "tpl"; } m.msg = !arabic ? "تعذّرت الكتابة بهذه اللغة: " + (e.message === "NOKEY" ? "تحتاج مفتاح Gemini (القوالب الجاهزة بالعربية فقط)." : e.message) : e.message === "NOKEY" ? "لا يوجد مفتاح Gemini (يُضاف من «مولّد الصفحات الذكي»)، فاستُعمل قالب جاهز." : "تعذّر Gemini (" + e.message + ")، فاستُعمل قالب جاهز."; }
-        m.busy = false; mwPanel(selInfo() || inf, btn); };
-      p.querySelector('[data-mwa="go"]').onclick = () => run("ai"); p.querySelector('[data-mwa="tpl"]').onclick = () => run("tpl");
+      p.querySelector('[data-mwa="go"]').onclick = () => mwRun("ai"); p.querySelector('[data-mwa="tpl"]').onclick = () => mwRun("tpl");
       p.querySelector('[data-mw="pslug"]').onchange = () => { read(); mwPanel(selInfo() || inf, btn); };
       p.querySelector('[data-mw="lang"]').addEventListener("change", e => { try { localStorage.setItem("alyssum_pb_lang", e.target.value); } catch (x) { } });      // يُحفظ كلغة السوق (مشتركة مع مولّد الصفحات)
-      p.querySelectorAll("[data-mwi]").forEach(b => b.onclick = () => { mwInsert(inf, m.res, false); });
-      p.querySelectorAll("[data-mwp]").forEach(b => b.onclick = () => { mwInsert(inf, m.res, true); mwPanel(selInfo() || inf, btn); });
-      p.querySelectorAll("[data-mwr]").forEach(b => b.onclick = () => { const ins = b.dataset.mwr; read();
-        if (m.kind === "tpl") { const ord = ["s", "p", "l"], i = ord.indexOf(m.len); if (ins === "أطول" && i >= 0 && i < 2) m.len = ord[i + 1]; else if (ins === "أقصر" && i > 0) m.len = ord[i - 1]; run("tpl"); }      // القالب مجاني: الطول يُبدَّل محلياً دون API
-        else run("ai", { prev: m.res, instr: ins || "أعد الصياغة بأسلوب مختلف" }); });
       p.querySelectorAll("[data-mw]").forEach(el => el.addEventListener("change", read));
     }, { dock: true });
   }
+
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
     if (k === "fs-" || k === "fs+") { const cs = qFont(inf), cur = Number(eff(set, "fs", dev)) || (cs ? Math.round(parseFloat(cs.fontSize)) : 17); return qDone(inf, "fs", Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
