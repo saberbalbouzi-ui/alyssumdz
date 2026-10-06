@@ -149,16 +149,18 @@ window.AIVision = (function () {
   /* تحليل كامل: كشف (Gemini أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
   async function analyze(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
-    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.key ? 1 : 0) + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0); } catch (e) { }
-    if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: AC.src, note: AC.note, dets: AC.dets, later: null }; }
-    step("⏳ تجهيز نموذج الذكاء…");
+    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0); } catch (e) { }
+    if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحلي المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: "local", note: "", dets: AC.dets, later: null }; }
+    step("⏳ تجهيز النماذج المحلية…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
-    /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
-    let localErr = null, gem = [], src = "local", note = ""; const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null, pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite).catch(e => { localErr = e; return []; });      // وضع الماوس: بلا كشف، الترميز فقط
-    if (o.key && !o.noDetect) { try { step("⏳ Gemini يتعرّف على العناصر…"); gem = await geminiDetect(cv, o.key); src = "gemini"; } catch (e) { note = e.message; } }
-    const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label)); if (!gem.length && !loc.length && localErr) throw localErr;
-    const dets = gem.concat(loc.filter(d => !gem.some(g => iou(g.box, d.box) > .5)).map(d => gem.length ? Object.assign(d, { score: d.score * .7 }) : d));
-    if (o.zone) {                                                     // «منطقة»: ما رسمه المستخدم حول العنصر هو صندوقه (الأدق)، واسمه من أكبر كشف يطابقه
+    /* المسار المحلي فقط: لا تُرسل الصورة إلى Gemini أو أي خدمة خارجية. */
+    let localErr = null, src = "local", note = "";
+    const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null;
+    const pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite).catch(e => { localErr = e; return []; });
+    const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label));
+    if (!loc.length && localErr) throw localErr;
+    const dets = loc;
+    if (o.zone) {                                                     // «منطقة»: ما رسمه المستخدم حول العنصر هو صندوقه (الأدق)، واسمه من أكبر كشف محلي يطابقه
       const W = cv.width, H = cv.height, m = o.zone.margin || 0, zb = [W * m, H * m, W * (1 - m), H * (1 - m)], best = dets.filter(d => d.label && !PERSON.test(d.label)).sort((a, b) => iou(b.box, zb) - iou(a.box, zb))[0];
       dets.unshift({ label: best && iou(best.box, zb) > .3 ? best.label : "عنصر", score: 1.01, box: zb, src: "zone", zoneMain: true });
     }
@@ -439,5 +441,5 @@ window.AIVision = (function () {
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, pointMask, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
+  return { supported, analyze, pointMask, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, warm };
 })();
