@@ -664,6 +664,7 @@ const PB = (() => {
       return `<div class="pb-w x-${w.id}${free ? " pb-free" : ""}${sized ? " pb-sz" : ""}${def.fit ? " pb-fit" : ""}${s2.cls ? " " + esc(s2.cls) : ""}"${attrs(w, "widget", s2)} data-type="${w.type}"${free ? ' data-free="1"' : ""}>${def.html(s2, w.id, ctx)}</div>`;
     };
     const html = page.sections.map(sec => {
+      if (sec.set.off && !edit) return "";      // قسم مخفي: لا يظهر في الصفحة المنشورة (يبقى في المحرر باهتاً)
       const s = sec.set, kind = s.kind === "grid" ? "grid" : s.kind === "canvas" ? "canvas" : "flow", sx = `.pb-sec.x-${sec.id}`, inx = `${sx}>.pb-in`;
       SC = !!s.scaled; const dw = num(s.dw) || 1140; curAuto = null;
       if (kind === "canvas" && !s.scaled && s.autoM !== false && (sec.free || []).length && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined)) && own(s, "mh", "m") === undefined) curAuto = autoMobileLayout(sec);
@@ -714,7 +715,7 @@ const PB = (() => {
       }
       const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free || (edit ? '<div class="pb-empty" style="margin:40px auto;max-width:360px;pointer-events:none">اسحب العناصر إلى هذا القماش الحر وحرّكها وغيّر أحجامها بحرية</div>' : "")}</div>` : "";
       const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
-      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""}${s.bgImg ? " pb-hasbg" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl || num(s.bgDark) > 0 ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
+      SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""}${s.bgImg ? " pb-hasbg" : ""}${edit && s.off ? " pb-off" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl || num(s.bgDark) > 0 ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
     }).join("");
     return { html, css: finishCss(css) };
   }

@@ -133,6 +133,9 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.widget .pbx-h.d-nw{width:15px;height:15px;top:-8px;left:-8px;background:#8b3dff;border-color:#fff;box-shadow:0 0 0 1.5px #8b3dff,0 1px 4px rgba(0,0,0,.3)}
 .pbx-box.widget .pbx-h.d-ne{top:-7px;right:-7px}.pbx-box.widget .pbx-h.d-se{bottom:-7px;right:-7px}.pbx-box.widget .pbx-h.d-sw{bottom:-7px;left:-7px}
 .pbx-box.widget .pbx-rad{border-color:#8b3dff}
+.pb-edit .pb-off{opacity:.3;outline:2px dashed #999;outline-offset:-2px}
+.pbx-sbar{position:absolute;display:flex;flex-direction:column;gap:2px;pointer-events:auto;z-index:6;background:#fff;border-radius:12px;padding:5px;box-shadow:0 3px 14px rgba(14,19,24,.25),0 0 0 1px rgba(64,87,109,.08)}
+.pbx-sbar button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0}.pbx-sbar button:hover{background:#ebeef2}.pbx-sbar button[disabled]{opacity:.3;cursor:default;background:none}.pbx-sbar button.on{background:#ebeef2;color:#8b3dff}.pbx-sbar button.add{background:#f1f2f6}.pbx-sbar button.dng:hover{color:#b83232}.pbx-sbar svg{width:20px;height:20px;display:block}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
@@ -351,7 +354,7 @@ body{overflow-x:hidden;margin:0}`;
       pane.innerHTML = `<div class="pbx-grid">${ORDER.map(t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`).join("")}</div><p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته ${FREE_ONLY ? "فوق قماش الصفحة" : "إلى العمود المحدد"}. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
     } else if (E.ltab === "def") {
       const card = (key, name) => `<button type="button" class="pbx-dfc" draggable="true" data-tpl="${key}" title="${esc(name)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC[key] || ""}</svg><span>${esc(name)}</span></button>`;
-      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 أقسام وعناصر جاهزة</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">${FREE_ONLY ? "الأقسام والأعمدة معطّلة مؤقتاً: كل العناصر حرة. " : ""}انقر الأيقونة لإضافتها بعد القسم المحدد، أو اسحبها إلى مكانها في الصفحة (على الجوال: ضغط مطوّل ثم سحب).</div><div class="pbx-dgrid">`
+      pane.innerHTML = `<div class="pbx-f" style="font-weight:900;color:#173f35">🧩 أقسام وعناصر جاهزة</div><div style="font-size:.74rem;color:#6b6556;line-height:1.7;margin:.2rem 0 .6rem">${FREE_ONLY ? "الأعمدة معطّلة مؤقتاً: كل العناصر حرة. " : ""}انقر الأيقونة لإضافتها بعد القسم المحدد، أو اسحبها إلى مكانها في الصفحة (على الجوال: ضغط مطوّل ثم سحب).</div><div class="pbx-dgrid">`
         + (FREE_ONLY ? "" : card("_blank", "قسم واحد (عمود)") + card("_two", "قسمان (عمودان)") + card("_three", "ثلاثة أقسام (3 أعمدة)")
         + `<div class="pbx-dfc" style="cursor:default" title="قسم شبكي مخصص"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC.grid}</svg><span>القسم الشبكي</span><div class="pbx-row" style="gap:.25rem"><label style="font-size:.66rem">صفوف <input id="gb-r" type="number" min="1" max="10" value="2" style="width:100%;padding:.15rem"></label><label style="font-size:.66rem">أعمدة <input id="gb-c" type="number" min="1" max="12" value="3" style="width:100%;padding:.15rem"></label></div><button class="pbx-small" data-grid="1" type="button" style="width:100%">＋ إضافة</button></div>`
         + Object.keys(TPLS).filter(k => !TPL_DUP.includes(k)).map(k => card(k, TPLS[k].n.replace(/^[^\p{L}\p{N}]+/u, ""))).join(""))
@@ -361,8 +364,9 @@ body{overflow-x:hidden;margin:0}`;
     } else if (E.ltab === "lay") {
       let h = "";
       E.page.sections.forEach((sec, i) => {
-        if (FREE_ONLY) {      // بلا أقسام/أعمدة: كل العناصر في قائمة واحدة (الحرة مرتبة بالأمام/الخلف ثم ما بقي داخل أعمدة قديمة)
+        if (FREE_ONLY) {      // بلا أعمدة: كل العناصر في قائمة واحدة (الحرة مرتبة بالأمام/الخلف ثم ما بقي داخل أعمدة قديمة)
           const fz = (sec.free || []).slice().sort((a, b) => (Number(b.set.zi) || 0) - (Number(a.set.zi) || 0));
+          if (E.page.sections.length > 1) h += `<div data-hs="${sec.id}" style="font-weight:800;color:#8a8472;cursor:pointer;${E.hs === sec.id ? "background:#f1ebdd;" : ""}">▤ قسم ${i + 1}${sec.set.off ? " (مخفي)" : ""}${sec.set.locked ? " 🔒" : ""}</div>`;
           h += fz.map(w => `<div draggable="true" data-lay="${w.id}" data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}">${ico('grip',14)} ${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`).join("");
           sec.cols.forEach(col => col.widgets.forEach(w => { h += `<div data-sel="${w.id}" data-lk="w" class="${E.sel === w.id ? "on" : ""}">${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`; })); return;
         }
@@ -445,8 +449,8 @@ body{overflow-x:hidden;margin:0}`;
     const mk = (type, t) => new MouseEvent(type, { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView });
     doc.addEventListener("touchstart", e => {
       if (e.touches.length !== 1) return; const tg = e.target; if (!tg || !tg.closest) return;
-      const ok = isFrame ? (E.sel && tg.closest('[data-pb="' + E.sel + '"]') && !tg.closest("[contenteditable=true]")) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz,.pbx-ft,.pbx-sb");
-      if (!ok || (!isFrame && tg.closest(".pbx-bar button,.pbx-bar label,.pbx-ft button"))) return; on = true; e.preventDefault(); tg.dispatchEvent(mk("mousedown", e.touches[0]));
+      const ok = isFrame ? (E.sel && tg.closest('[data-pb="' + E.sel + '"]') && !tg.closest("[contenteditable=true]")) : tg.closest(".pbx-box,.pbx-bar,.pbx-rz,.pbx-ft,.pbx-sb,.pbx-sbar");
+      if (!ok || (!isFrame && tg.closest(".pbx-bar button,.pbx-bar label,.pbx-ft button,.pbx-sbar button"))) return; on = true; e.preventDefault(); tg.dispatchEvent(mk("mousedown", e.touches[0]));
     }, { passive: false });
     doc.addEventListener("touchmove", e => { if (!on) return; e.preventDefault(); doc.documentElement.dispatchEvent(mk("mousemove", e.touches[0])); }, { passive: false });
     const end = e => { if (!on) return; on = false; doc.documentElement.dispatchEvent(mk("mouseup", e.changedTouches[0])); };
@@ -530,6 +534,7 @@ body{overflow-x:hidden;margin:0}`;
       const el = e.target.closest("[data-pb]"); if (el) { const w = e.target.closest('[data-kind="widget"]'); if (FREE_ONLY && !w) select(null); else select((w || el).dataset.pb); } else select(null);
     }, true);
     fdoc.addEventListener("submit", e => e.preventDefault(), true);
+    fdoc.addEventListener("mousemove", e => { if (E.busy || (e.buttons & 1)) return; const se = e.target.closest && e.target.closest(".pb-sec"); if (se && se.dataset.pb && se.dataset.pb !== E.hs) { E.hs = se.dataset.pb; positionOverlay(); } });      // شريط القسم يتبع القسم تحت المؤشر
     fdoc.addEventListener("mousemove", e => { if (E.md && !E.md.moved && (e.buttons & 1) && Math.abs(e.clientX - E.md.x) + Math.abs(e.clientY - E.md.y) > 4) E.md.moved = true; }, true);
     fdoc.addEventListener("mousedown", e => {
       E.md = { x: e.clientX, y: e.clientY, moved: false, sel: E.sel };
@@ -537,7 +542,7 @@ body{overflow-x:hidden;margin:0}`;
       const wEl = e.target.closest('[data-kind="widget"]'); if (!wEl) return;
       const cap = e.target.closest(".pb-sl-cap:not(.below)");
       if (cap && E.sel === wEl.dataset.pb) { e.preventDefault(); return startCapDrag(e, cap, wEl); }
-      { const i1 = find(wEl.dataset.pb); if (i1 && i1.set.locked) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); return; } }      // العنصر المقفل يُحدَّد فقط
+      { const i1 = find(wEl.dataset.pb); if (i1 && isLocked(i1)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); return; } }      // العنصر المقفل يُحدَّد فقط
       { const i0 = find(wEl.dataset.pb); if (i0 && E.dev === "m" && i0.sec.set.kind !== "canvas" && (wEl.dataset.free ? PB.autoFlowFree(i0.sec) : true)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); if (!E.mToast) { E.mToast = 1; toast("📱 في الهاتف تُرتَّب العناصر تلقائياً داخل الأقسام العادية — حرّكها من عرض سطح المكتب أو استعمل إعدادات الشريط الجانبي"); } return; } }
       if (wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots")) {
         if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
@@ -633,8 +638,7 @@ body{overflow-x:hidden;margin:0}`;
     const set = sec.set, has = !!set.bgImg, lk = !!set.bgLocked, canvas = set.kind === "canvas";
     const items = [["⧉", "نسخ", () => { if (!has) return toast("لا توجد صورة خلفية لنسخها"); E.clip = PB.mkW("image", { src: set.bgImg, alt: "" }); toast("📋 نُسخت صورة الخلفية — الصقها بـ Ctrl+V كعنصر"); }, "Ctrl+C", 0, 0, !has],
       ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip],
-      FREE_ONLY ? null : ["➕", "إضافة قسم", () => { const i = E.page.sections.indexOf(sec); addSection("_blank", i + 1); }, "Ctrl+Shift+Enter"],
-      FREE_ONLY ? null : ["⧉", "تكرار القسم", () => { const c = reId(clone(sec)); E.page.sections.splice(E.page.sections.indexOf(sec) + 1, 0, c); afterEdit(c.id); }, "Ctrl+D"],
+      ["➕", "إضافة قسم", () => addSecAfter(sec), "Ctrl+Shift+Enter"], ["⧉", "تكرار القسم", () => dupSec(sec)],
       has ? ["🗑", "حذف الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); ["bgImg", "bgSize", "bgPos", "bgOrig"].forEach(k => delete set[k]); E.nextLabel = "حذف الخلفية"; afterEdit(); }, "Del", 1, 0, lk] : null, "-",
       has ? [lk ? "🔓" : "🔒", lk ? "فتح قفل الخلفية" : "قفل الخلفية", () => { if (lk) delete set.bgLocked; else set.bgLocked = true; afterEdit(); toast(lk ? "🔓 فُتحت الخلفية" : "🔒 الخلفية مقفلة"); }] : null,
       canvas ? ["↕", "تغيير حجم الصفحة (الارتفاع)", () => { const v = Number(prompt("ارتفاع الصفحة بالبكسل:", Number(eff(set, "mh", E.dev)) || 520)); if (v >= 100) { setR(set, "mh", E.dev, Math.round(v)); afterEdit(); } }] : null,
@@ -684,7 +688,7 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
   function select(id) {
     if (editing) { try { editing.el.blur(); } catch (e) { } }
-    E.sel = id; renderInspector(); positionOverlay(); if (E.ltab === "lay") renderLeft();
+    E.sel = id; { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; } renderInspector(); positionOverlay(); if (E.ltab === "lay") renderLeft();
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
   /* تتبّع سحب موحّد: يعمل لمن بدأ داخل الـ iframe (Chrome يوصل الأحداث للإطار الذي بدأ فيه الضغط) أو من اللوحة؛ الإزاحة تُعاد بوحدات بكسل الصفحة */
@@ -726,10 +730,11 @@ body{overflow-x:hidden;margin:0}`;
 
   function positionOverlay() {
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
+    try { drawSecBar(ovl); } catch (x) { console.warn(x); }
     if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
     const el = fdoc.querySelector(`[data-pb="${E.sel}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, rotV = inf.kind === "widget" ? (num(eff(inf.set, "rot", E.dev)) || 0) : 0;
-    const isW = inf.kind === "widget", locked = isW && !!inf.set.locked;
+    const isW = inf.kind === "widget", locked = isW && isLocked(inf);
     const box = document.createElement("div"); box.className = "pbx-box " + inf.kind + (locked ? " lk" : "");
     box.style.cssText = `left:${o.ox + r.left * s}px;top:${o.oy + r.top * s}px;width:${r.width * s}px;height:${r.height * s}px${rotV ? `;transform:rotate(${rotV}deg)` : ""}`;
     const lbl = inf.kind === "widget" ? WIDGETS[inf.node.type].label + (inf.free ? " ✦" : "") : inf.kind === "column" ? "عمود" : "قسم" + ({ grid: " شبكي", canvas: " حر" }[inf.set.kind] || "");
@@ -801,9 +806,33 @@ body{overflow-x:hidden;margin:0}`;
     const sw = sb.offsetWidth; let sl = bx.r + 12; if (sl + sw > W - 4) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
     sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, bx.t) + "px";
   }
+
+  /* ───────────────── شريط القسم (يمين القسم): نقل، إخفاء، قفل، تكرار، حذف، إضافة قسم فارغ ───────────────── */
+  const SIC = {
+    up: SVG('<path d="M6 15l6-6 6 6"/>'), down: SVG('<path d="M6 9l6 6 6-6"/>'), eye: SVG('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+    eyeoff: SVG('<path d="M2 12s3.6-7 10-7c2 0 3.8.7 5.3 1.7M22 12s-3.6 7-10 7c-2 0-3.8-.7-5.3-1.7"/><path d="M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/>'), add: SVG('<rect x="4" y="4" width="16" height="16" rx="3" stroke-dasharray="0"/><path d="M12 8v8M8 12h8"/>')
+  };
+  const actSec = () => E.page.sections.find(x => x.id === E.hs) || E.page.sections[0];
+  function drawSecBar(ovl) {
+    const sec = actSec(); if (!sec || !fdoc || !root) return; const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return;
+    const r = layoutRect(el), o = ovlOrigin(), s = o.s, st = $("pbx-stage"), W = ovl.clientWidth, i = E.page.sections.indexOf(sec), n = E.page.sections.length, off = !!sec.set.off, lk = !!sec.set.locked;
+    const d = document.createElement("div"); d.className = "pbx-sbar";
+    [["up", SIC.up, "نقل القسم للأعلى", () => moveSec(sec, -1), 0, i === 0], ["down", SIC.down, "نقل القسم للأسفل", () => moveSec(sec, 1), 0, i === n - 1],
+     ["off", off ? SIC.eyeoff : SIC.eye, off ? "إظهار القسم" : "إخفاء القسم (لا يظهر في الصفحة المنشورة)", () => { sec.set.off = off ? undefined : true; if (off) delete sec.set.off; E.nextLabel = off ? "إظهار قسم" : "إخفاء قسم"; afterEdit(E.sel); }, off],
+     ["lk", lk ? FIC.unlock : FIC.lock, lk ? "فتح قفل القسم" : "قفل القسم وكل محتواه", () => { if (lk) delete sec.set.locked; else sec.set.locked = true; E.nextLabel = lk ? "فتح قفل قسم" : "قفل قسم"; afterEdit(E.sel); toast(lk ? "🔓 فُتح قفل القسم" : "🔒 القسم وكل محتواه مقفل"); }, lk],
+     ["dup", FIC.dup, "تكرار القسم مع كل محتواه", () => dupSec(sec)], ["del", FIC.del, "حذف القسم وكل محتواه", () => delSec(sec), 0, 0, "dng"], ["add", SIC.add, "إضافة قسم فارغ بعد هذا القسم", () => addSecAfter(sec), 0, 0, "add"]
+    ].forEach(([k, ic, tt, fn, on, dis, cls]) => { const b = document.createElement("button"); b.type = "button"; b.innerHTML = ic; b.title = tt; b.dataset.k = k; if (on) b.classList.add("on"); if (cls) b.classList.add(cls); if (dis) b.disabled = true; else b.onclick = ev => { ev.stopPropagation(); fn(); }; d.appendChild(b); });
+    ovl.appendChild(d); const bw = d.offsetWidth, bh = d.offsetHeight, top0 = o.oy + r.top * s, bot0 = o.oy + (r.top + r.height) * s;
+    d.style.left = Math.min(o.ox + (r.left + r.width) * s + 10, W - bw - 4) + "px"; d.style.top = Math.max(top0, Math.min(st.scrollTop + 8, bot0 - bh)) + "px";      // بجانب القسم، ويلازم الشاشة إن كان القسم طويلاً
+  }
+  function moveSec(sec, d) { const L = E.page.sections, i = L.indexOf(sec), j = i + d; if (j < 0 || j >= L.length) return; [L[i], L[j]] = [L[j], L[i]]; E.nextLabel = "نقل قسم"; afterEdit(E.sel); setTimeout(() => { const e = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (e) e.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 50); }
+  function dupSec(sec) { const c = reId(clone(sec)); delete c.set.locked; E.page.sections.splice(E.page.sections.indexOf(sec) + 1, 0, c); E.hs = c.id; E.nextLabel = "تكرار قسم"; afterEdit(null); toast("⧉ نُسخ القسم بكل محتواه"); }
+  function delSec(sec) { const L = E.page.sections, i = L.indexOf(sec); if (sec.set.locked) { toast("🔒 القسم مقفل — افتح قفله أولاً"); return; } L.splice(i, 1); E.hs = (L[i] || L[i - 1] || {}).id; E.nextLabel = "حذف قسم"; afterEdit(null); toastUndo("🗑 حُذف القسم وكل محتواه"); }
+  function addSecAfter(sec) { const s = TPLS.canvas.f(), L = E.page.sections; s.free = s.free || []; L.splice((sec ? L.indexOf(sec) : L.length - 1) + 1, 0, s); E.hs = s.id; E.nextLabel = "إضافة قسم"; afterEdit(null); setTimeout(() => { const e = fdoc.querySelector(`[data-pb="${s.id}"]`); if (e) e.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف قسم فارغ"); }
   function openMenuFor(btn) { const r = btn.getBoundingClientRect(); openCtx(r.left, r.bottom + 6, r); }
   /* قفل العنصر */
-  function toggleLock() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; if (inf.set.locked) delete inf.set.locked; else inf.set.locked = true; E.nextLabel = inf.set.locked ? "قفل عنصر" : "فتح قفل"; afterEdit(); toast(inf.set.locked ? "🔒 العنصر مقفل" : "🔓 فُتح القفل"); }
+  const isLocked = inf => !!(inf && inf.kind === "widget" && (inf.set.locked || (inf.sec && inf.sec.set.locked)));
+  function toggleLock() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; if (inf.sec.set.locked) { toast("🔒 القسم مقفل — افتح قفله من شريط القسم"); return; } if (inf.set.locked) delete inf.set.locked; else inf.set.locked = true; E.nextLabel = inf.set.locked ? "قفل عنصر" : "فتح قفل"; afterEdit(); toast(inf.set.locked ? "🔒 العنصر مقفل" : "🔓 فُتح القفل"); }
   /* نسخ/لصق العنصر ونمطه */
   function copyEl() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; E.clip = clone(inf.node); toast("📋 نُسخ العنصر — الصقه بـ Ctrl+V"); }
   function pasteEl() {
@@ -1041,7 +1070,7 @@ body{overflow-x:hidden;margin:0}`;
   function target() {
     if (FREE_ONLY) {      // كل عنصر جديد حر: في قسم العنصر/القسم المحدد، وإلا آخر قماش، وإلا قماش جديد
       const inf = selInfo(); if (inf && inf.sec) return { sec: inf.sec };
-      let sec = E.page.sections.slice().reverse().find(x => x.set.kind === "canvas"); if (!sec) { sec = TPLS.canvas.f(); E.page.sections.push(sec); }
+      let sec = (E.page.sections.find(x => x.id === E.hs && x.set.kind === "canvas")) || E.page.sections.slice().reverse().find(x => x.set.kind === "canvas"); if (!sec) { sec = TPLS.canvas.f(); E.page.sections.push(sec); }
       return { sec };
     }
     const inf = selInfo();
@@ -1164,6 +1193,7 @@ body{overflow-x:hidden;margin:0}`;
     if (e.target.closest("[data-grid]")) return addGrid();
     const t = e.target.closest("[data-tpl]"); if (t) return addSection(t.dataset.tpl);
     const df = e.target.closest("[data-dflt]"); if (df) return addDefault(df.dataset.dflt);
+    const hs = e.target.closest("[data-hs]"); if (hs) { E.hs = hs.dataset.hs; positionOverlay(); renderLeft(); const el = fdoc.querySelector(`[data-pb="${E.hs}"]`); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
     const l = e.target.closest("[data-sel]"); if (l) { select(l.dataset.sel); const el = fdoc.querySelector(`[data-pb="${l.dataset.sel}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }
   });
   function toggleSnap() { E.snap = !E.snap; updateTop(); toast(E.snap ? "🧲 الالتصاق مفعّل: يلتصق العنصر بحواف وأوسط العناصر الأخرى" : "التحريك حر تماماً بلا التصاق"); }
@@ -1174,6 +1204,7 @@ body{overflow-x:hidden;margin:0}`;
     const mod = e.ctrlKey || e.metaKey;
     if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+    else if (mod && e.shiftKey && e.key === "Enter") { e.preventDefault(); addSecAfter(actSec()); }
     else if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); dup(); }
     else if (mod && e.altKey && e.code === "KeyC" && E.sel) { e.preventDefault(); copyStyle(); }
     else if (mod && e.altKey && e.code === "KeyV" && E.sel) { e.preventDefault(); pasteStyle(); }
@@ -1183,7 +1214,7 @@ body{overflow-x:hidden;margin:0}`;
     else if ((e.key === "]" || e.key === "[") && E.sel) { const i0 = selInfo(); if (i0 && i0.kind === "widget") { e.preventDefault(); zOrder(e.key === "]" ? 1 : -1); } }
     else if (e.key === "Escape") { const inf = selInfo(); select(inf ? parentId(inf) : null); }          // Esc = تحديد الأب (عمود ثم قسم ثم لا شيء)
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
-      const inf = selInfo(); if (!inf) return; if (inf.set.locked) return;
+      const inf = selInfo(); if (!inf) return; if (isLocked(inf)) return;
       if (!inf.free) { e.preventDefault(); const d = (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : 0; if (d) { if (e.altKey) move(d); else nav(d); } return; }   // العناصر العادية: الأسهم تنقل التحديد (Alt = إعادة ترتيب)
       const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, st = e.shiftKey ? 10 : 1;
       let fx = Number(eff(inf.set, "fx", E.dev)) || 0, fy = Number(eff(inf.set, "fy", E.dev)) || 0;
@@ -1300,7 +1331,7 @@ body{overflow-x:hidden;margin:0}`;
   function renderInspector() {
     updateMbar();
     const el = $("pbx-insp"); if (!el) return; const inf = selInfo();
-    if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأقسام والأعمدة معطّلة مؤقتاً: كل العناصر حرة)." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
+    if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
     el.innerHTML = `<div class="pbx-ih">${lbl}</div>
