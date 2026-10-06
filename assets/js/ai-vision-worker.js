@@ -36,6 +36,7 @@ function getDet(k, id) { if (!dets[k]) dets[k] = T.pipeline("object-detection", 
 let dpth = null;
 function getDepth(id) { if (!dpth) dpth = T.pipeline("depth-estimation", M.depth, { device: "wasm", dtype: "int8", progress_callback: prog(id) }).catch(e => { dpth = null; throw e; }); return dpth; }
 const ops = {
+  async depthLoad(a, id) { await getDepth(id); return true; },
   async depth(a, id) { const p = await getDepth(id), r = await p(raw(a)), t = r.predicted_depth, d = t.dims; return { w: d[d.length - 1], h: d[d.length - 2], data: Float32Array.from(t.data) }; },
   async load(a, id) { if (a.sam) await getSam(id); for (const k of a.det || []) await getDet(k, id); return true; },
   /* كشف: [{src, label, score, box:[x0,y0,x1,y1]}] بإحداثيات الصورة المُرسلة */

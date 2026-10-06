@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=18", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=19", BASE).href;
   const SAMSZ = 1024, DETSZ = 736, W8 = {};      // 736 بدل 960: كشف أسرع بنحو الضعف بلا فقد يُذكر لعناصر بحجم مفيد
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -30,7 +30,7 @@ window.AIVision = (function () {
     return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط) " + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
   }
   /* خريطة عمق نسبية (أكبر = أقرب) لصورة بحجم ≤640 ← {w,h,data} */
-  async function depth(cv, onp) { const im = pix(cv, 640); return worker("dep").call("depth", { data: im.data, w: im.w, h: im.h }, onp, [im.data]); }
+  async function depth(cv, onp, max) { const im = pix(cv, max || 518); return worker("dep").call("depth", { data: im.data, w: im.w, h: im.h }, onp, [im.data]); }
   /* ───── الكشف ───── */
   const AR = { globe: "مجسم الكرة الأرضية", "pencil case": "مقلمة", person: "شخص", book: "كتاب", spoon: "ملعقة", "pen/pencil": "قلم", marker: "قلم", plate: "صحن", bowl: "صحن", "bowl/basin": "وعاء", "tea pot": "إبريق", kettle: "إبريق", jug: "إبريق", bottle: "عبوة", cup: "كوب", vase: "إناء", "wine glass": "كأس", fork: "شوكة", knife: "سكين", "cell phone": "هاتف", laptop: "حاسوب", clock: "ساعة", "potted plant": "نبتة", pottedplant: "نبتة", flower: "زهور", "green vegetables": "أعشاب", apple: "تفاح", orange: "برتقال", "orange/tangerine": "برتقال", banana: "موز", lemon: "ليمون", garlic: "ثوم", nuts: "مكسرات", bread: "خبز", cake: "كعكة", cookies: "بسكويت", dessert: "حلوى", cosmetics: "مستحضر", toiletry: "عبوة", canned: "علبة", "storage box": "علبة", basket: "سلة", handbag: "حقيبة", "handbag/satchel": "حقيبة", backpack: "حقيبة", luggage: "حقيبة", "teddy bear": "دمية", "stuffed toy": "دمية", candle: "شمعة", "cutting/chopping board": "لوح تقطيع", scissors: "مقص", "paint brush": "فرشاة", brush: "فرشاة", "pencil case": "مقلمة", notepaper: "ورقة", folder: "ملف", towel: "منشفة", dog: "كلب", cat: "قطة", bird: "طائر", "wild bird": "طائر", horse: "حصان", carrot: "جزر", broccoli: "بروكلي", tomato: "طماطم", pepper: "فلفل", egg: "بيض", mushroom: "فطر", flask: "قارورة", "barrel/bucket": "دلو", lantern: "فانوس", lamp: "مصباح", tablet: "لوحي", camera: "كاميرا", "head phone": "سماعة", remote: "جهاز تحكم", keyboard: "لوحة مفاتيح", mouse: "فأرة", umbrella: "مظلة", "sports ball": "كرة", soap: "صابون", lipstick: "أحمر شفاه", comb: "مشط", "hair dryer": "مجفف شعر", toothbrush: "فرشاة أسنان", strawberry: "فراولة", grape: "عنب", pear: "إجاص", peach: "خوخ", pomegranate: "رمان", watermelon: "بطيخ", "kiwi fruit": "كيوي", mango: "مانجو", coconut: "جوز الهند", avocado: "أفوكادو", cucumber: "خيار", onion: "بصل", potato: "بطاطا", lettuce: "خس", cheese: "جبن" };
   const DROP = new Set(["dining table", "diningtable", "dinning table", "couch", "sofa", "chair", "bed", "bench", "toilet", "sink", "refrigerator", "oven", "tv", "tvmonitor", "monitor/tv", "desk", "coffee table", "side table", "cabinet/shelf", "nightstand", "stool", "pillow", "carpet", "picture/frame", "mirror", "ring", "necklace", "bracelet", "glasses", "hat", "watch", "belt", "tie", "bow tie", "mask", "gloves", "other shoes", "sneakers", "boots", "leather shoes", "sandals", "slippers", "high heels", "power outlet", "air conditioner", "radiator", "faucet", "awning", "street lights", "traffic light", "traffic sign", "stop sign", "speed limit sign", "crosswalk sign", "trash bin can", "bathtub", "blackboard/whiteboard", "carriage", "extension cord", "converter"]);
@@ -151,14 +151,14 @@ window.AIVision = (function () {
   /* تحليل كامل: كشف (Gemini أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
   async function analyze(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
-    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0); } catch (e) { }
+    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0) + "|" + (o.noHeld ? 1 : 0) + "|" + (o.maxItems || 0) + "|" + (o.fastDet ? 1 : 0); } catch (e) { }
     if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحلي المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: "local", note: "", dets: AC.dets, later: null }; }
     step("⏳ تجهيز أداة القص…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
     /* المسار المحلي فقط: لا تُرسل الصورة إلى Gemini أو أي خدمة خارجية. */
     let localErr = null, src = "local", note = "";
     const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null;
-    const pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite).catch(e => { localErr = e; return []; });
+    const pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite || o.fastDet).catch(e => { localErr = e; return []; });
     const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label));
     if (!loc.length && localErr) throw localErr;
     const dets = loc;
@@ -169,7 +169,7 @@ window.AIVision = (function () {
     step("⏳ تحليل الصورة…"); const S = await pS, items = [];
     /* بعد ترميز SAM مرة واحدة، طلبات الأقنعة مستقلة؛ ننفذ اثنتين معاً لتقليل زمن الانتظار
        مع إبقاء ترتيب النتائج ثابتاً حتى لا تتغير أولوية الدمج/التعارض. */
-    const maskJobs = dets.map((d, i) => ({ d, i }));
+    const maskJobs = (o.maxItems ? dets.slice(0, o.maxItems) : dets).map((d, i) => ({ d, i }));
     const masked = new Array(maskJobs.length); let nextMask = 0;
     const workers = 1;      /* متتابعة: عامل SAM يحمل حالة طلب واحد، والتوازي يتلف المدخلات فتفشل كل الأقنعة (أخطاء input_points/input_boxes) */
     await Promise.all(Array.from({ length: workers }, async () => {
@@ -193,8 +193,8 @@ window.AIVision = (function () {
       for (let i = out.length - 1; i >= 0; i--) { const o = out[i]; if (o === main || PERSON.test(o.label)) continue; const ob = [o.x0, o.y0, o.x1, o.y1]; if (bInter(ob, eb) > .7 * bArea(ob)) { unite(main, o, S); out.splice(i, 1); } }
       if (main.label === "عنصر") { const n = dets.find(d => d.label && !PERSON.test(d.label) && d !== dets[0] && bInter(d.box, mb) > .5 * bArea(d.box)); if (n) main.label = n.label; }
     }
-    if (!o.lite) await heldItems(S, out, step);
-    await occlusions(S, out, step);
+    if (!o.lite && !o.noHeld) await heldItems(S, out, step);
+    if (!o.noHeld) await occlusions(S, out, step);
     out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); if (fp) AC = { fp, S, items: cloneItems(out), src, note, dets }; return { S, items: out, src, note, dets, later };
   }
   /* دمج عناصر يختارها المستخدم في عنصر واحد (يأخذ اسم أكبرها) */
@@ -464,6 +464,6 @@ window.AIVision = (function () {
     const mk = fn => { const c = document.createElement("canvas"); c.width = dw; c.height = dh; const g = c.getContext("2d"), im = g.createImageData(dw, dh); for (let i = 0; i < dw * dh; i++) { const al = fn(i); if (al) { im.data[i * 4] = rgb[0]; im.data[i * 4 + 1] = rgb[1]; im.data[i * 4 + 2] = rgb[2]; im.data[i * 4 + 3] = al; } } g.putImageData(im, 0, 0); return c; };
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
-  function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); } catch (e) { } }
+  function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
   return { supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, warm };
 })();
