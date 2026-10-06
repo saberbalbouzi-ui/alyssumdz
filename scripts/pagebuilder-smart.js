@@ -350,5 +350,53 @@ ${tool('<path d="M4 20L16 8"/><path d="M14 4l.9 2.1L17 7l-2.1.9L14 10l-.9-2.1L11
       } catch (e) { alert("⚠️ " + e.message); }
     }; inp.click();
   }
-  return { pane, capture, captureElements, importImages, warm, setGem };
+
+  /* ───── ممحاة بالفرشاة: ارسم فوق ما تريد حذفه فتُرمَّم الخلفية بنموذج MI-GAN المحلي (أو ترميم محلي بسيط إن تعذّر النموذج) ───── */
+  async function eraser(inf) {
+    if (!inf || inf.node.type !== "image" || !inf.set.src) { alert("حدّد صورة أولاً"); return; }
+    const id = inf.node.id; let src; try { src = await loadCanvas(inf.set.src); } catch (e) { alert("⚠️ " + e.message); return; }
+    const MAXS = 1800, k0 = Math.min(1, MAXS / Math.max(src.width, src.height)); let base = src;
+    if (k0 < 1) { base = document.createElement("canvas"); base.width = Math.round(src.width * k0); base.height = Math.round(src.height * k0); base.getContext("2d").drawImage(src, 0, 0, base.width, base.height); }
+    const W = base.width, H = base.height, dispW = Math.max(240, Math.min(W, innerWidth * .88 - 8, (innerHeight - 230) * W / H)), dispH = Math.round(dispW * H / W), K = W / dispW;
+    const ov = document.createElement("div"); ov.id = "pbs-er"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.78);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
+    ov.innerHTML = `<div style="background:#fff;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;flex-direction:column;gap:.6rem;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center"><b style="font-size:1rem">🧽 ممحاة الصورة</b><span style="flex:1"></span>
+        <label style="font-size:.78rem;display:flex;gap:.4rem;align-items:center">حجم الفرشاة <input id="er-sz" type="range" min="6" max="120" value="36" style="width:120px"></label>
+        <button id="er-undo" type="button" class="pbx-small">↶ ضربة</button><button id="er-clr" type="button" class="pbx-small">مسح الرسم</button><button id="er-back" type="button" class="pbx-small" disabled>↩ تراجع الإزالة</button>
+        <button id="er-go" type="button" style="background:#173f35;color:#fff;border:0;border-radius:8px;padding:.45rem .9rem;font-weight:800;cursor:pointer;font-family:inherit">✨ إزالة المحدد</button>
+        <button id="er-save" type="button" style="background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.45rem .9rem;font-weight:800;cursor:pointer;font-family:inherit" disabled>💾 حفظ في الصفحة</button><button id="er-x" type="button" class="pbx-small">إغلاق</button></div>
+      <div id="er-st" style="position:relative;width:${dispW}px;height:${dispH}px;margin:0 auto;background:repeating-conic-gradient(#e6e0d0 0 25%,#fff 0 50%) 50%/16px 16px;border-radius:8px;overflow:hidden;touch-action:none"><canvas id="er-v" width="${dispW}" height="${dispH}" style="position:absolute;inset:0"></canvas><canvas id="er-o" width="${dispW}" height="${dispH}" style="position:absolute;inset:0;cursor:crosshair"></canvas><div id="er-c" style="position:absolute;pointer-events:none;border:2px solid #fff;box-shadow:0 0 0 1px #000;border-radius:50%;display:none"></div></div>
+      <div id="er-msg" style="font-size:.78rem;color:#6b6556;text-align:center;min-height:1.2em">ارسم بالفأرة أو الإصبع فوق ما تريد حذفه (نص، شعار، عنصر)، ثم اضغط «إزالة المحدد». يمكنك التكرار على أجزاء متعددة.</div></div>`;
+    document.body.appendChild(ov); const $ = i => ov.querySelector("#" + i), v = $("er-v"), o = $("er-o"), cur = $("er-c"), vg = v.getContext("2d"), og = o.getContext("2d"), msg = t => { $("er-msg").textContent = t; };
+    let strokes = [], drawing = null, hist = [], dirty = false, busy = false;
+    const redrawBase = () => { vg.clearRect(0, 0, dispW, dispH); vg.drawImage(base, 0, 0, dispW, dispH); };
+    const paintView = () => { og.clearRect(0, 0, dispW, dispH); og.lineCap = og.lineJoin = "round"; og.strokeStyle = og.fillStyle = "rgba(255,60,60,.55)"; strokes.forEach(s => { og.lineWidth = s.r * 2 / K; og.beginPath(); s.p.forEach((q, i) => i ? og.lineTo(q[0] / K, q[1] / K) : og.moveTo(q[0] / K, q[1] / K)); if (s.p.length === 1) { og.arc(s.p[0][0] / K, s.p[0][1] / K, s.r / K, 0, 7); og.fill(); } else og.stroke(); }); };
+    const pos = e => { const r = o.getBoundingClientRect(); return [(e.clientX - r.left) * K * (dispW / r.width), (e.clientY - r.top) * K * (dispH / r.height)]; };
+    const rad = () => Number($("er-sz").value) * K / 2;
+    o.addEventListener("pointerdown", e => { if (busy) return; e.preventDefault(); o.setPointerCapture(e.pointerId); drawing = { r: rad(), p: [pos(e)] }; strokes.push(drawing); paintView(); });
+    o.addEventListener("pointermove", e => { const r = o.getBoundingClientRect(), d = Number($("er-sz").value) / (dispW / r.width) * (r.width / dispW); cur.style.display = "block"; cur.style.width = cur.style.height = $("er-sz").value + "px"; cur.style.left = (e.clientX - r.left - $("er-sz").value / 2) + "px"; cur.style.top = (e.clientY - r.top - $("er-sz").value / 2) + "px"; if (drawing) { drawing.p.push(pos(e)); paintView(); } });
+    o.addEventListener("pointerup", () => { drawing = null; }); o.addEventListener("pointerleave", () => { cur.style.display = "none"; });
+    $("er-undo").onclick = () => { strokes.pop(); paintView(); }; $("er-clr").onclick = () => { strokes = []; paintView(); };
+    const close = () => { if (dirty && !confirm("هناك إزالة لم تُحفظ في الصفحة. إغلاق دون حفظ؟")) return; ov.remove(); }; $("er-x").onclick = close;
+    $("er-back").onclick = () => { if (!hist.length || busy) return; base = hist.pop(); redrawBase(); strokes = []; paintView(); $("er-back").disabled = !hist.length; dirty = hist.length > 0; $("er-save").disabled = !dirty; };
+    $("er-go").onclick = async () => {
+      if (busy) return; if (!strokes.length) { msg("ارسم أولاً فوق ما تريد حذفه"); return; } busy = true; $("er-go").disabled = true; msg("⏳ جارٍ التجهيز…");
+      try {
+        const mk = document.createElement("canvas"); mk.width = W; mk.height = H; const mg = mk.getContext("2d"); mg.lineCap = mg.lineJoin = "round"; mg.strokeStyle = mg.fillStyle = "#fff";
+        strokes.forEach(s => { mg.lineWidth = s.r * 2; mg.beginPath(); s.p.forEach((q, i) => i ? mg.lineTo(q[0], q[1]) : mg.moveTo(q[0], q[1])); if (s.p.length === 1) { mg.arc(s.p[0][0], s.p[0][1], s.r, 0, 7); mg.fill(); } else mg.stroke(); });
+        const d = mg.getImageData(0, 0, W, H).data, U = new Uint8Array(W * H); let n = 0; for (let i = 0; i < W * H; i++) if (d[i * 4 + 3] > 100) { U[i] = 1; n++; } if (!n) throw new Error("لم يُحدَّد شيء");
+        const work = document.createElement("canvas"); work.width = W; work.height = H; work.getContext("2d", { willReadFrequently: true }).drawImage(base, 0, 0);
+        let note = ""; const how = await AIVision.eraseBg(work, [{ erase: { m: U, x0: 0, y0: 0, w: W, h: H } }], { grow: Math.max(2, Math.round(Math.max(W, H) / 700)), onNote: m => { note = m; }, onStep: m => msg(m) });
+        hist.push(base); base = work; redrawBase(); strokes = []; paintView(); dirty = true; $("er-back").disabled = false; $("er-save").disabled = false;
+        msg(how === "model" ? "✅ تمت الإزالة بنموذج الذكاء الاصطناعي. أكمل إزالة أجزاء أخرى أو احفظ." : "✅ تمت الإزالة بترميم محلي بسيط" + (note ? " (" + note + ")" : "") + " — للخلفيات المعقدة جرّب الاتصال بالإنترنت ليُحمَّل النموذج.");
+      } catch (e) { msg("⚠️ " + e.message); } busy = false; $("er-go").disabled = false;
+    };
+    $("er-save").onclick = async () => {
+      if (busy) return; busy = true; $("er-save").disabled = true; msg("⏳ جارٍ رفع الصورة…");
+      try { const blob = await new Promise(r => base.toBlob(r, "image/png")), path = await A().uploadBlob(blob, "er-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(id); if (q) { q.node.set.src = path; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); } dirty = false; ov.remove(); }
+      catch (e) { msg("⚠️ " + e.message); $("er-save").disabled = false; } busy = false;
+    };
+    redrawBase();
+  }
+  return { pane, capture, captureElements, importImages, eraser, warm, setGem };
 })();

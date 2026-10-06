@@ -166,7 +166,11 @@ const PB = (() => {
     return `<svg class="pb-svg" viewBox="0 0 100 100" preserveAspectRatio="${st ? "none" : "xMidYMid meet"}" aria-hidden="true">${defs ? "<defs>" + defs + "</defs>" : ""}${el}</svg>`;
   }
   /* ═════════════════ تعريف العناصر (Widgets) ═════════════════ */
-  const F_FONT = [["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"], ["'Courier New',monospace", "Mono"]];
+  /* خطوط Google: [الاسم, الأوزان المطلوبة, الاسم العربي] — تُحمَّل في المحرر كلها، وفي الصفحة المنشورة المستعمل منها فقط */
+  const FONT_FAMS = [["Tajawal", "400;700", "تجوّال"], ["Almarai", "400;700", "المراعي"], ["Amiri", "400;700", "أميري"], ["Lateef", "400;700", "لطيف"], ["Noto Kufi Arabic", "400;700", "نوتو كوفي"], ["Noto Naskh Arabic", "400;700", "نوتو نسخ"], ["Reem Kufi", "400;700", "ريم كوفي"], ["El Messiri", "400;700", "المسيري"], ["Changa", "400;700", "تشانغا"], ["Harmattan", "400;700", "هرمتان"], ["Scheherazade New", "400;700", "شهرزاد"], ["Markazi Text", "400;700", "مركزي"], ["Lalezar", "", "لاله زار"], ["Aref Ruqaa", "400;700", "عارف رقعة"], ["Mada", "400;700", "مدى"], ["Readex Pro", "400;700", "ريدكس"], ["IBM Plex Sans Arabic", "400;700", "IBM بلكس"], ["Rakkas", "", "رقّاص"], ["Baloo Bhaijaan 2", "400;700", "بالو بهيجان"], ["Lemonada", "400;700", "ليمونادا"], ["Poppins", "400;700", "Poppins"], ["Montserrat", "400;700", "Montserrat"], ["Open Sans", "400;700", "Open Sans"], ["Roboto", "400;700", "Roboto"], ["Playfair Display", "400;700", "Playfair Display"], ["Lora", "400;700", "Lora"]];
+  const F_FONT = [["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"], ["'Courier New',monospace", "Mono"]].concat(FONT_FAMS.map(([n, w, l]) => [`'${n}','Cairo',sans-serif`, l === n ? n : l + " (" + n + ")"]));
+  const fontsHref = names => names.length ? "https://fonts.googleapis.com/css2?" + names.map(n => { const f = FONT_FAMS.find(x => x[0] === n); return "family=" + n.replace(/ /g, "+") + (f && f[1] ? ":wght@" + f[1] : ""); }).join("&") + "&display=swap" : "";
+  const usedFonts = obj => { const str = JSON.stringify(obj || ""); return FONT_FAMS.filter(([n]) => str.includes("'" + n + "'")).map(x => x[0]); };
   const F_W = [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]];
   const AL = [["start", "⇥ بداية"], ["center", "↔ وسط"], ["end", "⇤ نهاية"]];
   const typoCtl = (extra) => [
@@ -852,6 +856,7 @@ if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProduc
 <link rel="icon" href="${esc(ctx.base)}assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); return u ? `<link href="${u}" rel="stylesheet" media="print" onload="this.media='all'">` : ""; })()}
 <style>${BASE_CSS}
 .pb-page{background:${esc(page.bg || "#fff")}${page.ff ? ";font-family:" + page.ff : ""}}
 ${r.css}
@@ -862,5 +867,5 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
