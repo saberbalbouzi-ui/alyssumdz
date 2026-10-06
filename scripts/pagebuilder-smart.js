@@ -192,7 +192,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     let sel = new Set(), hov = -1, busy = false;  if (Z) items.forEach(i => { if (i.zoneMain) sel.add(i.id); });      // العنصر داخل المنطقة محدَّد مسبقاً
     const names = () => { const c = {}, n = {}; items.forEach(it => c[it.label] = (c[it.label] || 0) + 1); const out = {}; items.slice().sort((a, b) => a.v.cx - b.v.cx).forEach(it => { n[it.label] = (n[it.label] || 0) + 1; out[it.id] = c[it.label] > 1 ? it.label + " " + n[it.label] : it.label; }); return out; };
     const ex = $("pbs-extra");
-    ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><div id="pbs-refine" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"></div><button id="pbs-merge"
+    ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><div id="pbs-refine" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button><div style="font-size:.74rem;color:#8a8472;line-height:1.6">🔒 معالجة محلية بالكامل: D-FINE + SAM 2.1 + تحسين الحواف + MI-GAN. لا تُرسل الصورة إلى API.</div>';
     let refineMode = null;
     function refineUI() {
       const box = $("pbs-refine"), one = sel.size === 1 && sh.S.mode !== "all";
