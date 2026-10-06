@@ -53,13 +53,21 @@ const PB = (() => {
   const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); };
   const BOX = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]];
   /* الخلفية/الحدود غير المتجاوبة (قيمة واحدة) */
+  const hexA = (c, a) => { a = num(a); if (a == null || a >= 1) return c; const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (m) { const n = parseInt(m[1], 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; } return `color-mix(in srgb,${c} ${Math.round(a * 100)}%,transparent)`; };
   function boxStatic(css, sel, s) {
-    let d = "";
-    if (s.bg) d += `background-color:${s.bg};`;
+    let d = "", bgd = "";
+    if (s.bg) bgd += `background-color:${s.bg};`;
     const gl = gradCss(s.gr) || ((s.grad1 && s.grad2) ? `linear-gradient(${num(s.gradAng) ?? 135}deg,${s.grad1},${s.grad2})` : "");
-    if (gl) d += `background-image:${gl};`;
-    if (s.bgImg) { d += `background-image:${gl ? gl + "," : ""}url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}');background-size:${s.bgSize || "cover"};background-position:${s.bgPos || "center"};background-repeat:no-repeat;`; if (s.bgFixed) d += "background-attachment:fixed;"; }
-    if (num(s.bw)) d += `border:${num(s.bw)}px ${s.bs || "solid"} ${s.bc || "#ddd"};`;
+    if (gl) bgd += `background-image:${gl};`;
+    if (s.bgImg) { bgd += `background-image:${gl ? gl + "," : ""}url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}');background-size:${s.bgSize || "cover"};background-position:${s.bgPos || "center"};background-repeat:no-repeat;`; if (s.bgFixed) bgd += "background-attachment:fixed;"; }
+    /* الإطار: سماكة عامة أو لكل جهة، نمط، لون بشفافية، وتدوير كل زاوية */
+    const bws = Array.isArray(s.bws) ? s.bws : [], bwA = [0, 1, 2, 3].map(i => (bws[i] === "" || bws[i] == null || isNaN(Number(bws[i]))) ? (num(s.bw) || 0) : Number(bws[i]));
+    if (bwA.some(x => x > 0)) { const col = hexA(s.bc || "#ddd", s.bco), st = s.bs || "solid"; d += bwA.every(x => x === bwA[0]) ? `border:${bwA[0]}px ${st} ${col};` : `border-style:${st};border-color:${col};border-width:${bwA.map(x => x + "px").join(" ")};`; }
+    if (Array.isArray(s.radc) && s.radc.some(x => x !== "" && x != null && !isNaN(Number(x)))) d += `border-radius:${[0, 1, 2, 3].map(i => (num(s.radc[i]) || 0) + "px").join(" ")}!important;`;
+    /* الخلفية في طبقة مستقلة (::after) عند ضبط شفافية الخلفية أو تدوير زواياها: لا تتأثر بها الحدود ولا المحتوى */
+    const bga = num(s.bga), layer = !!bgd && ((bga != null && bga < 1) || DEVS.some(dv => own(s, "bgrad", dv) !== undefined));
+    if (layer) { d += "position:relative;isolation:isolate;"; css.d.push(`${sel}::after{content:"";position:absolute;inset:${bwA.map(x => -x + "px").join(" ")};z-index:-1;pointer-events:none;border-radius:inherit;${bgd}${bga != null && bga < 1 ? `opacity:${Math.max(0, bga)};` : ""}}`); emit(css, sel + "::after", s, [["bgrad", px("border-radius")]]); }
+    else d += bgd;
     if (s.shadow && SHADOWS[s.shadow]) d += `box-shadow:${SHADOWS[s.shadow]};`;
     if (s.op !== undefined && s.op !== "" && num(s.op) != null) d += `opacity:${num(s.op)};`;
     if (num(s.z)) d += `z-index:${num(s.z)};position:relative;`;
@@ -523,10 +531,15 @@ const PB = (() => {
       { k: "bgOp", l: "شفافية صورة الخلفية (0 = شفافة، 1 = معتمة)", t: "num", min: 0, max: 1, step: .05, tab: "s", showIf: ["bgImg", "*"] },
       { k: "bgBlur", l: "تمويه صورة الخلفية (px)", t: "num", min: 0, max: 40, tab: "s", showIf: ["bgImg", "*"] },
       { k: "bgDark", l: "تعتيم الخلفية بطبقة داكنة (0 – 0.9) ليظهر النص فوقها أوضح", t: "num", min: 0, max: .9, step: .05, tab: "s", showIf: ["bgImg", "*"] },
-      { k: "bw", l: "سماكة الحد (px)", t: "num", min: 0, max: 40, tab: "s" }, { k: "bs", l: "نمط الحد", t: "select", o: [["solid", "متصل"], ["dashed", "متقطع"], ["dotted", "نقطي"]], tab: "s" }, { k: "bc", l: "لون الحد", t: "color", tab: "s" },
-      { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
+      { k: "bga", l: "شفافية الخلفية (0 = شفافة، 1 = معتمة) — لا تؤثر على النص ولا الإطار", t: "num", min: 0, max: 1, step: .05, tab: "s" },
+      { k: "bgrad", l: "تدوير زوايا الخلفية (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
+      { k: "bw", l: "سماكة الإطار (px) — لكل الجهات", t: "num", min: 0, max: 40, tab: "s" }, { k: "bws", l: "سماكة كل جهة (px) — تتجاوز السماكة العامة", t: "dims", tab: "s" },
+      { k: "bs", l: "نمط الإطار", t: "select", o: [["solid", "متصل"], ["dashed", "متقطع"], ["dotted", "نقطي"], ["double", "مزدوج"], ["groove", "محفور"], ["ridge", "بارز"], ["inset", "غائر"], ["outset", "ناتئ"]], tab: "s" }, { k: "bc", l: "لون الإطار", t: "color", tab: "s" },
+      { k: "bco", l: "شفافية الإطار (0 = شفاف، 1 = معتم)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
+      { k: "rad", l: "تدوير زوايا الإطار (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
+      { k: "radc", l: "تدوير كل زاوية على حدة (px) — يتجاوز التدوير العام", t: "dims", lb: ["أعلى-يسار", "أعلى-يمين", "أسفل-يمين", "أسفل-يسار"], tab: "s" },
       { k: "shadow", l: "الظل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" },
-      { k: "op", l: "الشفافية (0-1)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
+      { k: "op", l: "شفافية العنصر كله (0 = شفاف، 1 = معتم)", t: "num", min: 0, max: 1, step: .05, tab: "s" },
     ];
     if (kind === "widget") a.unshift({ k: "rot", l: "تدوير العنصر (درجة)", t: "num", r: 1, min: -360, max: 360, tab: "a" }, { k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "a" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "a", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "a" },
       { k: "fx", l: "الموضع الأفقي % (وضع حر)", t: "num", r: 1, min: -50, max: 150, step: .5, tab: "a", onlyFree: 1 }, { k: "fy", l: "الموضع العمودي px (وضع حر)", t: "num", r: 1, min: -500, max: 5000, tab: "a", onlyFree: 1 }, { k: "fwd", l: "العرض % (وضع حر)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "a", onlyFree: 1 }, { k: "fh", l: "الارتفاع px (وضع حر)", t: "num", r: 1, min: 10, max: 5000, tab: "a", onlyFree: 1 },
