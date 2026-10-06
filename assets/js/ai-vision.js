@@ -11,10 +11,10 @@ window.AIVision = (function () {
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
   function mkWorker(kind) {
     const w = new Worker(WURL, { type: "module" }), P = new Map(); let ok, ko; const ready = new Promise((r, j) => { ok = r; ko = j; }); ready.catch(() => { });
-    const t = setTimeout(() => die(new Error("انتهت مهلة تحميل مكتبة الذكاء (الإنترنت بطيء؟)")), 120000);
+    const t = setTimeout(() => die(new Error("انتهت مهلة تحميل أداة القص (الإنترنت بطيء؟)")), 120000);
     function die(err) { clearTimeout(t); if (W8[kind] === w) delete W8[kind]; try { w.terminate(); } catch (e) { } ko(err); P.forEach(p => p.rej(err)); P.clear(); }
     w.onmessage = e => { const d = e.data || {}; if (d.ready) { clearTimeout(t); return ok(); } const p = P.get(d.id); if (!p) return; if (d.progress) return p.onp && p.onp(d.progress); P.delete(d.id); d.ok ? p.res(d.r) : p.rej(new Error(d.err)); };
-    w.onerror = e => { if (e.preventDefault) e.preventDefault(); die(new Error("تعذّر تشغيل نموذج الذكاء داخل المتصفح — تحقّق من الإنترنت" + (e.message ? " (" + e.message + ")" : ""))); };
+    w.onerror = e => { if (e.preventDefault) e.preventDefault(); die(new Error("تعذّر تشغيل أداة القص داخل المتصفح — تحقّق من الإنترنت" + (e.message ? " (" + e.message + ")" : ""))); };
     w.call = (op, a, onp, tr) => ready.then(() => new Promise((res, rej) => { const id = ++seq; P.set(id, { res, rej, onp }); w.postMessage({ id, op, a }, tr || []); }));
     return w;
   }
@@ -27,7 +27,7 @@ window.AIVision = (function () {
   /* تقدّم التنزيل لكل الملفات معاً ← نص عربي */
   function progress(step) {
     const files = {}; let last = 0;
-    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? "⏳ تنزيل نموذج الذكاء (مرة واحدة فقط) " + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز نموذج الذكاء…"); };
+    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط) " + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
   }
   /* ───── الكشف ───── */
   const AR = { globe: "مجسم الكرة الأرضية", "pencil case": "مقلمة", person: "شخص", book: "كتاب", spoon: "ملعقة", "pen/pencil": "قلم", marker: "قلم", plate: "صحن", bowl: "صحن", "bowl/basin": "وعاء", "tea pot": "إبريق", kettle: "إبريق", jug: "إبريق", bottle: "عبوة", cup: "كوب", vase: "إناء", "wine glass": "كأس", fork: "شوكة", knife: "سكين", "cell phone": "هاتف", laptop: "حاسوب", clock: "ساعة", "potted plant": "نبتة", pottedplant: "نبتة", flower: "زهور", "green vegetables": "أعشاب", apple: "تفاح", orange: "برتقال", "orange/tangerine": "برتقال", banana: "موز", lemon: "ليمون", garlic: "ثوم", nuts: "مكسرات", bread: "خبز", cake: "كعكة", cookies: "بسكويت", dessert: "حلوى", cosmetics: "مستحضر", toiletry: "عبوة", canned: "علبة", "storage box": "علبة", basket: "سلة", handbag: "حقيبة", "handbag/satchel": "حقيبة", backpack: "حقيبة", luggage: "حقيبة", "teddy bear": "دمية", "stuffed toy": "دمية", candle: "شمعة", "cutting/chopping board": "لوح تقطيع", scissors: "مقص", "paint brush": "فرشاة", brush: "فرشاة", "pencil case": "مقلمة", notepaper: "ورقة", folder: "ملف", towel: "منشفة", dog: "كلب", cat: "قطة", bird: "طائر", "wild bird": "طائر", horse: "حصان", carrot: "جزر", broccoli: "بروكلي", tomato: "طماطم", pepper: "فلفل", egg: "بيض", mushroom: "فطر", flask: "قارورة", "barrel/bucket": "دلو", lantern: "فانوس", lamp: "مصباح", tablet: "لوحي", camera: "كاميرا", "head phone": "سماعة", remote: "جهاز تحكم", keyboard: "لوحة مفاتيح", mouse: "فأرة", umbrella: "مظلة", "sports ball": "كرة", soap: "صابون", lipstick: "أحمر شفاه", comb: "مشط", "hair dryer": "مجفف شعر", toothbrush: "فرشاة أسنان", strawberry: "فراولة", grape: "عنب", pear: "إجاص", peach: "خوخ", pomegranate: "رمان", watermelon: "بطيخ", "kiwi fruit": "كيوي", mango: "مانجو", coconut: "جوز الهند", avocado: "أفوكادو", cucumber: "خيار", onion: "بصل", potato: "بطاطا", lettuce: "خس", cheese: "جبن" };
@@ -151,7 +151,7 @@ window.AIVision = (function () {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
     let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.key ? 1 : 0) + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0); } catch (e) { }
     if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: AC.src, note: AC.note, dets: AC.dets, later: null }; }
-    step("⏳ تجهيز نموذج الذكاء…");
+    step("⏳ تجهيز أداة القص…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
     /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
     let localErr = null, gem = [], src = "local", note = ""; const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null, pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite).catch(e => { localErr = e; return []; });      // وضع الماوس: بلا كشف، الترميز فقط

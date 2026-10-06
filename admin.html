@@ -1484,7 +1484,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome-admin.js?v=1.22.1"></script>
 <script src="assets/js/admin-assistant.js?v=1.22.1"></script>
 <script src="assets/js/admin-update.js?v=1.22.1"></script>
-<script src="assets/js/ai-vision.js?v=19"></script>
+<script src="assets/js/ai-vision.js?v=20"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -11586,7 +11586,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         const work = document.createElement("canvas"); work.width = W; work.height = H; work.getContext("2d", { willReadFrequently: true }).drawImage(base, 0, 0);
         let note = ""; const how = await AIVision.eraseBg(work, [{ erase: { m: U, x0: 0, y0: 0, w: W, h: H } }], { grow: Math.max(2, Math.round(Math.max(W, H) / 700)), onNote: m => { note = m; }, onStep: m => msg(m) });
         hist.push(base); base = work; redrawBase(); strokes = []; paintView(); dirty = true; $("er-back").disabled = false; $("er-save").disabled = false;
-        msg(how === "model" ? "✅ تمت الإزالة بنموذج الذكاء الاصطناعي. أكمل إزالة أجزاء أخرى أو احفظ." : "✅ تمت الإزالة بترميم محلي بسيط" + (note ? " (" + note + ")" : "") + " — للخلفيات المعقدة جرّب الاتصال بالإنترنت ليُحمَّل النموذج.");
+        msg(how === "model" ? "✅ تمت الإزالة. أكمل إزالة أجزاء أخرى أو احفظ." : "✅ تمت الإزالة بترميم محلي بسيط" + (note ? " (" + note + ")" : "") + " — للخلفيات المعقدة جرّب الاتصال بالإنترنت ليُحمَّل النموذج.");
       } catch (e) { msg("⚠️ " + e.message); } busy = false; $("er-go").disabled = false;
     };
     $("er-save").onclick = async () => {
@@ -12210,7 +12210,7 @@ const PBBgRemove = (function () {
     if (!t) return null; const fr = (t.x1 - t.x0) * (t.y1 - t.y0) / (W * H); return t.y0 > H * .3 && t.y1 > H * .9 && fr > .05 && fr < .7 && t.area > 0 ? t : null;
   }
   async function aiCut(srcC, o) {
-    const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز نموذج الذكاء داخل المتصفح (أول مرة أطول)…");
+    const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز أداة القص داخل متصفحك (أول مرة أطول)…");
     const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items); if (grp && !grp.length) grp = null;
     if (!grp) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];
       best = await AIVision.addItem(S, { pts: [[W / 2, H / 2, 1]].concat(e.map(p => [W * p[0], H * p[1], 0])), label: "الموضوع" }, items); }

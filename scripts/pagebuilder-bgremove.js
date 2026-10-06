@@ -235,7 +235,7 @@ const PBBgRemove = (function () {
     if (!t) return null; const fr = (t.x1 - t.x0) * (t.y1 - t.y0) / (W * H); return t.y0 > H * .3 && t.y1 > H * .9 && fr > .05 && fr < .7 && t.area > 0 ? t : null;
   }
   async function aiCut(srcC, o) {
-    const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز نموذج الذكاء داخل المتصفح (أول مرة أطول)…");
+    const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز أداة القص داخل متصفحك (أول مرة أطول)…");
     const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items); if (grp && !grp.length) grp = null;
     if (!grp) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];
       best = await AIVision.addItem(S, { pts: [[W / 2, H / 2, 1]].concat(e.map(p => [W * p[0], H * p[1], 0])), label: "الموضوع" }, items); }

@@ -403,7 +403,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         const work = document.createElement("canvas"); work.width = W; work.height = H; work.getContext("2d", { willReadFrequently: true }).drawImage(base, 0, 0);
         let note = ""; const how = await AIVision.eraseBg(work, [{ erase: { m: U, x0: 0, y0: 0, w: W, h: H } }], { grow: Math.max(2, Math.round(Math.max(W, H) / 700)), onNote: m => { note = m; }, onStep: m => msg(m) });
         hist.push(base); base = work; redrawBase(); strokes = []; paintView(); dirty = true; $("er-back").disabled = false; $("er-save").disabled = false;
-        msg(how === "model" ? "✅ تمت الإزالة بنموذج الذكاء الاصطناعي. أكمل إزالة أجزاء أخرى أو احفظ." : "✅ تمت الإزالة بترميم محلي بسيط" + (note ? " (" + note + ")" : "") + " — للخلفيات المعقدة جرّب الاتصال بالإنترنت ليُحمَّل النموذج.");
+        msg(how === "model" ? "✅ تمت الإزالة. أكمل إزالة أجزاء أخرى أو احفظ." : "✅ تمت الإزالة بترميم محلي بسيط" + (note ? " (" + note + ")" : "") + " — للخلفيات المعقدة جرّب الاتصال بالإنترنت ليُحمَّل النموذج.");
       } catch (e) { msg("⚠️ " + e.message); } busy = false; $("er-go").disabled = false;
     };
     $("er-save").onclick = async () => {
