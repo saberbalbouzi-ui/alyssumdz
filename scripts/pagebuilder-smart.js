@@ -15,7 +15,7 @@ ${tool('<path d="M4 7V5h16v2M12 5v14M9 19h6"/><path d="M3 21h18" stroke-dasharra
 ${tool('<path d="M4 20L16 8"/><path d="M14 4l.9 2.1L17 7l-2.1.9L14 10l-.9-2.1L11 7l2.1-.9z"/><path d="M19 12l.6 1.4L21 14l-1.4.6L19 16l-.6-1.4L17 14l1.4-.6z"/>', "التقاط العناصر", "الالتقاط السحري: يقصّ الأشخاص والمنتجات كصور شفافة — حدّد صورة أولاً", "captureElements", ' onmouseenter="PBSmart.warm()"')}
 </div>
 <div style="font-size:.72rem;color:#6b6556;line-height:1.7;margin:.55rem 0">حدّد صورة في الصفحة (حتى في قسم عادي — تُنسخ تلقائياً إلى قسم كانفاس) ثم اضغط أداة الالتقاط.</div>
-<label style="display:flex;gap:.4rem;align-items:flex-start;font-size:.72rem;color:#6b6556;line-height:1.6;cursor:pointer"><input type="checkbox" ${gemOn() ? "checked" : ""} onchange="PBSmart.setGem(this.checked)"> <span>اختياري: الاستعانة بمفتاح Gemini لأسماء أدق. بدونه تعمل الأدوات كاملة داخل متصفحك مجاناً.</span></label>
+${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="display:flex;gap:.4rem;align-items:flex-start;font-size:.72rem;color:#6b6556;line-height:1.6;cursor:pointer"><input type="checkbox" ${gemOn() ? "checked" : ""} onchange="PBSmart.setGem(this.checked)"> <span>اختياري: الاستعانة بمفتاح Gemini لأسماء أدق. بدونه تعمل الأدوات كاملة داخل متصفحك مجاناً.</span></label>` : `<div style="font-size:.72rem;color:#6b6556;line-height:1.6">🔒 Gemini (API) معطّل — تعمل الأدوات كاملة داخل متصفحك بلا API.</div>`}
 </div>`;
   }
   /* تحميل صورة الودجت كقماش بالحجم الطبيعي */

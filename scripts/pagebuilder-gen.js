@@ -261,7 +261,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   /* مفتاح التحكم: استعمال API للتوليد (توليد الصفحة، الوصف، تدقيق النص…) معطّل افتراضياً؛ يُفعَّل بـ CONFIG.AI_API = true في config.js (أو يُتحكَّم به مركزياً في نسخة SaaS) */
   const aiOn = () => { try { return typeof CONFIG !== "undefined" && CONFIG.AI_API === true; } catch (e) { return false; } };
   async function gemGenerate(key, task, parts, cfg, modelsOverride) {
-    if (task !== "ocr" && task !== "detect" && !aiOn()) { const e = new Error("🔒 التوليد بالذكاء الاصطناعي (API) معطّل حالياً"); e.code = "API_OFF"; throw e; }
+    if (!aiOn()) { const e = new Error("🔒 التوليد بالذكاء الاصطناعي (API) معطّل حالياً"); e.code = "API_OFF"; throw e; }
     const models = [...new Set(modelsOverride || await gemModels(key, task))], waits = [0, 4000, 10000, 20000]; let last = "";
     const note = t => { for (const id of ["gen-automsg", "gen-msg"]) { const el = typeof document !== "undefined" && document.getElementById(id); if (el && (!el.textContent || /^⏳|Google/.test(el.textContent))) el.textContent = t; } };
     for (let round = 0; round < waits.length; round++) {
@@ -390,7 +390,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 
   /* ───────────── الواجهة داخل تبويب «بناء الصفحات المتقدم» ───────────── */
   const S = { canvas: null, cuts: [], regions: [], file: null, regionMode: false };
-  function mount(host) { mount0(host); if (!aiOn()) { const c = host.querySelector("#gen-card"); if (c) { const b = document.createElement("div"); b.style.cssText = "margin:.4rem 0 .8rem;padding:.6rem .8rem;background:#fff4e5;border:1.5px solid #f0c987;border-radius:10px;font-weight:700;color:#8a5a00;line-height:1.7"; b.textContent = "🔒 التوليد بالذكاء الاصطناعي (توليد الصفحة والوصف) معطّل حالياً — لا يُستهلك أي API. الأدوات الأخرى (تحرير صفحة جاهزة، قصّها وتقسيمها) تعمل كالمعتاد."; c.insertBefore(b, c.children[1] || null); const mk = host.querySelector("#gen-make"); if (mk) { mk.disabled = true; mk.title = "معطّل حالياً"; } } } }
+  function mount(host) { mount0(host); if (!aiOn()) { const c = host.querySelector("#gen-card"); if (c) { const b = document.createElement("div"); b.style.cssText = "margin:.4rem 0 .8rem;padding:.6rem .8rem;background:#fff4e5;border:1.5px solid #f0c987;border-radius:10px;font-weight:700;color:#8a5a00;line-height:1.7"; b.textContent = "🔒 التوليد بالذكاء الاصطناعي (توليد الصفحة والوصف) معطّل حالياً — لا يُستهلك أي API. الأدوات الأخرى (تحرير صفحة جاهزة، قصّها وتقسيمها) تعمل كالمعتاد."; c.insertBefore(b, c.children[1] || null); const mk = host.querySelector("#gen-make"); if (mk) { mk.disabled = true; mk.title = "معطّل حالياً"; }
+      host.querySelectorAll("#gen-engine option, #gen-erase-det option").forEach(o => { if (/gemini/i.test(o.value)) o.remove(); }); const eg = host.querySelector("#gen-erase-gem"); if (eg) { eg.disabled = true; eg.checked = false; eg.parentNode.style.opacity = ".5"; } const gb = host.querySelector("#gen-detect-btn, [onclick*=\"PBGen.detect()\"]"); if (gb) gb.disabled = true; } } }
   function mount0(host) {
     host.innerHTML = `
 <div class="card" id="gen-card" style="margin-bottom:1rem">
@@ -507,7 +508,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     try { $("gen-gkey").value = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-rbkey").value = localStorage.getItem("alyssum_removebg_key") || ""; } catch (e) { }
     try { $("gen-tier").value = gemTier(); } catch (e) { }
     try { if (!localStorage.getItem("alyssum_gp_gkey")) $("gen-adv").open = true; } catch (e) { }
-    try { const gk0 = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-gkey1").value = gk0; if (gk0) { $("gen-engine").value = "gemini"; engineUI(); } } catch (e) { }
+    try { const gk0 = localStorage.getItem("alyssum_gp_gkey") || ""; $("gen-gkey1").value = gk0; if (gk0 && aiOn()) { $("gen-engine").value = "gemini"; engineUI(); } } catch (e) { }
     step(1); showLast();
   }
   /* المعالج: 1 البرومبت ← 2 الصورة والأقسام ← 3 التحويل */
@@ -522,7 +523,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   function engineUI() { $("gen-gk-wrap").style.display = $("gen-engine").value === "gemini" ? "" : "none"; }
   async function detect() {
-    if (!S.canvas) return; const msg = $("gen-msg"), key = ($("gen-gkey").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
+    if (!S.canvas) return; if (!aiOn()) { $("gen-msg").textContent = "🔒 الكشف بالذكاء الاصطناعي (API) معطّل حالياً — استعمل القص اليدوي"; return; } const msg = $("gen-msg"), key = ($("gen-gkey").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
     if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (اختر محرك Gemini ثم الصق المفتاح)"; return; }
     msg.textContent = "⏳ Gemini يبحث عن المنتج والصور…"; try { try { localStorage.setItem("alyssum_gp_gkey", key); } catch (e) { }
       const found = await (PBGen.detectFn || geminiDetect)(S.canvas, key), keep = found.filter(r => !S.regions.some(q => { const ix = Math.min(q.x1, r.x1) - Math.max(q.x0, r.x0), iy = Math.min(q.y1, r.y1) - Math.max(q.y0, r.y0); return ix > 0 && iy > 0 && ix * iy > .5 * Math.min((q.x1 - q.x0) * (q.y1 - q.y0), (r.x1 - r.x0) * (r.y1 - r.y0)); }));
@@ -725,7 +726,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   }
   /* ───── أداة الممحاة في الواجهة ───── */
   const eMsg = t => { const e = $("gen-erase-msg"); if (e) e.textContent = t; };
-  const gKey = () => { const a = $("gen-gkey") && $("gen-gkey").value.replace(/[\s"']/g, ""); if (a) return a; const b = $("gen-gkey1") && $("gen-gkey1").value.replace(/[\s"']/g, ""); if (b) return b; try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } };
+  const gKey = () => { if (!aiOn()) return ""; const a = $("gen-gkey") && $("gen-gkey").value.replace(/[\s"']/g, ""); if (a) return a; const b = $("gen-gkey1") && $("gen-gkey1").value.replace(/[\s"']/g, ""); if (b) return b; try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } };
   function pushUndo() { const c = document.createElement("canvas"); c.width = S.canvas.width; c.height = S.canvas.height; c.getContext("2d").drawImage(S.canvas, 0, 0); (S.undo = S.undo || []).push(c); if (S.undo.length > 5) S.undo.shift(); const u = $("gen-erase-undo"); if (u) u.disabled = false; }
   function geminiOpt() { const k = gKey(); return $("gen-erase-gem") && $("gen-erase-gem").checked && k ? { gemini: (ctx, P, m2, v) => (PBGen.geminiErase || ((cx, Pp, m, vv) => geminiEraseRegion(k, cx, Pp, m, vv)))(ctx, P, m2, v) } : {}; }
   async function ocrLines(band, L, key, log) {

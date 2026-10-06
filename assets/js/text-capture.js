@@ -5,7 +5,7 @@ window.TextCapture = (function () {
   const KEYNAME = "alyssum_gp_gkey", hx = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
   const colorDist = (a, b) => { const p = hx(a), q = hx(b); return Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) + Math.abs(p[2] - q[2]); };
   const ocr = {
-    key() { try { return (localStorage.getItem(KEYNAME) || "").replace(/[\s"']/g, ""); } catch (e) { return ""; } },
+    key() { try { if (typeof CONFIG === "undefined" || CONFIG.AI_API !== true) return ""; return (localStorage.getItem(KEYNAME) || "").replace(/[\s"']/g, ""); } catch (e) { return ""; } },
     setKey(k) { try { localStorage.setItem(KEYNAME, k); } catch (e) { } },
     /* يعيد [{text, box:{x0,y0,x1,y1}}] بإحداثيات القماش المُعطى */
     async read(canvas, o) { o = o || {}; const k = this.key(); return k ? this.gemini(canvas, k, o) : this.tesseract(canvas, o); },
