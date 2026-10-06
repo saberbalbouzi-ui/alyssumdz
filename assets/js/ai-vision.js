@@ -5,7 +5,7 @@
    ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
-  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=16", BASE).href;
+  const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=17", BASE).href;
   const SAMSZ = 1024, DETSZ = 736, W8 = {};      // 736 بدل 960: كشف أسرع بنحو الضعف بلا فقد يُذكر لعناصر بحجم مفيد
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
@@ -149,24 +149,42 @@ window.AIVision = (function () {
   /* تحليل كامل: كشف (Gemini أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
   async function analyze(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
-    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.key ? 1 : 0) + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0); } catch (e) { }
-    if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: AC.src, note: AC.note, dets: AC.dets, later: null }; }
+    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0); } catch (e) { }
+    if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحلي المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: "local", note: "", dets: AC.dets, later: null }; }
     step("⏳ تجهيز أداة القص…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
-    /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
-    let localErr = null, gem = [], src = "local", note = ""; const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null, pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite).catch(e => { localErr = e; return []; });      // وضع الماوس: بلا كشف، الترميز فقط
-    if (o.key && !o.noDetect) { try { step("⏳ Gemini يتعرّف على العناصر…"); gem = await geminiDetect(cv, o.key); src = "gemini"; } catch (e) { note = e.message; } }
-    const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label)); if (!gem.length && !loc.length && localErr) throw localErr;
-    const dets = gem.concat(loc.filter(d => !gem.some(g => iou(g.box, d.box) > .5)).map(d => gem.length ? Object.assign(d, { score: d.score * .7 }) : d));
-    if (o.zone) {                                                     // «منطقة»: ما رسمه المستخدم حول العنصر هو صندوقه (الأدق)، واسمه من أكبر كشف يطابقه
+    /* المسار المحلي فقط: لا تُرسل الصورة إلى Gemini أو أي خدمة خارجية. */
+    let localErr = null, src = "local", note = "";
+    const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null;
+    const pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite).catch(e => { localErr = e; return []; });
+    const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label));
+    if (!loc.length && localErr) throw localErr;
+    const dets = loc;
+    if (o.zone) {                                                     // «منطقة»: ما رسمه المستخدم حول العنصر هو صندوقه (الأدق)، واسمه من أكبر كشف محلي يطابقه
       const W = cv.width, H = cv.height, m = o.zone.margin || 0, zb = [W * m, H * m, W * (1 - m), H * (1 - m)], best = dets.filter(d => d.label && !PERSON.test(d.label)).sort((a, b) => iou(b.box, zb) - iou(a.box, zb))[0];
       dets.unshift({ label: best && iou(best.box, zb) > .3 ? best.label : "عنصر", score: 1.01, box: zb, src: "zone", zoneMain: true });
     }
     step("⏳ تحليل الصورة…"); const S = await pS, items = [];
-    for (let i = 0; i < dets.length; i++) {
-      step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…"); const d = dets[i], m = await maskFor(S, { box: d.box }); if (!m.area) continue;
-      items.push(Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src, zoneMain: !!d.zoneMain }));
-    }
+    /* بعد ترميز SAM مرة واحدة، طلبات الأقنعة مستقلة؛ ننفذ اثنتين معاً لتقليل زمن الانتظار
+       مع إبقاء ترتيب النتائج ثابتاً حتى لا تتغير أولوية الدمج/التعارض. */
+    const maskJobs = dets.map((d, i) => ({ d, i }));
+    const masked = new Array(maskJobs.length); let nextMask = 0;
+    const workers = Math.min(2, Math.max(1, maskJobs.length));
+    await Promise.all(Array.from({ length: workers }, async () => {
+      while (true) {
+        const i = nextMask++; if (i >= maskJobs.length) return;
+        const d = maskJobs[i];
+        step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…");
+        try {
+          const m = await maskFor(S, { box: d.box });
+          masked[i] = m && m.area ? Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src, zoneMain: !!d.zoneMain }) : null;
+        } catch (e) {
+          masked[i] = null;
+          console.warn("SAM mask", i, e);
+        }
+      }
+    }));
+    masked.forEach(m => { if (m) items.push(m); });
     const out = mergeItems(items, S), main = out.find(i => i.zoneMain);
     if (main) {                                                       // «منطقة»: أجزاء الشيء نفسه (شرائح كشف داخل المستطيل) تُضمّ إليه؛ الأشخاص/الأيدي تبقى منفصلة لتُطرح الأصابع
       const mb = [main.x0, main.y0, main.x1, main.y1], ex = .1 * Math.max(mb[2] - mb[0], mb[3] - mb[1]), eb = [mb[0] - ex, mb[1] - ex, mb[2] + ex, mb[3] + ex];
@@ -246,6 +264,28 @@ window.AIVision = (function () {
     const m = pre || await maskFor(S, p); if (!m.area) return null; m.manual = true; m.label = p.label || (pre && pre.label) || "عنصر"; m.det = 1; fillHoles(m, items); stats(m, S);
     const hit = items.find(o => both(o, m) / Math.min(o.area, m.area) > .85 && Math.abs(o.area - m.area) / Math.max(o.area, m.area) < .25); if (hit) return hit;
     m.id = Math.max(-1, ...items.map(o => o.id)) + 1; items.push(m); return m;
+  }
+  /* تحسين قناع عنصر موجود محلياً: نقاط + / - تعيد استعمال embedding نفسه، بلا إعادة كشف الصورة. */
+  async function refineItem(S, it, p, mode, items) {
+    if (!it || !it.lo || !it.area) return null;
+    const box = [it.x0, it.y0, it.x1, it.y1], pts = [[p[0], p[1], mode === "add" ? 1 : 0]];
+    const m = await maskFor(S, { box, pts });
+    if (!m || !m.area) return it;
+    const N = it.lo.length;
+    if (mode === "add") {
+      /* الإضافة لا تسمح لـSAM بالقفز بعيداً عن العنصر: نأخذ فقط القناع داخل صندوق موسّع قليلاً. */
+      const padX = Math.max(8, (it.x1 - it.x0) * .22), padY = Math.max(8, (it.y1 - it.y0) * .22);
+      const bx0 = Math.max(0, it.x0 - padX), by0 = Math.max(0, it.y0 - padY), bx1 = Math.min(S.W, it.x1 + padX), by1 = Math.min(S.H, it.y1 + padY);
+      for (let y = 0; y < S.lh; y++) for (let x = 0; x < S.lw; x++) {
+        const gx = (x + .5) / S.fx, gy = (y + .5) / S.fy, j = y * S.lw + x;
+        if (m.lo[j] > 0 && gx >= bx0 && gx <= bx1 && gy >= by0 && gy <= by1) it.lo[j] = Math.max(it.lo[j], m.lo[j]);
+      }
+    } else {
+      for (let j = 0; j < N; j++) if (m.lo[j] > 0) it.lo[j] = -Math.max(4, Math.abs(it.lo[j]));
+    }
+    cleanLo(it.lo, it.lw, it.lh);
+    stats(it, S); it.manual = true; it.v = null;
+    return it;
   }
   /* قيمة القناع عند بكسل كامل (x,y) بالاستيفاء الخطي */
   function sampler(S, it) {
@@ -423,5 +463,5 @@ window.AIVision = (function () {
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, pointMask, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
+  return { supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, warm };
 })();
