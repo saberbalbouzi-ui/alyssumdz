@@ -189,16 +189,51 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const prep = it => { it.v = (Z || it.sil) && AIVision.fineView ? AIVision.fineView(S, cv, it, k, items) : AIVision.viewMask(S, it, k);      // المنطقة والأشياء في اليد: حدود بالدقة الكاملة
       const o = AIVision.overlays(it.v, [13, 148, 136]); it.out = o.out; it.fill = o.fill; };
     items.forEach(prep);
-    let sel = new Set(), hov = -1, busy = false; const AIF = "alyssum_pbs_aifill"; if (Z) items.forEach(i => { if (i.zoneMain) sel.add(i.id); });      // العنصر داخل المنطقة محدَّد مسبقاً
+    let sel = new Set(), hov = -1, busy = false;  if (Z) items.forEach(i => { if (i.zoneMain) sel.add(i.id); });      // العنصر داخل المنطقة محدَّد مسبقاً
     const names = () => { const c = {}, n = {}; items.forEach(it => c[it.label] = (c[it.label] || 0) + 1); const out = {}; items.slice().sort((a, b) => a.v.cx - b.v.cx).forEach(it => { n[it.label] = (n[it.label] || 0) + 1; out[it.id] = c[it.label] > 1 ? it.label + " " + n[it.label] : it.label; }); return out; };
-    const ex = $("pbs-extra"); let aiFill = false; try { aiFill = !!key && localStorage.getItem(AIF) !== "0"; } catch (e) { aiFill = !!key; }
-    ex.innerHTML = `<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button>` +
-      (key ? `<label style="font-size:.78rem;display:flex;gap:.4rem;align-items:flex-start;line-height:1.6;cursor:pointer"><input type="checkbox" id="pbs-aifill" ${aiFill ? "checked" : ""}> <span>إعادة رسم الخلفية بـ Gemini بدل النموذج المحلي (يستهلك طلب صورة).</span></label>` : `<div style="font-size:.74rem;color:#8a8472;line-height:1.6">🪄 مكان العناصر في الخلفية يُعاد رسمه بنموذج ذكي داخل متصفحك (بلا مفتاح).</div>`);
-    if ($("pbs-aifill")) $("pbs-aifill").onchange = e => { aiFill = e.target.checked; try { localStorage.setItem(AIF, aiFill ? "1" : "0"); } catch (er) { } };
+    const ex = $("pbs-extra");
+    ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><div id="pbs-refine" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button><div style="font-size:.74rem;color:#8a8472;line-height:1.6">🔒 معالجة محلية بالكامل: D-FINE + SAM 2.1 + تحسين الحواف + MI-GAN. لا تُرسل الصورة إلى API.</div>';
+    let refineMode = null, refineHistory = [], refineBusy = false;
+    const selectedItem = () => sel.size === 1 ? items.find(q => q.id === [...sel][0]) : null;
+    const pushRefineHistory = it => {
+      if (!it || !it.lo) return;
+      refineHistory.push({ id: it.id, lo: it.lo.slice(), x0: it.x0, y0: it.y0, x1: it.x1, y1: it.y1, area: it.area });
+      if (refineHistory.length > 12) refineHistory.shift();
+    };
+    const undoRefine = () => {
+      const h = refineHistory.pop(), it = h && items.find(q => q.id === h.id);
+      if (!it) return;
+      it.lo = h.lo; it.x0 = h.x0; it.y0 = h.y0; it.x1 = h.x1; it.y1 = h.y1; it.area = h.area;
+      it.manual = true; it.v = null; prep(it); paint();
+      $("pbs-msg").textContent = "↶ تم التراجع عن آخر تعديل للقناع.";
+    };
+    function refineUI() {
+      const box = $("pbs-refine"), one = sel.size === 1 && sh.S.mode !== "all";
+      if (!box) return;
+      if (!one) { refineMode = null; refineHistory = []; box.innerHTML = ""; return; }
+      const canUndo = refineHistory.length > 0;
+      box.innerHTML =
+        '<button type="button" data-rf="add" style="border:1.5px solid #16a34a;background:'+(refineMode==="add"?'#16a34a':'#fff')+';color:'+(refineMode==="add"?'#fff':'#166534')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">＋ إضافة</button>' +
+        '<button type="button" data-rf="sub" style="border:1.5px solid #dc2626;background:'+(refineMode==="sub"?'#dc2626':'#fff')+';color:'+(refineMode==="sub"?'#fff':'#991b1b')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">− استبعاد</button>' +
+        '<button type="button" id="pbs-rf-undo" '+(canUndo?'':'disabled')+' style="border:1.5px solid #64748b;background:#fff;color:#334155;border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer;opacity:'+(canUndo?'1':'.45')+'">↶ تراجع</button>' +
+        (refineMode ? '<button type="button" id="pbs-rf-done" style="border:1.5px solid #0d9488;background:#0d9488;color:#fff;border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">✓ إنهاء</button>' : '');
+      box.querySelectorAll("[data-rf]").forEach(b => b.onclick = () => {
+        refineMode = refineMode === b.dataset.rf ? null : b.dataset.rf;
+        ov.style.cursor = refineMode ? "crosshair" : "pointer";
+        $("pbs-msg").textContent = refineMode === "add" ? "＋ انقر عدة مرات لإضافة الأجزاء المطلوبة. اضغط ✓ عند الانتهاء." :
+          refineMode === "sub" ? "− انقر عدة مرات لاستبعاد الأجزاء. اضغط ✓ عند الانتهاء." : "";
+        refineUI(); paint();
+      });
+      const ub = $("pbs-rf-undo"); if (ub) ub.onclick = undoRefine;
+      const db = $("pbs-rf-done"); if (db) db.onclick = () => {
+        refineMode = null; ov.style.cursor = "pointer"; $("pbs-msg").textContent = "✅ تم إنهاء تحسين القناع.";
+        refineUI(); paint();
+      };
+    }
     function list() {
       const nm = names(), on = it => sh.S.mode === "all" || sel.has(it.id);
       const html = items.map(it => `<button type="button" data-id="${it.id}" style="border:1.5px solid #0d9488;border-radius:999px;padding:.22rem .6rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;background:${on(it) ? "#0d9488" : "#fff"};color:${on(it) ? "#fff" : "#0d9488"}">${on(it) ? "✓ " : ""}${esc(nm[it.id])}</button>`).join("");
-      $("pbs-merge").style.display = sh.S.mode !== "all" && sel.size > 1 ? "block" : "none"; if (html === list.last) return; list.last = html; $("pbs-list").innerHTML = html;      // لا نعيد البناء عند مجرد التمرير
+      $("pbs-merge").style.display = sh.S.mode !== "all" && sel.size > 1 ? "block" : "none"; refineUI(); if (html === list.last) return; list.last = html; $("pbs-list").innerHTML = html;      // لا نعيد البناء عند مجرد التمرير
       $("pbs-list").querySelectorAll("button").forEach(b => { b.onclick = () => { const id = +b.dataset.id; if (sh.S.mode === "all") setMode("one"); sel.has(id) ? sel.delete(id) : sel.add(id); paint(); }; b.onmouseenter = () => { hov = +b.dataset.id; paint(); }; b.onmouseleave = () => { hov = -1; paint(); }; });
     }
     function paint() {
@@ -235,7 +270,24 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       if (rsel) { if (!d.moved) return paint(); const r = rectOf(d, x, y), hit = items.filter(it => inRect(it, r)); if (!hit.length) { paint(); $("pbs-msg").textContent = "▭ لا يوجد عنصر كامل داخل المستطيل — وسِّعه ليشمل العنصر كله (الأجزاء الناقصة تُتجاهل)."; return; }
         if (sh.S.mode === "all") setMode("one"); sel = new Set(hit.map(it => it.id)); paint(); $("pbs-msg").textContent = "▭ حُدّد " + hit.length + ": " + hit.map(it => names()[it.id]).join("، ") + " — العناصر المقطوعة (كيد/جسم يمسك المنتج) لا تُلتقط."; return; }
       if (d.moved) { const b = rectOf(d, x, y); if (b[2] - b[0] < 8 || b[3] - b[1] < 8) return paint(); return add({ box: b }, "تحديد العنصر داخل المستطيل…"); }
-      const h = at(x, y); if (h >= 0) { if (sh.S.mode !== "all") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
+      const h = at(x, y);
+      if (refineMode && sel.size === 1 && !refineBusy) {
+        const it = selectedItem();
+        if (it) {
+          refineBusy = true; busy = true; pushRefineHistory(it);
+          const mode0 = refineMode;
+          $("pbs-msg").textContent = mode0 === "add" ? "⏳ إضافة الجزء إلى القناع…" : "⏳ استبعاد الجزء من القناع…"; paint();
+          AIVision.refineItem(S, it, [x / k, y / k], mode0, items).then(() => {
+            refineBusy = false; busy = false; prep(it); refineUI(); paint();
+            $("pbs-msg").textContent = mode0 === "add" ? "＋ تمت الإضافة — يمكنك مواصلة النقر." : "− تم الاستبعاد — يمكنك مواصلة النقر.";
+          }).catch(e => {
+            refineBusy = false; busy = false; refineHistory.pop();
+            $("pbs-msg").textContent = "⚠️ " + e.message; paint();
+          });
+        }
+        return;
+      }
+      if (h >= 0) { if (sh.S.mode !== "all") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
       add({ pts: [[x / k, y / k, 1]] }, "تحديد العنصر تحت النقرة…"); };
     ov.onpointermove = (f => e => { if (drag) return mm(e); f(e); })(ov.onpointermove); ov.onpointerup = mu; ov.onpointercancel = () => { drag = null; paint(); };
     const cl0 = sh.close; sh.close = () => { cl0(); };
@@ -264,10 +316,9 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       try {
         $("pbs-msg").textContent = "⏳ قصّ العناصر بدقة…"; await new Promise(r => setTimeout(r, 30));
         const nm = names(), cuts = AIVision.cutouts(S, cv, chosen, { matteMax: lite ? 1.2e6 : 3.2e6 }); cuts.forEach(c => c.label = nm[c.item.id] || c.label);
-        $("pbs-msg").textContent = aiFill && key ? "⏳ Gemini يعيد رسم الخلفية مكان العناصر…" : "⏳ إعادة رسم الخلفية مكان العناصر…"; await new Promise(r => setTimeout(r, 30));
+        $("pbs-msg").textContent = "⏳ إعادة رسم الخلفية محلياً مكان العناصر…"; await new Promise(r => setTimeout(r, 30));
         const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0); let fillNote = "";
-        const gen = aiFill && key && typeof PBGen !== "undefined" && PBGen.gemGenerate ? async parts => PBGen.gemGenerate(key, "image", parts, {}, await PBGen.imageModels(key)) : null;
-        const how = await AIVision.eraseBg(part, cuts, { gen, local: !lite, onNote: m => { fillNote = m; }, onStep: m => { $("pbs-msg").textContent = m; } });
+        const how = await AIVision.eraseBg(part, cuts, { local: !lite, onNote: m => { fillNote = m; }, onStep: m => { $("pbs-msg").textContent = m; } });
         const FW = Z ? Z.full.width : W, FH = Z ? Z.full.height : H, ox = Z ? Z.ox : 0, oy = Z ? Z.oy : 0, base = document.createElement("canvas"); base.width = FW; base.height = FH; const bg = base.getContext("2d"); if (Z) bg.drawImage(Z.full, 0, 0); bg.drawImage(part, ox, oy);      // المنطقة المرمَّمة تعود لمكانها في الصورة الكاملة
         if (!(await preview(part, cuts))) { busy = false; paint(); return; }      // معاينة: حفظ أو إلغاء
         $("pbs-msg").textContent = "⏳ رفع الصور…"; const stamp = Date.now().toString(36);
