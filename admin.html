@@ -7346,8 +7346,9 @@ const PB = (() => {
       label: "صورة", ic: "🖼️", fit: 1, def: { src: "", alt: "", fit: "cover" },
       ctl: [{ k: "src", l: "الصورة (انقر مرتين عليها لرفع صورة) — أو GIF متحرك", t: "image", gif: 1, tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
         { k: "ianim", l: "🎬 حركة الصورة (أنيميشن)", t: "select", o: IANIMS, tab: "s" }, { k: "ianimAmt", l: "شدة الحركة % (مقدار التقريب/الإزاحة/الميل)", t: "num", min: 2, max: 100, tab: "s", showIf: ["ianim", "*"] }, { k: "ianimDur", l: "السرعة: مدة الدورة الواحدة (ثانية — أقل = أسرع)", t: "num", min: .2, max: 60, step: .1, tab: "s", showIf: ["ianim", "*"] }, { k: "ianimIter", l: "التكرار", t: "select", o: [["infinite", "مستمر ∞"], ["1", "مرة واحدة"], ["2", "مرتان"], ["3", "3 مرات"], ["5", "5 مرات"], ["10", "10 مرات"]], tab: "s", showIf: ["ianim", "*"] }, { k: "ianimBack", l: "ذهاب وإياب (تعود الحركة إلى بدايتها)", t: "switch", tab: "s", showIf: ["ianim", "*"] }, { k: "ianimEase", l: "نمط التسارع", t: "select", o: [["ease-in-out", "ناعم"], ["linear", "منتظم"], ["ease-in", "بطيء ثم سريع"], ["ease-out", "سريع ثم بطيء"]], tab: "s", showIf: ["ianim", "*"] }, { k: "ianimDelay", l: "تأخير البدء (ثانية)", t: "num", min: 0, max: 20, step: .1, tab: "s", showIf: ["ianim", "*"] }],
-      html: (s, id, ctx) => { const src = s.src ? (/^(https?:|data:|\/)/.test(s.src) ? s.src : ctx.base + s.src) : ""; const im = src ? `<img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">` : `<div class="pb-ph" data-upload="1">🖼️ انقر مرتين لرفع صورة</div>`; return s.link && !ctx.edit ? `<a href="${esc(s.link)}">${im}</a>` : im; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-im", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-im{width:100%;object-fit:${s.fit || "cover"};display:block}`); imgAnim(c, sel, s); },
+      html: (s, id, ctx) => { const src = s.src ? (/^(https?:|data:|\/)/.test(s.src) ? s.src : ctx.base + s.src) : ""; const cp = s.crop && s.crop.w ? s.crop : null, n1 = v => Math.round((Number(v) || 0) * 10) / 10;      // قصّ بنمط Canva: الصورة بحجمها وموضعها داخل الإطار (نسب مئوية من الإطار)
+      const im = src ? (cp ? `<div class="pb-cropbox"><img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" style="position:absolute;left:${n1(cp.x)}%;top:${n1(cp.y)}%;width:${n1(cp.w)}%;height:auto!important;max-width:none"></div>` : `<img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">`) : `<div class="pb-ph" data-upload="1">🖼️ انقر مرتين لرفع صورة</div>`; return s.link && !ctx.edit ? `<a href="${esc(s.link)}">${im}</a>` : im; },
+      css: (c, sel, s) => { emit(c, sel + " .pb-im," + sel + " .pb-cropbox", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-im{width:100%;object-fit:${s.fit || "cover"};display:block}${sel} .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}`); imgAnim(c, sel, s); },
     },
     button: {
       label: "زر", ic: "🔘", fit: 1, def: { text: "اطلب الآن", kind: "link", link: "#", bgc: "#157a55", color: "#ffffff", hbg: "#0f5a3e", fs: { d: 18 }, fw: "800", brad: { d: 12 }, bpad: { d: [14, 32, 14, 32] }, al: { d: "center" } },
@@ -8117,6 +8118,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.widget .pbx-h.d-nw{width:15px;height:15px;top:-8px;left:-8px;background:#8b3dff;border-color:#fff;box-shadow:0 0 0 1.5px #8b3dff,0 1px 4px rgba(0,0,0,.3)}
 .pbx-box.widget .pbx-h.d-ne{top:-7px;right:-7px}.pbx-box.widget .pbx-h.d-se{bottom:-7px;right:-7px}.pbx-box.widget .pbx-h.d-sw{bottom:-7px;left:-7px}
 .pbx-box.widget .pbx-rad{border-color:#8b3dff}
+.pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
 .pbx-ft button:hover,.pbx-ft button.on{background:#ebeef2}.pbx-ft button.dng:hover{color:#b83232}
@@ -8711,6 +8713,7 @@ body{overflow-x:hidden;margin:0}`;
       if (!locked && r.height * s >= 64 && r.width * s >= 90) { const rh = document.createElement("div"); rh.className = "pbx-rad"; rh.title = "اسحب لتقويس الزوايا (Shift = دائري كامل)"; rh.style.left = Math.min(Math.max(rv * s, 0), Math.max(0, r.width * s / 2 - 6)) + 6 + "px"; rh.onmousedown = ev => startRadius(ev, inf, rk, rh); box.appendChild(rh); }  /* مقبض التقويس يُخفى في العناصر الصغيرة كي لا يغطي العنصر ويمنع مسكه */
 }
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
+    if (!locked && isW && inf.free && inf.node.type === "image") ["n", "s", "e", "w"].forEach(d => { const b = document.createElement("div"); b.className = "pbx-edge e-" + d; b.title = "اسحب الحافة: للخارج يكبّر الصورة في هذا الاتجاه، وللداخل يقصّها"; b.onmousedown = ev => startResize(ev, d, inf); box.appendChild(b); });      // كل حافة الصورة تُسحب وليس نقطة المنتصف فقط
     if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => startResize(ev, d, inf); box.appendChild(h); });
     ovl.appendChild(box);
     if (isW && !E.busy) drawFloat(inf, box, ovl, locked);
@@ -8803,16 +8806,27 @@ body{overflow-x:hidden;margin:0}`;
     const gridCell = inf.kind === "column" && inf.sec.set.kind === "grid";
     const m0 = ((own(set, "mar", dev) || eff(set, "mar", dev)) || [0, 0, 0, 0]).slice();
     let nb = null, pair = 0, sc0 = null, ws0 = null, cc0 = null;
+    let ic = null; if (free && inf.node.type === "image") { const im = el.querySelector("img.pb-im"); if (im && im.naturalWidth) {      /* قصّ الصورة: مستطيل الصورة داخل الإطار (px) */
+      const q = im.naturalHeight / im.naturalWidth, c = set.crop, W0 = r0.width, H0 = r0.height;
+      if (c && c.w) ic = { x: c.x / 100 * W0, y: c.y / 100 * H0, w: c.w / 100 * W0, q };
+      else { const k = Math.max(W0 / im.naturalWidth, H0 / im.naturalHeight), w = im.naturalWidth * k; ic = { x: (W0 - w) / 2, y: (H0 - w * q) / 2, w, q }; } } }
     if (inf.kind === "column" && hasW && !gridCell) { const sibs = inf.sec.cols, nbn = dir.includes("w") ? (sibs[inf.idx + 1] || sibs[inf.idx - 1]) : (sibs[inf.idx - 1] || sibs[inf.idx + 1]); if (nbn && eff(nbn.set, "w", dev) != null && eff(set, "w", dev) != null) { nb = nbn; pair = Number(eff(set, "w", dev)) + Number(eff(nbn.set, "w", dev)); } }
     const mv = (dx, dy, ev) => {
       let label = "", guides = [];
       if (free) {
         let L = r0.left - cr.left, T = r0.top - cr.top, R = L + r0.width, B = T + r0.height; const W0 = r0.width, H0 = r0.height, snap = E.snap && !ev.altKey;
         if (dir.includes("e")) R += dx; if (dir.includes("w")) L += dx; if (dir.includes("s")) B += dy; if (dir.includes("n")) T += dy;
-        if (hasW && hasH && !ev.shiftKey) { let w = R - L, h = B - T; if (Math.abs(dx) > Math.abs(dy)) h = w * H0 / W0; else w = h * W0 / H0; if (dir.includes("w")) L = R - w; else R = L + w; if (dir.includes("n")) T = B - h; else B = T + h; }
+        const lockK = ev.ctrlKey || ev.metaKey || ev.shiftKey, prop = hasW && hasH && (ic ? lockK : !ev.shiftKey);      // الصورة: الزاوية حرة (قصّ) وCtrl/Shift = تكبير منسجم؛ بقية العناصر: الزاوية منسجمة وShift = حر
+        if (prop) { let w = R - L, h = B - T; if (Math.abs(dx) > Math.abs(dy)) h = w * H0 / W0; else w = h * W0 / H0; if (dir.includes("w")) L = R - w; else R = L + w; if (dir.includes("n")) T = B - h; else B = T + h; }
         else if (snap) { let g; if (dir.includes("e")) { [R, g] = snapEdge(R, pts.xs); if (g != null) guides.push({ x: g }); } if (dir.includes("w")) { [L, g] = snapEdge(L, pts.xs); if (g != null) guides.push({ x: g }); } if (dir.includes("s")) { [B, g] = snapEdge(B, pts.ys); if (g != null) guides.push({ y: g }); } if (dir.includes("n")) { [T, g] = snapEdge(T, pts.ys); if (g != null) guides.push({ y: g }); } }
         if (R - L < 24) { if (dir.includes("w")) L = R - 24; else R = L + 24; } if (B - T < 14) { if (dir.includes("n")) T = B - 14; else B = T + 14; }
-        if (hasW && hasH && !ev.shiftKey) { if (ws0 == null) ws0 = Number(eff(set, "wsc", dev)) || 100; setR(set, "wsc", dev, Math.max(20, Math.min(500, Math.round(ws0 * (R - L) / W0)))); if (dev !== "d" && own(set, "wsc", "d") === undefined) setR(set, "wsc", "d", ws0); }      // زوايا العنصر الحر: نسبة ثابتة + المحتوى يكبر معه (Shift = تحجيم حر)
+        if (ic && !prop) {      // قصّ: حافة الإطار تتحرك والصورة ثابتة؛ وإن انكشف فراغ تكبر الصورة في نفس الاتجاه لتملأ الإطار
+          const L0 = r0.left - cr.left, T0 = r0.top - cr.top, Wn = R - L, Hn = B - T, w = ic.w, h = ic.w * ic.q; let x = L0 - L + ic.x, y = T0 - T + ic.y, k = 1;
+          const ax = dir.includes("e") ? 0 : dir.includes("w") ? Wn : Wn / 2, ay = dir.includes("s") ? 0 : dir.includes("n") ? Hn : Hn / 2;
+          if (x - ax < 0) k = Math.max(k, ax / (ax - x)); if (x + w - ax > 0) k = Math.max(k, (Wn - ax) / (x + w - ax)); if (y - ay < 0) k = Math.max(k, ay / (ay - y)); if (y + h - ay > 0) k = Math.max(k, (Hn - ay) / (y + h - ay));
+          const r1 = v => Math.round(v * 10) / 10; set.crop = { x: r1((ax + (x - ax) * k) / Wn * 100), y: r1((ay + (y - ay) * k) / Hn * 100), w: r1(w * k / Wn * 100) };
+        }
+        if (!ic && hasW && hasH && !ev.shiftKey) { if (ws0 == null) ws0 = Number(eff(set, "wsc", dev)) || 100; setR(set, "wsc", dev, Math.max(20, Math.min(500, Math.round(ws0 * (R - L) / W0)))); if (dev !== "d" && own(set, "wsc", "d") === undefined) setR(set, "wsc", "d", ws0); }      // زوايا العنصر الحر: نسبة ثابتة + المحتوى يكبر معه (Shift = تحجيم حر)
         setR(set, "fx", dev, Math.round(L / cr.width * 1000) / 10); setR(set, "fwd", dev, Math.round((R - L) / cr.width * 1000) / 10); setR(set, "fy", dev, Math.round(T / uOf(inf.sec, cr))); setR(set, "fh", dev, Math.round((B - T) / uOf(inf.sec, cr)));
         if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(set, k, "d") === undefined) setR(set, k, "d", eff(set, k, dev)); });
         label = Math.round((R - L)) + "×" + Math.round(B - T); growCanvas(inf.sec);
@@ -9191,6 +9205,7 @@ body{overflow-x:hidden;margin:0}`;
     { const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 5); if (cks.length) h += grp("الألوان", `<div class="pbx-qc">` + cks.map(c => { const v = inf.set[c.k]; return `<label title="${esc(c.l)}">${esc(c.l.replace(/^لون\s*/, "").replace(/\s*\(.*$/, "")).slice(0, 14)}<input type="color" data-qc="${c.k}" value="${/^#[0-9a-f]{6}$/i.test(v || "") ? v : "#ffffff"}"></label>`; }).join("") + `</div>`); }
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
     if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;
+    if (inf.node.type === "image" && inf.set.crop) h += grp("قصّ الصورة", q("crop-reset", "↺ إلغاء القصّ", "إعادة الصورة لملء الإطار تلقائياً", false, "wide"));
     if (inf.node.type === "image" && inf.node.set.src) h += `<div class="pbx-qg"><small>أدوات القماش (كانفاس) — تعمل على أي صورة</small><div class="pbx-magic"><button type="button" data-q="smart-text" title="يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل">${ico("t_text", 22)} التقاط النص</button><button type="button" data-q="smart-magic" title="يفصل العناصر (أشخاص، منتجات…) كصور شفافة">${ico("t_magic", 22)} التقاط سحري</button></div><label class="pbx-gem"><input type="checkbox" data-gem="1" ${gemOn() ? "checked" : ""}> استعانة اختيارية بمفتاح Gemini (بدونه تعمل الأدوات مجاناً)</label></div>`;
     return h + `</div>`;
   }
@@ -9203,6 +9218,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   function onQuick(k) {
     if (k.startsWith("tx-")) { textPreset(k.slice(3)); return; }
+    if (k === "crop-reset") { const i = selInfo(); if (i) { delete i.set.crop; afterEdit(); } return; }
     if (k === "bg-restore") { const inf = selInfo(); if (inf && inf.kind === "section") restoreBackground(inf.node); return; }
     if (k === "smart-text") return PBSmart.capture(); if (k === "smart-magic") return PBSmart.captureElements(); if (k === "smart-import") return PBSmart.importImages();
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
