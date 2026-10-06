@@ -148,15 +148,20 @@ const PBBgRemove = (function () {
 
   /* ───────── الألفا النهائي بدقّة الصورة ───────── */
   /* u: قناع التحليل المصغّر (0..1). opt: shift (px)، detail (0.5..3)، feather، decon */
-  function matte(rgbObj, u, uw, uh, opt) {
-    const { w, h, rgb } = rgbObj, n = w * h, K = Math.max(w, h) / 1000, M = resizeF(u, uw, uh, w, h);
+  function matte(rgbObj, u, uw, uh, opt) { return matteCore(rgbObj, resizeF(u, uw, uh, rgbObj.w, rgbObj.h), opt); }
+  /* النواة: M = قناع ناعم بدقّة الصورة نفسها (0..1؛ 0.5 = الحدّ). تُستعمل أيضاً في «التقاط العناصر» لحواف الشعر والعناصر */
+  function matteCore(rgbObj, M, opt) {
+    const { w, h, rgb } = rgbObj, n = w * h, K = Math.max(w, h) / 1000;
     let B = new Uint8Array(n); for (let i = 0; i < n; i++) B[i] = M[i] > .5 ? 1 : 0;
     const sh = Math.round((opt.shift || 0) * K); if (sh > 0) B = morph(B, w, h, sh, true); else if (sh < 0) B = morph(B, w, h, -sh, false);
-    const e = Math.max(2, Math.round(2.6 * K * (opt.detail || 1))), inner = morph(B, w, h, e, true), outer = morph(B, w, h, e, false), band = new Uint8Array(n), bgSure = new Uint8Array(n);
+    const e = opt.band ? Math.max(2, Math.round(opt.band)) : Math.max(2, Math.round(2.6 * K * (opt.detail || 1))), inner = morph(B, w, h, e, true), outer = morph(B, w, h, e, false), band = new Uint8Array(n), bgSure = new Uint8Array(n);
     for (let i = 0; i < n; i++) { if (inner[i]) { band[i] = 0; } else if (outer[i]) band[i] = 1; else bgSure[i] = 1; }
     const alpha = new Float32Array(n), Bf = new Float32Array(n); for (let i = 0; i < n; i++) Bf[i] = B[i];
     const gf = guidedFast(rgb, w, h, Bf, Math.max(3, Math.round(e * 1.4)), 4e-4, Math.max(1, Math.round(Math.max(w, h) / 650)));
-    const Fc = fillNearest(rgb, w, h, inner, band, e * 3 + 4), Bc = fillNearest(rgb, w, h, bgSure, band, e * 3 + 4);
+    const smoothFill = fc => {      // تنعيم حقل اللون بتطبيع الأوزان (الملء بأقرب مصدر يعطي كتلاً مربّعة عند الشريط العريض)
+      const w1 = new Float32Array(n), ch = [new Float32Array(n), new Float32Array(n), new Float32Array(n)]; for (let i = 0; i < n; i++) if (fc.dist[i] !== 255) { w1[i] = 1; ch[0][i] = fc.col[i * 3]; ch[1][i] = fc.col[i * 3 + 1]; ch[2][i] = fc.col[i * 3 + 2]; }
+      const r = Math.max(2, Math.round(e * .8)), bw = boxMean(w1, w, h, r), bc = ch.map(c => boxMean(c, w, h, r)); for (let i = 0; i < n; i++) if (fc.dist[i] !== 255 && bw[i] > 1e-4) { fc.col[i * 3] = bc[0][i] / bw[i]; fc.col[i * 3 + 1] = bc[1][i] / bw[i]; fc.col[i * 3 + 2] = bc[2][i] / bw[i]; } return fc; };
+    const Fc = smoothFill(fillNearest(rgb, w, h, inner, band, e * 3 + 4)), Bc = smoothFill(fillNearest(rgb, w, h, bgSure, band, e * 3 + 4));
     for (let i = 0; i < n; i++) {
       if (inner[i]) { alpha[i] = 1; continue; } if (bgSure[i]) { alpha[i] = 0; continue; }
       const ag = clamp((gf[i] - .5) * 1.8 + .5, 0, 1); let a = ag;
@@ -170,7 +175,7 @@ const PBBgRemove = (function () {
     for (let i = 0; i < n; i++) { const a = al[i]; let r = rgb[i * 3], g = rgb[i * 3 + 1], b = rgb[i * 3 + 2];
       if (opt.decon !== false && a < .985 && !inner[i] && Fc.dist[i] !== 255) { r = Fc.col[i * 3]; g = Fc.col[i * 3 + 1]; b = Fc.col[i * 3 + 2]; }
       out[i * 4] = r * 255; out[i * 4 + 1] = g * 255; out[i * 4 + 2] = b * 255; out[i * 4 + 3] = a < .004 ? 0 : a * 255; }
-    return { w, h, data: out, alpha: al };
+    return { w, h, data: out, alpha: al, inner };
   }
 
   /* ───────── واجهة النافذة ───────── */
@@ -288,5 +293,5 @@ const PBBgRemove = (function () {
     return m;
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, _t: { setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph, wand } };
+  return { open, _t: { matteCore, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph, wand } };
 })();

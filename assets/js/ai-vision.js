@@ -6,7 +6,7 @@
    Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
   const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=16", BASE).href;
-  const SAMSZ = 1024, DETSZ = 960, W8 = {};
+  const SAMSZ = 1024, DETSZ = 736, W8 = {};      // 736 بدل 960: كشف أسرع بنحو الضعف بلا فقد يُذكر لعناصر بحجم مفيد
   let seq = 0, curS = null;
   /* ───── العمّال: عامل للقصّ (SAM) وآخر للكشف يعملان بالتوازي ───── */
   function mkWorker(kind) {
@@ -39,7 +39,8 @@ window.AIVision = (function () {
   const iou = (a, b) => { const i = bInter(a, b); return i / Math.max(1, bArea(a) + bArea(b) - i); };
   async function localDetect(cv, onp, zone) {
     const im = pix(cv, DETSZ), W = cv.width, H = cv.height, K = 1 / im.k;
-    const raw = await worker("det").call("detect", { data: im.data, w: im.w, h: im.h, thr: .1 }, onp, [im.data]);
+    /* نموذجا الكشف (COCO وObjects365) في عاملين متوازيين بدل التتابع */
+    const [r1, r2] = await Promise.all([worker("det").call("detect", { data: im.data.slice(0), w: im.w, h: im.h, thr: .1, models: ["coco"] }, onp), worker("det2").call("detect", { data: im.data, w: im.w, h: im.h, thr: .1, models: ["o365"] }, onp, [im.data])]), raw = r1.concat(r2);
     const all = raw.map(d => ({ src: d.src, en: String(d.label).toLowerCase(), score: d.score, b: d.box.map((v, i) => Math.max(0, Math.min(i % 2 ? H : W, v * K))) }));
     const o365 = all.filter(d => d.src === "o365");
     all.forEach(d => { if (d.src !== "coco") return; let bi = .45; o365.forEach(q => { const v = iou(d.b, q.b); if (v > bi) { bi = v; d.en2 = q.en; } }); });      // اسم Objects365 أدق (قلم بدل «سكين»، صحن بدل «وعاء»)
@@ -47,7 +48,7 @@ window.AIVision = (function () {
     c.sort((p, q) => q.score - p.score); const keep = [];
     const per = {}; c.forEach(d => { const en = d.en2 || d.en; if ((per[en] || 0) >= (PRODUCT.test(en) ? 8 : 6)) return; if (!keep.some(k => iou(k.b, d.b) > .6 || ((k.en2 || k.en) === en && bInter(k.b, d.b) / Math.max(1, bArea(d.b)) > .85))) { keep.push(d); per[en] = (per[en] || 0) + 1; } });      // لا يستأثر صنف واحد (كتب كثيرة) بكل الأماكن
     const persons = keep.filter(k => (k.en2 || k.en) === "person"), held = d => persons.some(p => bInter(p.b, d.b) / Math.max(1, bArea(d.b)) > .8);      // وعاء/كوب في يد شخص = منتج (عبوة)
-    return keep.slice(0, 30).map(d => ({ label: /^(cup|vase|bottle|jug|canned|cosmetics|toiletry)$/.test(d.en2 || d.en) && ((d.b[3] - d.b[1]) > (d.b[2] - d.b[0]) * 1.1 || held(d)) ? "عبوة" : arName(d.en2 || d.en), en: d.en2 || d.en, score: d.score, box: d.b, src: d.src }));
+    return keep.slice(0, 18).map(d => ({ label: /^(cup|vase|bottle|jug|canned|cosmetics|toiletry)$/.test(d.en2 || d.en) && ((d.b[3] - d.b[1]) > (d.b[2] - d.b[0]) * 1.1 || held(d)) ? "عبوة" : arName(d.en2 || d.en), en: d.en2 || d.en, score: d.score, box: d.b, src: d.src }));
   }
   /* كشف بـ Gemini: صناديق + أسماء عربية (يُرسل الصورة مصغّرة إلى Google بمفتاحك فقط) */
   async function geminiDetect(cv, key) {
@@ -178,12 +179,12 @@ window.AIVision = (function () {
   /* احتياط: ما يمسكه شخص أو يقف أمامه (منتج في اليد) ولم يكشفه الكاشف = فراغ محاط بقناع الشخص ← نقرة SAM عنده تعطي العنصر */
   async function heldItems(S, out, step) {
     const { lw, lh } = S, N = lw * lh, any = new Uint8Array(N); out.forEach(o => { for (let i = 0; i < N; i++) if (o.lo[i] > 0) any[i] = 1; });
-    for (const P of out.filter(o => PERSON.test(o.label)).slice(0, 3)) {
+    for (const P of out.filter(o => PERSON.test(o.label)).slice(0, 2)) {
       const bx0 = Math.floor(P.x0 * S.fx), by0 = Math.floor(P.y0 * S.fy), bx1 = Math.ceil(P.x1 * S.fx), by1 = Math.ceil(P.y1 * S.fy), st = Math.max(3, Math.round(Math.min(bx1 - bx0, by1 - by0) / 9)), R = Math.max(4, st), seeds = [];
       const inP = (x, y) => x >= 0 && y >= 0 && x < lw && y < lh && P.lo[y * lw + x] > 0;
       for (let y = by0 + st; y < by1 - st / 2; y += st) for (let x = bx0 + st; x < bx1 - st / 2; x += st) { if (any[y * lw + x]) continue;
         let sides = 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { for (let r = 1; r <= R * 3; r++) if (inP(x + dx * r, y + dy * r)) { sides++; break; } } if (sides >= 3) seeds.push([x, y]); }
-      for (const [x, y] of seeds.slice(0, 8)) {
+      for (const [x, y] of seeds.slice(0, 5)) {
         if (any[y * lw + x]) continue; step("⏳ البحث عمّا في اليد…");
         const m = await maskFor(S, { pts: [[(x + .5) / S.fx, (y + .5) / S.fy, 1]] }); if (!m.area || m.score < .6) continue;
         const fr = m.area / N; let ov = 0; for (let i = 0; i < N; i++) if (m.lo[i] > 0 && any[i]) ov++;
@@ -258,8 +259,8 @@ window.AIVision = (function () {
   }
   /* معاينة بالدقة الكاملة (نفس قصّ «التقاط») مصغّرة للعرض: للحواف الدقيقة كالأصابع */
   function fineView(S, cv, it, k, items) {
-    const D = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, S.W, S.H).data, A = fullAlpha(S, it, D, {});
-    (items || []).filter(J => J.holder === it).forEach(J => { const B = fullAlpha(S, J, D, {}); for (let y = Math.max(A.y0, B.y0); y < Math.min(A.y0 + A.h, B.y0 + B.h); y++) for (let x = Math.max(A.x0, B.x0); x < Math.min(A.x0 + A.w, B.x0 + B.w); x++) A.a[(y - A.y0) * A.w + x - A.x0] *= 1 - B.a[(y - B.y0) * B.w + x - B.x0]; });      // اليد = حدودها ناقص الشيء الذي تمسكه
+    const D = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, S.W, S.H).data, A = fullAlpha(S, it, D, { matte: false });
+    (items || []).filter(J => J.holder === it).forEach(J => { const B = fullAlpha(S, J, D, { matte: false }); for (let y = Math.max(A.y0, B.y0); y < Math.min(A.y0 + A.h, B.y0 + B.h); y++) for (let x = Math.max(A.x0, B.x0); x < Math.min(A.x0 + A.w, B.x0 + B.w); x++) A.a[(y - A.y0) * A.w + x - A.x0] *= 1 - B.a[(y - B.y0) * B.w + x - B.x0]; });      // اليد = حدودها ناقص الشيء الذي تمسكه
     const dx = Math.floor(A.x0 * k), dy = Math.floor(A.y0 * k), dw = Math.max(2, Math.ceil((A.x0 + A.w) * k) - dx), dh = Math.max(2, Math.ceil((A.y0 + A.h) * k) - dy), a = new Uint8Array(dw * dh); let ly = -1, sx = 0, nx = 0, n = 0, cx = 0, cy = 0;
     for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const gx = Math.min(A.w - 1, Math.floor((dx + x + .5) / k) - A.x0), gy = Math.min(A.h - 1, Math.floor((dy + y + .5) / k) - A.y0); if (gx >= 0 && gy >= 0 && A.a[gy * A.w + gx] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } } }
     return { a, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (n ? cx / n : dw / 2), cy: dy + (n ? cy / n : dh / 2) };
@@ -285,6 +286,14 @@ window.AIVision = (function () {
     const f = sampler(S, it), p = new Float32Array(N), I = new Float32Array(N), Bm = new Uint8Array(N), inv = new Uint8Array(N);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4, v = f(x0 + x, y0 + y) > 0 ? 1 : 0; Bm[i] = v; inv[i] = 1 - v; p[i] = v; I[i] = (D[gi] * .299 + D[gi + 1] * .587 + D[gi + 2] * .114) / 255; }
     if (opt.refine === false) return { a: p, x0, y0, w, h };
+    /* دقة الشعر والحواف: ألفا حقيقية من ألوان المقدّمة/الخلفية القريبة + مرشّح موجَّه + إزالة هالة الخلفية (محرّك «نزع الخلفية» نفسه)؛ احتياطاً المرشّح البسيط أدناه */
+    if (opt.matte !== false && N <= 3200000 && typeof PBBgRemove !== "undefined" && PBBgRemove._t && PBBgRemove._t.matteCore) {
+      try { const rgb = new Float32Array(N * 3), M = new Float32Array(N);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4; rgb[i * 3] = D[gi] / 255; rgb[i * 3 + 1] = D[gi + 1] / 255; rgb[i * 3 + 2] = D[gi + 2] / 255; M[i] = Math.max(0, Math.min(1, .5 + f(x0 + x, y0 + y) / 10)); }
+        const band = (PERSON.test(it.label || "") ? 1.7 : 1.1) / S.fx, r = PBBgRemove._t.matteCore({ w, h, rgb }, M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), c8 = new Uint8ClampedArray(N * 3);
+        for (let i = 0; i < N; i++) { c8[i * 3] = r.data[i * 4]; c8[i * 3 + 1] = r.data[i * 4 + 1]; c8[i * 3 + 2] = r.data[i * 4 + 2]; }
+        return { a: r.alpha, x0, y0, w, h, rgb8: c8 }; } catch (e) { console.warn("matte", e); }
+    }
     /* داخل العنصر معتم تماماً وخارجه شفاف؛ الشريط الضيق حول الحدّ فقط يُعاد حسابه بالمرشّح الموجَّه ليلتصق بحافة الصورة */
     const rb = Math.max(2, Math.round(.9 / S.fx)), dil = ImageTools.sqDilate(Bm, w, h, rb), ero = ImageTools.sqDilate(inv, w, h, rb), q = guided(I, p, w, h, rb, opt.eps || 4e-4), a = new Float32Array(N);
     for (let i = 0; i < N; i++) { if (!(dil[i] && ero[i])) { a[i] = Bm[i]; continue; } const v = (q[i] - .5) * 1.6 + .5; a[i] = v < .06 ? 0 : v > .94 ? 1 : v; }
@@ -340,7 +349,7 @@ window.AIVision = (function () {
       const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"), im = g.createImageData(w, h), er = new Uint8Array(w * h); let px = 0;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const gx = X0 + x, gy = Y0 + y, i = y * w + x, lx = gx - a.x0, ly = gy - a.y0, al = lx >= 0 && ly >= 0 && lx < a.w && ly < a.h ? m[ly * a.w + lx] : 0, gi = (gy * W + gx) * 4;
-        if (al > .02) { im.data[i * 4] = D[gi]; im.data[i * 4 + 1] = D[gi + 1]; im.data[i * 4 + 2] = D[gi + 2]; im.data[i * 4 + 3] = Math.round(al * 255); if (al > .08) er[i] = 1; px++; continue; }
+        if (al > .02) { const ci = (ly * a.w + lx) * 3, c8 = a.rgb8; im.data[i * 4] = c8 ? c8[ci] : D[gi]; im.data[i * 4 + 1] = c8 ? c8[ci + 1] : D[gi + 1]; im.data[i * 4 + 2] = c8 ? c8[ci + 2] : D[gi + 2]; im.data[i * 4 + 3] = Math.round(al * 255); if (al > .08) er[i] = 1; px++; continue; }
         const sv = sh ? sh.s[i] : 0; if (sv > .03) { im.data[i * 4 + 3] = Math.round(sv * 255); er[i] = 1; }
       }
       g.putImageData(im, 0, 0); out.push({ canvas: c, x0: X0, y0: Y0, w, h, label: it.label, front: order.length - 1 - n, item: it, erase: { m: er, x0: X0, y0: Y0, w, h }, px });
@@ -407,6 +416,6 @@ window.AIVision = (function () {
     const mk = fn => { const c = document.createElement("canvas"); c.width = dw; c.height = dh; const g = c.getContext("2d"), im = g.createImageData(dw, dh); for (let i = 0; i < dw * dh; i++) { const al = fn(i); if (al) { im.data[i * 4] = rgb[0]; im.data[i * 4 + 1] = rgb[1]; im.data[i * 4 + 2] = rgb[2]; im.data[i * 4 + 3] = al; } } g.putImageData(im, 0, 0); return c; };
     return { out: mk(i => o[i] ? 255 : 0), fill: mk(i => a[i] ? 85 : 0) };
   }
-  function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco", "o365"] }).catch(() => { }); } catch (e) { } }
+  function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); } catch (e) { } }
   return { supported, analyze, pointMask, addItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, geminiDetect, warm };
 })();

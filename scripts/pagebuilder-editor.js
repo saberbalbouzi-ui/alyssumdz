@@ -745,7 +745,8 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
   function select(id) {
     if (editing) { try { editing.el.blur(); } catch (e) { } }
-    E.sel = id; { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; } renderInspector(); positionOverlay(); if (E.ltab === "lay") renderLeft();
+    E.sel = id; { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
+     positionOverlay(); if (E.ltab === "lay") renderLeft();
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
   /* تتبّع سحب موحّد: يعمل لمن بدأ داخل الـ iframe (Chrome يوصل الأحداث للإطار الذي بدأ فيه الضغط) أو من اللوحة؛ الإزاحة تُعاد بوحدات بكسل الصفحة */
