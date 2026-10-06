@@ -37,10 +37,10 @@ window.AIVision = (function () {
   const arName = en => AR[en] || en;
   const bArea = b => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]), bInter = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
   const iou = (a, b) => { const i = bInter(a, b); return i / Math.max(1, bArea(a) + bArea(b) - i); };
-  async function localDetect(cv, onp, zone) {
-    const im = pix(cv, DETSZ), W = cv.width, H = cv.height, K = 1 / im.k;
+  async function localDetect(cv, onp, zone, lite) {
+    const im = pix(cv, lite ? 640 : DETSZ), W = cv.width, H = cv.height, K = 1 / im.k;
     /* نموذجا الكشف (COCO وObjects365) في عاملين متوازيين بدل التتابع */
-    const [r1, r2] = await Promise.all([worker("det").call("detect", { data: im.data.slice(0), w: im.w, h: im.h, thr: .1, models: ["coco"] }, onp), worker("det2").call("detect", { data: im.data, w: im.w, h: im.h, thr: .1, models: ["o365"] }, onp, [im.data])]), raw = r1.concat(r2);
+    const [r1, r2] = await Promise.all([worker("det").call("detect", { data: lite ? im.data : im.data.slice(0), w: im.w, h: im.h, thr: .1, models: ["coco"] }, onp), lite ? Promise.resolve([]) : worker("det2").call("detect", { data: im.data, w: im.w, h: im.h, thr: .1, models: ["o365"] }, onp, [im.data])]), raw = r1.concat(r2);      // الهاتف («خفيف»): نموذج COCO وحده بدقة أقل
     const all = raw.map(d => ({ src: d.src, en: String(d.label).toLowerCase(), score: d.score, b: d.box.map((v, i) => Math.max(0, Math.min(i % 2 ? H : W, v * K))) }));
     const o365 = all.filter(d => d.src === "o365");
     all.forEach(d => { if (d.src !== "coco") return; let bi = .45; o365.forEach(q => { const v = iou(d.b, q.b); if (v > bi) { bi = v; d.en2 = q.en; } }); });      // اسم Objects365 أدق (قلم بدل «سكين»، صحن بدل «وعاء»)
@@ -48,7 +48,7 @@ window.AIVision = (function () {
     c.sort((p, q) => q.score - p.score); const keep = [];
     const per = {}; c.forEach(d => { const en = d.en2 || d.en; if ((per[en] || 0) >= (PRODUCT.test(en) ? 8 : 6)) return; if (!keep.some(k => iou(k.b, d.b) > .6 || ((k.en2 || k.en) === en && bInter(k.b, d.b) / Math.max(1, bArea(d.b)) > .85))) { keep.push(d); per[en] = (per[en] || 0) + 1; } });      // لا يستأثر صنف واحد (كتب كثيرة) بكل الأماكن
     const persons = keep.filter(k => (k.en2 || k.en) === "person"), held = d => persons.some(p => bInter(p.b, d.b) / Math.max(1, bArea(d.b)) > .8);      // وعاء/كوب في يد شخص = منتج (عبوة)
-    return keep.slice(0, 18).map(d => ({ label: /^(cup|vase|bottle|jug|canned|cosmetics|toiletry)$/.test(d.en2 || d.en) && ((d.b[3] - d.b[1]) > (d.b[2] - d.b[0]) * 1.1 || held(d)) ? "عبوة" : arName(d.en2 || d.en), en: d.en2 || d.en, score: d.score, box: d.b, src: d.src }));
+    return keep.slice(0, lite ? 10 : 18).map(d => ({ label: /^(cup|vase|bottle|jug|canned|cosmetics|toiletry)$/.test(d.en2 || d.en) && ((d.b[3] - d.b[1]) > (d.b[2] - d.b[0]) * 1.1 || held(d)) ? "عبوة" : arName(d.en2 || d.en), en: d.en2 || d.en, score: d.score, box: d.b, src: d.src }));
   }
   /* كشف بـ Gemini: صناديق + أسماء عربية (يُرسل الصورة مصغّرة إلى Google بمفتاحك فقط) */
   async function geminiDetect(cv, key) {
@@ -149,12 +149,12 @@ window.AIVision = (function () {
   /* تحليل كامل: كشف (Gemini أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
   async function analyze(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
-    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.key ? 1 : 0) + "|" + (o.noDetect ? 1 : 0); } catch (e) { }
+    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.key ? 1 : 0) + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0); } catch (e) { }
     if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: AC.src, note: AC.note, dets: AC.dets, later: null }; }
     step("⏳ تجهيز نموذج الذكاء…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
     /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
-    let localErr = null, gem = [], src = "local", note = ""; const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null, pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone).catch(e => { localErr = e; return []; });      // وضع الماوس: بلا كشف، الترميز فقط
+    let localErr = null, gem = [], src = "local", note = ""; const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null, pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite).catch(e => { localErr = e; return []; });      // وضع الماوس: بلا كشف، الترميز فقط
     if (o.key && !o.noDetect) { try { step("⏳ Gemini يتعرّف على العناصر…"); gem = await geminiDetect(cv, o.key); src = "gemini"; } catch (e) { note = e.message; } }
     const loc = (await pLoc).filter(d => !(o.skip || []).includes(d.label)); if (!gem.length && !loc.length && localErr) throw localErr;
     const dets = gem.concat(loc.filter(d => !gem.some(g => iou(g.box, d.box) > .5)).map(d => gem.length ? Object.assign(d, { score: d.score * .7 }) : d));
@@ -173,7 +173,7 @@ window.AIVision = (function () {
       for (let i = out.length - 1; i >= 0; i--) { const o = out[i]; if (o === main || PERSON.test(o.label)) continue; const ob = [o.x0, o.y0, o.x1, o.y1]; if (bInter(ob, eb) > .7 * bArea(ob)) { unite(main, o, S); out.splice(i, 1); } }
       if (main.label === "عنصر") { const n = dets.find(d => d.label && !PERSON.test(d.label) && d !== dets[0] && bInter(d.box, mb) > .5 * bArea(d.box)); if (n) main.label = n.label; }
     }
-    await heldItems(S, out, step);
+    if (!o.lite) await heldItems(S, out, step);
     await occlusions(S, out, step);
     out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); if (fp) AC = { fp, S, items: cloneItems(out), src, note, dets }; return { S, items: out, src, note, dets, later };
   }
@@ -293,7 +293,7 @@ window.AIVision = (function () {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4, v = f(x0 + x, y0 + y) > 0 ? 1 : 0; Bm[i] = v; inv[i] = 1 - v; p[i] = v; I[i] = (D[gi] * .299 + D[gi + 1] * .587 + D[gi + 2] * .114) / 255; }
     if (opt.refine === false) return { a: p, x0, y0, w, h };
     /* دقة الشعر والحواف: ألفا حقيقية من ألوان المقدّمة/الخلفية القريبة + مرشّح موجَّه + إزالة هالة الخلفية (محرّك «نزع الخلفية» نفسه)؛ احتياطاً المرشّح البسيط أدناه */
-    if (opt.matte !== false && N <= 3200000 && typeof PBBgRemove !== "undefined" && PBBgRemove._t && PBBgRemove._t.matteCore) {
+    if (opt.matte !== false && N <= (opt.matteMax || 3200000) && typeof PBBgRemove !== "undefined" && PBBgRemove._t && PBBgRemove._t.matteCore) {
       try { const rgb = new Float32Array(N * 3), M = new Float32Array(N);
         for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4; rgb[i * 3] = D[gi] / 255; rgb[i * 3 + 1] = D[gi + 1] / 255; rgb[i * 3 + 2] = D[gi + 2] / 255; M[i] = Math.max(0, Math.min(1, .5 + f(x0 + x, y0 + y) / 10)); }
         const band = (PERSON.test(it.label || "") ? 1.7 : 1.1) / S.fx, r = PBBgRemove._t.matteCore({ w, h, rgb }, M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), c8 = new Uint8ClampedArray(N * 3);
