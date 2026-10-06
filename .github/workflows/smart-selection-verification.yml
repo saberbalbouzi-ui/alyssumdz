@@ -2,6 +2,8 @@ name: Smart Selection Verification
 on:
   push:
     branches: [feature/smart-element-selection-v3]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 jobs:
   verify:
