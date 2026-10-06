@@ -183,6 +183,7 @@ body{overflow-x:hidden;margin:0}`;
 `;
 
   const toastUndo = m => { const t = $("pbx-msg"); if (!t) return; t.innerHTML = esc(m) + ' <button type="button" id="pbx-tu" style="margin-inline-start:.6rem;background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.2rem .7rem;font-weight:800;cursor:pointer;font-family:inherit">↩ إلغاء النسخ</button>'; t.style.display = "block"; $("pbx-tu").onclick = () => { undo(); t.style.display = "none"; toast("↩ أُلغي النسخ"); }; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 9000); };
+  const ERASER_ON = false;      // الممحاة بالذكاء الاصطناعي (الفرشاة + MI-GAN) معطّلة مؤقتاً: ضعها true لإعادتها
   const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
 
   /* ───────────────── بنية الواجهة ───────────────── */
@@ -949,7 +950,7 @@ body{overflow-x:hidden;margin:0}`;
         + btn("bold", QI.B, "عريض", fw >= 600) + btn("italic", QI.I, "مائل", set.fst === "italic") + btn("under", QI.U, "تحته خط", set.td === "underline") + btn("strike", QI.S, "يتوسطه خط", set.td === "line-through") + btn("case", QI.case, "حالة الأحرف: كبيرة / أول حرف / عادي", !!set.tt && set.tt !== "none")
         + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + btn("dir", set.tdir === "ltr" ? QI.ltr : QI.rtl, "اتجاه النص: من اليمين لليسار / من اليسار لليمين") + btn("list", QI.list, "قائمة بنقطة أو أيقونة", t === "text" ? /<[uo]l/i.test(set.html || "") : !!set.lm) + `<label class="qa" title="لون رمز القائمة (الافتراضي: لون النص)"><b>${esc(set.lm && set.lm !== "num" ? set.lm : "•")}</b><i style="background:${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></i><input type="color" data-qi="lmc" value="${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></label>` + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
     } else if (isImg) {
-      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") + tb("textcap", "التقاط النص", "يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل") + tb("magic", "التقاط سحري", "يفصل العناصر (أشخاص، منتجات…) كصور شفافة") + sep
+      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + (ERASER_ON ? tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") : "") + tb("textcap", "التقاط النص", "يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل") + tb("magic", "التقاط سحري", "يفصل العناصر (أشخاص، منتجات…) كصور شفافة") + sep
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + btn("crop", QI.crop, "قصّ الصورة", !!set.crop) + tb("flip", "قلب", "قلب الصورة أفقياً أو عمودياً", !!(set.flx || set.fly)) + sep;
     } else {
       const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 6);
@@ -1017,6 +1018,7 @@ body{overflow-x:hidden;margin:0}`;
     return `أنت كاتب محتوى محترف لمتجر إلكتروني. اكتب بلغة: ${L.name}${o.lang === "ar" ? " (عربية فصحى مبسّطة)" : ""}.\n${info}${task}${notes}\nنوع الوصف: ${sty}.\n${o.prev ? "" : "الطول: " + MW_LEN[o.len] + ".\n"}${lim}\nقواعد: اكتب وصفاً فقط؛ لا تذكر السعر ولا العروض ولا التوصيل ولا دعوة للشراء؛ لا تعد بالشفاء؛ بلا عناوين ولا رموز تنسيق ولا شرح.\nاكتب صيغة واحدة فقط.`;
   }
   async function mwGemini(o) {
+    if (!PBGen.aiOn()) { const e = new Error("API_OFF"); e.code = "API_OFF"; throw e; }
     const key = mwKey(); if (!key) throw new Error("NOKEY"); if (typeof PBGen === "undefined") throw new Error("أداة Gemini غير محمّلة");
     const j = await PBGen.gemGenerate(key, "copy", [{ text: mwPrompt(o) }], { temperature: o.prev ? .9 : o.pslug ? .45 : .85 });
     const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
@@ -1097,7 +1099,7 @@ body{overflow-x:hidden;margin:0}`;
     m.busy = true; m.msg = ""; mwRefresh(); positionOverlay();
     try { const t = await mwGemini(redo ? Object.assign({}, o, { prev: en.l[en.i] || m.res, instr: "أعد الصياغة بأسلوب مختلف مع الحفاظ على الطول نفسه تقريباً" }) : Object.assign({}, o, { prev: "", instr: "" })); en.l.push(t); en.i = en.l.length - 1; mwCsave(C, key); m.res = t; m.kind = "ai";
       m.msg = redo ? "هذه إعادتك الوحيدة بـAPI لهذا الطلب؛ الضغط التالي يعرض المحفوظات مجاناً." : "حُفظت الإجابة لاستدعائها مجاناً لاحقاً؛ لك إعادة واحدة جديدة بـAPI."; }
-    catch (e) { m.msg = "تعذّر Gemini: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات الذكي»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
+    catch (e) { m.msg = e.code === "API_OFF" ? "الكتابة بالذكاء الاصطناعي (API) معطّلة حالياً. المحفوظات تعمل مجاناً، ويمكنك استعمال «قالب جاهز»." : "تعذّر Gemini: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات الذكي»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
     m.busy = false; const i2 = selInfo(); if (i2 && i2.node.id === inf.node.id && m.res) mwPreview(i2, m.res); else positionOverlay(); mwRefresh();
   }
   function mwRedo(ins) {      // إعادة: واحدة بـAPI ثم المحفوظات مجاناً. أطول/أقصر: ينتقل بين الأطوال (من المحفوظات إن وُجدت)
@@ -1171,7 +1173,7 @@ body{overflow-x:hidden;margin:0}`;
     if (k === "radius") return qPop(btn, qRange(inf, null, "rad", "تدوير الزوايا (px)", 0, 200, 1, Number(eff(set, "rad", dev)) || 0), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)));
     if (k === "replace") return uploadFor(inf);
     if (k === "mw") return mwPanel(inf, btn);
-    if (k === "eraser") return PBSmart.eraser(inf);
+    if (k === "eraser") { if (!ERASER_ON) { toast("الممحاة بالذكاء الاصطناعي معطّلة مؤقتاً"); return; } return PBSmart.eraser(inf); }
     if (k === "textcap") return PBSmart.capture(); if (k === "magic") return PBSmart.captureElements();
     if (k === "crop") return qPop(btn, `<h6>قصّ الصورة</h6><p>اسحب حواف الصورة للقصّ</p>${set.crop ? '<div class="pg" style="grid-template-columns:1fr;margin-top:.5rem"><button type="button" class="pb2" data-a="reset">↺ إلغاء القصّ</button></div>' : ""}`, p => { const r = p.querySelector("[data-a]"); if (r) r.onclick = () => { closePop(); delete set.crop; afterEdit(); }; }, { dock: true });
     if (k === "flip") return qPop(btn, `<h6>قلب الصورة</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2${set.flx ? " on" : ""}" data-a="flx">↔ أفقياً</button><button type="button" class="pb2${set.fly ? " on" : ""}" data-a="fly">↕ عمودياً</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { closePop(); if (set[b.dataset.a]) delete set[b.dataset.a]; else set[b.dataset.a] = true; afterEdit(); }));
@@ -1836,7 +1838,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.rep) { const items = inf.set[t.dataset.rep] || []; items[t.dataset.i][t.dataset.f] = t.type === "checkbox" ? t.checked : t.value; inf.set[t.dataset.rep] = items; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.pzk) { PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value); return; }
-    if (t.dataset.mkk) { PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); return; }
+    if (t.dataset.mkk) { PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); if (t.type === "range") { const bb = t.parentNode.querySelector("b"); if (bb) bb.textContent = t.value; } return; }
     if (t.dataset.gk) return gradInput(t, inf);
     if (t.dataset.rich) { inf.set[t.dataset.rich] = PB.cleanHtml(t.innerHTML); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }      // المحرر المرئي للمحتوى
     if (!t.dataset.k) return; const c = ctlByKey(inf, t.dataset.k); if (!c) return;
@@ -1851,6 +1853,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset && t.dataset.pp) { const inf = selInfo(); if (!inf) return; const cur = new Set(String(inf.set[t.dataset.pp] || "").split(/[\s,،]+/).filter(Boolean)); t.checked ? cur.add(t.dataset.v) : cur.delete(t.dataset.v); inf.set[t.dataset.pp] = [...cur].join(","); afterEdit(); return; } if (t.dataset.gk) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox") { gradInput(t, selInfo()); renderInspector(); } else renderInspector(); return; } if (t.dataset.k || t.dataset.rep) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox" || t.type === "color") { onInspInput(e); renderInspector(); } if (t.dataset.range) renderInspector(); }
     if (t.dataset.fileFor) {}
     if (t.dataset.pzk) { if (PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value)) renderInspector(); return; }
+    if (t.dataset.mkk) { if (PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value)) renderInspector(); return; }
     if (t.dataset.k === "gcols" || t.dataset.k === "grows") { clearTimeout(hT); commitHist(); renderInspector(); }      // شبكة خلايا الصور في الإعدادات تتبع الأعمدة والصفوف
   }
   async function onInspClick(e) {

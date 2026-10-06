@@ -19,4 +19,6 @@ const CONFIG = {
      لأن الزوار لا يملكون إلا دوالّ محدودة (supabase/schema.sql). لا تضع هنا أبداً مفتاح service_role. */
   SUPABASE_URL: "https://qvdaiundlkfbmjlummni.supabase.co",
   SUPABASE_ANON_KEY: "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h",             // ← الصق هنا المفتاح العام من Project Settings ← API Keys (anon / publishable)
+  /* استعمال الذكاء الاصطناعي عبر API (توليد الصفحة بالصور، الكتابة السحرية «حرر»): معطّل افتراضياً. اجعلها true لتفعيله على هذا الموقع (يحتاج مفتاح Gemini). القوالب الجاهزة والإجابات المحفوظة تعمل دائماً بلا API. */
+  AI_API: false,
 };

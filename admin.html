@@ -8270,6 +8270,7 @@ body{overflow-x:hidden;margin:0}`;
 `;
 
   const toastUndo = m => { const t = $("pbx-msg"); if (!t) return; t.innerHTML = esc(m) + ' <button type="button" id="pbx-tu" style="margin-inline-start:.6rem;background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.2rem .7rem;font-weight:800;cursor:pointer;font-family:inherit">↩ إلغاء النسخ</button>'; t.style.display = "block"; $("pbx-tu").onclick = () => { undo(); t.style.display = "none"; toast("↩ أُلغي النسخ"); }; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 9000); };
+  const ERASER_ON = false;      // الممحاة بالذكاء الاصطناعي (الفرشاة + MI-GAN) معطّلة مؤقتاً: ضعها true لإعادتها
   const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
 
   /* ───────────────── بنية الواجهة ───────────────── */
@@ -9036,7 +9037,7 @@ body{overflow-x:hidden;margin:0}`;
         + btn("bold", QI.B, "عريض", fw >= 600) + btn("italic", QI.I, "مائل", set.fst === "italic") + btn("under", QI.U, "تحته خط", set.td === "underline") + btn("strike", QI.S, "يتوسطه خط", set.td === "line-through") + btn("case", QI.case, "حالة الأحرف: كبيرة / أول حرف / عادي", !!set.tt && set.tt !== "none")
         + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + btn("dir", set.tdir === "ltr" ? QI.ltr : QI.rtl, "اتجاه النص: من اليمين لليسار / من اليسار لليمين") + btn("list", QI.list, "قائمة بنقطة أو أيقونة", t === "text" ? /<[uo]l/i.test(set.html || "") : !!set.lm) + `<label class="qa" title="لون رمز القائمة (الافتراضي: لون النص)"><b>${esc(set.lm && set.lm !== "num" ? set.lm : "•")}</b><i style="background:${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></i><input type="color" data-qi="lmc" value="${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></label>` + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
     } else if (isImg) {
-      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") + tb("textcap", "التقاط النص", "يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل") + tb("magic", "التقاط سحري", "يفصل العناصر (أشخاص، منتجات…) كصور شفافة") + sep
+      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + (ERASER_ON ? tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") : "") + tb("textcap", "التقاط النص", "يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل") + tb("magic", "التقاط سحري", "يفصل العناصر (أشخاص، منتجات…) كصور شفافة") + sep
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + btn("crop", QI.crop, "قصّ الصورة", !!set.crop) + tb("flip", "قلب", "قلب الصورة أفقياً أو عمودياً", !!(set.flx || set.fly)) + sep;
     } else {
       const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 6);
@@ -9104,6 +9105,7 @@ body{overflow-x:hidden;margin:0}`;
     return `أنت كاتب محتوى محترف لمتجر إلكتروني. اكتب بلغة: ${L.name}${o.lang === "ar" ? " (عربية فصحى مبسّطة)" : ""}.\n${info}${task}${notes}\nنوع الوصف: ${sty}.\n${o.prev ? "" : "الطول: " + MW_LEN[o.len] + ".\n"}${lim}\nقواعد: اكتب وصفاً فقط؛ لا تذكر السعر ولا العروض ولا التوصيل ولا دعوة للشراء؛ لا تعد بالشفاء؛ بلا عناوين ولا رموز تنسيق ولا شرح.\nاكتب صيغة واحدة فقط.`;
   }
   async function mwGemini(o) {
+    if (!PBGen.aiOn()) { const e = new Error("API_OFF"); e.code = "API_OFF"; throw e; }
     const key = mwKey(); if (!key) throw new Error("NOKEY"); if (typeof PBGen === "undefined") throw new Error("أداة Gemini غير محمّلة");
     const j = await PBGen.gemGenerate(key, "copy", [{ text: mwPrompt(o) }], { temperature: o.prev ? .9 : o.pslug ? .45 : .85 });
     const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
@@ -9184,7 +9186,7 @@ body{overflow-x:hidden;margin:0}`;
     m.busy = true; m.msg = ""; mwRefresh(); positionOverlay();
     try { const t = await mwGemini(redo ? Object.assign({}, o, { prev: en.l[en.i] || m.res, instr: "أعد الصياغة بأسلوب مختلف مع الحفاظ على الطول نفسه تقريباً" }) : Object.assign({}, o, { prev: "", instr: "" })); en.l.push(t); en.i = en.l.length - 1; mwCsave(C, key); m.res = t; m.kind = "ai";
       m.msg = redo ? "هذه إعادتك الوحيدة بـAPI لهذا الطلب؛ الضغط التالي يعرض المحفوظات مجاناً." : "حُفظت الإجابة لاستدعائها مجاناً لاحقاً؛ لك إعادة واحدة جديدة بـAPI."; }
-    catch (e) { m.msg = "تعذّر Gemini: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات الذكي»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
+    catch (e) { m.msg = e.code === "API_OFF" ? "الكتابة بالذكاء الاصطناعي (API) معطّلة حالياً. المحفوظات تعمل مجاناً، ويمكنك استعمال «قالب جاهز»." : "تعذّر Gemini: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات الذكي»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
     m.busy = false; const i2 = selInfo(); if (i2 && i2.node.id === inf.node.id && m.res) mwPreview(i2, m.res); else positionOverlay(); mwRefresh();
   }
   function mwRedo(ins) {      // إعادة: واحدة بـAPI ثم المحفوظات مجاناً. أطول/أقصر: ينتقل بين الأطوال (من المحفوظات إن وُجدت)
@@ -9258,7 +9260,7 @@ body{overflow-x:hidden;margin:0}`;
     if (k === "radius") return qPop(btn, qRange(inf, null, "rad", "تدوير الزوايا (px)", 0, 200, 1, Number(eff(set, "rad", dev)) || 0), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)));
     if (k === "replace") return uploadFor(inf);
     if (k === "mw") return mwPanel(inf, btn);
-    if (k === "eraser") return PBSmart.eraser(inf);
+    if (k === "eraser") { if (!ERASER_ON) { toast("الممحاة بالذكاء الاصطناعي معطّلة مؤقتاً"); return; } return PBSmart.eraser(inf); }
     if (k === "textcap") return PBSmart.capture(); if (k === "magic") return PBSmart.captureElements();
     if (k === "crop") return qPop(btn, `<h6>قصّ الصورة</h6><p>اسحب حواف الصورة للقصّ</p>${set.crop ? '<div class="pg" style="grid-template-columns:1fr;margin-top:.5rem"><button type="button" class="pb2" data-a="reset">↺ إلغاء القصّ</button></div>' : ""}`, p => { const r = p.querySelector("[data-a]"); if (r) r.onclick = () => { closePop(); delete set.crop; afterEdit(); }; }, { dock: true });
     if (k === "flip") return qPop(btn, `<h6>قلب الصورة</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2${set.flx ? " on" : ""}" data-a="flx">↔ أفقياً</button><button type="button" class="pb2${set.fly ? " on" : ""}" data-a="fly">↕ عمودياً</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { closePop(); if (set[b.dataset.a]) delete set[b.dataset.a]; else set[b.dataset.a] = true; afterEdit(); }));
@@ -9923,7 +9925,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.rep) { const items = inf.set[t.dataset.rep] || []; items[t.dataset.i][t.dataset.f] = t.type === "checkbox" ? t.checked : t.value; inf.set[t.dataset.rep] = items; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.pzk) { PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value); return; }
-    if (t.dataset.mkk) { PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); return; }
+    if (t.dataset.mkk) { PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); if (t.type === "range") { const bb = t.parentNode.querySelector("b"); if (bb) bb.textContent = t.value; } return; }
     if (t.dataset.gk) return gradInput(t, inf);
     if (t.dataset.rich) { inf.set[t.dataset.rich] = PB.cleanHtml(t.innerHTML); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }      // المحرر المرئي للمحتوى
     if (!t.dataset.k) return; const c = ctlByKey(inf, t.dataset.k); if (!c) return;
@@ -9938,6 +9940,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset && t.dataset.pp) { const inf = selInfo(); if (!inf) return; const cur = new Set(String(inf.set[t.dataset.pp] || "").split(/[\s,،]+/).filter(Boolean)); t.checked ? cur.add(t.dataset.v) : cur.delete(t.dataset.v); inf.set[t.dataset.pp] = [...cur].join(","); afterEdit(); return; } if (t.dataset.gk) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox") { gradInput(t, selInfo()); renderInspector(); } else renderInspector(); return; } if (t.dataset.k || t.dataset.rep) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox" || t.type === "color") { onInspInput(e); renderInspector(); } if (t.dataset.range) renderInspector(); }
     if (t.dataset.fileFor) {}
     if (t.dataset.pzk) { if (PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value)) renderInspector(); return; }
+    if (t.dataset.mkk) { if (PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value)) renderInspector(); return; }
     if (t.dataset.k === "gcols" || t.dataset.k === "grows") { clearTimeout(hT); commitHist(); renderInspector(); }      // شبكة خلايا الصور في الإعدادات تتبع الأعمدة والصفوف
   }
   async function onInspClick(e) {
@@ -10436,7 +10439,10 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   /* استدعاء Gemini بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
   /* طلب موحّد لـ Gemini: تدوير النماذج + إعادة محاولة بتأخير متزايد عند الازدحام (503) أو الحصة (429) */
+  /* مفتاح التحكم: استعمال API للتوليد (توليد الصفحة، الوصف، تدقيق النص…) معطّل افتراضياً؛ يُفعَّل بـ CONFIG.AI_API = true في config.js (أو يُتحكَّم به مركزياً في نسخة SaaS) */
+  const aiOn = () => { try { return typeof CONFIG !== "undefined" && CONFIG.AI_API === true; } catch (e) { return false; } };
   async function gemGenerate(key, task, parts, cfg, modelsOverride) {
+    if (task !== "ocr" && task !== "detect" && !aiOn()) { const e = new Error("🔒 التوليد بالذكاء الاصطناعي (API) معطّل حالياً"); e.code = "API_OFF"; throw e; }
     const models = [...new Set(modelsOverride || await gemModels(key, task))], waits = [0, 4000, 10000, 20000]; let last = "";
     const note = t => { for (const id of ["gen-automsg", "gen-msg"]) { const el = typeof document !== "undefined" && document.getElementById(id); if (el && (!el.textContent || /^⏳|Google/.test(el.textContent))) el.textContent = t; } };
     for (let round = 0; round < waits.length; round++) {
@@ -10565,7 +10571,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 
   /* ───────────── الواجهة داخل تبويب «بناء الصفحات المتقدم» ───────────── */
   const S = { canvas: null, cuts: [], regions: [], file: null, regionMode: false };
-  function mount(host) {
+  function mount(host) { mount0(host); if (!aiOn()) { const c = host.querySelector("#gen-card"); if (c) { const b = document.createElement("div"); b.style.cssText = "margin:.4rem 0 .8rem;padding:.6rem .8rem;background:#fff4e5;border:1.5px solid #f0c987;border-radius:10px;font-weight:700;color:#8a5a00;line-height:1.7"; b.textContent = "🔒 التوليد بالذكاء الاصطناعي (توليد الصفحة والوصف) معطّل حالياً — لا يُستهلك أي API. الأدوات الأخرى (تحرير صفحة جاهزة، قصّها وتقسيمها) تعمل كالمعتاد."; c.insertBefore(b, c.children[1] || null); const mk = host.querySelector("#gen-make"); if (mk) { mk.disabled = true; mk.title = "معطّل حالياً"; } } } }
+  function mount0(host) {
     host.innerHTML = `
 <div class="card" id="gen-card" style="margin-bottom:1rem">
   <b style="color:var(--green);font-size:1.15rem">✨ توليد صفحة جديدة</b>
@@ -11011,7 +11018,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { gemGenerate, imageModels, showResult, savePage, editPage, editAdvanced, downloadPage, setParts, brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { aiOn, gemGenerate, imageModels, showResult, savePage, editPage, editAdvanced, downloadPage, setParts, brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
 
 /* ═══ أدوات ذكية في منشئ الصفحات: «التقاط النص» (مثل Canva) ═══
@@ -11702,20 +11709,31 @@ const PBMask = (function () {
   function css() {
     if (document.getElementById("mk-css")) return; const st = document.createElement("style"); st.id = "mk-css";
     st.textContent = `.pbx-mk{display:flex;flex-direction:column;gap:.45rem;font-size:.8rem}.pbx-mk p{margin:0;color:#6b6556;line-height:1.7;font-size:.76rem}.pbx-mk label{display:flex;flex-direction:column;gap:.2rem;font-weight:700;font-size:.76rem}.pbx-mk select{width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.35rem;font-family:inherit}
-.pbx-mk .mk-b{display:grid;grid-template-columns:1fr;gap:.35rem}.pbx-mk .mk-go{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:0;padding:.55rem;font-size:.82rem}.pbx-mk .mk-k{flex-direction:row;align-items:center;gap:.4rem;font-weight:600;cursor:pointer}.pbx-mk .mk-on{background:#ede9fe;color:#6d28d9;border-radius:8px;padding:.35rem .5rem;font-weight:800;font-size:.76rem}`;
+.pbx-mk .pbx-pr{display:flex;flex-direction:column;gap:.15rem;font-weight:700;font-size:.74rem}.pbx-mk .pbx-pr input{width:100%}.pbx-mk .mk-b{display:grid;grid-template-columns:1fr;gap:.35rem}.pbx-mk .mk-go{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:0;padding:.55rem;font-size:.82rem}.pbx-mk .mk-k{flex-direction:row;align-items:center;gap:.4rem;font-weight:600;cursor:pointer}.pbx-mk .mk-on{background:#ede9fe;color:#6d28d9;border-radius:8px;padding:.35rem .5rem;font-weight:800;font-size:.76rem}`;
     document.head.appendChild(st);
   }
+  const libKeys = () => Object.keys(PB.SHAPES).filter(k => !["stroke", "line"].includes(PB.SHAPES[k][1]));
+  const libSel = () => S.target && S.target.startsWith("lib:") && PB.SHAPES[S.target.slice(4)] ? S.target.slice(4) : "";
+  Object.assign(S, { size: 70, px: 50, py: 50 });
   function panel(inf) {
     css(); if (!inf || inf.kind !== "widget" || inf.set.pz) return "";
     const img = inf.node.type === "image", st = inf.set; if (img && !st.src) return "";
-    const L = cands(inf), cur = L.find(w => w.id === S.target) || L[0], reset = img && st.clip ? `<div class="mk-on">🎭 القناع مفعّل (${st.clipMode === "out" ? "منطقة محذوفة" : "الصورة داخل الشكل فقط"})</div><button type="button" class="pbx-small" data-mk="reset">↺ إلغاء القناع (الصورة كاملة)</button>` : "";
-    const hint = L.length ? "" : `<p>${img ? "ضع <b>شكلاً</b> (من «أشكال») فوق الصورة ثم اضغط أحد الخيارين: إبقاء الصورة داخل الشكل أو حذف الشكل منها." : "ضع هذا الشكل فوق <b>صورة</b> ثم اضغط أحد الخيارين: إبقاء الصورة داخل الشكل أو حذف الشكل منها."}</p>`;
-    const iAll = (inf.sec.free || []).filter(w => w.type === "image");
-    return `<div class="pbx-mk">${reset}${hint}${L.length ? `<label>${img ? "الشكل الذي فوق الصورة" : "الصورة التي تحت الشكل"}<select data-mkk="target">${L.map((w, i) => `<option value="${esc(w.id)}"${cur && w.id === cur.id ? " selected" : ""}>${esc(wname(w, iAll.indexOf(w)))}</option>`).join("")}</select></label>` : ""}
+    const L = cands(inf), lib = img ? libSel() : "", cur = lib ? null : (L.find(w => w.id === S.target) || L[0]), reset = img && st.clip ? `<div class="mk-on">🎭 القناع مفعّل (${st.clipMode === "out" ? "منطقة محذوفة" : "الصورة داخل الشكل فقط"})</div><button type="button" class="pbx-small" data-mk="reset">↺ إلغاء القناع (الصورة كاملة)</button>` : "";
+    const iAll = (inf.sec.free || []).filter(w => w.type === "image"), sl = (k, lbl, mn, mx) => `<label class="pbx-pr">${lbl} <b>${S[k]}</b><input type="range" data-mkk="${k}" min="${mn}" max="${mx}" value="${S[k]}"></label>`;
+    if (!img) {      // من جهة الشكل: اختيار الصورة التي تحته
+      const hint = L.length ? "" : `<p>ضع هذا الشكل فوق <b>صورة</b> ثم اضغط أحد الخيارين.</p>`;
+      return `<div class="pbx-mk">${hint}${L.length ? `<label>الصورة التي تحت الشكل<select data-mkk="target">${L.map(w => `<option value="${esc(w.id)}"${cur && w.id === cur.id ? " selected" : ""}>${esc(wname(w, iAll.indexOf(w)))}</option>`).join("")}</select></label>` : ""}
 <div class="mk-b"><button type="button" class="pbx-small mk-go" data-mk="in">🖼 أبقِ الصورة داخل الشكل</button><button type="button" class="pbx-small mk-go" data-mk="out">✂ احذف الشكل من الصورة</button></div>
-<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label></div>`;
+<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label></div>`; }
+    // من جهة الصورة: قائمة واحدة فيها الأشكال الموضوعة فوق الصورة + مكتبة الأشكال الجاهزة
+    const val = lib ? "lib:" + lib : cur ? cur.id : "lib:ellipse", cl = val.startsWith("lib:");
+    const groups = PB.SHAPE_GROUPS.map(g => { const ks = libKeys().filter(k => PB.SHAPES[k][4] === g); return ks.length ? `<optgroup label="${esc(g)}">${ks.map(k => `<option value="lib:${k}"${val === "lib:" + k ? " selected" : ""}>${esc(PB.SHAPES[k][0])}</option>`).join("")}</optgroup>` : ""; }).join("");
+    const placed = L.length ? `<optgroup label="شكل موضوع فوق الصورة">${L.map(w => `<option value="${esc(w.id)}"${val === w.id ? " selected" : ""}>${esc(wname(w, 0))}</option>`).join("")}</optgroup>` : "";
+    return `<div class="pbx-mk">${reset}<label>اختر الشكل<select data-mkk="target">${placed}${groups}</select></label>
+${cl ? `${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق القناع">➕ ضعه فوق الصورة لأعدّله بيدي</button>` : `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>`}
+<div class="mk-b"><button type="button" class="pbx-small mk-go" data-mk="in">🖼 أبقِ الصورة داخل الشكل</button><button type="button" class="pbx-small mk-go" data-mk="out">✂ احذف الشكل من الصورة</button></div></div>`;
   }
-  function opt(k, v) { if (k === "target") S.target = v; else if (k === "keep") S.keep = !!v; }
+  function opt(k, v) { if (k === "target") { S.target = v; return true; } if (k === "keep") S.keep = !!v; else if (k === "size" || k === "px" || k === "py") { S[k] = Number(v); return false; } return false; }
   /* نقاط الشكل (حلقات) بإحداثيات نسبية من إطار الصورة */
   function rings(shp, imgR, shR, E) {
     const sh = PB.SHAPES[shp.set.shape], kind = sh[1], set = shp.set; let R = [];
@@ -11739,18 +11757,30 @@ const PBMask = (function () {
   const pathOf = rs => rs.map(r => "M" + r.map(p => p[0] + " " + p[1]).join("L") + "Z").join("");
   function act(name, inf) {
     const E = A().E; if (name === "reset") { delete inf.set.clip; delete inf.set.clipEO; delete inf.set.clipMode; E.nextLabel = "إلغاء قناع"; A().commitAfter(); return; }
-    const L = cands(inf), other = L.find(w => w.id === S.target) || L[0]; if (!other) { toast("ضع شكلاً فوق الصورة أولاً"); return; }
-    const imgW = inf.node.type === "image" ? inf.node : other, shpW = inf.node.type === "image" ? other : inf.node, img = A().find(imgW.id), shp = A().find(shpW.id);
-    if (!img || !shp) return; if (img.set.pz) { toast("قطع البازل لا تدعم القناع"); return; }
+    const isImg = inf.node.type === "image", lib = isImg ? (libSel() || (cands(inf).length ? "" : "ellipse")) : "";
+    const L = cands(inf), other = isImg && lib ? null : (L.find(w => w.id === S.target) || L[0]);
+    if (!lib && !other) { toast("ضع شكلاً فوق الصورة أولاً"); return; }
+    const imgW = isImg ? inf.node : other, img = A().find(imgW.id); if (!img) return;
+    if (img.set.pz) { toast("قطع البازل لا تدعم القناع"); return; }
     if (Number(PB.eff(img.set, "rot", E.dev)) || 0) { toast("أزل تدوير الصورة أولاً"); return; }
+    const iR = A().layoutOf(img.node.id); if (!iR) return;
+    // شكل من المكتبة: مربع حول مركز مختار بنسبة من أصغر بُعدي الصورة
+    const box = () => { const side = Math.max(8, Math.min(iR.width, iR.height) * S.size / 100); return { side, left: iR.left + (iR.width - side) * S.px / 100, top: iR.top + (iR.height - side) * S.py / 100 }; };
+    if (name === "place") {
+      if (!lib) return; const bx = box(), sh = PB.mkFree("shape", 0, 0, (Number(img.set.zi) || 0) + 1), E2 = E; sh.set.shape = lib; sh.set.fill = "#c8a24b";
+      const g = { fx: Number(PB.eff(img.set, "fx", E2.dev)), fy: Number(PB.eff(img.set, "fy", E2.dev)), fwd: Number(PB.eff(img.set, "fwd", E2.dev)), fh: Number(PB.eff(img.set, "fh", E2.dev)) };
+      PB.setR(sh.set, "fx", E2.dev, +(g.fx + (bx.left - iR.left) / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fy", E2.dev, +(g.fy + (bx.top - iR.top) / iR.height * g.fh).toFixed(2)); PB.setR(sh.set, "fwd", E2.dev, +(bx.side / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fh", E2.dev, +(bx.side / iR.height * g.fh).toFixed(2));
+      img.list.splice(img.idx + 1, 0, sh); E.nextLabel = "إضافة شكل للقناع"; E.sel = sh.id; S.target = img.node.id; A().commitAfter(sh.id); toast("➕ وُضع الشكل فوق الصورة — حرّكه وكبّره ثم اختر الصورة في «قناع بالشكل» وطبّق"); return; }
     if (img.set.clip && (img.set.clipMode !== "out" || name !== "out")) { toast("على الصورة قناع بالفعل — ألغِه أولاً (يمكن حذف أكثر من شكل بالتتابع فقط)"); return; }
-    const iR = A().layoutOf(img.node.id), sR = A().layoutOf(shp.node.id); if (!iR || !sR) return;
-    const rs = rings(shp.node, iR, sR, E); if (!rs.length) { toast("تعذّر قراءة الشكل"); return; }
-    const eo = ((PB.SHAPES[shp.node.set.shape] || [])[5] === "evenodd");
-    if (name === "in") { img.set.clip = pathOf(rs); img.set.clipEO = eo || undefined; if (!eo) delete img.set.clipEO; }
+    let shpNode, rs, key;
+    if (lib) { const bx = box(); key = lib; shpNode = { set: { shape: lib, rx: 0 } }; rs = rings(shpNode, iR, { left: bx.left, top: bx.top, width: bx.side, height: bx.side }, E); }
+    else { const shp = A().find(isImg ? other.id : inf.node.id); if (!shp) return; shpNode = shp.node; key = shpNode.set.shape; const sR = A().layoutOf(shp.node.id); if (!sR) return; rs = rings(shpNode, iR, sR, E); }
+    if (!rs.length) { toast("تعذّر قراءة الشكل"); return; }
+    const eo = ((PB.SHAPES[key] || [])[5] === "evenodd");
+    if (name === "in") { img.set.clip = pathOf(rs); if (eo) img.set.clipEO = true; else delete img.set.clipEO; }
     else { img.set.clip = (img.set.clip || "M0 0L1 0L1 1L0 1Z") + pathOf(rs); img.set.clipEO = true; }
     img.set.clipMode = name;
-    if (!S.keep) { const i = shp.list.indexOf(shp.node); if (i >= 0) shp.list.splice(i, 1); }
+    if (!lib && !S.keep) { const shp = A().find(shpNode.id); if (shp) { const i = shp.list.indexOf(shp.node); if (i >= 0) shp.list.splice(i, 1); } }
     E.nextLabel = name === "in" ? "قناع: إبقاء داخل الشكل" : "قناع: حذف الشكل من الصورة"; E.sel = img.node.id; A().commitAfter(img.node.id);
     toast(name === "in" ? "🎭 بقيت الصورة داخل الشكل فقط" : "✂ حُذف الشكل من الصورة");
   }

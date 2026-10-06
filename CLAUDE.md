@@ -32,4 +32,5 @@
 ## تنبيهات تقنية
 - `const CONFIG` و`const API` ليسا خصائص على `window`؛ استعمل `typeof CONFIG !== "undefined"`.
 - أداة «توليد صفحة منتج» (`GenPage` في admin.html) معطّلة مؤقتاً.
+- **معطّل مؤقتاً بطلب صاحب المتجر:** (1) الممحاة بالذكاء الاصطناعي في شريط الصورة (`ERASER_ON=false` في `pagebuilder-editor.js`)؛ (2) كل توليد عبر API: «توليد الصفحة» في `pagebuilder-gen.js` والكتابة السحرية «حرر» — مفتاح التحكم `CONFIG.AI_API` (الافتراضي `false` في `config.js`؛ الدالة `PBGen.aiOn()`). القوالب الجاهزة وإجابات الكتابة السحرية المحفوظة تعمل بلا API. خطة SaaS لرصيد API لكل موقع: مجلد `saas/` (مرحلة 1 فقط، غير مربوطة).
 - الاختبار: خادم محلي `python3 -m http.server` + Playwright؛ الشبكة الخارجية (Google) محجوبة في بيئة Claude السحابية.

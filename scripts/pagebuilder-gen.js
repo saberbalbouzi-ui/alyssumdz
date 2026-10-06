@@ -258,7 +258,10 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   }
   /* استدعاء Gemini بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
   /* طلب موحّد لـ Gemini: تدوير النماذج + إعادة محاولة بتأخير متزايد عند الازدحام (503) أو الحصة (429) */
+  /* مفتاح التحكم: استعمال API للتوليد (توليد الصفحة، الوصف، تدقيق النص…) معطّل افتراضياً؛ يُفعَّل بـ CONFIG.AI_API = true في config.js (أو يُتحكَّم به مركزياً في نسخة SaaS) */
+  const aiOn = () => { try { return typeof CONFIG !== "undefined" && CONFIG.AI_API === true; } catch (e) { return false; } };
   async function gemGenerate(key, task, parts, cfg, modelsOverride) {
+    if (task !== "ocr" && task !== "detect" && !aiOn()) { const e = new Error("🔒 التوليد بالذكاء الاصطناعي (API) معطّل حالياً"); e.code = "API_OFF"; throw e; }
     const models = [...new Set(modelsOverride || await gemModels(key, task))], waits = [0, 4000, 10000, 20000]; let last = "";
     const note = t => { for (const id of ["gen-automsg", "gen-msg"]) { const el = typeof document !== "undefined" && document.getElementById(id); if (el && (!el.textContent || /^⏳|Google/.test(el.textContent))) el.textContent = t; } };
     for (let round = 0; round < waits.length; round++) {
@@ -387,7 +390,8 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 
   /* ───────────── الواجهة داخل تبويب «بناء الصفحات المتقدم» ───────────── */
   const S = { canvas: null, cuts: [], regions: [], file: null, regionMode: false };
-  function mount(host) {
+  function mount(host) { mount0(host); if (!aiOn()) { const c = host.querySelector("#gen-card"); if (c) { const b = document.createElement("div"); b.style.cssText = "margin:.4rem 0 .8rem;padding:.6rem .8rem;background:#fff4e5;border:1.5px solid #f0c987;border-radius:10px;font-weight:700;color:#8a5a00;line-height:1.7"; b.textContent = "🔒 التوليد بالذكاء الاصطناعي (توليد الصفحة والوصف) معطّل حالياً — لا يُستهلك أي API. الأدوات الأخرى (تحرير صفحة جاهزة، قصّها وتقسيمها) تعمل كالمعتاد."; c.insertBefore(b, c.children[1] || null); const mk = host.querySelector("#gen-make"); if (mk) { mk.disabled = true; mk.title = "معطّل حالياً"; } } } }
+  function mount0(host) {
     host.innerHTML = `
 <div class="card" id="gen-card" style="margin-bottom:1rem">
   <b style="color:var(--green);font-size:1.15rem">✨ توليد صفحة جديدة</b>
@@ -833,5 +837,5 @@ Before rendering, internally verify every text element: no duplicated sentences,
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
-  return { gemGenerate, imageModels, showResult, savePage, editPage, editAdvanced, downloadPage, setParts, brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
+  return { aiOn, gemGenerate, imageModels, showResult, savePage, editPage, editAdvanced, downloadPage, setParts, brushMode, detectText, eraseBrush, eraseAll, eraseMode, eraseUndo, downloadClean, geminiErase: null, eraseRects, geminiEraseRegion, LANGS, buildPrompt, extractIntended, snapText, auto, generateImage, approve, regen, checkImage, ocrFn: null, downloadOrig, restoreLast, downloadLast, showLast, copyHidden, makeFinal, setCanvas, imgFn: null, testKey, gemPrefs, gemTrack, proofread, localFix, copyFinal, textFn: null, loadImage, suggestCuts, groupLines, analyze, erase, refineBox, cleanArabic, geminiOcr, geminiDetect, detect, detectFn: null, removeBgCall, cropBlob, convert, mount, makePrompt, copyPrompt, onFile, recut, run, engineUI, regionMode, step, ocr: null, removeBg: null };
 })();
