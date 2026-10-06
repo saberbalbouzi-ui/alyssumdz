@@ -76,7 +76,13 @@ const PB = (() => {
     const ye = cv > 0 ? top + sag : top, ym = cv > 0 ? top : top + sag, yc = 2 * ym - ye, H = Math.round(top + sag + fsv * .55 + 10), pid = "pbtc-" + id;
     return `<svg class="pb-tc" viewBox="0 0 ${Wv} ${H}" style="display:block;width:100%;height:auto;overflow:visible" role="img" aria-label="${esc(s.text)}"><path id="${pid}" d="M 30 ${Math.round(ye)} Q ${Wv / 2} ${Math.round(yc)} ${Wv - 30} ${Math.round(ye)}" fill="none"/><text style="font-size:${fsv}px;fill:currentColor;font-family:inherit;font-weight:inherit;letter-spacing:inherit"><textPath href="#${pid}" startOffset="50%" text-anchor="middle">${esc(s.text)}</textPath></text></svg>`;
   }
-  const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); textFx(c, sel, s); };
+  /* رموز القائمة النقطية في عنصر النص */
+  const LMARKS = ["•", "●", "■", "◆", "✔", "✓", "✅", "★", "☆", "✦", "❖", "➜", "➤", "»", "♥", "✿", "⚡", "🔥", "👍", "🌿", "🍯", "📌", "💎", "🎁"];
+  function listFx(c, sel, s) {
+    if (!s.lm) return; const m = String(s.lm), css = x => String(x).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " "), col = /^#[0-9a-f]{3,8}$/i.test(s.lmc || "") ? s.lmc : "inherit";
+    c.d.push(`${sel} .pb-tx ul,${sel} .pb-tx ol{list-style:none;margin:0 0 .8em;padding:0;${m === "num" ? "counter-reset:pbl;" : ""}}${sel} .pb-tx li{position:relative;padding-inline-start:1.7em;margin:.3em 0;${m === "num" ? "counter-increment:pbl;" : ""}}${sel} .pb-tx li:before{content:${m === "num" ? 'counter(pbl) "."' : '"' + css(m) + '"'};position:absolute;inset-inline-start:0;top:0;color:${col};font-weight:900}`);
+  }
+  const textGrad = (c, sel, s) => { const g = gradCss(s.tgr); if (g) c.d.push(`${sel} .pb-t{background-image:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}`); textFx(c, sel, s); listFx(c, sel, s); };
   const BOX = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]];
   /* الخلفية/الحدود غير المتجاوبة (قيمة واحدة) */
   const hexA = (c, a) => { a = num(a); if (a == null || a >= 1) return c; const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (m) { const n = parseInt(m[1], 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; } return `color-mix(in srgb,${c} ${Math.round(a * 100)}%,transparent)`; };
@@ -247,7 +253,7 @@ const PB = (() => {
     },
     text: {
       label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
-      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl(), [TGR]),
+      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }]), [TGR]),
       html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
     },
@@ -898,5 +904,5 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();

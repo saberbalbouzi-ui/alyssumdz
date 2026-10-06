@@ -921,7 +921,7 @@ body{overflow-x:hidden;margin:0}`;
         + `<span class="qn"><button type="button" data-qb="fs-" title="تصغير الخط">−</button><input type="number" data-qi="fs" min="8" max="160" value="${fs}" title="حجم الخط"><button type="button" data-qb="fs+" title="تكبير الخط">+</button></span>`
         + `<label class="qa" title="لون النص"><b>A</b><i style="background:${col}"></i><input type="color" data-qi="color" value="${col}"></label>` + sep
         + btn("bold", QI.B, "عريض", fw >= 600) + btn("italic", QI.I, "مائل", set.fst === "italic") + btn("under", QI.U, "تحته خط", set.td === "underline") + btn("strike", QI.S, "يتوسطه خط", set.td === "line-through") + btn("case", QI.case, "حالة الأحرف: كبيرة / أول حرف / عادي", !!set.tt && set.tt !== "none")
-        + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + (t === "text" ? btn("list", QI.list, "قائمة نقطية", /<ul/i.test(set.html || "")) : "") + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
+        + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + (t === "text" ? btn("list", QI.list, "قائمة بنقطة أو أيقونة", /<[uo]l/i.test(set.html || "")) + `<label class="qa" title="لون رمز القائمة (الافتراضي: لون النص)"><b>${esc(set.lm && set.lm !== "num" ? set.lm : "•")}</b><i style="background:${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></i><input type="color" data-qi="lmc" value="${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></label>` : "") + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
     } else if (isImg) {
       h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") + tb("textcap", "التقاط النص", "يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل") + tb("magic", "التقاط سحري", "يفصل العناصر (أشخاص، منتجات…) كصور شفافة") + sep
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + btn("crop", QI.crop, "قصّ الصورة", !!set.crop) + tb("flip", "قلب", "قلب الصورة أفقياً أو عمودياً", !!(set.flx || set.fly)) + sep;
@@ -964,6 +964,13 @@ body{overflow-x:hidden;margin:0}`;
     return `<h6>${label}</h6><div class="pr"><input type="range" data-pr="${k}" min="${mn}" max="${mx}" step="${stp}" value="${val}"><b>${val}</b></div>`;
   }
   function bindRanges(p, inf, fn) { p.querySelectorAll("input[data-pr]").forEach(r => { r.oninput = () => { r.parentNode.querySelector("b").textContent = r.value; fn(r.dataset.pr, Number(r.value)); }; r.onchange = () => { commitHist(); renderInspector(); }; }); }
+  /* تحويل نص العنصر إلى قائمة (أو إزالتها) وضبط رمزها */
+  function qList(inf, m) {
+    const set = inf.set, h = set.html || "", isL = /<[uo]l/i.test(h);
+    if (m === "__none") { if (isL) set.html = h.replace(/<\/?[uo]l[^>]*>/gi, "").replace(/<li[^>]*>/gi, "<p>").replace(/<\/li>/gi, "</p>"); delete set.lm; delete set.lmc; }
+    else { if (!isL) set.html = "<ul>" + (h.match(/<p[\s>]/i) ? h.replace(/<p[^>]*>/gi, "<li>").replace(/<\/p>/gi, "</li>") : "<li>" + h + "</li>") + "</ul>"; if (m === "__def") delete set.lm; else set.lm = m; }
+    E.nextLabel = "قائمة النص"; afterEdit();
+  }
   function qAct(k, btn) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
     if (k === "fs-" || k === "fs+") { const cs = qFont(inf), cur = Number(eff(set, "fs", dev)) || (cs ? Math.round(parseFloat(cs.fontSize)) : 17); return qDone(inf, "fs", Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
@@ -973,7 +980,10 @@ body{overflow-x:hidden;margin:0}`;
     if (k === "strike") return qDone(inf, "td", set.td === "line-through" ? "" : "line-through");
     if (k === "case") return qDone(inf, "tt", !set.tt || set.tt === "none" ? "uppercase" : set.tt === "uppercase" ? "capitalize" : "");
     if (k === "align") { const o = ["start", "center", "end"], c = eff(set, "ta", dev) || "start"; return qDone(inf, "ta", o[(o.indexOf(c) + 1) % 3], true); }
-    if (k === "list") { const h = set.html || ""; set.html = /<ul/i.test(h) ? h.replace(/<\/?ul[^>]*>/gi, "").replace(/<li[^>]*>/gi, "<p>").replace(/<\/li>/gi, "</p>") : "<ul>" + (h.match(/<p[\s>]/i) ? h.replace(/<p[^>]*>/gi, "<li>").replace(/<\/p>/gi, "</li>") : "<li>" + h + "</li>") + "</ul>"; E.nextLabel = "قائمة نقطية"; return afterEdit(); }
+    if (k === "list") {
+      const isL = /<[uo]l/i.test(set.html || ""), cur = set.lm || "", mk = PB.LMARKS, curC = /^#[0-9a-f]{6}$/i.test(set.lmc || "");
+      return qPop(btn, `<h6>رمز القائمة</h6><div class="pg lmg"><button type="button" class="pb2${!isL ? " on" : ""}" data-lm="__none" style="grid-column:span 3">بدون قائمة</button><button type="button" class="pb2${isL && !cur ? " on" : ""}" data-lm="__def">نقطة عادية</button><button type="button" class="pb2${cur === "num" ? " on" : ""}" data-lm="num">1 2 3</button><span></span>${mk.map(m => `<button type="button" class="pb2 lmt${cur === m ? " on" : ""}" data-lm="${m}">${m}</button>`).join("")}</div><h6>رمز آخر (حرف أو إيموجي)</h6><input type="text" data-lc maxlength="4" placeholder="اكتب أو الصق رمزاً" style="width:100%;height:34px;border:1px solid #d9dbe3;border-radius:8px;padding:0 .6rem;font-family:inherit;margin-bottom:.5rem">${curC ? '<button type="button" class="rst" data-rc>↺ لون الرمز = لون النص</button>' : ""}`,
+        p => { p.querySelectorAll("[data-lm]").forEach(b => b.onclick = () => { qList(inf, b.dataset.lm); qAct("list", btn); }); const ci = p.querySelector("[data-lc]"); ci.onchange = () => setTimeout(() => { if (ci.value.trim()) { qList(inf, ci.value.trim()); qAct("list", btn); } }, 0); const rc = p.querySelector("[data-rc]"); if (rc) rc.onclick = () => { delete set.lmc; afterEdit(); qAct("list", btn); }; }, { dock: true }); }
     if (k === "spacing") { const cs = qFont(inf), ls = Number(eff(set, "ls", dev)) || 0, lh = Number(eff(set, "lh", dev)) || (cs ? Math.round(parseFloat(cs.lineHeight) / parseFloat(cs.fontSize) * 10) / 10 || 1.4 : 1.4);
       return qPop(btn, qRange(inf, null, "ls", "التباعد بين الحروف (px)", -5, 20, .5, ls) + qRange(inf, null, "lh", "التباعد بين الأسطر", .8, 3, .1, lh), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)), { dock: true }); }
     if (k === "opacity") { const v = Math.round((num(set.op) ?? 1) * 100); return qPop(btn, qRange(inf, null, "op", "شفافية العنصر %", 0, 100, 1, v), p => bindRanges(p, inf, (kk, val) => qLive(inf, "op", val >= 100 ? "" : val / 100))); }
