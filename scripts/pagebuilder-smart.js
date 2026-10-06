@@ -193,12 +193,42 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const names = () => { const c = {}, n = {}; items.forEach(it => c[it.label] = (c[it.label] || 0) + 1); const out = {}; items.slice().sort((a, b) => a.v.cx - b.v.cx).forEach(it => { n[it.label] = (n[it.label] || 0) + 1; out[it.id] = c[it.label] > 1 ? it.label + " " + n[it.label] : it.label; }); return out; };
     const ex = $("pbs-extra");
     ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><div id="pbs-refine" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button><div style="font-size:.74rem;color:#8a8472;line-height:1.6">🔒 معالجة محلية بالكامل: D-FINE + SAM 2.1 + تحسين الحواف + MI-GAN. لا تُرسل الصورة إلى API.</div>';
-    let refineMode = null;
+    let refineMode = null, refineHistory = [], refineBusy = false;
+    const selectedItem = () => sel.size === 1 ? items.find(q => q.id === [...sel][0]) : null;
+    const pushRefineHistory = it => {
+      if (!it || !it.lo) return;
+      refineHistory.push({ id: it.id, lo: it.lo.slice(), x0: it.x0, y0: it.y0, x1: it.x1, y1: it.y1, area: it.area });
+      if (refineHistory.length > 12) refineHistory.shift();
+    };
+    const undoRefine = () => {
+      const h = refineHistory.pop(), it = h && items.find(q => q.id === h.id);
+      if (!it) return;
+      it.lo = h.lo; it.x0 = h.x0; it.y0 = h.y0; it.x1 = h.x1; it.y1 = h.y1; it.area = h.area;
+      it.manual = true; it.v = null; prep(it); paint();
+      $("pbs-msg").textContent = "↶ تم التراجع عن آخر تعديل للقناع.";
+    };
     function refineUI() {
       const box = $("pbs-refine"), one = sel.size === 1 && sh.S.mode !== "all";
       if (!box) return;
-      box.innerHTML = one ? '<button type="button" data-rf="add" style="border:1.5px solid #16a34a;background:'+(refineMode==="add"?'#16a34a':'#fff')+';color:'+(refineMode==="add"?'#fff':'#166534')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">＋ إضافة جزء</button><button type="button" data-rf="sub" style="border:1.5px solid #dc2626;background:'+(refineMode==="sub"?'#dc2626':'#fff')+';color:'+(refineMode==="sub"?'#fff':'#991b1b')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">− استبعاد جزء</button>' : '';
-      box.querySelectorAll("button").forEach(b => b.onclick = () => { refineMode = refineMode === b.dataset.rf ? null : b.dataset.rf; ov.style.cursor = refineMode ? "crosshair" : "pointer"; $("pbs-msg").textContent = refineMode === "add" ? "＋ انقر على جزء من العنصر تريد إضافته إلى القناع." : refineMode === "sub" ? "− انقر على جزء تريد استبعاده من القناع (مثلاً أصابع فوق عبوة)." : ""; refineUI(); paint(); });
+      if (!one) { refineMode = null; refineHistory = []; box.innerHTML = ""; return; }
+      const canUndo = refineHistory.length > 0;
+      box.innerHTML =
+        '<button type="button" data-rf="add" style="border:1.5px solid #16a34a;background:'+(refineMode==="add"?'#16a34a':'#fff')+';color:'+(refineMode==="add"?'#fff':'#166534')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">＋ إضافة</button>' +
+        '<button type="button" data-rf="sub" style="border:1.5px solid #dc2626;background:'+(refineMode==="sub"?'#dc2626':'#fff')+';color:'+(refineMode==="sub"?'#fff':'#991b1b')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">− استبعاد</button>' +
+        '<button type="button" id="pbs-rf-undo" '+(canUndo?'':'disabled')+' style="border:1.5px solid #64748b;background:#fff;color:#334155;border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer;opacity:'+(canUndo?'1':'.45')+'">↶ تراجع</button>' +
+        (refineMode ? '<button type="button" id="pbs-rf-done" style="border:1.5px solid #0d9488;background:#0d9488;color:#fff;border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">✓ إنهاء</button>' : '');
+      box.querySelectorAll("[data-rf]").forEach(b => b.onclick = () => {
+        refineMode = refineMode === b.dataset.rf ? null : b.dataset.rf;
+        ov.style.cursor = refineMode ? "crosshair" : "pointer";
+        $("pbs-msg").textContent = refineMode === "add" ? "＋ انقر عدة مرات لإضافة الأجزاء المطلوبة. اضغط ✓ عند الانتهاء." :
+          refineMode === "sub" ? "− انقر عدة مرات لاستبعاد الأجزاء. اضغط ✓ عند الانتهاء." : "";
+        refineUI(); paint();
+      });
+      const ub = $("pbs-rf-undo"); if (ub) ub.onclick = undoRefine;
+      const db = $("pbs-rf-done"); if (db) db.onclick = () => {
+        refineMode = null; ov.style.cursor = "pointer"; $("pbs-msg").textContent = "✅ تم إنهاء تحسين القناع.";
+        refineUI(); paint();
+      };
     }
     function list() {
       const nm = names(), on = it => sh.S.mode === "all" || sel.has(it.id);
@@ -241,10 +271,19 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         if (sh.S.mode === "all") setMode("one"); sel = new Set(hit.map(it => it.id)); paint(); $("pbs-msg").textContent = "▭ حُدّد " + hit.length + ": " + hit.map(it => names()[it.id]).join("، ") + " — العناصر المقطوعة (كيد/جسم يمسك المنتج) لا تُلتقط."; return; }
       if (d.moved) { const b = rectOf(d, x, y); if (b[2] - b[0] < 8 || b[3] - b[1] < 8) return paint(); return add({ box: b }, "تحديد العنصر داخل المستطيل…"); }
       const h = at(x, y);
-      if (refineMode && sel.size === 1) {
-        const it = items.find(q => q.id === [...sel][0]);
-        if (it) { busy = true; $("pbs-msg").textContent = refineMode === "add" ? "⏳ إضافة الجزء إلى القناع…" : "⏳ استبعاد الجزء من القناع…"; paint();
-          AIVision.refineItem(S, it, [x / k, y / k], refineMode, items).then(() => { busy = false; refineMode = null; prep(it); paint(); $("pbs-msg").textContent = "✅ تم تحسين القناع."; }).catch(e => { busy = false; $("pbs-msg").textContent = "⚠️ " + e.message; paint(); });
+      if (refineMode && sel.size === 1 && !refineBusy) {
+        const it = selectedItem();
+        if (it) {
+          refineBusy = true; busy = true; pushRefineHistory(it);
+          const mode0 = refineMode;
+          $("pbs-msg").textContent = mode0 === "add" ? "⏳ إضافة الجزء إلى القناع…" : "⏳ استبعاد الجزء من القناع…"; paint();
+          AIVision.refineItem(S, it, [x / k, y / k], mode0, items).then(() => {
+            refineBusy = false; busy = false; prep(it); refineUI(); paint();
+            $("pbs-msg").textContent = mode0 === "add" ? "＋ تمت الإضافة — يمكنك مواصلة النقر." : "− تم الاستبعاد — يمكنك مواصلة النقر.";
+          }).catch(e => {
+            refineBusy = false; busy = false; refineHistory.pop();
+            $("pbs-msg").textContent = "⚠️ " + e.message; paint();
+          });
         }
         return;
       }
