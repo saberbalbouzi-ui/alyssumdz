@@ -192,11 +192,18 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     let sel = new Set(), hov = -1, busy = false;  if (Z) items.forEach(i => { if (i.zoneMain) sel.add(i.id); });      // العنصر داخل المنطقة محدَّد مسبقاً
     const names = () => { const c = {}, n = {}; items.forEach(it => c[it.label] = (c[it.label] || 0) + 1); const out = {}; items.slice().sort((a, b) => a.v.cx - b.v.cx).forEach(it => { n[it.label] = (n[it.label] || 0) + 1; out[it.id] = c[it.label] > 1 ? it.label + " " + n[it.label] : it.label; }); return out; };
     const ex = $("pbs-extra");
-    ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button><div style="font-size:.74rem;color:#8a8472;line-height:1.6">🔒 معالجة محلية بالكامل: D-FINE + SAM 2.1 + تحسين الحواف + MI-GAN. لا تُرسل الصورة إلى API.</div>');
+    ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><div id="pbs-refine" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"></div><button id="pbs-merge"
+    let refineMode = null;
+    function refineUI() {
+      const box = $("pbs-refine"), one = sel.size === 1 && sh.S.mode !== "all";
+      if (!box) return;
+      box.innerHTML = one ? '<button type="button" data-rf="add" style="border:1.5px solid #16a34a;background:'+(refineMode==="add"?'#16a34a':'#fff')+';color:'+(refineMode==="add"?'#fff':'#166534')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">＋ إضافة جزء</button><button type="button" data-rf="sub" style="border:1.5px solid #dc2626;background:'+(refineMode==="sub"?'#dc2626':'#fff')+';color:'+(refineMode==="sub"?'#fff':'#991b1b')+';border-radius:10px;padding:.38rem .55rem;font-weight:800;cursor:pointer">− استبعاد جزء</button>' : '';
+      box.querySelectorAll("button").forEach(b => b.onclick = () => { refineMode = refineMode === b.dataset.rf ? null : b.dataset.rf; ov.style.cursor = refineMode ? "crosshair" : "pointer"; $("pbs-msg").textContent = refineMode === "add" ? "＋ انقر على جزء من العنصر تريد إضافته إلى القناع." : refineMode === "sub" ? "− انقر على جزء تريد استبعاده من القناع (مثلاً أصابع فوق عبوة)." : ""; refineUI(); paint(); });
+    }
     function list() {
       const nm = names(), on = it => sh.S.mode === "all" || sel.has(it.id);
       const html = items.map(it => `<button type="button" data-id="${it.id}" style="border:1.5px solid #0d9488;border-radius:999px;padding:.22rem .6rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;background:${on(it) ? "#0d9488" : "#fff"};color:${on(it) ? "#fff" : "#0d9488"}">${on(it) ? "✓ " : ""}${esc(nm[it.id])}</button>`).join("");
-      $("pbs-merge").style.display = sh.S.mode !== "all" && sel.size > 1 ? "block" : "none"; if (html === list.last) return; list.last = html; $("pbs-list").innerHTML = html;      // لا نعيد البناء عند مجرد التمرير
+      $("pbs-merge").style.display = sh.S.mode !== "all" && sel.size > 1 ? "block" : "none"; refineUI(); if (html === list.last) return; list.last = html; $("pbs-list").innerHTML = html;      // لا نعيد البناء عند مجرد التمرير
       $("pbs-list").querySelectorAll("button").forEach(b => { b.onclick = () => { const id = +b.dataset.id; if (sh.S.mode === "all") setMode("one"); sel.has(id) ? sel.delete(id) : sel.add(id); paint(); }; b.onmouseenter = () => { hov = +b.dataset.id; paint(); }; b.onmouseleave = () => { hov = -1; paint(); }; });
     }
     function paint() {
@@ -233,7 +240,15 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       if (rsel) { if (!d.moved) return paint(); const r = rectOf(d, x, y), hit = items.filter(it => inRect(it, r)); if (!hit.length) { paint(); $("pbs-msg").textContent = "▭ لا يوجد عنصر كامل داخل المستطيل — وسِّعه ليشمل العنصر كله (الأجزاء الناقصة تُتجاهل)."; return; }
         if (sh.S.mode === "all") setMode("one"); sel = new Set(hit.map(it => it.id)); paint(); $("pbs-msg").textContent = "▭ حُدّد " + hit.length + ": " + hit.map(it => names()[it.id]).join("، ") + " — العناصر المقطوعة (كيد/جسم يمسك المنتج) لا تُلتقط."; return; }
       if (d.moved) { const b = rectOf(d, x, y); if (b[2] - b[0] < 8 || b[3] - b[1] < 8) return paint(); return add({ box: b }, "تحديد العنصر داخل المستطيل…"); }
-      const h = at(x, y); if (h >= 0) { if (sh.S.mode !== "all") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
+      const h = at(x, y);
+      if (refineMode && sel.size === 1) {
+        const it = items.find(q => q.id === [...sel][0]);
+        if (it) { busy = true; $("pbs-msg").textContent = refineMode === "add" ? "⏳ إضافة الجزء إلى القناع…" : "⏳ استبعاد الجزء من القناع…"; paint();
+          AIVision.refineItem(S, it, [x / k, y / k], refineMode, items).then(() => { busy = false; refineMode = null; prep(it); paint(); $("pbs-msg").textContent = "✅ تم تحسين القناع."; }).catch(e => { busy = false; $("pbs-msg").textContent = "⚠️ " + e.message; paint(); });
+        }
+        return;
+      }
+      if (h >= 0) { if (sh.S.mode !== "all") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
       add({ pts: [[x / k, y / k, 1]] }, "تحديد العنصر تحت النقرة…"); };
     ov.onpointermove = (f => e => { if (drag) return mm(e); f(e); })(ov.onpointermove); ov.onpointerup = mu; ov.onpointercancel = () => { drag = null; paint(); };
     const cl0 = sh.close; sh.close = () => { cl0(); };
