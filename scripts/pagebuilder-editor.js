@@ -1066,7 +1066,7 @@ body{overflow-x:hidden;margin:0}`;
     const gridCell = inf.kind === "column" && inf.sec.set.kind === "grid";
     const m0 = ((own(set, "mar", dev) || eff(set, "mar", dev)) || [0, 0, 0, 0]).slice();
     let nb = null, pair = 0, sc0 = null, ws0 = null, cc0 = null;
-    let minW = 24; if (free && (inf.node.type === "heading" || inf.node.type === "text")) { try { const t = el.querySelector(".pb-t"), cs = fdoc.defaultView.getComputedStyle(t), c2 = document.createElement("canvas").getContext("2d"); c2.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; const lw = Math.max(0, ...(t.innerText || t.textContent || "").split(/\s+/).map(w => c2.measureText(w).width)); minW = Math.max(24, Math.ceil(lw + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 6)); } catch (x) { } }      // لا يضيق إطار النص عن أطول كلمة فلا تتكسّر الحروف عمودياً
+    const minW = 14;      // بلا حدّ أدنى فعلي: يمكن تضييق إطار النص كثيراً فتنكسر الحروف عمودياً
     let ic = null; if (free && inf.node.type === "image") { const im = el.querySelector("img.pb-im"); if (im && im.naturalWidth) {      /* قصّ الصورة: مستطيل الصورة داخل الإطار (px) */
       const q = im.naturalHeight / im.naturalWidth, c = set.crop, W0 = r0.width, H0 = r0.height;
       if (c && c.w) ic = { x: c.x / 100 * W0, y: c.y / 100 * H0, w: c.w / 100 * W0, q };
