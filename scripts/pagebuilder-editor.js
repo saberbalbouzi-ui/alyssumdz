@@ -133,6 +133,11 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.widget .pbx-h.d-nw{width:15px;height:15px;top:-8px;left:-8px;background:#8b3dff;border-color:#fff;box-shadow:0 0 0 1.5px #8b3dff,0 1px 4px rgba(0,0,0,.3)}
 .pbx-box.widget .pbx-h.d-ne{top:-7px;right:-7px}.pbx-box.widget .pbx-h.d-se{bottom:-7px;right:-7px}.pbx-box.widget .pbx-h.d-sw{bottom:-7px;left:-7px}
 .pbx-box.widget .pbx-rad{border-color:#8b3dff}
+.pbx-add2{display:block;margin:16px auto 80px;border:1px solid #bdbfca;background:rgba(255,255,255,.35);color:#111;border-radius:12px;padding:.75rem;font-weight:800;font-family:inherit;font-size:.95rem;cursor:pointer}.pbx-add2:hover{background:rgba(255,255,255,.75)}
+.pbx-thumbs{position:fixed;z-index:20;width:80px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow-y:auto;overflow-x:hidden;padding:4px 0;scrollbar-width:thin;direction:ltr}
+.pbx-th{position:relative;flex:none;background:#fff;border:2px solid #fff;border-radius:7px;box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer;overflow:hidden;box-sizing:content-box;background-size:cover;background-position:center}.pbx-th:hover{border-color:#c9b6ef}.pbx-th.on{border-color:#8b3dff}.pbx-th.off{opacity:.45}
+.pbx-th>b{position:absolute;left:3px;bottom:1px;font-size:10px;font-weight:800;color:#111;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;z-index:2}.pbx-th>i{position:absolute;right:3px;top:2px;font-size:9px;font-style:normal;z-index:2}.pbx-th>u{position:absolute;display:block;text-decoration:none;border-radius:1px;background-size:cover;background-position:center}
+.pbx-thadd{flex:none;width:70px;height:42px;border:0;border-radius:9px;background:#e6e7ec;color:#111;font-size:22px;cursor:pointer;font-family:inherit}.pbx-thadd:hover{background:#dcdde4}
 .pb-edit .pb-off{opacity:.3;outline:2px dashed #999;outline-offset:-2px}
 .pbx-sbar{position:absolute;display:flex;flex-direction:column;gap:2px;pointer-events:auto;z-index:6;background:#fff;border-radius:12px;padding:5px;box-shadow:0 3px 14px rgba(14,19,24,.25),0 0 0 1px rgba(64,87,109,.08)}
 .pbx-sbar button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0}.pbx-sbar button:hover{background:#ebeef2}.pbx-sbar button[disabled]{opacity:.3;cursor:default;background:none}.pbx-sbar button.on{background:#ebeef2;color:#8b3dff}.pbx-sbar button.add{background:#f1f2f6}.pbx-sbar button.dng:hover{color:#b83232}.pbx-sbar svg{width:20px;height:20px;display:block}
@@ -184,7 +189,7 @@ body{overflow-x:hidden;margin:0}`;
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
   <div class="pbx-stage" id="pbx-stage">
     <div class="pbx-sc" id="pbx-sc"><div class="pbx-fw" id="pbx-fw"><iframe id="pbx-frame" title="القماش"></iframe></div></div>
-    ${FREE_ONLY ? "" : '<button class="pbx-add" onclick="PBApp.addBlank()">＋ إضافة قسم جديد</button>'}
+    ${FREE_ONLY ? '<button class="pbx-add2" id="pbx-add2" onclick="PBApp.addBlank()">＋ إضافة قسم جديد</button>' : '<button class="pbx-add" onclick="PBApp.addBlank()">＋ إضافة قسم جديد</button>'}
     <div id="pbx-ovl"></div>
   </div>
   <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
@@ -417,7 +422,7 @@ body{overflow-x:hidden;margin:0}`;
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
-    fitStage(); positionOverlay();
+    fitStage(); positionOverlay(); thumbsSoon();
   }
   function fixCountdown() { root.querySelectorAll(".pb-cd").forEach(el => { const v = { d: "00", h: "23", m: "59", s: "59" }; for (const k in v) { const b = el.querySelector(`[data-u=${k}]`); if (b) b.textContent = v[k]; } }); }
   function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(renderCanvas); }
@@ -510,10 +515,13 @@ body{overflow-x:hidden;margin:0}`;
   }
   function fitStage() {
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
-    const w = DEVW[E.dev], s = Math.min(1, Math.max(300, st.clientWidth - 36) / w) * (E.zoom || 1); E.scale = s;
+    const gut = FREE_ONLY && !isMob() ? 132 : 0; st.style.paddingRight = gut ? gut + "px" : "";      // يمين الصفحة: شريط القسم ومصغّرات الأقسام
+    const w = DEVW[E.dev], s = Math.min(1, Math.max(300, st.clientWidth - gut - 36) / w) * (E.zoom || 1); E.scale = s;
     const h = FREE_ONLY ? Math.max(200, root ? root.offsetHeight : 0) : Math.max(500, (root ? root.offsetHeight : 0) + 40);      // بلا أقسام عادية: لا شريط أبيض تحت آخر قسم
     fw.style.width = w + "px"; fw.style.height = h + "px"; fw.style.transform = `scale(${s})`; frame.style.height = h + "px";
     sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
+    const ad = $("pbx-add2"); if (ad) ad.style.width = (w * s) + "px";
+    drawThumbs(true);
   }
   const renderCanvasHeight = () => fitStage();
 
@@ -730,7 +738,7 @@ body{overflow-x:hidden;margin:0}`;
 
   function positionOverlay() {
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
-    try { drawSecBar(ovl); } catch (x) { console.warn(x); }
+    try { drawSecBar(ovl); markThumbs(); } catch (x) { console.warn(x); }
     if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
     const el = fdoc.querySelector(`[data-pb="${E.sel}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, rotV = inf.kind === "widget" ? (num(eff(inf.set, "rot", E.dev)) || 0) : 0;
@@ -829,6 +837,39 @@ body{overflow-x:hidden;margin:0}`;
   function dupSec(sec) { const c = reId(clone(sec)); delete c.set.locked; E.page.sections.splice(E.page.sections.indexOf(sec) + 1, 0, c); E.hs = c.id; E.nextLabel = "تكرار قسم"; afterEdit(null); toast("⧉ نُسخ القسم بكل محتواه"); }
   function delSec(sec) { const L = E.page.sections, i = L.indexOf(sec); if (sec.set.locked) { toast("🔒 القسم مقفل — افتح قفله أولاً"); return; } L.splice(i, 1); E.hs = (L[i] || L[i - 1] || {}).id; E.nextLabel = "حذف قسم"; afterEdit(null); toastUndo("🗑 حُذف القسم وكل محتواه"); }
   function addSecAfter(sec) { const s = TPLS.canvas.f(), L = E.page.sections; s.free = s.free || []; L.splice((sec ? L.indexOf(sec) : L.length - 1) + 1, 0, s); E.hs = s.id; E.nextLabel = "إضافة قسم"; afterEdit(null); setTimeout(() => { const e = fdoc.querySelector(`[data-pb="${s.id}"]`); if (e) e.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف قسم فارغ"); }
+
+  /* ───────────────── مصغّرات الأقسام (عمود طولي على يمين الصفحة) ───────────────── */
+  let thT = 0;
+  const thumbsSoon = () => { clearTimeout(thT); thT = setTimeout(() => drawThumbs(), 150); };
+  function placeThumbs() {
+    const box = $("pbx-thumbs"), ovl = $("pbx-ovl"), st = $("pbx-stage"); if (!box || !ovl || !st) return;
+    const o = ovl.getBoundingClientRect(), r = st.getBoundingClientRect(); box.style.left = Math.max(0, o.right - 84) + "px"; box.style.top = (r.top + 10) + "px"; box.style.maxHeight = Math.max(80, r.height - 20) + "px";
+  }
+  function markThumbs() { const box = $("pbx-thumbs"); if (!box) return; box.querySelectorAll("[data-th]").forEach(t => t.classList.toggle("on", t.dataset.th === (actSec() || {}).id)); placeThumbs(); }
+  function drawThumbs(light) {
+    const app = $("pb-app"); if (!app || !E.page || !fdoc || !root) return;
+    let box = $("pbx-thumbs");
+    if (!box) { box = document.createElement("div"); box.id = "pbx-thumbs"; box.className = "pbx-thumbs"; app.appendChild(box);
+      box.addEventListener("click", ev => { const t = ev.target.closest("[data-th]"); if (t) { E.hs = t.dataset.th; markThumbs(); positionOverlay(); const el = fdoc.querySelector(`[data-pb="${E.hs}"]`); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" }); return; } if (ev.target.closest("[data-thadd]")) addSecAfter(E.page.sections[E.page.sections.length - 1]); }); }
+    const show = FREE_ONLY && !isMob(); box.style.display = show ? "" : "none"; if (!show) return; placeThumbs(); if (light) return;
+    const TW = 66, frag = document.createDocumentFragment(), cv = fdoc.defaultView;
+    E.page.sections.forEach((sec, i) => {
+      const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return; const sr = el.getBoundingClientRect(), H = Math.max(40, sr.height), W = Math.max(100, sr.width), th = Math.max(30, Math.min(110, Math.round(TW * H / W))), cs = cv.getComputedStyle(el);
+      const d = document.createElement("div"); d.className = "pbx-th" + (sec.set.off ? " off" : ""); d.dataset.th = sec.id; d.style.width = TW + "px"; d.style.height = th + "px"; d.title = "قسم " + (i + 1);
+      if (cs.backgroundColor && cs.backgroundColor !== "rgba(0, 0, 0, 0)") d.style.backgroundColor = cs.backgroundColor; if (cs.backgroundImage && cs.backgroundImage !== "none" && /url\(/.test(cs.backgroundImage)) d.style.backgroundImage = cs.backgroundImage.replace(/^.*?(url\([^)]*\)).*$/, "$1");
+      el.querySelectorAll('[data-kind="widget"]').forEach(w => {
+        const r = w.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return; const t = w.dataset.type || "", u = document.createElement("u");
+        let x = (r.left - sr.left) / W * TW, y = (r.top - sr.top) / H * th, bw = r.width / W * TW, bh = r.height / H * th;
+        if (t === "image") { const im = w.querySelector("img"); if (im && im.src) u.style.backgroundImage = `url("${im.src}")`; else u.style.background = "#e3e0d6"; }
+        else if (t === "heading" || t === "text") { u.style.background = "rgba(28,36,32,.72)"; bh = Math.max(1.5, Math.min(bh, t === "heading" ? 4 : 2)); bw *= .85; }
+        else if (t === "button") { const b = w.querySelector(".pb-btn"), c = b ? cv.getComputedStyle(b).backgroundColor : ""; u.style.background = c && c !== "rgba(0, 0, 0, 0)" ? c : "#157a55"; u.style.borderRadius = "3px"; }
+        else u.style.background = "#e3e0d6";
+        u.style.left = x + "px"; u.style.top = y + "px"; u.style.width = Math.max(1.5, bw) + "px"; u.style.height = Math.max(1.5, bh) + "px"; d.appendChild(u); });
+      const b = document.createElement("b"); b.textContent = i + 1; d.appendChild(b); if (sec.set.locked || sec.set.off) { const m = document.createElement("i"); m.textContent = sec.set.locked ? "🔒" : "🚫"; d.appendChild(m); }
+      frag.appendChild(d); });
+    const add = document.createElement("button"); add.type = "button"; add.className = "pbx-thadd"; add.dataset.thadd = "1"; add.title = "إضافة قسم جديد"; add.textContent = "＋"; frag.appendChild(add);
+    box.innerHTML = ""; box.appendChild(frag); markThumbs();
+  }
   function openMenuFor(btn) { const r = btn.getBoundingClientRect(); openCtx(r.left, r.bottom + 6, r); }
   /* قفل العنصر */
   const isLocked = inf => !!(inf && inf.kind === "widget" && (inf.set.locked || (inf.sec && inf.sec.set.locked)));
@@ -1084,7 +1125,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   function addSection(k, at) { const s = mkTpl(k); if (at == null) { const inf = selInfo(); at = inf ? inf.sec ? E.page.sections.indexOf(inf.sec) + 1 : E.page.sections.length : E.page.sections.length; } E.page.sections.splice(at, 0, s); afterEdit(s.id); if (isMob()) panel("l", false); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${s.id}"]`); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" }); }, 50); }
   /* قسم فارغ جديد يُضاف أسفل آخر قسم ويُحدَّد ليُنقل بأزرار الطبقات أو شريط القسم */
-  function addBlank() { addSection("_blank", E.page.sections.length); toast("✅ أُضيف قسم فارغ في الأسفل — انقله من «الطبقات» بالأسهم ▲▼"); }
+  function addBlank() { if (FREE_ONLY) return addSecAfter(E.page.sections[E.page.sections.length - 1]); addSection("_blank", E.page.sections.length); toast("✅ أُضيف قسم فارغ في الأسفل — انقله من «الطبقات» بالأسهم ▲▼"); }
   function addGrid() { const r = Math.max(1, Math.min(10, Number(($("gb-r") || {}).value) || 2)), c = Math.max(1, Math.min(12, Number(($("gb-c") || {}).value) || 3)), s = PB.mkGrid(r, c), inf = selInfo(), at = inf ? E.page.sections.indexOf(inf.sec) + 1 : E.page.sections.length; E.page.sections.splice(at, 0, s); afterEdit(s.id); }
 
   /* ───────────────── رفع الصور مباشرة من الصفحة (جودة عالية بلا تصغير مفرط) ───────────────── */
