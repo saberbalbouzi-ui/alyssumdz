@@ -12195,11 +12195,12 @@ const PBBgRemove = (function () {
   }
   /* مجموعة الموضوع: الأشخاص كلهم (أو الموضوع الرئيسي) + ما يحملونه + الأشياء الملاصقة لهم؛ أثاث الغرفة/ديكورها لا يدخل */
   const BGLBL = /^(إبريق|مزهرية|ساعة|لوحة|نافذة|ستارة|وسادة|أريكة|كرسي|طاولة|مصباح|نبتة|تلفاز|مرآة)/, PERS = /^(شخص|رجل|امرأة|إمرأة|سيدة|طفل|طفلة|ولد|بنت|فتاة|شاب|أم|أب)/;
-  function pickGroup(S, items) {
+  function pickGroup(S, items, tbl) {
     const main = pickMain(S, items); if (!main) return null; const px = S.W * S.H, bA = b => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]), bI = (a, c) => bA([Math.max(a[0], c[0]), Math.max(a[1], c[1]), Math.min(a[2], c[2]), Math.min(a[3], c[3])]);
     const bx = i => [i.x0, i.y0, i.x1, i.y1], persons = items.filter(i => PERS.test(i.label) && !i.holder); let seeds;
     if (PERS.test(main.label)) { const mx = Math.max(...persons.map(p => p.area)); seeds = persons.filter(p => p.area >= .12 * mx); } else { seeds = [main]; if (main.holder && !seeds.includes(main.holder)) seeds.push(main.holder); }
-    const grp = new Set(seeds); let grew = true;
+    if (tbl) seeds.push(tbl); const grp = new Set(seeds); let grew = true;      // الطاولة بذرة أيضاً: كل ما عليها (كتب، صحن، ملعقة) يلتحق بها
+
     while (grew) { grew = false; items.forEach(i => { if (grp.has(i) || BGLBL.test(i.label)) return; const held = i.holder && grp.has(i.holder);      // ما يحمله الموضوع يدخل دائماً (ولو ثقة كشفه منخفضة)
       if (!held && ((i.det || 1) < .3 || bA(bx(i)) < .004 * px || ![...grp].some(g => bI(bx(i), bx(g)) >= .5 * bA(bx(i))))) return; grp.add(i); grew = true; }); }
     return [...grp];
@@ -12209,18 +12210,28 @@ const PBBgRemove = (function () {
     const W = cv.width, H = cv.height, P = (x, y, l) => [W * x, H * y, l], t = await AIVision.addItem(S, { pts: [P(.5, .95, 1), P(.2, .95, 1), P(.8, .95, 1), P(.5, .03, 0), P(.1, .15, 0), P(.9, .15, 0)], label: "طاولة" }, items);
     if (!t) return null; const fr = (t.x1 - t.x0) * (t.y1 - t.y0) / (W * H); return t.y0 > H * .3 && t.y1 > H * .9 && fr > .05 && fr < .7 && t.area > 0 ? t : null;
   }
+  /* ثقوب صغيرة مغلقة داخل الموضوع (عبوة في يد لم يكشفها الكشف الخفيف…) تُملأ من الصورة الأصلية؛ الفراغات الكبيرة أو المتصلة بالحافة تبقى شفافة */
+  function fillHolesC(out, cv, maxFrac) {
+    const w = out.width, h = out.height, n = w * h, g = out.getContext("2d", { willReadFrequently: true }), im = g.getImageData(0, 0, w, h), d = im.data, o = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+    const lab = new Int32Array(n).fill(-1), q = new Int32Array(n), comps = []; let filled = 0;
+    for (let s0 = 0; s0 < n; s0++) { if (lab[s0] >= 0 || d[s0 * 4 + 3] > 40) continue; let hd = 0, tl = 0, border = false; const id = comps.length; q[tl++] = s0; lab[s0] = id;
+      while (hd < tl) { const p = q[hd++], x = p % w, y = (p / w) | 0; if (x === 0 || y === 0 || x === w - 1 || y === h - 1) border = true; for (const t of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1]) if (t >= 0 && lab[t] < 0 && d[t * 4 + 3] <= 40) { lab[t] = id; q[tl++] = t; } }
+      comps.push({ a: tl, border }); }
+    for (let i = 0; i < n; i++) { const c = comps[lab[i]]; if (c && !c.border && c.a < maxFrac * n) { d[i * 4] = o[i * 4]; d[i * 4 + 1] = o[i * 4 + 1]; d[i * 4 + 2] = o[i * 4 + 2]; d[i * 4 + 3] = 255; filled++; } }
+    if (filled) g.putImageData(im, 0, 0); return out;
+  }
   async function aiCut(srcC, o) {
     const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز أداة القص داخل متصفحك (أول مرة أطول)…");
-    const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items); if (grp && !grp.length) grp = null;
+    const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, tbl = null; if (o.variant !== "all") { const pre = pickMain(S, items); if (pre && PERS.test(pre.label)) { try { tbl = await tableItem(S, items, cv); } catch (e) { console.warn("table", e); } } }      // مشهد بأشخاص: الطاولة أمامهم تبقى (يُحذف ما وراءهم فقط)
+    let grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items, tbl); if (grp && !grp.length) grp = null;
     if (!grp) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];
       best = await AIVision.addItem(S, { pts: [[W / 2, H / 2, 1]].concat(e.map(p => [W * p[0], H * p[1], 0])), label: "الموضوع" }, items); }
     else {
-      if (grp.some(g => PERS.test(g.label)) && o.variant !== "all") { try { const t = await tableItem(S, items, cv); if (t) grp.push(t); } catch (e) { console.warn("table", e); } }      // مشهد بأشخاص: الطاولة أمامهم تبقى (يُحذف ما وراءهم فقط)
       best = grp.length > 1 ? AIVision.joinItems(S, items, grp) : grp[0]; }
     if (!best) return null;
     step("⏳ قصّ الحواف بدقة (شعر وتفاصيل)…"); await tick();
     const cuts = AIVision.cutouts(S, cv, [best], { shadow: false, matteMax: lite ? 1.2e6 : 3.2e6 }); if (!cuts.length) return null;
-    const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; out.getContext("2d").drawImage(cuts[0].canvas, cuts[0].x0, cuts[0].y0); return out;
+    const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; out.getContext("2d").drawImage(cuts[0].canvas, cuts[0].x0, cuts[0].y0); return fillHolesC(out, cv, .03);
   }
   const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
