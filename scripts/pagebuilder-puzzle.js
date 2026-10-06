@@ -127,7 +127,7 @@ const PBPuzzle = (function () {
   }
   async function build(inf, polys) {
     const E = A().E, set0 = inf.set;
-    if (!set0.src) { toast("ارفع صورة أولاً"); return; } if (E.dev !== "d") { toast("قسّم الصورة من عرض الحاسوب (المكتب)"); return; }
+    if (!set0.src) { toast("ارفع صورة أولاً"); return; } if (set0.clip) { toast("ألغِ قناع الصورة قبل تقسيمها إلى بازل"); return; } if (E.dev !== "d") { toast("قسّم الصورة من عرض الحاسوب (المكتب)"); return; }
     if (!polys.length) { toast("تعذّر إنشاء القطع"); return; } if (polys.length > MAXP) { toast("عدد القطع كبير (" + polys.length + ") — الحد الأقصى " + MAXP); return; }
     A().prepMobile(inf.sec);
     const L = A().layoutOf(inf.node.id); if (!L || !L.width || !L.height) return; const Wf = L.width, Hf = L.height, fa = Wf / Hf, im = await loadImg(set0.src);

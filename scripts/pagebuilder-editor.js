@@ -1730,7 +1730,7 @@ body{overflow-x:hidden;margin:0}`;
       all.forEach(c => L[POS.includes(c.k) ? "pos" : VIS.includes(c.k) ? "vis" : ADV.includes(c.k) ? "adv" : "own"].push(c));
       groups = [["own", "إعدادات خاصة بالعنصر", L.own], ["pos", "الموضع والحجم والتدوير", L.pos], ["vis", "الظهور والحركة", L.vis], ["adv", "متقدم (CSS)", L.adv]];
     } else if (E.tab === "c" && all.length > 5) {
-      const TXT = ["text", "textarea", "rich", "image", "gallery", "rep", "prodpick", "shapepick", "iconpick", "badgecolors"], A = all.filter(c => TXT.includes(c.t)), B = all.filter(c => !TXT.includes(c.t));
+      const TXT = ["text", "textarea", "rich", "image", "gallery", "rep", "prodpick", "shapepick", "iconpick", "badgecolors", "mask", "puzzle"], A = all.filter(c => TXT.includes(c.t)), B = all.filter(c => !TXT.includes(c.t));
       groups = A.length && B.length ? [["ct", "المحتوى", A], ["co", "خيارات العرض", B]] : [];
     }
     groups = groups.filter(g => g[2].length); if (!groups.length) return plain();
@@ -1769,6 +1769,7 @@ ${inspGroups(all, inf)}`;
       case "num": { const P = c.pct ? (v => (v === undefined || v === "" || v === null) ? v : Math.round(Number(v) * 100)) : (v => v), mn = c.pct ? 0 : c.min, mx = c.pct ? 100 : c.max, stp = c.pct ? 1 : (c.step || 1); const rng = (mx != null && mn != null && mx - mn <= 2000) ? `<input type="range" ${a} data-range="1" min="${mn}" max="${mx}" step="${stp}" value="${P(effV) ?? mn}" class="sm" style="max-width:96px">` : ""; b = `<div class="pbx-row"><input type="number" ${a} ${mn != null ? `min="${mn}"` : ""} ${mx != null ? `max="${mx}"` : ""} step="${stp}" value="${P(ownV) ?? ""}" placeholder="${inherited ? P(effV) : ""}" class="${inherited ? "inh" : ""}">${rng}</div>`; break; }
       case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${(typeof c.o === "function" ? c.o() : c.o).map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
       case "puzzle": b = PBPuzzle.panel(selInfo()); break;
+      case "mask": b = PBMask.panel(selInfo()); break;
       case "gcells": { const L = PB.galCells(set), D = PB.galDims(set); b = `<div class="pbx-gcg" style="grid-template-columns:repeat(${D[0]},minmax(0,1fr))">` + Array.from({ length: D[0] * D[1] }, (_, i) => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-gcu="${i}" title="${L[i] ? "استبدال صورة هذا الجزء" : "رفع صورة لهذا الجزء"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] ? `<i data-gcx="${i}" title="مسح صورة هذا الجزء">✕</i>` : ""}</div>`).join("") + `</div><button class="pbx-small" data-gcm="1" style="margin-top:.35rem">⬆ رفع عدّة صور وتوزيعها على الخلايا الفارغة</button>`; break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
@@ -1835,6 +1836,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.rep) { const items = inf.set[t.dataset.rep] || []; items[t.dataset.i][t.dataset.f] = t.type === "checkbox" ? t.checked : t.value; inf.set[t.dataset.rep] = items; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.pzk) { PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value); return; }
+    if (t.dataset.mkk) { PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); return; }
     if (t.dataset.gk) return gradInput(t, inf);
     if (t.dataset.rich) { inf.set[t.dataset.rich] = PB.cleanHtml(t.innerHTML); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }      // المحرر المرئي للمحتوى
     if (!t.dataset.k) return; const c = ctlByKey(inf, t.dataset.k); if (!c) return;
@@ -1882,6 +1884,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       return;
     }
     if (t.dataset.pz) { PBPuzzle.act(t.dataset.pz, inf); return; }
+    if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); return; }
     if (t.dataset.gcu) { galUpload(inf, Number(t.dataset.gcu)); return; }
     if (t.dataset.gcx) { const L = galArr(inf); L[Number(t.dataset.gcx)] = ""; afterEdit(); return; }
     if (t.dataset.gcm) { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); return; }

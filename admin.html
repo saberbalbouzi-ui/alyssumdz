@@ -7426,11 +7426,12 @@ const PB = (() => {
     },
     image: {
       label: "صورة", ic: "🖼️", fit: 1, def: { src: "", alt: "", fit: "cover" },
-      ctl: [{ k: "src", l: "الصورة (انقر مرتين عليها لرفع صورة) — أو GIF متحرك", t: "image", gif: 1, tab: "c" }, { k: "pz", l: "🧩 بازل", t: "puzzle", tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
+      ctl: [{ k: "src", l: "الصورة (انقر مرتين عليها لرفع صورة) — أو GIF متحرك", t: "image", gif: 1, tab: "c" }, { k: "pz", l: "🧩 بازل", t: "puzzle", tab: "c" }, { k: "mk", l: "🎭 قناع بالشكل", t: "mask", tab: "c" }, { k: "alt", l: "نص بديل (SEO)", t: "text", tab: "c" }, { k: "link", l: "رابط عند النقر", t: "text", tab: "c" }, { k: "fit", l: "ملاءمة الصورة", t: "select", o: [["cover", "تغطية (cover)"], ["contain", "احتواء (contain)"], ["fill", "تمديد"]], tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 500, tab: "s" },
         { k: "ianim", l: "🎬 حركة الصورة (أنيميشن)", t: "select", o: IANIMS, tab: "s" }, { k: "ianimAmt", l: "شدة الحركة % (مقدار التقريب/الإزاحة/الميل)", t: "num", min: 2, max: 100, tab: "s", showIf: ["ianim", "*"] }, { k: "ianimDur", l: "السرعة: مدة الدورة الواحدة (ثانية — أقل = أسرع)", t: "num", min: .2, max: 60, step: .1, tab: "s", showIf: ["ianim", "*"] }, { k: "ianimIter", l: "التكرار", t: "select", o: [["infinite", "مستمر ∞"], ["1", "مرة واحدة"], ["2", "مرتان"], ["3", "3 مرات"], ["5", "5 مرات"], ["10", "10 مرات"]], tab: "s", showIf: ["ianim", "*"] }, { k: "ianimBack", l: "ذهاب وإياب (تعود الحركة إلى بدايتها)", t: "switch", tab: "s", showIf: ["ianim", "*"] }, { k: "ianimEase", l: "نمط التسارع", t: "select", o: [["ease-in-out", "ناعم"], ["linear", "منتظم"], ["ease-in", "بطيء ثم سريع"], ["ease-out", "سريع ثم بطيء"]], tab: "s", showIf: ["ianim", "*"] }, { k: "ianimDelay", l: "تأخير البدء (ثانية)", t: "num", min: 0, max: 20, step: .1, tab: "s", showIf: ["ianim", "*"] }],
       html: (s, id, ctx) => { const src = s.src ? (/^(https?:|data:|\/)/.test(s.src) ? s.src : ctx.base + s.src) : ""; const cp = s.crop && s.crop.w ? s.crop : null, n1 = v => { const k = cp && cp.h ? 100 : 10; return Math.round((Number(v) || 0) * k) / k; };      // قصّ بنمط Canva: الصورة بحجمها وموضعها داخل الإطار (نسب مئوية من الإطار)
-      const clp = cp && s.clip ? String(s.clip).replace(/[^MLCZmlcz0-9.,\s-]/g, "") : "", cid = "pzc-" + String(id || "").replace(/[^a-zA-Z0-9_-]/g, "");      // بازل: قطعة بشكل مخصّص (مسار بإحداثيات نسبية 0..1 داخل مستطيل القطعة)
-      const im = src ? (cp ? `${clp ? `<svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs><clipPath id="${cid}" clipPathUnits="objectBoundingBox"><path d="${clp}"/></clipPath></defs></svg>` : ""}<div class="pb-cropbox"${clp ? ` style="clip-path:url(#${cid})"` : ""}><img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" style="position:absolute;left:${n1(cp.x)}%;top:${n1(cp.y)}%;width:${n1(cp.w)}%;height:${cp.h ? n1(cp.h) + "%" : "auto"}!important;max-width:none"></div>` : `<img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">`) : `<div class="pb-ph" data-upload="1">🖼️ انقر مرتين لرفع صورة</div>`; return s.link && !ctx.edit ? `<a href="${esc(s.link)}">${im}</a>` : im; },
+      const clp = s.clip ? String(s.clip).replace(/[^MLCZmlcz0-9.,\s-]/g, "") : "", cid = "pzc-" + String(id || "").replace(/[^a-zA-Z0-9_-]/g, "");      // مسار قص بإحداثيات نسبية 0..1 داخل مستطيل العنصر: قطع البازل وقناع الشكل
+      const defs = clp ? `<svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs><clipPath id="${cid}" clipPathUnits="objectBoundingBox"><path d="${clp}"${s.clipEO ? ' clip-rule="evenodd"' : ""}/></clipPath></defs></svg>` : "", cst = clp ? ` style="clip-path:url(#${cid})"` : "";
+      const im = src ? (cp ? `${defs}<div class="pb-cropbox"${cst}><img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" style="position:absolute;left:${n1(cp.x)}%;top:${n1(cp.y)}%;width:${n1(cp.w)}%;height:${cp.h ? n1(cp.h) + "%" : "auto"}!important;max-width:none"></div>` : clp ? `${defs}<div class="pb-cropbox"${cst}><img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:${esc(s.fit || "cover")}"></div>` : `<img class="pb-im" src="${esc(src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async">`) : `<div class="pb-ph" data-upload="1">🖼️ انقر مرتين لرفع صورة</div>`; return s.link && !ctx.edit ? `<a href="${esc(s.link)}">${im}</a>` : im; },
       css: (c, sel, s) => { emit(c, sel + " .pb-im," + sel + " .pb-cropbox", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-im{width:100%;object-fit:${s.fit || "cover"};display:block}${sel} .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}`); imgAnim(c, sel, s); },
     },
     button: {
@@ -7490,7 +7491,7 @@ const PB = (() => {
     },
     shape: {
       label: "شكل / خط", ic: "⬟", fit: 1, def: { shape: "star5", fill: "#c8a24b", outline: false, stroke: "", sw: 0, dash: "", rx: 0, keep: true, flip: "", mh: { d: 160 }, w: { d: 30 }, al: { d: "center" } },
-      ctl: [{ k: "shape", l: "الشكل", t: "shapepick", tab: "c" }, { k: "fill", l: "لون التعبئة (امسحه للاكتفاء بالكونتور)", t: "color", tab: "c" }, { k: "fgr", l: "تعبئة بتدرّج (degradé)", t: "grad", tab: "c" }, { k: "outline", l: "كونتور فقط (بدون تعبئة)", t: "switch", tab: "c" },
+      ctl: [{ k: "shape", l: "الشكل", t: "shapepick", tab: "c" }, { k: "mk", l: "🎭 قناع للصورة تحته", t: "mask", tab: "c" }, { k: "fill", l: "لون التعبئة (امسحه للاكتفاء بالكونتور)", t: "color", tab: "c" }, { k: "fgr", l: "تعبئة بتدرّج (degradé)", t: "grad", tab: "c" }, { k: "outline", l: "كونتور فقط (بدون تعبئة)", t: "switch", tab: "c" },
         { k: "stroke", l: "لون الخط/الكونتور", t: "color", tab: "c" }, { k: "sw", l: "سماكة الخط (px)", t: "num", min: 0, max: 40, tab: "c" }, { k: "dash", l: "نمط الخط", t: "select", o: [["", "متصل"], ["10 7", "متقطع"], ["2 8", "منقّط"], ["22 8 4 8", "شرطة ونقطة"]], tab: "c" },
         { k: "rx", l: "تدوير زوايا المستطيل (%)", t: "num", min: 0, max: 50, tab: "c", showIf: ["shape", "rect"] }, { k: "keep", l: "حفظ النسبة (بدل التمدد مع الحجم)", t: "switch", tab: "c" }, { k: "flip", l: "قلب", t: "select", o: [["", "بدون"], ["x", "أفقي"], ["y", "عمودي"], ["xy", "الاثنان"]], tab: "c" }, { k: "sym", l: "التناظر (يكرّر الشكل متناظراً داخل الإطار)", t: "select", o: [["", "بدون"], ["h", "أفقي (يمين / يسار)"], ["v", "عمودي (أعلى / أسفل)"], ["hv", "رباعي (4 أرباع)"], ["r4", "دوراني ×4 (زهرة)"], ["r6", "دوراني ×6"], ["r8", "دوراني ×8"]], tab: "c" },
         { k: "sh", l: "ظل الشكل", t: "select", o: [["", "بدون"], ["sm", "خفيف"], ["md", "متوسط"], ["lg", "كبير"], ["glow", "توهج"]], tab: "s" }],
@@ -9816,7 +9817,7 @@ body{overflow-x:hidden;margin:0}`;
       all.forEach(c => L[POS.includes(c.k) ? "pos" : VIS.includes(c.k) ? "vis" : ADV.includes(c.k) ? "adv" : "own"].push(c));
       groups = [["own", "إعدادات خاصة بالعنصر", L.own], ["pos", "الموضع والحجم والتدوير", L.pos], ["vis", "الظهور والحركة", L.vis], ["adv", "متقدم (CSS)", L.adv]];
     } else if (E.tab === "c" && all.length > 5) {
-      const TXT = ["text", "textarea", "rich", "image", "gallery", "rep", "prodpick", "shapepick", "iconpick", "badgecolors"], A = all.filter(c => TXT.includes(c.t)), B = all.filter(c => !TXT.includes(c.t));
+      const TXT = ["text", "textarea", "rich", "image", "gallery", "rep", "prodpick", "shapepick", "iconpick", "badgecolors", "mask", "puzzle"], A = all.filter(c => TXT.includes(c.t)), B = all.filter(c => !TXT.includes(c.t));
       groups = A.length && B.length ? [["ct", "المحتوى", A], ["co", "خيارات العرض", B]] : [];
     }
     groups = groups.filter(g => g[2].length); if (!groups.length) return plain();
@@ -9855,6 +9856,7 @@ ${inspGroups(all, inf)}`;
       case "num": { const P = c.pct ? (v => (v === undefined || v === "" || v === null) ? v : Math.round(Number(v) * 100)) : (v => v), mn = c.pct ? 0 : c.min, mx = c.pct ? 100 : c.max, stp = c.pct ? 1 : (c.step || 1); const rng = (mx != null && mn != null && mx - mn <= 2000) ? `<input type="range" ${a} data-range="1" min="${mn}" max="${mx}" step="${stp}" value="${P(effV) ?? mn}" class="sm" style="max-width:96px">` : ""; b = `<div class="pbx-row"><input type="number" ${a} ${mn != null ? `min="${mn}"` : ""} ${mx != null ? `max="${mx}"` : ""} step="${stp}" value="${P(ownV) ?? ""}" placeholder="${inherited ? P(effV) : ""}" class="${inherited ? "inh" : ""}">${rng}</div>`; break; }
       case "select": b = `<select ${a} class="${inherited ? "inh" : ""}">${(inherited || ownV === undefined) && c.r ? `<option value=""${ownV === undefined ? " selected" : ""}>${inherited ? "↩ موروث" : "—"}</option>` : ""}${(typeof c.o === "function" ? c.o() : c.o).map(o => `<option value="${esc(o[0])}"${String(ownV ?? (c.r ? "" : set[k] ?? "")) === String(o[0]) && !(c.r && ownV === undefined) ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`; break;
       case "puzzle": b = PBPuzzle.panel(selInfo()); break;
+      case "mask": b = PBMask.panel(selInfo()); break;
       case "gcells": { const L = PB.galCells(set), D = PB.galDims(set); b = `<div class="pbx-gcg" style="grid-template-columns:repeat(${D[0]},minmax(0,1fr))">` + Array.from({ length: D[0] * D[1] }, (_, i) => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-gcu="${i}" title="${L[i] ? "استبدال صورة هذا الجزء" : "رفع صورة لهذا الجزء"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] ? `<i data-gcx="${i}" title="مسح صورة هذا الجزء">✕</i>` : ""}</div>`).join("") + `</div><button class="pbx-small" data-gcm="1" style="margin-top:.35rem">⬆ رفع عدّة صور وتوزيعها على الخلايا الفارغة</button>`; break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
@@ -9921,6 +9923,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.rep) { const items = inf.set[t.dataset.rep] || []; items[t.dataset.i][t.dataset.f] = t.type === "checkbox" ? t.checked : t.value; inf.set[t.dataset.rep] = items; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.pzk) { PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value); return; }
+    if (t.dataset.mkk) { PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); return; }
     if (t.dataset.gk) return gradInput(t, inf);
     if (t.dataset.rich) { inf.set[t.dataset.rich] = PB.cleanHtml(t.innerHTML); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }      // المحرر المرئي للمحتوى
     if (!t.dataset.k) return; const c = ctlByKey(inf, t.dataset.k); if (!c) return;
@@ -9968,6 +9971,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       return;
     }
     if (t.dataset.pz) { PBPuzzle.act(t.dataset.pz, inf); return; }
+    if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); return; }
     if (t.dataset.gcu) { galUpload(inf, Number(t.dataset.gcu)); return; }
     if (t.dataset.gcx) { const L = galArr(inf); L[Number(t.dataset.gcx)] = ""; afterEdit(); return; }
     if (t.dataset.gcm) { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); return; }
@@ -11542,7 +11546,7 @@ const PBPuzzle = (function () {
   }
   async function build(inf, polys) {
     const E = A().E, set0 = inf.set;
-    if (!set0.src) { toast("ارفع صورة أولاً"); return; } if (E.dev !== "d") { toast("قسّم الصورة من عرض الحاسوب (المكتب)"); return; }
+    if (!set0.src) { toast("ارفع صورة أولاً"); return; } if (set0.clip) { toast("ألغِ قناع الصورة قبل تقسيمها إلى بازل"); return; } if (E.dev !== "d") { toast("قسّم الصورة من عرض الحاسوب (المكتب)"); return; }
     if (!polys.length) { toast("تعذّر إنشاء القطع"); return; } if (polys.length > MAXP) { toast("عدد القطع كبير (" + polys.length + ") — الحد الأقصى " + MAXP); return; }
     A().prepMobile(inf.sec);
     const L = A().layoutOf(inf.node.id); if (!L || !L.width || !L.height) return; const Wf = L.width, Hf = L.height, fa = Wf / Hf, im = await loadImg(set0.src);
@@ -11653,6 +11657,78 @@ ${S.pat === "jigsaw" || S.pat === "wave" ? `<label class="pz-r">${S.pat === "jig
     toast("ارسم خطاً مستقيماً (يمتد تلقائياً حتى الحواف) أو منحنياً من حافة إلى حافة، ثم اضغط «قسّم»");
   }
   return { panel, opt, act, snap, S, stopDraw, _t: { edgePolys, regionsFromStrokes, hexPolys, triPolys, brickPolys, knobEdge } };
+})();
+
+/* ═══ قناع الصورة بشكل (مثل «تقاطع/طرح» في Canva) ═══
+   ضع شكلاً فوق الصورة ثم: «أبقِ الصورة داخل الشكل» (يختفي كل ما خارجه) أو «احذف الشكل من الصورة» (يُثقب مكانه).
+   يُخزَّن القناع في الصورة نفسها كمسار قص نسبي (clip) فيتبعها عند التحريك والتحجيم؛ ويمكن إلغاؤه لاسترجاع الصورة كاملة. */
+const PBMask = (function () {
+  const A = () => PBApp, esc = s => PB.esc(s), S = { target: "", keep: false };
+  const toast = m => { const t = document.getElementById("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 4200); };
+  const isShape = w => w.type === "shape" && (PB.SHAPES[w.set.shape] || [])[1] && !["stroke", "line"].includes(PB.SHAPES[w.set.shape][1]);
+  const inter = (a, b) => a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  const zi = w => Number(w.set.zi) || 0;
+  function cands(inf) {      // العناصر المتداخلة مع المحدّد: أشكال إن كان صورة، وصوراً إن كان شكلاً (مرتّبة الأعلى أولاً)
+    const wantShape = inf.node.type === "image", me = A().layoutOf(inf.node.id), L = (inf.sec.free || []).map((w, i) => [w, i]).filter(([w]) => w !== inf.node && (wantShape ? isShape(w) : w.type === "image" && w.set.src && !w.set.pz) && inter(me, A().layoutOf(w.id)));
+    return L.sort((x, y) => zi(y[0]) - zi(x[0]) || y[1] - x[1]).map(x => x[0]);
+  }
+  const wname = (w, n) => w.type === "shape" ? ((PB.SHAPES[w.set.shape] || [])[0] || "شكل") : "صورة " + (n + 1);
+  function css() {
+    if (document.getElementById("mk-css")) return; const st = document.createElement("style"); st.id = "mk-css";
+    st.textContent = `.pbx-mk{display:flex;flex-direction:column;gap:.45rem;font-size:.8rem}.pbx-mk p{margin:0;color:#6b6556;line-height:1.7;font-size:.76rem}.pbx-mk label{display:flex;flex-direction:column;gap:.2rem;font-weight:700;font-size:.76rem}.pbx-mk select{width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.35rem;font-family:inherit}
+.pbx-mk .mk-b{display:grid;grid-template-columns:1fr;gap:.35rem}.pbx-mk .mk-go{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:0;padding:.55rem;font-size:.82rem}.pbx-mk .mk-k{flex-direction:row;align-items:center;gap:.4rem;font-weight:600;cursor:pointer}.pbx-mk .mk-on{background:#ede9fe;color:#6d28d9;border-radius:8px;padding:.35rem .5rem;font-weight:800;font-size:.76rem}`;
+    document.head.appendChild(st);
+  }
+  function panel(inf) {
+    css(); if (!inf || inf.kind !== "widget" || inf.set.pz) return "";
+    const img = inf.node.type === "image", st = inf.set; if (img && !st.src) return "";
+    const L = cands(inf), cur = L.find(w => w.id === S.target) || L[0], reset = img && st.clip ? `<div class="mk-on">🎭 القناع مفعّل (${st.clipMode === "out" ? "منطقة محذوفة" : "الصورة داخل الشكل فقط"})</div><button type="button" class="pbx-small" data-mk="reset">↺ إلغاء القناع (الصورة كاملة)</button>` : "";
+    const hint = L.length ? "" : `<p>${img ? "ضع <b>شكلاً</b> (من «أشكال») فوق الصورة ثم اضغط أحد الخيارين: إبقاء الصورة داخل الشكل أو حذف الشكل منها." : "ضع هذا الشكل فوق <b>صورة</b> ثم اضغط أحد الخيارين: إبقاء الصورة داخل الشكل أو حذف الشكل منها."}</p>`;
+    const iAll = (inf.sec.free || []).filter(w => w.type === "image");
+    return `<div class="pbx-mk">${reset}${hint}${L.length ? `<label>${img ? "الشكل الذي فوق الصورة" : "الصورة التي تحت الشكل"}<select data-mkk="target">${L.map((w, i) => `<option value="${esc(w.id)}"${cur && w.id === cur.id ? " selected" : ""}>${esc(wname(w, iAll.indexOf(w)))}</option>`).join("")}</select></label>` : ""}
+<div class="mk-b"><button type="button" class="pbx-small mk-go" data-mk="in">🖼 أبقِ الصورة داخل الشكل</button><button type="button" class="pbx-small mk-go" data-mk="out">✂ احذف الشكل من الصورة</button></div>
+<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label></div>`;
+  }
+  function opt(k, v) { if (k === "target") S.target = v; else if (k === "keep") S.keep = !!v; }
+  /* نقاط الشكل (حلقات) بإحداثيات نسبية من إطار الصورة */
+  function rings(shp, imgR, shR, E) {
+    const sh = PB.SHAPES[shp.set.shape], kind = sh[1], set = shp.set; let R = [];
+    if (kind === "rect") { const rx = Math.max(0, Math.min(50, Number(set.rx) || 0)); R = rx ? sample(`M${rx} 0H${100 - rx}A${rx} ${rx} 0 0 1 100 ${rx}V${100 - rx}A${rx} ${rx} 0 0 1 ${100 - rx} 100H${rx}A${rx} ${rx} 0 0 1 0 ${100 - rx}V${rx}A${rx} ${rx} 0 0 1 ${rx} 0Z`) : [[[0, 0], [100, 0], [100, 100], [0, 100]]]; }
+    else if (kind === "ellipse") R = [Array.from({ length: 96 }, (_, i) => [50 + 50 * Math.cos(i / 96 * 2 * Math.PI), 50 + 50 * Math.sin(i / 96 * 2 * Math.PI)])];
+    else if (kind === "poly") R = String(sh[2]).split("|").map(g => g.trim().split(/\s+/).map(p => p.split(",").map(Number)));
+    else R = sample(sh[2]);
+    const stretch = !!sh[3] || set.keep === false, Wp = shR.width, Hp = shR.height, sc = Math.min(Wp, Hp) / 100, rot = (Number(PB.eff(set, "rot", E.dev)) || 0) * Math.PI / 180, co = Math.cos(rot), si = Math.sin(rot);
+    const f = v => +v.toFixed(4);
+    return R.filter(r => r.length >= 3).map(r => r.map(([px, py]) => { let x = stretch ? px / 100 * Wp : (Wp - 100 * sc) / 2 + px * sc, y = stretch ? py / 100 * Hp : (Hp - 100 * sc) / 2 + py * sc;
+      const dx = x - Wp / 2, dy = y - Hp / 2; x = Wp / 2 + dx * co - dy * si; y = Hp / 2 + dx * si + dy * co;
+      return [f((shR.left + x - imgR.left) / imgR.width), f((shR.top + y - imgR.top) / imgR.height)]; }));
+  }
+  let svg = null;
+  function sample(d) {      // أخذ عيّنات من مسار SVG (أقواس ومنحنيات) إلى مضلعات
+    if (!svg) { svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("style", "position:absolute;width:0;height:0;visibility:hidden"); svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "path")); document.body.appendChild(svg); }
+    const pth = svg.firstChild, out = [];
+    String(d).split(/(?=[Mm])/).forEach(sub => { sub = sub.trim(); if (!sub) return; pth.setAttribute("d", sub); const Ln = pth.getTotalLength(); if (!Ln) return; const n = Math.max(24, Math.min(320, Math.round(Ln / 1.1))), ring = []; for (let i = 0; i < n; i++) { const p = pth.getPointAtLength(Ln * i / n); ring.push([p.x, p.y]); } out.push(ring); });
+    return out;
+  }
+  const pathOf = rs => rs.map(r => "M" + r.map(p => p[0] + " " + p[1]).join("L") + "Z").join("");
+  function act(name, inf) {
+    const E = A().E; if (name === "reset") { delete inf.set.clip; delete inf.set.clipEO; delete inf.set.clipMode; E.nextLabel = "إلغاء قناع"; A().commitAfter(); return; }
+    const L = cands(inf), other = L.find(w => w.id === S.target) || L[0]; if (!other) { toast("ضع شكلاً فوق الصورة أولاً"); return; }
+    const imgW = inf.node.type === "image" ? inf.node : other, shpW = inf.node.type === "image" ? other : inf.node, img = A().find(imgW.id), shp = A().find(shpW.id);
+    if (!img || !shp) return; if (img.set.pz) { toast("قطع البازل لا تدعم القناع"); return; }
+    if (Number(PB.eff(img.set, "rot", E.dev)) || 0) { toast("أزل تدوير الصورة أولاً"); return; }
+    if (img.set.clip && (img.set.clipMode !== "out" || name !== "out")) { toast("على الصورة قناع بالفعل — ألغِه أولاً (يمكن حذف أكثر من شكل بالتتابع فقط)"); return; }
+    const iR = A().layoutOf(img.node.id), sR = A().layoutOf(shp.node.id); if (!iR || !sR) return;
+    const rs = rings(shp.node, iR, sR, E); if (!rs.length) { toast("تعذّر قراءة الشكل"); return; }
+    const eo = ((PB.SHAPES[shp.node.set.shape] || [])[5] === "evenodd");
+    if (name === "in") { img.set.clip = pathOf(rs); img.set.clipEO = eo || undefined; if (!eo) delete img.set.clipEO; }
+    else { img.set.clip = (img.set.clip || "M0 0L1 0L1 1L0 1Z") + pathOf(rs); img.set.clipEO = true; }
+    img.set.clipMode = name;
+    if (!S.keep) { const i = shp.list.indexOf(shp.node); if (i >= 0) shp.list.splice(i, 1); }
+    E.nextLabel = name === "in" ? "قناع: إبقاء داخل الشكل" : "قناع: حذف الشكل من الصورة"; E.sel = img.node.id; A().commitAfter(img.node.id);
+    toast(name === "in" ? "🎭 بقيت الصورة داخل الشكل فقط" : "✂ حُذف الشكل من الصورة");
+  }
+  return { panel, opt, act };
 })();
 
 /* ═════════════════════════════════════════════════════════════════
