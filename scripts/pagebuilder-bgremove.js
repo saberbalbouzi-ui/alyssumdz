@@ -232,7 +232,7 @@ const PBBgRemove = (function () {
   }
   /* سطح الطاولة/المكتب أسفل المشهد: نقاط موجبة في أسفل الصورة وسالبة في أعلاها؛ يُقبل إن كان أسفل الصورة وبحجم معقول */
   async function tableItem(S, items, cv) {
-    const W = cv.width, H = cv.height, P = (x, y, l) => [W * x, H * y, l], t = await AIVision.addItem(S, { pts: [P(.5, .95, 1), P(.2, .95, 1), P(.8, .95, 1), P(.5, .03, 0), P(.1, .15, 0), P(.9, .15, 0)], label: "طاولة" }, items);
+    const W = cv.width, H = cv.height, P = (x, y, l) => [W * x, H * y, l], t = await AIVision.addItem(S, { pts: [P(.5, .95, 1), P(.08, .96, 1), P(.28, .95, 1), P(.72, .95, 1), P(.92, .96, 1), P(.5, .03, 0), P(.1, .15, 0), P(.9, .15, 0)], label: "طاولة" }, items);
     if (!t) return null; const fr = (t.x1 - t.x0) * (t.y1 - t.y0) / (W * H); return t.y0 > H * .3 && t.y1 > H * .9 && fr > .05 && fr < .7 && t.area > 0 ? t : null;
   }
   /* ثقوب صغيرة مغلقة داخل الموضوع (عبوة في يد لم يكشفها الكشف الخفيف…) تُملأ من الصورة الأصلية؛ الفراغات الكبيرة أو المتصلة بالحافة تبقى شفافة */
