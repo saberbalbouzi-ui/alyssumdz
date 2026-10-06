@@ -1057,20 +1057,31 @@ body{overflow-x:hidden;margin:0}`;
   }
   function mwRefresh() { const p = $("pbx-pop"); if (p && p.querySelector("[data-mwa]")) { const i = selInfo(); if (i) mwPanel(i, document.body); } }
   const mwRead = () => document.querySelectorAll("#pbx-pop [data-mw]").forEach(el => { E.mw[el.dataset.mw] = el.value; });
+  /* ذاكرة الإجابات: لكل (منتج/كلمات + النوع + الطول + اللغة) تُحفظ الإجابات (حتى اثنتين: الأصلية + إعادة واحدة بـAPI)، وما بعد ذلك يدور بينها مجاناً */
+  const MWC = "alyssum_mw_cache";
+  const mwCache = () => { try { return JSON.parse(localStorage.getItem(MWC) || "{}"); } catch (e) { return {}; } };
+  const mwCsave = (C, key) => { try { const v = C[key]; delete C[key]; C[key] = v; const ks = Object.keys(C); if (ks.length > 300) ks.slice(0, ks.length - 300).forEach(k => delete C[k]); localStorage.setItem(MWC, JSON.stringify(C)); } catch (e) { } };
+  const mwKeyOf = o => [o.pslug || "", String(o.words || "").trim().toLowerCase().replace(/\s+/g, " "), o.style, o.len, o.lang].join("|");
   async function mwRun(kind, extra) {
     const m = E.mw, inf = selInfo(); if (!inf || inf.kind !== "widget") return; mwRead(); const o = Object.assign({}, m, extra || {});
-    if (!o.pslug && !String(o.words).trim() && !o.prev) { m.msg = "اكتب اسم المنتج أو فكرته، أو اختر منتجاً من المتجر."; mwRefresh(); return; }
+    if (!o.pslug && !String(o.words).trim()) { m.msg = "اكتب اسم المنتج أو فكرته، أو اختر منتجاً من المتجر."; mwRefresh(); return; }
     const arabic = o.lang === "ar" || o.lang === "ma", tplOne = () => { const a = mwTemplates(o); m.ti = (m.ti + 1) % a.length; return a[m.ti]; };
     if (kind === "tpl") { if (!arabic) m.msg = "القوالب الجاهزة بالعربية فقط."; else { m.res = tplOne(); m.kind = "tpl"; m.msg = "ظهر القالب في العنصر — اختر إدراج أو إلغاء أو إعادة من الشريط تحته."; mwPreview(inf, m.res); } mwRefresh(); return; }
+    const key = mwKeyOf(o), C = mwCache(), en = C[key] || (C[key] = { l: [], i: 0 }), redo = !!(extra && extra.redo);
+    if ((!redo && en.l.length) || (redo && en.l.length >= 2)) {      // من المحفوظات: مجاناً
+      if (redo) en.i = (en.i + 1) % en.l.length; m.res = en.l[en.i % en.l.length]; m.kind = "ai"; mwCsave(C, key);
+      m.msg = "من المحفوظات — مجاناً بلا استهلاك API (" + (en.i + 1) + "/" + en.l.length + ")."; mwPreview(inf, m.res); mwRefresh(); return;
+    }
     m.busy = true; m.msg = ""; mwRefresh(); positionOverlay();
-    try { m.res = await mwGemini(o); m.kind = "ai"; m.msg = "ظهرت المسوّدة في العنصر — اختر إدراج أو إلغاء أو إعادة من الشريط تحته."; }
-    catch (e) { if (arabic) { m.res = tplOne(); m.kind = "tpl"; } m.msg = !arabic ? "تعذّرت الكتابة بهذه اللغة: " + (e.message === "NOKEY" ? "تحتاج مفتاح Gemini (القوالب الجاهزة بالعربية فقط)." : e.message) : e.message === "NOKEY" ? "لا يوجد مفتاح Gemini (يُضاف من «مولّد الصفحات الذكي»)، فظهر قالب جاهز." : "تعذّر Gemini (" + e.message + ")، فظهر قالب جاهز."; }
-    m.busy = false; const i2 = selInfo(); if (i2 && i2.node.id === inf.node.id && m.res && (m.kind === "ai" || arabic)) mwPreview(i2, m.res); else positionOverlay(); mwRefresh();
+    try { const t = await mwGemini(redo ? Object.assign({}, o, { prev: en.l[en.i] || m.res, instr: "أعد الصياغة بأسلوب مختلف مع الحفاظ على الطول نفسه تقريباً" }) : Object.assign({}, o, { prev: "", instr: "" })); en.l.push(t); en.i = en.l.length - 1; mwCsave(C, key); m.res = t; m.kind = "ai";
+      m.msg = redo ? "هذه إعادتك الوحيدة بـAPI لهذا الطلب؛ الضغط التالي يعرض المحفوظات مجاناً." : "حُفظت الإجابة لاستدعائها مجاناً لاحقاً؛ لك إعادة واحدة جديدة بـAPI."; }
+    catch (e) { m.msg = "تعذّر Gemini: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات الذكي»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
+    m.busy = false; const i2 = selInfo(); if (i2 && i2.node.id === inf.node.id && m.res) mwPreview(i2, m.res); else positionOverlay(); mwRefresh();
   }
-  function mwRedo(ins) {      // أطول/أقصر/إعادة: القالب مجاني (يبدّل الطول محلياً)، وGemini طلب واحد
-    const m = E.mw; mwRead();
-    if (m.kind === "tpl") { const ord = ["s", "p", "l"], i = ord.indexOf(m.len); if (ins === "أطول" && i >= 0 && i < 2) m.len = ord[i + 1]; else if (ins === "أقصر" && i > 0) m.len = ord[i - 1]; mwRun("tpl"); }
-    else mwRun("ai", { prev: m.res, instr: ins || "أعد الصياغة بأسلوب مختلف" });
+  function mwRedo(ins) {      // إعادة: واحدة بـAPI ثم المحفوظات مجاناً. أطول/أقصر: ينتقل بين الأطوال (من المحفوظات إن وُجدت)
+    const m = E.mw; mwRead(); const ord = ["s", "p", "l"], i = ord.indexOf(m.len);
+    if (ins) { const j = i + (ins === "أطول" ? 1 : -1); if (i < 0 || j < 0 || j > 2) { toast(i < 0 ? "الطول يُغيَّر من الأنواع (جملة/فقرة)، لا من النقاط" : "هذا " + (ins === "أطول" ? "أطول" : "أقصر") + " طول متاح"); return; } m.len = ord[j]; const ls = document.querySelector('#pbx-pop [data-mw="len"]'); if (ls) ls.value = m.len; }
+    if (m.kind === "tpl") mwRun("tpl"); else mwRun("ai", ins ? undefined : { redo: true });
   }
   function mwPanel(inf, btn) {
     const m = E.mw = E.mw || {}; Object.entries({ words: "", style: "mk", len: "p", lang: mwLang0(), pslug: inf.set.prod || E.page.product || "", res: "", kind: "", ti: 0, msg: "", busy: false }).forEach(([k, v]) => { if (!(k in m)) m[k] = v; });
