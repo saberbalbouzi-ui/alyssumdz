@@ -204,7 +204,7 @@ const PBBgRemove = (function () {
     const fullC = scaledCanvas(srcC, FW, FH), loC = scaledCanvas(fullC, LW, LH), loO = rgbOf(loC), seeds = new Uint8Array(LW * LH);
     { const d = loC.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, LW, LH).data; let t = 0; for (let i = 0; i < LW * LH; i++) { const al = d[i * 4 + 3]; if (al < 40) { seeds[i] = 2; t++; } else if (al > 215) seeds[i] = 1; } if (t < LW * LH * .01) seeds.fill(0); }      // صورة شفافة أصلاً: الشفاف خلفية والمعتم مقدّمة
     o.onStep && o.onStep("⏳ تحليل الألوان…"); await tick();
-    let u = seeds.some(v => v) ? null : floodBg(loO.rgb, LW, LH); if (u) o.onStep && o.onStep("⏳ خلفية استوديو: فصلها عن الحواف…");
+    let u = seeds.some(v => v) || o.noFlood ? null : floodBg(loO.rgb, LW, LH); if (u) o.onStep && o.onStep("⏳ خلفية استوديو: فصلها عن الحواف…");
     if (!u) u = await segment(loO, seeds, {}); if (!u) throw new Error("تعذّر تحليل ألوان الصورة"); const U = cleanMask(u, LW, LH, seeds);
     o.onStep && o.onStep("⏳ حواف دقيقة…"); await tick();
     const r = matte(rgbOf(fullC), U, LW, LH, { shift: 0, detail: 1, feather: 0, decon: true }), c = document.createElement("canvas"); c.width = FW; c.height = FH;
@@ -218,22 +218,34 @@ const PBBgRemove = (function () {
     if (!best) return null; const bb = (best.x1 - best.x0) * (best.y1 - best.y0) / (W * H), lx = Math.max(0, Math.min(best.lw - 1, Math.floor(cx * S.fx))), ly = Math.max(0, Math.min(best.lh - 1, Math.floor(cy * S.fy)));
     return bb >= .12 || best.lo[ly * best.lw + lx] > 0 ? best : null;      // عنصر صغير بعيد عن المركز ليس الموضوع
   }
+  /* مجموعة الموضوع: الأشخاص كلهم (أو الموضوع الرئيسي) + ما يحملونه + الأشياء الملاصقة لهم؛ أثاث الغرفة/ديكورها لا يدخل */
+  const BGLBL = /^(إبريق|مزهرية|ساعة|لوحة|نافذة|ستارة|وسادة|أريكة|كرسي|طاولة|مصباح|نبتة|تلفاز|مرآة)/, PERS = /^(شخص|رجل|امرأة|إمرأة|سيدة|طفل|طفلة|ولد|بنت|فتاة|شاب|أم|أب)/;
+  function pickGroup(S, items) {
+    const main = pickMain(S, items); if (!main) return null; const px = S.W * S.H, bA = b => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]), bI = (a, c) => bA([Math.max(a[0], c[0]), Math.max(a[1], c[1]), Math.min(a[2], c[2]), Math.min(a[3], c[3])]);
+    const bx = i => [i.x0, i.y0, i.x1, i.y1], persons = items.filter(i => PERS.test(i.label) && !i.holder); let seeds;
+    if (PERS.test(main.label)) { const mx = Math.max(...persons.map(p => p.area)); seeds = persons.filter(p => p.area >= .12 * mx); } else { seeds = [main]; if (main.holder && !seeds.includes(main.holder)) seeds.push(main.holder); }
+    const grp = new Set(seeds); let grew = true;
+    while (grew) { grew = false; items.forEach(i => { if (grp.has(i) || BGLBL.test(i.label)) return; const held = i.holder && grp.has(i.holder);      // ما يحمله الموضوع يدخل دائماً (ولو ثقة كشفه منخفضة)
+      if (!held && ((i.det || 1) < .3 || bA(bx(i)) < .004 * px || ![...grp].some(g => bI(bx(i), bx(g)) >= .5 * bA(bx(i))))) return; grp.add(i); grew = true; }); }
+    return [...grp];
+  }
   async function aiCut(srcC, o) {
     const lite = LITE(), cv = capC(srcC, lite ? 1280 : 2200), step = o.onStep || (() => { }); step("⏳ تجهيز نموذج الذكاء داخل المتصفح (أول مرة أطول)…");
-    const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = o.variant === "pts" ? null : pickMain(S, items);
-    if (!best) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];
+    const res = await AIVision.analyze(cv, { lite, onStep: step }), S = res.S, items = res.items; let best = null, grp = o.variant === "all" ? items.filter(i => !BGLBL.test(i.label) && ((i.det || 1) >= .3 || i.holder)) : pickGroup(S, items); if (grp && !grp.length) grp = null;
+    if (!grp) { step("⏳ تحديد الموضوع من مركز الصورة…"); const W = cv.width, H = cv.height, e = [[.03, .03], [.5, .02], [.97, .03], [.02, .5], [.98, .5], [.03, .97], [.5, .98], [.97, .97]];
       best = await AIVision.addItem(S, { pts: [[W / 2, H / 2, 1]].concat(e.map(p => [W * p[0], H * p[1], 0])), label: "الموضوع" }, items); }
-    if (!best) return null; const held = items.filter(i => i.holder === best); if (held.length) best = AIVision.joinItems(S, items, [best].concat(held));      // ما يحمله (منتج في اليد) يبقى مع صاحبه
+    else best = grp.length > 1 ? AIVision.joinItems(S, items, grp) : grp[0];
+    if (!best) return null;
     step("⏳ قصّ الحواف بدقة (شعر وتفاصيل)…"); await tick();
     const cuts = AIVision.cutouts(S, cv, [best], { shadow: false, matteMax: lite ? 1.2e6 : 3.2e6 }); if (!cuts.length) return null;
     const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; out.getContext("2d").drawImage(cuts[0].canvas, cuts[0].x0, cuts[0].y0); return out;
   }
-  const METHODS = { ai: aiCut, pts: (c, o) => aiCut(c, Object.assign({}, o, { variant: "pts" })), classic: classicCut };
+  const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   async function autoCut(srcC, o) {
-    o = o || {}; const order = o.methods || (aiOK() ? ["ai", "pts", "classic"] : ["classic"]); let err = null, last = null;
+    o = o || {}; const order = o.methods || (aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null;
     for (const m of order) {
-      try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; if (cov > .015 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
+      try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; if (cov > .02 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
     }
     if (last) return last; throw err || new Error("تعذّر نزع الخلفية من هذه الصورة");
@@ -244,34 +256,34 @@ const PBBgRemove = (function () {
     if (!document.getElementById("pbbg-css")) { const st = document.createElement("style"); st.id = "pbbg-css"; st.textContent = "@keyframes pbbgScan{0%{top:0}100%{top:100%}}#pbbg .ln{position:absolute;left:0;right:0;height:2px;background:#60a5fa;box-shadow:0 0 8px #3b82f6;animation:pbbgScan 1.4s linear infinite;pointer-events:none}#pbbg button{font-family:inherit}"; document.head.appendChild(st); }
     const ov = document.createElement("div"); ov.id = "pbbg"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.82);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl;padding:10px";
     ov.innerHTML = `<div style="background:#fff;border-radius:16px;padding:.8rem;width:min(760px,98vw);max-height:96vh;display:flex;flex-direction:column;gap:.6rem;box-shadow:0 20px 60px rgba(0,0,0,.5)">
-  <div style="display:flex;align-items:center;gap:.5rem"><b style="flex:1">✂️ نزع الخلفية</b><button id="bg-x" type="button" style="border:0;background:none;font-size:1.2rem;cursor:pointer">✕</button></div>
+  <div style="display:flex;align-items:center;gap:.5rem"><b style="flex:1">✂️ نزع الخلفية</b></div>
   <div id="bg-vw" style="position:relative;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/18px 18px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;max-height:68vh"><canvas id="bg-cv" style="max-width:100%;max-height:68vh;display:block"></canvas><div class="ln" id="bg-ln"></div></div>
   <div id="bg-msg" style="font-size:.84rem;line-height:1.7;color:#173f35;min-height:1.7em"></div>
-  <div id="bg-bar" style="display:none;gap:.45rem;flex-wrap:wrap"><button id="bg-save" type="button" style="flex:1 1 150px;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.65rem;font-weight:800;cursor:pointer">💾 حفظ (استبدال الصورة)</button><button id="bg-copy" type="button" style="flex:1 1 130px;background:#c8a24b;color:#173f35;border:0;border-radius:10px;padding:.65rem;font-weight:800;cursor:pointer">➕ نسخة بجانبها</button><button id="bg-again" type="button" style="flex:0 1 auto;background:#fff;color:#173f35;border:1.5px solid #d6d3cb;border-radius:10px;padding:.65rem .8rem;font-weight:700;cursor:pointer">🔁 طريقة أخرى</button></div>
+  <div id="bg-bar" style="display:flex;gap:.45rem"><button id="bg-save" type="button" disabled style="flex:2;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.7rem;font-weight:800;cursor:pointer">💾 حفظ</button><button id="bg-again" type="button" disabled style="flex:1;background:#fff;color:#173f35;border:1.5px solid #d6d3cb;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer">🔁 إعادة</button><button id="bg-x" type="button" style="flex:1;background:#fff;color:#b83232;border:1.5px solid #e6c4c4;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer">✕ إلغاء</button></div>
 </div>`;
     document.body.appendChild(ov); const $ = i => ov.querySelector("#" + i), cv = $("bg-cv"), cg = cv.getContext("2d"), msg = t => { $("bg-msg").textContent = t; };
     const S = { busy: false, res: null, tried: [], closed: false };
     const close = () => { S.closed = true; ov.remove(); }; $("bg-x").onclick = close;
     const show = (c, bgOnly) => { cv.width = c ? c.width : srcC.width; cv.height = c ? c.height : srcC.height; cg.clearRect(0, 0, cv.width, cv.height); cg.drawImage(c || srcC, 0, 0, cv.width, cv.height); };
     const run = async methods => {
-      if (S.busy) return; S.busy = true; $("bg-bar").style.display = "none"; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
+      if (S.busy) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
       try { const r = await autoCut(srcC, { methods, onStep: m => { if (!S.closed) msg(m); } }); if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
-        msg("✅ تمّ (" + ({ ai: "بالذكاء داخل المتصفح", pts: "بالذكاء من مركز الصورة", classic: "بالتحليل اللوني" }[r.method]) + "). إن لم تعجبك النتيجة جرّب «طريقة أخرى».");
-        const more = (aiOK() ? ["ai", "pts", "classic"] : ["classic"]).length > 1; $("bg-again").style.display = more ? "" : "none"; $("bg-save").style.display = $("bg-copy").style.display = ""; $("bg-bar").style.display = "flex"; }
+        msg("✅ تمّ. إن لم تعجبك النتيجة اضغط «إعادة» لتجربة طريقة أخرى.");
+        $("bg-save").disabled = $("bg-again").disabled = false; }
       catch (e) { if (!S.closed) { $("bg-ln").style.display = "none"; const er = e && e.message || e; if (S.res) { show(S.res.canvas); msg("⚠️ فشلت هذه الطريقة (" + er + ") — عدتُ للنتيجة السابقة."); } else { msg("⚠️ " + er); S.res = null; }
-        $("bg-again").style.display = aiOK() || S.res ? "" : "none"; $("bg-save").style.display = $("bg-copy").style.display = S.res ? "" : "none"; $("bg-bar").style.display = "flex"; } console.error(e); } S.busy = false;
+        $("bg-again").disabled = false; $("bg-save").disabled = !S.res; } console.error(e); } S.busy = false;
     };
-    $("bg-again").onclick = () => { const all = aiOK() ? ["ai", "pts", "classic"] : ["classic"], i = all.indexOf(S.res ? S.res.method : "classic"); run([all[(i + 1) % all.length]]); };
+    $("bg-again").onclick = () => { const all = aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"], i = all.indexOf(S.res ? S.res.method : "classic"); run([all[(i + 1) % all.length]]); };
     const save = async asCopy => {
-      if (S.busy || !S.res) return; S.busy = true; $("bg-save").disabled = $("bg-copy").disabled = true;
+      if (S.busy || !S.res) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true;
       try { const blob = await new Promise(r => S.res.canvas.toBlob(r, "image/png")); msg("⏳ رفع الصورة…"); const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
         if (asCopy) { const c = PB.mkFree("image", 0, 0, (Number(q.node.set.zi) || 1) + 1); Object.assign(c.set, JSON.parse(JSON.stringify(q.node.set)), { src: path, crop: q.node.set.crop ? JSON.parse(JSON.stringify(q.node.set.crop)) : undefined, clip: undefined, clipEO: undefined, clipMode: undefined, pz: undefined, pzh: undefined, pzo: undefined, zi: (Number(q.node.set.zi) || 1) + 1 });
           ["d", "m"].forEach(dev => { const fx = Number(PB.eff(q.node.set, "fx", dev)), fy = Number(PB.eff(q.node.set, "fy", dev)), fw = Number(PB.eff(q.node.set, "fwd", dev)), fh = Number(PB.eff(q.node.set, "fh", dev)); if (![fx, fy, fw, fh].every(Number.isFinite)) return; const right = fx + fw + 2 + fw <= 100; PB.setR(c.set, "fx", dev, right ? +(fx + fw + 2).toFixed(2) : fx); PB.setR(c.set, "fy", dev, right ? fy : +(fy + fh + 16).toFixed(2)); PB.setR(c.set, "fwd", dev, fw); PB.setR(c.set, "fh", dev, fh); });
           q.list.splice(q.idx + 1, 0, c); A().E.nextLabel = "نزع الخلفية (نسخة)"; A().E.sel = c.id; A().renderCanvas(); A().commitAfter(c.id); }
         else { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "نزع الخلفية"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); }
-        close(); } catch (e) { msg("⚠️ " + e.message); $("bg-save").disabled = $("bg-copy").disabled = false; console.error(e); } S.busy = false;
+        close(); } catch (e) { msg("⚠️ " + e.message); $("bg-save").disabled = $("bg-again").disabled = false; console.error(e); } S.busy = false;
     };
-    $("bg-save").onclick = () => save(false); $("bg-copy").onclick = () => save(true);
+    $("bg-save").onclick = () => save(false);
     run(null);
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
