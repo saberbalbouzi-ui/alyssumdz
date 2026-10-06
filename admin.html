@@ -8123,6 +8123,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-sb{position:absolute;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:7}
 .pbx-sb button{border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);cursor:grab}.pbx-sb button:hover{background:#f3ecff;color:#8b3dff}.pbx-sb button:active{cursor:grabbing}
 .pbx-ft svg,.pbx-sb svg{width:20px;height:20px;display:block}
+.pbx-tsx{display:grid;gap:.4rem}.pbx-tsx button{border:1.5px solid #e0d9c8;background:#fff;border-radius:12px;padding:.55rem .8rem;text-align:start;cursor:pointer;font-family:inherit;color:#111;line-height:1.3}.pbx-tsx button:hover{border-color:#8b3dff;background:#faf6ff}
 .pbx-ctx2{z-index:10004}.pbx-ctx button.has-sub:after{content:"‹";margin-inline-start:auto;font-size:1.1rem;color:#999}.pbx-ctx button.off{opacity:.4;cursor:default}
 @media(pointer:coarse){.pbx-box.widget .pbx-h{width:20px;height:20px}.pbx-box.widget .pbx-h.d-n,.pbx-box.widget .pbx-h.d-s{width:34px;height:14px}.pbx-box.widget .pbx-h.d-e,.pbx-box.widget .pbx-h.d-w{width:14px;height:34px}.pbx-ft button,.pbx-sb button{width:40px;height:40px}}
 `;
@@ -9184,7 +9185,8 @@ body{overflow-x:hidden;margin:0}`;
     if (inf.kind !== "widget") return "";
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
     const grp = (cap, body) => `<div class="pbx-qg"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
-    let h = `<div class="pbx-q">` + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
+    const isTx = inf.node.type === "heading" || inf.node.type === "text";
+    let h = `<div class="pbx-q">` + (isTx ? `<div class="pbx-qg"><small>أنماط النص الافتراضية</small><div class="pbx-tsx"><button type="button" data-q="tx-title" style="font-size:1.45rem;font-weight:800">إضافة عنوان</button><button type="button" data-q="tx-sub" style="font-size:1.05rem;font-weight:700">إضافة عنوان فرعي</button><button type="button" data-q="tx-body" style="font-size:.78rem;font-weight:400">إضافة أسطر في متن النص</button></div></div>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
     { const rv = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); h += grp("التدوير", `<div class="pbx-qr" style="width:100%"><button class="pbx-qk" data-q="rot-m" title="تدوير -15°" style="flex:0 0 auto">↺</button><input type="range" min="-180" max="180" step="1" value="${rv}" data-qrot="1" title="اسحب لتدوير العنصر"><button class="pbx-qk" data-q="rot-p" title="تدوير +15°" style="flex:0 0 auto">↻</button><b>${rv}°</b><button class="pbx-qk" data-q="rot-0" title="إعادة التدوير" style="flex:0 0 auto">⟲</button></div>`); }
     { const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 5); if (cks.length) h += grp("الألوان", `<div class="pbx-qc">` + cks.map(c => { const v = inf.set[c.k]; return `<label title="${esc(c.l)}">${esc(c.l.replace(/^لون\s*/, "").replace(/\s*\(.*$/, "")).slice(0, 14)}<input type="color" data-qc="${c.k}" value="${/^#[0-9a-f]{6}$/i.test(v || "") ? v : "#ffffff"}"></label>`; }).join("") + `</div>`); }
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
@@ -9192,7 +9194,15 @@ body{overflow-x:hidden;margin:0}`;
     if (inf.node.type === "image" && inf.node.set.src) h += `<div class="pbx-qg"><small>أدوات القماش (كانفاس) — تعمل على أي صورة</small><div class="pbx-magic"><button type="button" data-q="smart-text" title="يفصل النصوص عن الصورة ويحوّلها نصوصاً قابلة للتعديل">${ico("t_text", 22)} التقاط النص</button><button type="button" data-q="smart-magic" title="يفصل العناصر (أشخاص، منتجات…) كصور شفافة">${ico("t_magic", 22)} التقاط سحري</button></div><label class="pbx-gem"><input type="checkbox" data-gem="1" ${gemOn() ? "checked" : ""}> استعانة اختيارية بمفتاح Gemini (بدونه تعمل الأدوات مجاناً)</label></div>`;
     return h + `</div>`;
   }
+  /* أنماط النص الافتراضية (عنوان / عنوان فرعي / نص عادي) تُطبَّق على عنصر العنوان أو النص المحدد */
+  const TEXT_PRESETS = { title: { fs: { d: 44, m: 30 }, fw: "800", lh: { d: 1.25 }, tag: "h2" }, sub: { fs: { d: 28, m: 22 }, fw: "700", lh: { d: 1.35 }, tag: "h3" }, body: { fs: { d: 17, m: 16 }, fw: "400", lh: { d: 1.8 }, tag: "p" } };
+  function textPreset(k) {
+    const inf = selInfo(), pr = TEXT_PRESETS[k]; if (!inf || inf.kind !== "widget" || !pr || !["heading", "text"].includes(inf.node.type)) return;
+    ["fs", "fw", "lh"].forEach(x => { inf.set[x] = clone(pr[x]); }); if (inf.node.type === "heading") inf.set.tag = pr.tag;
+    E.nextLabel = "نمط نص"; afterEdit();
+  }
   function onQuick(k) {
+    if (k.startsWith("tx-")) { textPreset(k.slice(3)); return; }
     if (k === "bg-restore") { const inf = selInfo(); if (inf && inf.kind === "section") restoreBackground(inf.node); return; }
     if (k === "smart-text") return PBSmart.capture(); if (k === "smart-magic") return PBSmart.captureElements(); if (k === "smart-import") return PBSmart.importImages();
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
