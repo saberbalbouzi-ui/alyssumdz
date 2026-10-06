@@ -142,9 +142,15 @@ window.AIVision = (function () {
     out.forEach(it => { if (it.parts > 1 && it.label === "كتاب") it.label = "كتب"; if (it.parts > 1 && it.label === "قلم") it.label = "أقلام"; });
     return out;
   }
+  /* ذاكرة التحليل: إعادة فتح الأداة على الصورة نفسها (والترميز ما زال في العامل) تعيد النتيجة فوراً بلا ترميز ولا كشف ولا أقنعة */
+  let AC = null;
+  const fingerprint = cv => { const g = cv.getContext("2d", { willReadFrequently: true }), W = cv.width, H = cv.height; let h = 2166136261; for (let j = 0; j < 12; j++) for (let i = 0; i < 12; i++) { const d = g.getImageData(Math.min(W - 1, Math.floor((i + .5) * W / 12)), Math.min(H - 1, Math.floor((j + .5) * H / 12)), 1, 1).data; for (let k = 0; k < 3; k++) h = Math.imul(h ^ d[k], 16777619); } return W + "x" + H + ":" + (h >>> 0); };
+  const cloneItems = list => { const m = new Map(), out = list.map(it => { const c = {}; for (const k in it) { const v = it[k]; c[k] = ArrayBuffer.isView(v) ? v.slice() : Array.isArray(v) ? JSON.parse(JSON.stringify(v)) : v; } m.set(it, c); return c; }); out.forEach(c => { if (c.holder) c.holder = m.get(c.holder) || null; }); return out; };
   /* تحليل كامل: كشف (Gemini أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
   async function analyze(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
+    let fp = ""; try { fp = fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.key ? 1 : 0) + "|" + (o.noDetect ? 1 : 0); } catch (e) { }
+    if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: AC.src, note: AC.note, dets: AC.dets, later: null }; }
     step("⏳ تجهيز نموذج الذكاء…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
     /* الكشف المحلي يعمل دائماً (بالتوازي)؛ ومع مفتاح Gemini تتقدّم عناصره (أسماء أدق) ويُكمَّل بما فاته من الكشف المحلي */
@@ -169,7 +175,7 @@ window.AIVision = (function () {
     }
     await heldItems(S, out, step);
     await occlusions(S, out, step);
-    out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); return { S, items: out, src, note, dets, later };
+    out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); if (fp) AC = { fp, S, items: cloneItems(out), src, note, dets }; return { S, items: out, src, note, dets, later };
   }
   /* دمج عناصر يختارها المستخدم في عنصر واحد (يأخذ اسم أكبرها) */
   function joinItems(S, items, list) {
