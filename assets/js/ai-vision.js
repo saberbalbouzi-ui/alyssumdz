@@ -208,7 +208,31 @@ window.AIVision = (function () {
     }
     if (!o.lite && !o.noHeld) await heldItems(S, out, step);
     if (!o.noHeld) await occlusions(S, out, step);
-    out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); if (fp) AC = { fp, S, items: cloneItems(out), src, note, dets }; return { S, items: out, src, note, dets, later };
+    out.forEach((it, i) => { it.id = i; if (!it.occFixed) fillHoles(it, out.filter(o => o !== it)); stats(it, S); }); if (!o.zone) markPartial(S, out); if (fp) AC = { fp, S, items: cloneItems(out), src, note, dets }; return { S, items: out, src, note, dets, later };
+  }
+  /* «عناصر كاملة فقط»: كل عنصر مقطوع بحافة الصورة (يد/ذراع/شخص نصفه خارج الإطار/كتاب مقطوع) أو صغير جداً (جزء/شظية) يُعلَّم partial فلا تعرضه أداة الالتقاط؛
+     يبقى في القائمة لأنه قد يكون ماسكاً لعنصر كامل (الجسم الذي يمسك القارورة يُستعمل لفصل الأصابع ولا يُلتقط) ولأن نزع الخلفية يحتاج الأشخاص */
+  /* لبّ العنصر: أكبر كتلة متصلة من بكسلات القناع المؤكَّدة بعد تآكل 3 خلايا (تسقط الزوائد الرقيقة وما التصق به من عناصر أخرى عند حافة الصورة فلا يصير عنصر كامل «مقطوعاً»).
+     الشخص لا يُؤكَّل (الذراع تدخل رقيقة من الحافة وهي بالضبط حالة اليد الماسكة) */
+  function solid(lo, lw, lh, erode) {
+    let a = new Uint8Array(lw * lh); for (let i = 0; i < a.length; i++) a[i] = lo[i] > 1.5 ? 1 : 0; if (!erode) return a;
+    for (let r = 0; r < 3; r++) { const b = new Uint8Array(a.length); for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { const i = y * lw + x; b[i] = a[i] && (x === 0 || a[i - 1]) && (x === lw - 1 || a[i + 1]) && (y === 0 || a[i - lw]) && (y === lh - 1 || a[i + lw]) ? 1 : 0; } a = b; }
+    const lab = new Int32Array(a.length), sz = [0], st = []; let n = 0;
+    for (let i = 0; i < a.length; i++) { if (!a[i] || lab[i]) continue; n++; let c = 0; st.push(i); lab[i] = n; while (st.length) { const j = st.pop(), x = j % lw; c++; for (const q of [x > 0 ? j - 1 : -1, x < lw - 1 ? j + 1 : -1, j - lw, j + lw]) if (q >= 0 && q < a.length && a[q] && !lab[q]) { lab[q] = n; st.push(q); } } sz.push(c); }
+    let bi = 1; for (let k = 2; k <= n; k++) if (sz[k] > sz[bi]) bi = k; const o = new Uint8Array(a.length); for (let i = 0; i < a.length; i++) o[i] = lab[i] === bi ? 1 : 0; return o;
+  }
+  function markPartial(S, out) {
+    const { lw, lh, fx, fy, W, H } = S, tx = Math.max(1.5, .012 * Math.max(W, H) * Math.min(fx, fy)), N = W * H;
+    out.forEach(it => {
+      it.partial = false; if (it.zoneMain || it.zone) return;
+      const per = PERSON.test(it.label || ""), lo = it.lo, core = solid(lo, lw, lh, !per), top = new Set(), bot = new Set(), lef = new Set(), rig = new Set(), gw = W * fx, gh = H * fy; let x0 = lw, x1 = -1, y0 = lh, y1 = -1;
+      for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) if (core[y * lw + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (y < tx) top.add(x); if (y > gh - 1 - tx) bot.add(x); if (x < tx) lef.add(y); if (x > gw - 1 - tx) rig.add(y); }
+      const small = it.area < .004 * N && Math.max((it.x1 - it.x0) / W, (it.y1 - it.y0) / H) < .12;
+      if (it.sil && it.holder && !small) { it.partial = false; it.partialWhy = ""; return; }      // شيء في اليد: يُعدّ كاملاً (اليد تغطي جزءاً منه لا إطار الصورة)
+      if (x1 < 0) { it.partial = small; it.partialWhy = small ? "small" : ""; return; }
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1, cut = (set, len) => set.size >= Math.max(3, (per ? .05 : .12) * len);
+      it.partial = !!(cut(top, bw) || cut(bot, bw) || cut(lef, bh) || cut(rig, bh) || small); it.partialWhy = small ? "small" : it.partial ? "edge" : "";
+    });
   }
   /* دمج عناصر يختارها المستخدم في عنصر واحد (يأخذ اسم أكبرها) */
   function joinItems(S, items, list) {

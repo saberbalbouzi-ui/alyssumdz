@@ -132,7 +132,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   /* ═══ التقاط العناصر (مثل «الالتقاط السحري» في Canva) ═══
      الذكاء داخل المتصفح (assets/js/ai-vision.js): كشف العناصر بأسمائها (امرأة، طفل، عبوة، صحن، ملعقة، قلم، إبريق، كتب…) وحدود دقيقة بالبكسل،
      واختيار عنصر أو أكثر أو الكل، وإضافة ما فات الكشف بنقرة أو مستطيل. إن تعذّر تحميل النموذج نعود إلى الكشف البسيط بالحواف. */
-  const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره (وانقر على غيره لإضافته). فاتك عنصر؟ انقر عليه مباشرة أو ارسم مستطيلاً حوله.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
+  const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره. تلتقط الأداة العناصر الكاملة فقط (شخص، منتج، كتاب، قلم، زهرة…)؛ الجزء المقطوع كيدٍ تمسك منتجاً لا يُلتقط، ويُلتقط المنتج وحده.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Gemini اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
   function warm(inf) { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
@@ -187,7 +187,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   }
   /* الواجهة الذكية: حدود ملوّنة تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
   function elementsAI(sh, cv, inf, w, res, key, Z, lite) {
-    const $ = sh.$, W = cv.width, H = cv.height, S = res.S, items = res.items; $("pbs-load").style.display = "none";
+    const $ = sh.$, W = cv.width, H = cv.height, S = res.S, allItems = res.items, items = allItems.filter(i => !i.partial); $("pbs-load").style.display = "none";
     $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · " + (S.dev === "webgpu" ? "⚡ كرت الشاشة" : "المعالج") + " · كشف: " + (res.src === "gemini" ? "Gemini+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
@@ -250,17 +250,12 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         for (let n = 0; n < 8 && boxes.some(b => x < b[0] + b[2] && x + tw > b[0] && y < b[1] + b[3] && y + th > b[1]); n++) y += th + 2; boxes.push([x, y, tw, th]);
         g.fillStyle = on || hov === it.id ? "#0d9488" : "rgba(255,255,255,.92)"; g.beginPath(); if (g.roundRect) g.roundRect(x, y, tw, th, 10); else g.rect(x, y, tw, th); g.fill(); g.strokeStyle = "#0d9488"; g.lineWidth = 1; g.stroke(); g.fillStyle = on || hov === it.id ? "#fff" : "#115e59"; g.fillText(t, x + tw / 2, y + th / 2 + 1); });
       const n = mode === "all" ? items.length : sel.size; $("pbs-go").disabled = !n || busy; $("pbs-go").textContent = mode === "all" ? "التقاط " + items.length + " عنصراً" : n > 1 ? "التقاط " + n + " عناصر" : "التقاط";
-      if (!busy) $("pbs-msg").textContent = items.length ? (mode === "all" ? "سيُلتقط كل العناصر (" + items.length + ") وتبقى الخلفية." : sel.size ? "محدّد: " + [...sel].map(id => nm[id]).join("، ") : "") : "لم أجد عناصر — انقر على أي عنصر في الصورة أو ارسم مستطيلاً حوله لإضافته.";
+      if (!busy) $("pbs-msg").textContent = items.length ? (mode === "all" ? "سيُلتقط كل العناصر (" + items.length + ") وتبقى الخلفية." : sel.size ? "محدّد: " + [...sel].map(id => nm[id]).join("، ") : "") : "لم أجد عناصر كاملة في الصورة (العناصر المقطوعة بحافة الصورة أو الأجزاء الصغيرة لا تُلتقط). جرّب «✏️ منطقة أخرى» برسم مستطيل حول العنصر.";
       list();
     }
     const setMode = m => { const b = sh.host.querySelector('#pbs-seg button[data-m="' + m + '"]'); if (b) b.click(); };
     const pos = e => { const r = ov.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
     const at = (x, y) => { let best = -1, ba = 1e18; items.forEach(it => { const lx = Math.round(x - it.v.dx), ly = Math.round(y - it.v.dy); if (lx >= 0 && ly >= 0 && lx < it.v.dw && ly < it.v.dh && it.v.a[ly * it.v.dw + lx] && it.area < ba) { ba = it.area; best = it.id; } }); return best; };
-    async function add(p, msg) {
-      if (busy) return; busy = true; $("pbs-msg").textContent = "⏳ " + msg; paint();
-      try { const it = await AIVision.addItem(S, p, items, p.pre); busy = false; if (!it) { $("pbs-msg").textContent = "لم أجد عنصراً هنا — جرّب النقر في وسطه أو رسم مستطيل حوله."; return paint(); } prep(it); if (sh.S.mode === "one") sel.add(it.id); hov = -1; paint(); $("pbs-msg").textContent = "✅ أُضيف «" + names()[it.id] + "»."; }
-      catch (e) { busy = false; $("pbs-msg").textContent = "⚠️ " + e.message; paint(); }
-    }
     let drag = null, rsel = false; const zone = () => false;
     const inRect = (it, r) => { const tol = .015 * Math.max(W, H); return it.x0 >= r[0] - tol && it.x1 <= r[2] + tol && it.y0 >= r[1] - tol && it.y1 <= r[3] + tol; };      // العنصر الكامل فقط داخل المستطيل
     const rectOf = (d, x, y) => [Math.max(0, Math.min(d.x, x) / k), Math.max(0, Math.min(d.y, y) / k), Math.min(W, Math.max(d.x, x) / k), Math.min(H, Math.max(d.y, y) / k)];
@@ -275,7 +270,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const mu = ev => { if (!drag || sh.S.closed) return; const d = drag, [x, y] = pos(ev); drag = null;
       if (rsel) { if (!d.moved) return paint(); const r = rectOf(d, x, y), hit = items.filter(it => inRect(it, r)); if (!hit.length) { paint(); $("pbs-msg").textContent = "▭ لا يوجد عنصر كامل داخل المستطيل — وسِّعه ليشمل العنصر كله (الأجزاء الناقصة تُتجاهل)."; return; }
         if (sh.S.mode === "all") setMode("one"); sel = new Set(hit.map(it => it.id)); paint(); $("pbs-msg").textContent = "▭ حُدّد " + hit.length + ": " + hit.map(it => names()[it.id]).join("، ") + " — العناصر المقطوعة (كيد/جسم يمسك المنتج) لا تُلتقط."; return; }
-      if (d.moved) { const b = rectOf(d, x, y); if (b[2] - b[0] < 8 || b[3] - b[1] < 8) return paint(); return add({ box: b }, "تحديد العنصر داخل المستطيل…"); }
+      if (d.moved) return paint();      // لا إنشاء عناصر بالسحب: الأداة تلتقط العناصر الكاملة المكتشفة فقط
       const h = at(x, y);
       if (refineMode && sel.size === 1 && !refineBusy) {
         const it = selectedItem();
@@ -294,7 +289,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         return;
       }
       if (h >= 0) { if (sh.S.mode !== "all") { sel.has(h) ? sel.delete(h) : sel.add(h); paint(); } return; }
-      add({ pts: [[x / k, y / k, 1]] }, "تحديد العنصر تحت النقرة…"); };
+      paint(); };
     ov.onpointermove = (f => e => { if (drag) return mm(e); f(e); })(ov.onpointermove); ov.onpointerup = mu; ov.onpointercancel = () => { drag = null; paint(); };
     const cl0 = sh.close; sh.close = () => { cl0(); };
     { const rb = document.createElement("button"); rb.type = "button"; rb.id = "pbs-rsel"; const sty = on => rb.style.cssText = "border:1.5px solid #2563eb;background:" + (on ? "#2563eb" : "#fff") + ";color:" + (on ? "#fff" : "#2563eb") + ";border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit"; rb.textContent = "▭ مستطيل الاختيار"; rb.title = "ارسم مستطيلاً: تُحدَّد فقط العناصر الكاملة داخله (المقطوعة كجزء من اليد تُتجاهل)"; sty(false);
