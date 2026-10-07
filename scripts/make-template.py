@@ -70,6 +70,9 @@ fill = lambda t: re.sub(r"\{\{([A-Z_]+)\}\}", lambda m: vals.get(m.group(1), m.g
 
 # الصفحة الرئيسية + صفحة منتج تجريبي
 (OUT / "index.html").write_text(fill((ROOT / "scripts/template/index.html").read_text(encoding="utf-8")), encoding="utf-8")
+# صفحتا المتجر وحسابي (تُولَّدان من هيدر وفوتر الرئيسية الجاهزة فتحملان هوية الزبون)
+import subprocess, sys as _sys
+subprocess.run([_sys.executable, str(ROOT / "scripts/build-shop-pages.py"), str(OUT / "index.html"), str(OUT)], check=True)
 demo = {"SLUG": "demo", "TITLE": "منتج تجريبي", "TITLE_URL": "%D9%85%D9%86%D8%AA%D8%AC%20%D8%AA%D8%AC%D8%B1%D9%8A%D8%A8%D9%8A", "DESC": "وصف المنتج التجريبي — عدّله أو احذفه من لوحة التحكم.", "SUB": "المنتجات", "CAT": "المنتجات"}
 page = (ROOT / "p/_template/index.html").read_text(encoding="utf-8").replace('<meta name="robots" content="noindex" data-template>\n', "")
 (OUT / "p/demo").mkdir(parents=True, exist_ok=True)

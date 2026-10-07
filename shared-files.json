@@ -32,7 +32,9 @@
       "assets/js/data.js",
       "assets/js/wilayas.js",
       "p/<slug>/index.html (كل صفحات المنتجات ونصوصها المعدَّلة)",
-      "index.html"
+      "index.html",
+      "shop.html (يُولَّد بـ scripts/build-shop-pages.py من هيدر وفوتر index.html)",
+      "account.html (كذلك)"
     ],
     "المظهر والمحتوى": [
       "assets/data/chrome.json",

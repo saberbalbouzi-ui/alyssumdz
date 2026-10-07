@@ -8,7 +8,62 @@ window.Chrome = (function () {
   const abs = u => /^(https?:|\/\/|#|tel:|mailto:|sms:|viber:|\/)/i.test(u || "");
   const url = (u, rel) => !u ? "#" : (abs(u) ? u : (rel || "") + u);
 
-  const HEAD_IDS = ["logo", "menu", "social", "share", "wa", "account", "cart"], FOOT_IDS = ["about", "links", "contact", "social", "custom"];
+  const HEAD_IDS = ["logo", "menu", "social", "share", "account", "cart"], FOOT_IDS = ["about", "links", "contact", "social", "custom"];
+
+  /* ── عناوين القائمة الذكية: الرئيسية / التصنيفات / المتجر / الفئات / المنتجات / حسابي ──
+     التصنيفات والفئات والمنتجات تفتح قائمة منسدلة تحت العنوان؛ المتجر صفحة كل المنتجات (shop.html)، وحسابي صفحة الدخول/التسجيل (account.html) */
+  const MK = { home: ["الرئيسية", "index.html"], shop: ["المتجر", "shop.html"], cats: ["التصنيفات", "index.html#categories", 1], sets: ["الفئات", "shop.html", 1], prods: ["المنتجات", "index.html#products", 1], acct: ["حسابي", "account.html"] };
+  const MK_LIST = [["home", "🏠 الرئيسية"], ["cats", "🗂️ التصنيفات (قائمة منسدلة بتصنيفات المتجر)"], ["shop", "🛍️ المتجر (صفحة كل المنتجات)"], ["sets", "⭐ الفئات (الأكثر طلباً / تخفيضات / جديدة)"], ["prods", "📦 المنتجات (قائمة منسدلة)"], ["acct", "👤 حسابي (دخول / حساب جديد)"]];
+  const DEF_SETS = [{ key: "best", label: "🔥 الأكثر مبيعاً" }, { key: "hot", label: "⚡ الأكثر طلباً" }, { key: "sale", label: "🏷️ التخفيضات" }, { key: "new", label: "✨ المنتجات الجديدة" }];
+  const prodHref = (p, rel) => typeof productHref === "function" ? productHref(p) : (rel || "") + "p/" + p.slug + "/";
+  /* محتوى القائمة المنسدلة (d = {cats, prods, sets}: تُمرَّر من منشئ الصفحات أو تُقرأ وقت التشغيل من data.js) */
+  function popHtml(kind, slugs, rel, d) {
+    d = d || {}; const A = (h, t) => '<a href="' + esc(url(h, rel)) + '" role="menuitem">' + esc(t) + "</a>", all = A("shop.html", "عرض الكل ←");
+    if (kind === "cats") { const c = d.cats || {}, ks = Object.keys(c); return all + ks.map(k => A("shop.html?cat=" + encodeURIComponent(k), c[k])).join(""); }
+    if (kind === "sets") return all + (d.sets && d.sets.length ? d.sets : DEF_SETS).map(x => A("shop.html?c=" + encodeURIComponent(x.key), x.label)).join("");
+    if (kind === "prods") { let L = (d.prods || []).filter(p => p && p.slug && p.active !== false); if (slugs && slugs.length) L = slugs.map(sl => L.find(p => p.slug === sl)).filter(Boolean); return all + L.map(p => A(prodHref(p, rel), p.title)).join(""); }
+    return "";
+  }
+  function menuItem(it, rel, d) {
+    const m = MK[it.kind];
+    if (!m) return '<a href="' + esc(url(it.url, rel)) + '">' + esc(it.label) + "</a>";
+    const label = it.label || m[0];
+    if (!m[2]) return '<a href="' + esc(url(m[1], rel)) + '">' + esc(label) + "</a>";
+    const sl = Array.isArray(it.slugs) ? it.slugs : [];
+    return '<div class="mi-dd" data-dd="' + it.kind + '"' + (sl.length ? ' data-slugs="' + esc(sl.join(",")) + '"' : "") + '><a href="' + esc(url(m[1], rel)) + '" class="mi-t" aria-haspopup="true" aria-expanded="false">' + esc(label) + ' <i class="mi-c" aria-hidden="true">▾</i></a><div class="mi-pop" role="menu">' + popHtml(it.kind, sl, rel, d) + "</div></div>";
+  }
+  const menuNav = (items, rel, d) => { const L = (items || []).filter(i => i && !i.h && (MK[i.kind] || (i.label && i.url))); return L.length ? '<nav class="menu">' + L.map(i => menuItem(i, rel, d)).join("") + "</nav>" : ""; };
+  /* تعبئة القوائم المنسدلة وقت التشغيل من بيانات الموقع الحالية */
+  async function fillMenus(root) {
+    const els = (root || document).querySelectorAll(".mi-dd[data-dd]"); if (!els.length) return;
+    const d = {}; try { if (typeof CATEGORIES !== "undefined") d.cats = CATEGORIES; } catch (e) { } try { if (typeof PRODUCTS !== "undefined") d.prods = PRODUCTS; } catch (e) { }
+    if (d.prods && typeof loadCollections === "function") { try { const cs = (await loadCollections()).filter(c => c.enabled !== false && d.prods.some(p => p.active !== false && (p.tags || []).includes(c.key))); if (cs.length) d.sets = cs.map(c => ({ key: c.key, label: c.label || c.title })); } catch (e) { } }
+    const rel = typeof REL !== "undefined" ? REL : "";
+    els.forEach(el => { const k = el.dataset.dd, sl = (el.dataset.slugs || "").split(",").filter(Boolean), dd = k === "cats" && !d.cats ? null : k === "prods" && !d.prods ? null : d; if (!dd) return; const pop = el.querySelector(".mi-pop"); if (pop) pop.innerHTML = popHtml(k, sl, rel, dd); });
+  }
+  function bindMenus() {
+    if (Chrome._mb) return; Chrome._mb = true;
+    document.addEventListener("click", e => {
+      const t = e.target.closest && e.target.closest(".mi-dd > .mi-t");
+      document.querySelectorAll(".mi-dd.open").forEach(x => { if (!t || x !== t.parentNode) { x.classList.remove("open"); const a = x.querySelector(".mi-t"); if (a) a.setAttribute("aria-expanded", "false"); } });
+      if (t) { e.preventDefault(); const dd = t.parentNode, on = dd.classList.toggle("open"); t.setAttribute("aria-expanded", on ? "true" : "false"); }
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".mi-dd.open").forEach(x => x.classList.remove("open")); });
+  }
+  const MENU_CSS = ".mi-dd{position:relative;display:inline-flex;align-items:center}.mi-dd .mi-t{display:inline-flex;align-items:center;gap:.28rem;cursor:pointer}.mi-c{font-style:normal;font-size:.68em;opacity:.7;transition:transform .2s}.mi-dd.open .mi-c{transform:rotate(180deg)}" +
+    ".mi-pop{display:none;position:absolute;top:100%;inset-inline-start:0;min-width:210px;max-width:320px;max-height:68vh;overflow:auto;background:#fff;border:1px solid #eae3d6;border-radius:14px;box-shadow:0 18px 40px rgba(20,30,25,.16);padding:.35rem;z-index:80}" +
+    ".mi-pop a{display:block;padding:.5rem .8rem;border-radius:9px;color:#1c2420!important;opacity:1!important;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi-pop a:first-child{color:#8a6a1a!important;border-bottom:1px solid #f0e9d8;border-radius:9px 9px 0 0;margin-bottom:.15rem}.mi-pop a:hover{background:#f4efe6}" +
+    ".mi-dd.open>.mi-pop{display:block}@media(hover:hover){.mi-dd:hover>.mi-pop{display:block}}";
+  /* أيقونات سلة عصرية (خطّية بلون النص) */
+  const CART_ICONS = {
+    cart: ["سلة تسوّق", '<path d="M3 4h2.2l2.3 11a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.55-1.2L20.7 8.2H6.2"/><circle cx="9.6" cy="20" r="1.35"/><circle cx="17" cy="20" r="1.35"/>'],
+    bag: ["كيس تسوّق", '<path d="M6.2 7.5h11.6l1.1 12.5H5.1z"/><path d="M9 7.5a3 3 0 0 1 6 0"/>'],
+    bag2: ["كيس مبتسم", '<path d="M5.4 8h13.2l1 12H4.4z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M9.2 13.6c1.2 1.5 4.4 1.5 5.6 0"/>'],
+    basket: ["سلّة", '<path d="M2.8 10h18.4l-1.9 9.2H4.7z"/><path d="M8 10l3-5.5M16 10l-3-5.5"/><path d="M9.2 13.4v2.8M12 13.4v2.8M14.8 13.4v2.8"/>'],
+    trolley: ["عربة", '<path d="M2.5 3.5h3l3 11.5h10.2L21 7.5H6.5"/><circle cx="9.8" cy="19.6" r="1.3"/><circle cx="17" cy="19.6" r="1.3"/>'],
+    tote: ["حقيبة", '<path d="M4.8 9h14.4l.8 11H4z"/><path d="M8.6 9V6.8a3.4 3.4 0 0 1 6.8 0V9"/>']
+  };
+  const cartIcon = (id, size) => CART_ICONS[id] ? '<svg class="ch-ci" width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CART_ICONS[id][1] + "</svg>" : "";
   const SHARE_ALL = ["whatsapp", "facebook", "messenger", "telegram", "x", "linkedin", "pinterest", "viber", "reddit", "email", "sms"];
   /* القيم الافتراضية = شكل الموقع الحالي، فيتطابق أول حفظ مع الموقع الحالي ثم يعدّل صاحب المتجر ما يشاء */
   function defaults(site) {
@@ -22,13 +77,13 @@ window.Chrome = (function () {
         sticky: true, bg: "", color: "", pad: "",
         order: HEAD_IDS.slice(),
         topbar: { show: true, text: "🚚 توصيل سريع لـ **58 ولاية** · 💵 **الدفع عند الاستلام** · 🎁 اشترِ **قطعتين** واحصل على **الثالثة مجاناً**", bg: "", color: "", link: "" },
-        logo: { show: true },
+        logo: { show: true, text: true, image: true, link: "home" },
         menu: { show: true, color: "", items: [{ label: "الفئات", url: "index.html#categories" }, { label: "المنتجات", url: "index.html#products" }, { label: "لماذا نحن؟", url: "index.html#features" }, { label: "الأسئلة الشائعة", url: "index.html#faq" }] },
         social: { show: false, style: "color", shape: "none", size: 18 },
-        share: { show: true, style: "soft" },
+        share: { show: true, style: "soft", mode: "icon", label: "انشر" },
         wa: { show: true, label: "واتساب", mode: "icon", style: "brand", size: 24 },
         account: { show: true },
-        cart: { show: true }
+        cart: { show: true, icon: "emoji" }
       },
       footer: {
         show: true, bg: "", color: "", headColor: "",
@@ -51,6 +106,10 @@ window.Chrome = (function () {
   function norm(cfg, site) {
     const c = merge(defaults(site), cfg || {});
     const fix = (ord, all) => { ord = (ord || []).filter(x => all.includes(x)); all.forEach(x => { if (!ord.includes(x)) ord.push(x); }); return ord; };
+    const hh = c.header; if (hh.social.ids === undefined) {      /* ترقية: زر واتساب صار أيقونة ضمن «أيقونات التواصل» (قائمة اختيار) */
+      const ids = [], waOn = !hh.wa || hh.wa.show !== false; if (waOn) ids.push("whatsapp"); if (hh.social.show) (c.social || []).forEach(s => { if (s && s.id && s.url && !ids.includes(s.id)) ids.push(s.id); });
+      hh.social.ids = ids; if (!hh.social.show && ids.length) { hh.social.show = true; if (hh.wa) { hh.social.style = hh.wa.style || "brand"; hh.social.shape = "round"; hh.social.size = +hh.wa.size || 24; } }
+    }
     c.header.order = fix(c.header.order, HEAD_IDS); c.footer.order = fix(c.footer.order, FOOT_IDS); return c;
   }
 
@@ -59,16 +118,19 @@ window.Chrome = (function () {
     const L = (c.social || []).filter(s => s && s.id && s.url && SI().byId[s.id]);
     return L.length ? '<div class="ch-soc ' + place + '">' + L.map(s => SI().link(s.id, s.url, o)).join("") + "</div>" : "";
   }
+  /* أيقونات الهيدر: المختارة من القائمة (ids)؛ واتساب من رقم المتجر إن لم يكن له رابط مخصص */
+  function socialsSel(c, o, wa) {
+    const g = (c.social || []).filter(s => s && s.id && s.url), L = (o.ids || []).map(id => id === "whatsapp" ? (g.find(s => s.id === id) || (wa ? { id, url: "https://wa.me/" + wa } : null)) : g.find(s => s.id === id)).filter(s => s && SI().byId[s.id]);
+    return L.length ? '<div class="ch-soc hd-soc">' + L.map(s => SI().link(s.id, s.url, o)).join("") + "</div>" : "";
+  }
   /* ── الهيدر: ينتج HTML؛ keep = {logo,cart,account} نصوص بديلة (في الصفحة: علامات تُستبدل بالعقد الحقيقية) ── */
   function headerHtml(cfg, ctx, keep) {
     const c = norm(cfg, ctx && ctx.site), h = c.header, rel = (ctx && ctx.rel) || "", wa = (ctx && ctx.wa) || "", k = keep || {};
     const part = {
       logo: () => h.logo.show ? (k.logo || "") : "",
-      menu: () => h.menu.show && h.menu.items.length ? '<nav class="menu">' + h.menu.items.map(i => '<a href="' + esc(url(i.url, rel)) + '">' + esc(i.label) + "</a>").join("") + "</nav>" : "",
-      social: () => h.social.show ? socials(c, h.social, "hd-soc") : "",
-      share: () => h.share.show ? '<button type="button" class="ch-share-btn" data-share aria-label="مشاركة" title="مشاركة">' + SI().icon("share", { size: 18, style: h.share.style || "soft", shape: "round" }) + "</button>" : "",
-      wa: () => !h.wa.show ? "" : h.wa.mode === "text" ? '<a class="hd-wa" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">' + esc(h.wa.label || "واتساب") + "</a>"
-        : '<a class="hd-wa hd-wa-ic" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener" aria-label="واتساب" title="واتساب">' + SI().icon("whatsapp", { size: +h.wa.size || 24, style: h.wa.style || "brand", shape: "round" }) + "</a>",
+      menu: () => h.menu.show ? menuNav(h.menu.items, rel, ctx && ctx.menuData) : "",
+      social: () => h.social.show ? socialsSel(c, h.social, wa) : "",
+      share: () => !h.share.show ? "" : h.share.mode === "text" ? '<button type="button" class="ch-share-btn ch-share-txt" data-share aria-label="مشاركة" title="مشاركة">' + esc(h.share.label || "انشر") + "</button>" : '<button type="button" class="ch-share-btn" data-share aria-label="مشاركة" title="مشاركة">' + SI().icon("share", { size: +h.share.size || 18, style: h.share.style || "soft", shape: "round" }) + "</button>",
       account: () => h.account.show ? (k.account || "") : "",
       cart: () => h.cart.show ? (k.cart || "") : ""
     };
@@ -124,6 +186,19 @@ window.Chrome = (function () {
     if (h.bg) s += "header.site{background:" + h.bg + "!important}";
     if (h.color) s += "header.site .logo,header.site nav.menu a,header.site .ch-share-btn,header.site .ch-soc{color:" + h.color + "}";
     if (h.menu.color) s += "header.site nav.menu a{color:" + h.menu.color + "!important}";
+    s += MENU_CSS + ".logo[data-nolink]{pointer-events:none;cursor:default}header.site .ch-share-txt{background:#173f35;color:#fff!important;border-radius:999px;padding:.45rem 1rem;font-weight:800;font-size:.88rem}header.site .ch-ci{display:block}";
+    if (h.logo.text === false) s += "header.site .logo{font-size:0!important}header.site .logo span{display:none!important}";
+    else if (h.logo.image === false) s += "header.site .logo{background-image:none!important;font-size:" + (+h.logo.size || 24) + "px!important;line-height:normal!important;width:auto!important;height:auto!important}";
+    if (h.logo.color && h.logo.text !== false) s += "header.site .logo{color:" + h.logo.color + "}";
+    if (h.logo.size && h.logo.text !== false && h.logo.image !== false) s += "header.site .logo{font-size:" + (+h.logo.size) + "px}";
+    if (h.menu.size) s += "header.site nav.menu>a,header.site nav.menu .mi-t{font-size:" + (+h.menu.size) + "px}";
+    if (h.social.color) s += "header.site .hd-soc{color:" + h.social.color + "}";
+    if (h.share.color) s += "header.site .ch-share-btn{color:" + h.share.color + "!important}";
+    if (h.share.bg) s += "header.site .ch-share-txt{background:" + h.share.bg + "}";
+    if (h.cart.bg) s += "header.site .cart-btn{background:" + h.cart.bg + "}";
+    if (h.cart.color) s += "header.site .cart-btn{color:" + h.cart.color + "}";
+    if (h.account.bg) s += "header.site .acc-btn{background:" + h.account.bg + "}";
+    if (h.account.color) s += "header.site .acc-btn{color:" + h.account.color + "}";
     if (h.pad) s += ".site .container{padding-top:" + h.pad + "px;padding-bottom:" + h.pad + "px}";
     if (tp.bg) s += ".topbar{background:" + tp.bg + "!important}";
     if (tp.color) s += ".topbar,.topbar a{color:" + tp.color + "!important}";
@@ -186,7 +261,7 @@ window.Chrome = (function () {
 
   /* ── تطبيق على الصفحة ── */
   const out = {
-    HEAD_IDS, FOOT_IDS, SHARE_ALL, defaults, norm, headerHtml, topbarHtml, footerHtml, css, Share, cfg: null,
+    HEAD_IDS, FOOT_IDS, SHARE_ALL, MK, MK_LIST, DEF_SETS, CART_ICONS, cartIcon, menuNav, menuItem, popHtml, fillMenus, bindMenus, MENU_CSS, defaults, norm, headerHtml, topbarHtml, footerHtml, css, Share, cfg: null,
     ctx() { return { rel: typeof REL !== "undefined" ? REL : "", wa: typeof WA_NUMBER !== "undefined" ? WA_NUMBER : "", site: (typeof CONFIG !== "undefined" && CONFIG.SITE) || {} }; },
     apply(cfg) {
       if (cfg && cfg.off) cfg = null;      /* «استرجاع الافتراضي» من اللوحة يكتب {"off":true} */
@@ -199,6 +274,9 @@ window.Chrome = (function () {
           const keep = { logo: hd.querySelector(".logo"), cart: hd.querySelector(".cart-btn"), account: hd.querySelector(".acc-btn") };
           hd.innerHTML = headerHtml(cfg, ctx, { logo: '<i data-keep="logo"></i>', cart: '<i data-keep="cart"></i>', account: '<i data-keep="account"></i>' });
           hd.querySelectorAll("[data-keep]").forEach(ph => { const n = keep[ph.dataset.keep]; n ? ph.replaceWith(n) : ph.remove(); });
+          const lg = hd.querySelector(".logo"); if (lg) { if (c.header.logo.link === "none") { lg.removeAttribute("href"); lg.setAttribute("data-nolink", "1"); } else { lg.removeAttribute("data-nolink"); if (!lg.getAttribute("href")) lg.setAttribute("href", ctx.rel + "index.html"); } }
+          const ct = hd.querySelector(".cart-btn"); if (ct && CART_ICONS[c.header.cart.icon]) { const sp = ct.querySelector("span[aria-hidden]"); if (sp) sp.innerHTML = cartIcon(c.header.cart.icon, 22); }
+          if (c.header.account.show) hd.removeAttribute("data-noacc"); else hd.setAttribute("data-noacc", "1");
         }
         let tb = document.querySelector(".topbar");
         const th = tb && tb.hasAttribute("data-pbw") ? "" : topbarHtml(cfg, ctx);      /* شريط من عنصر المطوّر: لا يُستبدل */
@@ -219,8 +297,9 @@ window.Chrome = (function () {
         const hd = document.querySelector("header.site:not([data-pbw]) .container");
         if (hd && !hd.querySelector(".ch-share-btn")) { const t = document.createElement("div"); t.innerHTML = headerHtml({ header: { logo: { show: false }, menu: { show: false }, wa: { show: false }, account: { show: false }, cart: { show: false } } }, ctx); const b = t.querySelector(".ch-share-btn"); if (b) { const cart = hd.querySelector(".cart-btn"); cart ? hd.insertBefore(b, cart) : hd.appendChild(b); } }
       }
+      bindMenus(); fillMenus();
       /* الأزرار الظاهرة */
-      if (!this._bound) { this._bound = true; document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-share]"); if (b) { e.preventDefault(); Share.open(); } }); }
+      this.bindShare();
       const old = document.getElementById("ch-float"); if (old) old.remove();
       if (c.share.float && !/embed/.test(location.search)) {
         const b = document.createElement("button"); b.id = "ch-float"; b.type = "button"; b.setAttribute("data-share", ""); b.setAttribute("aria-label", "مشاركة");
@@ -229,6 +308,7 @@ window.Chrome = (function () {
         b.innerHTML = SI().glyph("share", 20); document.body.appendChild(b);
       }
     },
+    bindShare() { if (!this._bound) { this._bound = true; document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-share]"); if (b) { e.preventDefault(); Share.open(); } }); } },
     async init() {
       if (window.parent !== window && /pb-embed/.test(document.documentElement.className)) return;
       let cfg = null;

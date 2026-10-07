@@ -3,13 +3,13 @@
 window.ChromeAdmin = (function () {
   const C = () => window.Chrome, SI = () => window.SocialIcons, esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const site = () => (typeof SITE_CFG !== "undefined" && SITE_CFG) || (typeof CONFIG !== "undefined" && CONFIG.SITE) || {};
-  const HN = { logo: "الشعار", menu: "قائمة الروابط", social: "أيقونات التواصل", share: "زر المشاركة", wa: "زر واتساب", account: "زر الحساب 👤", cart: "زر السلة 🛒" };
+  const HN = { logo: "الشعار", menu: "قائمة الروابط", social: "أيقونات التواصل", share: "زر المشاركة", account: "زر الحساب 👤", cart: "زر السلة 🛒" };
   const FN = { about: "نبذة عن المتجر", links: "روابط سريعة", contact: "تواصل معنا", social: "أيقونات التواصل", custom: "قسم نصي حرّ" };
   const SN = { whatsapp: "واتساب", facebook: "فيسبوك", messenger: "ماسنجر", telegram: "تيليغرام", x: "إكس", linkedin: "لينكدإن", pinterest: "بنترست", viber: "فايبر", reddit: "ريديت", email: "بريد إلكتروني", sms: "رسالة نصية" };
   const STY = [["brand", "خلفية بلون العلامة"], ["color", "رمز بلون العلامة"], ["soft", "خلفية فاتحة"], ["outline", "إطار"], ["mono", "لون النص"]], SHP = [["round", "دائري"], ["square", "مربع مدوَّر"], ["none", "بلا خلفية"]];
   /* بادئات تُكمَل بها المعرّفات المكتوبة بلا رابط كامل */
   const PRE = { facebook: "https://facebook.com/", instagram: "https://instagram.com/", tiktok: "https://tiktok.com/@", youtube: "https://youtube.com/@", x: "https://x.com/", telegram: "https://t.me/", snapchat: "https://snapchat.com/add/", pinterest: "https://pinterest.com/", linkedin: "https://linkedin.com/in/", threads: "https://threads.net/@", messenger: "https://m.me/", twitch: "https://twitch.tv/", github: "https://github.com/", reddit: "https://reddit.com/user/", vimeo: "https://vimeo.com/", medium: "https://medium.com/@", behance: "https://behance.net/", dribbble: "https://dribbble.com/", discord: "https://discord.gg/", kick: "https://kick.com/", soundcloud: "https://soundcloud.com/", spotify: "https://open.spotify.com/user/", tumblr: "https://tumblr.com/" };
-  const S = { cfg: null, sha: undefined, tab: "header", pv: null, cust: {}, pages: null };
+  const S = { cfg: null, sha: undefined, tab: "header", pv: null, cust: {}, pages: null, acc: { logo: 1 } };
 
   const get = (p) => p.split(".").reduce((o, k) => (o == null ? o : o[k]), S.cfg);
   const put = (p, v) => { const ks = p.split("."), last = ks.pop(); let o = S.cfg; ks.forEach(k => { if (o[k] == null || typeof o[k] !== "object") o[k] = {}; o = o[k]; }); o[last] = v; };
@@ -62,17 +62,45 @@ window.ChromeAdmin = (function () {
       '<div class="grid2">' + F.s("share.pos", "مكان الزر العائم", [["bottom-left", "أسفل اليسار"], ["bottom-right", "أسفل اليمين"]]) + F.s("header.share.style", "نمط أيقونة الهيدر", STY) + "</div>" + F.t("share.text", "نص يرافق الرابط عند المشاركة (اختياري)", { ph: "مثال: اكتشف منتجات أليسوم الطبيعية 🌿" }) +
       '<div class="section-title">أدوات المشاركة الظاهرة</div><div class="ca-pal">' + C().SHARE_ALL.map(id => '<label class="ca-pi' + (sh.channels.includes(id) ? " on" : "") + '"><input type="checkbox" data-ch="' + id + '"' + (sh.channels.includes(id) ? " checked" : "") + ">" + SI().icon(id, { size: 16, style: "brand", shape: "round" }) + "<small>" + SN[id] + "</small></label>").join("") + "</div></div>";
   }
+  /* بطاقة قابلة للطيّ لكل عنصر في الهيدر: المحتوى ثم التنسيق (نفس أسماء العناصر) */
+  const acc = (key, title, content, style, on) => '<details class="card ca-acc" data-acc="' + key + '"' + (S.acc[key] ? " open" : "") + '><summary class="ca-h"><b>' + title + "</b>" + (on === false ? '<small class="ca-off">مخفي</small>' : "") + "</summary>" + '<div class="ca-sub">محتوى</div>' + content + (style ? '<div class="ca-sub">🎨 التنسيق</div>' + style : "") + "</details>";
+  const prodsList = () => ((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x && x.slug);
+  /* قائمة عناوين الهيدر: عنوان ذكي (الرئيسية/التصنيفات/المتجر/الفئات/المنتجات/حسابي) أو عنوان من سجلّ الموقع أو مخصص */
+  function menuList(path) {
+    const L = get(path) || [], reg = S.cfg.links || [], MK = C().MK;
+    return '<div class="ca-list">' + L.map((it, i) => {
+      const key = path + "." + i, hit = reg.find(r => r.url === it.url), cust = !it.kind && (!!S.cust[key] || (!hit && !!it.url) || (!hit && !it.label));
+      const sel = it.kind ? "@" + it.kind : cust ? "__c" : (hit ? it.url : "");
+      const op = [["", "— اختر عنواناً —"]].concat(C().MK_LIST.map(x => ["@" + x[0], x[1]]), reg.map(r => [r.url, r.label]), [["__c", "➕ عنوان مخصص (برابط)"]]);
+      const pk = it.kind === "prods" ? '<details class="ca-pk"><summary>اختر منتجات معيّنة <b>(' + ((it.slugs || []).length || "الكل") + ')</b> — بلا اختيار = كل المنتجات</summary><div class="ca-pkb">' + (prodsList().map(x => '<label class="ca-c"><input type="checkbox" data-pk="' + key + '" data-v="' + esc(x.slug) + '"' + ((it.slugs || []).includes(x.slug) ? " checked" : "") + "><span>" + esc(x.title || x.slug) + "</span></label>").join("") || "لا منتجات") + "</div></details>" : "";
+      return '<div class="ca-mrow"><div class="ca-row"><input data-p="' + key + '.label" value="' + esc(it.label || "") + '" placeholder="' + esc(it.kind ? "النص (فارغ = «" + MK[it.kind][0] + "»)" : "النص (فارغ = اسم العنوان)") + '"><select data-mk="' + key + '">' + op.map(o => '<option value="' + esc(o[0]) + '"' + (sel === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>").join("") + "</select>" + '<span class="ca-tools">' + mv(path + "|", i) + '<button type="button" class="small red" data-del="' + path + ":" + i + '">✕</button></span></div>' +
+        (cust ? '<input data-p="' + key + '.url" value="' + esc(it.url || "") + '" dir="ltr" placeholder="https://… أو index.html#قسم">' : "") + pk + '<label class="ca-c"><input type="checkbox" data-p="' + key + '.h"' + (it.h ? " checked" : "") + "><span>إخفاء هذا العنوان</span></label></div>";
+    }).join("") + '</div><button type="button" class="small" data-addmenu="' + path + '">+ عنوان</button>';
+  }
+  function socialPick() {
+    const g = (S.cfg.social || []).filter(x => x && x.id), ids = S.cfg.header.social.ids || [], av = [{ id: "whatsapp", label: "واتساب (رقم المتجر)" }].concat(g.filter(x => x.id !== "whatsapp").map(x => ({ id: x.id, label: (SI().byId[x.id] || {}).label || x.id })));
+    return '<div class="hint">اختر الأيقونة أو الأيقونات التي تظهر في الهيدر قبل السلة. حسابات التواصل تُضاف من بطاقة «حسابات التواصل» أسفل.</div><div class="ca-pal">' + av.map(x => '<label class="ca-pi' + (ids.includes(x.id) ? " on" : "") + '"><input type="checkbox" data-sid="' + x.id + '"' + (ids.includes(x.id) ? " checked" : "") + ">" + SI().icon(x.id, { size: 18, style: "brand", shape: "round" }) + "<small>" + esc(x.label) + "</small></label>").join("") + "</div>";
+  }
+  function cartPick() {
+    const cur = S.cfg.header.cart.icon || "emoji", CI = C().CART_ICONS;
+    return '<div class="ca-pal">' + [["emoji", "🛒", "الافتراضية"]].concat(Object.keys(CI).map(k => [k, C().cartIcon(k, 24), CI[k][0]])).map(x => '<button type="button" class="ca-pi' + (cur === x[0] ? " on" : "") + '" data-cic="' + x[0] + '" title="' + esc(x[2]) + '"><span style="font-size:1.3rem;line-height:1">' + x[1] + "</span><small>" + esc(x[2]) + "</small></button>").join("") + "</div>";
+  }
   function headerTab() {
     const h = S.cfg.header;
     return linksCard() + '<div class="card"><div class="section-title">عام</div><div class="ca-chk">' + F.c("header.sticky", "الهيدر ثابت أعلى الصفحة عند التمرير") + '</div><div class="grid2">' + F.col("header.bg", "لون خلفية الهيدر") + F.col("header.color", "لون الشعار والروابط") + F.n("header.pad", "التباعد الرأسي (بكسل)", 0, 40) + "</div></div>" +
       '<div class="card">' + cardH("📢 الشريط العلوي") + '<div class="ca-chk">' + F.c("header.topbar.show", "إظهار الشريط العلوي") + "</div>" + F.a("header.topbar.text", "النص (**كلمة** لتغميقها)", { rows: 2 }) + '<div class="grid2">' + F.t("header.topbar.link", "رابط عند الضغط (اختياري)", { ltr: 1 }) + F.col("header.topbar.bg", "لون الخلفية") + F.col("header.topbar.color", "لون النص") + "</div></div>" +
       orderCard("header", HN) +
-      '<div class="card">' + cardH("🏷️ الشعار") + F.c("header.logo.show", "إظهار الشعار") + '<div class="hint">صورة الشعار وحجمه من تبويب «المظهر».</div></div>' +
-      '<div class="card">' + cardH("☰ قائمة الروابط") + F.c("header.menu.show", "إظهار القائمة (على الشاشات الكبيرة)") + F.col("header.menu.color", "لون الروابط") + linkList("header.menu.items", "رابط") + "</div>" +
-      '<div class="card">' + cardH("🔗 أيقونات التواصل في الهيدر") + F.c("header.social.show", "إظهار") + socialStyle("header") + '<div class="hint">الحسابات نفسها تُدار من القسم التالي.</div></div>' +
-      socialCard() + shareCard() +
-      '<div class="card">' + cardH("💬 زر واتساب") + F.c("header.wa.show", "إظهار") + '<div class="grid2">' + F.s("header.wa.mode", "الشكل في الهيدر", [["icon", "أيقونة واتساب"], ["text", "كلمة (نص)"]]) + F.s("header.wa.style", "نمط الأيقونة", STY) + F.n("header.wa.size", "حجم الأيقونة (بكسل)", 16, 48) + "</div>" + F.t("header.wa.label", "النص (عند اختيار «كلمة»)") + '<div class="hint">الرقم من «نموذج الطلب». أيقونات المواقع الأخرى (فيسبوك، إنستغرام…) تُضاف من «أيقونات التواصل» أعلاه.</div></div>' +
-      '<div class="card">' + cardH("👤 زر الحساب و🛒 السلة") + '<div class="ca-chk">' + F.c("header.account.show", "إظهار زر الحساب") + F.c("header.cart.show", "إظهار زر السلة") + "</div></div>";
+      acc("logo", "🏷️ الشعار (نصي / صورة)", F.c("header.logo.show", "إظهار الشعار") + '<div class="ca-chk">' + F.c("header.logo.text", "إظهار الشعار النصي") + F.c("header.logo.image", "إظهار صورة الشعار") + "</div>" + F.s("header.logo.link", "رابط الشعار", [["home", "الرئيسية"], ["none", "بدون رابط"]]) + '<div class="hint">صورة الشعار وحجمها من تبويب «المظهر».</div>',
+        '<div class="grid2">' + F.col("header.logo.color", "لون الشعار النصي") + F.n("header.logo.size", "حجم الشعار النصي (بكسل)", 14, 60) + "</div>", h.logo.show) +
+      acc("menu", "☰ العناوين", F.c("header.menu.show", "إظهار العناوين (على الشاشات الكبيرة)") + '<div class="hint">اختر لكل عنوان من القائمة: الرئيسية، <b>التصنيفات</b> (قائمة بتصنيفات المتجر وكل تصنيف يفتح صفحته)، <b>المتجر</b> (صفحة كل المنتجات)، <b>الفئات</b> (الأكثر طلباً / تخفيضات / جديدة وكل فئة تفتح صفحتها)، <b>المنتجات</b> (قائمة بكل المنتجات أو بمنتجات تختارها)، <b>حسابي</b> (صفحة الدخول أو إنشاء حساب)، أو أي عنوان من «عناوين الموقع» أو مخصص.</div>' + menuList("header.menu.items"),
+        '<div class="grid2">' + F.col("header.menu.color", "لون العناوين") + F.n("header.menu.size", "حجم الخط (بكسل)", 10, 28) + "</div>", h.menu.show) +
+      acc("social", "🔗 أيقونات التواصل", F.c("header.social.show", "إظهار الأيقونات (قبل السلة)") + socialPick(),
+        '<div class="grid2">' + F.s("header.social.style", "نمط الأيقونات", STY) + F.s("header.social.shape", "الشكل", SHP) + F.n("header.social.size", "الحجم (بكسل)", 12, 48) + F.col("header.social.color", "اللون (للنمط «لون النص»)") + "</div>", h.social.show) +
+      acc("share", "📤 النشر", F.c("header.share.show", "إظهار زر النشر") + F.s("header.share.mode", "الشكل", [["icon", "أيقونة نشر"], ["text", "كلمة «انشر»"]]) + F.t("header.share.label", "نص الزر (عند «كلمة»)"),
+        '<div class="grid2">' + F.s("header.share.style", "نمط الأيقونة", STY) + F.n("header.share.size", "حجم الأيقونة (بكسل)", 14, 44) + F.col("header.share.color", "لون الأيقونة/الكلمة") + F.col("header.share.bg", "خلفية الكلمة") + "</div>", h.share.show) +
+      acc("account", "👤 حسابي", F.c("header.account.show", "إظهار زر «حسابي»"), '<div class="grid2">' + F.col("header.account.bg", "الخلفية") + F.col("header.account.color", "لون الأيقونة") + "</div>", h.account.show) +
+      acc("cart", "🛒 السلة", F.c("header.cart.show", "إظهار زر السلة") + '<div class="ca-sub2">أيقونة السلة</div>' + cartPick(), '<div class="grid2">' + F.col("header.cart.bg", "الخلفية") + F.col("header.cart.color", "لون الأيقونة") + "</div>", h.cart.show) +
+      socialCard() + shareCard();
   }
   function footerTab() {
     const f = S.cfg.footer;
@@ -89,9 +117,9 @@ window.ChromeAdmin = (function () {
   /* معاينة حيّة داخل iframe بأنماط الموقع نفسها */
   function preview() {
     const fr = document.getElementById("ca-pv-" + S.tab); if (!fr) return;
-    const cfg = S.cfg, ctx = { rel: "", wa: site().waNumber || "", site: site() }, th = (typeof Admin !== "undefined" && Admin.theme) || {};
+    const cfg = S.cfg, ctx = { rel: "", wa: site().waNumber || "", site: site(), menuData: { cats: (typeof Admin !== "undefined" && Admin.categories) || (typeof CATEGORIES !== "undefined" ? CATEGORIES : {}), prods: prodsList() } }, th = (typeof Admin !== "undefined" && Admin.theme) || {};
     const base = location.href.replace(/[^/]*$/, ""), nm = esc(site().name || "المتجر");
-    const keep = { logo: '<a class="logo" href="#">' + nm + "</a>", cart: '<button class="cart-btn" type="button"><span>🛒</span><span class="cart-count">0</span></button>', account: '<button class="acc-btn" type="button">👤</button>' };
+    const hc = cfg.header.cart, keep = { logo: '<a class="logo"' + (cfg.header.logo.link === "none" ? ' data-nolink="1"' : ' href="#"') + ">" + nm + "</a>", cart: '<button class="cart-btn" type="button"><span aria-hidden="true">' + (C().CART_ICONS[hc.icon] ? C().cartIcon(hc.icon, 22) : "🛒") + '</span><span class="cart-count">0</span></button>', account: '<button class="acc-btn" type="button">👤</button>' };
     const tb = C().topbarHtml(cfg, ctx);
     const body = S.tab === "header" ? (tb ? '<div class="topbar">' + tb + "</div>" : "") + '<header class="site"><div class="container">' + C().headerHtml(cfg, ctx, keep) + "</div></header>" : '<footer class="site" style="margin:0"><div class="container">' + (cfg.footer.show ? C().footerHtml(cfg, ctx) : "<p>الفوتر مخفي</p>") + "</div></footer>";
     const font = th.fontUrl ? '<link rel="stylesheet" href="' + esc(th.fontUrl) + '">' : "";
@@ -105,6 +133,7 @@ window.ChromeAdmin = (function () {
   }
   function bind(root) {
     if (root._b) return; root._b = true;
+    root.addEventListener("toggle", e => { const d = e.target; if (d && d.dataset && d.dataset.acc) S.acc[d.dataset.acc] = d.open ? 1 : 0; }, true);
     root.addEventListener("input", e => {
       const el = e.target, p = el.dataset && el.dataset.p; if (!p || el.type === "checkbox" || el.tagName === "SELECT") return;
       put(p, el.type === "number" ? (el.value === "" ? "" : +el.value) : el.value); if (el.type === "color") { const i = el.parentNode.querySelector("i"); if (i) i.textContent = el.value; } pvLater();
@@ -112,6 +141,9 @@ window.ChromeAdmin = (function () {
     root.addEventListener("change", e => {
       const el = e.target;
       if (el.dataset.ch) { const a = S.cfg.share.channels; el.checked ? (!a.includes(el.dataset.ch) && a.push(el.dataset.ch)) : a.splice(a.indexOf(el.dataset.ch), 1); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
+      if (el.dataset.sid) { const ids = S.cfg.header.social.ids = S.cfg.header.social.ids || [], i = ids.indexOf(el.dataset.sid); el.checked ? (i < 0 && ids.push(el.dataset.sid)) : (i >= 0 && ids.splice(i, 1)); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
+      if (el.dataset.pk) { const row = get(el.dataset.pk); row.slugs = row.slugs || []; const i = row.slugs.indexOf(el.dataset.v); el.checked ? (i < 0 && row.slugs.push(el.dataset.v)) : (i >= 0 && row.slugs.splice(i, 1)); const sm = el.closest("details").querySelector("summary b"); if (sm) sm.textContent = "(" + (row.slugs.length || "الكل") + ")"; preview(); return; }
+      if (el.dataset.mk) { const key = el.dataset.mk, row = get(key), v = el.value; if (v[0] === "@") { row.kind = v.slice(1); delete row.url; delete S.cust[key]; if (row.kind !== "prods") delete row.slugs; } else { delete row.kind; delete row.slugs; if (v === "__c") { S.cust[key] = 1; row.url = ""; } else { delete S.cust[key]; row.url = v; if (!row.label) { const r = (S.cfg.links || []).find(q => q.url === v); if (r) row.label = r.label; } } } render(); return; }
       if (el.dataset.lk) { const key = el.dataset.lk, row = get(key); if (el.value === "__c") { S.cust[key] = 1; row.url = ""; } else { delete S.cust[key]; row.url = el.value; if (!row.label) { const r = (S.cfg.links || []).find(q => q.url === el.value); if (r) row.label = r.label; } } render(); return; }
       if (el.dataset.addpage) { const [u, t] = String(el.value).split("|"); if (u) { S.cfg.links.push({ label: t, url: u }); } render(); return; }
       const p = el.dataset.p; if (!p) return;
@@ -133,6 +165,8 @@ window.ChromeAdmin = (function () {
       if (b.dataset.clr) { put(b.dataset.clr, ""); render(); }
       else if (b.dataset.addsoc) { S.cfg.social.push({ id: b.dataset.addsoc, url: "" }); render(); setTimeout(() => { const ins = root.querySelectorAll("[data-soc]"); ins[ins.length - 1] && ins[ins.length - 1].focus(); }, 30); }
       else if (b.dataset.del) { const [p, i] = b.dataset.del.split(":"); get(p).splice(+i, 1); render(); }
+      else if (b.dataset.cic) { S.cfg.header.cart.icon = b.dataset.cic; render(); }
+      else if (b.dataset.addmenu) { get(b.dataset.addmenu).push({ kind: "home", label: "" }); render(); }
       else if (b.dataset.add) { get(b.dataset.add).push({ label: "", url: "" }); render(); }
       else if (b.dataset.mv) { let [k, i, d] = b.dataset.mv.split(":"); k = k.replace("|", ""); i = +i; d = +d; const a = get(k), j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; render(); }
     });

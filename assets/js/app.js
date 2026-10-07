@@ -964,6 +964,38 @@ function initHome(){
   };
 }
 
+/* ── صفحة المتجر shop.html: كل المنتجات، أو تصنيف ?cat=مفتاح، أو فئة ?c=best|hot|sale|new، أو منتجات مختارة ?p=slug1,slug2 ── */
+async function initShop(){
+  const grid = document.getElementById("shop-grid"); if(!grid) return;
+  const q = new URLSearchParams(location.search), cat = q.get("cat") || "", col = q.get("c") || "", ps = (q.get("p") || "").split(",").map(x=>x.trim()).filter(Boolean);
+  const cols = (await loadCollections()).filter(c=>c.enabled!==false);
+  const cur = col ? cols.find(c=>c.key===col) : null;
+  let list = PRODUCTS.filter(p=>p.active!==false), title = "المتجر", sub = "كل منتجاتنا — والدفع دائماً عند الاستلام";
+  if(cat){ list = list.filter(p=>p.cat===cat); title = CATEGORIES[cat] || cat; sub = "كل منتجات هذا التصنيف"; }
+  else if(col){ list = list.filter(p=>(p.tags||[]).includes(col)); title = cur ? (cur.title || cur.label) : col; sub = cur ? (cur.sub || "") : ""; }
+  else if(ps.length){ list = ps.map(sl=>list.find(p=>p.slug===sl)).filter(Boolean); title = "منتجات مختارة"; sub = ""; }
+  const T = document.getElementById("shop-title"), S = document.getElementById("shop-sub"), C = document.getElementById("shop-chips");
+  if(T) T.textContent = title; if(S) S.textContent = sub;
+  try{ document.title = title + " | " + ((typeof CONFIG!=="undefined" && CONFIG.SITE && CONFIG.SITE.name) || document.title.split("|")[0].trim()); }catch(e){}
+  if(C){
+    const a = (href, label, on)=>`<a class="chip${on?" active":""}" href="${href}">${label}</a>`;
+    C.innerHTML = a("shop.html", "الكل", !cat && !col && !ps.length) + Object.entries(CATEGORIES).filter(([k])=>PRODUCTS.some(p=>p.active!==false && p.cat===k)).map(([k,l])=>a("shop.html?cat="+encodeURIComponent(k), l, k===cat)).join("") +
+      cols.filter(c=>collectionProducts(c.key).length).map(c=>a("shop.html?c="+encodeURIComponent(c.key), c.label, c.key===col)).join("");
+  }
+  grid.innerHTML = "";
+  if(!list.length){ grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:2rem 0">لا توجد منتجات هنا حالياً.</p>'; return; }
+  list.forEach(p=>{ const a = document.createElement("a"); a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = productHref(p); a.innerHTML = productCardHTML(p, cur && cur.ribbon ? {ribbon:cur.ribbon} : undefined); grid.appendChild(a); });
+}
+/* ── صفحة حسابي account.html: تفتح نافذة الدخول/التسجيل مباشرة ── */
+function initAccountPage(){
+  const box = document.getElementById("acct-box"); if(!box) return;
+  const draw = ()=>{ const p = Account.profile(); box.innerHTML = p
+    ? `<p>أهلاً <b>${Account.esc(p.name || "")}</b> 👋</p><button class="btn btn-gold" type="button" id="acct-open">👤 فتح حسابي وطلباتي</button>`
+    : `<p>أنشئ حسابك مرة واحدة لتتبّع طلباتك وإعادة الطلب ببياناتك المحفوظة.</p><div style="display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap"><button class="btn btn-gold" type="button" data-t="reg">✨ حساب جديد</button><button class="btn btn-ghost" type="button" data-t="login" style="color:var(--green);border-color:var(--line)">🔑 تسجيل الدخول</button></div>`;
+    box.querySelectorAll("button").forEach(b=>b.onclick = ()=>{ Account.tab = b.dataset.t || Account.tab; Account.open(); if(b.dataset.t && !Account.profile()) Account.guest(b.dataset.t); }); };
+  draw(); setTimeout(()=>{ try{ Account.open(); }catch(e){} }, 400);
+}
+
 /* ── تبويبات الرئيسية: الأكثر مبيعاً / الأكثر طلباً / التخفيضات / المنتجات الجديدة ──
    عضوية المنتج في تبويب = p.tags (تُعدَّل من لوحة الإدارة ← تعديل المنتج). التبويب الفارغ يُخفى. */
 const COLLECTIONS_DEFAULT = [{"key": "best", "label": "🔥 الأكثر مبيعاً", "title": "الأكثر مبيعاً", "sub": "المنتجات المفضّلة لدى عملائنا", "ribbon": "🔥 الأكثر مبيعاً", "bg": "#F4EFE6", "accent": "#8a6a1a", "enabled": true}, {"key": "hot", "label": "⚡ الأكثر طلباً", "title": "الأكثر طلباً", "sub": "الأكثر طلباً هذه الأيام", "ribbon": "⚡ الأكثر طلباً", "bg": "#FBEBDD", "accent": "#b4531a", "enabled": true}, {"key": "sale", "label": "🏷️ التخفيضات", "title": "التخفيضات", "sub": "أسعار مخفّضة لفترة محدودة", "ribbon": "🏷️ تخفيض", "bg": "#FBE4E4", "accent": "#b83232", "enabled": true}, {"key": "new", "label": "✨ المنتجات الجديدة", "title": "المنتجات الجديدة", "sub": "وصل حديثاً إلى المتجر", "ribbon": "✨ جديد", "bg": "#E4F1EA", "accent": "#157a55", "enabled": true}];
@@ -1163,10 +1195,12 @@ const Account = {
   init(){
     if(window.parent !== window) return;
     const hd = document.querySelector("header.site .container"); if(!hd || hd.querySelector(".acc-btn")) return;
-    const b = document.createElement("button");
-    b.className = "acc-btn"; b.type = "button"; b.setAttribute("aria-label", "حسابي"); b.innerHTML = "👤";
-    b.onclick = ()=>this.open();
-    const cart = hd.querySelector(".cart-btn"); cart ? hd.insertBefore(b, cart) : hd.appendChild(b);
+    if(!hd.hasAttribute("data-noacc")){      // الهيدر قد يُخفي زر الحساب (إعدادات الهيدر)
+      const b = document.createElement("button");
+      b.className = "acc-btn"; b.type = "button"; b.setAttribute("aria-label", "حسابي"); b.innerHTML = "👤";
+      b.onclick = ()=>this.open();
+      const cart = hd.querySelector(".cart-btn"); cart ? hd.insertBefore(b, cart) : hd.appendChild(b);
+    }
     this.mark();
     const fl = document.querySelector("footer.site .fgrid > div:nth-child(2) p");      // روابط سريعة في ذيل الصفحة
     if(fl && !fl.querySelector(".ft-trk")) fl.insertAdjacentHTML("beforeend", '<br><a href="#" class="ft-trk">📦 تتبّع طلبك</a><br><a href="#" class="ft-acc">👤 حسابي</a>');
@@ -1609,7 +1643,7 @@ const PhoneDZ = {
   const go = ()=>{
     try{
       const rel = typeof REL!=="undefined" ? REL : "";
-      const ld = (f, cb)=>{ const s = document.createElement("script"); s.src = rel + "assets/js/" + f + "?v=2"; s.onload = cb; document.head.appendChild(s); };
+      const ld = (f, cb)=>{ const s = document.createElement("script"); s.src = rel + "assets/js/" + f + "?v=3"; s.onload = cb; document.head.appendChild(s); };
       ld("social-icons.js", ()=>ld("chrome.js", ()=>{ try{ Chrome.init(); }catch(e){} }));
     }catch(e){}
   };
