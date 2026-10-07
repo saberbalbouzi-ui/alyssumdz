@@ -3,7 +3,7 @@
 window.ChromeAdmin = (function () {
   const C = () => window.Chrome, SI = () => window.SocialIcons, esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const site = () => (typeof SITE_CFG !== "undefined" && SITE_CFG) || (typeof CONFIG !== "undefined" && CONFIG.SITE) || {};
-  const HN = { logo: "الشعار", menu: "قائمة الروابط", social: "أيقونات التواصل", share: "زر المشاركة", account: "زر الحساب 👤", cart: "زر السلة 🛒" };
+  const HN = { logo: "الشعار", menu: "قائمة الروابط", social: "أيقونات التواصل", share: "زر المشاركة", cart: "زر السلة 🛒" };
   const FN = { about: "نبذة عن المتجر", links: "روابط سريعة", contact: "تواصل معنا", social: "أيقونات التواصل", custom: "قسم نصي حرّ" };
   const SN = { whatsapp: "واتساب", facebook: "فيسبوك", messenger: "ماسنجر", telegram: "تيليغرام", x: "إكس", linkedin: "لينكدإن", pinterest: "بنترست", viber: "فايبر", reddit: "ريديت", email: "بريد إلكتروني", sms: "رسالة نصية" };
   const STY = [["brand", "خلفية بلون العلامة"], ["color", "رمز بلون العلامة"], ["soft", "خلفية فاتحة"], ["outline", "إطار"], ["mono", "لون النص"]], SHP = [["round", "دائري"], ["square", "مربع مدوَّر"], ["none", "بلا خلفية"]];
@@ -98,7 +98,6 @@ window.ChromeAdmin = (function () {
         '<div class="grid2">' + F.s("header.social.style", "نمط الأيقونات", STY) + F.s("header.social.shape", "الشكل", SHP) + F.n("header.social.size", "الحجم (بكسل)", 12, 48) + F.col("header.social.color", "اللون (للنمط «لون النص»)") + "</div>", h.social.show) +
       acc("share", "📤 النشر", F.c("header.share.show", "إظهار زر النشر") + F.s("header.share.mode", "الشكل", [["icon", "أيقونة نشر"], ["text", "كلمة «انشر»"]]) + F.t("header.share.label", "نص الزر (عند «كلمة»)"),
         '<div class="grid2">' + F.s("header.share.style", "نمط الأيقونة", STY) + F.n("header.share.size", "حجم الأيقونة (بكسل)", 14, 44) + F.col("header.share.color", "لون الأيقونة/الكلمة") + F.col("header.share.bg", "خلفية الكلمة") + "</div>", h.share.show) +
-      acc("account", "👤 حسابي", F.c("header.account.show", "إظهار زر «حسابي»"), '<div class="grid2">' + F.col("header.account.bg", "الخلفية") + F.col("header.account.color", "لون الأيقونة") + "</div>", h.account.show) +
       acc("cart", "🛒 السلة", F.c("header.cart.show", "إظهار زر السلة") + '<div class="ca-sub2">أيقونة السلة</div>' + cartPick(), '<div class="grid2">' + F.col("header.cart.bg", "الخلفية") + F.col("header.cart.color", "لون الأيقونة") + "</div>", h.cart.show) +
       socialCard() + shareCard();
   }

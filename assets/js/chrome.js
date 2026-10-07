@@ -8,7 +8,7 @@ window.Chrome = (function () {
   const abs = u => /^(https?:|\/\/|#|tel:|mailto:|sms:|viber:|\/)/i.test(u || "");
   const url = (u, rel) => !u ? "#" : (abs(u) ? u : (rel || "") + u);
 
-  const HEAD_IDS = ["logo", "menu", "social", "share", "account", "cart"], FOOT_IDS = ["about", "links", "contact", "social", "custom"];
+  const HEAD_IDS = ["logo", "menu", "social", "share", "cart"], FOOT_IDS = ["about", "links", "contact", "social", "custom"];
 
   /* ── عناوين القائمة الذكية: الرئيسية / التصنيفات / المتجر / الفئات / المنتجات / حسابي ──
      التصنيفات والفئات والمنتجات تفتح قائمة منسدلة تحت العنوان؛ المتجر صفحة كل المنتجات (shop.html)، وحسابي صفحة الدخول/التسجيل (account.html) */
@@ -95,7 +95,7 @@ window.Chrome = (function () {
         share: { show: true, style: "soft", mode: "icon", label: "انشر" },
         wa: { show: true, label: "واتساب", mode: "icon", style: "brand", size: 24 },
         account: { show: true },
-        cart: { show: true, icon: "emoji" }
+        cart: { show: true, icon: "cart" }
       },
       footer: {
         show: true, bg: "", color: "", headColor: "",
@@ -122,6 +122,7 @@ window.Chrome = (function () {
       const ids = [], waOn = !hh.wa || hh.wa.show !== false; if (waOn) ids.push("whatsapp"); if (hh.social.show) (c.social || []).forEach(s => { if (s && s.id && s.url && !ids.includes(s.id)) ids.push(s.id); });
       hh.social.ids = ids; if (!hh.social.show && ids.length) { hh.social.show = true; if (hh.wa) { hh.social.style = hh.wa.style || "brand"; hh.social.shape = "round"; hh.social.size = +hh.wa.size || 24; } }
     }
+    if (!hh.account.moved) { if (hh.account.show !== false && Array.isArray(hh.menu.items) && !hh.menu.items.some(i => i && i.kind === "acct")) hh.menu.items = hh.menu.items.concat([{ kind: "acct", label: "" }]); hh.account = { show: false, moved: true }; }      /* زر «حسابي» المستقل صار عنواناً في قائمة العناوين */
     c.header.order = fix(c.header.order, HEAD_IDS); c.footer.order = fix(c.footer.order, FOOT_IDS); return c;
   }
 
@@ -143,7 +144,6 @@ window.Chrome = (function () {
       menu: () => h.menu.show ? menuNav(h.menu.items, rel, ctx && ctx.menuData) : "",
       social: () => h.social.show ? socialsSel(c, h.social, wa) : "",
       share: () => !h.share.show ? "" : h.share.mode === "text" ? '<button type="button" class="ch-share-btn ch-share-txt" data-share aria-label="مشاركة" title="مشاركة">' + esc(h.share.label || "انشر") + "</button>" : '<button type="button" class="ch-share-btn" data-share aria-label="مشاركة" title="مشاركة">' + SI().icon("share", { size: +h.share.size || 18, style: h.share.style || "soft", shape: "round" }) + "</button>",
-      account: () => h.account.show ? (k.account || "") : "",
       cart: () => h.cart.show ? (k.cart || "") : ""
     };
     let out = h.order.map(id => part[id]()).join("");
@@ -214,8 +214,6 @@ window.Chrome = (function () {
     if (h.share.bg) s += "header.site .ch-share-txt{background:" + h.share.bg + "}";
     if (h.cart.bg) s += "header.site .cart-btn{background:" + h.cart.bg + "}";
     if (h.cart.color) s += "header.site .cart-btn{color:" + h.cart.color + "}";
-    if (h.account.bg) s += "header.site .acc-btn{background:" + h.account.bg + "}";
-    if (h.account.color) s += "header.site .acc-btn{color:" + h.account.color + "}";
     if (h.pad) s += ".site .container{padding-top:" + h.pad + "px;padding-bottom:" + h.pad + "px}";
     if (tp.bg) s += ".topbar{background:" + tp.bg + "!important}";
     if (tp.color) s += ".topbar,.topbar a{color:" + tp.color + "!important}";
@@ -293,7 +291,7 @@ window.Chrome = (function () {
           hd.querySelectorAll("[data-keep]").forEach(ph => { const n = keep[ph.dataset.keep]; n ? ph.replaceWith(n) : ph.remove(); });
           const lg = hd.querySelector(".logo"); if (lg) { if (c.header.logo.link === "none") { lg.removeAttribute("href"); lg.setAttribute("data-nolink", "1"); } else { lg.removeAttribute("data-nolink"); if (!lg.getAttribute("href")) lg.setAttribute("href", ctx.rel + "index.html"); } }
           const ct = hd.querySelector(".cart-btn"); if (ct && CART_ICONS[c.header.cart.icon]) { const sp = ct.querySelector("span[aria-hidden]"); if (sp) sp.innerHTML = cartIcon(c.header.cart.icon, 22); }
-          if (c.header.account.show) hd.removeAttribute("data-noacc"); else hd.setAttribute("data-noacc", "1");
+          hd.setAttribute("data-noacc", "1");
         }
         let tb = document.querySelector(".topbar");
         const th = tb && tb.hasAttribute("data-pbw") ? "" : topbarHtml(cfg, ctx);      /* شريط من عنصر المطوّر: لا يُستبدل */

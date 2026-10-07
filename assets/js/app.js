@@ -1643,9 +1643,19 @@ const PhoneDZ = {
   const go = ()=>{
     try{
       const rel = typeof REL!=="undefined" ? REL : "";
-      const ld = (f, cb)=>{ const s = document.createElement("script"); s.src = rel + "assets/js/" + f + "?v=5"; s.onload = cb; document.head.appendChild(s); };
+      const ld = (f, cb)=>{ const s = document.createElement("script"); s.src = rel + "assets/js/" + f + "?v=6"; s.onload = cb; document.head.appendChild(s); };
       ld("social-icons.js", ()=>ld("chrome.js", ()=>{ try{ Chrome.init(); }catch(e){} }));
     }catch(e){}
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", ()=>setTimeout(go, 50)) : setTimeout(go, 50);
+})();
+
+/* ════════ أيقونات عصرية فقط: تُحوَّل الإيموجي والرموز القديمة في واجهة الموقع إلى SVG (assets/js/modern-icons.js)؛ محتوى الزبون (وصف المنتج وأقسام المطوّر) لا يُمسّ ════════ */
+(function(){
+  try{
+    const rel = typeof REL!=="undefined" ? REL : "", s = document.createElement("script");
+    s.src = rel + "assets/js/modern-icons.js?v=1"; s.async = true;
+    s.onload = ()=>{ try{ ModernIcons.style(); const go = ()=>ModernIcons.watch({ skip: ".lp-desc,.pb-sec,.pb-w,[data-keep-emoji]" }); document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go(); }catch(e){} };
+    document.head.appendChild(s);
+  }catch(e){}
 })();
