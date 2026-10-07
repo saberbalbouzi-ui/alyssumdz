@@ -15,6 +15,7 @@ window.Chrome = (function () {
     site = site || {};
     return {
       v: 1,
+      links: [{ label: "الرئيسية", url: "index.html" }, { label: "الفئات", url: "index.html#categories" }, { label: "المنتجات", url: "index.html#products" }, { label: "لماذا نحن؟", url: "index.html#features" }, { label: "الأسئلة الشائعة", url: "index.html#faq" }],      /* عناوين الموقع المتاحة: تُختار منها روابط القوائم (الهيدر/الفوتر/المطوّر) وتُدار من إعدادات الموقع */
       social: site.instagram ? [{ id: "instagram", url: "https://instagram.com/" + site.instagram }] : [],
       share: { float: false, pos: "bottom-left", channels: ["whatsapp", "facebook", "messenger", "telegram", "x", "email"], text: "", style: "brand" },
       header: {

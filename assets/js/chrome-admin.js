@@ -9,7 +9,7 @@ window.ChromeAdmin = (function () {
   const STY = [["brand", "خلفية بلون العلامة"], ["color", "رمز بلون العلامة"], ["soft", "خلفية فاتحة"], ["outline", "إطار"], ["mono", "لون النص"]], SHP = [["round", "دائري"], ["square", "مربع مدوَّر"], ["none", "بلا خلفية"]];
   /* بادئات تُكمَل بها المعرّفات المكتوبة بلا رابط كامل */
   const PRE = { facebook: "https://facebook.com/", instagram: "https://instagram.com/", tiktok: "https://tiktok.com/@", youtube: "https://youtube.com/@", x: "https://x.com/", telegram: "https://t.me/", snapchat: "https://snapchat.com/add/", pinterest: "https://pinterest.com/", linkedin: "https://linkedin.com/in/", threads: "https://threads.net/@", messenger: "https://m.me/", twitch: "https://twitch.tv/", github: "https://github.com/", reddit: "https://reddit.com/user/", vimeo: "https://vimeo.com/", medium: "https://medium.com/@", behance: "https://behance.net/", dribbble: "https://dribbble.com/", discord: "https://discord.gg/", kick: "https://kick.com/", soundcloud: "https://soundcloud.com/", spotify: "https://open.spotify.com/user/", tumblr: "https://tumblr.com/" };
-  const S = { cfg: null, sha: undefined, tab: "header", pv: null };
+  const S = { cfg: null, sha: undefined, tab: "header", pv: null, cust: {}, pages: null };
 
   const get = (p) => p.split(".").reduce((o, k) => (o == null ? o : o[k]), S.cfg);
   const put = (p, v) => { const ks = p.split("."), last = ks.pop(); let o = S.cfg; ks.forEach(k => { if (o[k] == null || typeof o[k] !== "object") o[k] = {}; o = o[k]; }); o[last] = v; };
@@ -25,9 +25,21 @@ window.ChromeAdmin = (function () {
   const cardH = (title, tools, on) => '<div class="ca-h"><b>' + title + '</b><span class="ca-tools">' + (tools || "") + "</span></div>";
   const mv = (kind, i) => '<button type="button" class="small gray" data-mv="' + kind + ':' + i + ':-1" title="أعلى">▲</button><button type="button" class="small gray" data-mv="' + kind + ':' + i + ':1" title="أسفل">▼</button>';
   /* قائمة روابط (عنوان + رابط) */
+  /* قائمة روابط: لكل صف النص + اختيار «العنوان» من عناوين الموقع المتاحة (إعدادها في بطاقة «عناوين الموقع»)، أو «عنوان مخصص» برابط */
   function linkList(path, label) {
-    const L = get(path) || [];
-    return '<div class="ca-list">' + L.map((it, i) => '<div class="ca-row"><input data-p="' + path + "." + i + '.label" value="' + esc(it.label) + '" placeholder="العنوان"><input data-p="' + path + "." + i + '.url" value="' + esc(it.url) + '" dir="ltr" placeholder="index.html#products أو https://…"><span class="ca-tools">' + mv(path + "|", i) + '<button type="button" class="small red" data-del="' + path + ":" + i + '">✕</button></span></div>').join("") + '</div><button type="button" class="small" data-add="' + path + '">+ ' + label + "</button>";
+    const L = get(path) || [], reg = S.cfg.links || [];
+    return '<div class="ca-list">' + L.map((it, i) => {
+      const key = path + "." + i, hit = reg.find(r => r.url === it.url), cust = !!S.cust[key] || (!hit && !!it.url) || (!hit && !it.label);
+      return '<div class="ca-row"><input data-p="' + key + '.label" value="' + esc(it.label) + '" placeholder="النص (فارغ = اسم العنوان)"><select data-lk="' + key + '"><option value="">— اختر عنواناً —</option>' + reg.map(r => '<option value="' + esc(r.url) + '"' + (!cust && hit && hit.url === r.url ? " selected" : "") + ">" + esc(r.label) + "</option>").join("") + '<option value="__c"' + (cust ? " selected" : "") + ">➕ عنوان مخصص (برابط)</option></select>" + (cust ? '<input data-p="' + key + '.url" value="' + esc(it.url) + '" dir="ltr" placeholder="https://… أو index.html#قسم">' : "") + '<span class="ca-tools">' + mv(path + "|", i) + '<button type="button" class="small red" data-del="' + path + ":" + i + '">✕</button></span></div>';
+    }).join("") + '</div><button type="button" class="small" data-add="' + path + '">+ ' + label + "</button>";
+  }
+  /* عناوين الموقع المتاحة (cfg.links): يختار منها الهيدر والفوتر ومنشئ الصفحات؛ تُضاف صفحات الموقع ومنتجاته بنقرة أو عنوان مخصص */
+  function linksCard() {
+    const L = S.cfg.links || [], pages = (S.pages || []).filter(x => x && x.slug), prods = ((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x && x.slug);
+    const opt = (grp, arr, f) => arr.length ? '<optgroup label="' + grp + '">' + arr.map(f).join("") + "</optgroup>" : "";
+    return '<div class="card"><div class="section-title">🧭 عناوين الموقع المتاحة</div><div class="hint">هذه قائمة كل العناوين (الصفحات والأقسام) التي تختار منها روابط قوائم الهيدر والفوتر وهيدر منشئ الصفحات بدل كتابة الروابط. أضف عنواناً جديداً مخصصاً برابط، أو أضف إحدى صفحاتك/منتجاتك بنقرة، ثم انشر.</div>' +
+      '<div class="ca-list">' + L.map((it, i) => '<div class="ca-row"><input data-p="links.' + i + '.label" value="' + esc(it.label) + '" placeholder="اسم العنوان"><input data-p="links.' + i + '.url" value="' + esc(it.url) + '" dir="ltr" placeholder="index.html#products أو https://…"><span class="ca-tools">' + mv("links|", i) + '<button type="button" class="small red" data-del="links:' + i + '">✕</button></span></div>').join("") + "</div>" +
+      '<div class="ca-row"><button type="button" class="small" data-add="links">➕ عنوان جديد مخصص (اسم + رابط)</button>' + '<select data-addpage="1"><option value="">📄 إضافة من صفحاتي ومنتجاتي…</option>' + opt("صفحات الهبوط", pages, x => '<option value="lp/' + esc(x.slug) + '/|' + esc(x.title || x.slug) + '">' + esc(x.title || x.slug) + "</option>") + opt("المنتجات", prods, x => '<option value="p/' + esc(x.slug) + '/|' + esc(x.title || x.slug) + '">' + esc(x.title || x.slug) + "</option>") + "</select></div></div>";
   }
   function orderCard(kind, names) {
     const ord = get(kind + ".order");
@@ -52,7 +64,7 @@ window.ChromeAdmin = (function () {
   }
   function headerTab() {
     const h = S.cfg.header;
-    return '<div class="card"><div class="section-title">عام</div><div class="ca-chk">' + F.c("header.sticky", "الهيدر ثابت أعلى الصفحة عند التمرير") + '</div><div class="grid2">' + F.col("header.bg", "لون خلفية الهيدر") + F.col("header.color", "لون الشعار والروابط") + F.n("header.pad", "التباعد الرأسي (بكسل)", 0, 40) + "</div></div>" +
+    return linksCard() + '<div class="card"><div class="section-title">عام</div><div class="ca-chk">' + F.c("header.sticky", "الهيدر ثابت أعلى الصفحة عند التمرير") + '</div><div class="grid2">' + F.col("header.bg", "لون خلفية الهيدر") + F.col("header.color", "لون الشعار والروابط") + F.n("header.pad", "التباعد الرأسي (بكسل)", 0, 40) + "</div></div>" +
       '<div class="card">' + cardH("📢 الشريط العلوي") + '<div class="ca-chk">' + F.c("header.topbar.show", "إظهار الشريط العلوي") + "</div>" + F.a("header.topbar.text", "النص (**كلمة** لتغميقها)", { rows: 2 }) + '<div class="grid2">' + F.t("header.topbar.link", "رابط عند الضغط (اختياري)", { ltr: 1 }) + F.col("header.topbar.bg", "لون الخلفية") + F.col("header.topbar.color", "لون النص") + "</div></div>" +
       orderCard("header", HN) +
       '<div class="card">' + cardH("🏷️ الشعار") + F.c("header.logo.show", "إظهار الشعار") + '<div class="hint">صورة الشعار وحجمه من تبويب «المظهر».</div></div>' +
@@ -100,6 +112,8 @@ window.ChromeAdmin = (function () {
     root.addEventListener("change", e => {
       const el = e.target;
       if (el.dataset.ch) { const a = S.cfg.share.channels; el.checked ? (!a.includes(el.dataset.ch) && a.push(el.dataset.ch)) : a.splice(a.indexOf(el.dataset.ch), 1); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
+      if (el.dataset.lk) { const key = el.dataset.lk, row = get(key); if (el.value === "__c") { S.cust[key] = 1; row.url = ""; } else { delete S.cust[key]; row.url = el.value; if (!row.label) { const r = (S.cfg.links || []).find(q => q.url === el.value); if (r) row.label = r.label; } } render(); return; }
+      if (el.dataset.addpage) { const [u, t] = String(el.value).split("|"); if (u) { S.cfg.links.push({ label: t, url: u }); } render(); return; }
       const p = el.dataset.p; if (!p) return;
       if (el.type === "checkbox") { put(p, el.checked); render(); }
       else if (el.tagName === "SELECT") { put(p, el.value); preview(); }
@@ -131,6 +145,7 @@ window.ChromeAdmin = (function () {
     else { try { const r = await fetch("assets/data/chrome.json", { cache: "no-store" }); if (r.ok) cfg = await r.json(); } catch (e) { } }
     if (cfg && cfg.off) cfg = null;
     S.cfg = C().norm(cfg, site());
+    try { const r = await fetch("assets/pages/index.json", { cache: "no-store" }); S.pages = r.ok ? await r.json() : []; } catch (e) { S.pages = []; }
   }
   const out = {
     async open(tab) {
