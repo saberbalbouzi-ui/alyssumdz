@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.31.1">
+<meta name="admin-version" content="1.31.2">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.31.1"></script>
-<script src="assets/js/chrome-admin.js?v=1.31.1"></script>
-<script src="assets/js/admin-assistant.js?v=1.31.1"></script>
-<script src="assets/js/admin-update.js?v=1.31.1"></script>
+<script src="assets/js/ctl-help.js?v=1.31.2"></script>
+<script src="assets/js/chrome-admin.js?v=1.31.2"></script>
+<script src="assets/js/admin-assistant.js?v=1.31.2"></script>
+<script src="assets/js/admin-update.js?v=1.31.2"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -8488,6 +8488,9 @@ body{overflow-x:hidden;margin:0}`;
 .ep-ddl.mk-list{max-height:250px;border:1.5px solid #e6e0d0;padding:.35rem}
 .pbx-epf{position:fixed;z-index:10045;display:flex;gap:.3rem;background:#fff;border-radius:999px;padding:.25rem;box-shadow:0 6px 22px rgba(0,0,0,.3),0 0 0 1.5px #a855f7}.pbx-epf button{display:flex;align-items:center;gap:.25rem;border:0;border-radius:999px;padding:.32rem .75rem;font:800 .74rem inherit;font-family:inherit;cursor:pointer}.pbx-epf .ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pbx-epf .no{background:#f1f2f6;color:#b83232}
 .mk-box{position:fixed;z-index:10040;border:2px dashed #7c3aed;background:rgba(124,58,237,.08);cursor:move;touch-action:none;border-radius:4px;box-sizing:border-box}.mk-box .mk-hd{position:absolute;right:-8px;bottom:-8px;width:15px;height:15px;background:#7c3aed;border:2px solid #fff;border-radius:4px;cursor:nwse-resize}
+#pbx-pimg.drop{outline:3px dashed #0d9488;outline-offset:-6px;background:#f0fdfa}
+.mk-pre{display:flex;flex-wrap:wrap;gap:.25rem}.mk-pre .pbx-small{flex:1;white-space:nowrap}.mk-pre .pbx-small.on{background:#ede9fe;border-color:#7c3aed;color:#5b21b6}
+.mk-gl{position:fixed;z-index:10039;pointer-events:none;border:0 dashed rgba(124,58,237,.5);transition:border-color .1s}.mk-gl.v{width:0;border-left-width:1.5px}.mk-gl.h{height:0;border-top-width:1.5px}.mk-gl.hot{border-style:solid;border-color:#ec4899}
 .pbx-pend{align-items:center;gap:.35rem;background:#ecfdf5;border:1.5px solid #86d4b0;border-radius:10px;padding:.35rem .5rem;margin:.35rem 0;font-size:.74rem;font-weight:700;color:#14573b;position:sticky;top:1.6rem;z-index:6}.pbx-pend span{flex:1;line-height:1.5}.pbx-pend button{border:0;border-radius:8px;padding:.3rem .6rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.74rem}.pbx-pend .ok{background:#0d9488;color:#fff}.pbx-pend .no{background:#fff;color:#b91c1c;border:1.5px solid #fca5a5}.pbx-ih{display:flex;align-items:center;gap:.4rem;font-weight:900;color:#173f35;position:sticky;top:-.7rem;z-index:6;background:#fff;margin:-.7rem -.7rem .5rem;padding:.7rem .7rem .5rem;border-bottom:1px solid #eee}.pbx-ih small{color:#999;font-weight:600}
 .pbx-itabs{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-itabs button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.4rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-itabs button.on{background:#173f35;color:#fff;border-color:#173f35}
 .pbx-dv{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-dv button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.3rem;cursor:pointer;font-size:.9rem}.pbx-dv button.on{background:#c8a24b;border-color:#c8a24b}
@@ -9512,6 +9515,7 @@ body{overflow-x:hidden;margin:0}`;
     if (t.dataset.ddt) { (t.dataset.ddt === "pz" ? PBPuzzle : PBMask).opt("dd"); epDraw(); return; }
     if (t.dataset.pzpat) { PBPuzzle.opt("pat", t.dataset.pzpat); epDraw(); return; }
     if (t.dataset.pz) { await PBPuzzle.act(t.dataset.pz, inf); epDraw(); return; }
+    if (t.dataset.mkp) { const v = t.dataset.mkp; if (v === "c") { PBMask.opt("px", 50); PBMask.opt("py", 50); } else PBMask.opt("size", Number(v)); epDraw(); return; }
     if (t.dataset.mksh) { PBMask.opt("target", t.dataset.mksh); epDraw(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); epDraw(); return; }
     if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
@@ -10114,7 +10118,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   function drawPimg() {
     const m = $("pbx-pimg"); if (!m) return; const L = pageImages(), inf = E.sel ? selInfo() : null, k = imgKeyOf(inf), canUse = !!(inf && k && !multiOn()), pm = E.pmenu;
-    m.innerHTML = `<div class="ph"><b>${ico("image", 16)} صور هذه الصفحة <small>(${L.length})</small></b><button type="button" data-pm="x" title="إغلاق">✕</button></div><button type="button" class="pbx-small pup" data-pm="up">${ico("upload", 14)} رفع صورة جديدة إلى القائمة</button><p class="pt">انقر صورة <b>مرة واحدة</b> لإضافتها إلى الصفحة، أو <b>اسحبها</b> إلى صورة لاستبدالها أو إلى مكان فارغ. للحذف: القائمة ${ico("dots", 12)} فوق الصورة، أو مرّر الفأرة عليها واضغط <b>Delete</b>.</p><div class="pg">${L.map(pth => `<div class="pi" tabindex="0" draggable="true" data-pimg-i="${esc(pth)}" title="انقر لإضافتها إلى الصفحة أو اسحبها"><img src="${esc(localize(pth))}" loading="lazy" draggable="false" alt=""><button type="button" class="pdt" data-pm="menu" data-p="${esc(pth)}" title="خيارات الصورة">${ico("dots", 14)}</button>${canUse ? `<button type="button" class="pus" data-pm="use" data-p="${esc(pth)}" title="استعمالها في العنصر المحدّد">استبدال</button>` : ""}${pm === pth ? `<div class="pmm"><button type="button" data-pm="dl" data-p="${esc(pth)}">${ico("download", 14)} تحميل الصورة</button><button type="button" class="dng" data-pm="del" data-p="${esc(pth)}">${ico("trash", 14)} حذف</button></div>` : ""}</div>`).join("") || '<p class="pe">لا توجد صور في هذه الصفحة بعد — ارفع صورة بالزر أعلاه.</p>'}</div>`;
+    m.innerHTML = `<div class="ph"><b>${ico("image", 16)} صور هذه الصفحة <small>(${L.length})</small></b><button type="button" data-pm="x" title="إغلاق">✕</button></div><button type="button" class="pbx-small pup" data-pm="up">${ico("upload", 14)} رفع صورة جديدة إلى القائمة</button><p class="pt">انقر صورة <b>مرة واحدة</b> لإضافتها إلى الصفحة، أو <b>اسحبها</b> إلى صورة لاستبدالها أو إلى مكان فارغ، و<b>اسحب صوراً من حاسوبك</b> وأفلتها هنا لرفعها. للحذف: القائمة ${ico("dots", 12)} فوق الصورة، أو مرّر الفأرة عليها واضغط <b>Delete</b>.</p><div class="pg">${L.map(pth => `<div class="pi" tabindex="0" draggable="true" data-pimg-i="${esc(pth)}" title="انقر لإضافتها إلى الصفحة أو اسحبها"><img src="${esc(localize(pth))}" loading="lazy" draggable="false" alt=""><button type="button" class="pdt" data-pm="menu" data-p="${esc(pth)}" title="خيارات الصورة">${ico("dots", 14)}</button>${canUse ? `<button type="button" class="pus" data-pm="use" data-p="${esc(pth)}" title="استعمالها في العنصر المحدّد">استبدال</button>` : ""}${pm === pth ? `<div class="pmm"><button type="button" data-pm="dl" data-p="${esc(pth)}">${ico("download", 14)} تحميل الصورة</button><button type="button" class="dng" data-pm="del" data-p="${esc(pth)}">${ico("trash", 14)} حذف</button></div>` : ""}</div>`).join("") || '<p class="pe">لا توجد صور في هذه الصفحة بعد — ارفع صورة بالزر أعلاه.</p>'}</div>`;
   }
   function openPageImages() {
     let m = $("pbx-pimg"); if (m) { m.remove(); return; }      // الزر يفتح اللوحة ويغلقها
@@ -10131,6 +10135,11 @@ body{overflow-x:hidden;margin:0}`;
       if (E.pmenu) { E.pmenu = null; if (!it) { drawPimg(); return; } }
       if (it) addPageImage(it.dataset.pimgI);
     });
+    const isF = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files");
+    m.addEventListener("dragover", e => { if (!isF(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; m.classList.add("drop"); });
+    m.addEventListener("dragleave", e => { if (!m.contains(e.relatedTarget)) m.classList.remove("drop"); });
+    m.addEventListener("drop", async e => { if (!isF(e)) return; e.preventDefault(); e.stopPropagation(); m.classList.remove("drop"); const fs = [...e.dataTransfer.files].filter(f => /^image\//.test(f.type)); if (!fs.length) { toast("اسحب ملفات صور فقط"); return; }
+      try { await uploadFiles(fs); E.nextLabel = "رفع صور إلى مكتبة الصفحة"; commitHist(); toast("أُضيفت " + fs.length + " صورة إلى المكتبة"); drawPimg(); } catch (err) { toast("❌ " + err.message); } });
     m.addEventListener("dragstart", e => { const it = e.target.closest && e.target.closest("[data-pimg-i]"); if (!it) return; E.drag = dragOfImg(it); e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
     m.addEventListener("mouseover", e => { const it = e.target.closest && e.target.closest("[data-pimg-i]"); if (it && document.activeElement !== it && !(document.activeElement && document.activeElement.closest && document.activeElement.closest("#pbx-pimg .pmm"))) { try { it.focus({ preventScroll: true }); } catch (x) { } } });
     m.addEventListener("keydown", e => { const it = e.target.closest && e.target.closest("[data-pimg-i]"); if (e.key === "Escape") { e.stopPropagation(); if (E.pmenu) { E.pmenu = null; drawPimg(); } else m.remove(); return; }
@@ -12658,7 +12667,7 @@ ${invertUi}<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ?
     const dd = `<div class="ep-dd"><button type="button" class="ep-ddb${S.dd ? " open" : ""}" data-ddt="mk">${S.picked && curKey ? PB.shapeThumb(curKey) : ""}<b>${S.picked && curName ? esc(curName) : "اختر شكل الماسك"}</b>${CHEV}</button>${S.dd ? `<div class="ep-ddl mk-list">${placed}${groups}</div>` : ""}</div>`;
     const hint = pend ? `<p>تظهر المعاينة على الصورة — اسحب الشكل بالفأرة فوق الصورة لتحريكه ومقبضه لتكبيره، ثم اضغط ✓ العائمة تحت الصورة للتأكيد أو ✕ للإلغاء.</p>` : `<p>اختر شكلاً من القائمة لتظهر معاينته مباشرة على الصورة.</p>`;
     return `<div class="pbx-mk">${reset}${dd}
-${shown && cl ? `${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
+${shown && cl ? `<div class="mk-pre"><button type="button" class="pbx-small" data-mkp="c" title="يضع الشكل في مركز الصورة تماماً">وسط الصورة</button>${[30, 50, 70, 100].map(v => `<button type="button" class="pbx-small${S.size === v ? " on" : ""}" data-mkp="${v}" title="حجم الشكل ${v}% من الصورة">${v}%</button>`).join("")}</div>${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
 ${invertUi}${hint}</div>`;
   }
   /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة. أي تغيير على الصورة يحدّث المعاينة الحيّة فوراً */
@@ -12673,11 +12682,24 @@ ${invertUi}${hint}</div>`;
   /* مربع تحريك الشكل فوق الصورة قبل التأكيد: اسحب الجسم لنقل الشكل، والمقبض لتكبيره */
   let box = null;
   const boxGeom = inf => { const L = A().layoutOf(inf.node.id); if (!L) return null; const side = Math.max(8, Math.min(L.width, L.height) * S.size / 100); return { L, side, x: L.left + (L.width - side) * S.px / 100, y: L.top + (L.height - side) * S.py / 100 }; };
-  function hideBox() { if (box) { box.el.remove(); box = null; } }
+  function hideBox() { if (box) { box.el.remove(); if (box.v) { box.v.remove(); box.h.remove(); } box = null; } }
+  /* معالم المنتصف: خطّا مركز الصورة (متقطّعان) يتوهّجان عند محاذاة مركز الشكل لهما، ويتجاذب الشكل معهما ومع حواف الصورة (Alt يعطّل التجاذب) */
+  function guides(g, f, s) {
+    if (!box.v) { box.v = document.createElement("i"); box.v.className = "mk-gl v"; box.h = document.createElement("i"); box.h.className = "mk-gl h"; document.body.append(box.v, box.h); }
+    const L = g.L, rx = L.width - g.side, ry = L.height - g.side;
+    box.v.style.cssText = `left:${f.left + (L.left + L.width / 2) * s}px;top:${f.top + L.top * s}px;height:${L.height * s}px`; box.h.style.cssText = `left:${f.left + L.left * s}px;top:${f.top + (L.top + L.height / 2) * s}px;width:${L.width * s}px`;
+    box.v.classList.toggle("hot", rx > 1 && S.px === 50); box.h.classList.toggle("hot", ry > 1 && S.py === 50);
+  }
+  function snapPos(g, s, raw) {      // raw: [px,py] بالنسبة المئوية → بعد التجاذب مع المركز والحواف
+    const L = g.L, T = 8 / s, out = raw.slice(), rx = L.width - g.side, ry = L.height - g.side;
+    [[0, rx, L.width], [1, ry, L.height]].forEach(([i, r, W]) => { if (r <= 1) return; const off = r * raw[i] / 100, cen = off + g.side / 2;
+      if (Math.abs(cen - W / 2) < T) out[i] = 50; else if (off < T) out[i] = 0; else if (r - off < T) out[i] = 100; });
+    return out;
+  }
   function placeBox() {
     if (!box) return; const inf = A().find(box.id), fw = document.getElementById("pbx-fw"); if (!inf || !fw || !S.pend || !libSel()) return hideBox();
     const g = boxGeom(inf); if (!g) return hideBox(); const f = fw.getBoundingClientRect(), s = A().E.scale || 1, st = box.el.style;
-    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.side * s) + "px"; st.height = (g.side * s) + "px";
+    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.side * s) + "px"; st.height = (g.side * s) + "px"; guides(g, f, s);
   }
   function showBox(inf) {
     if (!S.pend || !libSel() || !inf || inf.node.type !== "image") return hideBox();
@@ -12686,7 +12708,7 @@ ${invertUi}${hint}</div>`;
       const down = (e, resize) => { e.preventDefault(); e.stopPropagation(); const i2 = A().find(box.id), g = boxGeom(i2); if (!g) return; const s = A().E.scale || 1, x0 = e.clientX, y0 = e.clientY, p0 = [S.px, S.py, S.size]; el.setPointerCapture(e.pointerId);
         const mv = ev => { const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s, L = g.L;
           if (resize) S.size = Math.max(10, Math.min(100, Math.round((g.side + Math.max(dx, dy)) / Math.min(L.width, L.height) * 100)));
-          else { const rx = L.width - g.side, ry = L.height - g.side; if (rx > 1) S.px = Math.max(0, Math.min(100, Math.round(p0[0] + dx / rx * 100))); if (ry > 1) S.py = Math.max(0, Math.min(100, Math.round(p0[1] + dy / ry * 100))); }
+          else { const rx = L.width - g.side, ry = L.height - g.side; const raw = [Math.max(0, Math.min(100, p0[0] + (rx > 1 ? dx / rx * 100 : 0))), Math.max(0, Math.min(100, p0[1] + (ry > 1 ? dy / ry * 100 : 0)))], sn = ev.altKey ? raw : snapPos(g, s, raw); if (rx > 1) S.px = Math.round(sn[0]); if (ry > 1) S.py = Math.round(sn[1]); }
           const i3 = A().find(box.id); if (i3) { preview(i3); placeBox(); } };
         const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); if (S.hook) S.hook(); }; el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); };
       el.addEventListener("pointerdown", e => down(e, !!e.target.closest(".mk-hd")));

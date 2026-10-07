@@ -44,7 +44,7 @@ ${invertUi}<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ?
     const dd = `<div class="ep-dd"><button type="button" class="ep-ddb${S.dd ? " open" : ""}" data-ddt="mk">${S.picked && curKey ? PB.shapeThumb(curKey) : ""}<b>${S.picked && curName ? esc(curName) : "اختر شكل الماسك"}</b>${CHEV}</button>${S.dd ? `<div class="ep-ddl mk-list">${placed}${groups}</div>` : ""}</div>`;
     const hint = pend ? `<p>تظهر المعاينة على الصورة — اسحب الشكل بالفأرة فوق الصورة لتحريكه ومقبضه لتكبيره، ثم اضغط ✓ العائمة تحت الصورة للتأكيد أو ✕ للإلغاء.</p>` : `<p>اختر شكلاً من القائمة لتظهر معاينته مباشرة على الصورة.</p>`;
     return `<div class="pbx-mk">${reset}${dd}
-${shown && cl ? `${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
+${shown && cl ? `<div class="mk-pre"><button type="button" class="pbx-small" data-mkp="c" title="يضع الشكل في مركز الصورة تماماً">وسط الصورة</button>${[30, 50, 70, 100].map(v => `<button type="button" class="pbx-small${S.size === v ? " on" : ""}" data-mkp="${v}" title="حجم الشكل ${v}% من الصورة">${v}%</button>`).join("")}</div>${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
 ${invertUi}${hint}</div>`;
   }
   /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة. أي تغيير على الصورة يحدّث المعاينة الحيّة فوراً */
@@ -59,11 +59,24 @@ ${invertUi}${hint}</div>`;
   /* مربع تحريك الشكل فوق الصورة قبل التأكيد: اسحب الجسم لنقل الشكل، والمقبض لتكبيره */
   let box = null;
   const boxGeom = inf => { const L = A().layoutOf(inf.node.id); if (!L) return null; const side = Math.max(8, Math.min(L.width, L.height) * S.size / 100); return { L, side, x: L.left + (L.width - side) * S.px / 100, y: L.top + (L.height - side) * S.py / 100 }; };
-  function hideBox() { if (box) { box.el.remove(); box = null; } }
+  function hideBox() { if (box) { box.el.remove(); if (box.v) { box.v.remove(); box.h.remove(); } box = null; } }
+  /* معالم المنتصف: خطّا مركز الصورة (متقطّعان) يتوهّجان عند محاذاة مركز الشكل لهما، ويتجاذب الشكل معهما ومع حواف الصورة (Alt يعطّل التجاذب) */
+  function guides(g, f, s) {
+    if (!box.v) { box.v = document.createElement("i"); box.v.className = "mk-gl v"; box.h = document.createElement("i"); box.h.className = "mk-gl h"; document.body.append(box.v, box.h); }
+    const L = g.L, rx = L.width - g.side, ry = L.height - g.side;
+    box.v.style.cssText = `left:${f.left + (L.left + L.width / 2) * s}px;top:${f.top + L.top * s}px;height:${L.height * s}px`; box.h.style.cssText = `left:${f.left + L.left * s}px;top:${f.top + (L.top + L.height / 2) * s}px;width:${L.width * s}px`;
+    box.v.classList.toggle("hot", rx > 1 && S.px === 50); box.h.classList.toggle("hot", ry > 1 && S.py === 50);
+  }
+  function snapPos(g, s, raw) {      // raw: [px,py] بالنسبة المئوية → بعد التجاذب مع المركز والحواف
+    const L = g.L, T = 8 / s, out = raw.slice(), rx = L.width - g.side, ry = L.height - g.side;
+    [[0, rx, L.width], [1, ry, L.height]].forEach(([i, r, W]) => { if (r <= 1) return; const off = r * raw[i] / 100, cen = off + g.side / 2;
+      if (Math.abs(cen - W / 2) < T) out[i] = 50; else if (off < T) out[i] = 0; else if (r - off < T) out[i] = 100; });
+    return out;
+  }
   function placeBox() {
     if (!box) return; const inf = A().find(box.id), fw = document.getElementById("pbx-fw"); if (!inf || !fw || !S.pend || !libSel()) return hideBox();
     const g = boxGeom(inf); if (!g) return hideBox(); const f = fw.getBoundingClientRect(), s = A().E.scale || 1, st = box.el.style;
-    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.side * s) + "px"; st.height = (g.side * s) + "px";
+    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.side * s) + "px"; st.height = (g.side * s) + "px"; guides(g, f, s);
   }
   function showBox(inf) {
     if (!S.pend || !libSel() || !inf || inf.node.type !== "image") return hideBox();
@@ -72,7 +85,7 @@ ${invertUi}${hint}</div>`;
       const down = (e, resize) => { e.preventDefault(); e.stopPropagation(); const i2 = A().find(box.id), g = boxGeom(i2); if (!g) return; const s = A().E.scale || 1, x0 = e.clientX, y0 = e.clientY, p0 = [S.px, S.py, S.size]; el.setPointerCapture(e.pointerId);
         const mv = ev => { const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s, L = g.L;
           if (resize) S.size = Math.max(10, Math.min(100, Math.round((g.side + Math.max(dx, dy)) / Math.min(L.width, L.height) * 100)));
-          else { const rx = L.width - g.side, ry = L.height - g.side; if (rx > 1) S.px = Math.max(0, Math.min(100, Math.round(p0[0] + dx / rx * 100))); if (ry > 1) S.py = Math.max(0, Math.min(100, Math.round(p0[1] + dy / ry * 100))); }
+          else { const rx = L.width - g.side, ry = L.height - g.side; const raw = [Math.max(0, Math.min(100, p0[0] + (rx > 1 ? dx / rx * 100 : 0))), Math.max(0, Math.min(100, p0[1] + (ry > 1 ? dy / ry * 100 : 0)))], sn = ev.altKey ? raw : snapPos(g, s, raw); if (rx > 1) S.px = Math.round(sn[0]); if (ry > 1) S.py = Math.round(sn[1]); }
           const i3 = A().find(box.id); if (i3) { preview(i3); placeBox(); } };
         const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); if (S.hook) S.hook(); }; el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); };
       el.addEventListener("pointerdown", e => down(e, !!e.target.closest(".mk-hd")));
