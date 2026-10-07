@@ -397,13 +397,13 @@ const PBClone = (function () {
     mountWin(f, W, 900, 900, true); st("جارٍ عرض الصفحة…");
     f.onload = async () => { st("تحميل الصور والخطوط…"); const d = f.contentDocument; if (!d) return; try { await Promise.race([Promise.all([...d.images].filter(i => !i.complete).map(i => new Promise(r => { i.onload = i.onerror = r; }))), sleep(5000)]); await Promise.race([d.fonts ? d.fonts.ready : Promise.resolve(), sleep(2500)]); } catch (e) { }
       const h = Math.min(16000, Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0, 300)); f.style.height = h + "px"; await sleep(80); const h2 = Math.min(16000, Math.max(d.documentElement.scrollHeight, h)); f.style.height = h2 + "px";
-      S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»."); };
+      S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.src ? " [المصدر: " + ({ chrome: "إضافة كروم", proxy: "جلب عادي", github: "متصفح GitHub" }[S.src] || S.src) + "]" : "") + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»."); };
     f.srcdoc = html;
   }
   async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
-    S.extInfo = null; S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
-    try { const r = await getPage(u, !!full, 0); const bi = bodyInfo(r.html); if (bi.text < 60 && bi.imgs < 3) throw new Error("وصلت الصفحة فارغة (لا نص ولا صور)." + (EXT.ok && extOld() ? " نسخة إضافة كروم عندك قديمة (v" + EXT.v + ") — حدّثها (احذفها وحمّل المجلد الجديد من «تثبيت إضافة كروم») ثم F5." : " الموقع يبني محتواه داخل إطار أو بالجافاسكربت أو يمنع القراءة الآلية.")); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
+    S.extInfo = null; S.extErr = ""; S.src = ""; S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
+    try { const r = await getPage(u, !!full, 0); S.src = r.src; const bi = bodyInfo(r.html), real = bi.doc.querySelectorAll("img[src],video,picture").length; if ((bi.text < 60 && bi.imgs < 3) || (r.src === "proxy" && bi.text < 150 && real < 3)) throw new Error("وصلت الصفحة فارغة (الجلب العادي يرى قشرة بيضاء لأن الموقع يبني محتواه بالجافاسكربت أو داخل إطار). " + (!EXT.ok ? "الحل: ثبّت إضافة كروم (زر «تثبيت إضافة كروم») ثم أعد تحميل اللوحة F5." : extOld() ? "نسخة إضافة كروم عندك قديمة (v" + EXT.v + ") فتُتجاهل — احذفها وحمّل أحدث نسخة من «أحدث نسخة» ثم F5." : "إضافة كروم متصلة لكن فشلت القراءة" + (S.extErr ? ": " + S.extErr : "") + ".")); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
     catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
   }
   const canFull = () => { try { const c = typeof GH !== "undefined" ? GH.cfg() : null; return !!(c && c.token && c.token !== "php" && c.owner); } catch (e) { return false; } };
@@ -425,17 +425,17 @@ const PBClone = (function () {
     stg.innerHTML = `<div class="cl-help"><h3>إضافة كروم «مساعد نسخ القوالب»</h3><p>تفتح الموقع في <b>متصفح كروم الذي عندك</b> بجلستك وكوكيزك فتتجاوز صفحات الحماية (Cloudflare…) وتقرأ المواقع المبنية بالجافاسكربت، ثم تعيد نسخته لهذه النافذة. تُثبَّت مرة واحدة:</p><ol><li><a href="assets/ext/alyssum-clone-helper.zip" download>حمّل ملف الإضافة (zip)</a> وفُكّ ضغطه في أي مكان.</li><li>افتح في كروم العنوان <code dir="ltr">chrome://extensions</code> وفعّل <b>وضع المطوّر (Developer mode)</b> أعلى اليمين.</li><li>اضغط <b>«تحميل إضافة غير مضغوطة» (Load unpacked)</b> واختر المجلد <code dir="ltr">alyssum-clone-helper</code>.</li><li>أعد تحميل لوحة التحكم (F5) ثم افتح «نسخ قالب»: سيظهر «● كروم متصل». عند أول استعمال تُسأل مرة واحدة السماح للوحة.</li></ol><p class="cl-sm">للأمان: الإضافة لا تعمل إلا من صفحة لوحة التحكم التي توافق عليها، وتفتح نافذة صغيرة مؤقتة لكل طلب ثم تغلقها، ولا ترسل شيئاً إلى أي خادم.</p></div>`;
   }
   async function getPage(u, full, hop, via) {
-    let html = null;
+    let html = null, src = full ? "github" : "proxy";
     if (full) html = await fetchFull(u, S.W);
     else {
       if (EXT.ok && extOld()) st("إضافة كروم عندك قديمة (v" + EXT.v + ") فتُتجاهل — حدّثها لتقرأ كل المواقع.");
-      if (EXT.ok && !extOld()) { try { const x = await fetchViaExt(u, S.W); html = x.html; u = x.url; via = true; } catch (e) { st(e.message + " — جارٍ تجربة الجلب العادي…"); html = null; } }
-      if (html == null) { try { html = await fetchHtml(u); } catch (e) { if (canFull()) { st(e.message + " — جارٍ المحاولة تلقائياً بالمتصفح الكامل…"); full = true; html = await fetchFull(u, S.W); } else throw e; } }
+      if (EXT.ok && !extOld()) { try { const x = await fetchViaExt(u, S.W); html = x.html; u = x.url; via = true; src = "chrome"; } catch (e) { S.extErr = e.message; st(e.message + " — جارٍ تجربة الجلب العادي…"); html = null; } }
+      if (html == null) { try { html = await fetchHtml(u); } catch (e) { if (canFull()) { st(e.message + " — جارٍ المحاولة تلقائياً بالمتصفح الكامل…"); full = true; src = "github"; html = await fetchFull(u, S.W); } else throw e; } }
     }
     if (isChallenge(html)) { const e = new Error("الموقع يعرض صفحة تحقّق من الجدار الحماية (Enable JavaScript and cookies to continue) حتى للمتصفح الكامل. لا يمكن نسخه آلياً — افتحه في متصفحك والتقط لقطة شاشة للصفحة ثم استعمل تبويب «صورة (لقطة شاشة)»."); throw e; }
     const fr = hop < 2 ? mainIframe(html, u) : ""; if (fr) { st("المحتوى الحقيقي داخل إطار مضمّن — جارٍ فتح رابطه…"); return getPage(fr, full, hop + 1, via); }
-    if (!full && !via && canFull()) { const b = bodyInfo(html); if (b.text < 150 && b.imgs < 3) { st("الصفحة تُبنى بالجافاسكربت — جارٍ استعمال المتصفح الكامل…"); html = await fetchFull(u, S.W); if (hop < 2) { const f2 = mainIframe(html, u); if (f2) return getPage(f2, true, hop + 1); } } }
-    return { html, url: u };
+    if (!full && !via && canFull()) { const b = bodyInfo(html); if (b.text < 150 && b.imgs < 3) { st("الصفحة تُبنى بالجافاسكربت — جارٍ استعمال المتصفح الكامل…"); html = await fetchFull(u, S.W); src = "github"; if (hop < 2) { const f2 = mainIframe(html, u); if (f2) return getPage(f2, true, hop + 1); } } }
+    return { html, url: u, src };
   }
   function pickImg() { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.onchange = () => { if (i.files[0]) loadImg(i.files[0]); }; i.click(); }
   function loadImg(file) {
