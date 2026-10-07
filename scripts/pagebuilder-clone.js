@@ -403,7 +403,7 @@ const PBClone = (function () {
   async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
     S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
-    try { const r = await getPage(u, !!full, 0); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
+    try { const r = await getPage(u, !!full, 0); const bi = bodyInfo(r.html); if (bi.text < 60 && bi.imgs < 3) throw new Error("وصلت الصفحة فارغة (لا نص ولا صور)." + (EXT.ok && extOld() ? " نسخة إضافة كروم عندك قديمة (v" + EXT.v + ") — حدّثها (احذفها وحمّل المجلد الجديد من «تثبيت إضافة كروم») ثم F5." : " الموقع يبني محتواه داخل إطار أو بالجافاسكربت أو يمنع القراءة الآلية.")); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
     catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
   }
   const canFull = () => { try { const c = typeof GH !== "undefined" ? GH.cfg() : null; return !!(c && c.token && c.token !== "php" && c.owner); } catch (e) { return false; } };
@@ -416,7 +416,8 @@ const PBClone = (function () {
   const EXT = { ok: false, v: "", allowed: false, id: 0, pend: new Map(), t: 0 };
   window.addEventListener("message", e => { const d = e.data; if (e.source !== window || !d || !d.aly) return; const p = EXT.pend.get(d.id); if (p) { EXT.pend.delete(d.id); p(d); } });
   const extCall = (type, extra, ms) => new Promise((res, rej) => { const id = ++EXT.id, t = setTimeout(() => { EXT.pend.delete(id); rej(new Error("لا استجابة من الإضافة")); }, ms || 1500); EXT.pend.set(id, d => { clearTimeout(t); res(d); }); window.postMessage(Object.assign({ alyReq: 1, type, id }, extra || {}), location.origin); });
-  function extUi() { const el = $("cl-ext"); if (!el) return; const old = EXT.ok && String(EXT.v || "0").localeCompare("1.1.0", undefined, { numeric: true }) < 0; if (old) { el.innerHTML = `<button type="button" data-cl="extinfo" title="نسخة الإضافة المثبّتة قديمة (v${esc(EXT.v)}) وقد تُظهر بعض المواقع فارغة">حدّث الإضافة إلى 1.1.0</button>`; return; } el.innerHTML = EXT.ok ? `<b class="cl-extok" title="الإضافة v${esc(EXT.v)}">● كروم متصل — يقرأ كل المواقع</b>` : `<button type="button" data-cl="extinfo" title="إضافة كروم تفتح المواقع في متصفحك الحقيقي فتتجاوز الحماية وتقرأ كل المواقع">تثبيت إضافة كروم</button>`; }
+  const extOld = () => EXT.ok && String(EXT.v || "0").localeCompare("1.1.0", undefined, { numeric: true }) < 0;
+  function extUi() { const el = $("cl-ext"); if (!el) return; if (extOld()) { el.innerHTML = `<button type="button" data-cl="extinfo" title="نسخة الإضافة المثبّتة قديمة (v${esc(EXT.v)}) وقد تُظهر بعض المواقع فارغة">حدّث الإضافة إلى 1.1.0</button>`; return; } el.innerHTML = EXT.ok ? `<b class="cl-extok" title="الإضافة v${esc(EXT.v)}">● كروم متصل — يقرأ كل المواقع</b>` : `<button type="button" data-cl="extinfo" title="إضافة كروم تفتح المواقع في متصفحك الحقيقي فتتجاوز الحماية وتقرأ كل المواقع">تثبيت إضافة كروم</button>`; }
   async function extPing() { try { const r = await extCall("ping", {}, 900); EXT.ok = true; EXT.v = r.v; EXT.allowed = !!r.ok; } catch (e) { EXT.ok = false; } extUi(); }
   async function fetchViaExt(url, W) { st("جارٍ فتح الموقع في متصفح كروم عندك (نافذة صغيرة مؤقتة)…"); const r = await extCall("fetch", { url, width: W }, 150000); if (r.error) throw new Error(r.error); return { html: r.html, url: r.url || url }; }
   function extHelp() {
@@ -427,7 +428,8 @@ const PBClone = (function () {
     let html = null;
     if (full) html = await fetchFull(u, S.W);
     else {
-      if (EXT.ok) { try { const x = await fetchViaExt(u, S.W); html = x.html; u = x.url; via = true; } catch (e) { st(e.message + " — جارٍ تجربة الجلب العادي…"); html = null; } }
+      if (EXT.ok && extOld()) st("إضافة كروم عندك قديمة (v" + EXT.v + ") فتُتجاهل — حدّثها لتقرأ كل المواقع.");
+      if (EXT.ok && !extOld()) { try { const x = await fetchViaExt(u, S.W); html = x.html; u = x.url; via = true; } catch (e) { st(e.message + " — جارٍ تجربة الجلب العادي…"); html = null; } }
       if (html == null) { try { html = await fetchHtml(u); } catch (e) { if (canFull()) { st(e.message + " — جارٍ المحاولة تلقائياً بالمتصفح الكامل…"); full = true; html = await fetchFull(u, S.W); } else throw e; } }
     }
     if (isChallenge(html)) { const e = new Error("الموقع يعرض صفحة تحقّق من الجدار الحماية (Enable JavaScript and cookies to continue) حتى للمتصفح الكامل. لا يمكن نسخه آلياً — افتحه في متصفحك والتقط لقطة شاشة للصفحة ثم استعمل تبويب «صورة (لقطة شاشة)»."); throw e; }
