@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.31.3">
+<meta name="admin-version" content="1.31.4">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.31.3"></script>
-<script src="assets/js/chrome-admin.js?v=1.31.3"></script>
-<script src="assets/js/admin-assistant.js?v=1.31.3"></script>
-<script src="assets/js/admin-update.js?v=1.31.3"></script>
+<script src="assets/js/ctl-help.js?v=1.31.4"></script>
+<script src="assets/js/chrome-admin.js?v=1.31.4"></script>
+<script src="assets/js/admin-assistant.js?v=1.31.4"></script>
+<script src="assets/js/admin-update.js?v=1.31.4"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -8488,7 +8488,7 @@ body{overflow-x:hidden;margin:0}`;
 .ep-ddl{margin-top:.3rem;border:1.5px solid #e6e0d0;border-radius:10px;background:#fff;padding:.35rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;max-height:250px;overflow:auto}.ep-ddl .mk-gh{grid-column:1/-1;font-weight:800;font-size:.68rem;color:#8a8268;margin:.3rem .1rem .05rem}.pbx-mk .ep-ddl .mk-grid{display:contents!important}.pbx-mk .ep-ddl{padding:.35rem!important;border-radius:10px}.ep-ddl .ep-it span{font-size:.58rem}.ep-it{display:flex;flex-direction:column;align-items:center;gap:.15rem;border:1.5px solid transparent;background:#faf6ec;border-radius:8px;padding:.25rem .1rem;cursor:pointer;font-family:inherit;font-size:.6rem;font-weight:700;color:#173f35;line-height:1.2;text-align:center}.ep-it:hover{border-color:#7c3aed}.ep-it.on{border-color:#7c3aed;background:#ede9fe;color:#5b21b6}.ep-it .pbx-thumb{width:34px;height:34px}.ep-it span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ep-ddl.mk-list{max-height:250px;border:1.5px solid #e6e0d0;padding:.35rem}
 .pbx-epf{position:fixed;z-index:10045;display:flex;gap:.3rem;background:#fff;border-radius:999px;padding:.25rem;box-shadow:0 6px 22px rgba(0,0,0,.3),0 0 0 1.5px #a855f7}.pbx-epf button{display:flex;align-items:center;gap:.25rem;border:0;border-radius:999px;padding:.32rem .75rem;font:800 .74rem inherit;font-family:inherit;cursor:pointer}.pbx-epf .ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pbx-epf .no{background:#f1f2f6;color:#b83232}
-.mk-box{position:fixed;z-index:10040;border:2px dashed #7c3aed;background:rgba(124,58,237,.08);cursor:move;touch-action:none;border-radius:4px;box-sizing:border-box}.mk-box .mk-hd{position:absolute;right:-8px;bottom:-8px;width:15px;height:15px;background:#7c3aed;border:2px solid #fff;border-radius:4px;cursor:nwse-resize}
+.mk-box{position:fixed;z-index:10040;border:2px dashed #7c3aed;background:rgba(124,58,237,.08);cursor:move;touch-action:none;border-radius:4px;box-sizing:border-box}.mk-box .mk-hd{position:absolute;width:11px;height:11px;background:#7c3aed;border:2px solid #fff;border-radius:3px;box-sizing:border-box}.mk-hd[data-h=n]{top:-6px;left:calc(50% - 5px);cursor:ns-resize}.mk-hd[data-h=s]{bottom:-6px;left:calc(50% - 5px);cursor:ns-resize}.mk-hd[data-h=e]{right:-6px;top:calc(50% - 5px);cursor:ew-resize}.mk-hd[data-h=w]{left:-6px;top:calc(50% - 5px);cursor:ew-resize}.mk-hd[data-h=ne]{top:-6px;right:-6px;cursor:nesw-resize}.mk-hd[data-h=nw]{top:-6px;left:-6px;cursor:nwse-resize}.mk-hd[data-h=se]{bottom:-6px;right:-6px;cursor:nwse-resize}.mk-hd[data-h=sw]{bottom:-6px;left:-6px;cursor:nesw-resize}
 #pbx-pimg.drop{outline:3px dashed #0d9488;outline-offset:-6px;background:#f0fdfa}
 .mk-pre{display:flex;flex-wrap:wrap;gap:.25rem}.mk-pre .pbx-small{flex:1;white-space:nowrap}.mk-pre .pbx-small.on{background:#ede9fe;border-color:#7c3aed;color:#5b21b6}
 .mk-gl{position:fixed;z-index:10039;pointer-events:none;border:0 dashed rgba(124,58,237,.5);transition:border-color .1s}.mk-gl.v{width:0;border-left-width:1.5px}.mk-gl.h{height:0;border-top-width:1.5px}.mk-gl.hot{border-style:solid;border-color:#ec4899}
@@ -9160,7 +9160,11 @@ body{overflow-x:hidden;margin:0}`;
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
       img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)],
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
-      img && canvas ? "-" : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null].filter(Boolean);
+      img && canvas ? "-" : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null,
+      typeof PBMask !== "undefined" && canvas && PBMask.can(inf) ? "-" : null,
+      typeof PBMask !== "undefined" && canvas && PBMask.can(inf) ? [ico("mask", 16), img ? "ماسك: احذف العنصر الذي فوقها منها" : "ماسك: احذف هذا العنصر من الصورة التي تحته", () => PBMask.quick(inf, false)] : null,
+      typeof PBMask !== "undefined" && canvas && PBMask.can(inf) ? [ico("mask", 16), img ? "ماسك معكوس: أبقِ الصورة داخل العنصر الذي فوقها" : "ماسك معكوس: أبقِ الصورة داخل هذا العنصر", () => PBMask.quick(inf, true)] : null,
+      img && inf.set.clip ? [ico("x", 16), "إلغاء الماسك (الصورة كاملة)", () => PBMask.act("reset", inf)] : null].filter(Boolean);
     showMenu(items, x, y, anchor);
   }
   /* يعرض قائمة عائمة من عناصر [أيقونة، نص، دالة، اختصار، خطر، قائمة فرعية، معطّل] */
@@ -12637,11 +12641,13 @@ const PBMask = (function () {
   const isShape = w => w.type === "shape" && (PB.SHAPES[w.set.shape] || [])[1] && !["stroke", "line"].includes(PB.SHAPES[w.set.shape][1]);
   const inter = (a, b) => a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
   const zi = w => Number(w.set.zi) || 0;
-  function cands(inf) {      // العناصر المتداخلة مع المحدّد: أشكال إن كان صورة، وصوراً إن كان شكلاً (مرتّبة الأعلى أولاً)
-    const wantShape = inf.node.type === "image", me = A().layoutOf(inf.node.id), L = (inf.sec.free || []).map((w, i) => [w, i]).filter(([w]) => w !== inf.node && (wantShape ? isShape(w) : w.type === "image" && w.set.src && !w.set.pz) && inter(me, A().layoutOf(w.id)));
-    return L.sort((x, y) => zi(y[0]) - zi(x[0]) || y[1] - x[1]).map(x => x[0]);
+  const SKIP = ["shdr", "sbar", "herow", "sfoot", "orderorig"], rectKey = () => Object.keys(PB.SHAPES).find(k => PB.SHAPES[k][1] === "rect") || "rect";
+  const maskKey = w => isShape(w) ? w.set.shape : rectKey();
+  function cands(inf) {      // العناصر المتداخلة مع المحدّد: إن كان صورة فأي عنصر فوقها/تحتها (الأشكال أولاً ثم الأعلى)، وإن كان عنصراً آخر فالصور المتداخلة معه
+    const isImg = inf.node.type === "image", me = A().layoutOf(inf.node.id), L = (inf.sec.free || []).map((w, i) => [w, i]).filter(([w]) => w !== inf.node && !SKIP.includes(w.type) && (isImg ? !(w.type === "image" && w.set.pz) : w.type === "image" && w.set.src && !w.set.pz) && inter(me, A().layoutOf(w.id)));
+    return L.sort((x, y) => (isImg ? (isShape(y[0]) ? 1e6 : 0) - (isShape(x[0]) ? 1e6 : 0) : 0) || zi(y[0]) - zi(x[0]) || y[1] - x[1]).map(x => x[0]);
   }
-  const wname = (w, n) => w.type === "shape" ? ((PB.SHAPES[w.set.shape] || [])[0] || "شكل") : "صورة " + (n + 1);
+  const wname = (w, n) => w.type === "shape" ? ((PB.SHAPES[w.set.shape] || [])[0] || "شكل") : w.type === "image" ? "صورة " + (n + 1) : ((PB.WIDGETS[w.type] || {}).label || "عنصر");
   function css() {
     if (document.getElementById("mk-css")) return; const st = document.createElement("style"); st.id = "mk-css";
     st.textContent = `.pbx-mk{display:flex;flex-direction:column;gap:.45rem;font-size:.8rem}.pbx-mk p{margin:0;color:#6b6556;line-height:1.7;font-size:.76rem}.pbx-mk label{display:flex;flex-direction:column;gap:.2rem;font-weight:700;font-size:.76rem}.pbx-mk select{width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.35rem;font-family:inherit}
@@ -12650,7 +12656,11 @@ const PBMask = (function () {
   }
   const libKeys = () => Object.keys(PB.SHAPES).filter(k => !["stroke", "line"].includes(PB.SHAPES[k][1]));
   const libSel = () => S.target && S.target.startsWith("lib:") && PB.SHAPES[S.target.slice(4)] ? S.target.slice(4) : "";
-  Object.assign(S, { size: 70, px: 50, py: 50, invert: false, pend: null, picked: false, dd: false });
+  Object.assign(S, { size: 70, sw: null, sh: null, px: 50, py: 50, invert: false, pend: null, picked: false, dd: false });
+  /* مستطيل الشكل داخل الصورة: العرض والارتفاع مستقلان (% من الصورة)، وافتراضيهما مربع بنسبة size من أصغر بُعد */
+  const dims = L => { const base = Math.min(L.width, L.height) * S.size / 100, w = Math.max(10, Math.min(L.width, S.sw != null ? L.width * S.sw / 100 : base)), h = Math.max(10, Math.min(L.height, S.sh != null ? L.height * S.sh / 100 : base)); return { L, w, h, x: L.left + (L.width - w) * S.px / 100, y: L.top + (L.height - h) * S.py / 100 }; };
+  const fillWH = () => { const inf = A().find(A().E.sel), L = inf && A().layoutOf(inf.node.id); if (!L) return; const d = dims(L); if (S.sw == null) S.sw = Math.round(d.w / L.width * 100); if (S.sh == null) S.sh = Math.round(d.h / L.height * 100); };
+  const curWH = inf => { const L = A().layoutOf(inf.node.id); if (!L) return [S.size, S.size]; const d = dims(L); return [Math.round(d.w / L.width * 100), Math.round(d.h / L.height * 100)]; };
   const CHEV = '<svg class="ep-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   const thumbBtn = (val, key, name, on) => `<button type="button" class="mk-sh${on ? " on" : ""}" data-mksh="${esc(val)}" title="${esc(name)}">${PB.shapeThumb(key)}<span>${esc(name)}</span></button>`;
   function panel(inf) {
@@ -12658,29 +12668,29 @@ const PBMask = (function () {
     const img = inf.node.type === "image", st = inf.set; if (img && !st.src) return "";
     const L = cands(inf), lib = img ? libSel() : "", cur = lib ? null : (L.find(w => w.id === S.target) || L[0]), pend = !!(S.pend && S.pend.id === inf.node.id);
     const reset = img && st.clip && !pend ? `<div class="mk-on">الماسك مفعّل (${st.clipMode === "out" ? "شكل محذوف من الصورة" : "الصورة داخل الشكل فقط"})</div><button type="button" class="pbx-small" data-mk="reset">إلغاء الماسك (الصورة كاملة)</button>` : "";
-    const iAll = (inf.sec.free || []).filter(w => w.type === "image"), sl = (k, lbl, mn, mx) => `<label class="pbx-pr">${lbl} <b>${S[k]}</b><input type="range" data-mkk="${k}" min="${mn}" max="${mx}" value="${S[k]}"></label>`;
+    const iAll = (inf.sec.free || []).filter(w => w.type === "image"), wh = curWH(inf), sl = (k, lbl, mn, mx) => { const v = k === "sw" ? wh[0] : k === "sh" ? wh[1] : S[k]; return `<label class="pbx-pr">${lbl} <b>${v}</b><input type="range" data-mkk="${k}" min="${mn}" max="${mx}" value="${v}"></label>`; };
     const invertUi = `<label class="mk-k"><input type="checkbox" data-mkk="invert" ${S.invert ? "checked" : ""}> اعكس: أبقِ الشكل وأخفِ بقية الصورة</label><p>الافتراضي: <b>يُحذف الشكل من الصورة</b> (يُثقب مكانه). فعّل «اعكس» لتبقى الصورة داخل الشكل فقط.</p>`;
     if (!img) {      // من جهة الشكل: اختيار الصورة التي تحته
-      const hint = L.length ? "" : `<p>ضع هذا الشكل فوق <b>صورة</b> ثم اضغط «تطبيق الماسك».</p>`;
+      const hint = L.length ? "" : `<p>ضع هذا العنصر فوق <b>صورة</b> ثم اضغط «تطبيق الماسك» (أو بالزر الأيمن على العنصر).</p>`;
       return `<div class="pbx-mk">${hint}${L.length ? `<label>الصورة التي تحت الشكل<select data-mkk="target">${L.map(w => `<option value="${esc(w.id)}"${cur && w.id === cur.id ? " selected" : ""}>${esc(wname(w, iAll.indexOf(w)))}</option>`).join("")}</select></label>` : ""}
 ${invertUi}<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>
-<div class="mk-b"><button type="button" class="pbx-small mk-go" data-mk="apply">🎭 تطبيق الماسك</button></div></div>`; }
+<div class="mk-b"><button type="button" class="pbx-small mk-go" data-mk="apply">تطبيق الماسك</button></div></div>`; }
     // من جهة الصورة: أشكال حقيقية بجانب أسمائها (الموضوعة فوق الصورة + المكتبة) + معاينة حيّة على الصفحة
     const val = lib ? "lib:" + lib : cur ? cur.id : "lib:ellipse", cl = val.startsWith("lib:"), shown = S.picked || pend || !!st.clip;
     const small = (v, key, name, on) => `<button type="button" class="ep-it${on ? " on" : ""}" data-mksh="${esc(v)}" title="${esc(name)}">${PB.shapeThumb(key)}<span>${esc(name)}</span></button>`;
-    const curKey = lib || (cur && cur.set ? cur.set.shape : ""), curName = lib ? PB.SHAPES[lib][0] : cur ? wname(cur, 0) : "";
-    const placed = L.length ? `<div class="mk-gh">شكل موضوع فوق الصورة</div><div class="mk-grid">${L.map(w => small(w.id, w.set.shape, wname(w, 0), val === w.id)).join("")}</div>` : "";
+    const curKey = lib || (cur && cur.set ? maskKey(cur) : ""), curName = lib ? PB.SHAPES[lib][0] : cur ? wname(cur, 0) : "";
+    const placed = L.length ? `<div class="mk-gh">عناصر متداخلة مع الصورة في الصفحة</div><div class="mk-grid">${L.map((w, i) => small(w.id, maskKey(w), wname(w, iAll.indexOf(w)), val === w.id)).join("")}</div>` : "";
     const groups = PB.SHAPE_GROUPS.map(g => { const ks = libKeys().filter(k => PB.SHAPES[k][4] === g); return ks.length ? `<div class="mk-gh">${esc(g)}</div><div class="mk-grid">${ks.map(k => small("lib:" + k, k, PB.SHAPES[k][0], val === "lib:" + k)).join("")}</div>` : ""; }).join("");
     const dd = `<div class="ep-dd"><button type="button" class="ep-ddb${S.dd ? " open" : ""}" data-ddt="mk">${S.picked && curKey ? PB.shapeThumb(curKey) : ""}<b>${S.picked && curName ? esc(curName) : "اختر شكل الماسك"}</b>${CHEV}</button>${S.dd ? `<div class="ep-ddl mk-list">${placed}${groups}</div>` : ""}</div>`;
-    const hint = pend ? `<p>تظهر المعاينة على الصورة — اسحب الشكل بالفأرة فوق الصورة لتحريكه ومقبضه لتكبيره، ثم اضغط ✓ العائمة تحت الصورة للتأكيد أو ✕ للإلغاء.</p>` : `<p>اختر شكلاً من القائمة لتظهر معاينته مباشرة على الصورة.</p>`;
+    const hint = pend ? `<p>تظهر المعاينة على الصورة — اسحب الشكل بالفأرة فوق الصورة لتحريكه، وأي جانب من إطاره البنفسجي أو زاويته لتعديل شكله (الزاوية تحفظ النسبة)، ثم اضغط ✓ العائمة تحت الصورة للتأكيد أو ✕ للإلغاء.</p>` : `<p>اختر شكلاً من القائمة لتظهر معاينته مباشرة على الصورة.</p>`;
     return `<div class="pbx-mk">${reset}${dd}
-${shown && cl ? `<div class="mk-pre"><button type="button" class="pbx-small" data-mkp="c" title="يضع الشكل في مركز الصورة تماماً">وسط الصورة</button>${[30, 50, 70, 100].map(v => `<button type="button" class="pbx-small${S.size === v ? " on" : ""}" data-mkp="${v}" title="حجم الشكل ${v}% من الصورة">${v}%</button>`).join("")}</div>${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
+${shown && cl ? `<div class="mk-pre"><button type="button" class="pbx-small" data-mkp="c" title="يضع الشكل في مركز الصورة تماماً">وسط الصورة</button>${[30, 50, 70, 100].map(v => `<button type="button" class="pbx-small" data-mkp="${v}" title="حجم الشكل ${v}% من الصورة">${v}%</button>`).join("")}</div>${sl("sw", "عرض الشكل %", 5, 100)}${sl("sh", "ارتفاع الشكل %", 5, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة كعنصر لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
 ${invertUi}${hint}</div>`;
   }
   /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة. أي تغيير على الصورة يحدّث المعاينة الحيّة فوراً */
   function opt(k, v) {
     if (k === "dd") { S.dd = !S.dd; return true; }
-    if (k === "target") { S.target = v; S.picked = true; S.dd = false; } else if (k === "keep") S.keep = !!v; else if (k === "invert") S.invert = !!v; else if (k === "size" || k === "px" || k === "py") S[k] = Number(v); else return false;
+    if (k === "target") { S.target = v; S.picked = true; S.dd = false; } else if (k === "keep") S.keep = !!v; else if (k === "invert") S.invert = !!v; else if (k === "size") { S.size = Number(v); S.sw = S.sh = null; } else if (k === "sw" || k === "sh") { fillWH(); S[k] = Number(v); } else if (k === "px" || k === "py") S[k] = Number(v); else return false;
     const had = !!S.pend, ok = S.picked ? livePreview() : false; return k === "target" || k === "invert" || (!had && ok);
   }
   function livePreview() {      // يحدّث المعاينة إن كان المحدّد صورة بها صورة؛ يعيد true إن بدأت معاينة جديدة
@@ -12688,37 +12698,40 @@ ${invertUi}${hint}</div>`;
   }
   /* مربع تحريك الشكل فوق الصورة قبل التأكيد: اسحب الجسم لنقل الشكل، والمقبض لتكبيره */
   let box = null;
-  const boxGeom = inf => { const L = A().layoutOf(inf.node.id); if (!L) return null; const side = Math.max(8, Math.min(L.width, L.height) * S.size / 100); return { L, side, x: L.left + (L.width - side) * S.px / 100, y: L.top + (L.height - side) * S.py / 100 }; };
+  const boxGeom = inf => { const L = A().layoutOf(inf.node.id); return L ? dims(L) : null; };
   function hideBox() { if (box) { box.el.remove(); if (box.v) { box.v.remove(); box.h.remove(); } box = null; } }
   /* معالم المنتصف: خطّا مركز الصورة (متقطّعان) يتوهّجان عند محاذاة مركز الشكل لهما، ويتجاذب الشكل معهما ومع حواف الصورة (Alt يعطّل التجاذب) */
   function guides(g, f, s) {
     if (!box.v) { box.v = document.createElement("i"); box.v.className = "mk-gl v"; box.h = document.createElement("i"); box.h.className = "mk-gl h"; document.body.append(box.v, box.h); }
-    const L = g.L, rx = L.width - g.side, ry = L.height - g.side;
+    const L = g.L, rx = L.width - g.w, ry = L.height - g.h;
     box.v.style.cssText = `left:${f.left + (L.left + L.width / 2) * s}px;top:${f.top + L.top * s}px;height:${L.height * s}px`; box.h.style.cssText = `left:${f.left + L.left * s}px;top:${f.top + (L.top + L.height / 2) * s}px;width:${L.width * s}px`;
     box.v.classList.toggle("hot", rx > 1 && S.px === 50); box.h.classList.toggle("hot", ry > 1 && S.py === 50);
   }
   function snapPos(g, s, raw) {      // raw: [px,py] بالنسبة المئوية → بعد التجاذب مع المركز والحواف
-    const L = g.L, T = 8 / s, out = raw.slice(), rx = L.width - g.side, ry = L.height - g.side;
-    [[0, rx, L.width], [1, ry, L.height]].forEach(([i, r, W]) => { if (r <= 1) return; const off = r * raw[i] / 100, cen = off + g.side / 2;
+    const L = g.L, T = 8 / s, out = raw.slice(), rx = L.width - g.w, ry = L.height - g.h;
+    [[0, rx, L.width, g.w], [1, ry, L.height, g.h]].forEach(([i, r, W, sz]) => { if (r <= 1) return; const off = r * raw[i] / 100, cen = off + sz / 2;
       if (Math.abs(cen - W / 2) < T) out[i] = 50; else if (off < T) out[i] = 0; else if (r - off < T) out[i] = 100; });
     return out;
   }
   function placeBox() {
     if (!box) return; const inf = A().find(box.id), fw = document.getElementById("pbx-fw"); if (!inf || !fw || !S.pend || !libSel()) return hideBox();
     const g = boxGeom(inf); if (!g) return hideBox(); const f = fw.getBoundingClientRect(), s = A().E.scale || 1, st = box.el.style;
-    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.side * s) + "px"; st.height = (g.side * s) + "px"; guides(g, f, s);
+    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.w * s) + "px"; st.height = (g.h * s) + "px"; guides(g, f, s);
   }
   function showBox(inf) {
     if (!S.pend || !libSel() || !inf || inf.node.type !== "image") return hideBox();
     if (!box || box.id !== inf.node.id) {
-      hideBox(); const el = document.createElement("div"); el.className = "mk-box"; el.innerHTML = '<i class="mk-hd"></i>'; document.body.appendChild(el); box = { id: inf.node.id, el };
-      const down = (e, resize) => { e.preventDefault(); e.stopPropagation(); const i2 = A().find(box.id), g = boxGeom(i2); if (!g) return; const s = A().E.scale || 1, x0 = e.clientX, y0 = e.clientY, p0 = [S.px, S.py, S.size]; el.setPointerCapture(e.pointerId);
-        const mv = ev => { const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s, L = g.L;
-          if (resize) S.size = Math.max(10, Math.min(100, Math.round((g.side + Math.max(dx, dy)) / Math.min(L.width, L.height) * 100)));
-          else { const rx = L.width - g.side, ry = L.height - g.side; const raw = [Math.max(0, Math.min(100, p0[0] + (rx > 1 ? dx / rx * 100 : 0))), Math.max(0, Math.min(100, p0[1] + (ry > 1 ? dy / ry * 100 : 0)))], sn = ev.altKey ? raw : snapPos(g, s, raw); if (rx > 1) S.px = Math.round(sn[0]); if (ry > 1) S.py = Math.round(sn[1]); }
+      hideBox(); const el = document.createElement("div"); el.className = "mk-box"; el.innerHTML = ["n", "s", "e", "w", "ne", "nw", "se", "sw"].map(h => `<i class="mk-hd" data-h="${h}"></i>`).join(""); document.body.appendChild(el); box = { id: inf.node.id, el };
+      const down = (e, h) => { e.preventDefault(); e.stopPropagation(); const i2 = A().find(box.id), g = boxGeom(i2); if (!g) return; const s = A().E.scale || 1, x0 = e.clientX, y0 = e.clientY, L = g.L, W = L.width, H = L.height, l0 = g.x - L.left, t0 = g.y - L.top, w0 = g.w, h0 = g.h, MIN = 12; el.setPointerCapture(e.pointerId);
+        const mv = ev => { const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s; let l = l0, t = t0, r = l0 + w0, b = t0 + h0;
+          if (!h) { const raw = [Math.max(0, Math.min(100, W - w0 > 1 ? (l0 + dx) / (W - w0) * 100 : 50)), Math.max(0, Math.min(100, H - h0 > 1 ? (t0 + dy) / (H - h0) * 100 : 50))], sn = ev.altKey ? raw : snapPos(g, s, raw); S.px = Math.round(sn[0]); S.py = Math.round(sn[1]); }
+          else { if (h.includes("w")) l += dx; if (h.includes("e")) r += dx; if (h.includes("n")) t += dy; if (h.includes("s")) b += dy;
+            if (h.length === 2 && !ev.shiftKey) { const k = Math.max((r - l) / w0, (b - t) / h0); if (h.includes("w")) l = r - w0 * k; else r = l + w0 * k; if (h.includes("n")) t = b - h0 * k; else b = t + h0 * k; }      // الزاوية تحفظ النسبة (Shift = حرّة)
+            l = Math.max(0, l); t = Math.max(0, t); r = Math.min(W, r); b = Math.min(H, b); if (r - l < MIN) { if (h.includes("w")) l = r - MIN; else r = l + MIN; } if (b - t < MIN) { if (h.includes("n")) t = b - MIN; else b = t + MIN; }
+            const w = r - l, hh = b - t; S.sw = Math.round(w / W * 100); S.sh = Math.round(hh / H * 100); S.px = W - w > 1 ? Math.round(l / (W - w) * 100) : 50; S.py = H - hh > 1 ? Math.round(t / (H - hh) * 100) : 50; }
           const i3 = A().find(box.id); if (i3) { preview(i3); placeBox(); } };
         const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); if (S.hook) S.hook(); }; el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); };
-      el.addEventListener("pointerdown", e => down(e, !!e.target.closest(".mk-hd")));
+      el.addEventListener("pointerdown", e => { const hd = e.target.closest(".mk-hd"); down(e, hd ? hd.dataset.h : ""); });
     }
     placeBox();
   }
@@ -12756,11 +12769,14 @@ ${invertUi}${hint}</div>`;
     if (b.clip && (b.clipMode !== "out" || mode !== "out")) return { err: "على الصورة ماسك بالفعل — ألغِه أولاً (يمكن حذف أكثر من شكل بالتتابع فقط)" };
     // شكل من المكتبة: مربع حول مركز مختار بنسبة من أصغر بُعدي الصورة
     let shpNode, rs, key;
-    if (lib) { const side = Math.max(8, Math.min(iR.width, iR.height) * S.size / 100), bx = { left: iR.left + (iR.width - side) * S.px / 100, top: iR.top + (iR.height - side) * S.py / 100, side }; key = lib; shpNode = { set: { shape: lib, rx: 0 } }; rs = rings(shpNode, iR, { left: bx.left, top: bx.top, width: bx.side, height: bx.side }, E); }
-    else { const shp = A().find(isImg ? other.id : inf.node.id); if (!shp) return { err: "تعذّر إيجاد الشكل" }; shpNode = shp.node; key = shpNode.set.shape; const sR = A().layoutOf(shp.node.id); if (!sR) return { err: "تعذّر قراءة الشكل" }; rs = rings(shpNode, iR, sR, E); }
+    let del = false;
+    if (lib) { const d = dims(iR); key = lib; shpNode = { set: { shape: lib, rx: 0, keep: false } }; rs = rings(shpNode, iR, { left: d.x, top: d.y, width: d.w, height: d.h }, E); }
+    else { const shp = A().find(isImg ? other.id : inf.node.id); if (!shp) return { err: "تعذّر إيجاد العنصر" }; shpNode = shp.node; del = isShape(shpNode); const sR = A().layoutOf(shp.node.id); if (!sR) return { err: "تعذّر قراءة العنصر" };
+      let ringNode = shpNode; if (!del) { const mn = Math.min(sR.width, sR.height) || 1; ringNode = { set: { shape: rectKey(), keep: false, rx: Math.max(0, Math.min(50, (Number(PB.eff(shpNode.set, "rad", E.dev)) || 0) / mn * 100)), rot: shpNode.set.rot } }; }      // عنصر غير شكل: يُستعمل مستطيله (بتدوير زواياه) كماسك
+      key = ringNode.set.shape; rs = rings(ringNode, iR, sR, E); }
     if (!rs.length) return { err: "تعذّر قراءة الشكل" };
     const eo = ((PB.SHAPES[key] || [])[5] === "evenodd");
-    return mode === "in" ? { img, mode, clip: pathOf(rs), eo, lib, shpNode } : { img, mode, clip: (b.clip || "M0 0L1 0L1 1L0 1Z") + pathOf(rs), eo: true, lib, shpNode };
+    return mode === "in" ? { img, mode, clip: pathOf(rs), eo, lib, shpNode, del } : { img, mode, clip: (b.clip || "M0 0L1 0L1 1L0 1Z") + pathOf(rs), eo: true, lib, shpNode, del };
   }
   const setClip = (img, r) => { img.set.clip = r.clip; if (r.eo) img.set.clipEO = true; else delete img.set.clipEO; img.set.clipMode = r.mode; };
   function restorePend() { const p = S.pend; if (!p) return null; const img = A().find(p.id); S.pend = null; if (img) { ["clip", "clipEO", "clipMode"].forEach(k => { if (p.prev[k] === undefined) delete img.set[k]; else img.set[k] = p.prev[k]; }); } return img; }
@@ -12774,25 +12790,31 @@ ${invertUi}${hint}</div>`;
   function cancel() { const img = restorePend(); hideBox(); if (img) A().renderCanvas(); }
   function act(name, inf) {
     const E = A().E; if (name === "reset") { cancel(); S.picked = false; delete inf.set.clip; delete inf.set.clipEO; delete inf.set.clipMode; E.nextLabel = "إلغاء الماسك"; A().commitAfter(); return; }
-    if (name === "no") { cancel(); toast("✕ أُلغيت المعاينة"); return; }
+    if (name === "no") { cancel(); toast("أُلغيت المعاينة"); return; }
     if (name === "preview") { preview(inf); return; }
     if (name === "place") {
       const isImg = inf.node.type === "image", lib = isImg ? libSel() : ""; if (!lib) return; const img = A().find(inf.node.id), iR = A().layoutOf(img.node.id); if (!iR) return;
-      cancel(); const side = Math.max(8, Math.min(iR.width, iR.height) * S.size / 100), bx = { left: iR.left + (iR.width - side) * S.px / 100, top: iR.top + (iR.height - side) * S.py / 100, side };
+      cancel(); const d = dims(iR), bx = { left: d.x, top: d.y, w: d.w, h: d.h };
       const sh = PB.mkFree("shape", 0, 0, (Number(img.set.zi) || 0) + 1), E2 = E; sh.set.shape = lib; sh.set.fill = "#c8a24b";
       const g = { fx: Number(PB.eff(img.set, "fx", E2.dev)), fy: Number(PB.eff(img.set, "fy", E2.dev)), fwd: Number(PB.eff(img.set, "fwd", E2.dev)), fh: Number(PB.eff(img.set, "fh", E2.dev)) };
-      PB.setR(sh.set, "fx", E2.dev, +(g.fx + (bx.left - iR.left) / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fy", E2.dev, +(g.fy + (bx.top - iR.top) / iR.height * g.fh).toFixed(2)); PB.setR(sh.set, "fwd", E2.dev, +(bx.side / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fh", E2.dev, +(bx.side / iR.height * g.fh).toFixed(2));
-      img.list.splice(img.idx + 1, 0, sh); E.nextLabel = "إضافة شكل للماسك"; E.sel = sh.id; S.target = img.node.id; A().commitAfter(sh.id); toast("➕ وُضع الشكل فوق الصورة — حرّكه وكبّره ثم اختر الصورة في «ماسك» وطبّق"); return; }
+      PB.setR(sh.set, "fx", E2.dev, +(g.fx + (bx.left - iR.left) / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fy", E2.dev, +(g.fy + (bx.top - iR.top) / iR.height * g.fh).toFixed(2)); PB.setR(sh.set, "fwd", E2.dev, +(bx.w / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fh", E2.dev, +(bx.h / iR.height * g.fh).toFixed(2));
+      img.list.splice(img.idx + 1, 0, sh); E.nextLabel = "إضافة شكل للماسك"; E.sel = sh.id; S.target = img.node.id; A().commitAfter(sh.id); toast("وُضع الشكل فوق الصورة — حرّكه وكبّره ثم اختر الصورة في «ماسك» وطبّق"); return; }
     // ok / apply: تأكيد المعاينة، أو تطبيق مباشر من جهة الشكل
     const pend = S.pend && S.pend.id === inf.node.id ? S.pend : null; if (pend) S.pend = null; hideBox(); S.picked = false;
     const base = pend ? pend.prev : null, r = compute(inf, base);
     if (r.err) { if (pend) { S.pend = pend; } toast(r.err); return; }
     setClip(r.img, r);
-    if (!r.lib && !S.keep) { const shp = A().find(r.shpNode.id); if (shp) { const i = shp.list.indexOf(shp.node); if (i >= 0) shp.list.splice(i, 1); } }
+    if (!r.lib && r.del && !S.keep) { const shp = A().find(r.shpNode.id); if (shp) { const i = shp.list.indexOf(shp.node); if (i >= 0) shp.list.splice(i, 1); } }
     E.nextLabel = r.mode === "in" ? "ماسك: إبقاء داخل الشكل" : "ماسك: حذف الشكل من الصورة"; E.sel = r.img.node.id; A().commitAfter(r.img.node.id);
-    toast(r.mode === "in" ? "🎭 بقيت الصورة داخل الشكل فقط" : "✂ حُذف الشكل من الصورة");
+    S.sw = S.sh = null; toast(r.mode === "in" ? "بقيت الصورة داخل الشكل فقط" : "حُذف الشكل من الصورة");
   }
-  return { panel, opt, act, cancel, hideBox, reposition: placeBox, setHook: f => { S.hook = f; }, pending: () => (S.pend ? S.pend.id : "") };
+  /* الزر الأيمن على عنصر موضوع فوق صورة (أو صورة تحتها عنصر): ماسك فوري عادي أو معكوس بلا فتح اللوحة */
+  const can = inf => { try { return !!inf && inf.kind === "widget" && !!inf.free && !inf.set.pz && (inf.node.type !== "image" || !!inf.set.src) && cands(inf).length > 0; } catch (e) { return false; } };
+  function quick(inf, invert) {
+    cancel(); const L = cands(inf); if (!L.length) { toast("ضع عنصراً فوق الصورة أولاً"); return; }
+    S.invert = !!invert; S.target = L[0].id; S.picked = false; S.keep = false; act("apply", inf);
+  }
+  return { panel, opt, act, cancel, can, quick, hideBox, reposition: placeBox, setHook: f => { S.hook = f; }, pending: () => (S.pend ? S.pend.id : "") };
 })();
 
 /* ═══ نزع الخلفية بزر واحد — بلا API ولا اشتراك ولا إعدادات ═══
