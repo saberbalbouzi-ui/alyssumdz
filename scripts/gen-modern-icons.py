@@ -76,6 +76,7 @@ EXTRA = {
     "star-fill": '<path d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3 6.3 20.3l1.1-6.3L2.8 9.5l6.4-.9z" fill="currentColor" fill-opacity="1"/>',
     "bot": P("M5 8h14v11H5z") + O("M12 3v5M9 13v.1M15 13v.1M9 16.5h6"),
     "mobile": P("M7 2h10v20H7z") + O("M11 19h2"),
+    "tablet": P("M4 3h16v18H4z") + O("M11 18h2"),
 }
 ICONS.update({k: v for k, v in EXTRA.items()})
 

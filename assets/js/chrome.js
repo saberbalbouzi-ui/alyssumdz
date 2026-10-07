@@ -12,6 +12,7 @@ window.Chrome = (function () {
 
   /* ── عناوين القائمة الذكية: الرئيسية / التصنيفات / المتجر / الفئات / المنتجات / حسابي ──
      التصنيفات والفئات والمنتجات تفتح قائمة منسدلة تحت العنوان؛ المتجر صفحة كل المنتجات (shop.html)، وحسابي صفحة الدخول/التسجيل (account.html) */
+  const HIDE_OPTS = [["", "تظهر في كل الأجهزة"], ["d", "إخفاء في المكتب"], ["t", "إخفاء في التابلت"], ["m", "إخفاء في الهاتف"], ["tm", "إخفاء في التابلت والهاتف"], ["dt", "إخفاء في المكتب والتابلت"], ["dm", "إخفاء في المكتب والهاتف"]];
   const MK = { home: ["الرئيسية", "index.html"], shop: ["المتجر", "shop.html"], cats: ["التصنيفات", "index.html#categories", 1], sets: ["الفئات", "shop.html", 1], prods: ["المنتجات", "index.html#products", 1], acct: ["حسابي", "account.html"] };
   const MK_LIST = [["home", "🏠 الرئيسية"], ["cats", "🗂️ التصنيفات (قائمة منسدلة بتصنيفات المتجر)"], ["shop", "🛍️ المتجر (صفحة كل المنتجات)"], ["sets", "⭐ الفئات (الأكثر طلباً / تخفيضات / جديدة)"], ["prods", "📦 المنتجات (قائمة منسدلة)"], ["acct", "👤 حسابي (دخول / حساب جديد)"]];
   const DEF_SETS = [{ key: "best", label: "الأكثر مبيعاً" }, { key: "hot", label: "الأكثر طلباً" }, { key: "sale", label: "التخفيضات" }, { key: "new", label: "المنتجات الجديدة" }];
@@ -25,12 +26,12 @@ window.Chrome = (function () {
     return "";
   }
   function menuItem(it, rel, d) {
-    const m = MK[it.kind];
-    if (!m) return '<a href="' + esc(url(it.url, rel)) + '">' + esc(it.label) + "</a>";
+    const m = MK[it.kind], vh = it.vh ? ' data-vh="' + esc(it.vh) + '"' : "";
+    if (!m) return '<a' + vh + ' href="' + esc(url(it.url, rel)) + '">' + esc(it.label) + "</a>";
     const label = it.label || m[0];
-    if (!m[2]) return '<a href="' + esc(url(m[1], rel)) + '">' + esc(label) + "</a>";
+    if (!m[2]) return '<a' + vh + ' href="' + esc(url(m[1], rel)) + '">' + esc(label) + "</a>";
     const sl = Array.isArray(it.slugs) ? it.slugs : [];
-    return '<div class="mi-dd' + (it.kind === "prods" && !sl.length ? " mi-mega" : "") + '" data-dd="' + it.kind + '"' + (sl.length ? ' data-slugs="' + esc(sl.join(",")) + '"' : "") + '><a href="' + esc(url(m[1], rel)) + '" class="mi-t" aria-haspopup="true" aria-expanded="false">' + (typeof ModernIcons !== "undefined" ? ModernIcons.html(esc(label)) : esc(label)) + ' <i class="mi-c" aria-hidden="true">▾</i></a><div class="mi-pop" role="menu">' + popHtml(it.kind, sl, rel, d) + "</div></div>";
+    return '<div class="mi-dd' + (it.kind === "prods" && !sl.length ? " mi-mega" : "") + '"' + vh + ' data-dd="' + it.kind + '"' + (sl.length ? ' data-slugs="' + esc(sl.join(",")) + '"' : "") + '><a href="' + esc(url(m[1], rel)) + '" class="mi-t" aria-haspopup="true" aria-expanded="false">' + (typeof ModernIcons !== "undefined" ? ModernIcons.html(esc(label)) : esc(label)) + ' <i class="mi-c" aria-hidden="true">▾</i></a><div class="mi-pop" role="menu">' + popHtml(it.kind, sl, rel, d) + "</div></div>";
   }
   const BURGER = '<button type="button" class="mb-burger" aria-label="القائمة" aria-expanded="false"><svg class="b1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="b2" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
   const menuNav = (items, rel, d) => { const L = (items || []).filter(i => i && !i.h && (MK[i.kind] || (i.label && i.url))); return L.length ? BURGER + '<nav class="menu">' + L.map(i => menuItem(i, rel, d)).join("") + "</nav>" : ""; };
@@ -56,7 +57,7 @@ window.Chrome = (function () {
     document.addEventListener("mouseout", e => { const dd = e.target.closest && e.target.closest(".mi-dd"); if (dd && hov() && !dd.closest("nav.menu.mob-open") && !(e.relatedTarget && dd.contains(e.relatedTarget))) { dd.classList.remove("open"); const a = dd.querySelector(".mi-t"); if (a) a.setAttribute("aria-expanded", "false"); } });
     document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".mi-dd.open").forEach(x => x.classList.remove("open")); });
   }
-  const MENU_CSS = ".mi-dd{position:relative;display:inline-flex;align-items:center}.mi-dd .mi-t{display:inline-flex;align-items:center;gap:.28rem;cursor:pointer}.mi-c{font-style:normal;font-size:.68em;opacity:.7;transition:transform .2s}.mi-dd.open .mi-c{transform:rotate(180deg)}" +
+  const MENU_CSS = "@media(min-width:1025px){body:not(.pb-edit) [data-vh*=\"d\"]{display:none!important}}@media(min-width:768px) and (max-width:1024px){body:not(.pb-edit) [data-vh*=\"t\"]{display:none!important}}@media(max-width:767px){body:not(.pb-edit) [data-vh*=\"m\"]{display:none!important}}" + ".mi-dd{position:relative;display:inline-flex;align-items:center}.mi-dd .mi-t{display:inline-flex;align-items:center;gap:.28rem;cursor:pointer}.mi-c{font-style:normal;font-size:.68em;opacity:.7;transition:transform .2s}.mi-dd.open .mi-c{transform:rotate(180deg)}" +
     ".mi-pop{display:none;position:absolute;top:100%;inset-inline-start:0;min-width:210px;max-width:320px;max-height:68vh;overflow:auto;background:#fff;border:1px solid #eae3d6;border-radius:14px;box-shadow:0 18px 40px rgba(20,30,25,.16);padding:.35rem;z-index:80}" +
     ".mi-pop a{display:block;padding:.5rem .8rem;border-radius:9px;color:#1c2420!important;opacity:1!important;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi-pop a:first-child{color:#8a6a1a!important;border-bottom:1px solid #f0e9d8;border-radius:9px 9px 0 0;margin-bottom:.15rem}.mi-pop a:hover{background:#f4efe6}" +
     ".mi-dd.open>.mi-pop{display:block}@media(hover:hover){.mi-dd:hover>.mi-pop{display:block}.mi-dd:hover .mi-c{transform:rotate(180deg)}}" +
@@ -279,7 +280,7 @@ window.Chrome = (function () {
 
   /* ── تطبيق على الصفحة ── */
   const out = {
-    HEAD_IDS, FOOT_IDS, SHARE_ALL, MK, MK_LIST, DEF_SETS, CART_ICONS, cartIcon, menuNav, menuItem, popHtml, fillMenus, bindMenus, MENU_CSS, defaults, norm, headerHtml, topbarHtml, footerHtml, css, Share, cfg: null,
+    HEAD_IDS, FOOT_IDS, SHARE_ALL, HIDE_OPTS, MK, MK_LIST, DEF_SETS, CART_ICONS, cartIcon, menuNav, menuItem, popHtml, fillMenus, bindMenus, MENU_CSS, defaults, norm, headerHtml, topbarHtml, footerHtml, css, Share, cfg: null,
     ctx() { return { rel: typeof REL !== "undefined" ? REL : "", wa: typeof WA_NUMBER !== "undefined" ? WA_NUMBER : "", site: (typeof CONFIG !== "undefined" && CONFIG.SITE) || {} }; },
     apply(cfg) {
       if (cfg && cfg.off) cfg = null;      /* «استرجاع الافتراضي» من اللوحة يكتب {"off":true} */
