@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.30.5">
+<meta name="admin-version" content="1.30.6">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.30.5"></script>
-<script src="assets/js/chrome-admin.js?v=1.30.5"></script>
-<script src="assets/js/admin-assistant.js?v=1.30.5"></script>
-<script src="assets/js/admin-update.js?v=1.30.5"></script>
+<script src="assets/js/ctl-help.js?v=1.30.6"></script>
+<script src="assets/js/chrome-admin.js?v=1.30.6"></script>
+<script src="assets/js/admin-assistant.js?v=1.30.6"></script>
+<script src="assets/js/admin-update.js?v=1.30.6"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7290,6 +7290,9 @@ const PB = (() => {
     const d = new DOMParser().parseFromString("<body>" + String(html || "") + "</body>", "text/html");
     d.body.querySelectorAll("script,style,iframe,object,embed,link,meta,form").forEach(n => n.remove());
     d.body.querySelectorAll("*").forEach(n => [...n.attributes].forEach(a => { if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(a.value))) n.removeAttribute(a.name); }));
+    [...d.body.children].forEach(n => { if (n.tagName === "DIV" && !n.attributes.length) { const p = d.createElement("p"); while (n.firstChild) p.appendChild(n.firstChild); n.replaceWith(p); } });      // أسطر المحرّر (div) تصير فقرات
+    const emp = n => n && n.tagName === "P" && !n.textContent.trim() && !n.querySelector("img,svg,iframe,video");
+    while (emp(d.body.lastElementChild) && d.body.children.length > 1) d.body.lastElementChild.remove();      // أسطر فارغة زائدة في النهاية
     return d.body.innerHTML;
   };
   const formatNum = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ");
@@ -7514,7 +7517,7 @@ const PB = (() => {
     },
     text: {
       label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
-      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }]), [TGR]),
+      ctl: [{ k: "html", l: "المحتوى", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }]), [TGR]),
       html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },      // الإطار = خلفية النص ويتوسّع تلقائياً مع الأسطر (يُعطَّل بتغيير الارتفاع بالسحب)
     },
@@ -10489,7 +10492,7 @@ ${inspGroups(all, inf)}`;
     let b = "";
     switch (c.t) {
       case "text": if (["link", "cust", "llink"].includes(c.k)) { const an = anchorList(); b = `<input type="text" ${a} value="${esc(ownV ?? "")}" list="pbx-anc" placeholder="https://… أو اختر مرساة ⚓">${an.length ? `<datalist id="pbx-anc">${an.map(x => `<option value="${esc(x[0])}">${esc(x[1])}</option>`).join("")}</datalist>` : ""}`; } else b = `<input type="text" ${a} value="${esc(ownV ?? "")}">`; break;
-      case "rich": if ((E.richMode || "v") === "v") { b = `<div class="pbx-rt2"><div class="pbx-rtt"><button type="button" data-rm="v" class="on">مرئي</button><button type="button" data-rm="h">&lt;/&gt; HTML</button><span></span><button type="button" data-rx="bold" title="عريض"><b>B</b></button><button type="button" data-rx="italic" title="مائل"><i>I</i></button><button type="button" data-rx="underline" title="تحته خط"><u>U</u></button><button type="button" data-rx="insertUnorderedList" title="قائمة">≣</button><button type="button" data-rx="createLink" title="رابط">🔗</button><button type="button" data-rx="removeFormat" title="إزالة التنسيق">✕</button></div><div class="pbx-rv" contenteditable="true" data-rich="${k}" data-k="${k}" dir="auto">${PB.cleanHtml(ownV ?? "")}</div></div>`; break; }
+      case "rich": if (c.k === "html" || (E.richMode || "h") === "v") { b = `<div class="pbx-rt2"><div class="pbx-rtt">${c.k === "html" ? "" : `<button type="button" data-rm="v" class="on">مرئي</button><button type="button" data-rm="h">&lt;/&gt; HTML</button>`}<span></span><button type="button" data-rx="bold" title="عريض"><b>B</b></button><button type="button" data-rx="italic" title="مائل"><i>I</i></button><button type="button" data-rx="underline" title="تحته خط"><u>U</u></button><button type="button" data-rx="insertUnorderedList" title="قائمة">≣</button><button type="button" data-rx="createLink" title="رابط">🔗</button><button type="button" data-rx="removeFormat" title="إزالة التنسيق">✕</button></div><div class="pbx-rv" contenteditable="true" data-rich="${k}" data-k="${k}" dir="auto">${PB.cleanHtml(ownV ?? "")}</div></div>`; break; }
         b = `<div class="pbx-rt2"><div class="pbx-rtt"><button type="button" data-rm="v">مرئي</button><button type="button" data-rm="h" class="on">&lt;/&gt; HTML</button></div><textarea ${a} dir="ltr" rows="8">${esc(ownV ?? "")}</textarea></div>`; break;
       case "textarea": case "gallery": b = `<textarea ${a} ${c.t === "rich" ? 'dir="ltr" rows="8"' : ""}>${esc(ownV ?? "")}</textarea>` + (c.t === "gallery" ? `<button class="pbx-small" data-upadd="${k}">⬆ رفع صور وإضافتها</button>` : ""); break;
       case "datetime": b = `<input type="datetime-local" ${a} value="${esc(ownV ?? "")}">`; break;

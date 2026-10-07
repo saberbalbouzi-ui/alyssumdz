@@ -146,6 +146,9 @@ const PB = (() => {
     const d = new DOMParser().parseFromString("<body>" + String(html || "") + "</body>", "text/html");
     d.body.querySelectorAll("script,style,iframe,object,embed,link,meta,form").forEach(n => n.remove());
     d.body.querySelectorAll("*").forEach(n => [...n.attributes].forEach(a => { if (/^on/i.test(a.name) || (/^(href|src)$/i.test(a.name) && /^\s*javascript:/i.test(a.value))) n.removeAttribute(a.name); }));
+    [...d.body.children].forEach(n => { if (n.tagName === "DIV" && !n.attributes.length) { const p = d.createElement("p"); while (n.firstChild) p.appendChild(n.firstChild); n.replaceWith(p); } });      // أسطر المحرّر (div) تصير فقرات
+    const emp = n => n && n.tagName === "P" && !n.textContent.trim() && !n.querySelector("img,svg,iframe,video");
+    while (emp(d.body.lastElementChild) && d.body.children.length > 1) d.body.lastElementChild.remove();      // أسطر فارغة زائدة في النهاية
     return d.body.innerHTML;
   };
   const formatNum = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ");
@@ -370,7 +373,7 @@ const PB = (() => {
     },
     text: {
       label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
-      ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }]), [TGR]),
+      ctl: [{ k: "html", l: "المحتوى", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }]), [TGR]),
       html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
       css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },      // الإطار = خلفية النص ويتوسّع تلقائياً مع الأسطر (يُعطَّل بتغيير الارتفاع بالسحب)
     },
