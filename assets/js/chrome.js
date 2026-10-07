@@ -32,7 +32,8 @@ window.Chrome = (function () {
     const sl = Array.isArray(it.slugs) ? it.slugs : [];
     return '<div class="mi-dd" data-dd="' + it.kind + '"' + (sl.length ? ' data-slugs="' + esc(sl.join(",")) + '"' : "") + '><a href="' + esc(url(m[1], rel)) + '" class="mi-t" aria-haspopup="true" aria-expanded="false">' + esc(label) + ' <i class="mi-c" aria-hidden="true">▾</i></a><div class="mi-pop" role="menu">' + popHtml(it.kind, sl, rel, d) + "</div></div>";
   }
-  const menuNav = (items, rel, d) => { const L = (items || []).filter(i => i && !i.h && (MK[i.kind] || (i.label && i.url))); return L.length ? '<nav class="menu">' + L.map(i => menuItem(i, rel, d)).join("") + "</nav>" : ""; };
+  const BURGER = '<button type="button" class="mb-burger" aria-label="القائمة" aria-expanded="false"><svg class="b1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="b2" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+  const menuNav = (items, rel, d) => { const L = (items || []).filter(i => i && !i.h && (MK[i.kind] || (i.label && i.url))); return L.length ? BURGER + '<nav class="menu">' + L.map(i => menuItem(i, rel, d)).join("") + "</nav>" : ""; };
   /* تعبئة القوائم المنسدلة وقت التشغيل من بيانات الموقع الحالية */
   async function fillMenus(root) {
     const els = (root || document).querySelectorAll(".mi-dd[data-dd]"); if (!els.length) return;
@@ -44,6 +45,9 @@ window.Chrome = (function () {
   function bindMenus() {
     if (Chrome._mb) return; Chrome._mb = true;
     document.addEventListener("click", e => {
+      const bg = e.target.closest && e.target.closest(".mb-burger");
+      document.querySelectorAll("nav.menu.mob-open").forEach(n => { const own = bg && bg.parentNode.contains(n); if (!own && !(e.target.closest && e.target.closest("nav.menu"))) { n.classList.remove("mob-open"); const b = n.parentNode.querySelector(".mb-burger"); if (b) { b.classList.remove("on"); b.setAttribute("aria-expanded", "false"); } } });
+      if (bg) { const nav = bg.parentNode.querySelector("nav.menu"); if (nav) { const on = nav.classList.toggle("mob-open"); bg.classList.toggle("on", on); bg.setAttribute("aria-expanded", on ? "true" : "false"); } return; }
       const t = e.target.closest && e.target.closest(".mi-dd > .mi-t");
       document.querySelectorAll(".mi-dd.open").forEach(x => { if (!t || x !== t.parentNode) { x.classList.remove("open"); const a = x.querySelector(".mi-t"); if (a) a.setAttribute("aria-expanded", "false"); } });
       if (t) { e.preventDefault(); const dd = t.parentNode, on = dd.classList.toggle("open"); t.setAttribute("aria-expanded", on ? "true" : "false"); }
@@ -53,7 +57,12 @@ window.Chrome = (function () {
   const MENU_CSS = ".mi-dd{position:relative;display:inline-flex;align-items:center}.mi-dd .mi-t{display:inline-flex;align-items:center;gap:.28rem;cursor:pointer}.mi-c{font-style:normal;font-size:.68em;opacity:.7;transition:transform .2s}.mi-dd.open .mi-c{transform:rotate(180deg)}" +
     ".mi-pop{display:none;position:absolute;top:100%;inset-inline-start:0;min-width:210px;max-width:320px;max-height:68vh;overflow:auto;background:#fff;border:1px solid #eae3d6;border-radius:14px;box-shadow:0 18px 40px rgba(20,30,25,.16);padding:.35rem;z-index:80}" +
     ".mi-pop a{display:block;padding:.5rem .8rem;border-radius:9px;color:#1c2420!important;opacity:1!important;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi-pop a:first-child{color:#8a6a1a!important;border-bottom:1px solid #f0e9d8;border-radius:9px 9px 0 0;margin-bottom:.15rem}.mi-pop a:hover{background:#f4efe6}" +
-    ".mi-dd.open>.mi-pop{display:block}@media(hover:hover){.mi-dd:hover>.mi-pop{display:block}}";
+    ".mi-dd.open>.mi-pop{display:block}@media(hover:hover){.mi-dd:hover>.mi-pop{display:block}}" +
+    /* قائمة الجوال: زر ☰ يفتح لوحة تحت الهيدر، والقوائم المنسدلة تتحول إلى أقسام تُفتح بالنقر */
+    ".mb-burger{display:none;background:none;border:0;color:inherit;cursor:pointer;padding:.3rem .4rem;margin-inline-start:auto;line-height:0;align-items:center}.mb-burger .b2{display:none}.mb-burger.on .b1{display:none}.mb-burger.on .b2{display:block}" +
+    "@media(max-width:860px){.mb-burger{display:inline-flex}header nav.menu.mob-open{display:flex!important;flex-direction:column;align-items:stretch;gap:0!important;position:absolute;top:100%;left:0;right:0;margin:0!important;background:#fff;border-bottom:1px solid #eae3d6;box-shadow:0 18px 30px rgba(20,30,25,.14);max-height:calc(100vh - 72px);overflow:auto;padding:.3rem 1rem .6rem;z-index:90}" +
+    "header nav.menu.mob-open>a,header nav.menu.mob-open .mi-t{display:flex;justify-content:space-between;align-items:center;color:#1c2420!important;opacity:1!important;font-size:1rem!important;padding:.85rem .2rem;border-bottom:1px solid #f3eddf}header nav.menu.mob-open .mi-dd{display:block}" +
+    "header nav.menu.mob-open .mi-pop{position:static;box-shadow:none;border:0;max-height:none;min-width:0;max-width:none;padding:0 .7rem .4rem;background:#faf7f0;border-radius:10px;margin-bottom:.3rem}header nav.menu.mob-open .mi-dd:hover>.mi-pop{display:none}header nav.menu.mob-open .mi-dd.open>.mi-pop{display:block}}";
   /* أيقونات سلة عصرية (خطّية بلون النص) */
   const CART_ICONS = {
     cart: ["سلة تسوّق", '<path d="M3 4h2.2l2.3 11a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.55-1.2L20.7 8.2H6.2"/><circle cx="9.6" cy="20" r="1.35"/><circle cx="17" cy="20" r="1.35"/>'],
@@ -297,6 +306,7 @@ window.Chrome = (function () {
         const hd = document.querySelector("header.site:not([data-pbw]) .container");
         if (hd && !hd.querySelector(".ch-share-btn")) { const t = document.createElement("div"); t.innerHTML = headerHtml({ header: { logo: { show: false }, menu: { show: false }, wa: { show: false }, account: { show: false }, cart: { show: false } } }, ctx); const b = t.querySelector(".ch-share-btn"); if (b) { const cart = hd.querySelector(".cart-btn"); cart ? hd.insertBefore(b, cart) : hd.appendChild(b); } }
       }
+      document.querySelectorAll("header.site:not([data-pbw]) .container").forEach(hd => { const nav = hd.querySelector("nav.menu"); if (nav && !hd.querySelector(".mb-burger")) nav.insertAdjacentHTML("beforebegin", BURGER); });      /* هيدر ثابت بلا إعداد محفوظ: يحصل على زر ☰ للجوال */
       bindMenus(); fillMenus();
       /* الأزرار الظاهرة */
       this.bindShare();
