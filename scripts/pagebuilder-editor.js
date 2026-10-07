@@ -82,8 +82,14 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-tip{position:absolute;background:#173f35;color:#fff;font-size:.75rem;font-weight:800;padding:.15rem .5rem;border-radius:6px;pointer-events:none;z-index:5}
 .pbx-add{display:block;margin:0 auto 24px;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.6rem 1.4rem;font-weight:800;cursor:pointer;font-family:inherit}
 .pbx-rt{position:absolute;display:none;background:#222;border-radius:8px;padding:3px;gap:2px;pointer-events:auto;z-index:6}.pbx-rt button{background:none;border:0;color:#fff;font-weight:800;padding:.25rem .55rem;cursor:pointer;border-radius:5px;font-family:inherit}.pbx-rt button:hover{background:#444}.pbx-rt input[type=color]{width:26px;height:26px;border:0;padding:0;background:none;vertical-align:middle}
-.pbx-pimgb{white-space:nowrap;display:inline-flex;align-items:center;gap:.25rem;margin-inline-start:.45rem;border:1.5px solid #e0d9c8;background:#fff;color:#173f35;border-radius:999px;padding:.12rem .55rem;font:800 .68rem inherit;font-family:inherit;cursor:pointer;vertical-align:middle}.pbx-pimgb:hover{background:#173f35;color:#fff;border-color:#173f35}.pbx-pimgb svg{flex:none}
-#pbx-pimg{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:10002;width:min(330px,92vw);max-height:68vh;overflow:auto;background:#fff;border:1.5px solid #d9d2c2;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:.7rem;display:flex;flex-direction:column;gap:.5rem;font-family:inherit}#pbx-pimg .ph{display:flex;align-items:center;gap:.4rem;color:#173f35}#pbx-pimg .ph b{flex:1;display:flex;align-items:center;gap:.35rem}#pbx-pimg .ph small{color:#999;font-weight:600}#pbx-pimg .ph button{border:0;background:#f4efe6;border-radius:50%;width:26px;height:26px;cursor:pointer;font-weight:800}#pbx-pimg .pup{display:flex;align-items:center;justify-content:center;gap:.35rem;background:#173f35;color:#fff;border-color:#173f35;font-weight:800}#pbx-pimg .pt{margin:0;font-size:.72rem;line-height:1.8;color:#6b6556}#pbx-pimg .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}#pbx-pimg .pi{position:relative;aspect-ratio:1;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:grab;background:#f4efe6}#pbx-pimg .pi:hover{border-color:#c8a24b}#pbx-pimg .pi img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}#pbx-pimg .pi button{position:absolute;inset-inline:3px;bottom:3px;border:0;border-radius:6px;background:rgba(23,63,53,.92);color:#fff;font:800 .62rem inherit;font-family:inherit;padding:.15rem;cursor:pointer;opacity:0;transition:.15s}#pbx-pimg .pi:hover button{opacity:1}#pbx-pimg .pe{grid-column:1/-1;color:#888;font-size:.78rem;text-align:center}
+.pbx-pimgb{white-space:nowrap;display:inline-flex;align-items:center;gap:.25rem;margin-inline-start:auto;border:1.5px solid #e0d9c8;background:#fff;color:#173f35;border-radius:999px;padding:.12rem .55rem;font:800 .68rem inherit;font-family:inherit;cursor:pointer;vertical-align:middle}.pbx-pimgb:hover{background:#173f35;color:#fff;border-color:#173f35}.pbx-pimgb svg{flex:none}
+#pbx-pimg{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:10002;width:min(330px,92vw);max-height:68vh;overflow:auto;background:#fff;border:1.5px solid #d9d2c2;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:.7rem;display:flex;flex-direction:column;gap:.5rem;font-family:inherit}#pbx-pimg .ph{display:flex;align-items:center;gap:.4rem;color:#173f35}#pbx-pimg .ph b{flex:1;display:flex;align-items:center;gap:.35rem}#pbx-pimg .ph small{color:#999;font-weight:600}#pbx-pimg .ph button{border:0;background:#f4efe6;border-radius:50%;width:26px;height:26px;cursor:pointer;font-weight:800}#pbx-pimg .pup{display:flex;align-items:center;justify-content:center;gap:.35rem;background:#173f35;color:#fff;border-color:#173f35;font-weight:800}#pbx-pimg .pt{margin:0;font-size:.72rem;line-height:1.8;color:#6b6556}#pbx-pimg .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;padding-bottom:3.2rem}#pbx-pimg .pi{position:relative;aspect-ratio:1;border:2px solid transparent;border-radius:10px;cursor:grab;background:#f4efe6;outline:0}#pbx-pimg .pi:hover,#pbx-pimg .pi:focus{border-color:#c8a24b}#pbx-pimg .pi img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;border-radius:8px}#pbx-pimg .pi .pus{position:absolute;inset-inline:3px;bottom:3px;border:0;border-radius:6px;background:rgba(23,63,53,.92);color:#fff;font:800 .62rem inherit;font-family:inherit;padding:.15rem;cursor:pointer;opacity:0;transition:.15s}#pbx-pimg .pi:hover .pus{opacity:1}#pbx-pimg .pi .pdt{position:absolute;top:3px;inset-inline-end:3px;width:24px;height:24px;border:0;border-radius:7px;background:rgba(255,255,255,.94);color:#173f35;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);opacity:0;transition:.15s}#pbx-pimg .pi:hover .pdt,#pbx-pimg .pi:focus .pdt,#pbx-pimg .pi .pdt:focus{opacity:1}#pbx-pimg .pmm{position:absolute;z-index:4;top:30px;left:50%;transform:translateX(-50%);width:124px;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.06);padding:.25rem;display:flex;flex-direction:column;gap:.1rem;cursor:default}#pbx-pimg .pmm button{display:flex;align-items:center;gap:.4rem;border:0;background:transparent;border-radius:7px;padding:.4rem .5rem;font:700 .74rem inherit;font-family:inherit;color:#173f35;cursor:pointer;text-align:start}#pbx-pimg .pmm button:hover{background:#f4efe6}#pbx-pimg .pmm .dng{color:#b83232}#pbx-pimg .pmm .dng:hover{background:#fee2e2}#pbx-pimg .pe{grid-column:1/-1;color:#888;font-size:.78rem;text-align:center}
+.pbx-ep{padding:2.6rem .8rem .8rem!important;display:flex;flex-direction:column;gap:.5rem;overflow:hidden!important}.pbx-ep .ep-h{display:flex;align-items:center;font-weight:900;color:#173f35;font-size:.92rem}.pbx-ep .ep-h b{display:flex;align-items:center;gap:.4rem}.pbx-ep .ep-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem}.pbx-ep .ep-tabs button{display:flex;flex-direction:column;align-items:center;gap:.2rem;border:1.5px solid #e0d9c8;background:#fff;border-radius:10px;padding:.45rem .1rem;cursor:pointer;font-family:inherit;font-weight:800;font-size:.66rem;color:#173f35;line-height:1.3;text-align:center}.pbx-ep .ep-tabs button:hover{border-color:#8b3dff;background:#faf6ff}.pbx-ep .ep-tabs button.on{background:#e8dcff;border-color:#8b3dff;color:#4b1fa8}.pbx-ep .ep-b{flex:1;overflow:auto;padding-top:.3rem}.pbx-ep .ep-n{margin:0;color:#6b6556;font-size:.8rem;line-height:1.8}
+.ep-dd{position:relative}.ep-ddb{display:flex;align-items:center;gap:.5rem;width:100%;border:1.5px solid #d9d2c2;background:#fff;border-radius:10px;padding:.3rem .5rem;cursor:pointer;font-family:inherit;font-weight:800;font-size:.78rem;color:#173f35;text-align:start}.ep-ddb b{flex:1;font-weight:800}.ep-ddb .pbx-thumb{width:30px;height:30px;flex:none}.ep-ddb:hover,.ep-ddb.open{border-color:#7c3aed}.ep-ddb .ep-chev{flex:none;transition:transform .15s}.ep-ddb.open .ep-chev{transform:rotate(180deg)}
+.ep-ddl{margin-top:.3rem;border:1.5px solid #e6e0d0;border-radius:10px;background:#fff;padding:.35rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;max-height:250px;overflow:auto}.ep-ddl .mk-gh{grid-column:1/-1;font-weight:800;font-size:.68rem;color:#8a8268;margin:.3rem .1rem .05rem}.pbx-mk .ep-ddl .mk-grid{display:contents!important}.pbx-mk .ep-ddl{padding:.35rem!important;border-radius:10px}.ep-ddl .ep-it span{font-size:.58rem}.ep-it{display:flex;flex-direction:column;align-items:center;gap:.15rem;border:1.5px solid transparent;background:#faf6ec;border-radius:8px;padding:.25rem .1rem;cursor:pointer;font-family:inherit;font-size:.6rem;font-weight:700;color:#173f35;line-height:1.2;text-align:center}.ep-it:hover{border-color:#7c3aed}.ep-it.on{border-color:#7c3aed;background:#ede9fe;color:#5b21b6}.ep-it .pbx-thumb{width:34px;height:34px}.ep-it span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-ddl.mk-list{max-height:250px;border:1.5px solid #e6e0d0;padding:.35rem}
+.pbx-epf{position:fixed;z-index:10045;display:flex;gap:.3rem;background:#fff;border-radius:999px;padding:.25rem;box-shadow:0 6px 22px rgba(0,0,0,.3),0 0 0 1.5px #a855f7}.pbx-epf button{display:flex;align-items:center;gap:.25rem;border:0;border-radius:999px;padding:.32rem .75rem;font:800 .74rem inherit;font-family:inherit;cursor:pointer}.pbx-epf .ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pbx-epf .no{background:#f1f2f6;color:#b83232}
+.mk-box{position:fixed;z-index:10040;border:2px dashed #7c3aed;background:rgba(124,58,237,.08);cursor:move;touch-action:none;border-radius:4px;box-sizing:border-box}.mk-box .mk-hd{position:absolute;right:-8px;bottom:-8px;width:15px;height:15px;background:#7c3aed;border:2px solid #fff;border-radius:4px;cursor:nwse-resize}
 .pbx-pend{align-items:center;gap:.35rem;background:#ecfdf5;border:1.5px solid #86d4b0;border-radius:10px;padding:.35rem .5rem;margin:.35rem 0;font-size:.74rem;font-weight:700;color:#14573b;position:sticky;top:1.6rem;z-index:6}.pbx-pend span{flex:1;line-height:1.5}.pbx-pend button{border:0;border-radius:8px;padding:.3rem .6rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.74rem}.pbx-pend .ok{background:#0d9488;color:#fff}.pbx-pend .no{background:#fff;color:#b91c1c;border:1.5px solid #fca5a5}.pbx-ih{display:flex;align-items:center;gap:.4rem;font-weight:900;color:#173f35;position:sticky;top:-.7rem;z-index:6;background:#fff;margin:-.7rem -.7rem .5rem;padding:.7rem .7rem .5rem;border-bottom:1px solid #eee}.pbx-ih small{color:#999;font-weight:600}
 .pbx-itabs{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-itabs button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.4rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-itabs button.on{background:#173f35;color:#fff;border-color:#173f35}
 .pbx-dv{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-dv button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.3rem;cursor:pointer;font-size:.9rem}.pbx-dv button.on{background:#c8a24b;border-color:#c8a24b}
@@ -348,7 +354,7 @@ body{overflow-x:hidden;margin:0}`;
   const slugify = t => String(t || "").toLowerCase().trim().replace(/[^a-z0-9؀-ۿ]+/g, "-").replace(/[؀-ۿ]+/g, "").replace(/^-+|-+$/g, "") || "page-" + Date.now().toString(36).slice(-4);
 
   /* أيقونات SVG موحّدة بدل الإيموجي */
-  const IC = { upload: '<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>', heading: '<path d="M6 4v16M18 4v16M6 12h12"/>', text: '<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', button: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>',
+  const IC = { check: '<path d="M5 12.5l4.5 4.5L19 7"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', scissors: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5L20 18M8 16.5L20 6"/>', upload: '<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>', dots: '<circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/>', download: '<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>', trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', puzzle: '<path d="M9 4h4v3a2 2 0 104 0V4h3v5h-3a2 2 0 100 4h3v7h-5v-3a2 2 0 10-4 0v3H4v-6h3a2 2 0 100-4H4V4z"/>', mask: '<circle cx="9" cy="12" r="6"/><path d="M15 6.5a6 6 0 010 11M12 8.5h0"/>', cutout: '<path d="M4 4h4M4 4v4M20 4h-4M20 4v4M4 20h4M4 20v-4M20 20h-4M20 20v-4"/><circle cx="12" cy="9.5" r="2.4"/><path d="M7.5 17c.6-2.6 2.5-4 4.5-4s3.9 1.4 4.5 4"/>', heading: '<path d="M6 4v16M18 4v16M6 12h12"/>', text: '<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', button: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>',
     shape: '<path d="M12 3l2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.2 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/>', slider: '<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M2 9v6M22 9v6"/>', gallery: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
     sbar: '<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h12"/>', shdr: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20M6 6.5h3M15 6.5h3"/>',
     shopcats: '<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/>', herow: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 10h7M6 14h4"/><rect x="15" y="8" width="4" height="8" rx="1"/>', sfoot: '<rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 15h20M6 18h4M14 18h4"/>', tbadges: '<path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z"/>', pgal: '<rect x="3" y="3" width="18" height="12" rx="2"/><rect x="3" y="18" width="4" height="3" rx="1"/><rect x="10" y="18" width="4" height="3" rx="1"/><rect x="17" y="18" width="4" height="3" rx="1"/>',
@@ -833,6 +839,7 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
   function select(id) {
     if (typeof PBMask !== "undefined" && PBMask.pending() && PBMask.pending() !== id) PBMask.cancel();      // معاينة ماسك غير مؤكَّدة تُلغى عند تحديد عنصر آخر
+    if (typeof PBPuzzle !== "undefined" && PBPuzzle.previewing() && PBPuzzle.previewing() !== id) PBPuzzle.cancelPrev();
     if (editing) { try { editing.el.blur(); } catch (e) { } }
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
@@ -878,6 +885,7 @@ body{overflow-x:hidden;margin:0}`;
   const snapEdge = (v, list) => { let b = v, bd = 8, g = null; list.forEach(p => { const d = Math.abs(v - p); if (d < bd) { bd = d; b = p; g = p; } }); return [b, g]; };
 
   function positionOverlay() {
+    try { epFloatPos(); if (typeof PBMask !== "undefined") PBMask.reposition(); } catch (x) { }
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
     if (E.mwp && E.mwp.id !== E.sel) { mwRestore(); toast("↩ أُلغيت مسوّدة الكتابة السحرية"); setTimeout(() => { renderCanvas(); renderInspector(); }, 0); }      // تغيير التحديد قبل الإدراج = إلغاء
     try { drawSecBar(ovl); markThumbs(); } catch (x) { console.warn(x); }
@@ -1026,7 +1034,7 @@ body{overflow-x:hidden;margin:0}`;
     crop: SVG('<path d="M6 2v14a2 2 0 002 2h14M2 6h14a2 2 0 012 2v14"/>'), flip: SVG('<path d="M12 3v18M8 7L3 12l5 5V7zM16 7l5 5-5 5V7z"/>')
   };
   Object.assign(QI, {
-    replace: SVG('<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>'), textcap: SVG('<path d="M4 7V4h16v3M12 4v16M9 20h6"/>'), magic: SVG('<path d="M5 19L19 5M14 4l1 3 3 1-3 1-1 3-1-3-3-1 3-1zM6 12l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>'),
+    edit: SVG('<path d="M4 20l1-4L16 5l3 3L8 19l-4 1zM14 7l3 3"/>'), replace: SVG('<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>'), textcap: SVG('<path d="M4 7V4h16v3M12 4v16M9 20h6"/>'), magic: SVG('<path d="M5 19L19 5M14 4l1 3 3 1-3 1-1 3-1-3-3-1 3-1zM6 12l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>'),
     effects: SVG('<path d="M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4z"/>'), anim: SVG('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z" fill="currentColor"/>'), pos: SVG('<path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/>'),
     curve: SVG('<path d="M3 17C5 6 19 6 21 17"/><path d="M8 11.5l1.2 2.2M12 10.3v3M16 11.5l-1.2 2.2" stroke-width="2.4"/>'),
     rtl: SVG('<path d="M13 4v13M17 4v13M17 4h-5a3.5 3.5 0 000 7h1"/><path d="M20 21H6M6 21l3-3M6 21l3 3" transform="translate(0 -2)"/>'), ltr: SVG('<path d="M11 4v13M7 4v13M7 4h5a3.5 3.5 0 010 7h-1"/><path d="M4 19h14M18 19l-3-3M18 19l-3 3"/>'),
@@ -1053,7 +1061,7 @@ body{overflow-x:hidden;margin:0}`;
         + btn("bold", QI.B, "عريض", fw >= 600) + btn("italic", QI.I, "مائل", set.fst === "italic") + btn("under", QI.U, "تحته خط", set.td === "underline") + btn("strike", QI.S, "يتوسطه خط", set.td === "line-through") + btn("case", QI.case, "حالة الأحرف: كبيرة / أول حرف / عادي", !!set.tt && set.tt !== "none")
         + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + btn("dir", set.tdir === "ltr" ? QI.ltr : QI.rtl, "اتجاه النص: من اليمين لليسار / من اليسار لليمين") + btn("list", QI.list, "قائمة بنقطة أو أيقونة", t === "text" ? /<[uo]l/i.test(set.html || "") : !!set.lm) + `<label class="qa" title="لون رمز القائمة (الافتراضي: لون النص)"><b>${esc(set.lm && set.lm !== "num" ? set.lm : "•")}</b><i style="background:${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></i><input type="color" data-qi="lmc" value="${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></label>` + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
     } else if (isImg) {
-      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("bgremove", "نزع الخلفية", "نزع خلفية الصورة بنقرة واحدة (بلا API ولا إعدادات)") + (ERASER_ON ? tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") : "") + tb("magic", "التقاط سحري", "يفصل العناصر (أشخاص، منتجات…) كصور شفافة") + sep
+      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("edit", "تعديل", "أدوات الصورة في شريط جانبي: بازل، ماسك، نزع الخلفية، التقاط العناصر", !!$("pbx-ep")) + (ERASER_ON ? tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") : "") + sep
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + btn("crop", QI.crop, "قصّ الصورة", !!set.crop) + tb("flip", "قلب", "قلب الصورة أفقياً أو عمودياً", !!(set.flx || set.fly)) + sep;
     } else {
       const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 6);
@@ -1067,6 +1075,72 @@ body{overflow-x:hidden;margin:0}`;
     const bar = $("pbx-qbar"), ovl = $("pbx-ovl"), st = $("pbx-stage"); if (!bar || !ovl || !st || bar.style.display === "none") return;
     const o = ovl.getBoundingClientRect(), r = st.getBoundingClientRect(), gut = isMob() ? 0 : 132; bar.style.left = (o.left + 8) + "px"; bar.style.top = (r.top + (isMob() ? 6 : 8)) + "px"; bar.style.maxWidth = Math.max(240, o.width - gut - 16) + "px"; bar.style.width = isMob() ? (o.width - 16) + "px" : "";
   }
+
+  /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
+  const EP_TABS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"]];
+  const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
+  function epBody(inf) {
+    const t = E.ept || "pz";
+    if (!inf.set.src && !inf.set.pz) return `<p class="ep-n">ارفع صورة أولاً لتظهر أدوات التعديل.</p>`;
+    if (t === "pz") return PBPuzzle.panel(inf);
+    if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
+    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button></div>`;
+    return `<div class="pbx-pz"><p>يفصل العناصر الكاملة في الصورة (أشخاص، منتجات…) كصور شفافة منفصلة ويضعها في الصفحة.</p><button type="button" class="pbx-small pz-go" data-q="smart-magic">${ico("cutout", 16)} التقاط العناصر</button></div>`;
+  }
+  function epPlace(p) {
+    const a = [$("pbx-insp"), $("pbx-lside")].find(x => x && x.offsetParent), ar = a ? a.getBoundingClientRect() : null; p.classList.toggle("dock", !!(ar && !isMob())); p.classList.toggle("sheet", !(ar && !isMob()));
+    if (ar && !isMob()) { p.style.left = ar.left + "px"; p.style.top = ar.top + "px"; p.style.width = ar.width + "px"; p.style.height = ar.height + "px"; } else { p.style.left = p.style.top = p.style.width = p.style.height = ""; }
+  }
+  function epDraw() {
+    const p = $("pbx-ep"); if (!p) return; const inf = epInf(); if (!inf) { epClose(); return; }
+    const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || "pz";
+    p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico("image", 16)} تعديل الصورة</b></div><div class="ep-tabs">${EP_TABS.map(([k, n, ic]) => `<button type="button" class="${cur === k ? "on" : ""}" data-ept="${k}" title="${n}">${ico(ic, 22)}<span>${n}</span></button>`).join("")}</div><div class="ep-b">${epBody(inf)}</div>`;
+    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; epPlace(p); epFloat();
+  }
+  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); drawQbarSoon(); }
+  const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
+  function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
+  function epToggle() {
+    if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; closePop();
+    const p = document.createElement("div"); p.id = "pbx-ep"; p.className = "pbx-pop pbx-ep"; p.dir = "rtl"; document.body.appendChild(p);
+    p.addEventListener("click", epClick); p.addEventListener("input", epInput); p.addEventListener("change", epChange);
+    if (typeof PBMask !== "undefined") PBMask.setHook(() => { if ($("pbx-ep")) epDraw(); });
+    epDraw(); drawQbarSoon();
+  }
+  async function epClick(e) {
+    const t = e.target.closest("button"); if (!t) return; const inf = epInf(); if (!inf) return;
+    if (t.dataset.ep === "x") { epClose(); return; }
+    if (t.dataset.ept) { if (typeof PBMask !== "undefined") PBMask.cancel(); PBPuzzle.cancelPrev(); E.ept = t.dataset.ept; epDraw(); return; }
+    if (t.dataset.ddt) { (t.dataset.ddt === "pz" ? PBPuzzle : PBMask).opt("dd"); epDraw(); return; }
+    if (t.dataset.pzpat) { PBPuzzle.opt("pat", t.dataset.pzpat); epDraw(); return; }
+    if (t.dataset.pz) { await PBPuzzle.act(t.dataset.pz, inf); epDraw(); return; }
+    if (t.dataset.mksh) { PBMask.opt("target", t.dataset.mksh); epDraw(); return; }
+    if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); epDraw(); return; }
+    if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
+    if (t.dataset.q === "smart-magic") { PBSmart.captureElements(); return; }
+  }
+  function epInput(e) {      // تحريك الأشرطة: معاينة حيّة بلا إعادة رسم اللوحة (حتى لا يُقطع السحب)
+    const t = e.target; if (t.dataset.mkk) { const redraw = PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); if (t.type === "range") { const bb = t.parentNode.querySelector("b"); if (bb) bb.textContent = t.value; } if (redraw && t.type !== "range") epDraw(); else epFloat(); return; }
+    if (t.dataset.pzk === "knob") PBPuzzle.opt("knob", t.value, false);
+  }
+  function epChange(e) {
+    const t = e.target; if (t.dataset.mkk) { PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); epDraw(); return; }
+    if (t.dataset.pzk) { PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value, true); epDraw(); return; }
+  }
+  /* أزرار تأكيد/إلغاء صغيرة عائمة تحت الصورة أثناء معاينة البازل أو الماسك */
+  function epFloat() {
+    let f = $("pbx-epf"); const inf = epInf(), mk = typeof PBMask !== "undefined" ? PBMask.pending() : "", pz = typeof PBPuzzle !== "undefined" ? PBPuzzle.previewing() : "", kind = inf && mk === inf.node.id ? "mk" : inf && pz === inf.node.id ? "pz" : "";
+    if (!kind) { if (f) f.remove(); return; }
+    if (!f) { f = document.createElement("div"); f.id = "pbx-epf"; f.className = "pbx-epf"; f.innerHTML = `<button type="button" class="ok" data-epf="ok" title="تأكيد">${ico("check", 15)}<span>تأكيد</span></button><button type="button" class="no" data-epf="no" title="إلغاء">${ico("x", 15)}<span>إلغاء</span></button>`; document.body.appendChild(f);
+      f.addEventListener("click", async e => { const b = e.target.closest("[data-epf]"); if (!b) return; const i2 = epInf(), kd = f.dataset.k; if (!i2) return;
+        if (b.dataset.epf === "ok") { if (kd === "mk") PBMask.act("ok", i2); else await PBPuzzle.act("split", i2); } else { if (kd === "mk") PBMask.cancel(); else PBPuzzle.cancelPrev(); }
+        epFloat(); if ($("pbx-ep")) epDraw(); }); }
+    f.dataset.k = kind; epFloatPos();
+  }
+  function epFloatPos() {
+    const f = $("pbx-epf"); if (!f) return; const inf = epInf(), fw = $("pbx-fw"), L = inf && layoutOf(inf.node.id); if (!L || !fw) return; const r = fw.getBoundingClientRect(), s = E.scale || 1, w = f.offsetWidth || 150;
+    f.style.left = Math.max(6, Math.min(innerWidth - w - 6, r.left + (L.left + L.width / 2) * s - w / 2)) + "px"; f.style.top = Math.max(60, Math.min(innerHeight - 46, r.top + (L.top + L.height) * s + 10)) + "px";
+  }
   function closePop() { const p = $("pbx-pop"); if (p) p.remove(); }
   function drawQbar() {
     const app = $("pb-app"); if (!app) return; let bar = $("pbx-qbar");
@@ -1075,7 +1149,7 @@ body{overflow-x:hidden;margin:0}`;
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
       bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qDone(inf, "fs", Math.max(8, Math.min(160, Number(t.value) || 17)), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
     if (!document.getElementById("pbfonts-a")) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
-    const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget" && !multiOn(); if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null; bar.style.display = show ? "flex" : "none"; if (!show) return;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه
+    const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget" && !multiOn(); if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null; bar.style.display = show ? "flex" : "none"; try { epSync(); } catch (x) { console.warn(x); } if (!show) return;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه
     bar.innerHTML = qbarHtml(inf); placeQbar();
   }
   function qPop(btn, html, bind, opt) {
@@ -1275,6 +1349,7 @@ body{overflow-x:hidden;margin:0}`;
     if (k === "style") return qPop(btn, `<h6>نمط العنصر</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-a="copy">🖌️ نسخ النمط</button><button type="button" class="pb2"${E.styleClip ? "" : " disabled style=\"opacity:.4\""} data-a="paste">🎨 لصق النمط</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { b.dataset.a === "copy" ? copyStyle() : pasteStyle(); qAct("style", btn); }), { dock: true });
     if (k === "border") { const bw = Number(set.bw) || 0, bs = (qDef(inf, "bs") || { o: [] }).o; return qPop(btn, qRange(inf, null, "bw", "سماكة الإطار (px)", 0, 40, 1, bw) + `<h6>النمط</h6><select data-pa>${bs.map(([v, n]) => `<option value="${v}"${(set.bs || "solid") === v ? " selected" : ""}>${n}</option>`).join("")}</select><h6>اللون</h6><input type="color" data-pc value="${/^#[0-9a-f]{6}$/i.test(set.bc || "") ? set.bc : "#333333"}">`, p => { p.querySelector("[data-pa]").onchange = e => qDone(inf, "bs", e.target.value); p.querySelector("[data-pc]").oninput = e => qLive(inf, "bc", e.target.value); p.querySelector("[data-pc]").onchange = () => { commitHist(); renderInspector(); }; bindRanges(p, inf, (kk, v) => qLive(inf, kk, v || "")); }, { dock: true }); }
     if (k === "radius") return qPop(btn, qRange(inf, null, "rad", "تدوير الزوايا (px)", 0, 200, 1, Number(eff(set, "rad", dev)) || 0), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)));
+    if (k === "edit") return epToggle();
     if (k === "replace") return uploadFor(inf);
     if (k === "mw") return mwPanel(inf, btn);
     if (k === "bgremove") return PBBgRemove.open(inf);
@@ -1620,7 +1695,18 @@ body{overflow-x:hidden;margin:0}`;
   const IMG_RE = /(?:https?:\/\/[^"\\\s'()<>]+?|assets\/[^"\\\s'()<>]+?)\.(?:png|jpe?g|webp|gif|svg|avif)(?![\w])/gi;
   function pageImages() {
     const seen = new Set(), out = [], add = pth => { if (!pth || seen.has(pth) || /^assets\/img\/icons\//.test(pth)) return; seen.add(pth); out.push(pth); };
-    (E.pageMedia || []).slice().reverse().forEach(add); ((JSON.stringify(E.page || {}).match(IMG_RE)) || []).forEach(add); return out;
+    ((E.page && E.page.media) || []).slice().reverse().forEach(add); const rest = Object.assign({}, E.page || {}); delete rest.media; ((JSON.stringify(rest).match(IMG_RE)) || []).forEach(add); return out;      // مكتبة الصفحة المحفوظة (page.media) ثم كل ما هو مستعمل فيها
+  }
+  const pmAdd = pth => { if (!E.page) return; const L = E.page.media = E.page.media || []; if (pth && !L.includes(pth)) L.push(pth); };
+  const imgKeyOf = inf => { const c = inf ? ctlsFor(inf).find(x => x.t === "image") : null; return c ? c.k : null; };
+  function delPageImage(pth) {      // حذف صورة من مكتبة الصفحة؛ إن كانت مستعملة تُفرَّغ مواضعها بعد تأكيد (ويمكن التراجع Ctrl+Z). ملف الصورة نفسه يبقى في الموقع
+    const media = ((E.page.media || []).filter(x => x !== pth)), rest = Object.assign({}, E.page); delete rest.media; const json = JSON.stringify(rest), n = json.split(pth).length - 1;
+    if (n && !confirm("هذه الصورة مستعملة في الصفحة (" + n + (n > 1 ? " مواضع" : " موضع") + "). حذفها سيُفرغ هذه المواضع. هل تريد المتابعة؟")) return;
+    E.page = n ? JSON.parse(json.split(pth).join("")) : rest; E.page.media = media; E.pmenu = null; E.nextLabel = "حذف صورة من مكتبة الصفحة"; afterEdit(); toast("حُذفت الصورة من مكتبة الصفحة (Ctrl+Z للتراجع)");
+  }
+  async function dlPageImage(pth) {
+    const url = localize(pth), name = (pth.split("?")[0].split("/").pop() || "image").replace(/[^\w.\-]/g, "_");
+    try { const r = await fetch(url); if (!r.ok) throw new Error("x"); const b = await r.blob(), a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); } catch (e) { window.open(url, "_blank"); }
   }
   function dragOfImg(el) { return el && el.dataset && el.dataset.pimgI != null ? { img: el.dataset.pimgI } : null; }
   function addPageImage(pth) {
@@ -1629,22 +1715,28 @@ body{overflow-x:hidden;margin:0}`;
     const w = PB.mkW("image"); init(w); t.col.widgets.push(w); afterEdit(w.id);
   }
   function drawPimg() {
-    const m = $("pbx-pimg"); if (!m) return; const L = pageImages(), inf = E.pimgK && E.sel ? selInfo() : null, canUse = !!(inf && inf.set);
-    m.innerHTML = `<div class="ph"><b>${ico("image", 16)} صور هذه الصفحة <small>(${L.length})</small></b><button type="button" data-pm="x" title="إغلاق">✕</button></div><button type="button" class="pbx-small pup" data-pm="up">${ico("upload", 14)} رفع صورة جديدة إلى القائمة</button><p class="pt">انقر صورة <b>مرة واحدة</b> لإضافتها إلى الصفحة، أو <b>اسحبها</b> وأفلتها على صورة لاستبدالها أو على مكان فارغ لوضعها هناك.</p><div class="pg">${L.map(pth => `<div class="pi" draggable="true" data-pimg-i="${esc(pth)}" title="انقر لإضافتها إلى الصفحة أو اسحبها"><img src="${esc(localize(pth))}" loading="lazy" draggable="false" alt="">${canUse ? `<button type="button" data-pm="use" data-p="${esc(pth)}" title="استعمالها في الصورة المحدّدة">استبدال</button>` : ""}</div>`).join("") || '<p class="pe">لا توجد صور في هذه الصفحة بعد — ارفع صورة بالزر أعلاه.</p>'}</div>`;
+    const m = $("pbx-pimg"); if (!m) return; const L = pageImages(), inf = E.sel ? selInfo() : null, k = imgKeyOf(inf), canUse = !!(inf && k && !multiOn()), pm = E.pmenu;
+    m.innerHTML = `<div class="ph"><b>${ico("image", 16)} صور هذه الصفحة <small>(${L.length})</small></b><button type="button" data-pm="x" title="إغلاق">✕</button></div><button type="button" class="pbx-small pup" data-pm="up">${ico("upload", 14)} رفع صورة جديدة إلى القائمة</button><p class="pt">انقر صورة <b>مرة واحدة</b> لإضافتها إلى الصفحة، أو <b>اسحبها</b> إلى صورة لاستبدالها أو إلى مكان فارغ. للحذف: القائمة ${ico("dots", 12)} فوق الصورة، أو مرّر الفأرة عليها واضغط <b>Delete</b>.</p><div class="pg">${L.map(pth => `<div class="pi" tabindex="0" draggable="true" data-pimg-i="${esc(pth)}" title="انقر لإضافتها إلى الصفحة أو اسحبها"><img src="${esc(localize(pth))}" loading="lazy" draggable="false" alt=""><button type="button" class="pdt" data-pm="menu" data-p="${esc(pth)}" title="خيارات الصورة">${ico("dots", 14)}</button>${canUse ? `<button type="button" class="pus" data-pm="use" data-p="${esc(pth)}" title="استعمالها في العنصر المحدّد">استبدال</button>` : ""}${pm === pth ? `<div class="pmm"><button type="button" data-pm="dl" data-p="${esc(pth)}">${ico("download", 14)} تحميل الصورة</button><button type="button" class="dng" data-pm="del" data-p="${esc(pth)}">${ico("trash", 14)} حذف</button></div>` : ""}</div>`).join("") || '<p class="pe">لا توجد صور في هذه الصفحة بعد — ارفع صورة بالزر أعلاه.</p>'}</div>`;
   }
-  function openPageImages(k) {
-    E.pimgK = k || null; let m = $("pbx-pimg");
-    if (!m) { m = document.createElement("div"); m.id = "pbx-pimg"; m.dir = "rtl"; document.body.appendChild(m);
-      m.addEventListener("click", async e => {
-        const b = e.target.closest("[data-pm]"), it = e.target.closest("[data-pimg-i]");
-        if (b) { e.stopPropagation(); const a = b.dataset.pm;
-          if (a === "x") { m.remove(); return; }
-          if (a === "up") { try { const fs = await pickFiles(true); if (!fs.length) return; await uploadFiles(fs); toast("✅ أُضيفت " + fs.length + " صورة إلى القائمة — انقرها لإضافتها إلى الصفحة"); drawPimg(); } catch (err) { toast("❌ " + err.message); } return; }
-          if (a === "use") { const inf = selInfo(); if (!inf || !inf.set) return; if (inf.kind === "widget" && inf.node.type === "image" && (!E.pimgK || E.pimgK === "src")) applyPaths(inf, [b.dataset.p]); else if (E.pimgK) { inf.set[E.pimgK] = b.dataset.p; E.nextLabel = "استبدال صورة"; afterEdit(); } return; } }
-        if (it) addPageImage(it.dataset.pimgI);
-      });
-      m.addEventListener("dragstart", e => { const it = e.target.closest && e.target.closest("[data-pimg-i]"); if (!it) return; E.drag = dragOfImg(it); e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
-    }
+  function openPageImages() {
+    let m = $("pbx-pimg"); if (m) { m.remove(); return; }      // الزر يفتح اللوحة ويغلقها
+    m = document.createElement("div"); m.id = "pbx-pimg"; m.dir = "rtl"; document.body.appendChild(m);
+    m.addEventListener("click", async e => {
+      const b = e.target.closest("[data-pm]"), it = e.target.closest("[data-pimg-i]");
+      if (b) { e.stopPropagation(); const a = b.dataset.pm, p = b.dataset.p;
+        if (a === "x") { E.pmenu = null; m.remove(); return; }
+        if (a === "menu") { E.pmenu = E.pmenu === p ? null : p; drawPimg(); return; }
+        if (a === "dl") { E.pmenu = null; drawPimg(); dlPageImage(p); return; }
+        if (a === "del") { delPageImage(p); return; }
+        if (a === "up") { try { const fs = await pickFiles(true); if (!fs.length) return; await uploadFiles(fs); E.nextLabel = "رفع صور إلى مكتبة الصفحة"; commitHist(); toast("أُضيفت " + fs.length + " صورة إلى القائمة — انقرها لإضافتها إلى الصفحة"); drawPimg(); } catch (err) { toast("❌ " + err.message); } return; }
+        if (a === "use") { const inf = selInfo(), k = imgKeyOf(inf); if (!inf || !inf.set || !k) return; if (inf.kind === "widget" && inf.node.type === "image" && k === "src") applyPaths(inf, [p]); else { inf.set[k] = p; E.nextLabel = "استبدال صورة"; afterEdit(); } return; } }
+      if (E.pmenu) { E.pmenu = null; if (!it) { drawPimg(); return; } }
+      if (it) addPageImage(it.dataset.pimgI);
+    });
+    m.addEventListener("dragstart", e => { const it = e.target.closest && e.target.closest("[data-pimg-i]"); if (!it) return; E.drag = dragOfImg(it); e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
+    m.addEventListener("mouseover", e => { const it = e.target.closest && e.target.closest("[data-pimg-i]"); if (it && document.activeElement !== it && !(document.activeElement && document.activeElement.closest && document.activeElement.closest("#pbx-pimg .pmm"))) { try { it.focus({ preventScroll: true }); } catch (x) { } } });
+    m.addEventListener("keydown", e => { const it = e.target.closest && e.target.closest("[data-pimg-i]"); if (e.key === "Escape") { e.stopPropagation(); if (E.pmenu) { E.pmenu = null; drawPimg(); } else m.remove(); return; }
+      if (!it) return; if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); e.stopPropagation(); delPageImage(it.dataset.pimgI); } else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); addPageImage(it.dataset.pimgI); } else e.stopPropagation(); });
     drawPimg();
   }
   let pimgT = 0; const pimgRefresh = () => { if (!$("pbx-pimg")) return; clearTimeout(pimgT); pimgT = setTimeout(drawPimg, 250); };
@@ -1669,7 +1761,7 @@ body{overflow-x:hidden;margin:0}`;
   /* الرفع بالتحضير الفوري: تُضغط الصورة وتظهر في المحرر محلياً حالاً، ويكمل الرفع إلى GitHub في الخلفية بالتتابع */
   async function uploadFiles(files) {
     const out = [], A = Admin; A.localImg = A.localImg || {};
-    for (const f of files) { const p = await A.prepareImage(f, "assets/img/pages", "pg-", HQ); A.localImg[p.path] = URL.createObjectURL(p.blob); out.push(p.path); queueCommit(p); (E.pageMedia = E.pageMedia || []).push(p.path); }
+    for (const f of files) { const p = await A.prepareImage(f, "assets/img/pages", "pg-", HQ); A.localImg[p.path] = URL.createObjectURL(p.blob); out.push(p.path); queueCommit(p); pmAdd(p.path); }
     pimgRefresh();
     return out;
   }
@@ -1693,7 +1785,7 @@ body{overflow-x:hidden;margin:0}`;
   /* رفع صورة (Blob) من المولّد: تظهر محلياً فوراً ويكمل الحفظ في الموقع بالخلفية */
   async function uploadBlob(blob, name, opt) {
     const A = Admin; A.localImg = A.localImg || {}; const f = new File([blob], name + ".webp", { type: "image/webp" }), p = await A.prepareImage(f, "assets/img/pages", "gen-", Object.assign({ max: 2000, q: .86, noVariants: true, uniq: true }, opt || {}));
-    A.localImg[p.path] = URL.createObjectURL(p.blob); queueCommit(p); (E.pageMedia = E.pageMedia || []).push(p.path); pimgRefresh(); return p.path;
+    A.localImg[p.path] = URL.createObjectURL(p.blob); queueCommit(p); pmAdd(p.path); pimgRefresh(); return p.path;
   }
   /* استبدال مسارات الصور المرفوعة حديثاً بروابط محلية في معاينة المحرر */
   function localize(str) { const L = (typeof Admin !== "undefined" && Admin.localImg) || {}; for (const k in L) if (str.indexOf(k) >= 0) str = str.split(k).join(L[k]); return str; }
@@ -2022,7 +2114,6 @@ body{overflow-x:hidden;margin:0}`;
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
     if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;
     if (inf.node.type === "image" && inf.set.crop) h += grp("قصّ الصورة", q("crop-reset", "↺ إلغاء القصّ", "إعادة الصورة لملء الإطار تلقائياً", false, "wide"));
-    if (inf.node.type === "image" && inf.node.set.src) h += `<div class="pbx-qg"><small>أدوات القماش (كانفاس) — تعمل على أي صورة</small><div class="pbx-magic"><button type="button" data-q="smart-magic" title="يفصل العناصر (أشخاص، منتجات…) كصور شفافة">${ico("t_magic", 22)} التقاط سحري</button></div><label class="pbx-gem"><input type="checkbox" data-gem="1" ${gemOn() ? "checked" : ""}> استعانة اختيارية بمفتاح Gemini (بدونه تعمل الأدوات مجاناً)</label></div>`;
     return h + `</div>`;
   }
   /* أنماط النص الافتراضية (عنوان / عنوان فرعي / نص عادي) تُطبَّق على عنصر العنوان أو النص المحدد */
@@ -2128,7 +2219,7 @@ body{overflow-x:hidden;margin:0}`;
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
-    el.innerHTML = `<div class="pbx-ih">${lbl}</div>
+    el.innerHTML = `<div class="pbx-ih">${lbl}<button type="button" class="pbx-pimgb" data-pimg="1" title="مكتبة صور هذه الصفحة: كل الصور المستعملة فيها، مع رفع صور جديدة وحذفها وتحميلها وسحبها إلى الصفحة">${ico("image", 14)}<span>صور الصفحة</span></button></div>
 <div id="pbx-pend" class="pbx-pend" style="display:none"><span>👁 تعديلاتك تظهر مباشرة على الصفحة</span><button type="button" class="ok" data-pend="ok">✓ تأكيد</button><button type="button" class="no" data-pend="no">↩ إلغاء</button></div>
 ${quickHtml(inf)}
 ${visRow(inf)}
@@ -2143,7 +2234,7 @@ ${inspGroups(all, inf)}`;
     const ownV = isR ? own(set, k, dev) : set[k], effV = isR ? eff(set, k, dev) : set[k];
     const inherited = isR && ownV === undefined && effV !== undefined;
     const rs = (ownV !== undefined && ownV !== "" && !(c.t === "switch" && ownV === false && !isR)) ? `<button class="rs" data-rs="${k}" title="إعادة للافتراضي">↺</button>` : "";
-    const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h, c.t) : "", head = `<label>${esc(sp.t)}${hq}${c.t === "image" ? `<button type="button" class="pbx-pimgb" data-pimg="${k}" title="صور هذه الصفحة: اختر صورة سبق رفعها أو ارفع جديدة، واسحبها إلى الصفحة">${ico("image", 14)}<span>صور الصفحة</span></button>` : ""}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
+    const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h, c.t) : "", head = `<label>${esc(sp.t)}${hq}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
     const a = `data-k="${k}" data-t="${c.t}"`;
     let b = "";
     switch (c.t) {
@@ -2317,7 +2408,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.mcaddc) { const arr = inf.set[t.dataset.mcaddc] = inf.set[t.dataset.mcaddc] || []; arr.push({ t: "", l: "__custom", cu: "" }); E.mcOpen = arr.length - 1; afterEdit(); return; }
     if (t.dataset.repmv) { const arr = inf.set[t.dataset.repmv] || [], i = Number(t.dataset.i), j = i + Number(t.dataset.d); if (j >= 0 && j < arr.length) { [arr[i], arr[j]] = [arr[j], arr[i]]; afterEdit(); } return; }
     if (t.dataset.repdel) { inf.set[t.dataset.repdel].splice(Number(t.dataset.i), 1); afterEdit(); return; }
-    if (t.dataset.pimg) { openPageImages(t.dataset.pimg); return; }
+    if (t.dataset.pimg) { openPageImages(); return; }
     if (t.dataset.up || t.dataset.upadd) {
       const multi = !!t.dataset.upadd, k = t.dataset.up || t.dataset.upadd;
       const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.multiple = multi;

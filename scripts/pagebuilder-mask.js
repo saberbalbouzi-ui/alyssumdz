@@ -20,36 +20,64 @@ const PBMask = (function () {
   }
   const libKeys = () => Object.keys(PB.SHAPES).filter(k => !["stroke", "line"].includes(PB.SHAPES[k][1]));
   const libSel = () => S.target && S.target.startsWith("lib:") && PB.SHAPES[S.target.slice(4)] ? S.target.slice(4) : "";
-  Object.assign(S, { size: 70, px: 50, py: 50, invert: false, pend: null });
+  Object.assign(S, { size: 70, px: 50, py: 50, invert: false, pend: null, picked: false, dd: false });
+  const CHEV = '<svg class="ep-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   const thumbBtn = (val, key, name, on) => `<button type="button" class="mk-sh${on ? " on" : ""}" data-mksh="${esc(val)}" title="${esc(name)}">${PB.shapeThumb(key)}<span>${esc(name)}</span></button>`;
   function panel(inf) {
     css(); if (!inf || inf.kind !== "widget" || inf.set.pz) return "";
     const img = inf.node.type === "image", st = inf.set; if (img && !st.src) return "";
     const L = cands(inf), lib = img ? libSel() : "", cur = lib ? null : (L.find(w => w.id === S.target) || L[0]), pend = !!(S.pend && S.pend.id === inf.node.id);
-    const reset = img && st.clip && !pend ? `<div class="mk-on">🎭 الماسك مفعّل (${st.clipMode === "out" ? "شكل محذوف من الصورة" : "الصورة داخل الشكل فقط"})</div><button type="button" class="pbx-small" data-mk="reset">↺ إلغاء الماسك (الصورة كاملة)</button>` : "";
+    const reset = img && st.clip && !pend ? `<div class="mk-on">الماسك مفعّل (${st.clipMode === "out" ? "شكل محذوف من الصورة" : "الصورة داخل الشكل فقط"})</div><button type="button" class="pbx-small" data-mk="reset">إلغاء الماسك (الصورة كاملة)</button>` : "";
     const iAll = (inf.sec.free || []).filter(w => w.type === "image"), sl = (k, lbl, mn, mx) => `<label class="pbx-pr">${lbl} <b>${S[k]}</b><input type="range" data-mkk="${k}" min="${mn}" max="${mx}" value="${S[k]}"></label>`;
-    const invertUi = `<label class="mk-k"><input type="checkbox" data-mkk="invert" ${S.invert ? "checked" : ""}> ↔ اعكس: أبقِ الشكل وأخفِ بقية الصورة</label><p>الافتراضي: <b>يُحذف الشكل من الصورة</b> (يُثقب مكانه). فعّل «اعكس» لتبقى الصورة داخل الشكل فقط.</p>`;
+    const invertUi = `<label class="mk-k"><input type="checkbox" data-mkk="invert" ${S.invert ? "checked" : ""}> اعكس: أبقِ الشكل وأخفِ بقية الصورة</label><p>الافتراضي: <b>يُحذف الشكل من الصورة</b> (يُثقب مكانه). فعّل «اعكس» لتبقى الصورة داخل الشكل فقط.</p>`;
     if (!img) {      // من جهة الشكل: اختيار الصورة التي تحته
       const hint = L.length ? "" : `<p>ضع هذا الشكل فوق <b>صورة</b> ثم اضغط «تطبيق الماسك».</p>`;
       return `<div class="pbx-mk">${hint}${L.length ? `<label>الصورة التي تحت الشكل<select data-mkk="target">${L.map(w => `<option value="${esc(w.id)}"${cur && w.id === cur.id ? " selected" : ""}>${esc(wname(w, iAll.indexOf(w)))}</option>`).join("")}</select></label>` : ""}
 ${invertUi}<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>
 <div class="mk-b"><button type="button" class="pbx-small mk-go" data-mk="apply">🎭 تطبيق الماسك</button></div></div>`; }
     // من جهة الصورة: أشكال حقيقية بجانب أسمائها (الموضوعة فوق الصورة + المكتبة) + معاينة حيّة على الصفحة
-    const val = lib ? "lib:" + lib : cur ? cur.id : "lib:ellipse", cl = val.startsWith("lib:");
-    const placed = L.length ? `<div class="mk-gh">شكل موضوع فوق الصورة</div><div class="mk-grid">${L.map(w => thumbBtn(w.id, w.set.shape, wname(w, 0), val === w.id)).join("")}</div>` : "";
-    const groups = PB.SHAPE_GROUPS.map(g => { const ks = libKeys().filter(k => PB.SHAPES[k][4] === g); return ks.length ? `<div class="mk-gh">${esc(g)}</div><div class="mk-grid">${ks.map(k => thumbBtn("lib:" + k, k, PB.SHAPES[k][0], val === "lib:" + k)).join("")}</div>` : ""; }).join("");
-    const bar = pend ? `<div class="mk-pend">👁 معاينة حيّة على الصفحة — غيّر الشكل أو الحجم أو الموضع وستراها مباشرة<div class="mk-pb"><button type="button" class="pbx-small mk-yes" data-mk="ok">✓ تأكيد النتيجة</button><button type="button" class="pbx-small mk-no" data-mk="no">✕ إلغاء</button></div></div>` : `<div class="mk-b"><button type="button" class="pbx-small mk-go" data-mk="preview">👁 معاينة الماسك على الصفحة</button></div><p>اختر شكلاً أو حرّك أي شريط لتظهر المعاينة الحيّة، ثم أكّد النتيجة أو ألغِها.</p>`;
-    return `<div class="pbx-mk">${reset}<div class="mk-list">${placed}${groups}</div>
-${cl ? `${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">➕ ضعه فوق الصورة لأعدّله بيدي</button>` : `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>`}
-${invertUi}${bar}</div>`;
+    const val = lib ? "lib:" + lib : cur ? cur.id : "lib:ellipse", cl = val.startsWith("lib:"), shown = S.picked || pend || !!st.clip;
+    const small = (v, key, name, on) => `<button type="button" class="ep-it${on ? " on" : ""}" data-mksh="${esc(v)}" title="${esc(name)}">${PB.shapeThumb(key)}<span>${esc(name)}</span></button>`;
+    const curKey = lib || (cur && cur.set ? cur.set.shape : ""), curName = lib ? PB.SHAPES[lib][0] : cur ? wname(cur, 0) : "";
+    const placed = L.length ? `<div class="mk-gh">شكل موضوع فوق الصورة</div><div class="mk-grid">${L.map(w => small(w.id, w.set.shape, wname(w, 0), val === w.id)).join("")}</div>` : "";
+    const groups = PB.SHAPE_GROUPS.map(g => { const ks = libKeys().filter(k => PB.SHAPES[k][4] === g); return ks.length ? `<div class="mk-gh">${esc(g)}</div><div class="mk-grid">${ks.map(k => small("lib:" + k, k, PB.SHAPES[k][0], val === "lib:" + k)).join("")}</div>` : ""; }).join("");
+    const dd = `<div class="ep-dd"><button type="button" class="ep-ddb${S.dd ? " open" : ""}" data-ddt="mk">${S.picked && curKey ? PB.shapeThumb(curKey) : ""}<b>${S.picked && curName ? esc(curName) : "اختر شكل الماسك"}</b>${CHEV}</button>${S.dd ? `<div class="ep-ddl mk-list">${placed}${groups}</div>` : ""}</div>`;
+    const hint = pend ? `<p>تظهر المعاينة على الصورة — اسحب الشكل بالفأرة فوق الصورة لتحريكه ومقبضه لتكبيره، ثم اضغط ✓ العائمة تحت الصورة للتأكيد أو ✕ للإلغاء.</p>` : `<p>اختر شكلاً من القائمة لتظهر معاينته مباشرة على الصورة.</p>`;
+    return `<div class="pbx-mk">${reset}${dd}
+${shown && cl ? `${sl("size", "حجم الشكل %", 10, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
+${invertUi}${hint}</div>`;
   }
   /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة. أي تغيير على الصورة يحدّث المعاينة الحيّة فوراً */
   function opt(k, v) {
-    if (k === "target") S.target = v; else if (k === "keep") S.keep = !!v; else if (k === "invert") S.invert = !!v; else if (k === "size" || k === "px" || k === "py") S[k] = Number(v); else return false;
-    const had = !!S.pend, ok = livePreview(); return k === "target" || k === "invert" || (!had && ok);
+    if (k === "dd") { S.dd = !S.dd; return true; }
+    if (k === "target") { S.target = v; S.picked = true; S.dd = false; } else if (k === "keep") S.keep = !!v; else if (k === "invert") S.invert = !!v; else if (k === "size" || k === "px" || k === "py") S[k] = Number(v); else return false;
+    const had = !!S.pend, ok = S.picked ? livePreview() : false; return k === "target" || k === "invert" || (!had && ok);
   }
   function livePreview() {      // يحدّث المعاينة إن كان المحدّد صورة بها صورة؛ يعيد true إن بدأت معاينة جديدة
     const inf = A().find(A().E.sel); if (!inf || inf.node.type !== "image" || !inf.set.src || inf.set.pz) return false; const had = !!S.pend; preview(inf); return !had && !!S.pend;
+  }
+  /* مربع تحريك الشكل فوق الصورة قبل التأكيد: اسحب الجسم لنقل الشكل، والمقبض لتكبيره */
+  let box = null;
+  const boxGeom = inf => { const L = A().layoutOf(inf.node.id); if (!L) return null; const side = Math.max(8, Math.min(L.width, L.height) * S.size / 100); return { L, side, x: L.left + (L.width - side) * S.px / 100, y: L.top + (L.height - side) * S.py / 100 }; };
+  function hideBox() { if (box) { box.el.remove(); box = null; } }
+  function placeBox() {
+    if (!box) return; const inf = A().find(box.id), fw = document.getElementById("pbx-fw"); if (!inf || !fw || !S.pend || !libSel()) return hideBox();
+    const g = boxGeom(inf); if (!g) return hideBox(); const f = fw.getBoundingClientRect(), s = A().E.scale || 1, st = box.el.style;
+    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.side * s) + "px"; st.height = (g.side * s) + "px";
+  }
+  function showBox(inf) {
+    if (!S.pend || !libSel() || !inf || inf.node.type !== "image") return hideBox();
+    if (!box || box.id !== inf.node.id) {
+      hideBox(); const el = document.createElement("div"); el.className = "mk-box"; el.innerHTML = '<i class="mk-hd"></i>'; document.body.appendChild(el); box = { id: inf.node.id, el };
+      const down = (e, resize) => { e.preventDefault(); e.stopPropagation(); const i2 = A().find(box.id), g = boxGeom(i2); if (!g) return; const s = A().E.scale || 1, x0 = e.clientX, y0 = e.clientY, p0 = [S.px, S.py, S.size]; el.setPointerCapture(e.pointerId);
+        const mv = ev => { const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s, L = g.L;
+          if (resize) S.size = Math.max(10, Math.min(100, Math.round((g.side + Math.max(dx, dy)) / Math.min(L.width, L.height) * 100)));
+          else { const rx = L.width - g.side, ry = L.height - g.side; if (rx > 1) S.px = Math.max(0, Math.min(100, Math.round(p0[0] + dx / rx * 100))); if (ry > 1) S.py = Math.max(0, Math.min(100, Math.round(p0[1] + dy / ry * 100))); }
+          const i3 = A().find(box.id); if (i3) { preview(i3); placeBox(); } };
+        const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); if (S.hook) S.hook(); }; el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); };
+      el.addEventListener("pointerdown", e => down(e, !!e.target.closest(".mk-hd")));
+    }
+    placeBox();
   }
   /* نقاط الشكل (حلقات) بإحداثيات نسبية من إطار الصورة */
   function rings(shp, imgR, shR, E) {
@@ -98,11 +126,11 @@ ${invertUi}${bar}</div>`;
     const base = S.pend ? S.pend.prev : { clip: inf.set.clip, clipEO: inf.set.clipEO, clipMode: inf.set.clipMode }, r = compute(inf, base);
     if (r.err) { toast(r.err); return; }
     if (!S.pend) S.pend = { id: r.img.node.id, prev: base };
-    setClip(r.img, r); A().renderCanvas();
+    setClip(r.img, r); A().renderCanvas(); showBox(A().find(r.img.node.id));
   }
-  function cancel() { const img = restorePend(); if (img) A().renderCanvas(); }
+  function cancel() { const img = restorePend(); hideBox(); if (img) A().renderCanvas(); }
   function act(name, inf) {
-    const E = A().E; if (name === "reset") { delete inf.set.clip; delete inf.set.clipEO; delete inf.set.clipMode; E.nextLabel = "إلغاء الماسك"; A().commitAfter(); return; }
+    const E = A().E; if (name === "reset") { cancel(); S.picked = false; delete inf.set.clip; delete inf.set.clipEO; delete inf.set.clipMode; E.nextLabel = "إلغاء الماسك"; A().commitAfter(); return; }
     if (name === "no") { cancel(); toast("✕ أُلغيت المعاينة"); return; }
     if (name === "preview") { preview(inf); return; }
     if (name === "place") {
@@ -113,7 +141,7 @@ ${invertUi}${bar}</div>`;
       PB.setR(sh.set, "fx", E2.dev, +(g.fx + (bx.left - iR.left) / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fy", E2.dev, +(g.fy + (bx.top - iR.top) / iR.height * g.fh).toFixed(2)); PB.setR(sh.set, "fwd", E2.dev, +(bx.side / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fh", E2.dev, +(bx.side / iR.height * g.fh).toFixed(2));
       img.list.splice(img.idx + 1, 0, sh); E.nextLabel = "إضافة شكل للماسك"; E.sel = sh.id; S.target = img.node.id; A().commitAfter(sh.id); toast("➕ وُضع الشكل فوق الصورة — حرّكه وكبّره ثم اختر الصورة في «ماسك» وطبّق"); return; }
     // ok / apply: تأكيد المعاينة، أو تطبيق مباشر من جهة الشكل
-    const pend = S.pend && S.pend.id === inf.node.id ? S.pend : null; if (pend) S.pend = null;
+    const pend = S.pend && S.pend.id === inf.node.id ? S.pend : null; if (pend) S.pend = null; hideBox(); S.picked = false;
     const base = pend ? pend.prev : null, r = compute(inf, base);
     if (r.err) { if (pend) { S.pend = pend; } toast(r.err); return; }
     setClip(r.img, r);
@@ -121,5 +149,5 @@ ${invertUi}${bar}</div>`;
     E.nextLabel = r.mode === "in" ? "ماسك: إبقاء داخل الشكل" : "ماسك: حذف الشكل من الصورة"; E.sel = r.img.node.id; A().commitAfter(r.img.node.id);
     toast(r.mode === "in" ? "🎭 بقيت الصورة داخل الشكل فقط" : "✂ حُذف الشكل من الصورة");
   }
-  return { panel, opt, act, cancel, pending: () => (S.pend ? S.pend.id : "") };
+  return { panel, opt, act, cancel, hideBox, reposition: placeBox, setHook: f => { S.hook = f; }, pending: () => (S.pend ? S.pend.id : "") };
 })();

@@ -4,11 +4,12 @@
    كل قطعة تحمل: pz (معرّف المجموعة)، pzh (موضعها الأصلي لكل جهاز)، pzs (التجاذب)، crop (جزء الصورة)، clip (مسار القص نسبياً 0..1). */
 const PBPuzzle = (function () {
   const A = () => PBApp, esc = s => PB.esc(s);
-  const S = { pat: "jigsaw", cols: 4, rows: 3, knob: 100, pv: null, pvId: "" };
+  const S = { pat: "jigsaw", cols: 4, rows: 3, knob: 100, pv: null, pvId: "", picked: false, dd: false };
+  const CHEV = '<svg class="ep-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   /* مصغّرات حقيقية لأنماط التقسيم بجانب أسمائها */
   const PTH = { grid: "M33 6V94M66 6V94M6 33H94M6 66H94", jigsaw: "M6 50H38a11 11 0 1 1 24 0H94M50 6V38a11 11 0 1 0 0 24V94", wave: "M6 33Q28 15 50 33T94 33M6 66Q28 48 50 66T94 66M33 6Q15 28 33 50T33 94M66 6Q48 28 66 50T66 94", tri: "M6 6L94 94M94 6L6 94M50 6V94M6 50H94", brick: "M6 33H94M6 66H94M50 6V33M28 33V66M72 33V66M50 66V94", hex: "M50 8L86 29V71L50 92L14 71V29ZM50 50V8M50 50L86 71M50 50L14 71", free: "M10 82C30 8 70 92 90 18" };
   const patThumb = k => `<svg class="pbx-thumb" viewBox="0 0 100 100" aria-hidden="true"><rect x="3" y="3" width="94" height="94" rx="12" fill="#faf6ec" stroke="#cfc6b0" stroke-width="3"/><path d="${PTH[k] || PTH.grid}" fill="none" stroke="#7c3aed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"${k === "free" ? ' stroke-dasharray="1 9"' : ""}/></svg>`;
-  const PATS = [["grid", "شبكة مستطيلات"], ["jigsaw", "بازل كلاسيكي (بروزات)"], ["wave", "شبكة متموّجة"], ["tri", "مثلثات"], ["brick", "طوب (صفوف متداخلة)"], ["hex", "خلايا سداسية"], ["free", "حر — ارسم مستقيمات أو منحنيات"]];
+  const PATS = [["grid", "شبكة"], ["jigsaw", "كلاسيكي"], ["wave", "متموّج"], ["tri", "مثلثات"], ["brick", "طوب"], ["hex", "سداسي"], ["free", "حر"]];
   const MAXP = 120, SNAP_PX = 16;
   let D = null;      // حالة وضع الرسم
 
@@ -138,6 +139,10 @@ const PBPuzzle = (function () {
     let ix = 0, iy = 0, iw = 1, ih = 1; const na = im && im.naturalHeight ? im.naturalWidth / im.naturalHeight : 0, cp = set0.crop && set0.crop.w ? set0.crop : null;
     if (na) { if (cp) { iw = cp.w / 100; ih = iw * fa / na; ix = cp.x / 100; iy = cp.y / 100; } else { const fit = set0.fit || "cover";
       if (fit === "fill") { iw = 1; ih = 1; } else { const wide = fa > na, cover = fit !== "contain"; if (wide === cover) { iw = 1; ih = fa / na; } else { ih = 1; iw = na / fa; } ix = (1 - iw) / 2; iy = (1 - ih) / 2; } } }
+    if (set0.hauto) {      // الصورة بارتفاع تلقائي: قيمة fh المحفوظة قديمة لا تطابق الارتفاع الفعلي فكانت القطع تُحسب بقياس خاطئ ← نزامنها مع الارتفاع الحقيقي قبل التقسيم
+      try { const el = document.getElementById("pbx-frame").contentDocument.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"), cw = pin ? pin.getBoundingClientRect().width : 0, u = inf.sec.set.scaled && cw ? cw / (Number(inf.sec.set.dw) || 1140) : 1, hd = Math.round(Hf / u), fwdD = Number(PB.eff(set0, "fwd", "d")), fwdM = Number(PB.eff(set0, "fwd", "m")), Dw = cw / u;
+        if (hd > 0) { PB.setR(set0, "fh", "d", hd); if (Dw > 0 && fwdD > 0 && fwdM > 0 && PB.own(set0, "fh", "m") !== undefined) PB.setR(set0, "fh", "m", Math.round(hd * (fwdM * 360) / (fwdD * Dw))); } } catch (e) { }
+    }
     const gid = PB.uid(), G = { d: geom(set0, "d"), m: geom(set0, "m") }; if (!G.d) { toast("تعذّر قراءة موضع الصورة"); return; }
     const ORIG = { src: set0.src, alt: set0.alt || "", link: set0.link || "", fit: set0.fit || "cover", crop: set0.crop ? JSON.parse(JSON.stringify(set0.crop)) : null, zi: Number(set0.zi) || 1, g: {} };
     ["d", "m"].forEach(dev => { const g = G[dev]; if (g) ORIG.g[dev] = [g.fx, g.fy, g.fwd, g.fh]; });      // الأصل لإعادة التقسيم أو إرجاع الصورة كاملة
@@ -159,29 +164,34 @@ const PBPuzzle = (function () {
   const group = inf => (inf.sec.free || []).filter(w => w.set.pz && w.set.pz === inf.set.pz);
   const home = (st, dev) => st.pzh && (st.pzh[dev] || st.pzh.d);
   function shapeUi(resplit) {
-    const free = S.pat === "free", num = (k, mx) => `<input type="number" data-pzk="${k}" min="1" max="${mx}" value="${esc(S[k])}">`;
-    return `<div class="pz-pats">${PATS.map(([k, n]) => `<button type="button" class="pz-pat${S.pat === k ? " on" : ""}" data-pzpat="${k}" title="${n}">${patThumb(k)}<span>${n}</span></button>`).join("")}</div>
-${free ? `<p class="pz-h">ارسم على الصورة خطوطاً مستقيمة أو منحنية تقطعها من حافة إلى حافة؛ تتحوّل المناطق الناتجة إلى قطع.</p><button type="button" class="pbx-small pz-go" data-pz="${resplit ? "resplit" : "draw"}">✏️ ${resplit ? "أعد التقسيم: ارسم خطوطاً جديدة" : "ارسم خطوط التقسيم"}</button>`
-      : `<div class="pz-g"><label>الأعمدة (أفقياً)${num("cols", 12)}</label>${S.pat === "hex" ? "" : `<label>الصفوف (عمودياً)${num("rows", 12)}</label>`}</div>
+    const free = S.pat === "free", shown = S.picked || resplit, num = (k, mx) => `<input type="number" data-pzk="${k}" min="1" max="${mx}" value="${esc(S[k])}">`, cur = PATS.find(p => p[0] === S.pat) || PATS[0];
+    const dd = `<div class="ep-dd"><button type="button" class="ep-ddb${S.dd ? " open" : ""}" data-ddt="pz">${shown ? patThumb(S.pat) : ""}<b>${shown ? esc(cur[1]) : "اختر شكل التقسيم"}</b>${CHEV}</button>${S.dd ? `<div class="ep-ddl">${PATS.map(([k, n]) => `<button type="button" class="ep-it${shown && S.pat === k ? " on" : ""}" data-pzpat="${k}" title="${esc(n)}">${patThumb(k)}<span>${esc(n)}</span></button>`).join("")}</div>` : ""}</div>`;
+    return `${dd}${free ? `<p class="pz-h">ارسم على الصورة خطوطاً مستقيمة أو منحنية تقطعها من حافة إلى حافة؛ تتحوّل المناطق الناتجة إلى قطع.</p><button type="button" class="pbx-small pz-go" data-pz="${resplit ? "resplit" : "draw"}">ارسم خطوط التقسيم</button>`
+      : `<div class="pz-g"><label>الأعمدة${num("cols", 12)}</label>${S.pat === "hex" ? "" : `<label>الصفوف${num("rows", 12)}</label>`}</div>
 ${S.pat === "jigsaw" || S.pat === "wave" ? `<label class="pz-r">${S.pat === "jigsaw" ? "حجم البروزات" : "عمق التموّج"} <input type="range" data-pzk="knob" min="60" max="150" value="${esc(S.knob)}"></label>` : ""}
-${S.pv ? `<div class="pz-pend">👁 معاينة حيّة لخطوط التقسيم على الصفحة — غيّر النمط أو الأعمدة أو الصفوف وسترى النتيجة مباشرة<div class="pz-pb"><button type="button" class="pbx-small pz-yes" data-pz="${resplit ? "resplit" : "split"}">✓ تأكيد التقسيم</button><button type="button" class="pbx-small pz-no" data-pz="pvcancel">✕ إلغاء</button></div></div>` : `<button type="button" class="pbx-small pz-go" data-pz="pvshow">👁 معاينة التقسيم على الصفحة</button>`}`}`;
+${resplit ? "" : S.pv ? `<p class="pz-h">تظهر معاينة التقسيم على الصورة — غيّر الأعمدة أو الصفوف وسترى النتيجة، ثم اضغط ✓ العائمة تحت الصورة للتأكيد أو ✕ للإلغاء.</p>` : `<p class="pz-h">اختر شكلاً من القائمة لتظهر معاينته مباشرة على الصورة.</p>`}`}`;
   }
+  const previewing = () => (S.pv ? S.pvId : "");
   function panel(inf) {
-    if (!inf || inf.kind !== "widget") return "";
+    css(); if (!inf || inf.kind !== "widget") return "";
     const st = inf.set; if (S.pvId !== inf.node.id) { S.pv = null; S.pvId = inf.node.id; }
     if (st.pz) { const n = group(inf).length;
       return `<div class="pbx-pz"><p>🧩 قطعة من بازل (${n} قطعة). اسحبها لتفصلها عن البقية؛ وعند اقترابها من موضعها الصحيح بجوار قطعة أخرى تنجذب إليه.</p>
 <label class="pz-sw"><input type="checkbox" data-pzk="snap" ${st.pzs !== false ? "checked" : ""}> 🧲 التجاذب بين القطع</label>
 <div class="pz-btns"><button type="button" class="pbx-small" data-pz="gather">↺ تجميع كل القطع</button><button type="button" class="pbx-small" data-pz="scatter">🎲 بعثرة كل القطع</button></div>
-<div class="pz-sep">نوع البازل (يستبدل القطع الحالية)</div>${shapeUi(true)}<button type="button" class="pbx-small" data-pz="merge">↩ إرجاع الصورة كاملة</button></div>`; }
+<div class="pz-sep">نوع البازل (يستبدل القطع الحالية)</div>${shapeUi(true)}<button type="button" class="pbx-small" data-pz="merge">إرجاع الصورة كاملة</button></div>`; }
     if (!st.src) return `<div class="pbx-pz"><p>ارفع صورة أولاً ثم قسّمها إلى بازل.</p></div>`;
     return `<div class="pbx-pz"><p>قسّم الصورة إلى قطع منفصلة تتجاذب عند اقترابها. اختر الشكل:</p>${shapeUi(false)}
 <p class="pz-h">يمكن التراجع بـ Ctrl+Z. القطع عناصر حرة يمكن تحريك كل واحدة وإعادة ترتيبها.</p></div>`;
   }
-  /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة */
-  function opt(k, v) {
-    if (k === "snap") { const inf = A().find(A().E.sel); if (inf && inf.set.pz) { group(inf).forEach(w => { w.set.pzs = !!v; }); A().E.nextLabel = "تجاذب البازل"; A().commitAfter(); } return false; }
-    if (k === "pat") { S.pat = v; if (S.pv) showPrev(); return true; } S[k] = Number(v) || S[k]; if (S.pv) showPrev(); return false;
+  /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة. final=true عند انتهاء التعديل (change) فيُعاد تقسيم القطع الحالية */
+  function opt(k, v, final) {
+    if (k === "dd") { S.dd = !S.dd; return true; }
+    const inf = A().find(A().E.sel);
+    if (k === "snap") { if (inf && inf.set.pz) { group(inf).forEach(w => { w.set.pzs = !!v; }); A().E.nextLabel = "تجاذب البازل"; A().commitAfter(); } return false; }
+    if (k === "pat") { S.pat = v; S.picked = true; S.dd = false; } else S[k] = Number(v) || S[k];
+    if (inf && inf.node.type === "image") { if (inf.set.pz) { if (final !== false && (k === "pat" || final) && S.pat !== "free") act("resplit", inf); else if (k === "pat" && S.pat === "free") act("resplit", inf); } else if (S.picked) showPrev(); }
+    return k === "pat";
   }
   /* معاينة حيّة: مضلعات التقسيم فوق الصورة داخل الصفحة (لا تُحفظ حتى «تأكيد التقسيم») */
   function clearPrev() { try { const d = document.getElementById("pbx-frame").contentDocument; d.querySelectorAll(".pbx-pzprev").forEach(e => e.remove()); } catch (e) { } }
@@ -288,5 +298,6 @@ ${S.pv ? `<div class="pz-pend">👁 معاينة حيّة لخطوط التقس�
     window.addEventListener("scroll", D.pos, true); window.addEventListener("resize", D.pos); document.addEventListener("keydown", D.key, true); D.pos();
     toast("ارسم خطاً مستقيماً (يمتد تلقائياً حتى الحواف) أو منحنياً من حافة إلى حافة، ثم اضغط «قسّم»");
   }
-  return { panel, opt, act, snap, S, stopDraw, _t: { edgePolys, regionsFromStrokes, hexPolys, triPolys, brickPolys, knobEdge } };
+  const cancelPrev = () => { S.pv = null; clearPrev(); };
+  return { panel, opt, act, snap, S, stopDraw, previewing, cancelPrev, _t: { edgePolys, regionsFromStrokes, hexPolys, triPolys, brickPolys, knobEdge } };
 })();
