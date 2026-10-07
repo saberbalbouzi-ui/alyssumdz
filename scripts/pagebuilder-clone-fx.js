@@ -21,6 +21,17 @@ const PBCloneFx = (() => {
     if (/slide/.test(n)) return /up|bottom/.test(n) ? "fadeUp" : /down|top/.test(n) ? "fadeDown" : "slideStart";
     return "";
   }
+  /* أطوال التحويل داخل @keyframes والتحويم: px ← calc(var(--u)*N) لتتناسب مع تحجيم القسم، والنسبة % (نسبة لحجم العنصر نفسه) ← px تصميم بمقاس العنصر المتحرّك الأصلي
+     (وإلا انزاح كل عنصر في الحاوية بنسبة عرضه وحده فتتداخل عناصر الشريط المتحرّك) */
+  function scaleTf(v, bw, bh) {
+    if (!v || /calc\(/.test(v)) return v;
+    return v.replace(/(translate(?:3d|X|Y|Z)?)\(([^)]*)\)/gi, (m, fn, args) => {
+      const f = fn.toLowerCase(), parts = args.split(",").map(x => x.trim());
+      const conv = (a, i) => { const q = /^(-?[\d.]+)(px|%)$/.exec(a); if (!q) return a; const n = parseFloat(q[1]); if (!n) return "0px"; const axisY = f === "translatey" || (f !== "translatex" && i === 1); const base = q[2] === "%" ? (axisY ? bh : bw) / 100 : 1; return `calc(var(--u)*${Math.round(n * base * 100) / 100})`; };
+      return fn + "(" + parts.map(conv).join(",") + ")";
+    });
+  }
+  function scaleKf(css, bw, bh) { return css.replace(/(\btransform|\btranslate)\s*:\s*([^;}]+)/g, (m, k, v) => k + ":" + (k === "transform" ? scaleTf(v, bw, bh) : v.split(/\s+/).map(x => /^-?[\d.]+(px|%)$/.test(x) ? scaleTf("translateX(" + x + ")", bw, bh).replace(/^translatex\(|\)$/gi, "") : x).join(" "))); }
   const secs = v => { const n = parseFloat(v); return isFinite(n) ? (/ms$/.test(String(v).trim()) ? n / 1000 : n) : 0; };
 
   function create(c) {
@@ -87,7 +98,7 @@ const PBCloneFx = (() => {
         const rule = S.kf.get(nm); if (!rule) return; const dur = secs(a.dur[i % a.dur.length]), delay = secs(a.delay[i % a.delay.length]), it = a.iter[i % a.iter.length], dir = a.dir[i % a.dir.length], fill = a.fill[i % a.fill.length], tf = a.tf[i % a.tf.length]; if (!dur) return;
         const preset = it === "1" ? presetOf(nm) : "";
         if (preset) { all.forEach(w => { if (!w.set.anim) { w.set.anim = preset; w.set.animDur = r1(Math.min(3, Math.max(.1, dur))); w.set.animDelay = r1(Math.min(5, delay)); } }); S.stats.entr++; return; }
-        const txt = rule.cssText; if (txt.length > 8000) return; const nn = "pbk-" + nm.replace(/[^\w-]/g, "_"), kfCss = txt.replace(/^@(-webkit-)?keyframes\s+[^{]+/, "@keyframes " + nn), needO = /scale|rotate|skew/.test(txt) && all.length > 1;
+        const txt0 = rule.cssText; if (txt0.length > 8000) return; const er = e.getBoundingClientRect(), txt = scaleKf(txt0, er.width, er.height); const nn = "pbk-" + nm.replace(/[^\w-]/g, "_"), kfCss = txt.replace(/^@(-webkit-)?keyframes\s+[^{]+/, "@keyframes " + nn), needO = /scale|rotate|skew/.test(txt) && all.length > 1;
         all.forEach((w, k) => pass(w, (S.kfDone && S.kfDone.has(nn) && all.length > 6 ? "" : kfCss + "\n") + `selector{animation:${nn} ${dur}s ${tf} ${delay}s ${it === "infinite" ? "infinite" : it} ${dir} ${fill};${needO ? "transform-origin:" + origin(w, e) + ";" : ""}}`));
         (S.kfDone = S.kfDone || new Set()).add(nn); S.stats.anim++;
       });
@@ -133,7 +144,7 @@ const PBCloneFx = (() => {
         const fl = []; if (decl.filter) fl.push(decl.filter); const dsw = ds && w === paintOwn ? ds : ""; if (dsw) fl.push(dsw);
         const isMine = mine.includes(w); if (!native) { addCls(w, "hzm-" + zid); }
         const L = [], B = [];
-        if (hasBox) { const pureScale = /scale/.test((decl.transform || "") + (decl.scale || "")) && !/translate|rotate|skew/.test((decl.transform || "") + (decl.rotate || "")), inner = ((w.type === "image" || w.type === "shape") && pureScale) ? (w.type === "image" ? " .pb-im" : " .pb-svg") : "", tgt = "selector" + inner; const body = []; for (const p of ["transform", "translate", "scale", "rotate", "opacity", "backdrop-filter"]) if (decl[p]) body.push(`${p}:${decl[p]}`); if (fl.length && !inner) body.push("filter:" + fl.join(" ")); if (body.length) { L.push(`selector${H}${inner}{${body.join(";")}}`); if (inner) B.push(`selector{overflow:hidden}`); B.push(`${tgt}{transition:${tr}}`); if (/scale|rotate|skew/.test((decl.transform || "") + (decl.scale || "") + (decl.rotate || "")) && all.length > 1 && !inner) B.push(`selector{transform-origin:${origin(w, zone)}}`); if (dsw && !(w.set.css || "").includes("drop-shadow")) B.push(`selector{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}`); } }
+        if (hasBox) { const pureScale = /scale/.test((decl.transform || "") + (decl.scale || "")) && !/translate|rotate|skew/.test((decl.transform || "") + (decl.rotate || "")), inner = ((w.type === "image" || w.type === "shape") && pureScale) ? (w.type === "image" ? " .pb-im" : " .pb-svg") : "", tgt = "selector" + inner; const body = []; const sr = zone.getBoundingClientRect(); for (const p of ["transform", "translate", "scale", "rotate", "opacity", "backdrop-filter"]) if (decl[p]) body.push(`${p}:${p === "transform" ? scaleTf(decl[p], sr.width, sr.height) : decl[p]}`); if (fl.length && !inner) body.push("filter:" + fl.join(" ")); if (body.length) { L.push(`selector${H}${inner}{${body.join(";")}}`); if (inner) B.push(`selector{overflow:hidden}`); B.push(`${tgt}{transition:${tr}}`); if (/scale|rotate|skew/.test((decl.transform || "") + (decl.scale || "") + (decl.rotate || "")) && all.length > 1 && !inner) B.push(`selector{transform-origin:${origin(w, zone)}}`); if (dsw && !(w.set.css || "").includes("drop-shadow")) B.push(`selector{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}`); } }
         if (hasTxt && (w.type === "text" || w.type === "heading" || w.type === "button")) { const tgt = w.type === "button" ? "selector" + H + " .pb-btn" : `selector.pb-w${H} .pb-t,selector.pb-w${H} .pb-t *`, body = []; for (const p of ["color", "text-shadow", "-webkit-text-fill-color", "text-decoration-color", "letter-spacing"]) if (decl[p]) body.push(`${p}:${decl[p]}!important`); if (body.length) { L.push(`${tgt}{${body.join(";")}}`); B.push(`selector .pb-t,selector .pb-btn{transition:color .3s,text-shadow .3s}`); } }
         if (hasBg && isMine) { const bg = decl["background-color"], bd = decl["border-color"]; if (w.type === "button") { const body = []; if (bg) body.push(`background-color:${bg}!important;background-image:none!important`); if (bd) body.push(`border-color:${bd}!important`); L.push(`selector${H} .pb-btn{${body.join(";")}}`); B.push(`selector .pb-btn{transition:${tr}}`); } else if (w.type === "shape") { if (bg) L.push(`selector${H} .pb-svg *{fill:${bg}!important}`); if (bd) L.push(`selector${H} .pb-svg *{stroke:${bd}!important}`); B.push(`selector .pb-svg *{transition:fill .3s,stroke .3s}`); } }
         if (L.length) { pass(w, B.concat(L).join("\n")); S.stats.hover++; }
@@ -141,5 +152,61 @@ const PBCloneFx = (() => {
     }
     return { pre, el, post, stats: S.stats, _S: S };
   }
-  return { create, dropShadows, presetOf, splitTop };
+
+  /* ───────── تحليل التأثيرات قبل النسخ ─────────
+     كل كاشف: id/label/status (ok مدعوم، partial جزئي، none غير متوفر)/note/find(doc,win) ← {n, sample}. عند ظهور تأثير جديد في مواقع الزبائن يُضاف كاشفه هنا
+     ويُطلب من المستخدم إرسال طلب إضافته (assets/data/fx-requests.json) ليُنفَّذ في المطوّر؛ وعند تنفيذه تُرقّى حالته إلى ok. */
+  const q = (doc, sel) => { try { return [...doc.querySelectorAll(sel)]; } catch (e) { return []; } };
+  const big = (doc, el, minW) => { const r = el.getBoundingClientRect(); return r.width >= (minW || 80) && r.height >= 24; };
+  const tracks = (d, w) => {      // عناصر بحركة CSS لا نهائية بإزاحة أفقية داخل حاوية تقصّ (أشرطة متحركة)
+    const kf = new Set(); const f = rs => { for (const r of rs) { try { if (r.type === 7 && /translate(X|3d)?\(/i.test(r.cssText)) kf.add(r.name); else if (r.cssRules && r.type !== 1) f(r.cssRules); } catch (e) { } } };
+    for (const sh of d.styleSheets) { try { f(sh.cssRules); } catch (e) { } }
+    const out = []; if (!kf.size) return out;
+    for (const el of q(d, "body *").slice(0, 4000)) { const cs = w.getComputedStyle(el); if (!/infinite/.test(cs.animationIterationCount) || !cs.animationName.split(",").some(n => kf.has(n.trim()))) continue; let C = el.parentElement; while (C && C !== d.body && w.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === d.body) continue; const cr = C.getBoundingClientRect(), er = el.getBoundingClientRect(); if (cr.width < 200 || er.width < cr.width * 1.05) continue; out.push({ el, C, img: !!C.querySelector("img,picture,video") }); }
+    return out;
+  };
+  const REGISTRY = [
+    { id: "hover", label: "تأثيرات التحويم (بطاقات/أزرار/صور)", status: "ok", note: "تُنسخ مع منطقة تحويم للبطاقة كاملة", find: (d, w) => { let n = 0; for (const sh of d.styleSheets) { try { const f = rs => { for (const r of rs) { if (r.type === 1 && /:hover/i.test(r.selectorText || "")) n++; else if (r.cssRules && r.type !== 5 && r.type !== 7) f(r.cssRules); } }; f(sh.cssRules); } catch (e) { } } return { n }; } },
+    { id: "keyframes", label: "حركات CSS مستمرة (طفو/نبض/دوران)", status: "ok", note: "@keyframes حرفية", find: (d, w) => { const e = q(d, "body *").slice(0, 3000).filter(x => { const a = w.getComputedStyle(x).animationName; return a && a !== "none"; }); return { n: e.length, sample: e[0] }; } },
+    { id: "entrance", label: "حركات الظهور بالتمرير (AOS/WOW/animate.css)", status: "ok", note: "تتحول لحركات المطوّر", find: d => { const e = q(d, "[data-aos],.wow,[class*='animate__'],[data-settings*='animation']"); return { n: e.length, sample: e[0] }; } },
+    { id: "slider", label: "سلايدر/كاروسيل", status: "ok", note: "Swiper/Slick/Owl/Splide/Bootstrap/Glide/Flickity: بالأسهم والنقاط والتشغيل التلقائي", find: d => { const e = q(d, ".swiper,.swiper-container,.slick-slider,.owl-carousel,.splide,.carousel,.glide,.flickity-enabled"); return { n: e.length, sample: e[0] }; } },
+    { id: "tabs", label: "تبويبات", status: "ok", note: "تبدّل لوحاتها", find: d => { const e = q(d, "[role='tablist'],.nav-tabs,.nav-pills,.elementor-tabs"); return { n: e.length, sample: e[0] }; } },
+    { id: "accordion", label: "أكورديون / أسئلة قابلة للطي / details", status: "ok", note: "تفتح وتغلق ويُزاح ما تحتها", find: d => { const e = q(d, "details,[aria-expanded][aria-controls],[data-bs-toggle='collapse'],.accordion"); return { n: e.length, sample: e[0] }; } },
+    { id: "dropdown", label: "قوائم منسدلة (تحويم)", status: "ok", note: "تظهر بالتحويم", find: d => { const e = q(d, "li > ul,li > .sub-menu,li > .dropdown-menu,.menu-item-has-children > ul").filter(x => x.getBoundingClientRect().height < 2 || getComputedStyle(x).display === "none" || getComputedStyle(x).visibility === "hidden"); return { n: e.length, sample: e[0] }; } },
+    { id: "hamburger", label: "قائمة الجوال ☰", status: "ok", note: "تُنسخ عبر «نسخة الجوال»", find: d => { const e = q(d, ".navbar-toggler,.menu-toggle,.hamburger,[class*='burger'],[class*='menu-toggle']"); return { n: e.length, sample: e[0] }; } },
+    { id: "sticky", label: "عنصر ثابت عند التمرير (fixed/sticky)", status: "ok", note: "يلتصق بأعلى الشاشة", find: (d, w) => { const e = q(d, "header,nav,div,aside").filter(x => { const p = w.getComputedStyle(x).position; return (p === "fixed" || p === "sticky") && parseFloat(w.getComputedStyle(x).top) >= 0 && big(d, x, 100) && x.getBoundingClientRect().height < 300; }); return { n: e.length, sample: e[0] }; } },
+    { id: "parallax", label: "خلفية Parallax / ثابتة", status: "partial", note: "تُحاكى تقريبياً", find: (d, w) => { const e = q(d, "[data-parallax],[data-stellar-background-ratio],.parallax,.jarallax,section,div").filter(x => { const c = w.getComputedStyle(x); return c.backgroundAttachment === "fixed" || /parallax|jarallax/i.test(String(x.className || "")); }); return { n: e.length, sample: e[0] }; } },
+    { id: "marquee", label: "شريط إعلانات/نصوص متحرك", status: "ok", note: "يتحول لعنصر «شريط متحرّك» في المطوّر", find: (d, w) => { const t = tracks(d, w).filter(x => !x.img), e = t.length ? t.map(x => x.C) : q(d, "marquee,[class*='marquee'],[class*='ticker']").filter(x => !x.querySelector("img")); return { n: e.length, sample: e[0] }; } },
+    { id: "marqueeImg", label: "شريط شعارات/صور متحرك", status: "none", note: "غير متوفر: تُنسخ الشعارات ثابتة", find: (d, w) => { const t = tracks(d, w).filter(x => x.img), e = t.length ? t.map(x => x.C) : q(d, "[class*='marquee'],[class*='ticker'],[class*='logo-slider']").filter(x => x.querySelectorAll("img").length >= 3); return { n: e.length, sample: e[0] }; } },
+    { id: "videoBg", label: "فيديو خلفية/تشغيل تلقائي", status: "partial", note: "يُنسخ غلاف الفيديو (صورة) فقط", find: (d, w) => { const e = q(d, "video").filter(v => (v.autoplay || v.hasAttribute("autoplay") || v.loop) && big(d, v, 300)); return { n: e.length, sample: e[0] }; } },
+    { id: "lottie", label: "رسوم Lottie المتحركة", status: "none", note: "غير متوفر", find: d => { const e = q(d, "lottie-player,dotlottie-player,.lottie,[data-lottie],[data-animation-path],[class*='lottie']"); return { n: e.length, sample: e[0] }; } },
+    { id: "canvas", label: "Canvas / WebGL / جسيمات / مخططات", status: "none", note: "غير متوفر: لا يُنسخ", find: d => { const e = q(d, "canvas").filter(x => big(d, x, 100)); return { n: e.length, sample: e[0] }; } },
+    { id: "svgAnim", label: "رسوم SVG المتحركة (SMIL)", status: "none", note: "غير متوفر", find: d => { const e = q(d, "svg animate,svg animateTransform,svg animateMotion,svg set"); return { n: e.length, sample: e[0] }; } },
+    { id: "counter", label: "عدّادات أرقام متصاعدة", status: "partial", note: "يُنسخ الرقم النهائي ثابتاً", find: d => { const e = q(d, "[data-count],[data-purecounter-end],.counter,.count-up,.odometer,.countup,[data-to]"); return { n: e.length, sample: e[0] }; } },
+    { id: "countdown", label: "عدّاد تنازلي", status: "partial", note: "يُنسخ شكلاً ثابتاً (يوجد عنصر عدّاد في المطوّر)", find: d => { const e = q(d, ".countdown,[data-countdown],[class*='countdown']"); return { n: e.length, sample: e[0] }; } },
+    { id: "typewriter", label: "نص يُكتب تدريجياً (Typewriter)", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".typed,.typewriter,[data-typed],.typed-cursor,[class*='typewriter'],[class*='typing']"); return { n: e.length, sample: e[0] }; } },
+    { id: "modal", label: "نوافذ منبثقة / Lightbox", status: "none", note: "غير متوفر", find: d => { const e = q(d, "[data-bs-toggle='modal'],[data-fancybox],[data-lightbox],[data-toggle='modal'],.mfp-gallery,.glightbox"); return { n: e.length, sample: e[0] }; } },
+    { id: "filterGrid", label: "شبكة قابلة للتصفية (Isotope/MixItUp)", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".isotope,.mixitup,[data-filter],.filter-button-group,.portfolio-filter"); return { n: e.length, sample: e[0] }; } },
+    { id: "cursor", label: "مؤشر ماوس مخصص", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".cursor,.custom-cursor,.cursor-follower,[class*='cursor-dot'],[class*='cursor-outer']"); return { n: e.length, sample: e[0] }; } },
+    { id: "tilt", label: "إمالة ثلاثية الأبعاد بالماوس (Tilt)", status: "none", note: "غير متوفر", find: d => { const e = q(d, "[data-tilt],.tilt,.js-tilt,[data-atropos]"); return { n: e.length, sample: e[0] }; } },
+    { id: "scrollTimeline", label: "حركات مرتبطة بالتمرير (scroll-timeline)", status: "none", note: "غير متوفر", find: d => { let n = 0; for (const st of q(d, "style")) if (/animation-timeline|scroll-timeline|view-timeline/.test(st.textContent || "")) n++; return { n }; } },
+    { id: "embed", label: "تضمين يوتيوب/فيميو/خريطة", status: "none", note: "غير منسوخ (الإطار يُحذف) — أضفه بعنصر فيديو/خريطة", find: d => { const e = q(d, "iframe[src*='youtube'],iframe[src*='youtu.be'],iframe[src*='vimeo'],iframe[src*='google.com/maps'],iframe[src*='maps.google']"); return { n: e.length, sample: e[0] }; } },
+    { id: "form", label: "نماذج (اتصال/اشتراك)", status: "partial", note: "تُنسخ شكلاً ولا تُرسل", find: d => { const e = q(d, "form").filter(f => f.querySelectorAll("input,textarea,select").length >= 2); return { n: e.length, sample: e[0] }; } },
+    { id: "scrollSnap", label: "أقسام ملتصقة بالتمرير (scroll-snap)", status: "none", note: "غير متوفر", find: (d, w) => { const e = [d.documentElement, d.body].concat(q(d, "main,section")).filter(x => x && /snap/.test(w.getComputedStyle(x).scrollSnapType || "")); return { n: e.length, sample: e[0] }; } }
+  ];
+  function analyze(doc, win) {
+    const fz = doc.getElementById("pbx-freeze"); if (fz) fz.disabled = true;      // لقراءة الحركات الفعلية
+    try { return analyze0(doc, win); } finally { if (fz) fz.disabled = false; }
+  }
+  function analyze0(doc, win) {
+    const out = [];
+    for (const r of REGISTRY) {
+      let f = null; try { f = r.find(doc, win); } catch (e) { }
+      if (!f || !f.n) continue;
+      let snippet = ""; try { snippet = f.sample ? f.sample.outerHTML.replace(/\s+/g, " ").slice(0, 400) : ""; } catch (e) { }
+      out.push({ id: r.id, label: r.label, status: r.status, note: r.note, n: f.n, snippet });
+    }
+    return out;
+  }
+  return { create, dropShadows, presetOf, splitTop, analyze, REGISTRY };
 })();
