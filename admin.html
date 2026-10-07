@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.34.6">
+<meta name="admin-version" content="1.34.7">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.34.6"></script>
-<script src="assets/js/chrome-admin.js?v=1.34.6"></script>
-<script src="assets/js/admin-assistant.js?v=1.34.6"></script>
-<script src="assets/js/admin-update.js?v=1.34.6"></script>
+<script src="assets/js/ctl-help.js?v=1.34.7"></script>
+<script src="assets/js/chrome-admin.js?v=1.34.7"></script>
+<script src="assets/js/admin-assistant.js?v=1.34.7"></script>
+<script src="assets/js/admin-update.js?v=1.34.7"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -14125,11 +14125,11 @@ const PBClone = (function () {
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
-<div class="cl-f"><span id="cl-st"></span><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
+<div class="cl-f"><span id="cl-st"></span><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
     document.body.appendChild(m);
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
-      const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
+      const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
     $("cl-url").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); loadUrl(false); } });
     $("cl-w").addEventListener("change", () => { S.W = Number($("cl-w").value) || 1280; if (S.frame) mountFrame(S.html); });
     m.addEventListener("dragover", e => { if (S.tab === "img" && e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files")) e.preventDefault(); });
@@ -14150,17 +14150,42 @@ const PBClone = (function () {
     lim.addEventListener("pointerdown", e => { e.preventDefault(); lim.setPointerCapture(e.pointerId); const mv = ev => { const sr = stg.getBoundingClientRect(); if (ev.clientY > sr.bottom - 28) stg.scrollTop += 16; else if (ev.clientY < sr.top + 28) stg.scrollTop -= 16; set((ev.clientY - win.getBoundingClientRect().top + 11) / k); }, up = () => { lim.removeEventListener("pointermove", mv); lim.removeEventListener("pointerup", up); }; lim.addEventListener("pointermove", mv); lim.addEventListener("pointerup", up); });
     const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = !!wait; S.setLimit = set;
   }
+  /* قياس المعاينة: إن كانت شبه فارغة مع أن الصفحة المقروءة فيها نص، نُظهر العناصر المخفية بـopacity:0/visibility:hidden (بقايا أنيميشن الظهور عند التمرير) ثم نعيد القياس */
+  function measureDoc(d) {
+    const v = n => { const r = n.getBoundingClientRect(), c = d.defaultView.getComputedStyle(n); if (n.checkVisibility && !n.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false; return r.width > 2 && r.height > 2 && c.visibility !== "hidden" && c.display !== "none" && Number(c.opacity) > 0.05; };
+    let vis = 0, hid = 0, txt = 0; const all = [...d.body.querySelectorAll("*")].slice(0, 6000);
+    for (const n of all) { if (v(n)) { vis++; if (n.children.length === 0 && (n.textContent || "").trim().length) txt += n.textContent.trim().length; } else hid++; }
+    const imgs = [...d.images], ok = imgs.filter(i => i.complete && i.naturalWidth > 0).length;
+    return { visEls: vis, hidEls: hid, visText: txt, imgs: imgs.length, imgsOk: ok };
+  }
+  function diagPage(d, h2) {
+    try {
+      let m = measureDoc(d), fixed = 0; const total = (d.body.textContent || "").replace(/\s+/g, " ").trim().length;
+      if (total > 100 && m.visText < Math.min(60, total * .2)) {
+        const W = d.defaultView; d.querySelectorAll("body *").forEach(n => { const c = W.getComputedStyle(n); if ((Number(c.opacity) === 0 || c.visibility === "hidden") && ((n.textContent || "").trim().length > 3 || n.querySelector("img"))) { n.style.setProperty("opacity", "1", "important"); n.style.setProperty("visibility", "visible", "important"); fixed++; } });
+        m = measureDoc(d);
+      }
+      const b = d.body, c = d.defaultView.getComputedStyle(b);
+      S.diag = Object.assign({ ver: typeof CONFIG !== "undefined" && CONFIG.VERSION || "", src: S.src, url: S.url, ext: EXT.ok ? EXT.v : "off", extInfo: S.extInfo, extErr: S.extErr, htmlLen: (S.html || "").length, totalText: total, docH: h2, fixedHidden: fixed, body: { display: c.display, vis: c.visibility, op: c.opacity, ov: c.overflow, h: c.height, cls: (b.className || "").slice(0, 80), kids: b.children.length }, head: (b.innerText || "").replace(/\s+/g, " ").slice(0, 160), ua: navigator.userAgent.slice(0, 90), scr: screen.width + "x" + screen.height }, m);
+      if (m.visText < 30 && total > 100) S.warn = "⚠ المعاينة تبدو فارغة رغم وجود نص في الصفحة المقروءة — اضغط «نسخ التقرير» وأرسله لي.";
+      else S.warn = fixed ? "(أُظهرت " + fixed + " عنصراً كان مخفياً بالأنيميشن)" : "";
+    } catch (e) { S.diag = { err: String(e && e.message || e) }; }
+  }
+  async function copyDiag() {
+    const t = JSON.stringify(S.diag || { note: "لا تقرير بعد — افتح رابطاً أولاً" });
+    try { await navigator.clipboard.writeText(t); toast("نُسخ التقرير — الصقه في المحادثة"); } catch (e) { window.prompt("انسخ هذا التقرير (Ctrl+C) وأرسله:", t); }
+  }
   function mountFrame(html) {
     const W = S.W, f = document.createElement("iframe"); f.setAttribute("sandbox", "allow-same-origin"); f.setAttribute("scrolling", "no"); f.style.cssText = `width:${W}px;height:900px`; S.frame = f;
     mountWin(f, W, 900, 900, true); st("جارٍ عرض الصفحة…");
     f.onload = async () => { st("تحميل الصور والخطوط…"); const d = f.contentDocument; if (!d) return; try { await Promise.race([Promise.all([...d.images].filter(i => !i.complete).map(i => new Promise(r => { i.onload = i.onerror = r; }))), sleep(5000)]); await Promise.race([d.fonts ? d.fonts.ready : Promise.resolve(), sleep(2500)]); } catch (e) { }
       const h = Math.min(16000, Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0, 300)); f.style.height = h + "px"; await sleep(80); const h2 = Math.min(16000, Math.max(d.documentElement.scrollHeight, h)); f.style.height = h2 + "px";
-      S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.src ? " [المصدر: " + ({ chrome: "إضافة كروم", proxy: "جلب عادي", github: "متصفح GitHub" }[S.src] || S.src) + "]" : "") + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»."); };
+      diagPage(d, h2); S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.src ? " [المصدر: " + ({ chrome: "إضافة كروم", proxy: "جلب عادي", github: "متصفح GitHub" }[S.src] || S.src) + "]" : "") + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»." + (S.warn ? " " + S.warn : "")); };
     f.srcdoc = html;
   }
   async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
-    S.extInfo = null; S.extErr = ""; S.src = ""; S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
+    S.extInfo = null; S.extErr = ""; S.src = ""; S.warn = ""; S.diag = null; S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
     try { const r = await getPage(u, !!full, 0); S.src = r.src; const bi = bodyInfo(r.html), real = bi.doc.querySelectorAll("img[src],video,picture").length; if ((bi.text < 60 && bi.imgs < 3) || (r.src === "proxy" && bi.text < 150 && real < 3)) throw new Error("وصلت الصفحة فارغة (الجلب العادي يرى قشرة بيضاء لأن الموقع يبني محتواه بالجافاسكربت أو داخل إطار). " + (!EXT.ok ? "الحل: ثبّت إضافة كروم (زر «تثبيت إضافة كروم») ثم أعد تحميل اللوحة F5." : extOld() ? "نسخة إضافة كروم عندك قديمة (v" + EXT.v + ") فتُتجاهل — احذفها وحمّل أحدث نسخة من «أحدث نسخة» ثم F5." : "إضافة كروم متصلة لكن فشلت القراءة" + (S.extErr ? ": " + S.extErr : "") + ".")); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
     catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
   }
@@ -14174,8 +14199,8 @@ const PBClone = (function () {
   const EXT = { ok: false, v: "", allowed: false, id: 0, pend: new Map(), t: 0 };
   window.addEventListener("message", e => { const d = e.data; if (e.source !== window || !d || !d.aly) return; const p = EXT.pend.get(d.id); if (p) { EXT.pend.delete(d.id); p(d); } });
   const extCall = (type, extra, ms) => new Promise((res, rej) => { const id = ++EXT.id, t = setTimeout(() => { EXT.pend.delete(id); rej(new Error("لا استجابة من الإضافة")); }, ms || 1500); EXT.pend.set(id, d => { clearTimeout(t); res(d); }); window.postMessage(Object.assign({ alyReq: 1, type, id }, extra || {}), location.origin); });
-  const extOld = () => EXT.ok && String(EXT.v || "0").localeCompare("1.1.0", undefined, { numeric: true }) < 0;
-  function extUi() { const el = $("cl-ext"); if (!el) return; if (extOld()) { el.innerHTML = `<button type="button" data-cl="extinfo" title="نسخة الإضافة المثبّتة قديمة (v${esc(EXT.v)}) وقد تُظهر بعض المواقع فارغة">حدّث الإضافة إلى 1.1.0</button>`; return; } el.innerHTML = EXT.ok ? `<b class="cl-extok" title="الإضافة v${esc(EXT.v)}">● كروم متصل (v${esc(EXT.v)})</b> <a class="cl-sm" href="assets/ext/alyssum-clone-helper.zip" download title="حمّل أحدث نسخة من الإضافة">أحدث نسخة ⭳</a> <button type="button" class="cl-sm" data-cl="extinfo" title="خطوات التثبيت والتحديث">؟</button>` : `<button type="button" data-cl="extinfo" title="إضافة كروم تفتح المواقع في متصفحك الحقيقي فتتجاوز الحماية وتقرأ كل المواقع">تثبيت إضافة كروم</button>`; }
+  const extOld = () => EXT.ok && String(EXT.v || "0").localeCompare("1.1.3", undefined, { numeric: true }) < 0;
+  function extUi() { const el = $("cl-ext"); if (!el) return; if (extOld()) { el.innerHTML = `<button type="button" data-cl="extinfo" title="نسخة الإضافة المثبّتة قديمة (v${esc(EXT.v)}) وقد تُظهر بعض المواقع فارغة">حدّث الإضافة إلى 1.1.3</button>`; return; } el.innerHTML = EXT.ok ? `<b class="cl-extok" title="الإضافة v${esc(EXT.v)}">● كروم متصل (v${esc(EXT.v)})</b> <a class="cl-sm" href="assets/ext/alyssum-clone-helper.zip" download title="حمّل أحدث نسخة من الإضافة">أحدث نسخة ⭳</a> <button type="button" class="cl-sm" data-cl="extinfo" title="خطوات التثبيت والتحديث">؟</button>` : `<button type="button" data-cl="extinfo" title="إضافة كروم تفتح المواقع في متصفحك الحقيقي فتتجاوز الحماية وتقرأ كل المواقع">تثبيت إضافة كروم</button>`; }
   async function extPing() { try { const r = await extCall("ping", {}, 900); EXT.ok = true; EXT.v = r.v; EXT.allowed = !!r.ok; } catch (e) { EXT.ok = false; } extUi(); }
   async function fetchViaExt(url, W) { st("جارٍ فتح الموقع في متصفح كروم عندك (نافذة صغيرة مؤقتة)…"); const r = await extCall("fetch", { url, width: W }, 150000); if (r.error) throw new Error(r.error); S.extInfo = r.stats || null; return { html: r.html, url: r.url || url }; }
   function extHelp() {

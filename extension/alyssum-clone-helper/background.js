@@ -26,11 +26,15 @@ async function grab(url, width) {
     for (let i = 0; i < 40; i++) { const blocked = await run(tabId, () => /just a moment|attention required|please wait|access denied|verify you are human/i.test(document.title) || /Enable JavaScript and cookies to continue/i.test((document.body && document.body.innerText || "").slice(0, 600))).catch(() => false); if (!blocked) break; await sleep(1000); }      // صفحة تحقق: قد تُحلّ تلقائياً أو يحلّها المستخدم يدوياً في النافذة
     // قياس كل الإطارات بلا تعديل؛ إن كان المحتوى الحقيقي داخل إطار (مثل معاينة قوالب Wix) نختار الإطار الأكبر محتوى
     const measure = async () => {
-      const meas = await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, func: () => { try { const b = document.body; return { text: ((b && b.innerText) || "").replace(/\s+/g, " ").trim().length, imgs: document.querySelectorAll("img,svg,video,canvas").length, iw: window.innerWidth, title: document.title, url: location.href, h: Math.max(document.documentElement.scrollHeight, b ? b.scrollHeight : 0) }; } catch (e) { return null; } } }).catch(() => []);
+      const meas = await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, func: () => { try { const b = document.body; return { text: ((b && b.innerText) || "").replace(/\s+/g, " ").trim().length, imgs: document.querySelectorAll("img,svg,video,canvas").length, iw: window.innerWidth, title: document.title, url: location.href, bf: Math.max(0, ...[...document.querySelectorAll("iframe")].map(f => { const r = f.getBoundingClientRect(); return (Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0))) / Math.max(1, innerWidth * innerHeight); })), h: Math.max(document.documentElement.scrollHeight, b ? b.scrollHeight : 0) }; } catch (e) { return null; } } }).catch(() => []);
       const fr = (meas || []).filter(r => r && r.result).map(r => Object.assign({ frameId: r.frameId }, r.result));
-      const score = f => f.text + f.imgs * 40, top = fr.find(f => f.frameId === 0) || fr[0]; let best = top;
-      if (top && score(top) < 300) for (const f of fr) if (score(f) > score(best)) best = f;
-      return { fr, top, best, sc: best ? score(best) : 0 };
+      const score = f => f.text + f.imgs * 40, top = fr.find(f => f.frameId === 0) || fr[0]; let best = top, wait = false;
+      const kids = fr.filter(f => f !== top);
+      if (top && top.bf > 0.5) {      // الإطار الرئيسي غلاف يحوي إطاراً يغطي الصفحة (معاينة Wix…): المحتوى الحقيقي داخل الإطار الداخلي لا الغلاف
+        const k = kids.sort((a, b) => score(b) - score(a))[0];
+        if (k && score(k) >= 60) best = k; else wait = true;      // لم يُحمَّل الإطار الداخلي بعد
+      } else if (top && score(top) < 300) for (const f of kids) if (score(f) > score(best)) best = f;
+      return { fr, top, best, sc: wait ? 0 : (best ? score(best) : 0) };
     };
     // الإطارات الداخلية تتأخر عن تحميل الصفحة: ننتظر (حتى ~30ث) حتى يظهر محتوى كافٍ ويستقر
     let m = await measure(), prev = -1;
