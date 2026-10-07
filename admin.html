@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.24.6">
+<meta name="admin-version" content="1.24.7">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1481,9 +1481,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/text-capture.js"></script>
 <script src="assets/js/social-icons.js?v=1"></script>
 <script src="assets/js/chrome.js?v=2"></script>
-<script src="assets/js/chrome-admin.js?v=1.24.6"></script>
-<script src="assets/js/admin-assistant.js?v=1.24.6"></script>
-<script src="assets/js/admin-update.js?v=1.24.6"></script>
+<script src="assets/js/chrome-admin.js?v=1.24.7"></script>
+<script src="assets/js/admin-assistant.js?v=1.24.7"></script>
+<script src="assets/js/admin-update.js?v=1.24.7"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7460,6 +7460,13 @@ const PB = (() => {
   /* قيمة أيقونة (إيموجي | ic:اسم | img:مسار) ← HTML؛ base لمسارات الصور المرفوعة */
   const iconHtml = (v, base) => { v = String(v == null ? "" : v); if (/^ic:/.test(v) && ICMAP[v.slice(3)]) return iconSvg(v.slice(3)); if (/^img:/.test(v)) { const p = v.slice(4); return `<img class="pb-icimg" src="${esc(/^(https?:|data:|\/)/.test(p) ? p : (base || "") + p)}" alt="">`; } return esc(v); };
   const isIconTok = v => /^(ic:|img:)/.test(String(v || ""));
+  /* نص الشريط العلوي: **غامق** + رموز {ic:اسم}/{img:مسار} + (اختياري) تحويل الإيموجي الشائعة إلى الأيقونات العصرية تلقائياً */
+  const EMO2IC = { "🚚": "truck", "🚛": "truck", "💵": "cash", "💰": "cash", "💳": "card", "🎁": "gift", "✅": "check-circle", "✔️": "check", "⭐": "star", "🌟": "star", "✨": "sparkle", "🔥": "flame", "🌿": "leaf", "🍃": "leaf", "🌱": "sprout", "🛡️": "shield-check", "⚡": "zap", "💎": "gem", "🏷️": "tag", "🔒": "lock", "❤️": "heart", "💚": "heart", "⏰": "clock", "🕒": "clock", "📞": "phone", "☎️": "phone", "💬": "chat", "📦": "box", "🌍": "globe", "🌐": "globe", "🏆": "trophy", "👑": "crown", "🎉": "sparkle", "💧": "drop", "☀️": "sun", "🌙": "moon", "🧠": "brain", "🔄": "refresh", "📍": "pin", "✉️": "mail", "📧": "mail", "👍": "thumbs-up", "🎯": "target", "👥": "users", "👤": "user", "🌸": "flower", "💊": "pill", "🛒": "cart", "♾️": "infinity" };
+  const barRich = (txt, base, auto) => {
+    let t = esc(txt || "").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\{((?:ic|img):[^}\s]+)\}/g, (m, tk) => /^ic:/.test(tk) && !ICMAP[tk.slice(3)] ? m : iconHtml(tk, base));
+    if (auto) t = t.replace(new RegExp(Object.keys(EMO2IC).map(k => k.replace(/\uFE0F/g, "\\uFE0F?")).join("|"), "g"), m => { const k = EMO2IC[m] || EMO2IC[m.replace(/\uFE0F/g, "")] || EMO2IC[m + "\uFE0F"]; return k ? iconHtml("ic:" + k) : m; });
+    return t;
+  };
   const BMARKS = [["disc", "● نقطة"], ["circle", "○ دائرة"], ["square", "■ مربع"], ["check", "✔ علامة صح"], ["checkbox", "☑ مربع صح"], ["arrow", "◀ سهم"], ["chev", "‹ سهم صغير"], ["star", "★ نجمة"], ["diamond", "◆ معين"], ["dash", "– شرطة"], ["heart", "❤ قلب"], ["leaf", "🌿 ورقة"], ["dec", "1. أرقام"], ["ar", "١. أرقام عربية"], ["alpha", "a. حروف لاتينية"], ["roman", "i. أرقام رومانية"], ["bdc", "🟢 شارة دائرية ✔ (ملوّنة)"], ["bdn", "🔢 شارة دائرية برقم (ملوّنة)"], ["bsq", "🟩 شارة مربعة ✔ (ملوّنة)"], ["bst", "⭐ شارة دائرية نجمة (ملوّنة)"], ["bdd", "⚫ نقطة ملوّنة مليئة"], ["custom", "✎ رمز مخصص"]];
   const BANIMS = [["", "بدون"], ["pulse", "نبض"], ["bounce", "قفز"], ["shake", "اهتزاز"], ["wobble", "تمايل"], ["float", "طفو"], ["heart", "نبضة قلب"], ["tada", "تادا"], ["jelly", "جيلي"]];
   const IANIMS = [["", "بدون"], ["zin", "تقريب للأمام (Zoom In)"], ["zout", "ابتعاد للخلف (Zoom Out)"], ["pulse", "نبض (تقريب وابتعاد)"], ["kb", "كين بيرنز (تقريب مع انزياح)"], ["float", "طفو للأعلى والأسفل"], ["sway", "تأرجح"], ["spin", "دوران مستمر"], ["blink", "وميض"], ["shake", "اهتزاز"]];
@@ -7673,11 +7680,11 @@ const PB = (() => {
         emit(c, sel + " .pb-sf", s, [["spad", v => dimsDecl("padding", v)], ["fs", px("font-size")]]); },
     },
     sbar: {
-      label: "الشريط العلوي (إعلان)", ic: "📢", def: { txt: "🚚 توصيل سريع لـ **58 ولاية** · 💵 **الدفع عند الاستلام** · 🎁 اشترِ **قطعتين** واحصل على **الثالثة مجاناً**", link: "", tbg: "#173F35", ttc: "#F3E9D2", tbc: "#E4C87F", tfs: { d: 14 }, tpd: { d: [7, 16, 7, 16] }, tal: "center" },
-      ctl: [{ k: "txt", l: "نص الإعلان — اجعل الكلمة **بين نجمتين** لتظهر بلون مميّز", t: "textarea", tab: "c" }, { k: "link", l: "رابط عند النقر (اختياري)", t: "text", tab: "c" },
-        { k: "tbg", l: "لون الخلفية", t: "color", tab: "s" }, { k: "ttc", l: "لون النص", t: "color", tab: "s" }, { k: "tbc", l: "لون الكلمات المميّزة", t: "color", tab: "s" }, { k: "tfs", l: "حجم الخط (px)", t: "num", r: 1, min: 9, max: 30, tab: "s" }, { k: "tpd", l: "الحشو", t: "dims", r: 1, tab: "s" }, { k: "tal", l: "المحاذاة", t: "select", o: [["center", "وسط"], ["start", "يمين"], ["end", "يسار"]], tab: "s" }],
-      html: s => { const t = esc(s.txt || "").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>"), inner = s.link ? `<a href="${esc(s.link)}">${t}</a>` : t; return `<div class="topbar pb-tp" data-pbw="1"><span data-edit="txt">${inner}</span></div>`; },
-      css: (c, sel, s) => { c.d.push(`${sel} .pb-tp{background:${s.tbg || "#173F35"};color:${s.ttc || "#F3E9D2"};text-align:${s.tal || "center"};position:relative;overflow:hidden;box-sizing:border-box;letter-spacing:.1px}${sel} .pb-tp a{color:inherit}${sel} .pb-tp b{color:${s.tbc || "#E4C87F"}}`); emit(c, sel + " .pb-tp", s, [["tfs", px("font-size")], ["tpd", v => dimsDecl("padding", v)]]); },
+      label: "الشريط العلوي (إعلان)", ic: "📢", def: { smod: true, txt: "🚚 توصيل سريع لـ **58 ولاية** · 💵 **الدفع عند الاستلام** · 🎁 اشترِ **قطعتين** واحصل على **الثالثة مجاناً**", link: "", tbg: "#173F35", ttc: "#F3E9D2", tbc: "#E4C87F", tfs: { d: 14 }, tpd: { d: [7, 16, 7, 16] }, tal: "center" },
+      ctl: [{ k: "txt", l: "نص الإعلان — اجعل الكلمة **بين نجمتين** لتظهر بلون مميّز، ويمكن إدراج أيقونة بصيغة {ic:truck}", t: "textarea", tab: "c" }, { k: "icins", l: "إدراج أيقونة عصرية في النص (أو ارفع أيقونتك)", t: "icins", tab: "c" }, { k: "smod", l: "تحويل الإيموجي في النص (🚚 💵 🎁 …) تلقائياً إلى الأيقونات العصرية", t: "switch", tab: "c" }, { k: "link", l: "رابط عند النقر (اختياري)", t: "text", tab: "c" },
+        { k: "tbg", l: "لون الخلفية", t: "color", tab: "s" }, { k: "ttc", l: "لون النص", t: "color", tab: "s" }, { k: "tbc", l: "لون الكلمات المميّزة", t: "color", tab: "s" }, { k: "sic", l: "لون الأيقونات (فارغ = لون الكلمات المميّزة)", t: "color", tab: "s" }, { k: "tfs", l: "حجم الخط (px)", t: "num", r: 1, min: 9, max: 30, tab: "s" }, { k: "tpd", l: "الحشو", t: "dims", r: 1, tab: "s" }, { k: "tal", l: "المحاذاة", t: "select", o: [["center", "وسط"], ["start", "يمين"], ["end", "يسار"]], tab: "s" }],
+      html: (s, id, ctx) => { const t = barRich(s.txt, ctx && ctx.base, s.smod), inner = s.link ? `<a href="${esc(s.link)}">${t}</a>` : t; return `<div class="topbar pb-tp" data-pbw="1"><span data-edit="txt">${inner}</span></div>`; },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-tp{background:${s.tbg || "#173F35"};color:${s.ttc || "#F3E9D2"};text-align:${s.tal || "center"};position:relative;overflow:hidden;box-sizing:border-box;letter-spacing:.1px}${sel} .pb-tp a{color:inherit}${sel} .pb-tp b{color:${s.tbc || "#E4C87F"}}${sel} .pb-tp .pb-ico,${sel} .pb-tp .pb-icimg{width:1.2em;height:1.2em;vertical-align:-.22em;margin-inline:.1em}${sel} .pb-tp .pb-ico{color:${s.sic || s.tbc || "#E4C87F"}}`); emit(c, sel + " .pb-tp", s, [["tfs", px("font-size")], ["tpd", v => dimsDecl("padding", v)]]); },
     },
     shdr: {
       label: "الهيدر (رأس الموقع)", ic: "🔝", def: { hsite: "1", la: "ألي", lb: "سوم", llink: "index.html", lh: { d: 44 }, menu: [{ t: "الفئات", l: "index.html#categories" }, { t: "المنتجات", l: "index.html#products" }, { t: "لماذا نحن؟", l: "index.html#features" }, { t: "الأسئلة الشائعة", l: "index.html#faq" }], wa: true, wat: "واتساب", wal: "", cart: true, hbg: "#FBF8F2", hbr: "#EAE3D6", lc: "#173F35", lac: "#8a6a1a", mc: "#173F35", wbg: "#157A55", wtc: "#ffffff", cbg: "#173F35", stk: true, lfs: { d: 24 }, hcw: { d: 1240 }, hpd: { d: [11, 0, 11, 0] } },
@@ -8182,7 +8189,7 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, setChrome, ICONS, iconHtml, isIconTok, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, barRich, setChrome, ICONS, iconHtml, isIconTok, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -9682,7 +9689,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
   function addFree(type, sec, x, y) {
-    if (type === "shdr") return addHeaderTop();
+    if (type === "shdr" || type === "sbar") return addTopPart(type);
     const fr = sec.free || [], bottom = fr.reduce((m, q) => Math.max(m, (Number(eff(q.set, "fy", "d")) || 0) + (Number(eff(q.set, "fh", "d")) || 0)), 0);
     const w = PB.mkFree(type, x != null ? x : 6, y != null ? y : (fr.length ? bottom + 20 : 24), Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1);
     (sec.free = sec.free || []).push(w);
@@ -9696,16 +9703,18 @@ body{overflow-x:hidden;margin:0}`;
     E.page.sections.splice(i, 0, sec); afterEdit(sec.id); if (isMob()) panel("l", false);
     setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف: " + d.n);
   }
-  /* الهيدر يُضاف دائماً قسماً كامل العرض في أعلى الصفحة (بعد الشريط العلوي إن وُجد) ثم تنتقل الشاشة إلى هناك؛ وإن وُجد هيدر فيها يُحدَّد بدل تكراره */
-  function addHeaderTop() {
-    const L = E.page.sections, has = n => n.type === "shdr", isBar = sec => { const ws = (sec.cols || []).flatMap(c => c.widgets).concat(sec.free || []); return ws.length && ws.every(w => w.type === "sbar"); };
-    let w = null; for (const sec of L) { w = (sec.cols || []).flatMap(c => c.widgets).concat(sec.free || []).find(has); if (w) break; }
-    if (w) toast("الهيدر موجود في الصفحة — حُدِّد لتعديله");
-    else { const sec = PB.DFLT.find(x => x.k === "sitehead").f(); let at = 0; while (at < L.length && isBar(L[at])) at++; L.splice(at, 0, sec); w = sec.cols[0].widgets[0]; E.nextLabel = "إضافة الهيدر"; }
-    afterEdit(w.id); if (isMob()) panel("l", false); setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 60);
+  /* الهيدر يُضاف دائماً قسماً كامل العرض في أعلى الصفحة، والشريط العلوي (الإعلان) قسماً مباشرة تحت الهيدر؛ ثم تنتقل الشاشة إلى مكانه. وإن وُجد العنصر في الصفحة يُحدَّد بدل تكراره */
+  function addTopPart(type) {
+    const L = E.page.sections, allW = sec => (sec.cols || []).flatMap(c => c.widgets).concat(sec.free || []), isOnly = (sec, t) => { const ws = allW(sec); return ws.length && ws.every(w => w.type === t); };
+    let w = null; for (const sec of L) { w = allW(sec).find(x => x.type === type); if (w) break; }
+    const nm = type === "shdr" ? "الهيدر" : "الشريط العلوي";
+    if (w) toast(nm + " موجود في الصفحة — حُدِّد لتعديله");
+    else { const sec = PB.DFLT.find(x => x.k === (type === "shdr" ? "sitehead" : "sitebar")).f(); let at = 0; if (type === "sbar") { const hi = L.findIndex(q => isOnly(q, "shdr")); at = hi >= 0 ? hi + 1 : 0; } L.splice(at, 0, sec); w = sec.cols[0].widgets[0]; E.nextLabel = "إضافة " + nm; }
+    afterEdit(w.id); if (isMob()) panel("l", false); setTimeout(() => { const st = $("pbx-stage"), el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (!st) return; if (type === "shdr" || !el) st.scrollTo({ top: 0, behavior: "smooth" }); else el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60);
   }
+  const addHeaderTop = () => addTopPart("shdr");
   function addWidget(type, col, at) {
-    if (type === "shdr") return addHeaderTop();
+    if (type === "shdr" || type === "sbar") return addTopPart(type);
     const t = col && !FREE_ONLY ? { col } : target();
     if (t.sec) return addFree(type, t.sec);
     const w = PB.mkW(type); if (at == null) t.col.widgets.push(w); else t.col.widgets.splice(at, 0, w); afterEdit(w.id); if (isMob()) panel("l", false);
@@ -10173,6 +10182,7 @@ ${inspGroups(all, inf)}`;
       case "bgremove": b = `<div class="pbx-pz"><p>✂️ انزع خلفية الصورة بنقرة واحدة، بلا إعدادات — داخل متصفحك بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open" style="background:linear-gradient(135deg,#0d9488,#16a34a);color:#fff;border:0;padding:.55rem">✂️ نزع الخلفية</button></div>`; break;
       case "gcells": { const L = PB.galCells(set), D = PB.galDims(set); b = `<div class="pbx-gcg" style="grid-template-columns:repeat(${D[0]},minmax(0,1fr))">` + Array.from({ length: D[0] * D[1] }, (_, i) => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-gcu="${i}" title="${L[i] ? "استبدال صورة هذا الجزء" : "رفع صورة لهذا الجزء"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] ? `<i data-gcx="${i}" title="مسح صورة هذا الجزء">✕</i>` : ""}</div>`).join("") + `</div><button class="pbx-small" data-gcm="1" style="margin-top:.35rem">⬆ رفع عدّة صور وتوزيعها على الخلايا الفارغة</button>`; break; }
       case "hsite": b = '<div style="background:#eef7f2;border:1.5px solid #b9dccb;border-radius:10px;padding:.6rem .7rem;font-size:.82rem;line-height:1.7;color:#1d5a42">✅ يعرض هنا <b>هيدر الموقع المحفوظ</b> كما هو (الشعار، القائمة، واتساب، السلة، المشاركة…) ويتبع أي تعديل تحفظه في إعدادات الموقع. لذلك أُخفيت إعدادات عناصره؛ لتغييرها اختر «هيدر مخصص» أعلاه أو عدّله من إعدادات الموقع.<br><button type="button" class="pbx-small" data-hsite="1" style="margin-top:.4rem">⚙️ فتح إعدادات الموقع ← الهيدر</button></div>'; break;
+      case "icins": b = `<button type="button" class="pbx-small" data-icins="1">🎨 إدراج أيقونة عصرية في النص / رفع أيقونتك</button><small style="display:block;color:#6b6556;font-size:.72rem;line-height:1.6;margin:.25rem 0">تُدرج في مكان المؤشر داخل النص أعلاه بصيغة {ic:…}؛ ${ICON_HELP}</small>`; break;
       case "pgcells": { const L = Array.isArray(set.cells) ? set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); const lk = !!set.prod, sl = i => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-pgu="${i}" title="${L[i] ? "استبدال هذه الصورة" : "اختيار صورة"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] && !(i === 0 && lk) ? `<i data-pgx="${i}" title="إزالة الصورة">✕</i>` : ""}</div>`;
         b = `<div class="pbx-gcg" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div style="grid-column:1/-1;max-width:55%;margin:0 auto;width:100%">${sl(0)}</div>${[1, 2, 3, 4].map(sl).join("")}</div>` + (lk ? '<p style="font-size:.74rem;color:#7a6a2c;margin:.3rem 0 0">🔗 الصورة الأولى مرتبطة بالمنتج: تتبع صورته ولا تتغيّر من هنا.</p>' : ""); break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
@@ -10293,6 +10303,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); return; }
     if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
     if (t.dataset.hsite) { if (E.dirty && !confirm("لديك تعديلات غير منشورة في الصفحة — سيُغلق المطوّر وتُحفظ مسودتها تلقائياً. متابعة؟")) return; try { saveDraftNow(); } catch (e) { } close(); const nb = [...document.querySelectorAll(".nav-btn")].find(x => /chromeh/.test(x.getAttribute("onclick") || "")); if (nb) nb.click(); return; }
+    if (t.dataset.icins) { const r = t.getBoundingClientRect(), ta = document.querySelector('#pbx-insp textarea'); showIconPop(Math.max(6, r.left - 120), r.bottom + 6, "", v => { const tk = PB.isIconTok(v) ? "{" + v + "}" : v, cur = String(inf.set.txt || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.txt = cur.slice(0, at) + tk + cur.slice(at); afterEdit(); }); return; }
     if (t.dataset.ipop) { const r = t.getBoundingClientRect(), key = t.dataset.ipop; showIconPop(Math.max(6, r.left - 120), r.bottom + 6, String(inf.set[key] || ""), v => { inf.set[key] = v; afterEdit(); }); return; }
     if (t.dataset.pgu) { slotPick(inf, Number(t.dataset.pgu)); return; }
     if (t.dataset.pgx) { const L = pgArr(inf); L[Number(t.dataset.pgx)] = ""; inf.set.cells = L; afterEdit(); return; }

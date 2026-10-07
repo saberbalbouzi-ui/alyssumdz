@@ -1495,7 +1495,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
   function addFree(type, sec, x, y) {
-    if (type === "shdr") return addHeaderTop();
+    if (type === "shdr" || type === "sbar") return addTopPart(type);
     const fr = sec.free || [], bottom = fr.reduce((m, q) => Math.max(m, (Number(eff(q.set, "fy", "d")) || 0) + (Number(eff(q.set, "fh", "d")) || 0)), 0);
     const w = PB.mkFree(type, x != null ? x : 6, y != null ? y : (fr.length ? bottom + 20 : 24), Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1);
     (sec.free = sec.free || []).push(w);
@@ -1509,16 +1509,18 @@ body{overflow-x:hidden;margin:0}`;
     E.page.sections.splice(i, 0, sec); afterEdit(sec.id); if (isMob()) panel("l", false);
     setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60); toast("✅ أُضيف: " + d.n);
   }
-  /* الهيدر يُضاف دائماً قسماً كامل العرض في أعلى الصفحة (بعد الشريط العلوي إن وُجد) ثم تنتقل الشاشة إلى هناك؛ وإن وُجد هيدر فيها يُحدَّد بدل تكراره */
-  function addHeaderTop() {
-    const L = E.page.sections, has = n => n.type === "shdr", isBar = sec => { const ws = (sec.cols || []).flatMap(c => c.widgets).concat(sec.free || []); return ws.length && ws.every(w => w.type === "sbar"); };
-    let w = null; for (const sec of L) { w = (sec.cols || []).flatMap(c => c.widgets).concat(sec.free || []).find(has); if (w) break; }
-    if (w) toast("الهيدر موجود في الصفحة — حُدِّد لتعديله");
-    else { const sec = PB.DFLT.find(x => x.k === "sitehead").f(); let at = 0; while (at < L.length && isBar(L[at])) at++; L.splice(at, 0, sec); w = sec.cols[0].widgets[0]; E.nextLabel = "إضافة الهيدر"; }
-    afterEdit(w.id); if (isMob()) panel("l", false); setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 60);
+  /* الهيدر يُضاف دائماً قسماً كامل العرض في أعلى الصفحة، والشريط العلوي (الإعلان) قسماً مباشرة تحت الهيدر؛ ثم تنتقل الشاشة إلى مكانه. وإن وُجد العنصر في الصفحة يُحدَّد بدل تكراره */
+  function addTopPart(type) {
+    const L = E.page.sections, allW = sec => (sec.cols || []).flatMap(c => c.widgets).concat(sec.free || []), isOnly = (sec, t) => { const ws = allW(sec); return ws.length && ws.every(w => w.type === t); };
+    let w = null; for (const sec of L) { w = allW(sec).find(x => x.type === type); if (w) break; }
+    const nm = type === "shdr" ? "الهيدر" : "الشريط العلوي";
+    if (w) toast(nm + " موجود في الصفحة — حُدِّد لتعديله");
+    else { const sec = PB.DFLT.find(x => x.k === (type === "shdr" ? "sitehead" : "sitebar")).f(); let at = 0; if (type === "sbar") { const hi = L.findIndex(q => isOnly(q, "shdr")); at = hi >= 0 ? hi + 1 : 0; } L.splice(at, 0, sec); w = sec.cols[0].widgets[0]; E.nextLabel = "إضافة " + nm; }
+    afterEdit(w.id); if (isMob()) panel("l", false); setTimeout(() => { const st = $("pbx-stage"), el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (!st) return; if (type === "shdr" || !el) st.scrollTo({ top: 0, behavior: "smooth" }); else el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60);
   }
+  const addHeaderTop = () => addTopPart("shdr");
   function addWidget(type, col, at) {
-    if (type === "shdr") return addHeaderTop();
+    if (type === "shdr" || type === "sbar") return addTopPart(type);
     const t = col && !FREE_ONLY ? { col } : target();
     if (t.sec) return addFree(type, t.sec);
     const w = PB.mkW(type); if (at == null) t.col.widgets.push(w); else t.col.widgets.splice(at, 0, w); afterEdit(w.id); if (isMob()) panel("l", false);
@@ -1986,6 +1988,7 @@ ${inspGroups(all, inf)}`;
       case "bgremove": b = `<div class="pbx-pz"><p>✂️ انزع خلفية الصورة بنقرة واحدة، بلا إعدادات — داخل متصفحك بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open" style="background:linear-gradient(135deg,#0d9488,#16a34a);color:#fff;border:0;padding:.55rem">✂️ نزع الخلفية</button></div>`; break;
       case "gcells": { const L = PB.galCells(set), D = PB.galDims(set); b = `<div class="pbx-gcg" style="grid-template-columns:repeat(${D[0]},minmax(0,1fr))">` + Array.from({ length: D[0] * D[1] }, (_, i) => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-gcu="${i}" title="${L[i] ? "استبدال صورة هذا الجزء" : "رفع صورة لهذا الجزء"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] ? `<i data-gcx="${i}" title="مسح صورة هذا الجزء">✕</i>` : ""}</div>`).join("") + `</div><button class="pbx-small" data-gcm="1" style="margin-top:.35rem">⬆ رفع عدّة صور وتوزيعها على الخلايا الفارغة</button>`; break; }
       case "hsite": b = '<div style="background:#eef7f2;border:1.5px solid #b9dccb;border-radius:10px;padding:.6rem .7rem;font-size:.82rem;line-height:1.7;color:#1d5a42">✅ يعرض هنا <b>هيدر الموقع المحفوظ</b> كما هو (الشعار، القائمة، واتساب، السلة، المشاركة…) ويتبع أي تعديل تحفظه في إعدادات الموقع. لذلك أُخفيت إعدادات عناصره؛ لتغييرها اختر «هيدر مخصص» أعلاه أو عدّله من إعدادات الموقع.<br><button type="button" class="pbx-small" data-hsite="1" style="margin-top:.4rem">⚙️ فتح إعدادات الموقع ← الهيدر</button></div>'; break;
+      case "icins": b = `<button type="button" class="pbx-small" data-icins="1">🎨 إدراج أيقونة عصرية في النص / رفع أيقونتك</button><small style="display:block;color:#6b6556;font-size:.72rem;line-height:1.6;margin:.25rem 0">تُدرج في مكان المؤشر داخل النص أعلاه بصيغة {ic:…}؛ ${ICON_HELP}</small>`; break;
       case "pgcells": { const L = Array.isArray(set.cells) ? set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); const lk = !!set.prod, sl = i => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-pgu="${i}" title="${L[i] ? "استبدال هذه الصورة" : "اختيار صورة"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] && !(i === 0 && lk) ? `<i data-pgx="${i}" title="إزالة الصورة">✕</i>` : ""}</div>`;
         b = `<div class="pbx-gcg" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div style="grid-column:1/-1;max-width:55%;margin:0 auto;width:100%">${sl(0)}</div>${[1, 2, 3, 4].map(sl).join("")}</div>` + (lk ? '<p style="font-size:.74rem;color:#7a6a2c;margin:.3rem 0 0">🔗 الصورة الأولى مرتبطة بالمنتج: تتبع صورته ولا تتغيّر من هنا.</p>' : ""); break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
@@ -2106,6 +2109,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); return; }
     if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
     if (t.dataset.hsite) { if (E.dirty && !confirm("لديك تعديلات غير منشورة في الصفحة — سيُغلق المطوّر وتُحفظ مسودتها تلقائياً. متابعة؟")) return; try { saveDraftNow(); } catch (e) { } close(); const nb = [...document.querySelectorAll(".nav-btn")].find(x => /chromeh/.test(x.getAttribute("onclick") || "")); if (nb) nb.click(); return; }
+    if (t.dataset.icins) { const r = t.getBoundingClientRect(), ta = document.querySelector('#pbx-insp textarea'); showIconPop(Math.max(6, r.left - 120), r.bottom + 6, "", v => { const tk = PB.isIconTok(v) ? "{" + v + "}" : v, cur = String(inf.set.txt || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.txt = cur.slice(0, at) + tk + cur.slice(at); afterEdit(); }); return; }
     if (t.dataset.ipop) { const r = t.getBoundingClientRect(), key = t.dataset.ipop; showIconPop(Math.max(6, r.left - 120), r.bottom + 6, String(inf.set[key] || ""), v => { inf.set[key] = v; afterEdit(); }); return; }
     if (t.dataset.pgu) { slotPick(inf, Number(t.dataset.pgu)); return; }
     if (t.dataset.pgx) { const L = pgArr(inf); L[Number(t.dataset.pgx)] = ""; inf.set.cells = L; afterEdit(); return; }
