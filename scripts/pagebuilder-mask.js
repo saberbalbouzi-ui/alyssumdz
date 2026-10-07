@@ -22,7 +22,7 @@ const PBMask = (function () {
   }
   const libKeys = () => Object.keys(PB.SHAPES).filter(k => !["stroke", "line"].includes(PB.SHAPES[k][1]));
   const libSel = () => S.target && S.target.startsWith("lib:") && PB.SHAPES[S.target.slice(4)] ? S.target.slice(4) : "";
-  Object.assign(S, { size: 70, sw: null, sh: null, px: 50, py: 50, invert: false, pend: null, picked: false, dd: false });
+  Object.assign(S, { size: 70, sw: null, sh: null, rot: 0, px: 50, py: 50, invert: false, pend: null, picked: false, dd: false });
   /* مستطيل الشكل داخل الصورة: العرض والارتفاع مستقلان (% من الصورة)، وافتراضيهما مربع بنسبة size من أصغر بُعد */
   const dims = L => { const base = Math.min(L.width, L.height) * S.size / 100, w = Math.max(10, Math.min(L.width, S.sw != null ? L.width * S.sw / 100 : base)), h = Math.max(10, Math.min(L.height, S.sh != null ? L.height * S.sh / 100 : base)); return { L, w, h, x: L.left + (L.width - w) * S.px / 100, y: L.top + (L.height - h) * S.py / 100 }; };
   const fillWH = () => { const inf = A().find(A().E.sel), L = inf && A().layoutOf(inf.node.id); if (!L) return; const d = dims(L); if (S.sw == null) S.sw = Math.round(d.w / L.width * 100); if (S.sh == null) S.sh = Math.round(d.h / L.height * 100); };
@@ -50,13 +50,13 @@ ${invertUi}<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ?
     const dd = `<div class="ep-dd"><button type="button" class="ep-ddb${S.dd ? " open" : ""}" data-ddt="mk">${S.picked && curKey ? PB.shapeThumb(curKey) : ""}<b>${S.picked && curName ? esc(curName) : "اختر شكل الماسك"}</b>${CHEV}</button>${S.dd ? `<div class="ep-ddl mk-list">${placed}${groups}</div>` : ""}</div>`;
     const hint = pend ? `<p>تظهر المعاينة على الصورة — اسحب الشكل بالفأرة فوق الصورة لتحريكه، وأي جانب من إطاره البنفسجي أو زاويته لتعديل شكله (الزاوية تحفظ النسبة)، ثم اضغط ✓ العائمة تحت الصورة للتأكيد أو ✕ للإلغاء.</p>` : `<p>اختر شكلاً من القائمة لتظهر معاينته مباشرة على الصورة.</p>`;
     return `<div class="pbx-mk">${reset}${dd}
-${shown && cl ? `<div class="mk-pre"><button type="button" class="pbx-small" data-mkp="c" title="يضع الشكل في مركز الصورة تماماً">وسط الصورة</button>${[30, 50, 70, 100].map(v => `<button type="button" class="pbx-small" data-mkp="${v}" title="حجم الشكل ${v}% من الصورة">${v}%</button>`).join("")}</div>${sl("sw", "عرض الشكل %", 5, 100)}${sl("sh", "ارتفاع الشكل %", 5, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة كعنصر لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
+${shown && cl ? `<div class="mk-pre"><button type="button" class="pbx-small" data-mkp="c" title="يضع الشكل في مركز الصورة تماماً">وسط الصورة</button>${[30, 50, 70, 100].map(v => `<button type="button" class="pbx-small" data-mkp="${v}" title="حجم الشكل ${v}% من الصورة">${v}%</button>`).join("")}</div>${sl("sw", "عرض الشكل %", 5, 100)}${sl("sh", "ارتفاع الشكل %", 5, 100)}${sl("px", "الموضع الأفقي %", 0, 100)}${sl("rot", "تدوير الشكل °", -180, 180)}${sl("py", "الموضع العمودي %", 0, 100)}<button type="button" class="pbx-small" data-mk="place" title="يضع الشكل المختار فوق الصورة كعنصر لتحرّكه وتكبّره بيدك ثم تطبّق الماسك">ضعه فوق الصورة كعنصر لأعدّله بيدي</button>` : shown ? `<label class="mk-k"><input type="checkbox" data-mkk="keep" ${S.keep ? "checked" : ""}> احتفظ بالشكل كعنصر بعد التطبيق</label>` : ""}
 ${invertUi}${hint}</div>`;
   }
   /* خيارات اللوحة؛ تعيد true إن لزم إعادة رسم اللوحة. أي تغيير على الصورة يحدّث المعاينة الحيّة فوراً */
   function opt(k, v) {
     if (k === "dd") { S.dd = !S.dd; return true; }
-    if (k === "target") { S.target = v; S.picked = true; S.dd = false; } else if (k === "keep") S.keep = !!v; else if (k === "invert") S.invert = !!v; else if (k === "size") { S.size = Number(v); S.sw = S.sh = null; } else if (k === "sw" || k === "sh") { fillWH(); S[k] = Number(v); } else if (k === "px" || k === "py") S[k] = Number(v); else return false;
+    if (k === "target") { S.target = v; S.picked = true; S.dd = false; } else if (k === "keep") S.keep = !!v; else if (k === "invert") S.invert = !!v; else if (k === "size") { S.size = Number(v); S.sw = S.sh = null; } else if (k === "sw" || k === "sh") { fillWH(); S[k] = Number(v); } else if (k === "px" || k === "py" || k === "rot") S[k] = Number(v); else return false;
     const had = !!S.pend, ok = S.picked ? livePreview() : false; return k === "target" || k === "invert" || (!had && ok);
   }
   function livePreview() {      // يحدّث المعاينة إن كان المحدّد صورة بها صورة؛ يعيد true إن بدأت معاينة جديدة
@@ -82,22 +82,27 @@ ${invertUi}${hint}</div>`;
   function placeBox() {
     if (!box) return; const inf = A().find(box.id), fw = document.getElementById("pbx-fw"); if (!inf || !fw || !S.pend || !libSel()) return hideBox();
     const g = boxGeom(inf); if (!g) return hideBox(); const f = fw.getBoundingClientRect(), s = A().E.scale || 1, st = box.el.style;
-    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.w * s) + "px"; st.height = (g.h * s) + "px"; guides(g, f, s);
+    st.left = (f.left + g.x * s) + "px"; st.top = (f.top + g.y * s) + "px"; st.width = (g.w * s) + "px"; st.height = (g.h * s) + "px"; st.transform = S.rot ? `rotate(${S.rot}deg)` : ""; guides(g, f, s);
   }
   function showBox(inf) {
     if (!S.pend || !libSel() || !inf || inf.node.type !== "image") return hideBox();
     if (!box || box.id !== inf.node.id) {
-      hideBox(); const el = document.createElement("div"); el.className = "mk-box"; el.innerHTML = ["n", "s", "e", "w", "ne", "nw", "se", "sw"].map(h => `<i class="mk-hd" data-h="${h}"></i>`).join(""); document.body.appendChild(el); box = { id: inf.node.id, el };
-      const down = (e, h) => { e.preventDefault(); e.stopPropagation(); const i2 = A().find(box.id), g = boxGeom(i2); if (!g) return; const s = A().E.scale || 1, x0 = e.clientX, y0 = e.clientY, L = g.L, W = L.width, H = L.height, l0 = g.x - L.left, t0 = g.y - L.top, w0 = g.w, h0 = g.h, MIN = 12; el.setPointerCapture(e.pointerId);
-        const mv = ev => { const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s; let l = l0, t = t0, r = l0 + w0, b = t0 + h0;
-          if (!h) { const raw = [Math.max(0, Math.min(100, W - w0 > 1 ? (l0 + dx) / (W - w0) * 100 : 50)), Math.max(0, Math.min(100, H - h0 > 1 ? (t0 + dy) / (H - h0) * 100 : 50))], sn = ev.altKey ? raw : snapPos(g, s, raw); S.px = Math.round(sn[0]); S.py = Math.round(sn[1]); }
-          else { if (h.includes("w")) l += dx; if (h.includes("e")) r += dx; if (h.includes("n")) t += dy; if (h.includes("s")) b += dy;
-            if (h.length === 2 && !ev.shiftKey) { const k = Math.max((r - l) / w0, (b - t) / h0); if (h.includes("w")) l = r - w0 * k; else r = l + w0 * k; if (h.includes("n")) t = b - h0 * k; else b = t + h0 * k; }      // الزاوية تحفظ النسبة (Shift = حرّة)
-            l = Math.max(0, l); t = Math.max(0, t); r = Math.min(W, r); b = Math.min(H, b); if (r - l < MIN) { if (h.includes("w")) l = r - MIN; else r = l + MIN; } if (b - t < MIN) { if (h.includes("n")) t = b - MIN; else b = t + MIN; }
-            const w = r - l, hh = b - t; S.sw = Math.round(w / W * 100); S.sh = Math.round(hh / H * 100); S.px = W - w > 1 ? Math.round(l / (W - w) * 100) : 50; S.py = H - hh > 1 ? Math.round(t / (H - hh) * 100) : 50; }
+      hideBox(); const el = document.createElement("div"); el.className = "mk-box"; el.innerHTML = ["n", "s", "e", "w", "ne", "nw", "se", "sw"].map(h => `<i class="mk-hd" data-h="${h}"></i>`).join("") + '<i class="mk-rot" data-h="rot" title="اسحب لتدوير الشكل (Shift = بلا تجاذب للزوايا)"></i>'; document.body.appendChild(el); box = { id: inf.node.id, el };
+      const down = (e, h) => { e.preventDefault(); e.stopPropagation(); const i2 = A().find(box.id), g = boxGeom(i2); if (!g) return; const s = A().E.scale || 1, x0 = e.clientX, y0 = e.clientY, L = g.L, W = L.width, H = L.height, l0 = g.x - L.left, t0 = g.y - L.top, w0 = g.w, h0 = g.h, MIN = 12, rad = (S.rot || 0) * Math.PI / 180, co = Math.cos(rad), si = Math.sin(rad), bc = el.getBoundingClientRect(), ccx = bc.left + bc.width / 2, ccy = bc.top + bc.height / 2; el.setPointerCapture(e.pointerId);
+        const mv = ev => {
+          if (h === "rot") { let a = Math.atan2(ev.clientY - ccy, ev.clientX - ccx) * 180 / Math.PI + 90; a = ((a + 540) % 360) - 180; if (!ev.shiftKey) [-180, -135, -90, -45, 0, 45, 90, 135, 180].forEach(q => { if (Math.abs(a - q) < 4) a = q; }); S.rot = Math.round(a) === -180 ? 180 : Math.round(a); }
+          else { const dx = (ev.clientX - x0) / s, dy = (ev.clientY - y0) / s;
+            if (!h) { const raw = [Math.max(0, Math.min(100, W - w0 > 1 ? (l0 + dx) / (W - w0) * 100 : 50)), Math.max(0, Math.min(100, H - h0 > 1 ? (t0 + dy) / (H - h0) * 100 : 50))], sn = ev.altKey ? raw : snapPos(g, s, raw); S.px = Math.round(sn[0]); S.py = Math.round(sn[1]); }
+            else { const dxl = dx * co + dy * si, dyl = -dx * si + dy * co; let l = l0, t = t0, r = l0 + w0, b = t0 + h0;      // الإزاحة في إطار الشكل المُدار
+              if (h.includes("w")) l += dxl; if (h.includes("e")) r += dxl; if (h.includes("n")) t += dyl; if (h.includes("s")) b += dyl;
+              if (h.length === 2 && !ev.shiftKey) { const k = Math.max((r - l) / w0, (b - t) / h0); if (h.includes("w")) l = r - w0 * k; else r = l + w0 * k; if (h.includes("n")) t = b - h0 * k; else b = t + h0 * k; }      // الزاوية تحفظ النسبة (Shift = حرّة)
+              if (r - l < MIN) { if (h.includes("w")) l = r - MIN; else r = l + MIN; } if (b - t < MIN) { if (h.includes("n")) t = b - MIN; else b = t + MIN; }
+              let w = Math.min(W, r - l), hh = Math.min(H, b - t); const c0x = l0 + w0 / 2, c0y = t0 + h0 / 2, sx = (l + r) / 2 - c0x, sy = (t + b) / 2 - c0y, ncx = c0x + sx * co - sy * si, ncy = c0y + sx * si + sy * co;      // المركز الجديد يُدار مع الشكل
+              const nl = Math.max(0, Math.min(W - w, ncx - w / 2)), nt = Math.max(0, Math.min(H - hh, ncy - hh / 2));
+              S.sw = Math.round(w / W * 100); S.sh = Math.round(hh / H * 100); S.px = W - w > 1 ? Math.round(nl / (W - w) * 100) : 50; S.py = H - hh > 1 ? Math.round(nt / (H - hh) * 100) : 50; } }
           const i3 = A().find(box.id); if (i3) { preview(i3); placeBox(); } };
         const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); if (S.hook) S.hook(); }; el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); };
-      el.addEventListener("pointerdown", e => { const hd = e.target.closest(".mk-hd"); down(e, hd ? hd.dataset.h : ""); });
+      el.addEventListener("pointerdown", e => { const hd = e.target.closest("[data-h]"); down(e, hd ? hd.dataset.h : ""); });
     }
     placeBox();
   }
@@ -136,7 +141,7 @@ ${invertUi}${hint}</div>`;
     // شكل من المكتبة: مربع حول مركز مختار بنسبة من أصغر بُعدي الصورة
     let shpNode, rs, key;
     let del = false;
-    if (lib) { const d = dims(iR); key = lib; shpNode = { set: { shape: lib, rx: 0, keep: false } }; rs = rings(shpNode, iR, { left: d.x, top: d.y, width: d.w, height: d.h }, E); }
+    if (lib) { const d = dims(iR); key = lib; shpNode = { set: { shape: lib, rx: 0, keep: false, rot: S.rot ? { d: S.rot, t: S.rot, m: S.rot } : undefined } }; rs = rings(shpNode, iR, { left: d.x, top: d.y, width: d.w, height: d.h }, E); }
     else { const shp = A().find(isImg ? other.id : inf.node.id); if (!shp) return { err: "تعذّر إيجاد العنصر" }; shpNode = shp.node; del = isShape(shpNode); const sR = A().layoutOf(shp.node.id); if (!sR) return { err: "تعذّر قراءة العنصر" };
       let ringNode = shpNode; if (!del) { const mn = Math.min(sR.width, sR.height) || 1; ringNode = { set: { shape: rectKey(), keep: false, rx: Math.max(0, Math.min(50, (Number(PB.eff(shpNode.set, "rad", E.dev)) || 0) / mn * 100)), rot: shpNode.set.rot } }; }      // عنصر غير شكل: يُستعمل مستطيله (بتدوير زواياه) كماسك
       key = ringNode.set.shape; rs = rings(ringNode, iR, sR, E); }
@@ -161,7 +166,7 @@ ${invertUi}${hint}</div>`;
     if (name === "place") {
       const isImg = inf.node.type === "image", lib = isImg ? libSel() : ""; if (!lib) return; const img = A().find(inf.node.id), iR = A().layoutOf(img.node.id); if (!iR) return;
       cancel(); const d = dims(iR), bx = { left: d.x, top: d.y, w: d.w, h: d.h };
-      const sh = PB.mkFree("shape", 0, 0, (Number(img.set.zi) || 0) + 1), E2 = E; sh.set.shape = lib; sh.set.fill = "#c8a24b";
+      const sh = PB.mkFree("shape", 0, 0, (Number(img.set.zi) || 0) + 1), E2 = E; sh.set.shape = lib; sh.set.fill = "#c8a24b"; if (S.rot) PB.setR(sh.set, "rot", E2.dev, S.rot);
       const g = { fx: Number(PB.eff(img.set, "fx", E2.dev)), fy: Number(PB.eff(img.set, "fy", E2.dev)), fwd: Number(PB.eff(img.set, "fwd", E2.dev)), fh: Number(PB.eff(img.set, "fh", E2.dev)) };
       PB.setR(sh.set, "fx", E2.dev, +(g.fx + (bx.left - iR.left) / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fy", E2.dev, +(g.fy + (bx.top - iR.top) / iR.height * g.fh).toFixed(2)); PB.setR(sh.set, "fwd", E2.dev, +(bx.w / iR.width * g.fwd).toFixed(2)); PB.setR(sh.set, "fh", E2.dev, +(bx.h / iR.height * g.fh).toFixed(2));
       img.list.splice(img.idx + 1, 0, sh); E.nextLabel = "إضافة شكل للماسك"; E.sel = sh.id; S.target = img.node.id; A().commitAfter(sh.id); toast("وُضع الشكل فوق الصورة — حرّكه وكبّره ثم اختر الصورة في «ماسك» وطبّق"); return; }
@@ -172,13 +177,13 @@ ${invertUi}${hint}</div>`;
     setClip(r.img, r);
     if (!r.lib && r.del && !S.keep) { const shp = A().find(r.shpNode.id); if (shp) { const i = shp.list.indexOf(shp.node); if (i >= 0) shp.list.splice(i, 1); } }
     E.nextLabel = r.mode === "in" ? "ماسك: إبقاء داخل الشكل" : "ماسك: حذف الشكل من الصورة"; E.sel = r.img.node.id; A().commitAfter(r.img.node.id);
-    S.sw = S.sh = null; toast(r.mode === "in" ? "بقيت الصورة داخل الشكل فقط" : "حُذف الشكل من الصورة");
+    S.sw = S.sh = null; S.rot = 0; toast(r.mode === "in" ? "بقيت الصورة داخل الشكل فقط" : "حُذف الشكل من الصورة");
   }
   /* الزر الأيمن على عنصر موضوع فوق صورة (أو صورة تحتها عنصر): ماسك فوري عادي أو معكوس بلا فتح اللوحة */
   const can = inf => { try { return !!inf && inf.kind === "widget" && !!inf.free && !inf.set.pz && (inf.node.type !== "image" || !!inf.set.src) && cands(inf).length > 0; } catch (e) { return false; } };
   function quick(inf, invert) {
     cancel(); const L = cands(inf); if (!L.length) { toast("ضع عنصراً فوق الصورة أولاً"); return; }
-    S.invert = !!invert; S.target = L[0].id; S.picked = false; S.keep = false; act("apply", inf);
+    S.invert = !!invert; S.target = L[0].id; S.picked = false; S.keep = false; S.rot = 0; act("apply", inf);
   }
   return { panel, opt, act, cancel, can, quick, hideBox, reposition: placeBox, setHook: f => { S.hook = f; }, pending: () => (S.pend ? S.pend.id : "") };
 })();
