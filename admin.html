@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.30.3">
+<meta name="admin-version" content="1.30.4">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.30.3"></script>
-<script src="assets/js/chrome-admin.js?v=1.30.3"></script>
-<script src="assets/js/admin-assistant.js?v=1.30.3"></script>
-<script src="assets/js/admin-update.js?v=1.30.3"></script>
+<script src="assets/js/ctl-help.js?v=1.30.4"></script>
+<script src="assets/js/chrome-admin.js?v=1.30.4"></script>
+<script src="assets/js/admin-assistant.js?v=1.30.4"></script>
+<script src="assets/js/admin-update.js?v=1.30.4"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -9637,6 +9637,7 @@ body{overflow-x:hidden;margin:0}`;
     if (k === "align") { const o = ["start", "center", "end"], c = eff(set, "ta", dev) || "start"; return qDone(inf, "ta", o[(o.indexOf(c) + 1) % 3], true); }
     if (k === "list") {
       const isH = inf.node.type === "heading", listed = isH ? !!set.lm : /<[uo]l/i.test(set.html || "");
+      if (!re && listed) { qList(inf, "__none"); closePop(); return; }      // زر «قائمة» تبديل: الضغط الثاني يلغي القائمة ويُغلق لوحتها
       if (!re && !listed) { qList(inf, E.lastLm || "•"); }      // النقر على «قائمة» يحوّل النص إلى قائمة فوراً برمز افتراضي، ثم تظهر الرموز للاختيار
       const isL = isH ? !!set.lm : /<[uo]l/i.test(set.html || ""), cur = set.lm || "", mk = PB.LMARKS, curC = /^#[0-9a-f]{6}$/i.test(set.lmc || "");
       return qPop(btn, `<h6>رمز القائمة</h6><div class="pg lmg"><button type="button" class="pb2${!isL ? " on" : ""}" data-lm="__none" style="grid-column:span 3">بدون قائمة</button><button type="button" class="pb2${isL && !cur ? " on" : ""}" data-lm="__def">نقطة عادية</button><button type="button" class="pb2${cur === "num" ? " on" : ""}" data-lm="num">1 2 3</button><span></span>${mk.map(m => `<button type="button" class="pb2 lmt${cur === m ? " on" : ""}" data-lm="${m}">${m}</button>`).join("")}</div>` + qRange(inf, null, "lmd", "المسافة بين الرمز والنص", 0.3, 6, 0.1, Number(set.lmd) || 1.6) + qRange(inf, null, "lms", "حجم الرمز %", 50, 300, 5, Number(set.lms) || 100) + `<label class="lmfx"><input type="checkbox" data-lfx${set.lmfx === "0" ? "" : " checked"}> تطبيق تأثيرات النص على الرمز</label>${curC ? '<button type="button" class="rst" data-rc>↺ لون الرمز = لون النص</button>' : ""}`,
