@@ -396,7 +396,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     host.innerHTML = `
 <div class="card" id="gen-card" style="margin-bottom:1rem">
   <b style="color:var(--green);font-size:1.15rem">✨ توليد صفحة جديدة</b>
-  <div class="hint" style="margin:.4rem 0 .6rem">اضبط <b>إعدادات التوليد</b> (المفتاح والجودة) ← أدخل معلومات المنتج ← «توليد الصفحة». بعد النتيجة: <b>✏️ تحرير الصفحة</b> (تُقسَّم إلى أقسام وتُفتح في منشئ الصفحات حيث تجد «أدوات ذكية» لالتقاط النص والعناصر) · <b>⬇ تحميل للجهاز</b> · <b>🗂 حفظ في ملفات المنتج</b> · <b>🔄 إعادة التوليد</b> — مع خيار تقسيم الصفحة قبل التحميل/الحفظ أو أخذها كاملة.</div>
+  <div class="hint" style="margin:.4rem 0 .6rem">اضبط <b>إعدادات التوليد</b> (المفتاح والجودة) ← أدخل معلومات المنتج ← «توليد الصفحة». بعد النتيجة: <b>✏️ تحرير الصفحة</b> (تُقسَّم إلى أقسام وتُفتح في منشئ الصفحات حيث تجد «أدوات ذكية» لالتقاط العناصر) · <b>⬇ تحميل للجهاز</b> · <b>🗂 حفظ في ملفات المنتج</b> · <b>🔄 إعادة التوليد</b> — مع خيار تقسيم الصفحة قبل التحميل/الحفظ أو أخذها كاملة.</div>
   <div class="gen-step" data-s="1">
   <details id="gen-adv" style="margin:.5rem 0 .8rem;padding:.6rem .8rem;background:#f7faf7;border:1.5px solid #cfe3d3;border-radius:10px"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات التوليد (المفتاح، الجودة، الهيكل)</summary>
     <div class="grid2" style="margin-top:.4rem">
