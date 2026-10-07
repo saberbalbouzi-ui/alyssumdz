@@ -152,10 +152,11 @@ const PBClone = (function () {
       if (tag === "html") return; if (tag === "body") { if (hasFill) bodyBg = hex(fill); if (!lay.length) return; }
       if (vr.w < 3 || vr.h < 3) return; const rad = radiusOf(cs, r), mn = Math.min(r.w, r.h), ell = rad >= mn / 2 * .98 && Math.abs(r.w - r.h) < 3, shp = { shape: ell ? "ellipse" : "rect", keep: false, outline: false, rx: 0 }; if (!ell && rad >= 1) shp.rad = { d: Math.round(Math.min(rad, mn / 2)) };
       if (tag !== "body" && (hasFill || brd)) { const p = Object.assign({}, shp); if (hasFill) { p.fill = hex(fill); if (fill.a < 1) p.op = r2(fill.a); } else { p.fill = ""; p.outline = true; } if (brd) { p.stroke = hex(brd.c); p.sw = Math.max(1, Math.round(brd.w)); } else p.sw = 0; add("shape", clipY(vr), p); }
+      const par = /fixed/.test(cs.backgroundAttachment || "") || /parallax|jarallax/i.test(String(el.className && el.className.baseVal != null ? el.className.baseVal : el.className || "")) || el.hasAttribute("data-parallax") || el.hasAttribute("data-stellar-background-ratio");      // خلفية ثابتة/Parallax
       lay.slice().reverse().forEach(L => {      // طبقات الخلفية من الأسفل للأعلى
         if (/gradient\(/.test(L)) { const g = cssGrad(L, r, vr); if (g) add("shape", clipY(vr), Object.assign({}, shp, { fgr: g, fill: "", sw: 0 })); return; }
         const um = /url\((["']?)(.*?)\1\)/.exec(L); if (!um || !um[2] || /^data:image\/(gif|svg)/.test(um[2]) || vr.w < 20 || vr.h < 20) return; const sz = (cs.backgroundSize || "").toLowerCase(), rp = cs.backgroundRepeat || "";
-        if (!/^repeat/.test(rp) || /cover|contain/.test(sz) || vr.w > 140) add("image", clipY(vr), { src: abs(um[2]), alt: "", fit: /contain/.test(sz) ? "contain" : "cover", rad: rad ? { d: Math.round(rad) } : undefined }); });
+        if (!/^repeat/.test(rp) || /cover|contain/.test(sz) || vr.w > 140) add("image", clipY(vr), Object.assign({ src: abs(um[2]), alt: "", fit: /contain/.test(sz) ? "contain" : "cover", rad: rad ? { d: Math.round(rad) } : undefined }, par ? { cls: "pb-par", css: "selector{--par:.35}" } : {})); });
     }
     function svgData(el, cs) {
       try { const c = el.cloneNode(true), r = rectOf(el); c.setAttribute("xmlns", "http://www.w3.org/2000/svg"); if (!c.getAttribute("width")) c.setAttribute("width", r.w); if (!c.getAttribute("height")) c.setAttribute("height", r.h); if (!c.getAttribute("viewBox") && px(c.getAttribute("width")) && px(c.getAttribute("height"))) c.setAttribute("viewBox", "0 0 " + px(c.getAttribute("width")) + " " + px(c.getAttribute("height")));
@@ -163,6 +164,7 @@ const PBClone = (function () {
         const cl = col(cs.color); let s = new XMLSerializer().serializeToString(c).replace(/currentColor/gi, cl ? hex(cl) : "#000"); if (s.length > 90000) return ""; return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s); } catch (e) { return ""; }
     }
     function visit0(el, clip, anchor) {
+      if (slSkip.has(el)) return;
       if (stop || ++count > 5000) return; const tag = el.tagName.toLowerCase(); if (SKIP.has(tag)) return;
       const cs = win.getComputedStyle(el); if (cs.display === "none") return; if (cs.opacity === "0" && tag !== "body" && tag !== "html") return;
       const a = tag === "a" ? el : anchor, r = rectOf(el), contents = cs.display === "contents";
@@ -193,9 +195,71 @@ const PBClone = (function () {
       if (clips) radCtx.pop();
     }
     const FXON = !opt.noFx && typeof PBCloneFx !== "undefined", ownEnd = new Map(), fx = FXON ? PBCloneFx.create({ doc, win, W, out, add, col, px, r1, r2 }) : null;
-    function visit(el, clip, anchor) { const i0 = out.length; visit0(el, clip, anchor); const i1 = out.length; if (fx && i1 > i0) { try { fx.el(el, i0, ownEnd.has(el) ? ownEnd.get(el) : i1, i1); } catch (e) { console.warn("fx", e); } } }
+    /* ───── السلايدرات: كل «صفحة» شرائح مجموعة عناصر تُظهر بالتناوب (أسهم/نقاط/سحب/تشغيل تلقائي في الصفحة المنشورة) ───── */
+    const SLD = [
+      { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev", next: ".swiper-button-next", dot: ".swiper-pagination-bullet" },
+      { root: ".slick-slider", slide: ".slick-slide:not(.slick-cloned)", prev: ".slick-prev", next: ".slick-next", dot: ".slick-dots li" },
+      { root: ".owl-carousel", slide: ".owl-item:not(.cloned)", prev: ".owl-prev", next: ".owl-next", dot: ".owl-dot" },
+      { root: ".splide", slide: ".splide__slide:not(.splide__slide--clone)", prev: ".splide__arrow--prev", next: ".splide__arrow--next", dot: ".splide__pagination__page" },
+      { root: ".carousel", slide: ".carousel-item", prev: ".carousel-control-prev", next: ".carousel-control-next", dot: ".carousel-indicators [data-bs-target],.carousel-indicators li", bs: 1 },
+      { root: ".glide", slide: ".glide__slide:not(.glide__slide--clone)", prev: ".glide__arrow--left", next: ".glide__arrow--right", dot: ".glide__bullet" },
+      { root: ".flickity-enabled", slide: ".flickity-slider > *", prev: ".flickity-prev-next-button.previous", next: ".flickity-prev-next-button.next", dot: ".flickity-page-dots .dot" }
+    ];
+    const slSkip = new Set(), elCls = new Map(), elRange = new Map(), slRoot = new Map(), sliders = []; let slN = 0;
+    const tagW = (ws, cl) => ws.forEach(w => cl.forEach(c => { if (!(" " + (w.set.cls || "") + " ").includes(" " + c + " ")) w.set.cls = ((w.set.cls || "") + " " + c).trim(); }));
+    const inBox = (r, B) => r.w > 1 && r.x + r.w / 2 > B.x && r.x + r.w / 2 < B.x + B.w && r.y + r.h / 2 > B.y && r.y + r.h / 2 < B.y + B.h;
+    function findSliders() {
+      const claimed = [];
+      for (const def of SLD) {
+        let roots; try { roots = doc.querySelectorAll(def.root); } catch (e) { continue; }
+        for (const root of roots) {
+          if (claimed.some(c => c === root || c.contains(root))) continue; let all = [...root.querySelectorAll(def.slide)].filter(x => x.closest(def.root) === root); if (all.length < 2) continue;
+          const rr = rectOf(root); if (rr.w < 50 || rr.h < 30 || rr.y >= limit) continue; const sr0 = all.map(rectOf);
+          const stacked = sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));
+          let act = 0; if (stacked) { const k = all.findIndex(x => /(^|\s|-)active(\s|$|-)/.test(x.className)); act = k < 0 ? 0 : k; } else { const k = sr0.findIndex(r => inBox(r, rr)); act = k < 0 ? 0 : k; }
+          const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf); const pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length), pages = Math.ceil(slides.length / pv); if (pages < 2) continue;
+          const id = "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
+          try { const a = root.getAttribute("data-bs-interval") || root.getAttribute("data-interval"); if (a) ms = +a || ms; const sk = root.getAttribute("data-slick"); if (sk) { const o = JSON.parse(sk); ms = o.autoplay ? (o.autoplaySpeed || 3000) : 0; } const sp = root.getAttribute("data-splide"); if (sp) { const o = JSON.parse(sp); ms = o.autoplay ? (o.interval || 5000) : 0; } const sa = slides[0].getAttribute("data-swiper-autoplay"); if (sa) ms = +sa || ms; } catch (e) { }
+          slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
+          slides.slice(pv).forEach(x => slSkip.add(x));
+          const sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot), pr = sel(def.prev), nx = sel(def.next), actP = Math.floor(act / pv);
+          dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : dots.length === all.length ? Math.floor(((j - act + all.length) % all.length) / pv) : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
+          pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
+          const sl = { id, def, root, slides, pv, pages, stacked, track: slides[0].parentElement, ms, dots, pr, nx, act }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
+        }
+      }
+    }
+    function sliderPages(sl, clip) {
+      const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = r0 && out[r0[0]] ? out[r0[0]].set.zi : null;
+      for (let p = 1; p < sl.pages; p++) {
+        const win = sl.slides.slice(p * sl.pv, (p + 1) * sl.pv); if (!win.length) break; const saved = [], keep = (n, props) => { saved.push([n, n.getAttribute("style")]); props.forEach(([k, v]) => n.style.setProperty(k, v, "important")); };
+        if (sl.stacked) { sl.slides.forEach(x => { if (!win.includes(x)) keep(x, [["display", "none"]]); }); win.forEach(x => keep(x, [["display", "block"], ["opacity", "1"], ["visibility", "visible"], ["transform", "none"]])); }
+        else { const w0 = rectOf(win[0]); keep(sl.track, [["translate", (s0.x - w0.x) + "px " + (s0.y - w0.y) + "px"]]); win.forEach(x => keep(x, [["opacity", "1"], ["visibility", "visible"]])); const w1 = rectOf(win[0]); if (Math.abs(w1.x - s0.x) > 6 || Math.abs(w1.y - s0.y) > 6) { saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); continue; } }
+        const i0 = out.length; win.forEach(x => { slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p, "pb-sl-off"]); visit(x, cl, null); });
+        saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st));
+        const ws = out.slice(i0); if (ws.length && z0 != null) { const zmin = Math.min(...ws.map(w => w.set.zi)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + z0; }); }
+      }
+      if (fx) fx.stats.slides = (fx.stats.slides || 0) + sl.slides.length;
+    }
+    function sliderControls(sl) {      // الأسهم الخالية من محتوى (أيقونة ::after) نرسم لها رمزاً، ونُكسب النقاط مظهر «نشط/غير نشط»
+      for (const [list, ch, cls] of [[sl.pr, "‹", "pbsp-" + sl.id], [sl.nx, "›", "pbsn-" + sl.id]]) for (const a of list) {
+        const r = rectOf(a); if (r.w < 4 || r.h < 4 || r.y >= limit || a.textContent.trim() || a.querySelector("img,svg")) continue; const ps = win.getComputedStyle(a, "::after"), c = col(ps.content && ps.content !== "none" ? ps.color : win.getComputedStyle(a).color) || { r: 255, g: 255, b: 255, a: 1 };
+        add("text", r, { html: '<p dir="ltr" style="text-align:center;margin:0;unicode-bidi:isolate">' + ch + "</p>", fs: { d: Math.round(Math.min(44, r.h * .9)) }, fw: "700", lh: { d: 1 }, ta: { d: "center" }, color: hex(c), cls });
+      }
+      const rg = d => elRange.get(d), paintOf = d => { const q = rg(d); return q ? out.slice(q[0], q[1]).find(w => w.type === "shape" || w.type === "button" || w.type === "image") : null; };
+      const on = sl.dots.find(d => /active|current|selected/.test(d.className)) || sl.dots[0], off = sl.dots.find(d => d !== on); if (!on || !off) return; const pa = paintOf(on), pi = paintOf(off); if (!pa || !pi) return;
+      const rule = (cl, p) => `selector.${cl}{opacity:${p.set.op != null ? p.set.op : 1}!important}` + (p.type === "shape" && p.set.fill ? `\nselector.${cl} .pb-svg *{fill:${p.set.fill}!important}` : "");
+      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "button").forEach(w => { w.set.css = (w.set.css ? w.set.css + "\n" : "") + "selector{transition:all .3s}\n" + rule("pb-dot-on", pa) + "\n" + rule("pb-dot-off", pi); }); }
+    }
+    function visit(el, clip, anchor) {
+      const i0 = out.length; visit0(el, clip, anchor); const sl = slRoot.get(el); if (sl) sliderPages(sl, clip); const i1 = out.length;
+      const tg = elCls.get(el); if (tg && i1 > i0) tagW(out.slice(i0, i1), tg); if (tg || slRoot.has(el)) elRange.set(el, [i0, i1]);
+      if (fx && i1 > i0) { try { fx.el(el, i0, ownEnd.has(el) && !sl ? ownEnd.get(el) : i1, i1); } catch (e) { console.warn("fx", e); } }
+    }
     if (fx) { try { fx.pre(); } catch (e) { console.warn("fx.pre", e); } }
+    if (!opt.noSlides) { try { findSliders(); } catch (e) { console.warn("sliders", e); } }
     visit(doc.documentElement, { x: 0, y: 0, w: W, h: limit }, null);
+    sliders.forEach(sl => { try { sliderControls(sl); } catch (e) { console.warn("slctl", e); } });
     if (fx) { try { fx.post(); } catch (e) { console.warn("fx.post", e); } }
     return { widgets: out, bg: bodyBg, truncated: stop || count > 5000, fx: fx ? fx.stats : null };
   }
@@ -220,7 +284,7 @@ const PBClone = (function () {
     async function work() { while (i < imgs.length) { const w = imgs[i++], u = w.set.src; st("حفظ الصور في موقعك… " + (done + 1) + "/" + imgs.length); try { if (!cache.has(u)) cache.set(u, (async () => { const b = await fetchBlob(u); return b ? await A().uploadBlob(b, "clone", { max: 1920 }) : null; })()); const p = await cache.get(u); if (p) w.set.src = p; } catch (e) { } done++; } }
     await Promise.all([work(), work(), work()]); return done;
   }
-  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
+  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");

@@ -41,7 +41,14 @@ async function grab(url, width) {
   const tabId = win.tabs[0].id;
   Promise.race([chrome.windows.update(win.id, { focused: true }), sleep(3000)]).catch(() => { });      // النوافذ المحجوبة/غير المركّزة يوقف كروم رسمها فلا تُحمَّل الأقسام السفلية
   try {
-    await waitComplete(tabId, 50000); await sleep(1200);
+    await waitComplete(tabId, 50000);
+    // تسجيل الحالة الابتدائية للعناصر المخفية/المزاحة (حركات الظهور المبنية بالجافاسكربت: GSAP/ScrollTrigger…) قبل التمرير
+    await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, func: () => { try {
+      for (const e of [...document.body.querySelectorAll("*")].slice(0, 6000)) { const r = e.getBoundingClientRect(); if (r.width < 24 || r.height < 12) continue; const cs = getComputedStyle(e), o = parseFloat(cs.opacity); let tx = 0, ty = 0, sc = 1; const m = /matrix\(([^)]+)\)/.exec(cs.transform), m3 = /matrix3d\(([^)]+)\)/.exec(cs.transform);
+        if (m) { const a = m[1].split(",").map(parseFloat); sc = Math.hypot(a[0], a[1]); tx = a[4]; ty = a[5]; } else if (m3) { const a = m3[1].split(",").map(parseFloat); sc = Math.hypot(a[0], a[1]); tx = a[12]; ty = a[13]; }
+        if (o < 0.6 || Math.abs(ty) >= 12 || Math.abs(tx) >= 12 || Math.abs(sc - 1) > 0.08) e.setAttribute("data-aly-i", [o.toFixed(2), Math.round(tx), Math.round(ty), sc.toFixed(2)].join(",")); }
+    } catch (e) { } } }).catch(() => { });
+    await sleep(1200);
     const iw = await run(tabId, () => window.innerWidth);      // ضبط عرض النافذة ليطابق العرض المطلوب
     if (iw && Math.abs(iw - W) > 4) { await chrome.windows.update(win.id, { width: Math.max(300, win.width + (W - iw)) }).catch(() => { }); await sleep(900); }
     for (let i = 0; i < 40; i++) { const blocked = await run(tabId, () => /just a moment|attention required|please wait|access denied|verify you are human/i.test(document.title) || /Enable JavaScript and cookies to continue/i.test((document.body && document.body.innerText || "").slice(0, 600))).catch(() => false); if (!blocked) break; await sleep(1000); }      // صفحة تحقق: قد تُحلّ تلقائياً أو يحلّها المستخدم يدوياً في النافذة
@@ -55,11 +62,11 @@ async function grab(url, width) {
         const k = kids.sort((a, b) => score(b) - score(a))[0];
         if (k && score(k) >= 60) best = k; else wait = true;      // لم يُحمَّل الإطار الداخلي بعد
       } else if (top && score(top) < 300) for (const f of kids) if (score(f) > score(best)) best = f;
-      return { fr, top, best, sc: wait ? 0 : (best ? score(best) : 0) };
+      return { fr, top, best, wait, sc: wait ? 0 : (best ? score(best) : 0) };
     };
     // الإطارات الداخلية تتأخر عن تحميل الصفحة: ننتظر (حتى ~30ث) حتى يظهر محتوى كافٍ ويستقر
-    let m = await measure(), prev = -1;
-    for (let i = 0; i < 30 && (m.sc < 300 || m.sc !== prev); i++) { prev = m.sc; await sleep(1000); m = await measure(); if (m.sc >= 300 && m.sc === prev) break; }
+    let m = await measure(), prev = -1, same = 0;
+    for (let i = 0; i < 30; i++) { if (m.wait) same = 0; else if (m.sc === prev) same++; else same = 0; if ((m.sc >= 300 && same >= 1) || same >= 3) break; prev = m.sc; await sleep(1000); m = await measure(); }
     // تمرير الصفحة وأي حاوية تمرير داخلية في كل الإطارات لتحميل الصور الكسولة والأقسام المؤجلة
     await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, func: async () => {
       const sc = [document.scrollingElement || document.documentElement, ...[...document.querySelectorAll("body *")].filter(n => n.scrollHeight > n.clientHeight + 300 && n.clientHeight > 300 && /(auto|scroll)/.test(getComputedStyle(n).overflowY))].slice(0, 4);
@@ -75,6 +82,8 @@ async function grab(url, width) {
       try { if (document.adoptedStyleSheets && document.adoptedStyleSheets.length) { const st = document.createElement("style"); st.textContent = document.adoptedStyleSheets.map(sh => [...sh.cssRules].map(r => r.cssText).join("\n")).join("\n"); document.head.appendChild(st); } } catch (e) { }
       document.querySelectorAll("img").forEach(i => { const u = i.currentSrc || i.src; if (u) { i.setAttribute("src", u); i.removeAttribute("srcset"); i.removeAttribute("loading"); } });
       const url = location.href;
+      document.querySelectorAll("[data-aly-i]").forEach(e => { try { const [o0, tx0, ty0, sc0] = e.getAttribute("data-aly-i").split(",").map(parseFloat), cs = getComputedStyle(e), o = parseFloat(cs.opacity); let tx = 0, ty = 0, sc = 1; const m = /matrix\(([^)]+)\)/.exec(cs.transform); if (m) { const a = m[1].split(",").map(parseFloat); sc = Math.hypot(a[0], a[1]); tx = a[4]; ty = a[5]; }
+        if (o >= 0.9 && Math.abs(tx) < 3 && Math.abs(ty) < 3 && Math.abs(sc - 1) < 0.05) { const p = Math.abs(ty0) >= 12 ? (ty0 > 0 ? "fadeUp" : "fadeDown") : Math.abs(tx0) >= 12 ? "slideStart" : sc0 < 0.95 ? "zoomIn" : "fadeIn"; e.setAttribute("data-aly-anim", p); } e.removeAttribute("data-aly-i"); } catch (x) { } });
       document.querySelectorAll("script,noscript,iframe,object,embed,link[rel=preload],link[rel=modulepreload],link[rel=prefetch],meta[http-equiv=refresh]").forEach(n => n.remove());
       document.querySelectorAll("*").forEach(n => { for (const a of [...n.attributes]) if (/^on/i.test(a.name)) n.removeAttribute(a.name); });
       document.querySelectorAll("base").forEach(b => b.remove()); const b = document.createElement("base"); b.href = url; document.head.prepend(b);

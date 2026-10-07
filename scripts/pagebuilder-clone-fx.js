@@ -70,6 +70,13 @@ const PBCloneFx = (() => {
           if (Math.abs(ang) > .5 && Math.abs(ang) < 359.5 && Math.abs(sx - 1) < .03 && Math.abs(sy - 1) < .03) { const w = mine[0], g = geomOf(w), cx = g.x + g.w / 2, cy = g.y + g.h / 2, w0 = e.offsetWidth, h0 = e.offsetHeight; w.set.fx = { d: r2((cx - w0 / 2) / W * 100) }; w.set.fy = { d: Math.round(cy - h0 / 2) }; w.set.fwd = { d: r2(w0 / W * 100) }; w.set.fh = { d: Math.max(2, Math.round(h0)) }; w.set.rot = Math.round(ang * 10) / 10; } } }
       animation(e, cs, all);
       entrance(e, all);
+      pin(e, cs, all);
+    }
+    /* هيدر/شريط ثابت (fixed/sticky): يلتصق بأعلى الشاشة عند التمرير (سكربت .pb-pin في الصفحة المنشورة)؛ نتجاوز الطبقات الكبيرة (preloader/نوافذ) والعناصر السفلية */
+    function pin(e, cs, all) {
+      if (cs.position !== "fixed" && cs.position !== "sticky") return; const t = parseFloat(cs.top); if (!isFinite(t)) return;
+      const r = e.getBoundingClientRect(); if (r.height > 300 || r.height > win.innerHeight * .45 || r.width < 60) return;
+      all.forEach(w => { const g = geomOf(w); pass(w, `selector{--pin:${Math.round(t)}px;--pino:${Math.round(g.y - r.top)}px;z-index:60}`); addCls(w, "pb-pin"); }); S.stats.pin = (S.stats.pin || 0) + 1;
     }
     function origin(w, e) {      // مركز الحاوية بالنسبة لإطار العنصر (ليدور/يكبّر المحتوى حول مركز البطاقة لا مركز كل عنصر)
       const r = e.getBoundingClientRect(), g = geomOf(w); return `${Math.round(r.left + r.width / 2 - g.x)}px ${Math.round(r.top + r.height / 2 - g.y)}px`;
@@ -89,6 +96,7 @@ const PBCloneFx = (() => {
       let p = "", dur = .6, delay = 0; const g = n => e.getAttribute(n);
       if (g("data-aos")) { p = presetOf(g("data-aos")); dur = secs((g("data-aos-duration") || "600") + "ms"); delay = secs((g("data-aos-delay") || "0") + "ms"); }
       else if (e.classList.contains("wow") || /\banimate__/.test(e.className || "")) { const cl = [...e.classList].find(k => presetOf(k)); if (cl) { p = presetOf(cl); dur = secs(g("data-wow-duration") || "1s"); delay = secs(g("data-wow-delay") || "0s"); } }
+      else if (g("data-aly-anim")) { p = g("data-aly-anim"); dur = .8; }      // سجّلتها الإضافة: العنصر كان مخفياً/مزاحاً عند التحميل ثم صار طبيعياً بعد التمرير (حركة جافاسكربت)
       else if (g("data-settings") && /animation/.test(g("data-settings"))) { try { const st = JSON.parse(g("data-settings")), nm = st._animation || st.animation; if (nm) { p = presetOf(nm); delay = secs((st._animation_delay || 0) + "ms"); } } catch (x) { } }
       if (p) { all.forEach(w => { if (!w.set.anim) { w.set.anim = p; w.set.animDur = r1(Math.min(3, Math.max(.1, dur))); w.set.animDelay = r1(Math.min(5, delay)); } }); S.stats.entr++; }
     }
@@ -97,7 +105,7 @@ const PBCloneFx = (() => {
     function ensureZone(zoneEl) {
       let z = S.zones.get(zoneEl); if (z) return z; const id = "z" + (++S.zn), rg = S.own.get(zoneEl);
       const paint = rg ? out.slice(rg[0], rg[1]).find(w => (w.type === "shape" || w.type === "image") && true) : null;
-      let wdg = paint; if (!wdg) { const r = zoneEl.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return null; wdg = add("shape", { x: r.left, y: r.top, w: r.width, h: r.height }, { shape: "rect", fill: "", outline: false, sw: 0, keep: false, css: "selector{pointer-events:none}" }); if (!wdg) return null; }
+      let wdg = paint; if (!wdg) { const r = zoneEl.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return null; wdg = add("shape", { x: r.left, y: r.top, w: r.width, h: r.height }, { shape: "rect", fill: "#ffffff", op: 0, outline: false, sw: 0, keep: false, css: "selector{opacity:0!important;pointer-events:none!important}" }); if (!wdg) return null; }
       addCls(wdg, "hz-" + id); z = { id, w: wdg }; S.zones.set(zoneEl, z); S.stats.zone++; return z;
     }
     function post() {
@@ -117,7 +125,7 @@ const PBCloneFx = (() => {
     }
     function emitHover(subj, zone, decl) {
       const [a0, a1] = S.range.get(subj), [o0, o1] = S.own.get(subj) || [a0, a1], all = out.slice(a0, a1), mine = out.slice(o0, o1); if (!all.length) return;
-      const native = zone === subj && all.length === 1; let zid = ""; if (!native) { const z = ensureZone(zone); if (!z) return; zid = z.id; }
+      const zr = S.range.get(zone), native = all.length === 1 && (zone === subj || (zr && zr[1] - zr[0] === all.length)); let zid = ""; if (!native) { const z = ensureZone(zone); if (!z) return; zid = z.id; }
       const H = native ? ":hover" : ".pb-hov", tr = S.trans.get(subj) || S.trans.get(zone) || "all .3s ease";
       const hasBox = Object.keys(decl).some(k => BOX_PROPS.has(k)), hasTxt = Object.keys(decl).some(k => TEXT_PROPS.has(k)), hasBg = decl["background-color"] != null || decl["border-color"] != null;
       const ds = decl["box-shadow"] ? dropShadows(decl["box-shadow"]) : "", paintOwn = mine.find(w => w.type === "shape" || w.type === "image" || w.type === "button");
@@ -125,7 +133,7 @@ const PBCloneFx = (() => {
         const fl = []; if (decl.filter) fl.push(decl.filter); const dsw = ds && w === paintOwn ? ds : ""; if (dsw) fl.push(dsw);
         const isMine = mine.includes(w); if (!native) { addCls(w, "hzm-" + zid); }
         const L = [], B = [];
-        if (hasBox) { const pureScale = /scale/.test((decl.transform || "") + (decl.scale || "")) && !/translate|rotate|skew/.test((decl.transform || "") + (decl.rotate || "")), tgt = ((w.type === "image" || w.type === "shape") && pureScale) ? (w.type === "image" ? "selector .pb-im" : "selector .pb-svg") : "selector"; const body = []; for (const p of ["transform", "translate", "scale", "rotate", "opacity", "backdrop-filter"]) if (decl[p]) body.push(`${p}:${decl[p]}`); if (fl.length && tgt === "selector") body.push("filter:" + fl.join(" ")); if (body.length) { L.push(`${tgt}${H}{${body.join(";")}}`); if (tgt !== "selector") B.push(`selector{overflow:hidden}`); B.push(`${tgt}{transition:${tr}}`); if (/scale|rotate|skew/.test((decl.transform || "") + (decl.scale || "") + (decl.rotate || "")) && all.length > 1 && tgt === "selector") B.push(`selector{transform-origin:${origin(w, zone)}}`); if (dsw && !(w.set.css || "").includes("drop-shadow")) B.push(`selector{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}`); } }
+        if (hasBox) { const pureScale = /scale/.test((decl.transform || "") + (decl.scale || "")) && !/translate|rotate|skew/.test((decl.transform || "") + (decl.rotate || "")), inner = ((w.type === "image" || w.type === "shape") && pureScale) ? (w.type === "image" ? " .pb-im" : " .pb-svg") : "", tgt = "selector" + inner; const body = []; for (const p of ["transform", "translate", "scale", "rotate", "opacity", "backdrop-filter"]) if (decl[p]) body.push(`${p}:${decl[p]}`); if (fl.length && !inner) body.push("filter:" + fl.join(" ")); if (body.length) { L.push(`selector${H}${inner}{${body.join(";")}}`); if (inner) B.push(`selector{overflow:hidden}`); B.push(`${tgt}{transition:${tr}}`); if (/scale|rotate|skew/.test((decl.transform || "") + (decl.scale || "") + (decl.rotate || "")) && all.length > 1 && !inner) B.push(`selector{transform-origin:${origin(w, zone)}}`); if (dsw && !(w.set.css || "").includes("drop-shadow")) B.push(`selector{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}`); } }
         if (hasTxt && (w.type === "text" || w.type === "heading" || w.type === "button")) { const tgt = w.type === "button" ? "selector" + H + " .pb-btn" : `selector.pb-w${H} .pb-t,selector.pb-w${H} .pb-t *`, body = []; for (const p of ["color", "text-shadow", "-webkit-text-fill-color", "text-decoration-color", "letter-spacing"]) if (decl[p]) body.push(`${p}:${decl[p]}!important`); if (body.length) { L.push(`${tgt}{${body.join(";")}}`); B.push(`selector .pb-t,selector .pb-btn{transition:color .3s,text-shadow .3s}`); } }
         if (hasBg && isMine) { const bg = decl["background-color"], bd = decl["border-color"]; if (w.type === "button") { const body = []; if (bg) body.push(`background-color:${bg}!important;background-image:none!important`); if (bd) body.push(`border-color:${bd}!important`); L.push(`selector${H} .pb-btn{${body.join(";")}}`); B.push(`selector .pb-btn{transition:${tr}}`); } else if (w.type === "shape") { if (bg) L.push(`selector${H} .pb-svg *{fill:${bg}!important}`); if (bd) L.push(`selector${H} .pb-svg *{stroke:${bd}!important}`); B.push(`selector .pb-svg *{transition:fill .3s,stroke .3s}`); } }
         if (L.length) { pass(w, B.concat(L).join("\n")); S.stats.hover++; }
