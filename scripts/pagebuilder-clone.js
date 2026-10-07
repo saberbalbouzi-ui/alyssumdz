@@ -379,11 +379,23 @@ const PBClone = (function () {
   async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
     S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
-    try {
-      let html; if (full) html = await fetchFull(u, S.W);
-      else try { html = await fetchHtml(u); } catch (e) { if (e.blocked && typeof GH !== "undefined" && GH.cfg() && GH.cfg().token && GH.cfg().token !== "php") { st(e.message + " — جارٍ المحاولة تلقائياً بالمتصفح الكامل…"); html = await fetchFull(u, S.W); } else throw e; }
-      if (isChallenge(html)) { const e = new Error("الموقع يعرض صفحة تحقّق من الجدار الحماية (Enable JavaScript and cookies to continue) حتى للمتصفح الكامل. لا يمكن نسخه آلياً — افتحه في متصفحك والتقط لقطة شاشة للصفحة ثم استعمل تبويب «صورة (لقطة شاشة)»."); throw e; }
-      S.html = prep(html, u); mountFrame(S.html); } catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
+    try { const r = await getPage(u, !!full, 0); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
+    catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
+  }
+  const canFull = () => { try { const c = typeof GH !== "undefined" ? GH.cfg() : null; return !!(c && c.token && c.token !== "php" && c.owner); } catch (e) { return false; } };
+  function bodyInfo(html) { const d = new DOMParser().parseFromString(html, "text/html"); d.querySelectorAll("script,style,noscript,template").forEach(n => n.remove()); return { text: (d.body ? d.body.textContent : "").replace(/\s+/g, " ").trim().length, imgs: d.querySelectorAll("img,svg,video,picture").length, doc: d }; }
+  function mainIframe(html, base) {      // صفحة «غلاف» محتواها الحقيقي داخل إطار (مثل معاينة قوالب Wix): نتّبع رابط الإطار
+    const b = bodyInfo(html); if (b.text > 600) return ""; const BAD = /recaptcha|googletagmanager|facebook\.com|doubleclick|youtube\.com\/embed|google\.com\/maps|twitter\.com|about:blank/i, fr = [...b.doc.querySelectorAll("iframe[src]")].map(f => { let u = ""; try { u = new URL(f.getAttribute("src"), base).href; } catch (e) { } return { u, pri: f.getAttribute("data-hook") === "desktop-iframe" ? 2 : 1 }; }).filter(x => /^https?:/.test(x.u) && !BAD.test(x.u)).sort((a, c) => c.pri - a.pri);
+    return fr.length ? fr[0].u : "";
+  }
+  async function getPage(u, full, hop) {
+    let html;
+    if (full) html = await fetchFull(u, S.W);
+    else { try { html = await fetchHtml(u); } catch (e) { if (canFull()) { st(e.message + " — جارٍ المحاولة تلقائياً بالمتصفح الكامل…"); full = true; html = await fetchFull(u, S.W); } else throw e; } }
+    if (isChallenge(html)) { const e = new Error("الموقع يعرض صفحة تحقّق من الجدار الحماية (Enable JavaScript and cookies to continue) حتى للمتصفح الكامل. لا يمكن نسخه آلياً — افتحه في متصفحك والتقط لقطة شاشة للصفحة ثم استعمل تبويب «صورة (لقطة شاشة)»."); throw e; }
+    const fr = hop < 2 ? mainIframe(html, u) : ""; if (fr) { st("المحتوى الحقيقي داخل إطار مضمّن — جارٍ فتح رابطه…"); return getPage(fr, full, hop + 1); }
+    if (!full && canFull()) { const b = bodyInfo(html); if (b.text < 150 && b.imgs < 3) { st("الصفحة تُبنى بالجافاسكربت — جارٍ استعمال المتصفح الكامل…"); html = await fetchFull(u, S.W); if (hop < 2) { const f2 = mainIframe(html, u); if (f2) return getPage(f2, true, hop + 1); } } }
+    return { html, url: u };
   }
   function pickImg() { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.onchange = () => { if (i.files[0]) loadImg(i.files[0]); }; i.click(); }
   function loadImg(file) {
