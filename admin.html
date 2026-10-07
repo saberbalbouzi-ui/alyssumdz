@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.33.0">
+<meta name="admin-version" content="1.33.1">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.33.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.33.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.33.0"></script>
-<script src="assets/js/admin-update.js?v=1.33.0"></script>
+<script src="assets/js/ctl-help.js?v=1.33.1"></script>
+<script src="assets/js/chrome-admin.js?v=1.33.1"></script>
+<script src="assets/js/admin-assistant.js?v=1.33.1"></script>
+<script src="assets/js/admin-update.js?v=1.33.1"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -13789,9 +13789,12 @@ const PBClone = (function () {
     let enc = "utf-8"; const head = new TextDecoder("latin1").decode(buf.slice(0, 3000)), m = /<meta[^>]+charset=["']?\s*([\w-]+)/i.exec(head); if (m) enc = m[1];
     try { return new TextDecoder(enc).decode(buf); } catch (e) { return new TextDecoder("utf-8").decode(buf); }
   }
+  /* صفحة تحدٍّ من جدار حماية (Cloudflare وأمثاله) بدل محتوى الموقع */
+  const isChallenge = h => { const t = String(h || ""), head = t.slice(0, 120000); return /Enable JavaScript and cookies to continue|<title>\s*(Just a moment\.\.\.|Attention Required! \| Cloudflare|Access denied|Please Wait\.\.\.|DDoS-Guard)/i.test(head) || (/_cf_chl_opt|cf-browser-verification|challenge-platform|cf-turnstile/i.test(head) && t.length < 90000 && !/<h1|<h2|<img/i.test(head.replace(/<script[\s\S]*?<\/script>/gi, "")) ); };
   async function fetchHtml(url) {
-    const tries = [url].concat(PROXIES.map(p => p(url))); let last = null;
-    for (let i = 0; i < tries.length; i++) { try { st(i ? "جارٍ المحاولة عبر وسيط (" + i + "/" + PROXIES.length + ")…" : "جارٍ جلب الصفحة…"); const buf = await fget(tries[i], "buf"); const html = decode(buf); if (/<html|<body|<!doctype/i.test(html.slice(0, 4000)) && html.length > 300) return html; last = new Error("استجابة ليست صفحة HTML"); } catch (e) { last = e; } }
+    const tries = [url].concat(PROXIES.map(p => p(url))); let last = null, blocked = false;
+    for (let i = 0; i < tries.length; i++) { try { st(i ? "جارٍ المحاولة عبر وسيط (" + i + "/" + PROXIES.length + ")…" : "جارٍ جلب الصفحة…"); const buf = await fget(tries[i], "buf"); const html = decode(buf); if (isChallenge(html)) { blocked = true; last = new Error("صفحة تحقّق"); continue; } if (/<html|<body|<!doctype/i.test(html.slice(0, 4000)) && html.length > 300) return html; last = new Error("استجابة ليست صفحة HTML"); } catch (e) { last = e; } }
+    if (blocked) { const e = new Error("الموقع محمي بجدار حماية (مثل Cloudflare) ويطلب «تفعيل JavaScript والكوكيز» فلا يسمح بالجلب الآلي."); e.blocked = true; throw e; }
     throw new Error("تعذّر جلب الصفحة (" + (last && last.message || "؟") + "). جرّب موقعاً آخر أو استعمل تبويب «صورة» بلقطة شاشة للصفحة.");
   }
   /* جلب بمتصفح كامل على خادم: يشغّل workflow «clone-page» في مستودعك (GitHub Actions + Chromium) فيعرض الصفحة بجافاسكربتها ويحفظ نسخة جامدة في assets/clone ثم تُقرأ هنا */
@@ -14134,7 +14137,11 @@ const PBClone = (function () {
   async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
     S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
-    try { const html = full ? await fetchFull(u, S.W) : await fetchHtml(u); S.html = prep(html, u); mountFrame(S.html); } catch (e) { st(e.message); toast(e.message); } finally { S.busy = false; }
+    try {
+      let html; if (full) html = await fetchFull(u, S.W);
+      else try { html = await fetchHtml(u); } catch (e) { if (e.blocked && typeof GH !== "undefined" && GH.cfg() && GH.cfg().token && GH.cfg().token !== "php") { st(e.message + " — جارٍ المحاولة تلقائياً بالمتصفح الكامل…"); html = await fetchFull(u, S.W); } else throw e; }
+      if (isChallenge(html)) { const e = new Error("الموقع يعرض صفحة تحقّق من الجدار الحماية (Enable JavaScript and cookies to continue) حتى للمتصفح الكامل. لا يمكن نسخه آلياً — افتحه في متصفحك والتقط لقطة شاشة للصفحة ثم استعمل تبويب «صورة (لقطة شاشة)»."); throw e; }
+      S.html = prep(html, u); mountFrame(S.html); } catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
   }
   function pickImg() { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.onchange = () => { if (i.files[0]) loadImg(i.files[0]); }; i.click(); }
   function loadImg(file) {

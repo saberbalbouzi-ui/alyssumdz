@@ -8,8 +8,11 @@ if (!/^[a-z0-9]{6,40}$/.test(id)) { console.error("معرّف غير صالح");
 const OUT = path.join("assets", "clone"); fs.mkdirSync(OUT, { recursive: true });
 for (const f of fs.readdirSync(OUT)) { try { const p = path.join(OUT, f); if (Date.now() - fs.statSync(p).mtimeMs > 24 * 3600 * 1000) fs.unlinkSync(p); } catch (e) { } }      // تنظيف الملفات القديمة
 (async () => {
-  const browser = await chromium.launch(), ctx = await browser.newContext({ viewport: { width: W, height: 900 }, userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", locale: "ar", ignoreHTTPSErrors: true }), page = await ctx.newPage();
+  const browser = await chromium.launch({ args: ["--disable-blink-features=AutomationControlled"] }), ctx = await browser.newContext({ viewport: { width: W, height: 900 }, userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", locale: "ar", ignoreHTTPSErrors: true }), page = await ctx.newPage();
   try { await page.goto(url, { waitUntil: "networkidle", timeout: 60000 }); } catch (e) { console.warn("goto:", e.message); }
+  await page.addInitScript(() => { try { Object.defineProperty(navigator, "webdriver", { get: () => false }); } catch (e) { } });
+  /* صفحة تحقّق (Cloudflare…): انتظر حتى 25 ثانية لعلّها تُحلّ تلقائياً */
+  for (let i = 0; i < 25; i++) { const blocked = await page.evaluate(() => /just a moment|attention required|please wait|access denied/i.test(document.title) || /Enable JavaScript and cookies to continue/i.test((document.body && document.body.innerText || "").slice(0, 600))).catch(() => false); if (!blocked) break; await page.waitForTimeout(1000); }
   await page.waitForTimeout(1500);
   /* تمرير تدريجي لتحميل الصور الكسولة وتشغيل كشف العناصر عند التمرير */
   await page.evaluate(async () => { const h = () => Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0); let y = 0; for (let i = 0; i < 60 && y < h(); i++) { y += 500; window.scrollTo(0, y); await new Promise(r => setTimeout(r, 220)); } window.scrollTo(0, 0); await new Promise(r => setTimeout(r, 900)); });
