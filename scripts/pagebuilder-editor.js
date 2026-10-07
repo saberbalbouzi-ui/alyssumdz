@@ -644,7 +644,7 @@ body{overflow-x:hidden;margin:0}`;
     fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) clearFd(); }, true);
     fdoc.addEventListener("drop", async e => { if (!fileDrag(e)) return; const t = dropW(e); clearFd(); if (!t) return; e.preventDefault(); e.stopPropagation();
       const files = [...e.dataTransfer.files].filter(f => /^image\//.test(f.type) || (/^video\/(mp4|webm)$/.test(f.type) && t.inf.node.type === "pgal")); if (!files.length) { toast("اسحب ملفات صور فقط"); return; } const inf = t.inf; select(inf.node.id);
-      try { const paths = inf.node.type === "pgal" ? (await Promise.all(files.slice(0, 5).map(async f => { if (/^video\//.test(f.type)) { const ext = f.type.split("/")[1]; if (f.size > 8 * 1024 * 1024) { toast("❌ الفيديو أكبر من 8MB"); return null; } const A = Admin; A.localImg = A.localImg || {}; const pp = { path: "assets/img/pages/pv-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 4) + "." + ext, blob: f, ext }; A.localImg[pp.path] = URL.createObjectURL(f); queueCommit(pp); return pp.path; } return (await uploadFiles([f]))[0]; }))).filter(Boolean) : await uploadFiles(inf.node.type === "image" ? files.slice(0, 1) : files); if (inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); galFill(inf, paths, ce ? Number(ce.dataset.cell) : Math.max(0, galArr(inf).findIndex(x => !x))); } else if (inf.node.type === "pgal") { const se = e.target.closest("[data-slot]"); pgFill(inf, paths, se ? Number(se.dataset.slot) : -1); } else applyPaths(inf, paths); } catch (err) { toast("❌ " + err.message); } }, true);
+      try { const paths = inf.node.type === "pgal" ? (await Promise.all(files.slice(0, 5).map(async f => { if (/^video\//.test(f.type)) return prepVideo(f); return (await uploadFiles([f]))[0]; }))).filter(Boolean) : await uploadFiles(inf.node.type === "image" ? files.slice(0, 1) : files); if (inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); galFill(inf, paths, ce ? Number(ce.dataset.cell) : Math.max(0, galArr(inf).findIndex(x => !x))); } else if (inf.node.type === "pgal") { const se = e.target.closest("[data-slot]"); pgFill(inf, paths, se ? Number(se.dataset.slot) : -1); } else applyPaths(inf, paths); } catch (err) { toast("❌ " + err.message); } }, true);
     fdoc.addEventListener("contextmenu", showCtx); fdoc.addEventListener("scroll", hideCtx, true);
     fdoc.addEventListener("dragover", onDragOver); fdoc.addEventListener("drop", onDrop); fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) hideDrop(); });
     fdoc.addEventListener("keydown", onKey);
@@ -1630,19 +1630,59 @@ body{overflow-x:hidden;margin:0}`;
   /* وسائط المعرض: صورة (تُحوَّل WebP) أو GIF متحرك أو فيديو قصير MP4/WebM (حتى 8MB) بلا تحويل */
   const VID_RE = /\.(mp4|webm)$/i, MEDIA_OK = /\.(png|jpe?g|webp|gif|mp4|webm)$/i;
   const pickMedia = () => new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = ".png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,image/*,video/mp4,video/webm"; i.onchange = () => res(i.files[0] || null); i.click(); });
+  /* ضغط الفيديو داخل المتصفح قبل الرفع (إعادة ترميز بنافذة تشغيل حقيقية: أقصى بُعد 720px ومعدّل بِت يناسب 7MB): يقبل ملفات حتى 200MB ومقاطع حتى 60 ثانية؛ MP4 إن دعمه المتصفح وإلا WebM */
+  async function compressVideo(file, onp, ctl) {
+    const url = URL.createObjectURL(file), v = document.createElement("video"); v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+    try {
+      await new Promise((res, rej) => { v.onloadedmetadata = res; v.onerror = () => rej(new Error("تعذّر قراءة الفيديو — جرّب MP4 (H.264) أو WebM")); });
+      const dur = v.duration; if (!isFinite(dur) || dur <= 0) throw new Error("تعذّر معرفة مدة الفيديو");
+      if (dur > 60) throw new Error("المقطع أطول من 60 ثانية (" + Math.round(dur) + "ث) — قصّه ليبقى قصيراً (3–30 ثانية مناسب)");
+      const W0 = v.videoWidth, H0 = v.videoHeight, k = Math.min(1, 720 / Math.max(W0, H0)), w = Math.max(2, Math.round(W0 * k / 2) * 2), h = Math.max(2, Math.round(H0 * k / 2) * 2);
+      if (typeof MediaRecorder === "undefined") throw new Error("المتصفح لا يدعم ضغط الفيديو");
+      const mime = ["video/mp4;codecs=avc1.42E01E", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }); if (!mime) throw new Error("المتصفح لا يدعم ضغط الفيديو");
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const g = cv.getContext("2d"), stream = cv.captureStream(30);
+      try { const as = (v.captureStream ? v.captureStream() : null); if (as) as.getAudioTracks().forEach(t => stream.addTrack(t)); } catch (e) { }
+      const vbps = Math.max(350000, Math.min(2500000, Math.floor((7 * 1048576 * 8) / dur - 72000))), rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: vbps, audioBitsPerSecond: 64000 }), chunks = [];
+      rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      const done = new Promise(res => { rec.onstop = res; });
+      const tick = setInterval(() => { try { g.drawImage(v, 0, 0, w, h); } catch (e) { } if (onp) onp(Math.min(.99, v.currentTime / dur)); if (ctl && ctl.cancel) { clearInterval(tick); try { rec.stop(); } catch (e) { } v.pause(); } }, 33);
+      rec.start(500); await v.play(); await new Promise(res => { v.onended = res; v.onpause = () => { if (v.ended || (ctl && ctl.cancel)) res(); }; });
+      clearInterval(tick); try { rec.stop(); } catch (e) { } await done;
+      if (ctl && ctl.cancel) throw new Error("أُلغي الضغط");
+      const ext = /mp4/.test(mime) ? "mp4" : "webm", blob = new Blob(chunks, { type: ext === "mp4" ? "video/mp4" : "video/webm" }); if (!blob.size) throw new Error("فشل ضغط الفيديو");
+      return { blob, ext, before: file.size, after: blob.size };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  function progressBox(msg) {      // نافذة تقدّم صغيرة قابلة للإلغاء
+    const m = document.createElement("div"); m.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10005;display:flex;align-items:center;justify-content:center;direction:rtl";
+    m.innerHTML = `<div style="background:#fff;border-radius:16px;padding:1.1rem 1.3rem;width:min(360px,90vw);display:grid;gap:.6rem"><b>${msg}</b><div style="height:8px;background:#eee;border-radius:99px;overflow:hidden"><i data-bar style="display:block;height:100%;width:0;background:#0d9488;transition:width .2s"></i></div><small data-t style="color:#6b6556">لا تغادر هذا التبويب أثناء الضغط (يستغرق قرابة مدة المقطع)</small><button class="pbx-small" data-x>إلغاء</button></div>`;
+    const ctl = { cancel: false }; m.querySelector("[data-x]").onclick = () => { ctl.cancel = true; }; document.body.appendChild(m);
+    return { ctl, set: f => { m.querySelector("[data-bar]").style.width = Math.round(f * 100) + "%"; m.querySelector("[data-t]").textContent = Math.round(f * 100) + "% — لا تغادر هذا التبويب أثناء الضغط"; }, close: () => m.remove() };
+  }
+  /* يُجهّز ملف فيديو للرفع: ≤4MB كما هو، وأكبر يُضغط تلقائياً (فإن فشل الضغط يُرفع الأصلي إن كان ≤8MB) ← مسار الملف أو null */
+  async function prepVideo(f) {
+    const nm = f.name || "", ext0 = (nm.match(/\.(\w+)$/) || [])[1] || "mp4";
+    if (f.size > 200 * 1024 * 1024) { toast("❌ الفيديو كبير جداً (" + Math.round(f.size / 1048576) + "MB) — الحد 200MB قبل الضغط؛ استعمل مقطعاً قصيراً"); return null; }
+    let blob = f, ext = ext0.toLowerCase();
+    if (f.size > 4 * 1024 * 1024) {
+      const pb = progressBox("⏳ ضغط الفيديو (" + (f.size / 1048576).toFixed(1) + "MB)…");
+      try { const r = await compressVideo(f, pb.set, pb.ctl); blob = r.blob; ext = r.ext; toast("✅ ضُغط الفيديو من " + (r.before / 1048576).toFixed(1) + "MB إلى " + (r.after / 1048576).toFixed(1) + "MB"); }
+      catch (err) { if (pb.ctl.cancel) { pb.close(); return null; } if (f.size > 8 * 1024 * 1024) { pb.close(); toast("❌ تعذّر ضغط الفيديو (" + err.message + ") والملف أكبر من 8MB"); return null; } toast("⚠ لم يُضغط الفيديو (" + err.message + ") — رُفع كما هو"); }
+      pb.close();
+    }
+    if (blob.size > 8 * 1024 * 1024) { toast("❌ الفيديو ما زال كبيراً بعد الضغط (" + (blob.size / 1048576).toFixed(1) + "MB) — قصّ المقطع"); return null; }
+    const A = Admin; A.localImg = A.localImg || {}; const p = { path: "assets/img/pages/pv-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 4) + "." + ext, blob, ext }; A.localImg[p.path] = URL.createObjectURL(blob); queueCommit(p); return p.path;
+  }
   async function uploadMedia() {
     const f = await pickMedia(); if (!f) return null; const nm = f.name || "", ext = (nm.match(/\.(\w+)$/) || [])[1];
     if (!MEDIA_OK.test(nm)) { toast("❌ صيغة " + (ext ? "." + ext.toUpperCase() : "الملف") + " غير مدعومة — الصيغ الصحيحة: صورة (JPG/PNG/WebP) أو GIF أو فيديو قصير MP4 / WebM"); return null; }
-    if (VID_RE.test(nm)) {
-      if (f.size > 8 * 1024 * 1024) { toast("❌ الفيديو كبير (" + (f.size / 1048576).toFixed(1) + "MB) — الحد 8MB؛ استعمل مقطعاً قصيراً (3–10 ثوانٍ) بصيغة MP4 مضغوطة"); return null; }
-      const A = Admin; A.localImg = A.localImg || {}; const p = { path: "assets/img/pages/pv-" + Date.now().toString(36) + "." + ext.toLowerCase(), blob: f, ext: ext.toLowerCase() }; A.localImg[p.path] = URL.createObjectURL(f); queueCommit(p); return p.path;
-    }
+    if (VID_RE.test(nm)) return prepVideo(f);
     if (/\.gif$/i.test(nm) && f.size > 6 * 1024 * 1024) { toast("⚠ ملف GIF كبير (" + (f.size / 1048576).toFixed(1) + "MB) وقد يبطّئ الصفحة — الأفضل فيديو MP4 قصير"); }
     return (await uploadFiles([f]))[0];
   }
   async function slotPick(inf, idx) {      // نافذة صغيرة: رفع من الجهاز (صورة/GIF/فيديو) أو من المكتبة أو برابط
     const c = await new Promise(res => { const m = document.createElement("div"); m.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10004;display:flex;align-items:center;justify-content:center;direction:rtl";
-      m.innerHTML = `<div style="background:#fff;border-radius:16px;padding:1rem 1.2rem;min-width:280px;display:grid;gap:.5rem"><b>${idx === 0 ? "الصورة الرئيسية" : "المصغّرة " + idx}</b><button class="pbx-small" data-c="up">⬆ رفع صورة أو GIF أو فيديو قصير</button><small style="color:#6b6556;font-size:.72rem;line-height:1.6">الصيغ: JPG / PNG / WebP · GIF متحرك · فيديو MP4 أو WebM قصير (حتى 8MB، يُشغَّل تلقائياً بلا صوت)</small><button class="pbx-small" data-c="lib">📚 اختيار من مكتبة الصور</button><button class="pbx-small" data-c="url">🔗 لصق رابط (صورة / GIF / فيديو)</button>${pgArr(inf)[idx] ? '<button class="pbx-small" data-c="del">🗑 إزالة</button>' : ""}<button class="pbx-small" data-c="">إلغاء</button></div>`;
+      m.innerHTML = `<div style="background:#fff;border-radius:16px;padding:1rem 1.2rem;min-width:280px;display:grid;gap:.5rem"><b>${idx === 0 ? "الصورة الرئيسية" : "المصغّرة " + idx}</b><button class="pbx-small" data-c="up">⬆ رفع صورة أو GIF أو فيديو قصير</button><small style="color:#6b6556;font-size:.72rem;line-height:1.6">الصيغ: JPG / PNG / WebP · GIF متحرك · فيديو MP4 أو WebM قصير (حتى 60 ثانية؛ يُضغط تلقائياً إن كان أكبر من 4MB فيقبل ملفات حتى 200MB)</small><button class="pbx-small" data-c="lib">📚 اختيار من مكتبة الصور</button><button class="pbx-small" data-c="url">🔗 لصق رابط (صورة / GIF / فيديو)</button>${pgArr(inf)[idx] ? '<button class="pbx-small" data-c="del">🗑 إزالة</button>' : ""}<button class="pbx-small" data-c="">إلغاء</button></div>`;
       m.addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b || e.target === m) { m.remove(); res(b ? b.dataset.c : ""); } }); document.body.appendChild(m); });
     try {
       if (c === "up") { const v = await uploadMedia(); if (v) pgFill(inf, [v], idx); }
@@ -2215,7 +2255,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
