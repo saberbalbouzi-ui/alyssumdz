@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.28.2">
+<meta name="admin-version" content="1.28.3">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1481,11 +1481,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/image-tools.js"></script>
 <script src="assets/js/text-capture.js"></script>
 <script src="assets/js/social-icons.js?v=1"></script>
-<script src="assets/js/chrome.js?v=4"></script>
-<script src="assets/js/ctl-help.js?v=1.28.2"></script>
-<script src="assets/js/chrome-admin.js?v=1.28.2"></script>
-<script src="assets/js/admin-assistant.js?v=1.28.2"></script>
-<script src="assets/js/admin-update.js?v=1.28.2"></script>
+<script src="assets/js/chrome.js?v=5"></script>
+<script src="assets/js/ctl-help.js?v=1.28.3"></script>
+<script src="assets/js/chrome-admin.js?v=1.28.3"></script>
+<script src="assets/js/admin-assistant.js?v=1.28.3"></script>
+<script src="assets/js/admin-update.js?v=1.28.3"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -8369,7 +8369,7 @@ ${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); r
 ${r.css}
 ${page.css || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
-${hasHdr ? `<script>var REL=${JSON.stringify(ctx.base)};<\/script>` : ""}${(hasProd || bindProd || hasHdr) ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}${hasHdr ? `<script src="${esc(ctx.base)}assets/js/social-icons.js"><\/script><script src="${esc(ctx.base)}assets/js/chrome.js?v=4"><\/script><script>(function(){var go=function(){try{${hdrSite ? "Chrome.init();" : "Chrome.bindShare();Chrome.bindMenus();Chrome.fillMenus();"}}catch(e){}};document.readyState==="complete"?go():addEventListener("load",go)})()<\/script>` : ""}${bindProd ? `<script>(function(){var p=(window.PRODUCTS||[]).filter(function(x){return x.slug===${JSON.stringify(page.product)}})[0];if(!p)return;var f=function(n){return Number(n).toLocaleString("fr-DZ")+" دج"},g=function(i){return document.getElementById(i)},a=g("pprice"),b=g("pold"),c=g("psave"),has=p.old&&p.old>p.price;if(a)a.textContent=f(p.price);if(b){b.textContent=has?f(p.old):"";b.style.display=has?"":"none"}if(c){c.textContent=has?"وفّر "+Math.round((1-p.price/p.old)*100)+"%":"";c.style.display=has?"":"none"}})();<\/script>` : ""}
+${hasHdr ? `<script>var REL=${JSON.stringify(ctx.base)};<\/script>` : ""}${(hasProd || bindProd || hasHdr) ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}${hasHdr ? `<script src="${esc(ctx.base)}assets/js/social-icons.js"><\/script><script src="${esc(ctx.base)}assets/js/chrome.js?v=5"><\/script><script>(function(){var go=function(){try{${hdrSite ? "Chrome.init();" : "Chrome.bindShare();Chrome.bindMenus();Chrome.fillMenus();"}}catch(e){}};document.readyState==="complete"?go():addEventListener("load",go)})()<\/script>` : ""}${bindProd ? `<script>(function(){var p=(window.PRODUCTS||[]).filter(function(x){return x.slug===${JSON.stringify(page.product)}})[0];if(!p)return;var f=function(n){return Number(n).toLocaleString("fr-DZ")+" دج"},g=function(i){return document.getElementById(i)},a=g("pprice"),b=g("pold"),c=g("psave"),has=p.old&&p.old>p.price;if(a)a.textContent=f(p.price);if(b){b.textContent=has?f(p.old):"";b.style.display=has?"":"none"}if(c){c.textContent=has?"وفّر "+Math.round((1-p.price/p.old)*100)+"%":"";c.style.display=has?"":"none"}})();<\/script>` : ""}
 <script>var __pbBase=${JSON.stringify(ctx.base)};var __pbSlug=${JSON.stringify(page.slug || "")};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}${hasContact ? "(" + contactRuntime.toString() + ")();" : ""}<\/script>
 </body></html>`;
   }
