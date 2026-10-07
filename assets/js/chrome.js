@@ -200,6 +200,11 @@ window.Chrome = (function () {
     else if (h.logo.image === false) s += "header.site .logo{background-image:none!important;font-size:" + (+h.logo.size || 24) + "px!important;line-height:normal!important;width:auto!important;height:auto!important}";
     if (h.logo.color && h.logo.text !== false) s += "header.site .logo{color:" + h.logo.color + "}";
     if (h.logo.size && h.logo.text !== false && h.logo.image !== false) s += "header.site .logo{font-size:" + (+h.logo.size) + "px}";
+    if (h.menu.weight) s += "header.site nav.menu>a,header.site nav.menu .mi-t{font-weight:" + h.menu.weight + "}";
+    if (h.menu.gap !== undefined && h.menu.gap !== "") s += "header.site nav.menu{gap:" + (+h.menu.gap) + "px}";
+    if (h.menu.hover) s += "header.site nav.menu>a:hover,header.site nav.menu .mi-t:hover{color:" + h.menu.hover + "!important;opacity:1}";
+    if (h.menu.popbg) s += "header.site .mi-pop{background:" + h.menu.popbg + "}";
+    if (h.menu.popcolor) s += "header.site .mi-pop a{color:" + h.menu.popcolor + "!important}";
     if (h.menu.size) s += "header.site nav.menu>a,header.site nav.menu .mi-t{font-size:" + (+h.menu.size) + "px}";
     if (h.social.color) s += "header.site .hd-soc{color:" + h.social.color + "}";
     if (h.share.color) s += "header.site .ch-share-btn{color:" + h.share.color + "!important}";

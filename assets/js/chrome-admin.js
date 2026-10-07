@@ -68,15 +68,14 @@ window.ChromeAdmin = (function () {
   const prodsList = () => ((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x && x.slug);
   /* قائمة عناوين الهيدر: عنوان ذكي (الرئيسية/التصنيفات/المتجر/الفئات/المنتجات/حسابي) أو عنوان من سجلّ الموقع أو مخصص */
   function menuList(path) {
-    const L = get(path) || [], reg = S.cfg.links || [], MK = C().MK;
+    const L = get(path) || [], reg = S.cfg.links || [], MK = C().MK, MKL = C().MK_LIST;
+    const nm = it => it.label || (it.kind ? MK[it.kind][0] : (it.url ? "رابط" : "عنوان")), icon = it => it.kind ? (MKL.find(x => x[0] === it.kind) || ["", "🔗"])[1].split(" ")[0] : "🔗";
     return '<div class="ca-list">' + L.map((it, i) => {
-      const key = path + "." + i, hit = reg.find(r => r.url === it.url), cust = !it.kind && (!!S.cust[key] || (!hit && !!it.url) || (!hit && !it.label));
-      const sel = it.kind ? "@" + it.kind : cust ? "__c" : (hit ? it.url : "");
-      const op = [["", "— اختر عنواناً —"]].concat(C().MK_LIST.map(x => ["@" + x[0], x[1]]), reg.map(r => [r.url, r.label]), [["__c", "➕ عنوان مخصص (برابط)"]]);
+      const key = path + "." + i, op = S.mcOpen === key;
       const pk = it.kind === "prods" ? '<details class="ca-pk"><summary>اختر منتجات معيّنة <b>(' + ((it.slugs || []).length || "الكل") + ')</b> — بلا اختيار = كل المنتجات</summary><div class="ca-pkb">' + (prodsList().map(x => '<label class="ca-c"><input type="checkbox" data-pk="' + key + '" data-v="' + esc(x.slug) + '"' + ((it.slugs || []).includes(x.slug) ? " checked" : "") + "><span>" + esc(x.title || x.slug) + "</span></label>").join("") || "لا منتجات") + "</div></details>" : "";
-      return '<div class="ca-mrow"><div class="ca-row"><input data-p="' + key + '.label" value="' + esc(it.label || "") + '" placeholder="' + esc(it.kind ? "النص (فارغ = «" + MK[it.kind][0] + "»)" : "النص (فارغ = اسم العنوان)") + '"><select data-mk="' + key + '">' + op.map(o => '<option value="' + esc(o[0]) + '"' + (sel === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>").join("") + "</select>" + '<span class="ca-tools">' + mv(path + "|", i) + '<button type="button" class="small red" data-del="' + path + ":" + i + '">✕</button></span></div>' +
-        (cust ? '<input data-p="' + key + '.url" value="' + esc(it.url || "") + '" dir="ltr" placeholder="https://… أو index.html#قسم">' : "") + pk + '<label class="ca-c"><input type="checkbox" data-p="' + key + '.h"' + (it.h ? " checked" : "") + "><span>إخفاء هذا العنوان</span></label></div>";
-    }).join("") + '</div><button type="button" class="small" data-addmenu="' + path + '">+ عنوان</button>';
+      return '<div class="ca-mc' + (op ? " open" : "") + (it.h ? " off" : "") + '"><div class="ca-mch" data-mcopen="' + key + '"><span>' + icon(it) + "</span><b>" + esc(nm(it)) + (it.h ? " <small>(مخفي)</small>" : "") + '</b><span class="ca-tools">' + mv(path + "|", i) + '<button type="button" class="small red" data-del="' + path + ":" + i + '">✕</button></span></div>' +
+        (op ? '<div class="ca-mcs"><input data-p="' + key + '.label" value="' + esc(it.label || "") + '" placeholder="' + esc(it.kind ? "النص (فارغ = «" + MK[it.kind][0] + "»)" : "النص") + '">' + (it.kind ? "" : '<input data-p="' + key + '.url" value="' + esc(it.url || "") + '" dir="ltr" placeholder="https://… أو index.html#قسم">') + pk + '<label class="ca-c"><input type="checkbox" data-p="' + key + '.h"' + (it.h ? " checked" : "") + "><span>إخفاء هذا العنوان</span></label></div>" : "") + "</div>";
+    }).join("") + '<div class="ca-mc add"><select data-mcadd="' + path + '"><option value="">➕ اضف عنوان…</option>' + MKL.map(x => '<option value="' + x[0] + '">' + esc(x[1]) + "</option>").join("") + '</select><button type="button" class="small" data-addmenu="' + path + '" style="margin-top:.4rem">🔗 رابط مخصص</button></div></div>';
   }
   function socialPick() {
     const g = (S.cfg.social || []).filter(x => x && x.id), ids = S.cfg.header.social.ids || [], av = [{ id: "whatsapp", label: "واتساب (رقم المتجر)" }].concat(g.filter(x => x.id !== "whatsapp").map(x => ({ id: x.id, label: (SI().byId[x.id] || {}).label || x.id })));
@@ -94,7 +93,7 @@ window.ChromeAdmin = (function () {
       acc("logo", "🏷️ الشعار (نصي / صورة)", F.c("header.logo.show", "إظهار الشعار") + '<div class="ca-chk">' + F.c("header.logo.text", "إظهار الشعار النصي") + F.c("header.logo.image", "إظهار صورة الشعار") + "</div>" + F.s("header.logo.link", "رابط الشعار", [["home", "الرئيسية"], ["none", "بدون رابط"]]) + '<div class="hint">صورة الشعار وحجمها من تبويب «المظهر».</div>',
         '<div class="grid2">' + F.col("header.logo.color", "لون الشعار النصي") + F.n("header.logo.size", "حجم الشعار النصي (بكسل)", 14, 60) + "</div>", h.logo.show) +
       acc("menu", "☰ العناوين", F.c("header.menu.show", "إظهار العناوين (على الشاشات الكبيرة)") + '<div class="hint">اختر لكل عنوان من القائمة: الرئيسية، <b>التصنيفات</b> (قائمة بتصنيفات المتجر وكل تصنيف يفتح صفحته)، <b>المتجر</b> (صفحة كل المنتجات)، <b>الفئات</b> (الأكثر طلباً / تخفيضات / جديدة وكل فئة تفتح صفحتها)، <b>المنتجات</b> (قائمة بكل المنتجات أو بمنتجات تختارها)، <b>حسابي</b> (صفحة الدخول أو إنشاء حساب)، أو أي عنوان من «عناوين الموقع» أو مخصص.</div>' + menuList("header.menu.items"),
-        '<div class="grid2">' + F.col("header.menu.color", "لون العناوين") + F.n("header.menu.size", "حجم الخط (بكسل)", 10, 28) + "</div>", h.menu.show) +
+        '<div class="grid2">' + F.col("header.menu.color", "لون العناوين") + F.col("header.menu.hover", "لون العنوان عند المرور") + F.n("header.menu.size", "حجم الخط (بكسل)", 10, 28) + F.s("header.menu.weight", "سماكة الخط", [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]]) + F.n("header.menu.gap", "المسافة بين العناوين (بكسل)", 0, 80) + F.col("header.menu.popbg", "خلفية القوائم المنسدلة") + F.col("header.menu.popcolor", "نص القوائم المنسدلة") + "</div>", h.menu.show) +
       acc("social", "🔗 أيقونات التواصل", F.c("header.social.show", "إظهار الأيقونات (قبل السلة)") + socialPick(),
         '<div class="grid2">' + F.s("header.social.style", "نمط الأيقونات", STY) + F.s("header.social.shape", "الشكل", SHP) + F.n("header.social.size", "الحجم (بكسل)", 12, 48) + F.col("header.social.color", "اللون (للنمط «لون النص»)") + "</div>", h.social.show) +
       acc("share", "📤 النشر", F.c("header.share.show", "إظهار زر النشر") + F.s("header.share.mode", "الشكل", [["icon", "أيقونة نشر"], ["text", "كلمة «انشر»"]]) + F.t("header.share.label", "نص الزر (عند «كلمة»)"),
@@ -144,7 +143,7 @@ window.ChromeAdmin = (function () {
       if (el.dataset.ch) { const a = S.cfg.share.channels; el.checked ? (!a.includes(el.dataset.ch) && a.push(el.dataset.ch)) : a.splice(a.indexOf(el.dataset.ch), 1); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
       if (el.dataset.sid) { const ids = S.cfg.header.social.ids = S.cfg.header.social.ids || [], i = ids.indexOf(el.dataset.sid); el.checked ? (i < 0 && ids.push(el.dataset.sid)) : (i >= 0 && ids.splice(i, 1)); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
       if (el.dataset.pk) { const row = get(el.dataset.pk); row.slugs = row.slugs || []; const i = row.slugs.indexOf(el.dataset.v); el.checked ? (i < 0 && row.slugs.push(el.dataset.v)) : (i >= 0 && row.slugs.splice(i, 1)); const sm = el.closest("details").querySelector("summary b"); if (sm) sm.textContent = "(" + (row.slugs.length || "الكل") + ")"; preview(); return; }
-      if (el.dataset.mk) { const key = el.dataset.mk, row = get(key), v = el.value; if (v[0] === "@") { row.kind = v.slice(1); delete row.url; delete S.cust[key]; if (row.kind !== "prods") delete row.slugs; } else { delete row.kind; delete row.slugs; if (v === "__c") { S.cust[key] = 1; row.url = ""; } else { delete S.cust[key]; row.url = v; if (!row.label) { const r = (S.cfg.links || []).find(q => q.url === v); if (r) row.label = r.label; } } } render(); return; }
+      if (el.dataset.mcadd) { if (!el.value) return; const arr = get(el.dataset.mcadd); arr.push({ kind: el.value, label: "" }); S.mcOpen = el.dataset.mcadd + "." + (arr.length - 1); render(); return; }
       if (el.dataset.lk) { const key = el.dataset.lk, row = get(key); if (el.value === "__c") { S.cust[key] = 1; row.url = ""; } else { delete S.cust[key]; row.url = el.value; if (!row.label) { const r = (S.cfg.links || []).find(q => q.url === el.value); if (r) row.label = r.label; } } render(); return; }
       if (el.dataset.addpage) { const [u, t] = String(el.value).split("|"); if (u) { S.cfg.links.push({ label: t, url: u }); } render(); return; }
       const p = el.dataset.p; if (!p) return;
@@ -162,14 +161,15 @@ window.ChromeAdmin = (function () {
       }
     });
     root.addEventListener("click", e => {
+      const mh = e.target.closest("[data-mcopen]"); if (mh && !e.target.closest("button")) { S.mcOpen = S.mcOpen === mh.dataset.mcopen ? "" : mh.dataset.mcopen; render(); return; }
       const b = e.target.closest("button"); if (!b) return;
       if (b.dataset.clr) { put(b.dataset.clr, ""); render(); }
       else if (b.dataset.addsoc) { S.cfg.social.push({ id: b.dataset.addsoc, url: "" }); render(); setTimeout(() => { const ins = root.querySelectorAll("[data-soc]"); ins[ins.length - 1] && ins[ins.length - 1].focus(); }, 30); }
-      else if (b.dataset.del) { const [p, i] = b.dataset.del.split(":"); get(p).splice(+i, 1); render(); }
+      else if (b.dataset.del) { S.mcOpen = ""; const [p, i] = b.dataset.del.split(":"); get(p).splice(+i, 1); render(); }
       else if (b.dataset.cic) { S.cfg.header.cart.icon = b.dataset.cic; render(); }
-      else if (b.dataset.addmenu) { get(b.dataset.addmenu).push({ kind: "home", label: "" }); render(); }
+      else if (b.dataset.addmenu) { const arr = get(b.dataset.addmenu); arr.push({ label: "", url: "" }); S.mcOpen = b.dataset.addmenu + "." + (arr.length - 1); render(); }
       else if (b.dataset.add) { get(b.dataset.add).push({ label: "", url: "" }); render(); }
-      else if (b.dataset.mv) { let [k, i, d] = b.dataset.mv.split(":"); k = k.replace("|", ""); i = +i; d = +d; const a = get(k), j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; render(); }
+      else if (b.dataset.mv) { S.mcOpen = ""; let [k, i, d] = b.dataset.mv.split(":"); k = k.replace("|", ""); i = +i; d = +d; const a = get(k), j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; render(); }
     });
   }
 
