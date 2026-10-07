@@ -7,6 +7,27 @@ async function waitComplete(tabId, ms) {
   const t0 = Date.now(); while (Date.now() - t0 < ms) { const t = await chrome.tabs.get(tabId).catch(() => null); if (!t) throw new Error("أُغلقت النافذة"); if (t.status === "complete") return; await sleep(300); }
 }
 const run = (tabId, func, args) => chrome.scripting.executeScript({ target: { tabId }, func, args: args || [] }).then(r => r && r[0] && r[0].result);
+/* دمج ملفات CSS الخارجية داخل الصفحة: نجلبها من الخلفية (صلاحية المضيف تتجاوز CORS) ونحوّل روابط url() إلى مطلقة
+   ليتمكّن المستنسخ من قراءة قواعد :hover و@keyframes (لا يُسمح بقراءة القواعد من ملف خارجي مختلف المصدر) */
+const abs = (u, base) => { try { return new URL(u, base).href; } catch (e) { return u; } };
+async function fetchCss(href, depth) {
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
+  try {
+    const r = await fetch(href, { credentials: "omit", signal: ctl.signal }); if (!r.ok) return "";
+    let t = await r.text(); if (t.length > 1500000) return "";
+    if (depth < 2) { const imps = [...t.matchAll(/@import\s+(?:url\()?\s*(["']?)([^"')\s;]+)\1\s*\)?[^;]*;/g)]; for (const m of imps) { const sub = await fetchCss(abs(m[2], href), depth + 1); t = t.replace(m[0], sub); } }
+    return t.replace(/url\(\s*(["']?)(?!data:|https?:|\/\/|#|about:)([^)"']+?)\1\s*\)/gi, (m, q, u) => "url(" + q + abs(u, href) + q + ")");
+  } catch (e) { return ""; } finally { clearTimeout(to); }
+}
+async function inlineSheets(tabId, frameId) {
+  const links = await run2(tabId, frameId, () => [...document.querySelectorAll('link[rel~="stylesheet"][href]')].map((l, i) => { l.setAttribute("data-aly-i", i); return { i, href: l.href, media: l.media || "" }; }));
+  if (!links || !links.length) return;
+  const css = []; let total = 0;
+  for (const l of links.slice(0, 40)) { if (total > 4000000) break; const t = await fetchCss(l.href, 0); total += t.length; css.push({ i: l.i, t, media: l.media }); }
+  await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, args: [css], func: list => {
+    for (const c of list) { const l = document.querySelector('link[data-aly-i="' + c.i + '"]'); if (!l || !c.t) continue; const st = document.createElement("style"); st.setAttribute("data-aly-href", l.href); if (c.media && c.media !== "all") st.media = c.media; st.textContent = c.t; l.replaceWith(st); }
+  } }).catch(() => { });
+}
 const run2 = (tabId, frameId, func) => chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, func }).then(r => r && r[0] && r[0].result);
 async function grab(url, width) {
   if (!/^https?:\/\//i.test(url)) throw new Error("رابط غير صالح");
@@ -48,6 +69,7 @@ async function grab(url, width) {
     m = await measure(); const { fr, top, best } = m;
     if (!fr.length) throw new Error("لم تُقرأ الصفحة");
     if (best.text < 60 && best.imgs < 3) throw new Error("الصفحة فارغة في كروم (نص " + best.text + " وعناصر " + best.imgs + "، إطارات " + fr.length + "). قد يكون الموقع يمنع القراءة الآلية أو يحتاج تسجيل دخول");
+    await inlineSheets(tabId, best.frameId).catch(() => { });
     const out = await run2(tabId, best.frameId, () => {
       document.querySelectorAll("style").forEach(s => { try { if (s.sheet && s.sheet.cssRules && s.sheet.cssRules.length) s.textContent = [...s.sheet.cssRules].map(r => r.cssText).join("\n"); } catch (e) { } });
       try { if (document.adoptedStyleSheets && document.adoptedStyleSheets.length) { const st = document.createElement("style"); st.textContent = document.adoptedStyleSheets.map(sh => [...sh.cssRules].map(r => r.cssText).join("\n")).join("\n"); document.head.appendChild(st); } } catch (e) { }

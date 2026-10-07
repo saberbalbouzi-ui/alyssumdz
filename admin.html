@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.34.7">
+<meta name="admin-version" content="1.35.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.34.7"></script>
-<script src="assets/js/chrome-admin.js?v=1.34.7"></script>
-<script src="assets/js/admin-assistant.js?v=1.34.7"></script>
-<script src="assets/js/admin-update.js?v=1.34.7"></script>
+<script src="assets/js/ctl-help.js?v=1.35.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.35.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.35.0"></script>
+<script src="assets/js/admin-update.js?v=1.35.0"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -8329,6 +8329,7 @@ if(fade){ss.forEach(function(x,j){x.classList.toggle('on',j===0)})}run()});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.pb-ptabs button');if(!b)return;var box=b.closest('.pb-prod'),k=b.getAttribute('data-k');[].forEach.call(b.parentNode.children,function(x){x.classList.toggle('on',x===b)});[].forEach.call(box.querySelectorAll('.pb-pc'),function(c){var show=!k||(k.charAt(0)==='c'?c.getAttribute('data-c')===k.slice(2):(' '+c.getAttribute('data-t')+' ').indexOf(' '+k.slice(2)+' ')>-1);c.style.display=show?'':'none'})});
 window.addEventListener('message',function(e){if(e.origin!==location.origin||!e.data||!e.data.pbEmbedH)return;[].forEach.call(document.querySelectorAll('.pb-ofr'),function(f){if(f.contentWindow===e.source&&!f.closest('.pb-sz')&&f.getAttribute('data-auto')!=='0')f.style.height=Math.ceil(e.data.pbEmbedH)+'px'})});
 if(window.PRODUCTS){$('.pb-prod').forEach(function(n){try{n.innerHTML=__pbProducts(JSON.parse(n.getAttribute('data-pbp')),window.PRODUCTS,__pbBase,window.__pbMeta)}catch(e){}})}
+(function(){if(!window.matchMedia||!matchMedia('(hover:hover)').matches)return;$('.pb-fz').forEach(function(fz){var zs=[];$('[class*="hz-"]',fz).forEach(function(z){var m=(' '+z.className).match(/ hz-(z[0-9]+)/);if(m)zs.push({el:z,id:m[1],mem:$('.hzm-'+m[1],fz)})});if(!zs.length)return;var on={},raf=0,px=-1e5,py=-1e5;function upd(){raf=0;zs.forEach(function(o){var r=o.el.getBoundingClientRect(),hit=px>=r.left&&px<=r.right&&py>=r.top&&py<=r.bottom;if(hit!==!!on[o.id]){on[o.id]=hit;o.mem.forEach(function(m){m.classList.toggle('pb-hov',hit)})}})}fz.addEventListener('pointermove',function(e){px=e.clientX;py=e.clientY;if(!raf)raf=requestAnimationFrame(upd)});fz.addEventListener('pointerleave',function(){px=-1e5;py=-1e5;upd()})})})();
 })();`;
 
   /* تشغيل نماذج الاتصال في الصفحة المنشورة (يُحقن نصه كما هو): تحقق، إرسال إلى واتساب/بريد/رابط استقبال، حماية Honeypot + مهلة */
@@ -13756,6 +13757,144 @@ ${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">�
   return { after, hide, select };
 })();
 
+/* نسخ قالب — التقاط التأثيرات بدقة (ظلال، فلاتر، تدوير، شفافية، حركات @keyframes، حركات الظهور، التحويم)
+   يُستدعى من PBClone.extract: create(ctx) ثم pre() قبل المرور على العناصر، و el() بعد كل عنصر، و post() في النهاية.
+   التأثيرات تُكتب في خانة «CSS مخصص» لكل عنصر (set.css) فيمكن تعديلها من المطوّر؛ والتحويم على «بطاقة كاملة» يعمل
+   بمناطق تحويم (hz-/hzm-) يشغّلها سكربت صغير في الصفحة المنشورة (RUNTIME_JS). */
+const PBCloneFx = (() => {
+  const HOVER_PROPS = new Set(["transform", "translate", "scale", "rotate", "opacity", "filter", "backdrop-filter", "box-shadow", "text-shadow", "color", "background-color", "background", "border-color", "text-decoration-color", "letter-spacing", "-webkit-text-fill-color"]);
+  const BOX_PROPS = new Set(["transform", "translate", "scale", "rotate", "opacity", "filter", "backdrop-filter", "box-shadow"]);
+  const TEXT_PROPS = new Set(["color", "text-shadow", "text-decoration-color", "letter-spacing", "-webkit-text-fill-color"]);
+  const splitTop = (s, sep) => { const o = []; let d = 0, q = "", cur = ""; for (const ch of String(s || "")) { if (q) { cur += ch; if (ch === q) q = ""; continue; } if (ch === '"' || ch === "'") { q = ch; cur += ch; continue; } if (ch === "(" || ch === "[") d++; if (ch === ")" || ch === "]") d--; if (ch === sep && d === 0) { o.push(cur.trim()); cur = ""; } else cur += ch; } if (cur.trim()) o.push(cur.trim()); return o; };
+  /* box-shadow ← drop-shadow (يتبع شكل العنصر: دائرة/زوايا مدوّرة/صورة شفافة)؛ الانتشار (spread) والداخلي (inset) غير مدعومين */
+  function dropShadows(v) {
+    if (!v || v === "none") return "";
+    const out = []; for (const part of splitTop(v, ",")) { if (/\binset\b/.test(part)) continue; const cm = part.match(/rgba?\([^)]*\)|hsla?\([^)]*\)|#[0-9a-f]{3,8}\b/i), nums = (part.replace(cm ? cm[0] : "", "").match(/-?[\d.]+px|-?0(?![\d.])/g) || []).map(parseFloat); if (nums.length < 2) continue; const [x, y, b = 0, sp = 0] = nums; out.push(`drop-shadow(${x}px ${y}px ${Math.max(0, b + Math.max(0, sp))}px ${cm ? cm[0] : "rgba(0,0,0,.25)"})`); }
+    return out.join(" ");
+  }
+  /* اسم حركة ظهور ← إعداد المطوّر الجاهز */
+  function presetOf(name) {
+    const n = String(name || "").toLowerCase().replace(/[^a-z]/g, "");
+    if (/fade/.test(n)) return /up|bottom/.test(n) ? "fadeUp" : /down|top/.test(n) ? "fadeDown" : /left|right/.test(n) ? "slideStart" : "fadeIn";
+    if (/zoom/.test(n)) return "zoomIn";
+    if (/slide/.test(n)) return /up|bottom/.test(n) ? "fadeUp" : /down|top/.test(n) ? "fadeDown" : "slideStart";
+    return "";
+  }
+  const secs = v => { const n = parseFloat(v); return isFinite(n) ? (/ms$/.test(String(v).trim()) ? n / 1000 : n) : 0; };
+
+  function create(c) {
+    const { doc, win, W, out, add, col, px, r1, r2 } = c, S = { anims: new Map(), trans: new Map(), kf: new Map(), hover: [], own: new Map(), range: new Map(), zones: new Map(), zn: 0, stats: { shadow: 0, tshadow: 0, filter: 0, anim: 0, entr: 0, hover: 0, zone: 0 } };
+    const pass = (w, css) => { w.set.css = ((w.set.css ? w.set.css + "\n" : "") + css); };
+    const addCls = (w, k) => { if (!(" " + (w.set.cls || "") + " ").includes(" " + k + " ")) w.set.cls = ((w.set.cls || "") + " " + k).trim(); };
+    const geomOf = w => ({ x: (w.set.fx.d || 0) / 100 * W, y: w.set.fy.d || 0, w: (w.set.fwd.d || 0) / 100 * W, h: w.set.fh.d || 0 });
+
+    function eachRule(rules, fn) {
+      for (const r of rules) {
+        try {
+          if (r.type === 1) fn(r);
+          else if (r.type === 7) { if (!S.kf.has(r.name)) S.kf.set(r.name, r); }
+          else if (r.type === 4) { const cond = (r.conditionText || (r.media && r.media.mediaText) || ""); if (!cond || win.matchMedia(cond).matches) eachRule(r.cssRules, fn); }
+          else if (r.cssRules && r.type !== 5) eachRule(r.cssRules, fn);
+        } catch (e) { }
+      }
+    }
+    /* قبل المرور: نوقف تجميد الحركات لحظة لقراءة الحركات/الانتقالات الفعلية وقواعد :hover و@keyframes */
+    function pre() {
+      const fz = doc.getElementById("pbx-freeze"); if (fz) fz.disabled = true;
+      try {
+        for (const sh of doc.styleSheets) { try { eachRule(sh.cssRules, r => { if (/:hover/i.test(r.selectorText || "")) S.hover.push(r); }); } catch (e) { } }
+        let n = 0; for (const el of doc.body ? doc.body.querySelectorAll("*") : []) {
+          if (++n > 7000) break; const cs = win.getComputedStyle(el), an = cs.animationName;
+          if (an && an !== "none" && cs.animationPlayState !== "paused") S.anims.set(el, { names: splitTop(an, ","), dur: splitTop(cs.animationDuration, ","), delay: splitTop(cs.animationDelay, ","), iter: splitTop(cs.animationIterationCount, ","), dir: splitTop(cs.animationDirection, ","), fill: splitTop(cs.animationFillMode, ","), tf: splitTop(cs.animationTimingFunction, ",") });
+          const td = cs.transitionDuration; if (td && !/^(0s,?\s*)+$/.test(td) && cs.transitionProperty !== "none") S.trans.set(el, cs.transition);
+        }
+      } catch (e) { }
+      if (fz) fz.disabled = false;
+    }
+    /* الظلال والفلاتر والشفافية والتدوير والحركات لعنصر واحد: i0..own = عناصره المباشرة، i0..i1 = عناصره مع أبنائه */
+    function el(e, i0, own, i1) {
+      S.range.set(e, [i0, i1]); S.own.set(e, [i0, own]);
+      const mine = out.slice(i0, own), all = out.slice(i0, i1); if (!all.length) return;
+      const cs = win.getComputedStyle(e), paint = mine.find(w => w.type === "shape" || w.type === "image" || w.type === "button"), txts = mine.filter(w => w.type === "text" || w.type === "heading" || w.type === "button");
+      const fl = []; const ds = dropShadows(cs.boxShadow); if (ds && paint && cs.display !== "inline") { fl.push(ds); S.stats.shadow++; }
+      if (cs.filter && cs.filter !== "none") { fl.unshift(cs.filter); S.stats.filter++; }
+      if (fl.length && paint) pass(paint, `selector{filter:${fl.join(" ")}}`);
+      if (cs.backdropFilter && cs.backdropFilter !== "none" && (paint || mine[0])) { const t = paint || mine[0]; pass(t, `selector{backdrop-filter:${cs.backdropFilter};-webkit-backdrop-filter:${cs.backdropFilter}}`); S.stats.filter++; }
+      if (cs.mixBlendMode && cs.mixBlendMode !== "normal") mine.forEach(w => pass(w, `selector{mix-blend-mode:${cs.mixBlendMode}}`));
+      if (cs.textShadow && cs.textShadow !== "none") txts.forEach(w => { const sel = w.type === "button" ? "selector .pb-btn" : "selector.pb-w .pb-t,selector.pb-w .pb-t *"; pass(w, `${sel}{text-shadow:${cs.textShadow}!important}`); S.stats.tshadow++; });
+      const o = parseFloat(cs.opacity); if (isFinite(o) && o < 0.98 && o > 0) all.forEach(w => { w.set.op = r2(Math.max(.02, (w.set.op != null ? w.set.op : 1) * o)); });
+      // تدوير عنصر مفرد: نعيد القياس من حجم التخطيط الحقيقي (المستطيل المقاس يشمل التدوير) ثم نضع rot
+      if (cs.transform && cs.transform !== "none" && mine.length === 1 && e.offsetWidth) {
+        const m = cs.transform.match(/matrix\(([^)]+)\)/); if (m) { const [a, b, cc, d] = m[1].split(",").map(parseFloat), sx = Math.hypot(a, b), sy = (a * d - b * cc) / (sx || 1), ang = Math.atan2(b, a) * 180 / Math.PI;
+          if (Math.abs(ang) > .5 && Math.abs(ang) < 359.5 && Math.abs(sx - 1) < .03 && Math.abs(sy - 1) < .03) { const w = mine[0], g = geomOf(w), cx = g.x + g.w / 2, cy = g.y + g.h / 2, w0 = e.offsetWidth, h0 = e.offsetHeight; w.set.fx = { d: r2((cx - w0 / 2) / W * 100) }; w.set.fy = { d: Math.round(cy - h0 / 2) }; w.set.fwd = { d: r2(w0 / W * 100) }; w.set.fh = { d: Math.max(2, Math.round(h0)) }; w.set.rot = Math.round(ang * 10) / 10; } } }
+      animation(e, cs, all);
+      entrance(e, all);
+    }
+    function origin(w, e) {      // مركز الحاوية بالنسبة لإطار العنصر (ليدور/يكبّر المحتوى حول مركز البطاقة لا مركز كل عنصر)
+      const r = e.getBoundingClientRect(), g = geomOf(w); return `${Math.round(r.left + r.width / 2 - g.x)}px ${Math.round(r.top + r.height / 2 - g.y)}px`;
+    }
+    function animation(e, cs, all) {
+      const a = S.anims.get(e); if (!a) return;
+      a.names.forEach((nm, i) => {
+        const rule = S.kf.get(nm); if (!rule) return; const dur = secs(a.dur[i % a.dur.length]), delay = secs(a.delay[i % a.delay.length]), it = a.iter[i % a.iter.length], dir = a.dir[i % a.dir.length], fill = a.fill[i % a.fill.length], tf = a.tf[i % a.tf.length]; if (!dur) return;
+        const preset = it === "1" ? presetOf(nm) : "";
+        if (preset) { all.forEach(w => { if (!w.set.anim) { w.set.anim = preset; w.set.animDur = r1(Math.min(3, Math.max(.1, dur))); w.set.animDelay = r1(Math.min(5, delay)); } }); S.stats.entr++; return; }
+        const txt = rule.cssText; if (txt.length > 8000) return; const nn = "pbk-" + nm.replace(/[^\w-]/g, "_"), kfCss = txt.replace(/^@(-webkit-)?keyframes\s+[^{]+/, "@keyframes " + nn), needO = /scale|rotate|skew/.test(txt) && all.length > 1;
+        all.forEach((w, k) => pass(w, (S.kfDone && S.kfDone.has(nn) && all.length > 6 ? "" : kfCss + "\n") + `selector{animation:${nn} ${dur}s ${tf} ${delay}s ${it === "infinite" ? "infinite" : it} ${dir} ${fill};${needO ? "transform-origin:" + origin(w, e) + ";" : ""}}`));
+        (S.kfDone = S.kfDone || new Set()).add(nn); S.stats.anim++;
+      });
+    }
+    function entrance(e, all) {      // مكتبات حركة الظهور بالتمرير (AOS / WOW / animate.css / Elementor) ← حركات المطوّر الجاهزة
+      let p = "", dur = .6, delay = 0; const g = n => e.getAttribute(n);
+      if (g("data-aos")) { p = presetOf(g("data-aos")); dur = secs((g("data-aos-duration") || "600") + "ms"); delay = secs((g("data-aos-delay") || "0") + "ms"); }
+      else if (e.classList.contains("wow") || /\banimate__/.test(e.className || "")) { const cl = [...e.classList].find(k => presetOf(k)); if (cl) { p = presetOf(cl); dur = secs(g("data-wow-duration") || "1s"); delay = secs(g("data-wow-delay") || "0s"); } }
+      else if (g("data-settings") && /animation/.test(g("data-settings"))) { try { const st = JSON.parse(g("data-settings")), nm = st._animation || st.animation; if (nm) { p = presetOf(nm); delay = secs((st._animation_delay || 0) + "ms"); } } catch (x) { } }
+      if (p) { all.forEach(w => { if (!w.set.anim) { w.set.anim = p; w.set.animDur = r1(Math.min(3, Math.max(.1, dur))); w.set.animDelay = r1(Math.min(5, delay)); } }); S.stats.entr++; }
+    }
+    /* التحويم: القواعد التي فيها :hover تُحوَّل إلى CSS على عناصر المطوّر؛ إن كان المحوَّم عنصراً واحداً فـ:hover العادي، وإلا منطقة تحويم تحرّك أعضاءها معاً */
+    function hoverDecls(style) { const d = {}; for (let i = 0; i < style.length; i++) { const p = style[i]; if (HOVER_PROPS.has(p)) d[p] = style.getPropertyValue(p).trim(); } if (d.background && !c.col(d.background)) delete d.background; if (d.background) { d["background-color"] = d.background; delete d.background; } return d; }
+    function ensureZone(zoneEl) {
+      let z = S.zones.get(zoneEl); if (z) return z; const id = "z" + (++S.zn), rg = S.own.get(zoneEl);
+      const paint = rg ? out.slice(rg[0], rg[1]).find(w => (w.type === "shape" || w.type === "image") && true) : null;
+      let wdg = paint; if (!wdg) { const r = zoneEl.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return null; wdg = add("shape", { x: r.left, y: r.top, w: r.width, h: r.height }, { shape: "rect", fill: "", outline: false, sw: 0, keep: false, css: "selector{pointer-events:none}" }); if (!wdg) return null; }
+      addCls(wdg, "hz-" + id); z = { id, w: wdg }; S.zones.set(zoneEl, z); S.stats.zone++; return z;
+    }
+    function post() {
+      const plans = new Map(); let guard = 0;
+      for (const rule of S.hover) {
+        if (++guard > 4000) break; const style = rule.style, decl = hoverDecls(style); if (!Object.keys(decl).length) continue;
+        for (const sel of splitTop(rule.selectorText, ",")) {
+          if (/::|:before|:after|:active|:focus|:visited/i.test(sel)) continue; const idx = sel.search(/:hover/i); if (idx < 0) continue;
+          const last = sel.toLowerCase().lastIndexOf(":hover"), pre = sel.slice(0, last), post = sel.slice(last + 6), m = post.match(/^[^\s>+~]*/), same = m ? m[0] : "", rest = post.slice(same.length).trim();
+          if (/^[+~]/.test(rest) || /:hover/i.test(pre + rest)) continue;
+          const zoneSel = (pre + same).trim() || "*", subjSel = rest ? zoneSel + " " + rest : zoneSel; let subs; try { subs = doc.querySelectorAll(subjSel); } catch (x) { continue; }
+          let n = 0; for (const s of subs) { if (++n > 300) break; if (!S.range.has(s)) continue; let zone = s; if (rest) { try { zone = s.closest(zoneSel); } catch (x) { zone = null; } } if (!zone || !S.range.has(zone)) continue;
+            const key = plans.get(s) || new Map(); plans.set(s, key); const cur = key.get(zone) || { zone, decl: {} }; Object.assign(cur.decl, decl); key.set(zone, cur); }
+        }
+      }
+      for (const [subj, zmap] of plans) for (const { zone, decl } of zmap.values()) emitHover(subj, zone, decl);
+    }
+    function emitHover(subj, zone, decl) {
+      const [a0, a1] = S.range.get(subj), [o0, o1] = S.own.get(subj) || [a0, a1], all = out.slice(a0, a1), mine = out.slice(o0, o1); if (!all.length) return;
+      const native = zone === subj && all.length === 1; let zid = ""; if (!native) { const z = ensureZone(zone); if (!z) return; zid = z.id; }
+      const H = native ? ":hover" : ".pb-hov", tr = S.trans.get(subj) || S.trans.get(zone) || "all .3s ease";
+      const hasBox = Object.keys(decl).some(k => BOX_PROPS.has(k)), hasTxt = Object.keys(decl).some(k => TEXT_PROPS.has(k)), hasBg = decl["background-color"] != null || decl["border-color"] != null;
+      const ds = decl["box-shadow"] ? dropShadows(decl["box-shadow"]) : "", paintOwn = mine.find(w => w.type === "shape" || w.type === "image" || w.type === "button");
+      for (const w of all) {
+        const fl = []; if (decl.filter) fl.push(decl.filter); const dsw = ds && w === paintOwn ? ds : ""; if (dsw) fl.push(dsw);
+        const isMine = mine.includes(w); if (!native) { addCls(w, "hzm-" + zid); }
+        const L = [], B = [];
+        if (hasBox) { const pureScale = /scale/.test((decl.transform || "") + (decl.scale || "")) && !/translate|rotate|skew/.test((decl.transform || "") + (decl.rotate || "")), tgt = ((w.type === "image" || w.type === "shape") && pureScale) ? (w.type === "image" ? "selector .pb-im" : "selector .pb-svg") : "selector"; const body = []; for (const p of ["transform", "translate", "scale", "rotate", "opacity", "backdrop-filter"]) if (decl[p]) body.push(`${p}:${decl[p]}`); if (fl.length && tgt === "selector") body.push("filter:" + fl.join(" ")); if (body.length) { L.push(`${tgt}${H}{${body.join(";")}}`); if (tgt !== "selector") B.push(`selector{overflow:hidden}`); B.push(`${tgt}{transition:${tr}}`); if (/scale|rotate|skew/.test((decl.transform || "") + (decl.scale || "") + (decl.rotate || "")) && all.length > 1 && tgt === "selector") B.push(`selector{transform-origin:${origin(w, zone)}}`); if (dsw && !(w.set.css || "").includes("drop-shadow")) B.push(`selector{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}`); } }
+        if (hasTxt && (w.type === "text" || w.type === "heading" || w.type === "button")) { const tgt = w.type === "button" ? "selector" + H + " .pb-btn" : `selector.pb-w${H} .pb-t,selector.pb-w${H} .pb-t *`, body = []; for (const p of ["color", "text-shadow", "-webkit-text-fill-color", "text-decoration-color", "letter-spacing"]) if (decl[p]) body.push(`${p}:${decl[p]}!important`); if (body.length) { L.push(`${tgt}{${body.join(";")}}`); B.push(`selector .pb-t,selector .pb-btn{transition:color .3s,text-shadow .3s}`); } }
+        if (hasBg && isMine) { const bg = decl["background-color"], bd = decl["border-color"]; if (w.type === "button") { const body = []; if (bg) body.push(`background-color:${bg}!important;background-image:none!important`); if (bd) body.push(`border-color:${bd}!important`); L.push(`selector${H} .pb-btn{${body.join(";")}}`); B.push(`selector .pb-btn{transition:${tr}}`); } else if (w.type === "shape") { if (bg) L.push(`selector${H} .pb-svg *{fill:${bg}!important}`); if (bd) L.push(`selector${H} .pb-svg *{stroke:${bd}!important}`); B.push(`selector .pb-svg *{transition:fill .3s,stroke .3s}`); } }
+        if (L.length) { pass(w, B.concat(L).join("\n")); S.stats.hover++; }
+      }
+    }
+    return { pre, el, post, stats: S.stats, _S: S };
+  }
+  return { create, dropShadows, presetOf, splitTop };
+})();
+
 /* ═══ نسخ قالب: يفتح موقعاً (برابطه) أو صورة (لقطة شاشة) في نافذة بحدّ سفلي قابل للتحجيم، ثم يحوّل ما فيها إلى عناصر المطوّر القابلة للتعديل ═══
    الرابط: يُجلب HTML (مباشرة أو عبر وسيط CORS) ويُعرض في إطار معزول بلا سكربتات، ثم يُقرأ تخطيطه الحقيقي (المواضع والأحجام والألوان والخطوط)
    فيُبنى قسم حرّ «بتحجيم تلقائي» عناصره: شكل/صورة/نص/عنوان/زر بنفس أماكنها.
@@ -13822,7 +13961,7 @@ const PBClone = (function () {
     d.querySelectorAll("source[data-srcset]").forEach(s => s.setAttribute("srcset", s.getAttribute("data-srcset")));
     d.querySelectorAll("[data-bg],[data-background-image]").forEach(n => { const b = n.getAttribute("data-bg") || n.getAttribute("data-background-image"); if (b && !/gradient/.test(n.style.backgroundImage || "")) n.style.backgroundImage = "url('" + b.replace(/'/g, "%27") + "')"; });
     d.querySelectorAll("base").forEach(b => b.remove()); const base = d.createElement("base"); base.href = url; (d.head || d.documentElement).prepend(base);
-    const css = d.createElement("style"); css.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}[data-aos],.aos-init,.aos-animate,.reveal,.wow,.fade-in,.animate__animated,.scroll-reveal,.sr{opacity:1!important;transform:none!important;visibility:visible!important}html{scroll-behavior:auto}";
+    const css = d.createElement("style"); css.id = "pbx-freeze"; css.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}[data-aos],.aos-init,.aos-animate,.reveal,.wow,.fade-in,.animate__animated,.scroll-reveal,.sr{opacity:1!important;transform:none!important;visibility:visible!important}html{scroll-behavior:auto}";
     (d.head || d.documentElement).appendChild(css);
     return "<!doctype html>" + d.documentElement.outerHTML;
   }
@@ -13866,7 +14005,13 @@ const PBClone = (function () {
     const abs = u => { try { return u ? new URL(u, base).href : ""; } catch (e) { return ""; } };
     const rectOf = el => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; };
     const geom = (w, r) => { w.set.fx = { d: r2(r.x / W * 100) }; w.set.fy = { d: Math.round(r.y) }; w.set.fwd = { d: r2(r.w / W * 100) }; w.set.fh = { d: Math.max(2, Math.round(r.h)) }; return w; };
-    const add = (type, r, props) => { if (out.length > 800) { stop = true; return null; } const w = PB.mkFree(type, 0, 0, ++z); Object.assign(w.set, props || {}); delete w.set.mh; geom(w, r); out.push(w); return w; };
+    const radCtx = [];
+    const clipCorners = (w, r) => {
+      if (!radCtx.length || (w.type !== "shape" && w.type !== "image")) return; const T = 2, base = (w.set.rad && w.set.rad.d) || 0, c = [base, base, base, base];
+      for (const k of radCtx) { const R = k.r, q = k.crad, L = Math.abs(r.x - R.x) < T, Rt = Math.abs(r.x + r.w - (R.x + R.w)) < T, Tp = Math.abs(r.y - R.y) < T, B = Math.abs(r.y + r.h - (R.y + R.h)) < T; if (L && Tp) c[0] = Math.max(c[0], q[0]); if (Rt && Tp) c[1] = Math.max(c[1], q[1]); if (Rt && B) c[2] = Math.max(c[2], q[2]); if (L && B) c[3] = Math.max(c[3], q[3]); }
+      const half = Math.min(r.w, r.h) / 2; if (c.some(v => v > base + .5)) w.set.radc = c.map(v => Math.round(Math.min(v, half)));
+    };
+    const add = (type, r, props) => { if (out.length > 800) { stop = true; return null; } const w = PB.mkFree(type, 0, 0, ++z); Object.assign(w.set, props || {}); delete w.set.mh; geom(w, r); clipCorners(w, r); out.push(w); return w; };
     const clipY = r => r.y + r.h > limit ? { x: r.x, y: r.y, w: r.w, h: Math.max(1, limit - r.y) } : r;
     const cornerPx = (v, r) => { const t = String(v || "0").trim().split(/\s+/); const f = (tok, base) => /%$/.test(tok) ? parseFloat(tok) / 100 * base : px(tok); return Math.min(f(t[0], r.w), f(t[1] || t[0], r.h)); };
     const radiusOf = (cs, r) => { const half = Math.min(r.w, r.h) / 2, v = ["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map(k => Math.min(Math.max(0, cornerPx(cs["border" + k + "Radius"], r)), half)).sort((a, b) => a - b); return (v[1] + v[2]) / 2; };      // وسيط الزوايا الأربع (نسبة % وقيم بيضاوية مدعومة)
@@ -13902,7 +14047,7 @@ const PBClone = (function () {
       const bw = ["Top", "Right", "Bottom", "Left"].map(s => px(cs["border" + s + "Width"]) * (cs["border" + s + "Style"] !== "none" && cs["border" + s + "Style"] !== "hidden" ? 1 : 0)), bc = col(cs.borderTopColor), brd = bw[0] >= 1 && bw.every(v => Math.abs(v - bw[0]) < .5) && bc && bc.a > .05 ? { w: bw[0], c: bc } : null;
       const hasFill = fill && fill.a > .03; if (!hasFill && !lay.length && !brd) return;
       if (tag === "html") return; if (tag === "body") { if (hasFill) bodyBg = hex(fill); if (!lay.length) return; }
-      if (vr.w < 3 || vr.h < 3) return; const rad = radiusOf(cs, r), mn = Math.min(r.w, r.h), ell = rad >= mn / 2 * .98 && Math.abs(r.w - r.h) < 3, shp = { shape: ell ? "ellipse" : "rect", keep: false, outline: false, rx: ell ? 0 : Math.min(50, r2(rad / (mn || 1) * 100)) };
+      if (vr.w < 3 || vr.h < 3) return; const rad = radiusOf(cs, r), mn = Math.min(r.w, r.h), ell = rad >= mn / 2 * .98 && Math.abs(r.w - r.h) < 3, shp = { shape: ell ? "ellipse" : "rect", keep: false, outline: false, rx: 0 }; if (!ell && rad >= 1) shp.rad = { d: Math.round(Math.min(rad, mn / 2)) };
       if (tag !== "body" && (hasFill || brd)) { const p = Object.assign({}, shp); if (hasFill) { p.fill = hex(fill); if (fill.a < 1) p.op = r2(fill.a); } else { p.fill = ""; p.outline = true; } if (brd) { p.stroke = hex(brd.c); p.sw = Math.max(1, Math.round(brd.w)); } else p.sw = 0; add("shape", clipY(vr), p); }
       lay.slice().reverse().forEach(L => {      // طبقات الخلفية من الأسفل للأعلى
         if (/gradient\(/.test(L)) { const g = cssGrad(L, r, vr); if (g) add("shape", clipY(vr), Object.assign({}, shp, { fgr: g, fill: "", sw: 0 })); return; }
@@ -13914,7 +14059,7 @@ const PBClone = (function () {
         c.querySelectorAll("script,foreignObject").forEach(n => n.remove()); c.querySelectorAll("use").forEach(u => { const id = (u.getAttribute("href") || u.getAttribute("xlink:href") || "").replace(/^#/, ""); const ref = id && doc.getElementById(id); if (ref) { let dd = c.querySelector("defs"); if (!dd) { dd = doc.createElementNS("http://www.w3.org/2000/svg", "defs"); c.prepend(dd); } if (!dd.querySelector("#" + CSS.escape(id))) dd.appendChild(ref.cloneNode(true)); } });
         const cl = col(cs.color); let s = new XMLSerializer().serializeToString(c).replace(/currentColor/gi, cl ? hex(cl) : "#000"); if (s.length > 90000) return ""; return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s); } catch (e) { return ""; }
     }
-    function visit(el, clip, anchor) {
+    function visit0(el, clip, anchor) {
       if (stop || ++count > 5000) return; const tag = el.tagName.toLowerCase(); if (SKIP.has(tag)) return;
       const cs = win.getComputedStyle(el); if (cs.display === "none") return; if (cs.opacity === "0" && tag !== "body" && tag !== "html") return;
       const a = tag === "a" ? el : anchor, r = rectOf(el), contents = cs.display === "contents";
@@ -13936,13 +14081,20 @@ const PBClone = (function () {
         if (tag !== "body" && tag !== "html" && textBlock(el)) { emitText(el, cs, r, clip, a); return; }
       }
       // أبناء العنصر (نص مباشر بين عناصر كتلية: يُلفّ بمدى)
+      ownEnd.set(el, out.length);
       const ownClip = tag === "html" || tag === "body" ? clip : (cs.overflowX !== "visible" || cs.overflowY !== "visible") ? (inter(r, clip) || { x: 0, y: 0, w: 0, h: 0 }) : clip;
       if (ownClip.w <= 0 || ownClip.h <= 0) return;
+      const crad = ["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map(k => Math.max(0, cornerPx(cs["border" + k + "Radius"], r))), clips = tag !== "html" && tag !== "body" && (cs.overflowX !== "visible" || cs.overflowY !== "visible") && crad.some(v => v >= 1); if (clips) radCtx.push({ r, crad });      // حاوية تقصّ بأركان مدوّرة: أبناؤها الملاصقون لأركانها يرثون التدوير
       for (const c of el.childNodes) { if (c.nodeType === 1) visit(c, ownClip, a); else if (c.nodeType === 3 && c.nodeValue.trim() && !hidden && !contents) { const rg = doc.createRange(); rg.selectNodeContents(c); const rc = [...rg.getClientRects()]; if (!rc.length || rc[0].top >= limit) continue; const wrap = doc.createElement("span"); wrap.textContent = c.nodeValue; const tops = [...new Set(rc.map(q => Math.round(q.top / 3)))].length, f = rc.reduce((m, q) => q.top < m.top ? q : m, rc[0]), fs = px(cs.fontSize) || 16, lhPx = cs.lineHeight === "normal" ? fs * 1.3 : px(cs.lineHeight) || fs * 1.3, x0 = Math.min(...rc.map(q => q.left)), x1 = Math.max(...rc.map(q => q.right)), props = textProps(cs, lhPx);
           add("text", { x: Math.max(0, x0 - 1), y: f.top - Math.max(0, (lhPx - f.height) / 2), w: Math.min(W, x1 - x0 + Math.max(6, (x1 - x0) * .03)), h: tops * lhPx }, Object.assign(props, { html: "<p>" + esc(c.nodeValue.replace(/\s+/g, " ").trim()) + "</p>" })); } }
+      if (clips) radCtx.pop();
     }
+    const FXON = !opt.noFx && typeof PBCloneFx !== "undefined", ownEnd = new Map(), fx = FXON ? PBCloneFx.create({ doc, win, W, out, add, col, px, r1, r2 }) : null;
+    function visit(el, clip, anchor) { const i0 = out.length; visit0(el, clip, anchor); const i1 = out.length; if (fx && i1 > i0) { try { fx.el(el, i0, ownEnd.has(el) ? ownEnd.get(el) : i1, i1); } catch (e) { console.warn("fx", e); } } }
+    if (fx) { try { fx.pre(); } catch (e) { console.warn("fx.pre", e); } }
     visit(doc.documentElement, { x: 0, y: 0, w: W, h: limit }, null);
-    return { widgets: out, bg: bodyBg, truncated: stop || count > 5000 };
+    if (fx) { try { fx.post(); } catch (e) { console.warn("fx.post", e); } }
+    return { widgets: out, bg: bodyBg, truncated: stop || count > 5000, fx: fx ? fx.stats : null };
   }
 
   /* ───────── بناء الصفحة وفتحها في المحرّر ───────── */
@@ -13965,12 +14117,13 @@ const PBClone = (function () {
     async function work() { while (i < imgs.length) { const w = imgs[i++], u = w.set.src; st("حفظ الصور في موقعك… " + (done + 1) + "/" + imgs.length); try { if (!cache.has(u)) cache.set(u, (async () => { const b = await fetchBlob(u); return b ? await A().uploadBlob(b, "clone", { max: 1920 }) : null; })()); const p = await cache.get(u); if (p) w.set.src = p; } catch (e) { } done++; } }
     await Promise.all([work(), work(), work()]); return done;
   }
+  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
     await saveImages(res.widgets, $("cl-save") && $("cl-save").checked);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
-    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
+    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
   }
 
   /* ───────── وضع الصورة: OCR ───────── */
@@ -14085,7 +14238,7 @@ const PBClone = (function () {
     if (!keep) for (const wl of wipeList) { const b = { x: Math.round(wl.b.x), y: Math.round(wl.b.y), w: Math.round(wl.b.w), h: Math.round(wl.b.h) }; fillRing(ctx, ctx.getImageData(0, 0, dw, H).data, dw, H, b, null); }
     st("حفظ الصورة الخلفية…"); const blob = await toBlob(cv, "image/webp", .92); let src = ""; try { src = await A().uploadBlob(blob, "clone-bg", { max: 2000 }); } catch (e) { src = cv.toDataURL("image/jpeg", .85); }
     mk("image", 0, 0, dw, H, { src: keep ? await (async () => { try { return await A().uploadBlob(await toBlob(orig, "image/webp", .92), "clone-bg", { max: 2000 }); } catch (e) { return orig.toDataURL("image/jpeg", .85); } })() : src, alt: "", fit: "fill" });
-    for (const s0 of shapes) { const isBtn = false; mk("shape", s0.x, s0.y, s0.w, s0.h, { shape: s0.kind, keep: false, outline: false, fill: "#" + s0.color.map(v => v.toString(16).padStart(2, "0")).join(""), sw: 0, rx: s0.kind === "rect" ? Math.min(50, r2(s0.rad / (Math.min(s0.w, s0.h) || 1) * 100)) : 0 }); }
+    for (const s0 of shapes) { const isBtn = false; mk("shape", s0.x, s0.y, s0.w, s0.h, { shape: s0.kind, keep: false, outline: false, fill: "#" + s0.color.map(v => v.toString(16).padStart(2, "0")).join(""), sw: 0, rx: 0, rad: s0.kind === "rect" && s0.rad >= 1 ? { d: Math.round(Math.min(s0.rad, Math.min(s0.w, s0.h) / 2)) } : undefined }); }
     for (const ph of photoW) mk("image", ph.p.x, ph.p.y, ph.p.w, ph.p.h, { src: ph.src, alt: "", fit: "fill" });
     /* أزرار: شكل دائري/مستدير صغير يحوي سطر نص واحد ← عنصر زر */
     const used = new Set(), btnShapes = new Set();
@@ -14199,8 +14352,8 @@ const PBClone = (function () {
   const EXT = { ok: false, v: "", allowed: false, id: 0, pend: new Map(), t: 0 };
   window.addEventListener("message", e => { const d = e.data; if (e.source !== window || !d || !d.aly) return; const p = EXT.pend.get(d.id); if (p) { EXT.pend.delete(d.id); p(d); } });
   const extCall = (type, extra, ms) => new Promise((res, rej) => { const id = ++EXT.id, t = setTimeout(() => { EXT.pend.delete(id); rej(new Error("لا استجابة من الإضافة")); }, ms || 1500); EXT.pend.set(id, d => { clearTimeout(t); res(d); }); window.postMessage(Object.assign({ alyReq: 1, type, id }, extra || {}), location.origin); });
-  const extOld = () => EXT.ok && String(EXT.v || "0").localeCompare("1.1.3", undefined, { numeric: true }) < 0;
-  function extUi() { const el = $("cl-ext"); if (!el) return; if (extOld()) { el.innerHTML = `<button type="button" data-cl="extinfo" title="نسخة الإضافة المثبّتة قديمة (v${esc(EXT.v)}) وقد تُظهر بعض المواقع فارغة">حدّث الإضافة إلى 1.1.3</button>`; return; } el.innerHTML = EXT.ok ? `<b class="cl-extok" title="الإضافة v${esc(EXT.v)}">● كروم متصل (v${esc(EXT.v)})</b> <a class="cl-sm" href="assets/ext/alyssum-clone-helper.zip" download title="حمّل أحدث نسخة من الإضافة">أحدث نسخة ⭳</a> <button type="button" class="cl-sm" data-cl="extinfo" title="خطوات التثبيت والتحديث">؟</button>` : `<button type="button" data-cl="extinfo" title="إضافة كروم تفتح المواقع في متصفحك الحقيقي فتتجاوز الحماية وتقرأ كل المواقع">تثبيت إضافة كروم</button>`; }
+  const extOld = () => EXT.ok && String(EXT.v || "0").localeCompare("1.1.4", undefined, { numeric: true }) < 0;
+  function extUi() { const el = $("cl-ext"); if (!el) return; if (extOld()) { el.innerHTML = `<button type="button" data-cl="extinfo" title="نسخة الإضافة المثبّتة قديمة (v${esc(EXT.v)}) وقد تُظهر بعض المواقع فارغة">حدّث الإضافة إلى 1.1.4</button>`; return; } el.innerHTML = EXT.ok ? `<b class="cl-extok" title="الإضافة v${esc(EXT.v)}">● كروم متصل (v${esc(EXT.v)})</b> <a class="cl-sm" href="assets/ext/alyssum-clone-helper.zip" download title="حمّل أحدث نسخة من الإضافة">أحدث نسخة ⭳</a> <button type="button" class="cl-sm" data-cl="extinfo" title="خطوات التثبيت والتحديث">؟</button>` : `<button type="button" data-cl="extinfo" title="إضافة كروم تفتح المواقع في متصفحك الحقيقي فتتجاوز الحماية وتقرأ كل المواقع">تثبيت إضافة كروم</button>`; }
   async function extPing() { try { const r = await extCall("ping", {}, 900); EXT.ok = true; EXT.v = r.v; EXT.allowed = !!r.ok; } catch (e) { EXT.ok = false; } extUi(); }
   async function fetchViaExt(url, W) { st("جارٍ فتح الموقع في متصفح كروم عندك (نافذة صغيرة مؤقتة)…"); const r = await extCall("fetch", { url, width: W }, 150000); if (r.error) throw new Error(r.error); S.extInfo = r.stats || null; return { html: r.html, url: r.url || url }; }
   function extHelp() {
