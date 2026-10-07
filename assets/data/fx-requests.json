@@ -1,4 +1,47 @@
 {
  "v": 1,
- "requests": []
+ "requests": [
+  {
+   "id": "modal",
+   "label": "نوافذ منبثقة / Lightbox",
+   "status": "none",
+   "note": "غير متوفر",
+   "state": "new",
+   "first": "2026-10-07T23:55:09.108Z",
+   "sites": [
+    "grainibio.com"
+   ],
+   "samples": [
+    {
+     "host": "grainibio.com",
+     "url": "https://grainibio.com/home/",
+     "n": 37,
+     "snippet": "<a href=\"#\" class=\"em-button em-button-text em-button-icon header-search__icon\" data-toggle=\"modal\" data-target=\"search-modal\"> <span class=\"ecomus-svg-icon ecomus-svg-icon--search\"><svg aria-hidden=\"true\" role=\"img\" focusable=\"false\" xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 18 18\" fill=\"currentColor\"><path d=\"M17.7241 16.1932L13.6436 12.1127C14.626 10.8049 15.1563 9."
+    }
+   ],
+   "last": "2026-10-07T23:55:09.108Z",
+   "count": 1
+  },
+  {
+   "id": "form",
+   "label": "نماذج (اتصال/اشتراك)",
+   "status": "partial",
+   "note": "تُنسخ شكلاً ولا تُرسل",
+   "state": "new",
+   "first": "2026-10-07T23:55:09.108Z",
+   "sites": [
+    "grainibio.com"
+   ],
+   "samples": [
+    {
+     "host": "grainibio.com",
+     "url": "https://grainibio.com/home/",
+     "n": 2,
+     "snippet": "<form method=\"get\" class=\"search-modal__form em-instant-search__form\" action=\"https://grainibio.com/\"> <div class=\"modal__content-search-field\"> <span class=\"ecomus-svg-icon ecomus-svg-icon--search\"><svg aria-hidden=\"true\" role=\"img\" focusable=\"false\" xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 18 18\" fill=\"currentColor\"><path d=\"M17.7241 16.1932L13.6436 12.1127C14.626 1"
+    }
+   ],
+   "last": "2026-10-07T23:55:09.108Z",
+   "count": 1
+  }
+ ]
 }
