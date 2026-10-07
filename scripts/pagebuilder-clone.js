@@ -15,7 +15,8 @@ const PBClone = (function () {
   function col(c) {      // أي لون CSS ← {r,g,b,a} (عبر canvas ليشمل oklch وغيره)
     if (!c || c === "transparent" || c === "none") return null; if (cc.has(c)) return cc.get(c);
     if (!cx0) { cv0 = document.createElement("canvas"); cv0.width = cv0.height = 1; cx0 = cv0.getContext("2d", { willReadFrequently: true }); }
-    cx0.clearRect(0, 0, 1, 1); cx0.fillStyle = "#000"; cx0.fillStyle = c; cx0.fillRect(0, 0, 1, 1); const d = cx0.getImageData(0, 0, 1, 1).data, o = d[3] ? { r: d[0], g: d[1], b: d[2], a: d[3] / 255 } : null; cc.set(c, o); return o;
+    cx0.clearRect(0, 0, 1, 1); cx0.fillStyle = "#010203"; cx0.fillStyle = c; if (cx0.fillStyle === "#010203" && !/^#010203$/i.test(c)) { cc.set(c, null); return null; }      // لون غير مفهوم: لا يُعدّ أسود
+    cx0.fillRect(0, 0, 1, 1); const d = cx0.getImageData(0, 0, 1, 1).data, o = d[3] ? { r: d[0], g: d[1], b: d[2], a: d[3] / 255 } : { r: 0, g: 0, b: 0, a: 0 }; cc.set(c, o); return o;
   }
   const hex = c => "#" + [c.r, c.g, c.b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
   const px = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
@@ -77,13 +78,29 @@ const PBClone = (function () {
     return "";
   }
   function splitTop(str) { const o = []; let d = 0, cur = ""; for (const ch of String(str || "")) { if (ch === "(") d++; if (ch === ")") d--; if (ch === "," && !d) { o.push(cur.trim()); cur = ""; } else cur += ch; } if (cur.trim()) o.push(cur.trim()); return o; }
-  function cssGrad(bg) {      // linear/radial-gradient(...) ← تدرّج المطوّر {t,a,s:[{c,p,o}]}
+  function cssGrad(bg, r0, vr0) {      // r0 = مستطيل العنصر الأصلي، vr0 = الجزء المرسوم منه (بعد القصّ بالحد السفلي/overflow)      // linear/radial-gradient(...) ← تدرّج المطوّر {t,a,s:[{c,p,o}]}
     const m = /(repeating-)?(linear|radial)-gradient\((.*)\)\s*$/i.exec(bg || ""); if (!m) return null; const body = m[3], parts = []; let depth = 0, cur = "";
     for (const ch of body) { if (ch === "(") depth++; if (ch === ")") depth--; if (ch === "," && !depth) { parts.push(cur.trim()); cur = ""; } else cur += ch; } parts.push(cur.trim());
     let a = 180, first = parts[0]; if (m[2].toLowerCase() === "linear") { const am = /^(-?[\d.]+)deg$/.exec(first); if (am) { a = Number(am[1]); parts.shift(); } else if (/^to\s/.test(first)) { const to = first.replace(/^to\s+/, ""); a = { "top": 0, "right": 90, "bottom": 180, "left": 270, "top right": 45, "right top": 45, "bottom right": 135, "right bottom": 135, "bottom left": 225, "left bottom": 225, "top left": 315, "left top": 315 }[to] ?? 180; parts.shift(); } }
     let gx = 50, gy = 50, shp = "ellipse"; const isCfg = !/^(rgb|hsl|#|color|oklch|oklab|lab|lch)/i.test(first) && (/\bat\b|^(circle|ellipse|closest|farthest)/.test(first) || /^-?[\d.]+(px|%|em|rem)\s/.test(first)); if (m[2].toLowerCase() === "radial" && isCfg) { if (/circle/.test(first)) shp = "circle"; const at = /at\s+(.+)$/.exec(first); if (at) { const kw = { left: 0, top: 0, center: 50, right: 100, bottom: 100 }, t = at[1].trim().split(/\s+/), cv = (v, i) => /%$/.test(v) ? parseFloat(v) : v in kw ? kw[v] : 50; const a0 = t[0], a1 = t[1] || (a0 === "top" || a0 === "bottom" ? "center" : "center"); if (a0 === "top" || a0 === "bottom") { gy = cv(a0); gx = cv(a1); } else { gx = cv(a0); gy = cv(a1); } } parts.shift(); }
-    const stops = parts.map(p => { const mm = /^(.*?)(?:\s+(-?[\d.]+)%)?$/.exec(p), c = col(mm && mm[1] ? mm[1].trim() : ""); return c ? { c: hex(c), o: c.a < 1 ? r2(c.a) : undefined, p: mm[2] != null ? Number(mm[2]) : null } : null; }).filter(Boolean); if (stops.length < 2) return null;
-    stops.forEach((s, i) => { if (s.p == null) s.p = Math.round(i / (stops.length - 1) * 100); if (s.o === undefined) delete s.o; });
+    const R0 = r0 || { x: 0, y: 0, w: 0, h: 0 }, VR = vr0 || R0, ang = a * Math.PI / 180, rad0 = m[2].toLowerCase() === "radial", circ = shp === "circle";
+    const lenOf = (W, H, cx, cy) => rad0 ? (circ ? Math.hypot(Math.max(cx, 100 - cx) / 100 * W, Math.max(cy, 100 - cy) / 100 * H) : Math.max(cx, 100 - cx) / 100 * W * Math.SQRT2) : Math.abs(W * Math.sin(ang)) + Math.abs(H * Math.cos(ang));
+    const lenO = lenOf(R0.w, R0.h, gx, gy);
+    let bad = false; const raw = parts.map(p => { const mm = /^(.*?)(?:\s+(-?[\d.]+)(%|px|em|rem)?)?$/.exec(p), c = col(mm && mm[1] ? mm[1].trim() : ""); if (!c) { bad = true; return null; } let pos = mm[2] != null ? Number(mm[2]) : null; if (pos != null && mm[3] && mm[3] !== "%") pos = lenO > 0 ? pos * (mm[3] === "px" ? 1 : 16) / lenO * 100 : null; return { col: c, p: pos }; });
+    if (bad || raw.length < 2) return null;
+    raw.forEach((q, i) => { if (q.p == null) q.p = i / (raw.length - 1) * 100; });
+    /* إعادة التعبير عن المواضع على المستطيل المرسوم فعلاً (مثلاً body طوله 8000px مقصوص عند 1500px) */
+    let nx = gx, ny = gy, lenN = lenO, off = 0;
+    if (VR !== R0 && (VR.w !== R0.w || VR.h !== R0.h || VR.x !== R0.x || VR.y !== R0.y) && R0.w > 0 && R0.h > 0) {
+      if (rad0) { nx = ((R0.x + gx / 100 * R0.w) - VR.x) / VR.w * 100; ny = ((R0.y + gy / 100 * R0.h) - VR.y) / VR.h * 100; lenN = lenOf(VR.w, VR.h, Math.max(0, Math.min(100, nx)), Math.max(0, Math.min(100, ny))); }
+      else { lenN = lenOf(VR.w, VR.h, 0, 0); if (Math.abs(Math.cos(ang)) > .999) off = Math.cos(ang) < 0 ? VR.y - R0.y : (R0.y + R0.h) - (VR.y + VR.h); }
+    }
+    const stops = raw.map((q, i) => { let c = q.col; if (c.a === 0) { const nb = raw.slice(0, i).reverse().concat(raw.slice(i + 1)).find(z => z.col.a > 0); c = nb ? { r: nb.col.r, g: nb.col.g, b: nb.col.b, a: 0 } : c; } const pp = lenN > 0 ? (q.p / 100 * lenO - off) / lenN * 100 : q.p; return { r: c.r, g: c.g, b: c.b, a: c.a, p: pp }; });      // الشفاف يأخذ لون أقرب نقطة مرئية (التدرّج في CSS مسبق الضرب)
+    gx = r1(nx); gy = r1(ny);
+    /* قصّ التدرّج على المجال المرئي 0..100 مع استيفاء ألوان الأطراف (مواضع خارج الصندوق تُحذف دون تغيير ألوان الحافة) */
+    stops.sort((x, y) => x.p - y.p); if (stops[0].p > 0) stops.unshift(Object.assign({}, stops[0], { p: 0 })); if (stops[stops.length - 1].p < 100) stops.push(Object.assign({}, stops[stops.length - 1], { p: 100 }));
+    const at = t => { for (let i = 0; i < stops.length - 1; i++) { const A = stops[i], B = stops[i + 1]; if (t >= A.p && t <= B.p) { const f = B.p === A.p ? 0 : (t - A.p) / (B.p - A.p); return { r: A.r + (B.r - A.r) * f, g: A.g + (B.g - A.g) * f, b: A.b + (B.b - A.b) * f, a: A.a + (B.a - A.a) * f }; } } return t < stops[0].p ? stops[0] : stops[stops.length - 1]; };
+    const keep = [{ p: 0, ...at(0) }].concat(stops.filter(q => q.p > 0.05 && q.p < 99.95), [{ p: 100, ...at(100) }]).map(q => ({ c: hex(q), o: q.a < .995 ? r2(q.a) : undefined, p: r1(q.p) })); keep.forEach(q => { if (q.o === undefined) delete q.o; }); stops.length = 0; stops.push(...keep);
     return m[2].toLowerCase() === "radial" ? { t: "radial", a: 0, sh: shp, x: gx, y: gy, s: stops } : { t: "linear", a, s: stops };
   }
   function extract(doc, win, W, limit, opt) {
@@ -93,7 +110,8 @@ const PBClone = (function () {
     const geom = (w, r) => { w.set.fx = { d: r2(r.x / W * 100) }; w.set.fy = { d: Math.round(r.y) }; w.set.fwd = { d: r2(r.w / W * 100) }; w.set.fh = { d: Math.max(2, Math.round(r.h)) }; return w; };
     const add = (type, r, props) => { if (out.length > 800) { stop = true; return null; } const w = PB.mkFree(type, 0, 0, ++z); Object.assign(w.set, props || {}); delete w.set.mh; geom(w, r); out.push(w); return w; };
     const clipY = r => r.y + r.h > limit ? { x: r.x, y: r.y, w: r.w, h: Math.max(1, limit - r.y) } : r;
-    const radiusOf = (cs, r) => { const v = px(cs.borderTopLeftRadius); return Math.min(v, Math.min(r.w, r.h) / 2); };
+    const cornerPx = (v, r) => { const t = String(v || "0").trim().split(/\s+/); const f = (tok, base) => /%$/.test(tok) ? parseFloat(tok) / 100 * base : px(tok); return Math.min(f(t[0], r.w), f(t[1] || t[0], r.h)); };
+    const radiusOf = (cs, r) => { const half = Math.min(r.w, r.h) / 2, v = ["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map(k => Math.min(Math.max(0, cornerPx(cs["border" + k + "Radius"], r)), half)).sort((a, b) => a - b); return (v[1] + v[2]) / 2; };      // وسيط الزوايا الأربع (نسبة % وقيم بيضاوية مدعومة)
     function textBlock(el) { let has = false, bad = false; (function w(n) { for (const c of n.childNodes) { if (bad) return; if (c.nodeType === 3) { if (c.nodeValue.trim()) has = true; } else if (c.nodeType === 1) { const t = c.tagName.toLowerCase(); if (!INL.has(t)) { bad = true; return; } const d = win.getComputedStyle(c).display; if (t !== "br" && t !== "wbr" && !/^inline/.test(d) && d !== "contents") { bad = true; return; } if (win.getComputedStyle(c).position === "absolute") { bad = true; return; } w(c); } } })(el); return has && !bad; }
     function inlineHtml(el, cs) {      // محتوى مضمَّن نظيف: نص + <br> + روابط + عريض/مائل + ألوان مختلفة
       const base0 = { c: cs.color, w: cs.fontWeight, s: cs.fontStyle, f: cs.fontSize };
@@ -129,7 +147,7 @@ const PBClone = (function () {
       if (vr.w < 3 || vr.h < 3) return; const rad = radiusOf(cs, r), mn = Math.min(r.w, r.h), ell = rad >= mn / 2 * .98 && Math.abs(r.w - r.h) < 3, shp = { shape: ell ? "ellipse" : "rect", keep: false, outline: false, rx: ell ? 0 : Math.min(50, r2(rad / (mn || 1) * 100)) };
       if (tag !== "body" && (hasFill || brd)) { const p = Object.assign({}, shp); if (hasFill) { p.fill = hex(fill); if (fill.a < 1) p.op = r2(fill.a); } else { p.fill = ""; p.outline = true; } if (brd) { p.stroke = hex(brd.c); p.sw = Math.max(1, Math.round(brd.w)); } else p.sw = 0; add("shape", clipY(vr), p); }
       lay.slice().reverse().forEach(L => {      // طبقات الخلفية من الأسفل للأعلى
-        if (/gradient\(/.test(L)) { const g = cssGrad(L); if (g) add("shape", clipY(vr), Object.assign({}, shp, { fgr: g, fill: "", sw: 0 })); return; }
+        if (/gradient\(/.test(L)) { const g = cssGrad(L, r, vr); if (g) add("shape", clipY(vr), Object.assign({}, shp, { fgr: g, fill: "", sw: 0 })); return; }
         const um = /url\((["']?)(.*?)\1\)/.exec(L); if (!um || !um[2] || /^data:image\/(gif|svg)/.test(um[2]) || vr.w < 20 || vr.h < 20) return; const sz = (cs.backgroundSize || "").toLowerCase(), rp = cs.backgroundRepeat || "";
         if (!/^repeat/.test(rp) || /cover|contain/.test(sz) || vr.w > 140) add("image", clipY(vr), { src: abs(um[2]), alt: "", fit: /contain/.test(sz) ? "contain" : "cover", rad: rad ? { d: Math.round(rad) } : undefined }); });
     }
@@ -149,7 +167,7 @@ const PBClone = (function () {
         const isBtn = tag === "button" || (tag === "input" && /^(submit|button|reset)$/.test(type)) || el.getAttribute("role") === "button" || (tag === "a" && fill && fill.a > .3 && textBlock(el) && pad >= 6 && r.h <= 140);
         if (isBtn && r.h <= 160) { const txt = (tag === "input" ? el.value : el.innerText || el.textContent || "").replace(/\s+/g, " ").trim(); if (txt) { const tc = col(cs.color), bc = col(cs.borderTopColor), bwid = px(cs.borderTopWidth), href = a && a.getAttribute("href") && !/^(javascript:)/i.test(a.getAttribute("href")) ? abs(a.getAttribute("href")) : "#";
           const p = { text: txt, kind: "link", link: href, bgc: fill && fill.a > .03 ? hex(fill) : "transparent", color: tc ? hex(tc) : "#000000", fs: { d: r1(px(cs.fontSize) || 16) }, fw: String(cs.fontWeight), brad: { d: Math.round(Math.min(px(cs.borderTopLeftRadius), r.h / 2)) }, bpad: { d: [Math.round(px(cs.paddingTop)), Math.round(px(cs.paddingRight)), Math.round(px(cs.paddingBottom)), Math.round(px(cs.paddingLeft))] }, full: { d: true }, al: { d: "center" } };
-          const gr = cssGrad(cs.backgroundImage); if (gr) p.bgr = gr; if (bwid >= 1 && bc && bc.a > .05 && cs.borderTopStyle !== "none") { p.bw = Math.round(bwid); p.bc = hex(bc); p.bs = cs.borderTopStyle; } const ff = fontOf(cs); if (ff) p.ff = ff; if (cs.textTransform !== "none") p.tt = cs.textTransform;
+          const gr = cssGrad(cs.backgroundImage, r, vr); if (gr) p.bgr = gr; if (bwid >= 1 && bc && bc.a > .05 && cs.borderTopStyle !== "none") { p.bw = Math.round(bwid); p.bc = hex(bc); p.bs = cs.borderTopStyle; } const ff = fontOf(cs); if (ff) p.ff = ff; if (cs.textTransform !== "none") p.tt = cs.textTransform;
           add("button", clipY(vr), p); return; } }
         if (tag === "img") { const src = abs(el.currentSrc || el.getAttribute("src") || ""); if (src && !/^data:image\/gif;base64,R0lGODlhAQAB/.test(src)) { const of = cs.objectFit, rad = radiusOf(cs, r), p = { src, alt: el.getAttribute("alt") || "", fit: of === "cover" ? "cover" : of === "contain" ? "contain" : "fill", rad: rad ? { d: Math.round(rad) } : undefined }; if (a && a.getAttribute("href") && !/^(javascript:|#$)/i.test(a.getAttribute("href"))) p.link = abs(a.getAttribute("href")); add("image", clipY(vr), p); } return; }
         if (tag === "svg") { const d = svgData(el, cs); if (d) add("image", clipY(vr), { src: d, alt: "", fit: "contain" }); return; }
@@ -249,10 +267,14 @@ const PBClone = (function () {
     for (let it = 0; it < 8; it++) { if (frac(i => ok(s0.x - 1, s0.y + i), s0.h) > .8) { s0.x -= 1; s0.w += 1; } else break; }
     for (let it = 0; it < 8; it++) { if (frac(i => ok(s0.x + s0.w, s0.y + i), s0.h) > .8) s0.w += 1; else break; }
   }
-  function cornerRadius(data, w, h, s0) {      // نصف قطر الزوايا من أول بكسل على القطر يطابق لون الشكل: t = 0.293·r
-    const c = s0.color, ok = (x, y) => { const i = (y * w + x) * 4; return x >= 0 && y >= 0 && x < w && y < h && (Math.abs(data[i] - c[0]) + Math.abs(data[i + 1] - c[1]) + Math.abs(data[i + 2] - c[2])) / 3 < 18; }, m = Math.floor(Math.min(s0.w, s0.h) / 2), rs = [];
-    for (const [cx, cy, dx, dy] of [[s0.x, s0.y, 1, 1], [s0.x + s0.w - 1, s0.y, -1, 1], [s0.x, s0.y + s0.h - 1, 1, -1], [s0.x + s0.w - 1, s0.y + s0.h - 1, -1, -1]]) { let k = 0; while (k < m && !ok(cx + dx * k, cy + dy * k)) k++; rs.push(k / .293); }
-    const r = median(rs); return r < 4 ? 0 : Math.round(Math.min(r, Math.min(s0.w, s0.h) / 2));
+  function cornerRadius(data, w, h, s0) {      // نصف قطر الزاوية: أول حافة لونية على القطر من الزاوية (t = 0.293·r)؛ بلا حافة واضحة في ثلاث زوايا على الأقل ← 0 (لا نشوّه الشكل)
+    const m = Math.floor(Math.min(s0.w, s0.h) / 2), L = (x, y) => { x = Math.max(0, Math.min(w - 1, x)); y = Math.max(0, Math.min(h - 1, y)); const i = (y * w + x) * 4; return [data[i], data[i + 1], data[i + 2]]; }, rs = [];
+    for (const [cx, cy, dx, dy] of [[s0.x, s0.y, 1, 1], [s0.x + s0.w - 1, s0.y, -1, 1], [s0.x, s0.y + s0.h - 1, 1, -1], [s0.x + s0.w - 1, s0.y + s0.h - 1, -1, -1]]) {
+      const c0 = L(cx, cy), inn = L(cx + dx * Math.min(m, 4 + Math.floor(m * .6)), cy + dy * Math.min(m, 4 + Math.floor(m * .6))); let k = 0, found = -1;
+      if (cd(c0, inn) < 22) { rs.push(0); continue; }      // الزاوية بلون الداخل نفسه: زاوية حادة
+      for (; k < m; k++) { if (cd(L(cx + dx * k, cy + dy * k), L(cx + dx * (k + 1), cy + dy * (k + 1))) > 26 && cd(L(cx + dx * (k + 2), cy + dy * (k + 2)), c0) > 20) { found = k + 1; break; } }
+      rs.push(found > 0 ? found / .293 : -1); }
+    const ok = rs.filter(v => v >= 0); if (ok.length < 3) return 0; const r = median(ok); return r < 4 ? 0 : Math.round(Math.min(r, Math.min(s0.w, s0.h) / 2));
   }
   function detect(data, w, h) {
     const C = 4, G = grid(data, w, h, C), { gw, gh, mean, sd } = G, N = gw * gh, flat = new Uint8Array(N), tex = new Uint8Array(N);
@@ -266,7 +288,7 @@ const PBClone = (function () {
       const touches = (sa.x0 === 0 ? 1 : 0) + (sa.y0 === 0 ? 1 : 0) + (sa.x1 === gw - 1 ? 1 : 0) + (sa.y1 === gh - 1 ? 1 : 0); if (touches >= 3 || (bw * bh > area * .85)) return;      // خلفية الصفحة
       const ratio = sa.span / (sa.bw * sa.bh), aspect = bw / bh; let kind = ""; if (ratio >= .86) kind = "rect"; else if (ratio > .72 && ratio < .83 && aspect > .75 && aspect < 1.33) kind = "ellipse"; if (!kind) return;
       let r = 0, g = 0, b = 0; cells.forEach(k => { r += mean[k * 3]; g += mean[k * 3 + 1]; b += mean[k * 3 + 2]; }); const col0 = [r / n, g / n, b / n].map(Math.round), rad = kind === "rect" && ratio < .995 ? Math.min(Math.min(bw, bh) / 2, Math.sqrt((sa.bw * sa.bh * C * C - sa.span * C * C) / (4 - Math.PI))) : 0;
-      const sh = { kind, x: sa.x0 * C, y: sa.y0 * C, w: bw, h: bh, color: col0, rad: Math.round(rad), area: bw * bh }; refine(data, w, h, sh); if (kind === "rect") { const cr = cornerRadius(data, w, h, sh); if (cr > sh.rad) sh.rad = cr; } sh.area = sh.w * sh.h; shapes.push(sh); });
+      const sh = { kind, x: sa.x0 * C, y: sa.y0 * C, w: bw, h: bh, color: col0, rad: Math.round(rad), area: bw * bh }; refine(data, w, h, sh); sh.rad = kind === "rect" ? cornerRadius(data, w, h, sh) : 0; sh.area = sh.w * sh.h; shapes.push(sh); });
     /* صور: خلايا ذات ملمس كثيف */
     const dens = new Uint8Array(N); for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { let c = 0, t = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const yy = y + dy, xx = x + dx; if (yy < 0 || xx < 0 || yy >= gh || xx >= gw) continue; t++; c += tex[yy * gw + xx]; } dens[y * gw + x] = c / t > .5 ? 1 : 0; }
     const p2 = new Int32Array(N).map((_, i) => i), f2 = x => { while (p2[x] !== x) { p2[x] = p2[p2[x]]; x = p2[x]; } return x; };
