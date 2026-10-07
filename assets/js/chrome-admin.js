@@ -14,13 +14,14 @@ window.ChromeAdmin = (function () {
   const get = (p) => p.split(".").reduce((o, k) => (o == null ? o : o[k]), S.cfg);
   const put = (p, v) => { const ks = p.split("."), last = ks.pop(); let o = S.cfg; ks.forEach(k => { if (o[k] == null || typeof o[k] !== "object") o[k] = {}; o = o[k]; }); o[last] = v; };
   /* حقول: كلها تكتب في المسار p عبر ChromeAdmin.set */
+  const lab = (p, l) => { if (typeof CtlHelp === "undefined") return l; const x = CtlHelp.qp(p, l); return esc(x.t) + x.q; };
   const F = {
-    t: (p, l, o) => '<label class="ca-f"><span>' + l + '</span><input data-p="' + p + '" value="' + esc(get(p)) + '" placeholder="' + esc((o && o.ph) || "") + '"' + (o && o.ltr ? ' dir="ltr"' : "") + "></label>",
-    a: (p, l, o) => '<label class="ca-f"><span>' + l + '</span><textarea data-p="' + p + '" rows="' + ((o && o.rows) || 3) + '" placeholder="' + esc((o && o.ph) || "") + '">' + esc(get(p)) + "</textarea></label>",
-    c: (p, l) => '<label class="ca-c"><input type="checkbox" data-p="' + p + '"' + (get(p) ? " checked" : "") + "><span>" + l + "</span></label>",
-    n: (p, l, mn, mx) => '<label class="ca-f"><span>' + l + '</span><input type="number" data-p="' + p + '" min="' + mn + '" max="' + mx + '" value="' + esc(get(p)) + '"></label>',
-    s: (p, l, opts) => '<label class="ca-f"><span>' + l + '</span><select data-p="' + p + '">' + opts.map(o => '<option value="' + o[0] + '"' + (get(p) === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></label>",
-    col: (p, l) => { const v = get(p) || ""; return '<div class="ca-f"><span>' + l + '</span><div class="ca-col"><input type="color" data-p="' + p + '" value="' + (/^#[0-9a-f]{6}$/i.test(v) ? v : "#ffffff") + '"><button type="button" class="small gray" data-clr="' + p + '">افتراضي</button><i>' + (v || "افتراضي") + "</i></div></div>"; }
+    t: (p, l, o) => '<label class="ca-f"><span>' + lab(p, l) + '</span><input data-p="' + p + '" value="' + esc(get(p)) + '" placeholder="' + esc((o && o.ph) || "") + '"' + (o && o.ltr ? ' dir="ltr"' : "") + "></label>",
+    a: (p, l, o) => '<label class="ca-f"><span>' + lab(p, l) + '</span><textarea data-p="' + p + '" rows="' + ((o && o.rows) || 3) + '" placeholder="' + esc((o && o.ph) || "") + '">' + esc(get(p)) + "</textarea></label>",
+    c: (p, l) => '<label class="ca-c"><input type="checkbox" data-p="' + p + '"' + (get(p) ? " checked" : "") + "><span>" + lab(p, l) + "</span></label>",
+    n: (p, l, mn, mx) => '<label class="ca-f"><span>' + lab(p, l) + '</span><input type="number" data-p="' + p + '" min="' + mn + '" max="' + mx + '" value="' + esc(get(p)) + '"></label>',
+    s: (p, l, opts) => '<label class="ca-f"><span>' + lab(p, l) + '</span><select data-p="' + p + '">' + opts.map(o => '<option value="' + o[0] + '"' + (get(p) === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></label>",
+    col: (p, l) => { const v = get(p) || ""; return '<div class="ca-f"><span>' + lab(p, l) + '</span><div class="ca-col"><input type="color" data-p="' + p + '" value="' + (/^#[0-9a-f]{6}$/i.test(v) ? v : "#ffffff") + '"><button type="button" class="small gray" data-clr="' + p + '">افتراضي</button><i>' + (v || "افتراضي") + "</i></div></div>"; }
   };
   const cardH = (title, tools, on) => '<div class="ca-h"><b>' + title + '</b><span class="ca-tools">' + (tools || "") + "</span></div>";
   const mv = (kind, i) => '<button type="button" class="small gray" data-mv="' + kind + ':' + i + ':-1" title="أعلى">▲</button><button type="button" class="small gray" data-mv="' + kind + ':' + i + ':1" title="أسفل">▼</button>';

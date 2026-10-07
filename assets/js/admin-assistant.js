@@ -72,12 +72,12 @@ const AdminHelp = (() => {
     const d = bubble("a", "مرحباً 👋 أنا مساعدك لشرح أدوات الموقع وإعداداته. اسألني عن أي قسم في اللوحة أو أي عنصر في مطوّر الصفحات."); const t = curTab();
     chips([["اشرح لي هذا القسم", () => ask("اشرح هذا القسم")]].concat(SUGG.map(s => [s, () => ask(s)])), d);
   }
-  async function load() { if (KB) return; try { const r = await fetch("assets/data/admin-help.json", { cache: "no-cache" }); KB = await r.json(); index(); } catch (e) { KB = null; } }
+  async function load() { if (KB) return; try { const r = await fetch("assets/data/admin-help.json", { cache: "no-cache" }); KB = await r.json(); try { if (window.CtlHelp) { await CtlHelp.load(); KB = KB.concat(CtlHelp.entries()); } } catch (e) { } index(); } catch (e) { KB = null; } }
   function toggle() { open ? close() : show(); }
   async function show() { build(); await load(); open = true; $("ah-panel").classList.add("on"); setTimeout(() => { const i = $("ah-in"); if (i) i.focus(); }, 50); }
   function close() { open = false; const p = $("ah-panel"); if (p) p.classList.remove("on"); }
   function send(ev) { ev.preventDefault(); const i = $("ah-in"), v = i.value; i.value = ""; ask(v); }
   const init = () => { const tryB = () => { if (document.querySelector("#app .top")) { build(); load(); } else setTimeout(tryB, 400); }; tryB(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { ask, send, close, toggle, decide: q => { const r = KB ? search(q, 4) : []; if (!r.length || r[0].sc < 6 || r[0].cov < .6) return 'REPHRASE'; const c = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01); return c.length ? 'AMBIG:' + [r[0]].concat(c).map(x => x.e.id).join('+') : 'OK:' + r[0].e.id; }, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };
+  return { ask, send, close, toggle, show, decide: q => { const r = KB ? search(q, 4) : []; if (!r.length || r[0].sc < 6 || r[0].cov < .6) return 'REPHRASE'; const c = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01); return c.length ? 'AMBIG:' + [r[0]].concat(c).map(x => x.e.id).join('+') : 'OK:' + r[0].e.id; }, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };
 })();

@@ -2011,6 +2011,7 @@ body{overflow-x:hidden;margin:0}`;
   /* تبويب «تنسيق»: ثلاث مجموعات تُفتح وتُغلق — تنسيق العنصر، تنسيق الخلفية (لون بسيط ثم تدرّج متعدد الألوان ثم صورة)، باقي الإعدادات */
   const BG_KEYS = ["bg", "gr", "grad1", "grad2", "gradAng", "bga", "bgrad", "bgImg", "bgSize", "bgPos", "bgFixed", "bgOp", "bgBlur", "bgDark"], BD_KEYS = ["bw", "bws", "bs", "bc", "bco", "rad", "radc"];
   function inspGroups(all, inf) {
+    E.curType = inf.kind === "widget" ? inf.node.type : inf.kind;
     const own = new Set(((inf.def && inf.def.ctl) || []).map(c => c.k)), plain = () => all.map(c => field(c, inf.set)).join("") || '<p style="color:#888;font-size:.82rem">لا توجد إعدادات في هذا التبويب.</p>';
     let groups = [], LBL = {};
     const GD = inf.def && inf.def.groups && inf.def.groups[E.tab]; let pre = [];      /* مجموعات خاصة بالعنصر (تبويب لكل جزء): الوسم g في تحكّمه */
@@ -2062,7 +2063,7 @@ ${inspGroups(all, inf)}`;
     const ownV = isR ? own(set, k, dev) : set[k], effV = isR ? eff(set, k, dev) : set[k];
     const inherited = isR && ownV === undefined && effV !== undefined;
     const rs = (ownV !== undefined && ownV !== "" && !(c.t === "switch" && ownV === false && !isR)) ? `<button class="rs" data-rs="${k}" title="إعادة للافتراضي">↺</button>` : "";
-    const head = `<label>${esc(c.l)}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
+    const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h) : "", head = `<label>${esc(sp.t)}${hq}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
     const a = `data-k="${k}" data-t="${c.t}"`;
     let b = "";
     switch (c.t) {
