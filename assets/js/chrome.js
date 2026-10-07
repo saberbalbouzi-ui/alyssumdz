@@ -14,14 +14,14 @@ window.Chrome = (function () {
      التصنيفات والفئات والمنتجات تفتح قائمة منسدلة تحت العنوان؛ المتجر صفحة كل المنتجات (shop.html)، وحسابي صفحة الدخول/التسجيل (account.html) */
   const MK = { home: ["الرئيسية", "index.html"], shop: ["المتجر", "shop.html"], cats: ["التصنيفات", "index.html#categories", 1], sets: ["الفئات", "shop.html", 1], prods: ["المنتجات", "index.html#products", 1], acct: ["حسابي", "account.html"] };
   const MK_LIST = [["home", "🏠 الرئيسية"], ["cats", "🗂️ التصنيفات (قائمة منسدلة بتصنيفات المتجر)"], ["shop", "🛍️ المتجر (صفحة كل المنتجات)"], ["sets", "⭐ الفئات (الأكثر طلباً / تخفيضات / جديدة)"], ["prods", "📦 المنتجات (قائمة منسدلة)"], ["acct", "👤 حسابي (دخول / حساب جديد)"]];
-  const DEF_SETS = [{ key: "best", label: "🔥 الأكثر مبيعاً" }, { key: "hot", label: "⚡ الأكثر طلباً" }, { key: "sale", label: "🏷️ التخفيضات" }, { key: "new", label: "✨ المنتجات الجديدة" }];
+  const DEF_SETS = [{ key: "best", label: "الأكثر مبيعاً" }, { key: "hot", label: "الأكثر طلباً" }, { key: "sale", label: "التخفيضات" }, { key: "new", label: "المنتجات الجديدة" }];
   const prodHref = (p, rel) => typeof productHref === "function" ? productHref(p) : (rel || "") + "p/" + p.slug + "/";
   /* محتوى القائمة المنسدلة (d = {cats, prods, sets}: تُمرَّر من منشئ الصفحات أو تُقرأ وقت التشغيل من data.js) */
   function popHtml(kind, slugs, rel, d) {
-    d = d || {}; const A = (h, t) => '<a href="' + esc(url(h, rel)) + '" role="menuitem">' + esc(t) + "</a>", all = A("shop.html", "عرض الكل ←");
+    d = d || {}; const lab = t => typeof ModernIcons !== "undefined" ? ModernIcons.html(esc(t)) : esc(t), A = (h, t) => '<a href="' + esc(url(h, rel)) + '" role="menuitem">' + lab(t) + "</a>", all = A("shop.html", "عرض الكل ←");
     if (kind === "cats") { const c = d.cats || {}, ks = Object.keys(c); return all + ks.map(k => A("shop.html?cat=" + encodeURIComponent(k), c[k])).join(""); }
     if (kind === "sets") return all + (d.sets && d.sets.length ? d.sets : DEF_SETS).map(x => A("shop.html?c=" + encodeURIComponent(x.key), x.label)).join("");
-    if (kind === "prods") { let L = (d.prods || []).filter(p => p && p.slug && p.active !== false); if (slugs && slugs.length) L = slugs.map(sl => L.find(p => p.slug === sl)).filter(Boolean); const mega = !(slugs && slugs.length), img = p => { const m = p.cover || (p.images && p.images[0]); return m ? '<img src="' + esc(url(m, rel)) + '" alt="" width="44" height="44" loading="lazy">' : ""; }; return all + L.map(p => '<a href="' + esc(prodHref(p, rel)) + '" role="menuitem">' + (mega ? img(p) + "<span>" + esc(p.title) + "</span>" : esc(p.title)) + "</a>").join(""); }
+    if (kind === "prods") { let L = (d.prods || []).filter(p => p && p.slug && p.active !== false); if (slugs && slugs.length) L = slugs.map(sl => L.find(p => p.slug === sl)).filter(Boolean); const mega = !(slugs && slugs.length), img = p => { const m = p.cover || (p.images && p.images[0]); return m ? '<img src="' + esc(url(m, rel)) + '" alt="" width="44" height="44" loading="lazy">' : ""; }; return all + L.map(p => '<a href="' + esc(prodHref(p, rel)) + '" role="menuitem">' + (mega ? img(p) + "<span>" + lab(p.title) + "</span>" : lab(p.title)) + "</a>").join(""); }
     return "";
   }
   function menuItem(it, rel, d) {
@@ -30,7 +30,7 @@ window.Chrome = (function () {
     const label = it.label || m[0];
     if (!m[2]) return '<a href="' + esc(url(m[1], rel)) + '">' + esc(label) + "</a>";
     const sl = Array.isArray(it.slugs) ? it.slugs : [];
-    return '<div class="mi-dd' + (it.kind === "prods" && !sl.length ? " mi-mega" : "") + '" data-dd="' + it.kind + '"' + (sl.length ? ' data-slugs="' + esc(sl.join(",")) + '"' : "") + '><a href="' + esc(url(m[1], rel)) + '" class="mi-t" aria-haspopup="true" aria-expanded="false">' + esc(label) + ' <i class="mi-c" aria-hidden="true">▾</i></a><div class="mi-pop" role="menu">' + popHtml(it.kind, sl, rel, d) + "</div></div>";
+    return '<div class="mi-dd' + (it.kind === "prods" && !sl.length ? " mi-mega" : "") + '" data-dd="' + it.kind + '"' + (sl.length ? ' data-slugs="' + esc(sl.join(",")) + '"' : "") + '><a href="' + esc(url(m[1], rel)) + '" class="mi-t" aria-haspopup="true" aria-expanded="false">' + (typeof ModernIcons !== "undefined" ? ModernIcons.html(esc(label)) : esc(label)) + ' <i class="mi-c" aria-hidden="true">▾</i></a><div class="mi-pop" role="menu">' + popHtml(it.kind, sl, rel, d) + "</div></div>";
   }
   const BURGER = '<button type="button" class="mb-burger" aria-label="القائمة" aria-expanded="false"><svg class="b1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="b2" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
   const menuNav = (items, rel, d) => { const L = (items || []).filter(i => i && !i.h && (MK[i.kind] || (i.label && i.url))); return L.length ? BURGER + '<nav class="menu">' + L.map(i => menuItem(i, rel, d)).join("") + "</nav>" : ""; };
