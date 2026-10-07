@@ -19,35 +19,40 @@ window.CtlHelp = (function () {
   const css = () => {
     if (document.getElementById("ctlq-css")) return; const st = document.createElement("style"); st.id = "ctlq-css";
     st.textContent = ".ctl-q{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-inline-start:.35rem;border-radius:50%;background:#e9e2cf;color:#6b5a2a;font:800 10px/1 system-ui,sans-serif;font-style:normal;cursor:pointer;vertical-align:middle;user-select:none;flex:none;transition:.15s}.ctl-q:hover,.ctl-q:focus{background:#c8a24b;color:#173f35;outline:0}" +
-      "#ctlq-pop{position:fixed;z-index:2147483000;max-width:300px;min-width:200px;background:#173f35;color:#fff;border-radius:12px;padding:.7rem .8rem;box-shadow:0 14px 40px rgba(0,0,0,.35);font:600 .82rem/1.8 inherit;font-family:inherit;direction:rtl;text-align:start}#ctlq-pop b{display:block;color:#E4C87F;margin-bottom:.2rem;font-size:.85rem}#ctlq-pop .ask{margin-top:.5rem;border:0;background:#E4C87F;color:#173f35;border-radius:999px;padding:.25rem .8rem;font:800 .76rem inherit;font-family:inherit;cursor:pointer}#ctlq-pop:after{content:'';position:absolute;top:-6px;inset-inline-start:var(--ax,20px);width:12px;height:12px;background:#173f35;transform:rotate(45deg)}";
+      "#ctlq-pop{position:fixed;z-index:2147483000;max-width:300px;min-width:200px;background:#173f35;color:#fff;border-radius:12px;padding:.7rem .8rem;box-shadow:0 14px 40px rgba(0,0,0,.35);font:600 .82rem/1.8 inherit;font-family:inherit;direction:rtl;text-align:start}#ctlq-pop{pointer-events:none}#ctlq-pop .gd{margin-top:.45rem;padding-top:.4rem;border-top:1px dashed rgba(255,255,255,.3);color:#F3E9D2;font-weight:700}#ctlq-pop b{display:block;color:#E4C87F;margin-bottom:.2rem;font-size:.85rem}#ctlq-pop .ask{margin-top:.5rem;border:0;background:#E4C87F;color:#173f35;border-radius:999px;padding:.25rem .8rem;font:800 .76rem inherit;font-family:inherit;cursor:pointer}#ctlq-pop:after{content:'';position:absolute;bottom:-6px;inset-inline-start:var(--ax,20px);width:12px;height:12px;background:#173f35;transform:rotate(45deg)}#ctlq-pop.dn:after{bottom:auto;top:-6px}";
     document.head.appendChild(st);
   };
   const load = () => ready || (ready = fetch("assets/data/ctl-help.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : {}).then(j => { D = j || {}; }).catch(() => { }));
+  /* إرشاد «ماذا أفعل» بحسب نوع الحقل */
+  const GUIDE = { switch: "فعّل المربع لتشغيل الخيار وأزله لإيقافه.", num: "اكتب رقماً أو غيّره بالأسهم؛ اتركه فارغاً للقيمة الافتراضية. زر ↺ يعيده كما كان. وفي الحقول المصحوبة بأيقونة الجهاز غيّر زر المعاينة (مكتب/تابلت/هاتف) لضبط قيمة لكل جهاز.", color: "اضغط المربع الملوّن واختر لوناً؛ زر ↺ يرجع اللون الافتراضي.", select: "اختر من القائمة المنسدلة؛ تظهر النتيجة فوراً في الصفحة.", text: "اكتب النص في الحقل؛ يظهر التغيير مباشرة.", textarea: "اكتب النص في الحقل؛ سطر جديد = عنصر جديد حيث ينطبق.", image: "انقر لاختيار صورة من المكتبة أو ارفع صورة من جهازك.", rep: "أضف عنصراً بزر «＋»، وغيّر ترتيبه بالأسهم، واحذفه بـ«حذف».", dims: "اكتب أربع قيم: أعلى، يمين، أسفل، يسار (بالبكسل).", align: "اضغط أحد الأزرار لاختيار المحاذاة.", grad: "أضف ألواناً ومواضعها لتكوين التدرّج، ثم اختر نوعه وزاويته." };
+  const guide = t => GUIDE[t] || "";
   const text = (key, type) => (type && D[type + "." + key]) || D[key] || "";
   /* أيقونة «؟»: key مفتاح التحكّم، type نوع العنصر، title العنوان القصير، extra شرح احتياطي (من العنوان الطويل) */
-  function q(key, type, title, extra) {
-    css(); const id = (type || "") + "|" + key + "|" + title; REG.set(id, { key, type, title, extra });
+  function q(key, type, title, extra, ctype) {
+    css(); const id = (type || "") + "|" + key + "|" + title; REG.set(id, { key, type, title, extra, ctype });
     return '<i class="ctl-q" role="button" tabindex="0" data-hq="' + esc(id) + '" title="شرح هذا الإعداد">?</i>';
   }
   /* لحقول إعدادات الموقع: path:مسار */
-  function qp(path, label) { const sp = split(label); return { t: sp.t, q: q("path:" + path, "", sp.t, sp.h) }; }
-  const entry = id => { const r = REG.get(id); if (!r) return null; const raw = D[r.type ? r.type + "." + r.key : r.key] || D[r.key]; let a = raw ? (typeof raw === "string" ? raw : raw.a) : ""; if (!a) a = r.extra; return { t: r.title, a: a || "", key: r.key }; };
+  function qp(path, label, ctype) { const sp = split(label); return { t: sp.t, q: q("path:" + path, "", sp.t, sp.h, ctype) }; }
+  const entry = id => { const r = REG.get(id); if (!r) return null; const raw = D[r.type ? r.type + "." + r.key : r.key] || D[r.key]; let a = raw ? (typeof raw === "string" ? raw : raw.a) : ""; if (!a) a = r.extra; return { t: r.title, a: a || "", key: r.key, g: guide(r.ctype) }; };
   function hide() { const p = document.getElementById("ctlq-pop"); if (p) p.remove(); }
   function show(el) {
     hide(); const e = entry(el.dataset.hq); if (!e) return; const p = document.createElement("div"); p.id = "ctlq-pop";
-    p.innerHTML = "<b>" + esc(e.t) + "</b>" + (e.a ? esc(e.a).replace(/\n/g, "<br>") : '<span style="opacity:.8">لا يوجد شرح مكتوب لهذا الإعداد بعد — اسأل المساعد.</span>') + '<br><button type="button" class="ask">💬 اسألني عن هذا الإعداد</button>';
-    document.body.appendChild(p); const r = el.getBoundingClientRect(), w = p.offsetWidth, h = p.offsetHeight; let left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8), top = r.bottom + 10; if (top + h > innerHeight - 8) top = Math.max(8, r.top - h - 10);
+    p.innerHTML = "<b>" + esc(e.t) + "</b>" + (e.a ? esc(e.a).replace(/\n/g, "<br>") : '<span style="opacity:.85">اضبط هذا الإعداد بما يناسب تصميمك وراقب النتيجة مباشرة في الصفحة.</span>') + (e.g ? '<div class="gd">💡 ما تفعله: ' + esc(e.g) + "</div>" : "");
+    document.body.appendChild(p); const r = el.getBoundingClientRect(), w = p.offsetWidth, h = p.offsetHeight; let left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8), top = r.top - h - 10, below = false; if (top < 8) { top = r.bottom + 10; below = true; } p.classList.toggle("dn", below);
     p.style.left = left + "px"; p.style.top = top + "px"; p.style.setProperty("--ax", Math.max(10, Math.min(w - 24, r.left + r.width / 2 - left - 6)) + "px");
-    p.querySelector(".ask").onclick = async () => { hide(); try { await AdminHelp.show(); AdminHelp.ask("ما هو إعداد «" + e.t + "»؟"); } catch (x) { } };
   }
   document.addEventListener("click", ev => { const q1 = ev.target.closest && ev.target.closest(".ctl-q"); if (q1) { ev.preventDefault(); ev.stopPropagation(); const open = document.getElementById("ctlq-pop") && document.getElementById("ctlq-pop")._for === q1; if (open) hide(); else { show(q1); const p = document.getElementById("ctlq-pop"); if (p) p._for = q1; } return; } if (!(ev.target.closest && ev.target.closest("#ctlq-pop"))) hide(); }, true);
+  let ht = 0;
+  document.addEventListener("mouseover", ev => { const el = ev.target.closest && ev.target.closest(".ctl-q"); if (!el) return; clearTimeout(ht); ht = setTimeout(() => { show(el); const p = document.getElementById("ctlq-pop"); if (p) p._for = el; }, 120); });
+  document.addEventListener("mouseout", ev => { const el = ev.target.closest && ev.target.closest(".ctl-q"); if (!el) return; clearTimeout(ht); hide(); });
   document.addEventListener("keydown", ev => { if (ev.key === "Escape") hide(); else if ((ev.key === "Enter" || ev.key === " ") && ev.target.classList && ev.target.classList.contains("ctl-q")) { ev.preventDefault(); show(ev.target); } });
   addEventListener("scroll", hide, true); addEventListener("resize", hide);
   /* تسميات لوحة الإدارة الثابتة: يُختصر العنوان الطويل وتُضاف «؟» لكل تسمية بلا عناصر فرعية */
   function scan(root) {
     css(); (root || document).querySelectorAll(".field > label").forEach(l => {
       if (l.dataset.hqd || l.closest("#pbx-insp,#pbx,.pbx-wrap,[id^='ca-body-'],#ah-panel") || l.children.length || !l.textContent.trim()) return; l.dataset.hqd = "1";
-      const sp = split(l.textContent); l.textContent = sp.t; l.insertAdjacentHTML("beforeend", q("lbl:" + sp.t, "", sp.t, sp.h));
+      const sp = split(l.textContent), ctl = l.parentElement && l.parentElement.querySelector("input,select,textarea"), ct = !ctl ? "" : ctl.tagName === "SELECT" ? "select" : ctl.tagName === "TEXTAREA" ? "textarea" : ({ checkbox: "switch", number: "num", color: "color" }[ctl.type] || "text"); l.textContent = sp.t; l.insertAdjacentHTML("beforeend", q("lbl:" + sp.t, "", sp.t, sp.h, ct));
     });
   }
   /* مدخلات المساعد: شرح كل إعداد في مطوّر الصفحات ومسارات إعدادات الموقع */
@@ -55,7 +60,7 @@ window.CtlHelp = (function () {
     const out = [], seen = new Set();
     if (typeof PB !== "undefined" && PB.WIDGETS) Object.keys(PB.WIDGETS).forEach(ty => { const w = PB.WIDGETS[ty]; (w.ctl || []).forEach(c => {
       if (!c || !c.l) return; const sp = split(c.l), a = text(c.k, ty) || sp.h, id = "c:" + ty + "." + c.k; if (!a || seen.has(id)) return; seen.add(id);
-      out.push({ id, t: sp.t + " — " + w.label, k: "إعداد " + w.label + " " + sp.t + " " + c.k, a: a + "\n(في الإعدادات ← " + ({ c: "محتوى", s: "تنسيق", a: "متقدم" }[c.tab] || "محتوى") + ")", go: "builder" }); }); });
+      out.push({ id, t: sp.t + " — " + w.label, k: "إعداد " + w.label + " " + sp.t + " " + c.k, a: a + (guide(c.t) ? "\n💡 ما تفعله: " + guide(c.t) : "") + "\n(في الإعدادات ← " + ({ c: "محتوى", s: "تنسيق", a: "متقدم" }[c.tab] || "محتوى") + ")", go: "builder" }); }); });
     Object.keys(D).forEach(k => { if (k.indexOf("path:") === 0 && D[k] && D[k].t) out.push({ id: k, t: D[k].t + " — الهيدر والفوتر", k: "إعداد الهيدر الفوتر الموقع " + D[k].t + " " + k.slice(5), a: D[k].a + "\n(إعدادات الموقع ← الهيدر/الفوتر)", go: "chromeh" }); });
     return out;
   }

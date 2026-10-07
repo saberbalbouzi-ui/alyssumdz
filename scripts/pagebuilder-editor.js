@@ -2075,7 +2075,7 @@ ${inspGroups(all, inf)}`;
     const ownV = isR ? own(set, k, dev) : set[k], effV = isR ? eff(set, k, dev) : set[k];
     const inherited = isR && ownV === undefined && effV !== undefined;
     const rs = (ownV !== undefined && ownV !== "" && !(c.t === "switch" && ownV === false && !isR)) ? `<button class="rs" data-rs="${k}" title="إعادة للافتراضي">↺</button>` : "";
-    const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h) : "", head = `<label>${esc(sp.t)}${hq}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
+    const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h, c.t) : "", head = `<label>${esc(sp.t)}${hq}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
     const a = `data-k="${k}" data-t="${c.t}"`;
     let b = "";
     switch (c.t) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.29.0">
+<meta name="admin-version" content="1.29.1">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=6"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.29.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.29.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.29.0"></script>
-<script src="assets/js/admin-update.js?v=1.29.0"></script>
+<script src="assets/js/ctl-help.js?v=1.29.1"></script>
+<script src="assets/js/chrome-admin.js?v=1.29.1"></script>
+<script src="assets/js/admin-assistant.js?v=1.29.1"></script>
+<script src="assets/js/admin-update.js?v=1.29.1"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -10463,7 +10463,7 @@ ${inspGroups(all, inf)}`;
     const ownV = isR ? own(set, k, dev) : set[k], effV = isR ? eff(set, k, dev) : set[k];
     const inherited = isR && ownV === undefined && effV !== undefined;
     const rs = (ownV !== undefined && ownV !== "" && !(c.t === "switch" && ownV === false && !isR)) ? `<button class="rs" data-rs="${k}" title="إعادة للافتراضي">↺</button>` : "";
-    const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h) : "", head = `<label>${esc(sp.t)}${hq}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
+    const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h, c.t) : "", head = `<label>${esc(sp.t)}${hq}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
     const a = `data-k="${k}" data-t="${c.t}"`;
     let b = "";
     switch (c.t) {
