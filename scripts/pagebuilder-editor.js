@@ -25,7 +25,7 @@ const PBApp = (() => {
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
 .pb-edit .pb-sl-cap:not(.below){cursor:move}
 .pb-drop{position:absolute;background:#2d6cdf;height:4px;border-radius:2px;pointer-events:none;z-index:9999;box-shadow:0 0 0 2px rgba(45,108,223,.25)}
-.pb-edit [data-anim]{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp{overflow:visible!important}.pb-edit .pb-tp-r .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp>.pb-tp-m{display:block}.pb-edit .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
+.pb-edit [data-anim]{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp:not([data-live]).pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp:not([data-live]){overflow:visible!important}.pb-edit .pb-tp-r:not([data-live]) .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp:not([data-live])>.pb-tp-m{display:block}.pb-edit .pb-tp:not([data-live]) .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp:not([data-live]) .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t:not([data-live]) .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
 .pb-edit .pb-cf :is(input,textarea,select,button){pointer-events:none}.pb-edit .pb-cf-b span,.pb-edit [data-edit],.pb-edit [data-icon]{pointer-events:auto}.pb-edit [data-edit]:hover{outline:1.5px dashed #0d9488;outline-offset:2px;cursor:text}.pb-edit [data-icon]:hover{outline:1.5px dashed #0d9488;outline-offset:3px;cursor:pointer}
 body{overflow-x:hidden;margin:0}`;
 
@@ -474,7 +474,12 @@ body{overflow-x:hidden;margin:0}`;
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
-    fitStage(); positionOverlay(); thumbsSoon();
+    fitStage(); positionOverlay(); thumbsSoon(); liveBars();
+  }
+  /* الشريط العلوي غير المحدّد يعمل مباشرة في المحرّر (تناوب الإعلانات وحركتها)؛ عند تحديده يتجمّد ليُعدَّل نصه */
+  function liveBars() {
+    (E.liveT || []).forEach(clearInterval); E.liveT = []; if (!root) return;
+    root.querySelectorAll(".pb-tp").forEach(b => { const w = b.closest("[data-pb]"); if (w && w.dataset.pb === E.sel) { b.removeAttribute("data-live"); return; } b.setAttribute("data-live", "1"); const r = +b.getAttribute("data-rot") || 0, it = [].slice.call(b.querySelectorAll(".pb-tp-i")); if (r > 0 && it.length > 1) { let i = Math.max(0, it.findIndex(x => x.classList.contains("on"))); E.liveT.push(setInterval(() => { it[i].classList.remove("on"); i = (i + 1) % it.length; it[i].classList.add("on"); }, r * 1000)); } });
   }
   function fixCountdown() { root.querySelectorAll(".pb-cd").forEach(el => { const v = { d: "00", h: "23", m: "59", s: "59" }; for (const k in v) { const b = el.querySelector(`[data-u=${k}]`); if (b) b.textContent = v[k]; } }); }
   function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { renderCanvas(); updPend(); }); }
@@ -828,7 +833,7 @@ body{overflow-x:hidden;margin:0}`;
     if (editing) { try { editing.el.blur(); } catch (e) { } }
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
-     positionOverlay(); if (E.ltab === "lay") renderLeft();
+     positionOverlay(); liveBars(); if (E.ltab === "lay") renderLeft();
     { const q = id && find(id); if (q && q.node && q.node.type === "shdr" && E.page.sections.indexOf(q.sec) <= 1) setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 40); }      // الهيدر في أعلى الصفحة: تنتقل الشاشة إلى مكانه
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe

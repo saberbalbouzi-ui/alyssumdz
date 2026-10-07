@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.30.1">
+<meta name="admin-version" content="1.30.2">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.30.1"></script>
-<script src="assets/js/chrome-admin.js?v=1.30.1"></script>
-<script src="assets/js/admin-assistant.js?v=1.30.1"></script>
-<script src="assets/js/admin-update.js?v=1.30.1"></script>
+<script src="assets/js/ctl-help.js?v=1.30.2"></script>
+<script src="assets/js/chrome-admin.js?v=1.30.2"></script>
+<script src="assets/js/admin-assistant.js?v=1.30.2"></script>
+<script src="assets/js/admin-update.js?v=1.30.2"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -8307,7 +8307,7 @@ const PB = (() => {
   const RUNTIME_JS = `(function(){
 try{if(localStorage.getItem('alyssum_admin_on')==='1'&&self===top&&__pbSlug&&!/[?&](preview|embed)=/.test(location.search)){var ea=document.createElement('a');ea.href=__pbBase+'admin.html#edit='+encodeURIComponent(__pbSlug);ea.textContent='✏️ تعديل هذه الصفحة';ea.style.cssText='position:fixed;bottom:16px;left:16px;z-index:99999;background:#173f35;color:#fff;padding:.65rem 1.1rem;border-radius:999px;font:800 14px Cairo,system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);text-decoration:none';document.body.appendChild(ea)}}catch(e){}
 var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
-$('.pb-tp[data-rot],.pb-tp[data-hide],.pb-tp[data-close]').forEach(function(b){var k=b.getAttribute('data-close'),gone=0;function hid(a){if(a){b.style.maxHeight=b.offsetHeight+'px';void b.offsetHeight}b.classList.add('pb-tp-h')}try{if(k&&localStorage.getItem(k)){b.style.maxHeight='0px';b.classList.add('pb-tp-h');gone=1}}catch(e){}var x=b.querySelector('.pb-tp-x');if(x)x.onclick=function(e){e.preventDefault();e.stopPropagation();gone=1;try{localStorage.setItem(k,'1')}catch(_){}hid(1)};var r=+b.getAttribute('data-rot')||0;if(r>0){var it=[].slice.call(b.querySelectorAll('.pb-tp-i')),i=0;if(it.length>1)setInterval(function(){it[i].classList.remove('on');i=(i+1)%it.length;it[i].classList.add('on')},r*1000)}if(b.hasAttribute('data-hide')&&!gone){var hs=0;addEventListener('scroll',function(){var y=window.pageYOffset||document.documentElement.scrollTop||0;if(gone)return;if(y>80&&!hs){hs=1;hid(1)}else if(y<20&&hs){hs=0;b.classList.remove('pb-tp-h');b.style.maxHeight=''}},{passive:true})}});
+$('.pb-tp[data-rot],.pb-tp[data-hide],.pb-tp[data-close]').forEach(function(b){var k=b.getAttribute('data-close'),gone=0;var sc=b.closest('.pb-sec');function hid(a){if(a){b.style.maxHeight=b.offsetHeight+'px';void b.offsetHeight}b.classList.add('pb-tp-h');if(sc){sc.style.transition='min-height .35s,height .35s';sc.style.minHeight='0';sc.style.height='0';sc.style.overflow='hidden'}}try{if(k&&localStorage.getItem(k)){b.style.maxHeight='0px';b.classList.add('pb-tp-h');gone=1}}catch(e){}var x=b.querySelector('.pb-tp-x');if(x)x.onclick=function(e){e.preventDefault();e.stopPropagation();gone=1;try{localStorage.setItem(k,'1')}catch(_){}hid(1)};var r=+b.getAttribute('data-rot')||0;if(r>0){var it=[].slice.call(b.querySelectorAll('.pb-tp-i')),i=0;if(it.length>1)setInterval(function(){it[i].classList.remove('on');i=(i+1)%it.length;it[i].classList.add('on')},r*1000)}if(b.hasAttribute('data-hide')&&!gone){var hs=0;addEventListener('scroll',function(){var y=window.pageYOffset||document.documentElement.scrollTop||0;if(gone)return;if(y>80&&!hs){hs=1;hid(1)}else if(y<20&&hs){hs=0;b.classList.remove('pb-tp-h');b.style.maxHeight='';if(sc){sc.style.minHeight='';sc.style.height='';sc.style.overflow=''}}},{passive:true})}});
 $('.pb-hd[data-tr]').forEach(function(h){var sc=h.closest('.pb-sec');if(sc)sc.style.zIndex=60;var p=+h.getAttribute('data-trp');if(isNaN(p))p=30;function f(){h.classList.toggle('pb-sc',(window.pageYOffset||document.documentElement.scrollTop||0)>p)}f();addEventListener('scroll',f,{passive:true})});
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct,.pb-bl[data-ia]').forEach(function(n){io.observe(n)})}else{$('[data-anim],.pb-bl[data-ia]').forEach(function(n){n.classList.add('pb-in-view')})}
 function tick(){$('.pb-cd').forEach(function(el){var end;if(el.dataset.mode==='date'&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
@@ -8420,7 +8420,7 @@ const PBApp = (() => {
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
 .pb-edit .pb-sl-cap:not(.below){cursor:move}
 .pb-drop{position:absolute;background:#2d6cdf;height:4px;border-radius:2px;pointer-events:none;z-index:9999;box-shadow:0 0 0 2px rgba(45,108,223,.25)}
-.pb-edit [data-anim]{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp{overflow:visible!important}.pb-edit .pb-tp-r .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp>.pb-tp-m{display:block}.pb-edit .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
+.pb-edit [data-anim]{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp:not([data-live]).pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp:not([data-live]){overflow:visible!important}.pb-edit .pb-tp-r:not([data-live]) .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp:not([data-live])>.pb-tp-m{display:block}.pb-edit .pb-tp:not([data-live]) .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp:not([data-live]) .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t:not([data-live]) .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
 .pb-edit .pb-cf :is(input,textarea,select,button){pointer-events:none}.pb-edit .pb-cf-b span,.pb-edit [data-edit],.pb-edit [data-icon]{pointer-events:auto}.pb-edit [data-edit]:hover{outline:1.5px dashed #0d9488;outline-offset:2px;cursor:text}.pb-edit [data-icon]:hover{outline:1.5px dashed #0d9488;outline-offset:3px;cursor:pointer}
 body{overflow-x:hidden;margin:0}`;
 
@@ -8869,7 +8869,12 @@ body{overflow-x:hidden;margin:0}`;
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
-    fitStage(); positionOverlay(); thumbsSoon();
+    fitStage(); positionOverlay(); thumbsSoon(); liveBars();
+  }
+  /* الشريط العلوي غير المحدّد يعمل مباشرة في المحرّر (تناوب الإعلانات وحركتها)؛ عند تحديده يتجمّد ليُعدَّل نصه */
+  function liveBars() {
+    (E.liveT || []).forEach(clearInterval); E.liveT = []; if (!root) return;
+    root.querySelectorAll(".pb-tp").forEach(b => { const w = b.closest("[data-pb]"); if (w && w.dataset.pb === E.sel) { b.removeAttribute("data-live"); return; } b.setAttribute("data-live", "1"); const r = +b.getAttribute("data-rot") || 0, it = [].slice.call(b.querySelectorAll(".pb-tp-i")); if (r > 0 && it.length > 1) { let i = Math.max(0, it.findIndex(x => x.classList.contains("on"))); E.liveT.push(setInterval(() => { it[i].classList.remove("on"); i = (i + 1) % it.length; it[i].classList.add("on"); }, r * 1000)); } });
   }
   function fixCountdown() { root.querySelectorAll(".pb-cd").forEach(el => { const v = { d: "00", h: "23", m: "59", s: "59" }; for (const k in v) { const b = el.querySelector(`[data-u=${k}]`); if (b) b.textContent = v[k]; } }); }
   function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { renderCanvas(); updPend(); }); }
@@ -9223,7 +9228,7 @@ body{overflow-x:hidden;margin:0}`;
     if (editing) { try { editing.el.blur(); } catch (e) { } }
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
-     positionOverlay(); if (E.ltab === "lay") renderLeft();
+     positionOverlay(); liveBars(); if (E.ltab === "lay") renderLeft();
     { const q = id && find(id); if (q && q.node && q.node.type === "shdr" && E.page.sections.indexOf(q.sec) <= 1) setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 40); }      // الهيدر في أعلى الصفحة: تنتقل الشاشة إلى مكانه
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
