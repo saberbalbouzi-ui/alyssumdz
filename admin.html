@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.24.10">
+<meta name="admin-version" content="1.24.11">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1481,9 +1481,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/text-capture.js"></script>
 <script src="assets/js/social-icons.js?v=1"></script>
 <script src="assets/js/chrome.js?v=2"></script>
-<script src="assets/js/chrome-admin.js?v=1.24.10"></script>
-<script src="assets/js/admin-assistant.js?v=1.24.10"></script>
-<script src="assets/js/admin-update.js?v=1.24.10"></script>
+<script src="assets/js/chrome-admin.js?v=1.24.11"></script>
+<script src="assets/js/admin-assistant.js?v=1.24.11"></script>
+<script src="assets/js/admin-update.js?v=1.24.11"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7630,10 +7630,25 @@ const PB = (() => {
       css: (c, sel, s) => { c.d.push(`${sel} .pb-so{display:flex;flex-wrap:wrap;align-items:center;justify-content:${s.jc || "center"};gap:${num(s.gap) ?? 10}px}${sel} .pb-so .si-a{display:inline-flex;transition:transform .15s}${sel} .pb-so .si-a:hover{transform:translateY(-2px)}`); if (s.ic) c.d.push(`${sel} .pb-so .si-ic{color:${s.ic}!important}`); },
     },
     pprice: {
-      label: "سعر المنتج (مرتبط)", ic: "💰", def: { prod: "", pc: "", fs: { d: 34 }, ta: { d: "start" } },
-      ctl: [{ k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" }, { k: "pc", l: "لون السعر", t: "color", tab: "s" }, { k: "fs", l: "حجم السعر (px)", t: "num", r: 1, min: 14, max: 90, tab: "s" }],
-      html: (s, id, ctx) => { const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>'; const f = n => Number(n || 0).toLocaleString("fr-DZ") + " دج", has = p.old && p.old > p.price; return `<div class="pb-pp${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبط بسعر المنتج — انقر للتعديل"` : ""}><span class="price-now" id="pprice">${f(p.price)}</span><span class="price-old" id="pold"${has ? "" : ' style="display:none"'}>${has ? f(p.old) : ""}</span><span class="save-pill" id="psave"${has ? "" : ' style="display:none"'}>${has ? "وفّر " + Math.round((1 - p.price / p.old) * 100) + "%" : ""}</span></div>`; },
-      css: (c, sel, s) => { c.d.push(`${sel} .pb-pp{display:flex;gap:.7rem;align-items:baseline;flex-wrap:wrap}:where(${sel} .price-now){font-weight:900;color:${s.pc || "#157a55"}}:where(${sel} .price-old){text-decoration:line-through;color:#999}:where(${sel} .save-pill){background:#fde8e8;color:#b83232;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:800}`); emit(c, sel + " .price-now", s, [["fs", px("font-size")]]); if (s.pc) c.d.push(`${sel} .price-now{color:${s.pc}}`); },
+      label: "سعر المنتج (مرتبط أو مخصص)", ic: "💰", def: { prod: "", psrc: "", shold: true, shsave: true, pst: "وفّر", cnow: "3,900 دج", cold: "4,900 دج", csave: "وفّر 20%", pc: "", fs: { d: 34 }, ta: { d: "start" } },
+      ctl: [{ k: "psrc", l: "مصدر السعر", t: "select", o: [["", "🔗 مرتبط بسعر المنتج (يتغيّر من بياناته)"], ["custom", "✏️ مخصص (كل عناصره قابلة للتعديل هنا وبالنقر في الصفحة)"]], tab: "c" },
+        { k: "prod", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c", showIf: ["psrc", "!"] },
+        { k: "cnow", l: "السعر الحالي (نص حرّ مع العملة)", t: "text", tab: "c", showIf: ["psrc", "custom"] }, { k: "cold", l: "السعر قبل التخفيض", t: "text", tab: "c", showIf: ["psrc", "custom"] }, { k: "csave", l: "نص التخفيض (مثل: وفّر 20%)", t: "text", tab: "c", showIf: ["psrc", "custom"] },
+        { k: "shold", l: "إظهار السعر قبل التخفيض", t: "switch", tab: "c" }, { k: "shsave", l: "إظهار شارة التخفيض", t: "switch", tab: "c" }, { k: "pst", l: "كلمة شارة التخفيض (قبل النسبة)", t: "text", tab: "c", showIf: ["psrc", "!"], showIf2: ["shsave", "*"] },
+        { k: "pc", l: "لون السعر الحالي", t: "color", tab: "s" }, { k: "fs", l: "حجم السعر الحالي (px)", t: "num", r: 1, min: 14, max: 90, tab: "s" },
+        { k: "oc", l: "لون السعر قبل التخفيض", t: "color", tab: "s", showIf: ["shold", "*"] }, { k: "os", l: "حجم السعر قبل التخفيض (px)", t: "num", r: 1, min: 10, max: 60, tab: "s", showIf: ["shold", "*"] },
+        { k: "sbg", l: "خلفية شارة التخفيض", t: "color", tab: "s", showIf: ["shsave", "*"] }, { k: "sc", l: "لون نص الشارة", t: "color", tab: "s", showIf: ["shsave", "*"] }, { k: "ss", l: "حجم نص الشارة (px)", t: "num", r: 1, min: 9, max: 40, tab: "s", showIf: ["shsave", "*"] }, { k: "sr", l: "تدوير الشارة (px)", t: "num", r: 1, min: 0, max: 40, tab: "s", showIf: ["shsave", "*"] },
+        { k: "pgp", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "pjc", l: "المحاذاة", t: "select", o: [["", "يمين (البداية)"], ["center", "وسط"], ["flex-end", "يسار (النهاية)"]], tab: "s" }],
+      html: (s, id, ctx) => {
+        const custom = s.psrc === "custom", offO = s.shold === false ? " pb-off" : "", offS = s.shsave === false ? " pb-off" : "";
+        if (custom) return `<div class="pb-pp"><span class="price-now" data-edit="cnow">${esc(s.cnow)}</span><span class="price-old${offO}" data-edit="cold">${esc(s.cold)}</span><span class="save-pill${offS}" data-edit="csave">${esc(s.csave)}</span></div>`;
+        const p = (ctx.products || []).find(x => x.slug === (s.prod || ctx.pageProduct)); if (!p) return '<div class="pb-ph">اختر المنتج</div>';
+        const f = n => Number(n || 0).toLocaleString("fr-DZ") + " دج", has = p.old && p.old > p.price;
+        return `<div class="pb-pp${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(p.slug)}" title="مرتبط بسعر المنتج — انقر للتعديل"` : ""}><span class="price-now" id="pprice">${f(p.price)}</span><span class="price-old${offO}" id="pold"${has ? "" : ' style="display:none"'}>${has ? f(p.old) : ""}</span><span class="save-pill${offS}" id="psave"${has ? "" : ' style="display:none"'}>${has ? esc(s.pst || "وفّر") + " " + Math.round((1 - p.price / p.old) * 100) + "%" : ""}</span></div>`; },
+      css: (c, sel, s) => {
+        c.d.push(`${sel} .pb-pp{display:flex;gap:${num(s.pgp) ?? 11}px;align-items:baseline;flex-wrap:wrap${s.pjc ? ";justify-content:" + s.pjc : ""}}${sel} .pb-off{display:none!important}:where(${sel} .price-now){font-weight:900;color:${s.pc || "#157a55"}}:where(${sel} .price-old){text-decoration:line-through;color:#999}:where(${sel} .save-pill){background:#fde8e8;color:#b83232;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:800}`);
+        emit(c, sel + " .price-now", s, [["fs", px("font-size")]]); emit(c, sel + " .price-old", s, [["os", px("font-size")]]); emit(c, sel + " .save-pill", s, [["ss", px("font-size")], ["sr", px("border-radius")]]);
+        if (s.pc) c.d.push(`${sel} .price-now{color:${s.pc}}`); if (s.oc) c.d.push(`${sel} .price-old{color:${s.oc}}`); if (s.sbg) c.d.push(`${sel} .save-pill{background:${s.sbg}}`); if (s.sc) c.d.push(`${sel} .save-pill{color:${s.sc}}`); },
     },
     poffers: {
       label: "عروض المنتج (مرتبطة)", ic: "🏷️", def: { prod: "" },
