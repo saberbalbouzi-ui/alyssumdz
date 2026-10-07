@@ -391,10 +391,11 @@ const PBClone = (function () {
     const E = A().E; if (E && E.page && E.dirty && !confirm("سيُفتح القالب المنسوخ في صفحة جديدة، وتُحفظ مسودة صفحتك الحالية تلقائياً. هل تريد المتابعة؟")) return false;
     try { A().saveDraftNow(); } catch (e) { } close(); A().open(page, "", true); return true;
   }
-  async function saveImages(widgets, doSave) {      // يحفظ الصور في موقعك (يتفادى الروابط الخارجية التي قد تتعطّل) بأقصى 40 صورة
-    const imgs = widgets.filter(w => w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)).slice(0, 40); if (!doSave || !imgs.length) return 0;
-    let done = 0, i = 0; const cache = new Map();
-    async function work() { while (i < imgs.length) { const w = imgs[i++], u = w.set.src; st("حفظ الصور في موقعك… " + (done + 1) + "/" + imgs.length); try { if (!cache.has(u)) cache.set(u, (async () => { const b = await fetchBlob(u); return b ? await A().uploadBlob(b, "clone", { max: 1920 }) : null; })()); const p = await cache.get(u); if (p) w.set.src = p; } catch (e) { } done++; } }
+  async function saveImages(widgets, doSave) {      // يحفظ الصور في موقعك (يتفادى الروابط الخارجية التي قد تتعطّل): كل رابط فريد مرة واحدة (نسخة الجوال والشرائح تتشارك الصور) بأقصى 80 رابطاً فريداً
+    const by = new Map(); widgets.forEach(w => { if (w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)) { const k = w.set.src; if (!by.has(k)) by.set(k, []); by.get(k).push(w); } });
+    const urls = [...by.keys()].slice(0, 80); if (!doSave || !urls.length) return 0;
+    let done = 0, i = 0;
+    async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) by.get(u).forEach(w => { w.set.src = p; }); } catch (e) { } done++; } }
     await Promise.all([work(), work(), work()]); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
@@ -643,7 +644,7 @@ const PBClone = (function () {
   function mountFrame(html) {
     const W = S.W, f = document.createElement("iframe"); f.setAttribute("sandbox", "allow-same-origin"); f.setAttribute("scrolling", "no"); f.style.cssText = `width:${W}px;height:900px`; S.frame = f;
     mountWin(f, W, 900, 900, true); st("جارٍ عرض الصفحة…");
-    f.onload = async () => { st("تحميل الصور والخطوط…"); const d = f.contentDocument; if (!d) return; try { await Promise.race([Promise.all([...d.images].filter(i => !i.complete).map(i => new Promise(r => { i.onload = i.onerror = r; }))), sleep(5000)]); await Promise.race([d.fonts ? d.fonts.ready : Promise.resolve(), sleep(2500)]); } catch (e) { }
+    f.onload = async () => { st("تحميل الصور والخطوط…"); const d = f.contentDocument; if (!d) return; try { d.addEventListener("click", e => { const a = e.target && e.target.closest && e.target.closest("a,area"); if (a) e.preventDefault(); }, true); d.addEventListener("submit", e => e.preventDefault(), true); } catch (e) { } try { await Promise.race([Promise.all([...d.images].filter(i => !i.complete).map(i => new Promise(r => { i.onload = i.onerror = r; }))), sleep(5000)]); await Promise.race([d.fonts ? d.fonts.ready : Promise.resolve(), sleep(2500)]); } catch (e) { }
       const h = Math.min(16000, Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0, 300)); f.style.height = h + "px"; await sleep(80); const h2 = Math.min(16000, Math.max(d.documentElement.scrollHeight, h)); f.style.height = h2 + "px";
       diagPage(d, h2); try { S.fxRep = typeof PBCloneFx !== "undefined" ? PBCloneFx.analyze(d, f.contentWindow) : []; S.fxAsked = false; fxPanel(S.fxRep.some(x => x.status !== "ok")); } catch (e) { console.warn("analyze", e); } S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.src ? " [المصدر: " + ({ chrome: "إضافة كروم", proxy: "جلب عادي", github: "متصفح GitHub" }[S.src] || S.src) + "]" : "") + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»." + (S.warn ? " " + S.warn : "")); };
     f.srcdoc = html;
