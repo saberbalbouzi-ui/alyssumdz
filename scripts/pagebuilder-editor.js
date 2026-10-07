@@ -8,10 +8,11 @@ const PBApp = (() => {
   const DEVW = { d: 1280, t: 820, m: 390 };
   /* مؤقتاً: تعطيل «القسم» و«العمود» — كل العناصر حرة (موضع مطلق فوق قماش الصفحة). غيّر القيمة إلى false لإرجاع الأقسام والأعمدة كما كانت. */
   const FREE_ONLY = true;
-  const E = { sl: {}, snap: true, live: (() => { try { return localStorage.getItem("pbx_live") !== "0"; } catch (e) { return true; } })(), page: null, sel: null, dev: "d", hist: [], hi: -1, slug: "", isNew: true, dirty: false, tab: "c", ltab: "add", drag: null, scale: 1, sha: {} };
+  const E = { sl: {}, snap: true, fx: (() => { try { return localStorage.getItem("pbx_fx") !== "0"; } catch (e) { return true; } })(), live: (() => { try { return localStorage.getItem("pbx_live") !== "0"; } catch (e) { return true; } })(), page: null, sel: null, dev: "d", hist: [], hi: -1, slug: "", isNew: true, dirty: false, tab: "c", ltab: "add", drag: null, scale: 1, sha: {} };
   let frame, fdoc, root, styleEl, built = false, raf = 0, saveT = 0;
 
   const EDIT_CSS = `
+.pb-edit.pb-fx .pb-sl-off,.pb-edit.pb-fx .pb-gx-off{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 ::-webkit-scrollbar{width:21px;height:21px}::-webkit-scrollbar-thumb{background:#E8923A;border-radius:12px;border:1px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:#f3ece0}
 .pb-edit [data-pb]{cursor:pointer}
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
@@ -229,6 +230,7 @@ body{overflow-x:hidden;margin:0}`;
   <button data-dv="d" onclick="PBApp.setDev('d')" title="المكتب">${ico('dev_d',16)} المكتب</button>
   <button data-dv="t" onclick="PBApp.setDev('t')" title="التابلت">${ico('dev_t',16)} تابلت</button>
   <button data-dv="m" onclick="PBApp.setDev('m')" title="الهاتف">${ico('dev_m',16)} هاتف</button>
+  <button id="pbx-fx" onclick="PBApp.toggleFx()" title="تأثيرات حيّة: تعمل السلايدرات والتبويبات والأكورديون والقوائم المنسدلة وتحويم البطاقات داخل المحرّر نفسه (الثبات عند التمرير وParallax تظهر في المعاينة والصفحة المنشورة).">تأثيرات حيّة</button>
   <button id="pbx-live" onclick="PBApp.toggleLive()" title="تعديل مباشر: التعديلات تُطبَّق على الصفحة فوراً بلا شريط تأكيد. عطّله لتظهر أزرار تأكيد/إلغاء لكل عنصر.">✏️ تعديل مباشر</button>
   <button id="pbx-snap" onclick="PBApp.toggleSnap()" title="الالتصاق بحواف العناصر الأخرى والمنتصف (اضغط Alt أثناء السحب لتعطيله مؤقتاً)">${ico('snap',16)} التصاق</button>
   <button id="pbx-undo" onclick="PBApp.undo()" title="تراجع (Ctrl+Z)">${ico('undo',16)}</button>
@@ -353,7 +355,7 @@ body{overflow-x:hidden;margin:0}`;
   function updateTop() {
     $("pbx-undo").disabled = E.hi <= 0; $("pbx-redo").disabled = E.hi >= E.hist.length - 1;
     $("pbx-dirty").textContent = E.dirty ? "● تعديلات غير منشورة" : "";
-    document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap); const lv = $("pbx-live"); if (lv) lv.classList.toggle("on", E.live);
+    document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap); const lv = $("pbx-live"); if (lv) lv.classList.toggle("on", E.live); const fxb = $("pbx-fx"); if (fxb) fxb.classList.toggle("on", E.fx);
   }
   /* تعديل اسم الصفحة من الشريط العلوي: الحقل للقراءة افتراضياً، وزر «تعديل الاسم» يفتحه (Enter يؤكّد وEsc يلغي) */
   function rename() {
@@ -495,8 +497,14 @@ body{overflow-x:hidden;margin:0}`;
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
-    fitStage(); positionOverlay(); thumbsSoon(); liveBars();
+    fitStage(); positionOverlay(); thumbsSoon(); liveBars(); runFx();
   }
+  /* التأثيرات الحيّة داخل المحرّر: نشغّل سكربت FX_JS في إطار الصفحة بعد كل رسم (الحالة تُحفظ بين الرسمين: الشريحة الحالية وفتح الأكورديون) */
+  function runFx() {
+    try { const w = fdoc && fdoc.defaultView; if (!w) return; if (!E.fx) { (w.__pbfxC || []).forEach(f => { try { f(); } catch (e) { } }); if (w.__pbfxC) w.__pbfxC.length = 0; fdoc.body.classList.remove("pb-fx"); return; } w.__pbEd = true; fdoc.body.classList.add("pb-fx"); w.eval(PB.FX_JS); } catch (e) { console.warn("fx", e); }
+  }
+  function toggleFx() { E.fx = !E.fx; try { localStorage.setItem("pbx_fx", E.fx ? "1" : "0"); } catch (e) { } updateTop(); renderCanvas(); toast(E.fx ? "تأثيرات حيّة مفعّلة: جرّب الأسهم والنقاط والتحويم داخل المحرّر" : "التأثيرات الحيّة معطّلة"); }
+  function fxReveal(id) { try { const w = fdoc && fdoc.defaultView, el = root && root.querySelector('[data-pb="' + id + '"]'); if (w && w.__pbFx && el && E.fx) w.__pbFx.reveal(el); } catch (e) { } }
   /* الشريط العلوي غير المحدّد يعمل مباشرة في المحرّر (تناوب الإعلانات وحركتها)؛ عند تحديده يتجمّد ليُعدَّل نصه */
   function liveBars() {
     (E.liveT || []).forEach(clearInterval); E.liveT = []; if (!root) return;
@@ -865,6 +873,7 @@ body{overflow-x:hidden;margin:0}`;
     if (typeof PBMask !== "undefined" && PBMask.pending() && PBMask.pending() !== id) PBMask.cancel();      // معاينة ماسك غير مؤكَّدة تُلغى عند تحديد عنصر آخر
     if (typeof PBPuzzle !== "undefined" && PBPuzzle.previewing() && PBPuzzle.previewing() !== id) PBPuzzle.cancelPrev();
     if (editing) { try { editing.el.blur(); } catch (e) { } }
+    if (id) fxReveal(id);      // عنصر في شريحة/لوحة مخفية: تُعرض أولاً
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
      positionOverlay(); liveBars(); if (E.ltab === "lay") renderLeft();
@@ -2509,7 +2518,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { insertSections, rename, toggleLive, renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { insertSections, rename, toggleLive, toggleFx, renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

@@ -122,7 +122,7 @@ const PBClone = (function () {
     function inlineHtml(el, cs) {      // محتوى مضمَّن نظيف: نص + <br> + روابط + عريض/مائل + ألوان مختلفة
       const base0 = { c: cs.color, w: cs.fontWeight, s: cs.fontStyle, f: cs.fontSize };
       function w(n, parent) { let o = "";
-        for (const c of n.childNodes) { if (c.nodeType === 3) o += esc(c.nodeValue.replace(/\s+/g, " ")); else if (c.nodeType === 1) { const t = c.tagName.toLowerCase(); if (t === "br") { o += "<br>"; continue; } if (t === "wbr") continue; const s = win.getComputedStyle(c), inner = w(c, s); if (!inner.trim() && !/img/.test(t)) continue; const sty = []; const cl = col(s.color), pc = col(parent.color); if (cl && pc && hex(cl) !== hex(pc)) sty.push("color:" + hex(cl)); if (s.fontWeight !== parent.fontWeight) sty.push("font-weight:" + s.fontWeight); if (s.fontStyle !== parent.fontStyle) sty.push("font-style:" + s.fontStyle); if (s.fontSize !== parent.fontSize) sty.push("font-size:" + s.fontSize); if (s.textDecorationLine !== parent.textDecorationLine && s.textDecorationLine !== "none") sty.push("text-decoration:" + s.textDecorationLine);
+        for (const c of n.childNodes) { if (c.nodeType === 3) o += esc(c.nodeValue.replace(/\s+/g, " ")); else if (c.nodeType === 1) { const t = c.tagName.toLowerCase(); if (t === "br") { o += "<br>"; continue; } if (t === "wbr") continue; const s = win.getComputedStyle(c), inner = w(c, s); if (!inner.trim() && !/img/.test(t)) continue; const sty = []; const cl = col(s.color), pc = col(parent.color); if (cl && (t === "a" || (pc && hex(cl) !== hex(pc)))) sty.push("color:" + hex(cl)); if (s.fontWeight !== parent.fontWeight) sty.push("font-weight:" + s.fontWeight); if (s.fontStyle !== parent.fontStyle) sty.push("font-style:" + s.fontStyle); if (s.fontSize !== parent.fontSize) { const q = px(s.fontSize) / (px(parent.fontSize) || 16); if (isFinite(q) && Math.abs(q - 1) > .01) sty.push("font-size:" + r2(q) + "em"); } if (t === "a") sty.push("text-decoration:" + (s.textDecorationLine === "none" ? "none" : s.textDecorationLine)); else if (s.textDecorationLine !== parent.textDecorationLine && s.textDecorationLine !== "none") sty.push("text-decoration:" + s.textDecorationLine);
           if (t === "a" && c.getAttribute("href") && !/^javascript:/i.test(c.getAttribute("href"))) o += `<a href="${esc(abs(c.getAttribute("href")))}"${sty.length ? ` style="${sty.join(";")}"` : ""}>${inner}</a>`; else o += sty.length ? `<span style="${sty.join(";")}">${inner}</span>` : inner; } }
         return o; }
       return w(el, cs).replace(/^(\s|<br>)+|(\s|<br>)+$/g, "").trim();
@@ -229,6 +229,20 @@ const PBClone = (function () {
         }
       }
     }
+
+    function findTabs() {      // التبويبات: كل تبويب «صفحة» مثل الشريحة؛ الأزرار = نقاط، واللوحات متراكمة في المكان نفسه
+      let lists = []; try { lists = [...doc.querySelectorAll('[role="tablist"],.nav-tabs,.nav-pills,.elementor-tabs-wrapper,ul.tabs,.tabs-nav,.tab-list')] } catch (e) { }
+      for (const lst of lists) {
+        if (sliders.some(x => x.root.contains(lst))) continue; let tabs = [...lst.querySelectorAll('[role="tab"],[data-bs-toggle="tab"],[data-toggle="tab"],[data-bs-toggle="pill"],.elementor-tab-title')]; if (!tabs.length) tabs = [...lst.querySelectorAll("a[href^='#'],button[aria-controls]")];
+        if (tabs.length < 2) continue; const panels = tabs.map(targetOf); if (panels.some(x => !x) || new Set(panels).size !== panels.length) continue; if (panels.some(pn => pn.contains(lst) || lst.contains(pn))) continue;
+        const rr0 = rectOf(lst); if (rr0.y >= limit) continue;
+        let root = panels[0].parentElement; while (root && !panels.every(pn => root.contains(pn))) root = root.parentElement; if (!root || root === doc.body || root === doc.documentElement) continue;
+        let act = tabs.findIndex(t => t.getAttribute("aria-selected") === "true" || /(^|\s)(active|current|selected|elementor-active)(\s|$)/.test(t.className)); if (act < 0) act = Math.max(0, panels.findIndex(isShown));
+        const rot = a => a.slice(act).concat(a.slice(0, act)), pn = rot(panels), tb = rot(tabs), id = "s" + (++slN);
+        elCls.set(pn[0], ["pbsl-" + id + "-0", "pbsi-" + id + "-0"]); pn.slice(1).forEach(x => slSkip.add(x)); tb.forEach((t, j) => elCls.set(t, ["pbsd-" + id + "-" + j]));
+        const sl = { id, def: {}, root, slides: pn, pv: 1, pages: pn.length, stacked: true, track: null, ms: 0, dots: tb, pr: [], nx: [], act, tabs: 1 }; sliders.push(sl); slRoot.set(root, sl);
+      }
+    }
     function sliderPages(sl, clip) {
       const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = r0 && out[r0[0]] ? out[r0[0]].set.zi : null;
       for (let p = 1; p < sl.pages; p++) {
@@ -249,7 +263,50 @@ const PBClone = (function () {
       const rg = d => elRange.get(d), paintOf = d => { const q = rg(d); return q ? out.slice(q[0], q[1]).find(w => w.type === "shape" || w.type === "button" || w.type === "image") : null; };
       const on = sl.dots.find(d => /active|current|selected/.test(d.className)) || sl.dots[0], off = sl.dots.find(d => d !== on); if (!on || !off) return; const pa = paintOf(on), pi = paintOf(off); if (!pa || !pi) return;
       const rule = (cl, p) => `selector.${cl}{opacity:${p.set.op != null ? p.set.op : 1}!important}` + (p.type === "shape" && p.set.fill ? `\nselector.${cl} .pb-svg *{fill:${p.set.fill}!important}` : "");
+      const txtOf = d => { const q = rg(d); return q ? out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading" || w.type === "button") : []; }, ta = txtOf(on), ti = txtOf(off);
+      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading").forEach((w, k) => { const a = ta[k], b = ti[k]; if (!a || !b || a.set.color === b.set.color) return; w.set.css = (w.set.css ? w.set.css + "\n" : "") + "selector.pb-dot-on .pb-t,selector.pb-dot-on .pb-t *{color:" + a.set.color + "!important}\nselector.pb-dot-off .pb-t,selector.pb-dot-off .pb-t *{color:" + b.set.color + "!important}"; }); }
       for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "button").forEach(w => { w.set.css = (w.set.css ? w.set.css + "\n" : "") + "selector{transition:all .3s}\n" + rule("pb-dot-on", pa) + "\n" + rule("pb-dot-off", pi); }); }
+    }
+
+    /* ───── مجموعات الإظهار/الإخفاء: أكورديون، <details>، القوائم المنسدلة، قائمة الجوال ☰ ─────
+       الرأس يحمل pbdh-<id> والمحتوى pbdb-<id> (مخفي pb-gx-off إن كان مغلقاً) وبياناته pbdm-<id>-<الارتفاع>-<عتبة التحريك>-<مفتوح؟>-<تحويم؟>-<العرض> على أول عنصر منه */
+    const discs = []; let dN = 0;
+    const FORCE = [["display", "block"], ["visibility", "visible"], ["opacity", "1"], ["height", "auto"], ["max-height", "none"], ["overflow", "visible"], ["transform", "none"], ["pointer-events", "auto"], ["clip", "auto"], ["clip-path", "none"]];
+    const isShown = e => { const r = e.getBoundingClientRect(), c = win.getComputedStyle(e); return r.height > 2 && r.width > 2 && c.display !== "none" && c.visibility !== "hidden" && Number(c.opacity) > .05; };
+    const targetOf = h => {
+      const raw = h.getAttribute("aria-controls") || h.getAttribute("data-bs-target") || h.getAttribute("data-target") || (/^#./.test(h.getAttribute("href") || "") ? h.getAttribute("href") : "") || ""; if (!raw) return null;
+      try { return doc.getElementById(raw.replace(/^#/, "")) || doc.querySelector(raw); } catch (e) { return null; }
+    };
+    function findDisclosures() {
+      const used = new Set(), items = [], add1 = it => { if (!it.head || !it.bodies.length || used.has(it.head) || it.bodies.some(b => b === it.head || b.contains(it.head) || it.head.contains(b))) return; used.add(it.head); items.push(it); };
+      for (const d of doc.querySelectorAll("details")) { const sm = d.querySelector(":scope > summary"); if (sm) add1({ head: sm, bodies: [...d.children].filter(c => c !== sm && c.tagName !== "SCRIPT"), det: d, o0: d.open, hov: false }); }
+      let heads = []; try { heads = [...doc.querySelectorAll('[aria-expanded][aria-controls],[data-bs-toggle="collapse"],[data-toggle="collapse"],.navbar-toggler,.menu-toggle,.hamburger,[class*="burger"],[class*="menu-toggle"],[class*="nav-toggle"],button[aria-label*="menu" i],button[aria-label*="القائمة"]')]; } catch (e) { }
+      for (const h of heads) {
+        if (h.getAttribute("role") === "tab" || h.closest("details,[role=tablist]")) continue; const r = rectOf(h); if (r.w < 4 || r.h < 4 || r.y >= limit) continue;
+        let b = targetOf(h); if (!b) { const n = h.nextElementSibling; if (n && /^(nav|ul|div)$/i.test(n.tagName)) b = n; else if (h.parentElement) b = h.parentElement.querySelector(":scope > nav, :scope > .collapse, :scope > ul"); }
+        if (b) add1({ head: h, bodies: [b], o0: isShown(b), hov: h.hasAttribute("aria-haspopup") });
+      }
+      let subs = []; try { subs = [...doc.querySelectorAll('li > ul, li > .sub-menu, li > .dropdown-menu, .dropdown > .dropdown-menu, .menu-item-has-children > ul, li > div[class*="mega"], li > div[class*="dropdown"]')]; } catch (e) { }
+      for (const b of subs) { if (isShown(b) || b.closest("details")) continue; const li = b.parentElement, h = (b.previousElementSibling && /^(a|button|span)$/i.test(b.previousElementSibling.tagName) ? b.previousElementSibling : li && li.querySelector(":scope > a, :scope > button")); if (h && rectOf(h).w > 4) add1({ head: h, bodies: [b], o0: false, hov: true }); }
+      for (const it of items) { it.id = "d" + (++dN); elCls.set(it.head, ["pbdh-" + it.id]); if (it.o0) it.bodies.forEach(b => elCls.set(b, ["pbdb-" + it.id])); discs.push(it); }
+    }
+    function discPass() {
+      const full = { x: 0, y: 0, w: W, h: limit }; let n = 0;
+      for (const it of discs) {
+        const saved = [], keep = (e, props) => { saved.push([e, e.getAttribute("style")]); props.forEach(([k, v]) => e.style.setProperty(k, v, "important")); }; let i0 = out.length, bodies = it.bodies;
+        if (!it.o0) {
+          if (it.det) it.det.setAttribute("open", "");
+          for (const b of bodies) { let a = b.parentElement, k = 0; while (a && a !== doc.body && k++ < 4) { if (win.getComputedStyle(a).display === "none") keep(a, [["display", "block"]]); a = a.parentElement; } keep(b, FORCE); }
+          if (!bodies.some(b => rectOf(b).h > 2)) { saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); continue; }
+        }
+        const rs = bodies.map(rectOf).filter(r => r.h > 1), y0 = Math.min(...rs.map(r => r.y)), y1 = Math.max(...rs.map(r => r.y + r.h)), overlay = bodies.some(b => /absolute|fixed/.test(win.getComputedStyle(b).position));
+        if (!it.o0) { i0 = out.length; bodies.forEach(b => { elCls.set(b, ["pbdb-" + it.id, "pb-gx-off"]); visit(b, full, null); }); saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); }
+        let ws = []; if (it.o0) bodies.forEach(b => { const q = elRange.get(b); if (q) ws = ws.concat(out.slice(q[0], q[1])); }); else ws = out.slice(i0); if (!ws.length) continue;
+        if (overlay) { const zmax = out.reduce((m, w) => Math.max(m, w.set.zi || 0), 0); const zmin = Math.min(...ws.map(w => w.set.zi || 0)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + zmax + 5; }); }
+        const H = overlay ? 0 : Math.round(y1 - y0), thr = Math.round(y0 + (it.o0 ? H : 0)); if (!overlay && fx) { let a = bodies[0].parentElement, k = 0; while (a && a !== doc.body && a !== doc.documentElement && k++ < 8) { const q = fx._S.own.get(a); if (q) tagW(out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "image"), ["pbds-" + it.id]); a = a.parentElement; } }      // خلفيات الحاويات تتمدّد مع فتح العنصر
+        tagW([ws[0]], ["pbdm-" + it.id + "-" + H + "-" + thr + "-" + (it.o0 ? 1 : 0) + "-" + (it.hov ? 1 : 0) + "-" + W]); n++;
+      }
+      if (fx && n) fx.stats.disc = (fx.stats.disc || 0) + n;
     }
     function visit(el, clip, anchor) {
       const i0 = out.length; visit0(el, clip, anchor); const sl = slRoot.get(el); if (sl) sliderPages(sl, clip); const i1 = out.length;
@@ -257,21 +314,43 @@ const PBClone = (function () {
       if (fx && i1 > i0) { try { fx.el(el, i0, ownEnd.has(el) && !sl ? ownEnd.get(el) : i1, i1); } catch (e) { console.warn("fx", e); } }
     }
     if (fx) { try { fx.pre(); } catch (e) { console.warn("fx.pre", e); } }
-    if (!opt.noSlides) { try { findSliders(); } catch (e) { console.warn("sliders", e); } }
+    if (!opt.noSlides) { try { findSliders(); findTabs(); } catch (e) { console.warn("sliders", e); } }
+    if (!opt.noDisc) { try { findDisclosures(); } catch (e) { console.warn("disc", e); } }
     visit(doc.documentElement, { x: 0, y: 0, w: W, h: limit }, null);
     sliders.forEach(sl => { try { sliderControls(sl); } catch (e) { console.warn("slctl", e); } });
+    try { discPass(); } catch (e) { console.warn("discpass", e); }
     if (fx) { try { fx.post(); } catch (e) { console.warn("fx.post", e); } }
     return { widgets: out, bg: bodyBg, truncated: stop || count > 5000, fx: fx ? fx.stats : null };
   }
 
   /* ───────── بناء الصفحة وفتحها في المحرّر ───────── */
-  function buildPage(widgets, title, bg, W, limit) {
+  function buildPage(widgets, title, bg, W, limit, mob) {
     const sec = PB.mkCanvas(); Object.assign(sec.set, { layout: "full", scaled: true, dw: W, mh: { d: Math.round(limit) }, pad: { d: [0, 0, 0, 0] } }); sec.free = widgets;
-    const page = PB.newPage(title || "قالب منسوخ", ""); page.header = false; page.footer = false; if (bg) page.bg = bg; page.sections = [sec]; return page;
+    const page = PB.newPage(title || "قالب منسوخ", ""); page.header = false; page.footer = false; if (bg) page.bg = bg; page.sections = [sec];
+    if (mob && mob.widgets.length) {      // نسخة الجوال: قسم مستقل بعرض تصميم 390 يظهر على الجوال فقط، والقسم الأول يُخفى على الجوال
+      const sm = PB.mkCanvas(); Object.assign(sm.set, { layout: "full", scaled: true, dw: mob.W, mh: { d: Math.round(mob.limit) }, pad: { d: [0, 0, 0, 0] }, hd: true, ht: true }); sm.free = mob.widgets; sec.set.hm = true; page.sections.push(sm);
+    }
+    return page;
+  }
+  /* يستخرج تصميم الجوال: نفس الصفحة في إطار بعرض 390؛ الحد السفلي يُقابَل بكتلة الصفحة نفسها (بالموضع في شجرة الجسم) */
+  async function extractMobile(docD) {
+    const MW = 390, f = document.createElement("iframe"); f.setAttribute("sandbox", "allow-same-origin"); f.style.cssText = `position:fixed;left:-9999px;top:0;width:${MW}px;height:1200px;border:0;visibility:hidden`; document.body.appendChild(f);
+    try {
+      await new Promise((res, rej) => { f.onload = res; f.onerror = rej; f.srcdoc = S.html; setTimeout(res, 20000); }); const d = f.contentDocument; if (!d || !d.body) throw new Error("لا إطار");
+      try { await Promise.race([Promise.all([...d.images].filter(i => !i.complete).map(i => new Promise(r => { i.onload = i.onerror = r; }))), sleep(5000)]); await Promise.race([d.fonts ? d.fonts.ready : Promise.resolve(), sleep(2500)]); } catch (e) { } await sleep(300);
+      const hM = Math.min(16000, Math.max(d.documentElement.scrollHeight, d.body.scrollHeight, 300)); f.style.height = hM + "px"; await sleep(80);
+      const wr = (dd, rootEl) => { let r = rootEl; for (let k = 0; k < 3; k++) { const kids = [...r.children].filter(c => !SKIP.has(c.tagName.toLowerCase())); if (kids.length === 1) r = kids[0]; else break; } return r; };
+      let limM = hM; try {
+        const rD = wr(docD, docD.body), rM = wr(d, d.body), kD = [...rD.children], kM = [...rM.children]; let idx = -1;
+        kD.forEach((c, i) => { const q = c.getBoundingClientRect(); if (q.height > 2 && q.top < S.limit - 6) idx = i; });
+        if (idx >= 0 && kM.length === kD.length) { for (let i = idx; i >= 0; i--) { const q = kM[i].getBoundingClientRect(); if (q.height > 2) { limM = Math.max(200, Math.round(q.bottom)); break; } } }
+      } catch (e) { }
+      limM = Math.min(limM, 9000); const res = extract(d, f.contentWindow, MW, limM, {}); return { widgets: res.widgets, W: MW, limit: limM, fx: res.fx };
+    } finally { f.remove(); }
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
     const dest = (document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec";
-    if (dest === "sec") { const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) sec.set.bg = page.bg; close(); A().insertSections([sec], "نسخ قالب"); return true; }
+    if (dest === "sec") { const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
     return openInEditor(page);
   }
   async function openInEditor(page) {
@@ -284,13 +363,14 @@ const PBClone = (function () {
     async function work() { while (i < imgs.length) { const w = imgs[i++], u = w.set.src; st("حفظ الصور في موقعك… " + (done + 1) + "/" + imgs.length); try { if (!cache.has(u)) cache.set(u, (async () => { const b = await fetchBlob(u); return b ? await A().uploadBlob(b, "clone", { max: 1920 }) : null; })()); const p = await cache.get(u); if (p) w.set.src = p; } catch (e) { } done++; } }
     await Promise.all([work(), work(), work()]); return done;
   }
-  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
+  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
-    await saveImages(res.widgets, $("cl-save") && $("cl-save").checked);
+    let mob = null; if ($("cl-mob") && $("cl-mob").checked) { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
+    await saveImages(res.widgets.concat(mob ? mob.widgets : []), $("cl-save") && $("cl-save").checked);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
-    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
+    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
   }
 
   /* ───────── وضع الصورة: OCR ───────── */
@@ -441,7 +521,7 @@ const PBClone = (function () {
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
-<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label></div>
+<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label title="يستخرج تصميم الصفحة عند عرض الجوال (390px) كقسم مستقل يظهر للجوال فقط، فتعمل قائمة ☰ والتخطيط الحقيقي للهاتف؛ والقسم الأول يختفي على الجوال"><input type="checkbox" id="cl-mob" checked> نسخة الجوال أيضاً</label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label></div>
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
