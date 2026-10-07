@@ -211,6 +211,42 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 .ca-pal{display:flex;flex-wrap:wrap;gap:.45rem;margin:.5rem 0}.ca-pi{display:inline-flex;flex-direction:column;align-items:center;gap:.2rem;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:.45rem .5rem;cursor:pointer;min-width:74px;font-family:inherit}.ca-pi:hover{border-color:var(--gold)}.ca-pi small{font-size:.7rem;font-weight:700;color:var(--green)}.ca-pi.on{border-color:var(--ok);background:#f1faf5}.ca-pi input{display:none}
 .ca-ord{display:flex;flex-wrap:wrap;gap:.45rem}.ca-chip{display:inline-flex;align-items:center;gap:.2rem;background:#f4efe6;border-radius:999px;padding:.2rem .3rem .2rem .7rem;font-weight:800;font-size:.85rem;color:var(--green)}.ca-chip small{color:#999;font-weight:600}
 @media(max-width:700px){.ca-row,.ca-soc{grid-template-columns:1fr}}
+
+/* ════════ ALYSSUM · Dark Fluorescent Glass UI ════════ */
+:root{--green:#39FF88;--green2:#0B2A1C;--gold:#00F5FF;--gold2:#7DFFE0;--bg:#050607;--line:rgba(255,255,255,.11);--red:#FF4D67;--ok:#39FF88;--blue:#6C8CFF;--warn-bg:rgba(255,184,77,.12);--glass:rgba(255,255,255,.055);--glass-strong:rgba(255,255,255,.085);--text:#F7FBFF;--muted:#A8B4BA}
+html,body{background:#050607!important;color:var(--text)!important}
+body{background:radial-gradient(circle at 8% 0%,rgba(57,255,136,.09),transparent 30rem),radial-gradient(circle at 92% 8%,rgba(0,245,255,.075),transparent 32rem),radial-gradient(circle at 50% 100%,rgba(168,85,247,.055),transparent 36rem),#050607!important}
+.login,.card,.side-nav,.stat div,.fee,.color-card,.modal,.attr-row,.var-row,.grp-pick,.action-bar,.diff-box,.editor-sidebar,.live-pill{background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.025))!important;border:1px solid rgba(255,255,255,.11)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 20px 55px rgba(0,0,0,.38)!important;backdrop-filter:blur(20px) saturate(145%);-webkit-backdrop-filter:blur(20px) saturate(145%)}
+.login{border-color:rgba(57,255,136,.25)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 55px rgba(57,255,136,.08),0 25px 70px rgba(0,0,0,.5)!important}
+.login h1,.top h1,.section-title,.color-group-title,.side-nav-intro b,.nav-txt b,.modal h3,.fee h4,.color-card h4,.var-row .vl{color:#fff!important}
+.login p,.side-nav-intro p,.nav-txt small,.hint,.stat span,.date-field,.top small{color:var(--muted)!important}
+input,select,textarea{background:rgba(0,0,0,.28)!important;color:#fff!important;border-color:rgba(255,255,255,.14)!important}
+input::placeholder,textarea::placeholder{color:#77848A!important}
+input:focus,select:focus,textarea:focus{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(57,255,136,.09),0 0 22px rgba(57,255,136,.12)!important}
+select option{background:#111719;color:#fff}
+.btn,.small:not(.gold):not(.blue):not(.gray):not(.warn),.nav-btn.on{background:linear-gradient(135deg,#39FF88,#00D97A)!important;color:#03120A!important;box-shadow:0 0 22px rgba(57,255,136,.18)!important}
+.btn:hover,.small:hover,.nav-btn.on:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.small.gold{background:linear-gradient(135deg,#00F5FF,#00BFD0)!important;color:#001216!important}
+.small.blue{background:linear-gradient(135deg,#718BFF,#586BFF)!important;color:#fff!important}
+.small.warn,.top button.logout{background:linear-gradient(135deg,#FF4D67,#D92E4D)!important;color:#fff!important}
+.small.gray{background:rgba(255,255,255,.09)!important;color:#fff!important}
+.side-nav{border-color:rgba(57,255,136,.13)!important}
+.nav-btn{color:#EAF2F4!important}.nav-btn:hover{background:rgba(57,255,136,.07)!important}.nav-btn.on .nav-txt small{color:#062015!important}
+.live-pill{color:var(--green)!important}.live-pill.on{border-color:rgba(57,255,136,.55)!important;box-shadow:0 0 18px rgba(57,255,136,.12)!important}
+.nb{background:#FF4D67!important;box-shadow:0 0 16px rgba(255,77,103,.25)!important}
+table{color:#EAF2F4}th{background:linear-gradient(135deg,#10261D,#073B2B)!important;color:#fff!important;border-bottom:1px solid rgba(57,255,136,.25)}td{border-bottom-color:rgba(255,255,255,.08)!important}tr:hover td{background:rgba(57,255,136,.045)!important}
+.rt tr{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.1)!important}
+.pill.st-nouvelle,.pill.st-pending{background:rgba(255,184,77,.15)!important;color:#FFD27A!important}.pill.st-confirmee{background:rgba(108,140,255,.16)!important;color:#9EB2FF!important}.pill.st-expediee{background:rgba(168,85,247,.17)!important;color:#D2A7FF!important}.pill.st-livree{background:rgba(57,255,136,.14)!important;color:#71FFAB!important}.pill.st-annulee,.pill.st-echec{background:rgba(255,77,103,.14)!important;color:#FF8A9D!important}
+.color-preview{background:rgba(0,0,0,.3)!important;border-color:rgba(255,255,255,.1)!important}
+.modal-bg{background:rgba(0,0,0,.78)!important;backdrop-filter:blur(10px)}.modal{border-color:rgba(0,245,255,.18)!important}.modal.xl .action-bar{background:rgba(5,6,7,.82)!important;border-color:rgba(0,245,255,.25)!important}
+.action-bar b,.section-title{color:var(--gold)!important}.badge-draft{background:rgba(255,184,77,.12)!important;color:#FFD27A!important;border-color:rgba(255,184,77,.35)!important}.diff-box{background:rgba(255,184,77,.06)!important;border-color:rgba(255,184,77,.25)!important}.diff-old{color:#FF7C8D!important}.diff-new{color:#65FF9F!important}
+#toast2{background:linear-gradient(135deg,#39FF88,#00CFA0)!important;color:#03120A!important;box-shadow:0 0 28px rgba(57,255,136,.25)}
+.editor-bg{background:#050607!important}.editor-sidebar{border-color:rgba(57,255,136,.15)!important}.search-bar input,.search-bar select{background:rgba(255,255,255,.045)!important}
+.top h1{text-shadow:0 0 20px rgba(57,255,136,.18),0 0 35px rgba(0,245,255,.1)}
+.stat div,.card,.side-nav{position:relative;overflow:hidden}.stat div::after,.card::after,.side-nav::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(120deg,rgba(57,255,136,.035),transparent 42%,rgba(0,245,255,.025))}
+@media(max-width:900px){.side-nav{border-color:rgba(0,245,255,.16)!important}}
+@media(prefers-reduced-motion:no-preference){.top h1{animation:alyGlow 4s ease-in-out infinite alternate}@keyframes alyGlow{from{text-shadow:0 0 14px rgba(57,255,136,.12)}to{text-shadow:0 0 25px rgba(0,245,255,.22)}}}
+
 </style>
 </head>
 <body>
