@@ -36,6 +36,20 @@ const PBClone = (function () {
     for (let i = 0; i < tries.length; i++) { try { st(i ? "جارٍ المحاولة عبر وسيط (" + i + "/" + PROXIES.length + ")…" : "جارٍ جلب الصفحة…"); const buf = await fget(tries[i], "buf"); const html = decode(buf); if (/<html|<body|<!doctype/i.test(html.slice(0, 4000)) && html.length > 300) return html; last = new Error("استجابة ليست صفحة HTML"); } catch (e) { last = e; } }
     throw new Error("تعذّر جلب الصفحة (" + (last && last.message || "؟") + "). جرّب موقعاً آخر أو استعمل تبويب «صورة» بلقطة شاشة للصفحة.");
   }
+  /* جلب بمتصفح كامل على خادم: يشغّل workflow «clone-page» في مستودعك (GitHub Actions + Chromium) فيعرض الصفحة بجافاسكربتها ويحفظ نسخة جامدة في assets/clone ثم تُقرأ هنا */
+  async function fetchFull(url, W, token) {
+    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token || c.token === "php" || !c.owner) throw new Error("الجلب بمتصفح كامل يحتاج ربط GitHub في الإعدادات (غير متاح في نسخة الاستضافة PHP)");
+    const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
+    st("تشغيل المتصفح الكامل على خادم GitHub…");
+    const r = await fetch(api + "/actions/workflows/clone-page.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ ref: c.branch || "main", inputs: { url, width: String(W), id } }) });
+    if (r.status !== 204) { const t = await r.text().catch(() => ""); throw new Error(r.status === 404 ? "لم يُعثر على الـworkflow «clone-page» في المستودع — انشر آخر تحديث للوحة أولاً" : r.status === 403 || r.status === 401 ? "التوكن بلا صلاحية تشغيل Actions (يلزم صلاحية «workflow» أو Actions: write)" : "فشل تشغيل الخادم (" + r.status + ") " + t.slice(0, 100)); }
+    const t0 = Date.now(), path = "assets/clone/" + id + ".html"; S.runId = id;
+    while (Date.now() - t0 < 300000) { await sleep(6000); if (S.runId !== id || !$("pbx-clone")) throw new Error("أُلغي الجلب"); st("المتصفح الكامل يعرض الصفحة على خادم GitHub… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 1–2 دقيقة)");
+      const g = await fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main") + "&t=" + Date.now(), { headers: Object.assign({}, H, { Accept: "application/vnd.github.raw+json" }) }).catch(() => null); if (!g || g.status === 404) continue; if (!g.ok) throw new Error("تعذّر قراءة النتيجة (" + g.status + ")");
+      const html = await g.text(); fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main"), { headers: H }).then(m => m.ok ? m.json() : null).then(m => m && fetch(api + "/contents/" + path, { method: "DELETE", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ message: "clone: تنظيف", sha: m.sha, branch: c.branch || "main" }) })).catch(() => { });      // تنظيف الملف المؤقت
+      return html; }
+    throw new Error("انتهت المهلة قبل اكتمال العرض على الخادم — راجع تبويب Actions في GitHub");
+  }
   async function fetchBlob(url) { const tries = [url].concat(PROXIES.map(p => p(url))); for (const t of tries) { try { const b = await fget(t, "blob", 20000); if (b && b.size > 200 && /^image\//.test(b.type)) return b; } catch (e) { } } return null; }
   /* يجهّز HTML للعرض الآمن: بلا سكربتات، مع <base>، وكشف الصور الكسولة، وإيقاف الحركات */
   function prep(html, url) {
@@ -157,6 +171,11 @@ const PBClone = (function () {
     const sec = PB.mkCanvas(); Object.assign(sec.set, { layout: "full", scaled: true, dw: W, mh: { d: Math.round(limit) }, pad: { d: [0, 0, 0, 0] } }); sec.free = widgets;
     const page = PB.newPage(title || "قالب منسوخ", ""); page.header = false; page.footer = false; if (bg) page.bg = bg; page.sections = [sec]; return page;
   }
+  async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
+    const dest = (document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec";
+    if (dest === "sec") { const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) sec.set.bg = page.bg; close(); A().insertSections([sec], "نسخ قالب"); return true; }
+    return openInEditor(page);
+  }
   async function openInEditor(page) {
     const E = A().E; if (E && E.page && E.dirty && !confirm("سيُفتح القالب المنسوخ في صفحة جديدة، وتُحفظ مسودة صفحتك الحالية تلقائياً. هل تريد المتابعة؟")) return false;
     try { A().saveDraftNow(); } catch (e) { } close(); A().open(page, "", true); return true;
@@ -172,7 +191,7 @@ const PBClone = (function () {
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
     await saveImages(res.widgets, $("cl-save") && $("cl-save").checked);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
-    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit); const ok = await openInEditor(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
+    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
   }
 
   /* ───────── وضع الصورة: OCR ───────── */
@@ -206,26 +225,97 @@ const PBClone = (function () {
     return blocks;
   }
   const AR = /[؀-ۿ]/;
+  /* ───────── تحويل اللقطة إلى عناصر: مناطق مسطّحة ← أشكال، مناطق بملمس ← صور، نصوص ← OCR ───────── */
+  const cd = (a, b) => (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])) / 3;
+  function grid(data, w, h, C) {
+    const gw = Math.ceil(w / C), gh = Math.ceil(h / C), mean = new Float32Array(gw * gh * 3), sd = new Float32Array(gw * gh);
+    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) { let sr = 0, sg = 0, sb = 0, sl = 0, sl2 = 0, n = 0; const x1 = Math.min(w, (gx + 1) * C), y1 = Math.min(h, (gy + 1) * C);
+      for (let y = gy * C; y < y1; y++) for (let x = gx * C; x < x1; x++) { const i = (y * w + x) * 4, r = data[i], g = data[i + 1], b = data[i + 2], l = .299 * r + .587 * g + .114 * b; sr += r; sg += g; sb += b; sl += l; sl2 += l * l; n++; }
+      const k = gy * gw + gx; mean[k * 3] = sr / n; mean[k * 3 + 1] = sg / n; mean[k * 3 + 2] = sb / n; sd[k] = Math.sqrt(Math.max(0, sl2 / n - (sl / n) * (sl / n))); }
+    return { gw, gh, mean, sd };
+  }
+  function spanArea(cells, gw) {      // مساحة الشكل بتجاهل الثقوب: مجموع امتداد كل صف
+    const rows = new Map(); let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1; for (const k of cells) { const y = (k / gw) | 0, x = k % gw, r = rows.get(y); if (!r) rows.set(y, [x, x]); else { if (x < r[0]) r[0] = x; if (x > r[1]) r[1] = x; } if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    let a = 0; rows.forEach(r => { a += r[1] - r[0] + 1; }); return { span: a, x0, x1, y0, y1, bw: x1 - x0 + 1, bh: y1 - y0 + 1 };
+  }
+  function refine(data, w, h, s0) {      // يمدّ كل حافة بالبكسل حتى لا يطابق الصف/العمود التالي لون الشكل
+    const c = s0.color, ok = (x, y) => { if (x < 0 || y < 0 || x >= w || y >= h) return false; const i = (y * w + x) * 4; return (Math.abs(data[i] - c[0]) + Math.abs(data[i + 1] - c[1]) + Math.abs(data[i + 2] - c[2])) / 3 < 13; };
+    const frac = (fn, n) => { let m = 0, t = 0; for (let i = 0; i < n; i += 2) { t++; if (fn(i)) m++; } return t ? m / t : 0; };
+    for (let it = 0; it < 8; it++) { if (frac(i => ok(s0.x + Math.round(i / s0.w * s0.w), s0.y - 1), s0.w) > .8) { s0.y -= 1; s0.h += 1; } else break; }
+    for (let it = 0; it < 8; it++) { if (frac(i => ok(s0.x + i, s0.y + s0.h), s0.w) > .8) s0.h += 1; else break; }
+    for (let it = 0; it < 8; it++) { if (frac(i => ok(s0.x - 1, s0.y + i), s0.h) > .8) { s0.x -= 1; s0.w += 1; } else break; }
+    for (let it = 0; it < 8; it++) { if (frac(i => ok(s0.x + s0.w, s0.y + i), s0.h) > .8) s0.w += 1; else break; }
+  }
+  function cornerRadius(data, w, h, s0) {      // نصف قطر الزوايا من أول بكسل على القطر يطابق لون الشكل: t = 0.293·r
+    const c = s0.color, ok = (x, y) => { const i = (y * w + x) * 4; return x >= 0 && y >= 0 && x < w && y < h && (Math.abs(data[i] - c[0]) + Math.abs(data[i + 1] - c[1]) + Math.abs(data[i + 2] - c[2])) / 3 < 18; }, m = Math.floor(Math.min(s0.w, s0.h) / 2), rs = [];
+    for (const [cx, cy, dx, dy] of [[s0.x, s0.y, 1, 1], [s0.x + s0.w - 1, s0.y, -1, 1], [s0.x, s0.y + s0.h - 1, 1, -1], [s0.x + s0.w - 1, s0.y + s0.h - 1, -1, -1]]) { let k = 0; while (k < m && !ok(cx + dx * k, cy + dy * k)) k++; rs.push(k / .293); }
+    const r = median(rs); return r < 4 ? 0 : Math.round(Math.min(r, Math.min(s0.w, s0.h) / 2));
+  }
+  function detect(data, w, h) {
+    const C = 4, G = grid(data, w, h, C), { gw, gh, mean, sd } = G, N = gw * gh, flat = new Uint8Array(N), tex = new Uint8Array(N);
+    for (let k = 0; k < N; k++) { flat[k] = sd[k] < 5.5 ? 1 : 0; tex[k] = sd[k] >= 6.5 ? 1 : 0; }
+    const par = new Int32Array(N).map((_, i) => i), find = x => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; }, uni = (a, b) => { a = find(a); b = find(b); if (a !== b) par[a] = b; };
+    const m3 = k => [mean[k * 3], mean[k * 3 + 1], mean[k * 3 + 2]];
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const k = y * gw + x; if (!flat[k]) continue; if (x + 1 < gw && flat[k + 1] && cd(m3(k), m3(k + 1)) < 14) uni(k, k + 1); if (y + 1 < gh && flat[k + gw] && cd(m3(k), m3(k + gw)) < 14) uni(k, k + gw); }
+    const comps = new Map(); for (let k = 0; k < N; k++) if (flat[k]) { const r = find(k); (comps.get(r) || comps.set(r, []).get(r)).push(k); }
+    const shapes = [], area = w * h;
+    comps.forEach(cells => { const n = cells.length; if (n * C * C < 26 * 26) return; const sa = spanArea(cells, gw), bw = sa.bw * C, bh = sa.bh * C; if (bw < 22 || bh < 14) return;
+      const touches = (sa.x0 === 0 ? 1 : 0) + (sa.y0 === 0 ? 1 : 0) + (sa.x1 === gw - 1 ? 1 : 0) + (sa.y1 === gh - 1 ? 1 : 0); if (touches >= 3 || (bw * bh > area * .85)) return;      // خلفية الصفحة
+      const ratio = sa.span / (sa.bw * sa.bh), aspect = bw / bh; let kind = ""; if (ratio >= .86) kind = "rect"; else if (ratio > .72 && ratio < .83 && aspect > .75 && aspect < 1.33) kind = "ellipse"; if (!kind) return;
+      let r = 0, g = 0, b = 0; cells.forEach(k => { r += mean[k * 3]; g += mean[k * 3 + 1]; b += mean[k * 3 + 2]; }); const col0 = [r / n, g / n, b / n].map(Math.round), rad = kind === "rect" && ratio < .995 ? Math.min(Math.min(bw, bh) / 2, Math.sqrt((sa.bw * sa.bh * C * C - sa.span * C * C) / (4 - Math.PI))) : 0;
+      const sh = { kind, x: sa.x0 * C, y: sa.y0 * C, w: bw, h: bh, color: col0, rad: Math.round(rad), area: bw * bh }; refine(data, w, h, sh); if (kind === "rect") { const cr = cornerRadius(data, w, h, sh); if (cr > sh.rad) sh.rad = cr; } sh.area = sh.w * sh.h; shapes.push(sh); });
+    /* صور: خلايا ذات ملمس كثيف */
+    const dens = new Uint8Array(N); for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { let c = 0, t = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const yy = y + dy, xx = x + dx; if (yy < 0 || xx < 0 || yy >= gh || xx >= gw) continue; t++; c += tex[yy * gw + xx]; } dens[y * gw + x] = c / t > .5 ? 1 : 0; }
+    const p2 = new Int32Array(N).map((_, i) => i), f2 = x => { while (p2[x] !== x) { p2[x] = p2[p2[x]]; x = p2[x]; } return x; };
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const k = y * gw + x; if (!dens[k]) continue; for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [-1, 1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue; const k2 = yy * gw + xx; if (dens[k2]) { const a = f2(k), b = f2(k2); if (a !== b) p2[a] = b; } } }
+    const pc = new Map(); for (let k = 0; k < N; k++) if (dens[k]) { const r = f2(k); (pc.get(r) || pc.set(r, []).get(r)).push(k); }
+    let photos = []; pc.forEach(cells => { const sa = spanArea(cells, gw), bw = sa.bw * C, bh = sa.bh * C; if (bw < 44 || bh < 44 || sa.span / (sa.bw * sa.bh) < .6) return; photos.push({ x: Math.max(0, sa.x0 * C - C), y: Math.max(0, sa.y0 * C - C), w: Math.min(w, bw + 2 * C), h: Math.min(h, bh + 2 * C), area: bw * bh }); });
+    const touchB = (a, b) => !(a.x > b.x + b.w + 12 || b.x > a.x + a.w + 12 || a.y > b.y + b.h + 12 || b.y > a.y + a.h + 12); let merged = true;      // دمج صناديق الصور المتجاورة
+    while (merged) { merged = false; for (let i = 0; i < photos.length && !merged; i++) for (let j = i + 1; j < photos.length && !merged; j++) if (touchB(photos[i], photos[j])) { const a = photos[i], b = photos[j], x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y), x1 = Math.max(a.x + a.w, b.x + b.w), y1 = Math.max(a.y + a.h, b.y + b.h); photos.splice(j, 1); photos[i] = { x: x0, y: y0, w: x1 - x0, h: y1 - y0, area: (x1 - x0) * (y1 - y0) }; merged = true; } }
+    photos = photos.filter(p => p.area < area * .9).slice(0, 14);
+    const inP = s0 => photos.some(p => s0.x >= p.x - 4 && s0.y >= p.y - 4 && s0.x + s0.w <= p.x + p.w + 4 && s0.y + s0.h <= p.y + p.h + 4);      // أشكال داخل الصور ليست أشكالاً
+    return { shapes: shapes.filter(s0 => !inP(s0)).sort((a, b) => b.area - a.area).slice(0, 120), photos };
+  }
+  function fillRing(ctx, data, w, h, b, rgb) {      // يملأ المستطيل بلون الإطار المحيط (وسيط) أو لون معطى
+    let c = rgb; if (!c) { const g = (x, y) => { x = Math.max(0, Math.min(w - 1, x)); y = Math.max(0, Math.min(h - 1, y)); const i = (y * w + x) * 4; return [data[i], data[i + 1], data[i + 2]]; }, pts = []; for (let x = b.x; x < b.x + b.w; x += 3) { pts.push(g(x, b.y - 3)); pts.push(g(x, b.y + b.h + 3)); } for (let y = b.y; y < b.y + b.h; y += 3) { pts.push(g(b.x - 3, y)); pts.push(g(b.x + b.w + 3, y)); } c = [0, 1, 2].map(k => Math.round(median(pts.map(p => p[k])))); }
+    ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2); return c;
+  }
+  const toBlob = (cv, type, q) => new Promise(r => cv.toBlob(r, type, q));
   async function doCopyImage() {
     const im = S.img; if (!im) return; const dw = im.dw, k = im.k, H = Math.round(S.limit), srcH = Math.max(8, Math.round(H / k));
     const cv = document.createElement("canvas"); cv.width = dw; cv.height = H; const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im.el, 0, 0, im.el.naturalWidth, Math.min(im.el.naturalHeight, srcH), 0, 0, dw, H);
-    const widgets = []; let z = 1; const ocr = $("cl-ocr") && $("cl-ocr").checked, lang = ($("cl-lang") && $("cl-lang").value) || "ara+eng"; let blocks = [], note = "";
+    const ocr = $("cl-ocr") && $("cl-ocr").checked, vec = !$("cl-vec") || $("cl-vec").checked, keep = $("cl-keep") && $("cl-keep").checked, lang = ($("cl-lang") && $("cl-lang").value) || "ara+eng"; let blocks = [], note = "";
     if (ocr) { try { const T = await loadTess(); st("جارٍ التعرّف على النصوص… (أول مرة تحمّل اللغات وقد تستغرق دقيقة)"); const { data } = await T.recognize(cv, lang, { logger: m => { if (m && m.status && m.progress != null) st("التعرّف على النصوص: " + Math.round(m.progress * 100) + "% — " + m.status); } });
         const raw = data.lines || (data.blocks || []).flatMap(b => (b.paragraphs || []).flatMap(p => p.lines || [])); const lines = raw.filter(l => l.text && l.text.replace(/\s+/g, "").length >= 2 && (l.confidence == null || l.confidence >= 45) && /[\p{L}\p{N}]/u.test(l.text)).map(l => ({ x0: l.bbox.x0, y0: l.bbox.y0, x1: l.bbox.x1, y1: l.bbox.y1, text: l.text.replace(/\s+/g, " ").trim() }));
-        blocks = groupLines(lines); } catch (e) { note = " (تعذّر التعرّف على النصوص: " + e.message + " — نُسخت الصورة فقط)"; } }
-    const id = ctx.getImageData(0, 0, dw, H), data = id.data, texts = [];
-    for (const b of blocks) { const ls = b.lines, lhs = ls.map(l => l.y1 - l.y0), fsEst = Math.max(8, Math.round(median(lhs) * .8)), pitch = ls.length > 1 ? (ls[ls.length - 1].y0 - ls[0].y0) / (ls.length - 1) : fsEst * 1.35, bgc = ringBg(data, dw, H, { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }), ink = inkColor(data, dw, bgc, { x0: Math.max(0, b.x0), y0: Math.max(0, b.y0), x1: Math.min(dw - 1, b.x1), y1: Math.min(H - 1, b.y1) });
+        blocks = groupLines(lines); } catch (e) { note = " (تعذّر التعرّف على النصوص: " + e.message + ")"; } }
+    let id0 = ctx.getImageData(0, 0, dw, H), data0 = id0.data; const orig = document.createElement("canvas"); orig.width = dw; orig.height = H; orig.getContext("2d").drawImage(cv, 0, 0);
+    const texts = [];
+    for (const b of blocks) { const ls = b.lines, lhs = ls.map(l => l.y1 - l.y0), fsEst = Math.max(8, Math.round(median(lhs) * .8)), pitch = ls.length > 1 ? (ls[ls.length - 1].y0 - ls[0].y0) / (ls.length - 1) : fsEst * 1.35, bgc = ringBg(data0, dw, H, { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }), ink = inkColor(data0, dw, bgc, { x0: Math.max(0, b.x0), y0: Math.max(0, b.y0), x1: Math.min(dw - 1, b.x1), y1: Math.min(H - 1, b.y1) });
       texts.push({ b, fsEst, pitch, ink: ink || (lum(bgc[0], bgc[1], bgc[2]) > 140 ? [20, 20, 20] : [245, 245, 245]) }); }
-    for (const t of texts) for (const l of t.b.lines) wipe(ctx, data, dw, H, { x0: Math.max(0, l.x0), y0: Math.max(0, l.y0), x1: Math.min(dw - 1, l.x1), y1: Math.min(H - 1, l.y1) });
-    st("حفظ الصورة الخلفية…"); const blob = await new Promise(r => cv.toBlob(r, "image/webp", .92)); let src = ""; try { src = await A().uploadBlob(blob, "clone-bg", { max: 2000 }); } catch (e) { src = cv.toDataURL("image/jpeg", .85); }
-    const mk = (type, x, y, w, h, p) => { const w0 = PB.mkFree(type, 0, 0, ++z); Object.assign(w0.set, p); delete w0.set.mh; w0.set.fx = { d: r2(x / dw * 100) }; w0.set.fy = { d: Math.round(y) }; w0.set.fwd = { d: r2(w / dw * 100) }; w0.set.fh = { d: Math.max(2, Math.round(h)) }; widgets.push(w0); return w0; };
-    mk("image", 0, 0, dw, H, { src, alt: "", fit: "fill" });
-    for (const t of texts) { const b = t.b, ar = AR.test(b.lines.map(l => l.text).join(" ")), single = b.lines.length === 1, w0 = b.x1 - b.x0, slack = Math.max(8, w0 * .08), cx = b.lines.map(l => (l.x0 + l.x1) / 2), cspread = Math.max(...cx) - Math.min(...cx), l0 = b.lines.map(l => l.x0), lsp = Math.max(...l0) - Math.min(...l0), r0 = b.lines.map(l => l.x1), rsp = Math.max(...r0) - Math.min(...r0);
+    for (const t of texts) for (const l of t.b.lines) wipe(ctx, data0, dw, H, { x0: Math.max(0, l.x0), y0: Math.max(0, l.y0), x1: Math.min(dw - 1, l.x1), y1: Math.min(H - 1, l.y1) });
+    let shapes = [], photos = []; if (vec) { st("رسم عناصر الصورة: كشف المربعات والأزرار والصور…"); await sleep(20); const d1 = ctx.getImageData(0, 0, dw, H); const r = detect(d1.data, dw, H); shapes = r.shapes; photos = r.photos; }
+    const widgets = []; let z = 1; const mk = (type, x, y, w, h, p) => { const w0 = PB.mkFree(type, 0, 0, ++z); Object.assign(w0.set, p); delete w0.set.mh; w0.set.fx = { d: r2(x / dw * 100) }; w0.set.fy = { d: Math.round(y) }; w0.set.fwd = { d: r2(w / dw * 100) }; w0.set.fh = { d: Math.max(2, Math.round(h)) }; widgets.push(w0); return w0; };
+    /* صور مقتطعة (من لقطة بلا نصوص) */
+    const photoW = []; let pi = 0; for (const p of photos) { st("حفظ صورة مقتطعة " + (++pi) + "/" + photos.length + "…"); const c2 = document.createElement("canvas"); c2.width = Math.round(p.w); c2.height = Math.round(p.h); c2.getContext("2d").drawImage(cv, Math.round(p.x), Math.round(p.y), c2.width, c2.height, 0, 0, c2.width, c2.height); let src = ""; try { src = await A().uploadBlob(await toBlob(c2, "image/webp", .9), "clone-img", { max: 1600 }); } catch (e) { src = c2.toDataURL("image/jpeg", .85); } photoW.push({ p, src }); }
+    /* تنظيف الخلفية: الصور ثم الأشكال من الأصغر للأكبر ليُملأ كل منها بلون ما حوله */
+    const d2 = ctx.getImageData(0, 0, dw, H).data, wipeList = photos.map(p => ({ b: p, col: null })).concat(shapes.slice().sort((a, b) => a.area - b.area).map(s0 => ({ b: s0, col: null })));
+    if (!keep) for (const wl of wipeList) { const b = { x: Math.round(wl.b.x), y: Math.round(wl.b.y), w: Math.round(wl.b.w), h: Math.round(wl.b.h) }; fillRing(ctx, ctx.getImageData(0, 0, dw, H).data, dw, H, b, null); }
+    st("حفظ الصورة الخلفية…"); const blob = await toBlob(cv, "image/webp", .92); let src = ""; try { src = await A().uploadBlob(blob, "clone-bg", { max: 2000 }); } catch (e) { src = cv.toDataURL("image/jpeg", .85); }
+    mk("image", 0, 0, dw, H, { src: keep ? await (async () => { try { return await A().uploadBlob(await toBlob(orig, "image/webp", .92), "clone-bg", { max: 2000 }); } catch (e) { return orig.toDataURL("image/jpeg", .85); } })() : src, alt: "", fit: "fill" });
+    for (const s0 of shapes) { const isBtn = false; mk("shape", s0.x, s0.y, s0.w, s0.h, { shape: s0.kind, keep: false, outline: false, fill: "#" + s0.color.map(v => v.toString(16).padStart(2, "0")).join(""), sw: 0, rx: s0.kind === "rect" ? Math.min(50, r2(s0.rad / (Math.min(s0.w, s0.h) || 1) * 100)) : 0 }); }
+    for (const ph of photoW) mk("image", ph.p.x, ph.p.y, ph.p.w, ph.p.h, { src: ph.src, alt: "", fit: "fill" });
+    /* أزرار: شكل دائري/مستدير صغير يحوي سطر نص واحد ← عنصر زر */
+    const used = new Set(), btnShapes = new Set();
+    for (const s0 of shapes) { if (s0.kind !== "rect" || s0.h < 24 || s0.h > 96 || s0.w < 60 || s0.w > 460 || s0.w / s0.h < 1.6 || s0.w / s0.h > 9) continue; const inside = texts.filter(t => { const cx = (t.b.x0 + t.b.x1) / 2, cy = (t.b.y0 + t.b.y1) / 2; return cx > s0.x && cx < s0.x + s0.w && cy > s0.y && cy < s0.y + s0.h; }); if (inside.length !== 1 || inside[0].b.lines.length !== 1 || used.has(inside[0])) continue; const t = inside[0]; used.add(t); btnShapes.add(s0);
+      const tw = t.b.x1 - t.b.x0, ph = Math.max(6, Math.round((s0.w - tw) / 2)), pv = Math.max(4, Math.round((s0.h - t.pitch) / 2)), tc = t.ink;
+      mk("button", s0.x, s0.y, s0.w, s0.h, { text: t.b.lines[0].text, kind: "link", link: "#", bgc: "#" + s0.color.map(v => v.toString(16).padStart(2, "0")).join(""), color: "#" + tc.map(v => v.toString(16).padStart(2, "0")).join(""), fs: { d: t.fsEst }, fw: "700", brad: { d: Math.round(Math.min(s0.rad, s0.h / 2)) }, bpad: { d: [pv, ph, pv, ph] }, full: { d: true }, al: { d: "center" } }); }
+    if (btnShapes.size) { for (let q = widgets.length - 1; q >= 0; q--) { const w0 = widgets[q]; if (w0.type === "shape") { const m = [...btnShapes].find(s0 => Math.abs(w0.set.fy.d - Math.round(s0.y)) < 1 && Math.abs(w0.set.fx.d - r2(s0.x / dw * 100)) < .05 && Math.abs(w0.set.fwd.d - r2(s0.w / dw * 100)) < .05); if (m) widgets.splice(q, 1); } } }
+    for (const t of texts) { if (used.has(t)) continue; const b = t.b, ar = AR.test(b.lines.map(l => l.text).join(" ")), single = b.lines.length === 1, w0 = b.x1 - b.x0, slack = Math.max(8, w0 * .08), cx = b.lines.map(l => (l.x0 + l.x1) / 2), cspread = Math.max(...cx) - Math.min(...cx), l0 = b.lines.map(l => l.x0), lsp = Math.max(...l0) - Math.min(...l0), r0 = b.lines.map(l => l.x1), rsp = Math.max(...r0) - Math.min(...r0);
       let ta = ar ? "right" : "left"; if (!single) { const lh = t.fsEst; ta = cspread < lh * .6 && lsp > lh * .8 ? "center" : (ar ? (rsp <= lsp ? "right" : "left") : (lsp <= rsp ? "left" : "right")); }
-      const x = ta === "center" ? b.x0 - slack / 2 : ta === "right" ? b.x0 - slack : b.x0, html = "<p>" + b.lines.map(l => esc(l.text)).join("<br>") + "</p>";
+      const x = ta === "center" ? b.x0 - slack / 2 : ta === "right" ? b.x0 - slack : b.x0, html = "<p" + (single ? ' style="white-space:nowrap"' : "") + ">" + b.lines.map(l => esc(l.text)).join("<br>") + "</p>";
       mk("text", Math.max(0, x), b.y0 - Math.max(0, (t.pitch - (b.lines[0].y1 - b.lines[0].y0)) / 2), Math.min(dw, w0 + slack), t.pitch * b.lines.length, { html, fs: { d: t.fsEst }, lh: { d: r2(Math.max(1, Math.min(2.2, t.pitch / t.fsEst))) }, fw: t.fsEst >= 26 ? "700" : "400", color: "#" + t.ink.map(v => v.toString(16).padStart(2, "0")).join(""), ta: { d: ta }, tdir: ar ? "rtl" : undefined }); }
-    const bgc = (() => { const g = id.data; return "#" + [0, 1, 2].map(kk => g[kk].toString(16).padStart(2, "0")).join(""); })();
-    const page = buildPage(widgets, "قالب من صورة", bgc, dw, H); const ok = await openInEditor(page); if (ok) toast("تم النسخ: صورة خلفية + " + texts.length + " نصاً قابلاً للتعديل" + note);
+    const bgc = "#" + [0, 1, 2].map(kk => d2[kk].toString(16).padStart(2, "0")).join("");
+    const page = buildPage(widgets, "قالب من صورة", bgc, dw, H); const ok = await deliver(page); if (ok) toast("تم النسخ: صورة خلفية + " + shapes.length + " شكلاً + " + photos.length + " صورة + " + texts.length + " نصاً" + (btnShapes.size ? " (منها " + btnShapes.size + " أزرار)" : "") + note);
   }
 
   /* ───────── الواجهة ───────── */
@@ -239,25 +329,25 @@ const PBClone = (function () {
 #pbx-clone .cl-stage{flex:1;overflow:auto;background:#d8d2c4;padding:14px;min-height:260px;position:relative}#pbx-clone .cl-empty{color:#6b6556;text-align:center;padding:3rem 1rem;line-height:2;font-weight:700}
 #pbx-clone .cl-win{position:relative;margin:0 auto;overflow:hidden;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.35);direction:ltr}#pbx-clone .cl-in{position:absolute;left:0;top:0;transform-origin:0 0}#pbx-clone .cl-in iframe,#pbx-clone .cl-in img{display:block;border:0;background:#fff}
 #pbx-clone .cl-lim{position:absolute;left:0;right:0;bottom:0;height:22px;cursor:ns-resize;touch-action:none;background:linear-gradient(to top,rgba(124,58,237,.35),rgba(124,58,237,0));border-bottom:3px solid #7c3aed;display:flex;align-items:flex-end;justify-content:center}#pbx-clone .cl-lim span{background:#7c3aed;color:#fff;font:800 .72rem system-ui,sans-serif;padding:.1rem .7rem;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:.4rem}
-#pbx-clone .cl-f{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;border-top:1px solid #eee}#pbx-clone .cl-f #cl-st{flex:1;font-size:.8rem;color:#6b6556;font-weight:700}#pbx-clone .cl-note{padding:.4rem 1rem;font-size:.72rem;color:#8a8268;background:#fffbea;border-bottom:1px solid #f1e6b8}`;
+#pbx-clone .cl-f{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;border-top:1px solid #eee}#pbx-clone .cl-dest{display:flex;align-items:center;gap:.25rem;font-size:.78rem;font-weight:700;color:#173f35;white-space:nowrap}#pbx-clone .cl-f #cl-st{flex:1;font-size:.8rem;color:#6b6556;font-weight:700}#pbx-clone .cl-note{padding:.4rem 1rem;font-size:.72rem;color:#8a8268;background:#fffbea;border-bottom:1px solid #f1e6b8}`;
     document.head.appendChild(s);
   }
   const ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 012-2h10"/></svg>';
-  function close() { const m = $("pbx-clone"); if (m) m.remove(); S.frame = null; S.img = null; }
+  function close() { const m = $("pbx-clone"); if (m) m.remove(); S.frame = null; S.img = null; S.runId = ""; }
   function open() {
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
-<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label></div>
-<div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
+<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label></div>
+<div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
-<div class="cl-f"><span id="cl-st"></span><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
+<div class="cl-f"><span id="cl-st"></span><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
     document.body.appendChild(m);
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
-      const a = b.dataset.cl; if (a === "x") close(); else if (a === "load") loadUrl(); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
-    $("cl-url").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); loadUrl(); } });
+      const a = b.dataset.cl; if (a === "x") close(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
+    $("cl-url").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); loadUrl(false); } });
     $("cl-w").addEventListener("change", () => { S.W = Number($("cl-w").value) || 1280; if (S.frame) mountFrame(S.html); });
     m.addEventListener("dragover", e => { if (S.tab === "img" && e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files")) e.preventDefault(); });
     m.addEventListener("drop", e => { if (S.tab !== "img") return; const f = [...(e.dataTransfer.files || [])].find(x => /^image\//.test(x.type)); if (f) { e.preventDefault(); loadImg(f); } });
@@ -283,10 +373,10 @@ const PBClone = (function () {
       S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px. اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»."); };
     f.srcdoc = html;
   }
-  async function loadUrl() {
+  async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
     S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
-    try { const html = await fetchHtml(u); S.html = prep(html, u); mountFrame(S.html); } catch (e) { st(e.message); toast(e.message); } finally { S.busy = false; }
+    try { const html = full ? await fetchFull(u, S.W) : await fetchHtml(u); S.html = prep(html, u); mountFrame(S.html); } catch (e) { st(e.message); toast(e.message); } finally { S.busy = false; }
   }
   function pickImg() { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.onchange = () => { if (i.files[0]) loadImg(i.files[0]); }; i.click(); }
   function loadImg(file) {
@@ -297,5 +387,5 @@ const PBClone = (function () {
     if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true;
     try { if (S.tab === "url") await doCopyUrl(); else await doCopyImage(); } catch (e) { st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
-  return { open, close, _t: { extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, S } };
+  return { open, close, _t: { extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
 })();

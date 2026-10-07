@@ -1634,6 +1634,11 @@ body{overflow-x:hidden;margin:0}`;
     afterEdit(w.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50);
   }
   /* إضافة عنصر/قسم افتراضي بعد القسم المحدد (أو في آخر الصفحة) */
+  /* إدراج أقسام جاهزة (مثل القالب المنسوخ) بعد القسم المحدد أو في آخر الصفحة */
+  function insertSections(secs, label) {
+    const L = E.page.sections, inf = selInfo(), at = inf && inf.sec ? L.indexOf(inf.sec) + 1 : L.length; L.splice(at, 0, ...secs); E.nextLabel = label || "إضافة قسم"; afterEdit(secs[0].id);
+    setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${secs[0].id}"]`); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" }); }, 80);
+  }
   function addDefault(k, atIdx) {
     const d = PB.DFLT.find(x => x.k === k); if (!d) return; const sec = d.f(), inf = selInfo(); let i = E.page.sections.length; if (!sec.set.tight) sec.set.pz = true;      // العنصر الافتراضي: سحب إطاره يكبّر/يصغّر كل ما بداخله
     if (atIdx != null) i = Math.max(0, Math.min(atIdx, E.page.sections.length)); else if (inf && inf.sec) { const j = E.page.sections.findIndex(x => x.id === inf.sec.id); if (j >= 0) i = j + 1; }
@@ -2504,7 +2509,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { rename, toggleLive, renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { insertSections, rename, toggleLive, renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
