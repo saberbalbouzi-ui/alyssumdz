@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.34.3">
+<meta name="admin-version" content="1.34.4">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.34.3"></script>
-<script src="assets/js/chrome-admin.js?v=1.34.3"></script>
-<script src="assets/js/admin-assistant.js?v=1.34.3"></script>
-<script src="assets/js/admin-update.js?v=1.34.3"></script>
+<script src="assets/js/ctl-help.js?v=1.34.4"></script>
+<script src="assets/js/chrome-admin.js?v=1.34.4"></script>
+<script src="assets/js/admin-assistant.js?v=1.34.4"></script>
+<script src="assets/js/admin-update.js?v=1.34.4"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -14155,12 +14155,12 @@ const PBClone = (function () {
     mountWin(f, W, 900, 900, true); st("جارٍ عرض الصفحة…");
     f.onload = async () => { st("تحميل الصور والخطوط…"); const d = f.contentDocument; if (!d) return; try { await Promise.race([Promise.all([...d.images].filter(i => !i.complete).map(i => new Promise(r => { i.onload = i.onerror = r; }))), sleep(5000)]); await Promise.race([d.fonts ? d.fonts.ready : Promise.resolve(), sleep(2500)]); } catch (e) { }
       const h = Math.min(16000, Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0, 300)); f.style.height = h + "px"; await sleep(80); const h2 = Math.min(16000, Math.max(d.documentElement.scrollHeight, h)); f.style.height = h2 + "px";
-      S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px. اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»."); };
+      S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»."); };
     f.srcdoc = html;
   }
   async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
-    S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
+    S.extInfo = null; S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
     try { const r = await getPage(u, !!full, 0); const bi = bodyInfo(r.html); if (bi.text < 60 && bi.imgs < 3) throw new Error("وصلت الصفحة فارغة (لا نص ولا صور)." + (EXT.ok && extOld() ? " نسخة إضافة كروم عندك قديمة (v" + EXT.v + ") — حدّثها (احذفها وحمّل المجلد الجديد من «تثبيت إضافة كروم») ثم F5." : " الموقع يبني محتواه داخل إطار أو بالجافاسكربت أو يمنع القراءة الآلية.")); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
     catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
   }
@@ -14177,7 +14177,7 @@ const PBClone = (function () {
   const extOld = () => EXT.ok && String(EXT.v || "0").localeCompare("1.1.0", undefined, { numeric: true }) < 0;
   function extUi() { const el = $("cl-ext"); if (!el) return; if (extOld()) { el.innerHTML = `<button type="button" data-cl="extinfo" title="نسخة الإضافة المثبّتة قديمة (v${esc(EXT.v)}) وقد تُظهر بعض المواقع فارغة">حدّث الإضافة إلى 1.1.0</button>`; return; } el.innerHTML = EXT.ok ? `<b class="cl-extok" title="الإضافة v${esc(EXT.v)}">● كروم متصل — يقرأ كل المواقع</b>` : `<button type="button" data-cl="extinfo" title="إضافة كروم تفتح المواقع في متصفحك الحقيقي فتتجاوز الحماية وتقرأ كل المواقع">تثبيت إضافة كروم</button>`; }
   async function extPing() { try { const r = await extCall("ping", {}, 900); EXT.ok = true; EXT.v = r.v; EXT.allowed = !!r.ok; } catch (e) { EXT.ok = false; } extUi(); }
-  async function fetchViaExt(url, W) { st("جارٍ فتح الموقع في متصفح كروم عندك (نافذة صغيرة مؤقتة)…"); const r = await extCall("fetch", { url, width: W }, 150000); if (r.error) throw new Error(r.error); return { html: r.html, url: r.url || url }; }
+  async function fetchViaExt(url, W) { st("جارٍ فتح الموقع في متصفح كروم عندك (نافذة صغيرة مؤقتة)…"); const r = await extCall("fetch", { url, width: W }, 150000); if (r.error) throw new Error(r.error); S.extInfo = r.stats || null; return { html: r.html, url: r.url || url }; }
   function extHelp() {
     const stg = $("cl-stage"); if (!stg) return; S.frame = null; S.img = null; const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = true;
     stg.innerHTML = `<div class="cl-help"><h3>إضافة كروم «مساعد نسخ القوالب»</h3><p>تفتح الموقع في <b>متصفح كروم الذي عندك</b> بجلستك وكوكيزك فتتجاوز صفحات الحماية (Cloudflare…) وتقرأ المواقع المبنية بالجافاسكربت، ثم تعيد نسخته لهذه النافذة. تُثبَّت مرة واحدة:</p><ol><li><a href="assets/ext/alyssum-clone-helper.zip" download>حمّل ملف الإضافة (zip)</a> وفُكّ ضغطه في أي مكان.</li><li>افتح في كروم العنوان <code dir="ltr">chrome://extensions</code> وفعّل <b>وضع المطوّر (Developer mode)</b> أعلى اليمين.</li><li>اضغط <b>«تحميل إضافة غير مضغوطة» (Load unpacked)</b> واختر المجلد <code dir="ltr">alyssum-clone-helper</code>.</li><li>أعد تحميل لوحة التحكم (F5) ثم افتح «نسخ قالب»: سيظهر «● كروم متصل». عند أول استعمال تُسأل مرة واحدة السماح للوحة.</li></ol><p class="cl-sm">للأمان: الإضافة لا تعمل إلا من صفحة لوحة التحكم التي توافق عليها، وتفتح نافذة صغيرة مؤقتة لكل طلب ثم تغلقها، ولا ترسل شيئاً إلى أي خادم.</p></div>`;

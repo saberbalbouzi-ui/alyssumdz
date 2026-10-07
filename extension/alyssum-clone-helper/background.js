@@ -18,6 +18,7 @@ async function grab(url, width) {
   }
   if (!win) throw lastErr || new Error("تعذّر فتح النافذة");
   const tabId = win.tabs[0].id;
+  Promise.race([chrome.windows.update(win.id, { focused: true }), sleep(3000)]).catch(() => { });      // النوافذ المحجوبة/غير المركّزة يوقف كروم رسمها فلا تُحمَّل الأقسام السفلية
   try {
     await waitComplete(tabId, 50000); await sleep(1200);
     const iw = await run(tabId, () => window.innerWidth);      // ضبط عرض النافذة ليطابق العرض المطلوب
@@ -25,7 +26,7 @@ async function grab(url, width) {
     for (let i = 0; i < 40; i++) { const blocked = await run(tabId, () => /just a moment|attention required|please wait|access denied|verify you are human/i.test(document.title) || /Enable JavaScript and cookies to continue/i.test((document.body && document.body.innerText || "").slice(0, 600))).catch(() => false); if (!blocked) break; await sleep(1000); }      // صفحة تحقق: قد تُحلّ تلقائياً أو يحلّها المستخدم يدوياً في النافذة
     // قياس كل الإطارات بلا تعديل؛ إن كان المحتوى الحقيقي داخل إطار (مثل معاينة قوالب Wix) نختار الإطار الأكبر محتوى
     const measure = async () => {
-      const meas = await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, func: () => { try { const b = document.body; return { text: ((b && b.innerText) || "").replace(/\s+/g, " ").trim().length, imgs: document.querySelectorAll("img,svg,video,canvas").length, iw: window.innerWidth, title: document.title, url: location.href }; } catch (e) { return null; } } }).catch(() => []);
+      const meas = await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, func: () => { try { const b = document.body; return { text: ((b && b.innerText) || "").replace(/\s+/g, " ").trim().length, imgs: document.querySelectorAll("img,svg,video,canvas").length, iw: window.innerWidth, title: document.title, url: location.href, h: Math.max(document.documentElement.scrollHeight, b ? b.scrollHeight : 0) }; } catch (e) { return null; } } }).catch(() => []);
       const fr = (meas || []).filter(r => r && r.result).map(r => Object.assign({ frameId: r.frameId }, r.result));
       const score = f => f.text + f.imgs * 40, top = fr.find(f => f.frameId === 0) || fr[0]; let best = top;
       if (top && score(top) < 300) for (const f of fr) if (score(f) > score(best)) best = f;
@@ -54,6 +55,6 @@ async function grab(url, width) {
       return "<!doctype html>" + document.documentElement.outerHTML;
     });
     if (!out || out.length < 400) throw new Error("صفحة فارغة");
-    return { html: out, iw: top.iw, title: top.title, url: best.url };
+    return { html: out, iw: top.iw, title: top.title, url: best.url, stats: { text: best.text, imgs: best.imgs, h: best.h, frames: fr.length } };
   } finally { chrome.windows.remove(win.id).catch(() => { }); }
 }
