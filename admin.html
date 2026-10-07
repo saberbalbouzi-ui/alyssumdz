@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.30.4">
+<meta name="admin-version" content="1.30.5">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.30.4"></script>
-<script src="assets/js/chrome-admin.js?v=1.30.4"></script>
-<script src="assets/js/admin-assistant.js?v=1.30.4"></script>
-<script src="assets/js/admin-update.js?v=1.30.4"></script>
+<script src="assets/js/ctl-help.js?v=1.30.5"></script>
+<script src="assets/js/chrome-admin.js?v=1.30.5"></script>
+<script src="assets/js/admin-assistant.js?v=1.30.5"></script>
+<script src="assets/js/admin-update.js?v=1.30.5"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7510,13 +7510,13 @@ const PB = (() => {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
       ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص", t: "num", min: -100, max: 100, step: 1, tab: "s" }, { k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }]), [TGR]),
       html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = num(s.tcurve) ? curveSvg(s, id) : s.lm ? `<span data-edit="text">${String(s.text).split("\n").map(l => `<span class="pb-li">${esc(l)}</span>`).join("")}</span>` : `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
+      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },
     },
     text: {
       label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
       ctl: [{ k: "html", l: "المحتوى (HTML)", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }]), [TGR]),
       html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
-      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); },
+      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },      // الإطار = خلفية النص ويتوسّع تلقائياً مع الأسطر (يُعطَّل بتغيير الارتفاع بالسحب)
     },
     image: {
       label: "صورة", ic: "🖼️", fit: 1, def: { src: "", alt: "", fit: "cover" },
@@ -9188,6 +9188,7 @@ body{overflow-x:hidden;margin:0}`;
     const r = fdoc.createRange(); r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
+    el.addEventListener("input", () => { const q = find(wEl.dataset.pb); if (q && q.sec) growCanvas(q.sec); positionOverlay(); });      // الإطار يتوسّع تلقائياً مع الأسطر أثناء الكتابة
     const multi = field === "text" && wEl.dataset.type === "heading";      // العنوان: Enter ينتقل إلى السطر الموالي (و Ctrl+Enter أو Esc أو النقر خارجه ينهي التحرير)
     const listH = multi && !!(find(wEl.dataset.pb) || { set: {} }).set.lm;
     el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault();
@@ -9711,7 +9712,7 @@ body{overflow-x:hidden;margin:0}`;
   function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
   function startResize(e, dir, inf) {
-    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
+    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) inf.set.hauto = false;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, dev = E.dev, r0 = layoutRect(el), set = inf.set;
     const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), free = inf.kind === "widget" && inf.free;
@@ -9910,7 +9911,8 @@ body{overflow-x:hidden;margin:0}`;
   /* بلا أقسام: القماش يكبر تلقائياً ليتسع لأسفل عنصر حر (لا مقبض لتحجيم القسم) */
   function growCanvas(sec) {
     if (!FREE_ONLY || sec.set.kind !== "canvas") return; const dev = E.dev;
-    const tight = !!sec.set.tight, need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + (Number(eff(w.set, "fh", dev)) || 0))) + (tight ? 0 : 40), cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
+    const hOf = w => { if (["text", "heading"].includes(w.type) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; };
+    const tight = !!sec.set.tight, need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))) + (tight ? 0 : 40), cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
     if (tight ? Math.abs(need - cur) > 0.5 : need > cur) setR(sec.set, "mh", dev, Math.round(need));
   }
   const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
@@ -10356,7 +10358,7 @@ body{overflow-x:hidden;margin:0}`;
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
     const grp = (cap, body) => `<div class="pbx-qg"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
     const isTx = inf.node.type === "heading" || inf.node.type === "text";
-    let h = `<div class="pbx-q">` + (isTx ? `<button type="button" class="pbx-mwbtn" data-q="mw" title="اكتب كلمات وسيحرّر لك وصفاً">${QI.mw}<span>كتابة سحرية</span></button><div class="pbx-qg"><small>أنماط النص الافتراضية</small><div class="pbx-tsx"><button type="button" data-q="tx-title" style="font-size:1.45rem;font-weight:800">إضافة عنوان</button><button type="button" data-q="tx-sub" style="font-size:1.05rem;font-weight:700">إضافة عنوان فرعي</button><button type="button" data-q="tx-body" style="font-size:.78rem;font-weight:400">إضافة أسطر في متن النص</button></div></div>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
+    let h = `<div class="pbx-q">` + (isTx ? `<button type="button" class="pbx-mwbtn" data-q="mw" title="اكتب كلمات وسيحرّر لك وصفاً">${QI.mw}<span>كتابة سحرية</span></button>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
     { const rv = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); h += grp("التدوير", `<div class="pbx-qr" style="width:100%"><button class="pbx-qk" data-q="rot-m" title="تدوير -15°" style="flex:0 0 auto">↺</button><input type="range" min="-180" max="180" step="1" value="${rv}" data-qrot="1" title="اسحب لتدوير العنصر"><button class="pbx-qk" data-q="rot-p" title="تدوير +15°" style="flex:0 0 auto">↻</button><b>${rv}°</b><button class="pbx-qk" data-q="rot-0" title="إعادة التدوير" style="flex:0 0 auto">⟲</button></div>`); }
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
     if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;

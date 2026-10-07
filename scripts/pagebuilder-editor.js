@@ -793,6 +793,7 @@ body{overflow-x:hidden;margin:0}`;
     const r = fdoc.createRange(); r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
+    el.addEventListener("input", () => { const q = find(wEl.dataset.pb); if (q && q.sec) growCanvas(q.sec); positionOverlay(); });      // الإطار يتوسّع تلقائياً مع الأسطر أثناء الكتابة
     const multi = field === "text" && wEl.dataset.type === "heading";      // العنوان: Enter ينتقل إلى السطر الموالي (و Ctrl+Enter أو Esc أو النقر خارجه ينهي التحرير)
     const listH = multi && !!(find(wEl.dataset.pb) || { set: {} }).set.lm;
     el.addEventListener("keydown", ev => { if (!rich && ev.key === "Enter") { ev.preventDefault();
@@ -1316,7 +1317,7 @@ body{overflow-x:hidden;margin:0}`;
   function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
   function startResize(e, dir, inf) {
-    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
+    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) inf.set.hauto = false;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, dev = E.dev, r0 = layoutRect(el), set = inf.set;
     const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), free = inf.kind === "widget" && inf.free;
@@ -1515,7 +1516,8 @@ body{overflow-x:hidden;margin:0}`;
   /* بلا أقسام: القماش يكبر تلقائياً ليتسع لأسفل عنصر حر (لا مقبض لتحجيم القسم) */
   function growCanvas(sec) {
     if (!FREE_ONLY || sec.set.kind !== "canvas") return; const dev = E.dev;
-    const tight = !!sec.set.tight, need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + (Number(eff(w.set, "fh", dev)) || 0))) + (tight ? 0 : 40), cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
+    const hOf = w => { if (["text", "heading"].includes(w.type) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; };
+    const tight = !!sec.set.tight, need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))) + (tight ? 0 : 40), cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
     if (tight ? Math.abs(need - cur) > 0.5 : need > cur) setR(sec.set, "mh", dev, Math.round(need));
   }
   const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
@@ -1961,7 +1963,7 @@ body{overflow-x:hidden;margin:0}`;
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
     const grp = (cap, body) => `<div class="pbx-qg"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
     const isTx = inf.node.type === "heading" || inf.node.type === "text";
-    let h = `<div class="pbx-q">` + (isTx ? `<button type="button" class="pbx-mwbtn" data-q="mw" title="اكتب كلمات وسيحرّر لك وصفاً">${QI.mw}<span>كتابة سحرية</span></button><div class="pbx-qg"><small>أنماط النص الافتراضية</small><div class="pbx-tsx"><button type="button" data-q="tx-title" style="font-size:1.45rem;font-weight:800">إضافة عنوان</button><button type="button" data-q="tx-sub" style="font-size:1.05rem;font-weight:700">إضافة عنوان فرعي</button><button type="button" data-q="tx-body" style="font-size:.78rem;font-weight:400">إضافة أسطر في متن النص</button></div></div>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
+    let h = `<div class="pbx-q">` + (isTx ? `<button type="button" class="pbx-mwbtn" data-q="mw" title="اكتب كلمات وسيحرّر لك وصفاً">${QI.mw}<span>كتابة سحرية</span></button>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
     { const rv = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); h += grp("التدوير", `<div class="pbx-qr" style="width:100%"><button class="pbx-qk" data-q="rot-m" title="تدوير -15°" style="flex:0 0 auto">↺</button><input type="range" min="-180" max="180" step="1" value="${rv}" data-qrot="1" title="اسحب لتدوير العنصر"><button class="pbx-qk" data-q="rot-p" title="تدوير +15°" style="flex:0 0 auto">↻</button><b>${rv}°</b><button class="pbx-qk" data-q="rot-0" title="إعادة التدوير" style="flex:0 0 auto">⟲</button></div>`); }
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
     if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;
