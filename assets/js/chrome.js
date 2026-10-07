@@ -42,6 +42,7 @@ window.Chrome = (function () {
     const rel = typeof REL !== "undefined" ? REL : "";
     els.forEach(el => { const k = el.dataset.dd, sl = (el.dataset.slugs || "").split(",").filter(Boolean), dd = k === "cats" && !d.cats ? null : k === "prods" && !d.prods ? null : d; if (!dd) return; const pop = el.querySelector(".mi-pop"); if (pop) pop.innerHTML = popHtml(k, sl, rel, dd); });
   }
+  const hov = () => { try { return matchMedia("(hover:hover)").matches; } catch (e) { return false; } };
   function bindMenus() {
     if (Chrome._mb) return; Chrome._mb = true;
     document.addEventListener("click", e => {
@@ -50,14 +51,15 @@ window.Chrome = (function () {
       if (bg) { const nav = bg.parentNode.querySelector("nav.menu"); if (nav) { const on = nav.classList.toggle("mob-open"); bg.classList.toggle("on", on); bg.setAttribute("aria-expanded", on ? "true" : "false"); } return; }
       const t = e.target.closest && e.target.closest(".mi-dd > .mi-t");
       document.querySelectorAll(".mi-dd.open").forEach(x => { if (!t || x !== t.parentNode) { x.classList.remove("open"); const a = x.querySelector(".mi-t"); if (a) a.setAttribute("aria-expanded", "false"); } });
-      if (t) { e.preventDefault(); const dd = t.parentNode, on = dd.classList.toggle("open"); t.setAttribute("aria-expanded", on ? "true" : "false"); }
+      if (t) { e.preventDefault(); if (hov() && !t.closest("nav.menu.mob-open")) return; const dd = t.parentNode, on = dd.classList.toggle("open"); t.setAttribute("aria-expanded", on ? "true" : "false"); }      /* بالفأرة تُفتح القائمة بالمرور وتُغلق بمغادرتها؛ بالنقر فقط في اللمس ولوحة الجوال */
     });
+    document.addEventListener("mouseout", e => { const dd = e.target.closest && e.target.closest(".mi-dd"); if (dd && hov() && !dd.closest("nav.menu.mob-open") && !(e.relatedTarget && dd.contains(e.relatedTarget))) { dd.classList.remove("open"); const a = dd.querySelector(".mi-t"); if (a) a.setAttribute("aria-expanded", "false"); } });
     document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".mi-dd.open").forEach(x => x.classList.remove("open")); });
   }
   const MENU_CSS = ".mi-dd{position:relative;display:inline-flex;align-items:center}.mi-dd .mi-t{display:inline-flex;align-items:center;gap:.28rem;cursor:pointer}.mi-c{font-style:normal;font-size:.68em;opacity:.7;transition:transform .2s}.mi-dd.open .mi-c{transform:rotate(180deg)}" +
     ".mi-pop{display:none;position:absolute;top:100%;inset-inline-start:0;min-width:210px;max-width:320px;max-height:68vh;overflow:auto;background:#fff;border:1px solid #eae3d6;border-radius:14px;box-shadow:0 18px 40px rgba(20,30,25,.16);padding:.35rem;z-index:80}" +
     ".mi-pop a{display:block;padding:.5rem .8rem;border-radius:9px;color:#1c2420!important;opacity:1!important;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi-pop a:first-child{color:#8a6a1a!important;border-bottom:1px solid #f0e9d8;border-radius:9px 9px 0 0;margin-bottom:.15rem}.mi-pop a:hover{background:#f4efe6}" +
-    ".mi-dd.open>.mi-pop{display:block}@media(hover:hover){.mi-dd:hover>.mi-pop{display:block}}" +
+    ".mi-dd.open>.mi-pop{display:block}@media(hover:hover){.mi-dd:hover>.mi-pop{display:block}.mi-dd:hover .mi-c{transform:rotate(180deg)}}" +
     /* قائمة «المنتجات» (الكل): لوحة عريضة بعرض الهيدر كله، منتجاتها في سطور وأعمدة بصور مصغّرة */
     ".mi-dd.mi-mega{position:static}.mi-mega>.mi-pop{inset-inline:0;min-width:0;max-width:none;width:auto;border-radius:0 0 20px 20px;border-inline:0;padding:1rem max(16px,calc((100% - 1240px)/2)) 1.2rem;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.3rem .8rem;max-height:70vh}.mi-mega.open>.mi-pop{display:grid}@media(hover:hover){.mi-mega:hover>.mi-pop{display:grid}}" +
     ".mi-mega .mi-pop a{display:flex;align-items:center;gap:.6rem;white-space:normal;line-height:1.5;padding:.45rem .6rem}.mi-mega .mi-pop a img{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none;background:#f4efe6}.mi-mega .mi-pop a:first-child{grid-column:1/-1;border-radius:9px}" +
