@@ -631,15 +631,19 @@ body{overflow-x:hidden;margin:0}`;
       const inf = find(wEl.dataset.pb); if (inf && inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); if (ce) galUpload(inf, Number(ce.dataset.cell)); else { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); } }
       else if (inf && ["image", "slider", "gallery"].includes(inf.node.type)) uploadFor(inf);
     });
+    /* معرض المنتج 1+4: النقر على صورة (رئيسية/مصغّرة) يفتح اختيارها مباشرة (الفارغة فوراً، والممتلئة إن كان المعرض محدّداً قبل النقرة) */
+    fdoc.addEventListener("mousedown", e => { E.selAtDown = E.sel; }, true);
+    fdoc.addEventListener("click", e => { const sl = e.target.closest && e.target.closest("[data-slot]"); if (!sl || sl.classList.contains("pbbind")) return; const w = sl.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); if (!inf || inf.node.type !== "pgal") return;
+      const idx = Number(sl.dataset.slot), arr = pgArr(inf); if (arr[idx] && E.selAtDown !== w.dataset.pb) return; e.preventDefault(); e.stopPropagation(); select(inf.node.id); slotPick(inf, idx); }, true);
     /* زر «رفع صورة» داخل الصندوق الفارغ + سحب صور من الحاسوب وإفلاتها على صورة/سلايدر/معرض (في المعرض: على خليته) */
     fdoc.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-phb]"); if (!b) return; const w = b.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); if (!inf) return; e.preventDefault(); e.stopPropagation(); select(inf.node.id); uploadFor(inf); }, true);
-    const fileDrag = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files"), dropW = e => { const w = e.target.closest && e.target.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); return inf && ["image", "gallery", "slider"].includes(inf.node.type) ? { w, inf } : null; };
+    const fileDrag = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files"), dropW = e => { const w = e.target.closest && e.target.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); return inf && ["image", "gallery", "slider", "pgal"].includes(inf.node.type) ? { w, inf } : null; };
     const clearFd = () => fdoc.querySelectorAll('[data-fdrop]').forEach(x => { x.style.outline = ""; x.removeAttribute("data-fdrop"); });
     fdoc.addEventListener("dragover", e => { if (!fileDrag(e)) return; const t = dropW(e); if (!t) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; if (!t.w.hasAttribute("data-fdrop")) { clearFd(); t.w.setAttribute("data-fdrop", "1"); t.w.style.outline = "3px dashed #7c3aed"; } }, true);
     fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) clearFd(); }, true);
     fdoc.addEventListener("drop", async e => { if (!fileDrag(e)) return; const t = dropW(e); clearFd(); if (!t) return; e.preventDefault(); e.stopPropagation();
       const files = [...e.dataTransfer.files].filter(f => /^image\//.test(f.type)); if (!files.length) { toast("اسحب ملفات صور فقط"); return; } const inf = t.inf; select(inf.node.id);
-      try { const paths = await uploadFiles(inf.node.type === "image" ? files.slice(0, 1) : files); if (inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); galFill(inf, paths, ce ? Number(ce.dataset.cell) : Math.max(0, galArr(inf).findIndex(x => !x))); } else applyPaths(inf, paths); } catch (err) { toast("❌ " + err.message); } }, true);
+      try { const paths = await uploadFiles(inf.node.type === "image" ? files.slice(0, 1) : files); if (inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); galFill(inf, paths, ce ? Number(ce.dataset.cell) : Math.max(0, galArr(inf).findIndex(x => !x))); } else if (inf.node.type === "pgal") { const se = e.target.closest("[data-slot]"); pgFill(inf, paths, se ? Number(se.dataset.slot) : -1); } else applyPaths(inf, paths); } catch (err) { toast("❌ " + err.message); } }, true);
     fdoc.addEventListener("contextmenu", showCtx); fdoc.addEventListener("scroll", hideCtx, true);
     fdoc.addEventListener("dragover", onDragOver); fdoc.addEventListener("drop", onDrop); fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) hideDrop(); });
     fdoc.addEventListener("keydown", onKey);
@@ -1525,6 +1529,7 @@ body{overflow-x:hidden;margin:0}`;
   function applyPaths(inf, paths) {
     const t = inf.node.type;
     if (t === "image") inf.set.src = paths[0];
+    else if (t === "pgal") { pgFill(inf, paths, -1); return; }
     else if (t === "gallery" && inf.set.grid) galFill(inf, paths, 0);
     else if (t === "gallery") inf.set.imgs = ((inf.set.imgs || "").trim() ? inf.set.imgs.trim() + "\n" : "") + paths.join("\n");
     else if (t === "slider") { const L = inf.set.items = inf.set.items || []; const empty = L.filter(x => !x.img); paths.forEach((pth, i) => { if (empty[i]) empty[i].img = pth; else L.push({ img: pth, title: "", cx: 50, cy: 84 }); }); }
@@ -1567,6 +1572,19 @@ body{overflow-x:hidden;margin:0}`;
     const L = galArr(inf), n = L.length; let i = Math.max(0, Math.min(n - 1, start || 0));
     paths.forEach((pth, k) => { if (k === 0) { L[i] = pth; return; } let j = -1; for (let q = 1; q <= n; q++) { const x = (i + q) % n; if (!L[x]) { j = x; break; } } if (j >= 0) { L[j] = pth; i = j; } else toast("⚠ لا توجد خلايا فارغة كافية — زِد الأعمدة أو الصفوف"); });
     afterEdit();
+  }
+  /* معرض المنتج 1+4: خمس خلايا (0 رئيسية و1..4 مصغّرات) */
+  function pgArr(inf) { const L = Array.isArray(inf.set.cells) ? inf.set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); return L; }
+  function pgFill(inf, paths, start) {      // أول صورة في الخلية المحدّدة (أو أول فارغة) والباقي في الخلايا الفارغة التي بعدها
+    const L = pgArr(inf); let i = start >= 0 ? start : Math.max(0, L.findIndex(x => !x));
+    paths.forEach((pth, k) => { if (k === 0) { L[i] = pth; return; } const j = L.findIndex((x, q) => !x && q !== i); if (j >= 0) { L[j] = pth; i = j; } else toast("⚠ المعرض يتسع لخمس صور فقط (1+4)"); });
+    inf.set.cells = L; afterEdit();
+  }
+  async function slotPick(inf, idx) {      // نافذة صغيرة: رفع من الجهاز أو من المكتبة
+    const c = await new Promise(res => { const m = document.createElement("div"); m.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10004;display:flex;align-items:center;justify-content:center;direction:rtl";
+      m.innerHTML = `<div style="background:#fff;border-radius:16px;padding:1rem 1.2rem;min-width:260px;display:grid;gap:.5rem"><b>${idx === 0 ? "الصورة الرئيسية" : "المصغّرة " + idx}</b><button class="pbx-small" data-c="up">⬆ رفع من الجهاز</button><button class="pbx-small" data-c="lib">📚 اختيار من مكتبة الصور</button>${pgArr(inf)[idx] ? '<button class="pbx-small" data-c="del">🗑 إزالة الصورة</button>' : ""}<button class="pbx-small" data-c="">إلغاء</button></div>`;
+      m.addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b || e.target === m) { m.remove(); res(b ? b.dataset.c : ""); } }); document.body.appendChild(m); });
+    try { if (c === "up") { const f = await pickFiles(false); if (f.length) pgFill(inf, await uploadFiles(f.slice(0, 1)), idx); } else if (c === "lib") { const r = await openLibrary(false); if (r.length) pgFill(inf, r, idx); } else if (c === "del") { const L = pgArr(inf); L[idx] = ""; inf.set.cells = L; afterEdit(); } } catch (err) { toast("❌ " + err.message); }
   }
   async function galUpload(inf, idx) {
     const files = await pickFiles(true); if (!files.length) return;
@@ -1931,6 +1949,8 @@ ${inspGroups(all, inf)}`;
       case "mask": b = PBMask.panel(selInfo()); break;
       case "bgremove": b = `<div class="pbx-pz"><p>✂️ انزع خلفية الصورة بنقرة واحدة، بلا إعدادات — داخل متصفحك بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open" style="background:linear-gradient(135deg,#0d9488,#16a34a);color:#fff;border:0;padding:.55rem">✂️ نزع الخلفية</button></div>`; break;
       case "gcells": { const L = PB.galCells(set), D = PB.galDims(set); b = `<div class="pbx-gcg" style="grid-template-columns:repeat(${D[0]},minmax(0,1fr))">` + Array.from({ length: D[0] * D[1] }, (_, i) => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-gcu="${i}" title="${L[i] ? "استبدال صورة هذا الجزء" : "رفع صورة لهذا الجزء"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] ? `<i data-gcx="${i}" title="مسح صورة هذا الجزء">✕</i>` : ""}</div>`).join("") + `</div><button class="pbx-small" data-gcm="1" style="margin-top:.35rem">⬆ رفع عدّة صور وتوزيعها على الخلايا الفارغة</button>`; break; }
+      case "pgcells": { const L = Array.isArray(set.cells) ? set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); const lk = !!set.prod, sl = i => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-pgu="${i}" title="${L[i] ? "استبدال هذه الصورة" : "اختيار صورة"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] && !(i === 0 && lk) ? `<i data-pgx="${i}" title="إزالة الصورة">✕</i>` : ""}</div>`;
+        b = `<div class="pbx-gcg" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div style="grid-column:1/-1;max-width:55%;margin:0 auto;width:100%">${sl(0)}</div>${[1, 2, 3, 4].map(sl).join("")}</div>` + (lk ? '<p style="font-size:.74rem;color:#7a6a2c;margin:.3rem 0 0">🔗 الصورة الأولى مرتبطة بالمنتج: تتبع صورته ولا تتغيّر من هنا.</p>' : ""); break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
@@ -2047,6 +2067,8 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.pz) { PBPuzzle.act(t.dataset.pz, inf); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); return; }
     if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
+    if (t.dataset.pgu) { slotPick(inf, Number(t.dataset.pgu)); return; }
+    if (t.dataset.pgx) { const L = pgArr(inf); L[Number(t.dataset.pgx)] = ""; inf.set.cells = L; afterEdit(); return; }
     if (t.dataset.gcu) { galUpload(inf, Number(t.dataset.gcu)); return; }
     if (t.dataset.gcx) { const L = galArr(inf); L[Number(t.dataset.gcx)] = ""; afterEdit(); return; }
     if (t.dataset.gcm) { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); return; }

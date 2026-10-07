@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.24.2">
+<meta name="admin-version" content="1.24.3">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1481,9 +1481,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/text-capture.js"></script>
 <script src="assets/js/social-icons.js?v=1"></script>
 <script src="assets/js/chrome.js?v=1"></script>
-<script src="assets/js/chrome-admin.js?v=1.24.2"></script>
-<script src="assets/js/admin-assistant.js?v=1.24.2"></script>
-<script src="assets/js/admin-update.js?v=1.24.2"></script>
+<script src="assets/js/chrome-admin.js?v=1.24.3"></script>
+<script src="assets/js/admin-assistant.js?v=1.24.3"></script>
+<script src="assets/js/admin-update.js?v=1.24.3"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7623,11 +7623,22 @@ const PB = (() => {
         emit(c, sel + " .pb-hd .container", s, [["hpd", v => dimsDecl("padding", v).replace(/padding-(right|left):[^;]*;/g, "")]]); emit(c, sel + " .pb-hd .logo", s, [["lfs", px("font-size")]]); },
     },
     pgal: {
-      label: "معرض المنتج (رئيسية + مصغّرات)", ic: "🖼️", fit: 1, def: { imgs: "", ratio: "1/1", rad: { d: 20 }, trad: { d: 12 }, tsz: { d: 72 }, gap: { d: 10 }, auto: 0, ac: "#c8a24b" },
-      ctl: [{ k: "imgs", l: "الصور (سطر لكل صورة) — أو ارفعها مباشرة. الأولى هي الرئيسية", t: "gallery", tab: "c" }, { k: "auto", l: "تبديل تلقائي كل (ثانية) — 0 = بلا", t: "num", min: 0, max: 30, tab: "c" },
-        { k: "ratio", l: "نسبة الصورة الرئيسية", t: "select", o: [["1/1", "مربعة"], ["4/3", "4:3"], ["3/4", "طولية 3:4"], ["16/9", "عريضة"]], tab: "s" }, { k: "rad", l: "تدوير الصورة الرئيسية (px)", t: "num", r: 1, min: 0, max: 80, tab: "s" }, { k: "tsz", l: "حجم المصغّرة (px)", t: "num", r: 1, min: 30, max: 160, tab: "s" }, { k: "trad", l: "تدوير المصغّرات (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "ac", l: "لون إطار المصغّرة النشطة", t: "color", tab: "s" }],
-      html: (s, id, ctx) => { const L = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean), u = x => /^(https?:|data:|\/)/.test(x) ? x : (ctx.base || "") + x; if (!L.length) return '<div class="pb-ph" data-upload="1">🖼️ أضف صور المعرض من إعدادات العنصر</div>'; return `<div class="pb-pgl" data-auto="${num(s.auto) || 0}"><div class="pb-pgm"><img src="${esc(u(L[0]))}" alt="" loading="lazy"></div><div class="pb-pgt">${L.map((x, i) => `<img src="${esc(u(x))}" alt=""${i === 0 ? ' class="on"' : ""}>`).join("")}</div></div>`; },
-      css: (c, sel, s) => { c.d.push(`${sel} .pb-pgm img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}${sel} .pb-pgt{display:flex;flex-wrap:wrap;gap:${num(s.gap) ?? 10}px;margin-top:${num(s.gap) ?? 10}px}${sel} .pb-pgt img{object-fit:cover;cursor:pointer;border:2px solid transparent;opacity:.85;transition:.2s}${sel} .pb-pgt img.on,${sel} .pb-pgt img:hover{opacity:1;border-color:${s.ac || "#c8a24b"}}`); emit(c, sel + " .pb-pgm img", s, [["rad", px("border-radius")]]); emit(c, sel + " .pb-pgt img", s, [["tsz", v => `width:${num(v)}px;height:${num(v)}px;`], ["trad", px("border-radius")]]); },
+      label: "معرض المنتج 1+4 (رئيسية مربعة + 4 مصغّرات)", ic: "🖼️", fit: 1, def: { cells: [], prod: "", imgs: "", ratio: "1/1", rad: { d: 20 }, trad: { d: 12 }, gap: { d: 10 }, auto: 0, ac: "#c8a24b" },
+      ctl: [{ k: "cells", l: "الصور — انقر الصورة الرئيسية أو أي مصغّرة هنا (أو في الصفحة مباشرة) لاختيار صورتها", t: "pgcells", tab: "c" },
+        { k: "prod", l: "ربط الصورة الأولى بالمنتج (صورتها تتبع صورة المنتج وتُعدَّل من بياناته)", t: "select", o: () => [["", "— بلا ربط (صورة حرّة) —"], ["__page", "منتج هذه الصفحة"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c" },
+        { k: "imgs", l: "صور بالنمط القديم (سطر لكل صورة) — امسحها ليعمل نمط 1+4", t: "gallery", tab: "c", showIf: ["imgs", "*"] }, { k: "auto", l: "تبديل تلقائي كل (ثانية) — 0 = بلا", t: "num", min: 0, max: 30, tab: "c" },
+        { k: "ratio", l: "نسبة الصورة الرئيسية", t: "select", o: [["1/1", "مربعة"], ["4/3", "4:3"], ["3/4", "طولية 3:4"], ["16/9", "عريضة"]], tab: "s" }, { k: "rad", l: "تدوير الصورة الرئيسية (px)", t: "num", r: 1, min: 0, max: 80, tab: "s" }, { k: "trad", l: "تدوير المصغّرات (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "ac", l: "لون إطار المصغّرة عند المرور", t: "color", tab: "s" }],
+      html: (s, id, ctx) => {
+        const u = x => /^(https?:|data:|\/)/.test(x) ? x : (ctx.base || "") + x, ed = !!(ctx && ctx.edit), Ls = String(s.imgs || "").split("\n").map(x => x.trim()).filter(Boolean), cs = Array.isArray(s.cells) ? s.cells.slice(0, 5) : [];
+        if (Ls.length && !cs.some(Boolean)) return `<div class="pb-pgl" data-auto="${num(s.auto) || 0}"><div class="pb-pgm"><img src="${esc(u(Ls[0]))}" alt="" loading="lazy"></div><div class="pb-pgt">${Ls.map((x, i) => `<img src="${esc(u(x))}" alt=""${i === 0 ? ' class="on"' : ""}>`).join("")}</div></div>`;      // معارض قديمة: تبقى كما كانت
+        while (cs.length < 5) cs.push("");
+        const pr = s.prod ? (ctx.products || []).find(x => x.slug === (s.prod === "__page" ? ctx.pageProduct : s.prod)) : null, pim = pr ? ((pr.images && pr.images.length) ? pr.images[0] : pr.cover) : "";
+        if (pim) cs[0] = pim;
+        if (!ed) { const L = cs.filter(Boolean); if (!L.length) return ""; return `<div class="pb-pgl pb-p14" data-auto="${num(s.auto) || 0}"><div class="pb-pgm"><img src="${esc(u(L[0]))}" alt="" loading="lazy"></div><div class="pb-pgt">${L.slice(1).map(x => `<div class="pb-pgc"><img src="${esc(u(x))}" alt="" loading="lazy"></div>`).join("")}</div></div>`; }
+        const slot = i => { const v = cs[i], bind = i === 0 && pim && pr; return `<div class="${i === 0 ? "pb-pgm" : "pb-pgc"} pe${v ? "" : " emp"}${bind ? " pbbind" : ""}" data-slot="${i}"${bind ? ` data-pbbind="${esc(pr.slug)}" title="مرتبطة بصورة المنتج — انقر لتعديل بيانات المنتج"` : ` title="انقر لاختيار الصورة"`}>${v ? `<img src="${esc(u(v))}" alt="">` : '<span class="pb-gp">＋</span>'}</div>`; };
+        return `<div class="pb-pgl pb-p14">${slot(0)}<div class="pb-pgt">${[1, 2, 3, 4].map(slot).join("")}</div></div>`; },
+      css: (c, sel, s) => { const g = num(s.gap) ?? 10; c.d.push(`${sel} .pb-pgm img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}${sel} .pb-pgt{display:flex;flex-wrap:wrap;gap:${g}px;margin-top:${g}px}${sel} .pb-pgt>img{width:72px;height:72px;object-fit:cover;cursor:pointer;border:2px solid transparent;opacity:.85;transition:.2s}${sel} .pb-pgt>img.on,${sel} .pb-pgt>img:hover{opacity:1;border-color:${s.ac || "#c8a24b"}}${sel} .pb-p14 .pb-pgt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:${g}px}${sel} .pb-p14 .pb-pgc img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;cursor:pointer;border:2px solid transparent;box-sizing:border-box;opacity:.9;transition:.2s}${sel} .pb-p14 .pb-pgc img:hover{opacity:1;border-color:${s.ac || "#c8a24b"}}${sel} .pb-pgl .pe{cursor:pointer;position:relative}${sel} .pb-pgl .pe.emp{aspect-ratio:1/1;border:2px dashed #b9b19a;background:#faf6ec;display:flex;align-items:center;justify-content:center;border-radius:12px}${sel} .pb-pgl .pb-pgm.pe.emp{aspect-ratio:${s.ratio || "1/1"}}${sel} .pb-pgl .pb-gp{font-size:1.6rem;color:#8a8268}`);
+        emit(c, sel + " .pb-pgm img," + sel + " .pb-pgm.pe.emp", s, [["rad", px("border-radius")]]); emit(c, sel + " .pb-pgt>img", s, [["tsz", v => `width:${num(v)}px;height:${num(v)}px;`]]); emit(c, sel + " .pb-pgt>img," + sel + " .pb-pgc img," + sel + " .pb-pgc.pe.emp", s, [["trad", px("border-radius")]]); },
     },
     contact: {
       label: "نموذج اتصال", ic: "✉️", def: { title: "تواصل معنا", desc: "اترك رسالتك وسنردّ عليك في أقرب وقت.", fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "full" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "البريد الإلكتروني", type: "email", ph: "example@mail.com", req: false, w: "half" }, { label: "رسالتك", type: "textarea", ph: "اكتب رسالتك هنا", req: true, w: "full" }], btn: "إرسال الرسالة", dest: "whatsapp", dzPhone: true, ok: "✅ تم إرسال رسالتك بنجاح، شكراً لك!", subject: "رسالة من نموذج الاتصال", fbg: "#ffffff", fbc: "#e6dfcf", frad: { d: 16 }, fpad: { d: [24, 24, 24, 24] }, tcol: "#173f35", lcol: "#444444", ibg: "#faf6ec", ibc: "#e0d9c8", irad: { d: 10 }, ifs: { d: 16 }, bbg: "#157a55", bcol: "#ffffff", brad: { d: 12 }, bfull: true, cd: 20 },
@@ -7819,7 +7830,7 @@ const PB = (() => {
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
     split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
-  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], tbadges: [26, 300], pgal: [200, 600], pprice: [30, 80], poffers: [80, 260], pgallery: [200, 700], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
+  const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], pgal: [36, 520], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], tbadges: [26, 300], pgal: [200, 600], pprice: [30, 80], poffers: [80, 260], pgallery: [200, 700], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
   const mkGrid = (r, c) => mkS(Array.from({ length: Math.max(1, r) * Math.max(1, c) }, () => mkC([])), { kind: "grid", gc: { d: Math.max(1, c), t: Math.min(Math.max(1, c), 2), m: 1 }, gap: { d: 16 } });
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
@@ -7845,7 +7856,7 @@ const PB = (() => {
     { k: "sitefoot", n: "الفوتر (تذييل الموقع)", ic: "🔻", d: "أعمدة نص وروابط وسطر الحقوق بألوانك", f: () => mkS([mkC([mkW("sfoot", {})])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }) },
     { k: "sitebar", n: "الشريط العلوي (إعلان)", ic: "📢", d: "شريط إعلان بلون وكلمات مميّزة ورابط", f: () => mkS([mkC([mkW("sbar", {})])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }) },
     { k: "sitehead", n: "الهيدر (رأس الموقع)", ic: "🔝", d: "الشعار والقائمة وزرّا واتساب والسلة", f: () => mkS([mkC([mkW("shdr", {})])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }) },
-    { k: "gallery", n: "معرض المنتج (رئيسية + مصغّرات)", ic: "🖼️", d: "صورة كبيرة تتبدّل بالنقر على المصغّرات، مع تبديل تلقائي اختياري", f: () => mkS([mkC([mkW("pgal", {})], DCARD)], { cw: { d: 640 }, pad: { d: [30, 20, 30, 20] } }) },
+    { k: "gallery", n: "معرض المنتج 1+4 (رئيسية مربعة + 4 مصغّرات)", ic: "🖼️", d: "صورة رئيسية مربعة وأربع صور صغيرة تحتها؛ اخترها بالنقر عليها أو من الإعدادات، وتبدّل الرئيسية بالنقر على مصغّرة، مع ربط الصورة الأولى بالمنتج", f: () => mkS([mkC([mkW("pgal", {})], DCARD)], { cw: { d: 640 }, pad: { d: [30, 20, 30, 20] } }) },
     { k: "assure", n: "ضمانات تحت المعرض (دفع عند الاستلام · توصيل · هدية · استبدال)", ic: "✅", d: "أربع بطاقات: الدفع عند الاستلام، التوصيل، الثالثة مجاناً، استبدال مضمون — كل بطاقة عنصر مستقل قابل للتعديل والتحريك والسحب", f: () => {
       const card = (ic, t, x) => mkC([mkW("iconbox", { icon: ic, title: t, text: x, isz: { d: 34 }, tfs: { d: 15 }, tc: DK.green, xc: DK.muted })], { bg: "#ffffff", rad: { d: 16 }, pad: { d: [14, 10, 14, 10] }, bw: 1, bs: "solid", bc: DK.line, shadow: "sm", w: { d: 24, m: 48 } });
       return mkS([card("💵", "الدفع عند الاستلام", "لا تدفع إلا بعد أن تستلم طلبك"), card("🚚", "توصيل لكل الولايات", "خلال 24-72 ساعة إلى باب بيتك"), card("🎁", "الثالثة مجاناً", "اشترِ قطعتين واحصل على الثالثة هدية"), card("🔄", "استبدال مضمون", "نستبدل المنتج إن لم يعجبك")], { pad: { d: [10, 20, 10, 20] }, gap: { d: 12 }, jc: "space-between" }); } },
@@ -8014,7 +8025,8 @@ var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct').forEach(function(n){io.observe(n)})}else{$('[data-anim]').forEach(function(n){n.classList.add('pb-in-view')})}
 function tick(){$('.pb-cd').forEach(function(el){var end;if(el.dataset.mode==='date'&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
 tick();setInterval(tick,1000);
-$('.pb-pgl').forEach(function(g){var m=g.querySelector('.pb-pgm img'),ts=[].slice.call(g.querySelectorAll('.pb-pgt img')),i=0,t;function show(k){i=k;ts.forEach(function(x,j){x.classList.toggle('on',j===k)});if(m)m.src=ts[k].src}function run(){clearInterval(t);var a=+g.getAttribute('data-auto')||0;if(a>0&&ts.length>1)t=setInterval(function(){show((i+1)%ts.length)},a*1000)}ts.forEach(function(x,j){x.onclick=function(){show(j);run()}});run()});
+$('.pb-p14').forEach(function(g){var m=g.querySelector('.pb-pgm img'),ts=[].slice.call(g.querySelectorAll('.pb-pgc img')),all=[m.src].concat(ts.map(function(x){return x.src})),k=0,t;function show(n){k=n;m.src=all[n];var r=all.filter(function(_,j){return j!==n});ts.forEach(function(x,j){x.src=r[j]})}function run(){clearInterval(t);var a=+g.getAttribute('data-auto')||0;if(a>0&&all.length>1)t=setInterval(function(){show((k+1)%all.length)},a*1000)}ts.forEach(function(x,j){x.onclick=function(){show(j<k?j:j+1);run()}});run()});
+$('.pb-pgl:not(.pb-p14)').forEach(function(g){var m=g.querySelector('.pb-pgm img'),ts=[].slice.call(g.querySelectorAll('.pb-pgt img')),i=0,t;function show(k){i=k;ts.forEach(function(x,j){x.classList.toggle('on',j===k)});if(m)m.src=ts[k].src}function run(){clearInterval(t);var a=+g.getAttribute('data-auto')||0;if(a>0&&ts.length>1)t=setInterval(function(){show((i+1)%ts.length)},a*1000)}ts.forEach(function(x,j){x.onclick=function(){show(j);run()}});run()});
 $('[data-live]').forEach(function(b){var lo=+b.getAttribute('data-min')||8,hi=+b.getAttribute('data-max')||18,v=lo+Math.floor(Math.random()*(hi-lo+1));b.textContent=v;setInterval(function(){v=Math.max(lo-3,Math.min(hi+4,v+(Math.random()>.5?1:-1)));b.textContent=v},7000)});
 $('.pb-sl').forEach(function(sl){var tr=sl.querySelector('.pb-sl-tr'),ss=[].slice.call(tr.children),n=ss.length,i=0,fade=sl.classList.contains('fade'),loop=sl.getAttribute('data-loop')==='1',dots=[].slice.call(sl.querySelectorAll('.pb-sl-dots i')),t;
 function P(){return Math.max(1,Math.min(3,Math.round(parseFloat(getComputedStyle(sl).getPropertyValue('--per')))||1))}function show(k){var mx=Math.max(0,n-P());if(k<0)k=loop?mx:0;if(k>mx)k=loop?0:mx;i=k;if(fade){ss.forEach(function(x,j){x.classList.toggle('on',j===i)})}else{tr.style.transform='translateX(calc('+i+' * 100% / var(--per,1)))'}dots.forEach(function(d,j){d.classList.toggle('on',j===i);d.style.display=j>mx?'none':''})}window.addEventListener('resize',function(){show(i)});show(0);
@@ -8718,15 +8730,19 @@ body{overflow-x:hidden;margin:0}`;
       const inf = find(wEl.dataset.pb); if (inf && inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); if (ce) galUpload(inf, Number(ce.dataset.cell)); else { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); } }
       else if (inf && ["image", "slider", "gallery"].includes(inf.node.type)) uploadFor(inf);
     });
+    /* معرض المنتج 1+4: النقر على صورة (رئيسية/مصغّرة) يفتح اختيارها مباشرة (الفارغة فوراً، والممتلئة إن كان المعرض محدّداً قبل النقرة) */
+    fdoc.addEventListener("mousedown", e => { E.selAtDown = E.sel; }, true);
+    fdoc.addEventListener("click", e => { const sl = e.target.closest && e.target.closest("[data-slot]"); if (!sl || sl.classList.contains("pbbind")) return; const w = sl.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); if (!inf || inf.node.type !== "pgal") return;
+      const idx = Number(sl.dataset.slot), arr = pgArr(inf); if (arr[idx] && E.selAtDown !== w.dataset.pb) return; e.preventDefault(); e.stopPropagation(); select(inf.node.id); slotPick(inf, idx); }, true);
     /* زر «رفع صورة» داخل الصندوق الفارغ + سحب صور من الحاسوب وإفلاتها على صورة/سلايدر/معرض (في المعرض: على خليته) */
     fdoc.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-phb]"); if (!b) return; const w = b.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); if (!inf) return; e.preventDefault(); e.stopPropagation(); select(inf.node.id); uploadFor(inf); }, true);
-    const fileDrag = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files"), dropW = e => { const w = e.target.closest && e.target.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); return inf && ["image", "gallery", "slider"].includes(inf.node.type) ? { w, inf } : null; };
+    const fileDrag = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files"), dropW = e => { const w = e.target.closest && e.target.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); return inf && ["image", "gallery", "slider", "pgal"].includes(inf.node.type) ? { w, inf } : null; };
     const clearFd = () => fdoc.querySelectorAll('[data-fdrop]').forEach(x => { x.style.outline = ""; x.removeAttribute("data-fdrop"); });
     fdoc.addEventListener("dragover", e => { if (!fileDrag(e)) return; const t = dropW(e); if (!t) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; if (!t.w.hasAttribute("data-fdrop")) { clearFd(); t.w.setAttribute("data-fdrop", "1"); t.w.style.outline = "3px dashed #7c3aed"; } }, true);
     fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) clearFd(); }, true);
     fdoc.addEventListener("drop", async e => { if (!fileDrag(e)) return; const t = dropW(e); clearFd(); if (!t) return; e.preventDefault(); e.stopPropagation();
       const files = [...e.dataTransfer.files].filter(f => /^image\//.test(f.type)); if (!files.length) { toast("اسحب ملفات صور فقط"); return; } const inf = t.inf; select(inf.node.id);
-      try { const paths = await uploadFiles(inf.node.type === "image" ? files.slice(0, 1) : files); if (inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); galFill(inf, paths, ce ? Number(ce.dataset.cell) : Math.max(0, galArr(inf).findIndex(x => !x))); } else applyPaths(inf, paths); } catch (err) { toast("❌ " + err.message); } }, true);
+      try { const paths = await uploadFiles(inf.node.type === "image" ? files.slice(0, 1) : files); if (inf.node.type === "gallery" && inf.set.grid) { const ce = e.target.closest("[data-cell]"); galFill(inf, paths, ce ? Number(ce.dataset.cell) : Math.max(0, galArr(inf).findIndex(x => !x))); } else if (inf.node.type === "pgal") { const se = e.target.closest("[data-slot]"); pgFill(inf, paths, se ? Number(se.dataset.slot) : -1); } else applyPaths(inf, paths); } catch (err) { toast("❌ " + err.message); } }, true);
     fdoc.addEventListener("contextmenu", showCtx); fdoc.addEventListener("scroll", hideCtx, true);
     fdoc.addEventListener("dragover", onDragOver); fdoc.addEventListener("drop", onDrop); fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) hideDrop(); });
     fdoc.addEventListener("keydown", onKey);
@@ -9612,6 +9628,7 @@ body{overflow-x:hidden;margin:0}`;
   function applyPaths(inf, paths) {
     const t = inf.node.type;
     if (t === "image") inf.set.src = paths[0];
+    else if (t === "pgal") { pgFill(inf, paths, -1); return; }
     else if (t === "gallery" && inf.set.grid) galFill(inf, paths, 0);
     else if (t === "gallery") inf.set.imgs = ((inf.set.imgs || "").trim() ? inf.set.imgs.trim() + "\n" : "") + paths.join("\n");
     else if (t === "slider") { const L = inf.set.items = inf.set.items || []; const empty = L.filter(x => !x.img); paths.forEach((pth, i) => { if (empty[i]) empty[i].img = pth; else L.push({ img: pth, title: "", cx: 50, cy: 84 }); }); }
@@ -9654,6 +9671,19 @@ body{overflow-x:hidden;margin:0}`;
     const L = galArr(inf), n = L.length; let i = Math.max(0, Math.min(n - 1, start || 0));
     paths.forEach((pth, k) => { if (k === 0) { L[i] = pth; return; } let j = -1; for (let q = 1; q <= n; q++) { const x = (i + q) % n; if (!L[x]) { j = x; break; } } if (j >= 0) { L[j] = pth; i = j; } else toast("⚠ لا توجد خلايا فارغة كافية — زِد الأعمدة أو الصفوف"); });
     afterEdit();
+  }
+  /* معرض المنتج 1+4: خمس خلايا (0 رئيسية و1..4 مصغّرات) */
+  function pgArr(inf) { const L = Array.isArray(inf.set.cells) ? inf.set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); return L; }
+  function pgFill(inf, paths, start) {      // أول صورة في الخلية المحدّدة (أو أول فارغة) والباقي في الخلايا الفارغة التي بعدها
+    const L = pgArr(inf); let i = start >= 0 ? start : Math.max(0, L.findIndex(x => !x));
+    paths.forEach((pth, k) => { if (k === 0) { L[i] = pth; return; } const j = L.findIndex((x, q) => !x && q !== i); if (j >= 0) { L[j] = pth; i = j; } else toast("⚠ المعرض يتسع لخمس صور فقط (1+4)"); });
+    inf.set.cells = L; afterEdit();
+  }
+  async function slotPick(inf, idx) {      // نافذة صغيرة: رفع من الجهاز أو من المكتبة
+    const c = await new Promise(res => { const m = document.createElement("div"); m.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10004;display:flex;align-items:center;justify-content:center;direction:rtl";
+      m.innerHTML = `<div style="background:#fff;border-radius:16px;padding:1rem 1.2rem;min-width:260px;display:grid;gap:.5rem"><b>${idx === 0 ? "الصورة الرئيسية" : "المصغّرة " + idx}</b><button class="pbx-small" data-c="up">⬆ رفع من الجهاز</button><button class="pbx-small" data-c="lib">📚 اختيار من مكتبة الصور</button>${pgArr(inf)[idx] ? '<button class="pbx-small" data-c="del">🗑 إزالة الصورة</button>' : ""}<button class="pbx-small" data-c="">إلغاء</button></div>`;
+      m.addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b || e.target === m) { m.remove(); res(b ? b.dataset.c : ""); } }); document.body.appendChild(m); });
+    try { if (c === "up") { const f = await pickFiles(false); if (f.length) pgFill(inf, await uploadFiles(f.slice(0, 1)), idx); } else if (c === "lib") { const r = await openLibrary(false); if (r.length) pgFill(inf, r, idx); } else if (c === "del") { const L = pgArr(inf); L[idx] = ""; inf.set.cells = L; afterEdit(); } } catch (err) { toast("❌ " + err.message); }
   }
   async function galUpload(inf, idx) {
     const files = await pickFiles(true); if (!files.length) return;
@@ -10018,6 +10048,8 @@ ${inspGroups(all, inf)}`;
       case "mask": b = PBMask.panel(selInfo()); break;
       case "bgremove": b = `<div class="pbx-pz"><p>✂️ انزع خلفية الصورة بنقرة واحدة، بلا إعدادات — داخل متصفحك بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open" style="background:linear-gradient(135deg,#0d9488,#16a34a);color:#fff;border:0;padding:.55rem">✂️ نزع الخلفية</button></div>`; break;
       case "gcells": { const L = PB.galCells(set), D = PB.galDims(set); b = `<div class="pbx-gcg" style="grid-template-columns:repeat(${D[0]},minmax(0,1fr))">` + Array.from({ length: D[0] * D[1] }, (_, i) => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-gcu="${i}" title="${L[i] ? "استبدال صورة هذا الجزء" : "رفع صورة لهذا الجزء"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] ? `<i data-gcx="${i}" title="مسح صورة هذا الجزء">✕</i>` : ""}</div>`).join("") + `</div><button class="pbx-small" data-gcm="1" style="margin-top:.35rem">⬆ رفع عدّة صور وتوزيعها على الخلايا الفارغة</button>`; break; }
+      case "pgcells": { const L = Array.isArray(set.cells) ? set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); const lk = !!set.prod, sl = i => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-pgu="${i}" title="${L[i] ? "استبدال هذه الصورة" : "اختيار صورة"}">${L[i] ? `<img src="${esc(localize(L[i]))}" alt="">` : "＋"}</button>${L[i] && !(i === 0 && lk) ? `<i data-pgx="${i}" title="إزالة الصورة">✕</i>` : ""}</div>`;
+        b = `<div class="pbx-gcg" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div style="grid-column:1/-1;max-width:55%;margin:0 auto;width:100%">${sl(0)}</div>${[1, 2, 3, 4].map(sl).join("")}</div>` + (lk ? '<p style="font-size:.74rem;color:#7a6a2c;margin:.3rem 0 0">🔗 الصورة الأولى مرتبطة بالمنتج: تتبع صورته ولا تتغيّر من هنا.</p>' : ""); break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
       case "color": b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(ownV || "") ? ownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || "—")}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
@@ -10134,6 +10166,8 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.pz) { PBPuzzle.act(t.dataset.pz, inf); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); return; }
     if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
+    if (t.dataset.pgu) { slotPick(inf, Number(t.dataset.pgu)); return; }
+    if (t.dataset.pgx) { const L = pgArr(inf); L[Number(t.dataset.pgx)] = ""; inf.set.cells = L; afterEdit(); return; }
     if (t.dataset.gcu) { galUpload(inf, Number(t.dataset.gcu)); return; }
     if (t.dataset.gcx) { const L = galArr(inf); L[Number(t.dataset.gcx)] = ""; afterEdit(); return; }
     if (t.dataset.gcm) { const L = galArr(inf), k = L.findIndex(x => !x); galUpload(inf, k < 0 ? 0 : k); return; }
