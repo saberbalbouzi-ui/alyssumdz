@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Alyssum Clone Helper — مساعد نسخ القوالب",
+  "version": "1.0.0",
+  "description": "يفتح المواقع في متصفح كروم الخاص بك (بجلستك وكوكيزك) ويعيد نسخة جامدة منها للوحة «نسخ قالب» في لوحة تحكم متجرك.",
+  "permissions": ["tabs", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{ "matches": ["*://*/admin.html*"], "js": ["bridge.js"], "run_at": "document_start" }],
+  "icons": { "48": "icon48.png", "128": "icon128.png" }
+}
