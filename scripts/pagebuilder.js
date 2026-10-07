@@ -257,6 +257,69 @@ const PB = (() => {
     ["تجارة وتوصيل", "🛒 🛍️ 🚚 🚛 📦 📮 💵 💰 💳 🧾 🎁 🏪 🏬 🧾 🏷️ 📞 ☎️ 📱 💬 📧 ✉️ 🌐 ⏰ ⏱️ 🕒 📅 🗓️ 🔒 🛡️ ♻️ 📈 🔄".split(" ")],
     ["الجزائر والمناسبات", "🇩🇿 🕌 ☪️ 🕋 📿 🤲 🌙 ⭐ 🏠 🏡 👨‍👩‍👧 👶 🎓 💍 🎂 🍰 🎈".split(" ")],
   ];
+  /* أيقونات عصرية (SVG بخط رفيع + تعبئة شفافة خفيفة بنمط duotone، بلون النص الحالي)؛ القيمة المخزَّنة "ic:<اسم>" وللأيقونة المرفوعة "img:<مسار>" */
+  const IC = (n, l, d) => [n, l, d], N = ' fill="none"';
+  const ICONS = [
+    ["علامات وتقييم", [
+      IC("check", "صح", `<path d="M5 12.5l4.5 4.5L19 7.5"${N}/>`),
+      IC("check-circle", "صح في دائرة", `<circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.4l3 3 5.4-6"${N}/>`),
+      IC("shield-check", "حماية مضمونة", `<path d="M12 22s8-3.6 8-10V5.2L12 2 4 5.2V12c0 6.4 8 10 8 10z"/><path d="M8.6 12.2l2.5 2.5 4.4-4.9"${N}/>`),
+      IC("badge", "شارة جودة", `<path d="M12 2.5l2.4 1.8 3-.2 1 2.8 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-1 2.8-3-.2L12 21.5l-2.4-1.8-3 .2-1-2.8-2.5-1.7.9-2.9-.9-2.9 2.5-1.7 1-2.8 3 .2z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.6"${N}/>`),
+      IC("star", "نجمة", `<path d="M12 2.8l2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3 6.3 20.3l1.1-6.3L2.8 9.5l6.4-.9z"/>`),
+      IC("sparkle", "بريق", `<path d="M12 2.5l2 6.2a3 3 0 0 0 1.9 1.9l6.1 1.9-6.1 1.9a3 3 0 0 0-1.9 1.9L12 22.5l-2-6.2a3 3 0 0 0-1.9-1.9L2 12.5l6.1-1.9A3 3 0 0 0 10 8.7z"/>`),
+      IC("zap", "طاقة سريعة", `<path d="M13.2 2.5L4.5 13.4h6.3l-.9 8.1 8.7-11h-6.3z"/>`),
+      IC("flame", "حرارة / رائج", `<path d="M12 2.5c.6 3.4 4.6 5 4.6 9.6a4.6 4.6 0 0 1-9.2 0c0-1.6.7-2.6 1.4-3.5.3 1.2.9 2 1.8 2.3C10.2 8.4 10.6 5.4 12 2.5z"/><path d="M12 21.5a6.5 6.5 0 0 0 6.5-6.5M5.5 15A6.5 6.5 0 0 0 12 21.5"${N}/>`),
+      IC("crown", "تاج", `<path d="M3 7.5l4.5 4 4.5-6.5 4.5 6.5 4.5-4-1.8 10.5H4.8z"/><path d="M5 20.5h14"${N}/>`),
+      IC("gem", "ألماس", `<path d="M6.5 3.5h11l4 5.5-9.5 12L2.5 9z"/><path d="M2.5 9h19M9 3.5L7.5 9 12 21M15 3.5l1.5 5.5L12 21"${N}/>`),
+      IC("award", "جائزة", `<circle cx="12" cy="9" r="6.5"/><path d="M8.5 14.6L7.4 22 12 19.6l4.6 2.4-1.1-7.4"${N}/>`),
+      IC("thumbs-up", "إعجاب", `<path d="M7.5 10.5V21H4.2a1.2 1.2 0 0 1-1.2-1.2v-8.1a1.2 1.2 0 0 1 1.2-1.2z"/><path d="M7.5 10.5l3.4-7.2a2.3 2.3 0 0 1 3.1 2.8L13.4 9h5.9a1.9 1.9 0 0 1 1.9 2.2l-1.2 7.6A2.6 2.6 0 0 1 17.4 21H7.5"/>`),
+      IC("heart", "قلب", `<path d="M12 20.7S3.2 15.5 3.2 9.1A4.9 4.9 0 0 1 12 6.6a4.9 4.9 0 0 1 8.8 2.5c0 6.4-8.8 11.6-8.8 11.6z"/>`),
+      IC("target", "هدف", `<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="5.2"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/>`),
+      IC("infinity", "بلا حدود", `<path d="M12 12c-1.8-2.5-3.4-4-5.3-4a4 4 0 0 0 0 8c1.9 0 3.5-1.5 5.3-4s3.4-4 5.3-4a4 4 0 0 1 0 8c-1.9 0-3.5-1.5-5.3-4z"${N}/>`),
+    ]],
+    ["طبيعة وصحة", [
+      IC("leaf", "ورقة", `<path d="M20.5 3.5C11 3.5 4.5 8.5 4.5 15.2a5.3 5.3 0 0 0 1.4 3.6C7 20 8.700 20.5 10.200 20.500c6.500 0 10.300-6.500 10.300-17z"/><path d="M3.500 21c2.500-5 6.500-8.500 11-10.500"${N}/>`),
+      IC("sprout", "نبتة", `<path d="M12 21.500v-9"${N}/><path d="M12 12.500C12 8.500 9 6 4.500 6c0 4 2.700 6.500 7.500 6.500z"/><path d="M12 14.500c0-3.500 2.500-6.500 7.500-6.500 0 4-2.500 6.500-7.500 6.500z"/>`),
+      IC("drop", "قطرة", `<path d="M12 2.800s6.700 6.500 6.700 11.400a6.700 6.700 0 0 1-13.400 0C5.300 9.300 12 2.800 12 2.800z"/><path d="M9 14.500a3 3 0 0 0 3 3"${N}/>`),
+      IC("sun", "شمس", `<circle cx="12" cy="12" r="4.200"/><path d="M12 2.500v2.300M12 19.200v2.300M2.500 12h2.300M19.200 12h2.300M5.300 5.300l1.600 1.600M17.100 17.100l1.600 1.600M5.300 18.700l1.600-1.600M17.100 6.900l1.600-1.600"${N}/>`),
+      IC("moon", "قمر", `<path d="M20.500 14.200A8.700 8.700 0 0 1 9.800 3.500a8.700 8.700 0 1 0 10.700 10.700z"/>`),
+      IC("flower", "زهرة", `<circle cx="12" cy="6.6" r="3.1"/><circle cx="17.1" cy="10.3" r="3.1"/><circle cx="15.2" cy="16.3" r="3.1"/><circle cx="8.8" cy="16.3" r="3.1"/><circle cx="6.9" cy="10.3" r="3.1"/><circle cx="12" cy="12" r="2.2" fill="currentColor" fill-opacity="1"/>`),
+      IC("pulse", "نبض / صحة", `<path d="M2.500 12.500h4l2.500-6.500 4 12 2.500-5.500h6"${N}/>`),
+      IC("heart-pulse", "قلب صحي", `<path d="M12 20.700S3.200 15.500 3.200 9.100A4.900 4.900 0 0 1 12 6.600a4.900 4.900 0 0 1 8.800 2.500c0 6.400-8.800 11.600-8.800 11.600z"/><path d="M6.500 12h3l1.500-2.500 2.200 5 1.500-2.500h2.800"${N}/>`),
+      IC("brain", "دماغ / تركيز", `<path d="M9.500 3.500A3.500 3.500 0 0 0 6 7a3.300 3.300 0 0 0-2 5.800A3.600 3.600 0 0 0 7.500 18.500 3 3 0 0 0 12 20V4.500a3 3 0 0 0-2.500-1z"/><path d="M14.500 3.500A3.500 3.500 0 0 1 18 7a3.300 3.300 0 0 1 2 5.800 3.600 3.600 0 0 1-3.500 5.700A3 3 0 0 1 12 20"/>`),
+      IC("dna", "حمض نووي", `<path d="M7 3c0 5.500 10 5.500 10 9s-10 3.500-10 9"${N}/><path d="M17 3c0 5.500-10 5.500-10 9s10 3.500 10 9"${N}/><path d="M9 6.200h6M8.200 17.800h7.600M9.700 12h4.600"${N}/>`),
+      IC("pill", "كبسولة", `<rect x="2.500" y="8" width="19" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="M8.800 8.800l6.400 6.400"${N}/>`),
+      IC("eye", "رؤية", `<path d="M1.800 12S5.500 5 12 5s10.200 7 10.200 7-3.700 7-10.200 7S1.800 12 1.800 12z"/><circle cx="12" cy="12" r="3"/>`),
+    ]],
+    ["تجارة وخدمة", [
+      IC("truck", "توصيل", `<path d="M2 6.500h12v10.500H2zM14 10h4.200l3.300 3.300V17H14z"/><circle cx="6.500" cy="18" r="2" fill="currentColor" fill-opacity="1"/><circle cx="17.500" cy="18" r="2" fill="currentColor" fill-opacity="1"/>`),
+      IC("box", "طرد", `<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.300 7.700L12 12.500l8.700-4.800M12 12.500v9"${N}/>`),
+      IC("cart", "سلة", `<path d="M2.500 3.500h3l2.200 11.500h10.800L20.700 7H6.200"/><circle cx="9" cy="19.500" r="1.500" fill="currentColor" fill-opacity="1"/><circle cx="17" cy="19.500" r="1.500" fill="currentColor" fill-opacity="1"/>`),
+      IC("cash", "دفع نقداً", `<rect x="2.500" y="6" width="19" height="12" rx="2.500"/><circle cx="12" cy="12" r="2.600"/><path d="M6 12h.01M18 12h.01"${N}/>`),
+      IC("card", "بطاقة دفع", `<rect x="2.500" y="5" width="19" height="14" rx="2.500"/><path d="M2.500 10h19M6.500 15h4"${N}/>`),
+      IC("gift", "هدية", `<rect x="3.500" y="9" width="17" height="12" rx="1.800"/><path d="M2.500 6.500h19V9h-19zM12 6.500V21M12 6.500c-1.500-3.500-5.500-3.500-5.500-1.200 0 1.200 1.300 1.200 5.500 1.200zM12 6.500c1.500-3.500 5.500-3.500 5.500-1.200 0 1.200-1.300 1.200-5.500 1.200z"${N}/>`),
+      IC("tag", "وسم / عرض", `<path d="M2.800 12.200V3.800a1 1 0 0 1 1-1h8.400a1 1 0 0 1 .7.300l8.100 8.100a1 1 0 0 1 0 1.400l-8.400 8.400a1 1 0 0 1-1.400 0L3.100 12.900a1 1 0 0 1-.3-.7z"/><circle cx="7.500" cy="7.500" r="1.400" fill="currentColor" fill-opacity="1"/>`),
+      IC("percent", "تخفيض", `<path d="M19 5L5 19"${N}/><circle cx="7" cy="7" r="2.800"/><circle cx="17" cy="17" r="2.800"/>`),
+      IC("clock", "وقت / سرعة", `<circle cx="12" cy="12" r="9.500"/><path d="M12 6.800V12l3.400 2"${N}/>`),
+      IC("lock", "أمان", `<rect x="4.500" y="10.500" width="15" height="10.500" rx="2.500"/><path d="M8 10.500V7.500a4 4 0 0 1 8 0v3"${N}/><circle cx="12" cy="15.800" r="1.300" fill="currentColor" fill-opacity="1"/>`),
+      IC("refresh", "استبدال", `<path d="M20.500 11A8.500 8.500 0 0 0 5.700 6.300L3.500 8.500"${N}/><path d="M3.500 3.500v5h5"${N}/><path d="M3.500 13a8.500 8.500 0 0 0 14.800 4.700l2.200-2.200"${N}/><path d="M20.500 20.500v-5h-5"${N}/>`),
+      IC("headset", "دعم الزبائن", `<path d="M4 15v-3a8 8 0 0 1 16 0v3"${N}/><rect x="2.500" y="13.500" width="4.500" height="6.500" rx="2"/><rect x="17" y="13.500" width="4.500" height="6.500" rx="2"/><path d="M19.500 20c0 1.500-1.500 2-3.500 2"${N}/>`),
+      IC("chat", "محادثة", `<path d="M21 12.200a8.700 8.700 0 0 1-12.700 7.700L3 21l1.200-4.800A8.700 8.700 0 1 1 21 12.200z"/>`),
+      IC("phone", "هاتف", `<path d="M21.500 16.600v2.900a2 2 0 0 1-2.200 2A19.700 19.700 0 0 1 2.500 4.700 2 2 0 0 1 4.500 2.500h2.900a2 2 0 0 1 2 1.700c.1 1 .4 1.900.7 2.800a2 2 0 0 1-.5 2.100L8.400 10.400a16 16 0 0 0 6.100 6.100l1.300-1.200a2 2 0 0 1 2.100-.4c.9.300 1.800.600 2.800.7a2 2 0 0 1 1.700 2z"/>`),
+      IC("mail", "بريد", `<rect x="2.500" y="4.500" width="19" height="15" rx="2.500"/><path d="M3 7l9 6.500L21 7"${N}/>`),
+      IC("pin", "موقع", `<path d="M12 22s7.500-6.200 7.500-12.200a7.500 7.500 0 0 0-15 0C4.500 15.800 12 22 12 22z"/><circle cx="12" cy="9.800" r="2.800"/>`),
+      IC("globe", "عالمي", `<circle cx="12" cy="12" r="9.500"/><path d="M2.500 12h19M12 2.500c2.800 2.700 4.200 5.900 4.200 9.500s-1.400 6.800-4.200 9.500c-2.800-2.700-4.200-5.900-4.200-9.500S9.200 5.200 12 2.500z"${N}/>`),
+      IC("trophy", "كأس / تميّز", `<path d="M6 9H4.500a2.500 2.500 0 0 1 0-5H6M18 9h1.500a2.500 2.500 0 0 0 0-5H18"${N}/><path d="M4 22h16M10 14.700V17c0 .550-.470.980-.970 1.210C7.850 18.750 7 20.240 7 22M14 14.700V17c0 .550.470.980.970 1.210C16.150 18.750 17 20.240 17 22"${N}/><path d="M18 2H6v7a6 6 0 0 0 12 0z"/>`),
+      IC("layers", "طبقات / مكوّنات", `<path d="M12 2.800l9.500 5.200L12 13.200 2.500 8z"/><path d="M2.500 12.500l9.500 5.200 9.500-5.200M2.500 16.700l9.500 5.200 9.500-5.200"${N}/>`),
+      IC("user", "شخص", `<circle cx="12" cy="8" r="4.200"/><path d="M4 21c.5-4 3.700-6.300 8-6.300s7.500 2.300 8 6.300"${N}/>`),
+      IC("users", "عائلة / مجتمع", `<circle cx="9" cy="8.500" r="3.700"/><path d="M2.500 20.500c.4-3.600 3-5.500 6.500-5.500s6.100 1.900 6.500 5.500"${N}/><path d="M16 4.900a3.700 3.700 0 0 1 0 7.200M18.500 15.300c1.800.7 3 2.300 3.200 5.200"${N}/>`),
+    ]],
+  ];
+  const ICMAP = {}; ICONS.forEach(g => g[1].forEach(i => { ICMAP[i[0]] = i; }));
+  const iconSvg = n => `<svg class="pb-ico" viewBox="0 0 24 24" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICMAP[n][2]}</svg>`;
+  /* قيمة أيقونة (إيموجي | ic:اسم | img:مسار) ← HTML؛ base لمسارات الصور المرفوعة */
+  const iconHtml = (v, base) => { v = String(v == null ? "" : v); if (/^ic:/.test(v) && ICMAP[v.slice(3)]) return iconSvg(v.slice(3)); if (/^img:/.test(v)) { const p = v.slice(4); return `<img class="pb-icimg" src="${esc(/^(https?:|data:|\/)/.test(p) ? p : (base || "") + p)}" alt="">`; } return esc(v); };
+  const isIconTok = v => /^(ic:|img:)/.test(String(v || ""));
   const BMARKS = [["disc", "● نقطة"], ["circle", "○ دائرة"], ["square", "■ مربع"], ["check", "✔ علامة صح"], ["checkbox", "☑ مربع صح"], ["arrow", "◀ سهم"], ["chev", "‹ سهم صغير"], ["star", "★ نجمة"], ["diamond", "◆ معين"], ["dash", "– شرطة"], ["heart", "❤ قلب"], ["leaf", "🌿 ورقة"], ["dec", "1. أرقام"], ["ar", "١. أرقام عربية"], ["alpha", "a. حروف لاتينية"], ["roman", "i. أرقام رومانية"], ["bdc", "🟢 شارة دائرية ✔ (ملوّنة)"], ["bdn", "🔢 شارة دائرية برقم (ملوّنة)"], ["bsq", "🟩 شارة مربعة ✔ (ملوّنة)"], ["bst", "⭐ شارة دائرية نجمة (ملوّنة)"], ["bdd", "⚫ نقطة ملوّنة مليئة"], ["custom", "✎ رمز مخصص"]];
   const BANIMS = [["", "بدون"], ["pulse", "نبض"], ["bounce", "قفز"], ["shake", "اهتزاز"], ["wobble", "تمايل"], ["float", "طفو"], ["heart", "نبضة قلب"], ["tada", "تادا"], ["jelly", "جيلي"]];
   const IANIMS = [["", "بدون"], ["zin", "تقريب للأمام (Zoom In)"], ["zout", "ابتعاد للخلف (Zoom Out)"], ["pulse", "نبض (تقريب وابتعاد)"], ["kb", "كين بيرنز (تقريب مع انزياح)"], ["float", "طفو للأعلى والأسفل"], ["sway", "تأرجح"], ["spin", "دوران مستمر"], ["blink", "وميض"], ["shake", "اهتزاز"]];
@@ -365,22 +428,23 @@ const PB = (() => {
     iconlist: {
       label: "قائمة أيقونات", ic: "✅", def: { items: "طبيعي 100%\nدفع عند الاستلام\nتوصيل لكل الولايات", icon: "✅", ic_c: "#157a55", fs: { d: 18 }, gap: { d: 10 } },
       ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "icon", l: "الأيقونة (اختر من القائمة أو اكتب أي رمز) — أو انقر الأيقونة في الصفحة", t: "iconpick", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "ic_c", l: "لون الأيقونة", t: "color", tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
-      html: s => `<ul class="pb-il">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li><i data-icon="icon">${esc(s.icon || "✅")}</i><span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`,
+      html: (s, id, ctx) => `<ul class="pb-il">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li><i data-icon="icon">${iconHtml(s.icon || "✅", ctx && ctx.base)}</i><span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`,
       css: (c, sel, s) => { emit(c, sel + " .pb-il", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-il li", s, [["gap", px("margin-bottom")]]); emit(c, sel + " .pb-il i", s, [["isz", px("font-size")]]); if (s.ic_c) c.d.push(`${sel} .pb-il i{color:${s.ic_c}}`); },
     },
     iconbox: {
       label: "صندوق أيقونة", ic: "💠", def: { icon: "🌿", title: "ميزة رائعة", text: "وصف قصير يشرح الميزة للزبون.", al: { d: "center" }, isz: { d: 44 }, tc: "#173F35", xc: "#555555" },
       ctl: [{ k: "icon", l: "الأيقونة (اختر من القائمة أو اكتب أي رمز) — أو انقر الأيقونة في الصفحة", t: "iconpick", tab: "c" }, { k: "title", l: "العنوان", t: "text", tab: "c" }, { k: "text", l: "الوصف", t: "textarea", tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 16, max: 140, tab: "s" }, { k: "tc", l: "لون العنوان", t: "color", tab: "s" }, { k: "xc", l: "لون الوصف", t: "color", tab: "s" }, { k: "tfs", l: "حجم العنوان (px)", t: "num", r: 1, min: 12, max: 60, tab: "s" }],
-      html: s => { const b = `<div class="pb-ib"><div class="pb-ibi" data-icon="icon">${esc(s.icon)}</div><h3 data-edit="title">${esc(s.title)}</h3><p data-edit="text">${esc(s.text)}</p></div>`; return s.link ? `<a href="${esc(s.link)}" style="color:inherit;text-decoration:none">${b}</a>` : b; },
+      html: (s, id, ctx) => { const b = `<div class="pb-ib"><div class="pb-ibi" data-icon="icon">${iconHtml(s.icon, ctx && ctx.base)}</div><h3 data-edit="title">${esc(s.title)}</h3><p data-edit="text">${esc(s.text)}</p></div>`; return s.link ? `<a href="${esc(s.link)}" style="color:inherit;text-decoration:none">${b}</a>` : b; },
       css: (c, sel, s) => { emit(c, sel + " .pb-ibi", s, [["isz", px("font-size")]]); emit(c, sel + " .pb-ib h3", s, [["tfs", px("font-size")]]); if (s.tc) c.d.push(`${sel} .pb-ib h3{color:${s.tc}}`); if (s.xc) c.d.push(`${sel} .pb-ib p{color:${s.xc}}`); },
     },
     bullets: {
-      label: "قائمة مزايا", ic: "•", fit: 1, def: { items: "ميزة أولى للمنتج\nميزة ثانية للمنتج\nميزة ثالثة للمنتج", mk: "disc", mchar: "★", mc: "#157a55", ms: { d: 18 }, gap: { d: 8 }, fs: { d: 18 } },
-      ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "micon", l: "أيقونة المزايا — اختر من القائمة (تتفوق على نوع العلامة؛ اتركها «اختر أيقونة» لاستعمال النوع)", t: "iconpick", tab: "c" }, { k: "mk", l: "نوع العلامة (اختر واحداً)", t: "select", o: BMARKS.map(m => [m[0], m[1]]), tab: "c" }, { k: "mchar", l: "الرمز المخصص (أي رمز أو إيموجي)", t: "iconpick", tab: "c", showIf: ["mk", "custom"] },
+      label: "قائمة المزايا", ic: "•", fit: 1, def: { items: "ميزة أولى للمنتج\nميزة ثانية للمنتج\nميزة ثالثة للمنتج", micon: "ic:check-circle", mk: "disc", mchar: "★", mc: "#157a55", ms: { d: 18 }, gap: { d: 8 }, fs: { d: 18 } },
+      ctl: [{ k: "items", l: "العناصر (سطر لكل عنصر) — أو انقر النص في الصفحة لتعديله", t: "textarea", tab: "c" }, { k: "micon", l: "أيقونة المزايا — اختر من الأيقونات العصرية أو ارفع أيقونتك (تتفوق على نوع العلامة؛ امسحها لاستعمال النوع أدناه)", t: "iconpick", tab: "c" }, { k: "mk", l: "نوع العلامة (اختر واحداً)", t: "select", o: BMARKS.map(m => [m[0], m[1]]), tab: "c" }, { k: "mchar", l: "الرمز المخصص (أي رمز أو إيموجي)", t: "iconpick", tab: "c", showIf: ["mk", "custom"] },
         { k: "mc", l: "لون العلامة", t: "color", tab: "s" }, { k: "mcols", l: "ألوان الشارات — لكل شارة رقمها بجانبها خانة اللون (يتغير العدد تلقائياً مع عدد العناصر)", t: "badgecolors", tab: "s" }, { k: "ms", l: "حجم العلامة (px)", t: "num", r: 1, min: 8, max: 80, tab: "s" }, { k: "gap", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }].concat(typoCtl().filter(c => c.k !== "ta")),
-      html: s => `<ul class="pb-bl">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li><span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`,
+      html: (s, id, ctx) => { const tk = isIconTok(s.micon), mi = tk ? `<i class="pb-bi" data-icon="micon">${iconHtml(s.micon, ctx && ctx.base)}</i>` : ""; return `<ul class="pb-bl">${String(s.items || "").split("\n").map((x, i) => [x, i]).filter(x => x[0].trim()).map(([x, i]) => `<li>${mi}<span data-edit="items" data-idx="${i}">${esc(x)}</span></li>`).join("")}</ul>`; },
       css: (c, sel, s) => {
         emit(c, sel + " .pb-bl", s, TYPO.filter(x => x[0] !== "ta")); emit(c, sel + " .pb-bl li", s, [["gap", px("margin-bottom")], ["ms", v => `padding-inline-start:calc(${U(num(v) || 18)}*1.9);`]]);
+        if (isIconTok(s.micon)) { c.d.push(`${sel} .pb-bl li{position:relative}${sel} .pb-bl li .pb-bi{position:absolute;inset-inline-start:0;top:.1em;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-style:normal;${s.mc ? "color:" + s.mc + ";" : "color:#157a55;"}}${sel} .pb-bl li .pb-bi .pb-ico,${sel} .pb-bl li .pb-bi .pb-icimg{width:1.3em;height:1.3em}`); emit(c, sel + " .pb-bl li .pb-bi", s, [["ms", px("font-size")]]); return; }
         const mk = s.micon ? "custom" : BMARKS.some(m => m[0] === s.mk) ? s.mk : "disc", BG = { bdc: ["✔", "50%"], bdn: ["", "50%"], bsq: ["✔", "28%"], bst: ["★", "50%"], bdd: ["", "50%"] }[mk];
         if (BG) {      /* شارات ملوّنة: خلفية بلون الشارة (تتناوب الألوان بين العناصر) */
           const cols = String(s.mcs || "").split(/[,،\s]+/).filter(x => /^#[0-9a-f]{3,8}$/i.test(x)), base = s.mc || "#157a55";
@@ -607,7 +671,7 @@ const PB = (() => {
       css: () => { },
     },
   };
-  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "tbadges", "pgal", "shopcats", "herow", "sfoot", "sbar", "shdr", "pprice", "poffers", "pgallery", "social", "iconbox", "iconlist", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
+  const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "tbadges", "pgal", "shopcats", "herow", "sfoot", "sbar", "shdr", "pprice", "poffers", "pgallery", "social", "iconbox", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html"];
 
   /* ═════════════════ تعريف الأقسام/الأعمدة + الإعدادات المشتركة ═════════════════ */
   const common = (kind) => {
@@ -688,7 +752,7 @@ const PB = (() => {
     cta: { n: "🔥 عرض محدود + عدّ تنازلي", f: () => mkS([mkC([mkW("heading", { text: "عرض ينتهي قريباً!", color: "#ffffff" }), mkW("countdown", { cbg: "#ffffff", color: "#173F35" }), mkW("button", { text: "احجز طلبك الآن", bgc: "#C8A24B", color: "#173F35" })])], { bg: "#b83232", pad: { d: [60, 20, 60, 20] } }) },
     faq: { n: "❓ الأسئلة الشائعة", f: () => mkS([mkC([mkW("heading", { text: "أسئلة شائعة", fs: { d: 34, m: 26 } }), mkW("accordion", {})])], { cw: { d: 820 } }) },
     canvas: { n: "🎨 قسم حر (قماش فارغ)", f: () => mkCanvas() },
-    split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("iconlist", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
+    split: { n: "🪟 صورة + نص", f: () => mkS([mkC([mkW("image", {})], { w: { d: 45 } }), mkC([mkW("heading", { text: "لماذا نحن؟", ta: { d: "start" }, fs: { d: 32, m: 24 } }), mkW("text", {}), mkW("bullets", {}), mkW("button", { text: "اطلب الآن", al: { d: "start" } })], { w: { d: 55 }, va: { d: "center" } })], { va: { d: "center" } }) },
   };
   const FREE_SIZE = { shape: [14, 120], heading: [60, 70], text: [40, 150], image: [30, 280], button: [22, 56], slider: [60, 380], gallery: [60, 360], pgal: [36, 520], products: [90, 520], orderorig: [50, 760], iconbox: [26, 180], iconlist: [34, 160], bullets: [34, 170], social: [30, 60], contact: [50, 520], tbadges: [26, 300], pgal: [200, 600], pprice: [30, 80], poffers: [80, 260], pgallery: [200, 700], video: [50, 300], accordion: [60, 260], testimonial: [30, 220], counter: [22, 130], countdown: [50, 110], divider: [50, 12], spacer: [20, 40], html: [40, 160] };
   const mkFree = (type, x, y, z) => { const w = mkW(type), sz = FREE_SIZE[type] || [30, 150]; Object.assign(w.set, { fx: { d: Math.round((x ?? 10) * 2) / 2 }, fy: { d: Math.round(y ?? 20) }, fwd: { d: sz[0] }, fh: { d: sz[1] }, zi: z ?? 1 }); delete w.set.w; delete w.set.mh; return w; };
@@ -696,7 +760,8 @@ const PB = (() => {
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
   /* ترقية صفحات قديمة: طبقة العناصر الحرة، النموذج السريع ⟵ النموذج الأصلي، مصادر المنتجات */
   const migrate = page => { (page.sections || []).forEach(sec => { sec.free = sec.free || []; if (!sec.cols || !sec.cols.length) sec.cols = [mkC([])];
-    const fix = w => { if (isObj(w.set.fw)) { w.set.fwd = w.set.fw; delete w.set.fw; } if (w.type === "orderform") { w.type = "orderorig"; w.set = { prod: (w.set && w.set.prod) || "", auto: true }; } if (w.type === "products") { const st = w.set; if (st.val && !st.tag && !st.cat && !st.slugs) { if (st.mode === "tag") st.tag = st.val; else if (st.mode === "cat") st.cat = st.val; else if (st.mode === "slugs") st.slugs = st.val; } } };
+    const fix = w => { if (w.type === "iconlist") { const o = w.set || {}; w.type = "bullets"; w.set = Object.assign({}, o, { micon: o.icon || "ic:check-circle", mc: o.ic_c || o.mc }); if (o.isz !== undefined) w.set.ms = o.isz; ["icon", "ic_c", "isz"].forEach(k => delete w.set[k]); }      // «قائمة أيقونات» اندمجت في «قائمة المزايا»
+    if (isObj(w.set.fw)) { w.set.fwd = w.set.fw; delete w.set.fw; } if (w.type === "orderform") { w.type = "orderorig"; w.set = { prod: (w.set && w.set.prod) || "", auto: true }; } if (w.type === "products") { const st = w.set; if (st.val && !st.tag && !st.cat && !st.slugs) { if (st.mode === "tag") st.tag = st.val; else if (st.mode === "cat") st.cat = st.val; else if (st.mode === "slugs") st.slugs = st.val; } } };
     sec.cols.forEach(c => c.widgets.forEach(fix)); sec.free.forEach(fix);
     const mnz = Math.min(0, ...sec.free.map(w => Number(w.set.zi) || 0)); if (mnz < 0) sec.free.forEach(w => { w.set.zi = (Number(w.set.zi) || 0) - mnz; }); }); return page; };      // إصلاح صفحات فيها z-index سالب (عنصر مخفي خلف الخلفية)
   /* ═════════ عناصر افتراضية: عناصر وأقسام جاهزة بتنسيق صفحة المنتج (ألوان/حدود/ظلال/خطوط) لاستعمالها في صفحات جديدة ═════════ */
@@ -838,7 +903,7 @@ const PB = (() => {
 .pb-t{margin:0;overflow-wrap:anywhere}.pb-hd{white-space:pre-line}.pb-tx p{margin:0 0 .8em}.pb-tx>:last-child{margin-bottom:0}
 .pb-btn{display:inline-block;text-decoration:none;text-align:center;cursor:pointer;transition:background .2s,transform .15s}.pb-btn:hover{transform:translateY(-2px)}
 .pb-ph{background:#f1ede2;border:2px dashed #cfc6b0;color:#8a8472;padding:28px;text-align:center;border-radius:12px;font-size:.95rem}.pb-w .pb-ph{box-sizing:border-box;height:100%;display:flex;flex-direction:column;gap:.55rem;align-items:center;justify-content:center}.pb-phb{display:inline-block;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;font-weight:800;border-radius:999px;padding:.5rem 1.1rem;cursor:pointer;font-size:.9rem;box-shadow:0 4px 12px rgba(124,58,237,.35)}.pb-ph small{font-size:.75rem;color:#9a937c}
-.pb-hr{height:0}.pb-bl{list-style:none;margin:0;padding:0}.pb-bl li{list-style:none}.pb-il{list-style:none;margin:0;padding:0}.pb-il li{display:flex;gap:.6rem;align-items:flex-start}.pb-il li:last-child{margin-bottom:0!important}
+.pb-ico{width:1em;height:1em;display:inline-block;vertical-align:-.15em}.pb-icimg{width:1em;height:1em;object-fit:contain;display:inline-block;vertical-align:-.15em}.pb-hr{height:0}.pb-bl{list-style:none;margin:0;padding:0}.pb-bl li{list-style:none}.pb-il{list-style:none;margin:0;padding:0}.pb-il li{display:flex;gap:.6rem;align-items:flex-start}.pb-il li:last-child{margin-bottom:0!important}
 .pb-ib{padding:8px}.pb-ibi{line-height:1.1;margin-bottom:.4rem}.pb-ib h3{margin:0 0 .4rem;font-size:1.25rem;font-weight:800}.pb-ib p{margin:0}
 .pb-acc details{margin-bottom:10px;border:1px solid #e6dfcf;border-radius:12px;overflow:hidden;background:#fff}.pb-acc summary,.pb-acc .pb-sum{cursor:pointer;padding:14px 18px;font-weight:800;list-style:none}.pb-acc .pb-sum:after{content:'－';float:inline-end}.pb-acc summary::-webkit-details-marker{display:none}.pb-acc summary:after{content:'＋';float:inline-end}.pb-acc details[open] summary:after{content:'－'}.pb-acc details>div{padding:14px 18px;line-height:1.8}
 .pb-ct{text-align:center}.pb-ctn{font-weight:900;line-height:1.1}.pb-ctl{font-weight:700;margin-top:.3rem}
@@ -954,5 +1019,5 @@ ${hasProd || bindProd ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/scri
 </body></html>`;
   }
 
-  return { galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, ICONS, iconHtml, isIconTok, BMARKS, TPLS, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
