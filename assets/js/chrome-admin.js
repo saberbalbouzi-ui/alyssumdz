@@ -59,7 +59,7 @@ window.ChromeAdmin = (function () {
       '<div class="card">' + cardH("☰ قائمة الروابط") + F.c("header.menu.show", "إظهار القائمة (على الشاشات الكبيرة)") + F.col("header.menu.color", "لون الروابط") + linkList("header.menu.items", "رابط") + "</div>" +
       '<div class="card">' + cardH("🔗 أيقونات التواصل في الهيدر") + F.c("header.social.show", "إظهار") + socialStyle("header") + '<div class="hint">الحسابات نفسها تُدار من القسم التالي.</div></div>' +
       socialCard() + shareCard() +
-      '<div class="card">' + cardH("💬 زر واتساب") + F.c("header.wa.show", "إظهار") + F.t("header.wa.label", "نص الزر") + '<div class="hint">الرقم من «نموذج الطلب».</div></div>' +
+      '<div class="card">' + cardH("💬 زر واتساب") + F.c("header.wa.show", "إظهار") + '<div class="grid2">' + F.s("header.wa.mode", "الشكل في الهيدر", [["icon", "أيقونة واتساب"], ["text", "كلمة (نص)"]]) + F.s("header.wa.style", "نمط الأيقونة", STY) + F.n("header.wa.size", "حجم الأيقونة (بكسل)", 16, 48) + "</div>" + F.t("header.wa.label", "النص (عند اختيار «كلمة»)") + '<div class="hint">الرقم من «نموذج الطلب». أيقونات المواقع الأخرى (فيسبوك، إنستغرام…) تُضاف من «أيقونات التواصل» أعلاه.</div></div>' +
       '<div class="card">' + cardH("👤 زر الحساب و🛒 السلة") + '<div class="ca-chk">' + F.c("header.account.show", "إظهار زر الحساب") + F.c("header.cart.show", "إظهار زر السلة") + "</div></div>";
   }
   function footerTab() {

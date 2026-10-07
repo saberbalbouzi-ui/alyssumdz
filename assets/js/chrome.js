@@ -25,7 +25,7 @@ window.Chrome = (function () {
         menu: { show: true, color: "", items: [{ label: "الفئات", url: "index.html#categories" }, { label: "المنتجات", url: "index.html#products" }, { label: "لماذا نحن؟", url: "index.html#features" }, { label: "الأسئلة الشائعة", url: "index.html#faq" }] },
         social: { show: false, style: "color", shape: "none", size: 18 },
         share: { show: true, style: "soft" },
-        wa: { show: true, label: "واتساب" },
+        wa: { show: true, label: "واتساب", mode: "icon", style: "brand", size: 24 },
         account: { show: true },
         cart: { show: true }
       },
@@ -66,7 +66,8 @@ window.Chrome = (function () {
       menu: () => h.menu.show && h.menu.items.length ? '<nav class="menu">' + h.menu.items.map(i => '<a href="' + esc(url(i.url, rel)) + '">' + esc(i.label) + "</a>").join("") + "</nav>" : "",
       social: () => h.social.show ? socials(c, h.social, "hd-soc") : "",
       share: () => h.share.show ? '<button type="button" class="ch-share-btn" data-share aria-label="مشاركة" title="مشاركة">' + SI().icon("share", { size: 18, style: h.share.style || "soft", shape: "round" }) + "</button>" : "",
-      wa: () => h.wa.show ? '<a class="hd-wa" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">' + esc(h.wa.label || "واتساب") + "</a>" : "",
+      wa: () => !h.wa.show ? "" : h.wa.mode === "text" ? '<a class="hd-wa" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">' + esc(h.wa.label || "واتساب") + "</a>"
+        : '<a class="hd-wa hd-wa-ic" href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener" aria-label="واتساب" title="واتساب">' + SI().icon("whatsapp", { size: +h.wa.size || 24, style: h.wa.style || "brand", shape: "round" }) + "</a>",
       account: () => h.account.show ? (k.account || "") : "",
       cart: () => h.cart.show ? (k.cart || "") : ""
     };
@@ -114,7 +115,7 @@ window.Chrome = (function () {
   function css(cfg, ctx) {
     const c = norm(cfg, ctx && ctx.site), h = c.header, f = c.footer, tp = h.topbar;
     let s = ".si-a{display:inline-flex;transition:transform .15s}.si-a:hover{transform:translateY(-2px)}.ch-soc{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}" +
-      "footer.site .container{display:block}.ch-share-btn svg{flex:none}.ch-fill{margin-inline-start:auto}.ch-share-btn{background:none;border:0;cursor:pointer;color:inherit;font:inherit;display:inline-flex;align-items:center;gap:.4rem;padding:0}" +
+      "footer.site .container{display:block}.ch-share-btn svg{flex:none}.ch-fill{margin-inline-start:auto}header.site .hd-wa.hd-wa-ic{background:none!important;padding:0!important;border-radius:0!important;box-shadow:none!important;display:inline-flex;align-items:center;margin-inline-start:0}.ch-share-btn{background:none;border:0;cursor:pointer;color:inherit;font:inherit;display:inline-flex;align-items:center;gap:.4rem;padding:0}" +
       ".ch-ftshare{text-align:center}.ch-share-wide{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:.5rem 1.1rem;font-weight:800;margin-top:1.1rem}.ch-share-wide:hover{background:rgba(255,255,255,.18)}" +
       ".ch-rows{display:grid;gap:.45rem;font-size:.95rem}.ch-row{display:flex;gap:.5rem;align-items:center}.ch-row svg{flex:none;opacity:.85}.ch-grid a{color:inherit}.ch-grid p a:hover,.ch-row a:hover{text-decoration:underline}" +
       "@media(max-width:760px){.ch-grid{grid-template-columns:1fr!important}}";
