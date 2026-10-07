@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.31.5">
+<meta name="admin-version" content="1.31.6">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.31.5"></script>
-<script src="assets/js/chrome-admin.js?v=1.31.5"></script>
-<script src="assets/js/admin-assistant.js?v=1.31.5"></script>
-<script src="assets/js/admin-update.js?v=1.31.5"></script>
+<script src="assets/js/ctl-help.js?v=1.31.6"></script>
+<script src="assets/js/chrome-admin.js?v=1.31.6"></script>
+<script src="assets/js/admin-assistant.js?v=1.31.6"></script>
+<script src="assets/js/admin-update.js?v=1.31.6"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -8431,6 +8431,7 @@ body{overflow-x:hidden;margin:0}`;
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
 .pbx-top{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#173f35;color:#fff;flex-wrap:wrap}
+.pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
 .pbx-top input{background:#fff;border:0;border-radius:8px;padding:.4rem .7rem;font-weight:800;width:auto;flex:0 1 240px;min-width:120px;font-family:inherit;color:#173f35}
 .pbx-top button{display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:8px;padding:.42rem .75rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.85rem}
 .pbx-top button:hover{background:rgba(255,255,255,.22)}.pbx-top button.on{background:#c8a24b;color:#173f35}.pbx-top button.pub{background:#c8a24b;color:#173f35}.pbx-top button:disabled{opacity:.35;cursor:default}
@@ -8617,7 +8618,7 @@ body{overflow-x:hidden;margin:0}`;
   <button onclick="PBApp.close()" title="إغلاق المحرر">${ico('close',16)} إغلاق</button>
   <button class="pbx-tg" id="pbx-tgl" onclick="PBApp.panel('l')" title="إظهار/إخفاء شريط الأدوات">${ico('tab_add',16)} الأدوات</button>
   <button class="pbx-tg" id="pbx-tgr" onclick="PBApp.panel('r')" title="إظهار/إخفاء شريط الإعدادات">${ico('tab_pg',16)} الإعدادات</button>
-  <input id="pbx-title" placeholder="عنوان الصفحة" oninput="PBApp.meta('title',this.value)">
+  <input id="pbx-title" placeholder="عنوان الصفحة" readonly oninput="PBApp.meta('title',this.value)"><button id="pbx-rn" type="button" onclick="PBApp.rename()" title="تعديل اسم الصفحة (Enter للتأكيد، Esc للإلغاء)">${ico('pencil',15)}<span>تعديل الاسم</span></button>
   <button id="pbx-upd" data-au="1" type="button" onclick="AdminUpdate.apply()" title="تحديث الصفحة لآخر نسخة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg> <span class="au-t">تحديث</span></button>
   <button id="pbx-cc" type="button" onclick="AdminUpdate.clearCache()" title="مسح كاش المتصفح وإعادة تحميل الصفحة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></svg> <span>الكاش</span></button>
   <span class="sp"></span>
@@ -8752,11 +8753,19 @@ body{overflow-x:hidden;margin:0}`;
     $("pbx-dirty").textContent = E.dirty ? "● تعديلات غير منشورة" : "";
     document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap); const lv = $("pbx-live"); if (lv) lv.classList.toggle("on", E.live);
   }
+  /* تعديل اسم الصفحة من الشريط العلوي: الحقل للقراءة افتراضياً، وزر «تعديل الاسم» يفتحه (Enter يؤكّد وEsc يلغي) */
+  function rename() {
+    const i = $("pbx-title"), b = $("pbx-rn"); if (!i) return; if (!i.readOnly) { i.blur(); return; }
+    const old = i.value; i.readOnly = false; i.focus(); i.select(); if (b) b.querySelector("span").textContent = "تأكيد الاسم";
+    const end = ok => { i.removeEventListener("keydown", kd); i.removeEventListener("blur", bl); i.readOnly = true; if (b) b.querySelector("span").textContent = "تعديل الاسم"; if (!ok) { i.value = old; meta("title", old); } else if (!i.value.trim()) { i.value = old; meta("title", old); toast("اسم الصفحة لا يمكن أن يكون فارغاً"); } else if (i.value !== old) toast("تم تعديل اسم الصفحة"); };
+    const kd = e => { if (e.key === "Enter") { e.preventDefault(); i.blur(); } else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); i.removeEventListener("blur", bl); end(false); i.blur(); } };
+    const bl = () => end(true); i.addEventListener("keydown", kd); i.addEventListener("blur", bl);
+  }
   function meta(k, v) { E.page[k] = v; if (k === "title" && E.isNew && !E.slugTouched) { E.page.slug = slugify(v); } E.dirty = true; clearTimeout(saveT); saveT = setTimeout(() => { commitHist(); saveDraft(); }, 600); if (k === "title") { updateTop(); if (E.ltab === "pg") { const s = $("pg-slug"); if (s && E.isNew && !E.slugTouched) s.value = E.page.slug; } } else renderCanvas(); }
   const slugify = t => String(t || "").toLowerCase().trim().replace(/[^a-z0-9؀-ۿ]+/g, "-").replace(/[؀-ۿ]+/g, "").replace(/^-+|-+$/g, "") || "page-" + Date.now().toString(36).slice(-4);
 
   /* أيقونات SVG موحّدة بدل الإيموجي */
-  const IC = { check: '<path d="M5 12.5l4.5 4.5L19 7"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', scissors: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5L20 18M8 16.5L20 6"/>', upload: '<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>', dots: '<circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/>', download: '<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>', trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', puzzle: '<path d="M9 4h4v3a2 2 0 104 0V4h3v5h-3a2 2 0 100 4h3v7h-5v-3a2 2 0 10-4 0v3H4v-6h3a2 2 0 100-4H4V4z"/>', mask: '<circle cx="9" cy="12" r="6"/><path d="M15 6.5a6 6 0 010 11M12 8.5h0"/>', cutout: '<path d="M4 4h4M4 4v4M20 4h-4M20 4v4M4 20h4M4 20v-4M20 20h-4M20 20v-4"/><circle cx="12" cy="9.5" r="2.4"/><path d="M7.5 17c.6-2.6 2.5-4 4.5-4s3.9 1.4 4.5 4"/>', heading: '<path d="M6 4v16M18 4v16M6 12h12"/>', text: '<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', button: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>',
+  const IC = { pencil: '<path d="M4 20l1-4L16 5l3 3L8 19l-4 1zM14 7l3 3"/>', check: '<path d="M5 12.5l4.5 4.5L19 7"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', scissors: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5L20 18M8 16.5L20 6"/>', upload: '<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>', dots: '<circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/>', download: '<path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>', trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', puzzle: '<path d="M9 4h4v3a2 2 0 104 0V4h3v5h-3a2 2 0 100 4h3v7h-5v-3a2 2 0 10-4 0v3H4v-6h3a2 2 0 100-4H4V4z"/>', mask: '<circle cx="9" cy="12" r="6"/><path d="M15 6.5a6 6 0 010 11M12 8.5h0"/>', cutout: '<path d="M4 4h4M4 4v4M20 4h-4M20 4v4M4 20h4M4 20v-4M20 20h-4M20 20v-4"/><circle cx="12" cy="9.5" r="2.4"/><path d="M7.5 17c.6-2.6 2.5-4 4.5-4s3.9 1.4 4.5 4"/>', heading: '<path d="M6 4v16M18 4v16M6 12h12"/>', text: '<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', button: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>',
     shape: '<path d="M12 3l2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.2 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/>', slider: '<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M2 9v6M22 9v6"/>', gallery: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
     sbar: '<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h12"/>', shdr: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20M6 6.5h3M15 6.5h3"/>',
     shopcats: '<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/>', herow: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 10h7M6 14h4"/><rect x="15" y="8" width="4" height="8" rx="1"/>', sfoot: '<rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 15h20M6 18h4M14 18h4"/>', tbadges: '<path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z"/>', pgal: '<rect x="3" y="3" width="18" height="12" rx="2"/><rect x="3" y="18" width="4" height="3" rx="1"/><rect x="10" y="18" width="4" height="3" rx="1"/><rect x="17" y="18" width="4" height="3" rx="1"/>',
@@ -10893,7 +10902,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { toggleLive, renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { rename, toggleLive, renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
