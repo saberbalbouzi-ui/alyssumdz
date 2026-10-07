@@ -361,7 +361,61 @@ window.AIVision = (function () {
     return { a, x0, y0, w, h };
   }
   /* شيء في اليد بالدقة الكاملة: صورته الخارجية كاملة، ثم تُطرح الأصابع بتصنيف لوني (جلد اليد من ذراع الشخص نفسه، ولون الشيء من الشيء) قرب اليد فقط، وحافة ناعمة بالمرشّح الموجَّه */
+  /* فصل دقيق للأصابع: حلّال تنعيم يراعي الحواف على نافذة مصغّرة ببذور (الشيء المؤكَّد / اليد المؤكَّدة) ونموذج لوني GMM للشيء واليد من هذه الصورة نفسها،
+     ثم تكبير وماتينغ على الدقة الكاملة قرب اليد فقط. أي فشل ← الطريقة اللونية القديمة (heldAlphaOld) */
   function heldAlpha(S, it, D, opt) {
+    try { const r = heldAlpha2(S, it, D, opt); if (r) return r; } catch (e) { console.warn("held2", e); }
+    return heldAlphaOld(S, it, D, opt);
+  }
+  function heldAlpha2(S, it, D, opt) {
+    const T = typeof PBBgRemove !== "undefined" && PBBgRemove._t; if (!T || !T.solve || !T.fitGMM || !T.llOf || !T.morph || !it.hand) return null;
+    const W = S.W, old = fullAlpha(S, { lo: it.sil, lw: it.lw, lh: it.lh, x0: it.x0, y0: it.y0, x1: it.x1, y1: it.y1 }, D, Object.assign({}, opt, { inner: true, matte: false })), { x0, y0, w, h } = old, N = w * h, hs = sampler(S, { lo: it.hand, lw: it.lw, lh: it.lh }), key = x0 + "," + y0 + "," + w + "," + h;
+    const skin = (r, g, b) => r > 90 && g > b && r - b > 25 && r - g > 10 && g / r > .5 && g / r < .93 && b / r > .35 && b / r < .88, ps = it.holder ? sampler(S, it.holder) : null;
+    let R = it._hu && it._hu.key === key ? it._hu : null;
+    if (!R) {
+      const s = Math.min(1, 480 / Math.max(w, h)), sw = Math.max(8, Math.round(w * s)), sh = Math.max(8, Math.round(h * s)), n = sw * sh, rgb = new Float32Array(n * 3), ja = new Float32Array(n), hl = new Float32Array(n), hp = new Uint8Array(n);
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        const i = y * sw + x; let r = 0, g = 0, b = 0;
+        for (let q = 0; q < 4; q++) { const fx = Math.min(w - 1, Math.floor((x + .25 + (q & 1) * .5) / sw * w)), fy = Math.min(h - 1, Math.floor((y + .25 + (q >> 1) * .5) / sh * h)), gi = ((y0 + fy) * W + x0 + fx) * 4; r += D[gi]; g += D[gi + 1]; b += D[gi + 2]; }
+        rgb[i * 3] = r / 1020; rgb[i * 3 + 1] = g / 1020; rgb[i * 3 + 2] = b / 1020;
+        const cx = Math.min(w - 1, Math.floor((x + .5) / sw * w)), cy = Math.min(h - 1, Math.floor((y + .5) / sh * h)); ja[i] = old.a[cy * w + cx]; hl[i] = hs(x0 + cx, y0 + cy); hp[i] = ps && ps(x0 + cx, y0 + cy) > 0 ? 1 : 0;
+      }
+      /* منطقة اليد التقريبية (قناع اليد الخشن موسَّعاً): داخلها فقط يُعاد الحسم، وخارجها الشيء كما هو */
+      const hm = new Uint8Array(n); for (let i = 0; i < n; i++) hm[i] = hl[i] > -3 || (ja[i] < .05 && hp[i]) ? 1 : 0;
+      const nearU = T.morph(hm, sw, sh, Math.max(6, Math.round(Math.max(sw, sh) * .09)), false), near = new Uint8Array(n); for (let i = 0; i < n; i++) near[i] = nearU[i] && ja[i] >= .05 ? 1 : 0;
+      const fS = [], bS = [], pick = (L, cap) => { const st = Math.max(1, L.length / cap), o = new Float32Array(Math.min(L.length, cap) * 3); let k = 0; for (let t = 0; t < L.length && k < cap; t += st) { const i = L[t | 0]; o[k * 3] = rgb[i * 3]; o[k * 3 + 1] = rgb[i * 3 + 1]; o[k * 3 + 2] = rgb[i * 3 + 2]; k++; } return o.subarray(0, k * 3); };
+      for (let i = 0; i < n; i++) { const sk = skin(rgb[i * 3] * 255, rgb[i * 3 + 1] * 255, rgb[i * 3 + 2] * 255); if (ja[i] > .9 && (!nearU[i] || (hl[i] < -2 && !sk))) fS.push(i); if (sk && ((ja[i] < .05 && hp[i]) || (ja[i] > .5 && hl[i] > .6))) bS.push(i); }
+      if (fS.length < 60 || bS.length < 60) { console.warn('held2 seeds', fS.length, bS.length); return null; }
+      let sd = 7; const rnd = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296, GF = T.fitGMM(pick(fS, 5000), 6, rnd), GB = T.fitGMM(pick(bS, 5000), 6, rnd); if (!GF || !GB) return null;
+      const P = new Float32Array(n), B0 = new Uint8Array(n);
+      for (let i = 0; i < n; i++) { if (ja[i] < .05) { P[i] = 0; continue; } if (!near[i]) { P[i] = 1; B0[i] = 1; continue; } const d = Math.max(-14, Math.min(14, T.llOf(GF, rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]) - T.llOf(GB, rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]))); P[i] = 1 / (1 + Math.exp(-.3 * d)); B0[i] = P[i] > .5 ? 1 : 0; }
+      /* تنظيف (جزر/ثقوب صغيرة) ثم شريط غير مؤكَّد حول الحدّ يُحسم بالتنعيم الواعي بالحواف */
+      const cl = T.cleanMask ? T.cleanMask(Float32Array.from(B0), sw, sh, new Uint8Array(n)) : Float32Array.from(B0); for (let i = 0; i < n; i++) B0[i] = cl[i] > .5 ? 1 : 0;
+      /* كتلة «يد» لا يسندها قناع اليد (بلا بكسلات يد مؤكَّدة) = انعكاس على الزجاج أو لون يشبه الجلد داخل الشيء ← تعود للشيء */
+      { const lab = new Int32Array(n), stk = []; let cn = 0;
+        for (let s0 = 0; s0 < n; s0++) { if (B0[s0] || ja[s0] < .05 || lab[s0]) continue; cn++; const cp = []; let hv = 0, tc = 0; stk.push(s0); lab[s0] = cn;
+          while (stk.length) { const j = stk.pop(), x = j % sw; cp.push(j); if (hl[j] > .6) hv++; for (const q of [x > 0 ? j - 1 : -1, x < sw - 1 ? j + 1 : -1, j - sw, j + sw]) if (q >= 0 && q < n) { if (!B0[q] && ja[q] >= .05 && !lab[q]) { lab[q] = cn; stk.push(q); } else if (ja[q] < .05 && hp[q]) tc++; } }
+          if (hv < cp.length * .15) for (const j of cp) { B0[j] = 1; P[j] = Math.max(P[j], .9); } } }
+      const e = Math.max(2, Math.round(Math.max(sw, sh) / 140)), fgC = T.morph(B0, sw, sh, e, true), inv = new Uint8Array(n); for (let i = 0; i < n; i++) inv[i] = 1 - B0[i];
+      const bgC = T.morph(inv, sw, sh, e, true), seed = new Uint8Array(n);
+      for (let i = 0; i < n; i++) { if (ja[i] < .05) { seed[i] = 2; continue; } if (!near[i]) { seed[i] = 1; continue; } if (fgC[i]) seed[i] = 1; else if (bgC[i]) seed[i] = 2; }
+      R = it._hu = { key, u: T.solve(rgb, sw, sh, P, seed, .08), sw, sh, nearU };
+    }
+    const { u, sw, sh } = R, M = new Float32Array(N), nr = new Uint8Array(N);
+    for (let y = 0; y < h; y++) { const fy = Math.max(0, Math.min(sh - 1.001, (y + .5) / h * sh - .5)), v0 = fy | 0, ty = fy - v0;
+      for (let x = 0; x < w; x++) { const i = y * w + x; if (!R.nearU[(Math.min(R.sh - 1, (y / h * R.sh) | 0)) * R.sw + Math.min(R.sw - 1, (x / w * R.sw) | 0)]) { M[i] = old.a[i]; continue; } nr[i] = 1;
+        const fx = Math.max(0, Math.min(sw - 1.001, (x + .5) / w * sw - .5)), u0 = fx | 0, tx = fx - u0, j = v0 * sw + u0, q = (u[j] * (1 - tx) + u[j + 1] * tx) * (1 - ty) + (u[j + sw] * (1 - tx) + u[j + sw + 1] * tx) * ty;
+        M[i] = Math.max(0, Math.min(1, (q - .5) * 2.4 + .5)); } }
+    let al = M, rgb8 = null;
+    if (opt.matte !== false && N <= (opt.matteMax || 3200000) && T.matteCore) {
+      const rgb = new Float32Array(N * 3); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4; rgb[i * 3] = D[gi] / 255; rgb[i * 3 + 1] = D[gi + 1] / 255; rgb[i * 3 + 2] = D[gi + 2] / 255; }
+      const r = T.matteCore({ w, h, rgb }, M, { band: 2, detail: 1, decon: true, shift: 0, feather: 0 });
+      al = r.alpha; rgb8 = new Uint8ClampedArray(N * 3); for (let i = 0; i < N; i++) { rgb8[i * 3] = r.data[i * 4]; rgb8[i * 3 + 1] = r.data[i * 4 + 1]; rgb8[i * 3 + 2] = r.data[i * 4 + 2]; }
+    }
+    const a = Float32Array.from(al);
+    return rgb8 ? { a, x0, y0, w, h, rgb8 } : { a, x0, y0, w, h };
+  }
+  function heldAlphaOld(S, it, D, opt) {
     const W = S.W, base = fullAlpha(S, { lo: it.sil, lw: it.lw, lh: it.lh, x0: it.x0, y0: it.y0, x1: it.x1, y1: it.y1 }, D, Object.assign({}, opt, { inner: true })), { x0, y0, w, h } = base, N = w * h;
     const lw = it.lw, lh = it.lh, at = (arr, x, y) => { const u = Math.min(lw - 1, Math.max(0, Math.floor((x + .5) * S.fx))), v = Math.min(lh - 1, Math.max(0, Math.floor((y + .5) * S.fy))); return arr[v * lw + u]; };
     const handN = new Uint8Array(lw * lh); for (let i = 0; i < lw * lh; i++) handN[i] = it.hand[i] > 0 ? 1 : 0; const gate = ImageTools.sqDilate(handN, lw, lh, 2);

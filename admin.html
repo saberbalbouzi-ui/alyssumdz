@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.24.0">
+<meta name="admin-version" content="1.24.1">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1481,10 +1481,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/text-capture.js"></script>
 <script src="assets/js/social-icons.js?v=1"></script>
 <script src="assets/js/chrome.js?v=1"></script>
-<script src="assets/js/chrome-admin.js?v=1.24.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.24.0"></script>
-<script src="assets/js/admin-update.js?v=1.24.0"></script>
-<script src="assets/js/ai-vision.js?v=27"></script>
+<script src="assets/js/chrome-admin.js?v=1.24.1"></script>
+<script src="assets/js/admin-assistant.js?v=1.24.1"></script>
+<script src="assets/js/admin-update.js?v=1.24.1"></script>
+<script src="assets/js/ai-vision.js?v=44"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -12364,7 +12364,7 @@ const PBBgRemove = (function () {
     run(null);
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, autoCut, _t: { matteCore, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, autoCut, _t: { matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();
 
 /* ═════════════════════════════════════════════════════════════════
