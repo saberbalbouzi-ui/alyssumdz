@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.29.2">
+<meta name="admin-version" content="1.29.3">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=7"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.29.2"></script>
-<script src="assets/js/chrome-admin.js?v=1.29.2"></script>
-<script src="assets/js/admin-assistant.js?v=1.29.2"></script>
-<script src="assets/js/admin-update.js?v=1.29.2"></script>
+<script src="assets/js/ctl-help.js?v=1.29.3"></script>
+<script src="assets/js/chrome-admin.js?v=1.29.3"></script>
+<script src="assets/js/admin-assistant.js?v=1.29.3"></script>
+<script src="assets/js/admin-update.js?v=1.29.3"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7738,10 +7738,10 @@ const PB = (() => {
     shdr: {
       label: "الهيدر (رأس الموقع)", ic: "🔝",
       groups: { c: [["hs", "🏠 الهيدر المعروض"], ["lg", "🏷️ الشعار (نصي / صورة)"], ["mn", "☰ العناوين"], ["sc", "🔗 أيقونات التواصل"], ["sh", "📤 النشر"], ["ac", "🛒 السلة"], ["od", "↕ ترتيب العناصر"]], s: [["gl", "🏷️ الشعار (نصي / صورة)"], ["gm", "☰ العناوين"], ["gs", "🔗 أيقونات التواصل"], ["gc", "🛒 السلة"], ["gp", "📤 النشر"], ["gb", "🎨 خلفية الهيدر والتثبيت"]] },
-      def: { hsite: "1", hord: HPARTS.map(x => ({ id: x[0] })), ltx: true, la: "ألي", lb: "سوم", lion: true, limg: "", llink: "index.html", lh: { d: 44 }, menu: [{ t: "", l: "@home" }, { t: "", l: "@cats" }, { t: "", l: "@sets" }, { t: "", l: "@prods" }], mon: true, son: true, soc: [{ id: "whatsapp", url: "" }], shon: true, shm: "icon", shl: "انشر", cart: true, cic: "cart", hbg: "#FBF8F2", hbr: "#EAE3D6", lc: "#173F35", lac: "#8a6a1a", mc: "#173F35", sst: "brand", ssh: "round", ssz: 24, cbg: "#173F35", stk: true, lfs: { d: 24 }, hcw: { d: 1240 }, hpd: { d: [11, 0, 11, 0] } },
+      def: { hsite: "1", hord: HPARTS.map(x => ({ id: x[0] })), ltx: true, la: "أليسوم", lsplit: false, lb: "", lion: true, limg: "", llink: "index.html", lh: { d: 44 }, menu: [{ t: "", l: "@home" }, { t: "", l: "@cats" }, { t: "", l: "@sets" }, { t: "", l: "@prods" }], mon: true, son: true, soc: [{ id: "whatsapp", url: "" }], shon: true, shm: "icon", shl: "انشر", cart: true, cic: "cart", hbg: "#FBF8F2", hbr: "#EAE3D6", lc: "#173F35", lac: "#8a6a1a", mc: "#173F35", sst: "brand", ssh: "round", ssz: 24, cbg: "#173F35", stk: true, lfs: { d: 24 }, hcw: { d: 1240 }, hpd: { d: [11, 0, 11, 0] } },
       ctl: [{ k: "hsite", g: "hs", l: "الهيدر المعروض في هذه الصفحة", t: "select", o: [["1", "✅ الهيدر الافتراضي المحفوظ (الذي تعدّله من إعدادات الموقع ← الهيدر)"], ["", "🛠️ هيدر مخصص لهذه الصفحة (تغيير عناصره من هنا)"]], tab: "c" },
         { k: "hnote", g: "hs", l: "", t: "hsite", tab: "c", showIf: ["hsite", "*"] },
-        { k: "ltx", g: "lg", l: "إظهار الشعار النصي", t: "switch", tab: "c", showIf: ["hsite", "!"] }, { k: "la", g: "lg", l: "الشعار النصي — الجزء الأول", t: "text", tab: "c", showIf: ["hsite", "!"], showIf2: ["ltx", "*"] }, { k: "lb", g: "lg", l: "الشعار النصي — الجزء الملوّن", t: "text", tab: "c", showIf: ["hsite", "!"], showIf2: ["ltx", "*"] },
+        { k: "ltx", g: "lg", l: "إظهار الشعار النصي", t: "switch", tab: "c", showIf: ["hsite", "!"] }, { k: "la", g: "lg", l: "نص الشعار", t: "text", tab: "c", showIf: ["hsite", "!"], showIf2: ["ltx", "*"] }, { k: "lsplit", g: "lg", l: "تقسيم النص إلى جزأين بلونين", t: "switch", tab: "c", showIf: ["hsite", "!"], showIf2: ["ltx", "*"] }, { k: "lb", g: "lg", l: "الجزء الثاني الملوّن", t: "text", tab: "c", showIf: ["hsite", "!"], showIf2: ["lsplit", "*"] },
         { k: "lion", g: "lg", l: "إظهار صورة الشعار", t: "switch", tab: "c", showIf: ["hsite", "!"] }, { k: "limg", g: "lg", l: "صورة الشعار (PNG بخلفية شفافة مفضّل)", t: "image", tab: "c", showIf: ["hsite", "!"], showIf2: ["lion", "*"] },
         { k: "llink", g: "lg", l: "رابط الشعار", t: "select", o: [["", "بدون رابط"], ["index.html", "الرئيسية"]], tab: "c", showIf: ["hsite", "!"] },
         { k: "mon", g: "mn", l: "إظهار العناوين", t: "switch", tab: "c", showIf: ["hsite", "!"] },
@@ -7752,7 +7752,7 @@ const PB = (() => {
         { k: "shon", g: "sh", l: "إظهار زر النشر (مشاركة الصفحة)", t: "switch", tab: "c", showIf: ["hsite", "!"] }, { k: "shm", g: "sh", l: "شكل الزر", t: "select", o: [["icon", "أيقونة نشر"], ["text", "كلمة «انشر»"]], tab: "c", showIf: ["hsite", "!"], showIf2: ["shon", "*"] }, { k: "shh", g: "sh", l: "ظهور زر النشر", t: "select", o: [["", "تظهر في كل الأجهزة"], ["m", "إخفاء في الهاتف"], ["tm", "إخفاء في التابلت والهاتف"], ["d", "إخفاء في الحاسوب فقط"]], tab: "c", showIf: ["hsite", "!"], showIf2: ["shon", "*"] }, { k: "shl", g: "sh", l: "نص الزر", t: "text", tab: "c", showIf: ["shm", "text"], showIf2: ["hsite", "!"] },
         { k: "cart", g: "ac", l: "إظهار زر السلة", t: "switch", tab: "c", showIf: ["hsite", "!"] }, { k: "cic", g: "ac", l: "أيقونة السلة", t: "cartpick", tab: "c", showIf: ["hsite", "!"], showIf2: ["cart", "*"] },
         { k: "hord", g: "od", l: "ترتيب عناصر الهيدر (غيّر أماكنها بالأسهم؛ ما تحذفه من القائمة يختفي)", t: "rep", f: [["id", "العنصر", "select", HPARTS]], mv: 1, tab: "c", showIf: ["hsite", "!"] },
-        { k: "lc", g: "gl", l: "لون الشعار النصي", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "lac", g: "gl", l: "لون جزء الشعار الملوّن", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "lfs", g: "gl", l: "حجم الشعار النصي (px)", t: "num", r: 1, min: 14, max: 60, tab: "s", showIf: ["hsite", "!"] }, { k: "lh", g: "gl", l: "ارتفاع صورة الشعار (px)", t: "num", r: 1, min: 16, max: 120, tab: "s", showIf: ["hsite", "!"] },
+        { k: "lc", g: "gl", l: "لون الشعار النصي", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "lac", g: "gl", l: "لون الجزء الثاني من الشعار", t: "color", tab: "s", showIf: ["hsite", "!"], showIf2: ["lsplit", "*"] }, { k: "lfs", g: "gl", l: "حجم الشعار النصي (px)", t: "num", r: 1, min: 14, max: 60, tab: "s", showIf: ["hsite", "!"] }, { k: "lh", g: "gl", l: "ارتفاع صورة الشعار (px)", t: "num", r: 1, min: 16, max: 120, tab: "s", showIf: ["hsite", "!"] },
         { k: "mc", g: "gm", l: "لون العناوين", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "mfs", g: "gm", l: "حجم خط العناوين (px)", t: "num", r: 1, min: 10, max: 28, tab: "s", showIf: ["hsite", "!"] }, { k: "mw", g: "gm", l: "سماكة خط العناوين", t: "select", o: F_W, tab: "s", showIf: ["hsite", "!"] }, { k: "mgp", g: "gm", l: "المسافة بين العناوين (px)", t: "num", r: 1, min: 0, max: 80, tab: "s", showIf: ["hsite", "!"] }, { k: "mhc", g: "gm", l: "لون العنوان عند المرور", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "mpb", g: "gm", l: "خلفية القوائم المنسدلة", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "mpc", g: "gm", l: "نص القوائم المنسدلة", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "mbg", g: "gm", l: "قائمة الجوال ☰ — لون خلفية اللوحة", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "mtc", g: "gm", l: "قائمة الجوال ☰ — لون العناوين", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "bbc", g: "gm", l: "لون زر ☰", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "bbs", g: "gm", l: "حجم زر ☰ (px)", t: "num", r: 1, min: 16, max: 44, tab: "s", showIf: ["hsite", "!"] },
         { k: "sst", g: "gs", l: "نمط أيقونات التواصل", t: "select", o: [["brand", "خلفية بلون العلامة"], ["color", "رمز بلون العلامة"], ["soft", "خلفية فاتحة"], ["outline", "إطار"], ["mono", "لون واحد (اللون أدناه)"]], tab: "s", showIf: ["hsite", "!"] }, { k: "ssh", g: "gs", l: "شكل أيقونات التواصل", t: "select", o: [["none", "بلا خلفية"], ["round", "دائري"], ["square", "مربع مدوَّر"]], tab: "s", showIf: ["hsite", "!"] }, { k: "ssz", g: "gs", l: "حجم أيقونات التواصل (px)", t: "num", r: 1, min: 12, max: 48, tab: "s", showIf: ["hsite", "!"] }, { k: "ssc", g: "gs", l: "لون الأيقونات (للنمط «لون واحد»)", t: "color", tab: "s", showIf: ["hsite", "!"] },
         { k: "cbg", g: "gc", l: "خلفية زر السلة", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "cco", g: "gc", l: "لون أيقونة السلة", t: "color", tab: "s", showIf: ["hsite", "!"] }, { k: "csz", g: "gc", l: "حجم أيقونة السلة (px)", t: "num", r: 1, min: 14, max: 40, tab: "s", showIf: ["hsite", "!"] },
@@ -7767,7 +7767,7 @@ const PB = (() => {
         }
         const ul = x => !x ? "#" : /^(https?:|data:|\/|#|mailto:|tel:)/.test(x) ? x : rel + x, im = x => /^(https?:|data:|\/)/.test(x) ? x : rel + x;
         const M = (Array.isArray(s.menu) ? s.menu : []).filter(x => x && !x.h).map(x => x.l && x.l[0] === "@" ? { kind: x.l.slice(1), label: x.t || "", slugs: Array.isArray(x.ps) ? x.ps : [] } : (menuLabel(x) && menuUrl(x) ? { label: menuLabel(x), url: menuUrl(x) } : null)).filter(Boolean);
-        const lImg = s.lion !== false && s.limg ? `<img class="pb-lgi" src="${esc(im(s.limg))}" alt="${esc(s.la || "")}">` : "", lTx = s.ltx !== false && (s.la || s.lb) ? `<b class="pb-lgt">${esc(s.la || "")}${s.lb ? `<span>${esc(s.lb)}</span>` : ""}</b>` : "";
+        const lImg = s.lion !== false && s.limg ? `<img class="pb-lgi" src="${esc(im(s.limg))}" alt="${esc(s.la || "")}">` : "", lTx = s.ltx !== false && (s.la || s.lb) ? `<b class="pb-lgt">${esc(s.la || "")}${s.lsplit && s.lb ? `<span>${esc(s.lb)}</span>` : ""}</b>` : "";
         const logo = lImg || lTx ? `<a class="logo pb-lg"${s.llink ? ` href="${esc(ul(s.llink))}"` : ' data-nolink="1"'}>${lImg}${lTx}</a>` : "";
         const SL = SIc ? (Array.isArray(s.soc) ? s.soc : []).filter(x => x && !x.h && SIc.byId[x.id]) : [], socH = s.son !== false && SL.length ? `<div class="pb-hsoc hd-soc">${SL.map(x => SIc.link(x.id, x.url || (x.id === "whatsapp" && wa ? "https://wa.me/" + wa : "#"), { size: num(eff(s, "ssz", "d")) || 22, style: s.sst || "color", shape: s.ssh || "none" })).join("")}</div>` : "";
         const shH = s.shon === true ? (s.shm === "text" || !SIc ? `<button type="button" class="ch-share-btn ch-share-txt" data-share aria-label="مشاركة">${esc(s.shl || "انشر")}</button>` : `<button type="button" class="ch-share-btn" data-share aria-label="مشاركة" title="مشاركة">${SIc.icon("share", { size: num(eff(s, "shz", "d")) || 20, style: s.shs || "soft", shape: "round" })}</button>`) : "";
@@ -8103,6 +8103,7 @@ const PB = (() => {
   const mkCanvas = () => mkS([mkC([])], { kind: "canvas", mh: { d: 520 }, pad: { d: [0, 0, 0, 0] } });
   /* ترقية صفحات قديمة: طبقة العناصر الحرة، النموذج السريع ⟵ النموذج الأصلي، مصادر المنتجات */
   function migHdr(st) {
+    if (st.lsplit === undefined && st.lb) st.lsplit = true;      // الشعار القديم بجزأين يبقى مقسّماً
     if (st.ltx === undefined && st.lion === undefined) { if (st.lon === false) { st.ltx = false; st.lion = false; } else if (st.limg) st.ltx = false; } delete st.lon;
     if (st.wa !== undefined) { if (st.wa) { const soc = Array.isArray(st.soc) ? st.soc : []; if (!soc.some(x => x && x.id === "whatsapp")) st.soc = [{ id: "whatsapp", url: st.wal || "" }].concat(soc); if (st.son === undefined) st.son = true; if (!st.sst && st.wst) { st.sst = st.wst; st.ssh = "round"; if (st.wsz) st.ssz = st.wsz; } } ["wa", "wam", "wat", "wal", "wst", "wsz", "wbg", "wtc"].forEach(k => delete st[k]); }
     if (Array.isArray(st.menu)) st.menu.forEach(x => { if (x && x.l && x.l[0] !== "@" && x.l !== "__custom") { if (!x.t) { const r = siteLinks().find(q => q.url === x.l); if (r) x.t = r.label; } x.cu = x.l; x.l = "__custom"; } });      // عناوين السجلّ القديمة تصير روابط مخصصة (القائمة المتاحة: العناوين الذكية فقط)

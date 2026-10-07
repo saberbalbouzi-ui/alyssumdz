@@ -89,7 +89,7 @@ window.Chrome = (function () {
         sticky: true, bg: "", color: "", pad: "",
         order: HEAD_IDS.slice(),
         topbar: { show: true, text: "🚚 توصيل سريع لـ **58 ولاية** · 💵 **الدفع عند الاستلام** · 🎁 اشترِ **قطعتين** واحصل على **الثالثة مجاناً**", bg: "", color: "", link: "" },
-        logo: { show: true, text: true, image: true, link: "home" },
+        logo: { show: true, text: true, image: true, link: "home", split: true },
         menu: { show: true, color: "", items: [{ label: "الفئات", url: "index.html#categories" }, { label: "المنتجات", url: "index.html#products" }, { label: "لماذا نحن؟", url: "index.html#features" }, { label: "الأسئلة الشائعة", url: "index.html#faq" }] },
         social: { show: false, style: "color", shape: "none", size: 18 },
         share: { show: true, style: "soft", mode: "icon", label: "انشر" },
@@ -201,6 +201,7 @@ window.Chrome = (function () {
     s += MENU_CSS + ".logo[data-nolink]{pointer-events:none;cursor:default}header.site .ch-share-txt{background:#173f35;color:#fff!important;border-radius:999px;padding:.45rem 1rem;font-weight:800;font-size:.88rem}header.site .ch-ci{display:block}";
     if (h.logo.text === false) s += "header.site .logo{font-size:0!important}header.site .logo span{display:none!important}";
     else if (h.logo.image === false) s += "header.site .logo{background-image:none!important;font-size:" + (+h.logo.size || 24) + "px!important;line-height:normal!important;width:auto!important;height:auto!important}";
+    if (h.logo.split === false) s += "header.site .logo span{color:inherit!important}"; else if (h.logo.accent) s += "header.site .logo span{color:" + h.logo.accent + "!important}";
     if (h.logo.color && h.logo.text !== false) s += "header.site .logo{color:" + h.logo.color + "}";
     if (h.logo.size && h.logo.text !== false && h.logo.image !== false) s += "header.site .logo{font-size:" + (+h.logo.size) + "px}";
     if (h.menu.weight) s += "header.site nav.menu>a,header.site nav.menu .mi-t{font-weight:" + h.menu.weight + "}";
