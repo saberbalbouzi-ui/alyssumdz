@@ -26,10 +26,9 @@ def S_(p, fill=False): return ic(p, fill)
 ALY_CSS = """
 html{background:#020a06!important}
 body,.pb-page{background:transparent!important;color:#e7f5ec}
-body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(42% 52% at 0% 8%,rgba(34,197,94,.26),transparent 62%),radial-gradient(38% 46% at 100% 46%,rgba(132,204,22,.17),transparent 62%),radial-gradient(52% 42% at 52% 104%,rgba(22,163,74,.24),transparent 62%),radial-gradient(30% 30% at 70% 10%,rgba(16,185,129,.12),transparent 60%);animation:alyAur 22s ease-in-out infinite alternate}
-@keyframes alyAur{to{transform:scale(1.08) translateY(-10px);filter:hue-rotate(14deg)}}
-body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;background:LEAF1 no-repeat left -70px top 70px/310px,LEAF2 no-repeat right -90px bottom 60px/370px,LEAF1 no-repeat right -110px top 36%/230px;animation:alySway 16s ease-in-out infinite alternate;filter:drop-shadow(0 0 30px rgba(34,197,94,.55))}
-@keyframes alySway{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(-22px) rotate(1.6deg)}}
+body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;background:linear-gradient(180deg,rgba(2,10,6,.18),rgba(2,10,6,.5)),url(/assets/img/tpl/alyssum-bg.webp) center/cover no-repeat;animation:alyAur 26s ease-in-out infinite alternate}
+@keyframes alyAur{to{transform:scale(1.06) translateY(-8px)}}
+@media(max-width:767px){body::before{background-position:left center,left center}}
 .pb-sec{position:relative}
 .aly-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(21,128,61,.18);border:1px solid rgba(134,239,172,.4);color:#d9f99d;font-weight:800;font-size:14px;backdrop-filter:blur(10px)}
 .aly-pill svg{width:18px;height:18px;color:#86efac}
