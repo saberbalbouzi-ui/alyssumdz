@@ -4734,6 +4734,11 @@ const Admin = {
   },
 
   renderCoupons(){
+    if(typeof AdminCoupons2 === "undefined"){
+      if(!this._coupons2Loading){ this._coupons2Loading = true; const s=document.createElement("script"); s.src="assets/js/admin-coupons2.js?v=1"; s.onload=()=>{ this._coupons2Loading=false; if(typeof AdminCoupons2!=="undefined") AdminCoupons2.init(); }; s.onerror=()=>{ this._coupons2Loading=false; toast("تعذّر تحميل أدوات الخصومات المتقدمة"); }; document.head.appendChild(s); }
+      return;
+    }
+    return AdminCoupons2.render();
     const el = $f("coupons-table");
     if(!el) return;
     if(!this.coupons.length){

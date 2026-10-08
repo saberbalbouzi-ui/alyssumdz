@@ -74,7 +74,7 @@ const Cart = {
     }).join("") : `<p style="text-align:center;color:var(--muted);padding:2rem 0">السلة فارغة 🛒</p>`;
     const sub = Cart.subtotal();
     const fee = Cart.fee();
-    const discount = currentCouponDiscount(sub);
+    const discount = currentCouponDiscount(sub, couponCartItems());
     const totEl = document.getElementById("cart-total");
     if(totEl) totEl.textContent = fmt(Math.max(0, sub - discount) + (items.length?fee:0));
     const feeEl = document.getElementById("cart-fee");
@@ -104,7 +104,7 @@ const Cart = {
     const wl = WILAYAS.find(x=>x.id==wId);
     const sub = Cart.subtotal();
     const fee = Cart.fee();
-    const discount = currentCouponDiscount(sub);
+    const discount = currentCouponDiscount(sub, couponCartItems());
     const total = Math.max(0, sub - discount) + fee;
     // Enregistrement dans Google Sheets
     const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
@@ -117,7 +117,7 @@ const Cart = {
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
-    Gifts.markUsed(AppliedCoupon.record);
+    Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
     let msg = `السلام عليكم ${SITE_NAME}، أريد تأكيد طلبي:\n`;
     items.forEach(it=>{
       const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
@@ -424,19 +424,34 @@ async function loadCoupons(){
   }catch(e){ __couponsCache = []; }
   return __couponsCache;
 }
-function findValidCoupon(list, code, subtotal){
+function findValidCoupon(list, code, subtotal, items){
   const c = (list||[]).find(x=>x.code && x.code.toUpperCase()===String(code||"").trim().toUpperCase());
   if(!c) return { ok:false, msg:"⚠️ الكود غير صحيح" };
   if(c.active===false) return { ok:false, msg:"⚠️ هذا الكود غير مفعّل حالياً" };
-  if(c.expiresAt && new Date(c.expiresAt) < new Date()) return { ok:false, msg:"⚠️ انتهت صلاحية هذا الكود" };
-  if(c.minOrder && subtotal < Number(c.minOrder)) return { ok:false, msg:"⚠️ الحد الأدنى لهذا الكود: " + fmt(Number(c.minOrder)) };
+  const now = Date.now(), from = c.from ? new Date(c.from + "T00:00:00").getTime() : 0, to = c.to ? new Date(c.to + "T23:59:59").getTime() : c.expiresAt ? new Date(c.expiresAt).getTime() : 0;
+  if(from && now < from) return { ok:false, msg:"⚠️ يبدأ هذا الكود في " + c.from };
+  if(to && now > to) return { ok:false, msg:"⚠️ انتهت صلاحية هذا الكود" };
+  const min = Number(c.min != null ? c.min : c.minOrder) || 0;
+  if(min && subtotal < min) return { ok:false, msg:"⚠️ الحدّ الأدنى للطلب " + fmt(min) };
+  const lines = Array.isArray(items) ? items : [];
+  if(c.cats && c.cats.length && !lines.some(it=>(c.cats||[]).includes(it.cat))) return { ok:false, msg:"⚠️ لا ينطبق هذا الكود على فئات سلتك" };
+  if(c.slugs && c.slugs.length && !lines.some(it=>(c.slugs||[]).includes(it.slug))) return { ok:false, msg:"⚠️ لا ينطبق هذا الكود على منتجات سلتك" };
+  if(c.stack === false && lines.some(it=>Number(it.qty)>1 || Number(it.free)>0)) return { ok:false, msg:"⚠️ لا يمكن جمع هذا الكود مع عرض الكمية" };
+  const eligible = lines.length && (c.cats && c.cats.length || c.slugs && c.slugs.length)
+    ? lines.filter(it=>(!c.cats || !c.cats.length || c.cats.includes(it.cat)) && (!c.slugs || !c.slugs.length || c.slugs.includes(it.slug))).reduce((s,it)=>s+(Number(it.amount)||0),0)
+    : subtotal;
   if(c.type==="freeship" || c.type==="gift") return { ok:true, coupon:c, discount:0 };      // توصيل مجاني / هدية منتج: بلا مبلغ خصم
-  const discount = c.type==="percent" ? Math.round(subtotal * Number(c.value)/100) : Math.min(Number(c.value)||0, subtotal);
+  let discount = c.type==="percent" ? Math.round(eligible * Number(c.value)/100) : Math.min(Number(c.value)||0, eligible);
+  if(c.type==="percent" && Number(c.max)>0) discount = Math.min(discount, Number(c.max));
   if(discount<=0) return { ok:false, msg:"⚠️ الكود غير صالح لهذا الطلب" };
   return { ok:true, coupon:c, discount };
 }
 /* حالة الكود المُطبَّق — مشتركة بين صفحة المنتج ودرج السلة (سياق واحد نشط في كل مرة عملياً) */
 const AppliedCoupon = { code:"", record:null };
+function couponCartItems(){ return (typeof Cart !== "undefined" ? Cart.all() : []).map(it=>{const p=PRODUCTS.find(x=>x.slug===it.slug)||{};return {slug:it.slug,cat:p.cat,qty:it.qty,amount:Number(it.qty)*Number(it.price)};}); }
+function markCouponPhoneUsed(c, phone){ if(!c || !c.perPhone || !phone) return; try{ const k="alyssum_coupon_phone_"+c.code.toUpperCase(), a=JSON.parse(localStorage.getItem(k)||"[]"), d=String(phone).replace(/\D/g,""); if(d&&!a.includes(d)){a.push(d);localStorage.setItem(k,JSON.stringify(a));} }catch(e){} }
+function couponHasPreviousOrders(){ let prior=false; try{const recent=JSON.parse(localStorage.getItem("alyssum_recent_orders")||"{}");prior=Object.keys(recent||{}).length>0;}catch(e){} try{const profile=typeof Account!=="undefined"&&Account.profile?Account.profile():null;prior=prior||!!(profile&&(Number(profile.ordersCount)>0||Number(profile.order_count)>0||(Array.isArray(profile.orders)&&profile.orders.length)));}catch(e){} return prior; }
+function couponPhoneAlreadyUsed(c,phone){ if(!c||!c.perPhone||!phone)return false; try{const used=JSON.parse(localStorage.getItem("alyssum_coupon_phone_"+c.code.toUpperCase())||"[]"),digits=String(phone).replace(/\D/g,"");return digits.length>=9&&used.includes(digits);}catch(e){return false;} }
 function couponFreeShip(){ return !!(AppliedCoupon.record && AppliedCoupon.record.type==="freeship"); }
 function couponGiftTitle(){
   const r = AppliedCoupon.record; if(!r || r.type!=="gift") return "";
@@ -447,9 +462,9 @@ function couponMsg(res){
   const c = res.coupon;
   return c.type==="freeship" ? "✅ تم تطبيق الكود — توصيل مجاني 🚚" : c.type==="gift" ? "✅ تم تطبيق الكود — هديتك: " + (c.giftTitle || (PRODUCTS.find(x=>x.slug===c.product)||{}).title || c.product) + " 🎁" : "✅ تم تطبيق الكود — خصم " + fmt(res.discount);
 }
-function currentCouponDiscount(subtotal){
+function currentCouponDiscount(subtotal, items){
   if(!AppliedCoupon.record || !subtotal) return 0;
-  const res = findValidCoupon([AppliedCoupon.record], AppliedCoupon.code, subtotal);
+  const res = findValidCoupon([AppliedCoupon.record], AppliedCoupon.code, subtotal, items);
   return res.ok ? res.discount : 0;
 }
 function buildCouponBoxHTML(idPrefix){
@@ -459,7 +474,7 @@ function buildCouponBoxHTML(idPrefix){
     '</div><div id="' + idPrefix + '-coupon-msg" style="font-size:.82rem;margin:-.3rem 0 .6rem;min-height:1.1em"></div>';
 }
 /* يُدرج صندوق كود الخصم قبل عنصر مرجعي (مربع الإجمالي)، ويربط منطق التطبيق بدالة إعادة الحساب rerender */
-function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender){
+function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender, getItems){
   if(!beforeEl && !document.getElementById(idPrefix + "-coupon-input")) return;
   /* صفحات المنتجات الثابتة تحمل صندوق الكود جاهزاً في HTML (بلا أي معالج) — نربط المعالج به بدل الخروج، وإلا لا يعمل الكود إطلاقاً */
   if(!document.getElementById(idPrefix + "-coupon-input")){
@@ -484,7 +499,17 @@ function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender){
         else if(pr && pr.error){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent = pr.error === "used" ? "⚠️ هذا الكود استُعمل من قبل" : pr.error === "expired" ? "⚠️ انتهت صلاحية هذا الكود" : "⚠️ هذا الكود غير صالح لهذا الرقم"; msg.style.color="var(--red)"; rerender(); return; }
       }
     }
-    const res = findValidCoupon(list, code, getSubtotal());
+    const lines = getItems ? getItems() : [];
+    const candidate = list.find(c=>String(c.code||"").toUpperCase()===code.toUpperCase());
+    if(candidate && candidate.firstOrder){
+      if(couponHasPreviousOrders()){ AppliedCoupon.code=""; AppliedCoupon.record=null; msg.textContent="⚠️ هذا الكود مخصّص لأول طلب فقط"; msg.style.color="var(--red)"; rerender(); return; }
+    }
+    if(candidate && candidate.perPhone){
+      const ph=(document.getElementById("phone")||document.getElementById("cphone")||{}).value||"", digits=ph.replace(/\D/g,"");
+      if(digits.length<9){AppliedCoupon.code="";AppliedCoupon.record=null;msg.textContent="📱 أدخل رقم هاتفك للتحقق من هذا الكود";msg.style.color="var(--red)";rerender();return;}
+      if(couponPhoneAlreadyUsed(candidate,ph)){AppliedCoupon.code="";AppliedCoupon.record=null;msg.textContent="⚠️ استُعمل هذا الكود من قبل لهذا الرقم";msg.style.color="var(--red)";rerender();return;}
+    }
+    const res = findValidCoupon(list, code, getSubtotal(), lines);
     if(!res.ok){
       AppliedCoupon.code=""; AppliedCoupon.record=null;
       msg.textContent = res.msg; msg.style.color = "var(--red)";
@@ -801,7 +826,7 @@ function initProduct(slug){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
     const fee = freeShip ? 0 : (state.wilaya ? (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home) : null);
     feeEl.textContent = freeShip ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية");
-    const discount = currentCouponDiscount(state.offer.price);
+    const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
     const total = Math.max(0, state.offer.price - discount) + (fee||0);
     totEl.textContent = fmt(total);
     const st = document.getElementById("sticky-price");
@@ -814,7 +839,7 @@ function initProduct(slug){
   update();
   // حقل كود الخصم — يُحقن ديناميكياً قبل مربع الإجمالي (لا حاجة لتعديل كل صفحة منتج يدوياً)
   const totalBoxEl = feeEl.closest(".total-box");
-  if(totalBoxEl) injectCouponBox("prod", totalBoxEl, ()=>state.offer.price, update);
+  if(totalBoxEl) injectCouponBox("prod", totalBoxEl, ()=>state.offer.price, update, ()=>[{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
 
   // بنود الطلب حسب نوع المنتج (المتغيّر: عنوان التنويع داخل الاسم؛ المجمّع: بند لكل منتج بكمية)
   function orderItems(){
@@ -845,7 +870,7 @@ function initProduct(slug){
       if(v) extraValues[f.label||f.id] = v;
     }
     const fee = (offerFreeShip(p, state.offer) || couponFreeShip()) ? 0 : (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home);
-    const discount = currentCouponDiscount(state.offer.price);
+    const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
     const total = Math.max(0, state.offer.price - discount) + fee;
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
     // Enregistrement dans Google Sheets
@@ -859,7 +884,7 @@ function initProduct(slug){
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
-    Gifts.markUsed(AppliedCoupon.record);
+    Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     firePixelPurchase(p, total, state.offer.qty);
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n` + (type==="grouped"
@@ -1135,7 +1160,7 @@ function initCartDrawer(){
   bg.onclick = ()=>{ dr.classList.remove("open"); bg.classList.remove("open") };
   // حقل كود الخصم — يُحقن قبل مربع إجمالي السلة (drawer موجود في كل صفحات الموقع)
   const totBox = document.querySelector("#drawer .tot");
-  if(totBox) injectCouponBox("cart", totBox, ()=>Cart.subtotal(), Cart.render);
+  if(totBox) injectCouponBox("cart", totBox, ()=>Cart.subtotal(), Cart.render, couponCartItems);
 }
 
 
