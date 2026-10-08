@@ -191,6 +191,52 @@ FLD_STD = [
     {"label": "البريد الإلكتروني", "type": "email", "ph": "example@mail.com", "req": False, "w": "full"},
     {"label": "رسالتك", "type": "textarea", "ph": "كيف نساعدك؟", "req": True, "w": "full"}]
 
+
+# ═════════ تأثيرات المجالات (v1.47) ═════════
+import urllib.parse
+def _svg(svg):
+    return "url(\"data:image/svg+xml," + urllib.parse.quote(svg, safe="/:=;,'()") + "\")"
+def honeycomb(color="#f59e0b", op=.16, bg="#fff3cf"):
+    svg = "<svg width='28' height='49' viewBox='0 0 28 49' xmlns='http://www.w3.org/2000/svg'><g fill='%s' fill-opacity='%s'><path d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/></g></svg>" % (color.replace("#", "%23") if False else color, op)
+    return FX("خلايا نحل سداسية متحركة", "selector{background-color:[[bg]];background-image:" + _svg(svg) + ";background-size:[[sz]]px;animation:hcMove 40s linear infinite}@keyframes hcMove{to{background-position:[[sz]]px [[sz]]px}}",
+              bg=("لون الخلفية", "text", bg), sz=("حجم الخلية px", "num", 56))
+def paper(bg="#f3ead7", ink="0.35,0.25,0.12", op=.10):
+    r, g, b = ink.split(",")
+    svg = "<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 %s 0 0 0 0 %s 0 0 0 0 %s 0 0 0 %s 0'/></filter><rect width='100%%' height='100%%' filter='url(#n)'/></svg>" % (r, g, b, op * 4)
+    return FX("ورق مصنّع بملمس خشن", "selector{background-color:[[bg]];background-image:" + _svg(svg) + "}", bg=("لون الورق", "text", bg))
+def drip(k, color="#f59e0b", h=46):
+    svg1 = "radial-gradient(ellipse 20px 40px at 40px 0,[[c]] 0 68%,transparent 70%)"
+    svg2 = "radial-gradient(ellipse 12px 26px at 90px 0,[[c]] 0 68%,transparent 70%)"
+    return FX("قطرات عسل تنساب من أسفل القسم",
+              "selector{position:relative;z-index:3}selector::after{content:\"\";position:absolute;inset-inline:0;bottom:-[[h]]px;height:[[h]]px;background:" + svg1 + "," + svg2 + ";background-size:130px [[h]]px,190px [[h]]px;background-repeat:repeat-x;pointer-events:none;animation:" + k + "Dr 6s ease-in-out infinite alternate}@keyframes " + k + "Dr{to{height:calc([[h]]px + 10px)}}",
+              c=("لون القطرات", "text", color), h=("الارتفاع px", "num", h))
+def sparkle(k, color="#ffffff"):
+    pts = [(12, 22, 2), (28, 64, 1.5), (46, 14, 2.5), (62, 76, 2), (78, 30, 1.5), (90, 58, 2.5), (20, 88, 1.5), (54, 46, 2), (36, 36, 1.5), (84, 12, 2), (70, 52, 1.5), (6, 52, 2)]
+    layers = ",".join("radial-gradient(%spx %spx at %s%% %s%%,[[c]],transparent)" % (r, r, x, y) for x, y, r in pts)
+    layers2 = ",".join("radial-gradient(%spx %spx at %s%% %s%%,[[c]],transparent)" % (r, r, (x + 17) % 100, (y + 31) % 100) for x, y, r in pts)
+    return FX("بريق لامع يومض كالألماس",
+              "selector{position:relative;overflow:hidden}selector::before,selector::after{content:\"\";position:absolute;inset:0;pointer-events:none;z-index:0}selector::before{background:" + layers + ";animation:" + k + "Tw 3.2s ease-in-out infinite alternate}selector::after{background:" + layers2 + ";animation:" + k + "Tw 4.1s ease-in-out -1.4s infinite alternate}selector>.pb-in{position:relative;z-index:1}@keyframes " + k + "Tw{0%{opacity:.15;transform:scale(.96)}100%{opacity:1;transform:scale(1.04)}}",
+              c=("لون البريق", "text", color))
+def dial(k, face="#0b0b0b", gold="#c9992e", size=380):
+    ticks = "repeating-conic-gradient([[g]] 0 .7deg,transparent .7deg 6deg)"
+    return FX("قرص ساعة بعقارب تتحرك",
+              "selector{position:relative;min-height:[[s]]px}selector::before{content:\"\";position:absolute;top:50%;left:50%;width:[[s]]px;height:[[s]]px;max-width:90%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,[[f]] 0 58%,#262626 59% 61%,[[g]] 62% 63%,transparent 64%)," + ticks + ";-webkit-mask:radial-gradient(circle,#000 0 63.5%,transparent 64% 66%,#000 66.5% 72%,transparent 72.5%);mask:radial-gradient(circle,#000 0 63.5%,transparent 64% 66%,#000 66.5% 72%,transparent 72.5%);box-shadow:0 30px 80px rgba(0,0,0,.6)}selector::after{content:\"\";position:absolute;left:50%;top:calc(50% - [[s]]px*.26);width:3px;height:calc([[s]]px*.26);margin-left:-1.5px;background:linear-gradient([[g]],transparent);transform-origin:50% 100%;animation:" + k + "Hd 60s steps(60) infinite;box-shadow:0 0 12px [[g]]}@keyframes " + k + "Hd{to{transform:rotate(360deg)}}",
+              f=("لون الوجه", "text", face), g=("لون الإطار والعقارب", "text", gold), s=("القطر px", "num", size))
+def cursor(k, color="#38bdf8"):
+    return FX("مؤشر طرفية يومض", "selector .pb-t::after{content:\"▌\";color:[[c]];margin-inline-start:4px;animation:" + k + "Cu 1s steps(2) infinite}@keyframes " + k + "Cu{50%{opacity:0}}", c=("لون المؤشر", "text", color))
+def outlinetext(c="#111111", w=2):
+    return FX("نص مفرّغ بحدّ", "selector .pb-t{color:transparent!important;-webkit-text-stroke:[[w]]px [[c]];letter-spacing:2px}", c=("لون الحد", "text", c), w=("السماكة px", "num", w))
+def zoomcol(col="rgba(0,0,0,.35)"):
+    return FX("تكبير ناعم بالمرور", "selector{overflow:hidden;transition:transform .6s cubic-bezier(.2,.8,.2,1),box-shadow .6s}selector:hover{transform:scale(1.025);box-shadow:0 30px 70px [[c]]}", c=("لون الظل", "text", col))
+def tiltcol(deg=-2):
+    return FX("مائل يستقيم بالمرور", "selector{transform:rotate([[d]]deg);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}selector:hover{transform:rotate(0) translateY(-8px) scale(1.03);box-shadow:0 26px 54px rgba(0,0,0,.25)}", d=("زاوية الميل", "num", deg))
+def ribbon(text="الأكثر طلباً", bg="#f59e0b", color="#111"):
+    return FX("شريط زاوية «" + text + "»", "selector{position:relative;overflow:hidden}selector::before{content:\"[[t]]\";position:absolute;top:18px;inset-inline-end:-38px;transform:rotate(40deg);background:[[bg]];color:[[c]];padding:5px 46px;font-weight:900;font-size:13px;box-shadow:0 6px 14px rgba(0,0,0,.25);z-index:2}", t=("النص", "text", text), bg=("اللون", "text", bg), c=("لون النص", "text", color))
+def barfx(c1, c2):
+    return FX("شريط تقدّم متدرّج متحرك", "selector .pb-pg i,selector [class*=pb-pr] i{background:linear-gradient(90deg,[[a]],[[b]],[[a]])!important;background-size:200% 100%;animation:pgSh 2.4s linear infinite;box-shadow:0 0 14px [[a]]}@keyframes pgSh{to{background-position:200% 0}}", a=("اللون 1", "text", c1), b=("اللون 2", "text", c2))
+def bgfade(c1, c2, ang=160):
+    return FX("خلفية متدرّجة", "selector{background:linear-gradient([[a]]deg,[[c1]],[[c2]])}", a=("الزاوية", "num", ang), c1=("اللون 1", "text", c1), c2=("اللون 2", "text", c2))
+
 TEMPLATES = []
 def reg(id, cat, fld, n, d, sections, page_extra=None):
     pg = {"v": 1, "title": n, "slug": "", "desc": "", "bg": "#ffffff", "ff": "", "header": False, "footer": False, "css": "", "sections": sections}
@@ -202,6 +248,7 @@ def reg(id, cat, fld, n, d, sections, page_extra=None):
 exec(open(os.path.join(HERE, "gen-templates-contact.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-order.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-store.py"), encoding="utf-8").read())
+exec(open(os.path.join(HERE, "gen-templates-niche.py"), encoding="utf-8").read())
 
 json.dump(TEMPLATES, open(os.path.join(OUT, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print("ok", len(TEMPLATES), "templates")

@@ -61,7 +61,7 @@ const AdminNav = (() => {
     { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
     { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
   ];
-  const LS = { cat: "all", fld: "all" }; let LIBX = null;
+  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "1";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen() { await libLoad(); LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -73,7 +73,13 @@ const AdminNav = (() => {
     m.innerHTML = `<div class="tl-box"><div class="tl-top"><h3>مكتبة القوالب</h3><button type="button" class="small gray" onclick="AdminNav.libClose()">إغلاق</button></div>
 <div class="ap-tabs">${LCATS.map(x => chip("cat", x[0], x[1])).join("")}</div>
 <div class="tl-fl"><b>الميدان:</b>${chip("fld", "all", "عرض الكل")}${flds.map(f => chip("fld", f, f)).join("")}</div>
-<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div><button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button></div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
+<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="tl-th" onclick="AdminNav.libView('${x.id}')" title="معاينة كبيرة"><img loading="lazy" alt="" src="assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}" onerror="this.parentNode.classList.add('none')"><span>معاينة</span></div><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div><button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button></div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
+  }
+  function libView(id) {
+    const x = libAll().find(q => q.id === id); if (!x) return; let v = $("tl-view");
+    if (!v) { v = document.createElement("div"); v.id = "tl-view"; v.onclick = e => { if (e.target === v) v.style.display = "none"; }; document.body.appendChild(v); }
+    v.innerHTML = `<div class="tv-box"><div class="tv-top"><b>${esc(x.n)}</b><span><button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button> <button type="button" class="small gray" onclick="document.getElementById('tl-view').style.display='none'">إغلاق</button></span></div><div class="tv-body"><img alt="" src="assets/pages/templates/thumbs/${esc(x.id)}-full.jpg?v=${V}" onerror="this.onerror=null;this.src='assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}'"></div></div>`;
+    v.style.display = "flex";
   }
   async function libUse(id) {
     const x = libAll().find(q => q.id === id); if (!x) return;
@@ -199,5 +205,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { libOpen, libClose, libSet, libUse, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { libOpen, libClose, libSet, libUse, libView, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

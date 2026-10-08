@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.46.0">
+<meta name="admin-version" content="1.47.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -50,7 +50,9 @@ button{cursor:pointer;border:none;font-family:inherit}
 .nav-btn.on .nav-txt small{color:#DCE9E3}
 /* تبويبات كبيرة لتنظيم العناوين (المظهر / ecommerce / تطبيقات) + عرضا الوكيل (ذكي/ناطق) */
 .ap-tabs{display:flex;gap:.4rem;margin-top:.8rem;flex-wrap:wrap}.ap-tabs button{border:1.5px solid var(--line);background:#fff;color:var(--green);border-radius:12px;padding:.5rem 1rem;font-weight:800;font-family:inherit;cursor:pointer;transition:background .2s,transform .2s}.ap-tabs button:hover{transform:translateY(-2px)}.ap-tabs button.on{background:var(--green);color:#fff;border-color:var(--green)}
-#tl-lib{position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:1rem}#tl-lib .tl-box{background:#fff;color:#173f35;border-radius:20px;width:min(980px,96vw);height:min(88vh,760px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);padding:1rem 1.2rem}#tl-lib .tl-top{display:flex;align-items:center;justify-content:space-between}#tl-lib .tl-top h3{margin:0}#tl-lib .tl-fl{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.5rem 0}#tl-lib .tl-fl button,#tl-lib .ap-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:.35rem .9rem;font:inherit;font-weight:700;cursor:pointer}#tl-lib .tl-fl button.on,#tl-lib .ap-tabs button.on{background:#157a5522;border-color:#157a55;color:#157a55}#tl-lib .tl-adv{display:inline-block;margin-top:.3rem;font-size:.78rem;font-weight:800;color:#157a55}#tl-lib .tl-body{flex:1;overflow:auto;margin-top:.4rem}
+#tl-lib{position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:1rem}#tl-lib .tl-box{background:#fff;color:#173f35;border-radius:20px;width:min(980px,96vw);height:min(88vh,760px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);padding:1rem 1.2rem}#tl-lib .tl-top{display:flex;align-items:center;justify-content:space-between}#tl-lib .tl-top h3{margin:0}#tl-lib .tl-fl{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.5rem 0}#tl-lib .tl-fl button,#tl-lib .ap-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:.35rem .9rem;font:inherit;font-weight:700;cursor:pointer}#tl-lib .tl-fl button.on,#tl-lib .ap-tabs button.on{background:#157a5522;border-color:#157a55;color:#157a55}#tl-lib .tl-adv{display:inline-block;margin-top:.3rem;font-size:.78rem;font-weight:800;color:#157a55}#tl-lib .tl-c .ap-h{flex-wrap:wrap;gap:.4rem;align-items:flex-start}#tl-lib .tl-c .ap-h b{flex:1 1 140px}#tl-lib .tl-th{position:relative;height:170px;border-radius:12px;overflow:hidden;margin-bottom:.6rem;cursor:zoom-in;background:#eef2f1;border:1px solid var(--line)}#tl-lib .tl-th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;transition:transform .6s}#tl-lib .tl-th:hover img{transform:scale(1.05)}#tl-lib .tl-th span{position:absolute;inset-inline:0;bottom:0;padding:.35rem;text-align:center;font-weight:800;font-size:.85rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));opacity:0;transition:.25s}#tl-lib .tl-th:hover span{opacity:1}#tl-lib .tl-th.none{display:none}
+#tl-view{position:fixed;inset:0;z-index:99995;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:1rem}#tl-view .tv-box{background:#fff;color:#173f35;border-radius:18px;width:min(900px,96vw);height:min(92vh,900px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5)}#tl-view .tv-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;border-bottom:1px solid var(--line)}#tl-view .tv-body{flex:1;overflow:auto;background:#e9eeed}#tl-view .tv-body img{width:100%;display:block}
+#tl-lib .tl-body{flex:1;overflow:auto;margin-top:.4rem}
 .tl-c{border:1px solid var(--line);border-radius:16px;padding:.9rem 1rem;margin-top:.7rem}.tl-c.dev{opacity:.7;border-style:dashed}.tl-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.7rem;margin-top:.5rem}.tl-g .tl-c{margin-top:0}.tl-s{margin-top:.6rem;display:grid;gap:.45rem}.tl-r{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.45rem .2rem;border-bottom:1px dashed var(--line);font-weight:700}
 .nav-btn.nav-work{display:none!important}html.app-off-ask .ah-btn,html.app-off-ask .ah-panel{display:none!important}html.app-off-cloner #pbx-clb{display:none!important}.app-off-tag{display:inline-block;margin-inline-start:.4rem;font-size:.66rem;font-weight:800;background:rgba(255,93,130,.16);color:#d64545;border:1px solid rgba(255,93,130,.5);border-radius:99px;padding:.05rem .45rem;vertical-align:middle}.app-off-tag.hidden{display:none}
 .app-cfg .ap-h{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}.app-cfg .ap-h h3{margin:0;flex:1;font-size:1.25rem}.app-cfg .ap-s{display:inline-block;border-radius:99px;padding:.15rem .7rem;font-size:.78rem;font-weight:900;border:1px solid}.app-cfg .ap-s.on{color:#157a55;border-color:rgba(21,122,85,.5);background:rgba(21,122,85,.1)}.app-cfg .ap-s.off{color:#d64545;border-color:rgba(214,69,69,.5);background:rgba(214,69,69,.1)}
@@ -1529,11 +1531,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.46.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.46.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.46.0"></script>
-<script src="assets/js/admin-nav.js?v=1.46.0"></script>
-<script src="assets/js/admin-update.js?v=1.46.0"></script>
+<script src="assets/js/ctl-help.js?v=1.47.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.47.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.47.0"></script>
+<script src="assets/js/admin-nav.js?v=1.47.0"></script>
+<script src="assets/js/admin-update.js?v=1.47.0"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>

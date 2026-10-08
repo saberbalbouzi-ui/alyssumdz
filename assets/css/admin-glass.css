@@ -289,3 +289,11 @@ html.glass #tl-lib .tl-c .ap-h{gap:.6rem;align-items:flex-start}
 html.glass #tl-lib .tl-c .ap-s{flex:none;white-space:nowrap;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;background:rgba(34,197,94,.18);border:1px solid rgba(190,242,100,.35);color:#fff}
 html.glass #tl-lib .tl-c button.small{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(21,122,85,.26));border:1px solid rgba(190,242,100,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.18),0 3px 8px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:.2s}
 html.glass #tl-lib .tl-c button.small:hover{background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32));transform:translateY(-2px)}
+html.glass #tl-lib .tl-th{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)}
+html.glass #tl-view{background:rgba(3,12,9,.72);backdrop-filter:blur(6px)}
+html.glass #tl-view .tv-box{background:rgba(14,32,26,.92);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.16);color:#fff}
+html.glass #tl-view .tv-top{border-color:rgba(255,255,255,.14)}
+html.glass #tl-view .tv-body{background:rgba(0,0,0,.35)}
+html.glass #tl-view .tv-top button.small{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(21,122,85,.26));border:1px solid rgba(190,242,100,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.18);transition:.2s}
+html.glass #tl-view .tv-top button.small:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32))}
+html.glass #tl-view .tv-top button.small.gray{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22)}
