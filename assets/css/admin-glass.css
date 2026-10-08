@@ -149,3 +149,31 @@ html.glass .top{background:linear-gradient(155deg,rgba(70,170,80,.1),rgba(0,0,0,
 html.glass .nav-ic{background:rgba(134,240,106,.09)!important;border:1px solid var(--g-line);border-radius:12px;color:var(--g-mint)}
 html.glass .nav-btn.on .nav-ic{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.35)}
 html.glass [style*="background:#e6dfcf"],html.glass [style*="background:#E6DFCF"],html.glass [style*="background:#eee"],html.glass [style*="background:#EEE"],html.glass [style*="background:#f0ebe0"],html.glass [style*="background:#efe9da"],html.glass [style*="background:#e5dfd2"],html.glass [style*="background:#f3eedf"]{background:rgba(255,255,255,.1)!important}
+
+/* ───── زجاج سميك: بطاقات شفافة بحافة لامعة وعمق (سُمك) ─────
+   طبقات: لمعة علوية خفيفة + حافة مضيئة من الأعلى وداكنة من الأسفل + توهّج داخلي + ظل خارجي + تمويه الخلفية */
+html.glass{
+  --g-thick:inset 0 1.5px 0 rgba(255,255,255,.34),inset 0 -2px 0 rgba(0,0,0,.5),inset 1.5px 0 0 rgba(255,255,255,.1),inset -1.5px 0 0 rgba(255,255,255,.07),inset 0 0 28px rgba(255,255,255,.055);
+  --g-drop:0 18px 38px -8px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.5);
+  --g-sheen:linear-gradient(172deg,rgba(255,255,255,.17) 0%,rgba(255,255,255,.04) 30%,rgba(255,255,255,0) 55%);
+}
+html.glass .card,html.glass .stat div,html.glass .side-nav,html.glass .top,html.glass .live-pill,html.glass .login,html.glass .pbx-pc{
+  background:var(--g-sheen),var(--g-surf);
+  backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+  border:1px solid rgba(160,255,160,.3);
+  box-shadow:var(--g-thick),var(--g-drop);
+}
+html.glass .card{border-radius:22px}
+/* بطاقات الإحصاء الملوّنة: كل بطاقة بلون زجاجي مختلف كما في التصميم المرجعي (أخضر، سماوي، ذهبي، بنفسجي) */
+html.glass .stat div{border-radius:20px;text-align:start;padding:1rem 1.1rem;--c:134,240,106;color:var(--g-mut);
+  background:var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.38),rgba(var(--c),.1) 62%,rgba(0,0,0,.3));
+  border-color:rgba(var(--c),.55);
+  box-shadow:var(--g-thick),var(--g-drop),0 0 26px rgba(var(--c),.16)}
+html.glass .stat div:nth-child(4n+2){--c:59,230,255}
+html.glass .stat div:nth-child(4n+3){--c:255,200,70}
+html.glass .stat div:nth-child(4n+4){--c:183,155,255}
+html.glass .stat b{color:#fff;font-size:1.55rem;text-shadow:0 0 16px rgba(var(--c,134,240,106),.5)}
+html.glass .stat span{color:rgba(255,255,255,.7)}
+html.glass .alert-card{background:var(--g-sheen),linear-gradient(150deg,rgba(255,93,130,.22),rgba(0,0,0,.35))!important;border-color:rgba(255,93,130,.6)!important}
+/* الأزرار الزجاجية أيضاً بسُمك */
+html.glass .btn,html.glass .small,html.glass .top .small{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1.5px 0 rgba(0,0,0,.4),0 6px 16px -4px rgba(0,0,0,.6),0 0 16px rgba(134,240,106,.12)}
