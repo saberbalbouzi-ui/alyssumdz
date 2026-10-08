@@ -1,0 +1,151 @@
+/* ───── مظهر «الزجاج الداكن» للوحة التحكم (admin.html) ─────
+   خلفية سوداء، نصوص بيضاء، ألوان فلورسنت بلورية شفافة، والأخضر القديم صار «زجاجاً مدخَّناً» شفافاً.
+   يُفعَّل بالصنف html.glass (يضبطه سكربت صغير في admin.html من localStorage: admin_theme)، ويُلغى بإزالته (المظهر الكلاسيكي).
+   لا يمسّ إطار معاينة الصفحة (iframe) ولا الصفحات المنشورة. */
+html.glass{
+  color-scheme:dark;
+  --g-bg:#000; --g-tx:#eef3f6; --g-mut:rgba(226,236,242,.62); --g-dim:rgba(226,236,242,.4);
+  --g-surf:linear-gradient(155deg,rgba(70,170,80,.13),rgba(8,24,12,.55) 70%); --g-surf2:rgba(110,230,110,.1); --g-line:rgba(120,235,120,.2); --g-line2:rgba(150,255,150,.32);
+  --g-smoke:rgba(10,30,16,.66);                       /* الأخضر القديم ← زجاج مدخَّن */
+  --g-mint:#86f06a; --g-cyan:#3be6ff; --g-vio:#b79bff; --g-amber:#ffd45e; --g-rose:#ff5d82; --g-blue:#5aa8ff;
+  --g-blur:blur(18px) saturate(150%);
+  --g-sh:0 10px 34px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.09);
+  /* إعادة تعريف متغيّرات اللوحة الأصلية */
+  --green:#7dffd0; --green2:#0b1a17; --gold:#ffd45e; --gold2:#ffe9a8; --bg:#04060a; --line:rgba(255,255,255,.12);
+  --red:#ff5d82; --ok:#3dffb4; --blue:#5aa8ff; --warn-bg:rgba(255,212,94,.12);
+  font-size:15px;
+}
+html.glass body{
+  background:var(--g-bg);color:var(--g-tx);font-weight:500;
+  background-image:radial-gradient(800px 500px at 12% -6%,rgba(80,200,90,.16),transparent 62%),radial-gradient(700px 500px at 96% 105%,rgba(80,200,90,.1),transparent 65%);
+  background-attachment:fixed;
+}
+html.glass ::selection{background:rgba(134,240,106,.35);color:#fff}
+html.glass ::-webkit-scrollbar{width:10px;height:10px}html.glass ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:10px;border:2px solid transparent;background-clip:content-box}html.glass ::-webkit-scrollbar-track{background:transparent}
+
+/* ── التمييز بين العنوان والبقية: العناوين أكبر وأثقل وبلون مضيء، والنص العادي أصغر وأخفّ ── */
+html.glass h1,html.glass h2,html.glass h3,html.glass h4{color:#fff;font-weight:900;letter-spacing:.2px}
+html.glass h1{font-size:1.35rem}html.glass h2{font-size:1.15rem}html.glass h3{font-size:1.02rem}html.glass h4{font-size:.95rem}
+html.glass .top h1,html.glass .side-nav-intro b,html.glass .card>h2:first-child,html.glass .card>h3:first-child{
+  color:var(--g-mint);text-shadow:0 0 18px rgba(134,240,106,.35)}
+html.glass p,html.glass small,html.glass .hint,html.glass label{color:var(--g-mut);font-weight:500}
+html.glass label{font-size:.84rem}
+html.glass .nav-txt b{font-size:.92rem;font-weight:800;color:var(--g-tx)}
+html.glass .nav-txt small{font-size:.7rem;color:var(--g-dim)}
+html.glass .nav-btn.on .nav-txt b{color:#fff}html.glass .nav-btn.on .nav-txt small{color:rgba(255,255,255,.75)}html.glass .nav-btn.on .nav-ic,html.glass .nav-btn.on svg{color:#fff}
+
+/* ── الأسطح الزجاجية ── */
+html.glass .card,html.glass .side-nav,html.glass .login,html.glass .live-pill,html.glass .pbx-pc,html.glass .spv-bar{
+  background:var(--g-surf);border:1px solid var(--g-line);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);color:var(--g-tx)}
+html.glass .card{border-radius:20px}
+html.glass .side-nav{border-radius:26px;background:linear-gradient(170deg,rgba(80,190,90,.2),rgba(6,22,10,.6) 60%);border-color:rgba(150,255,150,.3);box-shadow:0 0 40px rgba(80,200,90,.12),var(--g-sh)}
+html.glass .alert-card{border:1px solid rgba(255,93,130,.6)!important;background:rgba(255,93,130,.08)}
+html.glass .side-nav-intro{border-bottom-color:var(--g-line)}
+html.glass .side-nav-intro p{color:var(--g-dim)}
+html.glass .nav-btn{color:var(--g-tx);border:1px solid transparent;transition:background .2s,border-color .2s,box-shadow .2s}
+html.glass .nav-btn:hover{background:var(--g-surf2);border-color:var(--g-line)}
+html.glass .nav-btn.on{background:linear-gradient(135deg,rgba(120,240,100,.5),rgba(40,130,55,.38));border-color:rgba(170,255,150,.6);color:#fff;box-shadow:0 0 0 1px rgba(134,240,106,.15),0 0 26px rgba(134,240,106,.18),inset 0 1px 0 rgba(255,255,255,.1)}
+html.glass .nav-ic{filter:drop-shadow(0 0 6px rgba(134,240,106,.35))}
+html.glass .nav-ic,html.glass .nav-btn svg{color:var(--g-mint)}
+
+/* ── الأزرار: زجاج ملوّن شفاف بتوهّج خفيف ── */
+html.glass .btn,html.glass .small,html.glass .pbx-add{
+  background:var(--g-smoke);color:var(--g-mint);border:1px solid rgba(134,240,106,.45);backdrop-filter:blur(10px);
+  box-shadow:0 0 16px rgba(134,240,106,.12),inset 0 1px 0 rgba(255,255,255,.1);font-weight:800;transition:box-shadow .2s,border-color .2s,transform .1s}
+html.glass .btn:hover,html.glass .small:hover{border-color:var(--g-mint);box-shadow:0 0 22px rgba(134,240,106,.3),inset 0 1px 0 rgba(255,255,255,.15)}
+html.glass .btn:active,html.glass .small:active{transform:translateY(1px)}
+html.glass .small.warn,html.glass .top button.logout,html.glass .nb{background:rgba(255,93,130,.14);color:var(--g-rose);border:1px solid rgba(255,93,130,.5);box-shadow:0 0 16px rgba(255,93,130,.14)}
+html.glass .nb{color:#fff;background:rgba(255,93,130,.55)}
+html.glass .top button[style*="background:#C8A24B"],html.glass .top button[style*="background:#c8a24b"],html.glass .small[style*="C8A24B"],html.glass .small[style*="c8a24b"]{background:rgba(255,212,94,.13)!important;color:var(--g-amber)!important;border:1px solid rgba(255,212,94,.5)!important}
+html.glass .top button[style*="background:#1B4F8A"],html.glass .top button[style*="background:#1b4f8a"],html.glass .small[style*="1B4F8A"],html.glass .small[style*="1b4f8a"]{background:rgba(90,168,255,.13)!important;color:var(--g-blue)!important;border:1px solid rgba(90,168,255,.5)!important}
+html.glass .top button[style*="background:#999"],html.glass .top button[style*="background:#9"],html.glass .top button[style*="background:#8"],html.glass .small[style*="background:#9"],html.glass .small[style*="background:#8"],html.glass .small[style*="background:#aaa"],html.glass .small[style*="background:#888"]{background:var(--g-surf2)!important;color:var(--g-tx)!important;border:1px solid var(--g-line2)!important}
+html.glass .ob.g{background:rgba(134,240,106,.15);color:var(--g-mint);border:1px solid rgba(134,240,106,.5)}
+html.glass .ob.r{background:rgba(255,93,130,.15);color:var(--g-rose);border:1px solid rgba(255,93,130,.5)}
+html.glass .ob.o{background:rgba(255,212,94,.1);color:var(--g-amber);border:1px solid rgba(255,212,94,.5)}html.glass .ob.o.on{background:rgba(255,212,94,.35);color:#fff}
+
+/* ── الحقول ── */
+html.glass input,html.glass select,html.glass textarea{background:rgba(255,255,255,.05);color:var(--g-tx);border:1px solid var(--g-line);border-radius:10px;font-weight:500;font-size:.88rem}
+html.glass input::placeholder,html.glass textarea::placeholder{color:var(--g-dim)}
+html.glass input:focus,html.glass select:focus,html.glass textarea:focus{border-color:var(--g-cyan);box-shadow:0 0 0 3px rgba(59,230,255,.14),0 0 18px rgba(59,230,255,.12);background:rgba(255,255,255,.07)}
+html.glass option{background:#0b1114;color:var(--g-tx)}
+html.glass input[type=checkbox],html.glass input[type=radio]{accent-color:var(--g-mint)}
+html.glass input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.7)}
+
+/* ── الجداول ── */
+html.glass table{color:var(--g-tx);font-size:.84rem}
+html.glass th{background:var(--g-smoke);color:var(--g-mint);font-size:.78rem;font-weight:800;letter-spacing:.3px;border-bottom:1px solid rgba(134,240,106,.3)}
+html.glass td{border-bottom:1px solid var(--g-line)}
+html.glass tr:hover td{background:rgba(255,255,255,.04)}
+html.glass .rt tr,html.glass .attr-row,html.glass .var-row{background:var(--g-surf);border-color:var(--g-line)}
+html.glass .rt td[data-l]::before{color:var(--g-dim)}
+html.glass .var-row .vl,html.glass .pbx-sh{color:var(--g-mint)}
+html.glass .pbx-sh span{background:var(--g-surf2);color:var(--g-tx)}
+html.glass .grp-pick{border-color:var(--g-line)}
+
+/* ── شارات الحالة: زجاج فلورسنت ── */
+html.glass .pill{border:1px solid currentColor;backdrop-filter:blur(6px)}
+html.glass .st-nouvelle,html.glass .st-pending{background:rgba(255,212,94,.12);color:var(--g-amber)}
+html.glass .st-confirmee{background:rgba(90,168,255,.12);color:var(--g-blue)}
+html.glass .st-expediee{background:rgba(183,155,255,.12);color:var(--g-vio)}
+html.glass .st-livree{background:rgba(134,240,106,.12);color:var(--g-mint)}
+html.glass .st-annulee,html.glass .st-echec{background:rgba(255,93,130,.12);color:var(--g-rose)}
+html.glass .live-pill{color:var(--g-tx)}html.glass .live-pill.on{border-color:var(--g-mint);color:var(--g-mint);box-shadow:0 0 18px rgba(134,240,106,.25)}
+
+/* ── المعاينة السريعة والنوافذ ── */
+html.glass .spv{background:rgba(2,4,8,.8);backdrop-filter:blur(6px)}
+html.glass .spv-bar button,html.glass .spv-bar a{background:var(--g-surf);color:var(--g-tx);border-color:var(--g-line)}
+html.glass .spv-bar button.on{background:var(--g-smoke);color:var(--g-mint);border-color:rgba(134,240,106,.5)}
+html.glass .spv-bar b{color:var(--g-mint)}
+
+/* ── تعميم: أي خلفية بيضاء/كريمية مكتوبة داخل style="" تصير زجاجاً، والنصوص الخضراء الداكنة تصير مضيئة ── */
+html.glass [style*="background:#fff"],html.glass [style*="background: #fff"],html.glass [style*="background:#FFF"],html.glass [style*="background:white"],
+html.glass [style*="background:#fcfaf6"],html.glass [style*="background:#FAF7F0"],html.glass [style*="background:#faf7f0"],html.glass [style*="background:#faf6ec"],html.glass [style*="background:#FAF6EC"],
+html.glass [style*="background:#F5F2EB"],html.glass [style*="background:#f5f2eb"],html.glass [style*="background:#f8f5ec"],html.glass [style*="background:#fdfaf3"],html.glass [style*="background:#fffdf7"]{
+  background:var(--g-surf)!important;color:var(--g-tx)}
+html.glass [style*="color:#173F35"],html.glass [style*="color:#173f35"],html.glass [style*="color:var(--green)"]{color:var(--g-mint)!important}
+html.glass [style*="color:#6B7672"],html.glass [style*="color:#6b7672"],html.glass [style*="color:#888"],html.glass [style*="color:#777"],html.glass [style*="color:#666"],html.glass [style*="color:#8a8472"],html.glass [style*="color:#6b6556"]{color:var(--g-mut)!important}
+html.glass [style*="color:#1C2420"],html.glass [style*="color:#222"],html.glass [style*="color:#333"],html.glass [style*="color:#111"],html.glass [style*="color:#000"]{color:var(--g-tx)!important}
+html.glass [style*="border:1px solid #ddd"],html.glass [style*="border:1px solid #eee"],html.glass [style*="border:1.5px solid #e5dfd2"],html.glass [style*="border:1.5px solid var(--line)"]{border-color:var(--g-line)!important}
+html.glass a{color:var(--g-cyan)}
+html.glass hr{border-color:var(--g-line)}
+html.glass code,html.glass pre,html.glass kbd{background:rgba(255,255,255,.07);color:var(--g-amber);border-radius:6px}
+
+/* ───── منشئ الصفحات (واجهة المحرّر، لا الصفحة نفسها) ───── */
+html.glass #pb-app{background:var(--g-bg);color:var(--g-tx)}
+html.glass .pbx-top{background:rgba(10,18,17,.78);backdrop-filter:var(--g-blur);border-bottom:1px solid var(--g-line);box-shadow:0 4px 24px rgba(0,0,0,.45)}
+html.glass .pbx-top button{background:var(--g-surf);color:var(--g-tx);border:1px solid var(--g-line);border-radius:9px;font-weight:700;font-size:.8rem}
+html.glass .pbx-top button:hover{border-color:var(--g-mint);color:var(--g-mint)}
+html.glass .pbx-top button.on,html.glass .pbx-top button.pri,html.glass .pbx-top button[onclick*="publish"]{background:var(--g-smoke);color:var(--g-mint);border-color:rgba(134,240,106,.5);box-shadow:0 0 16px rgba(134,240,106,.18)}
+html.glass .pbx-top input{background:rgba(255,255,255,.07);color:#fff;border:1px solid var(--g-line);margin:0}
+html.glass .pbx-left,html.glass .pbx-right{background:rgba(10,16,18,.72);backdrop-filter:var(--g-blur);border-color:var(--g-line);color:var(--g-tx)}
+html.glass .pbx-pane{background:transparent;border-bottom-color:var(--g-line)}
+html.glass .pbx-wi,html.glass .pbx-tpl,html.glass .pbx-q,html.glass .pbx-gr,html.glass .pbx-gb,html.glass .pbx-fxi,html.glass .pbx-mc,html.glass .pbx-ac,html.glass .pbx-pop .mwi{background:var(--g-surf);border:1px solid var(--g-line);color:var(--g-tx)}
+html.glass .pbx-wi:hover,html.glass .pbx-tpl:hover{border-color:rgba(134,240,106,.55);box-shadow:0 0 18px rgba(134,240,106,.15)}
+html.glass .pbx-small,html.glass .pbx-qk,html.glass .pbx-pimgb{background:var(--g-surf);color:var(--g-tx);border:1px solid var(--g-line)}
+html.glass .pbx-small:hover,html.glass .pbx-qk:hover{border-color:var(--g-mint);color:var(--g-mint)}
+html.glass .pbx-pop,html.glass #pbx-pimg,html.glass .pbx-histbox,html.glass .pbx-qbar,html.glass .pbx-sbar,html.glass .pbx-ft,html.glass .pbx-mt,html.glass .pbx-mwbar,html.glass .pbx-epf,html.glass .ep-ddl{
+  background:rgba(12,20,22,.86)!important;backdrop-filter:var(--g-blur);border:1px solid var(--g-line2);color:var(--g-tx);box-shadow:0 14px 44px rgba(0,0,0,.6)}
+html.glass .pbx-qbar select,html.glass .pbx-pop select{background:rgba(255,255,255,.07);color:var(--g-tx);border:1px solid var(--g-line)}
+html.glass .pbx-hh,html.glass .pbx-msg,html.glass .pbx-tip,html.glass .pbx-lghost,html.glass .pbx-mbar,html.glass .pbx-mbar2{background:var(--g-smoke);color:var(--g-mint);border:1px solid rgba(134,240,106,.4);backdrop-filter:var(--g-blur)}
+html.glass .pbx-mwbar button{background:var(--g-surf2);color:var(--g-tx)}
+html.glass .pbx-stage,html.glass #pbx-stage{background:#070b0e}
+html.glass .pbx-ih,html.glass .pbx-right h3,html.glass .pbx-right h4{color:var(--g-mint)}
+html.glass .pbx-right .field>label,html.glass .pbx-right label{color:var(--g-mut)}
+html.glass .pbx-right input,html.glass .pbx-right select,html.glass .pbx-right textarea{background:rgba(255,255,255,.06)}
+
+/* ── نافذة نسخ القالب + تنظيف الصور + المساعد ── */
+html.glass .cl-box,html.glass #pbx-clean .cb{background:rgba(10,16,18,.92);backdrop-filter:var(--g-blur);border:1px solid var(--g-line2);color:var(--g-tx)}
+html.glass #pbx-clean .cm{color:var(--g-tx)}html.glass #pbx-clean .ch,html.glass #pbx-clean .cf{border-color:var(--g-line)}
+html.glass #pbx-clean .ch b{color:var(--g-mint)}html.glass #pbx-clean .cx,html.glass #pbx-clean button.s{background:var(--g-surf2);color:var(--g-tx)}
+html.glass #pbx-clean .ci{background:var(--g-surf);border-color:var(--g-line)}html.glass #pbx-clean .warn{background:rgba(255,212,94,.1);border-color:rgba(255,212,94,.4);color:var(--g-amber)}
+html.glass #pbx-clean select{background:#0b1114;color:var(--g-tx);border-color:var(--g-line)}
+
+/* أزرار الشريط العلوي بالأصناف (ذهبي/أزرق/رمادي) + زر المعاينة */
+html.glass .small.gold{background:rgba(255,212,94,.13);color:var(--g-amber);border:1px solid rgba(255,212,94,.5);box-shadow:0 0 16px rgba(255,212,94,.12)}
+html.glass .small.blue{background:rgba(90,168,255,.13);color:var(--g-blue);border:1px solid rgba(90,168,255,.5);box-shadow:0 0 16px rgba(90,168,255,.12)}
+html.glass .small.gray{background:var(--g-surf2);color:var(--g-tx);border:1px solid var(--g-line2);box-shadow:none}
+html.glass .small[style*="background:var(--green)"]{background:var(--g-smoke)!important;color:var(--g-mint)!important}
+html.glass .top{background:linear-gradient(155deg,rgba(70,170,80,.1),rgba(0,0,0,.2));border:1px solid var(--g-line);border-radius:22px;padding:.7rem 1rem;backdrop-filter:var(--g-blur)}
+html.glass .nav-ic{background:rgba(134,240,106,.09)!important;border:1px solid var(--g-line);border-radius:12px;color:var(--g-mint)}
+html.glass .nav-btn.on .nav-ic{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.35)}
+html.glass [style*="background:#e6dfcf"],html.glass [style*="background:#E6DFCF"],html.glass [style*="background:#eee"],html.glass [style*="background:#EEE"],html.glass [style*="background:#f0ebe0"],html.glass [style*="background:#efe9da"],html.glass [style*="background:#e5dfd2"],html.glass [style*="background:#f3eedf"]{background:rgba(255,255,255,.1)!important}

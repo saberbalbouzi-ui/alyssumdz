@@ -1,0 +1,372 @@
+/* مولَّد بـ scripts/gen-glass.py — لا تعدّله يدوياً (عدّل admin-glass.css) */
+html.glass body{color:var(--g-tx)}
+html.glass .side-nav{background:rgba(255,255,255,.06)}
+html.glass .side-nav-intro p{color:var(--g-mut)}
+html.glass .ob.o{background:rgba(255,255,255,.06);color:hsl(35,90%,70%)}
+html.glass .nav-btn:hover{background:rgba(255,255,255,.06)}
+html.glass .nav-txt small{color:var(--g-mut)}
+html.glass .spv-bar{background:rgba(255,255,255,.06)}
+html.glass .spv-bar button,html.glass .spv-bar a{background:rgba(255,255,255,.06)}
+html.glass .live-pill{background:rgba(255,255,255,.06)}
+html.glass .live-pill.on{color:var(--g-mint)}
+html.glass .alert-card{background:rgba(255,255,255,.06)}
+html.glass .pbx-sh span{background:rgba(255,255,255,.06)}
+html.glass .pbx-pc{background:rgba(255,255,255,.06)}
+html.glass .pbx-pin small{color:var(--g-mut)}
+html.glass .card{background:rgba(255,255,255,.06)}
+html.glass tr:hover td{background:rgba(255,255,255,.06)}
+html.glass .rt tr{background:rgba(255,255,255,.06)}
+html.glass .st-nouvelle{background:hsla(42,100%,62%,.14);color:hsl(42,100%,74%)}
+html.glass .st-confirmee{background:hsla(214,100%,62%,.14);color:hsl(214,100%,74%)}
+html.glass .st-expediee{background:hsla(262,100%,62%,.14);color:hsl(262,100%,74%)}
+html.glass .st-livree{background:hsla(148,100%,62%,.14);color:hsl(148,100%,74%)}
+html.glass .st-annulee{background:hsla(0,100%,62%,.14);color:hsl(0,90%,70%)}
+html.glass .attr-row{background:rgba(255,255,255,.06)}
+html.glass .st-echec{background:hsla(0,100%,62%,.14);color:hsl(0,90%,70%)}
+html.glass .st-pending{background:hsla(42,100%,62%,.14);color:hsl(42,100%,74%)}
+html.glass .fee{background:rgba(255,255,255,.06)}
+html.glass .fee label{color:var(--g-mut)}
+html.glass .color-card{background:rgba(255,255,255,.06)}
+html.glass .color-preview{background:rgba(255,255,255,.06)}
+html.glass .stat div{background:rgba(255,255,255,.06)}
+html.glass .stat span{color:var(--g-mut)}
+html.glass .modal{background:rgba(255,255,255,.06)}
+html.glass .modal.xl .action-bar{background:rgba(255,255,255,.06)}
+html.glass .action-bar{background:rgba(255,255,255,.06)}
+html.glass .badge-draft{color:hsl(44,90%,70%)}
+html.glass .diff-box{background:rgba(255,255,255,.06)}
+html.glass .date-field{color:var(--g-mut)}
+html.glass .hint{color:var(--g-mut)}
+html.glass .editor-bg{background:rgba(255,255,255,.06)}
+html.glass .editor-sidebar{background:rgba(255,255,255,.06)}
+html.glass .editor-frame{background:rgba(255,255,255,.06)}
+html.glass .nav-btn:hover{background:rgba(255,255,255,.06);border-color-color:rgba(255,255,255,.14)}
+html.glass .nav-ic{background:rgba(255,255,255,.06)}
+html.glass input,html.glass select,html.glass textarea{background:rgba(255,255,255,.06);border-color-color:rgba(255,255,255,.14)}
+html.glass .rt th{color:var(--g-mut)}
+html.glass webkit-scrollbar-thumb{background:hsla(43,100%,62%,.14)}
+html.glass * الهيدر والفوتر (ChromeAdmin) */
+.ca-pv{background:rgba(255,255,255,.06)}
+html.glass .ca-col i{color:var(--g-mut)}
+html.glass .ca-mc{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .ca-mch{background:rgba(255,255,255,.06)}
+html.glass .ca-mcs{border-top-color:rgba(255,255,255,.14)}
+html.glass .ca-mc.add{background:rgba(255,255,255,.06)}
+html.glass .ca-acc[open]>summary{border-bottom-color:rgba(255,255,255,.14)}
+html.glass .ca-sub{color:hsl(42,90%,70%);border-bottom-color:rgba(255,255,255,.14)}
+html.glass .ca-off{background:rgba(255,255,255,.06);color:var(--g-mut)}
+html.glass .ca-mrow{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .ca-pkb{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .ca-pi{background:rgba(255,255,255,.06)}
+html.glass .ca-pi.on{background:rgba(255,255,255,.06)}
+html.glass .ca-chip{background:rgba(255,255,255,.06)}
+html.glass w.document.write('<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>وصل الطلب ' + o.id + '</title><style>' +
+      "body{color:var(--g-tx)}
+html.glass h2{color:var(--g-mint)}
+html.glass .muted{color:var(--g-mut)}
+html.glass td{border-bottom-color:rgba(255,255,255,.14)}
+html.glass td:first-child{color:var(--g-mut)}
+html.glass .tot{color:var(--g-mint)}
+html.glass .items{border-color:rgba(255,255,255,.14)}
+html.glass #__adm_edit_toolbar button{background:rgba(10,30,16,.66)}
+html.glass #__adm_edit_toolbar button:hover{background:rgba(10,30,16,.66)}
+html.glass .save-pill){background:hsla(0,100%,62%,.14);color:hsl(0,90%,70%)}
+html.glass .offer){background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .offer.on){background:rgba(255,255,255,.06)}
+html.glass .offer .u){color:var(--g-mut)}
+html.glass webkit-scrollbar-track{background:rgba(255,255,255,.06)}
+html.glass const css = `
+#pb-app{background:rgba(255,255,255,.06)}
+html.glass .pbx-top{background:rgba(10,30,16,.66)}
+html.glass .pbx-top input{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-top button.on{color:var(--g-mint)}
+html.glass .pbx-top button.pub{color:var(--g-mint)}
+html.glass .pbx-left{background:rgba(255,255,255,.06)}
+html.glass .pbx-right{background:rgba(255,255,255,.06)}
+html.glass .pbx-tabs button.pbx-ah{background:rgba(255,255,255,.06);color:var(--g-tx);border-bottom-color:rgba(255,255,255,.14)}
+html.glass .pbx-tabs button.pbx-ah:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-tabs button.pbx-ah.on{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-it{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-it:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-pane{background:rgba(255,255,255,.06);border-bottom-color:rgba(255,255,255,.14)}
+html.glass .pbx-vis>span{color:var(--g-mut)}
+html.glass .pbx-vis button{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-vis button.off{background:rgba(255,255,255,.06);color:hsl(0,90%,70%)}
+html.glass .pbx-cat{color:var(--g-mint);border-bottom-color:rgba(255,255,255,.14)}
+html.glass .pbx-wi{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-wi:hover{background:hsla(42,100%,62%,.14)}
+html.glass .pbx-tpl{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-gr{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-grprev{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-gl{color:hsl(44,90%,70%)}
+html.glass .pbx-gp button{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-shg small{color:hsl(42,90%,70%)}
+html.glass .pbx-shs button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-shs button.on{background:hsla(44,100%,62%,.14)}
+html.glass .pbx-rad{background:rgba(255,255,255,.06)}
+html.glass .pbx-rot{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-ip .ipu{background:rgba(255,255,255,.06)}
+html.glass .pbx-ip .ipu small{color:var(--g-mut)}
+html.glass .pbx-ip .ipu b{color:var(--g-mint)}
+html.glass .pbx-ip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-ip h5{color:hsl(44,90%,70%)}
+html.glass .pbx-ip .g button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-ip .g button:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-ip input{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-ctx{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-ctx button{color:var(--g-mint)}
+html.glass .pbx-ctx button:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-ctx hr{border-top-color:rgba(255,255,255,.14)}
+html.glass .pbx-ctx .dng{color:hsl(0,90%,70%)}
+html.glass .pbx-qc label{background:rgba(255,255,255,.06);color:var(--g-mut);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-q{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-qg>small{color:hsl(42,90%,70%)}
+html.glass .pbx-qk{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-qk.on{background:rgba(10,30,16,.66)}
+html.glass .pbx-crumb{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-h{background:rgba(255,255,255,.06);color:hsl(218,90%,70%)}
+html.glass .pbx-box.column .pbx-h{color:hsl(282,90%,70%)}
+html.glass .pbx-bar button.on{outline-color:rgba(255,255,255,.14)}
+html.glass .pbx-gb{background:rgba(255,255,255,.06)}
+html.glass .pbx-gb input{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-tip{background:rgba(10,30,16,.66)}
+html.glass .pbx-add{background:rgba(10,30,16,.66)}
+html.glass .pbx-pimgb{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pimgb:hover{background:rgba(10,30,16,.66)}
+html.glass #pbx-pimg{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass #pbx-pimg .ph{color:var(--g-mint)}
+html.glass #pbx-pimg .ph button{background:rgba(255,255,255,.06)}
+html.glass #pbx-pimg .pup{background:rgba(10,30,16,.66)}
+html.glass #pbx-pimg .pt{color:var(--g-mut)}
+html.glass #pbx-pimg .pi{background:rgba(255,255,255,.06)}
+html.glass #pbx-pimg .pcl{color:hsl(0,90%,70%)}
+html.glass #pbx-pimg .ptool button{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass #pbx-pimg .ptool button.on{background:rgba(10,30,16,.66)}
+html.glass #pbx-pimg .ptool button.dng{color:hsl(0,90%,70%)}
+html.glass #pbx-pimg .pi .pck{border-color:rgba(255,255,255,.14)}
+html.glass #pbx-pimg .pi .pdt{color:var(--g-mint)}
+html.glass #pbx-pimg .pmm{background:rgba(255,255,255,.06)}
+html.glass #pbx-pimg .pmm button{color:var(--g-mint)}
+html.glass #pbx-pimg .pmm button:hover{background:rgba(255,255,255,.06)}
+html.glass #pbx-pimg .pmm .dng{color:hsl(0,90%,70%)}
+html.glass #pbx-pimg .pmm .dng:hover{background:hsla(0,100%,62%,.14)}
+html.glass #pbx-pimg .pe{color:var(--g-mut)}
+html.glass .pbx-ep .ep-h{color:var(--g-mint)}
+html.glass .pbx-ep .ep-tabs button{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-ep .ep-tabs button:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-ep .ep-tabs button.on{background:hsla(260,100%,62%,.14);color:hsl(260,100%,74%)}
+html.glass .pbx-ep .ep-n{color:var(--g-mut)}
+html.glass .ep-ddb{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .ep-ddl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .ep-ddl .mk-gh{color:hsl(45,90%,70%)}
+html.glass .ep-it{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .ep-it.on{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
+html.glass .ep-ddl.mk-list{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-epf{background:rgba(255,255,255,.06)}
+html.glass .pbx-epf .no{background:rgba(255,255,255,.06);color:hsl(0,90%,70%)}
+html.glass .mk-box .mk-hd{border-color:rgba(255,255,255,.14)}
+html.glass .mk-box .mk-rot{background:rgba(255,255,255,.06)}
+html.glass #pbx-pimg.drop{background:rgba(255,255,255,.06)}
+html.glass .mk-pre .pbx-small.on{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
+html.glass .pbx-pend{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-pend .no{background:rgba(255,255,255,.06);color:hsl(0,90%,70%)}
+html.glass .pbx-ih{background:rgba(255,255,255,.06);color:var(--g-mint);border-bottom-color:rgba(255,255,255,.14)}
+html.glass .pbx-fxi{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-fxi .fxh b{color:var(--g-mint)}
+html.glass .pbx-fxi .fxh button{background:hsla(0,100%,62%,.14);color:hsl(0,90%,70%)}
+html.glass .pbx-fxi .fxf{color:var(--g-mut)}
+html.glass .pbx-fxi .fxf input,html.glass .pbx-fxi .fxf select,html.glass .pbx-fxi .fxf textarea{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-fxn{color:var(--g-mut)}
+html.glass .pbx-itabs button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-itabs button.on{background:rgba(10,30,16,.66)}
+html.glass .pbx-dv button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-f>label{color:var(--g-tx)}
+html.glass .pbx-f .rs{color:hsl(0,90%,70%)}
+html.glass .pbx-f input[type=text],html.glass .pbx-f input[type=number],html.glass .pbx-f input[type=datetime-local],html.glass .pbx-f select,html.glass .pbx-f textarea{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-f .inh{background:rgba(255,255,255,.06)}
+html.glass .pbx-magic button{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-gem{color:var(--g-mut)}
+html.glass .pbx-f input[type=color]{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-al button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-al button.on{background:rgba(10,30,16,.66)}
+html.glass .pbx-dims small{color:var(--g-mut)}
+html.glass .pbx-mc{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-mch{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-mch button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-mcs{border-top-color:rgba(255,255,255,.14)}
+html.glass .pbx-mc.add{background:rgba(255,255,255,.06)}
+html.glass .pbx-rep{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-cp{color:var(--g-mut)}
+html.glass .pbx-cp select{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-gcg .gc>button{background:rgba(255,255,255,.06)}
+html.glass .pbx-gcg .gc.has>button{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-gcg .gc>button:hover{color:hsl(262,90%,70%)}
+html.glass .pbx-small{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-dfc{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-dfc:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-dfc span{color:var(--g-mint)}
+html.glass .pbx-lay div:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-lm b:hover{color:var(--g-mint)}
+html.glass .pbx-lay div.on{background:rgba(10,30,16,.66)}
+html.glass .pbx-upb{color:var(--g-mint)}
+html.glass .pbx-msg{background:rgba(10,30,16,.66)}
+html.glass .pbx-top button.au-new{color:var(--g-mint)}
+html.glass .pbx-bcr{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-bcr .n{background:rgba(10,30,16,.66)}
+html.glass .pbx-lghost{background:rgba(10,30,16,.66)}
+html.glass .pbx-histbox{background:rgba(255,255,255,.06)}
+html.glass .pbx-hh{background:rgba(10,30,16,.66)}
+html.glass .pbx-hi{background:rgba(255,255,255,.06);border-bottom-color:rgba(255,255,255,.14)}
+html.glass .pbx-hi:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-hi .n{background:hsla(41,100%,62%,.14);color:hsl(41,100%,74%)}
+html.glass .pbx-hi .l{color:var(--g-tx)}
+html.glass .pbx-hi.cur{background:rgba(255,255,255,.06)}
+html.glass .pbx-mbar,html.glass .pbx-mbar2{background:rgba(10,30,16,.66)}
+html.glass .pbx-box.widget .pbx-h{background:rgba(255,255,255,.06);color:hsl(264,90%,70%)}
+html.glass .pbx-box.widget .pbx-h.d-nw{border-color-color:rgba(255,255,255,.14)}
+html.glass .pbx-add2{color:var(--g-tx);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-th{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-th>b{color:var(--g-tx)}
+html.glass .pbx-thadd{background:rgba(255,255,255,.06);color:var(--g-tx)}
+html.glass .pbx-thadd:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-sbar{background:rgba(255,255,255,.06)}
+html.glass .pbx-sbar button{color:var(--g-tx)}
+html.glass .pbx-sbar button:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-sbar button.on{background:rgba(255,255,255,.06);color:hsl(264,90%,70%)}
+html.glass .pbx-sbar button.add{background:rgba(255,255,255,.06)}
+html.glass .pbx-sbar button.dng:hover{color:hsl(0,90%,70%)}
+html.glass .pbx-ac{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-ach{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-ach.on{background:rgba(255,255,255,.06)}
+html.glass .pbx-ach i{color:hsl(42,90%,70%)}
+html.glass .pbx-qbar{background:rgba(255,255,255,.06);color:var(--g-tx)}
+html.glass .pbx-qbar button:hover,html.glass .pbx-qbar label.qa:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-qbar button.on{background:hsla(260,100%,62%,.14);color:hsl(260,100%,74%)}
+html.glass .pbx-qbar select{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-qbar .qn{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-qbar .qsep{background:rgba(255,255,255,.06)}
+html.glass .pbx-pop{background:rgba(255,255,255,.06);color:var(--g-tx)}
+html.glass .pbx-pop .dk-x{background:rgba(255,255,255,.06)}
+html.glass .pbx-pop .fxtabs button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pop .fxtabs button.on{background:hsla(260,100%,62%,.14);color:hsl(260,100%,74%)}
+html.glass .pbx-pop .mwc{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pop .mwb button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pop .mwb button:first-child{background:rgba(10,30,16,.66)}
+html.glass .pbx-rt2{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-rtt{background:rgba(255,255,255,.06);border-bottom-color:rgba(255,255,255,.14)}
+html.glass .pbx-rtt button:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-rtt button.on{background:rgba(10,30,16,.66)}
+html.glass .pbx-pop .rst{background:rgba(255,255,255,.06);color:hsl(259,90%,70%)}
+html.glass .pbx-pop .fxt .fxs{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pop .fxt small{color:var(--g-tx)}
+html.glass .pbx-pop h6{color:var(--g-mut)}
+html.glass .pbx-pop button.pb2{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pop button.pb2:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-pop button.pb2.on{background:hsla(260,100%,62%,.14)}
+html.glass .pbx-pop select{background:rgba(255,255,255,.06);color:var(--g-tx)}
+html.glass .pbx-pop select,html.glass .pbx-pop input[type=color]{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pop p{color:var(--g-mut)}
+html.glass .pbx-ft{background:rgba(255,255,255,.06)}
+html.glass .pbx-ft button,html.glass .pbx-sb button{color:var(--g-tx)}
+html.glass .pbx-pop .mwi{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pop .mwi b{color:var(--g-tx)}
+html.glass .pbx-pop .mwi small{color:var(--g-mut)}
+html.glass .pbx-pop .mwi em{color:var(--g-mut)}
+html.glass .pbx-pop .mwi .mwb button{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
+html.glass .pbx-pop .mwi .mwb button.dg{background:hsla(0,100%,62%,.14);color:hsl(0,90%,70%)}
+html.glass .pbx-mwbar{background:rgba(255,255,255,.06)}
+html.glass .pbx-mwbar span{color:hsl(262,90%,70%)}
+html.glass .pbx-mwbar button{background:rgba(255,255,255,.06);color:var(--g-tx)}
+html.glass .pbx-mwbar button:hover:not(:disabled){background:rgba(255,255,255,.06)}
+html.glass .pbx-mwbar button.no{color:hsl(0,90%,70%)}
+html.glass .pbx-ft button:hover,html.glass .pbx-ft button.on{background:rgba(255,255,255,.06)}
+html.glass .pbx-ft button.dng:hover{color:hsl(0,90%,70%)}
+html.glass .pbx-sb button{background:rgba(255,255,255,.06)}
+html.glass .pbx-sb button:hover{background:rgba(255,255,255,.06);color:hsl(264,90%,70%)}
+html.glass .pbx-mt{background:rgba(255,255,255,.06)}
+html.glass .pbx-mt button{color:var(--g-tx)}
+html.glass .pbx-mt button:hover{background:rgba(255,255,255,.06)}
+html.glass .pbx-mt button.dng:hover{color:hsl(0,90%,70%)}
+html.glass .pbx-tsx button{background:rgba(255,255,255,.06);color:var(--g-tx);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-tsx button:hover{background:rgba(255,255,255,.06)}
+html.glass #pbs-modal.pbs-m #pbs-panel{background:rgba(255,255,255,.06)}
+html.glass #pbs-fab button.no{background:rgba(255,255,255,.06);color:hsl(0,90%,70%)}
+html.glass .pbs-dot{background:hsla(204,100%,62%,.14)}
+html.glass .pbx-pz .pz-pat{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-pz .pz-pat.on{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
+html.glass .pbx-pz .pz-pend{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-pz .pz-no{background:rgba(255,255,255,.06);color:hsl(0,90%,70%)}
+html.glass .pbx-pz p{color:var(--g-mut)}
+html.glass .pbx-pz select,html.glass .pbx-pz input[type=number]{border-color:rgba(255,255,255,.14)}
+html.glass .pz-sep{color:hsl(263,90%,70%);border-top-color:rgba(255,255,255,.14)}
+html.glass .pz-bar{background:rgba(255,255,255,.06)}
+html.glass .pz-bar button{background:rgba(255,255,255,.06);color:var(--g-tx)}
+html.glass .pz-bar button.on{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
+html.glass .pz-bar button.no{color:hsl(0,90%,70%)}
+html.glass .pz-bar span{color:hsl(263,90%,70%)}
+html.glass .pbx-mk p{color:var(--g-mut)}
+html.glass .pbx-mk select{border-color:rgba(255,255,255,.14)}
+html.glass .pbx-mk .mk-list{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-mk .mk-gh{color:hsl(45,90%,70%)}
+html.glass .pbx-mk .mk-sh{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass .pbx-mk .mk-sh.on{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
+html.glass .pbx-mk .mk-pend{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass .pbx-mk .mk-no{background:rgba(255,255,255,.06);color:hsl(0,90%,70%)}
+html.glass .pbx-mk .mk-on{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
+html.glass st.textContent = `#pbed{background:rgba(255,255,255,.06)}
+html.glass #pbed .pe-h code{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass #pbed .pe-h button{background:rgba(255,255,255,.06)}
+html.glass #pbed .pe-l{color:var(--g-mint)}
+html.glass #pbed .pe-l input,html.glass #pbed .pe-l textarea,html.glass #pbed .pe-l select{border-color:rgba(255,255,255,.14)}
+html.glass #pbed .pe-f>span{color:var(--g-mint)}
+html.glass #pbed .pe-c input{border-color:rgba(255,255,255,.14)}
+html.glass #pbed .pe-c button{background:rgba(255,255,255,.06)}
+html.glass #pbed .pe-c i{color:var(--g-mut)}
+html.glass #pbed .pe-r button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass #pbed .pe-r button.red{background:rgba(255,255,255,.06);color:hsl(3,90%,70%)}
+html.glass #pbed .pe-mob{background:rgba(255,255,255,.06)}
+html.glass #pbed .pe-mob.on{background:hsla(34,100%,62%,.14)}
+html.glass #pbed .pe-n{color:var(--g-mut)}
+html.glass #pbx-clone .cl-box{background:rgba(255,255,255,.06)}
+html.glass #pbx-clone .cl-h{background:rgba(10,30,16,.66);border-bottom-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone .cl-tabs button{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone .cl-tabs button.on{background:rgba(10,30,16,.66)}
+html.glass #pbx-clone .cl-ctl{background:rgba(255,255,255,.06);border-bottom-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone .cl-ctl input[type=text],html.glass #pbx-clone .cl-ctl input[type=url]{border-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone .cl-ctl select{border-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone .cl-ctl label{color:var(--g-mint)}
+html.glass #pbx-clone .cl-ctl button,html.glass #pbx-clone .cl-f button{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass #pbx-clone .cl-stage{background:rgba(255,255,255,.06)}
+html.glass #pbx-clone .cl-empty{color:var(--g-mut)}
+html.glass #pbx-clone .cl-win{background:rgba(255,255,255,.06)}
+html.glass #pbx-clone .cl-in iframe,html.glass #pbx-clone .cl-in img{background:rgba(255,255,255,.06)}
+html.glass #pbx-clone .cl-f{background:rgba(255,255,255,.06);border-top-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone .cl-lr{color:hsl(263,90%,70%)}
+html.glass #pbx-clone .cl-lr b{color:var(--g-mint)}
+html.glass #pbx-clone .cl-dest{color:var(--g-mint)}
+html.glass #pbx-clone .cl-f #cl-st{color:var(--g-mut)}
+html.glass #pbx-clone .cl-extok{color:var(--g-mint)}
+html.glass #pbx-clone .cl-help{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass #pbx-clone .cl-help code{background:rgba(255,255,255,.06)}
+html.glass #pbx-clone .cl-sm{color:var(--g-mut)}
+html.glass #pbx-clone #cl-rep{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone #cl-rep .rw{border-top-color:rgba(255,255,255,.14)}
+html.glass #pbx-clone #cl-rep .ch.ok{background:hsla(149,100%,62%,.14);color:hsl(149,100%,74%)}
+html.glass #pbx-clone #cl-rep .ch.partial{background:hsla(47,100%,62%,.14);color:hsl(47,100%,74%)}
+html.glass #pbx-clone #cl-rep .ch.none{background:hsla(0,100%,62%,.14);color:hsl(0,90%,70%)}
+html.glass #pbx-clone #cl-rep .rw small{color:var(--g-mut)}
+html.glass #pbx-clone #cl-rep .bt button{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass #pbx-clone .cl-sm.warn{background:rgba(255,255,255,.06);color:hsl(22,90%,70%)}
+html.glass #pbx-clone .cl-note{background:hsla(48,100%,62%,.14);color:hsl(48,100%,74%)}
+html.glass #pbx-clean .cb{background:rgba(255,255,255,.06)}
+html.glass #pbx-clean .ch{border-bottom-color:rgba(255,255,255,.14)}
+html.glass #pbx-clean .ch b{color:var(--g-mint)}
+html.glass #pbx-clean .cx{background:rgba(255,255,255,.06)}
+html.glass #pbx-clean .cm{color:var(--g-tx)}
+html.glass #pbx-clean .ci{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+html.glass #pbx-clean .ci i{background:rgba(10,30,16,.66)}
+html.glass #pbx-clean .ci.off i{background:rgba(255,255,255,.06)}
+html.glass #pbx-clean .cf{border-top-color:rgba(255,255,255,.14)}
+html.glass #pbx-clean button.s{background:rgba(255,255,255,.06);color:var(--g-mint)}
+html.glass #pbx-clean select{border-color:rgba(255,255,255,.14)}
+html.glass #pbx-clean .warn{background:hsla(42,100%,62%,.14)}
