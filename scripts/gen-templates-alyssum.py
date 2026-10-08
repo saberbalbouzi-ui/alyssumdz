@@ -81,6 +81,15 @@ body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;
 .pb-pc:hover::after{left:140%}
 .pb-pci{position:relative!important;aspect-ratio:1/.92!important;background:#04180d!important}
 .pb-pci img{transition:transform .8s cubic-bezier(.2,.8,.2,1)}.pb-pc:hover .pb-pci img{transform:scale(1.08)}
+.pb-pci,.aly-grid .card .thumb{background-color:#04180d!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;position:relative;overflow:hidden}
+.pb-pc:nth-child(6n+1) .pb-pci,.aly-grid .card:nth-child(6n+1) .thumb{background-image:url(/assets/img/tpl/alyssum-sc1.webp)!important}
+.pb-pc:nth-child(6n+2) .pb-pci,.aly-grid .card:nth-child(6n+2) .thumb{background-image:url(/assets/img/tpl/alyssum-sc2.webp)!important}
+.pb-pc:nth-child(6n+3) .pb-pci,.aly-grid .card:nth-child(6n+3) .thumb{background-image:url(/assets/img/tpl/alyssum-sc3.webp)!important}
+.pb-pc:nth-child(6n+4) .pb-pci,.aly-grid .card:nth-child(6n+4) .thumb{background-image:url(/assets/img/tpl/alyssum-sc4.webp)!important}
+.pb-pc:nth-child(6n+5) .pb-pci,.aly-grid .card:nth-child(6n+5) .thumb{background-image:url(/assets/img/tpl/alyssum-sc5.webp)!important}
+.pb-pc:nth-child(6n+6) .pb-pci,.aly-grid .card:nth-child(6n+6) .thumb{background-image:url(/assets/img/tpl/alyssum-sc6.webp)!important}
+.pb-pci img,.aly-grid .card .thumb img{position:absolute!important;left:0;right:0;bottom:15%;margin:0 auto;width:68%!important;height:auto!important;aspect-ratio:1;object-fit:contain!important;filter:drop-shadow(0 14px 14px rgba(0,0,0,.55));z-index:1}
+.pb-pc:hover .pb-pci img,.aly-grid .card:hover .thumb img{transform:scale(1.07) translateY(-4px)}
 .pb-pci::before{content:"♡";position:absolute;top:10px;inset-inline-end:10px;z-index:3;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(2,12,7,.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:17px;transition:.3s}
 .pb-pc:hover .pb-pci::before{background:#ef4444;border-color:#ef4444;transform:scale(1.12)}
 .pb-pcd{top:auto!important;bottom:10px!important;inset-inline-start:10px!important;background:linear-gradient(135deg,#ef4444,#f97316)!important;border-radius:999px!important;padding:3px 10px!important;font-weight:900!important}
