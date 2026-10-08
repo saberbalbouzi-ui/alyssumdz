@@ -680,6 +680,7 @@ const PBClone = (function () {
   const ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 012-2h10"/></svg>';
   function close() { const m = $("pbx-clone"); if (m) m.remove(); S.frame = null; S.img = null; S.runId = ""; clearInterval(EXT.t); }
   function open() {
+    if (document.documentElement.classList.contains("app-off-cloner")) { toast("ناسخ القوالب معطّل من تبويب تطبيقات"); return; }
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>

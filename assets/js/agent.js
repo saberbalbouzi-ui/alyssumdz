@@ -318,7 +318,7 @@ const Agent = (() => {
   /* ── تدريب الوكيل لكل صفحة (تُدار من لوحة التحكم ⟵ الوكيل الذكي ⟵ تدريب الوكيل) ──
      assets/data/agent-training.json: { scopes: { home: {...}, "<slug>": {...} } }
      الدماغ (AgentBrain) يُحمَّل عند الحاجة فقط ويبحث في: الأسئلة المدرَّبة + معلومات الصفحة + بيانات المنتج. */
-  let TRAIN = null, BRAIN_CHUNKS = null;
+  let TRAIN = null, BRAIN_CHUNKS = null, APPS_OFF = new Set();
   const scopeKey = () => currentSlug || "home";
   const scopeCfg = () => (TRAIN && TRAIN.scopes && TRAIN.scopes[scopeKey()]) || null;
   function loadScriptOnce(src) {
@@ -337,6 +337,7 @@ const Agent = (() => {
         const r = await fetch(base + "assets/data/agent-training.json", { cache: "no-store" });
         TRAIN = r.ok ? await r.json() : null;
       } catch (e) { TRAIN = null; }
+      try { const r = await fetch(base + "assets/data/apps.json", { cache: "no-store" }); const j = r.ok ? await r.json() : null; APPS_OFF = new Set((j && j.off) || []); } catch (e) { APPS_OFF = new Set(); }      // تعطيل التطبيقات من لوحة التحكم (agent/voice)
       const c = scopeCfg();
       await loadScriptOnce(base + "assets/js/agent-brain.js");            // يلزم أيضاً لبحث المنتجات بالكلمات المفتاحية
       if (c && c.enabled !== false) applyIdentity();
@@ -874,8 +875,10 @@ const Agent = (() => {
   }
   async function decideUi() {
     const g = (TRAIN && TRAIN.display) || {}, sc = scopeCfg() || {};
+    if (APPS_OFF.has("agent")) { const f0 = document.getElementById("agent-fab"); if (f0) f0.style.display = "none"; return; }
     let mode = sc.display && sc.display !== "default" ? sc.display : (g.mode || "chat");
     if (mode === "avatar" && g.mobileChat && window.innerWidth <= 640) mode = "chat";
+    if (APPS_OFF.has("voice")) mode = "chat";
     avatarOn = mode === "avatar";
     const fab = document.getElementById("agent-fab");
     if (avatarOn) { await loadAvatarScript(); if (!window.AvatarScript) { avatarOn = false; fab.style.display = "grid"; return; } fab.style.display = "none"; Avatar.init(); } else fab.style.display = "grid";
