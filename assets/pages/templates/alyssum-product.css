@@ -60,3 +60,24 @@ main .sec-sub,main .lead{color:#b9d4c3!important}
 .gthumbs{display:flex;gap:10px;flex-wrap:wrap}
 .gthumbs img{flex:0 0 78px!important;width:78px!important;height:78px!important;object-fit:cover;border-radius:12px;border:2px solid rgba(134,239,172,.3)!important;opacity:.75}
 .gthumbs img.on,.gthumbs img:hover{border-color:#bef264!important;opacity:1}
+/* معرض المنتج: يلتصق أثناء تمرير عمود المعلومات الطويل (سطح المكتب)، وبلا فراغ سفلي مصطنع */
+.pb-colin:has(#gmain)>.pb-w{margin-bottom:12px!important}
+.pb-col:has(#gmain){align-self:flex-start}
+@media(min-width:900px){.pb-col:has(#gmain){position:sticky;top:90px}}
+.pbox,.pb-colin:has(#gmain){overflow:hidden}
+#gmain{border-radius:20px;transition:transform .6s cubic-bezier(.2,.8,.2,1);box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.pb-colin:has(#gmain):hover #gmain{transform:scale(1.025)}
+.pb-colin:has(#gmain){box-shadow:0 22px 60px rgba(0,0,0,.5),0 0 0 1px rgba(190,242,100,.14),inset 0 1px 0 rgba(255,255,255,.16)!important}
+/* شريط الثقة تحت المعلومات */
+.pb-sec .aly-trust{margin-top:4px}
+/* شريط الشراء الثابت (جوال) */
+.aly-buybar{display:none}
+@media(max-width:767px){
+  .aly-buybar{position:fixed;left:10px;right:10px;bottom:10px;z-index:9990;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 14px;border-radius:18px;background:linear-gradient(145deg,rgba(12,54,29,.94),rgba(3,16,9,.97));border:1px solid rgba(134,239,172,.38);backdrop-filter:blur(16px);box-shadow:0 14px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.16);transition:transform .35s,opacity .35s}
+  .aly-buybar.off{transform:translateY(140%);opacity:0;pointer-events:none}
+  .aly-buybar .bb-p small{display:block;color:#a7c4b2;font-size:12px}
+  .aly-buybar .bb-p b{color:#bef264;font-size:22px;text-shadow:0 0 18px rgba(190,242,100,.4)}
+  .aly-buybar .bb-btn{flex:none;padding:13px 26px;border-radius:14px;font-weight:900;font-size:16px;text-decoration:none;color:#052e16!important;background:linear-gradient(180deg,#bef264,#4ade80 55%,#22c55e);box-shadow:0 8px 22px rgba(74,222,128,.4),inset 0 1px 0 rgba(255,255,255,.7)}
+  body{padding-bottom:84px}
+  .pb-colin:has(#gmain){padding:12px!important}
+}

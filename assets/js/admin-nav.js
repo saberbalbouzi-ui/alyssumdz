@@ -132,6 +132,8 @@ const AdminNav = (() => {
   /* ───── صفحات المنتجات بأسلوب أليسوم: يُستبدل هيدر/شريط/فوتر الصفحة بنظيرها في القالب، ويُضاف CSS القالب + CSS صفحة المنتج (alyssum-product.css)
      فتبقى بيانات المنتج وقسم الطلب ومحتواه الخاص كما هي، لكن بالخلفية والزجاج الأخضر والأزرار نفسها ───── */
   let ALYPC = null;
+  /* شريط الشراء الثابت (جوال فقط): السعر الحالي + زر «اطلب الآن» يمرّر إلى نموذج الطلب، ويختفي حين يكون النموذج ظاهراً */
+  const ALY_BUYBAR = '<div class="aly-buybar" dir="rtl"><div class="bb-p"><small>السعر</small><b id="bb-price"></b></div><a class="bb-btn" href="#order-form">اطلب الآن</a></div><script>(function(){var bar=document.querySelector(".aly-buybar");if(!bar)return;var pe=function(){return document.querySelector(".price-now,#pprice")},o=document.getElementById("order-form");function sync(){var e=pe(),b=document.getElementById("bb-price");if(e&&b)b.textContent=e.textContent.trim()}sync();setInterval(sync,1500);if(o&&"IntersectionObserver"in window){new IntersectionObserver(function(es){es.forEach(function(x){bar.classList.toggle("off",x.isIntersecting)})},{threshold:.15}).observe(o)}var a=bar.querySelector(".bb-btn");a.addEventListener("click",function(ev){if(o){ev.preventDefault();o.scrollIntoView({behavior:"smooth",block:"start"})}})})()</script>';
   const alyHas = (n, t) => { let f = false; alyWalk(n, x => { if (x.type === t) f = true; }); return f; };
   async function alySkinProduct(P) {
     if (ALYPC === null) { try { const r = await fetch("assets/pages/templates/alyssum-product.css?t=" + Date.now()); ALYPC = r.ok ? await r.text() : ""; } catch (_) { ALYPC = ""; } }
@@ -141,6 +143,12 @@ const AdminNav = (() => {
     top.grp = "top"; foot.grp = "bot";
     P.sections = [top].concat((P.sections || []).filter(sc => !isTop(sc) && !isFoot(sc)).map(sc => { if (sc.grp === "top" || sc.grp === "bot") sc.grp = "main"; return sc; }), [foot]);
     alyDarken(P.sections);
+    /* إضافات صفحة المنتج: شريط الثقة (من القالب) بعد قسم المعرض/المعلومات، وشريط شراء ثابت للجوال قبل الفوتر؛ يُزالان أولاً كي لا يتكرران عند إعادة التطبيق */
+    P.sections = P.sections.filter(sc => !sc.aly);
+    let trust = ""; tpl.sections.forEach(sc => alyWalk(sc, n => { if (!trust && n.type === "html" && n.set && /aly-trust/.test(n.set.code || "")) trust = n.set.code; }));
+    const ti = P.sections.findIndex(sc => alyHas(sc, "pprice") || alyHas(sc, "poffers") || (JSON.stringify(sc.cols || []).indexOf("gmain") >= 0));
+    if (trust) { const ts = PB.mkS([PB.mkC([PB.mkW("html", { code: trust })])], { cw: { d: 1140 }, pad: { d: [6, 20, 18, 20], m: [4, 14, 14, 14] } }); ts.aly = "trust"; P.sections.splice(ti >= 0 ? ti + 1 : 1, 0, ts); }
+    const bb = PB.mkS([PB.mkC([PB.mkW("html", { code: ALY_BUYBAR })])], { cw: { d: 1140 } }); bb.aly = "buybar"; bb.grp = "bot"; P.sections.splice(P.sections.length - 1, 0, bb);
     P.tplCss = (tpl.css || "") + "\n" + (ALYPC || ""); P.tplSkin = "alyssum";
     return P;
   }
