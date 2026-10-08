@@ -1,0 +1,1550 @@
+{
+  "v": 1,
+  "title": "ALYSSUM",
+  "slug": "alyssum",
+  "desc": "قالب ALYSSUM المرجعي: أسود نباتي فاخر، أخضر فوسفوري Pistachio، ذهبي، زجاج ثلاثي الأبعاد، منتجات ALYSSUM الحقيقية، توهجات وحركات Page Builder، مع استجابة كاملة للهاتف.",
+  "bg": "#050705",
+  "ff": "'Cairo',sans-serif",
+  "header": false,
+  "footer": false,
+  "css": "",
+  "sections": [
+    {
+      "id": "top",
+      "set": {
+        "layout": "full",
+        "cw": {
+          "d": 1140
+        },
+        "pad": {
+          "d": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "gap": {
+          "d": 0
+        },
+        "kind": "canvas"
+      },
+      "cols": [
+        {
+          "id": "a",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": []
+        }
+      ]
+    },
+    {
+      "id": "nav",
+      "set": {
+        "layout": "full",
+        "cw": {
+          "d": 1140
+        },
+        "pad": {
+          "d": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "gap": {
+          "d": 0
+        },
+        "kind": "canvas"
+      },
+      "cols": [
+        {
+          "id": "b",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "hdr",
+              "type": "shdr",
+              "set": {
+                "hord": [
+                  {
+                    "id": "logo"
+                  },
+                  {
+                    "id": "menu"
+                  },
+                  {
+                    "id": "social"
+                  },
+                  {
+                    "id": "share"
+                  },
+                  {
+                    "id": "cart"
+                  }
+                ],
+                "ltx": true,
+                "la": "أليسوم ALYSSUM",
+                "llink": "index.html",
+                "menu": [
+                  {
+                    "t": "الفئات",
+                    "l": "@cats"
+                  },
+                  {
+                    "t": "المنتجات",
+                    "l": "@prods"
+                  },
+                  {
+                    "t": "لماذا نحن؟",
+                    "l": "@features"
+                  },
+                  {
+                    "t": "الأسئلة",
+                    "l": "@faq"
+                  }
+                ],
+                "mon": true,
+                "son": true,
+                "soc": [
+                  {
+                    "id": "whatsapp",
+                    "url": "https://wa.me/213559237239"
+                  }
+                ],
+                "shon": true,
+                "cart": true,
+                "hbg": "#050705",
+                "hbr": "#b7ff4a",
+                "lc": "#0b160d",
+                "lac": "#b7ff4a",
+                "mc": "#0b160d",
+                "cbg": "#b7ff4a",
+                "stk": true,
+                "lfs": {
+                  "d": 24
+                },
+                "hcw": {
+                  "d": 1240
+                },
+                "hpd": {
+                  "d": [
+                    10,
+                    0,
+                    10,
+                    0
+                  ]
+                },
+                "fh": {
+                  "d": 70
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hero",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "pad": {
+          "d": [
+            72,
+            20,
+            88,
+            20
+          ],
+          "m": [
+            38,
+            16,
+            52,
+            16
+          ]
+        },
+        "gap": {
+          "d": 42
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "ht",
+          "set": {
+            "w": {
+              "d": 55
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "ey",
+              "type": "text",
+              "set": {
+                "html": "<p>🌿 ALYSSUM Herbal Science</p>",
+                "fs": {
+                  "d": 15,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "start"
+                },
+                "fw": "500",
+                "color": "#b7ff4a"
+              }
+            },
+            {
+              "id": "h1",
+              "type": "heading",
+              "set": {
+                "text": "منتجات طبيعية 100% أصلية، توصلك حتى باب الدار",
+                "tag": "h1",
+                "fs": {
+                  "d": 58,
+                  "m": 34
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "start"
+                },
+                "lh": {
+                  "d": 1.2
+                },
+                "color": "#f4f8f3"
+              }
+            },
+            {
+              "id": "hp",
+              "type": "text",
+              "set": {
+                "html": "<p>زيوت، أعشاب، عسل فاخر ومنتجات عناية طبيعية مختارة بعناية — جودة تثق بها آلاف العائلات الجزائرية.</p>",
+                "fs": {
+                  "d": 20,
+                  "m": 16
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "start"
+                },
+                "fw": "500",
+                "color": "#a6b3aa"
+              }
+            },
+            {
+              "id": "buy",
+              "type": "button",
+              "set": {
+                "text": "🛍️ تسوّق الآن",
+                "kind": "link",
+                "link": "#products",
+                "bgc": "#b7ff4a",
+                "color": "#061006",
+                "hbg": "#d9ff9a",
+                "fs": {
+                  "d": 18,
+                  "m": 16
+                },
+                "fw": "900",
+                "brad": {
+                  "d": 16
+                },
+                "bpad": {
+                  "d": [
+                    15,
+                    34,
+                    15,
+                    34
+                  ]
+                }
+              }
+            },
+            {
+              "id": "tr",
+              "type": "text",
+              "set": {
+                "html": "<p>✔ دفع عند الاستلام  ·  ✔ توصيل 58 ولاية  ·  ✔ منتجات أصلية</p>",
+                "fs": {
+                  "d": 15,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "start"
+                },
+                "fw": "500",
+                "color": "#d9f99d"
+              }
+            }
+          ]
+        },
+        {
+          "id": "hm",
+          "set": {
+            "w": {
+              "d": 45
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "hero",
+              "type": "image",
+              "set": {
+                "src": "assets/img/hero-720.webp",
+                "alt": "عائلة جزائرية تثق بمنتجات أليسوم الطبيعية",
+                "fit": "cover",
+                "rad": {
+                  "d": 34
+                },
+                "shadow": "lg",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            },
+            {
+              "id": "float",
+              "type": "image",
+              "set": {
+                "src": "assets/img/tarkiz/cover-1791065932434.webp",
+                "alt": "عسل التركيز",
+                "fit": "contain",
+                "rad": {
+                  "d": 20
+                },
+                "shadow": "lg"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cats",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "id": "cats",
+        "pad": {
+          "d": [
+            54,
+            20,
+            68,
+            20
+          ],
+          "m": [
+            34,
+            16,
+            42,
+            16
+          ]
+        },
+        "gap": {
+          "d": 22
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "ch",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "k",
+              "type": "text",
+              "set": {
+                "html": "<p>تسوّق بسهولة</p>",
+                "fs": {
+                  "d": 14,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#b7ff4a"
+              }
+            },
+            {
+              "id": "ct",
+              "type": "heading",
+              "set": {
+                "text": "تسوّق حسب الفئة",
+                "tag": "h2",
+                "fs": {
+                  "d": 40,
+                  "m": 28
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "center"
+                },
+                "lh": {
+                  "d": 1.25
+                },
+                "color": "#f4f8f3"
+              }
+            },
+            {
+              "id": "cp",
+              "type": "text",
+              "set": {
+                "html": "<p>اختر الفئة التي تبحث عنها وشاهد منتجاتها فوراً</p>",
+                "fs": {
+                  "d": 17,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#a6b3aa"
+              }
+            }
+          ]
+        },
+        {
+          "id": "cg",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "cats",
+              "type": "shopcats",
+              "set": {
+                "items": [
+                  {
+                    "cat": "skin",
+                    "label": "العناية بالبشرة",
+                    "img": "assets/img/anti-acne/presentation/anti-acne 01.webp"
+                  },
+                  {
+                    "cat": "hair",
+                    "label": "العناية بالشعر",
+                    "img": "assets/img/anti-chute/0.webp"
+                  },
+                  {
+                    "cat": "honey",
+                    "label": "العسل الطبيعي",
+                    "img": "assets/img/miel-sidr/0.webp"
+                  },
+                  {
+                    "cat": "health",
+                    "label": "الصحة والعافية",
+                    "img": "assets/img/flexi-relief/0.webp"
+                  },
+                  {
+                    "cat": "roqia",
+                    "label": "الرقية الشرعية",
+                    "img": "assets/img/misk-noir/0.webp"
+                  },
+                  {
+                    "cat": "supplements",
+                    "label": "مكملات غذائية",
+                    "img": "assets/img/tarkiz/presentation/01.webp"
+                  }
+                ],
+                "cols": {
+                  "d": 3,
+                  "t": 3,
+                  "m": 2
+                },
+                "gap": {
+                  "d": 18
+                },
+                "rad": {
+                  "d": 26
+                },
+                "fs": {
+                  "d": 16
+                },
+                "tc": "#fff",
+                "ov": "#071008",
+                "ovo": 35,
+                "ratio": "1/1",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bestsellers",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "pad": {
+          "d": [
+            54,
+            20,
+            68,
+            20
+          ],
+          "m": [
+            34,
+            16,
+            42,
+            16
+          ]
+        },
+        "gap": {
+          "d": 22
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "bh",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "bk",
+              "type": "text",
+              "set": {
+                "html": "<p>اختيار الآلاف</p>",
+                "fs": {
+                  "d": 14,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#d6b45a"
+              }
+            },
+            {
+              "id": "bht",
+              "type": "heading",
+              "set": {
+                "text": "الأكثر مبيعاً",
+                "tag": "h2",
+                "fs": {
+                  "d": 40,
+                  "m": 28
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "center"
+                },
+                "lh": {
+                  "d": 1.25
+                },
+                "color": "#f4f8f3"
+              }
+            },
+            {
+              "id": "bp",
+              "type": "text",
+              "set": {
+                "html": "<p>المنتجات المفضلة لدى عملائنا</p>",
+                "fs": {
+                  "d": 17,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#a6b3aa"
+              }
+            }
+          ]
+        },
+        {
+          "id": "bg",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "best",
+              "type": "products",
+              "set": {
+                "mode": "ids",
+                "ids": [
+                  "anti-acne",
+                  "tarkiz",
+                  "miel-sidr",
+                  "anti-chute"
+                ],
+                "limit": 4,
+                "btn": "اطلب الآن",
+                "showOld": true,
+                "cardw": {
+                  "d": 250,
+                  "m": 160
+                },
+                "gap": {
+                  "d": 20
+                },
+                "rad": {
+                  "d": 26
+                },
+                "cbg": "rgba(7,16,9,.78)",
+                "bbg": "#b7ff4a",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "id": "products",
+        "pad": {
+          "d": [
+            54,
+            20,
+            72,
+            20
+          ],
+          "m": [
+            34,
+            16,
+            44,
+            16
+          ]
+        },
+        "gap": {
+          "d": 22
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "ph",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "pk",
+              "type": "text",
+              "set": {
+                "html": "<p>التشكيلة الكاملة</p>",
+                "fs": {
+                  "d": 14,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#b7ff4a"
+              }
+            },
+            {
+              "id": "pht",
+              "type": "heading",
+              "set": {
+                "text": "كل منتجاتنا الطبيعية",
+                "tag": "h2",
+                "fs": {
+                  "d": 40,
+                  "m": 28
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "center"
+                },
+                "lh": {
+                  "d": 1.25
+                },
+                "color": "#f4f8f3"
+              }
+            },
+            {
+              "id": "pp",
+              "type": "text",
+              "set": {
+                "html": "<p>اختر ما يناسبك — والدفع دائماً عند الاستلام</p>",
+                "fs": {
+                  "d": 17,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#a6b3aa"
+              }
+            }
+          ]
+        },
+        {
+          "id": "pg",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "all",
+              "type": "products",
+              "set": {
+                "mode": "all",
+                "limit": 12,
+                "btn": "اطلب الآن",
+                "showOld": true,
+                "cardw": {
+                  "d": 250,
+                  "m": 160
+                },
+                "gap": {
+                  "d": 20
+                },
+                "rad": {
+                  "d": 26
+                },
+                "cbg": "rgba(7,16,9,.78)",
+                "bbg": "#b7ff4a",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "id": "features",
+        "pad": {
+          "d": [
+            58,
+            20,
+            72,
+            20
+          ],
+          "m": [
+            36,
+            16,
+            46,
+            16
+          ]
+        },
+        "gap": {
+          "d": 24
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "fh",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "fk",
+              "type": "text",
+              "set": {
+                "html": "<p>وعد ALYSSUM</p>",
+                "fs": {
+                  "d": 14,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#b7ff4a"
+              }
+            },
+            {
+              "id": "fht",
+              "type": "heading",
+              "set": {
+                "text": "لماذا يثق بنا الآلاف؟",
+                "tag": "h2",
+                "fs": {
+                  "d": 40,
+                  "m": 28
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "center"
+                },
+                "lh": {
+                  "d": 1.25
+                },
+                "color": "#f4f8f3"
+              }
+            }
+          ]
+        },
+        {
+          "id": "fg",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "f1",
+              "type": "iconbox",
+              "set": {
+                "icon": "💵",
+                "title": "الدفع عند الاستلام",
+                "text": "لا نطلب أي دفع مسبق — تدفع فقط عندما يصلك المنتج",
+                "iconColor": "#b7ff4a",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            },
+            {
+              "id": "f2",
+              "type": "iconbox",
+              "set": {
+                "icon": "🚚",
+                "title": "توصيل 58 ولاية",
+                "text": "توصيل سريع إلى باب المنزل أو المكتب خلال 24-72 ساعة",
+                "iconColor": "#b7ff4a",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            },
+            {
+              "id": "f3",
+              "type": "iconbox",
+              "set": {
+                "icon": "🌿",
+                "title": "طبيعي 100%",
+                "text": "منتجات أصلية مختارة بعناية ومفحوصة قبل الشحن",
+                "iconColor": "#b7ff4a",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            },
+            {
+              "id": "f4",
+              "type": "iconbox",
+              "set": {
+                "icon": "🎧",
+                "title": "دعم مباشر",
+                "text": "واتساب ومساعدة مباشرة للرد على استفساراتك",
+                "iconColor": "#b7ff4a",
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "story",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "pad": {
+          "d": [
+            64,
+            20,
+            78,
+            20
+          ],
+          "m": [
+            40,
+            16,
+            48,
+            16
+          ]
+        },
+        "gap": {
+          "d": 32
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "si",
+          "set": {
+            "w": {
+              "d": 46
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "storyimg",
+              "type": "image",
+              "set": {
+                "src": "assets/img/anti-acne/body/anti-acne 05.webp",
+                "alt": "منتج أليسوم للعناية بالبشرة",
+                "fit": "cover",
+                "rad": {
+                  "d": 26
+                },
+                "shadow": "lg"
+              }
+            }
+          ]
+        },
+        {
+          "id": "st",
+          "set": {
+            "w": {
+              "d": 54
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "sk",
+              "type": "text",
+              "set": {
+                "html": "<p>من نحن</p>",
+                "fs": {
+                  "d": 14,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "start"
+                },
+                "fw": "500",
+                "color": "#b7ff4a"
+              }
+            },
+            {
+              "id": "sh",
+              "type": "heading",
+              "set": {
+                "text": "قصة أليسوم — من الطبيعة الجزائرية إلى بيتك",
+                "tag": "h2",
+                "fs": {
+                  "d": 42,
+                  "m": 30
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "start"
+                },
+                "color": "#f4f8f3"
+              }
+            },
+            {
+              "id": "sx",
+              "type": "text",
+              "set": {
+                "html": "<p>أجود مكونات الطبيعة — العسل، الأعشاب والزيوت — تستحق أن تصل إليك بجودة عالية وثقة حقيقية.</p>",
+                "fs": {
+                  "d": 18,
+                  "m": 15
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "start"
+                },
+                "fw": "500",
+                "color": "#a6b3aa"
+              }
+            },
+            {
+              "id": "bl",
+              "type": "iconlist",
+              "set": {
+                "items": "مكونات طبيعية مختارة بعناية\nفحص جودة قبل التعبئة والشحن\nثقة آلاف العائلات الجزائرية",
+                "icon": "✔",
+                "ic_c": "#b7ff4a",
+                "fs": {
+                  "d": 19,
+                  "m": 16
+                },
+                "gap": {
+                  "d": 12
+                },
+                "fw": "800"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reviews",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "pad": {
+          "d": [
+            56,
+            20,
+            72,
+            20
+          ],
+          "m": [
+            36,
+            16,
+            44,
+            16
+          ]
+        },
+        "gap": {
+          "d": 22
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "rh",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "rk",
+              "type": "text",
+              "set": {
+                "html": "<p>آراء حقيقية</p>",
+                "fs": {
+                  "d": 14,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#d6b45a"
+              }
+            },
+            {
+              "id": "rht",
+              "type": "heading",
+              "set": {
+                "text": "ماذا قال زبائننا؟",
+                "tag": "h2",
+                "fs": {
+                  "d": 40,
+                  "m": 28
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "center"
+                },
+                "lh": {
+                  "d": 1.25
+                },
+                "color": "#f4f8f3"
+              }
+            }
+          ]
+        },
+        {
+          "id": "rg",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "r1",
+              "type": "testimonial",
+              "set": {
+                "text": "وصلني المنتج في يومين، والنتيجة ممتازة جداً. تعامل راقٍ والدفع عند الاستلام مريح.",
+                "name": "أمينة — الجزائر العاصمة",
+                "rating": 5,
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            },
+            {
+              "id": "r2",
+              "type": "testimonial",
+              "set": {
+                "text": "طلبت زيت ضد التساقط وكان التعامل سريعاً ومحترفاً. شكراً أليسوم.",
+                "name": "يوسف — وهران",
+                "rating": 5,
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            },
+            {
+              "id": "r3",
+              "type": "testimonial",
+              "set": {
+                "text": "عسل السدر أصلي وذقته وعرفت الفرق. أنصح به بشدة.",
+                "name": "سفيان — قسنطينة",
+                "rating": 5,
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cta",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "pad": {
+          "d": [
+            70,
+            20,
+            82,
+            20
+          ],
+          "m": [
+            44,
+            16,
+            54,
+            16
+          ]
+        },
+        "gap": {
+          "d": 20
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "cc",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "ch",
+              "type": "heading",
+              "set": {
+                "text": "ابدأ رحلتك نحو صحة طبيعية اليوم",
+                "tag": "h2",
+                "fs": {
+                  "d": 42,
+                  "m": 29
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "center"
+                },
+                "lh": {
+                  "d": 1.25
+                },
+                "color": "#f4f8f3"
+              }
+            },
+            {
+              "id": "cx",
+              "type": "text",
+              "set": {
+                "html": "<p>آلاف العائلات الجزائرية اختارت أليسوم لجودتها وثقتها. اطلب الآن وادفع عند الاستلام.</p>",
+                "fs": {
+                  "d": 18,
+                  "m": 15
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#a6b3aa"
+              }
+            },
+            {
+              "id": "cb",
+              "type": "button",
+              "set": {
+                "text": "🛍️ تصفّح المنتجات",
+                "kind": "link",
+                "link": "#products",
+                "bgc": "#b7ff4a",
+                "color": "#061006",
+                "hbg": "#d9ff9a",
+                "fs": {
+                  "d": 18,
+                  "m": 16
+                },
+                "fw": "900",
+                "brad": {
+                  "d": 16
+                },
+                "bpad": {
+                  "d": [
+                    15,
+                    34,
+                    15,
+                    34
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faq",
+      "set": {
+        "layout": "boxed",
+        "cw": {
+          "d": 1140
+        },
+        "id": "faq",
+        "pad": {
+          "d": [
+            54,
+            20,
+            72,
+            20
+          ],
+          "m": [
+            34,
+            16,
+            44,
+            16
+          ]
+        },
+        "gap": {
+          "d": 20
+        },
+        "fxs": [
+          {
+            "id": "aurora",
+            "n": "Green Aurora",
+            "on": true,
+            "tpl": "selector{background:radial-gradient(50% 60% at 10% 20%,#b7ff4a38,transparent 65%),radial-gradient(45% 55% at 90% 18%,#22c55e28,transparent 65%),radial-gradient(60% 60% at 60% 100%,#d6b45a20,transparent 65%),#050705;background-size:150% 150%;animation:alyAur 22s ease-in-out infinite alternate}@keyframes alyAur{to{background-position:100% 100%}}",
+            "p": {}
+          }
+        ]
+      },
+      "cols": [
+        {
+          "id": "qq",
+          "set": {
+            "w": {
+              "d": 100
+            },
+            "va": "center"
+          },
+          "widgets": [
+            {
+              "id": "qk",
+              "type": "text",
+              "set": {
+                "html": "<p>أسئلة شائعة</p>",
+                "fs": {
+                  "d": 14,
+                  "m": 14
+                },
+                "lh": {
+                  "d": 1.9
+                },
+                "ta": {
+                  "d": "center"
+                },
+                "fw": "500",
+                "color": "#b7ff4a"
+              }
+            },
+            {
+              "id": "qh",
+              "type": "heading",
+              "set": {
+                "text": "كل ما تحتاج معرفته",
+                "tag": "h2",
+                "fs": {
+                  "d": 40,
+                  "m": 28
+                },
+                "fw": "900",
+                "ta": {
+                  "d": "center"
+                },
+                "lh": {
+                  "d": 1.25
+                },
+                "color": "#f4f8f3"
+              }
+            },
+            {
+              "id": "faq",
+              "type": "faq",
+              "set": {
+                "items": [
+                  {
+                    "q": "كيف أطلب؟",
+                    "a": "اختر المنتج والعرض، املأ الاسم والهاتف والولاية ثم أكد الطلب."
+                  },
+                  {
+                    "q": "هل الدفع عند الاستلام متاح؟",
+                    "a": "نعم، الدفع عند الاستلام متاح في الولايات الـ58."
+                  },
+                  {
+                    "q": "كم مدة التوصيل؟",
+                    "a": "عادة من 24 إلى 72 ساعة حسب الولاية."
+                  },
+                  {
+                    "q": "كيف أتواصل معكم؟",
+                    "a": "عبر واتساب على 0559 23 72 39."
+                  }
+                ],
+                "fxs": [
+                  {
+                    "id": "glass",
+                    "n": "Glass 3D",
+                    "on": true,
+                    "tpl": "selector{background:rgba(7,16,9,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(183,255,74,.28);box-shadow:0 18px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .45s,box-shadow .45s}selector:hover{transform:perspective(1100px) translateY(-8px) rotateX(2deg) rotateY(-2deg);box-shadow:0 30px 90px rgba(141,255,34,.22),inset 0 1px 0 rgba(255,255,255,.12)}",
+                    "p": {}
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
