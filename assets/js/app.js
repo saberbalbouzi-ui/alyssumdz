@@ -5,6 +5,7 @@ function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; if(productType
 function cartItemFreeShip(it){ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; if(!p || !p.freeShip) return false; const fl = (p.offers||[]).filter(x=>x.ship); return fl.length ? it.qty >= Math.min(...fl.map(x=>x.qty)) : true; }
 const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " دج";
+function lowStockNote(p){ const stock = Number(p && p.stock); return Number.isFinite(stock) && stock > 0 && stock <= 5 ? "بقي " + stock + " فقط" : ""; }
 
 /* ── أنواع المنتجات: فردي (simple) | متغيّر (variable: سمات + تنويعات بسعر/مخزون/صورة لكل تنويع) | مجمّع (grouped: عدة منتجات فردية في صفحة واحدة) ── */
 function productType(p){ return (p && (p.type === "variable" || p.type === "grouped")) ? p.type : "simple"; }
@@ -520,6 +521,16 @@ function initProduct(slug){
   const state = { offer: p.offers[bestIdx] || p.offers[0], wilaya:null, dtype:"home" };
   const outOfStock = isOutOfStock(p);
 
+  function updateLowStockNote(variation){
+    const pp = document.getElementById("pprice"); if(!pp || !pp.parentElement) return;
+    let note = pp.parentElement.querySelector(".stk-note");
+    const stockProduct = variation && variation.stock != null ? Object.assign({}, p, { stock:variation.stock }) : p;
+    const text = lowStockNote(stockProduct);
+    if(text){ if(!note){ note = document.createElement("small"); note.className = "stk-note"; pp.parentElement.appendChild(note); } note.textContent = text; }
+    else if(note) note.remove();
+  }
+  updateLowStockNote();
+
   // حقول SEO المخصصة لهذا المنتج (تُضبط من لوحة التحكم ⟵ تعديل منتج ⟵ SEO) — راجع applySeoTags في القسم أعلاه
   applySeoTags({
     title: p.seoTitle || "",
@@ -586,6 +597,7 @@ function initProduct(slug){
     const has = old && old.value > old.price;
     if(po){ po.textContent = has ? fmt(old.value) : ""; po.style.display = has ? "" : "none"; }
     if(ps){ ps.textContent = has ? "وفّر " + Math.round((1-old.price/old.value)*100) + "%" : ""; ps.style.display = has ? "" : "none"; }
+    updateLowStockNote(type === "variable" ? state.variation : null);
   }
   function refreshHeroPrice(){
     if(type==="variable"){
