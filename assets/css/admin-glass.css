@@ -186,3 +186,24 @@ html.glass #pbx-clone #cl-rep{background:#101f1a!important;backdrop-filter:none!
 html.glass #pbx-clone #cl-rep h4{color:var(--g-mint)}
 html.glass #pbx-clean .cb,html.glass .pbx-pop,html.glass #pbx-pimg,html.glass .pbx-histbox{background:#0c1714!important;backdrop-filter:none!important}
 html.glass #pbx-clean{background:rgba(0,0,0,.78)}
+
+/* ───── تصحيح: الخلفية السوداء تبقى ظاهرة؛ الحاويات الكبيرة شبه شفافة محايدة بلا صبغة خضراء،
+   والبطاقات الصغيرة ذات العناوين فقط هي التي تأخذ الزجاج السميك الشفاف ───── */
+html.glass{--g-surf:rgba(255,255,255,.025);--g-surf2:rgba(255,255,255,.06);--g-line:rgba(255,255,255,.1);--g-line2:rgba(255,255,255,.18)}
+html.glass body{background-image:radial-gradient(700px 420px at 10% -10%,rgba(134,240,106,.07),transparent 65%),radial-gradient(600px 420px at 100% 110%,rgba(59,230,255,.05),transparent 65%)}
+/* حاويات كبيرة: سوداء/شفافة بحدّ رفيع */
+html.glass .card,html.glass .side-nav,html.glass .top,html.glass .login,html.glass .pbx-pc,html.glass .spv-bar{
+  background:rgba(255,255,255,.022);backdrop-filter:none;-webkit-backdrop-filter:none;
+  border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+html.glass .alert-card{background:rgba(255,93,130,.07)!important;border-color:rgba(255,93,130,.55)!important}
+html.glass .side-nav-intro{border-bottom-color:rgba(255,255,255,.08)}
+/* بطاقات صغيرة بعناوين: زجاج شفاف سميك محايد */
+html.glass .nav-btn,html.glass .live-pill,html.glass .pbx-wi,html.glass .pbx-tpl{
+  background:var(--g-sheen),rgba(255,255,255,.04);
+  backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);
+  border:1px solid rgba(255,255,255,.2);box-shadow:var(--g-thick),0 8px 18px -6px rgba(0,0,0,.7)}
+html.glass .nav-btn:hover,html.glass .pbx-wi:hover,html.glass .pbx-tpl:hover{border-color:rgba(255,255,255,.38);background:var(--g-sheen),rgba(255,255,255,.07)}
+html.glass .nav-btn.on{background:var(--g-sheen),linear-gradient(135deg,rgba(134,240,106,.34),rgba(134,240,106,.08));border-color:rgba(170,255,150,.7);box-shadow:var(--g-thick),0 0 24px rgba(134,240,106,.25),0 8px 18px -6px rgba(0,0,0,.7)}
+html.glass .side-nav{gap:.55rem}
+/* بطاقات الإحصاء: زجاج سميك ملوّن (يبقى كل لون لوحده) */
+html.glass .stat div{background:var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.3),rgba(var(--c),.07) 65%,rgba(0,0,0,.25));box-shadow:var(--g-thick),0 10px 22px -6px rgba(0,0,0,.75),0 0 22px rgba(var(--c),.14)}
