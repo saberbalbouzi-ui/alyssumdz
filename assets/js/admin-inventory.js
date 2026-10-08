@@ -3,7 +3,7 @@ const AdminInventory = (() => {
   const $ = id => document.getElementById(id), state = { filter: "all", query: "", dirty: new Map(), low: 5, lowSha: null, loaded: false, csvRows: [] };
   const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
   const products = () => (typeof Admin !== "undefined" && Array.isArray(Admin.products)) ? Admin.products : [];
-  const keyOf = (p, v) => p.slug + (v ? ":" + (v.id || v.sku || "") : "");
+  const keyOf = (p, v) => p.slug + (v ? ":" + (v.id || v.sku || Object.values(v.attrs || {}).join("-") || "variation") : "");
   function rows() {
     const out = [];
     products().forEach(p => {
@@ -20,10 +20,10 @@ const AdminInventory = (() => {
     const counts = new Map(), orders = (Admin && Admin.orders) || [], cancelled = ["annulee", "annulée", "cancelled", "canceled"];
     orders.forEach(o => {
       if (String(o.status || "").toLowerCase() === "livree" || cancelled.includes(String(o.status || "").toLowerCase())) return;
-      let items = o.items || o.products || o.lines || [];
+      let items = (Array.isArray(o.items) && o.items.length ? o.items : null) || o.items_text || o.products || o.lines || [];
       if (typeof items === "string") { try { items = JSON.parse(items); } catch (_) { items = []; } }
       if (!Array.isArray(items)) items = [];
-      items.forEach(it => { const slug = it.slug || it.productSlug || it.product_slug || (typeof it.product === "string" ? it.product : ""); if (slug) counts.set(slug, (counts.get(slug) || 0) + (Number(it.qty || it.quantity) || 0)); });
+      items.forEach(it => { const slug = it.slug || it.productSlug || it.product_slug || (typeof it.product === "string" ? it.product : ""), qty = Number(it.qty || it.quantity) || 0, vid = it.vid || it.variationId || it.variation_id; if (slug) { counts.set(slug, (counts.get(slug) || 0) + qty); if (vid) counts.set(slug + ":" + vid, (counts.get(slug + ":" + vid) || 0) + qty); } });
     });
     return counts;
   }
@@ -61,11 +61,11 @@ const AdminInventory = (() => {
       const all = rows(), sold = soldCounts(), low = all.filter(r => statusOf(stockOf(r)) === "low").length, out = all.filter(r => statusOf(stockOf(r)) === "out").length;
       let list = all.filter(r => { const s = statusOf(stockOf(r)), f = state.filter; return (f === "all" || s === f) && (!state.query || (r.title + " " + r.p.slug).toLowerCase().includes(state.query)); });
       host.innerHTML = `<div class="card"><b>تنبيه المخزون</b><p>${low} منخفض · ${out} نافد</p><button class="small warn" type="button" data-filter="low">عرض المنخفض</button> <button class="small warn" type="button" data-filter="out">عرض النافد</button><label>حد المنخفض <input id="inv-low" type="number" min="0" step="1" value="${state.low}" style="width:90px"></label><button class="small" id="inv-low-save">حفظ الحد</button></div>
-        <div class="card"><div class="search-bar"><input id="inv-search" placeholder="بحث بالاسم أو slug" value="${esc(state.query)}"><select id="inv-filter"><option value="all">الكل</option><option value="low">منخفض</option><option value="out">نافد</option><option value="untracked">غير متتبَّع</option></select><button class="small" id="inv-save" ${state.dirty.size ? "" : "disabled"}>حفظ التغييرات (${state.dirty.size})</button><button class="small" id="inv-bulk">ضبط دفعة</button><button class="small" id="inv-export">تصدير CSV</button><button class="small" id="inv-import">استيراد CSV</button><input id="inv-file" type="file" accept=".csv,text/csv" hidden></div><div id="inv-preview"></div><div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th></th><th>الصورة</th><th>المنتج / التنويع</th><th>المخزون</th><th>الحالة</th><th>مبيع في طلبات غير مسلَّمة</th></tr></thead><tbody>${list.map(r => { const s=statusOf(stockOf(r)), img=r.v && r.v.image || r.p.cover || (r.p.images||[])[0] || ""; return `<tr><td><input type="checkbox" data-select="${esc(r.key)}" aria-label="اختيار ${esc(r.title)}"></td><td>${img?`<img src="${esc(img)}" alt="" width="44" height="44" style="object-fit:cover;border-radius:9px">`:"—"}</td><td>${esc(r.title)}<small style="display:block;opacity:.65" dir="ltr">${esc(r.key)}</small></td><td><input type="number" min="0" step="1" data-stock="${esc(r.key)}" value="${stockOf(r)==null?"":esc(stockOf(r))}" placeholder="—" style="width:90px"></td><td><span class="pill ${s === "out" ? "st-annulee" : s === "low" ? "st-nouvelle" : "st-livree"}">${statusText(s)}</span></td><td>${Number(sold.get(r.p.slug) || 0)}</td></tr>`; }).join("") || `<tr><td colspan="6">لا توجد نتائج</td></tr>`}</tbody></table></div></div>`;
+        <div class="card"><div class="search-bar"><input id="inv-search" placeholder="بحث بالاسم أو slug" value="${esc(state.query)}"><select id="inv-filter"><option value="all">الكل</option><option value="low">منخفض</option><option value="out">نافد</option><option value="untracked">غير متتبَّع</option></select><button class="small" id="inv-save" ${state.dirty.size ? "" : "disabled"}>حفظ التغييرات (${state.dirty.size})</button><button class="small" id="inv-bulk">ضبط دفعة</button><button class="small" id="inv-export">تصدير CSV</button><button class="small" id="inv-import">استيراد CSV</button><input id="inv-file" type="file" accept=".csv,text/csv" hidden></div><div id="inv-preview"></div><div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th></th><th>الصورة</th><th>المنتج / التنويع</th><th>المخزون</th><th>الحالة</th><th>مبيع في طلبات غير مسلَّمة</th></tr></thead><tbody>${list.map(r => { const s=statusOf(stockOf(r)), img=r.v && r.v.image || r.p.cover || (r.p.images||[])[0] || ""; return `<tr data-row-search="${esc((r.title+" "+r.p.slug).toLowerCase())}"><td><input type="checkbox" data-select="${esc(r.key)}" aria-label="اختيار ${esc(r.title)}"></td><td>${img?`<img src="${esc(img)}" alt="" width="44" height="44" style="object-fit:cover;border-radius:9px">`:"—"}</td><td>${esc(r.title)}<small style="display:block;opacity:.65" dir="ltr">${esc(r.key)}</small></td><td><input type="number" min="0" step="1" data-stock="${esc(r.key)}" value="${stockOf(r)==null?"":esc(stockOf(r))}" placeholder="—" style="width:90px"></td><td><span class="pill ${s === "out" ? "st-annulee" : s === "low" ? "st-nouvelle" : "st-livree"}">${statusText(s)}</span></td><td>${Number(sold.get(r.key) || (r.v ? 0 : sold.get(r.p.slug)) || 0)}</td></tr>`; }).join("") || `<tr><td colspan="6">لا توجد نتائج</td></tr>`}</tbody></table></div></div>`;
       $("inv-filter").value = state.filter;
       host.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; render(); });
       $("inv-low-save").onclick = () => saveLow($("inv-low").value);
-      $("inv-search").oninput = e => { state.query=e.target.value.toLowerCase(); render(); };
+      $("inv-search").oninput = e => { state.query=e.target.value.toLowerCase(); host.querySelectorAll("[data-row-search]").forEach(row => { row.hidden = !row.dataset.rowSearch.includes(state.query); }); };
       $("inv-filter").onchange = e => { state.filter=e.target.value; render(); };
       host.querySelectorAll("[data-stock]").forEach(inp => inp.oninput = () => { state.dirty.set(inp.dataset.stock, inp.value === "" ? null : Number(inp.value)); const b=$("inv-save"); if(b){b.disabled=false;b.textContent="حفظ التغييرات (توجد تعديلات)";} });
       $("inv-save").onclick = saveChanges;
@@ -86,6 +86,7 @@ const AdminInventory = (() => {
     const selected = [...document.querySelectorAll("[data-select]:checked")].map(x=>x.dataset.select); if(!selected.length){toast("اختر منتجاً واحداً على الأقل");return;}
     const raw=prompt("أدخل قيمة جديدة (12) أو زيادة/نقصان (+5 أو -2)"); if(raw==null||!raw.trim())return;
     const re=/^[+-]\d+$/.test(raw.trim()), delta=Number(raw), index=new Map(rows().map(r=>[r.key,r]));
+    if(!re && (!Number.isInteger(delta) || delta < 0)){toast("أدخل كمية صحيحة غير سالبة أو زيادة/نقصان مثل +5 أو -2");return;}
     selected.forEach(k=>{const r=index.get(k);if(!r)return;const cur=Number(stockOf(r)||0);state.dirty.set(k,Math.max(0,re?cur+delta:delta));}); render();
   }
   function csvEscape(s) { return '"' + String(s == null ? "" : s).replace(/"/g,'""') + '"'; }
