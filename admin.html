@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.69.0">
+<meta name="admin-version" content="1.70.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1561,17 +1561,17 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.69.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.69.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.69.0"></script>
+<script src="assets/js/ctl-help.js?v=1.70.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.70.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.70.0"></script>
 <script src="assets/js/img-gen.js?v=1.51.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.69.0"></script>
-<script src="assets/js/admin-update.js?v=1.69.0"></script>
+<script src="assets/js/admin-nav.js?v=1.70.0"></script>
+<script src="assets/js/admin-update.js?v=1.70.0"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1"></script>
 <script src="assets/js/admin-social.js?v=1.65.0"></script>
-<script src="assets/js/admin-zones.js?v=1.68.0"></script>
+<script src="assets/js/admin-zones.js?v=1.70.0"></script>
 <script src="assets/js/admin-home.js?v=1.60.0"></script>
 <script src="assets/js/admin-orders-plus.js?v=1.61.0"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
@@ -2299,7 +2299,7 @@ function ecotrackCompany(name, defaultBase){
       { key:"boutique", label:"اسم المتجر عند الشركة (اختياري)", type:"text", required:false },
     ],
     buildRequest(cfg, order){
-      const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null, stop = order.dtype === "stop";
+      const w = Admin.wCo(order.wilaya), stop = order.dtype === "stop";
       const price = Math.max(0, Math.round(Number(order.total) || 0));
       return { url: baseOf(cfg) + "/api/v1/create/order", method: "POST", headers: { "Authorization": "Bearer " + cfg.token, "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({ reference: String(order.id), nom_client: order.name || "", telephone: String(order.phone||"").replace(/\D/g, ""), adresse: order.address || [order.commune, order.wilaya].filter(Boolean).join("، "),
@@ -5187,12 +5187,15 @@ const Admin = {
   actualFees(o){ const t = this.trackingOf(o), a = t && this.ydActual && this.ydActual[t.tracking]; return a || null; },
 
   /* تكاليف ياليدين الحقيقية لطلب (من /v1/fees المخزَّنة): توصيل بالبلدية، رسم الإرجاع، نسبة COD، نسبة التأمين. null إن لم تُجلب بعد */
+  /* ولايات 59–69 الجديدة: ياليدين وبقية الشركات ما زالت بالنظام القديم، فتُرسل الطلبات باسم الولاية الأم (w.par) وبلدية بتهجئتها */
+  wCo(name){ if(typeof WILAYAS === "undefined") return null; const w = WILAYAS.find(x=>x.name === name); const pw = w && w.par ? WILAYAS.find(x=>x.id === w.par) : w; if(!pw) return null; const kids = WILAYAS.filter(x=>x.par === pw.id); return kids.length ? Object.assign({}, pw, { desks: (pw.desks || []).concat(...kids.map(k=>k.desks || [])) }) : pw; },
+  coOrder(o){ if(!o || typeof WILAYAS === "undefined") return o; const w = WILAYAS.find(x=>x.name === o.wilaya); if(!w || !w.par) return o; const pw = WILAYAS.find(x=>x.id === w.par); return pw ? Object.assign({}, o, { wilaya: pw.name, __newWilaya: o.wilaya }) : o; },
   fromWilayaId(){
     const co = this.allDeliveryCompanies().yalidine, cfg = this.deliveryCfg.yalidine || {}, want = this.normName(cfg.fromWilayaName || "Alger");
     const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>this.normName(x.name) === want) : null; return w ? w.id : 16;
   },
   realFees(o){
-    const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null; if(!w || !this.ydFees) return null;
+    const w = Admin.wCo(o.wilaya); if(!w || !this.ydFees) return null;
     const f = this.ydFees[this.fromWilayaId() + "-" + w.id]; if(!f) return null;
     const c = f.pc[this.normName(o.commune)] || null;
     const delivery = c ? (o.dtype === "stop" && c.d != null ? c.d : c.h) : null;
@@ -5203,7 +5206,7 @@ const Admin = {
     if(!co || !co.feesDetailRequest || !cfg || !(cfg.apiId || cfg.apiToken) || this._feesBusy) return;
     const since = days > 0 ? Date.now() - days * 86400000 : 0, from = this.fromWilayaId(), need = new Set();
     this.orders.forEach(o=>{ if(!["livree","echec","confirmee","expediee"].includes(o.status)) return; if(since && !(new Date(o.date).getTime() >= since)) return;
-      const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null; if(!w) return;
+      const w = Admin.wCo(o.wilaya); if(!w) return;
       const k = from + "-" + w.id, f = this.ydFees[k]; if(force || !f || Date.now() - f.ts > 30 * 86400000) need.add(w.id); });
     if(!need.size) return;
     this._feesBusy = true; let got = 0;
@@ -5217,7 +5220,7 @@ const Admin = {
     if(got) this.renderFinance(true);
   },
   carrierCost(o){
-    const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === o.wilaya) : null;
+    const w = Admin.wCo(o.wilaya);
     const S = this.fin.set; if(S.delMode === "val") return Number(S.delVal) || 0;
     const base = w ? (o.dtype === "stop" ? w.stop : w.home) : (Number(o.fee) || 0);
     return Math.round(base * ((Number(S.delVal) || 0) / 100));
@@ -6153,7 +6156,7 @@ const Admin = {
         let ph = String(order.phone || "").replace(/\D/g, ""); if(ph.startsWith("213")) ph = "0" + ph.slice(3); else if(ph.length === 9) ph = "0" + ph;
         const stop = order.dtype === "stop";
         let deskId = null;
-        if(stop){ const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null; const d = w && (w.desks||[]).find(x=>x.name === order.desk); deskId = order.__deskId || (d ? d.id : null);
+        if(stop){ const w = Admin.wCo(order.wilaya); const d = w && (w.desks||[]).find(x=>x.name === order.desk); deskId = order.__deskId || (d ? d.id : null);
           if(!deskId) { const err = new Error("مكتب Stop Desk «" + (order.desk || "؟") + "» غير معروف لدى ياليدين — اختر مكتباً من القائمة أو حوّل التوصيل إلى المنزل"); throw err; } }
         /* إعدادات صاحب المتجر: التأمين دائماً مفعّل، السعر بدون التوصيل = القيمة المصرَّح بها للتأمين، لا أبعاد ولا وزن، فتح الطرد مسموح، والمنتجات بلا أسعار */
         const total = Math.max(0, Math.round(Number(order.total) || 0)), price = Math.max(0, total - Math.round(Number(order.fee) || 0));
@@ -6745,7 +6748,7 @@ const Admin = {
     return out;
   },
   async resolveCommune(co, cfg, order){
-    const w = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null;
+    const w = Admin.wCo(order.wilaya);
     const override = (this._communeOverride||{})[order.id]; if(override) return { ok:true, name: override };
     if(!w) return { ok:true, name: order.commune };           // لا نعرف الولاية: نتركه كما هو
     const info = await this.companyCommunes(co, cfg, w.id), list = info.names || [];
@@ -6777,7 +6780,7 @@ const Admin = {
 
   async sendOrderToDelivery(orderIndex, companyKey){
     if(!companyKey){ toast("⚠️ لا توجد شركة توصيل نشطة — فعّل واحدة من تبويب «شركات التوصيل»"); return }
-    const order = this.orders[orderIndex];
+    const order = this.coOrder(this.orders[orderIndex]);
     if(!order){ toast("❌ لم يُعثر على الطلب"); return }
     const co = this.allDeliveryCompanies()[companyKey];
     const cfg = this.deliveryCfg[companyKey] || {};
@@ -6787,7 +6790,7 @@ const Admin = {
     try{
       let ord = order;
       if(co.wilayasRequest){                                // أسماء الولايات الرسمية (بالرقم) + هل الولاية مخدومة
-        const wl = await this.companyWilayas(co, cfg), w0 = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null;
+        const wl = await this.companyWilayas(co, cfg), w0 = Admin.wCo(order.wilaya);
         const off = w0 && wl[w0.id];
         if(off){
           if(!off.ok){ this.showNotice("🚫 الولاية غير مخدومة", "ياليدين لا تخدم حالياً ولاية <b>" + off.name + "</b>. سلّم هذا الطلب بشركة أخرى."); return false }
@@ -6796,7 +6799,7 @@ const Admin = {
       }
       if(co.centersRequest && order.dtype === "stop"){     // مكتب Stop Desk يجب أن يكون من مراكز ياليدين الرسمية
         const centers = await this.companyCenters(co, cfg);
-        const w0 = (typeof WILAYAS !== "undefined") ? WILAYAS.find(x=>x.name === order.wilaya) : null;
+        const w0 = Admin.wCo(order.wilaya);
         const d0 = w0 && (w0.desks||[]).find(x=>x.name === order.desk);
         const ov = (this._deskOverride||{})[order.id];
         const id = ov || (d0 && centers.some(c=>c.id === d0.id) ? d0.id : null);
