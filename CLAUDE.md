@@ -24,6 +24,9 @@
 
 - تحديث اللوحة: `assets/js/admin-update.js` يقارن `<meta name="admin-version">` بملف `VERSION` على الخادم؛ **بعد رفع `VERSION` شغّل `python3 scripts/build-admin-pb.py`** (يختم النسخة داخل admin.html ويكسر كاش السكربتات).
 
+## مراجع محفوظة
+- `docs/shopify-architecture-report.md`: تقرير تقنيات Shopify (Rails/React/Polaris/GraphQL/Functions/Kafka…) وما نأخذه لمنصتنا SaaS (multi-tenant بـ`store_id`، صلاحيات، Extensions، أحداث وWebhooks، API-first، نظام تصميم خاص). محفوظ بطلب صاحب المتجر ليُعمل به؛ ارجع إليه عند أي عمل على المنصة/SaaS/لوحة الإدارة.
+
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 
