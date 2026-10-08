@@ -8,6 +8,15 @@ const PBClone = (function () {
   const S = { tab: "url", W: 1280, limit: 1200, docH: 0, k: 1, url: "", html: "", frame: null, img: null, busy: false };
   const toast = m => { const t = document.getElementById("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 5200); };
   const $ = id => document.getElementById(id), sleep = ms => new Promise(r => setTimeout(r, ms));
+  const prog = p => { const e = $("cl-ring"); if (!e) return; if (p == null) { e.hidden = true; return; } p = Math.max(0, Math.min(100, Math.round(p))); e.hidden = false; e.style.setProperty("--p", p); const i = e.firstChild; if (i) i.textContent = p + "%"; };      // دائرة خضراء تمتلئ تدريجياً حتى يكتمل النسخ
+  /* اكتمال النسخ: علامة صح داخل الدائرة + نغمة قصيرة هادئة + اهتزاز خفيف على الجوال (مرة واحدة لكل عملية) */
+  const CHECK = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let doneShown = false;
+  function finishFx() {
+    if (doneShown) return; doneShown = true; prog(100); const e = $("cl-ring"), i = e && e.firstChild; if (i) i.innerHTML = CHECK; const t = $("cl-st"); if (t) t.textContent = "تم النسخ";
+    try { if (navigator.vibrate) navigator.vibrate([25, 45, 55]); } catch (x) { }
+    try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { const c = new AC(), t0 = c.currentTime; [[784, 0], [1175, .11]].forEach(([f, d]) => { const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0, t0 + d); g.gain.linearRampToValueAtTime(.07, t0 + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .22); o.connect(g); g.connect(c.destination); o.start(t0 + d); o.stop(t0 + d + .25); }); setTimeout(() => { try { c.close(); } catch (x) { } }, 700); } } catch (x) { }
+  }
   const st = m => { const e = $("cl-st"); if (e) e.textContent = m || ""; };
 
   /* ───────── ألوان ───────── */
@@ -139,14 +148,15 @@ const PBClone = (function () {
       return p;
     }
     function emitText(el, cs, r, clip, anchor) {
-      const rg = doc.createRange(); rg.selectNodeContents(el); const rects = [...rg.getClientRects()].filter(q => q.width > 0.5 && q.height > 0.5); if (!rects.length) return;
+      const rg = doc.createRange(); rg.selectNodeContents(el); const clipsSelf = cs.overflowX !== "visible" || cs.overflowY !== "visible", rects = [...rg.getClientRects()].filter(q => q.width > 0.5 && q.height > 0.5 && (!clipsSelf || (q.right > r.x && q.left < r.x + r.w && q.bottom > r.y && q.top < r.y + r.h))); if (!rects.length) return;      // نص خارج صندوق يقصّ محتواه (text-indent:-9999px لأرقام النقاط) لا يُنسخ
+
       const tops = [...new Set(rects.map(q => Math.round(q.top / 3)))].length, first = rects.reduce((m, q) => q.top < m.top ? q : m, rects[0]), fs = px(cs.fontSize) || 16, lhPx = cs.lineHeight === "normal" ? fs * 1.3 : px(cs.lineHeight) || fs * 1.3;
       const padL = px(cs.paddingLeft) + px(cs.borderLeftWidth), padR = px(cs.paddingRight) + px(cs.borderRightWidth); let bx = r.x + padL, bw = Math.max(rects.reduce((m, q) => Math.max(m, q.right), 0) - rects.reduce((m, q) => Math.min(m, q.left), 1e9), r.w - padL - padR);
       const y = first.top - Math.max(0, (lhPx - first.height) / 2), h = Math.max(lhPx, tops * lhPx), slack = Math.max(4, bw * (tops === 1 ? .08 : .03));
       let rr = { x: Math.max(0, bx - (cs.textAlign === "center" ? slack / 2 : cs.textAlign === "right" || (cs.direction === "rtl" && cs.textAlign !== "left") ? slack : 0)), y, w: Math.min(W, bw + slack), h }; if (rr.y >= limit) return;
       const tag = el.tagName.toLowerCase(), isH = /^h[1-6]$/.test(tag), props = textProps(cs, lhPx), link = anchor && anchor.getAttribute("href") && !/^(javascript:|#$)/i.test(anchor.getAttribute("href")) ? abs(anchor.getAttribute("href")) : "";
       let html = inlineHtml(el, cs); if (!html) return;
-      if (cs.display === "list-item" && cs.listStyleType !== "none") { const par = el.parentElement, idx = par ? [...par.children].filter(c => win.getComputedStyle(c).display === "list-item").indexOf(el) + 1 : 1; html = (par && par.tagName === "OL" ? idx + ". " : "• ") + html; }
+      if (cs.display === "list-item" && cs.listStyleType !== "none" && !clipsSelf) { const par = el.parentElement, idx = par ? [...par.children].filter(c => win.getComputedStyle(c).display === "list-item").indexOf(el) + 1 : 1; html = (par && par.tagName === "OL" ? idx + ". " : "• ") + html; }
       if (isH && !/<(a|span|b|i|em|strong)\b/.test(html) && !/<br>/.test(html)) return add("heading", rr, Object.assign(props, { text: el.textContent.replace(/\s+/g, " ").trim(), tag, link: link || undefined }));
       if (link && !/<a\b/.test(html)) html = `<a href="${esc(link)}" style="color:inherit;text-decoration:inherit">${html}</a>`;
       add("text", rr, Object.assign(props, { html: tops === 1 ? '<p style="white-space:nowrap">' + html + "</p>" : "<p>" + html + "</p>" }));
@@ -170,7 +180,7 @@ const PBClone = (function () {
         const cl = col(cs.color); let s = new XMLSerializer().serializeToString(c).replace(/currentColor/gi, cl ? hex(cl) : "#000"); if (s.length > 90000) return ""; return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s); } catch (e) { return ""; }
     }
     function visit0(el, clip, anchor) {
-      if (slSkip.has(el)) return;
+      if (slSkip.has(el)) { const ow = skipOwner.get(el); if (ow && ow.z0 == null) ow.z0 = z; return; }
       if (mq.has(el)) { emitMarquee(el); return; }
       if (el.tagName === "FORM" && emitForm(el)) return;
       if (stop || ++count > 5000) return; const tag = el.tagName.toLowerCase(); if (SKIP.has(tag)) return;
@@ -198,7 +208,7 @@ const PBClone = (function () {
       const ownClip = tag === "html" || tag === "body" ? clip : (cs.overflowX !== "visible" || cs.overflowY !== "visible") ? (inter(r, clip) || { x: 0, y: 0, w: 0, h: 0 }) : clip;
       if (ownClip.w <= 0 || ownClip.h <= 0) return;
       const crad = ["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map(k => Math.max(0, cornerPx(cs["border" + k + "Radius"], r))), clips = tag !== "html" && tag !== "body" && (cs.overflowX !== "visible" || cs.overflowY !== "visible") && crad.some(v => v >= 1); if (clips) radCtx.push({ r, crad });      // حاوية تقصّ بأركان مدوّرة: أبناؤها الملاصقون لأركانها يرثون التدوير
-      for (const c of el.childNodes) { if (c.nodeType === 1) visit(c, ownClip, a); else if (c.nodeType === 3 && c.nodeValue.trim() && !hidden && !contents) { const rg = doc.createRange(); rg.selectNodeContents(c); const rc = [...rg.getClientRects()]; if (!rc.length || rc[0].top >= limit) continue; const wrap = doc.createElement("span"); wrap.textContent = c.nodeValue; const tops = [...new Set(rc.map(q => Math.round(q.top / 3)))].length, f = rc.reduce((m, q) => q.top < m.top ? q : m, rc[0]), fs = px(cs.fontSize) || 16, lhPx = cs.lineHeight === "normal" ? fs * 1.3 : px(cs.lineHeight) || fs * 1.3, x0 = Math.min(...rc.map(q => q.left)), x1 = Math.max(...rc.map(q => q.right)), props = textProps(cs, lhPx);
+      for (const c of el.childNodes) { if (c.nodeType === 1) visit(c, ownClip, a); else if (c.nodeType === 3 && c.nodeValue.trim() && !hidden && !contents) { const rg = doc.createRange(); rg.selectNodeContents(c); const rc = [...rg.getClientRects()]; if (!rc.length || rc[0].top >= limit) continue; if (ownClip && (rc[0].right <= ownClip.x || rc[0].left >= ownClip.x + ownClip.w || rc[0].bottom <= ownClip.y || rc[0].top >= ownClip.y + ownClip.h)) continue; const wrap = doc.createElement("span"); wrap.textContent = c.nodeValue; const tops = [...new Set(rc.map(q => Math.round(q.top / 3)))].length, f = rc.reduce((m, q) => q.top < m.top ? q : m, rc[0]), fs = px(cs.fontSize) || 16, lhPx = cs.lineHeight === "normal" ? fs * 1.3 : px(cs.lineHeight) || fs * 1.3, x0 = Math.min(...rc.map(q => q.left)), x1 = Math.max(...rc.map(q => q.right)), props = textProps(cs, lhPx);
           add("text", { x: Math.max(0, x0 - 1), y: f.top - Math.max(0, (lhPx - f.height) / 2), w: Math.min(W, x1 - x0 + Math.max(6, (x1 - x0) * .03)), h: tops * lhPx }, Object.assign(props, { html: "<p>" + esc(c.nodeValue.replace(/\s+/g, " ").trim()) + "</p>" })); } }
       if (clips) radCtx.pop();
     }
@@ -206,15 +216,15 @@ const PBClone = (function () {
     const FXON = !opt.noFx && typeof PBCloneFx !== "undefined", ownEnd = new Map(), fx = FXON ? PBCloneFx.create({ idp: IDP, doc, win, W, out, add, col, px, r1, r2 }) : null;
     /* ───── السلايدرات: كل «صفحة» شرائح مجموعة عناصر تُظهر بالتناوب (أسهم/نقاط/سحب/تشغيل تلقائي في الصفحة المنشورة) ───── */
     const SLD = [
-      { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev", next: ".swiper-button-next", dot: ".swiper-pagination-bullet" },
-      { root: ".slick-slider", slide: ".slick-slide:not(.slick-cloned)", prev: ".slick-prev", next: ".slick-next", dot: ".slick-dots li" },
+      { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev,.elementor-swiper-button-prev", next: ".swiper-button-next,.elementor-swiper-button-next", dot: ".swiper-pagination-bullet", out: 1 },
+      { root: ".slick-slider", slide: ".slick-slide:not(.slick-cloned)", prev: ".slick-prev", next: ".slick-next", dot: ".slick-dots li,.jet-slick-dots li" },
       { root: ".owl-carousel", slide: ".owl-item:not(.cloned)", prev: ".owl-prev", next: ".owl-next", dot: ".owl-dot" },
       { root: ".splide", slide: ".splide__slide:not(.splide__slide--clone)", prev: ".splide__arrow--prev", next: ".splide__arrow--next", dot: ".splide__pagination__page" },
       { root: ".carousel", slide: ".carousel-item", prev: ".carousel-control-prev", next: ".carousel-control-next", dot: ".carousel-indicators [data-bs-target],.carousel-indicators li", bs: 1 },
       { root: ".glide", slide: ".glide__slide:not(.glide__slide--clone)", prev: ".glide__arrow--left", next: ".glide__arrow--right", dot: ".glide__bullet" },
       { root: ".flickity-enabled", slide: ".flickity-slider > *", prev: ".flickity-prev-next-button.previous", next: ".flickity-prev-next-button.next", dot: ".flickity-page-dots .dot" }
     ];
-    const slSkip = new Set(), elCls = new Map(), elRange = new Map(), slRoot = new Map(), sliders = []; let slN = 0;
+    const slSkip = new Set(), skipOwner = new Map(), elCls = new Map(), elRange = new Map(), slRoot = new Map(), sliders = []; let slN = 0;
     const tagW = (ws, cl) => ws.forEach(w => cl.forEach(c => { if (!(" " + (w.set.cls || "") + " ").includes(" " + c + " ")) w.set.cls = ((w.set.cls || "") + " " + c).trim(); }));
     const inBox = (r, B) => r.w > 1 && r.x + r.w / 2 > B.x && r.x + r.w / 2 < B.x + B.w && r.y + r.h / 2 > B.y && r.y + r.h / 2 < B.y + B.h;
     function findSliders() {
@@ -226,16 +236,27 @@ const PBClone = (function () {
           const rr = rectOf(root); if (rr.w < 50 || rr.h < 30 || rr.y >= limit) continue; const sr0 = all.map(rectOf);
           const stacked = !!def.bs || sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));      // بوتستراب: شرائح متراكمة دائماً (اللقطة قد تكون في منتصف الانتقال فتظهر متجاورة)
           let act = 0; if (stacked) { const k = all.findIndex(x => /(^|\s|-)active(\s|$|-)/.test(x.className)); act = k < 0 ? 0 : k; } else { const k = sr0.findIndex(r => inBox(r, rr)); act = k < 0 ? 0 : k; }
-          const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf); const pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length), pages = Math.ceil(slides.length / pv); if (pages < 2) continue;
+          const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf), sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot);
+          // سلايدر دوّار (Slick infinite…): عدد النقاط = عدد الشرائح الحقيقية وفي الواجهة أكثر من شريحة (مع نسخ مكرّرة) ← كل نقطة صفحة تُزاح شريحة واحدة (نافذة دورية)
+          let pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length); const clones = [...root.querySelectorAll(".slick-slide")].filter(x => x.closest(def.root) === root && x.classList.contains("slick-cloned")); if (!stacked) { const nAct = [...root.querySelectorAll(".slick-slide.slick-active,.swiper-slide-visible,.owl-item.active")].filter(x => x.closest(def.root) === root).length; if (nAct > pv && (clones.length || dots.length === all.length)) pv = Math.min(nAct, all.length - 1); }
+          const circ = !stacked && pv > 1 && dots.length === all.length && all.length > pv, pages = circ ? all.length : Math.ceil(slides.length / pv); if (pages < 2) continue;
           const id = IDP + "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
+          try { const so = root.closest("[data-slider_options]"); if (so) { const o = JSON.parse(so.getAttribute("data-slider_options")); ms = o.autoplay ? Math.max(2500, (o.autoplaySpeed || 0) + (o.speed || 0)) : 0; } } catch (e) { }
           try { const a = root.getAttribute("data-bs-interval") || root.getAttribute("data-interval"); if (a) ms = +a || ms; const sk = root.getAttribute("data-slick"); if (sk) { const o = JSON.parse(sk); ms = o.autoplay ? (o.autoplaySpeed || 3000) : 0; } const sp = root.getAttribute("data-splide"); if (sp) { const o = JSON.parse(sp); ms = o.autoplay ? (o.interval || 5000) : 0; } const sa = slides[0].getAttribute("data-swiper-autoplay"); if (sa) ms = +sa || ms; } catch (e) { }
           if (def.bs) { slides[0].style.setProperty("transform", "none", "important"); slides[0].style.setProperty("transition", "none", "important"); }
-          slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
+          const pitch = !stacked && sr0.length > 1 ? sr0[1].x - sr0[0].x : 0, stepD = Math.abs(pitch) > 8 && Math.abs(sr0[1].y - sr0[0].y) < Math.abs(pitch) * .5 ? Math.round(circ ? pitch : pitch * pv) : 0, swc = stepD ? ["pbsw-" + id + "-" + (stepD < 0 ? "m" : "") + Math.abs(stepD)] : [];      // خطوة الانزلاق بين الصفحات (وحدات التصميم): تحرّك المنتجات معاً وتُقصّ عند الحافة
+          slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms].concat(swc) : [])));
           slides.slice(pv).forEach(x => slSkip.add(x));
-          const sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot), pr = sel(def.prev), nx = sel(def.next), actP = Math.floor(act / pv);
-          dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : dots.length === all.length ? Math.floor(((j - act + all.length) % all.length) / pv) : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
+          const outer = (q, own) => {      // أسهم/نقاط تقع خارج حاوية السلايدر نفسها (مثل .swiper-arrows بجانب .swiper في ثيمات Elementor): نبحث في الأجداد القريبة بشرط ألا تضم سلايدراً آخر
+            let r = sel(q); if (r.length || !def.out) return r; let a = root.parentElement;
+            for (let k = 0; k < 3 && a && a !== doc.body; k++, a = a.parentElement) { if (a.querySelectorAll(def.root).length > 1) break; try { r = [...a.querySelectorAll(q)].filter(x => !root.contains(x)); } catch (e) { r = []; } if (r.length) return r; }
+            return r;
+          }, pr = outer(def.prev), nx = outer(def.next), actP = circ ? 0 : Math.floor(act / pv);
+          dots.forEach((d, j) => { const pg = circ ? (j - act + pages) % pages : dots.length === pages ? (j - actP + pages) % pages : dots.length === all.length ? Math.floor(((j - act + all.length) % all.length) / pv) : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
           pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
-          const sl = { id, def, root, slides, pv, pages, stacked, track: slides[0].parentElement, ms, dots, pr, nx, act }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
+          const sl = { id, def, root, slides, pv, pages, stacked, circ, track: slides[0].parentElement, ms, dots, pr, nx, act, pitch: sr0.length > 1 ? sr0[1].x - sr0[0].x : 0, tag0: ["pbsi-" + id + "-" + ms].concat(swc) };
+          if (circ) [...all, ...clones].forEach(x => { slSkip.add(x); skipOwner.set(x, sl); });      // السلايدر الدوّار: كل الصفحات (حتى الأولى) تُبنى بنوافذ دورية، والنسخ المكرّرة (clones) لا تُنسخ كمحتوى ثابت
+          sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
         }
       }
       try { findGenericSliders(claimed); } catch (e) { console.warn("generic sliders", e); }
@@ -273,7 +294,8 @@ const PBClone = (function () {
         const pr = pick(/(^|[\s_-])(prev|previous|back|left|arrow-left)([\s_-]|$)/i), nx = pick(/(^|[\s_-])(next|forward|right|arrow-right)([\s_-]|$)/i).filter(x => !pr.includes(x));
         let dots = []; try { for (const c of A.querySelectorAll("div,ul,ol,nav,span")) { if (inSl(c) || !/dot|bullet|indicator|pagina|pager|nav/i.test(lab(c))) continue; const k = [...c.children].filter(x => small(rectOf(x))); if (k.length >= 2 && (k.length === pages || k.length === slides.length)) { dots = k; break; } } } catch (e) { }
         const id = IDP + "s" + (++slN), ms = 5000;
-        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
+        const gp = sr.length > 1 ? sr[1].x - sr[0].x : 0, gStep = Math.abs(gp) > 8 && Math.abs(sr[1].y - sr[0].y) < Math.abs(gp) * .5 ? Math.round(gp * pv) : 0;
+        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms].concat(gStep ? ["pbsw-" + id + "-" + (gStep < 0 ? "m" : "") + Math.abs(gStep)] : []) : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
         const actP = Math.floor(act / pv); dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
         pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
         const sl = { id, def: {}, root, slides: ordered, pv, pages, stacked, track, ms, dots, pr, nx, act, generic: 1 }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
@@ -295,12 +317,17 @@ const PBClone = (function () {
       }
     }
     function sliderPages(sl, clip) {
-      const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = r0 && out[r0[0]] ? out[r0[0]].set.zi : null;
-      for (let p = 1; p < sl.pages; p++) {
-        const win = sl.slides.slice(p * sl.pv, (p + 1) * sl.pv); if (!win.length) break; const saved = [], keep = (n, props) => { saved.push([n, n.getAttribute("style")]); props.forEach(([k, v]) => n.style.setProperty(k, v, "important")); };
+      const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = sl.circ ? (sl.z0 != null ? sl.z0 : z) : (r0 && out[r0[0]] ? out[r0[0]].set.zi : null);
+      for (let p = sl.circ ? 0 : 1; p < sl.pages; p++) {
+        const N = sl.slides.length, win = sl.circ ? Array.from({ length: sl.pv }, (_, k) => sl.slides[(p + k) % N]) : sl.slides.slice(p * sl.pv, (p + 1) * sl.pv); if (!win.length) break; const saved = [], keep = (n, props) => { saved.push([n, n.getAttribute("style")]); props.forEach(([k, v]) => n.style.setProperty(k, v, "important")); };
         if (sl.stacked) { sl.slides.forEach(x => { if (!win.includes(x)) keep(x, [["display", "none"]]); }); win.forEach(x => keep(x, [["display", "block"], ["opacity", "1"], ["visibility", "visible"], ["transform", "none"]])); }
-        else { const w0 = rectOf(win[0]); keep(sl.track, [["translate", (s0.x - w0.x) + "px " + (s0.y - w0.y) + "px"]]); win.forEach(x => keep(x, [["opacity", "1"], ["visibility", "visible"]])); const w1 = rectOf(win[0]); if (Math.abs(w1.x - s0.x) > 6 || Math.abs(w1.y - s0.y) > 6) { saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); continue; } }
-        const i0 = out.length; win.forEach(x => { slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p, "pb-sl-off"]); visit(x, cl, null); });
+        else if (!sl.circ) { const w0 = rectOf(win[0]); keep(sl.track, [["translate", (s0.x - w0.x) + "px " + (s0.y - w0.y) + "px"]]); win.forEach(x => keep(x, [["opacity", "1"], ["visibility", "visible"]])); const w1 = rectOf(win[0]); if (Math.abs(w1.x - s0.x) > 6 || Math.abs(w1.y - s0.y) > 6) { saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); continue; } }
+        const i0 = out.length;
+        if (sl.circ) {      // نافذة دورية: كل شريحة تُزاح وحدها إلى موضعها في النافذة (الشرائح الملتفّة حول النهاية تبعد في الـDOM)
+          saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); saved.length = 0;
+          const pitch = sl.pitch;
+          win.forEach((x, k) => { const sv = [], kp = (n, props) => { sv.push([n, n.getAttribute("style")]); props.forEach(([a, v]) => n.style.setProperty(a, v, "important")); }; const rx = rectOf(x); kp(sl.track, [["translate", (s0.x + k * pitch - rx.x) + "px " + (s0.y - rx.y) + "px"]]); kp(x, [["opacity", "1"], ["visibility", "visible"]]); slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p].concat(p ? ["pb-sl-off"] : (k === 0 ? sl.tag0 : []))); visit(x, cl, null); sv.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); });
+        } else win.forEach(x => { slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p, "pb-sl-off"]); visit(x, cl, null); });
         saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st));
         const ws = out.slice(i0); if (ws.length && z0 != null) { const zmin = Math.min(...ws.map(w => w.set.zi)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + z0; }); }
       }
@@ -483,20 +510,20 @@ const PBClone = (function () {
     } finally { f.remove(); }
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
-    const dest = (document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec";
-    if (dest === "sec") { const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
+    const hasPg = !!(A().E && A().E.page), dest = hasPg ? ((document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec") : "new";      // بلا صفحة مفتوحة في المطوّر (فتح الناسخ من تبويب «تطبيقات») تُفتح الصفحة الجديدة تلقائياً
+    if (dest === "sec") { finishFx(); await sleep(900); const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
     return openInEditor(page);
   }
   async function openInEditor(page) {
     const E = A().E; if (E && E.page && E.dirty && !confirm("سيُفتح القالب المنسوخ في صفحة جديدة، وتُحفظ مسودة صفحتك الحالية تلقائياً. هل تريد المتابعة؟")) return false;
     { const up = S.upl || [], E2 = A().E; if (E2 && E2.page && E2.page.media) E2.page.media = E2.page.media.filter(x => !up.includes(x)); page.media = up.slice(); }      // صور النسخ تُسجَّل في مكتبة الصفحة الجديدة لا السابقة
-    try { A().saveDraftNow(); } catch (e) { } close(); A().open(page, "", true); return true;
+    try { A().saveDraftNow(); } catch (e) { } finishFx(); await sleep(900); close(); A().open(page, "", true); return true;
   }
   async function saveImages(widgets, doSave) {      // يحفظ الصور في موقعك (يتفادى الروابط الخارجية التي قد تتعطّل): كل رابط فريد مرة واحدة (نسخة الجوال والشرائح تتشارك الصور) بأقصى 80 رابطاً فريداً
     const by = new Map(); widgets.forEach(w => { if (w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)) { const k = w.set.src; if (!by.has(k)) by.set(k, []); by.get(k).push(w); } });
-    const urls = [...by.keys()].slice(0, 80); if (!doSave || !urls.length) return 0;
+    const urls = [...by.keys()].slice(0, (window.ImgCfg && ImgCfg.get("tpl", "imgcount", 80)) || 80); if (!doSave || !urls.length) return 0;
     let done = 0, i = 0;
-    async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; } }
+    async function work() { while (i < urls.length) { const u = urls[i++]; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: (window.ImgCfg && ImgCfg.get("tpl", "imgmax", 1920)) || 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); } }
     await Promise.all(Array.from({ length: 8 }, work)); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
@@ -512,12 +539,12 @@ const PBClone = (function () {
   }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
-    st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
-    S.upl = []; let mob = null; if ($("cl-mob") && $("cl-mob").checked) { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
-    if ($("cl-lnk") && $("cl-lnk").checked) { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
-    await saveImages(res.widgets.concat(mob ? mob.widgets : []), $("cl-save") && $("cl-save").checked);
+    prog(3); st(""); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
+    prog(25); S.upl = []; let mob = null; { await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
+    prog(45); { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
+    S.p0 = 45; S.p1 = 92; await saveImages(res.widgets.concat(mob ? mob.widgets : []), true); prog(94);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
-    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
+    prog(96); const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
   }
 
   /* ───────── وضع الصورة: OCR ───────── */
@@ -615,7 +642,7 @@ const PBClone = (function () {
     const im = S.img; if (!im) return; const dw = im.dw, k = im.k, H = Math.round(S.limit), srcH = Math.max(8, Math.round(H / k));
     const cv = document.createElement("canvas"); cv.width = dw; cv.height = H; const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im.el, 0, 0, im.el.naturalWidth, Math.min(im.el.naturalHeight, srcH), 0, 0, dw, H);
     const ocr = $("cl-ocr") && $("cl-ocr").checked, vec = !$("cl-vec") || $("cl-vec").checked, keep = $("cl-keep") && $("cl-keep").checked, lang = ($("cl-lang") && $("cl-lang").value) || "ara+eng"; let blocks = [], note = "";
-    if (ocr) { try { const T = await loadTess(); st("جارٍ التعرّف على النصوص… (أول مرة تحمّل اللغات وقد تستغرق دقيقة)"); const { data } = await T.recognize(cv, lang, { logger: m => { if (m && m.status && m.progress != null) st("التعرّف على النصوص: " + Math.round(m.progress * 100) + "% — " + m.status); } });
+    if (ocr) { try { const T = await loadTess();  const { data } = await T.recognize(cv, lang, { logger: m => { if (m && m.status && m.progress != null) st("التعرّف على النصوص: " + Math.round(m.progress * 100) + "% — " + m.status); } });
         const raw = data.lines || (data.blocks || []).flatMap(b => (b.paragraphs || []).flatMap(p => p.lines || [])); const lines = raw.filter(l => l.text && l.text.replace(/\s+/g, "").length >= 2 && (l.confidence == null || l.confidence >= 45) && /[\p{L}\p{N}]/u.test(l.text)).map(l => ({ x0: l.bbox.x0, y0: l.bbox.y0, x1: l.bbox.x1, y1: l.bbox.y1, text: l.text.replace(/\s+/g, " ").trim() }));
         blocks = groupLines(lines); } catch (e) { note = " (تعذّر التعرّف على النصوص: " + e.message + ")"; } }
     let id0 = ctx.getImageData(0, 0, dw, H), data0 = id0.data; const orig = document.createElement("canvas"); orig.width = dw; orig.height = H; orig.getContext("2d").drawImage(cv, 0, 0);
@@ -623,14 +650,14 @@ const PBClone = (function () {
     for (const b of blocks) { const ls = b.lines, lhs = ls.map(l => l.y1 - l.y0), fsEst = Math.max(8, Math.round(median(lhs) * .8)), pitch = ls.length > 1 ? (ls[ls.length - 1].y0 - ls[0].y0) / (ls.length - 1) : fsEst * 1.35, bgc = ringBg(data0, dw, H, { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }), ink = inkColor(data0, dw, bgc, { x0: Math.max(0, b.x0), y0: Math.max(0, b.y0), x1: Math.min(dw - 1, b.x1), y1: Math.min(H - 1, b.y1) });
       texts.push({ b, fsEst, pitch, ink: ink || (lum(bgc[0], bgc[1], bgc[2]) > 140 ? [20, 20, 20] : [245, 245, 245]) }); }
     for (const t of texts) for (const l of t.b.lines) wipe(ctx, data0, dw, H, { x0: Math.max(0, l.x0), y0: Math.max(0, l.y0), x1: Math.min(dw - 1, l.x1), y1: Math.min(H - 1, l.y1) });
-    let shapes = [], photos = []; if (vec) { st("رسم عناصر الصورة: كشف المربعات والأزرار والصور…"); await sleep(20); const d1 = ctx.getImageData(0, 0, dw, H); const r = detect(d1.data, dw, H); shapes = r.shapes; photos = r.photos; }
+    let shapes = [], photos = []; if (vec) {  await sleep(20); const d1 = ctx.getImageData(0, 0, dw, H); const r = detect(d1.data, dw, H); shapes = r.shapes; photos = r.photos; }
     const widgets = []; let z = 1; const mk = (type, x, y, w, h, p) => { const w0 = PB.mkFree(type, 0, 0, ++z); Object.assign(w0.set, p); delete w0.set.mh; w0.set.fx = { d: r2(x / dw * 100) }; w0.set.fy = { d: Math.round(y) }; w0.set.fwd = { d: r2(w / dw * 100) }; w0.set.fh = { d: Math.max(2, Math.round(h)) }; widgets.push(w0); return w0; };
     /* صور مقتطعة (من لقطة بلا نصوص) */
-    const photoW = []; let pi = 0; for (const p of photos) { st("حفظ صورة مقتطعة " + (++pi) + "/" + photos.length + "…"); const c2 = document.createElement("canvas"); c2.width = Math.round(p.w); c2.height = Math.round(p.h); c2.getContext("2d").drawImage(cv, Math.round(p.x), Math.round(p.y), c2.width, c2.height, 0, 0, c2.width, c2.height); let src = ""; try { src = await A().uploadBlob(await toBlob(c2, "image/webp", .9), "clone-img", { max: 1600 }); } catch (e) { src = c2.toDataURL("image/jpeg", .85); } photoW.push({ p, src }); }
+    const photoW = []; let pi = 0; for (const p of photos) { prog(20 + 60 * (pi++) / Math.max(1, photos.length));  const c2 = document.createElement("canvas"); c2.width = Math.round(p.w); c2.height = Math.round(p.h); c2.getContext("2d").drawImage(cv, Math.round(p.x), Math.round(p.y), c2.width, c2.height, 0, 0, c2.width, c2.height); let src = ""; try { src = await A().uploadBlob(await toBlob(c2, "image/webp", .9), "clone-img", { max: 1600 }); } catch (e) { src = c2.toDataURL("image/jpeg", .85); } photoW.push({ p, src }); }
     /* تنظيف الخلفية: الصور ثم الأشكال من الأصغر للأكبر ليُملأ كل منها بلون ما حوله */
     const d2 = ctx.getImageData(0, 0, dw, H).data, wipeList = photos.map(p => ({ b: p, col: null })).concat(shapes.slice().sort((a, b) => a.area - b.area).map(s0 => ({ b: s0, col: null })));
     if (!keep) for (const wl of wipeList) { const b = { x: Math.round(wl.b.x), y: Math.round(wl.b.y), w: Math.round(wl.b.w), h: Math.round(wl.b.h) }; fillRing(ctx, ctx.getImageData(0, 0, dw, H).data, dw, H, b, null); }
-    st("حفظ الصورة الخلفية…"); const blob = await toBlob(cv, "image/webp", .92); let src = ""; try { src = await A().uploadBlob(blob, "clone-bg", { max: 2000 }); } catch (e) { src = cv.toDataURL("image/jpeg", .85); }
+     const blob = await toBlob(cv, "image/webp", .92); let src = ""; try { src = await A().uploadBlob(blob, "clone-bg", { max: 2000 }); } catch (e) { src = cv.toDataURL("image/jpeg", .85); }
     mk("image", 0, 0, dw, H, { src: keep ? await (async () => { try { return await A().uploadBlob(await toBlob(orig, "image/webp", .92), "clone-bg", { max: 2000 }); } catch (e) { return orig.toDataURL("image/jpeg", .85); } })() : src, alt: "", fit: "fill" });
     for (const s0 of shapes) { const isBtn = false; mk("shape", s0.x, s0.y, s0.w, s0.h, { shape: s0.kind, keep: false, outline: false, fill: "#" + s0.color.map(v => v.toString(16).padStart(2, "0")).join(""), sw: 0, rx: 0, rad: s0.kind === "rect" && s0.rad >= 1 ? { d: Math.round(Math.min(s0.rad, Math.min(s0.w, s0.h) / 2)) } : undefined }); }
     for (const ph of photoW) mk("image", ph.p.x, ph.p.y, ph.p.w, ph.p.h, { src: ph.src, alt: "", fit: "fill" });
@@ -655,7 +682,7 @@ const PBClone = (function () {
 #pbx-clone .cl-box{position:relative;background:#fff;border-radius:18px;width:min(1180px,96vw);height:min(94vh,880px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45)}
 #pbx-clone .cl-h{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;border-bottom:1px solid #eee;background:#173f35;color:#fff}#pbx-clone .cl-h b{font-size:1rem;display:flex;align-items:center;gap:.4rem}#pbx-clone .cl-h small{opacity:.75;flex:1;font-weight:600}#pbx-clone .cl-h button{border:0;background:rgba(255,255,255,.15);color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer}
 #pbx-clone .cl-tabs{display:flex;gap:.3rem;padding:.6rem 1rem 0}#pbx-clone .cl-tabs button{border:1.5px solid #e0d9c8;background:#fff;border-radius:10px 10px 0 0;padding:.45rem 1rem;cursor:pointer;font-family:inherit;font-weight:800;font-size:.85rem;color:#173f35}#pbx-clone .cl-tabs button.on{background:#173f35;color:#fff;border-color:#173f35}
-#pbx-clone .cl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid #eee;background:#faf6ec}#pbx-clone .cl-ctl input[type=text],#pbx-clone .cl-ctl input[type=url]{flex:1 1 280px;min-width:180px;border:1.5px solid #d9d2c2;border-radius:10px;padding:.5rem .7rem;font-family:inherit;direction:ltr;text-align:left}#pbx-clone .cl-ctl select{border:1.5px solid #d9d2c2;border-radius:10px;padding:.45rem;font-family:inherit}#pbx-clone .cl-ctl label{display:flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:700;color:#173f35}#pbx-clone .cl-ctl button,#pbx-clone .cl-f button{border:1.5px solid #173f35;background:#fff;color:#173f35;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-family:inherit;font-weight:800}#pbx-clone .cl-ctl button.pri,#pbx-clone .cl-f .cl-go{background:linear-gradient(135deg,#173f35,#0d9488);color:#fff;border-color:transparent}#pbx-clone .cl-f .cl-go:disabled{opacity:.45;cursor:not-allowed}
+#pbx-clone .cl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid #eee;background:#faf6ec}#pbx-clone .cl-ctl input[type=text],#pbx-clone .cl-ctl input[type=url]{flex:1 1 280px;min-width:180px;border:1.5px solid #d9d2c2;border-radius:10px;padding:.5rem .7rem;font-family:inherit;direction:ltr;text-align:left}#pbx-clone .cl-ctl select{border:1.5px solid #d9d2c2;border-radius:10px;padding:.45rem;font-family:inherit}#pbx-clone .cl-ctl label{display:flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:700;color:#173f35}#pbx-clone .cl-ctl button,#pbx-clone .cl-f button{border:1.5px solid #173f35;background:#fff;color:#173f35;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-family:inherit;font-weight:800}#pbx-clone .cl-ctl button.pri,#pbx-clone .cl-f .cl-go{min-height:48px;padding:.65rem 1.3rem;background:rgba(34,197,94,.3);color:#fff;border-color:rgba(34,197,94,.6);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:none;transition:transform .15s,background .15s}#pbx-clone .cl-ctl button.pri:hover,#pbx-clone .cl-f .cl-go:hover:not(:disabled){background:rgba(34,197,94,.5);transform:translateY(-2px)}#pbx-clone #cl-ring{--p:0;flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:conic-gradient(#16a34a calc(var(--p)*1%),#d6ecdc 0);display:inline-grid;place-items:center;box-shadow:0 0 0 2px rgba(22,163,74,.18)}#pbx-clone #cl-ring[hidden]{display:none}#pbx-clone #cl-ring i{font-style:normal;width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:900;color:#15803d;font-variant-numeric:tabular-nums}#pbx-clone .cl-f .cl-go:disabled{opacity:.45;cursor:not-allowed}
 #pbx-clone .cl-ctl[hidden]{display:none!important}#pbx-clone .cl-h,#pbx-clone .cl-tabs,#pbx-clone .cl-ctl,#pbx-clone .cl-note,#pbx-clone .cl-f{flex:none}#pbx-clone .cl-stage{flex:1 1 0;overflow:auto;background:#d8d2c4;padding:14px;min-height:90px;position:relative}#pbx-clone .cl-empty{color:#6b6556;text-align:center;padding:3rem 1rem;line-height:2;font-weight:700}
 #pbx-clone .cl-win{position:relative;margin:0 auto;overflow:hidden;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.35);direction:ltr}#pbx-clone .cl-in{position:absolute;left:0;top:0;transform-origin:0 0}#pbx-clone .cl-in iframe,#pbx-clone .cl-in img{display:block;border:0;background:#fff}
 #pbx-clone .cl-lim{position:absolute;left:0;right:0;bottom:0;height:22px;cursor:ns-resize;touch-action:none;background:linear-gradient(to top,rgba(124,58,237,.35),rgba(124,58,237,0));border-bottom:3px solid #7c3aed;display:flex;align-items:flex-end;justify-content:center}#pbx-clone .cl-lim span{background:#7c3aed;color:#fff;font:800 .72rem system-ui,sans-serif;padding:.1rem .7rem;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:.4rem}
@@ -666,15 +693,17 @@ const PBClone = (function () {
   const ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 012-2h10"/></svg>';
   function close() { const m = $("pbx-clone"); if (m) m.remove(); S.frame = null; S.img = null; S.runId = ""; clearInterval(EXT.t); }
   function open() {
+    if (document.documentElement.classList.contains("app-off-cloner")) { toast("ناسخ القوالب معطّل من تبويب تطبيقات"); return; }
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
-<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label title="يستخرج تصميم الصفحة عند عرض الجوال (390px) كقسم مستقل يظهر للجوال فقط، فتعمل قائمة ☰ والتخطيط الحقيقي للهاتف؛ والقسم الأول يختفي على الجوال"><input type="checkbox" id="cl-mob" checked> نسخة الجوال أيضاً</label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label><label title="روابط الموقع الأصلي في الأزرار والنصوص والصور تتحول إلى # فلا تنقل الزائر إلى موقع آخر؛ يمكنك لاحقاً وضع روابطك من إعدادات كل عنصر. تبقى روابط المراسي والاتصال وواتساب."><input type="checkbox" id="cl-lnk" checked> تعطيل روابط الموقع الأصلي (تصير #)</label></div>
+<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label></div>
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
-<div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
+<div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-ring" hidden><i>0</i></span><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
     document.body.appendChild(m);
+    try { const dd = window.ImgCfg && ImgCfg.get("tpl", "dest", "sec"), rr = m.querySelector('input[name="cl-dest"][value="' + dd + '"]'); if (rr) rr.checked = true; } catch (e) { }      // الوجهة الافتراضية من إعدادات القوالب
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
       const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "fxrep") fxPanel(); else if (a === "fxsend") { const un = (S.fxRep || []).filter((x, i) => x.status !== "ok" && (document.querySelector(`#cl-rep [data-fxi="${i}"]`) || {}).checked); sendFxRequests(un.length ? un : []); } else if (a === "fxclose") fxPanel(false); else if (a === "fxstat") fxStatus(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
@@ -813,9 +842,9 @@ const PBClone = (function () {
     im.onerror = () => toast("تعذّر قراءة الصورة"); im.src = url;
   }
   async function run() {
-    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true;
+    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true; prog(1); doneShown = false;
     try {      // اختيار التأثيرات المطلوب إضافتها يتم من نافذة «التأثيرات» الأولى فقط؛ لا نافذة تأكيد ثانية عند «انسخ»
-      if (S.tab === "url") await doCopyUrl(); else await doCopyImage(); } catch (e) { st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
+      if (S.tab === "url") await doCopyUrl(); else { prog(10); await doCopyImage(); finishFx(); } setTimeout(() => prog(null), 1800); } catch (e) { prog(null); st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
   return { open, close, _t: { extractMobile, neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
 })();

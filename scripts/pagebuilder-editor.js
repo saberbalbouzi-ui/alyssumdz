@@ -13,7 +13,7 @@ const PBApp = (() => {
 
   const EDIT_CSS = `
 .pb-edit.pb-fx .pb-sl-off,.pb-edit.pb-fx .pb-gx-off{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
-::-webkit-scrollbar{width:21px;height:21px}::-webkit-scrollbar-thumb{background:#E8923A;border-radius:12px;border:1px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:#f3ece0}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-color:rgba(255,128,24,.62) transparent}}
 .pb-edit [data-pb]{cursor:pointer}
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
@@ -33,6 +33,8 @@ body{overflow-x:hidden;margin:0}`;
   const css = `
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
+.pbx-adx{display:none!important}#pb-app.pbx-ad .pbx-adx{display:inline-flex!important}
+#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2{display:none!important}
 .pbx-top{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#173f35;color:#fff;flex-wrap:wrap}
 .pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
 .pbx-top input{background:#fff;border:0;border-radius:8px;padding:.4rem .7rem;font-weight:800;width:auto;flex:0 1 240px;min-width:120px;font-family:inherit;color:#173f35}
@@ -150,7 +152,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.widget .pbx-h.d-ne{top:-7px;right:-7px}.pbx-box.widget .pbx-h.d-se{bottom:-7px;right:-7px}.pbx-box.widget .pbx-h.d-sw{bottom:-7px;left:-7px}
 .pbx-box.widget .pbx-rad{border-color:#8b3dff}
 .pbx-add2{display:block;margin:16px auto 80px;border:1px solid #bdbfca;background:rgba(255,255,255,.35);color:#111;border-radius:12px;padding:.75rem;font-weight:800;font-family:inherit;font-size:.95rem;cursor:pointer}.pbx-add2:hover{background:rgba(255,255,255,.75)}
-.pbx-thumbs{position:fixed;z-index:20;width:80px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow-y:auto;overflow-x:hidden;padding:4px 0;scrollbar-width:thin;direction:ltr}
+.pbx-thumbs{position:fixed;z-index:20;width:80px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow-y:auto;overflow-x:hidden;padding:4px 0;direction:ltr}
 .pbx-th{position:relative;flex:none;background:#fff;border:2px solid #fff;border-radius:7px;box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer;overflow:hidden;box-sizing:content-box;background-size:cover;background-position:center}.pbx-th:hover{border-color:#c9b6ef}.pbx-th.on{border-color:#8b3dff}.pbx-th.off{opacity:.45}
 .pbx-th>b{position:absolute;left:3px;bottom:1px;font-size:10px;font-weight:800;color:#111;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;z-index:2}.pbx-th>i{position:absolute;right:3px;top:2px;font-size:9px;font-style:normal;z-index:2}.pbx-th>u{position:absolute;display:block;text-decoration:none;border-radius:1px;background-size:cover;background-position:center}
 .pbx-thadd{flex:none;width:70px;height:42px;border:0;border-radius:9px;background:#e6e7ec;color:#111;font-size:22px;cursor:pointer;font-family:inherit}.pbx-thadd:hover{background:#dcdde4}
@@ -158,7 +160,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-sbar{position:absolute;display:flex;flex-direction:column;gap:2px;pointer-events:auto;z-index:6;background:#fff;border-radius:12px;padding:5px;box-shadow:0 3px 14px rgba(14,19,24,.25),0 0 0 1px rgba(64,87,109,.08)}
 .pbx-sbar button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0}.pbx-sbar button:hover{background:#ebeef2}.pbx-sbar button[disabled]{opacity:.3;cursor:default;background:none}.pbx-sbar button.on{background:#ebeef2;color:#8b3dff}.pbx-sbar button.add{background:#f1f2f6}.pbx-sbar button.dng:hover{color:#b83232}.pbx-sbar svg{width:20px;height:20px;display:block}
 .pbx-ac{border:1.5px solid #eadfc4;border-radius:10px;margin-bottom:.55rem;background:#fff;overflow:hidden}.pbx-ach{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:#faf6ec;padding:.55rem .7rem;font-family:inherit;font-weight:800;font-size:.86rem;color:#173f35;cursor:pointer}.pbx-ach.on{background:#f1ebdd}.pbx-ach i{font-style:normal;color:#a08a55}.pbx-acb{padding:.6rem .6rem .2rem}
-.pbx-qbar{position:fixed;z-index:21;display:flex;align-items:center;gap:2px;background:#fff;border-radius:14px;padding:5px 8px;box-shadow:0 3px 16px rgba(14,19,24,.22),0 0 0 1px rgba(64,87,109,.08);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;white-space:nowrap;font-family:inherit;color:#0e1318}
+.pbx-qbar{position:fixed;z-index:21;display:flex;align-items:center;gap:2px;background:#fff;border-radius:14px;padding:5px 8px;box-shadow:0 3px 16px rgba(14,19,24,.22),0 0 0 1px rgba(64,87,109,.08);overflow-x:auto;overflow-y:hidden;white-space:nowrap;font-family:inherit;color:#0e1318}
 .pbx-qbar button,.pbx-qbar label.qa{flex:none;min-width:34px;height:36px;border:0;background:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 8px;font-family:inherit;font-weight:700;font-size:.82rem;color:inherit;position:relative}
 .pbx-qbar button:hover,.pbx-qbar label.qa:hover{background:#ebeef2}.pbx-qbar button.on{background:#e8dcff;color:#4b1fa8}.pbx-qbar button svg{width:18px;height:18px}
 .pbx-qbar select{flex:none;height:36px;border:1px solid #d9dbe3;border-radius:8px;padding:0 .4rem!important;margin:0!important;width:auto!important;font-family:inherit;font-size:.82rem;background:#fff;max-width:150px}
@@ -190,6 +192,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-mwbar button.ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pbx-mwbar button.no{color:#b83232}
 .pbx-ft button:hover,.pbx-ft button.on{background:#ebeef2}.pbx-ft button.dng:hover{color:#b83232}
 .pbx-sb{position:absolute;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:7}
+.pbx-slnav{position:absolute;display:flex;align-items:center;gap:.4rem;pointer-events:auto;z-index:8;background:rgba(10,30,16,.9);color:#86f06a;border:1px solid rgba(134,240,106,.45);border-radius:999px;padding:.2rem .35rem;font:800 .8rem/1 inherit;font-family:inherit;direction:ltr;box-shadow:0 6px 18px rgba(0,0,0,.45)}.pbx-slnav button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(150,255,170,.5);background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28));color:#fff;font-size:1.15rem;line-height:1;cursor:pointer;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -2px 4px rgba(0,0,0,.25);transition:transform .15s}.pbx-slnav button:hover{transform:translateY(-2px)}.pbx-slnav span{min-width:46px;text-align:center}
 .pbx-sb button{border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);cursor:grab}.pbx-sb button:hover{background:#f3ecff;color:#8b3dff}.pbx-sb button:active{cursor:grabbing}
 .pbx-ft svg,.pbx-sb svg{width:20px;height:20px;display:block}
 .pbx-box.multi{border:2px solid #8b3dff;background:rgba(139,61,255,.07)}
@@ -238,6 +241,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
+  <button class="pub pbx-adx" id="pbx-adx" type="button" onclick="ImgGen.exportAd()" title="يحوّل التصميم إلى صورة بمقاس المنصة بالبكسل للتنزيل أو الحفظ في المكتبة">⬇ تصدير الصورة</button>
   <button class="pub" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
 </div>
 <div class="pbx-main">
@@ -288,18 +292,18 @@ body{overflow-x:hidden;margin:0}`;
   function open(page, slug, isNew) {
     build();
     E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
-    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
+    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
-    E.zoom = 1; ltab("add"); setDev(isMob() ? "m" : "d"); renderInspector(); updateTop();
+    E.zoom = 1; ltab("add"); setDev(isMob() && !E.page.ad ? "m" : "d"); renderInspector(); updateTop();
     if (fdoc) renderCanvas();
     (async () => { try { const r = await fetch("assets/data/chrome.json", { cache: "no-store" }), c = r.ok ? await r.json() : null; PB.setChrome(typeof ChromeAdmin !== "undefined" && ChromeAdmin.state && ChromeAdmin.state.cfg ? ChromeAdmin.state.cfg : c); if (fdoc && E.page) renderCanvas(); } catch (e) { } })();      // هيدر الموقع المحفوظ لمعاينة «الهيدر الافتراضي»
   }
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
-    $("pb-app").classList.remove("on"); document.body.style.overflow = "";
+    $("pb-app").classList.remove("on", "pbx-ad"); document.body.style.overflow = "";
     purgeUnsaved(true).then(n => { if (n) toast("🧹 حُذفت " + n + " صورة غير محفوظة ونُظّفت المكتبة"); });
     if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
   }
@@ -426,12 +430,13 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── اللوحة اليسرى ───────────────── */
   function ltab(t) { E.ltab = t === "tpl" ? "def" : t; renderLeft(); }
   function ltoggle(t) { if (t === "tpl") t = "def"; E.ltab = E.ltab === t ? "" : t; renderLeft(); }
+  const AD_OK = ["heading", "text", "image", "button", "shape", "iconbox", "bullets", "counter", "social", "divider"];      // عناصر لوحة الصور الإشهارية (بلا عناصر الويب)
   function renderLeft() {
     const pane = $("pbx-lpane"); if (!pane) return;
     document.querySelectorAll("[data-lt]").forEach(b => b.classList.toggle("on", b.dataset.lt === E.ltab));
     const hb = E.ltab && document.querySelector(`[data-lt="${E.ltab}"]`); if (!hb) { pane.style.display = "none"; pane.innerHTML = ""; return; } pane.style.display = ""; hb.after(pane);      // أدوات كل عنوان تُفتح تحته (نمط ووردبريس)
     if (E.ltab === "add") {
-      const tile = t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`, cats = PB.CATS.map(([n, L]) => [n, L.filter(t => WIDGETS[t])]), used = new Set(cats.flatMap(c => c[1])), rest = ORDER.filter(t => !used.has(t) && WIDGETS[t]); if (rest.length) cats[0][1] = cats[0][1].concat(rest);
+      const tile = t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`, cats = (E.page.ad ? [["عناصر التصميم", AD_OK]] : PB.CATS).map(([n, L]) => [n, L.filter(t => WIDGETS[t])]), used = new Set(cats.flatMap(c => c[1])), rest = E.page.ad ? [] : ORDER.filter(t => !used.has(t) && WIDGETS[t]); if (rest.length) cats[0][1] = cats[0][1].concat(rest);
       pane.innerHTML = cats.map(([n, L]) => `<div class="pbx-cat">${n}</div><div class="pbx-grid">${L.map(tile).join("")}</div>`).join("")+`<p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته ${FREE_ONLY ? "فوق قماش الصفحة" : "إلى العمود المحدد"}. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
     } else if (E.ltab === "def") {
       const card = (key, name) => `<button type="button" class="pbx-dfc" draggable="true" data-tpl="${key}" title="${esc(name)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC[key] || ""}</svg><span>${esc(name)}</span></button>`;
@@ -495,7 +500,7 @@ body{overflow-x:hidden;margin:0}`;
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0;
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
-    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || ""));
+    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
@@ -906,6 +911,14 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* مستطيل التخطيط (قبل التدوير): المركز من getBoundingClientRect والأبعاد من offsetWidth/Height */
   function layoutRect(el) { const r = el.getBoundingClientRect(); if (!el.offsetWidth) return r; const w = el.offsetWidth, h = el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + r.height / 2; return { left: cx - w / 2, top: cy - h / 2, width: w, height: h, right: cx + w / 2, bottom: cy + h / 2 }; }
+  /* أسهم/نقاط السلايدر وعناوين الأكورديون صغيرة فتغطيها مقابض التحجيم عند تحديدها فلا تصلها النقرة: نمرّر «نقرة» (بلا سحب) إلى العنصر تحتها */
+  function fwdClickOnTap(ev) {
+    const x0 = ev.clientX, y0 = ev.clientY, up = u => {
+      document.removeEventListener("mouseup", up, true); if (Math.abs(u.clientX - x0) + Math.abs(u.clientY - y0) > 4) return;
+      try { const fr = $("pbx-frame"), fb = fr.getBoundingClientRect(), sc = fb.width / (fr.offsetWidth || fb.width) || 1, el = fdoc.elementFromPoint((x0 - fb.left) / sc, (y0 - fb.top) / sc), c = el && el.closest && el.closest('[class*="pbsd-"],[class*="pbsp-"],[class*="pbsn-"],[class*="pbdh-"],[class*="pbdx-"]'); if (c) setTimeout(() => c.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: fdoc.defaultView })), 0); } catch (e) { }
+    };
+    document.addEventListener("mouseup", up, true);
+  }
   function ovlOrigin() { const fw = $("pbx-fw"), fr = fw.getBoundingClientRect(), or = $("pbx-ovl").getBoundingClientRect(); return { ox: fr.left - or.left, oy: fr.top - or.top, s: E.scale }; }      // نسبة لطبقة الغطاء نفسها (تتحرك مع التمرير وتستثني شريط التمرير الذي قد يكون يسار المنطقة)
   function drawGuides(list, cr) {
     document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); if (!list || !list.length) return;
@@ -966,7 +979,7 @@ body{overflow-x:hidden;margin:0}`;
 }
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
     if (!locked && isW && inf.free && inf.node.type === "image") ["n", "s", "e", "w"].forEach(d => { const b = document.createElement("div"); b.className = "pbx-edge e-" + d; b.title = "اسحب الحافة: للخارج يكبّر الصورة في هذا الاتجاه، وللداخل يقصّها"; b.onmousedown = ev => startResize(ev, d, inf); box.appendChild(b); });      // كل حافة الصورة تُسحب وليس نقطة المنتصف فقط
-    if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => startResize(ev, d, inf); box.appendChild(h); });
+    if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => { if (ev.button === 0) fwdClickOnTap(ev); startResize(ev, d, inf); }; box.appendChild(h); });
     ovl.appendChild(box);
     if (isW && !E.busy) drawFloat(inf, box, ovl, locked);
   }
@@ -998,6 +1011,15 @@ body{overflow-x:hidden;margin:0}`;
     more: SVG('<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>', 1), rot: SVG('<path d="M20 11a8 8 0 10-2.2 5.8"/><path d="M20 4v7h-7"/>'),
     move: SVG('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')
   };
+  /* مُنقّل السلايدر: نقاط/أسهم السلايدر صغيرة وتغطيها مقابض التحديد وشريط الجانب عند تحديدها، فيظهر عند تحديد أي عنصر من سلايدر مُنقّل «‹ 2 / 6 ›» للتنقل بين الشرائح دون النقر داخل الصفحة */
+  function drawSlNav(inf, bx, ovl, ft) {
+    try {
+      const m = String((inf.set && inf.set.cls) || "").match(/pbs[ldpn]-([a-z0-9]+)/); if (!m) return; const w = fdoc && fdoc.defaultView, g = w && w.__pbFx && w.__pbFx.sl && w.__pbFx.sl[m[1]]; if (!g || !g.n) return;
+      const d = document.createElement("div"), sp = () => d.querySelector("span"); d.className = "pbx-slnav"; d.innerHTML = '<button type="button" data-d="-1" title="الشريحة السابقة">‹</button><span></span><button type="button" data-d="1" title="الشريحة التالية">›</button>'; sp().textContent = (g.get() + 1) + " / " + g.n;
+      d.onmousedown = ev => ev.stopPropagation(); d.onclick = ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); g.show(g.get() + Number(b.dataset.d), Number(b.dataset.d)); sp().textContent = (g.get() + 1) + " / " + g.n; };
+      ovl.appendChild(d); const iv = setInterval(() => { if (!d.isConnected) return clearInterval(iv); try { sp().textContent = (g.get() + 1) + " / " + g.n; } catch (e) { } }, 250); const W = ovl.clientWidth, ftT = parseFloat(ft.style.top) || 0, below = ftT >= bx.b; let top = below ? ftT + ft.offsetHeight + 8 : bx.b + 10; d.style.top = top + "px"; d.style.left = Math.max(4, Math.min(W - d.offsetWidth - 4, (bx.l + bx.r) / 2 - d.offsetWidth / 2)) + "px";
+    } catch (e) { }
+  }
   function drawFloat(inf, box, ovl, locked) {
     const O = ovl.getBoundingClientRect(), R = box.getBoundingClientRect(), st = $("pbx-stage"), W = ovl.clientWidth;
     const bx = { l: R.left - O.left, t: R.top - O.top, r: R.right - O.left, b: R.bottom - O.top };      // أبعاد الإطار بعد التدوير (نسبة لطبقة الغطاء)
@@ -1007,6 +1029,7 @@ body{overflow-x:hidden;margin:0}`;
     let top = bx.t - fh - GAP; if (top < vt + 4) { top = bx.b + GAP + 6; if (top + fh > vb - 4) top = Math.max(vt + 4, bx.t + 8); }      // فوق العنصر إن اتسع المكان وإلا تحته
     let left = (bx.l + bx.r) / 2 - fw / 2; left = Math.max(4, Math.min(W - fw - 4, left));
     ft.style.top = top + "px"; ft.style.left = left + "px"; drawMwBar(inf, bx, ovl, ft);
+    drawSlNav(inf, bx, ovl, ft);
     if (locked) return;
     const sb = mk("pbx-sb", [["rot", FIC.rot, "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)", null], ["move", FIC.move, "اسحب لتحريك العنصر", null]]);
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
@@ -2679,6 +2702,12 @@ ${this.quickImg(this.q.cover)}
     document.getElementById("pq-bg").classList.add("open");
   },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },
+  mode(m) {
+    if (m !== "ad") m = "web"; try { localStorage.setItem("alyssum_pb_mode", m); } catch (e) { }
+    document.querySelectorAll("#pb-modes [data-pbm]").forEach(b => b.classList.toggle("on", b.dataset.pbm === m));
+    document.getElementById("pb-web").classList.toggle("hidden", m === "ad"); document.getElementById("pb-ad").classList.toggle("hidden", m !== "ad");
+    if (m === "ad" && typeof ImgGen !== "undefined") ImgGen.open();
+  },
   initGen() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } },
   async init() { await this.refresh(); },
   async refresh() {

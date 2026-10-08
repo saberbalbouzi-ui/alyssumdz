@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.42.2">
+<meta name="admin-version" content="1.51.9">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -48,6 +48,21 @@ button{cursor:pointer;border:none;font-family:inherit}
 .nav-btn:hover{background:#FAF7F0}
 .nav-btn.on{background:var(--green);color:#fff}
 .nav-btn.on .nav-txt small{color:#DCE9E3}
+/* تبويبات كبيرة لتنظيم العناوين (المظهر / ecommerce / تطبيقات) + عرضا الوكيل (ذكي/ناطق) */
+.ap-tabs{display:flex;gap:.4rem;margin-top:.8rem;flex-wrap:wrap}.ap-tabs button{border:1.5px solid var(--line);background:#fff;color:var(--green);border-radius:12px;padding:.5rem 1rem;font-weight:800;font-family:inherit;cursor:pointer;transition:background .2s,transform .2s}.ap-tabs button:hover{transform:translateY(-2px)}.ap-tabs button.on{background:var(--green);color:#fff;border-color:var(--green)}
+#tl-lib{position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:1rem}#tl-lib .tl-box{background:#fff;color:#173f35;border-radius:20px;width:min(980px,96vw);height:min(88vh,760px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);padding:1rem 1.2rem}#tl-lib .tl-top{display:flex;align-items:center;justify-content:space-between}#tl-lib .tl-top h3{margin:0}#tl-lib .tl-fl{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.5rem 0}#tl-lib .tl-fl button,#tl-lib .ap-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:.35rem .9rem;font:inherit;font-weight:700;cursor:pointer}#tl-lib .tl-fl button.on,#tl-lib .ap-tabs button.on{background:#157a5522;border-color:#157a55;color:#157a55}#tl-lib .tl-adv{display:inline-block;margin-top:.3rem;font-size:.78rem;font-weight:800;color:#157a55}#tl-lib .tl-c .ap-h{flex-wrap:wrap;gap:.4rem;align-items:flex-start}#tl-lib .tl-c .ap-h b{flex:1 1 140px}#tl-lib .tl-act{display:flex;gap:.4rem;flex-wrap:wrap}#tl-lib .tl-act button{flex:1}#tl-lib .tl-th{position:relative;height:170px;border-radius:12px;overflow:hidden;margin-bottom:.6rem;cursor:zoom-in;background:#eef2f1;border:1px solid var(--line)}#tl-lib .tl-th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;transition:transform .6s}#tl-lib .tl-th:hover img{transform:scale(1.05)}#tl-lib .tl-th span{position:absolute;inset-inline:0;bottom:0;padding:.35rem;text-align:center;font-weight:800;font-size:.85rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));opacity:0;transition:.25s}#tl-lib .tl-th:hover span{opacity:1}#tl-lib .tl-th.none{display:none}
+#tl-view{position:fixed;inset:0;z-index:99995;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:1rem}#tl-view .tv-box{background:#fff;color:#173f35;border-radius:18px;width:min(900px,96vw);height:min(92vh,900px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5)}#tl-view .tv-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;border-bottom:1px solid var(--line)}#tl-view .tv-body{flex:1;overflow:auto;background:#e9eeed}#tl-view .tv-body img{width:100%;display:block}
+#tl-lib .tl-body{flex:1;overflow:auto;margin-top:.4rem}
+.ig-cost{display:flex;gap:1.2rem;flex-wrap:wrap;margin:.6rem 0;padding:.5rem .9rem;border:1px dashed var(--line);border-radius:12px;font-size:.88rem}.ig-modes{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin:.8rem 0}.ig-modes button{border:1.5px solid var(--line);background:transparent;color:inherit;border-radius:16px;padding:.8rem 1rem;text-align:start;cursor:pointer;font:inherit;transition:.2s}.ig-modes button b{display:block}.ig-modes button small{opacity:.8}.ig-modes button.on{border-color:#157a55;background:#157a5522}.ig-modes button:hover{transform:translateY(-2px)}.ig-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}@media(max-width:800px){.ig-grid,.ig-modes{grid-template-columns:1fr}}.ig-src{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}.ig-src select{flex:1;min-width:160px}.ig-prev{margin-top:.5rem;min-height:70px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;padding:.5rem;font-size:.85rem}.ig-prev img{max-height:170px;max-width:100%;border-radius:8px;background:#fff}.ig-gal{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem}.ig-gal img{width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--line)}.ig-cus{display:flex;gap:.4rem;align-items:center;margin-top:.4rem}.ig-cus input{width:90px}.ig-res{margin-top:1rem}.ig-out{border:1px solid var(--line);border-radius:14px;padding:.6rem;background:#f4f4f2;display:grid;place-items:center}.ig-out img{max-width:100%;max-height:560px;border-radius:8px}
+.tl-c{border:1px solid var(--line);border-radius:16px;padding:.9rem 1rem;margin-top:.7rem}.tl-c.dev{opacity:.7;border-style:dashed}.tl-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.7rem;margin-top:.5rem}.tl-g .tl-c{margin-top:0}.tl-s{margin-top:.6rem;display:grid;gap:.45rem}.tl-r{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.45rem .2rem;border-bottom:1px dashed var(--line);font-weight:700}
+.nav-btn.nav-work{display:none!important}html.app-off-ask .ah-btn,html.app-off-ask .ah-panel{display:none!important}html.app-off-cloner #pbx-clb{display:none!important}.app-off-tag{display:inline-block;margin-inline-start:.4rem;font-size:.66rem;font-weight:800;background:rgba(255,93,130,.16);color:#d64545;border:1px solid rgba(255,93,130,.5);border-radius:99px;padding:.05rem .45rem;vertical-align:middle}.app-off-tag.hidden{display:none}
+.app-cfg .ap-h{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}.app-cfg .ap-h h3{margin:0;flex:1;font-size:1.25rem}.app-cfg .ap-s{display:inline-block;border-radius:99px;padding:.15rem .7rem;font-size:.78rem;font-weight:900;border:1px solid}.app-cfg .ap-s.on{color:#157a55;border-color:rgba(21,122,85,.5);background:rgba(21,122,85,.1)}.app-cfg .ap-s.off{color:#d64545;border-color:rgba(214,69,69,.5);background:rgba(214,69,69,.1)}
+.app-cfg .ap-sec{margin-top:1rem}.app-cfg .ap-sec>b{display:block;color:var(--green);margin-bottom:.3rem}.app-cfg ol{margin:.2rem 0 0;padding-inline-start:1.3rem;line-height:2}.app-cfg .ap-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem}.app-cfg .ap-kv>div{border:1px solid var(--line);border-radius:14px;padding:.7rem .9rem}.app-cfg .ap-kv small{display:block;color:#6B7672}.app-cfg .ap-kv b{font-size:1.05rem}
+.sw{position:relative;display:inline-block;width:56px;height:30px;flex:none}.sw input{opacity:0;width:0;height:0;position:absolute}.sw i{position:absolute;inset:0;border-radius:99px;background:#cfc8b5;border:1px solid rgba(0,0,0,.1);cursor:pointer;transition:background .2s}.sw i:after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);transition:transform .2s}.sw input:checked+i{background:#157a55}.sw input:checked+i:after{transform:translateX(-26px)}
+.nav-groups{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-bottom:.7rem}.nav-groups .ng{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.7rem .3rem;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--green);font-weight:900;cursor:pointer;font-family:inherit;transition:background .2s,transform .2s}.nav-groups .ng svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.nav-groups .ng b{font-size:.84rem}.nav-groups .ng:hover{transform:translateY(-2px);background:#FAF7F0}.nav-groups .ng.on{background:var(--green);color:#fff;border-color:var(--green)}
+.side-nav[data-g="look"] .nav-btn:not([data-grp="look"]),.side-nav[data-g="shop"] .nav-btn:not([data-grp="shop"]),.side-nav[data-g="apps"] .nav-btn:not([data-grp="apps"]){display:none}
+#tab-agent[data-view="voice"]>:not(#av-card){display:none!important}#tab-agent[data-view="agent"] #av-card{display:none!important}
+
 .nav-ic{font-size:1.5rem;flex:none;line-height:1}
 .nav-txt{display:flex;flex-direction:column;gap:.15rem;text-align:right;min-width:0}
 .nav-txt b{font-size:.98rem;font-weight:800;white-space:nowrap}
@@ -61,7 +76,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .spv-bar b{color:var(--green);margin-inline-end:.4rem}
 .spv-bar button,.spv-bar a{border:1px solid var(--line);background:#fff;border-radius:10px;padding:.4rem .8rem;font-weight:800;font-size:.85rem;cursor:pointer;text-decoration:none;color:var(--green)}
 .spv-bar button.on{background:var(--green);color:#fff;border-color:var(--green)}
-.spv-bar .sp{margin-inline-start:auto}.spv-bar button,.spv-bar a{display:inline-flex;align-items:center;gap:.35rem}.spv-bar svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.spv-bar button.edit{background:var(--gold);color:var(--green);border-color:var(--gold)}.spv-bar .hidden{display:none}
+.spv-bar button.inst{background:linear-gradient(180deg,rgba(34,197,94,.9),rgba(21,128,61,.9));color:#fff;border-color:#15803d;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);transition:.2s}.spv-bar button.inst:hover{transform:translateY(-2px);filter:brightness(1.1)}.spv-bar .sp{margin-inline-start:auto}.spv-bar button,.spv-bar a{display:inline-flex;align-items:center;gap:.35rem}.spv-bar svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.spv-bar button.edit{background:var(--gold);color:var(--green);border-color:var(--gold)}.spv-bar .hidden{display:none}
 .spv-stage{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:1rem}
 .spv-frame{background:#fff;border:0;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:100%;height:100%;transition:width .25s}
 .spv-frame.tablet{width:768px;max-width:100%;border:10px solid #222;border-radius:24px}
@@ -198,7 +213,7 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(200,162,75,.22
 button.small,.small{border-radius:10px;font-weight:800;letter-spacing:0;transition:filter .15s,transform .1s}
 button.small:hover{filter:brightness(1.06)}button.small:active{transform:translateY(1px)}
 .rt{border-collapse:separate;border-spacing:0 6px}.rt th{font-size:.72rem;color:#7a8580;font-weight:800;letter-spacing:.02em}
-::-webkit-scrollbar{width:21px;height:21px}::-webkit-scrollbar-thumb{background:#D9D1BC;border-radius:12px;border:1px solid transparent;background-clip:content-box}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:#E8923A;background-clip:content-box}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}
 
 /* الهيدر والفوتر (ChromeAdmin) */
 .ca-pv{width:100%;height:150px;border:1px solid var(--line);border-radius:12px;background:#fff}#ca-pv-footer{height:360px}.ca-pvbox{position:sticky;top:0;z-index:5}
@@ -212,8 +227,8 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 .ca-ord{display:flex;flex-wrap:wrap;gap:.45rem}.ca-chip{display:inline-flex;align-items:center;gap:.2rem;background:#f4efe6;border-radius:999px;padding:.2rem .3rem .2rem .7rem;font-weight:800;font-size:.85rem;color:var(--green)}.ca-chip small{color:#999;font-weight:600}
 @media(max-width:700px){.ca-row,.ca-soc{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=4">
-<link rel="stylesheet" href="assets/css/admin-glass.css?v=4">
+<link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
+<link rel="stylesheet" href="assets/css/admin-glass.css?v=5">
 <script>try{if(localStorage.getItem("admin_theme")!=="classic")document.documentElement.classList.add("glass")}catch(e){document.documentElement.classList.add("glass")}window.AdminTheme={toggle:function(){var c=document.documentElement.classList.toggle("glass");try{localStorage.setItem("admin_theme",c?"glass":"classic")}catch(e){}}};</script>
 </head>
 <body>
@@ -236,6 +251,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
     <button data-d="phone" onclick="SitePreview.dev('phone')"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg> الهاتف</button>
     <button onclick="SitePreview.reload()" title="تحديث"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5"/></svg></button>
     <a id="spv-ext" href="./" target="_blank" rel="noopener" class="sp" title="فتح في تبويب"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    <button id="spv-inst" class="inst hidden" onclick="SitePreview.install()"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg> <span>تثبيت</span></button>
     <button id="spv-edit" class="edit hidden" onclick="SitePreview.edit()"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg> <span>تعديل</span></button>
     <button onclick="SitePreview.close()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> إغلاق</button>
   </div>
@@ -243,12 +259,14 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 </div>
 <script>
 const SitePreview = {
-  _url: "./", _edit: null,
+  _url: "./", _edit: null, _inst: null,
+  _instBtn(opts){ const b = document.getElementById("spv-inst"); this._inst = opts.install || null; b.classList.toggle("hidden", !this._inst); b.querySelector("span").textContent = opts.installLabel || "تثبيت"; },
+  install(){ if(this._inst) this._inst(); },
   open(){ this.openUrl("./", { title: "معاينة الموقع", edit: ()=>PBConvert.edit("home"), editLabel: "✏️ تعديل في المطوّر" }); },
   /* يفتح أي رابط داخل النافذة؛ opts.edit = دالة زر «تعديل» (تظهر فقط إن وُجدت) */
-  openUrl(url, opts){ opts = opts || {}; this._url = url; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; const ex = document.getElementById("spv-ext"); ex.classList.remove("hidden"); ex.href = url; this.dev("desktop"); document.getElementById("spv-frame").removeAttribute("srcdoc"); document.getElementById("spv").classList.add("on"); document.getElementById("spv-frame").src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); },
+  openUrl(url, opts){ opts = opts || {}; this._instBtn(opts); this._url = url; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; const ex = document.getElementById("spv-ext"); ex.classList.remove("hidden"); ex.href = url; this.dev("desktop"); document.getElementById("spv-frame").removeAttribute("srcdoc"); document.getElementById("spv").classList.add("on"); document.getElementById("spv-frame").src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); },
   /* معاينة HTML جاهز (srcdoc) — تُستعمل لمعاينة المنشئ قبل النشر */
-  openHtml(html, opts){ opts = opts || {}; this._url = null; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; document.getElementById("spv-ext").classList.add("hidden"); this.dev("desktop"); const f = document.getElementById("spv-frame"); f.removeAttribute("src"); f.srcdoc = html; document.getElementById("spv").classList.add("on"); },
+  openHtml(html, opts){ opts = opts || {}; this._instBtn(opts); this._url = null; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; document.getElementById("spv-ext").classList.add("hidden"); this.dev("desktop"); const f = document.getElementById("spv-frame"); f.removeAttribute("src"); f.srcdoc = html; document.getElementById("spv").classList.add("on"); },
   edit(){ if(this._edit) this._edit(); },
   close(){ document.getElementById("spv").classList.remove("on"); const f = document.getElementById("spv-frame"); f.removeAttribute("src"); f.removeAttribute("srcdoc"); },
   dev(d){ const f = document.getElementById("spv-frame"); f.className = "spv-frame " + (d === "desktop" ? "" : d); document.querySelectorAll(".spv-bar [data-d]").forEach(b=>b.classList.toggle("on", b.dataset.d === d)); },
@@ -270,35 +288,51 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   </div>
   <div class="stat" id="stats"></div>
   <div class="admin-body">
-    <nav class="side-nav">
+    <nav class="side-nav" data-g="shop">
       <div class="side-nav-intro">
         <b>📋 دليل الاستخدام</b>
         <p>اختر قسماً من القائمة، ثم استعمل الأزرار داخل كل قسم لإضافة أو تعديل أو نشر التغييرات. زر «🏠 تعديل الصفحة الرئيسية» أعلى الصفحة يفتح محرراً مباشراً للموقع نفسه.</p>
       </div>
-      <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('repeat',this)"><span class="nav-ic">🔁</span><span class="nav-txt"><b>إعادة الشراء<span class="nb hidden" id="nb-repeat"></span></b><small>رسائل واتساب لزبائنك السابقين مع كود تخفيض</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('setup',this)"><span class="nav-ic">🚀</span><span class="nav-txt"><b>تجهيز المتجر<span class="nb hidden" id="nb-setup"></span></b><small>قائمة فحص جاهزية قبل التسليم أو الإطلاق</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات</b><small>صفحاتك + المحرر المرئي + أدوات ذكية (التقاط العناصر)</small></span></button>
-      <button class="nav-btn" id="nav-pbgen" onclick="Admin.tab('pbgen',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>مولّد الصفحات الذكي</b><small>توليد صفحة جديدة ← تحرير بالأدوات الذكية ← حفظ</small></span></button>
+      <div class="nav-groups" id="nav-groups">
+        <button type="button" class="ng" data-g="look" onclick="AdminNav.group('look')"><span class="ng-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/></svg></span><b>المظهر</b></button>
+        <button type="button" class="ng on" data-g="shop" onclick="AdminNav.group('shop')"><span class="ng-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 01-8 0"/></svg></span><b>ecommerce</b></button>
+        <button type="button" class="ng" data-g="apps" onclick="AdminNav.group('apps')"><span class="ng-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg></span><b>تطبيقات</b></button>
+      </div>
+      <button class="nav-btn on" data-grp="shop" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('repeat',this)"><span class="nav-ic">🔁</span><span class="nav-txt"><b>إعادة الشراء<span class="nb hidden" id="nb-repeat"></span></b><small>رسائل واتساب لزبائنك السابقين مع كود تخفيض</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('setup',this)"><span class="nav-ic">🚀</span><span class="nav-txt"><b>تجهيز المتجر<span class="nb hidden" id="nb-setup"></span></b><small>قائمة فحص جاهزية قبل التسليم أو الإطلاق</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
+      <button class="nav-btn nav-work" data-grp="apps" data-work="builder" onclick="Admin.tab('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات</b><small>صفحاتك + المحرر المرئي + أدوات ذكية (التقاط العناصر)</small></span></button>
+      <button class="nav-btn nav-work" data-grp="apps" data-work="smart" id="nav-pbgen" onclick="Admin.tab('pbgen',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>المطوّر الذكي</b><small>توليد صفحة جديدة ← تحرير بالأدوات الذكية ← حفظ</small></span></button>
+      <button class="nav-btn nav-work" data-grp="apps" data-work="imgtools" data-ic="imgtools" onclick="Admin.tab('imgtools',this)"><span class="nav-ic">🖼️</span><span class="nav-txt"><b>أدوات تعديل الصور</b><small>نزع الخلفية وضغط الصور وتحويلها، وبقية أدوات الصور داخل المطوّر</small></span></button>
+      <button class="nav-btn nav-work" data-grp="apps" data-work="imggen" data-ic="imgtools" onclick="Admin.tab('imggen',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>مولّد الصور</b><small>صور منتجات وصور إشهارية بمقاسات مواقع التواصل</small></span></button>
+      <button class="nav-btn nav-work" data-grp="apps" data-work="agent" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي<span class="nb hidden" id="nb-agent"></span></b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="builder" data-ic="builder" onclick="AdminNav.app('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات<span class="app-off-tag hidden" data-appst="builder">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="smart" data-ic="pbgen" onclick="AdminNav.app('smart',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>المطوّر الذكي<span class="app-off-tag hidden" data-appst="smart">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="imgtools" data-ic="imgtools" onclick="AdminNav.app('imgtools',this)"><span class="nav-ic">🖼️</span><span class="nav-txt"><b>أدوات تعديل الصور<span class="app-off-tag hidden" data-appst="imgtools">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="imggen" data-ic="imgtools" onclick="AdminNav.app('imggen',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>مولّد الصور<span class="app-off-tag hidden" data-appst="imggen">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="agent" data-ic="agent" onclick="AdminNav.app('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي<span class="app-off-tag hidden" data-appst="agent">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="voice" data-ic="voice" onclick="AdminNav.app('voice',this)"><span class="nav-ic">🎙️</span><span class="nav-txt"><b>الوكيل الناطق<span class="app-off-tag hidden" data-appst="voice">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="ask" data-ic="ask" onclick="AdminNav.app('ask',this)"><span class="nav-ic">💬</span><span class="nav-txt"><b>اسألني<span class="app-off-tag hidden" data-appst="ask">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-app="cloner" data-ic="cloner" onclick="AdminNav.app('cloner',this)"><span class="nav-ic">📋</span><span class="nav-txt"><b>ناسخ القوالب<span class="app-off-tag hidden" data-appst="cloner">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
       <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
-      <button class="nav-btn" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('chromeh',this)"><span class="nav-ic">🔝</span><span class="nav-txt"><b>الهيدر</b><small>الشريط العلوي، القائمة، أيقونات التواصل، المشاركة، الأزرار</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('chromef',this)"><span class="nav-ic">🔚</span><span class="nav-txt"><b>الفوتر</b><small>النبذة، الروابط، التواصل، أيقونات التواصل، حقوق النشر</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي<span class="nb hidden" id="nb-agent"></span></b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromeh',this)"><span class="nav-ic">🔝</span><span class="nav-txt"><b>الهيدر</b><small>الشريط العلوي، القائمة، أيقونات التواصل، المشاركة، الأزرار</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromef',this)"><span class="nav-ic">🔚</span><span class="nav-txt"><b>الفوتر</b><small>النبذة، الروابط، التواصل، أيقونات التواصل، حقوق النشر</small></span></button>
+      <button class="nav-btn" data-grp="look" data-ic="tpl" onclick="AdminNav.tpl(this)"><span class="nav-ic">🧩</span><span class="nav-txt"><b>قوالب</b><small>تحميل قالب جاهز، ناسخ القوالب، وإعدادات القوالب</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
     </nav>
     <main class="admin-main">
 
@@ -558,11 +592,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   </div>
 
   <div id="tab-builder" class="hidden">
-    <div class="card">
+    <div class="card" style="padding:.8rem"><div class="ig-modes" id="pb-modes"><button type="button" data-pbm="web" class="on" onclick="PBAdmin.mode('web')"><b>🌐 صفحة ويب</b><small>المطوّر الكامل: صفحات هبوط وأقسام وعناصر المتجر</small></button><button type="button" data-pbm="ad" onclick="PBAdmin.mode('ad')"><b>🖼️ صور إشهارية</b><small>تصميم بمقاس منصة (فيسبوك، إنستغرام، تيك توك…) بلا عناصر ويب</small></button></div></div>
+    <div id="pb-ad" class="hidden"><div class="card app-cfg" id="ig-body"></div></div>
+    <div id="pb-web"><div class="card">
       <div class="search-bar">
         <b style="color:var(--green);align-self:center">📄 الصفحات</b>
         <button class="small" onclick="PBAdmin.newPage()">＋ صفحة جديدة</button>
-        <button class="small gold" onclick="PBAdmin.openGen()">🪄 المولّد الذكي (من صورة)</button>
+        <button class="small gold" onclick="PBAdmin.openGen()" title="يحوّل صورة تصميم إلى صفحة هبوط قابلة للتعديل">🪄 صفحة هبوط ذكية</button>
         <button class="small gray" onclick="PBAdmin.openTemplate('focus-honey')" title="صفحة هبوط كاملة مبنية بعناصر المنشئ على نمط التصميم المرجعي">📄 قالب جاهز: عسل التركيز</button>
         <button class="small gray" onclick="PBAdmin.importPage()">⬆ استيراد صفحة (JSON)</button>
         <button class="small gold" onclick="PBAdmin.refresh()">↻ تحديث</button>
@@ -570,7 +606,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div class="hint">صمّم صفحات هبوط بأقسام وأعمدة وعناصر (عنوان، نص، صورة، زر، منتجات، أسئلة شائعة، عدّ تنازلي، معرض...) مع إعدادات مستقلة للمكتب والتابلت والهاتف وتحرير مباشر على الصفحة. تُنشر الصفحة على الرابط <code dir="ltr">/lp/اسم-الصفحة/</code>.</div>
       <div id="pb-cta"></div>
       <div class="rtw" style="overflow:auto" id="pb-list"></div>
-    </div>
+    </div></div>
   </div>
   <div id="tab-pbgen" class="hidden">
     <div class="card" style="padding:1rem"><div id="pb-gen-host"></div></div>
@@ -927,6 +963,22 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card"><div style="overflow:auto"><table id="pixels-table"></table></div></div>
   </div>
 
+  <div id="tab-tpl" class="hidden"><div class="card app-cfg" id="tpl-body"></div></div>
+  <div id="tab-appcfg" class="hidden"><div class="card app-cfg" id="app-cfg-body"></div></div>
+  <div id="tab-imggen" class="hidden"></div>
+  <div id="tab-imgtools" class="hidden">
+    <div class="card">
+      <b style="color:var(--green)">🖼️ أدوات تعديل الصور</b>
+      <div class="hint">أدوات سريعة تعمل في متصفحك بلا اشتراك ولا مفتاح: اختر صورة ثم انزع خلفيتها بالذكاء المحلي أو اضغطها وحوّلها إلى WebP. وبقية الأدوات المتقدمة (التقاط العناصر، الماسك، البازل، الممحاة) داخل مطوّر الصفحات: حدّد صورة ثم زر «تعديل».</div>
+      <div class="action-bar" style="margin-top:.6rem"><label class="small gold" style="cursor:pointer;display:inline-flex;align-items:center;gap:.4rem">اختيار صورة<input type="file" accept="image/*" style="display:none" onchange="AdminNav.imgLoad(this)"></label>
+        <button class="small" id="it-cut" disabled onclick="AdminNav.imgCut()">نزع الخلفية</button>
+        <span style="display:inline-flex;align-items:center;gap:.4rem"><button class="small gray" id="it-webp" disabled onclick="AdminNav.imgWebp()">ضغط وتحويل WebP</button><input id="it-q" type="range" min="40" max="100" value="82" style="width:110px" title="الجودة"></span>
+        <button class="small" id="it-dl" disabled onclick="AdminNav.imgDl()">تنزيل النتيجة</button>
+        <button class="small gray" onclick="AdminNav.openBuilder()">فتح مطوّر الصفحات</button></div>
+      <div id="it-msg" class="hint" style="margin-top:.5rem"></div>
+      <div id="it-pv" style="margin-top:.6rem;min-height:140px;border-radius:14px;border:1px dashed var(--line);display:grid;place-items:center;padding:.6rem;overflow:hidden"><span class="hint" style="margin:0">لم تُختر صورة بعد</span></div>
+    </div>
+  </div>
   <div id="tab-agent" class="hidden">
     <div class="card hidden" id="aq-card">
       <b style="color:#b3261e">❓ أسئلة جديدة لم يعرف الوكيل الإجابة عنها <span id="aq-count"></span></b>
@@ -1488,11 +1540,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.42.2"></script>
-<script src="assets/js/chrome-admin.js?v=1.42.2"></script>
-<script src="assets/js/admin-assistant.js?v=1.42.2"></script>
-<script src="assets/js/admin-update.js?v=1.42.2"></script>
-<script src="assets/js/ai-vision.js?v=50"></script>
+<script src="assets/js/ctl-help.js?v=1.51.9"></script>
+<script src="assets/js/chrome-admin.js?v=1.51.9"></script>
+<script src="assets/js/admin-assistant.js?v=1.51.9"></script>
+<script src="assets/js/img-gen.js?v=1.51.0"></script>
+<script src="assets/js/admin-nav.js?v=1.51.9"></script>
+<script src="assets/js/admin-update.js?v=1.51.9"></script>
+<script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -2426,7 +2480,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","imgtools","imggen","appcfg","tpl","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -7892,7 +7946,7 @@ const PB = (() => {
         emit(c, sel + " .pb-gal", s, [["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-gal img", s, [["rad", px("border-radius")]]); c.d.push(`${sel} .pb-gal img{width:100%;aspect-ratio:${s.ratio || "1/1"};object-fit:cover;display:block}`); },
     },
     slider: {
-      label: "سلايدر", ic: "🎞️", fit: 1, def: { items: [{ img: "", title: "عنوان الشريحة الأولى", cx: 50, cy: 84 }, { img: "", title: "عنوان الشريحة الثانية", cx: 50, cy: 84 }], auto: true, interval: 4, arrows: true, dots: true, loop: true, trans: "slide", fit: "cover", cap: "over", capc: "#ffffff", capbg: "#00000080", capfs: { d: 22, m: 15 }, ratio: "16/9", rad: { d: 14 } },
+      label: "سلايدر", ic: "🎞️", fit: 1, def: { items: [{ img: "", title: "عنوان الصورة الأولى", cx: 50, cy: 84 }, { img: "", title: "عنوان الصورة الثانية", cx: 50, cy: 84 }, { img: "", title: "عنوان الصورة الثالثة", cx: 50, cy: 84 }], auto: true, interval: 4, arrows: true, dots: true, loop: true, trans: "slide", fit: "cover", cap: "over", capc: "#ffffff", capbg: "#000000", capfs: { d: 20, m: 13 }, ratio: "16/9", rad: { d: 14 }, per: { d: "3", m: "1" } },
       ctl: [{ k: "items", l: "الشرائح (صورة + عنوان + رابط)", t: "rep", f: [["img", "الصورة", "image"], ["title", "العنوان"], ["link", "رابط (اختياري)"]], up: "img", tab: "c" },
         { k: "auto", l: "تغيير تلقائي", t: "switch", tab: "c" }, { k: "interval", l: "كل كم ثانية", t: "num", min: 1, max: 30, tab: "c" }, { k: "loop", l: "تكرار دائري", t: "switch", tab: "c" }, { k: "arrows", l: "إظهار الأسهم الجانبية", t: "switch", tab: "c" }, { k: "dots", l: "إظهار النقاط", t: "switch", tab: "c" },
         { k: "per", l: "عدد الصور الظاهرة أفقياً (التلاشي يتعطّل عند أكثر من 1)", t: "select", r: 1, o: [["1", "1 — صورة واحدة"], ["2", "2 — صورتان"], ["3", "3 — ثلاث صور"]], tab: "c" }, { k: "trans", l: "نوع الانتقال", t: "select", o: [["slide", "انزلاق"], ["fade", "تلاشي"]], tab: "c" }, { k: "cap", l: "العنوان", t: "select", o: [["over", "فوق الصورة (قابل للتحريك بالسحب)"], ["below", "تحت الصورة"], ["none", "بدون"]], tab: "c" },
@@ -7906,7 +7960,7 @@ const PB = (() => {
           const inner = `${im}${cap}`; return `<div class="pb-sl-s${i === cur ? " on" : ""}">${it.link && !ctx.edit ? `<a href="${esc(it.link)}" style="display:contents">${inner}</a>` : inner}</div>`; };
         return `<div class="pb-sl${fade ? " fade" : ""}" data-auto="${s.auto !== false ? 1 : 0}" data-int="${num(s.interval) || 4}" data-loop="${s.loop !== false ? 1 : 0}"><div class="pb-sl-vp"><div class="pb-sl-tr"${!fade && ctx.edit ? ` style="transform:translateX(calc(${cur} * 100% / var(--per,1)))"` : ""}>${L.map(slide).join("")}</div></div>${s.arrows !== false ? '<button type="button" class="pb-sl-a pv" aria-label="السابق">‹</button><button type="button" class="pb-sl-a nx" aria-label="التالي">›</button>' : ""}${s.dots !== false ? `<div class="pb-sl-dots">${L.map((_, i) => `<i class="${i === cur ? "on" : ""}"></i>`).join("")}</div>` : ""}</div>`;
       },
-      css: (c, sel, s) => { c.d.push(`${sel} .pb-sl{--fit:${s.fit || "cover"};aspect-ratio:${s.ratio || "16/9"}}${sel} .pb-sl-cap{color:${s.capc || "#fff"};background:${s.capbg || "#00000080"}}`); emit(c, sel + " .pb-sl-cap", s, [["capfs", px("font-size")]]); emit(c, sel + " .pb-sl", s, [["rad", px("border-radius")], ["per", v => `--per:${Math.max(1, Math.min(3, num(v) || 1))};`]]); },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-sl{--fit:${s.fit || "cover"};aspect-ratio:${s.ratio || "16/9"}}${sel} .pb-sl-cap{color:${s.capc || "#fff"};background:${!s.capbg || s.capbg === "#00000080" ? "#000000" : s.capbg}}`); emit(c, sel + " .pb-sl-cap", s, [["capfs", px("font-size")]]); emit(c, sel + " .pb-sl", s, [["rad", px("border-radius")], ["per", v => `--per:${Math.max(1, Math.min(3, num(v) || 1))};`]]); },
     },
     products: {
       label: "منتجات المتجر", ic: "🛍️", fit: 1, def: { mode: "all", tag: "", cat: "", slugs: "", tabs: "", limit: 0, btn: "اطلب الآن", showOld: true, cardw: { d: 220, m: 150 }, gap: { d: 16 }, rad: { d: 16 }, cbg: "#ffffff", bbg: "#157a55" },
@@ -8268,6 +8322,7 @@ const PB = (() => {
   /* CSS الأساسي للمكوّنات (مشترك بين المحرر والصفحة المنشورة) */
   const BASE_CSS = `
 *{box-sizing:border-box}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}
 .pb-page{margin:0;font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2420;line-height:1.6;-webkit-font-smoothing:antialiased}
 .pb-page img{max-width:100%}
 .pb-sec{position:relative;isolation:isolate}
@@ -8330,7 +8385,20 @@ function L(t,ev,fn,o){t.addEventListener(ev,fn,o);C.push(function(){t.removeEven
 (function(){var P=$('.pb-pin');if(!P.length||ED)return;P.forEach(function(p){var s=p.closest('.pb-sec');if(s){s.style.zIndex=70;s.style.overflow='visible'}['.pb-in','.pb-fz'].forEach(function(q){var z=p.closest(q);if(z)z.style.overflow='visible'});});function rv(p,n){var v=getComputedStyle(p).getPropertyValue(n).trim();if(!v)return 0;var i=document.createElement('i');i.style.cssText='position:absolute;visibility:hidden;pointer-events:none;width:0;height:'+v;p.appendChild(i);var h=i.offsetHeight;p.removeChild(i);return h}function ini(){P.forEach(function(p){p.__on=!!getComputedStyle(p).getPropertyValue('--pin').trim();p.__t=rv(p,'--pin')+rv(p,'--pino')})}ini();function f(){P.forEach(function(p){if(!p.__on){if(p.__sh){p.__sh=0;p.style.translate=''}return}var sh=p.__sh||0,r=p.getBoundingClientRect(),k=p.offsetHeight?r.height/p.offsetHeight:1,ns=Math.max(0,(p.__t-(r.top-sh*k))/(k||1));if(Math.abs(ns-sh)>.4){p.__sh=ns;p.style.translate='0 '+ns+'px'}})}L(window,'scroll',f,{passive:true});L(window,'resize',function(){ini();f()});f()})();
 (function(){var P=$('.pb-par');if(!P.length||ED)return;P.forEach(function(p){var v=getComputedStyle(p).getPropertyValue('--par').trim(),k=parseFloat(v);p.__on=!!v;p.__k=isNaN(k)?.3:k});var raf=0;function f(){raf=0;var h=innerHeight;P.forEach(function(p){if(!p.__on)return;var r=p.getBoundingClientRect();if(r.bottom<-300||r.top>h+300)return;p.style.setProperty('--py',((h/2-(r.top+r.height/2))*p.__k*.5)+'px')})}function q(){if(!raf)raf=requestAnimationFrame(f)}L(window,'scroll',q,{passive:true});L(window,'resize',q);f()})();
 (function(){var G={};function g(id){return G[id]||(G[id]={h:[],b:[],x:[],H:0,thr:0,on:0,hov:0,dw:1280,open:0})}$('[class*="pbd"]').forEach(function(e){String(e.className).split(' ').forEach(function(c){var m;if(m=c.match(/^pbdh-([a-z0-9]+)$/))g(m[1]).h.push(e);else if(m=c.match(/^pbds-([a-z0-9]+)$/)){var q=g(m[1]);(q.s=q.s||[]).push(e)}else if(m=c.match(/^pbdx-([a-z0-9]+)$/)){g(m[1]).x.push(e)}else if(m=c.match(/^pbdb-([a-z0-9]+)$/)){g(m[1]).b.push(e);e.classList.add('pb-gx-m')}else if(m=c.match(/^pbdm-([a-z0-9]+)-([0-9]+)-([0-9]+)-([01])-([01])-([0-9]+)$/)){var o=g(m[1]);o.H=+m[2];o.thr=+m[3];o.on=+m[4];o.hov=+m[5];o.dw=+m[6]}})});var ids=Object.keys(G).filter(function(k){return G[k].b.length&&G[k].h.length}),gs=ids.map(function(k){return G[k]});if(!gs.length)return;var touch=!matchMedia('(hover:hover)').matches,BK=[];gs.forEach(function(o){o.fz=o.b[0].closest('.pb-fz');if(!o.fz)return;var B=BK.filter(function(x){return x.fz===o.fz})[0];if(!B){B={fz:o.fz,inn:o.fz.parentNode,dw:o.dw,gs:[],ST2:[]};B.u0=B.fz.getBoundingClientRect().width/B.dw||1;B.bd=B.inn.offsetHeight/B.u0;BK.push(B)}B.gs.push(o);o.B=B;(o.s||[]).forEach(function(e){if(B.ST2.indexOf(e)<0){B.ST2.push(e);e.__h0=e.offsetHeight/B.u0}})});function upd(B){var u=B.fz.getBoundingClientRect().width/B.dw||1,tot=0;[].slice.call(B.fz.children).forEach(function(w){if(w.classList.contains('pb-pin'))return;var y=w.offsetTop/u,sh=0;B.gs.forEach(function(o){var d=o.open-o.on;if(d&&o.H&&y>=o.thr&&o.b.indexOf(w)<0)sh+=d*o.H});w.style.translate=sh?'0 '+(sh*u)+'px':''});B.ST2.forEach(function(e){e.__x=0});B.gs.forEach(function(o){tot+=(o.open-o.on)*o.H;(o.s||[]).forEach(function(e){e.__x+=(o.open-o.on)*o.H})});B.ST2.forEach(function(e){e.style.height=e.__x?Math.max(0,(e.__h0+e.__x)*u)+'px':''});if(tot||B.inn.__t){B.inn.style.minHeight=Math.max(0,(B.bd+tot)*u)+'px';B.inn.__t=1}}ids.forEach(function(id){var o=G[id];if(!o.B)return;function set(v){o.open=v?1:0;ST['d'+id]=o.open;o.b.forEach(function(e){e.classList.toggle('pb-gx-off',!v)});o.h.forEach(function(e){e.classList.toggle('pb-gx-open',!!v)});upd(o.B)}o.set=set;API.dg[id]={set:set};o.x.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){ev.preventDefault();set(0)})});var tm=0;function leave(){clearTimeout(tm);tm=setTimeout(function(){set(0)},180)}function enter(){clearTimeout(tm);set(1)}C.push(function(){clearTimeout(tm)});o.h.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(o.hov&&!touch)return;ev.preventDefault();set(!o.open)});if(o.hov&&!touch){e.addEventListener('mouseenter',enter);e.addEventListener('mouseleave',leave)}});if(o.hov&&!touch)o.b.forEach(function(e){e.addEventListener('mouseenter',enter);e.addEventListener('mouseleave',leave)});set(ST['d'+id]!=null?ST['d'+id]:o.on)});L(document,'keydown',function(ev){if(ev.key==='Escape')gs.forEach(function(o){if(o.open&&!o.H&&!o.on&&o.set)o.set(0)})});L(document,'click',function(ev){gs.forEach(function(o){if(o.open&&!o.H&&!o.on&&o.set&&!o.h.concat(o.b).some(function(e){return e.contains(ev.target)}))o.set(0)})});L(window,'resize',function(){BK.forEach(upd)})})();
-(function(){var G={};function g(id){return G[id]||(G[id]={s:[],d:[],p:[],n:[],ms:5000,i:0,t:0})}$('[class*="pbs"]').forEach(function(e){String(e.className).split(' ').forEach(function(c){var m;if(m=c.match(/^pbsl-([a-z0-9]+)-([0-9]+)$/)){var o=g(m[1]);(o.s[+m[2]]=o.s[+m[2]]||[]).push(e);e.classList.add('pb-sl-m')}else if(m=c.match(/^pbsd-([a-z0-9]+)-([0-9]+)$/)){var o2=g(m[1]);(o2.d[+m[2]]=o2.d[+m[2]]||[]).push(e)}else if(m=c.match(/^pbsp-([a-z0-9]+)$/))g(m[1]).p.push(e);else if(m=c.match(/^pbsn-([a-z0-9]+)$/))g(m[1]).n.push(e);else if(m=c.match(/^pbsi-([a-z0-9]+)-([0-9]+)$/))g(m[1]).ms=+m[2]})});Object.keys(G).forEach(function(id){var o=G[id],N=o.s.length;if(N<2)return;if(ED)o.ms=0;function show(k){k=(k+N)%N;o.i=k;ST['s'+id]=k;o.s.forEach(function(m,j){(m||[]).forEach(function(e){e.classList.toggle('pb-sl-off',j!==k);e.classList.toggle('pb-sl-l',j<k);e.classList.toggle('pb-sl-r',j>k)})});o.d.forEach(function(m,j){(m||[]).forEach(function(e){e.classList.toggle('pb-dot-on',j===k);e.classList.toggle('pb-dot-off',j!==k)})})}API.sl[id]={show:show};function rst(){clearInterval(o.t);if(o.ms>0)o.t=setInterval(function(){if(!document.hidden&&!o.hov)show(o.i+1)},o.ms)}C.push(function(){clearInterval(o.t)});o.p.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(o.i-1);rst()})});o.n.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(o.i+1);rst()})});o.d.forEach(function(m,j){(m||[]).forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(j);rst()})})});var x0=null;if(!ED)o.s.forEach(function(m){(m||[]).forEach(function(e){e.addEventListener('pointerdown',function(ev){x0=ev.clientX});e.addEventListener('pointerup',function(ev){if(x0!=null&&Math.abs(ev.clientX-x0)>50){show(o.i+(ev.clientX<x0?1:-1));rst()}x0=null});e.addEventListener('mouseenter',function(){o.hov=1});e.addEventListener('mouseleave',function(){o.hov=0})})});show(ST['s'+id]!=null?ST['s'+id]:0);rst()})})();
+(function(){var G={};function g(id){return G[id]||(G[id]={s:[],d:[],p:[],n:[],ms:5000,i:0,t:0,st:0,init:0,m:0,run:0,act:[]})}$('[class*="pbs"]').forEach(function(e){String(e.className).split(' ').forEach(function(c){var m;if(m=c.match(/^pbsl-([a-z0-9]+)-([0-9]+)$/)){var o=g(m[1]);(o.s[+m[2]]=o.s[+m[2]]||[]).push(e)}else if(m=c.match(/^pbsd-([a-z0-9]+)-([0-9]+)$/)){var o2=g(m[1]);(o2.d[+m[2]]=o2.d[+m[2]]||[]).push(e)}else if(m=c.match(/^pbsw-([a-z0-9]+)-(m?)([0-9]+)$/))g(m[1]).st=(m[2]?-1:1)*(+m[3]);else if(m=c.match(/^pbsp-([a-z0-9]+)$/))g(m[1]).p.push(e);else if(m=c.match(/^pbsn-([a-z0-9]+)$/))g(m[1]).n.push(e);else if(m=c.match(/^pbsi-([a-z0-9]+)-([0-9]+)$/))g(m[1]).ms=+m[2]})});Object.keys(G).forEach(function(id){var o=G[id],N=o.s.length;if(N<2)return;if(ED)o.ms=0;
+if(!o.st)o.s.forEach(function(m){(m||[]).forEach(function(e){e.classList.add('pb-sl-m')})});
+/* انزلاق حقيقي: كل وحدة (صفحة شرائح) تنزلق بخطوة الشريحة/الصفحة، وتُقصّ عند حواف منطقة السلايدر فتختفي عند الحافة وتظهر من الجهة الأخرى */
+function cls(k){o.s.forEach(function(m,j){(m||[]).forEach(function(e){e.classList.toggle('pb-sl-off',j!==k);if(!o.st){e.classList.toggle('pb-sl-l',j<k);e.classList.toggle('pb-sl-r',j>k)}})})}
+function dots(k){o.d.forEach(function(m,j){(m||[]).forEach(function(e){e.classList.toggle('pb-dot-on',j===k);e.classList.toggle('pb-dot-off',j!==k)})})}
+function probe(){var e=(o.s[0]||[])[0],p=e&&e.parentNode;if(!p)return 0;var x=document.createElement('div');x.style.cssText='position:absolute;visibility:hidden;height:0;width:calc(var(--u)*1)';p.appendChild(x);var w=x.getBoundingClientRect().width;p.removeChild(x);return w}
+function meas(){var a=1e9,b=-1e9;o.s.forEach(function(m){(m||[]).forEach(function(e){e.style.translate='';e.style.clipPath='';var r=e.getBoundingClientRect();e.__r=[r.left,r.width];e.__f=(e.offsetWidth&&r.width/e.offsetWidth)||1;a=Math.min(a,r.left);b=Math.max(b,r.left+r.width)})});o.W0=a;o.W1=b;o.m=1}
+function put(e,tx){var r=e.__r,f=e.__f||1;e.style.translate=(tx/f)+'px 0';e.style.clipPath='inset(0 '+Math.max(0,(r[0]+r[1]+tx-o.W1)/f)+'px 0 '+Math.max(0,(o.W0-(r[0]+tx))/f)+'px)'}
+function clr(){o.act.forEach(function(e){e.style.translate='';e.style.clipPath='';e.style.removeProperty('opacity');e.style.removeProperty('visibility')});o.act=[];if(o.sec){o.sec.style.overflowX=o.sov||'';o.sec=null}}
+function show(k,d){k=(k+N)%N;var old=o.i;if(o.run){cancelAnimationFrame(o.raf);o.run=0;clr()}o.i=k;ST['s'+id]=k;var st=o.st?probe()*o.st:0;
+if(d&&o.init&&old!==k&&st&&!document.hidden){if(!o.m)meas();var A=o.s[old]||[],B=o.s[k]||[];o.act=A.concat(B);var se=A[0]&&A[0].closest&&A[0].closest('.pb-sec');if(se){o.sec=se;o.sov=se.style.overflowX;se.style.overflowX='clip'}o.act.forEach(function(e){e.style.setProperty('opacity','1','important');e.style.setProperty('visibility','visible','important')});A.forEach(function(e){put(e,0)});B.forEach(function(e){put(e,d*st)});o.run=1;var t0=null;(function f(now){if(!t0)t0=now;var t=Math.min(1,(now-t0)/620),q=1-Math.pow(1-t,3);A.forEach(function(e){put(e,-d*st*q)});B.forEach(function(e){put(e,d*st*(1-q))});if(t<1)o.raf=requestAnimationFrame(f);else{o.run=0;clr();cls(k)}})(performance.now())}
+else cls(k);dots(k)}
+API.sl[id]={show:show,get:function(){return o.i},n:N};L(window,'resize',function(){o.m=0});C.push(function(){cancelAnimationFrame(o.raf);clr()});
+function rst(){clearInterval(o.t);if(o.ms>0)o.t=setInterval(function(){if(!document.hidden&&!o.hov)show(o.i+1,1)},o.ms)}C.push(function(){clearInterval(o.t)});o.p.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(o.i-1,-1);rst()})});o.n.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(o.i+1,1);rst()})});o.d.forEach(function(m,j){(m||[]).forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(j,j>o.i?1:-1);rst()})})});var x0=null;if(!ED)o.s.forEach(function(m){(m||[]).forEach(function(e){e.addEventListener('pointerdown',function(ev){x0=ev.clientX});e.addEventListener('pointerup',function(ev){if(x0!=null&&Math.abs(ev.clientX-x0)>50){var dd=ev.clientX<x0?1:-1;show(o.i+dd,dd);rst()}x0=null});e.addEventListener('mouseenter',function(){o.hov=1});e.addEventListener('mouseleave',function(){o.hov=0})})});show(ST['s'+id]!=null?ST['s'+id]:0);o.init=1;rst()})})();
 })();`;
 
   const RUNTIME_JS = `(function(){
@@ -8413,7 +8481,7 @@ ${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); r
 <style>${BASE_CSS}
 .pb-page{background:${esc(page.bg || "#fff")}${page.ff ? ";font-family:" + page.ff : ""}}
 ${r.css}
-${page.css || ""}</style></head>
+${page.css || ""}${page.tplCss || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
 ${hasHdr ? `<script>var REL=${JSON.stringify(ctx.base)};<\/script>` : ""}${(hasProd || bindProd || hasHdr) ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}${hasHdr ? `<script src="${esc(ctx.base)}assets/js/modern-icons.js"><\/script><script src="${esc(ctx.base)}assets/js/social-icons.js"><\/script><script src="${esc(ctx.base)}assets/js/chrome.js?v=9"><\/script><script>(function(){var go=function(){try{${hdrSite ? "Chrome.init();" : "Chrome.bindShare();Chrome.bindMenus();Chrome.fillMenus();"}var hh=document.querySelector('header.site');if(hh&&window.ModernIcons){ModernIcons.style();ModernIcons.watch({root:hh})}}catch(e){}};document.readyState==="complete"?go():addEventListener("load",go)})()<\/script>` : ""}${bindProd ? `<script>(function(){var p=(window.PRODUCTS||[]).filter(function(x){return x.slug===${JSON.stringify(page.product)}})[0];if(!p)return;var f=function(n){return Number(n).toLocaleString("fr-DZ")+" دج"},g=function(i){return document.getElementById(i)},a=g("pprice"),b=g("pold"),c=g("psave"),has=p.old&&p.old>p.price;if(a)a.textContent=f(p.price);if(b){b.textContent=has?f(p.old):"";b.style.display=has?"":"none"}if(c){c.textContent=has?"وفّر "+Math.round((1-p.price/p.old)*100)+"%":"";c.style.display=has?"":"none"}})();<\/script>` : ""}
 <script>var __pbBase=${JSON.stringify(ctx.base)};var __pbSlug=${JSON.stringify(page.slug || "")};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}${hasContact ? "(" + contactRuntime.toString() + ")();" : ""}<\/script>
@@ -8438,7 +8506,7 @@ const PBApp = (() => {
 
   const EDIT_CSS = `
 .pb-edit.pb-fx .pb-sl-off,.pb-edit.pb-fx .pb-gx-off{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
-::-webkit-scrollbar{width:21px;height:21px}::-webkit-scrollbar-thumb{background:#E8923A;border-radius:12px;border:1px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:#f3ece0}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-color:rgba(255,128,24,.62) transparent}}
 .pb-edit [data-pb]{cursor:pointer}
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
@@ -8458,6 +8526,8 @@ body{overflow-x:hidden;margin:0}`;
   const css = `
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
+.pbx-adx{display:none!important}#pb-app.pbx-ad .pbx-adx{display:inline-flex!important}
+#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2{display:none!important}
 .pbx-top{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#173f35;color:#fff;flex-wrap:wrap}
 .pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
 .pbx-top input{background:#fff;border:0;border-radius:8px;padding:.4rem .7rem;font-weight:800;width:auto;flex:0 1 240px;min-width:120px;font-family:inherit;color:#173f35}
@@ -8575,7 +8645,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.widget .pbx-h.d-ne{top:-7px;right:-7px}.pbx-box.widget .pbx-h.d-se{bottom:-7px;right:-7px}.pbx-box.widget .pbx-h.d-sw{bottom:-7px;left:-7px}
 .pbx-box.widget .pbx-rad{border-color:#8b3dff}
 .pbx-add2{display:block;margin:16px auto 80px;border:1px solid #bdbfca;background:rgba(255,255,255,.35);color:#111;border-radius:12px;padding:.75rem;font-weight:800;font-family:inherit;font-size:.95rem;cursor:pointer}.pbx-add2:hover{background:rgba(255,255,255,.75)}
-.pbx-thumbs{position:fixed;z-index:20;width:80px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow-y:auto;overflow-x:hidden;padding:4px 0;scrollbar-width:thin;direction:ltr}
+.pbx-thumbs{position:fixed;z-index:20;width:80px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow-y:auto;overflow-x:hidden;padding:4px 0;direction:ltr}
 .pbx-th{position:relative;flex:none;background:#fff;border:2px solid #fff;border-radius:7px;box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer;overflow:hidden;box-sizing:content-box;background-size:cover;background-position:center}.pbx-th:hover{border-color:#c9b6ef}.pbx-th.on{border-color:#8b3dff}.pbx-th.off{opacity:.45}
 .pbx-th>b{position:absolute;left:3px;bottom:1px;font-size:10px;font-weight:800;color:#111;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;z-index:2}.pbx-th>i{position:absolute;right:3px;top:2px;font-size:9px;font-style:normal;z-index:2}.pbx-th>u{position:absolute;display:block;text-decoration:none;border-radius:1px;background-size:cover;background-position:center}
 .pbx-thadd{flex:none;width:70px;height:42px;border:0;border-radius:9px;background:#e6e7ec;color:#111;font-size:22px;cursor:pointer;font-family:inherit}.pbx-thadd:hover{background:#dcdde4}
@@ -8583,7 +8653,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-sbar{position:absolute;display:flex;flex-direction:column;gap:2px;pointer-events:auto;z-index:6;background:#fff;border-radius:12px;padding:5px;box-shadow:0 3px 14px rgba(14,19,24,.25),0 0 0 1px rgba(64,87,109,.08)}
 .pbx-sbar button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0}.pbx-sbar button:hover{background:#ebeef2}.pbx-sbar button[disabled]{opacity:.3;cursor:default;background:none}.pbx-sbar button.on{background:#ebeef2;color:#8b3dff}.pbx-sbar button.add{background:#f1f2f6}.pbx-sbar button.dng:hover{color:#b83232}.pbx-sbar svg{width:20px;height:20px;display:block}
 .pbx-ac{border:1.5px solid #eadfc4;border-radius:10px;margin-bottom:.55rem;background:#fff;overflow:hidden}.pbx-ach{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:#faf6ec;padding:.55rem .7rem;font-family:inherit;font-weight:800;font-size:.86rem;color:#173f35;cursor:pointer}.pbx-ach.on{background:#f1ebdd}.pbx-ach i{font-style:normal;color:#a08a55}.pbx-acb{padding:.6rem .6rem .2rem}
-.pbx-qbar{position:fixed;z-index:21;display:flex;align-items:center;gap:2px;background:#fff;border-radius:14px;padding:5px 8px;box-shadow:0 3px 16px rgba(14,19,24,.22),0 0 0 1px rgba(64,87,109,.08);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;white-space:nowrap;font-family:inherit;color:#0e1318}
+.pbx-qbar{position:fixed;z-index:21;display:flex;align-items:center;gap:2px;background:#fff;border-radius:14px;padding:5px 8px;box-shadow:0 3px 16px rgba(14,19,24,.22),0 0 0 1px rgba(64,87,109,.08);overflow-x:auto;overflow-y:hidden;white-space:nowrap;font-family:inherit;color:#0e1318}
 .pbx-qbar button,.pbx-qbar label.qa{flex:none;min-width:34px;height:36px;border:0;background:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 8px;font-family:inherit;font-weight:700;font-size:.82rem;color:inherit;position:relative}
 .pbx-qbar button:hover,.pbx-qbar label.qa:hover{background:#ebeef2}.pbx-qbar button.on{background:#e8dcff;color:#4b1fa8}.pbx-qbar button svg{width:18px;height:18px}
 .pbx-qbar select{flex:none;height:36px;border:1px solid #d9dbe3;border-radius:8px;padding:0 .4rem!important;margin:0!important;width:auto!important;font-family:inherit;font-size:.82rem;background:#fff;max-width:150px}
@@ -8615,6 +8685,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-mwbar button.ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pbx-mwbar button.no{color:#b83232}
 .pbx-ft button:hover,.pbx-ft button.on{background:#ebeef2}.pbx-ft button.dng:hover{color:#b83232}
 .pbx-sb{position:absolute;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:7}
+.pbx-slnav{position:absolute;display:flex;align-items:center;gap:.4rem;pointer-events:auto;z-index:8;background:rgba(10,30,16,.9);color:#86f06a;border:1px solid rgba(134,240,106,.45);border-radius:999px;padding:.2rem .35rem;font:800 .8rem/1 inherit;font-family:inherit;direction:ltr;box-shadow:0 6px 18px rgba(0,0,0,.45)}.pbx-slnav button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(150,255,170,.5);background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28));color:#fff;font-size:1.15rem;line-height:1;cursor:pointer;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -2px 4px rgba(0,0,0,.25);transition:transform .15s}.pbx-slnav button:hover{transform:translateY(-2px)}.pbx-slnav span{min-width:46px;text-align:center}
 .pbx-sb button{border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);cursor:grab}.pbx-sb button:hover{background:#f3ecff;color:#8b3dff}.pbx-sb button:active{cursor:grabbing}
 .pbx-ft svg,.pbx-sb svg{width:20px;height:20px;display:block}
 .pbx-box.multi{border:2px solid #8b3dff;background:rgba(139,61,255,.07)}
@@ -8663,6 +8734,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
+  <button class="pub pbx-adx" id="pbx-adx" type="button" onclick="ImgGen.exportAd()" title="يحوّل التصميم إلى صورة بمقاس المنصة بالبكسل للتنزيل أو الحفظ في المكتبة">⬇ تصدير الصورة</button>
   <button class="pub" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
 </div>
 <div class="pbx-main">
@@ -8713,18 +8785,18 @@ body{overflow-x:hidden;margin:0}`;
   function open(page, slug, isNew) {
     build();
     E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
-    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
+    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
-    E.zoom = 1; ltab("add"); setDev(isMob() ? "m" : "d"); renderInspector(); updateTop();
+    E.zoom = 1; ltab("add"); setDev(isMob() && !E.page.ad ? "m" : "d"); renderInspector(); updateTop();
     if (fdoc) renderCanvas();
     (async () => { try { const r = await fetch("assets/data/chrome.json", { cache: "no-store" }), c = r.ok ? await r.json() : null; PB.setChrome(typeof ChromeAdmin !== "undefined" && ChromeAdmin.state && ChromeAdmin.state.cfg ? ChromeAdmin.state.cfg : c); if (fdoc && E.page) renderCanvas(); } catch (e) { } })();      // هيدر الموقع المحفوظ لمعاينة «الهيدر الافتراضي»
   }
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
-    $("pb-app").classList.remove("on"); document.body.style.overflow = "";
+    $("pb-app").classList.remove("on", "pbx-ad"); document.body.style.overflow = "";
     purgeUnsaved(true).then(n => { if (n) toast("🧹 حُذفت " + n + " صورة غير محفوظة ونُظّفت المكتبة"); });
     if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
   }
@@ -8851,12 +8923,13 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── اللوحة اليسرى ───────────────── */
   function ltab(t) { E.ltab = t === "tpl" ? "def" : t; renderLeft(); }
   function ltoggle(t) { if (t === "tpl") t = "def"; E.ltab = E.ltab === t ? "" : t; renderLeft(); }
+  const AD_OK = ["heading", "text", "image", "button", "shape", "iconbox", "bullets", "counter", "social", "divider"];      // عناصر لوحة الصور الإشهارية (بلا عناصر الويب)
   function renderLeft() {
     const pane = $("pbx-lpane"); if (!pane) return;
     document.querySelectorAll("[data-lt]").forEach(b => b.classList.toggle("on", b.dataset.lt === E.ltab));
     const hb = E.ltab && document.querySelector(`[data-lt="${E.ltab}"]`); if (!hb) { pane.style.display = "none"; pane.innerHTML = ""; return; } pane.style.display = ""; hb.after(pane);      // أدوات كل عنوان تُفتح تحته (نمط ووردبريس)
     if (E.ltab === "add") {
-      const tile = t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`, cats = PB.CATS.map(([n, L]) => [n, L.filter(t => WIDGETS[t])]), used = new Set(cats.flatMap(c => c[1])), rest = ORDER.filter(t => !used.has(t) && WIDGETS[t]); if (rest.length) cats[0][1] = cats[0][1].concat(rest);
+      const tile = t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`, cats = (E.page.ad ? [["عناصر التصميم", AD_OK]] : PB.CATS).map(([n, L]) => [n, L.filter(t => WIDGETS[t])]), used = new Set(cats.flatMap(c => c[1])), rest = E.page.ad ? [] : ORDER.filter(t => !used.has(t) && WIDGETS[t]); if (rest.length) cats[0][1] = cats[0][1].concat(rest);
       pane.innerHTML = cats.map(([n, L]) => `<div class="pbx-cat">${n}</div><div class="pbx-grid">${L.map(tile).join("")}</div>`).join("")+`<p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته ${FREE_ONLY ? "فوق قماش الصفحة" : "إلى العمود المحدد"}. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
     } else if (E.ltab === "def") {
       const card = (key, name) => `<button type="button" class="pbx-dfc" draggable="true" data-tpl="${key}" title="${esc(name)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC[key] || ""}</svg><span>${esc(name)}</span></button>`;
@@ -8920,7 +8993,7 @@ body{overflow-x:hidden;margin:0}`;
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0;
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
-    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || ""));
+    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
@@ -9331,6 +9404,14 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* مستطيل التخطيط (قبل التدوير): المركز من getBoundingClientRect والأبعاد من offsetWidth/Height */
   function layoutRect(el) { const r = el.getBoundingClientRect(); if (!el.offsetWidth) return r; const w = el.offsetWidth, h = el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + r.height / 2; return { left: cx - w / 2, top: cy - h / 2, width: w, height: h, right: cx + w / 2, bottom: cy + h / 2 }; }
+  /* أسهم/نقاط السلايدر وعناوين الأكورديون صغيرة فتغطيها مقابض التحجيم عند تحديدها فلا تصلها النقرة: نمرّر «نقرة» (بلا سحب) إلى العنصر تحتها */
+  function fwdClickOnTap(ev) {
+    const x0 = ev.clientX, y0 = ev.clientY, up = u => {
+      document.removeEventListener("mouseup", up, true); if (Math.abs(u.clientX - x0) + Math.abs(u.clientY - y0) > 4) return;
+      try { const fr = $("pbx-frame"), fb = fr.getBoundingClientRect(), sc = fb.width / (fr.offsetWidth || fb.width) || 1, el = fdoc.elementFromPoint((x0 - fb.left) / sc, (y0 - fb.top) / sc), c = el && el.closest && el.closest('[class*="pbsd-"],[class*="pbsp-"],[class*="pbsn-"],[class*="pbdh-"],[class*="pbdx-"]'); if (c) setTimeout(() => c.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: fdoc.defaultView })), 0); } catch (e) { }
+    };
+    document.addEventListener("mouseup", up, true);
+  }
   function ovlOrigin() { const fw = $("pbx-fw"), fr = fw.getBoundingClientRect(), or = $("pbx-ovl").getBoundingClientRect(); return { ox: fr.left - or.left, oy: fr.top - or.top, s: E.scale }; }      // نسبة لطبقة الغطاء نفسها (تتحرك مع التمرير وتستثني شريط التمرير الذي قد يكون يسار المنطقة)
   function drawGuides(list, cr) {
     document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); if (!list || !list.length) return;
@@ -9391,7 +9472,7 @@ body{overflow-x:hidden;margin:0}`;
 }
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
     if (!locked && isW && inf.free && inf.node.type === "image") ["n", "s", "e", "w"].forEach(d => { const b = document.createElement("div"); b.className = "pbx-edge e-" + d; b.title = "اسحب الحافة: للخارج يكبّر الصورة في هذا الاتجاه، وللداخل يقصّها"; b.onmousedown = ev => startResize(ev, d, inf); box.appendChild(b); });      // كل حافة الصورة تُسحب وليس نقطة المنتصف فقط
-    if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => startResize(ev, d, inf); box.appendChild(h); });
+    if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => { if (ev.button === 0) fwdClickOnTap(ev); startResize(ev, d, inf); }; box.appendChild(h); });
     ovl.appendChild(box);
     if (isW && !E.busy) drawFloat(inf, box, ovl, locked);
   }
@@ -9423,6 +9504,15 @@ body{overflow-x:hidden;margin:0}`;
     more: SVG('<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>', 1), rot: SVG('<path d="M20 11a8 8 0 10-2.2 5.8"/><path d="M20 4v7h-7"/>'),
     move: SVG('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')
   };
+  /* مُنقّل السلايدر: نقاط/أسهم السلايدر صغيرة وتغطيها مقابض التحديد وشريط الجانب عند تحديدها، فيظهر عند تحديد أي عنصر من سلايدر مُنقّل «‹ 2 / 6 ›» للتنقل بين الشرائح دون النقر داخل الصفحة */
+  function drawSlNav(inf, bx, ovl, ft) {
+    try {
+      const m = String((inf.set && inf.set.cls) || "").match(/pbs[ldpn]-([a-z0-9]+)/); if (!m) return; const w = fdoc && fdoc.defaultView, g = w && w.__pbFx && w.__pbFx.sl && w.__pbFx.sl[m[1]]; if (!g || !g.n) return;
+      const d = document.createElement("div"), sp = () => d.querySelector("span"); d.className = "pbx-slnav"; d.innerHTML = '<button type="button" data-d="-1" title="الشريحة السابقة">‹</button><span></span><button type="button" data-d="1" title="الشريحة التالية">›</button>'; sp().textContent = (g.get() + 1) + " / " + g.n;
+      d.onmousedown = ev => ev.stopPropagation(); d.onclick = ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); g.show(g.get() + Number(b.dataset.d), Number(b.dataset.d)); sp().textContent = (g.get() + 1) + " / " + g.n; };
+      ovl.appendChild(d); const iv = setInterval(() => { if (!d.isConnected) return clearInterval(iv); try { sp().textContent = (g.get() + 1) + " / " + g.n; } catch (e) { } }, 250); const W = ovl.clientWidth, ftT = parseFloat(ft.style.top) || 0, below = ftT >= bx.b; let top = below ? ftT + ft.offsetHeight + 8 : bx.b + 10; d.style.top = top + "px"; d.style.left = Math.max(4, Math.min(W - d.offsetWidth - 4, (bx.l + bx.r) / 2 - d.offsetWidth / 2)) + "px";
+    } catch (e) { }
+  }
   function drawFloat(inf, box, ovl, locked) {
     const O = ovl.getBoundingClientRect(), R = box.getBoundingClientRect(), st = $("pbx-stage"), W = ovl.clientWidth;
     const bx = { l: R.left - O.left, t: R.top - O.top, r: R.right - O.left, b: R.bottom - O.top };      // أبعاد الإطار بعد التدوير (نسبة لطبقة الغطاء)
@@ -9432,6 +9522,7 @@ body{overflow-x:hidden;margin:0}`;
     let top = bx.t - fh - GAP; if (top < vt + 4) { top = bx.b + GAP + 6; if (top + fh > vb - 4) top = Math.max(vt + 4, bx.t + 8); }      // فوق العنصر إن اتسع المكان وإلا تحته
     let left = (bx.l + bx.r) / 2 - fw / 2; left = Math.max(4, Math.min(W - fw - 4, left));
     ft.style.top = top + "px"; ft.style.left = left + "px"; drawMwBar(inf, bx, ovl, ft);
+    drawSlNav(inf, bx, ovl, ft);
     if (locked) return;
     const sb = mk("pbx-sb", [["rot", FIC.rot, "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)", null], ["move", FIC.move, "اسحب لتحريك العنصر", null]]);
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
@@ -11104,6 +11195,12 @@ ${this.quickImg(this.q.cover)}
     document.getElementById("pq-bg").classList.add("open");
   },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },
+  mode(m) {
+    if (m !== "ad") m = "web"; try { localStorage.setItem("alyssum_pb_mode", m); } catch (e) { }
+    document.querySelectorAll("#pb-modes [data-pbm]").forEach(b => b.classList.toggle("on", b.dataset.pbm === m));
+    document.getElementById("pb-web").classList.toggle("hidden", m === "ad"); document.getElementById("pb-ad").classList.toggle("hidden", m !== "ad");
+    if (m === "ad" && typeof ImgGen !== "undefined") ImgGen.open();
+  },
   initGen() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } },
   async init() { await this.refresh(); },
   async refresh() {
@@ -12137,14 +12234,14 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره. تلتقط الأداة العناصر الكاملة فقط (شخص، منتج، كتاب، قلم، زهرة…)؛ الجزء المقطوع كيدٍ تمسك منتجاً لا يُلتقط، ويُلتقط المنتج وحده.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Gemini اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
-  function warm(inf) { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
+  function warm(inf) { try { if (window.ImgCfg && ImgCfg.get("capture", "warm", true) === false) return; if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
   /* تحضير مسبق: بعد تحديد صورة بثانيتين يُحلَّل في الخلفية (الحاسوب فقط) فيجد «التقاط العناصر» و«نزع الخلفية» النتيجة جاهزة؛ طلب مماثل أثناء التحليل ينتظره */
   const PF = {}; let pfT = 0;
   function prefetch(inf) {
     clearTimeout(pfT); const src = inf && inf.node && inf.node.set && inf.node.set.src; if (!src || PF[src] || LITE() || !window.AIVision || !AIVision.supported()) return;
     pfT = setTimeout(async () => { if (PF[src]) return; PF[src] = 1; try { const cv = capCanvas(await loadCanvas(src), 2200); await Promise.all([AIVision.analyze(cv, { lite: false, zone: null }), AIVision.depth ? AIVision.depth(cv, null, 448).catch(() => null) : null]); } catch (e) { PF[src] = 0; } }, 2500);
   }
-  const LITE = () => { try { return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
+  const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
   function capCanvas(cv, max) { const m = Math.max(cv.width, cv.height); if (m <= max) return cv; const r = max / m, c = document.createElement("canvas"); c.width = Math.round(cv.width * r); c.height = Math.round(cv.height * r); c.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, c.width, c.height); return c; }
   async function captureElements() {
     const t = target(); if (t.err) return alert(t.err);
@@ -12645,6 +12742,7 @@ ${resplit ? "" : S.pv ? `<p class="pz-h">تظهر معاينة التقسيم ع
   }
   const previewing = () => (S.pv ? S.pvId : "");
   function panel(inf) {
+    if (!S._c) { S._c = 1; if (window.ImgCfg) { S.cols = ImgCfg.get("puzzle", "cols", S.cols); S.rows = ImgCfg.get("puzzle", "rows", S.rows); S.knob = ImgCfg.get("puzzle", "knob", S.knob); } }
     css(); if (!inf || inf.kind !== "widget") return "";
     const st = inf.set; if (S.pvId !== inf.node.id) { S.pv = null; S.pvId = inf.node.id; }
     if (st.pz) { const n = group(inf).length;
@@ -12806,6 +12904,7 @@ const PBMask = (function () {
   const CHEV = '<svg class="ep-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   const thumbBtn = (val, key, name, on) => `<button type="button" class="mk-sh${on ? " on" : ""}" data-mksh="${esc(val)}" title="${esc(name)}">${PB.shapeThumb(key)}<span>${esc(name)}</span></button>`;
   function panel(inf) {
+    if (!S._c) { S._c = 1; if (window.ImgCfg && ImgCfg.get("mask", "invert", false)) S.invert = true; }
     css(); if (!inf || inf.kind !== "widget" || inf.set.pz) return "";
     const img = inf.node.type === "image", st = inf.set; if (img && !st.src) return "";
     const L = cands(inf), lib = img ? libSel() : "", cur = lib ? null : (L.find(w => w.id === S.target) || L[0]), pend = !!(S.pend && S.pend.id === inf.node.id);
@@ -12850,6 +12949,7 @@ ${invertUi}${hint}</div>`;
     box.v.classList.toggle("hot", rx > 1 && S.px === 50); box.h.classList.toggle("hot", ry > 1 && S.py === 50);
   }
   function snapPos(g, s, raw) {      // raw: [px,py] بالنسبة المئوية → بعد التجاذب مع المركز والحواف
+    if (window.ImgCfg && ImgCfg.get("mask", "snap", true) === false) return raw.slice();
     const L = g.L, T = 8 / s, out = raw.slice(), rx = L.width - g.w, ry = L.height - g.h;
     [[0, rx, L.width, g.w], [1, ry, L.height, g.h]].forEach(([i, r, W, sz]) => { if (r <= 1) return; const off = r * raw[i] / 100, cen = off + sz / 2;
       if (Math.abs(cen - W / 2) < T) out[i] = 50; else if (off < T) out[i] = 0; else if (r - off < T) out[i] = 100; });
@@ -13147,7 +13247,7 @@ const PBBgRemove = (function () {
      الطريقة ٢ «pts»: نقطة في مركز الصورة (موجبة) ونقاط على أطرافها (سالبة) لقناع SAM حين لا يجد الكشف شيئاً.
      الطريقة ٣ «classic»: تحليل لوني كلاسيكي (GMM من حواف الصورة) — تعمل دائماً حتى بلا نماذج.
      يُتحقَّق من النتيجة (نسبة التغطية)، وإن فشلت طريقة تُجرَّب التي بعدها؛ وزرّ «طريقة أخرى» يبدّل يدوياً. */
-  const LITE = () => { try { return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };
+  const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const capC = (c, max) => { const m = Math.max(c.width, c.height); if (m <= max) return c; const r = max / m, o = document.createElement("canvas"); o.width = Math.round(c.width * r); o.height = Math.round(c.height * r); o.getContext("2d", { willReadFrequently: true }).drawImage(c, 0, 0, o.width, o.height); return o; };
   const aiOK = () => { try { return typeof AIVision !== "undefined" && AIVision.supported(); } catch (e) { return false; } };
   const coverage = c => { const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 127) n++; return n / (c.width * c.height); };
@@ -13253,7 +13353,7 @@ const PBBgRemove = (function () {
   const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   async function autoCut(srcC, o) {
-    o = o || {}; const order = o.methods || (aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null;
+    o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true; const order = o.methods || ((window.ImgCfg && ImgCfg.get("bg", "method", "auto") === "classic") ? ["classic"] : (aiOK() ? ["ai", "classic"] : ["classic"])); let err = null, last = null;
     for (const m of order) {
       try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; if (cov > .02 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
@@ -13616,6 +13716,7 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       const st = doc.createElement("style"); st.id = "pb-native"; st.textContent = PB.BASE_CSS; doc.head.appendChild(st);
       const sc = doc.createElement("script"); sc.textContent = "var __pbBase=" + JSON.stringify(o.kind === "home" ? "" : "../../") + ";var __pbSlug=\"\";var __pbMeta={};" + PB.RUNTIME_JS; doc.body.appendChild(sc);
     }
+    { const old = doc.getElementById("pb-tpl-css"); if (old) old.remove(); if (P.tplCss) { const st2 = doc.createElement("style"); st2.id = "pb-tpl-css"; st2.textContent = P.tplCss; doc.head.appendChild(st2); } }      // أنماط قالب مثبَّت (مثل «أليسوم»): خلفية الصفحة والتأثيرات العامة
     const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
     await GH.putFile(pth, btoa(unescape(encodeURIComponent(html))), cur && cur.sha, "نشر " + (o.kind === "home" ? "الصفحة الرئيسية" : "صفحة المنتج " + o.slug) + " من المطوّر");
     await put("assets/pages/_conv/" + k + ".json", P, "مصدر تحرير المطوّر: " + k);
@@ -14110,6 +14211,15 @@ const PBClone = (function () {
   const S = { tab: "url", W: 1280, limit: 1200, docH: 0, k: 1, url: "", html: "", frame: null, img: null, busy: false };
   const toast = m => { const t = document.getElementById("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 5200); };
   const $ = id => document.getElementById(id), sleep = ms => new Promise(r => setTimeout(r, ms));
+  const prog = p => { const e = $("cl-ring"); if (!e) return; if (p == null) { e.hidden = true; return; } p = Math.max(0, Math.min(100, Math.round(p))); e.hidden = false; e.style.setProperty("--p", p); const i = e.firstChild; if (i) i.textContent = p + "%"; };      // دائرة خضراء تمتلئ تدريجياً حتى يكتمل النسخ
+  /* اكتمال النسخ: علامة صح داخل الدائرة + نغمة قصيرة هادئة + اهتزاز خفيف على الجوال (مرة واحدة لكل عملية) */
+  const CHECK = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let doneShown = false;
+  function finishFx() {
+    if (doneShown) return; doneShown = true; prog(100); const e = $("cl-ring"), i = e && e.firstChild; if (i) i.innerHTML = CHECK; const t = $("cl-st"); if (t) t.textContent = "تم النسخ";
+    try { if (navigator.vibrate) navigator.vibrate([25, 45, 55]); } catch (x) { }
+    try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { const c = new AC(), t0 = c.currentTime; [[784, 0], [1175, .11]].forEach(([f, d]) => { const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0, t0 + d); g.gain.linearRampToValueAtTime(.07, t0 + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .22); o.connect(g); g.connect(c.destination); o.start(t0 + d); o.stop(t0 + d + .25); }); setTimeout(() => { try { c.close(); } catch (x) { } }, 700); } } catch (x) { }
+  }
   const st = m => { const e = $("cl-st"); if (e) e.textContent = m || ""; };
 
   /* ───────── ألوان ───────── */
@@ -14241,14 +14351,15 @@ const PBClone = (function () {
       return p;
     }
     function emitText(el, cs, r, clip, anchor) {
-      const rg = doc.createRange(); rg.selectNodeContents(el); const rects = [...rg.getClientRects()].filter(q => q.width > 0.5 && q.height > 0.5); if (!rects.length) return;
+      const rg = doc.createRange(); rg.selectNodeContents(el); const clipsSelf = cs.overflowX !== "visible" || cs.overflowY !== "visible", rects = [...rg.getClientRects()].filter(q => q.width > 0.5 && q.height > 0.5 && (!clipsSelf || (q.right > r.x && q.left < r.x + r.w && q.bottom > r.y && q.top < r.y + r.h))); if (!rects.length) return;      // نص خارج صندوق يقصّ محتواه (text-indent:-9999px لأرقام النقاط) لا يُنسخ
+
       const tops = [...new Set(rects.map(q => Math.round(q.top / 3)))].length, first = rects.reduce((m, q) => q.top < m.top ? q : m, rects[0]), fs = px(cs.fontSize) || 16, lhPx = cs.lineHeight === "normal" ? fs * 1.3 : px(cs.lineHeight) || fs * 1.3;
       const padL = px(cs.paddingLeft) + px(cs.borderLeftWidth), padR = px(cs.paddingRight) + px(cs.borderRightWidth); let bx = r.x + padL, bw = Math.max(rects.reduce((m, q) => Math.max(m, q.right), 0) - rects.reduce((m, q) => Math.min(m, q.left), 1e9), r.w - padL - padR);
       const y = first.top - Math.max(0, (lhPx - first.height) / 2), h = Math.max(lhPx, tops * lhPx), slack = Math.max(4, bw * (tops === 1 ? .08 : .03));
       let rr = { x: Math.max(0, bx - (cs.textAlign === "center" ? slack / 2 : cs.textAlign === "right" || (cs.direction === "rtl" && cs.textAlign !== "left") ? slack : 0)), y, w: Math.min(W, bw + slack), h }; if (rr.y >= limit) return;
       const tag = el.tagName.toLowerCase(), isH = /^h[1-6]$/.test(tag), props = textProps(cs, lhPx), link = anchor && anchor.getAttribute("href") && !/^(javascript:|#$)/i.test(anchor.getAttribute("href")) ? abs(anchor.getAttribute("href")) : "";
       let html = inlineHtml(el, cs); if (!html) return;
-      if (cs.display === "list-item" && cs.listStyleType !== "none") { const par = el.parentElement, idx = par ? [...par.children].filter(c => win.getComputedStyle(c).display === "list-item").indexOf(el) + 1 : 1; html = (par && par.tagName === "OL" ? idx + ". " : "• ") + html; }
+      if (cs.display === "list-item" && cs.listStyleType !== "none" && !clipsSelf) { const par = el.parentElement, idx = par ? [...par.children].filter(c => win.getComputedStyle(c).display === "list-item").indexOf(el) + 1 : 1; html = (par && par.tagName === "OL" ? idx + ". " : "• ") + html; }
       if (isH && !/<(a|span|b|i|em|strong)\b/.test(html) && !/<br>/.test(html)) return add("heading", rr, Object.assign(props, { text: el.textContent.replace(/\s+/g, " ").trim(), tag, link: link || undefined }));
       if (link && !/<a\b/.test(html)) html = `<a href="${esc(link)}" style="color:inherit;text-decoration:inherit">${html}</a>`;
       add("text", rr, Object.assign(props, { html: tops === 1 ? '<p style="white-space:nowrap">' + html + "</p>" : "<p>" + html + "</p>" }));
@@ -14272,7 +14383,7 @@ const PBClone = (function () {
         const cl = col(cs.color); let s = new XMLSerializer().serializeToString(c).replace(/currentColor/gi, cl ? hex(cl) : "#000"); if (s.length > 90000) return ""; return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s); } catch (e) { return ""; }
     }
     function visit0(el, clip, anchor) {
-      if (slSkip.has(el)) return;
+      if (slSkip.has(el)) { const ow = skipOwner.get(el); if (ow && ow.z0 == null) ow.z0 = z; return; }
       if (mq.has(el)) { emitMarquee(el); return; }
       if (el.tagName === "FORM" && emitForm(el)) return;
       if (stop || ++count > 5000) return; const tag = el.tagName.toLowerCase(); if (SKIP.has(tag)) return;
@@ -14300,7 +14411,7 @@ const PBClone = (function () {
       const ownClip = tag === "html" || tag === "body" ? clip : (cs.overflowX !== "visible" || cs.overflowY !== "visible") ? (inter(r, clip) || { x: 0, y: 0, w: 0, h: 0 }) : clip;
       if (ownClip.w <= 0 || ownClip.h <= 0) return;
       const crad = ["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map(k => Math.max(0, cornerPx(cs["border" + k + "Radius"], r))), clips = tag !== "html" && tag !== "body" && (cs.overflowX !== "visible" || cs.overflowY !== "visible") && crad.some(v => v >= 1); if (clips) radCtx.push({ r, crad });      // حاوية تقصّ بأركان مدوّرة: أبناؤها الملاصقون لأركانها يرثون التدوير
-      for (const c of el.childNodes) { if (c.nodeType === 1) visit(c, ownClip, a); else if (c.nodeType === 3 && c.nodeValue.trim() && !hidden && !contents) { const rg = doc.createRange(); rg.selectNodeContents(c); const rc = [...rg.getClientRects()]; if (!rc.length || rc[0].top >= limit) continue; const wrap = doc.createElement("span"); wrap.textContent = c.nodeValue; const tops = [...new Set(rc.map(q => Math.round(q.top / 3)))].length, f = rc.reduce((m, q) => q.top < m.top ? q : m, rc[0]), fs = px(cs.fontSize) || 16, lhPx = cs.lineHeight === "normal" ? fs * 1.3 : px(cs.lineHeight) || fs * 1.3, x0 = Math.min(...rc.map(q => q.left)), x1 = Math.max(...rc.map(q => q.right)), props = textProps(cs, lhPx);
+      for (const c of el.childNodes) { if (c.nodeType === 1) visit(c, ownClip, a); else if (c.nodeType === 3 && c.nodeValue.trim() && !hidden && !contents) { const rg = doc.createRange(); rg.selectNodeContents(c); const rc = [...rg.getClientRects()]; if (!rc.length || rc[0].top >= limit) continue; if (ownClip && (rc[0].right <= ownClip.x || rc[0].left >= ownClip.x + ownClip.w || rc[0].bottom <= ownClip.y || rc[0].top >= ownClip.y + ownClip.h)) continue; const wrap = doc.createElement("span"); wrap.textContent = c.nodeValue; const tops = [...new Set(rc.map(q => Math.round(q.top / 3)))].length, f = rc.reduce((m, q) => q.top < m.top ? q : m, rc[0]), fs = px(cs.fontSize) || 16, lhPx = cs.lineHeight === "normal" ? fs * 1.3 : px(cs.lineHeight) || fs * 1.3, x0 = Math.min(...rc.map(q => q.left)), x1 = Math.max(...rc.map(q => q.right)), props = textProps(cs, lhPx);
           add("text", { x: Math.max(0, x0 - 1), y: f.top - Math.max(0, (lhPx - f.height) / 2), w: Math.min(W, x1 - x0 + Math.max(6, (x1 - x0) * .03)), h: tops * lhPx }, Object.assign(props, { html: "<p>" + esc(c.nodeValue.replace(/\s+/g, " ").trim()) + "</p>" })); } }
       if (clips) radCtx.pop();
     }
@@ -14308,15 +14419,15 @@ const PBClone = (function () {
     const FXON = !opt.noFx && typeof PBCloneFx !== "undefined", ownEnd = new Map(), fx = FXON ? PBCloneFx.create({ idp: IDP, doc, win, W, out, add, col, px, r1, r2 }) : null;
     /* ───── السلايدرات: كل «صفحة» شرائح مجموعة عناصر تُظهر بالتناوب (أسهم/نقاط/سحب/تشغيل تلقائي في الصفحة المنشورة) ───── */
     const SLD = [
-      { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev", next: ".swiper-button-next", dot: ".swiper-pagination-bullet" },
-      { root: ".slick-slider", slide: ".slick-slide:not(.slick-cloned)", prev: ".slick-prev", next: ".slick-next", dot: ".slick-dots li" },
+      { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev,.elementor-swiper-button-prev", next: ".swiper-button-next,.elementor-swiper-button-next", dot: ".swiper-pagination-bullet", out: 1 },
+      { root: ".slick-slider", slide: ".slick-slide:not(.slick-cloned)", prev: ".slick-prev", next: ".slick-next", dot: ".slick-dots li,.jet-slick-dots li" },
       { root: ".owl-carousel", slide: ".owl-item:not(.cloned)", prev: ".owl-prev", next: ".owl-next", dot: ".owl-dot" },
       { root: ".splide", slide: ".splide__slide:not(.splide__slide--clone)", prev: ".splide__arrow--prev", next: ".splide__arrow--next", dot: ".splide__pagination__page" },
       { root: ".carousel", slide: ".carousel-item", prev: ".carousel-control-prev", next: ".carousel-control-next", dot: ".carousel-indicators [data-bs-target],.carousel-indicators li", bs: 1 },
       { root: ".glide", slide: ".glide__slide:not(.glide__slide--clone)", prev: ".glide__arrow--left", next: ".glide__arrow--right", dot: ".glide__bullet" },
       { root: ".flickity-enabled", slide: ".flickity-slider > *", prev: ".flickity-prev-next-button.previous", next: ".flickity-prev-next-button.next", dot: ".flickity-page-dots .dot" }
     ];
-    const slSkip = new Set(), elCls = new Map(), elRange = new Map(), slRoot = new Map(), sliders = []; let slN = 0;
+    const slSkip = new Set(), skipOwner = new Map(), elCls = new Map(), elRange = new Map(), slRoot = new Map(), sliders = []; let slN = 0;
     const tagW = (ws, cl) => ws.forEach(w => cl.forEach(c => { if (!(" " + (w.set.cls || "") + " ").includes(" " + c + " ")) w.set.cls = ((w.set.cls || "") + " " + c).trim(); }));
     const inBox = (r, B) => r.w > 1 && r.x + r.w / 2 > B.x && r.x + r.w / 2 < B.x + B.w && r.y + r.h / 2 > B.y && r.y + r.h / 2 < B.y + B.h;
     function findSliders() {
@@ -14328,16 +14439,27 @@ const PBClone = (function () {
           const rr = rectOf(root); if (rr.w < 50 || rr.h < 30 || rr.y >= limit) continue; const sr0 = all.map(rectOf);
           const stacked = !!def.bs || sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));      // بوتستراب: شرائح متراكمة دائماً (اللقطة قد تكون في منتصف الانتقال فتظهر متجاورة)
           let act = 0; if (stacked) { const k = all.findIndex(x => /(^|\s|-)active(\s|$|-)/.test(x.className)); act = k < 0 ? 0 : k; } else { const k = sr0.findIndex(r => inBox(r, rr)); act = k < 0 ? 0 : k; }
-          const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf); const pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length), pages = Math.ceil(slides.length / pv); if (pages < 2) continue;
+          const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf), sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot);
+          // سلايدر دوّار (Slick infinite…): عدد النقاط = عدد الشرائح الحقيقية وفي الواجهة أكثر من شريحة (مع نسخ مكرّرة) ← كل نقطة صفحة تُزاح شريحة واحدة (نافذة دورية)
+          let pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length); const clones = [...root.querySelectorAll(".slick-slide")].filter(x => x.closest(def.root) === root && x.classList.contains("slick-cloned")); if (!stacked) { const nAct = [...root.querySelectorAll(".slick-slide.slick-active,.swiper-slide-visible,.owl-item.active")].filter(x => x.closest(def.root) === root).length; if (nAct > pv && (clones.length || dots.length === all.length)) pv = Math.min(nAct, all.length - 1); }
+          const circ = !stacked && pv > 1 && dots.length === all.length && all.length > pv, pages = circ ? all.length : Math.ceil(slides.length / pv); if (pages < 2) continue;
           const id = IDP + "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
+          try { const so = root.closest("[data-slider_options]"); if (so) { const o = JSON.parse(so.getAttribute("data-slider_options")); ms = o.autoplay ? Math.max(2500, (o.autoplaySpeed || 0) + (o.speed || 0)) : 0; } } catch (e) { }
           try { const a = root.getAttribute("data-bs-interval") || root.getAttribute("data-interval"); if (a) ms = +a || ms; const sk = root.getAttribute("data-slick"); if (sk) { const o = JSON.parse(sk); ms = o.autoplay ? (o.autoplaySpeed || 3000) : 0; } const sp = root.getAttribute("data-splide"); if (sp) { const o = JSON.parse(sp); ms = o.autoplay ? (o.interval || 5000) : 0; } const sa = slides[0].getAttribute("data-swiper-autoplay"); if (sa) ms = +sa || ms; } catch (e) { }
           if (def.bs) { slides[0].style.setProperty("transform", "none", "important"); slides[0].style.setProperty("transition", "none", "important"); }
-          slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
+          const pitch = !stacked && sr0.length > 1 ? sr0[1].x - sr0[0].x : 0, stepD = Math.abs(pitch) > 8 && Math.abs(sr0[1].y - sr0[0].y) < Math.abs(pitch) * .5 ? Math.round(circ ? pitch : pitch * pv) : 0, swc = stepD ? ["pbsw-" + id + "-" + (stepD < 0 ? "m" : "") + Math.abs(stepD)] : [];      // خطوة الانزلاق بين الصفحات (وحدات التصميم): تحرّك المنتجات معاً وتُقصّ عند الحافة
+          slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms].concat(swc) : [])));
           slides.slice(pv).forEach(x => slSkip.add(x));
-          const sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot), pr = sel(def.prev), nx = sel(def.next), actP = Math.floor(act / pv);
-          dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : dots.length === all.length ? Math.floor(((j - act + all.length) % all.length) / pv) : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
+          const outer = (q, own) => {      // أسهم/نقاط تقع خارج حاوية السلايدر نفسها (مثل .swiper-arrows بجانب .swiper في ثيمات Elementor): نبحث في الأجداد القريبة بشرط ألا تضم سلايدراً آخر
+            let r = sel(q); if (r.length || !def.out) return r; let a = root.parentElement;
+            for (let k = 0; k < 3 && a && a !== doc.body; k++, a = a.parentElement) { if (a.querySelectorAll(def.root).length > 1) break; try { r = [...a.querySelectorAll(q)].filter(x => !root.contains(x)); } catch (e) { r = []; } if (r.length) return r; }
+            return r;
+          }, pr = outer(def.prev), nx = outer(def.next), actP = circ ? 0 : Math.floor(act / pv);
+          dots.forEach((d, j) => { const pg = circ ? (j - act + pages) % pages : dots.length === pages ? (j - actP + pages) % pages : dots.length === all.length ? Math.floor(((j - act + all.length) % all.length) / pv) : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
           pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
-          const sl = { id, def, root, slides, pv, pages, stacked, track: slides[0].parentElement, ms, dots, pr, nx, act }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
+          const sl = { id, def, root, slides, pv, pages, stacked, circ, track: slides[0].parentElement, ms, dots, pr, nx, act, pitch: sr0.length > 1 ? sr0[1].x - sr0[0].x : 0, tag0: ["pbsi-" + id + "-" + ms].concat(swc) };
+          if (circ) [...all, ...clones].forEach(x => { slSkip.add(x); skipOwner.set(x, sl); });      // السلايدر الدوّار: كل الصفحات (حتى الأولى) تُبنى بنوافذ دورية، والنسخ المكرّرة (clones) لا تُنسخ كمحتوى ثابت
+          sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
         }
       }
       try { findGenericSliders(claimed); } catch (e) { console.warn("generic sliders", e); }
@@ -14375,7 +14497,8 @@ const PBClone = (function () {
         const pr = pick(/(^|[\s_-])(prev|previous|back|left|arrow-left)([\s_-]|$)/i), nx = pick(/(^|[\s_-])(next|forward|right|arrow-right)([\s_-]|$)/i).filter(x => !pr.includes(x));
         let dots = []; try { for (const c of A.querySelectorAll("div,ul,ol,nav,span")) { if (inSl(c) || !/dot|bullet|indicator|pagina|pager|nav/i.test(lab(c))) continue; const k = [...c.children].filter(x => small(rectOf(x))); if (k.length >= 2 && (k.length === pages || k.length === slides.length)) { dots = k; break; } } } catch (e) { }
         const id = IDP + "s" + (++slN), ms = 5000;
-        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
+        const gp = sr.length > 1 ? sr[1].x - sr[0].x : 0, gStep = Math.abs(gp) > 8 && Math.abs(sr[1].y - sr[0].y) < Math.abs(gp) * .5 ? Math.round(gp * pv) : 0;
+        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms].concat(gStep ? ["pbsw-" + id + "-" + (gStep < 0 ? "m" : "") + Math.abs(gStep)] : []) : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
         const actP = Math.floor(act / pv); dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
         pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
         const sl = { id, def: {}, root, slides: ordered, pv, pages, stacked, track, ms, dots, pr, nx, act, generic: 1 }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
@@ -14397,12 +14520,17 @@ const PBClone = (function () {
       }
     }
     function sliderPages(sl, clip) {
-      const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = r0 && out[r0[0]] ? out[r0[0]].set.zi : null;
-      for (let p = 1; p < sl.pages; p++) {
-        const win = sl.slides.slice(p * sl.pv, (p + 1) * sl.pv); if (!win.length) break; const saved = [], keep = (n, props) => { saved.push([n, n.getAttribute("style")]); props.forEach(([k, v]) => n.style.setProperty(k, v, "important")); };
+      const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = sl.circ ? (sl.z0 != null ? sl.z0 : z) : (r0 && out[r0[0]] ? out[r0[0]].set.zi : null);
+      for (let p = sl.circ ? 0 : 1; p < sl.pages; p++) {
+        const N = sl.slides.length, win = sl.circ ? Array.from({ length: sl.pv }, (_, k) => sl.slides[(p + k) % N]) : sl.slides.slice(p * sl.pv, (p + 1) * sl.pv); if (!win.length) break; const saved = [], keep = (n, props) => { saved.push([n, n.getAttribute("style")]); props.forEach(([k, v]) => n.style.setProperty(k, v, "important")); };
         if (sl.stacked) { sl.slides.forEach(x => { if (!win.includes(x)) keep(x, [["display", "none"]]); }); win.forEach(x => keep(x, [["display", "block"], ["opacity", "1"], ["visibility", "visible"], ["transform", "none"]])); }
-        else { const w0 = rectOf(win[0]); keep(sl.track, [["translate", (s0.x - w0.x) + "px " + (s0.y - w0.y) + "px"]]); win.forEach(x => keep(x, [["opacity", "1"], ["visibility", "visible"]])); const w1 = rectOf(win[0]); if (Math.abs(w1.x - s0.x) > 6 || Math.abs(w1.y - s0.y) > 6) { saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); continue; } }
-        const i0 = out.length; win.forEach(x => { slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p, "pb-sl-off"]); visit(x, cl, null); });
+        else if (!sl.circ) { const w0 = rectOf(win[0]); keep(sl.track, [["translate", (s0.x - w0.x) + "px " + (s0.y - w0.y) + "px"]]); win.forEach(x => keep(x, [["opacity", "1"], ["visibility", "visible"]])); const w1 = rectOf(win[0]); if (Math.abs(w1.x - s0.x) > 6 || Math.abs(w1.y - s0.y) > 6) { saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); continue; } }
+        const i0 = out.length;
+        if (sl.circ) {      // نافذة دورية: كل شريحة تُزاح وحدها إلى موضعها في النافذة (الشرائح الملتفّة حول النهاية تبعد في الـDOM)
+          saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); saved.length = 0;
+          const pitch = sl.pitch;
+          win.forEach((x, k) => { const sv = [], kp = (n, props) => { sv.push([n, n.getAttribute("style")]); props.forEach(([a, v]) => n.style.setProperty(a, v, "important")); }; const rx = rectOf(x); kp(sl.track, [["translate", (s0.x + k * pitch - rx.x) + "px " + (s0.y - rx.y) + "px"]]); kp(x, [["opacity", "1"], ["visibility", "visible"]]); slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p].concat(p ? ["pb-sl-off"] : (k === 0 ? sl.tag0 : []))); visit(x, cl, null); sv.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); });
+        } else win.forEach(x => { slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p, "pb-sl-off"]); visit(x, cl, null); });
         saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st));
         const ws = out.slice(i0); if (ws.length && z0 != null) { const zmin = Math.min(...ws.map(w => w.set.zi)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + z0; }); }
       }
@@ -14585,20 +14713,20 @@ const PBClone = (function () {
     } finally { f.remove(); }
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
-    const dest = (document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec";
-    if (dest === "sec") { const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
+    const hasPg = !!(A().E && A().E.page), dest = hasPg ? ((document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec") : "new";      // بلا صفحة مفتوحة في المطوّر (فتح الناسخ من تبويب «تطبيقات») تُفتح الصفحة الجديدة تلقائياً
+    if (dest === "sec") { finishFx(); await sleep(900); const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
     return openInEditor(page);
   }
   async function openInEditor(page) {
     const E = A().E; if (E && E.page && E.dirty && !confirm("سيُفتح القالب المنسوخ في صفحة جديدة، وتُحفظ مسودة صفحتك الحالية تلقائياً. هل تريد المتابعة؟")) return false;
     { const up = S.upl || [], E2 = A().E; if (E2 && E2.page && E2.page.media) E2.page.media = E2.page.media.filter(x => !up.includes(x)); page.media = up.slice(); }      // صور النسخ تُسجَّل في مكتبة الصفحة الجديدة لا السابقة
-    try { A().saveDraftNow(); } catch (e) { } close(); A().open(page, "", true); return true;
+    try { A().saveDraftNow(); } catch (e) { } finishFx(); await sleep(900); close(); A().open(page, "", true); return true;
   }
   async function saveImages(widgets, doSave) {      // يحفظ الصور في موقعك (يتفادى الروابط الخارجية التي قد تتعطّل): كل رابط فريد مرة واحدة (نسخة الجوال والشرائح تتشارك الصور) بأقصى 80 رابطاً فريداً
     const by = new Map(); widgets.forEach(w => { if (w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)) { const k = w.set.src; if (!by.has(k)) by.set(k, []); by.get(k).push(w); } });
-    const urls = [...by.keys()].slice(0, 80); if (!doSave || !urls.length) return 0;
+    const urls = [...by.keys()].slice(0, (window.ImgCfg && ImgCfg.get("tpl", "imgcount", 80)) || 80); if (!doSave || !urls.length) return 0;
     let done = 0, i = 0;
-    async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; } }
+    async function work() { while (i < urls.length) { const u = urls[i++]; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: (window.ImgCfg && ImgCfg.get("tpl", "imgmax", 1920)) || 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); } }
     await Promise.all(Array.from({ length: 8 }, work)); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
@@ -14614,12 +14742,12 @@ const PBClone = (function () {
   }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
-    st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
-    S.upl = []; let mob = null; if ($("cl-mob") && $("cl-mob").checked) { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
-    if ($("cl-lnk") && $("cl-lnk").checked) { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
-    await saveImages(res.widgets.concat(mob ? mob.widgets : []), $("cl-save") && $("cl-save").checked);
+    prog(3); st(""); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
+    prog(25); S.upl = []; let mob = null; { await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
+    prog(45); { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
+    S.p0 = 45; S.p1 = 92; await saveImages(res.widgets.concat(mob ? mob.widgets : []), true); prog(94);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
-    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
+    prog(96); const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
   }
 
   /* ───────── وضع الصورة: OCR ───────── */
@@ -14717,7 +14845,7 @@ const PBClone = (function () {
     const im = S.img; if (!im) return; const dw = im.dw, k = im.k, H = Math.round(S.limit), srcH = Math.max(8, Math.round(H / k));
     const cv = document.createElement("canvas"); cv.width = dw; cv.height = H; const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.drawImage(im.el, 0, 0, im.el.naturalWidth, Math.min(im.el.naturalHeight, srcH), 0, 0, dw, H);
     const ocr = $("cl-ocr") && $("cl-ocr").checked, vec = !$("cl-vec") || $("cl-vec").checked, keep = $("cl-keep") && $("cl-keep").checked, lang = ($("cl-lang") && $("cl-lang").value) || "ara+eng"; let blocks = [], note = "";
-    if (ocr) { try { const T = await loadTess(); st("جارٍ التعرّف على النصوص… (أول مرة تحمّل اللغات وقد تستغرق دقيقة)"); const { data } = await T.recognize(cv, lang, { logger: m => { if (m && m.status && m.progress != null) st("التعرّف على النصوص: " + Math.round(m.progress * 100) + "% — " + m.status); } });
+    if (ocr) { try { const T = await loadTess();  const { data } = await T.recognize(cv, lang, { logger: m => { if (m && m.status && m.progress != null) st("التعرّف على النصوص: " + Math.round(m.progress * 100) + "% — " + m.status); } });
         const raw = data.lines || (data.blocks || []).flatMap(b => (b.paragraphs || []).flatMap(p => p.lines || [])); const lines = raw.filter(l => l.text && l.text.replace(/\s+/g, "").length >= 2 && (l.confidence == null || l.confidence >= 45) && /[\p{L}\p{N}]/u.test(l.text)).map(l => ({ x0: l.bbox.x0, y0: l.bbox.y0, x1: l.bbox.x1, y1: l.bbox.y1, text: l.text.replace(/\s+/g, " ").trim() }));
         blocks = groupLines(lines); } catch (e) { note = " (تعذّر التعرّف على النصوص: " + e.message + ")"; } }
     let id0 = ctx.getImageData(0, 0, dw, H), data0 = id0.data; const orig = document.createElement("canvas"); orig.width = dw; orig.height = H; orig.getContext("2d").drawImage(cv, 0, 0);
@@ -14725,14 +14853,14 @@ const PBClone = (function () {
     for (const b of blocks) { const ls = b.lines, lhs = ls.map(l => l.y1 - l.y0), fsEst = Math.max(8, Math.round(median(lhs) * .8)), pitch = ls.length > 1 ? (ls[ls.length - 1].y0 - ls[0].y0) / (ls.length - 1) : fsEst * 1.35, bgc = ringBg(data0, dw, H, { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }), ink = inkColor(data0, dw, bgc, { x0: Math.max(0, b.x0), y0: Math.max(0, b.y0), x1: Math.min(dw - 1, b.x1), y1: Math.min(H - 1, b.y1) });
       texts.push({ b, fsEst, pitch, ink: ink || (lum(bgc[0], bgc[1], bgc[2]) > 140 ? [20, 20, 20] : [245, 245, 245]) }); }
     for (const t of texts) for (const l of t.b.lines) wipe(ctx, data0, dw, H, { x0: Math.max(0, l.x0), y0: Math.max(0, l.y0), x1: Math.min(dw - 1, l.x1), y1: Math.min(H - 1, l.y1) });
-    let shapes = [], photos = []; if (vec) { st("رسم عناصر الصورة: كشف المربعات والأزرار والصور…"); await sleep(20); const d1 = ctx.getImageData(0, 0, dw, H); const r = detect(d1.data, dw, H); shapes = r.shapes; photos = r.photos; }
+    let shapes = [], photos = []; if (vec) {  await sleep(20); const d1 = ctx.getImageData(0, 0, dw, H); const r = detect(d1.data, dw, H); shapes = r.shapes; photos = r.photos; }
     const widgets = []; let z = 1; const mk = (type, x, y, w, h, p) => { const w0 = PB.mkFree(type, 0, 0, ++z); Object.assign(w0.set, p); delete w0.set.mh; w0.set.fx = { d: r2(x / dw * 100) }; w0.set.fy = { d: Math.round(y) }; w0.set.fwd = { d: r2(w / dw * 100) }; w0.set.fh = { d: Math.max(2, Math.round(h)) }; widgets.push(w0); return w0; };
     /* صور مقتطعة (من لقطة بلا نصوص) */
-    const photoW = []; let pi = 0; for (const p of photos) { st("حفظ صورة مقتطعة " + (++pi) + "/" + photos.length + "…"); const c2 = document.createElement("canvas"); c2.width = Math.round(p.w); c2.height = Math.round(p.h); c2.getContext("2d").drawImage(cv, Math.round(p.x), Math.round(p.y), c2.width, c2.height, 0, 0, c2.width, c2.height); let src = ""; try { src = await A().uploadBlob(await toBlob(c2, "image/webp", .9), "clone-img", { max: 1600 }); } catch (e) { src = c2.toDataURL("image/jpeg", .85); } photoW.push({ p, src }); }
+    const photoW = []; let pi = 0; for (const p of photos) { prog(20 + 60 * (pi++) / Math.max(1, photos.length));  const c2 = document.createElement("canvas"); c2.width = Math.round(p.w); c2.height = Math.round(p.h); c2.getContext("2d").drawImage(cv, Math.round(p.x), Math.round(p.y), c2.width, c2.height, 0, 0, c2.width, c2.height); let src = ""; try { src = await A().uploadBlob(await toBlob(c2, "image/webp", .9), "clone-img", { max: 1600 }); } catch (e) { src = c2.toDataURL("image/jpeg", .85); } photoW.push({ p, src }); }
     /* تنظيف الخلفية: الصور ثم الأشكال من الأصغر للأكبر ليُملأ كل منها بلون ما حوله */
     const d2 = ctx.getImageData(0, 0, dw, H).data, wipeList = photos.map(p => ({ b: p, col: null })).concat(shapes.slice().sort((a, b) => a.area - b.area).map(s0 => ({ b: s0, col: null })));
     if (!keep) for (const wl of wipeList) { const b = { x: Math.round(wl.b.x), y: Math.round(wl.b.y), w: Math.round(wl.b.w), h: Math.round(wl.b.h) }; fillRing(ctx, ctx.getImageData(0, 0, dw, H).data, dw, H, b, null); }
-    st("حفظ الصورة الخلفية…"); const blob = await toBlob(cv, "image/webp", .92); let src = ""; try { src = await A().uploadBlob(blob, "clone-bg", { max: 2000 }); } catch (e) { src = cv.toDataURL("image/jpeg", .85); }
+     const blob = await toBlob(cv, "image/webp", .92); let src = ""; try { src = await A().uploadBlob(blob, "clone-bg", { max: 2000 }); } catch (e) { src = cv.toDataURL("image/jpeg", .85); }
     mk("image", 0, 0, dw, H, { src: keep ? await (async () => { try { return await A().uploadBlob(await toBlob(orig, "image/webp", .92), "clone-bg", { max: 2000 }); } catch (e) { return orig.toDataURL("image/jpeg", .85); } })() : src, alt: "", fit: "fill" });
     for (const s0 of shapes) { const isBtn = false; mk("shape", s0.x, s0.y, s0.w, s0.h, { shape: s0.kind, keep: false, outline: false, fill: "#" + s0.color.map(v => v.toString(16).padStart(2, "0")).join(""), sw: 0, rx: 0, rad: s0.kind === "rect" && s0.rad >= 1 ? { d: Math.round(Math.min(s0.rad, Math.min(s0.w, s0.h) / 2)) } : undefined }); }
     for (const ph of photoW) mk("image", ph.p.x, ph.p.y, ph.p.w, ph.p.h, { src: ph.src, alt: "", fit: "fill" });
@@ -14757,7 +14885,7 @@ const PBClone = (function () {
 #pbx-clone .cl-box{position:relative;background:#fff;border-radius:18px;width:min(1180px,96vw);height:min(94vh,880px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45)}
 #pbx-clone .cl-h{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;border-bottom:1px solid #eee;background:#173f35;color:#fff}#pbx-clone .cl-h b{font-size:1rem;display:flex;align-items:center;gap:.4rem}#pbx-clone .cl-h small{opacity:.75;flex:1;font-weight:600}#pbx-clone .cl-h button{border:0;background:rgba(255,255,255,.15);color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer}
 #pbx-clone .cl-tabs{display:flex;gap:.3rem;padding:.6rem 1rem 0}#pbx-clone .cl-tabs button{border:1.5px solid #e0d9c8;background:#fff;border-radius:10px 10px 0 0;padding:.45rem 1rem;cursor:pointer;font-family:inherit;font-weight:800;font-size:.85rem;color:#173f35}#pbx-clone .cl-tabs button.on{background:#173f35;color:#fff;border-color:#173f35}
-#pbx-clone .cl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid #eee;background:#faf6ec}#pbx-clone .cl-ctl input[type=text],#pbx-clone .cl-ctl input[type=url]{flex:1 1 280px;min-width:180px;border:1.5px solid #d9d2c2;border-radius:10px;padding:.5rem .7rem;font-family:inherit;direction:ltr;text-align:left}#pbx-clone .cl-ctl select{border:1.5px solid #d9d2c2;border-radius:10px;padding:.45rem;font-family:inherit}#pbx-clone .cl-ctl label{display:flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:700;color:#173f35}#pbx-clone .cl-ctl button,#pbx-clone .cl-f button{border:1.5px solid #173f35;background:#fff;color:#173f35;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-family:inherit;font-weight:800}#pbx-clone .cl-ctl button.pri,#pbx-clone .cl-f .cl-go{background:linear-gradient(135deg,#173f35,#0d9488);color:#fff;border-color:transparent}#pbx-clone .cl-f .cl-go:disabled{opacity:.45;cursor:not-allowed}
+#pbx-clone .cl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid #eee;background:#faf6ec}#pbx-clone .cl-ctl input[type=text],#pbx-clone .cl-ctl input[type=url]{flex:1 1 280px;min-width:180px;border:1.5px solid #d9d2c2;border-radius:10px;padding:.5rem .7rem;font-family:inherit;direction:ltr;text-align:left}#pbx-clone .cl-ctl select{border:1.5px solid #d9d2c2;border-radius:10px;padding:.45rem;font-family:inherit}#pbx-clone .cl-ctl label{display:flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:700;color:#173f35}#pbx-clone .cl-ctl button,#pbx-clone .cl-f button{border:1.5px solid #173f35;background:#fff;color:#173f35;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-family:inherit;font-weight:800}#pbx-clone .cl-ctl button.pri,#pbx-clone .cl-f .cl-go{min-height:48px;padding:.65rem 1.3rem;background:rgba(34,197,94,.3);color:#fff;border-color:rgba(34,197,94,.6);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:none;transition:transform .15s,background .15s}#pbx-clone .cl-ctl button.pri:hover,#pbx-clone .cl-f .cl-go:hover:not(:disabled){background:rgba(34,197,94,.5);transform:translateY(-2px)}#pbx-clone #cl-ring{--p:0;flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:conic-gradient(#16a34a calc(var(--p)*1%),#d6ecdc 0);display:inline-grid;place-items:center;box-shadow:0 0 0 2px rgba(22,163,74,.18)}#pbx-clone #cl-ring[hidden]{display:none}#pbx-clone #cl-ring i{font-style:normal;width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:900;color:#15803d;font-variant-numeric:tabular-nums}#pbx-clone .cl-f .cl-go:disabled{opacity:.45;cursor:not-allowed}
 #pbx-clone .cl-ctl[hidden]{display:none!important}#pbx-clone .cl-h,#pbx-clone .cl-tabs,#pbx-clone .cl-ctl,#pbx-clone .cl-note,#pbx-clone .cl-f{flex:none}#pbx-clone .cl-stage{flex:1 1 0;overflow:auto;background:#d8d2c4;padding:14px;min-height:90px;position:relative}#pbx-clone .cl-empty{color:#6b6556;text-align:center;padding:3rem 1rem;line-height:2;font-weight:700}
 #pbx-clone .cl-win{position:relative;margin:0 auto;overflow:hidden;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.35);direction:ltr}#pbx-clone .cl-in{position:absolute;left:0;top:0;transform-origin:0 0}#pbx-clone .cl-in iframe,#pbx-clone .cl-in img{display:block;border:0;background:#fff}
 #pbx-clone .cl-lim{position:absolute;left:0;right:0;bottom:0;height:22px;cursor:ns-resize;touch-action:none;background:linear-gradient(to top,rgba(124,58,237,.35),rgba(124,58,237,0));border-bottom:3px solid #7c3aed;display:flex;align-items:flex-end;justify-content:center}#pbx-clone .cl-lim span{background:#7c3aed;color:#fff;font:800 .72rem system-ui,sans-serif;padding:.1rem .7rem;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:.4rem}
@@ -14768,15 +14896,17 @@ const PBClone = (function () {
   const ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 012-2h10"/></svg>';
   function close() { const m = $("pbx-clone"); if (m) m.remove(); S.frame = null; S.img = null; S.runId = ""; clearInterval(EXT.t); }
   function open() {
+    if (document.documentElement.classList.contains("app-off-cloner")) { toast("ناسخ القوالب معطّل من تبويب تطبيقات"); return; }
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
-<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label title="يستخرج تصميم الصفحة عند عرض الجوال (390px) كقسم مستقل يظهر للجوال فقط، فتعمل قائمة ☰ والتخطيط الحقيقي للهاتف؛ والقسم الأول يختفي على الجوال"><input type="checkbox" id="cl-mob" checked> نسخة الجوال أيضاً</label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label><label title="روابط الموقع الأصلي في الأزرار والنصوص والصور تتحول إلى # فلا تنقل الزائر إلى موقع آخر؛ يمكنك لاحقاً وضع روابطك من إعدادات كل عنصر. تبقى روابط المراسي والاتصال وواتساب."><input type="checkbox" id="cl-lnk" checked> تعطيل روابط الموقع الأصلي (تصير #)</label></div>
+<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label></div>
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
-<div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
+<div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-ring" hidden><i>0</i></span><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
     document.body.appendChild(m);
+    try { const dd = window.ImgCfg && ImgCfg.get("tpl", "dest", "sec"), rr = m.querySelector('input[name="cl-dest"][value="' + dd + '"]'); if (rr) rr.checked = true; } catch (e) { }      // الوجهة الافتراضية من إعدادات القوالب
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
       const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "fxrep") fxPanel(); else if (a === "fxsend") { const un = (S.fxRep || []).filter((x, i) => x.status !== "ok" && (document.querySelector(`#cl-rep [data-fxi="${i}"]`) || {}).checked); sendFxRequests(un.length ? un : []); } else if (a === "fxclose") fxPanel(false); else if (a === "fxstat") fxStatus(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
@@ -14915,9 +15045,9 @@ const PBClone = (function () {
     im.onerror = () => toast("تعذّر قراءة الصورة"); im.src = url;
   }
   async function run() {
-    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true;
+    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true; prog(1); doneShown = false;
     try {      // اختيار التأثيرات المطلوب إضافتها يتم من نافذة «التأثيرات» الأولى فقط؛ لا نافذة تأكيد ثانية عند «انسخ»
-      if (S.tab === "url") await doCopyUrl(); else await doCopyImage(); } catch (e) { st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
+      if (S.tab === "url") await doCopyUrl(); else { prog(10); await doCopyImage(); finishFx(); } setTimeout(() => prog(null), 1800); } catch (e) { prog(null); st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
   return { open, close, _t: { extractMobile, neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
 })();
@@ -15032,9 +15162,10 @@ window.AIC = (function(){ const P = {
     attributes:'<path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L2 12V2h10l8.6 8.6a2 2 0 010 2.8z"/><circle cx="7" cy="7" r="1.4"/>', categories:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', fees:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
     delivery:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>', coupons:'<path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/><path d="M13 5v2M13 17v2M13 11v2"/>', blacklist:'<circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/>',
     loyalty:'<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>', theme:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/>',
-    checkout:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2l-3 2-2-2-3 2-3-2-2 2z"/><path d="M8 8h8M8 12h8"/>', pixels:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>', agent:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01M9 18h6"/><circle cx="12" cy="3" r="1"/>', pending:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'
+    checkout:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2l-3 2-2-2-3 2-3-2-2 2z"/><path d="M8 8h8M8 12h8"/>', pixels:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>', agent:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01M9 18h6"/><circle cx="12" cy="3" r="1"/>', pending:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    tpl:'<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', imgtools:'<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', voice:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4M8 22h8"/>', ask:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M9.5 8.5a2.5 2.5 0 114 2c-.8.5-1.5 1-1.5 2M12 15.5h.01"/>', cloner:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'
   };
-  const go = () => document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""), ic = b.querySelector(".nav-ic"); if (m && P[m[1]] && ic) ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[m[1]] + '</svg>'; });
+  const go = () => document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""), k = b.dataset.ic || (m && m[1]), ic = b.querySelector(".nav-ic"); if (k && P[k] && ic) ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[k] + '</svg>'; });
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
 </script>

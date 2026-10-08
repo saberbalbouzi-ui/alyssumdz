@@ -4,7 +4,7 @@
    لا يمسّ إطار معاينة الصفحة (iframe) ولا الصفحات المنشورة. */
 html.glass{
   color-scheme:dark;
-  --g-bg:#000; --g-tx:#eef3f6; --g-mut:rgba(226,236,242,.62); --g-dim:rgba(226,236,242,.4);
+  --g-bg:#000; --g-tx:#eef3f6; --g-mut:rgba(244,249,252,.9); --g-dim:rgba(244,249,252,.72);
   --g-surf:linear-gradient(155deg,rgba(70,170,80,.13),rgba(8,24,12,.55) 70%); --g-surf2:rgba(110,230,110,.1); --g-line:rgba(120,235,120,.2); --g-line2:rgba(150,255,150,.32);
   --g-smoke:rgba(10,30,16,.66);                       /* الأخضر القديم ← زجاج مدخَّن */
   --g-mint:#86f06a; --g-cyan:#3be6ff; --g-vio:#b79bff; --g-amber:#ffd45e; --g-rose:#ff5d82; --g-blue:#5aa8ff;
@@ -21,7 +21,7 @@ html.glass body{
   background-attachment:fixed;
 }
 html.glass ::selection{background:rgba(134,240,106,.35);color:#fff}
-html.glass ::-webkit-scrollbar{width:10px;height:10px}html.glass ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:10px;border:2px solid transparent;background-clip:content-box}html.glass ::-webkit-scrollbar-track{background:transparent}
+/* شريط التمرير: أكريليك برتقالي فلورسنت شفاف 6px (يُعرَّف عاماً في admin.html وstyle.css وBASE_CSS) */
 
 /* ── التمييز بين العنوان والبقية: العناوين أكبر وأثقل وبلون مضيء، والنص العادي أصغر وأخفّ ── */
 html.glass h1,html.glass h2,html.glass h3,html.glass h4{color:#fff;font-weight:900;letter-spacing:.2px}
@@ -207,3 +207,111 @@ html.glass .nav-btn.on{background:var(--g-sheen),linear-gradient(135deg,rgba(134
 html.glass .side-nav{gap:.55rem}
 /* بطاقات الإحصاء: زجاج سميك ملوّن (يبقى كل لون لوحده) */
 html.glass .stat div{background:var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.3),rgba(var(--c),.07) 65%,rgba(0,0,0,.25));box-shadow:var(--g-thick),0 10px 22px -6px rgba(0,0,0,.75),0 0 22px rgba(var(--c),.14)}
+
+/* زرّا «فتح» و«انسخ» في نافذة نسخ القالب: بعرض بقية الأزرار وأطول قليلاً، نص أبيض وأخضر شفاف بلا توهج */
+html.glass #pbx-clone .cl-ctl button.pri,html.glass #pbx-clone .cl-f button.cl-go{min-height:48px;background:rgba(52,220,100,.26)!important;color:#fff!important;border-color:rgba(120,240,150,.55)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:none!important;text-shadow:none;transition:transform .15s,background .15s}
+html.glass #pbx-clone .cl-ctl button.pri:hover,html.glass #pbx-clone .cl-f button.cl-go:hover:not(:disabled){background:rgba(52,220,100,.46)!important;transform:translateY(-2px);box-shadow:none!important}
+html.glass #pbx-clone .cl-f button.cl-go:disabled{background:rgba(255,255,255,.06)!important;color:rgba(255,255,255,.4)!important;box-shadow:none!important;text-shadow:none}
+html.glass #pbx-clone #cl-ring i{background:#0f1a14;color:#7dff9d}
+html.glass #pbx-clone #cl-ring{background:conic-gradient(#3ddc6b calc(var(--p)*1%),rgba(255,255,255,.14) 0)}
+
+/* ───── بطاقات العناوين عند المرور: تلوين أخضر مثل البطاقة النشطة + حركة خفيفة (بلا توهج) ───── */
+html.glass .nav-btn,html.glass .live-pill,html.glass .pbx-wi,html.glass .pbx-tpl,html.glass .stat div,html.glass .card{transition:background .22s,border-color .22s,transform .22s}
+html.glass .nav-btn:hover,html.glass .live-pill:hover,html.glass .pbx-wi:hover,html.glass .pbx-tpl:hover{background:var(--g-sheen),linear-gradient(135deg,rgba(134,240,106,.34),rgba(134,240,106,.08))!important;border-color:rgba(170,255,150,.7)!important;box-shadow:var(--g-thick),0 8px 18px -6px rgba(0,0,0,.7)!important;transform:translateY(-2px)}
+html.glass .stat div:hover{background:var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.52),rgba(var(--c),.16) 65%,rgba(0,0,0,.25))!important;border-color:rgba(var(--c),.85)!important;transform:translateY(-2px)}
+html.glass .card:hover,html.glass .alert-card:hover{background:rgba(134,240,106,.05)!important;border-color:rgba(170,255,150,.45)!important;transform:translateY(-1px)}
+/* النص الصغير تحت العناوين: أبيض أوضح */
+html.glass .hint,html.glass .nav-txt small,html.glass .side-nav-intro p,html.glass small,html.glass .card p,html.glass .stat span{color:rgba(244,249,252,.84)!important}
+
+/* ───── قائمة الصفحات: أزرار كل صفحة تتلوّن بالأخضر بالمرور مع حركة خفيفة؛ سلة الحذف حمراء زجاجية شفافة ───── */
+html.glass .pbx-pact button{transition:background .2s,border-color .2s,transform .2s}
+html.glass .pbx-pact button:hover{background:linear-gradient(135deg,rgba(134,240,106,.4),rgba(134,240,106,.14))!important;color:#fff!important;border-color:rgba(170,255,150,.75)!important;box-shadow:none!important;transform:translateY(-2px)}
+html.glass .pbx-pc:hover{border-color:rgba(170,255,150,.4)}
+html.glass .pbx-pact button[onclick*="unpublish"],html.glass button[style*="background:var(--red)"]{background:rgba(255,93,130,.16)!important;color:#ff8fa8!important;border:1px solid rgba(255,93,130,.55)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:none!important}
+html.glass .pbx-pact button[onclick*="unpublish"]:hover,html.glass button[style*="background:var(--red)"]:hover{background:rgba(255,93,130,.34)!important;color:#fff!important;border-color:rgba(255,130,160,.85)!important;box-shadow:none!important;transform:translateY(-2px)}
+
+/* ───── الشريط العلوي: تلوين بلون الزر بالمرور مع حركة خفيفة ───── */
+html.glass .top .small,html.glass .top button,html.glass .top .live-pill{transition:background .2s,transform .2s}
+html.glass .top .small:hover,html.glass .top button:hover,html.glass .top .live-pill:hover{background:color-mix(in srgb,currentColor 26%,rgba(10,20,15,.55))!important;transform:translateY(-2px)}
+
+/* ───── الإشعارات وشروحات «؟»: تنسيق وألوان موحّدة (زجاج مدخَّن + حدّ ونص أخضر ليموني) ───── */
+html.glass #toast2,html.glass .pbx-msg,html.glass #au-banner,html.glass .au-toast,html.glass #ctlq-pop{background:rgba(10,30,16,.9)!important;color:var(--g-mint)!important;border:1px solid rgba(134,240,106,.45)!important;-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:0 0 24px rgba(134,240,106,.22),0 14px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14)!important}
+html.glass #au-banner *,html.glass .au-toast{color:var(--g-mint)}
+html.glass #ctlq-pop{color:#eafbe4!important}
+html.glass #ctlq-pop b{color:var(--g-mint)}
+html.glass #ctlq-pop .gd{color:#d8f7cf;border-top-color:rgba(134,240,106,.35)}
+html.glass #ctlq-pop .ask{background:rgba(134,240,106,.2);color:var(--g-mint);border:1px solid rgba(134,240,106,.5)}
+html.glass #ctlq-pop:after{background:rgba(10,30,16,.95);border:1px solid rgba(134,240,106,.45);border-top:0;border-inline-start:0}
+html.glass #ctlq-pop.dn:after{border:1px solid rgba(134,240,106,.45);border-bottom:0;border-inline-end:0;border-top:1px solid rgba(134,240,106,.45);border-inline-start:1px solid rgba(134,240,106,.45)}
+html.glass .ctl-q{background:rgba(134,240,106,.16)!important;color:var(--g-mint)!important;box-shadow:0 0 0 1px rgba(134,240,106,.45)}
+html.glass .ctl-q:hover{box-shadow:0 0 0 1px rgba(134,240,106,.9),0 0 14px rgba(134,240,106,.6)}
+
+/* ───── قاعدة صاحب المتجر: كل الأزرار زجاج شفاف منتفخ قليلاً بنص أبيض (برتقالي للتنبيه/التحديث، أخضر للأساسي) ─────
+   الأزرار الملوّنة المضمّنة بـstyle (ذهبي/أخضر داكن/تركوازي) تُحوَّل إلى زجاج منتفخ بدل اللون الصلب */
+html.glass button[style*="background:#c8a24b" i],html.glass #au-go{background:linear-gradient(180deg,rgba(255,170,70,.78),rgba(255,115,20,.5))!important;color:#fff!important;border:1px solid rgba(255,196,130,.65)!important;border-radius:14px!important;padding:.5rem 1.15rem!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 2px 3px rgba(255,255,255,.5),inset 0 -3px 6px rgba(0,0,0,.28),0 4px 10px -2px rgba(0,0,0,.45)!important;text-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s,background .15s}
+html.glass button[style*="background:#173f35" i]:not(.logout),html.glass button[style*="background:#0d9488" i]{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border:1px solid rgba(140,255,170,.55)!important;border-radius:14px!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 2px 3px rgba(255,255,255,.45),inset 0 -3px 6px rgba(0,0,0,.28),0 4px 10px -2px rgba(0,0,0,.45)!important;text-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s,background .15s}
+html.glass button[style*="background:#c8a24b" i]:hover,html.glass #au-go:hover,html.glass button[style*="background:#173f35" i]:hover,html.glass button[style*="background:#0d9488" i]:hover{transform:translateY(-2px);filter:brightness(1.12)}
+html.glass #au-banner{border-radius:18px}
+
+/* ───── تبويبات الإعدادات (محتوى/تنسيق/متقدم) وعناوين المجموعات: تتلوّن بالأخضر عند تحديدها، وعناوين المجموعات بخلفية خضراء زجاجية فلورسنت ───── */
+html.glass button[data-itab]{transition:background .2s,border-color .2s,transform .2s}
+html.glass button[data-itab]:hover{transform:translateY(-2px);background:rgba(134,240,106,.14)!important}
+html.glass button[data-itab].on{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border-color:rgba(150,255,170,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.25)!important}
+html.glass .pbx-ach{background:linear-gradient(135deg,rgba(80,230,120,.2),rgba(13,148,136,.08))!important;color:var(--g-mint)!important;border:1px solid rgba(134,240,106,.35)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3);transition:background .2s,transform .2s}
+html.glass .pbx-ach:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(80,230,120,.34),rgba(13,148,136,.16))!important}
+html.glass .pbx-ach.on{background:linear-gradient(135deg,rgba(80,230,120,.46),rgba(13,148,136,.24))!important;color:#fff!important;border-color:rgba(170,255,150,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -2px 5px rgba(0,0,0,.2)}
+
+/* ───── effet cristal للبطاقات الملوّنة: وجوه ضوئية مائلة + لمعة علوية + توهّج داخلي بلون البطاقة + حافة بيضاء ───── */
+html.glass{--g-crystal:linear-gradient(115deg,rgba(255,255,255,0) 18%,rgba(255,255,255,.07) 23%,rgba(255,255,255,0) 29%,rgba(255,255,255,0) 52%,rgba(255,255,255,.04) 57%,rgba(255,255,255,0) 63%),radial-gradient(130px 50px at 16% 0%,rgba(255,255,255,.14),transparent 72%),radial-gradient(110px 90px at 100% 100%,rgba(var(--c,134,240,106),.14),transparent 72%)}
+html.glass .stat div{background:var(--g-crystal),var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.34),rgba(var(--c),.09) 65%,rgba(0,0,0,.25))!important;-webkit-backdrop-filter:blur(16px) saturate(190%) brightness(1.08);backdrop-filter:blur(16px) saturate(190%) brightness(1.08);border-color:rgba(255,255,255,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 8px rgba(var(--c),.14),0 10px 22px -6px rgba(0,0,0,.75)!important}
+html.glass .stat div:hover{background:var(--g-crystal),var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.55),rgba(var(--c),.16) 65%,rgba(0,0,0,.25))!important}
+html.glass .nav-btn.on{background:var(--g-crystal),var(--g-sheen),linear-gradient(135deg,rgba(134,240,106,.38),rgba(134,240,106,.1))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 8px rgba(134,240,106,.14),0 8px 18px -6px rgba(0,0,0,.7)!important}
+
+/* ───── التبويبات الكبيرة للقائمة الجانبية (المظهر / ecommerce / تطبيقات): زجاج، والمحدَّد أخضر زجاجي منتفخ ───── */
+html.glass .nav-groups .ng{background:var(--g-sheen),rgba(255,255,255,.04);color:var(--g-tx);border:1px solid rgba(255,255,255,.2);box-shadow:var(--g-thick),0 8px 18px -6px rgba(0,0,0,.7);-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);transition:background .2s,transform .2s,border-color .2s}
+html.glass .nav-groups .ng:hover{transform:translateY(-2px);background:var(--g-sheen),rgba(134,240,106,.14)}
+html.glass .nav-groups .ng.on{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border-color:rgba(150,255,170,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.25),0 8px 18px -6px rgba(0,0,0,.7)!important}
+html.glass .nav-groups .ng svg{filter:none}
+
+/* تبويبات صفحات التطبيقات/القوالب: المحدَّد أخضر زجاجي منتفخ، وبطاقات الأدوات زجاج */
+html.glass .ap-tabs button{background:var(--g-sheen),rgba(255,255,255,.04);color:var(--g-tx);border:1px solid rgba(255,255,255,.2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+html.glass .ap-tabs button.on{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border-color:rgba(150,255,170,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.25)}
+html.glass .tl-c{background:var(--g-sheen),rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}html.glass .tl-c:hover{border-color:rgba(170,255,150,.4)}
+html.glass .tl-r{border-bottom-color:rgba(255,255,255,.12)}
+
+/* مكتبة القوالب (v1.45.2) */
+html.glass #tl-lib{background:rgba(3,12,9,.62);backdrop-filter:blur(6px)}
+html.glass #tl-lib .tl-box{background:rgba(14,32,26,.86);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.16);color:#fff}
+html.glass #tl-lib .tl-fl button,html.glass #tl-lib .ap-tabs button{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);color:#fff;transition:.2s}
+html.glass #tl-lib .tl-fl button:hover,html.glass #tl-lib .ap-tabs button:hover{background:rgba(190,242,100,.16);transform:translateY(-2px)}
+html.glass #tl-lib .tl-fl button.on,html.glass #tl-lib .ap-tabs button.on{background:rgba(34,197,94,.28);border-color:rgba(190,242,100,.6);color:#fff}
+html.glass #tl-lib .tl-c .ap-h{gap:.6rem;align-items:flex-start}
+html.glass #tl-lib .tl-c .ap-s{flex:none;white-space:nowrap;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;background:rgba(34,197,94,.18);border:1px solid rgba(190,242,100,.35);color:#fff}
+html.glass #tl-lib .tl-c button.small{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(21,122,85,.26));border:1px solid rgba(190,242,100,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.18),0 3px 8px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:.2s}
+html.glass #tl-lib .tl-c button.small:hover{background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32));transform:translateY(-2px)}
+html.glass #tl-lib .tl-th{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)}
+html.glass #tl-view{background:rgba(3,12,9,.72);backdrop-filter:blur(6px)}
+html.glass #tl-view .tv-box{background:rgba(14,32,26,.92);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.16);color:#fff}
+html.glass #tl-view .tv-top{border-color:rgba(255,255,255,.14)}
+html.glass #tl-view .tv-body{background:rgba(0,0,0,.35)}
+html.glass #tl-view .tv-top button.small{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(21,122,85,.26));border:1px solid rgba(190,242,100,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.18);transition:.2s}
+html.glass #tl-view .tv-top button.small:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32))}
+html.glass #tl-view .tv-top button.small.gray{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22)}
+html.glass #tl-lib .tl-act button.small{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(21,122,85,.26));border:1px solid rgba(190,242,100,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.18),0 3px 8px rgba(0,0,0,.2);transition:.2s}
+html.glass #tl-lib .tl-act button.small:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32))}
+html.glass #tl-lib .tl-act button.small.gold{background:linear-gradient(180deg,rgba(251,146,60,.4),rgba(194,65,12,.3));border-color:rgba(253,186,116,.5)}
+html.glass .spv-bar button.inst{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.45),rgba(21,122,85,.35));border:1px solid rgba(190,242,100,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 5px rgba(0,0,0,.18)}
+html.glass .ig-modes button{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(8px)}
+html.glass .ig-modes button.on{background:rgba(34,197,94,.22);border-color:rgba(190,242,100,.55)}
+html.glass .ig-cost,html.glass .ig-prev{border-color:rgba(255,255,255,.22)}
+html.glass .ig-out{background:rgba(0,0,0,.3);border-color:rgba(255,255,255,.18)}
+html.glass #ig-body .action-bar button.small{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(21,122,85,.26));border:1px solid rgba(190,242,100,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.18),0 3px 8px rgba(0,0,0,.2);transition:.2s}
+html.glass #ig-body .action-bar button.small:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32))}
+html.glass #ig-body .action-bar button.small.gold{background:linear-gradient(180deg,rgba(251,146,60,.4),rgba(194,65,12,.3));border-color:rgba(253,186,116,.5)}
+html.glass #ig-body .action-bar button.small.gray{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22)}
+
+/* v1.51.8 — النوافذ المنبثقة: كانت تتحول إلى شفافة 6% (من تحويل #fff تلقائياً) فلا يظهر محتواها ويتداخل مع الصفحة خلفها؛ الآن زجاج داكن شبه معتم مع تمويه الخلفية */
+html.glass .modal-bg{background:rgba(2,8,5,.76);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+html.glass .modal,html.glass .editor-bg,html.glass .diff-box,html.glass #pbs-modal.pbs-m #pbs-panel,html.glass #pbx-clone .cl-box,html.glass #pbx-clone .cl-win{background:rgba(9,24,18,.985)!important;border:1px solid rgba(255,255,255,.14);color:var(--g-tx);box-shadow:0 34px 90px rgba(0,0,0,.65)}
+html.glass .modal.xl .action-bar{background:rgba(9,24,18,.99)!important;border-top-color:rgba(255,255,255,.14)}
+html.glass .spv-bar,html.glass .login{background:rgba(9,24,18,.92)}

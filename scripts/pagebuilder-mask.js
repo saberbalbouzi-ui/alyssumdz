@@ -30,6 +30,7 @@ const PBMask = (function () {
   const CHEV = '<svg class="ep-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   const thumbBtn = (val, key, name, on) => `<button type="button" class="mk-sh${on ? " on" : ""}" data-mksh="${esc(val)}" title="${esc(name)}">${PB.shapeThumb(key)}<span>${esc(name)}</span></button>`;
   function panel(inf) {
+    if (!S._c) { S._c = 1; if (window.ImgCfg && ImgCfg.get("mask", "invert", false)) S.invert = true; }
     css(); if (!inf || inf.kind !== "widget" || inf.set.pz) return "";
     const img = inf.node.type === "image", st = inf.set; if (img && !st.src) return "";
     const L = cands(inf), lib = img ? libSel() : "", cur = lib ? null : (L.find(w => w.id === S.target) || L[0]), pend = !!(S.pend && S.pend.id === inf.node.id);
@@ -74,6 +75,7 @@ ${invertUi}${hint}</div>`;
     box.v.classList.toggle("hot", rx > 1 && S.px === 50); box.h.classList.toggle("hot", ry > 1 && S.py === 50);
   }
   function snapPos(g, s, raw) {      // raw: [px,py] بالنسبة المئوية → بعد التجاذب مع المركز والحواف
+    if (window.ImgCfg && ImgCfg.get("mask", "snap", true) === false) return raw.slice();
     const L = g.L, T = 8 / s, out = raw.slice(), rx = L.width - g.w, ry = L.height - g.h;
     [[0, rx, L.width, g.w], [1, ry, L.height, g.h]].forEach(([i, r, W, sz]) => { if (r <= 1) return; const off = r * raw[i] / 100, cen = off + sz / 2;
       if (Math.abs(cen - W / 2) < T) out[i] = 50; else if (off < T) out[i] = 0; else if (r - off < T) out[i] = 100; });

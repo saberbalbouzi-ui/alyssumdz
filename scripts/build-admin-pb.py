@@ -14,5 +14,5 @@ else:
     s = s[:i] + block + "\n" + s[i:]
 ver = (root / "VERSION").read_text(encoding="utf-8").strip()
 s = re.sub(r'<meta name="admin-version" content="[^"]*">', '<meta name="admin-version" content="%s">' % ver, s, count=1)
-s = re.sub(r'(<script src="assets/js/(?:admin-assistant|admin-update|chrome-admin|ctl-help)\.js)(?:\?v=[^"]*)?(")', lambda m: m.group(1) + "?v=" + ver + m.group(2), s)      # كسر كاش السكربتات عند كل إصدار
+s = re.sub(r'(<script src="assets/js/(?:admin-assistant|admin-update|admin-nav|chrome-admin|ctl-help)\.js)(?:\?v=[^"]*)?(")', lambda m: m.group(1) + "?v=" + ver + m.group(2), s)      # كسر كاش السكربتات عند كل إصدار
 p.write_text(s, encoding="utf-8"); print("ok", len(src), "bytes")
