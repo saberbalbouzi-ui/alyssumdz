@@ -313,6 +313,7 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       const st = doc.createElement("style"); st.id = "pb-native"; st.textContent = PB.BASE_CSS; doc.head.appendChild(st);
       const sc = doc.createElement("script"); sc.textContent = "var __pbBase=" + JSON.stringify(o.kind === "home" ? "" : "../../") + ";var __pbSlug=\"\";var __pbMeta={};" + PB.RUNTIME_JS; doc.body.appendChild(sc);
     }
+    { const old = doc.getElementById("pb-tpl-css"); if (old) old.remove(); if (P.tplCss) { const st2 = doc.createElement("style"); st2.id = "pb-tpl-css"; st2.textContent = P.tplCss; doc.head.appendChild(st2); } }      // أنماط قالب مثبَّت (مثل «أليسوم»): خلفية الصفحة والتأثيرات العامة
     const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
     await GH.putFile(pth, btoa(unescape(encodeURIComponent(html))), cur && cur.sha, "نشر " + (o.kind === "home" ? "الصفحة الرئيسية" : "صفحة المنتج " + o.slug) + " من المطوّر");
     await put("assets/pages/_conv/" + k + ".json", P, "مصدر تحرير المطوّر: " + k);

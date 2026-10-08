@@ -496,7 +496,7 @@ body{overflow-x:hidden;margin:0}`;
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0;
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
-    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || ""));
+    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }

@@ -61,7 +61,7 @@ const AdminNav = (() => {
     { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
     { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
   ];
-  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "2";
+  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "3";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen() { await libLoad(); LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -73,13 +73,73 @@ const AdminNav = (() => {
     m.innerHTML = `<div class="tl-box"><div class="tl-top"><h3>مكتبة القوالب</h3><button type="button" class="small gray" onclick="AdminNav.libClose()">إغلاق</button></div>
 <div class="ap-tabs">${LCATS.map(x => chip("cat", x[0], x[1])).join("")}</div>
 <div class="tl-fl"><b>الميدان:</b>${chip("fld", "all", "عرض الكل")}${flds.map(f => chip("fld", f, f)).join("")}</div>
-<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="tl-th" onclick="AdminNav.libView('${x.id}')" title="معاينة كبيرة"><img loading="lazy" alt="" src="assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}" onerror="this.parentNode.classList.add('none')"><span>معاينة</span></div><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div><button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button></div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
+<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="tl-th" onclick="AdminNav.libView('${x.id}')" title="معاينة كبيرة"><img loading="lazy" alt="" src="assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}" onerror="this.parentNode.classList.add('none')"><span>معاينة</span></div><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div>${x.alyssum ? `<div class="tl-act"><button type="button" class="small" onclick="AdminNav.alyPreview()">معاينة</button><button type="button" class="small" onclick="AdminNav.alyEdit()">تعديل</button><button type="button" class="small gold" onclick="AdminNav.alyInstall()">تثبيت</button></div>` : `<button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button>`}</div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
   }
   function libView(id) {
     const x = libAll().find(q => q.id === id); if (!x) return; let v = $("tl-view");
     if (!v) { v = document.createElement("div"); v.id = "tl-view"; v.onclick = e => { if (e.target === v) v.style.display = "none"; }; document.body.appendChild(v); }
-    v.innerHTML = `<div class="tv-box"><div class="tv-top"><b>${esc(x.n)}</b><span><button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button> <button type="button" class="small gray" onclick="document.getElementById('tl-view').style.display='none'">إغلاق</button></span></div><div class="tv-body"><img alt="" src="assets/pages/templates/thumbs/${esc(x.id)}-full.jpg?v=${V}" onerror="this.onerror=null;this.src='assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}'"></div></div>`;
+    v.innerHTML = `<div class="tv-box"><div class="tv-top"><b>${esc(x.n)}</b><span>${x.alyssum ? `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyPreview()">معاينة</button> <button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyEdit()">تعديل</button> <button type="button" class="small gold" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyInstall()">تثبيت</button>` : `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button>`} <button type="button" class="small gray" onclick="document.getElementById('tl-view').style.display='none'">إغلاق</button></span></div><div class="tv-body"><img alt="" src="assets/pages/templates/thumbs/${esc(x.id)}-full.jpg?v=${V}" onerror="this.onerror=null;this.src='assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}'"></div></div>`;
     v.style.display = "flex";
+  }
+  /* ══ قالب «أليسوم»: معاينة (نافذة بأجهزتها) / تعديل (في المطوّر) / تثبيت (بصور المتجر وروابطه) ══ */
+  let ALYP = null;
+  async function alyLoad() { if (!ALYP) { const r = await fetch("assets/pages/templates/s-alyssum.json?t=" + Date.now()); if (!r.ok) throw new Error("ملف القالب غير موجود"); ALYP = await r.json(); } return PBAdmin.fresh(JSON.parse(JSON.stringify(ALYP))); }
+  const coverOf = p => (p && (p.cover || (p.images && p.images[0]))) || "";
+  const aProds = () => ((typeof PBBind !== "undefined" && PBBind.list) ? PBBind.list() : ((typeof Admin !== "undefined" && Admin.products) || [])).filter(p => p && p.active !== false);
+  function alyWalk(n, f) { f(n); (n.cols || []).forEach(c => alyWalk(c, f)); (n.widgets || []).forEach(w => alyWalk(w, f)); (n.free || []).forEach(w => alyWalk(w, f)); }
+  /* التثبيت: صور القالب ← صور منتجات المتجر وفئاته، اسم المتجر، والأقسام تُوسَم لتحلّ محل هيدر/محتوى/فوتر الرئيسية */
+  function alyLocalize(page) {
+    const P = aProds(), best = P.find(p => (p.tags || []).includes("best") && coverOf(p)) || P.find(p => coverOf(p)), other = P.find(p => p !== best && (p.tags || []).includes("new") && coverOf(p)) || P.find(p => p !== best && coverOf(p)) || best;
+    const CT = (typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : {});
+    const nm = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "", latin = /^[A-Za-z0-9 _.-]+$/.test(nm);
+    const rep = o => { if (typeof o === "string") return latin ? o.replace(/ALYSSUM/g, nm.toUpperCase()) : o; if (Array.isArray(o)) return o.map(rep); if (o && typeof o === "object") { Object.keys(o).forEach(k => { o[k] = rep(o[k]); }); } return o; };
+    page.sections.forEach((sec, i) => {
+      let foot = false; alyWalk(sec, n => { if (n.type === "sfoot") foot = true; });
+      sec.grp = i === 0 ? "top" : (foot ? "bot" : "main");
+      alyWalk(sec, n => {
+        const s = n.set || {};
+        if (n.type === "image" && s.slot === "hero" && best) { s.src = coverOf(best); s.alt = best.title; }
+        if (n.type === "image" && s.slot === "banner" && other) { s.src = coverOf(other); s.alt = other.title; }
+        if (n.type === "shopcats" && s.slotCats) {
+          const keys = Object.keys(CT).slice(0, 6);
+          if (keys.length) s.items = keys.map(k => ({ cat: k, label: "", img: coverOf(P.find(p => p.cat === k && coverOf(p))) || coverOf(best) }));
+        }
+        if (n.type === "sfoot" && nm) { s.copy = "© " + new Date().getFullYear() + " " + nm + " — جميع الحقوق محفوظة"; }
+      });
+    });
+    if (nm) page.sections.forEach(sec => alyWalk(sec, n => { if (n.set) n.set = rep(n.set); }));
+    /* كل المنتجات مع شرائح الفئات: يلزمها #chips و#grid ليعمل سكربت الرئيسية وبطاقات «تسوّق حسب الفئة» (goToCategory) */
+    const bi = page.sections.findIndex(sec => sec.cols && sec.cols.some(c => c.widgets.some(w => w.type === "products")));
+    const cat = PB.mkS([PB.mkC([PB.mkW("heading", { text: "كل منتجاتنا الطبيعية", tag: "h2", fs: { d: 30, m: 24 }, fw: "900", ta: { d: "start" }, color: "#ffffff" }), PB.mkW("html", { code: '<div class="chips" id="chips"></div><div class="grid aly-grid" id="grid"></div>' })])], { cw: { d: 1240 }, cid: "products", pad: { d: [10, 20, 30, 20], m: [6, 16, 20, 16] } });
+    cat.grp = "main"; page.sections.splice(bi >= 0 ? bi + 1 : page.sections.length - 1, 0, cat);
+    return page;
+  }
+  async function alyPreview() {
+    try {
+      libClose(); toast("⏳ جارِ تحضير المعاينة…");
+      const page = await alyLoad(), dir = location.href.replace(/[^/]*$/, "");
+      const html = PB.fullHtml(PB.migrate(page), Object.assign({ base: "", baseHref: dir }, PBApp.siteCtx()));
+      SitePreview.openHtml(html, { title: "معاينة قالب أليسوم", edit: alyEdit, editLabel: "تعديل في المطوّر", install: alyInstall, installLabel: "تثبيت على متجري" });
+    } catch (e) { toast("تعذّرت المعاينة: " + e.message); }
+  }
+  async function alyEdit() {
+    try {
+      try { SitePreview.close(); } catch (_) { } libClose();
+      const page = await alyLoad(); page.title = "أليسوم";
+      PBApp.open(page, "", true); toast("✅ فُتح قالب أليسوم في المطوّر بتأثيراته وخلفياته — عدّل ثم «حفظ ونشر»");
+    } catch (e) { toast("تعذّر الفتح: " + e.message); }
+  }
+  async function alyInstall() {
+    if (!confirm("تثبيت قالب «أليسوم» على متجرك:\n\n• تُستبدل صور القالب بصور منتجاتك وفئاتك\n• تُربط الروابط والأزرار والهيدر والفوتر بمتجرك\n• يُفتح في المطوّر كصفحة رئيسية جاهزة؛ لا يُنشر شيء إلا بعد «حفظ ونشر» (وتُحفظ نسخة من الرئيسية الحالية للاسترجاع)\n\nمتابعة؟")) return;
+    try {
+      try { SitePreview.close(); } catch (_) { } libClose(); toast("⏳ جارِ تثبيت القالب بصور متجرك…");
+      const page = alyLocalize(await alyLoad());
+      await PBConvert.edit("home");
+      const P = PBApp.E && PBApp.E.page; if (!P) throw new Error("تعذّر فتح الرئيسية في المطوّر");
+      P.sections = page.sections; P.tplCss = page.css; P.title = "الصفحة الرئيسية";
+      PBApp.E.nextLabel = "تثبيت قالب أليسوم"; PBApp.E.dirty = true; PBApp.commitAfter(P.sections[0].id);
+      toast("✅ ثُبّت القالب بصور وروابط متجرك — راجعه ثم «حفظ ونشر»");
+    } catch (e) { toast("تعذّر التثبيت: " + e.message); }
   }
   async function libUse(id) {
     const x = libAll().find(q => q.id === id); if (!x) return;
@@ -205,5 +265,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { libOpen, libClose, libSet, libUse, libView, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { alyPreview, alyEdit, alyInstall, libOpen, libClose, libSet, libUse, libView, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

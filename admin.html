@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.48.0">
+<meta name="admin-version" content="1.49.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -50,7 +50,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .nav-btn.on .nav-txt small{color:#DCE9E3}
 /* تبويبات كبيرة لتنظيم العناوين (المظهر / ecommerce / تطبيقات) + عرضا الوكيل (ذكي/ناطق) */
 .ap-tabs{display:flex;gap:.4rem;margin-top:.8rem;flex-wrap:wrap}.ap-tabs button{border:1.5px solid var(--line);background:#fff;color:var(--green);border-radius:12px;padding:.5rem 1rem;font-weight:800;font-family:inherit;cursor:pointer;transition:background .2s,transform .2s}.ap-tabs button:hover{transform:translateY(-2px)}.ap-tabs button.on{background:var(--green);color:#fff;border-color:var(--green)}
-#tl-lib{position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:1rem}#tl-lib .tl-box{background:#fff;color:#173f35;border-radius:20px;width:min(980px,96vw);height:min(88vh,760px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);padding:1rem 1.2rem}#tl-lib .tl-top{display:flex;align-items:center;justify-content:space-between}#tl-lib .tl-top h3{margin:0}#tl-lib .tl-fl{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.5rem 0}#tl-lib .tl-fl button,#tl-lib .ap-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:.35rem .9rem;font:inherit;font-weight:700;cursor:pointer}#tl-lib .tl-fl button.on,#tl-lib .ap-tabs button.on{background:#157a5522;border-color:#157a55;color:#157a55}#tl-lib .tl-adv{display:inline-block;margin-top:.3rem;font-size:.78rem;font-weight:800;color:#157a55}#tl-lib .tl-c .ap-h{flex-wrap:wrap;gap:.4rem;align-items:flex-start}#tl-lib .tl-c .ap-h b{flex:1 1 140px}#tl-lib .tl-th{position:relative;height:170px;border-radius:12px;overflow:hidden;margin-bottom:.6rem;cursor:zoom-in;background:#eef2f1;border:1px solid var(--line)}#tl-lib .tl-th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;transition:transform .6s}#tl-lib .tl-th:hover img{transform:scale(1.05)}#tl-lib .tl-th span{position:absolute;inset-inline:0;bottom:0;padding:.35rem;text-align:center;font-weight:800;font-size:.85rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));opacity:0;transition:.25s}#tl-lib .tl-th:hover span{opacity:1}#tl-lib .tl-th.none{display:none}
+#tl-lib{position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:1rem}#tl-lib .tl-box{background:#fff;color:#173f35;border-radius:20px;width:min(980px,96vw);height:min(88vh,760px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);padding:1rem 1.2rem}#tl-lib .tl-top{display:flex;align-items:center;justify-content:space-between}#tl-lib .tl-top h3{margin:0}#tl-lib .tl-fl{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.5rem 0}#tl-lib .tl-fl button,#tl-lib .ap-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:.35rem .9rem;font:inherit;font-weight:700;cursor:pointer}#tl-lib .tl-fl button.on,#tl-lib .ap-tabs button.on{background:#157a5522;border-color:#157a55;color:#157a55}#tl-lib .tl-adv{display:inline-block;margin-top:.3rem;font-size:.78rem;font-weight:800;color:#157a55}#tl-lib .tl-c .ap-h{flex-wrap:wrap;gap:.4rem;align-items:flex-start}#tl-lib .tl-c .ap-h b{flex:1 1 140px}#tl-lib .tl-act{display:flex;gap:.4rem;flex-wrap:wrap}#tl-lib .tl-act button{flex:1}#tl-lib .tl-th{position:relative;height:170px;border-radius:12px;overflow:hidden;margin-bottom:.6rem;cursor:zoom-in;background:#eef2f1;border:1px solid var(--line)}#tl-lib .tl-th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;transition:transform .6s}#tl-lib .tl-th:hover img{transform:scale(1.05)}#tl-lib .tl-th span{position:absolute;inset-inline:0;bottom:0;padding:.35rem;text-align:center;font-weight:800;font-size:.85rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));opacity:0;transition:.25s}#tl-lib .tl-th:hover span{opacity:1}#tl-lib .tl-th.none{display:none}
 #tl-view{position:fixed;inset:0;z-index:99995;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:1rem}#tl-view .tv-box{background:#fff;color:#173f35;border-radius:18px;width:min(900px,96vw);height:min(92vh,900px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5)}#tl-view .tv-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;border-bottom:1px solid var(--line)}#tl-view .tv-body{flex:1;overflow:auto;background:#e9eeed}#tl-view .tv-body img{width:100%;display:block}
 #tl-lib .tl-body{flex:1;overflow:auto;margin-top:.4rem}
 .tl-c{border:1px solid var(--line);border-radius:16px;padding:.9rem 1rem;margin-top:.7rem}.tl-c.dev{opacity:.7;border-style:dashed}.tl-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.7rem;margin-top:.5rem}.tl-g .tl-c{margin-top:0}.tl-s{margin-top:.6rem;display:grid;gap:.45rem}.tl-r{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.45rem .2rem;border-bottom:1px dashed var(--line);font-weight:700}
@@ -75,7 +75,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .spv-bar b{color:var(--green);margin-inline-end:.4rem}
 .spv-bar button,.spv-bar a{border:1px solid var(--line);background:#fff;border-radius:10px;padding:.4rem .8rem;font-weight:800;font-size:.85rem;cursor:pointer;text-decoration:none;color:var(--green)}
 .spv-bar button.on{background:var(--green);color:#fff;border-color:var(--green)}
-.spv-bar .sp{margin-inline-start:auto}.spv-bar button,.spv-bar a{display:inline-flex;align-items:center;gap:.35rem}.spv-bar svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.spv-bar button.edit{background:var(--gold);color:var(--green);border-color:var(--gold)}.spv-bar .hidden{display:none}
+.spv-bar button.inst{background:linear-gradient(180deg,rgba(34,197,94,.9),rgba(21,128,61,.9));color:#fff;border-color:#15803d;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);transition:.2s}.spv-bar button.inst:hover{transform:translateY(-2px);filter:brightness(1.1)}.spv-bar .sp{margin-inline-start:auto}.spv-bar button,.spv-bar a{display:inline-flex;align-items:center;gap:.35rem}.spv-bar svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.spv-bar button.edit{background:var(--gold);color:var(--green);border-color:var(--gold)}.spv-bar .hidden{display:none}
 .spv-stage{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:1rem}
 .spv-frame{background:#fff;border:0;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:100%;height:100%;transition:width .25s}
 .spv-frame.tablet{width:768px;max-width:100%;border:10px solid #222;border-radius:24px}
@@ -250,6 +250,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
     <button data-d="phone" onclick="SitePreview.dev('phone')"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg> الهاتف</button>
     <button onclick="SitePreview.reload()" title="تحديث"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5"/></svg></button>
     <a id="spv-ext" href="./" target="_blank" rel="noopener" class="sp" title="فتح في تبويب"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    <button id="spv-inst" class="inst hidden" onclick="SitePreview.install()"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg> <span>تثبيت</span></button>
     <button id="spv-edit" class="edit hidden" onclick="SitePreview.edit()"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg> <span>تعديل</span></button>
     <button onclick="SitePreview.close()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> إغلاق</button>
   </div>
@@ -257,12 +258,14 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 </div>
 <script>
 const SitePreview = {
-  _url: "./", _edit: null,
+  _url: "./", _edit: null, _inst: null,
+  _instBtn(opts){ const b = document.getElementById("spv-inst"); this._inst = opts.install || null; b.classList.toggle("hidden", !this._inst); b.querySelector("span").textContent = opts.installLabel || "تثبيت"; },
+  install(){ if(this._inst) this._inst(); },
   open(){ this.openUrl("./", { title: "معاينة الموقع", edit: ()=>PBConvert.edit("home"), editLabel: "✏️ تعديل في المطوّر" }); },
   /* يفتح أي رابط داخل النافذة؛ opts.edit = دالة زر «تعديل» (تظهر فقط إن وُجدت) */
-  openUrl(url, opts){ opts = opts || {}; this._url = url; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; const ex = document.getElementById("spv-ext"); ex.classList.remove("hidden"); ex.href = url; this.dev("desktop"); document.getElementById("spv-frame").removeAttribute("srcdoc"); document.getElementById("spv").classList.add("on"); document.getElementById("spv-frame").src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); },
+  openUrl(url, opts){ opts = opts || {}; this._instBtn(opts); this._url = url; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; const ex = document.getElementById("spv-ext"); ex.classList.remove("hidden"); ex.href = url; this.dev("desktop"); document.getElementById("spv-frame").removeAttribute("srcdoc"); document.getElementById("spv").classList.add("on"); document.getElementById("spv-frame").src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); },
   /* معاينة HTML جاهز (srcdoc) — تُستعمل لمعاينة المنشئ قبل النشر */
-  openHtml(html, opts){ opts = opts || {}; this._url = null; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; document.getElementById("spv-ext").classList.add("hidden"); this.dev("desktop"); const f = document.getElementById("spv-frame"); f.removeAttribute("src"); f.srcdoc = html; document.getElementById("spv").classList.add("on"); },
+  openHtml(html, opts){ opts = opts || {}; this._instBtn(opts); this._url = null; this._edit = opts.edit || null; document.getElementById("spv-title").textContent = opts.title || "معاينة"; const eb = document.getElementById("spv-edit"); eb.classList.toggle("hidden", !this._edit); eb.querySelector("span").textContent = opts.editLabel || "تعديل"; document.getElementById("spv-ext").classList.add("hidden"); this.dev("desktop"); const f = document.getElementById("spv-frame"); f.removeAttribute("src"); f.srcdoc = html; document.getElementById("spv").classList.add("on"); },
   edit(){ if(this._edit) this._edit(); },
   close(){ document.getElementById("spv").classList.remove("on"); const f = document.getElementById("spv-frame"); f.removeAttribute("src"); f.removeAttribute("srcdoc"); },
   dev(d){ const f = document.getElementById("spv-frame"); f.className = "spv-frame " + (d === "desktop" ? "" : d); document.querySelectorAll(".spv-bar [data-d]").forEach(b=>b.classList.toggle("on", b.dataset.d === d)); },
@@ -1531,11 +1534,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.48.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.48.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.48.0"></script>
-<script src="assets/js/admin-nav.js?v=1.48.0"></script>
-<script src="assets/js/admin-update.js?v=1.48.0"></script>
+<script src="assets/js/ctl-help.js?v=1.49.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.49.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.49.0"></script>
+<script src="assets/js/admin-nav.js?v=1.49.0"></script>
+<script src="assets/js/admin-update.js?v=1.49.0"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -8471,7 +8474,7 @@ ${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); r
 <style>${BASE_CSS}
 .pb-page{background:${esc(page.bg || "#fff")}${page.ff ? ";font-family:" + page.ff : ""}}
 ${r.css}
-${page.css || ""}</style></head>
+${page.css || ""}${page.tplCss || ""}</style></head>
 <body class="pb-page">${hdr}<main>${r.html}</main>${ftr}
 ${hasHdr ? `<script>var REL=${JSON.stringify(ctx.base)};<\/script>` : ""}${(hasProd || bindProd || hasHdr) ? `<script src="${esc(ctx.base)}assets/js/data.js"><\/script>` : ""}${hasHdr ? `<script src="${esc(ctx.base)}assets/js/modern-icons.js"><\/script><script src="${esc(ctx.base)}assets/js/social-icons.js"><\/script><script src="${esc(ctx.base)}assets/js/chrome.js?v=9"><\/script><script>(function(){var go=function(){try{${hdrSite ? "Chrome.init();" : "Chrome.bindShare();Chrome.bindMenus();Chrome.fillMenus();"}var hh=document.querySelector('header.site');if(hh&&window.ModernIcons){ModernIcons.style();ModernIcons.watch({root:hh})}}catch(e){}};document.readyState==="complete"?go():addEventListener("load",go)})()<\/script>` : ""}${bindProd ? `<script>(function(){var p=(window.PRODUCTS||[]).filter(function(x){return x.slug===${JSON.stringify(page.product)}})[0];if(!p)return;var f=function(n){return Number(n).toLocaleString("fr-DZ")+" دج"},g=function(i){return document.getElementById(i)},a=g("pprice"),b=g("pold"),c=g("psave"),has=p.old&&p.old>p.price;if(a)a.textContent=f(p.price);if(b){b.textContent=has?f(p.old):"";b.style.display=has?"":"none"}if(c){c.textContent=has?"وفّر "+Math.round((1-p.price/p.old)*100)+"%":"";c.style.display=has?"":"none"}})();<\/script>` : ""}
 <script>var __pbBase=${JSON.stringify(ctx.base)};var __pbSlug=${JSON.stringify(page.slug || "")};var __pbMeta=${JSON.stringify(ctx.meta || {})};${hasProd ? "var __pbProducts=" + productsHtml.toString() + ";" : ""}${RUNTIME_JS}${hasContact ? "(" + contactRuntime.toString() + ")();" : ""}<\/script>
@@ -8979,7 +8982,7 @@ body{overflow-x:hidden;margin:0}`;
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0;
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
-    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || ""));
+    styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
@@ -13696,6 +13699,7 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       const st = doc.createElement("style"); st.id = "pb-native"; st.textContent = PB.BASE_CSS; doc.head.appendChild(st);
       const sc = doc.createElement("script"); sc.textContent = "var __pbBase=" + JSON.stringify(o.kind === "home" ? "" : "../../") + ";var __pbSlug=\"\";var __pbMeta={};" + PB.RUNTIME_JS; doc.body.appendChild(sc);
     }
+    { const old = doc.getElementById("pb-tpl-css"); if (old) old.remove(); if (P.tplCss) { const st2 = doc.createElement("style"); st2.id = "pb-tpl-css"; st2.textContent = P.tplCss; doc.head.appendChild(st2); } }      // أنماط قالب مثبَّت (مثل «أليسوم»): خلفية الصفحة والتأثيرات العامة
     const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
     await GH.putFile(pth, btoa(unescape(encodeURIComponent(html))), cur && cur.sha, "نشر " + (o.kind === "home" ? "الصفحة الرئيسية" : "صفحة المنتج " + o.slug) + " من المطوّر");
     await put("assets/pages/_conv/" + k + ".json", P, "مصدر تحرير المطوّر: " + k);

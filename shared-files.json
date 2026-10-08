@@ -183,7 +183,11 @@
     "assets/img/tpl/watch_pocket.webp",
     "assets/img/tpl/watch_rock.webp",
     "assets/img/tpl/watch_white.webp",
-    "assets/img/tpl/watch_wrist.webp"
+    "assets/img/tpl/watch_wrist.webp",
+    "assets/pages/templates/s-alyssum-glass.json",
+    "assets/pages/templates/s-alyssum.json",
+    "assets/pages/templates/thumbs/s-alyssum-full.jpg",
+    "assets/pages/templates/thumbs/s-alyssum.jpg"
   ],
   "local": {
     "الهوية والإعدادات": [
