@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.65.0">
+<meta name="admin-version" content="1.66.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -713,11 +713,14 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <b style="color:var(--green)">📣 إشعار الزبون عند تغيّر حالة الطلب</b>
       <div class="hint">عند تفعيل الخيار تُجهَّز رسالة واتساب للزبون كلما تغيّرت حالة طلبه (يدوياً أو بعد «🔄 تحديث حالات الشحن»)، فتجدها في «📣 إشعارات الزبائن» بتبويب الطلبات. المتغيّرات: {name} {id} {tracking}</div>
       <label style="display:flex;gap:.5rem;align-items:center;font-weight:800"><input type="checkbox" id="nt-enabled" style="width:auto"> تفعيل إشعارات الزبائن</label>
-      <label class="hint" style="margin:.6rem 0 0">عند التسجيل لدى شركة التوصيل (يتضمن رقم التتبع ورابط التتبّع) — {name} {id} {tracking} {link}</label><textarea id="nt-registered" rows="3"></textarea>
-      <label class="hint" style="margin:.6rem 0 0">عند الشحن (expediee)</label><textarea id="nt-expediee" rows="2"></textarea>
-      <label class="hint" style="margin:.3rem 0 0">عند التسليم (livree)</label><textarea id="nt-livree" rows="2"></textarea>
-      <label class="hint" style="margin:.3rem 0 0">عند فشل التوصيل (echec)</label><textarea id="nt-echec" rows="2"></textarea>
-      <button class="small gold" onclick="Admin.saveNotify()">💾 حفظ</button>
+      <div class="hint">العناصر النائبة: {name} {id} {items} {total} {wilaya} {store} {tracking} {link}</div>
+      <label class="hint" style="margin:.6rem 0 0">عند التسجيل لدى شركة التوصيل (رقم التتبع ورابطه)</label><textarea id="nt-registered" rows="3" oninput="Admin.ntPreview()"></textarea><div class="hint" id="nt-pv-registered" style="white-space:pre-wrap;background:rgba(255,255,255,.05);border-radius:10px;padding:.5rem .7rem"></div><div class="hint"></div>
+      <label class="hint" style="margin:.6rem 0 0">عند تأكيد الطلب (قيد التجهيز)</label><textarea id="nt-confirmee" rows="3" oninput="Admin.ntPreview()"></textarea><div class="hint" id="nt-pv-confirmee" style="white-space:pre-wrap;background:rgba(255,255,255,.05);border-radius:10px;padding:.5rem .7rem"></div><div class="hint"></div>
+      <label class="hint" style="margin:.6rem 0 0">عند الشحن (في الطريق)</label><textarea id="nt-expediee" rows="3" oninput="Admin.ntPreview()"></textarea><div class="hint" id="nt-pv-expediee" style="white-space:pre-wrap;background:rgba(255,255,255,.05);border-radius:10px;padding:.5rem .7rem"></div><div class="hint"></div>
+      <label class="hint" style="margin:.6rem 0 0">عند التسليم</label><textarea id="nt-livree" rows="3" oninput="Admin.ntPreview()"></textarea><div class="hint" id="nt-pv-livree" style="white-space:pre-wrap;background:rgba(255,255,255,.05);border-radius:10px;padding:.5rem .7rem"></div><div class="hint"></div>
+      <label class="hint" style="margin:.6rem 0 0">عند فشل التوصيل</label><textarea id="nt-echec" rows="3" oninput="Admin.ntPreview()"></textarea><div class="hint" id="nt-pv-echec" style="white-space:pre-wrap;background:rgba(255,255,255,.05);border-radius:10px;padding:.5rem .7rem"></div><div class="hint"></div>
+      <label class="hint" style="margin:.6rem 0 0">عند إلغاء الطلب</label><textarea id="nt-annulee" rows="3" oninput="Admin.ntPreview()"></textarea><div class="hint" id="nt-pv-annulee" style="white-space:pre-wrap;background:rgba(255,255,255,.05);border-radius:10px;padding:.5rem .7rem"></div><div class="hint"></div>
+      <button class="small gold" onclick="Admin.saveNotify()">💾 حفظ</button> <button class="small gray" onclick="Admin.resetNotify()">استرجاع الافتراضي</button>
     </div>
     <div class="card" id="wh-card">
       <b style="color:var(--green)">⚡ Webhook ياليدين (تحديث الحالات لحظياً)</b>
@@ -1340,7 +1343,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <h3>📣 إشعارات الزبائن بتغيّر حالة الطلب</h3>
     <div class="hint" style="margin-top:0">لكل تغيّر حالة رسالة جاهزة؛ اضغط «إرسال» لفتح واتساب برسالة معبّأة (الإرسال التلقائي بلا ضغط يحتاج خدمة رسائل مدفوعة).</div>
     <div class="rtw" style="overflow:auto"><table id="notify-table" class="rt"></table></div>
-    <div class="action-bar"><button class="small warn" onclick="Admin.clearNotify()">🗑️ مسح الكل</button><button class="small gray" onclick="document.getElementById('notify-modal-bg').classList.remove('open')">إغلاق</button></div>
+    <div class="action-bar"><button class="small blue" onclick="Admin.sendNextNotify()" title="يفتح الرسالة الأولى في الطابور فقط، ثم اضغط مرة أخرى للتالية">💬 إرسال التالي</button><button class="small warn" onclick="Admin.clearNotify()">🗑️ مسح الكل</button><button class="small gray" onclick="document.getElementById('notify-modal-bg').classList.remove('open')">إغلاق</button></div>
   </div>
 </div>
 
@@ -1554,13 +1557,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.65.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.65.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.65.0"></script>
+<script src="assets/js/ctl-help.js?v=1.66.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.66.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.66.0"></script>
 <script src="assets/js/img-gen.js?v=1.51.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.65.0"></script>
-<script src="assets/js/admin-update.js?v=1.65.0"></script>
+<script src="assets/js/admin-nav.js?v=1.66.0"></script>
+<script src="assets/js/admin-update.js?v=1.66.0"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1"></script>
 <script src="assets/js/admin-social.js?v=1.65.0"></script>
@@ -7028,7 +7031,9 @@ const Admin = {
     registered:"مرحباً {name} 🌿\nتم تسجيل طلبك بنجاح ✅\nرقم التتبع: {tracking}\nتابع حالته في أي وقت من هنا:\n{link}\n\nيمكنك أيضاً إنشاء حساب بنفس رقم هاتفك لترى كل طلباتك وتحصل على هدية ترحيبية 🎁",
     expediee:"مرحباً {name} 🌿\nتم شحن طلبك رقم {id} وهو في الطريق إليك. {tracking}\nشكراً لثقتك.",
     livree:"مرحباً {name} 🌿\nتم تسليم طلبك رقم {id}. نتمنى أن ينال إعجابك، وسعداء بخدمتك دائماً.",
-    echec:"مرحباً {name}\nتعذّر تسليم طلبك رقم {id}. يرجى التواصل معنا لتحديد موعد جديد." } }; },
+    echec:"مرحباً {name}\nتعذّر تسليم طلبك رقم {id}. يرجى التواصل معنا لتحديد موعد جديد.",
+    confirmee:"مرحباً {name} 🌿\nتم تأكيد طلبك رقم {id} ({items}) بمبلغ {total} دج إلى ولاية {wilaya}، وهو قيد التجهيز الآن.\nشكراً لثقتك بـ {store}.",
+    annulee:"مرحباً {name}\nتم إلغاء طلبك رقم {id} بناءً على طلبك أو لتعذّر التواصل. يسعدنا خدمتك متى أحببت — {store}." } }; },
   async loadNotify(){
     this.notifyCfg = this.notifyDefaults();
     try{ const f = await GH.getFile("assets/data/notify.json"); this.notifyCfgSha = f.sha; const j = JSON.parse(decodeURIComponent(escape(atob((f.content||"").replace(/\n/g,"")))));
@@ -7038,16 +7043,27 @@ const Admin = {
   },
   fillNotifyForm(){
     const c = this.notifyCfg || this.notifyDefaults(); if(!$f("nt-enabled")) return;
-    $f("nt-enabled").checked = !!c.enabled; ["registered","expediee","livree","echec"].forEach(k=>$f("nt-"+k).value = c.templates[k] || "");
+    $f("nt-enabled").checked = !!c.enabled; this.NT_KEYS.forEach(k=>$f("nt-"+k).value = c.templates[k] || ""); this.ntPreview();
   },
   async saveNotify(){
-    const c = { enabled: $f("nt-enabled").checked, templates:{ registered:$f("nt-registered").value, expediee:$f("nt-expediee").value, livree:$f("nt-livree").value, echec:$f("nt-echec").value } };
+    const c = { enabled: $f("nt-enabled").checked, templates:Object.fromEntries(this.NT_KEYS.map(k=>[k, $f("nt-"+k).value])) };
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(c, null, 2))));
       const res = await GH.putFile("assets/data/notify.json", b64, this.notifyCfgSha, "إعدادات إشعارات الزبائن عبر لوحة التحكم");
       this.notifyCfgSha = res && res.content ? res.content.sha : undefined; this.notifyCfg = c; this.renderNotifyBadge(); toast("✅ حُفظت إعدادات الإشعارات");
     }catch(err){ console.error(err); toast("❌ " + err.message); }
   },
+  NT_KEYS:["registered","confirmee","expediee","livree","echec","annulee"],
+  NT_LBL:{ registered:"تسجيل + تتبع", confirmee:"تأكيد الطلب", expediee:"في الطريق", livree:"تم التسليم", echec:"فشل التوصيل", annulee:"إلغاء" },
+  /* معاينة حيّة بطلب تجريبي + عدّاد الحروف */
+  ntPreview(){
+    this.NT_KEYS.forEach(k=>{ const t = $f("nt-"+k), pv = $f("nt-pv-"+k); if(!t || !pv) return;
+      const txt = this.notifyFill(t.value, { id:"1042", name:"أحمد", status:k, tracking:"ECOM123456", total:"4 500", items:"زيت الحبة السوداء ×2", wilaya:"الجزائر" });
+      pv.textContent = txt; pv.nextElementSibling && (pv.nextElementSibling.textContent = t.value.length + " حرفاً" + (/\{(?!name|id|link|tracking|total|items|wilaya|store)\w+\}/.test(t.value) ? " — ⚠ عنصر نائب غير معروف" : "")); });
+  },
+  resetNotify(){ if(!confirm("استرجاع نصوص كل الرسائل الافتراضية؟ (لا يُحفظ إلا بعد «حفظ»)")) return; const d = this.notifyDefaults().templates; this.NT_KEYS.forEach(k=>$f("nt-"+k).value = d[k]); this.ntPreview(); },
+  /* إرسال الطابور تسلسلياً: كل نقرة تفتح الرسالة التالية فقط (لا نوافذ متعددة دفعة واحدة) */
+  sendNextNotify(){ if(!this.notifyQ.length) return toast("الطابور فارغ"); this.sendNotify(0); },
   saveNotifyQ(){ try{ localStorage.setItem("alyssum_notify_q", JSON.stringify(this.notifyQ)); }catch(e){} this.renderNotifyBadge(); },
   renderNotifyBadge(){
     const b = $f("notify-btn"); if(!b) return;
@@ -7057,11 +7073,14 @@ const Admin = {
   enqueueNotify(o, status){
     const c = this.notifyCfg; if(!c || !c.enabled || !c.templates[status] || !o.phone) return;
     this.notifyQ = this.notifyQ.filter(x=>!(x.id === o.id)); // آخر حالة فقط لكل طلب
-    this.notifyQ.push({ id:o.id, name:o.name||"", phone:o.phone, status, tracking:(this.trackingOf(o)||{}).tracking||"", ts:Date.now() });
+    let its = ""; try{ its = this.parseOrderItems(o.items).map(i=>i.title + (i.qty > 1 ? " ×" + i.qty : "")).join("، "); }catch(e){}
+    this.notifyQ.push({ id:o.id, name:o.name||"", phone:o.phone, status, tracking:(this.trackingOf(o)||{}).tracking||"", total:Number(o.total||0).toLocaleString("fr-DZ"), items:its, wilaya:o.wilaya||"", ts:Date.now() });
     this.saveNotifyQ();
   },
-  notifyText(x){
-    const t = (this.notifyCfg.templates[x.status] || "");
+  notifyText(x){ return this.notifyFill(this.notifyCfg.templates[x.status] || "", x); },
+  notifyFill(t, x){
+    const store = (typeof SITE_CFG !== "undefined" && (SITE_CFG.name || SITE_CFG.domain)) || "المتجر";
+    t = String(t).replace(/\{total\}/g, x.total || "").replace(/\{items\}/g, x.items || "").replace(/\{wilaya\}/g, x.wilaya || "").replace(/\{store\}/g, store);
     const base = location.href.replace(/[?#].*$/, "").replace(/[^\/]*$/, "");
     return t.replace(/\{name\}/g, x.name).replace(/\{id\}/g, x.id).replace(/\{link\}/g, x.tracking ? base + "?t=" + encodeURIComponent(x.tracking) : base)
       .replace(/\{tracking\}/g, x.status === "registered" ? (x.tracking || "") : (x.tracking ? "رقم التتبع: " + x.tracking : ""));
@@ -7069,7 +7088,7 @@ const Admin = {
   openNotify(){
     const q = this.notifyQ;
     $f("notify-table").innerHTML = q.length
-      ? '<tr class="hd"><th>الطلب</th><th>الزبون</th><th>الحالة</th><th></th></tr>' + q.map((x,i)=>'<tr><td class="t"><b>' + x.id + '</b></td><td data-l="الزبون">' + x.name + ' <small dir="ltr" style="color:#999">' + x.phone + '</small></td><td data-l="الحالة"><span class="pill st-' + (x.status === "registered" ? "confirmee" : x.status) + '">' + (x.status === "registered" ? "تم التسجيل + التتبع" : x.status) + '</span></td><td class="act"><button class="small blue" onclick="Admin.sendNotify(' + i + ')">💬 إرسال</button><button class="small gray" onclick="Admin.dismissNotify(' + i + ')">تجاهل</button></td></tr>').join("")
+      ? '<tr class="hd"><th>الطلب</th><th>الزبون</th><th>الحالة</th><th></th></tr>' + q.map((x,i)=>'<tr><td class="t"><b>' + x.id + '</b></td><td data-l="الزبون">' + x.name + ' <small dir="ltr" style="color:#999">' + x.phone + '</small></td><td data-l="الحالة"><span class="pill st-' + (x.status === "registered" ? "confirmee" : x.status) + '">' + (this.NT_LBL[x.status] || x.status) + '</span></td><td class="act"><button class="small blue" onclick="Admin.sendNotify(' + i + ')">💬 إرسال</button><button class="small gray" onclick="Admin.dismissNotify(' + i + ')">تجاهل</button></td></tr>').join("")
       : "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد إشعارات بانتظار الإرسال</td></tr>";
     $f("notify-modal-bg").classList.add("open");
   },
