@@ -18,7 +18,7 @@ const only = process.argv.slice(2);
       let pg;
       if (j.legacy) { const it = AdminNav.libItems().find(x => x.id === j.id); let s = it.b(); if (!Array.isArray(s)) s = [s]; pg = PB.newPage("t", ""); pg.sections = s; pg.header = false; pg.footer = false; }
       else return null;
-      pg = PB.migrate(pg); return PB.fullHtml(pg, { base: "", edit: false, path: "", products: pr, pageProduct: pr[0] && pr[0].slug, site: { name: "متجرك", wa: "213555000000" } });
+      pg = PB.migrate(pg); return PB.fullHtml(pg, { base: "", edit: false, path: "", demo: true, products: pr, pageProduct: pr[0] && pr[0].slug, site: { name: "متجرك", wa: "213555000000" } });
     }, [j, prods]);
     let H = html;
     if (!H) {
@@ -26,7 +26,7 @@ const only = process.argv.slice(2);
       H = await p.evaluate(([t, pr]) => {
         const fill = n => { (n.cols || []).forEach(fill); (n.widgets || []).forEach(w => { if (w.type === "orderorig" && !w.set.prod && pr[0]) w.set.prod = pr[0].slug; fill(w); }); (n.free || []).forEach(fill); };
         t.sections.forEach(fill); const pg = PB.migrate(t); pg.product = pr[0] && pr[0].slug;
-        return PB.fullHtml(pg, { base: "", edit: false, path: "", products: pr, pageProduct: pr[0] && pr[0].slug, site: { name: "متجرك", wa: "213555000000" } });
+        return PB.fullHtml(pg, { base: "", edit: false, path: "", demo: true, products: pr, pageProduct: pr[0] && pr[0].slug, site: { name: "متجرك", wa: "213555000000" } });
       }, [tpl, prods]);
     }
     const tmp = path.join(ROOT, "_th_" + j.id + ".html"); fs.writeFileSync(tmp, H);

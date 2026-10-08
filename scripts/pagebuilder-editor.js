@@ -2597,7 +2597,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   /* معاينة داخل نافذة بشريط علوي (المكتب/التابلت/الهاتف + عودة للتعديل + إغلاق) مع صور الرفع الحديث */
   function preview() {
     const dir = location.href.replace(/[^/]*$/, "");
-    const html = localize(PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir }, siteCtx())));
+    const html = localize(PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir, demo: true }, siteCtx())));
     SitePreview.openHtml(html, { title: "معاينة قبل النشر", edit: () => SitePreview.close(), editLabel: "عودة للتعديل" });
   }
   async function putJson(path, obj, msg) {
@@ -2613,6 +2613,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       try { await slim(true); } catch (e) { }                                                         // تخفيف تلقائي للصور الثقيلة فقط (>450KB)
       if (E.upq) await E.upq;
       P = E.page;
+      if (P.demo) { P.demo = false; try { renderCanvas(); } catch (e) { } }      // النشر دائماً ببيانات المتجر الحقيقية لا بيانات القالب التجريبية
       if (mode === "direct") { await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); return; }
       const html = PB.fullHtml(typeof PBBind !== "undefined" ? PBBind.bakePage(P) : P, Object.assign({ base: "../../" }, siteCtx()));
       await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);

@@ -160,6 +160,8 @@ const PB = (() => {
   const formatNum = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ");
 
   /* ───── شبكة المنتجات: دالة مستقلة (تُحقن كما هي داخل الصفحة المنشورة لتحديث الأسعار تلقائياً) ───── */
+  /* بيانات تجريبية للقوالب: set.demo = [{t,p,o,i,c}] (الاسم، السعر، القديم، الصورة، الفئة) تُعرض فقط ما دام للصفحة page.demo (ولا تُنشر) */
+  const demoProds = a => (Array.isArray(a) ? a : []).map((d, i) => ({ slug: "demo-" + (i + 1), title: d.t || "منتج", price: Number(d.p) || 0, old: Number(d.o) || 0, cover: d.i || "", images: d.i ? [d.i] : [], cat: d.c || "", tags: [], active: true }));
   function productsHtml(s, products, base, meta) {
     const f = n => Number(n).toLocaleString("fr-FR").replace(/[  ]/g, " ") + " دج";
     const e = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -549,7 +551,12 @@ const PB = (() => {
       label: "فئات المتجر", ic: "🗂️", def: { items: [{ cat: "skin", label: "", img: "" }, { cat: "hair", label: "", img: "" }, { cat: "honey", label: "", img: "" }], cols: { d: 6, t: 3, m: 2 }, gap: { d: 18 }, rad: { d: 20 }, fs: { d: 15 }, tc: "#ffffff", ov: "#0a201a", ovo: 75, ratio: "1/1" },
       ctl: [{ k: "items", l: "البطاقات — اختر الفئة لكل بطاقة (الاسم فارغ = اسم الفئة)", t: "rep", f: [["cat", "الفئة", "select", () => Object.entries(((typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : {}))).map(([k, v]) => [k, v])], ["label", "اسم مخصّص"], ["img", "صورة البطاقة", "image"]], mv: 1, tab: "c" },
         { k: "cols", l: "عدد الأعمدة", t: "num", r: 1, min: 1, max: 8, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "rad", l: "تدوير البطاقة (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "fs", l: "حجم الاسم (px)", t: "num", r: 1, min: 10, max: 40, tab: "s" }, { k: "tc", l: "لون الاسم", t: "color", tab: "s" }, { k: "ov", l: "لون التعتيم السفلي", t: "color", tab: "s" }, { k: "ovo", l: "قوة التعتيم %", t: "num", min: 0, max: 100, tab: "s" }, { k: "ratio", l: "نسبة البطاقة", t: "select", o: [["1/1", "مربعة"], ["4/5", "طولية"], ["3/4", "طولية 3:4"], ["4/3", "عريضة"]], tab: "s" }],
-      html: (s, id, ctx) => { const CT = (typeof CATEGORIES !== "undefined" ? CATEGORIES : {}), cats = (typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : CT, u = x => /^(https?:|data:|\/)/.test(x) ? x : (ctx.base || "") + x, L = (Array.isArray(s.items) ? s.items : []).filter(x => x && x.cat);
+      html: (s, id, ctx) => { const CT = (typeof CATEGORIES !== "undefined" ? CATEGORIES : {}), cats = (typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : CT, u = x => /^(https?:|data:|\/)/.test(x) ? x : (ctx.base || "") + x, L0 = (Array.isArray(s.items) ? s.items : []).filter(x => x && x.cat);
+        let L = L0;
+        if (L.some(x => x.dl)) {      // بطاقات قالب: أسماء تجريبية في المعاينة، وفئات المتجر الحقيقية (بنفس الصور) عند النشر
+          if (ctx.demoOn) L = L.map(x => Object.assign({}, x, { label: x.dl }));
+          else { const ks = Object.keys(cats); L = L.map((x, i) => ks[i] ? { cat: ks[i], label: "", img: x.img } : null).filter(Boolean); }
+        }
         if (!L.length) return '<div class="pb-ph">أضف فئة من إعدادات العنصر</div>';
         return `<div class="pb-sc">${L.map(x => { const nm = x.label || cats[x.cat] || x.cat; return `<button type="button" class="pb-sci" data-cat="${esc(x.cat)}"${ctx.edit ? "" : ` onclick="window.goToCategory?goToCategory(${esc(JSON.stringify(x.cat))}):(location.href=${esc(JSON.stringify((ctx.base || "") + "index.html#products"))})"`}${x.img ? ` style="background-image:url('${esc(u(x.img))}')"` : ""}><span>${esc(nm)}</span></button>`; }).join("")}</div>`; },
       css: (c, sel, s) => { const o = Math.max(0, Math.min(100, num(s.ovo) ?? 75)) / 100, ov = s.ov || "#0a201a";
@@ -769,7 +776,7 @@ const PB = (() => {
         { k: "tabs", l: "أزرار تبديل للزائر", t: "select", o: [["", "بدون"], ["tags", "بين التبويبات"], ["cats", "بين التصنيفات"]], tab: "c" },
         { k: "limit", l: "الحد الأقصى للعدد (0 = الكل)", t: "num", min: 0, max: 100, tab: "c" }, { k: "btn", l: "نص الزر", t: "text", tab: "c" }, { k: "showOld", l: "إظهار السعر القديم", t: "switch", tab: "c" },
         { k: "cardw", l: "أصغر عرض للبطاقة (px) — تتغير الأعمدة تلقائياً مع حجم الشبكة", t: "num", r: 1, min: 100, max: 500, tab: "s" }, { k: "cols", l: "عدد أعمدة ثابت (اختياري)", t: "num", r: 1, min: 1, max: 8, tab: "s" }, { k: "gap", l: "التباعد (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "rad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }, { k: "cbg", l: "خلفية البطاقة", t: "color", tab: "s" }, { k: "bbg", l: "لون الزر", t: "color", tab: "s" }],
-      html: (s, id, ctx) => `<div class="pb-prod" data-pbp='${esc(JSON.stringify({ mode: s.mode, tag: s.tag, cat: s.cat, slugs: s.slugs, tabs: s.tabs, limit: s.limit, btn: s.btn, showOld: s.showOld, val: s.val }))}'>${productsHtml(s, ctx.products, ctx.base, ctx.meta)}</div>`,
+      html: (s, id, ctx) => { const dm0 = ctx.demoOn && Array.isArray(s.demo) && s.demo.length; return `<div class="pb-prod"${dm0 ? ' data-demo="1"' : ` data-pbp='${esc(JSON.stringify({ mode: s.mode, tag: s.tag, cat: s.cat, slugs: s.slugs, tabs: s.tabs, limit: s.limit, btn: s.btn, showOld: s.showOld, val: s.val }))}'`}>${productsHtml(s, dm0 ? demoProds(s.demo) : ctx.products, ctx.base, ctx.meta)}</div>`; },
       css: (c, sel, s) => { emit(c, sel + " .pb-pgrid", s, [["cardw", v => `grid-template-columns:repeat(auto-fill,minmax(${num(v)}px,1fr));`], ["cols", v => `grid-template-columns:repeat(${Math.max(1, num(v) || 1)},1fr);`], ["gap", px("gap")]]); c.d.push(`${sel} .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(${num(eff(s, "cardw", "d")) || 220}px,1fr))}`); emit(c, sel + " .pb-pc", s, [["rad", px("border-radius")]]); if (s.cbg) c.d.push(`${sel} .pb-pc{background:${s.cbg}}`); if (s.bbg) c.d.push(`${sel} .pb-pcb{background:${s.bbg}}`); },
     },
     orderorig: {
@@ -1035,6 +1042,7 @@ const PB = (() => {
   function renderSections(page, ctx) {
     if (!ctx.wa && ctx.site && ctx.site.wa) ctx = Object.assign({}, ctx, { wa: ctx.site.wa });      // رقم واتساب المتجر للأزرار والنماذج
     if ((page.product && !ctx.pageProduct) || page.slug) ctx = Object.assign({}, ctx, { pageProduct: ctx.pageProduct || page.product, pageSlug: ctx.pageSlug || page.slug });
+    ctx = Object.assign({}, ctx, { demoOn: !!page.demo && (!!ctx.edit || ctx.demo === true) });      // بيانات القالب التجريبية: في التحرير والمعاينة فقط
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
     const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? (s.anim ? ` data-anim="${esc(s.anim)}" data-ad="${num(s.animDur) ?? .6}" data-ade="${num(s.animDelay) ?? 0}"` : "") : animAttr(s)}`;

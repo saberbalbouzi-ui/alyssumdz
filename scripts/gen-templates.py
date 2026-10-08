@@ -252,10 +252,12 @@ TEMPLATES = []
 def reg(id, cat, fld, n, d, sections, page_extra=None):
     pg = {"v": 1, "title": n, "slug": "", "desc": "", "bg": "#ffffff", "ff": "", "header": False, "footer": False, "css": "", "sections": sections}
     if page_extra: pg.update(page_extra)
+    if cat == "store" and "localize_copy" in globals(): localize_copy(id, pg)      # نصوص وبيانات تجريبية خاصة بكل ثيم (gen-templates-copy.py)
     TEMPLATES.append({"id": id, "cat": cat, "fld": fld, "n": n, "d": d, "kind": "page" if cat == "store" else "sec"})
     os.makedirs(OUT, exist_ok=True)
     json.dump(pg, open(os.path.join(OUT, id + ".json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 
+exec(open(os.path.join(HERE, "gen-templates-copy.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-contact.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-order.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-store.py"), encoding="utf-8").read())
