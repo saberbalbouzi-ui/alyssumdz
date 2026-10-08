@@ -237,6 +237,17 @@ def barfx(c1, c2):
 def bgfade(c1, c2, ang=160):
     return FX("خلفية متدرّجة", "selector{background:linear-gradient([[a]]deg,[[c1]],[[c2]])}", a=("الزاوية", "num", ang), c1=("اللون 1", "text", c1), c2=("اللون 2", "text", c2))
 
+
+# ═════════ الصور الافتراضية (assets/img/tpl/*.webp من scripts/fetch-template-images.py) — قابلة للتعديل في المحرّر ═════════
+def IMG(n): return "assets/img/tpl/%s.webp" % n
+def PIC(n, alt="", rad=22, **x):
+    s = dict(src=IMG(n), alt=alt, fit="cover", hauto=True, rad=dm(rad)); s.update(x); return W("image", **s)
+def PH(n, top="rgba(0,0,0,.05)", bot="rgba(0,0,0,.6)", ang=180, pos="center", **x):
+    """خصائص تجعل عموداً/قسماً صورة خلفية (صورة الخلفية في تبويب التنسيق) مع تدرّج يحمي النص"""
+    s = dict(bgImg=IMG(n), bgSize="cover", bgPos=pos)
+    if top and bot: s.update(grad1=top, grad2=bot, gradAng=ang)
+    s.update(x); return s
+
 TEMPLATES = []
 def reg(id, cat, fld, n, d, sections, page_extra=None):
     pg = {"v": 1, "title": n, "slug": "", "desc": "", "bg": "#ffffff", "ff": "", "header": False, "footer": False, "css": "", "sections": sections}

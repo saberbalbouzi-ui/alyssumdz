@@ -5,6 +5,7 @@ def orderw(**x):
 # 1) عرض فلاش
 k = "of"; ICC[0] = "#fde047"
 head = C([
+    PIC("mkt_bags", "عرض فلاش", 24, w=dm(60, 100), al={"d": "center"}, fxs=[FX("وهج برتقالي", "selector img{box-shadow:0 30px 80px rgba(249,115,22,.45)}")], **anim("zoomIn", .8)),
     W("heading", text="عرض فلاش — ينتهي قريباً", tag="h2", fs=dm(46, 30), fw="900", ta={"d": "center"}, color="#ffffff", lh={"d": 1.3}, fxs=[gradtext(k, "#fde047", "#fb923c", "#f43f5e", 4)], **anim("fadeDown", .7)),
     T("خصم حصري على الطلبات اليوم فقط — أكمل بياناتك في النموذج أدناه وادفع عند الاستلام.", 19, "#fecaca", **anim("fadeUp", .7, .1)),
     W("countdown", mode="daily", cbg="#00000055", color="#fde047", fs=dm(42, 30), crad=dm(14), al={"d": "center"}, fxs=[cdglow(k, "#f97316")], **anim("zoomIn", .7, .2)),
@@ -19,6 +20,7 @@ reg("o-flash", "order", "عروض", "طلب بعرض فلاش", "خلفية نا
 # 2) فاخر داكن
 k = "ol"; ICC[0] = "#f5d77a"
 ben = C([
+    PIC("jewel_ring", "جودة فاخرة", 8, fxs=[FX("إطار ذهبي", "selector img{border:1px solid #c9992e;box-shadow:0 30px 70px rgba(0,0,0,.5)}")], **anim("fadeUp", .8)),
     W("heading", text="لماذا تطلب منّا؟", tag="h2", fs=dm(38, 28), fw="900", ta={"d": "start"}, color="#f5d77a", fxs=[goldshimmer(k, 5)], **anim("fadeUp")),
     W("bullets", items="جودة أصلية مضمونة 100%\nتوصيل سريع لجميع الولايات\nالدفع عند الاستلام بعد المعاينة\nإمكانية الاستبدال خلال 7 أيام\nدعم متواصل عبر واتساب", micon="ic:check-circle", mc="#f5d77a", ms=dm(24), gap=dm(14), fs=dm(19, 16), color="#f1ead2", manim="pop", **anim("fadeUp", .7, .1)),
     W("tbadges", items="ضمان الجودة\nتوصيل مؤمَّن", live=True, liveText="يشاهدون العرض الآن", lmin=9, lmax=26, cbg="#00000050", cc="#f5d77a", cbc="#c9992e", crad=dm(10), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .7, .2)),
@@ -29,7 +31,7 @@ reg("o-lux", "order", "فخامة", "طلب فاخر داكن ذهبي", "قسم
 
 # 3) ثلاث خطوات
 k = "os"; ICC[0] = "#2563eb"
-head = C([H("اطلب في 3 خطوات بسيطة", 42, 28, "#0f172a", fxs=[gradtext(k, "#2563eb", "#7c3aed", "#db2777", 7)], **anim("fadeUp")), T("لا حساب ولا بطاقة بنكية — فقط اسمك وهاتفك وعنوانك، وتدفع عند الاستلام.", 18, "#475569", **anim("fadeUp", .7, .1))], w=100)
+head = C([PIC("mkt_open", "متجر", 24, w=dm(60, 100), al={"d": "center"}, fxs=[FX("ظل أزرق", "selector img{box-shadow:0 30px 70px rgba(37,99,235,.25)}")], **anim("zoomIn", .8)), H("اطلب في 3 خطوات بسيطة", 42, 28, "#0f172a", fxs=[gradtext(k, "#2563eb", "#7c3aed", "#db2777", 7)], **anim("fadeUp")), T("لا حساب ولا بطاقة بنكية — فقط اسمك وهاتفك وعنوانك، وتدفع عند الاستلام.", 18, "#475569", **anim("fadeUp", .7, .1))], w=100)
 steps = [C([IB(ic, t, x, tc="#0f172a", xc="#64748b", isz=36, fxs=[softcard("#ffffff", "rgba(37,99,235,.14)", 22, 24, "#e0e7ff"), lift(".pb-ib", "rgba(37,99,235,.25)", -8), floaty(k + str(i), ".pb-ibi", 6, 4 + i * .6)], **anim("fadeUp", .7, .1 + i * .15))], w=33, pad=dm([0, 0, 24, 0]))
          for i, (ic, t, x) in enumerate([("cart", "1 · اختر منتجك", "حدّد الباقة المناسبة من النموذج"), ("user", "2 · أدخل بياناتك", "الاسم والهاتف والولاية فقط"), ("truck", "3 · استلم وادفع", "نوصّل لباب بيتك وتدفع عند الاستلام")])]
 SOL = lambda: [FX("خلفية هادئة", "selector{background:#f4f7ff}")]
@@ -55,8 +57,8 @@ reg("o-bundle", "order", "متجر", "طلب باقات وكوبون", "قسم �
 k = "op"; ICC[0] = "#a78bfa"
 cnt = [C([W("counter", n=n, pre=p, suf=s, label=l, fs=dm(46, 30), color="#a78bfa", lc="#cbd5e1", fxs=[ctrcolor("#a78bfa", "#22d3ee")], **anim("fadeUp", .6, .1 + i * .1))], w=25)
        for i, (n, p, s, l) in enumerate([(12000, "+", "", "طلب مُسلَّم"), (58, "", "", "ولاية نغطيها"), (98, "", "%", "نسبة الرضا"), (24, "", "h", "متوسط التوصيل")])]
-tes = [C([W("testimonial", name=n, role=r, text=t, stars=5, tbg="#ffffff14", rad=dm(22), fxs=[tscard("rgba(255,255,255,.08)", "rgba(255,255,255,.2)", 22, "#f1f5f9"), lift(".pb-ts", "rgba(124,58,237,.4)", -8)], **anim("fadeUp", .7, .1 + i * .12))], w=33)
-       for i, (n, r, t) in enumerate([("سمية ب.", "وهران", "طلبت صباحاً ووصلني بعد يومين، الجودة فاقت توقعاتي بكثير."), ("كريم ع.", "قسنطينة", "تعامل راقٍ وسرعة في التأكيد، والدفع عند الاستلام أراحني."), ("نور الهدى", "الجزائر العاصمة", "أنصح الجميع، المنتج أصلي والخدمة ممتازة.")])]
+tes = [C([W("testimonial", name=n, role=r, text=t, img=IMG(["av_m1", "av_m2", "av_m3"][i]), stars=5, tbg="#ffffff14", rad=dm(22), fxs=[tscard("rgba(255,255,255,.08)", "rgba(255,255,255,.2)", 22, "#f1f5f9"), lift(".pb-ts", "rgba(124,58,237,.4)", -8)], **anim("fadeUp", .7, .1 + i * .12))], w=33)
+       for i, (n, r, t) in enumerate([("ياسين ب.", "وهران", "طلبت صباحاً ووصلني بعد يومين، الجودة فاقت توقعاتي بكثير."), ("كريم ع.", "قسنطينة", "تعامل راقٍ وسرعة في التأكيد، والدفع عند الاستلام أراحني."), ("أمين ر.", "الجزائر العاصمة", "أنصح الجميع، المنتج أصلي والخدمة ممتازة.")])]
 head = C([H("آلاف الزبائن وثقوا بنا", 44, 30, "#ffffff", fxs=[gradtext(k, "#a78bfa", "#22d3ee", "#f472b6", 7)], **anim("fadeUp")),
           W("tbadges", items="تقييم 4.9 من 5\nتوصيل مضمون", live=True, liveText="يشترون الآن", lmin=11, lmax=34, cbg="#ffffff14", cc="#e2e8f0", cbc="#ffffff30", crad=dm(999), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeUp", .7, .1))], w=100)
 cta = W("addcart", t="اطلب الآن — الدفع عند الاستلام", dest="page", abg="#7c3aed", atc="#ffffff", afs=dm(20, 17), apad=dm([16, 34, 16, 34]), arad=dm(16), ashine=True, al={"d": "center"}, fxs=[pulse(k, "124,58,237", 2.2, sel=".pb-ac"), btngrad("#7c3aed", "#db2777", "rgba(124,58,237,.5)", sel=".pb-ac")], **anim("zoomIn", .8))

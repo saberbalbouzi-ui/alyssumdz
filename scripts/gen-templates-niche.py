@@ -43,7 +43,7 @@ th = TH(k, False, "#4a1d33", "#8a5a6e", "#e11d77", "#a855f7", "#ffffff",
         [aurora(k + "o", "#4a1d33", "#e11d7799", "#a855f777", "#fbbf2455", 12), sticker(k, "عيّنة مجانية", "#fde68a", "#4a1d33", 118)],
         dict(hbg="#fff5f7", hbr="#fbcfe8", lc="#4a1d33", lac="#e11d77", mc="#4a1d33", cbg="#e11d77"),
         ("✿ عيّنة مجانية مع كل طلب  ·  توصيل لكل الولايات  ·  الدفع عند الاستلام", "#4a1d33", "#ffe4ee", "#f9a8d4"), ("#fbcfe8", "#4a1d33"),
-        cats=dict(ov="#9d174d", ovo=45, rad=40, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(225,29,119,.35)", -8, 3)]),
+        cats=dict(imgs=["skin_gua", "cosm_pink", "skin_dropper"], ov="#9d174d", ovo=35, rad=40, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(225,29,119,.35)", -8, 3)]),
         prods=dict(cbg="#ffffff", bbg="#e11d77", rad=34, fxs=[lift(".pb-pc", "rgba(225,29,119,.3)", -10, 2), FX("بطاقة وردية", "selector .pb-pc{border:1px solid #fbcfe8;box-shadow:0 14px 40px rgba(225,29,119,.12)}")]),
         cpbg="#ffffff22", cdc="#fde68a")
 orb = FX("كرة عناية سائلة تتحوّل", "selector{position:relative;min-height:470px}selector::before{content:\"\";position:absolute;inset:6% 4%;background:radial-gradient(circle at 30% 28%,#fff,#fbcfe8 38%,#f472b6 72%,#be185d);border-radius:58% 42% 46% 54%/52% 48% 52% 48%;animation:ncMorph 10s ease-in-out infinite alternate;box-shadow:0 50px 100px rgba(225,29,119,.35),inset -20px -30px 60px rgba(190,24,93,.35)}selector::after{content:\"\";position:absolute;inset:2% 0;border-radius:50%;border:1.5px dashed rgba(225,29,119,.35);animation:ncSpin 36s linear infinite}@keyframes ncMorph{to{border-radius:44% 56% 58% 42%/58% 42% 58% 42%;transform:rotate(8deg) scale(1.04)}}@keyframes ncSpin{to{transform:rotate(360deg)}}")
@@ -55,7 +55,8 @@ hero = S([
        BTN("اكتشفي المجموعة", bg="#e11d77", al="start", link="#products", fxs=[btngrad("#e11d77", "#a855f7", "rgba(225,29,119,.45)"), shine(k), pulse(k, "225,29,119", 2.4)], **anim("fadeUp", .8, .2)),
        W("tbadges", items="بدون بارابين\nمختبر جلدياً\nنباتي 100%", live=True, liveText="يتسوّقن الآن", lmin=18, lmax=52, cbg="#ffffffcc", cc="#4a1d33", cbc="#fbcfe8", crad=dm(999), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3))], w=54, va="center"),
     C([IB("drop", "ترطيب 24 ساعة", "عمق وإشراقة", tc="#4a1d33", xc="#8a5a6e", isz=34, fxs=glassrose("a"), w=dm(70), al={"d": "start"}, **anim("zoomIn", .8, .2)),
-       IB("sparkle", "إشراقة فورية", "نتيجة من أول استعمال", tc="#4a1d33", xc="#8a5a6e", isz=34, fxs=glassrose("b"), w=dm(70), al={"d": "end"}, **anim("zoomIn", .8, .35))], w=46, va="center", fxs=[orb])
+       IB("sparkle", "إشراقة فورية", "نتيجة من أول استعمال", tc="#4a1d33", xc="#8a5a6e", isz=34, fxs=glassrose("b"), w=dm(70), al={"d": "end"}, **anim("zoomIn", .8, .35))], w=46, va="center", pad=dm([60, 20, 60, 20]), **PH("cosm_terra", "rgba(190,24,93,.05)", "rgba(190,24,93,.25)"),
+      fxs=[FX("صورة بشكل عضوي متحوّل", "selector{min-height:470px;border-radius:58% 42% 46% 54%/52% 48% 52% 48%;animation:ncMorph 10s ease-in-out infinite alternate;box-shadow:0 50px 100px rgba(225,29,119,.3)}@keyframes ncMorph{to{border-radius:44% 56% 58% 42%/58% 42% 58% 42%}}")])
 ], pad=dm([90, 20, 100, 20], [50, 16, 56, 16]), gap={"d": 36}, fxs=[aurora(k, "#fff5f7", "#fbcfe899", "#e9d5ff77", "#fde68a66", 20), blobs(k, "#f9a8d4", "#ddd6fe", 340, .5)])
 steps = S([C([W("heading", text="روتين العناية في 3 خطوات", tag="h2", fs=dm(38, 26), fw="900", ta={"d": "center"}, color="#4a1d33", fxs=[gradtext(k + "r", "#e11d77", "#a855f7", "#f59e0b", 8)], **anim("fadeUp")), T("بسيط، سريع ومثبت النتائج.", 17, "#8a5a6e", **anim("fadeUp", .7, .1))], w=100, pad=dm([0, 0, 26, 0]))]
           + [C([IB(ic, t, x, tc="#4a1d33", xc="#8a5a6e", isz=40, fxs=[softcard("#ffffff", "rgba(225,29,119,.12)", 30, 26, "#fce7f3"), tiltcol([-2, 0, 2][i]), floaty(k + "s" + str(i), ".pb-ibi", 6, 4 + i * .5)], **anim("fadeUp", .7, .1 + i * .15))], w=33, pad=dm([0, 0, 20, 0])) for i, (ic, t, x) in enumerate([("drop", "1 · نظّفي", "غسول لطيف يزيل الشوائب بلا جفاف"), ("sparkle", "2 · غذّي", "سيروم مركّز بمكوّنات فعّالة"), ("sun", "3 · احمي", "كريم نهاري بحماية وترطيب")])],
@@ -78,7 +79,7 @@ th = TH(k, True, "#ffffff", "#9ca3af", "#a3e635", "#22d3ee", "#ffffff10", NAVY, 
         dict(hbg="#05070d", hbr="#ffffff1a", lc="#ffffff", lac="#a3e635", mc="#e5e7eb", cbg="#65a30d"),
         ("⚡ شحن مجاني فوق 6000 دج  ·  منتجات أصلية ومرخّصة  ·  الدفع عند الاستلام", "#a3e635", "#0b1220", "#0b1220"), ("#0b1220", "#a3e635"),
         prods=dict(cbg="#ffffff", bbg="#65a30d", rad=18, fxs=[lift(".pb-pc", "rgba(163,230,53,.35)", -10, 3)]),
-        cats=dict(ov="#05070d", ovo=55, rad=18, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(163,230,53,.35)", -8, 3)]), cdc="#a3e635")
+        cats=dict(imgs=["supp_caps", "supp_smoothie", "supp_veg"], ov="#05070d", ovo=40, rad=18, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(163,230,53,.35)", -8, 3)]), cdc="#a3e635")
 hero = S([
     C([T("⚡ طاقة · تركيز · تعافٍ", 15, "#a3e635", "start", fw="900", **anim("fadeDown")),
        W("heading", text="أداء بلا حدود، من أول جرعة", tag="h1", fs=dm(64, 36), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.15}, fxs=[gradtext(k, "#a3e635", "#22d3ee", "#a3e635", 5)], **anim("fadeUp", .8)),
@@ -91,7 +92,7 @@ hero = S([
        W("progress", pl="التعافي العضلي", pv=95, pc="#a3e635", pbg="#ffffff1a", ph=dm(14), color="#e5e7eb", fxs=[barfx("#a3e635", "#facc15")], **anim("fadeUp", .6, .3)),
        W("progress", pl="الامتصاص", pv=97, pc="#a3e635", pbg="#ffffff1a", ph=dm(14), color="#e5e7eb", fxs=[barfx("#22d3ee", "#a855f7")], **anim("fadeUp", .6, .4))],
       w=46, va="center", pad=dm([30, 30, 20, 30]), fxs=[glass("rgba(255,255,255,.06)", "rgba(163,230,53,.35)", 18, 24), scan(k, "rgba(163,230,53,.9)")])
-], pad=dm([90, 20, 90, 20], [50, 16, 50, 16]), gap={"d": 40}, fxs=[aurora(k, "#05070d", "#a3e63544", "#22d3ee33", "#8b5cf633", 16), gridbg(k, "rgba(163,230,53,.05)", 48)])
+], pad=dm([90, 20, 90, 20], [50, 16, 50, 16]), gap={"d": 40}, **PH("supp_green", "rgba(5,7,13,.78)", "rgba(5,7,13,.94)", bgFixed=True), fxs=[FX("وهج ليموني", "selector::after{content:\"\";position:absolute;inset:0;background:radial-gradient(50% 60% at 85% 0%,rgba(163,230,53,.18),transparent 60%);pointer-events:none}")])
 how = S([C([W("heading", text="كيف تعمل تركيباتنا؟", tag="h2", fs=dm(38, 26), fw="900", ta={"d": "center"}, color="#ffffff", fxs=[gradtext(k + "h", "#a3e635", "#22d3ee", "#a3e635", 6)], **anim("fadeUp"))], w=100, pad=dm([0, 0, 24, 0]))]
         + [C([IB(ic, t, x, tc="#ffffff", xc="#9ca3af", isz=44, fxs=[FX("بطاقة سداسية مضيئة", "selector .pb-ib{background:linear-gradient(160deg,rgba(163,230,53,.12),rgba(34,211,238,.06));border:1px solid rgba(163,230,53,.3);border-radius:22px;padding:28px;height:100%;box-sizing:border-box;clip-path:polygon(0 0,100% 0,100% 88%,88% 100%,0 100%)}"), lift(".pb-ib", "rgba(163,230,53,.3)", -8), floaty(k + "w" + str(i), ".pb-ibi", 6, 4 + i * .6)], **anim("fadeUp", .7, .1 + i * .15))], w=33, pad=dm([0, 0, 20, 0])) for i, (ic, t, x) in enumerate([("pill", "1 · تركيبة مدروسة", "عناصر نشطة بجرعات فعّالة"), ("zap", "2 · امتصاص سريع", "تقنية تُسرّع وصول المغذّيات"), ("trophy", "3 · نتائج ملموسة", "أداء وتعافٍ أفضل خلال أسابيع")])],
        pad=dm([60, 20, 60, 20], [40, 16, 40, 16]), gap={"d": 20}, fxs=NAVY("h"))
@@ -111,16 +112,16 @@ th = TH(k, False, "#5a3411", "#8a6a3c", "#d97706", "#92400e", "#ffffff", HONEY, 
         ("🍯 عسل طبيعي مفحوص  ·  توصيل لكل الولايات  ·  الدفع عند الاستلام", "#5a3411", "#fef3c7", "#fbbf24"), ("#d97706", "#fffbeb"),
         hfx=lambda s: [gradtext(k + s, "#5a3411", "#d97706", "#5a3411", 8)],
         prods=dict(cbg="#fffdf6", bbg="#d97706", rad=26, fxs=[lift(".pb-pc", "rgba(217,119,6,.35)", -10, 2), FX("بطاقة عسلية", "selector .pb-pc{border:1.5px solid #fde68a;box-shadow:0 14px 36px rgba(217,119,6,.14)}")]),
-        cats=dict(ov="#5a3411", ovo=45, rad=30, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(217,119,6,.35)", -8, 3)]), cdc="#fbbf24")
+        cats=dict(imgs=["honey_dipper", "honey_bee", "honey_jar"], ov="#5a3411", ovo=35, rad=30, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(217,119,6,.35)", -8, 3)]), cdc="#fbbf24")
 hero = S([
     C([T("🍯 من الخلية مباشرة", 15, "#b45309", "start", fw="800", **anim("fadeDown")),
        W("heading", text="ذهبٌ سائل من قلب الطبيعة", tag="h1", fs=dm(62, 36), fw="900", ta={"d": "start"}, color="#5a3411", lh={"d": 1.2}, fxs=[gradtext(k, "#5a3411", "#d97706", "#5a3411", 8)], **anim("fadeUp", .8)),
        T("عسل خام غير مُسخَّن من أجود المناحل، مفحوص ومضمون الأصل. اكتشف النكهات والفوائد واطلب بكل ثقة.", 19, "#8a6a3c", "start", **anim("fadeUp", .8, .1)),
        BTN("تذوّق الآن", bg="#d97706", al="start", link="#products", fxs=[btngrad("#f59e0b", "#b45309", "rgba(217,119,6,.45)"), shine(k), pulse(k, "217,119,6", 2.4)], **anim("fadeUp", .8, .2)),
        W("tbadges", items="خام 100%\nمفحوص مخبرياً\nبدون سكر مضاف", live=True, liveText="يتذوّقون الآن", lmin=10, lmax=38, cbg="#ffffffd0", cc="#5a3411", cbc="#fde68a", crad=dm(999), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3))], w=56, va="center"),
-    C([W("counter", n=100, suf="%", label="عسل طبيعي خام", fs=dm(70, 48), color="#b45309", lc="#5a3411", al={"d": "center"}, fxs=[ctrcolor("#f59e0b", "#92400e")], **anim("zoomIn", .8, .2)),
-       T("مفحوص • غير مُسخَّن • بلا إضافات", 16, "#8a6a3c", **anim("fadeUp", .8, .3))], w=44, va="center", pad=dm([36, 24, 36, 24]),
-      fxs=[FX("قرص عسلي زجاجي", "selector{background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.9),rgba(253,230,138,.85) 60%,rgba(245,158,11,.75));border-radius:46% 54% 52% 48%/54% 46% 54% 46%;box-shadow:0 40px 90px rgba(217,119,6,.35),inset 0 2px 0 rgba(255,255,255,.8);animation:nhB 9s ease-in-out infinite alternate}@keyframes nhB{to{border-radius:54% 46% 48% 52%/46% 54% 46% 54%;transform:translateY(-10px)}}")])
+    C([W("counter", n=100, suf="%", label="عسل طبيعي خام", fs=dm(70, 48), color="#ffffff", lc="#ffffff", al={"d": "center"}, **anim("zoomIn", .8, .2)),
+       T("مفحوص • غير مُسخَّن • بلا إضافات", 16, "#ffffffdd", **anim("fadeUp", .8, .3))], w=44, va="flex-end", pad=dm([260, 24, 36, 24]), **PH("honey_amber", "rgba(90,52,17,0)", "rgba(90,52,17,.78)", pos="top"),
+      fxs=[FX("صورة عسل بشكل عضوي", "selector{border-radius:46% 54% 52% 48%/54% 46% 54% 46%;box-shadow:0 40px 90px rgba(217,119,6,.35);animation:nhB 9s ease-in-out infinite alternate}@keyframes nhB{to{border-radius:54% 46% 48% 52%/46% 54% 46% 54%;transform:translateY(-10px)}}")])
 ], pad=dm([90, 20, 110, 20], [50, 16, 60, 16]), gap={"d": 36}, fxs=[honeycomb("#f59e0b", .18, "#fff3cf"), drip(k, "#f59e0b", 46)])
 journey = S([C([W("heading", text="من الخلية إلى بيتك", tag="h2", fs=dm(38, 26), fw="900", ta={"d": "center"}, color="#5a3411", fxs=[gradtext(k + "j", "#5a3411", "#d97706", "#5a3411", 8)], **anim("fadeUp")), T("أربع محطات تضمن لك النقاء والطعم الأصيل.", 17, "#8a6a3c", **anim("fadeUp", .7, .1))], w=100, pad=dm([0, 0, 28, 0]))]
             + [C([IB(ic, t, x, tc="#5a3411", xc="#8a6a3c", isz=40, fxs=[softcard("#ffffff", "rgba(217,119,6,.16)", 26, 24, "#fde68a"), lift(".pb-ib", "rgba(217,119,6,.3)", -8, 3), floaty(k + "j" + str(i), ".pb-ibi", 7, 4 + i * .5)], **anim("fadeUp", .7, .1 + i * .12))], w=25, pad=dm([0, 0, 20, 0])) for i, (ic, t, x) in enumerate([("sprout", "المنحل", "مواقع نقية بعيدة عن التلوث"), ("flower", "الرحيق", "من أزهار برية ومواسم محددة"), ("shield-check", "الفحص", "تحاليل نقاء قبل التعبئة"), ("truck", "التوصيل", "إلى باب بيتك بتغليف آمن")])],
@@ -138,15 +139,16 @@ th = TH(k, False, "#2f4a12", "#6b5b3a", "#4d7c0f", "#78350f", "#fffaf0", PAPER, 
         ("🌿 أعشاب وزيوت نقية  ·  بلا إضافات كيميائية  ·  الدفع عند الاستلام", "#2f4a12", "#f3ead7", "#bef264"), ("#4d7c0f", "#f3ead7"),
         hfx=lambda s: [gradtext(k + s, "#3f6212", "#78350f", "#3f6212", 9)],
         prods=dict(cbg="#fffaf0", bbg="#4d7c0f", rad=14, fxs=[lift(".pb-pc", "rgba(77,124,15,.3)", -8, 2), FX("بطاقة ورقية", "selector .pb-pc{border:1.5px solid #d6c9a2;box-shadow:0 10px 28px rgba(80,60,20,.12)}")]),
-        cats=dict(ov="#2f4a12", ovo=50, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(77,124,15,.35)", -8, 2)]), cdc="#bef264", offc="#f3ead7", offm="#e5e7d0")
+        cats=dict(imgs=["herb_rosemary", "oil_olive", "herb_tea"], ov="#2f4a12", ovo=35, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(77,124,15,.35)", -8, 2)]), cdc="#bef264", offc="#f3ead7", offm="#e5e7d0")
 label_fx = FX("لصيقة صيدلية عشبية", "selector{background:#fffaf0;border:2px solid #3f6212;outline:1px solid #3f6212;outline-offset:-10px;border-radius:6px;box-shadow:0 30px 60px rgba(60,50,20,.25);text-align:center}selector::before{content:\"✦ ✦ ✦\";position:absolute;top:14px;inset-inline:0;text-align:center;color:#78350f;letter-spacing:12px;font-size:14px}")
 hero = S([C([
     T("— صيدلية الطبيعة —", 15, "#78350f", "center", fw="800", **anim("fadeDown")),
     W("heading", text="أعشاب وزيوت أصيلة بخبرة الأجداد", tag="h1", fs=dm(56, 32), fw="900", ta={"d": "center"}, color="#2f4a12", lh={"d": 1.3}, fxs=[gradtext(k, "#3f6212", "#78350f", "#3f6212", 9)], **anim("fadeUp", .8)),
     T("نختار أجود الأعشاب ونعصر الزيوت على البارد لنوصلها إليك نقية كما خلقها الله، مع دليل استعمال لكل منتج.", 19, "#6b5b3a", **anim("fadeUp", .8, .1)),
     BTN("تصفّح العطّار", bg="#4d7c0f", link="#products", fxs=[btngrad("#4d7c0f", "#3f6212", "rgba(77,124,15,.4)"), shine(k)], **anim("zoomIn", .8, .2)),
-    W("tbadges", items="بدون مواد حافظة\nعصر على البارد\nمخبري الفحص", live=False, cbg="#f8f1df", cc="#2f4a12", cbc="#bfae7b", crad=dm(6), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeUp", .8, .3))], w=100, pad=dm([50, 30, 50, 30]), fxs=[label_fx])],
-    cw={"d": 860}, pad=dm([80, 20, 90, 20], [46, 16, 50, 16]), fxs=[paper("#efe3c6"), floaty(k + "x", "::after", 0, 0)] if False else [paper("#efe3c6")])
+    W("tbadges", items="بدون مواد حافظة\nعصر على البارد\nمخبري الفحص", live=False, cbg="#f8f1df", cc="#2f4a12", cbc="#bfae7b", crad=dm(6), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeUp", .8, .3))], w=64, va="center", pad=dm([50, 30, 50, 30]), fxs=[label_fx]),
+    C([W("spacer", mh=dm(440))], w=36, va="center", **PH("herb_jars", "rgba(47,74,18,0)", "rgba(47,74,18,.25)"), fxs=[FX("إطار صورة عتيقة", "selector{border:2px solid #3f6212;outline:1px solid #3f6212;outline-offset:-10px;border-radius:6px;box-shadow:0 30px 60px rgba(60,50,20,.25);transform:rotate(1.5deg)}")])],
+    pad=dm([80, 20, 90, 20], [46, 16, 50, 16]), gap={"d": 34}, fxs=[paper("#efe3c6")])
 benefits = S([C([W("heading", text="فوائد من الطبيعة", tag="h2", fs=dm(38, 26), fw="900", ta={"d": "center"}, color="#2f4a12", fxs=[gradtext(k + "b", "#3f6212", "#78350f", "#3f6212", 9)], **anim("fadeUp"))], w=100, pad=dm([0, 0, 24, 0]))]
           + [C([IB(ic, t, x, tc="#2f4a12", xc="#6b5b3a", isz=38, fxs=[softcard("#fffaf0", "rgba(80,60,20,.1)", 8, 24, "#d6c9a2"), lift(".pb-ib", "rgba(77,124,15,.25)", -6, 2), floaty(k + "g" + str(i), ".pb-ibi", 6, 4 + i * .4)], **anim("fadeUp", .7, .08 + i * .08))], w=33, pad=dm([0, 0, 18, 0])) for i, (ic, t, x) in enumerate([("leaf", "تهدئة وراحة", "أعشاب لتهدئة الأعصاب وصفاء الذهن"), ("heart-pulse", "دعم القلب", "زيوت غنية بالأوميغا والمضادات"), ("drop", "ترطيب وعناية", "زيوت للبشرة والشعر بلا كيمياء"), ("shield-check", "مناعة قوية", "أعشاب تقوّي الدفاعات الطبيعية"), ("sprout", "هضم أفضل", "مشروبات عشبية للراحة الهضمية"), ("sun", "نشاط وحيوية", "خلطات طبيعية للطاقة اليومية")])],
           pad=dm([60, 20, 50, 20], [40, 16, 36, 16]), gap={"d": 16}, fxs=[paper("#f8f1df")])
@@ -169,7 +171,7 @@ th = TH(k, False, "#111111", "#6b6b6b", "#111111", "#7c3aed", "#ffffff", WH, GR,
         ctr=[FX("أرقام مفرّغة", "selector .pb-ctn{color:transparent!important;-webkit-text-stroke:2px #111;font-weight:900}")],
         fcard=lambda i: [FX("بطاقة خطّية", "selector .pb-ib{border:1px solid #111;border-radius:0;padding:26px;height:100%;box-sizing:border-box;background:#fff;transition:background .3s,color .3s,transform .3s}selector .pb-ib:hover{background:#111;transform:translateY(-6px)}selector .pb-ib:hover *{color:#fff!important}")],
         prods=dict(cbg="#ffffff", bbg="#111111", rad=0, fxs=[FX("بطاقة تحريرية", "selector .pb-pc{border:0;border-radius:0;box-shadow:none;transition:transform .5s cubic-bezier(.2,.8,.2,1)}selector .pb-pc:hover{transform:translateY(-8px)}selector .pb-pc:hover img{transform:scale(1.06)}selector .pb-pc img{transition:transform .8s}")]),
-        cats=dict(ov="#111111", ovo=35, rad=0, cols=3, fxs=[zoomcol("rgba(0,0,0,.3)")]), accfx=[accfx("#ffffff", "#111111", 0)],
+        cats=dict(imgs=["fashion_shoe", "fashion_rack", "fashion_knit"], ov="#111111", ovo=25, rad=0, cols=3, fxs=[zoomcol("rgba(0,0,0,.3)")]), accfx=[accfx("#ffffff", "#111111", 0)],
         tsfx=[FX("رأي مربّع", "selector .pb-ts{background:#fff!important;border:1px solid #111;border-radius:0;box-shadow:8px 8px 0 #111}"), lift(".pb-ts", "rgba(0,0,0,.2)", -6)])
 hero = S([
     C([W("heading", text="NEW", tag="h1", fs=dm(128, 64), fw="900", ta={"d": "start"}, color="#111111", lh={"d": .95}, fxs=[outlinetext("#111111", 2)], **anim("slideStart", .9)),
@@ -178,11 +180,11 @@ hero = S([
        BTN("تسوّق الإطلالة", bg="#111111", al="start", link="#products", fxs=[FX("زر خطّي", "selector .pb-btn{border-radius:0!important;border:2px solid #111;transition:background .3s,color .3s,transform .3s}selector .pb-btn:hover{background:#fff!important;color:#111!important;transform:translateX(-6px)}")], **anim("fadeUp", .8, .4))], w=58, va="center"),
     C([W("heading", text="LOOK 01", tag="div", fs=dm(26, 20), fw="900", ta={"d": "center"}, color="#ffffff", **anim("zoomIn", .8, .2)),
        T("إطلالة مسائية", 16, "#ffffffcc", **anim("fadeUp", .8, .3))], w=42, va="flex-end", pad=dm([200, 20, 24, 20]),
-      fxs=[bgfade("#111111", "#7c3aed", 160), zoomcol("rgba(124,58,237,.4)"), ribbon("جديد", "#ffffff", "#111")])
+      **PH("fashion_man", "rgba(17,17,17,0)", "rgba(17,17,17,.6)", pos="top"), fxs=[zoomcol("rgba(0,0,0,.4)"), ribbon("جديد", "#ffffff", "#111")])
 ], pad=dm([70, 20, 70, 20], [40, 16, 40, 16]), gap={"d": 30}, fxs=WH)
 look = S([C([W("heading", text="LOOKBOOK", tag="h2", fs=dm(40, 28), fw="900", ta={"d": "center"}, color="#111", **anim("fadeUp"))], w=100, pad=dm([0, 0, 24, 0]))]
-         + [C([W("heading", text=t, tag="div", fs=dm(22, 18), fw="900", ta={"d": "center"}, color="#ffffff", **anim("zoomIn", .7, .1 + i * .1)), T(x, 15, "#ffffffcc", **anim("fadeUp", .7, .2 + i * .1))], w=w, va="flex-end", pad=dm([h, 18, 22, 18]), fxs=[bgfade(c1, c2, 160), zoomcol("rgba(0,0,0,.35)")])
-            for i, (t, x, w, h, c1, c2) in enumerate([("CASUAL", "يومي مريح", 33, 280, "#1f2937", "#6b7280"), ("STREET", "ستايل الشارع", 34, 360, "#7c2d12", "#f97316"), ("CLASSIC", "أناقة كلاسيكية", 33, 280, "#0f172a", "#475569")])],
+         + [C([W("heading", text=t, tag="div", fs=dm(22, 18), fw="900", ta={"d": "center"}, color="#ffffff", **anim("zoomIn", .7, .1 + i * .1)), T(x, 15, "#ffffffcc", **anim("fadeUp", .7, .2 + i * .1))], w=w, va="flex-end", pad=dm([h, 18, 22, 18]), **PH(c1, "rgba(0,0,0,0)", "rgba(0,0,0,.65)", pos="top"), fxs=[zoomcol("rgba(0,0,0,.35)")])
+            for i, (t, x, w, h, c1, c2) in enumerate([("CASUAL", "يومي مريح", 33, 300, "fashion_blue", ""), ("STREET", "ستايل الشارع", 34, 400, "fashion_sneakers", ""), ("CLASSIC", "أناقة كلاسيكية", 33, 300, "fashion_shirts", "")])],
          pad=dm([60, 20, 60, 20], [40, 16, 40, 16]), gap={"d": 12}, fxs=GR)
 big = S([C([W("marquee", mqt="NEW COLLECTION   ✦   FREE DELIVERY   ✦   COD   ✦   RETURNS 7 DAYS", mqs=22, mqd="rtl", mqg=dm(60), mqp=True, mqbg="#111111", mqc="#ffffff", fs=dm(44, 28), fw="900", fxs=[marqueefx()])], w=100)], layout="full", pad=dm([0, 0, 0, 0]))
 size = S([C([W("heading", text="دليل المقاسات", tag="h2", fs=dm(36, 26), fw="900", ta={"d": "center"}, color="#111", **anim("fadeUp")),
@@ -200,7 +202,7 @@ th = TH(k, True, "#e2e8f0", "#94a3b8", "#38bdf8", "#818cf8", "#ffffff10", SL, SL
         dict(hbg="#0b1220", hbr="#ffffff1a", lc="#ffffff", lac="#38bdf8", mc="#e2e8f0", cbg="#0284c7"),
         ("💻 ضمان رسمي على كل الأجهزة  ·  تقسيط مرن  ·  توصيل سريع  ·  الدفع عند الاستلام", "#0284c7", "#ffffff", "#bae6fd"), ("#0f172a", "#38bdf8"),
         prods=dict(cbg="#ffffff", bbg="#0284c7", rad=16, fxs=[lift(".pb-pc", "rgba(56,189,248,.4)", -10, 3)]),
-        cats=dict(ov="#0b1220", ovo=55, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(56,189,248,.35)", -8, 3)]), cdc="#38bdf8")
+        cats=dict(imgs=["it_pc", "it_laptop", "it_color"], ov="#0b1220", ovo=40, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(56,189,248,.35)", -8, 3)]), cdc="#38bdf8")
 term = W("text", html="<p style='font-family:monospace;direction:ltr;text-align:left;margin:0'><span style='color:#22c55e'>$</span> specs --best<br><span style='color:#38bdf8'>CPU</span>&nbsp;&nbsp;Core i7 · 14 cores<br><span style='color:#38bdf8'>RAM</span>&nbsp;&nbsp;32 GB DDR5<br><span style='color:#38bdf8'>SSD</span>&nbsp;&nbsp;1 TB NVMe<br><span style='color:#38bdf8'>GPU</span>&nbsp;&nbsp;RTX 4060 8GB<br><span style='color:#22c55e'>$</span> order --now</p>", fs=dm(18, 15), lh={"d": 1.9}, color="#e2e8f0", fw="600", fxs=[cursor(k)], **anim("fadeUp", .8, .2))
 hero = S([
     C([T("▍ تقنية بلا حدود", 15, "#38bdf8", "start", fw="800", **anim("fadeDown")),
@@ -208,7 +210,7 @@ hero = S([
        T("حواسيب، لابتوبات، قطع وملحقات أصلية بضمان رسمي وتقسيط مرن. نركّب ونسلّم حتى باب بيتك.", 19, "#94a3b8", "start", **anim("fadeUp", .8, .1)),
        BTN("تصفّح العتاد", bg="#0284c7", al="start", link="#products", fxs=[btngrad("#0284c7", "#6366f1", "rgba(56,189,248,.45)"), shine(k), pulse(k, "56,189,248", 2.2)], **anim("zoomIn", .8, .2)),
        W("tbadges", items="ضمان رسمي\nتقسيط مرن\nدعم فني", live=True, liveText="يتصفّحون الآن", lmin=16, lmax=57, cbg="#ffffff12", cc="#e2e8f0", cbc="#ffffff30", crad=dm(8), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3))], w=56, va="center"),
-    C([term], w=44, va="center", pad=dm([34, 30, 34, 30]), fxs=[glass("rgba(8,15,30,.8)", "rgba(56,189,248,.35)", 16, 16), scan(k, "rgba(56,189,248,.9)")])
+    C([term], w=44, va="center", pad=dm([34, 30, 34, 30]), **PH("it_circuit", "rgba(8,15,30,.82)", "rgba(8,15,30,.9)"), fxs=[FX("إطار تقني", "selector{border:1px solid rgba(56,189,248,.4);border-radius:16px;box-shadow:0 30px 70px rgba(0,0,0,.5)}"), scan(k, "rgba(56,189,248,.9)")])
 ], pad=dm([90, 20, 90, 20], [50, 16, 50, 16]), gap={"d": 40}, fxs=SL("h"))
 brands = mq("HP   ✦   DELL   ✦   ASUS   ✦   LENOVO   ✦   ACER   ✦   MSI   ✦   LOGITECH   ✦   KINGSTON   ✦   SAMSUNG   ✦   NVIDIA", *th["mqc"])
 cmp2 = S([C([W("heading", text="قارن المواصفات", tag="h2", fs=dm(36, 26), fw="900", ta={"d": "center"}, color="#ffffff", **anim("fadeUp")),
@@ -226,13 +228,13 @@ th = TH(k, True, "#ffffff", "#c4b5fd", "#c084fc", "#f472b6", "#ffffff10", PUR, P
         dict(hbg="#0a0614", hbr="#ffffff1a", lc="#ffffff", lac="#c084fc", mc="#e9d5ff", cbg="#9333ea"),
         ("⚡ تسليم فوري بعد الدفع  ·  تحديثات مدى الحياة  ·  ضمان استرجاع 14 يوماً", "#7e22ce", "#ffffff", "#f5d0fe"), ("#1e1b4b", "#e9d5ff"),
         prods=dict(cbg="#ffffff", bbg="#9333ea", rad=24, fxs=[lift(".pb-pc", "rgba(168,85,247,.45)", -10, 3)]),
-        cats=dict(ov="#0a0614", ovo=50, rad=24, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(168,85,247,.4)", -8, 3)]), cdc="#f0abfc")
+        cats=dict(imgs=["dig_code", "dig_server", "dig_earth"], ov="#0a0614", ovo=40, rad=24, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(168,85,247,.4)", -8, 3)]), cdc="#f0abfc")
 hero = S([C([
     W("tbadges", items="⚡ تسليم فوري\nتحديثات مدى الحياة\nدعم مباشر", live=False, cbg="#ffffff14", cc="#e9d5ff", cbc="#ffffff30", crad=dm(999), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeDown")),
     W("heading", text="منتجات رقمية تبني دخلك وتختصر وقتك", tag="h1", fs=dm(64, 34), fw="900", ta={"d": "center"}, color="#ffffff", lh={"d": 1.2}, fxs=[gradtext(k, "#c084fc", "#f472b6", "#38bdf8", 5)], **anim("fadeUp", .8)),
     T("قوالب، كتب إلكترونية، دورات وأدوات جاهزة للتحميل الفوري بعد الدفع — بلا انتظار ولا شحن.", 20, "#c4b5fd", **anim("fadeUp", .8, .1)),
     BTN("استعرض المنتجات", bg="#9333ea", link="#products", fxs=[btngrad("#9333ea", "#ec4899", "rgba(168,85,247,.55)"), shine(k), pulse(k, "168,85,247", 2)], **anim("zoomIn", .8, .2))], w=100)],
-    cw={"d": 900}, pad=dm([110, 20, 100, 20], [60, 16, 56, 16]), fxs=[aurora(k, "#0a0614", "#a855f788", "#ec489966", "#38bdf855", 14), blobs(k, "#a855f7", "#ec4899", 420, .35), sparkle(k, "#e9d5ff")] if False else [aurora(k, "#0a0614", "#a855f788", "#ec489966", "#38bdf855", 14), blobs(k, "#a855f7", "#ec4899", 420, .35)])
+    cw={"d": 900}, pad=dm([110, 20, 100, 20], [60, 16, 56, 16]), **PH("dig_dash", "rgba(10,6,20,.6)", "rgba(10,6,20,.93)", bgFixed=True), fxs=[blobs(k, "#a855f7", "#ec4899", 420, .3)])
 gets = S([C([W("heading", text="ماذا ستحصل عليه؟", tag="h2", fs=dm(36, 26), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")),
              bullets("ملفات جاهزة للتحميل المباشر\nتحديثات مجانية مدى الحياة\nدليل استعمال خطوة بخطوة\nدعم فني عبر واتساب\nضمان استرجاع 14 يوماً", "check-circle", "#c084fc", "#ede9fe", **anim("fadeUp", .7, .1))], w=50, va="center"),
           C([W("counter", n=4800, pre="+", label="عميل يستعمل منتجاتنا", fs=dm(56, 38), color="#c084fc", lc="#c4b5fd", fxs=[ctrcolor("#c084fc", "#f472b6")], **anim("zoomIn", .7)),
@@ -264,14 +266,14 @@ th = TH(k, False, "#0f172a", "#64748b", "#f97316", "#ef4444", "#ffffff", LG, WHT
         dict(hbg="#ffffff", hbr="#e2e8f0", lc="#0f172a", lac="#f97316", mc="#0f172a", cbg="#f97316"),
         ("🏪 آلاف المنتجات من بائعين موثوقين  ·  دفع عند الاستلام  ·  توصيل لكل الولايات", "#f97316", "#ffffff", "#fff7ed"), ("#0f172a", "#fb923c"),
         prods=dict(cbg="#ffffff", bbg="#f97316", rad=14, fxs=[lift(".pb-pc", "rgba(249,115,22,.3)", -8, 2), FX("بطاقة سوق", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06)}")]),
-        cats=dict(ov="#0f172a", ovo=40, rad=14, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(249,115,22,.3)", -6, 2)]), cdc="#fde047")
-def tile(t, x, c1, c2, w, h=250, btn="تسوّق الآن"):
+        cats=dict(imgs=["it_laptop", "fashion_rack", "skin_dropper"], ov="#0f172a", ovo=30, rad=14, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(249,115,22,.3)", -6, 2)]), cdc="#fde047")
+def tile(t, x, c1, c2, w, h=250, btn="تسوّق الآن", img="mkt_bags"):
     return C([W("heading", text=t, tag="h2", fs=dm(30, 24), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")), T(x, 16, "#ffffffdd", "start", **anim("fadeUp", .7, .1)),
               BTN(btn, bg="#ffffff", color="#111", al="start", link="#products", fxs=[FX("زر أبيض", "selector .pb-btn{border-radius:999px!important}"), shine(k + t[:2])], **anim("fadeUp", .7, .2))],
-             w=w, va="flex-end", pad=dm([h, 24, 24, 24]), fxs=[bgfade(c1, c2, 150), zoomcol("rgba(0,0,0,.3)")])
-hero = S([tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "#f97316", "#ef4444", 50, 260),
-          tile("وصل حديثاً", "اكتشف أحدث العروض", "#6366f1", "#06b6d4", 25, 260, "اكتشف"),
-          tile("توصيل مجاني", "فوق 6000 دج", "#10b981", "#22c55e", 25, 260, "التفاصيل")],
+             w=w, va="flex-end", pad=dm([h, 24, 24, 24]), rad=dm(18), **PH(img, c1, c2, 150), fxs=[zoomcol("rgba(0,0,0,.3)")])
+hero = S([tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(239,68,68,.88)", 50, 260, "تسوّق الآن", "mkt_bags"),
+          tile("وصل حديثاً", "اكتشف أحدث العروض", "rgba(99,102,241,.5)", "rgba(6,182,212,.88)", 25, 260, "اكتشف", "fashion_shirts"),
+          tile("توصيل مجاني", "فوق 6000 دج", "rgba(16,185,129,.5)", "rgba(21,128,61,.9)", 25, 260, "التفاصيل", "mkt_open")],
          pad=dm([30, 20, 20, 20], [20, 12, 12, 12]), gap={"d": 14}, fxs=LG("h"), cw={"d": 1240})
 chips = S([C([W("tbadges", items="إلكترونيات\nأزياء\nالمنزل والمطبخ\nجمال وعناية\nأطفال\nرياضة\nكتب\nسيارات", live=True, liveText="مستخدم متصل", lmin=120, lmax=480, cbg="#ffffff", cc="#0f172a", cbc="#e2e8f0", crad=dm(999), cfs=dm(15), gap=dm(10), jc="center", **anim("fadeUp"))], w=100)],
          pad=dm([14, 20, 20, 20], [10, 12, 14, 12]), fxs=LG("c"))
@@ -300,7 +302,7 @@ th = TH(k, True, "#f5d77a", "#b9ae8f", "#c9992e", "#f5d77a", "#ffffff08", BLK, B
         ("⌚ ضمان دولي سنتان  ·  تغليف فاخر مع كل ساعة  ·  الدفع عند الاستلام", "#0a0a0a", "#f5d77a", "#c9992e"), ("#14100a", "#f5d77a"),
         hfx=lambda s: [goldshimmer(k + s, 6)], ctr=[goldshimmer(k + "c", 6)],
         prods=dict(cbg="#14100a", bbg="#b8860b", rad=6, fxs=[FX("بطاقة ساعة", "selector .pb-pc{border:1px solid #c9992e66;transition:transform .45s,box-shadow .45s}selector .pb-pc:hover{transform:translateY(-10px);box-shadow:0 30px 64px rgba(201,153,46,.3)}selector .pb-pc *{color:#f5d77a}")]),
-        cats=dict(ov="#0a0a0a", ovo=50, rad=6, cols=3, tc="#f5d77a", fxs=[FX("حد ذهبي", "selector a,selector .pb-sc{border:1px solid #c9992e;border-radius:6px}"), zoomcol("rgba(201,153,46,.3)")]),
+        cats=dict(imgs=["watch_hand", "watch_pocket", "watch_wrist"], ov="#0a0a0a", ovo=35, rad=6, cols=3, tc="#f5d77a", fxs=[FX("حد ذهبي", "selector a,selector .pb-sc{border:1px solid #c9992e;border-radius:6px}"), zoomcol("rgba(201,153,46,.3)")]),
         fcard=lambda i: [FX("بطاقة فاخرة", "selector .pb-ib{border:1px solid #c9992e66;border-radius:6px;padding:26px;background:linear-gradient(160deg,#17120a,#0a0a0a);height:100%;box-sizing:border-box}"), lift(".pb-ib", "rgba(201,153,46,.25)", -8), floaty(k + "f" + str(i), ".pb-ibi", 5, 5 + i * .4)],
         offc="#f5d77a", offm="#e7ddc0", cdc="#f5d77a")
 hero = S([
@@ -317,8 +319,10 @@ move = S([C([W("heading", text="هندسة الدقّة", tag="h2", fs=dm(38, 26
 spec = S([C([W("heading", text="المواصفات", tag="h2", fs=dm(34, 26), fw="900", ta={"d": "center"}, color="#f5d77a", **anim("fadeUp")),
              W("table", tbl="البند | التفصيل\nالحركة | أوتوماتيكية\nالزجاج | سافير مضاد للخدش\nالعلبة | فولاذ 316L\nالسوار | جلد إيطالي / فولاذ\nالمقاومة | 100 متر", thead=True, tzb=True, thbg="#b8860b", thc="#1a1409", tbd="#c9992e55", tbfs=dm(17), tbal="center", fxs=[FX("جدول داكن", "selector table{color:#e7ddc0;background:#14100a;border-radius:6px;overflow:hidden}")], **anim("fadeUp", .8, .1))], w=100)],
         cw={"d": 760}, pad=dm([40, 20, 60, 20], [30, 16, 40, 16]), fxs=BLK("s"))
+banner = S([C([T("— TIMELESS —", 14, "#c9992e", "center", fw="800"), W("heading", text="ليس مجرّد ساعة، بل رفيق رحلة", tag="h2", fs=dm(44, 28), fw="900", ta={"d": "center"}, color="#f5d77a", fxs=[goldshimmer(k + "bn", 6)], **anim("fadeUp"))], w=100)],
+            cw={"d": 860}, pad=dm([150, 20, 150, 20], [90, 16, 90, 16]), **PH("watch_rock", "rgba(10,10,10,.5)", "rgba(10,10,10,.82)", bgFixed=True))
 niche("s-watches", "متجر ساعات — كرونوس", "قرص ساعة حقيقي بعقرب ثوانٍ يدور داخل الهيرو، ذهب لامع على فحمي، عدّادات الهندسة الدقيقة وجدول المواصفات.", "ساعات", "El Messiri", "#0a0a0a",
-      [bar(*th["bar"]), hdr(**th["hdr"]), hero, mq("AUTOMATIC   ✦   SAPPHIRE   ✦   316L STEEL   ✦   WATER RESISTANT   ✦   SWISS MADE   ✦   LIMITED EDITION", *th["mqc"]), move, prodsec(k, th, "المجموعة", "قطع مختارة بعناية"), spec, catsec(k, th, "الفئات"), feat(k, th, [("shield-check", "ضمان دولي", "سنتان على الحركة"), ("gift", "تغليف فاخر", "علبة هدية أنيقة"), ("truck", "توصيل مؤمَّن", "لكل الولايات"), ("refresh", "استبدال", "خلال 7 أيام")])] + tail(k, th, skipstats=True))
+      [bar(*th["bar"]), hdr(**th["hdr"]), hero, mq("AUTOMATIC   ✦   SAPPHIRE   ✦   316L STEEL   ✦   WATER RESISTANT   ✦   SWISS MADE   ✦   LIMITED EDITION", *th["mqc"]), move, prodsec(k, th, "المجموعة", "قطع مختارة بعناية"), banner, spec, catsec(k, th, "الفئات"), feat(k, th, [("shield-check", "ضمان دولي", "سنتان على الحركة"), ("gift", "تغليف فاخر", "علبة هدية أنيقة"), ("truck", "توصيل مؤمَّن", "لكل الولايات"), ("refresh", "استبدال", "خلال 7 أيام")])] + tail(k, th, skipstats=True))
 
 # ───────── 10) مجوهرات ─────────
 k = "nj"; ICC[0] = "#b76e79"
@@ -330,7 +334,7 @@ th = TH(k, False, "#4a1c2b", "#8a6270", "#b76e79", "#d4a373", "#ffffff", CH, [FX
         ("💎 ذهب عيار 18 وفضة 925  ·  شهادة أصالة مع كل قطعة  ·  تغليف هدايا مجاني", "#4a1c2b", "#fbe8ea", "#f3c6cd"), ("#f8e9e4", "#4a1c2b"),
         hfx=lambda s: [gradtext(k + s, "#4a1c2b", "#b76e79", "#d4a373", 8)], ctr=[ctrcolor("#b76e79", "#d4a373")],
         prods=dict(cbg="#ffffff", bbg="#b76e79", rad=6, fxs=[lift(".pb-pc", "rgba(183,110,121,.35)", -10, 2), FX("بطاقة ناعمة", "selector .pb-pc{border:1px solid #f0d9d2;box-shadow:0 14px 40px rgba(183,110,121,.14)}")]),
-        cats=dict(ov="#4a1c2b", ovo=40, rad=6, cols=3, fxs=[zoomcol("rgba(183,110,121,.35)")]), cdc="#f3c6cd", cpbg="#ffffff22")
+        cats=dict(imgs=["jewel_leaf", "jewel_studs", "jewel_chain"], ov="#4a1c2b", ovo=30, rad=6, cols=3, fxs=[zoomcol("rgba(183,110,121,.35)")]), cdc="#f3c6cd", cpbg="#ffffff22")
 hero = S([C([
     T("✦ ELEGANCE IN EVERY DETAIL ✦", 14, "#b76e79", "center", fw="800", **anim("fadeDown")),
     W("heading", text="مجوهرات تحكي قصتك", tag="h1", fs=dm(70, 38), fw="900", ta={"d": "center"}, color="#4a1c2b", lh={"d": 1.2}, fxs=[gradtext(k, "#4a1c2b", "#b76e79", "#d4a373", 8)], **anim("fadeUp", .9)),
@@ -342,10 +346,12 @@ carat = S([C([W("counter", n=n, pre=p, suf=s, label=l, fs=dm(54, 34), color="#b7
 gift = S([C([W("heading", text="تغليف هدايا يليق بالمناسبة", tag="h2", fs=dm(36, 26), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")),
              T("علبة مخملية، شريط ساتان، وبطاقة إهداء بخط يدك — مجاناً مع كل طلب.", 18, "#fbe8ea", "start", **anim("fadeUp", .7, .1)),
              BTN("اطلبي هديتك", bg="#ffffff", color="#4a1c2b", al="start", link="#products", fxs=[shine(k + "g")], **anim("fadeUp", .7, .2))], w=60, va="center"),
-          C([W("counter", n=0, pre="", suf=" دج", label="تغليف الهدايا", fs=dm(54, 38), color="#ffffff", lc="#fbe8ea", **anim("zoomIn", .7, .2))], w=40, va="center", pad=dm([30, 20, 30, 20]), fxs=[glass("rgba(255,255,255,.12)", "rgba(255,255,255,.4)", 14, 140), ribbon("مجاني", "#d4a373", "#4a1c2b")])],
+          C([W("counter", n=0, pre="", suf=" دج", label="تغليف الهدايا", fs=dm(54, 38), color="#ffffff", lc="#ffffff", al={"d": "center"}, **anim("zoomIn", .7, .2))], w=40, va="flex-end", pad=dm([230, 20, 24, 20]), **PH("jewel_pearl", "rgba(74,28,43,0)", "rgba(74,28,43,.75)"), fxs=[FX("إطار ذهبي", "selector{border-radius:16px;border:2px solid rgba(255,255,255,.55);box-shadow:0 30px 70px rgba(0,0,0,.4)}"), ribbon("مجاني", "#d4a373", "#4a1c2b")])],
          pad=dm([50, 40, 50, 40], [36, 20, 36, 20]), cw={"d": 1100}, mar=dm([20, 20, 40, 20], [14, 12, 30, 12]), rad=dm(10), fxs=[aurora(k + "gf", "#4a1c2b", "#b76e79aa", "#d4a37377", "#f3c6cd55", 12), sparkle(k + "gf", "#ffffff")])
+strip = S([C([W("heading", text=t, tag="div", fs=dm(22, 18), fw="900", ta={"d": "center"}, color="#ffffff", **anim("fadeUp", .7, .1 + i * .1))], w=33, va="flex-end", pad=dm([230, 14, 22, 14]), **PH(im, "rgba(74,28,43,0)", "rgba(74,28,43,.7)"), fxs=[zoomcol("rgba(183,110,121,.4)")]) for i, (t, im) in enumerate([("القلائد", "jewel_moon"), ("الخواتم", "jewel_ring"), ("الأساور", "jewel_gold")])],
+          pad=dm([50, 20, 40, 20], [34, 16, 30, 16]), gap={"d": 14}, fxs=[FX("خلفية كريمية", "selector{background:#fffaf6}")])
 niche("s-jewelry", "متجر مجوهرات — لؤلؤة", "شامبانيا وذهب وردي ببريق لامع يومض كالألماس، عدّادات العيار والأصالة، وقسم تغليف هدايا ملكي.", "مجوهرات", "Amiri", "#fffaf6",
-      [bar(*th["bar"]), hdr(**th["hdr"]), hero, mq("ذهب 18K   ✦   فضة 925   ✦   ألماس   ✦   لؤلؤ   ✦   خواتم   ✦   أساور   ✦   قلائد   ✦   أقراط", *th["mqc"]), catsec(k, th, "المجموعات", "اختاري ما يناسب ذوقك"), prodsec(k, th, "قطع مختارة", "الأكثر إعجاباً"), carat, gift] + tail(k, th, skipstats=True))
+      [bar(*th["bar"]), hdr(**th["hdr"]), hero, mq("ذهب 18K   ✦   فضة 925   ✦   ألماس   ✦   لؤلؤ   ✦   خواتم   ✦   أساور   ✦   قلائد   ✦   أقراط", *th["mqc"]), strip, catsec(k, th, "المجموعات", "اختاري ما يناسب ذوقك"), prodsec(k, th, "قطع مختارة", "الأكثر إعجاباً"), carat, gift] + tail(k, th, skipstats=True))
 
 # ───────── 11) إكسسوارات ─────────
 k = "na"; ICC[0] = "#8b5cf6"
@@ -356,7 +362,7 @@ th = TH(k, False, "#1f1147", "#6b5fa0", "#8b5cf6", "#ec4899", "#ffffff", CRM, [F
         dict(hbg="#fff8f0", hbr="#fde4c8", lc="#1f1147", lac="#8b5cf6", mc="#1f1147", cbg="#8b5cf6"),
         ("🎀 اشترِ قطعتين والثالثة هدية  ·  توصيل لكل الولايات  ·  الدفع عند الاستلام", "#1f1147", "#fff8f0", "#fcd34d"), ("#8b5cf6", "#ffffff"),
         prods=dict(cbg="#ffffff", bbg="#8b5cf6", rad=26, fxs=[tiltcol(-1.5), FX("بطاقة مرحة", "selector .pb-pc{border:2px solid #1f1147;box-shadow:5px 5px 0 #1f1147}")]),
-        cats=dict(ov="#1f1147", ovo=35, rad=30, cols=3, fxs=[tiltcol(-2)]), cdc="#fcd34d")
+        cats=dict(imgs=["acc_outfit", "acc_headphones", "acc_satchel"], ov="#1f1147", ovo=25, rad=30, cols=3, fxs=[tiltcol(-2)]), cdc="#fcd34d")
 def blob(c, sz, extra=""):
     return FX("شكل لوني عائم", "selector{position:relative}selector::before{content:\"\";position:absolute;width:%spx;height:%spx;border-radius:50%%;background:%s;filter:blur(2px);opacity:.9;%s animation:naBl 7s ease-in-out infinite alternate}@keyframes naBl{to{transform:translate(18px,-24px) rotate(12deg)}}" % (sz, sz, c, extra))
 hero = S([
@@ -364,7 +370,7 @@ hero = S([
        W("heading", text="التفاصيل الصغيرة تصنع الفرق الكبير", tag="h1", fs=dm(58, 34), fw="900", ta={"d": "start"}, color="#1f1147", lh={"d": 1.25}, fxs=[gradtext(k, "#8b5cf6", "#ec4899", "#f59e0b", 6)], **anim("fadeUp", .8)),
        T("حقائب، نظارات، أحزمة، قبعات وأكثر — ألوان مرحة وجودة تدوم. اطلب واختر هديتك المجانية.", 19, "#6b5fa0", "start", **anim("fadeUp", .8, .1)),
        BTN("تسوّقي الآن", bg="#8b5cf6", al="start", link="#products", fxs=[btngrad("#8b5cf6", "#ec4899", "rgba(139,92,246,.45)"), shine(k), pulse(k, "139,92,246", 2.4)], **anim("zoomIn", .8, .2))], w=54, va="center"),
-    C([W("heading", text=t, tag="div", fs=dm(26, 22), fw="900", ta={"d": "center"}, color=c, pad=dm([34, 10, 34, 10]), rad=dm(28), w=dm(86 - i * 6), al={"d": "start" if i % 2 else "end"}, fxs=[bgfade(c1, c2, 140), tiltcol(d)], **anim("zoomIn", .7, .1 + i * .1)) for i, (t, c, c1, c2, d) in enumerate([("حقائب", "#ffffff", "#8b5cf6", "#ec4899", -3), ("نظارات", "#1f1147", "#fcd34d", "#fb923c", 3), ("أحزمة", "#1f1147", "#6ee7b7", "#38bdf8", -2), ("قبعات", "#ffffff", "#f472b6", "#a855f7", 2)])], w=46, va="center", pad=dm([10, 10, 10, 10]))
+    C([W("heading", text=t, tag="div", fs=dm(26, 22), fw="900", ta={"d": "center"}, color="#ffffff", pad=dm([70, 10, 22, 10]), rad=dm(28), w=dm(86 - i * 6), al={"d": "start" if i % 2 else "end"}, **PH(im, "rgba(31,17,71,0)", c1, pos="top"), fxs=[tiltcol(d), FX("إطار", "selector{border:3px solid #1f1147;box-shadow:6px 6px 0 #1f1147}")], **anim("zoomIn", .7, .1 + i * .1)) for i, (t, im, c1, d) in enumerate([("حقائب", "acc_pink", "rgba(139,92,246,.75)", -3), ("نظارات", "acc_sunglasses", "rgba(236,72,153,.7)", 3), ("حقائب جلدية", "acc_satchel", "rgba(245,158,11,.7)", -2), ("خواتم", "acc_rings", "rgba(16,185,129,.7)", 2)])], w=46, va="center", pad=dm([10, 10, 10, 10]))
 ], pad=dm([90, 20, 90, 20], [50, 16, 50, 16]), gap={"d": 36}, fxs=[aurora(k, "#fff8f0", "#ddd6fe99", "#fbcfe899", "#fde68a88", 16), blobs(k, "#c4b5fd", "#fcd34d", 320, .5)])
 mix = S([C([W("heading", text="Mix & Match", tag="h2", fs=dm(40, 28), fw="900", ta={"d": "center"}, color="#1f1147", fxs=[gradtext(k + "m", "#8b5cf6", "#ec4899", "#f59e0b", 6)], **anim("fadeUp")), T("اختاري ثلاث قطع تكمل بعضها وتوفّري أكثر.", 17, "#6b5fa0", **anim("fadeUp", .7, .1))], w=100, pad=dm([0, 0, 26, 0]))]
         + [C([IB(ic, t, x, tc="#1f1147", xc="#6b5fa0", isz=44, fxs=[FX("بطاقة ملوّنة", "selector .pb-ib{background:%s;border:2px solid #1f1147;border-radius:26px;box-shadow:6px 6px 0 #1f1147;padding:26px;height:100%%;box-sizing:border-box}" % c), tiltcol(d), floaty(k + "x" + str(i), ".pb-ibi", 6, 3.8 + i * .5)], **anim("fadeUp", .7, .1 + i * .12))], w=33, pad=dm([0, 0, 20, 0])) for i, (ic, t, x, c, d) in enumerate([("gift", "الأساسية", "حقيبة صغيرة تناسب كل إطلالة", "#ede9fe", -2), ("sparkle", "اللمسة", "نظارة أو إكسسوار شعر لافت", "#fef3c7", 2), ("heart", "الهدية", "الثالثة مجاناً مع طلبك", "#fce7f3", -1.5)])],
