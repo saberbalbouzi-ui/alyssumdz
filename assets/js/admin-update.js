@@ -17,7 +17,7 @@ const AdminUpdate = (() => {
   async function check(force) {
     try { const r = await fetch("VERSION?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) return; const v = (await r.text()).trim(); if (!/^\d+\.\d+\.\d+$/.test(v)) return; latest = v; avail = !!cur && cmp(v, cur) > 0; paint(); if (avail) banner(); else if (force) toast("✅ أنت على آخر نسخة (" + cur + ")"); } catch (e) { if (force) toast("تعذّر التحقق من وجود تحديث"); }
   }
-  const toast = m => { try { if (typeof Admin !== "undefined" && Admin.toast) return Admin.toast(m); } catch (e) { } const t = document.createElement("div"); t.textContent = m; t.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10090;font-family:inherit"; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); };
+  const toast = m => { try { if (typeof Admin !== "undefined" && Admin.toast) return Admin.toast(m); } catch (e) { } const t = document.createElement("div"); t.className = "au-toast"; t.textContent = m; t.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10090;font-family:inherit"; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); };
   /* حالة الصفحة قبل إعادة التحميل: التبويب المفتوح، وصفحة المطوّر المفتوحة بما فيها تعديلاتها غير المنشورة — فتعود كما كانت */
   function saveState() {
     try {

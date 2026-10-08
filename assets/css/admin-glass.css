@@ -222,3 +222,28 @@ html.glass .stat div:hover{border-color:rgba(var(--c),.95)!important;transform:t
 html.glass .card:hover,html.glass .alert-card:hover{border-color:rgba(170,255,150,.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 28px rgba(134,240,106,.2)!important}
 /* النص الصغير تحت العناوين: أبيض أوضح */
 html.glass .hint,html.glass .nav-txt small,html.glass .side-nav-intro p,html.glass small,html.glass .card p,html.glass .stat span{color:rgba(244,249,252,.84)!important}
+
+/* ───── قائمة الصفحات: أزرار تعديل كل صفحة تتوهج بالمرور كالبطاقة الخضراء؛ سلة الحذف حمراء زجاجية شفافة ───── */
+html.glass .pbx-pact button{transition:box-shadow .2s,border-color .2s,background .2s}
+html.glass .pbx-pact button:hover{background:var(--g-sheen),linear-gradient(135deg,rgba(134,240,106,.34),rgba(134,240,106,.08))!important;color:#fff!important;border-color:rgba(170,255,150,.7)!important;box-shadow:0 0 22px rgba(134,240,106,.38),inset 0 1px 0 rgba(255,255,255,.25)!important}
+html.glass .pbx-pc:hover{border-color:rgba(170,255,150,.4);box-shadow:0 0 22px rgba(134,240,106,.14)}
+html.glass .pbx-pact button[onclick*="unpublish"],html.glass button[style*="background:var(--red)"]{background:rgba(255,93,130,.16)!important;color:#ff8fa8!important;border:1px solid rgba(255,93,130,.55)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 14px rgba(255,93,130,.22),inset 0 1px 0 rgba(255,255,255,.18)!important}
+html.glass .pbx-pact button[onclick*="unpublish"]:hover,html.glass button[style*="background:var(--red)"]:hover{background:rgba(255,93,130,.32)!important;color:#fff!important;border-color:rgba(255,130,160,.9)!important;box-shadow:0 0 28px rgba(255,93,130,.6),inset 0 1px 0 rgba(255,255,255,.3)!important}
+
+/* ───── الشريط العلوي: العناوين والأزرار تتوهج بلونها دائماً بخفوت وبقوة عند المرور ───── */
+html.glass .top h1{text-shadow:0 0 18px rgba(134,240,106,.55);transition:text-shadow .2s}
+html.glass .top h1:hover{text-shadow:0 0 28px rgba(134,240,106,.95),0 0 6px rgba(134,240,106,.7)}
+html.glass .top .small,html.glass .top button,html.glass .top .live-pill{transition:box-shadow .2s,transform .2s,filter .2s;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 14px color-mix(in srgb,currentColor 30%,transparent)}
+html.glass .top .small:hover,html.glass .top button:hover,html.glass .top .live-pill:hover{filter:brightness(1.15);transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 30px color-mix(in srgb,currentColor 65%,transparent),0 0 6px color-mix(in srgb,currentColor 55%,transparent)}
+
+/* ───── الإشعارات وشروحات «؟»: تنسيق وألوان موحّدة (زجاج مدخَّن + حدّ ونص أخضر ليموني) ───── */
+html.glass #toast2,html.glass .pbx-msg,html.glass #au-banner,html.glass .au-toast,html.glass #ctlq-pop{background:rgba(10,30,16,.9)!important;color:var(--g-mint)!important;border:1px solid rgba(134,240,106,.45)!important;-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:0 0 24px rgba(134,240,106,.22),0 14px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14)!important}
+html.glass #au-banner *,html.glass .au-toast{color:var(--g-mint)}
+html.glass #ctlq-pop{color:#eafbe4!important}
+html.glass #ctlq-pop b{color:var(--g-mint)}
+html.glass #ctlq-pop .gd{color:#d8f7cf;border-top-color:rgba(134,240,106,.35)}
+html.glass #ctlq-pop .ask{background:rgba(134,240,106,.2);color:var(--g-mint);border:1px solid rgba(134,240,106,.5)}
+html.glass #ctlq-pop:after{background:rgba(10,30,16,.95);border:1px solid rgba(134,240,106,.45);border-top:0;border-inline-start:0}
+html.glass #ctlq-pop.dn:after{border:1px solid rgba(134,240,106,.45);border-bottom:0;border-inline-end:0;border-top:1px solid rgba(134,240,106,.45);border-inline-start:1px solid rgba(134,240,106,.45)}
+html.glass .ctl-q{background:rgba(134,240,106,.16)!important;color:var(--g-mint)!important;box-shadow:0 0 0 1px rgba(134,240,106,.45)}
+html.glass .ctl-q:hover{box-shadow:0 0 0 1px rgba(134,240,106,.9),0 0 14px rgba(134,240,106,.6)}
