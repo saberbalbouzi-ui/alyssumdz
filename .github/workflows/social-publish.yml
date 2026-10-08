@@ -1,0 +1,35 @@
+# ينشر منشورات فيسبوك/انستغرام المجدولة من لوحة التحكم (تبويب «السوشيال») عبر Graph API.
+# يلزم أسرار المستودع: META_PAGE_TOKEN و META_PAGE_ID و META_IG_ID (اختياري). بلا أسرار = لا يفعل شيئاً.
+name: social-publish
+on:
+  schedule: [{ cron: "*/15 * * * *" }]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: social-publish
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: تحقق من وجود منشورات مستحقة
+        id: chk
+        run: |
+          if [ ! -f assets/data/social.json ]; then echo "go=0" >> $GITHUB_OUTPUT; exit 0; fi
+          node -e "const d=JSON.parse(require('fs').readFileSync('assets/data/social.json','utf8'));const n=(d.posts||[]).filter(p=>p.status==='scheduled'&&p.via==='runner'&&new Date(p.at)<=new Date()).length;console.log('go='+(n?1:0))" >> $GITHUB_OUTPUT
+      - uses: actions/setup-node@v4
+        if: steps.chk.outputs.go == '1'
+        with: { node-version: 20 }
+      - name: نشر
+        if: steps.chk.outputs.go == '1'
+        env:
+          META_PAGE_TOKEN: ${{ secrets.META_PAGE_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_IG_ID: ${{ secrets.META_IG_ID }}
+        run: node scripts/social-publish.js
+      - name: حفظ النتائج
+        if: steps.chk.outputs.go == '1'
+        run: |
+          git config user.name "social-bot"; git config user.email "social-bot@users.noreply.github.com"
+          git add assets/data/social.json
+          git diff --cached --quiet || (git commit -m "نتائج النشر على السوشيال" && git push)

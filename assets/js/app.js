@@ -113,7 +113,7 @@ const Cart = {
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record);
@@ -844,7 +844,7 @@ function initProduct(slug){
       items: orderItems(),
       subtotal: state.offer.price, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record);
@@ -898,6 +898,8 @@ function isOutOfStock(p){
   return p.stock!==undefined && p.stock!==null && Number(p.stock)<=0;
 }
 /* مصدر الطلب (أي صفحة جاء منها): من ?src= أو ?utm_content= ويُحفظ للجلسة؛ يُسجَّل في حقل «📄 الصفحة» داخل extra لمقارنة صفحات المنتج في الإحصاءات */
+/* مصدر الحملة: utm_source/utm_campaign من رابط الإعلان أو المنشور يُحفظان 14 يوماً ويُسجَّلان في extra الطلب («📣 الحملة») ليحسب تبويب «السوشيال ← الحملات» الطلبات والإيراد لكل حملة */
+const Attrib = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("utm_source"), c = q.get("utm_campaign"); if(s || c){ localStorage.setItem("alyssum_utm", JSON.stringify({ s: s || "", m: q.get("utm_medium") || "", c: c || "", t: Date.now() })); } const o = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); if(o && Date.now() - o.t < 14*864e5 && o.s !== "home" && o.c) return { "📣 الحملة": (o.s ? o.s + "/" : "") + o.c }; }catch(e){} return {}; })();
 const PageSrc = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("src") || q.get("utm_content"); if(s) sessionStorage.setItem("alyssum_src", s); return sessionStorage.getItem("alyssum_src") || ""; }catch(e){ return ""; } })();
 /* رابط المنتج في البطاقات: صفحة «المسار» المختارة (صفحة هبوط) إن وُجدت وإلا صفحته الرسمية؛ ومع اختبار A/B (p.ab = {b, pct}) يُوزَّع الزوار على النسختين بنسبة pct% للثانية ويثبت اختيار كل زائر؛ ويُضاف رمز تتبع UTM */
 function productHref(p){
