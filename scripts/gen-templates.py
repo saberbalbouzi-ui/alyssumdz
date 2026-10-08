@@ -262,8 +262,5 @@ exec(open(os.path.join(HERE, "gen-templates-store.py"), encoding="utf-8").read()
 exec(open(os.path.join(HERE, "gen-templates-niche.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-alyssum.py"), encoding="utf-8").read())
 
-# قوالب مكتوبة يدوياً (ليست من المولّد) تُحفظ في الفهرس: ملفاتها تبقى كما هي
-EXTRA = [{"id": "alyssum", "cat": "store", "fld": "ALYSSUM", "n": "ALYSSUM", "d": "القالب المرجعي الرسمي لـ ALYSSUM: أسود نباتي، أخضر فوسفوري، زجاج ثلاثي الأبعاد، منتجات حقيقية وحركات قابلة للتعديل.", "kind": "page"}]
-TEMPLATES += [x for x in EXTRA if os.path.exists(os.path.join(OUT, x["id"] + ".json"))]
 json.dump(TEMPLATES, open(os.path.join(OUT, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print("ok", len(TEMPLATES), "templates")
