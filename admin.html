@@ -330,6 +330,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('customers',this)"><span class="nav-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.5a3 3 0 010 5.8M17 14c2.4.7 4 2.8 4 6"/></svg></span><span class="nav-txt"><b>العملاء</b><small>شرائح العملاء وسجلّ طلباتهم وملاحظاتهم</small></span></button>
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromeh',this)"><span class="nav-ic">🔝</span><span class="nav-txt"><b>الهيدر</b><small>الشريط العلوي، القائمة، أيقونات التواصل، المشاركة، الأزرار</small></span></button>
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromef',this)"><span class="nav-ic">🔚</span><span class="nav-txt"><b>الفوتر</b><small>النبذة، الروابط، التواصل، أيقونات التواصل، حقوق النشر</small></span></button>
@@ -750,6 +751,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="small gold" onclick="Admin.saveWelcome()">💾 حفظ ونشر</button>
     </div>
   </div>
+
+  <div id="tab-customers" class="hidden"><div id="customers-app"></div></div>
 
   <div id="tab-attributes" class="hidden">
     <div class="card">
@@ -1562,6 +1565,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-home.js?v=1.60.0"></script>
 <script src="assets/js/admin-orders-plus.js?v=1.61.0"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
+<script src="assets/js/admin-customers.js?v=1"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
