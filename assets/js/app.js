@@ -1659,3 +1659,23 @@ const PhoneDZ = {
     document.head.appendChild(s);
   }catch(e){}
 })();
+
+/* بطاقات المنتجات (قالب أليسوم): الصورة الشفافة (المنتج وحده) تقف على مشهد القالب، أما الصورة المعتمة (منتج بخلفية/مشهد جاهز) فتُعرض كاملة بتكبير عند التمرير — يُوسَم الثاني بـ img-full ويقرأ القالب الصنف */
+(function () {
+  const seen = new WeakSet();
+  function check(img) {
+    if (seen.has(img)) return; seen.add(img);
+    const run = () => {
+      try {
+        const N = 32, c = document.createElement("canvas"); c.width = c.height = N; const x = c.getContext("2d"); x.drawImage(img, 0, 0, N, N);
+        const d = x.getImageData(0, 0, N, N).data; let op = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) op++;
+        if (op / (N * N) > .8) { const h = img.closest(".pb-pci,.thumb"); if (h) h.classList.add("img-full"); }
+      } catch (e) { }
+    };
+    if (img.complete && img.naturalWidth) run(); else img.addEventListener("load", run, { once: true });
+  }
+  const scan = () => document.querySelectorAll(".pb-pci img,.aly-grid .card .thumb img").forEach(check);
+  let t = 0; const later = () => { clearTimeout(t); t = setTimeout(scan, 150); };
+  const boot = () => { scan(); try { new MutationObserver(later).observe(document.body, { childList: true, subtree: true }); } catch (e) { } };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+})();

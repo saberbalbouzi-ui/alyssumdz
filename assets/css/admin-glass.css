@@ -309,3 +309,9 @@ html.glass #ig-body .action-bar button.small{color:#fff;background:linear-gradie
 html.glass #ig-body .action-bar button.small:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32))}
 html.glass #ig-body .action-bar button.small.gold{background:linear-gradient(180deg,rgba(251,146,60,.4),rgba(194,65,12,.3));border-color:rgba(253,186,116,.5)}
 html.glass #ig-body .action-bar button.small.gray{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22)}
+
+/* v1.51.8 — النوافذ المنبثقة: كانت تتحول إلى شفافة 6% (من تحويل #fff تلقائياً) فلا يظهر محتواها ويتداخل مع الصفحة خلفها؛ الآن زجاج داكن شبه معتم مع تمويه الخلفية */
+html.glass .modal-bg{background:rgba(2,8,5,.76);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+html.glass .modal,html.glass .editor-bg,html.glass .diff-box,html.glass #pbs-modal.pbs-m #pbs-panel,html.glass #pbx-clone .cl-box,html.glass #pbx-clone .cl-win{background:rgba(9,24,18,.985)!important;border:1px solid rgba(255,255,255,.14);color:var(--g-tx);box-shadow:0 34px 90px rgba(0,0,0,.65)}
+html.glass .modal.xl .action-bar{background:rgba(9,24,18,.99)!important;border-top-color:rgba(255,255,255,.14)}
+html.glass .spv-bar,html.glass .login{background:rgba(9,24,18,.92)}
