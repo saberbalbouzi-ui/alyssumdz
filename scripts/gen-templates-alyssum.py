@@ -28,7 +28,7 @@ html{background:#020a06!important}
 body,.pb-page{background:transparent!important;color:#e7f5ec}
 body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;background:linear-gradient(180deg,rgba(2,10,6,.18),rgba(2,10,6,.5)),url(/assets/img/tpl/alyssum-bg.webp) center/cover no-repeat;animation:alyAur 26s ease-in-out infinite alternate}
 @keyframes alyAur{to{transform:scale(1.06) translateY(-8px)}}
-@media(max-width:767px){body::before{background-position:left center,left center}}
+@media(max-width:767px){body::before{background:linear-gradient(180deg,rgba(2,10,6,.12),rgba(2,10,6,.4)),url(/assets/img/tpl/alyssum-bg-m.webp) center/cover no-repeat}}
 .pb-sec{position:relative}
 .aly-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(21,128,61,.18);border:1px solid rgba(134,239,172,.4);color:#d9f99d;font-weight:800;font-size:14px;backdrop-filter:blur(10px)}
 .aly-pill svg{width:18px;height:18px;color:#86efac}
