@@ -187,7 +187,8 @@
     "assets/pages/templates/s-alyssum.json",
     "assets/pages/templates/thumbs/s-alyssum-full.jpg",
     "assets/pages/templates/thumbs/s-alyssum.jpg",
-    "assets/js/img-gen.js"
+    "assets/js/img-gen.js",
+    "assets/js/vendor/html-to-image.min.js"
   ],
   "local": {
     "الهوية والإعدادات": [

@@ -33,6 +33,8 @@ body{overflow-x:hidden;margin:0}`;
   const css = `
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
+.pbx-adx{display:none!important}#pb-app.pbx-ad .pbx-adx{display:inline-flex!important}
+#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2{display:none!important}
 .pbx-top{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#173f35;color:#fff;flex-wrap:wrap}
 .pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
 .pbx-top input{background:#fff;border:0;border-radius:8px;padding:.4rem .7rem;font-weight:800;width:auto;flex:0 1 240px;min-width:120px;font-family:inherit;color:#173f35}
@@ -239,6 +241,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
+  <button class="pub pbx-adx" id="pbx-adx" type="button" onclick="ImgGen.exportAd()" title="يحوّل التصميم إلى صورة بمقاس المنصة بالبكسل للتنزيل أو الحفظ في المكتبة">⬇ تصدير الصورة</button>
   <button class="pub" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
 </div>
 <div class="pbx-main">
@@ -289,18 +292,18 @@ body{overflow-x:hidden;margin:0}`;
   function open(page, slug, isNew) {
     build();
     E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
-    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden";
+    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
-    E.zoom = 1; ltab("add"); setDev(isMob() ? "m" : "d"); renderInspector(); updateTop();
+    E.zoom = 1; ltab("add"); setDev(isMob() && !E.page.ad ? "m" : "d"); renderInspector(); updateTop();
     if (fdoc) renderCanvas();
     (async () => { try { const r = await fetch("assets/data/chrome.json", { cache: "no-store" }), c = r.ok ? await r.json() : null; PB.setChrome(typeof ChromeAdmin !== "undefined" && ChromeAdmin.state && ChromeAdmin.state.cfg ? ChromeAdmin.state.cfg : c); if (fdoc && E.page) renderCanvas(); } catch (e) { } })();      // هيدر الموقع المحفوظ لمعاينة «الهيدر الافتراضي»
   }
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
-    $("pb-app").classList.remove("on"); document.body.style.overflow = "";
+    $("pb-app").classList.remove("on", "pbx-ad"); document.body.style.overflow = "";
     purgeUnsaved(true).then(n => { if (n) toast("🧹 حُذفت " + n + " صورة غير محفوظة ونُظّفت المكتبة"); });
     if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
   }
@@ -427,12 +430,13 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── اللوحة اليسرى ───────────────── */
   function ltab(t) { E.ltab = t === "tpl" ? "def" : t; renderLeft(); }
   function ltoggle(t) { if (t === "tpl") t = "def"; E.ltab = E.ltab === t ? "" : t; renderLeft(); }
+  const AD_OK = ["heading", "text", "image", "button", "shape", "iconbox", "bullets", "counter", "social", "divider"];      // عناصر لوحة الصور الإشهارية (بلا عناصر الويب)
   function renderLeft() {
     const pane = $("pbx-lpane"); if (!pane) return;
     document.querySelectorAll("[data-lt]").forEach(b => b.classList.toggle("on", b.dataset.lt === E.ltab));
     const hb = E.ltab && document.querySelector(`[data-lt="${E.ltab}"]`); if (!hb) { pane.style.display = "none"; pane.innerHTML = ""; return; } pane.style.display = ""; hb.after(pane);      // أدوات كل عنوان تُفتح تحته (نمط ووردبريس)
     if (E.ltab === "add") {
-      const tile = t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`, cats = PB.CATS.map(([n, L]) => [n, L.filter(t => WIDGETS[t])]), used = new Set(cats.flatMap(c => c[1])), rest = ORDER.filter(t => !used.has(t) && WIDGETS[t]); if (rest.length) cats[0][1] = cats[0][1].concat(rest);
+      const tile = t => `<div class="pbx-wi" draggable="true" data-add="${t}" title="اسحبه إلى الصفحة أو انقر لإضافته"><i>${ico(t, 24)}</i>${WIDGETS[t].label}</div>`, cats = (E.page.ad ? [["عناصر التصميم", AD_OK]] : PB.CATS).map(([n, L]) => [n, L.filter(t => WIDGETS[t])]), used = new Set(cats.flatMap(c => c[1])), rest = E.page.ad ? [] : ORDER.filter(t => !used.has(t) && WIDGETS[t]); if (rest.length) cats[0][1] = cats[0][1].concat(rest);
       pane.innerHTML = cats.map(([n, L]) => `<div class="pbx-cat">${n}</div><div class="pbx-grid">${L.map(tile).join("")}</div>`).join("")+`<p style="font-size:.75rem;color:#888;margin-top:.8rem;line-height:1.7">اسحب العنصر إلى الصفحة، أو انقر عليه لإضافته ${FREE_ONLY ? "فوق قماش الصفحة" : "إلى العمود المحدد"}. انقر مرتين على أي نص في الصفحة لتعديله مباشرة.</p>`;
     } else if (E.ltab === "def") {
       const card = (key, name) => `<button type="button" class="pbx-dfc" draggable="true" data-tpl="${key}" title="${esc(name)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${TIC[key] || ""}</svg><span>${esc(name)}</span></button>`;
@@ -2698,6 +2702,12 @@ ${this.quickImg(this.q.cover)}
     document.getElementById("pq-bg").classList.add("open");
   },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },
+  mode(m) {
+    if (m !== "ad") m = "web"; try { localStorage.setItem("alyssum_pb_mode", m); } catch (e) { }
+    document.querySelectorAll("#pb-modes [data-pbm]").forEach(b => b.classList.toggle("on", b.dataset.pbm === m));
+    document.getElementById("pb-web").classList.toggle("hidden", m === "ad"); document.getElementById("pb-ad").classList.toggle("hidden", m !== "ad");
+    if (m === "ad" && typeof ImgGen !== "undefined") ImgGen.open();
+  },
   initGen() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } },
   async init() { await this.refresh(); },
   async refresh() {
