@@ -19,7 +19,7 @@ async function fb(p, d) {
   const j = await call(G + "/" + PAGE + "/feed", { message: p.text || "" }); return j.id;
 }
 async function ig(p, d) {
-  const img = abs(p.image, d); if (!img) throw new Error("انستغرام يحتاج صورة");
+  const img = abs(p.igImage || p.image, d); if (!img) throw new Error("انستغرام يحتاج صورة");
   const c = await call(G + "/" + IG + "/media", { image_url: img, caption: p.text || "" });
   for (let i = 0; i < 6; i++) { const r = await fetch(G + "/" + c.id + "?fields=status_code&access_token=" + encodeURIComponent(TOK)).then(x => x.json()).catch(() => ({})); if (!r.status_code || r.status_code === "FINISHED") break; if (r.status_code === "ERROR") throw new Error("فشل تجهيز الصورة"); await new Promise(z => setTimeout(z, 4000)); }
   const j = await call(G + "/" + IG + "/media_publish", { creation_id: c.id }); return j.id;

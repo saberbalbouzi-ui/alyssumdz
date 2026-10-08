@@ -18,7 +18,11 @@ const AdminSocial = (() => {
   const meta = () => { try { return JSON.parse(localStorage.getItem(MK) || "{}") || {}; } catch (e) { return {}; } };
   const saveMeta = m => { try { localStorage.setItem(MK, JSON.stringify(m)); } catch (e) { } };
   const products = () => ((A().products) || []).filter(p => p && p.active !== false);
-  const prodBy = s => products().find(p => p.slug === s);
+  const exts = () => ((S.d && S.d.settings.ext) || []).map(x => ({ slug: "x:" + x.id, ext: true, xid: x.id, title: x.title || "منتج خارجي", price: Number(x.price) || 0, old: Number(x.old) || 0, url: x.url || "", cover: x.img || "", images: x.img ? [x.img] : [], desc: x.desc || "", cat: "" }));
+  const prodBy = s => s && String(s).startsWith("x:") ? exts().find(p => p.slug === s) : products().find(p => p.slug === s);
+  const allProds = () => products().concat(exts());
+  const isHttp = u => /^https?:\/\//i.test(u || "");
+  const imgSrc = u => isHttp(u) ? u : (typeof REL !== "undefined" ? REL : "") + u;
   const imgAbs = p => !p ? "" : /^https?:/.test(p) ? p : "https://" + domain() + "/" + String(p).replace(/^\//, "");
   const dflt = () => ({
     v: 1, settings: { domain: domain(), runner: false, fbNative: true, hashtags: [{ n: "عام", t: "#الجزائر #دفع_عند_الاستلام #توصيل_58_ولاية" }, { n: "طبيعي", t: "#منتجات_طبيعية #عناية_طبيعية #أعشاب" }] },
@@ -58,7 +62,7 @@ const AdminSocial = (() => {
   const TIPS = ["الاستمرار في الاستعمال أهم من كثرته، فالنتائج تأتي بالانتظام", "اختر المنتجات الطبيعية الموثوقة واقرأ طريقة الاستعمال قبل البدء", "احفظ المنتج في مكان بارد وجاف بعيداً عن الشمس", "الشرب الكافي للماء مع العناية الجيدة يعطيان أفضل النتائج"];
   const CTA = ["اطلب الآن والدفع عند الاستلام", "راسلنا على واتساب للطلب", "توصيل لكل الولايات خلال 24 إلى 72 ساعة", "الكمية محدودة، اطلب قبل النفاد"];
   const EMO = ["🔥", "✅", "🚚", "💚", "🌿", "🍯", "✨", "⭐", "🎁", "📞", "👇", "⏰"];
-  function link(p, camp) { return p ? "https://" + domain() + "/p/" + p.slug + "/?utm_source=social&utm_medium=organic&utm_campaign=" + encodeURIComponent(camp || "post") : "https://" + domain() + "/"; }
+  function link(p, camp) { if (p && p.ext) { if (!p.url) return "https://" + domain() + "/"; return p.url + (p.url.includes("?") ? "&" : "?") + "utm_source=social&utm_medium=organic&utm_campaign=" + encodeURIComponent(camp || "post"); } return p ? "https://" + domain() + "/p/" + p.slug + "/?utm_source=social&utm_medium=organic&utm_campaign=" + encodeURIComponent(camp || "post") : "https://" + domain() + "/"; }
   function fill(t, p, camp, k) {
     const o = p || {}, disc = o.old && o.old > o.price ? Math.round((1 - o.price / o.old) * 100) : 0, wa = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "";
     const bl = (o.benefits || o.features || []), b = i => (typeof bl[i] === "string" ? bl[i] : (bl[i] && bl[i].t) || ["طبيعي وآمن", "نتائج ملموسة", "توصيل سريع ودفع عند الاستلام"][i]);
@@ -81,9 +85,19 @@ const AdminSocial = (() => {
     if (p.image) { const j = await gcall(m.pageId + "/photos", Object.assign({ url: imgAbs(p.image), caption: p.text }, sch)); return j.post_id || j.id; }
     return (await gcall(m.pageId + "/feed", Object.assign({ message: p.text }, sch))).id;
   }
+  /* انستغرام يقبل JPEG/PNG فقط: نحوّل صور webp وأمثالها إلى JPEG ونحفظها ونعيد استعمالها */
+  async function ensureIg(p) {
+    if (!p.channels.includes("ig") || !p.image || p.igImage || !/\.(webp|avif|gif|svg)(\?|$)/i.test(p.image)) return;
+    const map = S.d.settings.jpg = S.d.settings.jpg || {}; if (map[p.image]) { p.igImage = map[p.image]; return; }
+    const r = await fetch(imgSrc(p.image)); if (!r.ok) throw new Error("تعذّر قراءة الصورة لتحويلها"); const bmp = await createImageBitmap(await r.blob());
+    const cv = document.createElement("canvas"); cv.width = bmp.width; cv.height = bmp.height; const x = cv.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(bmp, 0, 0);
+    const blob = await new Promise(res => cv.toBlob(res, "image/jpeg", .92)); if (!blob) throw new Error("فشل التحويل إلى JPEG");
+    const path = "assets/img/pages/social-ig-" + Date.now() + ".jpg"; await A().commitImage({ path, blob, ext: "jpg" }, "social-", { noVariants: true });
+    map[p.image] = path; p.igImage = path; persist();
+  }
   async function pubIg(p) {
     const m = meta(); if (!m.igId) throw new Error("معرّف حساب انستغرام غير مضبوط"); if (!p.image) throw new Error("انستغرام يحتاج صورة");
-    const c = await gcall(m.igId + "/media", { image_url: imgAbs(p.image), caption: p.text });
+    const c = await gcall(m.igId + "/media", { image_url: imgAbs(p.igImage || p.image), caption: p.text });
     for (let i = 0; i < 8; i++) { const st = await gcall(c.id + "?fields=status_code", null, "GET").catch(() => ({})); if (!st.status_code || st.status_code === "FINISHED") break; if (st.status_code === "ERROR") throw new Error("فشل تجهيز الصورة"); await new Promise(z => setTimeout(z, 3000)); }
     return (await gcall(m.igId + "/media_publish", { creation_id: c.id })).id;
   }
@@ -126,7 +140,7 @@ const AdminSocial = (() => {
     if (!drafts.length) { toast("لا مسودات جاهزة (يلزم نص، وصورة لانستغرام)"); return; }
     const taken = S.d.posts.filter(p => p.status === "scheduled").map(p => new Date(p.at).getTime()), slots = allSlots(Date.now(), days).filter(s => !taken.some(t => Math.abs(t - s.getTime()) < 20 * 60e3));
     let n = 0; const via = S.d.settings.runner ? "runner" : "browser";
-    for (const p of drafts) { const s = slots.shift(); if (!s) break; p.at = s.toISOString(); p.status = "scheduled"; p.via = via; if (via === "browser") await nativeFb(p); n++; }
+    for (const p of drafts) { const s = slots.shift(); if (!s) break; p.at = s.toISOString(); p.status = "scheduled"; p.via = via; try { await ensureIg(p); } catch (e) { p.error = "تحويل الصورة: " + e.message; } if (via === "browser") await nativeFb(p); n++; }
     persist(); draw(); toast("✅ جُدولت " + n + " منشورات" + (drafts.length > n ? " — وبقيت " + (drafts.length - n) + " مسودة بلا موعد (زِد الأيام)" : ""));
   }
   function generate(o) {
@@ -159,7 +173,7 @@ const AdminSocial = (() => {
 .sm-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.sm-cal div{padding:6px;border-radius:10px;text-align:center;font-size:.76rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}.sm-cal b{display:block;font-size:1.05rem}.sm-cal .full{background:rgba(74,222,128,.18);border-color:#86efac}
 #sm table{width:100%;border-collapse:collapse;font-size:.85rem}#sm th{text-align:start;padding:8px 6px;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.14);white-space:nowrap}#sm td{padding:9px 6px;border-bottom:1px solid rgba(255,255,255,.07)}
 .sm-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.sm-k div{padding:12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}.sm-k b{display:block;font-size:1.25rem}.sm-k small{color:rgba(255,255,255,.7)}.sm-bar{height:6px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;min-width:70px}.sm-bar i{display:block;height:100%;background:#86f06a}
-.sm-warn{color:#fdba74;font-size:.8rem}.sm-ok{color:#86efac;font-size:.8rem}.sm-em{padding:22px;text-align:center;color:rgba(255,255,255,.65)}#sm-status{color:rgba(255,255,255,.65);font-size:.8rem}`;
+.sm-dd{border:1px solid rgba(255,255,255,.2);border-radius:11px;background:rgba(255,255,255,.07)}.sm-dd summary{padding:9px 12px;cursor:pointer;font-weight:800}.sm-ddl{max-height:260px;overflow:auto;padding:6px 12px 10px;display:grid;gap:2px;background:rgba(9,24,18,.985);border-top:1px solid rgba(255,255,255,.12);border-radius:0 0 11px 11px}.sm-ddl .sm-chk{margin:0}.sm-warn{color:#fdba74;font-size:.8rem}.sm-ok{color:#86efac;font-size:.8rem}.sm-em{padding:22px;text-align:center;color:rgba(255,255,255,.65)}#sm-status{color:rgba(255,255,255,.65);font-size:.8rem}`;
     document.head.appendChild(st);
   }
   /* ───────── واجهة: الرسم ───────── */
@@ -188,7 +202,7 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
     return `<div class="sm-c"><h3>الأسبوعان القادمان (المجدول لكل يوم — الهدف ${r.perDay}/يوم)</h3><div class="sm-cal" style="grid-template-columns:repeat(7,1fr)">${c}</div></div>`;
   }
   function cardHtml(p) {
-    const pr = prodBy(p.product), img = p.image ? `<img loading="lazy" src="${esc(/^https?:/.test(p.image) ? p.image : (typeof REL !== "undefined" ? REL : "") + p.image)}" alt="">` : '<div class="ph"></div>';
+    const pr = prodBy(p.product), img = p.image ? `<img loading="lazy" src="${esc(imgSrc(p.image))}" alt="">` : '<div class="ph"></div>';
     return `<div class="sm-p" data-id="${esc(p.id)}">${img}<div><div class="t"></div><div class="m"><span class="sm-bd ${esc(p.status)}">${STN[p.status] || p.status}</span>${p.channels.map(c => `<span>${CH[c]}</span>`).join("")}${p.at ? `<span>${esc(fdt(p.at))}</span>` : ""}${p.fbSched ? '<span class="sm-ok">مجدول لدى فيسبوك</span>' : ""}${pr ? `<span>${esc(pr.title)}</span>` : ""}</div>${p.error ? `<div class="sm-warn">${esc(p.error)}</div>` : ""}</div><div class="a"><button type="button" class="sm-b sm gh" data-a="edit" data-id="${esc(p.id)}">تعديل</button>${p.status !== "published" ? `<button type="button" class="sm-b sm" data-a="now" data-id="${esc(p.id)}">نشر الآن</button>` : ""}<button type="button" class="sm-b sm gh" data-a="dup" data-id="${esc(p.id)}">نسخ</button><button type="button" class="sm-b sm rd" data-a="del" data-id="${esc(p.id)}">حذف</button></div></div>`;
   }
   async function act(a, id) {
@@ -199,6 +213,17 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
     if (a === "now") { if (!meta().token) { toast("أدخل رمز Meta من تبويب «الاتصال» أولاً"); S.tab = "set"; draw(); return; } if (!confirm("نشر هذا المنشور الآن على " + p.channels.map(c => CH[c]).join(" و") + "؟")) return; toast("جارِ النشر…"); await publishNow(p); }
   }
   /* —— المؤلّف —— */
+  /* نموذج منتج خارجي (اسم/سعر/رابط/صورة) يُحفظ في settings.ext ويُعاد استعماله */
+  function extForm(id, done) {
+    const host = $("sm-xf") || $("gn-xf"); if (!host) return; const cur = id ? (S.d.settings.ext || []).find(x => x.id === id) : null, x = cur ? Object.assign({}, cur) : { id: uid("x"), title: "", price: "", old: "", url: "", img: "", desc: "" };
+    host.innerHTML = `<div class="sm-c" style="margin-top:8px"><h3 style="font-size:1rem">${cur ? "تعديل" : "إضافة"} منتج خارجي</h3><div class="sm-row"><div><label>الاسم</label><input data-f="title"></div><div><label>السعر (دج)</label><input data-f="price" type="number" min="0"></div><div><label>السعر القديم (اختياري)</label><input data-f="old" type="number" min="0"></div></div>
+<label>رابط المنتج (صفحة الشراء)</label><input data-f="url" dir="ltr" placeholder="https://…"><label>رابط الصورة (https://…)</label><input data-f="img" dir="ltr" placeholder="https://…/photo.jpg"><label>وصف قصير</label><input data-f="desc">
+<div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="sm-b" data-xs="1">حفظ المنتج</button><button type="button" class="sm-b gh" data-xc="1">إلغاء</button></div></div>`;
+    host.querySelectorAll("[data-f]").forEach(i => i.value = x[i.dataset.f] == null ? "" : x[i.dataset.f]);
+    host.querySelector("[data-xc]").onclick = () => { host.innerHTML = ""; };
+    host.querySelector("[data-xs]").onclick = () => { host.querySelectorAll("[data-f]").forEach(i => x[i.dataset.f] = i.value.trim()); if (!x.title) return toast("اكتب اسم المنتج"); if (x.url && !isHttp(x.url)) return toast("رابط المنتج يجب أن يبدأ بـ https://"); if (x.img && !isHttp(x.img)) return toast("رابط الصورة يجب أن يبدأ بـ https://");
+      const L = S.d.settings.ext = S.d.settings.ext || [], k = L.findIndex(y => y.id === x.id); if (k < 0) L.push(x); else L[k] = x; persist(); host.innerHTML = ""; done && done(x); };
+  }
   function openComposer(p) {
     let w = $("smw"); if (!w) { w = document.createElement("div"); w.id = "smw"; document.body.appendChild(w); }
     css(); S.cur = p ? JSON.parse(JSON.stringify(p)) : { id: uid("p"), text: "", image: "", channels: S.d.rule.channels.slice(), at: "", status: "draft", via: S.d.settings.runner ? "runner" : "browser", product: "", ids: {}, created: new Date().toISOString() };
@@ -208,8 +233,10 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
   function drawComposer() {
     const w = $("smw"), p = S.cur, pr = prodBy(p.product), P = products(), tags = S.d.settings.hashtags;
     const imgs = pr ? (pr.images && pr.images.length ? pr.images : [pr.cover]).filter(Boolean) : [];
+    if (p.image && !imgs.includes(p.image)) imgs.unshift(p.image);
     w.innerHTML = `<div class="w"><div class="sm-hd"><h2 style="font-size:1.2rem">${S.d.posts.some(x => x.id === p.id) ? "تعديل منشور" : "منشور جديد"}</h2><button type="button" class="sm-b gh sm" data-x="1">إغلاق</button></div><div class="cols"><div>
-<label>المنتج (اختياري — لإدراج بياناته ورابطه)</label><select id="sm-prod"><option value="">— بلا منتج —</option>${P.map(x => `<option value="${esc(x.slug)}" ${x.slug === p.product ? "selected" : ""}>${esc(x.title)}</option>`).join("")}</select>
+<label>المنتج (اختياري — لإدراج بياناته ورابطه)</label><select id="sm-prod"><option value="">— بلا منتج —</option><optgroup label="منتجات المتجر">${P.map(x => `<option value="${esc(x.slug)}" ${x.slug === p.product ? "selected" : ""}>${esc(x.title)}</option>`).join("")}</optgroup>${exts().length ? `<optgroup label="منتجات خارجية">${exts().map(x => `<option value="${esc(x.slug)}" ${x.slug === p.product ? "selected" : ""}>${esc(x.title)}</option>`).join("")}</optgroup>` : ""}<option value="__new">+ منتج خارجي جديد…</option></select>
+${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="button" data-xe="1">تعديل المنتج الخارجي</button><button type="button" data-xd="1">حذف</button></div>` : ""}<div id="sm-xf"></div>
 <label>قالب بحسب الهدف</label><div class="sm-chips">${OBJ.map(([k, t]) => `<button type="button" data-tpl="${k}">${t}</button>`).join("")}<button type="button" data-var="1" title="يبدّل بين صياغات القالب الأخير">صياغة أخرى</button></div>
 <label>النص</label><textarea id="sm-text" placeholder="اكتب منشورك هنا…">${esc(p.text)}</textarea>
 <div class="sm-chips" style="margin-top:6px"><button type="button" data-ins="link">رابط المنتج</button><button type="button" data-ins="price">السعر</button><button type="button" data-ins="wa">واتساب</button>${CTA.map((c, i) => `<button type="button" data-cta="${i}">${esc(c.slice(0, 18))}…</button>`).join("")}<button type="button" data-clean="1">تنظيف الفراغات</button><button type="button" data-bul="1">أسطر ← نقاط</button></div>
@@ -217,9 +244,11 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
 <label>هاشتاغات</label><div class="sm-chips">${tags.map((t, i) => `<button type="button" data-tag="${i}" title="${esc(t.t)}">${esc(t.n)}</button>`).join("")}</div>
 <div id="sm-cnt" style="margin-top:6px"></div></div><div>
 <label>القنوات</label><div class="sm-row"><label class="sm-chk"><input type="checkbox" data-ch="fb" ${p.channels.includes("fb") ? "checked" : ""}> فيسبوك</label><label class="sm-chk"><input type="checkbox" data-ch="ig" ${p.channels.includes("ig") ? "checked" : ""}> انستغرام</label></div>
-<label>الصورة</label><div class="sm-thumbs">${imgs.map(i => `<img class="${i === p.image ? "on" : ""}" data-img="${esc(i)}" src="${esc((typeof REL !== "undefined" ? REL : "") + i)}" alt="">`).join("")}</div>
+<label>الصورة</label><div class="sm-thumbs">${imgs.map(i => `<img class="${i === p.image ? "on" : ""}" data-img="${esc(i)}" src="${esc(imgSrc(i))}" alt="">`).join("")}</div>
 <div class="sm-chips" style="margin-top:6px"><button type="button" data-up="1">رفع صورة</button><button type="button" data-lib="1">من مكتبة الصور</button><button type="button" data-gen="1">توليد صورة بالذكاء</button><button type="button" data-noimg="1">بلا صورة</button></div><input type="file" id="sm-file" accept="image/*" hidden>
 <div id="sm-lib" style="display:none;margin-top:6px"></div>
+<label>أو رابط صورة خارجية (https://…)</label><div class="sm-row" style="grid-template-columns:1fr auto"><input id="sm-eimg" dir="ltr" placeholder="https://example.com/photo.jpg" value="${isHttp(p.image) ? esc(p.image) : ""}"><button type="button" class="sm-b sm" data-eimg="1">استعمال</button></div>
+<div id="sm-igw"></div>
 <label>الموعد</label><input type="datetime-local" id="sm-at" value="${p.at ? dtl(p.at) : ""}">
 <label>المعاينة</label><div class="sm-row"><div class="sm-pv" id="sm-pvf"></div><div class="sm-pv ig" id="sm-pvi"></div></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="sm-b gh" data-save="draft">حفظ كمسودة</button><button type="button" class="sm-b" data-save="sched">جدولة</button><button type="button" class="sm-b al" data-save="now">نشر الآن</button></div></div></div></div>`;
@@ -228,7 +257,10 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
   function bindComposer() {
     const w = $("smw"), p = S.cur, T = () => $("sm-text"), sync = () => { p.text = T().value; preview(); };
     w.querySelector("[data-x]").onclick = closeComposer; T().oninput = sync;
-    $("sm-prod").onchange = e => { p.product = e.target.value; const pr = prodBy(p.product); if (pr && !p.image) p.image = pr.cover || ""; drawComposer(); };
+    $("sm-prod").onchange = e => { if (e.target.value === "__new") { e.target.value = p.product || ""; return extForm(null, x => { p.product = "x:" + x.id; if (!p.image && x.img) p.image = x.img; drawComposer(); }); } p.product = e.target.value; const pr = prodBy(p.product); if (pr && !p.image) p.image = pr.cover || ""; drawComposer(); };
+    const xe = w.querySelector("[data-xe]"); if (xe) xe.onclick = () => extForm(p.product.slice(2), x => { if (!p.image && x.img) p.image = x.img; drawComposer(); });
+    const xd = w.querySelector("[data-xd]"); if (xd) xd.onclick = () => { if (!confirm("حذف هذا المنتج الخارجي من القائمة؟")) return; S.d.settings.ext = (S.d.settings.ext || []).filter(x => "x:" + x.id !== p.product); p.product = ""; persist(); drawComposer(); };
+    w.querySelector("[data-eimg]").onclick = () => { const u = $("sm-eimg").value.trim(); if (!isHttp(u)) return toast("أدخل رابطاً يبدأ بـ https://"); p.image = u; drawComposer(); };
     const ins = t => { const e = T(), a = e.selectionStart || e.value.length; e.value = e.value.slice(0, a) + t + e.value.slice(a); sync(); e.focus(); };
     let lastTpl = null, vi = 0;
     w.querySelectorAll("[data-tpl]").forEach(b => b.onclick = () => { lastTpl = b.dataset.tpl; vi = 0; T().value = fill(TPL[lastTpl][0], prodBy(p.product), "post-" + p.id, 0); sync(); });
@@ -255,12 +287,13 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
     const f = $("sm-pvf"), g = $("sm-pvi"), mk = (e, tag) => { e.innerHTML = `<div class="h"><span class="av"></span>${esc(nm)} <small>${tag}</small></div>${im}<div class="tx"></div>`; e.querySelector(".tx").textContent = txt; };
     mk(f, "فيسبوك"); mk(g, "انستغرام");
     const warn = [];
-    if (p.channels.includes("ig")) { if (!p.image) warn.push("انستغرام يحتاج صورة"); if (txt.length > LIM.ig) warn.push("نص انستغرام " + txt.length + "/" + LIM.ig); if (hashCount(txt) > 30) warn.push("أكثر من 30 هاشتاغاً"); if (/https?:\/\//.test(txt)) warn.push("روابط انستغرام في النص غير قابلة للنقر؛ ضع «الرابط في البايو»"); }
+    if (p.channels.includes("ig")) { if (!p.image) warn.push("انستغرام يحتاج صورة"); if (txt.length > LIM.ig) warn.push("نص انستغرام " + txt.length + "/" + LIM.ig); if (hashCount(txt) > 30) warn.push("أكثر من 30 هاشتاغاً"); if (p.image && !p.igImage && /\.(webp|avif|gif|svg)(\?|$)/i.test(p.image)) warn.push("انستغرام يقبل JPEG/PNG فقط — يُحوَّل تلقائياً عند الجدولة/النشر"); if (/https?:\/\//.test(txt)) warn.push("روابط انستغرام في النص غير قابلة للنقر؛ ضع «الرابط في البايو»"); }
     $("sm-cnt").innerHTML = `<span class="sm-s">${txt.length} حرفاً • ${hashCount(txt)} هاشتاغ</span>` + warn.map(x => `<div class="sm-warn">${esc(x)}</div>`).join("");
   }
   async function saveCur(mode) {
     const p = S.cur; p.text = $("sm-text").value.trim(); if (!p.text && !p.image) return toast("اكتب نصاً أو اختر صورة");
     if (!p.channels.length) return toast("اختر قناة واحدة على الأقل"); if (p.channels.includes("ig") && !p.image) return toast("انستغرام يحتاج صورة");
+    if (mode !== "draft") { try { await ensureIg(p); } catch (e) { toast("تحويل الصورة لانستغرام: " + e.message); return; } }
     if (mode === "sched") { if (!p.at) return toast("حدّد موعد النشر"); if (new Date(p.at) < new Date(Date.now() + 2 * 60e3)) return toast("اختر موعداً في المستقبل"); p.status = "scheduled"; p.via = S.d.settings.runner ? "runner" : "browser"; if (p.via === "browser") await nativeFb(p); }
     else if (mode === "draft") p.status = "draft";
     const i = S.d.posts.findIndex(x => x.id === p.id); if (i < 0) S.d.posts.push(p); else S.d.posts[i] = p;
@@ -269,7 +302,7 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
   }
   /* —— النشر اليومي —— */
   function tabPlan(h) {
-    const r = S.d.rule, ts = slotTimes(r), P = products(), drafts = S.d.posts.filter(p => p.status === "draft").length, sched = S.d.posts.filter(p => p.status === "scheduled").length;
+    const r = S.d.rule, ts = slotTimes(r), P = allProds(), drafts = S.d.posts.filter(p => p.status === "draft").length, sched = S.d.posts.filter(p => p.status === "scheduled").length;
     const dayN = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], hm = m => pad(Math.floor(m / 60) % 24) + ":" + pad(m % 60);
     h.innerHTML = `<div class="sm-c"><h3>قاعدة النشر اليومي</h3><div class="sm-row"><div><label>عدد المنشورات في اليوم</label><input type="number" id="pl-n" min="1" max="12" value="${r.perDay}"></div><div><label>من الساعة</label><input type="time" id="pl-s" value="${r.start}"></div><div><label>إلى الساعة</label><input type="time" id="pl-e" value="${r.end}"></div></div>
 <label>أيام النشر</label><div class="sm-chips">${dayN.map((n, i) => `<button type="button" data-d="${i}" class="${r.days.includes(i) ? "on" : ""}">${n}</button>`).join("")}</div>
@@ -277,7 +310,8 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
 <div class="sm-s" style="margin-top:8px">الأوقات الناتجة يومياً: <b>${ts.map(hm).join("، ")}</b> • المسودات: ${drafts} • المجدول: ${sched}</div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="sm-b" data-fill="7">ملء الأسبوع القادم من المسودات</button><button type="button" class="sm-b gh" data-fill="14">أسبوعان</button><button type="button" class="sm-b gh" data-fill="30">30 يوماً</button></div></div>
 <div class="sm-c"><h3>مولّد منشورات تلقائي</h3><div class="sm-s">يكتب لك مسودات من قوالب الهدف بتدوير المنتجات والصياغات، ثم تراجعها وتعدّلها وتجدولها بضغطة.</div>
-<label>المنتجات</label><div class="sm-chips" id="gn-p">${P.slice(0, 60).map(x => `<button type="button" data-p="${esc(x.slug)}">${esc(x.title.slice(0, 26))}</button>`).join("")}</div><div style="margin-top:6px"><button type="button" class="sm-b sm gh" data-pall="1">تحديد الأفضل (الأعلى خصماً)</button></div>
+<label>المنتجات</label><details class="sm-dd" id="gn-p"><summary><span id="gn-cnt">0 مختار</span></summary><div class="sm-ddl">${P.map(x => `<label class="sm-chk"><input type="checkbox" data-p="${esc(x.slug)}"> ${esc(x.title.slice(0, 40))}${x.ext ? " (خارجي)" : ""}</label>`).join("")}</div></details>
+<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="sm-b sm gh" data-pall="1">تحديد الأفضل (الأعلى خصماً)</button><button type="button" class="sm-b sm gh" data-pclr="1">مسح</button><button type="button" class="sm-b sm gh" data-xnew="1">+ منتج خارجي</button></div><div id="gn-xf"></div>
 <label>الأهداف</label><div class="sm-chips" id="gn-o">${OBJ.map(([k, t]) => `<button type="button" data-o="${k}" class="${["offer", "benefit", "urgent"].includes(k) ? "on" : ""}">${t}</button>`).join("")}</div>
 <div class="sm-row"><div><label>عدد المنشورات</label><input type="number" id="gn-n" min="1" max="60" value="${Math.min(28, r.perDay * 7)}"></div><div><label>هاشتاغات تُلحق</label><select id="gn-t"><option value="">بلا</option>${S.d.settings.hashtags.map((t, i) => `<option value="${i}">${esc(t.n)}</option>`).join("")}</select></div></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="sm-b" data-gen="0">توليد مسودات</button><button type="button" class="sm-b al" data-gen="7">توليد + جدولة أسبوع</button></div></div>`;
@@ -286,10 +320,14 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
     h.querySelectorAll("[data-rc]").forEach(c => c.onchange = sv);
     h.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { const d = +b.dataset.d; r.days = r.days.includes(d) ? r.days.filter(x => x !== d) : r.days.concat(d); persist(); tabPlan(h); });
     h.querySelectorAll("[data-fill]").forEach(b => b.onclick = () => { sv(); fillSchedule(+b.dataset.fill); });
-    h.querySelectorAll("#gn-p [data-p],#gn-o [data-o]").forEach(b => b.onclick = () => b.classList.toggle("on"));
-    h.querySelector("[data-pall]").onclick = () => { const best = P.slice().sort((a, b) => ((b.old || 0) - b.price) / (b.old || 1) - ((a.old || 0) - a.price) / (a.old || 1)).slice(0, 6).map(x => x.slug); h.querySelectorAll("#gn-p [data-p]").forEach(x => x.classList.toggle("on", best.includes(x.dataset.p))); };
+    const cnt = () => { $("gn-cnt").textContent = h.querySelectorAll("#gn-p [data-p]:checked").length + " مختار"; };
+    h.querySelectorAll("#gn-p [data-p]").forEach(c => c.onchange = cnt); h.querySelectorAll("#gn-o [data-o]").forEach(b => b.onclick = () => b.classList.toggle("on"));
+    h.querySelector("[data-pclr]").onclick = () => { h.querySelectorAll("#gn-p [data-p]").forEach(x => x.checked = false); cnt(); };
+    h.querySelector("[data-xnew]").onclick = () => extForm(null, x => { S.keepSel = [...h.querySelectorAll("#gn-p [data-p]:checked")].map(i => i.dataset.p).concat("x:" + x.id); tabPlan(h); h.querySelector("#gn-p").open = true; });
+    if (S.keepSel) { h.querySelectorAll("#gn-p [data-p]").forEach(x => x.checked = S.keepSel.includes(x.dataset.p)); S.keepSel = null; cnt(); }
+    h.querySelector("[data-pall]").onclick = () => { const best = P.slice().sort((a, b) => ((b.old || 0) - b.price) / (b.old || 1) - ((a.old || 0) - a.price) / (a.old || 1)).slice(0, 6).map(x => x.slug); h.querySelectorAll("#gn-p [data-p]").forEach(x => x.checked = best.includes(x.dataset.p)); cnt(); };
     h.querySelectorAll("[data-gen]").forEach(b => b.onclick = async () => {
-      const slugs = [...h.querySelectorAll("#gn-p .on")].map(x => x.dataset.p), objs = [...h.querySelectorAll("#gn-o .on")].map(x => x.dataset.o), ti = $("gn-t").value;
+      const slugs = [...h.querySelectorAll("#gn-p [data-p]:checked")].map(x => x.dataset.p), objs = [...h.querySelectorAll("#gn-o .on")].map(x => x.dataset.o), ti = $("gn-t").value;
       const n = generate({ slugs, objs, count: Math.max(1, Math.min(60, +$("gn-n").value || 7)), tags: ti !== "" ? S.d.settings.hashtags[+ti].t : "" }); if (!n) return;
       toast("✅ وُلّدت " + n + " مسودة"); if (+b.dataset.gen) { sv(); await fillSchedule(+b.dataset.gen); S.tab = "posts"; draw(); } else { S.tab = "posts"; S.filter = "draft"; draw(); }
     });
@@ -320,7 +358,7 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
     S.camp = c; w.classList.add("on"); w.onmousedown = e => { if (e.target === w) closeComposer(); }; drawCamp(isNew);
   }
   function drawCamp(isNew) {
-    const w = $("smw"), c = S.camp, P = products(), pr = prodBy(c.product), m = metrics(c), ulink = src => link(pr, c.utm || "campagne").replace("utm_source=social&utm_medium=organic", "utm_source=" + src + "&utm_medium=paid");
+    const w = $("smw"), c = S.camp, P = allProds(), pr = prodBy(c.product), m = metrics(c), ulink = src => link(pr, c.utm || "campagne").replace("utm_source=social&utm_medium=organic", "utm_source=" + src + "&utm_medium=paid");
     w.innerHTML = `<div class="w"><div class="sm-hd"><h2 style="font-size:1.2rem">${isNew ? "حملة جديدة" : "الحملة"}</h2><button type="button" class="sm-b gh sm" data-x="1">إغلاق</button></div><div class="cols"><div>
 <label>اسم الحملة</label><input id="cm-n" value="">
 <div class="sm-row"><div><label>المنصة</label><select id="cm-pl"><option value="both">فيسبوك + انستغرام</option><option value="fb">فيسبوك</option><option value="ig">انستغرام</option></select></div><div><label>الهدف</label><select id="cm-ob">${Object.entries(OBJS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></div><div><label>الحالة</label><select id="cm-st">${Object.entries(CST).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></div></div>
