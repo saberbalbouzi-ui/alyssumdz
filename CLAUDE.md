@@ -27,6 +27,7 @@
 ## مراجع محفوظة
 - `docs/shopify-architecture-report.md`: تقرير تقنيات Shopify (Rails/React/Polaris/GraphQL/Functions/Kafka…) وما نأخذه لمنصتنا SaaS (multi-tenant بـ`store_id`، صلاحيات، Extensions، أحداث وWebhooks، API-first، نظام تصميم خاص). محفوظ بطلب صاحب المتجر ليُعمل به؛ ارجع إليه عند أي عمل على المنصة/SaaS/لوحة الإدارة.
 - `docs/dashboard-design-reference.md`: وصف لقطة لوحة SaaS «زجاج داكن أخضر» التي أرسلها صاحب المتجر كهدف بصري (هوية الألوان، تخطيط الشريط الجانبي/العلوي/بطاقات الإحصاء/المخططات/الجداول) وما أُنجز منها وما تبقى كمخطط عمل. محفوظ بطلبه ليُبنى عليه؛ ارجع إليه عند أي عمل على مظهر اللوحة أو صفحتها الرئيسية.
+- `docs/shopify-admin-modules.md`: وحدات لوحة Shopify للتاجر (27 وحدة: Dashboard/Products/Inventory/Orders/Returns/Customers/Online Store/Pages/Marketing/Discounts/Analytics/Payments/Shipping/POS/Channels/Staff/Flow/Apps/AI…) مع جدول مطابقتها لما نملكه وترتيب الأولويات (أساسية/مهمة/توسّع). محفوظ بطلب صاحب المتجر لبناء مخطط العمل؛ ارجع إليه عند تخطيط أي وحدة جديدة في اللوحة. المحرّر يُعدّ وحدة رئيسية (Store Builder) لا «صفحات» عادية.
 
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
