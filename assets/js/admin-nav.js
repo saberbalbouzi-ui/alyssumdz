@@ -79,7 +79,7 @@ const AdminNav = (() => {
   function libView(id) {
     const x = libAll().find(q => q.id === id); if (!x) return; let v = $("tl-view");
     if (!v) { v = document.createElement("div"); v.id = "tl-view"; v.onclick = e => { if (e.target === v) v.style.display = "none"; }; document.body.appendChild(v); }
-    v.innerHTML = `<div class="tv-box"><div class="tv-top"><b>${esc(x.n)}</b><span>${x.alyssum ? `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyPreview()">معاينة</button> <button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyEdit()">تعديل</button> <button type="button" class="small gold" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyInstall()">تثبيت</button>` : `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button>`} <button type="button" class="small gray" onclick="document.getElementById('tl-view').style.display='none'">إغلاق</button></span></div><div class="tv-body"><img alt="" src="assets/pages/templates/thumbs/${esc(x.id)}-full.jpg?v=${V}" onerror="this.onerror=null;this.src='assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}'"></div></div>`;
+    v.innerHTML = `<div class="tv-box"><div class="tv-top"><b>${esc(x.n)}</b><span>${x.alyssum ? `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyPreview()">معاينة</button> <button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyEdit()">تعديل</button> <button type="button" class="small gold" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyInstall()">تثبيت على الرئيسية</button> <button type="button" class="small gold" title="يطبّق أسلوب أليسوم (الهيدر والفوتر والخلفية والزجاج الأخضر) على كل صفحات المنتجات مع حفظ الأصل للاسترجاع" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyInstallProductsUi()">تثبيت على صفحات المنتجات</button>` : `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button>`} <button type="button" class="small gray" onclick="document.getElementById('tl-view').style.display='none'">إغلاق</button></span></div><div class="tv-body"><img alt="" src="assets/pages/templates/thumbs/${esc(x.id)}-full.jpg?v=${V}" onerror="this.onerror=null;this.src='assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}'"></div></div>`;
     v.style.display = "flex";
   }
   /* ══ قالب «أليسوم»: معاينة (نافذة بأجهزتها) / تعديل (في المطوّر) / تثبيت (بصور المتجر وروابطه) ══ */
@@ -128,6 +128,56 @@ const AdminNav = (() => {
     const cat = PB.mkS([PB.mkC([PB.mkW("heading", { text: "كل منتجاتنا الطبيعية", tag: "h2", fs: { d: 30, m: 24 }, fw: "900", ta: { d: "start" }, color: "#ffffff" }), PB.mkW("html", { code: '<div class="chips" id="chips"></div><div class="grid aly-grid" id="grid"></div>' })])], { cw: { d: 1240 }, cid: "products", pad: { d: [10, 20, 30, 20], m: [6, 16, 20, 16] } });
     cat.grp = "main"; page.sections.splice(bi >= 0 ? bi + 1 : page.sections.length - 1, 0, cat);
     return page;
+  }
+  /* ───── صفحات المنتجات بأسلوب أليسوم: يُستبدل هيدر/شريط/فوتر الصفحة بنظيرها في القالب، ويُضاف CSS القالب + CSS صفحة المنتج (alyssum-product.css)
+     فتبقى بيانات المنتج وقسم الطلب ومحتواه الخاص كما هي، لكن بالخلفية والزجاج الأخضر والأزرار نفسها ───── */
+  let ALYPC = null;
+  const alyHas = (n, t) => { let f = false; alyWalk(n, x => { if (x.type === t) f = true; }); return f; };
+  async function alySkinProduct(P) {
+    if (ALYPC === null) { try { const r = await fetch("assets/pages/templates/alyssum-product.css?t=" + Date.now()); ALYPC = r.ok ? await r.text() : ""; } catch (_) { ALYPC = ""; } }
+    const tpl = alyLocalize(await alyLoad()), top = tpl.sections.find(sc => alyHas(sc, "shdr")), foot = tpl.sections.find(sc => alyHas(sc, "sfoot"));
+    if (!top || !foot) throw new Error("قالب أليسوم ناقص");
+    const isTop = sc => alyHas(sc, "sbar") || alyHas(sc, "shdr"), isFoot = sc => alyHas(sc, "sfoot");
+    top.grp = "top"; foot.grp = "bot";
+    P.sections = [top].concat((P.sections || []).filter(sc => !isTop(sc) && !isFoot(sc)).map(sc => { if (sc.grp === "top" || sc.grp === "bot") sc.grp = "main"; return sc; }), [foot]);
+    alyDarken(P.sections);
+    P.tplCss = (tpl.css || "") + "\n" + (ALYPC || ""); P.tplSkin = "alyssum";
+    return P;
+  }
+  /* تحويل ألوان عناصر الصفحة الفاتحة إلى زجاج أخضر داكن: الخلفيات الفاتحة ← زجاج شفاف بحدّ أخضر، والنصوص الداكنة ← فاتحة، وتدرّجات الأقسام الفاتحة تُحذف */
+  const aRGB = c => { c = String(c || "").trim(); let m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c); if (m) { let h = m[1]; if (h.length === 3) h = h.replace(/./g, "$&$&"); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4), 16), 1]; } m = /^rgba?\(([^)]+)\)$/i.exec(c); if (m) { const a = m[1].split(",").map(x => parseFloat(x)); return [a[0], a[1], a[2], a[3] == null ? 1 : a[3]]; } return null; };
+  const aLum = r => (.299 * r[0] + .587 * r[1] + .114 * r[2]) / 255, aLight = c => { const r = aRGB(c); return !!r && r[3] > .5 && aLum(r) > .7; }, aDark = c => { const r = aRGB(c); return !!r && r[3] > .3 && aLum(r) < .5; };
+  const A_GLASS = "rgba(12,54,29,.82)", A_LINE = "rgba(134,239,172,.3)", A_TXT = "#ecfdf5";
+  function alyDarken(sections) {
+    (sections || []).forEach(sec => alyWalk(sec, n => {
+      const s = n.set; if (!s) return; const isBox = !n.type || n.type === "col", t = n.type || "", keep = /^(shdr|sbar|sfoot|button|image|orderorig|html|products|pgal|pcard|shopcats|herow|video|marquee|map|contact|poffers|tbadges|pprice)$/.test(t);
+      if (aLight(s.bg)) { if (isBox) { s.bg = ""; } else if (!keep || t === "tbadges") { s.bg = A_GLASS; s.bc = A_LINE; s.bw = 1; if (s.shadow && s.shadow !== "none") s.shadow = "md"; } }
+      if (aLight(s.bc)) s.bc = A_LINE;
+      ["grad1", "grad2"].forEach(k => { if (aLight(s[k])) s[k] = ""; });
+      if (!keep && aDark(s.color)) s.color = A_TXT;
+      if (t === "tbadges") { ["cbg"].forEach(k => { if (aLight(s[k])) s[k] = "rgba(21,128,61,.2)"; }); if (aDark(s.cc)) s.cc = "#d9f99d"; if (aLight(s.cbc)) s.cbc = A_LINE; }
+    }));
+  }
+  /* تثبيت أسلوب أليسوم على صفحات المنتجات (الكل أو المختارة) ثم حفظها مباشرة؛ الأصل يُحفظ في assets/pages/_conv/ للاسترجاع */
+  async function alyInstallProducts(slugs, opt) {
+    const list = (slugs && slugs.length ? slugs : aProds().map(p => p.slug)), done = [], fail = [];
+    for (const slug of list) {
+      try {
+        await PBConvert.edit("product", slug); const P = PBApp.E && PBApp.E.page; if (!P) throw new Error("لم تُفتح");
+        await alySkinProduct(P); PBApp.E.nextLabel = "أسلوب أليسوم لصفحة المنتج"; PBApp.E.dirty = true;
+        await PBConvert.saveDirect(P, PBApp.siteCtx()); await PBBind.commit(); PBApp.E.dirty = false; done.push(slug);
+        if (opt && opt.progress) opt.progress(done.length, list.length, slug);
+      } catch (e) { console.warn("alyInstallProducts", slug, e); fail.push(slug + ": " + e.message); }
+    }
+    return { done, fail };
+  }
+  async function alyInstallProductsUi() {
+    const L = aProds(); if (!L.length) { toast("لا توجد منتجات"); return; }
+    if (!confirm("تطبيق أسلوب «أليسوم» على " + L.length + " صفحة منتج:\n\n• هيدر وفوتر وخلفية وبطاقات القالب بدل التصميم الحالي\n• بيانات المنتج والسعر والعروض ونموذج الطلب كما هي\n• يُحفظ الأصل في assets/pages/_conv/ ويمكن استرجاعه من «تعديل» الصفحة\n• يُنشر مباشرة على الموقع\n\nمتابعة؟")) return;
+    toast("⏳ جارِ تحويل صفحات المنتجات…");
+    const r = await alyInstallProducts(L.map(p => p.slug), { progress: (n, t, sl) => toast("⏳ " + n + "/" + t + " — " + sl) });
+    try { PBApp.close && PBApp.close(); } catch (_) { }
+    toast(r.fail.length ? "⚠ تم " + r.done.length + " وفشل " + r.fail.length + ": " + r.fail[0] : "✅ حُوّلت " + r.done.length + " صفحة منتج بأسلوب أليسوم (تظهر على الموقع خلال دقيقة)");
   }
   async function alyPreview() {
     try {
@@ -299,5 +349,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { alyDeal, alyPreview, alyEdit, alyInstall, libOpen, libClose, libSet, libUse, libView, libPreview, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

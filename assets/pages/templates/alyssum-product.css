@@ -1,0 +1,62 @@
+/* ═════ أسلوب «أليسوم» لصفحات المنتجات (يُضاف بعد css القالب الرئيسي؛ انظر AdminNav.alySkinProduct) ═════ */
+.pb-page,.pb-sec{color:#ecfdf5}
+.pb-sec{background:transparent!important;background-image:none!important}
+.pb-sec::before,.pb-sec::after{display:none!important}
+.pb-sec h1,.pb-sec h2,.pb-sec h3,.pb-sec h4,.pb-sec .pb-t,.pb-sec .pb-t *,.pb-sec p,.pb-sec li,.pb-sec label,.pb-sec small,.pb-sec b,.pb-sec strong,.pb-sec em{color:#ecfdf5!important}
+.pb-sec h1,.pb-sec h2{text-shadow:0 2px 22px rgba(0,0,0,.45)}
+.pb-sec p,.pb-sec .pb-t p{color:#c5dccd!important}
+.pb-sec a{color:#bef264}
+/* بطاقات زجاجية داكنة */
+.pb-colin,.pbox,.offer,.total-box,.cod-note,.dtype,.lp-card,.pb-tbc,.pb-card,.card,.order-form,.pb-order,#pb-order,.form-card,.box{
+  background:linear-gradient(145deg,rgba(12,54,29,.88),rgba(3,16,9,.94))!important;border:1px solid rgba(134,239,172,.28)!important;border-radius:20px;
+  box-shadow:0 18px 44px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14)!important;color:#ecfdf5!important;backdrop-filter:blur(16px)}
+.pb-tbc{border-radius:999px!important;background:rgba(21,128,61,.2)!important;border-color:rgba(134,239,172,.4)!important;color:#d9f99d!important;box-shadow:none!important}
+.pb-tbc *{color:#d9f99d!important}
+.offer{border-radius:16px}.offer.on,.offer:hover{border-color:#bef264!important;box-shadow:0 0 0 1px rgba(190,242,100,.5),0 14px 34px rgba(74,222,128,.25)!important}
+.thumb{background:rgba(255,255,255,.06)!important;border:1px solid rgba(134,239,172,.3)!important;border-radius:12px}
+.thumb.on,.thumb:hover{border-color:#bef264!important}
+/* السعر */
+.price-now,.pb-sec .price-now,.pb-sec .price{color:#bef264!important;text-shadow:0 0 26px rgba(190,242,100,.45)}
+.old,.pb-sec .old,.pb-sec s,.pb-sec del{color:#8fb09b!important}
+.save-pill,.best{background:rgba(74,222,128,.18)!important;color:#d9f99d!important;border:1px solid rgba(134,239,172,.45)!important}
+/* الحقول والأزرار */
+.pb-sec input,.pb-sec select,.pb-sec textarea{background:rgba(255,255,255,.07)!important;color:#fff!important;border:1px solid rgba(134,239,172,.32)!important;border-radius:12px}
+.pb-sec input::placeholder,.pb-sec textarea::placeholder{color:#8fb09b!important}
+.pb-sec input:focus,.pb-sec select:focus,.pb-sec textarea:focus{border-color:#bef264!important;box-shadow:0 0 0 3px rgba(190,242,100,.18)!important;outline:0}
+.pb-sec option{background:#04180d;color:#ecfdf5}
+.btn-cart2,.btn-order,.pb-sec .lp-btn,.pb-sec .pb-btn{background:linear-gradient(180deg,#bef264,#4ade80 55%,#22c55e)!important;color:#052e16!important;border:0!important;border-radius:14px!important;font-weight:900;box-shadow:0 12px 30px rgba(74,222,128,.38),inset 0 1px 0 rgba(255,255,255,.7)!important}
+.btn-cart2 *,.btn-order *,.pb-sec .lp-btn *{color:#052e16!important}
+.btn-cart2:hover,.btn-order:hover{transform:translateY(-3px);filter:brightness(1.06)}
+.pb-sec .lp-btn-gold{background:rgba(255,255,255,.06)!important;color:#ecfdf5!important;border:1px solid rgba(134,239,172,.4)!important;box-shadow:none!important}
+.pb-sec .lp-btn-gold *{color:#ecfdf5!important}
+.total-box,.total-box *{color:#ecfdf5!important}
+/* الأسئلة/الآراء/الأقسام التسويقية */
+.q,.p,.u{color:#ecfdf5!important}
+.pb-sec .pb-acc,.pb-sec .pb-acc-i,.pb-sec details{background:rgba(255,255,255,.05)!important;border:1px solid rgba(134,239,172,.25)!important;border-radius:16px}
+.pb-sec hr,.pb-sec .pb-div{border-color:rgba(134,239,172,.2)!important}
+/* نموذج الطلب والشريط الترويجي */
+.form,#order-form,.pb-ofraw{background:transparent!important;color:#ecfdf5!important;box-shadow:none!important;border-color:transparent!important}
+.form h3,.form label,.form small,.form .field label{color:#ecfdf5!important}
+.dtype{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px!important}
+.dtype label{background:rgba(255,255,255,.06)!important;color:#ecfdf5!important;border:1px solid rgba(134,239,172,.3)!important;border-radius:12px!important;padding:10px 12px;cursor:pointer}
+.dtype label:has(input:checked){background:rgba(74,222,128,.2)!important;border-color:#bef264!important;color:#fff!important}
+.dtype label span{color:inherit!important}
+.btn-wa{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.06)!important;color:#d9f99d!important;border:1px solid rgba(134,239,172,.4)!important;border-radius:14px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)!important;font-weight:800}
+.deal-bar,.deal-bar *{color:#ecfdf5!important}
+.deal-bar{background:linear-gradient(145deg,rgba(12,54,29,.88),rgba(3,16,9,.94))!important;border:1px solid rgba(134,239,172,.3)!important;border-radius:18px!important;box-shadow:0 14px 34px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14)!important}
+.deal-timer{background:rgba(74,222,128,.16)!important;border:1px solid rgba(134,239,172,.45)!important;color:#bef264!important;border-radius:12px!important}
+.deal-timer *{color:#bef264!important}
+.cod-note{color:#d9f99d!important;text-align:center}
+.coupon-box input{background:rgba(255,255,255,.07)!important;color:#fff!important;border:1px solid rgba(134,239,172,.32)!important}
+.pb-ofraw .field input,.pb-ofraw .field select{width:100%}
+/* الهيدر والفوتر: ألوان واضحة */
+.pb-hd a,.pb-hd .mi-t,.pb-hd .mi-dd>a,.pb-hd .menu a{color:#ecfdf5!important}
+.pb-hd .mi-t:hover,.pb-hd a:hover{color:#bef264!important}
+.pb-sf a,.pb-sf .pb-sf-h{color:#d9f99d!important}
+.pb-sf,.pb-sf p,.pb-sf span,.pb-sf small{color:#b9d4c3!important}
+.pb-sf .pb-sf-h{color:#fff!important}
+main h1,main h2,main h3,main h4,.pb-page h2,.pb-page h3{color:#ecfdf5!important}
+main .sec-sub,main .lead{color:#b9d4c3!important}
+.gthumbs{display:flex;gap:10px;flex-wrap:wrap}
+.gthumbs img{flex:0 0 78px!important;width:78px!important;height:78px!important;object-fit:cover;border-radius:12px;border:2px solid rgba(134,239,172,.3)!important;opacity:.75}
+.gthumbs img.on,.gthumbs img:hover{border-color:#bef264!important;opacity:1}

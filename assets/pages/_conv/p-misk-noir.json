@@ -1,0 +1,2402 @@
+{
+ "v": 1,
+ "title": "مسك اسود+مسك ابيض",
+ "slug": "misk-noir",
+ "desc": "المسك الأسود والأبيض للرقية الشرعية، عطر خارجي برائحة ثابتة ومميزة يُستخدم كعامل مساعد ضمن الروتين الشرعي الرقية الشرعية .",
+ "bg": "transparent",
+ "ff": "",
+ "header": false,
+ "footer": false,
+ "css": "\n:root{\n  --green:#23463a;\n  --green-2:#2f5d4f;\n  --gold:#c7a56f;\n  --gold-2:#e8d0a3;\n  --cream:#fbf8f2;\n  --ink:#17201c;\n  --muted:#4f5a55;\n  --line:rgba(35,70,58,.10);\n  --glass:rgba(255,255,255,.72);\n  --shadow-xl:0 28px 80px rgba(25,48,40,.14);\n  --shadow-lg:0 18px 50px rgba(25,48,40,.10);\n  --shadow-md:0 12px 32px rgba(25,48,40,.08);\n  --radius-xl:32px;\n  --radius-lg:24px;\n}\nhtml{scroll-behavior:smooth}\nbody{\n  background:\n    radial-gradient(circle at 12% 10%, rgba(199,165,111,.11), transparent 24rem),\n    radial-gradient(circle at 90% 17%, rgba(47,93,79,.10), transparent 28rem),\n    linear-gradient(180deg,#fcfaf6 0%,#f8f4ec 52%,#fcfaf6 100%);\n  color:var(--ink);\n}\nbody:before{\n  content:\"\";\n  position:fixed; inset:0; pointer-events:none; z-index:-1;\n  background-image:linear-gradient(rgba(35,70,58,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(35,70,58,.018) 1px,transparent 1px);\n  background-size:34px 34px;\n  mask-image:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 78%);\n}\n.container{width:min(1240px,calc(100% - 32px))}\n.topbar{\n  position:relative; overflow:hidden;\n  padding:10px 16px;\n  background:linear-gradient(90deg,#18392f,#2f5d4f 48%,#18392f);\n  box-shadow:0 8px 25px rgba(24,57,47,.15);\n  letter-spacing:.1px;\n}\n.topbar:after{\n  content:\"\"; position:absolute; inset:0; pointer-events:none;\n  background:linear-gradient(100deg,transparent 15%,rgba(255,255,255,.13) 50%,transparent 85%);\n  transform:translateX(-100%); animation:shine 7s linear infinite;\n}\n@keyframes shine{to{transform:translateX(100%)}}\n\n.site{\n  position:sticky; top:0; z-index:30;\n  background:rgba(252,250,246,.82);\n  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);\n  border-bottom:1px solid rgba(35,70,58,.08);\n}\n.site .container{min-height:74px}\n.logo{font-size:29px!important;font-weight:900;letter-spacing:-1px;color:var(--green)!important}\n.logo span{color:var(--gold)!important}\n.menu a{font-weight:800!important;color:#3d4a45!important;transition:.25s ease}\n.menu a:hover{color:var(--green)!important}\n.hd-wa{\n  border:1px solid rgba(35,70,58,.12)!important;\n  background:#fff!important;\n  color:var(--green)!important;\n  box-shadow:0 8px 20px rgba(35,70,58,.07);\n}\n.cart-btn{\n  box-shadow:0 8px 20px rgba(35,70,58,.06);\n  border:1px solid rgba(35,70,58,.10)!important;\n}\n\n.crumbs{\n  margin:20px 0 10px!important;\n  color:#7b867f!important;\n  font-size:.88rem!important;\n}\n.crumbs a{font-weight:800;color:var(--green)!important}\n\n.lp-hero{\n  position:relative;\n  padding:26px 0 84px!important;\n  align-items:stretch!important;\n}\n.lp-hero:before{\n  content:\"\"; position:absolute; left:-9vw; top:28px;\n  width:28vw; height:28vw; max-width:380px; max-height:380px;\n  border:1px solid rgba(199,165,111,.16); border-radius:50%;\n  box-shadow:0 0 0 28px rgba(199,165,111,.035),0 0 0 56px rgba(199,165,111,.02);\n  pointer-events:none;\n}\n.pbox{\n  position:relative; padding:18px!important;\n  border:1px solid rgba(35,70,58,.09)!important;\n  border-radius:var(--radius-xl)!important;\n  background:rgba(255,255,255,.76)!important;\n  box-shadow:var(--shadow-xl)!important;\n  backdrop-filter:blur(16px);\n}\n.gmain{\n  min-height:540px!important;\n  border-radius:25px!important;\n  background:\n    radial-gradient(circle at 50% 30%,rgba(255,255,255,.95),transparent 48%),\n    linear-gradient(145deg,#f3eee4,#faf7f1)!important;\n  border:1px solid rgba(35,70,58,.05);\n}\n.gmain img{\n  transition:transform .7s cubic-bezier(.2,.7,.2,1);\n  filter:drop-shadow(0 26px 24px rgba(22,48,39,.13));\n}\n.pbox:hover .gmain img{transform:scale(1.035) translateY(-5px)}\n.pthumbs{margin-top:15px}\n.gthumbs{gap:10px!important}\n.gthumbs>*{border-radius:16px!important;border:1px solid var(--line)!important;overflow:hidden}\n.gthumbs img{width:100%;height:84px;object-fit:cover;cursor:pointer;transition:.2s}\n.gthumbs img:hover{opacity:.8}\n.gthumbs img.active{border:2px solid var(--gold)!important;opacity:1}\n.trust-strip span{\n  background:rgba(255,255,255,.88)!important;\n  border:1px solid var(--line)!important;\n  box-shadow:0 8px 18px rgba(35,70,58,.05);\n}\n\n.lp-info{\n  display:flex!important; flex-direction:column!important; justify-content:center!important;\n  padding:10px 4px 10px 10px;\n}\n.eyebrow{\n  width:max-content;\n  padding:8px 14px!important;\n  border:1px solid rgba(199,165,111,.26);\n  background:linear-gradient(135deg,#f4ecde,#fbf7ef)!important;\n  color:var(--green)!important;\n  border-radius:999px!important;\n  font-weight:900!important;\n  box-shadow:0 8px 18px rgba(199,165,111,.08);\n}\n.lp-info h1{\n  font-size:clamp(40px,5vw,68px)!important;\n  line-height:1.08!important;\n  letter-spacing:-1.8px;\n  color:var(--green)!important;\n  margin:13px 0 12px!important;\n  text-wrap:balance;\n}\n.lp-sub{\n  font-size:clamp(19px,2vw,26px)!important;\n  line-height:1.55!important;\n  font-weight:900!important;\n  color:#27332e!important;\n  max-width:700px;\n}\n.lp-desc{\n  font-size:17px!important;\n  line-height:1.95!important;\n  color:var(--muted)!important;\n  max-width:720px;\n}\n.stars{color:#bb8c36!important}\n.stars small{color:#718078!important}\n.pd-tags{gap:10px!important}\n.tag{\n  border:1px solid rgba(35,70,58,.08)!important;\n  background:#fff!important;\n  border-radius:999px!important;\n  padding:9px 13px!important;\n  box-shadow:0 7px 17px rgba(35,70,58,.05);\n}\n.price-box{\n  margin:13px 0!important;\n  display:flex!important; align-items:center!important; gap:13px!important; flex-wrap:wrap;\n}\n.price-now{font-size:42px!important;color:var(--green)!important;font-weight:900!important}\n.price-old{font-size:20px!important;color:#9b978e!important}\n.save-pill{\n  background:#edf4ef!important;color:var(--green)!important;border:1px solid rgba(35,70,58,.10);\n  padding:6px 10px;border-radius:999px;font-weight:900\n}\n.deal-bar{\n  border:1px solid rgba(199,165,111,.30)!important;\n  background:linear-gradient(135deg,#fcf7ed,#fff)!important;\n  box-shadow:0 12px 30px rgba(199,165,111,.10)!important;\n  border-radius:22px!important;\n}\n.deal-timer{\n  border-radius:16px!important;\n  background:var(--green)!important;\n  color:#fff!important;\n  padding:9px 14px!important;\n  font-weight:900!important;\n}\n.offers{\n  display:grid;gap:10px;margin:14px 0;\n}\n.offer-card{\n  border:1px solid rgba(35,70,58,.08);\n  border-radius:18px;\n  background:#fff;\n}\n.mini-points{gap:9px!important}\n.mini-points>div{\n  background:rgba(255,255,255,.86)!important;\n  border:1px solid var(--line)!important;\n  box-shadow:0 8px 18px rgba(35,70,58,.045)!important;\n  border-radius:15px!important;\n}\n.form{\n  position:relative;\n  margin-top:18px!important;\n  padding:24px!important;\n  border-radius:26px!important;\n  border:1px solid rgba(35,70,58,.09)!important;\n  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(250,248,242,.96))!important;\n  box-shadow:var(--shadow-lg)!important;\n}\n.form h3{\n  font-size:21px!important;color:var(--green)!important;margin-bottom:17px!important\n}\n.field input,.field select{\n  min-height:52px!important;\n  border:1px solid rgba(35,70,58,.14)!important;\n  background:#fff!important;border-radius:14px!important;\n  outline:none!important;\n  transition:.22s ease!important;\n}\n.field input:focus,.field select:focus{\n  border-color:rgba(47,93,79,.55)!important;\n  box-shadow:0 0 0 4px rgba(47,93,79,.09)!important;\n}\n.dtype{\n  border:1px solid rgba(35,70,58,.08);\n  background:#f6f3eb;\n  border-radius:15px;\n  padding:8px!important;\n}\n.dtype label{\n  background:#fff;border-radius:12px;padding:10px 12px!important;\n  border:1px solid transparent;\n}\n.total-box{\n  margin:12px 0!important;\n  border-radius:18px!important;\n  border:1px solid rgba(35,70,58,.09)!important;\n  background:#f8f5ed!important;\n  color:var(--ink)!important;\n}\n.total-box small{color:var(--muted)!important;font-weight:700!important}\n.total-box b,.total-box #fee{color:var(--green)!important}\n.btn-order,.btn-gold,.lp-btn-gold{\n  background:linear-gradient(135deg,#d0ae78,#e7cb9b)!important;\n  color:#19231f!important;\n  box-shadow:0 14px 28px rgba(199,165,111,.22)!important;\n  border-radius:16px!important;\n}\n.btn-wa,.btn-cart2{\n  border-radius:15px!important;\n  transition:.25s ease!important;\n}\n.btn-order:hover,.btn-wa:hover,.btn-cart2:hover,.lp-btn:hover{transform:translateY(-2px)}\n\n.lp-sec{\n  position:relative;\n  padding:90px 0!important;\n}\n.lp-sec.alt{\n  background:linear-gradient(180deg,rgba(255,255,255,.54),rgba(245,241,233,.58));\n  border-top:1px solid rgba(35,70,58,.055);\n  border-bottom:1px solid rgba(35,70,58,.055);\n}\n.lp-grid{gap:48px!important}\n.lp-imgcard{\n  border-radius:30px!important;\n  box-shadow:var(--shadow-xl)!important;\n  border:1px solid rgba(35,70,58,.08)!important;\n  overflow:hidden!important;\n  background:#fff!important;\n}\n.lp-imgcard img{transition:transform .7s cubic-bezier(.2,.7,.2,1)!important}\n.lp-imgcard:hover img{transform:scale(1.035)}\n.lp-textcard{\n  padding:38px!important;\n  border-radius:28px!important;\n  border:1px solid rgba(35,70,58,.08)!important;\n  box-shadow:var(--shadow-md)!important;\n  background:rgba(255,255,255,.82)!important;\n  backdrop-filter:blur(10px);\n}\n.lp-textcard h2,.lp-head h2{\n  color:var(--green)!important;\n  letter-spacing:-.6px;\n}\n.lp-textcard h2{font-size:clamp(30px,3vw,44px)!important;line-height:1.2!important}\n.lp-textcard p{color:var(--muted)!important;font-size:17px!important}\n.lp-bullets{gap:10px!important}\n.lp-bullets>div{\n  position:relative;padding:14px 16px 14px 18px!important;\n  background:#f7f4ed!important;border:1px solid rgba(35,70,58,.07)!important;\n  border-radius:16px!important;\n}\n.lp-bullets>div:before{\n  content:\"✓\";position:absolute;right:auto;left:12px;top:50%;transform:translateY(-50%);\n  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;\n  background:#e8efe9;color:var(--green);font-weight:900;font-size:12px;\n}\n[dir=\"rtl\"] .lp-bullets>div{padding-left:45px!important;padding-right:16px!important}\n.lp-head{margin-bottom:34px!important;text-align:center}\n.lp-head h2{font-size:clamp(31px,3vw,46px)!important}\n.lp-head p{color:var(--muted)!important}\n.lp-cards{gap:16px!important}\n.lp-card{\n  border:1px solid rgba(35,70,58,.08)!important;\n  border-radius:22px!important;\n  background:rgba(255,255,255,.86)!important;\n  box-shadow:var(--shadow-md)!important;\n  transition:.35s ease!important;\n}\n.lp-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)!important}\n.lp-card .ic{\n  width:54px;height:54px;border-radius:16px;display:grid;place-items:center;\n  background:linear-gradient(135deg,#edf3ee,#f4ecde);\n}\n.lp-stepnum{\n  box-shadow:0 10px 22px rgba(35,70,58,.16);\n}\n.lp-final{\n  position:relative;overflow:hidden;\n  border-radius:34px!important;\n  padding:58px 30px!important;\n  background:\n   radial-gradient(circle at 10% 10%,rgba(231,203,155,.22),transparent 25%),\n   radial-gradient(circle at 90% 90%,rgba(255,255,255,.07),transparent 26%),\n   linear-gradient(135deg,#17392f,#2f5d4f)!important;\n  box-shadow:var(--shadow-xl)!important;\n}\n.lp-final:after{\n  content:\"\";position:absolute;inset:14px;border:1px solid rgba(255,255,255,.10);border-radius:25px;pointer-events:none\n}\n.lp-final h2{font-size:clamp(31px,4vw,52px)!important;color:#f0d39d!important;line-height:1.2!important}\n.lp-final p{font-size:17px!important;color:rgba(255,255,255,.84)!important;max-width:820px}\n.lp-btn{\n  min-height:56px!important;padding:14px 22px!important;border-radius:16px!important;font-weight:900!important;\n}\n.lp-btn-green{\n  background:rgba(255,255,255,.10)!important;color:#fff!important;\n  border:1px solid rgba(255,255,255,.2)!important;\n}\n.sticky-cta{\n  border-top:1px solid rgba(35,70,58,.1)!important;\n  background:rgba(252,250,246,.90)!important;\n  backdrop-filter:blur(18px)!important;\n  box-shadow:0 -10px 28px rgba(35,70,58,.06)!important;\n}\nfooter.site{\n  position:relative!important;\n  background:#132d25!important;\n  color:rgba(255,255,255,.76)!important;\n  border-bottom:0!important;\n  margin-top:0;\n}\nfooter.site a{color:#f0d39d!important}\nfooter.site h4{color:#fff!important}\n.copy{border-top:1px solid rgba(255,255,255,.10)!important}\n\n/* Avis screenshots */\n.reviews-screenshots{\n  display:grid;\n  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));\n  gap:16px;\n  margin-top:20px;\n}\n.reviews-screenshots img{\n  width:100%;\n  border-radius:16px;\n  box-shadow:0 12px 32px rgba(25,48,40,.12);\n  border:1px solid rgba(35,70,58,.08);\n  transition:transform .3s ease;\n}\n.reviews-screenshots img:hover{\n  transform:translateY(-4px);\n}\n\n@media (max-width:980px){\n  .lp-cards[style*=\"repeat(4\"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}\n  .lp-cards[style*=\"repeat(3\"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}\n\n  .lp-hero{padding-top:10px!important}\n  .gmain{min-height:390px!important}\n  .lp-info{padding:8px 0}\n  .lp-info h1{font-size:42px!important}\n  .lp-sec{padding:68px 0!important}\n  .lp-textcard{padding:26px!important}\n}\n@media (max-width:640px){\n  .lp-cards[style*=\"repeat(4\"]{grid-template-columns:1fr!important}\n  .lp-cards[style*=\"repeat(3\"]{grid-template-columns:1fr!important}\n\n  .container{width:min(100% - 20px,1240px)}\n  .site .container{min-height:66px}\n  .menu{display:none!important}\n  .hd-wa{display:none!important}\n  .crumbs{font-size:.78rem!important}\n  .gmain{min-height:330px!important}\n  .lp-info h1{font-size:37px!important}\n  .lp-sub{font-size:18px!important}\n  .lp-desc{font-size:15.5px!important}\n  .form{padding:18px!important}\n  .lp-sec{padding:56px 0!important}\n  .lp-textcard h2{font-size:29px!important}\n  .lp-card{padding:20px!important}\n  .lp-final{padding:42px 20px!important}\n  .reviews-screenshots{grid-template-columns:1fr!important}\n}\n@media (prefers-reduced-motion:reduce){\n  *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}\n}\n\n/* نموذج الطلب العريض */\n.order-wide{margin-top:2rem}\n.order-wide .form{max-width:none!important;margin-top:0!important}\n@media(min-width:960px){\n  .order-wide .form{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem 1.2rem;align-items:end;padding:26px 32px!important}\n  .order-wide .form>h3{grid-column:1/-1;margin:0}\n  .order-wide .form .frow{display:contents}\n  .order-wide .form .field{margin:0}\n  .order-wide .form #desk-wrap{grid-column:span 2}\n  .order-wide .form .dtype{grid-column:span 2;margin:0}\n  .order-wide .form .coupon-box{grid-column:span 2;margin:0!important;flex-wrap:nowrap!important;align-self:stretch;align-items:center}\n  .order-wide .form .coupon-box .btn-cart2{width:auto!important;flex:none;margin:0}\n  .order-wide .form #prod-coupon-msg{grid-column:1/-1;margin:0!important;min-height:0!important}\n  .order-wide .form .total-box{grid-column:span 2;margin:0;align-self:stretch}\n  .order-wide .form .btn-order{grid-column:span 2;margin:0;align-self:stretch;font-size:1.1rem}\n  .order-wide .form .btn-wa,.order-wide .form .btn-cart2#add-cart{grid-column:span 2;margin:0}\n  .order-wide .form .cod-note{grid-column:1/-1;margin:0}\n}\n\n/* أليسوم — ALYSSUM Store · Design System */\n:root{\n  --bg:#FBF8F2; --card:#FFFFFF; --ink:#1C2420; --muted:#566360;\n  --green:#173F35; --green-2:#0F2E26; --gold:#C8A24B; --gold-2:#E4C87F;\n  --red:#D64545; --ok:#157A55; --line:#EAE3D6; --r:18px;\n  --shadow:0 10px 30px rgba(23,63,53,.08); --shadow-lg:0 24px 60px rgba(23,63,53,.16);\n}\n*{margin:0;padding:0;box-sizing:border-box}\nhtml{scroll-behavior:smooth;overflow-x:hidden;width:100%}\nbody{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--ink);direction:rtl;line-height:1.7;overflow-x:hidden;width:100%}\nimg{max-width:100%;display:block}\n:where(img[width][height]){height:auto}\na{text-decoration:none;color:inherit}\nbutton{font-family:inherit;cursor:pointer;border:none}\n.container{width:min(1180px,92%);margin-inline:auto}\n\n/* ── Top bar ── */\n.topbar{background:var(--green);color:#F3E9D2;font-size:.85rem;padding:.45rem 0;text-align:center}\n.topbar b{color:var(--gold-2)}\n\n/* ── Header ── */\nheader.site{position:sticky;top:0;z-index:50;background:rgba(251,248,242,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}\n.site .container{display:flex;align-items:center;gap:1rem;padding:.7rem 0}\n.logo{font-size:1.5rem;font-weight:900;color:var(--green);letter-spacing:.5px}\n.logo span{color:#8a6a1a}\nnav.menu{display:flex;gap:1.4rem;margin-inline-start:auto;font-weight:700;font-size:.95rem}\nnav.menu a{color:var(--green);opacity:.85}\nnav.menu a:hover{opacity:1;color:var(--gold)}\n@media(max-width:860px){nav.menu{display:none}}\n@media(max-width:500px){.hd-wa{padding:.5rem .8rem;font-size:0}.hd-wa::before{content:\"💬\";font-size:1.2rem}}\n.hd-wa{background:var(--ok);color:#fff;padding:.5rem 1.1rem;border-radius:999px;font-weight:800;display:flex;align-items:center;gap:.4rem}\n.cart-btn{position:relative;background:var(--green);color:#fff;width:44px;height:44px;border-radius:14px;display:grid;place-items:center}\n.cart-count{position:absolute;top:-6px;left:-6px;background:var(--red);color:#fff;font-size:.7rem;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:grid;place-items:center;padding:0 4px}\n\n/* ── Hero ── */\n.hero{background:radial-gradient(1200px 500px at 80% -10%,#E9DDBE,transparent),linear-gradient(160deg,var(--green-2),var(--green));color:#fff;padding:4rem 0;position:relative;overflow:hidden}\n.hero::after{content:\"\";position:absolute;inset:auto -120px -160px auto;width:420px;height:420px;border-radius:50%;background:rgba(200,162,75,.14)}\n.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:2.6rem;align-items:center;position:relative;z-index:1}\n@media(max-width:900px){.hero-grid{grid-template-columns:1fr}}\n.hero h1{font-size:clamp(1.9rem,4.5vw,3.2rem);font-weight:900;line-height:1.35}\n.hero h1 em{color:var(--gold-2);font-style:normal}\n.hero p{color:#D9E2DD;margin:1rem 0 1.6rem;max-width:520px;font-size:1.08rem}\n.hero-cta{display:flex;gap:.9rem;flex-wrap:wrap}\n.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:800;border-radius:14px;padding:.95rem 2rem;font-size:1.05rem;transition:.2s}\n.btn-gold{background:linear-gradient(135deg,var(--gold),#B08A36);color:#fff;box-shadow:0 12px 26px rgba(200,162,75,.4)}\n.btn-gold:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(200,162,75,.5)}\n.btn-ghost{border:2px solid rgba(255,255,255,.4);color:#fff}\n.btn-ghost:hover{background:rgba(255,255,255,.1)}\n.hero-trust{margin-top:1.3rem}\n.hero-trust span{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22);color:#F1EBDD}\n.hero-stats{display:flex;gap:2.2rem;margin-top:2rem;flex-wrap:wrap}\n.hero-stats div b{font-size:1.5rem;color:var(--gold-2)}\n.hero-stats div small{display:block;color:#C7D3CD}\n.hero-media{position:relative}\n.hero-imgbox{border-radius:28px;overflow:hidden;aspect-ratio:1/1;box-shadow:var(--shadow-lg);border:1px solid rgba(255,255,255,.15)}\n.hero-imgbox img{width:100%;height:100%;object-fit:cover}\n.hero-badge{position:absolute;display:flex;align-items:center;gap:.6rem;background:#fff;color:var(--ink);border-radius:16px;padding:.7rem 1rem;box-shadow:var(--shadow-lg);font-size:1.3rem;font-weight:900}\n.hero-badge b{color:var(--green);font-size:.95rem}\n.hero-badge small{display:block;color:var(--muted);font-weight:700;font-size:.72rem}\n.hero-badge.b1{top:-14px;right:-14px}\n.hero-badge.b2{bottom:-14px;left:-14px}\n@media(max-width:900px){.hero-badge{position:static;display:inline-flex;margin:.6rem .5rem 0 0}}\n\n/* ── Sections ── */\nsection{padding:3.6rem 0}\n.sec-title{text-align:center;margin-bottom:2.2rem}\n.sec-title h2{font-size:1.9rem;font-weight:900;color:var(--green)}\n.sec-title p{color:var(--muted)}\n.sec-title .kicker{color:var(--gold);font-weight:800;letter-spacing:2px;font-size:.8rem}\n\n/* ── Category chips ── */\n.chips{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem}\n.chip{padding:.5rem 1.3rem;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-weight:700;color:var(--muted);transition:.15s}\n.chip.active,.chip:hover{background:var(--green);color:#fff;border-color:var(--green)}\n\n/* ── Product grid ── */\n.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:1.4rem}\n.card{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);transition:.25s;display:flex;flex-direction:column}\n.card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}\n.card .thumb{position:relative;aspect-ratio:1;background:#F4EFE6;overflow:hidden}\n.card .thumb img{width:100%;height:100%;object-fit:cover;transition:.5s}\n.card:hover .thumb img{transform:scale(1.06)}\n.badge-off{position:absolute;top:12px;right:12px;background:#b83232;color:#fff;font-weight:800;font-size:.78rem;padding:.25rem .7rem;border-radius:999px}\n.ribbon-oos{position:absolute;inset:0;background:rgba(28,36,32,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;text-align:center;z-index:2}\n.card.oos .thumb img{filter:grayscale(60%)}\n.oos-warning{background:#FBEAEA;border:1px solid var(--red);color:#8A2424;border-radius:10px;padding:.9rem 1.1rem;font-weight:700;margin:1rem 0;text-align:center}\n.card .body{padding:1.1rem 1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;flex:1}\n.card h3{font-size:1.02rem;font-weight:800;color:var(--ink)}\n.stars{color:var(--gold);font-size:.85rem;letter-spacing:2px}\n.stars small{color:var(--muted);letter-spacing:0}\n.price-row{display:flex;align-items:baseline;gap:.6rem;margin-top:auto}\n.price{font-size:1.35rem;font-weight:900;color:var(--green)}\n.old{color:var(--muted);text-decoration:line-through;font-size:.92rem}\n.card .cta{margin-top:.6rem;background:var(--green);color:#fff;border-radius:12px;padding:.7rem;font-weight:800;text-align:center;transition:.2s}\n.card .cta:hover{background:var(--gold)}\n\n/* ── Features ── */\n.feat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.6rem;text-align:center;box-shadow:var(--shadow)}\n.feat .ic{font-size:2rem;margin-bottom:.6rem}\n.feat h3{font-size:1.05rem;font-weight:800;color:var(--green)}\n.feat p{color:var(--muted);font-size:.92rem}\n.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.3rem}\n\n/* ── Landing produit ── */\n.crumbs{font-size:.85rem;color:var(--muted);padding:1rem 0}\n.crumbs a{color:var(--green);font-weight:700}\n.pd{display:grid;grid-template-columns:1.05fr 1fr;gap:2.6rem;align-items:start}\n@media(max-width:900px){.pd{grid-template-columns:1fr}}\n.gallery{position:sticky;top:90px}\n@media(max-width:900px){.gallery{position:static}}\n.gmain{border-radius:var(--r);overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);aspect-ratio:1}\n.gmain img{width:100%;height:100%;object-fit:cover}\n.gthumbs{display:flex;gap:.7rem;margin-top:.8rem}\n.gthumbs img{width:74px;height:74px;border-radius:12px;object-fit:cover;border:2px solid var(--line);cursor:pointer;opacity:.7;transition:.15s}\n.gthumbs img.on,.gthumbs img:hover{border-color:var(--gold);opacity:1}\n.pd-info h1{font-size:1.75rem;font-weight:900;color:var(--green);line-height:1.5}\n.pd-tags{display:flex;gap:.5rem;flex-wrap:wrap;margin:.7rem 0}\n.tag{background:#F1EBDD;color:#7A6A45;font-size:.75rem;font-weight:700;padding:.28rem .8rem;border-radius:999px}\n.pd-price{display:flex;align-items:baseline;gap:.9rem;margin:1rem 0 .2rem}\n.pd-price .price{font-size:2.3rem}\n.save-pill{background:var(--red);color:#fff;font-weight:800;border-radius:999px;padding:.3rem .9rem;font-size:.85rem}\n\n.offers{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin:1.2rem 0}\n.offer{border:2px solid var(--line);border-radius:14px;padding:.85rem .6rem;text-align:center;cursor:pointer;background:#fff;transition:.15s;position:relative}\n.offer.on{border-color:var(--gold);background:#FDF8EC;box-shadow:0 6px 18px rgba(200,162,75,.25)}\n.offer .q{font-weight:900;font-size:1.05rem;color:var(--green)}\n.offer .p{font-weight:900;color:var(--ink);margin-top:.15rem}\n.offer .u{font-size:.75rem;color:var(--muted)}\n.offer .best{position:absolute;top:-11px;right:50%;transform:translateX(50%);background:var(--gold);color:#1C2420;font-size:.68rem;font-weight:800;padding:.14rem .6rem;border-radius:999px;white-space:nowrap}\n\n.form{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.6rem;box-shadow:var(--shadow);margin-top:1.4rem}\n.form h3{font-weight:900;color:var(--green);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}\n.frow{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}\n@media(max-width:560px){.frow{grid-template-columns:1fr}}\n.field{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.85rem}\n.field label{font-size:.85rem;font-weight:800;color:var(--ink)}\n.field input,.field select{border:1.5px solid var(--line);border-radius:12px;padding:.75rem .95rem;font-family:inherit;font-size:1rem;background:#FDFCFA;transition:.15s}\n.field input:focus,.field select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(200,162,75,.15)}\n.dtype{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.9rem}\n.dtype label{border:2px solid var(--line);border-radius:12px;padding:.7rem;text-align:center;font-weight:800;cursor:pointer;transition:.15s;font-size:.92rem}\n.dtype input{display:none}\n.dtype input:checked+span{color:var(--green)}\n.dtype label:has(input:checked){border-color:var(--green);background:#EFF6F3}\n.total-box{background:var(--green-2);color:#fff;border-radius:14px;padding:1rem 1.3rem;display:flex;justify-content:space-between;align-items:center;margin:.4rem 0 1rem}\n.total-box b{font-size:1.5rem;color:var(--gold-2)}\n.total-box small{display:block;color:#B9C8C1;font-weight:400}\n.btn-order{width:100%;background:linear-gradient(135deg,var(--gold),#B08A36);color:#fff;font-size:1.15rem;padding:1.05rem;border-radius:14px;font-weight:900;box-shadow:0 14px 30px rgba(200,162,75,.4);transition:.2s}\n.btn-order:hover{transform:translateY(-2px)}\n.btn-wa{width:100%;background:var(--ok);color:#fff;margin-top:.7rem;padding:.95rem;border-radius:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:.5rem}\n.btn-cart2{width:100%;background:#fff;border:2px solid var(--green);color:var(--green);margin-top:.7rem;padding:.85rem;border-radius:14px;font-weight:800}\n.cod-note{display:flex;gap:.6rem;align-items:center;justify-content:center;background:#EFF6F3;border:1px dashed var(--ok);color:var(--green);border-radius:12px;padding:.65rem;font-weight:800;font-size:.9rem;margin-top:.9rem}\n\n.benefits{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.6rem;margin-top:1.6rem}\n.benefits li{list-style:none;display:flex;gap:.6rem;padding:.45rem 0;color:#3A4540}\n.benefits li::before{content:\"✔\";color:var(--ok);font-weight:900}\n\n.trust{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.2rem}\n.trust div{flex:1;min-width:140px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:.9rem;text-align:center;font-weight:800;color:var(--green);font-size:.88rem}\n.trust div span{display:block;font-size:1.5rem;margin-bottom:.3rem}\n\n/* ── Sticky mobile CTA ── */\n.sticky-cta{position:fixed;bottom:0;right:0;left:0;z-index:40;background:#fff;border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(0,0,0,.08);display:none;padding:.7rem 4%;gap:.8rem;align-items:center}\n@media(max-width:900px){.sticky-cta{display:flex}}\n.sticky-cta .p{font-weight:900;color:var(--green);font-size:1.15rem}\n.sticky-cta .btn{flex:1;padding:.8rem;font-size:1rem}\n\n/* ── Cart drawer ── */\n.drawer-bg{position:fixed;inset:0;background:rgba(15,25,21,.5);z-index:60;opacity:0;pointer-events:none;transition:.25s}\n.drawer{position:fixed;top:0;left:0;bottom:0;width:min(420px,92vw);background:#fff;z-index:61;transform:translateX(-100%);transition:.3s;display:flex;flex-direction:column}\n.drawer.open{transform:none}\n.drawer-bg.open{opacity:1;pointer-events:auto}\n.drawer h3{padding:1.2rem 1.4rem;border-bottom:1px solid var(--line);font-weight:900;color:var(--green)}\n.drawer .items{flex:1;overflow:auto;padding:1rem 1.4rem}\n.citem{display:flex;gap:.8rem;align-items:center;border:1px solid var(--line);border-radius:14px;padding:.7rem;margin-bottom:.8rem}\n.citem img{width:64px;height:64px;border-radius:10px;object-fit:cover}\n.citem .t{flex:1;font-weight:800;font-size:.92rem}\n.qty{display:flex;align-items:center;gap:.5rem}\n.qty button{width:28px;height:28px;border-radius:8px;background:var(--green);color:#fff;font-weight:900}\n.drawer .foot{padding:1.2rem 1.4rem;border-top:1px solid var(--line)}\n.drawer .tot{display:flex;justify-content:space-between;font-weight:900;font-size:1.1rem;margin-bottom:.8rem;color:var(--green)}\n\n/* ── Agent ── */\n.agent-fab{position:fixed;bottom:22px;left:22px;z-index:70;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;display:grid;place-items:center;box-shadow:0 14px 34px rgba(23,63,53,.45);cursor:pointer;border:2px solid var(--gold)}\n.agent-fab::after{content:\"\";position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(200,162,75,.5);animation:pulse 2s infinite}\n@keyframes pulse{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.25);opacity:0}}\n.agent-panel{position:fixed;bottom:96px;left:22px;z-index:70;width:min(370px,calc(100vw - 32px));height:520px;max-height:72vh;background:#fff;border-radius:20px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden;transform:translateY(20px);opacity:0;pointer-events:none;transition:.25s;border:1px solid var(--line)}\n.agent-panel.open{transform:none;opacity:1;pointer-events:auto}\n.agent-head{background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;padding:.95rem 1.1rem;display:flex;align-items:center;gap:.7rem}\n.agent-head .av{width:38px;height:38px;border-radius:50%;background:var(--gold);display:grid;place-items:center;font-size:1.2rem}\n.agent-head b{font-size:.98rem}\n.agent-head small{display:block;color:#C7D3CD;font-size:.72rem}\n.agent-head .x{margin-inline-start:auto;background:none;color:#fff;font-size:1.3rem}\n.agent-body{flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:.6rem;background:#F7F4ED}\n.msg{max-width:86%;padding:.6rem .9rem;border-radius:14px;font-size:.92rem;line-height:1.6;animation:in .25s}\n@keyframes in{from{opacity:0;transform:translateY(6px)}}\n.msg.bot{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-right-radius:4px}\n.msg.user{background:var(--green);color:#fff;align-self:flex-start;border-bottom-left-radius:4px;margin-inline-start:auto}\n.msg .mini{display:block;margin-top:.5rem;background:#FDF8EC;border:1px solid var(--gold-2);border-radius:10px;padding:.5rem .7rem;color:var(--ink);font-weight:700}\n.msg .mini b{color:var(--green)}\n.agent-input{display:flex;gap:.5rem;padding:.8rem;border-top:1px solid var(--line);background:#fff}\n.agent-input input{flex:1;border:1.5px solid var(--line);border-radius:999px;padding:.6rem 1rem;font-family:inherit;font-size:.95rem}\n.agent-input input:focus{outline:none;border-color:var(--gold)}\n.agent-input button{width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;font-size:1.1rem}\n.typing{display:flex;gap:4px;padding:.4rem .2rem}\n.typing i{width:7px;height:7px;border-radius:50%;background:#B9C8C1;animation:tp 1s infinite}\n.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}\n@keyframes tp{0%,100%{transform:none;opacity:.5}50%{transform:translateY(-4px);opacity:1}}\n\n/* ── FAQ ── */\n.faq details{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:.7rem;padding:1rem 1.3rem}\n.faq summary{font-weight:800;color:var(--green);cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}\n.faq summary::after{content:\"+\";font-size:1.3rem;color:var(--gold)}\n.faq details[open] summary::after{content:\"−\"}\n.faq p{color:var(--muted);margin-top:.6rem;font-size:.95rem}\n\n/* ── Footer ── */\nfooter.site{background:var(--green-2);color:#C7D3CD;padding:3rem 0 1.5rem;margin-top:3rem}\nfooter.site h4,footer.site .ft-h{color:#fff;font-weight:900;margin-bottom:.8rem;font-size:1rem}\n.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:2rem}\n@media(max-width:760px){.fgrid{grid-template-columns:1fr}}\nfooter a:hover{color:var(--gold-2)}\n.copy{text-align:center;border-top:1px solid rgba(255,255,255,.1);margin-top:2rem;padding-top:1.2rem;font-size:.85rem}\n\n/* ── Reviews ── */\n.reviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem}\n.review{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.3rem;box-shadow:var(--shadow)}\n.review .who{display:flex;align-items:center;gap:.7rem;margin-top:.8rem;font-weight:800;color:var(--green);font-size:.9rem}\n.review .who i{width:38px;height:38px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-style:normal}\n\n\n/* ════════ صفحة المنتج — Landing Page ════════ */\n.lp-hero{padding:2rem 0 3rem}\n.pd2{display:grid;grid-template-columns:1fr 1fr;gap:2.4rem;align-items:start}\n@media(max-width:900px){.pd2{grid-template-columns:1fr}}\n.pbox{background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:18px}\n.pbox .gmain{border:none;box-shadow:none;background:#F4EFE6;border-radius:20px}\n.pthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}\n.pthumbs .gthumbs{display:contents}\n.pthumbs .gthumbs img{width:100%;height:84px;border-radius:14px}\n@media(max-width:560px){.pthumbs .gthumbs img{height:64px}}\n.eyebrow{display:inline-block;background:#EFF6F3;color:var(--green);padding:.35rem 1rem;border-radius:999px;font-size:.78rem;font-weight:800;margin-bottom:.8rem}\n.lp-info h1{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:900;color:var(--green);line-height:1.45}\n.lp-sub{font-size:1.12rem;font-weight:800;margin:.4rem 0;color:var(--ink)}\n.lp-desc{color:var(--muted);font-size:1rem;margin-bottom:.8rem}\n.price-box{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap;margin:.6rem 0}\n.price-now{font-size:2.2rem;font-weight:900;color:var(--green)}\n.price-old{font-size:1.15rem;color:var(--muted);text-decoration:line-through}\n.deal-bar{display:flex;align-items:center;gap:.8rem;background:linear-gradient(135deg,#FFF3E2,#FDEBD3);border:1.5px dashed var(--gold);border-radius:16px;padding:.8rem 1.1rem;margin:1rem 0;flex-wrap:wrap}\n.deal-bar .gift{font-size:1.6rem}\n.deal-bar b{color:var(--green);font-size:1.02rem}\n.deal-timer{font-size:1.35rem;font-weight:900;color:var(--red);letter-spacing:2px;font-variant-numeric:tabular-nums;direction:ltr}\n.mini-points{display:grid;gap:.55rem;margin:1.1rem 0}\n.mini-points div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:.6rem 1rem;font-weight:800;color:#3A4540;box-shadow:var(--shadow);font-size:.95rem}\n.mini-points div::before{content:\"✔ \";color:var(--ok);font-weight:900}\n.cta-row{display:flex;gap:.7rem;flex-wrap:wrap;margin:.6rem 0 1rem}\n.lp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:.8rem 1.8rem;border-radius:999px;font-family:inherit;font-size:1rem;font-weight:900;transition:.2s;cursor:pointer;border:none}\n.lp-btn-gold{background:linear-gradient(135deg,var(--gold),#B08A36);color:#fff;box-shadow:0 10px 24px rgba(200,162,75,.35)}\n.lp-btn-ghost{background:#fff;color:var(--green);border:2px solid var(--line)}\n.lp-btn-green{background:var(--ok);color:#fff}\n.lp-btn:hover{transform:translateY(-2px)}\n.trust-strip{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.9rem}\n.trust-strip span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:.4rem .95rem;font-size:.8rem;color:var(--muted);font-weight:800}\n\n/* أقسام الصفحة */\n.lp-sec{padding:2.8rem 0}\n.lp-sec.alt{background:#F4EFE6}\n.lp-head{text-align:center;margin-bottom:2rem}\n.lp-head h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:900;color:var(--green)}\n.lp-head p{color:var(--muted);max-width:680px;margin:.4rem auto 0}\n.lp-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.8rem;align-items:center}\n@media(max-width:900px){.lp-grid{grid-template-columns:1fr}}\n.lp-imgcard{border-radius:26px;overflow:hidden;min-height:340px;box-shadow:var(--shadow-lg);background:#fff}\n.lp-imgcard img{width:100%;height:100%;min-height:340px;object-fit:cover}\n.lp-textcard{background:#fff;border:1px solid var(--line);border-radius:26px;padding:2rem;box-shadow:var(--shadow)}\n.lp-textcard h2{font-size:clamp(1.35rem,2.6vw,1.8rem);color:var(--green);font-weight:900;margin-bottom:.7rem}\n.lp-textcard p{color:var(--muted);margin-bottom:1rem}\n.lp-bullets{display:grid;gap:.6rem}\n.lp-bullets div{background:#F9F7F2;border:1px solid var(--line);border-radius:14px;padding:.6rem 1rem;font-weight:800;color:#3A4540;font-size:.95rem}\n.lp-bullets div::before{content:\"✔ \";color:var(--ok);font-weight:900}\n.lp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem}\n@media(max-width:900px){.lp-cards{grid-template-columns:1fr}}\n.lp-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.6rem;box-shadow:var(--shadow);transition:.2s}\n.lp-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}\n.lp-card .ic{font-size:2rem;margin-bottom:.5rem}\n.lp-card h3{font-size:1.1rem;font-weight:900;color:var(--green);margin-bottom:.4rem}\n.lp-card p{color:var(--muted);font-size:.93rem}\n.lp-stepnum{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#fff;font-size:1.2rem;font-weight:900;margin-bottom:.8rem}\n.lp-final{background:linear-gradient(135deg,var(--green-2),var(--green));color:#fff;border-radius:30px;padding:3rem 1.6rem;text-align:center;box-shadow:var(--shadow-lg);margin:2.5rem 0}\n.lp-final h2{font-size:clamp(1.5rem,3vw,2.2rem);color:var(--gold-2);font-weight:900;margin-bottom:.7rem}\n.lp-final p{max-width:700px;margin:0 auto 1.4rem;color:rgba(255,255,255,.88)}\n.lp-testis{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem}\n@media(max-width:900px){.lp-testis{grid-template-columns:1fr}}\n\n\n/* ════════ قسم الصفحة الرئيسية الجديد 2026 (تجديد شامل حديث) ════════\n   إضافات فقط — لا تُغيّر أياً من القواعد أعلاه المستعملة في صفحات المنتجات الـ29\n   أو في شبكة المنتجات المشتركة (.card). آمنة للتوسعة لاحقاً بنفس الروح. */\n\n/* مرساة التمرير حتى لا يغطي الهيدر اللاصق عناوين الأقسام عند الضغط على روابط القائمة */\nsection[id]{scroll-margin-top:84px}\n\n/* شريط ثقة صغير قابل لإعادة الاستخدام (مستعمل في الهيرو والقسم الختامي) */\n.trust-strip{display:flex;flex-wrap:wrap;gap:.55rem}\n.trust-strip span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:.4rem .95rem;font-size:.8rem;color:var(--muted);font-weight:800}\n\n/* بطاقات «تسوّق حسب الفئة» */\n.shop-cats{display:grid;grid-template-columns:repeat(6,1fr);gap:1.1rem}\n@media(max-width:960px){.shop-cats{grid-template-columns:repeat(3,1fr)}}\n@media(max-width:560px){.shop-cats{grid-template-columns:repeat(2,1fr)}}\n.shop-cat{position:relative;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background-size:cover;background-position:center;background-color:var(--card);box-shadow:var(--shadow);border:1px solid var(--line);transition:.25s;font-family:inherit;padding:0;-webkit-appearance:none;appearance:none}\n.shop-cat:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}\n.shop-cat::before{content:\"\";position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,32,26,.92) 0%,rgba(10,32,26,.75) 32%,rgba(10,32,26,.15) 68%,rgba(10,32,26,0) 100%);transition:.25s}\n.shop-cat:hover::before{background:linear-gradient(0deg,rgba(163,124,42,.94) 0%,rgba(10,32,26,.78) 34%,rgba(10,32,26,.2) 70%,rgba(10,32,26,0) 100%)}\n.shop-cat span{position:absolute;inset-inline:0;bottom:0;padding:.9rem .5rem;color:#fff;font-weight:900;font-size:.95rem;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.55)}\n@media(max-width:560px){.shop-cat span{font-size:.85rem}}\n\n/* شريط «الأكثر مبيعاً» — يعيد استعمال .card و.grid، فقط يضيف شريط تمييز */\n.ribbon-best{position:absolute;top:12px;left:12px;background:linear-gradient(135deg,var(--gold),#B08A36);color:#fff;font-weight:800;font-size:.72rem;padding:.25rem .7rem;border-radius:999px;box-shadow:0 6px 14px rgba(200,162,75,.4)}\n\n/* لقطات حقيقية من محادثات الزبائن (نفس الأسلوب المستعمل في صفحات المنتجات) */\n.reviews-screenshots{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.6rem}\n.reviews-screenshots img{width:100%;border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--line);transition:.25s}\n.reviews-screenshots img:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}\n.shots-caption{text-align:center;color:var(--muted);font-size:.85rem;margin-top:.9rem}\n\n/* حركات ظهور خفيفة عند التمرير */\n.reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}\n.reveal.show{opacity:1;transform:none}\n@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}\n\n/* مبادرة الوكيل: رسالة ترحيب صغيرة فوق الأيقونة (لا تغطي الصفحة) + أزرار سريعة */\n.agent-teaser{position:fixed;bottom:96px;left:22px;z-index:71;width:min(310px,calc(100vw - 44px));background:#fff;border:1px solid var(--gold-2);border-radius:18px 18px 18px 4px;box-shadow:var(--shadow-lg);padding:.9rem 1rem .8rem;animation:agentTeaserIn .4s ease;font-size:.92rem;line-height:1.65;cursor:pointer}\n.agent-teaser .tx{position:absolute;top:4px;right:8px;background:none;border:0;color:var(--muted);font-size:1rem;cursor:pointer;padding:2px 6px}\n.agent-teaser .tt{padding-top:.2rem}\n@keyframes agentTeaserIn{from{opacity:0;transform:translateY(10px)}}\n.agent-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem}\n.agent-chips .chip{background:#F4EFE4;border:1px solid var(--gold-2);color:var(--green);border-radius:999px;padding:.35rem .8rem;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer}\n.agent-chips .chip:hover{background:#fff}\n.agent-chips .chip.gold{background:var(--gold);border-color:var(--gold);color:#fff}\n.msg.cta{background:transparent;border:0;padding:0}\n\n/* عدّاد «يشاهدون الآن» البارز في صفحة المنتج */\n.tag.live-badge{background:linear-gradient(135deg,#fff3f0,#ffe9e4);border:1.5px solid #f3b3a8;color:#b3261e;font-weight:800;font-size:1.02rem;padding:.5rem 1rem;border-radius:999px;display:inline-flex;align-items:center;gap:.5rem;box-shadow:0 6px 18px rgba(179,38,30,.12)}\n.tag.live-badge b{font-size:1.25rem;font-weight:900;color:#b3261e;min-width:1.4ch;text-align:center}\n.live-dot{width:11px;height:11px;border-radius:50%;background:#e03b2f;display:inline-block;box-shadow:0 0 0 0 rgba(224,59,47,.6);animation:liveDot 1.4s infinite}\n@keyframes liveDot{70%{box-shadow:0 0 0 9px rgba(224,59,47,0)}100%{box-shadow:0 0 0 0 rgba(224,59,47,0)}}\n\n/* المنتجات المتغيّرة والمجمّعة */\n.variant-box{margin:.9rem 0;display:grid;gap:.8rem}\n.v-name{font-weight:800;margin-bottom:.35rem;color:var(--green)}\n.v-vals{display:flex;flex-wrap:wrap;gap:.5rem}\n.v-chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:.45rem 1.05rem;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink);transition:.15s}\n.v-chip:hover{border-color:var(--gold)}\n.v-chip.on{background:var(--green);border-color:var(--green);color:#fff}\n.v-chip.off{opacity:.4;text-decoration:line-through;cursor:not-allowed}\n.v-hint{font-size:.85rem;color:var(--muted)}\n.group-box{display:grid;gap:.6rem;margin:.9rem 0}\n.g-row{display:flex;align-items:center;gap:.8rem;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:.6rem .8rem}\n.g-row img{width:58px;height:58px;border-radius:10px;object-fit:cover;flex:none}\n.g-t{flex:1;display:flex;flex-direction:column;min-width:0}\n.g-t small{color:var(--muted)}\n.g-q{display:flex;align-items:center;gap:.5rem}\n.g-q button{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:1.2rem;font-weight:800;cursor:pointer;font-family:inherit}\n.g-q button:disabled{opacity:.4;cursor:not-allowed}\n.g-q b{min-width:1.5rem;text-align:center}\n\n/* ── حسابي + تثبيت الموقع ── */\n.acc-btn{position:relative;background:#fff;color:var(--green);width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.15rem;border:1.5px solid var(--line);margin-inline-start:.4rem}\n.acc-btn.on::after{content:\"\";position:absolute;top:6px;inset-inline-end:6px;width:10px;height:10px;border-radius:50%;background:var(--ok);border:2px solid #fff}\n.acc-bg{position:fixed;inset:0;background:rgba(15,46,38,.55);z-index:120;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(3px)}\n.acc-bg.open{display:flex}\n.acc-box{background:#fff;border-radius:22px;width:min(460px,100%);max-height:92vh;overflow:auto;padding:1.6rem 1.3rem 1.3rem;position:relative;box-shadow:var(--shadow-lg)}\n.acc-x{position:absolute;top:.7rem;inset-inline-start:.7rem;width:34px;height:34px;border-radius:50%;background:var(--bg);color:var(--muted);font-size:.95rem}\n.acc-box h3{color:var(--green);font-size:1.25rem;margin-bottom:.2rem;padding-inline-start:2.2rem}\n.acc-box h4{color:var(--green);margin:1.1rem 0 .5rem}\n.acc-sub{color:var(--muted);font-size:.9rem;margin-bottom:.9rem}\n.acc-tabs{display:flex;gap:.4rem;background:var(--bg);padding:.25rem;border-radius:14px;margin-bottom:1rem}\n.acc-tabs button{flex:1;padding:.55rem;border-radius:11px;background:transparent;font-weight:800;color:var(--muted)}\n.acc-tabs button.on{background:#fff;color:var(--green);box-shadow:0 2px 8px rgba(23,63,53,.1)}\n.acc-box form label{display:block;font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:.7rem}\n.acc-box form input,.acc-box form select{display:block;width:100%;margin-top:.25rem;padding:.7rem .8rem;border:1.5px solid var(--line);border-radius:12px;font:inherit;background:#fff}\n.acc-box form input:focus,.acc-box form select:focus{outline:none;border-color:var(--gold)}\n.acc-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}\n.acc-go{width:100%;margin-top:.2rem}\n.acc-msg{min-height:1.2rem;font-size:.85rem;font-weight:700;margin:.2rem 0 .6rem;color:var(--muted)}\n.acc-msg.bad{color:var(--red)} .acc-msg.ok{color:var(--ok)}\n.acc-note{font-size:.78rem;color:var(--muted);text-align:center;margin-top:.7rem}\n.acc-done{text-align:center}\n.acc-done h3{padding:0}\n.acc-ok{font-size:2.6rem;line-height:1}\n.acc-install{background:linear-gradient(135deg,#F6EFD9,#FBF8F2);border:1.5px solid var(--gold-2);border-radius:16px;padding:1rem;margin:.8rem 0;text-align:center}\n.acc-install .ai-t{font-weight:900;color:var(--green);margin-bottom:.2rem}\n.acc-install p{font-size:.85rem;color:var(--muted);margin-bottom:.7rem}\n.ai-steps{display:none;margin-top:.7rem;font-size:.85rem;line-height:1.8;background:#fff;border-radius:12px;padding:.7rem;text-align:right}\n.acc-ord{border:1.5px solid var(--line);border-radius:14px;padding:.7rem .8rem;margin-bottom:.55rem}\n.ao-h,.ao-f{display:flex;justify-content:space-between;gap:.5rem;font-size:.85rem}\n.ao-h span{font-weight:800}\n.ao-i{font-size:.85rem;color:var(--muted);margin:.35rem 0}\n.ao-t{font-size:.8rem;color:var(--muted);margin-top:.3rem}\n.acc-link{display:flex;gap:.4rem;margin-top:.5rem}\n.acc-link input{flex:1;padding:.6rem .7rem;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:.85rem}\n.acc-link .btn{padding:.5rem 1rem}\n.acc-prof{margin-top:1rem;border-top:1px solid var(--line);padding-top:.8rem}\n.acc-prof summary{cursor:pointer;font-weight:800;color:var(--green);margin-bottom:.7rem}\n.acc-out{display:block;margin:1rem auto 0;background:transparent;color:var(--red);font-weight:800;padding:.4rem 1rem}\n@media(max-width:560px){.acc-bg{align-items:flex-end;padding:0}.acc-box{border-radius:22px 22px 0 0;max-height:94vh}}\n.acc-box .btn-ghost{background:var(--bg);color:var(--green);border:1.5px solid var(--line);box-shadow:none}\n.acc-cont{width:100%;margin-top:.3rem}\n.acc-gift{border:1.5px dashed var(--gold);background:linear-gradient(135deg,#FFF9E8,#FBF8F2);border-radius:16px;padding:.8rem 1rem;margin:.7rem 0;text-align:right;font-size:.88rem}\n.acc-gift .g-t{font-weight:900;color:var(--green);margin-bottom:.2rem}\n.acc-gift .g-code{display:inline-block;margin-top:.2rem}.acc-gift .g-code b{background:var(--green);color:#fff;padding:.05rem .5rem;border-radius:6px;letter-spacing:1px}\n.acc-gift .g-apply{margin-top:.5rem;padding:.5rem 1.2rem;font-size:.9rem}\n.acc-gift.locked,.acc-gift.used,.acc-gift.expired{border-color:var(--line);background:var(--bg);color:var(--muted)}\n.acc-trk-link{display:block;margin:.7rem auto 0;background:transparent;color:var(--green);font-weight:800;font-size:.85rem;text-decoration:underline}\n.trk-steps{list-style:none;margin:1rem 0;padding:0;display:flex;flex-direction:column;gap:.5rem}\n.trk-steps li{padding:.6rem .9rem;border-radius:12px;background:var(--bg);color:var(--muted);font-weight:700;border:1.5px solid var(--line)}\n.trk-steps li.done{background:#E8F6EF;color:var(--ok);border-color:#BFE6D3}\n.trk-steps li.now{background:var(--green);color:#fff;border-color:var(--green)}\n.trk-bad{margin:1rem 0;padding:.8rem;border-radius:12px;background:#FDECEC;color:var(--red);font-weight:800}\n.trk-meta{font-size:.85rem;color:var(--muted);line-height:1.9;border-top:1px solid var(--line);padding-top:.7rem}\n\n.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}\n\n#bestsellers{transition:background .35s}\n.coll-tabs{display:flex;gap:.6rem;overflow-x:auto;scroll-snap-type:x proximity;padding:.2rem .2rem 1rem;margin-bottom:.6rem;justify-content:center;-webkit-overflow-scrolling:touch;scrollbar-width:none}\n.coll-tabs::-webkit-scrollbar{display:none}\n.coll-tabs button{flex:0 0 auto;scroll-snap-align:center;padding:.55rem 1.2rem;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-weight:800;color:var(--ink);font-family:inherit;font-size:.92rem;cursor:pointer;white-space:nowrap;transition:background .25s,color .25s,transform .15s}\n.coll-tabs button.on{color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.14)}\n@media (max-width:640px){.coll-tabs{justify-content:flex-start}}\n\n/* شريط التمرير: أكريليك برتقالي فلورسنت شفاف رقيق 6px بزوايا مدوّرة */\n::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}\n\n/* ── بطاقات أكريليك فلورسنت شفاف (أخضر/أزرق/أصفر/برتقالي بالتناوب) بزوايا مدوّرة ── */\n.card,.feat,.review,.lp-card,.lp-textcard,.benefits,.form,.trust div,.mini-points div,.faq details{--ac:255,118,24;background:linear-gradient(145deg,rgba(var(--ac),.17),rgba(255,255,255,.62) 52%,rgba(var(--ac),.1));-webkit-backdrop-filter:blur(10px) saturate(1.35);backdrop-filter:blur(10px) saturate(1.35);border:1px solid rgba(var(--ac),.42);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(255,255,255,.4),0 10px 26px rgba(var(--ac),.18)}\n.card,.feat,.review,.lp-card,.lp-textcard,.benefits,.form{border-radius:24px}\n.trust div,.mini-points div,.faq details{border-radius:18px}\n:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n+1){--ac:110,230,30}\n:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n+2){--ac:50,140,255}\n:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n+3){--ac:255,205,20}\n:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n){--ac:255,110,20}\n\n/* effet cristal لبطاقات الموقع الملوّنة: وجوه ضوئية مائلة ولمعة علوية وتوهّج داخلي */\n.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details{background:linear-gradient(115deg,rgba(255,255,255,0) 16%,rgba(255,255,255,.14) 22%,rgba(255,255,255,0) 29%,rgba(255,255,255,0) 52%,rgba(255,255,255,.08) 58%,rgba(255,255,255,0) 66%),radial-gradient(160px 60px at 16% 0%,rgba(255,255,255,.22),transparent 72%),linear-gradient(145deg,rgba(var(--ac),.17),rgba(255,255,255,.62) 52%,rgba(var(--ac),.1));box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 8px rgba(var(--ac),.07),0 10px 26px rgba(var(--ac),.18)}\n\n\n/* ═══════════════════════════════════════════════════════════════\n   ALYSSUM 2026 — Glass / Fluorescent Pistachio Visual Layer\n   UI/Builder-safe visual enhancement: no product logic changes.\n   ═══════════════════════════════════════════════════════════════ */\n\n:root{\n  --bg:#050705;\n  --card:rgba(14,22,16,.72);\n  --ink:#F4F8F3;\n  --muted:#A6B3AA;\n  --green:#B7FF4A;\n  --green-strong:#8DFF22;\n  --green-deep:#16351D;\n  --gold:#D6B45A;\n  --gold-2:#F1D987;\n  --line:rgba(183,255,74,.16);\n  --shadow:0 20px 60px rgba(0,0,0,.42);\n  --shadow-lg:0 28px 90px rgba(0,0,0,.56);\n}\n\n/* black canvas — preserves existing green/gold visual language */\nhtml,body{background:#050705;color:var(--ink)}\nbody{\n  background:\n    radial-gradient(900px 420px at 78% -8%,rgba(183,255,74,.055),transparent 68%),\n    radial-gradient(720px 420px at 8% 55%,rgba(24,95,45,.07),transparent 70%),\n    #050705;\n}\n.topbar{\n  background:rgba(8,13,9,.88);\n  color:#DCE8DE;\n  border-bottom:1px solid rgba(183,255,74,.09);\n  backdrop-filter:blur(16px);\n}\n.topbar b{color:var(--green)}\n\nheader.site{\n  background:rgba(4,7,5,.72);\n  border-bottom:1px solid rgba(255,255,255,.07);\n  box-shadow:0 10px 35px rgba(0,0,0,.22);\n  backdrop-filter:blur(22px) saturate(145%);\n}\n.logo{color:#F5FAF5}\n.logo span{color:var(--green)}\nnav.menu a{color:#D8E2DB}\n.hd-wa{\n  background:linear-gradient(135deg,#C8FF67,#79E51D);\n  color:#071006;\n  box-shadow:0 8px 24px rgba(183,255,74,.18);\n}\n.cart-btn{background:rgba(183,255,74,.12);color:var(--green);border:1px solid rgba(183,255,74,.28)}\n\n.hero{\n  background:\n    radial-gradient(600px 360px at 82% 20%,rgba(183,255,74,.13),transparent 65%),\n    radial-gradient(450px 280px at 12% 90%,rgba(214,180,90,.08),transparent 70%),\n    linear-gradient(145deg,#07110A,#0A1B10 48%,#061008);\n  border-bottom:1px solid rgba(183,255,74,.10);\n}\n.hero::after{\n  width:560px;height:560px;\n  background:radial-gradient(circle,rgba(183,255,74,.09),transparent 68%);\n  filter:blur(4px);\n}\n.hero h1 em{color:var(--green)}\n.hero p{color:#C7D4CB}\n.btn-gold{\n  background:linear-gradient(135deg,#C8FF67,#86EA28);\n  color:#081008;\n  box-shadow:0 14px 38px rgba(183,255,74,.23);\n}\n.btn-gold:hover{box-shadow:0 18px 48px rgba(183,255,74,.32)}\n.btn-ghost{\n  background:rgba(255,255,255,.045);\n  border:1px solid rgba(255,255,255,.18);\n  backdrop-filter:blur(14px);\n}\n.hero-stats div,.hero-badge{\n  background:rgba(255,255,255,.045)!important;\n  border:1px solid rgba(255,255,255,.11)!important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 18px 42px rgba(0,0,0,.28);\n  backdrop-filter:blur(16px);\n}\n.hero-stats b{color:var(--green)}\n.hero-imgbox{\n  border:1px solid rgba(183,255,74,.25)!important;\n  box-shadow:0 35px 90px rgba(0,0,0,.48),0 0 60px rgba(183,255,74,.10)!important;\n  background:rgba(255,255,255,.035)!important;\n  backdrop-filter:blur(20px);\n}\n.hero-imgbox img{filter:saturate(1.03) contrast(1.02)}\n\n.hero-orb{\n  position:absolute;display:block;border-radius:50%;pointer-events:none;z-index:3;\n  filter:blur(.2px);mix-blend-mode:screen;\n}\n.orb-green{width:110px;height:110px;right:-20px;top:18%;background:radial-gradient(circle,rgba(183,255,74,.34),rgba(183,255,74,.02) 70%,transparent 72%);animation:alyFloat 5s ease-in-out infinite}\n.orb-gold{width:90px;height:90px;left:3%;bottom:12%;background:radial-gradient(circle,rgba(241,217,135,.24),transparent 70%);animation:alyFloat 6.5s ease-in-out infinite reverse}\n.hero-leaf-glow{position:absolute;inset:7% 7% auto auto;width:45%;height:45%;border-radius:50%;background:radial-gradient(circle,rgba(183,255,74,.10),transparent 68%);filter:blur(22px);pointer-events:none}\n.hero-product-float{\n  position:absolute;left:-16px;bottom:24px;z-index:5;\n  display:flex;align-items:center;gap:.55rem;\n  padding:.5rem .7rem .5rem .5rem;\n  border:1px solid rgba(183,255,74,.24);\n  background:rgba(5,9,6,.66);\n  backdrop-filter:blur(18px) saturate(140%);\n  border-radius:18px;color:#fff;font-size:.72rem;font-weight:900;\n  box-shadow:0 18px 44px rgba(0,0,0,.4),0 0 25px rgba(183,255,74,.08);\n  animation:alyFloat 6s ease-in-out infinite;\n}\n.hero-product-float img{width:48px;height:48px;object-fit:cover;border-radius:12px;border:1px solid rgba(183,255,74,.28)}\n.hero-product-float span{color:var(--green)}\n\n#categories,#products,#reviews,#faq{background:#050705!important}\n#bestsellers,#features{background:#070B08!important}\n.sec-title h2{color:#F5FAF5}\n.sec-title p,.kicker{color:#9BAAA0}\n\n.shop-cat{\n  border-color:rgba(183,255,74,.14);\n  box-shadow:0 18px 48px rgba(0,0,0,.36);\n}\n.shop-cat::before{\n  background:linear-gradient(0deg,rgba(3,9,5,.94),rgba(3,9,5,.18) 72%,transparent)!important;\n}\n.shop-cat:hover::before{\n  background:linear-gradient(0deg,rgba(45,91,24,.92),rgba(3,9,5,.16) 72%,transparent)!important;\n}\n.shop-cat:hover{box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 28px rgba(183,255,74,.08)}\n\n.card,.feat,.review,.lp-card,.lp-textcard,.benefits,.form,.trust div,.mini-points div,.faq details{\n  --ac:183,255,74;\n  color:#F2F7F3;\n  background:\n    linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.018) 52%,rgba(183,255,74,.025)),\n    rgba(9,15,11,.68)!important;\n  border:1px solid rgba(var(--ac),.20)!important;\n  box-shadow:\n    inset 0 1px 0 rgba(255,255,255,.10),\n    inset 0 -20px 45px rgba(0,0,0,.14),\n    0 20px 55px rgba(0,0,0,.38)!important;\n  backdrop-filter:blur(22px) saturate(145%);\n  -webkit-backdrop-filter:blur(22px) saturate(145%);\n  position:relative;\n  overflow:hidden;\n}\n.card::before,.feat::before,.review::before,.lp-card::before,.lp-textcard::before,.faq details::before{\n  content:\"\";position:absolute;inset:0;pointer-events:none;\n  background:linear-gradient(115deg,transparent 24%,rgba(255,255,255,.10) 31%,transparent 39%);\n  transform:translateX(-120%);\n  transition:transform .9s cubic-bezier(.2,.7,.2,1);\n}\n.card:hover::before,.feat:hover::before,.review:hover::before,.lp-card:hover::before,.lp-textcard:hover::before,.faq details:hover::before{transform:translateX(120%)}\n.card:hover,.feat:hover,.review:hover,.lp-card:hover{\n  border-color:rgba(183,255,74,.38)!important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 28px 70px rgba(0,0,0,.48),0 0 34px rgba(183,255,74,.07)!important;\n}\n.card h3,.feat h3,.lp-card h3,.lp-textcard h2,.faq summary{color:#F4F9F5}\n.card p,.feat p,.review,.lp-card p,.lp-textcard p,.faq details p{color:#A9B7AE}\n.card .price,.price-now{color:var(--green)!important}\n.ribbon-best{background:linear-gradient(135deg,#C8FF67,#80E522);color:#071006;box-shadow:0 10px 24px rgba(183,255,74,.2)}\n\n.lp-imgcard{\n  background:rgba(255,255,255,.03)!important;\n  border:1px solid rgba(183,255,74,.16)!important;\n  box-shadow:0 25px 70px rgba(0,0,0,.45)!important;\n}\n.lp-textcard{background:rgba(10,16,12,.72)!important}\n.lp-bullets div,.mini-points div{\n  background:rgba(255,255,255,.035)!important;\n  color:#D8E4DB!important;\n  border-color:rgba(255,255,255,.08)!important;\n}\n.lp-final{\n  background:\n    radial-gradient(450px 220px at 80% 10%,rgba(183,255,74,.16),transparent 70%),\n    linear-gradient(135deg,#0A1A0F,#12291A);\n  border:1px solid rgba(183,255,74,.18);\n  box-shadow:0 30px 80px rgba(0,0,0,.48);\n}\n.lp-final h2{color:var(--green)}\n\n.review .who,.shots-caption{color:#91A096}\n.faq details{background:rgba(10,16,12,.7)!important}\n.faq details[open]{border-color:rgba(183,255,74,.35)!important}\n\n.site footer,.site .copy{color:#A7B3AA}\nfooter.site{background:#030503!important;border-top:1px solid rgba(255,255,255,.07)}\nfooter.site a{color:#CBE5D1}\nfooter.site a:hover{color:var(--green)}\n\n::-webkit-scrollbar-thumb{\n  background:linear-gradient(180deg,rgba(183,255,74,.78),rgba(116,220,30,.54));\n  box-shadow:inset 0 0 0 1px rgba(230,255,202,.42),0 0 10px rgba(183,255,74,.25);\n}\n@supports not selector(::-webkit-scrollbar){*{scrollbar-color:rgba(183,255,74,.62) transparent}}\n\n@keyframes alyFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-10px,0)}}\n@keyframes alyPulse{0%,100%{box-shadow:0 0 0 0 rgba(183,255,74,0)}50%{box-shadow:0 0 0 10px rgba(183,255,74,0)}}\n\n@media (max-width:700px){\n  .hero-product-float{left:10px;bottom:12px}\n  .hero-orb{display:none}\n  .card,.feat,.review,.lp-card,.lp-textcard,.benefits,.form,.faq details{backdrop-filter:blur(16px) saturate(135%)}\n  .card:hover,.feat:hover,.review:hover,.lp-card:hover{transform:none}\n}\n\n/* Page Builder visual-effect hooks: effects remain CSS-driven and non-destructive */\n[data-builder-effect=\"glass\"]{--builder-glass:1}\n[data-builder-effect=\"lift\"]{transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s ease}\n[data-builder-effect=\"lift\"]:hover{transform:translateY(-6px)}\n\n",
+ "sections": [
+  {
+   "id": "1urza8u",
+   "set": {
+    "layout": "full",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "tight": true,
+    "mh": {
+     "d": 70
+    }
+   },
+   "cols": [
+    {
+     "id": "9dpl2q8",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "gj8ewld",
+     "type": "shdr",
+     "set": {
+      "hord": [
+       {
+        "id": "logo"
+       },
+       {
+        "id": "menu"
+       },
+       {
+        "id": "social"
+       },
+       {
+        "id": "share"
+       },
+       {
+        "id": "cart"
+       }
+      ],
+      "ltx": true,
+      "la": "ALYSSUM",
+      "lsplit": false,
+      "lb": "",
+      "lion": true,
+      "limg": "",
+      "llink": "index.html",
+      "lh": {
+       "d": 44
+      },
+      "menu": [
+       {
+        "t": "",
+        "l": "@home"
+       },
+       {
+        "t": "",
+        "l": "@prods"
+       },
+       {
+        "t": "",
+        "l": "@cats"
+       },
+       {
+        "t": "",
+        "l": "@sets"
+       }
+      ],
+      "mon": true,
+      "son": true,
+      "soc": [
+       {
+        "id": "whatsapp",
+        "url": ""
+       }
+      ],
+      "shon": true,
+      "shm": "icon",
+      "shl": "انشر",
+      "cart": true,
+      "cic": "cart",
+      "hbg": "#04120a",
+      "hbr": "#14532d",
+      "lc": "#ffffff",
+      "lac": "#86efac",
+      "mc": "#d1fae5",
+      "sst": "brand",
+      "ssh": "round",
+      "ssz": 24,
+      "cbg": "#16a34a",
+      "stk": true,
+      "lfs": {
+       "d": 26
+      },
+      "hcw": {
+       "d": 1240
+      },
+      "hpd": {
+       "d": [
+        11,
+        0,
+        11,
+        0
+       ]
+      },
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 70
+      },
+      "zi": 1,
+      "fxs": [
+       {
+        "id": "n2z5xcm",
+        "n": "زجاج الهيدر",
+        "on": true,
+        "tpl": "selector{backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid rgba(134,239,172,.22);box-shadow:0 10px 40px rgba(0,0,0,.45)}selector .pb-hd{background:rgba(3,16,9,.78)!important}",
+        "p": {}
+       }
+      ]
+     }
+    }
+   ],
+   "grp": "top"
+  },
+  {
+   "id": "ewx8o0n",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      60,
+      20,
+      60,
+      20
+     ],
+     "m": [
+      36,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "ppbhhl3",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 32
+      },
+      "pad": {
+       "d": [
+        18,
+        18,
+        18,
+        18
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "ao0ys3h",
+       "type": "html",
+       "set": {
+        "code": "<img id=\"gmain\" fetchpriority=\"high\" decoding=\"async\" src=\"../../assets/img/misk-noir/0.webp\" alt=\"مسك اسود+مسك ابيض\">",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "w809e6s",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"gthumbs\" data-static=\"1\"><img src=\"../../assets/img/misk-noir/0.webp\" alt=\"مسك اسود+مسك ابيض\" class=\"on active\"></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          928,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "lfw0xog",
+       "type": "text",
+       "set": {
+        "html": "<p><span> الدفع عند الاستلام</span><span> توصيل 58 ولاية</span><span> الثالثة مجاناً</span><span> استبدال مضمون</span></p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "zd0roax",
+     "set": {
+      "pad": {
+       "d": [
+        10,
+        4,
+        10,
+        10
+       ]
+      },
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "ceal6ub",
+       "type": "text",
+       "set": {
+        "html": "<p>ALYSSUM — الرقية الشرعية</p>",
+        "fs": {
+         "d": 12
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "grad1": "",
+        "grad2": "",
+        "gradAng": 135,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 999
+        },
+        "pad": {
+         "d": [
+          8,
+          14,
+          8,
+          14
+         ]
+        },
+        "shadow": "md",
+        "w": {
+         "d": 31
+        },
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          26,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "k0sp2jn",
+       "type": "heading",
+       "set": {
+        "text": "مسك اسود+مسك ابيض",
+        "tag": "h1",
+        "fs": {
+         "d": 64,
+         "m": 46
+        },
+        "fw": "800",
+        "ta": {
+         "d": "start"
+        },
+        "bindTitle": true,
+        "prod": "misk-noir",
+        "color": "#ecfdf5",
+        "lh": {
+         "d": 1.08
+        },
+        "ls": {
+         "d": -1.8
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          17,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "trnthds",
+       "type": "text",
+       "set": {
+        "html": "<p><small>(+40 تقييم إيجابي)</small></p>",
+        "fs": {
+         "d": 14
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#bb8c36",
+        "ls": {
+         "d": 2
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          11,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "p732hyl",
+       "type": "text",
+       "set": {
+        "html": "<p>منتجات أصيلة مرتبطة بالسنة النبوية</p>",
+        "fs": {
+         "d": 26
+        },
+        "lh": {
+         "d": 1.55
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          6,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "ppec1qh",
+       "type": "text",
+       "set": {
+        "html": "<p>المسك الأسود والأبيض للرقية الشرعية، عطر خارجي برائحة ثابتة ومميزة يُستخدم كعامل مساعد ضمن الروتين الشرعي الرقية الشرعية .</p>",
+        "fs": {
+         "d": 17
+        },
+        "lh": {
+         "d": 1.95
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          24,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "g18ggct",
+       "type": "tbadges",
+       "set": {
+        "items": "طبيعي 100%\nأصلي ومفحص",
+        "live": true,
+        "liveText": "يشاهدون هذا المنتج الآن",
+        "lmin": 8,
+        "lmax": 18,
+        "dot": "#d64545",
+        "cbg": "rgba(21,128,61,.2)",
+        "cc": "#d9f99d",
+        "cbc": "rgba(134,239,172,.3)",
+        "crad": {
+         "d": 999
+        },
+        "cfs": {
+         "d": 12
+        },
+        "gap": {
+         "d": 10
+        },
+        "jc": "flex-start",
+        "mar": {
+         "d": [
+          0,
+          0,
+          24,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "k1jdy90",
+       "type": "pprice",
+       "set": {
+        "prod": "misk-noir",
+        "psrc": "",
+        "shold": true,
+        "shsave": true,
+        "pst": "وفّر",
+        "cnow": "3,900 دج",
+        "cold": "4,900 دج",
+        "csave": "وفّر 20%",
+        "pc": "",
+        "fs": {
+         "d": 34
+        },
+        "ta": {
+         "d": "start"
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          29,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "5anb8t1",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"deal-bar\">\n        <span class=\"gift\">🎁</span>\n        <div style=\"flex:1;min-width:180px\"><b>عرض محدود: اشترِ قطعتين واحصل على الثالثة مجاناً</b><br><small style=\"color:#8a6a2f\">ينتهي العرض خلال:</small></div>\n        <span class=\"deal-timer\">48:00:00</span>\n      </div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          30,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "qs67z47",
+       "type": "poffers",
+       "set": {
+        "prod": "misk-noir",
+        "mar": {
+         "d": [
+          0,
+          0,
+          32,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "61ri1sn",
+       "type": "text",
+       "set": {
+        "html": "<p>✔  منتجات طبيعية أصيلة</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 15
+        },
+        "pad": {
+         "d": [
+          10,
+          16,
+          10,
+          16
+         ]
+        },
+        "shadow": "md",
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          9,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "5nki405",
+       "type": "text",
+       "set": {
+        "html": "<p>✔  مرتبطة بالسنة النبوية المطهرة</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 15
+        },
+        "pad": {
+         "d": [
+          10,
+          16,
+          10,
+          16
+         ]
+        },
+        "shadow": "md",
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          9,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "7v1vzja",
+       "type": "text",
+       "set": {
+        "html": "<p>✔  جودة ونقاء مضمونان</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 15
+        },
+        "pad": {
+         "d": [
+          10,
+          16,
+          10,
+          16
+         ]
+        },
+        "shadow": "md",
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          9,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "41lm13m",
+       "type": "text",
+       "set": {
+        "html": "<p>✔  توصيل لجميع الولايات مع الدفع عند الاستلام</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 15
+        },
+        "pad": {
+         "d": [
+          10,
+          16,
+          10,
+          16
+         ]
+        },
+        "shadow": "md",
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "v8lcg0f",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      60,
+      20,
+      60,
+      20
+     ],
+     "m": [
+      36,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "9ewi8tp",
+     "set": {},
+     "widgets": [
+      {
+       "id": "ego5h0u",
+       "type": "orderorig",
+       "set": {
+        "prod": "misk-noir",
+        "auto": true,
+        "raw": "<form class=\"form\" id=\"order-form\" style=\"margin-top:1rem\">\n        <h3 role=\"heading\" aria-level=\"2\">📝 املأ معلوماتك — الدفع عند الاستلام</h3>\n        <div class=\"frow\">\n          <div class=\"field\"><label>الاسم الكامل *</label><input id=\"name\" required=\"\" placeholder=\"مثال: أحمد بن علي\"></div>\n          <div class=\"field\"><label>رقم الهاتف *</label><input id=\"phone\" required=\"\" inputmode=\"tel\" placeholder=\"05XXXXXXXX\"></div>\n        </div>\n        <div class=\"frow\">\n          <div class=\"field\"><label>الولاية *</label><select id=\"wilaya\" required=\"\"><option value=\"\">— اختر ولايتك —</option></select></div>\n          <div class=\"field\"><label>البلدية</label><input id=\"commune\" placeholder=\"اختياري\"></div>\n        </div>\n        <div class=\"field\" id=\"desk-wrap\" style=\"display:none\"><label>مكتب التوصيل (Stop Desk) *</label><select id=\"desk\" aria-label=\"مكتب التوصيل\"></select></div>\n        <div class=\"field\"><label>العنوان الكامل</label><input id=\"address\" placeholder=\"الحي، الشارع، رقم المنزل...\"></div>\n        <div class=\"dtype\">\n          <label><input type=\"radio\" name=\"dtype\" value=\"home\" checked=\"\"><span>🏠 توصيل للمنزل</span></label>\n          <label><input type=\"radio\" name=\"dtype\" value=\"stop\"><span>🏢 مكتب Stop Desk (أرخص)</span></label>\n        </div>\n        <div class=\"total-box\">\n          <div><small>رسوم التوصيل</small><span id=\"fee\">—</span></div>\n          <div style=\"text-align:left\"><small>الإجمالي</small><b id=\"grand\">—</b></div>\n        </div>\n        <button type=\"submit\" class=\"btn-order\">✅ تأكيد الطلب — <span id=\"btn-total\"></span></button>\n        <a class=\"btn-wa\" href=\"https://wa.me/213559237239?text=أريد%20طلب:%20مسك%20اسود+مسك%20ابيض\" target=\"_blank\">💬 اطلب مباشرة عبر واتساب</a>\n        <button type=\"button\" class=\"btn-cart2\" id=\"add-cart\">🛒 أضف إلى السلة</button>\n        <div class=\"cod-note\">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>\n      </form>",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "f67rg7b",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1240
+    },
+    "pad": {
+     "d": [
+      90,
+      20,
+      90,
+      20
+     ],
+     "m": [
+      54,
+      16,
+      54,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "bg": "",
+    "grad1": "",
+    "grad2": "",
+    "gradAng": 180
+   },
+   "cols": [
+    {
+     "id": "mnj997i",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 30
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "m5mxj2h",
+       "type": "image",
+       "set": {
+        "src": "assets/img/misk-noir/0.webp",
+        "alt": "مسك اسود+مسك ابيض",
+        "fit": "cover",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "xcd7pif",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 28
+      },
+      "pad": {
+       "d": [
+        38,
+        38,
+        38,
+        38
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "aeh7e5f",
+       "type": "heading",
+       "set": {
+        "text": "هل تبحث عن منتجات رقية أصيلة وموثوقة؟",
+        "tag": "h2",
+        "fs": {
+         "d": 38,
+         "m": 27
+        },
+        "fw": "800",
+        "ta": {
+         "d": "start"
+        },
+        "bindTitle": false,
+        "prod": "misk-noir",
+        "color": "#ecfdf5",
+        "lh": {
+         "d": 1.2
+        },
+        "ls": {
+         "d": -0.6
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          11,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "pmgp9nz",
+       "type": "text",
+       "set": {
+        "html": "<p>من السنة النبوية استخدام الماء والعسل والحبة السوداء وغيرها. لكن الأصالة والنقاء شرطان أساسيان ليصل المنتج بحقيقته الكاملة.</p>",
+        "fs": {
+         "d": 17
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          16,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "wg7exfl",
+       "type": "text",
+       "set": {
+        "html": "<p>✓ منتجات مجهولة المصدر</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 16
+        },
+        "pad": {
+         "d": [
+          14,
+          16,
+          14,
+          45
+         ]
+        },
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          10,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "58xom5o",
+       "type": "text",
+       "set": {
+        "html": "<p>✓ اختلاط وتلوث يفقدان الفائدة</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 16
+        },
+        "pad": {
+         "d": [
+          14,
+          16,
+          14,
+          45
+         ]
+        },
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          10,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "9jr9kw2",
+       "type": "text",
+       "set": {
+        "html": "<p>✓ صعوبة الوثوق بالجودة</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 16
+        },
+        "pad": {
+         "d": [
+          14,
+          16,
+          14,
+          45
+         ]
+        },
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          10,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "6ydguid",
+       "type": "text",
+       "set": {
+        "html": "<p>✓ غياب المتابعة والاستشارة</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#d8e4db",
+        "bg": "rgba(12,54,29,.82)",
+        "bw": 1,
+        "bs": "solid",
+        "bc": "rgba(134,239,172,.3)",
+        "rad": {
+         "d": 16
+        },
+        "pad": {
+         "d": [
+          14,
+          16,
+          14,
+          45
+         ]
+        },
+        "fw": "800",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "2iosol8",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1240
+    },
+    "pad": {
+     "d": [
+      90,
+      20,
+      90,
+      20
+     ],
+     "m": [
+      54,
+      16,
+      54,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "ekbqzy0",
+     "set": {},
+     "widgets": [
+      {
+       "id": "f46yjsw",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-textcard\">\n      <h2>الحل: أصالة ونقاء من أليسوم</h2>\n      <p>منتجات الرقية من أليسوم مختارة بعناية من مصادر موثوقة، طبيعية ونقية، تصلك بتغليف آمن مع إمكانية الاستفسار والاستشارة عبر واتساب.</p>\n      <div class=\"lp-bullets\"><div>منتجات طبيعية نقية 100%</div><div>مصادر موثوقة مختارة بعناية</div><div>تغليف آمن يحفظ الجودة</div><div>استشارة وإرشاد عبر واتساب</div></div>\n    </div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "x6xvhhf",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-imgcard\"><img width=\"1000\" height=\"1000\" src=\"../../assets/img/misk-noir/0.webp\" alt=\"مسك اسود+مسك ابيض\" loading=\"lazy\"></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "3cu2bkx",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1240
+    },
+    "pad": {
+     "d": [
+      90,
+      20,
+      90,
+      20
+     ],
+     "m": [
+      54,
+      16,
+      54,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "bg": "",
+    "grad1": "",
+    "grad2": "",
+    "gradAng": 180
+   },
+   "cols": [
+    {
+     "id": "dxtfbl4",
+     "set": {},
+     "widgets": [
+      {
+       "id": "smf85ac",
+       "type": "heading",
+       "set": {
+        "text": "لماذا هذا المنتج؟",
+        "tag": "h2",
+        "fs": {
+         "d": 38,
+         "m": 27
+        },
+        "fw": "800",
+        "ta": {
+         "d": "center"
+        },
+        "bindTitle": false,
+        "prod": "misk-noir",
+        "color": "#ecfdf5",
+        "lh": {
+         "d": 1.7
+        },
+        "ls": {
+         "d": -0.6
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          6,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "19aoz5j",
+       "type": "text",
+       "set": {
+        "html": "<p>ستة أسباب تجعله الخيار الصحيح لك</p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "center"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          34,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "gb2egx5",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-card\"><div class=\"ic\">🌿</div><h3>أصالة موثوقة</h3><p>من مصادر مختارة بعناية</p></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "atz6a6h",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-card\"><div class=\"ic\">💧</div><h3>نقاء تام</h3><p>طبيعي 100% بدون إضافات</p></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "kwghmel",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-card\"><div class=\"ic\">✨</div><h3>تغليف محكم</h3><p>يحفظ المنتج حتى باب دارك</p></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          16,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "pwsm63d",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-card\"><div class=\"ic\">🛡</div><h3>دليل استعمال</h3><p>تعليمات واضحة لكل منتج</p></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "dp12jas",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-card\"><div class=\"ic\">️</div><h3>دعم مباشر</h3><p>رد سريع على استفساراتك</p></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "0fcwmc1",
+       "type": "html",
+       "set": {
+        "code": "<div class=\"lp-card\"><div class=\"ic\">📦</div><h3>جودة مضمونة</h3><p>منتج أصلي مفحص من أليسوم</p></div>",
+        "src": "orig",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "40e8fdk",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      60,
+      20,
+      60,
+      20
+     ],
+     "m": [
+      36,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "0youzz4",
+     "set": {},
+     "widgets": [
+      {
+       "id": "n89w83c",
+       "type": "heading",
+       "set": {
+        "text": "طريقة الاستعمال",
+        "tag": "h2",
+        "fs": {
+         "d": 38,
+         "m": 27
+        },
+        "fw": "800",
+        "ta": {
+         "d": "center"
+        },
+        "bindTitle": false,
+        "prod": "misk-noir",
+        "color": "#ecfdf5",
+        "lh": {
+         "d": 1.7
+        },
+        "ls": {
+         "d": -0.6
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          6,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "uaqs0n3",
+       "type": "text",
+       "set": {
+        "html": "<p>ثلاث خطوات بسيطة للحصول على أفضل نتيجة</p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "center"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "941e5sj",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      60,
+      20,
+      60,
+      20
+     ],
+     "m": [
+      36,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "4wslvbl",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 22
+      },
+      "pad": {
+       "d": [
+        26,
+        26,
+        26,
+        26
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "mbooybj",
+       "type": "text",
+       "set": {
+        "html": "<p>1</p>",
+        "fs": {
+         "d": 19
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ffffff",
+        "bg": "#173f35",
+        "rad": {
+         "d": 50
+        },
+        "shadow": "md",
+        "w": {
+         "d": 11
+        },
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          13,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "hfgayec",
+       "type": "heading",
+       "set": {
+        "text": "استلم طلبك",
+        "tag": "h3",
+        "fs": {
+         "d": 18,
+         "m": 18
+        },
+        "fw": "800",
+        "ta": {
+         "d": "start"
+        },
+        "bindTitle": false,
+        "prod": "misk-noir",
+        "color": "#f4f9f5",
+        "lh": {
+         "d": 1.7
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          6,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "bk6a2rr",
+       "type": "text",
+       "set": {
+        "html": "<p>توصيل سريع مع الدفع عند الاستلام</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#a9b7ae",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "dj1bsf0",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 22
+      },
+      "pad": {
+       "d": [
+        26,
+        26,
+        26,
+        26
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "dutveul",
+       "type": "text",
+       "set": {
+        "html": "<p>2</p>",
+        "fs": {
+         "d": 19
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ffffff",
+        "bg": "#173f35",
+        "rad": {
+         "d": 50
+        },
+        "shadow": "md",
+        "w": {
+         "d": 11
+        },
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          13,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "rpcsus2",
+       "type": "heading",
+       "set": {
+        "text": "اتبع الدليل",
+        "tag": "h3",
+        "fs": {
+         "d": 18,
+         "m": 18
+        },
+        "fw": "800",
+        "ta": {
+         "d": "start"
+        },
+        "bindTitle": false,
+        "prod": "misk-noir",
+        "color": "#f4f9f5",
+        "lh": {
+         "d": 1.7
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          6,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "d62k5pm",
+       "type": "text",
+       "set": {
+        "html": "<p>تعليمات الاستعمال واضحة ومرفقة</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#a9b7ae",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "eu6yh98",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 22
+      },
+      "pad": {
+       "d": [
+        26,
+        26,
+        26,
+        26
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "8mc1cr1",
+       "type": "text",
+       "set": {
+        "html": "<p>3</p>",
+        "fs": {
+         "d": 19
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ffffff",
+        "bg": "#173f35",
+        "rad": {
+         "d": 50
+        },
+        "shadow": "md",
+        "w": {
+         "d": 11
+        },
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          13,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "zeqc8dj",
+       "type": "heading",
+       "set": {
+        "text": "استشرنا",
+        "tag": "h3",
+        "fs": {
+         "d": 18,
+         "m": 18
+        },
+        "fw": "800",
+        "ta": {
+         "d": "start"
+        },
+        "bindTitle": false,
+        "prod": "misk-noir",
+        "color": "#f4f9f5",
+        "lh": {
+         "d": 1.7
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          6,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "aduz701",
+       "type": "text",
+       "set": {
+        "html": "<p>أي سؤال شرعي أو عملي — نحن هنا</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#a9b7ae",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "awthf0u",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      60,
+      20,
+      60,
+      20
+     ],
+     "m": [
+      36,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "n8j7hm8",
+     "set": {},
+     "widgets": [
+      {
+       "id": "twofiuy",
+       "type": "heading",
+       "set": {
+        "text": "آراء بعض الزبائن",
+        "tag": "h2",
+        "fs": {
+         "d": 38,
+         "m": 27
+        },
+        "fw": "800",
+        "ta": {
+         "d": "center"
+        },
+        "bindTitle": false,
+        "prod": "misk-noir",
+        "color": "#ecfdf5",
+        "lh": {
+         "d": 1.7
+        },
+        "ls": {
+         "d": -0.6
+        },
+        "mar": {
+         "d": [
+          0,
+          0,
+          6,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "yd0fn9v",
+       "type": "text",
+       "set": {
+        "html": "<p>تجارب حقيقية من زبائننا في مختلف الولايات</p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "center"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "gr1iqrq",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      60,
+      20,
+      60,
+      20
+     ],
+     "m": [
+      36,
+      16,
+      36,
+      16
+     ]
+    },
+    "gap": {
+     "d": 20
+    }
+   },
+   "cols": [
+    {
+     "id": "bjd33ee",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 22
+      },
+      "pad": {
+       "d": [
+        26,
+        26,
+        26,
+        26
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "224fkuh",
+       "type": "text",
+       "set": {
+        "html": "<p>«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          22,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "nvbdv91",
+       "type": "text",
+       "set": {
+        "html": "<p>أ</p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ffffff",
+        "bg": "#173f35",
+        "rad": {
+         "d": 50
+        },
+        "w": {
+         "d": 12
+        },
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "h7vk2b6",
+       "type": "text",
+       "set": {
+        "html": "<p>أبو أيوب<br><small>ولاية المدية</small></p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "ese2pc3",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 22
+      },
+      "pad": {
+       "d": [
+        26,
+        26,
+        26,
+        26
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "s8h1mni",
+       "type": "text",
+       "set": {
+        "html": "<p>«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          22,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "gyq4h0y",
+       "type": "text",
+       "set": {
+        "html": "<p>م</p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ffffff",
+        "bg": "#173f35",
+        "rad": {
+         "d": 50
+        },
+        "w": {
+         "d": 12
+        },
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "y6fw0us",
+       "type": "text",
+       "set": {
+        "html": "<p>مريم<br><small>ولاية الجلفة</small></p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "bl9vf9c",
+     "set": {
+      "bg": "",
+      "bw": 1,
+      "bs": "solid",
+      "bc": "rgba(134,239,172,.3)",
+      "rad": {
+       "d": 22
+      },
+      "pad": {
+       "d": [
+        26,
+        26,
+        26,
+        26
+       ]
+      },
+      "shadow": "lg",
+      "ta": {
+       "d": "start"
+      }
+     },
+     "widgets": [
+      {
+       "id": "lz4l15g",
+       "type": "text",
+       "set": {
+        "html": "<p>«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>",
+        "fs": {
+         "d": 15
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "mar": {
+         "d": [
+          0,
+          0,
+          22,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "4pgc5mw",
+       "type": "text",
+       "set": {
+        "html": "<p>ا</p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ffffff",
+        "bg": "#173f35",
+        "rad": {
+         "d": 50
+        },
+        "w": {
+         "d": 12
+        },
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      },
+      {
+       "id": "h7iobnu",
+       "type": "text",
+       "set": {
+        "html": "<p>الطاهر<br><small>ولاية غرداية</small></p>",
+        "fs": {
+         "d": 16
+        },
+        "lh": {
+         "d": 1.7
+        },
+        "ta": {
+         "d": "start"
+        },
+        "color": "#ecfdf5",
+        "fw": "900",
+        "mar": {
+         "d": [
+          0,
+          0,
+          0,
+          0
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "jiq00wt",
+   "set": {
+    "layout": "full",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "m": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 0
+    }
+   },
+   "cols": [
+    {
+     "id": "j5z8iz0",
+     "set": {},
+     "widgets": [
+      {
+       "id": "6bf9fto",
+       "type": "html",
+       "set": {
+        "code": "<section style=\"padding-top:0\"><div class=\"container\">\n  <div class=\"lp-final\">\n    <h2>🎁 اطلب الآن — اشترِ قطعتين واحصل على الثالثة مجاناً</h2>\n    <p>العرض متاح لفترة محدودة فقط. املأ الاستمارة بالأعلى وسنتصل بك للتأكيد، ثم يصلك الطلب خلال 24-72 ساعة والدفع عند الاستلام.</p>\n    <div class=\"cta-row\" style=\"justify-content:center\">\n      <a class=\"lp-btn lp-btn-gold\" href=\"#order-form\">✅ اطلب الآن — الدفع عند الاستلام</a>\n      <a class=\"lp-btn lp-btn-green\" href=\"https://wa.me/213559237239?text=أريد%20طلب:%20مسك%20اسود+مسك%20ابيض\" target=\"_blank\">💬 اطلب عبر واتساب</a>\n    </div>\n  </div>\n  <div class=\"lp-head\" style=\"margin-top:2.5rem\"><h2 style=\"font-size:1.5rem\">قد يعجبك أيضاً</h2></div>\n  <div class=\"grid\" id=\"related\"></div>\n</div></section>",
+        "src": "orig"
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "main",
+   "free": []
+  },
+  {
+   "id": "9nczhyx",
+   "set": {
+    "layout": "full",
+    "cw": {
+     "d": 1140
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "m": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 0
+    }
+   },
+   "cols": [
+    {
+     "id": "ef0tzcp",
+     "set": {},
+     "widgets": [
+      {
+       "id": "g3anmwm",
+       "type": "sfoot",
+       "set": {
+        "cols": [
+         {
+          "h": "ALYSSUM",
+          "b": "الجمال الطبيعي لحياة أفضل: منتجات عناية طبيعية أصلية بجودة مضمونة والدفع عند الاستلام."
+         },
+         {
+          "h": "روابط سريعة",
+          "b": "[الفئات](index.html#categories)\n[المنتجات](index.html#products)\n[المميزات](index.html#features)\n[الأسئلة](index.html#faq)"
+         },
+         {
+          "h": "تواصل معنا",
+          "b": "📱 واتساب: [0559 23 72 39](https://wa.me/213559237239)\n🕐 السبت – الخميس: 9ص – 6م\n📍 الجزائر"
+         }
+        ],
+        "copy": "© 2026 أليسوم ALYSSUM — جميع الحقوق محفوظة",
+        "sbg": "#020a06",
+        "tc": "#a7c4b2",
+        "hc": "#ffffff",
+        "lc": "#a7c4b2",
+        "lh": "#bef264",
+        "w1": 2,
+        "spad": {
+         "d": [
+          48,
+          0,
+          24,
+          0
+         ],
+         "m": [
+          32,
+          0,
+          20,
+          0
+         ]
+        },
+        "cw": {
+         "d": 1200
+        },
+        "fs": {
+         "d": 15
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "grp": "bot"
+  }
+ ],
+ "seoTitle": "مسك اسود+مسك ابيض",
+ "product": "misk-noir",
+ "shell": "<!DOCTYPE html>\n<html dir=\"rtl\" lang=\"ar\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap\" rel=\"stylesheet\" media=\"print\" onload=\"this.media='all'\"><noscript><link href=\"https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap\" rel=\"stylesheet\"></noscript>\n<link rel=\"stylesheet\" href=\"../../assets/css/style.css\">\n<link rel=\"icon\" href=\"../../assets/img/favicon.png\">\n<title>مسك اسود+مسك ابيض — أليسوم | الدفع عند الاستلام</title><meta name=\"description\" content=\"المسك الأسود والأبيض للرقية الشرعية، عطر خارجي برائحة ثابتة ومميزة يُستخدم كعامل مساعد ضمن الروتين الشرعي الرقية الشرعية .\"><style id=\"premium-overrides\">\n:root{\n  --green:#23463a;\n  --green-2:#2f5d4f;\n  --gold:#c7a56f;\n  --gold-2:#e8d0a3;\n  --cream:#fbf8f2;\n  --ink:#17201c;\n  --muted:#4f5a55;\n  --line:rgba(35,70,58,.10);\n  --glass:rgba(255,255,255,.72);\n  --shadow-xl:0 28px 80px rgba(25,48,40,.14);\n  --shadow-lg:0 18px 50px rgba(25,48,40,.10);\n  --shadow-md:0 12px 32px rgba(25,48,40,.08);\n  --radius-xl:32px;\n  --radius-lg:24px;\n}\nhtml{scroll-behavior:smooth}\nbody{\n  background:\n    radial-gradient(circle at 12% 10%, rgba(199,165,111,.11), transparent 24rem),\n    radial-gradient(circle at 90% 17%, rgba(47,93,79,.10), transparent 28rem),\n    linear-gradient(180deg,#fcfaf6 0%,#f8f4ec 52%,#fcfaf6 100%);\n  color:var(--ink);\n}\nbody:before{\n  content:\"\";\n  position:fixed; inset:0; pointer-events:none; z-index:-1;\n  background-image:linear-gradient(rgba(35,70,58,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(35,70,58,.018) 1px,transparent 1px);\n  background-size:34px 34px;\n  mask-image:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 78%);\n}\n.container{width:min(1240px,calc(100% - 32px))}\n.topbar{\n  position:relative; overflow:hidden;\n  padding:10px 16px;\n  background:linear-gradient(90deg,#18392f,#2f5d4f 48%,#18392f);\n  box-shadow:0 8px 25px rgba(24,57,47,.15);\n  letter-spacing:.1px;\n}\n.topbar:after{\n  content:\"\"; position:absolute; inset:0; pointer-events:none;\n  background:linear-gradient(100deg,transparent 15%,rgba(255,255,255,.13) 50%,transparent 85%);\n  transform:translateX(-100%); animation:shine 7s linear infinite;\n}\n@keyframes shine{to{transform:translateX(100%)}}\n\n.site{\n  position:sticky; top:0; z-index:30;\n  background:rgba(252,250,246,.82);\n  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);\n  border-bottom:1px solid rgba(35,70,58,.08);\n}\n.site .container{min-height:74px}\n.logo{font-size:29px!important;font-weight:900;letter-spacing:-1px;color:var(--green)!important}\n.logo span{color:var(--gold)!important}\n.menu a{font-weight:800!important;color:#3d4a45!important;transition:.25s ease}\n.menu a:hover{color:var(--green)!important}\n.hd-wa{\n  border:1px solid rgba(35,70,58,.12)!important;\n  background:#fff!important;\n  color:var(--green)!important;\n  box-shadow:0 8px 20px rgba(35,70,58,.07);\n}\n.cart-btn{\n  box-shadow:0 8px 20px rgba(35,70,58,.06);\n  border:1px solid rgba(35,70,58,.10)!important;\n}\n\n.crumbs{\n  margin:20px 0 10px!important;\n  color:#7b867f!important;\n  font-size:.88rem!important;\n}\n.crumbs a{font-weight:800;color:var(--green)!important}\n\n.lp-hero{\n  position:relative;\n  padding:26px 0 84px!important;\n  align-items:stretch!important;\n}\n.lp-hero:before{\n  content:\"\"; position:absolute; left:-9vw; top:28px;\n  width:28vw; height:28vw; max-width:380px; max-height:380px;\n  border:1px solid rgba(199,165,111,.16); border-radius:50%;\n  box-shadow:0 0 0 28px rgba(199,165,111,.035),0 0 0 56px rgba(199,165,111,.02);\n  pointer-events:none;\n}\n.pbox{\n  position:relative; padding:18px!important;\n  border:1px solid rgba(35,70,58,.09)!important;\n  border-radius:var(--radius-xl)!important;\n  background:rgba(255,255,255,.76)!important;\n  box-shadow:var(--shadow-xl)!important;\n  backdrop-filter:blur(16px);\n}\n.gmain{\n  min-height:540px!important;\n  border-radius:25px!important;\n  background:\n    radial-gradient(circle at 50% 30%,rgba(255,255,255,.95),transparent 48%),\n    linear-gradient(145deg,#f3eee4,#faf7f1)!important;\n  border:1px solid rgba(35,70,58,.05);\n}\n.gmain img{\n  transition:transform .7s cubic-bezier(.2,.7,.2,1);\n  filter:drop-shadow(0 26px 24px rgba(22,48,39,.13));\n}\n.pbox:hover .gmain img{transform:scale(1.035) translateY(-5px)}\n.pthumbs{margin-top:15px}\n.gthumbs{gap:10px!important}\n.gthumbs>*{border-radius:16px!important;border:1px solid var(--line)!important;overflow:hidden}\n.gthumbs img{width:100%;height:84px;object-fit:cover;cursor:pointer;transition:.2s}\n.gthumbs img:hover{opacity:.8}\n.gthumbs img.active{border:2px solid var(--gold)!important;opacity:1}\n.trust-strip span{\n  background:rgba(255,255,255,.88)!important;\n  border:1px solid var(--line)!important;\n  box-shadow:0 8px 18px rgba(35,70,58,.05);\n}\n\n.lp-info{\n  display:flex!important; flex-direction:column!important; justify-content:center!important;\n  padding:10px 4px 10px 10px;\n}\n.eyebrow{\n  width:max-content;\n  padding:8px 14px!important;\n  border:1px solid rgba(199,165,111,.26);\n  background:linear-gradient(135deg,#f4ecde,#fbf7ef)!important;\n  color:var(--green)!important;\n  border-radius:999px!important;\n  font-weight:900!important;\n  box-shadow:0 8px 18px rgba(199,165,111,.08);\n}\n.lp-info h1{\n  font-size:clamp(40px,5vw,68px)!important;\n  line-height:1.08!important;\n  letter-spacing:-1.8px;\n  color:var(--green)!important;\n  margin:13px 0 12px!important;\n  text-wrap:balance;\n}\n.lp-sub{\n  font-size:clamp(19px,2vw,26px)!important;\n  line-height:1.55!important;\n  font-weight:900!important;\n  color:#27332e!important;\n  max-width:700px;\n}\n.lp-desc{\n  font-size:17px!important;\n  line-height:1.95!important;\n  color:var(--muted)!important;\n  max-width:720px;\n}\n.stars{color:#bb8c36!important}\n.stars small{color:#718078!important}\n.pd-tags{gap:10px!important}\n.tag{\n  border:1px solid rgba(35,70,58,.08)!important;\n  background:#fff!important;\n  border-radius:999px!important;\n  padding:9px 13px!important;\n  box-shadow:0 7px 17px rgba(35,70,58,.05);\n}\n.price-box{\n  margin:13px 0!important;\n  display:flex!important; align-items:center!important; gap:13px!important; flex-wrap:wrap;\n}\n.price-now{font-size:42px!important;color:var(--green)!important;font-weight:900!important}\n.price-old{font-size:20px!important;color:#9b978e!important}\n.save-pill{\n  background:#edf4ef!important;color:var(--green)!important;border:1px solid rgba(35,70,58,.10);\n  padding:6px 10px;border-radius:999px;font-weight:900\n}\n.deal-bar{\n  border:1px solid rgba(199,165,111,.30)!important;\n  background:linear-gradient(135deg,#fcf7ed,#fff)!important;\n  box-shadow:0 12px 30px rgba(199,165,111,.10)!important;\n  border-radius:22px!important;\n}\n.deal-timer{\n  border-radius:16px!important;\n  background:var(--green)!important;\n  color:#fff!important;\n  padding:9px 14px!important;\n  font-weight:900!important;\n}\n.offers{\n  display:grid;gap:10px;margin:14px 0;\n}\n.offer-card{\n  border:1px solid rgba(35,70,58,.08);\n  border-radius:18px;\n  background:#fff;\n}\n.mini-points{gap:9px!important}\n.mini-points>div{\n  background:rgba(255,255,255,.86)!important;\n  border:1px solid var(--line)!important;\n  box-shadow:0 8px 18px rgba(35,70,58,.045)!important;\n  border-radius:15px!important;\n}\n.form{\n  position:relative;\n  margin-top:18px!important;\n  padding:24px!important;\n  border-radius:26px!important;\n  border:1px solid rgba(35,70,58,.09)!important;\n  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(250,248,242,.96))!important;\n  box-shadow:var(--shadow-lg)!important;\n}\n.form h3{\n  font-size:21px!important;color:var(--green)!important;margin-bottom:17px!important\n}\n.field input,.field select{\n  min-height:52px!important;\n  border:1px solid rgba(35,70,58,.14)!important;\n  background:#fff!important;border-radius:14px!important;\n  outline:none!important;\n  transition:.22s ease!important;\n}\n.field input:focus,.field select:focus{\n  border-color:rgba(47,93,79,.55)!important;\n  box-shadow:0 0 0 4px rgba(47,93,79,.09)!important;\n}\n.dtype{\n  border:1px solid rgba(35,70,58,.08);\n  background:#f6f3eb;\n  border-radius:15px;\n  padding:8px!important;\n}\n.dtype label{\n  background:#fff;border-radius:12px;padding:10px 12px!important;\n  border:1px solid transparent;\n}\n.total-box{\n  margin:12px 0!important;\n  border-radius:18px!important;\n  border:1px solid rgba(35,70,58,.09)!important;\n  background:#f8f5ed!important;\n  color:var(--ink)!important;\n}\n.total-box small{color:var(--muted)!important;font-weight:700!important}\n.total-box b,.total-box #fee{color:var(--green)!important}\n.btn-order,.btn-gold,.lp-btn-gold{\n  background:linear-gradient(135deg,#d0ae78,#e7cb9b)!important;\n  color:#19231f!important;\n  box-shadow:0 14px 28px rgba(199,165,111,.22)!important;\n  border-radius:16px!important;\n}\n.btn-wa,.btn-cart2{\n  border-radius:15px!important;\n  transition:.25s ease!important;\n}\n.btn-order:hover,.btn-wa:hover,.btn-cart2:hover,.lp-btn:hover{transform:translateY(-2px)}\n\n.lp-sec{\n  position:relative;\n  padding:90px 0!important;\n}\n.lp-sec.alt{\n  background:linear-gradient(180deg,rgba(255,255,255,.54),rgba(245,241,233,.58));\n  border-top:1px solid rgba(35,70,58,.055);\n  border-bottom:1px solid rgba(35,70,58,.055);\n}\n.lp-grid{gap:48px!important}\n.lp-imgcard{\n  border-radius:30px!important;\n  box-shadow:var(--shadow-xl)!important;\n  border:1px solid rgba(35,70,58,.08)!important;\n  overflow:hidden!important;\n  background:#fff!important;\n}\n.lp-imgcard img{transition:transform .7s cubic-bezier(.2,.7,.2,1)!important}\n.lp-imgcard:hover img{transform:scale(1.035)}\n.lp-textcard{\n  padding:38px!important;\n  border-radius:28px!important;\n  border:1px solid rgba(35,70,58,.08)!important;\n  box-shadow:var(--shadow-md)!important;\n  background:rgba(255,255,255,.82)!important;\n  backdrop-filter:blur(10px);\n}\n.lp-textcard h2,.lp-head h2{\n  color:var(--green)!important;\n  letter-spacing:-.6px;\n}\n.lp-textcard h2{font-size:clamp(30px,3vw,44px)!important;line-height:1.2!important}\n.lp-textcard p{color:var(--muted)!important;font-size:17px!important}\n.lp-bullets{gap:10px!important}\n.lp-bullets>div{\n  position:relative;padding:14px 16px 14px 18px!important;\n  background:#f7f4ed!important;border:1px solid rgba(35,70,58,.07)!important;\n  border-radius:16px!important;\n}\n.lp-bullets>div:before{\n  content:\"✓\";position:absolute;right:auto;left:12px;top:50%;transform:translateY(-50%);\n  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;\n  background:#e8efe9;color:var(--green);font-weight:900;font-size:12px;\n}\n[dir=\"rtl\"] .lp-bullets>div{padding-left:45px!important;padding-right:16px!important}\n.lp-head{margin-bottom:34px!important;text-align:center}\n.lp-head h2{font-size:clamp(31px,3vw,46px)!important}\n.lp-head p{color:var(--muted)!important}\n.lp-cards{gap:16px!important}\n.lp-card{\n  border:1px solid rgba(35,70,58,.08)!important;\n  border-radius:22px!important;\n  background:rgba(255,255,255,.86)!important;\n  box-shadow:var(--shadow-md)!important;\n  transition:.35s ease!important;\n}\n.lp-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)!important}\n.lp-card .ic{\n  width:54px;height:54px;border-radius:16px;display:grid;place-items:center;\n  background:linear-gradient(135deg,#edf3ee,#f4ecde);\n}\n.lp-stepnum{\n  box-shadow:0 10px 22px rgba(35,70,58,.16);\n}\n.lp-final{\n  position:relative;overflow:hidden;\n  border-radius:34px!important;\n  padding:58px 30px!important;\n  background:\n   radial-gradient(circle at 10% 10%,rgba(231,203,155,.22),transparent 25%),\n   radial-gradient(circle at 90% 90%,rgba(255,255,255,.07),transparent 26%),\n   linear-gradient(135deg,#17392f,#2f5d4f)!important;\n  box-shadow:var(--shadow-xl)!important;\n}\n.lp-final:after{\n  content:\"\";position:absolute;inset:14px;border:1px solid rgba(255,255,255,.10);border-radius:25px;pointer-events:none\n}\n.lp-final h2{font-size:clamp(31px,4vw,52px)!important;color:#f0d39d!important;line-height:1.2!important}\n.lp-final p{font-size:17px!important;color:rgba(255,255,255,.84)!important;max-width:820px}\n.lp-btn{\n  min-height:56px!important;padding:14px 22px!important;border-radius:16px!important;font-weight:900!important;\n}\n.lp-btn-green{\n  background:rgba(255,255,255,.10)!important;color:#fff!important;\n  border:1px solid rgba(255,255,255,.2)!important;\n}\n.sticky-cta{\n  border-top:1px solid rgba(35,70,58,.1)!important;\n  background:rgba(252,250,246,.90)!important;\n  backdrop-filter:blur(18px)!important;\n  box-shadow:0 -10px 28px rgba(35,70,58,.06)!important;\n}\nfooter.site{\n  position:relative!important;\n  background:#132d25!important;\n  color:rgba(255,255,255,.76)!important;\n  border-bottom:0!important;\n  margin-top:0;\n}\nfooter.site a{color:#f0d39d!important}\nfooter.site h4{color:#fff!important}\n.copy{border-top:1px solid rgba(255,255,255,.10)!important}\n\n/* Avis screenshots */\n.reviews-screenshots{\n  display:grid;\n  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));\n  gap:16px;\n  margin-top:20px;\n}\n.reviews-screenshots img{\n  width:100%;\n  border-radius:16px;\n  box-shadow:0 12px 32px rgba(25,48,40,.12);\n  border:1px solid rgba(35,70,58,.08);\n  transition:transform .3s ease;\n}\n.reviews-screenshots img:hover{\n  transform:translateY(-4px);\n}\n\n@media (max-width:980px){\n  .lp-cards[style*=\"repeat(4\"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}\n  .lp-cards[style*=\"repeat(3\"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}\n\n  .lp-hero{padding-top:10px!important}\n  .gmain{min-height:390px!important}\n  .lp-info{padding:8px 0}\n  .lp-info h1{font-size:42px!important}\n  .lp-sec{padding:68px 0!important}\n  .lp-textcard{padding:26px!important}\n}\n@media (max-width:640px){\n  .lp-cards[style*=\"repeat(4\"]{grid-template-columns:1fr!important}\n  .lp-cards[style*=\"repeat(3\"]{grid-template-columns:1fr!important}\n\n  .container{width:min(100% - 20px,1240px)}\n  .site .container{min-height:66px}\n  .menu{display:none!important}\n  .hd-wa{display:none!important}\n  .crumbs{font-size:.78rem!important}\n  .gmain{min-height:330px!important}\n  .lp-info h1{font-size:37px!important}\n  .lp-sub{font-size:18px!important}\n  .lp-desc{font-size:15.5px!important}\n  .form{padding:18px!important}\n  .lp-sec{padding:56px 0!important}\n  .lp-textcard h2{font-size:29px!important}\n  .lp-card{padding:20px!important}\n  .lp-final{padding:42px 20px!important}\n  .reviews-screenshots{grid-template-columns:1fr!important}\n}\n@media (prefers-reduced-motion:reduce){\n  *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}\n}\n\n/* نموذج الطلب العريض */\n.order-wide{margin-top:2rem}\n.order-wide .form{max-width:none!important;margin-top:0!important}\n@media(min-width:960px){\n  .order-wide .form{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem 1.2rem;align-items:end;padding:26px 32px!important}\n  .order-wide .form>h3{grid-column:1/-1;margin:0}\n  .order-wide .form .frow{display:contents}\n  .order-wide .form .field{margin:0}\n  .order-wide .form #desk-wrap{grid-column:span 2}\n  .order-wide .form .dtype{grid-column:span 2;margin:0}\n  .order-wide .form .coupon-box{grid-column:span 2;margin:0!important;flex-wrap:nowrap!important;align-self:stretch;align-items:center}\n  .order-wide .form .coupon-box .btn-cart2{width:auto!important;flex:none;margin:0}\n  .order-wide .form #prod-coupon-msg{grid-column:1/-1;margin:0!important;min-height:0!important}\n  .order-wide .form .total-box{grid-column:span 2;margin:0;align-self:stretch}\n  .order-wide .form .btn-order{grid-column:span 2;margin:0;align-self:stretch;font-size:1.1rem}\n  .order-wide .form .btn-wa,.order-wide .form .btn-cart2#add-cart{grid-column:span 2;margin:0}\n  .order-wide .form .cod-note{grid-column:1/-1;margin:0}\n}\n</style>\n<!--seo:start-->\n<link rel=\"canonical\" href=\"https://alyssumdz.com/p/misk-noir/\">\n<meta property=\"og:locale\" content=\"ar_DZ\"><meta property=\"og:site_name\" content=\"أليسوم ALYSSUM\">\n<meta property=\"og:type\" content=\"product\"><meta property=\"og:title\" content=\"مسك اسود+مسك ابيض — أليسوم | الدفع عند الاستلام\"><meta property=\"og:description\" content=\"المسك الأسود والأبيض للرقية الشرعية، عطر خارجي برائحة ثابتة ومميزة يُستخدم كعامل مساعد ضمن الروتين الشرعي الرقية الشرعية .\"><meta property=\"og:url\" content=\"https://alyssumdz.com/p/misk-noir/\"><meta property=\"og:image\" content=\"https://alyssumdz.com/assets/img/misk-noir/0.webp\">\n<script type=\"application/ld+json\">{\"@context\": \"https://schema.org\", \"@type\": \"Product\", \"name\": \"مسك اسود+مسك ابيض\", \"description\": \"المسك الأسود والأبيض للرقية الشرعية، عطر خارجي برائحة ثابتة ومميزة يُستخدم كعامل مساعد ضمن الروتين الشرعي الرقية الشرعية .\", \"image\": [\"https://alyssumdz.com/assets/img/misk-noir/0.webp\"], \"sku\": \"misk-noir\", \"brand\": {\"@type\": \"Brand\", \"name\": \"أليسوم ALYSSUM\"}, \"offers\": {\"@type\": \"Offer\", \"url\": \"https://alyssumdz.com/p/misk-noir/\", \"priceCurrency\": \"DZD\", \"price\": \"1600\", \"availability\": \"https://schema.org/InStock\", \"itemCondition\": \"https://schema.org/NewCondition\"}}</script>\n<!--seo:end-->\n</head><body>\n<div class=\"topbar\">🚚 توصيل سريع لـ <b>58 ولاية</b> · 💵 <b>الدفع عند الاستلام</b> · 🎁 اشترِ <b>قطعتين</b> واحصل على <b>الثالثة مجاناً</b></div><header class=\"site\"><div class=\"container\">\n      <a class=\"logo\" href=\"../../index.html\">ألي<span>سوم</span></a>\n      <nav class=\"menu\">\n        <a href=\"../../index.html#products\">المنتجات</a>\n        <a href=\"../../index.html#features\">لماذا نحن؟</a>\n        <a href=\"../../index.html#faq\">الأسئلة الشائعة</a>\n      </nav>\n      <a class=\"hd-wa\" href=\"https://wa.me/213559237239\" target=\"_blank\">واتساب</a>\n      <button class=\"cart-btn\"><span aria-hidden=\"true\">🛒</span><span class=\"cart-count\">0</span><span class=\"sr-only\"> السلة</span></button>\n    </div></header><main id=\"main\">\n<div class=\"container\">\n  <div class=\"crumbs\"><a href=\"../../index.html\">الرئيسية</a> / <a href=\"../../index.html#products\">المنتجات</a> / مسك اسود+مسك ابيض</div>\n  <div class=\"pd2 lp-hero\">\n    <div class=\"pbox\">\n      <div class=\"gmain\"><img id=\"gmain\" fetchpriority=\"high\" decoding=\"async\" src=\"../../assets/img/misk-noir/0.webp\" alt=\"مسك اسود+مسك ابيض\"></div>\n      <div class=\"pthumbs\"><div class=\"gthumbs\" data-static=\"1\"><img src=\"../../assets/img/misk-noir/0.webp\" alt=\"مسك اسود+مسك ابيض\" class=\"on active\"></div></div>\n      <div class=\"trust-strip\" style=\"margin-top:1rem\">\n        <span>💵 الدفع عند الاستلام</span><span>🚚 توصيل 58 ولاية</span><span>🎁 الثالثة مجاناً</span><span>🔄 استبدال مضمون</span>\n      </div>\n    </div>\n\n    <div class=\"lp-info\">\n      <span class=\"eyebrow\">ALYSSUM — الرقية الشرعية</span>\n      <h1>مسك اسود+مسك ابيض</h1>\n      <div class=\"stars\" style=\"margin:.3rem 0\">★★★★★ <small>(+40 تقييم إيجابي)</small></div>\n      <p class=\"lp-sub\">منتجات أصيلة مرتبطة بالسنة النبوية</p>\n      <p class=\"lp-desc\">المسك الأسود والأبيض للرقية الشرعية، عطر خارجي برائحة ثابتة ومميزة يُستخدم كعامل مساعد ضمن الروتين الشرعي الرقية الشرعية .</p>\n      <div class=\"pd-tags\">\n        <span class=\"tag\">🌿 طبيعي 100%</span>\n        <span class=\"tag\">✅ أصلي ومفحص</span>\n        <span class=\"tag\">👁️ <b id=\"viewers\">9</b> يشاهدون الآن</span>\n      </div>\n\n      <div class=\"price-box\">\n        <span class=\"price-now\" id=\"pprice\"></span>\n        <span class=\"price-old\" id=\"pold\"></span>\n        <span class=\"save-pill\" id=\"psave\"></span>\n      </div>\n\n      <div class=\"deal-bar\">\n        <span class=\"gift\">🎁</span>\n        <div style=\"flex:1;min-width:180px\"><b>عرض محدود: اشترِ قطعتين واحصل على الثالثة مجاناً</b><br><small style=\"color:#8a6a2f\">ينتهي العرض خلال:</small></div>\n        <span class=\"deal-timer\">48:00:00</span>\n      </div>\n\n      <div class=\"offers\" id=\"offers\"></div>\n\n      <div class=\"mini-points\"><div>منتجات طبيعية أصيلة</div><div>مرتبطة بالسنة النبوية المطهرة</div><div>جودة ونقاء مضمونان</div><div>توصيل لجميع الولايات مع الدفع عند الاستلام</div></div>\n    </div>\n  </div>\n  <div class=\"order-wide\">\n<form class=\"form\" id=\"order-form\" style=\"margin-top:1rem\">\n        <h3 role=\"heading\" aria-level=\"2\">📝 املأ معلوماتك — الدفع عند الاستلام</h3>\n        <div class=\"frow\">\n          <div class=\"field\"><label>الاسم الكامل *</label><input id=\"name\" required placeholder=\"مثال: أحمد بن علي\"></div>\n          <div class=\"field\"><label>رقم الهاتف *</label><input id=\"phone\" required inputmode=\"tel\" placeholder=\"05XXXXXXXX\"></div>\n        </div>\n        <div class=\"frow\">\n          <div class=\"field\"><label>الولاية *</label><select id=\"wilaya\" required><option value=\"\">— اختر ولايتك —</option></select></div>\n          <div class=\"field\"><label>البلدية</label><input id=\"commune\" placeholder=\"اختياري\"></div>\n        </div>\n        <div class=\"field\" id=\"desk-wrap\" style=\"display:none\"><label>مكتب التوصيل (Stop Desk) *</label><select id=\"desk\" aria-label=\"مكتب التوصيل\"></select></div>\n        <div class=\"field\"><label>العنوان الكامل</label><input id=\"address\" placeholder=\"الحي، الشارع، رقم المنزل...\"></div>\n        <div class=\"dtype\">\n          <label><input type=\"radio\" name=\"dtype\" value=\"home\" checked><span>🏠 توصيل للمنزل</span></label>\n          <label><input type=\"radio\" name=\"dtype\" value=\"stop\"><span>🏢 مكتب Stop Desk (أرخص)</span></label>\n        </div>\n        <div class=\"total-box\">\n          <div><small>رسوم التوصيل</small><span id=\"fee\">—</span></div>\n          <div style=\"text-align:left\"><small>الإجمالي</small><b id=\"grand\">—</b></div>\n        </div>\n        <button type=\"submit\" class=\"btn-order\">✅ تأكيد الطلب — <span id=\"btn-total\"></span></button>\n        <a class=\"btn-wa\" href=\"https://wa.me/213559237239?text=أريد%20طلب:%20مسك%20اسود+مسك%20ابيض\" target=\"_blank\">💬 اطلب مباشرة عبر واتساب</a>\n        <button type=\"button\" class=\"btn-cart2\" id=\"add-cart\">🛒 أضف إلى السلة</button>\n        <div class=\"cod-note\">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>\n      </form>\n  </div>\n</div>\n\n<section class=\"lp-sec alt\"><div class=\"container\">\n  <div class=\"lp-grid\">\n    <div class=\"lp-imgcard\"><img width=\"1000\" height=\"1000\" src=\"../../assets/img/misk-noir/0.webp\" alt=\"مسك اسود+مسك ابيض\" loading=\"lazy\"></div>\n    <div class=\"lp-textcard\">\n      <h2>هل تبحث عن منتجات رقية أصيلة وموثوقة؟</h2>\n      <p>من السنة النبوية استخدام الماء والعسل والحبة السوداء وغيرها. لكن الأصالة والنقاء شرطان أساسيان ليصل المنتج بحقيقته الكاملة.</p>\n      <div class=\"lp-bullets\"><div>منتجات مجهولة المصدر</div><div>اختلاط وتلوث يفقدان الفائدة</div><div>صعوبة الوثوق بالجودة</div><div>غياب المتابعة والاستشارة</div></div>\n    </div>\n  </div>\n</div></section>\n\n<section class=\"lp-sec\"><div class=\"container\">\n  <div class=\"lp-grid\">\n    <div class=\"lp-textcard\">\n      <h2>الحل: أصالة ونقاء من أليسوم</h2>\n      <p>منتجات الرقية من أليسوم مختارة بعناية من مصادر موثوقة، طبيعية ونقية، تصلك بتغليف آمن مع إمكانية الاستفسار والاستشارة عبر واتساب.</p>\n      <div class=\"lp-bullets\"><div>منتجات طبيعية نقية 100%</div><div>مصادر موثوقة مختارة بعناية</div><div>تغليف آمن يحفظ الجودة</div><div>استشارة وإرشاد عبر واتساب</div></div>\n    </div>\n    <div class=\"lp-imgcard\"><img width=\"1000\" height=\"1000\" src=\"../../assets/img/misk-noir/0.webp\" alt=\"مسك اسود+مسك ابيض\" loading=\"lazy\"></div>\n  </div>\n</div></section>\n\n<section class=\"lp-sec alt\"><div class=\"container\">\n  <div class=\"lp-head\"><h2>✨ لماذا هذا المنتج؟</h2><p>ستة أسباب تجعله الخيار الصحيح لك</p></div>\n  <div class=\"lp-cards\"><div class=\"lp-card\"><div class=\"ic\">🌿</div><h3>أصالة موثوقة</h3><p>من مصادر مختارة بعناية</p></div><div class=\"lp-card\"><div class=\"ic\">💧</div><h3>نقاء تام</h3><p>طبيعي 100% بدون إضافات</p></div><div class=\"lp-card\"><div class=\"ic\">✨</div><h3>تغليف محكم</h3><p>يحفظ المنتج حتى باب دارك</p></div><div class=\"lp-card\"><div class=\"ic\">🛡</div><h3>دليل استعمال</h3><p>تعليمات واضحة لكل منتج</p></div><div class=\"lp-card\"><div class=\"ic\">️</div><h3>دعم مباشر</h3><p>رد سريع على استفساراتك</p></div><div class=\"lp-card\"><div class=\"ic\">📦</div><h3>جودة مضمونة</h3><p>منتج أصلي مفحص من أليسوم</p></div></div>\n</div></section>\n\n<section class=\"lp-sec\"><div class=\"container\">\n  <div class=\"lp-head\"><h2>طريقة الاستعمال</h2><p>ثلاث خطوات بسيطة للحصول على أفضل نتيجة</p></div>\n  <div class=\"lp-cards\"><div class=\"lp-card\"><div class=\"lp-stepnum\">1</div><h3>استلم طلبك</h3><p>توصيل سريع مع الدفع عند الاستلام</p></div><div class=\"lp-card\"><div class=\"lp-stepnum\">2</div><h3>اتبع الدليل</h3><p>تعليمات الاستعمال واضحة ومرفقة</p></div><div class=\"lp-card\"><div class=\"lp-stepnum\">3</div><h3>استشرنا</h3><p>أي سؤال شرعي أو عملي — نحن هنا</p></div></div>\n</div></section>\n\n<section class=\"lp-sec alt\"><div class=\"container\">\n  <div class=\"lp-head\"><h2>آراء بعض الزبائن</h2><p>تجارب حقيقية من زبائننا في مختلف الولايات</p></div>\n  <div class=\"lp-testis\"><div class=\"lp-card\">\n        <div class=\"stars\">★★★★★</div>\n        <p style=\"color:#3A4540\">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>\n        <div style=\"display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)\">\n          <span style=\"width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center\">أ</span>\n          <div>أبو أيوب<br><small style=\"color:var(--muted);font-weight:700\">ولاية المدية</small></div>\n        </div></div><div class=\"lp-card\">\n        <div class=\"stars\">★★★★★</div>\n        <p style=\"color:#3A4540\">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>\n        <div style=\"display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)\">\n          <span style=\"width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center\">م</span>\n          <div>مريم<br><small style=\"color:var(--muted);font-weight:700\">ولاية الجلفة</small></div>\n        </div></div><div class=\"lp-card\">\n        <div class=\"stars\">★★★★★</div>\n        <p style=\"color:#3A4540\">«منتج رائع ووصلني بسرعة، والتعامل كان في غاية الاحترافية. أنصح به بشدة!»</p>\n        <div style=\"display:flex;align-items:center;gap:.7rem;margin-top:1rem;font-weight:900;color:var(--green)\">\n          <span style=\"width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center\">ا</span>\n          <div>الطاهر<br><small style=\"color:var(--muted);font-weight:700\">ولاية غرداية</small></div>\n        </div></div></div>\n</div></section>\n\n<section style=\"padding-top:0\"><div class=\"container\">\n  <div class=\"lp-final\">\n    <h2>🎁 اطلب الآن — اشترِ قطعتين واحصل على الثالثة مجاناً</h2>\n    <p>العرض متاح لفترة محدودة فقط. املأ الاستمارة بالأعلى وسنتصل بك للتأكيد، ثم يصلك الطلب خلال 24-72 ساعة والدفع عند الاستلام.</p>\n    <div class=\"cta-row\" style=\"justify-content:center\">\n      <a class=\"lp-btn lp-btn-gold\" href=\"#order-form\">✅ اطلب الآن — الدفع عند الاستلام</a>\n      <a class=\"lp-btn lp-btn-green\" href=\"https://wa.me/213559237239?text=أريد%20طلب:%20مسك%20اسود+مسك%20ابيض\" target=\"_blank\">💬 اطلب عبر واتساب</a>\n    </div>\n  </div>\n  <div class=\"lp-head\" style=\"margin-top:2.5rem\"><h2 style=\"font-size:1.5rem\">قد يعجبك أيضاً</h2></div>\n  <div class=\"grid\" id=\"related\"></div>\n</div></section>\n<div class=\"sticky-cta\">\n  <div><small style=\"color:var(--muted)\">الإجمالي</small><div class=\"p\" id=\"sticky-price\">—</div></div>\n  <a class=\"btn btn-gold\" href=\"#order-form\" style=\"flex:1\">اطلب الآن — الدفع عند الاستلام</a>\n</div>\n</main><footer class=\"site\"><div class=\"container\" style=\"text-align:center;padding:1.6rem 0\"><span style=\"color:#C7D3CD;font-size:.85rem\">© 2026 ALYSSUM DZ — جميع الحقوق محفوظة</span></div></footer><div class=\"drawer-bg\" id=\"drawer-bg\"></div>\n<div class=\"drawer\" id=\"drawer\">\n  <h3>🛒 سلة التسوق</h3>\n  <div class=\"items\" id=\"cart-items\"></div>\n  <div class=\"foot\">\n    <div class=\"frow\" style=\"grid-template-columns:1fr 1fr\">\n      <div class=\"field\"><label>الاسم الكامل</label><input id=\"cname\" placeholder=\"مثال: أحمد بن علي\"></div>\n      <div class=\"field\"><label>رقم الهاتف</label><input id=\"cphone\" placeholder=\"05XXXXXXXX\" inputmode=\"tel\"></div>\n    </div>\n    <div class=\"frow\" style=\"grid-template-columns:1fr 1fr\">\n      <div class=\"field\"><label>الولاية</label><select id=\"cwilaya\" aria-label=\"الولاية\"><option value=\"\">— اختر —</option></select></div>\n      <div class=\"field\"><label>البلدية</label><input id=\"ccommune\" placeholder=\"اختياري\"></div>\n    </div>\n    <div class=\"dtype\">\n      <label><input type=\"radio\" name=\"cdtype\" value=\"home\" checked><span>🏠 إلى المنزل</span></label>\n      <label><input type=\"radio\" name=\"cdtype\" value=\"stop\"><span>🏢 مكتب Stop Desk</span></label>\n    </div>\n    <div class=\"tot\"><span>الإجمالي (مع التوصيل)</span><span id=\"cart-total\">0 دج</span></div>\n    <div style=\"display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem;margin-bottom:.8rem\"><span>رسوم التوصيل</span><span id=\"cart-fee\">—</span></div>\n    <button class=\"btn-order\" onclick=\"Cart.checkout()\">تأكيد الطلب عبر واتساب ✓</button>\n  </div>\n</div><script>const REL=\"../../\";</script>\n<script defer src=\"../../assets/js/config.js\"></script>\n<script defer src=\"../../assets/js/data.js\"></script>\n<script defer src=\"../../assets/js/wilayas.js\"></script>\n<script defer src=\"../../assets/js/api.js\"></script>\n<script defer src=\"../../assets/js/app.js\"></script>\n<script>addEventListener(\"load\",function(){setTimeout(function(){var s=document.createElement(\"script\");s.src=\"../../assets/js/agent.js\";document.body.appendChild(s)},600)})</script>\n<script>\n/* معرض الصور: الصورة الكبيرة تتبع الصور المصغّرة، وتدوير تلقائي (يتوقف داخل محرر اللوحة والفأرة فوق المعرض) */\n(function(){\n  var main=document.getElementById(\"gmain\"), box=document.querySelector(\".gthumbs[data-static]\");\n  if(!main||!box) return;\n  function thumbs(){ return [].slice.call(box.querySelectorAll(\"img\")); }\n  function show(im){ main.src=im.src; thumbs().forEach(function(x){ x.classList.remove(\"on\",\"active\"); }); im.classList.add(\"on\",\"active\"); }\n  document.addEventListener(\"DOMContentLoaded\",function(){\n    var t=thumbs(); if(t[0]) show(t[0]);\n    if(window.parent!==window) return;\n    var timer;\n    function restart(){ clearInterval(timer); timer=setInterval(function(){ var a=thumbs(); if(a.length<2) return; var i=-1; a.forEach(function(x,k){ if(x.classList.contains(\"on\")) i=k; }); show(a[(i+1)%a.length]); },4000); }\n    box.addEventListener(\"click\",function(e){ var im=e.target.closest(\"img\"); if(im){ show(im); restart(); } });\n    restart();\n    var pb=document.querySelector(\".pbox\"); if(pb){ pb.addEventListener(\"mouseenter\",function(){ clearInterval(timer); }); pb.addEventListener(\"mouseleave\",restart); }\n  });\n})();\n</script>\n<script>document.addEventListener(\"DOMContentLoaded\",()=>{bootStore().then(()=>{\n      initProduct(\"misk-noir\");\n      initCartDrawer();\n      fillCartWilayas();\n      const p = PRODUCTS.find(x=>x.slug===\"misk-noir\");\n      if(p){\n        if(p.old){ document.getElementById(\"pold\").textContent = fmt(p.old);\n          document.getElementById(\"psave\").textContent = \"وفّر \" + Math.round((1-p.price/p.old)*100) + \"%\"; }\n        else { document.getElementById(\"pold\").style.display=\"none\"; document.getElementById(\"psave\").style.display=\"none\"; }\n        document.getElementById(\"pprice\").textContent = fmt(p.price);\n      }\n      // منتجات مشابهة\n      const rel2 = PRODUCTS.filter(x=>x.slug!==\"misk-noir\"&&x.cat===(p?p.cat:\"\")).slice(0,4);\n      const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!==\"misk-noir\").slice(0,4);\n      document.getElementById(\"related\").innerHTML = others.map(x=>`\n        <a class=\"card\" href=\"../../p/${x.slug}/\">\n          <div class=\"thumb\"><img loading=\"lazy\" src=\"../../${x.cover||x.images[0]}\" alt=\"${x.title}\"></div>\n          <div class=\"body\"><h3>${x.title}</h3>\n          <div class=\"price-row\"><span class=\"price\">${fmt(x.price)}</span>${x.old?`<span class=\"old\">${fmt(x.old)}</span>`:\"\"}</div></div>\n        </a>`).join(\"\");\n    });});</script></body></html>",
+ "origin": {
+  "kind": "product",
+  "slug": "misk-noir",
+  "direct": true,
+  "raw": false,
+  "native": true
+ },
+ "tplCss": "\nhtml{background:#020a06!important}\nbody,.pb-page{background:transparent!important;color:#e7f5ec}\nbody::before{content:\"\";position:fixed;inset:-2%;z-index:-2;pointer-events:none;background:linear-gradient(180deg,rgba(2,10,6,.18),rgba(2,10,6,.5)),url(/assets/img/tpl/alyssum-bg.webp) center/cover no-repeat;animation:alyAur 26s ease-in-out infinite alternate}\n@keyframes alyAur{to{transform:scale(1.06) translateY(-8px)}}\n@media(max-width:767px){body::before{background:linear-gradient(180deg,rgba(2,10,6,.12),rgba(2,10,6,.4)),url(/assets/img/tpl/alyssum-bg-m.webp) center/cover no-repeat}}\n.pb-sec{position:relative}\n.aly-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(21,128,61,.18);border:1px solid rgba(134,239,172,.4);color:#d9f99d;font-weight:800;font-size:14px;backdrop-filter:blur(10px)}\n.aly-pill svg{width:18px;height:18px;color:#86efac}\n.aly-btns{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0}\n.aly-b1,.aly-b2{display:inline-flex;align-items:center;justify-content:center;gap:12px;padding:15px 30px;border-radius:14px;font-weight:900;font-size:17px;text-decoration:none;position:relative;overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background .3s}\n.aly-b1{color:#052e16;background:linear-gradient(180deg,#bef264,#4ade80 55%,#22c55e);box-shadow:0 12px 34px rgba(74,222,128,.4),inset 0 1px 0 rgba(255,255,255,.7);animation:alyPulse 2.6s infinite}\n.aly-b1::after{content:\"\";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.65),transparent);transform:skewX(-22deg);animation:alyShine 3.4s ease-in-out infinite}\n.aly-b2{color:#ecfdf5;background:rgba(255,255,255,.06);border:1px solid rgba(134,239,172,.35);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}\n.aly-b1:hover,.aly-b2:hover{transform:translateY(-4px)}\n.aly-b2:hover{background:rgba(74,222,128,.16);border-color:#86efac}\n.aly-b1 svg,.aly-b2 svg{width:20px;height:20px}\n@keyframes alyShine{0%,55%{left:-70%}100%{left:140%}}\n@keyframes alyPulse{0%{box-shadow:0 12px 34px rgba(74,222,128,.4),0 0 0 0 rgba(74,222,128,.55)}70%{box-shadow:0 12px 34px rgba(74,222,128,.4),0 0 0 18px rgba(74,222,128,0)}100%{box-shadow:0 12px 34px rgba(74,222,128,.4),0 0 0 0 rgba(74,222,128,0)}}\n.aly-proof{display:flex;align-items:center;gap:14px;margin-top:10px;flex-wrap:wrap}\n.aly-av{display:flex}.aly-av i{width:42px;height:42px;border-radius:50%;border:2px solid #052e16;margin-inline-start:-12px;background:linear-gradient(145deg,var(--a),var(--b));display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.4)}.aly-av i:first-child{margin-inline-start:0}.aly-av svg{width:24px;height:24px;color:rgba(255,255,255,.85)}\n.aly-proof b{display:block;color:#fff;font-size:20px;line-height:1.1}.aly-proof small{color:#a7c4b2;font-size:13px}.aly-stars{color:#facc15;letter-spacing:2px;font-size:18px}\n.aly-ben{display:grid;gap:10px}\n.aly-ben a,.aly-ben div{display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(134,239,172,.2);color:#ecfdf5;font-weight:800;font-size:16px;backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);text-decoration:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s}\n.aly-ben svg{width:26px;height:26px;color:#86efac;flex:none;transition:transform .5s}\n.aly-ben a:hover,.aly-ben div:hover{transform:translateX(-8px);border-color:rgba(190,242,100,.6);background:rgba(74,222,128,.12)}\n.aly-ben div:hover svg{transform:rotate(-12deg) scale(1.15)}\n.aly-ben>*:first-child{background:linear-gradient(135deg,rgba(74,222,128,.16),rgba(255,255,255,.04))}\n.aly-bdg{display:grid;place-items:center;text-align:center;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(74,222,128,.35),rgba(4,24,14,.85));border:2px solid rgba(134,239,172,.7);color:#fff;position:relative;box-shadow:0 0 40px rgba(74,222,128,.4),inset 0 0 30px rgba(74,222,128,.2);backdrop-filter:blur(8px);animation:alyFloat 5s ease-in-out infinite}\n.aly-bdg::before{content:\"\";position:absolute;inset:-9px;border-radius:50%;border:2px dashed rgba(190,242,100,.55);animation:alySpin 24s linear infinite}\n.aly-bdg small{font-size:13px;font-weight:800;line-height:1.25;color:#d9f99d}.aly-bdg b{display:block;font-size:54px;line-height:.9;color:#bef264;text-shadow:0 0 22px rgba(190,242,100,.7)}\n@keyframes alySpin{to{transform:rotate(360deg)}}@keyframes alyFloat{50%{transform:translateY(-12px)}}\n.aly-trust{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(134,239,172,.25);backdrop-filter:blur(16px);overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}\n.aly-trust div{display:flex;align-items:center;gap:14px;padding:18px 22px;color:#ecfdf5;border-inline-start:1px solid rgba(134,239,172,.16);transition:background .3s}\n.aly-trust div:first-child{border-inline-start:0}.aly-trust div:hover{background:rgba(74,222,128,.1)}\n.aly-trust i{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(74,222,128,.14);border:1px solid rgba(134,239,172,.4);color:#86efac;flex:none}.aly-trust i svg{width:26px;height:26px}\n.aly-trust b{display:block;font-size:16px}.aly-trust small{color:#a7c4b2;font-size:13px}\n.aly-trust div:hover i{animation:alyBeat .9s}@keyframes alyBeat{40%{transform:scale(1.22)}}\n@media(max-width:900px){.aly-trust{grid-template-columns:1fr 1fr}.aly-trust div:nth-child(3){border-inline-start:0}}\n.pb-sec.aly-glass{border:1px solid rgba(134,239,172,.26);border-radius:34px;box-shadow:0 40px 110px rgba(0,0,0,.65),0 0 90px rgba(34,197,94,.1),inset 0 1px 0 rgba(255,255,255,.14);overflow:hidden}\n.pb-sec.aly-glass:not(#hero){background:linear-gradient(140deg,rgba(6,40,22,.72),rgba(2,12,7,.88))}\n#hero.aly-glass{background-color:#020a06;background-size:cover;background-position:center}\n#hero.aly-glass::before{display:none}\n@media(max-width:767px){#hero.aly-glass{background-position:62% center}#hero.aly-glass::before{display:block;background:linear-gradient(180deg,rgba(2,12,7,.62),rgba(2,12,7,.4) 55%,rgba(2,12,7,.7));animation:none}}\n.aly-glass::before{content:\"\";position:absolute;inset:0;pointer-events:none;background:radial-gradient(28% 40% at 22% 30%,rgba(190,242,100,.1),transparent 70%),radial-gradient(30% 40% at 80% 70%,rgba(74,222,128,.12),transparent 70%);animation:alyBokeh 14s ease-in-out infinite alternate}\n@keyframes alyBokeh{to{transform:translate(40px,-20px) scale(1.1);opacity:.7}}\n.aly-glass::after{content:\"\";position:absolute;top:0;left:-60%;width:40%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.07),transparent);transform:skewX(-18deg);animation:alySheen 9s ease-in-out infinite}\n@keyframes alySheen{0%,60%{left:-60%}100%{left:140%}}\n.aly-glass>.pb-in{position:relative;z-index:1}\n.aly-sh h2,.aly-sh{color:#fff}\n.aly-ticker{display:flex;gap:44px;white-space:nowrap}\n.pb-pgrid{gap:18px!important}\n.pb-pc{position:relative;display:flex;flex-direction:column;border-radius:22px!important;background:linear-gradient(160deg,rgba(12,54,29,.97),rgba(3,16,9,.99))!important;border:1px solid rgba(134,239,172,.28)!important;box-shadow:0 22px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)!important;color:#ecfdf5!important;overflow:hidden;backdrop-filter:blur(12px);transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .3s!important}\n.pb-pc:hover{transform:perspective(900px) translateY(-12px) rotateX(2deg)!important;border-color:rgba(190,242,100,.65)!important;box-shadow:0 36px 80px rgba(0,0,0,.6),0 0 50px rgba(74,222,128,.28)!important}\n.pb-pc::after{content:\"\";position:absolute;top:0;left:-80%;width:50%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.12),transparent);transform:skewX(-20deg);transition:left .9s}\n.pb-pc:hover::after{left:140%}\n.pb-pci{position:relative!important;aspect-ratio:1/.92!important;background:#04180d!important}\n.pb-pci img{transition:transform .8s cubic-bezier(.2,.8,.2,1)}.pb-pc:hover .pb-pci img{transform:scale(1.08)}\n.pb-pci,.aly-grid .card .thumb{background-color:#04180d!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;position:relative;overflow:hidden}\n.pb-pc:nth-child(6n+1) .pb-pci,.aly-grid .card:nth-child(6n+1) .thumb{background-image:url(/assets/img/tpl/alyssum-sc1.webp)!important}\n.pb-pc:nth-child(6n+2) .pb-pci,.aly-grid .card:nth-child(6n+2) .thumb{background-image:url(/assets/img/tpl/alyssum-sc2.webp)!important}\n.pb-pc:nth-child(6n+3) .pb-pci,.aly-grid .card:nth-child(6n+3) .thumb{background-image:url(/assets/img/tpl/alyssum-sc3.webp)!important}\n.pb-pc:nth-child(6n+4) .pb-pci,.aly-grid .card:nth-child(6n+4) .thumb{background-image:url(/assets/img/tpl/alyssum-sc4.webp)!important}\n.pb-pc:nth-child(6n+5) .pb-pci,.aly-grid .card:nth-child(6n+5) .thumb{background-image:url(/assets/img/tpl/alyssum-sc5.webp)!important}\n.pb-pc:nth-child(6n+6) .pb-pci,.aly-grid .card:nth-child(6n+6) .thumb{background-image:url(/assets/img/tpl/alyssum-sc6.webp)!important}\n.pb-pci img,.aly-grid .card .thumb img{position:absolute!important;left:0;right:0;bottom:15%;margin:0 auto;width:68%!important;height:auto!important;aspect-ratio:1;object-fit:contain!important;filter:drop-shadow(0 14px 14px rgba(0,0,0,.55));z-index:1}\n.pb-pc:hover .pb-pci img,.aly-grid .card:hover .thumb img{transform:scale(1.07) translateY(-4px)}\n.pb-pci.img-full,.aly-grid .card .thumb.img-full{background-image:none!important}\n.pb-pci.img-full img,.aly-grid .card .thumb.img-full img{position:static!important;width:100%!important;height:100%!important;aspect-ratio:auto!important;object-fit:cover!important;filter:none!important;margin:0!important}\n.pb-pc:hover .pb-pci.img-full img,.aly-grid .card:hover .thumb.img-full img{transform:scale(1.08)}\n.pb-pci::before{content:\"♡\";position:absolute;top:10px;inset-inline-end:10px;z-index:3;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(2,12,7,.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:17px;transition:.3s}\n.pb-pc:hover .pb-pci::before{background:#ef4444;border-color:#ef4444;transform:scale(1.12)}\n.pb-pcd{top:auto!important;bottom:10px!important;inset-inline-start:10px!important;background:linear-gradient(135deg,#ef4444,#f97316)!important;border-radius:999px!important;padding:3px 10px!important;font-weight:900!important}\n.pb-pc h3{color:#f0fdf4!important;font-size:15px!important;font-weight:800!important;margin:12px 12px 2px!important}\n.pb-pc h3::after{content:\"★★★★★\";display:block;color:#facc15;font-size:13px;letter-spacing:2px;margin-top:4px}\n.pb-pcp{margin:6px 12px!important;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.pb-pcp b{color:#bef264!important;font-size:19px!important}.pb-pcp s{color:#7f9a88!important;font-size:13px}\n.pb-pcb{margin:auto 12px 12px!important;border-radius:12px!important;padding:11px 14px!important;font-weight:900!important;text-align:center;color:#052e16!important;background:linear-gradient(180deg,#bef264,#4ade80 60%,#22c55e)!important;box-shadow:0 8px 22px rgba(74,222,128,.35),inset 0 1px 0 rgba(255,255,255,.65)!important;position:relative;overflow:hidden;transition:transform .3s,filter .3s}\n.pb-pc:hover .pb-pcb{filter:brightness(1.1);transform:translateY(-2px)}\n.pb-pc:nth-child(1)::before,.pb-pc:nth-child(2)::before,.pb-pc:nth-child(3)::before{position:absolute;top:10px;inset-inline-start:10px;z-index:4;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:900;color:#fff}\n.pb-pc:nth-child(1)::before{content:\"الأكثر مبيعاً\";background:linear-gradient(135deg,#a16207,#eab308);color:#1c1303}\n.pb-pc:nth-child(2)::before{content:\"جديد\";background:linear-gradient(135deg,#1d4ed8,#38bdf8)}\n.pb-pc:nth-child(3)::before{content:\"عرض خاص\";background:linear-gradient(135deg,#b91c1c,#f43f5e)}\n.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:22px}\n#chips .chip{background:rgba(255,255,255,.06)!important;border:1px solid rgba(134,239,172,.3)!important;color:#d1fae5!important;border-radius:999px;padding:.55rem 1.3rem;font-weight:800;backdrop-filter:blur(10px);transition:transform .3s,border-color .3s}\n#chips .chip:hover{transform:translateY(-3px);border-color:#86efac!important}\n#chips .chip.active{background:linear-gradient(180deg,#bef264,#4ade80)!important;color:#052e16!important;border-color:transparent!important}\n.aly-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}\n.aly-grid .card{position:relative;display:flex;flex-direction:column;border-radius:22px!important;background:linear-gradient(160deg,rgba(12,54,29,.97),rgba(3,16,9,.99))!important;border:1px solid rgba(134,239,172,.28)!important;box-shadow:0 22px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)!important;color:#ecfdf5!important;overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .3s}\n.aly-grid .card:hover{transform:translateY(-10px)!important;border-color:rgba(190,242,100,.65)!important;box-shadow:0 36px 80px rgba(0,0,0,.6),0 0 50px rgba(74,222,128,.28)!important}\n.aly-grid .card .thumb{background:#04180d!important}.aly-grid .card .body{padding:12px!important}.aly-grid .card h3{color:#f0fdf4!important;font-size:15px!important}\n.aly-grid .card .stars{color:#facc15!important}.aly-grid .card .stars small{color:#7f9a88}\n.aly-grid .card .price{color:#bef264!important;font-weight:900}.aly-grid .card .old{color:#7f9a88!important}\n.aly-grid .card .cta{border-radius:12px!important;text-align:center;font-weight:900;padding:10px!important;color:#052e16!important;background:linear-gradient(180deg,#bef264,#4ade80 60%,#22c55e)!important;box-shadow:0 8px 22px rgba(74,222,128,.3)}\n.aly-bn{display:none}\n@media(max-width:767px){.aly-bn{display:flex;position:fixed;z-index:60;left:10px;right:10px;bottom:10px;padding:8px 10px;border-radius:22px;background:rgba(4,22,12,.82);backdrop-filter:blur(18px);border:1px solid rgba(134,239,172,.3);box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14)}.aly-bn a{flex:1;display:grid;justify-items:center;gap:3px;padding:7px 0;border-radius:14px;color:#a7c4b2;font-size:12px;font-weight:800;text-decoration:none;transition:.3s}.aly-bn a svg{width:23px;height:23px}.aly-bn a.on,.aly-bn a:hover{color:#bef264;background:rgba(74,222,128,.14)}.pb-page{padding-bottom:84px}}\nbody.pb-edit .aly-bn{display:none!important}\n\n/* ═════ أسلوب «أليسوم» لصفحات المنتجات (يُضاف بعد css القالب الرئيسي؛ انظر AdminNav.alySkinProduct) ═════ */\n.pb-page,.pb-sec{color:#ecfdf5}\n.pb-sec{background:transparent!important;background-image:none!important}\n.pb-sec::before,.pb-sec::after{display:none!important}\n.pb-sec h1,.pb-sec h2,.pb-sec h3,.pb-sec h4,.pb-sec .pb-t,.pb-sec .pb-t *,.pb-sec p,.pb-sec li,.pb-sec label,.pb-sec small,.pb-sec b,.pb-sec strong,.pb-sec em{color:#ecfdf5!important}\n.pb-sec h1,.pb-sec h2{text-shadow:0 2px 22px rgba(0,0,0,.45)}\n.pb-sec p,.pb-sec .pb-t p{color:#c5dccd!important}\n.pb-sec a{color:#bef264}\n/* بطاقات زجاجية داكنة */\n.pb-colin,.pbox,.offer,.total-box,.cod-note,.dtype,.lp-card,.pb-tbc,.pb-card,.card,.order-form,.pb-order,#pb-order,.form-card,.box{\n  background:linear-gradient(145deg,rgba(12,54,29,.88),rgba(3,16,9,.94))!important;border:1px solid rgba(134,239,172,.28)!important;border-radius:20px;\n  box-shadow:0 18px 44px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14)!important;color:#ecfdf5!important;backdrop-filter:blur(16px)}\n.pb-tbc{border-radius:999px!important;background:rgba(21,128,61,.2)!important;border-color:rgba(134,239,172,.4)!important;color:#d9f99d!important;box-shadow:none!important}\n.pb-tbc *{color:#d9f99d!important}\n.offer{border-radius:16px}.offer.on,.offer:hover{border-color:#bef264!important;box-shadow:0 0 0 1px rgba(190,242,100,.5),0 14px 34px rgba(74,222,128,.25)!important}\n.thumb{background:rgba(255,255,255,.06)!important;border:1px solid rgba(134,239,172,.3)!important;border-radius:12px}\n.thumb.on,.thumb:hover{border-color:#bef264!important}\n/* السعر */\n.price-now,.pb-sec .price-now,.pb-sec .price{color:#bef264!important;text-shadow:0 0 26px rgba(190,242,100,.45)}\n.old,.pb-sec .old,.pb-sec s,.pb-sec del{color:#8fb09b!important}\n.save-pill,.best{background:rgba(74,222,128,.18)!important;color:#d9f99d!important;border:1px solid rgba(134,239,172,.45)!important}\n/* الحقول والأزرار */\n.pb-sec input,.pb-sec select,.pb-sec textarea{background:rgba(255,255,255,.07)!important;color:#fff!important;border:1px solid rgba(134,239,172,.32)!important;border-radius:12px}\n.pb-sec input::placeholder,.pb-sec textarea::placeholder{color:#8fb09b!important}\n.pb-sec input:focus,.pb-sec select:focus,.pb-sec textarea:focus{border-color:#bef264!important;box-shadow:0 0 0 3px rgba(190,242,100,.18)!important;outline:0}\n.pb-sec option{background:#04180d;color:#ecfdf5}\n.btn-cart2,.btn-order,.pb-sec .lp-btn,.pb-sec .pb-btn{background:linear-gradient(180deg,#bef264,#4ade80 55%,#22c55e)!important;color:#052e16!important;border:0!important;border-radius:14px!important;font-weight:900;box-shadow:0 12px 30px rgba(74,222,128,.38),inset 0 1px 0 rgba(255,255,255,.7)!important}\n.btn-cart2 *,.btn-order *,.pb-sec .lp-btn *{color:#052e16!important}\n.btn-cart2:hover,.btn-order:hover{transform:translateY(-3px);filter:brightness(1.06)}\n.pb-sec .lp-btn-gold{background:rgba(255,255,255,.06)!important;color:#ecfdf5!important;border:1px solid rgba(134,239,172,.4)!important;box-shadow:none!important}\n.pb-sec .lp-btn-gold *{color:#ecfdf5!important}\n.total-box,.total-box *{color:#ecfdf5!important}\n/* الأسئلة/الآراء/الأقسام التسويقية */\n.q,.p,.u{color:#ecfdf5!important}\n.pb-sec .pb-acc,.pb-sec .pb-acc-i,.pb-sec details{background:rgba(255,255,255,.05)!important;border:1px solid rgba(134,239,172,.25)!important;border-radius:16px}\n.pb-sec hr,.pb-sec .pb-div{border-color:rgba(134,239,172,.2)!important}\n/* نموذج الطلب والشريط الترويجي */\n.form,#order-form,.pb-ofraw{background:transparent!important;color:#ecfdf5!important;box-shadow:none!important;border-color:transparent!important}\n.form h3,.form label,.form small,.form .field label{color:#ecfdf5!important}\n.dtype{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px!important}\n.dtype label{background:rgba(255,255,255,.06)!important;color:#ecfdf5!important;border:1px solid rgba(134,239,172,.3)!important;border-radius:12px!important;padding:10px 12px;cursor:pointer}\n.dtype label:has(input:checked){background:rgba(74,222,128,.2)!important;border-color:#bef264!important;color:#fff!important}\n.dtype label span{color:inherit!important}\n.btn-wa{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.06)!important;color:#d9f99d!important;border:1px solid rgba(134,239,172,.4)!important;border-radius:14px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)!important;font-weight:800}\n.deal-bar,.deal-bar *{color:#ecfdf5!important}\n.deal-bar{background:linear-gradient(145deg,rgba(12,54,29,.88),rgba(3,16,9,.94))!important;border:1px solid rgba(134,239,172,.3)!important;border-radius:18px!important;box-shadow:0 14px 34px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14)!important}\n.deal-timer{background:rgba(74,222,128,.16)!important;border:1px solid rgba(134,239,172,.45)!important;color:#bef264!important;border-radius:12px!important}\n.deal-timer *{color:#bef264!important}\n.cod-note{color:#d9f99d!important;text-align:center}\n.coupon-box input{background:rgba(255,255,255,.07)!important;color:#fff!important;border:1px solid rgba(134,239,172,.32)!important}\n.pb-ofraw .field input,.pb-ofraw .field select{width:100%}\n/* الهيدر والفوتر: ألوان واضحة */\n.pb-hd a,.pb-hd .mi-t,.pb-hd .mi-dd>a,.pb-hd .menu a{color:#ecfdf5!important}\n.pb-hd .mi-t:hover,.pb-hd a:hover{color:#bef264!important}\n.pb-sf a,.pb-sf .pb-sf-h{color:#d9f99d!important}\n.pb-sf,.pb-sf p,.pb-sf span,.pb-sf small{color:#b9d4c3!important}\n.pb-sf .pb-sf-h{color:#fff!important}\nmain h1,main h2,main h3,main h4,.pb-page h2,.pb-page h3{color:#ecfdf5!important}\nmain .sec-sub,main .lead{color:#b9d4c3!important}\n.gthumbs{display:flex;gap:10px;flex-wrap:wrap}\n.gthumbs img{flex:0 0 78px!important;width:78px!important;height:78px!important;object-fit:cover;border-radius:12px;border:2px solid rgba(134,239,172,.3)!important;opacity:.75}\n.gthumbs img.on,.gthumbs img:hover{border-color:#bef264!important;opacity:1}\n",
+ "tplSkin": "alyssum"
+}
