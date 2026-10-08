@@ -9,6 +9,14 @@ const PBClone = (function () {
   const toast = m => { const t = document.getElementById("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 5200); };
   const $ = id => document.getElementById(id), sleep = ms => new Promise(r => setTimeout(r, ms));
   const prog = p => { const e = $("cl-ring"); if (!e) return; if (p == null) { e.hidden = true; return; } p = Math.max(0, Math.min(100, Math.round(p))); e.hidden = false; e.style.setProperty("--p", p); const i = e.firstChild; if (i) i.textContent = p + "%"; };      // دائرة خضراء تمتلئ تدريجياً حتى يكتمل النسخ
+  /* اكتمال النسخ: علامة صح داخل الدائرة + نغمة قصيرة هادئة + اهتزاز خفيف على الجوال (مرة واحدة لكل عملية) */
+  const CHECK = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let doneShown = false;
+  function finishFx() {
+    if (doneShown) return; doneShown = true; prog(100); const e = $("cl-ring"), i = e && e.firstChild; if (i) i.innerHTML = CHECK; const t = $("cl-st"); if (t) t.textContent = "تم النسخ";
+    try { if (navigator.vibrate) navigator.vibrate([25, 45, 55]); } catch (x) { }
+    try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { const c = new AC(), t0 = c.currentTime; [[784, 0], [1175, .11]].forEach(([f, d]) => { const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0, t0 + d); g.gain.linearRampToValueAtTime(.07, t0 + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .22); o.connect(g); g.connect(c.destination); o.start(t0 + d); o.stop(t0 + d + .25); }); setTimeout(() => { try { c.close(); } catch (x) { } }, 700); } } catch (x) { }
+  }
   const st = m => { const e = $("cl-st"); if (e) e.textContent = m || ""; };
 
   /* ───────── ألوان ───────── */
@@ -208,7 +216,7 @@ const PBClone = (function () {
     const FXON = !opt.noFx && typeof PBCloneFx !== "undefined", ownEnd = new Map(), fx = FXON ? PBCloneFx.create({ idp: IDP, doc, win, W, out, add, col, px, r1, r2 }) : null;
     /* ───── السلايدرات: كل «صفحة» شرائح مجموعة عناصر تُظهر بالتناوب (أسهم/نقاط/سحب/تشغيل تلقائي في الصفحة المنشورة) ───── */
     const SLD = [
-      { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev", next: ".swiper-button-next", dot: ".swiper-pagination-bullet" },
+      { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev,.elementor-swiper-button-prev", next: ".swiper-button-next,.elementor-swiper-button-next", dot: ".swiper-pagination-bullet", out: 1 },
       { root: ".slick-slider", slide: ".slick-slide:not(.slick-cloned)", prev: ".slick-prev", next: ".slick-next", dot: ".slick-dots li,.jet-slick-dots li" },
       { root: ".owl-carousel", slide: ".owl-item:not(.cloned)", prev: ".owl-prev", next: ".owl-next", dot: ".owl-dot" },
       { root: ".splide", slide: ".splide__slide:not(.splide__slide--clone)", prev: ".splide__arrow--prev", next: ".splide__arrow--next", dot: ".splide__pagination__page" },
@@ -238,7 +246,11 @@ const PBClone = (function () {
           if (def.bs) { slides[0].style.setProperty("transform", "none", "important"); slides[0].style.setProperty("transition", "none", "important"); }
           slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
           slides.slice(pv).forEach(x => slSkip.add(x));
-          const pr = sel(def.prev), nx = sel(def.next), actP = circ ? 0 : Math.floor(act / pv);
+          const outer = (q, own) => {      // أسهم/نقاط تقع خارج حاوية السلايدر نفسها (مثل .swiper-arrows بجانب .swiper في ثيمات Elementor): نبحث في الأجداد القريبة بشرط ألا تضم سلايدراً آخر
+            let r = sel(q); if (r.length || !def.out) return r; let a = root.parentElement;
+            for (let k = 0; k < 3 && a && a !== doc.body; k++, a = a.parentElement) { if (a.querySelectorAll(def.root).length > 1) break; try { r = [...a.querySelectorAll(q)].filter(x => !root.contains(x)); } catch (e) { r = []; } if (r.length) return r; }
+            return r;
+          }, pr = outer(def.prev), nx = outer(def.next), actP = circ ? 0 : Math.floor(act / pv);
           dots.forEach((d, j) => { const pg = circ ? (j - act + pages) % pages : dots.length === pages ? (j - actP + pages) % pages : dots.length === all.length ? Math.floor(((j - act + all.length) % all.length) / pv) : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
           pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
           const sl = { id, def, root, slides, pv, pages, stacked, circ, track: slides[0].parentElement, ms, dots, pr, nx, act }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
@@ -482,13 +494,13 @@ const PBClone = (function () {
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
     const dest = (document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec";
-    if (dest === "sec") { const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
+    if (dest === "sec") { finishFx(); await sleep(900); const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
     return openInEditor(page);
   }
   async function openInEditor(page) {
     const E = A().E; if (E && E.page && E.dirty && !confirm("سيُفتح القالب المنسوخ في صفحة جديدة، وتُحفظ مسودة صفحتك الحالية تلقائياً. هل تريد المتابعة؟")) return false;
     { const up = S.upl || [], E2 = A().E; if (E2 && E2.page && E2.page.media) E2.page.media = E2.page.media.filter(x => !up.includes(x)); page.media = up.slice(); }      // صور النسخ تُسجَّل في مكتبة الصفحة الجديدة لا السابقة
-    try { A().saveDraftNow(); } catch (e) { } close(); A().open(page, "", true); return true;
+    try { A().saveDraftNow(); } catch (e) { } finishFx(); await sleep(900); close(); A().open(page, "", true); return true;
   }
   async function saveImages(widgets, doSave) {      // يحفظ الصور في موقعك (يتفادى الروابط الخارجية التي قد تتعطّل): كل رابط فريد مرة واحدة (نسخة الجوال والشرائح تتشارك الصور) بأقصى 80 رابطاً فريداً
     const by = new Map(); widgets.forEach(w => { if (w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)) { const k = w.set.src; if (!by.has(k)) by.set(k, []); by.get(k).push(w); } });
@@ -811,9 +823,9 @@ const PBClone = (function () {
     im.onerror = () => toast("تعذّر قراءة الصورة"); im.src = url;
   }
   async function run() {
-    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true; prog(1);
+    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true; prog(1); doneShown = false;
     try {      // اختيار التأثيرات المطلوب إضافتها يتم من نافذة «التأثيرات» الأولى فقط؛ لا نافذة تأكيد ثانية عند «انسخ»
-      if (S.tab === "url") await doCopyUrl(); else { prog(10); await doCopyImage(); } prog(100); setTimeout(() => prog(null), 1800); } catch (e) { prog(null); st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
+      if (S.tab === "url") await doCopyUrl(); else { prog(10); await doCopyImage(); finishFx(); } setTimeout(() => prog(null), 1800); } catch (e) { prog(null); st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
   return { open, close, _t: { extractMobile, neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
 })();

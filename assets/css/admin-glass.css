@@ -4,7 +4,7 @@
    لا يمسّ إطار معاينة الصفحة (iframe) ولا الصفحات المنشورة. */
 html.glass{
   color-scheme:dark;
-  --g-bg:#000; --g-tx:#eef3f6; --g-mut:rgba(226,236,242,.62); --g-dim:rgba(226,236,242,.4);
+  --g-bg:#000; --g-tx:#eef3f6; --g-mut:rgba(244,249,252,.9); --g-dim:rgba(244,249,252,.72);
   --g-surf:linear-gradient(155deg,rgba(70,170,80,.13),rgba(8,24,12,.55) 70%); --g-surf2:rgba(110,230,110,.1); --g-line:rgba(120,235,120,.2); --g-line2:rgba(150,255,150,.32);
   --g-smoke:rgba(10,30,16,.66);                       /* الأخضر القديم ← زجاج مدخَّن */
   --g-mint:#86f06a; --g-cyan:#3be6ff; --g-vio:#b79bff; --g-amber:#ffd45e; --g-rose:#ff5d82; --g-blue:#5aa8ff;
@@ -213,3 +213,11 @@ html.glass #pbx-clone .cl-f button.cl-go{background:linear-gradient(135deg,#3ddc
 html.glass #pbx-clone .cl-f button.cl-go:disabled{background:rgba(255,255,255,.06)!important;color:rgba(255,255,255,.4)!important;box-shadow:none!important;text-shadow:none}
 html.glass #pbx-clone #cl-ring i{background:#0f1a14;color:#7dff9d}
 html.glass #pbx-clone #cl-ring{background:conic-gradient(#3ddc6b calc(var(--p)*1%),rgba(255,255,255,.14) 0)}
+
+/* ───── توهّج كل بطاقات العناوين عند المرور عليها مثل البطاقة الخضراء النشطة (القوائم والبطاقات الصغيرة ثم بطاقات الأرقام الكبيرة بلونها ثم الحاويات) ───── */
+html.glass .nav-btn,html.glass .live-pill,html.glass .pbx-wi,html.glass .pbx-tpl,html.glass .stat div,html.glass .card{transition:box-shadow .22s,border-color .22s,background .22s,transform .22s}
+html.glass .nav-btn:hover,html.glass .live-pill:hover,html.glass .pbx-wi:hover,html.glass .pbx-tpl:hover{background:var(--g-sheen),linear-gradient(135deg,rgba(134,240,106,.34),rgba(134,240,106,.08))!important;border-color:rgba(170,255,150,.7)!important;box-shadow:var(--g-thick),0 0 24px rgba(134,240,106,.3),0 8px 18px -6px rgba(0,0,0,.7)!important}
+html.glass .stat div:hover{border-color:rgba(var(--c),.95)!important;transform:translateY(-2px);box-shadow:var(--g-thick),0 12px 26px -6px rgba(0,0,0,.75),0 0 36px rgba(var(--c),.55),0 0 8px rgba(var(--c),.5)!important}
+html.glass .card:hover,html.glass .alert-card:hover{border-color:rgba(170,255,150,.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 28px rgba(134,240,106,.2)!important}
+/* النص الصغير تحت العناوين: أبيض أوضح */
+html.glass .hint,html.glass .nav-txt small,html.glass .side-nav-intro p,html.glass small,html.glass .card p,html.glass .stat span{color:rgba(244,249,252,.84)!important}
