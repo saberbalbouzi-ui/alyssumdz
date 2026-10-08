@@ -311,6 +311,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('inventory',this)"><span class="nav-ic">▤</span><span class="nav-txt"><b>المخزون</b><small>الكميات والتنبيهات والتعديلات الجماعية</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('bulkp',this)"><span class="nav-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16M3 14h18"/></svg></span><span class="nav-txt"><b>تعديل جماعي</b><small>تحرير أسعار وحقول عدة منتجات دفعة واحدة</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('reports',this)"><span class="nav-ic">▥</span><span class="nav-txt"><b>التقارير</b><small>مبيعات حسب الفترة والفئة والولاية والحملة</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('audit',this)"><span class="nav-ic">✓</span><span class="nav-txt"><b>فحص المنتجات</b><small>جودة الصور والوصف والأسعار والروابط</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="builder" onclick="Admin.tab('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات</b><small>صفحاتك + المحرر المرئي + أدوات ذكية (التقاط العناصر)</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="smart" id="nav-pbgen" onclick="Admin.tab('pbgen',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>المطوّر الذكي</b><small>توليد صفحة جديدة ← تحرير بالأدوات الذكية ← حفظ</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="imgtools" data-ic="imgtools" onclick="Admin.tab('imgtools',this)"><span class="nav-ic">🖼️</span><span class="nav-txt"><b>أدوات تعديل الصور</b><small>نزع الخلفية وضغط الصور وتحويلها، وبقية أدوات الصور داخل المطوّر</small></span></button>
@@ -740,6 +741,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-inventory" class="hidden"><div id="inventory-content"></div></div>
   <div id="tab-bulkp" class="hidden"><div id="bulk-products-app"></div></div>
   <div id="tab-reports" class="hidden admin-extra-tab"><div id="admin-reports-app"></div></div>
+  <div id="tab-audit" class="hidden admin-extra-tab"><div id="admin-audit-app"></div></div>
 
   <div id="tab-coupons" class="hidden">
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
@@ -1576,6 +1578,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-customers.js?v=1"></script>
 <script src="assets/js/admin-bulk-products.js?v=1"></script>
 <script src="assets/js/admin-reports.js?v=1"></script>
+<script src="assets/js/admin-audit.js?v=1"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
