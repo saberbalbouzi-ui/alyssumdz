@@ -20,6 +20,7 @@
     "assets/js/admin-inventory.js",
     "assets/js/admin-coupons2.js",
     "assets/data/inventory.json",
+    "assets/js/admin-social.js",
     "scripts/social-publish.js",
     "assets/data/admin-help.json",
     "assets/js/social-icons.js",

@@ -35,7 +35,7 @@ async function ig(p, d) {
       try {
         if (DRY) { res[ch] = "dry"; continue; }
         if (!TOK) throw new Error("META_PAGE_TOKEN غير مضبوط");
-        if (ch === "fb") { if (!PAGE) throw new Error("META_PAGE_ID غير مضبوط"); res.fb = await fb(p, domain); }
+        if (ch === "fb") { if (p.ids && p.ids.fb) { res.fb = p.ids.fb; continue; } if (!PAGE) throw new Error("META_PAGE_ID غير مضبوط"); res.fb = await fb(p, domain); }
         if (ch === "ig") { if (!IG) throw new Error("META_IG_ID غير مضبوط"); res.ig = await ig(p, domain); }
       } catch (e) { err.push(ch + ": " + e.message); }
     }
