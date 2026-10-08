@@ -19,10 +19,10 @@ const PBConvert = (() => {
   const siteBase = () => location.href.replace(/[?#].*$/, "").replace(/[^/]*$/, "");
   const absCss = (css, from) => css.replace(/url\(\s*(['"]?)(?!data:|https?:|\/\/|#)([^)'"]+?)\1\s*\)/g, (m, q, u) => { try { return "url(" + new URL(u, from).href + ")"; } catch (e) { return m; } });
   const GROUP = el => el.matches(".topbar,header") ? "top" : el.matches("footer") ? "bot" : "";
-  async function render(url) {
+  async function render(url, html) {
     const fr = document.createElement("iframe"); fr.setAttribute("aria-hidden", "true"); fr.style.cssText = "position:fixed;left:-12000px;top:0;width:1280px;height:900px;border:0;visibility:hidden";
     document.body.appendChild(fr);
-    try { await new Promise((res, rej) => { fr.onload = res; fr.onerror = rej; fr.src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); setTimeout(res, 12000); }); await new Promise(r => setTimeout(r, 2200)); return fr; }
+    try { await new Promise((res, rej) => { fr.onload = res; fr.onerror = rej; if (html) { const bh = new URL(url, location.href).href; fr.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + '<base href="' + bh + '">') : '<base href="' + bh + '">' + html; } else fr.src = url + (url.includes("?") ? "&" : "?") + "preview=" + Date.now(); setTimeout(res, 12000); }); await new Promise(r => setTimeout(r, 2200)); return fr; }
     catch (e) { fr.remove(); throw e; }
   }
   function convertMain(doc, o, fdoc) {
@@ -219,7 +219,7 @@ const PBConvert = (() => {
       const g = GROUP(el); if (g === "top") { const r = raw("top", el); r._isBar = el.matches(".topbar"); top.push(r); } else if (g === "bot") bot.push(raw("bot", el));
     });
     if (native) {      // صفحة المنتج: تُفكَّك إلى عناصر المطوّر الحقيقية (عنوان/نص/صورة/زر/أعمدة…) وتبقى الأجزاء الوظيفية كتلاً أصلية محمية
-      const fr = await render(kind === "home" ? "index.html" : "p/" + slug + "/");
+      const fr = await render(kind === "home" ? "index.html" : "p/" + slug + "/", srcText);
       let main = []; try { const st = fr.contentDocument.createElement("style"); st.textContent = ".reveal{opacity:1!important;transform:none!important;transition:none!important}"; fr.contentDocument.head.appendChild(st); main = convertMain(fr.contentDocument, { kind, slug }, doc); } finally { fr.remove(); }
       main.forEach(x => { x.grp = x.grp || "main"; });
       if (main._foot && bot.length) bot.splice(0, bot.length, main._foot);
@@ -236,13 +236,13 @@ const PBConvert = (() => {
     return page;
   }
   /* زر «تعديل» ← يفتح الصفحة في المطوّر */
-  async function edit(kind, slug) {
+  async function edit(kind, slug, opt) {
     if (kind === "home") slug = "";
     try { SitePreview.close(); } catch (e) { }
     toast("⏳ جارِ فتح الصفحة في المطوّر…");
     try {
       PBBind.reset(); PBEd.hide(); const k = key(kind, slug); let page = null;
-      try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.shell && p.origin.native) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
+      if (!(opt && opt.fresh)) try { const f = await GH.getFile("assets/pages/_conv/" + k + ".json"); const p = JSON.parse(dec(f)); if (p && p.origin && p.origin.direct && p.shell && p.origin.native) page = p; } catch (e) { }      // نسخة محفوظة سابقاً (تُستعمل ما دامت هي المنشورة)
       if (!page) {
         const pr = kind === "product" ? (Admin.products || []).find(x => x.slug === slug) : null;
         if (kind === "product" && !pr) throw new Error("المنتج غير موجود");
