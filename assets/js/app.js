@@ -130,6 +130,7 @@ const Cart = {
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
+    Thanks.show({ name, total, lines: items.map(it=>{ const q = PRODUCTS.find(x=>x.slug===it.slug)||it; return q.title + (it.qty>1?" ×"+it.qty:""); }), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   }
 };
 
@@ -863,6 +864,7 @@ function initProduct(slug){
     Object.entries(extraValues).forEach(([label,val])=>{ msg += `\n${label}: ${val}`; });
     msg += `\n\n💵 الدفع عند الاستلام`;
     Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
+    Thanks.show({ name, total, lines: type==="grouped" ? state.group.kids.filter((c,i)=>state.group.qty[i]).map(c=>c.title) : [p.title + (state.offer.qty>1?" ×"+state.offer.qty:"")], wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   });
 
   // أضف إلى السلة
@@ -920,7 +922,7 @@ function productCardHTML(p, opts){
       <h3>${p.title}</h3>
       <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>
       <div class="price-row"><span class="price">${ptype!=="simple" && hasPriceRange(p) ? "من " : ""}${fmt(ptype==="simple" ? p.price : minPrice(p))}</span>${(ptype==="simple" && p.old)?`<span class="old">${fmt(p.old)}</span>`:""}</div>
-      <div class="cta">${oos?"نفدت الكمية":"اطلب الآن — الدفع عند الاستلام"}</div>
+      <div class="cta">${oos?"نفدت الكمية":(document.querySelector(".aly-grid")?"عرض المنتج":"اطلب الآن — الدفع عند الاستلام")}</div>
     </div>`;
 }
 
@@ -976,6 +978,10 @@ async function initShop(){
   else if(ps.length){ list = ps.map(sl=>list.find(p=>p.slug===sl)).filter(Boolean); title = "منتجات مختارة"; sub = ""; }
   const T = document.getElementById("shop-title"), S = document.getElementById("shop-sub"), C = document.getElementById("shop-chips");
   if(T) T.textContent = title; if(S) S.textContent = sub;
+  if(cat && document.querySelector(".aly-grid")){      // لافتة الفئة بصورتها (قالب أليسوم)
+    const hi = REL + "assets/img/tpl/alyssum-cat-" + cat + ".webp", im = new Image(), box = document.querySelector(".shop-page .sec-title");
+    im.onload = ()=>{ if(box) box.style.setProperty("--shop-hero", "url('" + hi + "')"); }; im.src = hi;
+  }
   try{ document.title = title + " | " + ((typeof CONFIG!=="undefined" && CONFIG.SITE && CONFIG.SITE.name) || document.title.split("|")[0].trim()); }catch(e){}
   if(C){
     const a = (href, label, on)=>`<a class="chip${on?" active":""}" href="${href}">${label}</a>`;
@@ -1536,6 +1542,32 @@ PWA.init();
    antibot: حقل مخفي + رمز نموذج موقَّع من الخادم + تحقق من الهاتف والاسم + حدّ للطلبات من نفس الـ IP.
    dup: منع طلب المنتج نفسه مرتين من نفس الـ IP خلال ساعات محددة. الفحص الحقيقي على الخادم (Supabase/PHP)،
    وبلا خلفية يُكتفى بفحص على هذا الجهاز. لا يُخزَّن عنوان الـ IP نفسه بل بصمة مجزّأة. */
+
+/* ── صفحة الشكر بعد إتمام الطلب: لوحة فوق الصفحة بملخص الطلب وخطوات ما بعده (تُفتح بعد إرسال الطلب وفتح واتساب) ── */
+const Thanks = {
+  esc: s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])),
+  css(){
+    if(document.getElementById("thx-css")) return;
+    const st = document.createElement("style"); st.id = "thx-css";
+    st.textContent = "#thx{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,8,5,.8);backdrop-filter:blur(7px);animation:thxIn .35s ease}@keyframes thxIn{from{opacity:0}to{opacity:1}}#thx .thx-box{width:min(480px,100%);max-height:92vh;overflow:auto;text-align:center;color:#ecfdf5;background:linear-gradient(145deg,rgba(12,54,29,.99),rgba(3,16,9,.99));border:1px solid rgba(134,239,172,.32);border-radius:26px;padding:28px 22px 22px;box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14);animation:thxUp .45s cubic-bezier(.2,.8,.2,1)}@keyframes thxUp{from{transform:translateY(24px) scale(.97);opacity:0}to{transform:none;opacity:1}}#thx .thx-ic{width:74px;height:74px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:rgba(74,222,128,.18);border:1px solid rgba(134,239,172,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}#thx .thx-ic svg{width:38px;height:38px;stroke:#bef264;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:thxCk .6s .25s ease forwards}@keyframes thxCk{to{stroke-dashoffset:0}}#thx h2{margin:.2rem 0 .3rem;font-size:1.5rem;color:#fff}#thx p{margin:.2rem 0;color:#c5dccd;font-size:.97rem;line-height:1.7}#thx .thx-sum{margin:14px 0;padding:12px 14px;text-align:start;background:rgba(255,255,255,.06);border:1px solid rgba(134,239,172,.22);border-radius:16px}#thx .thx-sum li{list-style:none;padding:3px 0;color:#ecfdf5;font-weight:700}#thx .thx-sum b{color:#bef264}#thx .thx-tot{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(134,239,172,.3);font-weight:900}#thx .thx-st{display:grid;gap:6px;margin:10px 0 16px;text-align:start;font-size:.9rem;color:#c5dccd}#thx .thx-st span{display:flex;gap:8px;align-items:flex-start}#thx .thx-st i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:.8rem;background:rgba(74,222,128,.2);border:1px solid rgba(134,239,172,.4);color:#d9f99d}#thx .thx-act{display:flex;gap:10px;flex-wrap:wrap}#thx .thx-act a,#thx .thx-act button{flex:1 1 140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:13px 14px;border-radius:14px;font:inherit;font-weight:900;text-decoration:none;cursor:pointer;color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(134,239,172,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -6px 12px rgba(0,0,0,.2),0 6px 16px rgba(0,0,0,.25);backdrop-filter:blur(8px);transition:transform .2s,background .2s}#thx .thx-act a:hover,#thx .thx-act button:hover{transform:translateY(-2px);background:rgba(74,222,128,.22)}#thx .thx-act .pri{background:rgba(74,222,128,.24);border-color:#86efac}";
+    document.head.appendChild(st);
+  },
+  show(o){
+    try{
+      this.css(); const old = document.getElementById("thx"); if(old) old.remove();
+      const e = this.esc, el = document.createElement("div"); el.id = "thx"; el.setAttribute("role","dialog"); el.setAttribute("aria-label","شكراً لطلبك");
+      const L = (o.lines || []).slice(0, 6).map(x=>"<li>• " + e(x) + "</li>").join(""), tot = (typeof fmt === "function" && o.total != null) ? fmt(o.total) : "";
+      el.innerHTML = '<div class="thx-box"><div class="thx-ic"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>شكراً لك' + (o.name ? " " + e(String(o.name).split(" ")[0]) : "") + '، تم استلام طلبك</h2><p>طلبك مسجَّل لدينا، وسنتصل بك لتأكيده خلال ساعات قليلة.</p>' +
+        (L ? '<ul class="thx-sum" style="margin-inline:0;padding-inline:14px">' + L + (tot ? '<div class="thx-tot"><span>الإجمالي (الدفع عند الاستلام)</span><b>' + e(tot) + '</b></div>' : "") + "</ul>" : "") +
+        '<div class="thx-st"><span><i>1</i>سنؤكّد معك الطلب هاتفياً أو عبر واتساب.</span><span><i>2</i>نجهّز طلبك ونشحنه إلى ولايتك.</span><span><i>3</i>تعاين وتدفع عند الاستلام فقط.</span></div>' +
+        '<div class="thx-act"><a class="pri" href="' + (typeof REL !== "undefined" ? REL : "") + 'index.html">متابعة التسوق</a>' + (o.wa ? '<a href="' + e(o.wa) + '" target="_blank" rel="noopener">إرسال الطلب على واتساب</a>' : "") + '<button type="button" id="thx-x">إغلاق</button></div></div>';
+      document.body.appendChild(el);
+      const close = ()=>{ el.remove(); document.removeEventListener("keydown", kd); }, kd = ev=>{ if(ev.key === "Escape") close(); };
+      document.addEventListener("keydown", kd); el.querySelector("#thx-x").onclick = close; el.addEventListener("mousedown", ev=>{ if(ev.target === el) close(); });
+      try{ if(navigator.vibrate) navigator.vibrate(30); }catch(_){}
+    }catch(err){ console.warn("Thanks", err); }
+  }
+};
 const Guard = {
   cfg: null, tok: "",
   active(){ return !!(this.cfg && (this.cfg.antibot || this.cfg.dup)); },

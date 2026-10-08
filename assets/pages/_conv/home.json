@@ -818,7 +818,7 @@
        "set": {
         "mode": "all",
         "limit": 6,
-        "btn": "أضف إلى السلة",
+        "btn": "عرض المنتج",
         "showOld": true,
         "cardw": {
          "d": 176,
