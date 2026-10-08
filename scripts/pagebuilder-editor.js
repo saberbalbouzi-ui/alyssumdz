@@ -298,7 +298,9 @@ body{overflow-x:hidden;margin:0}`;
   }
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
+    if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
     $("pb-app").classList.remove("on"); document.body.style.overflow = "";
+    purgeUnsaved(true).then(n => { if (n) toast("🧹 حُذفت " + n + " صورة غير محفوظة ونُظّفت المكتبة"); });
     if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
   }
 
@@ -1838,9 +1840,50 @@ body{overflow-x:hidden;margin:0}`;
     pimgRefresh();
     return out;
   }
+  /* ── رفع الصور على دفعات: كل ما يُرفع خلال لحظات (نسخ قالب بعشرات الصور) يُحفظ بـcommit واحد عبر Git Data API
+     (blobs بالتوازي ثم tree وcommit وتحديث المرجع) بدل commit متتابع لكل صورة؛ ويرجع للطريقة القديمة إن فشل ── */
+  async function commitBatch(items) {
+    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("php");
+    const c = GH.cfg(); if (!c || !c.token) throw new Error("no gh"); const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+    const j = async (u, o) => { const r = await fetch(u, Object.assign({ headers: H }, o || {})); if (!r.ok) { const e = new Error("GitHub " + r.status); e.status = r.status; throw e; } return r.json(); };
+    const ent = []; let k = 0;
+    const work = async () => { while (k < items.length) { const p = items[k++], b64 = await Admin.blobToBase64(p.blob); if (!b64) throw new Error("blob"); const b = await j(api + "/git/blobs", { method: "POST", body: JSON.stringify({ content: b64, encoding: "base64" }) }); ent.push({ path: p.path, mode: "100644", type: "blob", sha: b.sha }); } };
+    await Promise.all([work(), work(), work(), work(), work(), work()]);
+    for (let t = 0; t < 3; t++) {
+      try {
+        const ref = await j(api + "/git/ref/heads/" + encodeURIComponent(br) + "?t=" + Date.now()), cm = await j(api + "/git/commits/" + ref.object.sha);
+        const tr = await j(api + "/git/trees", { method: "POST", body: JSON.stringify({ base_tree: cm.tree.sha, tree: ent }) });
+        const nc = await j(api + "/git/commits", { method: "POST", body: JSON.stringify({ message: "رفع " + items.length + " صورة من منشئ الصفحات", tree: tr.sha, parents: [ref.object.sha] }) });
+        await j(api + "/git/refs/heads/" + encodeURIComponent(br), { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) }); return;
+      } catch (e) { if (t === 2 || (e.status && e.status !== 422 && e.status !== 409)) throw e; await new Promise(r => setTimeout(r, 600 * (t + 1))); }
+    }
+  }
+  async function flushBatch() {
+    const items = (E.cq || []).splice(0); E.cqBusy = false; if (!items.length) return; E.upFail = E.upFail || [];
+    let ok = false; try { await commitBatch(items); ok = true; } catch (e) { console.warn("batch commit", e); }
+    if (!ok) for (const p of items) { try { await Admin.commitImage(p, "pg-", HQ); } catch (err) { E.upFail.push(p.path); p._f = 1; toast("❌ تعذّر حفظ صورة في الموقع: " + err.message); } }
+    const good = items.filter(p => !p._f && !/\.(mp4|webm)$/i.test(p.path)).map(p => p.path); if (good.length) await mediaAdd(good);
+    E.upN = Math.max(0, (E.upN || 0) - items.length); upBadge(); if (!E.upN && E.upFail.length) toast("⚠ بعض الصور لم تُحفظ — أعد رفعها");
+  }
   function queueCommit(p) {
-    E.upN = (E.upN || 0) + 1; E.upFail = E.upFail || []; upBadge();
-    E.upq = (E.upq || Promise.resolve()).then(() => Admin.commitImage(p, "pg-", HQ)).then(() => { if (!/\.(mp4|webm)$/i.test(p.path)) mediaAdd([p.path]); }, err => { E.upFail.push(p.path); toast("❌ تعذّر حفظ صورة في الموقع: " + err.message); }).then(() => { E.upN--; upBadge(); if (!E.upN && E.upFail.length) toast("⚠ بعض الصور لم تُحفظ — أعد رفعها"); });
+    E.upN = (E.upN || 0) + 1; E.upFail = E.upFail || []; (E.cq = E.cq || []).push(p); upBadge(); trackUp(p.path);
+    if (!E.cqBusy) { E.cqBusy = true; E.upq = (E.upq || Promise.resolve()).then(() => new Promise(r => setTimeout(r, 400))).then(flushBatch); }
+  }
+  /* ── الصور المرفوعة في هذه الجلسة ولم تُحفظ في صفحة: تُحذف عند إغلاق المحرّر بلا حفظ (وتُنظَّف المكتبة)، وتُستردّ بعد انقطاع الجلسة ── */
+  const SID = Date.now() + "-" + Math.random().toString(36).slice(2, 6), TKEY = "pbx_sess_up";
+  const tget = () => { try { return JSON.parse(localStorage.getItem(TKEY) || "[]"); } catch (e) { return []; } }, tset = a => { try { localStorage.setItem(TKEY, JSON.stringify(a)); } catch (e) { } };
+  function trackUp(path) { if (/\.(mp4|webm)$/i.test(path)) return; const a = tget(); if (!a.some(x => x.p === path)) { a.push({ p: path, s: SID, t: Date.now() }); tset(a); } }
+  function markSaved(P) { const js = JSON.stringify(P || E.page), a = tget().filter(x => !(x.s === SID && js.includes(x.p))); tset(a); }
+  setInterval(() => { try { if (tget().some(x => x.s === SID) || ($("pb-app") && $("pb-app").classList.contains("on"))) { const h = JSON.parse(localStorage.getItem("pbx_hb") || "{}"); h[SID] = Date.now(); for (const k in h) if (Date.now() - h[k] > 864e5) delete h[k]; localStorage.setItem("pbx_hb", JSON.stringify(h)); } } catch (e) { } }, 20000);
+  setTimeout(() => { try { const c = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (c && c.token && !(typeof PHPAPI !== "undefined" && PHPAPI.on())) purgeUnsaved(false); } catch (e) { } }, 15000);
+  async function purgeUnsaved(own) {      // own=true: صور هذه الجلسة؛ false: صور جلسات سابقة انقطعت (أقدم من 5 دقائق)
+    const a = tget(), hb = (() => { try { return JSON.parse(localStorage.getItem("pbx_hb") || "{}"); } catch (e) { return {}; } })(), mine = a.filter(x => own ? x.s === SID : x.s !== SID && Date.now() - x.t > 2 * 60e3 && Date.now() - (hb[x.s] || 0) > 2 * 60e3); if (!mine.length) return 0;      // جلسة أخرى ما زالت حيّة (نبض كل 20ث) لا تُمسّ
+    try {
+      if (E.upq) await E.upq; const paths = mine.map(x => x.p);
+      const n = typeof PBClean !== "undefined" ? await PBClean.purge(paths, { verify: true, own: !!own }) : 0;
+      tset(tget().filter(x => !paths.includes(x.p))); if (n) { const gone = new Set(paths); if (E.page && E.page.media) E.page.media = E.page.media.filter(x => !gone.has(x)); }
+      return n;
+    } catch (e) { console.warn("purge", e); return 0; }
   }
   function upBadge() { const b = $("pbx-upb"); if (!b) return; b.style.display = E.upN ? "inline-block" : "none"; b.textContent = "⬆ " + (E.upN || 0) + " صورة تُحفظ في الموقع…"; }
   /* إعادة ضغط صور الصفحة المرفوعة سابقاً (أكبر من 1600px أو ثقيلة) وتبديل مساراتها */
@@ -2547,7 +2590,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       try { await slim(true); } catch (e) { }                                                         // تخفيف تلقائي للصور الثقيلة فقط (>450KB)
       if (E.upq) await E.upq;
       P = E.page;
-      if (mode === "direct") { await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); return; }
+      if (mode === "direct") { await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); return; }
       const html = PB.fullHtml(typeof PBBind !== "undefined" ? PBBind.bakePage(P) : P, Object.assign({ base: "../../" }, siteCtx()));
       await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);
       await putJson("assets/pages/" + slug + ".json", P, "مصدر صفحة هبوط: " + slug);
@@ -2556,7 +2599,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       const i = idx.findIndex(x => x.slug === slug); if (i >= 0) idx[i] = row; else idx.push(row);
       await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط");
       if (typeof PBBind !== "undefined") await PBBind.commit();
-      E.isNew = false; E.dirty = false; try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
+      E.isNew = false; E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
       toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)");
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }

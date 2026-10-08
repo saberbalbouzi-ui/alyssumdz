@@ -50,6 +50,23 @@ const PBClean = (() => {
       ${v.length ? `<div class="cg">${v.map(x => `<div class="ci${x.on ? "" : " off"}" data-c="tg" data-p="${esc(x.p)}" title="${esc(x.p)}"><img src="${esc(x.p)}" loading="lazy" alt=""><i>✓</i><small>${kb(x.size)}</small></div>`).join("")}</div>` : '<p style="color:#2d6a4f"><b>لا توجد صور يتيمة قابلة للحذف الآن.</b></p>'}`);
     foot(`<button class="p" data-c="del"${sel.length ? "" : " disabled"}>حذف المحدد نهائياً (${sel.length} — ${kb(sz)})</button><button class="s" data-c="all">${sel.length === v.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button class="s" data-c="x">إغلاق</button>`);
   }
+  /* حذف مسارات صور نهائياً: تحديث media.json ثم commit واحد (Git Data API). opt.verify: يستبعد ما تذكره أي صفحة محفوظة (قراءة من GitHub مباشرة لا من كاش الموقع) */
+  async function purge(paths, opt) {
+    paths = [...new Set(paths || [])].filter(p => /^assets\/img\//.test(p)); if (!paths.length) return 0; const G = ghx(), dec = t => decodeURIComponent(escape(atob((t || "").replace(/\n/g, ""))));
+    if (opt && opt.verify) {
+      const used = new Set(), add = txt => { paths.forEach(p => { if (txt.includes(p.split("/").pop())) used.add(p); }); };
+      try { const ix = JSON.parse(dec((await GH.getFile("assets/pages/index.json")).content)); let i = 0; const w = async () => { while (i < ix.length) { const r = ix[i++]; try { add(dec((await GH.getFile("assets/pages/" + r.slug + ".json")).content)); } catch (e) { } } }; await Promise.all([w(), w(), w(), w()]); } catch (e) { }
+      if (!opt.own) { try { if (typeof PBApp !== "undefined" && PBApp.pageJson) add(PBApp.pageJson() || ""); } catch (e) { } }      // الصفحة المفتوحة تُحتسب إلا عند إغلاقها بلا حفظ
+      paths = paths.filter(p => !used.has(p)); if (!paths.length) return 0;
+    }
+    try { const f = await GH.getFile("assets/pages/media.json"), L = JSON.parse(dec(f.content)), nl = L.filter(x => !paths.includes(x.p)); if (nl.length !== L.length) await GH.putFile("assets/pages/media.json", btoa(unescape(encodeURIComponent(JSON.stringify(nl, null, 1)))), f.sha, "تنظيف مكتبة صور منشئ الصفحات"); } catch (e) { console.warn("media.json", e); }
+    const ref = await G.j(G.api + "/git/ref/heads/" + encodeURIComponent(G.br)), cm = await G.j(G.api + "/git/commits/" + ref.object.sha);
+    const ex = new Set(); try { const t = await G.j(G.api + "/git/trees/" + cm.tree.sha + "?recursive=1"); (t.tree || []).forEach(x => ex.add(x.path)); } catch (e) { paths.forEach(p => ex.add(p)); }
+    paths = paths.filter(p => ex.has(p)); if (!paths.length) return 0;
+    const tr = await G.j(G.api + "/git/trees", { method: "POST", body: JSON.stringify({ base_tree: cm.tree.sha, tree: paths.map(p => ({ path: p, mode: "100644", type: "blob", sha: null })) }) });
+    const nc = await G.j(G.api + "/git/commits", { method: "POST", body: JSON.stringify({ message: "تنظيف الصور غير المحفوظة (" + paths.length + ")", tree: tr.sha, parents: [ref.object.sha] }) });
+    await G.j(G.api + "/git/refs/heads/" + encodeURIComponent(G.br), { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) }); return paths.length;
+  }
   async function remove() {
     const sel = vis().filter(x => x.on); if (!sel.length) return; if (!confirm("حذف " + sel.length + " صورة نهائياً من المستودع؟")) return;
     foot(""); body('<p id="pbx-cs">جارٍ الحذف…</p>'); const st = t => { const e = document.getElementById("pbx-cs"); if (e) e.textContent = t; }, G = S.G, paths = sel.map(x => x.p);
@@ -69,5 +86,5 @@ const PBClean = (() => {
     if (c === "x") { M.remove(); M = null; } else if (c === "tg") { const x = S.unused.find(y => y.p === t.dataset.p); if (x) { x.on = !x.on; draw(); } } else if (c === "all") { const v = vis(), all = v.every(x => x.on); v.forEach(x => { x.on = !all; }); draw(); } else if (c === "del") remove();
   }
   document.addEventListener("change", e => { const t = e.target; if (t && t.dataset && t.dataset.c === "age" && S) { S.minAge = +t.value; draw(); } });
-  return { open: scan };
+  return { open: scan, purge };
 })();

@@ -60,7 +60,7 @@ const PBClone = (function () {
       return html; }
     throw new Error("انتهت المهلة قبل اكتمال العرض على الخادم — راجع تبويب Actions في GitHub");
   }
-  async function fetchBlob(url) { const tries = [url].concat(PROXIES.map(p => p(url))); for (const t of tries) { try { const b = await fget(t, "blob", 20000); if (b && b.size > 200 && /^image\//.test(b.type)) return b; } catch (e) { } } return null; }
+  async function fetchBlob(url) { const tries = [url].concat(PROXIES.map(p => p(url))); for (const t of tries) { try { const b = await fget(t, "blob", 12000); if (b && b.size > 200 && /^image\//.test(b.type)) return b; } catch (e) { } } return null; }
   /* يجهّز HTML للعرض الآمن: بلا سكربتات، مع <base>، وكشف الصور الكسولة، وإيقاف الحركات */
   function prep(html, url) {
     const d = new DOMParser().parseFromString(html, "text/html");
@@ -476,7 +476,7 @@ const PBClone = (function () {
     const urls = [...by.keys()].slice(0, 80); if (!doSave || !urls.length) return 0;
     let done = 0, i = 0;
     async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; } }
-    await Promise.all([work(), work(), work()]); return done;
+    await Promise.all(Array.from({ length: 8 }, work)); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
   /* روابط الموقع الأصلي تتحول إلى # (روابط المراسي الداخلية #xxx وواتساب/اتصل/بريد تبقى) كي لا يُخرج الزائر من صفحتك */
