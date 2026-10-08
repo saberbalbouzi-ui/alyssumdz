@@ -62,7 +62,11 @@ body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;
 .aly-trust b{display:block;font-size:16px}.aly-trust small{color:#a7c4b2;font-size:13px}
 .aly-trust div:hover i{animation:alyBeat .9s}@keyframes alyBeat{40%{transform:scale(1.22)}}
 @media(max-width:900px){.aly-trust{grid-template-columns:1fr 1fr}.aly-trust div:nth-child(3){border-inline-start:0}}
-.pb-sec.aly-glass{border:1px solid rgba(134,239,172,.26);border-radius:34px;background:linear-gradient(140deg,rgba(6,40,22,.72),rgba(2,12,7,.88));box-shadow:0 40px 110px rgba(0,0,0,.65),0 0 90px rgba(34,197,94,.1),inset 0 1px 0 rgba(255,255,255,.14);overflow:hidden}
+.pb-sec.aly-glass{border:1px solid rgba(134,239,172,.26);border-radius:34px;box-shadow:0 40px 110px rgba(0,0,0,.65),0 0 90px rgba(34,197,94,.1),inset 0 1px 0 rgba(255,255,255,.14);overflow:hidden}
+.pb-sec.aly-glass:not(#hero){background:linear-gradient(140deg,rgba(6,40,22,.72),rgba(2,12,7,.88))}
+#hero.aly-glass{background-color:#020a06;background-size:cover;background-position:center}
+#hero.aly-glass::before{display:none}
+@media(max-width:767px){#hero.aly-glass{background-position:62% center}#hero.aly-glass::before{display:block;background:linear-gradient(180deg,rgba(2,12,7,.62),rgba(2,12,7,.4) 55%,rgba(2,12,7,.7));animation:none}}
 .aly-glass::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(28% 40% at 22% 30%,rgba(190,242,100,.1),transparent 70%),radial-gradient(30% 40% at 80% 70%,rgba(74,222,128,.12),transparent 70%);animation:alyBokeh 14s ease-in-out infinite alternate}
 @keyframes alyBokeh{to{transform:translate(40px,-20px) scale(1.1);opacity:.7}}
 .aly-glass::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.07),transparent);transform:skewX(-18deg);animation:alySheen 9s ease-in-out infinite}
@@ -128,21 +132,21 @@ hs["fxs"] = [FX("زجاج الهيدر", "selector{backdrop-filter:blur(18px) sa
 
 hero_text = C([
     alyhtml("<span class='aly-pill'>%s منتجات طبيعية 100%%</span>" % S_(I_LEAF), **anim("fadeDown", .7)),
-    W("heading", text="العناية الطبيعية", tag="h1", fs=dm(50, 34), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.15}, **anim("slideStart", .8)),
-    W("heading", text="لبشرة أكثر نقاءً وجمالاً", tag="div", fs=dm(50, 34), fw="900", ta={"d": "start"}, color="#bef264", lh={"d": 1.2},
+    W("heading", text="العناية الطبيعية", tag="h1", fs=dm(44, 32), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.15}, **anim("slideStart", .8)),
+    W("heading", text="لبشرة أكثر نقاءً وجمالاً", tag="div", fs=dm(44, 32), fw="900", ta={"d": "start"}, color="#bef264", lh={"d": 1.2},
       fxs=[FX("نص يتدرّج للأخضر الليموني", "selector .pb-t{background:linear-gradient(to left,#ffffff 0%,#ffffff 36%,#d9f99d 54%,#a3e635 78%,#4ade80 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;animation:alyGt 7s ease-in-out infinite alternate}@keyframes alyGt{to{background-position:100% 0}}")], **anim("slideStart", .8, .1)),
-    T("منتجات ALYSSUM المصنوعة من مكونات طبيعية مختارة بالعناية تعزز جمالك وصحتك بشكل آمن وفعال.", 19, "#b7d2c0", "start", **anim("fadeUp", .8, .2)),
+    T("منتجات ALYSSUM المصنوعة من مكونات طبيعية مختارة بالعناية تعزز جمالك وصحتك بشكل آمن وفعال.", 17, "#b7d2c0", "start", **anim("fadeUp", .8, .2)),
     alyhtml(hero_btns, **anim("fadeUp", .8, .3)),
     alyhtml(hero_proof, **anim("fadeUp", .8, .4)),
-], w=40, va="center", pad=dm([10, 20, 10, 0]))
+], w=46, va="center", pad=dm([6, 10, 6, 0]))
 hero_mid = C([
     alyhtml(badge, mar=dm([0, 0, -150, 0]), al={"d": "start"}, zi=3, **anim("zoomIn", .9, .3)),
     PIC("honey_jar", "منتج أليسوم", 30, slot="hero", w=dm(92, 100), al={"d": "center"},
-        fxs=[FX("وهج وطفو المنتج", "selector img{box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 70px rgba(74,222,128,.35);border:1px solid rgba(134,239,172,.4);animation:alyFloatImg 7s ease-in-out infinite}@keyframes alyFloatImg{50%{transform:translateY(-14px)}}")], **anim("zoomIn", .9, .15)),
-], w=29, va="center")
-hero_right = C([alyhtml(hero_ben, **anim("slideEnd" if False else "fadeUp", .8, .25))], w=31, va="center", pad=dm([0, 0, 0, 20]))
+        fxs=[FX("وهج وطفو المنتج", "selector img{border:0;border-radius:0;-webkit-mask-image:radial-gradient(ellipse 50% 52% at 50% 50%,#000 42%,transparent 100%);mask-image:radial-gradient(ellipse 50% 52% at 50% 50%,#000 42%,transparent 100%);filter:drop-shadow(0 24px 30px rgba(0,0,0,.55));animation:alyFloatImg 7s ease-in-out infinite}@keyframes alyFloatImg{50%{transform:translateY(-14px)}}")], **anim("zoomIn", .9, .15)),
+], w=26, va="center")
+hero_right = C([alyhtml(hero_ben, **anim("slideEnd" if False else "fadeUp", .8, .25))], w=28, va="center", pad=dm([0, 0, 0, 20]))
 hero_trust = C([alyhtml(trust, **anim("fadeUp", .8, .5))], w=100, pad=dm([26, 0, 0, 0]))
-hero = S([hero_text, hero_mid, hero_right, hero_trust], cw={"d": 1240}, pad=dm([54, 40, 40, 40], [30, 18, 24, 18]), mar=dm([22, 18, 0, 18], [14, 8, 0, 8]), rev=True, cls="aly-glass", gap={"d": 14}, **{"cid": "hero"})
+hero = S([hero_text, hero_mid, hero_right, hero_trust], cw={"d": 1240}, pad=dm([40, 40, 26, 40], [30, 18, 24, 18]), mar=dm([22, 18, 0, 18], [14, 8, 0, 8]), rev=True, cls="aly-glass", gap={"d": 14}, bgImg=IMG("alyssum-hero-bg"), bgSize="cover", bgPos="center", **{"cid": "hero"})
 
 cats_w = W("shopcats", items=[{"cat": "skin", "label": "", "img": IMG("skin_gua")}, {"cat": "hair", "label": "", "img": IMG("skin_dropper")}, {"cat": "honey", "label": "", "img": IMG("honey_dipper")},
                                 {"cat": "health", "label": "", "img": IMG("herb_rosemary")}, {"cat": "roqia", "label": "", "img": IMG("oil_olive")}, {"cat": "supplements", "label": "", "img": IMG("supp_caps")}],
