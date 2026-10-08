@@ -48,7 +48,7 @@ const AdminNav = (() => {
   /* ══ صفحة «قوالب» في تبويب المظهر: تحميل قالب / ناسخ القوالب / إعدادات ══ */
   const TPL = [{ id: "focus-honey", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي." }];
   /* ══ مكتبة القوالب (نافذة): نماذج اتصال / نماذج الطلبات / صفحات كاملة، مع تصفية حسب الميدان ══ */
-  const LCATS = [["all", "الكل"], ["contact", "نماذج اتصال"], ["order", "نماذج الطلبات"], ["page", "صفحات كاملة"]];
+  const LCATS = [["all", "الكل"], ["contact", "نماذج اتصال"], ["order", "نماذج الطلبات"], ["page", "صفحات كاملة"], ["store", "صفحات متاجر"]];
   const cf = (set, title, desc) => () => { const m = PB.mkW; return PB.mkS([PB.mkC([m("contact", Object.assign({ title, desc }, set))])], { pad: { d: [40, 20, 40, 20], m: [28, 16, 28, 16] } }); };
   const dflt = ks => () => { const L = ks.map(k => PB.DFLT.find(x => x.k === k).f()); return L; };
   const LIB = [
@@ -61,25 +61,34 @@ const AdminNav = (() => {
     { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
     { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
   ];
-  const LS = { cat: "all", fld: "all" };
-  function libOpen() { LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
+  const LS = { cat: "all", fld: "all" }; let LIBX = null;
+  async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
+  function libAll() { return LIB.concat(LIBX || []); }
+  async function libOpen() { await libLoad(); LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
   function libClose() { const m = $("tl-lib"); if (m) m.style.display = "none"; }
   function libSet(k, v) { LS[k] = v; libDraw(); }
   function libDraw() {
-    const m = $("tl-lib"); if (!m) return; const flds = [...new Set(LIB.map(x => x.fld))], L = LIB.filter(x => (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld));
+    const m = $("tl-lib"); if (!m) return; const ALL = libAll(), flds = [...new Set(ALL.map(x => x.fld))], L = ALL.filter(x => (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld));
     const chip = (k, v, l) => `<button type="button" class="${LS[k] === v ? "on" : ""}" onclick="AdminNav.libSet('${k}','${v}')">${esc(l)}</button>`;
     m.innerHTML = `<div class="tl-box"><div class="tl-top"><h3>مكتبة القوالب</h3><button type="button" class="small gray" onclick="AdminNav.libClose()">إغلاق</button></div>
 <div class="ap-tabs">${LCATS.map(x => chip("cat", x[0], x[1])).join("")}</div>
 <div class="tl-fl"><b>الميدان:</b>${chip("fld", "all", "عرض الكل")}${flds.map(f => chip("fld", f, f)).join("")}</div>
-<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div><div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div><button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.file ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button></div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
+<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div><button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button></div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
   }
   async function libUse(id) {
-    const x = LIB.find(q => q.id === id); if (!x) return;
+    const x = libAll().find(q => q.id === id); if (!x) return;
     try {
       libClose();
-      if (x.file) { await PBAdmin.openTemplate(x.file); return; }
-      let secs = x.b(); if (!Array.isArray(secs)) secs = [secs];
+      if (x.file && x.cat === "store") { await PBAdmin.openTemplate(x.file); return; }
       const open = !!(typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page && $("pb-app") && $("pb-app").classList.contains("on"));
+      let secs;
+      if (x.file) {
+        const r = await fetch("assets/pages/templates/" + x.file + ".json?t=" + Date.now()); if (!r.ok) throw new Error("القالب غير موجود");
+        secs = PBAdmin.fresh(await r.json()).sections;
+        const slug = (open && PBApp.E.page.product) || ((typeof Admin !== "undefined" && Admin.products && Admin.products[0]) || {}).slug || "";
+        const fill = n => { (n.cols || []).forEach(fill); (n.widgets || []).forEach(w => { if (w.type === "orderorig" && !w.set.prod && slug) w.set.prod = slug; fill(w); }); (n.free || []).forEach(fill); };
+        secs.forEach(fill);
+      } else { secs = x.b(); if (!Array.isArray(secs)) secs = [secs]; }
       if (open) { PBApp.insertSections(secs, "قالب: " + x.n); }
       else { const pg = PB.newPage(x.n, ""); pg.sections = secs; PBApp.open(pg, "", true); }
     } catch (e) { try { toast("تعذّر تحميل القالب: " + e.message); } catch (_) { } }

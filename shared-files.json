@@ -25,7 +25,23 @@
     "assets/js/avatar-script.js",
     "api/index.php",
     "p/_template/index.html",
-    "assets/js/admin-nav.js"
+    "assets/js/admin-nav.js",
+    "assets/pages/templates/c-aurora.json",
+    "assets/pages/templates/c-gold.json",
+    "assets/pages/templates/c-neon.json",
+    "assets/pages/templates/c-soft.json",
+    "assets/pages/templates/c-steps.json",
+    "assets/pages/templates/index.json",
+    "assets/pages/templates/o-bundle.json",
+    "assets/pages/templates/o-flash.json",
+    "assets/pages/templates/o-lux.json",
+    "assets/pages/templates/o-proof.json",
+    "assets/pages/templates/o-steps.json",
+    "assets/pages/templates/s-aurora.json",
+    "assets/pages/templates/s-fresh.json",
+    "assets/pages/templates/s-gold.json",
+    "assets/pages/templates/s-pop.json",
+    "assets/pages/templates/s-tech.json"
   ],
   "local": {
     "الهوية والإعدادات": [
