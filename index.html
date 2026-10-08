@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet"></noscript>
-<link rel="preload" as="image" href="assets/img/hero-720.webp" fetchpriority="high"><link rel="stylesheet" href="assets/css/style.css">
+<link rel="preload" as="image" href="assets/img/anti-acne/presentation/anti-acne 01.webp" fetchpriority="high"><link rel="stylesheet" href="assets/css/style.css">
 <link rel="icon" href="assets/img/favicon.png">
 <title>أليسوم ALYSSUM — منتجات طبيعية أصلية | الدفع عند الاستلام</title><meta name="description" content="متجر أليسوم: زيوت، أعشاب، عسل فاخر ومنتجات الرقية الشرعية الطبيعية الأصلية. توصيل 58 ولاية والدفع عند الاستلام."><!--seo:start-->
 <link rel="canonical" href="https://alyssumdz.com/">
@@ -47,7 +47,7 @@
   <div class="hero-media">
     <div class="hero-imgbox"><img src="assets/img/hero-720.webp" width="720" height="720" fetchpriority="high" decoding="async" alt="عائلة جزائرية تثق بمنتجات أليسوم الطبيعية"></div>
     <div class="hero-badge b1">⭐<div><b>4.9/5</b><small>+5000 تقييم</small></div></div>
-    <div class="hero-badge b2">🚚<div><b>24-72h</b><small>توصيل لكل الولايات</small></div></div>
+    <div class="hero-badge b2">🚚<div><b>24-72h</b><small>توصيل لكل الولايات</small></div></div><div class="hero-product-float"><img src="assets/img/tarkiz/cover-1791065932434.webp" alt="عسل التركيز"><span>الأكثر طلباً</span></div>
   </div>
 </div></section>
 
@@ -171,4 +171,24 @@
 <script defer src="assets/js/api.js"></script>
 <script defer src="assets/js/app.js"></script>
 <script>addEventListener("load",function(){setTimeout(function(){var s=document.createElement("script");s.src="assets/js/agent.js";document.body.appendChild(s)},600)})</script>
-<script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{initHome();renderBestsellers(["tarkiz","anti-acne","anti-chute"]);initCartDrawer();fillCartWilayas();initReveal();});});</script></body></html>
+<script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{initHome();renderBestsellers(["anti-acne","tarkiz","miel-sidr","anti-chute"]);initCartDrawer();fillCartWilayas();initReveal();});});</script>
+<script>
+/* ALYSSUM Builder Glass Effects — visual-only layer */
+document.addEventListener('DOMContentLoaded',()=>{
+  const targets=document.querySelectorAll('.card,.feat,.review,.lp-card,.shop-cat,.lp-textcard');
+  targets.forEach(el=>{
+    el.setAttribute('data-builder-effect','glass');
+    el.setAttribute('data-builder-effect-ready','true');
+    el.addEventListener('pointermove',e=>{
+      if(matchMedia('(max-width:700px)').matches) return;
+      const r=el.getBoundingClientRect(), x=(e.clientX-r.left)/r.width-.5, y=(e.clientY-r.top)/r.height-.5;
+      el.style.setProperty('--mx',(x*100).toFixed(1)+'%');
+      el.style.setProperty('--my',(y*100).toFixed(1)+'%');
+      el.style.transform='perspective(900px) rotateX('+(-y*1.8).toFixed(2)+'deg) rotateY('+(x*2.2).toFixed(2)+'deg) translateY(-3px)';
+    });
+    el.addEventListener('pointerleave',()=>{
+      el.style.transform='';
+    });
+  });
+});
+</script></body></html>
