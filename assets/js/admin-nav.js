@@ -47,6 +47,43 @@ const AdminNav = (() => {
   }
   /* ══ صفحة «قوالب» في تبويب المظهر: تحميل قالب / ناسخ القوالب / إعدادات ══ */
   const TPL = [{ id: "focus-honey", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي." }];
+  /* ══ مكتبة القوالب (نافذة): نماذج اتصال / نماذج الطلبات / صفحات كاملة، مع تصفية حسب الميدان ══ */
+  const LCATS = [["all", "الكل"], ["contact", "نماذج اتصال"], ["order", "نماذج الطلبات"], ["page", "صفحات كاملة"]];
+  const cf = (set, title, desc) => () => { const m = PB.mkW; return PB.mkS([PB.mkC([m("contact", Object.assign({ title, desc }, set))])], { pad: { d: [40, 20, 40, 20], m: [28, 16, 28, 16] } }); };
+  const dflt = ks => () => { const L = ks.map(k => PB.DFLT.find(x => x.k === k).f()); return L; };
+  const LIB = [
+    { id: "c-wa", cat: "contact", fld: "عام", n: "نموذج اتصال بسيط (واتساب)", d: "الاسم والهاتف والبريد والرسالة، تصل جاهزة على واتساب المتجر.", b: cf({}, "تواصل معنا", "اترك رسالتك وسنردّ عليك في أقرب وقت.") },
+    { id: "c-dark", cat: "contact", fld: "عام", n: "نموذج اتصال داكن أنيق", d: "خلفية خضراء داكنة وحقول زجاجية وزر ذهبي.", b: cf({ fbg: "#173f35", fbc: "#2b5b4e", tcol: "#ffffff", lcol: "#e6dfcf", ibg: "#ffffff1a", ibc: "#ffffff40", bbg: "#c8a24b", bcol: "#173f35" }, "راسلنا الآن", "فريقنا جاهز للرد على استفساراتك.") },
+    { id: "c-quote", cat: "contact", fld: "خدمات", n: "طلب عرض سعر", d: "الاسم والهاتف والولاية ونوع الخدمة وتفاصيل الطلب.", b: cf({ fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "half" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "الولاية", type: "text", ph: "مثال: الجزائر", req: false, w: "half" }, { label: "نوع الخدمة", type: "select", ph: "اختر الخدمة", opts: "خدمة أولى، خدمة ثانية، أخرى", req: true, w: "half" }, { label: "تفاصيل الطلب", type: "textarea", ph: "صف طلبك بإيجاز", req: true, w: "full" }], btn: "اطلب عرض السعر", subject: "طلب عرض سعر" }, "اطلب عرض سعر", "أخبرنا بما تحتاجه ونعود إليك بعرض مناسب.") },
+    { id: "c-health", cat: "contact", fld: "صحة وعسل", n: "استشارة صحية / تغذية", d: "نموذج مخصص للاستشارة حول المنتج المناسب للحالة.", b: cf({ fields: [{ label: "الاسم", type: "text", ph: "اسمك", req: true, w: "half" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "العمر", type: "number", ph: "العمر", req: false, w: "half" }, { label: "الحاجة", type: "select", ph: "اختر", opts: "تقوية الذاكرة، المناعة، الطاقة، أخرى", req: true, w: "half" }, { label: "ملاحظات", type: "textarea", ph: "أي تفاصيل تفيدنا", req: false, w: "full" }], btn: "أرسل استشارتي", subject: "طلب استشارة" }, "استشارة مجانية", "اكتب حالتك وسنقترح عليك المنتج الأنسب.") },
+    { id: "o-orig", cat: "order", fld: "متجر", n: "نموذج الطلب الكامل", d: "نموذج الطلب الأصلي بكل عروضه ورسوم التوصيل.", b: dflt(["order"]) },
+    { id: "o-deal", cat: "order", fld: "متجر", n: "عرض محدود + نموذج الطلب", d: "شريط عرض بعدّاد تنازلي ثم نموذج الطلب وزر ذهبي.", b: dflt(["deal", "order", "cta"]) },
+    { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
+    { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
+  ];
+  const LS = { cat: "all", fld: "all" };
+  function libOpen() { LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
+  function libClose() { const m = $("tl-lib"); if (m) m.style.display = "none"; }
+  function libSet(k, v) { LS[k] = v; libDraw(); }
+  function libDraw() {
+    const m = $("tl-lib"); if (!m) return; const flds = [...new Set(LIB.map(x => x.fld))], L = LIB.filter(x => (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld));
+    const chip = (k, v, l) => `<button type="button" class="${LS[k] === v ? "on" : ""}" onclick="AdminNav.libSet('${k}','${v}')">${esc(l)}</button>`;
+    m.innerHTML = `<div class="tl-box"><div class="tl-top"><h3>مكتبة القوالب</h3><button type="button" class="small gray" onclick="AdminNav.libClose()">إغلاق</button></div>
+<div class="ap-tabs">${LCATS.map(x => chip("cat", x[0], x[1])).join("")}</div>
+<div class="tl-fl"><b>الميدان:</b>${chip("fld", "all", "عرض الكل")}${flds.map(f => chip("fld", f, f)).join("")}</div>
+<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div><div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div><button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.file ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button></div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
+  }
+  async function libUse(id) {
+    const x = LIB.find(q => q.id === id); if (!x) return;
+    try {
+      libClose();
+      if (x.file) { await PBAdmin.openTemplate(x.file); return; }
+      let secs = x.b(); if (!Array.isArray(secs)) secs = [secs];
+      const open = !!(typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page && $("pb-app") && $("pb-app").classList.contains("on"));
+      if (open) { PBApp.insertSections(secs, "قالب: " + x.n); }
+      else { const pg = PB.newPage(x.n, ""); pg.sections = secs; PBApp.open(pg, "", true); }
+    } catch (e) { try { toast("تعذّر تحميل القالب: " + e.message); } catch (_) { } }
+  }
   const TT = { tab: "load" };
   function tplTab(t) { TT.tab = t; renderTpl(); }
   async function renderTpl() {
@@ -55,7 +92,7 @@ const AdminNav = (() => {
     let body = "";
     if (t === "load") {
       let pages = []; try { const r = await fetch("assets/pages/index.json", { cache: "no-store" }); pages = r.ok ? await r.json() : []; } catch (e) { }
-      body = `<div class="ap-sec"><b>قوالب جاهزة</b><div class="tl-g">${TPL.map(x => `<div class="tl-c"><b>${esc(x.n)}</b><div class="hint" style="margin:.2rem 0 .5rem">${esc(x.d)}</div><button class="small" onclick="PBAdmin.openTemplate('${x.id}')">تحميل القالب في المطوّر</button></div>`).join("")}</div></div>
+      body = `<div class="ap-sec"><b>مكتبة القوالب</b><div class="hint" style="margin:0 0 .5rem">نماذج اتصال، نماذج طلبات وصفحات كاملة — تُعرض حسب الميدان أو كلها.</div><button class="small" onclick="AdminNav.libOpen()">فتح مكتبة القوالب</button></div>
 <div class="ap-sec"><b>استيراد قالب من ملف</b><div class="hint" style="margin:0 0 .4rem">ملف JSON صدّرته من متجر آخر أو من هنا.</div><button class="small gold" onclick="PBAdmin.importPage()">استيراد قالب (JSON)</button></div>
 <div class="ap-sec"><b>تنزيل صفحة كقالب</b>${pages.length ? `<div class="tl-g">${pages.map(p => `<div class="tl-c"><b>${esc(p.title || p.slug)}</b><div class="hint" dir="ltr" style="margin:.1rem 0 .5rem">/lp/${esc(p.slug)}/</div><button class="small gray" onclick="PBAdmin.exportPage('${esc(p.slug)}')">تنزيل JSON</button></div>`).join("")}</div>` : `<div class="hint">لا توجد صفحات منشورة بعد.</div>`}</div>`;
     } else if (t === "clone") {
@@ -153,5 +190,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { libOpen, libClose, libSet, libUse, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

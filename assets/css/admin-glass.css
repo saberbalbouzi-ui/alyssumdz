@@ -278,3 +278,14 @@ html.glass .ap-tabs button{background:var(--g-sheen),rgba(255,255,255,.04);color
 html.glass .ap-tabs button.on{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border-color:rgba(150,255,170,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.25)}
 html.glass .tl-c{background:var(--g-sheen),rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}html.glass .tl-c:hover{border-color:rgba(170,255,150,.4)}
 html.glass .tl-r{border-bottom-color:rgba(255,255,255,.12)}
+
+/* مكتبة القوالب (v1.45.2) */
+html.glass #tl-lib{background:rgba(3,12,9,.62);backdrop-filter:blur(6px)}
+html.glass #tl-lib .tl-box{background:rgba(14,32,26,.86);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.16);color:#fff}
+html.glass #tl-lib .tl-fl button,html.glass #tl-lib .ap-tabs button{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);color:#fff;transition:.2s}
+html.glass #tl-lib .tl-fl button:hover,html.glass #tl-lib .ap-tabs button:hover{background:rgba(190,242,100,.16);transform:translateY(-2px)}
+html.glass #tl-lib .tl-fl button.on,html.glass #tl-lib .ap-tabs button.on{background:rgba(34,197,94,.28);border-color:rgba(190,242,100,.6);color:#fff}
+html.glass #tl-lib .tl-c .ap-h{gap:.6rem;align-items:flex-start}
+html.glass #tl-lib .tl-c .ap-s{flex:none;white-space:nowrap;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;background:rgba(34,197,94,.18);border:1px solid rgba(190,242,100,.35);color:#fff}
+html.glass #tl-lib .tl-c button.small{color:#fff;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(21,122,85,.26));border:1px solid rgba(190,242,100,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.18),0 3px 8px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:.2s}
+html.glass #tl-lib .tl-c button.small:hover{background:linear-gradient(180deg,rgba(74,222,128,.42),rgba(21,122,85,.32));transform:translateY(-2px)}
