@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.43.1">
+<meta name="admin-version" content="1.43.2">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1488,10 +1488,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.43.1"></script>
-<script src="assets/js/chrome-admin.js?v=1.43.1"></script>
-<script src="assets/js/admin-assistant.js?v=1.43.1"></script>
-<script src="assets/js/admin-update.js?v=1.43.1"></script>
+<script src="assets/js/ctl-help.js?v=1.43.2"></script>
+<script src="assets/js/chrome-admin.js?v=1.43.2"></script>
+<script src="assets/js/admin-assistant.js?v=1.43.2"></script>
+<script src="assets/js/admin-update.js?v=1.43.2"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -14111,6 +14111,7 @@ const PBClone = (function () {
   const S = { tab: "url", W: 1280, limit: 1200, docH: 0, k: 1, url: "", html: "", frame: null, img: null, busy: false };
   const toast = m => { const t = document.getElementById("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 5200); };
   const $ = id => document.getElementById(id), sleep = ms => new Promise(r => setTimeout(r, ms));
+  const prog = p => { const e = $("cl-ring"); if (!e) return; if (p == null) { e.hidden = true; return; } p = Math.max(0, Math.min(100, Math.round(p))); e.hidden = false; e.style.setProperty("--p", p); const i = e.firstChild; if (i) i.textContent = p + "%"; };      // دائرة خضراء تمتلئ تدريجياً حتى يكتمل النسخ
   const st = m => { const e = $("cl-st"); if (e) e.textContent = m || ""; };
 
   /* ───────── ألوان ───────── */
@@ -14596,7 +14597,7 @@ const PBClone = (function () {
     const by = new Map(); widgets.forEach(w => { if (w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)) { const k = w.set.src; if (!by.has(k)) by.set(k, []); by.get(k).push(w); } });
     const urls = [...by.keys()].slice(0, 80); if (!doSave || !urls.length) return 0;
     let done = 0, i = 0;
-    async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; } }
+    async function work() { while (i < urls.length) { const u = urls[i++]; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); } }
     await Promise.all(Array.from({ length: 8 }, work)); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
@@ -14612,12 +14613,12 @@ const PBClone = (function () {
   }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
-    st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
-    S.upl = []; let mob = null; { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
-    { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
-    await saveImages(res.widgets.concat(mob ? mob.widgets : []), true);
+    prog(3); st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
+    prog(25); S.upl = []; let mob = null; { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
+    prog(45); { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
+    S.p0 = 45; S.p1 = 92; await saveImages(res.widgets.concat(mob ? mob.widgets : []), true); prog(94);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
-    const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
+    prog(96); const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
   }
 
   /* ───────── وضع الصورة: OCR ───────── */
@@ -14755,7 +14756,7 @@ const PBClone = (function () {
 #pbx-clone .cl-box{position:relative;background:#fff;border-radius:18px;width:min(1180px,96vw);height:min(94vh,880px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45)}
 #pbx-clone .cl-h{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;border-bottom:1px solid #eee;background:#173f35;color:#fff}#pbx-clone .cl-h b{font-size:1rem;display:flex;align-items:center;gap:.4rem}#pbx-clone .cl-h small{opacity:.75;flex:1;font-weight:600}#pbx-clone .cl-h button{border:0;background:rgba(255,255,255,.15);color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer}
 #pbx-clone .cl-tabs{display:flex;gap:.3rem;padding:.6rem 1rem 0}#pbx-clone .cl-tabs button{border:1.5px solid #e0d9c8;background:#fff;border-radius:10px 10px 0 0;padding:.45rem 1rem;cursor:pointer;font-family:inherit;font-weight:800;font-size:.85rem;color:#173f35}#pbx-clone .cl-tabs button.on{background:#173f35;color:#fff;border-color:#173f35}
-#pbx-clone .cl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid #eee;background:#faf6ec}#pbx-clone .cl-ctl input[type=text],#pbx-clone .cl-ctl input[type=url]{flex:1 1 280px;min-width:180px;border:1.5px solid #d9d2c2;border-radius:10px;padding:.5rem .7rem;font-family:inherit;direction:ltr;text-align:left}#pbx-clone .cl-ctl select{border:1.5px solid #d9d2c2;border-radius:10px;padding:.45rem;font-family:inherit}#pbx-clone .cl-ctl label{display:flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:700;color:#173f35}#pbx-clone .cl-ctl button,#pbx-clone .cl-f button{border:1.5px solid #173f35;background:#fff;color:#173f35;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-family:inherit;font-weight:800}#pbx-clone .cl-ctl button.pri,#pbx-clone .cl-f .cl-go{background:linear-gradient(135deg,#173f35,#0d9488);color:#fff;border-color:transparent}#pbx-clone .cl-f .cl-go:disabled{opacity:.45;cursor:not-allowed}
+#pbx-clone .cl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid #eee;background:#faf6ec}#pbx-clone .cl-ctl input[type=text],#pbx-clone .cl-ctl input[type=url]{flex:1 1 280px;min-width:180px;border:1.5px solid #d9d2c2;border-radius:10px;padding:.5rem .7rem;font-family:inherit;direction:ltr;text-align:left}#pbx-clone .cl-ctl select{border:1.5px solid #d9d2c2;border-radius:10px;padding:.45rem;font-family:inherit}#pbx-clone .cl-ctl label{display:flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:700;color:#173f35}#pbx-clone .cl-ctl button,#pbx-clone .cl-f button{border:1.5px solid #173f35;background:#fff;color:#173f35;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-family:inherit;font-weight:800}#pbx-clone .cl-ctl button.pri,#pbx-clone .cl-f .cl-go{flex:0 1 300px;min-width:190px;min-height:58px;padding:.95rem 2.2rem;font-size:1.3rem;font-weight:900;border-radius:18px;background:linear-gradient(135deg,#16a34a,#0d9488);color:#fff;border-color:transparent;box-shadow:0 8px 22px rgba(22,163,74,.38),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .15s,box-shadow .15s}#pbx-clone .cl-f .cl-go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 28px rgba(22,163,74,.48),inset 0 1px 0 rgba(255,255,255,.35)}#pbx-clone #cl-ring{--p:0;flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:conic-gradient(#16a34a calc(var(--p)*1%),#d6ecdc 0);display:inline-grid;place-items:center;box-shadow:0 0 0 2px rgba(22,163,74,.18)}#pbx-clone #cl-ring[hidden]{display:none}#pbx-clone #cl-ring i{font-style:normal;width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:900;color:#15803d;font-variant-numeric:tabular-nums}#pbx-clone .cl-f .cl-go:disabled{opacity:.45;cursor:not-allowed}
 #pbx-clone .cl-ctl[hidden]{display:none!important}#pbx-clone .cl-h,#pbx-clone .cl-tabs,#pbx-clone .cl-ctl,#pbx-clone .cl-note,#pbx-clone .cl-f{flex:none}#pbx-clone .cl-stage{flex:1 1 0;overflow:auto;background:#d8d2c4;padding:14px;min-height:90px;position:relative}#pbx-clone .cl-empty{color:#6b6556;text-align:center;padding:3rem 1rem;line-height:2;font-weight:700}
 #pbx-clone .cl-win{position:relative;margin:0 auto;overflow:hidden;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.35);direction:ltr}#pbx-clone .cl-in{position:absolute;left:0;top:0;transform-origin:0 0}#pbx-clone .cl-in iframe,#pbx-clone .cl-in img{display:block;border:0;background:#fff}
 #pbx-clone .cl-lim{position:absolute;left:0;right:0;bottom:0;height:22px;cursor:ns-resize;touch-action:none;background:linear-gradient(to top,rgba(124,58,237,.35),rgba(124,58,237,0));border-bottom:3px solid #7c3aed;display:flex;align-items:flex-end;justify-content:center}#pbx-clone .cl-lim span{background:#7c3aed;color:#fff;font:800 .72rem system-ui,sans-serif;padding:.1rem .7rem;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:.4rem}
@@ -14773,7 +14774,7 @@ const PBClone = (function () {
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
-<div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
+<div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-ring" hidden><i>0</i></span><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
     document.body.appendChild(m);
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
@@ -14913,9 +14914,9 @@ const PBClone = (function () {
     im.onerror = () => toast("تعذّر قراءة الصورة"); im.src = url;
   }
   async function run() {
-    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true;
+    if (S.busy) return; const g = document.querySelector("#pbx-clone .cl-go"); S.busy = true; if (g) g.disabled = true; prog(1);
     try {      // اختيار التأثيرات المطلوب إضافتها يتم من نافذة «التأثيرات» الأولى فقط؛ لا نافذة تأكيد ثانية عند «انسخ»
-      if (S.tab === "url") await doCopyUrl(); else await doCopyImage(); } catch (e) { st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
+      if (S.tab === "url") await doCopyUrl(); else { prog(10); await doCopyImage(); } prog(100); setTimeout(() => prog(null), 1800); } catch (e) { prog(null); st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
   return { open, close, _t: { extractMobile, neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
 })();
