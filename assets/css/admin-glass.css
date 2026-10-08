@@ -208,8 +208,9 @@ html.glass .side-nav{gap:.55rem}
 /* بطاقات الإحصاء: زجاج سميك ملوّن (يبقى كل لون لوحده) */
 html.glass .stat div{background:var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.3),rgba(var(--c),.07) 65%,rgba(0,0,0,.25));box-shadow:var(--g-thick),0 10px 22px -6px rgba(0,0,0,.75),0 0 22px rgba(var(--c),.14)}
 
-/* زر «انسخ» في نافذة نسخ القالب: بارز أخضر مضيء (أهم زر في النافذة) */
-html.glass #pbx-clone .cl-f button.cl-go{background:linear-gradient(135deg,#3ddc6b,#16a34a 55%,#0d9488)!important;color:#04200e!important;border-color:rgba(255,255,255,.45)!important;font-weight:900!important;box-shadow:0 10px 28px rgba(52,208,88,.45),inset 0 1px 0 rgba(255,255,255,.55)!important;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+/* زرّا «فتح» و«انسخ» في نافذة نسخ القالب: بعرض بقية الأزرار، نص أبيض وزجاج أخضر شفاف */
+html.glass #pbx-clone .cl-ctl button.pri,html.glass #pbx-clone .cl-f button.cl-go{background:linear-gradient(135deg,rgba(52,220,100,.5),rgba(13,148,136,.38))!important;color:#fff!important;border-color:rgba(150,255,170,.6)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 20px rgba(52,220,100,.32),inset 0 1px 0 rgba(255,255,255,.4)!important;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+html.glass #pbx-clone .cl-ctl button.pri:hover,html.glass #pbx-clone .cl-f button.cl-go:hover:not(:disabled){box-shadow:0 0 30px rgba(52,220,100,.55),inset 0 1px 0 rgba(255,255,255,.5)!important}
 html.glass #pbx-clone .cl-f button.cl-go:disabled{background:rgba(255,255,255,.06)!important;color:rgba(255,255,255,.4)!important;box-shadow:none!important;text-shadow:none}
 html.glass #pbx-clone #cl-ring i{background:#0f1a14;color:#7dff9d}
 html.glass #pbx-clone #cl-ring{background:conic-gradient(#3ddc6b calc(var(--p)*1%),rgba(255,255,255,.14) 0)}
