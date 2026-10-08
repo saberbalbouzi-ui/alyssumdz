@@ -190,6 +190,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-mwbar button.ok{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff}.pbx-mwbar button.no{color:#b83232}
 .pbx-ft button:hover,.pbx-ft button.on{background:#ebeef2}.pbx-ft button.dng:hover{color:#b83232}
 .pbx-sb{position:absolute;display:flex;flex-direction:column;gap:8px;pointer-events:auto;z-index:7}
+.pbx-slnav{position:absolute;display:flex;align-items:center;gap:.4rem;pointer-events:auto;z-index:8;background:rgba(10,30,16,.9);color:#86f06a;border:1px solid rgba(134,240,106,.45);border-radius:999px;padding:.2rem .35rem;font:800 .8rem/1 inherit;font-family:inherit;direction:ltr;box-shadow:0 6px 18px rgba(0,0,0,.45)}.pbx-slnav button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(150,255,170,.5);background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28));color:#fff;font-size:1.15rem;line-height:1;cursor:pointer;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -2px 4px rgba(0,0,0,.25);transition:transform .15s}.pbx-slnav button:hover{transform:translateY(-2px)}.pbx-slnav span{min-width:46px;text-align:center}
 .pbx-sb button{border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(14,19,24,.3),0 0 0 1px rgba(64,87,109,.1);cursor:grab}.pbx-sb button:hover{background:#f3ecff;color:#8b3dff}.pbx-sb button:active{cursor:grabbing}
 .pbx-ft svg,.pbx-sb svg{width:20px;height:20px;display:block}
 .pbx-box.multi{border:2px solid #8b3dff;background:rgba(139,61,255,.07)}
@@ -1006,6 +1007,15 @@ body{overflow-x:hidden;margin:0}`;
     more: SVG('<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>', 1), rot: SVG('<path d="M20 11a8 8 0 10-2.2 5.8"/><path d="M20 4v7h-7"/>'),
     move: SVG('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>')
   };
+  /* مُنقّل السلايدر: نقاط/أسهم السلايدر صغيرة وتغطيها مقابض التحديد وشريط الجانب عند تحديدها، فيظهر عند تحديد أي عنصر من سلايدر مُنقّل «‹ 2 / 6 ›» للتنقل بين الشرائح دون النقر داخل الصفحة */
+  function drawSlNav(inf, bx, ovl, ft) {
+    try {
+      const m = String((inf.set && inf.set.cls) || "").match(/pbs[ldpn]-([a-z0-9]+)/); if (!m) return; const w = fdoc && fdoc.defaultView, g = w && w.__pbFx && w.__pbFx.sl && w.__pbFx.sl[m[1]]; if (!g || !g.n) return;
+      const d = document.createElement("div"), sp = () => d.querySelector("span"); d.className = "pbx-slnav"; d.innerHTML = '<button type="button" data-d="-1" title="الشريحة السابقة">‹</button><span></span><button type="button" data-d="1" title="الشريحة التالية">›</button>'; sp().textContent = (g.get() + 1) + " / " + g.n;
+      d.onmousedown = ev => ev.stopPropagation(); d.onclick = ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); g.show(g.get() + Number(b.dataset.d)); sp().textContent = (g.get() + 1) + " / " + g.n; };
+      ovl.appendChild(d); const iv = setInterval(() => { if (!d.isConnected) return clearInterval(iv); try { sp().textContent = (g.get() + 1) + " / " + g.n; } catch (e) { } }, 250); const W = ovl.clientWidth, ftT = parseFloat(ft.style.top) || 0, below = ftT >= bx.b; let top = below ? ftT + ft.offsetHeight + 8 : bx.b + 10; d.style.top = top + "px"; d.style.left = Math.max(4, Math.min(W - d.offsetWidth - 4, (bx.l + bx.r) / 2 - d.offsetWidth / 2)) + "px";
+    } catch (e) { }
+  }
   function drawFloat(inf, box, ovl, locked) {
     const O = ovl.getBoundingClientRect(), R = box.getBoundingClientRect(), st = $("pbx-stage"), W = ovl.clientWidth;
     const bx = { l: R.left - O.left, t: R.top - O.top, r: R.right - O.left, b: R.bottom - O.top };      // أبعاد الإطار بعد التدوير (نسبة لطبقة الغطاء)
@@ -1015,6 +1025,7 @@ body{overflow-x:hidden;margin:0}`;
     let top = bx.t - fh - GAP; if (top < vt + 4) { top = bx.b + GAP + 6; if (top + fh > vb - 4) top = Math.max(vt + 4, bx.t + 8); }      // فوق العنصر إن اتسع المكان وإلا تحته
     let left = (bx.l + bx.r) / 2 - fw / 2; left = Math.max(4, Math.min(W - fw - 4, left));
     ft.style.top = top + "px"; ft.style.left = left + "px"; drawMwBar(inf, bx, ovl, ft);
+    drawSlNav(inf, bx, ovl, ft);
     if (locked) return;
     const sb = mk("pbx-sb", [["rot", FIC.rot, "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)", null], ["move", FIC.move, "اسحب لتحريك العنصر", null]]);
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
