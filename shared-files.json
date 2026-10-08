@@ -24,7 +24,8 @@
     "assets/js/ai-vision-worker.js",
     "assets/js/avatar-script.js",
     "api/index.php",
-    "p/_template/index.html"
+    "p/_template/index.html",
+    "assets/js/admin-nav.js"
   ],
   "local": {
     "الهوية والإعدادات": [

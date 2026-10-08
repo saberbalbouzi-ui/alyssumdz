@@ -497,7 +497,7 @@ const PBClone = (function () {
     } finally { f.remove(); }
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
-    const dest = (document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec";
+    const hasPg = !!(A().E && A().E.page), dest = hasPg ? ((document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec") : "new";      // بلا صفحة مفتوحة في المطوّر (فتح الناسخ من تبويب «تطبيقات») تُفتح الصفحة الجديدة تلقائياً
     if (dest === "sec") { finishFx(); await sleep(900); const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
     return openInEditor(page);
   }

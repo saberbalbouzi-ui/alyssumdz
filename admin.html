@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.44.2">
+<meta name="admin-version" content="1.44.3">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -48,6 +48,11 @@ button{cursor:pointer;border:none;font-family:inherit}
 .nav-btn:hover{background:#FAF7F0}
 .nav-btn.on{background:var(--green);color:#fff}
 .nav-btn.on .nav-txt small{color:#DCE9E3}
+/* تبويبات كبيرة لتنظيم العناوين (المظهر / ecommerce / تطبيقات) + عرضا الوكيل (ذكي/ناطق) */
+.nav-groups{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-bottom:.7rem}.nav-groups .ng{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.7rem .3rem;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--green);font-weight:900;cursor:pointer;font-family:inherit;transition:background .2s,transform .2s}.nav-groups .ng svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.nav-groups .ng b{font-size:.84rem}.nav-groups .ng:hover{transform:translateY(-2px);background:#FAF7F0}.nav-groups .ng.on{background:var(--green);color:#fff;border-color:var(--green)}
+.side-nav[data-g="look"] .nav-btn:not([data-grp="look"]),.side-nav[data-g="shop"] .nav-btn:not([data-grp="shop"]),.side-nav[data-g="apps"] .nav-btn:not([data-grp="apps"]){display:none}
+#tab-agent[data-view="voice"]>:not(#av-card){display:none!important}#tab-agent[data-view="agent"] #av-card{display:none!important}
+
 .nav-ic{font-size:1.5rem;flex:none;line-height:1}
 .nav-txt{display:flex;flex-direction:column;gap:.15rem;text-align:right;min-width:0}
 .nav-txt b{font-size:.98rem;font-weight:800;white-space:nowrap}
@@ -270,35 +275,44 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   </div>
   <div class="stat" id="stats"></div>
   <div class="admin-body">
-    <nav class="side-nav">
+    <nav class="side-nav" data-g="shop">
       <div class="side-nav-intro">
         <b>📋 دليل الاستخدام</b>
         <p>اختر قسماً من القائمة، ثم استعمل الأزرار داخل كل قسم لإضافة أو تعديل أو نشر التغييرات. زر «🏠 تعديل الصفحة الرئيسية» أعلى الصفحة يفتح محرراً مباشراً للموقع نفسه.</p>
       </div>
-      <button class="nav-btn on" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('repeat',this)"><span class="nav-ic">🔁</span><span class="nav-txt"><b>إعادة الشراء<span class="nb hidden" id="nb-repeat"></span></b><small>رسائل واتساب لزبائنك السابقين مع كود تخفيض</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('setup',this)"><span class="nav-ic">🚀</span><span class="nav-txt"><b>تجهيز المتجر<span class="nb hidden" id="nb-setup"></span></b><small>قائمة فحص جاهزية قبل التسليم أو الإطلاق</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات</b><small>صفحاتك + المحرر المرئي + أدوات ذكية (التقاط العناصر)</small></span></button>
-      <button class="nav-btn" id="nav-pbgen" onclick="Admin.tab('pbgen',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>مولّد الصفحات الذكي</b><small>توليد صفحة جديدة ← تحرير بالأدوات الذكية ← حفظ</small></span></button>
+      <div class="nav-groups" id="nav-groups">
+        <button type="button" class="ng" data-g="look" onclick="AdminNav.group('look')"><span class="ng-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/></svg></span><b>المظهر</b></button>
+        <button type="button" class="ng on" data-g="shop" onclick="AdminNav.group('shop')"><span class="ng-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 01-8 0"/></svg></span><b>ecommerce</b></button>
+        <button type="button" class="ng" data-g="apps" onclick="AdminNav.group('apps')"><span class="ng-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg></span><b>تطبيقات</b></button>
+      </div>
+      <button class="nav-btn on" data-grp="shop" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('repeat',this)"><span class="nav-ic">🔁</span><span class="nav-txt"><b>إعادة الشراء<span class="nb hidden" id="nb-repeat"></span></b><small>رسائل واتساب لزبائنك السابقين مع كود تخفيض</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('setup',this)"><span class="nav-ic">🚀</span><span class="nav-txt"><b>تجهيز المتجر<span class="nb hidden" id="nb-setup"></span></b><small>قائمة فحص جاهزية قبل التسليم أو الإطلاق</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
+      <button class="nav-btn" data-grp="apps" onclick="Admin.tab('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات</b><small>صفحاتك + المحرر المرئي + أدوات ذكية (التقاط العناصر)</small></span></button>
+      <button class="nav-btn" data-grp="apps" id="nav-pbgen" onclick="Admin.tab('pbgen',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>المطوّر الذكي</b><small>توليد صفحة جديدة ← تحرير بالأدوات الذكية ← حفظ</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-ic="imgtools" onclick="Admin.tab('imgtools',this)"><span class="nav-ic">🖼️</span><span class="nav-txt"><b>أدوات تعديل الصور</b><small>نزع الخلفية وضغط الصور وتحويلها، وبقية أدوات الصور داخل المطوّر</small></span></button>
+      <button class="nav-btn" data-grp="apps" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي<span class="nb hidden" id="nb-agent"></span></b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-ic="voice" data-view="voice" onclick="AdminNav.voice(this)"><span class="nav-ic">🎙️</span><span class="nav-txt"><b>الوكيل الناطق</b><small>الأفاتار الناطق، صوت ElevenLabs، وملفات الصوت الجاهزة</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-ic="ask" onclick="AdminNav.ask()"><span class="nav-ic">💬</span><span class="nav-txt"><b>اسألني</b><small>مساعد اللوحة: يجيب عن أي أداة أو إعداد</small></span></button>
+      <button class="nav-btn" data-grp="apps" data-ic="cloner" onclick="AdminNav.clone()"><span class="nav-ic">📋</span><span class="nav-txt"><b>ناسخ القوالب</b><small>انسخ تصميم أي موقع إلى عناصر قابلة للتعديل</small></span></button>
       <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
-      <button class="nav-btn" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('chromeh',this)"><span class="nav-ic">🔝</span><span class="nav-txt"><b>الهيدر</b><small>الشريط العلوي، القائمة، أيقونات التواصل، المشاركة، الأزرار</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('chromef',this)"><span class="nav-ic">🔚</span><span class="nav-txt"><b>الفوتر</b><small>النبذة، الروابط، التواصل، أيقونات التواصل، حقوق النشر</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('agent',this)"><span class="nav-ic">🤖</span><span class="nav-txt"><b>الوكيل الذكي<span class="nb hidden" id="nb-agent"></span></b><small>أسئلة وأجوبة جاهزة يرد بها الوكيل تلقائياً</small></span></button>
-      <button class="nav-btn" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromeh',this)"><span class="nav-ic">🔝</span><span class="nav-txt"><b>الهيدر</b><small>الشريط العلوي، القائمة، أيقونات التواصل، المشاركة، الأزرار</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromef',this)"><span class="nav-ic">🔚</span><span class="nav-txt"><b>الفوتر</b><small>النبذة، الروابط، التواصل، أيقونات التواصل، حقوق النشر</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
     </nav>
     <main class="admin-main">
 
@@ -927,6 +941,19 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card"><div style="overflow:auto"><table id="pixels-table"></table></div></div>
   </div>
 
+  <div id="tab-imgtools" class="hidden">
+    <div class="card">
+      <b style="color:var(--green)">🖼️ أدوات تعديل الصور</b>
+      <div class="hint">أدوات سريعة تعمل في متصفحك بلا اشتراك ولا مفتاح: اختر صورة ثم انزع خلفيتها بالذكاء المحلي أو اضغطها وحوّلها إلى WebP. وبقية الأدوات المتقدمة (التقاط العناصر، الماسك، البازل، الممحاة) داخل مطوّر الصفحات: حدّد صورة ثم زر «تعديل».</div>
+      <div class="action-bar" style="margin-top:.6rem"><label class="small gold" style="cursor:pointer;display:inline-flex;align-items:center;gap:.4rem">اختيار صورة<input type="file" accept="image/*" style="display:none" onchange="AdminNav.imgLoad(this)"></label>
+        <button class="small" id="it-cut" disabled onclick="AdminNav.imgCut()">نزع الخلفية</button>
+        <span style="display:inline-flex;align-items:center;gap:.4rem"><button class="small gray" id="it-webp" disabled onclick="AdminNav.imgWebp()">ضغط وتحويل WebP</button><input id="it-q" type="range" min="40" max="100" value="82" style="width:110px" title="الجودة"></span>
+        <button class="small" id="it-dl" disabled onclick="AdminNav.imgDl()">تنزيل النتيجة</button>
+        <button class="small gray" onclick="AdminNav.openBuilder()">فتح مطوّر الصفحات</button></div>
+      <div id="it-msg" class="hint" style="margin-top:.5rem"></div>
+      <div id="it-pv" style="margin-top:.6rem;min-height:140px;border-radius:14px;border:1px dashed var(--line);display:grid;place-items:center;padding:.6rem;overflow:hidden"><span class="hint" style="margin:0">لم تُختر صورة بعد</span></div>
+    </div>
+  </div>
   <div id="tab-agent" class="hidden">
     <div class="card hidden" id="aq-card">
       <b style="color:#b3261e">❓ أسئلة جديدة لم يعرف الوكيل الإجابة عنها <span id="aq-count"></span></b>
@@ -1488,10 +1515,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.44.2"></script>
-<script src="assets/js/chrome-admin.js?v=1.44.2"></script>
-<script src="assets/js/admin-assistant.js?v=1.44.2"></script>
-<script src="assets/js/admin-update.js?v=1.44.2"></script>
+<script src="assets/js/ctl-help.js?v=1.44.3"></script>
+<script src="assets/js/chrome-admin.js?v=1.44.3"></script>
+<script src="assets/js/admin-assistant.js?v=1.44.3"></script>
+<script src="assets/js/admin-nav.js?v=1.44.3"></script>
+<script src="assets/js/admin-update.js?v=1.44.3"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -2426,7 +2454,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","imgtools","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -14632,7 +14660,7 @@ const PBClone = (function () {
     } finally { f.remove(); }
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
-    const dest = (document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec";
+    const hasPg = !!(A().E && A().E.page), dest = hasPg ? ((document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec") : "new";      // بلا صفحة مفتوحة في المطوّر (فتح الناسخ من تبويب «تطبيقات») تُفتح الصفحة الجديدة تلقائياً
     if (dest === "sec") { finishFx(); await sleep(900); const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
     return openInEditor(page);
   }
@@ -15079,9 +15107,10 @@ window.AIC = (function(){ const P = {
     attributes:'<path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L2 12V2h10l8.6 8.6a2 2 0 010 2.8z"/><circle cx="7" cy="7" r="1.4"/>', categories:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', fees:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
     delivery:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>', coupons:'<path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/><path d="M13 5v2M13 17v2M13 11v2"/>', blacklist:'<circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/>',
     loyalty:'<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>', theme:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/>',
-    checkout:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2l-3 2-2-2-3 2-3-2-2 2z"/><path d="M8 8h8M8 12h8"/>', pixels:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>', agent:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01M9 18h6"/><circle cx="12" cy="3" r="1"/>', pending:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'
+    checkout:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2l-3 2-2-2-3 2-3-2-2 2z"/><path d="M8 8h8M8 12h8"/>', pixels:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>', agent:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01M9 18h6"/><circle cx="12" cy="3" r="1"/>', pending:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    imgtools:'<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', voice:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4M8 22h8"/>', ask:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M9.5 8.5a2.5 2.5 0 114 2c-.8.5-1.5 1-1.5 2M12 15.5h.01"/>', cloner:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'
   };
-  const go = () => document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""), ic = b.querySelector(".nav-ic"); if (m && P[m[1]] && ic) ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[m[1]] + '</svg>'; });
+  const go = () => document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""), k = b.dataset.ic || (m && m[1]), ic = b.querySelector(".nav-ic"); if (k && P[k] && ic) ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[k] + '</svg>'; });
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
 </script>
