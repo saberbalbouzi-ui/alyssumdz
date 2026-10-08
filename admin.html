@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.39.1">
+<meta name="admin-version" content="1.40.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.39.1"></script>
-<script src="assets/js/chrome-admin.js?v=1.39.1"></script>
-<script src="assets/js/admin-assistant.js?v=1.39.1"></script>
-<script src="assets/js/admin-update.js?v=1.39.1"></script>
+<script src="assets/js/ctl-help.js?v=1.40.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.40.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.40.0"></script>
+<script src="assets/js/admin-update.js?v=1.40.0"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7953,7 +7953,7 @@ const PB = (() => {
       ctl: [{ k: "mqt", l: "النصوص — سطر لكل عنصر (**غامق** و{ic:اسم} للأيقونات)", t: "textarea", tab: "c" }, { k: "mqs", l: "مدة الدورة بالثواني (أقل = أسرع)", t: "num", min: 4, max: 200, tab: "c" }, { k: "mqd", l: "الاتجاه", t: "select", o: [["rtl", "من اليمين لليسار"], ["ltr", "من اليسار لليمين"]], tab: "c" }, { k: "mqp", l: "يتوقف عند مرور الفأرة", t: "switch", tab: "c" },
         { k: "mqbg", l: "لون الخلفية", t: "color", tab: "s" }, { k: "mqc", l: "لون النص", t: "color", tab: "s" }, { k: "fs", l: "حجم الخط (px)", t: "num", r: 1, min: 10, max: 60, tab: "s" }, { k: "mqg", l: "المسافة بين العناصر (px)", t: "num", r: 1, min: 8, max: 200, tab: "s" }, { k: "ff", l: "العائلة", t: "select", o: F_FONT, tab: "s" }, { k: "fw", l: "الوزن", t: "select", o: F_W, tab: "s" }],
       html: (s, id, ctx) => { const L = String(s.mqt || "").split("\n").map(x => x.trim()).filter(Boolean), g = L.map(x => `<span class="pb-mq-i">${barRich(x, ctx && ctx.base, true)}</span>`).join(""); return `<div class="pb-mq${s.mqp === false ? " nop" : ""}"><div class="pb-mq-tr" style="--mqd:${num(s.mqs) || 24}s;${s.mqd === "ltr" ? "animation-direction:reverse" : ""}"><div class="pb-mq-g">${g}</div><div class="pb-mq-g" aria-hidden="true">${g}</div></div></div>`; },
-      css: (c, sel, s) => { c.d.push(`${sel} .pb-mq{height:100%;overflow:hidden;display:flex;align-items:center;background:${s.mqbg || "#173F35"};color:${s.mqc || "#F3E9D2"};font-weight:700;white-space:nowrap}${sel} .pb-mq-tr{display:flex;width:max-content;animation:pbMq var(--mqd,24s) linear infinite}${sel} .pb-mq:not(.nop):hover .pb-mq-tr{animation-play-state:paused}${sel} .pb-mq-g{display:flex;flex:none}${sel} .pb-mq-i{padding-inline:calc(var(--g,48px)/2)}${sel} .pb-mq .pb-ico,${sel} .pb-mq .pb-icimg{width:1.2em;height:1.2em;vertical-align:-.22em}.pb-edit ${sel} .pb-mq-tr{animation:none!important}.pb-edit ${sel} .pb-mq-g+.pb-mq-g{display:none}@media(prefers-reduced-motion:reduce){${sel} .pb-mq-tr{animation:none}}`); emit(c, sel + " .pb-mq", s, [["fs", px("font-size")], ["mqg", v => `--g:${U(num(v))};`]].concat(TYPO.filter(x => ["ff", "fw"].includes(x[0])))); },
+      css: (c, sel, s) => { c.d.push(`${sel} .pb-mq{height:100%;overflow:hidden;display:flex;align-items:center;background:${s.mqbg || "#173F35"};color:${s.mqc || "#F3E9D2"};font-weight:700;white-space:nowrap}${sel} .pb-mq-tr{display:flex;width:max-content;animation:pbMq var(--mqd,24s) linear infinite}${sel} .pb-mq:not(.nop):hover .pb-mq-tr{animation-play-state:paused}${sel} .pb-mq-g{display:flex;flex:none}${sel} .pb-mq-i{padding-inline:calc(var(--g,48px)/2)}${sel} .pb-mq .pb-ico,${sel} .pb-mq .pb-icimg{width:1.2em;height:1.2em;vertical-align:-.22em}@media(prefers-reduced-motion:reduce){${sel} .pb-mq-tr{animation:none}}`); emit(c, sel + " .pb-mq", s, [["fs", px("font-size")], ["mqg", v => `--g:${U(num(v))};`]].concat(TYPO.filter(x => ["ff", "fw"].includes(x[0])))); },
     },
     progress: {
       label: "شريط تقدّم", ic: "📊", def: { pl: "نسبة رضا الزبائن", pv: 95, pshow: true, pc: "#157a55", pbg: "#e9e4d6", ph: { d: 14 }, prad: { d: 999 }, color: "#1c2420", fs: { d: 16 } },
@@ -8181,7 +8181,7 @@ const PB = (() => {
     if ((page.product && !ctx.pageProduct) || page.slug) ctx = Object.assign({}, ctx, { pageProduct: ctx.pageProduct || page.product, pageSlug: ctx.pageSlug || page.slug });
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
-    const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? "" : animAttr(s)}`;
+    const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? (s.anim ? ` data-anim="${esc(s.anim)}" data-ad="${num(s.animDur) ?? .6}" data-ade="${num(s.animDelay) ?? 0}"` : "") : animAttr(s)}`;
     const common2 = (sel, s, spec) => { boxStatic(css, sel, s); emit(css, sel, s, spec); hideRules(css, sel, s, edit); customCss(css, sel, s); };
     /* عنصر واحد: عادي (داخل عمود) أو حر (موضع مطلق فوق القسم) */
     const renderW = (w, free) => {
@@ -8447,7 +8447,7 @@ const PBApp = (() => {
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
 .pb-edit .pb-sl-cap:not(.below){cursor:move}
 .pb-drop{position:absolute;background:#2d6cdf;height:4px;border-radius:2px;pointer-events:none;z-index:9999;box-shadow:0 0 0 2px rgba(45,108,223,.25)}
-.pb-edit [data-anim]{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp:not([data-live]).pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp:not([data-live]){overflow:visible!important}.pb-edit .pb-tp-r:not([data-live]) .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp:not([data-live])>.pb-tp-m{display:block}.pb-edit .pb-tp:not([data-live]) .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp:not([data-live]) .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t:not([data-live]) .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
+.pb-edit:not(.pb-anim-play) [data-anim]{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp:not([data-live]).pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp:not([data-live]){overflow:visible!important}.pb-edit .pb-tp-r:not([data-live]) .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp:not([data-live])>.pb-tp-m{display:block}.pb-edit .pb-tp:not([data-live]) .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp:not([data-live]) .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t:not([data-live]) .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
 .pb-edit .pb-cf :is(input,textarea,select,button){pointer-events:none}.pb-edit .pb-cf-b span,.pb-edit [data-edit],.pb-edit [data-icon]{pointer-events:auto}.pb-edit [data-edit]:hover{outline:1.5px dashed #0d9488;outline-offset:2px;cursor:text}.pb-edit [data-icon]:hover{outline:1.5px dashed #0d9488;outline-offset:3px;cursor:pointer}
 body{overflow-x:hidden;margin:0}`;
 
@@ -8507,7 +8507,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-rt{position:absolute;display:none;background:#222;border-radius:8px;padding:3px;gap:2px;pointer-events:auto;z-index:6}.pbx-rt button{background:none;border:0;color:#fff;font-weight:800;padding:.25rem .55rem;cursor:pointer;border-radius:5px;font-family:inherit}.pbx-rt button:hover{background:#444}.pbx-rt input[type=color]{width:26px;height:26px;border:0;padding:0;background:none;vertical-align:middle}
 .pbx-pimgb{white-space:nowrap;display:inline-flex;align-items:center;gap:.25rem;margin-inline-start:auto;border:1.5px solid #e0d9c8;background:#fff;color:#173f35;border-radius:999px;padding:.12rem .55rem;font:800 .68rem inherit;font-family:inherit;cursor:pointer;vertical-align:middle}.pbx-pimgb:hover{background:#173f35;color:#fff;border-color:#173f35}.pbx-pimgb svg{flex:none}
 #pbx-pimg.dock,#pbx-pimg.sheet{transform:none!important;max-height:none;border-radius:0;border:0;box-shadow:-2px 0 14px rgba(0,0,0,.22);bottom:auto;z-index:10002}#pbx-pimg.sheet{left:0!important;right:0;bottom:0;top:auto;width:auto!important;max-height:62vh;border-radius:16px 16px 0 0}
-#pbx-pimg{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:10002;width:min(330px,92vw);max-height:68vh;overflow:auto;background:#fff;border:1.5px solid #d9d2c2;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:.7rem;display:flex;flex-direction:column;gap:.5rem;font-family:inherit}#pbx-pimg .ph{display:flex;align-items:center;gap:.4rem;color:#173f35}#pbx-pimg .ph b{flex:1;display:flex;align-items:center;gap:.35rem}#pbx-pimg .ph small{color:#999;font-weight:600}#pbx-pimg .ph button{border:0;background:#f4efe6;border-radius:50%;width:26px;height:26px;cursor:pointer;font-weight:800}#pbx-pimg .pup{display:flex;align-items:center;justify-content:center;gap:.35rem;background:#173f35;color:#fff;border-color:#173f35;font-weight:800}#pbx-pimg .pt{margin:0;font-size:.72rem;line-height:1.8;color:#6b6556}#pbx-pimg .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;padding-bottom:3.2rem}#pbx-pimg .pi{position:relative;aspect-ratio:1;border:2px solid transparent;border-radius:10px;cursor:grab;background:#f4efe6;outline:0}#pbx-pimg .ptool{display:flex;gap:.35rem;flex-wrap:wrap}#pbx-pimg .ptool button{border:1.5px solid #d9d2c2;background:#fff;color:#173f35;border-radius:9px;padding:.25rem .6rem;font:800 .72rem inherit;font-family:inherit;cursor:pointer}#pbx-pimg .ptool button.on{background:#173f35;color:#fff;border-color:#173f35}#pbx-pimg .ptool button.dng{border-color:#dc2626;color:#b91c1c}#pbx-pimg .ptool button:disabled{opacity:.4;cursor:not-allowed}#pbx-pimg .pi .pck{position:absolute;top:4px;inset-inline-start:4px;width:22px;height:22px;border-radius:7px;border:2px solid #fff;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.8rem;z-index:2;cursor:pointer}#pbx-pimg .pi.psel{border-color:#0d9488;box-shadow:0 0 0 2px rgba(13,148,136,.35)}#pbx-pimg .pi.psel .pck{background:#0d9488}#pbx-pimg .pi:hover,#pbx-pimg .pi:focus{border-color:#c8a24b}#pbx-pimg .pi img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;border-radius:8px}#pbx-pimg .pi .pus{position:absolute;inset-inline:3px;bottom:3px;border:0;border-radius:6px;background:rgba(23,63,53,.92);color:#fff;font:800 .62rem inherit;font-family:inherit;padding:.15rem;cursor:pointer;opacity:0;transition:.15s}#pbx-pimg .pi:hover .pus{opacity:1}#pbx-pimg .pi .pdt{position:absolute;top:3px;inset-inline-end:3px;width:24px;height:24px;border:0;border-radius:7px;background:rgba(255,255,255,.94);color:#173f35;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);opacity:0;transition:.15s}#pbx-pimg .pi:hover .pdt,#pbx-pimg .pi:focus .pdt,#pbx-pimg .pi .pdt:focus{opacity:1}#pbx-pimg .pmm{position:absolute;z-index:4;top:30px;left:50%;transform:translateX(-50%);width:124px;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.06);padding:.25rem;display:flex;flex-direction:column;gap:.1rem;cursor:default}#pbx-pimg .pmm button{display:flex;align-items:center;gap:.4rem;border:0;background:transparent;border-radius:7px;padding:.4rem .5rem;font:700 .74rem inherit;font-family:inherit;color:#173f35;cursor:pointer;text-align:start}#pbx-pimg .pmm button:hover{background:#f4efe6}#pbx-pimg .pmm .dng{color:#b83232}#pbx-pimg .pmm .dng:hover{background:#fee2e2}#pbx-pimg .pe{grid-column:1/-1;color:#888;font-size:.78rem;text-align:center}
+#pbx-pimg{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:10002;width:min(330px,92vw);max-height:68vh;overflow:auto;background:#fff;border:1.5px solid #d9d2c2;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:.7rem;display:flex;flex-direction:column;gap:.5rem;font-family:inherit}#pbx-pimg .ph{display:flex;align-items:center;gap:.4rem;color:#173f35}#pbx-pimg .ph b{flex:1;display:flex;align-items:center;gap:.35rem}#pbx-pimg .ph small{color:#999;font-weight:600}#pbx-pimg .ph button{border:0;background:#f4efe6;border-radius:50%;width:26px;height:26px;cursor:pointer;font-weight:800}#pbx-pimg .pup{display:flex;align-items:center;justify-content:center;gap:.35rem;background:#173f35;color:#fff;border-color:#173f35;font-weight:800}#pbx-pimg .pt{margin:0;font-size:.72rem;line-height:1.8;color:#6b6556}#pbx-pimg .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;padding-bottom:3.2rem}#pbx-pimg .pi{position:relative;aspect-ratio:1;border:2px solid transparent;border-radius:10px;cursor:grab;background:#f4efe6;outline:0}#pbx-pimg .pcl{margin:.5rem 0 .2rem;width:100%;color:#b83232}.ptool{display:flex;gap:.35rem;flex-wrap:wrap}#pbx-pimg .ptool button{border:1.5px solid #d9d2c2;background:#fff;color:#173f35;border-radius:9px;padding:.25rem .6rem;font:800 .72rem inherit;font-family:inherit;cursor:pointer}#pbx-pimg .ptool button.on{background:#173f35;color:#fff;border-color:#173f35}#pbx-pimg .ptool button.dng{border-color:#dc2626;color:#b91c1c}#pbx-pimg .ptool button:disabled{opacity:.4;cursor:not-allowed}#pbx-pimg .pi .pck{position:absolute;top:4px;inset-inline-start:4px;width:22px;height:22px;border-radius:7px;border:2px solid #fff;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.8rem;z-index:2;cursor:pointer}#pbx-pimg .pi.psel{border-color:#0d9488;box-shadow:0 0 0 2px rgba(13,148,136,.35)}#pbx-pimg .pi.psel .pck{background:#0d9488}#pbx-pimg .pi:hover,#pbx-pimg .pi:focus{border-color:#c8a24b}#pbx-pimg .pi img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;border-radius:8px}#pbx-pimg .pi .pus{position:absolute;inset-inline:3px;bottom:3px;border:0;border-radius:6px;background:rgba(23,63,53,.92);color:#fff;font:800 .62rem inherit;font-family:inherit;padding:.15rem;cursor:pointer;opacity:0;transition:.15s}#pbx-pimg .pi:hover .pus{opacity:1}#pbx-pimg .pi .pdt{position:absolute;top:3px;inset-inline-end:3px;width:24px;height:24px;border:0;border-radius:7px;background:rgba(255,255,255,.94);color:#173f35;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);opacity:0;transition:.15s}#pbx-pimg .pi:hover .pdt,#pbx-pimg .pi:focus .pdt,#pbx-pimg .pi .pdt:focus{opacity:1}#pbx-pimg .pmm{position:absolute;z-index:4;top:30px;left:50%;transform:translateX(-50%);width:124px;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.06);padding:.25rem;display:flex;flex-direction:column;gap:.1rem;cursor:default}#pbx-pimg .pmm button{display:flex;align-items:center;gap:.4rem;border:0;background:transparent;border-radius:7px;padding:.4rem .5rem;font:700 .74rem inherit;font-family:inherit;color:#173f35;cursor:pointer;text-align:start}#pbx-pimg .pmm button:hover{background:#f4efe6}#pbx-pimg .pmm .dng{color:#b83232}#pbx-pimg .pmm .dng:hover{background:#fee2e2}#pbx-pimg .pe{grid-column:1/-1;color:#888;font-size:.78rem;text-align:center}
 .pbx-ep{padding:2.6rem .8rem .8rem!important;display:flex;flex-direction:column;gap:.5rem;overflow:hidden!important}.pbx-ep .ep-h{display:flex;align-items:center;font-weight:900;color:#173f35;font-size:.92rem}.pbx-ep .ep-h b{display:flex;align-items:center;gap:.4rem}.pbx-ep .ep-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem}.pbx-ep .ep-tabs button{display:flex;flex-direction:column;align-items:center;gap:.2rem;border:1.5px solid #e0d9c8;background:#fff;border-radius:10px;padding:.45rem .1rem;cursor:pointer;font-family:inherit;font-weight:800;font-size:.66rem;color:#173f35;line-height:1.3;text-align:center}.pbx-ep .ep-tabs button:hover{border-color:#8b3dff;background:#faf6ff}.pbx-ep .ep-tabs button.on{background:#e8dcff;border-color:#8b3dff;color:#4b1fa8}.pbx-ep .ep-b{flex:1;overflow:auto;padding-top:.3rem}.pbx-ep .ep-n{margin:0;color:#6b6556;font-size:.8rem;line-height:1.8}
 .ep-dd{position:relative}.ep-ddb{display:flex;align-items:center;gap:.5rem;width:100%;border:1.5px solid #d9d2c2;background:#fff;border-radius:10px;padding:.3rem .5rem;cursor:pointer;font-family:inherit;font-weight:800;font-size:.78rem;color:#173f35;text-align:start}.ep-ddb b{flex:1;font-weight:800}.ep-ddb .pbx-thumb{width:30px;height:30px;flex:none}.ep-ddb:hover,.ep-ddb.open{border-color:#7c3aed}.ep-ddb .ep-chev{flex:none;transition:transform .15s}.ep-ddb.open .ep-chev{transform:rotate(180deg)}
 .ep-ddl{margin-top:.3rem;border:1.5px solid #e6e0d0;border-radius:10px;background:#fff;padding:.35rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;max-height:250px;overflow:auto}.ep-ddl .mk-gh{grid-column:1/-1;font-weight:800;font-size:.68rem;color:#8a8268;margin:.3rem .1rem .05rem}.pbx-mk .ep-ddl .mk-grid{display:contents!important}.pbx-mk .ep-ddl{padding:.35rem!important;border-radius:10px}.ep-ddl .ep-it span{font-size:.58rem}.ep-it{display:flex;flex-direction:column;align-items:center;gap:.15rem;border:1.5px solid transparent;background:#faf6ec;border-radius:8px;padding:.25rem .1rem;cursor:pointer;font-family:inherit;font-size:.6rem;font-weight:700;color:#173f35;line-height:1.2;text-align:center}.ep-it:hover{border-color:#7c3aed}.ep-it.on{border-color:#7c3aed;background:#ede9fe;color:#5b21b6}.ep-it .pbx-thumb{width:34px;height:34px}.ep-it span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -8651,6 +8651,7 @@ body{overflow-x:hidden;margin:0}`;
   <button data-dv="d" onclick="PBApp.setDev('d')" title="المكتب">${ico('dev_d',16)} المكتب</button>
   <button data-dv="t" onclick="PBApp.setDev('t')" title="التابلت">${ico('dev_t',16)} تابلت</button>
   <button data-dv="m" onclick="PBApp.setDev('m')" title="الهاتف">${ico('dev_m',16)} هاتف</button>
+  <button id="pbx-anim" onclick="PBApp.playAnims(PBApp.animTarget())" title="تشغيل حركات الظهور: يعيد تشغيل حركة ظهور العنصر المحدّد (أو كل عناصر الصفحة إن لم يُحدَّد شيء) لتراها كما ستظهر للزائر.">▶ حركات الظهور</button>
   <button id="pbx-fx" onclick="PBApp.toggleFx()" title="تأثيرات حيّة: تعمل السلايدرات والتبويبات والأكورديون والقوائم المنسدلة وتحويم البطاقات داخل المحرّر نفسه (الثبات عند التمرير وParallax تظهر في المعاينة والصفحة المنشورة).">تأثيرات حيّة</button>
   <button id="pbx-live" onclick="PBApp.toggleLive()" title="تعديل مباشر: التعديلات تُطبَّق على الصفحة فوراً بلا شريط تأكيد. عطّله لتظهر أزرار تأكيد/إلغاء لكل عنصر.">✏️ تعديل مباشر</button>
   <button id="pbx-snap" onclick="PBApp.toggleSnap()" title="الالتصاق بحواف العناصر الأخرى والمنتصف (اضغط Alt أثناء السحب لتعطيله مؤقتاً)">${ico('snap',16)} التصاق</button>
@@ -8923,6 +8924,17 @@ body{overflow-x:hidden;margin:0}`;
   /* التأثيرات الحيّة داخل المحرّر: نشغّل سكربت FX_JS في إطار الصفحة بعد كل رسم (الحالة تُحفظ بين الرسمين: الشريحة الحالية وفتح الأكورديون) */
   function runFx() {
     try { const w = fdoc && fdoc.defaultView; if (!w) return; if (!E.fx) { (w.__pbfxC || []).forEach(f => { try { f(); } catch (e) { } }); if (w.__pbfxC) w.__pbfxC.length = 0; fdoc.body.classList.remove("pb-fx"); return; } w.__pbEd = true; fdoc.body.classList.add("pb-fx"); w.eval(PB.FX_JS); } catch (e) { console.warn("fx", e); }
+  }
+  /* إعادة تشغيل حركات الظهور داخل المحرّر (تبقى ثابتة أثناء التحرير؛ هذا الزر يعرضها مرة ثم يعيدها كما كانت) */
+  function animTarget() { return E.sel && fdoc && fdoc.querySelector('[data-pb="' + E.sel + '"] [data-anim],[data-pb="' + E.sel + '"][data-anim]') ? E.sel : null; }
+  function playAnims(id) {
+    if (!fdoc || !fdoc.body) return; const root = id ? fdoc.querySelector('[data-pb="' + id + '"]') : fdoc;
+    const els = root ? [...root.querySelectorAll("[data-anim]")].concat(root.matches && root.matches("[data-anim]") ? [root] : []) : [];
+    if (!els.length) { toast("لا توجد حركات ظهور" + (id ? " في هذا العنصر" : " في الصفحة") + " — اختر «حركة الظهور» من تبويب الحركة في إعدادات العنصر"); return; }
+    const b = fdoc.body; clearTimeout(E.animT); els.forEach(e => { e.style.setProperty("--ad", (e.dataset.ad || .6) + "s"); e.style.setProperty("--ade", (e.dataset.ade || 0) + "s"); e.classList.remove("pb-in-view"); }); els.forEach(e => { e.style.transition = "none"; }); b.classList.add("pb-anim-play"); void b.offsetWidth; els.forEach(e => { e.style.transition = ""; });
+    let mx = 0; els.forEach(e => { mx = Math.max(mx, (parseFloat(e.dataset.ad) || .6) + (parseFloat(e.dataset.ade) || 0)); });
+    requestAnimationFrame(() => requestAnimationFrame(() => els.forEach(e => e.classList.add("pb-in-view"))));
+    E.animT = setTimeout(() => { b.classList.remove("pb-anim-play"); els.forEach(e => e.classList.remove("pb-in-view")); }, mx * 1000 + 600);
   }
   function toggleFx() { E.fx = !E.fx; try { localStorage.setItem("pbx_fx", E.fx ? "1" : "0"); } catch (e) { } updateTop(); renderCanvas(); toast(E.fx ? "تأثيرات حيّة مفعّلة: جرّب الأسهم والنقاط والتحويم داخل المحرّر" : "التأثيرات الحيّة معطّلة"); }
   function fxReveal(id) { try { const w = fdoc && fdoc.defaultView, el = root && root.querySelector('[data-pb="' + id + '"]'); if (w && w.__pbFx && el && E.fx) w.__pbFx.reveal(el); } catch (e) { } }
@@ -10183,7 +10195,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   function drawPimg() {
     const m = $("pbx-pimg"); if (!m) return; pimgPlace(m); const L = pageImages(), inf = E.sel ? selInfo() : null, k = imgKeyOf(inf), canUse = !!(inf && k && !multiOn()), pm = E.pmenu, sel = E.pSel = E.pSel || new Set(); [...sel].forEach(p => { if (!L.includes(p)) sel.delete(p); }); const allSel = L.length > 0 && L.every(p => sel.has(p));
-    m.innerHTML = `<div class="ph"><b>${ico("image", 16)} تحميل صورة <small>(${L.length})</small></b><button type="button" data-pm="x" title="إغلاق">✕</button></div><button type="button" class="pbx-small pup" data-pm="up">${ico("upload", 14)} رفع صورة جديدة إلى القائمة</button><div class="ptool"><button type="button" class="${E.pSelOn ? "on" : ""}" data-pm="selmode" title="تحديد عدة صور لحذفها معاً">تحديد متعدد</button>${E.pSelOn ? `<button type="button" data-pm="selall">${allSel ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button type="button" class="dng" data-pm="delsel"${sel.size ? "" : " disabled"}>حذف المحدد (${sel.size})</button>` : ""}</div><p class="pt">انقر صورة <b>مرة واحدة</b> لإضافتها إلى الصفحة، أو <b>اسحبها</b> إلى صورة لاستبدالها أو إلى مكان فارغ، و<b>اسحب صوراً من حاسوبك</b> وأفلتها هنا لرفعها. للحذف: القائمة ${ico("dots", 12)} فوق الصورة، أو مرّر الفأرة عليها واضغط <b>Delete</b>.</p><div class="pg">${L.map(pth => `<div class="pi${sel.has(pth) ? " psel" : ""}" tabindex="0" draggable="true" data-pimg-i="${esc(pth)}" title="${E.pSelOn ? "انقر لتحديدها" : "انقر لإضافتها إلى الصفحة أو اسحبها"}">${E.pSelOn ? `<span class="pck" data-pm="tick" data-p="${esc(pth)}">${sel.has(pth) ? "✓" : ""}</span>` : ""}<img src="${esc(localize(pth))}" loading="lazy" draggable="false" alt=""><button type="button" class="pdt" data-pm="menu" data-p="${esc(pth)}" title="خيارات الصورة">${ico("dots", 14)}</button>${canUse ? `<button type="button" class="pus" data-pm="use" data-p="${esc(pth)}" title="استعمالها في العنصر المحدّد">استبدال</button>` : ""}${pm === pth ? `<div class="pmm"><button type="button" data-pm="dl" data-p="${esc(pth)}">${ico("download", 14)} تحميل الصورة</button><button type="button" class="dng" data-pm="del" data-p="${esc(pth)}">${ico("trash", 14)} حذف</button></div>` : ""}</div>`).join("") || '<p class="pe">لا توجد صور في هذه الصفحة بعد — ارفع صورة بالزر أعلاه.</p>'}</div>`;
+    m.innerHTML = `<div class="ph"><b>${ico("image", 16)} تحميل صورة <small>(${L.length})</small></b><button type="button" data-pm="x" title="إغلاق">✕</button></div><button type="button" class="pbx-small pup" data-pm="up">${ico("upload", 14)} رفع صورة جديدة إلى القائمة</button><div class="ptool"><button type="button" class="${E.pSelOn ? "on" : ""}" data-pm="selmode" title="تحديد عدة صور لحذفها معاً">تحديد متعدد</button>${E.pSelOn ? `<button type="button" data-pm="selall">${allSel ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button type="button" class="dng" data-pm="delsel"${sel.size ? "" : " disabled"}>حذف المحدد (${sel.size})</button>` : ""}</div><p class="pt">انقر صورة <b>مرة واحدة</b> لإضافتها إلى الصفحة، أو <b>اسحبها</b> إلى صورة لاستبدالها أو إلى مكان فارغ، و<b>اسحب صوراً من حاسوبك</b> وأفلتها هنا لرفعها. للحذف: القائمة ${ico("dots", 12)} فوق الصورة، أو مرّر الفأرة عليها واضغط <b>Delete</b>.</p><div class="pg">${L.map(pth => `<div class="pi${sel.has(pth) ? " psel" : ""}" tabindex="0" draggable="true" data-pimg-i="${esc(pth)}" title="${E.pSelOn ? "انقر لتحديدها" : "انقر لإضافتها إلى الصفحة أو اسحبها"}">${E.pSelOn ? `<span class="pck" data-pm="tick" data-p="${esc(pth)}">${sel.has(pth) ? "✓" : ""}</span>` : ""}<img src="${esc(localize(pth))}" loading="lazy" draggable="false" alt=""><button type="button" class="pdt" data-pm="menu" data-p="${esc(pth)}" title="خيارات الصورة">${ico("dots", 14)}</button>${canUse ? `<button type="button" class="pus" data-pm="use" data-p="${esc(pth)}" title="استعمالها في العنصر المحدّد">استبدال</button>` : ""}${pm === pth ? `<div class="pmm"><button type="button" data-pm="dl" data-p="${esc(pth)}">${ico("download", 14)} تحميل الصورة</button><button type="button" class="dng" data-pm="del" data-p="${esc(pth)}">${ico("trash", 14)} حذف</button></div>` : ""}</div>`).join("") || '<p class="pe">لا توجد صور في هذه الصفحة بعد — ارفع صورة بالزر أعلاه.</p>'}</div><button type="button" class="pbx-small pcl" data-pm="clean" title="يفحص الموقع كله ويعرض الصور المرفوعة التي لا تستعملها أي صفحة لتحذفها نهائياً">تنظيف الصور غير المستعملة في الموقع</button>`;
   }
   function pimgPlace(m) {      // النافذة تفتح مكان شريط الإعدادات (وفي الهاتف لوحة سفلية)
     const a = [$("pbx-insp"), $("pbx-lside")].find(x => x && x.offsetParent), ar = a ? a.getBoundingClientRect() : null, dock = !!(ar && !isMob()); m.classList.toggle("dock", dock); m.classList.toggle("sheet", !dock);
@@ -10197,6 +10209,7 @@ body{overflow-x:hidden;margin:0}`;
       const b = e.target.closest("[data-pm]"), it = e.target.closest("[data-pimg-i]");
       if (b) { e.stopPropagation(); const a = b.dataset.pm, p = b.dataset.p;
         if (a === "x") { E.pmenu = null; m.remove(); return; }
+        if (a === "clean") { if (typeof PBClean !== "undefined") PBClean.open(); return; }
         if (a === "menu") { E.pmenu = E.pmenu === p ? null : p; drawPimg(); return; }
         if (a === "dl") { E.pmenu = null; drawPimg(); dlPageImage(p); return; }
         if (a === "del") { delPageImage(p); return; }
@@ -10705,7 +10718,7 @@ body{overflow-x:hidden;margin:0}`;
       if (pr.t === "code") return `<label class="fxf">${X(pr.l)}<textarea ${a} rows="${Math.min(10, Math.max(3, String(pr.v || "").split("\n").length + 1))}" spellcheck="false" dir="ltr">${X(pr.v)}</textarea></label>`;
       return `<label class="fxf">${X(pr.l)}<input type="text" ${a} value="${X(pr.v)}" dir="ltr"></label>`;
     };
-    const native = inf.set.anim ? `<div class="pbx-fxi"><div class="fxh"><b>حركة الظهور بالتمرير</b></div><label class="fxf">النوع<select data-fxn="anim">${FX_ANIM.map(([v, n]) => `<option value="${v}"${inf.set.anim === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="fxf">المدة (ثانية)<input type="number" step="0.1" data-fxn="animDur" value="${X(inf.set.animDur != null ? inf.set.animDur : 0.6)}"></label><label class="fxf">التأخير (ثانية)<input type="number" step="0.1" data-fxn="animDelay" value="${X(inf.set.animDelay != null ? inf.set.animDelay : 0)}"></label></div>` : "";
+    const native = inf.set.anim ? `<div class="pbx-fxi"><div class="fxh"><b>حركة الظهور بالتمرير</b><button type="button" class="pbx-small" data-fxplay="1" title="شغّل الحركة هنا لتراها كما ستظهر للزائر">▶ تشغيل</button></div><label class="fxf">النوع<select data-fxn="anim">${FX_ANIM.map(([v, n]) => `<option value="${v}"${inf.set.anim === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="fxf">المدة (ثانية)<input type="number" step="0.1" data-fxn="animDur" value="${X(inf.set.animDur != null ? inf.set.animDur : 0.6)}"></label><label class="fxf">التأخير (ثانية)<input type="number" step="0.1" data-fxn="animDelay" value="${X(inf.set.animDelay != null ? inf.set.animDelay : 0)}"></label></div>` : "";
     return `<p class="pbx-fxn">نُسخت هذه التأثيرات مع العنصر من الموقع الأصلي. عدّل إعداداتها أو عطّلها (إيقاف) أو احذفها. تظهر نتيجتها على الصفحة مباشرة (التحويم والحركات تعمل داخل المحرّر وفي المعاينة).</p>${native}` + its.map((it, i) => `<div class="pbx-fxi${it.on === false ? " off" : ""}"><div class="fxh"><b>${X(it.n || "تأثير")}</b><label><input type="checkbox" data-fxon="${i}" ${it.on === false ? "" : "checked"}> مفعّل</label><button type="button" data-fxdel="${i}" title="حذف هذا التأثير">حذف</button></div>${Object.keys(it.p || {}).map(k => fld(i, k, it.p[k])).join("")}</div>`).join("");
   }
   function renderInspector() {
@@ -10817,7 +10830,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   function onInspInput(e) {
     const t = e.target, inf = selInfo(); if (!inf) return;
     if (t.dataset.fxk !== undefined) { const it = (inf.set.fxs || [])[+t.dataset.fxi], pr = it && it.p && it.p[t.dataset.fxk]; if (pr) { pr.v = pr.t === "num" ? (t.value === "" ? 0 : Number(t.value)) : t.value; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); } return; }
-    if (t.dataset.fxn) { const k = t.dataset.fxn; if (k === "anim") { if (t.value) inf.set.anim = t.value; else { delete inf.set.anim; delete inf.set.animDur; delete inf.set.animDelay; } } else inf.set[k] = t.value === "" ? 0 : Number(t.value); schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); if (k === "anim" && !t.value) renderInspector(); return; }
+    if (t.dataset.fxn) { const k = t.dataset.fxn; if (k === "anim") { if (t.value) inf.set.anim = t.value; else { delete inf.set.anim; delete inf.set.animDur; delete inf.set.animDelay; } } else inf.set[k] = t.value === "" ? 0 : Number(t.value); schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); if (k === "anim" && !t.value) renderInspector(); else { clearTimeout(E.animP); E.animP = setTimeout(() => playAnims(E.sel), 250); } return; }
     if (t.dataset.bc !== undefined) { const a = Array.isArray(inf.set.mcols) ? inf.set.mcols : (inf.set.mcols = []); a[Number(t.dataset.bc)] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qrot) { const v = Number(t.value); setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); const b = t.parentNode.querySelector("b"); if (b) b.textContent = v + "°"; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
@@ -10855,6 +10868,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       if (!was) { const ip = $("pbx-insp"), b = ip.querySelector(`[data-ac="${k}"]`), ih = ip.querySelector(".pbx-ih"); if (b) ip.scrollTop += b.getBoundingClientRect().top - ip.getBoundingClientRect().top - (ih ? ih.offsetHeight : 0) - 4 + (-0.7 * 16 * 0); }
       return; }
     if (!inf) return;
+    if (t.dataset.fxplay) { playAnims(E.sel); return; }
     if (t.dataset.fxdel !== undefined) { const a = inf.set.fxs || []; a.splice(+t.dataset.fxdel, 1); if (!a.length) { delete inf.set.fxs; if (!inf.set.anim) E.tab = "c"; } E.nextLabel = "حذف تأثير منسوخ"; afterEdit(); return; }
     if (t.dataset.vis) { inf.set[t.dataset.vis] = !inf.set[t.dataset.vis]; if (!inf.set[t.dataset.vis]) delete inf.set[t.dataset.vis]; E.nextLabel = "تغيير الظهور"; afterEdit(); return; }
     if (t.dataset.q) { onQuick(t.dataset.q); return; }
@@ -10968,7 +10982,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { insertSections, rename, toggleLive, toggleFx, renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
@@ -14059,6 +14073,12 @@ const PBClone = (function () {
     cx0.clearRect(0, 0, 1, 1); cx0.fillStyle = "#010203"; cx0.fillStyle = c; if (cx0.fillStyle === "#010203" && !/^#010203$/i.test(c)) { cc.set(c, null); return null; }      // لون غير مفهوم: لا يُعدّ أسود
     cx0.fillRect(0, 0, 1, 1); const d = cx0.getImageData(0, 0, 1, 1).data, o = d[3] ? { r: d[0], g: d[1], b: d[2], a: d[3] / 255 } : { r: 0, g: 0, b: 0, a: 0 }; cc.set(c, o); return o;
   }
+  /* لون النص الفعلي: النص المقصوص بالخلفية (تدرّج) يأخذ لون منتصف التدرّج، والتعبئة الشفافة بلا تدرّج تعود لـcolor */
+  function textFill(cs) {
+    const f = cs.webkitTextFillColor, bc = cs.webkitBackgroundClip || cs.backgroundClip || "";
+    if (/text/.test(bc) && cs.backgroundImage && cs.backgroundImage !== "none") { const m = cs.backgroundImage.match(/rgba?\([^)]*\)|#[0-9a-f]{3,8}/gi); if (m) { const cc = col(m[Math.floor((m.length - 1) / 2)]); if (cc && cc.a > .3) return cc; } }
+    const fc = f && f !== "currentcolor" ? col(f) : null; if (fc && fc.a >= .35) return fc; return col(cs.color);
+  }
   const hex = c => "#" + [c.r, c.g, c.b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
   const px = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
   const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
@@ -14169,7 +14189,7 @@ const PBClone = (function () {
       return w(el, cs).replace(/^(\s|<br>)+|(\s|<br>)+$/g, "").trim();
     }
     function textProps(cs, lineH) {
-      const fs = px(cs.fontSize) || 16, lh = cs.lineHeight === "normal" ? 1.3 : lineH / fs, c = col(cs.color), p = { fs: { d: Math.round(fs * 10) / 10 }, fw: String(cs.fontWeight), lh: { d: r2(Math.max(.8, Math.min(3, lh))) }, ta: { d: /^(left|right|center|justify)$/.test(cs.textAlign) ? cs.textAlign : cs.direction === "rtl" ? "right" : "left" } };
+      const fs = px(cs.fontSize) || 16, lh = cs.lineHeight === "normal" ? 1.3 : lineH / fs, c = textFill(cs), p = { fs: { d: Math.round(fs * 10) / 10 }, fw: String(cs.fontWeight), lh: { d: r2(Math.max(.8, Math.min(3, lh))) }, ta: { d: /^(left|right|center|justify)$/.test(cs.textAlign) ? cs.textAlign : cs.direction === "rtl" ? "right" : "left" } };
       if (c) p.color = hex(c); if (c && c.a < 1) p.op = r2(Math.max(.05, c.a)); const ff = fontOf(cs); if (ff) p.ff = ff; const ls = px(cs.letterSpacing); if (ls) p.ls = { d: r1(ls) }; if (cs.textTransform && cs.textTransform !== "none") p.tt = cs.textTransform; if (cs.fontStyle === "italic") p.fst = "italic"; if (/underline/.test(cs.textDecorationLine)) p.td = "underline"; else if (/line-through/.test(cs.textDecorationLine)) p.td = "line-through"; if (cs.direction === "rtl") p.tdir = "rtl";
       return p;
     }
@@ -14258,11 +14278,12 @@ const PBClone = (function () {
         for (const root of roots) {
           if (claimed.some(c => c === root || c.contains(root))) continue; let all = [...root.querySelectorAll(def.slide)].filter(x => x.closest(def.root) === root); if (all.length < 2) continue;
           const rr = rectOf(root); if (rr.w < 50 || rr.h < 30 || rr.y >= limit) continue; const sr0 = all.map(rectOf);
-          const stacked = sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));
+          const stacked = !!def.bs || sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));      // بوتستراب: شرائح متراكمة دائماً (اللقطة قد تكون في منتصف الانتقال فتظهر متجاورة)
           let act = 0; if (stacked) { const k = all.findIndex(x => /(^|\s|-)active(\s|$|-)/.test(x.className)); act = k < 0 ? 0 : k; } else { const k = sr0.findIndex(r => inBox(r, rr)); act = k < 0 ? 0 : k; }
           const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf); const pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length), pages = Math.ceil(slides.length / pv); if (pages < 2) continue;
           const id = "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
           try { const a = root.getAttribute("data-bs-interval") || root.getAttribute("data-interval"); if (a) ms = +a || ms; const sk = root.getAttribute("data-slick"); if (sk) { const o = JSON.parse(sk); ms = o.autoplay ? (o.autoplaySpeed || 3000) : 0; } const sp = root.getAttribute("data-splide"); if (sp) { const o = JSON.parse(sp); ms = o.autoplay ? (o.interval || 5000) : 0; } const sa = slides[0].getAttribute("data-swiper-autoplay"); if (sa) ms = +sa || ms; } catch (e) { }
+          if (def.bs) { slides[0].style.setProperty("transform", "none", "important"); slides[0].style.setProperty("transition", "none", "important"); }
           slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
           slides.slice(pv).forEach(x => slSkip.add(x));
           const sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot), pr = sel(def.prev), nx = sel(def.next), actP = Math.floor(act / pv);
@@ -14270,6 +14291,34 @@ const PBClone = (function () {
           pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
           const sl = { id, def, root, slides, pv, pages, stacked, track: slides[0].parentElement, ms, dots, pr, nx, act }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
         }
+      }
+      try { findGenericSliders(claimed); } catch (e) { console.warn("generic sliders", e); }
+    }
+    /* سلايدر بلا مكتبة معروفة (قوالب Wix/Shopify/كود مخصص): حاوية تقصّ/تمرّر فيها صف شرائح متساوية الحجم أعرض من الحاوية؛ الأسهم والنقاط تُستنتج من الأصناف/العناوين */
+    function findGenericSliders(claimed) {
+      let cands = []; try { cands = [...doc.querySelectorAll("div,section,ul,ol,article")]; } catch (e) { return; }
+      const small = r => r.w >= 10 && r.w <= 140 && r.h >= 10 && r.h <= 140;
+      for (const root of cands) {
+        if (sliders.length >= 12) break;
+        if (claimed.some(c => c === root || c.contains(root) || root.contains(c)) || [...mq.keys()].some(k => k === root || k.contains(root) || root.contains(k))) continue;
+        const rr = rectOf(root); if (rr.w < 200 || rr.h < 60 || rr.y >= limit) continue; if (!/(hidden|auto|scroll|clip)/.test(win.getComputedStyle(root).overflowX)) continue;
+        let track = null, slides = null, t = root;
+        for (let d = 0; d < 3 && t; d++) { const ch = [...t.children].filter(x => { const r = rectOf(x); return r.w > 20 && r.h > 20 && win.getComputedStyle(x).position !== "absolute"; }); if (ch.length >= 2) { track = t; slides = ch; break; } if (ch.length === 1) t = ch[0]; else break; }
+        if (!track || slides.length > 30) continue;
+        const sr = slides.map(rectOf), w0 = sr[0]; if (sr.some(r => Math.abs(r.y - w0.y) > w0.h * .3 || r.w / w0.w > 1.25 || r.w / w0.w < .8 || r.h / w0.h > 1.3 || r.h / w0.h < .75)) continue;
+        if (!sr.some(r => r.x + r.w > rr.x + rr.w + 6 || r.x < rr.x - 6)) continue; if (w0.w < rr.w * .2) continue;
+        const pv = Math.max(1, sr.filter(r => inBox(r, rr)).length), act0 = sr.findIndex(r => inBox(r, rr)), act = act0 < 0 ? 0 : act0, ordered = slides.slice(act).concat(slides.slice(0, act));
+        const pages = Math.ceil(ordered.length / pv); if (pages < 2) continue;
+        const A = (() => { let a = root.parentElement; for (let i = 0; i < 2 && a && a !== doc.body && rectOf(a).h < rr.h * 1.6; i++) a = a.parentElement || a; return a || root; })(), inSl = x => slides.some(s => s.contains(x));
+        const lab = x => (typeof x.className === "string" ? x.className : "") + " " + (x.getAttribute("aria-label") || "") + " " + (x.getAttribute("title") || "") + " " + (x.id || "");
+        const pick = re => { let r = []; try { r = [...A.querySelectorAll("button,a,div,span,i,svg")].filter(x => !inSl(x) && re.test(lab(x)) && small(rectOf(x)) && !x.querySelector("button,a") && rectOf(x).y < limit); } catch (e) { } return r.filter(x => !r.some(y => y !== x && y.contains(x))).slice(0, 2); };
+        const pr = pick(/(^|[\s_-])(prev|previous|back|left|arrow-left)([\s_-]|$)/i), nx = pick(/(^|[\s_-])(next|forward|right|arrow-right)([\s_-]|$)/i).filter(x => !pr.includes(x));
+        let dots = []; try { for (const c of A.querySelectorAll("div,ul,ol,nav,span")) { if (inSl(c) || !/dot|bullet|indicator|pagina|pager|nav/i.test(lab(c))) continue; const k = [...c.children].filter(x => small(rectOf(x))); if (k.length >= 2 && (k.length === pages || k.length === slides.length)) { dots = k; break; } } } catch (e) { }
+        const id = "s" + (++slN), ms = 5000;
+        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
+        const actP = Math.floor(act / pv); dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
+        pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
+        const sl = { id, def: {}, root, slides: ordered, pv, pages, stacked: false, track, ms, dots, pr, nx, act, generic: 1 }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
       }
     }
 
@@ -14390,7 +14439,11 @@ const PBClone = (function () {
     }
     function addMarquee(C, T, dur, dir) {
       const cr = rectOf(C); if (cr.w < 200 || cr.h < 14 || cr.y >= limit || mq.has(C) || [...mq.keys()].some(k => k.contains(C) || C.contains(k))) return;
-      const it = mqItems(T); if (!it) return; const el0 = it.els[0], cs = win.getComputedStyle(el0), c = col(cs.color) || { r: 255, g: 255, b: 255, a: 1 }, bg = bgOf(C) || { r: 23, g: 63, b: 53, a: 1 };
+      const it = mqItems(T); if (!it) return; const el0 = it.els[0], bg = bgOf(C) || { r: 23, g: 63, b: 53, a: 1 };
+      /* لون النص الحقيقي: أعمق عنصر يحمل أول نص مرئي (لون المغلّف قد يكون شفافاً/موروثاً)؛ الشفاف أو النص المقصوص بالخلفية يُستبدل بلون مقابل لخلفية الشريط */
+      let tEl = el0; try { const tw = doc.createTreeWalker(el0, 4); let n; while ((n = tw.nextNode())) { if (n.nodeValue.trim()) { tEl = n.parentElement || el0; break; } } } catch (e) { }
+      const cs = win.getComputedStyle(el0), ts = win.getComputedStyle(tEl); let c = textFill(ts);
+      if (!c || c.a < .35) { const lum = (.299 * bg.r + .587 * bg.g + .114 * bg.b); c = lum < 140 ? { r: 255, g: 255, b: 255, a: 1 } : { r: 20, g: 20, b: 20, a: 1 }; }
       let gap = 48; if (it.els.length >= 2) { const a = rectOf(it.els[0]), b = rectOf(it.els[1]); const g = b.x > a.x ? b.x - (a.x + a.w) : a.x - (b.x + b.w); if (isFinite(g) && g >= 4 && g < 400) gap = Math.round(g); }
       const ff = fontOf(cs); mq.set(C, { cr, texts: it.texts, dur: Math.max(4, Math.round(dur || 20)), dir, gap, fs: Math.round(px(cs.fontSize) || 16), fw: String(cs.fontWeight), c: hex(c), bg: hex(bg), ff });
     }
@@ -14398,7 +14451,7 @@ const PBClone = (function () {
       const S0 = fx && fx._S;
       if (S0) for (const [T, a] of S0.anims) {
         const i = a.names.findIndex((n, k) => a.iter[k % a.iter.length] === "infinite" && S0.kf.get(n) && /translate(X|3d)?\(/i.test(S0.kf.get(n).cssText)); if (i < 0) continue;
-        let C = T.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === doc.body) continue; if (rectOf(T).w < rectOf(C).w * 1.05) continue;
+        let C = T.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === doc.body) continue; if (rectOf(T).w < rectOf(C).w * 1.05 && !/translate(X|3d)?\(\s*-?(9\d|1\d\d)(\.\d+)?%/i.test(S0.kf.get(a.names[i]).cssText)) continue;      // الشريط الأضيق من الحاوية مقبول إن كانت إزاحته ±100% (يدخل من الخارج)
         const kf = S0.kf.get(a.names[i]).cssText, to = /(?:to|100%)\s*\{[^}]*translate(?:X|3d)?\(\s*(-?[\d.]+)/i.exec(kf); let neg = to ? parseFloat(to[1]) < 0 : true; if (/reverse/.test(a.dir[i % a.dir.length])) neg = !neg;
         const d = parseFloat(a.dur[i % a.dur.length]) || 20; addMarquee(C, T, /ms$/.test(a.dur[i % a.dur.length]) ? d / 1000 : d, neg ? "ltr" : "rtl");      // عنصر المطوّر: الافتراضي (rtl) يتحرك لليمين، و ltr (animation-direction:reverse) لليسار
       }
@@ -14481,10 +14534,21 @@ const PBClone = (function () {
     await Promise.all([work(), work(), work()]); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
+  /* روابط الموقع الأصلي تتحول إلى # (روابط المراسي الداخلية #xxx وواتساب/اتصل/بريد تبقى) كي لا يُخرج الزائر من صفحتك */
+  function neutralizeLinks(ws) {
+    let n = 0; const keep = u => /^(#|tel:|mailto:|sms:|https?:\/\/(wa\.me|api\.whatsapp\.com|wa\.link)\b)/i.test(String(u || "").trim());
+    for (const w of ws) {
+      const st = w.set; if (!st) continue;
+      for (const k of ["link", "llink", "href"]) if (typeof st[k] === "string" && st[k] && !keep(st[k])) { st[k] = "#"; n++; }
+      for (const k of ["html", "text"]) if (typeof st[k] === "string" && /href=/.test(st[k])) st[k] = st[k].replace(/href="([^"]*)"/g, (m, u) => { const v = u.replace(/&amp;/g, "&"); if (!v || keep(v)) return m; n++; return 'href="#"'; });
+    }
+    return n;
+  }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
     S.upl = []; let mob = null; if ($("cl-mob") && $("cl-mob").checked) { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
+    if ($("cl-lnk") && $("cl-lnk").checked) { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
     await saveImages(res.widgets.concat(mob ? mob.widgets : []), $("cl-save") && $("cl-save").checked);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
     const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
@@ -14639,7 +14703,7 @@ const PBClone = (function () {
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
-<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label title="يستخرج تصميم الصفحة عند عرض الجوال (390px) كقسم مستقل يظهر للجوال فقط، فتعمل قائمة ☰ والتخطيط الحقيقي للهاتف؛ والقسم الأول يختفي على الجوال"><input type="checkbox" id="cl-mob" checked> نسخة الجوال أيضاً</label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label></div>
+<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label title="يستخرج تصميم الصفحة عند عرض الجوال (390px) كقسم مستقل يظهر للجوال فقط، فتعمل قائمة ☰ والتخطيط الحقيقي للهاتف؛ والقسم الأول يختفي على الجوال"><input type="checkbox" id="cl-mob" checked> نسخة الجوال أيضاً</label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label><label title="روابط الموقع الأصلي في الأزرار والنصوص والصور تتحول إلى # فلا تنقل الزائر إلى موقع آخر؛ يمكنك لاحقاً وضع روابطك من إعدادات كل عنصر. تبقى روابط المراسي والاتصال وواتساب."><input type="checkbox" id="cl-lnk" checked> تعطيل روابط الموقع الأصلي (تصير #)</label></div>
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
@@ -14787,7 +14851,81 @@ const PBClone = (function () {
     try { if (S.tab === "url" && S.fxRep && !S.fxAsked) { const un = S.fxRep.filter(x => x.status !== "ok" && !(S.fxSent || {})[(() => { try { return new URL(S.url).hostname; } catch (e) { return ""; } })() + "|" + x.id]); S.fxAsked = true; if (un.length && confirm("عُثر في الصفحة على تأثيرات/عناصر غير متوفرة بالكامل في المطوّر:\n• " + un.map(x => x.label + " (" + CHIP[x.status] + ")").join("\n• ") + "\n\nهل تريد إرسال طلب إضافتها للمطوّر قبل النسخ؟ (موافق = أرسل ثم تابع، إلغاء = تابع بدون إرسال)")) await sendFxRequests(un); }
       if (S.tab === "url") await doCopyUrl(); else await doCopyImage(); } catch (e) { st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
-  return { open, close, _t: { extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
+  return { open, close, _t: { neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
+})();
+
+/* ───── تنظيف الصور غير المستعملة (PBClean) ─────
+   يفحص مستودع GitHub: صور المجلد assets/img/pages/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
+   (صفحات html وملفات json وجافاسكربت وcss) ويجمع أسماء الصور المذكورة فيها؛ ما لا يذكره أي ملف يُعرض للحذف.
+   الحذف: تحديث assets/pages/media.json ثم commit واحد يحذف الملفات عبر Git Data API. لا يعمل مع نسخة PHP (لا مستودع). */
+const PBClean = (() => {
+  const EXT = /\.(webp|png|jpe?g|gif|svg|avif)$/i, TXT = /\.(html|json|js|css|webmanifest|xml)$/i;
+  const SKIP = /^(admin\.html$|assets\/pages\/media\.json$|assets\/clone\/|assets\/ext\/|scripts\/|extension\/|\.github\/|saas\/|supabase\/|apps-script\/|php-edition\/|node_modules\/)/;
+  const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  let M = null, S = null;
+  const css = `#pbx-clean{position:fixed;inset:0;z-index:10050;background:rgba(20,30,26,.55);display:flex;align-items:center;justify-content:center;font-family:inherit}#pbx-clean .cb{background:#fff;border-radius:16px;width:min(760px,94vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);direction:rtl}#pbx-clean .ch{display:flex;align-items:center;padding:.8rem 1rem;border-bottom:1px solid #eee6d3}#pbx-clean .ch b{flex:1;color:#173f35}#pbx-clean .cx{border:0;background:#f4efe3;border-radius:8px;width:30px;height:30px;cursor:pointer}#pbx-clean .cm{padding:.8rem 1rem;overflow:auto;flex:1;font-size:.88rem;color:#3d3a30;line-height:1.7}#pbx-clean .cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:.5rem;margin-top:.6rem}#pbx-clean .ci{position:relative;border:1.5px solid #e6dfcf;border-radius:10px;overflow:hidden;aspect-ratio:1;background:#faf7ef;cursor:pointer}#pbx-clean .ci img{width:100%;height:100%;object-fit:cover;display:block}#pbx-clean .ci.off{opacity:.35}#pbx-clean .ci i{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:5px;background:#173f35;color:#fff;font-style:normal;font-size:12px;text-align:center;line-height:18px}#pbx-clean .ci.off i{background:#fff;color:transparent;border:1.5px solid #bbb}#pbx-clean .ci small{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;text-align:center}#pbx-clean .cf{display:flex;gap:.5rem;align-items:center;padding:.7rem 1rem;border-top:1px solid #eee6d3;flex-wrap:wrap}#pbx-clean button.p{background:#b83232;color:#fff;border:0;border-radius:10px;padding:.55rem 1rem;cursor:pointer;font-family:inherit;font-weight:700}#pbx-clean button.p:disabled{opacity:.45;cursor:default}#pbx-clean button.s{background:#f4efe3;color:#173f35;border:0;border-radius:10px;padding:.5rem .8rem;cursor:pointer;font-family:inherit}#pbx-clean select{font-family:inherit;padding:.3rem;border-radius:8px;border:1px solid #d8d0bb}#pbx-clean .warn{background:#fff6e0;border:1px solid #ecd9a0;border-radius:10px;padding:.5rem .7rem;margin:.4rem 0;font-size:.82rem}`;
+  function shell() {
+    if (!document.getElementById("pbx-clean-css")) { const st = document.createElement("style"); st.id = "pbx-clean-css"; st.textContent = css; document.head.appendChild(st); }
+    if (M) M.remove(); M = document.createElement("div"); M.id = "pbx-clean";
+    M.innerHTML = `<div class="cb"><div class="ch"><b>تنظيف الصور غير المستعملة</b><button class="cx" data-c="x" title="إغلاق">✕</button></div><div class="cm" id="pbx-cm"></div><div class="cf" id="pbx-cf"></div></div>`;
+    M.addEventListener("click", onClick); document.body.appendChild(M);
+  }
+  const body = h => { const e = document.getElementById("pbx-cm"); if (e) e.innerHTML = h; }, foot = h => { const e = document.getElementById("pbx-cf"); if (e) e.innerHTML = h; };
+  const ageOf = p => { const m = /gen-(\d{12,13})-/.exec(p); return m ? Date.now() - Number(m[1]) : Infinity; };
+  function ghx() {
+    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة تعمل مع وضع GitHub فقط (نسخة PHP لا تحتفظ بمستودع).");
+    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token) throw new Error("اربط GitHub أولاً من الإعدادات.");
+    const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
+    const j = async (u, o) => { const r = await fetch(u, o ? Object.assign({ headers: Object.assign({ "Content-Type": "application/json" }, H) }, o) : { headers: H }); if (!r.ok) throw new Error("GitHub " + r.status + " — " + (await r.text().catch(() => "")).slice(0, 120)); return r.json(); };
+    return { api, br, j, H };
+  }
+  async function scan() {
+    shell(); body('<p id="pbx-cs">جارٍ قراءة قائمة ملفات الموقع…</p>'); foot('<button class="s" data-c="x">إغلاق</button>');
+    const st = t => { const e = document.getElementById("pbx-cs"); if (e) e.textContent = t; };
+    let G; try { G = ghx(); } catch (e) { body('<div class="warn">' + esc(e.message) + "</div>"); return; }
+    try {
+      const tree = await G.j(G.api + "/git/trees/" + encodeURIComponent(G.br) + "?recursive=1&t=" + Date.now()), files = (tree.tree || []).filter(x => x.type === "blob");
+      if (tree.truncated) throw new Error("المستودع كبير جداً لهذه الأداة (قائمة الملفات مقتطعة) — لن أحذف شيئاً.");
+      const cand = files.filter(f => /^assets\/img\/pages\//.test(f.path) && EXT.test(f.path)), refs = files.filter(f => TXT.test(f.path) && !SKIP.test(f.path) && (f.size || 0) < 4e6);
+      const used = new Set(), dec = new TextDecoder("utf-8"); let done = 0, i = 0;
+      const addToks = txt => { const m = txt.match(/[\w.\-%]+\.(?:webp|png|jpe?g|gif|svg|avif)/gi); if (m) m.forEach(x => { used.add(x.toLowerCase()); try { used.add(decodeURIComponent(x).toLowerCase()); } catch (e) { } }); };
+      if (typeof PBApp !== "undefined" && PBApp.pageJson) { try { addToks(PBApp.pageJson() || ""); } catch (e) { } }      // الصفحة المفتوحة الآن (غير المحفوظة) تُعدّ مستعملة
+      const work = async () => { while (i < refs.length) { const f = refs[i++]; try { const b = await G.j(G.api + "/git/blobs/" + f.sha), bin = atob((b.content || "").replace(/\n/g, "")), u8 = Uint8Array.from(bin, c => c.charCodeAt(0)); addToks(dec.decode(u8)); } catch (e) { } done++; if (done % 10 === 0) st("قراءة الملفات " + done + " / " + refs.length + "…"); } };
+      await Promise.all([work(), work(), work(), work(), work(), work()]);
+      const unused = cand.filter(f => !used.has(f.path.split("/").pop().toLowerCase())).map(f => ({ p: f.path, size: f.size || 0, age: ageOf(f.path), on: true }));
+      S = { G, total: cand.length, unused, minAge: 24 }; draw();
+    } catch (e) { body('<div class="warn">تعذّر الفحص: ' + esc(e.message) + "</div>"); }
+  }
+  const vis = () => S.unused.filter(x => x.age >= S.minAge * 3600e3);
+  function draw() {
+    const v = vis(), skip = S.unused.length - v.length, sel = v.filter(x => x.on), sz = sel.reduce((a, x) => a + x.size, 0);
+    body(`<p>صور المجلد <b>assets/img/pages</b>: <b>${S.total}</b> صورة، منها <b>${S.unused.length}</b> لا يذكرها أي ملف في الموقع (صفحات، قوائم صفحات، بيانات المنتجات…).</p>
+      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي من المستودع (يمكن استرجاعه فقط من سجلّ GitHub).</div>
+      <p>تجاهل ما رُفع خلال آخر <select data-c="age"><option value="24"${S.minAge === 24 ? " selected" : ""}>24 ساعة (موصى به)</option><option value="1"${S.minAge === 1 ? " selected" : ""}>ساعة</option><option value="0"${S.minAge === 0 ? " selected" : ""}>لا تتجاهل شيئاً</option></select>${skip ? ` — تُجوهلت ${skip} صورة حديثة` : ""}</p>
+      ${v.length ? `<div class="cg">${v.map(x => `<div class="ci${x.on ? "" : " off"}" data-c="tg" data-p="${esc(x.p)}" title="${esc(x.p)}"><img src="${esc(x.p)}" loading="lazy" alt=""><i>✓</i><small>${kb(x.size)}</small></div>`).join("")}</div>` : '<p style="color:#2d6a4f"><b>لا توجد صور يتيمة قابلة للحذف الآن.</b></p>'}`);
+    foot(`<button class="p" data-c="del"${sel.length ? "" : " disabled"}>حذف المحدد نهائياً (${sel.length} — ${kb(sz)})</button><button class="s" data-c="all">${sel.length === v.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button class="s" data-c="x">إغلاق</button>`);
+  }
+  async function remove() {
+    const sel = vis().filter(x => x.on); if (!sel.length) return; if (!confirm("حذف " + sel.length + " صورة نهائياً من المستودع؟")) return;
+    foot(""); body('<p id="pbx-cs">جارٍ الحذف…</p>'); const st = t => { const e = document.getElementById("pbx-cs"); if (e) e.textContent = t; }, G = S.G, paths = sel.map(x => x.p);
+    try {
+      st("تحديث قائمة مكتبة الصور…");
+      try { const f = await GH.getFile("assets/pages/media.json"), L = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); const nl = L.filter(x => !paths.includes(x.p)); if (nl.length !== L.length) await GH.putFile("assets/pages/media.json", btoa(unescape(encodeURIComponent(JSON.stringify(nl, null, 1)))), f.sha, "تنظيف مكتبة صور منشئ الصفحات"); } catch (e) { console.warn("media.json", e); }
+      st("إنشاء commit الحذف…");
+      const ref = await G.j(G.api + "/git/ref/heads/" + encodeURIComponent(G.br)), cm = await G.j(G.api + "/git/commits/" + ref.object.sha);
+      const tr = await G.j(G.api + "/git/trees", { method: "POST", body: JSON.stringify({ base_tree: cm.tree.sha, tree: paths.map(p => ({ path: p, mode: "100644", type: "blob", sha: null })) }) });
+      const nc = await G.j(G.api + "/git/commits", { method: "POST", body: JSON.stringify({ message: "تنظيف الصور غير المستعملة (" + paths.length + ")", tree: tr.sha, parents: [ref.object.sha] }) });
+      await G.j(G.api + "/git/refs/heads/" + encodeURIComponent(G.br), { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) });
+      body(`<p style="color:#2d6a4f"><b>تم حذف ${paths.length} صورة.</b> يظهر أثر ذلك على الموقع خلال دقيقة تقريباً.</p>`); foot('<button class="s" data-c="x">إغلاق</button>');
+    } catch (e) { body('<div class="warn">تعذّر الحذف: ' + esc(e.message) + "</div>"); foot('<button class="s" data-c="x">إغلاق</button>'); }
+  }
+  function onClick(e) {
+    const t = e.target.closest("[data-c]"); if (!t) return; const c = t.dataset.c;
+    if (c === "x") { M.remove(); M = null; } else if (c === "tg") { const x = S.unused.find(y => y.p === t.dataset.p); if (x) { x.on = !x.on; draw(); } } else if (c === "all") { const v = vis(), all = v.every(x => x.on); v.forEach(x => { x.on = !all; }); draw(); } else if (c === "del") remove();
+  }
+  document.addEventListener("change", e => { const t = e.target; if (t && t.dataset && t.dataset.c === "age" && S) { S.minAge = +t.value; draw(); } });
+  return { open: scan };
 })();
 
 </script>

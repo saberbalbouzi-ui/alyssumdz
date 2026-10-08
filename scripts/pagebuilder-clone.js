@@ -18,6 +18,12 @@ const PBClone = (function () {
     cx0.clearRect(0, 0, 1, 1); cx0.fillStyle = "#010203"; cx0.fillStyle = c; if (cx0.fillStyle === "#010203" && !/^#010203$/i.test(c)) { cc.set(c, null); return null; }      // لون غير مفهوم: لا يُعدّ أسود
     cx0.fillRect(0, 0, 1, 1); const d = cx0.getImageData(0, 0, 1, 1).data, o = d[3] ? { r: d[0], g: d[1], b: d[2], a: d[3] / 255 } : { r: 0, g: 0, b: 0, a: 0 }; cc.set(c, o); return o;
   }
+  /* لون النص الفعلي: النص المقصوص بالخلفية (تدرّج) يأخذ لون منتصف التدرّج، والتعبئة الشفافة بلا تدرّج تعود لـcolor */
+  function textFill(cs) {
+    const f = cs.webkitTextFillColor, bc = cs.webkitBackgroundClip || cs.backgroundClip || "";
+    if (/text/.test(bc) && cs.backgroundImage && cs.backgroundImage !== "none") { const m = cs.backgroundImage.match(/rgba?\([^)]*\)|#[0-9a-f]{3,8}/gi); if (m) { const cc = col(m[Math.floor((m.length - 1) / 2)]); if (cc && cc.a > .3) return cc; } }
+    const fc = f && f !== "currentcolor" ? col(f) : null; if (fc && fc.a >= .35) return fc; return col(cs.color);
+  }
   const hex = c => "#" + [c.r, c.g, c.b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
   const px = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
   const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
@@ -128,7 +134,7 @@ const PBClone = (function () {
       return w(el, cs).replace(/^(\s|<br>)+|(\s|<br>)+$/g, "").trim();
     }
     function textProps(cs, lineH) {
-      const fs = px(cs.fontSize) || 16, lh = cs.lineHeight === "normal" ? 1.3 : lineH / fs, c = col(cs.color), p = { fs: { d: Math.round(fs * 10) / 10 }, fw: String(cs.fontWeight), lh: { d: r2(Math.max(.8, Math.min(3, lh))) }, ta: { d: /^(left|right|center|justify)$/.test(cs.textAlign) ? cs.textAlign : cs.direction === "rtl" ? "right" : "left" } };
+      const fs = px(cs.fontSize) || 16, lh = cs.lineHeight === "normal" ? 1.3 : lineH / fs, c = textFill(cs), p = { fs: { d: Math.round(fs * 10) / 10 }, fw: String(cs.fontWeight), lh: { d: r2(Math.max(.8, Math.min(3, lh))) }, ta: { d: /^(left|right|center|justify)$/.test(cs.textAlign) ? cs.textAlign : cs.direction === "rtl" ? "right" : "left" } };
       if (c) p.color = hex(c); if (c && c.a < 1) p.op = r2(Math.max(.05, c.a)); const ff = fontOf(cs); if (ff) p.ff = ff; const ls = px(cs.letterSpacing); if (ls) p.ls = { d: r1(ls) }; if (cs.textTransform && cs.textTransform !== "none") p.tt = cs.textTransform; if (cs.fontStyle === "italic") p.fst = "italic"; if (/underline/.test(cs.textDecorationLine)) p.td = "underline"; else if (/line-through/.test(cs.textDecorationLine)) p.td = "line-through"; if (cs.direction === "rtl") p.tdir = "rtl";
       return p;
     }
@@ -217,11 +223,12 @@ const PBClone = (function () {
         for (const root of roots) {
           if (claimed.some(c => c === root || c.contains(root))) continue; let all = [...root.querySelectorAll(def.slide)].filter(x => x.closest(def.root) === root); if (all.length < 2) continue;
           const rr = rectOf(root); if (rr.w < 50 || rr.h < 30 || rr.y >= limit) continue; const sr0 = all.map(rectOf);
-          const stacked = sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));
+          const stacked = !!def.bs || sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));      // بوتستراب: شرائح متراكمة دائماً (اللقطة قد تكون في منتصف الانتقال فتظهر متجاورة)
           let act = 0; if (stacked) { const k = all.findIndex(x => /(^|\s|-)active(\s|$|-)/.test(x.className)); act = k < 0 ? 0 : k; } else { const k = sr0.findIndex(r => inBox(r, rr)); act = k < 0 ? 0 : k; }
           const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf); const pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length), pages = Math.ceil(slides.length / pv); if (pages < 2) continue;
           const id = "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
           try { const a = root.getAttribute("data-bs-interval") || root.getAttribute("data-interval"); if (a) ms = +a || ms; const sk = root.getAttribute("data-slick"); if (sk) { const o = JSON.parse(sk); ms = o.autoplay ? (o.autoplaySpeed || 3000) : 0; } const sp = root.getAttribute("data-splide"); if (sp) { const o = JSON.parse(sp); ms = o.autoplay ? (o.interval || 5000) : 0; } const sa = slides[0].getAttribute("data-swiper-autoplay"); if (sa) ms = +sa || ms; } catch (e) { }
+          if (def.bs) { slides[0].style.setProperty("transform", "none", "important"); slides[0].style.setProperty("transition", "none", "important"); }
           slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
           slides.slice(pv).forEach(x => slSkip.add(x));
           const sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot), pr = sel(def.prev), nx = sel(def.next), actP = Math.floor(act / pv);
@@ -229,6 +236,34 @@ const PBClone = (function () {
           pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
           const sl = { id, def, root, slides, pv, pages, stacked, track: slides[0].parentElement, ms, dots, pr, nx, act }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
         }
+      }
+      try { findGenericSliders(claimed); } catch (e) { console.warn("generic sliders", e); }
+    }
+    /* سلايدر بلا مكتبة معروفة (قوالب Wix/Shopify/كود مخصص): حاوية تقصّ/تمرّر فيها صف شرائح متساوية الحجم أعرض من الحاوية؛ الأسهم والنقاط تُستنتج من الأصناف/العناوين */
+    function findGenericSliders(claimed) {
+      let cands = []; try { cands = [...doc.querySelectorAll("div,section,ul,ol,article")]; } catch (e) { return; }
+      const small = r => r.w >= 10 && r.w <= 140 && r.h >= 10 && r.h <= 140;
+      for (const root of cands) {
+        if (sliders.length >= 12) break;
+        if (claimed.some(c => c === root || c.contains(root) || root.contains(c)) || [...mq.keys()].some(k => k === root || k.contains(root) || root.contains(k))) continue;
+        const rr = rectOf(root); if (rr.w < 200 || rr.h < 60 || rr.y >= limit) continue; if (!/(hidden|auto|scroll|clip)/.test(win.getComputedStyle(root).overflowX)) continue;
+        let track = null, slides = null, t = root;
+        for (let d = 0; d < 3 && t; d++) { const ch = [...t.children].filter(x => { const r = rectOf(x); return r.w > 20 && r.h > 20 && win.getComputedStyle(x).position !== "absolute"; }); if (ch.length >= 2) { track = t; slides = ch; break; } if (ch.length === 1) t = ch[0]; else break; }
+        if (!track || slides.length > 30) continue;
+        const sr = slides.map(rectOf), w0 = sr[0]; if (sr.some(r => Math.abs(r.y - w0.y) > w0.h * .3 || r.w / w0.w > 1.25 || r.w / w0.w < .8 || r.h / w0.h > 1.3 || r.h / w0.h < .75)) continue;
+        if (!sr.some(r => r.x + r.w > rr.x + rr.w + 6 || r.x < rr.x - 6)) continue; if (w0.w < rr.w * .2) continue;
+        const pv = Math.max(1, sr.filter(r => inBox(r, rr)).length), act0 = sr.findIndex(r => inBox(r, rr)), act = act0 < 0 ? 0 : act0, ordered = slides.slice(act).concat(slides.slice(0, act));
+        const pages = Math.ceil(ordered.length / pv); if (pages < 2) continue;
+        const A = (() => { let a = root.parentElement; for (let i = 0; i < 2 && a && a !== doc.body && rectOf(a).h < rr.h * 1.6; i++) a = a.parentElement || a; return a || root; })(), inSl = x => slides.some(s => s.contains(x));
+        const lab = x => (typeof x.className === "string" ? x.className : "") + " " + (x.getAttribute("aria-label") || "") + " " + (x.getAttribute("title") || "") + " " + (x.id || "");
+        const pick = re => { let r = []; try { r = [...A.querySelectorAll("button,a,div,span,i,svg")].filter(x => !inSl(x) && re.test(lab(x)) && small(rectOf(x)) && !x.querySelector("button,a") && rectOf(x).y < limit); } catch (e) { } return r.filter(x => !r.some(y => y !== x && y.contains(x))).slice(0, 2); };
+        const pr = pick(/(^|[\s_-])(prev|previous|back|left|arrow-left)([\s_-]|$)/i), nx = pick(/(^|[\s_-])(next|forward|right|arrow-right)([\s_-]|$)/i).filter(x => !pr.includes(x));
+        let dots = []; try { for (const c of A.querySelectorAll("div,ul,ol,nav,span")) { if (inSl(c) || !/dot|bullet|indicator|pagina|pager|nav/i.test(lab(c))) continue; const k = [...c.children].filter(x => small(rectOf(x))); if (k.length >= 2 && (k.length === pages || k.length === slides.length)) { dots = k; break; } } } catch (e) { }
+        const id = "s" + (++slN), ms = 5000;
+        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
+        const actP = Math.floor(act / pv); dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
+        pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
+        const sl = { id, def: {}, root, slides: ordered, pv, pages, stacked: false, track, ms, dots, pr, nx, act, generic: 1 }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
       }
     }
 
@@ -349,7 +384,11 @@ const PBClone = (function () {
     }
     function addMarquee(C, T, dur, dir) {
       const cr = rectOf(C); if (cr.w < 200 || cr.h < 14 || cr.y >= limit || mq.has(C) || [...mq.keys()].some(k => k.contains(C) || C.contains(k))) return;
-      const it = mqItems(T); if (!it) return; const el0 = it.els[0], cs = win.getComputedStyle(el0), c = col(cs.color) || { r: 255, g: 255, b: 255, a: 1 }, bg = bgOf(C) || { r: 23, g: 63, b: 53, a: 1 };
+      const it = mqItems(T); if (!it) return; const el0 = it.els[0], bg = bgOf(C) || { r: 23, g: 63, b: 53, a: 1 };
+      /* لون النص الحقيقي: أعمق عنصر يحمل أول نص مرئي (لون المغلّف قد يكون شفافاً/موروثاً)؛ الشفاف أو النص المقصوص بالخلفية يُستبدل بلون مقابل لخلفية الشريط */
+      let tEl = el0; try { const tw = doc.createTreeWalker(el0, 4); let n; while ((n = tw.nextNode())) { if (n.nodeValue.trim()) { tEl = n.parentElement || el0; break; } } } catch (e) { }
+      const cs = win.getComputedStyle(el0), ts = win.getComputedStyle(tEl); let c = textFill(ts);
+      if (!c || c.a < .35) { const lum = (.299 * bg.r + .587 * bg.g + .114 * bg.b); c = lum < 140 ? { r: 255, g: 255, b: 255, a: 1 } : { r: 20, g: 20, b: 20, a: 1 }; }
       let gap = 48; if (it.els.length >= 2) { const a = rectOf(it.els[0]), b = rectOf(it.els[1]); const g = b.x > a.x ? b.x - (a.x + a.w) : a.x - (b.x + b.w); if (isFinite(g) && g >= 4 && g < 400) gap = Math.round(g); }
       const ff = fontOf(cs); mq.set(C, { cr, texts: it.texts, dur: Math.max(4, Math.round(dur || 20)), dir, gap, fs: Math.round(px(cs.fontSize) || 16), fw: String(cs.fontWeight), c: hex(c), bg: hex(bg), ff });
     }
@@ -357,7 +396,7 @@ const PBClone = (function () {
       const S0 = fx && fx._S;
       if (S0) for (const [T, a] of S0.anims) {
         const i = a.names.findIndex((n, k) => a.iter[k % a.iter.length] === "infinite" && S0.kf.get(n) && /translate(X|3d)?\(/i.test(S0.kf.get(n).cssText)); if (i < 0) continue;
-        let C = T.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === doc.body) continue; if (rectOf(T).w < rectOf(C).w * 1.05) continue;
+        let C = T.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === doc.body) continue; if (rectOf(T).w < rectOf(C).w * 1.05 && !/translate(X|3d)?\(\s*-?(9\d|1\d\d)(\.\d+)?%/i.test(S0.kf.get(a.names[i]).cssText)) continue;      // الشريط الأضيق من الحاوية مقبول إن كانت إزاحته ±100% (يدخل من الخارج)
         const kf = S0.kf.get(a.names[i]).cssText, to = /(?:to|100%)\s*\{[^}]*translate(?:X|3d)?\(\s*(-?[\d.]+)/i.exec(kf); let neg = to ? parseFloat(to[1]) < 0 : true; if (/reverse/.test(a.dir[i % a.dir.length])) neg = !neg;
         const d = parseFloat(a.dur[i % a.dur.length]) || 20; addMarquee(C, T, /ms$/.test(a.dur[i % a.dur.length]) ? d / 1000 : d, neg ? "ltr" : "rtl");      // عنصر المطوّر: الافتراضي (rtl) يتحرك لليمين، و ltr (animation-direction:reverse) لليسار
       }
@@ -440,10 +479,21 @@ const PBClone = (function () {
     await Promise.all([work(), work(), work()]); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
+  /* روابط الموقع الأصلي تتحول إلى # (روابط المراسي الداخلية #xxx وواتساب/اتصل/بريد تبقى) كي لا يُخرج الزائر من صفحتك */
+  function neutralizeLinks(ws) {
+    let n = 0; const keep = u => /^(#|tel:|mailto:|sms:|https?:\/\/(wa\.me|api\.whatsapp\.com|wa\.link)\b)/i.test(String(u || "").trim());
+    for (const w of ws) {
+      const st = w.set; if (!st) continue;
+      for (const k of ["link", "llink", "href"]) if (typeof st[k] === "string" && st[k] && !keep(st[k])) { st[k] = "#"; n++; }
+      for (const k of ["html", "text"]) if (typeof st[k] === "string" && /href=/.test(st[k])) st[k] = st[k].replace(/href="([^"]*)"/g, (m, u) => { const v = u.replace(/&amp;/g, "&"); if (!v || keep(v)) return m; n++; return 'href="#"'; });
+    }
+    return n;
+  }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
     S.upl = []; let mob = null; if ($("cl-mob") && $("cl-mob").checked) { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
+    if ($("cl-lnk") && $("cl-lnk").checked) { const n = neutralizeLinks(res.widgets) + (mob ? neutralizeLinks(mob.widgets) : 0); if (n) console.info("روابط عُطّلت:", n); }
     await saveImages(res.widgets.concat(mob ? mob.widgets : []), $("cl-save") && $("cl-save").checked);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
     const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
@@ -598,7 +648,7 @@ const PBClone = (function () {
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
-<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label title="يستخرج تصميم الصفحة عند عرض الجوال (390px) كقسم مستقل يظهر للجوال فقط، فتعمل قائمة ☰ والتخطيط الحقيقي للهاتف؛ والقسم الأول يختفي على الجوال"><input type="checkbox" id="cl-mob" checked> نسخة الجوال أيضاً</label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label></div>
+<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label><label title="يستخرج تصميم الصفحة عند عرض الجوال (390px) كقسم مستقل يظهر للجوال فقط، فتعمل قائمة ☰ والتخطيط الحقيقي للهاتف؛ والقسم الأول يختفي على الجوال"><input type="checkbox" id="cl-mob" checked> نسخة الجوال أيضاً</label><label><input type="checkbox" id="cl-save" checked> حفظ الصور في موقعي (موصى به)</label><label title="روابط الموقع الأصلي في الأزرار والنصوص والصور تتحول إلى # فلا تنقل الزائر إلى موقع آخر؛ يمكنك لاحقاً وضع روابطك من إعدادات كل عنصر. تبقى روابط المراسي والاتصال وواتساب."><input type="checkbox" id="cl-lnk" checked> تعطيل روابط الموقع الأصلي (تصير #)</label></div>
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
@@ -746,5 +796,5 @@ const PBClone = (function () {
     try { if (S.tab === "url" && S.fxRep && !S.fxAsked) { const un = S.fxRep.filter(x => x.status !== "ok" && !(S.fxSent || {})[(() => { try { return new URL(S.url).hostname; } catch (e) { return ""; } })() + "|" + x.id]); S.fxAsked = true; if (un.length && confirm("عُثر في الصفحة على تأثيرات/عناصر غير متوفرة بالكامل في المطوّر:\n• " + un.map(x => x.label + " (" + CHIP[x.status] + ")").join("\n• ") + "\n\nهل تريد إرسال طلب إضافتها للمطوّر قبل النسخ؟ (موافق = أرسل ثم تابع، إلغاء = تابع بدون إرسال)")) await sendFxRequests(un); }
       if (S.tab === "url") await doCopyUrl(); else await doCopyImage(); } catch (e) { st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
-  return { open, close, _t: { extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
+  return { open, close, _t: { neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
 })();
