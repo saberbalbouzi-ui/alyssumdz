@@ -6,6 +6,7 @@ const AdminSearch = (() => {
   const norm = s => String(s || "").toLowerCase().replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").trim();
   const A = () => (typeof Admin !== "undefined" ? Admin : {});
   const ACTIONS = [
+    ["فتح المخزون", "فتح تبويب إدارة المخزون", () => { const b = document.querySelector('.nav-btn[onclick*="inventory"]'); if (b) b.click(); }, "المخزون الكمية تنبيه نافد منخفض"],
     ["منتج جديد", "إضافة منتج جديد للمتجر", () => A().editProduct && A().editProduct(null), "اضافة منتج جديد"],
     ["مظهر اللوحة", "التبديل بين الزجاج الداكن والكلاسيكي", () => typeof AdminTheme !== "undefined" && AdminTheme.toggle(), "الوضع الداكن المظهر ثيم"],
     ["اسألني", "مساعد اللوحة: اسأل عن أي أداة أو إعداد", () => typeof AdminHelp !== "undefined" && AdminHelp.show(), "مساعدة شرح"],

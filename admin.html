@@ -307,6 +307,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('products',this)"><span class="nav-ic">🌿</span><span class="nav-txt"><b>المنتجات</b><small>إضافة وتعديل المنتجات وصورها وأسعارها</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('inventory',this)"><span class="nav-ic">▤</span><span class="nav-txt"><b>المخزون</b><small>الكميات والتنبيهات والتعديلات الجماعية</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="builder" onclick="Admin.tab('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات</b><small>صفحاتك + المحرر المرئي + أدوات ذكية (التقاط العناصر)</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="smart" id="nav-pbgen" onclick="Admin.tab('pbgen',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>المطوّر الذكي</b><small>توليد صفحة جديدة ← تحرير بالأدوات الذكية ← حفظ</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="imgtools" data-ic="imgtools" onclick="Admin.tab('imgtools',this)"><span class="nav-ic">🖼️</span><span class="nav-txt"><b>أدوات تعديل الصور</b><small>نزع الخلفية وضغط الصور وتحويلها، وبقية أدوات الصور داخل المطوّر</small></span></button>
@@ -727,6 +728,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div id="delivery-price-source"></div>
     </div>
   </div>
+
+  <div id="tab-inventory" class="hidden"><div id="inventory-content"></div></div>
 
   <div id="tab-coupons" class="hidden">
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
@@ -1552,6 +1555,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-nav.js?v=1.61.0"></script>
 <script src="assets/js/admin-update.js?v=1.61.0"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
+<script src="assets/js/admin-inventory.js?v=1"></script>
 <script src="assets/js/admin-home.js?v=1.60.0"></script>
 <script src="assets/js/admin-orders-plus.js?v=1.61.0"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
