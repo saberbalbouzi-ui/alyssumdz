@@ -75,7 +75,7 @@ body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;
 .aly-sh h2,.aly-sh{color:#fff}
 .aly-ticker{display:flex;gap:44px;white-space:nowrap}
 .pb-pgrid{gap:18px!important}
-.pb-pc{position:relative;display:flex;flex-direction:column;border-radius:22px!important;background:linear-gradient(160deg,rgba(14,60,32,.72),rgba(2,14,8,.92))!important;border:1px solid rgba(134,239,172,.28)!important;box-shadow:0 22px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)!important;color:#ecfdf5!important;overflow:hidden;backdrop-filter:blur(12px);transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .3s!important}
+.pb-pc{position:relative;display:flex;flex-direction:column;border-radius:22px!important;background:linear-gradient(160deg,rgba(12,54,29,.97),rgba(3,16,9,.99))!important;border:1px solid rgba(134,239,172,.28)!important;box-shadow:0 22px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)!important;color:#ecfdf5!important;overflow:hidden;backdrop-filter:blur(12px);transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .3s!important}
 .pb-pc:hover{transform:perspective(900px) translateY(-12px) rotateX(2deg)!important;border-color:rgba(190,242,100,.65)!important;box-shadow:0 36px 80px rgba(0,0,0,.6),0 0 50px rgba(74,222,128,.28)!important}
 .pb-pc::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.12),transparent);transform:skewX(-20deg);transition:left .9s}
 .pb-pc:hover::after{left:140%}
@@ -98,7 +98,7 @@ body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;
 #chips .chip:hover{transform:translateY(-3px);border-color:#86efac!important}
 #chips .chip.active{background:linear-gradient(180deg,#bef264,#4ade80)!important;color:#052e16!important;border-color:transparent!important}
 .aly-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
-.aly-grid .card{position:relative;display:flex;flex-direction:column;border-radius:22px!important;background:linear-gradient(160deg,rgba(14,60,32,.72),rgba(2,14,8,.92))!important;border:1px solid rgba(134,239,172,.28)!important;box-shadow:0 22px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)!important;color:#ecfdf5!important;overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .3s}
+.aly-grid .card{position:relative;display:flex;flex-direction:column;border-radius:22px!important;background:linear-gradient(160deg,rgba(12,54,29,.97),rgba(3,16,9,.99))!important;border:1px solid rgba(134,239,172,.28)!important;box-shadow:0 22px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)!important;color:#ecfdf5!important;overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .3s}
 .aly-grid .card:hover{transform:translateY(-10px)!important;border-color:rgba(190,242,100,.65)!important;box-shadow:0 36px 80px rgba(0,0,0,.6),0 0 50px rgba(74,222,128,.28)!important}
 .aly-grid .card .thumb{background:#04180d!important}.aly-grid .card .body{padding:12px!important}.aly-grid .card h3{color:#f0fdf4!important;font-size:15px!important}
 .aly-grid .card .stars{color:#facc15!important}.aly-grid .card .stars small{color:#7f9a88}
