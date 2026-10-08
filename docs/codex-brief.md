@@ -58,6 +58,7 @@
 # الدفعة الثانية (بعد دمج A وB — ابدأ C وD فوراً دون انتظار؛ E تنتظر دمج A)
 
 ## المهمة C — العملاء (Customers)
+> **الحالة: ✅ دُمجت في v1.64.0.**
 **الفرع:** `codex/customers` — **ملفاتك:** `assets/js/admin-customers.js` (جديد)، `assets/data/customers.json` (جديد، `{"notes":{"<phone>":{"tags":[],"note":""}}}`)، وأسطر التسجيل الثلاثة في admin.html (زر `data-grp="shop"` + `#tab-customers` + script).
 
 **الواقع:** لا يوجد جدول عملاء؛ الطلبات في `Admin.orders` (`name, phone, wilaya, commune, total, status, date, items`). صفحات «إعادة الشراء» (`renderRepeat`) و«القائمة السوداء» (`renderBlacklist`) و«الولاء» موجودة — **لا تغيّرها**، اقرأ منطقها لتتجنّب التكرار (طبّع الهاتف بالطريقة نفسها المستعملة هناك).
@@ -73,6 +74,7 @@
 **القبول:** اختبار بـ40 طلباً تجريبياً بأرقام متكررة: عدّ العملاء وشرائحهم صحيح، تعديل وسم ← حفظ ← إعادة فتح يحتفظ به، لقطات شاشة.
 
 ## المهمة D — محرّر المنتجات الجماعي (Bulk Editor)
+> **الحالة: ✅ دُمجت في v1.64.0.**
 **الفرع:** `codex/bulk-products` — **ملفاتك:** `assets/js/admin-bulk-products.js` (جديد) وأسطر التسجيل الثلاثة (زر في مجموعة shop باسم «تعديل جماعي» + `#tab-bulkp` + script).
 
 **الواقع:** المنتجات في `Admin.products` وتُنشر بـ`Admin.publishDataJs()`؛ تعديل المنتج الفردي في `Admin.editProduct`. حقول المنتج: `slug,title,price,old,cat,tags[],active,stock,cover,images,variations…` (اقرأ مثالاً من `assets/js/data.js`). **ممنوع** تغيير `slug` أو `cover` أو `images` أو `variations` من هذه الأداة.
@@ -88,6 +90,7 @@
 **القبول:** اختبار: رفع كل الأسعار 10% لثلاثة منتجات، إضافة وسم، حفظ ← `data.js` الناتج يحمل التغيير وبقية الحقول مطابقة؛ استيراد CSV معيب لا يكسر؛ لقطة.
 
 ## المهمة E — المرتجعات (Returns) — تبدأ بعد دمج A
+> **الحالة: ⏳ جاهزة للبدء (A دُمجت منذ v1.62.0)؛ ابنِ على main v1.64.0.**
 **الفرع:** `codex/returns` — **ملفاتك:** `assets/js/admin-returns.js` (جديد)، `assets/data/returns.json` (جديد `{"items":[]}`)، وأسطر التسجيل الثلاثة (تبويب «المرتجعات»).
 
 **المطلوب (بلا تغيير حالات الطلبات في أي خلفية):**
