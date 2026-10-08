@@ -1012,7 +1012,7 @@ body{overflow-x:hidden;margin:0}`;
     try {
       const m = String((inf.set && inf.set.cls) || "").match(/pbs[ldpn]-([a-z0-9]+)/); if (!m) return; const w = fdoc && fdoc.defaultView, g = w && w.__pbFx && w.__pbFx.sl && w.__pbFx.sl[m[1]]; if (!g || !g.n) return;
       const d = document.createElement("div"), sp = () => d.querySelector("span"); d.className = "pbx-slnav"; d.innerHTML = '<button type="button" data-d="-1" title="الشريحة السابقة">‹</button><span></span><button type="button" data-d="1" title="الشريحة التالية">›</button>'; sp().textContent = (g.get() + 1) + " / " + g.n;
-      d.onmousedown = ev => ev.stopPropagation(); d.onclick = ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); g.show(g.get() + Number(b.dataset.d)); sp().textContent = (g.get() + 1) + " / " + g.n; };
+      d.onmousedown = ev => ev.stopPropagation(); d.onclick = ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); g.show(g.get() + Number(b.dataset.d), Number(b.dataset.d)); sp().textContent = (g.get() + 1) + " / " + g.n; };
       ovl.appendChild(d); const iv = setInterval(() => { if (!d.isConnected) return clearInterval(iv); try { sp().textContent = (g.get() + 1) + " / " + g.n; } catch (e) { } }, 250); const W = ovl.clientWidth, ftT = parseFloat(ft.style.top) || 0, below = ftT >= bx.b; let top = below ? ftT + ft.offsetHeight + 8 : bx.b + 10; d.style.top = top + "px"; d.style.left = Math.max(4, Math.min(W - d.offsetWidth - 4, (bx.l + bx.r) / 2 - d.offsetWidth / 2)) + "px";
     } catch (e) { }
   }

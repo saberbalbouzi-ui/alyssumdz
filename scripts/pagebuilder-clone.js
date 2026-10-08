@@ -180,7 +180,7 @@ const PBClone = (function () {
         const cl = col(cs.color); let s = new XMLSerializer().serializeToString(c).replace(/currentColor/gi, cl ? hex(cl) : "#000"); if (s.length > 90000) return ""; return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s); } catch (e) { return ""; }
     }
     function visit0(el, clip, anchor) {
-      if (slSkip.has(el)) return;
+      if (slSkip.has(el)) { const ow = skipOwner.get(el); if (ow && ow.z0 == null) ow.z0 = z; return; }
       if (mq.has(el)) { emitMarquee(el); return; }
       if (el.tagName === "FORM" && emitForm(el)) return;
       if (stop || ++count > 5000) return; const tag = el.tagName.toLowerCase(); if (SKIP.has(tag)) return;
@@ -224,7 +224,7 @@ const PBClone = (function () {
       { root: ".glide", slide: ".glide__slide:not(.glide__slide--clone)", prev: ".glide__arrow--left", next: ".glide__arrow--right", dot: ".glide__bullet" },
       { root: ".flickity-enabled", slide: ".flickity-slider > *", prev: ".flickity-prev-next-button.previous", next: ".flickity-prev-next-button.next", dot: ".flickity-page-dots .dot" }
     ];
-    const slSkip = new Set(), elCls = new Map(), elRange = new Map(), slRoot = new Map(), sliders = []; let slN = 0;
+    const slSkip = new Set(), skipOwner = new Map(), elCls = new Map(), elRange = new Map(), slRoot = new Map(), sliders = []; let slN = 0;
     const tagW = (ws, cl) => ws.forEach(w => cl.forEach(c => { if (!(" " + (w.set.cls || "") + " ").includes(" " + c + " ")) w.set.cls = ((w.set.cls || "") + " " + c).trim(); }));
     const inBox = (r, B) => r.w > 1 && r.x + r.w / 2 > B.x && r.x + r.w / 2 < B.x + B.w && r.y + r.h / 2 > B.y && r.y + r.h / 2 < B.y + B.h;
     function findSliders() {
@@ -238,13 +238,14 @@ const PBClone = (function () {
           let act = 0; if (stacked) { const k = all.findIndex(x => /(^|\s|-)active(\s|$|-)/.test(x.className)); act = k < 0 ? 0 : k; } else { const k = sr0.findIndex(r => inBox(r, rr)); act = k < 0 ? 0 : k; }
           const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf), sel = q => { try { return [...root.querySelectorAll(q)]; } catch (e) { return []; } }, dots = sel(def.dot);
           // سلايدر دوّار (Slick infinite…): عدد النقاط = عدد الشرائح الحقيقية وفي الواجهة أكثر من شريحة (مع نسخ مكرّرة) ← كل نقطة صفحة تُزاح شريحة واحدة (نافذة دورية)
-          let pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length); const clones = [...root.querySelectorAll(".slick-slide")].filter(x => x.closest(def.root) === root && x.classList.contains("slick-cloned")); if (!stacked) { const nAct = [...root.querySelectorAll(".slick-active,.swiper-slide-visible,.owl-item.active")].filter(x => x.closest(def.root) === root).length; if (nAct > pv && (clones.length || dots.length === all.length)) pv = Math.min(nAct, all.length - 1); }
+          let pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length); const clones = [...root.querySelectorAll(".slick-slide")].filter(x => x.closest(def.root) === root && x.classList.contains("slick-cloned")); if (!stacked) { const nAct = [...root.querySelectorAll(".slick-slide.slick-active,.swiper-slide-visible,.owl-item.active")].filter(x => x.closest(def.root) === root).length; if (nAct > pv && (clones.length || dots.length === all.length)) pv = Math.min(nAct, all.length - 1); }
           const circ = !stacked && pv > 1 && dots.length === all.length && all.length > pv, pages = circ ? all.length : Math.ceil(slides.length / pv); if (pages < 2) continue;
           const id = IDP + "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
           try { const so = root.closest("[data-slider_options]"); if (so) { const o = JSON.parse(so.getAttribute("data-slider_options")); ms = o.autoplay ? Math.max(2500, (o.autoplaySpeed || 0) + (o.speed || 0)) : 0; } } catch (e) { }
           try { const a = root.getAttribute("data-bs-interval") || root.getAttribute("data-interval"); if (a) ms = +a || ms; const sk = root.getAttribute("data-slick"); if (sk) { const o = JSON.parse(sk); ms = o.autoplay ? (o.autoplaySpeed || 3000) : 0; } const sp = root.getAttribute("data-splide"); if (sp) { const o = JSON.parse(sp); ms = o.autoplay ? (o.interval || 5000) : 0; } const sa = slides[0].getAttribute("data-swiper-autoplay"); if (sa) ms = +sa || ms; } catch (e) { }
           if (def.bs) { slides[0].style.setProperty("transform", "none", "important"); slides[0].style.setProperty("transition", "none", "important"); }
-          slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
+          const pitch = !stacked && sr0.length > 1 ? sr0[1].x - sr0[0].x : 0, stepD = Math.abs(pitch) > 8 && Math.abs(sr0[1].y - sr0[0].y) < Math.abs(pitch) * .5 ? Math.round(circ ? pitch : pitch * pv) : 0, swc = stepD ? ["pbsw-" + id + "-" + (stepD < 0 ? "m" : "") + Math.abs(stepD)] : [];      // خطوة الانزلاق بين الصفحات (وحدات التصميم): تحرّك المنتجات معاً وتُقصّ عند الحافة
+          slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms].concat(swc) : [])));
           slides.slice(pv).forEach(x => slSkip.add(x));
           const outer = (q, own) => {      // أسهم/نقاط تقع خارج حاوية السلايدر نفسها (مثل .swiper-arrows بجانب .swiper في ثيمات Elementor): نبحث في الأجداد القريبة بشرط ألا تضم سلايدراً آخر
             let r = sel(q); if (r.length || !def.out) return r; let a = root.parentElement;
@@ -253,7 +254,9 @@ const PBClone = (function () {
           }, pr = outer(def.prev), nx = outer(def.next), actP = circ ? 0 : Math.floor(act / pv);
           dots.forEach((d, j) => { const pg = circ ? (j - act + pages) % pages : dots.length === pages ? (j - actP + pages) % pages : dots.length === all.length ? Math.floor(((j - act + all.length) % all.length) / pv) : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
           pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
-          const sl = { id, def, root, slides, pv, pages, stacked, circ, track: slides[0].parentElement, ms, dots, pr, nx, act }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
+          const sl = { id, def, root, slides, pv, pages, stacked, circ, track: slides[0].parentElement, ms, dots, pr, nx, act, pitch: sr0.length > 1 ? sr0[1].x - sr0[0].x : 0, tag0: ["pbsi-" + id + "-" + ms].concat(swc) };
+          if (circ) [...all, ...clones].forEach(x => { slSkip.add(x); skipOwner.set(x, sl); });      // السلايدر الدوّار: كل الصفحات (حتى الأولى) تُبنى بنوافذ دورية، والنسخ المكرّرة (clones) لا تُنسخ كمحتوى ثابت
+          sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
         }
       }
       try { findGenericSliders(claimed); } catch (e) { console.warn("generic sliders", e); }
@@ -279,7 +282,8 @@ const PBClone = (function () {
         const pr = pick(/(^|[\s_-])(prev|previous|back|left|arrow-left)([\s_-]|$)/i), nx = pick(/(^|[\s_-])(next|forward|right|arrow-right)([\s_-]|$)/i).filter(x => !pr.includes(x));
         let dots = []; try { for (const c of A.querySelectorAll("div,ul,ol,nav,span")) { if (inSl(c) || !/dot|bullet|indicator|pagina|pager|nav/i.test(lab(c))) continue; const k = [...c.children].filter(x => small(rectOf(x))); if (k.length >= 2 && (k.length === pages || k.length === slides.length)) { dots = k; break; } } } catch (e) { }
         const id = IDP + "s" + (++slN), ms = 5000;
-        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
+        const gp = sr.length > 1 ? sr[1].x - sr[0].x : 0, gStep = Math.abs(gp) > 8 && Math.abs(sr[1].y - sr[0].y) < Math.abs(gp) * .5 ? Math.round(gp * pv) : 0;
+        ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms].concat(gStep ? ["pbsw-" + id + "-" + (gStep < 0 ? "m" : "") + Math.abs(gStep)] : []) : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
         const actP = Math.floor(act / pv); dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
         pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
         const sl = { id, def: {}, root, slides: ordered, pv, pages, stacked: false, track, ms, dots, pr, nx, act, generic: 1 }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
@@ -300,16 +304,16 @@ const PBClone = (function () {
       }
     }
     function sliderPages(sl, clip) {
-      const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = r0 && out[r0[0]] ? out[r0[0]].set.zi : null;
-      for (let p = 1; p < sl.pages; p++) {
+      const rr = rectOf(sl.root), cl = inter(rr, clip); if (!cl) return; const s0 = rectOf(sl.slides[0]), r0 = elRange.get(sl.slides[0]), z0 = sl.circ ? (sl.z0 != null ? sl.z0 : z) : (r0 && out[r0[0]] ? out[r0[0]].set.zi : null);
+      for (let p = sl.circ ? 0 : 1; p < sl.pages; p++) {
         const N = sl.slides.length, win = sl.circ ? Array.from({ length: sl.pv }, (_, k) => sl.slides[(p + k) % N]) : sl.slides.slice(p * sl.pv, (p + 1) * sl.pv); if (!win.length) break; const saved = [], keep = (n, props) => { saved.push([n, n.getAttribute("style")]); props.forEach(([k, v]) => n.style.setProperty(k, v, "important")); };
         if (sl.stacked) { sl.slides.forEach(x => { if (!win.includes(x)) keep(x, [["display", "none"]]); }); win.forEach(x => keep(x, [["display", "block"], ["opacity", "1"], ["visibility", "visible"], ["transform", "none"]])); }
         else if (!sl.circ) { const w0 = rectOf(win[0]); keep(sl.track, [["translate", (s0.x - w0.x) + "px " + (s0.y - w0.y) + "px"]]); win.forEach(x => keep(x, [["opacity", "1"], ["visibility", "visible"]])); const w1 = rectOf(win[0]); if (Math.abs(w1.x - s0.x) > 6 || Math.abs(w1.y - s0.y) > 6) { saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); continue; } }
         const i0 = out.length;
         if (sl.circ) {      // نافذة دورية: كل شريحة تُزاح وحدها إلى موضعها في النافذة (الشرائح الملتفّة حول النهاية تبعد في الـDOM)
           saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); saved.length = 0;
-          const r1 = rectOf(sl.slides[1]), pitch = r1.x - s0.x;
-          win.forEach((x, k) => { const sv = [], kp = (n, props) => { sv.push([n, n.getAttribute("style")]); props.forEach(([a, v]) => n.style.setProperty(a, v, "important")); }; const rx = rectOf(x); kp(sl.track, [["translate", (s0.x + k * pitch - rx.x) + "px " + (s0.y - rx.y) + "px"]]); kp(x, [["opacity", "1"], ["visibility", "visible"]]); slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p, "pb-sl-off"]); visit(x, cl, null); sv.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); });
+          const pitch = sl.pitch;
+          win.forEach((x, k) => { const sv = [], kp = (n, props) => { sv.push([n, n.getAttribute("style")]); props.forEach(([a, v]) => n.style.setProperty(a, v, "important")); }; const rx = rectOf(x); kp(sl.track, [["translate", (s0.x + k * pitch - rx.x) + "px " + (s0.y - rx.y) + "px"]]); kp(x, [["opacity", "1"], ["visibility", "visible"]]); slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p].concat(p ? ["pb-sl-off"] : (k === 0 ? sl.tag0 : []))); visit(x, cl, null); sv.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st)); });
         } else win.forEach(x => { slSkip.delete(x); elCls.set(x, ["pbsl-" + sl.id + "-" + p, "pb-sl-off"]); visit(x, cl, null); });
         saved.reverse().forEach(([n, st]) => st == null ? n.removeAttribute("style") : n.setAttribute("style", st));
         const ws = out.slice(i0); if (ws.length && z0 != null) { const zmin = Math.min(...ws.map(w => w.set.zi)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + z0; }); }
