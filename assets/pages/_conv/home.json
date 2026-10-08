@@ -442,7 +442,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "4tjrwy6",
@@ -556,7 +557,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "sqo6nkz",
@@ -663,7 +665,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "qsm4ul0",
@@ -777,7 +780,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "f07hfi1",
@@ -817,11 +821,11 @@
        "type": "products",
        "set": {
         "mode": "all",
-        "limit": 6,
+        "limit": 12,
         "btn": "عرض المنتج",
         "showOld": true,
         "cardw": {
-         "d": 176,
+         "d": 190,
          "m": 150
         },
         "gap": {
@@ -834,13 +838,16 @@
         "bbg": "#22c55e",
         "anim": "fadeUp",
         "animDur": 0.8,
-        "animDelay": 0
+        "animDelay": 0,
+        "slider": true,
+        "slauto": 4
        }
       }
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "d28ncas",
@@ -900,7 +907,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "1pqq5pe",
@@ -1185,7 +1193,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "f2t45mr",
@@ -1251,7 +1260,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "3ib0z4r",
@@ -1772,7 +1782,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "6my5aiz",
@@ -2062,7 +2073,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "8unk3ii",
@@ -2421,7 +2433,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "n9bbmct",
@@ -2541,7 +2554,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "c915e9p",
@@ -2753,7 +2767,8 @@
      ]
     }
    ],
-   "grp": "main"
+   "grp": "main",
+   "free": []
   },
   {
    "id": "tyf64bn",
@@ -2835,7 +2850,8 @@
      ]
     }
    ],
-   "grp": "bot"
+   "grp": "bot",
+   "free": []
   }
  ],
  "seoTitle": "أليسوم ALYSSUM",
