@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.38.1">
+<meta name="admin-version" content="1.39.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1484,10 +1484,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.38.1"></script>
-<script src="assets/js/chrome-admin.js?v=1.38.1"></script>
-<script src="assets/js/admin-assistant.js?v=1.38.1"></script>
-<script src="assets/js/admin-update.js?v=1.38.1"></script>
+<script src="assets/js/ctl-help.js?v=1.39.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.39.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.39.0"></script>
+<script src="assets/js/admin-update.js?v=1.39.0"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -7280,7 +7280,13 @@ const PB = (() => {
   function hideRules(css, sel, s, edit) {
     DEVS.forEach(dev => { if (s["h" + dev]) css.d.push(edit ? `@media ${DEVQ[dev]}{${sel}{opacity:.25;outline:2px dashed #b83232}}` : `@media ${DEVQ[dev]}{${sel}{display:none!important}}`); });
   }
-  function customCss(css, sel, s) { if (s.css && String(s.css).trim()) css.d.push(String(s.css).replace(/selector/g, sel)); }
+  /* التأثيرات المنسوخة (set.fxs): كل عنصر {id,n:الاسم,on,tpl,p:{مفتاح:{l,t,v,o?}}}؛ القالب tpl فيه [[مفتاح]] يُستبدل بقيمة الإعداد ثم selector باسم العنصر.
+     تُنشئها أداة «نسخ قالب»، وتُعدَّل/تُعطَّل/تُحذف من تبويب «تأثيرات منسوخة» في إعدادات أي عنصر. */
+  function fxCompile(it) { if (!it || it.on === false || !it.tpl) return ""; const P = it.p || {}; return String(it.tpl).replace(/\[\[(\w+)\]\]/g, (m, k) => P[k] && P[k].v != null ? String(P[k].v) : "").replace(/<\/style/gi, ""); }
+  function customCss(css, sel, s) {
+    if (s.css && String(s.css).trim()) css.d.push(String(s.css).replace(/selector/g, sel));
+    if (Array.isArray(s.fxs)) s.fxs.forEach(it => { const c = fxCompile(it); if (c.trim()) css.d.push(c.replace(/selector/g, sel)); });
+  }
   function finishCss(css, base) {
     return css.d.join("\n") + `\n@media(max-width:${BP.t}px){\n${css.t.join("\n")}\n}\n@media(max-width:${BP.m}px){\n.pb-sec .pb-col{width:100%;flex:0 0 100%;max-width:100%}\n${css.m.join("\n")}\n}`;
   }
@@ -8317,9 +8323,9 @@ var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))},ED=
 C.forEach(function(f){try{f()}catch(e){}});C.length=0;
 function L(t,ev,fn,o){t.addEventListener(ev,fn,o);C.push(function(){t.removeEventListener(ev,fn,o)})}
 (function(){if(!window.matchMedia||!matchMedia('(hover:hover)').matches)return;$('.pb-fz').forEach(function(fz){var zs=[];$('[class*="hz-"]',fz).forEach(function(z){var m=(' '+z.className).match(/ hz-(z[0-9]+)/);if(m)zs.push({el:z,id:m[1],mem:$('.hzm-'+m[1],fz)})});if(!zs.length)return;var on={},raf=0,px=-1e5,py=-1e5;function upd(){raf=0;zs.forEach(function(o){var r=o.el.getBoundingClientRect(),hit=px>=r.left&&px<=r.right&&py>=r.top&&py<=r.bottom;if(hit!==!!on[o.id]){on[o.id]=hit;o.mem.forEach(function(m){m.classList.toggle('pb-hov',hit)})}})}L(fz,'pointermove',function(e){px=e.clientX;py=e.clientY;if(!raf)raf=requestAnimationFrame(upd)});L(fz,'pointerleave',function(){px=-1e5;py=-1e5;upd()})})})();
-(function(){var P=$('.pb-pin');if(!P.length||ED)return;P.forEach(function(p){var s=p.closest('.pb-sec');if(s){s.style.zIndex=70;s.style.overflow='visible'}['.pb-in','.pb-fz'].forEach(function(q){var z=p.closest(q);if(z)z.style.overflow='visible'});var c=getComputedStyle(p);p.__t=(parseFloat(c.getPropertyValue('--pin'))||0)+(parseFloat(c.getPropertyValue('--pino'))||0)});function f(){P.forEach(function(p){var sh=p.__sh||0,r=p.getBoundingClientRect(),k=p.offsetHeight?r.height/p.offsetHeight:1,ns=Math.max(0,(p.__t-(r.top-sh*k))/(k||1));if(Math.abs(ns-sh)>.4){p.__sh=ns;p.style.translate='0 '+ns+'px'}})}L(window,'scroll',f,{passive:true});L(window,'resize',f);f()})();
-(function(){var P=$('.pb-par');if(!P.length||ED)return;P.forEach(function(p){var k=parseFloat(getComputedStyle(p).getPropertyValue('--par'));p.__k=isNaN(k)?.3:k});var raf=0;function f(){raf=0;var h=innerHeight;P.forEach(function(p){var r=p.getBoundingClientRect();if(r.bottom<-300||r.top>h+300)return;p.style.setProperty('--py',((h/2-(r.top+r.height/2))*p.__k*.5)+'px')})}function q(){if(!raf)raf=requestAnimationFrame(f)}L(window,'scroll',q,{passive:true});L(window,'resize',q);f()})();
-(function(){var G={};function g(id){return G[id]||(G[id]={h:[],b:[],H:0,thr:0,on:0,hov:0,dw:1280,open:0})}$('[class*="pbd"]').forEach(function(e){String(e.className).split(' ').forEach(function(c){var m;if(m=c.match(/^pbdh-([a-z0-9]+)$/))g(m[1]).h.push(e);else if(m=c.match(/^pbds-([a-z0-9]+)$/)){var q=g(m[1]);(q.s=q.s||[]).push(e)}else if(m=c.match(/^pbdb-([a-z0-9]+)$/)){g(m[1]).b.push(e);e.classList.add('pb-gx-m')}else if(m=c.match(/^pbdm-([a-z0-9]+)-([0-9]+)-([0-9]+)-([01])-([01])-([0-9]+)$/)){var o=g(m[1]);o.H=+m[2];o.thr=+m[3];o.on=+m[4];o.hov=+m[5];o.dw=+m[6]}})});var ids=Object.keys(G).filter(function(k){return G[k].b.length&&G[k].h.length}),gs=ids.map(function(k){return G[k]});if(!gs.length)return;var fz=gs[0].b[0].closest('.pb-fz'),inn=fz&&fz.parentNode;if(!fz)return;var u0=fz.getBoundingClientRect().width/gs[0].dw||1,bd=inn.offsetHeight/u0,ST2=[];gs.forEach(function(o){(o.s||[]).forEach(function(e){if(ST2.indexOf(e)<0){ST2.push(e);e.__h0=e.offsetHeight/u0}})});var touch=!matchMedia('(hover:hover)').matches;function upd(){var u=fz.getBoundingClientRect().width/gs[0].dw||1,tot=0;[].slice.call(fz.children).forEach(function(w){if(w.classList.contains('pb-pin'))return;var y=w.offsetTop/u,sh=0;gs.forEach(function(o){var d=o.open-o.on;if(d&&o.H&&y>=o.thr&&o.b.indexOf(w)<0)sh+=d*o.H});w.style.translate=sh?'0 '+(sh*u)+'px':''});ST2.forEach(function(e){e.__x=0});gs.forEach(function(o){tot+=(o.open-o.on)*o.H;(o.s||[]).forEach(function(e){e.__x+=(o.open-o.on)*o.H})});ST2.forEach(function(e){e.style.height=e.__x?Math.max(0,(e.__h0+e.__x)*u)+'px':''});if(tot||inn.__t){inn.style.minHeight=Math.max(0,(bd+tot)*u)+'px';inn.__t=1}}ids.forEach(function(id){var o=G[id];function set(v){o.open=v?1:0;ST['d'+id]=o.open;o.b.forEach(function(e){e.classList.toggle('pb-gx-off',!v)});o.h.forEach(function(e){e.classList.toggle('pb-gx-open',!!v)});upd()}o.set=set;API.dg[id]={set:set};var tm=0;function leave(){clearTimeout(tm);tm=setTimeout(function(){set(0)},180)}function enter(){clearTimeout(tm);set(1)}C.push(function(){clearTimeout(tm)});o.h.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(o.hov&&!touch)return;ev.preventDefault();set(!o.open)});if(o.hov&&!touch){e.addEventListener('mouseenter',enter);e.addEventListener('mouseleave',leave)}});if(o.hov&&!touch)o.b.forEach(function(e){e.addEventListener('mouseenter',enter);e.addEventListener('mouseleave',leave)});set(ST['d'+id]!=null?ST['d'+id]:o.on)});L(document,'click',function(ev){gs.forEach(function(o){if(o.open&&!o.H&&!o.on&&!o.h.concat(o.b).some(function(e){return e.contains(ev.target)}))o.set(0)})});L(window,'resize',upd)})();
+(function(){var P=$('.pb-pin');if(!P.length||ED)return;P.forEach(function(p){var s=p.closest('.pb-sec');if(s){s.style.zIndex=70;s.style.overflow='visible'}['.pb-in','.pb-fz'].forEach(function(q){var z=p.closest(q);if(z)z.style.overflow='visible'});});function rv(p,n){var v=getComputedStyle(p).getPropertyValue(n).trim();if(!v)return 0;var i=document.createElement('i');i.style.cssText='position:absolute;visibility:hidden;pointer-events:none;width:0;height:'+v;p.appendChild(i);var h=i.offsetHeight;p.removeChild(i);return h}function ini(){P.forEach(function(p){p.__on=!!getComputedStyle(p).getPropertyValue('--pin').trim();p.__t=rv(p,'--pin')+rv(p,'--pino')})}ini();function f(){P.forEach(function(p){if(!p.__on){if(p.__sh){p.__sh=0;p.style.translate=''}return}var sh=p.__sh||0,r=p.getBoundingClientRect(),k=p.offsetHeight?r.height/p.offsetHeight:1,ns=Math.max(0,(p.__t-(r.top-sh*k))/(k||1));if(Math.abs(ns-sh)>.4){p.__sh=ns;p.style.translate='0 '+ns+'px'}})}L(window,'scroll',f,{passive:true});L(window,'resize',function(){ini();f()});f()})();
+(function(){var P=$('.pb-par');if(!P.length||ED)return;P.forEach(function(p){var v=getComputedStyle(p).getPropertyValue('--par').trim(),k=parseFloat(v);p.__on=!!v;p.__k=isNaN(k)?.3:k});var raf=0;function f(){raf=0;var h=innerHeight;P.forEach(function(p){if(!p.__on)return;var r=p.getBoundingClientRect();if(r.bottom<-300||r.top>h+300)return;p.style.setProperty('--py',((h/2-(r.top+r.height/2))*p.__k*.5)+'px')})}function q(){if(!raf)raf=requestAnimationFrame(f)}L(window,'scroll',q,{passive:true});L(window,'resize',q);f()})();
+(function(){var G={};function g(id){return G[id]||(G[id]={h:[],b:[],x:[],H:0,thr:0,on:0,hov:0,dw:1280,open:0})}$('[class*="pbd"]').forEach(function(e){String(e.className).split(' ').forEach(function(c){var m;if(m=c.match(/^pbdh-([a-z0-9]+)$/))g(m[1]).h.push(e);else if(m=c.match(/^pbds-([a-z0-9]+)$/)){var q=g(m[1]);(q.s=q.s||[]).push(e)}else if(m=c.match(/^pbdx-([a-z0-9]+)$/)){g(m[1]).x.push(e)}else if(m=c.match(/^pbdb-([a-z0-9]+)$/)){g(m[1]).b.push(e);e.classList.add('pb-gx-m')}else if(m=c.match(/^pbdm-([a-z0-9]+)-([0-9]+)-([0-9]+)-([01])-([01])-([0-9]+)$/)){var o=g(m[1]);o.H=+m[2];o.thr=+m[3];o.on=+m[4];o.hov=+m[5];o.dw=+m[6]}})});var ids=Object.keys(G).filter(function(k){return G[k].b.length&&G[k].h.length}),gs=ids.map(function(k){return G[k]});if(!gs.length)return;var touch=!matchMedia('(hover:hover)').matches,BK=[];gs.forEach(function(o){o.fz=o.b[0].closest('.pb-fz');if(!o.fz)return;var B=BK.filter(function(x){return x.fz===o.fz})[0];if(!B){B={fz:o.fz,inn:o.fz.parentNode,dw:o.dw,gs:[],ST2:[]};B.u0=B.fz.getBoundingClientRect().width/B.dw||1;B.bd=B.inn.offsetHeight/B.u0;BK.push(B)}B.gs.push(o);o.B=B;(o.s||[]).forEach(function(e){if(B.ST2.indexOf(e)<0){B.ST2.push(e);e.__h0=e.offsetHeight/B.u0}})});function upd(B){var u=B.fz.getBoundingClientRect().width/B.dw||1,tot=0;[].slice.call(B.fz.children).forEach(function(w){if(w.classList.contains('pb-pin'))return;var y=w.offsetTop/u,sh=0;B.gs.forEach(function(o){var d=o.open-o.on;if(d&&o.H&&y>=o.thr&&o.b.indexOf(w)<0)sh+=d*o.H});w.style.translate=sh?'0 '+(sh*u)+'px':''});B.ST2.forEach(function(e){e.__x=0});B.gs.forEach(function(o){tot+=(o.open-o.on)*o.H;(o.s||[]).forEach(function(e){e.__x+=(o.open-o.on)*o.H})});B.ST2.forEach(function(e){e.style.height=e.__x?Math.max(0,(e.__h0+e.__x)*u)+'px':''});if(tot||B.inn.__t){B.inn.style.minHeight=Math.max(0,(B.bd+tot)*u)+'px';B.inn.__t=1}}ids.forEach(function(id){var o=G[id];if(!o.B)return;function set(v){o.open=v?1:0;ST['d'+id]=o.open;o.b.forEach(function(e){e.classList.toggle('pb-gx-off',!v)});o.h.forEach(function(e){e.classList.toggle('pb-gx-open',!!v)});upd(o.B)}o.set=set;API.dg[id]={set:set};o.x.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){ev.preventDefault();set(0)})});var tm=0;function leave(){clearTimeout(tm);tm=setTimeout(function(){set(0)},180)}function enter(){clearTimeout(tm);set(1)}C.push(function(){clearTimeout(tm)});o.h.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(o.hov&&!touch)return;ev.preventDefault();set(!o.open)});if(o.hov&&!touch){e.addEventListener('mouseenter',enter);e.addEventListener('mouseleave',leave)}});if(o.hov&&!touch)o.b.forEach(function(e){e.addEventListener('mouseenter',enter);e.addEventListener('mouseleave',leave)});set(ST['d'+id]!=null?ST['d'+id]:o.on)});L(document,'keydown',function(ev){if(ev.key==='Escape')gs.forEach(function(o){if(o.open&&!o.H&&!o.on&&o.set)o.set(0)})});L(document,'click',function(ev){gs.forEach(function(o){if(o.open&&!o.H&&!o.on&&o.set&&!o.h.concat(o.b).some(function(e){return e.contains(ev.target)}))o.set(0)})});L(window,'resize',function(){BK.forEach(upd)})})();
 (function(){var G={};function g(id){return G[id]||(G[id]={s:[],d:[],p:[],n:[],ms:5000,i:0,t:0})}$('[class*="pbs"]').forEach(function(e){String(e.className).split(' ').forEach(function(c){var m;if(m=c.match(/^pbsl-([a-z0-9]+)-([0-9]+)$/)){var o=g(m[1]);(o.s[+m[2]]=o.s[+m[2]]||[]).push(e);e.classList.add('pb-sl-m')}else if(m=c.match(/^pbsd-([a-z0-9]+)-([0-9]+)$/)){var o2=g(m[1]);(o2.d[+m[2]]=o2.d[+m[2]]||[]).push(e)}else if(m=c.match(/^pbsp-([a-z0-9]+)$/))g(m[1]).p.push(e);else if(m=c.match(/^pbsn-([a-z0-9]+)$/))g(m[1]).n.push(e);else if(m=c.match(/^pbsi-([a-z0-9]+)-([0-9]+)$/))g(m[1]).ms=+m[2]})});Object.keys(G).forEach(function(id){var o=G[id],N=o.s.length;if(N<2)return;if(ED)o.ms=0;function show(k){k=(k+N)%N;o.i=k;ST['s'+id]=k;o.s.forEach(function(m,j){(m||[]).forEach(function(e){e.classList.toggle('pb-sl-off',j!==k);e.classList.toggle('pb-sl-l',j<k);e.classList.toggle('pb-sl-r',j>k)})});o.d.forEach(function(m,j){(m||[]).forEach(function(e){e.classList.toggle('pb-dot-on',j===k);e.classList.toggle('pb-dot-off',j!==k)})})}API.sl[id]={show:show};function rst(){clearInterval(o.t);if(o.ms>0)o.t=setInterval(function(){if(!document.hidden&&!o.hov)show(o.i+1)},o.ms)}C.push(function(){clearInterval(o.t)});o.p.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(o.i-1);rst()})});o.n.forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(o.i+1);rst()})});o.d.forEach(function(m,j){(m||[]).forEach(function(e){e.style.cursor='pointer';e.addEventListener('click',function(ev){if(!ED)ev.preventDefault();show(j);rst()})})});var x0=null;if(!ED)o.s.forEach(function(m){(m||[]).forEach(function(e){e.addEventListener('pointerdown',function(ev){x0=ev.clientX});e.addEventListener('pointerup',function(ev){if(x0!=null&&Math.abs(ev.clientX-x0)>50){show(o.i+(ev.clientX<x0?1:-1));rst()}x0=null});e.addEventListener('mouseenter',function(){o.hov=1});e.addEventListener('mouseleave',function(){o.hov=0})})});show(ST['s'+id]!=null?ST['s'+id]:0);rst()})})();
 })();`;
 
@@ -8410,7 +8416,7 @@ ${hasHdr ? `<script>var REL=${JSON.stringify(ctx.base)};<\/script>` : ""}${(hasP
 </body></html>`;
   }
 
-  return { FX_JS, galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, shapeThumb, svgShape, isVid, barRich, setChrome, ICONS, iconHtml, isIconTok, BMARKS, TPLS, CATS, SC_LIST, HIDE_OPTS, expandSC, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { FX_JS, fxCompile, galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, shapeThumb, svgShape, isVid, barRich, setChrome, ICONS, iconHtml, isIconTok, BMARKS, TPLS, CATS, SC_LIST, HIDE_OPTS, expandSC, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -8512,7 +8518,7 @@ body{overflow-x:hidden;margin:0}`;
 .mk-pre{display:flex;flex-wrap:wrap;gap:.25rem}.mk-pre .pbx-small{flex:1;white-space:nowrap}.mk-pre .pbx-small.on{background:#ede9fe;border-color:#7c3aed;color:#5b21b6}
 .mk-gl{position:fixed;z-index:10039;pointer-events:none;border:0 dashed rgba(124,58,237,.5);transition:border-color .1s}.mk-gl.v{width:0;border-left-width:1.5px}.mk-gl.h{height:0;border-top-width:1.5px}.mk-gl.hot{border-style:solid;border-color:#ec4899}
 .pbx-pend{align-items:center;gap:.35rem;background:#ecfdf5;border:1.5px solid #86d4b0;border-radius:10px;padding:.35rem .5rem;margin:.35rem 0;font-size:.74rem;font-weight:700;color:#14573b;position:sticky;top:1.6rem;z-index:6}.pbx-pend span{flex:1;line-height:1.5}.pbx-pend button{border:0;border-radius:8px;padding:.3rem .6rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.74rem}.pbx-pend .ok{background:#0d9488;color:#fff}.pbx-pend .no{background:#fff;color:#b91c1c;border:1.5px solid #fca5a5}.pbx-ih{display:flex;align-items:center;gap:.4rem;font-weight:900;color:#173f35;position:sticky;top:-.7rem;z-index:6;background:#fff;margin:-.7rem -.7rem .5rem;padding:.7rem .7rem .5rem;border-bottom:1px solid #eee}.pbx-ih small{color:#999;font-weight:600}
-.pbx-itabs{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-itabs button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.4rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-itabs button.on{background:#173f35;color:#fff;border-color:#173f35}
+.pbx-fxi{border:1.5px solid #e6dfcf;border-radius:12px;padding:.55rem .65rem;margin-bottom:.55rem;background:#fff}.pbx-fxi.off{opacity:.55}.pbx-fxi .fxh{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem}.pbx-fxi .fxh b{flex:1;font-size:.84rem;color:#173f35}.pbx-fxi .fxh label{font-size:.72rem;display:flex;gap:.25rem;align-items:center;white-space:nowrap}.pbx-fxi .fxh button{border:0;background:#fee2e2;color:#991b1b;border-radius:8px;padding:.15rem .5rem;cursor:pointer}.pbx-fxi .fxf{display:block;font-size:.74rem;color:#6b6556;margin:.3rem 0}.pbx-fxi .fxf input,.pbx-fxi .fxf select,.pbx-fxi .fxf textarea{width:100%;box-sizing:border-box;border:1.5px solid #e0d9c8;border-radius:8px;padding:.3rem .45rem;font-family:inherit;margin-top:.15rem}.pbx-fxn{font-size:.76rem;color:#6b6556;line-height:1.7;margin:0 0 .6rem}.pbx-itabs{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-itabs button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.4rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-itabs button.on{background:#173f35;color:#fff;border-color:#173f35}
 .pbx-dv{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-dv button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.3rem;cursor:pointer;font-size:.9rem}.pbx-dv button.on{background:#c8a24b;border-color:#c8a24b}
 .pbx-f{margin-bottom:.7rem}.pbx-f>label{display:flex;align-items:center;gap:.3rem;font-size:.78rem;font-weight:800;color:#444;margin-bottom:.2rem}.pbx-f .dv{font-size:.7rem;opacity:.7}.pbx-f .rs{margin-inline-start:auto;border:0;background:none;cursor:pointer;color:#b83232;font-size:.8rem}
 .pbx-f input[type=text],.pbx-f input[type=number],.pbx-f input[type=datetime-local],.pbx-f select,.pbx-f textarea{width:100%;border:1.5px solid #e0d9c8;border-radius:8px;padding:.4rem .5rem;font-family:inherit;font-size:.85rem;background:#fff}
@@ -10677,11 +10683,26 @@ body{overflow-x:hidden;margin:0}`;
     const MI = typeof ModernIcons !== "undefined" ? ModernIcons : null, B = [["hd", "monitor", "المكتب"], ["ht", "tablet", "التابلت"], ["hm", "mobile", "الهاتف"]];
     return `<div class="pbx-vis"><span>الظهور في:</span>${B.map(([k, ic, n]) => { const off = !!inf.set[k]; return `<button type="button" data-vis="${k}" class="${off ? "off" : "on"}" title="${off ? "مخفي في " + n + " — انقر لإظهاره" : "ظاهر في " + n + " — انقر لإخفائه"}">${MI ? MI.svg(ic) : ""}<b>${n}</b></button>`; }).join("")}</div>`;
   }
+  /* تبويب «تأثيرات منسوخة»: التأثيرات التي نسختها أداة «نسخ قالب» مع العنصر (set.fxs) بأسمائها وإعداداتها: تعديل، تعطيل، حذف */
+  const hasFx = inf => !!(inf && inf.kind === "widget" && Array.isArray(inf.set.fxs) && inf.set.fxs.length);
+  const FX_ANIM = [["", "بدون"], ["fadeIn", "ظهور تدريجي"], ["fadeUp", "صعود"], ["fadeDown", "نزول"], ["zoomIn", "تكبير"], ["slideStart", "انزلاق من الجانب"]];
+  function fxTabHtml(inf) {
+    const its = inf.set.fxs || [], X = PB.esc, fld = (i, k, pr) => {
+      const a = `data-fxi="${i}" data-fxk="${k}"`;
+      if (pr.t === "num") return `<label class="fxf">${X(pr.l)}<input type="number" step="any" ${a} value="${X(pr.v)}"></label>`;
+      if (pr.t === "select") return `<label class="fxf">${X(pr.l)}<select ${a}>${(pr.o || []).map(([v, n]) => `<option value="${X(v)}"${String(pr.v) === v ? " selected" : ""}>${X(n)}</option>`).join("")}</select></label>`;
+      if (pr.t === "code") return `<label class="fxf">${X(pr.l)}<textarea ${a} rows="${Math.min(10, Math.max(3, String(pr.v || "").split("\n").length + 1))}" spellcheck="false" dir="ltr">${X(pr.v)}</textarea></label>`;
+      return `<label class="fxf">${X(pr.l)}<input type="text" ${a} value="${X(pr.v)}" dir="ltr"></label>`;
+    };
+    const native = inf.set.anim ? `<div class="pbx-fxi"><div class="fxh"><b>حركة الظهور بالتمرير</b></div><label class="fxf">النوع<select data-fxn="anim">${FX_ANIM.map(([v, n]) => `<option value="${v}"${inf.set.anim === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="fxf">المدة (ثانية)<input type="number" step="0.1" data-fxn="animDur" value="${X(inf.set.animDur != null ? inf.set.animDur : 0.6)}"></label><label class="fxf">التأخير (ثانية)<input type="number" step="0.1" data-fxn="animDelay" value="${X(inf.set.animDelay != null ? inf.set.animDelay : 0)}"></label></div>` : "";
+    return `<p class="pbx-fxn">نُسخت هذه التأثيرات مع العنصر من الموقع الأصلي. عدّل إعداداتها أو عطّلها (إيقاف) أو احذفها. تظهر نتيجتها على الصفحة مباشرة (التحويم والحركات تعمل داخل المحرّر وفي المعاينة).</p>${native}` + its.map((it, i) => `<div class="pbx-fxi${it.on === false ? " off" : ""}"><div class="fxh"><b>${X(it.n || "تأثير")}</b><label><input type="checkbox" data-fxon="${i}" ${it.on === false ? "" : "checked"}> مفعّل</label><button type="button" data-fxdel="${i}" title="حذف هذا التأثير">حذف</button></div>${Object.keys(it.p || {}).map(k => fld(i, k, it.p[k])).join("")}</div>`).join("");
+  }
   function renderInspector() {
     updateMbar(); try { drawQbar(); } catch (x) { console.warn(x); }
     const el = $("pbx-insp"); if (!el) return; if (multiOn()) { multiPanel(el); return; } const inf = selInfo(), newSel = E.inspSel !== E.sel; E.inspSel = E.sel; if (newSel) setTimeout(() => { el.scrollTop = 0; }, 0);      // التحوّل لعنصر آخر: الإعدادات من أعلى القائمة، واسم العنصر ثابت أعلاها
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
+    if (E.tab === "f" && !hasFx(inf)) E.tab = "c";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
     el.innerHTML = `<div class="pbx-ih">${lbl}<button type="button" class="pbx-pimgb" data-pimg="1" title="تحميل صورة: يفتح مكان شريط الإعدادات مكتبة صور هذه الصفحة لرفع صور جديدة وحذفها وسحبها إلى الصفحة">${ico("image", 14)}<span>تحميل صورة</span></button></div>
 <div id="pbx-pend" class="pbx-pend" style="display:none"><span>👁 تعديلاتك تظهر مباشرة على الصفحة</span><button type="button" class="ok" data-pend="ok">✓ تأكيد</button><button type="button" class="no" data-pend="no">↩ إلغاء</button></div>
@@ -10689,8 +10710,8 @@ ${quickHtml(inf)}
 ${visRow(inf)}
 <div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-cp"><small>نسخ تصميم ${DEVIC[E.dev]} ${DEVNAME[E.dev]} إلى:</small><select id="cp-scope"><option value="sel">العنصر المحدد</option>${FREE_ONLY ? "" : '<option value="sec">القسم كله</option>'}<option value="all">الصفحة كلها</option></select>${DEVS.filter(d => d !== E.dev).map(d => `<button class="pbx-small" data-cpy="${d}" title="نسخ إلى ${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
-<div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
-${inspGroups(all, inf)}`;
+<div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].concat(hasFx(inf) ? [["f", "تأثيرات منسوخة (" + (inf.set.fxs.length + (inf.set.anim ? 1 : 0)) + ")"]] : []).map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}"${k === "f" ? ' style="flex:2.3;white-space:nowrap;font-size:.74rem"' : ""}>${n}</button>`).join("")}</div>
+${E.tab === "f" ? fxTabHtml(inf) : inspGroups(all, inf)}`;
     updPend();
   }
   function field(c, set) {
@@ -10784,6 +10805,8 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   }
   function onInspInput(e) {
     const t = e.target, inf = selInfo(); if (!inf) return;
+    if (t.dataset.fxk !== undefined) { const it = (inf.set.fxs || [])[+t.dataset.fxi], pr = it && it.p && it.p[t.dataset.fxk]; if (pr) { pr.v = pr.t === "num" ? (t.value === "" ? 0 : Number(t.value)) : t.value; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); } return; }
+    if (t.dataset.fxn) { const k = t.dataset.fxn; if (k === "anim") { if (t.value) inf.set.anim = t.value; else { delete inf.set.anim; delete inf.set.animDur; delete inf.set.animDelay; } } else inf.set[k] = t.value === "" ? 0 : Number(t.value); schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); if (k === "anim" && !t.value) renderInspector(); return; }
     if (t.dataset.bc !== undefined) { const a = Array.isArray(inf.set.mcols) ? inf.set.mcols : (inf.set.mcols = []); a[Number(t.dataset.bc)] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qrot) { const v = Number(t.value); setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); const b = t.parentNode.querySelector("b"); if (b) b.textContent = v + "°"; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
@@ -10803,7 +10826,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   }
   const positionOverlaySoon = () => setTimeout(positionOverlay, 40);
   function onInspChange(e) {
-    const t = e.target; if (t.dataset && t.dataset.gem) { PBSmart.setGem(t.checked); return; }
+    const t = e.target; if (t.dataset && t.dataset.fxon !== undefined) { const inf = selInfo(), it = inf && (inf.set.fxs || [])[+t.dataset.fxon]; if (it) { it.on = t.checked; E.nextLabel = "تفعيل/تعطيل تأثير"; afterEdit(); } return; } if (t.dataset && t.dataset.gem) { PBSmart.setGem(t.checked); return; }
     if (t.dataset && t.dataset.pp) { const inf = selInfo(); if (!inf) return; const cur = new Set(String(inf.set[t.dataset.pp] || "").split(/[\s,،]+/).filter(Boolean)); t.checked ? cur.add(t.dataset.v) : cur.delete(t.dataset.v); inf.set[t.dataset.pp] = [...cur].join(","); afterEdit(); return; } if (t.dataset.gk) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox") { gradInput(t, selInfo()); renderInspector(); } else renderInspector(); return; } if (t.dataset.k || t.dataset.rep) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox" || t.type === "color") { onInspInput(e); renderInspector(); } if (t.dataset.range) renderInspector(); }
     if (t.dataset.fileFor) {}
     if (t.dataset.pzk) { if (PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value)) renderInspector(); return; }
@@ -10821,6 +10844,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       if (!was) { const ip = $("pbx-insp"), b = ip.querySelector(`[data-ac="${k}"]`), ih = ip.querySelector(".pbx-ih"); if (b) ip.scrollTop += b.getBoundingClientRect().top - ip.getBoundingClientRect().top - (ih ? ih.offsetHeight : 0) - 4 + (-0.7 * 16 * 0); }
       return; }
     if (!inf) return;
+    if (t.dataset.fxdel !== undefined) { const a = inf.set.fxs || []; a.splice(+t.dataset.fxdel, 1); if (!a.length) { delete inf.set.fxs; if (!inf.set.anim) E.tab = "c"; } E.nextLabel = "حذف تأثير منسوخ"; afterEdit(); return; }
     if (t.dataset.vis) { inf.set[t.dataset.vis] = !inf.set[t.dataset.vis]; if (!inf.set[t.dataset.vis]) delete inf.set[t.dataset.vis]; E.nextLabel = "تغيير الظهور"; afterEdit(); return; }
     if (t.dataset.q) { onQuick(t.dataset.q); return; }
     if (t.dataset.shp) { inf.set.shape = t.dataset.shp; if (["stroke", "line"].includes(PB.SHAPES[t.dataset.shp][1]) && !inf.set.stroke) inf.set.stroke = inf.set.fill || "#c8a24b"; afterEdit(); return; }
@@ -13787,6 +13811,11 @@ ${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">�
    التأثيرات تُكتب في خانة «CSS مخصص» لكل عنصر (set.css) فيمكن تعديلها من المطوّر؛ والتحويم على «بطاقة كاملة» يعمل
    بمناطق تحويم (hz-/hzm-) يشغّلها سكربت صغير في الصفحة المنشورة (RUNTIME_JS). */
 const PBCloneFx = (() => {
+  /* عناصر «التأثيرات المنسوخة» القابلة للتعديل (set.fxs): {id,n,on,tpl,p:{مفتاح:{l,t,v,o?}}}؛ يترجمها PB.fxCompile إلى CSS (انظر pagebuilder.js) ويعرضها تبويب «تأثيرات منسوخة» في الإعدادات */
+  const uid = () => Math.random().toString(36).slice(2, 8);
+  const mkItem = (n, tpl, p) => ({ id: uid(), n, on: true, tpl, p });
+  const rawP = css => ({ code: { l: "الكود (CSS) — كلمة selector = العنصر نفسه", t: "code", v: css } });
+  const pushItem = (w, it) => { (w.set.fxs = w.set.fxs || []).push(it); return it; };
   const HOVER_PROPS = new Set(["transform", "translate", "scale", "rotate", "opacity", "filter", "backdrop-filter", "box-shadow", "text-shadow", "color", "background-color", "background", "border-color", "text-decoration-color", "letter-spacing", "-webkit-text-fill-color"]);
   const BOX_PROPS = new Set(["transform", "translate", "scale", "rotate", "opacity", "filter", "backdrop-filter", "box-shadow"]);
   const TEXT_PROPS = new Set(["color", "text-shadow", "text-decoration-color", "letter-spacing", "-webkit-text-fill-color"]);
@@ -13820,7 +13849,7 @@ const PBCloneFx = (() => {
 
   function create(c) {
     const { doc, win, W, out, add, col, px, r1, r2 } = c, S = { anims: new Map(), trans: new Map(), kf: new Map(), hover: [], own: new Map(), range: new Map(), zones: new Map(), zn: 0, stats: { shadow: 0, tshadow: 0, filter: 0, anim: 0, entr: 0, hover: 0, zone: 0 } };
-    const pass = (w, css) => { w.set.css = ((w.set.css ? w.set.css + "\n" : "") + css); };
+    const pass = (w, css, n) => pushItem(w, mkItem(n || "تأثير CSS", "[[code]]", rawP(css)));
     const addCls = (w, k) => { if (!(" " + (w.set.cls || "") + " ").includes(" " + k + " ")) w.set.cls = ((w.set.cls || "") + " " + k).trim(); };
     const geomOf = w => ({ x: (w.set.fx.d || 0) / 100 * W, y: w.set.fy.d || 0, w: (w.set.fwd.d || 0) / 100 * W, h: w.set.fh.d || 0 });
 
@@ -13854,10 +13883,10 @@ const PBCloneFx = (() => {
       const cs = win.getComputedStyle(e), paint = mine.find(w => w.type === "shape" || w.type === "image" || w.type === "button"), txts = mine.filter(w => w.type === "text" || w.type === "heading" || w.type === "button");
       const fl = []; const ds = dropShadows(cs.boxShadow); if (ds && paint && cs.display !== "inline") { fl.push(ds); S.stats.shadow++; }
       if (cs.filter && cs.filter !== "none") { fl.unshift(cs.filter); S.stats.filter++; }
-      if (fl.length && paint) pass(paint, `selector{filter:${fl.join(" ")}}`);
-      if (cs.backdropFilter && cs.backdropFilter !== "none" && (paint || mine[0])) { const t = paint || mine[0]; pass(t, `selector{backdrop-filter:${cs.backdropFilter};-webkit-backdrop-filter:${cs.backdropFilter}}`); S.stats.filter++; }
-      if (cs.mixBlendMode && cs.mixBlendMode !== "normal") mine.forEach(w => pass(w, `selector{mix-blend-mode:${cs.mixBlendMode}}`));
-      if (cs.textShadow && cs.textShadow !== "none") txts.forEach(w => { const sel = w.type === "button" ? "selector .pb-btn" : "selector.pb-w .pb-t,selector.pb-w .pb-t *"; pass(w, `${sel}{text-shadow:${cs.textShadow}!important}`); S.stats.tshadow++; });
+      if (fl.length && paint) { const fv = fl.join(" "), m = /^drop-shadow\((-?[\d.]+)px (-?[\d.]+)px (-?[\d.]+)px (.+)\)$/.exec(fv); if (m && fv.split("drop-shadow(").length === 2) pushItem(paint, mkItem("ظل العنصر", "selector{filter:drop-shadow([[x]]px [[y]]px [[b]]px [[c]])}", { x: { l: "إزاحة أفقية (px)", t: "num", v: +m[1] }, y: { l: "إزاحة عمودية (px)", t: "num", v: +m[2] }, b: { l: "التمويه (px)", t: "num", v: +m[3] }, c: { l: "اللون", t: "text", v: m[4] } })); else pushItem(paint, mkItem("فلتر / ظل", "selector{filter:[[v]]}", { v: { l: "قيمة filter", t: "text", v: fv } })); }
+      if (cs.backdropFilter && cs.backdropFilter !== "none" && (paint || mine[0])) { const t = paint || mine[0]; pushItem(t, mkItem("تمويه الخلفية (زجاجي)", "selector{backdrop-filter:[[v]];-webkit-backdrop-filter:[[v]]}", { v: { l: "backdrop-filter", t: "text", v: cs.backdropFilter } })); S.stats.filter++; }
+      if (cs.mixBlendMode && cs.mixBlendMode !== "normal") mine.forEach(w => pushItem(w, mkItem("دمج الألوان", "selector{mix-blend-mode:[[v]]}", { v: { l: "mix-blend-mode", t: "text", v: cs.mixBlendMode } })));
+      if (cs.textShadow && cs.textShadow !== "none") txts.forEach(w => { const sel = w.type === "button" ? "selector .pb-btn" : "selector.pb-w .pb-t,selector.pb-w .pb-t *"; pushItem(w, mkItem("ظل النص / توهّج", sel + "{text-shadow:[[v]]!important}", { v: { l: "text-shadow", t: "text", v: cs.textShadow } })); S.stats.tshadow++; });
       const o = parseFloat(cs.opacity); if (isFinite(o) && o < 0.98 && o > 0) all.forEach(w => { w.set.op = r2(Math.max(.02, (w.set.op != null ? w.set.op : 1) * o)); });
       // تدوير عنصر مفرد: نعيد القياس من حجم التخطيط الحقيقي (المستطيل المقاس يشمل التدوير) ثم نضع rot
       if (cs.transform && cs.transform !== "none" && mine.length === 1 && e.offsetWidth) {
@@ -13871,7 +13900,7 @@ const PBCloneFx = (() => {
     function pin(e, cs, all) {
       if (cs.position !== "fixed" && cs.position !== "sticky") return; const t = parseFloat(cs.top); if (!isFinite(t)) return;
       const r = e.getBoundingClientRect(); if (r.height > 300 || r.height > win.innerHeight * .45 || r.width < 60) return;
-      all.forEach(w => { const g = geomOf(w); pass(w, `selector{--pin:${Math.round(t)}px;--pino:${Math.round(g.y - r.top)}px;z-index:60}`); addCls(w, "pb-pin"); }); S.stats.pin = (S.stats.pin || 0) + 1;
+      all.forEach(w => { const g = geomOf(w); pushItem(w, mkItem("تثبيت عند التمرير (هيدر/شريط ثابت)", "selector{--pin:calc(var(--u)*[[top]]);--pino:calc(var(--u)*[[off]]);z-index:[[z]]}", { top: { l: "المسافة من أعلى الشاشة (px)", t: "num", v: Math.round(t) }, off: { l: "إزاحة العنصر داخل المجموعة (px)", t: "num", v: Math.round(g.y - r.top) }, z: { l: "الترتيب z-index", t: "num", v: 60 } })); addCls(w, "pb-pin"); }); S.stats.pin = (S.stats.pin || 0) + 1;
     }
     function origin(w, e) {      // مركز الحاوية بالنسبة لإطار العنصر (ليدور/يكبّر المحتوى حول مركز البطاقة لا مركز كل عنصر)
       const r = e.getBoundingClientRect(), g = geomOf(w); return `${Math.round(r.left + r.width / 2 - g.x)}px ${Math.round(r.top + r.height / 2 - g.y)}px`;
@@ -13883,7 +13912,7 @@ const PBCloneFx = (() => {
         const preset = it === "1" ? presetOf(nm) : "";
         if (preset) { all.forEach(w => { if (!w.set.anim) { w.set.anim = preset; w.set.animDur = r1(Math.min(3, Math.max(.1, dur))); w.set.animDelay = r1(Math.min(5, delay)); } }); S.stats.entr++; return; }
         const txt0 = rule.cssText; if (txt0.length > 8000) return; const er = e.getBoundingClientRect(), txt = scaleKf(txt0, er.width, er.height); const nn = "pbk-" + nm.replace(/[^\w-]/g, "_"), kfCss = txt.replace(/^@(-webkit-)?keyframes\s+[^{]+/, "@keyframes " + nn), needO = /scale|rotate|skew/.test(txt) && all.length > 1;
-        all.forEach((w, k) => pass(w, (S.kfDone && S.kfDone.has(nn) && all.length > 6 ? "" : kfCss + "\n") + `selector{animation:${nn} ${dur}s ${tf} ${delay}s ${it === "infinite" ? "infinite" : it} ${dir} ${fill};${needO ? "transform-origin:" + origin(w, e) + ";" : ""}}`));
+        all.forEach((w, k) => { const first = !(S.kfDone && S.kfDone.has(nn) && all.length > 6); pushItem(w, mkItem("حركة مستمرة: " + nm, "[[kf]]\nselector{animation:" + nn + " [[dur]]s [[tf]] [[delay]]s [[it]] [[dir]] [[fill]];[[org]]}", { dur: { l: "المدة (ثانية)", t: "num", v: dur }, delay: { l: "التأخير (ثانية)", t: "num", v: delay }, it: { l: "التكرار (infinite أو عدد)", t: "text", v: it }, dir: { l: "الاتجاه", t: "select", v: dir, o: [["normal", "عادي"], ["reverse", "معكوس"], ["alternate", "ذهاب وإياب"], ["alternate-reverse", "ذهاب وإياب معكوس"]] }, tf: { l: "منحنى السرعة", t: "text", v: tf }, fill: { l: "حالة ما بعد الحركة", t: "select", v: fill, o: [["none", "بدون"], ["forwards", "تبقى في النهاية"], ["backwards", "تبدأ من أولها"], ["both", "الاثنان"]] }, org: { l: "نقطة الارتكاز (اختياري، مثل transform-origin:50% 50%;)", t: "text", v: needO ? "transform-origin:" + origin(w, e) + ";" : "" }, kf: { l: "إطارات الحركة @keyframes", t: "code", v: first ? kfCss : "" } })); });
         (S.kfDone = S.kfDone || new Set()).add(nn); S.stats.anim++;
       });
     }
@@ -13918,6 +13947,8 @@ const PBCloneFx = (() => {
       }
       for (const [subj, zmap] of plans) for (const { zone, decl } of zmap.values()) emitHover(subj, zone, decl);
     }
+    const HN = { transform: "حركة/تكبير", translate: "حركة", scale: "تكبير", rotate: "دوران", opacity: "شفافية", filter: "فلتر", "backdrop-filter": "تمويه", "box-shadow": "ظل", "text-shadow": "ظل النص", color: "لون النص", "background-color": "لون الخلفية", "border-color": "لون الإطار", "letter-spacing": "تباعد الحروف", "text-decoration-color": "لون التسطير", "-webkit-text-fill-color": "لون النص" };
+    const hoverName = decl => [...new Set(Object.keys(decl).map(k => HN[k]).filter(Boolean))].join(" + ") || "عام";
     function emitHover(subj, zone, decl) {
       const [a0, a1] = S.range.get(subj), [o0, o1] = S.own.get(subj) || [a0, a1], all = out.slice(a0, a1), mine = out.slice(o0, o1); if (!all.length) return;
       const zr = S.range.get(zone), native = all.length === 1 && (zone === subj || (zr && zr[1] - zr[0] === all.length)); let zid = ""; if (!native) { const z = ensureZone(zone); if (!z) return; zid = z.id; }
@@ -13931,7 +13962,7 @@ const PBCloneFx = (() => {
         if (hasBox) { const pureScale = /scale/.test((decl.transform || "") + (decl.scale || "")) && !/translate|rotate|skew/.test((decl.transform || "") + (decl.rotate || "")), inner = ((w.type === "image" || w.type === "shape") && pureScale) ? (w.type === "image" ? " .pb-im" : " .pb-svg") : "", tgt = "selector" + inner; const body = []; const sr = zone.getBoundingClientRect(); for (const p of ["transform", "translate", "scale", "rotate", "opacity", "backdrop-filter"]) if (decl[p]) body.push(`${p}:${p === "transform" ? scaleTf(decl[p], sr.width, sr.height) : decl[p]}`); if (fl.length && !inner) body.push("filter:" + fl.join(" ")); if (body.length) { L.push(`selector${H}${inner}{${body.join(";")}}`); if (inner) B.push(`selector{overflow:hidden}`); B.push(`${tgt}{transition:${tr}}`); if (/scale|rotate|skew/.test((decl.transform || "") + (decl.scale || "") + (decl.rotate || "")) && all.length > 1 && !inner) B.push(`selector{transform-origin:${origin(w, zone)}}`); if (dsw && !(w.set.css || "").includes("drop-shadow")) B.push(`selector{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}`); } }
         if (hasTxt && (w.type === "text" || w.type === "heading" || w.type === "button")) { const tgt = w.type === "button" ? "selector" + H + " .pb-btn" : `selector.pb-w${H} .pb-t,selector.pb-w${H} .pb-t *`, body = []; for (const p of ["color", "text-shadow", "-webkit-text-fill-color", "text-decoration-color", "letter-spacing"]) if (decl[p]) body.push(`${p}:${decl[p]}!important`); if (body.length) { L.push(`${tgt}{${body.join(";")}}`); B.push(`selector .pb-t,selector .pb-btn{transition:color .3s,text-shadow .3s}`); } }
         if (hasBg && isMine) { const bg = decl["background-color"], bd = decl["border-color"]; if (w.type === "button") { const body = []; if (bg) body.push(`background-color:${bg}!important;background-image:none!important`); if (bd) body.push(`border-color:${bd}!important`); L.push(`selector${H} .pb-btn{${body.join(";")}}`); B.push(`selector .pb-btn{transition:${tr}}`); } else if (w.type === "shape") { if (bg) L.push(`selector${H} .pb-svg *{fill:${bg}!important}`); if (bd) L.push(`selector${H} .pb-svg *{stroke:${bd}!important}`); B.push(`selector .pb-svg *{transition:fill .3s,stroke .3s}`); } }
-        if (L.length) { pass(w, B.concat(L).join("\n")); S.stats.hover++; }
+        if (L.length) { pass(w, B.concat(L).join("\n"), "تأثير تحويم: " + hoverName(decl)); S.stats.hover++; }
       }
     }
     return { pre, el, post, stats: S.stats, _S: S };
@@ -13949,6 +13980,7 @@ const PBCloneFx = (() => {
     for (const el of q(d, "body *").slice(0, 4000)) { const cs = w.getComputedStyle(el); if (!/infinite/.test(cs.animationIterationCount) || !cs.animationName.split(",").some(n => kf.has(n.trim()))) continue; let C = el.parentElement; while (C && C !== d.body && w.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === d.body) continue; const cr = C.getBoundingClientRect(), er = el.getBoundingClientRect(); if (cr.width < 200 || er.width < cr.width * 1.05) continue; out.push({ el, C, img: !!C.querySelector("img,picture,video") }); }
     return out;
   };
+  const isSearchForm = f => { try { return f.getAttribute('role') === 'search' || !!f.querySelector('input[type=search]') || (f.querySelectorAll('input:not([type=hidden]):not([type=submit]):not([type=button])').length === 1 && /^(s|q|search|query|keyword|keywords)$/i.test((f.querySelector('input:not([type=hidden]):not([type=submit])') || {}).name || '')); } catch (e) { return false; } };
   const REGISTRY = [
     { id: "hover", label: "تأثيرات التحويم (بطاقات/أزرار/صور)", status: "ok", note: "تُنسخ مع منطقة تحويم للبطاقة كاملة", find: (d, w) => { let n = 0; for (const sh of d.styleSheets) { try { const f = rs => { for (const r of rs) { if (r.type === 1 && /:hover/i.test(r.selectorText || "")) n++; else if (r.cssRules && r.type !== 5 && r.type !== 7) f(r.cssRules); } }; f(sh.cssRules); } catch (e) { } } return { n }; } },
     { id: "keyframes", label: "حركات CSS مستمرة (طفو/نبض/دوران)", status: "ok", note: "@keyframes حرفية", find: (d, w) => { const e = q(d, "body *").slice(0, 3000).filter(x => { const a = w.getComputedStyle(x).animationName; return a && a !== "none"; }); return { n: e.length, sample: e[0] }; } },
@@ -13969,13 +14001,14 @@ const PBCloneFx = (() => {
     { id: "counter", label: "عدّادات أرقام متصاعدة", status: "partial", note: "يُنسخ الرقم النهائي ثابتاً", find: d => { const e = q(d, "[data-count],[data-purecounter-end],.counter,.count-up,.odometer,.countup,[data-to]"); return { n: e.length, sample: e[0] }; } },
     { id: "countdown", label: "عدّاد تنازلي", status: "partial", note: "يُنسخ شكلاً ثابتاً (يوجد عنصر عدّاد في المطوّر)", find: d => { const e = q(d, ".countdown,[data-countdown],[class*='countdown']"); return { n: e.length, sample: e[0] }; } },
     { id: "typewriter", label: "نص يُكتب تدريجياً (Typewriter)", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".typed,.typewriter,[data-typed],.typed-cursor,[class*='typewriter'],[class*='typing']"); return { n: e.length, sample: e[0] }; } },
-    { id: "modal", label: "نوافذ منبثقة / Lightbox", status: "none", note: "غير متوفر", find: d => { const e = q(d, "[data-bs-toggle='modal'],[data-fancybox],[data-lightbox],[data-toggle='modal'],.mfp-gallery,.glightbox"); return { n: e.length, sample: e[0] }; } },
+    { id: "modal", label: "نوافذ منبثقة / Lightbox", status: "ok", note: "تُفتح بالنقر وتُغلق بـ×/Esc/النقر خارجها", find: d => { const e = q(d, "[data-bs-toggle='modal'],[data-fancybox],[data-lightbox],[data-toggle='modal'],.glightbox,a.fancybox"); return { n: e.length, sample: e[0] }; } },
     { id: "filterGrid", label: "شبكة قابلة للتصفية (Isotope/MixItUp)", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".isotope,.mixitup,[data-filter],.filter-button-group,.portfolio-filter"); return { n: e.length, sample: e[0] }; } },
     { id: "cursor", label: "مؤشر ماوس مخصص", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".cursor,.custom-cursor,.cursor-follower,[class*='cursor-dot'],[class*='cursor-outer']"); return { n: e.length, sample: e[0] }; } },
     { id: "tilt", label: "إمالة ثلاثية الأبعاد بالماوس (Tilt)", status: "none", note: "غير متوفر", find: d => { const e = q(d, "[data-tilt],.tilt,.js-tilt,[data-atropos]"); return { n: e.length, sample: e[0] }; } },
     { id: "scrollTimeline", label: "حركات مرتبطة بالتمرير (scroll-timeline)", status: "none", note: "غير متوفر", find: d => { let n = 0; for (const st of q(d, "style")) if (/animation-timeline|scroll-timeline|view-timeline/.test(st.textContent || "")) n++; return { n }; } },
     { id: "embed", label: "تضمين يوتيوب/فيميو/خريطة", status: "none", note: "غير منسوخ (الإطار يُحذف) — أضفه بعنصر فيديو/خريطة", find: d => { const e = q(d, "iframe[src*='youtube'],iframe[src*='youtu.be'],iframe[src*='vimeo'],iframe[src*='google.com/maps'],iframe[src*='maps.google']"); return { n: e.length, sample: e[0] }; } },
-    { id: "form", label: "نماذج (اتصال/اشتراك)", status: "partial", note: "تُنسخ شكلاً ولا تُرسل", find: d => { const e = q(d, "form").filter(f => f.querySelectorAll("input,textarea,select").length >= 2); return { n: e.length, sample: e[0] }; } },
+    { id: "form", label: "نماذج (اتصال/اشتراك/طلب)", status: "ok", note: "تتحول لعنصر «نموذج اتصال» يعمل (واتساب افتراضياً؛ غيّر الوجهة من إعداداته)", find: d => { const e = q(d, "form").filter(f => !isSearchForm(f) && f.querySelectorAll("input:not([type=hidden]):not([type=submit]):not([type=button]),textarea,select").length >= 1); return { n: e.length, sample: e[0] }; } },
+    { id: "searchForm", label: "نموذج بحث", status: "partial", note: "يُنسخ شكلاً فقط (لا يوجد بحث في الصفحة المنسوخة)", find: d => { const e = q(d, "form").filter(isSearchForm); return { n: e.length, sample: e[0] }; } },
     { id: "scrollSnap", label: "أقسام ملتصقة بالتمرير (scroll-snap)", status: "none", note: "غير متوفر", find: (d, w) => { const e = [d.documentElement, d.body].concat(q(d, "main,section")).filter(x => x && /snap/.test(w.getComputedStyle(x).scrollSnapType || "")); return { n: e.length, sample: e[0] }; } }
   ];
   function analyze(doc, win) {
@@ -13992,7 +14025,7 @@ const PBCloneFx = (() => {
     }
     return out;
   }
-  return { create, dropShadows, presetOf, splitTop, analyze, REGISTRY };
+  return { mkItem, pushItem, rawP, create, dropShadows, presetOf, splitTop, analyze, REGISTRY, isSearchForm };
 })();
 
 /* ═══ نسخ قالب: يفتح موقعاً (برابطه) أو صورة (لقطة شاشة) في نافذة بحدّ سفلي قابل للتحجيم، ثم يحوّل ما فيها إلى عناصر المطوّر القابلة للتعديل ═══
@@ -14153,7 +14186,7 @@ const PBClone = (function () {
       lay.slice().reverse().forEach(L => {      // طبقات الخلفية من الأسفل للأعلى
         if (/gradient\(/.test(L)) { const g = cssGrad(L, r, vr); if (g) add("shape", clipY(vr), Object.assign({}, shp, { fgr: g, fill: "", sw: 0 })); return; }
         const um = /url\((["']?)(.*?)\1\)/.exec(L); if (!um || !um[2] || /^data:image\/(gif|svg)/.test(um[2]) || vr.w < 20 || vr.h < 20) return; const sz = (cs.backgroundSize || "").toLowerCase(), rp = cs.backgroundRepeat || "";
-        if (!/^repeat/.test(rp) || /cover|contain/.test(sz) || vr.w > 140) add("image", clipY(vr), Object.assign({ src: abs(um[2]), alt: "", fit: /contain/.test(sz) ? "contain" : "cover", rad: rad ? { d: Math.round(rad) } : undefined }, par ? { cls: "pb-par", css: "selector{--par:.35}" } : {})); });
+        if (!/^repeat/.test(rp) || /cover|contain/.test(sz) || vr.w > 140) add("image", clipY(vr), Object.assign({ src: abs(um[2]), alt: "", fit: /contain/.test(sz) ? "contain" : "cover", rad: rad ? { d: Math.round(rad) } : undefined }, par ? { cls: "pb-par", fxs: [PBCloneFx.mkItem("خلفية Parallax / ثابتة", "selector{--par:[[k]]}", { k: { l: "قوة الحركة (0.1 خفيفة — 0.8 قوية)", t: "num", v: 0.35 } })] } : {})); });
     }
     function svgData(el, cs) {
       try { const c = el.cloneNode(true), r = rectOf(el); c.setAttribute("xmlns", "http://www.w3.org/2000/svg"); if (!c.getAttribute("width")) c.setAttribute("width", r.w); if (!c.getAttribute("height")) c.setAttribute("height", r.h); if (!c.getAttribute("viewBox") && px(c.getAttribute("width")) && px(c.getAttribute("height"))) c.setAttribute("viewBox", "0 0 " + px(c.getAttribute("width")) + " " + px(c.getAttribute("height")));
@@ -14163,6 +14196,7 @@ const PBClone = (function () {
     function visit0(el, clip, anchor) {
       if (slSkip.has(el)) return;
       if (mq.has(el)) { emitMarquee(el); return; }
+      if (el.tagName === "FORM" && emitForm(el)) return;
       if (stop || ++count > 5000) return; const tag = el.tagName.toLowerCase(); if (SKIP.has(tag)) return;
       const cs = win.getComputedStyle(el); if (cs.display === "none") return; if (cs.opacity === "0" && tag !== "body" && tag !== "html") return;
       const a = tag === "a" ? el : anchor, r = rectOf(el), contents = cs.display === "contents";
@@ -14262,8 +14296,8 @@ const PBClone = (function () {
       const on = sl.dots.find(d => /active|current|selected/.test(d.className)) || sl.dots[0], off = sl.dots.find(d => d !== on); if (!on || !off) return; const pa = paintOf(on), pi = paintOf(off); if (!pa || !pi) return;
       const rule = (cl, p) => `selector.${cl}{opacity:${p.set.op != null ? p.set.op : 1}!important}` + (p.type === "shape" && p.set.fill ? `\nselector.${cl} .pb-svg *{fill:${p.set.fill}!important}` : "");
       const txtOf = d => { const q = rg(d); return q ? out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading" || w.type === "button") : []; }, ta = txtOf(on), ti = txtOf(off);
-      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading").forEach((w, k) => { const a = ta[k], b = ti[k]; if (!a || !b || a.set.color === b.set.color) return; w.set.css = (w.set.css ? w.set.css + "\n" : "") + "selector.pb-dot-on .pb-t,selector.pb-dot-on .pb-t *{color:" + a.set.color + "!important}\nselector.pb-dot-off .pb-t,selector.pb-dot-off .pb-t *{color:" + b.set.color + "!important}"; }); }
-      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "button").forEach(w => { w.set.css = (w.set.css ? w.set.css + "\n" : "") + "selector{transition:all .3s}\n" + rule("pb-dot-on", pa) + "\n" + rule("pb-dot-off", pi); }); }
+      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading").forEach((w, k) => { const a = ta[k], b = ti[k]; if (!a || !b || a.set.color === b.set.color) return; PBCloneFx.pushItem(w, PBCloneFx.mkItem("مظهر نص التبويب/النقطة (نشط · غير نشط)", "selector.pb-dot-on .pb-t,selector.pb-dot-on .pb-t *{color:[[on]]!important}\nselector.pb-dot-off .pb-t,selector.pb-dot-off .pb-t *{color:[[off]]!important}", { on: { l: "لون النص عند النشاط", t: "text", v: a.set.color }, off: { l: "لون النص عند عدم النشاط", t: "text", v: b.set.color } })); }); }
+      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "button").forEach(w => { PBCloneFx.pushItem(w, PBCloneFx.mkItem("مظهر النقطة/التبويب (نشط · غير نشط)", "[[code]]", PBCloneFx.rawP("selector{transition:all .3s}\n" + rule("pb-dot-on", pa) + "\n" + rule("pb-dot-off", pi)))); }); }
     }
 
     /* ───── مجموعات الإظهار/الإخفاء: أكورديون، <details>، القوائم المنسدلة، قائمة الجوال ☰ ─────
@@ -14276,7 +14310,13 @@ const PBClone = (function () {
       try { return doc.getElementById(raw.replace(/^#/, "")) || doc.querySelector(raw); } catch (e) { return null; }
     };
     function findDisclosures() {
-      const used = new Set(), items = [], add1 = it => { if (!it.head || !it.bodies.length || used.has(it.head) || it.bodies.some(b => b === it.head || b.contains(it.head) || it.head.contains(b))) return; used.add(it.head); items.push(it); };
+      const used = new Set(), items = [], add1 = it => { if (!it.head || (!it.bodies.length && !it.make) || used.has(it.head) || it.bodies.some(b => b === it.head || b.contains(it.head) || it.head.contains(b))) return; used.add(it.head); items.push(it); };
+      const byBody = new Map(), bySrc = new Map(); let mh = []; try { mh = [...doc.querySelectorAll('[data-toggle="modal"],[data-bs-toggle="modal"],[data-fancybox],[data-lightbox],a.glightbox,a.fancybox')]; } catch (e) { }
+      for (const h of mh) {
+        const r = rectOf(h); if (r.w < 4 || r.h < 4 || r.y >= limit) continue; const lbx = h.hasAttribute("data-fancybox") || h.hasAttribute("data-lightbox") || /glightbox|fancybox/.test(String(h.className));
+        if (!lbx) { const b = targetOf(h); if (!b) continue; if (byBody.has(b)) { byBody.get(b).heads.push(h); used.add(h); continue; } const it = { head: h, heads: [h], bodies: [b], o0: false, hov: false, modal: true }; add1(it); if (used.has(h)) byBody.set(b, it); }
+        else { const im = h.querySelector("img"), href = h.getAttribute("href") || h.getAttribute("data-src") || ""; const src = abs(/\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(href) ? href : (im && (im.currentSrc || im.getAttribute("src")) || "")); if (!src) continue; if (bySrc.has(src)) { bySrc.get(src).heads.push(h); used.add(h); continue; } if (bySrc.size >= 30) continue; const it = { head: h, heads: [h], bodies: [], o0: false, hov: false, modal: true, lb: src }; it.make = (id, vh) => makeLightbox(src, id, vh); add1(it); if (used.has(h)) bySrc.set(src, it); }
+      }
       for (const d of doc.querySelectorAll("details")) { const sm = d.querySelector(":scope > summary"); if (sm) add1({ head: sm, bodies: [...d.children].filter(c => c !== sm && c.tagName !== "SCRIPT"), det: d, o0: d.open, hov: false }); }
       let heads = []; try { heads = [...doc.querySelectorAll('[aria-expanded][aria-controls],[data-bs-toggle="collapse"],[data-toggle="collapse"],.navbar-toggler,.menu-toggle,.hamburger,[class*="burger"],[class*="menu-toggle"],[class*="nav-toggle"],button[aria-label*="menu" i],button[aria-label*="القائمة"]')]; } catch (e) { }
       for (const h of heads) {
@@ -14286,23 +14326,42 @@ const PBClone = (function () {
       }
       let subs = []; try { subs = [...doc.querySelectorAll('li > ul, li > .sub-menu, li > .dropdown-menu, .dropdown > .dropdown-menu, .menu-item-has-children > ul, li > div[class*="mega"], li > div[class*="dropdown"]')]; } catch (e) { }
       for (const b of subs) { if (isShown(b) || b.closest("details")) continue; const li = b.parentElement, h = (b.previousElementSibling && /^(a|button|span)$/i.test(b.previousElementSibling.tagName) ? b.previousElementSibling : li && li.querySelector(":scope > a, :scope > button")); if (h && rectOf(h).w > 4) add1({ head: h, bodies: [b], o0: false, hov: true }); }
-      for (const it of items) { it.id = "d" + (++dN); elCls.set(it.head, ["pbdh-" + it.id]); if (it.o0) it.bodies.forEach(b => elCls.set(b, ["pbdb-" + it.id])); discs.push(it); }
+      for (const it of items) { it.id = "d" + (++dN); (it.heads || [it.head]).forEach(hh => elCls.set(hh, ["pbdh-" + it.id])); if (it.o0) it.bodies.forEach(b => elCls.set(b, ["pbdb-" + it.id])); discs.push(it); }
+    }
+
+    function makeLightbox(src, id, vh) {
+      vh = vh || 900; const bw = Math.min(Math.round(W * .7), W - 40), bh = Math.round(vh * .78), x = Math.round((W - bw) / 2), y = Math.round((vh - bh) / 2);
+      add("shape", { x: 0, y: 0, w: W, h: vh }, { shape: "rect", fill: "#000000", op: .72, outline: false, sw: 0, keep: false, cls: "pbdx-" + id });
+      add("image", { x, y, w: bw, h: bh }, { src, alt: "", fit: "contain" });
+      add("text", { x: W - 76, y: 18, w: 52, h: 52 }, { html: '<p dir="ltr" style="margin:0;text-align:center;color:#ffffff;cursor:pointer">×</p>', fs: { d: 38 }, fw: "700", lh: { d: 1.2 }, ta: { d: "center" }, color: "#ffffff", cls: "pbdx-" + id });
     }
     function discPass() {
-      const full = { x: 0, y: 0, w: W, h: limit }; let n = 0;
+      const full = { x: 0, y: 0, w: W, h: limit }; let n = 0; const fe = win.frameElement, vh = W < 600 ? 780 : 900;
       for (const it of discs) {
-        const saved = [], keep = (e, props) => { saved.push([e, e.getAttribute("style")]); props.forEach(([k, v]) => e.style.setProperty(k, v, "important")); }; let i0 = out.length, bodies = it.bodies;
-        if (!it.o0) {
+        const saved = [], keep = (e, props) => { saved.push([e, e.getAttribute("style")]); props.forEach(([k, v]) => e.style.setProperty(k, v, "important")); }; let i0 = out.length, bodies = it.bodies, h0 = null;
+        const undo = () => { saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); if (fe && h0 != null) fe.style.height = h0; };
+        if (it.modal && fe) { h0 = fe.style.height; fe.style.height = vh + "px"; }      // الإطار يُقاس بارتفاع شاشة حقيقي: النوافذ المنبثقة تتمركز بالنسبة له لا لارتفاع الصفحة كلها
+        if (!it.o0 && !it.make) {
           if (it.det) it.det.setAttribute("open", "");
-          for (const b of bodies) { let a = b.parentElement, k = 0; while (a && a !== doc.body && k++ < 4) { if (win.getComputedStyle(a).display === "none") keep(a, [["display", "block"]]); a = a.parentElement; } keep(b, FORCE); }
-          if (!bodies.some(b => rectOf(b).h > 2)) { saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); continue; }
+          for (const b of bodies) { let a = b.parentElement, k = 0; while (a && a !== doc.body && k++ < 4) { if (win.getComputedStyle(a).display === "none") keep(a, [["display", "block"]]); a = a.parentElement; } keep(b, FORCE); if (it.modal) b.querySelectorAll(".modal-dialog,.modal-content,[class*='dialog']").forEach(c => keep(c, [["transform", "none"], ["opacity", "1"]])); }
+          if (!bodies.some(b => rectOf(b).h > 2)) { undo(); continue; }
         }
-        const rs = bodies.map(rectOf).filter(r => r.h > 1), y0 = Math.min(...rs.map(r => r.y)), y1 = Math.max(...rs.map(r => r.y + r.h)), overlay = bodies.some(b => /absolute|fixed/.test(win.getComputedStyle(b).position));
-        if (!it.o0) { i0 = out.length; bodies.forEach(b => { elCls.set(b, ["pbdb-" + it.id, "pb-gx-off"]); visit(b, full, null); }); saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); }
+        const rs = bodies.map(rectOf).filter(r => r.h > 1), y0 = rs.length ? Math.min(...rs.map(r => r.y)) : 0, y1 = rs.length ? Math.max(...rs.map(r => r.y + r.h)) : 0, overlay = !!(it.modal || bodies.some(b => /absolute|fixed/.test(win.getComputedStyle(b).position)));
+        if (!it.o0 || it.make) {
+          i0 = out.length;
+          if (it.make) it.make(it.id, vh);
+          else {
+            if (it.modal) add("shape", { x: 0, y: 0, w: W, h: vh }, { shape: "rect", fill: "#000000", op: .55, outline: false, sw: 0, keep: false, cls: "pbdx-" + it.id });      // خلفية معتمة: النقر عليها يغلق النافذة
+            bodies.forEach(b => { const cl = ["pbdb-" + it.id, "pb-gx-off"]; elCls.set(b, cl); if (it.modal) b.querySelectorAll('[data-dismiss="modal"],[data-bs-dismiss="modal"],.close,.btn-close,.modal-close,button[class*="close"],a[class*="close"],[aria-label="Close"],[aria-label="إغلاق"]').forEach(x => elCls.set(x, ["pbdx-" + it.id])); visit(b, full, null); });
+          }
+          undo();
+        }
         let ws = []; if (it.o0) bodies.forEach(b => { const q = elRange.get(b); if (q) ws = ws.concat(out.slice(q[0], q[1])); }); else ws = out.slice(i0); if (!ws.length) continue;
-        if (overlay) { const zmax = out.reduce((m, w) => Math.max(m, w.set.zi || 0), 0); const zmin = Math.min(...ws.map(w => w.set.zi || 0)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + zmax + 5; }); }
+        if (it.make || it.modal) tagW(ws, ["pbdb-" + it.id, "pb-gx-off"]);
+        if (overlay) { const zmax = out.reduce((m, w) => Math.max(m, w.set.zi || 0), 0), zmin = Math.min(...ws.map(w => w.set.zi || 0)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + zmax + 5; }); }
+        if (it.modal) { tagW(ws, ["pb-pin"]); ws.forEach(w => { PBCloneFx.pushItem(w, PBCloneFx.mkItem("تثبيت في منتصف الشاشة (نافذة منبثقة)", "selector{--pin:calc(var(--u)*[[top]]);--pino:calc(var(--u)*[[off]]);z-index:[[z]]}", { top: { l: "المسافة من أعلى الشاشة (px)", t: "num", v: 0 }, off: { l: "الموضع داخل الشاشة (px)", t: "num", v: Math.round(w.set.fy.d || 0) }, z: { l: "الترتيب z-index", t: "num", v: 90 } })); }); }      // تظهر في منتصف الشاشة الحالية أينما كان التمرير
         const H = overlay ? 0 : Math.round(y1 - y0), thr = Math.round(y0 + (it.o0 ? H : 0)); if (!overlay && fx) { let a = bodies[0].parentElement, k = 0; while (a && a !== doc.body && a !== doc.documentElement && k++ < 8) { const q = fx._S.own.get(a); if (q) tagW(out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "image"), ["pbds-" + it.id]); a = a.parentElement; } }      // خلفيات الحاويات تتمدّد مع فتح العنصر
-        tagW([ws[0]], ["pbdm-" + it.id + "-" + H + "-" + thr + "-" + (it.o0 ? 1 : 0) + "-" + (it.hov ? 1 : 0) + "-" + W]); n++;
+        tagW([ws[0]], ["pbdm-" + it.id + "-" + H + "-" + thr + "-" + (it.o0 ? 1 : 0) + "-" + (it.hov ? 1 : 0) + "-" + W]); n++; if (it.modal && fx) fx.stats.modals = (fx.stats.modals || 0) + 1;
       }
       if (fx && n) fx.stats.disc = (fx.stats.disc || 0) + n;
     }
@@ -14334,6 +14393,20 @@ const PBClone = (function () {
       }
       let cand = []; try { cand = [...doc.querySelectorAll("marquee,[class*='marquee'],[class*='ticker']")]; } catch (e) { }
       for (const e of cand) { if (mq.has(e)) continue; const isTag = e.tagName.toLowerCase() === "marquee"; let C = e; if (!isTag && win.getComputedStyle(C).overflowX === "visible") { C = e.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; } if (!C || C === doc.body) continue; const T = isTag ? e : ([...C.children].find(x => x.scrollWidth > C.clientWidth * 1.05 || rectOf(x).w > rectOf(C).w * 1.05) || C.firstElementChild); if (!T) continue; if (!isTag && !([...C.querySelectorAll("*")].length)) continue; addMarquee(C, T, isTag ? Math.max(8, 400 / (+e.getAttribute("scrollamount") || 6)) : 20, e.getAttribute && e.getAttribute("direction") === "right" ? "rtl" : "ltr"); }
+    }
+
+    /* ───── النماذج: تتحول لعنصر «نموذج اتصال» الجاهز (يعمل: واتساب/بريد/رابط استقبال) بحقولها وألوانها؛ نماذج البحث تبقى شكلاً ───── */
+    function emitForm(f) {
+      if (typeof PBCloneFx === "undefined" || PBCloneFx.isSearchForm(f)) return false; const r = rectOf(f); if (r.w < 160 || r.h < 40 || r.y >= limit) return false;
+      const ctl = [...f.querySelectorAll("input,textarea,select")].filter(c => { const t = (c.getAttribute("type") || "text").toLowerCase(); if (/^(hidden|submit|button|image|reset|file|range|color|password)$/.test(t)) return false; const q = rectOf(c); return q.w > 20 && q.h > 10; }); if (!ctl.length) return false;
+      const lab = c => { let l = c.id ? f.querySelector('label[for="' + String(c.id).replace(/"/g, "") + '"]') : null; if (!l) l = c.closest("label"); const t = l ? l.textContent.replace(/\s+/g, " ").trim() : ""; return (t || c.getAttribute("aria-label") || c.getAttribute("placeholder") || c.getAttribute("name") || "حقل").slice(0, 60); };
+      const fields = ctl.slice(0, 12).map(c => { const tg = c.tagName.toLowerCase(), t0 = (c.getAttribute("type") || "text").toLowerCase(); const type = tg === "textarea" ? "textarea" : tg === "select" ? "select" : /^(checkbox|radio)$/.test(t0) ? "checkbox" : /^(tel|email|number|date)$/.test(t0) ? t0 : "text"; const o = { label: lab(c), type, ph: c.getAttribute("placeholder") || "", req: !!c.required || c.getAttribute("aria-required") === "true", w: "full" }; if (tg === "select") o.opts = [...c.options].map(x => x.textContent.trim()).filter(Boolean).join(","); return o; });
+      ctl.slice(0, 12).forEach((c, i) => { const q = rectOf(c); if (q.w < r.w * .62 && ctl.some((d, j) => j !== i && Math.abs(rectOf(d).y - q.y) < 12 && Math.abs(rectOf(d).x - q.x) > 20)) fields[i].w = "half"; });
+      const sb = f.querySelector('button[type="submit"],input[type="submit"],button:not([type])') || f.querySelector("button"), btn = sb ? (sb.tagName === "INPUT" ? sb.value : sb.textContent).replace(/\s+/g, " ").trim() : "", c0 = ctl.find(c => !/checkbox|radio/.test(c.getAttribute("type") || "")) || ctl[0];
+      const ics = win.getComputedStyle(c0), fcs = win.getComputedStyle(f), sbc = sb ? win.getComputedStyle(sb) : null, ib = col(ics.backgroundColor), ibd = col(ics.borderTopColor), fb = col(fcs.backgroundColor), fbd = col(fcs.borderTopColor), bb = sbc ? col(sbc.backgroundColor) : null, bc = sbc ? col(sbc.color) : null, tc = col(fcs.color);
+      const lb = f.querySelector("label"), lc = lb ? col(win.getComputedStyle(lb).color) : tc, pad = ["Top", "Right", "Bottom", "Left"].map(k => Math.round(px(fcs["padding" + k])));
+      const rr = radiusOf(fcs, r), props = { title: "", desc: "", fields, btn: btn || "إرسال", dest: "whatsapp", dzPhone: fields.some(x => x.type === "tel"), ok: "تم إرسال رسالتك بنجاح، شكراً لك!", subject: "نموذج من الموقع", fbg: fb && fb.a > .3 ? hex(fb) : "#ffffff", fbc: fbd && fbd.a > .1 && px(fcs.borderTopWidth) >= 1 ? hex(fbd) : "#e6dfcf", frad: { d: Math.round(rr) }, fpad: { d: pad.some(v => v > 0) ? pad : [20, 20, 20, 20] }, tcol: tc ? hex(tc) : "#173f35", lcol: lc ? hex(lc) : "#444444", ibg: ib && ib.a > .2 ? hex(ib) : "#ffffff", ibc: ibd && ibd.a > .1 ? hex(ibd) : "#e0d9c8", irad: { d: Math.round(radiusOf(ics, rectOf(c0))) }, ifs: { d: Math.round(px(ics.fontSize) || 16) }, bbg: bb && bb.a > .2 ? hex(bb) : "#157a55", bcol: bc ? hex(bc) : "#ffffff", brad: { d: sbc ? Math.round(radiusOf(sbc, rectOf(sb))) : 12 }, bfull: sb ? rectOf(sb).w >= r.w * .8 : true, cd: 20 };
+      const w = add("contact", clipY(r), props); if (w && fx) fx.stats.forms = (fx.stats.forms || 0) + 1; return !!w;
     }
     function emitMarquee(C) {
       const m = mq.get(C), w = add("marquee", m.cr, { mqt: m.texts.join("\n"), mqs: m.dur, mqd: m.dir, mqg: { d: m.gap }, mqp: true, mqbg: m.bg, mqc: m.c, fs: { d: m.fs }, fw: m.fw, ff: m.ff || undefined }); if (w && fx) fx.stats.marquee = (fx.stats.marquee || 0) + 1;
@@ -14395,7 +14468,7 @@ const PBClone = (function () {
     async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) by.get(u).forEach(w => { w.set.src = p; }); } catch (e) { } done++; } }
     await Promise.all([work(), work(), work()]); return done;
   }
-  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
+  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
@@ -14562,7 +14635,7 @@ const PBClone = (function () {
     document.body.appendChild(m);
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
-      const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "fxrep") fxPanel(); else if (a === "fxsend") { const un = (S.fxRep || []).filter((x, i) => x.status !== "ok" && (document.querySelector(`#cl-rep [data-fxi="${i}"]`) || {}).checked); sendFxRequests(un.length ? un : []); } else if (a === "fxclose") fxPanel(false); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
+      const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "fxrep") fxPanel(); else if (a === "fxsend") { const un = (S.fxRep || []).filter((x, i) => x.status !== "ok" && (document.querySelector(`#cl-rep [data-fxi="${i}"]`) || {}).checked); sendFxRequests(un.length ? un : []); } else if (a === "fxclose") fxPanel(false); else if (a === "fxstat") fxStatus(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
     $("cl-url").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); loadUrl(false); } });
     $("cl-w").addEventListener("change", () => { S.W = Number($("cl-w").value) || 1280; if (S.frame) mountFrame(S.html); });
     m.addEventListener("dragover", e => { if (S.tab === "img" && e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files")) e.preventDefault(); });
@@ -14604,7 +14677,16 @@ const PBClone = (function () {
     const sent = S.fxSent || {}, host = (() => { try { return new URL(S.url).hostname; } catch (e) { return ""; } })();
     el.innerHTML = `<h4>تحليل التأثيرات في هذه الصفحة</h4>` + (un.length ? `<div style="margin-bottom:.4rem">وُجدت <b>${un.length}</b> تأثيرات/عناصر غير متوفرة بالكامل في المطوّر. حدّد ما تريد طلب إضافته ثم أرسل الطلب ليُحدَّث المطوّر ويقرأ هذه المواقع بدقة:</div>` : `<div style="margin-bottom:.4rem">كل ما في الصفحة مدعوم في المطوّر.</div>`) +
       rep.map((x, i) => `<div class="rw"><span class="ch ${x.status}">${CHIP[x.status]}</span><div style="flex:1"><b>${esc(x.label)}</b> <span class="cl-sm">× ${x.n}</span><small>${esc(x.note || "")}</small></div>${x.status !== "ok" ? (sent[host + "|" + x.id] ? '<span class="cl-sm">أُرسل ✓</span>' : `<input type="checkbox" data-fxi="${i}" checked title="اطلب إضافته">`) : ""}</div>`).join("") +
-      `<div class="bt">${un.length ? '<button type="button" class="pri" data-cl="fxsend">إرسال طلب إضافة المحدَّد</button>' : ""}<button type="button" data-cl="fxclose">إغلاق</button></div>`;
+      `<div class="bt">${un.length ? '<button type="button" class="pri" data-cl="fxsend">إرسال طلب إضافة المحدَّد</button>' : ""}<button type="button" data-cl="fxstat">حالة طلباتي</button><button type="button" data-cl="fxclose">إغلاق</button></div><div id="cl-rep-st"></div>`;
+  }
+
+  /* «حالة طلباتي»: يقرأ assets/data/fx-requests.json ويعرض كل طلب وهل نُفِّذ وفي أي إصدار (state: new/done، doneIn) */
+  async function fxStatus() {
+    const box = $("cl-rep-st"); if (!box) return; box.innerHTML = '<div class="cl-sm" style="margin-top:.6rem">جارٍ قراءة الطلبات…</div>';
+    try {
+      if (typeof GH === "undefined" || !GH.cfg()) throw new Error("GitHub غير مضبوط"); const f = await GH.getFile(FXREQ), cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))), rs = cur.requests || [];
+      box.innerHTML = '<h4 style="margin:.7rem 0 .3rem">طلباتك المُرسلة</h4>' + (rs.length ? rs.map(r => `<div class="rw"><span class="ch ${r.state === "done" ? "ok" : "partial"}">${r.state === "done" ? "تمت الإضافة" : "قيد الانتظار"}</span><div style="flex:1"><b>${esc(r.label)}</b> <span class="cl-sm">× ${r.count || 1}</span><small>${r.state === "done" ? "نُفّذ في الإصدار " + esc(r.doneIn || "") + (r.doneNote ? " — " + esc(r.doneNote) : "") : "طُلب " + esc(String(r.last || r.first || "").slice(0, 10)) + " من: " + esc((r.sites || []).join("، "))}</small></div></div>`).join("") : '<div class="cl-sm">لا توجد طلبات مُرسلة بعد.</div>');
+    } catch (e) { box.innerHTML = '<div class="cl-sm" style="margin-top:.6rem;color:#991b1b">تعذّرت القراءة: ' + esc(e.message) + "</div>"; }
   }
   async function sendFxRequests(items) {
     items = (items || []).filter(x => x.status !== "ok"); const host = (() => { try { return new URL(S.url).hostname; } catch (e) { return ""; } })();
@@ -14615,7 +14697,7 @@ const PBClone = (function () {
       if (typeof GH === "undefined" || !GH.cfg()) throw new Error("GitHub غير مضبوط"); let cur = { v: 1, requests: [] }, sha = null;
       try { const f = await GH.getFile(FXREQ); sha = f.sha; cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))); if (!cur.requests) cur.requests = []; } catch (e) { if (!/404|لم يُعثر/.test(String(e.message))) throw e; }
       mergeInto(cur); await GH.putFile(FXREQ, btoa(unescape(encodeURIComponent(JSON.stringify(cur, null, 1)))), sha, "طلب إضافة تأثيرات للمطوّر: " + items.map(x => x.id).join(", "));
-      items.forEach(x => { S.fxSent[host + "|" + x.id] = 1; }); toast("أُرسل طلب إضافة " + items.length + " تأثير/عنصر للمطوّر"); fxPanel(true); return true;
+      items.forEach(x => { S.fxSent[host + "|" + x.id] = 1; }); toast("أُرسل طلب إضافة " + items.length + " تأثير/عنصر للمطوّر — تابعه من «حالة طلباتي»"); fxPanel(true); return true;
     } catch (e) {
       const cur = mergeInto({ v: 1, requests: [] }), blob = new Blob([JSON.stringify(cur, null, 1)], { type: "application/json" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "fx-request-" + (host || "site") + ".json"; document.body.appendChild(a); a.click(); a.remove();
       items.forEach(x => { S.fxSent[host + "|" + x.id] = 1; }); toast("تعذّر الإرسال المباشر (" + e.message + ") — نُزّل ملف الطلب؛ أرسله لمطوّر الموقع"); fxPanel(true); return false;

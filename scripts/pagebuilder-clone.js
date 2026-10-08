@@ -156,7 +156,7 @@ const PBClone = (function () {
       lay.slice().reverse().forEach(L => {      // طبقات الخلفية من الأسفل للأعلى
         if (/gradient\(/.test(L)) { const g = cssGrad(L, r, vr); if (g) add("shape", clipY(vr), Object.assign({}, shp, { fgr: g, fill: "", sw: 0 })); return; }
         const um = /url\((["']?)(.*?)\1\)/.exec(L); if (!um || !um[2] || /^data:image\/(gif|svg)/.test(um[2]) || vr.w < 20 || vr.h < 20) return; const sz = (cs.backgroundSize || "").toLowerCase(), rp = cs.backgroundRepeat || "";
-        if (!/^repeat/.test(rp) || /cover|contain/.test(sz) || vr.w > 140) add("image", clipY(vr), Object.assign({ src: abs(um[2]), alt: "", fit: /contain/.test(sz) ? "contain" : "cover", rad: rad ? { d: Math.round(rad) } : undefined }, par ? { cls: "pb-par", css: "selector{--par:.35}" } : {})); });
+        if (!/^repeat/.test(rp) || /cover|contain/.test(sz) || vr.w > 140) add("image", clipY(vr), Object.assign({ src: abs(um[2]), alt: "", fit: /contain/.test(sz) ? "contain" : "cover", rad: rad ? { d: Math.round(rad) } : undefined }, par ? { cls: "pb-par", fxs: [PBCloneFx.mkItem("خلفية Parallax / ثابتة", "selector{--par:[[k]]}", { k: { l: "قوة الحركة (0.1 خفيفة — 0.8 قوية)", t: "num", v: 0.35 } })] } : {})); });
     }
     function svgData(el, cs) {
       try { const c = el.cloneNode(true), r = rectOf(el); c.setAttribute("xmlns", "http://www.w3.org/2000/svg"); if (!c.getAttribute("width")) c.setAttribute("width", r.w); if (!c.getAttribute("height")) c.setAttribute("height", r.h); if (!c.getAttribute("viewBox") && px(c.getAttribute("width")) && px(c.getAttribute("height"))) c.setAttribute("viewBox", "0 0 " + px(c.getAttribute("width")) + " " + px(c.getAttribute("height")));
@@ -166,6 +166,7 @@ const PBClone = (function () {
     function visit0(el, clip, anchor) {
       if (slSkip.has(el)) return;
       if (mq.has(el)) { emitMarquee(el); return; }
+      if (el.tagName === "FORM" && emitForm(el)) return;
       if (stop || ++count > 5000) return; const tag = el.tagName.toLowerCase(); if (SKIP.has(tag)) return;
       const cs = win.getComputedStyle(el); if (cs.display === "none") return; if (cs.opacity === "0" && tag !== "body" && tag !== "html") return;
       const a = tag === "a" ? el : anchor, r = rectOf(el), contents = cs.display === "contents";
@@ -265,8 +266,8 @@ const PBClone = (function () {
       const on = sl.dots.find(d => /active|current|selected/.test(d.className)) || sl.dots[0], off = sl.dots.find(d => d !== on); if (!on || !off) return; const pa = paintOf(on), pi = paintOf(off); if (!pa || !pi) return;
       const rule = (cl, p) => `selector.${cl}{opacity:${p.set.op != null ? p.set.op : 1}!important}` + (p.type === "shape" && p.set.fill ? `\nselector.${cl} .pb-svg *{fill:${p.set.fill}!important}` : "");
       const txtOf = d => { const q = rg(d); return q ? out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading" || w.type === "button") : []; }, ta = txtOf(on), ti = txtOf(off);
-      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading").forEach((w, k) => { const a = ta[k], b = ti[k]; if (!a || !b || a.set.color === b.set.color) return; w.set.css = (w.set.css ? w.set.css + "\n" : "") + "selector.pb-dot-on .pb-t,selector.pb-dot-on .pb-t *{color:" + a.set.color + "!important}\nselector.pb-dot-off .pb-t,selector.pb-dot-off .pb-t *{color:" + b.set.color + "!important}"; }); }
-      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "button").forEach(w => { w.set.css = (w.set.css ? w.set.css + "\n" : "") + "selector{transition:all .3s}\n" + rule("pb-dot-on", pa) + "\n" + rule("pb-dot-off", pi); }); }
+      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "text" || w.type === "heading").forEach((w, k) => { const a = ta[k], b = ti[k]; if (!a || !b || a.set.color === b.set.color) return; PBCloneFx.pushItem(w, PBCloneFx.mkItem("مظهر نص التبويب/النقطة (نشط · غير نشط)", "selector.pb-dot-on .pb-t,selector.pb-dot-on .pb-t *{color:[[on]]!important}\nselector.pb-dot-off .pb-t,selector.pb-dot-off .pb-t *{color:[[off]]!important}", { on: { l: "لون النص عند النشاط", t: "text", v: a.set.color }, off: { l: "لون النص عند عدم النشاط", t: "text", v: b.set.color } })); }); }
+      for (const d of sl.dots) { const q = rg(d); if (!q) continue; out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "button").forEach(w => { PBCloneFx.pushItem(w, PBCloneFx.mkItem("مظهر النقطة/التبويب (نشط · غير نشط)", "[[code]]", PBCloneFx.rawP("selector{transition:all .3s}\n" + rule("pb-dot-on", pa) + "\n" + rule("pb-dot-off", pi)))); }); }
     }
 
     /* ───── مجموعات الإظهار/الإخفاء: أكورديون، <details>، القوائم المنسدلة، قائمة الجوال ☰ ─────
@@ -279,7 +280,13 @@ const PBClone = (function () {
       try { return doc.getElementById(raw.replace(/^#/, "")) || doc.querySelector(raw); } catch (e) { return null; }
     };
     function findDisclosures() {
-      const used = new Set(), items = [], add1 = it => { if (!it.head || !it.bodies.length || used.has(it.head) || it.bodies.some(b => b === it.head || b.contains(it.head) || it.head.contains(b))) return; used.add(it.head); items.push(it); };
+      const used = new Set(), items = [], add1 = it => { if (!it.head || (!it.bodies.length && !it.make) || used.has(it.head) || it.bodies.some(b => b === it.head || b.contains(it.head) || it.head.contains(b))) return; used.add(it.head); items.push(it); };
+      const byBody = new Map(), bySrc = new Map(); let mh = []; try { mh = [...doc.querySelectorAll('[data-toggle="modal"],[data-bs-toggle="modal"],[data-fancybox],[data-lightbox],a.glightbox,a.fancybox')]; } catch (e) { }
+      for (const h of mh) {
+        const r = rectOf(h); if (r.w < 4 || r.h < 4 || r.y >= limit) continue; const lbx = h.hasAttribute("data-fancybox") || h.hasAttribute("data-lightbox") || /glightbox|fancybox/.test(String(h.className));
+        if (!lbx) { const b = targetOf(h); if (!b) continue; if (byBody.has(b)) { byBody.get(b).heads.push(h); used.add(h); continue; } const it = { head: h, heads: [h], bodies: [b], o0: false, hov: false, modal: true }; add1(it); if (used.has(h)) byBody.set(b, it); }
+        else { const im = h.querySelector("img"), href = h.getAttribute("href") || h.getAttribute("data-src") || ""; const src = abs(/\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(href) ? href : (im && (im.currentSrc || im.getAttribute("src")) || "")); if (!src) continue; if (bySrc.has(src)) { bySrc.get(src).heads.push(h); used.add(h); continue; } if (bySrc.size >= 30) continue; const it = { head: h, heads: [h], bodies: [], o0: false, hov: false, modal: true, lb: src }; it.make = (id, vh) => makeLightbox(src, id, vh); add1(it); if (used.has(h)) bySrc.set(src, it); }
+      }
       for (const d of doc.querySelectorAll("details")) { const sm = d.querySelector(":scope > summary"); if (sm) add1({ head: sm, bodies: [...d.children].filter(c => c !== sm && c.tagName !== "SCRIPT"), det: d, o0: d.open, hov: false }); }
       let heads = []; try { heads = [...doc.querySelectorAll('[aria-expanded][aria-controls],[data-bs-toggle="collapse"],[data-toggle="collapse"],.navbar-toggler,.menu-toggle,.hamburger,[class*="burger"],[class*="menu-toggle"],[class*="nav-toggle"],button[aria-label*="menu" i],button[aria-label*="القائمة"]')]; } catch (e) { }
       for (const h of heads) {
@@ -289,23 +296,42 @@ const PBClone = (function () {
       }
       let subs = []; try { subs = [...doc.querySelectorAll('li > ul, li > .sub-menu, li > .dropdown-menu, .dropdown > .dropdown-menu, .menu-item-has-children > ul, li > div[class*="mega"], li > div[class*="dropdown"]')]; } catch (e) { }
       for (const b of subs) { if (isShown(b) || b.closest("details")) continue; const li = b.parentElement, h = (b.previousElementSibling && /^(a|button|span)$/i.test(b.previousElementSibling.tagName) ? b.previousElementSibling : li && li.querySelector(":scope > a, :scope > button")); if (h && rectOf(h).w > 4) add1({ head: h, bodies: [b], o0: false, hov: true }); }
-      for (const it of items) { it.id = "d" + (++dN); elCls.set(it.head, ["pbdh-" + it.id]); if (it.o0) it.bodies.forEach(b => elCls.set(b, ["pbdb-" + it.id])); discs.push(it); }
+      for (const it of items) { it.id = "d" + (++dN); (it.heads || [it.head]).forEach(hh => elCls.set(hh, ["pbdh-" + it.id])); if (it.o0) it.bodies.forEach(b => elCls.set(b, ["pbdb-" + it.id])); discs.push(it); }
+    }
+
+    function makeLightbox(src, id, vh) {
+      vh = vh || 900; const bw = Math.min(Math.round(W * .7), W - 40), bh = Math.round(vh * .78), x = Math.round((W - bw) / 2), y = Math.round((vh - bh) / 2);
+      add("shape", { x: 0, y: 0, w: W, h: vh }, { shape: "rect", fill: "#000000", op: .72, outline: false, sw: 0, keep: false, cls: "pbdx-" + id });
+      add("image", { x, y, w: bw, h: bh }, { src, alt: "", fit: "contain" });
+      add("text", { x: W - 76, y: 18, w: 52, h: 52 }, { html: '<p dir="ltr" style="margin:0;text-align:center;color:#ffffff;cursor:pointer">×</p>', fs: { d: 38 }, fw: "700", lh: { d: 1.2 }, ta: { d: "center" }, color: "#ffffff", cls: "pbdx-" + id });
     }
     function discPass() {
-      const full = { x: 0, y: 0, w: W, h: limit }; let n = 0;
+      const full = { x: 0, y: 0, w: W, h: limit }; let n = 0; const fe = win.frameElement, vh = W < 600 ? 780 : 900;
       for (const it of discs) {
-        const saved = [], keep = (e, props) => { saved.push([e, e.getAttribute("style")]); props.forEach(([k, v]) => e.style.setProperty(k, v, "important")); }; let i0 = out.length, bodies = it.bodies;
-        if (!it.o0) {
+        const saved = [], keep = (e, props) => { saved.push([e, e.getAttribute("style")]); props.forEach(([k, v]) => e.style.setProperty(k, v, "important")); }; let i0 = out.length, bodies = it.bodies, h0 = null;
+        const undo = () => { saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); if (fe && h0 != null) fe.style.height = h0; };
+        if (it.modal && fe) { h0 = fe.style.height; fe.style.height = vh + "px"; }      // الإطار يُقاس بارتفاع شاشة حقيقي: النوافذ المنبثقة تتمركز بالنسبة له لا لارتفاع الصفحة كلها
+        if (!it.o0 && !it.make) {
           if (it.det) it.det.setAttribute("open", "");
-          for (const b of bodies) { let a = b.parentElement, k = 0; while (a && a !== doc.body && k++ < 4) { if (win.getComputedStyle(a).display === "none") keep(a, [["display", "block"]]); a = a.parentElement; } keep(b, FORCE); }
-          if (!bodies.some(b => rectOf(b).h > 2)) { saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); continue; }
+          for (const b of bodies) { let a = b.parentElement, k = 0; while (a && a !== doc.body && k++ < 4) { if (win.getComputedStyle(a).display === "none") keep(a, [["display", "block"]]); a = a.parentElement; } keep(b, FORCE); if (it.modal) b.querySelectorAll(".modal-dialog,.modal-content,[class*='dialog']").forEach(c => keep(c, [["transform", "none"], ["opacity", "1"]])); }
+          if (!bodies.some(b => rectOf(b).h > 2)) { undo(); continue; }
         }
-        const rs = bodies.map(rectOf).filter(r => r.h > 1), y0 = Math.min(...rs.map(r => r.y)), y1 = Math.max(...rs.map(r => r.y + r.h)), overlay = bodies.some(b => /absolute|fixed/.test(win.getComputedStyle(b).position));
-        if (!it.o0) { i0 = out.length; bodies.forEach(b => { elCls.set(b, ["pbdb-" + it.id, "pb-gx-off"]); visit(b, full, null); }); saved.reverse().forEach(([e, st]) => st == null ? e.removeAttribute("style") : e.setAttribute("style", st)); if (it.det) it.det.removeAttribute("open"); }
+        const rs = bodies.map(rectOf).filter(r => r.h > 1), y0 = rs.length ? Math.min(...rs.map(r => r.y)) : 0, y1 = rs.length ? Math.max(...rs.map(r => r.y + r.h)) : 0, overlay = !!(it.modal || bodies.some(b => /absolute|fixed/.test(win.getComputedStyle(b).position)));
+        if (!it.o0 || it.make) {
+          i0 = out.length;
+          if (it.make) it.make(it.id, vh);
+          else {
+            if (it.modal) add("shape", { x: 0, y: 0, w: W, h: vh }, { shape: "rect", fill: "#000000", op: .55, outline: false, sw: 0, keep: false, cls: "pbdx-" + it.id });      // خلفية معتمة: النقر عليها يغلق النافذة
+            bodies.forEach(b => { const cl = ["pbdb-" + it.id, "pb-gx-off"]; elCls.set(b, cl); if (it.modal) b.querySelectorAll('[data-dismiss="modal"],[data-bs-dismiss="modal"],.close,.btn-close,.modal-close,button[class*="close"],a[class*="close"],[aria-label="Close"],[aria-label="إغلاق"]').forEach(x => elCls.set(x, ["pbdx-" + it.id])); visit(b, full, null); });
+          }
+          undo();
+        }
         let ws = []; if (it.o0) bodies.forEach(b => { const q = elRange.get(b); if (q) ws = ws.concat(out.slice(q[0], q[1])); }); else ws = out.slice(i0); if (!ws.length) continue;
-        if (overlay) { const zmax = out.reduce((m, w) => Math.max(m, w.set.zi || 0), 0); const zmin = Math.min(...ws.map(w => w.set.zi || 0)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + zmax + 5; }); }
+        if (it.make || it.modal) tagW(ws, ["pbdb-" + it.id, "pb-gx-off"]);
+        if (overlay) { const zmax = out.reduce((m, w) => Math.max(m, w.set.zi || 0), 0), zmin = Math.min(...ws.map(w => w.set.zi || 0)); ws.forEach(w => { w.set.zi = w.set.zi - zmin + zmax + 5; }); }
+        if (it.modal) { tagW(ws, ["pb-pin"]); ws.forEach(w => { PBCloneFx.pushItem(w, PBCloneFx.mkItem("تثبيت في منتصف الشاشة (نافذة منبثقة)", "selector{--pin:calc(var(--u)*[[top]]);--pino:calc(var(--u)*[[off]]);z-index:[[z]]}", { top: { l: "المسافة من أعلى الشاشة (px)", t: "num", v: 0 }, off: { l: "الموضع داخل الشاشة (px)", t: "num", v: Math.round(w.set.fy.d || 0) }, z: { l: "الترتيب z-index", t: "num", v: 90 } })); }); }      // تظهر في منتصف الشاشة الحالية أينما كان التمرير
         const H = overlay ? 0 : Math.round(y1 - y0), thr = Math.round(y0 + (it.o0 ? H : 0)); if (!overlay && fx) { let a = bodies[0].parentElement, k = 0; while (a && a !== doc.body && a !== doc.documentElement && k++ < 8) { const q = fx._S.own.get(a); if (q) tagW(out.slice(q[0], q[1]).filter(w => w.type === "shape" || w.type === "image"), ["pbds-" + it.id]); a = a.parentElement; } }      // خلفيات الحاويات تتمدّد مع فتح العنصر
-        tagW([ws[0]], ["pbdm-" + it.id + "-" + H + "-" + thr + "-" + (it.o0 ? 1 : 0) + "-" + (it.hov ? 1 : 0) + "-" + W]); n++;
+        tagW([ws[0]], ["pbdm-" + it.id + "-" + H + "-" + thr + "-" + (it.o0 ? 1 : 0) + "-" + (it.hov ? 1 : 0) + "-" + W]); n++; if (it.modal && fx) fx.stats.modals = (fx.stats.modals || 0) + 1;
       }
       if (fx && n) fx.stats.disc = (fx.stats.disc || 0) + n;
     }
@@ -337,6 +363,20 @@ const PBClone = (function () {
       }
       let cand = []; try { cand = [...doc.querySelectorAll("marquee,[class*='marquee'],[class*='ticker']")]; } catch (e) { }
       for (const e of cand) { if (mq.has(e)) continue; const isTag = e.tagName.toLowerCase() === "marquee"; let C = e; if (!isTag && win.getComputedStyle(C).overflowX === "visible") { C = e.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; } if (!C || C === doc.body) continue; const T = isTag ? e : ([...C.children].find(x => x.scrollWidth > C.clientWidth * 1.05 || rectOf(x).w > rectOf(C).w * 1.05) || C.firstElementChild); if (!T) continue; if (!isTag && !([...C.querySelectorAll("*")].length)) continue; addMarquee(C, T, isTag ? Math.max(8, 400 / (+e.getAttribute("scrollamount") || 6)) : 20, e.getAttribute && e.getAttribute("direction") === "right" ? "rtl" : "ltr"); }
+    }
+
+    /* ───── النماذج: تتحول لعنصر «نموذج اتصال» الجاهز (يعمل: واتساب/بريد/رابط استقبال) بحقولها وألوانها؛ نماذج البحث تبقى شكلاً ───── */
+    function emitForm(f) {
+      if (typeof PBCloneFx === "undefined" || PBCloneFx.isSearchForm(f)) return false; const r = rectOf(f); if (r.w < 160 || r.h < 40 || r.y >= limit) return false;
+      const ctl = [...f.querySelectorAll("input,textarea,select")].filter(c => { const t = (c.getAttribute("type") || "text").toLowerCase(); if (/^(hidden|submit|button|image|reset|file|range|color|password)$/.test(t)) return false; const q = rectOf(c); return q.w > 20 && q.h > 10; }); if (!ctl.length) return false;
+      const lab = c => { let l = c.id ? f.querySelector('label[for="' + String(c.id).replace(/"/g, "") + '"]') : null; if (!l) l = c.closest("label"); const t = l ? l.textContent.replace(/\s+/g, " ").trim() : ""; return (t || c.getAttribute("aria-label") || c.getAttribute("placeholder") || c.getAttribute("name") || "حقل").slice(0, 60); };
+      const fields = ctl.slice(0, 12).map(c => { const tg = c.tagName.toLowerCase(), t0 = (c.getAttribute("type") || "text").toLowerCase(); const type = tg === "textarea" ? "textarea" : tg === "select" ? "select" : /^(checkbox|radio)$/.test(t0) ? "checkbox" : /^(tel|email|number|date)$/.test(t0) ? t0 : "text"; const o = { label: lab(c), type, ph: c.getAttribute("placeholder") || "", req: !!c.required || c.getAttribute("aria-required") === "true", w: "full" }; if (tg === "select") o.opts = [...c.options].map(x => x.textContent.trim()).filter(Boolean).join(","); return o; });
+      ctl.slice(0, 12).forEach((c, i) => { const q = rectOf(c); if (q.w < r.w * .62 && ctl.some((d, j) => j !== i && Math.abs(rectOf(d).y - q.y) < 12 && Math.abs(rectOf(d).x - q.x) > 20)) fields[i].w = "half"; });
+      const sb = f.querySelector('button[type="submit"],input[type="submit"],button:not([type])') || f.querySelector("button"), btn = sb ? (sb.tagName === "INPUT" ? sb.value : sb.textContent).replace(/\s+/g, " ").trim() : "", c0 = ctl.find(c => !/checkbox|radio/.test(c.getAttribute("type") || "")) || ctl[0];
+      const ics = win.getComputedStyle(c0), fcs = win.getComputedStyle(f), sbc = sb ? win.getComputedStyle(sb) : null, ib = col(ics.backgroundColor), ibd = col(ics.borderTopColor), fb = col(fcs.backgroundColor), fbd = col(fcs.borderTopColor), bb = sbc ? col(sbc.backgroundColor) : null, bc = sbc ? col(sbc.color) : null, tc = col(fcs.color);
+      const lb = f.querySelector("label"), lc = lb ? col(win.getComputedStyle(lb).color) : tc, pad = ["Top", "Right", "Bottom", "Left"].map(k => Math.round(px(fcs["padding" + k])));
+      const rr = radiusOf(fcs, r), props = { title: "", desc: "", fields, btn: btn || "إرسال", dest: "whatsapp", dzPhone: fields.some(x => x.type === "tel"), ok: "تم إرسال رسالتك بنجاح، شكراً لك!", subject: "نموذج من الموقع", fbg: fb && fb.a > .3 ? hex(fb) : "#ffffff", fbc: fbd && fbd.a > .1 && px(fcs.borderTopWidth) >= 1 ? hex(fbd) : "#e6dfcf", frad: { d: Math.round(rr) }, fpad: { d: pad.some(v => v > 0) ? pad : [20, 20, 20, 20] }, tcol: tc ? hex(tc) : "#173f35", lcol: lc ? hex(lc) : "#444444", ibg: ib && ib.a > .2 ? hex(ib) : "#ffffff", ibc: ibd && ibd.a > .1 ? hex(ibd) : "#e0d9c8", irad: { d: Math.round(radiusOf(ics, rectOf(c0))) }, ifs: { d: Math.round(px(ics.fontSize) || 16) }, bbg: bb && bb.a > .2 ? hex(bb) : "#157a55", bcol: bc ? hex(bc) : "#ffffff", brad: { d: sbc ? Math.round(radiusOf(sbc, rectOf(sb))) : 12 }, bfull: sb ? rectOf(sb).w >= r.w * .8 : true, cd: 20 };
+      const w = add("contact", clipY(r), props); if (w && fx) fx.stats.forms = (fx.stats.forms || 0) + 1; return !!w;
     }
     function emitMarquee(C) {
       const m = mq.get(C), w = add("marquee", m.cr, { mqt: m.texts.join("\n"), mqs: m.dur, mqd: m.dir, mqg: { d: m.gap }, mqp: true, mqbg: m.bg, mqc: m.c, fs: { d: m.fs }, fw: m.fw, ff: m.ff || undefined }); if (w && fx) fx.stats.marquee = (fx.stats.marquee || 0) + 1;
@@ -398,7 +438,7 @@ const PBClone = (function () {
     async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) by.get(u).forEach(w => { w.set.src = p; }); } catch (e) { } done++; } }
     await Promise.all([work(), work(), work()]); return done;
   }
-  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
+  function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
@@ -565,7 +605,7 @@ const PBClone = (function () {
     document.body.appendChild(m);
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
-      const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "fxrep") fxPanel(); else if (a === "fxsend") { const un = (S.fxRep || []).filter((x, i) => x.status !== "ok" && (document.querySelector(`#cl-rep [data-fxi="${i}"]`) || {}).checked); sendFxRequests(un.length ? un : []); } else if (a === "fxclose") fxPanel(false); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
+      const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "fxrep") fxPanel(); else if (a === "fxsend") { const un = (S.fxRep || []).filter((x, i) => x.status !== "ok" && (document.querySelector(`#cl-rep [data-fxi="${i}"]`) || {}).checked); sendFxRequests(un.length ? un : []); } else if (a === "fxclose") fxPanel(false); else if (a === "fxstat") fxStatus(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
     $("cl-url").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); loadUrl(false); } });
     $("cl-w").addEventListener("change", () => { S.W = Number($("cl-w").value) || 1280; if (S.frame) mountFrame(S.html); });
     m.addEventListener("dragover", e => { if (S.tab === "img" && e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files")) e.preventDefault(); });
@@ -607,7 +647,16 @@ const PBClone = (function () {
     const sent = S.fxSent || {}, host = (() => { try { return new URL(S.url).hostname; } catch (e) { return ""; } })();
     el.innerHTML = `<h4>تحليل التأثيرات في هذه الصفحة</h4>` + (un.length ? `<div style="margin-bottom:.4rem">وُجدت <b>${un.length}</b> تأثيرات/عناصر غير متوفرة بالكامل في المطوّر. حدّد ما تريد طلب إضافته ثم أرسل الطلب ليُحدَّث المطوّر ويقرأ هذه المواقع بدقة:</div>` : `<div style="margin-bottom:.4rem">كل ما في الصفحة مدعوم في المطوّر.</div>`) +
       rep.map((x, i) => `<div class="rw"><span class="ch ${x.status}">${CHIP[x.status]}</span><div style="flex:1"><b>${esc(x.label)}</b> <span class="cl-sm">× ${x.n}</span><small>${esc(x.note || "")}</small></div>${x.status !== "ok" ? (sent[host + "|" + x.id] ? '<span class="cl-sm">أُرسل ✓</span>' : `<input type="checkbox" data-fxi="${i}" checked title="اطلب إضافته">`) : ""}</div>`).join("") +
-      `<div class="bt">${un.length ? '<button type="button" class="pri" data-cl="fxsend">إرسال طلب إضافة المحدَّد</button>' : ""}<button type="button" data-cl="fxclose">إغلاق</button></div>`;
+      `<div class="bt">${un.length ? '<button type="button" class="pri" data-cl="fxsend">إرسال طلب إضافة المحدَّد</button>' : ""}<button type="button" data-cl="fxstat">حالة طلباتي</button><button type="button" data-cl="fxclose">إغلاق</button></div><div id="cl-rep-st"></div>`;
+  }
+
+  /* «حالة طلباتي»: يقرأ assets/data/fx-requests.json ويعرض كل طلب وهل نُفِّذ وفي أي إصدار (state: new/done، doneIn) */
+  async function fxStatus() {
+    const box = $("cl-rep-st"); if (!box) return; box.innerHTML = '<div class="cl-sm" style="margin-top:.6rem">جارٍ قراءة الطلبات…</div>';
+    try {
+      if (typeof GH === "undefined" || !GH.cfg()) throw new Error("GitHub غير مضبوط"); const f = await GH.getFile(FXREQ), cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))), rs = cur.requests || [];
+      box.innerHTML = '<h4 style="margin:.7rem 0 .3rem">طلباتك المُرسلة</h4>' + (rs.length ? rs.map(r => `<div class="rw"><span class="ch ${r.state === "done" ? "ok" : "partial"}">${r.state === "done" ? "تمت الإضافة" : "قيد الانتظار"}</span><div style="flex:1"><b>${esc(r.label)}</b> <span class="cl-sm">× ${r.count || 1}</span><small>${r.state === "done" ? "نُفّذ في الإصدار " + esc(r.doneIn || "") + (r.doneNote ? " — " + esc(r.doneNote) : "") : "طُلب " + esc(String(r.last || r.first || "").slice(0, 10)) + " من: " + esc((r.sites || []).join("، "))}</small></div></div>`).join("") : '<div class="cl-sm">لا توجد طلبات مُرسلة بعد.</div>');
+    } catch (e) { box.innerHTML = '<div class="cl-sm" style="margin-top:.6rem;color:#991b1b">تعذّرت القراءة: ' + esc(e.message) + "</div>"; }
   }
   async function sendFxRequests(items) {
     items = (items || []).filter(x => x.status !== "ok"); const host = (() => { try { return new URL(S.url).hostname; } catch (e) { return ""; } })();
@@ -618,7 +667,7 @@ const PBClone = (function () {
       if (typeof GH === "undefined" || !GH.cfg()) throw new Error("GitHub غير مضبوط"); let cur = { v: 1, requests: [] }, sha = null;
       try { const f = await GH.getFile(FXREQ); sha = f.sha; cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))); if (!cur.requests) cur.requests = []; } catch (e) { if (!/404|لم يُعثر/.test(String(e.message))) throw e; }
       mergeInto(cur); await GH.putFile(FXREQ, btoa(unescape(encodeURIComponent(JSON.stringify(cur, null, 1)))), sha, "طلب إضافة تأثيرات للمطوّر: " + items.map(x => x.id).join(", "));
-      items.forEach(x => { S.fxSent[host + "|" + x.id] = 1; }); toast("أُرسل طلب إضافة " + items.length + " تأثير/عنصر للمطوّر"); fxPanel(true); return true;
+      items.forEach(x => { S.fxSent[host + "|" + x.id] = 1; }); toast("أُرسل طلب إضافة " + items.length + " تأثير/عنصر للمطوّر — تابعه من «حالة طلباتي»"); fxPanel(true); return true;
     } catch (e) {
       const cur = mergeInto({ v: 1, requests: [] }), blob = new Blob([JSON.stringify(cur, null, 1)], { type: "application/json" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "fx-request-" + (host || "site") + ".json"; document.body.appendChild(a); a.click(); a.remove();
       items.forEach(x => { S.fxSent[host + "|" + x.id] = 1; }); toast("تعذّر الإرسال المباشر (" + e.message + ") — نُزّل ملف الطلب؛ أرسله لمطوّر الموقع"); fxPanel(true); return false;

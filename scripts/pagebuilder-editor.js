@@ -97,7 +97,7 @@ body{overflow-x:hidden;margin:0}`;
 .mk-pre{display:flex;flex-wrap:wrap;gap:.25rem}.mk-pre .pbx-small{flex:1;white-space:nowrap}.mk-pre .pbx-small.on{background:#ede9fe;border-color:#7c3aed;color:#5b21b6}
 .mk-gl{position:fixed;z-index:10039;pointer-events:none;border:0 dashed rgba(124,58,237,.5);transition:border-color .1s}.mk-gl.v{width:0;border-left-width:1.5px}.mk-gl.h{height:0;border-top-width:1.5px}.mk-gl.hot{border-style:solid;border-color:#ec4899}
 .pbx-pend{align-items:center;gap:.35rem;background:#ecfdf5;border:1.5px solid #86d4b0;border-radius:10px;padding:.35rem .5rem;margin:.35rem 0;font-size:.74rem;font-weight:700;color:#14573b;position:sticky;top:1.6rem;z-index:6}.pbx-pend span{flex:1;line-height:1.5}.pbx-pend button{border:0;border-radius:8px;padding:.3rem .6rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.74rem}.pbx-pend .ok{background:#0d9488;color:#fff}.pbx-pend .no{background:#fff;color:#b91c1c;border:1.5px solid #fca5a5}.pbx-ih{display:flex;align-items:center;gap:.4rem;font-weight:900;color:#173f35;position:sticky;top:-.7rem;z-index:6;background:#fff;margin:-.7rem -.7rem .5rem;padding:.7rem .7rem .5rem;border-bottom:1px solid #eee}.pbx-ih small{color:#999;font-weight:600}
-.pbx-itabs{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-itabs button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.4rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-itabs button.on{background:#173f35;color:#fff;border-color:#173f35}
+.pbx-fxi{border:1.5px solid #e6dfcf;border-radius:12px;padding:.55rem .65rem;margin-bottom:.55rem;background:#fff}.pbx-fxi.off{opacity:.55}.pbx-fxi .fxh{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem}.pbx-fxi .fxh b{flex:1;font-size:.84rem;color:#173f35}.pbx-fxi .fxh label{font-size:.72rem;display:flex;gap:.25rem;align-items:center;white-space:nowrap}.pbx-fxi .fxh button{border:0;background:#fee2e2;color:#991b1b;border-radius:8px;padding:.15rem .5rem;cursor:pointer}.pbx-fxi .fxf{display:block;font-size:.74rem;color:#6b6556;margin:.3rem 0}.pbx-fxi .fxf input,.pbx-fxi .fxf select,.pbx-fxi .fxf textarea{width:100%;box-sizing:border-box;border:1.5px solid #e0d9c8;border-radius:8px;padding:.3rem .45rem;font-family:inherit;margin-top:.15rem}.pbx-fxn{font-size:.76rem;color:#6b6556;line-height:1.7;margin:0 0 .6rem}.pbx-itabs{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-itabs button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.4rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem}.pbx-itabs button.on{background:#173f35;color:#fff;border-color:#173f35}
 .pbx-dv{display:flex;gap:.3rem;margin-bottom:.6rem}.pbx-dv button{flex:1;border:1.5px solid #e6dfcf;background:#fff;border-radius:8px;padding:.3rem;cursor:pointer;font-size:.9rem}.pbx-dv button.on{background:#c8a24b;border-color:#c8a24b}
 .pbx-f{margin-bottom:.7rem}.pbx-f>label{display:flex;align-items:center;gap:.3rem;font-size:.78rem;font-weight:800;color:#444;margin-bottom:.2rem}.pbx-f .dv{font-size:.7rem;opacity:.7}.pbx-f .rs{margin-inline-start:auto;border:0;background:none;cursor:pointer;color:#b83232;font-size:.8rem}
 .pbx-f input[type=text],.pbx-f input[type=number],.pbx-f input[type=datetime-local],.pbx-f select,.pbx-f textarea{width:100%;border:1.5px solid #e0d9c8;border-radius:8px;padding:.4rem .5rem;font-family:inherit;font-size:.85rem;background:#fff}
@@ -2262,11 +2262,26 @@ body{overflow-x:hidden;margin:0}`;
     const MI = typeof ModernIcons !== "undefined" ? ModernIcons : null, B = [["hd", "monitor", "المكتب"], ["ht", "tablet", "التابلت"], ["hm", "mobile", "الهاتف"]];
     return `<div class="pbx-vis"><span>الظهور في:</span>${B.map(([k, ic, n]) => { const off = !!inf.set[k]; return `<button type="button" data-vis="${k}" class="${off ? "off" : "on"}" title="${off ? "مخفي في " + n + " — انقر لإظهاره" : "ظاهر في " + n + " — انقر لإخفائه"}">${MI ? MI.svg(ic) : ""}<b>${n}</b></button>`; }).join("")}</div>`;
   }
+  /* تبويب «تأثيرات منسوخة»: التأثيرات التي نسختها أداة «نسخ قالب» مع العنصر (set.fxs) بأسمائها وإعداداتها: تعديل، تعطيل، حذف */
+  const hasFx = inf => !!(inf && inf.kind === "widget" && Array.isArray(inf.set.fxs) && inf.set.fxs.length);
+  const FX_ANIM = [["", "بدون"], ["fadeIn", "ظهور تدريجي"], ["fadeUp", "صعود"], ["fadeDown", "نزول"], ["zoomIn", "تكبير"], ["slideStart", "انزلاق من الجانب"]];
+  function fxTabHtml(inf) {
+    const its = inf.set.fxs || [], X = PB.esc, fld = (i, k, pr) => {
+      const a = `data-fxi="${i}" data-fxk="${k}"`;
+      if (pr.t === "num") return `<label class="fxf">${X(pr.l)}<input type="number" step="any" ${a} value="${X(pr.v)}"></label>`;
+      if (pr.t === "select") return `<label class="fxf">${X(pr.l)}<select ${a}>${(pr.o || []).map(([v, n]) => `<option value="${X(v)}"${String(pr.v) === v ? " selected" : ""}>${X(n)}</option>`).join("")}</select></label>`;
+      if (pr.t === "code") return `<label class="fxf">${X(pr.l)}<textarea ${a} rows="${Math.min(10, Math.max(3, String(pr.v || "").split("\n").length + 1))}" spellcheck="false" dir="ltr">${X(pr.v)}</textarea></label>`;
+      return `<label class="fxf">${X(pr.l)}<input type="text" ${a} value="${X(pr.v)}" dir="ltr"></label>`;
+    };
+    const native = inf.set.anim ? `<div class="pbx-fxi"><div class="fxh"><b>حركة الظهور بالتمرير</b></div><label class="fxf">النوع<select data-fxn="anim">${FX_ANIM.map(([v, n]) => `<option value="${v}"${inf.set.anim === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="fxf">المدة (ثانية)<input type="number" step="0.1" data-fxn="animDur" value="${X(inf.set.animDur != null ? inf.set.animDur : 0.6)}"></label><label class="fxf">التأخير (ثانية)<input type="number" step="0.1" data-fxn="animDelay" value="${X(inf.set.animDelay != null ? inf.set.animDelay : 0)}"></label></div>` : "";
+    return `<p class="pbx-fxn">نُسخت هذه التأثيرات مع العنصر من الموقع الأصلي. عدّل إعداداتها أو عطّلها (إيقاف) أو احذفها. تظهر نتيجتها على الصفحة مباشرة (التحويم والحركات تعمل داخل المحرّر وفي المعاينة).</p>${native}` + its.map((it, i) => `<div class="pbx-fxi${it.on === false ? " off" : ""}"><div class="fxh"><b>${X(it.n || "تأثير")}</b><label><input type="checkbox" data-fxon="${i}" ${it.on === false ? "" : "checked"}> مفعّل</label><button type="button" data-fxdel="${i}" title="حذف هذا التأثير">حذف</button></div>${Object.keys(it.p || {}).map(k => fld(i, k, it.p[k])).join("")}</div>`).join("");
+  }
   function renderInspector() {
     updateMbar(); try { drawQbar(); } catch (x) { console.warn(x); }
     const el = $("pbx-insp"); if (!el) return; if (multiOn()) { multiPanel(el); return; } const inf = selInfo(), newSel = E.inspSel !== E.sel; E.inspSel = E.sel; if (newSel) setTimeout(() => { el.scrollTop = 0; }, 0);      // التحوّل لعنصر آخر: الإعدادات من أعلى القائمة، واسم العنصر ثابت أعلاها
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
+    if (E.tab === "f" && !hasFx(inf)) E.tab = "c";
     const all = ctlsFor(inf).filter(c => c.tab === E.tab);
     el.innerHTML = `<div class="pbx-ih">${lbl}<button type="button" class="pbx-pimgb" data-pimg="1" title="تحميل صورة: يفتح مكان شريط الإعدادات مكتبة صور هذه الصفحة لرفع صور جديدة وحذفها وسحبها إلى الصفحة">${ico("image", 14)}<span>تحميل صورة</span></button></div>
 <div id="pbx-pend" class="pbx-pend" style="display:none"><span>👁 تعديلاتك تظهر مباشرة على الصفحة</span><button type="button" class="ok" data-pend="ok">✓ تأكيد</button><button type="button" class="no" data-pend="no">↩ إلغاء</button></div>
@@ -2274,8 +2289,8 @@ ${quickHtml(inf)}
 ${visRow(inf)}
 <div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
 <div class="pbx-cp"><small>نسخ تصميم ${DEVIC[E.dev]} ${DEVNAME[E.dev]} إلى:</small><select id="cp-scope"><option value="sel">العنصر المحدد</option>${FREE_ONLY ? "" : '<option value="sec">القسم كله</option>'}<option value="all">الصفحة كلها</option></select>${DEVS.filter(d => d !== E.dev).map(d => `<button class="pbx-small" data-cpy="${d}" title="نسخ إلى ${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
-<div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
-${inspGroups(all, inf)}`;
+<div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].concat(hasFx(inf) ? [["f", "تأثيرات منسوخة (" + (inf.set.fxs.length + (inf.set.anim ? 1 : 0)) + ")"]] : []).map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}"${k === "f" ? ' style="flex:2.3;white-space:nowrap;font-size:.74rem"' : ""}>${n}</button>`).join("")}</div>
+${E.tab === "f" ? fxTabHtml(inf) : inspGroups(all, inf)}`;
     updPend();
   }
   function field(c, set) {
@@ -2369,6 +2384,8 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   }
   function onInspInput(e) {
     const t = e.target, inf = selInfo(); if (!inf) return;
+    if (t.dataset.fxk !== undefined) { const it = (inf.set.fxs || [])[+t.dataset.fxi], pr = it && it.p && it.p[t.dataset.fxk]; if (pr) { pr.v = pr.t === "num" ? (t.value === "" ? 0 : Number(t.value)) : t.value; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); } return; }
+    if (t.dataset.fxn) { const k = t.dataset.fxn; if (k === "anim") { if (t.value) inf.set.anim = t.value; else { delete inf.set.anim; delete inf.set.animDur; delete inf.set.animDelay; } } else inf.set[k] = t.value === "" ? 0 : Number(t.value); schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); if (k === "anim" && !t.value) renderInspector(); return; }
     if (t.dataset.bc !== undefined) { const a = Array.isArray(inf.set.mcols) ? inf.set.mcols : (inf.set.mcols = []); a[Number(t.dataset.bc)] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qrot) { const v = Number(t.value); setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); const b = t.parentNode.querySelector("b"); if (b) b.textContent = v + "°"; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
@@ -2388,7 +2405,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   }
   const positionOverlaySoon = () => setTimeout(positionOverlay, 40);
   function onInspChange(e) {
-    const t = e.target; if (t.dataset && t.dataset.gem) { PBSmart.setGem(t.checked); return; }
+    const t = e.target; if (t.dataset && t.dataset.fxon !== undefined) { const inf = selInfo(), it = inf && (inf.set.fxs || [])[+t.dataset.fxon]; if (it) { it.on = t.checked; E.nextLabel = "تفعيل/تعطيل تأثير"; afterEdit(); } return; } if (t.dataset && t.dataset.gem) { PBSmart.setGem(t.checked); return; }
     if (t.dataset && t.dataset.pp) { const inf = selInfo(); if (!inf) return; const cur = new Set(String(inf.set[t.dataset.pp] || "").split(/[\s,،]+/).filter(Boolean)); t.checked ? cur.add(t.dataset.v) : cur.delete(t.dataset.v); inf.set[t.dataset.pp] = [...cur].join(","); afterEdit(); return; } if (t.dataset.gk) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox") { gradInput(t, selInfo()); renderInspector(); } else renderInspector(); return; } if (t.dataset.k || t.dataset.rep) { commitHist(); if (t.tagName === "SELECT" || t.type === "checkbox" || t.type === "color") { onInspInput(e); renderInspector(); } if (t.dataset.range) renderInspector(); }
     if (t.dataset.fileFor) {}
     if (t.dataset.pzk) { if (PBPuzzle.opt(t.dataset.pzk, t.type === "checkbox" ? t.checked : t.value)) renderInspector(); return; }
@@ -2406,6 +2423,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       if (!was) { const ip = $("pbx-insp"), b = ip.querySelector(`[data-ac="${k}"]`), ih = ip.querySelector(".pbx-ih"); if (b) ip.scrollTop += b.getBoundingClientRect().top - ip.getBoundingClientRect().top - (ih ? ih.offsetHeight : 0) - 4 + (-0.7 * 16 * 0); }
       return; }
     if (!inf) return;
+    if (t.dataset.fxdel !== undefined) { const a = inf.set.fxs || []; a.splice(+t.dataset.fxdel, 1); if (!a.length) { delete inf.set.fxs; if (!inf.set.anim) E.tab = "c"; } E.nextLabel = "حذف تأثير منسوخ"; afterEdit(); return; }
     if (t.dataset.vis) { inf.set[t.dataset.vis] = !inf.set[t.dataset.vis]; if (!inf.set[t.dataset.vis]) delete inf.set[t.dataset.vis]; E.nextLabel = "تغيير الظهور"; afterEdit(); return; }
     if (t.dataset.q) { onQuick(t.dataset.q); return; }
     if (t.dataset.shp) { inf.set.shape = t.dataset.shp; if (["stroke", "line"].includes(PB.SHAPES[t.dataset.shp][1]) && !inf.set.stroke) inf.set.stroke = inf.set.fill || "#c8a24b"; afterEdit(); return; }

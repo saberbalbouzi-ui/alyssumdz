@@ -3,6 +3,11 @@
    التأثيرات تُكتب في خانة «CSS مخصص» لكل عنصر (set.css) فيمكن تعديلها من المطوّر؛ والتحويم على «بطاقة كاملة» يعمل
    بمناطق تحويم (hz-/hzm-) يشغّلها سكربت صغير في الصفحة المنشورة (RUNTIME_JS). */
 const PBCloneFx = (() => {
+  /* عناصر «التأثيرات المنسوخة» القابلة للتعديل (set.fxs): {id,n,on,tpl,p:{مفتاح:{l,t,v,o?}}}؛ يترجمها PB.fxCompile إلى CSS (انظر pagebuilder.js) ويعرضها تبويب «تأثيرات منسوخة» في الإعدادات */
+  const uid = () => Math.random().toString(36).slice(2, 8);
+  const mkItem = (n, tpl, p) => ({ id: uid(), n, on: true, tpl, p });
+  const rawP = css => ({ code: { l: "الكود (CSS) — كلمة selector = العنصر نفسه", t: "code", v: css } });
+  const pushItem = (w, it) => { (w.set.fxs = w.set.fxs || []).push(it); return it; };
   const HOVER_PROPS = new Set(["transform", "translate", "scale", "rotate", "opacity", "filter", "backdrop-filter", "box-shadow", "text-shadow", "color", "background-color", "background", "border-color", "text-decoration-color", "letter-spacing", "-webkit-text-fill-color"]);
   const BOX_PROPS = new Set(["transform", "translate", "scale", "rotate", "opacity", "filter", "backdrop-filter", "box-shadow"]);
   const TEXT_PROPS = new Set(["color", "text-shadow", "text-decoration-color", "letter-spacing", "-webkit-text-fill-color"]);
@@ -36,7 +41,7 @@ const PBCloneFx = (() => {
 
   function create(c) {
     const { doc, win, W, out, add, col, px, r1, r2 } = c, S = { anims: new Map(), trans: new Map(), kf: new Map(), hover: [], own: new Map(), range: new Map(), zones: new Map(), zn: 0, stats: { shadow: 0, tshadow: 0, filter: 0, anim: 0, entr: 0, hover: 0, zone: 0 } };
-    const pass = (w, css) => { w.set.css = ((w.set.css ? w.set.css + "\n" : "") + css); };
+    const pass = (w, css, n) => pushItem(w, mkItem(n || "تأثير CSS", "[[code]]", rawP(css)));
     const addCls = (w, k) => { if (!(" " + (w.set.cls || "") + " ").includes(" " + k + " ")) w.set.cls = ((w.set.cls || "") + " " + k).trim(); };
     const geomOf = w => ({ x: (w.set.fx.d || 0) / 100 * W, y: w.set.fy.d || 0, w: (w.set.fwd.d || 0) / 100 * W, h: w.set.fh.d || 0 });
 
@@ -70,10 +75,10 @@ const PBCloneFx = (() => {
       const cs = win.getComputedStyle(e), paint = mine.find(w => w.type === "shape" || w.type === "image" || w.type === "button"), txts = mine.filter(w => w.type === "text" || w.type === "heading" || w.type === "button");
       const fl = []; const ds = dropShadows(cs.boxShadow); if (ds && paint && cs.display !== "inline") { fl.push(ds); S.stats.shadow++; }
       if (cs.filter && cs.filter !== "none") { fl.unshift(cs.filter); S.stats.filter++; }
-      if (fl.length && paint) pass(paint, `selector{filter:${fl.join(" ")}}`);
-      if (cs.backdropFilter && cs.backdropFilter !== "none" && (paint || mine[0])) { const t = paint || mine[0]; pass(t, `selector{backdrop-filter:${cs.backdropFilter};-webkit-backdrop-filter:${cs.backdropFilter}}`); S.stats.filter++; }
-      if (cs.mixBlendMode && cs.mixBlendMode !== "normal") mine.forEach(w => pass(w, `selector{mix-blend-mode:${cs.mixBlendMode}}`));
-      if (cs.textShadow && cs.textShadow !== "none") txts.forEach(w => { const sel = w.type === "button" ? "selector .pb-btn" : "selector.pb-w .pb-t,selector.pb-w .pb-t *"; pass(w, `${sel}{text-shadow:${cs.textShadow}!important}`); S.stats.tshadow++; });
+      if (fl.length && paint) { const fv = fl.join(" "), m = /^drop-shadow\((-?[\d.]+)px (-?[\d.]+)px (-?[\d.]+)px (.+)\)$/.exec(fv); if (m && fv.split("drop-shadow(").length === 2) pushItem(paint, mkItem("ظل العنصر", "selector{filter:drop-shadow([[x]]px [[y]]px [[b]]px [[c]])}", { x: { l: "إزاحة أفقية (px)", t: "num", v: +m[1] }, y: { l: "إزاحة عمودية (px)", t: "num", v: +m[2] }, b: { l: "التمويه (px)", t: "num", v: +m[3] }, c: { l: "اللون", t: "text", v: m[4] } })); else pushItem(paint, mkItem("فلتر / ظل", "selector{filter:[[v]]}", { v: { l: "قيمة filter", t: "text", v: fv } })); }
+      if (cs.backdropFilter && cs.backdropFilter !== "none" && (paint || mine[0])) { const t = paint || mine[0]; pushItem(t, mkItem("تمويه الخلفية (زجاجي)", "selector{backdrop-filter:[[v]];-webkit-backdrop-filter:[[v]]}", { v: { l: "backdrop-filter", t: "text", v: cs.backdropFilter } })); S.stats.filter++; }
+      if (cs.mixBlendMode && cs.mixBlendMode !== "normal") mine.forEach(w => pushItem(w, mkItem("دمج الألوان", "selector{mix-blend-mode:[[v]]}", { v: { l: "mix-blend-mode", t: "text", v: cs.mixBlendMode } })));
+      if (cs.textShadow && cs.textShadow !== "none") txts.forEach(w => { const sel = w.type === "button" ? "selector .pb-btn" : "selector.pb-w .pb-t,selector.pb-w .pb-t *"; pushItem(w, mkItem("ظل النص / توهّج", sel + "{text-shadow:[[v]]!important}", { v: { l: "text-shadow", t: "text", v: cs.textShadow } })); S.stats.tshadow++; });
       const o = parseFloat(cs.opacity); if (isFinite(o) && o < 0.98 && o > 0) all.forEach(w => { w.set.op = r2(Math.max(.02, (w.set.op != null ? w.set.op : 1) * o)); });
       // تدوير عنصر مفرد: نعيد القياس من حجم التخطيط الحقيقي (المستطيل المقاس يشمل التدوير) ثم نضع rot
       if (cs.transform && cs.transform !== "none" && mine.length === 1 && e.offsetWidth) {
@@ -87,7 +92,7 @@ const PBCloneFx = (() => {
     function pin(e, cs, all) {
       if (cs.position !== "fixed" && cs.position !== "sticky") return; const t = parseFloat(cs.top); if (!isFinite(t)) return;
       const r = e.getBoundingClientRect(); if (r.height > 300 || r.height > win.innerHeight * .45 || r.width < 60) return;
-      all.forEach(w => { const g = geomOf(w); pass(w, `selector{--pin:${Math.round(t)}px;--pino:${Math.round(g.y - r.top)}px;z-index:60}`); addCls(w, "pb-pin"); }); S.stats.pin = (S.stats.pin || 0) + 1;
+      all.forEach(w => { const g = geomOf(w); pushItem(w, mkItem("تثبيت عند التمرير (هيدر/شريط ثابت)", "selector{--pin:calc(var(--u)*[[top]]);--pino:calc(var(--u)*[[off]]);z-index:[[z]]}", { top: { l: "المسافة من أعلى الشاشة (px)", t: "num", v: Math.round(t) }, off: { l: "إزاحة العنصر داخل المجموعة (px)", t: "num", v: Math.round(g.y - r.top) }, z: { l: "الترتيب z-index", t: "num", v: 60 } })); addCls(w, "pb-pin"); }); S.stats.pin = (S.stats.pin || 0) + 1;
     }
     function origin(w, e) {      // مركز الحاوية بالنسبة لإطار العنصر (ليدور/يكبّر المحتوى حول مركز البطاقة لا مركز كل عنصر)
       const r = e.getBoundingClientRect(), g = geomOf(w); return `${Math.round(r.left + r.width / 2 - g.x)}px ${Math.round(r.top + r.height / 2 - g.y)}px`;
@@ -99,7 +104,7 @@ const PBCloneFx = (() => {
         const preset = it === "1" ? presetOf(nm) : "";
         if (preset) { all.forEach(w => { if (!w.set.anim) { w.set.anim = preset; w.set.animDur = r1(Math.min(3, Math.max(.1, dur))); w.set.animDelay = r1(Math.min(5, delay)); } }); S.stats.entr++; return; }
         const txt0 = rule.cssText; if (txt0.length > 8000) return; const er = e.getBoundingClientRect(), txt = scaleKf(txt0, er.width, er.height); const nn = "pbk-" + nm.replace(/[^\w-]/g, "_"), kfCss = txt.replace(/^@(-webkit-)?keyframes\s+[^{]+/, "@keyframes " + nn), needO = /scale|rotate|skew/.test(txt) && all.length > 1;
-        all.forEach((w, k) => pass(w, (S.kfDone && S.kfDone.has(nn) && all.length > 6 ? "" : kfCss + "\n") + `selector{animation:${nn} ${dur}s ${tf} ${delay}s ${it === "infinite" ? "infinite" : it} ${dir} ${fill};${needO ? "transform-origin:" + origin(w, e) + ";" : ""}}`));
+        all.forEach((w, k) => { const first = !(S.kfDone && S.kfDone.has(nn) && all.length > 6); pushItem(w, mkItem("حركة مستمرة: " + nm, "[[kf]]\nselector{animation:" + nn + " [[dur]]s [[tf]] [[delay]]s [[it]] [[dir]] [[fill]];[[org]]}", { dur: { l: "المدة (ثانية)", t: "num", v: dur }, delay: { l: "التأخير (ثانية)", t: "num", v: delay }, it: { l: "التكرار (infinite أو عدد)", t: "text", v: it }, dir: { l: "الاتجاه", t: "select", v: dir, o: [["normal", "عادي"], ["reverse", "معكوس"], ["alternate", "ذهاب وإياب"], ["alternate-reverse", "ذهاب وإياب معكوس"]] }, tf: { l: "منحنى السرعة", t: "text", v: tf }, fill: { l: "حالة ما بعد الحركة", t: "select", v: fill, o: [["none", "بدون"], ["forwards", "تبقى في النهاية"], ["backwards", "تبدأ من أولها"], ["both", "الاثنان"]] }, org: { l: "نقطة الارتكاز (اختياري، مثل transform-origin:50% 50%;)", t: "text", v: needO ? "transform-origin:" + origin(w, e) + ";" : "" }, kf: { l: "إطارات الحركة @keyframes", t: "code", v: first ? kfCss : "" } })); });
         (S.kfDone = S.kfDone || new Set()).add(nn); S.stats.anim++;
       });
     }
@@ -134,6 +139,8 @@ const PBCloneFx = (() => {
       }
       for (const [subj, zmap] of plans) for (const { zone, decl } of zmap.values()) emitHover(subj, zone, decl);
     }
+    const HN = { transform: "حركة/تكبير", translate: "حركة", scale: "تكبير", rotate: "دوران", opacity: "شفافية", filter: "فلتر", "backdrop-filter": "تمويه", "box-shadow": "ظل", "text-shadow": "ظل النص", color: "لون النص", "background-color": "لون الخلفية", "border-color": "لون الإطار", "letter-spacing": "تباعد الحروف", "text-decoration-color": "لون التسطير", "-webkit-text-fill-color": "لون النص" };
+    const hoverName = decl => [...new Set(Object.keys(decl).map(k => HN[k]).filter(Boolean))].join(" + ") || "عام";
     function emitHover(subj, zone, decl) {
       const [a0, a1] = S.range.get(subj), [o0, o1] = S.own.get(subj) || [a0, a1], all = out.slice(a0, a1), mine = out.slice(o0, o1); if (!all.length) return;
       const zr = S.range.get(zone), native = all.length === 1 && (zone === subj || (zr && zr[1] - zr[0] === all.length)); let zid = ""; if (!native) { const z = ensureZone(zone); if (!z) return; zid = z.id; }
@@ -147,7 +154,7 @@ const PBCloneFx = (() => {
         if (hasBox) { const pureScale = /scale/.test((decl.transform || "") + (decl.scale || "")) && !/translate|rotate|skew/.test((decl.transform || "") + (decl.rotate || "")), inner = ((w.type === "image" || w.type === "shape") && pureScale) ? (w.type === "image" ? " .pb-im" : " .pb-svg") : "", tgt = "selector" + inner; const body = []; const sr = zone.getBoundingClientRect(); for (const p of ["transform", "translate", "scale", "rotate", "opacity", "backdrop-filter"]) if (decl[p]) body.push(`${p}:${p === "transform" ? scaleTf(decl[p], sr.width, sr.height) : decl[p]}`); if (fl.length && !inner) body.push("filter:" + fl.join(" ")); if (body.length) { L.push(`selector${H}${inner}{${body.join(";")}}`); if (inner) B.push(`selector{overflow:hidden}`); B.push(`${tgt}{transition:${tr}}`); if (/scale|rotate|skew/.test((decl.transform || "") + (decl.scale || "") + (decl.rotate || "")) && all.length > 1 && !inner) B.push(`selector{transform-origin:${origin(w, zone)}}`); if (dsw && !(w.set.css || "").includes("drop-shadow")) B.push(`selector{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}`); } }
         if (hasTxt && (w.type === "text" || w.type === "heading" || w.type === "button")) { const tgt = w.type === "button" ? "selector" + H + " .pb-btn" : `selector.pb-w${H} .pb-t,selector.pb-w${H} .pb-t *`, body = []; for (const p of ["color", "text-shadow", "-webkit-text-fill-color", "text-decoration-color", "letter-spacing"]) if (decl[p]) body.push(`${p}:${decl[p]}!important`); if (body.length) { L.push(`${tgt}{${body.join(";")}}`); B.push(`selector .pb-t,selector .pb-btn{transition:color .3s,text-shadow .3s}`); } }
         if (hasBg && isMine) { const bg = decl["background-color"], bd = decl["border-color"]; if (w.type === "button") { const body = []; if (bg) body.push(`background-color:${bg}!important;background-image:none!important`); if (bd) body.push(`border-color:${bd}!important`); L.push(`selector${H} .pb-btn{${body.join(";")}}`); B.push(`selector .pb-btn{transition:${tr}}`); } else if (w.type === "shape") { if (bg) L.push(`selector${H} .pb-svg *{fill:${bg}!important}`); if (bd) L.push(`selector${H} .pb-svg *{stroke:${bd}!important}`); B.push(`selector .pb-svg *{transition:fill .3s,stroke .3s}`); } }
-        if (L.length) { pass(w, B.concat(L).join("\n")); S.stats.hover++; }
+        if (L.length) { pass(w, B.concat(L).join("\n"), "تأثير تحويم: " + hoverName(decl)); S.stats.hover++; }
       }
     }
     return { pre, el, post, stats: S.stats, _S: S };
@@ -165,6 +172,7 @@ const PBCloneFx = (() => {
     for (const el of q(d, "body *").slice(0, 4000)) { const cs = w.getComputedStyle(el); if (!/infinite/.test(cs.animationIterationCount) || !cs.animationName.split(",").some(n => kf.has(n.trim()))) continue; let C = el.parentElement; while (C && C !== d.body && w.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === d.body) continue; const cr = C.getBoundingClientRect(), er = el.getBoundingClientRect(); if (cr.width < 200 || er.width < cr.width * 1.05) continue; out.push({ el, C, img: !!C.querySelector("img,picture,video") }); }
     return out;
   };
+  const isSearchForm = f => { try { return f.getAttribute('role') === 'search' || !!f.querySelector('input[type=search]') || (f.querySelectorAll('input:not([type=hidden]):not([type=submit]):not([type=button])').length === 1 && /^(s|q|search|query|keyword|keywords)$/i.test((f.querySelector('input:not([type=hidden]):not([type=submit])') || {}).name || '')); } catch (e) { return false; } };
   const REGISTRY = [
     { id: "hover", label: "تأثيرات التحويم (بطاقات/أزرار/صور)", status: "ok", note: "تُنسخ مع منطقة تحويم للبطاقة كاملة", find: (d, w) => { let n = 0; for (const sh of d.styleSheets) { try { const f = rs => { for (const r of rs) { if (r.type === 1 && /:hover/i.test(r.selectorText || "")) n++; else if (r.cssRules && r.type !== 5 && r.type !== 7) f(r.cssRules); } }; f(sh.cssRules); } catch (e) { } } return { n }; } },
     { id: "keyframes", label: "حركات CSS مستمرة (طفو/نبض/دوران)", status: "ok", note: "@keyframes حرفية", find: (d, w) => { const e = q(d, "body *").slice(0, 3000).filter(x => { const a = w.getComputedStyle(x).animationName; return a && a !== "none"; }); return { n: e.length, sample: e[0] }; } },
@@ -185,13 +193,14 @@ const PBCloneFx = (() => {
     { id: "counter", label: "عدّادات أرقام متصاعدة", status: "partial", note: "يُنسخ الرقم النهائي ثابتاً", find: d => { const e = q(d, "[data-count],[data-purecounter-end],.counter,.count-up,.odometer,.countup,[data-to]"); return { n: e.length, sample: e[0] }; } },
     { id: "countdown", label: "عدّاد تنازلي", status: "partial", note: "يُنسخ شكلاً ثابتاً (يوجد عنصر عدّاد في المطوّر)", find: d => { const e = q(d, ".countdown,[data-countdown],[class*='countdown']"); return { n: e.length, sample: e[0] }; } },
     { id: "typewriter", label: "نص يُكتب تدريجياً (Typewriter)", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".typed,.typewriter,[data-typed],.typed-cursor,[class*='typewriter'],[class*='typing']"); return { n: e.length, sample: e[0] }; } },
-    { id: "modal", label: "نوافذ منبثقة / Lightbox", status: "none", note: "غير متوفر", find: d => { const e = q(d, "[data-bs-toggle='modal'],[data-fancybox],[data-lightbox],[data-toggle='modal'],.mfp-gallery,.glightbox"); return { n: e.length, sample: e[0] }; } },
+    { id: "modal", label: "نوافذ منبثقة / Lightbox", status: "ok", note: "تُفتح بالنقر وتُغلق بـ×/Esc/النقر خارجها", find: d => { const e = q(d, "[data-bs-toggle='modal'],[data-fancybox],[data-lightbox],[data-toggle='modal'],.glightbox,a.fancybox"); return { n: e.length, sample: e[0] }; } },
     { id: "filterGrid", label: "شبكة قابلة للتصفية (Isotope/MixItUp)", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".isotope,.mixitup,[data-filter],.filter-button-group,.portfolio-filter"); return { n: e.length, sample: e[0] }; } },
     { id: "cursor", label: "مؤشر ماوس مخصص", status: "none", note: "غير متوفر", find: d => { const e = q(d, ".cursor,.custom-cursor,.cursor-follower,[class*='cursor-dot'],[class*='cursor-outer']"); return { n: e.length, sample: e[0] }; } },
     { id: "tilt", label: "إمالة ثلاثية الأبعاد بالماوس (Tilt)", status: "none", note: "غير متوفر", find: d => { const e = q(d, "[data-tilt],.tilt,.js-tilt,[data-atropos]"); return { n: e.length, sample: e[0] }; } },
     { id: "scrollTimeline", label: "حركات مرتبطة بالتمرير (scroll-timeline)", status: "none", note: "غير متوفر", find: d => { let n = 0; for (const st of q(d, "style")) if (/animation-timeline|scroll-timeline|view-timeline/.test(st.textContent || "")) n++; return { n }; } },
     { id: "embed", label: "تضمين يوتيوب/فيميو/خريطة", status: "none", note: "غير منسوخ (الإطار يُحذف) — أضفه بعنصر فيديو/خريطة", find: d => { const e = q(d, "iframe[src*='youtube'],iframe[src*='youtu.be'],iframe[src*='vimeo'],iframe[src*='google.com/maps'],iframe[src*='maps.google']"); return { n: e.length, sample: e[0] }; } },
-    { id: "form", label: "نماذج (اتصال/اشتراك)", status: "partial", note: "تُنسخ شكلاً ولا تُرسل", find: d => { const e = q(d, "form").filter(f => f.querySelectorAll("input,textarea,select").length >= 2); return { n: e.length, sample: e[0] }; } },
+    { id: "form", label: "نماذج (اتصال/اشتراك/طلب)", status: "ok", note: "تتحول لعنصر «نموذج اتصال» يعمل (واتساب افتراضياً؛ غيّر الوجهة من إعداداته)", find: d => { const e = q(d, "form").filter(f => !isSearchForm(f) && f.querySelectorAll("input:not([type=hidden]):not([type=submit]):not([type=button]),textarea,select").length >= 1); return { n: e.length, sample: e[0] }; } },
+    { id: "searchForm", label: "نموذج بحث", status: "partial", note: "يُنسخ شكلاً فقط (لا يوجد بحث في الصفحة المنسوخة)", find: d => { const e = q(d, "form").filter(isSearchForm); return { n: e.length, sample: e[0] }; } },
     { id: "scrollSnap", label: "أقسام ملتصقة بالتمرير (scroll-snap)", status: "none", note: "غير متوفر", find: (d, w) => { const e = [d.documentElement, d.body].concat(q(d, "main,section")).filter(x => x && /snap/.test(w.getComputedStyle(x).scrollSnapType || "")); return { n: e.length, sample: e[0] }; } }
   ];
   function analyze(doc, win) {
@@ -208,5 +217,5 @@ const PBCloneFx = (() => {
     }
     return out;
   }
-  return { create, dropShadows, presetOf, splitTop, analyze, REGISTRY };
+  return { mkItem, pushItem, rawP, create, dropShadows, presetOf, splitTop, analyze, REGISTRY, isSearchForm };
 })();
