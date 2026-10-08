@@ -13,6 +13,7 @@
     "assets/data/ctl-help.json",
     "assets/js/admin-assistant.js",
     "assets/js/admin-update.js",
+    "assets/js/admin-search.js",
     "assets/data/admin-help.json",
     "assets/js/social-icons.js",
     "assets/js/api.js",
