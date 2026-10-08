@@ -21,7 +21,7 @@ html.glass body{
   background-attachment:fixed;
 }
 html.glass ::selection{background:rgba(134,240,106,.35);color:#fff}
-html.glass ::-webkit-scrollbar{width:10px;height:10px}html.glass ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:10px;border:2px solid transparent;background-clip:content-box}html.glass ::-webkit-scrollbar-track{background:transparent}
+/* شريط التمرير: أكريليك برتقالي فلورسنت شفاف 6px (يُعرَّف عاماً في admin.html وstyle.css وBASE_CSS) */
 
 /* ── التمييز بين العنوان والبقية: العناوين أكبر وأثقل وبلون مضيء، والنص العادي أصغر وأخفّ ── */
 html.glass h1,html.glass h2,html.glass h3,html.glass h4{color:#fff;font-weight:900;letter-spacing:.2px}

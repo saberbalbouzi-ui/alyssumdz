@@ -427,3 +427,15 @@ section[id]{scroll-margin-top:84px}
 .coll-tabs button{flex:0 0 auto;scroll-snap-align:center;padding:.55rem 1.2rem;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-weight:800;color:var(--ink);font-family:inherit;font-size:.92rem;cursor:pointer;white-space:nowrap;transition:background .25s,color .25s,transform .15s}
 .coll-tabs button.on{color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.14)}
 @media (max-width:640px){.coll-tabs{justify-content:flex-start}}
+
+/* شريط التمرير: أكريليك برتقالي فلورسنت شفاف رقيق 6px بزوايا مدوّرة */
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}
+
+/* ── بطاقات أكريليك فلورسنت شفاف (أخضر/أزرق/أصفر/برتقالي بالتناوب) بزوايا مدوّرة ── */
+.card,.feat,.review,.lp-card,.lp-textcard,.benefits,.form,.trust div,.mini-points div,.faq details{--ac:255,118,24;background:linear-gradient(145deg,rgba(var(--ac),.17),rgba(255,255,255,.62) 52%,rgba(var(--ac),.1));-webkit-backdrop-filter:blur(10px) saturate(1.35);backdrop-filter:blur(10px) saturate(1.35);border:1px solid rgba(var(--ac),.42);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(255,255,255,.4),0 10px 26px rgba(var(--ac),.18)}
+.card,.feat,.review,.lp-card,.lp-textcard,.benefits,.form{border-radius:24px}
+.trust div,.mini-points div,.faq details{border-radius:18px}
+:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n+1){--ac:110,230,30}
+:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n+2){--ac:50,140,255}
+:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n+3){--ac:255,205,20}
+:is(.card,.feat,.review,.lp-card,.lp-textcard,.trust div,.mini-points div,.faq details):nth-child(4n){--ac:255,110,20}
