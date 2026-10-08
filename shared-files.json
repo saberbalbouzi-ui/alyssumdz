@@ -23,6 +23,8 @@
     "assets/js/admin-social.js",
     "assets/js/admin-customers.js",
     "assets/js/admin-zones.js",
+    "assets/js/admin-reports.js",
+    "assets/js/admin-audit.js",
     "assets/js/admin-bulk-products.js",
     "scripts/social-publish.js",
     "assets/data/admin-help.json",
