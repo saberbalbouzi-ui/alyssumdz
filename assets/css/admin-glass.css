@@ -245,3 +245,10 @@ html.glass #ctlq-pop:after{background:rgba(10,30,16,.95);border:1px solid rgba(1
 html.glass #ctlq-pop.dn:after{border:1px solid rgba(134,240,106,.45);border-bottom:0;border-inline-end:0;border-top:1px solid rgba(134,240,106,.45);border-inline-start:1px solid rgba(134,240,106,.45)}
 html.glass .ctl-q{background:rgba(134,240,106,.16)!important;color:var(--g-mint)!important;box-shadow:0 0 0 1px rgba(134,240,106,.45)}
 html.glass .ctl-q:hover{box-shadow:0 0 0 1px rgba(134,240,106,.9),0 0 14px rgba(134,240,106,.6)}
+
+/* ───── قاعدة صاحب المتجر: كل الأزرار زجاج شفاف منتفخ قليلاً بنص أبيض (برتقالي للتنبيه/التحديث، أخضر للأساسي) ─────
+   الأزرار الملوّنة المضمّنة بـstyle (ذهبي/أخضر داكن/تركوازي) تُحوَّل إلى زجاج منتفخ بدل اللون الصلب */
+html.glass button[style*="background:#c8a24b" i],html.glass #au-go{background:linear-gradient(180deg,rgba(255,170,70,.78),rgba(255,115,20,.5))!important;color:#fff!important;border:1px solid rgba(255,196,130,.65)!important;border-radius:14px!important;padding:.5rem 1.15rem!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 2px 3px rgba(255,255,255,.5),inset 0 -3px 6px rgba(0,0,0,.28),0 4px 10px -2px rgba(0,0,0,.45)!important;text-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s,background .15s}
+html.glass button[style*="background:#173f35" i]:not(.logout),html.glass button[style*="background:#0d9488" i]{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border:1px solid rgba(140,255,170,.55)!important;border-radius:14px!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 2px 3px rgba(255,255,255,.45),inset 0 -3px 6px rgba(0,0,0,.28),0 4px 10px -2px rgba(0,0,0,.45)!important;text-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s,background .15s}
+html.glass button[style*="background:#c8a24b" i]:hover,html.glass #au-go:hover,html.glass button[style*="background:#173f35" i]:hover,html.glass button[style*="background:#0d9488" i]:hover{transform:translateY(-2px);filter:brightness(1.12)}
+html.glass #au-banner{border-radius:18px}
