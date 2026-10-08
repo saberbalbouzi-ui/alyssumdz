@@ -62,7 +62,7 @@ const AdminNav = (() => {
     { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
     { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
   ];
-  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "1.51.6";
+  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "1.51.7";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen() { await libLoad(); LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -90,6 +90,15 @@ const AdminNav = (() => {
   function alyWalk(n, f) { f(n); (n.cols || []).forEach(c => alyWalk(c, f)); (n.widgets || []).forEach(w => alyWalk(w, f)); (n.free || []).forEach(w => alyWalk(w, f)); }
   /* التثبيت: صور القالب ← صور منتجات المتجر وفئاته، اسم المتجر، والأقسام تُوسَم لتحلّ محل هيدر/محتوى/فوتر الرئيسية */
   const ALY_CAT = Object.fromEntries(["skin", "hair", "honey", "health", "roqia", "supplements"].map(k => [k, "assets/img/tpl/alyssum-cat-" + k + ".webp"]));      // صور بطاقات الفئات الجاهزة للفئات المعروفة؛ غيرها يأخذ صورة منتجه
+  /* منتج البانر «حسب العروض»: أعلى خصم بين المنتجات وله صورة شفافة الخلفية (تقف على المنصة) */
+  let ALYD = null;
+  const aImgOk = src => new Promise(res => { const im = new Image(); im.onload = () => { try { const N = 48, c = document.createElement("canvas"); c.width = c.height = N; const x = c.getContext("2d"); x.drawImage(im, 0, 0, N, N); const d = x.getImageData(0, 0, N, N).data, al = (i, j) => d[(j * N + i) * 4 + 3]; let op = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) op++; res([[0, 0], [N - 1, 0], [0, N - 1], [N - 1, N - 1], [N >> 1, 0], [N >> 1, N - 1]].every(q => al(q[0], q[1]) < 20) && op / (N * N) < .8); } catch (e) { res(false); } }; im.onerror = () => res(false); im.src = (typeof REL !== "undefined" ? REL : "") + src; });
+  async function alyDeal() {
+    const disc = p => { const o = Number(p.old) || 0, n = Number(p.price) || 0; return o > n && n > 0 ? Math.round((o - n) / o * 100) : 0; };
+    const L = aProds().filter(p => disc(p) > 0).sort((a, b) => disc(b) - disc(a));
+    for (const p of L.slice(0, 12)) for (const im of [p.cover].concat(p.images || []).filter(Boolean).slice(0, 4)) if (await aImgOk(im)) return { p, img: im, d: disc(p) };
+    return null;
+  }
   function alyLocalize(page) {
     const P = aProds(), best = P.find(p => (p.tags || []).includes("best") && coverOf(p)) || P.find(p => coverOf(p)), other = P.find(p => p !== best && (p.tags || []).includes("new") && coverOf(p)) || P.find(p => p !== best && coverOf(p)) || best;
     const CT = (typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : {});
@@ -101,7 +110,11 @@ const AdminNav = (() => {
       alyWalk(sec, n => {
         const s = n.set || {};
         if (n.type === "image" && s.slot === "hero" && best) { s.src = coverOf(best); s.alt = best.title; }
-        if (n.type === "image" && s.slot === "banner" && other) { s.src = coverOf(other); s.alt = other.title; }
+        if (n.type === "image" && s.slot === "banner") { if (ALYD) { s.src = ALYD.img; s.alt = ALYD.p.title; } else if (other) { s.src = coverOf(other); s.alt = other.title; } }
+        if (ALYD && s.slot === "bannerT") s.text = ALYD.p.title;
+        if (ALYD && s.slot === "bannerD") s.html = "<p>خصم " + ALYD.d + "% — " + ALYD.p.price + " دج بدل " + ALYD.p.old + " دج. اطلبه الآن والدفع عند الاستلام.</p>";
+        if (ALYD && s.slot === "bannerB") s.html = "<p>عرض خاص · -" + ALYD.d + "%</p>";
+        if (ALYD && s.slot === "bannerL") s.link = "/p/" + ALYD.p.slug + "/";
         if (n.type === "shopcats" && s.slotCats) {
           const keys = Object.keys(CT).slice(0, 6);
           if (keys.length) s.items = keys.map(k => ({ cat: k, label: "", img: ALY_CAT[k] || coverOf(P.find(p => p.cat === k && coverOf(p))) || coverOf(best) }));
@@ -135,6 +148,7 @@ const AdminNav = (() => {
     if (!confirm("تثبيت قالب «أليسوم» على متجرك:\n\n• تُستبدل صور القالب بصور منتجاتك وفئاتك\n• تُربط الروابط والأزرار والهيدر والفوتر بمتجرك\n• يُفتح في المطوّر كصفحة رئيسية جاهزة؛ لا يُنشر شيء إلا بعد «حفظ ونشر» (وتُحفظ نسخة من الرئيسية الحالية للاسترجاع)\n\nمتابعة؟")) return;
     try {
       try { SitePreview.close(); } catch (_) { } libClose(); toast("⏳ جارِ تثبيت القالب بصور متجرك…");
+      try { ALYD = await alyDeal(); } catch (_) { ALYD = null; }
       const page = alyLocalize(await alyLoad());
       await PBConvert.edit("home");
       const P = PBApp.E && PBApp.E.page; if (!P) throw new Error("تعذّر فتح الرئيسية في المطوّر");
@@ -285,5 +299,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { alyPreview, alyEdit, alyInstall, libOpen, libClose, libSet, libUse, libView, libPreview, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { alyDeal, alyPreview, alyEdit, alyInstall, libOpen, libClose, libSet, libUse, libView, libPreview, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();
