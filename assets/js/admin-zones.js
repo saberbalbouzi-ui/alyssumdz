@@ -44,6 +44,7 @@ const AdminZones = (() => {
 #zn-card .zn-l{max-height:230px;overflow:auto;padding:8px 12px 10px;display:grid;gap:3px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));background:rgba(9,24,18,.985);border-top:1px solid rgba(255,255,255,.12);border-radius:0 0 12px 12px}
 #zn-card .zn-l label{display:flex;gap:6px;align-items:center;margin:0;font-size:.84rem;opacity:1}#zn-card .zn-l input{width:auto}#zn-card .zn-l label.off{opacity:.45}
 #zn-card .zn-tag{display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(134,240,106,.16);margin:2px;font-size:.78rem}#zn-card .zn-tag.rd{background:rgba(255,100,100,.18)}#zn-card .zn-tag button{border:0;background:transparent;color:inherit;cursor:pointer;margin-inline-start:4px}
+#zn-card .zn-sum th,#zn-card .zn-sum td{padding:6px 8px;text-align:start;border-bottom:1px solid rgba(255,255,255,.1);vertical-align:top}#zn-card .zn-sum th{opacity:.75;white-space:nowrap}
 #zn-card .zn-x{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)}`;
     document.head.appendChild(st);
   }
@@ -57,12 +58,20 @@ const AdminZones = (() => {
 <button type="button" class="small warn" data-zdel="${esc(z.id)}" style="margin-inline-start:auto">حذف المنطقة</button></div>
 <details ${S.open === z.id ? "open" : ""} data-zd="${esc(z.id)}"><summary>الولايات (${n})</summary><div class="zn-l">${(A().fees || []).map(w => { const o = zoneOf(w.id, z.id); return `<label class="${o ? "off" : ""}" title="${o ? "ضمن منطقة «" + esc(o.name) + "»" : ""}"><input type="checkbox" data-zw="${w.id}" ${(z.wilayas || []).includes(w.id) ? "checked" : ""} ${o ? "disabled" : ""}> ${pad(w.id)} ${esc(w.name)}${o ? " ← " + esc(o.name) : ""}</label>`; }).join("")}</div></details></div>`;
   }
+  /* ملخص مقروء: كل المناطق بأسعارها وولاياتها (مرتّبة بحسب السعر) + الولايات غير المنسوبة لمنطقة */
+  function sumHtml() {
+    const f = A().fees || [], m = n => Number(n || 0).toLocaleString("fr-DZ"), inZ = new Set(); S.zones.forEach(z => (z.wilayas || []).forEach(id => inZ.add(id)));
+    const rows = S.zones.map((z, i) => `<tr><td><b>${i + 1}</b></td><td style="white-space:nowrap">${esc(z.name)}</td><td>${z.freeHome ? "مجاني" : m(z.home)}</td><td>${z.freeStop ? "مجاني" : m(z.stop)}</td><td>${Number(z.freeOver) > 0 ? "≥ " + m(z.freeOver) : "—"}</td><td style="white-space:normal;min-width:260px">${(z.wilayas || []).map(id => { const w = f.find(x => x.id === id); return w ? `<bdi>${pad(w.id)} ${esc(w.name)}</bdi>` : id; }).join("، ") || "—"}</td></tr>`).join("");
+    const rest = f.filter(w => !inZ.has(w.id));
+    return `<details class="zn-sum" open><summary>ملخص المناطق (${S.zones.length}) — ${inZ.size} ولاية منسوبة${rest.length ? " و" + rest.length + " بدون منطقة" : ""}</summary><div style="overflow:auto;padding:8px 12px"><table style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr><th>#</th><th>المنطقة</th><th>🏠 منزل</th><th>🏢 مكتب</th><th>مجاني</th><th>الولايات</th></tr></thead><tbody>${rows}</tbody></table>${rest.length ? `<div class="hint" style="margin-top:6px">بدون منطقة (بأسعارها الفردية): ${rest.map(w => `<bdi>${pad(w.id)} ${esc(w.name)}</bdi>`).join("، ")}</div>` : ""}</div></details>`;
+  }
   function draw() {
     const host = $("zn-card"); if (!host) return; css(); const a = A(); if (!a || !a.fees || !a.fees.length) { host.innerHTML = ""; return; }
     const w = a.fees.find(x => x.id === +S.exWil), comm = (w && w.communes) || [];
     host.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem"><div><b style="color:var(--green)">مناطق التوصيل (Zones)</b>
 <div class="hint">اجمع الولايات في مناطق بسعر موحَّد للمنزل والمكتب، مع شحن مجاني اختياري. الولاية داخل منطقة تُدار أسعارها من المنطقة، وخارجها تبقى بسعرها الفردي أدناه.</div></div>
 <button type="button" class="small" data-zadd="1">+ منطقة جديدة</button></div><div class="hint" id="zn-st"></div>
+${S.zones.length ? sumHtml() : ""}
 ${S.zones.length ? S.zones.map(zoneHtml).join("") : '<div class="hint" style="margin-top:10px">لا مناطق بعد — أضف منطقة (مثل: «الشمال» 400/300، «الجنوب» 1000/700).</div>'}
 <div class="zn-x"><b>الاستثناءات من التوصيل</b><div class="hint">بلدات أو ولايات لا يصلها التوصيل: يظهر للزبون «غير متاح» ولا يستطيع إتمام الطلب إليها.</div>
 <div class="zn-r" style="margin-top:8px"><div><label>الولاية</label><select id="zn-xw"><option value="">— اختر —</option>${a.fees.map(x => `<option value="${x.id}" ${+S.exWil === x.id ? "selected" : ""}>${pad(x.id)} — ${esc(x.name)}</option>`).join("")}</select></div>
