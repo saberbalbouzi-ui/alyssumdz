@@ -181,7 +181,7 @@ const PBBgRemove = (function () {
      الطريقة ٢ «pts»: نقطة في مركز الصورة (موجبة) ونقاط على أطرافها (سالبة) لقناع SAM حين لا يجد الكشف شيئاً.
      الطريقة ٣ «classic»: تحليل لوني كلاسيكي (GMM من حواف الصورة) — تعمل دائماً حتى بلا نماذج.
      يُتحقَّق من النتيجة (نسبة التغطية)، وإن فشلت طريقة تُجرَّب التي بعدها؛ وزرّ «طريقة أخرى» يبدّل يدوياً. */
-  const LITE = () => { try { return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };
+  const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const capC = (c, max) => { const m = Math.max(c.width, c.height); if (m <= max) return c; const r = max / m, o = document.createElement("canvas"); o.width = Math.round(c.width * r); o.height = Math.round(c.height * r); o.getContext("2d", { willReadFrequently: true }).drawImage(c, 0, 0, o.width, o.height); return o; };
   const aiOK = () => { try { return typeof AIVision !== "undefined" && AIVision.supported(); } catch (e) { return false; } };
   const coverage = c => { const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 127) n++; return n / (c.width * c.height); };
@@ -287,7 +287,7 @@ const PBBgRemove = (function () {
   const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   async function autoCut(srcC, o) {
-    o = o || {}; const order = o.methods || (aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null;
+    o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true; const order = o.methods || ((window.ImgCfg && ImgCfg.get("bg", "method", "auto") === "classic") ? ["classic"] : (aiOK() ? ["ai", "classic"] : ["classic"])); let err = null, last = null;
     for (const m of order) {
       try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; if (cov > .02 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }

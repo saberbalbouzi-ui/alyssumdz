@@ -2,6 +2,9 @@
    كل زر في القائمة الجانبية يحمل data-grp (look|shop|apps)؛ الضغط على تبويب كبير يُظهر مجموعته فقط ويفتح أول عنصر فيها،
    وأي انتقال برمجي إلى قسم (Admin.tab) يُبدّل المجموعة تلقائياً. التطبيقات: أدوات تُفتح من هنا (مطوّر الصفحات، المطوّر الذكي،
    أدوات تعديل الصور، الوكيل الذكي، الوكيل الناطق، اسألني، ناسخ القوالب). */
+/* إعدادات أدوات الصور والقوالب (لكل متصفح): ImgCfg.get(أداة، مفتاح، افتراضي) — تقرؤها الأدوات عند التشغيل */
+window.ImgCfg = (() => { const K = "pbx_imgcfg"; let C = {}; try { C = JSON.parse(localStorage.getItem(K) || "{}") || {}; } catch (e) { } const save = () => { try { localStorage.setItem(K, JSON.stringify(C)); } catch (e) { } };
+  return { get: (t, k, d) => { const v = C[t] && C[t][k]; return v === undefined ? d : v; }, set: (t, k, v) => { (C[t] = C[t] || {})[k] = v; save(); }, reset: t => { delete C[t]; save(); } }; })();
 const AdminNav = (() => {
   const $ = id => document.getElementById(id), nav = () => document.querySelector(".side-nav");
   const toast = m => { try { if (typeof toast2 === "function") return toast2(m); window.toast && window.toast(m); } catch (e) { } };
@@ -15,12 +18,55 @@ const AdminNav = (() => {
   const APPS = {
     builder: { n: "مطوّر الصفحات", d: "محرّر مرئي لتصميم صفحات الهبوط وتعديل الصفحة الرئيسية وصفحات المنتجات بالسحب والإفلات: أقسام وعناصر حرّة (نص، صورة، زر، سلايدر، منتجات…) مع معاينة للجوال والتابلت وحفظ ونشر بضغطة واحدة.", how: ["افتح مكان العمل: قائمة صفحاتك أو زر «تعديل الصفحة الرئيسية» أعلى اللوحة.", "اختر «صفحة جديدة» أو «تعديل» لصفحة موجودة؛ يُفتح المحرّر المرئي.", "أضف العناصر من لوحة «عناصر» وحدّد أي عنصر لتظهر إعداداته (محتوى/تنسيق/متقدم).", "«حفظ ونشر» ينشر الصفحة على موقعك؛ والتعديلات غير المنشورة تُحفظ كمسودة."], where: "تبويب الصفحات + زر «تعديل الصفحة الرئيسية» + أزرار تعديل المنتجات", work: "builder", off: "يُمنع فتح المحرّر المرئي من أي زر." },
     smart: { n: "المطوّر الذكي", d: "يولّد صفحة جديدة من صورة واحدة ثم تحرّرها بالأدوات الذكية (التقاط العناصر، نزع الخلفية…) وتحفظها.", how: ["افتح مكان العمل ثم ارفع صورة تصميم.", "يُحوَّل التصميم إلى صفحة قابلة للتعديل.", "حرّرها بالأدوات الذكية ثم احفظها."], where: "تبويب المطوّر الذكي (مولّد الصفحات)", work: "pbgen", off: "يُمنع فتح المولّد الذكي." },
-    imgtools: { n: "أدوات تعديل الصور", d: "أدوات سريعة تعمل في متصفحك بلا مفتاح: نزع الخلفية بالذكاء المحلي وضغط الصور وتحويلها إلى WebP. والأدوات المتقدمة (التقاط العناصر، الماسك، البازل) داخل مطوّر الصفحات.", how: ["افتح مكان العمل واختر صورة من جهازك.", "اضغط «نزع الخلفية» أو «ضغط وتحويل WebP».", "نزّل النتيجة أو استعملها في صفحاتك."], where: "تبويب أدوات تعديل الصور", work: "imgtools", off: "يُمنع فتح صفحة أدوات الصور." },
+    imgtools: { tools: true, n: "أدوات تعديل الصور", d: "أدوات سريعة تعمل في متصفحك بلا مفتاح: نزع الخلفية بالذكاء المحلي وضغط الصور وتحويلها إلى WebP. والأدوات المتقدمة (التقاط العناصر، الماسك، البازل) داخل مطوّر الصفحات.", how: ["افتح مكان العمل واختر صورة من جهازك.", "اضغط «نزع الخلفية» أو «ضغط وتحويل WebP».", "نزّل النتيجة أو استعملها في صفحاتك."], where: "تبويب أدوات تعديل الصور", work: "imgtools", off: "يُمنع فتح صفحة أدوات الصور." },
     agent: { n: "الوكيل الذكي", d: "مساعد على موقعك يجيب الزبائن تلقائياً من أسئلة وأجوبة تدرّبه عليها، ويقترح المنتجات، ويسجّل الأسئلة التي لم يعرف جوابها لتجيب عنها.", how: ["افتح مكان العمل ودرّب الوكيل: أسئلة وأجوبة لكل صفحة.", "جرّبه ثم انشر التدريب.", "تابع الأسئلة الجديدة وأجب عنها ليتحسّن."], where: "نافذة المحادثة على موقعك + تبويب تدريب الوكيل", work: "agent", off: "يختفي الوكيل من موقعك كلياً (الزر والمحادثة)." },
     voice: { n: "الوكيل الناطق", d: "واجهة بديلة للوكيل: أفاتار ناطق يقرأ الصفحة ويقنع الزبون ويشير إلى «اطلب الآن»، بصوت ElevenLabs أو ملفات صوت جاهزة.", how: ["افتح مكان العمل واختر الواجهة (محادثة نصية أو أفاتار ناطق).", "أدخل مفتاح ElevenLabs (اختياري) ومعرّف الصوت.", "ولّد ملفات الصوت الجاهزة لكل صفحة ليسمعها الزبائن بلا مفتاح."], where: "الأفاتار على موقعك + قسم الوكيل الناطق", work: "voice", off: "يعود الموقع إلى المحادثة النصية دائماً." },
     ask: { n: "اسألني", d: "مساعد اللوحة: اكتب سؤالك عن أي أداة أو إعداد فيجيبك فوراً بلا إنترنت ولا مفتاح.", how: ["اضغط زر «اسألني» أعلى اللوحة.", "اكتب سؤالك أو اختر اقتراحاً.", "اضغط «اذهب إلى القسم» ليفتح لك المكان المقصود."], where: "زر «اسألني» أعلى اللوحة", work: "ask", off: "يختفي زر «اسألني» من اللوحة." },
     cloner: { n: "ناسخ القوالب", d: "ينسخ تصميم أي موقع (برابطه أو بلقطة شاشة) إلى عناصر قابلة للتعديل في مطوّر الصفحات: صور ونصوص وأزرار وسلايدرات وتأثيرات.", how: ["افتح مكان العمل واكتب رابط الموقع ثم «فتح».", "اسحب الحد السفلي لتحدّد ما يُنسخ.", "اضغط «انسخ» ويظهر الناتج في مطوّر الصفحات."], where: "زر «نسخ قالب» داخل مطوّر الصفحات", work: "cloner", off: "يختفي زر «نسخ قالب» ويُمنع فتح الناسخ." }
   };
+  /* قائمة أدوات الصور: كل أداة باسمها وإعداداتها (تُحفظ في هذا المتصفح وتقرؤها الأدوات عند التشغيل) */
+  const TOOLS = [
+    { id: "capture", n: "الالتقاط السحري", d: "يكتشف العناصر في الصورة (أشخاص ومنتجات) ويقصّها كاملة بدقة الشعر والحواف، بنماذج محلية بلا مفتاح.", where: "مطوّر الصفحات ← حدّد صورة ← تعديل ← التقاط العناصر", set: [{ k: "warm", l: "التحضير المسبق في الخلفية بعد تحديد الصورة (أسرع لكنه يستهلك ذاكرة)", t: "bool", d: true }, { k: "matte", l: "دقة الحواف العالية (شعر وتفاصيل دقيقة)", t: "bool", d: true }, { k: "lite", l: "الوضع الخفيف دائماً — أسرع وأقل دقة (يشمل نزع الخلفية)", t: "bool", d: false }] },
+    { id: "bg", n: "نزع الخلفية", d: "يزيل خلفية الصورة بضغطة واحدة بالذكاء المحلي (أشخاص، منتجات، خلفيات استوديو).", where: "مطوّر الصفحات ← حدّد صورة ← تعديل ← نزع الخلفية، وهذه الصفحة (أدوات الصور)", set: [{ k: "method", l: "الطريقة", t: "select", o: [["auto", "تلقائي: ذكاء ثم كلاسيكي"], ["classic", "كلاسيكي فقط (خلفيات متجانسة، الأسرع)"]], d: "auto" }, { k: "depth", l: "استعمال العمق لفصل ما وراء الشخص", t: "bool", d: true }] },
+    { id: "eraser", n: "الممحاة السحرية", d: "تمسح عنصراً غير مرغوب فيه وتعيد بناء ما خلفه. قيد التطوير وسنطوّرها لاحقاً، وهي معطّلة حالياً.", where: "ستظهر في شريط الصورة بعد تطويرها", dev: true, set: [] },
+    { id: "puzzle", n: "البازل", d: "يقسّم الصورة إلى قطع بازل متفرقة بشكل قابل للتحكم.", where: "مطوّر الصفحات ← حدّد صورة ← تعديل ← بازل", set: [{ k: "cols", l: "عدد الأعمدة الافتراضي", t: "num", min: 1, max: 12, d: 4 }, { k: "rows", l: "عدد الصفوف الافتراضي", t: "num", min: 1, max: 12, d: 3 }, { k: "knob", l: "حجم نتوء القطعة %", t: "num", min: 50, max: 160, d: 100 }] },
+    { id: "mask", n: "الماسك", d: "يقصّ الصورة بشكل (دائرة، نجمة، قلب…) مع معاينة حيّة ومعالم تجاذب وتدوير.", where: "مطوّر الصفحات ← حدّد صورة ← تعديل ← ماسك", set: [{ k: "invert", l: "الافتراضي: أبقِ الشكل وأخفِ بقية الصورة (بدل حذف الشكل)", t: "bool", d: false }, { k: "snap", l: "التجاذب مع مركز الصورة وحوافها (Alt يعطّله مؤقتاً)", t: "bool", d: true }] }
+  ];
+  const AT = { tab: "info" };
+  function setAppTab(t, id) { AT.tab = t; renderApp(id); }
+  function cfgSet(tool, key, v, id) { ImgCfg.set(tool, key, v); }
+  function cfgReset(tool, id) { ImgCfg.reset(tool); renderApp(id || "imgtools"); }
+  function ctl(tool, f) {
+    const v = ImgCfg.get(tool, f.k, f.d), on = `AdminNav.cfg('${tool}','${f.k}',`;
+    if (f.t === "bool") return `<label class="tl-r"><span>${esc(f.l)}</span><span class="sw"><input type="checkbox" ${v ? "checked" : ""} onchange="${on}this.checked)"><i></i></span></label>`;
+    if (f.t === "num") return `<label class="tl-r"><span>${esc(f.l)}</span><input type="number" min="${f.min}" max="${f.max}" value="${v}" style="width:90px" onchange="${on}Math.max(${f.min},Math.min(${f.max},Number(this.value)||${f.d})))"></label>`;
+    return `<label class="tl-r"><span>${esc(f.l)}</span><select onchange="${on}this.value)">${f.o.map(o => `<option value="${o[0]}" ${String(o[0]) === String(v) ? "selected" : ""}>${esc(o[1])}</option>`).join("")}</select></label>`;
+  }
+  function toolsHtml() {
+    return TOOLS.map(T => `<div class="tl-c${T.dev ? " dev" : ""}"><div class="ap-h"><h3 style="font-size:1.05rem">${esc(T.n)}</h3><span class="ap-s ${T.dev ? "off" : "on"}">${T.dev ? "قيد التطوير" : "متاحة"}</span></div><div>${esc(T.d)}</div><div class="hint" style="margin:.3rem 0 0">مكان العمل: ${esc(T.where)}</div>${T.set.length ? `<div class="tl-s">${T.set.map(f => ctl(T.id, f)).join("")}<div class="action-bar"><button class="small gray" onclick="AdminNav.cfgReset('${T.id}')">استعادة الافتراضي</button></div></div>` : `<div class="hint">لا إعدادات حالياً.</div>`}</div>`).join("");
+  }
+  /* ══ صفحة «قوالب» في تبويب المظهر: تحميل قالب / ناسخ القوالب / إعدادات ══ */
+  const TPL = [{ id: "focus-honey", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي." }];
+  const TT = { tab: "load" };
+  function tplTab(t) { TT.tab = t; renderTpl(); }
+  async function renderTpl() {
+    const box = $("tpl-body"); if (!box) return; const t = TT.tab, tabs = [["load", "تحميل قالب"], ["clone", "ناسخ القوالب"], ["set", "إعدادات"]];
+    const hd = `<div class="ap-h"><h3>القوالب</h3></div><div class="ap-tabs">${tabs.map(x => `<button type="button" class="${x[0] === t ? "on" : ""}" onclick="AdminNav.tplTab('${x[0]}')">${x[1]}</button>`).join("")}</div>`;
+    let body = "";
+    if (t === "load") {
+      let pages = []; try { const r = await fetch("assets/pages/index.json", { cache: "no-store" }); pages = r.ok ? await r.json() : []; } catch (e) { }
+      body = `<div class="ap-sec"><b>قوالب جاهزة</b><div class="tl-g">${TPL.map(x => `<div class="tl-c"><b>${esc(x.n)}</b><div class="hint" style="margin:.2rem 0 .5rem">${esc(x.d)}</div><button class="small" onclick="PBAdmin.openTemplate('${x.id}')">تحميل القالب في المطوّر</button></div>`).join("")}</div></div>
+<div class="ap-sec"><b>استيراد قالب من ملف</b><div class="hint" style="margin:0 0 .4rem">ملف JSON صدّرته من متجر آخر أو من هنا.</div><button class="small gold" onclick="PBAdmin.importPage()">استيراد قالب (JSON)</button></div>
+<div class="ap-sec"><b>تنزيل صفحة كقالب</b>${pages.length ? `<div class="tl-g">${pages.map(p => `<div class="tl-c"><b>${esc(p.title || p.slug)}</b><div class="hint" dir="ltr" style="margin:.1rem 0 .5rem">/lp/${esc(p.slug)}/</div><button class="small gray" onclick="PBAdmin.exportPage('${esc(p.slug)}')">تنزيل JSON</button></div>`).join("")}</div>` : `<div class="hint">لا توجد صفحات منشورة بعد.</div>`}</div>`;
+    } else if (t === "clone") {
+      const o = off("cloner");
+      body = `<div class="ap-sec"><b>ناسخ القوالب</b><div>${esc(APPS.cloner.d)}</div><ol>${APPS.cloner.how.map(x => "<li>" + esc(x) + "</li>").join("")}</ol><div class="action-bar" style="margin-top:.5rem"><button class="small" onclick="AdminNav.clone()" ${o ? "disabled" : ""}>فتح ناسخ القوالب</button><button class="small gray" onclick="AdminNav.group('apps');AdminNav.app('cloner',document.querySelector('.nav-btn[data-app=cloner]'))">إعدادات التطبيق</button></div>${o ? '<div class="hint">الناسخ معطّل من إعدادات التطبيقات.</div>' : ""}</div>`;
+    } else {
+      body = `<div class="ap-sec"><b>إعدادات القوالب</b><div class="tl-s">${ctl("tpl", { k: "dest", l: "وجهة النسخ الافتراضية عند وجود صفحة مفتوحة في المطوّر", t: "select", o: [["sec", "قسم داخل الصفحة الحالية"], ["new", "صفحة جديدة"]], d: "sec" })}${ctl("tpl", { k: "imgmax", l: "أقصى عرض للصور المحفوظة من القالب المنسوخ (px)", t: "select", o: [["1280", "1280"], ["1920", "1920"], ["2560", "2560"]], d: 1920 }).replace("this.value)", "Number(this.value))")}${ctl("tpl", { k: "imgcount", l: "أقصى عدد صور فريدة تُحفظ من القالب", t: "num", min: 10, max: 200, d: 80 })}<div class="action-bar"><button class="small gray" onclick="ImgCfg.reset('tpl');AdminNav.tplTab('set')">استعادة الافتراضي</button></div></div><div class="hint">تُحفظ هذه الإعدادات في هذا المتصفح وتُطبَّق عند فتح ناسخ القوالب.</div></div>`;
+    }
+    box.innerHTML = hd + body;
+  }
+  function tpl(btn) { try { Admin.tab("tpl", btn); } catch (e) { } renderTpl(); }
   const OFF = new Set(); let appSha;
   const off = id => OFF.has(id);
   function applyOff() {
@@ -49,15 +95,16 @@ const AdminNav = (() => {
     const A = APPS[id], box = $("app-cfg-body"); if (!A || !box) return; box.dataset.app = id;
     const cur = (typeof AdminUpdate !== "undefined" && AdminUpdate.current) || "", lat = (typeof AdminUpdate !== "undefined" && AdminUpdate.latest) || "", newer = lat && cur && lat !== cur && lat.split(".").map(Number).join() > cur.split(".").map(Number).join();
     const o = off(id);
-    box.innerHTML = `<div class="ap-h"><h3>${esc(A.n)}</h3><span class="ap-s ${o ? "off" : "on"}">${o ? "معطّل" : "مفعّل"}</span><label class="sw" title="${o ? "تفعيل" : "تعطيل"} التطبيق"><input type="checkbox" ${o ? "" : "checked"} onchange="AdminNav.toggle('${id}',this.checked)"><i></i></label></div>
+    const tabsH = A.tools ? `<div class="ap-tabs"><button type="button" class="${AT.tab === "info" ? "on" : ""}" onclick="AdminNav.setAppTab('info','${id}')">التعريف والتفعيل</button><button type="button" class="${AT.tab === "tools" ? "on" : ""}" onclick="AdminNav.setAppTab('tools','${id}')">قائمة الأدوات</button></div>` : "";
+    box.innerHTML = `<div class="ap-h"><h3>${esc(A.n)}</h3><span class="ap-s ${o ? "off" : "on"}">${o ? "معطّل" : "مفعّل"}</span><label class="sw" title="${o ? "تفعيل" : "تعطيل"} التطبيق"><input type="checkbox" ${o ? "" : "checked"} onchange="AdminNav.toggle('${id}',this.checked)"><i></i></label></div>${tabsH}${A.tools && AT.tab === "tools" ? `<div class="ap-sec">${toolsHtml()}</div>` : `
 <div class="ap-sec"><b>التعريف</b><div>${esc(A.d)}</div></div>
 <div class="ap-sec"><b>كيف يعمل</b><ol>${A.how.map(x => "<li>" + esc(x) + "</li>").join("")}</ol></div>
 <div class="ap-sec"><b>مكان عمل التطبيق</b><div>${esc(A.where)}</div><div class="action-bar" style="margin-top:.5rem"><button class="small" onclick="AdminNav.work('${id}')" ${o ? "disabled" : ""}>الانتقال إلى مكان العمل</button></div><div class="hint">التطبيق يبقى يعمل في مكانه المعتاد؛ هذه الصفحة للتعريف والإعداد فقط.</div></div>
 <div class="ap-sec"><b>النسخة والتحديث</b><div class="ap-kv"><div><small>النسخة الحالية</small><b dir="ltr">${esc(cur || "—")}</b></div><div><small>أحدث نسخة منشورة</small><b dir="ltr">${esc(lat || cur || "—")}</b></div><div><small>الحالة</small><b>${newer ? "يتوفر تحديث" : "محدّث"}</b></div></div>
 <div class="action-bar" style="margin-top:.5rem"><button class="small ${newer ? "gold" : ""}" onclick="AdminNav.update(${newer ? "true" : "false"},'${id}')">${newer ? "تحديث الآن" : "فحص التحديثات"}</button></div><div class="hint">التطبيقات تُحدَّث مع إصدار اللوحة نفسه؛ ورقم النسخة واحد لكلّها.</div></div>
-<div class="ap-sec"><b>التفعيل والتعطيل</b><div class="hint" style="margin:0">عند التعطيل: ${esc(A.off)} ويمكنك إعادة التفعيل في أي وقت.</div></div>`;
+<div class="ap-sec"><b>التفعيل والتعطيل</b><div class="hint" style="margin:0">عند التعطيل: ${esc(A.off)} ويمكنك إعادة التفعيل في أي وقت.</div></div>`}`;
   }
-  function app(id, btn) { try { Admin.tab("appcfg", btn); } catch (e) { return; } renderApp(id); const t = $("app-cfg-body"); if (t) t.dataset.app = id; }
+  function app(id, btn) { AT.tab = "info"; try { Admin.tab("appcfg", btn); } catch (e) { return; } renderApp(id); const t = $("app-cfg-body"); if (t) t.dataset.app = id; }
   async function update(isNew, id) { try { if (isNew) return AdminUpdate.apply(); await AdminUpdate.check(true); renderApp(id); } catch (e) { toast("تعذّر التحقق من التحديث"); } }
   function workBtn(w) { return [...document.querySelectorAll(".side-nav .nav-btn.nav-work")].find(b => b.dataset.work === w); }
   const WK = { builder: ["builder", "builder"], smart: ["smart", "pbgen"], imgtools: ["imgtools", "imgtools"], agent: ["agent", "agent"], voice: ["agent", "agent"] };
@@ -99,12 +146,12 @@ const AdminNav = (() => {
     /* أي Admin.tab (من أزرار أو برمجياً) يُبدّل المجموعة ويضبط عرض الوكيل */
     if (typeof Admin !== "undefined" && !Admin.__navHook) {
       const orig = Admin.tab; Admin.__navHook = 1;
-      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn); try { if (btn && btn.dataset && btn.dataset.grp && btn.dataset.grp !== cur) apply(btn.dataset.grp); if (t === "agent" && !VOICE) agentView("agent"); if (t === "appcfg" && btn && btn.dataset.app) renderApp(btn.dataset.app); } catch (e) { } return r; };
+      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn); try { if (btn && btn.dataset && btn.dataset.grp && btn.dataset.grp !== cur) apply(btn.dataset.grp); if (t === "agent" && !VOICE) agentView("agent"); if (t === "appcfg" && btn && btn.dataset.app) renderApp(btn.dataset.app); if (t === "tpl") renderTpl(); } catch (e) { } return r; };
     }
     agentView("agent");
     loadOff();
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { group, app, work, toggle, update, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

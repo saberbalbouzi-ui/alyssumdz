@@ -372,7 +372,7 @@ window.AIVision = (function () {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4, v = f(x0 + x, y0 + y) > 0 ? 1 : 0; Bm[i] = v; inv[i] = 1 - v; p[i] = v; I[i] = (D[gi] * .299 + D[gi + 1] * .587 + D[gi + 2] * .114) / 255; }
     if (opt.refine === false) return { a: p, x0, y0, w, h };
     /* دقة الشعر والحواف: ألفا حقيقية من ألوان المقدّمة/الخلفية القريبة + مرشّح موجَّه + إزالة هالة الخلفية (محرّك «نزع الخلفية» نفسه)؛ احتياطاً المرشّح البسيط أدناه */
-    if (opt.matte !== false && N <= (opt.matteMax || 3200000) && typeof PBBgRemove !== "undefined" && PBBgRemove._t && PBBgRemove._t.matteCore) {
+    if (opt.matte !== false && !(window.ImgCfg && ImgCfg.get("capture", "matte", true) === false) && N <= (opt.matteMax || 3200000) && typeof PBBgRemove !== "undefined" && PBBgRemove._t && PBBgRemove._t.matteCore) {
       try { const rgb = new Float32Array(N * 3), M = new Float32Array(N);
         for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4; rgb[i * 3] = D[gi] / 255; rgb[i * 3 + 1] = D[gi + 1] / 255; rgb[i * 3 + 2] = D[gi + 2] / 255; M[i] = Math.max(0, Math.min(1, .5 + f(x0 + x, y0 + y) / 10)); }
         const band = (PERSON.test(it.label || "") ? 1.7 : 1.1) / S.fx, r = PBBgRemove._t.matteCore({ w, h, rgb }, M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), c8 = new Uint8ClampedArray(N * 3);
@@ -431,7 +431,7 @@ window.AIVision = (function () {
         const fx = Math.max(0, Math.min(sw - 1.001, (x + .5) / w * sw - .5)), u0 = fx | 0, tx = fx - u0, j = v0 * sw + u0, q = (u[j] * (1 - tx) + u[j + 1] * tx) * (1 - ty) + (u[j + sw] * (1 - tx) + u[j + sw + 1] * tx) * ty;
         M[i] = Math.max(0, Math.min(1, (q - .5) * 2.4 + .5)); } }
     let al = M, rgb8 = null;
-    if (opt.matte !== false && N <= (opt.matteMax || 3200000) && T.matteCore) {
+    if (opt.matte !== false && !(window.ImgCfg && ImgCfg.get("capture", "matte", true) === false) && N <= (opt.matteMax || 3200000) && T.matteCore) {
       const rgb = new Float32Array(N * 3); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, gi = ((y0 + y) * W + x0 + x) * 4; rgb[i * 3] = D[gi] / 255; rgb[i * 3 + 1] = D[gi + 1] / 255; rgb[i * 3 + 2] = D[gi + 2] / 255; }
       const r = T.matteCore({ w, h, rgb }, M, { band: 2, detail: 1, decon: true, shift: 0, feather: 0 });
       al = r.alpha; rgb8 = new Uint8ClampedArray(N * 3); for (let i = 0; i < N; i++) { rgb8[i * 3] = r.data[i * 4]; rgb8[i * 3 + 1] = r.data[i * 4 + 1]; rgb8[i * 3 + 2] = r.data[i * 4 + 2]; }

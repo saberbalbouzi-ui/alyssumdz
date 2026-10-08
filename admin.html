@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.45.0">
+<meta name="admin-version" content="1.45.1">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -49,6 +49,8 @@ button{cursor:pointer;border:none;font-family:inherit}
 .nav-btn.on{background:var(--green);color:#fff}
 .nav-btn.on .nav-txt small{color:#DCE9E3}
 /* تبويبات كبيرة لتنظيم العناوين (المظهر / ecommerce / تطبيقات) + عرضا الوكيل (ذكي/ناطق) */
+.ap-tabs{display:flex;gap:.4rem;margin-top:.8rem;flex-wrap:wrap}.ap-tabs button{border:1.5px solid var(--line);background:#fff;color:var(--green);border-radius:12px;padding:.5rem 1rem;font-weight:800;font-family:inherit;cursor:pointer;transition:background .2s,transform .2s}.ap-tabs button:hover{transform:translateY(-2px)}.ap-tabs button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.tl-c{border:1px solid var(--line);border-radius:16px;padding:.9rem 1rem;margin-top:.7rem}.tl-c.dev{opacity:.7;border-style:dashed}.tl-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.7rem;margin-top:.5rem}.tl-g .tl-c{margin-top:0}.tl-s{margin-top:.6rem;display:grid;gap:.45rem}.tl-r{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.45rem .2rem;border-bottom:1px dashed var(--line);font-weight:700}
 .nav-btn.nav-work{display:none!important}html.app-off-ask .ah-btn,html.app-off-ask .ah-panel{display:none!important}html.app-off-cloner #pbx-clb{display:none!important}.app-off-tag{display:inline-block;margin-inline-start:.4rem;font-size:.66rem;font-weight:800;background:rgba(255,93,130,.16);color:#d64545;border:1px solid rgba(255,93,130,.5);border-radius:99px;padding:.05rem .45rem;vertical-align:middle}.app-off-tag.hidden{display:none}
 .app-cfg .ap-h{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}.app-cfg .ap-h h3{margin:0;flex:1;font-size:1.25rem}.app-cfg .ap-s{display:inline-block;border-radius:99px;padding:.15rem .7rem;font-size:.78rem;font-weight:900;border:1px solid}.app-cfg .ap-s.on{color:#157a55;border-color:rgba(21,122,85,.5);background:rgba(21,122,85,.1)}.app-cfg .ap-s.off{color:#d64545;border-color:rgba(214,69,69,.5);background:rgba(214,69,69,.1)}
 .app-cfg .ap-sec{margin-top:1rem}.app-cfg .ap-sec>b{display:block;color:var(--green);margin-bottom:.3rem}.app-cfg ol{margin:.2rem 0 0;padding-inline-start:1.3rem;line-height:2}.app-cfg .ap-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem}.app-cfg .ap-kv>div{border:1px solid var(--line);border-radius:14px;padding:.7rem .9rem}.app-cfg .ap-kv small{display:block;color:#6B7672}.app-cfg .ap-kv b{font-size:1.05rem}
@@ -318,6 +320,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromeh',this)"><span class="nav-ic">🔝</span><span class="nav-txt"><b>الهيدر</b><small>الشريط العلوي، القائمة، أيقونات التواصل، المشاركة، الأزرار</small></span></button>
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromef',this)"><span class="nav-ic">🔚</span><span class="nav-txt"><b>الفوتر</b><small>النبذة، الروابط، التواصل، أيقونات التواصل، حقوق النشر</small></span></button>
+      <button class="nav-btn" data-grp="look" data-ic="tpl" onclick="AdminNav.tpl(this)"><span class="nav-ic">🧩</span><span class="nav-txt"><b>قوالب</b><small>تحميل قالب جاهز، ناسخ القوالب، وإعدادات القوالب</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('checkout',this)"><span class="nav-ic">🧾</span><span class="nav-txt"><b>نموذج الطلب</b><small>ألوان النموذج، الحقول، الأزرار، العروض، رقم واتساب</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pending',this)"><span class="nav-ic">⏳</span><span class="nav-txt"><b>بانتظار التأكيد <span id="pending-count"></span></b><small>تعديلات معلّقة تحتاج تأكيدك لتطبيقها</small></span></button>
@@ -949,6 +952,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card"><div style="overflow:auto"><table id="pixels-table"></table></div></div>
   </div>
 
+  <div id="tab-tpl" class="hidden"><div class="card app-cfg" id="tpl-body"></div></div>
   <div id="tab-appcfg" class="hidden"><div class="card app-cfg" id="app-cfg-body"></div></div>
   <div id="tab-imgtools" class="hidden">
     <div class="card">
@@ -1524,12 +1528,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.45.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.45.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.45.0"></script>
-<script src="assets/js/admin-nav.js?v=1.45.0"></script>
-<script src="assets/js/admin-update.js?v=1.45.0"></script>
-<script src="assets/js/ai-vision.js?v=50"></script>
+<script src="assets/js/ctl-help.js?v=1.45.1"></script>
+<script src="assets/js/chrome-admin.js?v=1.45.1"></script>
+<script src="assets/js/admin-assistant.js?v=1.45.1"></script>
+<script src="assets/js/admin-nav.js?v=1.45.1"></script>
+<script src="assets/js/admin-update.js?v=1.45.1"></script>
+<script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -2463,7 +2467,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","imgtools","appcfg","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
+    ["orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","imgtools","appcfg","tpl","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -12207,14 +12211,14 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره. تلتقط الأداة العناصر الكاملة فقط (شخص، منتج، كتاب، قلم، زهرة…)؛ الجزء المقطوع كيدٍ تمسك منتجاً لا يُلتقط، ويُلتقط المنتج وحده.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Gemini اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
-  function warm(inf) { try { if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
+  function warm(inf) { try { if (window.ImgCfg && ImgCfg.get("capture", "warm", true) === false) return; if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
   /* تحضير مسبق: بعد تحديد صورة بثانيتين يُحلَّل في الخلفية (الحاسوب فقط) فيجد «التقاط العناصر» و«نزع الخلفية» النتيجة جاهزة؛ طلب مماثل أثناء التحليل ينتظره */
   const PF = {}; let pfT = 0;
   function prefetch(inf) {
     clearTimeout(pfT); const src = inf && inf.node && inf.node.set && inf.node.set.src; if (!src || PF[src] || LITE() || !window.AIVision || !AIVision.supported()) return;
     pfT = setTimeout(async () => { if (PF[src]) return; PF[src] = 1; try { const cv = capCanvas(await loadCanvas(src), 2200); await Promise.all([AIVision.analyze(cv, { lite: false, zone: null }), AIVision.depth ? AIVision.depth(cv, null, 448).catch(() => null) : null]); } catch (e) { PF[src] = 0; } }, 2500);
   }
-  const LITE = () => { try { return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
+  const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
   function capCanvas(cv, max) { const m = Math.max(cv.width, cv.height); if (m <= max) return cv; const r = max / m, c = document.createElement("canvas"); c.width = Math.round(cv.width * r); c.height = Math.round(cv.height * r); c.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, c.width, c.height); return c; }
   async function captureElements() {
     const t = target(); if (t.err) return alert(t.err);
@@ -12715,6 +12719,7 @@ ${resplit ? "" : S.pv ? `<p class="pz-h">تظهر معاينة التقسيم ع
   }
   const previewing = () => (S.pv ? S.pvId : "");
   function panel(inf) {
+    if (!S._c) { S._c = 1; if (window.ImgCfg) { S.cols = ImgCfg.get("puzzle", "cols", S.cols); S.rows = ImgCfg.get("puzzle", "rows", S.rows); S.knob = ImgCfg.get("puzzle", "knob", S.knob); } }
     css(); if (!inf || inf.kind !== "widget") return "";
     const st = inf.set; if (S.pvId !== inf.node.id) { S.pv = null; S.pvId = inf.node.id; }
     if (st.pz) { const n = group(inf).length;
@@ -12876,6 +12881,7 @@ const PBMask = (function () {
   const CHEV = '<svg class="ep-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   const thumbBtn = (val, key, name, on) => `<button type="button" class="mk-sh${on ? " on" : ""}" data-mksh="${esc(val)}" title="${esc(name)}">${PB.shapeThumb(key)}<span>${esc(name)}</span></button>`;
   function panel(inf) {
+    if (!S._c) { S._c = 1; if (window.ImgCfg && ImgCfg.get("mask", "invert", false)) S.invert = true; }
     css(); if (!inf || inf.kind !== "widget" || inf.set.pz) return "";
     const img = inf.node.type === "image", st = inf.set; if (img && !st.src) return "";
     const L = cands(inf), lib = img ? libSel() : "", cur = lib ? null : (L.find(w => w.id === S.target) || L[0]), pend = !!(S.pend && S.pend.id === inf.node.id);
@@ -12920,6 +12926,7 @@ ${invertUi}${hint}</div>`;
     box.v.classList.toggle("hot", rx > 1 && S.px === 50); box.h.classList.toggle("hot", ry > 1 && S.py === 50);
   }
   function snapPos(g, s, raw) {      // raw: [px,py] بالنسبة المئوية → بعد التجاذب مع المركز والحواف
+    if (window.ImgCfg && ImgCfg.get("mask", "snap", true) === false) return raw.slice();
     const L = g.L, T = 8 / s, out = raw.slice(), rx = L.width - g.w, ry = L.height - g.h;
     [[0, rx, L.width, g.w], [1, ry, L.height, g.h]].forEach(([i, r, W, sz]) => { if (r <= 1) return; const off = r * raw[i] / 100, cen = off + sz / 2;
       if (Math.abs(cen - W / 2) < T) out[i] = 50; else if (off < T) out[i] = 0; else if (r - off < T) out[i] = 100; });
@@ -13217,7 +13224,7 @@ const PBBgRemove = (function () {
      الطريقة ٢ «pts»: نقطة في مركز الصورة (موجبة) ونقاط على أطرافها (سالبة) لقناع SAM حين لا يجد الكشف شيئاً.
      الطريقة ٣ «classic»: تحليل لوني كلاسيكي (GMM من حواف الصورة) — تعمل دائماً حتى بلا نماذج.
      يُتحقَّق من النتيجة (نسبة التغطية)، وإن فشلت طريقة تُجرَّب التي بعدها؛ وزرّ «طريقة أخرى» يبدّل يدوياً. */
-  const LITE = () => { try { return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };
+  const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const capC = (c, max) => { const m = Math.max(c.width, c.height); if (m <= max) return c; const r = max / m, o = document.createElement("canvas"); o.width = Math.round(c.width * r); o.height = Math.round(c.height * r); o.getContext("2d", { willReadFrequently: true }).drawImage(c, 0, 0, o.width, o.height); return o; };
   const aiOK = () => { try { return typeof AIVision !== "undefined" && AIVision.supported(); } catch (e) { return false; } };
   const coverage = c => { const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 127) n++; return n / (c.width * c.height); };
@@ -13323,7 +13330,7 @@ const PBBgRemove = (function () {
   const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   async function autoCut(srcC, o) {
-    o = o || {}; const order = o.methods || (aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null;
+    o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true; const order = o.methods || ((window.ImgCfg && ImgCfg.get("bg", "method", "auto") === "classic") ? ["classic"] : (aiOK() ? ["ai", "classic"] : ["classic"])); let err = null, last = null;
     for (const m of order) {
       try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; if (cov > .02 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
@@ -14680,9 +14687,9 @@ const PBClone = (function () {
   }
   async function saveImages(widgets, doSave) {      // يحفظ الصور في موقعك (يتفادى الروابط الخارجية التي قد تتعطّل): كل رابط فريد مرة واحدة (نسخة الجوال والشرائح تتشارك الصور) بأقصى 80 رابطاً فريداً
     const by = new Map(); widgets.forEach(w => { if (w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)) { const k = w.set.src; if (!by.has(k)) by.set(k, []); by.get(k).push(w); } });
-    const urls = [...by.keys()].slice(0, 80); if (!doSave || !urls.length) return 0;
+    const urls = [...by.keys()].slice(0, (window.ImgCfg && ImgCfg.get("tpl", "imgcount", 80)) || 80); if (!doSave || !urls.length) return 0;
     let done = 0, i = 0;
-    async function work() { while (i < urls.length) { const u = urls[i++]; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); } }
+    async function work() { while (i < urls.length) { const u = urls[i++]; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: (window.ImgCfg && ImgCfg.get("tpl", "imgmax", 1920)) || 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; prog(S.p0 + (S.p1 - S.p0) * done / urls.length); } }
     await Promise.all(Array.from({ length: 8 }, work)); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
@@ -14862,6 +14869,7 @@ const PBClone = (function () {
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
 <div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-ring" hidden><i>0</i></span><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
     document.body.appendChild(m);
+    try { const dd = window.ImgCfg && ImgCfg.get("tpl", "dest", "sec"), rr = m.querySelector('input[name="cl-dest"][value="' + dd + '"]'); if (rr) rr.checked = true; } catch (e) { }      // الوجهة الافتراضية من إعدادات القوالب
     m.addEventListener("click", e => { const b = e.target.closest("[data-cl],[data-cltab]"); if (!b) { if (e.target === m) close(); return; }
       if (b.dataset.cltab) { S.tab = b.dataset.cltab; m.querySelectorAll("[data-cltab]").forEach(x => x.classList.toggle("on", x === b)); m.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== S.tab); resetStage(); return; }
       const a = b.dataset.cl; if (a === "x") close(); else if (a === "extinfo") extHelp(); else if (a === "diag") copyDiag(); else if (a === "fxrep") fxPanel(); else if (a === "fxsend") { const un = (S.fxRep || []).filter((x, i) => x.status !== "ok" && (document.querySelector(`#cl-rep [data-fxi="${i}"]`) || {}).checked); sendFxRequests(un.length ? un : []); } else if (a === "fxclose") fxPanel(false); else if (a === "fxstat") fxStatus(); else if (a === "load") loadUrl(false); else if (a === "loadfull") loadUrl(true); else if (a === "pick") pickImg(); else if (a === "copy") run(); });
@@ -15118,7 +15126,7 @@ window.AIC = (function(){ const P = {
     delivery:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>', coupons:'<path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/><path d="M13 5v2M13 17v2M13 11v2"/>', blacklist:'<circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/>',
     loyalty:'<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>', theme:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/>',
     checkout:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2l-3 2-2-2-3 2-3-2-2 2z"/><path d="M8 8h8M8 12h8"/>', pixels:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>', agent:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01M9 18h6"/><circle cx="12" cy="3" r="1"/>', pending:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
-    imgtools:'<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', voice:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4M8 22h8"/>', ask:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M9.5 8.5a2.5 2.5 0 114 2c-.8.5-1.5 1-1.5 2M12 15.5h.01"/>', cloner:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'
+    tpl:'<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', imgtools:'<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', voice:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4M8 22h8"/>', ask:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M9.5 8.5a2.5 2.5 0 114 2c-.8.5-1.5 1-1.5 2M12 15.5h.01"/>', cloner:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'
   };
   const go = () => document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""), k = b.dataset.ic || (m && m[1]), ic = b.querySelector(".nav-ic"); if (k && P[k] && ic) ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + P[k] + '</svg>'; });
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();

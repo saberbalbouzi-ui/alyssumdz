@@ -272,3 +272,9 @@ html.glass .nav-groups .ng{background:var(--g-sheen),rgba(255,255,255,.04);color
 html.glass .nav-groups .ng:hover{transform:translateY(-2px);background:var(--g-sheen),rgba(134,240,106,.14)}
 html.glass .nav-groups .ng.on{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border-color:rgba(150,255,170,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.25),0 8px 18px -6px rgba(0,0,0,.7)!important}
 html.glass .nav-groups .ng svg{filter:none}
+
+/* تبويبات صفحات التطبيقات/القوالب: المحدَّد أخضر زجاجي منتفخ، وبطاقات الأدوات زجاج */
+html.glass .ap-tabs button{background:var(--g-sheen),rgba(255,255,255,.04);color:var(--g-tx);border:1px solid rgba(255,255,255,.2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+html.glass .ap-tabs button.on{background:linear-gradient(180deg,rgba(80,230,120,.5),rgba(13,148,136,.28))!important;color:#fff!important;border-color:rgba(150,255,170,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.25)}
+html.glass .tl-c{background:var(--g-sheen),rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}html.glass .tl-c:hover{border-color:rgba(170,255,150,.4)}
+html.glass .tl-r{border-bottom-color:rgba(255,255,255,.12)}

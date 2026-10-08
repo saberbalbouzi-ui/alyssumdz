@@ -173,6 +173,7 @@ ${resplit ? "" : S.pv ? `<p class="pz-h">تظهر معاينة التقسيم ع
   }
   const previewing = () => (S.pv ? S.pvId : "");
   function panel(inf) {
+    if (!S._c) { S._c = 1; if (window.ImgCfg) { S.cols = ImgCfg.get("puzzle", "cols", S.cols); S.rows = ImgCfg.get("puzzle", "rows", S.rows); S.knob = ImgCfg.get("puzzle", "knob", S.knob); } }
     css(); if (!inf || inf.kind !== "widget") return "";
     const st = inf.set; if (S.pvId !== inf.node.id) { S.pv = null; S.pvId = inf.node.id; }
     if (st.pz) { const n = group(inf).length;
