@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.42.1">
+<meta name="admin-version" content="1.42.2">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1488,10 +1488,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.42.1"></script>
-<script src="assets/js/chrome-admin.js?v=1.42.1"></script>
-<script src="assets/js/admin-assistant.js?v=1.42.1"></script>
-<script src="assets/js/admin-update.js?v=1.42.1"></script>
+<script src="assets/js/ctl-help.js?v=1.42.2"></script>
+<script src="assets/js/chrome-admin.js?v=1.42.2"></script>
+<script src="assets/js/admin-assistant.js?v=1.42.2"></script>
+<script src="assets/js/admin-update.js?v=1.42.2"></script>
 <script src="assets/js/ai-vision.js?v=50"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -14344,21 +14344,33 @@ const PBClone = (function () {
     }
     /* سلايدر بلا مكتبة معروفة (قوالب Wix/Shopify/كود مخصص): حاوية تقصّ/تمرّر فيها صف شرائح متساوية الحجم أعرض من الحاوية؛ الأسهم والنقاط تُستنتج من الأصناف/العناوين */
     function findGenericSliders(claimed) {
-      let cands = []; try { cands = [...doc.querySelectorAll("div,section,ul,ol,article")]; } catch (e) { return; }
-      const small = r => r.w >= 10 && r.w <= 140 && r.h >= 10 && r.h <= 140;
+      let cands = []; try { cands = [...doc.querySelectorAll("div,section,ul,ol,article,header,main")]; } catch (e) { return; }
+      const small = r => r.w >= 10 && r.w <= 140 && r.h >= 10 && r.h <= 140, HINT = /slide|carousel|slider|hero|banner|rotat|fade|swiper|gallery|testimon|review|showcase|marquee-?item|cycle|reel/i, NOT = /(^|[\s_-])(tab|tabs|accordion|collapse|modal|dropdown|menu|nav|navbar|offcanvas|popover|tooltip)([\s_-]|$)/i;
+      const cn = x => (typeof x.className === "string" ? x.className : "") + " " + (x.id || "");
       for (const root of cands) {
-        if (sliders.length >= 12) break;
+        if (sliders.length >= 14) break;
         if (claimed.some(c => c === root || c.contains(root) || root.contains(c)) || [...mq.keys()].some(k => k === root || k.contains(root) || root.contains(k))) continue;
-        const rr = rectOf(root); if (rr.w < 200 || rr.h < 60 || rr.y >= limit) continue; if (!/(hidden|auto|scroll|clip)/.test(win.getComputedStyle(root).overflowX)) continue;
-        let track = null, slides = null, t = root;
-        for (let d = 0; d < 3 && t; d++) { const ch = [...t.children].filter(x => { const r = rectOf(x); return r.w > 20 && r.h > 20 && win.getComputedStyle(x).position !== "absolute"; }); if (ch.length >= 2) { track = t; slides = ch; break; } if (ch.length === 1) t = ch[0]; else break; }
-        if (!track || slides.length > 30) continue;
-        const sr = slides.map(rectOf), w0 = sr[0]; if (sr.some(r => Math.abs(r.y - w0.y) > w0.h * .3 || r.w / w0.w > 1.25 || r.w / w0.w < .8 || r.h / w0.h > 1.3 || r.h / w0.h < .75)) continue;
-        if (!sr.some(r => r.x + r.w > rr.x + rr.w + 6 || r.x < rr.x - 6)) continue; if (w0.w < rr.w * .2) continue;
-        const pv = Math.max(1, sr.filter(r => inBox(r, rr)).length), act0 = sr.findIndex(r => inBox(r, rr)), act = act0 < 0 ? 0 : act0, ordered = slides.slice(act).concat(slides.slice(0, act));
+        const rr = rectOf(root); if (rr.w < 200 || rr.h < 60 || rr.y >= limit) continue; const ov = /(hidden|auto|scroll|clip)/.test(win.getComputedStyle(root).overflowX);
+        let track = null, kids = null, t = root;
+        for (let d = 0; d < 3 && t; d++) { const ch = [...t.children].filter(x => !SKIP.has(x.tagName.toLowerCase())); const big = ch.filter(x => { const r = rectOf(x); return r.w > 20 && r.h > 20; }); if (ch.length >= 2 && (big.length >= 2 || d === 0 || ch.length > big.length)) { track = t; kids = ch; break; } if (ch.length === 1) t = ch[0]; else break; }
+        if (!track || kids.length > 40) continue;
+        let slides = null, stacked = false, pv = 1;
+        /* (1) صف شرائح متساوية الحجم يتجاوز الحاوية (تمرير/إزاحة) */
+        const rowK = kids.filter(x => { const r = rectOf(x); return r.w > 20 && r.h > 20; });
+        if (ov && rowK.length >= 2) {
+          const sr = rowK.map(rectOf), w0 = sr[0];
+          if (!sr.some(r => Math.abs(r.y - w0.y) > w0.h * .3 || r.w / w0.w > 1.25 || r.w / w0.w < .8 || r.h / w0.h > 1.3 || r.h / w0.h < .75) && sr.some(r => r.x + r.w > rr.x + rr.w + 6 || r.x < rr.x - 6) && w0.w >= rr.w * .15) { slides = rowK; pv = Math.max(1, sr.filter(r => inBox(r, rr)).length); }
+        }
+        /* (2) شرائح متراكمة في المكان نفسه (تلاشي/إخفاء): شريحة ظاهرة والباقي مخفي، وبوجود دلالة اسم (slide/hero/banner…) */
+        if (!slides && kids.length >= 2 && kids.length <= 14 && (HINT.test(cn(root)) || kids.some(k => HINT.test(cn(k)))) && !NOT.test(cn(root)) && !kids.some(k => NOT.test(cn(k)))) {
+          const cand = kids.filter(k => { const r = rectOf(k); return (r.w >= rr.w * .5 && r.h >= rr.h * .5) || win.getComputedStyle(k).display === "none"; }), shownK = cand.filter(k => isShown(k)), hid = cand.filter(k => !shownK.includes(k));
+          if (cand.length >= 2 && shownK.length >= 1 && shownK.length <= Math.max(1, Math.ceil(cand.length / 2)) && hid.length >= 1 && hid.every(k => { const c = win.getComputedStyle(k), r = rectOf(k); return c.display === "none" || c.visibility === "hidden" || Number(c.opacity) < .1 || r.w < 2 || r.x >= rr.x + rr.w - 2 || r.x + r.w <= rr.x + 2; })) { slides = shownK.concat(hid); stacked = true; pv = shownK.length; }
+        }
+        if (!slides) continue;
+        const sr2 = slides.map(rectOf), act0 = stacked ? 0 : sr2.findIndex(r => inBox(r, rr)), act = act0 < 0 ? 0 : act0, ordered = slides.slice(act).concat(slides.slice(0, act));
         const pages = Math.ceil(ordered.length / pv); if (pages < 2) continue;
         const A = (() => { let a = root.parentElement; for (let i = 0; i < 2 && a && a !== doc.body && rectOf(a).h < rr.h * 1.6; i++) a = a.parentElement || a; return a || root; })(), inSl = x => slides.some(s => s.contains(x));
-        const lab = x => (typeof x.className === "string" ? x.className : "") + " " + (x.getAttribute("aria-label") || "") + " " + (x.getAttribute("title") || "") + " " + (x.id || "");
+        const lab = x => cn(x) + " " + (x.getAttribute("aria-label") || "") + " " + (x.getAttribute("title") || "");
         const pick = re => { let r = []; try { r = [...A.querySelectorAll("button,a,div,span,i,svg")].filter(x => !inSl(x) && re.test(lab(x)) && small(rectOf(x)) && !x.querySelector("button,a") && rectOf(x).y < limit); } catch (e) { } return r.filter(x => !r.some(y => y !== x && y.contains(x))).slice(0, 2); };
         const pr = pick(/(^|[\s_-])(prev|previous|back|left|arrow-left)([\s_-]|$)/i), nx = pick(/(^|[\s_-])(next|forward|right|arrow-right)([\s_-]|$)/i).filter(x => !pr.includes(x));
         let dots = []; try { for (const c of A.querySelectorAll("div,ul,ol,nav,span")) { if (inSl(c) || !/dot|bullet|indicator|pagina|pager|nav/i.test(lab(c))) continue; const k = [...c.children].filter(x => small(rectOf(x))); if (k.length >= 2 && (k.length === pages || k.length === slides.length)) { dots = k; break; } } } catch (e) { }
@@ -14366,7 +14378,8 @@ const PBClone = (function () {
         ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
         const actP = Math.floor(act / pv); dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
         pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
-        const sl = { id, def: {}, root, slides: ordered, pv, pages, stacked: false, track, ms, dots, pr, nx, act, generic: 1 }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
+        const sl = { id, def: {}, root, slides: ordered, pv, pages, stacked, track, ms, dots, pr, nx, act, generic: 1 }; sliders.push(sl); slRoot.set(root, sl); claimed.push(root);
+        if (fx) fx.stats.gslides = (fx.stats.gslides || 0) + 1;
       }
     }
 
