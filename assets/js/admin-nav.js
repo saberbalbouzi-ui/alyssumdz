@@ -62,7 +62,7 @@ const AdminNav = (() => {
     { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
     { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
   ];
-  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "1.51.5";
+  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "1.51.6";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen() { await libLoad(); LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -89,6 +89,7 @@ const AdminNav = (() => {
   const aProds = () => ((typeof PBBind !== "undefined" && PBBind.list) ? PBBind.list() : ((typeof Admin !== "undefined" && Admin.products) || [])).filter(p => p && p.active !== false);
   function alyWalk(n, f) { f(n); (n.cols || []).forEach(c => alyWalk(c, f)); (n.widgets || []).forEach(w => alyWalk(w, f)); (n.free || []).forEach(w => alyWalk(w, f)); }
   /* التثبيت: صور القالب ← صور منتجات المتجر وفئاته، اسم المتجر، والأقسام تُوسَم لتحلّ محل هيدر/محتوى/فوتر الرئيسية */
+  const ALY_CAT = Object.fromEntries(["skin", "hair", "honey", "health", "roqia", "supplements"].map(k => [k, "assets/img/tpl/alyssum-cat-" + k + ".webp"]));      // صور بطاقات الفئات الجاهزة للفئات المعروفة؛ غيرها يأخذ صورة منتجه
   function alyLocalize(page) {
     const P = aProds(), best = P.find(p => (p.tags || []).includes("best") && coverOf(p)) || P.find(p => coverOf(p)), other = P.find(p => p !== best && (p.tags || []).includes("new") && coverOf(p)) || P.find(p => p !== best && coverOf(p)) || best;
     const CT = (typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : {});
@@ -103,7 +104,7 @@ const AdminNav = (() => {
         if (n.type === "image" && s.slot === "banner" && other) { s.src = coverOf(other); s.alt = other.title; }
         if (n.type === "shopcats" && s.slotCats) {
           const keys = Object.keys(CT).slice(0, 6);
-          if (keys.length) s.items = keys.map(k => ({ cat: k, label: "", img: coverOf(P.find(p => p.cat === k && coverOf(p))) || coverOf(best) }));
+          if (keys.length) s.items = keys.map(k => ({ cat: k, label: "", img: ALY_CAT[k] || coverOf(P.find(p => p.cat === k && coverOf(p))) || coverOf(best) }));
         }
         if (n.type === "sfoot" && nm) { s.copy = "© " + new Date().getFullYear() + " " + nm + " — جميع الحقوق محفوظة"; }
       });
