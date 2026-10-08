@@ -134,7 +134,7 @@ const PB = (() => {
   const devHide = (sel, v) => String(v || "").split("").filter(x => DEVQ[x]).map(x => `@media ${DEVQ[x]}{${sel}{display:none!important}}`).join("");
   const HIDE_OPTS = [["", "تظهر في كل الأجهزة"], ["d", "إخفاء في المكتب"], ["t", "إخفاء في التابلت"], ["m", "إخفاء في الهاتف"], ["tm", "إخفاء في التابلت والهاتف"], ["dt", "إخفاء في المكتب والتابلت"], ["dm", "إخفاء في المكتب والهاتف"]];
   function hideRules(css, sel, s, edit) {
-    DEVS.forEach(dev => { if (s["h" + dev]) css.d.push(edit ? `@media ${DEVQ[dev]}{${sel}{opacity:.25;outline:2px dashed #b83232}}` : `@media ${DEVQ[dev]}{${sel}{display:none!important}}`); });
+    DEVS.forEach(dev => { if (s["h" + dev]) css.d.push(edit && !s.cm ? `@media ${DEVQ[dev]}{${sel}{opacity:.25;outline:2px dashed #b83232}}` : `@media ${DEVQ[dev]}{${sel}{display:none!important}}`); });
   }
   /* التأثيرات المنسوخة (set.fxs): كل عنصر {id,n:الاسم,on,tpl,p:{مفتاح:{l,t,v,o?}}}؛ القالب tpl فيه [[مفتاح]] يُستبدل بقيمة الإعداد ثم selector باسم العنصر.
      تُنشئها أداة «نسخ قالب»، وتُعدَّل/تُعطَّل/تُحذف من تبويب «تأثيرات منسوخة» في إعدادات أي عنصر. */

@@ -40,7 +40,7 @@ const PBCloneFx = (() => {
   const secs = v => { const n = parseFloat(v); return isFinite(n) ? (/ms$/.test(String(v).trim()) ? n / 1000 : n) : 0; };
 
   function create(c) {
-    const { doc, win, W, out, add, col, px, r1, r2 } = c, S = { anims: new Map(), trans: new Map(), kf: new Map(), hover: [], own: new Map(), range: new Map(), zones: new Map(), zn: 0, stats: { shadow: 0, tshadow: 0, filter: 0, anim: 0, entr: 0, hover: 0, zone: 0 } };
+    const { doc, win, W, out, add, col, px, r1, r2 } = c, S = { idp: c.idp || "", anims: new Map(), trans: new Map(), kf: new Map(), hover: [], own: new Map(), range: new Map(), zones: new Map(), zn: 0, stats: { shadow: 0, tshadow: 0, filter: 0, anim: 0, entr: 0, hover: 0, zone: 0 } };
     const pass = (w, css, n) => pushItem(w, mkItem(n || "تأثير CSS", "[[code]]", rawP(css)));
     const addCls = (w, k) => { if (!(" " + (w.set.cls || "") + " ").includes(" " + k + " ")) w.set.cls = ((w.set.cls || "") + " " + k).trim(); };
     const geomOf = w => ({ x: (w.set.fx.d || 0) / 100 * W, y: w.set.fy.d || 0, w: (w.set.fwd.d || 0) / 100 * W, h: w.set.fh.d || 0 });
@@ -103,7 +103,7 @@ const PBCloneFx = (() => {
         const rule = S.kf.get(nm); if (!rule) return; const dur = secs(a.dur[i % a.dur.length]), delay = secs(a.delay[i % a.delay.length]), it = a.iter[i % a.iter.length], dir = a.dir[i % a.dir.length], fill = a.fill[i % a.fill.length], tf = a.tf[i % a.tf.length]; if (!dur) return;
         const preset = it === "1" ? presetOf(nm) : "";
         if (preset) { all.forEach(w => { if (!w.set.anim) { w.set.anim = preset; w.set.animDur = r1(Math.min(3, Math.max(.1, dur))); w.set.animDelay = r1(Math.min(5, delay)); } }); S.stats.entr++; return; }
-        const txt0 = rule.cssText; if (txt0.length > 8000) return; const er = e.getBoundingClientRect(), txt = scaleKf(txt0, er.width, er.height); const nn = "pbk-" + nm.replace(/[^\w-]/g, "_"), kfCss = txt.replace(/^@(-webkit-)?keyframes\s+[^{]+/, "@keyframes " + nn), needO = /scale|rotate|skew/.test(txt) && all.length > 1;
+        const txt0 = rule.cssText; if (txt0.length > 8000) return; const er = e.getBoundingClientRect(), txt = scaleKf(txt0, er.width, er.height); const nn = "pbk-" + (S.idp || "") + nm.replace(/[^\w-]/g, "_"), kfCss = txt.replace(/^@(-webkit-)?keyframes\s+[^{]+/, "@keyframes " + nn), needO = /scale|rotate|skew/.test(txt) && all.length > 1;
         all.forEach((w, k) => { const first = !(S.kfDone && S.kfDone.has(nn) && all.length > 6); pushItem(w, mkItem("حركة مستمرة: " + nm, "[[kf]]\nselector{animation:" + nn + " [[dur]]s [[tf]] [[delay]]s [[it]] [[dir]] [[fill]];[[org]]}", { dur: { l: "المدة (ثانية)", t: "num", v: dur }, delay: { l: "التأخير (ثانية)", t: "num", v: delay }, it: { l: "التكرار (infinite أو عدد)", t: "text", v: it }, dir: { l: "الاتجاه", t: "select", v: dir, o: [["normal", "عادي"], ["reverse", "معكوس"], ["alternate", "ذهاب وإياب"], ["alternate-reverse", "ذهاب وإياب معكوس"]] }, tf: { l: "منحنى السرعة", t: "text", v: tf }, fill: { l: "حالة ما بعد الحركة", t: "select", v: fill, o: [["none", "بدون"], ["forwards", "تبقى في النهاية"], ["backwards", "تبدأ من أولها"], ["both", "الاثنان"]] }, org: { l: "نقطة الارتكاز (اختياري، مثل transform-origin:50% 50%;)", t: "text", v: needO ? "transform-origin:" + origin(w, e) + ";" : "" }, kf: { l: "إطارات الحركة @keyframes", t: "code", v: first ? kfCss : "" } })); });
         (S.kfDone = S.kfDone || new Set()).add(nn); S.stats.anim++;
       });
@@ -119,7 +119,7 @@ const PBCloneFx = (() => {
     /* التحويم: القواعد التي فيها :hover تُحوَّل إلى CSS على عناصر المطوّر؛ إن كان المحوَّم عنصراً واحداً فـ:hover العادي، وإلا منطقة تحويم تحرّك أعضاءها معاً */
     function hoverDecls(style) { const d = {}; for (let i = 0; i < style.length; i++) { const p = style[i]; if (HOVER_PROPS.has(p)) d[p] = style.getPropertyValue(p).trim(); } if (d.background && !c.col(d.background)) delete d.background; if (d.background) { d["background-color"] = d.background; delete d.background; } return d; }
     function ensureZone(zoneEl) {
-      let z = S.zones.get(zoneEl); if (z) return z; const id = "z" + (++S.zn), rg = S.own.get(zoneEl);
+      let z = S.zones.get(zoneEl); if (z) return z; const id = "z" + (++S.zn + (S.idp ? 1000 : 0)), rg = S.own.get(zoneEl);
       const paint = rg ? out.slice(rg[0], rg[1]).find(w => (w.type === "shape" || w.type === "image") && true) : null;
       let wdg = paint; if (!wdg) { const r = zoneEl.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return null; wdg = add("shape", { x: r.left, y: r.top, w: r.width, h: r.height }, { shape: "rect", fill: "#ffffff", op: 0, outline: false, sw: 0, keep: false, css: "selector{opacity:0!important;pointer-events:none!important}" }); if (!wdg) return null; }
       addCls(wdg, "hz-" + id); z = { id, w: wdg }; S.zones.set(zoneEl, z); S.stats.zone++; return z;

@@ -202,7 +202,8 @@ const PBClone = (function () {
           add("text", { x: Math.max(0, x0 - 1), y: f.top - Math.max(0, (lhPx - f.height) / 2), w: Math.min(W, x1 - x0 + Math.max(6, (x1 - x0) * .03)), h: tops * lhPx }, Object.assign(props, { html: "<p>" + esc(c.nodeValue.replace(/\s+/g, " ").trim()) + "</p>" })); } }
       if (clips) radCtx.pop();
     }
-    const FXON = !opt.noFx && typeof PBCloneFx !== "undefined", ownEnd = new Map(), fx = FXON ? PBCloneFx.create({ doc, win, W, out, add, col, px, r1, r2 }) : null;
+    const IDP = opt.idp || "";      // بادئة معرّفات السلايدر/الأكورديون/المناطق لنسخة الجوال كي لا تتصادم مع معرّفات نسخة سطح المكتب في الصفحة نفسها
+    const FXON = !opt.noFx && typeof PBCloneFx !== "undefined", ownEnd = new Map(), fx = FXON ? PBCloneFx.create({ idp: IDP, doc, win, W, out, add, col, px, r1, r2 }) : null;
     /* ───── السلايدرات: كل «صفحة» شرائح مجموعة عناصر تُظهر بالتناوب (أسهم/نقاط/سحب/تشغيل تلقائي في الصفحة المنشورة) ───── */
     const SLD = [
       { root: ".swiper,.swiper-container", slide: ".swiper-slide:not(.swiper-slide-duplicate)", prev: ".swiper-button-prev", next: ".swiper-button-next", dot: ".swiper-pagination-bullet" },
@@ -226,7 +227,7 @@ const PBClone = (function () {
           const stacked = !!def.bs || sr0.slice(1).every(r => r.w < 1 || (Math.abs(r.x - sr0[0].x) < 3 && Math.abs(r.y - sr0[0].y) < 3));      // بوتستراب: شرائح متراكمة دائماً (اللقطة قد تكون في منتصف الانتقال فتظهر متجاورة)
           let act = 0; if (stacked) { const k = all.findIndex(x => /(^|\s|-)active(\s|$|-)/.test(x.className)); act = k < 0 ? 0 : k; } else { const k = sr0.findIndex(r => inBox(r, rr)); act = k < 0 ? 0 : k; }
           const slides = all.slice(act).concat(all.slice(0, act)), sr = slides.map(rectOf); const pv = stacked ? 1 : Math.max(1, sr.filter(r => inBox(r, rr)).length), pages = Math.ceil(slides.length / pv); if (pages < 2) continue;
-          const id = "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
+          const id = IDP + "s" + (++slN); let ms = def.bs && !root.hasAttribute("data-bs-ride") && !root.hasAttribute("data-ride") && !root.hasAttribute("data-bs-interval") ? 0 : 5000;
           try { const a = root.getAttribute("data-bs-interval") || root.getAttribute("data-interval"); if (a) ms = +a || ms; const sk = root.getAttribute("data-slick"); if (sk) { const o = JSON.parse(sk); ms = o.autoplay ? (o.autoplaySpeed || 3000) : 0; } const sp = root.getAttribute("data-splide"); if (sp) { const o = JSON.parse(sp); ms = o.autoplay ? (o.interval || 5000) : 0; } const sa = slides[0].getAttribute("data-swiper-autoplay"); if (sa) ms = +sa || ms; } catch (e) { }
           if (def.bs) { slides[0].style.setProperty("transform", "none", "important"); slides[0].style.setProperty("transition", "none", "important"); }
           slides.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : [])));
@@ -259,7 +260,7 @@ const PBClone = (function () {
         const pick = re => { let r = []; try { r = [...A.querySelectorAll("button,a,div,span,i,svg")].filter(x => !inSl(x) && re.test(lab(x)) && small(rectOf(x)) && !x.querySelector("button,a") && rectOf(x).y < limit); } catch (e) { } return r.filter(x => !r.some(y => y !== x && y.contains(x))).slice(0, 2); };
         const pr = pick(/(^|[\s_-])(prev|previous|back|left|arrow-left)([\s_-]|$)/i), nx = pick(/(^|[\s_-])(next|forward|right|arrow-right)([\s_-]|$)/i).filter(x => !pr.includes(x));
         let dots = []; try { for (const c of A.querySelectorAll("div,ul,ol,nav,span")) { if (inSl(c) || !/dot|bullet|indicator|pagina|pager|nav/i.test(lab(c))) continue; const k = [...c.children].filter(x => small(rectOf(x))); if (k.length >= 2 && (k.length === pages || k.length === slides.length)) { dots = k; break; } } } catch (e) { }
-        const id = "s" + (++slN), ms = 5000;
+        const id = IDP + "s" + (++slN), ms = 5000;
         ordered.slice(0, pv).forEach((x, k) => elCls.set(x, ["pbsl-" + id + "-0"].concat(k === 0 ? ["pbsi-" + id + "-" + ms] : []))); ordered.slice(pv).forEach(x => slSkip.add(x));
         const actP = Math.floor(act / pv); dots.forEach((d, j) => { const pg = dots.length === pages ? (j - actP + pages) % pages : Math.min(pages - 1, Math.floor(j * pages / dots.length)); elCls.set(d, ["pbsd-" + id + "-" + pg]); });
         pr.forEach(x => elCls.set(x, ["pbsp-" + id])); nx.forEach(x => elCls.set(x, ["pbsn-" + id]));
@@ -275,7 +276,7 @@ const PBClone = (function () {
         const rr0 = rectOf(lst); if (rr0.y >= limit) continue;
         let root = panels[0].parentElement; while (root && !panels.every(pn => root.contains(pn))) root = root.parentElement; if (!root || root === doc.body || root === doc.documentElement) continue;
         let act = tabs.findIndex(t => t.getAttribute("aria-selected") === "true" || /(^|\s)(active|current|selected|elementor-active)(\s|$)/.test(t.className)); if (act < 0) act = Math.max(0, panels.findIndex(isShown));
-        const rot = a => a.slice(act).concat(a.slice(0, act)), pn = rot(panels), tb = rot(tabs), id = "s" + (++slN);
+        const rot = a => a.slice(act).concat(a.slice(0, act)), pn = rot(panels), tb = rot(tabs), id = IDP + "s" + (++slN);
         elCls.set(pn[0], ["pbsl-" + id + "-0", "pbsi-" + id + "-0"]); pn.slice(1).forEach(x => slSkip.add(x)); tb.forEach((t, j) => elCls.set(t, ["pbsd-" + id + "-" + j]));
         const sl = { id, def: {}, root, slides: pn, pv: 1, pages: pn.length, stacked: true, track: null, ms: 0, dots: tb, pr: [], nx: [], act, tabs: 1 }; sliders.push(sl); slRoot.set(root, sl);
       }
@@ -331,7 +332,7 @@ const PBClone = (function () {
       }
       let subs = []; try { subs = [...doc.querySelectorAll('li > ul, li > .sub-menu, li > .dropdown-menu, .dropdown > .dropdown-menu, .menu-item-has-children > ul, li > div[class*="mega"], li > div[class*="dropdown"]')]; } catch (e) { }
       for (const b of subs) { if (isShown(b) || b.closest("details")) continue; const li = b.parentElement, h = (b.previousElementSibling && /^(a|button|span)$/i.test(b.previousElementSibling.tagName) ? b.previousElementSibling : li && li.querySelector(":scope > a, :scope > button")); if (h && rectOf(h).w > 4) add1({ head: h, bodies: [b], o0: false, hov: true }); }
-      for (const it of items) { it.id = "d" + (++dN); (it.heads || [it.head]).forEach(hh => elCls.set(hh, ["pbdh-" + it.id])); if (it.o0) it.bodies.forEach(b => elCls.set(b, ["pbdb-" + it.id])); discs.push(it); }
+      for (const it of items) { it.id = IDP + "d" + (++dN); (it.heads || [it.head]).forEach(hh => elCls.set(hh, ["pbdh-" + it.id])); if (it.o0) it.bodies.forEach(b => elCls.set(b, ["pbdb-" + it.id])); discs.push(it); }
     }
 
     function makeLightbox(src, id, vh) {
@@ -382,7 +383,7 @@ const PBClone = (function () {
       if (!c.length) c = [T]; if (c.some(x => x.querySelector && x.querySelector("img,video,canvas,picture"))) return null;
       const t = c.map(x => x.textContent.replace(/\s+/g, " ").trim()).filter(Boolean); return t.length ? { els: c, texts: t } : null;
     }
-    function addMarquee(C, T, dur, dir) {
+    function addMarquee(C, T, dur, dir, mv) {      // mv: {travel:px مسافة دورة الحركة الأصلية} أو {speed:px/ث} — لمطابقة السرعة الفعلية لا مدة الدورة فقط
       const cr = rectOf(C); if (cr.w < 200 || cr.h < 14 || cr.y >= limit || mq.has(C) || [...mq.keys()].some(k => k.contains(C) || C.contains(k))) return;
       const it = mqItems(T); if (!it) return; const el0 = it.els[0], bg = bgOf(C) || { r: 23, g: 63, b: 53, a: 1 };
       /* لون النص الحقيقي: أعمق عنصر يحمل أول نص مرئي (لون المغلّف قد يكون شفافاً/موروثاً)؛ الشفاف أو النص المقصوص بالخلفية يُستبدل بلون مقابل لخلفية الشريط */
@@ -390,7 +391,11 @@ const PBClone = (function () {
       const cs = win.getComputedStyle(el0), ts = win.getComputedStyle(tEl); let c = textFill(ts);
       if (!c || c.a < .35) { const lum = (.299 * bg.r + .587 * bg.g + .114 * bg.b); c = lum < 140 ? { r: 255, g: 255, b: 255, a: 1 } : { r: 20, g: 20, b: 20, a: 1 }; }
       let gap = 48; if (it.els.length >= 2) { const a = rectOf(it.els[0]), b = rectOf(it.els[1]); const g = b.x > a.x ? b.x - (a.x + a.w) : a.x - (b.x + b.w); if (isFinite(g) && g >= 4 && g < 400) gap = Math.round(g); }
-      const ff = fontOf(cs); mq.set(C, { cr, texts: it.texts, dur: Math.max(4, Math.round(dur || 20)), dir, gap, fs: Math.round(px(cs.fontSize) || 16), fw: String(cs.fontWeight), c: hex(c), bg: hex(bg), ff });
+      const ff = fontOf(cs);
+      /* السرعة: عنصر المطوّر يحرّك «مجموعة نصوص واحدة» خلال mqs ثانية؛ نحسب mqs لتكون السرعة (px/ث) كالأصلية: مدة المجموعة = عرضها ÷ السرعة الأصلية */
+      let gw = 0; try { gw = it.els.reduce((a, x) => a + rectOf(x).w, 0) + it.els.length * gap; } catch (e) { }
+      let d2 = dur || 20; if (gw > 40 && mv) { const sp = mv.speed || (mv.travel > 20 && dur ? mv.travel / dur : 0); if (sp > 1) d2 = gw / sp; }
+      mq.set(C, { cr, texts: it.texts, dur: Math.max(4, Math.min(300, Math.round(d2))), dir, gap, fs: Math.round(px(cs.fontSize) || 16), fw: String(cs.fontWeight), c: hex(c), bg: hex(bg), ff });
     }
     function findMarquees() {
       const S0 = fx && fx._S;
@@ -398,10 +403,12 @@ const PBClone = (function () {
         const i = a.names.findIndex((n, k) => a.iter[k % a.iter.length] === "infinite" && S0.kf.get(n) && /translate(X|3d)?\(/i.test(S0.kf.get(n).cssText)); if (i < 0) continue;
         let C = T.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; if (!C || C === doc.body) continue; if (rectOf(T).w < rectOf(C).w * 1.05 && !/translate(X|3d)?\(\s*-?(9\d|1\d\d)(\.\d+)?%/i.test(S0.kf.get(a.names[i]).cssText)) continue;      // الشريط الأضيق من الحاوية مقبول إن كانت إزاحته ±100% (يدخل من الخارج)
         const kf = S0.kf.get(a.names[i]).cssText, to = /(?:to|100%)\s*\{[^}]*translate(?:X|3d)?\(\s*(-?[\d.]+)/i.exec(kf); let neg = to ? parseFloat(to[1]) < 0 : true; if (/reverse/.test(a.dir[i % a.dir.length])) neg = !neg;
-        const d = parseFloat(a.dur[i % a.dur.length]) || 20; addMarquee(C, T, /ms$/.test(a.dur[i % a.dur.length]) ? d / 1000 : d, neg ? "ltr" : "rtl");      // عنصر المطوّر: الافتراضي (rtl) يتحرك لليمين، و ltr (animation-direction:reverse) لليسار
+        const d = parseFloat(a.dur[i % a.dur.length]) || 20, wT = rectOf(T).w, tx = (blk) => { const m = /translate(?:X|3d)?\(\s*(-?[\d.]+)(%|px)?/i.exec(blk || ""); return m ? (m[2] === "%" ? parseFloat(m[1]) * wT / 100 : parseFloat(m[1])) : 0; };
+        const fb = /(?:from|0%)\s*\{([^}]*)\}/i.exec(kf), tb = /(?:to|100%)\s*\{([^}]*)\}/i.exec(kf), travel = Math.abs(tx(tb && tb[1]) - tx(fb && fb[1]));
+        addMarquee(C, T, /ms$/.test(a.dur[i % a.dur.length]) ? d / 1000 : d, neg ? "ltr" : "rtl", { travel });      // عنصر المطوّر: الافتراضي (rtl) يتحرك لليمين، و ltr (animation-direction:reverse) لليسار
       }
       let cand = []; try { cand = [...doc.querySelectorAll("marquee,[class*='marquee'],[class*='ticker']")]; } catch (e) { }
-      for (const e of cand) { if (mq.has(e)) continue; const isTag = e.tagName.toLowerCase() === "marquee"; let C = e; if (!isTag && win.getComputedStyle(C).overflowX === "visible") { C = e.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; } if (!C || C === doc.body) continue; const T = isTag ? e : ([...C.children].find(x => x.scrollWidth > C.clientWidth * 1.05 || rectOf(x).w > rectOf(C).w * 1.05) || C.firstElementChild); if (!T) continue; if (!isTag && !([...C.querySelectorAll("*")].length)) continue; addMarquee(C, T, isTag ? Math.max(8, 400 / (+e.getAttribute("scrollamount") || 6)) : 20, e.getAttribute && e.getAttribute("direction") === "right" ? "rtl" : "ltr"); }
+      for (const e of cand) { if (mq.has(e)) continue; const isTag = e.tagName.toLowerCase() === "marquee"; let C = e; if (!isTag && win.getComputedStyle(C).overflowX === "visible") { C = e.parentElement; while (C && C !== doc.body && win.getComputedStyle(C).overflowX === "visible") C = C.parentElement; } if (!C || C === doc.body) continue; const T = isTag ? e : ([...C.children].find(x => x.scrollWidth > C.clientWidth * 1.05 || rectOf(x).w > rectOf(C).w * 1.05) || C.firstElementChild); if (!T) continue; if (!isTag && !([...C.querySelectorAll("*")].length)) continue; addMarquee(C, T, isTag ? Math.max(8, 400 / (+e.getAttribute("scrollamount") || 6)) : 20, e.getAttribute && e.getAttribute("direction") === "right" ? "rtl" : "ltr", isTag ? { speed: (+e.getAttribute("scrollamount") || 6) * 1000 / Math.max(10, +e.getAttribute("scrolldelay") || 85) } : undefined); }
     }
 
     /* ───── النماذج: تتحول لعنصر «نموذج اتصال» الجاهز (يعمل: واتساب/بريد/رابط استقبال) بحقولها وألوانها؛ نماذج البحث تبقى شكلاً ───── */
@@ -441,7 +448,8 @@ const PBClone = (function () {
     const sec = PB.mkCanvas(); Object.assign(sec.set, { layout: "full", scaled: true, dw: W, mh: { d: Math.round(limit) }, pad: { d: [0, 0, 0, 0] } }); sec.free = widgets;
     const page = PB.newPage(title || "قالب منسوخ", ""); page.header = false; page.footer = false; if (bg) page.bg = bg; page.sections = [sec];
     if (mob && mob.widgets.length) {      // نسخة الجوال: قسم مستقل بعرض تصميم 390 يظهر على الجوال فقط، والقسم الأول يُخفى على الجوال
-      const sm = PB.mkCanvas(); Object.assign(sm.set, { layout: "full", scaled: true, dw: mob.W, mh: { d: Math.round(mob.limit) }, pad: { d: [0, 0, 0, 0] }, hd: true, ht: true }); sm.free = mob.widgets; sec.set.hm = true; page.sections.push(sm);
+      const sm = PB.mkCanvas(); Object.assign(sm.set, { layout: "full", scaled: true, dw: mob.W, mh: { d: Math.round(mob.limit) }, pad: { d: [0, 0, 0, 0] }, hd: true, ht: true, cm: true }); sm.free = mob.widgets; sec.set.hm = true; sec.set.cm = true; page.sections.push(sm);
+      // cm: قسما سطح المكتب/الجوال المنسوختان لا يظهران باهتَين فوق بعضهما في المحرّر؛ يظهر كل منهما في عرض جهازه فقط
     }
     return page;
   }
@@ -458,7 +466,7 @@ const PBClone = (function () {
         kD.forEach((c, i) => { const q = c.getBoundingClientRect(); if (q.height > 2 && q.top < S.limit - 6) idx = i; });
         if (idx >= 0 && kM.length === kD.length) { for (let i = idx; i >= 0; i--) { const q = kM[i].getBoundingClientRect(); if (q.height > 2) { limM = Math.max(200, Math.round(q.bottom)); break; } } }
       } catch (e) { }
-      limM = Math.min(limM, 9000); const res = extract(d, f.contentWindow, MW, limM, {}); return { widgets: res.widgets, W: MW, limit: limM, fx: res.fx };
+      limM = Math.min(limM, 9000); const res = extract(d, f.contentWindow, MW, limM, { idp: "m" }); return { widgets: res.widgets, W: MW, limit: limM, fx: res.fx };
     } finally { f.remove(); }
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
@@ -796,5 +804,5 @@ const PBClone = (function () {
     try {      // اختيار التأثيرات المطلوب إضافتها يتم من نافذة «التأثيرات» الأولى فقط؛ لا نافذة تأكيد ثانية عند «انسخ»
       if (S.tab === "url") await doCopyUrl(); else await doCopyImage(); } catch (e) { st(e.message); toast("تعذّر النسخ: " + e.message); if (g) g.disabled = false; console.warn(e); } finally { S.busy = false; }
   }
-  return { open, close, _t: { neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
+  return { open, close, _t: { extractMobile, neutralizeLinks, extract, prep, buildPage, groupLines, cssGrad, col, wipe, ringBg, inkColor, detect, S } };
 })();
