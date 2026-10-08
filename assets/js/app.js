@@ -5,6 +5,32 @@ function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; if(productType
 function cartItemFreeShip(it){ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; if(!p || !p.freeShip) return false; const fl = (p.offers||[]).filter(x=>x.ship); return fl.length ? it.qty >= Math.min(...fl.map(x=>x.qty)) : true; }
 const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " دج";
+/* مناطق التوصيل (Zones): الأسعار والشحن المجاني والاستثناءات مشتقة في WILAYAS من لوحة التحكم ⟵ رسوم التوصيل:
+   w.fh/w.fs = توصيل مجاني للمنزل/المكتب، w.fo = مجاني عند بلوغ مجموع الطلب هذا المبلغ، w.xw = الولاية مستثناة كلياً،
+   w.xc = {بلدية:"all"|"home"} (all = لا توصيل نهائياً، home = لا توصيل للمنزل فقط ويبقى المكتب) */
+function shipBlocked(w, commune, type){
+  if(!w) return "";
+  if(w.xw) return "عذراً، لا يتوفر التوصيل إلى ولاية " + w.name + " حالياً";
+  const m = w.xc && commune ? w.xc[commune] : "";
+  if(m === "all") return "عذراً، لا يتوفر التوصيل إلى بلدية " + commune + " حالياً";
+  if(m === "home" && type !== "stop") return "التوصيل للمنزل غير متاح في بلدية " + commune + ((w.desks||[]).some(d=>d.commune===commune) ? " — اختر التوصيل إلى مكتب Stop Desk" : "");
+  return "";
+}
+function shipQuote(w, commune, type, sub){
+  if(!w) return { fee:null, free:false, blocked:false, msg:"" };
+  const msg = shipBlocked(w, commune, type); if(msg) return { fee:0, free:false, blocked:true, msg };
+  const base = type === "stop" ? w.stop : w.home;
+  const free = !!(type === "stop" ? w.fs : w.fh) || !!(w.fo && sub >= w.fo);
+  return { fee: free ? 0 : base, free, blocked:false, msg:"" };
+}
+/* تعطيل خيار المنزل/المكتب المحجوب في بلدية مستثناة وتحويل الاختيار إلى الآخر إن أمكن */
+function shipRadios(name, w, commune){
+  const rs = [...document.querySelectorAll('input[name="'+name+'"]')]; if(!rs.length) return;
+  rs.forEach(r=>{ const b = shipBlocked(w, commune, r.value); if(!b) return; r.disabled = true; const l = r.closest("label"); if(l){ l.style.opacity = .45; l.title = b; } });
+  const cur = rs.find(r=>r.checked);
+  if(cur && cur.disabled){ const alt = rs.find(r=>!r.disabled); if(alt){ alt.checked = true; alt.dispatchEvent(new Event("change")); } }
+}
+function shipOptLabel(w, c){ return (w && w.xc && w.xc[c] === "all") ? c + " (غير متاح)" : c; }
 function lowStockNote(p){ const stock = Number(p && p.stock); return Number.isFinite(stock) && stock > 0 && stock <= 5 ? "بقي " + stock + " فقط" : ""; }
 
 /* ── أنواع المنتجات: فردي (simple) | متغيّر (variable: سمات + تنويعات بسعر/مخزون/صورة لكل تنويع) | مجمّع (grouped: عدة منتجات فردية في صفحة واحدة) ── */
@@ -78,7 +104,11 @@ const Cart = {
     const totEl = document.getElementById("cart-total");
     if(totEl) totEl.textContent = fmt(Math.max(0, sub - discount) + (items.length?fee:0));
     const feeEl = document.getElementById("cart-fee");
-    if(feeEl) feeEl.textContent = items.length ? ((fee===0 && (items.every(cartItemFreeShip) || couponFreeShip())) ? "مجاني 🚚" : fmt(fee)) : "—";
+    const sq = Cart.quote();
+    if(feeEl){ feeEl.title = sq.msg || ""; feeEl.textContent = items.length ? (sq.blocked ? "غير متاح ⛔" : ((fee===0 && (items.every(cartItemFreeShip) || couponFreeShip() || sq.free)) ? "مجاني 🚚" : fmt(fee))) : "—"; }
+    let sm = document.getElementById("cart-ship-msg");
+    if(!sm && feeEl){ sm = document.createElement("div"); sm.id = "cart-ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.85rem;margin:.3rem 0;font-weight:700"; (feeEl.closest("div")||feeEl.parentNode).appendChild(sm); }
+    if(sm) sm.textContent = items.length ? sq.msg : "";
   },
   fee(){
     const _all = Cart.all(); if(_all.length && (_all.every(cartItemFreeShip) || couponFreeShip())) return 0;   // كل منتجات السلة بشحن مجاني
@@ -87,7 +117,12 @@ const Cart = {
     if(!w || !w.value) return 0;
     const wl = WILAYAS.find(x=>x.id==w.value);
     if(!wl) return 0;
-    return t && t.value==="stop" ? wl.stop : wl.home;
+    return Cart.quote().fee || 0;
+  },
+  quote(){
+    const w = document.getElementById("cwilaya"), t = document.querySelector('input[name="cdtype"]:checked'), c = document.getElementById("ccommune");
+    const wl = w && w.value ? WILAYAS.find(x=>x.id==w.value) : null;
+    return shipQuote(wl, c ? c.value : "", t ? t.value : "home", Cart.subtotal());
   },
   async checkout(){
     const items = Cart.all();
@@ -102,6 +137,7 @@ const Cart = {
     if(!name || !phone || !wId){ toast("يرجى ملء الاسم، الهاتف والولاية"); return }
     if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); document.getElementById("cphone")?.focus(); return }
     const wl = WILAYAS.find(x=>x.id==wId);
+    const __sq = Cart.quote(); if(__sq.blocked){ toast(__sq.msg); return }
     const sub = Cart.subtotal();
     const fee = Cart.fee();
     const discount = currentCouponDiscount(sub, couponCartItems());
@@ -760,7 +796,7 @@ function initProduct(slug){
     if(!communeSel) return;
     communeSel.innerHTML = '<option value="">— اختر البلدية —</option>';
     (w && w.communes ? w.communes : []).forEach(c=>{
-      const o = document.createElement("option"); o.value = c; o.textContent = c; communeSel.appendChild(o);
+      const o = document.createElement("option"); o.value = c; o.textContent = shipOptLabel(w, c); if(w && w.xc && w.xc[c] === "all") o.disabled = true; communeSel.appendChild(o);
     });
   }
   // مكاتب Stop Desk الحقيقية من Yalidine — تُرشَّح حسب البلدية المختارة
@@ -792,12 +828,14 @@ function initProduct(slug){
           const home = document.querySelector('input[name="dtype"][value="home"]');
           if(home){ home.checked = true; state.dtype = "home"; }
         }
-      }
+      } else { r.disabled = false; const l = r.closest("label"); if(l){ l.style.opacity = 1; l.title = ""; } }
     });
+    shipRadios("dtype", w, commune);
+    const cur = document.querySelector('input[name="dtype"]:checked'); if(cur) state.dtype = cur.value;
   }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
-    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}`;
+    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متاح)" : ""); if(w.xw) o.disabled = true;
     sel.appendChild(o);
   });
   sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); setDesks(state.wilaya); update() };
@@ -824,8 +862,12 @@ function initProduct(slug){
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
   function update(){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
-    const fee = freeShip ? 0 : (state.wilaya ? (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home) : null);
-    feeEl.textContent = freeShip ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية");
+    const sq = state.wilaya ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price) : null;
+    const fee = freeShip ? 0 : (sq ? sq.fee : null);
+    feeEl.textContent = freeShip ? "مجاني 🚚" : (sq && sq.blocked ? "غير متاح ⛔" : (sq && sq.free ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية")));
+    let sm = document.getElementById("ship-msg");
+    if(!sm){ sm = document.createElement("div"); sm.id = "ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.88rem;margin:.4rem 0;font-weight:700"; const tb = feeEl.closest(".total-box"); if(tb) tb.parentNode.insertBefore(sm, tb); }
+    sm.textContent = (!freeShip && sq) ? sq.msg : "";
     const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
     const total = Math.max(0, state.offer.price - discount) + (fee||0);
     totEl.textContent = fmt(total);
@@ -860,6 +902,7 @@ function initProduct(slug){
     if(type==="variable" && !state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(type==="grouped" && !(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); const gb = document.getElementById("group-box"); if(gb) gb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
+    const __sq = shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price); if(__sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
     if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     // جمع قيم الحقول الإضافية المخصّصة (لوحة التحكم ⟵ نموذج الطلب) — تُرفق في رسالة واتساب وفي الطلب المُسجَّل
     const extraValues = {};
@@ -869,7 +912,7 @@ function initProduct(slug){
       if(f.required && !v){ toast(`يرجى ملء حقل «${f.label||f.id}»`); if(el) el.focus(); return }
       if(v) extraValues[f.label||f.id] = v;
     }
-    const fee = (offerFreeShip(p, state.offer) || couponFreeShip()) ? 0 : (state.dtype==="stop"?state.wilaya.stop:state.wilaya.home);
+    const fee = (offerFreeShip(p, state.offer) || couponFreeShip()) ? 0 : __sq.fee;
     const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
     const total = Math.max(0, state.offer.price - discount) + fee;
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
@@ -1134,19 +1177,20 @@ function fillCartWilayas(){
           const home = document.querySelector('input[name="cdtype"][value="home"]');
           if(home) home.checked = true;
         }
-      }
+      } else { r.disabled = false; const l = r.closest("label"); if(l){ l.style.opacity = 1; l.title = ""; } }
     });
+    shipRadios("cdtype", w, commune);
   }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
-    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}`;
+    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متاح)" : ""); if(w.xw) o.disabled = true;
     sel.appendChild(o);
   });
   sel.onchange = ()=>{
     if(cSel){
       cSel.innerHTML = '<option value="">— اختر البلدية —</option>';
       const w = WILAYAS.find(x=>x.id==sel.value);
-      (w&&w.communes?w.communes:[]).forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; cSel.appendChild(o); });
+      (w&&w.communes?w.communes:[]).forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=shipOptLabel(w,c); if(w.xc && w.xc[c]==="all") o.disabled = true; cSel.appendChild(o); });
     }
     updateCartStop();
     Cart.render();
