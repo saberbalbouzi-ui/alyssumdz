@@ -429,20 +429,21 @@ const PBClone = (function () {
   }
   async function openInEditor(page) {
     const E = A().E; if (E && E.page && E.dirty && !confirm("سيُفتح القالب المنسوخ في صفحة جديدة، وتُحفظ مسودة صفحتك الحالية تلقائياً. هل تريد المتابعة؟")) return false;
+    { const up = S.upl || [], E2 = A().E; if (E2 && E2.page && E2.page.media) E2.page.media = E2.page.media.filter(x => !up.includes(x)); page.media = up.slice(); }      // صور النسخ تُسجَّل في مكتبة الصفحة الجديدة لا السابقة
     try { A().saveDraftNow(); } catch (e) { } close(); A().open(page, "", true); return true;
   }
   async function saveImages(widgets, doSave) {      // يحفظ الصور في موقعك (يتفادى الروابط الخارجية التي قد تتعطّل): كل رابط فريد مرة واحدة (نسخة الجوال والشرائح تتشارك الصور) بأقصى 80 رابطاً فريداً
     const by = new Map(); widgets.forEach(w => { if (w.type === "image" && /^https?:/.test(w.set.src) && !/\.(gif|svg)(\?|$)/i.test(w.set.src)) { const k = w.set.src; if (!by.has(k)) by.set(k, []); by.get(k).push(w); } });
     const urls = [...by.keys()].slice(0, 80); if (!doSave || !urls.length) return 0;
     let done = 0, i = 0;
-    async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) by.get(u).forEach(w => { w.set.src = p; }); } catch (e) { } done++; } }
+    async function work() { while (i < urls.length) { const u = urls[i++]; st("حفظ الصور في موقعك… " + (done + 1) + "/" + urls.length + (by.size > urls.length ? " (الحد الأقصى " + urls.length + " من " + by.size + " صورة فريدة)" : "")); try { const bl = await fetchBlob(u), p = bl ? await A().uploadBlob(bl, "clone", { max: 1920 }) : null; if (p) { by.get(u).forEach(w => { w.set.src = p; }); (S.upl = S.upl || []).push(p); } } catch (e) { } done++; } }
     await Promise.all([work(), work(), work()]); return done;
   }
   function fxSummary(f) { if (!f) return ""; const a = []; if (f.shadow || f.tshadow) a.push((f.shadow + f.tshadow) + " ظل"); if (f.anim) a.push(f.anim + " حركة"); if (f.entr) a.push(f.entr + " حركة ظهور"); if (f.hover) a.push(f.hover + " تأثير تحويم"); if (f.pin) a.push(f.pin + " عنصر ثابت عند التمرير"); if (f.slides) a.push(f.slides + " شريحة"); if (f.disc) a.push(f.disc + " قائمة/أكورديون قابل للفتح"); if (f.marquee) a.push(f.marquee + " شريط متحرك"); if (f.forms) a.push(f.forms + " نموذج يعمل"); if (f.modals) a.push(f.modals + " نافذة منبثقة"); return a.length ? " — مع التأثيرات: " + a.join("، ") : ""; }
   async function doCopyUrl() {
     const f = S.frame; if (!f || !f.contentDocument) return; const doc = f.contentDocument, win = f.contentWindow;
     st("تحليل الصفحة…"); await sleep(30); const res = extract(doc, win, S.W, Math.round(S.limit)); if (!res.widgets.length) throw new Error("لم يُعثر على محتوى قابل للنسخ في هذه المنطقة");
-    let mob = null; if ($("cl-mob") && $("cl-mob").checked) { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
+    S.upl = []; let mob = null; if ($("cl-mob") && $("cl-mob").checked) { st("استخراج نسخة الجوال (390px)…"); await sleep(30); try { mob = await extractMobile(doc); } catch (e) { console.warn("mobile", e); } }
     await saveImages(res.widgets.concat(mob ? mob.widgets : []), $("cl-save") && $("cl-save").checked);
     const title = (doc.title || "").trim() || (S.url ? new URL(S.url).hostname : "قالب منسوخ");
     const page = buildPage(res.widgets, title, res.bg, S.W, S.limit, mob); const ok = await deliver(page); if (ok) toast("تم النسخ: " + res.widgets.length + " عنصراً قابلاً للتعديل" + (mob ? " + " + mob.widgets.length + " لنسخة الجوال" : "") + fxSummary(res.fx) + (res.truncated ? " (اقتُصر على أول العناصر لكثرتها)" : ""));
