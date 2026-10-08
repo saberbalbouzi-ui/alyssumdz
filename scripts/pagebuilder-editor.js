@@ -906,6 +906,14 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* مستطيل التخطيط (قبل التدوير): المركز من getBoundingClientRect والأبعاد من offsetWidth/Height */
   function layoutRect(el) { const r = el.getBoundingClientRect(); if (!el.offsetWidth) return r; const w = el.offsetWidth, h = el.offsetHeight, cx = r.left + r.width / 2, cy = r.top + r.height / 2; return { left: cx - w / 2, top: cy - h / 2, width: w, height: h, right: cx + w / 2, bottom: cy + h / 2 }; }
+  /* أسهم/نقاط السلايدر وعناوين الأكورديون صغيرة فتغطيها مقابض التحجيم عند تحديدها فلا تصلها النقرة: نمرّر «نقرة» (بلا سحب) إلى العنصر تحتها */
+  function fwdClickOnTap(ev) {
+    const x0 = ev.clientX, y0 = ev.clientY, up = u => {
+      document.removeEventListener("mouseup", up, true); if (Math.abs(u.clientX - x0) + Math.abs(u.clientY - y0) > 4) return;
+      try { const fr = $("pbx-frame"), fb = fr.getBoundingClientRect(), sc = fb.width / (fr.offsetWidth || fb.width) || 1, el = fdoc.elementFromPoint((x0 - fb.left) / sc, (y0 - fb.top) / sc), c = el && el.closest && el.closest('[class*="pbsd-"],[class*="pbsp-"],[class*="pbsn-"],[class*="pbdh-"],[class*="pbdx-"]'); if (c) setTimeout(() => c.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: fdoc.defaultView })), 0); } catch (e) { }
+    };
+    document.addEventListener("mouseup", up, true);
+  }
   function ovlOrigin() { const fw = $("pbx-fw"), fr = fw.getBoundingClientRect(), or = $("pbx-ovl").getBoundingClientRect(); return { ox: fr.left - or.left, oy: fr.top - or.top, s: E.scale }; }      // نسبة لطبقة الغطاء نفسها (تتحرك مع التمرير وتستثني شريط التمرير الذي قد يكون يسار المنطقة)
   function drawGuides(list, cr) {
     document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); if (!list || !list.length) return;
@@ -966,7 +974,7 @@ body{overflow-x:hidden;margin:0}`;
 }
     const dirs = inf.kind === "widget" ? ["n", "s", "e", "w", "ne", "nw", "se", "sw"] : ["n", "s", "e", "w"];
     if (!locked && isW && inf.free && inf.node.type === "image") ["n", "s", "e", "w"].forEach(d => { const b = document.createElement("div"); b.className = "pbx-edge e-" + d; b.title = "اسحب الحافة: للخارج يكبّر الصورة في هذا الاتجاه، وللداخل يقصّها"; b.onmousedown = ev => startResize(ev, d, inf); box.appendChild(b); });      // كل حافة الصورة تُسحب وليس نقطة المنتصف فقط
-    if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => startResize(ev, d, inf); box.appendChild(h); });
+    if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => { if (ev.button === 0) fwdClickOnTap(ev); startResize(ev, d, inf); }; box.appendChild(h); });
     ovl.appendChild(box);
     if (isW && !E.busy) drawFloat(inf, box, ovl, locked);
   }
