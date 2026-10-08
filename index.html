@@ -161,6 +161,27 @@ body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;
 .aly-bn{display:none}
 @media(max-width:767px){.aly-bn{display:flex;position:fixed;z-index:60;left:10px;right:10px;bottom:10px;padding:8px 10px;border-radius:22px;background:rgba(4,22,12,.82);backdrop-filter:blur(18px);border:1px solid rgba(134,239,172,.3);box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14)}.aly-bn a{flex:1;display:grid;justify-items:center;gap:3px;padding:7px 0;border-radius:14px;color:#a7c4b2;font-size:12px;font-weight:800;text-decoration:none;transition:.3s}.aly-bn a svg{width:23px;height:23px}.aly-bn a.on,.aly-bn a:hover{color:#bef264;background:rgba(74,222,128,.14)}.pb-page{padding-bottom:84px}}
 body.pb-edit .aly-bn{display:none!important}
+
+/* v1.59: صور منتجات أكبر + خلفية مشاهد أخف شفافية + زوم تلقائي هادئ */
+.pb-pci,.aly-grid .card .thumb{background-color:rgba(4,24,13,.38)!important}
+.pb-pci::after,.aly-grid .card .thumb::after{content:"";position:absolute;inset:0;background:var(--sc) center/cover no-repeat;opacity:.58;z-index:0;pointer-events:none}
+.pb-pci,.aly-grid .card .thumb{background-image:none!important}
+.pb-pc:nth-child(6n+1) .pb-pci,.aly-grid .card:nth-child(6n+1) .thumb{--sc:url(/assets/img/tpl/alyssum-sc1.webp)}
+.pb-pc:nth-child(6n+2) .pb-pci,.aly-grid .card:nth-child(6n+2) .thumb{--sc:url(/assets/img/tpl/alyssum-sc2.webp)}
+.pb-pc:nth-child(6n+3) .pb-pci,.aly-grid .card:nth-child(6n+3) .thumb{--sc:url(/assets/img/tpl/alyssum-sc3.webp)}
+.pb-pc:nth-child(6n+4) .pb-pci,.aly-grid .card:nth-child(6n+4) .thumb{--sc:url(/assets/img/tpl/alyssum-sc4.webp)}
+.pb-pc:nth-child(6n+5) .pb-pci,.aly-grid .card:nth-child(6n+5) .thumb{--sc:url(/assets/img/tpl/alyssum-sc5.webp)}
+.pb-pc:nth-child(6n+6) .pb-pci,.aly-grid .card:nth-child(6n+6) .thumb{--sc:url(/assets/img/tpl/alyssum-sc6.webp)}
+.pb-pc,.aly-grid .card{background:linear-gradient(160deg,rgba(12,54,29,.84),rgba(3,16,9,.9))!important;backdrop-filter:blur(10px)}
+.pb-pci img,.aly-grid .card .thumb img{width:90%!important;bottom:6%!important;animation:alyZoom 6s ease-in-out infinite alternate;transform-origin:50% 80%}
+.pb-pc:nth-child(2n) .pb-pci img,.aly-grid .card:nth-child(2n) .thumb img{animation-delay:-2s}.pb-pc:nth-child(3n) .pb-pci img,.aly-grid .card:nth-child(3n) .thumb img{animation-delay:-4s}
+.pb-pc:hover .pb-pci img,.aly-grid .card:hover .thumb img{animation-duration:2.4s;transform:none}
+.pb-pci.img-full img,.aly-grid .card .thumb.img-full img{width:100%!important;bottom:auto!important}
+.pb-pci.img-full::after,.aly-grid .card .thumb.img-full::after{display:none}
+@keyframes alyZoom{0%{transform:scale(1)}100%{transform:scale(1.13)}}
+@media(prefers-reduced-motion:reduce){.pb-pci img,.aly-grid .card .thumb img{animation:none}}
+#shop-grid.aly-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px}
+.pb-pci>span,.aly-grid .card .thumb>span,.aly-grid .card .thumb>div{z-index:3!important}
 </style></head><body>
 <style>.pb-dc{display:contents!important}.pb-sec.x-7pwqq9q{padding-top:0px;padding-right:0px;padding-bottom:0px;padding-left:0px;}
 .pb-sec.x-7pwqq9q>.pb-in{margin:0 auto;width:100%;position:relative}
@@ -332,10 +353,10 @@ body:not(.pb-edit) .pb-sec:has(.pb-w.x-gj8ewld .pb-hd[data-stk]){position:sticky
 .pb-col.x-f1vlbw4>.pb-colin{width:100%;display:flex;flex-direction:column}
 .pb-col.x-f1vlbw4{flex:0 0 100%;width:100%;max-width:100%;}
 .pb-w.x-xcuk3l4{border-radius:22px;}
-.pb-w.x-xcuk3l4 .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
-.pb-w.x-xcuk3l4 .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.pb-w.x-xcuk3l4 .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;}
+.pb-w.x-xcuk3l4 .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
 .pb-w.x-xcuk3l4 .pb-pc{border-radius:22px;}
-.pb-w.x-xcuk3l4 .pb-psl .pb-pc{flex:0 0 190px}
+.pb-w.x-xcuk3l4 .pb-psl .pb-pc{flex:0 0 340px}
 .pb-w.x-xcuk3l4 .pb-pc{background:#04180d}
 .pb-w.x-xcuk3l4 .pb-pcb{background:#22c55e}
 .pb-w.x-xcuk3l4{overflow:hidden}
@@ -345,8 +366,8 @@ body:not(.pb-edit) .pb-sec:has(.pb-w.x-gj8ewld .pb-hd[data-stk]){position:sticky
 @media(max-width:767px){
 .pb-sec .pb-col{width:100%;flex:0 0 100%;max-width:100%}
 .pb-sec.x-f07hfi1{padding-top:4px;padding-right:16px;padding-bottom:20px;padding-left:16px;}
-.pb-w.x-xcuk3l4 .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
-.pb-w.x-xcuk3l4 .pb-psl .pb-pc{flex-basis:150px}
+.pb-w.x-xcuk3l4 .pb-pgrid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));}
+.pb-w.x-xcuk3l4 .pb-psl .pb-pc{flex-basis:250px}
 }</style><section class="pb-sec k-flow x-f07hfi1" id="bestsellers"><div class="pb-in"><div class="pb-col x-f1vlbw4"><div class="pb-colin"><div class="pb-w x-xcuk3l4 pb-fit" data-anim="fadeUp" style="--ad:0.8s;--ade:0s" data-type="products"><div class="pb-prod pb-psl" data-sl="4" data-pbp="{&quot;mode&quot;:&quot;all&quot;,&quot;limit&quot;:12,&quot;btn&quot;:&quot;عرض المنتج&quot;,&quot;showOld&quot;:true}"><div class="pb-pgrid"><a class="pb-pc" data-t="best sale" data-c="skin" href="p/anti-acne/"><div class="pb-pci"><span class="pb-pcd">-29%</span><img loading="lazy" decoding="async" src="assets/img/anti-acne/cover-1791483275654.webp" alt="كريمة ضد حب الشباب"></div><h3>كريمة ضد حب الشباب</h3><div class="pb-pcp"><b>2 400 دج</b><s>3 400 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="best sale" data-c="hair" href="p/anti-chute/"><div class="pb-pci"><span class="pb-pcd">-36%</span><img loading="lazy" decoding="async" src="assets/img/anti-chute/0.webp" alt="زيت ضد تساقط الشعر"></div><h3>زيت ضد تساقط الشعر</h3><div class="pb-pcp"><b>1 800 دج</b><s>2 800 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="hot sale" data-c="supplements" href="p/anti-colon/"><div class="pb-pci"><span class="pb-pcd">-29%</span><img loading="lazy" decoding="async" src="assets/img/anti-colon/0.webp" alt="عسل الخلعة و القولون"></div><h3>عسل الخلعة و القولون</h3><div class="pb-pcp"><b>2 500 دج</b><s>3 500 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="skin" href="p/anti-rides/"><div class="pb-pci"><span class="pb-pcd">-36%</span><img loading="lazy" decoding="async" src="assets/img/anti-rides/0.webp" alt="زيت أليسوم ضد التجاعيد و البقع"></div><h3>زيت أليسوم ضد التجاعيد و البقع</h3><div class="pb-pcp"><b>1 800 دج</b><s>2 800 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="skin" href="p/anti-rides-2/"><div class="pb-pci"><span class="pb-pcd">-36%</span><img loading="lazy" decoding="async" src="assets/img/anti-rides-2/0.webp" alt="كريمة ضد التجاعيد و البقع"></div><h3>كريمة ضد التجاعيد و البقع</h3><div class="pb-pcp"><b>1 800 دج</b><s>2 800 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="skin" href="p/barbarie/"><div class="pb-pci"><span class="pb-pcd">-27%</span><img loading="lazy" decoding="async" src="assets/img/barbarie/0.webp" alt="زيت بذور التين الشوكي"></div><h3>زيت بذور التين الشوكي</h3><div class="pb-pcp"><b>2 700 دج</b><s>3 700 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="health" href="p/breatyfresh/"><div class="pb-pci"><span class="pb-pcd">-32%</span><img loading="lazy" decoding="async" src="assets/img/breatyfresh/0.webp" alt="Breatyfresh-ضد رائحة الفم"></div><h3>Breatyfresh-ضد رائحة الفم</h3><div class="pb-pcp"><b>2 100 دج</b><s>3 100 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="skin" href="p/creme-tachouih/"><div class="pb-pci"><span class="pb-pcd">-36%</span><img loading="lazy" decoding="async" src="assets/img/creme-tachouih/0.webp" alt="كريمة تشويه الجمال"></div><h3>كريمة تشويه الجمال</h3><div class="pb-pcp"><b>1 800 دج</b><s>2 800 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="skin" href="p/eczema/"><div class="pb-pci"><span class="pb-pcd">-36%</span><img loading="lazy" decoding="async" src="assets/img/eczema/0.webp" alt="مرهم أليسوم  ضد الصدفية و الاكزيما"></div><h3>مرهم أليسوم  ضد الصدفية و الاكزيما</h3><div class="pb-pcp"><b>2 500 دج</b><s>3 900 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="hot sale" data-c="health" href="p/flexi-relief/"><div class="pb-pci"><span class="pb-pcd">-32%</span><img loading="lazy" decoding="async" src="assets/img/flexi-relief/0.webp" alt="مرهم أليسوم ضد ألم المفاصل و العضلات"></div><h3>مرهم أليسوم ضد ألم المفاصل و العضلات</h3><div class="pb-pcp"><b>2 100 دج</b><s>3 100 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="health" href="p/hemorroides/"><div class="pb-pci"><span class="pb-pcd">-32%</span><img loading="lazy" decoding="async" src="assets/img/hemorroides/0.webp" alt="مرهم أليسوم ضد البواسير"></div><h3>مرهم أليسوم ضد البواسير</h3><div class="pb-pcp"><b>2 100 دج</b><s>3 100 دج</s></div><span class="pb-pcb">عرض المنتج</span></a><a class="pb-pc" data-t="sale" data-c="hair" href="p/henna/"><div class="pb-pci"><span class="pb-pcd">-50%</span><img loading="lazy" decoding="async" src="assets/img/henna/0.webp" alt="حنة الشفاء"></div><h3>حنة الشفاء</h3><div class="pb-pcp"><b>900 دج</b><s>1 800 دج</s></div><span class="pb-pcb">عرض المنتج</span></a></div></div></div></div></div></div></section>
 <style>.pb-dc{display:contents!important}.pb-sec.x-d28ncas{padding-top:10px;padding-right:20px;padding-bottom:30px;padding-left:20px;}
 .pb-sec.x-d28ncas>.pb-in{margin:0 auto;width:100%;position:relative}

@@ -29,7 +29,7 @@ ALYSHOP = """<style id="aly-shop-css">
 #shop-chips .chip{background:rgba(255,255,255,.07)!important;border:1px solid rgba(134,239,172,.3)!important;color:#d1fae5!important;border-radius:999px;padding:.5rem 1.2rem;font-weight:800;backdrop-filter:blur(10px);transition:transform .2s,border-color .2s}
 #shop-chips .chip:hover{transform:translateY(-2px);border-color:#86efac!important}
 #shop-chips .chip.active{background:rgba(74,222,128,.22)!important;border-color:#bef264!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
-.shop-page .grid .card .cta{background:rgba(74,222,128,.2)!important;border:1px solid rgba(134,239,172,.4);color:#ecfdf5;border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -6px 12px rgba(0,0,0,.18);backdrop-filter:blur(8px)}
+.shop-page .grid .card .cta{background:rgba(74,222,128,.2)!important;border:1px solid rgba(134,239,172,.4);color:#ecfdf5!important;border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -6px 12px rgba(0,0,0,.18);backdrop-filter:blur(8px)}
 .shop-page .grid .card:hover .cta{background:rgba(74,222,128,.34)!important;transform:translateY(-2px)}
 #acct-box{background:linear-gradient(145deg,rgba(12,54,29,.88),rgba(3,16,9,.94))!important;border:1px solid rgba(134,239,172,.28)!important;color:#ecfdf5;backdrop-filter:blur(14px)}
 </style>"""

@@ -119,6 +119,26 @@ body::before{content:"";position:fixed;inset:-2%;z-index:-2;pointer-events:none;
 .aly-bn{display:none}
 @media(max-width:767px){.aly-bn{display:flex;position:fixed;z-index:60;left:10px;right:10px;bottom:10px;padding:8px 10px;border-radius:22px;background:rgba(4,22,12,.82);backdrop-filter:blur(18px);border:1px solid rgba(134,239,172,.3);box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14)}.aly-bn a{flex:1;display:grid;justify-items:center;gap:3px;padding:7px 0;border-radius:14px;color:#a7c4b2;font-size:12px;font-weight:800;text-decoration:none;transition:.3s}.aly-bn a svg{width:23px;height:23px}.aly-bn a.on,.aly-bn a:hover{color:#bef264;background:rgba(74,222,128,.14)}.pb-page{padding-bottom:84px}}
 body.pb-edit .aly-bn{display:none!important}
+/* v1.59: صور منتجات أكبر + خلفية مشاهد أخف شفافية + زوم تلقائي هادئ */
+.pb-pci,.aly-grid .card .thumb{background-color:rgba(4,24,13,.38)!important}
+.pb-pci::after,.aly-grid .card .thumb::after{content:"";position:absolute;inset:0;background:var(--sc) center/cover no-repeat;opacity:.58;z-index:0;pointer-events:none}
+.pb-pci,.aly-grid .card .thumb{background-image:none!important}
+.pb-pc:nth-child(6n+1) .pb-pci,.aly-grid .card:nth-child(6n+1) .thumb{--sc:url(/assets/img/tpl/alyssum-sc1.webp)}
+.pb-pc:nth-child(6n+2) .pb-pci,.aly-grid .card:nth-child(6n+2) .thumb{--sc:url(/assets/img/tpl/alyssum-sc2.webp)}
+.pb-pc:nth-child(6n+3) .pb-pci,.aly-grid .card:nth-child(6n+3) .thumb{--sc:url(/assets/img/tpl/alyssum-sc3.webp)}
+.pb-pc:nth-child(6n+4) .pb-pci,.aly-grid .card:nth-child(6n+4) .thumb{--sc:url(/assets/img/tpl/alyssum-sc4.webp)}
+.pb-pc:nth-child(6n+5) .pb-pci,.aly-grid .card:nth-child(6n+5) .thumb{--sc:url(/assets/img/tpl/alyssum-sc5.webp)}
+.pb-pc:nth-child(6n+6) .pb-pci,.aly-grid .card:nth-child(6n+6) .thumb{--sc:url(/assets/img/tpl/alyssum-sc6.webp)}
+.pb-pc,.aly-grid .card{background:linear-gradient(160deg,rgba(12,54,29,.84),rgba(3,16,9,.9))!important;backdrop-filter:blur(10px)}
+.pb-pci img,.aly-grid .card .thumb img{width:90%!important;bottom:6%!important;animation:alyZoom 6s ease-in-out infinite alternate;transform-origin:50% 80%}
+.pb-pc:nth-child(2n) .pb-pci img,.aly-grid .card:nth-child(2n) .thumb img{animation-delay:-2s}.pb-pc:nth-child(3n) .pb-pci img,.aly-grid .card:nth-child(3n) .thumb img{animation-delay:-4s}
+.pb-pc:hover .pb-pci img,.aly-grid .card:hover .thumb img{animation-duration:2.4s;transform:none}
+.pb-pci.img-full img,.aly-grid .card .thumb.img-full img{width:100%!important;bottom:auto!important}
+.pb-pci.img-full::after,.aly-grid .card .thumb.img-full::after{display:none}
+@keyframes alyZoom{0%{transform:scale(1)}100%{transform:scale(1.13)}}
+@media(prefers-reduced-motion:reduce){.pb-pci img,.aly-grid .card .thumb img{animation:none}}
+#shop-grid.aly-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px}
+.pb-pci>span,.aly-grid .card .thumb>span,.aly-grid .card .thumb>div{z-index:3!important}
 """
 
 def alyhtml(code, **x): return W("html", code=code, **x)
@@ -165,7 +185,7 @@ cats_w = W("shopcats", items=[{"cat": "skin", "label": "", "img": IMG("alyssum-c
           cols={"d": 6, "t": 3, "m": 2}, gap={"d": 14}, rad={"d": 20}, fs={"d": 16}, tc="#ffffff", ov="#021008", ovo=38, ratio="5/4", slotCats=True,
           fxs=[FX("بطاقات فئات زجاجية", "selector .pb-sci{border:1px solid rgba(134,239,172,.3);box-shadow:0 18px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .3s;overflow:hidden;position:relative}selector .pb-sci:hover{transform:translateY(-8px);border-color:rgba(190,242,100,.7);box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 40px rgba(74,222,128,.3)}selector .pb-sci::after{content:\"‹\";position:absolute;bottom:10px;inset-inline-start:10px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:rgba(2,12,7,.6);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:20px;backdrop-filter:blur(8px);transition:.3s}selector .pb-sci:hover::after{background:#4ade80;color:#052e16;transform:translateX(-5px)}")], **anim("fadeUp", .8))
 cats_sec = S([C([cats_w], w=100)], cw={"d": 1240}, pad=dm([4, 20, 20, 20], [4, 16, 14, 16]), cid="categories")
-best_sec = S([C([W("products", mode="all", limit=12, slider=True, slauto=4, btn="عرض المنتج", showOld=True, cardw=dm(190, 150), gap=dm(14), rad=dm(22), cbg="#04180d", bbg="#22c55e", **anim("fadeUp", .8))], w=100)], cw={"d": 1240}, pad=dm([4, 20, 24, 20], [4, 16, 20, 16]), cid="bestsellers")
+best_sec = S([C([W("products", mode="all", limit=12, slider=True, slauto=4, btn="عرض المنتج", showOld=True, cardw=dm(340, 250), gap=dm(14), rad=dm(22), cbg="#04180d", bbg="#22c55e", **anim("fadeUp", .8))], w=100)], cw={"d": 1240}, pad=dm([4, 20, 24, 20], [4, 16, 20, 16]), cid="bestsellers")
 promo = S([C([PIC("alyssum-banner-prod", "منتج العرض", 18, slot="banner", w=dm(100), fxs=[FX("مشهد المنتج على المنصة", "selector{position:relative;aspect-ratio:3/2;border-radius:18px;overflow:hidden;background:url(/assets/img/tpl/alyssum-banner-bg.webp) center/cover no-repeat;box-shadow:0 18px 44px rgba(0,0,0,.5)}selector img{position:absolute!important;left:0;right:0;bottom:11%;margin:0 auto;width:40%!important;height:auto!important;aspect-ratio:1;object-fit:contain!important;border-radius:0!important;filter:drop-shadow(0 14px 14px rgba(0,0,0,.55));transition:transform .8s}selector:hover img{transform:scale(1.08) translateY(-4px)}")])], w=32, va="center"),
            C([T("عرض خاص", 13, "#052e16", "start", fw="900", slot="bannerB", fxs=[FX("شارة", "selector .pb-t{display:inline-block;background:linear-gradient(135deg,#bef264,#4ade80);padding:3px 14px;border-radius:999px}")]),
               W("heading", text="تشكيلة جديدة بنقاء الطبيعة", tag="h3", slot="bannerT", fs=dm(30, 22), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")),
