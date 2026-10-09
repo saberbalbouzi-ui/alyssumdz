@@ -102,7 +102,7 @@ for p in live:
     block = (f'{S}\n<link rel="canonical" href="{esc(url_path(p["slug"]))}">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(SITE)}">\n'
              f'<meta property="og:type" content="product"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(url_path(p["slug"]))}">'
              + (f'<meta property="og:image" content="{esc(images[0])}">' if images else "") +
-             ( '<!--seo:noindex:start--><meta name="robots" content="noindex"><!--seo:noindex:end-->' if no_idx else "") +
+             ( '<!--seo:noindex:start--><meta name="robots" content="noindex" data-seo-managed="1"><!--seo:noindex:end-->' if no_idx else "") +
              f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n{E}\n')
     text = text.replace("</head>", block + "</head>", 1)
     f.write_text(text, encoding="utf-8")
