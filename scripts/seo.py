@@ -49,7 +49,7 @@ def robots_tag(text, enabled):
     text = re.sub(marker, "", text, flags=re.S)
     if not enabled:
         return text
-    block = '<!--seo:noindex:start--><meta name="robots" content="noindex"><!--seo:noindex:end-->\n'
+    block = '<!--seo:noindex:start--><meta name="robots" content="noindex" data-seo-managed="1"><!--seo:noindex:end-->\n'
     return re.sub(r"</head>", block + "</head>", text, count=1, flags=re.I)
 
 live = [p for p in products if p.get("active", True) and p["slug"] != "test" and (ROOT / "p" / p["slug"] / "index.html").exists()]
