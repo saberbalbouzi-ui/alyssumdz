@@ -468,7 +468,7 @@ const Seo = (() => {
     applySeoTags({title,description,image,type:"product"});
     if(image.startsWith("http://")||image.startsWith("https://")){setMetaTag("property","og:image",image);setMetaTag("name","twitter:image",image);}
     const skipped=(Array.isArray(cfg.noindex)?cfg.noindex:[]).map(String).some(x=>x===p.slug||x==="/p/"+p.slug+"/"||x==="p/"+p.slug);
-    if(skipped)setRobotsNoindex();
+    if(skipped)setRobotsNoindex();else{const managed=document.querySelector('meta[name="robots"][data-seo-managed="1"]');if(managed)managed.remove();}
     const images=(p.images&&p.images.length?p.images:[image]).map(absolute).filter(Boolean);
     const out=typeof isOutOfStock==="function"&&isOutOfStock(p);
     const schema={"@context":"https://schema.org","@type":"Product",name:p.title||title,description,image:images,url:location.href,sku:p.slug,offers:{"@type":"Offer",price:Number(p.price)||0,priceCurrency:"DZD",availability:out?"https://schema.org/OutOfStock":"https://schema.org/InStock",url:location.href}};
