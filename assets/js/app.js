@@ -100,9 +100,13 @@ const Cart = {
     }).join("") : `<p style="text-align:center;color:var(--muted);padding:2rem 0">السلة فارغة 🛒</p>`;
     const sub = Cart.subtotal();
     const fee = Cart.fee();
-    const discount = currentCouponDiscount(sub, couponCartItems());
+    const disc = currentCartDiscount(sub, couponCartItems());
+    const discount = disc.discount;
     const totEl = document.getElementById("cart-total");
     if(totEl) totEl.textContent = fmt(Math.max(0, sub - discount) + (items.length?fee:0));
+    let autoMsg = document.getElementById("cart-auto-disc-msg");
+    if(!autoMsg && totEl){ autoMsg = document.createElement("div"); autoMsg.id = "cart-auto-disc-msg"; autoMsg.style.cssText = "font-size:.82rem;color:var(--green,#16834a);margin:.25rem 0"; totEl.insertAdjacentElement("afterend", autoMsg); }
+    if(autoMsg) autoMsg.textContent = disc.autoDiscount > 0 ? "🎉 " + disc.message + " — خصم " + fmt(disc.autoDiscount) : "";
     const feeEl = document.getElementById("cart-fee");
     const sq = Cart.quote();
     if(feeEl){ feeEl.title = sq.msg || ""; feeEl.textContent = items.length ? (sq.blocked ? "غير متاح ⛔" : ((fee===0 && (items.every(cartItemFreeShip) || couponFreeShip() || sq.free)) ? "مجاني 🚚" : fmt(fee))) : "—"; }
@@ -140,7 +144,8 @@ const Cart = {
     const __sq = Cart.quote(); if(__sq.blocked){ toast(__sq.msg); return }
     const sub = Cart.subtotal();
     const fee = Cart.fee();
-    const discount = currentCouponDiscount(sub, couponCartItems());
+    const disc = currentCartDiscount(sub, couponCartItems());
+    const discount = disc.discount;
     const total = Math.max(0, sub - discount) + fee;
     // Enregistrement dans Google Sheets
     const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
@@ -150,7 +155,7 @@ const Cart = {
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
@@ -160,7 +165,7 @@ const Cart = {
       msg += `\n• ${p.title}${it.vlabel?" — "+it.vlabel:""} ×${it.qty} = ${fmt(Math.round(it.price*it.qty))}`;
     });
     msg += `\n\nالمجموع: ${fmt(sub)}`;
-    if(discount>0) msg += `\n🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
+    if(discount>0) msg += disc.autoDiscount > 0 ? `\n🎉 ${disc.message}: -${fmt(discount)}` : `\n🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
     else if(couponFreeShip()) msg += `\n🎟️ كود التوصيل المجاني (${AppliedCoupon.code})`;
     if(couponGiftTitle()) msg += `\n🎁 هدية الكود (${AppliedCoupon.code}): ${couponGiftTitle()}`;
     msg += `\nالتوصيل (${dtype==="stop"?"مكتب":"للمنزل"} - ${wl.name}${commune?" / "+commune:""}): ${fmt(fee)}`;
@@ -532,6 +537,79 @@ function currentCouponDiscount(subtotal, items){
   const res = findValidCoupon([AppliedCoupon.record], AppliedCoupon.code, subtotal, items);
   return res.ok ? res.discount : 0;
 }
+
+/* Automatic discounts (FR-DSC-3). Pure calculation is kept independent of the DOM. */
+const AutoDisc = {
+  rules: [],
+  compute(cart, rules, coupon) {
+    const now = new Date();
+    const items = (Array.isArray(cart) ? cart : []).map(it => ({
+      slug: String(it.slug || ""), cat: String(it.cat || ""),
+      qty: Math.max(0, Math.floor(Number(it.qty) || 0)),
+      price: Math.max(0, Number(it.price) || (Number(it.qty) ? Number(it.amount || 0) / Number(it.qty) : 0))
+    })).filter(it => it.qty > 0);
+    const subtotal = items.reduce((sum, it) => sum + it.qty * it.price, 0);
+    const eligible = (it, selector) => {
+      if (!selector || (!selector.slugs && !selector.cats)) return true;
+      const slugs = Array.isArray(selector.slugs) ? selector.slugs : selector.slug ? [selector.slug] : [];
+      const cats = Array.isArray(selector.cats) ? selector.cats : selector.cat ? [selector.cat] : [];
+      return (!slugs.length && !cats.length) || slugs.includes(it.slug) || cats.includes(it.cat);
+    };
+    const active = (rule) => rule && rule.active !== false &&
+      (!rule.from || new Date(rule.from + "T00:00:00").getTime() <= now.getTime()) &&
+      (!rule.to || new Date(rule.to + "T23:59:59").getTime() >= now.getTime()) &&
+      (!Number(rule.min) || subtotal >= Number(rule.min));
+    const candidates = (Array.isArray(rules) ? rules : []).filter(active).map(rule => {
+      let amount = 0;
+      if (rule.kind === "bxgy") {
+        const buyItems = items.filter(it => eligible(it, rule.buy));
+        const buyQty = Math.max(1, Math.floor(Number(rule.buy && rule.buy.qty) || 1));
+        const getQty = Math.max(1, Math.floor(Number(rule.get && rule.get.qty) || 1));
+        const times = Math.floor(buyItems.reduce((n, it) => n + it.qty, 0) / buyQty);
+        const getSelector = rule.get && rule.get.same ? rule.buy : { slugs: rule.get && rule.get.slug ? [rule.get.slug] : [] };
+        const getItems = items.filter(it => eligible(it, getSelector));
+        let free = Math.min(times * getQty, getItems.reduce((n, it) => n + it.qty, 0));
+        getItems.sort((a, b) => a.price - b.price);
+        for (const it of getItems) {
+          const n = Math.min(free, it.qty);
+          amount += n * it.price * (1 - Math.min(100, Math.max(0, Number(rule.get && rule.get.percent) || 100)) / 100);
+          free -= n;
+          if (!free) break;
+        }
+      } else {
+        const base = items.filter(it => eligible(it, rule)).reduce((n, it) => n + it.qty * it.price, 0);
+        amount = rule.kind === "auto_percent"
+          ? Math.round(base * Math.max(0, Number(rule.value) || 0) / 100)
+          : rule.kind === "auto_fixed" ? Math.min(base, Math.max(0, Number(rule.value) || 0)) : 0;
+      }
+      return { rule, discount: Math.max(0, Math.min(subtotal, Math.round(amount))) };
+    }).filter(x => x.discount > 0).sort((a, b) => b.discount - a.discount);
+    const best = candidates[0] || null;
+    const codeDiscount = Math.max(0, Math.min(subtotal, Math.round(Number(coupon && coupon.discount) || 0)));
+    if (!best) return { discount: codeDiscount, autoDiscount: 0, couponDiscount: codeDiscount, rule: null, message: "" };
+    const stack = best.rule.stack === true;
+    if (stack) {
+      const total = Math.min(subtotal, best.discount + codeDiscount);
+      return { discount: total, autoDiscount: total - codeDiscount, couponDiscount: codeDiscount, rule: best.rule,
+        message: String(best.rule.name || (best.rule.kind === "bxgy" ? "اشترِ واحصل على هدية" : "خصم تلقائي")) };
+    }
+    if (best.discount > codeDiscount) return { discount: best.discount, autoDiscount: best.discount, couponDiscount: 0, rule: best.rule,
+      message: String(best.rule.name || (best.rule.kind === "bxgy" ? "اشترِ واحصل على هدية" : "خصم تلقائي")) };
+    return { discount: codeDiscount, autoDiscount: 0, couponDiscount: codeDiscount, rule: null, message: "" };
+  },
+  load() {
+    fetch(REL + "assets/data/autodisc.json", { cache: "no-store" }).then(r => r.ok ? r.json() : [])
+      .then(data => { this.rules = Array.isArray(data) ? data : []; if (typeof Cart !== "undefined") Cart.render(); })
+      .catch(() => { this.rules = []; });
+  }
+};
+AutoDisc.load();
+function currentCartDiscount(subtotal, items) {
+  const codeDiscount = currentCouponDiscount(subtotal, items);
+  const cart = (items || []).map(it => ({ ...it, price: Number(it.qty) ? Number(it.amount || 0) / Number(it.qty) : 0 }));
+  return AutoDisc.compute(cart, AutoDisc.rules, { discount: codeDiscount });
+}
+
 function buildCouponBoxHTML(idPrefix){
   return '<div class="coupon-box" style="display:flex;gap:.4rem;margin:.6rem 0;align-items:center;flex-wrap:wrap">' +
     '<input id="' + idPrefix + '-coupon-input" placeholder="🎟️ كود الخصم (إن وُجد)" style="flex:1;min-width:120px;padding:.55rem .7rem;border:1.5px solid var(--line);border-radius:8px;font-family:inherit">' +
