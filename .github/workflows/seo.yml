@@ -3,7 +3,7 @@ name: seo-refresh
 on:
   push:
     branches: [main]
-    paths: ["assets/js/data.js", "redirects.json", "scripts/seo.py", "assets/js/config.js"]
+    paths: ["assets/js/data.js", "redirects.json", "scripts/seo.py", "assets/js/config.js", "assets/data/seo.json", "assets/pages/index.json"]
   workflow_dispatch:
 permissions:
   contents: write
