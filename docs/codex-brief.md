@@ -113,7 +113,7 @@
 | # | المهمة | الفرع | الأولوية | الحالة |
 |---|---|---|:-:|:-:|
 | E | المرتجعات | `codex/returns` | 🟠 P1 | ✅ v1.78.0 (PR #183 دُمج) |
-| P | حالة الدفع اليدوية (COD) | `codex/payments-status` | 🟠 P1 | ⏳ |
+| P | حالة الدفع اليدوية (COD) | `codex/payments-status` | 🟠 P1 | ✅ v1.79.0 |
 | Z | استيراد/تصدير المناطق CSV + قوالب جاهزة | `codex/zones-io` | 🟠 P1 | ⏳ |
 | S | SEO: sitemap وrobots وJSON-LD وحقول SEO للمنتج | `codex/seo` | 🔴 P1 | ⏳ |
 | B | المدوّنة + صفحات السياسات | `codex/blog-policies` | 🔴 P1 | ⏳ |
