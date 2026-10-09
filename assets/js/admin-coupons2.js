@@ -53,6 +53,57 @@ const AdminCoupons2 = (() => {
     if(kind==="copy"){try{await navigator.clipboard.writeText(c.code);toast("تم نسخ الكود");}catch(e){toast("تعذّر النسخ تلقائياً");}return;}
     if(kind==="duplicate"){let code=(c.code+"-COPY").slice(0,40),i=2;while(a.coupons.some(x=>x.code.toUpperCase()===code.toUpperCase()))code=(c.code+"-"+i++).slice(0,40);a.coupons.push(Object.assign({},c,{id:"cp_"+Date.now(),code}));return a.publishCoupons();}
   }
+
+  const AUTO_PATH="assets/data/autodisc.json";
+  let autoRules=[],autoSha;
+  const decode=b64=>JSON.parse(decodeURIComponent(escape(atob(String(b64||"").replace(/\\s/g,"")))));
+  async function loadAutoRules(){
+    autoRules=[];autoSha=undefined;
+    try{
+      if(GH.cfg()&&GH.cfg().token){const f=await GH.getFile(AUTO_PATH);autoSha=f.sha;autoRules=decode(f.content);if(!Array.isArray(autoRules))autoRules=[];}
+      else {autoRules=JSON.parse(localStorage.getItem("alyssum_autodisc_draft")||"[]");if(!Array.isArray(autoRules))autoRules=[];}
+    }catch(e){autoRules=[];}
+    renderAutoPanel();
+  }
+  function renderAutoPanel(){
+    const host=$("tab-coupons");if(!host)return;
+    let panel=$("autodisc-panel");
+    if(!panel){panel=document.createElement("div");panel.id="autodisc-panel";panel.className="card";panel.style.marginTop="1rem";host.appendChild(panel);}
+    panel.innerHTML='<h3>🎁 العروض التلقائية</h3><p class="hint">تُطبَّق تلقائياً على السلة. عند عدم السماح بالجمع، يُختار الخصم الأفضل للزبون.</p><div id="autodisc-list"></div><button type="button" class="btn" id="ad-add">إضافة عرض</button> <button type="button" class="btn primary" id="ad-save">حفظ العروض</button><div id="ad-editor"></div>';
+    $("ad-add").onclick=()=>editAuto({kind:"bxgy",name:"",buy:{qty:2},get:{same:true,qty:1,percent:100},min:0,active:true,stack:false});
+    $("ad-save").onclick=saveAuto;
+    drawAuto();
+  }
+  function drawAuto(){
+    const box=$("autodisc-list");if(!box)return;
+    box.innerHTML=autoRules.map((r,i)=>'<div class="card" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.6rem;margin:.35rem 0"><b>'+esc(r.name||"عرض بلا اسم")+'</b><span>'+esc(r.kind)+'</span><span>'+(r.active===false?"موقوف":"فعّال")+'</span><button type="button" class="small" data-aedit="'+i+'">تعديل</button><button type="button" class="small" data-adup="'+i+'">تكرار</button><button type="button" class="small warn" data-adel="'+i+'">حذف</button></div>').join("")||'<p class="hint">لا توجد عروض حتى الآن.</p>';
+    box.querySelectorAll("[data-aedit]").forEach(b=>b.onclick=()=>editAuto(autoRules[Number(b.dataset.aedit)],Number(b.dataset.aedit)));
+    box.querySelectorAll("[data-adup]").forEach(b=>b.onclick=()=>{const r=autoRules[Number(b.dataset.adup)];if(r){autoRules.push({...r,id:"ad_"+Date.now(),name:(r.name||"عرض")+" (نسخة)"});drawAuto();}});
+    box.querySelectorAll("[data-adel]").forEach(b=>b.onclick=()=>{autoRules.splice(Number(b.dataset.adel),1);drawAuto();});
+  }
+  function editAuto(r,index){
+    const box=$("ad-editor");if(!box)return;box.dataset.index=index==null?"":String(index);
+    box.innerHTML='<div class="card" style="margin-top:.7rem"><div class="grid2"><label class="hint">اسم العرض<input id="ad-name" value="'+esc(r.name||"")+'"></label><label class="hint">نوع العرض<select id="ad-kind"><option value="bxgy">اشترِ واحصل</option><option value="auto_percent">خصم نسبة تلقائي</option><option value="auto_fixed">خصم مبلغ تلقائي</option></select></label><label class="hint">الكمية المؤهلة للشراء<input id="ad-buy-qty" type="number" min="1" value="'+Number(r.buy&&r.buy.qty||1)+'"></label><label class="hint">كمية المكافأة<input id="ad-get-qty" type="number" min="1" value="'+Number(r.get&&r.get.qty||1)+'"></label><label class="hint">نسبة خصم المكافأة<input id="ad-get-percent" type="number" min="0" max="100" value="'+Number(r.get&&r.get.percent==null?100:r.get&&r.get.percent)+'"></label><label class="hint">قيمة خصم النسبة/المبلغ<input id="ad-value" type="number" min="0" value="'+Number(r.value||0)+'"></label><label class="hint">الحد الأدنى للسلة (دج)<input id="ad-min" type="number" min="0" value="'+Number(r.min||0)+'"></label><label class="hint">منتجات الشراء (slugs مفصولة بفاصلة)<input id="ad-buy-slugs" dir="ltr" value="'+esc((r.buy&&r.buy.slugs||[]).join(", "))+'"></label><label class="hint">فئات الشراء<input id="ad-buy-cats" dir="ltr" value="'+esc((r.buy&&r.buy.cats||[]).join(", "))+'"></label><label class="hint">منتج المكافأة؛ فارغ = نفس المنتج<input id="ad-get-slug" dir="ltr" value="'+esc(r.get&&r.get.slug||"")+'"></label><label class="hint">من<input id="ad-from" type="date" value="'+esc(r.from||"")+'"></label><label class="hint">إلى<input id="ad-to" type="date" value="'+esc(r.to||"")+'"></label></div><label class="hint"><input id="ad-active" type="checkbox" '+(r.active===false?"":"checked")+'> فعّال</label> <label class="hint"><input id="ad-stack" type="checkbox" '+(r.stack?"checked":"")+'> الجمع مع كود الخصم</label> <button type="button" class="btn primary" id="ad-apply">تطبيق</button> <button type="button" class="btn" id="ad-cancel">إلغاء</button></div>';
+    $("ad-kind").value=r.kind||"bxgy";
+    const list=id=>$(id).value.split(",").map(x=>x.trim()).filter(Boolean);
+    $("ad-apply").onclick=()=>{
+      const kind=$("ad-kind").value,name=$("ad-name").value.trim(),item={...r,id:r.id||"ad_"+Date.now(),name,kind,min:Math.max(0,Number($("ad-min").value)||0),from:$("ad-from").value||"",to:$("ad-to").value||"",active:$("ad-active").checked,stack:$("ad-stack").checked};
+      if(!name){toast("أدخل اسماً للعرض");return;}
+      if(item.from&&item.to&&item.to<item.from){toast("تاريخ الانتهاء يسبق البداية");return;}
+      if(kind==="bxgy"){item.buy={slugs:list("ad-buy-slugs"),cats:list("ad-buy-cats"),qty:Math.max(1,Math.floor(Number($("ad-buy-qty").value)||1))};item.get={same:!$("ad-get-slug").value.trim(),slug:$("ad-get-slug").value.trim(),qty:Math.max(1,Math.floor(Number($("ad-get-qty").value)||1)),percent:Math.min(100,Math.max(0,Number($("ad-get-percent").value)||0))};}
+      else {item.value=Math.max(0,Number($("ad-value").value)||0);item.slugs=list("ad-buy-slugs");item.cats=list("ad-buy-cats");if(!item.value){toast("أدخل قيمة خصم صحيحة");return;}}
+      if(index==null)autoRules.push(item);else autoRules[index]=item;box.innerHTML="";drawAuto();
+    };
+    $("ad-cancel").onclick=()=>{box.innerHTML="";};
+  }
+  async function saveAuto(){
+    const json=JSON.stringify(autoRules,null,2);if(!(GH.cfg()&&GH.cfg().token)){localStorage.setItem("alyssum_autodisc_draft",json);toast("حُفظت مسودة محلية؛ اضبط GitHub لنشرها");return;}
+    try{if(!autoSha){try{const f=await GH.getFile(AUTO_PATH);autoSha=f.sha;}catch(e){}}
+      const r=await GH.putFile(AUTO_PATH,btoa(unescape(encodeURIComponent(json))),autoSha,"حفظ العروض التلقائية");
+      autoSha=r&&r.content&&r.content.sha||autoSha;toast("تم حفظ العروض التلقائية");
+    }catch(e){toast("تعذر حفظ العروض: "+(e.message||""));console.error(e);}
+  }
+
   function init(){if(ready)return;ready=true;ensureForm();
     const oldEdit=A().editCoupon;A().editCoupon=function(id){const r=oldEdit.call(this,id);fill(id?this.coupons.find(x=>x.id===id):null);return r;};
     A().saveCoupon=save;
@@ -63,6 +114,7 @@ const AdminCoupons2 = (() => {
       catch(e){console.error(e);toast("تعذّر نشر الأكواد: "+(e.message||""));return false;}
     };
     render();
+    loadAutoRules();
   }
   return {init,render};
 })();
