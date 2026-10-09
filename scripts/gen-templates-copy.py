@@ -211,6 +211,37 @@ PACKS["s-accessories"] = _pk("ميكس", ("اختر إكسسواراتك", "نظ
 def _brand_swap(txt, brand):
     return txt.replace("متجرك", brand)
 
+
+# ───── تنويع الهيدر والفوتر بين القوالب (الهيكل واحد تقريباً، والشكل يتغيّر قليلاً من قالب لآخر) ─────
+_HV = {
+  "tall":   {"fh": {"d": 88}, "lfs": {"d": 30}, "lh": {"d": 56}, "hpd": {"d": [16, 0, 16, 0]}},
+  "compact": {"fh": {"d": 56}, "lfs": {"d": 20}, "lh": {"d": 38}, "hpd": {"d": [7, 0, 7, 0]}, "mfs": {"d": 13}},
+  "boxed":  {"hcw": {"d": 1040}, "fh": {"d": 76}},
+  "wide":   {"hcw": {"d": 1400}},
+  "menufirst": {"hord": [{"id": "menu"}, {"id": "logo"}, {"id": "social"}, {"id": "share"}, {"id": "cart"}]},
+  "nosocial": {"son": False},
+  "nosharetext": {"shm": "text"},
+  "noshare": {"shon": False},
+}
+_HID = {
+  "s-aurora": ["tall", "nosharetext"], "s-gold": ["tall", "boxed"], "s-fresh": ["compact"], "s-pop": ["menufirst"],
+  "s-tech": ["compact", "nosocial"], "s-cosmetics": ["tall"], "s-supplements": ["menufirst", "compact"], "s-honey": ["boxed", "tall"],
+  "s-herbs": [], "s-fashion": ["menufirst", "tall", "noshare"], "s-it": ["compact"], "s-digital": ["nosocial", "nosharetext"],
+  "s-marketplace": ["compact", "wide"], "s-watches": ["menufirst", "tall"], "s-jewelry": ["tall", "nosharetext"], "s-accessories": ["boxed"],
+}
+_PAY = {"h": "الدفع والتوصيل", "b": "💵 الدفع عند الاستلام\n🚚 توصيل لكل الولايات\n🔄 استبدال خلال 7 أيام"}
+_FID = {   # f2 = 4 أعمدة، f3 = عمودان، f4 = بلا حدّ علوي وحشو أكبر
+  "s-aurora": "f2", "s-gold": "f3", "s-fresh": "f4", "s-pop": "f2", "s-tech": "f3", "s-cosmetics": "f2", "s-supplements": "f4", "s-honey": "f3",
+  "s-herbs": "", "s-fashion": "f2", "s-it": "f3", "s-digital": "f4", "s-marketplace": "f2", "s-watches": "f3", "s-jewelry": "f4", "s-accessories": "f2",
+}
+def _vary_head(id, st):
+    for k in _HID.get(id, []): st.update(json.loads(json.dumps(_HV[k])))
+def _vary_foot(id, st):
+    f = _FID.get(id, ""); c = st.get("cols") or []
+    if f == "f2" and len(c) == 3: c.insert(2, dict(_PAY))
+    elif f == "f3" and len(c) == 3: st["cols"] = [c[0], c[2]]
+    elif f == "f4": st["w1"] = 0; st["spad"] = {"d": [64, 0, 34, 0], "m": [40, 0, 24, 0]}; st["fs"] = {"d": 14}
+
 def localize_copy(id, pg):
     """يستبدل النص العام بنص الثيم ويضيف البيانات التجريبية؛ يُرجع الصفحة نفسها."""
     P = PACKS.get(id)
@@ -234,7 +265,9 @@ def localize_copy(id, pg):
                     c[0] = {"h": brand, "b": P["about"]}
                     c[2] = {"h": "تواصل معنا", "b": "📱 واتساب: أضف رقم متجرك من الإعدادات\n🕐 %s\n📍 %s" % (P["hours"], P["addr"])}
                 st["copy"] = "© 2026 %s — جميع الحقوق محفوظة" % brand
+                _vary_foot(id, st)
             if ty == "shdr" and st and st.get("la") == "متجرك": st["la"] = brand
+            if ty == "shdr" and st: _vary_head(id, st)
             if ty == "products" and st: st["demo"] = P["dp"]
             if ty == "shopcats" and st:
                 for i, it in enumerate(st.get("items", [])):

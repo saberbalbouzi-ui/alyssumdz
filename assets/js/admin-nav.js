@@ -95,7 +95,7 @@ const AdminNav = (() => {
   }
   const myAsLib = it => ({ id: "my:" + it.id, my: true, cat: "page", fld: "قوالبي", n: it.n, d: (it.src === "import" ? "محمَّل من ملف" : "منشأ من صفحة") + " · " + (it.date || "") + " · " + (((it.page && it.page.sections) || []).length) + " قسم", file: null, page: it.page });
   function tplFind(id) { if (String(id).startsWith("my:")) { const it = (MY.items || []).find(q => "my:" + q.id === id); return it ? myAsLib(it) : null; } return libAll().find(q => q.id === id); }
-  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.30";
+  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.31";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen(view) { await libLoad(); await myLoad(); LS.type = "all"; LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -163,9 +163,10 @@ const AdminNav = (() => {
     const x = tplFind(id); if (!x) return;
     try {
       hideView(); libClose(); toast("⏳ جارِ تحضير المعاينة…");
+      if (x.cat === "store" && x.file && !x.alyssum && !x.my && window.TplSite) { try { await TplSite.open(id); return; } catch (e) { console.warn("TplSite", e); } }
       const page = await tplPageOf(x), dir = location.href.replace(/[^/]*$/, "");
       const html = PB.fullHtml(PB.migrate(page), Object.assign({ base: "", baseHref: dir, demo: true }, PBApp.siteCtx()));
-      SitePreview.openHtml(html, { title: "معاينة: " + x.n, edit: () => tplEdit(id), editLabel: "✏️ تعديل القالب", install: () => tplInstall(id), installLabel: "📌 تثبيت القالب" });
+      SitePreview.openHtml(window.TplSite ? TplSite.plain(html) : html, { title: "معاينة: " + x.n, edit: () => tplEdit(id), editLabel: "✏️ تعديل القالب", install: () => tplInstall(id), installLabel: "📌 تثبيت القالب" });
     } catch (e) { toast("تعذّرت المعاينة: " + e.message); }
   }
   async function tplEdit(id) {
@@ -216,7 +217,7 @@ const AdminNav = (() => {
       if (pw) { const w = clone(pw); w.set.slider = false; w.set.limit = "12"; secs.push(PB.mkS([PB.mkC([w])], { cw: { d: 1240 }, pad: { d: [8, 20, 40, 20], m: [8, 14, 30, 14] } })); }
       pg.sections = top.concat(secs, [foot]); pg.bg = home.bg || pg.bg; if (home.ff) pg.ff = home.ff; pg.css = (home.css || "") + "\n" + (T.shop || ""); pg.demo = true; pg.header = false; pg.footer = false;
       const dir = location.href.replace(/[^/]*$/, ""), html = PB.fullHtml(PB.migrate(pg), Object.assign({ base: "", baseHref: dir, demo: true }, PBApp.siteCtx()));
-      SitePreview.openHtml(html, { title: "صفحة فئة — " + x.n, edit: () => tplEdit(id), editLabel: "✏️ تعديل القالب", install: () => tplInstall(id), installLabel: "📌 تثبيت القالب" });
+      SitePreview.openHtml(window.TplSite ? TplSite.plain(html) : html, { title: "صفحة فئة — " + x.n, edit: () => tplEdit(id), editLabel: "✏️ تعديل القالب", install: () => tplInstall(id), installLabel: "📌 تثبيت القالب" });
     } catch (e) { toast("تعذّرت معاينة الفئة: " + e.message); }
   }
   function libView(id) {
@@ -405,7 +406,7 @@ const AdminNav = (() => {
       libClose(); toast("⏳ جارِ تحضير المعاينة…");
       const page = await alyLoad(), dir = location.href.replace(/[^/]*$/, "");
       const html = PB.fullHtml(PB.migrate(page), Object.assign({ base: "", baseHref: dir }, PBApp.siteCtx()));
-      SitePreview.openHtml(html, { title: "معاينة قالب أليسوم", edit: alyEdit, editLabel: "تعديل في المطوّر", install: alyInstall, installLabel: "تثبيت على متجري" });
+      SitePreview.openHtml(window.TplSite ? TplSite.plain(html) : html, { title: "معاينة قالب أليسوم", edit: alyEdit, editLabel: "تعديل في المطوّر", install: alyInstall, installLabel: "تثبيت على متجري" });
     } catch (e) { toast("تعذّرت المعاينة: " + e.message); }
   }
   async function alyEdit() {
@@ -572,5 +573,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { subs, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

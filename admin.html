@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.30">
+<meta name="admin-version" content="1.89.31">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -75,7 +75,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .spv{position:fixed;inset:0;background:rgba(15,30,25,.72);z-index:10020;display:none;flex-direction:column}
 .spv.on{display:flex}
 .spv-bar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.6rem .9rem;background:#fff;border-bottom:1px solid var(--line)}
-.spv-bar b{color:var(--green);margin-inline-end:.4rem}
+.spv-bar b{color:var(--green);margin-inline-end:.4rem}.spv-nav{display:inline-flex;gap:.3rem;flex-wrap:wrap}.spv-nav.hidden{display:none}.spv-nav button[disabled]{opacity:.4;cursor:default}
 .spv-bar button,.spv-bar a{border:1px solid var(--line);background:#fff;border-radius:10px;padding:.4rem .8rem;font-weight:800;font-size:.85rem;cursor:pointer;text-decoration:none;color:var(--green)}
 .spv-bar button.on{background:var(--green);color:#fff;border-color:var(--green)}
 .spv-bar button.inst{background:linear-gradient(180deg,rgba(34,197,94,.9),rgba(21,128,61,.9));color:#fff;border-color:#15803d;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);transition:.2s}.spv-bar button.inst:hover{transform:translateY(-2px);filter:brightness(1.1)}.spv-bar .sp{margin-inline-start:auto}.spv-bar button,.spv-bar a{display:inline-flex;align-items:center;gap:.35rem}.spv-bar svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.spv-bar button.edit{background:linear-gradient(180deg,rgba(34,197,94,.9),rgba(21,128,61,.9));color:#fff;border-color:#15803d}.spv-bar .hidden{display:none}
@@ -256,6 +256,7 @@ resetCfg:function(m){var c=this.cfg();c[m]=Object.assign({},this.D[m]);try{local
 <div class="spv" id="spv" onclick="if(event.target===this)SitePreview.close()">
   <div class="spv-bar">
     <b id="spv-title">معاينة الموقع</b>
+    <span id="spv-nav" class="spv-nav hidden"></span>
     <button data-d="desktop" class="on" onclick="SitePreview.dev('desktop')"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> المكتب</button>
     <button data-d="tablet" onclick="SitePreview.dev('tablet')"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2.5"/><path d="M11 18h2"/></svg> تابلت</button>
     <button data-d="phone" onclick="SitePreview.dev('phone')"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg> الهاتف</button>
@@ -270,7 +271,7 @@ resetCfg:function(m){var c=this.cfg();c[m]=Object.assign({},this.D[m]);try{local
 <script>
 const SitePreview = {
   _url: "./", _edit: null, _inst: null,
-  _instBtn(opts){ const b = document.getElementById("spv-inst"); this._inst = opts.install || null; b.classList.toggle("hidden", !this._inst); b.querySelector("span").textContent = opts.installLabel || "تثبيت"; },
+  _instBtn(opts){ if(window.TplSite) TplSite.reset(); const b = document.getElementById("spv-inst"); this._inst = opts.install || null; b.classList.toggle("hidden", !this._inst); b.querySelector("span").textContent = opts.installLabel || "تثبيت"; },
   install(){ if(this._inst) this._inst(); },
   open(){ this.openUrl("./", { title: "معاينة الموقع", edit: ()=>PBConvert.edit("home"), editLabel: "✏️ تعديل في المطوّر" }); },
   /* يفتح أي رابط داخل النافذة؛ opts.edit = دالة زر «تعديل» (تظهر فقط إن وُجدت) */
@@ -1600,17 +1601,18 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.30"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.30"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.30"></script>
+<script src="assets/js/ctl-help.js?v=1.89.31"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.31"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.31"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.30"></script>
+<script src="assets/js/admin-nav.js?v=1.89.31"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.31"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
 <script src="assets/js/admin-stores.js?v=1.89.25"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.30"></script>
+<script src="assets/js/admin-update.js?v=1.89.31"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
