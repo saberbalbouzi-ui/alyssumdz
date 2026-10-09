@@ -1895,7 +1895,7 @@ const PhoneDZ = {
   st.textContent = "html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}";
   document.head.appendChild(st);
   const go = ()=>{
-    const form = document.querySelector(".order-wide"); if(!form) return;
+    const form = document.querySelector(".order-wide") || document.querySelector(".pb-ofraw") || document.getElementById("order-form"); if(!form) return;
     const wrap = document.createElement("div"); wrap.id = "pb-embed-wrap";
     const off = document.getElementById("offers"); if(off) wrap.appendChild(off);
     wrap.appendChild(form); document.body.appendChild(wrap);

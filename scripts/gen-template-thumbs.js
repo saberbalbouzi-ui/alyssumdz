@@ -18,6 +18,7 @@ const only = process.argv.slice(2);
       let pg;
       if (j.legacy) { const it = AdminNav.libItems().find(x => x.id === j.id); let s = it.b(); if (!Array.isArray(s)) s = [s]; pg = PB.newPage("t", ""); pg.sections = s; pg.header = false; pg.footer = false; }
       else return null;
+      const fillp = n => { (n.cols || []).forEach(fillp); (n.widgets || []).forEach(w => { if (w.type === "orderorig" && w.set && !w.set.prod && pr[0]) w.set.prod = pr[0].slug; fillp(w); }); (n.free || []).forEach(fillp); }; (pg.sections || []).forEach(fillp);
       pg = PB.migrate(pg); return PB.fullHtml(pg, { base: "", edit: false, path: "", demo: true, products: pr, pageProduct: pr[0] && pr[0].slug, site: { name: "متجرك", wa: "213555000000" } });
     }, [j, prods]);
     let H = html;

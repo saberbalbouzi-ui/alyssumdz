@@ -60,7 +60,8 @@ const AdminNav = (() => {
   /* ══ مكتبة القوالب (نافذة): نماذج اتصال / نماذج الطلبات / صفحات كاملة، مع تصفية حسب الميدان ══ */
   const LCATS = [["all", "الكل"], ["store", "قوالب كاملة (متجر)"], ["page", "صفحات كاملة"], ["contact", "نماذج اتصال"], ["order", "نماذج الطلبات"]];
   /* نوع القالب: كامل = هوية متجر كاملة (رئيسية + فئات + منتج + هيدر/فوتر) كقوالب OceanWP؛ صفحات = قالب لصفحة أو نموذج فقط */
-  const LTYPES = [["all", "كل الأنواع"], ["full", "قوالب كاملة (رئيسية + فئات + منتجات)"], ["pages", "قوالب صفحات فقط"]];
+  const LTYPES = [["all", "الكل"], ["full", "موقع كامل"], ["pages", "صفحات"], ["order", "نموذج طلب"], ["contact", "نموذج إرسال"]];
+  const TYPE_CAT = { full: "store", pages: "page", order: "order", contact: "contact" };
   const isFull = x => x.cat === "store";
   const cf = (set, title, desc) => () => { const m = PB.mkW; return PB.mkS([PB.mkC([m("contact", Object.assign({ title, desc }, set))])], { pad: { d: [40, 20, 40, 20], m: [28, 16, 28, 16] } }); };
   const dflt = ks => () => { const L = ks.map(k => PB.DFLT.find(x => x.k === k).f()); return L; };
@@ -69,9 +70,7 @@ const AdminNav = (() => {
     { id: "c-dark", cat: "contact", fld: "عام", n: "نموذج اتصال داكن أنيق", d: "خلفية خضراء داكنة وحقول زجاجية وزر ذهبي.", b: cf({ fbg: "#173f35", fbc: "#2b5b4e", tcol: "#ffffff", lcol: "#e6dfcf", ibg: "#ffffff1a", ibc: "#ffffff40", bbg: "#c8a24b", bcol: "#173f35" }, "راسلنا الآن", "فريقنا جاهز للرد على استفساراتك.") },
     { id: "c-quote", cat: "contact", fld: "خدمات", n: "طلب عرض سعر", d: "الاسم والهاتف والولاية ونوع الخدمة وتفاصيل الطلب.", b: cf({ fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "half" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "الولاية", type: "text", ph: "مثال: الجزائر", req: false, w: "half" }, { label: "نوع الخدمة", type: "select", ph: "اختر الخدمة", opts: "خدمة أولى، خدمة ثانية، أخرى", req: true, w: "half" }, { label: "تفاصيل الطلب", type: "textarea", ph: "صف طلبك بإيجاز", req: true, w: "full" }], btn: "اطلب عرض السعر", subject: "طلب عرض سعر" }, "اطلب عرض سعر", "أخبرنا بما تحتاجه ونعود إليك بعرض مناسب.") },
     { id: "c-health", cat: "contact", fld: "صحة وعسل", n: "استشارة صحية / تغذية", d: "نموذج مخصص للاستشارة حول المنتج المناسب للحالة.", b: cf({ fields: [{ label: "الاسم", type: "text", ph: "اسمك", req: true, w: "half" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "العمر", type: "number", ph: "العمر", req: false, w: "half" }, { label: "الحاجة", type: "select", ph: "اختر", opts: "تقوية الذاكرة، المناعة، الطاقة، أخرى", req: true, w: "half" }, { label: "ملاحظات", type: "textarea", ph: "أي تفاصيل تفيدنا", req: false, w: "full" }], btn: "أرسل استشارتي", subject: "طلب استشارة" }, "استشارة مجانية", "اكتب حالتك وسنقترح عليك المنتج الأنسب.") },
-    { id: "o-orig", cat: "order", fld: "متجر", n: "نموذج الطلب الكامل", d: "نموذج الطلب الأصلي بكل عروضه ورسوم التوصيل.", b: dflt(["order"]) },
-    { id: "o-deal", cat: "order", fld: "متجر", n: "عرض محدود + نموذج الطلب", d: "شريط عرض بعدّاد تنازلي ثم نموذج الطلب وزر ذهبي.", b: dflt(["deal", "order", "cta"]) },
-    { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
+    { id: "o-orig", cat: "order", fld: "متجر", n: "نموذج طلب أليسوم", d: "نموذج الطلب الحقيقي كاملاً بكل عروضه وكميّاته ورسوم التوصيل وزر واتساب.", b: dflt(["order"]) },
     { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
   ];
   /* ══ قوالبي: القوالب المحمَّلة (استيراد JSON) أو المنشأة (صفحة محفوظة كقالب) — assets/data/mytpl.json (GitHub/PHP) أو localStorage ══ */
@@ -95,7 +94,7 @@ const AdminNav = (() => {
   }
   const myAsLib = it => ({ id: "my:" + it.id, my: true, cat: "page", fld: "قوالبي", n: it.n, d: (it.src === "import" ? "محمَّل من ملف" : "منشأ من صفحة") + " · " + (it.date || "") + " · " + (((it.page && it.page.sections) || []).length) + " قسم", file: null, page: it.page });
   function tplFind(id) { if (String(id).startsWith("my:")) { const it = (MY.items || []).find(q => "my:" + q.id === id); return it ? myAsLib(it) : null; } return libAll().find(q => q.id === id); }
-  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.31";
+  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.32";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen(view) { await libLoad(); await myLoad(); LS.type = "all"; LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -111,9 +110,9 @@ const AdminNav = (() => {
     let body = "";
     if (v === "lib") {
       const ALL = libAll(), flds = [...new Set(ALL.map(x => x.fld))], q = LS.q.trim().toLowerCase();
-      const L = ALL.filter(x => (LS.type === "all" || (LS.type === "full") === isFull(x)) && (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld) && (!q || (x.n + " " + x.d + " " + x.fld).toLowerCase().includes(q)));
+      const L = ALL.filter(x => (LS.type === "all" || x.cat === TYPE_CAT[LS.type]) && (LS.fld === "all" || x.fld === LS.fld) && (!q || (x.n + " " + x.d + " " + x.fld).toLowerCase().includes(q)));
       const sel = (k, opts) => `<select onchange="AdminNav.libSet('${k}',this.value)">${opts.map(o => `<option value="${esc(o[0])}"${LS[k] === o[0] ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`;
-      body = `<div class="tl-fb"><label>النوع ${sel("type", LTYPES)}</label><label>القسم ${sel("cat", LCATS)}</label><label>الميدان ${sel("fld", [["all", "عرض الكل"]].concat(flds.map(f => [f, f])))}</label><input id="tl-q" type="search" placeholder="🔍 بحث في القوالب" value="${esc(LS.q)}" oninput="AdminNav.libSet('q',this.value)"><span class="hint" style="margin:0">${L.length} قالب</span></div><div class="tl-body">${L.length ? libCards(L, false) : `<div class="hint">لا قوالب مطابقة.</div>`}</div>`;
+      body = `<div class="tl-fb"><label>الميدان ${sel("fld", [["all", "عرض الكل"]].concat(flds.map(f => [f, f])))}</label><label>القالب ${sel("type", LTYPES)}</label><input id="tl-q" type="search" placeholder="🔍 بحث في القوالب" value="${esc(LS.q)}" oninput="AdminNav.libSet('q',this.value)"><span class="hint" style="margin:0">${L.length} قالب</span></div><div class="tl-body">${L.length ? libCards(L, false) : `<div class="hint">لا قوالب مطابقة.</div>`}</div>`;
     } else if (v === "mine") {
       body = `<div class="tl-body">${MYL.length ? libCards(MYL, true) : `<div class="ap-sec"><b>لا قوالب بعد</b><div class="hint">قوالبك المحمَّلة من ملف أو المنشأة من صفحاتك تظهر هنا. ابدأ من «تحميل قالب».</div><button class="small gold" onclick="AdminNav.libSet('v','load')">+ تحميل قالب</button></div>`}</div>`;
     } else {
@@ -153,7 +152,7 @@ const AdminNav = (() => {
     let page;
     if (x.file) { const r = await fetch("assets/pages/templates/" + x.file + ".json?t=" + Date.now()); if (!r.ok) throw new Error("القالب غير موجود"); page = PBAdmin.fresh(await r.json()); }
     else { let secs = x.b(); if (!Array.isArray(secs)) secs = [secs]; page = PB.newPage(x.n, ""); page.sections = secs; }
-    const slug = (builderOpen() && PBApp.E.page.product) || ((typeof Admin !== "undefined" && Admin.products && Admin.products[0]) || {}).slug || "";
+    const slug = (builderOpen() && PBApp.E.page.product) || ((typeof Admin !== "undefined" && Admin.products && Admin.products[0]) || {}).slug || ((typeof PRODUCTS !== "undefined" && PRODUCTS[0]) || {}).slug || "";
     const fill = n => { (n.cols || []).forEach(fill); (n.widgets || []).forEach(w => { if (w.type === "orderorig" && w.set && !w.set.prod && slug) w.set.prod = slug; fill(w); }); (n.free || []).forEach(fill); };
     (page.sections || []).forEach(fill); return page;
   }
@@ -473,7 +472,7 @@ const AdminNav = (() => {
     let body = "";
     if (t === "load") {
       await myLoad();
-      body = `<div class="ap-sec"><b>مكتبة القوالب</b><div class="hint" style="margin:0 0 .5rem">كل شيء في نافذة واحدة: تصفّح القوالب بقوائم الفلترة، <b>قوالبي</b> (المحمَّلة والمنشأة)، و<b>تحميل قالب</b> (استيراد ملف أو حفظ صفحة كقالب). وفي معاينة كل قالب: معاينة حقيقية / تعديل القالب / تثبيت القالب.</div><div class="action-bar"><button class="small" onclick="AdminNav.libOpen()">فتح مكتبة القوالب</button><button class="small gold" onclick="AdminNav.libOpen('mine')">⭐ قوالبي (${(MY.items || []).length})</button><button class="small" onclick="AdminNav.libOpen('load')">⬆ تحميل قالب</button></div></div>`;
+      body = `<div class="ap-sec"><b>مكتبة القوالب</b><div class="hint" style="margin:0 0 .5rem">كل شيء في نافذة واحدة: تصفّح القوالب بقوائم الفلترة، <b>قوالبي</b> (المحمَّلة والمنشأة)، و<b>تحميل قالب</b> (استيراد ملف أو حفظ صفحة كقالب). وفي معاينة كل قالب: معاينة حقيقية / تعديل القالب / تثبيت القالب.</div><div class="action-bar"><button class="small" onclick="AdminNav.libOpen()">مكتبة القوالب</button><button class="small gold" onclick="AdminNav.libOpen('mine')">⭐ قوالبي (${(MY.items || []).length})</button><button class="small" onclick="AdminNav.libOpen('load')">⬆ تحميل قالب</button></div></div>`;
     } else if (t === "clone") {
       const o = off("cloner");
       body = `<div class="ap-sec"><b>ناسخ القوالب</b><div>${esc(APPS.cloner.d)}</div><ol>${APPS.cloner.how.map(x => "<li>" + esc(x) + "</li>").join("")}</ol><div class="action-bar" style="margin-top:.5rem"><button class="small" onclick="AdminNav.clone()" ${o ? "disabled" : ""}>فتح ناسخ القوالب</button><button class="small gray" onclick="AdminNav.group('apps');AdminNav.app('cloner',document.querySelector('.nav-btn[data-app=cloner]'))">إعدادات التطبيق</button></div>${o ? '<div class="hint">الناسخ معطّل من إعدادات التطبيقات.</div>' : ""}</div>`;

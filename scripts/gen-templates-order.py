@@ -12,7 +12,7 @@ head = C([
     W("stock", smode="manual", sn=9, smax=40, stx="🔥 بقيت {n} قطع فقط بسعر العرض!", color="#ffffff", sbgc="#ffffff22", fs=dm(18, 15), fxs=[stockbar(k)], **anim("fadeUp", .7, .3)),
 ], w=100)
 body = C([W("coupon", cpcode="FLASH20", cpt="كود خصم إضافي 20% لأول طلب", cpbtn="نسخ الكود", cpbg="#ffffff14", cpbc="#fde047", cpc="#ffffff", cpb="#f97316", fxs=[couponfx("#fde047")], **anim("fadeUp", .7)),
-          orderw(fxs=[rotborder(k, "#fde047", "#f43f5e", 3, 4, 22), FX("بطاقة بيضاء ناعمة", "selector{background:#fff;border-radius:22px;padding:6px;box-shadow:0 30px 80px rgba(0,0,0,.45)}")], **anim("fadeUp", .8, .1))], w=100)
+          orderw(fxs=[rotborder(k, "#fde047", "#f43f5e", 4, 3, 28), FX("بطاقة نارية داكنة", "selector{background:linear-gradient(145deg,#7c2d12,#3b0a0a);border-radius:28px;padding:20px;box-shadow:0 30px 80px rgba(249,115,22,.4)}")], **anim("fadeUp", .8, .1))], w=100)
 body["set"]["pad"] = dm([0, 0, 0, 0]); head["set"]["pad"] = dm([0, 0, 24, 0])
 reg("o-flash", "order", "عروض", "طلب بعرض فلاش", "خلفية نارية متحركة، عدّاد تنازلي متوهج، شريط مخزون يلمع، كوبون نابض، ونموذج الطلب بإطار متوهج دوّار.",
     [S([head, body], cw={"d": 860}, pad=dm([70, 20, 90, 20], [44, 16, 56, 16]), fxs=[aurora(k, "#450a0a", "#ef444499", "#f9731699", "#facc1566", 12), blobs(k, "#f97316", "#e11d48", 320, .45)])])
@@ -25,7 +25,7 @@ ben = C([
     W("bullets", items="جودة أصلية مضمونة 100%\nتوصيل سريع لجميع الولايات\nالدفع عند الاستلام بعد المعاينة\nإمكانية الاستبدال خلال 7 أيام\nدعم متواصل عبر واتساب", micon="ic:check-circle", mc="#f5d77a", ms=dm(24), gap=dm(14), fs=dm(19, 16), color="#f1ead2", manim="pop", **anim("fadeUp", .7, .1)),
     W("tbadges", items="ضمان الجودة\nتوصيل مؤمَّن", live=True, liveText="يشاهدون العرض الآن", lmin=9, lmax=26, cbg="#00000050", cc="#f5d77a", cbc="#c9992e", crad=dm(10), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .7, .2)),
 ], w=40, va="center")
-ordc = C([orderw(fxs=[goldborder("#c9992e"), FX("خلفية كريمية", "selector{background:#fffaf0;padding:8px;border-radius:8px}")], **anim("fadeUp", .8, .15))], w=60, va="center")
+ordc = C([orderw(fxs=[goldborder("#c9992e"), FX("بطاقة سوداء ذهبية", "selector{background:linear-gradient(160deg,#1f1708,#0c0a06);padding:12px;border-radius:4px;box-shadow:0 30px 70px rgba(0,0,0,.6)}")], **anim("fadeUp", .8, .15))], w=60, va="center")
 reg("o-lux", "order", "فخامة", "طلب فاخر داكن ذهبي", "قسم داكن بتوهّج دافئ ومزايا بلمعان ذهبي وشارات حيّة بجانب نموذج الطلب بحد ذهبي مزدوج.",
     [S([ben, ordc], pad=dm([90, 20, 90, 20], [56, 16, 56, 16]), gap={"d": 40}, fxs=[FX("خلفية سوداء بتدرّج دافئ", "selector{background:radial-gradient(80% 90% at 15% 10%,#2b2110,#0c0a06 60%),#0c0a06}"), spotlight(k, "rgba(201,153,46,.2)")])])
 
@@ -38,7 +38,7 @@ SOL = lambda: [FX("خلفية هادئة", "selector{background:#f4f7ff}")]
 reg("o-steps", "order", "عام", "طلب بثلاث خطوات", "خلفية هادئة، ثلاث بطاقات خطوات يربطها خط متقطع، ونموذج طلب بإطار دوّار وشارات ضمان.",
     [S([head], pad=dm([80, 20, 10, 20], [48, 16, 10, 16]), fxs=SOL()),
      S(steps, pad=dm([10, 20, 20, 20]), gap={"d": 20}, fxs=SOL() + [timeline("#2563eb")]),
-     S([C([orderw(fxs=[rotborder(k, "#2563eb", "#db2777", 2, 5, 22), FX("بطاقة ناصعة", "selector{background:#fff;border-radius:22px;padding:8px;box-shadow:0 30px 70px rgba(37,99,235,.18)}")], **anim("fadeUp", .8)),
+     S([C([orderw(fxs=[rotborder(k, "#38bdf8", "#2563eb", 2, 7, 12), FX("بطاقة زرقاء ليلية", "selector{background:linear-gradient(160deg,#0f2a5f,#0a1733);border:2px solid #38bdf8;border-radius:12px;padding:20px;box-shadow:0 24px 60px rgba(37,99,235,.3)}")], **anim("fadeUp", .8)),
          W("tbadges", items="دفع عند الاستلام\nتوصيل 58 ولاية\nاستبدال خلال 7 أيام", live=False, cbg="#ffffff", cc="#334155", cbc="#e0e7ff", crad=dm(999), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeUp", .8, .2))], w=100)],
        cw={"d": 900}, pad=dm([20, 20, 90, 20], [16, 16, 56, 16]), fxs=SOL())])
 
@@ -48,7 +48,7 @@ head = C([H("اختر باقتك ووفّر أكثر", 44, 30, "#ffffff", fxs=[g
 prods = C([W("products", mode="all", limit=3, btn="اطلب الآن", showOld=True, cardw=dm(300, 220), gap=dm(22), rad=dm(22), cbg="#ffffffee", bbg="#16a34a",
              fxs=[lift(".pb-pc", "rgba(0,0,0,.35)", -10, 3), FX("سعر بارز", "selector .pb-pcp{font-weight:900}")], **anim("fadeUp", .8, .1))], w=100)
 body = C([W("coupon", cpcode="PACK15", cpt="وفّر 15% عند اختيار أي باقة", cpbtn="نسخ الكود", cpbg="#ffffff18", cpbc="#86efac", cpc="#ffffff", cpb="#16a34a", fxs=[couponfx("#86efac")], **anim("zoomIn", .7)),
-          orderw(fxs=[rotborder(k, "#86efac", "#67e8f9", 3, 5, 22), FX("بطاقة بيضاء", "selector{background:#fff;border-radius:22px;padding:6px;box-shadow:0 30px 80px rgba(0,0,0,.4)}")], **anim("fadeUp", .8, .1))], w=100)
+          orderw(fxs=[rotborder(k, "#16a34a", "#fde047", 3, 5, 18), FX("بطاقة خضراء عميقة", "selector{background:linear-gradient(160deg,#064e3b,#022c22);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.4)}")], **anim("fadeUp", .8, .1))], w=100)
 for c_ in (head, prods): c_["set"]["pad"] = dm([0, 0, 28, 0])
 reg("o-bundle", "order", "متجر", "طلب باقات وكوبون", "قسم أخضر بأورورا يعرض منتجات المتجر ببطاقات ترتفع بالمرور، كوبون متوهج ثم نموذج الطلب بإطار دوّار.",
     [S([head, prods, body], pad=dm([80, 20, 90, 20], [48, 16, 56, 16]), fxs=[aurora(k, "#052e16", "#22c55e88", "#06b6d466", "#a3e63555", 16), blobs(k, "#22c55e", "#06b6d4", 340, .35)])])
@@ -65,5 +65,5 @@ cta = W("addcart", t="اطلب الآن — الدفع عند الاستلام",
 head["set"]["pad"] = dm([0, 0, 24, 0])
 for c_ in cnt + tes: c_["set"]["pad"] = dm([0, 0, 26, 0])
 reg("o-proof", "order", "عام", "طلب بإثبات اجتماعي", "عدّادات بتدرّج، آراء زبائن زجاجية ترتفع بالمرور، شارة «يشترون الآن»، زر نابض ثم نموذج الطلب.",
-    [S([head] + cnt + tes + [COL([cta], 100, 24), COL([orderw(fxs=[rotborder(k, "#a78bfa", "#22d3ee", 2, 5, 22), FX("بطاقة بيضاء", "selector{background:#fff;border-radius:22px;padding:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}")], w=dm(72, 100), al={"d": "center"}, **anim("fadeUp", .8))], 100, 0)],
+    [S([head] + cnt + tes + [COL([cta], 100, 24), COL([orderw(fxs=[rotborder(k, "#a78bfa", "#f472b6", 3, 6, 34), FX("بطاقة بنفسجية داكنة", "selector{background:linear-gradient(145deg,#2e1065,#1e1b4b);border-radius:34px;padding:24px;box-shadow:0 30px 80px rgba(124,58,237,.45)}")], w=dm(72, 100), al={"d": "center"}, **anim("fadeUp", .8))], 100, 0)],
        pad=dm([80, 20, 90, 20], [48, 16, 56, 16]), fxs=[aurora(k, "#0b0620", "#7c3aed88", "#06b6d466", "#db277755", 20), blobs(k, "#7c3aed", "#db2777", 340, .3)])])
