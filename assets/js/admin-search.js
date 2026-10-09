@@ -14,6 +14,7 @@ const AdminSearch = (() => {
     ["تحديث اللوحة", "جلب آخر نسخة منشورة", () => typeof AdminUpdate !== "undefined" && AdminUpdate.apply(), "تحديث نسخة"],
     ["فتح العملاء", "عرض شرائح العملاء وسجلّ طلباتهم", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'customers'")); if (b) b.click(); }, "عملاء زبائن"],
     ["فتح التقارير", "عرض التقارير المتقدمة حسب الفترة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'reports'")); if (b) b.click(); }, "تقارير مبيعات فئة ولاية حملة قمع"],
+    ["فتح المرتجعات", "تسجيل ومتابعة مرتجعات الطلبات المسلَّمة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'returns'")); if (b) b.click(); }, "مرتجعات استبدال استرداد إعادة المخزون"],
   ];
   function build() {
     if (box) return;
