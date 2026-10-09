@@ -62,24 +62,136 @@ const AdminNav = (() => {
     { id: "o-trust", cat: "order", fld: "صحة وعسل", n: "ضمانات + شارات ثقة + نموذج الطلب", d: "بطاقات الدفع عند الاستلام والتوصيل ثم شارات الثقة ونموذج الطلب.", b: dflt(["assure", "trust", "order"]) },
     { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
   ];
-  const LS = { cat: "all", fld: "all" }; let LIBX = null; const V = "1.76.1";
+  /* ══ قوالبي: القوالب المحمَّلة (استيراد JSON) أو المنشأة (صفحة محفوظة كقالب) — assets/data/mytpl.json (GitHub/PHP) أو localStorage ══ */
+  const MY = { items: null, sha: undefined }, MYF = "assets/data/mytpl.json", MYLS = "alyssum_mytpl";
+  const myOn = () => { try { return (typeof PHPAPI !== "undefined" && PHPAPI.on()) || (typeof GH !== "undefined" && GH.cfg && GH.cfg() && GH.cfg().token); } catch (e) { return false; } };
+  async function myLoad(force) {
+    if (MY.items && !force) return; MY.items = [];
+    try { const l = JSON.parse(localStorage.getItem(MYLS) || "null"); if (l && Array.isArray(l.items)) MY.items = l.items; } catch (e) { }
+    if (myOn()) { try { const f = await GH.getFile(MYF); MY.sha = f.sha; const j = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); if (j && Array.isArray(j.items)) MY.items = j.items; } catch (e) { MY.sha = undefined; } }
+  }
+  async function myPersist() {
+    const json = JSON.stringify({ items: MY.items });
+    try { localStorage.setItem(MYLS, json); } catch (e) { }
+    if (myOn()) { const r = await GH.putFile(MYF, btoa(unescape(encodeURIComponent(json))), MY.sha, "حفظ قوالبي"); MY.sha = r && r.content ? r.content.sha : MY.sha; }
+  }
+  async function mySave(name, page, src) {
+    await myLoad(); const it = { id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 4), n: String(name || "قالب بلا اسم").slice(0, 80), src, date: new Date().toISOString().slice(0, 10), page };
+    MY.items.unshift(it);
+    try { await myPersist(); } catch (e) { MY.items.shift(); throw e; }
+    return it;
+  }
+  const myAsLib = it => ({ id: "my:" + it.id, my: true, cat: "page", fld: "قوالبي", n: it.n, d: (it.src === "import" ? "محمَّل من ملف" : "منشأ من صفحة") + " · " + (it.date || "") + " · " + (((it.page && it.page.sections) || []).length) + " قسم", file: null, page: it.page });
+  function tplFind(id) { if (String(id).startsWith("my:")) { const it = (MY.items || []).find(q => "my:" + q.id === id); return it ? myAsLib(it) : null; } return libAll().find(q => q.id === id); }
+  const LS = { cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.76.1";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
-  async function libOpen() { await libLoad(); LS.cat = "all"; LS.fld = "all"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
+  async function libOpen(view) { await libLoad(); await myLoad(); LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
   function libClose() { const m = $("tl-lib"); if (m) m.style.display = "none"; }
-  function libSet(k, v) { LS[k] = v; libDraw(); }
-  function libDraw() {
-    const m = $("tl-lib"); if (!m) return; const ALL = libAll(), flds = [...new Set(ALL.map(x => x.fld))], L = ALL.filter(x => (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld));
-    const chip = (k, v, l) => `<button type="button" class="${LS[k] === v ? "on" : ""}" onclick="AdminNav.libSet('${k}','${v}')">${esc(l)}</button>`;
-    m.innerHTML = `<div class="tl-box"><div class="tl-top"><h3>مكتبة القوالب</h3><button type="button" class="small gray" onclick="AdminNav.libClose()">إغلاق</button></div>
-<div class="ap-tabs">${LCATS.map(x => chip("cat", x[0], x[1])).join("")}</div>
-<div class="tl-fl"><b>الميدان:</b>${chip("fld", "all", "عرض الكل")}${flds.map(f => chip("fld", f, f)).join("")}</div>
-<div class="tl-body">${L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c"><div class="tl-th" onclick="AdminNav.libView('${x.id}')" title="معاينة كبيرة"><img loading="lazy" alt="" src="assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}" onerror="this.parentNode.classList.add('none')"><span>معاينة</span></div><div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div><div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div>${x.alyssum ? `<div class="tl-act"><button type="button" class="small" onclick="AdminNav.alyPreview()">معاينة</button><button type="button" class="small" onclick="AdminNav.alyEdit()">تعديل</button><button type="button" class="small gold" onclick="AdminNav.alyInstall()">تثبيت</button></div>` : `<div class="tl-actions"><button type="button" class="small pri" onclick="AdminNav.libPreview('${x.id}')">👁 معاينة حقيقية</button><button type="button" class="small" onclick="AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button></div>`}</div>`).join("")}</div>` : `<div class="hint">لا قوالب في هذا الميدان/القسم بعد.</div>`}</div></div>`;
+  function libSet(k, v) { LS[k] = v; if (k === "q") { libDraw(true); return; } libDraw(); }
+  const TACT = id => `<button type="button" class="small pri" onclick="AdminNav.tplPreview('${id}')">👁 معاينة حقيقية</button><button type="button" class="small" onclick="AdminNav.tplEdit('${id}')">✏️ تعديل القالب</button><button type="button" class="small gold" onclick="AdminNav.tplInstall('${id}')">📌 تثبيت القالب</button>`;
+  function libCards(L, mine) {
+    return L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c">${mine ? `<div class="tl-th none-th">🗂</div>` : `<div class="tl-th" onclick="AdminNav.libView('${x.id}')" title="معاينة كبيرة"><img loading="lazy" alt="" src="assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}" onerror="this.parentNode.classList.add('none')"><span>معاينة كبيرة</span></div>`}<div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div>${mine ? "" : `<div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div>`}<div class="tl-actions">${TACT(x.id)}</div>${mine ? `<div class="tl-act" style="margin-top:.4rem"><button type="button" class="small gray" onclick="AdminNav.myDl('${x.id.slice(3)}')">⬇ تنزيل JSON</button><button type="button" class="small red" onclick="AdminNav.myDel('${x.id.slice(3)}')">🗑 حذف</button></div>` : ""}</div>`).join("")}</div>` : "";
+  }
+  function libDraw(keepFocus) {
+    const m = $("tl-lib"); if (!m) return; const v = LS.v, MYL = (MY.items || []).map(myAsLib);
+    const tab = (k, l) => `<button type="button" class="${v === k ? "on" : ""}" onclick="AdminNav.libSet('v','${k}')">${l}</button>`;
+    let body = "";
+    if (v === "lib") {
+      const ALL = libAll(), flds = [...new Set(ALL.map(x => x.fld))], q = LS.q.trim().toLowerCase();
+      const L = ALL.filter(x => (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld) && (!q || (x.n + " " + x.d + " " + x.fld).toLowerCase().includes(q)));
+      const sel = (k, opts) => `<select onchange="AdminNav.libSet('${k}',this.value)">${opts.map(o => `<option value="${esc(o[0])}"${LS[k] === o[0] ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`;
+      body = `<div class="tl-fb"><label>القسم ${sel("cat", LCATS)}</label><label>الميدان ${sel("fld", [["all", "عرض الكل"]].concat(flds.map(f => [f, f])))}</label><input id="tl-q" type="search" placeholder="🔍 بحث في القوالب" value="${esc(LS.q)}" oninput="AdminNav.libSet('q',this.value)"><span class="hint" style="margin:0">${L.length} قالب</span></div><div class="tl-body">${L.length ? libCards(L, false) : `<div class="hint">لا قوالب مطابقة.</div>`}</div>`;
+    } else if (v === "mine") {
+      body = `<div class="tl-body">${MYL.length ? libCards(MYL, true) : `<div class="ap-sec"><b>لا قوالب بعد</b><div class="hint">قوالبك المحمَّلة من ملف أو المنشأة من صفحاتك تظهر هنا. ابدأ من «تحميل قالب».</div><button class="small gold" onclick="AdminNav.libSet('v','load')">+ تحميل قالب</button></div>`}</div>`;
+    } else {
+      body = `<div class="tl-body"><div class="ap-sec"><b>استيراد قالب من ملف</b><div class="hint" style="margin:0 0 .4rem">ملف JSON صدّرته من متجر آخر أو من هنا — يُحفظ في «قوالبي».</div><button class="small gold" onclick="AdminNav.myImport()">⬆ استيراد قالب (JSON)</button></div>
+<div class="ap-sec"><b>إنشاء قالب من صفحة</b><div class="hint" style="margin:0 0 .4rem">احفظ تصميم صفحة كقالب في «قوالبي» لتعيد استعماله.</div><div class="action-bar" id="tl-pgs"><button class="small" onclick="AdminNav.mySavePage()">💾 حفظ الصفحة المفتوحة في المطوّر</button></div><div id="tl-pglist" class="hint">⏳ جارِ تحميل صفحاتك المنشورة…</div></div></div>`;
+      setTimeout(loadPgList, 0);
+    }
+    m.innerHTML = `<div class="tl-box"><div class="tl-top"><h3>مكتبة القوالب</h3><button type="button" class="small gray" onclick="AdminNav.libClose()">إغلاق</button></div><div class="ap-tabs">${tab("lib", "المكتبة")}${tab("mine", "⭐ قوالبي (" + MYL.length + ")")}${tab("load", "⬆ تحميل قالب")}</div>${body}</div>`;
+    if (keepFocus) { const i = $("tl-q"); if (i) { i.focus(); try { i.setSelectionRange(i.value.length, i.value.length); } catch (e) { } } }
+  }
+  async function loadPgList() {
+    let pages = []; try { const r = await fetch("assets/pages/index.json?t=" + Date.now(), { cache: "no-store" }); pages = r.ok ? await r.json() : []; } catch (e) { }
+    const el = $("tl-pglist"); if (!el) return;
+    el.innerHTML = pages.length ? `<div class="tl-g">${pages.map(p => `<div class="tl-c"><b>${esc(p.title || p.slug)}</b><div class="hint" dir="ltr" style="margin:.1rem 0 .5rem">/lp/${esc(p.slug)}/</div><div class="tl-act"><button class="small" onclick="AdminNav.mySavePage('${esc(p.slug)}')">💾 حفظ كقالب</button><button class="small gray" onclick="PBAdmin.exportPage('${esc(p.slug)}')">⬇ JSON</button></div></div>`).join("")}</div>` : "لا توجد صفحات منشورة بعد.";
+  }
+  function myImport() {
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+    inp.onchange = async () => { try { const f = inp.files[0], p = JSON.parse(await f.text()); if (!p || !Array.isArray(p.sections)) throw new Error("ملف قالب غير صالح (لا أقسام)"); await mySave(p.title || f.name.replace(/\.json$/i, ""), p, "import"); toast("✅ حُفظ في «قوالبي»"); LS.v = "mine"; libDraw(); } catch (e) { toast("❌ " + e.message); } };
+    inp.click();
+  }
+  const builderOpen = () => !!(typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page && $("pb-app") && $("pb-app").classList.contains("on"));
+  async function mySavePage(slug) {
+    try {
+      let page, name;
+      if (slug) { page = await PBAdmin.load(slug); name = page.title || slug; }
+      else { if (!builderOpen()) { toast("افتح صفحة في المطوّر أولاً، أو اختر إحدى صفحاتك المنشورة"); return; } page = JSON.parse(PBApp.pageJson()); name = page.title || "صفحة"; }
+      const nm = prompt("اسم القالب:", name); if (!nm) return;
+      page = JSON.parse(JSON.stringify(page)); delete page.slug; await mySave(nm, page, "page"); toast("✅ حُفظ «" + nm + "» في «قوالبي»"); LS.v = "mine"; libDraw();
+    } catch (e) { toast("❌ " + e.message); }
+  }
+  async function myDel(id) { const it = (MY.items || []).find(q => q.id === id); if (!it || !confirm("حذف قالب «" + it.n + "» من «قوالبي»؟")) return; const old = MY.items; MY.items = old.filter(q => q.id !== id); try { await myPersist(); libDraw(); } catch (e) { MY.items = old; toast("❌ " + e.message); } }
+  function myDl(id) { const it = (MY.items || []).find(q => q.id === id); if (!it) return; const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(it.page, null, 1)], { type: "application/json" })); a.download = "template-" + it.n.replace(/[^\w؀-ۿ-]+/g, "-") + ".json"; a.click(); }
+  /* الصفحة الكاملة للقالب (جاهزة للمعاينة/التعديل) من ملفه أو بنائه أو «قوالبي» */
+  async function tplPageOf(x) {
+    if (x.my) return PBAdmin.fresh(Object.assign(PB.newPage(x.n, ""), JSON.parse(JSON.stringify(x.page))));
+    if (x.alyssum) return await alyLoad();
+    let page;
+    if (x.file) { const r = await fetch("assets/pages/templates/" + x.file + ".json?t=" + Date.now()); if (!r.ok) throw new Error("القالب غير موجود"); page = PBAdmin.fresh(await r.json()); }
+    else { let secs = x.b(); if (!Array.isArray(secs)) secs = [secs]; page = PB.newPage(x.n, ""); page.sections = secs; }
+    const slug = (builderOpen() && PBApp.E.page.product) || ((typeof Admin !== "undefined" && Admin.products && Admin.products[0]) || {}).slug || "";
+    const fill = n => { (n.cols || []).forEach(fill); (n.widgets || []).forEach(w => { if (w.type === "orderorig" && w.set && !w.set.prod && slug) w.set.prod = slug; fill(w); }); (n.free || []).forEach(fill); };
+    (page.sections || []).forEach(fill); return page;
+  }
+  const hideView = () => { try { $("tl-view").style.display = "none"; } catch (_) { } };
+  /* معاينة حقيقية: الصفحة كما تظهر للزبون (ببيانات المتجر أو تجريبية للقوالب) في نافذة بأجهزتها وأزرار تعديل/تثبيت */
+  async function tplPreview(id) {
+    const x = tplFind(id); if (!x) return;
+    try {
+      hideView(); libClose(); toast("⏳ جارِ تحضير المعاينة…");
+      const page = await tplPageOf(x), dir = location.href.replace(/[^/]*$/, "");
+      const html = PB.fullHtml(PB.migrate(page), Object.assign({ base: "", baseHref: dir, demo: true }, PBApp.siteCtx()));
+      SitePreview.openHtml(html, { title: "معاينة: " + x.n, edit: () => tplEdit(id), editLabel: "✏️ تعديل القالب", install: () => tplInstall(id), installLabel: "📌 تثبيت القالب" });
+    } catch (e) { toast("تعذّرت المعاينة: " + e.message); }
+  }
+  async function tplEdit(id) {
+    const x = tplFind(id); if (!x) return;
+    try { try { SitePreview.close(); } catch (_) { } hideView(); libClose(); const page = await tplPageOf(x); page.title = x.n; PBApp.open(page, "", true); toast("✅ فُتح القالب في المطوّر — عدّل ثم «حفظ ونشر» (ولا يُنشر شيء قبل ذلك)"); }
+    catch (e) { toast("تعذّر الفتح: " + e.message); }
+  }
+  /* تثبيت القالب: نافذة خيارات بحسب النوع (متجر ← الرئيسية/صفحات المنتجات، وغيره ← إضافة لصفحة مفتوحة/صفحة جديدة) */
+  function tplInstall(id) {
+    const x = tplFind(id); if (!x) return; try { SitePreview.close(); } catch (_) { } hideView(); libClose();
+    let d = $("tl-inst"); if (!d) { d = document.createElement("div"); d.id = "tl-inst"; d.onclick = e => { if (e.target === d) d.style.display = "none"; }; document.body.appendChild(d); }
+    const open = builderOpen(), qa = JSON.stringify(id).replace(/"/g, "&quot;");
+    const b = (l, h, t) => `<button type="button" class="small ${t || ""}" onclick="document.getElementById('tl-inst').style.display='none';${h}">${l}</button>`;
+    d.innerHTML = `<div class="ti-box"><h3>تثبيت «${esc(x.n)}»</h3><div class="hint">اختر أين يُثبَّت. لا يُنشر شيء إلا بعد «حفظ ونشر» في المطوّر، أما صفحات المنتجات فتُنشر مباشرة بعد تأكيد منك.</div><div class="ti-act">${x.cat === "store" && !x.my ? b("🏠 على الصفحة الرئيسية", `AdminNav.tplInstallHome(${qa})`, "gold") + b("🛍 على صفحات المنتجات", x.alyssum ? "AdminNav.alyInstallProductsUi()" : `AdminNav.tplInstallProductsUi(${JSON.stringify(x.file).replace(/"/g, "&quot;")})`, "gold") : b(open ? "➕ إضافة إلى الصفحة المفتوحة" : "📄 فتح كصفحة جديدة", `AdminNav.tplAdd(${qa})`, "gold") + (open ? b("📄 كصفحة جديدة", `AdminNav.tplEdit(${qa})`) : "")}${b("إلغاء", "", "gray")}</div></div>`;
+    d.style.display = "flex";
+  }
+  async function tplAdd(id) {
+    const x = tplFind(id); if (!x) return;
+    try { const page = await tplPageOf(x); if (builderOpen()) PBApp.insertSections(page.sections, "قالب: " + x.n); else { page.title = x.n; PBApp.open(page, "", true); } }
+    catch (e) { toast("تعذّر التثبيت: " + e.message); }
+  }
+  /* تثبيت قالب متجر على الرئيسية: أقسامه وCSS الخاص به تحل محل الرئيسية في المطوّر (غير منشور حتى «حفظ ونشر»؛ وتبقى نسخة الاسترجاع) */
+  async function tplInstallHome(id) {
+    const x = tplFind(id); if (!x) return;
+    if (!confirm("تثبيت قالب «" + x.n + "» على الصفحة الرئيسية:\n\n• تُستبدل أقسام الرئيسية بأقسام القالب (هيدر/محتوى/فوتر) ويُربط بمنتجاتك وفئاتك\n• يُفتح في المطوّر؛ لا يُنشر شيء إلا بعد «حفظ ونشر» (وتُحفظ نسخة من الرئيسية الحالية للاسترجاع)\n\nمتابعة؟")) return;
+    try {
+      libClose(); toast("⏳ جارِ تثبيت القالب…"); if (x.alyssum) { try { ALYD = await alyDeal(); } catch (_) { ALYD = null; } }
+      const page = alyLocalize(await tplPageOf(x));
+      await PBConvert.edit("home"); const P = PBApp.E && PBApp.E.page; if (!P) throw new Error("تعذّر فتح الرئيسية في المطوّر");
+      P.sections = page.sections; P.tplCss = page.css || ""; P.demo = !!page.demo; P.title = "الصفحة الرئيسية";
+      PBApp.E.nextLabel = "تثبيت قالب " + x.n; PBApp.E.dirty = true; PBApp.commitAfter(P.sections[0].id);
+      toast("✅ ثُبّت القالب — راجعه ثم «حفظ ونشر»");
+    } catch (e) { toast("تعذّر التثبيت: " + e.message); }
   }
   function libView(id) {
-    const x = libAll().find(q => q.id === id); if (!x) return; let v = $("tl-view");
+    const x = tplFind(id); if (!x) return; let v = $("tl-view");
     if (!v) { v = document.createElement("div"); v.id = "tl-view"; v.onclick = e => { if (e.target === v) v.style.display = "none"; }; document.body.appendChild(v); }
-    v.innerHTML = `<div class="tv-box"><div class="tv-top"><b>${esc(x.n)}</b><span>${x.alyssum ? `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyPreview()">معاينة</button> <button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyEdit()">تعديل</button> <button type="button" class="small gold" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyInstall()">تثبيت على الرئيسية</button> <button type="button" class="small gold" title="يطبّق أسلوب أليسوم (الهيدر والفوتر والخلفية والزجاج الأخضر) على كل صفحات المنتجات مع حفظ الأصل للاسترجاع" onclick="document.getElementById('tl-view').style.display='none';AdminNav.alyInstallProductsUi()">تثبيت على صفحات المنتجات</button>` : `<button type="button" class="small" onclick="document.getElementById('tl-view').style.display='none';AdminNav.libUse('${x.id}')">${x.cat === "store" ? "فتح كصفحة جديدة" : "إضافة إلى الصفحة"}</button>${x.cat === "store" && x.file ? ` <button type="button" class="small" title="يفتح صفحة منتج من متجرك بتصميم هذا القالب دون حفظ" onclick="document.getElementById('tl-view').style.display='none';AdminNav.tplProductPreview('${x.file}')">معاينة على منتج</button> <button type="button" class="small gold" title="يطبّق هيدر وفوتر وألوان هذا القالب على كل صفحات المنتجات وينشرها" onclick="document.getElementById('tl-view').style.display='none';AdminNav.tplInstallProductsUi('${x.file}')">تثبيت على صفحات المنتجات</button>` : ""}`} <button type="button" class="small gray" onclick="document.getElementById('tl-view').style.display='none'">إغلاق</button></span></div><div class="tv-body"><img alt="" src="assets/pages/templates/thumbs/${esc(x.id)}-full.jpg?v=${V}" onerror="this.onerror=null;this.src='assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}'"></div></div>`;
+    v.innerHTML = `<div class="tv-box"><div class="tv-top"><b>${esc(x.n)}</b><span>${TACT(x.id)} <button type="button" class="small gray" onclick="document.getElementById('tl-view').style.display='none'">إغلاق</button></span></div><div class="tv-body"><img alt="" src="assets/pages/templates/thumbs/${esc(x.id)}-full.jpg?v=${V}" onerror="this.onerror=null;this.src='assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}'"></div></div>`;
     v.style.display = "flex";
   }
   /* ══ قالب «أليسوم»: معاينة (نافذة بأجهزتها) / تعديل (في المطوّر) / تثبيت (بصور المتجر وروابطه) ══ */
@@ -327,10 +439,8 @@ const AdminNav = (() => {
     const hd = `<div class="ap-h"><h3>القوالب</h3></div><div class="ap-tabs">${tabs.map(x => `<button type="button" class="${x[0] === t ? "on" : ""}" onclick="AdminNav.tplTab('${x[0]}')">${x[1]}</button>`).join("")}</div>`;
     let body = "";
     if (t === "load") {
-      let pages = []; try { const r = await fetch("assets/pages/index.json", { cache: "no-store" }); pages = r.ok ? await r.json() : []; } catch (e) { }
-      body = `<div class="ap-sec"><b>مكتبة القوالب</b><div class="hint" style="margin:0 0 .5rem">نماذج اتصال، نماذج طلبات وصفحات كاملة — تُعرض حسب الميدان أو كلها.</div><button class="small" onclick="AdminNav.libOpen()">فتح مكتبة القوالب</button></div>
-<div class="ap-sec"><b>استيراد قالب من ملف</b><div class="hint" style="margin:0 0 .4rem">ملف JSON صدّرته من متجر آخر أو من هنا.</div><button class="small gold" onclick="PBAdmin.importPage()">استيراد قالب (JSON)</button></div>
-<div class="ap-sec"><b>تنزيل صفحة كقالب</b>${pages.length ? `<div class="tl-g">${pages.map(p => `<div class="tl-c"><b>${esc(p.title || p.slug)}</b><div class="hint" dir="ltr" style="margin:.1rem 0 .5rem">/lp/${esc(p.slug)}/</div><button class="small gray" onclick="PBAdmin.exportPage('${esc(p.slug)}')">تنزيل JSON</button></div>`).join("")}</div>` : `<div class="hint">لا توجد صفحات منشورة بعد.</div>`}</div>`;
+      await myLoad();
+      body = `<div class="ap-sec"><b>مكتبة القوالب</b><div class="hint" style="margin:0 0 .5rem">كل شيء في نافذة واحدة: تصفّح القوالب بقوائم الفلترة، <b>قوالبي</b> (المحمَّلة والمنشأة)، و<b>تحميل قالب</b> (استيراد ملف أو حفظ صفحة كقالب). وفي معاينة كل قالب: معاينة حقيقية / تعديل القالب / تثبيت القالب.</div><div class="action-bar"><button class="small" onclick="AdminNav.libOpen()">فتح مكتبة القوالب</button><button class="small gold" onclick="AdminNav.libOpen('mine')">⭐ قوالبي (${(MY.items || []).length})</button><button class="small" onclick="AdminNav.libOpen('load')">⬆ تحميل قالب</button></div></div>`;
     } else if (t === "clone") {
       const o = off("cloner");
       body = `<div class="ap-sec"><b>ناسخ القوالب</b><div>${esc(APPS.cloner.d)}</div><ol>${APPS.cloner.how.map(x => "<li>" + esc(x) + "</li>").join("")}</ol><div class="action-bar" style="margin-top:.5rem"><button class="small" onclick="AdminNav.clone()" ${o ? "disabled" : ""}>فتح ناسخ القوالب</button><button class="small gray" onclick="AdminNav.group('apps');AdminNav.app('cloner',document.querySelector('.nav-btn[data-app=cloner]'))">إعدادات التطبيق</button></div>${o ? '<div class="hint">الناسخ معطّل من إعدادات التطبيقات.</div>' : ""}</div>`;
@@ -426,5 +536,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();
