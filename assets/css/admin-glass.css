@@ -321,3 +321,19 @@ html.glass #tl-lib .tl-fb select,html.glass #tl-lib .tl-fb input{background:rgba
 
 /* v1.89.1: رأس إعدادات العنصر (صورة/نص…) لاصق ويجب أن يكون معتماً كي لا يظهر المحتوى المتمرّر تحته */
 html.glass .pbx-ih{background:#0a1d16!important;background-image:none!important;border-bottom:1px solid rgba(134,240,106,.28)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* v1.89.3: شريط «تعديل الصورة» — العنوان أخضر باريز، وأيقونات الأدوات وأزرار التنفيذ زجاج شفاف منتفخ بأيقونة/نص أبيض */
+html.glass .pbx-ep .ep-h,html.glass .pbx-ep .ep-h b{color:#50e38a!important;font-size:1.02rem;font-weight:900;text-shadow:0 0 14px rgba(80,227,138,.35)}
+html.glass .pbx-ep .ep-h svg{color:#50e38a}
+html.glass .pbx-ep .ep-tabs{gap:.45rem}
+html.glass .pbx-ep .ep-tabs button{--t:74,222,128;color:#fff!important;font-size:.72rem;padding:.7rem .15rem .55rem;gap:.35rem;border-radius:14px;background:rgba(var(--t),.2)!important;border:1px solid rgba(var(--t),.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -8px 12px rgba(0,0,0,.2),0 6px 14px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:transform .2s,background .2s}
+html.glass .pbx-ep .ep-tabs button:nth-child(1){--t:59,130,246}
+html.glass .pbx-ep .ep-tabs button:nth-child(2){--t:168,85,247}
+html.glass .pbx-ep .ep-tabs button:nth-child(3){--t:251,146,60}
+html.glass .pbx-ep .ep-tabs button:nth-child(4){--t:74,222,128}
+html.glass .pbx-ep .ep-tabs button svg{width:28px;height:28px;color:#fff!important;stroke:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+html.glass .pbx-ep .ep-tabs button:hover{transform:translateY(-2px);background:rgba(var(--t),.34)!important}
+html.glass .pbx-ep .ep-tabs button.on{background:rgba(var(--t),.46)!important;border-color:rgba(255,255,255,.75)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.45),inset 0 -8px 12px rgba(0,0,0,.22),0 6px 16px rgba(0,0,0,.3)}
+html.glass .pbx-ep .pz-go,html.glass .pbx-ep .mk-go,html.glass .pbx-epf .ok{color:#fff!important;background:rgba(74,222,128,.26)!important;border:1px solid rgba(134,239,172,.6)!important;border-radius:12px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 10px rgba(0,0,0,.2),0 6px 14px rgba(0,0,0,.22);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:transform .2s,background .2s}
+html.glass .pbx-ep .pz-go svg,html.glass .pbx-ep .mk-go svg,html.glass .pbx-epf .ok svg{color:#fff;stroke:#fff}
+html.glass .pbx-ep .pz-go:hover,html.glass .pbx-ep .mk-go:hover,html.glass .pbx-epf .ok:hover{transform:translateY(-2px);background:rgba(74,222,128,.42)!important}
