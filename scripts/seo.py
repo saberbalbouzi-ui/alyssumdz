@@ -17,7 +17,9 @@ try:
 except (OSError, json.JSONDecodeError):
     seo = {}
 seo_products = seo.get("products") if isinstance(seo.get("products"), dict) else {}
-noindex = {str(x).strip().lower() for x in seo.get("noindex", []) if str(x).strip()}
+raw_noindex = seo.get("noindex", []) if isinstance(seo.get("noindex", []), list) else []
+noindex = {str(x).strip().lower() for x in raw_noindex if str(x).strip()}
+noindex_paths = {path_key(x) for x in noindex}
 
 def esc(s):
     return html.escape(str(s), quote=True)
@@ -28,8 +30,9 @@ def path_key(value):
     return "/" + value.strip("/")
 
 def excluded(slug, path):
-    keys = {str(slug or "").strip("/").lower(), path_key(path), path_key(path).lstrip("/")}
-    return any(k and (k in noindex or (k.startswith("/") and k[1:] in noindex)) for k in keys)
+    normalized = path_key(path)
+    keys = {str(slug or "").strip("/").lower(), normalized, normalized.lstrip("/")}
+    return any(k and k in noindex for k in keys) or normalized in noindex_paths
 
 def url_path(slug):
     return f"{BASE}/p/{slug}/"
@@ -41,13 +44,17 @@ def abs_img(value):
     return f"{BASE}/" + urllib.parse.quote(value.lstrip("/"))
 
 def robots_tag(text, enabled):
-    text = re.sub(r'<meta\s+name=["\']robots["\'][^>]*>\s*', "", text, flags=re.I)
-    return re.sub(r"</head>", '<meta name="robots" content="noindex">\n</head>', text, count=1, flags=re.I) if enabled else text
+    marker = r"<!--seo:noindex:start-->.*?<!--seo:noindex:end-->\s*"
+    text = re.sub(marker, "", text, flags=re.S)
+    if not enabled:
+        return text
+    block = '<!--seo:noindex:start--><meta name="robots" content="noindex"><!--seo:noindex:end-->\n'
+    return re.sub(r"</head>", block + "</head>", text, count=1, flags=re.I)
 
 live = [p for p in products if p.get("active", True) and p["slug"] != "test" and (ROOT / "p" / p["slug"] / "index.html").exists()]
 
 # Sitemap contains the home page plus active, published products and live page-builder pages.
-urls = [f"{BASE}/"]
+urls = [] if excluded("", "/") else [f"{BASE}/"]
 urls += [url_path(p["slug"]) for p in live if not excluded(p["slug"], f"/p/{p['slug']}/")]
 pages_path = ROOT / "assets/pages/index.json"
 pages = []
@@ -94,7 +101,7 @@ for p in live:
     block = (f'{S}\n<link rel="canonical" href="{esc(url_path(p["slug"]))}">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(SITE)}">\n'
              f'<meta property="og:type" content="product"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(url_path(p["slug"]))}">'
              + (f'<meta property="og:image" content="{esc(images[0])}">' if images else "") +
-             ( '<meta name="robots" content="noindex">' if no_idx else "") +
+             ( '<!--seo:noindex:start--><meta name="robots" content="noindex"><!--seo:noindex:end-->' if no_idx else "") +
              f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n{E}\n')
     text = text.replace("</head>", block + "</head>", 1)
     f.write_text(text, encoding="utf-8")
@@ -116,7 +123,7 @@ if site_desc:
         text = text.replace("</head>", meta + "\n</head>", 1)
 ld = {"@context": "https://schema.org", "@graph": [{"@type": "Organization", "name": site_title, "url": BASE + "/", "logo": BASE + "/assets/img/icon-512.png"},
                                                    {"@type": "WebSite", "name": site_title, "url": BASE + "/"}]}
-home_block = (f'{S}\n<link rel="canonical" href="{BASE}/">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(site_title)}"><meta property="og:url" content="{BASE}/">'
+home_block = (f'{S}\n<link rel="canonical" href="{BASE}/">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(site_title)}"><meta property="og:url" content="{BASE}/">' + ('<!--seo:noindex:start--><meta name="robots" content="noindex"><!--seo:noindex:end-->' if excluded("", "/") else "")
               + (f'<meta property="og:title" content="{esc(site_title)}"><meta property="og:description" content="{esc(site_desc)}">' if site_desc else "")
               + (f'<meta property="og:image" content="{esc(abs_img(seo.get("ogImage")))}">' if seo.get("ogImage") else "")
               + f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n{E}\n')
