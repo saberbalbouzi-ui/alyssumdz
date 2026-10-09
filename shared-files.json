@@ -26,6 +26,7 @@
     "assets/js/admin-yalidine.js",
     "assets/js/admin-returns.js",
     "assets/js/admin-payments.js",
+    "assets/js/admin-imgbatch.js",
     "assets/js/admin-shoppages.js",
     "assets/js/admin-reports.js",
     "assets/js/admin-audit.js",
