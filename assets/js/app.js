@@ -565,7 +565,7 @@ const AutoDisc = {
         const buyItems = items.filter(it => eligible(it, rule.buy));
         const buyQty = Math.max(1, Math.floor(Number(rule.buy && rule.buy.qty) || 1));
         const getQty = Math.max(1, Math.floor(Number(rule.get && rule.get.qty) || 1));
-        const times = Math.floor(buyItems.reduce((n, it) => n + it.qty, 0) / buyQty);
+        const times = Math.floor(buyItems.reduce((n, it) => n + it.qty, 0) / (buyQty + getQty));
         const getSelector = rule.get && rule.get.same ? rule.buy : { slugs: rule.get && rule.get.slug ? [rule.get.slug] : [] };
         const getItems = items.filter(it => eligible(it, getSelector));
         let free = Math.min(times * getQty, getItems.reduce((n, it) => n + it.qty, 0));
