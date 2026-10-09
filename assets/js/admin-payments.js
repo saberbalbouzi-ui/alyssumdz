@@ -118,7 +118,7 @@ const AdminPayments = (() => {
       $("pm-a-ok").onclick=async()=>{const a=rd(),tot=Math.round(Number(a.total)||0);if(!(tot>0)||!String(a.name).trim()&&!String(a.product).trim()){S.err="أدخل الاسم أو المنتج ومبلغاً أكبر من صفر.";draw();return;}
         const mid="m"+Date.now().toString(36);S.manual.push({id:mid,date:a.date||today(),name:String(a.name).trim().slice(0,80),phone:String(a.phone).trim().slice(0,30),product:String(a.product).trim().slice(0,160),total:tot});
         S.byOrder[mid]={status:"paid",amount:tot,date:a.date||today(),method:methods[a.method]?a.method:"cash",note:String(a.note||"").slice(0,300),manual:true};
-        S.add=null;S.addOpen=false;S.err="";const ok=await save();S.err=ok?(S.localOnly?"حُفظ محلياً فقط؛ لم يصل إلى الخادم.":""):S.err;draw();};
+        S.add=null;S.addOpen=false;S.err="";const ok=await save();S.err=ok?(S.localOnly?"حُفظ محلياً فقط؛ لم يُنشر بعد.":""):S.err;draw();};
     }
   }
   async function commit(oid) {
@@ -141,7 +141,7 @@ const AdminPayments = (() => {
     if(!it.manual&&!rec.status&&ov.name===it.name&&ov.phone===it.phone&&ov.product===it.product)delete S.byOrder[oid];
     else S.byOrder[oid]=Object.assign({},prev,rec);
     delete S.drafts[oid];S.err="";
-    const ok=await save();S.err=ok?(S.localOnly?"حُفظ محلياً فقط؛ لم يصل إلى الخادم.":""):S.err;draw();
+    const ok=await save();S.err=ok?(S.localOnly?"حُفظ محلياً فقط؛ لم يُنشر بعد.":""):S.err;draw();
   }
   async function resetAuto(oid) { if(!confirm("إعادة هذا الصف للحالة التلقائية من شركة التوصيل (يُمسح التعديل اليدوي)؟"))return; delete S.byOrder[oid];delete S.drafts[oid];const ok=await save();S.err=ok?"":S.err;draw(); }
   async function delManual(oid) { if(!confirm("حذف هذه الدفعة اليدوية؟"))return; S.manual=S.manual.filter(x=>String(x.id)!==oid);delete S.byOrder[oid];delete S.drafts[oid];S.selected.delete(oid);const ok=await save();S.err=ok?"":S.err;draw(); }
@@ -149,7 +149,7 @@ const AdminPayments = (() => {
     const chosen=[...S.selected], is=items().filter(it=>chosen.includes(it.id));
     if(!is.length)return;
     is.forEach(it=>{const r=Object.assign({},record(it),S.drafts[it.id]||{}),V=view(it),prev=S.byOrder[it.id]||{};r.status="paid";if(!(Number(r.amount)>0))r.amount=V.total;if(!r.date)r.date=today();r.method=methods[r.method]?r.method:"cod";S.byOrder[it.id]=Object.assign({},prev,{status:r.status,amount:r.amount,date:r.date,method:r.method,note:r.note||"",manual:true});delete S.drafts[it.id];});
-    S.selected.clear();S.err="";const ok=await save();S.err=ok?(S.localOnly?"حُفظت التغييرات محلياً فقط؛ لم تصل إلى الخادم.":""):S.err;draw();
+    S.selected.clear();S.err="";const ok=await save();S.err=ok?(S.localOnly?"حُفظت التغييرات محلياً فقط؛ لم تُنشر بعد.":""):S.err;draw();
   }
   async function render() { const host=$("payments-content");if(!host)return;host.innerHTML='<p class="pm-note">جارٍ تحميل سجلات الدفع…</p>';await load();draw(); }
   document.addEventListener("DOMContentLoaded",()=>{

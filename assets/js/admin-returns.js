@@ -39,7 +39,7 @@ const AdminReturns = (() => {
         const r=await GH.putFile(PATH,body,S.sha,"حفظ سجل المرتجعات"); S.sha=r && r.content && r.content.sha || S.sha;
       } else { localStorage.setItem(LOCAL,JSON.stringify(payload)); }
       S.localOnly=false; S.saving=false; return true;
-    } catch (e) { S.saving=false; S.localOnly=hasBackup; S.err="تعذّر حفظ المرتجعات على الخادم"+(hasBackup?"؛ حُفظت محلياً في هذا المتصفح":"، ولم تتوفر نسخة محلية")+": " + (e.message || ""); return hasBackup; }
+    } catch (e) { S.saving=false; S.localOnly=hasBackup; S.err="تعذّر حفظ المرتجعات"+(hasBackup?"؛ حُفظت محلياً في هذا المتصفح":"، ولم تتوفر نسخة محلية")+": " + (e.message || ""); return hasBackup; }
   }
   function deliveredAt(o) { return o && ((A().deliveredOf && A().deliveredOf(o)) || o.deliveredAt || o.deliveryDate || o.delivered_at || o.dateLivraison || o.date_livraison || o.date); }
   function withinReturnWindow(o) { const raw=S.order&&orderId(S.order)===orderId(o)&&S.deliveryDate?S.deliveryDate:deliveredAt(o), stamp=/^\d{4}-\d{2}-\d{2}$/.test(String(raw||""))?String(raw)+"T00:00:00":raw, t=new Date(stamp).getTime(), days=Math.max(1,Number(S.windowDays)||14); return Number.isFinite(t) && Date.now()>=t && Date.now()-t<days*86400000; }
@@ -142,7 +142,7 @@ const AdminReturns = (() => {
         updates.forEach(x=>{x.it.restocked=true;});
       }
       rec.receivedAt=new Date().toISOString();
-      if(!await save()){S.err="نُشر المخزون، لكن تعذّر حفظ سجل المرتجع على الخادم. النسخة المحلية محفوظة؛ لا تُعد نشر المخزون.";draw();return;}
+      if(!await save()){S.err="نُشر المخزون، لكن تعذّر حفظ سجل المرتجع. النسخة المحلية محفوظة؛ لا تُعد نشر المخزون.";draw();return;}
       S.err=S.localOnly?"تم نشر المخزون؛ حُفظ سجل المرتجع محلياً فقط. لا تُعد نشر المخزون.":"";draw();toast(updates.length?"تم استلام المرتجع وتحديث المخزون مرة واحدة":"تم تسجيل الاستلام؛ لم توجد منتجات ذات مخزون متتبَّع");return;
     }
     rec.status=next;if(!await save()){rec.status=old;S.err="تعذّر حفظ تغيير الحالة: "+S.err;draw();return;}

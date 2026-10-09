@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.20">
+<meta name="admin-version" content="1.89.21">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -396,7 +396,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <option value="annulee">ملغاة</option>
           <option value="echec">فشل التوصيل</option>
         </select>
-        <button class="small gray hidden" id="import-orders-btn" onclick="Admin.importOrders()" title="ينسخ طلبات Google Sheets القديمة إلى Supabase مرة واحدة (بدون تكرار)">⬆️ استيراد الطلبات القديمة</button>
+        <button class="small gray hidden" id="import-orders-btn" onclick="Admin.importOrders()" title="ينسخ طلباتك القديمة إلى متجرك مرة واحدة (بدون تكرار)">⬆️ استيراد الطلبات القديمة</button>
         <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
         <label class="date-field">من<input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ"></label>
         <label class="date-field">إلى<input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ"></label>
@@ -621,7 +621,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <button class="small" onclick="PBAdmin.newPage()">＋ صفحة جديدة</button>
         <button class="small gold" onclick="PBAdmin.openGen()" title="يحوّل صورة تصميم إلى صفحة هبوط قابلة للتعديل">🪄 صفحة هبوط ذكية</button>
         <button class="small gray" onclick="PBAdmin.openTemplate('focus-honey')" title="صفحة هبوط كاملة مبنية بعناصر المنشئ على نمط التصميم المرجعي">📄 قالب جاهز: عسل التركيز</button>
-        <button class="small gray" onclick="PBAdmin.importPage()">⬆ استيراد صفحة (JSON)</button>
+        <button class="small gray" onclick="PBAdmin.importPage()">⬆ استيراد صفحة (ملف)</button>
         <button class="small gold" onclick="PBAdmin.refresh()">↻ تحديث</button>
       </div>
       <div class="hint">صمّم صفحات هبوط بأقسام وأعمدة وعناصر (عنوان، نص، صورة، زر، منتجات، أسئلة شائعة، عدّ تنازلي، معرض...) مع إعدادات مستقلة للمكتب والتابلت والهاتف وتحرير مباشر على الصفحة. تُنشر الصفحة على الرابط <code dir="ltr">/lp/اسم-الصفحة/</code>.</div>
@@ -1024,7 +1024,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div id="aq-list"></div>
     </div>
     <div class="card hidden" id="aq-hint" style="background:#f7f5ef">
-      <small>ℹ️ تسجيل أسئلة الزبائن غير المفهومة غير مفعّل بعد: إمّا فعّل <b>Supabase</b> (شغّل <code>supabase/schema.sql</code> ثم اضغط «🔐 Supabase» أعلى اللوحة لتسجيل الدخول)، أو ألصق <code>apps-script/Code-additions.gs</code> في Apps Script.</small>
+      <small>ℹ️ تسجيل أسئلة الزبائن غير المفهومة غير مفعّل بعد — تواصل مع الدعم لتفعيله.</small>
     </div>
     <div class="card" id="av-card">
       <b style="color:var(--green)">🗣️ واجهة الزبون: محادثة نصية أم أفاتار ناطق؟</b>
@@ -1035,7 +1035,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       </div>
       <div class="hint">لتغيير صفحة بعينها: اختر الصفحة في «تدريب الوكيل» وغيّر «واجهة هذه الصفحة».</div>
       <div class="section-title" style="margin-top:1rem">🎙️ الصوت</div>
-      <div class="field" style="margin-top:.4rem"><label>مفتاح ElevenLabs API (اختياري — لتوليد الملفات الجاهزة وللتجربة)</label><input id="av-elkey" type="text" dir="ltr" placeholder="sk_..." autocomplete="off" autocapitalize="off" spellcheck="false" name="av-elkey-nofill" style="-webkit-text-security:disc" oninput="try{localStorage.setItem('alyssum_el_key',this.value.replace(/[\s&quot;']/g,''))}catch(e){}">
+      <div class="field" style="margin-top:.4rem"><label>مفتاح الصوت الاحترافي (اختياري — لتوليد الملفات الجاهزة وللتجربة)</label><input id="av-elkey" type="text" dir="ltr" placeholder="sk_..." autocomplete="off" autocapitalize="off" spellcheck="false" name="av-elkey-nofill" style="-webkit-text-security:disc" oninput="try{localStorage.setItem('alyssum_el_key',this.value.replace(/[\s&quot;']/g,''))}catch(e){}">
         <div class="hint">يُحفظ في هذا المتصفح فقط. الزبائن يسمعون <b>الملفات الجاهزة</b> أدناه إن وُجدت، وإلا صوت المتصفح.</div></div>
       <div class="field"><label>معرّف الصوت Voice ID (اختياري)</label><input id="av-elvoice" type="text" dir="ltr" placeholder="21m00Tcm4TlvDq8ikWAM" autocomplete="off" spellcheck="false" oninput="try{localStorage.setItem('alyssum_el_voice',this.value.trim())}catch(e){}"></div>
       <div class="action-bar"><button class="small gray" onclick="try{var u=new SpeechSynthesisUtterance('مرحباً بك في أليسوم');var v=(speechSynthesis.getVoices()||[]).find(function(x){return /^ar/i.test(x.lang)});if(!v){alert('لا يوجد صوت عربي في هذا المتصفح');return}u.voice=v;u.lang=v.lang;speechSynthesis.speak(u)}catch(e){alert('غير مدعوم')}">🔊 جرّب صوت المتصفح</button></div>
@@ -1309,7 +1309,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div id="upd-info" class="hint" style="margin-top:0">…</div>
     <div id="upd-notes" style="white-space:pre-wrap;background:#faf8f3;border:1px solid var(--line);border-radius:12px;padding:.8rem;margin:.6rem 0;display:none"></div>
     <div id="upd-msg" class="hint" style="color:#b33"></div>
-    <div class="hint">يحدّث التحديث ملفات النظام فقط (اللوحة والتصميم والبرمجة). لا يمسّ منتجاتك ولا طلباتك ولا كلمة المرور ولا إعداداتك، وتُحفظ نسخة احتياطية قبله ويمكن التراجع عنه.</div>
+    <div class="hint">يحدّث التحديث ملفات النظام فقط (اللوحة والتصميم والميزات). لا يمسّ منتجاتك ولا طلباتك ولا كلمة المرور ولا إعداداتك، وتُحفظ نسخة احتياطية قبله ويمكن التراجع عنه.</div>
     <div class="action-bar">
       <button class="small gold hidden" id="upd-go" onclick="Updater.apply()">⬇️ تحديث الآن</button>
       <button class="small warn hidden" id="upd-back" onclick="Updater.rollback()">↩️ تراجع عن آخر تحديث</button>
@@ -1424,7 +1424,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <div class="modal-bg" id="gh-modal-bg">
   <div class="modal">
     <h3>⚙️ إعدادات النشر</h3>
-    <div class="hint">التوكن يُخزَّن فقط داخل متصفحك (localStorage) ويُستعمل لنشر التعديلات مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. اطلب رمز النشر من مزوّد موقعك بصلاحية القراءة والكتابة على ملفات موقعك فقط.</div>
+    <div class="hint">التوكن يُخزَّن فقط داخل متصفحك ويُستعمل لنشر التعديلات مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. اطلب رمز النشر من مزوّد موقعك بصلاحية القراءة والكتابة على ملفات موقعك فقط.</div>
     <input id="gh-token" type="password" placeholder="رمز النشر (Token)" dir="ltr" autocomplete="off">
     <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="">
     <input id="gh-repo" placeholder="المستودع (repo)" dir="ltr" value="">
@@ -1565,7 +1565,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="hint" style="margin-top:-.4rem">ترويسات الطلب (Headers) — القيمة يمكن أن تحتوي {{cfg.مفتاح_الحقل}} ليُستبدل بقيمة الحقل عند الإرسال</div>
     <div id="cdc-headers-list" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem"></div>
     <button class="small" type="button" onclick="Admin.addCustomHeaderRow()">+ ترويسة جديدة</button>
-    <div class="hint" style="margin-top:.4rem">نص الطلب (Body JSON) — استعمل {{order.name}}، {{order.phone}}، {{order.wilaya}}، {{order.commune}}، {{order.address}}، {{order.items}}، {{order.total}}، {{order.id}} لبيانات الطلب، و{{cfg.مفتاح_الحقل}} لقيم الحقول أعلاه</div>
+    <div class="hint" style="margin-top:.4rem">نص الطلب (Body) — استعمل {{order.name}}، {{order.phone}}، {{order.wilaya}}، {{order.commune}}، {{order.address}}، {{order.items}}، {{order.total}}، {{order.id}} لبيانات الطلب، و{{cfg.مفتاح_الحقل}} لقيم الحقول أعلاه</div>
     <textarea id="cdc-body" dir="ltr" rows="6" placeholder='{"name":"{{order.name}}","phone":"{{order.phone}}","total":{{order.total}}}'></textarea>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.saveCustomCompany()">💾 حفظ الشركة</button>
@@ -1583,13 +1583,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.20"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.20"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.20"></script>
+<script src="assets/js/ctl-help.js?v=1.89.21"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.21"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.21"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.20"></script>
-<script src="assets/js/admin-update.js?v=1.89.20"></script>
+<script src="assets/js/admin-nav.js?v=1.89.21"></script>
+<script src="assets/js/admin-update.js?v=1.89.21"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1708,7 +1708,7 @@ const GH = {
     const r = await fetch(url, { headers:{ Authorization:"Bearer " + c.token, Accept:"application/vnd.github+json" } });
     if(!r.ok){
       if(r.status === 401) throw new Error("توكن غير صالح (401)");
-      if(r.status === 404) throw new Error("لم يُعثر على الملف/المستودع (404) — تحقق من owner/repo/branch");
+      if(r.status === 404) throw new Error("لم يُعثر على الملف (404) — تحقق من بيانات الربط");
       throw new Error("GET فشل (" + r.status + ")");
     }
     return r.json();
@@ -1836,7 +1836,7 @@ const GenPage = {
       await this.putSlot(slug, cur, this.fromB64(live.b64)); // نحفظ الحالية (بما فيها تعديلاتك) قبل الاستبدال
       await GH.putFile("p/" + slug + "/index.html", this.toB64(targetHtml.replace(this.NOINDEX,"")), live.sha, "تفعيل الصفحة " + (target==="default"?"الافتراضية":"المولّدة") + " للمنتج " + slug);
       const prev = p.pageMode; p.pageMode = target;
-      if(!(await Admin.publishDataJs())){ p.pageMode = prev; throw new Error("تم التبديل لكن تعذّر تحديث data.js"); }
+      if(!(await Admin.publishDataJs())){ p.pageMode = prev; throw new Error("تم التبديل لكن تعذّر تحديث بيانات المنتج"); }
       Admin.renderAll(); this.renderStatus(); Admin.renderPageMode(slug);
       GenPage.say("✅ فُعّلت الصفحة " + (target==="default"?"الافتراضية":"المولّدة") + " (قد يستغرق ظهورها دقيقة)");
     }catch(err){ console.error(err); GenPage.say("❌ " + err.message); }
@@ -2096,7 +2096,7 @@ const GenPage = {
       await this.putSlot(d.slug, "generated", this.html);
       const imgs = d.images.slice(); if(d.amb) imgs.push(d.amb);
       Object.assign(this.cur, { title:d.name, price:d.price, cat:d.cat, desc:d.desc, images:imgs, pageMode:"generated" });
-      if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج في data.js"); }
+      if(!(await Admin.publishDataJs())){ Object.assign(this.cur, JSON.parse(snapshot)); throw new Error("الصفحة نُشرت لكن تعذّر تحديث بيانات المنتج"); }
       Admin.renderAll();
       GenPage.say("✅ نُشرت الصفحة: " + SITE_CFG.domain + "/p/" + d.slug + "/ (قد يستغرق ظهورها دقيقة)");
       this.cancel(); this.pick($f("gp-pick").value);
@@ -2295,7 +2295,7 @@ const AvatarAudio = {
     const res = await GH.putFile(this.MANIFEST, b64, this.sha, "بيان ملفات صوت الأفاتار"); this.sha = res && res.content ? res.content.sha : this.sha;
   },
   async gen(key, quiet){
-    if(!this.elKey()){ toast("⚠️ ضع مفتاح ElevenLabs أولاً"); return false }
+    if(!this.elKey()){ toast("⚠️ ضع مفتاح الصوت أولاً"); return false }
     const cfg = GH.cfg(); if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️)"); return false }
     await this.load(); const lines = this.lines(key), files = [];
     try{
@@ -2315,7 +2315,7 @@ const AvatarAudio = {
     const todo = this.keys().filter(([k])=>!this.mf.items[k] || JSON.stringify(this.mf.items[k].lines)!==JSON.stringify(this.lines(k)));
     if(!todo.length){ toast("كل الملفات محدّثة"); return }
     const chars = todo.reduce((n,[k])=>n+this.lines(k).join("").length,0);
-    if(!confirm("سيُولَّد صوت لـ " + todo.length + " صفحة (~" + chars + " حرفاً من رصيد ElevenLabs). متابعة؟")) return;
+    if(!confirm("سيُولَّد صوت لـ " + todo.length + " صفحة (~" + chars + " حرفاً من رصيد الصوت). متابعة؟")) return;
     this.busy = true; let ok = 0; for(const [k] of todo){ if(await this.gen(k, true)) ok++; else break; } this.busy = false;
     toast("انتهى: " + ok + "/" + todo.length); this.render();
   },
@@ -2410,11 +2410,11 @@ const Admin = {
   /* استيراد طلبات Google Sheets القديمة إلى Supabase (مرة واحدة) مع تفادي التكرار (نفس الرقم، أو نفس الهاتف والمبلغ خلال 10 دقائق) */
   async importOrders(){
     if(!API.sb.enabled() || !API.sb.session()){ toast("انتهت الجلسة — سجّل الخروج ثم ادخل من جديد"); return }
-    const key = prompt("أدخل مفتاح إدارة Apps Script (لقراءة الطلبات القديمة من Google Sheets):");
+    const key = prompt("أدخل مفتاح إدارة الطلبات القديمة:");
     if(!key) return;
     toast("⏳ جارِ قراءة الطلبات القديمة...");
     const old = await API.get("orders", { key });
-    if(!old || !old.ok){ toast("❌ تعذّرت قراءة طلبات Google Sheets (تحقق من المفتاح)"); return }
+    if(!old || !old.ok){ toast("❌ تعذّرت قراءة الطلبات القديمة (تحقق من المفتاح)"); return }
     const have = await API.sb.adminFetch("/rest/v1/orders?select=id,phone,total,created_at&limit=5000") || [];
     const ids = new Set(have.map(r=>r.id));
     const near = o => have.some(r=>String(r.phone)===String(o.phone).replace(/[^0-9+]/g,"") && Number(r.total)===Number(o.total) && Math.abs(new Date(r.created_at) - new Date(o.date)) < 600000);
@@ -2425,7 +2425,7 @@ const Admin = {
       subtotal: Number(o.subtotal)||0, fee: Number(o.fee)||0, total: Number(o.total)||0, coupon: o.coupon||null, discount: Number(o.discount)||0,
       status: okStatus.includes(o.status) ? o.status : "nouvelle", note: String(o.note||""), source: "sheets-import" }));
     if(!rows.length){ toast("لا توجد طلبات جديدة للاستيراد (كلها موجودة)"); return }
-    if(!confirm("سيُستورد " + rows.length + " طلب إلى Supabase. متابعة؟")) return;
+    if(!confirm("سيُستورد " + rows.length + " طلب إلى متجرك. متابعة؟")) return;
     let done = 0;
     for(let i = 0; i < rows.length; i += 100){
       const r = await API.sb.adminFetch("/rest/v1/orders", { method:"POST", headers:{ Prefer:"resolution=ignore-duplicates,return=minimal" }, body: JSON.stringify(rows.slice(i, i+100)) });
@@ -2440,7 +2440,7 @@ const Admin = {
     const el = $f("live-now"); if(!el || !(CONFIG.API_URL || PHPAPI.on())) return;
     const r = await API.presence(this.key);
     if(r && r.ok){ el.textContent = "🟢 " + r.now + " يشاهدون الآن"; el.classList.add("on"); this.liveNow = r; }
-    else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = API.sb.enabled() ? "تعذّر قراءة Supabase — تأكد من تشغيل supabase/schema.sql وإضافة بريدك لجدول admins" : "ألصق apps-script/Code-additions.gs أو فعّل Supabase لتفعيل العدّاد الحقيقي"; }
+    else { el.textContent = "⚪ المشاهدون الآن: غير مفعّل"; el.classList.remove("on"); el.title = API.sb.enabled() ? "تعذّر قراءة العدّاد — تواصل مع الدعم" : "غير مفعّل — تواصل مع الدعم لتفعيل العدّاد الحقيقي"; }
   },
   async refreshAlerts(){
     if(!this.key || !(CONFIG.API_URL || PHPAPI.on())) return;
@@ -2480,7 +2480,7 @@ const Admin = {
     const box = $f("analytics-visits"), tbl = $f("analytics-pages");
     box.innerHTML = '<div><b>…</b><span>جارِ التحميل</span></div>'; tbl.innerHTML = "";
     const r = await API.analytics(this.key);
-    if(!r || !r.ok){ box.innerHTML = '<div style="flex:1;font-size:.85rem;color:#6b7672;padding:.5rem">لم تُفعَّل إحصاءات الزيارات بعد: فعّل Supabase (شغّل <code>supabase/schema.sql</code> وسجّل الدخول بزر «🔐 Supabase») أو ألصق <code>apps-script/Code-additions.gs</code> في Apps Script.</div>'; return }
+    if(!r || !r.ok){ box.innerHTML = '<div style="flex:1;font-size:.85rem;color:#6b7672;padding:.5rem">لم تُفعَّل إحصاءات الزيارات بعد — تواصل مع الدعم لتفعيلها.</div>'; return }
     const live = (this.liveNow && this.liveNow.ok) ? this.liveNow : { now: 0, byPage: {} };
     box.innerHTML = '<div><b>' + r.total.toLocaleString("fr-DZ") + '</b><span>إجمالي الزيارات</span></div>' +
       '<div><b>' + r.today.toLocaleString("fr-DZ") + '</b><span>زيارات اليوم</span></div>' +
@@ -3031,7 +3031,7 @@ const Admin = {
     try{
       r = await fetch(url, { mode:"cors" });
     }catch(e){
-      throw new Error("تعذّر الوصول للرابط — قد يمنع المصدر الجلب من المتصفح (CORS). حمّل الصورة يدوياً وارفعها من اللوحة");
+      throw new Error("تعذّر الوصول للرابط — قد يمنع المصدر الجلب من المتصفح . حمّل الصورة يدوياً وارفعها من اللوحة");
     }
     if(!r.ok) throw new Error("تعذّر جلب الصورة (رمز " + r.status + ")");
     const blob = await r.blob();
@@ -3708,7 +3708,7 @@ const Admin = {
       repo: $f("gh-repo").value.trim(),
       branch: $f("gh-branch").value.trim() || "main",
     };
-    if(!cfg.token || !cfg.owner || !cfg.repo){ toast("املأ التوكن واسم الحساب والمستودع"); return }
+    if(!cfg.token || !cfg.owner || !cfg.repo){ toast("املأ رمز النشر وبيانات الربط"); return }
     localStorage.setItem("alyssum_gh_cfg", JSON.stringify(cfg));
     $f("gh-modal-bg").classList.remove("open");
     toast("✓ تم حفظ ربط النشر في هذا المتصفح");
@@ -5111,7 +5111,7 @@ const Admin = {
     const yd = act === "yalidine";
     const goto = id=>()=>{ const b = [...document.querySelectorAll(".nav-btn")].find(x=>(x.getAttribute("onclick")||"").includes("'" + id + "'")); if(b) this.tab(id, b); };
     return [
-      { req:true, ok: !!(S.name && !/اسم متجرك|your store/i.test(S.name) && S.waNumber && !/^2130+$|^213550000000$/.test(String(S.waNumber))), t:"هوية المتجر (الاسم + رقم واتساب)", d: S.name ? S.name + " — " + (S.waNumber||"") : "غير مضبوطة", fix:"تُعدَّل في assets/js/config.js ← CONFIG.SITE", go:null },
+      { req:true, ok: !!(S.name && !/اسم متجرك|your store/i.test(S.name) && S.waNumber && !/^2130+$|^213550000000$/.test(String(S.waNumber))), t:"هوية المتجر (الاسم + رقم واتساب)", d: S.name ? S.name + " — " + (S.waNumber||"") : "غير مضبوطة", fix:"تُعدَّل من إعدادات المتجر أو بطلب للدعم", go:null },
       { req:true, ok: active.length > 0 && active.every(p=>p.images && p.images.length && Number(p.price) > 0), t:"المنتجات (صورة وسعر لكل منتج)", d: active.length + " منتج نشط", fix:"المنتجات", go:goto("products") },
       { req:true, ok: typeof WILAYAS !== "undefined" && WILAYAS.length >= 58 && WILAYAS.filter(w=>Number(w.home) > 0).length >= 50, t:"رسوم التوصيل للولايات", d: (typeof WILAYAS !== "undefined" ? WILAYAS.filter(w=>Number(w.home) > 0).length : 0) + " / 58 ولاية بسعر", fix:"رسوم التوصيل", go:goto("fees") },
       { req:true, ok: !!(act && hasKeys), t:"شركة توصيل مفعّلة بمفاتيحها", d: act ? all[act].name + (hasKeys ? " ✓" : " — المفاتيح فارغة") : "لا توجد شركة مفعّلة", fix:"شركات التوصيل", go:goto("delivery"), test: act },
@@ -5174,7 +5174,7 @@ const Admin = {
     const url = php ? base + "api/index.php?r=webhook&s=" + sec : CONFIG.SUPABASE_URL.replace(/\/$/, "") + "/functions/v1/yalidine-webhook?s=" + sec;
     $f("wh-url").value = url;
     $f("wh-hint").innerHTML = php ? "✅ جاهز: الرابط يعمل فور لصقه في ياليدين."
-      : "⚠️ على Supabase يلزم نشر الدالة مرة واحدة وضبط السر نفسه: <code dir='ltr'>supabase secrets set YALIDINE_WEBHOOK_SECRET=" + sec + "</code> ثم <code dir='ltr'>supabase functions deploy yalidine-webhook --no-verify-jwt</code> (التفاصيل في supabase/README.md).";
+      : "⚠️ يلزم تفعيل خدمة التتبع الفوري مرة واحدة — تواصل مع الدعم.";
   },
   copyWebhook(){ const v = $f("wh-url").value; if(!v){ toast("اضغط «إنشاء الرابط» أولاً"); return } navigator.clipboard.writeText(v).then(()=>toast("📋 نُسخ الرابط")).catch(()=>{ $f("wh-url").select(); }); },
 
@@ -5585,7 +5585,7 @@ const Admin = {
     const rnd = Array.from(crypto.getRandomValues(new Uint8Array(6)), b=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join(""), code = "BACK-" + rnd;
     const ph = this.normalizePhone(phone);
     const res = await API.sb.adminFetch("/rest/v1/promo_codes", { method:"POST", headers:{ Prefer:"return=minimal" }, body: JSON.stringify({ code, phone: ph, type: R.type, value: val, min_order: 0, expires_at: new Date(Date.now() + R.validDays * 86400000).toISOString() }) });
-    if(res === null) throw new Error("تعذّر إنشاء الكود — شغّل supabase/schema.sql (جدول promo_codes) وتأكد أنك مسجّل الدخول");
+    if(res === null) throw new Error("تعذّر إنشاء الكود — تأكد من تسجيل دخولك أو تواصل مع الدعم");
     return code;
   },
   repeatText(c, code){
@@ -6313,7 +6313,7 @@ const Admin = {
         { key:"apiId", label:"API ID", type:"text" },
         { key:"apiToken", label:"API Token", type:"password" },
         { key:"fromWilayaName", label:"ولاية الانطلاق (مثال: Alger)", type:"text", required:false },
-        { key:"extraJson", label:"حقول إضافية للطرد بصيغة JSON (اختياري، مثال: {\"can_open\":true})", type:"text", required:false },
+        { key:"extraJson", label:"حقول إضافية للطرد بصيغة متقدمة (اختياري، مثال: {\"can_open\":true})", type:"text", required:false },
         { key:"lastOrderNo", label:"آخر رقم طلب استُعمل في ياليدين (يتزايد تلقائياً)", type:"text", required:false },
         { key:"askOrderNo", label:"اكتب «نعم» ليُسأل عن رقم الطلب قبل كل إرسال (لتعديله يدوياً)", type:"text", required:false },
       ],
@@ -6641,7 +6641,7 @@ const Admin = {
       this.renderDeliveryPriceSourceCard();
     }catch(err){
       console.error(err);
-      if(err.cors){ if(!(opts && opts.auto)) this.explainCors(co); else toast("⚠️ تعذّر جلب أسعار " + co.name + " تلقائياً (حجب CORS) — جرّب «جلب الأسعار» من إعدادها"); return }
+      if(err.cors){ if(!(opts && opts.auto)) this.explainCors(co); else toast("⚠️ تعذّر جلب أسعار " + co.name + " تلقائياً (حجب المتصفح) — جرّب «جلب الأسعار» من إعدادها"); return }
       toast("❌ " + err.message);
     }
   },
@@ -6879,11 +6879,11 @@ const Admin = {
     toast("✅ أُضيفت " + name + " — اضغط «⚙️ إعداد» لإدخال بيانات الاتصال ثم فعّلها من الجدول");
   },
 
-  /* طلب إلى شركة توصيل: عبر وسيط الخادم في نسخة الاستضافة (لا مشكلة CORS)، أو مباشرة من المتصفح */
+  /* طلب إلى شركة توصيل: عبر وسيط الاتصال في نسخة الاستضافة (لا مشكلة CORS)، أو مباشرة من المتصفح */
   async courierFetch(req){
     if(PHPAPI.on()){
       const r = await PHPAPI.call("courier", { method:"POST", body: JSON.stringify({ url:req.url, method:req.method||"GET", headers:req.headers||{}, body:req.body }) });
-      if(!r.ok) throw new Error(r.j && r.j.error ? ("وسيط الخادم: " + r.j.error) : ("وسيط الخادم (" + r.status + ")"));
+      if(!r.ok) throw new Error(r.j && r.j.error ? ("وسيط الاتصال: " + r.j.error) : ("وسيط الاتصال (" + r.status + ")"));
       return { ok: r.j.status >= 200 && r.j.status < 300, status: r.j.status, text: r.j.body || "" };
     }
     /* النسخة السحابية (Supabase): عبر دالة Edge باسم courier (تتجاوز CORS وتتحقق أنك مدير)، وإلا اتصال مباشر قد يحجبه المتصفح */
@@ -6912,12 +6912,8 @@ const Admin = {
   },
   explainCors(co){
     this.showNotice("🚫 المتصفح حجب الاتصال بـ " + (co ? co.name : "الشركة"),
-      "موقعك الحالي (السحابية + Supabase) يتصل بياليدين مباشرة من المتصفح، وياليدين لا تسمح بذلك (قيد أمني اسمه CORS) — المفاتيح سليمة وليست هي المشكلة.<br><br>" +
-      "<b>الحل (مرة واحدة، 3 دقائق، بدون طرفية):</b><ol style='margin:.4rem 1.2rem'>" +
-      "<li>افتح لوحة Supabase ← <b>Edge Functions</b> ← <b>Deploy a new function</b>.</li>" +
-      "<li>اسم الدالة: <code>courier</code> ← الصق محتوى الملف <code>supabase/functions/courier/index.ts</code> من المستودع (يمكنني إرساله لك) ← <b>Deploy</b> (<b>أطفئ</b> خيار Verify JWT — الدالة تتحقق بنفسها أنك مدير).</li>" +
-      "<li>ارجع هنا وأعد المحاولة: ستمرّ كل طلبات ياليدين عبر الدالة تلقائياً.</li></ol>" +
-      "البديل: نسخة الاستضافة (PHP) تتجاوز هذه المشكلة دون أي دالة.");
+      "هذه الشركة لا تسمح بالاتصال المباشر من المتصفح — المفاتيح سليمة وليست هي المشكلة.<br><br>" +
+      "<b>الحل:</b> تواصل مع الدعم لتفعيل وسيط الاتصال بهذه الشركة (مرة واحدة)، وبعدها تمرّ كل الطلبات تلقائياً.");
   },
   /* رقم التتبع يُحفظ داخل ملاحظة الطلب بصيغة «🚚yalidine:yal-123» فيبقى مع الطلب في أي قاعدة بيانات */
   deliveredOf(o){ const m = String((o && o.note) || "").match(/📦livree:(\d{4}-\d{2}-\d{2})/); return m ? m[1] : ""; },
@@ -7145,7 +7141,7 @@ const Admin = {
         else if(m === o.status){ row.result = "— بلا تغيير"; }
         else if((m === "expediee" || m === "confirmee") && (this.STATUS_RANK[m] ?? 0) <= (this.STATUS_RANK[o.status] ?? 0)){ row.result = "— بلا تغيير"; }
         else { API.updateOrder(this.key, o.id, m); this.onStatusChange(i, m); changed++; row.result = "✅ ← " + m; row.cls = m === "echec" ? "st-echec" : "st-livree"; }
-      }catch(err){ failed++; if(err.cors) corsHit = co; row.result = "❌ " + (err.cors ? "حجب CORS" : err.message); row.cls = "st-annulee"; }
+      }catch(err){ failed++; if(err.cors) corsHit = co; row.result = "❌ " + (err.cors ? "حجب المتصفح" : err.message); row.cls = "st-annulee"; }
       rows.push(row);
       await new Promise(res=>setTimeout(res, 250));   // احترام حدود طلبات الشركة
     }
@@ -7307,7 +7303,7 @@ const Admin = {
       this.showNotice("🔁 مطابقة ياليدين", "قُرئ <b>" + parcels.length + "</b> طرداً (الأحدث) — رُبط بطلبات اللوحة (مطابقة نمطية للاسم والهاتف المقنَّعَين + الولاية والبلدية والسعر): <b>" + attached + "</b> جديداً، تغيّرت حالة <b>" + changed + "</b>" + (changes.length ? "<br><small>" + changes.map(esc).join("، ") + "</small>" : "") +
         "<br>طرود في ياليدين <b>بلا طلب مطابق</b> في اللوحة: <b>" + unmatched.length + "</b> (أُنشئت يدوياً في موقع ياليدين أو بهاتف مختلف)." +
         (unmatched.length ? '<div style="overflow:auto;max-height:260px;margin-top:.6rem"><table style="width:100%;border-collapse:collapse;font-size:.85rem"><tr><th>التتبع</th><th>الاسم</th><th>الهاتف</th><th>الولاية/البلدية</th><th>الحالة</th></tr>' + unmatched.slice(0, 40).map(p=>"<tr><td dir='ltr'>" + esc(p.tracking) + "</td><td>" + esc(p.name) + "</td><td dir='ltr'>" + esc(p.phone) + "</td><td>" + esc(p.wilaya) + " / " + esc(p.commune) + "</td><td>" + esc(p.status) + "</td></tr>").join("") + "</table></div>" : ""));
-    }catch(err){ if(!opts.bg) toast("❌ تعذّرت المطابقة: " + (err.cors ? "حجب CORS — تحقق من دالة courier وجلسة الدخول" : err.message)); }
+    }catch(err){ if(!opts.bg) toast("❌ تعذّرت المطابقة: " + (err.cors ? "حجب المتصفح — تواصل مع الدعم" : err.message)); }
     finally{ this._reconciling = false; if(btn){ btn.disabled = false; btn.textContent = "🔁 مطابقة مع ياليدين"; } }
   },
   renderShipSyncStatus(){
@@ -7465,7 +7461,7 @@ const Admin = {
 const Updater = {
   state: null,
   ERR: { hash_mismatch:"الحزمة تالفة أو معدّلة — لم يتغيّر شيء", bad_signature:"توقيع التحديث غير صالح — رُفض", not_newer:"لا يوجد إصدار أحدث", forbidden_path:"التحديث يحاول تعديل ملفات غير مسموحة — رُفض",
-         php_syntax:"التحديث يحوي خطأ برمجياً — رُفض", busy:"تحديث آخر قيد التنفيذ", download_failed:"تعذّر الاتصال بقناة التحديث", bad_latest:"بيانات قناة التحديث غير صالحة", bad_manifest:"بيان التحديث غير صالح",
+         php_syntax:"التحديث يحوي خطأً فنياً — رُفض", busy:"تحديث آخر قيد التنفيذ", download_failed:"تعذّر الاتصال بقناة التحديث", bad_latest:"بيانات قناة التحديث غير صالحة", bad_manifest:"بيان التحديث غير صالح",
          identity_unreadable:"تعذّر قراءة اسم المتجر من الإعدادات", updates_disabled:"التحديث غير مفعّل في هذا الموقع", no_backup:"لا توجد نسخة احتياطية للتراجع", write_failed:"تعذّرت الكتابة على الملفات — تحقق من الصلاحيات", zip_missing:"إضافة ZipArchive غير مفعّلة في الاستضافة" },
   async check(){
     if(!PHPAPI.on()) return null;
@@ -11655,12 +11651,12 @@ ${this.quickImg(this.q.cover)}
     const dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host;
     const svg = (d, w) => `<svg width="${w || 15}" height="${w || 15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px">${d}</svg>`;
     const I = { edit: svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'), eye: svg('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'), copy: svg('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'), trash: svg('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>'), link: svg('<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>'), dl: svg('<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>') };
-    const lpHtml = this.list.length ? `<div class="pbx-pl">${this.list.map(p => `<div class="pbx-pc"><div class="pbx-pth" ${p.thumb ? `style="background-image:url('${PB.esc(p.thumb)}')"` : ""}>${p.thumb ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)}${((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x.officialPage === p.slug || x.route === p.slug).map(x => (x.officialPage === p.slug ? ' <span class="pill st-livree" title="الصفحة الرسمية للمنتج ' + PB.esc(x.title) + '">📄 رسمية</span>' : "") + (x.route === p.slug ? ' <span class="pill st-confirmee" title="تُفتح من الرئيسية للمنتج ' + PB.esc(x.title) + '">🧭 مسار</span>' : "")).join("")}</b><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a><small>${PB.esc(p.updated || "")}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBAdmin.edit('${PB.esc(p.slug)}')" title="فتح الصفحة مباشرة في المطوّر">${I.edit} تعديل</button><button class="small" onclick="PBAdmin.preview('${PB.esc(p.slug)}')" title="معاينة الصفحة (ومنها زر التعديل)">${I.eye} معاينة</button><button class="small gray" onclick="PBAdmin.quick('${PB.esc(p.slug)}')" title="اسم الصفحة وصورتها وربطها بمنتج وSEO">${I.edit} تعديل سريع</button><button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')" title="نسخ الصفحة">${I.copy} نسخ</button><button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')" title="نسخ الرابط">${I.link}</button><button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')" title="تصدير JSON">${I.dl}</button><button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')" title="حذف الصفحة (إلغاء النشر)">${I.trash}</button></div></div>`).join("")}</div>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» أو افتح المولّد الذكي.</p>';
+    const lpHtml = this.list.length ? `<div class="pbx-pl">${this.list.map(p => `<div class="pbx-pc"><div class="pbx-pth" ${p.thumb ? `style="background-image:url('${PB.esc(p.thumb)}')"` : ""}>${p.thumb ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)}${((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x.officialPage === p.slug || x.route === p.slug).map(x => (x.officialPage === p.slug ? ' <span class="pill st-livree" title="الصفحة الرسمية للمنتج ' + PB.esc(x.title) + '">📄 رسمية</span>' : "") + (x.route === p.slug ? ' <span class="pill st-confirmee" title="تُفتح من الرئيسية للمنتج ' + PB.esc(x.title) + '">🧭 مسار</span>' : "")).join("")}</b><a href="lp/${PB.esc(p.slug)}/" target="_blank" dir="ltr">/lp/${PB.esc(p.slug)}/</a><small>${PB.esc(p.updated || "")}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBAdmin.edit('${PB.esc(p.slug)}')" title="فتح الصفحة مباشرة في المطوّر">${I.edit} تعديل</button><button class="small" onclick="PBAdmin.preview('${PB.esc(p.slug)}')" title="معاينة الصفحة (ومنها زر التعديل)">${I.eye} معاينة</button><button class="small gray" onclick="PBAdmin.quick('${PB.esc(p.slug)}')" title="اسم الصفحة وصورتها وربطها بمنتج وSEO">${I.edit} تعديل سريع</button><button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')" title="نسخ الصفحة">${I.copy} نسخ</button><button class="small gray" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}')" title="نسخ الرابط">${I.link}</button><button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')" title="تصدير الصفحة">${I.dl}</button><button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')" title="حذف الصفحة (إلغاء النشر)">${I.trash}</button></div></div>`).join("")}</div>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» أو افتح المولّد الذكي.</p>';
     const A = (typeof Admin !== "undefined") ? Admin : {}, prods = A.products || [], stat = p => p.active !== false ? '<span class="pill st-livree">نشط</span>' : '<span class="pill st-annulee">موقوف</span>', ic = n => (typeof AIC === "function" ? AIC(n) : "");
     const prHtml = prods.length ? `<div class="pbx-pl">${prods.map(p => { const img = p.cover || (p.images && p.images[0]) || ""; const sl = PB.esc(p.slug); return `<div class="pbx-pc"><div class="pbx-pth" ${img ? `style="background-image:url('${PB.esc(img)}')"` : ""}>${img ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)} ${stat(p)}</b><a href="p/${sl}/" target="_blank" dir="ltr">/p/${sl}/</a><small>${Number(p.price || 0).toLocaleString("fr-DZ")} دج · ${PB.esc((A.categories && A.categories[p.cat]) || p.cat || "")}${p.pageMode === "generated" ? " · صفحة مولّدة" : ""}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBConvert.edit('product','${sl}')" title="فتح صفحة المنتج مباشرة في مطوّر الصفحات">${ic("edit")} تعديل</button><button class="small" onclick="PBAdmin.previewProduct('${sl}')" title="معاينة صفحة المنتج (ومنها زر التعديل)">${ic("eye")} معاينة</button><button class="small gray" onclick="PBAdmin.quickProduct('${sl}')" title="الاسم والصورة وSEO">${ic("edit")} تعديل سريع</button><button class="small gray" onclick="Admin.duplicateProduct('${sl}')" title="نسخ المنتج وصفحته">${ic("copy")} نسخ</button><button class="small" style="background:var(--red);color:#fff" onclick="Admin.delProduct('${sl}')" title="حذف المنتج">${ic("trash")}</button></div></div>`; }).join("")}</div>` : '<p class="hint">لا توجد منتجات.</p>';
     box.innerHTML = `<h3 class="pbx-sh">صفحات الهبوط <span>${this.list.length}</span></h3>${lpHtml}<h3 class="pbx-sh">صفحات المنتجات <span>${prods.length}</span></h3>${prHtml}`;
   },
-  /* تكرار صفحة، وتصدير/استيراد ملف JSON (لنقل التصاميم بين متاجرك أو بيعها كقوالب) */
+  /* تكرار صفحة، وتصدير/استيراد ملف قالب (لنقل التصاميم بين متاجرك أو بيعها كقوالب) */
   async load(slug) { const f = await GH.getFile("assets/pages/" + slug + ".json"); return JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); },
   fresh(p) { const re = n => { n.id = PB.uid(); (n.cols || []).forEach(re); (n.widgets || []).forEach(re); }; p.sections.forEach(re); return p; },
   async duplicate(slug) {
@@ -11687,7 +11683,7 @@ ${this.quickImg(this.q.cover)}
   },
   copyLink(slug, dom) { const u = "https://" + dom + "/lp/" + slug + "/"; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => toast("✅ نُسخ: " + u), () => prompt("انسخ الرابط:", u)); },
   async unpublish(slug) {
-    if (!confirm("حذف هذه الصفحة من الموقع؟ سيُحوَّل رابطها إلى الصفحة الرئيسية، ويبقى مصدرها محفوظاً في المستودع للاسترجاع.")) return;
+    if (!confirm("حذف هذه الصفحة من الموقع؟ سيُحوَّل رابطها إلى الصفحة الرئيسية، ويبقى مصدرها محفوظاً للاسترجاع.")) return;
     try {
       const stub = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=../../"><title>…</title></head><body></body></html>';
       let sha; try { sha = (await GH.getFile("lp/" + slug + "/index.html")).sha; } catch (e) { }
@@ -11847,7 +11843,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 
   /* OCR داخل المتصفح (Tesseract.js من CDN، بلا مفتاح). يمكن استبداله (للاختبار) بتعيين PBGen.ocr */
   async function ensureTesseract() {
-    if (window.Tesseract) return; await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"; s.onload = res; s.onerror = () => rej(new Error("تعذّر تحميل محرك OCR (تحقق من الإنترنت)")); document.head.appendChild(s); });
+    if (window.Tesseract) return; await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"; s.onload = res; s.onerror = () => rej(new Error("تعذّر تحميل محرك قراءة النص (تحقق من الإنترنت)")); document.head.appendChild(s); });
   }
   async function defaultOcr(canvas, lang, log) {
     await ensureTesseract(); const r = await Tesseract.recognize(canvas, lang || "ara+eng", { logger: m => log && log(m) });
@@ -12002,7 +11998,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   /* remove.bg: قص خلفية الصورة (PNG شفاف). قد يمنع المتصفح الاتصال المباشر (CORS) — عندها استعمل «قص كصورة» أو ارفع صورة مقصوصة يدوياً */
   async function removeBgCall(blob, key) {
     const fd = new FormData(); fd.append("image_file", blob, "cut.png"); fd.append("size", "auto"); fd.append("format", "png");
-    let r; try { r = await fetch("https://api.remove.bg/v1.0/removebg", { method: "POST", headers: { "X-Api-Key": key }, body: fd }); } catch (e) { throw new Error("تعذّر الاتصال بـ remove.bg من المتصفح (قد يكون CORS أو الإنترنت)"); }
+    let r; try { r = await fetch("https://api.remove.bg/v1.0/removebg", { method: "POST", headers: { "X-Api-Key": key }, body: fd }); } catch (e) { throw new Error("تعذّر الاتصال بـ remove.bg من المتصفح (تحقق من الإنترنت)"); }
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error((j.errors && j.errors[0] && (j.errors[0].title + (j.errors[0].detail ? ": " + j.errors[0].detail : ""))) || ("remove.bg " + r.status)); }
     return await r.blob();
   }
@@ -12171,7 +12167,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <button class="small gray" type="button" id="gen-erase-btn" onclick="PBGen.eraseMode()">✋ امسح منطقة بالسحب</button>
       <button class="small gray" type="button" id="gen-erase-undo" onclick="PBGen.eraseUndo()" disabled>↶ تراجع</button>
       <button class="small gray" type="button" onclick="PBGen.downloadClean()">⬇ تنزيل الصورة</button>
-      <label class="hint" style="margin:0">الكشف <select id="gen-erase-det"><option value="pix">تلقائي بالصورة — بلا مفتاح</option><option value="ocr">بقراءة النص (OCR)</option></select></label>
+      <label class="hint" style="margin:0">الكشف <select id="gen-erase-det"><option value="pix">تلقائي بالصورة — بلا مفتاح</option><option value="ocr">بقراءة النص</option></select></label>
       <label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-erase-gem" style="width:auto"> Alyssum API للمناطق المعقدة (اختياري، يستهلك رصيداً)</label>
     </div>
     <div id="gen-erase-msg" class="hint" style="margin-top:.4rem;min-height:1.2em"></div>
@@ -12183,7 +12179,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   </div>
   <div style="display:none">
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">Tesseract — مجاني داخل المتصفح</option><option value="gemini">Alyssum API رؤية — أدق للعربية (بمفتاحك)</option></select></label>
+    <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">محرك مجاني داخل المتصفح</option><option value="gemini">Alyssum API رؤية — أدق للعربية (بمفتاحك)</option></select></label>
     <label class="hint" style="margin:0;display:none" id="gen-gk-wrap">مفتاح Alyssum API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
     <label class="hint" style="margin:0">مفتاح remove.bg (اختياري — لقص خلفية المنتج/الصور)<input id="gen-rbkey" dir="ltr" placeholder="بدونه: «قص كصورة» مستطيلة" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
   </div>
@@ -12197,7 +12193,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div class="gen-step" data-s="3" style="display:none">
   <b>③ التحويل إلى صفحة قابلة للتعديل</b>
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (OCR داخل المتصفح)</label>
+    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (قراءة النص داخل المتصفح)</label>
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
   </div>
   <textarea id="gen-intended" style="display:none"></textarea>
@@ -12531,7 +12527,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
     };
     try {
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;
-      if (CONV() && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Alyssum API أو اختر Tesseract"; btn.disabled = false; return; }
+      if (CONV() && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Alyssum API أو اختر المحرك المجاني"; btn.disabled = false; return; }
       try { if (gk) localStorage.setItem("alyssum_gp_gkey", gk); if (rb) localStorage.setItem("alyssum_removebg_key", rb); } catch (e) { }
       const page = await convert({ dw: 1100, canvas: S.canvas, cuts: S.cuts, regions: CONV() ? S.regions : [], intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: !!CONV() && $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: !!CONV() && $("gen-ocr").checked, inpaint: true, gemOpt: geminiOpt(), tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
       page.css = (page.css || "") + edgeGradient(S.canvas);        // خلفية الصفحة تمتد بنفس تدرّج حواف الصورة فلا تظهر هوامش بيضاء
@@ -12742,7 +12738,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     let sel = new Set(), hov = -1, busy = false;  if (Z) items.forEach(i => { if (i.zoneMain) sel.add(i.id); });      // العنصر داخل المنطقة محدَّد مسبقاً
     const names = () => { const c = {}, n = {}; items.forEach(it => c[it.label] = (c[it.label] || 0) + 1); const out = {}; items.slice().sort((a, b) => a.v.cx - b.v.cx).forEach(it => { n[it.label] = (n[it.label] || 0) + 1; out[it.id] = c[it.label] > 1 ? it.label + " " + n[it.label] : it.label; }); return out; };
     const ex = $("pbs-extra");
-    ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><div id="pbs-refine" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button><div style="font-size:.74rem;color:#8a8472;line-height:1.6">🔒 معالجة محلية بالكامل: D-FINE + SAM 2.1 + تحسين الحواف + MI-GAN. لا تُرسل الصورة إلى API.</div>';
+    ex.innerHTML = '<div id="pbs-list" style="display:flex;flex-wrap:wrap;gap:.35rem"></div><div id="pbs-refine" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem"></div><button id="pbs-merge" type="button" style="display:none;border:1.5px solid #0d9488;background:#fff;color:#0d9488;border-radius:10px;padding:.4rem;font-weight:700;cursor:pointer;font-family:inherit">🔗 دمج المحدّد في عنصر واحد</button><div style="font-size:.74rem;color:#8a8472;line-height:1.6">🔒 معالجة محلية بالكامل على جهازك: لا تُرسل الصورة إلى أي خدمة.</div>';
     let refineMode = null, refineHistory = [], refineBusy = false;
     const selectedItem = () => sel.size === 1 ? items.find(q => q.id === [...sel][0]) : null;
     const pushRefineHistory = it => {
@@ -14603,7 +14599,7 @@ const PBCloneFx = (() => {
   const REGISTRY = [
     { id: "hover", label: "تأثيرات التحويم (بطاقات/أزرار/صور)", status: "ok", note: "تُنسخ مع منطقة تحويم للبطاقة كاملة", find: (d, w) => { let n = 0; for (const sh of d.styleSheets) { try { const f = rs => { for (const r of rs) { if (r.type === 1 && /:hover/i.test(r.selectorText || "")) n++; else if (r.cssRules && r.type !== 5 && r.type !== 7) f(r.cssRules); } }; f(sh.cssRules); } catch (e) { } } return { n }; } },
     { id: "keyframes", label: "حركات CSS مستمرة (طفو/نبض/دوران)", status: "ok", note: "@keyframes حرفية", find: (d, w) => { const e = q(d, "body *").slice(0, 3000).filter(x => { const a = w.getComputedStyle(x).animationName; return a && a !== "none"; }); return { n: e.length, sample: e[0] }; } },
-    { id: "entrance", label: "حركات الظهور بالتمرير (AOS/WOW/animate.css)", status: "ok", note: "تتحول لحركات المطوّر", find: d => { const e = q(d, "[data-aos],.wow,[class*='animate__'],[data-settings*='animation']"); return { n: e.length, sample: e[0] }; } },
+    { id: "entrance", label: "حركات الظهور بالتمرير (حركات جاهزة)", status: "ok", note: "تتحول لحركات المطوّر", find: d => { const e = q(d, "[data-aos],.wow,[class*='animate__'],[data-settings*='animation']"); return { n: e.length, sample: e[0] }; } },
     { id: "slider", label: "سلايدر/كاروسيل", status: "ok", note: "Swiper/Slick/Owl/Splide/Bootstrap/Glide/Flickity: بالأسهم والنقاط والتشغيل التلقائي", find: d => { const e = q(d, ".swiper,.swiper-container,.slick-slider,.owl-carousel,.splide,.carousel,.glide,.flickity-enabled"); return { n: e.length, sample: e[0] }; } },
     { id: "tabs", label: "تبويبات", status: "ok", note: "تبدّل لوحاتها", find: d => { const e = q(d, "[role='tablist'],.nav-tabs,.nav-pills,.elementor-tabs"); return { n: e.length, sample: e[0] }; } },
     { id: "accordion", label: "أكورديون / أسئلة قابلة للطي / details", status: "ok", note: "تفتح وتغلق ويُزاح ما تحتها", find: d => { const e = q(d, "details,[aria-expanded][aria-controls],[data-bs-toggle='collapse'],.accordion"); return { n: e.length, sample: e[0] }; } },
@@ -14706,17 +14702,17 @@ const PBClone = (function () {
   }
   /* جلب بمتصفح كامل على خادم: يشغّل workflow «clone-page» في مستودعك (التشغيل الآلي + Chromium) فيعرض الصفحة بجافاسكربتها ويحفظ نسخة جامدة في assets/clone ثم تُقرأ هنا */
   async function fetchFull(url, W, token) {
-    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token || c.token === "php" || !c.owner) throw new Error("الجلب بمتصفح كامل يحتاج ربط النشر في الإعدادات (غير متاح في نسخة الاستضافة PHP)");
+    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token || c.token === "php" || !c.owner) throw new Error("الجلب بمتصفح كامل يحتاج ربط النشر في الإعدادات (غير متاح في هذه النسخة)");
     const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
-    st("تشغيل المتصفح الكامل على خادم النشر…");
+    st("تشغيل المتصفح الكامل…");
     const r = await fetch(api + "/actions/workflows/clone-page.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ ref: c.branch || "main", inputs: { url, width: String(W), id } }) });
-    if (r.status !== 204) { const t = await r.text().catch(() => ""); throw new Error(r.status === 404 ? "لم يُعثر على الـworkflow «clone-page» في المستودع — انشر آخر تحديث للوحة أولاً" : r.status === 403 || r.status === 401 ? "التوكن بلا صلاحية تشغيل Actions (يلزم صلاحية «workflow» أو Actions: write)" : "فشل تشغيل الخادم (" + r.status + ") " + t.slice(0, 100)); }
+    if (r.status !== 204) { const t = await r.text().catch(() => ""); throw new Error(r.status === 404 ? "خدمة المتصفح الكامل غير مفعّلة — حدّث اللوحة أو تواصل مع الدعم" : r.status === 403 || r.status === 401 ? "رمز النشر بلا صلاحية تشغيل المتصفح الكامل" : "فشل تشغيل المتصفح الكامل (" + r.status + ") " + t.slice(0, 100)); }
     const t0 = Date.now(), path = "assets/clone/" + id + ".html"; S.runId = id;
-    while (Date.now() - t0 < 300000) { await sleep(6000); if (S.runId !== id || !$("pbx-clone")) throw new Error("أُلغي الجلب"); st("المتصفح الكامل يعرض الصفحة على خادم النشر… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 1–2 دقيقة)");
+    while (Date.now() - t0 < 300000) { await sleep(6000); if (S.runId !== id || !$("pbx-clone")) throw new Error("أُلغي الجلب"); st("المتصفح الكامل يعرض الصفحة… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 1–2 دقيقة)");
       const g = await fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main") + "&t=" + Date.now(), { headers: Object.assign({}, H, { Accept: "application/vnd.github.raw+json" }) }).catch(() => null); if (!g || g.status === 404) continue; if (!g.ok) throw new Error("تعذّر قراءة النتيجة (" + g.status + ")");
       const html = await g.text(); fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main"), { headers: H }).then(m => m.ok ? m.json() : null).then(m => m && fetch(api + "/contents/" + path, { method: "DELETE", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ message: "clone: تنظيف", sha: m.sha, branch: c.branch || "main" }) })).catch(() => { });      // تنظيف الملف المؤقت
       return html; }
-    throw new Error("انتهت المهلة قبل اكتمال العرض على الخادم — راجع سجلّ التشغيل");
+    throw new Error("انتهت المهلة قبل اكتمال العرض — حاول مجدداً");
   }
   async function fetchBlob(url) { const tries = [url].concat(PROXIES.map(p => p(url))); for (const t of tries) { try { const b = await fget(t, "blob", 12000); if (b && b.size > 200 && /^image\//.test(b.type)) return b; } catch (e) { } } return null; }
   /* يجهّز HTML للعرض الآمن: بلا سكربتات، مع <base>، وكشف الصور الكسولة، وإيقاف الحركات */
@@ -15347,7 +15343,7 @@ const PBClone = (function () {
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
 <div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم النشر Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label></div>
-<div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
+<div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
 <div id="cl-rep" hidden></div><div class="cl-f"><span id="cl-ring" hidden><i>0</i></span><span id="cl-st"></span><button type="button" class="cl-sm" id="cl-fxb" data-cl="fxrep" hidden title="تحليل التأثيرات والعناصر الموجودة في الصفحة وما هو متوفر منها في المطوّر">التأثيرات</button><button type="button" class="cl-sm" data-cl="diag" title="ينسخ تقريراً تقنياً عن آخر صفحة لإرساله للدعم عند ظهور معاينة فارغة">نسخ التقرير</button><label class="cl-lr" title="الحد السفلي للنسخ: كل ما فوقه يُنسخ">الحد السفلي <input type="range" id="cl-lr" min="120" max="2000" step="10" value="1200" disabled><b id="cl-lv">—</b></label><label class="cl-dest"><input type="radio" name="cl-dest" value="sec" checked> قسم في الصفحة الحالية</label><label class="cl-dest"><input type="radio" name="cl-dest" value="new"> صفحة جديدة</label><button type="button" class="cl-go" data-cl="copy" disabled>انسخ</button><button type="button" data-cl="x">إلغاء</button></div></div>`;
@@ -15499,7 +15495,7 @@ const PBClone = (function () {
 })();
 
 /* ───── تنظيف الصور غير المستعملة (PBClean) ─────
-   يفحص مستودع الموقع: صور المجلد assets/img/pages/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
+   يفحص مستودع الموقع: صور مكتبة الصفحات/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
    (صفحات html وملفات json وجافاسكربت وcss) ويجمع أسماء الصور المذكورة فيها؛ ما لا يذكره أي ملف يُعرض للحذف.
    الحذف: تحديث assets/pages/media.json ثم commit واحد يحذف الملفات عبر Git Data API. لا يعمل مع نسخة PHP (لا مستودع). */
 const PBClean = (() => {
@@ -15518,7 +15514,7 @@ const PBClean = (() => {
   const body = h => { const e = document.getElementById("pbx-cm"); if (e) e.innerHTML = h; }, foot = h => { const e = document.getElementById("pbx-cf"); if (e) e.innerHTML = h; };
   const ageOf = p => { const m = /gen-(\d{12,13})-/.exec(p); return m ? Date.now() - Number(m[1]) : Infinity; };
   function ghx() {
-    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة تعمل مع وضع النشر المباشر فقط (نسخة PHP لا تحتفظ بمستودع).");
+    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة غير متاحة في هذه النسخة.");
     const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token) throw new Error("اربط النشر أولاً من الإعدادات.");
     const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
     const j = async (u, o) => { const r = await fetch(u, o ? Object.assign({ headers: Object.assign({ "Content-Type": "application/json" }, H) }, o) : { headers: H }); if (!r.ok) throw new Error("خطأ " + r.status + " — " + (await r.text().catch(() => "")).slice(0, 120)); return r.json(); };
@@ -15530,7 +15526,7 @@ const PBClean = (() => {
     let G; try { G = ghx(); } catch (e) { body('<div class="warn">' + esc(e.message) + "</div>"); return; }
     try {
       const tree = await G.j(G.api + "/git/trees/" + encodeURIComponent(G.br) + "?recursive=1&t=" + Date.now()), files = (tree.tree || []).filter(x => x.type === "blob");
-      if (tree.truncated) throw new Error("المستودع كبير جداً لهذه الأداة (قائمة الملفات مقتطعة) — لن أحذف شيئاً.");
+      if (tree.truncated) throw new Error("الموقع كبير جداً لهذه الأداة (قائمة الملفات مقتطعة) — لن أحذف شيئاً.");
       const cand = files.filter(f => /^assets\/img\/pages\//.test(f.path) && EXT.test(f.path)), refs = files.filter(f => TXT.test(f.path) && !SKIP.test(f.path) && (f.size || 0) < 4e6);
       const used = new Set(), dec = new TextDecoder("utf-8"); let done = 0, i = 0;
       const addToks = txt => { const m = txt.match(/[\w.\-%]+\.(?:webp|png|jpe?g|gif|svg|avif)/gi); if (m) m.forEach(x => { used.add(x.toLowerCase()); try { used.add(decodeURIComponent(x).toLowerCase()); } catch (e) { } }); };
@@ -15544,8 +15540,8 @@ const PBClean = (() => {
   const vis = () => S.unused.filter(x => x.age >= S.minAge * 3600e3);
   function draw() {
     const v = vis(), skip = S.unused.length - v.length, sel = v.filter(x => x.on), sz = sel.reduce((a, x) => a + x.size, 0);
-    body(`<p>صور المجلد <b>assets/img/pages</b>: <b>${S.total}</b> صورة، منها <b>${S.unused.length}</b> لا يذكرها أي ملف في الموقع (صفحات، قوائم صفحات، بيانات المنتجات…).</p>
-      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي من المستودع (يمكن استرجاعه فقط من سجلّ الموقع).</div>
+    body(`<p>صور مكتبة الصفحات: <b>${S.total}</b> صورة، منها <b>${S.unused.length}</b> لا يذكرها أي ملف في الموقع (صفحات، قوائم صفحات، بيانات المنتجات…).</p>
+      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي.</div>
       <p>تجاهل ما رُفع خلال آخر <select data-c="age"><option value="24"${S.minAge === 24 ? " selected" : ""}>24 ساعة (موصى به)</option><option value="1"${S.minAge === 1 ? " selected" : ""}>ساعة</option><option value="0"${S.minAge === 0 ? " selected" : ""}>لا تتجاهل شيئاً</option></select>${skip ? ` — تُجوهلت ${skip} صورة حديثة` : ""}</p>
       ${v.length ? `<div class="cg">${v.map(x => `<div class="ci${x.on ? "" : " off"}" data-c="tg" data-p="${esc(x.p)}" title="${esc(x.p)}"><img src="${esc(x.p)}" loading="lazy" alt=""><i>✓</i><small>${kb(x.size)}</small></div>`).join("")}</div>` : '<p style="color:#2d6a4f"><b>لا توجد صور يتيمة قابلة للحذف الآن.</b></p>'}`);
     foot(`<button class="p" data-c="del"${sel.length ? "" : " disabled"}>حذف المحدد نهائياً (${sel.length} — ${kb(sz)})</button><button class="s" data-c="all">${sel.length === v.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button class="s" data-c="x">إغلاق</button>`);
@@ -15568,12 +15564,12 @@ const PBClean = (() => {
     await G.j(G.api + "/git/refs/heads/" + encodeURIComponent(G.br), { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) }); return paths.length;
   }
   async function remove() {
-    const sel = vis().filter(x => x.on); if (!sel.length) return; if (!confirm("حذف " + sel.length + " صورة نهائياً من المستودع؟")) return;
+    const sel = vis().filter(x => x.on); if (!sel.length) return; if (!confirm("حذف " + sel.length + " صورة نهائياً من الموقع؟")) return;
     foot(""); body('<p id="pbx-cs">جارٍ الحذف…</p>'); const st = t => { const e = document.getElementById("pbx-cs"); if (e) e.textContent = t; }, G = S.G, paths = sel.map(x => x.p);
     try {
       st("تحديث قائمة مكتبة الصور…");
       try { const f = await GH.getFile("assets/pages/media.json"), L = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); const nl = L.filter(x => !paths.includes(x.p)); if (nl.length !== L.length) await GH.putFile("assets/pages/media.json", btoa(unescape(encodeURIComponent(JSON.stringify(nl, null, 1)))), f.sha, "تنظيف مكتبة صور منشئ الصفحات"); } catch (e) { console.warn("media.json", e); }
-      st("إنشاء commit الحذف…");
+      st("تنفيذ الحذف…");
       const ref = await G.j(G.api + "/git/ref/heads/" + encodeURIComponent(G.br)), cm = await G.j(G.api + "/git/commits/" + ref.object.sha);
       const tr = await G.j(G.api + "/git/trees", { method: "POST", body: JSON.stringify({ base_tree: cm.tree.sha, tree: paths.map(p => ({ path: p, mode: "100644", type: "blob", sha: null })) }) });
       const nc = await G.j(G.api + "/git/commits", { method: "POST", body: JSON.stringify({ message: "تنظيف الصور غير المستعملة (" + paths.length + ")", tree: tr.sha, parents: [ref.object.sha] }) });

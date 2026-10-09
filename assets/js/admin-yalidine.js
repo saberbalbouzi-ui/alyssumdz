@@ -121,7 +121,7 @@ const AdminYd = (() => {
         let j = JSON.parse(x.text); j = j && j.data && j.data[0] ? j.data[0] : j;
         const name = [j.firstname, j.familyname].filter(Boolean).join(" "), phone = String(j.contact_phone || j.contact_phone_2 || "");
         if (name || phone) { DET[r.tracking] = { name, phone, m: masked(name) || masked(phone) }; if (DET[r.tracking].m) still++; }
-        if (still >= 3 && still === n) { fail = "ياليدين تُقنّع الاسم والهاتف حتى في الطرد الفردي — لا يمكن كشفها بالواجهة البرمجية"; break; }
+        if (still >= 3 && still === n) { fail = "ياليدين تُقنّع الاسم والهاتف حتى في الطرد الفردي — لا يمكن كشفها من التطبيق"; break; }
       } catch (e) { fail = e.message || String(e); break; }
       saveDet(); await new Promise(res => setTimeout(res, 1300));
     }

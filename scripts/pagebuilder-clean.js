@@ -1,5 +1,5 @@
 /* ───── تنظيف الصور غير المستعملة (PBClean) ─────
-   يفحص مستودع الموقع: صور المجلد assets/img/pages/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
+   يفحص مستودع الموقع: صور مكتبة الصفحات/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
    (صفحات html وملفات json وجافاسكربت وcss) ويجمع أسماء الصور المذكورة فيها؛ ما لا يذكره أي ملف يُعرض للحذف.
    الحذف: تحديث assets/pages/media.json ثم commit واحد يحذف الملفات عبر Git Data API. لا يعمل مع نسخة PHP (لا مستودع). */
 const PBClean = (() => {
@@ -18,7 +18,7 @@ const PBClean = (() => {
   const body = h => { const e = document.getElementById("pbx-cm"); if (e) e.innerHTML = h; }, foot = h => { const e = document.getElementById("pbx-cf"); if (e) e.innerHTML = h; };
   const ageOf = p => { const m = /gen-(\d{12,13})-/.exec(p); return m ? Date.now() - Number(m[1]) : Infinity; };
   function ghx() {
-    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة تعمل مع وضع النشر المباشر فقط (نسخة PHP لا تحتفظ بمستودع).");
+    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة غير متاحة في هذه النسخة.");
     const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token) throw new Error("اربط النشر أولاً من الإعدادات.");
     const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
     const j = async (u, o) => { const r = await fetch(u, o ? Object.assign({ headers: Object.assign({ "Content-Type": "application/json" }, H) }, o) : { headers: H }); if (!r.ok) throw new Error("خطأ " + r.status + " — " + (await r.text().catch(() => "")).slice(0, 120)); return r.json(); };
@@ -30,7 +30,7 @@ const PBClean = (() => {
     let G; try { G = ghx(); } catch (e) { body('<div class="warn">' + esc(e.message) + "</div>"); return; }
     try {
       const tree = await G.j(G.api + "/git/trees/" + encodeURIComponent(G.br) + "?recursive=1&t=" + Date.now()), files = (tree.tree || []).filter(x => x.type === "blob");
-      if (tree.truncated) throw new Error("المستودع كبير جداً لهذه الأداة (قائمة الملفات مقتطعة) — لن أحذف شيئاً.");
+      if (tree.truncated) throw new Error("الموقع كبير جداً لهذه الأداة (قائمة الملفات مقتطعة) — لن أحذف شيئاً.");
       const cand = files.filter(f => /^assets\/img\/pages\//.test(f.path) && EXT.test(f.path)), refs = files.filter(f => TXT.test(f.path) && !SKIP.test(f.path) && (f.size || 0) < 4e6);
       const used = new Set(), dec = new TextDecoder("utf-8"); let done = 0, i = 0;
       const addToks = txt => { const m = txt.match(/[\w.\-%]+\.(?:webp|png|jpe?g|gif|svg|avif)/gi); if (m) m.forEach(x => { used.add(x.toLowerCase()); try { used.add(decodeURIComponent(x).toLowerCase()); } catch (e) { } }); };
@@ -44,8 +44,8 @@ const PBClean = (() => {
   const vis = () => S.unused.filter(x => x.age >= S.minAge * 3600e3);
   function draw() {
     const v = vis(), skip = S.unused.length - v.length, sel = v.filter(x => x.on), sz = sel.reduce((a, x) => a + x.size, 0);
-    body(`<p>صور المجلد <b>assets/img/pages</b>: <b>${S.total}</b> صورة، منها <b>${S.unused.length}</b> لا يذكرها أي ملف في الموقع (صفحات، قوائم صفحات، بيانات المنتجات…).</p>
-      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي من المستودع (يمكن استرجاعه فقط من سجلّ الموقع).</div>
+    body(`<p>صور مكتبة الصفحات: <b>${S.total}</b> صورة، منها <b>${S.unused.length}</b> لا يذكرها أي ملف في الموقع (صفحات، قوائم صفحات، بيانات المنتجات…).</p>
+      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي.</div>
       <p>تجاهل ما رُفع خلال آخر <select data-c="age"><option value="24"${S.minAge === 24 ? " selected" : ""}>24 ساعة (موصى به)</option><option value="1"${S.minAge === 1 ? " selected" : ""}>ساعة</option><option value="0"${S.minAge === 0 ? " selected" : ""}>لا تتجاهل شيئاً</option></select>${skip ? ` — تُجوهلت ${skip} صورة حديثة` : ""}</p>
       ${v.length ? `<div class="cg">${v.map(x => `<div class="ci${x.on ? "" : " off"}" data-c="tg" data-p="${esc(x.p)}" title="${esc(x.p)}"><img src="${esc(x.p)}" loading="lazy" alt=""><i>✓</i><small>${kb(x.size)}</small></div>`).join("")}</div>` : '<p style="color:#2d6a4f"><b>لا توجد صور يتيمة قابلة للحذف الآن.</b></p>'}`);
     foot(`<button class="p" data-c="del"${sel.length ? "" : " disabled"}>حذف المحدد نهائياً (${sel.length} — ${kb(sz)})</button><button class="s" data-c="all">${sel.length === v.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button class="s" data-c="x">إغلاق</button>`);
@@ -68,12 +68,12 @@ const PBClean = (() => {
     await G.j(G.api + "/git/refs/heads/" + encodeURIComponent(G.br), { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) }); return paths.length;
   }
   async function remove() {
-    const sel = vis().filter(x => x.on); if (!sel.length) return; if (!confirm("حذف " + sel.length + " صورة نهائياً من المستودع؟")) return;
+    const sel = vis().filter(x => x.on); if (!sel.length) return; if (!confirm("حذف " + sel.length + " صورة نهائياً من الموقع؟")) return;
     foot(""); body('<p id="pbx-cs">جارٍ الحذف…</p>'); const st = t => { const e = document.getElementById("pbx-cs"); if (e) e.textContent = t; }, G = S.G, paths = sel.map(x => x.p);
     try {
       st("تحديث قائمة مكتبة الصور…");
       try { const f = await GH.getFile("assets/pages/media.json"), L = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); const nl = L.filter(x => !paths.includes(x.p)); if (nl.length !== L.length) await GH.putFile("assets/pages/media.json", btoa(unescape(encodeURIComponent(JSON.stringify(nl, null, 1)))), f.sha, "تنظيف مكتبة صور منشئ الصفحات"); } catch (e) { console.warn("media.json", e); }
-      st("إنشاء commit الحذف…");
+      st("تنفيذ الحذف…");
       const ref = await G.j(G.api + "/git/ref/heads/" + encodeURIComponent(G.br)), cm = await G.j(G.api + "/git/commits/" + ref.object.sha);
       const tr = await G.j(G.api + "/git/trees", { method: "POST", body: JSON.stringify({ base_tree: cm.tree.sha, tree: paths.map(p => ({ path: p, mode: "100644", type: "blob", sha: null })) }) });
       const nc = await G.j(G.api + "/git/commits", { method: "POST", body: JSON.stringify({ message: "تنظيف الصور غير المستعملة (" + paths.length + ")", tree: tr.sha, parents: [ref.object.sha] }) });

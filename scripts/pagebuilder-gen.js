@@ -145,7 +145,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 
   /* OCR داخل المتصفح (Tesseract.js من CDN، بلا مفتاح). يمكن استبداله (للاختبار) بتعيين PBGen.ocr */
   async function ensureTesseract() {
-    if (window.Tesseract) return; await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"; s.onload = res; s.onerror = () => rej(new Error("تعذّر تحميل محرك OCR (تحقق من الإنترنت)")); document.head.appendChild(s); });
+    if (window.Tesseract) return; await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"; s.onload = res; s.onerror = () => rej(new Error("تعذّر تحميل محرك قراءة النص (تحقق من الإنترنت)")); document.head.appendChild(s); });
   }
   async function defaultOcr(canvas, lang, log) {
     await ensureTesseract(); const r = await Tesseract.recognize(canvas, lang || "ara+eng", { logger: m => log && log(m) });
@@ -300,7 +300,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   /* remove.bg: قص خلفية الصورة (PNG شفاف). قد يمنع المتصفح الاتصال المباشر (CORS) — عندها استعمل «قص كصورة» أو ارفع صورة مقصوصة يدوياً */
   async function removeBgCall(blob, key) {
     const fd = new FormData(); fd.append("image_file", blob, "cut.png"); fd.append("size", "auto"); fd.append("format", "png");
-    let r; try { r = await fetch("https://api.remove.bg/v1.0/removebg", { method: "POST", headers: { "X-Api-Key": key }, body: fd }); } catch (e) { throw new Error("تعذّر الاتصال بـ remove.bg من المتصفح (قد يكون CORS أو الإنترنت)"); }
+    let r; try { r = await fetch("https://api.remove.bg/v1.0/removebg", { method: "POST", headers: { "X-Api-Key": key }, body: fd }); } catch (e) { throw new Error("تعذّر الاتصال بـ remove.bg من المتصفح (تحقق من الإنترنت)"); }
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error((j.errors && j.errors[0] && (j.errors[0].title + (j.errors[0].detail ? ": " + j.errors[0].detail : ""))) || ("remove.bg " + r.status)); }
     return await r.blob();
   }
@@ -469,7 +469,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <button class="small gray" type="button" id="gen-erase-btn" onclick="PBGen.eraseMode()">✋ امسح منطقة بالسحب</button>
       <button class="small gray" type="button" id="gen-erase-undo" onclick="PBGen.eraseUndo()" disabled>↶ تراجع</button>
       <button class="small gray" type="button" onclick="PBGen.downloadClean()">⬇ تنزيل الصورة</button>
-      <label class="hint" style="margin:0">الكشف <select id="gen-erase-det"><option value="pix">تلقائي بالصورة — بلا مفتاح</option><option value="ocr">بقراءة النص (OCR)</option></select></label>
+      <label class="hint" style="margin:0">الكشف <select id="gen-erase-det"><option value="pix">تلقائي بالصورة — بلا مفتاح</option><option value="ocr">بقراءة النص</option></select></label>
       <label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-erase-gem" style="width:auto"> Alyssum API للمناطق المعقدة (اختياري، يستهلك رصيداً)</label>
     </div>
     <div id="gen-erase-msg" class="hint" style="margin-top:.4rem;min-height:1.2em"></div>
@@ -481,7 +481,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   </div>
   <div style="display:none">
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">Tesseract — مجاني داخل المتصفح</option><option value="gemini">Alyssum API رؤية — أدق للعربية (بمفتاحك)</option></select></label>
+    <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">محرك مجاني داخل المتصفح</option><option value="gemini">Alyssum API رؤية — أدق للعربية (بمفتاحك)</option></select></label>
     <label class="hint" style="margin:0;display:none" id="gen-gk-wrap">مفتاح Alyssum API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
     <label class="hint" style="margin:0">مفتاح remove.bg (اختياري — لقص خلفية المنتج/الصور)<input id="gen-rbkey" dir="ltr" placeholder="بدونه: «قص كصورة» مستطيلة" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
   </div>
@@ -495,7 +495,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div class="gen-step" data-s="3" style="display:none">
   <b>③ التحويل إلى صفحة قابلة للتعديل</b>
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (OCR داخل المتصفح)</label>
+    <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-ocr" checked style="width:auto"> استخراج النصوص القابلة للتعديل (قراءة النص داخل المتصفح)</label>
     <label class="hint" style="margin:0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-erase-orig" checked style="width:auto"> امسح الأصل من الخلفية عند قص عنصر (حيث تكون الخلفية بسيطة)</label>
   </div>
   <textarea id="gen-intended" style="display:none"></textarea>
@@ -829,7 +829,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
     };
     try {
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;
-      if (CONV() && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Alyssum API أو اختر Tesseract"; btn.disabled = false; return; }
+      if (CONV() && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Alyssum API أو اختر المحرك المجاني"; btn.disabled = false; return; }
       try { if (gk) localStorage.setItem("alyssum_gp_gkey", gk); if (rb) localStorage.setItem("alyssum_removebg_key", rb); } catch (e) { }
       const page = await convert({ dw: 1100, canvas: S.canvas, cuts: S.cuts, regions: CONV() ? S.regions : [], intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: !!CONV() && $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: !!CONV() && $("gen-ocr").checked, inpaint: true, gemOpt: geminiOpt(), tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
       page.css = (page.css || "") + edgeGradient(S.canvas);        // خلفية الصفحة تمتد بنفس تدرّج حواف الصورة فلا تظهر هوامش بيضاء
