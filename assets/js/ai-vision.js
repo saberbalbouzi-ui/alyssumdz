@@ -1,9 +1,9 @@
 /* الرؤية الذكية (مشترك: منشئ الصفحات، ولاحقاً المحرر): «التقاط العناصر» مثل الالتقاط السحري في Canva، ويعمل بلا مفتاح.
-   ① الكشف: Gemini إن وُجد مفتاح المولّد (أسماء عربية وتجميع ذكي)، وإلا نموذجان محليان داخل المتصفح (D-FINE على COCO وObjects365).
+   ① الكشف: Alyssum API إن وُجد مفتاح المولّد (أسماء عربية وتجميع ذكي)، وإلا نموذجان محليان داخل المتصفح (D-FINE على COCO وObjects365).
    ② الحدود: SAM 2.1 يرسم قناع كل عنصر بدقة البكسل من صندوقه، أو من نقرة/مستطيل يرسمه المستخدم لعنصر فاته الكشف،
       ثم «مرشّح موجَّه» يلصق الحافة بحواف الصورة الأصلية بدقتها الكاملة.
-   ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Gemini إن فعّله المستخدم).
-   Gemini اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
+   ③ القصّ: صورة شفافة لكل عنصر (+ ظلّه إن كانت خلفيته ناعمة)، وإعادة رسم مكانه في الخلفية بنموذج MI-GAN محلي (أو Alyssum API إن فعّله المستخدم).
+   Alyssum API اختياري ومُطفأ افتراضياً. النماذج تعمل في Web Worker (ai-vision-worker.js) فلا تتجمد الصفحة، وتُنزَّل مرة واحدة (~110MB) ثم تُحفظ في ذاكرة المتصفح. */
 window.AIVision = (function () {
   const BASE = (document.currentScript && document.currentScript.src) || location.href, WURL = new URL("ai-vision-worker.js?v=19", BASE).href;
   const SAMSZ = 1024, DETSZ = 736, W8 = {};      // 736 بدل 960: كشف أسرع بنحو الضعف بلا فقد يُذكر لعناصر بحجم مفيد
@@ -57,7 +57,7 @@ window.AIVision = (function () {
     const persons = keep.filter(k => (k.en2 || k.en) === "person"), held = d => persons.some(p => bInter(p.b, d.b) / Math.max(1, bArea(d.b)) > .8);      // وعاء/كوب في يد شخص = منتج (عبوة)
     return keep.slice(0, lite ? 10 : 18).map(d => ({ label: /^(cup|vase|bottle|jug|canned|cosmetics|toiletry)$/.test(d.en2 || d.en) && ((d.b[3] - d.b[1]) > (d.b[2] - d.b[0]) * 1.1 || held(d)) ? "عبوة" : arName(d.en2 || d.en), en: d.en2 || d.en, score: d.score, box: d.b, src: d.src }));
   }
-  /* كشف بـ Gemini: صناديق + أسماء عربية (يُرسل الصورة مصغّرة إلى Google بمفتاحك فقط) */
+  /* كشف بـ Alyssum API: صناديق + أسماء عربية (يُرسل الصورة مصغّرة إلى Google بمفتاحك فقط) */
   async function geminiDetect(cv, key) {
     const W = cv.width, H = cv.height, sc = Math.min(1, 1280 / Math.max(W, H)), c = document.createElement("canvas"); c.width = Math.round(W * sc); c.height = Math.round(H * sc); c.getContext("2d").drawImage(cv, 0, 0, c.width, c.height);
     const b64 = c.toDataURL("image/jpeg", .9).split(",")[1];
@@ -67,13 +67,13 @@ window.AIVision = (function () {
       const cfg = { responseMimeType: "application/json", temperature: 0 }; if (/2\.5/.test(m)) cfg.thinkingConfig = { thinkingBudget: 0 };
       let r; try { r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }] }], generationConfig: cfg }) }); } catch (e) { throw new Error("تعذّر الاتصال بـ Google"); }
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { last = r.status + ": " + ((j.error && j.error.message) || ""); if (r.status === 400 && /API key/i.test(last) || r.status === 403) throw new Error("مفتاح Gemini غير صالح: " + last.slice(0, 120)); continue; }
+      if (!r.ok) { last = r.status + ": " + ((j.error && j.error.message) || ""); if (r.status === 400 && /API key/i.test(last) || r.status === 403) throw new Error("مفتاح Alyssum API غير صالح: " + last.slice(0, 120)); continue; }
       const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join(""); let p;
       try { const s = t.replace(/^```(json)?|```$/g, "").trim(); p = JSON.parse(s.slice(Math.min(...["[", "{"].map(ch => s.indexOf(ch)).filter(i => i >= 0)))); } catch (e) { last = "رد غير مفهوم"; continue; }
       const arr = Array.isArray(p) ? p : (p.items || p.objects || []);
       return arr.filter(x => x && Array.isArray(x.box_2d) && x.box_2d.length === 4).slice(0, 25).map((x, i) => { const [a, b, cc, d] = x.box_2d.map(Number); return { label: String(x.label || "عنصر").trim().slice(0, 24), score: 1 - i * .01, box: [Math.max(0, b / 1000 * W), Math.max(0, a / 1000 * H), Math.min(W, d / 1000 * W), Math.min(H, cc / 1000 * H)], src: "gemini" }; }).filter(d => bArea(d.box) > W * H * .0008);
     }
-    throw new Error("فشل كشف Gemini — " + last.slice(0, 140));
+    throw new Error("فشل كشف Alyssum API — " + last.slice(0, 140));
   }
   /* ───── الأقنعة (SAM) ─────
      كل عنصر يحفظ قناعه منخفض الدقة (logits 256×256) ونحوّله عند الحاجة: عرض سريع، أو دقة كاملة مع تنعيم الحافة */
@@ -140,7 +140,7 @@ window.AIVision = (function () {
       const small = hit.area < it.area ? hit : it, big = small === hit ? it : hit;
       const CONT = /عبوة|كوب|إناء|قارورة|علبة|إبريق|مستحضر/, related = (FAM[small.label] || small.label) === (FAM[big.label] || big.label) || (CONT.test(small.label) && CONT.test(big.label));
       /* عنصر داخل شخص (منتج في اليد) أو من نوع مختلف = عنصر مستقل فوقه يُقتطع منه؛ «الجزء» فقط بين متقاربين (غطاء داخل عبوة) */
-      if (PERSON.test(big.label) || !related || (small.det || 0) > (big.det || 0) || (small.src === "gemini" && big.src === "gemini")) { carve(big, small, S); if (it.area) out.push(it); return; }      // عنصر فوق آخر (Gemini لا يذكر أجزاء العناصر)
+      if (PERSON.test(big.label) || !related || (small.det || 0) > (big.det || 0) || (small.src === "gemini" && big.src === "gemini")) { carve(big, small, S); if (it.area) out.push(it); return; }      // عنصر فوق آخر (Alyssum API لا يذكر أجزاء العناصر)
       const lb = big.label; unite(hit, it, S); hit.label = lb;                                                // جزء من العنصر
     });
     const fam = l => FAM[l] || l;
@@ -153,7 +153,7 @@ window.AIVision = (function () {
   let AC = null;
   const fingerprint = cv => { const g = cv.getContext("2d", { willReadFrequently: true }), W = cv.width, H = cv.height; let h = 2166136261; for (let j = 0; j < 12; j++) for (let i = 0; i < 12; i++) { const d = g.getImageData(Math.min(W - 1, Math.floor((i + .5) * W / 12)), Math.min(H - 1, Math.floor((j + .5) * H / 12)), 1, 1).data; for (let k = 0; k < 3; k++) h = Math.imul(h ^ d[k], 16777619); } return W + "x" + H + ":" + (h >>> 0); };
   const cloneItems = list => { const m = new Map(), out = list.map(it => { const c = {}; for (const k in it) { const v = it[k]; c[k] = ArrayBuffer.isView(v) ? v.slice() : Array.isArray(v) ? JSON.parse(JSON.stringify(v)) : v; } m.set(it, c); return c; }); out.forEach(c => { if (c.holder) c.holder = m.get(c.holder) || null; }); return out; };
-  /* تحليل كامل: كشف (Gemini أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
+  /* تحليل كامل: كشف (Alyssum API أو محلي) بالتوازي مع ترميز SAM، ثم قناع لكل عنصر */
   const fpOf = (cv, o) => { try { return fingerprint(cv) + "|" + (o.zone ? JSON.stringify(o.zone) : "") + "|" + (o.noDetect ? 1 : 0) + "|" + (o.lite ? 1 : 0) + "|" + (o.noHeld ? 1 : 0) + "|" + (o.maxItems || 0) + "|" + (o.fastDet ? 1 : 0); } catch (e) { return ""; } };
   let INF = null;      /* تحليل جارٍ لصورة بعينها (تحضير مسبق في الخلفية): طلب مماثل ينتظره بدل أن يكرّره فيتلف حالة SAM */
   function cachedFor(cv, o) { const fp = fpOf(cv, o || {}); return !!fp && ((AC && AC.fp === fp && curS === AC.S) || (INF && INF.fp === fp)); }
@@ -168,7 +168,7 @@ window.AIVision = (function () {
     if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحلي المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: "local", note: "", dets: AC.dets, later: null }; }
     step("⏳ تجهيز أداة القص…");
     const pS = embed(cv, prog("sam")); pS.catch(() => { });
-    /* المسار المحلي فقط: لا تُرسل الصورة إلى Gemini أو أي خدمة خارجية. */
+    /* المسار المحلي فقط: لا تُرسل الصورة إلى Alyssum API أو أي خدمة خارجية. */
     let localErr = null, src = "local", note = "";
     const later = o.noDetect ? localDetect(cv, () => { }, false).catch(() => []) : null;
     const pLoc = o.noDetect ? Promise.resolve([]) : localDetect(cv, prog("det"), o.zone, o.lite || o.fastDet).catch(e => { localErr = e; return []; });
@@ -495,7 +495,7 @@ window.AIVision = (function () {
     });
     return out;
   }
-  /* مسح العناصر من الخلفية: قناع موحّد موسَّع قليلاً ← ترميم محلي (أو Gemini إن مُرِّر gen) */
+  /* مسح العناصر من الخلفية: قناع موحّد موسَّع قليلاً ← ترميم محلي (أو Alyssum API إن مُرِّر gen) */
   function unionMask(W, H, cuts, grow) {
     const U = new Uint8Array(W * H); cuts.forEach(c => { const e = c.erase; for (let y = 0; y < e.h; y++) for (let x = 0; x < e.w; x++) if (e.m[y * e.w + x]) U[(e.y0 + y) * W + e.x0 + x] = 1; });
     return grow > 0 && ImageTools.sqDilate ? ImageTools.sqDilate(U, W, H, grow) : U;
@@ -533,19 +533,19 @@ window.AIVision = (function () {
       g.putImageData(img, x0, y0);
     }
   }
-  /* ملء بالذكاء الاصطناعي: نلوّن المنطقة بالأرجواني ونطلب إكمال الخلفية، ثم نأخذ بكسلات الناتج داخل المنطقة فقط (بحافة ناعمة) */
+  /* ملء بتقنية Alyssum الذكية: نلوّن المنطقة بالأرجواني ونطلب إكمال الخلفية، ثم نأخذ بكسلات الناتج داخل المنطقة فقط (بحافة ناعمة) */
   async function inpaintAI(base, U, gen) {
     const W = base.width, H = base.height, s = Math.min(1, 1536 / Math.max(W, H)), w = Math.round(W * s), h = Math.round(H * s), c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(base, 0, 0, w, h);
     const d = g.getImageData(0, 0, w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (U[Math.min(H - 1, Math.round((y + .5) / s)) * W + Math.min(W - 1, Math.round((x + .5) / s))]) { const i = (y * w + x) * 4; d.data[i] = 255; d.data[i + 1] = 0; d.data[i + 2] = 255; } g.putImageData(d, 0, 0);
     const parts = [{ text: "Edit this image: the areas painted solid magenta (#FF00FF) are holes where objects were removed. Fill ONLY the magenta areas with a realistic continuation of the surrounding background (walls, table, fabric, gradient, lighting and perspective), as if those objects were never there. Do not add any new object, person, text or logo. Keep every non-magenta pixel exactly the same, with the same framing and size. Return only the edited image." }, { inline_data: { mime_type: "image/png", data: c.toDataURL("image/png").split(",")[1] } }];
-    const j = await gen(parts), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), dd = pt && (pt.inlineData || pt.inline_data); if (!dd) throw new Error("لم يُرجع Gemini صورة للملء");
+    const j = await gen(parts), pt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).find(x => x.inlineData || x.inline_data), dd = pt && (pt.inlineData || pt.inline_data); if (!dd) throw new Error("لم يُرجع Alyssum API صورة للملء");
     const bin = atob(dd.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
     const im = await createImageBitmap(new Blob([arr], { type: dd.mimeType || dd.mime_type || "image/png" })); if (Math.abs(im.width / im.height - W / H) > .04 * (W / H)) throw new Error("أبعاد صورة الملء لا تطابق الأصل");
     const t = document.createElement("canvas"); t.width = W; t.height = H; const tg = t.getContext("2d", { willReadFrequently: true }); tg.drawImage(im, 0, 0, W, H); const G = tg.getImageData(0, 0, W, H).data;
     const R = Math.max(2, Math.round(Math.max(W, H) / 500)), soft = ImageTools.sqDilate(U, W, H, R), bd = base.getContext("2d", { willReadFrequently: true }), B = bd.getImageData(0, 0, W, H); let mag = 0, tot = 0;
     const blur = boxMean(Float32Array.from(soft), W, H, R);
     for (let i = 0; i < W * H; i++) { if (!soft[i]) continue; const f = U[i] ? 1 : Math.min(1, blur[i] * 1.5), j4 = i * 4; if (U[i]) { tot++; if (G[j4] > 200 && G[j4 + 1] < 60 && G[j4 + 2] > 200) mag++; } for (let k = 0; k < 3; k++) B.data[j4 + k] = Math.round(B.data[j4 + k] * (1 - f) + G[j4 + k] * f); }
-    if (tot && mag / tot > .03) throw new Error("لم يملأ Gemini المنطقة");
+    if (tot && mag / tot > .03) throw new Error("لم يملأ Alyssum API المنطقة");
     bd.putImageData(B, 0, 0);
   }
   /* خطوط الحدود للعرض: حافة القناع ← قماش بنفسجي + تعبئة شفافة */

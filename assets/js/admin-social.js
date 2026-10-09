@@ -7,7 +7,9 @@
 const AdminSocial = (() => {
   const $ = id => document.getElementById(id), A = () => (typeof Admin !== "undefined" ? Admin : {});
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const PATH = "assets/data/social.json", MK = "alyssum_meta", LK = "alyssum_social_local";
+  const PATH = "assets/data/social.json", MK = "alyssum_meta", LK = "alyssum_social_local", KEYLS = "alyssum_gp_gkey", CURK = "alyssum_social_cur", RET = "alyssum_social_ret";
+  /* الإشعار: توست اللوحة + رسالة ظاهرة داخل المؤلّف (التوست كان يختفي خلف النافذة فيبدو أن الأزرار لا تعمل) */
+  const toast = (t) => { try { if (typeof globalThis.toast === "function") globalThis.toast(t); } catch (e) { } const m = document.getElementById("sm-msg"); if (m) { m.textContent = t; m.className = /^(✅|✓)/.test(t) ? "ok" : (/^(⏳|جارِ)/.test(t) ? "" : "bad"); } };
   const S = { d: null, sha: null, tab: "posts", filter: "all", cur: null, saveT: 0, msg: "", ver: "v21.0", tick: 0 };
   const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
   const pad = n => String(n).padStart(2, "0");
@@ -48,16 +50,18 @@ const AdminSocial = (() => {
   function persist() { clearTimeout(S.saveT); status("جارِ الحفظ…"); S.saveT = setTimeout(writeData, 1200); }
   function status(t) { S.msg = t; const e = $("sm-status"); if (e) e.textContent = t; }
   /* ───────── القوالب وأدوات النص ───────── */
-  const OBJ = [["offer", "عرض / تخفيض"], ["new", "منتج جديد"], ["benefit", "فوائد المنتج"], ["urgent", "استعجال (كمية محدودة)"], ["proof", "رأي زبون"], ["tip", "نصيحة / معلومة"], ["ask", "سؤال للتفاعل"], ["bundle", "باقة / عرض كمية"]];
+  const OBJ = [["offer", "عرض / تخفيض"], ["new", "منتج جديد"], ["benefit", "فوائد المنتج"], ["urgent", "استعجال (كمية محدودة)"], ["proof", "رأي زبون"], ["tip", "نصيحة / معلومة"], ["ask", "سؤال للتفاعل"], ["bundle", "باقة / عرض كمية"], ["story", "لماذا اخترناه"], ["faq", "أسئلة شائعة"]];
   const TPL = {
-    offer: ["عرض خاص على {name}\nبدل {old} دج، الآن {price} دج فقط (خصم {disc}%)\nالدفع عند الاستلام • توصيل لكل الولايات\n\nاطلب الآن:\n{link}", "{name} بسعر لا يتكرر!\n{price} دج بدل {old} دج\nاستفد من العرض قبل أن ينتهي\n\n{link}", "خصم {disc}% على {name}\nالسعر الآن {price} دج فقط\nواتساب: {wa}\n\n{link}"],
-    new: ["وصل حديثاً: {name}\n{desc}\nالسعر: {price} دج\nالدفع عند الاستلام\n\nاكتشفه الآن:\n{link}", "جديدنا اليوم: {name}\nمن أجود ما اخترنا لك لتجربته\n{price} دج فقط\n\n{link}"],
-    benefit: ["لماذا يحبه زبائننا؟ {name}\n• {b1}\n• {b2}\n• {b3}\n\nجرّبه الآن بـ {price} دج\n{link}", "{name}: الفوائد باختصار\n{b1}\n{b2}\n{b3}\n\nاطلب مع الدفع عند الاستلام:\n{link}"],
-    urgent: ["الكمية محدودة: {name}\nمتبقٍ القليل بسعر {price} دج\nلا تفوّت فرصتك\n\n{link}", "آخر القطع من {name}\nاطلب اليوم قبل نفاد الكمية\n{price} دج • دفع عند الاستلام\n\n{link}"],
-    proof: ["قالوا عن {name}:\n«ممتاز، النتيجة كما وُصف والتوصيل كان سريعاً»\nجرّبه وكن الرأي القادم\n\n{link}", "رضا زبائننا هو أجمل رسالة\n{name} من منتجاتنا الأكثر طلباً\n\n{link}"],
-    tip: ["معلومة مفيدة اليوم\n{tip}\nومن منتجاتنا لهذا الغرض: {name}\n\n{link}", "هل تعلم؟\n{tip}\nاكتشف {name}:\n{link}"],
-    ask: ["سؤال لكم: ما أكثر شيء تبحثون عنه في {cat}؟\nاكتبوا لنا في التعليقات\nومن اقتراحاتنا: {name} — {price} دج\n{link}", "ما رأيكم في {name}؟ جرّبتموه من قبل؟\nشاركونا تجربتكم\n{link}"],
-    bundle: ["وفّر أكثر مع باقة {name}\nاشترِ أكثر من قطعة واحصل على سعر أفضل\nالسعر يبدأ من {price} دج\n\n{link}", "باقة {name}: الأوفر لك\nاطلبها الآن والدفع عند الاستلام\n{link}"],
+    offer: ["🔥 عرض لا يتكرر على {name}\n\nتبحث عن جودة حقيقية بسعر مناسب؟ هذه فرصتك.\n\n✅ {b1}\n✅ {b2}\n✅ {b3}\n\n💰 السعر الآن {price} دج فقط{save}\n🚚 توصيل لكل الولايات\n💵 الدفع عند الاستلام: تستلم، تفحص، ثم تدفع\n\n⏰ العرض لفترة محدودة وقد ينتهي في أي لحظة.\n\n👇 اطلب الآن بنقرة واحدة:\n{link}\n📞 أو عبر واتساب: {wa}", "هل ما زلت تؤجّل شراء {name}؟\n\nاليوم لديك سببان لتقرّر:\n1️⃣ سعر خاص {price} دج{save}\n2️⃣ دفع عند الاستلام بلا أي مخاطرة\n\nما يميّزه:\n• {b1}\n• {b2}\n• {b3}\n\nنؤكد طلبك هاتفياً قبل الشحن ونوصّله إلى ولايتك.\n\nاحجز قطعتك الآن 👇\n{link}", "عرض خاص على {name}\nالسعر الآن {price} دج فقط{save}\nالدفع عند الاستلام • توصيل لكل الولايات\n\nاطلب الآن:\n{link}"],
+    new: ["🆕 وصل حديثاً إلى متجرنا: {name}\n\n{desc}\n\nلماذا انتظرناه؟ لأنه يجمع:\n✅ {b1}\n✅ {b2}\n✅ {b3}\n\nالسعر التعريفي: {price} دج{save}\n💵 الدفع عند الاستلام • 🚚 توصيل لكل الولايات\n\nكن من أوائل من يجرّبه 👇\n{link}", "جديدنا اليوم: {name}\n{desc}\nالسعر: {price} دج{save}\nالدفع عند الاستلام\n\nاكتشفه الآن:\n{link}"],
+    benefit: ["لماذا يختاره زبائننا مراراً؟ {name} 🌿\n\n✨ {b1}\n✨ {b2}\n✨ {b3}\n\nنؤمن أن الجودة تُرى من أول استعمال، ولذلك نختار منتجاتنا بعناية ونراجع كل طلب قبل شحنه.\n\n📦 توصيل لكل الولايات\n💵 دفع عند الاستلام\n\nجرّبه الآن بـ {price} دج{save}:\n{link}", "{name}: كل ما تحتاج معرفته قبل الطلب\n\n▪️ ما هو؟ {desc}\n▪️ لمن؟ لكل من يبحث عن جودة موثوقة\n▪️ ما الذي يميّزه؟\n   • {b1}\n   • {b2}\n   • {b3}\n▪️ السعر: {price} دج{save}\n▪️ الدفع: عند الاستلام\n\nاطلبه من هنا 👇\n{link}\nأو راسلنا: {wa}", "{name}: الفوائد باختصار\n{b1}\n{b2}\n{b3}\n\nاطلب مع الدفع عند الاستلام:\n{link}"],
+    urgent: ["⚠️ الكمية المتبقية من {name} محدودة\n\nلا نعدكم بتوفّره طويلاً، فكلما وصلت دفعة جديدة تنفد بسرعة.\n\n✅ {b1}\n✅ {b2}\n\n💰 {price} دج فقط{save}\n💵 دفع عند الاستلام • 🚚 توصيل لكل الولايات\n\nلا تؤجّل: اطلب الآن قبل أن تجد الصفحة تقول «نفدت الكمية» 👇\n{link}\n📞 {wa}", "آخر القطع من {name}\nاطلب اليوم قبل نفاد الكمية\n{price} دج • دفع عند الاستلام\n\n{link}"],
+    proof: ["⭐ رضاكم هو أجمل رسالة نتلقاها\n\n{name} من المنتجات التي يعود لها زبائننا.\n\n📸 جرّبتموه؟ شاركونا رأيكم وصورة طلبكم في التعليقات.\n\nولمن لم يجرّبه بعد:\n✅ الدفع عند الاستلام\n✅ تأكيد الطلب هاتفياً\n✅ توصيل لكل الولايات\n\nالسعر: {price} دج{save}\n{link}", "قالوا عن {name}:\n«[ضع هنا تعليق زبون حقيقي تلقيته]»\n\nجرّبه وكن الرأي القادم\n{link}"],
+    tip: ["💡 معلومة مفيدة اليوم\n\n{tip}\n\nومن منتجاتنا التي تساعدك في هذا الاتجاه: {name}\n• {b1}\n• {b2}\n\nالسعر {price} دج{save}\n{link}", "هل تعلم؟\n{tip}\nاكتشف {name}:\n{link}"],
+    ask: ["❓ سؤال لكم: ما أكثر شيء تبحثون عنه في {cat}؟\n\nاكتبوا لنا في التعليقات، فنحن نقرأ كل ردّ ونختار منتجاتنا على أساسه.\n\nومن اقتراحاتنا لكم اليوم: {name}\n✅ {b1}\n✅ {b2}\n💰 {price} دج{save}\n\n👇 للطلب:\n{link}", "ما رأيكم في {name}؟ جرّبتموه من قبل؟\nشاركونا تجربتكم\n{link}"],
+    bundle: ["🎁 وفّر أكثر مع باقة {name}\n\nكلما اشتريت أكثر دفعت أقل للقطعة الواحدة.\n\n✅ {b1}\n✅ {b2}\n✅ {b3}\n\nالسعر يبدأ من {price} دج{save}\n💵 الدفع عند الاستلام • 🚚 توصيل لكل الولايات\n\nاختر الباقة المناسبة 👇\n{link}", "باقة {name}: الأوفر لك\nاطلبها الآن والدفع عند الاستلام\n{link}"],
+    story: ["لماذا اخترنا {name} ضمن منتجاتنا؟ 🌿\n\nلأننا لا نعرض إلا ما نثق به:\n• {b1}\n• {b2}\n• {b3}\n\nنتابع كل طلب من لحظة التأكيد حتى وصوله إليك.\n\nاكتشفه بنفسك بـ {price} دج{save}:\n{link}"],
+    faq: ["❓ أسئلة شائعة عن {name}\n\n🔹 هل الدفع عند الاستلام؟ نعم.\n🔹 كم مدة التوصيل؟ من 24 إلى 72 ساعة حسب الولاية.\n🔹 هل يمكنني الاستفسار قبل الطلب؟ بالتأكيد: {wa}\n🔹 كيف أطلب؟ من الرابط أدناه ثم نؤكد طلبك هاتفياً.\n\n{name} بـ {price} دج{save}\n{link}"],
   };
   const TIPS = ["الاستمرار في الاستعمال أهم من كثرته، فالنتائج تأتي بالانتظام", "اختر المنتجات الطبيعية الموثوقة واقرأ طريقة الاستعمال قبل البدء", "احفظ المنتج في مكان بارد وجاف بعيداً عن الشمس", "الشرب الكافي للماء مع العناية الجيدة يعطيان أفضل النتائج"];
   const CTA = ["اطلب الآن والدفع عند الاستلام", "راسلنا على واتساب للطلب", "توصيل لكل الولايات خلال 24 إلى 72 ساعة", "الكمية محدودة، اطلب قبل النفاد"];
@@ -66,7 +70,7 @@ const AdminSocial = (() => {
   function fill(t, p, camp, k) {
     const o = p || {}, disc = o.old && o.old > o.price ? Math.round((1 - o.price / o.old) * 100) : 0, wa = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "";
     const bl = (o.benefits || o.features || []), b = i => (typeof bl[i] === "string" ? bl[i] : (bl[i] && bl[i].t) || ["طبيعي وآمن", "نتائج ملموسة", "توصيل سريع ودفع عند الاستلام"][i]);
-    const map = { name: o.title || "منتجنا", price: o.price != null ? num(o.price) : "", old: o.old ? num(o.old) : "", disc: disc || "", link: link(p, camp), wa, desc: String(o.desc || o.sub || "").slice(0, 90), cat: ((A().categories || {})[o.cat]) || "المنتجات", b1: b(0), b2: b(1), b3: b(2), tip: TIPS[(k || 0) % TIPS.length] };
+    const map = { name: o.title || "منتجنا", price: o.price != null ? num(o.price) : "", old: o.old ? num(o.old) : "", disc: disc || "", link: link(p, camp), wa, desc: String(o.desc || o.sub || "").slice(0, 90), cat: ((A().categories || {})[o.cat]) || "المنتجات", b1: b(0), b2: b(1), b3: b(2), tip: TIPS[(k || 0) % TIPS.length], save: disc ? " بدل " + num(o.old) + " دج (وفّر " + disc + "%)" : "" };
     let x = String(t).replace(/\{(\w+)\}/g, (m, key) => (map[key] != null ? map[key] : m));
     if (!disc) x = x.replace(/\(خصم\s*%\)/g, "").replace(/\n?بدل\s+دج، الآن/g, "\nالآن").replace(/خصم\s*%\s*على/g, "عرض خاص على");
     return x.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
@@ -166,14 +170,16 @@ const AdminSocial = (() => {
 .sm-bd{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:800;border:1px solid}.sm-bd.draft{background:#ffffff18;border-color:#ffffff40}.sm-bd.scheduled{background:#3987e533;border-color:#3987e5}.sm-bd.published{background:#199e7033;border-color:#199e70}.sm-bd.failed,.sm-bd.partial{background:#d5518133;border-color:#d55181}
 #sm input,#sm select,#sm textarea,#smw input,#smw select,#smw textarea{width:100%;padding:9px 11px;border-radius:11px;font:inherit;color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2)}#sm textarea,#smw textarea{min-height:170px;line-height:1.7;resize:vertical}#smw option,#sm option{background:#0b1a13;color:#fff}#sm label,#smw label{display:block;font-size:.82rem;color:rgba(255,255,255,.78);margin:8px 0 4px}
 .sm-row{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}.sm-chk{display:flex!important;align-items:center;gap:6px;margin:0!important}.sm-chk input{width:auto!important}
-#smw{position:fixed;inset:0;z-index:100002;display:none;align-items:flex-start;justify-content:center;padding:4vh 12px;background:rgba(2,8,5,.8);backdrop-filter:blur(6px);overflow:auto}#smw.on{display:flex}#smw .w{width:min(980px,100%);background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.18);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);padding:18px 20px;color:#fff}#smw .cols{display:grid;gap:16px;grid-template-columns:1.25fr 1fr}@media(max-width:820px){#smw .cols{grid-template-columns:1fr}}
+#smw{display:block}#smw .w{width:100%;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:18px 20px;color:#fff}#smw .cols{display:grid;gap:16px;grid-template-columns:1.25fr 1fr}@media(max-width:820px){#smw .cols{grid-template-columns:1fr}}
 .sm-pv{padding:12px;border-radius:14px;background:#fff;color:#111;font-size:.88rem;line-height:1.6}.sm-pv .h{display:flex;gap:8px;align-items:center;margin-bottom:8px;font-weight:800}.sm-pv .av{width:34px;height:34px;border-radius:50%;background:#16a34a}.sm-pv .tx{white-space:pre-line;word-break:break-word}.sm-pv img{width:100%;border-radius:10px;margin-top:8px;display:block}.sm-pv.ig{border-radius:16px}.sm-pv.ig .tx{font-size:.84rem}
 .sm-chips{display:flex;flex-wrap:wrap;gap:6px}.sm-chips button{padding:5px 10px;border-radius:999px;font:inherit;font-size:.8rem;color:#fff;cursor:pointer;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2)}.sm-chips button:hover{background:rgba(255,255,255,.16)}.sm-chips button.on{background:rgba(74,222,128,.25);border-color:#86efac}
 .sm-thumbs{display:flex;gap:6px;flex-wrap:wrap}.sm-thumbs img{width:58px;height:58px;object-fit:cover;border-radius:10px;border:2px solid transparent;cursor:pointer}.sm-thumbs img.on{border-color:#86efac}
 .sm-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.sm-cal div{padding:6px;border-radius:10px;text-align:center;font-size:.76rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}.sm-cal b{display:block;font-size:1.05rem}.sm-cal .full{background:rgba(74,222,128,.18);border-color:#86efac}
 #sm table{width:100%;border-collapse:collapse;font-size:.85rem}#sm th{text-align:start;padding:8px 6px;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.14);white-space:nowrap}#sm td{padding:9px 6px;border-bottom:1px solid rgba(255,255,255,.07)}
 .sm-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.sm-k div{padding:12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}.sm-k b{display:block;font-size:1.25rem}.sm-k small{color:rgba(255,255,255,.7)}.sm-bar{height:6px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;min-width:70px}.sm-bar i{display:block;height:100%;background:#86f06a}
-.sm-dd{border:1px solid rgba(255,255,255,.2);border-radius:11px;background:rgba(255,255,255,.07)}.sm-dd summary{padding:9px 12px;cursor:pointer;font-weight:800}.sm-ddl{max-height:260px;overflow:auto;padding:6px 12px 10px;display:grid;gap:2px;background:rgba(9,24,18,.985);border-top:1px solid rgba(255,255,255,.12);border-radius:0 0 11px 11px}.sm-ddl .sm-chk{margin:0}.sm-warn{color:#fdba74;font-size:.8rem}.sm-ok{color:#86efac;font-size:.8rem}.sm-em{padding:22px;text-align:center;color:rgba(255,255,255,.65)}#sm-status{color:rgba(255,255,255,.65);font-size:.8rem}`;
+.sm-dd{border:1px solid rgba(255,255,255,.2);border-radius:11px;background:rgba(255,255,255,.07)}.sm-dd summary{padding:9px 12px;cursor:pointer;font-weight:800}.sm-ddl{max-height:260px;overflow:auto;padding:6px 12px 10px;display:grid;gap:2px;background:rgba(9,24,18,.985);border-top:1px solid rgba(255,255,255,.12);border-radius:0 0 11px 11px}.sm-ddl .sm-chk{margin:0}.sm-warn{color:#fdba74;font-size:.8rem}.sm-ok{color:#86efac;font-size:.8rem}.sm-em{padding:22px;text-align:center;color:rgba(255,255,255,.65)}#sm-status{color:rgba(255,255,255,.65);font-size:.8rem}
+#smw .sm-act{position:sticky;bottom:0;z-index:6;margin:14px -20px -18px;padding:12px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:rgba(9,24,18,.97);border-top:1px solid rgba(255,255,255,.16);border-radius:0 0 22px 22px;backdrop-filter:blur(8px)}#smw .sm-act #sm-msg{flex:1 1 220px;font-size:.84rem;min-height:1.2em;color:rgba(255,255,255,.8)}#sm-msg.ok{color:#86efac}#sm-msg.bad{color:#fdba74}
+#smw .sm-box{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14)}#smw .sm-box>summary{cursor:pointer;font-weight:800}#smw .sm-box select{margin-top:2px}#smw .sm-gres img{max-width:100%;max-height:260px;border-radius:12px;margin-top:8px;display:block}#sm-resume{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}`;
     document.head.appendChild(st);
   }
   /* ───────── واجهة: الرسم ───────── */
@@ -182,8 +188,12 @@ const AdminSocial = (() => {
     const root = $("sm"); if (!root || !S.d) return; css();
     root.innerHTML = `<div class="sm-hd"><div><h2>إدارة السوشيال</h2><div class="sm-s">كتابة منشورات فيسبوك وانستغرام وجدولتها وإدارة الحملات الإعلانية • <span id="sm-status">${esc(S.msg)}</span></div></div>
 <div class="sm-tabs">${[["posts", "المنشورات"], ["plan", "النشر اليومي"], ["ads", "الحملات الإعلانية"], ["set", "الاتصال والإعدادات"]].map(([k, t]) => `<button type="button" data-t="${k}" class="${S.tab === k ? "on" : ""}">${t}</button>`).join("")}</div></div><div id="sm-body"></div>`;
-    root.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { S.tab = b.dataset.t; draw(); });
-    ({ posts: tabPosts, plan: tabPlan, ads: tabAds, set: tabSet })[S.tab]($("sm-body"));
+    root.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { S.tab = b.dataset.t; S.compose = false; S.campOpen = false; draw(); });
+    const body = $("sm-body");
+    if (S.compose && S.cur) { body.innerHTML = '<div id="smw"></div>'; drawComposer(); return; }
+    if (S.campOpen && S.camp) { body.innerHTML = '<div id="smw"></div>'; drawCamp(S.campNew); return; }
+    ({ posts: tabPosts, plan: tabPlan, ads: tabAds, set: tabSet })[S.tab](body);
+    if (S.cur) { body.insertAdjacentHTML("afterbegin", '<div class="sm-c" id="sm-resume"><span>📝 لديك منشور قيد التحرير' + (S.cur.text ? ' — «' + esc(S.cur.text.slice(0, 40)) + '…»' : "") + '</span><span style="display:flex;gap:8px"><button type="button" class="sm-b sm" data-rs="1">متابعة التحرير</button><button type="button" class="sm-b sm gh" data-rd="1">تجاهل</button></span></div>'); body.querySelector("[data-rs]").onclick = () => { S.compose = true; S.tab = "posts"; draw(); }; body.querySelector("[data-rd]").onclick = () => { closeComposer(); }; }
   }
   /* —— المنشورات —— */
   function tabPosts(h) {
@@ -225,19 +235,20 @@ ${calHtml()}<div class="sm-g">${list.length ? list.map(cardHtml).join("") : '<di
       const L = S.d.settings.ext = S.d.settings.ext || [], k = L.findIndex(y => y.id === x.id); if (k < 0) L.push(x); else L[k] = x; persist(); host.innerHTML = ""; done && done(x); };
   }
   function openComposer(p) {
-    let w = $("smw"); if (!w) { w = document.createElement("div"); w.id = "smw"; document.body.appendChild(w); }
     css(); S.cur = p ? JSON.parse(JSON.stringify(p)) : { id: uid("p"), text: "", image: "", channels: S.d.rule.channels.slice(), at: "", status: "draft", via: S.d.settings.runner ? "runner" : "browser", product: "", ids: {}, created: new Date().toISOString() };
-    w.classList.add("on"); w.onmousedown = e => { if (e.target === w) closeComposer(); }; drawComposer();
+    S.compose = true; S.tab = "posts"; saveSess(); draw(); try { $("sm").scrollIntoView({ block: "start" }); } catch (e) { }
   }
-  const closeComposer = () => { const w = $("smw"); if (w) w.classList.remove("on"); };
+  function saveSess() { try { if (S.cur) sessionStorage.setItem(CURK, JSON.stringify(S.cur)); else sessionStorage.removeItem(CURK); } catch (e) { } }
+  const closeComposer = () => { S.compose = false; S.campOpen = false; S.cur = null; S.camp = null; saveSess(); draw(); };
   function drawComposer() {
     const w = $("smw"), p = S.cur, pr = prodBy(p.product), P = products(), tags = S.d.settings.hashtags;
     const imgs = pr ? (pr.images && pr.images.length ? pr.images : [pr.cover]).filter(Boolean) : [];
     if (p.image && !imgs.includes(p.image)) imgs.unshift(p.image);
-    w.innerHTML = `<div class="w"><div class="sm-hd"><h2 style="font-size:1.2rem">${S.d.posts.some(x => x.id === p.id) ? "تعديل منشور" : "منشور جديد"}</h2><button type="button" class="sm-b gh sm" data-x="1">إغلاق</button></div><div class="cols"><div>
+    w.innerHTML = `<div class="w"><div class="sm-hd"><h2 style="font-size:1.2rem">${S.d.posts.some(x => x.id === p.id) ? "تعديل منشور" : "منشور جديد"}</h2><button type="button" class="sm-b gh sm" data-x="1">رجوع</button></div><div class="cols"><div>
 <label>المنتج (اختياري — لإدراج بياناته ورابطه)</label><select id="sm-prod"><option value="">— بلا منتج —</option><optgroup label="منتجات المتجر">${P.map(x => `<option value="${esc(x.slug)}" ${x.slug === p.product ? "selected" : ""}>${esc(x.title)}</option>`).join("")}</optgroup>${exts().length ? `<optgroup label="منتجات خارجية">${exts().map(x => `<option value="${esc(x.slug)}" ${x.slug === p.product ? "selected" : ""}>${esc(x.title)}</option>`).join("")}</optgroup>` : ""}<option value="__new">+ منتج خارجي جديد…</option></select>
 ${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="button" data-xe="1">تعديل المنتج الخارجي</button><button type="button" data-xd="1">حذف</button></div>` : ""}<div id="sm-xf"></div>
 <label>قالب بحسب الهدف</label><div class="sm-chips">${OBJ.map(([k, t]) => `<button type="button" data-tpl="${k}">${t}</button>`).join("")}<button type="button" data-var="1" title="يبدّل بين صياغات القالب الأخير">صياغة أخرى</button></div>
+<details class="sm-box" open><summary>✨ توليد نص ذكي (Alyssum API)</summary><div class="sm-row" style="margin-top:8px"><div><label>الهدف</label><select id="ai-goal">${OBJ.map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select></div><div><label>الطول</label><select id="ai-len"><option value="short">قصير</option><option value="medium" selected>متوسط</option><option value="long">طويل ومقنع</option></select></div><div><label>الأسلوب</label><select id="ai-tone"><option value="friendly">ودّي</option><option value="pro">احترافي</option><option value="energetic">حماسي</option><option value="darija">دارجة جزائرية</option></select></div><div><label>اللغة</label><select id="ai-lang"><option value="ar">العربية</option><option value="fr">الفرنسية</option></select></div></div><label>تعليمات إضافية (اختياري)</label><input id="ai-extra" placeholder="مثال: ركّز على التوصيل لكل الولايات، اذكر أن العرض حتى الجمعة"><div class="sm-chips" style="margin-top:8px"><button type="button" data-aigen="new">✨ توليد نص جديد</button><button type="button" data-aigen="improve">✍️ حسّن النص الحالي وطوّله</button></div><div class="sm-s" id="ai-st" style="margin-top:6px">يحتاج مفتاح Alyssum API (من تبويب «الاتصال والإعدادات»). بلا مفتاح استعمل القوالب الجاهزة أدناه.</div></details>
 <label>النص</label><textarea id="sm-text" placeholder="اكتب منشورك هنا…">${esc(p.text)}</textarea>
 <div class="sm-chips" style="margin-top:6px"><button type="button" data-ins="link">رابط المنتج</button><button type="button" data-ins="price">السعر</button><button type="button" data-ins="wa">واتساب</button>${CTA.map((c, i) => `<button type="button" data-cta="${i}">${esc(c.slice(0, 18))}…</button>`).join("")}<button type="button" data-clean="1">تنظيف الفراغات</button><button type="button" data-bul="1">أسطر ← نقاط</button></div>
 <div class="sm-chips" style="margin-top:6px">${EMO.map(e => `<button type="button" data-emo="${e}">${e}</button>`).join("")}</div>
@@ -245,18 +256,22 @@ ${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="but
 <div id="sm-cnt" style="margin-top:6px"></div></div><div>
 <label>القنوات</label><div class="sm-row"><label class="sm-chk"><input type="checkbox" data-ch="fb" ${p.channels.includes("fb") ? "checked" : ""}> فيسبوك</label><label class="sm-chk"><input type="checkbox" data-ch="ig" ${p.channels.includes("ig") ? "checked" : ""}> انستغرام</label></div>
 <label>الصورة</label><div class="sm-thumbs">${imgs.map(i => `<img class="${i === p.image ? "on" : ""}" data-img="${esc(i)}" src="${esc(imgSrc(i))}" alt="">`).join("")}</div>
-<div class="sm-chips" style="margin-top:6px"><button type="button" data-up="1">رفع صورة</button><button type="button" data-lib="1">من مكتبة الصور</button><button type="button" data-gen="1">توليد صورة بالذكاء</button><button type="button" data-noimg="1">بلا صورة</button></div><input type="file" id="sm-file" accept="image/*" hidden>
+<div class="sm-chips" style="margin-top:6px"><button type="button" data-up="1">رفع صورة</button><button type="button" data-lib="1">من مكتبة الصور</button><button type="button" data-noimg="1">بلا صورة</button></div><input type="file" id="sm-file" accept="image/*" hidden>
+<details class="sm-box"><summary>🎨 توليد صورة ذكية (في المكان)</summary><div class="sm-row" style="margin-top:8px"><div><label>المقاس</label><select id="sg-fmt">${[["ig_port", "Instagram بورتريه 1080×1350"], ["ig_sq", "Instagram مربّع 1080×1080"], ["fb_post", "Facebook منشور 1200×630"], ["fb_sq", "Facebook مربّع 1080×1080"], ["ig_story", "قصة / Reels 1080×1920"]].map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select></div><div><label>وصف المطلوب (اختياري)</label><input id="sg-goal" placeholder="مثال: خلفية دافئة بألوان الخريف"></div></div><div class="sm-chips" style="margin-top:8px"><button type="button" data-igq="1">🎨 ولّد الصورة هنا</button><button type="button" data-igb="1">🧩 صمّم صورة في المطوّر</button></div><div class="sm-s" style="margin-top:6px">تُولَّد انطلاقاً من صورة المنتج أو الصورة المختارة كمرجع، وتبقى في هذه النافذة. «صمّم في المطوّر» يفتح لوحة تصميم ثم يعيدك تلقائياً إلى هذا المنشور بعد «حفظ في المكتبة».</div><div id="sg-res" class="sm-gres"></div></details>
 <div id="sm-lib" style="display:none;margin-top:6px"></div>
 <label>أو رابط صورة خارجية (https://…)</label><div class="sm-row" style="grid-template-columns:1fr auto"><input id="sm-eimg" dir="ltr" placeholder="https://example.com/photo.jpg" value="${isHttp(p.image) ? esc(p.image) : ""}"><button type="button" class="sm-b sm" data-eimg="1">استعمال</button></div>
 <div id="sm-igw"></div>
-<label>الموعد</label><input type="datetime-local" id="sm-at" value="${p.at ? dtl(p.at) : ""}">
+<label>الموعد (للجدولة)</label><input type="datetime-local" id="sm-at" value="${p.at ? dtl(p.at) : ""}"><div class="sm-chips" style="margin-top:6px"><button type="button" data-qs="1h">بعد ساعة</button><button type="button" data-qs="t20">اليوم 20:00</button><button type="button" data-qs="n10">غداً 10:00</button><button type="button" data-qs="n20">غداً 20:00</button></div>
 <label>المعاينة</label><div class="sm-row"><div class="sm-pv" id="sm-pvf"></div><div class="sm-pv ig" id="sm-pvi"></div></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="sm-b gh" data-save="draft">حفظ كمسودة</button><button type="button" class="sm-b" data-save="sched">جدولة</button><button type="button" class="sm-b al" data-save="now">نشر الآن</button></div></div></div></div>`;
+</div></div><div class="sm-act"><span id="sm-msg" role="status"></span><button type="button" class="sm-b gh" data-save="draft">💾 حفظ كمسودة</button><button type="button" class="sm-b" data-save="sched">🗓 جدولة</button><button type="button" class="sm-b al" data-save="now">🚀 نشر الآن</button><button type="button" class="sm-b gh" data-x2="1">إلغاء</button></div></div>`;
     bindComposer(); preview();
   }
   function bindComposer() {
     const w = $("smw"), p = S.cur, T = () => $("sm-text"), sync = () => { p.text = T().value; preview(); };
-    w.querySelector("[data-x]").onclick = closeComposer; T().oninput = sync;
+    w.querySelector("[data-x]").onclick = closeComposer; w.querySelector("[data-x2]").onclick = closeComposer; T().oninput = () => { sync(); saveSess(); };
+    w.querySelectorAll("[data-qs]").forEach(b => b.onclick = () => { const d = new Date(), k = b.dataset.qs; if (k === "1h") d.setTime(Date.now() + 3600e3); else { if (k[0] === "n") d.setDate(d.getDate() + 1); d.setHours(k === "n10" ? 10 : 20, 0, 0, 0); if (d < new Date(Date.now() + 3 * 60e3)) d.setDate(d.getDate() + 1); } p.at = d.toISOString(); $("sm-at").value = dtl(d); toast("✅ الموعد: " + fdt(d)); saveSess(); });
+    w.querySelectorAll("[data-aigen]").forEach(b => b.onclick = () => runAi(b.dataset.aigen));
+    w.querySelector("[data-igq]").onclick = quickImage; w.querySelector("[data-igb]").onclick = openBuilder;
     $("sm-prod").onchange = e => { if (e.target.value === "__new") { e.target.value = p.product || ""; return extForm(null, x => { p.product = "x:" + x.id; if (!p.image && x.img) p.image = x.img; drawComposer(); }); } p.product = e.target.value; const pr = prodBy(p.product); if (pr && !p.image) p.image = pr.cover || ""; drawComposer(); };
     const xe = w.querySelector("[data-xe]"); if (xe) xe.onclick = () => extForm(p.product.slice(2), x => { if (!p.image && x.img) p.image = x.img; drawComposer(); });
     const xd = w.querySelector("[data-xd]"); if (xd) xd.onclick = () => { if (!confirm("حذف هذا المنتج الخارجي من القائمة؟")) return; S.d.settings.ext = (S.d.settings.ext || []).filter(x => "x:" + x.id !== p.product); p.product = ""; persist(); drawComposer(); };
@@ -276,9 +291,8 @@ ${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="but
     w.querySelector("[data-noimg]").onclick = () => { p.image = ""; drawComposer(); };
     w.querySelector("[data-up]").onclick = () => $("sm-file").click();
     $("sm-file").onchange = async e => { const f = e.target.files[0]; if (!f) return; try { toast("جارِ رفع الصورة…"); p.image = await A().uploadImageFile(f, "assets/img/pages", "social-", { max: 1600, q: .9, noVariants: true, uniq: true }); drawComposer(); } catch (er) { toast("تعذّر الرفع: " + er.message); } };
-    w.querySelector("[data-gen]").onclick = () => { S.keep = JSON.parse(JSON.stringify(p)); closeComposer(); try { A().tab("imggen", [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'builder'") || (x.dataset.work === "imggen"))); } catch (e) { } toast("ولّد الصورة ثم «حفظ في المكتبة»، وارجع إلى السوشيال واختر «من مكتبة الصور»"); };
     w.querySelector("[data-lib]").onclick = async () => { const box = $("sm-lib"); box.style.display = "block"; box.innerHTML = "…"; let L = []; try { L = (await (await fetch("assets/pages/media.json?t=" + Date.now())).json()).slice(0, 36); } catch (e) { } box.innerHTML = L.length ? `<div class="sm-thumbs">${L.map(m => `<img data-lp="${esc(m.p)}" src="${esc((typeof REL !== "undefined" ? REL : "") + m.p)}" alt="">`).join("")}</div>` : '<div class="sm-s">لا صور في المكتبة بعد.</div>'; box.querySelectorAll("[data-lp]").forEach(i => i.onclick = () => { p.image = i.dataset.lp; drawComposer(); }); };
-    $("sm-at").onchange = e => { p.at = e.target.value ? new Date(e.target.value).toISOString() : ""; };
+    $("sm-at").onchange = $("sm-at").oninput = e => { p.at = e.target.value ? new Date(e.target.value).toISOString() : ""; saveSess(); };
     w.querySelectorAll("[data-save]").forEach(b => b.onclick = () => saveCur(b.dataset.save));
   }
   function preview() {
@@ -291,14 +305,85 @@ ${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="but
     $("sm-cnt").innerHTML = `<span class="sm-s">${txt.length} حرفاً • ${hashCount(txt)} هاشتاغ</span>` + warn.map(x => `<div class="sm-warn">${esc(x)}</div>`).join("");
   }
   async function saveCur(mode) {
-    const p = S.cur; p.text = $("sm-text").value.trim(); if (!p.text && !p.image) return toast("اكتب نصاً أو اختر صورة");
-    if (!p.channels.length) return toast("اختر قناة واحدة على الأقل"); if (p.channels.includes("ig") && !p.image) return toast("انستغرام يحتاج صورة");
-    if (mode !== "draft") { try { await ensureIg(p); } catch (e) { toast("تحويل الصورة لانستغرام: " + e.message); return; } }
-    if (mode === "sched") { if (!p.at) return toast("حدّد موعد النشر"); if (new Date(p.at) < new Date(Date.now() + 2 * 60e3)) return toast("اختر موعداً في المستقبل"); p.status = "scheduled"; p.via = S.d.settings.runner ? "runner" : "browser"; if (p.via === "browser") await nativeFb(p); }
+    const p = S.cur; if (!p) return; p.text = $("sm-text").value.trim(); const atv = $("sm-at") && $("sm-at").value; if (atv) p.at = new Date(atv).toISOString();
+    if (!p.text && !p.image) return toast("اكتب نصاً أو اختر صورة");
+    if (!p.channels.length) return toast("اختر قناة واحدة على الأقل (فيسبوك أو انستغرام)"); if (p.channels.includes("ig") && !p.image && mode !== "draft") return toast("انستغرام يحتاج صورة — اختر صورة أو ألغِ قناة انستغرام");
+    if (mode === "now" && !meta().token) { const m = $("sm-msg"); if (m) { m.className = "bad"; m.innerHTML = 'يلزم رمز Meta أولاً — <a href="#" id="sm-goset" style="color:#fff;text-decoration:underline">افتح «الاتصال والإعدادات»</a> (يبقى منشورك محفوظاً هنا).'; const g = $("sm-goset"); if (g) g.onclick = e => { e.preventDefault(); S.compose = false; S.tab = "set"; draw(); }; } return; }
+    if (mode !== "draft") { try { toast("⏳ جارِ التحضير…"); await ensureIg(p); } catch (e) { toast("تحويل الصورة لانستغرام: " + e.message); return; } }
+    if (mode === "sched") { if (!p.at) { const a = $("sm-at"); if (a) a.focus(); return toast("حدّد موعد النشر أو اضغط أحد الأوقات السريعة"); } if (new Date(p.at) < new Date(Date.now() + 2 * 60e3)) return toast("اختر موعداً في المستقبل (بعد دقيقتين على الأقل)"); p.status = "scheduled"; p.via = S.d.settings.runner ? "runner" : "browser"; if (p.via === "browser") await nativeFb(p); }
     else if (mode === "draft") p.status = "draft";
+    if (mode === "now" && !confirm("نشر الآن على " + p.channels.map(c => CH[c]).join(" و") + "؟")) return;
     const i = S.d.posts.findIndex(x => x.id === p.id); if (i < 0) S.d.posts.push(p); else S.d.posts[i] = p;
-    if (mode === "now") { if (!meta().token) { toast("أدخل رمز Meta من تبويب «الاتصال» أولاً"); return; } if (!confirm("نشر الآن على " + p.channels.map(c => CH[c]).join(" و") + "؟")) return; closeComposer(); toast("جارِ النشر…"); await publishNow(p); return; }
-    persist(); closeComposer(); draw(); toast(mode === "sched" ? "✅ جُدول المنشور" : "✅ حُفظت المسودة");
+    if (mode === "now") { toast("⏳ جارِ النشر…"); const st = await publishNow(p, true); const done = st === "published"; toast(done ? "✅ نُشر المنشور" : "⚠️ " + (p.error || "تعذّر النشر") + " — حُفظ المنشور ويمكنك إعادة المحاولة"); if (done) { S.cur = null; S.compose = false; saveSess(); draw(); toast("✅ نُشر المنشور"); } return; }
+    persist(); S.cur = null; S.compose = false; saveSess(); draw(); toast(mode === "sched" ? "✅ جُدول المنشور — " + fdt(p.at) : "✅ حُفظت المسودة");
+  }
+  /* ───────── التوليد الذكي للنص (Alyssum API) ───────── */
+  const apiKey = () => { try { return (localStorage.getItem(KEYLS) || "").trim(); } catch (e) { return ""; } };
+  const TONES = { friendly: "warm, friendly and conversational", pro: "professional, trustworthy and clear", energetic: "energetic, enthusiastic and persuasive", darija: "Algerian Darija (colloquial Algerian Arabic) written in Arabic script, relatable and lively" };
+  const LENS = { short: "about 60-90 words", medium: "about 130-190 words", long: "about 230-330 words with a richer story, benefits, objection handling and a strong closing" };
+  async function aiText(o) {
+    const key = apiKey(); if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
+    const pr = o.product || {}, disc = pr.old && pr.old > pr.price ? Math.round((1 - pr.price / pr.old) * 100) : 0, bl = (pr.benefits || pr.features || []).map(x => typeof x === "string" ? x : (x && x.t) || "").filter(Boolean);
+    const wa = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "", goal = (OBJ.find(x => x[0] === o.goal) || [0, "عرض"])[1];
+    const prompt = ["You are a senior social-media copywriter for an Algerian online store (cash on delivery, delivery to all wilayas, order confirmed by phone).",
+      "Write ONE ready-to-post " + (o.channels.includes("ig") && !o.channels.includes("fb") ? "Instagram" : "Facebook/Instagram") + " post in " + (o.lang === "fr" ? "French" : "Arabic (clear Modern Standard Arabic suited to an Algerian audience)") + ".",
+      "Post goal: " + goal + ". Tone: " + (TONES[o.tone] || TONES.friendly) + ". Length: " + (LENS[o.len] || LENS.medium) + ".",
+      "PRODUCT: " + (pr.title || "(no product)") + (pr.price ? " | price: " + pr.price + " DZD" : "") + (disc ? " | old price: " + pr.old + " DZD (" + disc + "% off)" : "") + (pr.desc ? " | description: " + String(pr.desc).slice(0, 400) : "") + (bl.length ? " | benefits: " + bl.slice(0, 5).join("; ") : "") + ".",
+      "Include the product link on its own line: " + link(pr.slug ? pr : null, "post-" + o.id) + (wa ? " and the WhatsApp number " + wa : "") + ".",
+      "STRUCTURE: a strong hook in the first line (question or bold promise, no clickbait lies) → the customer's problem or desire → the product as the solution → 3 concrete benefits as emoji bullets → trust points (cash on delivery, phone confirmation, delivery to all wilayas) → price/offer → truthful urgency only → a clear call to action.",
+      "RULES: never claim to cure, treat or heal any disease and never promise medical results; do not invent testimonials, statistics, awards, or stock numbers; no competitor mentions; short paragraphs and a few fitting emojis; keep within " + (o.channels.includes("ig") ? "2200" : "5000") + " characters; add 5-8 relevant hashtags at the end.",
+      o.extra ? "EXTRA INSTRUCTIONS FROM THE OWNER: " + o.extra : "", o.draft ? "REWRITE AND EXPAND THIS DRAFT (keep its facts, improve persuasion, structure and length):\n" + o.draft : "", "Output ONLY the post text, no explanations."].filter(Boolean).join("\n");
+    let last = null;
+    for (const m of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: .9, maxOutputTokens: 2048 } }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) { const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x => x.text || "").join("").trim(); if (t) return t.replace(/^```[a-z]*\n?|```$/g, "").trim(); last = new Error("ردّ فارغ"); continue; }
+      last = new Error((r.status === 400 || r.status === 403 ? "المفتاح غير صالح أو غير مفعّل — راجع تبويب «الاتصال والإعدادات»" : (j.error && j.error.message) || "HTTP " + r.status)); if (r.status !== 404 && r.status !== 503) throw last;
+    }
+    throw last || new Error("تعذّر التوليد");
+  }
+  async function runAi(mode) {
+    const p = S.cur, st = $("ai-st"), btns = document.querySelectorAll("[data-aigen]"); if (!p) return;
+    if (!apiKey()) { st.innerHTML = 'يلزم مفتاح Alyssum API — <a href="#" id="ai-goset" style="color:#fff;text-decoration:underline">أدخله من «الاتصال والإعدادات»</a> (يبقى منشورك محفوظاً).'; $("ai-goset").onclick = e => { e.preventDefault(); S.compose = false; S.tab = "set"; draw(); }; return; }
+    const cur = $("sm-text").value.trim(); if (mode === "improve" && !cur) { st.textContent = "اكتب نصاً أو ولّد نصاً جديداً أولاً."; return; }
+    btns.forEach(b => b.disabled = true); st.textContent = "⏳ جارِ الكتابة… (5–15 ثانية)";
+    try {
+      const t = await aiText({ id: p.id, product: prodBy(p.product), goal: $("ai-goal").value, len: $("ai-len").value, tone: $("ai-tone").value, lang: $("ai-lang").value, extra: $("ai-extra").value.trim(), channels: p.channels, draft: mode === "improve" ? cur : "" });
+      $("sm-text").value = t; p.text = t; preview(); saveSess(); st.textContent = "✅ تمّ — راجع النص وعدّله كما تشاء (" + t.length + " حرفاً). اضغط مرة أخرى للحصول على صياغة مختلفة.";
+    } catch (e) { st.textContent = "❌ " + (e.message || "فشل التوليد") + " — يمكنك استعمال القوالب الجاهزة."; }
+    btns.forEach(b => b.disabled = false);
+  }
+  /* ───────── الصورة الذكية: في المكان أو في المطوّر مع العودة التلقائية ───────── */
+  async function refBlob() {
+    const p = S.cur, pr = prodBy(p.product), src = p.image || (pr && (pr.cover || (pr.images || [])[0])) || ""; if (!src) throw new Error("اختر منتجاً أو صورة مرجعية أولاً");
+    const r = await fetch(imgSrc(src), { cache: "force-cache" }); if (!r.ok) throw new Error("تعذّر قراءة الصورة المرجعية"); return r.blob();
+  }
+  async function quickImage() {
+    const p = S.cur, box = $("sg-res"); if (typeof ImgGen === "undefined" || !ImgGen.quick) return toast("مولّد الصور غير متاح");
+    const sz = ImgGen._t.sizeOf($("sg-fmt").value), pr = prodBy(p.product), btn = document.querySelector("[data-igq]"); btn.disabled = true; box.innerHTML = '<div class="sm-s">⏳ جارِ توليد الصورة (10–40 ثانية)…</div>';
+    try {
+      const out = await ImgGen.quick({ blob: await refBlob(), name: (pr && pr.title) || "", desc: (pr && pr.desc) || "", goal: $("sg-goal").value.trim(), W: sz.w, H: sz.h, label: sz.label });
+      if (!out) { box.innerHTML = ""; btn.disabled = false; return; }
+      const u = URL.createObjectURL(out.blob); box.innerHTML = '<img src="' + u + '" alt=""><div class="sm-chips" style="margin-top:8px"><button type="button" data-igu="1">✅ استعمل هذه الصورة</button><button type="button" data-igr="1">🔄 أعد التوليد</button></div><div class="sm-s" id="sg-st"></div>';
+      box.querySelector("[data-igr]").onclick = quickImage;
+      box.querySelector("[data-igu]").onclick = async () => { const st = $("sg-st"); st.textContent = "⏳ جارِ الحفظ في المكتبة…"; try { const f = new File([out.blob], "social.webp", { type: out.blob.type || "image/webp" }); p.image = await A().uploadImageFile(f, "assets/img/pages", "social-", { max: 2400, q: .92, noVariants: true, uniq: true }); saveSess(); drawComposer(); toast("✅ أُضيفت الصورة إلى المنشور"); } catch (e) { st.textContent = "❌ تعذّر الحفظ: " + e.message; } };
+    } catch (e) { box.innerHTML = '<div class="sm-warn">' + esc(e.code === "NOKEY" ? "يلزم مفتاح Alyssum API — أدخله من «الاتصال والإعدادات» (منشورك محفوظ)." : e.message) + "</div>"; }
+    btn.disabled = false;
+  }
+  function openBuilder() {
+    const p = S.cur; if (typeof ImgGen === "undefined" || !ImgGen.openSized) return toast("المطوّر غير متاح");
+    p.text = ($("sm-text") || {}).value || p.text; saveSess(); try { sessionStorage.setItem(RET, JSON.stringify({ cur: p, t: Date.now() })); } catch (e) { }
+    const sz = ImgGen._t.sizeOf($("sg-fmt").value), pr = prodBy(p.product); ImgGen.openSized({ W: sz.w, H: sz.h, id: sz.id, label: sz.label, name: (pr && pr.title) || "" });
+  }
+  /* يستدعيها مولّد الصور بعد «حفظ في المكتبة»: إن كنا قادمين من منشور نعود إليه تلقائياً بالصورة */
+  function onLibraryImage(path) {
+    let r = null; try { r = JSON.parse(sessionStorage.getItem(RET) || "null"); } catch (e) { } if (!r || !r.cur || Date.now() - r.t > 6 * 3600e3) return false;
+    try { sessionStorage.removeItem(RET); } catch (e) { }
+    try { const k = "pbx_sess_up", a = JSON.parse(localStorage.getItem(k) || "null"); if (Array.isArray(a)) localStorage.setItem(k, JSON.stringify(a.filter(x => !x || x.p !== path))); } catch (e) { }
+    try { if (typeof PBApp !== "undefined") { if (PBApp.E) PBApp.E.dirty = false; const pa = document.getElementById("pb-app"); if (pa) pa.classList.remove("on", "pbx-ad"); document.body.style.overflow = ""; } } catch (e) { }
+    r.cur.image = path; S.cur = r.cur; S.compose = true; S.tab = "posts"; saveSess();
+    const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'social'")); try { A().tab("social", b); } catch (e) { open(); }
+    setTimeout(() => toast("✅ رجعنا إلى المنشور وأُضيفت الصورة"), 300); return true;
   }
   /* —— النشر اليومي —— */
   function tabPlan(h) {
@@ -353,13 +438,12 @@ ${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="but
     h.querySelector("[data-nc]").onclick = () => openCamp(); h.querySelectorAll("[data-ec]").forEach(b => b.onclick = () => openCamp(C[+b.dataset.ec]));
   }
   function openCamp(c) {
-    let w = $("smw"); if (!w) { w = document.createElement("div"); w.id = "smw"; document.body.appendChild(w); } css();
-    const isNew = !c; c = c ? JSON.parse(JSON.stringify(c)) : { id: uid("c"), name: "", platform: "both", objective: "sales", product: "", budget: 1000, from: dtl(Date.now()).slice(0, 10), to: "", status: "draft", utm: "", audience: "", notes: "", target: { cpa: 0 }, log: [] };
-    S.camp = c; w.classList.add("on"); w.onmousedown = e => { if (e.target === w) closeComposer(); }; drawCamp(isNew);
+    css(); const isNew = !c; c = c ? JSON.parse(JSON.stringify(c)) : { id: uid("c"), name: "", platform: "both", objective: "sales", product: "", budget: 1000, from: dtl(Date.now()).slice(0, 10), to: "", status: "draft", utm: "", audience: "", notes: "", target: { cpa: 0 }, log: [] };
+    S.camp = c; S.campNew = isNew; S.campOpen = true; S.tab = "ads"; draw(); try { $("sm").scrollIntoView({ block: "start" }); } catch (e) { }
   }
   function drawCamp(isNew) {
     const w = $("smw"), c = S.camp, P = allProds(), pr = prodBy(c.product), m = metrics(c), ulink = src => link(pr, c.utm || "campagne").replace("utm_source=social&utm_medium=organic", "utm_source=" + src + "&utm_medium=paid");
-    w.innerHTML = `<div class="w"><div class="sm-hd"><h2 style="font-size:1.2rem">${isNew ? "حملة جديدة" : "الحملة"}</h2><button type="button" class="sm-b gh sm" data-x="1">إغلاق</button></div><div class="cols"><div>
+    w.innerHTML = `<div class="w"><div class="sm-hd"><h2 style="font-size:1.2rem">${isNew ? "حملة جديدة" : "الحملة"}</h2><button type="button" class="sm-b gh sm" data-x="1">رجوع</button></div><div class="cols"><div>
 <label>اسم الحملة</label><input id="cm-n" value="">
 <div class="sm-row"><div><label>المنصة</label><select id="cm-pl"><option value="both">فيسبوك + انستغرام</option><option value="fb">فيسبوك</option><option value="ig">انستغرام</option></select></div><div><label>الهدف</label><select id="cm-ob">${Object.entries(OBJS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></div><div><label>الحالة</label><select id="cm-st">${Object.entries(CST).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></div></div>
 <label>المنتج المُعلَن عنه</label><select id="cm-pr"><option value="">— اختر —</option>${P.map(x => `<option value="${esc(x.slug)}">${esc(x.title)}</option>`).join("")}</select>
@@ -392,7 +476,10 @@ ${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="but
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="sm-b" data-sm="1">حفظ</button><button type="button" class="sm-b gh" data-test="1">اختبار الاتصال</button></div><div id="mt-r" class="sm-s" style="margin-top:8px"></div></div>
 <div class="sm-c"><h3>النشر والمتصفح مغلق</h3><div class="sm-row"><label class="sm-chk"><input type="checkbox" id="st-fn" ${st.fbNative ? "checked" : ""}> دع فيسبوك يجدول منشوراتها بنفسه (يعمل والمتصفح مغلق)</label><label class="sm-chk"><input type="checkbox" id="st-rn" ${st.runner ? "checked" : ""}> استعمل ناشر GitHub Actions (لانستغرام وللنشر الآلي)</label></div>
 <div class="sm-s" style="line-height:1.9;margin-top:8px">انستغرام لا يدعم الجدولة من الواجهة البرمجية، فالناشر الآلي <span dir="ltr">.github/workflows/social-publish.yml</span> يعمل كل 15 دقيقة وينشر المستحق. لتفعيله أضف في <span dir="ltr">GitHub ← Settings ← Secrets and variables ← Actions</span> الأسرار: <span dir="ltr">META_PAGE_TOKEN</span> و<span dir="ltr">META_PAGE_ID</span> و<span dir="ltr">META_IG_ID</span>. بدونه تُنشر المنشورات فقط حين تكون اللوحة مفتوحة.<br>الصور تُنشر برابط عام من موقعك (<span dir="ltr">${esc(domain())}</span>)، فيجب أن تكون الصورة منشورة على الموقع (ارفعها من المؤلّف أو مكتبة الصور).</div></div>
+<div class="sm-c"><h3>Alyssum API (توليد النص والصور)</h3><div class="sm-s" style="line-height:1.9">مفتاح واحد يعمل لتوليد النصوص هنا ولمولّد الصور. يُحفظ في <b>هذا المتصفح فقط</b> ولا يُكتب في المستودع.</div><div class="sm-row" style="grid-template-columns:1fr auto;margin-top:8px"><input type="password" id="ak-k" dir="ltr" autocomplete="off" placeholder="مفتاح Alyssum API"><button type="button" class="sm-b sm" data-ak="1">حفظ</button></div><div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="sm-b gh sm" data-akt="1">اختبار</button><span id="ak-r" class="sm-s"></span></div></div>
 <div class="sm-c"><h3>مجموعات الهاشتاغات</h3><div id="ht"></div><button type="button" class="sm-b sm gh" data-ha="1" style="margin-top:8px">إضافة مجموعة</button></div>`;
+    $("ak-k").value = apiKey(); h.querySelector("[data-ak]").onclick = () => { try { localStorage.setItem(KEYLS, $("ak-k").value.replace(/[\s"']/g, "")); } catch (e) { } toast("✅ حُفظ المفتاح في هذا المتصفح"); };
+    h.querySelector("[data-akt]").onclick = async () => { try { localStorage.setItem(KEYLS, $("ak-k").value.replace(/[\s"']/g, "")); } catch (e) { } const r = $("ak-r"); r.textContent = "⏳ اختبار…"; try { const t = await aiText({ id: "t", product: null, goal: "offer", len: "short", tone: "friendly", lang: "ar", extra: "اكتب جملتين فقط للاختبار", channels: ["fb"], draft: "" }); r.textContent = "✅ المفتاح يعمل"; } catch (e) { r.textContent = "❌ " + (e.message === "NOKEY" ? "أدخل المفتاح أولاً" : e.message); } };
     $("mt-t").value = m.token || ""; $("mt-p").value = m.pageId || ""; $("mt-i").value = m.igId || "";
     h.querySelector("[data-sm]").onclick = () => { saveMeta({ token: $("mt-t").value.trim(), pageId: $("mt-p").value.trim(), igId: $("mt-i").value.trim() }); S.d.settings.pageId = $("mt-p").value.trim(); persist(); toast("✅ حُفظت إعدادات الاتصال في هذا المتصفح"); };
     h.querySelector("[data-test]").onclick = async () => { saveMeta({ token: $("mt-t").value.trim(), pageId: $("mt-p").value.trim(), igId: $("mt-i").value.trim() }); const r = $("mt-r"); r.textContent = "جارِ الاختبار…"; const o = []; try { const j = await gcall(meta().pageId + "?fields=name,fan_count", null, "GET"); o.push("فيسبوك: " + j.name + " (" + num(j.fan_count) + " متابع)"); } catch (e) { o.push("فيسبوك: " + e.message); } if (meta().igId) { try { const j = await gcall(meta().igId + "?fields=username,followers_count", null, "GET"); o.push("انستغرام: @" + j.username + " (" + num(j.followers_count) + " متابع)"); } catch (e) { o.push("انستغرام: " + e.message); } } r.textContent = o.join(" • "); };
@@ -404,11 +491,11 @@ ${pr && pr.ext ? `<div class="sm-chips" style="margin-top:6px"><button type="but
     h.querySelector("[data-ha]").onclick = () => { st.hashtags.push({ n: "جديد", t: "#" }); persist(); tabSet(h); };
   }
   /* ───────── التشغيل ───────── */
-  async function open() { if (!S.d) { S.d = Object.assign(dflt(), (await readData()) || {}); const D = dflt(); S.d.settings = Object.assign(D.settings, S.d.settings); S.d.rule = Object.assign(D.rule, S.d.rule); S.d.posts = S.d.posts || []; S.d.campaigns = S.d.campaigns || []; S.d.settings.domain = domain(); engine(); } draw(); }
+  async function open() { if (!S.d) { S.d = Object.assign(dflt(), (await readData()) || {}); const D = dflt(); S.d.settings = Object.assign(D.settings, S.d.settings); S.d.rule = Object.assign(D.rule, S.d.rule); S.d.posts = S.d.posts || []; S.d.campaigns = S.d.campaigns || []; S.d.settings.domain = domain(); engine(); } if (!S.cur) { try { const c = JSON.parse(sessionStorage.getItem(CURK) || "null"); if (c && c.id) S.cur = c; } catch (e) { } } draw(); }
   function init() {
     const a = A(); if (!a || a.__socWrap || typeof a.tab !== "function") return setTimeout(init, 400);
     a.__socWrap = 1; const o = a.tab; a.tab = function (t, b) { const r = o.apply(this, arguments); const host = $("tab-social"); if (host) { document.querySelectorAll('[id^="tab-"]').forEach(el => { if (el !== host) { if (t === "social") el.classList.add("hidden"); } }); host.classList.toggle("hidden", t !== "social"); } if (t === "social") open(); return r; };
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { open, S, fill, TPL, slotTimes, metrics, generate, fillSchedule, draw, publishNow, nativeFb };
+  return { open, S, fill, TPL, aiText, onLibraryImage, slotTimes, metrics, generate, fillSchedule, draw, publishNow, nativeFb };
 })();

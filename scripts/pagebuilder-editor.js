@@ -211,7 +211,7 @@ body{overflow-x:hidden;margin:0}`;
 `;
 
   const toastUndo = m => { const t = $("pbx-msg"); if (!t) return; t.innerHTML = esc(m) + ' <button type="button" id="pbx-tu" style="margin-inline-start:.6rem;background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.2rem .7rem;font-weight:800;cursor:pointer;font-family:inherit">↩ إلغاء النسخ</button>'; t.style.display = "block"; $("pbx-tu").onclick = () => { undo(); t.style.display = "none"; toast("↩ أُلغي النسخ"); }; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 9000); };
-  const ERASER_ON = false;      // الممحاة بالذكاء الاصطناعي (الفرشاة + MI-GAN) معطّلة مؤقتاً: ضعها true لإعادتها
+  const ERASER_ON = false;      // الممحاة بتقنية Alyssum الذكية (الفرشاة + MI-GAN) معطّلة مؤقتاً: ضعها true لإعادتها
   const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
 
   /* ───────────────── بنية الواجهة ───────────────── */
@@ -1267,10 +1267,10 @@ body{overflow-x:hidden;margin:0}`;
   }
   async function mwGemini(o) {
     if (!PBGen.aiOn()) { const e = new Error("API_OFF"); e.code = "API_OFF"; throw e; }
-    const key = mwKey(); if (!key) throw new Error("NOKEY"); if (typeof PBGen === "undefined") throw new Error("أداة Gemini غير محمّلة");
+    const key = mwKey(); if (!key) throw new Error("NOKEY"); if (typeof PBGen === "undefined") throw new Error("أداة Alyssum API غير محمّلة");
     const j = await PBGen.gemGenerate(key, "copy", [{ text: mwPrompt(o) }], { temperature: o.prev ? .9 : o.pslug ? .45 : .85 });
     const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join("");
-    const v = t.split(/\n\s*-{3,}\s*\n?/).map(mwClean).filter(Boolean); if (!v.length) throw new Error("ردّ فارغ من Gemini"); return v[0];
+    const v = t.split(/\n\s*-{3,}\s*\n?/).map(mwClean).filter(Boolean); if (!v.length) throw new Error("ردّ فارغ من Alyssum API"); return v[0];
   }
   /* قوالب بلا إنترنت (وصف فقط): تُملأ من بيانات المنتج أو من الفكرة المكتوبة */
   function mwTemplates(o) {
@@ -1347,7 +1347,7 @@ body{overflow-x:hidden;margin:0}`;
     m.busy = true; m.msg = ""; mwRefresh(); positionOverlay();
     try { const t = await mwGemini(redo ? Object.assign({}, o, { prev: en.l[en.i] || m.res, instr: "أعد الصياغة بأسلوب مختلف مع الحفاظ على الطول نفسه تقريباً" }) : Object.assign({}, o, { prev: "", instr: "" })); en.l.push(t); en.i = en.l.length - 1; mwCsave(C, key); m.res = t; m.kind = "ai";
       m.msg = redo ? "هذه إعادتك الوحيدة بـAPI لهذا الطلب؛ الضغط التالي يعرض المحفوظات مجاناً." : "حُفظت الإجابة لاستدعائها مجاناً لاحقاً؛ لك إعادة واحدة جديدة بـAPI."; }
-    catch (e) { m.msg = e.code === "API_OFF" ? "الكتابة بالذكاء الاصطناعي (API) معطّلة حالياً. المحفوظات تعمل مجاناً، ويمكنك استعمال «قالب جاهز»." : "تعذّر Gemini: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات الذكي»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
+    catch (e) { m.msg = e.code === "API_OFF" ? "الكتابة بتقنية Alyssum الذكية (Alyssum API) معطّلة حالياً. المحفوظات تعمل مجاناً، ويمكنك استعمال «قالب جاهز»." : "تعذّر Alyssum API: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات الذكي»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
     m.busy = false; const i2 = selInfo(); if (i2 && i2.node.id === inf.node.id && m.res) mwPreview(i2, m.res); else positionOverlay(); mwRefresh();
   }
   function mwRedo(ins) {      // إعادة: واحدة بـAPI ثم المحفوظات مجاناً. أطول/أقصر: ينتقل بين الأطوال (من المحفوظات إن وُجدت)
@@ -1363,8 +1363,8 @@ body{overflow-x:hidden;margin:0}`;
       <p style="margin:-.2rem 0 .5rem">${P ? "منتج من المتجر: يُطوَّر وصفه بمعلوماته." : "منتج من خارج المتجر: يُنشأ الوصف من كلماتك."}</p>
       <textarea data-mw="words" rows="3" placeholder="${P ? "ملاحظات اختيارية (مثل: ركّز على فائدة معيّنة)" : "اكتب على الأقل خمس كلمات وصفية"}" style="width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.5rem;font-family:inherit;margin-bottom:.5rem">${esc(m.words)}</textarea>
       <div class="pg" style="grid-template-columns:1fr 1fr 1fr">${sel("style", MW_STYLE, m.style)}${sel("len", { s: "جملة", p: "فقرة قصيرة", l: "فقرة", b: "نقاط" }, m.len)}${sel("lang", Object.fromEntries(Object.entries(mwLangs()).map(([k, v]) => [k, String(v.label).split("(")[0].trim()])), m.lang)}</div>
-      <div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-mwa="go"${m.busy ? " disabled" : ""} title="يستعمل Gemini (طلب API واحد) ويكتب نصاً جديداً بحسب كلماتك">${m.busy ? "⏳ جارٍ الكتابة…" : "✨ حرر"}</button><button type="button" class="pb2" data-mwa="tpl" title="جمل جاهزة تُركَّب محلياً من بيانات المنتج: فوري، بلا إنترنت وبلا استهلاك API">🧩 قالب جاهز</button></div>
-      <p style="margin:.2rem 0 .1rem;font-size:.72rem;line-height:1.6;color:#6b7280"><b>✨ حرر</b>: ذكاء اصطناعي يصيغ نصاً جديداً مختلفاً في كل مرة، ويستهلك طلب API واحداً. <b>🧩 قالب</b>: صياغة جاهزة من بيانات المنتج، مجانية وفورية لكنها أبسط وأقل تنوعاً.</p>
+      <div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-mwa="go"${m.busy ? " disabled" : ""} title="يستعمل Alyssum API (طلب Alyssum API واحد) ويكتب نصاً جديداً بحسب كلماتك">${m.busy ? "⏳ جارٍ الكتابة…" : "✨ حرر"}</button><button type="button" class="pb2" data-mwa="tpl" title="جمل جاهزة تُركَّب محلياً من بيانات المنتج: فوري، بلا إنترنت وبلا استهلاك API">🧩 قالب جاهز</button></div>
+      <p style="margin:.2rem 0 .1rem;font-size:.72rem;line-height:1.6;color:#6b7280"><b>✨ حرر</b>: تقنية ذكية يصيغ نصاً جديداً مختلفاً في كل مرة، ويستهلك طلب Alyssum API واحداً. <b>🧩 قالب</b>: صياغة جاهزة من بيانات المنتج، مجانية وفورية لكنها أبسط وأقل تنوعاً.</p>
       <p style="margin:.1rem 0 .5rem">${esc(m.msg)}</p>
       <button type="button" class="pb2" data-mwa="lib" style="width:100%">📚 المحفوظات (${Object.keys(mwCache()).length}) ${m.saved ? "▲" : "▼"}</button>${m.saved ? mwSavedHtml(m) : ""}`;
     qPop(btn, html, p => {
@@ -1424,7 +1424,7 @@ body{overflow-x:hidden;margin:0}`;
     if (k === "replace") return uploadFor(inf);
     if (k === "mw") return mwPanel(inf, btn);
     if (k === "bgremove") return PBBgRemove.open(inf);
-    if (k === "eraser") { if (!ERASER_ON) { toast("الممحاة بالذكاء الاصطناعي معطّلة مؤقتاً"); return; } return PBSmart.eraser(inf); }
+    if (k === "eraser") { if (!ERASER_ON) { toast("الممحاة بتقنية Alyssum الذكية معطّلة مؤقتاً"); return; } return PBSmart.eraser(inf); }
     if (k === "magic") return PBSmart.captureElements();
     if (k === "crop") return qPop(btn, `<h6>قصّ الصورة</h6><p>اسحب حواف الصورة للقصّ</p>${set.crop ? '<div class="pg" style="grid-template-columns:1fr;margin-top:.5rem"><button type="button" class="pb2" data-a="reset">↺ إلغاء القصّ</button></div>' : ""}`, p => { const r = p.querySelector("[data-a]"); if (r) r.onclick = () => { closePop(); delete set.crop; afterEdit(); }; }, { dock: true });
     if (k === "flip") return qPop(btn, `<h6>قلب الصورة</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2${set.flx ? " on" : ""}" data-a="flx">↔ أفقياً</button><button type="button" class="pb2${set.fly ? " on" : ""}" data-a="fly">↕ عمودياً</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { closePop(); if (set[b.dataset.a]) delete set[b.dataset.a]; else set[b.dataset.a] = true; afterEdit(); }));

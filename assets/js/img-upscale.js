@@ -1,4 +1,4 @@
-/* رفع دقة الصور بلا ذكاء اصطناعي: تكبير تدريجي عالي الجودة + حدّة على السطوع فقط (Unsharp Mask) مع عتبة تمنع تضخيم الضجيج.
+/* رفع دقة الصور: تكبير تدريجي عالي الجودة + حدّة على السطوع فقط (Unsharp Mask) مع عتبة تمنع تضخيم الضجيج.
    كله داخل المتصفح (canvas)؛ يحفظ الشفافية. بطاقة #iu-card في تبويب أدوات الصور. */
 const ImgUpscale = (() => {
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -56,8 +56,8 @@ const ImgUpscale = (() => {
   function draw() {
     const c = ensure(); if (!c) return; const g = S.cfg, ok = S.out.filter(o => o.res);
     c.innerHTML = `<style>#iu-card .iu-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:.6rem 0}#iu-card label{display:grid;gap:4px;font-weight:700;font-size:.88rem}#iu-card .iu-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:.7rem}#iu-card .iu-it{border:1px solid var(--line);border-radius:12px;padding:6px;text-align:center;font-size:.8rem}#iu-card .iu-it img{max-width:100%;max-height:130px;border-radius:8px;background:repeating-conic-gradient(#8883 0 25%,transparent 0 50%) 0 0/14px 14px}</style>
-<b style="color:var(--green)">🔍 رفع دقة الصور (بلا ذكاء اصطناعي)</b>
-<p class="hint">تكبير تدريجي عالي الجودة + حدّة ذكية على السطوع فقط (لا تضخّم الضجيج). لا يخترع تفاصيل جديدة كالذكاء الاصطناعي، لكنه يعطي صورة أكبر وأوضح بلا هالات. يتم كل شيء في متصفحك، والشفافية تُحفظ. الحدّ الأقصى للناتج ${(MAXPX() / 1e6)} ميغابكسل.</p>
+<b style="color:var(--green)">🔍 رفع دقة الصور</b>
+<p class="hint">تكبير تدريجي عالي الجودة + حدّة ذكية على السطوع فقط (لا تضخّم الضجيج). لا يخترع تفاصيل جديدة كالتقنية الذكية، لكنه يعطي صورة أكبر وأوضح بلا هالات. يتم كل شيء في متصفحك، والشفافية تُحفظ. الحدّ الأقصى للناتج ${(MAXPX() / 1e6)} ميغابكسل.</p>
 <div class="iu-g"><label>التكبير<select id="iu-scale">${[["2", "×2"], ["3", "×3"], ["4", "×4"], ["w1200", "عرض 1200px"], ["w1600", "عرض 1600px"], ["w2000", "عرض 2000px"]].map(o => `<option value="${o[0]}"${o[0] === String(g.scale) ? " selected" : ""}>${o[1]}</option>`).join("")}</select></label>
 <label>الحدّة: <b id="iu-sv">${g.sharp}</b><input id="iu-sharp" type="range" min="0" max="100" value="${g.sharp}"></label>
 <label>الصيغة<select id="iu-fmt">${["webp", "png", "jpeg"].map(f => `<option${f === g.fmt ? " selected" : ""}>${f}</option>`).join("")}</select></label>

@@ -1,6 +1,6 @@
 /* ═══ أدوات ذكية في منشئ الصفحات: «التقاط النص» (مثل Canva) ═══
    تفحص الصورة المحدّدة، تحيط النصوص المكتشفة بمستطيلات ملوّنة، وتعرض نافذة بخيارين: «عنصر» (نص واحد تنقر عليه) أو «كل النصوص».
-   عند «التقاط» تُقرأ النصوص (Gemini إن وُجد مفتاحه وإلا Tesseract)، تُمسح من الصورة بدقة مع إعادة رسم الخلفية، وتصير عناصر نص قابلة للتعديل فوق الصورة.
+   عند «التقاط» تُقرأ النصوص (Alyssum API إن وُجد مفتاحه وإلا Tesseract)، تُمسح من الصورة بدقة مع إعادة رسم الخلفية، وتصير عناصر نص قابلة للتعديل فوق الصورة.
    تعمل على صورة داخل قسم «كانفاس» (الصفحات المولَّدة). تعتمد على assets/js/text-capture.js و image-tools.js. */
 const PBSmart = (function () {
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -14,7 +14,7 @@ ${tool('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>', "رفع صورة
 ${tool('<path d="M4 20L16 8"/><path d="M14 4l.9 2.1L17 7l-2.1.9L14 10l-.9-2.1L11 7l2.1-.9z"/><path d="M19 12l.6 1.4L21 14l-1.4.6L19 16l-.6-1.4L17 14l1.4-.6z"/>', "التقاط العناصر", "الالتقاط السحري: يقصّ الأشخاص والمنتجات كصور شفافة — حدّد صورة أولاً", "captureElements", ' onmouseenter="PBSmart.warm()"')}
 </div>
 <div style="font-size:.72rem;color:#6b6556;line-height:1.7;margin:.55rem 0">حدّد صورة في الصفحة (حتى في قسم عادي — تُنسخ تلقائياً إلى قسم كانفاس) ثم اضغط أداة الالتقاط.</div>
-${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="display:flex;gap:.4rem;align-items:flex-start;font-size:.72rem;color:#6b6556;line-height:1.6;cursor:pointer"><input type="checkbox" ${gemOn() ? "checked" : ""} onchange="PBSmart.setGem(this.checked)"> <span>اختياري: الاستعانة بمفتاح Gemini لأسماء أدق. بدونه تعمل الأدوات كاملة داخل متصفحك مجاناً.</span></label>` : `<div style="font-size:.72rem;color:#6b6556;line-height:1.6">🔒 Gemini (API) معطّل — تعمل الأدوات كاملة داخل متصفحك بلا API.</div>`}
+${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="display:flex;gap:.4rem;align-items:flex-start;font-size:.72rem;color:#6b6556;line-height:1.6;cursor:pointer"><input type="checkbox" ${gemOn() ? "checked" : ""} onchange="PBSmart.setGem(this.checked)"> <span>اختياري: الاستعانة بمفتاح Alyssum API لأسماء أدق. بدونه تعمل الأدوات كاملة داخل متصفحك مجاناً.</span></label>` : `<div style="font-size:.72rem;color:#6b6556;line-height:1.6">🔒 Alyssum API (Alyssum API) معطّل — تعمل الأدوات كاملة داخل متصفحك بلا API.</div>`}
 </div>`;
   }
   /* تحميل صورة الودجت كقماش بالحجم الطبيعي */
@@ -89,7 +89,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const inf = t.inf, w = inf.node, sh = shell("التقاط النص", "عنصر", "كل النصوص", "انقر على أحد المستطيلات الملوّنة لاختيار نص واحد. فاتك نص؟ ارسم مستطيلاً حوله بالسحب.", "ستُلتقط كل النصوص المكتشفة دفعة واحدة."), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
     const W = cv.width, H = cv.height, stopScan = scanFx(sh, cv); await new Promise(r => setTimeout(r, 40));
-    /* مسح الصورة: كشف بالصورة (+ قراءة إن وُجد مفتاح Gemini ليكون الكشف أدق وتُستبعد الصناديق غير النصية) */
+    /* مسح الصورة: كشف بالصورة (+ قراءة إن وُجد مفتاح Alyssum API ليكون الكشف أدق وتُستبعد الصناديق غير النصية) */
     let sc; try { sc = await TextCapture.scan(cv, { ocr: !!TextCapture.ocr.key() }); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
     if (sh.S.closed) return; stopScan(); $("pbs-load").style.display = "none"; const items = sc.items; items.forEach((b, i) => b.i = i);
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
@@ -132,7 +132,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
      الذكاء داخل المتصفح (assets/js/ai-vision.js): كشف العناصر بأسمائها (امرأة، طفل، عبوة، صحن، ملعقة، قلم، إبريق، كتب…) وحدود دقيقة بالبكسل،
      واختيار عنصر أو أكثر أو الكل، وإضافة ما فات الكشف بنقرة أو مستطيل. إن تعذّر تحميل النموذج نعود إلى الكشف البسيط بالحواف. */
   const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره. تلتقط الأداة العناصر الكاملة فقط (شخص، منتج، كتاب، قلم، زهرة…)؛ الجزء المقطوع كيدٍ تمسك منتجاً لا يُلتقط، ويُلتقط المنتج وحده.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
-  const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Gemini اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
+  const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Alyssum API اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
   function warm(inf) { try { if (window.ImgCfg && ImgCfg.get("capture", "warm", true) === false) return; if (window.AIVision && AIVision.supported() && !warm.done) { warm.done = true; AIVision.warm(); } if (inf) prefetch(inf); } catch (e) { } }
   /* تحضير مسبق: بعد تحديد صورة بثانيتين يُحلَّل في الخلفية (الحاسوب فقط) فيجد «التقاط العناصر» و«نزع الخلفية» النتيجة جاهزة؛ طلب مماثل أثناء التحليل ينتظره */
@@ -187,7 +187,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   /* الواجهة الذكية: حدود ملوّنة تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
   function elementsAI(sh, cv, inf, w, res, key, Z, lite) {
     const $ = sh.$, W = cv.width, H = cv.height, S = res.S, allItems = res.items, items = allItems.filter(i => !i.partial); $("pbs-load").style.display = "none";
-    $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · " + (S.dev === "webgpu" ? "⚡ كرت الشاشة" : "المعالج") + " · كشف: " + (res.src === "gemini" ? "Gemini+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
+    $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · " + (S.dev === "webgpu" ? "⚡ كرت الشاشة" : "المعالج") + " · كشف: " + (res.src === "gemini" ? "Alyssum API+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
@@ -298,7 +298,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     $("pbs-x").onclick = $("pbs-back").onclick = () => sh.close(); bindSeg(sh, () => { sel = new Set(); paint(); });
     $("pbs-merge").onclick = () => { const L = items.filter(it => sel.has(it.id)); if (L.length < 2) return; const it = AIVision.joinItems(S, items, L); prep(it); sel = new Set([it.id]); paint(); $("pbs-msg").textContent = "✅ دُمجت العناصر في «" + names()[it.id] + "»."; };
     $("pbs-msg").style.color = "#173f35"; paint();
-    if (res.note) $("pbs-msg").textContent = "ℹ️ تعذّر كشف Gemini (" + res.note.slice(0, 90) + ") — استُعمل الكشف المحلي.";
+    if (res.note) $("pbs-msg").textContent = "ℹ️ تعذّر كشف Alyssum API (" + res.note.slice(0, 90) + ") — استُعمل الكشف المحلي.";
     /* معاينة نتيجة المسح قبل الحفظ: الخلفية المرمَّمة + العناصر المفصولة مرفوعة قليلاً بظل، وزرّا «حفظ» و«إلغاء» */
     function preview(bgCanvas, cuts) {
       return new Promise(res => {
@@ -326,7 +326,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await new Promise(r => cuts[i].canvas.toBlob(r, "image/png")), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
         const els = cuts.map(c => ({ x0: c.x0 + ox, y0: c.y0 + oy, x1: c.x0 + ox + c.w, y1: c.y0 + oy + c.h, area: c.px, front: c.front, label: c.label }));
         const n = applyElements(inf, w, FW, FH, els, paths, basePath); sh.close();
-        alert("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (how === "ai" ? "\n🪄 أعاد Gemini رسم الخلفية مكانها." : how === "model" ? "\n🪄 أُعيد رسم الخلفية مكانها بالنموذج المحلي." : "\nℹ️ رُمِّمت الخلفية مكانها بترميم بسيط" + (fillNote ? " (" + fillNote.slice(0, 80) + ")" : "") + "."));
+        alert("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (how === "ai" ? "\n🪄 أعاد Alyssum API رسم الخلفية مكانها." : how === "model" ? "\n🪄 أُعيد رسم الخلفية مكانها بالنموذج المحلي." : "\nℹ️ رُمِّمت الخلفية مكانها بترميم بسيط" + (fillNote ? " (" + fillNote.slice(0, 80) + ")" : "") + "."));
       } catch (e) { console.error(e); busy = false; $("pbs-msg").textContent = "⚠️ " + e.message; $("pbs-go").disabled = false; }
     };
   }

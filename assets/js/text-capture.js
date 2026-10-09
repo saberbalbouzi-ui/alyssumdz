@@ -1,4 +1,4 @@
-/* التقاط النص (مشترك بين منشئ الصفحات في لوحة التحكم ومحرر /editor/): كشف أسطر النص بتحليل الصورة بدقة ثم قراءتها (Gemini إن وُجد المفتاح وإلا Tesseract)
+/* التقاط النص (مشترك بين منشئ الصفحات في لوحة التحكم ومحرر /editor/): كشف أسطر النص بتحليل الصورة بدقة ثم قراءتها (Alyssum API إن وُجد المفتاح وإلا Tesseract)
    ومطابقة القراءة بالصناديق، ثم مسح النص من الصورة وإعادة رسم الخلفية. لا يغيّر شيئاً قبل أن تطلب الدالة erase.
    المفتاح يبقى في متصفحك (localStorage) ويُرسل مباشرة إلى Google للقراءة فقط. */
 window.TextCapture = (function () {
@@ -18,15 +18,15 @@ window.TextCapture = (function () {
         let r; try { r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: b64 } }] }], generationConfig: { responseMimeType: "application/json", temperature: 0 } }) }); } catch (e) { throw new Error("تعذّر الاتصال بـ Google (الإنترنت؟)"); }
         const j = await r.json().catch(() => ({}));
         if (r.ok) {
-          const parts = (((j.candidates || [])[0] || {}).content || {}).parts, raw = (parts || []).map(x => x.text || "").join(""); let p; try { p = JSON.parse(raw.replace(/^```json|```$/g, "").trim()); } catch (e) { last = "رد غير مفهوم من Gemini"; continue; }
+          const parts = (((j.candidates || [])[0] || {}).content || {}).parts, raw = (parts || []).map(x => x.text || "").join(""); let p; try { p = JSON.parse(raw.replace(/^```json|```$/g, "").trim()); } catch (e) { last = "رد غير مفهوم من Alyssum API"; continue; }
           return (p.lines || []).filter(l => l && l.text && Array.isArray(l.box_2d) && l.box_2d.length === 4).map(l => { const [y0, x0, y1, x1] = l.box_2d.map(Number); return { text: String(l.text).replace(/\s+/g, " ").trim(), box: { x0: x0 / 1000 * W, x1: x1 / 1000 * W, y0: y0 / 1000 * H, y1: y1 / 1000 * H } }; });
         }
         const msg = (j.error && j.error.message) || ("HTTP " + r.status); last = r.status + ": " + msg;
-        if (r.status === 400 && /API key/i.test(msg) || r.status === 403) throw new Error("مفتاح Gemini غير صالح أو غير مسموح: " + msg.slice(0, 120));
+        if (r.status === 400 && /API key/i.test(msg) || r.status === 403) throw new Error("مفتاح Alyssum API غير صالح أو غير مسموح: " + msg.slice(0, 120));
         if (r.status === 404) break;
         if ([429, 500, 503].includes(r.status)) await new Promise(res => setTimeout(res, 1500 * (t + 1)));
       }
-      throw new Error("فشلت قراءة Gemini — " + last.slice(0, 160));
+      throw new Error("فشلت قراءة Alyssum API — " + last.slice(0, 160));
     },
     async tesseract(canvas) {
       if (!window.Tesseract) await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"; s.onload = res; s.onerror = () => rej(new Error("تعذّر تحميل Tesseract (الإنترنت؟)")); document.head.appendChild(s); });
@@ -61,7 +61,7 @@ window.TextCapture = (function () {
       }
     } catch (e) { console.warn("ocr", e); lines = null; note = e.message; }
     if (!lines || !lines.length) return { items: boxes.map(b => Object.assign(b, { text: "نص", placeholder: true })), unmatched: 0, note, hadOcr: false };
-    /* القراءة هي المرجع: كل سطر مقروء صندوقه = حدود Gemini (± هامش) ممدودة أفقياً بما يغطيه الكشف بالصورة؛ الصناديق غير المقروءة تُهمل (ليست نصاً) */
+    /* القراءة هي المرجع: كل سطر مقروء صندوقه = حدود Alyssum API (± هامش) ممدودة أفقياً بما يغطيه الكشف بالصورة؛ الصناديق غير المقروءة تُهمل (ليست نصاً) */
     const items = [], used = new Set();
     lines.sort((p, q) => p.box.y0 - q.box.y0 || q.box.x1 - p.box.x1).forEach(l => {
       let x0 = l.box.x0, x1 = l.box.x1; const lh = l.box.y1 - l.box.y0;

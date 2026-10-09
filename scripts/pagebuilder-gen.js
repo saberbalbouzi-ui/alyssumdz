@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════════
    PBGen — مولّد صفحة الهبوط الذكي:
-   ١) يبني «البرومبت السحري المزدوج» (نصوص بيع + برومبت تصميم لـ Nano Banana) بـ 7 لغات، تنسخه إلى Gemini/ChatGPT.
+   ١) يبني «البرومبت السحري المزدوج» (نصوص بيع + برومبت تصميم لـ Nano Banana) بـ 7 لغات، تنسخه إلى Alyssum API/ChatGPT.
    ٢) يستورد صورة الصفحة الطويلة الناتجة ويحوّلها إلى صفحة قابلة للتعديل في منشئ الصفحات:
       تقطيع إلى أقسام (حدود مقترحة تلقائياً وقابلة للضبط) + استخراج النصوص (OCR داخل المتصفح بلا مفاتيح API)
       إلى عناصر نصية حرة + محو النص المخبوز من الصورة حيث الخلفية بسيطة. الأقسام «متناسبة» فتتحجم مع الشاشة.
@@ -176,7 +176,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     ctx.putImageData(img, x0, y0);
   }
 
-  /* تضييق الصندوق إلى حدود الحبر الفعلية (يصحّح انحراف OCR/Gemini): البكسل «حبر» إن بعُد عن استكمال الخلفية الخطي بين حافتي الصندوق */
+  /* تضييق الصندوق إلى حدود الحبر الفعلية (يصحّح انحراف OCR/Alyssum API): البكسل «حبر» إن بعُد عن استكمال الخلفية الخطي بين حافتي الصندوق */
   function refineBox(ctx, W, H, b) {
     const pad = Math.max(6, Math.round((b.y1 - b.y0) * .3)), x0 = Math.max(0, Math.floor(b.x0 - pad)), y0 = Math.max(0, Math.floor(b.y0 - pad)), x1 = Math.min(W, Math.ceil(b.x1 + pad)), y1 = Math.min(H, Math.ceil(b.y1 + pad)), w = x1 - x0, h = y1 - y0;
     if (w < 8 || h < 8) return b; const d = ctx.getImageData(x0, y0, w, h).data; let mnx = w, mxx = -1, mny = h, mxy = -1, n = 0;
@@ -186,7 +186,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     if (n < 12 || mxx < 0) return b; return { x0: x0 + mnx, x1: x0 + mxx + 1, y0: y0 + mny, y1: y0 + mxy + 1 };
   }
   const { eraseRects, detectText, eraseBrush } = ImageTools;      // أدوات مشتركة: assets/js/image-tools.js
-  /* إعادة رسم مناطق معقدة بـ Gemini (تحرير صورة): نرسل القصاصة، ونأخذ بكسلات الناتج داخل القناع فقط فيبقى الباقي مطابقاً للأصل */
+  /* إعادة رسم مناطق معقدة بـ Alyssum API (تحرير صورة): نرسل القصاصة، ونأخذ بكسلات الناتج داخل القناع فقط فيبقى الباقي مطابقاً للأصل */
   async function geminiEraseRegion(key, ctx, P, m2, v) {
     const c = document.createElement("canvas"); c.width = P.w; c.height = P.h; c.getContext("2d").putImageData(ctx.getImageData(P.x, P.y, P.w, P.h), 0, 0);
     const b64 = c.toDataURL("image/png").split(",")[1];
@@ -197,7 +197,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     const o = tg.getImageData(0, 0, P.w, P.h).data; for (let i = 0; i < P.w * P.h; i++) if (m2[i]) { v[i * 3] = o[i * 4]; v[i * 3 + 1] = o[i * 4 + 1]; v[i * 3 + 2] = o[i * 4 + 2]; }
     return true;
   }
-  /* ───── Gemini: اختيار نموذج متاح تلقائياً + تفسير الأخطاء بالعربية ───── */
+  /* ───── Alyssum API: اختيار نموذج متاح تلقائياً + تفسير الأخطاء بالعربية ───── */
   const GEM_PREF = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
   function gemErr(status, msg) {
     msg = String(msg || ""); const raw = " [" + (status || "?") + (msg ? ": " + msg.slice(0, 160) : "") + "]";
@@ -208,7 +208,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     if (status === 429 || /quota|RESOURCE_EXHAUSTED|rate/i.test(msg)) return "تجاوز المفتاح حصة الاستعمال (مجانية/دقيقة) — انتظر دقيقة ثم أعد المحاولة، أو استعمل مفتاحاً آخر." + raw;
     if (status === 403 || /PERMISSION_DENIED/i.test(msg)) return "المفتاح لا يملك صلاحية استعمال النموذج (قد يكون محظوراً في بلدك/مشروعك أو مقيّداً)." + raw;
     if (status === 400 && /location|region/i.test(msg)) return "الخدمة غير متاحة في منطقتك لهذا المفتاح." + raw;
-    return (msg || ("Gemini " + status)) + raw;
+    return (msg || ("Alyssum API " + status)) + raw;
   }
   /* مستويات التكلفة (سعر مليون رمز إدخال بالدولار حسب التسعير المعلن): Flash-Lite الأرخص للمهام البسيطة، Flash للمتوسطة */
   const GEM_PRICE = { "gemini-2.5-flash-lite": .10, "gemini-3.1-flash-lite": .25, "gemini-2.5-flash": .30, "gemini-3.7-flash": .75, "gemini-3.1-pro": 2.0 };
@@ -236,7 +236,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   function gemTrack(j, model) {
     const u = (j && j.usageMetadata) || {}, tk = Number(u.promptTokenCount) || 0; _usage.tokens += tk; _usage.calls++; const pr = GEM_PRICE[model]; if (pr) _usage.cost += tk / 1e6 * pr; showCost();
   }
-  function showCost() { const el = typeof document !== "undefined" && document.getElementById("gen-cost"); if (el) el.textContent = _usage.calls ? "استهلاك Gemini: " + _usage.calls + " طلب · " + _usage.tokens.toLocaleString("en") + " رمز إدخال · ≈ $" + _usage.cost.toFixed(4) + " (مدخلات)" : ""; }
+  function showCost() { const el = typeof document !== "undefined" && document.getElementById("gen-cost"); if (el) el.textContent = _usage.calls ? "استهلاك Alyssum API: " + _usage.calls + " طلب · " + _usage.tokens.toLocaleString("en") + " رمز إدخال · ≈ $" + _usage.cost.toFixed(4) + " (مدخلات)" : ""; }
   /* اختبار المفتاح: يعرض النماذج المتاحة ويجرّب طلباً صغيراً ويفسّر الخطأ */
   async function testKey() {
     const msg = $("gen-automsg"), key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
@@ -248,7 +248,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       msg.textContent = "✅ المفتاح يعمل — النموذج المستعمل: " + models[0] + (t ? "" : " (ردّ فارغ)");
     } catch (err) { msg.textContent = "❌ " + err.message; }
   }
-  /* Gemini رؤية: يقرأ النص بدقة أعلى للعربية ويعيد صناديقه (box_2d مُطبَّعة 0-1000)؛ المفتاح مفتاحك المخزَّن في المتصفح فقط */
+  /* Alyssum API رؤية: يقرأ النص بدقة أعلى للعربية ويعيد صناديقه (box_2d مُطبَّعة 0-1000)؛ المفتاح مفتاحك المخزَّن في المتصفح فقط */
   async function geminiOcr(canvas, key, langName) {
     const W = canvas.width, H = canvas.height, c2 = document.createElement("canvas"), k = Math.min(1, 1600 / W); c2.width = Math.round(W * k); c2.height = Math.round(H * k); c2.getContext("2d").drawImage(canvas, 0, 0, c2.width, c2.height);
     const b64 = c2.toDataURL("image/jpeg", .9).split(",")[1];
@@ -256,12 +256,12 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     const o = await geminiJson(key, b64, prompt);
     return (o.lines || []).filter(l => l && l.text && Array.isArray(l.box_2d) && l.box_2d.length === 4).map(l => { const [ymin, xmin, ymax, xmax] = l.box_2d.map(Number); return { text: String(l.text).replace(/\s+/g, " ").trim(), conf: 95, bbox: { x0: xmin / 1000 * W, y0: ymin / 1000 * H, x1: xmax / 1000 * W, y1: ymax / 1000 * H } }; }).filter(l => l.text.length >= 1 && l.bbox.x1 > l.bbox.x0 && l.bbox.y1 > l.bbox.y0);
   }
-  /* استدعاء Gemini بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
-  /* طلب موحّد لـ Gemini: تدوير النماذج + إعادة محاولة بتأخير متزايد عند الازدحام (503) أو الحصة (429) */
+  /* استدعاء Alyssum API بصورة + تعليمات ويعيد JSON؛ يجرّب أكثر من نموذج عند الازدحام */
+  /* طلب موحّد لـ Alyssum API: تدوير النماذج + إعادة محاولة بتأخير متزايد عند الازدحام (503) أو الحصة (429) */
   /* مفتاح التحكم: استعمال API للتوليد (توليد الصفحة، الوصف، تدقيق النص…) معطّل افتراضياً؛ يُفعَّل بـ CONFIG.AI_API = true في config.js (أو يُتحكَّم به مركزياً في نسخة SaaS) */
   const aiOn = () => { try { return typeof CONFIG !== "undefined" && CONFIG.AI_API === true; } catch (e) { return false; } };
   async function gemGenerate(key, task, parts, cfg, modelsOverride) {
-    if (!aiOn()) { const e = new Error("🔒 التوليد بالذكاء الاصطناعي (API) معطّل حالياً"); e.code = "API_OFF"; throw e; }
+    if (!aiOn()) { const e = new Error("🔒 التوليد بتقنية Alyssum الذكية (Alyssum API) معطّل حالياً"); e.code = "API_OFF"; throw e; }
     const models = [...new Set(modelsOverride || await gemModels(key, task))], waits = [0, 4000, 10000, 20000]; let last = "";
     const note = t => { for (const id of ["gen-automsg", "gen-msg"]) { const el = typeof document !== "undefined" && document.getElementById(id); if (el && (!el.textContent || /^⏳|Google/.test(el.textContent))) el.textContent = t; } };
     for (let round = 0; round < waits.length; round++) {
@@ -277,14 +277,14 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
         if (r.status === 404 || /no longer available|not found|not supported/i.test(gm)) continue;
         throw new Error(last);
       }
-      if (imgQuota) throw new Error("🖼️ نماذج توليد الصور في Gemini غير مشمولة عادةً بالطبقة المجانية، ومفتاحك تجاوز/لا يملك حصة لها. الحل: فعّل الفوترة (Billing) لمشروع المفتاح في Google AI Studio، أو ولّد الصورة يدوياً بزر «نسخ البرومبت» في تطبيق Gemini ثم ارفعها بزر «لدي صورة جاهزة». (نصوص التسويق تعمل بالمجان وقد اكتملت.) " + last);
+      if (imgQuota) throw new Error("🖼️ نماذج توليد الصور في Alyssum API غير مشمولة عادةً بالطبقة المجانية، ومفتاحك تجاوز/لا يملك حصة لها. الحل: فعّل الفوترة (Billing) لمشروع المفتاح في Google AI Studio، أو ولّد الصورة يدوياً بزر «نسخ البرومبت» في تطبيق Alyssum API ثم ارفعها بزر «لدي صورة جاهزة». (نصوص التسويق تعمل بالمجان وقد اكتملت.) " + last);
       if (!busy) break;
     }
-    throw new Error(last || "لا يوجد نموذج Gemini متاح لهذا المفتاح");
+    throw new Error(last || "لا يوجد نموذج Alyssum API متاح لهذا المفتاح");
   }
   async function geminiJson(key, b64, prompt, task) {
     const j = await gemGenerate(key, task || "ocr", [{ inline_data: { mime_type: "image/jpeg", data: b64 } }, { text: prompt }], { responseMimeType: "application/json", temperature: 0 });
-    const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join(""), m = t.match(/\{[\s\S]*\}/); if (!m) throw new Error("ردّ غير مفهوم من Gemini"); return JSON.parse(m[0]);
+    const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(x => x.text || "").join(""), m = t.match(/\{[\s\S]*\}/); if (!m) throw new Error("ردّ غير مفهوم من Alyssum API"); return JSON.parse(m[0]);
   }
   async function geminiText(key, text, b64, mime, task) {
     const j = await gemGenerate(key, task || "copy", (b64 ? [{ inline_data: { mime_type: mime || "image/jpeg", data: b64 } }] : []).concat([{ text }]), { temperature: .7 });
@@ -390,7 +390,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
 
   /* ───────────── الواجهة داخل تبويب «بناء الصفحات المتقدم» ───────────── */
   const S = { canvas: null, cuts: [], regions: [], file: null, regionMode: false };
-  function mount(host) { mount0(host); if (!aiOn()) { const c = host.querySelector("#gen-card"); if (c) { const b = document.createElement("div"); b.style.cssText = "margin:.4rem 0 .8rem;padding:.6rem .8rem;background:#fff4e5;border:1.5px solid #f0c987;border-radius:10px;font-weight:700;color:#8a5a00;line-height:1.7"; b.textContent = "🔒 التوليد بالذكاء الاصطناعي (توليد الصفحة والوصف) معطّل حالياً — لا يُستهلك أي API. الأدوات الأخرى (تحرير صفحة جاهزة، قصّها وتقسيمها) تعمل كالمعتاد."; c.insertBefore(b, c.children[1] || null); const mk = host.querySelector("#gen-make"); if (mk) { mk.disabled = true; mk.title = "معطّل حالياً"; }
+  function mount(host) { mount0(host); if (!aiOn()) { const c = host.querySelector("#gen-card"); if (c) { const b = document.createElement("div"); b.style.cssText = "margin:.4rem 0 .8rem;padding:.6rem .8rem;background:#fff4e5;border:1.5px solid #f0c987;border-radius:10px;font-weight:700;color:#8a5a00;line-height:1.7"; b.textContent = "🔒 التوليد بتقنية Alyssum الذكية (توليد الصفحة والوصف) معطّل حالياً — لا يُستهلك أي API. الأدوات الأخرى (تحرير صفحة جاهزة، قصّها وتقسيمها) تعمل كالمعتاد."; c.insertBefore(b, c.children[1] || null); const mk = host.querySelector("#gen-make"); if (mk) { mk.disabled = true; mk.title = "معطّل حالياً"; }
       host.querySelectorAll("#gen-engine option, #gen-erase-det option").forEach(o => { if (/gemini/i.test(o.value)) o.remove(); }); const eg = host.querySelector("#gen-erase-gem"); if (eg) { eg.disabled = true; eg.checked = false; eg.parentNode.style.opacity = ".5"; } const gb = host.querySelector("#gen-detect-btn, [onclick*=\"PBGen.detect()\"]"); if (gb) gb.disabled = true; } } }
   function mount0(host) {
     host.innerHTML = `
@@ -400,13 +400,13 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div class="gen-step" data-s="1">
   <details id="gen-adv" style="margin:.5rem 0 .8rem;padding:.6rem .8rem;background:#f7faf7;border:1.5px solid #cfe3d3;border-radius:10px"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات التوليد (المفتاح، الجودة، الهيكل)</summary>
     <div class="grid2" style="margin-top:.4rem">
-      <label class="hint" style="margin:0">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
+      <label class="hint" style="margin:0">مفتاح Alyssum API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey1" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
       <label class="hint" style="margin:0">مستوى التكلفة/الجودة للنصوص<select id="gen-tier" onchange="try{localStorage.setItem('alyssum_gem_tier',this.value)}catch(e){}"><option value="auto">تلقائي (موصى)</option><option value="eco">اقتصادي: Flash-Lite</option><option value="best">أعلى جودة</option></select></label>
     </div>
     <div class="grid2" style="margin-top:.4rem">
       <label class="hint" style="margin:0">لغة السوق<select id="gen-lang" onchange="try{localStorage.setItem('alyssum_pb_lang',this.value)}catch(e){}">${Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k].label}</option>`).join("")}</select></label>
       <label class="hint" style="margin:0">نوع العرض<select id="gen-offer"><option value="single">منتج واحد</option><option value="bundle">باك / مجموعة منتجات</option></select></label>
-      <label class="hint" style="margin:0">هيكل الصفحة<select id="gen-tpl"><option value="11">قالب 11 قسماً (Anti Acne الناجح — موصى)</option><option value="free">حر (يقرّر Gemini الأقسام)</option></select></label>
+      <label class="hint" style="margin:0">هيكل الصفحة<select id="gen-tpl"><option value="11">قالب 11 قسماً (Anti Acne الناجح — موصى)</option><option value="free">حر (يقرّر Alyssum API الأقسام)</option></select></label>
       <label class="hint" style="margin:0">نسبة الصورة<select id="gen-ar"><option value="1:4">1:4 — طويل (موصى للصورة الواحدة)</option><option value="1:8">1:8 — أطول جداً (ضيق)</option><option value="9:16">9:16 — طولي</option><option value="2:3">2:3</option><option value="3:4">3:4</option><option value="4:5">4:5</option><option value="1:1">1:1 — مربع</option></select></label>
       <label class="hint" style="margin:0">الدقة<select id="gen-res"><option value="4K">4K — أعلى وضوحاً (موصى للنصوص)</option><option value="2K">2K</option><option value="1K">1K — أسرع وأرخص</option></select></label>
       <label class="hint" style="margin:0">نموذج الصور<select id="gen-imgq"><option value="pro">أعلى جودة نص (Nano Banana Pro) — الأغلى</option><option value="fast">أسرع وأرخص (Flash)</option></select></label>
@@ -428,7 +428,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <input id="gen-aud" type="hidden">
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 .3rem">
     <button class="small gold" type="button" id="gen-make" onclick="PBGen.generateImage()">🎨 توليد الصفحة</button>
-    <button class="small gray" type="button" onclick="PBGen.copyHidden()" title="يجهّز البرومبت ويُنسخ للحافظة دون عرضه، لاستعماله في تطبيق Gemini يدوياً">📋 نسخ البرومبت (دون عرضه)</button>
+    <button class="small gray" type="button" onclick="PBGen.copyHidden()" title="يجهّز البرومبت ويُنسخ للحافظة دون عرضه، لاستعماله في تطبيق Alyssum API يدوياً">📋 نسخ البرومبت (دون عرضه)</button>
   </div>
   <label class="hint" style="margin:.4rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-autoretry" style="width:auto"> إعادة توليد تلقائية مرة واحدة إن وُجدت أخطاء كثيرة في الصورة (تُحتسب كطلب صور إضافي)</label>
   <div id="gen-result" style="display:none;margin-top:.8rem;padding:.8rem;border:1.5px solid #cfe3d3;border-radius:12px;background:#fbfdfb">
@@ -470,7 +470,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       <button class="small gray" type="button" id="gen-erase-undo" onclick="PBGen.eraseUndo()" disabled>↶ تراجع</button>
       <button class="small gray" type="button" onclick="PBGen.downloadClean()">⬇ تنزيل الصورة</button>
       <label class="hint" style="margin:0">الكشف <select id="gen-erase-det"><option value="pix">تلقائي بالصورة — بلا مفتاح</option><option value="ocr">بقراءة النص (OCR)</option></select></label>
-      <label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-erase-gem" style="width:auto"> Gemini للمناطق المعقدة (اختياري، يستهلك رصيداً)</label>
+      <label class="hint" style="margin:0;display:flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-erase-gem" style="width:auto"> Alyssum API للمناطق المعقدة (اختياري، يستهلك رصيداً)</label>
     </div>
     <div id="gen-erase-msg" class="hint" style="margin-top:.4rem;min-height:1.2em"></div>
   </div>
@@ -481,15 +481,15 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   </div>
   <div style="display:none">
   <div class="grid2" style="margin-top:.4rem">
-    <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">Tesseract — مجاني داخل المتصفح</option><option value="gemini">Gemini رؤية — أدق للعربية (بمفتاحك)</option></select></label>
-    <label class="hint" style="margin:0;display:none" id="gen-gk-wrap">مفتاح Gemini API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
+    <label class="hint" style="margin:0">محرك استخراج النصوص<select id="gen-engine" onchange="PBGen.engineUI()"><option value="tess">Tesseract — مجاني داخل المتصفح</option><option value="gemini">Alyssum API رؤية — أدق للعربية (بمفتاحك)</option></select></label>
+    <label class="hint" style="margin:0;display:none" id="gen-gk-wrap">مفتاح Alyssum API (يُحفظ في هذا المتصفح فقط)<input id="gen-gkey" dir="ltr" placeholder="AIza..." autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
     <label class="hint" style="margin:0">مفتاح remove.bg (اختياري — لقص خلفية المنتج/الصور)<input id="gen-rbkey" dir="ltr" placeholder="بدونه: «قص كصورة» مستطيلة" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc"></label>
   </div>
-  <div style="margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" id="gen-detect-btn" onclick="PBGen.detect()" title="يستعمل مفتاح Gemini (طبقة مجانية)">🔍 اكتشاف المنتج والصور تلقائياً</button><button class="small gray" type="button" id="gen-region-btn" onclick="PBGen.regionMode()">✂️ رسم منطقة للقص (منتج/صورة)</button><small class="hint" style="margin:0">اضغط الزر ثم اسحب مستطيلاً حول المنتج أو أي صورة في المعاينة؛ كل منطقة تصير عنصر صورة مستقلاً قابلاً للتحريك. انقر × على المنطقة لحذفها.</small></div>
+  <div style="margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><button class="small gold" type="button" id="gen-detect-btn" onclick="PBGen.detect()" title="يستعمل مفتاح Alyssum API (طبقة مجانية)">🔍 اكتشاف المنتج والصور تلقائياً</button><button class="small gray" type="button" id="gen-region-btn" onclick="PBGen.regionMode()">✂️ رسم منطقة للقص (منتج/صورة)</button><small class="hint" style="margin:0">اضغط الزر ثم اسحب مستطيلاً حول المنتج أو أي صورة في المعاينة؛ كل منطقة تصير عنصر صورة مستقلاً قابلاً للتحريك. انقر × على المنطقة لحذفها.</small></div>
   </div>
   <div id="gen-prev" style="margin:.6rem 0"></div>
   </div>
-  <label class="hint" style="margin:.6rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-conv" checked style="width:auto"> فكّك النصوص إلى طبقات قابلة للتعديل (تُمسح من الصورة بالممحاة وتُعاد كنص حقيقي) — يلزم مفتاح Gemini للدقة بالعربية</label>
+  <label class="hint" style="margin:.6rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-conv" checked style="width:auto"> فكّك النصوص إلى طبقات قابلة للتعديل (تُمسح من الصورة بالممحاة وتُعاد كنص حقيقي) — يلزم مفتاح Alyssum API للدقة بالعربية</label>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.4rem"><button class="small gold" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 إلى المحرر مباشرة</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
   </div>
   <div class="gen-step" data-s="3" style="display:none">
@@ -519,13 +519,13 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
     document.querySelectorAll("#gen-card [data-gs]").forEach(b => { b.className = "small " + (Number(b.dataset.gs) === n ? "gold" : "gray"); });
     S.step = n;
     if (n === 2 && S.canvas) drawPreview();
-    if (n === 3) { const t = $("gen-title"); if (t && !t.value && S.file) t.value = (S.file.name || "").replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").slice(0, 60); $("gen-sum").innerHTML = S.canvas ? `سيتحول التصميم إلى <b>${S.cuts.length + 1}</b> قسماً${S.regions.length ? " مع <b>" + S.regions.length + "</b> عنصر مقصوص" : ""}. المحرك: <b>${$("gen-engine").value === "gemini" ? "Gemini رؤية" : "Tesseract"}</b>.` : "ارفع الصورة في الخطوة ②."; }
+    if (n === 3) { const t = $("gen-title"); if (t && !t.value && S.file) t.value = (S.file.name || "").replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").slice(0, 60); $("gen-sum").innerHTML = S.canvas ? `سيتحول التصميم إلى <b>${S.cuts.length + 1}</b> قسماً${S.regions.length ? " مع <b>" + S.regions.length + "</b> عنصر مقصوص" : ""}. المحرك: <b>${$("gen-engine").value === "gemini" ? "Alyssum API رؤية" : "Tesseract"}</b>.` : "ارفع الصورة في الخطوة ②."; }
   }
   function engineUI() { $("gen-gk-wrap").style.display = $("gen-engine").value === "gemini" ? "" : "none"; }
   async function detect() {
-    if (!S.canvas) return; if (!aiOn()) { $("gen-msg").textContent = "🔒 الكشف بالذكاء الاصطناعي (API) معطّل حالياً — استعمل القص اليدوي"; return; } const msg = $("gen-msg"), key = ($("gen-gkey").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
-    if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (اختر محرك Gemini ثم الصق المفتاح)"; return; }
-    msg.textContent = "⏳ Gemini يبحث عن المنتج والصور…"; try { try { localStorage.setItem("alyssum_gp_gkey", key); } catch (e) { }
+    if (!S.canvas) return; if (!aiOn()) { $("gen-msg").textContent = "🔒 الكشف بتقنية Alyssum الذكية (Alyssum API) معطّل حالياً — استعمل القص اليدوي"; return; } const msg = $("gen-msg"), key = ($("gen-gkey").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
+    if (!key) { msg.textContent = "❌ أدخل مفتاح Alyssum API أولاً (اختر محرك Alyssum API ثم الصق المفتاح)"; return; }
+    msg.textContent = "⏳ Alyssum API يبحث عن المنتج والصور…"; try { try { localStorage.setItem("alyssum_gp_gkey", key); } catch (e) { }
       const found = await (PBGen.detectFn || geminiDetect)(S.canvas, key), keep = found.filter(r => !S.regions.some(q => { const ix = Math.min(q.x1, r.x1) - Math.max(q.x0, r.x0), iy = Math.min(q.y1, r.y1) - Math.max(q.y0, r.y0); return ix > 0 && iy > 0 && ix * iy > .5 * Math.min((q.x1 - q.x0) * (q.y1 - q.y0), (r.x1 - r.x0) * (r.y1 - r.y0)); }));
       S.regions.push(...keep); drawPreview(); msg.textContent = "✅ أُضيفت " + keep.length + " منطقة — احذف (×) ما لا تريده ثم حوّل"; } catch (err) { msg.textContent = "❌ " + err.message; }
   }
@@ -540,15 +540,15 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
       return '"' + r + '"'; });
     return { text: out, issues };
   }
-  /* تدقيق إملائي ولغوي بـ Gemini على النصوص المقتبسة فقط (يمسح التكرار والأخطاء) */
+  /* تدقيق إملائي ولغوي بـ Alyssum API على النصوص المقتبسة فقط (يمسح التكرار والأخطاء) */
   async function proofread() {
     const msg = $("gen-automsg"), cur = $("gen-final").value; if (!cur.trim()) { msg.textContent = "❌ لا يوجد برومبت نهائي للتدقيق"; return; }
-    const key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })(); if (!key) { msg.textContent = "❌ أدخل مفتاح Gemini أولاً"; return; }
+    const key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })(); if (!key) { msg.textContent = "❌ أدخل مفتاح Alyssum API أولاً"; return; }
     const L = LANGS[$("gen-lang").value] || LANGS.ar; msg.textContent = "⏳ تدقيق إملائي ولغوي…";
     try {
       const ask = `You are a meticulous ${L.name} proofreader and copy editor. Below is an image-generation prompt. Every text inside double quotes " " will be rendered literally inside an image. Fix ONLY the quoted strings: (1) any spelling or grammar mistake, (2) any repeated word or phrase (consecutive repeats like "X X", the same content word appearing twice inside one string, and the same or near-identical sentence reused in different sections — rewrite so every string is unique), (3) letter elongation/kashida/tatweel, (4) diacritics, (5) strings longer than 8 words (shorten them), (6) wrong or unnatural words (use simple standard everyday ${L.name}). Keep the meaning and the persuasive tone. Do NOT touch anything outside the quotes and do NOT remove sections. Return the COMPLETE corrected prompt inside ONE code block, then after the block write a short Arabic bullet list of the corrections you made (or "لا توجد أخطاء").\n\n${cur}`;
       const t = await (PBGen.textFn || geminiText)(key, ask, null, null, "proof"), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
-      if (!blocks.length) throw new Error("لم يُرجع Gemini نصاً مصحّحاً"); const fx = localFix(blocks.join("\n\n"));
+      if (!blocks.length) throw new Error("لم يُرجع Alyssum API نصاً مصحّحاً"); const fx = localFix(blocks.join("\n\n"));
       $("gen-final").value = fx.text; $("gen-intended").value = fx.text; $("gen-copy").textContent = (($("gen-copy").textContent || "") + "\n\n— التدقيق —\n" + t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim()).trim();
       msg.textContent = "✅ تم التدقيق" + (fx.issues.length ? " (وإصلاح محلي لـ " + fx.issues.length + ")" : "");
     } catch (err) { msg.textContent = "❌ " + err.message; }
@@ -580,22 +580,22 @@ FINAL TEXT SAFETY CHECK
 ==================================================
 Before rendering, internally verify every text element: no duplicated sentences, words or letters; no random characters; no invented captions; no repeated headlines or product names. Every sentence is rendered once, exactly as written. NO HTML, NO CSS, NO code, NO UI, NO browser interface, NO extra text, NO fake text.`;
   }
-  /* مرحلة خفية: يكتب Gemini النصوص التسويقية والبرومبت النهائي، ثم يُدقَّق ويُخزَّن (لا يُعرض) */
+  /* مرحلة خفية: يكتب Alyssum API النصوص التسويقية والبرومبت النهائي، ثم يُدقَّق ويُخزَّن (لا يُعرض) */
   async function makeFinal(key) {
-    const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/5) Gemini يكتب نصوصاً تسويقية قوية…";
+    const msg = $("gen-automsg"); makePrompt(); msg.textContent = "⏳ (1/5) Alyssum API يكتب نصوصاً تسويقية قوية…";
     const f = $("gen-pimg").files && $("gen-pimg").files[0], b64 = f ? await small64(f, 1400) : null;
     const t = await (PBGen.textFn || geminiText)(key, $("gen-out").value, b64, "image/jpeg", "copy"), blocks = []; t.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (_, c) => { blocks.push(c.trim()); return ""; });
-    if (!blocks.length) throw new Error("لم يُرجع Gemini تصميماً جاهزاً — أعد المحاولة");
+    if (!blocks.length) throw new Error("لم يُرجع Alyssum API تصميماً جاهزاً — أعد المحاولة");
     const fx = localFix(blocks.join("\n\n")); $("gen-final").value = fx.text; $("gen-copy").textContent = t.replace(/```[a-zA-Z]*\n[\s\S]*?```/g, "").trim(); $("gen-intended").value = fx.text;
     msg.textContent = "⏳ (2/5) تدقيق إملائي وتكرار…"; try { await proofread(); } catch (e) { }
     const full = rulesBlock() + "\n\n" + $("gen-final").value; $("gen-final").value = full; S.finalPrompt = full; return S.finalPrompt;
   }
-  async function auto() { const msg = $("gen-automsg"), key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } try { await makeFinal(key); msg.textContent = "✅ جاهز"; } catch (err) { msg.textContent = "❌ " + err.message; } }
+  async function auto() { const msg = $("gen-automsg"), key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Alyssum API أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } try { await makeFinal(key); msg.textContent = "✅ جاهز"; } catch (err) { msg.textContent = "❌ " + err.message; } }
   /* نسخ البرومبت للحافظة دون عرضه */
   async function copyHidden() {
     const msg = $("gen-automsg"); try {
-      if (!S.finalPrompt) { const key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } await makeFinal(key); }
-      await navigator.clipboard.writeText(S.finalPrompt); msg.textContent = "✅ نُسخ البرومبت للحافظة — الصقه في Gemini مع صورة المنتج"; toast("✅ نُسخ البرومبت");
+      if (!S.finalPrompt) { const key = keyNow(); if (!key) { { msg.textContent = "❌ أدخل مفتاح Alyssum API أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; } await makeFinal(key); }
+      await navigator.clipboard.writeText(S.finalPrompt); msg.textContent = "✅ نُسخ البرومبت للحافظة — الصقه في Alyssum API مع صورة المنتج"; toast("✅ نُسخ البرومبت");
     } catch (e) { msg.innerHTML = '✅ البرومبت جاهز — <button class="small gold" type="button" onclick="PBGen.copyFinal()">اضغط هنا للنسخ</button>'; }
   }
   /* نماذج الصور المتاحة */
@@ -621,10 +621,10 @@ Before rendering, internally verify every text element: no duplicated sentences,
     }
     throw lastErr || new Error("تعذّر توليد الصورة");
   }
-  /* فحص الصورة المولّدة: Gemini يقرأ النصوص ← نقارنها بالنصوص المقصودة ونكشف التكرار */
+  /* فحص الصورة المولّدة: Alyssum API يقرأ النصوص ← نقارنها بالنصوص المقصودة ونكشف التكرار */
   async function checkImage() {
     const box = $("gen-rcheck"), key = keyNow(); if (!box || !S.canvas) return; S.issues = [];
-    if (!key) { box.textContent = "أدخل مفتاح Gemini لفحص النصوص تلقائياً."; return; }
+    if (!key) { box.textContent = "أدخل مفتاح Alyssum API لفحص النصوص تلقائياً."; return; }
     try {
       const L = LANGS[$("gen-lang").value] || LANGS.ar, lines = await (PBGen.ocrFn || geminiOcr)(S.canvas, key, L.name), want = extractIntended(S.finalPrompt || ""), seen = new Set(), issues = [];
       lines.forEach(l => {
@@ -645,7 +645,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   async function generateImage(isRegen) {
     if (isRegen !== true) S.retried = false;
     const msg = $("gen-automsg"), btn = $("gen-make"), key = keyNow(), pf = $("gen-pimg").files && $("gen-pimg").files[0];
-    if (!key) { { msg.textContent = "❌ أدخل مفتاح Gemini أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; }
+    if (!key) { { msg.textContent = "❌ أدخل مفتاح Alyssum API أولاً (إعدادات متقدمة)"; const ad = $("gen-adv"); if (ad) ad.open = true; } return; }
     if (!pf) { msg.textContent = "❌ ارفع صورة المنتج أولاً"; return; }
     if (!$("gen-name").value.trim() && !$("gen-desc").value.trim() && !($("gen-ing").value || "").trim()) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه أو مكوناته"; return; }
     btn.disabled = true;
@@ -757,7 +757,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   function eraseUndo() { const c = (S.undo || []).pop(); if (!c) return; S.canvas.width = c.width; S.canvas.height = c.height; S.canvas.getContext("2d").drawImage(c, 0, 0); if (!S.undo.length) $("gen-erase-undo").disabled = true; drawPreview(); eMsg("↶ تم التراجع"); }
   async function eraseDrag(a) {
     pushUndo(); eMsg("⏳ جارِ المسح…"); const g = S.canvas.getContext("2d", { willReadFrequently: true }), st = await eraseRects(g, [a], geminiOpt()); drawPreview();
-    eMsg(st[0] && st[0].masked ? "✅ مُسح — " + (st[0].complex && !st[0].gemini ? "الخلفية معقدة قد تبقى آثار (جرّب Gemini)" : "تم") : "لم أجد نصاً واضحاً داخل المنطقة (اجعل المستطيل أقرب للحروف)");
+    eMsg(st[0] && st[0].masked ? "✅ مُسح — " + (st[0].complex && !st[0].gemini ? "الخلفية معقدة قد تبقى آثار (جرّب Alyssum API)" : "تم") : "لم أجد نصاً واضحاً داخل المنطقة (اجعل المستطيل أقرب للحروف)");
   }
   function downloadClean() { if (!S.canvas) return; S.canvas.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "clean-" + (S.name || "landing") + ".png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, "image/png"); }
 
@@ -829,12 +829,12 @@ Before rendering, internally verify every text element: no duplicated sentences,
     };
     try {
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;
-      if (CONV() && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Gemini أو اختر Tesseract"; btn.disabled = false; return; }
+      if (CONV() && $("gen-engine").value === "gemini" && !gk) { msg.textContent = "أدخل مفتاح Alyssum API أو اختر Tesseract"; btn.disabled = false; return; }
       try { if (gk) localStorage.setItem("alyssum_gp_gkey", gk); if (rb) localStorage.setItem("alyssum_removebg_key", rb); } catch (e) { }
       const page = await convert({ dw: 1100, canvas: S.canvas, cuts: S.cuts, regions: CONV() ? S.regions : [], intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: !!CONV() && $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: !!CONV() && $("gen-ocr").checked, inpaint: true, gemOpt: geminiOpt(), tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
       page.css = (page.css || "") + edgeGradient(S.canvas);        // خلفية الصفحة تمتد بنفس تدرّج حواف الصورة فلا تظهر هوامش بيضاء
       page.slug = ($("gen-title").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "lp-" + Date.now().toString(36).slice(-4);
-      const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + (CONV() ? st.ok + " نصاً صار قابلاً للتعديل" : "الأقسام جاهزة") + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Gemini أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; PBApp.open(page, "", true);
+      const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + (CONV() ? st.ok + " نصاً صار قابلاً للتعديل" : "الأقسام جاهزة") + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Alyssum API أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; PBApp.open(page, "", true);
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }

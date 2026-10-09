@@ -241,7 +241,7 @@ window.ImageTools = (function () {
     const F = findObjects(work, opt), items = F.objects.map((o, i) => { const cut = cutObject(F, o), w = o.x1 - o.x0, h = o.y1 - o.y0; return { id: i, o, cut, x0: cut.x0, y0: cut.y0, x1: cut.x0 + cut.w, y1: cut.y0 + cut.h, area: cut.filled, role: Math.max(w, h) < W * .12 ? "icon" : (cut.filled / (w * h) > .85 ? "photo" : "object") }; });
     return { work, F, items };
   }
-  /* نسخة متزامنة من eraseRects للنصوص عند التحضير (eraseRects غير متزامنة لدعم Gemini فقط) */
+  /* نسخة متزامنة من eraseRects للنصوص عند التحضير (eraseRects غير متزامنة لدعم Alyssum API فقط) */
   function eraseRectsSync(ctx, rects) { let done; eraseRects(ctx, rects, { skipComplex: true }).then(() => { done = true; }); return done; }
   /* يمسح عناصر مختارة من قماش (ويُبقي بقية الصورة بما فيها النصوص) */
   function eraseElements(canvas, F, items) { const g = canvas.getContext("2d", { willReadFrequently: true }); items.forEach(it => eraseObject(g, it.o, it.cut, 5, F)); return canvas; }
