@@ -62,7 +62,7 @@ const AdminInsights = (() => {
     const a=A(),btn=[...document.querySelectorAll(".nav-btn")].find(x=>(x.getAttribute("onclick")||"").includes("'orders'")||/الطلبات/.test(x.textContent||""));
     if(a.tab)a.tab("orders",btn);
     const q=document.getElementById("order-filter-q");
-    if(q&&query){q.value=query;q.dispatchEvent(new Event("input",{bubbles:true}));q.focus();q.setSelectionRange(q.value.length,q.value.length);}
+    if(q&&query){q.value=query;q.dispatchEvent(new Event("input",{bubbles:true}));const active=document.getElementById("order-filter-q")||q;active.focus();active.setSelectionRange(active.value.length,active.value.length);}
   }
   function act(kind,value){
     const a=A();
