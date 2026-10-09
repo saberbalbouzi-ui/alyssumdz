@@ -16,6 +16,7 @@ const AdminSearch = (() => {
     ["فتح التقارير", "عرض التقارير المتقدمة حسب الفترة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'reports'")); if (b) b.click(); }, "تقارير مبيعات فئة ولاية حملة قمع"],
     ["فتح المرتجعات", "تسجيل ومتابعة مرتجعات الطلبات المسلَّمة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'returns'")); if (b) b.click(); }, "مرتجعات استبدال استرداد إعادة المخزون"],
     ["فتح المدفوعات", "حالة الدفع اليدوية والمبالغ المعلّقة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'payments'")); if (b) b.click(); }, "مدفوعات دفع تحصيل مدفوع مسترد معلق"],
+    ["فتح المدوّنة والسياسات", "مقالات المدوّنة وصفحات الخصوصية والاسترجاع والشحن والشروط", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'blog'")); if (b) b.click(); }, "مدونة مقال مقالات سياسة الخصوصية الاسترجاع الشحن الشروط blog policy"],
     ["فتح SEO", "عناوين وأوصاف المنتجات وبيانات المشاركة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'seo'")); if (b) b.click(); }, "seo محركات البحث وصف عنوان noindex sitemap"],
   ];
   function build() {

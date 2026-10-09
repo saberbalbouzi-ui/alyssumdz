@@ -50,3 +50,4 @@ const AdminBlog = (() => {
   function init(hostId="tab-blog"){host=$(hostId);if(!host)return false;load();return true;}
   return {init,load,render};
 })();
+document.addEventListener("DOMContentLoaded",()=>{if(typeof Admin==="undefined"||Admin._blogTabWrapped)return;const original=Admin.tab;Admin.tab=function(t,btn){const r=original.call(this,t,btn),el=document.getElementById("tab-blog");if(el)el.classList.toggle("hidden",t!=="blog");if(t==="blog")AdminBlog.init("tab-blog");return r;};Admin._blogTabWrapped=true;});

@@ -598,7 +598,7 @@ const AutoDisc = {
     return { discount: codeDiscount, autoDiscount: 0, couponDiscount: codeDiscount, rule: null, message: "" };
   },
   load() {
-    fetch(REL + "assets/data/autodisc.json", { cache: "no-store" }).then(r => r.ok ? r.json() : [])
+    fetch((typeof REL!=="undefined"?REL:"") + "assets/data/autodisc.json", { cache: "no-store" }).then(r => r.ok ? r.json() : [])
       .then(data => { this.rules = Array.isArray(data) ? data : []; if (typeof Cart !== "undefined") Cart.render(); })
       .catch(() => { this.rules = []; });
   }

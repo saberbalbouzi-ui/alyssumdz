@@ -56,7 +56,7 @@ const AdminCoupons2 = (() => {
 
   const AUTO_PATH="assets/data/autodisc.json";
   let autoRules=[],autoSha;
-  const decode=b64=>JSON.parse(decodeURIComponent(escape(atob(String(b64||"").replace(/\\s/g,"")))));
+  const decode=b64=>JSON.parse(decodeURIComponent(escape(atob(String(b64||"").replace(/\s/g,"")))));
   async function loadAutoRules(){
     autoRules=[];autoSha=undefined;
     try{
