@@ -23,6 +23,7 @@ const AdminNav = (() => {
     agent: { n: "الوكيل الذكي", d: "مساعد على موقعك يجيب الزبائن تلقائياً من أسئلة وأجوبة تدرّبه عليها، ويقترح المنتجات، ويسجّل الأسئلة التي لم يعرف جوابها لتجيب عنها.", how: ["افتح مكان العمل ودرّب الوكيل: أسئلة وأجوبة لكل صفحة.", "جرّبه ثم انشر التدريب.", "تابع الأسئلة الجديدة وأجب عنها ليتحسّن."], where: "نافذة المحادثة على موقعك + تبويب تدريب الوكيل", work: "agent", off: "يختفي الوكيل من موقعك كلياً (الزر والمحادثة)." },
     voice: { n: "الوكيل الناطق", d: "واجهة بديلة للوكيل: أفاتار ناطق يقرأ الصفحة ويقنع الزبون ويشير إلى «اطلب الآن»، بصوت احترافي أو ملفات صوت جاهزة.", how: ["افتح مكان العمل واختر الواجهة (محادثة نصية أو أفاتار ناطق).", "أدخل مفتاح الصوت (اختياري) ومعرّف الصوت.", "ولّد ملفات الصوت الجاهزة لكل صفحة ليسمعها الزبائن بلا مفتاح."], where: "الأفاتار على موقعك + قسم الوكيل الناطق", work: "voice", off: "يعود الموقع إلى المحادثة النصية دائماً." },
     ask: { n: "اسألني", d: "مساعد اللوحة: اكتب سؤالك عن أي أداة أو إعداد فيجيبك فوراً بلا إنترنت ولا مفتاح.", how: ["اضغط زر «اسألني» أعلى اللوحة.", "اكتب سؤالك أو اختر اقتراحاً.", "اضغط «اذهب إلى القسم» ليفتح لك المكان المقصود."], where: "زر «اسألني» أعلى اللوحة", work: "ask", off: "يختفي زر «اسألني» من اللوحة." },
+    floaters: { custom: true, n: "الأيقونات العائمة", d: "أزرار تواصل تطفو فوق صفحات موقعك: واتساب، واتصال هاتفي، وماسنجر. لكل أداة إعداداتها: تفعيلها أو تعطيلها، مكانها على الشاشة، شكلها ولونها، وطريقة ظهورها (حركة، تأخير، بعد تمرير، حسب الجهاز والصفحة).", how: ["فعّل الأداة التي تريدها من مفتاحها.", "اضبط الرقم (أو صفحة فيسبوك) ومكان الأيقونة وشكلها وطريقة ظهورها.", "اضغط «حفظ الأيقونات العائمة» فتظهر على موقعك خلال دقيقة."], where: "إعدادات الأيقونات في هذه الصفحة نفسها (أعلاها)", work: "floaters", off: "تختفي كل الأيقونات العائمة من موقعك." },
     cloner: { n: "ناسخ القوالب", d: "ينسخ تصميم أي موقع (برابطه أو بلقطة شاشة) إلى عناصر قابلة للتعديل في مطوّر الصفحات: صور ونصوص وأزرار وسلايدرات وتأثيرات.", how: ["افتح مكان العمل واكتب رابط الموقع ثم «فتح».", "اسحب الحد السفلي لتحدّد ما يُنسخ.", "اضغط «انسخ» ويظهر الناتج في مطوّر الصفحات."], where: "زر «نسخ قالب» داخل مطوّر الصفحات", work: "cloner", off: "يختفي زر «نسخ قالب» ويُمنع فتح الناسخ." }
   };
   /* قائمة أدوات الصور: كل أداة باسمها وإعداداتها (تُحفظ في هذا المتصفح وتقرؤها الأدوات عند التشغيل) */
@@ -86,7 +87,7 @@ const AdminNav = (() => {
   }
   const myAsLib = it => ({ id: "my:" + it.id, my: true, cat: "page", fld: "قوالبي", n: it.n, d: (it.src === "import" ? "محمَّل من ملف" : "منشأ من صفحة") + " · " + (it.date || "") + " · " + (((it.page && it.page.sections) || []).length) + " قسم", file: null, page: it.page });
   function tplFind(id) { if (String(id).startsWith("my:")) { const it = (MY.items || []).find(q => "my:" + q.id === id); return it ? myAsLib(it) : null; } return libAll().find(q => q.id === id); }
-  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.25";
+  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.26";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen(view) { await libLoad(); await myLoad(); LS.type = "all"; LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -497,7 +498,8 @@ const AdminNav = (() => {
   }
   function toggle(id, on) { on ? OFF.delete(id) : OFF.add(id); applyOff(); saveOff(); renderApp(id); }
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  function renderApp(id) {
+  function renderApp(id) { renderApp0(id); const A = APPS[id], box = $("app-cfg-body"); if (A && A.custom && box && typeof AdminFloat !== "undefined") { const h = document.createElement("div"); h.className = "ap-sec"; h.style.cssText = "padding:0;border:0;background:none"; const hd = box.querySelector(".ap-h"); if (hd) hd.after(h); else box.prepend(h); AdminFloat.mount(h); } }
+  function renderApp0(id) {
     const A = APPS[id], box = $("app-cfg-body"); if (!A || !box) return; box.dataset.app = id;
     const cur = (typeof AdminUpdate !== "undefined" && AdminUpdate.current) || "", lat = (typeof AdminUpdate !== "undefined" && AdminUpdate.latest) || "", newer = lat && cur && lat !== cur && lat.split(".").map(Number).join() > cur.split(".").map(Number).join();
     const o = off(id);
@@ -517,6 +519,7 @@ const AdminNav = (() => {
   function work(id) {
     if (!APPS[id]) return; if (off(id)) return toast("التطبيق معطّل — فعّله من إعداداته");
     if (id === "ask") return ask(); if (id === "cloner") return clone();
+    if (id === "floaters") { AT.tab = "info"; renderApp(id); const h = $("fl-host"); if (h) setTimeout(() => h.scrollIntoView({ behavior: "smooth", block: "start" }), 80); return; }
     const w = WK[id], b = w && workBtn(w[0]); if (!b) return;
     try { if (id === "voice") { VOICE = true; Admin.tab("agent", b); agentView("voice"); const c = $("av-card"); if (c) setTimeout(() => c.scrollIntoView({ behavior: "smooth", block: "start" }), 60); } else Admin.tab(w[1], b); } catch (e) { } VOICE = false;
     const mi = document.querySelector('.side-nav .nav-btn[data-app="' + id + '"]'); if (mi) { document.querySelectorAll(".nav-btn.on").forEach(x => x.classList.remove("on")); mi.classList.add("on"); }
