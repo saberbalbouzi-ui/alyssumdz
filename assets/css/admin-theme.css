@@ -111,3 +111,17 @@ html.white .ssw-m{background:#fff;color:#0f172a;border-color:#e2e8f0;box-shadow:
 html.white .ssw-i:hover{background:#f1f5f9}
 html.white .ssw-i.on{background:color-mix(in srgb,var(--ac) 12%,#fff)}
 html.white .ssw-i.add{color:var(--ac);border-top-color:#e2e8f0}
+
+/* ── المظهر الفاتح: تباين أوضح بين البطاقات والخلفية (رمادي خفيف للصفحة، أبيض للبطاقات، وسطوح داخلية رمادية فاتحة) ── */
+html.white{--bg:#e3e7ed;--line:#d2d9e3}
+html.white body{background:#e3e7ed}
+html.white .login,html.white .card,html.white .side-nav,html.white .stat div,html.white .modal,html.white .top{border-color:#d2d9e3;box-shadow:0 1px 2px rgba(15,23,42,.07),0 10px 26px rgba(15,23,42,.10)}
+html.white .card .card,html.white .card .ap-sec,html.white .ap-sec,html.white .tl-c,html.white .atm-card,html.white .nav-groups .ng{background:#f3f5f9;border-color:#dce2ea}
+html.white .atm-card.on{background:#fff}
+html.white .nav-ic{background:#e8ecf2}
+html.white .nav-btn:hover{background:#eef1f6;border-color:#dce2ea}
+html.white input,html.white select,html.white textarea{border-color:#cdd5e0}
+html.white .atm-pv.w{background:#e3e7ed}
+html.white th{background:#eef1f6}
+html.white tbody tr:nth-child(even) td{background:#f7f9fb}
+html.white .hint{color:#5b6677}
