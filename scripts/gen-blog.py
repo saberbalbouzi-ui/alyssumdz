@@ -130,7 +130,7 @@ def article_card(post):
     title = html.escape(str(post.get("title") or ""))
     slug = html.escape(str(post.get("slug") or ""), quote=True)
     summary = html.escape(str(post.get("summary") or ""))
-    cover = str(post.get("cover") or "")
+    cover = safe_url(post.get("cover") or "")
     image = '<img src="%s" alt="%s" loading="lazy">' % (
         html.escape(cover, quote=True), title) if cover else ""
     return '<article class="blog-card">%s<h2><a href="/blog/%s/">%s</a></h2><p>%s</p><time>%s</time></article>' % (
@@ -152,7 +152,7 @@ def main():
     for post in posts:
         slug = str(post["slug"])
         title = str(post["title"]).strip()
-        cover = str(post.get("cover") or "")
+        cover = safe_url(post.get("cover") or "")
         image = '<img src="%s" alt="%s">' % (html.escape(cover, quote=True), html.escape(title, quote=True)) if cover else ""
         body = css + '<article class="blog-article"><nav><a href="/blog/">المدوّنة</a> / %s</nav><h1>%s</h1><time>%s</time>%s<div>%s</div></article>' % (
             html.escape(title), html.escape(title), html.escape(str(post.get("date") or "")), image,
