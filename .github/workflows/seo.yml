@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/gen-blog.py\n      - run: python3 scripts/seo.py
+      - run: python3 scripts/gen-blog.py
+      - run: python3 scripts/seo.py
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
