@@ -1,0 +1,59 @@
+{
+ "v": 1,
+ "settings": {
+  "domain": "alyssumdz.com",
+  "runner": false,
+  "fbNative": true,
+  "hashtags": [
+   {
+    "n": "عام",
+    "t": "#الجزائر #دفع_عند_الاستلام #توصيل_58_ولاية"
+   },
+   {
+    "n": "طبيعي",
+    "t": "#منتجات_طبيعية #عناية_طبيعية #أعشاب"
+   }
+  ],
+  "jpg": {
+   "assets/img/anti-acne/presentation/anti-acne 004.webp": "assets/img/pages/social-ig-1791563791862.jpg"
+  }
+ },
+ "rule": {
+  "perDay": 3,
+  "start": "10:00",
+  "end": "21:00",
+  "days": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "channels": [
+   "fb",
+   "ig"
+  ],
+  "jitter": true
+ },
+ "posts": [
+  {
+   "id": "pmv16o3qtql5",
+   "text": "باقة كريمة ضد حب الشباب: الأوفر لكhttps://alyssumdz.com/p/anti-acne/?utm_source=social&utm_medium=organic&utm_campaign=post-pmv16o3qtql5\n• اطلبها الآن والدفع عند الاستلام\nhttps://alyssumdz.com/p/anti-acne/?utm_source=social&utm_medium=organic&utm_campaign=post-pmv16o3qtql52 400 دجواتساب: 213559237239\n• اطلب الآن والدفع عند الاستلام\n• راسلنا على واتساب للطلب\n• توصيل لكل الولايات خلال 24 إلى 72 ساعة\n• الكمية محدودة، اطلب قبل النفاد🔥 ✅ 🚚 💚 🌿 🍯 ✨ ⭐ 🎁 📞 👇 ⏰ \n\n#الجزائر #دفع_عند_الاستلام #توصيل_58_ولاية",
+   "image": "assets/img/anti-acne/presentation/anti-acne 004.webp",
+   "channels": [
+    "fb",
+    "ig"
+   ],
+   "at": "",
+   "status": "draft",
+   "via": "browser",
+   "product": "anti-acne",
+   "ids": {},
+   "created": "2026-10-09T16:32:10.997Z",
+   "igImage": "assets/img/pages/social-ig-1791563791862.jpg"
+  }
+ ],
+ "campaigns": []
+}
