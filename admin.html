@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.5">
+<meta name="admin-version" content="1.89.6">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -228,7 +228,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 @media(max-width:700px){.ca-row,.ca-soc{grid-template-columns:1fr}}
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
-<link rel="stylesheet" href="assets/css/admin-glass.css?v=10">
+<link rel="stylesheet" href="assets/css/admin-glass.css?v=11">
 <script>try{if(localStorage.getItem("admin_theme")!=="classic")document.documentElement.classList.add("glass")}catch(e){document.documentElement.classList.add("glass")}window.AdminTheme={toggle:function(){var c=document.documentElement.classList.toggle("glass");try{localStorage.setItem("admin_theme",c?"glass":"classic")}catch(e){}}};</script>
 </head>
 <body>
@@ -1574,13 +1574,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.5"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.5"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.5"></script>
+<script src="assets/js/ctl-help.js?v=1.89.6"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.6"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.6"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.5"></script>
-<script src="assets/js/admin-update.js?v=1.89.5"></script>
+<script src="assets/js/admin-nav.js?v=1.89.6"></script>
+<script src="assets/js/admin-update.js?v=1.89.6"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -5162,6 +5162,12 @@ const Admin = {
     this.stockLog(p, p.stock == null ? 0 : (p.stock - (before || 0)), p.stock, "يدوي", "تعديل يدوي" + (p.stock == null ? " (غير محدود)" : ""));
     this.queueStockPublish(); this.renderFinance(); this.renderProducts();
   },
+  setPrice(slug, val){
+    const p = this.products.find(x=>x.slug === slug), v = Math.round(Number(val)); if(!p) return;
+    if(!isFinite(v) || v <= 0){ toast("⚠️ أدخل سعراً صحيحاً"); this.renderFinance(true); return; }
+    if(Number(p.price) === v) return; p.price = v;
+    this.queueStockPublish(); this.renderFinance(true); this.renderProducts(); toast("✅ السعر صار " + v.toLocaleString("fr-DZ") + " دج (يُنشر خلال ثوانٍ)");
+  },
   setCost(slug, val){
     const v = Number(val); if(String(val).trim() === "" || !isFinite(v) || v < 0) delete this.fin.costs[slug]; else this.fin.costs[slug] = v;
     Priv.set("costs", this.fin.costs); this.renderFinance();
@@ -5404,8 +5410,8 @@ const Admin = {
           '<td data-l="المخزون">' + (si.vars ? '<small style="color:#999">المجموع: <b style="color:inherit">' + (st == null ? "∞" : st) + '</b> · عام:</small> ' : "") + '<input type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)">' + vsRows + '</td>' +
           '<td data-l="تغطية" style="' + (cover !== "∞" && cover !== "—" && parseInt(cover) < 7 ? "color:var(--red);font-weight:800" : "") + '">' + cover + '</td>' +
           '<td data-l="سعر الشراء"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
-          '<td data-l="سعر البيع"><b>' + nf(p.price) + '</b></td>' +
-          '<td data-l="البيع المقترح" title="' + tip + '" style="' + (low2 ? "color:#B26A00;font-weight:800" : "") + '">' + (sg ? nf(sg.price) + (low2 ? ' <small>⚠️ أقل من المقترح</small>' : ' <small style="color:var(--ok)">✓</small>') : "—") + '</td>' +
+          '<td data-l="سعر البيع"><input type="number" min="1" value="' + (Number(p.price) || "") + '" style="width:84px;font-weight:800" title="سعر البيع في المتجر — عدّله مباشرة" onchange="Admin.setPrice(\'' + p.slug + '\', this.value)"></td>' +
+          '<td data-l="البيع المقترح" title="' + tip + '">' + (sg ? '<b>' + nf(sg.price) + ' دج</b>' + (low2 ? '<div style="color:#f5b04a;font-size:.8rem;margin-top:.2rem">سعرك أقل بـ ' + nf(sg.price - Number(p.price)) + ' دج → ربحك أقل من المطلوب</div><button class="small fin-adopt" onclick="Admin.setPrice(\'' + p.slug + '\', ' + sg.price + ')">اعتماد ' + nf(sg.price) + '</button>' : '<div style="color:var(--ok);font-size:.8rem;margin-top:.2rem">✓ سعرك يحقق ربحك المطلوب</div>') : '<small style="color:#999">أدخل سعر الشراء أولاً</small>') + '</td>' +
           '<td data-l="سُلّم">' + r.units + (r.retUnits ? ' <small style="color:var(--red)">(-' + r.retUnits + ')</small>' : "") + '</td>' +
           '<td data-l="الإيراد">' + nf(r.revenue) + '</td>' +
           '<td data-l="التكاليف" title="بضاعة ' + nf(r.cogs) + ' · توصيل وتأمين ' + nf(r.delivery) + ' · تغليف ' + nf(r.pack) + ' · إعلان ' + nf(r.ad || 0) + '">' + nf(costs) + '</td>' +
