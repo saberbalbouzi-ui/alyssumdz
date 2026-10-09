@@ -82,11 +82,17 @@ const AdminYd = (() => {
         '<div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th>التتبع</th><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>الوجهة</th><th>السعر</th><th>الحالة</th><th>الطلب</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
         (pages > 1 ? '<div style="text-align:center;margin-top:8px"><button class="small" data-yd="prev"' + (S.page <= 1 ? " disabled" : "") + '>›</button> <span class="hint">' + S.page + ' / ' + pages + '</span> <button class="small" data-yd="next"' + (S.page >= pages ? " disabled" : "") + '>‹</button></div>' : "") : "");
   }
-  async function load() {
-    const a = A(); if (!a || S.busy) return; S.busy = true; S.prog = "جارِ التحميل…"; draw();
+  async function load(auto) {
+    const a = A(); if (!a || S.busy) return; S.busy = true; S.err = ""; S.prog = "جارِ التحميل…"; draw();
     try { await a.ydFetchParcels(60, (pg, n, tot) => { S.prog = n + (tot ? " / " + tot : ""); const b = document.querySelector('#yd-card [data-yd=load]'); if (b) b.textContent = "⏳ " + S.prog; }); }
-    catch (e) { if (typeof toast === "function") toast("⚠️ " + (e.message || e)); }
+    catch (e) { S.err = e.message || String(e); if (!auto && typeof toast === "function") toast("⚠️ " + (e.message || e)); }
     S.busy = false; draw();
+  }
+  /* تحميل تلقائي عند فتح التبويب إن كانت النسخة المحلية أقدم من 10 دقائق (وبعدها المطابقة الدورية كل 15 دقيقة تحدّثها) */
+  function auto() {
+    const a = A(); if (!a || S.busy || (S.at && Date.now() - S.at < 10 * 60e3) || (S.err && Date.now() - (S.errAt || 0) < 5 * 60e3)) return;
+    try { const k = a.activeCompanyKey(), co = k && a.allDeliveryCompanies()[k]; if (!co || !co.listRequest) return; } catch (e) { return; }
+    load(true).then(() => { if (S.err) S.errAt = Date.now(); });
   }
   function csv() {
     const list = filtered(), q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', tm = trackMap();
@@ -107,8 +113,8 @@ const AdminYd = (() => {
   });
   function init() {
     restore(); const a = A(); if (!a || !a.tab || a.__ydWrapped) return; a.__ydWrapped = true;
-    const old = a.tab.bind(a); a.tab = function (t) { const r = old.apply(a, arguments); if (t === "shipped") draw(); return r; };
-    if (!$("tab-shipped").classList.contains("hidden")) draw();
+    const old = a.tab.bind(a); a.tab = function (t) { const r = old.apply(a, arguments); if (t === "shipped") { draw(); auto(); } return r; };
+    if (!$("tab-shipped").classList.contains("hidden")) { draw(); auto(); }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   return { set, draw, load, S };
