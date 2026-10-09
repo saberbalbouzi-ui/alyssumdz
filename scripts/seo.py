@@ -83,12 +83,17 @@ for p in live:
     text = f.read_text(encoding="utf-8")
     text = re.sub(re.escape(S) + r".*?" + re.escape(E) + r"\n?", "", text, flags=re.S)
     record = seo_products.get(p["slug"], {}) if isinstance(seo_products, dict) else {}
-    title_match = re.search(r"<title>(.*?)</title>", text, re.S)
-    fallback_title = html.unescape(title_match.group(1)).strip() if title_match else p["title"]
-    title = record.get("title") or p.get("seoTitle") or fallback_title
+    title = record.get("title") or p.get("seoTitle") or f'{p["title"]} | {SITE}'
     desc_match = re.search(r'<meta name="description" content="([^"]*)"', text)
-    fallback_desc = html.unescape(desc_match.group(1)) if desc_match else (p.get("seoDesc") or p.get("desc") or seo.get("siteDesc", ""))
-    desc = record.get("desc") or p.get("seoDesc") or fallback_desc
+    fallback_desc = html.unescape(desc_match.group(1)) if desc_match else ""
+    desc = record.get("desc") or p.get("seoDesc") or p.get("desc") or seo.get("siteDesc") or fallback_desc
+    text = re.sub(r"<title>.*?</title>", f"<title>{esc(title)}</title>", text, count=1, flags=re.S)
+    if desc:
+        description_meta = f'<meta name="description" content="{esc(desc)}">'
+        if re.search(r'<meta\s+name="description"[^>]*>', text, re.I):
+            text = re.sub(r'<meta\s+name="description"[^>]*>', description_meta, text, count=1, flags=re.I)
+        else:
+            text = text.replace("</head>", description_meta + "\n</head>", 1)
     og_image = record.get("ogImage") or p.get("cover") or (p.get("images") or [None])[0] or seo.get("ogImage")
     images = [abs_img(og_image)] if og_image else [abs_img(i) for i in (p.get("images") or [])[:5]]
     stock = p.get("stock")
