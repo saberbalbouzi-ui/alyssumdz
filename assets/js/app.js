@@ -16,10 +16,24 @@ function shipBlocked(w, commune, type){
   if(m === "home" && type !== "stop") return "التوصيل للمنزل غير متاح في بلدية " + commune + ((w.desks||[]).some(d=>d.commune===commune) ? " — اختر التوصيل إلى مكتب Stop Desk" : "");
   return "";
 }
-function shipQuote(w, commune, type, sub){
+/* أسعار شركات التوصيل الأخرى (assets/data/ship-co.json): منتج له shipCo يُشحن بشركة غير الافتراضية فيُحسب توصيله بتعريفة تلك الشركة */
+let __SHIPCO = null;
+function loadShipCo(){
+  if(__SHIPCO !== null || typeof PRODUCTS === "undefined" || !PRODUCTS.some(x=>x && x.shipCo)) return;
+  __SHIPCO = {};
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies) __SHIPCO = j.companies; }).catch(()=>{});
+}
+/* شركة التوصيل لمجموعة بنود: إن اتفقت كلها على شركة غير افتراضية فهي، وإلا (مختلطة أو افتراضية) تُستعمل الافتراضية */
+document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
+function cartShipCo(items){
+  const set = new Set((items||[]).map(it=>{ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; return (p && p.shipCo) || ""; }));
+  return set.size === 1 ? [...set][0] : "";
+}
+function shipQuote(w, commune, type, sub, co){
   if(!w) return { fee:null, free:false, blocked:false, msg:"" };
   const msg = shipBlocked(w, commune, type); if(msg) return { fee:0, free:false, blocked:true, msg };
-  const base = type === "stop" ? w.stop : w.home;
+  let base = type === "stop" ? w.stop : w.home;
+  if(co && __SHIPCO && __SHIPCO[co] && __SHIPCO[co].prices){ const t = __SHIPCO[co].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0) base = v; }
   const free = !!(type === "stop" ? w.fs : w.fh) || !!(w.fo && sub >= w.fo);
   return { fee: free ? 0 : base, free, blocked:false, msg:"" };
 }
@@ -126,7 +140,7 @@ const Cart = {
   quote(){
     const w = document.getElementById("cwilaya"), t = document.querySelector('input[name="cdtype"]:checked'), c = document.getElementById("ccommune");
     const wl = w && w.value ? WILAYAS.find(x=>x.id==w.value) : null;
-    return shipQuote(wl, c ? c.value : "", t ? t.value : "home", Cart.subtotal());
+    return shipQuote(wl, c ? c.value : "", t ? t.value : "home", Cart.subtotal(), cartShipCo(Cart.all()));
   },
   async checkout(){
     const items = Cart.all();
@@ -965,7 +979,7 @@ function initProduct(slug){
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
   function update(){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
-    const sq = state.wilaya ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price) : null;
+    const sq = state.wilaya ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo) : null;
     const fee = freeShip ? 0 : (sq ? sq.fee : null);
     feeEl.textContent = freeShip ? "مجاني 🚚" : (sq && sq.blocked ? "غير متاح ⛔" : (sq && sq.free ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية")));
     let sm = document.getElementById("ship-msg");
@@ -1005,7 +1019,7 @@ function initProduct(slug){
     if(type==="variable" && !state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(type==="grouped" && !(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); const gb = document.getElementById("group-box"); if(gb) gb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
-    const __sq = shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price); if(__sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
+    const __sq = shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo); if(__sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
     if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     // جمع قيم الحقول الإضافية المخصّصة (لوحة التحكم ⟵ نموذج الطلب) — تُرفق في رسالة واتساب وفي الطلب المُسجَّل
     const extraValues = {};

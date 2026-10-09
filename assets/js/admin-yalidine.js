@@ -102,12 +102,12 @@ const AdminYd = (() => {
   /* تحميل تلقائي عند فتح التبويب إن كانت النسخة المحلية أقدم من 10 دقائق (وبعدها المطابقة الدورية كل 15 دقيقة تحدّثها) */
   function auto() {
     const a = A(); if (!a || S.busy || (S.at && Date.now() - S.at < 10 * 60e3) || (S.err && Date.now() - (S.errAt || 0) < 5 * 60e3)) return;
-    try { const k = a.activeCompanyKey(), co = k && a.allDeliveryCompanies()[k]; if (!co || !co.listRequest) return; } catch (e) { return; }
+    try { const k = (a.listCompanyKey?a.listCompanyKey():a.activeCompanyKey()), co = k && a.allDeliveryCompanies()[k]; if (!co || !co.listRequest) return; } catch (e) { return; }
     load(true).then(() => { if (S.err) S.errAt = Date.now(); });
   }
   /* كشف الأسماء والهواتف لطرود الصفحة الحالية غير المرتبطة بطلب: طلب طرد فردي لكل واحد (حدّ ياليدين ~50 طلب/دقيقة فنفصل بينها 1.3ث) */
   async function reveal() {
-    const a = A(); if (!a || S.busy) return; const k = a.activeCompanyKey(), co = k && a.allDeliveryCompanies()[k], cfg = k ? (a.deliveryCfg[k] || {}) : {};
+    const a = A(); if (!a || S.busy) return; const k = (a.listCompanyKey?a.listCompanyKey():a.activeCompanyKey()), co = k && a.allDeliveryCompanies()[k], cfg = k ? (a.deliveryCfg[k] || {}) : {};
     if (!co || !co.trackRequest) { if (typeof toast === "function") toast("⚠️ فعّل ياليدين أولاً"); return; }
     const tm = trackMap(), list = filtered().slice((S.page - 1) * PER, S.page * PER).filter(r => !tm[r.tracking] && !(DET[r.tracking] && !masked(DET[r.tracking].name)) && !(DET[r.tracking] && DET[r.tracking].m));
     if (!list.length) { if (typeof toast === "function") toast("لا يوجد في هذه الصفحة ما يُكشف"); return; }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.14">
+<meta name="admin-version" content="1.89.16">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -228,7 +228,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 @media(max-width:700px){.ca-row,.ca-soc{grid-template-columns:1fr}}
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
-<link rel="stylesheet" href="assets/css/admin-glass.css?v=13">
+<link rel="stylesheet" href="assets/css/admin-glass.css?v=14">
 <script>try{if(localStorage.getItem("admin_theme")!=="classic")document.documentElement.classList.add("glass")}catch(e){document.documentElement.classList.add("glass")}window.AdminTheme={toggle:function(){var c=document.documentElement.classList.toggle("glass");try{localStorage.setItem("admin_theme",c?"glass":"classic")}catch(e){}}};</script>
 </head>
 <body>
@@ -418,6 +418,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card">
       <div class="search-bar">
         <input id="ship-q" placeholder="🔍 بحث بالتتبع أو الاسم أو الهاتف أو رقم الطلب..." oninput="Admin.renderShipped()">
+        <select id="ship-co" onchange="Admin.renderShipped()" title="تصفية بشركة التوصيل"><option value="">كل الشركات</option></select>
         <select id="ship-status" onchange="Admin.renderShipped()">
           <option value="">كل الحالات</option><option value="confirmee">قيد التجهيز</option><option value="expediee">في الطريق</option><option value="livree">تم التسليم</option><option value="echec">فشل / مرتجع</option>
         </select>
@@ -426,6 +427,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       </div>
       <div class="hint" id="ship-sync-st" style="margin-top:.4rem"></div>
       <div class="hint" id="ship-count" style="margin-top:.4rem"></div>
+      <div id="ship-co-stats" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"></div>
     </div>
     <div class="card"><div class="rtw" style="overflow:auto"><table id="ship-table" class="rt"></table></div></div>
   </div>
@@ -715,7 +717,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
       <div>
         <b style="color:var(--green)">شركات التوصيل</b>
-        <div class="hint">يمكن تفعيل شركة واحدة فقط في نفس الوقت في المتجر. هذا التبويب خاص بربط حساب/مفاتيح API لكل شركة لإرسال الطلبات المؤكدة إليها مباشرة من لوحة التحكم. المفاتيح تُخزَّن فقط داخل متصفحك ولا تُنشر أبداً بشكل عام لأن الموقع بلا تسجيل دخول.</div>
+        <div class="hint">يمكن تفعيل أكثر من شركة معاً: واحدة «⭐ افتراضية» تُرسَل إليها الطلبات، وتُرسَل منتجات معيّنة بشركة أخرى (من إعدادات المنتج) أو تختار الشركة عند إرسال أي طلب. هذا التبويب خاص بربط حساب/مفاتيح API لكل شركة لإرسال الطلبات المؤكدة إليها مباشرة من لوحة التحكم. المفاتيح تُخزَّن فقط داخل متصفحك ولا تُنشر أبداً بشكل عام لأن الموقع بلا تسجيل دخول.</div>
       </div>
       <button class="small" onclick="Admin.openNewCustomCompany()">+ شركة جديدة</button>
     </div>
@@ -1135,6 +1137,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <div class="section-title">🤖 كلمات مفتاحية للوكيل الذكي</div>
         <textarea id="f-keywords" rows="2" placeholder="كلمات وعبارات يسأل بها الزبائن عن هذا المنتج، مفصولة بفاصلة — مثال: تركيز الاطفال, ذاكرة, الدراسة, miel concentration"></textarea>
         <div class="hint">الوكيل يقترح هذا المنتج عندما يطابق سؤال الزبون أي من هذه الكلمات (عربي/دارجة/فرنسي). كلما كانت أدق ومتنوعة كان الاقتراح أصح.</div>
+        <div class="section-title">🚚 شركة التوصيل لهذا المنتج</div>
+        <select id="f-shipco"></select>
+        <div class="hint" id="f-shipco-h"></div>
         <div id="f-seo-box"></div>
       </div>
       <div>
@@ -1524,10 +1529,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <h3 id="delivery-modal-title">إعداد شركة التوصيل</h3>
     <div class="hint" id="delivery-modal-note"></div>
     <div id="delivery-modal-fields"></div>
-    <div class="hint" style="margin-top:-.4rem">لتفعيل هذه الشركة في المتجر استعمل الاختيار المفرد بجانبها في جدول «شركات التوصيل» — يمكن تفعيل شركة واحدة فقط في نفس الوقت</div>
-    <details style="margin:.6rem 0">
-      <summary style="cursor:pointer;font-weight:700;color:var(--green)">🏷️ جدول أسعار هذه الشركة (اختياري)</summary>
-      <div class="hint" style="margin-top:.4rem">أدخل هنا التعريفة الرسمية لهذه الشركة لكل ولاية إن رغبت باعتمادها كمصدر أسعار المتجر بدل الأسعار المفضّلة اليدوية (من خيار «مصدر أسعار التوصيل» في نفس التبويب)</div>
+    <div class="hint" style="margin-top:-.4rem">التفعيل والتعطيل من مفتاح الشركة في جدول «شركات التوصيل» — يمكن تفعيل أكثر من شركة، وإحداها «⭐ الافتراضية».</div>
+    <div id="dlv-price-box" style="margin:.6rem 0"></div>
+    <details id="dlv-manual" style="margin:.6rem 0" hidden>
+      <summary style="cursor:pointer;font-weight:700;color:var(--green)">🏷️ تعريفة هذه الشركة (تُدخل يدوياً لأنها لا تدعم الجلب التلقائي)</summary>
       <div class="search-bar"><input id="dlv-price-search" placeholder="🔍 بحث عن ولاية..." oninput="Admin.renderDeliveryPriceGrid()"></div>
       <div class="fee-grid" id="dlv-price-grid" style="max-height:320px;overflow:auto"></div>
     </details>
@@ -1572,37 +1577,37 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.14"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.14"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.14"></script>
+<script src="assets/js/ctl-help.js?v=1.89.16"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.16"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.16"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.14"></script>
-<script src="assets/js/admin-update.js?v=1.89.14"></script>
+<script src="assets/js/admin-nav.js?v=1.89.16"></script>
+<script src="assets/js/admin-update.js?v=1.89.16"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
 <script src="assets/js/admin-zones.js?v=1.70.0"></script>
 <script src="assets/js/admin-zones-io.js?v=1.81.0"></script>
-<script src="assets/js/admin-yalidine.js?v=1.76.1"></script>
+<script src="assets/js/admin-yalidine.js?v=1.89.16"></script>
 <script src="assets/js/admin-shoppages.js?v=1.77.0"></script>
 <script src="assets/js/admin-home.js?v=1.60.0"></script>
 <script src="assets/js/admin-orders-plus.js?v=1.61.0"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
 <script src="assets/js/admin-customers.js?v=1.84.0"></script>
-<script src="assets/js/admin-bulk-products.js?v=1.89.14"></script>
-<script src="assets/js/admin-reports.js?v=1.89.14"></script>
-<script src="assets/js/admin-audit.js?v=1.89.14"></script>
+<script src="assets/js/admin-bulk-products.js?v=1.89.16"></script>
+<script src="assets/js/admin-reports.js?v=1.89.16"></script>
+<script src="assets/js/admin-audit.js?v=1.89.16"></script>
 <script src="assets/js/admin-returns.js?v=1.78.0"></script>
-<script src="assets/js/admin-payments.js?v=1.89.14"></script>
-<script src="assets/js/seo-box.js?v=1.89.14"></script>
-<script src="assets/js/admin-seo.js?v=1.89.14"></script>
+<script src="assets/js/admin-payments.js?v=1.89.16"></script>
+<script src="assets/js/seo-box.js?v=1.89.16"></script>
+<script src="assets/js/admin-seo.js?v=1.89.16"></script>
 <script src="assets/js/admin-blog.js?v=1.83.0"></script>
 <script src="assets/js/admin-insights.js?v=1.83.0"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
-<script src="assets/js/admin-copyset.js?v=1.89.14"></script>
+<script src="assets/js/admin-copyset.js?v=1.89.16"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -2853,9 +2858,11 @@ const Admin = {
   },
 
   deliveryOrderCellHtml(i){
-    const k = this.activeCompanyKey(), all = this.allDeliveryCompanies();
+    const all = this.allDeliveryCompanies(), en = this.enabledCompanyKeys(), o = this.orders[i], k = o ? this.orderCompanyKey(o) : this.activeCompanyKey();
     if(!k) return '<span title="فعّل شركة توصيل من تبويب «شركات التوصيل»" style="color:#999;cursor:help">—</span> ';
-    return '<button class="small blue" type="button" style="padding:.15rem .5rem" title="إرسال إلى ' + all[k].name + '" onclick="Admin.sendOrderToDelivery(' + i + ', \'' + k + '\')">🚚</button> ';
+    const btn = '<button class="small blue" type="button" style="padding:.15rem .5rem" title="إرسال إلى ' + all[k].name + '" onclick="Admin.sendOrderToDelivery(' + i + ', \'' + k + '\')">🚚' + (en.length > 1 ? ' <small>' + all[k].name.split(/[\s(]/)[0] + '</small>' : "") + '</button> ';
+    if(en.length < 2 || (o && this.trackingOf(o))) return btn;
+    return btn + '<select class="dlv-pick" title="إرسال عبر شركة أخرى" onchange="Admin.sendVia(' + i + ', this.value); this.selectedIndex = 0"><option value="">▾</option>' + en.filter(x=>x !== k).map(x=>'<option value="' + x + '">إرسال عبر ' + all[x].name + '</option>').join("") + '</select> ';
   },
 
   /* ════════ المنتجات ════════ */
@@ -2941,7 +2948,7 @@ const Admin = {
     $f("f-abb").innerHTML = pgOpts(src && src.ab && src.ab.b).replace(/<option value="">[^<]*<\/option>/, '<option value="">— بدون اختبار —</option>'); $f("f-abpct").value = (src && src.ab && src.ab.pct) || "";
     this.renderTagBoxes();
     document.querySelectorAll("input[data-tag]").forEach(c=>{ c.checked = !!(src && (src.tags||[]).includes(c.dataset.tag)); });
-    this.fillSeoBox(src);
+    this.fillSeoBox(src); this.fillShipCo(src);
     $f("f-keywords").value = src?(src.keywords||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
     this.fillProductTypeUI(src);
@@ -3479,7 +3486,7 @@ const Admin = {
       officialPage: $f("f-official").value || undefined, route: $f("f-route").value || undefined,
       ab: $f("f-abb").value ? { b: $f("f-abb").value, pct: Math.min(99, Math.max(1, Number($f("f-abpct").value) || 50)) } : undefined,
       tags: [...document.querySelectorAll("input[data-tag]")].filter(c=>c.checked).map(c=>c.dataset.tag),
-      ...this.readSeoBox(), keywords: $f("f-keywords").value.trim(),
+      ...this.readSeoBox(), ...(($f("f-shipco")||{}).value ? { shipCo: $f("f-shipco").value } : {}), keywords: $f("f-keywords").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
     if(prevP && prevP.pageMode) out.pageMode = prevP.pageMode; // نوع الصفحة (افتراضية/مولّدة) لا يُفقد عند حفظ المنتج
@@ -3598,7 +3605,7 @@ const Admin = {
     $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
     $f("f-active").value = "1";
     $f("f-stock").value = ""; if($f("f-cost")) $f("f-cost").value = (this.fin.costs[p.slug] == null ? "" : this.fin.costs[p.slug]);
-    this.fillSeoBox(p);
+    this.fillSeoBox(p); this.fillShipCo(p);
     if($f("f-keywords")) $f("f-keywords").value = p.keywords||"";
     this.renderOffersRows(p.offers||[]);
     this.fillProductTypeUI(p);
@@ -6442,14 +6449,14 @@ const Admin = {
     const el = $f("delivery-table");
     if(!el) return;
     const all = this.allDeliveryCompanies();
-    const keys = Object.keys(all);
-    const activeKey = keys.find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
-    el.innerHTML = '<tr><th>الشركة</th><th>نشطة</th><th></th></tr>' +
+    const keys = Object.keys(all), en = this.enabledCompanyKeys(), def = this.activeCompanyKey();
+    el.innerHTML = '<tr><th>الشركة</th><th>التفعيل</th><th>الأسعار</th><th></th></tr>' +
       keys.map(k=>{
         const co = all[k];
         const cfg = this.deliveryCfg[k] || {};
         const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
         const configured = !requiredFields.length || requiredFields.every(f=>String(cfg[f.key]||"").trim());
+        const on = !!cfg.enabled, n = Object.keys(cfg.prices||{}).length;
         const badge = !configured
           ? '<span class="pill st-nouvelle">غير مُعدّة بعد</span>'
           : co.custom
@@ -6459,33 +6466,64 @@ const Admin = {
               : co.confidence === "generic"
                 ? '<span class="pill st-nouvelle">ℹ️ عام</span>'
                 : '<span class="pill st-annulee">⚠️ تجريبي</span>';
+        const star = on && def === k ? '<span class="pill st-livree" title="الشركة الافتراضية للطلبات">⭐ افتراضية</span>' : (on && en.length > 1 ? '<button class="small gray" type="button" onclick="Admin.setDefaultCompany(\'' + k + '\')">⭐ اجعلها افتراضية</button>' : "");
+        const pr = !on ? '<small style="color:#999">تُجلب تلقائياً بعد التفعيل</small>' : (co.feesRequest ? (n ? '<small style="color:#86efac">✓ ' + n + ' ولاية (تلقائي)</small>' : '<small style="color:#f5b04a">لم تُجلب بعد</small>') : (n ? '<small>' + n + ' ولاية (يدوي)</small>' : '<small style="color:#999">اختيارية</small>'));
         return '<tr>' +
-          '<td><b>' + co.name + '</b><div class="hint" style="margin:.2rem 0 0">' + badge + '</div></td>' +
-          '<td><input type="radio" name="dlv-active-radio" title="تفعيل ' + co.name + '" style="width:auto;margin:0" ' + (activeKey===k?"checked":"") + (configured?"":" disabled") +
-            ' onchange="Admin.setActiveDeliveryCompany(\'' + k + '\')"></td>' +
-          '<td style="display:flex;flex-direction:column;gap:.3rem">' +
-            '<button class="small" type="button" title="إعداد" onclick="Admin.openDeliveryConfig(\'' + k + '\')">⚙️ إعداد</button>' +
-            (activeKey===k ? '<button class="small gray" type="button" title="إيقاف التفعيل" onclick="Admin.setActiveDeliveryCompany(null)">❌ إيقاف</button>' : "") +
-          '</td>' +
+          '<td><b>' + co.name + '</b><div class="hint" style="margin:.2rem 0 0">' + badge + ' ' + star + '</div></td>' +
+          '<td><label class="dlv-sw" title="' + (on ? "تعطيل " : "تفعيل ") + co.name + '"><input type="checkbox" ' + (on ? "checked" : "") + ' onchange="Admin.setCompanyEnabled(\'' + k + '\', this.checked)"><i></i><span>' + (on ? "مفعّلة" : "معطّلة") + '</span></label></td>' +
+          '<td>' + pr + '</td>' +
+          '<td><button class="small" type="button" title="إعداد" onclick="Admin.openDeliveryConfig(\'' + k + '\')">⚙️ إعداد</button></td>' +
         '</tr>';
       }).join("") +
-      (!keys.length ? '<tr><td colspan="3" class="hint">لا توجد شركات — اضغط «+ شركة جديدة»</td></tr>' : "");
+      (!keys.length ? '<tr><td colspan="4" class="hint">لا توجد شركات — اضغط «+ شركة جديدة»</td></tr>' : "");
     this.renderDeliveryPriceSourceCard();
   },
 
-  setActiveDeliveryCompany(key){
-    Object.keys(this.deliveryCfg).forEach(k=>{ if(this.deliveryCfg[k]) this.deliveryCfg[k].enabled = false; });
-    if(key) this.deliveryCfg[key] = Object.assign({}, this.deliveryCfg[key], { enabled: true });
+  /* تفعيل/تعطيل شركة (يمكن تفعيل عدة شركات؛ واحدة افتراضية). التفعيل يتطلب مفاتيحها، وتُجلب أسعارها تلقائياً إن دعمت ذلك */
+  setCompanyEnabled(key, on, opts){
+    opts = opts || {};
+    const co = this.allDeliveryCompanies()[key]; if(!co) return;
+    const cfg = Object.assign({}, this.deliveryCfg[key] || {});
+    if(on){
+      const req = (co.fields||[]).filter(f=>f.required!==false), missing = req.filter(f=>!String(cfg[f.key]||"").trim());
+      if(missing.length){ toast("⚠️ أدخل مفاتيح " + co.name + " أولاً (" + missing.map(f=>f.label).join("، ") + ")"); this.renderDelivery(); this.openDeliveryConfig(key); return }
+    }
+    cfg.enabled = !!on; if(!on) delete cfg.isDefault;
+    this.deliveryCfg[key] = cfg;
+    const en = this.enabledCompanyKeys();
+    if(on && (opts.makeDefault || !en.some(k=>k !== key && this.deliveryCfg[k].isDefault))) this.setDefaultCompany(key, true);
+    else if(!on && en.length && !en.some(k=>this.deliveryCfg[k].isDefault)) this.deliveryCfg[en[0]].isDefault = true;
     this.saveDeliveryCfgToStorage();
-    this.renderDelivery();
-    this.renderOrders();
+    this.renderDelivery(); this.renderOrders(); this.renderDeliveryBanners();
+    toast(on ? "✅ فُعّلت " + co.name + (en.length > 1 ? "" : " وهي الافتراضية") : "⏸️ عُطّلت " + co.name);
+    if(on && co.feesRequest && !Object.keys(cfg.prices||{}).length) this.fetchCompanyPrices(key, { auto:true });
   },
+  setDefaultCompany(key, silent){
+    Object.keys(this.deliveryCfg).forEach(k=>{ const c = this.deliveryCfg[k]; if(c) c.isDefault = (k === key); });
+    this.saveDeliveryCfgToStorage();
+    if(!silent){ this.renderDelivery(); this.renderOrders(); const co = this.allDeliveryCompanies()[key]; toast("⭐ " + (co ? co.name : key) + " هي الافتراضية الآن"); }
+  },
+  /* توافق مع الاستدعاءات القديمة (إعلان «فعّل الآن»…): تفعيل الشركة وجعلها الافتراضية؛ null = تعطيل الافتراضية */
+  setActiveDeliveryCompany(key){
+    if(!key){ const k = this.activeCompanyKey(); if(k) this.setCompanyEnabled(k, false); return }
+    this.setCompanyEnabled(key, true, { makeDefault:true });
+  },
+  /* شركة الطلب: طرد مسجَّل ⟵ شركته؛ وإلا إن اتفقت منتجاته على شركة مفعّلة غير الافتراضية فهي؛ وإلا الافتراضية */
+  orderCompanyKey(o){
+    const all = this.allDeliveryCompanies(), t = this.trackingOf(o);
+    if(t && all[t.company]) return t.company;
+    const en = this.enabledCompanyKeys(); if(!en.length) return null;
+    let want = "";
+    try{ const set = new Set((this.orderLines(o)||[]).map(l=>(l.p && l.p.shipCo) || "")); if(set.size === 1) want = [...set][0]; }catch(e){}
+    return want && en.includes(want) ? want : this.activeCompanyKey();
+  },
+  sendVia(i, key){ if(!key) return; this.sendOrderToDelivery(i, key); },
 
   renderDeliveryPriceSourceCard(){
     const box = $f("delivery-price-source");
     if(!box) return;
     const all = this.allDeliveryCompanies();
-    const activeKey = Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
+    const activeKey = this.activeCompanyKey();
     const activeCo = activeKey ? all[activeKey] : null;
     const activeCfg = activeKey ? (this.deliveryCfg[activeKey]||{}) : null;
     const hasPrices = !!(activeCfg && activeCfg.prices && Object.keys(activeCfg.prices).length);
@@ -6494,10 +6532,10 @@ const Admin = {
         '<input type="radio" name="dlv-price-src" style="width:auto;margin:0" ' + (this.deliveryPriceSource!=="company"?"checked":"") + ' onchange="Admin.setDeliveryPriceSource(\'manual\')"> الأسعار المفضّلة يدوياً (تبويب «🚚 رسوم التوصيل»)' +
       '</label>' +
       '<label style="display:flex;align-items:center;gap:.5rem;font-weight:700">' +
-        '<input type="radio" name="dlv-price-src" style="width:auto;margin:0" ' + (this.deliveryPriceSource==="company"?"checked":"") + (activeCo?"":" disabled") + ' onchange="Admin.setDeliveryPriceSource(\'company\')"> أسعار الشركة النشطة' + (activeCo?(' — ' + activeCo.name):"") +
+        '<input type="radio" name="dlv-price-src" style="width:auto;margin:0" ' + (this.deliveryPriceSource==="company"?"checked":"") + (activeCo?"":" disabled") + ' onchange="Admin.setDeliveryPriceSource(\'company\')"> أسعار الشركة الافتراضية' + (activeCo?(' — ' + activeCo.name):"") +
       '</label>' +
-      (activeCo && !hasPrices ? '<div class="hint">هذه الشركة ليس لها جدول أسعار محفوظ بعد — اجلبه تلقائياً بالزر أدناه، أو أضفه يدوياً من «⚙️ إعداد»</div>' : "") +
-      (!activeCo ? '<div class="hint">فعّل شركة أولاً من الجدول أعلاه (نقطة التفعيل) لاستعمال أسعارها</div>' : "") +
+      (activeCo && !hasPrices ? '<div class="hint">هذه الشركة ليس لها جدول أسعار بعد — يُجلب تلقائياً عند التفعيل أو بالزر أدناه</div>' : "") +
+      (!activeCo ? '<div class="hint">فعّل شركة أولاً من مفتاح التفعيل في الجدول أعلاه لاستعمال أسعارها</div>' : "") +
       this.fetchPricesButtonHtml();
   },
 
@@ -6509,7 +6547,7 @@ const Admin = {
     return '<button class="small gold" type="button" style="margin-top:.6rem" onclick="Admin.fetchCompanyPrices(\'' + k + '\')">⬇️ جلب أسعار ' + all[k].name + ' من حسابي</button> ' +
       (all[k].centersRequest ? '<button class="small blue" type="button" style="margin-top:.6rem" onclick="Admin.syncDesksFromCompany(\'' + k + '\')">🏢 مزامنة مكاتب Stop Desk من ' + all[k].name + '</button>' : "");
   },
-  async fetchCompanyPrices(key){
+  async fetchCompanyPrices(key, opts){
     const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
     if(!co || !co.feesRequest){ toast("هذه الشركة لا تدعم الجلب التلقائي"); return }
     toast("⏳ جارِ جلب التعريفة من " + co.name + "...");
@@ -6524,16 +6562,35 @@ const Admin = {
       }
       const n = Object.keys(prices).length;
       if(!n) throw new Error("لم تُرجع الشركة أي تعريفة");
-      this.deliveryCfg[key] = Object.assign({}, cfg, { prices });
+      this.deliveryCfg[key] = Object.assign({}, cfg, { prices, pricesAt: Date.now() });
       this.saveDeliveryCfgToStorage();
-      toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name);
-      const active = this.activeCompanyKey() === key;
-      if(active){ this.setDeliveryPriceSource("company"); } else { this.renderDelivery(); toast("✅ جُلبت الأسعار — فعّل الشركة (نقطة التفعيل) ثم اختر «أسعار الشركة النشطة»"); }
+      toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name + " تلقائياً");
+      this.publishShipCo();
+      this.renderDelivery(); if(this.editingDeliveryKey === key) this.renderDeliveryPriceBox(key);
+      if(this.activeCompanyKey() === key && this.deliveryPriceSource === "company") this.setDeliveryPriceSource("company");
     }catch(err){
       console.error(err);
-      if(err.cors){ this.explainCors(co); return }
+      if(err.cors){ if(!(opts && opts.auto)) this.explainCors(co); else toast("⚠️ تعذّر جلب أسعار " + co.name + " تلقائياً (حجب CORS) — جرّب «جلب الأسعار» من إعدادها"); return }
       toast("❌ " + err.message);
     }
+  },
+
+  /* نشر أسعار كل الشركات المفعّلة في ملف عام يقرؤه المتجر لحساب توصيل المنتجات المرتبطة بشركة غير الافتراضية */
+  async publishShipCo(){
+    try{
+      const companies = {}, all = this.allDeliveryCompanies();
+      this.enabledCompanyKeys().forEach(k=>{ const pr = (this.deliveryCfg[k]||{}).prices; if(pr && Object.keys(pr).length) companies[k] = { name: all[k].name, prices: pr }; });
+      if(typeof PBApp === "undefined" || !PBApp.putJson) return;
+      await PBApp.putJson("assets/data/ship-co.json", { updated: new Date().toISOString(), companies }, "أسعار شركات التوصيل (لمنتجات بشركة غير الافتراضية)");
+    }catch(e){ console.warn("ship-co", e); }
+  },
+  /* خانة «شركة التوصيل لهذا المنتج» في تعديل المنتج */
+  fillShipCo(src){
+    const sel = $f("f-shipco"); if(!sel) return;
+    const all = this.allDeliveryCompanies(), en = this.enabledCompanyKeys(), def = this.activeCompanyKey(), cur = (src && src.shipCo) || "";
+    sel.innerHTML = '<option value="">الشركة الافتراضية' + (def ? " (" + all[def].name + ")" : "") + '</option>' + en.filter(k=>k !== def).map(k=>'<option value="' + k + '"' + (cur === k ? " selected" : "") + '>' + all[k].name + (Object.keys((this.deliveryCfg[k]||{}).prices||{}).length ? "" : " — بلا أسعار محفوظة") + '</option>').join("") + (cur && !en.includes(cur) ? '<option value="' + cur + '" selected>' + ((all[cur]||{}).name || cur) + ' (غير مفعّلة)</option>' : "");
+    sel.value = cur;
+    const h = $f("f-shipco-h"); if(h) h.textContent = en.length > 1 ? "المنتج يُرسَل بهذه الشركة ويُحسب توصيله من تعريفتها. السلة المختلطة (منتجات بشركات مختلفة) تُشحن بالشركة الافتراضية وبسعرها." : "فعّل أكثر من شركة من «شركات التوصيل» لتختار شركة لهذا المنتج.";
   },
 
   setDeliveryPriceSource(mode){
@@ -6541,7 +6598,7 @@ const Admin = {
     localStorage.setItem("alyssum_delivery_price_source", mode);
     if(mode==="company"){
       const all = this.allDeliveryCompanies();
-      const activeKey = Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
+      const activeKey = this.activeCompanyKey();
       const cfg = activeKey ? this.deliveryCfg[activeKey] : null;
       if(cfg && cfg.prices && Object.keys(cfg.prices).length){
         this.fees = this.fees.map(w=>{
@@ -6577,6 +6634,21 @@ const Admin = {
     }).join("");
   },
 
+  /* قسم الأسعار في نافذة الشركة: بلا جدول يدوي — تلقائي عند التفعيل؛ الإدخال اليدوي فقط لشركة مفعّلة لا تدعم الجلب */
+  renderDeliveryPriceBox(key){
+    const box = $f("dlv-price-box"), man = $f("dlv-manual"); if(!box) return;
+    const co = this.allDeliveryCompanies()[key] || {}, cfg = this.deliveryCfg[key] || {}, n = Object.keys(cfg.prices||{}).length, on = !!cfg.enabled;
+    this._dlvManual = false; if(man){ man.hidden = true; man.open = false; }
+    if(!on){ box.innerHTML = '<div class="hint">🏷️ الأسعار تُجلب <b>تلقائياً</b> من حساب الشركة عند تفعيلها — لا حاجة لإدخالها الآن.</div>'; return }
+    if(co.feesRequest){
+      const at = cfg.pricesAt ? new Date(cfg.pricesAt).toLocaleDateString("ar-DZ") : "";
+      box.innerHTML = '<div class="hint">🏷️ الأسعار تلقائية من حساب ' + co.name + ': ' + (n ? '<b style="color:#86efac">' + n + ' ولاية محفوظة</b>' + (at ? " (آخر جلب " + at + ")" : "") : '<b style="color:#f5b04a">لم تُجلب بعد</b>') + '</div><button class="small gold" type="button" onclick="Admin.fetchCompanyPrices(\'' + key + '\')">⬇️ ' + (n ? "تحديث" : "جلب") + ' الأسعار الآن</button>';
+      return;
+    }
+    box.innerHTML = '<div class="hint">🏷️ هذه الشركة لا تدعم جلب الأسعار تلقائياً' + (n ? " — محفوظ " + n + " ولاية" : "") + '. الأسعار اختيارية: تُستعمل فقط إن اخترتها مصدراً للتوصيل أو لمنتجات مرتبطة بهذه الشركة.</div>';
+    this._dlvManual = true; if(man){ man.hidden = false; } this.renderDeliveryPriceGrid();
+  },
+
   collectDeliveryPriceGrid(){
     const prices = {};
     document.querySelectorAll("#dlv-price-grid .fee").forEach(card=>{
@@ -6602,7 +6674,7 @@ const Admin = {
       '<input id="dlv-f-' + f.key + '" type="' + (f.type||"text") + '" placeholder="' + f.label + (f.required===false?" (اختياري)":"") + '" dir="ltr" value="' + (cfg[f.key]||"").toString().replace(/"/g,"&quot;") + '">'
     ).join("");
     $f("dlv-price-search").value = "";
-    this.renderDeliveryPriceGrid();
+    this.renderDeliveryPriceBox(key);
     const delBtn = $f("dlv-delete-btn");
     if(delBtn) delBtn.classList.toggle("hidden", !this.customDeliveryCompanies[key]);
     document.getElementById("delivery-modal-bg").classList.add("open");
@@ -6614,7 +6686,7 @@ const Admin = {
     if(!co) return;
     const cfg = Object.assign({}, this.deliveryCfg[key]);
     (co.fields||[]).forEach(f=>{ cfg[f.key] = ($f("dlv-f-" + f.key)||{}).value ? $f("dlv-f-" + f.key).value.trim() : ""; });
-    cfg.prices = this.collectDeliveryPriceGrid();
+    if(this._dlvManual) cfg.prices = this.collectDeliveryPriceGrid();      // يدوي فقط للشركات التي لا تُجلب أسعارها تلقائياً (لئلا تُمحى التعريفة المجلوبة)
     const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
     const missing = requiredFields.filter(f=>!cfg[f.key]);
     if(cfg.enabled && missing.length){
@@ -6626,7 +6698,8 @@ const Admin = {
     document.getElementById("delivery-modal-bg").classList.remove("open");
     /* شركة مكتملة المفاتيح ولا توجد شركة نشطة ⟵ تُفعَّل مباشرة (كان يلزم الضغط على نقطة التفعيل في الجدول فيبقى التنبيه) */
     const complete = !missing.length;
-    if(complete && !this.activeCompanyKey()){ this.setActiveDeliveryCompany(key); toast("✅ حُفظت إعدادات " + co.name + " وفُعِّلت — تُزامَن مع أجهزتك الأخرى"); return }
+    if(complete && !this.activeCompanyKey()){ this.setCompanyEnabled(key, true, { makeDefault:true }); return }
+    this.publishShipCo();
     this.renderDelivery();
     this.renderOrders();
     toast("✅ حُفظت إعدادات " + co.name + " — تُزامَن مع أجهزتك الأخرى");
@@ -7042,7 +7115,7 @@ const Admin = {
     this.setNoteTag(o, /📞[1-3]\s*/g, "");
     this.renderOrders();
     const all = this.allDeliveryCompanies();
-    const key = Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled);
+    const key = this.orderCompanyKey(o);
     if(!key){ toast("✅ تم التأكيد — لكن لم يُرسل: فعّل ياليدين من «شركات التوصيل» ثم اضغط 🚚 إرسال"); this.renderDeliveryBanners(); return }
     const ok = await this.sendOrderToDelivery(i, key);
     if(ok){ this.enqueueNotify(o, "registered"); toast("✅ أُكّد الطلب وأُرسل إلى " + all[key].name + " — يظهر في «الطلبات المسجلة»" + (this.notifyCfg && this.notifyCfg.enabled ? "، ورسالة التتبع جاهزة في «📣 إشعارات الزبائن»" : "")); }
@@ -7055,7 +7128,11 @@ const Admin = {
   shippedOrders(){ return this.orders.map((o,i)=>({o,i,t:this.trackingOf(o)})).filter(x=>x.t); },
   renderShippedBadge(){ this.setBadge("nb-shipped", 0); },
   /* تتبّع الطلبات وإرسالها تلقائياً يتطلبان تفعيل شركة التوصيل (ياليدين) وإدخال مفاتيحها */
-  activeCompanyKey(){ const all = this.allDeliveryCompanies(); return Object.keys(all).find(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled) || null; },
+  /* الشركة المفعّلة التي تدعم قراءة قائمة الطرود (ياليدين) — الافتراضية أولاً */
+  listCompanyKey(){ const all = this.allDeliveryCompanies(), en = this.enabledCompanyKeys(), d = this.activeCompanyKey(); return (d && all[d].listRequest) ? d : (en.find(k=>all[k].listRequest) || d); },
+  enabledCompanyKeys(){ const all = this.allDeliveryCompanies(); return Object.keys(all).filter(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled); },
+  /* الشركة الافتراضية: المعلَّمة isDefault بين المفعّلة، وإلا أول مفعّلة */
+  activeCompanyKey(){ const en = this.enabledCompanyKeys(); return en.find(k=>this.deliveryCfg[k].isDefault) || en[0] || null; },
   deliveryBannerHtml(){
     const k = this.activeCompanyKey(), all = this.allDeliveryCompanies();
     if(!k){                                                  // مُعدّة (مفاتيح مكتملة) لكن غير مفعّلة ⟵ زر تفعيل بنقرة
@@ -7073,7 +7150,7 @@ const Admin = {
   /* مطابقة طرود ياليدين مع الطلبات: تربط رقم التتبع بالطلب إن لم يكن مسجَّلاً (تطابق الهاتف) وتحدّث الحالات، وتعرض طرود ياليدين التي لا طلب لها في اللوحة */
   /* جلب طرود حساب ياليدين (صفحات من 100، الأحدث أولاً) — يستعمله «مطابقة ياليدين» وبطاقة «طرود ياليدين» */
   async ydFetchParcels(maxPages, onPage){
-    const all = this.allDeliveryCompanies(), key = this.activeCompanyKey(), co = key && all[key], cfg = key ? (this.deliveryCfg[key] || {}) : {};
+    const all = this.allDeliveryCompanies(), key = this.listCompanyKey(), co = key && all[key], cfg = key ? (this.deliveryCfg[key] || {}) : {};
     if(!co || !co.listRequest) throw new Error("فعّل ياليدين من «شركات التوصيل» أولاً");
     const rows = []; let more = true, plain = false, total = 0;
     for(let pg = 1; pg <= (maxPages || 20) && more; pg++){
@@ -7088,7 +7165,7 @@ const Admin = {
     return { rows, total, partial: more };
   },
   async reconcileShipping(opts){
-    opts = opts || {}; if(this._reconciling) return; const all = this.allDeliveryCompanies(), key = this.activeCompanyKey(), co = key && all[key], cfg = key ? (this.deliveryCfg[key] || {}) : {};
+    opts = opts || {}; if(this._reconciling) return; const all = this.allDeliveryCompanies(), key = this.listCompanyKey(), co = key && all[key], cfg = key ? (this.deliveryCfg[key] || {}) : {};
     if(!co || !co.listRequest){ if(!opts.bg) toast("⚠️ المطابقة متاحة لياليدين فقط — فعّلها من «شركات التوصيل»"); return; }
     this._reconciling = true; const btn = $f("ship-rec-btn"); if(btn){ btn.disabled = true; btn.textContent = "⏳ جارِ المطابقة…"; }
     try{
@@ -7149,9 +7226,14 @@ const Admin = {
     const el = $f("ship-table"); if(!el) return;
     this.renderShipSyncStatus();
     this.renderDeliveryBanners();
-    const q = ($f("ship-q").value||"").trim().toLowerCase(), st = $f("ship-status").value;
-    const all = this.shippedOrders();
+    const q = ($f("ship-q").value||"").trim().toLowerCase(), st = $f("ship-status").value, cof = ($f("ship-co")||{}).value || "";
+    const all = this.shippedOrders(), cos = this.allDeliveryCompanies();
+    /* إحصاءات حسب شركة التوصيل (كل الطلبات المسجّلة) + قائمة التصفية */
+    const by = {}; all.forEach(({o,t})=>{ const g = by[t.company] || (by[t.company] = { n:0, ok:0, bad:0, way:0, sum:0 }); g.n++; g.sum += Number(o.total)||0; if(o.status === "livree") g.ok++; else if(["echec","annulee"].includes(o.status)) g.bad++; else g.way++; });
+    const sel = $f("ship-co"); if(sel){ const keys = Object.keys(by); sel.innerHTML = '<option value="">كل الشركات' + (keys.length > 1 ? "" : "") + '</option>' + keys.map(k=>'<option value="' + k + '"' + (cof === k ? " selected" : "") + '>' + ((cos[k]||{}).name || k) + ' (' + by[k].n + ')</option>').join(""); sel.style.display = keys.length > 1 ? "" : "none"; }
+    const sb = $f("ship-co-stats"); if(sb){ const keys = Object.keys(by); sb.innerHTML = keys.length > 1 ? keys.map(k=>{ const g = by[k], d = g.ok + g.bad; return '<div class="pill" style="padding:.35rem .7rem;font-weight:700;cursor:pointer" onclick="$f(\'ship-co\').value=\'' + k + '\';Admin.renderShipped()"><b>' + ((cos[k]||{}).name || k) + '</b> · ' + g.n + ' طلب · ✅ ' + g.ok + ' · ⏳ ' + g.way + ' · ⛔ ' + g.bad + (d ? ' · نجاح ' + Math.round(g.ok / d * 100) + '%' : "") + ' · ' + Math.round(g.sum).toLocaleString("fr-DZ") + ' دج</div>'; }).join("") : ""; }
     const rows = all.filter(({o,t})=>{
+      if(cof && t.company !== cof) return false;
       if(st && o.status !== st) return false;
       return !q || (t.tracking.toLowerCase().includes(q) || String(o.name||"").toLowerCase().includes(q) || String(o.phone||"").includes(q) || String(o.id||"").toLowerCase().includes(q));
     });
@@ -7159,7 +7241,7 @@ const Admin = {
     if(!rows.length){ el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>" + (all.length ? "لا نتائج مطابقة" : "لا توجد طلبات مسجلة بعد — أكّد طلباً جديداً ليُرسل إلى شركة التوصيل تلقائياً") + "</td></tr>"; return }
     el.innerHTML = '<tr class="hd"><th>Tracking</th><th>الحالة</th><th>الاسم واللقب</th><th>البلدية</th><th>الولاية</th><th>Stop Desk</th><th>Action</th></tr>' +
       rows.map(({o,i,t})=>{ const r = this.shipRaw[o.id];
-        return '<tr><td class="t" dir="ltr"><b>' + t.tracking + '</b></td>' +
+        return '<tr><td class="t" dir="ltr"><b>' + t.tracking + '</b>' + (Object.keys(by).length > 1 ? '<br><small style="color:#9fb5a9">' + ((cos[t.company]||{}).name || t.company) + '</small>' : "") + '</td>' +
         '<td data-l="الحالة"><span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>' + (r && r.raw ? '<br><small style="color:#777">' + r.raw + '</small>' : "") + '</td>' +
         '<td data-l="الاسم">' + (o.name||"") + '</td><td data-l="البلدية">' + (o.commune||"") + '</td><td data-l="الولاية">' + (o.wilaya||"") + '</td>' +
         '<td data-l="Stop Desk">' + (o.dtype==="stop" ? (o.desk||"✔") : "") + '</td>' +

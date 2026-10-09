@@ -359,3 +359,13 @@ html.glass input[type=checkbox]:disabled,html.glass input[type=radio]:disabled{o
 .sec-title:empty{display:none}
 .sec-title{display:inline-flex;align-items:center;gap:.5rem;font-weight:900;font-size:1.05rem;color:#f5c04a;padding:.3rem .9rem;border-radius:12px;background:linear-gradient(180deg,rgba(245,176,74,.2),rgba(245,176,74,.08));border:1px solid rgba(245,176,74,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 3px 8px rgba(0,0,0,.2);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .sec-title::before{content:"";width:6px;height:6px;border-radius:50%;background:#f5c04a}
+/* v1.89.15: مفتاح تفعيل/تعطيل شركات التوصيل + قائمة اختيار الشركة عند الإرسال */
+.dlv-sw{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:800;font-size:.85rem;white-space:nowrap}
+.dlv-sw input{position:absolute;opacity:0;width:0;height:0;-webkit-appearance:none;appearance:none}
+.dlv-sw i{position:relative;width:46px;height:26px;border-radius:99px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -4px 8px rgba(0,0,0,.25);transition:background .2s,border-color .2s;flex:none}
+.dlv-sw i::after{content:"";position:absolute;top:2px;inset-inline-start:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.35);transition:inset-inline-start .2s}
+.dlv-sw input:checked + i{background:rgba(34,197,94,.5);border-color:rgba(134,239,172,.7)}
+.dlv-sw input:checked + i::after{inset-inline-start:22px}
+.dlv-sw input:focus-visible + i{outline:2px solid rgba(134,239,172,.5);outline-offset:2px}
+.dlv-sw span{color:#fff}
+select.dlv-pick{width:auto;padding:.15rem .3rem;border-radius:9px;font-size:.78rem}
