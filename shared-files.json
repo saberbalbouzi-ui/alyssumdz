@@ -34,6 +34,7 @@
     "scripts/gen-blog.py",
     "assets/js/admin-imgbatch.js",
     "assets/js/img-upscale.js",
+    "assets/js/admin-copyset.js",
     "assets/js/admin-shoppages.js",
     "assets/js/admin-reports.js",
     "assets/js/admin-audit.js",

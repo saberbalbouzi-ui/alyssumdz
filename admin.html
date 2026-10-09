@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.86.0">
+<meta name="admin-version" content="1.87.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -551,6 +551,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <div id="fin-example" style="background:#faf6ec;border-radius:12px;padding:.8rem 1rem;margin-top:.6rem;font-size:.88rem;line-height:1.9"></div>
       </details>
     </div>
+    <div id="cs-fin"></div>
     <div class="card"><div class="rtw" style="overflow:auto"><table id="fin-table" class="rt"></table></div></div>
     <div class="card"><b style="color:var(--green)">🧾 آخر حركات المخزون</b><div class="rtw" style="overflow:auto;margin-top:.5rem"><table id="fin-log" class="rt"></table></div></div>
   </div>
@@ -603,6 +604,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <button class="small gray" onclick="Admin.ensureProductPages(true)" title="ينشئ صفحة لأي منتج ليس له صفحة على الموقع">🛠️ إنشاء الصفحات الناقصة</button>
         <button class="small gold" onclick="Admin.reload()">↻ تحديث</button>
       </div>
+      <div id="cs-prod"></div>
       <div class="rtw" style="overflow:auto"><table id="products-table" class="rt"></table></div>
     </div>
   </div>
@@ -1126,6 +1128,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <select id="f-cat"></select>
         <select id="f-active"><option value="1">✅ نشط — يظهر في المتجر</option><option value="0">⛔ موقوف — مخفي</option></select>
         <input id="f-stock" type="number" min="0" placeholder="الكمية المتوفرة في المخزون (اتركه فارغاً لعدم تتبع المخزون)">
+        <input id="f-cost" type="number" min="0" placeholder="سعر الشراء (التكلفة) للقطعة — مرتبط بتبويب «المخزون والأرباح» (لا يظهر للزبائن)">
         <div class="hint">إذا تُرك فارغاً، يبقى المنتج متاحاً دائماً بدون تتبع كمية. إذا وصلت الكمية لـ 0 يظهر "نفدت الكمية" في الموقع ويُعطَّل الطلب تلقائياً.</div>
         <textarea id="f-desc" rows="3" placeholder="وصف مختصر"></textarea>
         <div class="section-title">🤖 كلمات مفتاحية للوكيل الذكي</div>
@@ -1571,13 +1574,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.86.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.86.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.86.0"></script>
+<script src="assets/js/ctl-help.js?v=1.87.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.87.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.87.0"></script>
 <script src="assets/js/img-gen.js?v=1.85.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.86.0"></script>
-<script src="assets/js/admin-update.js?v=1.86.0"></script>
+<script src="assets/js/admin-nav.js?v=1.87.0"></script>
+<script src="assets/js/admin-update.js?v=1.87.0"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.65.0"></script>
@@ -1600,6 +1603,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
+<script src="assets/js/admin-copyset.js?v=1.87.0"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -2856,9 +2860,20 @@ const Admin = {
   },
 
   /* ════════ المنتجات ════════ */
+  /* المخزون الفعلي للمنتج: البسيط = stock؛ المتغيّر = مجموع تنويعاته المتتبَّعة + المخزون العام (لتنويعات بلا رقم خاص) */
+  stockInfo(p){
+    const vs = (p.type === "variable" && Array.isArray(p.variations)) ? p.variations.filter(v=>v.active !== false) : [];
+    const tv = vs.filter(v=>v.stock != null), gen = p.stock != null;
+    if(!vs.length) return { vars:false, tracked:gen, total: gen ? (Number(p.stock)||0) : null };
+    const total = tv.reduce((a,v)=>a + (Number(v.stock)||0), 0) + (gen ? (Number(p.stock)||0) : 0);
+    return { vars:true, tracked: tv.length > 0 || gen, mixed: tv.length > 0 && tv.length < vs.length && !gen, total: (tv.length || gen) ? total : null };
+  },
+  varLabel(v){ return Object.values(v.attrs || {}).join(" / ") || v.id; },
   stockBadgeHtml(p){
-    if(p.stock===undefined || p.stock===null) return '<small style="color:#999">غير محدود</small>';
-    const n = Number(p.stock)||0;
+    const si = this.stockInfo(p);
+    if(!si.tracked) return '<small style="color:#999">غير محدود</small>';
+    const n = si.total || 0;
+    if(si.vars && si.mixed) return '<span>' + n + '</span> <small style="color:#999" title="بعض التنويعات بلا رقم مخزون (غير محدودة)">+ غير محدود</small>';
     if(n<=0) return '<span class="pill st-annulee">نفدت الكمية</span>';
     if(n<=5) return '<span class="pill" style="background:#F5E6C8;color:#7A5A10">' + n + ' متبقي ⚠️</span>';
     return '<span>' + n + '</span>';
@@ -2879,11 +2894,11 @@ const Admin = {
     );
     $f("prod-count").textContent = list.length;
     $f("products-table").innerHTML =
-      '<tr class="hd"><th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("prod") : "") + '<th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
       list.map(p=>{
         const hasDraft = this.pending.some(x=>x.type==="product" && x.slug===p.slug);
         const img = p.cover || (p.images && p.images[0]) || "";
-        return '<tr>' +
+        return '<tr>' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.cell("prod", p.slug) : "") +
         '<td class="img">' + (img ? '<img class="thumb-preview" src="' + img + '" onerror="this.style.display=\'none\'">' : '—') + '</td>' +
         '<td class="t"><b>' + p.title + '</b>' + (hasDraft?' <span class="badge-draft">مسودة</span>':"") + '<br><small style="color:#999" dir="ltr">' + p.slug + '</small></td>' +
         '<td data-l="السعر"><b>' + Number(p.price).toLocaleString("fr-DZ") + ' دج</b>' + (p.old?'<br><small style="color:#999;text-decoration:line-through">' + Number(p.old).toLocaleString("fr-DZ") + '</small>':"") + '</td>' +
@@ -2900,6 +2915,7 @@ const Admin = {
       }).join("");
     $f("f-cat").innerHTML =
       Object.entries(this.categories).map(([k,v])=>'<option value="' + k + '">' + v + '</option>').join("");
+    if((typeof AdminCopySet !== "undefined")) AdminCopySet.mount("prod");
   },
 
   autoSaleTag(){ const o = Number($f("f-old").value), pr = Number($f("f-price").value); const c = document.querySelector("input[data-tag=sale]"); if(c && o > pr && pr > 0) c.checked = true; },
@@ -2919,6 +2935,7 @@ const Admin = {
     $f("f-cat").value = src?src.cat:Object.keys(this.categories)[0];
     $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
     $f("f-stock").value = (src && src.stock!==undefined && src.stock!==null) ? src.stock : "";
+    { const c = src && this.fin && this.fin.costs ? this.fin.costs[src.slug] : null; $f("f-cost").value = c == null ? "" : c; }
     $f("f-freeship").checked = !!(src && src.freeShip);
     const pgOpts = sel => '<option value="">الصفحة الافتراضية للمنتج (/p/' + (src?src.slug:"…") + '/)</option>' + ((typeof PBAdmin !== "undefined" && PBAdmin.list) || []).map(x=>'<option value="'+x.slug+'"'+(sel===x.slug?" selected":"")+'>'+(x.title||x.slug).replace(/</g,"&lt;")+' — /lp/'+x.slug+'/'+(x.product && src && x.product===src.slug ? " ✓ مرتبطة" : "")+'</option>').join("");
     $f("f-official").innerHTML = pgOpts(src && src.officialPage); $f("f-route").innerHTML = pgOpts(src && src.route);
@@ -3326,7 +3343,7 @@ const Admin = {
     $f("f-var-section").classList.toggle("hidden", t !== "variable");
     $f("f-grp-section").classList.toggle("hidden", t !== "grouped");
     $f("f-offers-box").classList.toggle("hidden", t === "grouped");
-    $f("f-stock").style.display = t === "simple" ? "" : "none";
+    $f("f-stock").style.display = t === "grouped" ? "none" : ""; $f("f-stock").placeholder = t === "variable" ? "مخزون عام (للتنويعات التي لا رقم لها) — أو حدّد مخزون كل تنويع أدناه" : "الكمية المتوفرة في المخزون (اتركه فارغاً لعدم تتبع المخزون)";
     $f("f-price").readOnly = t !== "simple"; $f("f-old").readOnly = t !== "simple";
     $f("f-price").placeholder = t === "simple" ? "السعر (دج)" : "يُحسب تلقائياً (أقل سعر)";
     $f("f-type-hint").textContent = t === "variable" ? "السعر الأساسي = أقل سعر بين التنويعات. أضف السمات ثم ولّد التنويعات." : t === "grouped" ? "السعر المعروض = أقل سعر بين المنتجات المختارة؛ الإجمالي يتبع ما يختاره الزبون." : "";
@@ -3474,7 +3491,7 @@ const Admin = {
     if(type === "variable"){
       out.variations = this.collectVars();
       const act = out.variations.filter(v=>v.active !== false && v.price > 0);
-      out.price = act.length ? Math.min(...act.map(v=>v.price)) : 0; out.old = null; out.stock = null;
+      out.price = act.length ? Math.min(...act.map(v=>v.price)) : 0; out.old = null;
       if(!offers.length) out.offers = [{qty:1, price: out.price}];
     }
     if(type === "grouped"){
@@ -3510,7 +3527,7 @@ const Admin = {
     if(!p.slug || !p.title || !p.price){ toast("املأ الحقول الأساسية"); return }
     const oldP = this.products.find(x=>x.slug===p.slug);
     const changes = this.diffProduct(oldP, p);
-    this.previewData = { type:"product", slug:p.slug, data:p };
+    this.previewData = { type:"product", slug:p.slug, data:p, cost: $f("f-cost").value };
     const previewCover = p.cover || p.images[0] || "";
     $f("preview-content").innerHTML =
       '<div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem">' +
@@ -3536,7 +3553,7 @@ const Admin = {
       return;
     }
     if(!this.previewData) return;
-    if(this.previewData.type === "product") this.publishProduct(this.previewData.data);
+    if(this.previewData.type === "product") this.publishProduct(this.previewData.data, this.previewData.cost);
     $f("preview-modal-bg").classList.remove("open");
     this.previewData = null;
   },
@@ -3552,8 +3569,9 @@ const Admin = {
     toast("📝 حُفظت المسودة — تظهر في تبويب «بانتظار التأكيد»");
   },
 
-  async publishProduct(data){
+  async publishProduct(data, costRaw){
     const p = data || this.collectProductForm();
+    const cr = costRaw !== undefined ? costRaw : (data ? undefined : $f("f-cost").value);   // سعر الشراء يُحفظ في بيانات المدير الخاصة لا في data.js العامة
     if(!p.slug || !p.title || !p.price){ toast(p.type === "variable" ? "ولّد التنويعات وحدّد أسعارها" : p.type === "grouped" ? "اختر المنتجات المجمّعة" : "املأ الحقول الأساسية"); return }
     const _terr = this.validateProductType(p); if(_terr){ toast("⚠️ " + _terr); return }
     API.saveProduct(this.key, p); // سجل في Google Sheets (تاريخي فقط — المصدر الحقيقي للموقع هو data.js أدناه)
@@ -3561,8 +3579,9 @@ const Admin = {
     if(i>=0) this.products[i]=p; else this.products.push(p);
     this.pending = this.pending.filter(x=>!(x.type==="product" && x.slug===p.slug));
     this.savePending();
+    if(cr !== undefined){ const cv = Number(cr); if(String(cr).trim() === "" || !isFinite(cv) || cv < 0) delete this.fin.costs[p.slug]; else this.fin.costs[p.slug] = cv; Priv.set("costs", this.fin.costs); }
     this.closeModal();
-    this.renderProducts(); this.renderStats();
+    this.renderProducts(); this.renderStats(); if(this.renderFinance) try{ this.renderFinance(); }catch(e){}
     toast("⏳ جارِ نشر المنتج على الموقع الحي...");
     const ok = await this.publishDataJs();
     if(ok) toast("✅ تم نشر «" + p.title + "» على الموقع الحي — يظهر خلال دقيقة تقريباً");
@@ -3580,7 +3599,7 @@ const Admin = {
     $f("f-images").value = (p.images||[]).join(", ");
     $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
     $f("f-active").value = "1";
-    $f("f-stock").value = "";
+    $f("f-stock").value = ""; if($f("f-cost")) $f("f-cost").value = (this.fin.costs[p.slug] == null ? "" : this.fin.costs[p.slug]);
     $f("f-seo-title").value = p.seoTitle||"";
     $f("f-seo-desc").value = p.seoDesc||"";
     if($f("f-keywords")) $f("f-keywords").value = p.keywords||"";
@@ -5004,7 +5023,7 @@ const Admin = {
       { req:false, ok: !!(cfg && cfg.prices && Object.keys(cfg.prices).length > 40), t:"تعريفة الشركة محمّلة من حسابها", d: cfg && cfg.prices ? Object.keys(cfg.prices).length + " ولاية" : "لم تُجلب", fix:"شركات التوصيل ← جلب الأسعار", go:goto("delivery"), skip: !yd },
       { req:false, ok: !!localStorage.getItem("alyssum_centers_v1"), t:"مكاتب Stop Desk الرسمية للشركة", d: localStorage.getItem("alyssum_centers_v1") ? "مزامَنة" : "لم تُزامَن", fix:"شركات التوصيل ← مزامنة المكاتب", go:goto("delivery"), skip: !yd },
       { req:true, ok: active.length > 0 && !noCost.length, t:"أسعار التكلفة لكل منتج", d: noCost.length ? noCost.length + " منتج بلا تكلفة" : "كاملة", fix:"المخزون والأرباح", go:goto("finance") },
-      { req:false, ok: active.some(p=>p.stock != null), t:"أرقام المخزون (لإغلاق المنتج عند النفاد)", d: active.filter(p=>p.stock != null).length + " منتج بمخزون محدد", fix:"المخزون والأرباح", go:goto("finance") },
+      { req:false, ok: active.some(p=>this.stockInfo(p).tracked), t:"أرقام المخزون (لإغلاق المنتج عند النفاد)", d: active.filter(p=>p.stock != null).length + " منتج بمخزون محدد", fix:"المخزون والأرباح", go:goto("finance") },
       { req:false, ok: !!(this.notifyCfg && this.notifyCfg.enabled), t:"رسائل واتساب للزبائن (التتبع والحالات)", d: this.notifyCfg && this.notifyCfg.enabled ? "مفعّلة" : "معطّلة", fix:"شركات التوصيل ← الإشعارات", go:goto("delivery") },
       { req:false, ok: !!secret, t:"رابط Webhook (تحديث الحالات لحظياً)", d: secret ? "أُنشئ الرابط — تأكد من لصقه في ياليدين" : "لم يُنشأ", fix:"شركات التوصيل ← Webhook", go:goto("delivery"), skip: !yd },
       { req:true, ok: this.orders.some(o=>this.trackingOf(o)), t:"طلب تجريبي وصل شركة التوصيل برقم تتبع", d: this.orders.filter(o=>this.trackingOf(o)).length + " طلب مسجّل", fix:"الطلبات ← تأكيد طلب", go:goto("orders") },
@@ -5129,16 +5148,24 @@ const Admin = {
     this._stockBusy = false; if(!ok) this._stockDirty = true; else this.renderFinance();
   },
   async publishStockNow(){ this._stockDirty = true; await this.flushStockPublish(); toast("✅ نُشر المخزون على الموقع"); },
+  setVarStock(slug, vid, val){
+    const p = this.products.find(x=>x.slug === slug), v = p && (p.variations||[]).find(x=>x.id === vid); if(!v) return;
+    const before = v.stock == null ? null : Number(v.stock);
+    v.stock = String(val).trim() === "" ? null : Math.max(0, Math.floor(Number(val)) || 0);
+    this.stockLog(p, v.stock == null ? 0 : (v.stock - (before || 0)), v.stock, "يدوي", "تعديل يدوي: " + this.varLabel(v) + (v.stock == null ? " (غير محدود)" : ""));
+    this.queueStockPublish(); this.renderFinance(); this.renderProducts();
+  },
   setStock(slug, val){
     const p = this.products.find(x=>x.slug === slug); if(!p) return;
     const before = p.stock == null ? null : Number(p.stock);
     p.stock = String(val).trim() === "" ? null : Math.max(0, Math.floor(Number(val)) || 0);
     this.stockLog(p, p.stock == null ? 0 : (p.stock - (before || 0)), p.stock, "يدوي", "تعديل يدوي" + (p.stock == null ? " (غير محدود)" : ""));
-    this.queueStockPublish(); this.renderFinance();
+    this.queueStockPublish(); this.renderFinance(); this.renderProducts();
   },
   setCost(slug, val){
     const v = Number(val); if(String(val).trim() === "" || !isFinite(v) || v < 0) delete this.fin.costs[slug]; else this.fin.costs[slug] = v;
     Priv.set("costs", this.fin.costs); this.renderFinance();
+    if($f("f-cost") && this.editingSlug === slug) $f("f-cost").value = this.fin.costs[slug] == null ? "" : this.fin.costs[slug];
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
@@ -5365,15 +5392,16 @@ const Admin = {
     const rows = active.map(p=>{ const r = per[p.slug] || { units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 }; return Object.assign({ p }, r); })
       .sort((a,b)=>((b.units + b.retUnits + b.expUnits) > 0) - ((a.units + a.retUnits + a.expUnits) > 0) || b.profit - a.profit);
     const low = Number(S.low) || 0;
-    $f("fin-table").innerHTML = '<tr class="hd"><th>المنتج</th><th title="الكمية المتوفرة — عدّلها مباشرة">المخزون</th><th title="كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً">تغطية</th><th title="ثمن شراء القطعة الواحدة — أدخله لكل منتج">سعر الشراء</th><th title="سعر البيع الحالي في المتجر">سعر البيع</th><th title="سعر يحقق الفائدة التي حددتها بعد كل التكاليف (شراء + تغليف + إعلان + توصيل + احتياطي إرجاع + تأمين)">البيع المقترح</th><th title="عدد القطع المُسلَّمة (وبين قوسين المُرجَعة)">سُلّم</th><th title="ما دفعه الزبائن عن المنتجات بعد الخصم">الإيراد</th><th title="البضاعة + التوصيل والتأمين + التغليف + الإعلان (مرّر المؤشر لرؤية التفصيل)">التكاليف</th><th title="خسارة الطلبات المرتجعة">خسارة الإرجاع</th><th title="الإيراد − التكاليف − خسارة الإرجاع">الربح الصافي</th><th title="الربح الحقيقي للقطعة الواحدة بعد احتساب المرتجعات. النقطة الخضراء = بأرقام شركة التوصيل الفعلية">ربح القطعة</th></tr>' +
-      rows.map(r=>{ const p = r.p, st = p.stock, avg = (sold14[p.slug] || 0) / 14, cover = st == null ? "∞" : (avg > 0 ? Math.floor(st / avg) + " يوم" : "—");
+    $f("fin-table").innerHTML = '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("fin") : "") + '<th>المنتج</th><th title="الكمية المتوفرة — عدّلها مباشرة">المخزون</th><th title="كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً">تغطية</th><th title="ثمن شراء القطعة الواحدة — أدخله لكل منتج">سعر الشراء</th><th title="سعر البيع الحالي في المتجر">سعر البيع</th><th title="سعر يحقق الفائدة التي حددتها بعد كل التكاليف (شراء + تغليف + إعلان + توصيل + احتياطي إرجاع + تأمين)">البيع المقترح</th><th title="عدد القطع المُسلَّمة (وبين قوسين المُرجَعة)">سُلّم</th><th title="ما دفعه الزبائن عن المنتجات بعد الخصم">الإيراد</th><th title="البضاعة + التوصيل والتأمين + التغليف + الإعلان (مرّر المؤشر لرؤية التفصيل)">التكاليف</th><th title="خسارة الطلبات المرتجعة">خسارة الإرجاع</th><th title="الإيراد − التكاليف − خسارة الإرجاع">الربح الصافي</th><th title="الربح الحقيقي للقطعة الواحدة بعد احتساب المرتجعات. النقطة الخضراء = بأرقام شركة التوصيل الفعلية">ربح القطعة</th></tr>' +
+      rows.map(r=>{ const p = r.p, si = this.stockInfo(p), st = si.total, avg = (sold14[p.slug] || 0) / 14, cover = st == null ? "∞" : (avg > 0 ? Math.floor(st / avg) + " يوم" : "—");
         const stCls = st != null && st <= 0 ? "color:var(--red);font-weight:800" : (st != null && st <= low ? "color:#B26A00;font-weight:800" : "");
         const cost = this.fin.costs[p.slug], sg = this.suggestPrice(p, r, K), costs = r.cogs + r.delivery + r.pack + (r.ad || 0);
         const unit = r.units > 0 ? Math.round(r.profit / r.units) : null, dot = r.units > 0 ? ('<span title="' + (r.estN ? "بعض الطلبات بتقدير من إعداداتك" : "بأرقام شركة التوصيل الفعلية") + '" style="color:' + (r.estN ? "#B26A00" : "var(--ok)") + '">●</span> ') : "";
         const low2 = sg && Number(p.price) < sg.price;
         const tip = sg ? ("شراء " + nf(sg.parts.buy) + " + تغليف " + nf(sg.parts.pack) + " + إعلان " + nf(sg.parts.ad) + " + توصيل تتحمله " + nf(sg.parts.burden) + " + احتياطي إرجاع " + nf(sg.parts.risk) + " + تأمين " + nf(sg.parts.ins) + " + فائدتك " + nf(sg.parts.profit)) : "أدخل سعر الشراء أولاً";
-        return '<tr><td class="t"><b>' + p.title + '</b>' + (pend[p.slug] ? '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>' : "") + '</td>' +
-          '<td data-l="المخزون"><input type="number" min="0" value="' + (st == null ? "" : st) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)"></td>' +
+        const vsRows = (p.type === "variable" && si.vars) ? (p.variations||[]).filter(v=>v.active !== false).map(v=>'<div style="display:flex;gap:.3rem;align-items:center;margin-top:.2rem"><small style="min-width:70px">' + this.varLabel(v) + '</small><input type="number" min="0" value="' + (v.stock == null ? "" : v.stock) + '" placeholder="∞" style="width:64px" onchange="Admin.setVarStock(\'' + p.slug + '\', \'' + v.id + '\', this.value)"></div>').join("") : "";
+        return '<tr>' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.cell("fin", p.slug) : "") + '<td class="t"><b>' + p.title + '</b>' + (pend[p.slug] ? '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>' : "") + '</td>' +
+          '<td data-l="المخزون">' + (si.vars ? '<small style="color:#999">المجموع: <b style="color:inherit">' + (st == null ? "∞" : st) + '</b> · عام:</small> ' : "") + '<input type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)">' + vsRows + '</td>' +
           '<td data-l="تغطية" style="' + (cover !== "∞" && cover !== "—" && parseInt(cover) < 7 ? "color:var(--red);font-weight:800" : "") + '">' + cover + '</td>' +
           '<td data-l="سعر الشراء"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
           '<td data-l="سعر البيع"><b>' + nf(p.price) + '</b></td>' +
@@ -5387,7 +5415,8 @@ const Admin = {
     $f("fin-log").innerHTML = this.fin.log.length ? '<tr class="hd"><th>الوقت</th><th>المنتج</th><th>التغيّر</th><th>المخزون بعده</th><th>السبب</th></tr>' +
       this.fin.log.slice(0, 15).map(l=>'<tr><td>' + new Date(l.ts).toLocaleString("ar-DZ") + '</td><td>' + l.title + '</td><td dir="ltr" style="color:' + (l.delta < 0 ? "var(--red)" : "var(--ok)") + '">' + (l.delta > 0 ? "+" : "") + l.delta + '</td><td>' + (l.after == null ? "∞" : l.after) + '</td><td>' + l.why + (l.ref ? ' <small dir="ltr" style="color:#999">' + l.ref + '</small>' : "") + '</td></tr>').join("")
       : "<tr><td style='text-align:center;padding:1.2rem;color:#999'>لا حركات بعد — تظهر هنا عند تأكيد أو إلغاء الطلبات</td></tr>";
-    this.setBadge("nb-finance", active.filter(p=>p.active !== false && p.stock != null && p.stock <= low).length);
+    if((typeof AdminCopySet !== "undefined")) AdminCopySet.mount("fin");
+    this.setBadge("nb-finance", active.filter(p=>{ const t = this.stockInfo(p).total; return p.active !== false && t != null && t <= low; }).length);
   },
 
   /* ════════ إعادة الشراء عبر واتساب (assets/data/repeat.json + كود تخفيض يُنشأ في coupons.json) ════════ */
