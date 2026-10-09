@@ -68,6 +68,28 @@ for page in pages if isinstance(pages, list) else []:
     slug = str(page.get("slug") or "").strip("/") if isinstance(page, dict) else ""
     if slug and page.get("live", True) and not excluded(slug, f"/lp/{slug}/"):
         urls.append(f"{BASE}/lp/{slug}/")
+# Published blog articles and policy pages are included once their generated files exist.
+blog_path = ROOT / "assets/data/blog.json"
+published_posts = []
+if blog_path.exists():
+    try:
+        blog_data = json.loads(blog_path.read_text(encoding="utf-8"))
+        raw_posts = blog_data.get("posts", []) if isinstance(blog_data, dict) else []
+        published_posts = [p for p in raw_posts if isinstance(p, dict) and p.get("published") is True
+                           and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", str(p.get("slug") or ""))]
+    except (OSError, json.JSONDecodeError):
+        published_posts = []
+if published_posts and (ROOT / "blog" / "index.html").exists() and not excluded("", "/blog/"):
+    urls.append(f"{BASE}/blog/")
+for post in published_posts:
+    slug = str(post["slug"])
+    path = f"/blog/{slug}/"
+    if (ROOT / "blog" / slug / "index.html").exists() and not excluded(slug, path):
+        urls.append(f"{BASE}{path}")
+for slug in ("privacy", "returns", "shipping", "terms"):
+    path = f"/policy/{slug}/"
+    if (ROOT / "policy" / slug / "index.html").exists() and not excluded(slug, path):
+        urls.append(f"{BASE}{path}")
 urls = list(dict.fromkeys(urls))
 (ROOT / "sitemap.xml").write_text(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
