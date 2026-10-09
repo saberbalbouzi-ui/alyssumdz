@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.23">
+<meta name="admin-version" content="1.89.24">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -347,7 +347,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('customers',this)"><span class="nav-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.5a3 3 0 010 5.8M17 14c2.4.7 4 2.8 4 6"/></svg></span><span class="nav-txt"><b>العملاء</b><small>شرائح العملاء وسجلّ طلباتهم وملاحظاتهم</small></span></button>
-      <button class="nav-btn" data-grp="look" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>المظهر</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('admtheme',this)"><span class="nav-ic">🖥️</span><span class="nav-txt"><b>مظهر لوحة التحكم</b><small>داكن أو فاتح، اللون الأساسي وحجم الخط</small></span></button>
+      <button class="nav-btn" data-grp="look" onclick="Admin.tab('theme',this)"><span class="nav-ic">🎨</span><span class="nav-txt"><b>مظهر الموقع</b><small>الخط، الألوان، الشعار، وSEO الصفحة الرئيسية للزبائن</small></span></button>
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromeh',this)"><span class="nav-ic">🔝</span><span class="nav-txt"><b>الهيدر</b><small>الشريط العلوي، القائمة، أيقونات التواصل، المشاركة، الأزرار</small></span></button>
       <button class="nav-btn" data-grp="look" onclick="Admin.tab('chromef',this)"><span class="nav-ic">🔚</span><span class="nav-txt"><b>الفوتر</b><small>النبذة، الروابط، التواصل، أيقونات التواصل، حقوق النشر</small></span></button>
       <button class="nav-btn" data-grp="look" data-ic="tpl" onclick="AdminNav.tpl(this)"><span class="nav-ic">🧩</span><span class="nav-txt"><b>قوالب</b><small>تحميل قالب جاهز، ناسخ القوالب، وإعدادات القوالب</small></span></button>
@@ -822,11 +823,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     </div>
   </div>
 
-  <div id="tab-theme" class="hidden">
+  <div id="tab-admtheme" class="hidden">
     <div id="adm-theme"></div>
+  </div>
+  <div id="tab-theme" class="hidden">
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
       <div>
-        <b style="color:var(--green)">مظهر الموقع — الخطوط والألوان والشعار</b>
+        <b style="color:var(--green)">مظهر الموقع (ما يراه زبائنك) — الخطوط والألوان والشعار</b>
         <div class="hint">التغييرات تُطبَّق فوراً على كل صفحات الموقع (الرئيسية وكل صفحات المنتجات) عند النشر</div>
       </div>
       <div style="display:flex;gap:.6rem">
@@ -1592,14 +1595,14 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.23"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.23"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.23"></script>
+<script src="assets/js/ctl-help.js?v=1.89.24"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.24"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.24"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.23"></script>
+<script src="assets/js/admin-nav.js?v=1.89.24"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
-<script src="assets/js/admin-update.js?v=1.89.23"></script>
+<script src="assets/js/admin-update.js?v=1.89.24"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -2558,7 +2561,7 @@ const Admin = {
   tab(t, btn){
     document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
     btn.classList.add("on");
-    ["home","orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","imgtools","imggen","appcfg","tpl","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
+    ["home","orders","shipped","finance","setup","repeat","analytics","products","builder","pbgen","imgtools","imggen","appcfg","tpl","genpage","categories","fees","delivery","coupons","attributes","blacklist","loyalty","theme","admtheme","chromeh","chromef","checkout","pixels","agent","pending"].forEach(x=>{
       const el = $f("tab-"+x);
       if(el) el.classList.toggle("hidden", x!==t);
     });
@@ -15614,7 +15617,7 @@ window.AIC = (function(){ const P = {
     products:'<path d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.6 5-7"/>', builder:'<path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>', pbgen:'<path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8L19 13M17.8 6.2L19 5M12.2 6.2L11 5M3 21l9-9"/><path d="M12.2 11.8L11 13"/>',
     attributes:'<path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L2 12V2h10l8.6 8.6a2 2 0 010 2.8z"/><circle cx="7" cy="7" r="1.4"/>', categories:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', fees:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
     delivery:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>', coupons:'<path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/><path d="M13 5v2M13 17v2M13 11v2"/>', blacklist:'<circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/>',
-    loyalty:'<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>', theme:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/>',
+    loyalty:'<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>', theme:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/>', admtheme:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
     checkout:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2l-3 2-2-2-3 2-3-2-2 2z"/><path d="M8 8h8M8 12h8"/>', pixels:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>', agent:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01M9 18h6"/><circle cx="12" cy="3" r="1"/>', pending:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
     tpl:'<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', imgtools:'<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21"/>', voice:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4M8 22h8"/>', ask:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M9.5 8.5a2.5 2.5 0 114 2c-.8.5-1.5 1-1.5 2M12 15.5h.01"/>', cloner:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'
   };

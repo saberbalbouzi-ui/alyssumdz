@@ -23,7 +23,7 @@
   T.render = function(){
     var box = document.getElementById("adm-theme"); if(!box) return;
     var cur = this.mode(), cfg = this.cfg();
-    box.innerHTML = '<div class="card"><b style="font-size:1.05rem">مظهر لوحة التحكم</b><div class="hint" style="margin-top:.2rem">اختر المظهر الذي يريحك ولوّنه كما تحب — يمكنك أيضاً التبديل بينهما في أي وقت من أعلى اللوحة. لا يؤثر هذا على مظهر موقعك للزبائن.</div><div class="atm-grid">' +
+    box.innerHTML = '<div class="card"><b style="font-size:1.05rem">مظهر لوحة التحكم</b><div class="hint" style="margin-top:.2rem">اختر المظهر الذي يريحك ولوّنه كما تحب — يمكنك أيضاً التبديل بينهما في أي وقت من أعلى اللوحة. هذه الصفحة تخص لوحة التحكم التي تراها أنت فقط؛ أما مظهر موقعك للزبائن فمن «مظهر الموقع».</div><div class="atm-grid">' +
       ["dark","white"].map(function(m){
         var c = cfg[m], on = m === cur;
         return '<div class="atm-card' + (on ? " on" : "") + '"><div class="atm-h"><b>المظهر ' + NAMES[m] + '</b>' + (on ? '<span class="atm-badge">مفعّل</span>' : '') + '</div>' +
