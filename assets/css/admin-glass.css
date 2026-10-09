@@ -346,3 +346,12 @@ html.glass .spv-bar button.edit{color:#fff!important;background:linear-gradient(
 html.glass .spv-bar button.edit:hover{transform:translateY(-2px);filter:brightness(1.15)}
 html.glass .fin-adopt{margin-top:.3rem;color:#fff!important;background:linear-gradient(180deg,rgba(245,158,11,.45),rgba(180,100,10,.35))!important;border:1px solid rgba(251,191,36,.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 5px rgba(0,0,0,.18),0 3px 8px rgba(0,0,0,.25)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:transform .2s,filter .2s}
 html.glass .fin-adopt:hover{transform:translateY(-2px);filter:brightness(1.15)}
+/* v1.89.8: خانات الاختيار والراديو بخط رفيع (outline) عصرية بدل المربع الرمادي المصمت */
+html.glass input[type=checkbox],html.glass input[type=radio]{-webkit-appearance:none;appearance:none;width:18px!important;min-width:18px;height:18px!important;margin:0;flex:none;cursor:pointer;vertical-align:middle;background:transparent!important;border:1.5px solid rgba(255,255,255,.55)!important;border-radius:6px;padding:0!important;position:relative;transition:border-color .15s,background .15s,transform .15s,box-shadow .15s;box-shadow:none}
+html.glass input[type=radio]{border-radius:50%}
+html.glass input[type=checkbox]:hover,html.glass input[type=radio]:hover{border-color:var(--g-mint);transform:translateY(-1px)}
+html.glass input[type=checkbox]:checked,html.glass input[type=radio]:checked{border-color:var(--g-mint)!important;background:rgba(134,240,106,.12)!important}
+html.glass input[type=checkbox]:checked::after{content:"";position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386f06a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center/80% no-repeat}
+html.glass input[type=radio]:checked::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--g-mint)}
+html.glass input[type=checkbox]:focus-visible,html.glass input[type=radio]:focus-visible{outline:2px solid rgba(134,240,106,.45);outline-offset:2px}
+html.glass input[type=checkbox]:disabled,html.glass input[type=radio]:disabled{opacity:.4;cursor:not-allowed}
