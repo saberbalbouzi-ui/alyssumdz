@@ -194,7 +194,8 @@ const ImgGen = (() => {
   }
   function settingsHtml() {
     const fal = cfg.provider() === "fal";
-    return `<div class="ap-sec"><b>مزوّد التوليد</b><div class="hint">اختر مسار التوليد: «Alyssum API — المسار أ» أو «المسار ب» (نماذج تعديل بصورة مرجعية). لكل مسار مفتاحه الخاص المحفوظ في هذا المتصفح فقط.</div><div class="tl-s"><div class="tl-r"><span>المزوّد</span><select onchange="ImgGen.set('provider',this.value);ImgGen.tab('set')"><option value="gemini"${fal ? "" : " selected"}>Alyssum API — المسار أ</option><option value="fal"${fal ? " selected" : ""}>Alyssum API — المسار ب</option></select></div>
+    return `<div class="ap-sec"><b>تفعيل Alyssum API</b><div class="tl-s"><label class="tl-r" style="cursor:pointer"><span>تفعيل توليد الصور الذكي</span><input type="checkbox" ${LS.get("alyssum_ai_img", "1") === "0" ? "" : "checked"} onchange="try{localStorage.setItem('alyssum_ai_img',this.checked?'1':'0')}catch(e){}"></label><div class="hint">عند التعطيل يتوقف توليد الصور من هنا ومن تبويب السوشيال. تفعيل/تعطيل توليد النص الذكي من «السوشيال ← الاتصال والإعدادات».</div></div></div>
+<div class="ap-sec"><b>مزوّد التوليد</b><div class="hint">اختر مسار التوليد: «Alyssum API — المسار أ» أو «المسار ب» (نماذج تعديل بصورة مرجعية). لكل مسار مفتاحه الخاص المحفوظ في هذا المتصفح فقط.</div><div class="tl-s"><div class="tl-r"><span>المزوّد</span><select onchange="ImgGen.set('provider',this.value);ImgGen.tab('set')"><option value="gemini"${fal ? "" : " selected"}>Alyssum API — المسار أ</option><option value="fal"${fal ? " selected" : ""}>Alyssum API — المسار ب</option></select></div>
 ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span><input id="ig-fkey" type="password" autocomplete="off" placeholder="key_id:key_secret" value="${esc(LS.get(FALKEY, ""))}" onchange="ImgGen.saveFalKey()"></div><div class="tl-r"><span>معرّف النموذج</span><input dir="ltr" value="${esc(cfg.falModel())}" placeholder="fal-ai/nano-banana/edit" onchange="ImgGen.set('falmodel',this.value.trim())"></div><div class="tl-r"><span>تكلفة الصورة التقريبية (دولار)</span><input type="number" step="0.005" min="0" value="${cfg.falPrice()}" onchange="ImgGen.set('falprice',this.value)"></div><div class="hint">احصل على المفتاح من لوحة مزوّد هذا المسار. النماذج المقترحة: <code>fal-ai/nano-banana/edit</code> (افتراضي) أو <code>fal-ai/flux-pro/kontext</code>. السعر يدوي لأن التسعير يختلف حسب النموذج؛ راجع الرصيد الفعلي في لوحة المزوّد. إن حجب المتصفح الطلب فأخبرنا لنضيف وسيطاً.</div>` : ""}</div></div>
 <div class="ap-sec"${fal ? ' style="display:none"' : ""}><b>مفتاح Alyssum API (المسار أ)</b><div class="hint">يُحفظ في هذا المتصفح فقط ولا يُكتب في المستودع. احصل عليه من لوحة مزوّد الخدمة (مشروع جديد بلا قيود)، ونماذج الصور تتطلب تفعيل الفوترة بحدّ إنفاق صغير. المفتاح نفسه يعمل لتوليد النصوص في السوشيال.</div>
 <div class="tl-s"><input id="ig-key" type="password" autocomplete="off" placeholder="AIza…" value="${esc(LS.get(KEY, ""))}" onchange="ImgGen.saveKey()"><div class="action-bar"><button type="button" class="small" onclick="ImgGen.test()">اختبار المفتاح</button></div><div class="hint" id="ig-tmsg"></div></div></div>
@@ -233,6 +234,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
   async function generate() {
     if (S.busy) return; const msg = $("ig-msg"), fal = cfg.provider() === "fal", key = fal ? LS.get(FALKEY, "") : (getKey() || LS.get(KEY, ""));
     const fs = formSize(), sz = fs, W = fs.W, H = fs.H;
+    if (LS.get("alyssum_ai_img", "1") === "0") { if (msg) msg.textContent = "⛔ توليد الصور الذكي معطّل — فعّله من الإعدادات."; return; }
     if (!key) { S.tab = "set"; render(); toast("أدخل مفتاح Alyssum API أولاً"); return; }
     if (!S.srcBlob) { msg.textContent = "❌ اختر صورة المنتج أولاً (رفع أو من منتجاتك)"; return; }
     const name = $("ig-name").value.trim(), desc = $("ig-desc").value.trim(); if (!name && !desc) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه"; return; }
@@ -260,6 +262,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
   /* توليد صورة واحدة دون واجهة المولّد (يستعمله تبويب السوشيال): o = {blob مرجع, name, desc, goal, W, H, label} ← {blob, model, cost} أو null إن ألغى المستخدم */
   async function quick(o) {
     const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
+    if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
     if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
     if (!o || !o.blob) throw new Error("اختر صورة المنتج المرجعية أولاً");
     const est = fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
