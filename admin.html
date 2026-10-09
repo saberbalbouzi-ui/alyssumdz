@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.73.0">
+<meta name="admin-version" content="1.74.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1563,13 +1563,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.73.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.73.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.73.0"></script>
+<script src="assets/js/ctl-help.js?v=1.74.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.74.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.74.0"></script>
 <script src="assets/js/img-gen.js?v=1.51.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.73.0"></script>
-<script src="assets/js/admin-update.js?v=1.73.0"></script>
+<script src="assets/js/admin-nav.js?v=1.74.0"></script>
+<script src="assets/js/admin-update.js?v=1.74.0"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1"></script>
 <script src="assets/js/admin-social.js?v=1.65.0"></script>
@@ -6120,7 +6120,7 @@ const Admin = {
       trackRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       /* قائمة طرود الحساب (الأحدث أولاً) لمطابقتها مع طلبات اللوحة: GET /v1/parcels/ (صفحات) */
       listRequest(cfg, page, plain){ return { url: this.base + "/v1/parcels/?page_size=100&page=" + page + (plain ? "" : "&order_by=date_creation&order=desc"), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
-      parseList(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r && r.tracking).map(r=>({ tracking: String(r.tracking), status: String(r.last_status || ""), name: [r.firstname, r.familyname].filter(Boolean).join(" "), phone: String(r.contact_phone || r.contact_phone_2 || ""), wilaya: String(r.to_wilaya_name || ""), commune: String(r.to_commune_name || ""), date: String(r.date_creation || ""), orderId: String(r.order_id || "") })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
+      parseList(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r && r.tracking).map(r=>({ tracking: String(r.tracking), status: String(r.last_status || ""), name: [r.firstname, r.familyname].filter(Boolean).join(" "), phone: String(r.contact_phone || r.contact_phone_2 || ""), wilaya: String(r.to_wilaya_name || ""), commune: String(r.to_commune_name || ""), date: String(r.date_creation || ""), orderId: String(r.order_id || ""), price: Number(r.price != null ? r.price : r.product_value) || 0 })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* جدول التعريفة من حسابك: GET /v1/deliveryfees/ (صفحات) ⟵ [{wilaya_id, home_fee, desk_fee}] */
       feesRequest(cfg, page){ return { url: this.base + "/v1/deliveryfees/?page_size=100&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       parseFees(json){
@@ -7005,23 +7005,35 @@ const Admin = {
     this._reconciling = true; const btn = $f("ship-rec-btn"); if(btn){ btn.disabled = true; btn.textContent = "⏳ جارِ المطابقة…"; }
     try{
       const parcels = []; let more = true, plain = false;
-      for(let pg = 1; pg <= 5 && more; pg++){
+      for(let pg = 1; pg <= 10 && more; pg++){
         let r = await this.courierFetch(co.listRequest(cfg, pg, plain));
         if(!r.ok && pg === 1 && !plain){ plain = true; r = await this.courierFetch(co.listRequest(cfg, pg, true)); }
         if(!r.ok) throw new Error("رد الشركة " + r.status);
         const d = co.parseList(JSON.parse(r.text)); parcels.push(...d.rows); more = d.more;
         await new Promise(res=>setTimeout(res, 250));
       }
-      const norm = x=>this.normalizePhone(x), byTrk = new Map(), byPhone = new Map();
-      this.orders.forEach((o,i)=>{ const t = this.trackingOf(o); if(t) byTrk.set(t.tracking, i); else { const k = norm(o.phone); if(k){ (byPhone.get(k) || byPhone.set(k, []).get(k)).push(i); } } });
-      let attached = 0, changed = 0; const unmatched = [], changes = [];
+      /* ياليدين تُرجع الاسم والهاتف في القائمة مُقنَّعَين (أول/آخر حرف ورقم فقط والباقي *) فالمطابقة نمطية:
+         طول الكلمات والأحرف الظاهرة + الولاية والبلدية + السعر + قرب التاريخ، ولا يُربط إلا تطابق وحيد واضح */
+      const mm = (mask, plain)=>{ mask = String(mask || ""); plain = String(plain || ""); if(mask.length !== plain.length) return false; for(let k = 0; k < mask.length; k++){ if(mask[k] !== "*" && mask[k].toLowerCase() !== plain[k].toLowerCase()) return false; } return true; };
+      const nz = x=>String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9؀-ۿ]/g, "");
+      const words = x=>String(x || "").split(/\s+/).filter(Boolean);
+      const nameOk = (mask, name)=>{ const mw = words(mask), ow = words(name); if(!mw.length || !ow.length) return 0; if(!/\*/.test(mask)) return (nz(mask) === nz(name) || nz(name).includes(nz(mask))) ? 10 : 0; if(mw.every(m=>ow.some(w=>mm(m, w)))) return 10;
+        return mw.every(m=>ow.some(w=>w[0] && m[0].toLowerCase() === w[0].toLowerCase() && (m.slice(-1) === "*" || m.slice(-1).toLowerCase() === w.slice(-1).toLowerCase()))) ? 7 : 0; };
+      const tms = d=>{ const t = new Date(String(d || "").replace(" ", "T")).getTime(); return isFinite(t) ? t : 0; };
+      const listed = new Set(parcels.map(p=>p.tracking)), oldest = Math.min(...parcels.map(p=>tms(p.date)).filter(Boolean), Infinity);
+      const byTrk = new Map(); const free = [];
+      this.orders.forEach((o, i)=>{ const t = this.trackingOf(o); if(t){ byTrk.set(t.tracking, i); if(!listed.has(t.tracking) && tms(o.date) >= oldest) free.push(i); } else free.push(i); });
+      let attached = 0, changed = 0; const unmatched = [], changes = [], claimed = new Set();
+      const score = (p, i)=>{ const o = this.orders[i], co2 = this.coOrder(o), ph = this.normalizePhone(o.phone); if(!ph || !mm(String(p.phone).replace(/\s/g, ""), ph)) return -1; const nk = nameOk(p.name, o.name); if(!nk) return -1;
+        const wl = nz(p.wilaya), ow = nz(co2.wilaya); if(wl && ow && wl !== ow) return -1; let sc = nk; const pc = nz(p.commune), oc = nz(o.commune); if(pc && oc){ if(pc === oc) sc += 3; else sc -= 2; }
+        if(p.price && Number(o.total) === p.price) sc += 2; const dt = tms(p.date) - tms(o.date); if(tms(p.date) && tms(o.date)){ if(dt >= -864e5 && dt <= 20 * 864e5) sc += 2; else if(Math.abs(dt) > 60 * 864e5) return -1; } return sc; };
       for(const p of parcels){
         let i = byTrk.get(p.tracking);
         if(i == null){
-          const c = (byPhone.get(norm(p.phone)) || []).filter(x=>this.orders[x] && !this.trackingOf(this.orders[x]));
-          const nm = String(p.name || "").toLowerCase(), pick = c.find(x=>{ const n = String(this.orders[x].name || "").toLowerCase(); return n && nm && (nm.includes(n) || n.includes(nm) || n.split(/\s+/).some(w=>w.length > 2 && nm.includes(w))); }) ?? (c.length === 1 ? c[0] : undefined);
+          const cands = free.filter(x=>!claimed.has(x)).map(x=>({ x, sc: score(p, x) })).filter(c=>c.sc >= 10).sort((a, b)=>b.sc - a.sc || Math.abs(tms(p.date) - tms(this.orders[a.x].date)) - Math.abs(tms(p.date) - tms(this.orders[b.x].date)));
+          const pick = cands.length && (cands.length === 1 || cands[0].sc > cands[1].sc || Math.abs(tms(p.date) - tms(this.orders[cands[0].x].date)) < Math.abs(tms(p.date) - tms(this.orders[cands[1].x].date))) ? cands[0].x : undefined;
           if(pick == null){ unmatched.push(p); continue; }
-          this.saveTracking(this.orders[pick], key, p.tracking); byTrk.set(p.tracking, pick); i = pick; attached++;
+          this.saveTracking(this.orders[pick], key, p.tracking); claimed.add(pick); byTrk.set(p.tracking, pick); i = pick; attached++;
         }
         const o = this.orders[i]; if(p.status) this.setShipRaw(o.id, p.status);
         const m = co.mapStatus(p.status);
@@ -7032,7 +7044,7 @@ const Admin = {
       this._lastShipSync = Date.now(); this.renderOrders(); this.renderStats(); this.renderShipped();
       const esc = v=>String(v == null ? "" : v).replace(/[&<>"]/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
       if(opts.bg){ if(attached || changed) toast("🔁 مطابقة ياليدين: رُبط " + attached + " وتغيّرت حالة " + changed); return; }
-      this.showNotice("🔁 مطابقة ياليدين", "قُرئ <b>" + parcels.length + "</b> طرداً (الأحدث) — رُبط بطلبات اللوحة: <b>" + attached + "</b> جديداً، تغيّرت حالة <b>" + changed + "</b>" + (changes.length ? "<br><small>" + changes.map(esc).join("، ") + "</small>" : "") +
+      this.showNotice("🔁 مطابقة ياليدين", "قُرئ <b>" + parcels.length + "</b> طرداً (الأحدث) — رُبط بطلبات اللوحة (مطابقة نمطية للاسم والهاتف المقنَّعَين + الولاية والبلدية والسعر): <b>" + attached + "</b> جديداً، تغيّرت حالة <b>" + changed + "</b>" + (changes.length ? "<br><small>" + changes.map(esc).join("، ") + "</small>" : "") +
         "<br>طرود في ياليدين <b>بلا طلب مطابق</b> في اللوحة: <b>" + unmatched.length + "</b> (أُنشئت يدوياً في موقع ياليدين أو بهاتف مختلف)." +
         (unmatched.length ? '<div style="overflow:auto;max-height:260px;margin-top:.6rem"><table style="width:100%;border-collapse:collapse;font-size:.85rem"><tr><th>التتبع</th><th>الاسم</th><th>الهاتف</th><th>الولاية/البلدية</th><th>الحالة</th></tr>' + unmatched.slice(0, 40).map(p=>"<tr><td dir='ltr'>" + esc(p.tracking) + "</td><td>" + esc(p.name) + "</td><td dir='ltr'>" + esc(p.phone) + "</td><td>" + esc(p.wilaya) + " / " + esc(p.commune) + "</td><td>" + esc(p.status) + "</td></tr>").join("") + "</table></div>" : ""));
     }catch(err){ if(!opts.bg) toast("❌ تعذّرت المطابقة: " + (err.cors ? "حجب CORS — تحقق من دالة courier وجلسة الدخول" : err.message)); }
