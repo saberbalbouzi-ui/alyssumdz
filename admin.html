@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.1">
+<meta name="admin-version" content="1.89.2">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1574,13 +1574,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.1"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.1"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.1"></script>
+<script src="assets/js/ctl-help.js?v=1.89.2"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.2"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.2"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.1"></script>
-<script src="assets/js/admin-update.js?v=1.89.1"></script>
+<script src="assets/js/admin-nav.js?v=1.89.2"></script>
+<script src="assets/js/admin-update.js?v=1.89.2"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -9745,7 +9745,7 @@ body{overflow-x:hidden;margin:0}`;
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
     sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMove(ev, inf, !inf.free, false); };
     const sw = sb.offsetWidth; let sl = bx.r + 12; if (sl + sw > W - 4) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
-    sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, bx.t) + "px";
+    sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(bx.t, vb - sb.offsetHeight - 4)) + "px";      // داخل مجال الرؤية دائماً (كان يُقصّ عند أسفل المنطقة المرئية)
   }
 
   /* ───────────────── شريط القسم (يمين القسم): نقل، إخفاء، قفل، تكرار، حذف، إضافة قسم فارغ ───────────────── */
@@ -10880,6 +10880,25 @@ body{overflow-x:hidden;margin:0}`;
       b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else ma(k); }; bar.appendChild(b); });
     ovl.appendChild(bar); const st = $("pbx-stage"), W = ovl.clientWidth, fw = bar.offsetWidth, fh = bar.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight;
     let top = T - fh - 14; if (top < vt + 4) { top = B + 18; if (top + fh > vb - 4) top = Math.max(vt + 4, T + 8); } bar.style.top = top + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4, (L + R) / 2 - fw / 2)) + "px";
+    /* زرّا التدوير والتحريك للتحديد المتعدد (كانا يظهران لعنصر واحد فقط): التحريك يحرّك المجموعة كلها، والتدوير يدوّر كل عنصر حول مركزه بالزاوية نفسها */
+    if (ids.some(id => { const i = find(id); return i && i.kind === "widget" && !isLocked(i); })) {
+      const sb = document.createElement("div"); sb.className = "pbx-sb"; sb.innerHTML = `<button type="button" title="اسحب لتدوير العناصر المحدّدة (Shift = خطوات 15°)" data-k="rot">${FIC.rot}</button><button type="button" title="اسحب لتحريك العناصر المحدّدة معاً" data-k="move">${FIC.move}</button>`; ovl.appendChild(sb);
+      sb.children[0].onmousedown = ev => { if (ev.button) return; startRotateMulti(ev); }; sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMoveMulti(ev); };
+      let sl = R + 12; if (sl + sb.offsetWidth > W - 4) sl = Math.max(4, L - sb.offsetWidth - 12); sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(T, vb - sb.offsetHeight - 4)) + "px";
+    }
+  }
+  function startRotateMulti(e) {
+    e.preventDefault(); e.stopPropagation(); const dev = E.dev, infs = selIds().map(find).filter(i => i && i.kind === "widget" && !isLocked(i)); if (!infs.length) return;
+    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; let L = 1e9, T = 1e9, R = -1e9, B = -1e9;
+    infs.forEach(i => { const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`); if (!el) return; const r = layoutRect(el); L = Math.min(L, r.left); T = Math.min(T, r.top); R = Math.max(R, r.left + r.width); B = Math.max(B, r.top + r.height); });
+    const cx = f0.left + (L + R) / 2 * s, cy = f0.top + (T + B) / 2 * s, tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
+    const ang = (x, y) => Math.atan2(x - cx, -(y - cy)) * 180 / Math.PI, r0 = infs.map(i => Number(eff(i.set, "rot", dev)) || 0), a0 = ang(e.clientX, e.clientY);
+    const mv = (dx, dy, ev) => {
+      const inE = ev.target && ev.target.ownerDocument === fdoc, px = inE ? f0.left + ev.clientX * s : ev.clientX, py = inE ? f0.top + ev.clientY * s : ev.clientY; let d = ang(px, py) - a0;
+      infs.forEach((i, k) => { let a = r0[k] + d; a = ((a + 540) % 360) - 180; if (ev.shiftKey) a = Math.round(a / 15) * 15; setR(i.set, "rot", dev, Math.round(a) || undefined); });
+      renderCanvas(); positionOverlay(); const st = $("pbx-ovl").getBoundingClientRect(); tip.textContent = Math.round(d) + "°"; $("pbx-ovl").appendChild(tip); tip.style.left = (px - st.left + 14) + "px"; tip.style.top = (py - st.top + 14) + "px";
+    };
+    dragTrack(e, "grabbing", mv, () => { tip.remove(); commitHist(); renderInspector(); });
   }
   function onKey(e) {
     if (e.key === "Escape") hideCtx();

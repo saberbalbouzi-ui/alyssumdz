@@ -1035,7 +1035,7 @@ body{overflow-x:hidden;margin:0}`;
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
     sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMove(ev, inf, !inf.free, false); };
     const sw = sb.offsetWidth; let sl = bx.r + 12; if (sl + sw > W - 4) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
-    sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, bx.t) + "px";
+    sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(bx.t, vb - sb.offsetHeight - 4)) + "px";      // داخل مجال الرؤية دائماً (كان يُقصّ عند أسفل المنطقة المرئية)
   }
 
   /* ───────────────── شريط القسم (يمين القسم): نقل، إخفاء، قفل، تكرار، حذف، إضافة قسم فارغ ───────────────── */
@@ -2170,6 +2170,25 @@ body{overflow-x:hidden;margin:0}`;
       b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else ma(k); }; bar.appendChild(b); });
     ovl.appendChild(bar); const st = $("pbx-stage"), W = ovl.clientWidth, fw = bar.offsetWidth, fh = bar.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight;
     let top = T - fh - 14; if (top < vt + 4) { top = B + 18; if (top + fh > vb - 4) top = Math.max(vt + 4, T + 8); } bar.style.top = top + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4, (L + R) / 2 - fw / 2)) + "px";
+    /* زرّا التدوير والتحريك للتحديد المتعدد (كانا يظهران لعنصر واحد فقط): التحريك يحرّك المجموعة كلها، والتدوير يدوّر كل عنصر حول مركزه بالزاوية نفسها */
+    if (ids.some(id => { const i = find(id); return i && i.kind === "widget" && !isLocked(i); })) {
+      const sb = document.createElement("div"); sb.className = "pbx-sb"; sb.innerHTML = `<button type="button" title="اسحب لتدوير العناصر المحدّدة (Shift = خطوات 15°)" data-k="rot">${FIC.rot}</button><button type="button" title="اسحب لتحريك العناصر المحدّدة معاً" data-k="move">${FIC.move}</button>`; ovl.appendChild(sb);
+      sb.children[0].onmousedown = ev => { if (ev.button) return; startRotateMulti(ev); }; sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMoveMulti(ev); };
+      let sl = R + 12; if (sl + sb.offsetWidth > W - 4) sl = Math.max(4, L - sb.offsetWidth - 12); sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(T, vb - sb.offsetHeight - 4)) + "px";
+    }
+  }
+  function startRotateMulti(e) {
+    e.preventDefault(); e.stopPropagation(); const dev = E.dev, infs = selIds().map(find).filter(i => i && i.kind === "widget" && !isLocked(i)); if (!infs.length) return;
+    const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; let L = 1e9, T = 1e9, R = -1e9, B = -1e9;
+    infs.forEach(i => { const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`); if (!el) return; const r = layoutRect(el); L = Math.min(L, r.left); T = Math.min(T, r.top); R = Math.max(R, r.left + r.width); B = Math.max(B, r.top + r.height); });
+    const cx = f0.left + (L + R) / 2 * s, cy = f0.top + (T + B) / 2 * s, tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
+    const ang = (x, y) => Math.atan2(x - cx, -(y - cy)) * 180 / Math.PI, r0 = infs.map(i => Number(eff(i.set, "rot", dev)) || 0), a0 = ang(e.clientX, e.clientY);
+    const mv = (dx, dy, ev) => {
+      const inE = ev.target && ev.target.ownerDocument === fdoc, px = inE ? f0.left + ev.clientX * s : ev.clientX, py = inE ? f0.top + ev.clientY * s : ev.clientY; let d = ang(px, py) - a0;
+      infs.forEach((i, k) => { let a = r0[k] + d; a = ((a + 540) % 360) - 180; if (ev.shiftKey) a = Math.round(a / 15) * 15; setR(i.set, "rot", dev, Math.round(a) || undefined); });
+      renderCanvas(); positionOverlay(); const st = $("pbx-ovl").getBoundingClientRect(); tip.textContent = Math.round(d) + "°"; $("pbx-ovl").appendChild(tip); tip.style.left = (px - st.left + 14) + "px"; tip.style.top = (py - st.top + 14) + "px";
+    };
+    dragTrack(e, "grabbing", mv, () => { tip.remove(); commitHist(); renderInspector(); });
   }
   function onKey(e) {
     if (e.key === "Escape") hideCtx();
