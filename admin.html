@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.18">
+<meta name="admin-version" content="1.89.19">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -795,7 +795,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card">
       <b style="color:var(--green)">القائمة السوداء لأرقام الهواتف</b>
       <div class="hint">لحماية متجرك من الطلبات الوهمية أو المتكررة في الإلغاء.</div>
-      <div class="grid2" style="margin-top:.8rem">
+      <div id="bl-rule" style="margin:.8rem 0"></div>
+      <b style="display:block;margin-top:.6rem">إضافة يدوية</b>
+      <div class="grid2" style="margin-top:.5rem">
         <input id="bl-phone" placeholder="رقم الهاتف" dir="ltr">
         <input id="bl-reason" placeholder="السبب (اختياري)">
       </div>
@@ -1581,13 +1583,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.18"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.18"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.18"></script>
+<script src="assets/js/ctl-help.js?v=1.89.19"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.19"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.19"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.18"></script>
-<script src="assets/js/admin-update.js?v=1.89.18"></script>
+<script src="assets/js/admin-nav.js?v=1.89.19"></script>
+<script src="assets/js/admin-update.js?v=1.89.19"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1667,7 +1669,7 @@ const Priv = {
    تبقى كما هي في localStorage، وكل كتابة تُدفع أيضاً إلى التخزين الخاص بالمدير (Priv)، وعند فتح اللوحة يُجلب الأحدث من الخادم أولاً. */
 const PrivSync = {
   KEYS: { alyssum_delivery_cfg:"s_delivery_cfg", alyssum_custom_delivery:"s_delivery_custom", alyssum_delivery_price_source:"s_delivery_src",
-          alyssum_blacklist:"s_blacklist", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw", alyssum_repeat_sent:"s_repeat_sent", alyssum_mw_cache:"s_mw_cache" },
+          alyssum_blacklist:"s_blacklist", alyssum_bl_rule:"s_bl_rule", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw", alyssum_repeat_sent:"s_repeat_sent", alyssum_mw_cache:"s_mw_cache" },
   _raw: localStorage.setItem.bind(localStorage), _t: {}, ready: false,
   hook(){
     const self = this;
@@ -2568,7 +2570,7 @@ const Admin = {
     if(target){ const y = target.getBoundingClientRect().top + window.scrollY - 76; window.scrollTo({ top: Math.max(0, y), behavior: "smooth" }); }
   },
 
-  renderAll(){ this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderLoyalty(); this.renderTheme(); this.renderCheckoutSettings(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
+  renderAll(){ try{ this.blScanAll(true); }catch(e){} this.renderStats(); this.renderOrders(); this.renderProducts(); this.renderCategories(); this.renderFees(); this.renderDelivery(); this.renderCoupons(); this.renderBlacklist(); this.renderLoyalty(); this.renderTheme(); this.renderCheckoutSettings(); this.renderPixels(); this.renderQA(); this.renderPendingBadge(); },
 
   renderStats(){
     const today = new Date().toDateString();
@@ -2736,6 +2738,7 @@ const Admin = {
   },
 
   renderOrders(){
+    this._blMap = null;
     this.renderDeliveryBanners();
     const el = $f("orders-table");
     const wilayaSel = $f("order-filter-wilaya");
@@ -4931,8 +4934,79 @@ const Admin = {
   loadBlacklist(){
     try{ this.blacklist = JSON.parse(localStorage.getItem("alyssum_blacklist") || "[]") || []; }
     catch(e){ this.blacklist = []; }
+    this.loadBlRule();
   },
   saveBlacklistToStorage(){ localStorage.setItem("alyssum_blacklist", JSON.stringify(this.blacklist)); },
+
+  /* قاعدة الحظر التلقائي: بعد N طلبات فاشلة (فشل التوصيل/رفض الزبون لدى شركة التوصيل، واختيارياً الإلغاء) خلال مدة اختيارية، ولشركات اختيارية */
+  blRuleDefaults(){ return { on:true, threshold:2, cancelled:false, days:0, mode:"pending", companies:[], dismissed:{} }; },
+  loadBlRule(){
+    let r = {}; try{ r = JSON.parse(localStorage.getItem("alyssum_bl_rule") || "{}") || {}; }catch(e){}
+    this.blRule = Object.assign(this.blRuleDefaults(), r); if(!this.blRule.dismissed) this.blRule.dismissed = {}; if(!Array.isArray(this.blRule.companies)) this.blRule.companies = [];
+  },
+  saveBlRule(){ localStorage.setItem("alyssum_bl_rule", JSON.stringify(this.blRule)); },
+  /* الطلبات الفاشلة المحتسبة لرقم وفق القاعدة الحالية */
+  blFailOrders(phone){
+    if(!this.blRule) this.loadBlRule();
+    const R = this.blRule, p = this.normalizePhone(phone), now = Date.now(); if(!p) return [];
+    return (this.orders||[]).filter(o=>{
+      if(this.normalizePhone(o.phone) !== p) return false;
+      if(!(o.status === "echec" || (R.cancelled && o.status === "annulee"))) return false;
+      if(R.days){ const t = new Date(o.date).getTime(); if(!isNaN(t) && now - t > R.days * 864e5) return false; }
+      if(R.companies.length){ const t = this.trackingOf(o); if(t && !R.companies.includes(t.company)) return false; }
+      return true;
+    });
+  },
+  blFailMap(){
+    if(this._blMap) return this._blMap;
+    if(!this.blRule) this.loadBlRule();
+    const m = {}, seen = new Set();
+    (this.orders||[]).forEach(o=>{ const p = this.normalizePhone(o.phone); if(p && !seen.has(p)){ seen.add(p); const n = this.blFailOrders(p).length; if(n) m[p] = n; } });
+    return (this._blMap = m);
+  },
+  /* يطبّق القاعدة على رقم: يضيفه (أو يحدّث عدّاده) إن بلغ الحدّ ولم يُحذف يدوياً عند عدّ مساوٍ */
+  blAutoCheck(phone, silent){
+    if(!this.blRule) this.loadBlRule();
+    const R = this.blRule, p = this.normalizePhone(phone); if(!R.on || !p) return false;
+    const list = this.blFailOrders(p), n = list.length; if(n < R.threshold) return false;
+    const ex = this.isBlacklisted(p), reason = "قاعدة تلقائية: " + n + " طلبات فاشلة (" + list.slice(0,6).map(o=>o.id).join("، ") + ")";
+    if(ex){ if(ex.auto && ex.count !== n){ ex.count = n; ex.reason = reason; this.saveBlacklistToStorage(); } return false; }
+    if(n <= (R.dismissed[p] || 0)) return false;
+    const st = R.mode === "confirmed" ? "confirmed" : "pending";
+    this.blacklist.push({ phone:p, reason, date:new Date().toISOString(), state:st, auto:true, count:n });
+    this.saveBlacklistToStorage();
+    if(!silent) toast((st === "pending" ? "⏳ " : "🚫 ") + "رقم " + p + " بلغ " + n + " طلبات فاشلة — أُضيف للقائمة السوداء" + (st === "pending" ? " بانتظار مراجعتك" : ""));
+    return true;
+  },
+  blScanAll(silent){
+    if(!this.blRule) this.loadBlRule(); this._blMap = null;
+    if(!this.blRule.on) return 0;
+    const seen = new Set(); let added = 0;
+    (this.orders||[]).forEach(o=>{ if(o.status !== "echec" && o.status !== "annulee") return; const p = this.normalizePhone(o.phone); if(!p || seen.has(p)) return; seen.add(p); if(this.blAutoCheck(p, true)) added++; });
+    if(added){ this.renderBlacklist(); this.renderOrders(); }
+    if(!silent) toast(added ? "🚫 أُضيف " + added + " رقم للقائمة السوداء حسب القاعدة" : "✅ لا أرقام جديدة تبلغ حدّ القاعدة");
+    return added;
+  },
+  renderBlRule(){
+    const box = $f("bl-rule"); if(!box) return; if(!this.blRule) this.loadBlRule();
+    const R = this.blRule, all = this.allDeliveryCompanies(), keys = Object.keys(all).filter(k=>(this.deliveryCfg[k]||{}).enabled || R.companies.includes(k));
+    const sel = (id, opts, cur)=>'<select id="' + id + '" onchange="Admin.setBlRule()">' + opts.map(o=>'<option value="' + o[0] + '"' + (String(o[0]) === String(cur) ? " selected" : "") + '>' + o[1] + '</option>').join("") + '</select>';
+    box.innerHTML = '<div class="card" style="margin:0"><label style="display:flex;gap:.5rem;align-items:center;font-weight:800"><input type="checkbox" id="bl-r-on" ' + (R.on ? "checked" : "") + ' onchange="Admin.setBlRule()"> الحظر التلقائي حسب الطلبات الفاشلة</label>' +
+      '<div class="grid2" style="margin-top:.6rem"><div><label class="hint">عدد الطلبات الفاشلة للحظر</label>' + sel("bl-r-th", [[2,"طلبان"],[3,"3 طلبات"],[4,"4 طلبات"],[5,"5 طلبات"]], R.threshold) + '</div>' +
+      '<div><label class="hint">المدة المحتسبة</label>' + sel("bl-r-days", [[0,"كل الطلبات"],[30,"آخر 30 يوماً"],[60,"آخر 60 يوماً"],[90,"آخر 90 يوماً"],[180,"آخر 6 أشهر"]], R.days) + '</div>' +
+      '<div><label class="hint">عند بلوغ الحدّ</label>' + sel("bl-r-mode", [["pending","إضافة بانتظار مراجعتي"],["confirmed","حظر مباشر"]], R.mode) + '</div></div>' +
+      '<label style="display:flex;gap:.5rem;align-items:center;margin-top:.6rem"><input type="checkbox" id="bl-r-ca" ' + (R.cancelled ? "checked" : "") + ' onchange="Admin.setBlRule()"> احتسب أيضاً الطلبات الملغاة (إلغاء الزبون)</label>' +
+      (keys.length ? '<div class="hint" style="margin-top:.6rem">احتساب فشل شركات التوصيل: ' + (R.companies.length ? "المحدّدة فقط" : "كل الشركات") + ' (اتركها بلا تحديد لاحتساب الكل؛ الطلبات غير المسجّلة لدى شركة تُحتسب دائماً)</div><div style="display:flex;flex-wrap:wrap;gap:.5rem">' +
+        keys.map(k=>'<label style="display:flex;gap:.3rem;align-items:center"><input type="checkbox" class="bl-r-co" value="' + k + '" ' + (R.companies.includes(k) ? "checked" : "") + ' onchange="Admin.setBlRule()"> ' + all[k].name + '</label>').join("") + '</div>' : "") +
+      '<div class="hint" style="margin-top:.6rem">«فشل التوصيل» يُسجَّل عند تحديد الطلب فاشلاً أو عندما تُرجع شركة التوصيل حالة رفض/إرجاع. عند حذفك رقماً يدوياً لا يُضاف ثانية إلا إن زادت طلباته الفاشلة.</div>' +
+      '<button class="small green" type="button" style="margin-top:.5rem" onclick="Admin.blScanAll()">🔍 فحص الطلبات الحالية الآن</button></div>';
+  },
+  setBlRule(){
+    if(!this.blRule) this.loadBlRule(); const R = this.blRule;
+    R.on = !!$f("bl-r-on").checked; R.threshold = Number($f("bl-r-th").value) || 2; R.days = Number($f("bl-r-days").value) || 0; R.mode = $f("bl-r-mode").value === "confirmed" ? "confirmed" : "pending"; R.cancelled = !!$f("bl-r-ca").checked;
+    R.companies = [...document.querySelectorAll(".bl-r-co")].filter(c=>c.checked).map(c=>c.value);
+    this.saveBlRule(); this._blMap = null; this.renderBlRule(); this.renderOrders(); this.renderBlacklist(); toast("✅ حُفظت قاعدة الحظر");
+  },
 
   isBlacklisted(phone){
     const p = this.normalizePhone(phone);
@@ -4956,6 +5030,7 @@ const Admin = {
 
   delBlacklistEntry(phone){
     if(!confirm("إزالة هذا الرقم من القائمة السوداء؟")) return;
+    if(!this.blRule) this.loadBlRule(); this.blRule.dismissed[phone] = this.blFailOrders(phone).length; this.saveBlRule();
     this.blacklist = this.blacklist.filter(x=>x.phone!==phone);
     this.saveBlacklistToStorage();
     this.renderBlacklist();
@@ -4976,10 +5051,12 @@ const Admin = {
     }
     const p = this.normalizePhone(phone);
     if(!p) return "";
-    return ' <button class="small gray" type="button" style="padding:.15rem .4rem;font-size:.75rem" title="إضافة للقائمة السوداء" onclick="Admin.blacklistFromOrder(\'' + p + '\')">🚫</button>';
+    const fc = this.blFailMap()[p], th = (this.blRule || this.blRuleDefaults()).threshold;
+    return (fc ? ' <span class="pill st-pending" title="طلبات فاشلة لهذا الرقم — يُحظر عند ' + th + '">⚠️ ' + fc + '/' + th + '</span>' : "") + ' <button class="small gray" type="button" style="padding:.15rem .4rem;font-size:.75rem" title="إضافة للقائمة السوداء" onclick="Admin.blacklistFromOrder(\'' + p + '\')">🚫</button>';
   },
 
   renderBlacklist(){
+    this._blMap = null; this.renderBlRule();
     const el = $f("blacklist-table");
     if(!el) return;
     if(!this.blacklist.length){
@@ -4987,11 +5064,12 @@ const Admin = {
       return;
     }
     const sorted = [...this.blacklist].sort((a,b)=>(a.state==="pending"?0:1)-(b.state==="pending"?0:1) || new Date(b.date)-new Date(a.date));
-    el.innerHTML = '<tr class="hd"><th>الهاتف</th><th>الحالة</th><th>السبب</th><th>تاريخ الإضافة</th><th></th></tr>' +
+    el.innerHTML = '<tr class="hd"><th>الهاتف</th><th>الحالة</th><th>السبب</th><th>الفاشلة</th><th>تاريخ الإضافة</th><th></th></tr>' +
       sorted.map(x=>'<tr>' +
         '<td class="t" dir="ltr"><b>' + x.phone + '</b></td>' +
         '<td data-l="الحالة">' + (x.state==="pending" ? '<span class="pill st-pending">⏳ بانتظار المراجعة</span>' : '<span class="pill st-annulee">🚫 محظور</span>') + '</td>' +
-        '<td data-l="السبب">' + (x.reason || "—") + '</td>' +
+        '<td data-l="السبب">' + (x.auto ? '<span class="pill st-nouvelle">⚡ تلقائي</span> ' : "") + (x.reason || "—") + '</td>' +
+        '<td data-l="الفاشلة">' + (this.blFailMap()[x.phone] || x.count || 0) + '</td>' +
         '<td data-l="التاريخ">' + new Date(x.date).toLocaleDateString("ar-DZ") + '</td>' +
         '<td class="act">' + (x.state==="pending" ? '<button class="small" onclick="Admin.confirmBlacklist(\'' + x.phone + '\')">✅ تأكيد الحظر</button>' : "") + '<button class="small warn" onclick="Admin.delBlacklistEntry(\'' + x.phone + '\')">🗑️ حذف</button></td>' +
       '</tr>').join("");
@@ -5007,11 +5085,8 @@ const Admin = {
       o.note = (String(o.note || "").trim() + " 📦livree:" + new Date().toISOString().slice(0, 10)).trim();
       try{ API.updateOrder(this.key, o.id, undefined, o.note); }catch(e){}
     }
-    if(status === "echec"){
-      const p = this.normalizePhone(o.phone);
-      if(p && !this.isBlacklisted(p)) this.addBlacklistEntry(p, "فشل توصيل الطلب " + o.id, "pending");
-      else if(p) toast("ℹ️ هذا الرقم موجود أصلاً في القائمة السوداء");
-    }
+    this._blMap = null;
+    if(status === "echec" || status === "annulee") this.blAutoCheck(o.phone);
     this.enqueueNotify(o, status);
     this.syncStockForOrder(o, status);
     this.markStatusSeen();
