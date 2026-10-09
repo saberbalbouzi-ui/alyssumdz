@@ -279,8 +279,10 @@ window.Chrome = (function () {
     },
     async copy(txt) { try { await navigator.clipboard.writeText(txt); return true; } catch (e) { try { const a = document.createElement("textarea"); a.value = txt; a.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(a); a.select(); const ok = document.execCommand("copy"); a.remove(); return ok; } catch (e2) { return false; } } },
     close() { const m = document.getElementById("ch-share"); if (m) m.remove(); document.removeEventListener("keydown", Share._k); },
-    open(cfg) {
-      this.close(); const c = norm(cfg || Chrome.cfg, Chrome.ctx().site), sh = c.share, d = this.meta(sh), mobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent), ch = (sh.channels || []).filter(x => SHARE_ALL.includes(x));
+    /* النشر: تفتح نافذة الجهاز الأصلية (كل التطبيقات المثبّتة + نسخ الرابط)؛ وإن لم يدعمها المتصفح تظهر نافذة بديلة بنسخ الرابط وكل أدوات المشاركة */
+    open(cfg, forceModal) {
+      this.close(); const c = norm(cfg || Chrome.cfg, Chrome.ctx().site), sh = c.share, d = this.meta(sh), mobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent), ch = SHARE_ALL.slice();
+      if (navigator.share && !forceModal) { navigator.share({ title: d.title, text: d.text || d.title, url: d.url }).catch(e => { if (!e || e.name !== "AbortError") Share.open(cfg, true); }); return; }
       const names = { whatsapp: "واتساب", facebook: "فيسبوك", messenger: "ماسنجر", telegram: "تيليغرام", x: "إكس", linkedin: "لينكدإن", pinterest: "بنترست", viber: "فايبر", reddit: "ريديت", email: "بريد", sms: "رسالة" };
       const tile = id => '<a class="chs-t" href="' + esc(this.links(id, d, mobile)) + '" target="_blank" rel="noopener noreferrer" data-ch="' + id + '">' + (id === "email" ? SI().icon("email", { size: 22, style: "brand", shape: "round" }).replace("background:transparent", "background:#6b7280") : id === "sms" ? SI().icon("sms", { size: 22, style: "brand", shape: "round" }).replace("background:transparent", "background:#16a34a") : SI().icon(id, { size: 22, style: "brand", shape: "round" })) + "<span>" + names[id] + "</span></a>";
       const m = document.createElement("div"); m.id = "ch-share"; m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-label", "مشاركة");
@@ -292,14 +294,12 @@ window.Chrome = (function () {
         '#ch-share .chs-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:.7rem .4rem}#ch-share .chs-t{display:flex;flex-direction:column;align-items:center;gap:.35rem;text-decoration:none;color:#1c2420;font-size:.78rem;font-weight:700}#ch-share .chs-t:hover .si-ic{transform:scale(1.08)}#ch-share .si-ic{transition:transform .15s}#ch-share .chs-nat{width:100%;margin-bottom:.9rem;display:none}#ch-share .chs-qrb{width:100%;margin-top:1rem;border:1.5px dashed #d9d2c2;background:#faf8f3;border-radius:10px;padding:.55rem;font:inherit;font-weight:800;color:#173f35;cursor:pointer}#ch-share .chs-qr{text-align:center;margin-top:.8rem}#ch-share .chs-qr svg{width:180px;height:180px;background:#fff;padding:8px;border:1px solid #eae3d6;border-radius:12px}</style>' +
         '<div class="chs-box"><div class="chs-h"><b>مشاركة</b><button class="chs-x" type="button" aria-label="إغلاق">×</button></div>' +
         '<div class="chs-pv">' + (d.image ? '<img src="' + esc(d.image) + '" alt="">' : "") + "<span>" + esc(d.title) + "</span></div>" +
-        '<button class="chs-nat" type="button">📤 مشاركة عبر تطبيقات الجهاز</button>' +
         '<div class="chs-url"><input readonly value="' + esc(d.url) + '" aria-label="رابط الصفحة"><button type="button" class="chs-cp">نسخ الرابط</button></div>' +
         '<div class="chs-g">' + ch.map(tile).join("") + '</div><button type="button" class="chs-qrb">▦ رمز QR للمسح بالهاتف</button><div class="chs-qr" hidden></div></div>';
       document.body.appendChild(m);
       m.addEventListener("click", e => { if (e.target === m || e.target.closest(".chs-x")) this.close(); });
       const inp = m.querySelector("input"), cp = m.querySelector(".chs-cp"); inp.onfocus = () => inp.select();
       cp.onclick = async () => { const ok = await this.copy(d.url); cp.textContent = ok ? "تم النسخ ✓" : "انسخ يدوياً"; cp.classList.toggle("ok", ok); if (!ok) inp.select(); setTimeout(() => { cp.textContent = "نسخ الرابط"; cp.classList.remove("ok"); }, 2200); };
-      if (navigator.share) { const n = m.querySelector(".chs-nat"); n.style.display = "block"; n.onclick = () => navigator.share({ title: d.title, text: d.text || d.title, url: d.url }).catch(() => { }); }
       const qb = m.querySelector(".chs-qrb"), qa = m.querySelector(".chs-qr");
       qb.onclick = async () => {
         if (!qa.hidden) { qa.hidden = true; return; }
@@ -363,12 +363,6 @@ window.Chrome = (function () {
       /* الأزرار الظاهرة */
       this.bindShare();
       const old = document.getElementById("ch-float"); if (old) old.remove();
-      if (c.share.float && !/embed/.test(location.search)) {
-        const b = document.createElement("button"); b.id = "ch-float"; b.type = "button"; b.setAttribute("data-share", ""); b.setAttribute("aria-label", "مشاركة");
-        const pos = c.share.pos === "bottom-right" ? "right:14px" : "left:14px";
-        b.style.cssText = "position:fixed;bottom:84px;" + pos + ";z-index:60;border:0;background:#173f35;color:#fff;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.28);cursor:pointer";
-        b.innerHTML = SI().glyph("share", 20); document.body.appendChild(b);
-      }
     },
     bindShare() { if (!this._bound) { this._bound = true; document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-share]"); if (b) { e.preventDefault(); Share.open(); } }); } },
     async init() {

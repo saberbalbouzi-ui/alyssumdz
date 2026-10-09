@@ -57,12 +57,6 @@ window.ChromeAdmin = (function () {
   function socialStyle(kind) {
     return '<div class="grid2">' + F.s(kind + ".social.style", "نمط الأيقونات", STY) + F.s(kind + ".social.shape", "الشكل", SHP) + F.n(kind + ".social.size", "الحجم (بكسل)", 12, 40) + "</div>";
   }
-  function shareCard() {
-    const sh = S.cfg.share;
-    return '<div class="card"><div class="section-title">نافذة المشاركة (للرئيسية وصفحات المنتجات)</div><div class="hint">تفتح من أيقونة المشاركة فتعرض نسخ الرابط وأدوات المشاركة المختارة.</div><div class="ca-chk">' + F.c("header.share.show", "أيقونة المشاركة في الهيدر") + F.c("footer.share.show", "زر «شارك الموقع» في الفوتر") + F.c("share.float", "زر عائم على الصفحة") + "</div>" +
-      '<div class="grid2">' + F.s("share.pos", "مكان الزر العائم", [["bottom-left", "أسفل اليسار"], ["bottom-right", "أسفل اليمين"]]) + F.s("header.share.style", "نمط أيقونة الهيدر", STY) + "</div>" + F.t("share.text", "نص يرافق الرابط عند المشاركة (اختياري)", { ph: "مثال: اكتشف منتجات أليسوم الطبيعية 🌿" }) +
-      '<div class="section-title">أدوات المشاركة الظاهرة</div><div class="ca-pal">' + C().SHARE_ALL.map(id => '<label class="ca-pi' + (sh.channels.includes(id) ? " on" : "") + '"><input type="checkbox" data-ch="' + id + '"' + (sh.channels.includes(id) ? " checked" : "") + ">" + SI().icon(id, { size: 16, style: "brand", shape: "round" }) + "<small>" + SN[id] + "</small></label>").join("") + "</div></div>";
-  }
   /* بطاقة قابلة للطيّ لكل عنصر في الهيدر: المحتوى ثم التنسيق (نفس أسماء العناصر) */
   const acc = (key, title, content, style, on) => '<details class="card ca-acc" data-acc="' + key + '"' + (S.acc[key] ? " open" : "") + '><summary class="ca-h"><b>' + title + "</b>" + (on === false ? '<small class="ca-off">مخفي</small>' : "") + "</summary>" + '<div class="ca-sub">محتوى</div>' + content + (style ? '<div class="ca-sub">🎨 التنسيق</div>' + style : "") + "</details>";
   const prodsList = () => ((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x && x.slug);
@@ -107,10 +101,10 @@ window.ChromeAdmin = (function () {
         '<div class="grid2">' + F.col("header.menu.color", "لون العناوين") + F.col("header.menu.hover", "لون العنوان عند المرور") + F.n("header.menu.size", "حجم الخط (بكسل)", 10, 28) + F.s("header.menu.weight", "سماكة الخط", [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]]) + F.n("header.menu.gap", "المسافة بين العناوين (بكسل)", 0, 80) + F.col("header.menu.popbg", "خلفية القوائم المنسدلة") + F.col("header.menu.popcolor", "نص القوائم المنسدلة") + F.col("header.menu.mbg", "قائمة الجوال ☰ — خلفية اللوحة") + F.col("header.menu.mtc", "قائمة الجوال ☰ — لون العناوين") + F.col("header.menu.bbc", "لون زر ☰") + F.n("header.menu.bbs", "حجم زر ☰ (px)", 16, 44) + "</div>", h.menu.show) +
       acc("social", "🔗 أيقونات التواصل", F.c("header.social.show", "إظهار الأيقونات (قبل السلة)") + socialPick(),
         '<div class="grid2">' + F.s("header.social.style", "نمط الأيقونات", STY) + F.s("header.social.shape", "الشكل", SHP) + F.n("header.social.size", "الحجم (بكسل)", 12, 48) + F.col("header.social.color", "اللون (للنمط «لون النص»)") + "</div>", h.social.show) +
-      acc("share", "📤 النشر", F.c("header.share.show", "إظهار زر النشر") + F.s("header.share.mode", "الشكل", [["icon", "أيقونة نشر"], ["text", "كلمة «انشر»"]]) + F.t("header.share.label", "نص الزر (عند «كلمة»)"),
+      acc("share", "📤 النشر", F.c("header.share.show", "إظهار زر النشر") + F.s("header.share.mode", "الشكل", [["icon", "أيقونة نشر"], ["text", "كلمة «انشر»"]]) + F.t("header.share.label", "نص الزر (عند «كلمة»)") + '<div class="hint">عند الضغط تُفتح نافذة المشاركة الأصلية في جهاز الزائر بكل تطبيقاته مع نسخ الرابط — لا حاجة لاختيار أدوات.</div>' + F.t("share.text", "نص يرافق الرابط عند المشاركة (اختياري)", { ph: "مثال: اكتشف منتجات أليسوم الطبيعية" }),
         '<div class="grid2">' + F.s("header.share.style", "نمط الأيقونة", STY) + F.n("header.share.size", "حجم الأيقونة (بكسل)", 14, 44) + F.col("header.share.color", "لون الأيقونة/الكلمة") + F.col("header.share.bg", "خلفية الكلمة") + "</div>", h.share.show) +
       acc("cart", "🛒 السلة", F.c("header.cart.show", "إظهار زر السلة") + '<div class="ca-sub2">أيقونة السلة</div>' + cartPick(), '<div class="grid2">' + F.col("header.cart.bg", "الخلفية") + F.col("header.cart.color", "لون الأيقونة") + "</div>", h.cart.show) +
-      socialCard() + shareCard();
+      socialCard();
   }
   function footerTab() {
     const f = S.cfg.footer;
@@ -122,7 +116,7 @@ window.ChromeAdmin = (function () {
       '<div class="card">' + cardH("🔗 أيقونات التواصل") + F.c("footer.social.show", "إظهار") + F.t("footer.social.title", "العنوان") + socialStyle("footer") + "</div>" +
       socialCard() +
       '<div class="card">' + cardH("📝 قسم نصي حرّ") + F.c("footer.custom.show", "إظهار") + F.t("footer.custom.title", "العنوان") + F.a("footer.custom.text", "النص (**غامق**، سطر جديد = Enter)") + "</div>" +
-      '<div class="card">' + cardH("📤 المشاركة وحقوق النشر") + '<div class="ca-chk">' + F.c("footer.share.show", "زر «شارك الموقع»") + F.c("footer.copy.show", "إظهار سطر الحقوق") + "</div>" + F.t("footer.copy.text", "نص الحقوق") + '<div class="hint">إعدادات نافذة المشاركة في تبويب «الهيدر».</div></div>';
+      '<div class="card">' + cardH("📤 المشاركة وحقوق النشر") + '<div class="ca-chk">' + F.c("footer.share.show", "زر «شارك الموقع»") + F.c("footer.copy.show", "إظهار سطر الحقوق") + "</div>" + F.t("footer.copy.text", "نص الحقوق") + '<div class="hint">يفتح الزر نافذة المشاركة الأصلية في جهاز الزائر.</div></div>';
   }
   /* معاينة حيّة داخل iframe بأنماط الموقع نفسها */
   function preview() {
@@ -151,7 +145,6 @@ window.ChromeAdmin = (function () {
     });
     root.addEventListener("change", e => {
       const el = e.target;
-      if (el.dataset.ch) { const a = S.cfg.share.channels; el.checked ? (!a.includes(el.dataset.ch) && a.push(el.dataset.ch)) : a.splice(a.indexOf(el.dataset.ch), 1); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
       if (el.dataset.sid) { const ids = S.cfg.header.social.ids = S.cfg.header.social.ids || [], i = ids.indexOf(el.dataset.sid); el.checked ? (i < 0 && ids.push(el.dataset.sid)) : (i >= 0 && ids.splice(i, 1)); el.parentNode.classList.toggle("on", el.checked); preview(); return; }
       if (el.dataset.pk) { const row = get(el.dataset.pk); row.slugs = row.slugs || []; const i = row.slugs.indexOf(el.dataset.v); el.checked ? (i < 0 && row.slugs.push(el.dataset.v)) : (i >= 0 && row.slugs.splice(i, 1)); const sm = el.closest("details").querySelector("summary b"); if (sm) sm.textContent = "(" + (row.slugs.length || "الكل") + ")"; preview(); return; }
       if (el.dataset.mcadd) { if (!el.value) return; const arr = get(el.dataset.mcadd); arr.push({ kind: el.value, label: "" }); S.mcOpen = el.dataset.mcadd + "." + (arr.length - 1); render(); return; }
