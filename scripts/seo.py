@@ -19,7 +19,6 @@ except (OSError, json.JSONDecodeError):
 seo_products = seo.get("products") if isinstance(seo.get("products"), dict) else {}
 raw_noindex = seo.get("noindex", []) if isinstance(seo.get("noindex", []), list) else []
 noindex = {str(x).strip().lower() for x in raw_noindex if str(x).strip()}
-noindex_paths = {path_key(x) for x in noindex}
 
 def esc(s):
     return html.escape(str(s), quote=True)
@@ -28,6 +27,8 @@ def path_key(value):
     value = str(value or "").strip().lower()
     value = re.sub(r"^https?://[^/]+", "", value)
     return "/" + value.strip("/")
+
+noindex_paths = {path_key(x) for x in noindex}
 
 def excluded(slug, path):
     normalized = path_key(path)
