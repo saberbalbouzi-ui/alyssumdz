@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.72.0">
+<meta name="admin-version" content="1.73.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1563,13 +1563,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.72.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.72.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.72.0"></script>
+<script src="assets/js/ctl-help.js?v=1.73.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.73.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.73.0"></script>
 <script src="assets/js/img-gen.js?v=1.51.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.72.0"></script>
-<script src="assets/js/admin-update.js?v=1.72.0"></script>
+<script src="assets/js/admin-nav.js?v=1.73.0"></script>
+<script src="assets/js/admin-update.js?v=1.73.0"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1"></script>
 <script src="assets/js/admin-social.js?v=1.65.0"></script>
@@ -6133,7 +6133,13 @@ const Admin = {
       cancelRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "DELETE", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       labelRequest(cfg, tracking){ return this.trackRequest(cfg, tracking); },
       parseLabel(json){ const d = json && (json.label || json.labels ? json : (Array.isArray(json.data) ? json.data[0] : null)); const u = d ? String(d.label || d.labels || "") : ""; return /^https:\/\//.test(u) ? u : ""; },
-      parseStatus(json){ const d = json && (json.last_status ? json : (Array.isArray(json.data) ? json.data[0] : null)); return d ? String(d.last_status || "") : ""; },
+      parseStatus(json){
+        const f = (o, d)=>{ if(!o || typeof o !== "object" || d > 5) return ""; const ls = o.last_status; if(typeof ls === "string" && ls.trim()) return ls; if(ls && typeof ls === "object" && (ls.name || ls.label)) return String(ls.name || ls.label);
+          for(const k of Object.keys(o)){ const v = f(o[k], d + 1); if(v) return v; } return ""; };
+        return f(json, 0);
+      },
+      /* احتياط إن لم يُرجع طلب الطرد الفردي حالة: البحث بالتتبع في قائمة الطرود */
+      trackListRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/?tracking=" + encodeURIComponent(tracking), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       /* تحويل حالة ياليدين إلى حالتنا: livree | echec | expediee | confirmee | __alert (تنبيه بلا تغيير) | null (تجاهل) */
       mapStatus(raw){
         const t = String(raw||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
@@ -6884,7 +6890,9 @@ const Admin = {
         if(!cfg.apiId && !cfg.apiToken && !cfg.enabled) throw new Error("لم تُضبط مفاتيح " + co.name);
         const r = await this.courierFetch(co.trackRequest(cfg, t.tracking));
         if(!r.ok) throw new Error("رد الشركة " + r.status);
-        row.raw = co.parseStatus(JSON.parse(r.text));
+        let body = r.text; try{ row.raw = co.parseStatus(JSON.parse(r.text)); }catch(e){ row.raw = ""; }
+        if(!row.raw && co.trackListRequest){ try{ const r2 = await this.courierFetch(co.trackListRequest(cfg, t.tracking)); body = "[1] " + String(r.text).slice(0, 160) + " [2] " + String(r2.text).slice(0, 160); row.raw = co.parseStatus(JSON.parse(r2.text)); }catch(e){} }
+        if(!row.raw) row.body = String(body || "").replace(/\s+/g, " ").slice(0, 340);
         if(row.raw) this.setShipRaw(o.id, row.raw);
         const m = co.mapStatus(row.raw);
         if(m === "__alert"){ row.result = "⚠️ محاولة توصيل فاشلة (بلا تغيير)"; row.cls = "st-pending"; }
@@ -6899,8 +6907,8 @@ const Admin = {
     this._syncing = false; btns.forEach(b=>{ b.disabled = false; }); if($f("sync-btn")) $f("sync-btn").textContent = "🔄 تحديث حالات الشحن"; if($f("ship-sync-btn")) $f("ship-sync-btn").textContent = "🔄 تحديث الحالة";
     this._lastShipSync = Date.now();
     const firstErr = (rows.find(r=>/❌/.test(r.result)) || {}).result || "";
-    const unm = [...new Set(rows.filter(r=>r.unm).map(r=>r.unm))];
-    this._shipSync = { ts: Date.now(), checked: cands.length, changed, failed, err: firstErr.replace(/^❌\s*/, ""), unm };
+    const unm = [...new Set(rows.filter(r=>r.unm).map(r=>r.unm))], bad = rows.find(r=>r.body !== undefined && !r.raw);
+    this._shipSync = { ts: Date.now(), checked: cands.length, changed, failed, err: firstErr.replace(/^❌\s*/, ""), unm, diag: bad ? { id: bad.o.id, tracking: bad.t.tracking, body: bad.body } : null };
     this.renderShipSyncStatus();
     if(corsHit && !opts.bg){ this.explainCors(corsHit); }
     this.renderOrders(); this.renderStats(); this.renderShipped();
@@ -7034,7 +7042,7 @@ const Admin = {
     const el = $f("ship-sync-st"); if(!el) return; const st = this._shipSync;
     if(!st){ el.textContent = "لم تُجرَ مزامنة مع شركة التوصيل بعد في هذه الجلسة."; return; }
     const t = new Date(st.ts).toLocaleTimeString("ar-DZ", { hour:"2-digit", minute:"2-digit" });
-    el.innerHTML = "آخر مزامنة مع شركة التوصيل: <b>" + t + "</b> — فُحص " + st.checked + " طلب، تغيّر " + st.changed + (st.failed ? ' — <b style="color:#ff9aa2">فشل ' + st.failed + (st.err ? " (" + String(st.err).replace(/[<>&]/g, "") + ")" : "") + "</b>" : "") + (st.unm && st.unm.length ? ' — <b style="color:#fdba74">حالات ياليدين غير مترجمة: ' + st.unm.map(x=>String(x).replace(/[<>&]/g, "")).join("، ") + "</b>" : "") + ". المزامنة التلقائية كل 5 دقائق والتبويب مفتوح.";
+    el.innerHTML = "آخر مزامنة مع شركة التوصيل: <b>" + t + "</b> — فُحص " + st.checked + " طلب، تغيّر " + st.changed + (st.failed ? ' — <b style="color:#ff9aa2">فشل ' + st.failed + (st.err ? " (" + String(st.err).replace(/[<>&]/g, "") + ")" : "") + "</b>" : "") + (st.unm && st.unm.length ? ' — <b style="color:#fdba74">حالات ياليدين غير مترجمة: ' + st.unm.map(x=>String(x).replace(/[<>&]/g, "")).join("، ") + "</b>" : "") + ". المزامنة التلقائية كل 5 دقائق والتبويب مفتوح." + (st.diag ? '<details style="margin-top:.4rem"><summary style="cursor:pointer;color:#fdba74">لماذا الحالة فارغة؟ رد ياليدين الخام للطلب ' + String(st.diag.id).replace(/[<>&]/g, "") + '</summary><div dir="ltr" style="word-break:break-all;font-size:.78rem;opacity:.9;padding:.4rem;background:rgba(255,255,255,.06);border-radius:8px">tracking: ' + String(st.diag.tracking).replace(/[<>&]/g, "") + '<br>' + String(st.diag.body).replace(/[<>&]/g, "") + '</div></details>' : "");
   },
   /* مزامنة خلفية: أول مرة بعد تحميل اللوحة بقليل ثم كل 5 دقائق (والتبويب ظاهر) — بلا حاجة لفتح «الطلبات المسجلة» */
   startShipAutoSync(){
