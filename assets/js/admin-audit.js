@@ -25,7 +25,7 @@ const AdminAudit = (() => {
     if (broken) addIssue(issues, "critical", "broken", `${broken} صورة مكسورة أو غير قابلة للتحميل`);
     if (allImgs.length < 3) addIssue(issues, "medium", "few-images", "أقل من 3 صور للمنتج");
     const desc = String(p.desc || p.description || "").trim(); if (desc.length < 80) addIssue(issues, "medium", "short-desc", desc ? `الوصف قصير (${desc.length}/80 حرفاً)` : "الوصف مفقود");
-    if (!p.cat) addIssue(issues, "medium", "category", "المنتج بلا فئة");
+    if (!p.cat) addIssue(issues, "medium", "category", "المنتج بلا تصنيف");
     if (!Array.isArray(p.tags) || !p.tags.some(x => String(x).trim())) addIssue(issues, "low", "tags", "المنتج بلا وسوم");
     const price = Number(p.price), old = p.old === "" || p.old == null ? null : Number(p.old);
     if (old != null && Number.isFinite(old) && old <= price) addIssue(issues, "medium", "old-price", "السعر القديم ليس أكبر من السعر الحالي");

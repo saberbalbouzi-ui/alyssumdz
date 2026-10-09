@@ -9,7 +9,7 @@ const AdminCopySet = (() => {
   const F = {
     price: { l: "السعر", copy: (s, d) => { if (!isSimple(d)) return false; d.price = Number(s.price) || 0; return true; } },
     old: { l: "السعر القديم", copy: (s, d) => { if (!isSimple(d)) return false; d.old = s.old || null; return true; }, clear: d => { if (!isSimple(d)) return false; d.old = null; return true; } },
-    cat: { l: "القسم", copy: (s, d) => { d.cat = s.cat; return true; } },
+    cat: { l: "التصنيف", copy: (s, d) => { d.cat = s.cat; return true; } },
     stock: { l: "المخزون", copy: (s, d) => { if (isGrp(d)) return false; d.stock = s.stock == null ? null : s.stock; return true; },
       clear: d => { if (isGrp(d)) return false; d.stock = null; (d.variations || []).forEach(v => { v.stock = null; }); return true; } },
     cost: { l: "سعر الشراء", cost: true },

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.10">
+<meta name="admin-version" content="1.89.11">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -332,7 +332,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="apps" data-app="cloner" data-ic="cloner" onclick="AdminNav.app('cloner',this)"><span class="nav-ic">📋</span><span class="nav-txt"><b>ناسخ القوالب<span class="app-off-tag hidden" data-appst="cloner">معطّل</span></b><small>إعدادات التطبيق: التعريف والتفعيل والتحديث</small></span></button>
       <!-- أداة «توليد صفحة منتج» معطّلة مؤقتاً (الكود محفوظ في GenPage) -->
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
-      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>الأقسام</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>التصنيفات</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('coupons',this)"><span class="nav-ic">🎟️</span><span class="nav-txt"><b>أكواد الخصم</b><small>إنشاء أكواد تخفيض تظهر تلقائياً في الموقع</small></span></button>
@@ -600,7 +600,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div class="search-bar">
         <b style="color:var(--green);align-self:center">المنتجات (<span id="prod-count">0</span>)</b>
         <input id="prod-search" placeholder="🔍 بحث بالاسم أو المعرف..." oninput="Admin.renderProducts()">
-        <select id="prod-cat-filter" onchange="Admin.renderProducts()"><option value="">كل الأقسام</option></select>
+        <select id="prod-cat-filter" onchange="Admin.renderProducts()"><option value="">كل التصنيفات</option></select>
         <button class="small" onclick="Admin.editProduct(null)">+ منتج جديد</button>
         <button class="small gray" onclick="Admin.ensureProductPages(true)" title="ينشئ صفحة لأي منتج ليس له صفحة على الموقع">🛠️ إنشاء الصفحات الناقصة</button>
         <button class="small gold" onclick="Admin.reload()">↻ تحديث</button>
@@ -646,7 +646,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         </div>
         <div class="frow">
           <div class="field"><label>السعر (دج)</label><input id="gp-price" type="number" min="0"></div>
-          <div class="field"><label>القسم</label><select id="gp-cat"></select></div>
+          <div class="field"><label>التصنيف</label><select id="gp-cat"></select></div>
         </div>
         <div class="field"><label>صورة المنتج</label>
           <img id="gp-img-prev" alt="" style="display:block;width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-bottom:.5rem">
@@ -687,7 +687,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem;margin-bottom:1rem">
         <b style="color:var(--green)">أقسام المتجر</b>
-        <button class="small" onclick="Admin.editCategory(null)">+ قسم جديد</button>
+        <button class="small" onclick="Admin.editCategory(null)">+ تصنيف جديد</button>
       </div>
       <table id="categories-table"></table>
     </div>
@@ -1223,9 +1223,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <!-- نافذة قسم -->
 <div class="modal-bg" id="cat-modal-bg">
   <div class="modal">
-    <h3 id="cat-modal-title">قسم جديد</h3>
+    <h3 id="cat-modal-title">تصنيف جديد</h3>
     <input id="c-key" placeholder="المعرف (key) — إنجليزي بدون مسافات" dir="ltr">
-    <input id="c-label" placeholder="اسم القسم (بالعربية)">
+    <input id="c-label" placeholder="اسم التصنيف (بالعربية)">
     <div class="action-bar">
       <button class="small gold" onclick="Admin.publishCategory()">✅ حفظ ونشر</button>
       <button class="small gray" onclick="document.getElementById('cat-modal-bg').classList.remove('open')">إلغاء</button>
@@ -1575,13 +1575,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.10"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.10"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.10"></script>
+<script src="assets/js/ctl-help.js?v=1.89.11"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.11"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.11"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.10"></script>
-<script src="assets/js/admin-update.js?v=1.89.10"></script>
+<script src="assets/js/admin-nav.js?v=1.89.11"></script>
+<script src="assets/js/admin-update.js?v=1.89.11"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1593,9 +1593,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-orders-plus.js?v=1.61.0"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
 <script src="assets/js/admin-customers.js?v=1.84.0"></script>
-<script src="assets/js/admin-bulk-products.js?v=1"></script>
-<script src="assets/js/admin-reports.js?v=1.69.0"></script>
-<script src="assets/js/admin-audit.js?v=1.69.0"></script>
+<script src="assets/js/admin-bulk-products.js?v=1.89.11"></script>
+<script src="assets/js/admin-reports.js?v=1.89.11"></script>
+<script src="assets/js/admin-audit.js?v=1.89.11"></script>
 <script src="assets/js/admin-returns.js?v=1.78.0"></script>
 <script src="assets/js/admin-payments.js?v=1.79.0"></script>
 <script src="assets/js/admin-seo.js?v=1.81.0"></script>
@@ -1604,7 +1604,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
-<script src="assets/js/admin-copyset.js?v=1.87.0"></script>
+<script src="assets/js/admin-copyset.js?v=1.89.11"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -2572,7 +2572,7 @@ const Admin = {
       '<div><b>' + tOrders.length + '</b><span>طلبات اليوم</span></div>' +
       '<div><b>' + revenue.toLocaleString("fr-DZ") + ' دج</b><span>المبيعات</span></div>' +
       '<div><b>' + this.products.filter(p=>p.active!==false).length + '</b><span>منتج نشط</span></div>' +
-      '<div><b>' + Object.keys(this.categories).length + '</b><span>قسم</span></div>';
+      '<div><b>' + Object.keys(this.categories).length + '</b><span>تصنيف</span></div>';
   },
 
   /* ════════ التحليلات (Analytics) ════════
@@ -2895,7 +2895,7 @@ const Admin = {
     );
     $f("prod-count").textContent = list.length;
     $f("products-table").innerHTML =
-      '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("prod") : "") + '<th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>القسم</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
+      '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("prod") : "") + '<th></th><th>المنتج</th><th>السعر</th><th>العروض</th><th>التصنيف</th><th>المخزون</th><th>الحالة</th><th>إجراءات</th></tr>' +
       list.map(p=>{
         const hasDraft = this.pending.some(x=>x.type==="product" && x.slug===p.slug);
         const img = p.cover || (p.images && p.images[0]) || "";
@@ -2904,7 +2904,7 @@ const Admin = {
         '<td class="t"><b>' + p.title + '</b>' + (hasDraft?' <span class="badge-draft">مسودة</span>':"") + '<br><small style="color:#999" dir="ltr">' + p.slug + '</small></td>' +
         '<td data-l="السعر"><b>' + Number(p.price).toLocaleString("fr-DZ") + ' دج</b>' + (p.old?'<br><small style="color:#999;text-decoration:line-through">' + Number(p.old).toLocaleString("fr-DZ") + '</small>':"") + '</td>' +
         '<td data-l="العروض"><small>' + (p.offers||[]).map(o=>o.qty + '×=' + Number(o.price).toLocaleString("fr-DZ") + (o.free?" 🎁":"")).join("<br>") + '</small></td>' +
-        '<td data-l="القسم">' + (this.categories[p.cat]||p.cat||"-") + '</td>' +
+        '<td data-l="التصنيف">' + (this.categories[p.cat]||p.cat||"-") + '</td>' +
         '<td data-l="المخزون">' + this.stockBadgeHtml(p) + '</td>' +
         '<td data-l="الحالة">' + (p.active!==false?'<span class="pill st-livree">نشط</span>':'<span class="pill st-annulee">موقوف</span>') + '</td>' +
         '<td class="act one">' +
@@ -3507,7 +3507,7 @@ const Admin = {
   diffProduct(oldP, newP){
     const changes = [];
     if(!oldP) return [{label:"منتج جديد", old:null, new:newP.title}];
-    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","القسم"],["stock","المخزون"],["freeShip","الشحن المجاني"],["tags","التبويبات"],["type","النوع"]];
+    const fields = [["title","الاسم"],["price","السعر"],["old","سعر قبل التخفيض"],["desc","الوصف"],["cat","التصنيف"],["stock","المخزون"],["freeShip","الشحن المجاني"],["tags","التبويبات"],["type","النوع"]];
     fields.forEach(([k,label])=>{
       if(String(oldP[k]??"") !== String(newP[k]??""))
         changes.push({label, old: oldP[k]??"—", new: newP[k]??"—"});
@@ -4346,7 +4346,7 @@ const Admin = {
     }
   },
 
-  /* ════════ الأقسام ════════ */
+  /* ════════ التصنيفات ════════ */
   renderCategories(){
     const tbl = $f("categories-table");
     const entries = Object.entries(this.categories);
@@ -4370,7 +4370,7 @@ const Admin = {
     this.editingCatKey = key;
     const label = key ? this.categories[key] : "";
     const draft = this.pending.find(x=>x.type==="category" && x.catKey===key);
-    $f("cat-modal-title").textContent = key ? "تعديل قسم: " + (draft?draft.data.label:label) : "قسم جديد";
+    $f("cat-modal-title").textContent = key ? "تعديل تصنيف: " + (draft?draft.data.label:label) : "تصنيف جديد";
     $f("c-key").value = key || "";
     $f("c-key").readOnly = !!key;
     $f("c-label").value = draft ? draft.data.label : label;
@@ -4396,7 +4396,7 @@ const Admin = {
     this.savePending();
     $f("cat-modal-bg").classList.remove("open");
     this.renderCategories();
-    toast("📝 حُفظت مسودة القسم");
+    toast("📝 حُفظت مسودة التصنيف");
   },
 
   async publishCategory(){
@@ -4415,15 +4415,15 @@ const Admin = {
     API.saveCategories(this.key, this.categories);
     $f("cat-modal-bg").classList.remove("open");
     this.renderCategories(); this.renderProducts(); this.renderStats();
-    toast("⏳ جارِ نشر القسم على الموقع الحي...");
+    toast("⏳ جارِ نشر التصنيف على الموقع الحي...");
     const ok = await this.publishDataJs();
-    if(ok) toast("✅ تم نشر القسم «" + label + "» على الموقع الحي");
+    if(ok) toast("✅ تم نشر التصنيف «" + label + "» على الموقع الحي");
   },
 
   async delCategory(key){
     const count = this.products.filter(p=>p.cat===key).length;
-    if(count > 0){ toast("⚠️ لا يمكن حذف قسم يحتوي على " + count + " منتج — انقلها أولاً"); return }
-    if(!confirm("حذف القسم «" + this.categories[key] + "»؟")) return;
+    if(count > 0){ toast("⚠️ لا يمكن حذف تصنيف يحتوي على " + count + " منتج — انقلها أولاً"); return }
+    if(!confirm("حذف التصنيف «" + this.categories[key] + "»؟")) return;
     delete this.categories[key];
     this.pending = this.pending.filter(x=>!(x.type==="category" && x.catKey===key));
     this.savePending();
@@ -4431,7 +4431,7 @@ const Admin = {
     this.renderCategories(); this.renderStats();
     toast("⏳ جارِ تحديث الموقع الحي...");
     const ok = await this.publishDataJs();
-    if(ok) toast("✓ تم حذف القسم من الموقع الحي");
+    if(ok) toast("✓ تم حذف التصنيف من الموقع الحي");
   },
 
   /* ════════ رسوم التوصيل ════════ */
@@ -4485,7 +4485,7 @@ const Admin = {
       const date = new Date(d.date).toLocaleString("ar-DZ");
       return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem;border-right:4px solid var(--gold)">' +
         '<div>' +
-          '<span class="pill ' + (isP?'st-nouvelle':'st-confirmee') + '">' + (isP?"🌿 منتج":"🗂️ قسم") + '</span> ' +
+          '<span class="pill ' + (isP?'st-nouvelle':'st-confirmee') + '">' + (isP?"🌿 منتج":"🗂️ تصنيف") + '</span> ' +
           '<b>' + title + '</b> <small dir="ltr" style="color:#999">(' + (d.slug||d.catKey) + ')</small>' +
           '<br><small style="color:#999">' + date + '</small>' +
         '</div>' +
@@ -4528,9 +4528,9 @@ const Admin = {
       this.savePending();
       API.saveCategories(this.key, this.categories);
       this.renderCategories(); this.renderProducts(); this.renderPending(); this.renderStats();
-      toast("⏳ جارِ نشر القسم على الموقع الحي...");
+      toast("⏳ جارِ نشر التصنيف على الموقع الحي...");
       const ok = await this.publishDataJs();
-      if(ok) toast("✅ تم تأكيد القسم ونشره على الموقع الحي");
+      if(ok) toast("✅ تم تأكيد التصنيف ونشره على الموقع الحي");
     }
   },
 
