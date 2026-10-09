@@ -56,7 +56,7 @@ const AdminAudit = (() => {
   function exportDamaged() {
     const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
     const rows = [["slug","product","variant","orderId","reason","qty","date"], ...S.damaged.map(x => [x.slug,x.title,x.variant,x.orderId,x.reason,x.qty,x.date])];
-    const a=document.createElement("a"),url=URL.createObjectURL(new Blob(["\\uFEFF"+rows.map(r=>r.map(q).join(",")).join("\\r\\n")],{type:"text/csv;charset=utf-8"}));
+    const a=document.createElement("a"),url=URL.createObjectURL(new Blob(["\uFEFF"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"}));
     a.href=url;a.download="damaged-returns.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   function damagedCard() {
