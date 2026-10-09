@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.71.0">
+<meta name="admin-version" content="1.72.0">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -417,6 +417,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <option value="">كل الحالات</option><option value="confirmee">قيد التجهيز</option><option value="expediee">في الطريق</option><option value="livree">تم التسليم</option><option value="echec">فشل / مرتجع</option>
         </select>
         <button class="small gold" type="button" id="ship-sync-btn" onclick="Admin.syncShipping({silent:true})">🔄 تحديث الحالة</button>
+        <button class="small" type="button" id="ship-rec-btn" onclick="Admin.reconcileShipping()" title="يقرأ آخر طرود حسابك في ياليدين ويربطها بطلبات اللوحة ويحدّث حالاتها">🔁 مطابقة مع ياليدين</button>
       </div>
       <div class="hint" id="ship-sync-st" style="margin-top:.4rem"></div>
       <div class="hint" id="ship-count" style="margin-top:.4rem"></div>
@@ -1562,13 +1563,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.71.0"></script>
-<script src="assets/js/chrome-admin.js?v=1.71.0"></script>
-<script src="assets/js/admin-assistant.js?v=1.71.0"></script>
+<script src="assets/js/ctl-help.js?v=1.72.0"></script>
+<script src="assets/js/chrome-admin.js?v=1.72.0"></script>
+<script src="assets/js/admin-assistant.js?v=1.72.0"></script>
 <script src="assets/js/img-gen.js?v=1.51.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.71.0"></script>
-<script src="assets/js/admin-update.js?v=1.71.0"></script>
+<script src="assets/js/admin-nav.js?v=1.72.0"></script>
+<script src="assets/js/admin-update.js?v=1.72.0"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1"></script>
 <script src="assets/js/admin-social.js?v=1.65.0"></script>
@@ -6117,6 +6118,9 @@ const Admin = {
       /* بعد الإرسال: رقم التتبع من الاستجابة {order_id: {success, tracking}} */
       parseSent(json, order){ const r = json && (json[String(order.__ydId || order.id)] || (Array.isArray(json.data) && json.data[0])); return (r && r.success !== false && r.tracking) ? String(r.tracking) : ""; },
       trackRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      /* قائمة طرود الحساب (الأحدث أولاً) لمطابقتها مع طلبات اللوحة: GET /v1/parcels/ (صفحات) */
+      listRequest(cfg, page, plain){ return { url: this.base + "/v1/parcels/?page_size=100&page=" + page + (plain ? "" : "&order_by=date_creation&order=desc"), method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
+      parseList(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r && r.tracking).map(r=>({ tracking: String(r.tracking), status: String(r.last_status || ""), name: [r.firstname, r.familyname].filter(Boolean).join(" "), phone: String(r.contact_phone || r.contact_phone_2 || ""), wilaya: String(r.to_wilaya_name || ""), commune: String(r.to_commune_name || ""), date: String(r.date_creation || ""), orderId: String(r.order_id || "") })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* جدول التعريفة من حسابك: GET /v1/deliveryfees/ (صفحات) ⟵ [{wilaya_id, home_fee, desk_fee}] */
       feesRequest(cfg, page){ return { url: this.base + "/v1/deliveryfees/?page_size=100&page=" + page, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       parseFees(json){
@@ -6136,9 +6140,9 @@ const Admin = {
         if(!t) return null;
         if(/^livre/.test(t)) return "livree";
         if(/tentative.*(echou|echec)/.test(t)) return "__alert";
-        if(/echec livraison|^retour|retourne|echange.*(echou|echec)/.test(t)) return "echec";
-        if(/pas encore|pret a expedier|preparation|a verifier/.test(t)) return "confirmee";
-        if(/expedie|transfert|centre|localisation|vers wilaya|recu a wilaya|sorti en livraison|en attente du client|pret pour livreur|ramasse|en livraison/.test(t)) return "expediee";
+        if(/echec livraison|^retour|retourne|echange.*(echou|echec)|refuse|annule/.test(t)) return "echec";
+        if(/pas encore|pret a expedier|preparation|a verifier|en attente de ramassage|a ramasser/.test(t)) return "confirmee";
+        if(/expedie|transfert|centre|localisation|vers wilaya|recu a wilaya|sorti en livraison|en attente du client|pret pour livreur|ramasse|en livraison|transit|en route|reçu|recu|prise en charge|arrive|alerte resolue|debloque/.test(t)) return "expediee";
         return null;
       },
       note: "التكامل مبني على توثيق Yalidine API الرسمي (v1/parcels). أدخل معرّف وتوكن API من حسابك على منصة ياليدين.",
@@ -6884,7 +6888,7 @@ const Admin = {
         if(row.raw) this.setShipRaw(o.id, row.raw);
         const m = co.mapStatus(row.raw);
         if(m === "__alert"){ row.result = "⚠️ محاولة توصيل فاشلة (بلا تغيير)"; row.cls = "st-pending"; }
-        else if(!m){ row.result = "— بلا تغيير"; }
+        else if(!m){ row.result = row.raw ? "⚠️ حالة غير مترجمة: " + row.raw : "— لم تُرجع الشركة حالة"; row.unm = row.raw || "(فارغة)"; }
         else if(m === o.status){ row.result = "— بلا تغيير"; }
         else if((m === "expediee" || m === "confirmee") && (this.STATUS_RANK[m] ?? 0) <= (this.STATUS_RANK[o.status] ?? 0)){ row.result = "— بلا تغيير"; }
         else { API.updateOrder(this.key, o.id, m); this.onStatusChange(i, m); changed++; row.result = "✅ ← " + m; row.cls = m === "echec" ? "st-echec" : "st-livree"; }
@@ -6895,7 +6899,8 @@ const Admin = {
     this._syncing = false; btns.forEach(b=>{ b.disabled = false; }); if($f("sync-btn")) $f("sync-btn").textContent = "🔄 تحديث حالات الشحن"; if($f("ship-sync-btn")) $f("ship-sync-btn").textContent = "🔄 تحديث الحالة";
     this._lastShipSync = Date.now();
     const firstErr = (rows.find(r=>/❌/.test(r.result)) || {}).result || "";
-    this._shipSync = { ts: Date.now(), checked: cands.length, changed, failed, err: firstErr.replace(/^❌\s*/, "") };
+    const unm = [...new Set(rows.filter(r=>r.unm).map(r=>r.unm))];
+    this._shipSync = { ts: Date.now(), checked: cands.length, changed, failed, err: firstErr.replace(/^❌\s*/, ""), unm };
     this.renderShipSyncStatus();
     if(corsHit && !opts.bg){ this.explainCors(corsHit); }
     this.renderOrders(); this.renderStats(); this.renderShipped();
@@ -6985,15 +6990,55 @@ const Admin = {
       '<button class="small gold" type="button" onclick="Admin.tab(\'delivery\', [...document.querySelectorAll(\'.nav-btn\')].find(b=>(b.getAttribute(\'onclick\')||\'\').includes(\'delivery\')))">🔗 تفعيل شركة التوصيل الآن</button></div>';
   },
   renderDeliveryBanners(){ const h = this.deliveryBannerHtml(); ["ship-banner","orders-banner"].forEach(id=>{ const el = $f(id); if(el) el.innerHTML = h; }); },
+  /* مطابقة طرود ياليدين مع الطلبات: تربط رقم التتبع بالطلب إن لم يكن مسجَّلاً (تطابق الهاتف) وتحدّث الحالات، وتعرض طرود ياليدين التي لا طلب لها في اللوحة */
+  async reconcileShipping(opts){
+    opts = opts || {}; if(this._reconciling) return; const all = this.allDeliveryCompanies(), key = this.activeCompanyKey(), co = key && all[key], cfg = key ? (this.deliveryCfg[key] || {}) : {};
+    if(!co || !co.listRequest){ if(!opts.bg) toast("⚠️ المطابقة متاحة لياليدين فقط — فعّلها من «شركات التوصيل»"); return; }
+    this._reconciling = true; const btn = $f("ship-rec-btn"); if(btn){ btn.disabled = true; btn.textContent = "⏳ جارِ المطابقة…"; }
+    try{
+      const parcels = []; let more = true, plain = false;
+      for(let pg = 1; pg <= 5 && more; pg++){
+        let r = await this.courierFetch(co.listRequest(cfg, pg, plain));
+        if(!r.ok && pg === 1 && !plain){ plain = true; r = await this.courierFetch(co.listRequest(cfg, pg, true)); }
+        if(!r.ok) throw new Error("رد الشركة " + r.status);
+        const d = co.parseList(JSON.parse(r.text)); parcels.push(...d.rows); more = d.more;
+        await new Promise(res=>setTimeout(res, 250));
+      }
+      const norm = x=>this.normalizePhone(x), byTrk = new Map(), byPhone = new Map();
+      this.orders.forEach((o,i)=>{ const t = this.trackingOf(o); if(t) byTrk.set(t.tracking, i); else { const k = norm(o.phone); if(k){ (byPhone.get(k) || byPhone.set(k, []).get(k)).push(i); } } });
+      let attached = 0, changed = 0; const unmatched = [], changes = [];
+      for(const p of parcels){
+        let i = byTrk.get(p.tracking);
+        if(i == null){
+          const c = (byPhone.get(norm(p.phone)) || []).filter(x=>this.orders[x] && !this.trackingOf(this.orders[x]));
+          const nm = String(p.name || "").toLowerCase(), pick = c.find(x=>{ const n = String(this.orders[x].name || "").toLowerCase(); return n && nm && (nm.includes(n) || n.includes(nm) || n.split(/\s+/).some(w=>w.length > 2 && nm.includes(w))); }) ?? (c.length === 1 ? c[0] : undefined);
+          if(pick == null){ unmatched.push(p); continue; }
+          this.saveTracking(this.orders[pick], key, p.tracking); byTrk.set(p.tracking, pick); i = pick; attached++;
+        }
+        const o = this.orders[i]; if(p.status) this.setShipRaw(o.id, p.status);
+        const m = co.mapStatus(p.status);
+        if(!m || m === "__alert" || m === o.status || ["livree","annulee"].includes(o.status)) continue;
+        if((m === "expediee" || m === "confirmee") && (this.STATUS_RANK[m] ?? 0) <= (this.STATUS_RANK[o.status] ?? 0)) continue;
+        API.updateOrder(this.key, o.id, m); this.onStatusChange(i, m); changed++; changes.push(o.id + " ← " + (this.ST_AR[m] || m));
+      }
+      this._lastShipSync = Date.now(); this.renderOrders(); this.renderStats(); this.renderShipped();
+      const esc = v=>String(v == null ? "" : v).replace(/[&<>"]/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+      if(opts.bg){ if(attached || changed) toast("🔁 مطابقة ياليدين: رُبط " + attached + " وتغيّرت حالة " + changed); return; }
+      this.showNotice("🔁 مطابقة ياليدين", "قُرئ <b>" + parcels.length + "</b> طرداً (الأحدث) — رُبط بطلبات اللوحة: <b>" + attached + "</b> جديداً، تغيّرت حالة <b>" + changed + "</b>" + (changes.length ? "<br><small>" + changes.map(esc).join("، ") + "</small>" : "") +
+        "<br>طرود في ياليدين <b>بلا طلب مطابق</b> في اللوحة: <b>" + unmatched.length + "</b> (أُنشئت يدوياً في موقع ياليدين أو بهاتف مختلف)." +
+        (unmatched.length ? '<div style="overflow:auto;max-height:260px;margin-top:.6rem"><table style="width:100%;border-collapse:collapse;font-size:.85rem"><tr><th>التتبع</th><th>الاسم</th><th>الهاتف</th><th>الولاية/البلدية</th><th>الحالة</th></tr>' + unmatched.slice(0, 40).map(p=>"<tr><td dir='ltr'>" + esc(p.tracking) + "</td><td>" + esc(p.name) + "</td><td dir='ltr'>" + esc(p.phone) + "</td><td>" + esc(p.wilaya) + " / " + esc(p.commune) + "</td><td>" + esc(p.status) + "</td></tr>").join("") + "</table></div>" : ""));
+    }catch(err){ if(!opts.bg) toast("❌ تعذّرت المطابقة: " + (err.cors ? "حجب CORS — تحقق من دالة courier وجلسة الدخول" : err.message)); }
+    finally{ this._reconciling = false; if(btn){ btn.disabled = false; btn.textContent = "🔁 مطابقة مع ياليدين"; } }
+  },
   renderShipSyncStatus(){
     const el = $f("ship-sync-st"); if(!el) return; const st = this._shipSync;
     if(!st){ el.textContent = "لم تُجرَ مزامنة مع شركة التوصيل بعد في هذه الجلسة."; return; }
     const t = new Date(st.ts).toLocaleTimeString("ar-DZ", { hour:"2-digit", minute:"2-digit" });
-    el.innerHTML = "آخر مزامنة مع شركة التوصيل: <b>" + t + "</b> — فُحص " + st.checked + " طلب، تغيّر " + st.changed + (st.failed ? ' — <b style="color:#ff9aa2">فشل ' + st.failed + (st.err ? " (" + String(st.err).replace(/[<>&]/g, "") + ")" : "") + "</b>" : "") + ". المزامنة التلقائية كل 5 دقائق والتبويب مفتوح.";
+    el.innerHTML = "آخر مزامنة مع شركة التوصيل: <b>" + t + "</b> — فُحص " + st.checked + " طلب، تغيّر " + st.changed + (st.failed ? ' — <b style="color:#ff9aa2">فشل ' + st.failed + (st.err ? " (" + String(st.err).replace(/[<>&]/g, "") + ")" : "") + "</b>" : "") + (st.unm && st.unm.length ? ' — <b style="color:#fdba74">حالات ياليدين غير مترجمة: ' + st.unm.map(x=>String(x).replace(/[<>&]/g, "")).join("، ") + "</b>" : "") + ". المزامنة التلقائية كل 5 دقائق والتبويب مفتوح.";
   },
   /* مزامنة خلفية: أول مرة بعد تحميل اللوحة بقليل ثم كل 5 دقائق (والتبويب ظاهر) — بلا حاجة لفتح «الطلبات المسجلة» */
   startShipAutoSync(){
-    if(this._shipTimer) return; const run = ()=>{ if(document.hidden || !this.key || !this.activeCompanyKey()) return; this.syncShipping({ silent:true, bg:true }); };
+    if(this._shipTimer) return; let n = 0; const run = ()=>{ if(document.hidden || !this.key || !this.activeCompanyKey()) return; n++; if(n % 3 === 1) this.reconcileShipping({ bg:true }).finally(()=>this.syncShipping({ silent:true, bg:true })); else this.syncShipping({ silent:true, bg:true }); };
     setTimeout(run, 20000); this._shipTimer = setInterval(run, 300000);
   },
   autoSyncShipped(){ if(!this._lastShipSync || Date.now() - this._lastShipSync > 180000) this.syncShipping({silent:true}); },
