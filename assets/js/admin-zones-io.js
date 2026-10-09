@@ -99,12 +99,13 @@ const AdminZonesIO = (() => {
     const errors=preview.errors;
     modal.innerHTML=`<div class="znio-dialog" role="dialog" aria-modal="true" aria-labelledby="znio-title"><h3 id="znio-title">معاينة استيراد المناطق</h3><p>${esc(filename)} — ${preview.zones.length} منطقة، ${preview.zones.reduce((n,z)=>n+z.wilayas.length,0)} ولاية</p>${errors.length?`<div class="znio-errors">${errors.map(esc).join("<br>")}</div>`:`<div class="znio-scroll"><table><thead><tr><th>المنطقة</th><th>الولايات</th><th>المنزل</th><th>المكتب</th><th>مجاني</th></tr></thead><tbody>${preview.zones.map(z=>`<tr><td>${esc(z.name)}</td><td>${z.wilayas.length}</td><td>${z.home} دج</td><td>${z.stop} دج</td><td>${z.freeHome?"منزل ":""}${z.freeStop?"مكتب":"—"}</td></tr>`).join("")}</tbody></table></div><p class="znio-warning">سيستبدل الاستيراد المناطق والاستثناءات الحالية. يمكنك التراجع بـ Ctrl+Z قبل إجراء تعديل آخر.</p>`}<div class="znio-actions"><button type="button" data-zio-cancel>إلغاء</button><button type="button" data-zio-apply ${errors.length?"disabled":""}>تطبيق الاستيراد</button></div></div>`;
     host.appendChild(modal); modal.querySelector("[data-zio-cancel]").onclick=()=>modal.remove();
-    modal.querySelector("[data-zio-apply]").onclick=()=>{saveBackup();const s=state();s.zones=preview.zones;s.ex=preview.ex;s.exw=preview.exw;AdminZones.apply();AdminZones.draw();modal.remove();preview=null;toast("تم تطبيق المناطق. اضغط «حفظ الكل» لنشر التغيير.");};
+    modal.querySelector("[data-zio-apply]").onclick=()=>{saveBackup();const s=state();s.zones=preview.zones;s.ex=preview.ex;s.exw=preview.exw;refreshZones();modal.remove();preview=null;toast("تم تطبيق المناطق. اضغط «حفظ الكل» لنشر التغيير.");};
   }
   function saveBackup() { const s=state(); if(!s)return; try{localStorage.setItem(KEY,JSON.stringify({zones:s.zones,ex:s.ex,exw:s.exw}));}catch(_){} }
+  function refreshZones(){AdminZones.apply();if(typeof Admin!=="undefined"&&typeof Admin.renderFees==="function")Admin.renderFees();AdminZones.draw();}
   function undo() {
     const raw=localStorage.getItem(KEY); if(!raw){toast("لا توجد نسخة تراجع محفوظة.");return;}
-    try{const b=JSON.parse(raw),s=state();if(!s)throw 0;s.zones=b.zones;s.ex=b.ex;s.exw=b.exw;AdminZones.apply();AdminZones.draw();localStorage.removeItem(KEY);toast("تم التراجع عن آخر استيراد أو قالب.");}catch(_){toast("تعذّر استعادة النسخة الاحتياطية.");}
+    try{const b=JSON.parse(raw),s=state();if(!s)throw 0;s.zones=b.zones;s.ex=b.ex;s.exw=b.exw;refreshZones();localStorage.removeItem(KEY);toast("تم التراجع عن آخر استيراد أو قالب.");}catch(_){toast("تعذّر استعادة النسخة الاحتياطية.");}
   }
   const south = new Set([1,3,7,8,11,17,30,32,33,37,39,45,47,49,50,51,52,53,54,55,56,57,58]);
   const center = new Set([5,14,20,26,28,34,38,40,41,43]);
@@ -126,7 +127,7 @@ const AdminZonesIO = (() => {
     let zones;try{zones=template(kind,{home,stop});}catch(e){toast(e.message);return;}
     const label=kind==="flat"?"سعر موحّد":"الشمال/الوسط/الجنوب";
     if(!confirm(`سيستبدل قالب «${label}» المناطق الحالية (${state().zones.length}) بمجموعات مقترحة وأسعار قابلة للتعديل. تطبيق القالب؟`))return;
-    saveBackup();const s=state();s.zones=zones;s.ex=[];s.exw=[];AdminZones.apply();AdminZones.draw();toast("طُبّق القالب المقترح. عدّل الأسعار ثم اضغط «حفظ الكل».");
+    saveBackup();const s=state();s.zones=zones;s.ex=[];s.exw=[];refreshZones();toast("طُبّق القالب المقترح. عدّل الأسعار ثم اضغط «حفظ الكل».");
   }
   function inject() {
     const host=$("#zn-card");if(!host||!state()?.inited)return;
