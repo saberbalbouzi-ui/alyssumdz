@@ -38,7 +38,7 @@ window.ChromeAdmin = (function () {
   function linksCard() {
     const L = S.cfg.links || [], pages = (S.pages || []).filter(x => x && x.slug), prods = ((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x && x.slug);
     const opt = (grp, arr, f) => arr.length ? '<optgroup label="' + grp + '">' + arr.map(f).join("") + "</optgroup>" : "";
-    return '<div class="card"><div class="section-title">🧭 عناوين الموقع المتاحة</div><div class="hint">هذه قائمة كل العناوين (الصفحات والأقسام) التي تختار منها روابط قوائم الهيدر والفوتر وهيدر منشئ الصفحات بدل كتابة الروابط. أضف عنواناً جديداً مخصصاً برابط، أو أضف إحدى صفحاتك/منتجاتك بنقرة، ثم انشر.</div>' +
+    return '<div class="card"><div class="section-title">🧭 عناوين الموقع المتاحة</div><div class="hint">هذه قائمة كل العناوين (الصفحات والأقسام) التي تختار منها روابط القوائم بدل كتابة الروابط. أضف عنواناً جديداً مخصصاً برابط، أو أضف إحدى صفحاتك/منتجاتك بنقرة، ثم انشر.</div>' +
       '<div class="ca-list">' + L.map((it, i) => '<div class="ca-row"><input data-p="links.' + i + '.label" value="' + esc(it.label) + '" placeholder="اسم العنوان"><input data-p="links.' + i + '.url" value="' + esc(it.url) + '" dir="ltr" placeholder="#products أو https://…"><span class="ca-tools">' + mv("links|", i) + '<button type="button" class="small red" data-del="links:' + i + '">✕</button></span></div>').join("") + "</div>" +
       '<div class="ca-row"><button type="button" class="small" data-add="links">➕ عنوان جديد مخصص (اسم + رابط)</button>' + '<select data-addpage="1"><option value="">📄 إضافة من صفحاتي ومنتجاتي…</option>' + opt("صفحات الهبوط", pages, x => '<option value="lp/' + esc(x.slug) + '/|' + esc(x.title || x.slug) + '">' + esc(x.title || x.slug) + "</option>") + opt("المنتجات", prods, x => '<option value="p/' + esc(x.slug) + '/|' + esc(x.title || x.slug) + '">' + esc(x.title || x.slug) + "</option>") + "</select></div></div>";
   }
@@ -46,13 +46,12 @@ window.ChromeAdmin = (function () {
     const ord = get(kind + ".order");
     return '<div class="card"><div class="section-title">ترتيب المكوّنات</div><div class="hint">رتّب ظهور المكوّنات (الأول يظهر أولاً من جهة اليمين). كل مكوّن له إعداداته أدناه.</div><div class="ca-ord">' + ord.map((id, i) => '<span class="ca-chip">' + names[id] + (get(kind + "." + id + ".show") === false ? " <small>(مخفي)</small>" : "") + mv(kind + ".order", i) + "</span>").join("") + "</div></div>";
   }
-  /* لوحة حسابات التواصل (مشتركة بين الهيدر والفوتر) */
-  function socialCard() {
-    const L = S.cfg.social || [], hs = S.cfg.header.social.show, fs = S.cfg.footer.social.show;
-    return '<div class="card"><div class="section-title">حسابات التواصل الاجتماعي (للهيدر والفوتر معاً)</div><div class="hint">اضغط على الأيقونة لإضافتها ثم اكتب الرابط أو اسم الحساب فقط. الحالة الآن: ' + (hs ? "✔ ظاهرة في الهيدر" : "✖ غير ظاهرة في الهيدر") + " · " + (fs ? "✔ ظاهرة في الفوتر" : "✖ غير ظاهرة في الفوتر") + "</div>" +
+  /* لوحة حسابات التواصل: قائمة الحسابات مشتركة، وكل تبويب يعرض مفتاحه وحالته فقط (kind = header | footer) */
+  function socialCard(kind) {
+    const L = S.cfg.social || [], on = S.cfg[kind].social.show, where = kind === "header" ? "الهيدر" : "الفوتر";
+    return '<div class="card"><div class="section-title">حسابات التواصل الاجتماعي</div><div class="hint">اضغط على الأيقونة لإضافتها ثم اكتب الرابط أو اسم الحساب فقط. الحالة الآن: ' + (on ? "✔ ظاهرة في " : "✖ غير ظاهرة في ") + where + "</div>" +
       '<div class="ca-pal">' + SI().list.map(i => '<button type="button" class="ca-pi" data-addsoc="' + i.id + '" title="' + i.label + '">' + SI().icon(i.id, { size: 18, style: "brand", shape: "round" }) + "<small>" + i.label + "</small></button>").join("") + "</div>" +
-      '<div class="ca-list">' + L.map((s, i) => '<div class="ca-row ca-soc">' + SI().icon(s.id, { size: 18, style: "brand", shape: "round" }) + "<b>" + esc((SI().byId[s.id] || {}).label || s.id) + '</b><input data-p="social.' + i + '.url" data-soc="' + s.id + '" value="' + esc(s.url) + '" dir="ltr" placeholder="https://… أو اسم الحساب فقط"><span class="ca-tools">' + mv("social|", i) + '<button type="button" class="small red" data-del="social:' + i + '">✕</button></span></div>').join("") + "</div>" +
-      '<div class="ca-chk">' + F.c("header.social.show", "إظهار الأيقونات في الهيدر") + F.c("footer.social.show", "إظهار الأيقونات في الفوتر") + "</div></div>";
+      '<div class="ca-list">' + L.map((s, i) => '<div class="ca-row ca-soc">' + SI().icon(s.id, { size: 18, style: "brand", shape: "round" }) + "<b>" + esc((SI().byId[s.id] || {}).label || s.id) + '</b><input data-p="social.' + i + '.url" data-soc="' + s.id + '" value="' + esc(s.url) + '" dir="ltr" placeholder="https://… أو اسم الحساب فقط"><span class="ca-tools">' + mv("social|", i) + '<button type="button" class="small red" data-del="social:' + i + '">✕</button></span></div>').join("") + "</div></div>";
   }
   function socialStyle(kind) {
     return '<div class="grid2">' + F.s(kind + ".social.style", "نمط الأيقونات", STY) + F.s(kind + ".social.shape", "الشكل", SHP) + F.n(kind + ".social.size", "الحجم (بكسل)", 12, 40) + "</div>";
@@ -104,7 +103,7 @@ window.ChromeAdmin = (function () {
       acc("share", "📤 النشر", F.c("header.share.show", "إظهار زر النشر") + F.s("header.share.mode", "الشكل", [["icon", "أيقونة نشر"], ["text", "كلمة «انشر»"]]) + F.t("header.share.label", "نص الزر (عند «كلمة»)") + '<div class="hint">عند الضغط تُفتح نافذة المشاركة الأصلية في جهاز الزائر بكل تطبيقاته مع نسخ الرابط — لا حاجة لاختيار أدوات.</div>' + F.t("share.text", "نص يرافق الرابط عند المشاركة (اختياري)", { ph: "مثال: اكتشف منتجات أليسوم الطبيعية" }),
         '<div class="grid2">' + F.s("header.share.style", "نمط الأيقونة", STY) + F.n("header.share.size", "حجم الأيقونة (بكسل)", 14, 44) + F.col("header.share.color", "لون الأيقونة/الكلمة") + F.col("header.share.bg", "خلفية الكلمة") + "</div>", h.share.show) +
       acc("cart", "🛒 السلة", F.c("header.cart.show", "إظهار زر السلة") + '<div class="ca-sub2">أيقونة السلة</div>' + cartPick(), '<div class="grid2">' + F.col("header.cart.bg", "الخلفية") + F.col("header.cart.color", "لون الأيقونة") + "</div>", h.cart.show) +
-      socialCard();
+      socialCard("header");
   }
   function footerTab() {
     const f = S.cfg.footer;
@@ -114,7 +113,7 @@ window.ChromeAdmin = (function () {
       '<div class="card">' + cardH("🔗 روابط سريعة") + F.c("footer.links.show", "إظهار") + F.t("footer.links.title", "العنوان") + F.c("footer.links.tracking", "إضافة «تتبّع طلبك» و«حسابي»") + linkList("footer.links.items", "رابط") + "</div>" +
       '<div class="card">' + cardH("📞 تواصل معنا") + F.c("footer.contact.show", "إظهار") + F.t("footer.contact.title", "العنوان") + F.c("footer.contact.wa", "إظهار رقم واتساب المتجر") + '<div class="grid2">' + F.t("footer.contact.phone", "هاتف إضافي", { ltr: 1, ph: "0555 00 00 00" }) + F.t("footer.contact.email", "البريد الإلكتروني", { ltr: 1 }) + F.t("footer.contact.hours", "ساعات العمل") + F.t("footer.contact.address", "العنوان / الولاية") + "</div></div>" +
       '<div class="card">' + cardH("🔗 أيقونات التواصل") + F.c("footer.social.show", "إظهار") + F.t("footer.social.title", "العنوان") + socialStyle("footer") + "</div>" +
-      socialCard() +
+      socialCard("footer") +
       '<div class="card">' + cardH("📝 قسم نصي حرّ") + F.c("footer.custom.show", "إظهار") + F.t("footer.custom.title", "العنوان") + F.a("footer.custom.text", "النص (**غامق**، سطر جديد = Enter)") + "</div>" +
       '<div class="card">' + cardH("📤 المشاركة وحقوق النشر") + '<div class="ca-chk">' + F.c("footer.share.show", "زر «شارك الموقع»") + F.c("footer.copy.show", "إظهار سطر الحقوق") + "</div>" + F.t("footer.copy.text", "نص الحقوق") + '<div class="hint">يفتح الزر نافذة المشاركة الأصلية في جهاز الزائر.</div></div>';
   }
