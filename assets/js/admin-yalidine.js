@@ -68,7 +68,7 @@ const AdminYd = (() => {
     const chips = keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr><td class="m">' + esc(r.tracking) + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td>' + esc(r.name) + '</td><td class="m">' + esc(r.phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td></tr>';
+      return '<tr><td class="m">' + esc(r.tracking) + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(r.name) + '</td><td class="m">' + esc(r.phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td></tr>';
     }).join("") || '<tr><td colspan="8" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
