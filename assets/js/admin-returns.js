@@ -41,7 +41,7 @@ const AdminReturns = (() => {
       S.localOnly=false; S.saving=false; return true;
     } catch (e) { S.saving=false; S.localOnly=hasBackup; S.err="تعذّر حفظ المرتجعات على الخادم"+(hasBackup?"؛ حُفظت محلياً في هذا المتصفح":"، ولم تتوفر نسخة محلية")+": " + (e.message || ""); return hasBackup; }
   }
-  function deliveredAt(o) { return o && (o.deliveredAt || o.deliveryDate || o.delivered_at || o.dateLivraison || o.date_livraison || o.date); }
+  function deliveredAt(o) { return o && ((A().deliveredOf && A().deliveredOf(o)) || o.deliveredAt || o.deliveryDate || o.delivered_at || o.dateLivraison || o.date_livraison || o.date); }
   function withinReturnWindow(o) { const raw=S.order&&orderId(S.order)===orderId(o)&&S.deliveryDate?S.deliveryDate:deliveredAt(o), stamp=/^\d{4}-\d{2}-\d{2}$/.test(String(raw||""))?String(raw)+"T00:00:00":raw, t=new Date(stamp).getTime(), days=Math.max(1,Number(S.windowDays)||14); return Number.isFinite(t) && Date.now()>=t && Date.now()-t<days*86400000; }
   function orders() { return (A().orders || []).filter(o=>o && String(o.status || "").toLowerCase()==="livree"); }
   function orderLines(o) {
@@ -155,6 +155,8 @@ const AdminReturns = (() => {
     Admin.tab=function(t,btn){const result=original.call(this,t,btn);const el=$("tab-returns");if(el)el.classList.toggle("hidden",t!=="returns");if(t==="returns")AdminReturns.render();return result;};
     Admin._returnsTabWrapped=true;
   });
-  return { render };
+  /* واجهة للمالية/التقارير (v1.78): المبالغ المستردة المؤكَّدة (حالة «مستردّ المبلغ» + فرق الاستبدال السالب) منذ تاريخ، وتحميل السجل عند الحاجة */
+  function refundsSince(since, until) { return S.items.filter(r => { const t = new Date(r.receivedAt || r.date).getTime(); return (!since || t >= since) && (!until || t < until); }).reduce((n, r) => n + (r.status === "refunded" ? Math.max(0, Number(r.amount) || 0) : r.status === "exchanged" ? Math.max(0, -(Number(r.amount) || 0)) : 0), 0); }
+  return { render, ensure: load, refunds: refundsSince, items: () => S.items, loaded: () => S.loaded };
 })();
 
