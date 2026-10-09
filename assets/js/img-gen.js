@@ -5,7 +5,7 @@ const ImgGen = (() => {
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const toast = m => { try { (typeof toast2 === "function" ? toast2 : window.toast)(m); } catch (e) { } };
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } } };
-  const KEY = "alyssum_gp_gkey";
+  const KEY = "alyssum_gp_gkey", FALKEY = "alyssum_fal_key";
   /* ── المقاسات: [المعرّف، التسمية، العرض، الارتفاع] مجمّعة بالمنصة ── */
   const SIZES = [
     ["المتجر", [["shop", "صورة منتج للمتجر (مربّعة)", 1000, 1000], ["shop43", "صورة منتج 4:5", 1000, 1250]]],
@@ -27,7 +27,7 @@ const ImgGen = (() => {
   const S = { mode: "product", tab: "make", prod: null, srcBlob: null, srcName: "", res: null, resBlob: null, busy: false, models: null, lastModel: "" };
   const cfg = {
     budget: () => Number(LS.get("alyssum_ig_budget", "3")) || 0, spent: () => Number(LS.get("alyssum_ig_spent", "0")) || 0, count: () => Number(LS.get("alyssum_ig_count", "0")) || 0,
-    model: () => LS.get("alyssum_ig_model", "auto"), lang: () => LS.get("alyssum_ig_lang", "ar"), fmt: () => LS.get("alyssum_ig_fmt", "webp")
+    model: () => LS.get("alyssum_ig_model", "auto"), provider: () => LS.get("alyssum_ig_provider", "gemini") === "fal" ? "fal" : "gemini", falModel: () => (LS.get("alyssum_ig_falmodel", "") || "fal-ai/nano-banana/edit").trim(), falPrice: () => Number(LS.get("alyssum_ig_falprice", "0.04")) || 0.04, lang: () => LS.get("alyssum_ig_lang", "ar"), fmt: () => LS.get("alyssum_ig_fmt", "webp")
   };
   const money = n => "$" + (Math.round(n * 1000) / 1000).toFixed(3);
   const LANGS = { ar: ["العربية", "Arabic (right-to-left, perfectly shaped connected letters)"], fr: ["الفرنسية", "French"], en: ["الإنجليزية", "English"] };
@@ -131,6 +131,17 @@ const ImgGen = (() => {
     }
     throw last || new Error("تعذّر توليد الصورة");
   }
+  /* fal.ai: تعديل صورة بمرجع (REST مباشر بمفتاح المتصفح). نموذج قابل للضبط؛ kontext يقبل aspect_ratio */
+  async function callFal(key, prompt, dataUrl, ar) {
+    const m = cfg.falModel().replace(/^\/+|\/+$/g, ""), body = { prompt, image_urls: [dataUrl], num_images: 1, output_format: "png" };
+    if (/kontext/i.test(m)) { body.image_url = dataUrl; body.aspect_ratio = ar; delete body.num_images; }
+    const r = await fetch("https://fal.run/" + m, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Key " + key }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { const d = j.detail; const e = new Error("fal.ai " + r.status + ": " + (typeof d === "string" ? d : Array.isArray(d) && d[0] ? (d[0].msg || JSON.stringify(d[0])) : (j.message || "خطأ")) + (r.status === 401 || r.status === 403 ? " — تحقق من مفتاح fal" : "")); e.status = r.status; throw e; }
+    const u = (((j.images || [])[0]) || j.image || {}).url; if (!u) throw new Error("لم يُرجع fal صورة — لم تُحتسب تكلفة غالباً.");
+    const img = await fetch(u); if (!img.ok) throw new Error("تعذّر تنزيل الصورة الناتجة من fal");
+    return { blob: await img.blob(), model: "fal:" + m, cost: cfg.falPrice() };
+  }
   /* قصّ/تكبير إلى المقاس بالبكسل (cover) */
   async function fit(blob, W, H) {
     const u = URL.createObjectURL(blob), im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
@@ -181,7 +192,10 @@ const ImgGen = (() => {
     paintPrev(); estimate();
   }
   function settingsHtml() {
-    return `<div class="ap-sec"><b>مفتاح Gemini</b><div class="hint">يُحفظ في هذا المتصفح فقط ولا يُرسل إلا إلى Google. أنشئه من aistudio.google.com/apikey (مشروع جديد بلا قيود). نماذج الصور تتطلب تفعيل الفوترة بحدّ إنفاق صغير.</div>
+    const fal = cfg.provider() === "fal";
+    return `<div class="ap-sec"><b>مزوّد التوليد</b><div class="hint">اختر من يولّد الصور: Gemini (Google) أو fal.ai (نماذج تعديل بصورة مرجعية). كل مزوّد بمفتاحه الخاص المحفوظ في هذا المتصفح فقط.</div><div class="tl-s"><div class="tl-r"><span>المزوّد</span><select onchange="ImgGen.set('provider',this.value);ImgGen.tab('set')"><option value="gemini"${fal ? "" : " selected"}>Gemini</option><option value="fal"${fal ? " selected" : ""}>fal.ai</option></select></div>
+${fal ? `<div class="tl-r"><span>مفتاح fal.ai</span><input id="ig-fkey" type="password" autocomplete="off" placeholder="key_id:key_secret" value="${esc(LS.get(FALKEY, ""))}" onchange="ImgGen.saveFalKey()"></div><div class="tl-r"><span>معرّف النموذج</span><input dir="ltr" value="${esc(cfg.falModel())}" placeholder="fal-ai/nano-banana/edit" onchange="ImgGen.set('falmodel',this.value.trim())"></div><div class="tl-r"><span>تكلفة الصورة التقريبية (دولار)</span><input type="number" step="0.005" min="0" value="${cfg.falPrice()}" onchange="ImgGen.set('falprice',this.value)"></div><div class="hint">أنشئ المفتاح من fal.ai/dashboard/keys. النماذج المقترحة: <code>fal-ai/nano-banana/edit</code> (افتراضي) أو <code>fal-ai/flux-pro/kontext</code>. السعر يدوي لأن fal يسعّر حسب النموذج؛ راجع الرصيد الفعلي في لوحتهم. إن حجب المتصفح الطلب (CORS) فأخبرنا لنضيف وسيطاً.</div>` : ""}</div></div>
+<div class="ap-sec"${fal ? ' style="display:none"' : ""}><b>مفتاح Gemini</b><div class="hint">يُحفظ في هذا المتصفح فقط ولا يُرسل إلا إلى Google. أنشئه من aistudio.google.com/apikey (مشروع جديد بلا قيود). نماذج الصور تتطلب تفعيل الفوترة بحدّ إنفاق صغير.</div>
 <div class="tl-s"><input id="ig-key" type="password" autocomplete="off" placeholder="AIza…" value="${esc(LS.get(KEY, ""))}" onchange="ImgGen.saveKey()"><div class="action-bar"><button type="button" class="small" onclick="ImgGen.test()">اختبار المفتاح</button></div><div class="hint" id="ig-tmsg"></div></div></div>
 <div class="ap-sec"><b>التكلفة</b><div class="tl-s">
 <div class="tl-r"><span>حدّ الإنفاق (دولار) — يتوقف التوليد عند بلوغه (0 = بلا حدّ)</span><input type="number" step="0.5" min="0" value="${cfg.budget()}" onchange="ImgGen.set('budget',this.value)"></div>
@@ -195,7 +209,7 @@ const ImgGen = (() => {
     const u = URL.createObjectURL(S.srcBlob); p.innerHTML = `<img src="${u}" alt=""><small>${esc(S.srcName || "")}</small>`;
   }
   function estimate() {
-    const el = $("ig-est"); if (!el) return; const m = cfg.model(), pr = m === "auto" ? PRICE[PREF[0]] : priceOf(m), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
+    const el = $("ig-est"); if (!el) return; const m = cfg.model(), pr = cfg.provider() === "fal" ? cfg.falPrice() : m === "auto" ? PRICE[PREF[0]] : priceOf(m), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     el.textContent = "التكلفة التقريبية: " + money(pr) + " للصورة" + (isFinite(left) ? " · المتبقي من حدّك " + money(Math.max(0, left)) : "");
   }
   async function loadFrom(slug) {
@@ -216,23 +230,23 @@ const ImgGen = (() => {
   function readForm() { ["name", "desc", "txt"].forEach(k => { const e = $("ig-" + k); if (e) LS.set("alyssum_ig_" + k, e.value); }); }
 
   async function generate() {
-    if (S.busy) return; const msg = $("ig-msg"), key = getKey() || LS.get(KEY, "");
+    if (S.busy) return; const msg = $("ig-msg"), fal = cfg.provider() === "fal", key = fal ? LS.get(FALKEY, "") : (getKey() || LS.get(KEY, ""));
     const fs = formSize(), sz = fs, W = fs.W, H = fs.H;
-    if (!key) { S.tab = "set"; render(); toast("أدخل مفتاح Gemini أولاً"); return; }
+    if (!key) { S.tab = "set"; render(); toast(fal ? "أدخل مفتاح fal.ai أولاً" : "أدخل مفتاح Gemini أولاً"); return; }
     if (!S.srcBlob) { msg.textContent = "❌ اختر صورة المنتج أولاً (رفع أو من منتجاتك)"; return; }
     const name = $("ig-name").value.trim(), desc = $("ig-desc").value.trim(); if (!name && !desc) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه"; return; }
     const tmode = $("ig-txtm").value, txt = tmode !== "none" ? ($("ig-txt").value || "").trim() : ""; if (tmode !== "none" && !txt) { msg.textContent = "❌ اكتب النص المطلوب أو اختر «بلا نص»"; return; }
     readForm();
-    const models = cfg.model(), est = models === "auto" ? PRICE[PREF[0]] : priceOf(models), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
+    const models = cfg.model(), est = fal ? cfg.falPrice() : models === "auto" ? PRICE[PREF[0]] : priceOf(models), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { msg.textContent = "⛔ بلغتَ حدّ الإنفاق (" + money(cfg.budget()) + ") — ارفعه من الإعدادات أو صفّر العدّاد."; return; }
     if (!confirm("توليد صورة واحدة بتكلفة تقريبية " + money(est) + "\nالمقاس: " + W + "×" + H + " — " + (S.mode === "product" ? "صورة منتج" : "صورة إشهارية") + "\nمتابعة؟")) return;
     S.busy = true; $("ig-go").disabled = true; msg.textContent = "⏳ جارِ التوليد (قد يستغرق 10–40 ثانية)…";
     try {
       const ar = nearAr(W, H), prompt = buildPrompt({ mode: S.mode, name, desc, goal: ($("ig-goal") || {}).value ? $("ig-goal").value.trim() : "", text: txt, textMode: tmode, lang: $("ig-lang") ? $("ig-lang").value : "ar", w: W, h: H, ar, platform: sz.label });
       S.lastPrompt = prompt; const small = await shrink(S.srcBlob, 1400);
-      const out = await callModel(key, [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: await b64(small) } }], ar);
+      const out = fal ? await callFal(key, prompt, "data:image/jpeg;base64," + await b64(small), ar) : await callModel(key, [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: await b64(small) } }], ar);
       const cv = await fit(out.blob, W, H); S.res = cv; S.lastModel = out.model; S.resName = (name || "image").slice(0, 40); S.meta = { W, H, id: fs.id, label: fs.label, textMode: tmode, text: txt, lang: $("ig-lang") ? $("ig-lang").value : "ar", name };
-      LS.set("alyssum_ig_spent", String(cfg.spent() + priceOf(out.model))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
+      LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
       showRes(cv, W, H); msg.textContent = "✅ تمّ بنموذج " + out.model + " — " + W + "×" + H + "px"; const cb = document.querySelector(".ig-cost"); if (cb) cb.outerHTML = costBar(); estimate();
     } catch (e) { msg.textContent = "❌ " + e.message; } finally { S.busy = false; const g = $("ig-go"); if (g) g.disabled = false; }
   }
@@ -347,6 +361,7 @@ const ImgGen = (() => {
     pickProd: loadFrom, useImg, size(id) { LS.set("alyssum_ig_size_" + S.mode, id); const s = sizeOf(id); $("ig-cus").style.display = id === "custom" ? "flex" : "none"; const w = id === "custom" ? Number($("ig-w").value) : s.w, h = id === "custom" ? Number($("ig-h").value) : s.h; $("ig-sz").textContent = w + "×" + h + "px — النسبة المُرسلة للنموذج " + nearAr(w, h) + " ثم تُقصّ بدقة"; },
     cus() { LS.set("alyssum_ig_w", $("ig-w").value); LS.set("alyssum_ig_h", $("ig-h").value); api.size("custom"); },
     txtm(v) { LS.set("alyssum_ig_txtm", v); $("ig-txtbox").style.display = v === "none" ? "none" : "block"; }, lang(v) { LS.set("alyssum_ig_lang", v); },
+    saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) LS.set(FALKEY, k.trim()); toast("حُفظ مفتاح fal في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) LS.set(KEY, k); toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); estimate(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
     generate, toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
