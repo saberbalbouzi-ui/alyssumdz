@@ -49,7 +49,10 @@ const AdminNav = (() => {
   /* ══ صفحة «قوالب» في تبويب المظهر: تحميل قالب / ناسخ القوالب / إعدادات ══ */
   const TPL = [{ id: "focus-honey", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي." }];
   /* ══ مكتبة القوالب (نافذة): نماذج اتصال / نماذج الطلبات / صفحات كاملة، مع تصفية حسب الميدان ══ */
-  const LCATS = [["all", "الكل"], ["contact", "نماذج اتصال"], ["order", "نماذج الطلبات"], ["page", "صفحات كاملة"], ["store", "صفحات متاجر"]];
+  const LCATS = [["all", "الكل"], ["store", "قوالب كاملة (متجر)"], ["page", "صفحات كاملة"], ["contact", "نماذج اتصال"], ["order", "نماذج الطلبات"]];
+  /* نوع القالب: كامل = هوية متجر كاملة (رئيسية + فئات + منتج + هيدر/فوتر) كقوالب OceanWP؛ صفحات = قالب لصفحة أو نموذج فقط */
+  const LTYPES = [["all", "كل الأنواع"], ["full", "قوالب كاملة (رئيسية + فئات + منتجات)"], ["pages", "قوالب صفحات فقط"]];
+  const isFull = x => x.cat === "store";
   const cf = (set, title, desc) => () => { const m = PB.mkW; return PB.mkS([PB.mkC([m("contact", Object.assign({ title, desc }, set))])], { pad: { d: [40, 20, 40, 20], m: [28, 16, 28, 16] } }); };
   const dflt = ks => () => { const L = ks.map(k => PB.DFLT.find(x => x.k === k).f()); return L; };
   const LIB = [
@@ -83,15 +86,15 @@ const AdminNav = (() => {
   }
   const myAsLib = it => ({ id: "my:" + it.id, my: true, cat: "page", fld: "قوالبي", n: it.n, d: (it.src === "import" ? "محمَّل من ملف" : "منشأ من صفحة") + " · " + (it.date || "") + " · " + (((it.page && it.page.sections) || []).length) + " قسم", file: null, page: it.page });
   function tplFind(id) { if (String(id).startsWith("my:")) { const it = (MY.items || []).find(q => "my:" + q.id === id); return it ? myAsLib(it) : null; } return libAll().find(q => q.id === id); }
-  const LS = { cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.76.1";
+  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.77.0";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
-  async function libOpen(view) { await libLoad(); await myLoad(); LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
+  async function libOpen(view) { await libLoad(); await myLoad(); LS.type = "all"; LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
   function libClose() { const m = $("tl-lib"); if (m) m.style.display = "none"; }
   function libSet(k, v) { LS[k] = v; if (k === "q") { libDraw(true); return; } libDraw(); }
   const TACT = id => `<button type="button" class="small pri" onclick="AdminNav.tplPreview('${id}')">👁 معاينة حقيقية</button><button type="button" class="small" onclick="AdminNav.tplEdit('${id}')">✏️ تعديل القالب</button><button type="button" class="small gold" onclick="AdminNav.tplInstall('${id}')">📌 تثبيت القالب</button>`;
   function libCards(L, mine) {
-    return L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c">${mine ? `<div class="tl-th none-th">🗂</div>` : `<div class="tl-th" onclick="AdminNav.libView('${x.id}')" title="معاينة كبيرة"><img loading="lazy" alt="" src="assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}" onerror="this.parentNode.classList.add('none')"><span>معاينة كبيرة</span></div>`}<div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div>${mine ? "" : `<div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div>`}<div class="tl-actions">${TACT(x.id)}</div>${mine ? `<div class="tl-act" style="margin-top:.4rem"><button type="button" class="small gray" onclick="AdminNav.myDl('${x.id.slice(3)}')">⬇ تنزيل JSON</button><button type="button" class="small red" onclick="AdminNav.myDel('${x.id.slice(3)}')">🗑 حذف</button></div>` : ""}</div>`).join("")}</div>` : "";
+    return L.length ? `<div class="tl-g">${L.map(x => `<div class="tl-c">${mine ? `<div class="tl-th none-th">🗂</div>` : `<div class="tl-th" onclick="AdminNav.libView('${x.id}')" title="معاينة كبيرة"><img loading="lazy" alt="" src="assets/pages/templates/thumbs/${esc(x.id)}.jpg?v=${V}" onerror="this.parentNode.classList.add('none')"><span>معاينة كبيرة</span></div>`}<div class="ap-h"><b>${esc(x.n)}</b><span class="ap-s on">${esc(x.fld)}</span></div>${!mine && isFull(x) ? '<div class="tl-adv">قالب كامل · رئيسية + فئات + منتج</div>' : ""}${x.adv ? '<div class="tl-adv">متطوّر · تأثيرات قابلة للتعديل</div>' : ""}<div class="hint" style="margin:.3rem 0 .6rem">${esc(x.d)}</div>${mine ? "" : `<div class="hint" style="margin:0 0 .5rem">${esc((LCATS.find(c => c[0] === x.cat) || [])[1] || "")}</div>`}<div class="tl-actions">${TACT(x.id)}</div>${!mine && isFull(x) && x.file ? `<div class="tl-act" style="margin-top:.4rem"><button type="button" class="small gray" onclick="AdminNav.tplPreview('${x.id}')">🏠 الرئيسية</button><button type="button" class="small gray" onclick="AdminNav.tplCatPreview('${x.id}')">🗂 صفحة فئة</button><button type="button" class="small gray" onclick="AdminNav.tplProductPreview('${x.file}')">🛍 صفحة منتج</button></div>` : ""}${mine ? `<div class="tl-act" style="margin-top:.4rem"><button type="button" class="small gray" onclick="AdminNav.myDl('${x.id.slice(3)}')">⬇ تنزيل JSON</button><button type="button" class="small red" onclick="AdminNav.myDel('${x.id.slice(3)}')">🗑 حذف</button></div>` : ""}</div>`).join("")}</div>` : "";
   }
   function libDraw(keepFocus) {
     const m = $("tl-lib"); if (!m) return; const v = LS.v, MYL = (MY.items || []).map(myAsLib);
@@ -99,9 +102,9 @@ const AdminNav = (() => {
     let body = "";
     if (v === "lib") {
       const ALL = libAll(), flds = [...new Set(ALL.map(x => x.fld))], q = LS.q.trim().toLowerCase();
-      const L = ALL.filter(x => (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld) && (!q || (x.n + " " + x.d + " " + x.fld).toLowerCase().includes(q)));
+      const L = ALL.filter(x => (LS.type === "all" || (LS.type === "full") === isFull(x)) && (LS.cat === "all" || x.cat === LS.cat) && (LS.fld === "all" || x.fld === LS.fld) && (!q || (x.n + " " + x.d + " " + x.fld).toLowerCase().includes(q)));
       const sel = (k, opts) => `<select onchange="AdminNav.libSet('${k}',this.value)">${opts.map(o => `<option value="${esc(o[0])}"${LS[k] === o[0] ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`;
-      body = `<div class="tl-fb"><label>القسم ${sel("cat", LCATS)}</label><label>الميدان ${sel("fld", [["all", "عرض الكل"]].concat(flds.map(f => [f, f])))}</label><input id="tl-q" type="search" placeholder="🔍 بحث في القوالب" value="${esc(LS.q)}" oninput="AdminNav.libSet('q',this.value)"><span class="hint" style="margin:0">${L.length} قالب</span></div><div class="tl-body">${L.length ? libCards(L, false) : `<div class="hint">لا قوالب مطابقة.</div>`}</div>`;
+      body = `<div class="tl-fb"><label>النوع ${sel("type", LTYPES)}</label><label>القسم ${sel("cat", LCATS)}</label><label>الميدان ${sel("fld", [["all", "عرض الكل"]].concat(flds.map(f => [f, f])))}</label><input id="tl-q" type="search" placeholder="🔍 بحث في القوالب" value="${esc(LS.q)}" oninput="AdminNav.libSet('q',this.value)"><span class="hint" style="margin:0">${L.length} قالب</span></div><div class="tl-body">${L.length ? libCards(L, false) : `<div class="hint">لا قوالب مطابقة.</div>`}</div>`;
     } else if (v === "mine") {
       body = `<div class="tl-body">${MYL.length ? libCards(MYL, true) : `<div class="ap-sec"><b>لا قوالب بعد</b><div class="hint">قوالبك المحمَّلة من ملف أو المنشأة من صفحاتك تظهر هنا. ابدأ من «تحميل قالب».</div><button class="small gold" onclick="AdminNav.libSet('v','load')">+ تحميل قالب</button></div>`}</div>`;
     } else {
@@ -181,12 +184,31 @@ const AdminNav = (() => {
     if (!confirm("تثبيت قالب «" + x.n + "» على الصفحة الرئيسية:\n\n• تُستبدل أقسام الرئيسية بأقسام القالب (هيدر/محتوى/فوتر) ويُربط بمنتجاتك وفئاتك\n• يُفتح في المطوّر؛ لا يُنشر شيء إلا بعد «حفظ ونشر» (وتُحفظ نسخة من الرئيسية الحالية للاسترجاع)\n\nمتابعة؟")) return;
     try {
       libClose(); toast("⏳ جارِ تثبيت القالب…"); if (x.alyssum) { try { ALYD = await alyDeal(); } catch (_) { ALYD = null; } }
-      const page = alyLocalize(await tplPageOf(x));
+      let TP = null; if (!x.alyssum && !x.my && x.file) { try { TP = await tplProdLoad(x.file); } catch (_) { } }
+      const page = alyLocalize(await tplPageOf(x), { id: x.alyssum ? "alyssum" : (x.file || "tpl"), txt: TP && TP.txt });
       await PBConvert.edit("home"); const P = PBApp.E && PBApp.E.page; if (!P) throw new Error("تعذّر فتح الرئيسية في المطوّر");
-      P.sections = page.sections; P.tplCss = page.css || ""; P.demo = !!page.demo; P.title = "الصفحة الرئيسية";
+      let shopCss = ""; if (!x.alyssum && !x.my) { try { shopCss = (await tplProdLoad(x.file)).shop || ""; } catch (_) { } }
+      P.sections = page.sections; P.tplCss = (page.css || "") + (shopCss ? "\n/* صفحة المتجر والفئات وحسابي لهذا القالب */\n" + shopCss : ""); P.tplSkin = x.alyssum ? "alyssum" : (x.file || ""); P.demo = !!page.demo; P.title = "الصفحة الرئيسية";
       PBApp.E.nextLabel = "تثبيت قالب " + x.n; PBApp.E.dirty = true; PBApp.commitAfter(P.sections[0].id);
       toast("✅ ثُبّت القالب — راجعه ثم «حفظ ونشر»");
     } catch (e) { toast("تعذّر التثبيت: " + e.message); }
+  }
+  /* معاينة صفحة فئة/متجر بهوية القالب نفسه (هيدر وفوتر القالب + شرائح فئاته التجريبية + منتجاته التجريبية) — بلا أي ارتباط بأليسوم أو بمنتجات متجرك */
+  async function tplCatPreview(id) {
+    const x = tplFind(id); if (!x || !x.file) return;
+    try {
+      hideView(); libClose(); toast("⏳ جارِ تحضير صفحة الفئة…");
+      const T = await tplProdLoad(x.file), home = await tplPageOf(x), cats = [], prods = []; let pw = null;
+      alyWalk({ cols: [], widgets: [], free: [], sections: home.sections }, () => { }); home.sections.forEach(sc => alyWalk(sc, n => { if (n.type === "shopcats" && n.set && Array.isArray(n.set.items)) n.set.items.forEach(i => { if (i.dl) cats.push(i.dl); }); if (n.type === "products" && !pw) pw = n; }));
+      const clone = o => JSON.parse(JSON.stringify(o)), pg = PB.newPage(x.n + " — صفحة فئة", "");
+      const top = clone(T.top), foot = clone(T.foot); top.forEach(sc => { sc.grp = "top"; }); foot.grp = "bot";
+      const chips = '<div class="shop-page"><div class="sec-title"><span class="kicker">تسوّق بسهولة</span><h1>' + esc(cats[0] || "المتجر") + '</h1><p>كل منتجات هذا التصنيف</p></div><div id="shop-chips"><a class="chip active">الكل</a>' + cats.map((c, i) => '<a class="chip' + (i === 0 ? "" : "") + '">' + esc(c) + '</a>').join("") + '</div></div>';
+      const secs = [PB.mkS([PB.mkC([PB.mkW("html", { code: chips })])], { cw: { d: 1180 }, pad: { d: [24, 20, 4, 20], m: [16, 14, 4, 14] } })];
+      if (pw) { const w = clone(pw); w.set.slider = false; w.set.limit = "12"; secs.push(PB.mkS([PB.mkC([w])], { cw: { d: 1240 }, pad: { d: [8, 20, 40, 20], m: [8, 14, 30, 14] } })); }
+      pg.sections = top.concat(secs, [foot]); pg.bg = home.bg || pg.bg; if (home.ff) pg.ff = home.ff; pg.css = (home.css || "") + "\n" + (T.shop || ""); pg.demo = true; pg.header = false; pg.footer = false;
+      const dir = location.href.replace(/[^/]*$/, ""), html = PB.fullHtml(PB.migrate(pg), Object.assign({ base: "", baseHref: dir, demo: true }, PBApp.siteCtx()));
+      SitePreview.openHtml(html, { title: "صفحة فئة — " + x.n, edit: () => tplEdit(id), editLabel: "✏️ تعديل القالب", install: () => tplInstall(id), installLabel: "📌 تثبيت القالب" });
+    } catch (e) { toast("تعذّرت معاينة الفئة: " + e.message); }
   }
   function libView(id) {
     const x = tplFind(id); if (!x) return; let v = $("tl-view");
@@ -211,7 +233,8 @@ const AdminNav = (() => {
     for (const p of L.slice(0, 12)) for (const im of [p.cover].concat(p.images || []).filter(Boolean).slice(0, 4)) if (await aImgOk(im)) return { p, img: im, d: disc(p) };
     return null;
   }
-  function alyLocalize(page) {
+  function alyLocalize(page, opt) {
+    opt = opt || {}; const isAly = !opt.id || opt.id === "alyssum";
     const P = aProds(), best = P.find(p => (p.tags || []).includes("best") && coverOf(p)) || P.find(p => coverOf(p)), other = P.find(p => p !== best && (p.tags || []).includes("new") && coverOf(p)) || P.find(p => p !== best && coverOf(p)) || best;
     const CT = (typeof Admin !== "undefined" && Admin.categories && Object.keys(Admin.categories).length) ? Admin.categories : (typeof CATEGORIES !== "undefined" ? CATEGORIES : {});
     const nm = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "", latin = /^[A-Za-z0-9 _.-]+$/.test(nm);
@@ -237,7 +260,7 @@ const AdminNav = (() => {
     if (nm) page.sections.forEach(sec => alyWalk(sec, n => { if (n.set) n.set = rep(n.set); }));
     /* كل المنتجات مع شرائح الفئات: يلزمها #chips و#grid ليعمل سكربت الرئيسية وبطاقات «تسوّق حسب الفئة» (goToCategory) */
     const bi = page.sections.findIndex(sec => sec.cols && sec.cols.some(c => c.widgets.some(w => w.type === "products")));
-    const cat = PB.mkS([PB.mkC([PB.mkW("heading", { text: "كل منتجاتنا الطبيعية", tag: "h2", fs: { d: 30, m: 24 }, fw: "900", ta: { d: "start" }, color: "#ffffff" }), PB.mkW("html", { code: '<div class="chips" id="chips"></div><div class="grid aly-grid" id="grid"></div>' })])], { cw: { d: 1240 }, cid: "products", pad: { d: [10, 20, 30, 20], m: [6, 16, 20, 16] } });
+    const cat = PB.mkS([PB.mkC([PB.mkW("heading", { text: isAly ? "كل منتجاتنا الطبيعية" : "كل منتجاتنا", tag: "h2", fs: { d: 30, m: 24 }, fw: "900", ta: { d: "start" }, color: isAly ? "#ffffff" : (opt.txt || "#111111") }), PB.mkW("html", { code: '<div class="chips" id="chips"></div><div class="grid' + (isAly ? " aly-grid" : "") + '" id="grid"></div>' })])], { cw: { d: 1240 }, cid: "products", pad: { d: [10, 20, 30, 20], m: [6, 16, 20, 16] } });
     cat.grp = "main"; page.sections.splice(bi >= 0 ? bi + 1 : page.sections.length - 1, 0, cat);
     return page;
   }
@@ -536,5 +559,5 @@ const AdminNav = (() => {
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

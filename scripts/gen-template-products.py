@@ -78,6 +78,23 @@ def _css(P):
     o.append(".tp-buybar{display:none}@media(max-width:767px){.tp-buybar{position:fixed;%s;z-index:9990;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:%s;border:%s solid %s;box-shadow:0 -8px 30px rgba(0,0,0,.25);transition:transform .35s,opacity .35s}.tp-buybar.off{transform:translateY(140%%);opacity:0;pointer-events:none}.tp-buybar .bb-p small{display:block;color:%s;font-size:12px}.tp-buybar .bb-p b{color:%s;font-size:21px}.tp-buybar .bb-btn{flex:none;padding:13px 26px;border-radius:%spx;font-weight:900;font-size:16px;text-decoration:none;color:%s!important;background:%s;%s}body{padding-bottom:84px}.pb-colin:has(#gmain){padding:12px!important}}" % (bbp, P["cardbg"] if P["dark"] or cs != "solid" else "#ffffff", bw, P["line"], m, a, max(r - 4, 8), on, btn, btnex))
     return "\n".join(o)
 
+def _shopcss(P):
+    """CSS صفحة المتجر/الفئات (shop.html وaccount.html) بألوان القالب نفسه — لا علاقة له بأليسوم. يُلحق بـ tplCss الرئيسية فتنقله build-shop-pages.py وShopPages (المتصفح) إلى صفحتي المتجر وحسابي."""
+    t, m, a, a2, on, r = P["txt"], P["mut"], P["acc"], P["acc2"], P["onacc"], P["rad"]
+    cs = P["card"]; bw = "3px" if cs == "hard" else "1px"
+    bl = "backdrop-filter:blur(14px);" if cs == "glass" else ""
+    btn = {"grad": "linear-gradient(180deg,%s,%s)" % (a2 if P["dark"] else a, a), "flat": a, "hard": a}[P["btn"]]
+    sh = P["shadow"] if cs != "glass" else "%s,inset 0 1px 0 rgba(255,255,255,.14)" % P["shadow"]
+    o = []
+    o.append("body{background:%s;color:%s}" % (P["bg"], t))
+    o.append(".shop-page{color:%s}.shop-page .sec-title{padding:38px 20px 30px;margin:0 auto 22px;border-radius:%spx;background:linear-gradient(135deg,%s22,%s22);border:%s solid %s;text-align:center}" % (t, int(r * 1.2), a, a2, bw, P["line"]))
+    o.append(".shop-page .sec-title h1{color:%s}.shop-page .sec-title p{color:%s}.shop-page .sec-title .kicker{color:%s;font-weight:800}" % (t, m, a))
+    o.append("#shop-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:24px}#shop-chips .chip{background:%s!important;border:%s solid %s!important;color:%s!important;border-radius:%s;padding:.5rem 1.2rem;font-weight:800;transition:.2s}#shop-chips .chip:hover{transform:translateY(-2px);border-color:%s!important}#shop-chips .chip.active{background:%s!important;border-color:%s!important;color:%s!important}" % (P["cardbg"], bw, P["line"], t, "999px" if r > 6 else "0", a, a, a, on))
+    o.append(".shop-page .grid .card{background:%s!important;border:%s solid %s!important;border-radius:%spx!important;box-shadow:%s!important;color:%s!important;overflow:hidden;%s}.shop-page .grid .card .thumb{background:transparent}.shop-page .grid .card h3{color:%s!important}.shop-page .grid .card .price{color:%s!important}.shop-page .grid .card .old,.shop-page .grid .card .stars small{color:%s!important}" % (P["cardbg"], bw, P["line"], r, sh, t, bl, t, a, m))
+    o.append(".shop-page .grid .card .cta{background:%s!important;color:%s!important;border:%s;border-radius:%spx!important;font-weight:900;box-shadow:none}.shop-page .grid .card:hover{transform:translateY(-4px)}.shop-page .grid .card:hover .cta{filter:brightness(1.08)}" % (btn, on, "3px solid #111" if P["btn"] == "hard" else "0", max(r - 6, 0)))
+    o.append("#acct-box{background:%s!important;border:%s solid %s!important;border-radius:%spx!important;color:%s!important;%s}#acct-box input,#acct-box select{background:%s!important;color:%s!important;border:1px solid %s!important;border-radius:%spx}#acct-box h2,#acct-box h3,#acct-box label,#acct-box b{color:%s!important}#acct-box p,#acct-box small{color:%s!important}#acct-box button{background:%s!important;color:%s!important;border:0!important;border-radius:%spx}" % (P["cardbg"], bw, P["line"], r, t, bl, P["fld"], P["fldtxt"], P["line"], max(r - 6, 0), t, m, btn, on, max(r - 6, 0)))
+    return "\n".join(o)
+
 _BUY = '<div class="tp-buybar" dir="rtl"><div class="bb-p"><small>السعر</small><b id="bb-price"></b></div><a class="bb-btn" href="#order-form">اطلب الآن</a></div><script>(function(){var bar=document.querySelector(".tp-buybar");if(!bar)return;var pe=function(){return document.querySelector(".price-now,#pprice")},o=document.getElementById("order-form");function sync(){var e=pe(),b=document.getElementById("bb-price");if(e&&b)b.textContent=e.textContent.trim()}sync();setInterval(sync,1500);if(o&&"IntersectionObserver"in window){new IntersectionObserver(function(es){es.forEach(function(x){bar.classList.toggle("off",x.isIntersecting)})},{threshold:.15}).observe(o)}var a=bar.querySelector(".bb-btn");a.addEventListener("click",function(ev){if(o){ev.preventDefault();o.scrollIntoView({behavior:"smooth",block:"start"})}})})()</script>'
 
 def _has(n, ty):
@@ -103,5 +120,6 @@ def build_product_skins(out_dir):
         items = [(pk.get("f%dt" % i, ""), pk.get("f%dx" % i, "")) for i in range(4)]
         trust = '<div class="tp-trust">' + "".join('<div><i></i><b>%s</b><small>%s</small></div>' % (t, x) for t, x in items if t) + "</div>"
         d = dict(id=tid, dark=P["dark"], txt=P["txt"], mut=P["mut"], acc=P["acc"], glass=("rgba(255,255,255,.07)" if P["dark"] else ""), line=P["line"], layout=P["layout"], bar=P["bar"], card=P["card"], bg=P["bg"], ff=tpl.get("ff", ""), top=top, foot=foot[-1], css=_css(P), trust=trust, buybar=_BUY, brand=pk.get("brand", ""))
+        d["shop"] = _shopcss(P)
         json.dump(d, open(os.path.join(out_dir, "prod-" + tid + ".json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print("ok product skins", len(PPAL))

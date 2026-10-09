@@ -24,6 +24,7 @@
     "assets/js/admin-customers.js",
     "assets/js/admin-zones.js",
     "assets/js/admin-yalidine.js",
+    "assets/js/admin-shoppages.js",
     "assets/js/admin-reports.js",
     "assets/js/admin-audit.js",
     "assets/js/admin-bulk-products.js",

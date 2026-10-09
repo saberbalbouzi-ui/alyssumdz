@@ -317,6 +317,7 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
     const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
     await GH.putFile(pth, btoa(unescape(encodeURIComponent(html))), cur && cur.sha, "نشر " + (o.kind === "home" ? "الصفحة الرئيسية" : "صفحة المنتج " + o.slug) + " من المطوّر");
     await put("assets/pages/_conv/" + k + ".json", P, "مصدر تحرير المطوّر: " + k);
+    if (o.kind === "home" && typeof ShopPages !== "undefined") { try { await ShopPages.sync(html); } catch (e) { console.warn("ShopPages", e); } }      // صفحتا المتجر/الفئات وحسابي تتبعان هوية الرئيسية المنشورة
   }
   async function restore(kind, slug) {
     if (!confirm("استرجاع الصفحة الأصلية؟ سيُستبدل تصميم المطوّر الحالي (يبقى مصدره محفوظاً).")) return;
