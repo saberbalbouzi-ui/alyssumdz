@@ -19,9 +19,9 @@ const AdminOrderDocs = (() => {
   }
   function totals(o,its=lines(o)){
     const calculated=its.reduce((n,x)=>n+x.qty*x.price,0);
-    const subtotal=Number.isFinite(Number(o.subtotal))?Number(o.subtotal):calculated;
+    const subtotal=o.subtotal!==null&&o.subtotal!==undefined&&o.subtotal!==""&&Number.isFinite(Number(o.subtotal))?Number(o.subtotal):calculated;
     const fee=Math.max(0,Number(o.fee)||0),discount=Math.max(0,Number(o.discount)||0);
-    const total=Number.isFinite(Number(o.total))?Number(o.total):Math.max(0,subtotal+fee-discount);
+    const total=o.total!==null&&o.total!==undefined&&o.total!==""&&Number.isFinite(Number(o.total))?Number(o.total):Math.max(0,subtotal+fee-discount);
     return {subtotal,fee,discount,total};
   }
   function barcode(order){return String(order.tracking||order.trackingNumber||order.tracking_number||order.id||"").trim();}
@@ -60,5 +60,5 @@ const AdminOrderDocs = (() => {
     const obs=new MutationObserver(inject);obs.observe(document.body,{childList:true,subtree:true});inject();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-  return {print,lines,totals,barcodeSvg};
+  return {print,lines,totals,barcodeSvg,invoice,waybill};
 })();
