@@ -29,6 +29,8 @@
     "assets/js/admin-payments.js",
     "assets/js/admin-seo.js",
     "assets/js/admin-blog.js",
+    "assets/js/admin-insights.js",
+    "assets/js/admin-order-docs.js",
     "scripts/gen-blog.py",
     "assets/js/admin-imgbatch.js",
     "assets/js/admin-shoppages.js",
