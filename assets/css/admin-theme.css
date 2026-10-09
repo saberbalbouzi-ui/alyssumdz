@@ -1,0 +1,98 @@
+/* مظهرا لوحة التحكم: داكن (html.glass — admin-glass*.css) وفاتح (html.white — هذا الملف).
+   الألوان من متغيّر --ac (اللون الأساسي) يضبطه AdminTheme من إعدادات كل مظهر. */
+
+/* ── مفتاح التبديل في شريط اللوحة العلوي (للمظهرين) ── */
+.theme-sw{display:inline-flex;gap:2px;padding:3px;border-radius:999px;border:1px solid rgba(128,140,150,.35);background:rgba(128,140,150,.12);vertical-align:middle}
+.theme-sw button{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .75rem;border-radius:999px;background:transparent;color:inherit;font-size:.8rem;font-weight:800;opacity:.75;border:0;cursor:pointer;transition:background .15s,opacity .15s,transform .15s}
+.theme-sw button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.theme-sw button:hover{opacity:1;transform:translateY(-1px)}
+.theme-sw button.on{opacity:1;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--ac,#059669) 85%,#fff),color-mix(in srgb,var(--ac,#059669) 85%,#000));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 4px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.18)}
+html.glass .theme-sw{color:#e8f5ee}
+html.glass .theme-sw button.on{color:#06210f;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.05)),var(--g-mint)}
+
+/* ── بطاقة «مظهر لوحة التحكم» في صفحة المظهر ── */
+.atm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:.8rem}
+.atm-card{border:1.5px solid rgba(128,140,150,.35);border-radius:16px;padding:1rem;display:flex;flex-direction:column;gap:.7rem;background:rgba(128,140,150,.06)}
+.atm-card.on{border-color:var(--ac,#059669);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac,#059669) 20%,transparent)}
+.atm-h{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.atm-h b{font-size:1.05rem}
+.atm-badge{font-size:.72rem;font-weight:800;padding:.15rem .6rem;border-radius:999px;background:color-mix(in srgb,var(--ac,#059669) 18%,transparent);color:var(--ac,#059669);border:1px solid color-mix(in srgb,var(--ac,#059669) 45%,transparent)}
+.atm-pv{height:96px;border-radius:12px;display:grid;grid-template-columns:34px 1fr;gap:6px;padding:8px;border:1px solid rgba(128,140,150,.3)}
+.atm-pv i{display:block;border-radius:8px}
+.atm-pv .s{background:var(--pv-s)}.atm-pv .m{display:grid;grid-template-rows:14px 1fr 1fr;gap:6px}
+.atm-pv .m i{background:var(--pv-c)}.atm-pv .m i.t{background:var(--pv-a);opacity:.9;width:46%}
+.atm-pv.d{background:#05100b;--pv-s:rgba(134,240,106,.14);--pv-c:rgba(255,255,255,.08);--pv-a:var(--pv-ac)}
+.atm-pv.w{background:#f3f5f8;--pv-s:#fff;--pv-c:#fff;--pv-a:var(--pv-ac)}
+.atm-row{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
+.atm-row label{font-size:.8rem;font-weight:800;min-width:96px;opacity:.85}
+.atm-sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 0 1px rgba(128,140,150,.5)}
+.atm-sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--ac,#059669)}
+.atm-card input[type=color]{width:34px;height:28px;padding:0;margin:0;border:1px solid rgba(128,140,150,.5);border-radius:8px;background:none}
+.atm-card select{width:auto;margin:0;min-width:130px}
+.atm-act{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.2rem}
+
+/* ══════════ المظهر الفاتح (white) ══════════ */
+html.white{--ac:#059669;--green:color-mix(in srgb,var(--ac) 82%,#04261b);--gold:var(--ac);--gold2:color-mix(in srgb,var(--ac) 45%,#fff);--bg:#f3f5f8;--line:#e4e8ee;--blue:#2563eb;--red:#dc2626;color-scheme:light}
+html.white body{background:#f3f5f8;color:#0f172a}
+html.white .login,html.white .card,html.white .side-nav,html.white .stat div,html.white .modal{background:#fff;border:1px solid #e6eaf0;box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.05)}
+html.white .card,html.white .side-nav{border-radius:18px}
+html.white .top{background:#fff;border:1px solid #e6eaf0;border-radius:18px;padding:.7rem 1rem;box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.05)}
+html.white .top h1,html.white .card h2,html.white .card h3,html.white .section-title,html.white .stat b{color:#0f172a}
+html.white .section-title{border-bottom:2px solid color-mix(in srgb,var(--ac) 35%,#fff)}
+html.white .hint,html.white .stat span,html.white .side-nav-intro p,html.white .nav-txt small{color:#64748b}
+html.white .side-nav-intro b{color:#0f172a}
+html.white .side-nav-intro{border-bottom-color:#e6eaf0}
+/* القائمة الجانبية */
+html.white .nav-btn{color:#1e293b}
+html.white .nav-btn:hover{background:#f1f5f9;border-color:#e2e8f0}
+html.white .nav-btn.on{background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 92%,#fff),color-mix(in srgb,var(--ac) 80%,#000));color:#fff;box-shadow:0 8px 18px color-mix(in srgb,var(--ac) 30%,transparent)}
+html.white .nav-btn.on .nav-txt small{color:rgba(255,255,255,.85)}
+html.white .nav-ic{background:#eef2f7;color:var(--ac)}
+html.white .nav-btn.on .nav-ic{background:rgba(255,255,255,.2);color:#fff}
+html.white .nav-groups .ng{background:#f8fafc;border:1.5px solid #e2e8f0;color:#334155}
+html.white .nav-groups .ng:hover{background:#f1f5f9}
+html.white .nav-groups .ng.on{background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 92%,#fff),color-mix(in srgb,var(--ac) 80%,#000));border-color:var(--ac);color:#fff}
+/* الأزرار: زجاج ملوّن منتفخ بنص أبيض */
+html.white .btn,html.white .small,html.white .top button.logout{color:#fff;border:1px solid rgba(255,255,255,.35);background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 88%,#fff),color-mix(in srgb,var(--ac) 88%,#000));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 5px rgba(0,0,0,.16),0 3px 8px rgba(15,23,42,.14);text-shadow:0 1px 1px rgba(0,0,0,.18);transition:transform .15s,filter .15s}
+html.white .small.gold{background:linear-gradient(180deg,#fbbf5a,#e08a12)}
+html.white .small.blue{background:linear-gradient(180deg,#5b8def,#2457c9)}
+html.white .small.gray{background:linear-gradient(180deg,#94a3b8,#64748b)}
+html.white .small.warn,html.white .top button.logout{background:linear-gradient(180deg,#f06b6b,#cf2d2d)}
+html.white .btn:hover,html.white .small:hover,html.white .top button.logout:hover{transform:translateY(-2px);filter:brightness(1.05)}
+html.white .btn:active,html.white .small:active{transform:translateY(0)}
+/* الحقول */
+html.white input,html.white select,html.white textarea{background:#fff;border-color:#dbe1ea;color:#0f172a}
+html.white input:focus,html.white select:focus,html.white textarea:focus{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 22%,transparent)}
+html.white input::placeholder,html.white textarea::placeholder{color:#94a3b8}
+/* الجداول والشارات */
+html.white td{border-bottom-color:#eef1f5}
+html.white .rt th{color:#64748b}
+html.white .pill{border:1px solid rgba(15,23,42,.06)}
+/* خانات الاختيار */
+html.white input[type=checkbox],html.white input[type=radio]{accent-color:var(--ac)}
+/* الإشعارات */
+html.white #toast2{background:#0f172a;color:#fff}
+/* شريط التمرير */
+html.white ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--ac) 55%,#fff);border-radius:6px}
+/* بطاقات إعدادات المظهر داخل المظهر الفاتح */
+html.white .atm-card{background:#f8fafc;border-color:#dbe1ea}
+html.white .atm-card.on{background:#fff}
+html.white .theme-sw{border-color:#dbe1ea;background:#f1f5f9;color:#334155}
+
+/* ── وحدات صُمّمت بنص أبيض للمظهر الداكن: نعيد ألوانها في المظهر الفاتح ── */
+html.white :is(#ahome,#op-bar,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app,#ai-insights) :is(h1,h2,h3,h4,p,span,small,b,strong,label,div,td,th,li,i,em){color:#1e293b}
+html.white :is(#ahome,#op-bar,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app,#ai-insights) :is(h1,h2,h3,h4){color:#0f172a}
+html.white :is(#ahome,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app) :is(.cc-muted,.rt-note,.pm-note,.seo-note,.sm-s,.bp-count,small){color:#64748b}
+html.white :is(#ahome,#op-bar,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app) button{color:#fff;border:1px solid rgba(255,255,255,.35);background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 88%,#fff),color-mix(in srgb,var(--ac) 88%,#000));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 5px rgba(0,0,0,.16),0 3px 8px rgba(15,23,42,.14);text-shadow:0 1px 1px rgba(0,0,0,.18);transition:transform .15s,filter .15s}
+html.white :is(#ahome,#op-bar,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app) button:hover{transform:translateY(-2px);filter:brightness(1.05)}
+html.white :is(#ahome,#op-bar,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app) button:not(.on):not(.primary):not(.gh):not(.ah-btn){background:linear-gradient(180deg,#94a3b8,#64748b)}
+html.white :is(#ahome,#op-bar,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app) button :is(span,b,i,svg,small,div){color:#fff}
+html.white :is(#ahome,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app,#op-bar) :is(.card,.sm-c,.cc-card,.bp-card,.rt-card,.pm-card,.seo-card,.ah-card,[class*="-card"]){background:#fff;border:1px solid #e6eaf0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+html.white :is(#ahome,#op-bar,#sm,#bulk-products-app,#rt,#pm,#seo-content,#customers-app) button:is(.on,.primary,.gh,.ah-btn,[class*="primary"]){background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 88%,#fff),color-mix(in srgb,var(--ac) 88%,#000))!important;color:#fff!important}
+html.white :is(#bulk-products-app,#rt,#pm,#seo-content,#customers-app,#ahome) th{color:#64748b;background:transparent}
+html.white #ahome .kpi .v{color:#0f172a}
+html.white #ahome .kpi .lb,html.white #ahome .kpi .d.eq,html.white #ahome .kpi .d span{color:#64748b}
+html.white #ahome .kpi .d.up{color:#059669}html.white #ahome .kpi .d.dn{color:#dc2626}
+html.white #ahome .at button{background:#f8fafc!important;color:#1e293b!important;border:1px solid #e6eaf0;box-shadow:none;text-shadow:none;transform:none}
+html.white #ahome .at button:hover{background:#f1f5f9!important}
+html.white #ahome .at button *{color:inherit!important}html.white #ahome .at button b{color:var(--ac)!important}
