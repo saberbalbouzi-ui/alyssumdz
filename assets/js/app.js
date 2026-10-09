@@ -154,7 +154,7 @@ const Cart = {
       items: items.map(it => { const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
-      coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
+      coupon: AppliedCoupon.record && (disc.couponDiscount > 0 || couponFreeShip() || couponGiftTitle()) ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && disc.couponDiscount > 0 && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
