@@ -53,6 +53,7 @@
     "assets/js/ai-vision-worker.js",
     "assets/js/avatar-script.js",
     "p/_template/index.html",
+    "assets/js/admin-stores.js",
     "assets/js/admin-theme.js",
     "assets/js/admin-nav.js",
     "assets/pages/templates/c-aurora.json",

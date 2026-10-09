@@ -96,3 +96,18 @@ html.white #ahome .kpi .d.up{color:#059669}html.white #ahome .kpi .d.dn{color:#d
 html.white #ahome .at button{background:#f8fafc!important;color:#1e293b!important;border:1px solid #e6eaf0;box-shadow:none;text-shadow:none;transform:none}
 html.white #ahome .at button:hover{background:#f1f5f9!important}
 html.white #ahome .at button *{color:inherit!important}html.white #ahome .at button b{color:var(--ac)!important}
+
+/* ── مفتاح التنقل بين المواقع (أعلى اللوحة) ── */
+.ssw{position:relative;display:inline-block}
+.ssw .ssw-b{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ssw-m{position:absolute;top:calc(100% + 6px);inset-inline-start:0;min-width:270px;z-index:300;padding:.4rem;border-radius:14px;border:1px solid rgba(128,140,150,.4);background:rgba(9,24,18,.985);color:#e8f5ee;box-shadow:0 14px 36px rgba(0,0,0,.4);display:grid;gap:2px}
+.ssw-m[hidden]{display:none}
+.ssw-i{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:start;padding:.5rem .7rem;border-radius:10px;background:transparent;color:inherit;font-weight:800;font-size:.86rem;border:0;cursor:pointer;width:100%}
+.ssw-i small{font-weight:600;font-size:.7rem;opacity:.65}
+.ssw-i:hover{background:rgba(255,255,255,.1)}
+.ssw-i.on{cursor:default;background:rgba(134,240,106,.12)}
+.ssw-i.add{color:var(--g-mint,#86f06a);border-top:1px solid rgba(255,255,255,.12);border-radius:0 0 10px 10px;margin-top:2px}
+html.white .ssw-m{background:#fff;color:#0f172a;border-color:#e2e8f0;box-shadow:0 14px 36px rgba(15,23,42,.18)}
+html.white .ssw-i:hover{background:#f1f5f9}
+html.white .ssw-i.on{background:color-mix(in srgb,var(--ac) 12%,#fff)}
+html.white .ssw-i.add{color:var(--ac);border-top-color:#e2e8f0}

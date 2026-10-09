@@ -10,6 +10,8 @@ const CONFIG = {
     repoOwner: "saberbalbouzi-ui",      // حساب GitHub الذي يُنشر منه الموقع (تستعمله اللوحة)
     repoName: "alyssumdz",
   },
+  SUPPORT_WA: "213559237239",   /* رقم واتساب الدعم الذي تُرسل إليه طلبات الدومين والمواقع الجديدة من اللوحة */
+  PLATFORM_DOMAIN: "alyssumdz.com",   /* دومين المنصة لمن يختار عنواناً فرعياً */
   API_URL: "https://script.google.com/macros/s/AKfycbx8hfWsiB4UCn9u0Z7ySDZYVwvNXTAZMqoc-6SXFDi38m7EFGHr-eGPficx10gepj2C/exec",
   /* ملاحظة أمنية: حُذف ADMIN_KEY من هذا الملف العلني (لم يكن مستعملاً في الكود). المفتاح الذي كان هنا يجب اعتباره مكشوفاً:
      غيّره في Code.gs (Apps Script) إلى قيمة جديدة، ثم أدخل القيمة الجديدة عند تسجيل الدخول إلى لوحة التحكم. */

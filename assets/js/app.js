@@ -4,7 +4,7 @@ let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waN
 function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; if(productType(p)==="grouped") return true; const flagged = (p.offers||[]).some(x=>x.ship); return flagged ? !!(o && o.ship) : true; }
 function cartItemFreeShip(it){ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; if(!p || !p.freeShip) return false; const fl = (p.offers||[]).filter(x=>x.ship); return fl.length ? it.qty >= Math.min(...fl.map(x=>x.qty)) : true; }
 const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
-const fmt = n => n.toLocaleString("fr-DZ") + " دج";
+const fmt = n => n.toLocaleString("fr-DZ") + " " + (window.__STORE_CUR || "دج");
 /* مناطق التوصيل (Zones): الأسعار والشحن المجاني والاستثناءات مشتقة في WILAYAS من لوحة التحكم ⟵ رسوم التوصيل:
    w.fh/w.fs = توصيل مجاني للمنزل/المكتب، w.fo = مجاني عند بلوغ مجموع الطلب هذا المبلغ، w.xw = الولاية مستثناة كلياً،
    w.xc = {بلدية:"all"|"home"} (all = لا توصيل نهائياً، home = لا توصيل للمنزل فقط ويبقى المكتب) */
@@ -447,6 +447,35 @@ async function initCheckout(){
     applyCheckout(cfg);
     Guard.init(cfg && cfg.guard);
     PhoneDZ.setup(cfg);
+  }catch(e){ /* تجاهل */ }
+  try{ applyStore(await loadStore()); }catch(e){ /* تجاهل */ }
+}
+/* إعدادات المتجر (assets/data/store.json، من لوحة التحكم ← إعدادات الموقع): الاسم، واتساب، انستغرام، اللغة، العملة، وضع الصيانة */
+async function loadStore(){
+  try{ const r = await fetch((typeof REL!=="undefined"?REL:"") + "assets/data/store.json", {cache:"no-store"}); return r.ok ? await r.json() : null; }catch(e){ return null; }
+}
+function applyStore(c){
+  if(!c || typeof c !== "object") return;
+  window.STORE = c;
+  try{
+    if(typeof CONFIG !== "undefined" && CONFIG.SITE){
+      if(c.name) CONFIG.SITE.name = c.name;
+      if(c.instagram) CONFIG.SITE.instagram = String(c.instagram).replace(/^@/,"");
+    }
+    if(c.currency) window.__STORE_CUR = c.currency;
+    if(c.lang && /^(ar|fr|en)$/.test(c.lang)) document.documentElement.lang = c.lang;
+    const wa = String(c.wa || "").replace(/[^\d]/g,"");
+    if(wa){
+      WA_NUMBER = wa;
+      document.querySelectorAll('a[href*="wa.me/"]').forEach(a=>{ const m = (a.getAttribute("href")||"").match(/wa\.me\/\d*(.*)$/); if(m) a.setAttribute("href", "https://wa.me/" + WA_NUMBER + (m[1]||"")); });
+    }
+    if(c.maintenance && !/admin\.html/.test(location.pathname) && localStorage.getItem("alyssum_admin_on") !== "1" && !document.getElementById("store-maint")){
+      const d = document.createElement("div"); d.id = "store-maint";
+      d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#0b1511;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font-family:inherit";
+      const h = document.createElement("h1"); h.style.cssText = "font-size:1.6rem;margin:0"; h.textContent = c.name || "الموقع";
+      const p = document.createElement("p"); p.style.cssText = "max-width:480px;line-height:1.9;margin:0;opacity:.9"; p.textContent = c.maintMsg || "الموقع تحت الصيانة حالياً، نعود إليكم قريباً.";
+      d.append(h, p); document.body.appendChild(d);
+    }
   }catch(e){ /* تجاهل */ }
 }
 
