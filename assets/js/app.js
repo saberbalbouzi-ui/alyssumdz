@@ -467,7 +467,7 @@ const Seo = (() => {
     const image=record.ogImage||p.cover||(p.images&&p.images[0])||cfg.ogImage||"";
     applySeoTags({title,description,image,type:"product"});
     if(image.startsWith("http://")||image.startsWith("https://")){setMetaTag("property","og:image",image);setMetaTag("name","twitter:image",image);}
-    const skipped=(Array.isArray(cfg.noindex)?cfg.noindex:[]).map(String).some(x=>x===p.slug||x==="/p/"+p.slug+"/"||x==="p/"+p.slug);
+    const skipped=(Array.isArray(cfg.noindex)?cfg.noindex:[]).map(x=>String(x).replace(/^https?:\/\/[^/]+/i,"").replace(/^\/+|\/+$/g,"")).some(x=>x===p.slug||x==="p/"+p.slug);
     if(skipped)setRobotsNoindex();else{const managed=document.querySelector('meta[name="robots"][data-seo-managed="1"]');if(managed)managed.remove();}
     const images=(p.images&&p.images.length?p.images:[image]).map(absolute).filter(Boolean);
     const out=typeof isOutOfStock==="function"&&isOutOfStock(p);
