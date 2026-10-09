@@ -83,11 +83,16 @@ for p in live:
     text = f.read_text(encoding="utf-8")
     text = re.sub(re.escape(S) + r".*?" + re.escape(E) + r"\n?", "", text, flags=re.S)
     record = seo_products.get(p["slug"], {}) if isinstance(seo_products, dict) else {}
-    title = record.get("title") or p.get("seoTitle") or f'{p["title"]} | {SITE}'
+    # العنوان/الوصف المكتوبان يدوياً في الصفحة يبقيان ما لم يحدّد التاجر قيمة صريحة (seo.json أو seoTitle/seoDesc للمنتج)
+    t_match = re.search(r"<title>(.*?)</title>", text, re.S)
+    existing_title = html.unescape(t_match.group(1)).strip() if t_match else ""
+    custom_title = record.get("title") or p.get("seoTitle")
+    title = custom_title or existing_title or f'{p["title"]} | {SITE}'
     desc_match = re.search(r'<meta name="description" content="([^"]*)"', text)
     fallback_desc = html.unescape(desc_match.group(1)) if desc_match else ""
-    desc = record.get("desc") or p.get("seoDesc") or p.get("desc") or seo.get("siteDesc") or fallback_desc
-    text = re.sub(r"<title>.*?</title>", f"<title>{esc(title)}</title>", text, count=1, flags=re.S)
+    desc = record.get("desc") or p.get("seoDesc") or fallback_desc or p.get("desc") or seo.get("siteDesc") or ""
+    if custom_title:
+        text = re.sub(r"<title>.*?</title>", f"<title>{esc(title)}</title>", text, count=1, flags=re.S)
     if desc:
         description_meta = f'<meta name="description" content="{esc(desc)}">'
         if re.search(r'<meta\s+name="description"[^>]*>', text, re.I):
@@ -117,9 +122,11 @@ for p in live:
 index = ROOT / "index.html"
 text = index.read_text(encoding="utf-8")
 text = re.sub(re.escape(S) + r".*?" + re.escape(E) + r"\n?", "", text, flags=re.S)
-site_title = str(seo.get("siteTitle") or SITE).strip()
+custom_site_title = str(seo.get("siteTitle") or "").strip()
+hm = re.search(r"<title>(.*?)</title>", text, re.S)
+site_title = custom_site_title or (html.unescape(hm.group(1)).split("|")[0].split("—")[0].strip() if hm else "") or SITE
 site_desc = str(seo.get("siteDesc") or "").strip()
-if site_title:
+if custom_site_title:      # عنوان الرئيسية الحالي لا يُستبدل إلا إذا حدّد التاجر عنواناً صريحاً
     text = re.sub(r"<title>.*?</title>", f"<title>{esc(site_title)}</title>", text, count=1, flags=re.S)
 if site_desc:
     meta = f'<meta name="description" content="{esc(site_desc)}">'

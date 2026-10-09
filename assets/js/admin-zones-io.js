@@ -147,7 +147,7 @@ const AdminZonesIO = (() => {
     if(typeof AdminZones==="undefined"||!AdminZones.S)return setTimeout(init,300);
     const tick=()=>{if($("#zn-card")&&AdminZones.S.inited)attach();};
     new MutationObserver(tick).observe(document.body,{childList:true,subtree:true});tick();
-    document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||"")){e.preventDefault();undo();}});
+    document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||"")&&$("#zn-card")&&$("#zn-card").offsetParent&&localStorage.getItem(KEY)){e.preventDefault();undo();}});
   }
   document.readyState==="loading"?document.addEventListener("DOMContentLoaded",init):init();
   return {downloadCSV,parseCSV,validateCSV};

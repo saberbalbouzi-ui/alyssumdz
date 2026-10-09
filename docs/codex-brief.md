@@ -114,8 +114,8 @@
 |---|---|---|:-:|:-:|
 | E | المرتجعات | `codex/returns` | 🟠 P1 | ✅ v1.78.0 (PR #183 دُمج) |
 | P | حالة الدفع اليدوية (COD) | `codex/payments-status` | 🟠 P1 | ✅ v1.79.0 |
-| Z | استيراد/تصدير المناطق CSV + قوالب جاهزة | `codex/zones-io` | 🟠 P1 | ⏳ |
-| S | SEO: sitemap وrobots وJSON-LD وحقول SEO للمنتج | `codex/seo` | 🔴 P1 | ⏳ |
+| Z | استيراد/تصدير المناطق CSV + قوالب جاهزة | `codex/zones-io` | 🟠 P1 | ✅ v1.81.0 |
+| S | SEO: sitemap وrobots وJSON-LD وحقول SEO للمنتج | `codex/seo` | 🔴 P1 | ✅ v1.81.0 |
 | B | المدوّنة + صفحات السياسات | `codex/blog-policies` | 🔴 P1 | ⏳ |
 | D2 | Buy X Get Y + خصم تلقائي بلا كود | `codex/discounts-auto` | 🟠 P1 | ⏳ |
 | I | Insights وLive View في الرئيسية | `codex/insights` | 🟠 P1 | ⏳ |
