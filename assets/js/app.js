@@ -448,6 +448,35 @@ function applySeoTags(opts){
   if(finalImage) setMetaTag("name", "twitter:image", finalImage);
 }
 
+
+/* Merchant managed SEO metadata; applied on product pages only. */
+const Seo = (() => {
+  let configPromise = null;
+  async function config(){
+    if(!configPromise) configPromise=fetch((typeof REL!=="undefined"?REL:"")+"assets/data/seo.json",{cache:"no-store"}).then(r=>r.ok?r.json():{}).catch(()=>({}));
+    return configPromise;
+  }
+  function absolute(src){try{return src?new URL((src.startsWith("http://")||src.startsWith("https://")||src.startsWith("data:"))?src:(typeof REL!=="undefined"?REL:"")+src,location.href).href:"";}catch(e){return "";}}
+  function setRobotsNoindex(){let tag=document.querySelector('meta[name="robots"]');if(!tag){tag=document.createElement("meta");tag.name="robots";document.head.appendChild(tag);}tag.content="noindex";}
+  async function apply(p){
+    if(!p||!p.slug)return;
+    const cfg=await config(),record=(cfg.products&&cfg.products[p.slug])||{};
+    const site=(typeof CONFIG!=="undefined"&&CONFIG.SITE)||{},brand=cfg.siteTitle||site.name||"";
+    const title=record.title||p.seoTitle||[p.title,brand].filter(Boolean).join(" | ");
+    const description=record.desc||p.seoDesc||p.desc||cfg.siteDesc||"";
+    const image=record.ogImage||p.cover||(p.images&&p.images[0])||cfg.ogImage||"";
+    applySeoTags({title,description,image,type:"product"});
+    if(image.startsWith("http://")||image.startsWith("https://")){setMetaTag("property","og:image",image);setMetaTag("name","twitter:image",image);}
+    const skipped=(Array.isArray(cfg.noindex)?cfg.noindex:[]).map(String).some(x=>x===p.slug||x==="/p/"+p.slug+"/"||x==="p/"+p.slug);
+    if(skipped)setRobotsNoindex();
+    const images=(p.images&&p.images.length?p.images:[image]).map(absolute).filter(Boolean);
+    const out=typeof isOutOfStock==="function"&&isOutOfStock(p);
+    const schema={"@context":"https://schema.org","@type":"Product",name:p.title||title,description,image:images,url:location.href,sku:p.slug,offers:{"@type":"Offer",price:Number(p.price)||0,priceCurrency:"DZD",availability:out?"https://schema.org/OutOfStock":"https://schema.org/InStock",url:location.href}};
+    let ld=document.querySelector('script[type="application/ld+json"][data-seo-product]');if(!ld){ld=document.createElement("script");ld.type="application/ld+json";ld.dataset.seoProduct="1";document.head.appendChild(ld);}ld.textContent=JSON.stringify(schema);
+  }
+  return {apply};
+})();
+
 /* ════════ أكواد الخصم (Coupons) — تُدار من لوحة التحكم admin.html ⟵ أكواد الخصم ════════
    تُقرأ من assets/data/coupons.json (ملف عام — راجع الملاحظة في admin.html)، ويُحقن حقل إدخال
    الكود ديناميكياً في صفحة المنتج ودرج السلة عبر الدالتين أدناه، دون الحاجة لتعديل كل صفحة HTML. */
@@ -592,13 +621,7 @@ function initProduct(slug){
   }
   updateLowStockNote();
 
-  // حقول SEO المخصصة لهذا المنتج (تُضبط من لوحة التحكم ⟵ تعديل منتج ⟵ SEO) — راجع applySeoTags في القسم أعلاه
-  applySeoTags({
-    title: p.seoTitle || "",
-    description: p.seoDesc || "",
-    image: p.cover || (p.images && p.images[0]) || "",
-    type: "product",
-  });
+  Seo.apply(p);
 
   // معرض الصور — تُقرأ دائماً من data.js (p.images) عند كل تحميل للصفحة، ولا تُترك
   // لتجمّد داخل HTML الثابت للصفحة، حتى تبقى متطابقة مع ما يُعدَّل من لوحة التحكم
