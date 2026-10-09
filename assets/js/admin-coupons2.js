@@ -97,7 +97,7 @@ const AdminCoupons2 = (() => {
     $("ad-cancel").onclick=()=>{box.innerHTML="";};
   }
   async function saveAuto(){
-    const json=JSON.stringify(autoRules,null,2);if(!(GH.cfg()&&GH.cfg().token)){localStorage.setItem("alyssum_autodisc_draft",json);toast("حُفظت مسودة محلية؛ اضبط GitHub لنشرها");return;}
+    const json=JSON.stringify(autoRules,null,2);if(!(GH.cfg()&&GH.cfg().token)){localStorage.setItem("alyssum_autodisc_draft",json);toast("حُفظت مسودة محلية؛ اربط النشر لنشرها");return;}
     try{if(!autoSha){try{const f=await GH.getFile(AUTO_PATH);autoSha=f.sha;}catch(e){}}
       const r=await GH.putFile(AUTO_PATH,btoa(unescape(encodeURIComponent(json))),autoSha,"حفظ العروض التلقائية");
       autoSha=r&&r.content&&r.content.sha||autoSha;toast("تم حفظ العروض التلقائية");
@@ -108,7 +108,7 @@ const AdminCoupons2 = (() => {
     const oldEdit=A().editCoupon;A().editCoupon=function(id){const r=oldEdit.call(this,id);fill(id?this.coupons.find(x=>x.id===id):null);return r;};
     A().saveCoupon=save;
     A().publishCoupons=async function(){
-      const cfg=GH.cfg();if(!cfg||!cfg.token){toast("⚠️ اضبط GitHub أولاً");this.openGhSettings();return false;}
+      const cfg=GH.cfg();if(!cfg||!cfg.token){toast("⚠️ اربط النشر أولاً");this.openGhSettings();return false;}
       toast("جارٍ نشر أكواد الخصم...");
       try{const b64=btoa(unescape(encodeURIComponent(JSON.stringify(this.coupons,null,2)))),res=await GH.putFile("assets/data/coupons.json",b64,this.couponsSha,"تحديث أكواد الخصم المتقدمة");this.couponsSha=res&&res.content?res.content.sha:undefined;this.renderCoupons();toast("تم نشر أكواد الخصم");return true;}
       catch(e){console.error(e);toast("تعذّر نشر الأكواد: "+(e.message||""));return false;}

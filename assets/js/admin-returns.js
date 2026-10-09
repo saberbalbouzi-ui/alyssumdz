@@ -138,7 +138,7 @@ const AdminReturns = (() => {
       rec.status="received";
       if(updates.length){
         let published=false;try{published=typeof A().publishDataJs==="function"&&!!(await A().publishDataJs());}catch(_){published=false;}
-        if(!published){updates.forEach(x=>{x.p.stock=x.before;});rec.status=old;S.err="تعذّر نشر المخزون؛ لم يُسجَّل الاستلام. تحقق من GitHub ثم أعد المحاولة.";draw();return;}
+        if(!published){updates.forEach(x=>{x.p.stock=x.before;});rec.status=old;S.err="تعذّر نشر المخزون؛ لم يُسجَّل الاستلام. تحقق من الاتصال ثم أعد المحاولة.";draw();return;}
         updates.forEach(x=>{x.it.restocked=true;});
       }
       rec.receivedAt=new Date().toISOString();

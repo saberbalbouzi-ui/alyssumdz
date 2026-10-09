@@ -1,5 +1,5 @@
 /* ───── تنظيف الصور غير المستعملة (PBClean) ─────
-   يفحص مستودع GitHub: صور المجلد assets/img/pages/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
+   يفحص مستودع الموقع: صور المجلد assets/img/pages/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
    (صفحات html وملفات json وجافاسكربت وcss) ويجمع أسماء الصور المذكورة فيها؛ ما لا يذكره أي ملف يُعرض للحذف.
    الحذف: تحديث assets/pages/media.json ثم commit واحد يحذف الملفات عبر Git Data API. لا يعمل مع نسخة PHP (لا مستودع). */
 const PBClean = (() => {
@@ -18,10 +18,10 @@ const PBClean = (() => {
   const body = h => { const e = document.getElementById("pbx-cm"); if (e) e.innerHTML = h; }, foot = h => { const e = document.getElementById("pbx-cf"); if (e) e.innerHTML = h; };
   const ageOf = p => { const m = /gen-(\d{12,13})-/.exec(p); return m ? Date.now() - Number(m[1]) : Infinity; };
   function ghx() {
-    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة تعمل مع وضع GitHub فقط (نسخة PHP لا تحتفظ بمستودع).");
-    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token) throw new Error("اربط GitHub أولاً من الإعدادات.");
+    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة تعمل مع وضع النشر المباشر فقط (نسخة PHP لا تحتفظ بمستودع).");
+    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token) throw new Error("اربط النشر أولاً من الإعدادات.");
     const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
-    const j = async (u, o) => { const r = await fetch(u, o ? Object.assign({ headers: Object.assign({ "Content-Type": "application/json" }, H) }, o) : { headers: H }); if (!r.ok) throw new Error("GitHub " + r.status + " — " + (await r.text().catch(() => "")).slice(0, 120)); return r.json(); };
+    const j = async (u, o) => { const r = await fetch(u, o ? Object.assign({ headers: Object.assign({ "Content-Type": "application/json" }, H) }, o) : { headers: H }); if (!r.ok) throw new Error("خطأ " + r.status + " — " + (await r.text().catch(() => "")).slice(0, 120)); return r.json(); };
     return { api, br, j, H };
   }
   async function scan() {
@@ -45,12 +45,12 @@ const PBClean = (() => {
   function draw() {
     const v = vis(), skip = S.unused.length - v.length, sel = v.filter(x => x.on), sz = sel.reduce((a, x) => a + x.size, 0);
     body(`<p>صور المجلد <b>assets/img/pages</b>: <b>${S.total}</b> صورة، منها <b>${S.unused.length}</b> لا يذكرها أي ملف في الموقع (صفحات، قوائم صفحات، بيانات المنتجات…).</p>
-      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي من المستودع (يمكن استرجاعه فقط من سجلّ GitHub).</div>
+      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي من المستودع (يمكن استرجاعه فقط من سجلّ الموقع).</div>
       <p>تجاهل ما رُفع خلال آخر <select data-c="age"><option value="24"${S.minAge === 24 ? " selected" : ""}>24 ساعة (موصى به)</option><option value="1"${S.minAge === 1 ? " selected" : ""}>ساعة</option><option value="0"${S.minAge === 0 ? " selected" : ""}>لا تتجاهل شيئاً</option></select>${skip ? ` — تُجوهلت ${skip} صورة حديثة` : ""}</p>
       ${v.length ? `<div class="cg">${v.map(x => `<div class="ci${x.on ? "" : " off"}" data-c="tg" data-p="${esc(x.p)}" title="${esc(x.p)}"><img src="${esc(x.p)}" loading="lazy" alt=""><i>✓</i><small>${kb(x.size)}</small></div>`).join("")}</div>` : '<p style="color:#2d6a4f"><b>لا توجد صور يتيمة قابلة للحذف الآن.</b></p>'}`);
     foot(`<button class="p" data-c="del"${sel.length ? "" : " disabled"}>حذف المحدد نهائياً (${sel.length} — ${kb(sz)})</button><button class="s" data-c="all">${sel.length === v.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button class="s" data-c="x">إغلاق</button>`);
   }
-  /* حذف مسارات صور نهائياً: تحديث media.json ثم commit واحد (Git Data API). opt.verify: يستبعد ما تذكره أي صفحة محفوظة (قراءة من GitHub مباشرة لا من كاش الموقع) */
+  /* حذف مسارات صور نهائياً: تحديث media.json ثم commit واحد (Git Data API). opt.verify: يستبعد ما تذكره أي صفحة محفوظة (قراءة من الموقع مباشرة لا من كاش الموقع) */
   async function purge(paths, opt) {
     paths = [...new Set(paths || [])].filter(p => /^assets\/img\//.test(p)); if (!paths.length) return 0; const G = ghx(), dec = t => decodeURIComponent(escape(atob((t || "").replace(/\n/g, ""))));
     if (opt && opt.verify) {

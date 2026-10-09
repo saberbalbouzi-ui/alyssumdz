@@ -41,7 +41,7 @@ const AdminBlog = (() => {
     data.policies={...data.policies};document.querySelectorAll("[data-policy]").forEach(t=>data.policies[t.dataset.policy]=t.value);
     const json=JSON.stringify(data,null,2);
     try{
-      if(typeof GH==="undefined"||!GH.cfg||!GH.cfg().token){localStorage.setItem("alyssum_blog_draft",json);toast("حُفظت مسودة محلية؛ اضبط GitHub للنشر");return;}
+      if(typeof GH==="undefined"||!GH.cfg||!GH.cfg().token){localStorage.setItem("alyssum_blog_draft",json);toast("حُفظت مسودة محلية؛ اربط النشر للنشر");return;}
       if(!sha){try{sha=(await GH.getFile(FILE)).sha;}catch(e){}}
       const res=await GH.putFile(FILE,btoa(unescape(encodeURIComponent(json))),sha,"حفظ مقالات المدوّنة والسياسات");
       sha=res&&res.content&&res.content.sha||sha;toast("تم حفظ البيانات. شغّل توليد صفحات المدوّنة لنشر الصفحات.");

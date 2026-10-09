@@ -800,7 +800,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   /* حفظ داخل ملفات المنتج: assets/img/<slug>/landing/ (كاملة أو أقساماً) */
   async function savePage() {
     if (!S.blob || !S.canvas) return toast("لا توجد صفحة بعد"); const slug = ($("gen-prod") || {}).value; if (!slug) return toast("اختر المنتج أولاً من القائمة");
-    const cfg = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (!cfg || !cfg.token) return toast("⚠️ اضبط GitHub أولاً (زر ⚙️) لحفظ الملفات في المنتج");
+    const cfg = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (!cfg || !cfg.token) return toast("⚠️ اربط النشر أولاً (زر ⚙️) لحفظ الملفات في المنتج");
     const sv = $("gen-save"); sv.disabled = true; const ts = Date.now().toString(36);
     try {
       const folder = "assets/img/" + slug + "/landing", items = splitMode() === "full" ? [{ blob: S.blob }] : await sectionBlobs("image/png"), paths = [];
@@ -825,7 +825,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
     if (!S.canvas) return; const msg = $("gen-msg"), btn = $("gen-go"); btn.disabled = true;
     const upload = async (blob, name) => {
       try { if (typeof PBApp !== "undefined" && PBApp.uploadBlob) return await PBApp.uploadBlob(blob, name); const f = new File([blob], name + ".webp", { type: "image/webp" }); const p = await Admin.uploadImageFile(f, "assets/img/pages", "gen-", { max: 2000, q: .86, noVariants: true }); if (typeof PBApp !== "undefined" && PBApp.mediaAdd) PBApp.mediaAdd([p]); return p; }
-      catch (e) { msg.textContent = "⚠️ تعذّر الرفع إلى GitHub (" + e.message + ") — حُفظت الصور مؤقتاً داخل الصفحة؛ اضبط GitHub ثم أعد التحويل للنشر."; return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); }
+      catch (e) { msg.textContent = "⚠️ تعذّر الرفع (" + e.message + ") — حُفظت الصور مؤقتاً داخل الصفحة؛ اربط النشر ثم أعد التحويل للنشر."; return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); }
     };
     try {
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;

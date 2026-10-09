@@ -116,7 +116,7 @@ ${rest.length ? `<div class="zn-z"><b>ولايات بلا منطقة (${rest.len
     const rs = a.resetFees; a.resetFees = function () { const r = rs.apply(this, arguments); load(); apply(); draw(); return r; };
     /* النشر: wilayas.js يحمل WILAYAS (مع الحقول المشتقة) + SHIPPING */
     a.publishWilayasJs = async function () {
-      const cfg = GH.cfg(); if (!cfg || !cfg.token) { toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return false; }
+      const cfg = GH.cfg(); if (!cfg || !cfg.token) { toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return false; }
       try {
         apply(); const file = await GH.getFile("assets/js/wilayas.js");
         const content = "/* رسوم التوصيل ومكاتب Yalidine ومناطق التوصيل — يُعدَّل تلقائياً من لوحة التحكم admin.html */\n/* آخر تحديث: " + new Date().toISOString().slice(0, 10) + " */\n" +

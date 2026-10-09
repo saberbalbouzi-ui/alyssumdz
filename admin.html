@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.16">
+<meta name="admin-version" content="1.89.17">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -636,7 +636,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div id="gp-msg" style="display:none;margin:0 0 .8rem;padding:.7rem .9rem;border-radius:10px;font-size:.9rem;line-height:1.6"></div>
     <div class="card" id="gp-form">
       <b style="color:var(--green)">✨ توليد صفحة منتج</b>
-      <div class="hint">تعمل فقط على منتج موجود: اختر المنتج فتُملأ كل بياناته تلقائياً (بما فيها الصورة)، عدّل ما تشاء، ثم ولّد الصفحة. عند «تأكيد ونشر» تُفعَّل الصفحة المولّدة، وتبقى الصفحة الافتراضية محفوظة ويمكن الرجوع إليها دائماً. نموذج الطلب وآراء الزبائن حاضران دائماً، وكل عناصر الصفحة قابلة للتعديل من «تعديل الصفحة» كالصفحة الافتراضية. يلزم ضبط GitHub (⚙️).</div>
+      <div class="hint">تعمل فقط على منتج موجود: اختر المنتج فتُملأ كل بياناته تلقائياً (بما فيها الصورة)، عدّل ما تشاء، ثم ولّد الصفحة. عند «تأكيد ونشر» تُفعَّل الصفحة المولّدة، وتبقى الصفحة الافتراضية محفوظة ويمكن الرجوع إليها دائماً. نموذج الطلب وآراء الزبائن حاضران دائماً، وكل عناصر الصفحة قابلة للتعديل من «تعديل الصفحة» كالصفحة الافتراضية. يلزم ربط النشر (⚙️).</div>
       <div class="field" style="margin-top:.8rem"><label>اختر المنتج *</label><select id="gp-pick" onchange="GenPage.pick(this.value)"></select></div>
       <div id="gp-modebar" class="hidden" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:-.2rem 0 .8rem"><b id="gp-status" style="font-size:.85rem"></b>
         <button class="small gray" onclick="GenPage.switchMode(GenPage.cur.slug,'default')">🏠 الرجوع للصفحة الافتراضية</button>
@@ -762,7 +762,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem">
       <div>
         <b style="color:var(--green)">أكواد الخصم (Coupons)</b>
-        <div class="hint">يظهر حقل إدخال الكود تلقائياً في صفحة كل منتج ودرج السلة — لا حاجة لتعديل كل صفحة يدوياً. ملاحظة: الأكواد تُنشر كملف عام على GitHub (assets/data/coupons.json) مثل بقية إعدادات الموقع، فهي ليست سرّية بالمعنى الأمني — مناسبة لأكواد ترويجية عادية وليست لصلاحيات حساسة.</div>
+        <div class="hint">يظهر حقل إدخال الكود تلقائياً في صفحة كل منتج ودرج السلة — لا حاجة لتعديل كل صفحة يدوياً. ملاحظة: الأكواد تُنشر كملف عام على الموقع (assets/data/coupons.json) مثل بقية إعدادات الموقع، فهي ليست سرّية بالمعنى الأمني — مناسبة لأكواد ترويجية عادية وليست لصلاحيات حساسة.</div>
       </div>
       <button class="small" onclick="Admin.editCoupon(null)">+ كود جديد</button>
     </div>
@@ -794,7 +794,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-blacklist" class="hidden">
     <div class="card">
       <b style="color:var(--green)">القائمة السوداء لأرقام الهواتف</b>
-      <div class="hint">لحماية متجرك من الطلبات الوهمية أو المتكررة في الإلغاء — محفوظة فقط داخل هذا المتصفح (localStorage) مثل مفاتيح شركات التوصيل، لأنها بيانات تشغيلية خاصة بمتجرك ولا تُنشر أبداً على GitHub. رقم محظور يظهر بجانبه تنبيه 🚫 في تبويب الطلبات، لكن لا يمنع تلقائياً إرسال طلبات جديدة (الموقع عام بلا خادم) — الفائدة هنا تنبيهية عند المعالجة اليدوية.</div>
+      <div class="hint">لحماية متجرك من الطلبات الوهمية أو المتكررة في الإلغاء.</div>
       <div class="grid2" style="margin-top:.8rem">
         <input id="bl-phone" placeholder="رقم الهاتف" dir="ltr">
         <input id="bl-reason" placeholder="السبب (اختياري)">
@@ -1414,12 +1414,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   </div>
 </div>
 
-<!-- نافذة ضبط GitHub -->
+<!-- نافذة ربط النشر -->
 <div class="modal-bg" id="gh-modal-bg">
   <div class="modal">
     <h3>⚙️ إعدادات النشر</h3>
-    <div class="hint">التوكن يُخزَّن فقط داخل متصفحك (localStorage) ويُستعمل للاتصال بـ GitHub مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. يُفضَّل توكن من نوع Fine-grained مع صلاحية «Contents: Read and write» على مستودع alyssumdz فقط.</div>
-    <input id="gh-token" type="password" placeholder="GitHub Personal Access Token" dir="ltr" autocomplete="off">
+    <div class="hint">التوكن يُخزَّن فقط داخل متصفحك (localStorage) ويُستعمل لنشر التعديلات مباشرة من هذه الصفحة — لا يُرسل لأي خادم آخر. اطلب رمز النشر من مزوّد موقعك بصلاحية القراءة والكتابة على ملفات موقعك فقط.</div>
+    <input id="gh-token" type="password" placeholder="رمز النشر (Token)" dir="ltr" autocomplete="off">
     <input id="gh-owner" placeholder="الحساب (owner)" dir="ltr" value="">
     <input id="gh-repo" placeholder="المستودع (repo)" dir="ltr" value="">
     <input id="gh-branch" placeholder="الفرع (branch)" dir="ltr" value="main">
@@ -1435,16 +1435,16 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div class="modal">
     <h3>🖼️ تغيير الصورة</h3>
     <input id="imgpick-current" placeholder="مسار أو رابط الصورة" dir="ltr">
-    <div class="hint">اختر من الصور أدناه (المستخدمة في هذه الصفحة، أو كل صور هذا المنتج على GitHub)، أو عدّل المسار أعلاه مباشرة</div>
+    <div class="hint">اختر من الصور أدناه (المستخدمة في هذه الصفحة، أو كل صور هذا المنتج على الموقع)، أو عدّل المسار أعلاه مباشرة</div>
     <div style="display:flex;gap:.5rem;align-items:flex-start">
       <input id="imgpick-url" placeholder="أو الصق رابط صورة من الإنترنت هنا (https://...)" dir="ltr" style="margin-bottom:.8rem">
       <button class="small blue" type="button" style="white-space:nowrap" onclick="Admin.fetchImageFromUrlForPick()">📥 تحميل ورفع</button>
     </div>
-    <div class="hint" style="margin-top:-.6rem">تُرفع الصورة مباشرة لمجلد صور هذا المنتج على GitHub، ثم تُستخدم هنا تلقائياً — اضغط «✅ تطبيق» بعدها</div>
+    <div class="hint" style="margin-top:-.6rem">تُرفع الصورة مباشرة لمجلد صور هذا المنتج على الموقع، ثم تُستخدم هنا تلقائياً — اضغط «✅ تطبيق» بعدها</div>
     <label class="small" style="display:inline-block;cursor:pointer">📁 رفع صورة من الجهاز مباشرة<input type="file" accept="image/*" style="display:none" onchange="Admin.fetchImageFromDeviceForPick(this)"></label>
     <div class="hint" style="margin-top:.7rem;margin-bottom:.2rem;font-weight:700">🖼️ الصور المستخدمة في هذه الصفحة</div>
     <div id="imgpick-list" style="max-height:130px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
-    <div class="hint" style="margin-top:.7rem;margin-bottom:.2rem;font-weight:700">🗂️ كل صور هذا المنتج على GitHub</div>
+    <div class="hint" style="margin-top:.7rem;margin-bottom:.2rem;font-weight:700">🗂️ كل صور هذا المنتج على الموقع</div>
     <div id="imgpick-folder-list" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:.3rem"></div>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.applyImagePick()">✅ تطبيق</button>
@@ -1577,13 +1577,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.16"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.16"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.16"></script>
+<script src="assets/js/ctl-help.js?v=1.89.17"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.17"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.17"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.16"></script>
-<script src="assets/js/admin-update.js?v=1.89.16"></script>
+<script src="assets/js/admin-nav.js?v=1.89.17"></script>
+<script src="assets/js/admin-update.js?v=1.89.17"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1696,7 +1696,7 @@ const GH = {
       return r.j;
     }
     const c = this.cfg();
-    if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
+    if(!c || !c.token) throw new Error("لم يُضبط ربط النشر بعد");
     const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path +
       "?ref=" + encodeURIComponent(c.branch) + "&t=" + Date.now();
     const r = await fetch(url, { headers:{ Authorization:"Bearer " + c.token, Accept:"application/vnd.github+json" } });
@@ -1718,7 +1718,7 @@ const GH = {
       return r.j;
     }
     const c = this.cfg();
-    if(!c || !c.token) throw new Error("لم يُضبط GitHub بعد");
+    if(!c || !c.token) throw new Error("لم يُضبط ربط النشر بعد");
     const url = "https://api.github.com/repos/" + c.owner + "/" + c.repo + "/contents/" + path;
     const r = await fetch(url, {
       method:"PUT",
@@ -1727,7 +1727,7 @@ const GH = {
     });
     if(!r.ok){
       const t = await r.text().catch(()=>"");
-      if(r.status === 409) throw new Error("تعارض (409) — الملف تغيّر في GitHub، أعد فتح المعاينة وحاول من جديد");
+      if(r.status === 409) throw new Error("تعارض (409) — الملف تغيّر على الموقع، أعد فتح المعاينة وحاول من جديد");
       if(r.status === 401) throw new Error("توكن غير صالح أو بدون صلاحية كتابة (401/403)");
       throw new Error("PUT فشل (" + r.status + ") " + t.slice(0,120));
     }
@@ -1817,7 +1817,7 @@ const GenPage = {
   /* التبديل بين الصفحة الافتراضية والمولّدة — الرجوع للافتراضية متاح دائماً */
   async switchMode(slug, target){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ GenPage.say("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    if(!cfg || !cfg.token){ GenPage.say("⚠️ اربط النشر أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
     const p = (Admin.products||[]).find(x=>x.slug===slug); if(!p) return;
     const cur = this.mode(slug);
     if(cur === target){ GenPage.say("هذه الصفحة مفعّلة بالفعل"); return }
@@ -2073,7 +2073,7 @@ const GenPage = {
   async publish(){
     const d = this.prod; if(!d || !this.html || !this.cur) return;
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ GenPage.say("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    if(!cfg || !cfg.token){ GenPage.say("⚠️ اربط النشر أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
     if(!confirm("ستُفعَّل الصفحة المولّدة لـ «" + d.name + "». الصفحة الحالية تُحفظ كنسخة ويمكنك الرجوع إليها دائماً من تعديل المنتج. متابعة؟")) return;
     const btn = $f("gp-ok"); btn.disabled = true;
     const snapshot = JSON.stringify(this.cur);
@@ -2232,13 +2232,13 @@ const AgentTrain = {
   discard(){ if(this.dirty() && !confirm("تجاهل كل التعديلات غير المنشورة؟")) return; this.draft = this.clone(this.saved); this.select(this.key); this.init(); },
   async publish(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️)"); Admin.openGhSettings(); return }
     if(!this.dirty()){ toast("لا توجد تعديلات للنشر"); return }
     if(!this.tested && !confirm("لم تجرّب الوكيل بعد تعديلاتك الأخيرة. نشر بدون تجربة؟")) return;
     const bad = Object.keys(this.draft.scopes).filter(k=>(this.draft.scopes[k].qa||[]).some(x=>x.active!==false && (!String(x.q||"").trim() || !String(x.a_ar||"").trim() && !String(x.a_fr||"").trim())));
     if(bad.length){ toast("⚠️ بعض الأسئلة ناقصة (سؤال أو جواب فارغ) في: " + bad.join("، ")); return }
     try{
-      toast("⏳ جارِ النشر على GitHub...");
+      toast("⏳ جارِ النشر...");
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.draft, null, 2))));
       const res = await GH.putFile(this.FILE, b64, this.sha, "تدريب الوكيل الذكي عبر لوحة التحكم");
       this.sha = res && res.content ? res.content.sha : this.sha;
@@ -2290,7 +2290,7 @@ const AvatarAudio = {
   },
   async gen(key, quiet){
     if(!this.elKey()){ toast("⚠️ ضع مفتاح ElevenLabs أولاً"); return false }
-    const cfg = GH.cfg(); if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); return false }
+    const cfg = GH.cfg(); if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️)"); return false }
     await this.load(); const lines = this.lines(key), files = [];
     try{
       for(let i=0;i<lines.length;i++){
@@ -2498,7 +2498,7 @@ const Admin = {
     await PrivSync.pull();                                   // إعدادات المتصفح الحسّاسة تتزامن بين أجهزتك قبل قراءتها
     if(!CONFIG.API_URL && !PHPAPI.on()){ toast("⚠️ لم يُربط الـ API بعد"); }
     // ملاحظة: المنتجات ورسوم التوصيل تُقرأ محلياً من data.js/wilayas.js فقط (المصدر الوحيد
-    // الموثوق — يُعدَّلان مباشرة عبر لوحة التحكم وتُنشر التعديلات فوراً على GitHub)، ولا تُستبدَل
+    // الموثوق — يُعدَّلان مباشرة عبر لوحة التحكم وتُنشر التعديلات فوراً على الموقع)، ولا تُستبدَل
     // بنتيجة Google Sheets القديمة: شيت الاختبار كانت تحتوي أحياناً على منتج واحد فقط، وكانت —
     // إذا ردّت بأي بيانات ولو ناقصة — تُخفي أغلب المنتجات في لوحة التحكم بصفة عشوائية (نفس السبب
     // الذي دفع لتعطيل هذا الاستبدال في bootStore() بملف api.js). الطلبات وحدها تبقى تُقرأ من الشيت.
@@ -2982,7 +2982,7 @@ const Admin = {
     el.src = v;
   },
 
-  /* ════════ جلب صورة من رابط خارجي ورفعها مباشرة إلى GitHub — مع تحويل تلقائي لصيغة webp ════════ */
+  /* ════════ جلب صورة من رابط خارجي ورفعها مباشرة — مع تحويل تلقائي لصيغة webp ════════ */
   /* تحويل أي صورة إلى webp عبر Canvas (يقلّص الحجم ويوحّد الصيغة) — يرجع null إن تعذّر (متصفح قديم مثلاً) فنستعمل الصيغة الأصلية كبديل */
   async toWebp(blob, quality, maxSide){
     try{
@@ -3018,13 +3018,13 @@ const Admin = {
       reader.readAsDataURL(blob);
     });
   },
-  /* رفع صورة من رابط خارجي إلى مجلد معيّن على GitHub — تُحوَّل تلقائياً إلى webp مهما كانت صيغتها الأصلية */
+  /* رفع صورة من رابط خارجي إلى مجلد معيّن على الموقع — تُحوَّل تلقائياً إلى webp مهما كانت صيغتها الأصلية */
   async uploadImageToFolder(url, folder, filenamePrefix){
     let r;
     try{
       r = await fetch(url, { mode:"cors" });
     }catch(e){
-      throw new Error("تعذّر الوصول للرابط — قد يمنع المصدر الجلب من المتصفح (CORS). حمّل الصورة يدوياً وارفعها عبر GitHub");
+      throw new Error("تعذّر الوصول للرابط — قد يمنع المصدر الجلب من المتصفح (CORS). حمّل الصورة يدوياً وارفعها من اللوحة");
     }
     if(!r.ok) throw new Error("تعذّر جلب الصورة (رمز " + r.status + ")");
     const blob = await r.blob();
@@ -3076,7 +3076,7 @@ const Admin = {
     const path = folder + "/" + (filenamePrefix || "") + Date.now() + (opt && opt.uniq ? "-" + this._imgSeq : "") + "." + ext;
     return { path, blob: finalBlob, ext };
   },
-  /* رفع صورة مُجهَّزة إلى GitHub (+ النسختان المصغّرتان لصور المنتجات) */
+  /* رفع صورة مُجهَّزة إلى الموقع (+ النسختان المصغّرتان لصور المنتجات) */
   async commitImage(p, filenamePrefix, opt){
     const b64 = await this.blobToBase64(p.blob);
     if(!b64) throw new Error("فشلت قراءة الصورة");
@@ -3095,7 +3095,7 @@ const Admin = {
     const slug = $f("f-slug").value.trim();
     if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); input.value=""; return }
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
     toast("⏳ جارِ رفع الصورة من جهازك...");
     try{
       const path = await this.uploadImageFile(file, "assets/img/" + slug, "");
@@ -3117,7 +3117,7 @@ const Admin = {
     const slug = this.previewPageSlug;
     if(!slug){ toast("خطأ: لا يوجد منتج محدد"); input.value=""; return }
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); this.openGhSettings(); input.value=""; return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️)"); this.openGhSettings(); input.value=""; return }
     toast("⏳ جارِ رفع الصورة من جهازك...");
     try{
       const path = await this.uploadImageFile(file, "assets/img/" + slug, "");
@@ -3137,7 +3137,7 @@ const Admin = {
     const slug = $f("f-slug").value.trim();
     if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); return }
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
     toast("⏳ جارِ تحميل الصورة ورفعها...");
     try{
       const path = await this.uploadExternalImage(url, slug);
@@ -3160,7 +3160,7 @@ const Admin = {
     const slug = $f("f-slug").value.trim();
     if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); return }
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
     toast("⏳ جارِ تحميل صورة الغلاف ورفعها...");
     try{
       const path = await this.uploadImageToFolder(url, "assets/img/" + slug, "cover-");
@@ -3180,7 +3180,7 @@ const Admin = {
     const slug = $f("f-slug").value.trim();
     if(!slug){ toast("أدخل معرف المنتج (slug) أولاً"); input.value=""; return }
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
     toast("⏳ جارِ رفع صورة الغلاف من جهازك...");
     try{
       const path = await this.uploadImageFile(file, "assets/img/" + slug, "cover-");
@@ -3207,7 +3207,7 @@ const Admin = {
     const slug = this.previewPageSlug;
     if(!slug){ toast("خطأ: لا يوجد منتج محدد"); return }
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️)"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️)"); this.openGhSettings(); return }
     toast("⏳ جارِ تحميل الصورة ورفعها...");
     try{
       const path = await this.uploadExternalImage(url, slug);
@@ -3249,11 +3249,11 @@ const Admin = {
      المصدر الوحيد الذي يقرأه الموقع الحي فعلياً هو assets/js/data.js (PRODUCTS+CATEGORIES)
      و assets/js/wilayas.js (WILAYAS) — API.saveProduct/saveCategories/saveFees ترسل فقط إلى
      Google Sheets وهو غير مقروء من الموقع (معطّل عمداً في bootStore، راجع تعليق api.js)، لذلك
-     يجب أيضاً إعادة كتابة data.js/wilayas.js عبر GitHub في كل مرة يُنشر فيها منتج/قسم/رسم توصيل،
+     يجب أيضاً إعادة كتابة data.js/wilayas.js من اللوحة في كل مرة يُنشر فيها منتج/قسم/رسم توصيل،
      وإلا تبقى التعديلات حبيسة لوحة التحكم ولا تصل أبداً للزوار رغم رسالة «تم النشر». */
   async publishDataJs(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return false }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return false }
     try{
       const file = await GH.getFile("assets/js/data.js");
       const content = "/* منتجات المتجر — يُعدَّل تلقائياً من لوحة التحكم admin.html، آخر تحديث: " + new Date().toISOString() + " */\n" +
@@ -3293,7 +3293,7 @@ const Admin = {
   },
   async publishWilayasJs(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return false }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return false }
     try{
       const file = await GH.getFile("assets/js/wilayas.js");
       const content = "/* رسوم التوصيل ومكاتب Yalidine — يُعدَّل تلقائياً من لوحة التحكم admin.html */\n" +
@@ -3427,7 +3427,7 @@ const Admin = {
   async uploadVarImage(input){
     const file = input.files && input.files[0]; if(!file) return;
     const slug = $f("f-slug").value.trim(); if(!slug){ toast("أدخل معرّف المنتج (slug) أولاً"); input.value = ""; return }
-    const cfg = GH.cfg(); if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); input.value = ""; return }
+    const cfg = GH.cfg(); if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); input.value = ""; return }
     toast("⏳ جارِ رفع الصورة...");
     try{ const path = await this.uploadImageFile(file, "assets/img/" + slug, "var-"); const r = input.closest(".var-row");
       r.querySelector(".va-img").value = path; const im = r.querySelector(".va-prev"); im.src = path; im.style.display = ""; toast("✅ رُفعت الصورة"); }
@@ -3673,7 +3673,7 @@ const Admin = {
   readSeoBox(){ if(typeof SeoBox === "undefined" || !$f("fsb-title")) return {}; const r = SeoBox.read("fsb"), o = { seoTitle:r.title, seoDesc:r.desc, seoKw:r.kw, seoFocus:r.focus, seoImg:r.img }; if(r.noindex) o.noindex = true; return o; },
   closeModal(){ $f("prod-modal-bg").classList.remove("open"); this.editingSlug = null; },
 
-  /* ════════ تعديل مباشر لصفحة المنتج + نشر على GitHub ════════ */
+  /* ════════ تعديل مباشر لصفحة المنتج + نشر على الموقع ════════ */
   exitEditUI(){
     this._editing = false;
     this._editDoc = null;
@@ -3704,7 +3704,7 @@ const Admin = {
     if(!cfg.token || !cfg.owner || !cfg.repo){ toast("املأ التوكن واسم الحساب والمستودع"); return }
     localStorage.setItem("alyssum_gh_cfg", JSON.stringify(cfg));
     $f("gh-modal-bg").classList.remove("open");
-    toast("✓ تم حفظ ضبط GitHub في هذا المتصفح");
+    toast("✓ تم حفظ ربط النشر في هذا المتصفح");
   },
 
   enterPageEdit(){
@@ -4040,7 +4040,7 @@ const Admin = {
   },
   pickExistingImage(src){ $f("imgpick-current").value = src; },
 
-  /* ════════ المرحلة 3: منتقي الصور الموسّع — يعرض كل صور مجلد هذا المنتج على GitHub
+  /* ════════ المرحلة 3: منتقي الصور الموسّع — يعرض كل صور مجلد هذا المنتج على الموقع
      (وليس فقط الصور المستخدمة حالياً في الصفحة)، مع زر نسخ رابط مباشر لكل صورة ════════ */
   _resolveImageFolder(){
     // أثناء تعديل صفحة منتج: مجلد هذا المنتج بالكامل (بما فيه أي مجلدات فرعية مثل
@@ -4076,7 +4076,7 @@ const Admin = {
     if(!box) return;
     const cfg = GH.cfg();
     if(!cfg || !cfg.token){
-      box.innerHTML = '<div class="hint">⚠️ اضبط GitHub أولاً لعرض كل صور هذا المنتج (زر ⚙️)</div>';
+      box.innerHTML = '<div class="hint">⚠️ اربط النشر أولاً لعرض كل صور هذا المنتج (زر ⚙️)</div>';
       return;
     }
     const folder = this._resolveImageFolder();
@@ -4137,7 +4137,7 @@ const Admin = {
       this._editingImg.style.backgroundImage = "url('" + v + "')";
     }
     $f("imgpick-modal-bg").classList.remove("open");
-    toast("✓ تم تغيير الصورة هنا — لم يُنشر بعد، اضغط «✅ تحقق ونشر» للنشر على GitHub");
+    toast("✓ تم تغيير الصورة هنا — لم يُنشر بعد، اضغط «✅ تحقق ونشر» للنشر");
   },
   duplicateEditingImage(){
     const el = this._editingImg;
@@ -4288,9 +4288,9 @@ const Admin = {
 
   async validatePageEdit(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً من زر ⚙️"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً من زر ⚙️"); this.openGhSettings(); return }
     if(!this._editDoc){ toast("خطأ: لا توجد صفحة قيد التعديل"); return }
-    if(!confirm("نشر هذه التعديلات مباشرة على صفحة المنتج في GitHub؟")) return;
+    if(!confirm("نشر هذه التعديلات مباشرة على صفحة المنتج في الموقع؟")) return;
 
     // نبني مجموعات التغييرات (نص/تنسيق/حذف) قبل التنظيف — تُستخدم بعد النشر الناجح
     // لعرض نافذة «نطاق النشر» إن كانت هذه صفحة منتج (ميزة تطبيق التعديلات على كل صفحات المنتجات)
@@ -4343,11 +4343,11 @@ const Admin = {
     const path = this.previewPath;
     const label = this.previewKind === "home" ? "الصفحة الرئيسية" : ("صفحة " + this.previewPageSlug);
     try{
-      toast("⏳ جارِ الحفظ على GitHub...");
+      toast("⏳ جارِ الحفظ...");
       const file = await GH.getFile(path);
       const b64 = btoa(unescape(encodeURIComponent(html)));
       await GH.putFile(path, b64, file.sha, "تعديل " + label + " عبر لوحة التحكم");
-      toast("✅ تم النشر على GitHub — يظهر التحديث على الموقع خلال دقيقة تقريباً");
+      toast("✅ تم النشر — يظهر التحديث على الموقع خلال دقيقة تقريباً");
       this.exitEditUI();
       setTimeout(()=>{ this.refreshEditorFrame(); }, 1500);
       if(groups.length){
@@ -4689,8 +4689,8 @@ const Admin = {
 
   async publishPixels(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
-    toast("⏳ جارِ النشر على GitHub...");
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ النشر...");
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.pixels, null, 2))));
       const res = await GH.putFile("assets/data/pixels.json", b64, this.pixelsSha, "تحديث بكسلات التتبع عبر لوحة التحكم");
@@ -4780,8 +4780,8 @@ const Admin = {
 
   async publishQA(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
-    toast("⏳ جارِ النشر على GitHub...");
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ النشر...");
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.qaList, null, 2))));
       const res = await GH.putFile("assets/data/agent-faq.json", b64, this.qaSha, "تحديث أسئلة الوكيل الذكي عبر لوحة التحكم");
@@ -4898,8 +4898,8 @@ const Admin = {
 
   async publishCoupons(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
-    toast("⏳ جارِ النشر على GitHub...");
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return }
+    toast("⏳ جارِ النشر...");
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(this.coupons, null, 2))));
       const res = await GH.putFile("assets/data/coupons.json", b64, this.couponsSha, "تحديث أكواد الخصم عبر لوحة التحكم");
@@ -4914,7 +4914,7 @@ const Admin = {
 
   /* ════════ القائمة السوداء لأرقام الهواتف (Blacklist) ════════
      تبقى دائماً محلية فقط (localStorage) — بيانات تشغيلية خاصة بالمتجر عن زبائن حقيقيين،
-     لا تُنشر أبداً كملف عام على GitHub (نفس مبدأ مفاتيح شركات التوصيل). تظهر فقط كتنبيه
+     لا تُنشر أبداً (نفس مبدأ مفاتيح شركات التوصيل). تظهر فقط كتنبيه
      بجانب رقم الهاتف في تبويب الطلبات، ولا تمنع تلقائياً إرسال طلبات جديدة عبر الموقع. */
   normalizePhone(phone){
     const digits = String(phone||"").replace(/\D/g,"");
@@ -5158,7 +5158,7 @@ const Admin = {
   async flushStockPublish(){
     if(this._stockBusy){ this._stockTimer = setTimeout(()=>this.flushStockPublish(), 3000); return }
     if(!this._stockDirty) return;
-    const cfg = GH.cfg(); if(!cfg || !cfg.token){ if(!this._warnedGh){ this._warnedGh = true; toast("⚠️ المخزون تغيّر محلياً، اضبط GitHub لينعكس على الموقع"); } return }
+    const cfg = GH.cfg(); if(!cfg || !cfg.token){ if(!this._warnedGh){ this._warnedGh = true; toast("⚠️ المخزون تغيّر محلياً، اربط النشر لينعكس على الموقع"); } return }
     this._stockBusy = true; this._stockDirty = false;
     const ok = await this.publishDataJs();
     this._stockBusy = false; if(!ok) this._stockDirty = true; else this.renderFinance();
@@ -5887,7 +5887,7 @@ const Admin = {
     const url = $f("th-logo-url").value.trim();
     if(!url){ toast("أدخل رابط صورة الشعار أولاً"); return }
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); return }
     toast("⏳ جارِ تحميل الشعار وتحويله إلى webp ورفعه...");
     try{
       const path = await this.uploadImageToFolder(url, "assets/img/logo", "logo-");
@@ -5906,7 +5906,7 @@ const Admin = {
     const file = input.files && input.files[0];
     if(!file) return;
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً (زر ⚙️ في معاينة الصفحة)"); this.openGhSettings(); input.value=""; return }
     toast("⏳ جارِ رفع الشعار من جهازك وتحويله إلى webp...");
     try{
       const path = await this.uploadImageFile(file, "assets/img/logo", "logo-");
@@ -5930,7 +5930,7 @@ const Admin = {
 
   async publishTheme(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return }
     const preset = $f("th-font-preset").value;
     const customName = $f("th-font-name").value.trim();
     const cssFontFamily = preset !== "custom"
@@ -5951,7 +5951,7 @@ const Admin = {
     if(this.theme && this.theme.logo) theme.logo = this.theme.logo;
     theme.seoTitle = $f("th-seo-title").value.trim();
     theme.seoDesc = $f("th-seo-desc").value.trim();
-    toast("⏳ جارِ النشر على GitHub...");
+    toast("⏳ جارِ النشر...");
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(theme, null, 2))));
       const res = await GH.putFile("assets/data/theme.json", b64, this.themeSha, "تحديث مظهر الموقع (الخطوط/الألوان/الشعار) عبر لوحة التحكم");
@@ -5967,7 +5967,7 @@ const Admin = {
   async resetTheme(){
     if(!confirm("استرجاع المظهر الافتراضي للموقع (حذف كل التخصيصات الحالية)؟")) return;
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return }
     toast("⏳ جارِ الاسترجاع...");
     try{
       const b64 = btoa(unescape(encodeURIComponent("{}")));
@@ -5983,7 +5983,7 @@ const Admin = {
   },
 
   /* ════════ نموذج الطلب (واتساب/الأزرار/الحقول الإضافية/الألوان/العروض) — assets/data/checkout.json ════════
-     تُقرأ من الملف على GitHub، وتُطبَّق على كل صفحات المنتجات عبر initCheckout() في assets/js/app.js */
+     تُقرأ من الملف على الموقع، وتُطبَّق على كل صفحات المنتجات عبر initCheckout() في assets/js/app.js */
   CHECKOUT_COLOR_META: {
     orderBg:   { label:"خلفية زر «تأكيد الطلب»",      preview:"button" },
     orderText: { label:"نص زر «تأكيد الطلب»",          preview:"text-main" },
@@ -6124,7 +6124,7 @@ const Admin = {
 
   async publishCheckout(){
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return }
     const waNumber = $f("co-wa-number").value.trim().replace(/[^\d]/g,"");
     if(!waNumber){ toast("⚠️ أدخل رقم واتساب صحيح (أرقام فقط، مثال: 213559237239)"); return }
     const colors = {};
@@ -6153,7 +6153,7 @@ const Admin = {
       extraFields,
       colors,
     };
-    toast("⏳ جارِ النشر على GitHub...");
+    toast("⏳ جارِ النشر...");
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(checkout, null, 2))));
       const res = await GH.putFile("assets/data/checkout.json", b64, this.checkoutSha, "تحديث إعدادات نموذج الطلب عبر لوحة التحكم");
@@ -6170,7 +6170,7 @@ const Admin = {
   async resetCheckout(){
     if(!confirm("استرجاع إعدادات نموذج الطلب الافتراضية (حذف كل التخصيصات الحالية)؟")) return;
     const cfg = GH.cfg();
-    if(!cfg || !cfg.token){ toast("⚠️ اضبط GitHub أولاً"); this.openGhSettings(); return }
+    if(!cfg || !cfg.token){ toast("⚠️ اربط النشر أولاً"); this.openGhSettings(); return }
     toast("⏳ جارِ الاسترجاع...");
     try{
       const b64 = btoa(unescape(encodeURIComponent("{}")));
@@ -6186,7 +6186,7 @@ const Admin = {
   },
 
   /* ════════ ربط شركات التوصيل الجزائرية ════════
-     المفاتيح تُخزَّن فقط في localStorage (alyssum_delivery_cfg) — لا تُنشر أبداً كملف على GitHub
+     المفاتيح تُخزَّن فقط في localStorage (alyssum_delivery_cfg) — لا تُنشر أبداً
      لأن صفحات الموقع عامة بدون أي تسجيل دخول ويمكن لأي شخص قراءتها. */
   DELIVERY_COMPANIES: {
     yalidine: {
@@ -6786,7 +6786,7 @@ const Admin = {
       if(!r.ok) throw new Error(r.j && r.j.error ? ("وسيط الخادم: " + r.j.error) : ("وسيط الخادم (" + r.status + ")"));
       return { ok: r.j.status >= 200 && r.j.status < 300, status: r.j.status, text: r.j.body || "" };
     }
-    /* نسخة GitHub+Supabase: عبر دالة Edge باسم courier (تتجاوز CORS وتتحقق أنك مدير)، وإلا اتصال مباشر قد يحجبه المتصفح */
+    /* النسخة السحابية (Supabase): عبر دالة Edge باسم courier (تتجاوز CORS وتتحقق أنك مدير)، وإلا اتصال مباشر قد يحجبه المتصفح */
     if(API.sb.enabled() && API.ordersBackend() !== "sheets" && this._proxy !== false){
       try{
         const t = await API.sb.token();
@@ -6812,7 +6812,7 @@ const Admin = {
   },
   explainCors(co){
     this.showNotice("🚫 المتصفح حجب الاتصال بـ " + (co ? co.name : "الشركة"),
-      "موقعك الحالي (GitHub + Supabase) يتصل بياليدين مباشرة من المتصفح، وياليدين لا تسمح بذلك (قيد أمني اسمه CORS) — المفاتيح سليمة وليست هي المشكلة.<br><br>" +
+      "موقعك الحالي (السحابية + Supabase) يتصل بياليدين مباشرة من المتصفح، وياليدين لا تسمح بذلك (قيد أمني اسمه CORS) — المفاتيح سليمة وليست هي المشكلة.<br><br>" +
       "<b>الحل (مرة واحدة، 3 دقائق، بدون طرفية):</b><ol style='margin:.4rem 1.2rem'>" +
       "<li>افتح لوحة Supabase ← <b>Edge Functions</b> ← <b>Deploy a new function</b>.</li>" +
       "<li>اسم الدالة: <code>courier</code> ← الصق محتوى الملف <code>supabase/functions/courier/index.ts</code> من المستودع (يمكنني إرساله لك) ← <b>Deploy</b> (<b>أطفئ</b> خيار Verify JWT — الدالة تتحقق بنفسها أنك مدير).</li>" +
@@ -7456,18 +7456,18 @@ const Seller = {
     if(!confirm("سيُنشر الإصدار " + ver + " لجميع المواقع المثبَّتة. متابعة؟")) return;
     const c = GH.cfg(); btn.disabled = true; $f("rel-log").textContent = "";
     try{
-      this.log("1) بناء الإصدار على GitHub...");
+      this.log("1) بناء الإصدار على الموقع...");
       const d = await fetch("https://api.github.com/repos/" + c.owner + "/" + c.repo + "/actions/workflows/release.yml/dispatches", { method:"POST",
         headers:{ Authorization:"Bearer " + c.token, Accept:"application/vnd.github+json", "Content-Type":"application/json" }, body: JSON.stringify({ ref: c.branch || "main", inputs:{ version: ver, notes } }) });
       if(d.status === 404) throw new Error("ملف release.yml غير موجود على الفرع (ادمج التعديلات أولاً)");
-      if(d.status === 403 || d.status === 401) throw new Error("التوكن بلا صلاحية Actions: Read and write — عدّلها من إعدادات التوكن في GitHub");
+      if(d.status === 403 || d.status === 401) throw new Error("رمز النشر بلا صلاحية التشغيل — عدّل صلاحياته من مزوّد موقعك");
       if(d.status !== 204) throw new Error("تعذّر بدء البناء (" + d.status + ")");
       let man = null;
       for(let i = 0; i < 60 && !man; i++){
         await new Promise(r=>setTimeout(r, 6000));
         try{ const f = await GH.getFile("releases/" + ver + "/manifest.json"); man = this.fromB64(f.content); }catch(e){ if(i % 3 === 2) this.log("   ...بانتظار انتهاء البناء"); }
       }
-      if(!man) throw new Error("انتهت المهلة قبل ظهور الإصدار — راجع تبويب Actions في GitHub");
+      if(!man) throw new Error("انتهت المهلة قبل ظهور الإصدار — راجع سجلّ التشغيل");
       this.log("2) التوقيع بمفتاحك الخاص (يبقى في متصفحك)...");
       const sig = new Uint8Array(await crypto.subtle.sign({ name:"ECDSA", hash:"SHA-256" }, await this.privKey(), new TextEncoder().encode(man)));
       // تحقق احترازي: التوقيع يجب أن يطابق المفتاح العام المنشور في المستودع (وإلا لن يقبله أي عميل)
@@ -8807,7 +8807,7 @@ ${hasHdr ? `<script>var REL=${JSON.stringify(ctx.base)};<\/script>` : ""}${(hasP
 
 /* ══════════════════════════════════════════════════════════════════════════════
    PBApp — واجهة المحرر: لوحة العناصر، قماش حي (iframe) بتحرير مباشر، تحديد وسحب وتغيير حجم،
-   لوحة إعدادات متجاوبة (محتوى/تنسيق/متقدم)، تراجع/إعادة، وحفظ/نشر إلى GitHub (أو PHP).
+   لوحة إعدادات متجاوبة (محتوى/تنسيق/متقدم)، تراجع/إعادة، وحفظ/نشر إلى الموقع (أو PHP).
    ══════════════════════════════════════════════════════════════════════════════ */
 const PBApp = (() => {
   const { DEVS, DEVNAME, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common } = PB;
@@ -10671,7 +10671,7 @@ body{overflow-x:hidden;margin:0}`;
     addPageImage(pth);
   }
   async function libFor(inf) { const paths = await openLibrary(inf.node.type !== "image"); if (paths.length) applyPaths(inf, paths); }
-  /* الرفع بالتحضير الفوري: تُضغط الصورة وتظهر في المحرر محلياً حالاً، ويكمل الرفع إلى GitHub في الخلفية بالتتابع */
+  /* الرفع بالتحضير الفوري: تُضغط الصورة وتظهر في المحرر محلياً حالاً، ويكمل الرفع في الخلفية بالتتابع */
   async function uploadFiles(files) {
     const out = [], A = Admin; A.localImg = A.localImg || {};
     for (const f of files) { const p = await A.prepareImage(f, "assets/img/pages", "pg-", HQ); A.localImg[p.path] = URL.createObjectURL(p.blob); out.push(p.path); queueCommit(p); pmAdd(p.path); }
@@ -10683,7 +10683,7 @@ body{overflow-x:hidden;margin:0}`;
   async function commitBatch(items) {
     if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("php");
     const c = GH.cfg(); if (!c || !c.token) throw new Error("no gh"); const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
-    const j = async (u, o) => { const r = await fetch(u, Object.assign({ headers: H }, o || {})); if (!r.ok) { const e = new Error("GitHub " + r.status); e.status = r.status; throw e; } return r.json(); };
+    const j = async (u, o) => { const r = await fetch(u, Object.assign({ headers: H }, o || {})); if (!r.ok) { const e = new Error("خطأ " + r.status); e.status = r.status; throw e; } return r.json(); };
     const ent = []; let k = 0;
     const work = async () => { while (k < items.length) { const p = items[k++], b64 = await Admin.blobToBase64(p.blob); if (!b64) throw new Error("blob"); const b = await j(api + "/git/blobs", { method: "POST", body: JSON.stringify({ content: b64, encoding: "base64" }) }); ent.push({ path: p.path, mode: "100644", type: "blob", sha: b.sha }); } };
     await Promise.all([work(), work(), work(), work(), work(), work()]);
@@ -12402,7 +12402,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
   /* حفظ داخل ملفات المنتج: assets/img/<slug>/landing/ (كاملة أو أقساماً) */
   async function savePage() {
     if (!S.blob || !S.canvas) return toast("لا توجد صفحة بعد"); const slug = ($("gen-prod") || {}).value; if (!slug) return toast("اختر المنتج أولاً من القائمة");
-    const cfg = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (!cfg || !cfg.token) return toast("⚠️ اضبط GitHub أولاً (زر ⚙️) لحفظ الملفات في المنتج");
+    const cfg = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (!cfg || !cfg.token) return toast("⚠️ اربط النشر أولاً (زر ⚙️) لحفظ الملفات في المنتج");
     const sv = $("gen-save"); sv.disabled = true; const ts = Date.now().toString(36);
     try {
       const folder = "assets/img/" + slug + "/landing", items = splitMode() === "full" ? [{ blob: S.blob }] : await sectionBlobs("image/png"), paths = [];
@@ -12427,7 +12427,7 @@ Before rendering, internally verify every text element: no duplicated sentences,
     if (!S.canvas) return; const msg = $("gen-msg"), btn = $("gen-go"); btn.disabled = true;
     const upload = async (blob, name) => {
       try { if (typeof PBApp !== "undefined" && PBApp.uploadBlob) return await PBApp.uploadBlob(blob, name); const f = new File([blob], name + ".webp", { type: "image/webp" }); const p = await Admin.uploadImageFile(f, "assets/img/pages", "gen-", { max: 2000, q: .86, noVariants: true }); if (typeof PBApp !== "undefined" && PBApp.mediaAdd) PBApp.mediaAdd([p]); return p; }
-      catch (e) { msg.textContent = "⚠️ تعذّر الرفع إلى GitHub (" + e.message + ") — حُفظت الصور مؤقتاً داخل الصفحة؛ اضبط GitHub ثم أعد التحويل للنشر."; return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); }
+      catch (e) { msg.textContent = "⚠️ تعذّر الرفع (" + e.message + ") — حُفظت الصور مؤقتاً داخل الصفحة؛ اربط النشر ثم أعد التحويل للنشر."; return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); }
     };
     try {
       const gk = $("gen-gkey").value.replace(/[\s"']/g, ""), rb = $("gen-rbkey").value.trim(), L = LANGS[$("gen-lang").value] || LANGS.ar;
@@ -14604,19 +14604,19 @@ const PBClone = (function () {
     if (blocked) { const e = new Error("الموقع محمي بجدار حماية (مثل Cloudflare) ويطلب «تفعيل JavaScript والكوكيز» فلا يسمح بالجلب الآلي."); e.blocked = true; throw e; }
     throw new Error("تعذّر جلب الصفحة (" + (last && last.message || "؟") + "). جرّب موقعاً آخر أو استعمل تبويب «صورة» بلقطة شاشة للصفحة.");
   }
-  /* جلب بمتصفح كامل على خادم: يشغّل workflow «clone-page» في مستودعك (GitHub Actions + Chromium) فيعرض الصفحة بجافاسكربتها ويحفظ نسخة جامدة في assets/clone ثم تُقرأ هنا */
+  /* جلب بمتصفح كامل على خادم: يشغّل workflow «clone-page» في مستودعك (التشغيل الآلي + Chromium) فيعرض الصفحة بجافاسكربتها ويحفظ نسخة جامدة في assets/clone ثم تُقرأ هنا */
   async function fetchFull(url, W, token) {
-    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token || c.token === "php" || !c.owner) throw new Error("الجلب بمتصفح كامل يحتاج ربط GitHub في الإعدادات (غير متاح في نسخة الاستضافة PHP)");
+    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token || c.token === "php" || !c.owner) throw new Error("الجلب بمتصفح كامل يحتاج ربط النشر في الإعدادات (غير متاح في نسخة الاستضافة PHP)");
     const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
-    st("تشغيل المتصفح الكامل على خادم GitHub…");
+    st("تشغيل المتصفح الكامل على خادم النشر…");
     const r = await fetch(api + "/actions/workflows/clone-page.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ ref: c.branch || "main", inputs: { url, width: String(W), id } }) });
     if (r.status !== 204) { const t = await r.text().catch(() => ""); throw new Error(r.status === 404 ? "لم يُعثر على الـworkflow «clone-page» في المستودع — انشر آخر تحديث للوحة أولاً" : r.status === 403 || r.status === 401 ? "التوكن بلا صلاحية تشغيل Actions (يلزم صلاحية «workflow» أو Actions: write)" : "فشل تشغيل الخادم (" + r.status + ") " + t.slice(0, 100)); }
     const t0 = Date.now(), path = "assets/clone/" + id + ".html"; S.runId = id;
-    while (Date.now() - t0 < 300000) { await sleep(6000); if (S.runId !== id || !$("pbx-clone")) throw new Error("أُلغي الجلب"); st("المتصفح الكامل يعرض الصفحة على خادم GitHub… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 1–2 دقيقة)");
+    while (Date.now() - t0 < 300000) { await sleep(6000); if (S.runId !== id || !$("pbx-clone")) throw new Error("أُلغي الجلب"); st("المتصفح الكامل يعرض الصفحة على خادم النشر… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 1–2 دقيقة)");
       const g = await fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main") + "&t=" + Date.now(), { headers: Object.assign({}, H, { Accept: "application/vnd.github.raw+json" }) }).catch(() => null); if (!g || g.status === 404) continue; if (!g.ok) throw new Error("تعذّر قراءة النتيجة (" + g.status + ")");
       const html = await g.text(); fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main"), { headers: H }).then(m => m.ok ? m.json() : null).then(m => m && fetch(api + "/contents/" + path, { method: "DELETE", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ message: "clone: تنظيف", sha: m.sha, branch: c.branch || "main" }) })).catch(() => { });      // تنظيف الملف المؤقت
       return html; }
-    throw new Error("انتهت المهلة قبل اكتمال العرض على الخادم — راجع تبويب Actions في GitHub");
+    throw new Error("انتهت المهلة قبل اكتمال العرض على الخادم — راجع سجلّ التشغيل");
   }
   async function fetchBlob(url) { const tries = [url].concat(PROXIES.map(p => p(url))); for (const t of tries) { try { const b = await fget(t, "blob", 12000); if (b && b.size > 200 && /^image\//.test(b.type)) return b; } catch (e) { } } return null; }
   /* يجهّز HTML للعرض الآمن: بلا سكربتات، مع <base>، وكشف الصور الكسولة، وإيقاف الحركات */
@@ -15246,7 +15246,7 @@ const PBClone = (function () {
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>
-<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم GitHub Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label></div>
+<div class="cl-ctl" data-pane="url"><input type="text" id="cl-url" placeholder="https://example.com" spellcheck="false"><button type="button" class="pri" data-cl="load">فتح</button><span id="cl-ext" class="cl-extw"></span><button type="button" data-cl="loadfull" title="يشغّل متصفحاً كاملاً (Chromium) على خادم النشر Actions فيعرض الصفحة بجافاسكربتها، لنسخ المواقع المبنية بالجافاسكربت بدقة أعلى (1–2 دقيقة)">فتح بمتصفح كامل</button><label>عرض الصفحة <select id="cl-w"><option value="1440">1440</option><option value="1280" selected>1280</option><option value="1024">1024</option></select></label></div>
 <div class="cl-ctl" data-pane="img" hidden><button type="button" class="pri" data-cl="pick">اختر صورة</button><span style="font-size:.78rem;color:#6b6556">أو اسحبها إلى النافذة أو الصقها (Ctrl+V)</span><label><input type="checkbox" id="cl-ocr" checked> تحويل النصوص إلى نص قابل للتعديل (OCR)</label><label><input type="checkbox" id="cl-vec" checked> رسم عناصر الصورة (مربعات وأزرار وصور) كعناصر</label><label><input type="checkbox" id="cl-keep"> إبقاء الصورة الأصلية كاملة خلف العناصر</label><label>اللغة <select id="cl-lang"><option value="ara+eng">عربي + إنجليزي</option><option value="eng">إنجليزي</option><option value="fra+eng">فرنسي + إنجليزي</option><option value="ara+fra+eng">عربي + فرنسي + إنجليزي</option></select></label></div>
 <div class="cl-note">انسخ فقط ما لك حقّ استعماله: النصوص والصور والشعارات تعود لأصحابها. لا تُنفَّذ أي سكربتات من الموقع، والصفحات التي تُبنى بالجافاسكربت قد تظهر ناقصة (استعمل لقطة شاشة).</div>
 <div class="cl-stage" id="cl-stage"><div class="cl-empty">اكتب رابط الموقع ثم اضغط «فتح»<br>وبعد ظهور الصفحة اسحب الحافة البنفسجية السفلية لتحديد آخر نقطة تُنسخ.</div></div>
@@ -15304,7 +15304,7 @@ const PBClone = (function () {
   async function fxStatus() {
     const box = $("cl-rep-st"); if (!box) return; box.innerHTML = '<div class="cl-sm" style="margin-top:.6rem">جارٍ قراءة الطلبات…</div>';
     try {
-      if (typeof GH === "undefined" || !GH.cfg()) throw new Error("GitHub غير مضبوط"); const f = await GH.getFile(FXREQ), cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))), rs = cur.requests || [];
+      if (typeof GH === "undefined" || !GH.cfg()) throw new Error("ربط النشر غير مضبوط"); const f = await GH.getFile(FXREQ), cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))), rs = cur.requests || [];
       box.innerHTML = '<h4 style="margin:.7rem 0 .3rem">طلباتك المُرسلة</h4>' + (rs.length ? rs.map(r => `<div class="rw"><span class="ch ${r.state === "done" ? "ok" : "partial"}">${r.state === "done" ? "تمت الإضافة" : "قيد الانتظار"}</span><div style="flex:1"><b>${esc(r.label)}</b> <span class="cl-sm">× ${r.count || 1}</span><small>${r.state === "done" ? "نُفّذ في الإصدار " + esc(r.doneIn || "") + (r.doneNote ? " — " + esc(r.doneNote) : "") : "طُلب " + esc(String(r.last || r.first || "").slice(0, 10)) + " من: " + esc((r.sites || []).join("، "))}</small></div></div>`).join("") : '<div class="cl-sm">لا توجد طلبات مُرسلة بعد.</div>');
     } catch (e) { box.innerHTML = '<div class="cl-sm" style="margin-top:.6rem;color:#991b1b">تعذّرت القراءة: ' + esc(e.message) + "</div>"; }
   }
@@ -15314,7 +15314,7 @@ const PBClone = (function () {
     const now = new Date().toISOString(), mk = x => ({ id: x.id, label: x.label, status: x.status, note: x.note, n: x.n, host, url: S.url, snippet: x.snippet });
     const mergeInto = cur => { items.map(mk).forEach(e => { let r = cur.requests.find(q => q.id === e.id); if (!r) { r = { id: e.id, label: e.label, status: e.status, note: e.note, state: "new", first: now, sites: [], samples: [] }; cur.requests.push(r); } r.last = now; r.count = (r.count || 0) + 1; if (!r.sites.includes(e.host)) r.sites.push(e.host); if (r.samples.length < 5 && !r.samples.some(z => z.host === e.host)) r.samples.push({ host: e.host, url: e.url, n: e.n, snippet: e.snippet }); }); return cur; };
     try {
-      if (typeof GH === "undefined" || !GH.cfg()) throw new Error("GitHub غير مضبوط"); let cur = { v: 1, requests: [] }, sha = null;
+      if (typeof GH === "undefined" || !GH.cfg()) throw new Error("ربط النشر غير مضبوط"); let cur = { v: 1, requests: [] }, sha = null;
       try { const f = await GH.getFile(FXREQ); sha = f.sha; cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))); if (!cur.requests) cur.requests = []; } catch (e) { if (!/404|لم يُعثر/.test(String(e.message))) throw e; }
       mergeInto(cur); await GH.putFile(FXREQ, btoa(unescape(encodeURIComponent(JSON.stringify(cur, null, 1)))), sha, "طلب إضافة تأثيرات للمطوّر: " + items.map(x => x.id).join(", "));
       items.forEach(x => { S.fxSent[host + "|" + x.id] = 1; }); toast("أُرسل طلب إضافة " + items.length + " تأثير/عنصر للمطوّر — تابعه من «حالة طلباتي»"); fxPanel(true); return true;
@@ -15345,14 +15345,14 @@ const PBClone = (function () {
     mountWin(f, W, 900, 900, true); st("جارٍ عرض الصفحة…");
     f.onload = async () => { st("تحميل الصور والخطوط…"); const d = f.contentDocument; if (!d) return; try { d.addEventListener("click", e => { const a = e.target && e.target.closest && e.target.closest("a,area"); if (a) e.preventDefault(); }, true); d.addEventListener("submit", e => e.preventDefault(), true); } catch (e) { } try { await Promise.race([Promise.all([...d.images].filter(i => !i.complete).map(i => new Promise(r => { i.onload = i.onerror = r; }))), sleep(5000)]); await Promise.race([d.fonts ? d.fonts.ready : Promise.resolve(), sleep(2500)]); } catch (e) { }
       const h = Math.min(16000, Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0, 300)); f.style.height = h + "px"; await sleep(80); const h2 = Math.min(16000, Math.max(d.documentElement.scrollHeight, h)); f.style.height = h2 + "px";
-      diagPage(d, h2); try { S.fxRep = typeof PBCloneFx !== "undefined" ? PBCloneFx.analyze(d, f.contentWindow) : []; S.fxAsked = false; fxPanel(S.fxRep.some(x => x.status !== "ok")); } catch (e) { console.warn("analyze", e); } S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.src ? " [المصدر: " + ({ chrome: "إضافة كروم", proxy: "جلب عادي", github: "متصفح GitHub" }[S.src] || S.src) + "]" : "") + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»." + (S.warn ? " " + S.warn : "")); };
+      diagPage(d, h2); try { S.fxRep = typeof PBCloneFx !== "undefined" ? PBCloneFx.analyze(d, f.contentWindow) : []; S.fxAsked = false; fxPanel(S.fxRep.some(x => x.status !== "ok")); } catch (e) { console.warn("analyze", e); } S.docH = h2; if (S.setLimit) S.setLimit(Math.min(h2, 1800)); const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = false; st("جاهز — حجم الصفحة " + h2 + "px" + (S.src ? " [المصدر: " + ({ chrome: "إضافة كروم", proxy: "جلب عادي", github: "متصفح كامل" }[S.src] || S.src) + "]" : "") + (S.extInfo ? " (قرأ كروم " + S.extInfo.text + " حرفاً و" + S.extInfo.imgs + " عنصراً مرئياً، ارتفاع " + S.extInfo.h + "px)" : "") + ". اسحب الحافة البنفسجية لتحديد الحد السفلي ثم «انسخ»." + (S.warn ? " " + S.warn : "")); };
     f.srcdoc = html;
   }
   async function loadUrl(full) {
     if (S.busy) return; let u = ($("cl-url").value || "").trim(); if (!u) return; if (!/^https?:\/\//i.test(u)) u = "https://" + u; try { new URL(u); } catch (e) { toast("الرابط غير صحيح"); return; }
     S.extInfo = null; S.extErr = ""; S.src = ""; S.warn = ""; S.diag = null; S.busy = true; S.url = u; S.W = Number($("cl-w").value) || 1280; S.limit = 0; S.docH = 0;
     try { const r = await getPage(u, !!full, 0); S.src = r.src; const bi = bodyInfo(r.html), real = bi.doc.querySelectorAll("img[src],video,picture").length; if ((bi.text < 60 && bi.imgs < 3) || (r.src === "proxy" && bi.text < 150 && real < 3)) throw new Error("وصلت الصفحة فارغة (الجلب العادي يرى قشرة بيضاء لأن الموقع يبني محتواه بالجافاسكربت أو داخل إطار). " + (!EXT.ok ? "الحل: ثبّت إضافة كروم (زر «تثبيت إضافة كروم») ثم أعد تحميل اللوحة F5." : extOld() ? "نسخة إضافة كروم عندك قديمة (v" + EXT.v + ") فتُتجاهل — احذفها وحمّل أحدث نسخة من «أحدث نسخة» ثم F5." : "إضافة كروم متصلة لكن فشلت القراءة" + (S.extErr ? ": " + S.extErr : "") + ".")); S.url = r.url; S.html = prep(r.html, r.url); mountFrame(S.html); }
-    catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط GitHub)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
+    catch (e) { const m = e.blocked ? e.message + " جرّب «فتح بمتصفح كامل» (يلزم ربط النشر)، أو التقط لقطة شاشة للصفحة واستعمل تبويب «صورة (لقطة شاشة)»." : e.message; resetStage(); st(m); toast(m); } finally { S.busy = false; }
   }
   const canFull = () => { try { const c = typeof GH !== "undefined" ? GH.cfg() : null; return !!(c && c.token && c.token !== "php" && c.owner); } catch (e) { return false; } };
   function bodyInfo(html) { const d = new DOMParser().parseFromString(html, "text/html"); d.querySelectorAll("script,style,noscript,template").forEach(n => n.remove()); return { text: (d.body ? d.body.textContent : "").replace(/\s+/g, " ").trim().length, imgs: d.querySelectorAll("img,svg,video,picture").length, doc: d }; }
@@ -15399,7 +15399,7 @@ const PBClone = (function () {
 })();
 
 /* ───── تنظيف الصور غير المستعملة (PBClean) ─────
-   يفحص مستودع GitHub: صور المجلد assets/img/pages/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
+   يفحص مستودع الموقع: صور المجلد assets/img/pages/ (الصور التي يرفعها المطوّر ونسخ القالب) ثم يقرأ كل ملفات الموقع النصية
    (صفحات html وملفات json وجافاسكربت وcss) ويجمع أسماء الصور المذكورة فيها؛ ما لا يذكره أي ملف يُعرض للحذف.
    الحذف: تحديث assets/pages/media.json ثم commit واحد يحذف الملفات عبر Git Data API. لا يعمل مع نسخة PHP (لا مستودع). */
 const PBClean = (() => {
@@ -15418,10 +15418,10 @@ const PBClean = (() => {
   const body = h => { const e = document.getElementById("pbx-cm"); if (e) e.innerHTML = h; }, foot = h => { const e = document.getElementById("pbx-cf"); if (e) e.innerHTML = h; };
   const ageOf = p => { const m = /gen-(\d{12,13})-/.exec(p); return m ? Date.now() - Number(m[1]) : Infinity; };
   function ghx() {
-    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة تعمل مع وضع GitHub فقط (نسخة PHP لا تحتفظ بمستودع).");
-    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token) throw new Error("اربط GitHub أولاً من الإعدادات.");
+    if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("هذه الأداة تعمل مع وضع النشر المباشر فقط (نسخة PHP لا تحتفظ بمستودع).");
+    const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token) throw new Error("اربط النشر أولاً من الإعدادات.");
     const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
-    const j = async (u, o) => { const r = await fetch(u, o ? Object.assign({ headers: Object.assign({ "Content-Type": "application/json" }, H) }, o) : { headers: H }); if (!r.ok) throw new Error("GitHub " + r.status + " — " + (await r.text().catch(() => "")).slice(0, 120)); return r.json(); };
+    const j = async (u, o) => { const r = await fetch(u, o ? Object.assign({ headers: Object.assign({ "Content-Type": "application/json" }, H) }, o) : { headers: H }); if (!r.ok) throw new Error("خطأ " + r.status + " — " + (await r.text().catch(() => "")).slice(0, 120)); return r.json(); };
     return { api, br, j, H };
   }
   async function scan() {
@@ -15445,12 +15445,12 @@ const PBClean = (() => {
   function draw() {
     const v = vis(), skip = S.unused.length - v.length, sel = v.filter(x => x.on), sz = sel.reduce((a, x) => a + x.size, 0);
     body(`<p>صور المجلد <b>assets/img/pages</b>: <b>${S.total}</b> صورة، منها <b>${S.unused.length}</b> لا يذكرها أي ملف في الموقع (صفحات، قوائم صفحات، بيانات المنتجات…).</p>
-      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي من المستودع (يمكن استرجاعه فقط من سجلّ GitHub).</div>
+      <div class="warn">احفظ وانشر صفحاتك أولاً: الصور المستعملة في صفحة لم تُحفظ بعد تُعدّ غير مستعملة. الحذف نهائي من المستودع (يمكن استرجاعه فقط من سجلّ الموقع).</div>
       <p>تجاهل ما رُفع خلال آخر <select data-c="age"><option value="24"${S.minAge === 24 ? " selected" : ""}>24 ساعة (موصى به)</option><option value="1"${S.minAge === 1 ? " selected" : ""}>ساعة</option><option value="0"${S.minAge === 0 ? " selected" : ""}>لا تتجاهل شيئاً</option></select>${skip ? ` — تُجوهلت ${skip} صورة حديثة` : ""}</p>
       ${v.length ? `<div class="cg">${v.map(x => `<div class="ci${x.on ? "" : " off"}" data-c="tg" data-p="${esc(x.p)}" title="${esc(x.p)}"><img src="${esc(x.p)}" loading="lazy" alt=""><i>✓</i><small>${kb(x.size)}</small></div>`).join("")}</div>` : '<p style="color:#2d6a4f"><b>لا توجد صور يتيمة قابلة للحذف الآن.</b></p>'}`);
     foot(`<button class="p" data-c="del"${sel.length ? "" : " disabled"}>حذف المحدد نهائياً (${sel.length} — ${kb(sz)})</button><button class="s" data-c="all">${sel.length === v.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</button><button class="s" data-c="x">إغلاق</button>`);
   }
-  /* حذف مسارات صور نهائياً: تحديث media.json ثم commit واحد (Git Data API). opt.verify: يستبعد ما تذكره أي صفحة محفوظة (قراءة من GitHub مباشرة لا من كاش الموقع) */
+  /* حذف مسارات صور نهائياً: تحديث media.json ثم commit واحد (Git Data API). opt.verify: يستبعد ما تذكره أي صفحة محفوظة (قراءة من الموقع مباشرة لا من كاش الموقع) */
   async function purge(paths, opt) {
     paths = [...new Set(paths || [])].filter(p => /^assets\/img\//.test(p)); if (!paths.length) return 0; const G = ghx(), dec = t => decodeURIComponent(escape(atob((t || "").replace(/\n/g, ""))));
     if (opt && opt.verify) {

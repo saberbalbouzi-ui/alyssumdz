@@ -188,7 +188,7 @@ window.ChromeAdmin = (function () {
       render();
     },
     async save() {
-      toast("⏳ جارِ النشر على GitHub...");
+      toast("⏳ جارِ النشر...");
       try {
         const cfg = C().norm(S.cfg, site()), b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cfg, null, 2))));
         const res = await GH.putFile("assets/data/chrome.json", b64, S.sha, "تحديث الهيدر والفوتر وأيقونات التواصل والمشاركة عبر لوحة التحكم");

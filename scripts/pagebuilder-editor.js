@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════════
    PBApp — واجهة المحرر: لوحة العناصر، قماش حي (iframe) بتحرير مباشر، تحديد وسحب وتغيير حجم،
-   لوحة إعدادات متجاوبة (محتوى/تنسيق/متقدم)، تراجع/إعادة، وحفظ/نشر إلى GitHub (أو PHP).
+   لوحة إعدادات متجاوبة (محتوى/تنسيق/متقدم)، تراجع/إعادة، وحفظ/نشر إلى الموقع (أو PHP).
    ══════════════════════════════════════════════════════════════════════════════ */
 const PBApp = (() => {
   const { DEVS, DEVNAME, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, TPLS, SEC_CTL, COL_CTL, common } = PB;
@@ -1864,7 +1864,7 @@ body{overflow-x:hidden;margin:0}`;
     addPageImage(pth);
   }
   async function libFor(inf) { const paths = await openLibrary(inf.node.type !== "image"); if (paths.length) applyPaths(inf, paths); }
-  /* الرفع بالتحضير الفوري: تُضغط الصورة وتظهر في المحرر محلياً حالاً، ويكمل الرفع إلى GitHub في الخلفية بالتتابع */
+  /* الرفع بالتحضير الفوري: تُضغط الصورة وتظهر في المحرر محلياً حالاً، ويكمل الرفع في الخلفية بالتتابع */
   async function uploadFiles(files) {
     const out = [], A = Admin; A.localImg = A.localImg || {};
     for (const f of files) { const p = await A.prepareImage(f, "assets/img/pages", "pg-", HQ); A.localImg[p.path] = URL.createObjectURL(p.blob); out.push(p.path); queueCommit(p); pmAdd(p.path); }
@@ -1876,7 +1876,7 @@ body{overflow-x:hidden;margin:0}`;
   async function commitBatch(items) {
     if (typeof PHPAPI !== "undefined" && PHPAPI.on()) throw new Error("php");
     const c = GH.cfg(); if (!c || !c.token) throw new Error("no gh"); const api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main", H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
-    const j = async (u, o) => { const r = await fetch(u, Object.assign({ headers: H }, o || {})); if (!r.ok) { const e = new Error("GitHub " + r.status); e.status = r.status; throw e; } return r.json(); };
+    const j = async (u, o) => { const r = await fetch(u, Object.assign({ headers: H }, o || {})); if (!r.ok) { const e = new Error("خطأ " + r.status); e.status = r.status; throw e; } return r.json(); };
     const ent = []; let k = 0;
     const work = async () => { while (k < items.length) { const p = items[k++], b64 = await Admin.blobToBase64(p.blob); if (!b64) throw new Error("blob"); const b = await j(api + "/git/blobs", { method: "POST", body: JSON.stringify({ content: b64, encoding: "base64" }) }); ent.push({ path: p.path, mode: "100644", type: "blob", sha: b.sha }); } };
     await Promise.all([work(), work(), work(), work(), work(), work()]);
