@@ -1,1 +1,30 @@
-{}
+{
+  "waNumber": "213559237239",
+  "showWhatsappBtn": true,
+  "showAddToCart": true,
+  "showOffers": true,
+  "phoneDz": true,
+  "guard": {
+    "antibot": false,
+    "dup": false,
+    "hours": 24,
+    "phoneDz": true
+  },
+  "orderBtnText": "✅ تأكيد الطلب",
+  "whatsappBtnText": "💬 اطلب مباشرة عبر واتساب",
+  "cartBtnText": "🛒 أضف إلى السلة",
+  "fieldLabels": {
+    "name": "الاسم الكامل",
+    "phone": "رقم الهاتف",
+    "commune": "البلدية"
+  },
+  "extraFields": [],
+  "colors": {
+    "orderBg": "#d4a947",
+    "orderText": "#2b2117",
+    "waBg": "#25d366",
+    "waText": "#ffffff",
+    "cartBg": "#ffffff",
+    "cartText": "#1c2420"
+  }
+}
