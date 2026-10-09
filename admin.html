@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.6">
+<meta name="admin-version" content="1.89.7">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -516,7 +516,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ins-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من قيمة الطلب</option><option value="val">قيمة ثابتة لكل طلب (دج)</option></select><input id="fin-ins" type="number" min="0" placeholder="0" style="max-width:130px"></div>
         </div>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
-          <div><b>💰 الفائدة المطلوبة</b><div class="hint" style="margin:.15rem 0 0">ربحك الذي تريده في القطعة الواحدة. من هنا يُحسب «سعر البيع المقترح» لكل منتج في الجدول.</div></div>
+          <div><b>💰 الفائدة المطلوبة</b><div class="hint" style="margin:.15rem 0 0">ربحك الذي تريده في القطعة الواحدة. من هنا يُحسب «سعر البيع الأدنى» لكل منتج في الجدول.</div></div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-prof-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من سعر الشراء</option><option value="val">قيمة ثابتة للقطعة (دج)</option></select><input id="fin-prof" type="number" min="0" placeholder="30" style="max-width:130px"></div>
         </div>
         <label style="display:flex;gap:.5rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid var(--line)"><input type="checkbox" id="fin-real" style="width:auto;margin-top:.25rem"><span><b>🤖 الأرقام الفعلية تلقائياً</b><span class="hint" style="display:block;margin:.15rem 0 0">عند توفر أرقام شركة التوصيل (كشف الدفع المستورد أو التعريفة الرسمية) تُستعمل بدل تقديراتك أعلاه؛ تقديراتك تُستعمل للطلبات التي لا أرقام فعلية لها.</span></span></label>
@@ -544,9 +544,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <b>طلب فشل (مرتجع)</b> = خسارة: رسم الإرجاع + التغليف + الإعلان، (+ التوصيل إن لم تتوفر أرقام فعلية). والبضاعة تعود للمخزون.<br>
           <b>ربح متوقع</b> = الطلبات المؤكدة أو المشحونة التي لم تُسلَّم بعد، بنفس القاعدة.<br>
           <b>مصدر الأرقام (بالأولوية):</b> كشف الدفع الذي استوردته ← التعريفة الرسمية لشركة التوصيل ← تقديراتك في الأعلى.<br>
-          <b>سعر البيع المقترح</b> = (سعر الشراء + التغليف + الإعلان + ما تتحمله من التوصيل + احتياطي الإرجاع + التأمين + فائدتك المطلوبة)، مقرَّباً إلى أقرب 50 دج. عند وضع المؤشر عليه ترى التفصيل. إن كان سعر بيعك الحالي أقل منه تظهر علامة ⚠️.<br>
+          <b>سعر البيع الأدنى</b> = (سعر الشراء + التغليف + الإعلان + ما تتحمله من التوصيل + احتياطي الإرجاع + التأمين + فائدتك المطلوبة)، مقرَّباً إلى أقرب 50 دج. عند وضع المؤشر عليه ترى التفصيل. إن كان سعر بيعك الحالي أقل منه تظهر علامة ⚠️.<br>
           <b>ربح القطعة</b> = الربح الصافي ÷ القطع المُسلَّمة، بعد احتساب خسائر المرتجعات، وبالأرقام النهائية من شركة التوصيل (نقطة خضراء ●) متى توفرت، وإلا بتقديراتك (نقطة برتقالية).<br>
-          <b>أعمدة الجدول:</b> المخزون (يمكن تعديله مباشرة) · التغطية (كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً) · سعر الشراء (أدخله لكل منتج) · سُلّم (عدد القطع المُسلَّمة، وبين قوسين المُرجَعة) · سعر البيع الحالي · البيع المقترح · سُلّم · الإيراد · التكاليف (بضاعة + توصيل وتأمين + تغليف + إعلان) · خسارة الإرجاع · الربح الصافي · ربح القطعة.
+          <b>أعمدة الجدول:</b> المخزون (يمكن تعديله مباشرة) · التغطية (كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً) · سعر الشراء (أدخله لكل منتج) · سُلّم (عدد القطع المُسلَّمة، وبين قوسين المُرجَعة) · سعر البيع الحالي · سعر البيع الأدنى · سُلّم · الإيراد · التكاليف (بضاعة + توصيل وتأمين + تغليف + إعلان) · خسارة الإرجاع · الربح الصافي · ربح القطعة.
         </div>
         <div id="fin-example" style="background:#faf6ec;border-radius:12px;padding:.8rem 1rem;margin-top:.6rem;font-size:.88rem;line-height:1.9"></div>
       </details>
@@ -1574,13 +1574,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.6"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.6"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.6"></script>
+<script src="assets/js/ctl-help.js?v=1.89.7"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.7"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.7"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.6"></script>
-<script src="assets/js/admin-update.js?v=1.89.6"></script>
+<script src="assets/js/admin-nav.js?v=1.89.7"></script>
+<script src="assets/js/admin-update.js?v=1.89.7"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -5351,7 +5351,7 @@ const Admin = {
     const ads = {}; (this._adProds || []).forEach((sl, i)=>{ const c = this.adRead("fin-p" + i); if(c.method !== "inherit") ads[sl] = c; });
     this.fin.ads = ads; await Priv.set("adcfg", ads); toast("✅ حُفظت طرق حساب الإعلان لكل منتج"); this.renderFinance();
   },
-  /* سعر البيع المقترح = (الشراء + التغليف + الإعلان + عبء التوصيل + احتياطي الإرجاع + الفائدة) ÷ (1 − نسبة التأمين)، مقرَّباً لأعلى إلى أقرب 50 دج */
+  /* سعر البيع الأدنى = (الشراء + التغليف + الإعلان + عبء التوصيل + احتياطي الإرجاع + الفائدة) ÷ (1 − نسبة التأمين)، مقرَّباً لأعلى إلى أقرب 50 دج */
   suggestPrice(p, r, K){
     const S = this.fin.set, buy = Number(this.fin.costs[p.slug]); if(!(buy >= 0) || this.fin.costs[p.slug] == null) return null;
     const pack = Number(S.packaging) || 0, ad = (this._adNow && this._adNow[p.slug]) || 0;
@@ -5398,7 +5398,7 @@ const Admin = {
     const rows = active.map(p=>{ const r = per[p.slug] || { units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 }; return Object.assign({ p }, r); })
       .sort((a,b)=>((b.units + b.retUnits + b.expUnits) > 0) - ((a.units + a.retUnits + a.expUnits) > 0) || b.profit - a.profit);
     const low = Number(S.low) || 0;
-    $f("fin-table").innerHTML = '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("fin") : "") + '<th>المنتج</th><th title="الكمية المتوفرة — عدّلها مباشرة">المخزون</th><th title="كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً">تغطية</th><th title="ثمن شراء القطعة الواحدة — أدخله لكل منتج">سعر الشراء</th><th title="سعر البيع الحالي في المتجر">سعر البيع</th><th title="سعر يحقق الفائدة التي حددتها بعد كل التكاليف (شراء + تغليف + إعلان + توصيل + احتياطي إرجاع + تأمين)">البيع المقترح</th><th title="عدد القطع المُسلَّمة (وبين قوسين المُرجَعة)">سُلّم</th><th title="ما دفعه الزبائن عن المنتجات بعد الخصم">الإيراد</th><th title="البضاعة + التوصيل والتأمين + التغليف + الإعلان (مرّر المؤشر لرؤية التفصيل)">التكاليف</th><th title="خسارة الطلبات المرتجعة">خسارة الإرجاع</th><th title="الإيراد − التكاليف − خسارة الإرجاع">الربح الصافي</th><th title="الربح الحقيقي للقطعة الواحدة بعد احتساب المرتجعات. النقطة الخضراء = بأرقام شركة التوصيل الفعلية">ربح القطعة</th></tr>' +
+    $f("fin-table").innerHTML = '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("fin") : "") + '<th>المنتج</th><th title="الكمية المتوفرة — عدّلها مباشرة">المخزون</th><th title="كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً">تغطية</th><th title="ثمن شراء القطعة الواحدة — أدخله لكل منتج">سعر الشراء</th><th title="سعر البيع الحالي في المتجر">سعر البيع</th><th title="سعر يحقق الفائدة التي حددتها بعد كل التكاليف (شراء + تغليف + إعلان + توصيل + احتياطي إرجاع + تأمين)">سعر البيع الأدنى</th><th title="عدد القطع المُسلَّمة (وبين قوسين المُرجَعة)">سُلّم</th><th title="ما دفعه الزبائن عن المنتجات بعد الخصم">الإيراد</th><th title="البضاعة + التوصيل والتأمين + التغليف + الإعلان (مرّر المؤشر لرؤية التفصيل)">التكاليف</th><th title="خسارة الطلبات المرتجعة">خسارة الإرجاع</th><th title="الإيراد − التكاليف − خسارة الإرجاع">الربح الصافي</th><th title="الربح الحقيقي للقطعة الواحدة بعد احتساب المرتجعات. النقطة الخضراء = بأرقام شركة التوصيل الفعلية">ربح القطعة</th></tr>' +
       rows.map(r=>{ const p = r.p, si = this.stockInfo(p), st = si.total, avg = (sold14[p.slug] || 0) / 14, cover = st == null ? "∞" : (avg > 0 ? Math.floor(st / avg) + " يوم" : "—");
         const stCls = st != null && st <= 0 ? "color:var(--red);font-weight:800" : (st != null && st <= low ? "color:#B26A00;font-weight:800" : "");
         const cost = this.fin.costs[p.slug], sg = this.suggestPrice(p, r, K), costs = r.cogs + r.delivery + r.pack + (r.ad || 0);
@@ -5411,7 +5411,7 @@ const Admin = {
           '<td data-l="تغطية" style="' + (cover !== "∞" && cover !== "—" && parseInt(cover) < 7 ? "color:var(--red);font-weight:800" : "") + '">' + cover + '</td>' +
           '<td data-l="سعر الشراء"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
           '<td data-l="سعر البيع"><input type="number" min="1" value="' + (Number(p.price) || "") + '" style="width:84px;font-weight:800" title="سعر البيع في المتجر — عدّله مباشرة" onchange="Admin.setPrice(\'' + p.slug + '\', this.value)"></td>' +
-          '<td data-l="البيع المقترح" title="' + tip + '">' + (sg ? '<b>' + nf(sg.price) + ' دج</b>' + (low2 ? '<div style="color:#f5b04a;font-size:.8rem;margin-top:.2rem">سعرك أقل بـ ' + nf(sg.price - Number(p.price)) + ' دج → ربحك أقل من المطلوب</div><button class="small fin-adopt" onclick="Admin.setPrice(\'' + p.slug + '\', ' + sg.price + ')">اعتماد ' + nf(sg.price) + '</button>' : '<div style="color:var(--ok);font-size:.8rem;margin-top:.2rem">✓ سعرك يحقق ربحك المطلوب</div>') : '<small style="color:#999">أدخل سعر الشراء أولاً</small>') + '</td>' +
+          '<td data-l="سعر البيع الأدنى" title="' + tip + '">' + (sg ? '<b>' + nf(sg.price) + ' دج</b>' + (low2 ? '<div style="color:#f5b04a;font-size:.8rem;margin-top:.2rem">سعرك أقل بـ ' + nf(sg.price - Number(p.price)) + ' دج → ربحك أقل من المطلوب</div><button class="small fin-adopt" onclick="Admin.setPrice(\'' + p.slug + '\', ' + sg.price + ')">اعتماد ' + nf(sg.price) + '</button>' : '<div style="color:var(--ok);font-size:.8rem;margin-top:.2rem">✓ سعرك يحقق ربحك المطلوب</div>') : '<small style="color:#999">أدخل سعر الشراء أولاً</small>') + '</td>' +
           '<td data-l="سُلّم">' + r.units + (r.retUnits ? ' <small style="color:var(--red)">(-' + r.retUnits + ')</small>' : "") + '</td>' +
           '<td data-l="الإيراد">' + nf(r.revenue) + '</td>' +
           '<td data-l="التكاليف" title="بضاعة ' + nf(r.cogs) + ' · توصيل وتأمين ' + nf(r.delivery) + ' · تغليف ' + nf(r.pack) + ' · إعلان ' + nf(r.ad || 0) + '">' + nf(costs) + '</td>' +
