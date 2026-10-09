@@ -91,7 +91,7 @@ window.Chrome = (function () {
       header: {
         sticky: true, bg: "", color: "", pad: "",
         order: HEAD_IDS.slice(),
-        topbar: { show: true, text: "🚚 توصيل سريع لـ **58 ولاية** · 💵 **الدفع عند الاستلام** · 🎁 اشترِ **قطعتين** واحصل على **الثالثة مجاناً**", bg: "", color: "", link: "" },
+        topbar: { show: true, text: "🚚 توصيل سريع لـ **58 ولاية** · 💵 **الدفع عند الاستلام** · 🎁 اشترِ **قطعتين** واحصل على **الثالثة مجاناً**", bg: "", color: "", link: "", accent: "", fs: "", fw: "", align: "center", padY: "", pos: "above", effect: "fade", rot: 4, hide: false, anns: [] },
         logo: { show: true, text: true, image: true, link: "home", split: true },
         menu: { show: true, color: "", items: [{ label: "الفئات", url: "index.html#categories" }, { label: "المنتجات", url: "index.html#products" }, { label: "لماذا نحن؟", url: "index.html#features" }, { label: "الأسئلة الشائعة", url: "index.html#faq" }] },
         social: { show: false, style: "color", shape: "none", size: 18 },
@@ -153,9 +153,36 @@ window.Chrome = (function () {
     if (!/class="menu"/.test(out)) out = out.replace(/(<a class="hd-wa|<div class="ch-soc|<button type="button" class="ch-share-btn)/, '<span class="ch-fill"></span>$1');
     return out;
   }
-  function topbarHtml(cfg, ctx) {
-    const t = norm(cfg, ctx && ctx.site).header.topbar; if (!t.show || !t.text) return "";
-    return t.link ? '<a href="' + esc(url(t.link, ctx && ctx.rel)) + '" style="color:inherit">' + rich(t.text) + "</a>" : rich(t.text);
+  /* الشريط العلوي: نص أول + إعلانات أخرى (لكل إعلان ألوانه وخطه) + تناوب (تلاشي/انزلاق/شريط متحرك) + سحب تلقائي؛ نفس خيارات عنصر المطوّر */
+  const hex = v => /^#[0-9a-f]{3,8}$/i.test(v || "") ? v : "";
+  const TP_CSS = ".topbar.ch-tp{--hc:#E4C87F;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:max-height .35s ease,padding .35s ease,opacity .3s ease}.topbar.ch-tp a{color:inherit;text-decoration:none}.topbar.ch-tp b{color:var(--hc)}.ch-tp-i{display:block;box-sizing:border-box}.ch-tp-m,.topbar.ch-tp a{display:contents}.ch-tp-r{display:grid}.ch-tp-r .ch-tp-i{grid-area:1/1;visibility:hidden}.ch-tp-r .ch-tp-i.on{visibility:visible;animation:chTpIn .45s ease}.ch-eff-slide .ch-tp-i.on{animation:chTpDown .55s cubic-bezier(.2,.8,.2,1)}.ch-tp-t{white-space:nowrap}.ch-tp-mq{display:flex;width:max-content;animation:chTpMq var(--tpq,20s) linear infinite}.ch-tp-mq:hover{animation-play-state:paused}.ch-tp-tr{display:flex;flex:none}.ch-tp-t .ch-tp-i{display:inline-block;padding-inline:2.4rem}.topbar.ch-tp.ch-tp-h{max-height:0!important;padding-top:0!important;padding-bottom:0!important;opacity:0}@keyframes chTpIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@keyframes chTpDown{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:none}}@keyframes chTpMq{from{transform:translateX(0)}to{transform:translateX(50%)}}@media(prefers-reduced-motion:reduce){.ch-tp-mq{animation:none}}";
+  function topbarItems(t, ctx) {
+    const L = String(t.text || "").split("\n").map(x => x.trim()).filter(Boolean), A = (Array.isArray(t.anns) ? t.anns : []).filter(a => a && String(a.txt || "").trim());
+    const eff = ["slide", "ticker"].includes(t.effect) ? t.effect : "fade", rot0 = +t.rot || 0, multi = (L.length + A.length) > 1 && (rot0 > 0 || A.length > 0 || eff === "ticker"), rot = rot0 > 0 ? rot0 : 4, rel = ctx && ctx.rel;
+    const mk = (x, i, st, lnk, cls) => { const tx = '<span class="ch-tp-i' + (cls || "") + (i === 0 ? " on" : "") + '"' + (st ? ' style="' + st + '"' : "") + ">" + rich(x) + "</span>"; return lnk ? '<a href="' + esc(url(lnk, rel)) + '">' + tx + "</a>" : tx; };
+    const main = multi ? L.map((x, i) => mk(x, i, "", t.link)).join("") : mk(L.join(" "), 0, "", t.link);
+    const extra = multi ? A.map((a, j) => { const st = [hex(a.tbg) && "background:" + hex(a.tbg), hex(a.ttc) && "color:" + hex(a.ttc), hex(a.tbc) && "--hc:" + hex(a.tbc), +a.fs && "font-size:" + (+a.fs) + "px", a.ff && /^[\w\s,'"-]+$/.test(a.ff) && "font-family:" + a.ff, a.fw && /^\d{3}$/.test(a.fw) && "font-weight:" + a.fw].filter(Boolean).join(";"); return mk(String(a.txt).trim().split("\n").join(" "), L.length + j, st, a.link, " ch-tp-a"); }).join("") : "";
+    return { main, extra, multi, eff, rot, n: L.length + A.length };
+  }
+  function topbarHtml(cfg, ctx) {     /* المحتوى الداخلي فقط (للتوافق) */
+    const t = norm(cfg, ctx && ctx.site).header.topbar; if (!t.show || !(t.text || (t.anns || []).length)) return "";
+    const it = topbarItems(t, ctx); return '<span class="ch-tp-m">' + it.main + "</span>" + it.extra;
+  }
+  function topbarEl(cfg, ctx) {       /* عنصر الشريط كاملاً بصنفه وسماته */
+    const t = norm(cfg, ctx && ctx.site).header.topbar; if (!t.show || !(t.text || (t.anns || []).length)) return "";
+    const it = topbarItems(t, ctx), all = '<span class="ch-tp-m">' + it.main + "</span>" + it.extra, hd = t.hide ? ' data-ch-hide="1"' : "";
+    if (it.multi && it.eff === "ticker") { const dur = Math.max(6, Math.round(it.rot * it.n * 2)); return '<div class="topbar ch-tp ch-tp-t"' + hd + ' style="--tpq:' + dur + 's"><div class="ch-tp-mq"><div class="ch-tp-tr">' + all + '</div><div class="ch-tp-tr" aria-hidden="true">' + it.main + it.extra + "</div></div></div>"; }
+    return '<div class="topbar ch-tp' + (it.multi ? " ch-tp-r ch-eff-" + it.eff : "") + '"' + (it.multi ? ' data-ch-rot="' + it.rot + '"' : "") + hd + ">" + all + "</div>";
+  }
+  /* تشغيل التناوب والسحب التلقائي لشريط (يعمل أيضاً على عنصر داخل iframe المعاينة) */
+  function tpRun(tb) {
+    if (!tb) return; if (tb.__tpT) { clearInterval(tb.__tpT); tb.__tpT = 0; }
+    const r = +tb.getAttribute("data-ch-rot") || 0, items = [].slice.call(tb.querySelectorAll(".ch-tp-i"));
+    if (r > 0 && items.length > 1) { let i = 0; tb.__tpT = setInterval(() => { if (!tb.isConnected) { clearInterval(tb.__tpT); return; } items[i].classList.remove("on"); i = (i + 1) % items.length; items[i].classList.add("on"); }, r * 1000); }
+    if (tb.hasAttribute("data-ch-hide") && !tb.__tpH) {
+      tb.__tpH = 1; const w = tb.ownerDocument.defaultView === window ? window : window; let hs = 0;
+      window.addEventListener("scroll", () => { if (!tb.isConnected) return; const y = window.pageYOffset || document.documentElement.scrollTop || 0; if (y > 80 && !hs) { hs = 1; tb.style.maxHeight = tb.offsetHeight + "px"; void tb.offsetHeight; tb.classList.add("ch-tp-h"); } else if (y < 20 && hs) { hs = 0; tb.classList.remove("ch-tp-h"); tb.style.maxHeight = ""; } }, { passive: true });
+    }
   }
   /* ── الفوتر ── */
   function footerHtml(cfg, ctx) {
@@ -219,8 +246,17 @@ window.Chrome = (function () {
     if (h.cart.bg) s += "header.site .cart-btn{background:" + h.cart.bg + "}";
     if (h.cart.color) s += "header.site .cart-btn{color:" + h.cart.color + "}";
     if (h.pad) s += ".site .container{padding-top:" + h.pad + "px;padding-bottom:" + h.pad + "px}";
+    s += TP_CSS;
     if (tp.bg) s += ".topbar{background:" + tp.bg + "!important}";
     if (tp.color) s += ".topbar,.topbar a{color:" + tp.color + "!important}";
+    if (hex(tp.accent)) s += ".topbar.ch-tp{--hc:" + tp.accent + "}";
+    if (+tp.fs) s += ".topbar.ch-tp{font-size:" + (+tp.fs) + "px}";
+    if (/^\d{3}$/.test(tp.fw || "")) s += ".topbar.ch-tp{font-weight:" + tp.fw + "}";
+    if (tp.align === "start" || tp.align === "end") s += ".topbar.ch-tp{justify-content:flex-" + tp.align + ";text-align:" + (tp.align === "start" ? "right" : "left") + "}";
+    if (tp.padY !== "" && tp.padY != null && !isNaN(+tp.padY)) s += ".topbar.ch-tp .ch-tp-i{padding-top:" + (+tp.padY) + "px;padding-bottom:" + (+tp.padY) + "px}";
+    if (hex(h.menu.mbg) || hex(h.menu.mtc)) s += "@media(max-width:860px){" + (hex(h.menu.mbg) ? "header nav.menu.mob-open{background:" + h.menu.mbg + "!important}" : "") + (hex(h.menu.mtc) ? "header nav.menu.mob-open>a,header nav.menu.mob-open .mi-t{color:" + h.menu.mtc + "!important}" : "") + "}";
+    if (hex(h.menu.bbc)) s += "header .mb-burger{color:" + h.menu.bbc + "}";
+    if (+h.menu.bbs) s += "header .mb-burger svg{width:" + (+h.menu.bbs) + "px;height:" + (+h.menu.bbs) + "px}";
     if (f.bg) s += "footer.site{background:" + f.bg + "!important}";
     if (f.color) s += "footer.site,footer.site a{color:" + f.color + "}";
     if (f.headColor) s += "footer.site .ft-h{color:" + f.headColor + "}";
@@ -280,7 +316,7 @@ window.Chrome = (function () {
 
   /* ── تطبيق على الصفحة ── */
   const out = {
-    HEAD_IDS, FOOT_IDS, SHARE_ALL, HIDE_OPTS, MK, MK_LIST, DEF_SETS, CART_ICONS, cartIcon, menuNav, menuItem, popHtml, fillMenus, bindMenus, MENU_CSS, defaults, norm, headerHtml, topbarHtml, footerHtml, css, Share, cfg: null,
+    HEAD_IDS, FOOT_IDS, SHARE_ALL, HIDE_OPTS, MK, MK_LIST, DEF_SETS, CART_ICONS, cartIcon, menuNav, menuItem, popHtml, fillMenus, bindMenus, MENU_CSS, defaults, norm, headerHtml, topbarHtml, topbarEl, tpRun, footerHtml, css, Share, cfg: null,
     ctx() { return { rel: typeof REL !== "undefined" ? REL : "", wa: typeof WA_NUMBER !== "undefined" ? WA_NUMBER : "", site: (typeof CONFIG !== "undefined" && CONFIG.SITE) || {} }; },
     apply(cfg) {
       if (cfg && cfg.off) cfg = null;      /* «استرجاع الافتراضي» من اللوحة يكتب {"off":true} */
@@ -298,8 +334,14 @@ window.Chrome = (function () {
           hd.setAttribute("data-noacc", "1");
         }
         let tb = document.querySelector(".topbar");
-        const th = tb && tb.hasAttribute("data-pbw") ? "" : topbarHtml(cfg, ctx);      /* شريط من عنصر المطوّر: لا يُستبدل */
-        if (tb && tb.hasAttribute("data-pbw")) { /* يبقى كما صممته */ } else if (th) { if (!tb) { tb = document.createElement("div"); tb.className = "topbar"; document.body.insertBefore(tb, document.body.firstChild); } tb.innerHTML = th; tb.style.display = ""; } else if (tb) tb.style.display = "none";
+        if (tb && tb.hasAttribute("data-pbw")) { /* شريط من عنصر المطوّر: يبقى كما صممته */ }
+        else {
+          const el = topbarEl(cfg, ctx), tmp = document.createElement("div"); tmp.innerHTML = el;
+          const nt = tmp.firstElementChild, hdr = document.querySelector("header.site");
+          if (nt) { if (tb) tb.replaceWith(nt); else { (hdr && hdr.parentNode ? hdr.parentNode : document.body).insertBefore(nt, hdr || document.body.firstChild); } tb = nt; }
+          else if (tb) { tb.style.display = "none"; }
+          if (tb && nt) { if (hdr && hdr.parentNode) { if (c.header.topbar.pos === "below") hdr.after(tb); else hdr.before(tb); } tpRun(tb); }
+        }
         const ft = document.querySelector("footer.site");
         if (ft) {
           if (!c.footer.show) ft.style.display = "none";

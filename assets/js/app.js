@@ -1920,7 +1920,7 @@ const PhoneDZ = {
   const go = ()=>{
     try{
       const rel = typeof REL!=="undefined" ? REL : "";
-      const ld = (f, cb)=>{ const s = document.createElement("script"); s.src = rel + "assets/js/" + f + "?v=9"; s.onload = cb; document.head.appendChild(s); };
+      const ld = (f, cb)=>{ const s = document.createElement("script"); s.src = rel + "assets/js/" + f + "?v=10"; s.onload = cb; document.head.appendChild(s); };
       ld("social-icons.js", ()=>{ ld("chrome.js", ()=>{ try{ Chrome.init(); }catch(e){} }); ld("float-icons.js", ()=>{ try{ FloatIcons.init(rel); }catch(e){} }); });
     }catch(e){}
   };
