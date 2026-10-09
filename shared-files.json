@@ -28,6 +28,7 @@
     "assets/js/admin-returns.js",
     "assets/js/admin-payments.js",
     "assets/js/admin-seo.js",
+    "assets/js/seo-box.js",
     "assets/js/admin-blog.js",
     "assets/js/admin-insights.js",
     "assets/js/admin-order-docs.js",

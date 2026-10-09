@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.12">
+<meta name="admin-version" content="1.89.14">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -1135,10 +1135,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <div class="section-title">🤖 كلمات مفتاحية للوكيل الذكي</div>
         <textarea id="f-keywords" rows="2" placeholder="كلمات وعبارات يسأل بها الزبائن عن هذا المنتج، مفصولة بفاصلة — مثال: تركيز الاطفال, ذاكرة, الدراسة, miel concentration"></textarea>
         <div class="hint">الوكيل يقترح هذا المنتج عندما يطابق سؤال الزبون أي من هذه الكلمات (عربي/دارجة/فرنسي). كلما كانت أدق ومتنوعة كان الاقتراح أصح.</div>
-        <div class="section-title">SEO (اختياري)</div>
-        <input id="f-seo-title" placeholder="عنوان SEO مخصص (title) — اتركه فارغاً لاستخدام عنوان الصفحة الحالي">
-        <textarea id="f-seo-desc" rows="2" placeholder="وصف SEO مخصص (meta description) — اتركه فارغاً لاستخدام الوصف الحالي"></textarea>
-        <div class="hint">تُستخدم هذه الحقول لتحسين ظهور المنتج في نتائج البحث ومعاينة الرابط عند مشاركته على فيسبوك/واتساب/تويتر (Open Graph). صورة المنتج تُستخدم تلقائياً كصورة المعاينة.</div>
+        <div id="f-seo-box"></div>
       </div>
       <div>
         <div class="section-title">🏠 صورة المنتج</div>
@@ -1575,13 +1572,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=9"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.12"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.12"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.12"></script>
+<script src="assets/js/ctl-help.js?v=1.89.14"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.14"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.14"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.12"></script>
-<script src="assets/js/admin-update.js?v=1.89.12"></script>
+<script src="assets/js/admin-nav.js?v=1.89.14"></script>
+<script src="assets/js/admin-update.js?v=1.89.14"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1593,18 +1590,19 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-orders-plus.js?v=1.61.0"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
 <script src="assets/js/admin-customers.js?v=1.84.0"></script>
-<script src="assets/js/admin-bulk-products.js?v=1.89.12"></script>
-<script src="assets/js/admin-reports.js?v=1.89.12"></script>
-<script src="assets/js/admin-audit.js?v=1.89.12"></script>
+<script src="assets/js/admin-bulk-products.js?v=1.89.14"></script>
+<script src="assets/js/admin-reports.js?v=1.89.14"></script>
+<script src="assets/js/admin-audit.js?v=1.89.14"></script>
 <script src="assets/js/admin-returns.js?v=1.78.0"></script>
-<script src="assets/js/admin-payments.js?v=1.89.12"></script>
-<script src="assets/js/admin-seo.js?v=1.81.0"></script>
+<script src="assets/js/admin-payments.js?v=1.89.14"></script>
+<script src="assets/js/seo-box.js?v=1.89.14"></script>
+<script src="assets/js/admin-seo.js?v=1.89.14"></script>
 <script src="assets/js/admin-blog.js?v=1.83.0"></script>
 <script src="assets/js/admin-insights.js?v=1.83.0"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
-<script src="assets/js/admin-copyset.js?v=1.89.12"></script>
+<script src="assets/js/admin-copyset.js?v=1.89.14"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -2943,8 +2941,7 @@ const Admin = {
     $f("f-abb").innerHTML = pgOpts(src && src.ab && src.ab.b).replace(/<option value="">[^<]*<\/option>/, '<option value="">— بدون اختبار —</option>'); $f("f-abpct").value = (src && src.ab && src.ab.pct) || "";
     this.renderTagBoxes();
     document.querySelectorAll("input[data-tag]").forEach(c=>{ c.checked = !!(src && (src.tags||[]).includes(c.dataset.tag)); });
-    $f("f-seo-title").value = src?(src.seoTitle||""):"";
-    $f("f-seo-desc").value = src?(src.seoDesc||""):"";
+    this.fillSeoBox(src);
     $f("f-keywords").value = src?(src.keywords||""):"";
     this.renderOffersRows(src ? (src.offers||[]) : [{qty:1,price:0}]);
     this.fillProductTypeUI(src);
@@ -3482,7 +3479,7 @@ const Admin = {
       officialPage: $f("f-official").value || undefined, route: $f("f-route").value || undefined,
       ab: $f("f-abb").value ? { b: $f("f-abb").value, pct: Math.min(99, Math.max(1, Number($f("f-abpct").value) || 50)) } : undefined,
       tags: [...document.querySelectorAll("input[data-tag]")].filter(c=>c.checked).map(c=>c.dataset.tag),
-      seoTitle: $f("f-seo-title").value.trim(), seoDesc: $f("f-seo-desc").value.trim(), keywords: $f("f-keywords").value.trim(),
+      ...this.readSeoBox(), keywords: $f("f-keywords").value.trim(),
       offers: offers.length ? offers : [{qty:1, price:Number($f("f-price").value)||0}],
     };
     if(prevP && prevP.pageMode) out.pageMode = prevP.pageMode; // نوع الصفحة (افتراضية/مولّدة) لا يُفقد عند حفظ المنتج
@@ -3601,8 +3598,7 @@ const Admin = {
     $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
     $f("f-active").value = "1";
     $f("f-stock").value = ""; if($f("f-cost")) $f("f-cost").value = (this.fin.costs[p.slug] == null ? "" : this.fin.costs[p.slug]);
-    $f("f-seo-title").value = p.seoTitle||"";
-    $f("f-seo-desc").value = p.seoDesc||"";
+    this.fillSeoBox(p);
     if($f("f-keywords")) $f("f-keywords").value = p.keywords||"";
     this.renderOffersRows(p.offers||[]);
     this.fillProductTypeUI(p);
@@ -3656,6 +3652,18 @@ const Admin = {
     this.exitEditUI();
   },
 
+  /* SEO داخل إعدادات المنتج (SeoBox): الحقول تُحفظ في سجلّ المنتج نفسه */
+  fillSeoBox(src){
+    const host = $f("f-seo-box"); if(!host || typeof SeoBox === "undefined") return; src = src || {};
+    const imgs = () => (String(($f("f-images")||{}).value||"").split(",").map(x=>x.trim()).filter(Boolean)), cov = () => (($f("f-cover")||{}).value||"").trim() || imgs()[0] || "";
+    const o = { kind:"product", nameFn:()=>($f("f-title")||{}).value||"", imgs: imgs().concat(cov() ? [cov()] : []).filter((x,i,a)=>a.indexOf(x)===i), defImg: cov() || src.cover || (src.images||[])[0] || "", domain:(typeof CONFIG!=="undefined"&&CONFIG.SITE&&CONFIG.SITE.domain)||location.hostname, path:"p/" + (($f("f-slug")||{}).value||src.slug||"…") + "/", fallbackDesc:($f("f-desc")||{}).value||"",
+      upload: f => this.uploadImageFile(f, "assets/img/" + ((($f("f-slug")||{}).value||src.slug||"seo").trim() || "seo"), "seo-") };
+    host.innerHTML = SeoBox.html("fsb", { title:src.seoTitle||"", desc:src.seoDesc||"", kw:src.seoKw||"", focus:src.seoFocus||"", img:src.seoImg||"", noindex:!!src.noindex }, o);
+    SeoBox.bind("fsb", o); this._sbo = o;
+    const t = $f("f-title"); if(t) t.oninput = () => SeoBox.refresh("fsb", o);
+    const d = $f("f-desc"); if(d) d.addEventListener("input", () => { o.fallbackDesc = d.value; SeoBox.refresh("fsb", o); });
+  },
+  readSeoBox(){ if(typeof SeoBox === "undefined" || !$f("fsb-title")) return {}; const r = SeoBox.read("fsb"), o = { seoTitle:r.title, seoDesc:r.desc, seoKw:r.kw, seoFocus:r.focus, seoImg:r.img }; if(r.noindex) o.noindex = true; return o; },
   closeModal(){ $f("prod-modal-bg").classList.remove("open"); this.editingSlug = null; },
 
   /* ════════ تعديل مباشر لصفحة المنتج + نشر على GitHub ════════ */
@@ -8696,7 +8704,7 @@ ${FX_JS}
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${ctx.baseHref ? `<base href="${esc(ctx.baseHref)}">` : ""}
 <title>${esc(page.seoTitle || page.title)}${site.name ? " — " + esc(site.name) : ""}</title>
-<meta name="description" content="${esc(page.desc || "")}">${page.kw ? `<meta name="keywords" content="${esc(page.kw)}">` : ""}
+<meta name="description" content="${esc(page.desc || "")}">${(page.kw || page.seoFocus) ? `<meta name="keywords" content="${esc([page.seoFocus, page.kw].filter(Boolean).join(", "))}">` : ""}${page.noindex ? `<meta name="robots" content="noindex">` : ""}
 <link rel="canonical" href="${esc(url)}"><meta property="og:type" content="website"><meta property="og:title" content="${esc(page.seoTitle || page.title)}"><meta property="og:description" content="${esc(page.desc || "")}"><meta property="og:url" content="${esc(url)}">${page.cover ? `<meta property="og:image" content="${esc((site.domain ? "https://" + site.domain + "/" : ctx.base) + page.cover)}">` : ""}
 <link rel="icon" href="${esc(ctx.base)}assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -9183,9 +9191,9 @@ body{overflow-x:hidden;margin:0}`;
     } else {
       const P = E.page;
       pane.innerHTML = `
-<div class="pbx-f"><label>عنوان الصفحة (SEO)</label><input type="text" value="${esc(P.title)}" oninput="PBApp.meta('title',this.value);document.getElementById('pbx-title').value=this.value"></div>
+<div class="pbx-f"><label>اسم الصفحة (للوحة التحكم — وعنوان نتيجة البحث إن لم تضع Meta title)</label><input type="text" value="${esc(P.title)}" oninput="PBApp.meta('title',this.value);document.getElementById('pbx-title').value=this.value;if(window.SeoBox)SeoBox.refresh('pgs')"></div>
 <div class="pbx-f"><label>الرابط (slug) — حروف لاتينية وأرقام وشرطات</label><input type="text" dir="ltr" id="pg-slug" value="${esc(P.slug)}" ${E.isNew ? "" : "disabled"} oninput="PBApp.slugEdit(this.value)"><small style="color:#888">${E.isNew ? "سيكون: /lp/…/" : "لا يتغير بعد النشر"}</small></div>
-<div class="pbx-f"><label>وصف الصفحة (SEO)</label><textarea oninput="PBApp.meta('desc',this.value)">${esc(P.desc)}</textarea></div>
+<div id="pg-seo"></div>
 <div class="pbx-f"><label>المنتج المرتبط (نموذج الطلب والصفحة تخصّه)</label><select onchange="PBApp.linkProduct(this.value)"><option value="">— بدون —</option>${((typeof Admin !== "undefined" && Admin.products) || []).map(x => `<option value="${esc(x.slug)}"${P.product === x.slug ? " selected" : ""}>${esc(x.title)}</option>`).join("")}</select></div>
 <div class="pbx-f" style="display:flex;gap:.4rem;flex-wrap:wrap"><button type="button" class="pbx-btn" style="flex:1;background:#173f35;color:#fff;border:0;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.publish()">💾 حفظ ونشر</button><button type="button" class="pbx-btn" style="flex:1;background:#f3f1ea;border:1px solid #d9d2c3;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.dupCurrent()">⧉ نسخ الصفحة</button></div>
 <div class="pbx-f"><label>لون خلفية الصفحة</label><input type="color" value="${esc(P.bg || "#ffffff")}" oninput="PBApp.meta('bg',this.value)"></div>
@@ -9193,6 +9201,14 @@ body{overflow-x:hidden;margin:0}`;
 <div class="pbx-f"><label><input type="checkbox" ${P.header ? "checked" : ""} onchange="PBApp.meta('header',this.checked);PBApp.renderCanvas()"> ترويسة بسيطة (الشعار + واتساب)</label></div>
 <div class="pbx-f"><label><input type="checkbox" ${P.footer ? "checked" : ""} onchange="PBApp.meta('footer',this.checked)"> تذييل بسيط</label></div>
 <div class="pbx-f"><label>CSS مخصص للصفحة كلها</label><textarea dir="ltr" oninput="PBApp.meta('css',this.value)">${esc(P.css)}</textarea></div>`;
+      const sh = pane.querySelector("#pg-seo");
+      if (sh && window.SeoBox) {
+        const o = { kind: "page", nameFn: () => E.page.title || "", defImg: P.cover || "", imgs: [], domain: (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.domain) || location.hostname, path: "lp/" + (P.slug || "…") + "/",
+          upload: async f => { const path = await PBApp.uploadBlob(f, "seo-" + Date.now().toString(36)); return path; },
+          onChange: r => { meta("seoTitle", r.title); meta("seoFocus", r.focus); meta("kw", r.kw); meta("desc", r.desc); meta("cover", r.img); meta("noindex", r.noindex ? true : undefined); } };
+        sh.innerHTML = SeoBox.html("pgs", { title: P.seoTitle || "", focus: P.seoFocus || "", kw: P.kw || "", desc: P.desc || "", img: P.cover || "", noindex: !!P.noindex }, o);
+        SeoBox.bind("pgs", o);
+      }
     }
   }
   /* ربط الصفحة بمنتج: يخصّ نموذج الطلب الأصلي (orderorig) فيها */
@@ -11388,10 +11404,12 @@ const PBAdmin = {
 ${this.quickImg(pg.cover)}
 <label>المنتج المرتبط (نموذج الطلب والصفحة تخصّه)</label><select id="pq-prod"><option value="">— بدون —</option>${prods.map(x => `<option value="${PB.esc(x.slug)}"${pg.product === x.slug ? " selected" : ""}>${PB.esc(x.title)}</option>`).join("")}</select>
 ${(() => { const cur = prods.find(x => x.slug === pg.product); return `<div id="pq-flags" style="background:#faf6ec;border:1px solid #eadfc4;border-radius:10px;padding:.5rem .7rem;margin:.4rem 0"><label style="display:flex;gap:.5rem;align-items:center;font-weight:700"><input type="checkbox" id="pq-off" style="width:auto"${cur && cur.officialPage === slug ? " checked" : ""}> 📄 هذه الصفحة هي الصفحة الرسمية للمنتج (تعديلاتها تغيّر المنتج والعكس)</label><label style="display:flex;gap:.5rem;align-items:center;font-weight:700"><input type="checkbox" id="pq-route" style="width:auto"${cur && cur.route === slug ? " checked" : ""}> 🧭 تُفتح عند الضغط على المنتج في الصفحة الرئيسية</label><small class="hint">تُطبَّق على المنتج المختار أعلاه.</small></div>`; })()}
-<div class="section-title">SEO</div><label>عنوان SEO (اختياري — وإلا اسم الصفحة)</label><input id="pq-seot" value="${PB.esc(pg.seoTitle || "")}"><label>وصف الصفحة (Meta description)</label><textarea id="pq-desc" rows="3">${PB.esc(pg.desc || "")}</textarea><label>كلمات مفتاحية (مفصولة بفاصلة)</label><input id="pq-kw" value="${PB.esc(pg.kw || "")}"><small class="hint">الرابط: /lp/${PB.esc(slug)}/ (لا يتغير)</small>`);
+<div id="pq-seo-host"></div><small class="hint">الرابط: /lp/${PB.esc(slug)}/ (لا يتغير)</small>`);
+      this.quickSeo({ title: pg.seoTitle || "", focus: pg.seoFocus || "", kw: pg.kw || "", desc: pg.desc || "", noindex: !!pg.noindex }, { kind: "page", nameFn: () => (document.getElementById("pq-name") || {}).value || pg.title || "", path: "lp/" + slug + "/", noImage: true });
       document.getElementById("pq-bg").classList.add("open");
     } catch (err) { toast("❌ " + err.message); }
   },
+  quickSeo(vals, o) { const h = document.getElementById("pq-seo-host"); if (!h || !window.SeoBox) return; o.domain = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.domain) || location.hostname; h.innerHTML = SeoBox.html("pqs", vals, o); SeoBox.bind("pqs", o); const n = document.getElementById("pq-name"); if (n) n.addEventListener("input", () => SeoBox.refresh("pqs", o)); },
   quickImg(path) { return `<label>صورة الصفحة (تظهر في القائمة وعند المشاركة)</label><div class="pbx-row" style="gap:.5rem;align-items:center;margin-bottom:.8rem"><div id="pq-prev" class="pbx-pth" style="${path ? `background-image:url('${PB.esc(path)}')` : ""}">${path ? "" : "🖼️"}</div><button class="small gray" type="button" onclick="PBAdmin.quickPick('up')">⬆ رفع</button><button class="small gray" type="button" onclick="PBAdmin.quickPick('lib')">📚 المكتبة</button></div>`; },
   async quickPick(how) {
     try {
@@ -11408,7 +11426,7 @@ ${(() => { const cur = prods.find(x => x.slug === pg.product); return `<div id="
     try {
       toast("⏳ جارِ الحفظ والنشر…");
       if (q.kind === "lp") {
-        const pg = q.page, prev = pg.product || ""; pg.title = v("pq-name").trim() || pg.title; pg.seoTitle = v("pq-seot").trim(); pg.desc = v("pq-desc").trim(); pg.kw = v("pq-kw").trim(); pg.cover = q.cover || pg.cover || ""; pg.product = v("pq-prod");
+        const pg = q.page, prev = pg.product || ""; pg.title = v("pq-name").trim() || pg.title; { const r = SeoBox.read("pqs"); pg.seoTitle = r.title; pg.desc = r.desc; pg.kw = r.kw; pg.seoFocus = r.focus; if (r.noindex) pg.noindex = true; else delete pg.noindex; } pg.cover = q.cover || pg.cover || ""; pg.product = v("pq-prod");
         const walk = n => { (n.cols || []).forEach(walk); (n.widgets || []).forEach(walk); (n.free || []).forEach(walk); if (n.type === "orderorig" && pg.product) n.set.prod = pg.product; };
         pg.sections.forEach(walk);
         const html = PB.fullHtml(pg, Object.assign({ base: "../../" }, PBApp.siteCtx()));
@@ -11425,7 +11443,7 @@ ${(() => { const cur = prods.find(x => x.slug === pg.product); return `<div id="
         toast("✅ حُفظت الصفحة"); this.quickClose(); this.refresh();
       } else {
         const pr = Admin.products.find(x => x.slug === q.slug); if (!pr) throw new Error("المنتج غير موجود");
-        pr.title = v("pq-name").trim() || pr.title; if (q.cover) pr.cover = q.cover; pr.seoTitle = v("pq-seot").trim(); pr.seoDesc = v("pq-desc").trim(); pr.keywords = v("pq-kw").trim();
+        pr.title = v("pq-name").trim() || pr.title; if (q.cover) pr.cover = q.cover; { const r = SeoBox.read("pqs"); pr.seoTitle = r.title; pr.seoDesc = r.desc; pr.seoKw = r.kw; pr.seoFocus = r.focus; if (r.noindex) pr.noindex = true; else delete pr.noindex; }
         const ok = await Admin.publishDataJs(); if (ok) { toast("✅ حُفظ المنتج على الموقع"); this.quickClose(); this.refresh(); Admin.renderProducts(); }
       }
     } catch (err) { toast("❌ " + err.message); }
@@ -11435,7 +11453,8 @@ ${(() => { const cur = prods.find(x => x.slug === pg.product); return `<div id="
     this.q = { kind: "product", slug, cover: pr.cover || (pr.images && pr.images[0]) || "" };
     $q("pq-title", "تعديل سريع — صفحة منتج"); $q("pq-body", `<label>اسم الصفحة (اسم المنتج)</label><input id="pq-name" value="${PB.esc(pr.title || "")}">
 ${this.quickImg(this.q.cover)}
-<div class="section-title">SEO</div><label>عنوان SEO (اختياري)</label><input id="pq-seot" value="${PB.esc(pr.seoTitle || "")}"><label>وصف الصفحة (Meta description)</label><textarea id="pq-desc" rows="3">${PB.esc(pr.seoDesc || "")}</textarea><label>كلمات مفتاحية</label><input id="pq-kw" value="${PB.esc(pr.keywords || "")}"><small class="hint">بقية إعدادات المنتج (السعر، العروض، المخزون…) داخل «المنتجات ← تعديل».</small>`);
+<div id="pq-seo-host"></div><small class="hint">بقية إعدادات المنتج (السعر، العروض، المخزون…) داخل «المنتجات ← تعديل».</small>`);
+    this.quickSeo({ title: pr.seoTitle || "", focus: pr.seoFocus || "", kw: pr.seoKw || "", desc: pr.seoDesc || "", noindex: !!pr.noindex }, { kind: "product", nameFn: () => (document.getElementById("pq-name") || {}).value || pr.title || "", path: "p/" + slug + "/", noImage: true });
     document.getElementById("pq-bg").classList.add("open");
   },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },

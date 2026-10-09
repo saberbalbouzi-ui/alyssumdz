@@ -1280,7 +1280,7 @@ ${FX_JS}
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${ctx.baseHref ? `<base href="${esc(ctx.baseHref)}">` : ""}
 <title>${esc(page.seoTitle || page.title)}${site.name ? " — " + esc(site.name) : ""}</title>
-<meta name="description" content="${esc(page.desc || "")}">${page.kw ? `<meta name="keywords" content="${esc(page.kw)}">` : ""}
+<meta name="description" content="${esc(page.desc || "")}">${(page.kw || page.seoFocus) ? `<meta name="keywords" content="${esc([page.seoFocus, page.kw].filter(Boolean).join(", "))}">` : ""}${page.noindex ? `<meta name="robots" content="noindex">` : ""}
 <link rel="canonical" href="${esc(url)}"><meta property="og:type" content="website"><meta property="og:title" content="${esc(page.seoTitle || page.title)}"><meta property="og:description" content="${esc(page.desc || "")}"><meta property="og:url" content="${esc(url)}">${page.cover ? `<meta property="og:image" content="${esc((site.domain ? "https://" + site.domain + "/" : ctx.base) + page.cover)}">` : ""}
 <link rel="icon" href="${esc(ctx.base)}assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

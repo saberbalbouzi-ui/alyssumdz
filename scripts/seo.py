@@ -108,11 +108,11 @@ for p in live:
     # العنوان/الوصف المكتوبان يدوياً في الصفحة يبقيان ما لم يحدّد التاجر قيمة صريحة (seo.json أو seoTitle/seoDesc للمنتج)
     t_match = re.search(r"<title>(.*?)</title>", text, re.S)
     existing_title = html.unescape(t_match.group(1)).strip() if t_match else ""
-    custom_title = record.get("title") or p.get("seoTitle")
+    custom_title = p.get("seoTitle") or record.get("title")
     title = custom_title or existing_title or f'{p["title"]} | {SITE}'
     desc_match = re.search(r'<meta name="description" content="([^"]*)"', text)
     fallback_desc = html.unescape(desc_match.group(1)) if desc_match else ""
-    desc = record.get("desc") or p.get("seoDesc") or fallback_desc or p.get("desc") or seo.get("siteDesc") or ""
+    desc = p.get("seoDesc") or record.get("desc") or fallback_desc or p.get("desc") or seo.get("siteDesc") or ""
     if custom_title:
         text = re.sub(r"<title>.*?</title>", f"<title>{esc(title)}</title>", text, count=1, flags=re.S)
     if desc:
@@ -121,7 +121,7 @@ for p in live:
             text = re.sub(r'<meta\s+name="description"[^>]*>', description_meta, text, count=1, flags=re.I)
         else:
             text = text.replace("</head>", description_meta + "\n</head>", 1)
-    og_image = record.get("ogImage") or p.get("cover") or (p.get("images") or [None])[0] or seo.get("ogImage")
+    og_image = p.get("seoImg") or record.get("ogImage") or p.get("cover") or (p.get("images") or [None])[0] or seo.get("ogImage")
     images = [abs_img(og_image)] if og_image else [abs_img(i) for i in (p.get("images") or [])[:5]]
     stock = p.get("stock")
     is_out = stock is not None and int(stock) <= 0
@@ -130,8 +130,9 @@ for p in live:
           "offers": {"@type": "Offer", "url": url_path(p["slug"]), "priceCurrency": "DZD", "price": str(int(p.get("price") or 0)),
                      "availability": "https://schema.org/OutOfStock" if is_out else "https://schema.org/InStock",
                      "itemCondition": "https://schema.org/NewCondition"}}
-    no_idx = excluded(p["slug"], f"/p/{p['slug']}/")
+    no_idx = bool(p.get("noindex")) or excluded(p["slug"], f"/p/{p['slug']}/")
     block = (f'{S}\n<link rel="canonical" href="{esc(url_path(p["slug"]))}">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(SITE)}">\n'
+             (f'<meta name="keywords" content="{esc(", ".join(x for x in [p.get("seoFocus"), p.get("seoKw")] if x))}">' if (p.get("seoFocus") or p.get("seoKw")) else "") +
              f'<meta property="og:type" content="product"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(url_path(p["slug"]))}">'
              + (f'<meta property="og:image" content="{esc(images[0])}">' if images else "") +
              ( '<!--seo:noindex:start--><meta name="robots" content="noindex" data-seo-managed="1"><!--seo:noindex:end-->' if no_idx else "") +

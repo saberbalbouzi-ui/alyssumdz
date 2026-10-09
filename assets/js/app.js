@@ -467,12 +467,14 @@ const Seo = (() => {
     if(!p||!p.slug)return;
     const cfg=await config(),record=(cfg.products&&cfg.products[p.slug])||{};
     const site=(typeof CONFIG!=="undefined"&&CONFIG.SITE)||{},brand=cfg.siteTitle||site.name||"";
-    const title=record.title||p.seoTitle||[p.title,brand].filter(Boolean).join(" | ");
-    const description=record.desc||p.seoDesc||p.desc||cfg.siteDesc||"";
-    const image=record.ogImage||p.cover||(p.images&&p.images[0])||cfg.ogImage||"";
+    const title=p.seoTitle||record.title||[p.title,brand].filter(Boolean).join(" | ");
+    const description=p.seoDesc||record.desc||p.desc||cfg.siteDesc||"";
+    const image=p.seoImg||record.ogImage||p.cover||(p.images&&p.images[0])||cfg.ogImage||"";
     applySeoTags({title,description,image,type:"product"});
+    const kws=[p.seoFocus,p.seoKw].map(x=>String(x||"").trim()).filter(Boolean).join(", ");
+    if(kws)setMetaTag("name","keywords",kws);
     if(image.startsWith("http://")||image.startsWith("https://")){setMetaTag("property","og:image",image);setMetaTag("name","twitter:image",image);}
-    const skipped=(Array.isArray(cfg.noindex)?cfg.noindex:[]).map(x=>String(x).replace(/^https?:\/\/[^/]+/i,"").replace(/^\/+|\/+$/g,"")).some(x=>x===p.slug||x==="p/"+p.slug);
+    const skipped=!!p.noindex||(Array.isArray(cfg.noindex)?cfg.noindex:[]).map(x=>String(x).replace(/^https?:\/\/[^/]+/i,"").replace(/^\/+|\/+$/g,"")).some(x=>x===p.slug||x==="p/"+p.slug);
     if(skipped)setRobotsNoindex();else{const managed=document.querySelector('meta[name="robots"][data-seo-managed="1"]');if(managed)managed.remove();}
     const images=(p.images&&p.images.length?p.images:[image]).map(absolute).filter(Boolean);
     const out=typeof isOutOfStock==="function"&&isOutOfStock(p);
