@@ -86,7 +86,7 @@ const AdminNav = (() => {
   }
   const myAsLib = it => ({ id: "my:" + it.id, my: true, cat: "page", fld: "قوالبي", n: it.n, d: (it.src === "import" ? "محمَّل من ملف" : "منشأ من صفحة") + " · " + (it.date || "") + " · " + (((it.page && it.page.sections) || []).length) + " قسم", file: null, page: it.page });
   function tplFind(id) { if (String(id).startsWith("my:")) { const it = (MY.items || []).find(q => "my:" + q.id === id); return it ? myAsLib(it) : null; } return libAll().find(q => q.id === id); }
-  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.8";
+  const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.9";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
   function libAll() { return LIB.concat(LIBX || []); }
   async function libOpen(view) { await libLoad(); await myLoad(); LS.type = "all"; LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
@@ -552,7 +552,9 @@ const AdminNav = (() => {
     /* أي Admin.tab (من أزرار أو برمجياً) يُبدّل المجموعة ويضبط عرض الوكيل */
     if (typeof Admin !== "undefined" && !Admin.__navHook) {
       const orig = Admin.tab; Admin.__navHook = 1;
-      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn); try { if (btn && btn.dataset && btn.dataset.grp && btn.dataset.grp !== cur) apply(btn.dataset.grp); if (t === "agent" && !VOICE) agentView("agent"); if (t === "appcfg" && btn && btn.dataset.app) renderApp(btn.dataset.app); if (t === "tpl") renderTpl(); if (t === "imggen") { const bb = workBtn("builder"); if (bb) { Admin.tab("builder", bb); if (typeof PBAdmin !== "undefined") PBAdmin.mode("ad"); } } } catch (e) { } return r; };
+    function secTitle() { const el = document.getElementById("sec-title"); if (!el) return; const b = document.querySelector(".nav-btn.on .nav-txt b"); if (!b) return; const c = b.cloneNode(true); c.querySelectorAll(".nb").forEach(x => x.remove()); const t = (c.textContent || "").trim(); if (t) el.textContent = t; }
+    setTimeout(secTitle, 400); setTimeout(secTitle, 1500);
+      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn); try { secTitle(); if (btn && btn.dataset && btn.dataset.grp && btn.dataset.grp !== cur) apply(btn.dataset.grp); if (t === "agent" && !VOICE) agentView("agent"); if (t === "appcfg" && btn && btn.dataset.app) renderApp(btn.dataset.app); if (t === "tpl") renderTpl(); if (t === "imggen") { const bb = workBtn("builder"); if (bb) { Admin.tab("builder", bb); if (typeof PBAdmin !== "undefined") PBAdmin.mode("ad"); } } } catch (e) { } return r; };
     }
     agentView("agent");
     loadOff();
