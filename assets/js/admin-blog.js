@@ -17,7 +17,7 @@ const AdminBlog = (() => {
   function render(){
     if(!host)return;
     host.innerHTML='<div class="card"><h2>📝 المدوّنة</h2><p>حرّر المقالات والسياسات، ثم احفظ وانشر.</p><div class="grid2"><label>العنوان<input id="blog-title"></label><label>Slug لاتيني<input id="blog-slug" dir="ltr" placeholder="news-title"></label><label>صورة الغلاف<input id="blog-cover" dir="ltr"></label><label>ملخص<input id="blog-summary"></label><label>التاريخ<input id="blog-date" type="date"></label><label><input id="blog-published" type="checkbox"> منشور</label></div><label>محتوى Markdown<textarea id="blog-content" rows="12" style="width:100%"></textarea></label><button type="button" class="btn" id="blog-add">إضافة المقال</button> <button type="button" class="btn primary" id="blog-save">حفظ ونشر البيانات</button><div id="blog-list"></div></div><div class="card" style="margin-top:1rem"><h2>📄 صفحات السياسات</h2><div id="policy-list"></div></div>';
-    $("blog-add").onclick=addPost;$("blog-save").onclick=save;
+    $("blog-add").dataset.edit="";$("blog-add").onclick=addPost;$("blog-save").onclick=save;
     draw();
   }
   function draw(){
