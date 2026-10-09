@@ -3,7 +3,7 @@ name: seo-refresh
 on:
   push:
     branches: [main]
-    paths: ["assets/js/data.js", "redirects.json", "scripts/seo.py", "assets/js/config.js", "assets/data/seo.json", "assets/pages/index.json"]
+    paths: ["assets/js/data.js", "redirects.json", "scripts/seo.py", "assets/js/config.js", "assets/data/seo.json", "assets/data/blog.json", "scripts/gen-blog.py", "assets/pages/index.json"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/seo.py
+      - run: python3 scripts/gen-blog.py\n      - run: python3 scripts/seo.py
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
