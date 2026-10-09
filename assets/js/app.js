@@ -572,7 +572,7 @@ const AutoDisc = {
         getItems.sort((a, b) => a.price - b.price);
         for (const it of getItems) {
           const n = Math.min(free, it.qty);
-          amount += n * it.price * (1 - Math.min(100, Math.max(0, Number(rule.get && rule.get.percent) || 100)) / 100);
+          amount += n * it.price * (Math.min(100, Math.max(0, rule.get && rule.get.percent != null ? Number(rule.get.percent) : 100)) / 100);
           free -= n;
           if (!free) break;
         }
