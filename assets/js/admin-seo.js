@@ -16,7 +16,7 @@ const AdminSEO = (() => {
     if(!remote&&!l)S.data=defaults();S.localOnly=!remote;S.loaded=true;S.loading=false;
   }
   async function save(){if(S.saving)return false;S.saving=true;let remoteSaved=false;const updatedAt=new Date().toISOString();S.data.updatedAt=updatedAt;const body=encode(S.data);try{
-    localStorage.setItem(LOCAL,JSON.stringify({data:S.data,updatedAt}));
+    try{localStorage.setItem(LOCAL,JSON.stringify({data:S.data,updatedAt}));}catch(_){}
     if(typeof PHPAPI!=="undefined"&&PHPAPI.on()){const r=await PHPAPI.call("file",{method:"PUT",body:JSON.stringify({path:PATH,content:body,sha:S.sha,message:"حفظ إعدادات SEO"})});if(!r.ok)throw new Error(r.j&&(r.j.error||r.j.message)||"تعذّر الحفظ");S.sha=r.j.content&&r.j.content.sha||S.sha;remoteSaved=true;}
     else if(typeof GH!=="undefined"&&GH.cfg&&GH.cfg()&&GH.cfg().token){const r=await GH.putFile(PATH,body,S.sha,"حفظ إعدادات SEO");S.sha=r&&r.content&&r.content.sha||S.sha;remoteSaved=true;}
     S.localOnly=!remoteSaved;S.err="";S.updatedAt=updatedAt;S.saving=false;return true;
