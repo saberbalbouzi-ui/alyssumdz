@@ -23,7 +23,7 @@ const AdminSEO = (() => {
   }catch(e){S.saving=false;S.localOnly=true;S.err="تعذّر حفظ إعدادات SEO: "+(e.message||"");return false;}}
   function products(){return (A().products||[]).filter(p=>p&&p.slug);}
   function merged(p){return Object.assign({title:p.seoTitle||"",desc:p.seoDesc||"",ogImage:""},S.data.products[p.slug]||{},S.drafts[p.slug]||{});}
-  function noindex(p){return S.data.noindex.includes(p.slug)||S.data.noindex.includes("/p/"+p.slug+"/");}
+  function noindex(p){return S.data.noindex.some(value=>{const x=String(value).replace(/^https?:\/\/[^/]+/i,"").replace(/^\/+|\/+$/g,"");return x===p.slug||x==="p/"+p.slug;});}
   function badge(value,max){const n=String(value||"").trim().length;return `<small class="seo-count ${n>max?"seo-over":""}">${n}/${max}</small>`;}
   function filtered(){const q=S.query.trim().toLowerCase();return products().filter(p=>!q||String(p.slug).toLowerCase().includes(q)||String(p.title||"").toLowerCase().includes(q));}
   function draw(){const host=$("seo-content");if(!host)return;const list=filtered(),all=products();
