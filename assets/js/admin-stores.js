@@ -145,6 +145,61 @@ const AdminStores = (() => {
     notify(txt); if (kind !== "site") save();
   }
 
+  /* ── اسم الموقع على دومين المنصة: توفّر + اقتراحات ── */
+  const RESERVED = ["www", "admin", "api", "app", "mail", "ftp", "shop", "store", "blog", "support", "help", "dashboard", "panel", "test", "demo", "cdn", "static", "assets", "login", "account", "alyssum", "alyssumdz", "platform"];
+  let _wild = null;
+  async function dohHas(host) { const r = await fetch("https://cloudflare-dns.com/dns-query?name=" + encodeURIComponent(host) + "&type=A", { headers: { accept: "application/dns-json" } }); const j = await r.json(); return j.Status === 0 && (j.Answer || []).length > 0; }
+  async function subAvail(n) {
+    if (!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(n)) return "bad";
+    if (RESERVED.indexOf(n) >= 0) return "taken";
+    if (stores().some(x => x.sub === n)) return "taken";
+    try { const r = await fetch("assets/data/platform-sites.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); if ((j.taken || []).indexOf(n) >= 0) return "taken"; } } catch (e) { }
+    try { if (_wild === null) _wild = await dohHas("zz-probe-" + Math.random().toString(36).slice(2, 8) + "." + PLATFORM()); if (!_wild && await dohHas(n + "." + PLATFORM())) return "taken"; } catch (e) { return "free?"; }
+    return "free";
+  }
+  async function subSuggest(n) {
+    const c = [n + "-dz", "my" + n, n + "-shop", "la" + n, n + "-store", n + "1", "bio-" + n, n + "-officiel"].filter(x => x.length <= 30), out = [];
+    for (const x of c) { if (out.length >= 2) break; if ((await subAvail(x)) === "free") out.push(x); }
+    return out;
+  }
+  const cleanSub = v => String(v || "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9-]/g, "").replace(/^-+/, "").slice(0, 30);
+  let _nwT = 0;
+  function nwIn() {
+    const e = $("stp-nw-n"); if (!e) return; const n = cleanSub(e.value); if (e.value !== n) e.value = n;
+    S.nw = S.nw || {}; S.nw.n = n; const d = $("stp-nw-d"); if (d) d.textContent = (n || "name") + "." + PLATFORM();
+    clearTimeout(_nwT); const r = $("stp-nw-res"); if (!n) { if (r) r.innerHTML = ""; S.nw.s = ""; return; } if (r) r.innerHTML = '<span class="stp-b mid">جارٍ التحقق…</span>';
+    _nwT = setTimeout(() => nwCheck(n), 450);
+  }
+  async function nwCheck(n) {
+    const st = await subAvail(n); if (!S.nw || S.nw.n !== n) return; S.nw.s = st; const r = $("stp-nw-res"); if (!r) return;
+    if (st === "free" || st === "free?") { r.innerHTML = '<span class="stp-b ok">✔ العنوان متوفر</span>' + (st === "free?" ? ' <small>(سيؤكد الدعم توفّره عند الإنشاء)</small>' : ''); return; }
+    if (st === "bad") { r.innerHTML = '<span class="stp-b mid">اكتب 3 أحرف على الأقل: حروف لاتينية وأرقام وشرطة</span>'; return; }
+    r.innerHTML = '<span class="stp-b no">✖ هذا الاسم غير متوفر</span> <small>جارٍ اقتراح أسماء قريبة…</small>';
+    const sug = await subSuggest(n); if (!S.nw || S.nw.n !== n) return;
+    r.innerHTML = '<span class="stp-b no">✖ هذا الاسم غير متوفر</span> ' + (sug.length ? '<span style="margin-inline-start:.5rem">جرّب:</span> ' + sug.map(x => '<button type="button" class="small stp-chip" dir="ltr" onclick="AdminStores.nwPick(\'' + x + '\')">' + esc(x + "." + PLATFORM()) + '</button>').join("") : '<small>جرّب اسماً آخر</small>');
+  }
+  function nwPick(x) { const e = $("stp-nw-n"); if (e) { e.value = x; nwIn(); } }
+  function nwOwn() { const b = $("stp-nw-own"); if (b) { b.hidden = !b.hidden; if (!b.hidden) { const i = $("stp-nw-ownv"); if (i) i.focus(); } } }
+  function nwRequest() { if (!cleanSub(($("stp-nw-n") || {}).value)) return toast("⚠️ اكتب اسم الموقع أولاً"); S.nw = Object.assign(S.nw || {}, { n: cleanSub($("stp-nw-n").value), l: ($("stp-nw-l") || {}).value || "" }); domainDlg([S.nw.n], "new"); }
+  /* إنشاء موقع في قائمتي: على دومين المنصة، أو بدومين خاص، أو بطلب دومين جديد؛ ويظهر مباشرة في القائمة وإعداداته */
+  function createSite(mode, rq) {
+    const n = cleanSub(($("stp-nw-n") || {}).value || (S.nw && S.nw.n)), lab = (($("stp-nw-l") || {}).value || (S.nw && S.nw.l) || "").trim();
+    if (!n) return toast("⚠️ اكتب اسم الموقع");
+    let url = "", dom;
+    if (mode === "platform") {
+      if (S.nw && S.nw.s && S.nw.s !== "free" && S.nw.s !== "free?") return toast("⚠️ هذا العنوان غير متاح — اختر اسماً آخر");
+      if (!S.nw || !S.nw.s) return toast("⏳ انتظر نتيجة التحقق من العنوان");
+      dom = { mode: "platform", value: n, status: "requested", requests: [] }; url = "https://" + n + "." + PLATFORM() + "/admin.html";
+    } else if (mode === "own") {
+      const own = String(($("stp-nw-ownv") || {}).value || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+      if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(own)) return toast("⚠️ اكتب اسم دومين صحيحاً مثل example.com");
+      dom = { mode: "own", value: own, status: "requested", requests: [] }; url = "https://" + own + "/admin.html";
+    } else { dom = { mode: "request", value: "", status: "requested", requests: rq ? [rq] : [] }; url = "https://" + n + "." + PLATFORM() + "/admin.html"; }
+    const a = stores(), e = { id: "s" + Date.now().toString(36), name: lab || n, sub: n, url, domain: dom, created: new Date().toISOString(), pending: true };
+    a.push(e); saveStores(a); S.open = e.id; S.nw = null;
+    notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\n" + (mode === "platform" ? "العنوان: " + n + "." + PLATFORM() : mode === "own" ? "دومين خاص: " + dom.value : "طلب دومين جديد:\n" + (dom.requests[0] ? dom.requests[0].items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n") : "—")) + "\nمن موقع: " + curName());
+    renderAll(); toast("✅ أُضيف الموقع إلى قائمتك — طلب الإنشاء وصل إلى الدعم");
+  }
   /* ── حذف مجدول بعد 14 يوماً (قابل للإلغاء) ── */
   function delSite(id) {
     const cur = id === "cur", a = stores(), s = cur ? null : a.find(x => x.id === id), nm = cur ? curName() : (s && s.name); if (!cur && !s) return;
@@ -183,8 +238,8 @@ const AdminStores = (() => {
     m.innerHTML = '<div class="stp-mod">' + html + '</div>'; m.style.display = "flex";
   }
   const closeModal = () => { const m = $("stp-mod"); if (m) m.style.display = "none"; };
-  function domainDlg(prefill) {
-    const pf = prefill || [];
+  function domainDlg(prefill, ctx) {
+    S.dctx = ctx === "new" ? "new" : "cur"; const pf = Array.isArray(prefill) ? prefill : [];
     modal('<div class="stp-mh"><h3>طلب دومين جديد</h3><button type="button" class="small gray" onclick="AdminStores.closeDlg()">إغلاق</button></div>' +
       '<div class="hint">اكتب حتى ثلاثة أسماء (حروف لاتينية وأرقام وشرطة) واختر الامتدادات، ثم ابحث عن التوفّر. اختر ما تريده وأرسل الطلب.</div>' +
       '<div class="stp-nm">' + [0, 1, 2].map(i => '<input id="stp-dn' + i + '" dir="ltr" placeholder="الاسم ' + (i + 1) + (i ? " (اختياري)" : "") + '" value="' + esc(pf[i] || "") + '">').join("") + '</div>' +
@@ -204,7 +259,9 @@ const AdminStores = (() => {
   function sendDomain() {
     const picks = [...document.querySelectorAll(".stp-pick:checked")].map(x => S.jobs[+x.value]).filter(Boolean);
     if (!picks.length) return toast("⚠️ اختر اسماً من النتائج أولاً");
-    collect(); const rq = { id: "d" + Date.now().toString(36), at: new Date().toISOString(), items: picks.map(j => ({ d: j.n + "." + j.t, s: j.s })), status: picks.every(j => j.s === "free") ? "available" : picks.some(j => j.s === "free") ? "available" : "pending" };
+    const rq = { id: "d" + Date.now().toString(36), at: new Date().toISOString(), items: picks.map(j => ({ d: j.n + "." + j.t, s: j.s })), status: picks.some(j => j.s === "free") ? "available" : "pending" };
+    if (S.dctx === "new") { closeModal(); return createSite("request", rq); }
+    collect();
     S.d.domain.requests.unshift(rq); S.d.domain.status = "requested"; S.d.domain.at = rq.at;
     notify("طلب تسجيل دومين جديد\nالموقع: " + curName() + "\n" + rq.items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n"));
     closeModal(); S.open = "cur"; save();
@@ -229,7 +286,7 @@ const AdminStores = (() => {
     '.stp-deling .stp-cnt{display:inline-block;margin:0 .25rem;padding:0 .45rem;border-radius:999px;background:rgba(255,255,255,.22);font-size:.72rem}.stp-badge{font-size:.7rem;font-weight:800;padding:.1rem .55rem;border-radius:999px;background:rgba(134,240,106,.18);color:var(--g-mint,#16a34a)}.stp-st{font-size:.78rem;font-weight:800}' +
     '.stp-b{display:inline-block;font-size:.75rem;font-weight:800;padding:.1rem .6rem;border-radius:999px;border:1px solid rgba(128,140,150,.4)}.stp-b.ok{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.6);color:#22c55e}.stp-b.no{background:rgba(239,68,68,.16);border-color:rgba(239,68,68,.6);color:#ef4444}.stp-b.mid{background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.6);color:#f59e0b}' +
     '.stp-rq{display:flex;gap:.8rem;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:.6rem .8rem;border:1px solid rgba(128,140,150,.35);border-radius:12px;margin:.4rem 0}.stp-dn{margin-inline-end:.3rem}' +
-    '.stp-modbg{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:14px}.stp-mod{width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:1.2rem;background:rgba(9,24,18,.985);color:#e8f5ee;border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 70px rgba(0,0,0,.6)}html.white .stp-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}.stp-mh{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.4rem}.stp-mh h3{margin:0}.stp-nm{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;margin-top:.6rem}.stp-tl{display:flex;flex-wrap:wrap;gap:.4rem}.stp-tc{display:inline-flex;gap:.35rem;align-items:center;padding:.25rem .65rem;border:1px solid rgba(128,140,150,.4);border-radius:999px;cursor:pointer;font-weight:700;font-size:.85rem}.stp-tc input{width:auto;margin:0}.stp-rt{width:100%;border-collapse:collapse}.stp-rt td{padding:.4rem .5rem;border-bottom:1px solid rgba(128,140,150,.25)}</style>';
+    '.stp-nwa{margin-top:.5rem}.stp-nwd{display:inline-block;padding:.45rem .8rem;border-radius:10px;border:1px dashed rgba(128,140,150,.5);font-size:1.05rem}.stp-nwr{margin-top:.4rem;min-height:1.6rem}.stp-nwb{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}.stp-nwo{margin-top:.7rem;padding:.7rem;border:1px solid rgba(128,140,150,.35);border-radius:12px}.stp-chip{cursor:pointer;margin-inline-end:.4rem}.stp-modbg{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:14px}.stp-mod{width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:1.2rem;background:rgba(9,24,18,.985);color:#e8f5ee;border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 70px rgba(0,0,0,.6)}html.white .stp-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}.stp-mh{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.4rem}.stp-mh h3{margin:0}.stp-nm{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;margin-top:.6rem}.stp-tl{display:flex;flex-wrap:wrap;gap:.4rem}.stp-tc{display:inline-flex;gap:.35rem;align-items:center;padding:.25rem .65rem;border:1px solid rgba(128,140,150,.4);border-radius:999px;cursor:pointer;font-weight:700;font-size:.85rem}.stp-tc input{width:auto;margin:0}.stp-rt{width:100%;border-collapse:collapse}.stp-rt td{padding:.4rem .5rem;border-bottom:1px solid rgba(128,140,150,.25)}</style>';
   const acctIcon = id => { try { return window.SocialIcons ? '<span style="display:inline-flex;vertical-align:middle;margin-inline-end:.35rem">' + SocialIcons.icon(id, { size: 15, style: "brand", shape: "round" }) + '</span>' : ""; } catch (e) { return ""; } };
   function settingsHtml() {
     const d = S.d, dm = d.domain, reqs = dm.requests || [];
@@ -253,13 +310,17 @@ const AdminStores = (() => {
     mountSwitch();
     const box = $("stores-app"); if (!box) return; const d = S.d, list = stores(), open = S.open || "";
     const row = (id, nm, url, cur, dl, body) => '<div class="stp-site' + (open === id ? " on" : "") + '"><div class="stp-sh"><div class="stp-sn"><button type="button" class="stp-car" onclick="AdminStores.tog(\'' + id + '\')" title="إعدادات الموقع" aria-expanded="' + (open === id) + '">' + CAR + '</button><div><b>' + esc(nm) + '</b>' + (cur ? ' <span class="stp-badge">الحالي</span>' : '') + '<br><small dir="ltr">' + esc(url) + '</small></div></div><div>' + (cur ? '' : '<button class="small" type="button" onclick="AdminStores.open(\'' + id + '\')">فتح لوحة التحكم</button>') + delBtn(id, dl) + '</div></div>' + (open === id ? '<div class="stp-sb">' + body + '</div>' : '') + '</div>';
-    const other = s => '<div class="row"><div><label class="f">اسم الموقع في قائمتي</label><div style="display:flex;gap:.4rem"><b>' + esc(s.name) + '</b><button class="small gray" type="button" onclick="AdminStores.rename(\'' + s.id + '\')">تغيير الاسم</button></div></div></div><div class="hint">إعدادات هذا الموقع (الهوية، الدومين، الاتصال…) تظهر في لوحة تحكمه الخاصة.</div><button class="small" type="button" onclick="AdminStores.open(\'' + s.id + '\')">فتح لوحة تحكم ' + esc(s.name) + ' ← إعدادات الموقع</button>';
+    const rqRO = rq => '<div class="stp-rq"><div>' + rq.items.map(i => '<b dir="ltr" class="stp-dn">' + esc(i.d) + '</b> <span class="stp-b ' + (ST[i.s] || ["", "mid"])[1] + '">' + (ST[i.s] || ["؟"])[0] + '</span>').join("<br>") + '</div><small>' + esc(String(rq.at).slice(0, 10)) + '</small></div>';
+    const other = s => { const dm = s.domain || {}, addr = dm.mode === "own" ? dm.value : (s.sub ? s.sub + "." + PLATFORM() : s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, "")); return '<div class="row"><div><label class="f">اسم الموقع في قائمتي</label><div style="display:flex;gap:.4rem;align-items:center"><b>' + esc(s.name) + '</b><button class="small gray" type="button" onclick="AdminStores.rename(\'' + s.id + '\')">تغيير الاسم</button></div></div><div><label class="f">عنوان الموقع</label><b dir="ltr">' + esc(addr) + '</b>' + (s.pending ? ' <span class="stp-b mid">طلب الإنشاء قيد المعالجة لدى الدعم</span>' : '') + '</div></div>' + (dm.mode === "request" && (dm.requests || []).length ? '<label class="f">طلب الدومين</label>' + dm.requests.map(rqRO).join("") : '') + '<div class="hint">الهوية والاتصال والتوقيت وبقية الإعدادات لهذا الموقع تظهر في لوحة تحكمه عند جاهزيته.</div><button class="small" type="button" onclick="AdminStores.open(\'' + s.id + '\')">فتح لوحة تحكم ' + esc(s.name) + '</button>'; };
     box.innerHTML = CSS + '<div class="stp"><div class="card"><h3>مواقعي</h3><div class="hint">لكل موقع لوحة تحكم خاصة به. اضغط السهم لفتح إعدادات الموقع، ويمكنك التنقل بين مواقعك من أعلى اللوحة.</div>' +
       row("cur", curName(), here().replace(/^https?:\/\//, ""), true, d.deletion, settingsHtml()) +
       list.map(s => row(s.id, s.name, s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, ""), false, s.del, other(s))).join("") +
       ((d.deletion && d.deletion.at) || list.some(s => s.del) ? '<div class="hint" style="margin-top:.5rem">⏳ الموقع المحدّد للحذف يبقى كما هو حتى انتهاء المدة، ويمكنك إلغاء الحذف بالضغط على زر «جارٍ الحذف».</div>' : '') + '</div>' +
-      '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اطلب متجراً جديداً بلوحة تحكم خاصة به، أو أضف إلى قائمتك موقعاً لديك مسبقاً للتنقل بينه وبين مواقعك.</div><div class="row" style="margin-top:.5rem"><div><label class="f">اسم المتجر الجديد</label><input id="stp-new-n" placeholder="مثال: متجري الثاني"></div><div><label class="f">الدومين المطلوب (اختياري)</label><input id="stp-new-d" dir="ltr" placeholder="يُستعمل دومين المنصة إن تُرك فارغاً"></div></div><button class="small gold" type="button" onclick="AdminStores.request(\'site\')">طلب موقع جديد</button>' +
+      '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اكتب اسم الموقع (حروف لاتينية) فيظهر عنوانه على دومين المنصة تلقائياً، ثم اختر: إنشاء الموقع بهذا العنوان، أو إضافة دومين تملكه، أو طلب دومين جديد.</div><div class="row" style="margin-top:.5rem"><div><label class="f">اسم الموقع</label><input id="stp-nw-n" dir="ltr" placeholder="boutique" value="' + esc((S.nw && S.nw.n) || "") + '" oninput="AdminStores.nwIn()"></div><div><label class="f">اسم المتجر (اختياري)</label><input id="stp-nw-l" placeholder="مثال: متجر بوتيك" value="' + esc((S.nw && S.nw.l) || "") + '"></div></div><div class="stp-nwa"><label class="f">عنوان الموقع</label><div class="stp-nwd" dir="ltr"><b id="stp-nw-d">' + esc(((S.nw && S.nw.n) || "name") + "." + PLATFORM()) + '</b></div><div id="stp-nw-res" class="stp-nwr"></div></div>' +
+      '<div class="stp-nwb"><button class="small" type="button" onclick="AdminStores.createSite(\'platform\')">إنشاء الموقع على هذا العنوان</button><button class="small gold" type="button" onclick="AdminStores.nwOwn()">إضافة دومين خاص</button><button class="small gold" type="button" onclick="AdminStores.nwRequest()">طلب دومين خاص</button></div>' +
+      '<div id="stp-nw-own" class="stp-nwo" hidden><label class="f">اسم الدومين الذي تملكه</label><div style="display:flex;gap:.5rem;flex-wrap:wrap"><input id="stp-nw-ownv" dir="ltr" placeholder="example.com" style="flex:1;min-width:200px"><button class="small" type="button" onclick="AdminStores.createSite(\'own\')">إضافة الدومين</button></div></div>' +
       '<details style="margin-top:.9rem"><summary style="cursor:pointer;font-weight:800">لدي موقع جاهز — أضفه إلى قائمتي</summary><div class="row" style="margin-top:.5rem"><div><label class="f">اسم الموقع</label><input id="stp-add-n" placeholder="مثال: أليسوم 2"></div><div><label class="f">عنوان الموقع</label><input id="stp-add-u" dir="ltr" placeholder="example.com"></div></div><button class="small" type="button" onclick="AdminStores.add()">إضافة إلى قائمتي</button></details></div></div>';
+    if (S.nw && S.nw.n) nwCheck(S.nw.n);
     const t = $("stp-tz"); if (t) t.onchange = tick; tick(); clearInterval(S.clock); S.clock = setInterval(() => { if (!$("stp-clock")) return clearInterval(S.clock); tick(); }, 1000);
   }
   function tog(id) { if ($("stp-name")) collect(); S.open = S.open === id ? "" : id; renderAll(); }
@@ -270,5 +331,5 @@ const AdminStores = (() => {
 
   function boot() { mountSwitch(); load(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
-  return { save, add: addStore, delSite, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
+  return { save, add: addStore, delSite, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
 })();
