@@ -1,0 +1,12 @@
+# موزّع المستأجرين — نشر: cd saas/worker && npx wrangler deploy
+name = "alyssum-tenant-router"
+main = "tenant-router.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+SUPABASE_URL = "https://qvdaiundlkfbmjlummni.supabase.co"
+SUPABASE_KEY = "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h"   # المفتاح العام فقط
+PLATFORM_DOMAIN = "CHANGE-ME.example"                              # دومين المنصة الجديد (بلا www)
+
+# بعد شراء الدومين وإضافته لـCloudflare أضف المسارات (أو Custom Domains) هنا، مثلاً:
+# routes = [{ pattern = "*.CHANGE-ME.example/*", zone_name = "CHANGE-ME.example" }]

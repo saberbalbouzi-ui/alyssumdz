@@ -718,3 +718,33 @@ end $$;
 
 -- جدولة يومية اختيارية (تلزم إضافة pg_cron من Database ← Extensions):
 -- select cron.schedule('saas-lifecycle', '0 6 * * *', $$ select public.saas_lifecycle_run() $$);
+
+-- ════════════════════════════════════════════════════════════════════
+-- 10) الاستضافة متعددة المستأجرين (docs/multitenant-plan.md): الموزّع (Cloudflare Worker) يسأل عن المضيف
+-- ════════════════════════════════════════════════════════════════════
+alter table public.saas_sites add column if not exists host text;                 -- اسم مضيف إضافي صريح (اختياري)
+alter table public.saas_sites add column if not exists source text;               -- مصدر المحتوى: gh:owner/repo
+alter table public.saas_sites add column if not exists cf_hostname_id text;       -- معرّف Custom Hostname عند Cloudflare
+alter table public.saas_sites add column if not exists cf_status text;            -- حالة المضيف: pending|active|...
+alter table public.saas_sites add column if not exists ssl_status text;           -- حالة الشهادة: pending_validation|active|...
+alter table public.saas_sites add column if not exists cf_checked_at timestamptz;
+create unique index if not exists saas_sites_host_uq on public.saas_sites (lower(host)) where host is not null;
+create unique index if not exists saas_sites_sub_uq on public.saas_sites (lower(sub)) where sub is not null;
+
+-- يُرجع للموزّع ما يلزمه فقط (لا أسرار): هل المضيف معروف، وحالة الموقع، ومصدر محتواه.
+-- p_host = اسم المضيف الكامل؛ p_sub = الجزء الفرعي إن كان المضيف تحت دومين المنصة (يحسبه الموزّع).
+create or replace function public.saas_site_by_host(p_host text, p_sub text default null) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare h text := lower(btrim(coalesce(p_host, ''))); sb text := nullif(lower(btrim(coalesce(p_sub, ''))), ''); s public.saas_sites;
+begin
+  if h = '' or char_length(h) > 253 then return jsonb_build_object('known', false); end if;
+  select * into s from public.saas_sites
+   where (sb is not null and lower(sub) = sb)
+      or lower(host) = h
+      or (lower(domain) = h and domain_status in ('dns_ready', 'connected'))
+   order by (lower(host) = h) desc, (lower(domain) = h) desc limit 1;
+  if s.id is null then return jsonb_build_object('known', false); end if;
+  return jsonb_build_object('known', true, 'status', s.status, 'source', s.source, 'name', s.name);
+end $$;
+revoke all on function public.saas_site_by_host(text, text) from public;
+grant execute on function public.saas_site_by_host(text, text) to anon, authenticated;
