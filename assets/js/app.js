@@ -463,7 +463,7 @@ function applyStore(c){
       if(c.instagram) CONFIG.SITE.instagram = String(c.instagram).replace(/^@/,"");
     }
     if(c.currency) window.__STORE_CUR = c.currency;
-    if(c.lang && /^(ar|fr|en)$/.test(c.lang)) document.documentElement.lang = c.lang;
+    if(c.lang && /^(ar|fr|en|es|de|tr)$/.test(c.lang)) document.documentElement.lang = c.lang;
     const wa = String(c.wa || "").replace(/[^\d]/g,"");
     if(wa){
       WA_NUMBER = wa;
