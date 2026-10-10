@@ -55,6 +55,7 @@
     "p/_template/index.html",
     "assets/js/admin-float.js",
     "assets/js/float-icons.js",
+    "assets/js/saas-client.js",
     "assets/js/admin-stores.js",
     "assets/js/admin-theme.js",
     "assets/js/admin-nav.js",

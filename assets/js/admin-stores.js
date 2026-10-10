@@ -68,7 +68,7 @@ const AdminStores = (() => {
     const a = stores(), s = a.find(x => x.id === id); if (!s) return;
     if (s.del) {
       if (!confirm("«" + s.name + "» في مرحلة الحذف.\n\nهل تريد إلغاء الحذف وفتح لوحة التحكم؟")) return;
-      delete s.del; saveStores(a); notify("إلغاء طلب حذف الموقع: " + s.name); renderAll();
+      delete s.del; saveStores(a); notify("إلغاء طلب حذف الموقع: " + s.name, "site_delete_cancel", { target_name: s.name, target_origin: orig(s.url) }, "إلغاء حذف الموقع: " + s.name); renderAll();
     }
     if (s.pending && !(await live(s.url))) return toast("⏳ «" + s.name + "» قيد التفعيل لدى المنصة — سيفتح هنا فور جاهزيته");
     if (s.pending) { s.pending = false; saveStores(a); }
@@ -130,7 +130,15 @@ const AdminStores = (() => {
     d.domain.mode = m; if (m !== "request") d.domain.value = g("stp-dv-" + m) || "";
   }
   /* ── إرسال طلب إلى الدعم (واتساب أو نسخ النص) ── */
-  function notify(txt) {
+  const orig = u => { try { return new URL(u).origin; } catch (e) { return ""; } };
+  /* الطلب يصل إلى لوحة الدعم مباشرة (ويتابعه المستخدم في «طلبات الدعم»)؛ وإن تعذّر الاتصال يُرسل بواتساب كاحتياط */
+  async function notify(txt, kind, payload, subject) {
+    const SC = window.SaasClient;
+    if (SC && SC.on()) {
+      const r = await SC.send({ kind: kind || "support", subject: subject || String(txt).split("\n")[0], body: txt, payload: payload || {}, contact: { name: curName(), email: S.d.email, phone: S.d.phone || S.d.wa }, site: { name: curName() } });
+      if (r.ok) { toast("✅ وصل طلبك إلى فريق الدعم — رقم #" + r.num + " (تتابعه في «طلبات الدعم»)"); S.sup = null; supLoad(); return r; }
+      if (r.err === "rate") return toast("⚠️ أرسلت طلبات كثيرة، حاول لاحقاً");
+    }
     const wa = (typeof CONFIG !== "undefined" && CONFIG.SUPPORT_WA) || "";
     if (wa) window.open("https://wa.me/" + String(wa).replace(/\D/g, "") + "?text=" + encodeURIComponent(txt), "_blank", "noopener");
     else { try { navigator.clipboard.writeText(txt); } catch (e) { } toast("📋 نُسخ نص الطلب — أرسله إلى الدعم"); }
@@ -146,7 +154,7 @@ const AdminStores = (() => {
       txt = (m === "own" ? "طلب ربط دومين موجود" : "طلب عنوان على دومين المنصة") + "\nالدومين: " + (m === "platform" ? d.domain.value + "." + PLATFORM() : d.domain.value) + "\nالموقع: " + curName();
       d.domain.status = "requested"; d.domain.at = new Date().toISOString();
     }
-    notify(txt); if (kind !== "site") save();
+    notify(txt, "domain_link", { domain: d.domain.value, mode: m, target_origin: location.origin }, (m === "own" ? "طلب ربط دومين: " : "طلب عنوان على المنصة: ") + (m === "platform" ? d.domain.value + "." + PLATFORM() : d.domain.value)); if (kind !== "site") save();
   }
 
   /* ── اسم الموقع على دومين المنصة: توفّر + اقتراحات ── */
@@ -205,12 +213,12 @@ const AdminStores = (() => {
       return live(url).then(ok => {
         if (ok) { location.href = url; return; }
         const b = stores(), x = b.find(z => z.id === e.id); if (x) { x.pending = true; saveStores(b); } S.open = e.id;
-        notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\nالعنوان: " + n + "." + PLATFORM() + "\nمن موقع: " + curName());
+        notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\nالعنوان: " + n + "." + PLATFORM() + "\nمن موقع: " + curName(), "site_create", { new: { name: lab || n, sub: n, url, mode: "platform" } }, "طلب موقع جديد: " + n);
         renderAll(); toast("✅ أُضيف الموقع — العنوان قيد التفعيل وسيفتح لوحة التحكم فور جاهزيته");
       });
     }
     a.push(e); saveStores(a); S.open = e.id; S.nw = null;
-    notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\n" + (mode === "platform" ? "العنوان: " + n + "." + PLATFORM() : mode === "own" ? "دومين خاص: " + dom.value : "طلب دومين جديد:\n" + (dom.requests[0] ? dom.requests[0].items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n") : "—")) + "\nمن موقع: " + curName());
+    notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\n" + (mode === "platform" ? "العنوان: " + n + "." + PLATFORM() : mode === "own" ? "دومين خاص: " + dom.value : "طلب دومين جديد:\n" + (dom.requests[0] ? dom.requests[0].items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n") : "—")) + "\nمن موقع: " + curName(), "site_create", { new: { name: lab || n, sub: n, url, mode: dom.mode, domain: dom.value || undefined }, items: dom.requests[0] ? dom.requests[0].items : undefined }, "طلب موقع جديد: " + n);
     renderAll(); toast(mode === "own" ? "✅ أُضيف الدومين — أدخل إعدادات DNS الموضّحة ثم اضغط «تحقق من الدومين»" : "✅ أُضيف الموقع إلى قائمتك — طلب الدومين وصل إلى الدعم");
   }
   /* الحذف الفعلي مجدول: المنصة تحذف بيانات الموقع بعد 14 يوماً ويمكن الإلغاء قبلها */
@@ -256,7 +264,43 @@ const AdminStores = (() => {
     r.live = r.dnsOk ? await live("https://" + d + "/") : false; r.ok = r.dnsOk && r.live;
     dm.dns = r; if (r.ok) dm.status = "connected"; ref.save(); toast(r.ok ? "✅ الدومين مربوط ويعمل" : r.dnsOk ? "✔ DNS صحيح — بانتظار التفعيل لدى المنصة" : "⚠️ إعدادات DNS لم تكتمل بعد");
   }
-  function dnsTell(key) { const ref = domRef(key); if (!ref) return; notify("DNS جاهز لدومين خاص\nالدومين: " + ref.dm.value + "\nالموقع: " + (key === "cur" ? curName() : ((stores().find(x => x.id === key) || {}).name || "")) + "\nمن موقع: " + curName() + "\nنرجو تفعيل الدومين وإصدار شهادة الأمان."); }
+  function dnsTell(key) { const ref = domRef(key); if (!ref) return; notify("DNS جاهز لدومين خاص\nالدومين: " + ref.dm.value + "\nالموقع: " + (key === "cur" ? curName() : ((stores().find(x => x.id === key) || {}).name || "")) + "\nمن موقع: " + curName() + "\nنرجو تفعيل الدومين وإصدار شهادة الأمان.", "domain_dns", { domain: ref.dm.value, mode: "own", dns: ref.dm.dns ? { apex: ref.dm.dns.a, www: ref.dm.dns.w, live: ref.dm.dns.live, found: ref.dm.dns.found } : undefined, target_origin: key === "cur" ? location.origin : orig((stores().find(x => x.id === key) || {}).url) }, "DNS جاهز: " + ref.dm.value); }
+
+  /* ── طلبات الدعم (تصل إلى فريق المنصة مباشرة ويصلك ردّه هنا) ── */
+  const SUPK = { site_create: "طلب موقع جديد", site_delete: "طلب حذف موقع", site_delete_cancel: "إلغاء حذف", domain_request: "طلب دومين", domain_link: "ربط دومين", domain_dns: "تفعيل دومين", support: "دعم فني", billing: "الاشتراك", other: "أخرى" };
+  const SUPS = { new: ["تم الاستلام", "mid"], open: ["قيد المعالجة", "mid"], waiting: ["بانتظار ردّك", "no"], resolved: ["تم الحل", "ok"], rejected: ["مرفوض", "no"] };
+  const adm = t => (t.messages || []).filter(m => m.author === "admin").length;
+  const when = iso => { try { return new Date(iso).toLocaleString("ar-DZ", { dateStyle: "medium", timeStyle: "short" }); } catch (e) { return ""; } };
+  function supInner() {
+    const SC = window.SaasClient, L = S.sup === undefined ? null : S.sup, un = L ? SC.unseen(L).length : 0;
+    let h = '<h3>طلبات الدعم' + (un ? ' <span class="stp-b no">' + un + ' رد جديد</span>' : '') + '</h3><div class="hint">كل طلباتك (إنشاء موقع، حذف، دومين…) تصل إلى فريق المنصة هنا، ويصلك الرد في هذه الصفحة مع إشعار. يمكنك أيضاً كتابة طلب دعم جديد.</div>' +
+      '<div class="stp-nwo"><label class="f">موضوع الطلب</label><input id="stp-sup-s" maxlength="150" placeholder="مثال: لا أستطيع تعديل منتج"><label class="f">التفاصيل</label><textarea id="stp-sup-b" rows="3" placeholder="اشرح ما تحتاجه"></textarea><div style="margin-top:.4rem"><button class="small" type="button" onclick="AdminStores.supNew()">إرسال إلى الدعم</button> <button class="small gray" type="button" onclick="AdminStores.supLoad(true)">تحديث</button></div></div>';
+    if (L === null) return h + '<div class="hint" style="margin-top:.5rem">جارٍ تحميل طلباتك…</div>';
+    if (L === false) return h + '<div class="hint" style="margin-top:.5rem">تعذّر تحميل حالة الطلبات الآن.</div>';
+    if (!L.length) return h + '<div class="hint" style="margin-top:.5rem">لا طلبات سابقة.</div>';
+    return h + '<div style="margin-top:.6rem">' + L.map(t => { const st = SUPS[t.status] || ["؟", "mid"], op = S.supOpen === t.id, nu = SC.unseen([t]).length;
+      return '<div class="stp-rq" style="display:block"><div style="display:flex;gap:.6rem;justify-content:space-between;align-items:center;flex-wrap:wrap;cursor:pointer" onclick="AdminStores.supTog(\'' + esc(t.id) + '\')"><div><b>#' + t.num + ' ' + esc(t.subject) + '</b> <span class="stp-b ' + st[1] + '">' + st[0] + '</span>' + (nu ? ' <span class="stp-b no">رد جديد</span>' : '') + '<br><small>' + esc(SUPK[t.kind] || t.kind) + ' · ' + esc(when(t.created_at)) + '</small></div><span class="stp-car" style="display:grid">' + CAR + '</span></div>' +
+        (op ? '<div style="margin-top:.6rem;display:grid;gap:6px">' + (t.messages || []).map(m => '<div style="padding:.45rem .7rem;border-radius:12px;border:1px solid rgba(128,140,150,.35);white-space:pre-wrap;' + (m.author === "admin" ? 'background:rgba(34,197,94,.12);margin-inline-start:2rem' : m.author === "system" ? 'opacity:.7;font-size:.8rem' : 'margin-inline-end:2rem') + '">' + esc(m.body) + '<small style="display:block;opacity:.7">' + (m.author === "admin" ? "فريق الدعم" : m.author === "system" ? "النظام" : "أنت") + ' · ' + esc(when(m.at)) + '</small></div>').join("") + '<textarea id="stp-sup-r" rows="2" placeholder="اكتب رداً…"></textarea><div><button class="small" type="button" onclick="AdminStores.supReply(\'' + esc(t.id) + '\')">إرسال الرد</button></div></div>' : '') + '</div>'; }).join("") + '</div>';
+  }
+  const supCard = () => window.SaasClient && window.SaasClient.on() ? '<div class="card" id="stp-sup">' + supInner() + '</div>' : '';
+  function supDraw() { const e = $("stp-sup"); if (!e) return; if (document.activeElement && e.contains(document.activeElement) && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) && document.activeElement.value) return; e.innerHTML = supInner(); }
+  async function supLoad(manual) {
+    const SC = window.SaasClient; if (!SC || !SC.on()) return; if (manual) { S.sup = null; supDraw(); }
+    const r = await SC.list(); S.sup = r === null ? (S.sup || false) : r; if (S.supOpen && Array.isArray(S.sup)) SC.markSeen(S.sup.filter(t => t.id === S.supOpen)); supDraw();
+  }
+  function supTog(id) { S.supOpen = S.supOpen === id ? "" : id; if (S.supOpen && Array.isArray(S.sup)) window.SaasClient.markSeen(S.sup.filter(t => t.id === id)); const e = $("stp-sup"); if (e) e.innerHTML = supInner(); }
+  async function supNew() {
+    const sj = ($("stp-sup-s") || {}).value.trim(), bd = ($("stp-sup-b") || {}).value.trim(); if (!sj) return toast("⚠️ اكتب موضوع الطلب");
+    await notify(sj + (bd ? "\n\n" + bd : ""), "support", {}, sj);
+  }
+  async function supReply(id) {
+    const e = $("stp-sup-r"), b = e && e.value.trim(); if (!b) return toast("⚠️ اكتب الرد أولاً");
+    const r = await window.SaasClient.reply(id, b); if (!r.ok) return toast("⚠️ تعذّر إرسال الرد"); e.value = ""; toast("✅ وصل ردّك إلى فريق الدعم"); supLoad();
+  }
+  function supWatch() {
+    const SC = window.SaasClient; if (!SC || !SC.on()) return; const v = (document.querySelector('meta[name="admin-version"]') || {}).content || ""; SC.ping(v); S.tn = S.tn || {};
+    SC.watch((u, all) => { u.forEach(t => { const k = t.id + "|" + adm(t); if (!S.tn[k]) { S.tn[k] = 1; toast("💬 ردّ فريق الدعم على طلبك #" + t.num); } }); S.sup = all; supDraw(); });
+  }
 
   /* ── حذف مجدول بعد 14 يوماً (قابل للإلغاء) ── */
   function delSite(id) {
@@ -265,12 +309,12 @@ const AdminStores = (() => {
     if (dl && dl.at) {
       if (!confirm("إلغاء حذف «" + nm + "»؟ سيبقى الموقع وبياناته كما هي.")) return;
       if (cur) { S.d.deletion = null; collect(); save(); } else { delete s.del; saveStores(a); renderAll(); }
-      notify("إلغاء طلب حذف الموقع: " + nm); toast("✅ أُلغي طلب الحذف"); return;
+      notify("إلغاء طلب حذف الموقع: " + nm, "site_delete_cancel", { target_name: nm, target_origin: cur ? location.origin : orig(s.url) }, "إلغاء حذف الموقع: " + nm); toast("✅ أُلغي طلب الحذف"); return;
     }
     if (!confirm("حذف «" + nm + "»؟\n\nتنبيه: سيتم حذف جميع بيانات هذا الموقع من المنصة نهائياً (المنتجات، الطلبات، الصفحات، الإعدادات…) بعد " + DEL_DAYS + " يوماً من الآن.\nيمكنك إلغاء الحذف في أي وقت قبل انتهاء هذه المدة من الزر نفسه.\n\nهل تريد المتابعة؟")) return;
     const now = new Date(), obj = { req: now.toISOString(), at: new Date(now.getTime() + DEL_DAYS * DAY).toISOString() };
     if (cur) { collect(); S.d.deletion = obj; save(); } else { s.del = obj; saveStores(a); renderAll(); }
-    notify("طلب حذف الموقع: " + nm + "\nيُحذف نهائياً بتاريخ: " + obj.at.slice(0, 10)); toast("🗑️ جُدول حذف الموقع بعد " + DEL_DAYS + " يوماً — يمكنك الإلغاء قبلها");
+    notify("طلب حذف الموقع: " + nm + "\nيُحذف نهائياً بتاريخ: " + obj.at.slice(0, 10), "site_delete", { target_name: nm, target_origin: cur ? location.origin : orig(s.url), at: obj.at }, "طلب حذف الموقع: " + nm); toast("🗑️ جُدول حذف الموقع بعد " + DEL_DAYS + " يوماً — يمكنك الإلغاء قبلها");
   }
   const delBtn = (id, dl) => dl && dl.at
     ? '<button class="small warn stp-deling" type="button" onclick="AdminStores.delSite(\'' + id + '\')" title="اضغط لإلغاء الحذف">جارٍ الحذف <span class="stp-cnt">' + (daysLeft(dl.at) > 0 ? daysLeft(dl.at) + ' يوم' : 'اليوم') + '</span> · إلغاء</button>'
@@ -321,7 +365,7 @@ const AdminStores = (() => {
     if (S.dctx === "new") { closeModal(); return createSite("request", rq); }
     collect();
     S.d.domain.requests.unshift(rq); S.d.domain.status = "requested"; S.d.domain.at = rq.at;
-    notify("طلب تسجيل دومين جديد\nالموقع: " + curName() + "\n" + rq.items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n"));
+    notify("طلب تسجيل دومين جديد\nالموقع: " + curName() + "\n" + rq.items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n"), "domain_request", { items: rq.items, target_origin: location.origin }, "طلب تسجيل دومين جديد");
     closeModal(); S.open = "cur"; save();
   }
   async function recheck(id) {
@@ -374,11 +418,12 @@ const AdminStores = (() => {
       row("cur", curName(), here().replace(/^https?:\/\//, ""), true, d.deletion, settingsHtml()) +
       list.map(s => row(s.id, s.name, s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, ""), false, s.del, other(s))).join("") +
       ((d.deletion && d.deletion.at) || list.some(s => s.del) ? '<div class="hint" style="margin-top:.5rem">⏳ الموقع المحدّد للحذف يبقى كما هو حتى انتهاء المدة، ويمكنك إلغاء الحذف بالضغط على زر «جارٍ الحذف».</div>' : '') + '</div>' +
-      '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اكتب اسم الموقع (حروف لاتينية) فيظهر عنوانه على دومين المنصة تلقائياً، ثم اختر: إنشاء الموقع بهذا العنوان، أو إضافة دومين تملكه، أو طلب دومين جديد.</div><div style="margin-top:.5rem;max-width:420px"><label class="f">اسم الموقع</label><input id="stp-nw-n" dir="ltr" placeholder="boutique" value="' + esc((S.nw && S.nw.n) || "") + '" oninput="AdminStores.nwIn()"></div><div class="stp-nwa"><label class="f">عنوان الموقع</label><div class="stp-nwd" dir="ltr"><b id="stp-nw-d">' + esc(((S.nw && S.nw.n) || "name") + "." + PLATFORM()) + '</b></div><div id="stp-nw-res" class="stp-nwr"></div></div>' +
+      supCard() + '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اكتب اسم الموقع (حروف لاتينية) فيظهر عنوانه على دومين المنصة تلقائياً، ثم اختر: إنشاء الموقع بهذا العنوان، أو إضافة دومين تملكه، أو طلب دومين جديد.</div><div style="margin-top:.5rem;max-width:420px"><label class="f">اسم الموقع</label><input id="stp-nw-n" dir="ltr" placeholder="boutique" value="' + esc((S.nw && S.nw.n) || "") + '" oninput="AdminStores.nwIn()"></div><div class="stp-nwa"><label class="f">عنوان الموقع</label><div class="stp-nwd" dir="ltr"><b id="stp-nw-d">' + esc(((S.nw && S.nw.n) || "name") + "." + PLATFORM()) + '</b></div><div id="stp-nw-res" class="stp-nwr"></div></div>' +
       '<div class="stp-nwb"><button class="small" type="button" onclick="AdminStores.createSite(\'platform\')">إنشاء الموقع على هذا العنوان</button><button class="small gold" type="button" onclick="AdminStores.nwOwn()">إضافة دومين خاص</button><button class="small gold" type="button" onclick="AdminStores.nwRequest()">طلب دومين خاص</button></div>' +
       '<div id="stp-nw-own" class="stp-nwo" hidden><label class="f">اسم الدومين الذي تملكه</label><div style="display:flex;gap:.5rem;flex-wrap:wrap"><input id="stp-nw-ownv" dir="ltr" placeholder="example.com" style="flex:1;min-width:200px"><button class="small" type="button" onclick="AdminStores.createSite(\'own\')">إضافة الدومين</button></div></div>' +
       '</div></div>';
     if (S.nw && S.nw.n) nwCheck(S.nw.n);
+    if (window.SaasClient && S.sup === undefined && !S.supGo) { S.supGo = true; supLoad(); }
     const t = $("stp-tz"); if (t) t.onchange = tick; tick(); clearInterval(S.clock); S.clock = setInterval(() => { if (!$("stp-clock")) return clearInterval(S.clock); tick(); }, 1000);
   }
   function tog(id) { if ($("stp-name")) collect(); S.open = S.open === id ? "" : id; renderAll(); }
@@ -387,7 +432,7 @@ const AdminStores = (() => {
   function country() { const c = ($("stp-country") || {}).value, g = CSUG[c]; if (!g) return; const cc = $("stp-currencyCode"), t = $("stp-tz"), sy = $("stp-currency"); if (cc) cc.value = g[0]; if (sy) sy.value = g[2]; if (t && [...t.options].some(o => o.value === g[1])) { t.value = g[1]; tick(); } }
   function cur() { const c = ($("stp-currencyCode") || {}).value, sy = $("stp-currency"); if (c && sy) sy.value = curSym(c); }
 
-  function boot() { mountSwitch(); load(); }
+  function boot() { mountSwitch(); load(); supWatch(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
-  return { save, delSite, dnsCheck, dnsTell, copy: copyTxt, live, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
+  return { save, delSite, supNew, supTog, supReply, supLoad, dnsCheck, dnsTell, copy: copyTxt, live, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
 })();
