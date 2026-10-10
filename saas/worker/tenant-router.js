@@ -19,11 +19,14 @@ export function parseSource(src) {
   return { base: `https://${owner}.github.io`, prefix: root ? "" : `/${repo}` };
 }
 
+// PLATFORM_DOMAIN يقبل دومينًا واحدًا أو عدة دومينات مفصولة بفواصل (للانتقال من دومين منصة إلى آخر دون انقطاع).
 export function subOf(host, platform) {
-  const p = (platform || "").toLowerCase().replace(/^\./, "");
-  if (!p) return null;
-  const suf = "." + p;
-  if (host.endsWith(suf)) { const s = host.slice(0, -suf.length); return s && !s.includes(".") ? s : null; }
+  for (const raw of String(platform || "").split(",")) {
+    const p = raw.trim().toLowerCase().replace(/^\./, "");
+    if (!p) continue;
+    const suf = "." + p;
+    if (host.endsWith(suf)) { const s = host.slice(0, -suf.length); return s && !s.includes(".") ? s : null; }
+  }
   return null;
 }
 
