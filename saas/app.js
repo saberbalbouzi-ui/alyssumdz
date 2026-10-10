@@ -219,7 +219,7 @@
     const done = t.status === "resolved" || t.status === "rejected";
     if (t.kind === "site_create") { b("prov", "بدء التجهيز", "o"); b("activate", "تفعيل الموقع وإبلاغ الزبون"); b("reject", "رفض الطلب", "r"); }
     else if (t.kind === "domain_request") { b("domdone", "تم تسجيل الدومين وتفعيله"); b("domtaken", "الأسماء غير متاحة", "o"); }
-    else if (t.kind === "domain_link" || t.kind === "domain_dns") { b("domon", "تفعيل الدومين"); b("domdns", "DNS غير صحيح", "o"); }
+    else if (t.kind === "domain_link" || t.kind === "domain_dns") { b("domauto", "ربط تلقائي بالشهادة"); b("domstat", "فحص الشهادة", "o"); b("domon", "تفعيل الدومين يدوياً", "g"); b("domdns", "DNS غير صحيح", "o"); }
     else if (t.kind === "site_delete") { b("delsched", "اعتماد الحذف بعد 14 يوماً", "o"); b("delnow", "تنفيذ الحذف الآن", "r"); }
     else if (t.kind === "site_delete_cancel") { b("delcancel", "اعتماد إلغاء الحذف"); }
     else if (t.kind === "service_activation") { b("svcon", "تفعيل الخدمة"); b("svcoff", "إيقاف الخدمة", "o"); }
@@ -245,6 +245,20 @@
     if (act === "domtaken") return R(CANNED[3][1], "waiting");
     if (act === "domdone") { const d = prompt("الدومين الذي تم تفعيله:", ((p.items || []).find(i => i.s === "free") || {}).d || ""); if (!d) return; return R("تم تسجيل الدومين " + d + " وربطه بموقعك. ستجده فعّالاً خلال وقت قصير.", "resolved", s ? { domain: d.toLowerCase(), domain_mode: "request", domain_status: "connected" } : null); }
     if (act === "domon") { const d = prompt("الدومين المراد تفعيله:", p.domain || (s && s.domain) || ""); if (!d) return; return R("تم تفعيل الدومين " + d + " لموقعك وإصدار شهادة الأمان. قد يستغرق الظهور دقائق.", "resolved", s ? { domain: d.toLowerCase(), domain_mode: "own", domain_status: "connected" } : null); }
+    if (act === "domauto") {
+      if (!s) return toast("لا يوجد سجل موقع", "اربط الطلب بموقع أولاً", true);
+      const d = (prompt("الدومين المراد ربطه:", p.domain || s.domain || "") || "").trim().toLowerCase(); if (!d) return;
+      const r = await SaasDomains.call(sb, C, { action: "add", site: s.id, hostname: d });
+      if (!r.ok) return toast("تعذّر الربط", r.msg, true);
+      return R(SaasDomains.addMessage(d, r), "waiting", null);
+    }
+    if (act === "domstat") {
+      if (!s) return toast("لا يوجد سجل موقع", "اربط الطلب بموقع أولاً", true);
+      const r = await SaasDomains.call(sb, C, { action: "status", site: s.id });
+      if (!r.ok) return toast("تعذّر الفحص", r.msg, true);
+      if (!r.active) return toast("لم يكتمل بعد", SaasDomains.statusLine(r), true);
+      return R(SaasDomains.activeMessage(r.hostname || s.domain), "resolved", null);
+    }
     if (act === "domdns") return R(CANNED[4][1], "waiting", s ? { domain_status: "requested" } : null);
     if (act === "delsched") { if (!s) return toast("لا يوجد سجل موقع", "", true); const at = p.at || new Date(Date.now() + 14 * 864e5).toISOString(); return R("تم اعتماد حذف موقعك وسيُحذف نهائياً بتاريخ " + fmt(at) + ". يمكنك إلغاء الحذف قبلها من لوحة التحكم.", "open", { status: "deleting", deletion_at: at }); }
     if (act === "delnow") { if (!s || !confirm("حذف موقع «" + s.name + "» نهائياً الآن؟")) return; return R("تم حذف موقعك نهائياً من المنصة.", "resolved", { status: "deleted" }); }
