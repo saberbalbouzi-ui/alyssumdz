@@ -1,7 +1,7 @@
 /* الأوامر الصوتية للوحة التحكم (عربية فصحى + دارجة جزائرية + فرنسية) — بلا خدمة خارجية ولا مفتاح.
    الاستماع: SpeechRecognition في المتصفح (Chrome/Edge). الفهم: قواعد محلية (parse) نقية قابلة للاختبار؛ التنفيذ: استدعاء دوال اللوحة نفسها.
    المرحلة 1: تنقّل، بحث وتصفية الطلبات، أسئلة أرقام (طلبات/مبيعات/مخزون)، منتج جديد، تعديل منتج بالاسم، تبديل المظهر، تحديث اللوحة، أسئلة «اسألني».
-   أي أمر يغيّر بيانات يمرّ بتأكيد (نعم/لا أو زر). الاستماع المستمر بكلمة نداء «يا أليسوم» اختياري ومُطفأ افتراضياً.
+   أي أمر يغيّر بيانات يمرّ بتأكيد (نعم/لا أو زر). الميكروفون داخل أيقونة «اسألني»: أصفر = متوقف (ردود كتابية)، أخضر = يعمل (استماع بكلمة النداء «hi boutique» + ردود صوتية).
    أمر جديد = أضف قاعدة في parse() واسطراً في HELP_TXT، ثم اختبرها في scripts/test-voice.js. */
 const AdminVoice = (() => {
   /* ── تطبيع: حروف صغيرة، بلا لهجات/تشكيل، توحيد الألف والتاء المربوطة والياء، أرقام لاتينية ── */
@@ -521,7 +521,7 @@ const AdminVoice = (() => {
   const A = () => (typeof Admin !== "undefined" ? Admin : {});
   const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { } return null; };
   const SR = typeof window !== "undefined" ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
-  let lastSlug = "", rec = null, listening = false, continuous = false, armedUntil = 0, pending = null, pendingT = 0, lang = "ar-DZ", hud = null, restartT = 0, busy = false;
+  let lastSlug = "", rec = null, listening = false, micOn = false, armedUntil = 0, pending = null, pendingT = 0, lang = "ar-DZ", hud = null, restartT = 0, restarts = [];
 
   const navBtns = () => [...document.querySelectorAll(".nav-btn")];
   const tabBtn = id => { const m = navBtns().filter(b => (b.getAttribute("onclick") || "").includes("'" + id + "'")); return m.find(b => !b.classList.contains("nav-work")) || m[0]; };
@@ -581,187 +581,213 @@ const AdminVoice = (() => {
   }
   const dataNow = () => { const a = A(); let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { ctx: { slug: (a.editingSlug || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
 
-  /* ── نطق الرد (اختياري، يُطفأ بزر الصوت) ── */
-  const speakOn = () => LS("alyssum_voice_say") !== "0";
+  /* ── المخارج: لوحة «اسألني» إن كانت مفتوحة، وإلا شريط عائم صغير ── */
+  const $h = id => document.getElementById(id);
+  const AH = () => (typeof AdminHelp !== "undefined" ? AdminHelp : null);
+  const panelOpen = () => { const p = $h("ah-panel"); return !!p && p.classList.contains("on") && !!AH() && !!AH().post; };
+  const speakOn = () => micOn;                                   /* الردّ بالصوت فقط والميكروفون أخضر */
   function speak(text, fr) {
     if (!text || !speakOn() || typeof speechSynthesis === "undefined") return;
     try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = fr ? "fr-FR" : "ar-SA"; u.rate = 1.02; speechSynthesis.speak(u); } catch (e) { }
   }
-
-  /* ── الواجهة ── */
-  const ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function css() {
     if (document.getElementById("av-css")) return;
     const st = document.createElement("style"); st.id = "av-css";
-    st.textContent = `#av-btn{display:inline-flex;align-items:center;gap:.4rem;background:rgba(74,222,128,.16);border-color:rgba(134,239,172,.45);color:#fff}#av-btn:not(.on):hover{background:rgba(74,222,128,.3)}#av-btn.on{background:rgba(239,68,68,.28)!important;border-color:rgba(248,113,113,.7)!important;color:#fff!important}
-#av-btn.on svg{animation:avp 1.1s infinite}@keyframes avp{50%{transform:scale(1.25)}}
-#av-hud{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);width:min(520px,calc(100vw - 24px));z-index:99990;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(134,239,172,.35);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);padding:.9rem 1rem;opacity:0;pointer-events:none;transition:.22s;direction:rtl;font-family:inherit}
+    st.textContent = `#av-hud{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);width:min(520px,calc(100vw - 24px));z-index:99990;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(134,239,172,.35);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);padding:.9rem 1rem;opacity:0;pointer-events:none;transition:.22s;direction:rtl;font-family:inherit}
 #av-hud.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
-#av-hud .av-r{display:flex;align-items:center;gap:.6rem}#av-hud .av-dot{width:12px;height:12px;border-radius:50%;background:#64748b;flex:none}#av-hud.live .av-dot{background:#f87171;animation:avp 1s infinite}
+#av-hud .av-r{display:flex;align-items:center;gap:.6rem}#av-hud .av-dot{width:12px;height:12px;border-radius:50%;background:#4ade80;flex:none;animation:avp 1.2s infinite}@keyframes avp{50%{transform:scale(1.3)}}
 #av-hud .av-tx{flex:1;font-weight:800;font-size:.95rem;min-height:1.4em;color:#e2f7e8;word-break:break-word}#av-hud .av-tx i{opacity:.6;font-style:normal}
-#av-hud .av-out{margin-top:.55rem;font-size:.9rem;line-height:1.8;color:#bef264}#av-hud .av-out.err{color:#fda4af}
+#av-hud .av-out{margin-top:.55rem;font-size:.9rem;line-height:1.8;color:#bef264;white-space:pre-line}#av-hud .av-out.err{color:#fda4af}
 #av-hud .av-hp{margin-top:.6rem;display:none;font-size:.78rem;line-height:1.9;color:#cde8d6;border-top:1px solid rgba(255,255,255,.12);padding-top:.5rem}#av-hud.help .av-hp{display:block}.av-hp b{color:#86efac}
 #av-hud .av-bt{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.65rem}
 #av-hud button{font-family:inherit;font-weight:800;font-size:.8rem;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);backdrop-filter:blur(8px);border-radius:12px;padding:.42rem .85rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -5px 10px rgba(0,0,0,.18);transition:transform .15s,background .15s}
-#av-hud button:hover{transform:translateY(-2px);background:rgba(134,239,172,.22)}#av-hud button.ok{background:rgba(74,222,128,.22);border-color:rgba(134,239,172,.55)}#av-hud button.no{background:rgba(239,68,68,.2);border-color:rgba(248,113,113,.5)}#av-hud button.on{background:rgba(251,146,60,.28);border-color:rgba(251,146,60,.7)}
-@media(max-width:560px){#av-btn .t{display:none}#av-hud{bottom:12px}}`;
+#av-hud button:hover{transform:translateY(-2px);background:rgba(134,239,172,.22)}#av-hud button.ok{background:rgba(74,222,128,.22);border-color:rgba(134,239,172,.55)}#av-hud button.no{background:rgba(239,68,68,.2);border-color:rgba(248,113,113,.5)}
+@media(max-width:560px){#av-hud{bottom:12px}}`;
     document.head.appendChild(st);
   }
-  function build() {
-    css();
-    const top = document.querySelector("#app .top"); if (!top || document.getElementById("av-btn")) return;
-    const b = document.createElement("button"); b.id = "av-btn"; b.type = "button"; b.className = "small"; b.title = "أمر صوتي (Alt+V)";
-    b.innerHTML = ICON + '<span class="t">أمر صوتي</span>'; b.onclick = () => { if (listening) stop(); else { const o = $h("av-out"); if (o) o.textContent = ""; start(false); } };
-    const ref = document.getElementById("as-btn") || document.getElementById("theme-sw"); (ref && ref.parentNode === top ? top.insertBefore(b, ref) : top.appendChild(b));
-    if (!hud) {
-      hud = document.createElement("div"); hud.id = "av-hud"; hud.setAttribute("role", "dialog"); hud.setAttribute("aria-live", "polite");
-      hud.innerHTML = '<div class="av-r"><span class="av-dot"></span><div class="av-tx" id="av-tx"></div></div><div class="av-out" id="av-out"></div>' +
-        '<div class="av-hp" id="av-hp">' + HELP_TXT.map(h => "<div><b>" + esc(h[0]) + ":</b> " + esc(h[1]) + "</div>").join("") + "</div>" +
-        '<div class="av-bt" id="av-bt"></div>';
-      document.body.appendChild(hud);
-    }
+  function buildHud() {
+    css(); if (hud) return;
+    hud = document.createElement("div"); hud.id = "av-hud"; hud.setAttribute("role", "dialog"); hud.setAttribute("aria-live", "polite");
+    hud.innerHTML = '<div class="av-r"><span class="av-dot"></span><div class="av-tx" id="av-tx"></div></div><div class="av-out" id="av-out"></div>' +
+      '<div class="av-hp" id="av-hp">' + HELP_TXT.map(h => "<div><b>" + esc(h[0]) + ":</b> " + esc(h[1]) + "</div>").join("") + "</div>" +
+      '<div class="av-bt" id="av-bt"></div>';
+    document.body.appendChild(hud);
   }
-  const $h = id => document.getElementById(id);
   function buttons(extra) {
     const bt = $h("av-bt"); if (!bt) return; bt.innerHTML = "";
     const add = (label, fn, cls) => { const x = document.createElement("button"); x.type = "button"; x.textContent = label; if (cls) x.className = cls; x.onclick = fn; bt.appendChild(x); };
     (extra || []).forEach(e => add(e[0], e[1], e[2]));
-    if (SR) { add(listening ? "إيقاف" : "تحدّث", () => (listening ? stop() : start(false))); add(lang === "ar-DZ" ? "العربية ⇄ Fr" : "Fr ⇄ العربية", toggleLang); add(continuous ? "استماع مستمر: يعمل" : "استماع مستمر (يا " + wakeNames().first + ")", toggleCont, continuous ? "on" : ""); }
-    add(speakOn() ? "الصوت: يعمل" : "الصوت: متوقف", () => { LS("alyssum_voice_say", speakOn() ? "0" : "1"); try { speechSynthesis.cancel(); } catch (e) { } buttons(); });
-    add("الأوامر", () => hud.classList.toggle("help"));
-    add("إغلاق", closeHud);
+    if (SR) add(lang === "ar-DZ" ? "العربية ⇄ Fr" : "Fr ⇄ العربية", toggleLang);
+    add("الأوامر", () => hud.classList.toggle("help")); add("إغلاق", closeHud);
   }
-  function showHud(opts) {
-    build(); if (!hud) return; opts = opts || {};
-    hud.classList.add("on"); hud.classList.toggle("live", listening);
-    if (opts.tx !== undefined) $h("av-tx").innerHTML = opts.tx;
-    if (opts.out !== undefined) { const o = $h("av-out"); o.textContent = opts.out; o.classList.toggle("err", !!opts.err); }
-    buttons(opts.buttons);
+  let hudT = 0;
+  function showHud(o) {
+    buildHud(); o = o || {}; hud.classList.add("on");
+    clearTimeout(hudT); if (!pending && !(o.buttons && o.buttons.length)) hudT = setTimeout(() => { if (!pending && hud) hud.classList.remove("on", "help"); }, 9000);
+    if (o.tx !== undefined) $h("av-tx").innerHTML = o.tx;
+    if (o.out !== undefined) { const e = $h("av-out"); e.textContent = o.out; e.classList.toggle("err", !!o.err); }
+    buttons(o.buttons);
   }
-  function closeHud() { stop(); continuous = false; if (hud) hud.classList.remove("on", "help"); pending = null; }
-  function setBtn() { const b = $h("av-btn"); if (b) b.classList.toggle("on", listening); if (hud) hud.classList.toggle("live", listening); }
+  function closeHud() { if (hud) hud.classList.remove("on", "help"); pending = null; }
+  /* يعرض ناتج الأمر: محادثة «اسألني» إن كانت مفتوحة (مع أزرار الاختيار)، وإلا الشريط العائم */
+  function sink(o) {
+    if (panelOpen() && o.out !== undefined) { if (hud) hud.classList.remove("on"); AH().post("a", o.out, (o.buttons || []).map(b => [b[0], b[1], b[2] === "ok"]), !!o.err); return; }
+    showHud(o);
+  }
+  const mirrorUser = txt => { if (panelOpen() && txt) AH().post("u", txt); };
 
-  function toggleLang() { lang = lang === "ar-DZ" ? "fr-FR" : "ar-DZ"; LS("alyssum_voice_lang", lang); const was = listening; stop(); if (was) setTimeout(() => start(continuous), 250); else buttons(); showHud({ out: lang === "fr-FR" ? "Langue : français" : "اللغة: العربية (الجزائر)" }); }
-  function toggleCont() { continuous = !continuous; if (continuous) { stop(); start(true); showHud({ tx: "<i>قل: «يا " + wakeNames().first + "» ثم الأمر</i>", out: "الاستماع المستمر يعمل ما دامت اللوحة مفتوحة." }); } else { stop(); showHud({ out: "توقّف الاستماع المستمر." }); } }
-
-  function start(cont) {
-    build();
-    if (!SR) { showHud({ tx: "", out: "متصفحك لا يدعم الأوامر الصوتية. استعمل Chrome أو Edge.", err: true }); return; }
-    if (listening) return;
-    continuous = !!cont; clearTimeout(restartT);
+  /* ── الميكروفون: أصفر = متوقف (ردود كتابية)، أخضر = يعمل (استماع بكلمة النداء + ردود صوتية) ── */
+  const boutique = () => wakeNames().first;
+  function paintMic() {
+    const cls = !SR ? "na" : micOn ? "on" : "off";
+    ["ah-mic", "ah-mic2"].forEach(id => { const x = $h(id); if (!x) return; x.classList.remove("on", "off", "na"); x.classList.add(cls); x.classList.toggle("live", micOn && listening); x.title = !SR ? "متصفحك لا يدعم الأوامر الصوتية" : micOn ? "الميكروفون يعمل — اضغط لإيقافه" : "الميكروفون متوقف — اضغط لتشغيله"; });
+    const st = $h("ah-mic-st");
+    if (st) st.textContent = !SR ? "متصفحك لا يدعم الصوت. استعمل Chrome أو Edge." : micOn ? "الميكروفون يعمل — قل: hi " + boutique() + " ثم أمرك. أردّ بالصوت." : "الميكروفون متوقف — أردّ بالكتابة. اضغط الميكروفون لتشغيله.";
+  }
+  function toggleMic() { micOn ? micOff(true) : micStart(true); }
+  function micStart(user) {
+    if (!SR) { paintMic(); if (user) sink({ out: "متصفحك لا يدعم الأوامر الصوتية. استعمل Chrome أو Edge.", err: true }); return; }
+    micOn = true; LS("alyssum_voice_mic", "1"); startRec(); paintMic();
+    if (user) sink({ out: "الميكروفون يعمل. قل: hi " + boutique() + " ثم أمرك.", tx: "<i>أسمعك… قل «hi " + esc(boutique()) + "»</i>" });
+  }
+  function micOff(user) {
+    micOn = false; LS("alyssum_voice_mic", "0"); stopRec(); paintMic(); try { speechSynthesis.cancel(); } catch (e) { }
+    if (user) sink({ out: "الميكروفون متوقف. أردّ بالكتابة." });
+  }
+  function startRec() {
+    if (!SR || listening) return; clearTimeout(restartT);
     rec = new SR(); rec.lang = lang; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 3;
-    rec.onstart = () => { listening = true; setBtn(); showHud({ tx: continuous ? "<i>أسمعك… قل «يا " + wakeNames().first + "» ثم الأمر</i>" : "<i>تحدّث الآن…</i>" }); };
+    rec.onstart = () => { listening = true; paintMic(); };
     rec.onresult = e => {
       let interim = "", fin = null;
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) fin = Array.from({ length: r.length }, (_, k) => r[k].transcript); else interim += r[0].transcript;
-      }
-      if (interim) $h("av-tx").textContent = interim;
-      if (fin) { $h("av-tx").textContent = fin[0]; handle(fin); }
+      for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fin = Array.from({ length: r.length }, (_, k) => r[k].transcript); else interim += r[0].transcript; }
+      if (interim && (wakeRx().test(norm(interim)) || Date.now() < armedUntil || pending) && !panelOpen()) showHud({ tx: esc(interim) });
+      if (fin) handle(fin);
     };
     rec.onerror = e => {
-      const err = e && e.error;
-      if (err === "no-speech" || err === "aborted") return;
-      listening = false; continuous = false; setBtn();
-      const m = err === "not-allowed" || err === "service-not-allowed" ? "اسمح للموقع باستعمال الميكروفون من إعدادات المتصفح ثم أعد المحاولة." : err === "network" ? "الاتصال بالإنترنت لازم للتعرّف على الكلام." : err === "audio-capture" ? "لم أجد ميكروفوناً." : "تعذّر الاستماع (" + err + ").";
-      showHud({ out: m, err: true });
+      const err = e && e.error; if (err === "no-speech" || err === "aborted") return;
+      listening = false;
+      if (err === "not-allowed" || err === "service-not-allowed" || err === "audio-capture") { micOn = false; LS("alyssum_voice_mic", "0"); paintMic(); sink({ out: err === "audio-capture" ? "لم أجد ميكروفوناً." : "اسمح للموقع باستعمال الميكروفون من إعدادات المتصفح ثم اضغط الميكروفون.", err: true }); return; }
+      if (err === "network") { micOn = false; LS("alyssum_voice_mic", "0"); paintMic(); sink({ out: "التعرّف على الكلام يحتاج اتصالاً بالإنترنت.", err: true }); }
     };
-    rec.onend = () => { listening = false; setBtn(); if (continuous) restartT = setTimeout(() => { if (continuous && !listening) start(true); }, 350); else if (hud && hud.classList.contains("on")) buttons(); };
+    rec.onend = () => {
+      listening = false; paintMic(); if (!micOn) return;
+      const now = Date.now(); restarts = restarts.filter(x => now - x < 8000); restarts.push(now);
+      if (restarts.length > 10) { micOn = false; LS("alyssum_voice_mic", "0"); paintMic(); sink({ out: "توقّف الاستماع بعد انقطاعات متكررة. اضغط الميكروفون لإعادة تشغيله.", err: true }); return; }
+      restartT = setTimeout(() => { if (micOn && !listening) startRec(); }, 350);
+    };
     try { rec.start(); } catch (e) { listening = false; }
   }
-  function stop() { clearTimeout(restartT); const was = continuous; try { if (rec) { rec.onend = null; rec.abort ? rec.abort() : rec.stop(); } } catch (e) { } listening = false; setBtn(); if (was && !continuous) { } }
+  function stopRec() { clearTimeout(restartT); try { if (rec) { rec.onend = null; rec.abort ? rec.abort() : rec.stop(); } } catch (e) { } listening = false; }
+  function toggleLang() { lang = lang === "ar-DZ" ? "fr-FR" : "ar-DZ"; LS("alyssum_voice_lang", lang); if (micOn) { stopRec(); setTimeout(startRec, 250); } sink({ out: lang === "fr-FR" ? "Langue : français" : "اللغة: العربية (الجزائر)" }); }
 
-  /* كلمة النداء: اسم المتجر (من إعدادات الموقع) + «مساعد» */
+  /* كلمة النداء: «hi boutique» (+ اسم المتجر + «مساعد»؛ مع صيغ النطق المحتملة) */
+  const BOUT = ["boutique", "boutik", "bootique", "botique", "butik", "بوتيك", "بوتيج", "بوتيق"];
   function wakeNames() {
     let nm = ""; try { nm = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || ""; } catch (e) { }
     const ws = norm(nm).split(" ").filter(w => w.length >= 3);
-    return { ws: ws.concat(["مساعد", "assistant"]), first: (nm || "").split(/\s+/)[0] || "المساعد" };
+    return { ws: BOUT.concat(ws, ["مساعد", "assistant"]), first: "boutique" };
   }
   let WAKE_RX = null;
-  const wakeRx = () => WAKE_RX || (WAKE_RX = new RegExp("^(?:(?:يا|ya|hey|hi|هاي|اوكي|ok|okay|مرحبا|اهلا|salut)\\s+)*(?:" + wakeNames().ws.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\s*"));
-  function handle(alts) {
-    const norms = alts.map(norm);
-    /* ردّ على سؤال تأكيد قائم */
-    if (pending && pending.kind === "need") {
-      const d0 = dataNow(); let res = null;
-      for (const a of alts) { const r = fillSlot(pending, a, d0); if (r.kind !== "need") { res = r; break; } if (!res) res = r; }
-      pending = null; run(res, alts[0]); return;
-    }
-    if (pending && pending.kind === "choose") {
-      for (const x of norms) { const i = pickOption(pending.options, x); if (i === -1) { pending = null; showHud({ out: "تم الإلغاء." }); return; } if (i !== null) { chooseOpt(i); return; } }
-      const alt = parse(alts[0], dataNow());   /* أمر جديد مفهوم يلغي السؤال القائم */
-      if (alt.kind === "unknown" || alt.kind === "choose") { showHud({ out: "لم أفهم اختيارك. قل الرقم أو اسم الأداة.", err: true, buttons: optBtns(pending.options) }); return; }
-      pending = null;
-    }
+  const wakeRx = () => WAKE_RX || (WAKE_RX = new RegExp("^(?:(?:يا|ya|hey|hi|high|hello|هاي|هاى|اوكي|ok|okay|مرحبا|اهلا|salut|bonjour)\\s+)*(?:" + wakeNames().ws.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\s*"));
+
+  function handle(alts, opt) {
+    opt = opt || {}; const norms = alts.map(norm);
+    /* ردّ على سؤال قائم (إكمال/اختيار/تأكيد): لا يحتاج كلمة النداء */
     if (pending) {
-      const n = norms.find(x => has(YES, x) || has(NO, x) || has(STOP, x));
-      if (n !== undefined) { if (has(YES, n)) confirmPending(true); else confirmPending(false); return; }
+      if (!opt.typed) mirrorUser(alts[0]);
+      if (pending.kind === "need") {
+        const d0 = dataNow(); let res = null;
+        for (const a of alts) { const r = fillSlot(pending, a, d0); if (r.kind !== "need") { res = r; break; } if (!res) res = r; }
+        pending = null; run(res, alts[0]); return;
+      }
+      if (pending.kind === "choose") {
+        for (const x of norms) { const i = pickOption(pending.options, x); if (i === -1) { pending = null; sink({ out: "تم الإلغاء." }); return; } if (i !== null) { chooseOpt(i); return; } }
+        const alt = parse(alts[0], dataNow());   /* أمر جديد مفهوم يلغي السؤال القائم */
+        if (alt.kind === "unknown" || alt.kind === "choose") { sink({ out: "لم أفهم اختيارك. قل الرقم أو اسم الأداة.", err: true, buttons: optBtns(pending.options) }); return; }
+        pending = null;
+      } else {
+        const n = norms.find(x => has(YES, x) || has(NO, x) || has(STOP, x));
+        if (n !== undefined) { confirmPending(has(YES, n)); return; }
+      }
     }
-    /* كلمة النداء في الاستماع المستمر */
     let list = alts;
-    if (continuous) {
-      const wakeAll = norms.map(x => wakeRx().exec(x));
-      const i = wakeAll.findIndex(Boolean);
-      if (i >= 0) { list = norms.map((x, k) => (wakeAll[k] ? x.slice(wakeAll[k][0].length) : x)); if (!list[0] && !list[i]) { armedUntil = Date.now() + 8000; showHud({ tx: "أسمعك…", out: "تفضّل، قل الأمر." }); speak(lang === "fr-FR" ? "Je vous écoute" : "تفضّل", lang === "fr-FR"); return; } list = list.map((x, k) => x || list[i]); }
-      else if (Date.now() < armedUntil) { /* ما زال مسلَّحاً بعد النداء */ }
+    if (micOn && !opt.typed) {                       /* الاستماع المستمر: كلمة النداء شرط */
+      const wakeAll = norms.map(x => wakeRx().exec(x)), i = wakeAll.findIndex(Boolean);
+      if (i >= 0) {
+        list = norms.map((x, k) => (wakeAll[k] ? x.slice(wakeAll[k][0].length) : x));
+        if (!list[i]) { armedUntil = Date.now() + 10000; sink({ tx: "أسمعك…", out: lang === "fr-FR" ? "Je vous écoute." : "تفضّل، قل الأمر." }); speak(lang === "fr-FR" ? "Je vous écoute" : "تفضّل", lang === "fr-FR"); return; }
+        list = list.map(x => x || list[i]);
+      } else if (Date.now() < armedUntil) { /* ما زال مسلَّحاً بعد النداء */ }
       else return;
       armedUntil = 0;
     }
     const d = dataNow(); let best = null;
     for (const a of list) { const r = parse(a, d); if (r.kind !== "unknown") { best = r; break; } if (!best) best = r; }
+    if (!opt.typed) mirrorUser(list[0]);
     run(best, list[0]);
   }
   function run(r, heardText) {
-    const fr = /[a-z]{3,}/.test(norm(heardText || "")) && !/[ء-ي]/.test(norm(heardText || ""));
-    if (r.kind === "stop") { showHud({ out: "" }); return; }
+    const nt = norm(heardText || ""), fr = /[a-z]{3,}/.test(nt) && !/[ء-ي]/.test(nt);
+    if (r.kind === "stop") { sink({ out: "" }); return; }
     if (r.kind === "help") { showHud({ out: r.say }); hud.classList.add("help"); speak(r.say, fr); return; }
     if (r.kind === "ask") {
-      showHud({ out: "أسأل مساعد اللوحة…" });
-      try { if (typeof AdminHelp !== "undefined") { AdminHelp.show().then(() => AdminHelp.ask(r.q)); } } catch (e) { }
+      sink({ out: "أسأل مساعد اللوحة…" });
+      try { if (AH()) { AH().show().then(() => AH().ask(r.q)); } } catch (e) { }
       return;
     }
     if (r.kind === "need") {
       pending = r; clearTimeout(pendingT); pendingT = setTimeout(() => { pending = null; }, 30000);
-      showHud({ out: r.say, buttons: [["إلغاء", () => { pending = null; showHud({ out: "تم الإلغاء." }); }, "no"]] }); speak(r.say, fr); return;
+      sink({ out: r.say, buttons: [["إلغاء", () => { pending = null; sink({ out: "تم الإلغاء." }); }, "no"]] }); speak(r.say, fr); return;
     }
-    if (r.kind === "negated") { showHud({ out: r.say }); speak(r.say, fr); return; }
+    if (r.kind === "negated") { sink({ out: r.say }); speak(r.say, fr); return; }
     if (r.kind === "choose") {
       pending = r; clearTimeout(pendingT); pendingT = setTimeout(() => { pending = null; }, 30000);
-      showHud({ out: r.say, buttons: optBtns(r.options) }); speak(r.say, fr); return;
+      sink({ out: r.say, buttons: optBtns(r.options) }); speak(r.say, fr); return;
     }
     if (r.confirm) {
       pending = r; clearTimeout(pendingT); pendingT = setTimeout(() => { pending = null; }, 20000);
-      showHud({ out: r.say, buttons: [["نعم", () => confirmPending(true), "ok"], ["لا", () => confirmPending(false), "no"]] }); speak(r.say, fr); return;
+      sink({ out: r.say, buttons: [["نعم", () => confirmPending(true), "ok"], ["لا", () => confirmPending(false), "no"]] }); speak(r.say, fr); return;
     }
-    if (r.kind === "unknown") { showHud({ out: r.say, err: true }); speak(r.say, fr); return; }
+    if (r.kind === "unknown") { sink({ out: r.say, err: true }); speak(r.say, fr); return; }
     const ok = exec(r.act);
-    showHud({ out: ok ? r.say : "هذا القسم غير متاح في لوحتك.", err: !ok }); if (ok) speak(r.say, fr);
+    if (ok && r.act && r.act.slug) lastSlug = r.act.slug;
+    sink({ out: ok ? r.say : "هذا القسم غير متاح في لوحتك.", err: !ok }); if (ok) speak(r.say, fr);
   }
   const optBtns = opts => opts.map((o, i) => [(i + 1) + "- " + o.label, () => chooseOpt(i), i === 0 ? "ok" : ""]);
   function chooseOpt(i) {
-    const p = pending; if (!p || !p.options[i]) return; pending = null; clearTimeout(pendingT);
+    const p = pending; if (!p || !p.options || !p.options[i]) return; pending = null; clearTimeout(pendingT);
     const o = p.options[i];
-    if (o.text) { handle([o.text]); return; }
+    if (o.text) { handle([o.text], { typed: true }); return; }
     const ok = exec(o.act);
     let out = ok ? "أفتح " + o.label + "." : "هذا القسم غير متاح في لوحتك.";
     if (ok && o.act.type === "kb" && o.act.ans) out += "\n" + o.act.ans.replace(/\*\*|`/g, "").split(/\n/)[0].slice(0, 220);
-    showHud({ out, err: !ok }); if (ok) speak("أفتح " + o.label, false);
+    sink({ out, err: !ok }); if (ok) speak("أفتح " + o.label, false);
   }
   function confirmPending(yes) {
     const p = pending; pending = null; clearTimeout(pendingT); if (!p) return;
-    if (!yes) { showHud({ out: "تم الإلغاء." }); return; }
-    const ok = exec(p.act); showHud({ out: ok ? "تم." : "تعذّر التنفيذ.", err: !ok });
+    if (!yes) { sink({ out: "تم الإلغاء." }); return; }
+    const ok = exec(p.act); if (ok && p.act && p.act.slug) lastSlug = p.act.slug;
+    sink({ out: ok ? "تم." : "تعذّر التنفيذ.", err: !ok }); if (ok) speak("تم", false);
+  }
+  /* أمر مكتوب في محادثة «اسألني»: ينفَّذ إن كان أمراً مفهوماً، وإلا يبقى سؤالاً لقاعدة المعرفة */
+  const TYPED_OK = new Set(["nav", "orders", "answer", "newProduct", "editProduct", "theme", "update", "site", "search", "stockChange", "priceChange", "visibility", "discount", "need", "negated"]);
+  function tryCommand(q) {
+    if (pending) { handle([q], { typed: true }); return true; }
+    const r = parse(q, dataNow()); if (!TYPED_OK.has(r.kind)) return false;
+    run(r, q); return true;
   }
 
   function init() {
     const saved = LS("alyssum_voice_lang"); if (saved === "fr-FR" || saved === "ar-DZ") lang = saved;
-    loadKB(); loadLex(); const tryB = () => { if (document.querySelector("#app .top")) { build(); } else setTimeout(tryB, 400); }; tryB();
-    document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); listening ? stop() : start(false); } });
+    loadKB(); loadLex();
+    let tries = 0; const tick = () => { paintMic(); if (!$h("ah-mic") && tries++ < 40) setTimeout(tick, 500); }; tick();
+    if (LS("alyssum_voice_mic") === "1" && SR) setTimeout(() => { if (!micOn) { micOn = true; startRec(); paintMic(); } }, 1500);   /* يستأنف إن كان الإذن ممنوحاً سابقاً */
+    document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, start, stop, handle, HELP_TXT, matchProduct, phoneOf };
+  const api = { _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();

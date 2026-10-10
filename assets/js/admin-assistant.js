@@ -32,7 +32,12 @@ const AdminHelp = (() => {
   }
   function css() {
     if ($("ah-css")) return; const st = document.createElement("style"); st.id = "ah-css";
-    st.textContent = `.ah-btn{display:inline-flex;align-items:center;gap:.45rem;border:0;cursor:pointer;font-family:inherit;font-weight:800;font-size:.85rem;color:#173f35;background:linear-gradient(135deg,#f3e6bd,#c8a24b);border-radius:999px;padding:.28rem .85rem .28rem .6rem;box-shadow:0 4px 14px rgba(200,162,75,.45);transition:.2s}.ah-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(200,162,75,.55)}.ah-btn svg{flex:none}
+    st.textContent = `.ah-btn{display:inline-flex;align-items:center;gap:.45rem;border:0;cursor:pointer;font-family:inherit;font-weight:800;font-size:.85rem;color:#173f35;background:linear-gradient(135deg,#f3e6bd,#c8a24b);border-radius:999px;padding:.28rem .85rem .28rem .6rem;box-shadow:0 4px 14px rgba(200,162,75,.45);transition:.2s}.ah-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(200,162,75,.55)}.ah-btn svg{flex:none}.ah-btn{position:relative}
+.ah-mic{position:absolute;top:-6px;inset-inline-start:-6px;width:21px;height:21px;border-radius:50%;display:grid;place-items:center;border:2px solid #0f2e26;cursor:pointer;transition:.18s;padding:0}
+.ah-mic svg{width:11px;height:11px}.ah-mic.off{background:#fde047;color:#3b2f00}.ah-mic.on{background:#4ade80;color:#052e16}.ah-mic.na{background:#94a3b8;color:#1e293b;opacity:.7}.ah-mic.on.live{animation:ahmp 1.3s infinite}
+@keyframes ahmp{0%{box-shadow:0 0 0 0 rgba(74,222,128,.7)}100%{box-shadow:0 0 0 9px rgba(74,222,128,0)}}
+.ah-ms{display:flex;align-items:center;gap:.5rem;padding:.45rem .8rem;background:#f4efe0;border-bottom:1px solid #eadfc4;font-size:.76rem;color:#3d3a30;font-weight:700}
+.ah-mic2{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid transparent;cursor:pointer;padding:0}.ah-mic2 svg{width:15px;height:15px}.ah-mic2.off{background:#fde047;color:#3b2f00}.ah-mic2.on{background:#4ade80;color:#052e16}.ah-mic2.na{background:#cbd5e1;color:#475569}.ah-mic2.on.live{animation:ahmp 1.3s infinite}
 .ah-panel{position:fixed;top:64px;right:14px;width:min(400px,calc(100vw - 20px));height:min(560px,calc(100vh - 84px));background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(15,46,38,.35);z-index:9990;display:none;flex-direction:column;overflow:hidden;direction:rtl;font-family:inherit;border:1px solid #eadfc4}.ah-panel.on{display:flex}
 .ah-h{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;background:linear-gradient(135deg,#0f2e26,#173f35);color:#fff}.ah-h b{font-size:.98rem}.ah-h small{display:block;font-size:.7rem;opacity:.8;font-weight:600}.ah-x{margin-inline-start:auto;background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:1rem}
 .ah-m{flex:1;overflow:auto;padding:.8rem;background:#faf7f0;display:flex;flex-direction:column;gap:.55rem}.ah-b{max-width:92%;padding:.6rem .8rem;border-radius:14px;font-size:.86rem;line-height:1.8}.ah-b.u{align-self:flex-start;background:#173f35;color:#fff;border-end-start-radius:4px}.ah-b.a{align-self:flex-end;background:#fff;border:1px solid #eadfc4;color:#2a3430;border-end-end-radius:4px}.ah-b code{background:#f1ede1;padding:0 .3em;border-radius:4px;font-size:.8em;direction:ltr;unicode-bidi:embed}
@@ -43,6 +48,7 @@ const AdminHelp = (() => {
   }
   /* أيقونة وجه روبوت أنيقة */
   const ROBOT = (body, face, eye) => `<svg width="30" height="30" viewBox="0 0 40 40" fill="none" aria-hidden="true"><line x1="20" y1="3.5" x2="20" y2="9" stroke="${body}" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="3.2" r="2.2" fill="${body}"/><rect x="5" y="9" width="30" height="24" rx="9" fill="${body}"/><rect x="2" y="17" width="3.4" height="8" rx="1.7" fill="${body}"/><rect x="34.6" y="17" width="3.4" height="8" rx="1.7" fill="${body}"/><rect x="9" y="13" width="22" height="16" rx="6" fill="${face}"/><circle cx="15" cy="20" r="3.3" fill="${eye}"/><circle cx="25" cy="20" r="3.3" fill="${eye}"/><circle cx="15.8" cy="19.2" r="1.1" fill="#fff"/><circle cx="25.8" cy="19.2" r="1.1" fill="#fff"/><path d="M15.5 25.2c1.2 1.3 2.8 1.9 4.5 1.9s3.3-.6 4.5-1.9" stroke="${eye}" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg>`;
+  const MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
   const SUGG = ["كيف أضيف قسماً جديداً؟", "كيف أنقل قسماً أو عنصراً؟", "ما هي الأدوات الذكية؟", "كيف أستعمل التحريك الحر؟", "كيف أربط شركة توصيل؟", "كيف أستعمل الهيرو؟"];
   function bubble(cls, html) { const m = $("ah-m"), d = document.createElement("div"); d.className = "ah-b " + cls; d.innerHTML = html; m.appendChild(d); m.scrollTop = m.scrollHeight; return d; }
   function chips(list, d) { const w = document.createElement("div"); w.className = "ah-ch"; list.forEach(([label, fn, go]) => { const b = document.createElement("button"); b.type = "button"; b.className = "ah-c" + (go ? " go" : ""); b.textContent = label; b.onclick = fn; w.appendChild(b); }); d.appendChild(w); }
@@ -54,6 +60,7 @@ const AdminHelp = (() => {
   }
   function ask(q) {
     q = String(q || "").trim(); if (!q) return; bubble("u", esc(q));
+    try { if (typeof AdminVoice !== "undefined" && AdminVoice.tryCommand(q)) return; } catch (e) { }
     if (!KB) return bubble("a", "تعذّر تحميل قاعدة المعرفة. تأكد من الاتصال ثم أعد المحاولة.");
     if (/^(اشرح|ماذا يفعل|ما هذا).*(القسم|الصفحه|هذا)/.test(norm(q)) || /هذا القسم|هذه الصفحه/.test(norm(q))) { const t = curTab(), e = KB.find(x => x.go === t && x.id === t) || KB.find(x => x.id === t); if (e) return answer(e); }
     const r = search(q, 4);
@@ -65,10 +72,13 @@ const AdminHelp = (() => {
   }
   function build() {
     css(); const top = document.querySelector("#app .top"); if (!top || $("ah-btn")) return;
-    const b = document.createElement("button"); b.id = "ah-btn"; b.type = "button"; b.className = "ah-btn"; b.title = "مساعد استعمال الأدوات والإعدادات (اسم مؤقت)"; b.innerHTML = ROBOT("#173f35", "#0f2e26", "#E4C87F") + `<span class="t">${NAME}</span>`; b.onclick = toggle; top.insertBefore(b, top.firstChild);
+    const b = document.createElement("button"); b.id = "ah-btn"; b.type = "button"; b.className = "ah-btn"; b.title = "مساعد استعمال الأدوات والإعدادات (اسم مؤقت)"; b.innerHTML = ROBOT("#173f35", "#0f2e26", "#E4C87F") + `<span class="t">${NAME}</span><span class="ah-mic off" id="ah-mic" role="button" tabindex="0" title="الميكروفون">${MIC}</span>`; b.onclick = toggle; top.insertBefore(b, top.firstChild);
+    const mb = b.querySelector("#ah-mic"); if (mb) { const tg = e => { e.stopPropagation(); e.preventDefault(); if (typeof AdminVoice !== "undefined") AdminVoice.toggleMic(); }; mb.onclick = tg; mb.onkeydown = e => { if (e.key === "Enter" || e.key === " ") tg(e); }; }
     const p = document.createElement("div"); p.id = "ah-panel"; p.className = "ah-panel";
-    p.innerHTML = `<div class="ah-h">${ROBOT("#E4C87F", "#173f35", "#E4C87F")}<div><b>${NAME}</b><small>مساعد استعمال الأدوات (اسم مؤقت)</small></div><button class="ah-x" onclick="AdminHelp.close()" aria-label="إغلاق">✕</button></div><div class="ah-m" id="ah-m"></div><form class="ah-f" onsubmit="AdminHelp.send(event)"><input id="ah-in" placeholder="اسأل: كيف أستعمل…؟ ما هو…؟" autocomplete="off"><button type="submit">إرسال</button></form>`;
+    p.innerHTML = `<div class="ah-h">${ROBOT("#E4C87F", "#173f35", "#E4C87F")}<div><b>${NAME}</b><small>مساعد استعمال الأدوات (اسم مؤقت)</small></div><button class="ah-x" onclick="AdminHelp.close()" aria-label="إغلاق">✕</button></div><div class="ah-ms"><button type="button" class="ah-mic2 off" id="ah-mic2" aria-label="الميكروفون">${MIC}</button><span id="ah-mic-st"></span></div><div class="ah-m" id="ah-m"></div><form class="ah-f" onsubmit="AdminHelp.send(event)"><input id="ah-in" placeholder="اسأل: كيف أستعمل…؟ ما هو…؟" autocomplete="off"><button type="submit">إرسال</button></form>`;
     document.body.appendChild(p);
+    const m2 = $("ah-mic2"); if (m2) m2.onclick = () => { if (typeof AdminVoice !== "undefined") AdminVoice.toggleMic(); };
+    try { if (typeof AdminVoice !== "undefined") AdminVoice.paint(); } catch (e) { }
     const d = bubble("a", "مرحباً 👋 أنا مساعدك لشرح أدوات الموقع وإعداداته. اسألني عن أي قسم في اللوحة أو أي عنصر في مطوّر الصفحات."); const t = curTab();
     chips([["اشرح لي هذا القسم", () => ask("اشرح هذا القسم")]].concat(SUGG.map(s => [s, () => ask(s)])), d);
   }
@@ -79,5 +89,6 @@ const AdminHelp = (() => {
   function send(ev) { ev.preventDefault(); const i = $("ah-in"), v = i.value; i.value = ""; ask(v); }
   const init = () => { const tryB = () => { if (document.querySelector("#app .top")) { build(); load(); } else setTimeout(tryB, 400); }; tryB(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { ask, send, close, toggle, show, decide: q => { const r = KB ? search(q, 4) : []; if (!r.length || r[0].sc < 6 || r[0].cov < .6) return 'REPHRASE'; const c = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01); return c.length ? 'AMBIG:' + [r[0]].concat(c).map(x => x.e.id).join('+') : 'OK:' + r[0].e.id; }, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };
+  function post(cls, text, list, err) { build(); const d = bubble(cls === "u" ? "u" : "a", esc(text).replace(/\n/g, "<br>")); if (err) d.style.color = "#b42318"; if (list && list.length) chips(list, d); }
+  return { post, ask, send, close, toggle, show, decide: q => { const r = KB ? search(q, 4) : []; if (!r.length || r[0].sc < 6 || r[0].cov < .6) return 'REPHRASE'; const c = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01); return c.length ? 'AMBIG:' + [r[0]].concat(c).map(x => x.e.id).join('+') : 'OK:' + r[0].e.id; }, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };
 })();
