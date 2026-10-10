@@ -16,6 +16,7 @@
     "assets/js/admin-update.js",
     "assets/js/admin-search.js",
     "assets/js/admin-home.js",
+    "assets/js/admin-tablesel.js",
     "assets/js/admin-orders-plus.js",
     "assets/js/admin-keys.js",
     "assets/js/admin-inventory.js",

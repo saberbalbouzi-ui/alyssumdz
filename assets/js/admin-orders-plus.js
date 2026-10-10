@@ -40,18 +40,30 @@ const AdminOrdersPlus = (() => {
     const b = bar(); if (!b) return; css(); const c = cur(), custom = load();
     const chip = (v, i, own) => `<button type="button" class="opv${same(resolve(v.f), c) && (c.q || c.status || c.wilaya || c.dateFrom || c.dateTo) ? " on" : ""}" data-v="${own ? "c" : "b"}${i}">${esc(v.n)}${own ? '<i data-del="' + i + '" title="حذف العرض">×</i>' : ""}</button>`;
     b.innerHTML = `<div id="op-views"><button type="button" class="opv${!(c.q || c.status || c.wilaya || c.dateFrom || c.dateTo) ? " on" : ""}" data-v="all">كل الطلبات</button>${BUILT.map((v, i) => chip(v, i, false)).join("")}${custom.map((v, i) => chip(v, i, true)).join("")}<button type="button" class="opb gh" data-sv="1" title="يحفظ البحث والفلاتر الحالية كعرض باسم تختاره">+ حفظ العرض الحالي</button></div>
-<div id="op-bulk" class="${sel.size ? "on" : ""}"><span>محدَّد: <b>${sel.size}</b></span><select id="op-st"><option value="">تغيير الحالة إلى…</option>${["confirmee", "expediee", "livree", "annulee", "echec"].map(s => `<option value="${s}">${esc((A().ST_AR || {})[s] || s)}</option>`).join("")}</select><button type="button" class="opb" data-b="apply">تطبيق</button><button type="button" class="opb gh" data-b="phones">نسخ الأرقام</button><button type="button" class="opb gh" data-b="csv">تصدير المحدد CSV</button><button type="button" class="opb al" data-b="clear">إلغاء التحديد</button></div>`;
+<div id="op-bulk" class="${sel.size ? "on" : ""}"><span>محدَّد: <b>${sel.size}</b></span><select id="op-st"><option value="">تغيير الحالة إلى…</option>${["confirmee", "expediee", "livree", "annulee", "echec"].map(s => `<option value="${s}">${esc((A().ST_AR || {})[s] || s)}</option>`).join("")}</select><button type="button" class="opb" data-b="apply">تطبيق</button><button type="button" class="opb gh" data-b="phones">نسخ الأرقام</button>${actionMenu()}<button type="button" class="opb gh" data-b="allf" title="يحدّد كل الطلبات المطابقة للبحث والفلاتر وليس صفحة واحدة فقط">تحديد كل النتائج</button><button type="button" class="opb al" data-b="clear">إلغاء التحديد</button></div>`;
     b.onclick = e => {
       const t = e.target.closest("button,i"); if (!t) return;
       if (t.dataset.del !== undefined) { e.stopPropagation(); const v = load(); if (confirm("حذف العرض «" + v[+t.dataset.del].n + "»؟")) { v.splice(+t.dataset.del, 1); save(v); drawBar(); } return; }
       if (t.dataset.v) { const k = t.dataset.v; if (k === "all") apply({}); else apply((k[0] === "b" ? BUILT : load())[+k.slice(1)].f); return; }
       if (t.dataset.sv) { const n = (prompt("اسم العرض:") || "").trim(); if (!n) return; const v = load(); v.push({ n, f: cur() }); save(v); drawBar(); toast("✅ حُفظ العرض «" + n + "»"); return; }
-      if (t.dataset.b) bulk(t.dataset.b);
+      if (t.dataset.b === "menu") { if (window.TableSel) window.TableSel.toggleMenu(t); return; }
+      if (t.dataset.b) { document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); bulk(t.dataset.b); }
     };
+  }
+  const ORD_HEAD = ["الرقم", "التاريخ", "الاسم", "الهاتف", "الولاية", "البلدية", "المنتجات", "الإجمالي", "الحالة"];
+  const ordRows = L => L.map(o => [o.id, new Date(o.date).toLocaleString("ar-DZ"), o.name, o.phone, o.wilaya || "", o.commune || "", String(o.items || "").replace(/\n/g, " "), Number(o.total) || 0, (A().ST_AR || {})[o.status] || o.status]);
+  function actionMenu() {
+    if (!window.TableSel) return "";
+    return window.TableSel.menuHtml([{ g: "طباعة", k: "print-invoice", l: "🧾 فواتير (A4)" }, { g: "طباعة", k: "print-waybill", l: "📦 بوليصات توصيل (A6)" }, { g: "طباعة", k: "print-table", l: "🖨 جدول الطلبات المحددة" }, { g: "تحميل", k: "csv", l: "⬇ ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "⬇ ملف Excel" }], "data-b");
   }
   const chosen = () => (A().orders || []).filter(o => sel.has(String(o.id)));
   function bulk(a) {
+    if (a === "menu") return;
+    if (a === "allf") { (A().getFilteredOrders() || []).forEach(x => sel.add(String(x.o.id))); A().renderOrders(); return; }
     const L = chosen(); if (!L.length) return;
+    if (a === "print-invoice" || a === "print-waybill") { if (typeof AdminOrderDocs !== "undefined") AdminOrderDocs.print(a === "print-invoice" ? "invoice" : "waybill", L); return; }
+    if (a === "print-table") { window.TableSel && window.TableSel.printRows("الطلبات المحددة", ORD_HEAD, ordRows(L)); return; }
+    if (a === "xls") { window.TableSel && window.TableSel.downloadRows("xls", "orders-selected", ORD_HEAD, ordRows(L)); return; }
     if (a === "clear") { sel.clear(); A().renderOrders(); return; }
     if (a === "phones") { const t = [...new Set(L.map(o => o.phone).filter(Boolean))].join("\n"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ " + t.split("\n").length + " رقماً"), () => prompt("انسخ الأرقام:", t)); return; }
     if (a === "csv") {

@@ -49,7 +49,7 @@ const AdminOrderDocs = (() => {
   }
   function inject(){
     const bar=document.getElementById("op-bulk");if(!bar)return;
-    if(bar.querySelector("[data-order-docs]"))return;
+    if(bar.querySelector("[data-order-docs],.ts-act"))return;      // الفواتير والبوليصات صارت ضمن قائمة Action
     const group=document.createElement("span");group.setAttribute("data-order-docs","1");group.style.cssText="display:flex;gap:6px;flex-wrap:wrap";
     group.innerHTML='<button type="button" class="opb" data-print="invoice">🧾 فاتورة المحدد</button><button type="button" class="opb" data-print="waybill">📦 بوليصة المحدد</button>';
     bar.appendChild(group);
