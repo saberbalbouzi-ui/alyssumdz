@@ -244,6 +244,14 @@ const API = {
     return Array.isArray(rows) ? { ok: true, orders: rows.map(r => ({ id: r.id, date: r.created_at, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, dtype: r.dtype, desk: r.desk,
       items: r.items_text, subtotal: r.subtotal, fee: r.fee, total: Number(r.total), coupon: r.coupon, discount: r.discount, extra: r.extra, status: r.status, note: r.note })) } : null;
   },
+  /* حذف طلب: يُرجع true إن حُذف فعلاً من قاعدة البيانات (وإلا يستعمل المدير الإخفاء بوسم في الملاحظة) */
+  async deleteOrder(key, id) {
+    try {
+      if (this.php.on()) { const r = await this.php.send("order_delete", { id }); return !!(r && r.ok); }
+      if (this.ordersBackend() === "supabase") { const rows = await this.sb.adminFetch("/rest/v1/orders?id=eq." + encodeURIComponent(id), { method: "DELETE", headers: { Prefer: "return=representation" } }); return Array.isArray(rows) && rows.length > 0; }
+    } catch (e) { }
+    return false;
+  },
   saveProduct(key, product) { this.post({ type: "save_product", key, product }); },
   deleteProduct(key, slug) { this.post({ type: "delete_product", key, slug }); },
   saveFees(key, fees) { this.post({ type: "save_fees", key, fees }); },

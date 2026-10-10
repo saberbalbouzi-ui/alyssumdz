@@ -54,7 +54,7 @@ const AdminOrdersPlus = (() => {
   const ordRows = L => L.map(o => [o.id, new Date(o.date).toLocaleString("ar-DZ"), o.name, o.phone, o.wilaya || "", o.commune || "", String(o.items || "").replace(/\n/g, " "), Number(o.total) || 0, (A().ST_AR || {})[o.status] || o.status]);
   function actionMenu() {
     if (!window.TableSel) return "";
-    return window.TableSel.menuHtml([{ g: "طباعة", k: "print-invoice", l: "🧾 فواتير (A4)" }, { g: "طباعة", k: "print-waybill", l: "📦 بوليصات توصيل (A6)" }, { g: "طباعة", k: "print-table", l: "🖨 جدول الطلبات المحددة" }, { g: "تحميل", k: "csv", l: "⬇ ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "⬇ ملف Excel" }], "data-b");
+    return window.TableSel.menuHtml([{ g: "طباعة", k: "print-invoice", l: "🧾 فواتير (A4)" }, { g: "طباعة", k: "print-waybill", l: "📦 بوليصات توصيل (A6)" }, { g: "طباعة", k: "print-table", l: "🖨 جدول الطلبات المحددة" }, { g: "تحميل", k: "csv", l: "⬇ ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "⬇ ملف Excel" }, { g: "إجراءات", k: "delete", l: "🗑 حذف الطلبات المحددة", c: "danger" }], "data-b");
   }
   const chosen = () => (A().orders || []).filter(o => sel.has(String(o.id)));
   function bulk(a) {
@@ -64,6 +64,7 @@ const AdminOrdersPlus = (() => {
     if (a === "print-invoice" || a === "print-waybill") { if (typeof AdminOrderDocs !== "undefined") AdminOrderDocs.print(a === "print-invoice" ? "invoice" : "waybill", L); return; }
     if (a === "print-table") { window.TableSel && window.TableSel.printRows("الطلبات المحددة", ORD_HEAD, ordRows(L)); return; }
     if (a === "xls") { window.TableSel && window.TableSel.downloadRows("xls", "orders-selected", ORD_HEAD, ordRows(L)); return; }
+    if (a === "delete") { const ad = A(); Promise.resolve(ad.deleteOrders && ad.deleteOrders(L)).then(done => { if (done) sel.clear(); try { ad.renderOrders(); } catch (e) { } }); return; }
     if (a === "clear") { sel.clear(); A().renderOrders(); return; }
     if (a === "phones") { const t = [...new Set(L.map(o => o.phone).filter(Boolean))].join("\n"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("✅ نُسخ " + t.split("\n").length + " رقماً"), () => prompt("انسخ الأرقام:", t)); return; }
     if (a === "csv") {

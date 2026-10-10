@@ -549,6 +549,14 @@ switch ($route) {
         db()->prepare('UPDATE orders SET ' . implode(', ', $set) . ' WHERE id = ?')->execute($args);
         out(200, ['ok' => true]);
 
+    case 'order_delete':
+        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $id = (string)($b['id'] ?? '');
+        if ($id === '') out(422, ['error' => 'nothing_to_delete']);
+        db()->prepare('DELETE FROM orders WHERE id = ?')->execute([$id]);
+        out(200, ['ok' => true]);
+
     case 'presence':
         if (!$isAdmin) out(401, ['error' => 'unauthorized']);
         $st = db()->prepare('SELECT page, COUNT(*) c FROM presence WHERE seen_at > ? GROUP BY page'); $st->execute([time() - 75]);

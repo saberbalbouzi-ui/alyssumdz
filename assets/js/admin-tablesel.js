@@ -36,7 +36,7 @@ window.TableSel = (() => {
   /* ── قائمة Action (طباعة / تحميل) ── */
   function menuHtml(items, attr, off) {
     attr = attr || "data-ts"; let g = "";
-    return '<span class="ts-act"><button type="button" class="ts-btn"' + (off ? " disabled" : "") + " " + attr + '="menu">⚡ Action ▾</button><div class="ts-menu" hidden>' + items.map(it => { const h = it.g !== g ? '<div class="ts-g">' + esc(it.g) + "</div>" : ""; g = it.g; return h + '<button type="button" class="ts-i" ' + attr + '="' + esc(it.k) + '">' + esc(it.l) + "</button>"; }).join("") + "</div></span>";
+    return '<span class="ts-act"><button type="button" class="ts-btn"' + (off ? " disabled" : "") + " " + attr + '="menu">⚡ Action ▾</button><div class="ts-menu" hidden>' + items.map(it => { const h = it.g !== g ? '<div class="ts-g">' + esc(it.g) + "</div>" : ""; g = it.g; return h + '<button type="button" class="ts-i' + (it.c ? " " + it.c : "") + '" ' + attr + '="' + esc(it.k) + '">' + esc(it.l) + "</button>"; }).join("") + "</div></span>";
   }
   function toggleMenu(btn) { const m = btn.parentNode.querySelector(".ts-menu"); if (!m) return; const open = m.hidden; document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); m.hidden = !open; }
   document.addEventListener("click", e => { if (!e.target.closest(".ts-act")) document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); });

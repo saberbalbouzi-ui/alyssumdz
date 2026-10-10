@@ -175,6 +175,9 @@ alter table public.orders enable row level security;
 revoke all on public.orders from anon, authenticated;
 grant select, insert on public.orders to authenticated;
 grant update (status, note) on public.orders to authenticated;
+grant delete on public.orders to authenticated;                      -- حذف الطلبات من لوحة المدير (v1.89.54)
+drop policy if exists "admin delete orders" on public.orders;
+create policy "admin delete orders" on public.orders for delete to authenticated using (public.is_admin());
 drop policy if exists "admin read orders" on public.orders;
 create policy "admin read orders" on public.orders for select to authenticated using (public.is_admin());
 drop policy if exists "admin import orders" on public.orders;
