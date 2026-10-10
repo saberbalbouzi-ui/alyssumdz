@@ -71,23 +71,14 @@ const AdminInsights = (() => {
     const b=[...document.querySelectorAll(".nav-btn")].find(x=>(x.getAttribute("onclick")||"").includes("'analytics'")||/التحليلات/.test(x.textContent||""));
     if(b)b.click();
   }
-  let presenceAt=0;
-  async function presence(){
-    const box=document.getElementById("ai-live");if(!box)return;
-    if(typeof API==="undefined"||typeof API.presence!=="function"){box.hidden=true;return;}
-    if(Date.now()-presenceAt<30000)return;presenceAt=Date.now();
-    try{const r=await API.presence();const n=Number(r&&r.now);if(!r||r.ok===false||!Number.isFinite(n)){box.hidden=true;return;}box.hidden=false;box.textContent="👁️ "+n.toLocaleString("fr-DZ")+" زائر الآن";}
-    catch(e){box.hidden=true;}
-  }
   function render(){
     const root=document.getElementById("ahome");if(!root)return;
     let host=document.getElementById("ai-insights");
     if(!host){host=document.createElement("section");host.id="ai-insights";host.className="card";host.style.cssText="padding:1rem;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.05);color:inherit";root.appendChild(host);}
     const a=A(),rows=compute(a.orders||[],a.products||[]);
-    host.innerHTML='<h3 style="margin:0 0 .7rem">💡 رؤى المتجر <span id="ai-live" hidden style="float:left"></span></h3>'+
+    host.innerHTML='<h3 style="margin:0 0 .7rem">💡 رؤى المتجر</h3>'+
       (rows.length?'<div style="display:grid;gap:.5rem">'+rows.map((x,i)=>'<div style="display:flex;gap:.5rem;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:.5rem;border-bottom:1px solid rgba(255,255,255,.1)"><span>'+esc(x.text)+'</span><button type="button" data-ai="'+i+'" style="border:1px solid #86f06a;background:rgba(134,240,106,.12);border-radius:8px;padding:.35rem .65rem;color:inherit">افتح</button></div>').join("")+'</div>':'<p style="margin:.2rem 0;color:rgba(255,255,255,.7)">تظهر الرؤى بعد توفر 10 طلبات على الأقل.</p>');
     host.querySelectorAll("[data-ai]").forEach(b=>b.onclick=()=>{const x=rows[Number(b.dataset.ai)];if(x)act(x.kind,x.value);});
-    presence();
   }
   function init(){
     if(typeof AdminHome==="undefined"||!AdminHome||typeof AdminHome.render!=="function")return setTimeout(init,300);

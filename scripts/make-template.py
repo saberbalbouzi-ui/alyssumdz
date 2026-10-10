@@ -104,6 +104,9 @@ for fn, sz in (("icon-192.png", 192), ("icon-512.png", 512), ("icon-maskable-512
         "offers": [{"qty": 1, "price": 2000}, {"qty": 2, "price": 3600}, {"qty": 3, "price": 4800, "free": 1}]}], ensure_ascii=False) + ";\n", encoding="utf-8")
 for f, v in {"coupons": "[]", "pixels": "[]", "agent-faq": "[]", "agent-training": '{"version":1,"scopes":{}}', "welcome": '{"enabled":false}'}.items():
     (OUT / "assets/data" / (f + ".json")).write_text(v + "\n", encoding="utf-8")
+# بيانات الموقع الخاصة بك لا تنتقل للزبون: إعدادات محايدة باسم الزبون ورقمه، ومنشورات/حملات فارغة
+(OUT / "assets/data/store.json").write_text(json.dumps({"name": a.name, "tagline": "", "email": "", "phone": "", "wa": a.wa, "instagram": "", "address": "", "lang": "ar", "tz": "Africa/Algiers", "dateFmt": "DD/MM/YYYY", "timeFmt": "24", "weekStart": "sat", "currency": "دج", "maintenance": False, "maintMsg": "", "domain": {"mode": "own", "value": "", "status": ""}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+(OUT / "assets/data/social.json").write_text(json.dumps({"v": 1, "settings": {"domain": "", "runner": False, "fbNative": True, "hashtags": []}, "rule": {"perDay": 3, "start": "10:00", "end": "21:00", "days": [0, 1, 2, 3, 4, 5, 6], "channels": ["fb", "ig"], "jitter": True}, "posts": [], "campaigns": []}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 for f in ("checkout.json",):
     (OUT / "assets/data" / f).unlink(missing_ok=True)
 
