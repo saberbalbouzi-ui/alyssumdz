@@ -461,6 +461,7 @@ function applyStore(c){
     if(typeof CONFIG !== "undefined" && CONFIG.SITE){
       if(c.name) CONFIG.SITE.name = c.name;
       if(c.instagram) CONFIG.SITE.instagram = String(c.instagram).replace(/^@/,"");
+      if(!c.instagram && c.social && c.social.instagram){ try{ CONFIG.SITE.instagram = decodeURIComponent(new URL(c.social.instagram).pathname.split("/").filter(Boolean).pop()||"").replace(/^@/,""); }catch(e){} }
     }
     if(c.currency) window.__STORE_CUR = c.currency;
     if(c.lang && /^(ar|fr|en|es|de|tr)$/.test(c.lang)) document.documentElement.lang = c.lang;

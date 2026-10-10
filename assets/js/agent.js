@@ -6,6 +6,13 @@ const Agent = (() => {
   const _site = (typeof CONFIG !== "undefined" && CONFIG.SITE) || {};
   const SITE_DOMAIN = _site.domain || location.hostname;
   const SITE_IG = _site.instagram || "";
+  /* حسابات التواصل: من إعدادات الموقع (window.STORE.social) مع احتياط حساب انستغرام القديم */
+  const SOC = { ar: { instagram: "📸 انستغرام", facebook: "📘 فيسبوك", tiktok: "🎵 تيك توك", youtube: "▶️ يوتيوب", telegram: "✈️ تيليغرام", x: "𝕏 إكس", snapchat: "👻 سناب شات", linkedin: "💼 لينكدإن", pinterest: "📌 بنترست", threads: "🧵 ثريدز" }, fr: { instagram: "📸 Instagram", facebook: "📘 Facebook", tiktok: "🎵 TikTok", youtube: "▶️ YouTube", telegram: "✈️ Telegram", x: "𝕏 X", snapchat: "👻 Snapchat", linkedin: "💼 LinkedIn", pinterest: "📌 Pinterest", threads: "🧵 Threads" } };
+  const socialHtml = l => {
+    const st = Object.assign({}, (window.STORE && window.STORE.social) || {}); if (!st.instagram && SITE_IG) st.instagram = "https://www.instagram.com/" + SITE_IG;
+    const k = Object.keys(st).filter(x => st[x]); if (!k.length) return "";
+    return k.map(x => (SOC[l][x] || x) + (l === "fr" ? " : " : ": ") + '<a href="' + String(st[x]).replace(/"/g, "&quot;") + '" target="_blank" rel="noopener" style="color:var(--gold);font-weight:900">' + String(st[x]).replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "").replace(/</g, "&lt;") + '</a>').join("<br>");
+  };
   const panel = () => document.getElementById("agent-panel");
   const body = () => document.getElementById("agent-body");
   let greeted = false;
@@ -162,7 +169,7 @@ const Agent = (() => {
       pharmacyAvailability: () => `بعض منتجاتنا متوفرة في الصيدليات حسب الطلب 💊 لكن الطلب المباشر عبر موقعنا يبقى أسهل وأسرع، مع الدفع عند الاستلام وتوصيل لجميع الولايات.`,
       regulatoryApproval: () => `نعم ✅ جميع منتجاتنا مراقبة ومصرح بها من طرف وزارة التجارة، فهي مضمونة الجودة والسلامة 100%.`,
       phoneContact: () => `للتواصل معنا، الطريقة الأسرع هي واتساب 📱 والرد يكون فورياً وتلقائياً على مدار اليوم.<br><a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">📱 واتساب ${WA_NUMBER.replace("213","0")}</a>`,
-      socialMedia: () => `تابعنا لمزيد من العروض والنصائح 🌿<br>📸 انستغرام: <a href="https://www.instagram.com/${SITE_IG}" target="_blank" style="color:var(--gold);font-weight:900">@${SITE_IG}</a><br>📘 فيسبوك: بنفس الاسم "${SITE_IG}"`,
+      socialMedia: () => socialHtml("ar") ? `تابعنا لمزيد من العروض والنصائح 🌿<br>${socialHtml("ar")}` : `للتواصل معنا الطريقة الأسرع هي واتساب 📱 <a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">${WA_NUMBER.replace("213","0")}</a>`,
       resultsTime: () => `مدة ظهور النتيجة تختلف حسب المنتج، وعادة تكون بين أسبوعين إلى 3 أسابيع من الاستعمال المنتظم ⏳ ونحن على ثقة أنك ستلاحظ الفرق!`,
       guarantee: () => `منتجاتنا طبيعية 100% وأصلية ✅ إذا لم تكن راضياً، تواصل معنا مباشرة وسنحل المشكلة. رضا زبائننا هو سر نجاحنا منذ سنوات.`,
       howOrder: () => `الطلب سهل جداً 👇\n1️⃣ اختر العرض (قطعة / قطعتين / 3 قطع)\n2️⃣ املأ الاسم والهاتف والولاية\n3️⃣ اضغط «تأكيد الطلب» وسنتواصل معك للتأكيد.\nالدفع عند الاستلام!`,
@@ -212,7 +219,7 @@ const Agent = (() => {
       pharmacyAvailability: () => `Certains de nos produits sont disponibles en pharmacie sur demande 💊 mais commander directement sur notre site reste plus simple et plus rapide, avec paiement à la livraison partout en Algérie.`,
       regulatoryApproval: () => `Oui ✅ tous nos produits sont contrôlés et autorisés par le Ministère du Commerce — qualité et sécurité garanties à 100%.`,
       phoneContact: () => `Le moyen le plus rapide de nous contacter est WhatsApp 📱 avec une réponse instantanée et automatique à toute heure.<br><a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">📱 WhatsApp ${WA_NUMBER.replace("213","0")}</a>`,
-      socialMedia: () => `Suivez-nous pour plus d'offres et de conseils 🌿<br>📸 Instagram : <a href="https://www.instagram.com/${SITE_IG}" target="_blank" style="color:var(--gold);font-weight:900">@${SITE_IG}</a><br>📘 Facebook : même nom "${SITE_IG}"`,
+      socialMedia: () => socialHtml("fr") ? `Suivez-nous pour plus d'offres et de conseils 🌿<br>${socialHtml("fr")}` : `Le moyen le plus rapide de nous contacter est WhatsApp 📱 <a href="https://wa.me/${WA_NUMBER}" target="_blank" style="color:var(--ok);font-weight:900">${WA_NUMBER.replace("213","0")}</a>`,
       resultsTime: () => `Le délai d'apparition des résultats varie selon le produit, généralement entre 2 et 3 semaines d'utilisation régulière ⏳ Nous sommes confiants que vous verrez la différence !`,
       guarantee: () => `Nos produits sont 100% naturels et authentiques ✅ Si vous n'êtes pas satisfait, contactez-nous directement et nous réglerons le problème. La satisfaction de nos clients est notre priorité depuis des années.`,
       howOrder: () => `Commander est très simple 👇\n1️⃣ Choisissez l'offre (1 / 2 / 3 pièces)\n2️⃣ Renseignez nom, téléphone et wilaya\n3️⃣ Cliquez sur « Confirmer la commande », nous vous contacterons pour confirmer.\nPaiement à la livraison !`,
@@ -280,7 +287,7 @@ const Agent = (() => {
     { re: /(صيدلية|صيدليات|pharmacie)/i, key: "pharmacyAvailability" },
     { re: /(مراقب|مصرح|مرخص|وزارة التجارة|agréé|autorisé|contrôlé)/i, key: "regulatoryApproval" },
     { re: /(اتصال|تلفون|رقم الهاتف|هاتف|appel|téléphone|numéro)/i, key: "phoneContact" },
-    { re: /(انستغرام|انستقرام|فيسبوك|فايسبوك|فيس بوك|instagram|facebook)/i, key: "socialMedia" },
+    { re: /(انستغرام|انستقرام|فيسبوك|فايسبوك|فيس بوك|تيك توك|تيكتوك|يوتيوب|تيليغرام|تلغرام|سناب|حسابات|صفحتكم|صفحاتكم|reseaux|réseaux|instagram|facebook|tiktok|youtube|telegram|snapchat)/i, key: "socialMedia" },
     { re: /(سعر|بكم|ثمن|بشحال|شحال|prix|combien|coûte|coute|tarif)/i, key: "price" },
     { re: /(مكونات|مكوناته|مكوناتها|تركيبة|فيم يتكون|composition|ingrédients?|ingredient)/i, key: "ingredients" },
     { re: /(توصيل|ليفريزون|ليفريسون|توصيلة|الولايات|livraison|delivery)/i, key: "delivery" },

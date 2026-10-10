@@ -184,6 +184,8 @@ window.ChromeAdmin = (function () {
     else { try { const r = await fetch("assets/data/chrome.json", { cache: "no-store" }); if (r.ok) cfg = await r.json(); } catch (e) { } }
     if (cfg && cfg.off) cfg = null;
     S.cfg = C().norm(cfg, site());
+    /* حسابات التواصل المُدخلة في «إعدادات الموقع» تُتاح هنا لاختيارها في الهيدر والفوتر (حساب موجود بالمعرّف نفسه لا يُستبدل) */
+    try { const ac = (typeof AdminStores !== "undefined" && AdminStores.accounts && AdminStores.accounts()) || {}; Object.keys(ac).forEach(id => { if (ac[id] && !(S.cfg.social || []).some(x => x && x.id === id)) (S.cfg.social = S.cfg.social || []).push({ id, url: ac[id] }); }); } catch (e) { }
     try { const r = await fetch("assets/pages/index.json", { cache: "no-store" }); S.pages = r.ok ? await r.json() : []; } catch (e) { S.pages = []; }
   }
   const out = {
