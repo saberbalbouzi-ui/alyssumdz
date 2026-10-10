@@ -261,7 +261,8 @@
     "assets/js/img-gen.js",
     "assets/js/vendor/html-to-image.min.js",
     "assets/js/admin-voice.js",
-    "assets/data/voice-lexicon.json"
+    "assets/data/voice-lexicon.json",
+    "assets/js/admin-hand.js"
   ],
   "local": {
     "الهوية والإعدادات": [

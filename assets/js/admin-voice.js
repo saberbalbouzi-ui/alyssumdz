@@ -383,6 +383,8 @@ const AdminVoice = (() => {
     if (has(HELP, t)) return { kind: "help", say: L("هذه أمثلة على الأوامر.", "Voici des exemples de commandes.") };
     const am = ASK_ME.exec(t); if (am) return { kind: "ask", q: am[1], say: "" };
 
+    if (/(?:^| )(?:اوقف|ايقاف|طفي|عطل|بلا|بدون|ما نبغيش|لا تحرك|stop|sans|desactive)(?: \S+)? (?:ال)?(?:يد|main)(?: |$)/.test(t)) return { kind: "hand", say: L("أوقفت اليد، سأنفّذ مباشرة.", "Main désactivée."), act: { type: "hand", on: false } };
+    if (/(?:^| )(?:شغل|فعل|ارني|وريني|اظهر|active|montre)(?: \S+)? (?:ال)?(?:يد|main)(?: |$)/.test(t)) return { kind: "hand", say: L("شغّلت اليد.", "Main activée."), act: { type: "hand", on: true } };
     const orders = data.orders || [], products = data.products || [];
     const sem = understand(raw, t, data, L); if (sem) return sem;
     const isOpen = has(V_OPEN, t), ask = has(COUNT_Q, t) || has(WHAT_Q, t);
@@ -574,10 +576,56 @@ const AdminVoice = (() => {
         try { toast(act.type === "active" ? (act.on ? "تم إظهار المنتج (يُنشر خلال ثوانٍ)" : "تم إخفاء المنتج (يُنشر خلال ثوانٍ)") : "تم تطبيق التخفيض (يُنشر خلال ثوانٍ)"); } catch (e) { }
         lastSlug = act.slug; return true;
       }
+      case "hand": if (typeof AdminHand === "undefined") return false; AdminHand.setEnabled(!!act.on); paintMic(); return true;
       case "site": window.open("index.html", "_blank"); return true;
       case "search": if (typeof AdminSearch === "undefined") return false; AdminSearch.show(); setTimeout(() => { const i = document.getElementById("as-in"); if (i && act.q) { i.value = act.q; i.dispatchEvent(new Event("input")); } }, 60); return true;
     }
     return false;
+  }
+
+  /* ── التنفيذ باليد الافتراضية: تنقر وتكتب في عناصر اللوحة الحقيقية؛ وعند غياب العنصر يعود التنفيذ المباشر ── */
+  const q$ = s => { try { return document.querySelector(s); } catch (e) { return null; } };
+  async function waitFor(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < (ms || 1800)) { const v = fn(); if (v) return v; await new Promise(r => setTimeout(r, 80)); } return null; }
+  const isoD = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  function periodDates(per) { const now = new Date(); if (per === "today") return [isoD(now), isoD(now)]; if (per === "yesterday") { const y = isoD(new Date(now - 86400000)); return [y, y]; } if (per === "week") return [isoD(new Date(now - 6 * 86400000)), ""]; if (per === "month") return [isoD(new Date(now - 29 * 86400000)), ""]; return ["", ""]; }
+  let working = false;
+  async function execVia(act) {
+    const H = (typeof AdminHand !== "undefined" && AdminHand.enabled()) ? AdminHand : null;
+    if (!H || !act || act.type === "hand") return exec(act);
+    const dims = [$h("ah-panel"), $h("av-hud")].filter(Boolean); dims.forEach(x => x.classList.add("ah-dim")); working = true;
+    const a = A(), goTab = async id => { const b = tabBtn(id); if (!b) return false; if (b.classList.contains("on")) return true; return H.click(b); };
+    try {
+      switch (act.type) {
+        case "nav": { const b = tabBtn(act.tab); if (!b) return false; if (!(await H.click(b))) b.click(); return true; }
+        case "orders": {
+          if (!(await goTab("orders"))) return exec(act);
+          await H.sleep(220);
+          if (act.q) await H.type(q$("#order-filter-q"), act.q);
+          if (act.status) await H.type(q$("#order-filter-status"), act.status);
+          const [from, to] = periodDates(act.period);
+          if (from) await H.type(q$("#order-filter-from"), from); if (to) await H.type(q$("#order-filter-to"), to);
+          try { a.applyOrderFilters(); } catch (e) { } return true;
+        }
+        case "newProduct": { await goTab("products"); const btn = await waitFor(() => q$('[onclick="Admin.editProduct(null)"]')); if (btn && await H.click(btn)) return true; return exec(act); }
+        case "editProduct": { await goTab("products"); const btn = await waitFor(() => q$('[onclick*="editProduct(\'' + act.slug + '\')"]')); if (btn && await H.click(btn)) return true; return exec(act); }
+        case "stock": case "price": {
+          await goTab("finance"); const fn = act.type === "stock" ? "setStock" : "setPrice";
+          const inp = await waitFor(() => q$('input[onchange*="' + fn + "('" + act.slug + "'" + '"]'));
+          if (inp && await H.type(inp, String(act.to))) { lastSlug = act.slug; return true; } return exec(act);
+        }
+        case "theme": {
+          const m = act.mode === "toggle" ? (typeof AdminTheme !== "undefined" && AdminTheme.mode() === "dark" ? "white" : "dark") : act.mode;
+          const b = q$('#theme-sw button[data-m="' + m + '"]'); if (b && await H.click(b)) return true; return exec(act);
+        }
+        case "update": { const b = q$("#au-btn"); if (b) await H.point(b); return exec(act); }
+        case "search": {
+          const b = q$("#as-btn"); if (b && await H.click(b)) { const i = await waitFor(() => q$("#as-in")); if (i && act.q) await H.type(i, act.q); return true; } return exec(act);
+        }
+        case "active": case "discount": { await goTab("products"); const ok = exec(act); const row = q$('[onclick*="editProduct(\'' + act.slug + '\')"]'); if (row) await H.point(row.closest("tr") || row); return ok; }
+        default: return exec(act);
+      }
+    } catch (e) { return exec(act); }
+    finally { dims.forEach(x => x.classList.remove("ah-dim")); working = false; }
   }
   const dataNow = () => { const a = A(); let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { ctx: { slug: (a.editingSlug || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
 
@@ -642,6 +690,7 @@ const AdminVoice = (() => {
   function paintMic() {
     const cls = !SR ? "na" : micOn ? "on" : "off";
     ["ah-mic", "ah-mic2"].forEach(id => { const x = $h(id); if (!x) return; x.classList.remove("on", "off", "na"); x.classList.add(cls); x.classList.toggle("live", micOn && listening); x.title = !SR ? "متصفحك لا يدعم الأوامر الصوتية" : micOn ? "الميكروفون يعمل — اضغط لإيقافه" : "الميكروفون متوقف — اضغط لتشغيله"; });
+    const hb = $h("ah-hand"); if (hb) { const hon = typeof AdminHand !== "undefined" && AdminHand.enabled(); hb.textContent = hon ? "اليد: تعمل" : "اليد: متوقفة"; hb.classList.toggle("off", !hon); hb.style.display = typeof AdminHand === "undefined" ? "none" : ""; }
     const st = $h("ah-mic-st");
     if (st) st.textContent = !SR ? "متصفحك لا يدعم الصوت. استعمل Chrome أو Edge." : micOn ? "الميكروفون يعمل — قل: hi " + boutique() + " ثم أمرك. أردّ بالصوت." : "الميكروفون متوقف — أردّ بالكتابة. اضغط الميكروفون لتشغيله.";
   }
@@ -731,6 +780,7 @@ const AdminVoice = (() => {
   function resetWake() { WAKEV = null; WAKE_RX = null; LS("alyssum_voice_wake", ""); paintMic(); sink({ out: "أُعيد ضبط كلمة النداء إلى اسم المتجر." }); }
 
   function handle(alts, opt) {
+    if (working) return;                              /* اليد تعمل: لا أقاطعها */
     opt = opt || {}; const norms = alts.map(norm);
     /* ردّ على سؤال قائم (إكمال/اختيار/تأكيد): لا يحتاج كلمة النداء */
     if (pending) {
@@ -766,7 +816,7 @@ const AdminVoice = (() => {
     if (!opt.typed) mirrorUser(list[0]);
     run(best, list[0]);
   }
-  function run(r, heardText) {
+  async function run(r, heardText) {
     const nt = norm(heardText || ""), fr = /[a-z]{3,}/.test(nt) && !/[ء-ي]/.test(nt);
     if (r.kind === "stop") { sink({ out: "" }); return; }
     if (r.kind === "help") { showHud({ out: r.say }); hud.classList.add("help"); speak(r.say, fr); return; }
@@ -789,28 +839,30 @@ const AdminVoice = (() => {
       sink({ out: r.say, buttons: [["نعم", () => confirmPending(true), "ok"], ["لا", () => confirmPending(false), "no"]] }); speak(r.say, fr); return;
     }
     if (r.kind === "unknown") { sink({ out: r.say, err: true }); speak(r.say, fr); return; }
-    const ok = exec(r.act);
+    sink({ out: r.say }); if (r.act && ["nav","orders","newProduct","editProduct","stock","price","theme","search"].includes(r.act.type)) speak(r.say, fr);
+    const ok = await execVia(r.act);
     if (ok && r.act && r.act.slug) lastSlug = r.act.slug;
-    sink({ out: ok ? r.say : "هذا القسم غير متاح في لوحتك.", err: !ok }); if (ok) speak(r.say, fr);
+    if (!ok) sink({ out: "هذا القسم غير متاح في لوحتك.", err: true }); else if (!(r.act && ["nav","orders","newProduct","editProduct","stock","price","theme","search"].includes(r.act.type))) speak(r.say, fr);
   }
   const optBtns = opts => opts.map((o, i) => [(i + 1) + "- " + o.label, () => chooseOpt(i), i === 0 ? "ok" : ""]);
-  function chooseOpt(i) {
+  async function chooseOpt(i) {
     const p = pending; if (!p || !p.options || !p.options[i]) return; pending = null; clearTimeout(pendingT);
     const o = p.options[i];
     if (o.text) { handle([o.text], { typed: true }); return; }
-    const ok = exec(o.act);
+    const ok = await execVia(o.act);
     let out = ok ? "أفتح " + o.label + "." : "هذا القسم غير متاح في لوحتك.";
     if (ok && o.act.type === "kb" && o.act.ans) out += "\n" + o.act.ans.replace(/\*\*|`/g, "").split(/\n/)[0].slice(0, 220);
     sink({ out, err: !ok }); if (ok) speak("أفتح " + o.label, false);
   }
-  function confirmPending(yes) {
+  async function confirmPending(yes) {
     const p = pending; pending = null; clearTimeout(pendingT); if (!p) return;
     if (!yes) { sink({ out: "تم الإلغاء." }); return; }
-    const ok = exec(p.act); if (ok && p.act && p.act.slug) lastSlug = p.act.slug;
+    sink({ out: "أنفّذ…" });
+    const ok = await execVia(p.act); if (ok && p.act && p.act.slug) lastSlug = p.act.slug;
     sink({ out: ok ? "تم." : "تعذّر التنفيذ.", err: !ok }); if (ok) speak("تم", false);
   }
   /* أمر مكتوب في محادثة «اسألني»: ينفَّذ إن كان أمراً مفهوماً، وإلا يبقى سؤالاً لقاعدة المعرفة */
-  const TYPED_OK = new Set(["nav", "orders", "answer", "newProduct", "editProduct", "theme", "update", "site", "search", "stockChange", "priceChange", "visibility", "discount", "need", "negated"]);
+  const TYPED_OK = new Set(["hand", "nav", "orders", "answer", "newProduct", "editProduct", "theme", "update", "site", "search", "stockChange", "priceChange", "visibility", "discount", "need", "negated"]);
   function tryCommand(q) {
     if (pending) { handle([q], { typed: true }); return true; }
     const r = parse(q, dataNow()); if (!TYPED_OK.has(r.kind)) return false;
@@ -825,7 +877,7 @@ const AdminVoice = (() => {
     document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
+  const api = { toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();
