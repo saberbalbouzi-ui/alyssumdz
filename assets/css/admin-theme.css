@@ -152,3 +152,46 @@ html.white .hint{color:#5b6677}
 html.white .rp-ed{background:#fff;border-color:#cdd5e0;color:#0f172a}
 html.white .rp-tok{background:#e8f8ee;border-color:#86d39e;color:#15803d}
 html.white .rp-prev{border-color:#cdd5e0;background:#f7f9fb}
+
+/* ── زر الاتصال الهاتفي: يظهر في الهاتف فقط (يُحذف من المكتب والتابلت) ── */
+.call-lnk{display:none!important}
+@media (max-width:767px){.call-lnk{display:inline!important;font-size:1.05rem}}
+
+/* ── معاينة الطلب + شارة الحظر القابلة للتبديل ── */
+#ord-prev-b .kv td{padding:.32rem .2rem;border-bottom:1px dashed rgba(255,255,255,.12);font-size:.88rem;word-break:break-word}
+html.white #ord-prev-b .kv td{border-bottom-color:#dde3ec}
+.bl-tg{font-size:.72rem}
+
+/* ── الهاتف: أزرار منتظمة في الطلبات وكل صفحات الإعدادات ── */
+@media (max-width:760px){
+  .orders-compact{font-size:.8rem}
+  .orders-compact .act-sel{width:100%;max-width:none;min-height:40px;font-size:.84rem}
+  .orders-compact td.nw .small,.orders-compact td .small{min-height:38px;min-width:42px;font-size:.95rem}
+  .orders-compact td.nm{max-width:none}
+  .action-bar,.card .row-btns,.card>.row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .action-bar>button,.action-bar>a,.card .row-btns>button{width:100%;min-height:44px;margin:0!important;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;font-size:.88rem;padding:.4rem .5rem;white-space:normal;line-height:1.25}
+  .action-bar>button:only-child,.action-bar>button:last-child:nth-child(odd){grid-column:1/-1}
+  .tab>.card button.small,.tab .card .btns button{min-height:42px}
+  .ord-prev-act{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ── الهاتف: جدول الطلبات بطاقات + شريط البحث والأزرار شبكة منتظمة ── */
+@media (max-width:760px){
+  .search-bar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:stretch}
+  .search-bar>input,.search-bar>select,.search-bar>.date-field{grid-column:1/-1;width:100%;min-width:0;margin:0!important}
+  .search-bar>.date-field{display:flex;align-items:center;gap:.5rem;white-space:normal}
+  .search-bar>.date-field input{flex:1;min-width:0}
+  .search-bar>button{width:100%;min-height:44px;margin:0!important;display:inline-flex;align-items:center;justify-content:center;text-align:center;font-size:.86rem;padding:.4rem .5rem;white-space:normal;line-height:1.25}
+  .rtw{padding:.5rem!important}
+  table.orders-compact,table.orders-compact tbody{display:block;width:100%}
+  table.orders-compact tr:first-child:has(th){display:none}
+  table.orders-compact tr{display:grid;grid-template-columns:1fr 1fr;gap:.35rem .8rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:14px;padding:.7rem .8rem;margin-bottom:.6rem}
+  table.orders-compact td{display:block!important;border:none!important;padding:0!important;max-width:none!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;min-width:0;background:transparent!important}
+  table.orders-compact td[data-l]::before{content:attr(data-l) ": ";color:#8a8f8c;font-size:.72rem;font-weight:700}
+  table.orders-compact td.c-items,table.orders-compact td[data-l="الهاتف"],table.orders-compact td.o-act,table.orders-compact td.o-ship{grid-column:1/-1}
+  table.orders-compact td.o-ship{display:flex!important;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line,rgba(255,255,255,.14))!important;padding-top:.5rem!important}
+  table.orders-compact td.o-ship::before{display:none}
+  table.orders-compact td.o-ship .small{flex:1;min-height:42px}
+  table.orders-compact td[data-l="الهاتف"]{display:flex!important;align-items:center;gap:.6rem;flex-wrap:wrap}
+  table.orders-compact td[data-l="الهاتف"]::before{display:none}
+}
