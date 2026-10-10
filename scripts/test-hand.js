@@ -26,9 +26,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
 
   const browser = await chromium.launch();
   const init = () => {
-    class F { constructor() { window.__rec = this; } start() { setTimeout(() => this.onstart && this.onstart(), 5); } abort() { } stop() { } }
+    window.__queue = []; window.__spoken = [];
+    class F { constructor() { window.__rec = this; } start() { if (!this.interimResults && window.__queue.length) { const a = window.__queue.shift(); setTimeout(() => this.onresult({ resultIndex: 0, results: [Object.assign(a.map(x => ({ transcript: x[0], confidence: x[1] })), { isFinal: true, length: a.length })] }), 20); } else setTimeout(() => this.onstart && this.onstart(), 5); } abort() { } stop() { } }
     window.SpeechRecognition = F; window.webkitSpeechRecognition = F;
-    Object.defineProperty(window, "speechSynthesis", { value: { speak() { }, cancel() { }, getVoices() { return []; } }, configurable: true }); window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+    Object.defineProperty(window, "speechSynthesis", { value: { speak(u) { window.__spoken.push(u.text); }, cancel() { }, getVoices() { return []; } }, configurable: true }); window.SpeechSynthesisUtterance = function (t) { this.text = t; };
   };
   async function open(ctxOpts) {
     const ctx = await browser.newContext(ctxOpts), p = await ctx.newPage(), errs = [];
@@ -39,17 +40,32 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     await p.waitForTimeout(1500);
     return { p, errs };
   }
-  const say = async (p, t) => { await p.waitForFunction(() => !AdminVoice.busy(), null, { timeout: 20000 }); await p.evaluate(t => window.__rec.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: t }], { isFinal: true, length: 1 })] }), t); await p.waitForTimeout(500); await p.waitForFunction(() => !AdminVoice.busy(), null, { timeout: 20000 }); await p.waitForTimeout(250); };
+  const say = async (p, t) => { await p.waitForFunction(() => !AdminVoice.busy() && AdminVoice.quiet(), null, { timeout: 20000 }); await p.evaluate(t => window.__rec.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: t }], { isFinal: true, length: 1 })] }), t); await p.waitForTimeout(500); await p.waitForFunction(() => !AdminVoice.busy(), null, { timeout: 20000 }); await p.waitForTimeout(250); };
   const tab = p => p.evaluate(() => { const b = document.querySelector(".nav-btn.on .nav-txt b"); return b ? Array.from(b.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join("").trim() : ""; });
 
   // ═══ حاسوب ═══
   let { p, errs } = await open({ viewport: { width: 1280, height: 800 } });
+  // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
+  await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);
+  ok("أول فتح: يطلب التعرّف ولا يشغّل الميكروفون بعد", await p.evaluate(() => document.getElementById("ah-mic").classList.contains("off") && /مرة واحدة/.test(document.getElementById("av-out").textContent)));
+  await p.evaluate(() => { window.__queue.push([["blah blah blah blah blah blah", 0.3]], [["hi mystore", 0.9]]); });
+  await p.evaluate(() => [...document.querySelectorAll("#av-bt button")].find(b => b.textContent === "ابدأ").click()); await p.waitForTimeout(3800);
+  ok("صوت رديء ← أعاد السؤال مرة واحدة ثم قبل", (await p.evaluate(() => window.__queue.length)) === 0 && (await p.evaluate(() => window.__spoken.filter(x => /لم أسمعك/.test(x)).length)) === 1);
+  ok("بعد التعرّف: الميكروفون أخضر + تحية باسم المتجر", await p.evaluate(() => document.getElementById("ah-mic").classList.contains("on") && window.__spoken.some(x => /مرحباً Mystore/.test(x)) && localStorage.getItem("store_voice_enrolled") === "1"));
+  await p.waitForTimeout(3500);
+  await p.evaluate(() => { window.__spoken.length = 0; document.getElementById("ah-mic").click(); }); await p.waitForTimeout(300);
+  await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);
+  ok("فتح لاحق: تحية فقط بلا إعادة تعرّف", await p.evaluate(() => window.__spoken.some(x => /مرحباً Mystore/.test(x)) && document.getElementById("ah-mic").classList.contains("on")));
+  await p.waitForTimeout(7000);
+  await say(p, "افتح التقارير"); ok("كلام مباشر بلا كلمة نداء", (await tab(p)) === "التقارير", await tab(p));
+  await say(p, "وين ذهبت البارحة يا صديقي هل رايت الفيلم"); ok("الحديث العادي يُتجاهل", (await tab(p)) === "التقارير");
+  await p.evaluate(() => document.getElementById("ah-mic").click());
   await p.evaluate(() => { Admin.products[0].stock = 5; Admin.products[0].price = 2000; });
   const st = await p.evaluate(() => AdminVoice.selfTest());
   ok("الفحص الذاتي: كل عناصر اليد موجودة", st.ok, st.missing);
   ok("فهرس العناصر الحيّ غير فارغ", await p.evaluate(() => AdminVoice.findUI("سعر البيع", 3).length > 0));
-  await p.evaluate(() => document.getElementById("ah-mic").click());
-  await say(p, "hi mystore افتح التقارير"); ok("تنقّل باليد", (await tab(p)) === "التقارير", await tab(p));
+  await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(300); await p.waitForTimeout(6500);
+  await say(p, "hi mystore افتح المخزون"); ok("تنقّل باليد", (await tab(p)) === "المخزون", await tab(p));
   await say(p, "hi mystore زيد 3 حبات لمنتج تجريبي"); await p.evaluate(() => [...document.querySelectorAll("#av-bt button")].find(b => b.textContent === "نعم").click()); await p.waitForTimeout(600);
   await p.waitForFunction(() => !AdminVoice.busy(), null, { timeout: 20000 });
   ok("كتابة المخزون في خانة الجدول", (await p.evaluate(() => Admin.products[0].stock)) === 8, await p.evaluate(() => Admin.products[0].stock));
@@ -70,8 +86,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
 
   // ═══ جوال: دائرة خضراء تقع فوق الهدف ═══
   ({ p, errs } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }));
+  await p.evaluate(() => localStorage.setItem("store_voice_enrolled", "1"));
   ok("وضع اللمس يفعّل الدائرة", await p.evaluate(() => AdminHand.touchMode()));
   await p.evaluate(() => document.getElementById("ah-mic").click());
+  await p.waitForFunction(() => AdminVoice.quiet(), null, { timeout: 20000 });
   await p.evaluate(() => window.__rec.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: "hi mystore افتح التقارير" }], { isFinal: true, length: 1 })] }));
   let under = null, cls = "";
   for (let i = 0; i < 40 && !under; i++) {

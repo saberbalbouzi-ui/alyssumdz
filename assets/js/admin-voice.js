@@ -388,7 +388,7 @@ const AdminVoice = (() => {
     if (!t) return { kind: "unknown", say: "" };
     if (has(STOP, t) && t.split(" ").length <= 3) return { kind: "stop", say: "" };
     if (has(HELP, t)) return { kind: "help", say: L("هذه أمثلة على الأوامر.", "Voici des exemples de commandes.") };
-    const am = ASK_ME.exec(t); if (am) return { kind: "ask", q: am[1], say: "" };
+    const am = ASK_ME.exec(t); if (am) return { kind: "ask", q: am[1], say: "", explicit: true };
 
     if (/(?:^| )(?:اوقف|ايقاف|طفي|عطل|بلا|بدون|ما نبغيش|لا تحرك|stop|sans|desactive)(?: \S+)? (?:ال)?(?:يد|main)(?: |$)/.test(t)) return { kind: "hand", say: L("أوقفت اليد، سأنفّذ مباشرة.", "Main désactivée."), act: { type: "hand", on: false } };
     if (/(?:^| )(?:شغل|فعل|ارني|وريني|اظهر|active|montre)(?: \S+)? (?:ال)?(?:يد|main)(?: |$)/.test(t)) return { kind: "hand", say: L("شغّلت اليد.", "Main activée."), act: { type: "hand", on: true } };
@@ -782,9 +782,11 @@ const AdminVoice = (() => {
   const AH = () => (typeof AdminHelp !== "undefined" ? AdminHelp : null);
   const panelOpen = () => { const p = $h("ah-panel"); return !!p && p.classList.contains("on") && !!AH() && !!AH().post; };
   const speakOn = () => micOn;                                   /* الردّ بالصوت فقط والميكروفون أخضر */
+  let speakingUntil = 0;                                         /* أثناء نطق المساعد لا يُلتقط كلامه كأمر (منع الصدى) */
   function speak(text, fr) {
     if (!text || !speakOn() || typeof speechSynthesis === "undefined") return;
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = fr ? "fr-FR" : "ar-SA"; u.rate = 1.02; speechSynthesis.speak(u); } catch (e) { }
+    speakingUntil = Date.now() + Math.min(14000, 900 + String(text).length * 75);
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = fr ? "fr-FR" : "ar-SA"; u.rate = 1.02; u.onend = () => { speakingUntil = Date.now() + 500; }; speechSynthesis.speak(u); } catch (e) { }
   }
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function css() {
@@ -838,15 +840,35 @@ const AdminVoice = (() => {
   function paintMic() {
     const cls = !SR ? "na" : micOn ? "on" : "off";
     ["ah-mic", "ah-mic2"].forEach(id => { const x = $h(id); if (!x) return; x.classList.remove("on", "off", "na"); x.classList.add(cls); x.classList.toggle("live", micOn && listening); x.title = !SR ? "متصفحك لا يدعم الأوامر الصوتية" : micOn ? "الميكروفون يعمل — اضغط لإيقافه" : "الميكروفون متوقف — اضغط لتشغيله"; });
+    const wb = $h("ah-wake"); if (wb) { wb.textContent = wakeRequired() ? "كلمة النداء: مفعّلة" : "كلمة النداء: مطفأة"; wb.classList.toggle("off", !wakeRequired()); }
     const hb = $h("ah-hand"); if (hb) { const hon = typeof AdminHand !== "undefined" && AdminHand.enabled(); hb.textContent = hon ? "اليد: تعمل" : "اليد: متوقفة"; hb.classList.toggle("off", !hon); hb.style.display = typeof AdminHand === "undefined" ? "none" : ""; }
     const st = $h("ah-mic-st");
-    if (st) st.textContent = !SR ? "متصفحك لا يدعم الصوت. استعمل Chrome أو Edge." : micOn ? "الميكروفون يعمل — قل: hi " + boutique() + " ثم أمرك. أردّ بالصوت." : "الميكروفون متوقف — أردّ بالكتابة. اضغط الميكروفون لتشغيله.";
+    if (st) st.textContent = !SR ? "متصفحك لا يدعم الصوت. استعمل Chrome أو Edge." : micOn ? (wakeRequired() ? "الميكروفون يعمل — قل: hi " + boutique() + " ثم أمرك. أردّ بالصوت." : "الميكروفون يعمل — تكلّم مباشرة. أردّ بالصوت.") : "الميكروفون متوقف — أردّ بالكتابة. اضغط الميكروفون لتشغيله.";
+  }
+  /* ── أول مرة فقط: التعرّف على الصوت (hi + اسم المتجر)، ثم تحية عند كل فتح للميكروفون وكلام مباشر بلا نداء ── */
+  const enrolled = () => LS("alyssum_voice_enrolled") === "1" || !!(WAKEV && WAKEV.variants && WAKEV.variants.length);
+  const wakeRequired = () => LS("alyssum_voice_wake_req") === "1";
+  const shopName = () => (siteName() || "").trim();
+  function greet(first) {
+    const nm = shopName(), fr = lang === "fr-FR";
+    const msg = fr ? "Bonjour " + nm + ", je vous écoute." : "مرحباً " + nm + "، أنا أسمعك.";
+    sink({ out: msg + (first ? "\n" + (fr ? "Dites par exemple : ouvre les commandes." : "قل مثلاً: افتح الطلبات، أو: قداش من كوموند اليوم؟") : ""), tx: "<i>أسمعك…</i>" });
+    speak(msg, fr);
   }
   function toggleMic() { micOn ? micOff(true) : micStart(true); }
+  function skipEnroll() { LS("alyssum_voice_enrolled", "1"); calibrating = false; micStart(true); }
+  function enroll() {
+    const nm = shopName() || wakeNames().first, fr = lang === "fr-FR";
+    const msg = fr ? "Bienvenue sur la plateforme ! Pour reconnaître votre voix, dites « hi " + nm + " » une seule fois." : "مرحباً بك في المنصة! لأتعرّف على صوتك قل «hi " + nm + "» مرة واحدة.";
+    sink({ out: msg, buttons: [["ابدأ", () => calibrate({ auto: true }), "ok"], ["تخطّي", skipEnroll, "no"]] }); speakForce(msg, fr);
+  }
+  /* نطق قبل أن يصير الميكروفون أخضر (مرحلة التعرّف الأولى) */
+  function speakForce(text, fr) { const w = micOn; micOn = true; speak(text, fr); micOn = w; }
   function micStart(user) {
     if (!SR) { paintMic(); if (user) sink({ out: "متصفحك لا يدعم الأوامر الصوتية. استعمل Chrome أو Edge.", err: true }); return; }
+    if (user && !enrolled() && !calibrating) { enroll(); return; }
     micOn = true; LS("alyssum_voice_mic", "1"); startRec(); paintMic();
-    if (user) sink({ out: "الميكروفون يعمل. قل: hi " + boutique() + " ثم أمرك.", tx: "<i>أسمعك… قل «hi " + esc(boutique()) + "»</i>" });
+    if (user) greet(!LS("alyssum_voice_greeted")); if (user) LS("alyssum_voice_greeted", "1");
   }
   function micOff(user) {
     micOn = false; LS("alyssum_voice_mic", "0"); stopRec(); paintMic(); try { speechSynthesis.cancel(); } catch (e) { }
@@ -894,42 +916,60 @@ const AdminVoice = (() => {
   const wakeRx = () => WAKE_RX || (WAKE_RX = new RegExp("^(?:(?:يا|ya|hey|hi|high|hello|هاي|هاى|اوكي|ok|okay|مرحبا|اهلا|salut|bonjour)\\s+)*(?:" + wakeNames().ws.sort((a, b) => b.length - a.length).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\s*"));
   async function loadStoreName() { try { const r = await fetch("assets/data/store.json", { cache: "no-cache" }); if (r.ok) { const d = await r.json(); if (d && d.name) { STORE_NAME = String(d.name); WAKE_RX = null; paintMic(); } } } catch (e) { } }
 
-  /* ── معايرة صوت صاحب المتجر: يقول «hi اسم متجره» ثلاث مرات فتُحفظ الصيغ التي يلتقطها المتصفح لنطقه ── */
+  /* ── معايرة صوت صاحب المتجر: يقول «hi اسم متجره» مرة واحدة (وتُعاد فقط إن كان الصوت غير واضح) فتُحفظ الصيغ التي يلتقطها المتصفح لنطقه ── */
   function oneShot() {
     return new Promise(res => {
       if (!SR) return res(null);
       const r = new SR(); r.lang = lang; r.interimResults = false; r.continuous = false; r.maxAlternatives = 5; let done = false;
       const fin = v => { if (done) return; done = true; clearTimeout(tm); try { r.abort && r.abort(); } catch (e) { } res(v); }, tm = setTimeout(() => fin(null), 9000);
-      r.onresult = e => { const rr = e.results[e.results.length - 1], out = []; for (let k = 0; k < rr.length; k++) out.push(rr[k].transcript); fin(out); };
+      r.onresult = e => { const rr = e.results[e.results.length - 1], out = []; for (let k = 0; k < rr.length; k++) out.push({ t: rr[k].transcript, c: Number(rr[k].confidence) || 0 }); fin(out); };
       r.onerror = () => fin(null); r.onend = () => fin(null);
       try { r.start(); } catch (e) { fin(null); }
     });
   }
-  async function calibrate() {
+  /* تشابه نصّين (مسافة تحرير مُطبَّعة) لتقدير إن كان المسموع يشبه اسم المتجر */
+  function sim(a, b) {
+    if (!a || !b) return 0; const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i].concat(Array(n).fill(0)));
+    for (let j = 1; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return 1 - d[m][n] / Math.max(m, n);
+  }
+  /* هل المسموع واضح بما يكفي؟ (قصير، يشبه اسم المتجر أو ثقته عالية) ← الصيغ المقبولة، وإلا null فيُعاد السؤال */
+  function judgeTake(alts) {
+    const exp = norm(siteName()).split(" ").filter(w => w.length >= 3);
+    const parts = alts.map(a => { const n = norm(a.t), m = GREET.exec(n), rest = (m ? n.slice(m[0].length) : n).trim(); return { rest, c: a.c, words: rest ? rest.split(" ").length : 0 }; }).filter(p => p.rest.length >= 3 && p.words <= 3);
+    if (!parts.length) return null;
+    const near = p => exp.some(e => p.rest.includes(e) || e.includes(p.rest) || sim(p.rest, e) >= 0.55), top = parts[0], noConf = alts.every(a => !a.c);
+    if (!(parts.some(near) || top.c >= 0.6 || noConf)) return null;
+    const keep = parts.filter(p => near(p) || p.c >= 0.5 || noConf).map(p => p.rest);
+    return [...new Set(keep.length ? keep : [top.rest])].slice(0, 12);
+  }
+  async function calibrate(opt) {
+    opt = opt || {};
     if (!SR) { sink({ out: "متصفحك لا يدعم الأوامر الصوتية. استعمل Chrome أو Edge.", err: true }); return; }
     if (calibrating) return; calibrating = true;
     const was = micOn; stopRec(); micOn = false; paintMic(); pending = null;
     const resume = () => { calibrating = false; if (was) { micOn = true; startRec(); paintMic(); } };
-    const nm = wakeNames().first, takes = [];
-    for (let i = 1; i <= 3; i++) {
-      sink({ out: "المرة " + i + " من 3: قل «hi " + nm + "» بصوتك الآن…", tx: "<i>أسمعك…</i>" });
-      const alts = await oneShot();
-      if (!alts) { sink({ out: "لم أسمع شيئاً. اضغط «اضبط كلمة النداء» وأعد المحاولة بصوت أوضح.", err: true }); resume(); return; }
-      takes.push(alts); await new Promise(r => setTimeout(r, 450));
+    const nm = shopName() || wakeNames().first, fr = lang === "fr-FR";
+    let variants = null;
+    for (let i = 1; i <= 3 && !variants; i++) {                          /* مرة واحدة، وتُعاد فقط إن كان الصوت غير واضح */
+      const ask = i === 1 ? (fr ? "Dites « hi " + nm + " » une seule fois." : "قل «hi " + nm + "» مرة واحدة الآن…") : (fr ? "Je ne vous ai pas bien entendu. Répétez « hi " + nm + " »." : "لم أسمعك بوضوح. أعد قول «hi " + nm + "» بصوت أوضح…");
+      sink({ out: ask, tx: "<i>أسمعك…</i>" }); if (i > 1) speakForce(ask, fr);
+      const alts = await oneShot(); await new Promise(r => setTimeout(r, 300));
+      if (alts) variants = judgeTake(alts);
     }
-    const parts = new Map();
-    takes.forEach(alts => alts.forEach((a, k) => { const n = norm(a); if (!n || n.split(" ").length > 4) return; const m = GREET.exec(n), rest = (m ? n.slice(m[0].length) : n).trim(); if (rest.length >= 3) parts.set(rest, (parts.get(rest) || 0) + (k === 0 ? 2 : 1)); }));
-    const variants = [...parts.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]).slice(0, 12);
-    if (!variants.length) { sink({ out: "لم أتمكن من التقاط الكلمة. أعد المحاولة في مكان أهدأ وانطقها بوضوح.", err: true }); resume(); return; }
-    WAKEV = { variants, lang, at: Date.now() }; LS("alyssum_voice_wake", JSON.stringify(WAKEV)); WAKE_RX = null;
-    sink({ out: "تم الضبط. سأستجيب لـ: " + variants.map(v => "«hi " + v + "»").join("، ") + ".\nجرّب الآن: قل «hi " + nm + "» ثم أمرك." });
-    speak(lang === "fr-FR" ? "C'est réglé" : "تم الضبط", lang === "fr-FR"); resume(); paintMic();
+    if (!variants) { calibrating = false; sink({ out: "لم يتضح الصوت. جرّب في مكان أهدأ وقرّب الميكروفون.", err: true, buttons: [["أعد المحاولة", () => calibrate(opt), "ok"], ["تخطّي", skipEnroll, "no"]] }); if (!opt.auto) resume(); return; }
+    WAKEV = { variants, lang, at: Date.now() }; LS("alyssum_voice_wake", JSON.stringify(WAKEV)); LS("alyssum_voice_enrolled", "1"); WAKE_RX = null;
+    if (opt.auto) { calibrating = false; micStart(false); LS("alyssum_voice_greeted", "1"); const hello = (fr ? "Bonjour " : "مرحباً ") + shopName(); sink({ out: "تعرّفتُ على صوتك. " + hello + (fr ? ", je vous écoute." : "، أنا أسمعك.") + "\n" + (fr ? "Parlez directement : « ouvre les commandes »." : "تكلّم مباشرة بلا كلمة نداء: «افتح الطلبات»، «قداش من كوموند اليوم؟».") }); speak(hello, fr); if (hud) hud.classList.add("help"); return; }
+    sink({ out: "تم التعرّف على صوتك: " + variants.map(v => "«hi " + v + "»").join("، ") + "." }); speak(fr ? "C'est réglé" : "تم", fr); resume(); paintMic();
   }
+  function toggleWakeReq() { LS("alyssum_voice_wake_req", wakeRequired() ? "0" : "1"); paintMic(); sink({ out: wakeRequired() ? "صار الاستماع يتطلب كلمة النداء «hi " + shopName() + "»." : "أستمع مباشرة بلا كلمة نداء." }); }
   function resetWake() { WAKEV = null; WAKE_RX = null; LS("alyssum_voice_wake", ""); paintMic(); sink({ out: "أُعيد ضبط كلمة النداء إلى اسم المتجر." }); }
 
   function handle(alts, opt) {
+    opt = opt || {};
     if (working) return;                              /* اليد تعمل: لا أقاطعها */
-    opt = opt || {}; const norms = alts.map(norm);
+    if (!opt.typed && Date.now() < speakingUntil) return;   /* المساعد يتكلم الآن: لا نلتقط صوته */ const norms = alts.map(norm);
     /* ردّ على سؤال قائم (إكمال/اختيار/تأكيد): لا يحتاج كلمة النداء */
     if (pending) {
       if (!opt.typed) mirrorUser(alts[0]);
@@ -949,18 +989,20 @@ const AdminVoice = (() => {
       }
     }
     let list = alts;
-    if (micOn && !opt.typed) {                       /* الاستماع المستمر: كلمة النداء شرط */
+    let direct = false;
+    if (micOn && !opt.typed) {
       const wakeAll = norms.map(x => wakeRx().exec(x)), i = wakeAll.findIndex(Boolean);
-      if (i >= 0) {
+      if (i >= 0) {                                   /* ذُكرت كلمة النداء (اختيارية بعد التعرّف الأول) */
         list = norms.map((x, k) => (wakeAll[k] ? x.slice(wakeAll[k][0].length) : x));
         if (!list[i]) { armedUntil = Date.now() + 10000; sink({ tx: "أسمعك…", out: lang === "fr-FR" ? "Je vous écoute." : "تفضّل، قل الأمر." }); speak(lang === "fr-FR" ? "Je vous écoute" : "تفضّل", lang === "fr-FR"); return; }
-        list = list.map(x => x || list[i]);
-      } else if (Date.now() < armedUntil) { /* ما زال مسلَّحاً بعد النداء */ }
-      else return;
-      armedUntil = 0;
+        list = list.map(x => x || list[i]); armedUntil = 0;
+      } else if (Date.now() < armedUntil) { armedUntil = 0; }
+      else if (wakeRequired()) return;               /* وضع كلمة النداء الإجبارية */
+      else direct = true;                            /* كلام مباشر: ننفّذ المفهوم فقط ونتجاهل الباقي بصمت */
     }
     const d = dataNow(); let best = null;
     for (const a of list) { const r = parse(a, d); if (r.kind !== "unknown") { best = r; break; } if (!best) best = r; }
+    if (direct && (best.kind === "unknown" || (best.kind === "ask" && !best.explicit) || best.kind === "stop")) return;   /* حديث عادي لا أمر */
     if (!opt.typed) mirrorUser(list[0]);
     run(best, list[0]);
   }
@@ -1026,7 +1068,7 @@ const AdminVoice = (() => {
     document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
+  const api = { quiet: () => Date.now() >= speakingUntil, toggleWakeReq, enroll, exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();
