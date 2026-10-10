@@ -122,6 +122,32 @@ U("اريني حفظ", r => r.kind === "ui" && r.act.mode === "point" && /وله
 U("اضغط حفظ", r => r.kind === "choose" && r.options.length === 2, "النقر على عنصرين متشابهين ← يسأل أيهما");
 U("ou est le bouton export", r => r.kind === "ui" && r.act.mode === "point" && /CSV/.test(r.act.label), "فرنسي ← عنصر عربي عبر المرادفات");
 U("اضغط عنصر غير موجود ابدا", r => r.kind !== "ui");
+// ═══ محادثات متعددة الأدوار: الضمائر الغائبة والمتابعات تُربط بالسؤال السابق ═══
+const todayI = new Date().toISOString(), yestI = new Date(Date.now() - 86400000).toISOString();
+const cOrders = [
+  { id: "1", name: "أحمد", phone: "0550111111", wilaya: "الجزائر", total: 3000, status: "nouvelle", date: todayI, items: "حنة الشفاء ×2 = 3000 DA" },
+  { id: "2", name: "سارة", phone: "0661222222", wilaya: "وهران", total: 4500, status: "livree", date: todayI, items: "عسل السدر الطبيعي-250 غ ×1 = 4500 DA" },
+  { id: "3", name: "كريم", phone: "0770333333", wilaya: "الجزائر", total: 2000, status: "annulee", date: todayI, items: "زيت اللحية أليسوم ×1 = 2000 DA" },
+  { id: "4", name: "ياسين", phone: "0555444444", wilaya: "الجزائر", total: 6000, status: "confirmee", date: yestI, items: "حنة الشفاء ×4 = 6000 DA" },
+  { id: "5", name: "نور", phone: "0550555555", wilaya: "وهران", total: 1000, status: "confirmee", date: yestI, items: "حنة الشفاء ×1 = 1500 DA" },
+];
+function chat(turns, label) {
+  let mem = {}; const base = Object.assign({}, data, { orders: cOrders, ctx: { slug: "" } });
+  turns.forEach(([text, check], i) => {
+    n++; const r = V.parse(text, Object.assign({}, base, { mem })); let ok = false, why = "";
+    try { ok = !!check(r); } catch (e) { why = e.message; }
+    if (!ok) { fail++; console.log("✗ محادثة", label, "#" + (i + 1), JSON.stringify(text), "→", JSON.stringify({ kind: r.kind, say: r.say, act: r.act && { type: r.act.type, slug: r.act.slug, to: r.act.to }, opts: (r.options || []).map(o => o.label) }), why); }
+    mem = V.memUpdate(mem, r);
+  });
+}
+chat([["كم عدد الطلبات اليوم", r => r.kind === "answer" && /: 3\./.test(r.say)], ["وأمس؟", r => r.kind === "answer" && /أمس: 2\./.test(r.say)], ["والمؤكدة؟", r => r.kind === "answer" && /المؤكَّدة.*: 2\./.test(r.say)], ["قارنها باليوم", r => r.kind === "answer" && /مقابل/.test(r.say)], ["ماهي", r => r.kind === "choose" && r.options.length >= 4]], "طلبات");
+chat([["كم المبيعات اليوم", r => r.kind === "answer" && /7 500/.test(r.say)], ["وأمس", r => r.kind === "answer" && /أمس: 7 000/.test(r.say)], ["والمبيعات الشهر", r => r.kind === "answer" && /آخر 30/.test(r.say)]], "مبيعات");
+chat([["كم سعر حنة", r => r.kind === "answer" && /1 500/.test(r.say) && r.mem.slug === "prod-a"], ["ومخزونها؟", r => r.kind === "answer" && /مخزون/.test(r.say)], ["نقص سعرها 10 بالمية", r => r.kind === "priceChange" && r.act.slug === "prod-a" && r.act.to === 1350], ["ثم أخفه", r => r.kind === "visibility" && r.act.slug === "prod-a" && r.act.on === false], ["وسعره الآن؟", r => r.kind === "answer" && /1 500/.test(r.say)]], "منتج");
+chat([["آخر طلب", r => r.kind === "answer" && r.mem && r.mem.order && /أحمد/.test(r.say)], ["ما حالته؟", r => r.kind === "answer" && /في انتظار التأكيد/.test(r.say)], ["وهاتفه؟", r => r.kind === "answer" && /0550111111/.test(r.say)], ["وولايته", r => r.kind === "answer" && /الجزائر/.test(r.say)], ["ومبلغه؟", r => r.kind === "answer" && /3 000/.test(r.say)], ["ما هي منتجاته", r => r.kind === "answer" && /حنة/.test(r.say)], ["من هو زبونه", r => r.kind === "answer" && /أحمد/.test(r.say)]], "طلب");
+chat([["شحال سعر عسل السدر", r => r.kind === "answer" && /4 000/.test(r.say)], ["شحال بقى منو", r => r.kind === "answer" && /مخزون/.test(r.say) && /3/.test(r.say)], ["السعر ديالو", r => r.kind === "answer" && /4 000/.test(r.say)]], "دارجة");
+chat([["كم سعر حنة", r => r.kind === "answer"], ["son prix ?", r => r.kind === "answer" && /1 500|1500/.test(r.say)]], "فرنسي");
+chat([["ما أكثر منتج مبيعاً", r => r.kind === "answer" && /حنة الشفاء \(7\)/.test(r.say)], ["ما أكثر ولاية طلباً", r => r.kind === "answer" && /الجزائر \(3\)/.test(r.say)], ["ما متوسط قيمة الطلب", r => r.kind === "answer" && /متوسط/.test(r.say)], ["كم عدد الزبائن", r => r.kind === "answer" && /5/.test(r.say)], ["ما نسبة الإلغاء", r => r.kind === "answer" && /%/.test(r.say)], ["عدد الطلبات", r => r.kind === "answer" && /5/.test(r.say)]], "تحليل");
+chat([["ماهي المبيعات", r => r.kind === "answer"], ["وأمس", r => r.kind === "answer" && /أمس/.test(r.say)]], "مبيعات2");
 // أمثلة القاموس (expect: kind + حقول اختيارية)
 lex.examples.forEach(ex => {
   n++; const r = V.parse(ex.u, data), e = ex.expect; let ok = r.kind === e.kind;

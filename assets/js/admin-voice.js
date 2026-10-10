@@ -16,10 +16,18 @@ const AdminVoice = (() => {
 
   /* ── مفردات (فصحى + دارجة جزائرية + فرنسية) ── */
   /* مفردات الأساس (احتياط)؛ قاموس assets/data/voice-lexicon.json يضيف عليها عبر useLexicon() */
-  const BASE = {"V_OPEN": ["افتح", "فتح", "افتحلي", "حل", "حلي", "حللي", "اذهب", "اذهبي", "روح", "رح", "خذني", "وريني", "ورني", "ورلي", "وريلي", "وري", "اعرض", "اعرضلي", "عرض", "شوف", "شوفلي", "انتقل", "جيبلي", "جيب", "ouvre", "ouvrir", "ouvres", "va", "aller", "montre", "montrer", "affiche", "afficher", "voir", "open", "show", "go"], "V_ADD": ["add", "ajoute", "ajouter", "create", "cree", "creer", "importer", "insere", "inserer", "new", "nouveau", "nouvelle", "rajoute", "اصنع", "اضافه", "اضف", "اعمل", "انشئ", "حط", "حطلو", "حطلي", "دير", "ديرلي", "زيد", "زيدلي", "سوي", "ضيف", "ضيفلو", "ضيفلي", "نزيد", "نزيدلو", "نضيف"], "V_EDIT": ["عدل", "عدلي", "تعديل", "غير", "modifie", "modifier", "edit", "editer"], "V_CHANGE": ["غير", "بدل", "بدلي", "تبديل", "حول", "change", "changer", "passe", "passer", "bascule", "basculer", "mets", "met", "switch", "toggle"], "V_SEARCH": ["ابحث", "ابحثلي", "دور", "دورلي", "لوج", "لوجلي", "فتش", "cherche", "chercher", "recherche", "rechercher", "trouve", "trouver", "find", "search"], "V_UPDATE": ["حدث", "حدثي", "update", "actualise", "actualiser", "rafraichis", "mise a jour", "رفرش", "refresh"], "W_PRODUCTS": ["منتجات", "produits", "products"], "W_PRODUCT": ["article", "product", "produit", "برودوي", "برودي", "بروديه", "بروديي", "سلعا", "سلعه", "منتج", "منتجا", "منتجي", "منتوج", "منتوجا", "منتوجي"], "W_ORDER": ["طلب", "طلبات", "طلبيه", "طلبيات", "كوموند", "كوموندات", "كوموندا", "commande", "commandes", "order", "orders"], "W_CLIENT": ["زبون", "عميل", "client", "customer"], "W_STOCK": ["مخزون", "ستوك", "stock", "كميه", "كميات"], "COUNT_Q": ["كم", "كام", "قداش", "قديش", "شحال", "combien", "how many", "how much"], "WHAT_Q": ["ما", "ماهي", "ماهو", "واش", "شنو", "what", "quel", "quelle", "quels", "quelles", "c est quoi"], "W_REV": ["مبيعات", "مبيعاتي", "بيع", "بعت", "بعنا", "مداخيل", "مدخول", "دخل", "ايرادات", "ايراد", "ربح", "ارباح", "chiffre d affaires", "ventes", "vente", "revenu", "revenus", "sales", "revenue"], "W_LAST": ["اخر", "اخير", "اخرها", "dernier", "derniere", "last", "latest"], "P_TODAY": ["اليوم", "ليوم", "هاد اليوم", "aujourd hui", "today"], "P_YEST": ["امس", "البارح", "البارحه", "hier", "yesterday"], "P_WEEK": ["الاسبوع", "اسبوع", "semaine", "week", "7 ايام", "سبعه ايام"], "P_MONTH": ["الشهر", "شهر", "mois", "month", "30 يوم"], "S_OUT": ["نفد", "نفدت", "نفذ", "نفذت", "خلص", "خلصت", "سالا", "سالات", "ساليا", "سال", "منتهي", "انتهت", "انتهى", "rupture", "epuise", "epuisee", "epuises", "out of stock", "نقص"], "S_LOW": ["ناقص", "ناقصه", "منخفض", "منخفضه", "قليل", "قليله", "bas", "basse", "low", "يخلصو", "يخلص", "راهم يخلصو", "يوفي", "يوفى", "ينفد", "ينفذ", "bientot epuise"], "W_THEME": ["المظهر", "مظهر", "الوضع", "وضع", "ثيم", "theme", "mode", "dark", "sombre", "clair", "light", "الضو"], "T_DARK": ["داكن", "ليلي", "الليل", "ليل", "sombre", "dark", "noir", "اسود"], "T_LIGHT": ["فاتح", "نهاري", "النهار", "نهار", "clair", "light", "blanc", "ابيض"], "W_PANEL": ["اللوحه", "لوحه", "النسخه", "نسخه", "التحديث", "تحديث", "الصفحه", "page", "tableau", "panneau", "version", "panel"], "W_SITE": ["الموقع", "موقعي", "المتجر", "متجري", "site", "boutique", "magasin", "storefront"], "Q_START": ["كيف", "كيفاش", "كيفاه", "وين", "فين", "ماذا", "شنو", "واش", "لماذا", "علاش", "ليش", "اشرح", "اشرحلي", "علمني", "فسر", "comment", "pourquoi", "explique", "expliquer", "how", "what", "why", "c est quoi", "qu est ce que", "ou est", "ou se trouve"], "HELP": ["اوامر", "الاوامر", "ماذا اقول", "ما اقول", "واش نقول", "شنو نقول", "شنو نقدر", "واش نقدر", "مساعده", "aide", "aidez moi", "help", "commandes vocales", "que puis je dire", "que dire"], "STOP": ["الغاء", "الغي", "الغيه", "توقف", "وقف", "بطل", "خلاص", "annule", "annuler", "stop", "arrete", "tais toi", "cancel", "laisse tomber"], "YES": ["نعم", "ايوه", "ايه", "اي", "واه", "اكيد", "تمام", "موافق", "نفذ", "نفذها", "oui", "ok", "okay", "d accord", "yes", "confirme", "vas y", "ouais", "wah"], "NO": ["لا", "لأ", "non", "no", "ماشي", "annule", "الغاء"], "V_INC": ["زيد", "زيدلي", "زيدلو", "زيدها", "ضيف", "ضيفلي", "ضيفلو", "اضف", "ارفع", "ارفعلي", "كبر", "نزيد", "نضيف", "augmente", "augmenter", "ajoute", "ajouter", "rajoute", "rajouter", "monte", "majore", "increase", "add", "plus"], "V_DEC": ["نقص", "نقصلي", "نقصه", "نقصها", "نقصلو", "انقص", "نحي شويه", "حيد شويه", "هبط", "هبطلي", "قلل", "قللي", "baisse", "baisser", "diminue", "diminuer", "reduis", "reduire", "enleve un peu", "decrease", "lower", "moins"], "V_SET": ["خلي", "خليه", "خليها", "خلي", "ديرها", "ديرله", "ضع", "اجعل", "اجعله", "حط", "حطه", "حطها", "بدل", "بدلها", "بدله", "غير", "غيرها", "غيره", "عدل", "صحح", "fixe", "fixer", "definis", "definir", "mets", "mettre", "modifie", "modifier", "change", "changer", "passe", "set"], "V_HIDE": ["خبي", "خبيه", "خبيها", "اخف", "اخفي", "اخفه", "cache", "cacher", "masque", "masquer", "desactive", "desactiver", "hide", "عطل", "طفي", "طفيه"], "V_SHOWON": ["رجع", "رجعه", "رجعلي", "ارجع", "اظهر", "اظهره", "فعل", "فعله", "شغل", "شغله", "reactive", "reactiver", "active", "activer", "remets", "remettre", "republie", "republier"], "V_DEL": ["نحي", "نحيه", "نحيها", "نحيهالي", "نحيلي", "حيد", "حيده", "حيدها", "امسح", "امسحه", "امسحها", "احذف", "احذفه", "احذفها", "فسخ", "فسخه", "ارمي", "supprime", "supprimer", "efface", "effacer", "enleve", "enlever", "retire", "retirer", "delete", "remove"], "W_DISC": ["تخفيض", "تخفيضات", "خصم", "remise", "reduction", "promo", "promotion", "soldes", "solde", "discount", "ريدوكسيون", "بروموسيون"], "W_PRICE": ["سعر", "اسعار", "ثمن", "prix", "price", "tarif"], "W_PIECE": ["حبه", "حبات", "وحده", "وحدات", "قطعه", "قطع", "piece", "pieces", "pcs", "unite", "unites", "units", "unit"], "U_PCT": ["بالميه", "بالمايه", "بالمائه", "بالمئه", "في الميه", "في المايه", "فالميه", "pourcent", "pour cent", "pourcentage", "percent", "pct"], "U_CUR": ["دينار", "دنانير", "دج", "دينارا", "da", "dzd", "dinar", "dinars"], "W_THIS": ["هذا", "هذه", "هذي", "هاذا", "هاذي", "هاذ", "هذاك", "هذوك", "هادا", "هادي", "هاد", "ce", "cet", "cette", "celui ci", "celle ci", "ceci", "cela", "this", "نفسه", "نفس المنتوج"], "W_VAGUE": ["بزاف", "برشه", "كثير", "كثيره", "شويه", "شوي", "قليل", "ضاعف", "نصف", "نصفه", "double"], "W_ALLP": ["كامل", "كاملين", "قاع", "كلشي", "كل", "الكل", "جميع", "كل منتج", "tous", "toutes", "tout", "all"], "W_NEWW": ["جديد", "جديده", "اخر", "اخرى", "ثاني", "ثانيه", "nouveau", "nouvelle", "autre", "another", "new"], "W_SHOPW": ["بوتيك", "البوتيك", "متجر", "المتجر", "boutique", "magasin", "shop", "store", "الواجهه", "الموقع"], "REMAIN": ["بقالنا", "بقى", "بقي", "باقي", "باقيه", "بقات", "reste", "restant", "restants", "rest"]};
-  let COUNT_Q, HELP, NO, P_MONTH, P_TODAY, P_WEEK, P_YEST, Q_START, REMAIN, STOP, S_LOW, S_OUT, T_DARK, T_LIGHT, U_CUR, U_PCT, V_ADD, V_CHANGE, V_DEC, V_DEL, V_EDIT, V_HIDE, V_INC, V_OPEN, V_SEARCH, V_SET, V_SHOWON, V_UPDATE, WHAT_Q, W_ALLP, W_CLIENT, W_DISC, W_LAST, W_NEWW, W_ORDER, W_PANEL, W_PIECE, W_PRICE, W_PRODUCT, W_PRODUCTS, W_REV, W_SHOPW, W_SITE, W_STOCK, W_THEME, W_THIS, W_VAGUE, YES;
+  const BASE = {"V_OPEN": ["افتح", "فتح", "افتحلي", "حل", "حلي", "حللي", "اذهب", "اذهبي", "روح", "رح", "خذني", "وريني", "ورني", "ورلي", "وريلي", "وري", "اعرض", "اعرضلي", "عرض", "شوف", "شوفلي", "انتقل", "جيبلي", "جيب", "ouvre", "ouvrir", "ouvres", "va", "aller", "montre", "montrer", "affiche", "afficher", "voir", "open", "show", "go"], "V_ADD": ["add", "ajoute", "ajouter", "create", "cree", "creer", "importer", "insere", "inserer", "new", "nouveau", "nouvelle", "rajoute", "اصنع", "اضافه", "اضف", "اعمل", "انشئ", "حط", "حطلو", "حطلي", "دير", "ديرلي", "زيد", "زيدلي", "سوي", "ضيف", "ضيفلو", "ضيفلي", "نزيد", "نزيدلو", "نضيف"], "V_EDIT": ["عدل", "عدلي", "تعديل", "غير", "modifie", "modifier", "edit", "editer"], "V_CHANGE": ["غير", "بدل", "بدلي", "تبديل", "حول", "change", "changer", "passe", "passer", "bascule", "basculer", "mets", "met", "switch", "toggle"], "V_SEARCH": ["ابحث", "ابحثلي", "دور", "دورلي", "لوج", "لوجلي", "فتش", "cherche", "chercher", "recherche", "rechercher", "trouve", "trouver", "find", "search"], "V_UPDATE": ["حدث", "حدثي", "update", "actualise", "actualiser", "rafraichis", "mise a jour", "رفرش", "refresh"], "W_PRODUCTS": ["منتجات", "produits", "products"], "W_PRODUCT": ["article", "product", "produit", "برودوي", "برودي", "بروديه", "بروديي", "سلعا", "سلعه", "منتج", "منتجا", "منتجي", "منتوج", "منتوجا", "منتوجي"], "W_ORDER": ["طلب", "طلبات", "طلبيه", "طلبيات", "كوموند", "كوموندات", "كوموندا", "commande", "commandes", "order", "orders"], "W_CLIENT": ["client", "clients", "customer", "customers", "زبائن", "زبون", "عملاء", "عميل"], "W_STOCK": ["مخزون", "ستوك", "stock", "كميه", "كميات"], "COUNT_Q": ["كم", "كام", "قداش", "قديش", "شحال", "combien", "how many", "how much"], "WHAT_Q": ["ما", "ماهي", "ماهو", "واش", "شنو", "what", "quel", "quelle", "quels", "quelles", "c est quoi"], "W_REV": ["مبيعات", "مبيعاتي", "بيع", "بعت", "بعنا", "مداخيل", "مدخول", "دخل", "ايرادات", "ايراد", "ربح", "ارباح", "chiffre d affaires", "ventes", "vente", "revenu", "revenus", "sales", "revenue"], "W_LAST": ["اخر", "اخير", "اخرها", "dernier", "derniere", "last", "latest"], "P_TODAY": ["اليوم", "ليوم", "هاد اليوم", "aujourd hui", "today"], "P_YEST": ["امس", "البارح", "البارحه", "hier", "yesterday"], "P_WEEK": ["الاسبوع", "اسبوع", "semaine", "week", "7 ايام", "سبعه ايام"], "P_MONTH": ["الشهر", "شهر", "mois", "month", "30 يوم"], "S_OUT": ["نفد", "نفدت", "نفذ", "نفذت", "خلص", "خلصت", "سالا", "سالات", "ساليا", "سال", "منتهي", "انتهت", "انتهى", "rupture", "epuise", "epuisee", "epuises", "out of stock", "نقص"], "S_LOW": ["ناقص", "ناقصه", "منخفض", "منخفضه", "قليل", "قليله", "bas", "basse", "low", "يخلصو", "يخلص", "راهم يخلصو", "يوفي", "يوفى", "ينفد", "ينفذ", "bientot epuise"], "W_THEME": ["المظهر", "مظهر", "الوضع", "وضع", "ثيم", "theme", "mode", "dark", "sombre", "clair", "light", "الضو"], "T_DARK": ["داكن", "ليلي", "الليل", "ليل", "sombre", "dark", "noir", "اسود"], "T_LIGHT": ["فاتح", "نهاري", "النهار", "نهار", "clair", "light", "blanc", "ابيض"], "W_PANEL": ["اللوحه", "لوحه", "النسخه", "نسخه", "التحديث", "تحديث", "الصفحه", "page", "tableau", "panneau", "version", "panel"], "W_SITE": ["الموقع", "موقعي", "المتجر", "متجري", "site", "boutique", "magasin", "storefront"], "Q_START": ["كيف", "كيفاش", "كيفاه", "وين", "فين", "ماذا", "شنو", "واش", "لماذا", "علاش", "ليش", "اشرح", "اشرحلي", "علمني", "فسر", "comment", "pourquoi", "explique", "expliquer", "how", "what", "why", "c est quoi", "qu est ce que", "ou est", "ou se trouve"], "HELP": ["اوامر", "الاوامر", "ماذا اقول", "ما اقول", "واش نقول", "شنو نقول", "شنو نقدر", "واش نقدر", "مساعده", "aide", "aidez moi", "help", "commandes vocales", "que puis je dire", "que dire"], "STOP": ["الغاء", "الغي", "الغيه", "توقف", "وقف", "بطل", "خلاص", "annule", "annuler", "stop", "arrete", "tais toi", "cancel", "laisse tomber"], "YES": ["نعم", "ايوه", "ايه", "اي", "واه", "اكيد", "تمام", "موافق", "نفذ", "نفذها", "oui", "ok", "okay", "d accord", "yes", "confirme", "vas y", "ouais", "wah"], "NO": ["لا", "لأ", "non", "no", "ماشي", "annule", "الغاء"], "V_INC": ["زيد", "زيدلي", "زيدلو", "زيدها", "ضيف", "ضيفلي", "ضيفلو", "اضف", "ارفع", "ارفعلي", "كبر", "نزيد", "نضيف", "augmente", "augmenter", "ajoute", "ajouter", "rajoute", "rajouter", "monte", "majore", "increase", "add", "plus"], "V_DEC": ["نقص", "نقصلي", "نقصه", "نقصها", "نقصلو", "انقص", "نحي شويه", "حيد شويه", "هبط", "هبطلي", "قلل", "قللي", "baisse", "baisser", "diminue", "diminuer", "reduis", "reduire", "enleve un peu", "decrease", "lower", "moins"], "V_SET": ["خلي", "خليه", "خليها", "خلي", "ديرها", "ديرله", "ضع", "اجعل", "اجعله", "حط", "حطه", "حطها", "بدل", "بدلها", "بدله", "غير", "غيرها", "غيره", "عدل", "صحح", "fixe", "fixer", "definis", "definir", "mets", "mettre", "modifie", "modifier", "change", "changer", "passe", "set"], "V_HIDE": ["خبي", "خبيه", "خبيها", "اخف", "اخفي", "اخفه", "cache", "cacher", "masque", "masquer", "desactive", "desactiver", "hide", "عطل", "طفي", "طفيه"], "V_SHOWON": ["رجع", "رجعه", "رجعلي", "ارجع", "اظهر", "اظهره", "فعل", "فعله", "شغل", "شغله", "reactive", "reactiver", "active", "activer", "remets", "remettre", "republie", "republier"], "V_DEL": ["نحي", "نحيه", "نحيها", "نحيهالي", "نحيلي", "حيد", "حيده", "حيدها", "امسح", "امسحه", "امسحها", "احذف", "احذفه", "احذفها", "فسخ", "فسخه", "ارمي", "supprime", "supprimer", "efface", "effacer", "enleve", "enlever", "retire", "retirer", "delete", "remove"], "W_DISC": ["تخفيض", "تخفيضات", "خصم", "remise", "reduction", "promo", "promotion", "soldes", "solde", "discount", "ريدوكسيون", "بروموسيون"], "W_PRICE": ["سعر", "اسعار", "ثمن", "prix", "price", "tarif"], "W_PIECE": ["حبه", "حبات", "وحده", "وحدات", "قطعه", "قطع", "piece", "pieces", "pcs", "unite", "unites", "units", "unit"], "U_PCT": ["بالميه", "بالمايه", "بالمائه", "بالمئه", "في الميه", "في المايه", "فالميه", "pourcent", "pour cent", "pourcentage", "percent", "pct"], "U_CUR": ["دينار", "دنانير", "دج", "دينارا", "da", "dzd", "dinar", "dinars"], "W_THIS": ["هذا", "هذه", "هذي", "هاذا", "هاذي", "هاذ", "هذاك", "هذوك", "هادا", "هادي", "هاد", "ce", "cet", "cette", "celui ci", "celle ci", "ceci", "cela", "this", "نفسه", "نفس المنتوج"], "W_VAGUE": ["بزاف", "برشه", "كثير", "كثيره", "شويه", "شوي", "قليل", "ضاعف", "نصف", "نصفه", "double"], "W_ALLP": ["كامل", "كاملين", "قاع", "كلشي", "كل", "الكل", "جميع", "كل منتج", "tous", "toutes", "tout", "all"], "W_NEWW": ["جديد", "جديده", "اخر", "اخرى", "ثاني", "ثانيه", "nouveau", "nouvelle", "autre", "another", "new"], "W_SHOPW": ["بوتيك", "البوتيك", "متجر", "المتجر", "boutique", "magasin", "shop", "store", "الواجهه", "الموقع"], "REMAIN": ["بقالنا", "بقى", "بقي", "باقي", "باقيه", "بقات", "reste", "restant", "restants", "rest"], "COUNT_N": ["عدد", "مجموع", "اجمالي", "كميه", "nombre", "nb", "total"], "W_AVG": ["متوسط", "معدل", "moyenne", "average", "avg"], "W_TOPQ": ["اكثر", "افضل", "اعلي", "اكبر", "الاول", "meilleur", "meilleurs", "top", "plus vendu"], "W_WILAYA": ["ولايه", "ولايات", "wilaya", "wilayas"], "W_RATE": ["نسبه", "معدل", "taux", "percentage"], "W_CANCEL": ["الغاء", "ملغاه", "ملغي", "ملغيه", "فشل", "annulation", "annule", "annulees", "echec"], "COMPARE": ["قارن", "مقارنه", "قارنها", "قارنه", "مقابل", "compare", "comparer", "versus"], "A_STATUS": ["etat", "statut", "حالت", "حاله", "وضع", "وضعيه"], "A_CUST": ["زبون", "عميل", "اسم", "client", "nom", "شكون"], "A_PHONE": ["portable", "tel", "telephone", "رقم", "رقمه", "رقمها", "هاتف"], "A_ADDR": ["adresse", "commune", "wilaya", "بلديت", "عنوان", "مدينت", "مكان", "ولايت", "ولايه"], "A_TOTAL": ["مبلغ", "قيمه", "montant", "total", "ثمن"], "A_ITEMS": ["منتجات", "تفاصيل", "محتوي", "produits", "articles", "شنو شري"]};
+  let A_ADDR, A_CUST, A_ITEMS, A_PHONE, A_STATUS, A_TOTAL, COMPARE, COUNT_N, COUNT_Q, HELP, NO, P_MONTH, P_TODAY, P_WEEK, P_YEST, Q_START, REMAIN, STOP, S_LOW, S_OUT, T_DARK, T_LIGHT, U_CUR, U_PCT, V_ADD, V_CHANGE, V_DEC, V_DEL, V_EDIT, V_HIDE, V_INC, V_OPEN, V_SEARCH, V_SET, V_SHOWON, V_UPDATE, WHAT_Q, W_ALLP, W_AVG, W_CANCEL, W_CLIENT, W_DISC, W_LAST, W_NEWW, W_ORDER, W_PANEL, W_PIECE, W_PRICE, W_PRODUCT, W_PRODUCTS, W_RATE, W_REV, W_SHOPW, W_SITE, W_STOCK, W_THEME, W_THIS, W_TOPQ, W_VAGUE, W_WILAYA, YES;
   function buildRx(extra) {
     const W = k => (BASE[k] || []).concat((extra && extra[k]) || []);
+    A_ADDR = re(W("A_ADDR"));
+    A_CUST = re(W("A_CUST"));
+    A_ITEMS = re(W("A_ITEMS"));
+    A_PHONE = re(W("A_PHONE"));
+    A_STATUS = re(W("A_STATUS"));
+    A_TOTAL = re(W("A_TOTAL"));
+    COMPARE = re(W("COMPARE"));
+    COUNT_N = re(W("COUNT_N"));
     COUNT_Q = re(W("COUNT_Q"));
     HELP = re(W("HELP"));
     NO = re(W("NO"));
@@ -50,6 +58,8 @@ const AdminVoice = (() => {
     V_UPDATE = re(W("V_UPDATE"));
     WHAT_Q = re(W("WHAT_Q"));
     W_ALLP = re(W("W_ALLP"));
+    W_AVG = re(W("W_AVG"));
+    W_CANCEL = re(W("W_CANCEL"));
     W_CLIENT = re(W("W_CLIENT"));
     W_DISC = re(W("W_DISC"));
     W_LAST = re(W("W_LAST"));
@@ -60,13 +70,16 @@ const AdminVoice = (() => {
     W_PRICE = re(W("W_PRICE"));
     W_PRODUCT = re(W("W_PRODUCT"));
     W_PRODUCTS = re(W("W_PRODUCTS"));
+    W_RATE = re(W("W_RATE"));
     W_REV = re(W("W_REV"));
     W_SHOPW = re(W("W_SHOPW"));
     W_SITE = re(W("W_SITE"));
     W_STOCK = re(W("W_STOCK"));
     W_THEME = re(W("W_THEME"));
     W_THIS = re(W("W_THIS"));
+    W_TOPQ = re(W("W_TOPQ"));
     W_VAGUE = re(W("W_VAGUE"));
+    W_WILAYA = re(W("W_WILAYA"));
     YES = re(W("YES"));
   }
   buildRx(null);
@@ -269,7 +282,7 @@ const AdminVoice = (() => {
   const BIGQ = new Set(["بزاف", "برشه", "كثير", "كثيره"]);
   const productRef = (t, ent) => {
     const ws = t.split(" ").map((w, i) => (ent && ent.idx && ent.idx.has(i) ? "" : w)).filter(Boolean);
-    return ws.filter(w => ![V_INC, V_DEC, V_SET, V_HIDE, V_SHOWON, V_DEL, V_ADD, V_OPEN, V_EDIT, V_CHANGE, W_DISC, W_PRICE, W_PIECE, U_PCT, U_CUR, W_THIS, W_VAGUE, W_PRODUCT, W_STOCK, W_SHOPW, W_NEWW].some(r => r.test(" " + w + " "))).join(" ");
+    return ws.filter(w => ![V_INC, V_DEC, V_SET, V_HIDE, V_SHOWON, V_DEL, V_ADD, V_OPEN, V_EDIT, V_CHANGE, W_DISC, W_PRICE, W_PIECE, U_PCT, U_CUR, W_THIS, W_VAGUE, W_PRODUCT, W_STOCK, W_SHOPW, W_NEWW, COUNT_Q, WHAT_Q, COUNT_N, REMAIN, A_STATUS, A_CUST, A_PHONE, A_ADDR, A_TOTAL, A_ITEMS].some(r => r.test(" " + w + " "))).join(" ");
   };
   const pName = p => p.title.replace(/\s*[-–]\s*\d+\s*غ?$/, "");
   /* سؤال لإكمال معلومة ناقصة */
@@ -304,7 +317,7 @@ const AdminVoice = (() => {
     const pt = Object.assign({}, partial);
     if (slot === "product") {
       let p = null;
-      if (has(W_THIS, t) && data.ctx && data.ctx.slug) p = (data.products || []).find(x => x.slug === data.ctx.slug);
+      if (has(W_THIS, t) && refSlug(data)) p = (data.products || []).find(x => x.slug === refSlug(data));
       if (!p) p = matchProduct(productRef(t, numberIn(t)) || t, data.products);
       if (!p) return need("product", partial, L("لم أجد منتجاً بهذا الاسم. قل اسم المنتج مرة أخرى.", "Je n'ai pas trouvé ce produit. Redites le nom."));
       pt.slug = p.slug;
@@ -335,7 +348,7 @@ const AdminVoice = (() => {
       return { kind: "negated", say: L("حسناً، لن أنفّذ ذلك.", "D'accord, je ne le fais pas.") };
     }
     if (!anyVerb && !disc) return null;
-    const ent = numberIn(t), num = ent ? ent.value : null, pct = has(U_PCT, t) || /%/.test(raw), ctxSlug = data.ctx && data.ctx.slug;
+    const ent = numberIn(t), num = ent ? ent.value : null, pct = has(U_PCT, t) || /%/.test(raw), ctxSlug = refSlug(data);
     const vague = has(W_VAGUE, t) && num == null;
     const needsProd = () => { if (has(W_THIS, t) && ctxSlug) return ctxSlug; const p = matchProduct(productRef(t, ent), data.products); return p ? p.slug : (has(W_THIS, t) ? "" : ""); };
     const mk = (op, extra) => nextStep(Object.assign({ op, slug: needsProd(), value: num, pct, needValue: op !== "active" && op !== "delete" }, extra || {}), data, L);
@@ -378,15 +391,123 @@ const AdminVoice = (() => {
   }
   const ask = t => has(COUNT_Q, t) || has(WHAT_Q, t);
 
+
+  /* ── الضمائر الغائبة: «سعره/مخزونها/أخفِه/ديالو/son prix» تُفكَّك إلى (الكلمة + «هذا») فتُربط بآخر منتج/طلب مذكور ── */
+  const PRON_BASES = new Set(["سعر", "مخزون", "كميه", "كميت", "صور", "صوره", "صورت", "وصف", "تخفيض", "اسم", "حاله", "حالت", "زبون", "عنوان", "هاتف", "مبلغ", "تفاصيل", "منتجات", "ولايت", "بلديت", "مدينت", "رقم", "اخف", "نقص", "زيد", "غير", "بدل", "عدل", "احذف", "امسح", "اظهر", "فعل", "اكد", "الغ", "الغي", "ارسل", "افتح", "اعرض", "وريني", "رجع", "قارن", "حول", "حدث", "شوف", "خبي", "طفي", "شغل", "اعد", "ثمن", "قيمت", "قيمه"]);
+  const PRON_ALONE = new Set(["ديالو", "ديالها", "ديالهم", "تاعو", "تاعها", "تاعهم", "منو", "منها", "عليه", "عليها", "فيه", "فيها", "عنه", "عنها", "له", "لها", "لهم", "ذلك", "تلك", "ذاك", "son", "sa", "ses", "lui", "il", "elle", "celui", "celle"]);
+  const WHATW = new Set(["ما", "ماذا", "ماهو", "ماهي", "شنو", "واش", "اش"]);
+  function splitPron(t) {
+    const ws = t.split(" "), out = [];
+    ws.forEach((w, i) => {
+      if (PRON_ALONE.has(w)) { out.push("هذا"); return; }
+      if ((w === "هو" || w === "هي") && i > 0 && !WHATW.has(ws[i - 1])) { out.push("هذا"); return; }
+      for (const s of ["ها", "هم", "ه"]) if (w.length > s.length + 2 && w.endsWith(s)) { const b = w.slice(0, -s.length), b2 = b.replace(/^(?:ال|و|ف)/, ""); if (PRON_BASES.has(b) || PRON_BASES.has(b2)) { out.push(b, "هذا"); return; } }
+      out.push(w);
+    });
+    return out.join(" ");
+  }
+  /* ── تحليلات سريعة (نقية) ── */
+  const itemsOf = o => String(o.items || "").split(/\n/).map(l => { const m = /^(.+?)\s*×\s*(\d+)\s*=/.exec(l); return m ? { title: m[1].trim(), qty: Number(m[2]) } : null; }).filter(Boolean);
+  const valid = o => !["annulee", "echec"].includes(o.status);
+  function topCount(list, keyFn, n) { const c = new Map(); list.forEach(x => keyFn(x).forEach(([k, v]) => c.set(k, (c.get(k) || 0) + v))); return [...c.entries()].sort((a, b) => b[1] - a[1]).slice(0, n || 3); }
+  function numAnswer(k, per, st, orders, L) {
+    const list = orders.filter(o => inPeriod(o, per) && (!st || o.status === st));
+    if (k === "rev") { const sum = list.filter(valid).reduce((s, o) => s + (Number(o.total) || 0), 0); return { kind: "answer", topic: { k, per }, say: L("المبيعات " + PERIOD_AR[per || ""] + ": " + fmtN(sum) + " دينار.", "Ventes " + PERIOD_FR[per || ""] + " : " + fmtN(sum) + " DA.") }; }
+    const sname = st ? (STATUS.find(s => s[0] === st) || [])[1] : "";
+    return { kind: "answer", topic: { k: "ord", per, st }, say: L("عدد الطلبات" + (sname ? " " + sname : "") + " " + PERIOD_AR[per || ""] + ": " + list.length + ".", "Commandes" + (st ? " (" + st + ")" : "") + " " + PERIOD_FR[per || ""] + " : " + list.length + ".") };
+  }
+  const EXAMPLES_Q = ["كم عدد الطلبات اليوم؟", "كم المبيعات هذا الشهر؟", "ما أكثر منتج مبيعاً؟", "ما أكثر ولاية طلباً؟", "شنو نفد من المنتجات؟", "ما متوسط قيمة الطلب؟"];
+  function analyticsAnswer(t, data, L) {
+    const orders = data.orders || [], per = periodOf(t), inP = orders.filter(o => inPeriod(o, per)), PA = PERIOD_AR[per || ""], PF = PERIOD_FR[per || ""];
+    if (has(W_TOPQ, t) && (has(W_PRODUCT, t) || has(W_PRODUCTS, t))) {
+      const top = topCount(inP.filter(valid), o => itemsOf(o).map(i => [i.title, i.qty]), 3);
+      return { kind: "answer", topic: { k: "topp", per }, say: top.length ? L("الأكثر مبيعاً " + PA + ": " + top.map(x => x[0] + " (" + x[1] + ")").join("، ") + ".", "Top ventes " + PF + " : " + top.map(x => x[0] + " (" + x[1] + ")").join(", ") + ".") : L("لا توجد مبيعات " + PA + ".", "Aucune vente.") };
+    }
+    if (has(W_TOPQ, t) && has(W_WILAYA, t)) {
+      const top = topCount(inP, o => [[o.wilaya || "—", 1]], 3);
+      return { kind: "answer", topic: { k: "topw", per }, say: top.length ? L("أكثر الولايات طلباً " + PA + ": " + top.map(x => x[0] + " (" + x[1] + ")").join("، ") + ".", "Top wilayas " + PF + " : " + top.map(x => x[0] + " (" + x[1] + ")").join(", ") + ".") : L("لا توجد طلبات.", "Aucune commande.") };
+    }
+    if (has(W_AVG, t) && (has(W_ORDER, t) || has(W_REV, t) || /قيمه|valeur|montant/.test(t))) {
+      const v = inP.filter(valid), avg = v.length ? v.reduce((s, o) => s + (Number(o.total) || 0), 0) / v.length : 0;
+      return { kind: "answer", topic: { k: "avg", per }, say: L("متوسط قيمة الطلب " + PA + ": " + fmtN(avg) + " دينار (من " + v.length + " طلب).", "Panier moyen " + PF + " : " + fmtN(avg) + " DA.") };
+    }
+    if (has(W_RATE, t) && has(W_CANCEL, t)) {
+      const n = inP.length, c = inP.filter(o => !valid(o)).length;
+      return { kind: "answer", topic: { k: "rate", per }, say: L("نسبة الإلغاء والفشل " + PA + ": " + (n ? Math.round(c * 100 / n) : 0) + "% (" + c + " من " + n + ").", "Taux d'annulation " + PF + " : " + (n ? Math.round(c * 100 / n) : 0) + "%.") };
+    }
+    if (has(W_CLIENT, t) && (has(COUNT_Q, t) || has(COUNT_N, t))) {
+      const ph = new Set(inP.map(o => String(o.phone || "").replace(/\D/g, "")).filter(Boolean));
+      return { kind: "answer", topic: { k: "cust", per }, say: L("عدد الزبائن " + PA + ": " + ph.size + ".", "Clients " + PF + " : " + ph.size + ".") };
+    }
+    return null;
+  }
+  /* متابعة قصيرة تعتمد على آخر سؤال: «وأمس؟» «والمؤكدة؟» «والمبيعات؟» «قارنها بأمس» «ماهي؟» */
+  function followUp(t, data, L) {
+    const last = data.mem && data.mem.topic, verbs = [V_OPEN, V_INC, V_DEC, V_SET, V_HIDE, V_SHOWON, V_DEL, V_ADD, V_EDIT, V_CHANGE, V_SEARCH, V_UPDATE].some(r => r.test(t));
+    if (verbs) return null;
+    const rest = tokens(t).filter(w => !WHAT_Q.test(" " + w + " ") && !COUNT_Q.test(" " + w + " ") && !["عن", "عنه", "و", "هل", "ايضا", "كذلك"].includes(w));
+    if (!rest.length && (has(WHAT_Q, t) || has(COUNT_Q, t))) return { kind: "choose", single: false, say: L("ماذا تريد أن تعرف بالضبط؟ اختر أو قل سؤالك:", "Que voulez-vous savoir ?"), options: EXAMPLES_Q.slice(0, 5).map(q => ({ label: q.replace(/؟$/, ""), text: q })) };
+    if (!last || t.split(" ").length > 7) return null;
+    const per = periodOf(t), st = statusOf(t), orders = data.orders || [], noun = has(W_ORDER, t) || has(W_REV, t) || has(W_PRODUCT, t) || has(W_PRODUCTS, t);
+    if (has(COMPARE, t) && (last.k === "ord" || last.k === "rev")) {
+      const a = last.per || "today", b = (per && per !== a) ? per : (a === "today" ? "yesterday" : "today");
+      const A1 = numAnswer(last.k, a, last.st, orders, (x, f) => x), B1 = numAnswer(last.k, b, last.st, orders, (x, f) => x);
+      const num = r => Number((/(\d[\d ]*)(?:\.| دينار)/.exec(String(r.say).replace(/\s(?=\d{3})/g, "")) || [0, 0])[1].toString().replace(/\s/g, ""));
+      const x = num(A1), y = num(B1), d = y ? Math.round((x - y) * 100 / y) : null;
+      return { kind: "answer", topic: last, say: L((last.k === "rev" ? "المبيعات" : "الطلبات") + ": " + PERIOD_AR[a] + " " + fmtN(x) + " مقابل " + PERIOD_AR[b] + " " + fmtN(y) + (d === null ? "" : " (" + (d >= 0 ? "+" : "") + d + "%)") + ".", "Comparaison : " + PERIOD_FR[a] + " " + fmtN(x) + " vs " + PERIOD_FR[b] + " " + fmtN(y) + ".") };
+    }
+    if (per && !noun && !st && (last.k === "ord" || last.k === "rev")) return numAnswer(last.k, per, last.st, orders, L);
+    if (per && !noun && ["topp", "topw", "avg", "rate", "cust"].includes(last.k)) return analyticsAnswer(norm(({ topp: "اكثر منتج", topw: "اكثر ولايه", avg: "متوسط الطلب", rate: "نسبه الالغاء", cust: "كم زبون" })[last.k]) + " " + t, data, L);
+    if (st && !has(W_REV, t)) return numAnswer("ord", per || last.per || "", st[0], orders, L);
+    if (has(W_REV, t) && !has(W_ORDER, t) && t.split(" ").length <= 3) return numAnswer("rev", per || last.per || "", "", orders, L);
+    return null;
+  }
+  /* أسئلة عن خصائص منتج/طلب مذكور سابقاً: «سعره؟» «مخزونها؟» «ما حالته؟» «من هو زبونه؟» */
+  function attrAnswer(t, data, L) {
+    const mem = data.mem || {}, products = data.products || [], ref = has(W_THIS, t), ctx = data.ctx && data.ctx.slug;
+    const named = matchProduct(productRef(t, numberIn(t)), products);
+    const slug = named ? named.slug : (ref ? (mem.kind === "order" ? "" : (ctx || mem.slug)) : "");
+    const pAttrPrice = has(W_PRICE, t) && !has(A_TOTAL, t) || (has(A_TOTAL, t) && (named || mem.kind === "product" || (!mem.order)));
+    if (slug && !([V_INC, V_DEC, V_SET].some(r => r.test(t))) && (has(W_PRICE, t) || has(W_STOCK, t) || has(REMAIN, t) || (has(A_STATUS, t) && !mem.order))) {
+      const p = products.find(x => x.slug === slug); if (!p) return null; const q = pName(p), inf = data.stockInfo || (x => ({ tracked: x.stock != null, total: x.stock != null ? Number(x.stock) : null }));
+      if (has(W_STOCK, t) || has(REMAIN, t)) { const s = inf(p); return { kind: "answer", mem: { slug, kind: "product" }, say: s.tracked && s.total != null ? L("مخزون «" + q + "»: " + s.total + " حبة.", "Stock de « " + q + " » : " + s.total + ".") : L("«" + q + "» بلا تتبع للمخزون.", "Stock non suivi.") }; }
+      if (has(W_PRICE, t)) return { kind: "answer", mem: { slug, kind: "product" }, say: L("سعر «" + q + "»: " + fmtN(p.price) + " دينار" + (Number(p.old) > Number(p.price) ? " (بدل " + fmtN(p.old) + ")" : "") + ".", "Prix de « " + q + " » : " + fmtN(p.price) + " DA.") };
+      return { kind: "answer", mem: { slug, kind: "product" }, say: L("«" + q + "» " + (p.active === false ? "مخفي عن المتجر." : "ظاهر في المتجر."), "« " + q + " » " + (p.active === false ? "masqué." : "visible.")) };
+    }
+    const o = mem.order;
+    if (o && (ref || has(W_ORDER, t)) && !named) {
+      const nm = o.name || "—", ph = o.phone || "—";
+      if (has(A_STATUS, t)) { const s = STATUS.find(x => x[0] === o.status); return { kind: "answer", mem: { kind: "order" }, say: L("حالة طلب " + nm + ": " + (s ? s[1] : o.status || "—") + ".", "Statut de la commande de " + nm + " : " + (s ? s[1] : o.status) + ".") }; }
+      if (has(A_PHONE, t)) return { kind: "answer", mem: { kind: "order" }, say: L("هاتف " + nm + ": " + ph + ".", "Téléphone de " + nm + " : " + ph + ".") };
+      if (has(A_ADDR, t)) return { kind: "answer", mem: { kind: "order" }, say: L("ولاية " + nm + ": " + (o.wilaya || "—") + (o.commune ? " / " + o.commune : "") + ".", "Wilaya de " + nm + " : " + (o.wilaya || "—") + ".") };
+      if (has(A_TOTAL, t) || has(W_PRICE, t)) return { kind: "answer", mem: { kind: "order" }, say: L("مبلغ طلب " + nm + ": " + fmtN(o.total) + " دينار.", "Montant de la commande de " + nm + " : " + fmtN(o.total) + " DA.") };
+      if (has(A_ITEMS, t)) return { kind: "answer", mem: { kind: "order" }, say: L("منتجات طلب " + nm + ": " + (String(o.items || "—").replace(/\s*=\s*[\d ]+(?:DA|دج)?/g, "").split(/\n/).join("، ")) + ".", "Articles : " + String(o.items || "—").split(/\n/).join(", ") + ".") };
+      if (has(A_CUST, t)) return { kind: "answer", mem: { kind: "order" }, say: L("الزبون: " + nm + " (" + ph + ").", "Client : " + nm + " (" + ph + ").") };
+    }
+    return null;
+  }
+
+  /* المنتج الذي تشير إليه الضمائر: المفتوح في اللوحة، وإلا آخر منتج في المحادثة */
+  const refSlug = data => (data.ctx && data.ctx.slug) || (data.mem && data.mem.kind === "product" && data.mem.slug) || "";
+  /* تحديث ذاكرة المحادثة من نتيجة أمر (نقي): آخر منتج/طلب/موضوع */
+  function memUpdate(m, r) {
+    const n = Object.assign({ slug: "", order: null, kind: "", topic: null }, m || {});
+    if (!r || r.kind === "unknown" || r.kind === "stop") return n;
+    if (r.topic) n.topic = r.topic;
+    if (r.mem) { if (r.mem.slug) n.slug = r.mem.slug; if (r.mem.order) n.order = r.mem.order; if (r.mem.kind) n.kind = r.mem.kind; }
+    if (r.act && r.act.slug) { n.slug = r.act.slug; n.kind = "product"; }
+    return n;
+  }
+
   /* ── الفهم: النص + بيانات اللوحة ← أمر ──
      النتيجة: { kind, say, act, ... } حيث kind: nav|orders|answer|newProduct|editProduct|theme|update|ask|search|site|help|stop|unknown
      say: ما يُقال/يُعرض، act: وصف التنفيذ (يُنفَّذ في exec)، confirm: يحتاج تأكيداً. */
   function parse(raw, data) {
     data = data || {};
-    const t = norm(raw), fr = /[a-z]{3,}/.test(t) && !/[ء-ي]/.test(t);
+    const t = splitPron(norm(raw)), fr = /[a-z]{3,}/.test(t) && !/[ء-ي]/.test(t);
     const L = (ar, f) => (fr ? f : ar);
     if (!t) return { kind: "unknown", say: "" };
-    if (has(STOP, t) && t.split(" ").length <= 3) return { kind: "stop", say: "" };
+    if (has(STOP, t) && t.split(" ").length <= 3 && !has(WHAT_Q, t) && !has(COUNT_Q, t) && !has(W_RATE, t)) return { kind: "stop", say: "" };
     if (has(HELP, t)) return { kind: "help", say: L("هذه أمثلة على الأوامر.", "Voici des exemples de commandes.") };
     const am = ASK_ME.exec(t); if (am) return { kind: "ask", q: am[1], say: "", explicit: true };
 
@@ -419,8 +540,10 @@ const AdminVoice = (() => {
         if (cands.length) { const c = cands[0], rest = cands.slice(1).filter(x => x.label === c.label && x.tab !== c.tab); return Object.assign(mk(c, "point"), { say: L("هنا: " + show(c) + (rest.length ? " (وله نظير في " + rest.map(x => tab(x.tab)).join("، ") + ")" : ""), "Ici : " + c.label) }); }
       }
     }
+    const fu = followUp(t, data, L); if (fu) return fu;
     const sem = understand(raw, t, data, L); if (sem) return sem;
-    const isOpen = has(V_OPEN, t), ask = has(COUNT_Q, t) || has(WHAT_Q, t);
+    const at = attrAnswer(t, data, L); if (at) return at;
+    const isOpen = has(V_OPEN, t), ask = has(COUNT_Q, t) || has(WHAT_Q, t) || has(COUNT_N, t);
 
     /* منتج جديد */
     if (has(V_ADD, t) && has(W_PRODUCT, t) && !/منتجات|produits|products/.test(t)) return { kind: "newProduct", say: L("أفتح نموذج منتج جديد.", "J'ouvre un nouveau produit."), act: { type: "newProduct" } };
@@ -437,23 +560,20 @@ const AdminVoice = (() => {
     if (has(V_UPDATE, t) && has(W_PANEL, t)) return { kind: "update", confirm: true, say: L("هل أحدّث اللوحة الآن؟ ستُعاد تحميل الصفحة.", "Actualiser le panneau maintenant ?"), act: { type: "update" } };
 
     /* أسئلة الأرقام */
+    if (!isOpen) { const an = analyticsAnswer(t, data, L); if (an) return an; }
     if (has(W_REV, t) && !has(W_ORDER, t) && !isOpen && (ask || periodOf(t))) {
       const per = periodOf(t), sum = orders.filter(o => inPeriod(o, per) && !["annulee", "echec"].includes(o.status)).reduce((s, o) => s + (Number(o.total) || 0), 0);
-      return { kind: "answer", say: L("المبيعات " + PERIOD_AR[per] + ": " + fmtN(sum) + " دينار.", "Ventes " + PERIOD_FR[per] + " : " + fmtN(sum) + " DA.") };
+      return numAnswer("rev", per, "", orders, L);
     }
     if ((has(S_OUT, t) || has(S_LOW, t)) && (has(W_PRODUCT, t) || has(W_STOCK, t) || has(W_PRODUCTS, t))) return stockAnswer(t, products, data, L);
     if (ask && (has(W_STOCK, t) || has(REMAIN, t)) && !has(S_OUT, t) && !has(S_LOW, t)) {
       const pr = matchProduct(productRef(t, numberIn(t)), products), inf = data.stockInfo || (p => ({ tracked: p.stock != null, total: p.stock != null ? Number(p.stock) : null }));
-      if (pr) { const s = inf(pr); return { kind: "answer", say: s.tracked && s.total != null ? L("مخزون «" + pName(pr) + "»: " + s.total + " حبة.", "Stock de « " + pName(pr) + " » : " + s.total + ".") : L("«" + pName(pr) + "» بلا تتبع للمخزون.", "Stock non suivi.") }; }
+      if (pr) { const s = inf(pr); return { kind: "answer", mem: { slug: pr.slug, kind: "product" }, say: s.tracked && s.total != null ? L("مخزون «" + pName(pr) + "»: " + s.total + " حبة.", "Stock de « " + pName(pr) + " » : " + s.total + ".") : L("«" + pName(pr) + "» بلا تتبع للمخزون.", "Stock non suivi.") }; }
       let units = 0, items = 0, out = 0; products.filter(p => p.active !== false).forEach(p => { const s = inf(p); if (s.tracked && s.total != null) { items++; units += s.total; if (s.total <= 0) out++; } });
       return { kind: "answer", say: items ? L("في المخزون " + fmtN(units) + " حبة موزعة على " + items + " منتج" + (out ? "، منها " + out + " نفد." : "."), units + " pièces sur " + items + " produits" + (out ? " (" + out + " en rupture)." : ".")) : L("لا يوجد منتج بتتبّع للمخزون.", "Aucun produit avec suivi de stock.") };
     }
     if (ask && !isOpen) {
-      if (has(W_ORDER, t) || has(W_CLIENT, t) && false) {
-        const st = statusOf(t), per = periodOf(t);
-        const n = orders.filter(o => inPeriod(o, per) && (!st || o.status === st[0])).length;
-        return { kind: "answer", say: L("عدد الطلبات" + (st ? " " + st[1] : "") + " " + PERIOD_AR[per] + ": " + n + ".", "Commandes" + (st ? " (" + st[0] + ")" : "") + " " + PERIOD_FR[per] + " : " + n + ".") };
-      }
+      if (has(W_ORDER, t)) { const st = statusOf(t), per = periodOf(t); return numAnswer("ord", per, st ? st[0] : "", orders, L); }
       if (has(W_PRODUCT, t) || W_PRODUCTS.test(t)) {
         const n = products.filter(p => p.active !== false).length;
         return { kind: "answer", say: L("عندك " + n + " منتج نشط.", "Vous avez " + n + " produits actifs.") };
@@ -462,7 +582,7 @@ const AdminVoice = (() => {
     /* آخر طلب */
     if (has(W_LAST, t) && has(W_ORDER, t) && !isOpen) {
       const o = orders.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-      return { kind: "answer", say: o ? L("آخر طلب من " + (o.name || "زبون") + " ولاية " + (o.wilaya || "—") + " بمبلغ " + fmtN(o.total) + " دينار.", "Dernière commande : " + (o.name || "client") + ", " + (o.wilaya || "") + ", " + fmtN(o.total) + " DA.") : L("لا توجد طلبات بعد.", "Aucune commande.") };
+      return { kind: "answer", mem: o ? { order: o, kind: "order" } : undefined, say: o ? L("آخر طلب من " + (o.name || "زبون") + " ولاية " + (o.wilaya || "—") + " بمبلغ " + fmtN(o.total) + " دينار.", "Dernière commande : " + (o.name || "client") + ", " + (o.wilaya || "") + ", " + fmtN(o.total) + " DA.") : L("لا توجد طلبات بعد.", "Aucune commande.") };
     }
     /* منتجات نفدت/منخفضة بدون سؤال كم */
     if ((has(S_OUT, t) || has(S_LOW, t)) && (has(W_PRODUCT, t) || has(W_STOCK, t) || W_PRODUCTS.test(t)) && !isOpen) return stockAnswer(t, products, data, L);
@@ -470,7 +590,8 @@ const AdminVoice = (() => {
     /* بحث عن طلب/زبون */
     if (has(V_SEARCH, t) && (has(W_ORDER, t) || has(W_CLIENT, t))) {
       const phone = phoneOf(t), q = phone || tokens(t).filter(w => !V_SEARCH.test(" " + w + " ") && !W_ORDER.test(" " + w + " ") && !W_CLIENT.test(" " + w + " ")).join(" ").trim();
-      return { kind: "orders", say: q ? L("أبحث في الطلبات عن " + q + ".", "Je cherche « " + q + " » dans les commandes.") : L("أفتح الطلبات.", "J'ouvre les commandes."), act: { type: "orders", q } };
+      const hit = q ? orders.filter(o => norm((o.name || "") + " " + (o.phone || "")).includes(norm(q).replace(/\s/g, " "))) : [];
+      return { kind: "orders", mem: hit.length === 1 ? { order: hit[0], kind: "order" } : undefined, say: q ? L("أبحث في الطلبات عن " + q + ".", "Je cherche « " + q + " » dans les commandes.") : L("أفتح الطلبات.", "J'ouvre les commandes."), act: { type: "orders", q } };
     }
     if (has(V_SEARCH, t)) {
       const q = tokens(t).filter(w => !V_SEARCH.test(" " + w + " ")).join(" ").trim();
@@ -775,7 +896,14 @@ const AdminVoice = (() => {
     } catch (e) { logMiss(act, "استثناء: " + (e && e.message)); return exec(act); }
     finally { dims.forEach(x => x.classList.remove("ah-dim")); working = false; }
   }
-  const dataNow = () => { const a = A(); let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { ui: { find: findUI }, ctx: { slug: (a.editingSlug || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
+  /* ذاكرة المحادثة: آخر منتج/طلب/موضوع (10 دقائق) لربط الضمائر الغائبة والمتابعات القصيرة */
+  let MEM = { slug: "", order: null, kind: "", topic: null, at: 0 };
+  const memNow = () => (Date.now() - MEM.at < 600000 ? MEM : { slug: "", order: null, kind: "", topic: null, at: 0 });
+  function remember(r) {
+    const base = Date.now() - MEM.at < 600000 ? MEM : null;
+    MEM = Object.assign(memUpdate(base, r), { at: Date.now() }); if (r && r.act && r.act.slug) lastSlug = r.act.slug;
+  }
+  const dataNow = () => { const a = A(); let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { mem: memNow(), ui: { find: findUI }, ctx: { slug: (a.editingSlug || (memNow().kind === "product" ? memNow().slug : "") || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
 
   /* ── المخارج: لوحة «اسألني» إن كانت مفتوحة، وإلا شريط عائم صغير ── */
   const $h = id => document.getElementById(id);
@@ -1007,6 +1135,7 @@ const AdminVoice = (() => {
     run(best, list[0]);
   }
   async function run(r, heardText) {
+    remember(r);
     const nt = norm(heardText || ""), fr = /[a-z]{3,}/.test(nt) && !/[ء-ي]/.test(nt);
     if (r.kind === "stop") { sink({ out: "" }); return; }
     if (r.kind === "help") { showHud({ out: r.say }); hud.classList.add("help"); speak(r.say, fr); return; }
@@ -1068,7 +1197,7 @@ const AdminVoice = (() => {
     document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { quiet: () => Date.now() >= speakingUntil, toggleWakeReq, enroll, exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
+  const api = { memUpdate, examples: () => EXAMPLES_Q.slice(), memory: () => memNow(), quiet: () => Date.now() >= speakingUntil, toggleWakeReq, enroll, exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();

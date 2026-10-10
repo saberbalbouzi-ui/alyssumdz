@@ -71,7 +71,7 @@ const AdminHelp = (() => {
         const seen = new Set(), ui = ((typeof AdminVoice !== "undefined" && AdminVoice.findUI) ? AdminVoice.findUI(q, 12) : []).filter(c => { const k = c.label + "|" + c.tab; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 4);
         if (ui.length) { const d = bubble("a", "لم أجد شرحاً مكتوباً لهذا، لكن وجدت في اللوحة:"); chips(ui.map(c => [c.label.slice(0, 40) + (c.tab ? " — " + AdminVoice.tabLabel(c.tab) : ""), () => AdminVoice.showMe(c), true]), d); return; }
       } catch (e) { }
-      const d = bubble("a", "أعد طرح السؤال رجاءً مع ذكر اسم الإعداد أو العنصر الذي تريده 🙏 (مثل: الهيرو، الطبقات، التحريك الحر، رسوم التوصيل، الشارات). أو اختر موضوعاً:"); chips(SUGG.map(s => [s, () => ask(s)]), d); return; }
+      const d = bubble("a", "أعد طرح السؤال رجاءً مع ذكر اسم الإعداد أو العنصر الذي تريده 🙏 (مثل: الهيرو، الطبقات، التحريك الحر، رسوم التوصيل، الشارات). أو اسألني عن أرقام متجرك أو اختر موضوعاً:"); try { if (typeof AdminVoice !== "undefined" && AdminVoice.examples) chips(AdminVoice.examples().slice(0, 4).map(q => [q, () => ask(q)]), d); } catch (e) { } chips(SUGG.map(s => [s, () => ask(s)]), d); return; }
     const close = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01);
     if (close.length) { const d = bubble("a", "سؤالك يحتمل أكثر من موضوع — أيها تقصد؟"); chips([r[0]].concat(close).slice(0, 4).map(x => [x.e.t, () => { bubble("u", esc(x.e.t)); answer(x.e); }]), d); return; }
     answer(r[0].e, r.slice(1, 4).filter(x => x.sc > r[0].sc * .45));
