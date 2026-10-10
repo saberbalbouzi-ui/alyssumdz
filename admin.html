@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.47">
+<meta name="admin-version" content="1.89.48">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -292,7 +292,6 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <span id="live-now" class="live-pill" title="المشاهدون الآن على الموقع (حقيقي)">⚪ المشاهدون الآن: …</span>
     <span id="pending-badge"></span>
     <button class="small gold hidden" id="upd-btn" onclick="Updater.open()">🔔 تحديث متاح</button>
-    <button class="small gray hidden" id="rel-btn" onclick="Seller.open()" title="خاص بك كبائع فقط">📡 النشر للعملاء</button>
     <button class="small blue" onclick="PBAdmin.previewHomeBuilder()">🏠 تعديل الصفحة الرئيسية</button>
     <button class="small" style="background:var(--green);color:#fff" onclick="SitePreview.open()">👁️ زيارة الموقع</button>
     <button class="small" id="as-btn" onclick="AdminSearch.show()" title="بحث شامل في اللوحة (Ctrl+K)">بحث</button>
@@ -1340,29 +1339,6 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   </div>
 </div>
 
-<!-- نافذة النشر للعملاء (البائع فقط) -->
-<div class="modal-bg" id="rel-modal-bg">
-  <div class="modal lg">
-    <h3>📡 النشر للعملاء</h3>
-    <div class="hint" style="margin-top:0"><b>تطبيق على موقعي فقط:</b> تعديلاتك على هذا الموقع تُنشر كالمعتاد، ولا تصل أي عميل. <b>النشر لجميع المواقع:</b> يبني إصداراً من الملفات المشتركة فقط، توقّعه بمفتاحك، ثم يراه كل عميل في لوحته بزر «تحديث».</div>
-    <div class="section-title">1) مفتاح التوقيع</div>
-    <div id="rel-key" class="hint"></div>
-    <div class="action-bar" id="rel-key-actions"></div>
-    <div class="section-title">2) إصدار جديد</div>
-    <div class="grid2">
-      <div><input id="rel-ver" placeholder="رقم الإصدار (مثال 1.0.2)" dir="ltr"><div class="hint" id="rel-cur"></div></div>
-      <div><textarea id="rel-notes" rows="3" placeholder="ما الجديد؟ (تراه العملاء قبل التحديث)"></textarea></div>
-    </div>
-    <div class="action-bar">
-      <button class="small gold" id="rel-go" onclick="Seller.release()">🚀 نشر الإصدار لجميع المواقع</button>
-      <button class="small gray" onclick="document.getElementById('rel-modal-bg').classList.remove('open')">إغلاق</button>
-    </div>
-    <pre id="rel-log" style="background:#101614;color:#cfe;border-radius:12px;padding:.8rem;max-height:160px;overflow:auto;font-size:.8rem;display:none;direction:ltr;text-align:left"></pre>
-    <div class="section-title">3) ما يُنشر وما يبقى خاصاً</div>
-    <div class="grid2" id="rel-layers"><div class="hint">…</div><div></div></div>
-  </div>
-</div>
-
 <!-- نتيجة تحديث حالات الشحن -->
 <div class="modal-bg" id="ship-detail-bg">
   <div class="modal" style="max-width:560px">
@@ -1605,20 +1581,20 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.47"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.47"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.47"></script>
+<script src="assets/js/ctl-help.js?v=1.89.48"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.48"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.48"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.47"></script>
-<script src="assets/js/admin-coname.js?v=1.89.47"></script>
-<script src="assets/js/admin-tplsite.js?v=1.89.47"></script>
+<script src="assets/js/admin-nav.js?v=1.89.48"></script>
+<script src="assets/js/admin-coname.js?v=1.89.48"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.48"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
-<script src="assets/js/saas-client.js?v=1.89.47"></script>
-<script src="assets/js/admin-stores.js?v=1.89.47"></script>
+<script src="assets/js/saas-client.js?v=1.89.48"></script>
+<script src="assets/js/admin-stores.js?v=1.89.48"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.47"></script>
+<script src="assets/js/admin-update.js?v=1.89.48"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1627,8 +1603,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-yalidine.js?v=1.89.16"></script>
 <script src="assets/js/admin-shoppages.js?v=1.77.0"></script>
 <script src="assets/js/admin-home.js?v=1.60.0"></script>
-<script src="assets/js/admin-tablesel.js?v=1.89.47"></script>
-<script src="assets/js/admin-orders-plus.js?v=1.89.47"></script>
+<script src="assets/js/admin-tablesel.js?v=1.89.48"></script>
+<script src="assets/js/admin-orders-plus.js?v=1.89.48"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
 <script src="assets/js/admin-customers.js?v=1.84.0"></script>
 <script src="assets/js/admin-bulk-products.js?v=1.89.16"></script>
@@ -1640,7 +1616,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-seo.js?v=1.89.16"></script>
 <script src="assets/js/admin-blog.js?v=1.83.0"></script>
 <script src="assets/js/admin-insights.js?v=1.83.0"></script>
-<script src="assets/js/admin-confirm-svc.js?v=1.89.47"></script>
+<script src="assets/js/admin-confirm-svc.js?v=1.89.48"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
@@ -2553,7 +2529,7 @@ const Admin = {
     this.loadDeliveryCfg();
     this.loadBlacklist();
     this.startAlerts(); this.startShipAutoSync();
-    try{ Updater.init(); Seller.init(); }catch(e){}
+    try{ Updater.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadCollections(), this.loadRepeat(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
     this.renderAll();
@@ -7630,87 +7606,6 @@ const Updater = {
     else { $f("upd-msg").style.color = "#b33"; $f("upd-msg").textContent = "❌ " + (this.ERR[r.j.error] || r.j.error || "فشل التراجع"); }
   },
   init(){ if(!PHPAPI.on()) return; let t = 0; try{ t = +sessionStorage.getItem("alyssum_upd_t") || 0; }catch(e){} if(Date.now() - t > 600000){ try{ sessionStorage.setItem("alyssum_upd_t", String(Date.now())); }catch(e){} this.check(); } if(!this._iv) this._iv = setInterval(()=>this.check(), 1800000); },
-};
-
-/* ════════ النشر للعملاء (البائع فقط: CONFIG.SELLER === true) ════════ */
-const Seller = {
-  enabled(){ return typeof CONFIG !== "undefined" && CONFIG.SELLER === true && !PHPAPI.on(); },
-  KEY: "alyssum_sign_key",
-  b64(u8){ let s = ""; new Uint8Array(u8).forEach(c=>s += String.fromCharCode(c)); return btoa(s); },
-  unb64(b){ const s = atob(b); const u = new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i] = s.charCodeAt(i); return u; },
-  pem(spki){ return "-----BEGIN PUBLIC KEY-----\n" + this.b64(spki).match(/.{1,64}/g).join("\n") + "\n-----END PUBLIC KEY-----\n"; },
-  log(t){ const l = $f("rel-log"); l.style.display = "block"; l.textContent += t + "\n"; l.scrollTop = l.scrollHeight; },
-  hasKey(){ try{ return !!localStorage.getItem(this.KEY); }catch(e){ return false; } },
-  async privKey(){ const j = JSON.parse(localStorage.getItem(this.KEY)); return crypto.subtle.importKey("pkcs8", this.unb64(j.pkcs8), { name:"ECDSA", namedCurve:"P-256" }, false, ["sign"]); },
-  init(){ if(this.enabled()) $f("rel-btn").classList.remove("hidden"); },
-  async open(){
-    $f("rel-modal-bg").classList.add("open"); this.renderKey();
-    try{ const f = await GH.getFile("releases/latest.json"); const m = JSON.parse(JSON.parse(this.fromB64(f.content)).manifest); $f("rel-cur").textContent = "آخر إصدار منشور: " + m.version;
-      const p = m.version.split(".").map(Number); if(!$f("rel-ver").value) $f("rel-ver").value = p[0] + "." + p[1] + "." + (p[2] + 1);
-    }catch(e){ $f("rel-cur").textContent = "لم يُنشر أي إصدار بعد."; if(!$f("rel-ver").value){ try{ const v = await GH.getFile("VERSION"); $f("rel-ver").value = this.fromB64(v.content).trim().replace(/(\d+)$/, n=>(+n+1)); }catch(_){ $f("rel-ver").value = "1.0.1"; } } }
-    this.renderLayers();
-  },
-  fromB64(c){ return decodeURIComponent(escape(atob((c||"").replace(/\n/g,"")))); },
-  renderKey(){
-    const has = this.hasKey();
-    $f("rel-key").innerHTML = has ? "🔑 المفتاح الخاص محفوظ في هذا المتصفح فقط. <b>احتفظ بنسخة احتياطية</b>: إن ضاع لن يقبل العملاء إصداراً جديداً أبداً." : "⚠️ لا يوجد مفتاح توقيع بعد. أنشئه مرة واحدة (أو استورد نسختك الاحتياطية).";
-    $f("rel-key-actions").innerHTML = has ? '<button class="small blue" onclick="Seller.backup()">💾 نسخة احتياطية للمفتاح</button>' : '<button class="small gold" onclick="Seller.genKey()">🔐 إنشاء مفتاح التوقيع</button><label class="small gray" style="cursor:pointer;display:inline-block">📥 استيراد نسخة احتياطية<input type="file" accept=".json" style="display:none" onchange="Seller.importKey(this)"></label>';
-  },
-  async genKey(){
-    if(this.hasKey() && !confirm("يوجد مفتاح. استبداله سيمنع العملاء الحاليين من قبول التحديثات. متأكد؟")) return;
-    const kp = await crypto.subtle.generateKey({ name:"ECDSA", namedCurve:"P-256" }, true, ["sign","verify"]);
-    const pk = this.b64(await crypto.subtle.exportKey("pkcs8", kp.privateKey)), pem = this.pem(await crypto.subtle.exportKey("spki", kp.publicKey));
-    localStorage.setItem(this.KEY, JSON.stringify({ pkcs8: pk }));
-    this.download("signing-key-backup.json", JSON.stringify({ pkcs8: pk, note:"سرّي: لا ترفعه ولا تشاركه" }));
-    let sha; try{ sha = (await GH.getFile("releases/pubkey.pem")).sha; }catch(e){}
-    await GH.putFile("releases/pubkey.pem", btoa(pem), sha, "مفتاح التوقيع العام للتحديثات");
-    this.renderKey(); toast("✅ أُنشئ المفتاح ونُشر الجزء العام. احفظ ملف النسخة الاحتياطية المُنزَّل الآن.");
-  },
-  download(name, text){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type:"application/json" })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); },
-  backup(){ this.download("signing-key-backup.json", localStorage.getItem(this.KEY)); },
-  async importKey(input){ const f = input.files[0]; if(!f) return; try{ const j = JSON.parse(await f.text()); if(!j.pkcs8) throw 0; localStorage.setItem(this.KEY, JSON.stringify({ pkcs8:j.pkcs8 })); this.renderKey(); toast("✅ استُورد المفتاح"); }catch(e){ toast("❌ ملف غير صالح"); } },
-  async renderLayers(){
-    const box = $f("rel-layers");
-    try{
-      const j = await (await fetch("shared-files.json", { cache:"no-store" })).json();
-      const li = a => "<ul style='margin:.3rem 1rem;font-size:.82rem;direction:ltr;text-align:left'>" + a.map(x=>"<li>" + String(x).replace(/</g,"&lt;") + "</li>").join("") + "</ul>";
-      box.innerHTML = "<div><b>✅ يُنشر للجميع</b>" + li(j.shared) + "</div><div><b>🔒 خاص بكل موقع (لا يُلمس)</b>" + Object.entries(j.local).map(([k,v])=>"<div class='hint' style='margin:.4rem 0 0'>" + k + "</div>" + li(v)).join("") + "</div>";
-    }catch(e){ box.innerHTML = "<div class='hint'>تعذّر قراءة shared-files.json</div><div></div>"; }
-  },
-  async release(){
-    const ver = $f("rel-ver").value.trim(), notes = $f("rel-notes").value.trim(), btn = $f("rel-go");
-    if(!/^\d+\.\d+\.\d+$/.test(ver)){ toast("رقم إصدار غير صالح (x.y.z)"); return }
-    if(!this.hasKey()){ toast("أنشئ مفتاح التوقيع أولاً"); return }
-    if(!confirm("سيُنشر الإصدار " + ver + " لجميع المواقع المثبَّتة. متابعة؟")) return;
-    const c = GH.cfg(); btn.disabled = true; $f("rel-log").textContent = "";
-    try{
-      this.log("1) بناء الإصدار على الموقع...");
-      const d = await fetch("https://api.github.com/repos/" + c.owner + "/" + c.repo + "/actions/workflows/release.yml/dispatches", { method:"POST",
-        headers:{ Authorization:"Bearer " + c.token, Accept:"application/vnd.github+json", "Content-Type":"application/json" }, body: JSON.stringify({ ref: c.branch || "main", inputs:{ version: ver, notes } }) });
-      if(d.status === 404) throw new Error("ملف release.yml غير موجود على الفرع (ادمج التعديلات أولاً)");
-      if(d.status === 403 || d.status === 401) throw new Error("رمز النشر بلا صلاحية التشغيل — عدّل صلاحياته من مزوّد موقعك");
-      if(d.status !== 204) throw new Error("تعذّر بدء البناء (" + d.status + ")");
-      let man = null;
-      for(let i = 0; i < 60 && !man; i++){
-        await new Promise(r=>setTimeout(r, 6000));
-        try{ const f = await GH.getFile("releases/" + ver + "/manifest.json"); man = this.fromB64(f.content); }catch(e){ if(i % 3 === 2) this.log("   ...بانتظار انتهاء البناء"); }
-      }
-      if(!man) throw new Error("انتهت المهلة قبل ظهور الإصدار — راجع سجلّ التشغيل");
-      this.log("2) التوقيع بمفتاحك الخاص (يبقى في متصفحك)...");
-      const sig = new Uint8Array(await crypto.subtle.sign({ name:"ECDSA", hash:"SHA-256" }, await this.privKey(), new TextEncoder().encode(man)));
-      // تحقق احترازي: التوقيع يجب أن يطابق المفتاح العام المنشور في المستودع (وإلا لن يقبله أي عميل)
-      const pub = await GH.getFile("releases/pubkey.pem"), pemText = this.fromB64(pub.content);
-      const spki = this.unb64(pemText.replace(/-----[^-]+-----|\s/g,""));
-      const ok = await crypto.subtle.verify({ name:"ECDSA", hash:"SHA-256" }, await crypto.subtle.importKey("spki", spki, { name:"ECDSA", namedCurve:"P-256" }, false, ["verify"]), sig, new TextEncoder().encode(man));
-      if(!ok) throw new Error("مفتاحك الخاص لا يطابق المفتاح العام المنشور — لن يقبل العملاء هذا التوقيع. استورد النسخة الاحتياطية الصحيحة");
-      this.log("3) نشر latest.json...");
-      let sha; try{ sha = (await GH.getFile("releases/latest.json")).sha; }catch(e){}
-      await GH.putFile("releases/latest.json", btoa(unescape(encodeURIComponent(JSON.stringify({ manifest: man, sig: this.b64(sig) })))), sha, "نشر الإصدار " + ver + " للعملاء");
-      this.log("✅ نُشر الإصدار " + ver + ". سيظهر «تحديث متاح» في لوحة كل عميل خلال دقائق.");
-      toast("✅ نُشر الإصدار " + ver + " للعملاء");
-    }catch(e){ this.log("❌ " + e.message); toast("❌ " + e.message); }
-    btn.disabled = false;
-  },
 };
 
 document.addEventListener("input", e=>{

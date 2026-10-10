@@ -12,7 +12,7 @@
   const CST = { lead: "محتمل", active: "نشط", suspended: "موقوف", churned: "مفقود" };
   const DST = { none: "—", requested: "مطلوب", dns_ready: "DNS جاهز", connected: "مربوط", rejected: "مرفوض" };
   const DMODE = { platform: "دومين المنصة", own: "دومين خاص", request: "دومين جديد مطلوب" };
-  const TABS = { home: "نظرة عامة", inbox: "الطلبات", sites: "المواقع", customers: "الزبائن", subs: "الاشتراكات والإغلاق", api: "إعدادات API", outbox: "الإشعارات الصادرة", stats: "التحليلات", settings: "الإعدادات" };
+  const TABS = { home: "نظرة عامة", inbox: "الطلبات", sites: "المواقع", customers: "الزبائن", subs: "الاشتراكات والإغلاق", api: "إعدادات API", outbox: "الإشعارات الصادرة", stats: "التحليلات", rel: "نشر التحديثات", settings: "الإعدادات" };
   const CANNED = [
     ["تم الاستلام", "مرحباً، استلمنا طلبك وسنعالجه في أقرب وقت. شكراً لثقتك."],
     ["نحتاج معلومات", "لنتابع طلبك نحتاج منك بعض المعلومات الإضافية. هل يمكنك تزويدنا بالتفاصيل؟"],
@@ -131,7 +131,7 @@
     if (!$("view")) return;
     if (S.tab === "inbox") return inbox(soft);
     if (soft) { const ae = document.activeElement; if (ae && v0().contains(ae) && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) return; }
-    const v = $("view"), keep = v.scrollTop; v.innerHTML = ({ home, sites, customers, subs, api, outbox, stats: statsView, settings })[S.tab](); v.scrollTop = keep; wire();
+    const v = $("view"), keep = v.scrollTop; v.innerHTML = ({ home, sites, customers, subs, api, outbox, stats: statsView, rel: () => '<div id="relroot"></div>', settings })[S.tab](); v.scrollTop = keep; wire(); if (S.tab === "rel" && window.SaasRelease) window.SaasRelease.mount($("relroot"));
   }
 
   /* ── النظرة العامة ── */
