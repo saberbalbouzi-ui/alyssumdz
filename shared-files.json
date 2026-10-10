@@ -59,6 +59,7 @@
     "assets/js/admin-stores.js",
     "assets/js/admin-theme.js",
     "assets/js/admin-nav.js",
+    "assets/js/admin-coname.js",
     "assets/js/admin-tplsite.js",
     "assets/pages/templates/c-aurora.json",
     "assets/pages/templates/c-gold.json",
