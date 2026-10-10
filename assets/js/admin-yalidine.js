@@ -83,13 +83,13 @@ const AdminYd = (() => {
     }).join("") || '<tr><td colspan="8" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
-      '<button class="small" type="button" data-yd="rev" title="يطلب كل طرد غير مرتبط بطلب على حدة من ياليدين لمحاولة جلب الاسم والهاتف كاملين">🔓 كشف الأسماء والهواتف</button><button class="small" type="button" data-yd="csv"' + (S.rows.length ? "" : " disabled") + '>⬇ CSV</button></div>' +
+      '<button class="small" type="button" data-yd="csv"' + (S.rows.length ? "" : " disabled") + '>⬇ CSV</button><button class="small" type="button" data-yd="gs"' + (S.rows.length ? "" : " disabled") + ' title="ينسخ الجدول ويفتح Google Sheets جديداً — ألصقه في الخلية A1">📊 Google Sheets</button></div>' +
       (S.rows.length ? '<div class="yd-top"><span class="yd-total">Total ' + (S.total || S.rows.length) + '</span><span class="hint" style="margin:0">par statut:</span><div class="yd-chips">' + chips + '</div>' +
         '<button class="small" type="button" data-yd="fl">⚙ Filtre' + (S.q || S.wil || S.from || S.to || S.link ? " •" : "") + '</button>' + (S.st || S.q || S.wil || S.from || S.to || S.link ? '<button class="small" type="button" data-yd="clr">✖ مسح التصفية</button>' : "") + '</div>' : '<div class="hint">اضغط «تحميل / تحديث الطرود» لعرض إحصاءات حسابك في ياليدين حسب الحالة.</div>') +
       (S.fopen && S.rows.length ? '<div class="yd-f"><input data-yd-in="q" placeholder="🔍 تتبع / اسم / هاتف…" value="' + esc(S.q) + '"><select data-yd-in="wil"><option value="">كل الولايات</option>' + wils.map(w => '<option' + (norm(S.wil) === norm(w) ? " selected" : "") + '>' + esc(w) + '</option>').join("") + '</select>' +
         '<input type="date" data-yd-in="from" value="' + esc(S.from) + '" title="من تاريخ"><input type="date" data-yd-in="to" value="' + esc(S.to) + '" title="إلى تاريخ">' +
         '<select data-yd-in="link"><option value="">مرتبط وغير مرتبط</option><option value="yes"' + (S.link === "yes" ? " selected" : "") + '>مرتبط بطلب في اللوحة</option><option value="no"' + (S.link === "no" ? " selected" : "") + '>بلا طلب في اللوحة</option></select></div>' : "") +
-      (S.rows.length ? '<div class="hint">' + list.length + ' من أصل ' + (S.total || S.rows.length) + ' طرد' + (S.rows.length < S.total ? " (حُمِّل منها " + S.rows.length + ")" : "") + ' — الاسم والهاتف الحقيقيان يظهران للطرود المرتبطة بطلب في لوحتك، وغيرها تُقنِّعه ياليدين في القائمة (زر «🔓 كشف» يحاول جلبه لكل طرد على حدة).</div>' +
+      (S.rows.length ? '<div class="hint">' + list.length + ' من أصل ' + (S.total || S.rows.length) + ' طرد' + (S.rows.length < S.total ? " (حُمِّل منها " + S.rows.length + ")" : "") + ' — الاسم والهاتف الحقيقيان يظهران للطرود المرتبطة بطلب في لوحتك، وغيرها تُقنِّعه ياليدين في القائمة.</div>' +
         '<div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th>التتبع</th><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>الوجهة</th><th>السعر</th><th>الحالة</th><th>الطلب</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
         (pages > 1 ? '<div style="text-align:center;margin-top:8px"><button class="small" data-yd="prev"' + (S.page <= 1 ? " disabled" : "") + '>›</button> <span class="hint">' + S.page + ' / ' + pages + '</span> <button class="small" data-yd="next"' + (S.page >= pages ? " disabled" : "") + '>‹</button></div>' : "") : "");
   }
@@ -105,38 +105,26 @@ const AdminYd = (() => {
     try { const k = (a.listCompanyKey?a.listCompanyKey():a.activeCompanyKey()), co = k && a.allDeliveryCompanies()[k]; if (!co || !co.listRequest) return; } catch (e) { return; }
     load(true).then(() => { if (S.err) S.errAt = Date.now(); });
   }
-  /* كشف الأسماء والهواتف لطرود الصفحة الحالية غير المرتبطة بطلب: طلب طرد فردي لكل واحد (حدّ ياليدين ~50 طلب/دقيقة فنفصل بينها 1.3ث) */
-  async function reveal() {
-    const a = A(); if (!a || S.busy) return; const k = (a.listCompanyKey?a.listCompanyKey():a.activeCompanyKey()), co = k && a.allDeliveryCompanies()[k], cfg = k ? (a.deliveryCfg[k] || {}) : {};
-    if (!co || !co.trackRequest) { if (typeof toast === "function") toast("⚠️ فعّل ياليدين أولاً"); return; }
-    const tm = trackMap(), list = filtered().slice((S.page - 1) * PER, S.page * PER).filter(r => !tm[r.tracking] && !(DET[r.tracking] && !masked(DET[r.tracking].name)) && !(DET[r.tracking] && DET[r.tracking].m));
-    if (!list.length) { if (typeof toast === "function") toast("لا يوجد في هذه الصفحة ما يُكشف"); return; }
-    S.busy = true; let n = 0, still = 0, fail = "";
-    for (const r of list) {
-      S.prog = "كشف " + (++n) + " / " + list.length; draw();
-      try {
-        const x = await a.courierFetch(co.trackRequest(cfg, r.tracking));
-        if (x.status === 429) { fail = "تجاوزتَ حدّ طلبات ياليدين — أعد المحاولة بعد دقيقة"; break; }
-        if (!x.ok) { fail = "رد الشركة " + x.status; break; }
-        let j = JSON.parse(x.text); j = j && j.data && j.data[0] ? j.data[0] : j;
-        const name = [j.firstname, j.familyname].filter(Boolean).join(" "), phone = String(j.contact_phone || j.contact_phone_2 || "");
-        if (name || phone) { DET[r.tracking] = { name, phone, m: masked(name) || masked(phone) }; if (DET[r.tracking].m) still++; }
-        if (still >= 3 && still === n) { fail = "ياليدين تُقنّع الاسم والهاتف حتى في الطرد الفردي — لا يمكن كشفها من التطبيق"; break; }
-      } catch (e) { fail = e.message || String(e); break; }
-      saveDet(); await new Promise(res => setTimeout(res, 1300));
-    }
-    saveDet(); S.busy = false; draw(); if (fail && typeof toast === "function") toast("⚠️ " + fail);
-  }
   function csv() {
     const list = filtered(), q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', tm = trackMap();
     const out = ["tracking,date,name,phone,wilaya,commune,price,status,order"].concat(list.map(r => [r.tracking, String(r.date).slice(0, 10), real(r, tm[r.tracking]).name, real(r, tm[r.tracking]).phone, r.wilaya, r.commune, r.price, r.status, tm[r.tracking] ? tm[r.tracking].id : ""].map(q).join(",")));
     const b = new Blob(["﻿" + out.join("\n")], { type: "text/csv" }), u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = "yalidine-parcels.csv"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 3000);
   }
+  /* Google Sheets: ينسخ الجدول (بحسب التصفية) كنص مفصول بتبويب ويفتح جدولاً جديداً — اللصق في A1 يملأ الخلايا مباشرة */
+  function sheets() {
+    const list = filtered(), tm = trackMap(), cell = v => String(v == null ? "" : v).replace(/[\t\r\n]+/g, " ").trim();
+    const rows = [["tracking", "date", "name", "phone", "wilaya", "commune", "price", "status", "order"]].concat(list.map(r => { const x = real(r, tm[r.tracking]); return [r.tracking, String(r.date).slice(0, 10), x.name, x.phone, r.wilaya, r.commune, r.price, r.status, tm[r.tracking] ? tm[r.tracking].id : ""]; }));
+    const tsv = rows.map(r => r.map(cell).join("\t")).join("\n"), n = list.length;
+    try { window.open("https://sheets.new", "_blank", "noopener"); } catch (e) { }
+    const done = () => { if (typeof toast === "function") toast("📊 نُسخ " + n + " طرداً — ألصقه (Ctrl+V) في الخلية A1 من Google Sheets"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tsv).then(done, () => { csv(); if (typeof toast === "function") toast("تعذّر النسخ — نُزّل ملف CSV يمكنك استيراده في Google Sheets"); });
+    else { csv(); if (typeof toast === "function") toast("نُزّل ملف CSV — استورده في Google Sheets"); }
+  }
   document.addEventListener("click", e => {
     const chip = e.target.closest("#yd-card [data-yd-st]"), btn = e.target.closest("#yd-card [data-yd]");
     if (chip) { const k = chip.dataset.ydSt; S.st = S.st === k ? "" : k; S.page = 1; draw(); return; }
     if (!btn) return; const k = btn.dataset.yd;
-    if (k === "load") load(); else if (k === "rev") reveal(); else if (k === "csv") csv(); else if (k === "fl") { S.fopen = !S.fopen; draw(); }
+    if (k === "load") load(); else if (k === "csv") csv(); else if (k === "gs") sheets(); else if (k === "fl") { S.fopen = !S.fopen; draw(); }
     else if (k === "clr") { S.st = S.q = S.wil = S.from = S.to = S.link = ""; S.page = 1; draw(); }
     else if (k === "prev") { S.page--; draw(); } else if (k === "next") { S.page++; draw(); }
   });
