@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.48">
+<meta name="admin-version" content="1.89.49">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -398,6 +398,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-orders">
     <div id="cs-svc"></div>
     <div id="orders-banner"></div>
+    <div class="card" id="auto-reg-card" style="padding:.7rem 1rem">
+      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:0;font-weight:700"><input id="auto-reg" type="checkbox" onchange="Admin.setAutoReg(this.checked)" style="width:auto"> تسجيل الطلبات الجديدة تلقائياً لدى شركة التوصيل (برقم تسلسلي حسب عدد طرودك عندها)</label>
+    </div>
     <div class="card">
       <div class="search-bar">
         <input id="order-filter-q" placeholder="🔍 بحث بالاسم أو الهاتف أو رقم الطلب..." oninput="Admin.applyOrderFilters()">
@@ -1581,20 +1584,20 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.48"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.48"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.48"></script>
+<script src="assets/js/ctl-help.js?v=1.89.49"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.49"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.49"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.48"></script>
-<script src="assets/js/admin-coname.js?v=1.89.48"></script>
-<script src="assets/js/admin-tplsite.js?v=1.89.48"></script>
+<script src="assets/js/admin-nav.js?v=1.89.49"></script>
+<script src="assets/js/admin-coname.js?v=1.89.49"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.49"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
-<script src="assets/js/saas-client.js?v=1.89.48"></script>
-<script src="assets/js/admin-stores.js?v=1.89.48"></script>
+<script src="assets/js/saas-client.js?v=1.89.49"></script>
+<script src="assets/js/admin-stores.js?v=1.89.49"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.48"></script>
+<script src="assets/js/admin-update.js?v=1.89.49"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1603,8 +1606,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-yalidine.js?v=1.89.16"></script>
 <script src="assets/js/admin-shoppages.js?v=1.77.0"></script>
 <script src="assets/js/admin-home.js?v=1.60.0"></script>
-<script src="assets/js/admin-tablesel.js?v=1.89.48"></script>
-<script src="assets/js/admin-orders-plus.js?v=1.89.48"></script>
+<script src="assets/js/admin-tablesel.js?v=1.89.49"></script>
+<script src="assets/js/admin-orders-plus.js?v=1.89.49"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
 <script src="assets/js/admin-customers.js?v=1.84.0"></script>
 <script src="assets/js/admin-bulk-products.js?v=1.89.16"></script>
@@ -1616,7 +1619,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-seo.js?v=1.89.16"></script>
 <script src="assets/js/admin-blog.js?v=1.83.0"></script>
 <script src="assets/js/admin-insights.js?v=1.83.0"></script>
-<script src="assets/js/admin-confirm-svc.js?v=1.89.48"></script>
+<script src="assets/js/admin-confirm-svc.js?v=1.89.49"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
@@ -2458,6 +2461,7 @@ const Admin = {
       this.orders = o.orders;
       this.reconcileStatusChanges();
       if(changed){ this.renderStats(); this.renderOrders(); this.renderShipped(); }
+      this.autoRegisterNew();
     }
     const fresh = this.orders.filter(x=>x.status === "nouvelle").length;
     if(this.alerts.orders >= 0 && fresh > this.alerts.orders){ this.beep(); toast("🔔 طلب جديد!"); }
@@ -2752,6 +2756,7 @@ const Admin = {
 
   renderOrders(){
     this._blMap = null;
+    { const ar = $f("auto-reg"); if(ar) ar.checked = !!this.autoRegCfg().on; }
     this.renderDeliveryBanners();
     const el = $f("orders-table");
     const wilayaSel = $f("order-filter-wilaya");
@@ -6970,6 +6975,7 @@ const Admin = {
   },
   /* رسالة تبقى على الشاشة (لا تختفي كالتنبيه) حتى تغلقها */
   showNotice(title, html){
+    if(this._autoReg){ this._autoFail = title; toast("⚠️ التسجيل التلقائي: " + title + " — سجّل هذا الطلب يدوياً من 🚚"); return }
     let bg = document.getElementById("notice-modal-bg");
     if(!bg){ bg = document.createElement("div"); bg.id = "notice-modal-bg"; bg.className = "modal-bg"; bg.innerHTML = '<div class="modal"><h3 id="notice-title"></h3><div id="notice-body" style="line-height:1.9"></div><div class="action-bar"><button class="small gray" onclick="document.getElementById(\'notice-modal-bg\').classList.remove(\'open\')">فهمت، إغلاق</button></div></div>'; document.body.appendChild(bg); }
     $f("notice-title").textContent = title; $f("notice-body").innerHTML = html; bg.classList.add("open");
@@ -7094,6 +7100,41 @@ const Admin = {
     const i = this.orders.findIndex(x=>x.id === orderId); if(i > -1) this.sendOrderToDelivery(i, companyKey);
   },
 
+  /* ───── التسجيل التلقائي للطلبات الجديدة لدى شركة التوصيل (بأرقام تسلسلية حسب عدد طرودك عندها) ───── */
+  autoRegCfg(){
+    try{ const c = JSON.parse(localStorage.getItem("alyssum_auto_reg") || "null"); if(c && c.since) return c; }catch(e){}
+    const c = { on:true, since:new Date().toISOString() }; try{ localStorage.setItem("alyssum_auto_reg", JSON.stringify(c)); }catch(e){} return c;
+  },
+  setAutoReg(on){
+    const c = this.autoRegCfg(); c.on = !!on; if(on) c.since = new Date().toISOString();       // يسري على الطلبات الواصلة من الآن فقط
+    try{ localStorage.setItem("alyssum_auto_reg", JSON.stringify(c)); }catch(e){}
+    toast(on ? "✅ سيُسجَّل كل طلب جديد تلقائياً لدى شركة التوصيل" : "⏸️ أُوقف التسجيل التلقائي — سجّل الطلبات يدوياً بزر 🚚");
+    if(on) this.autoRegisterNew();
+  },
+  async autoRegisterNew(){
+    if(this._autoBusy) return; const c = this.autoRegCfg(); if(!c.on || !this.key) return;
+    const key0 = this.activeCompanyKey(); if(!key0) return;
+    let lock = 0; try{ lock = +localStorage.getItem("alyssum_auto_reg_lock") || 0; }catch(e){}
+    if(Date.now() - lock < 45000) return;                                                    // نافذة أخرى تعمل الآن
+    let done = {}; try{ done = JSON.parse(localStorage.getItem("alyssum_auto_reg_done") || "{}") || {}; }catch(e){}
+    const since = new Date(c.since).getTime();
+    const list = this.orders.filter(o=>o.status === "nouvelle" && !this.trackingOf(o) && !done[o.id] && new Date(o.date).getTime() >= since && !this.isBlacklisted(o.phone))
+      .sort((a,b)=>new Date(a.date) - new Date(b.date));
+    if(!list.length) return;
+    this._autoBusy = true; let ok = 0, bad = 0;
+    try{
+      for(const o of list){
+        try{ localStorage.setItem("alyssum_auto_reg_lock", String(Date.now())); }catch(e){}
+        done[o.id] = 1; try{ const ks = Object.keys(done); if(ks.length > 600) ks.slice(0, ks.length - 600).forEach(k=>delete done[k]); localStorage.setItem("alyssum_auto_reg_done", JSON.stringify(done)); }catch(e){}   // يُسجَّل قبل الإرسال فلا يتكرر عند الفشل
+        const i = this.orders.findIndex(x=>x.id === o.id); if(i < 0) continue;
+        this._autoReg = true;
+        try{ (await this.sendOrderToDelivery(i, this.orderCompanyKey(this.orders[i]) || key0)) ? ok++ : bad++; }catch(e){ bad++; } finally{ this._autoReg = false; }
+      }
+    }finally{ this._autoBusy = false; try{ localStorage.removeItem("alyssum_auto_reg_lock"); }catch(e){} }
+    if(ok) { toast("🚚 سُجّل تلقائياً " + ok + " طلب جديد لدى شركة التوصيل" + (bad ? " — وتعذّر " + bad : "")); this.renderShipped && this.renderShipped(); }
+    else if(bad) toast("⚠️ تعذّر التسجيل التلقائي لـ " + bad + " طلب — سجّلها يدوياً بزر 🚚");
+  },
+
   async sendOrderToDelivery(orderIndex, companyKey){
     if(!companyKey){ toast("⚠️ لا توجد شركة توصيل نشطة — فعّل واحدة من تبويب «شركات التوصيل»"); return }
     const order = this.coOrder(this.orders[orderIndex]);
@@ -7127,13 +7168,15 @@ const Admin = {
         if(!fix.ok){ this.askCommune(orderIndex, companyKey, fix); return false }
         ord = Object.assign({}, ord, { commune: fix.name });
       }
-      /* رقم الطلب في ياليدين يتبع آخر رقم عندها: «Mes colis — Total» (total_data) أو أكبر رقم رقمي ظاهر أو آخر رقم سجّلناه — الأكبر +1.
-         فإن أضفتَ طرداً يدوياً في ياليدين زاد المجموع وتلتقطه اللوحة تلقائياً. ويمكن تعديل الرقم قبل الإرسال (إعداد ياليدين ← «اسأل عن رقم الطلب»). */
+      /* رقم الطلب في ياليدين = العدد الكلي لطرودك عندها «Mes colis — Total» + 1 (تلقائي للتسجيل اليدوي والآلي)،
+         وإن كان الرقم محجوزاً لطرد ظاهر زِيد حتى يخلو. إن تعذّر جلب العدد يُستعمل آخر رقم سجّلناه/ظاهر +1. ويمكن تعديل الرقم قبل الإرسال (إعداد ياليدين ← «اسأل عن رقم الطلب») في التسجيل اليدوي فقط. */
       if(co.lastParcelsRequest){
-        let last = Number(cfg.lastOrderNo) || 0, detected = 0;
-        try{ const lr = await this.courierFetch(co.lastParcelsRequest(cfg)); if(lr.ok){ const j = JSON.parse(lr.text); detected = Number(j.total_data) || 0; (j.data || []).forEach(x=>{ if(/^\d+$/.test(String(x.order_id||""))) detected = Math.max(detected, Number(x.order_id)); }); } }catch(e){}
-        let next = Math.max(last, detected) + 1;
-        if(/^(نعم|oui|yes|1|true)$/i.test(String(cfg.askOrderNo || "").trim())){
+        let last = Number(cfg.lastOrderNo) || 0, total = 0, seen = new Set(), maxSeen = 0, okCount = false;
+        try{ const lr = await this.courierFetch(co.lastParcelsRequest(cfg)); if(lr.ok){ const j = JSON.parse(lr.text); total = Number(j.total_data) || 0; okCount = total > 0 || (Array.isArray(j.data) && !j.data.length);
+          (j.data || []).forEach(x=>{ const id = String(x.order_id||""); if(/^\d+$/.test(id)){ seen.add(Number(id)); maxSeen = Math.max(maxSeen, Number(id)); } }); } }catch(e){}
+        let next = okCount ? total + 1 : Math.max(last, maxSeen, total) + 1;
+        while(seen.has(next)) next++;
+        if(!this._autoReg && /^(نعم|oui|yes|1|true)$/i.test(String(cfg.askOrderNo || "").trim())){
           const v = prompt("رقم الطلب في ياليدين (الرقم التالي المقترح: " + next + ")", String(next));
           if(v === null) return false;
           if(!/^\d{1,12}$/.test(v.trim())){ toast("⚠️ أدخل رقماً صحيحاً"); return false }
@@ -7284,6 +7327,7 @@ const Admin = {
     this.renderOrders();
     const all = this.allDeliveryCompanies();
     const key = this.orderCompanyKey(o);
+    if(this.trackingOf(o)){ toast("✅ أُكّد الطلب — وهو مسجَّل مسبقاً لدى شركة التوصيل"); return }
     if(!key){ toast("✅ تم التأكيد — لكن لم يُرسل: فعّل ياليدين من «شركات التوصيل» ثم اضغط 🚚 إرسال"); this.renderDeliveryBanners(); return }
     const ok = await this.sendOrderToDelivery(i, key);
     if(ok){ this.enqueueNotify(o, "registered"); toast("✅ أُكّد الطلب وأُرسل إلى " + all[key].name + " — يظهر في «الطلبات المسجلة»" + (this.notifyCfg && this.notifyCfg.enabled ? "، ورسالة التتبع جاهزة في «📣 إشعارات الزبائن»" : "")); }
