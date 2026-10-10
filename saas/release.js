@@ -66,10 +66,15 @@ window.SaasRelease = (() => {
       renderKey(); toast("✅ أُنشئ المفتاح ونُشر الجزء العام. احفظ ملف النسخة الاحتياطية المُنزَّل الآن.");
     } catch (e) { toast("❌ " + e.message); }
   }
+  const vkey = v => String(v).split(".").map(Number);
+  const vcmp = (a, b) => { const x = vkey(a), y = vkey(b); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; };
+  async function siteVer() { try { const v = fromB64((await getFile("VERSION")).content).trim(); return /^\d+\.\d+\.\d+$/.test(v) ? v : ""; } catch (e) { return ""; } }
   async function cur() {
     if (!cfg()) { $("rel-cur").textContent = "اضبط ربط النشر لعرض آخر إصدار."; return; }
-    try { const f = await getFile("releases/latest.json"), m = JSON.parse(JSON.parse(fromB64(f.content)).manifest); $("rel-cur").textContent = "آخر إصدار منشور: " + m.version; const p = m.version.split(".").map(Number); if (!$("rel-ver").value) $("rel-ver").value = p[0] + "." + p[1] + "." + (p[2] + 1); }
-    catch (e) { $("rel-cur").textContent = "لم يُنشر أي إصدار بعد."; if (!$("rel-ver").value) { try { $("rel-ver").value = fromB64((await getFile("VERSION")).content).trim().replace(/(\d+)$/, n => +n + 1); } catch (_) { $("rel-ver").value = "1.0.1"; } } }
+    const sv = await siteVer(); let pub = "";
+    try { const f = await getFile("releases/latest.json"); pub = JSON.parse(JSON.parse(fromB64(f.content)).manifest).version; } catch (e) { }
+    $("rel-cur").textContent = (pub ? "آخر إصدار منشور للعملاء: " + pub : "لم يُنشر أي إصدار بعد.") + (sv ? " · نسخة الموقع الحالية: " + sv : "");
+    if (!$("rel-ver").value) $("rel-ver").value = sv || (pub ? vkey(pub).slice(0, 2).join(".") + "." + (vkey(pub)[2] + 1) : "1.0.1");
   }
   async function layers() {
     const box = $("rel-layers"); if (!box) return;
@@ -84,6 +89,8 @@ window.SaasRelease = (() => {
     if (!c) return toast("اضبط ربط النشر أولاً");
     if (!/^\d+\.\d+\.\d+$/.test(ver)) return toast("رقم إصدار غير صالح (x.y.z)");
     if (!hasKey()) return toast("أنشئ مفتاح التوقيع أولاً");
+    const sv = await siteVer();
+    if (sv && vcmp(ver, sv) < 0) return toast("الرقم " + ver + " أقل من نسخة الموقع الحالية " + sv + " — استعمل " + sv + " أو أكبر حتى تظهر التحديثات للعملاء");
     if (!confirm("سيُنشر الإصدار " + ver + " لجميع المواقع المثبَّتة. متابعة؟")) return;
     btn.disabled = true; $("rel-log").textContent = "";
     try {

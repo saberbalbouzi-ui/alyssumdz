@@ -9,6 +9,10 @@ if len(sys.argv) < 2 or not re.fullmatch(r"\d+\.\d+\.\d+", sys.argv[1]):
     sys.exit("الاستعمال: release.py <x.y.z> [ملاحظات] [--channel URL] [--pubkey FILE] [--releases DIR]")
 ver = sys.argv[1]
 rest = sys.argv[2:]
+_vf = root / "VERSION"
+_key = lambda v: tuple(int(x) for x in v.split("."))
+if _vf.exists() and re.fullmatch(r"\d+\.\d+\.\d+", _vf.read_text(encoding="utf-8").strip()) and _key(ver) < _key(_vf.read_text(encoding="utf-8").strip()):
+    sys.exit(f"رقم الإصدار {ver} أقل من نسخة الموقع الحالية {_vf.read_text(encoding='utf-8').strip()} — استعمل رقماً مساوياً أو أكبر (يجب أن يطابق ملف VERSION حتى تظهر التحديثات للعملاء).")
 opt = lambda k, d: rest[rest.index(k) + 1] if k in rest else d
 notes = rest[0] if rest and not rest[0].startswith("--") else ""
 channel = opt("--channel", "https://raw.githubusercontent.com/saberbalbouzi-ui/alyssumdz/main/releases")

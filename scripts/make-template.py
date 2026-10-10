@@ -201,10 +201,12 @@ if a.target == "php":
 
 # فحص التسرّب
 bad = [r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s != "demo"]
+ALLOWED_BRAND = re.compile(r"alyssum\s+(?:api|الذكية|الذكي)", re.I)
 hits = []
 for f in OUT.rglob("*"):
     if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:
         t = f.read_text(encoding="utf-8", errors="ignore")
+        t = ALLOWED_BRAND.sub(lambda m: " " * len(m.group(0)), t)   # اسم الخدمة المعتمد (Alyssum API / Alyssum الذكية) ليس تسرّباً
         for b in bad:
             for m in re.finditer(b, t, re.I):
                 hits.append((str(f.relative_to(OUT)), b, t[max(0, m.start() - 30):m.end() + 30].replace("\n", " ")))
