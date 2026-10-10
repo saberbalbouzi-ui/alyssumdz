@@ -83,7 +83,7 @@ const AdminYd = (() => {
     const chips = keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr><td class="m">' + esc(r.tracking) + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + contact(real(r, o).phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td></tr>';
+      return '<tr><td class="m">' + esc(r.tracking) + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + contact(real(r, o).phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td></tr>';
     }).join("") || '<tr><td colspan="8" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
@@ -124,7 +124,27 @@ const AdminYd = (() => {
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tsv).then(done, () => { csv(); if (typeof toast === "function") toast("تعذّر النسخ — نُزّل ملف CSV يمكنك استيراده في Google Sheets"); });
     else { csv(); if (typeof toast === "function") toast("نُزّل ملف CSV — استورده في Google Sheets"); }
   }
+  /* تفاصيل حالة متعثرة (محاولة فاشلة/مرتجع): السبب وهاتف الموزّع من سجلّ الطرد عند الشركة */
+  const PH = /(livreur|deliver|driver|courier|agent|rider|coursier|distribut)[a-z_ ]*(phone|tel|contact|mobile)|(phone|tel|contact|mobile)[a-z_ ]*(livreur|deliver|driver|courier|agent|rider|coursier)/i;
+  function phones(o, out, d) { d = d || 0; if (!o || typeof o !== "object" || d > 4) return out; Object.keys(o).forEach(k => { const v = o[k]; if (v && typeof v === "object") phones(v, out, d + 1); else if (PH.test(k) && /\d{8,}/.test(String(v))) out.push(String(v)); }); return out; }
+  async function detail(tr) {
+    const a = A(); if (!a || !a.showNotice) return; const title = "📦 " + tr;
+    a.showNotice(title, "⏳ جارِ جلب التفاصيل من شركة التوصيل…");
+    try {
+      const k = a.listCompanyKey ? a.listCompanyKey() : a.activeCompanyKey(), co = k && a.allDeliveryCompanies()[k], cfg = (a.deliveryCfg || {})[k] || {};
+      if (!co || !co.historyRequest) throw new Error("لا تدعم هذه الشركة عرض التفاصيل");
+      const [h, p] = await Promise.all([a.courierFetch(co.historyRequest(cfg, tr)).catch(() => null), a.courierFetch(co.trackRequest(cfg, tr)).catch(() => null)]);
+      const js = r => { try { return r && r.ok ? JSON.parse(r.text) : null; } catch (e) { return null; } };
+      const hj = js(h), pj = js(p), arr = hj && (Array.isArray(hj) ? hj : (hj.data || [])), list = (Array.isArray(arr) ? arr : []).slice().sort((x, y) => String(y.date_status || y.date || "").localeCompare(String(x.date_status || x.date || "")));
+      const bad = list.find(x => /tentative|echou|retour|echec|refus|annul/.test(norm(x.status || x.status_name || ""))) || list[0];
+      const reason = bad && (bad.reason || bad.motif || bad.comment || ""), ph = [...new Set(phones(hj, phones(pj, [])))];
+      const row = x => '<tr><td>' + esc(String(x.date_status || x.date || "").replace("T", " ").slice(0, 16)) + '</td><td>' + esc(x.status || x.status_name || "") + '</td><td>' + esc(x.reason || x.motif || "") + '</td><td>' + esc(x.center_name || "") + '</td></tr>';
+      a.showNotice(title, '<div style="line-height:1.9"><b>الحالة:</b> ' + esc((bad && (bad.status || bad.status_name)) || "—") + '<br><b>السبب:</b> ' + (reason ? esc(reason) : '<span style="opacity:.7">لم تذكر الشركة سبباً لهذه الحالة</span>') + '<br><b>هاتف الموزّع:</b> ' + (ph.length ? ph.map(n => '<a dir="ltr" href="tel:' + esc(n.replace(/[^\d+]/g, "")) + '">' + esc(n) + '</a>').join("، ") : '<span style="opacity:.7">لا يوجد هاتف مسجَّل للموزّع عند الشركة</span>') + '</div>' +
+        (list.length ? '<div style="overflow:auto;max-height:240px;margin-top:.6rem"><table style="width:100%;border-collapse:collapse;font-size:.82rem"><tr><th>التاريخ</th><th>الحالة</th><th>السبب</th><th>المركز</th></tr>' + list.slice(0, 8).map(row).join("") + '</table></div>' : ''));
+    } catch (e) { a.showNotice(title, "❌ تعذّر جلب التفاصيل: " + esc(e.message || e)); }
+  }
   document.addEventListener("click", e => {
+    const dd = e.target.closest("#yd-card [data-ydd]"); if (dd) { detail(dd.dataset.ydd); return; }
     const chip = e.target.closest("#yd-card [data-yd-st]"), btn = e.target.closest("#yd-card [data-yd]");
     if (chip) { const k = chip.dataset.ydSt; S.st = S.st === k ? "" : k; S.page = 1; draw(); return; }
     if (!btn) return; const k = btn.dataset.yd;

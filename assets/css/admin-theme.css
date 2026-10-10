@@ -208,3 +208,4 @@ html.white #ord-prev-b .kv td{border-bottom-color:#dde3ec}
 html.white .ord-x{color:#334155;border-color:#cdd5e0;background:#eef1f6}
 @media (max-width:760px){.orders-compact td.nm,.orders-compact td.c-items{max-width:none}}
 .ts-menu .ts-i.danger{color:#fca5a5!important}.ts-menu .ts-i.danger:hover{background:rgba(239,68,68,.28)!important}
+#yd-card .yd-b.ydc{cursor:pointer;transition:transform .15s}#yd-card .yd-b.ydc:hover{transform:translateY(-2px)}
