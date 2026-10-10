@@ -143,3 +143,12 @@ html.white .hint{color:#5b6677}
   #app .top>.logout{order:9}
   #app .top>button.hidden{display:none!important}
 }
+
+/* ── محرّر رسالة إعادة الشراء: شرائح العناصر التلقائية غير القابلة للتعديل ── */
+.rp-ed{min-height:150px;max-height:340px;overflow:auto;padding:.6rem .8rem;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.16);white-space:pre-wrap;word-break:break-word;line-height:1.9;outline:none}
+.rp-ed:focus{border-color:var(--g-mint,#86f06a);box-shadow:0 0 0 3px rgba(134,240,106,.15)}
+.rp-tok{display:inline-block;padding:0 .5rem;margin:0 .1rem;border-radius:8px;background:rgba(134,239,172,.16);border:1px solid rgba(134,239,172,.5);color:var(--g-mint,#16a34a);font-weight:800;font-size:.88em;direction:ltr;cursor:default}
+.rp-prev{margin-top:.4rem;padding:.6rem .8rem;border-radius:12px;border:1px dashed rgba(255,255,255,.25);white-space:pre-wrap;line-height:1.8;font-size:.9rem;max-height:260px;overflow:auto}
+html.white .rp-ed{background:#fff;border-color:#cdd5e0;color:#0f172a}
+html.white .rp-tok{background:#e8f8ee;border-color:#86d39e;color:#15803d}
+html.white .rp-prev{border-color:#cdd5e0;background:#f7f9fb}

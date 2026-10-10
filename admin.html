@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.43">
+<meta name="admin-version" content="1.89.44">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -231,7 +231,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
 <link rel="stylesheet" href="assets/css/admin-glass.css?v=14">
-<link rel="stylesheet" href="assets/css/admin-theme.css?v=8">
+<link rel="stylesheet" href="assets/css/admin-theme.css?v=9">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#86f06a",fs:17.5},white:{accent:"#059669",fs:17.5}},
 mode:function(){var m=null;try{m=localStorage.getItem(this.K)}catch(e){}return(m==="white"||m==="classic")?"white":"dark"},
 cfg:function(){var c={};try{c=JSON.parse(localStorage.getItem(this.C)||"{}")||{}}catch(e){}return{dark:Object.assign({},this.D.dark,c.dark||{}),white:Object.assign({},this.D.white,c.white||{})}},
@@ -445,7 +445,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   </div>
 
   <div id="tab-repeat" class="hidden">
-    <div class="card" oninput="Admin.rpAuto()" onchange="Admin.rpAuto()">
+    <div class="card" oninput="Admin.rpAuto();Admin.rpPreview()" onchange="Admin.rpAuto()">
       <b style="color:var(--green);display:block;margin-bottom:.35rem">🔁 إعادة الشراء عبر واتساب</b>
       <div class="hint">يقترح عليك زبائن سُلّمت طلباتهم منذ مدة (تقارب نفاد المنتج)، ولم يطلبوا بعدها. اضغط «💬» فيفتح واتساب برسالة جاهزة فيها كود تخفيض خاص. لكل زبون يُنشأ <b>كود شخصي</b> (مثل BACK-7K2F9X) مرتبط برقم هاتفه ويُستعمل مرة واحدة فقط وله صلاحية، فلا يفيد تسريبه ولا مشاركته.</div>
       <div class="grid2" style="margin-top:.6rem">
@@ -462,9 +462,14 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <label class="hint" style="margin:0">كود عام احتياطي (اختياري — يُولَّد تلقائياً إن تُرك فارغاً)<input id="rp-code" dir="ltr" style="text-transform:uppercase" placeholder="تلقائي"></label>
         </div>
       </details>
-      <label class="hint" style="margin:.6rem 0 0">نص الرسالة — يُملأ تلقائياً: {name} الاسم · {product} المنتج المختار · {link} رابط صفحة المنتج (مع الكود) · {code} الكود · {offer} وصف العرض · {days} صلاحية الكود · {register} دعوة التسجيل</label>
-      <textarea id="rp-msg" rows="7"></textarea>
-      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.4rem"><button class="small gray" type="button" onclick="Admin.rpResetMsg()">↺ النص الذكي الافتراضي</button><button class="small gold" type="button" onclick="Admin.saveRepeat()">💾 حفظ</button><small id="rp-saved" style="color:var(--ok);font-weight:700"></small></div>
+      <label class="hint" style="margin:.6rem 0 .3rem">نص الرسالة — العناصر بين الأقواس <b dir="ltr">{ }</b> تُملأ تلقائياً لكل زبون ولا يمكن تعديلها، وتستطيع تعديل بقية النص كما تشاء.</label>
+      <div id="rp-msg" class="rp-ed" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="false"></div>
+      <div class="hint" style="margin:.5rem 0 .2rem">إدراج عنصر تلقائي:</div>
+      <div id="rp-toks" style="display:flex;gap:.35rem;flex-wrap:wrap"></div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.6rem"><button class="small gray" type="button" onclick="Admin.rpCancel()">↶ إلغاء التعديل</button><button class="small gold" type="button" onclick="Admin.saveRepeat()">💾 حفظ</button><small id="rp-saved" style="color:var(--ok);font-weight:700"></small></div>
+      <div class="hint" style="margin:.8rem 0 .2rem">معاينة الرسالة لزبون <small>(الزبون والمنتج يُختاران لكل صف في الجدول أدناه، وهنا تعاين كيف تصل رسالته)</small>:</div>
+      <select id="rp-pv" onchange="Admin.rpPreview()"></select>
+      <div id="rp-prev" class="rp-prev"></div>
     </div>
     <div class="stat" id="rp-kpi"></div>
     <div class="card">
@@ -1599,20 +1604,20 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.43"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.43"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.43"></script>
+<script src="assets/js/ctl-help.js?v=1.89.44"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.44"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.44"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.43"></script>
-<script src="assets/js/admin-coname.js?v=1.89.43"></script>
-<script src="assets/js/admin-tplsite.js?v=1.89.43"></script>
+<script src="assets/js/admin-nav.js?v=1.89.44"></script>
+<script src="assets/js/admin-coname.js?v=1.89.44"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.44"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
-<script src="assets/js/saas-client.js?v=1.89.43"></script>
-<script src="assets/js/admin-stores.js?v=1.89.43"></script>
+<script src="assets/js/saas-client.js?v=1.89.44"></script>
+<script src="assets/js/admin-stores.js?v=1.89.44"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.43"></script>
+<script src="assets/js/admin-update.js?v=1.89.44"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -5561,7 +5566,47 @@ const Admin = {
   _rpPick: {}, _rpMode: "due",
   rpMode(m){ this._rpMode = m; this.renderRepeat(); },
   rpPick(ph, slug){ this._rpPick[ph] = slug; },
-  rpResetMsg(){ $f("rp-msg").value = this.repeatMsgDefault(); this.rpAuto(); },
+  /* محرّر الرسالة: العناصر {name} {product}… شرائح غير قابلة للتعديل (contenteditable=false)، وبقية النص يعدّله المستخدم */
+  _rpTok: [["name","الاسم"],["product","المنتج المختار"],["link","رابط صفحة المنتج"],["code","الكود"],["offer","وصف العرض"],["days","صلاحية الكود"],["register","دعوة التسجيل"]],
+  rpChip(t){ return '<span class="rp-tok" contenteditable="false" data-t="' + t + '">{' + t + '}</span>'; },
+  rpSet(text){
+    const names = this._rpTok.map(t=>t[0]), re = new RegExp("(\\{(?:" + names.join("|") + ")\\})");
+    $f("rp-msg").innerHTML = String(text || "").split(re).map(p=>{ const m = /^\{(\w+)\}$/.exec(p); return m && names.includes(m[1]) ? this.rpChip(m[1]) : PB.esc(p); }).join("");
+  },
+  rpGet(){
+    const ed = $f("rp-msg"); let out = "";
+    const walk = n=>n.childNodes.forEach(c=>{
+      if(c.nodeType === 3) out += c.data;
+      else if(c.nodeName === "BR") out += "\n";
+      else if(c.classList && c.classList.contains("rp-tok")) out += "{" + c.dataset.t + "}";
+      else if(/^(DIV|P)$/.test(c.nodeName)){ if(out && !out.endsWith("\n")) out += "\n"; walk(c); }
+      else walk(c);
+    });
+    walk(ed); return out.replace(/\u200b/g, "").replace(/\n+$/, "");
+  },
+  rpInsert(t){
+    const ed = $f("rp-msg"); ed.focus(); const sel = window.getSelection();
+    if(!sel.rangeCount || !ed.contains(sel.anchorNode)){ const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); }
+    document.execCommand("insertHTML", false, this.rpChip(t) + "&#8203;"); this.rpAuto(); this.rpPreview();
+  },
+  rpBindEditor(){
+    const ed = $f("rp-msg"); if(!ed || ed._rb) return; ed._rb = 1;
+    ed.addEventListener("keydown", e=>{ if(e.key === "Enter"){ e.preventDefault(); document.execCommand("insertLineBreak"); } });
+    ed.addEventListener("paste", e=>{ e.preventDefault(); document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain")); });
+    ed.addEventListener("drop", e=>e.preventDefault());
+    $f("rp-toks").innerHTML = this._rpTok.map(t=>'<button class="small gray" type="button" onclick="Admin.rpInsert(\'' + t[0] + '\')" title="' + t[1] + '"><span dir="ltr">{' + t[0] + '}</span> ' + t[1] + '</button>').join("");
+  },
+  /* إلغاء التعديل: يعيد كل الحقول إلى آخر ما حُفظ بزر «حفظ» (أو عند فتح الصفحة) */
+  rpCancel(){
+    const S = this._rpSnap || this.repeat || this.repeatDefaults(); clearTimeout(this._rpT);
+    $f("rp-min").value = S.minDays; $f("rp-max").value = S.maxDays; $f("rp-code").value = S.code; $f("rp-days").value = S.validDays; $f("rp-type").value = S.type; $f("rp-value").value = S.value; $f("rp-invite").checked = S.invite !== false; this.rpSet(S.message);
+    this.saveRepeat(true); this.rpPreview(); toast("↶ أُلغي التعديل");
+  },
+  rpPreview(){
+    const sel = $f("rp-pv"), box = $f("rp-prev"); if(!sel || !box) return;
+    const c = this.repeatCandidates(true).concat(this.repeatCandidates(false)).find(x=>x.ph === sel.value);
+    box.textContent = c ? this.repeatText(c, "BACK-XXXXXX", this.rpGet()) : "لا يوجد زبائن بعد لمعاينة الرسالة.";
+  },
   rpAuto(){ clearTimeout(this._rpT); this._rpT = setTimeout(()=>this.saveRepeat(true), 1400); },
   repeatOffer(R){ return R.type === "freeship" ? "توصيل مجاني على طلبك" : R.type === "fixed" ? ("خصم " + Number(R.value).toLocaleString("fr-DZ") + " دج") : ("خصم " + Number(R.value) + "%"); },
   /* زبائن سُلّم لهم طلب قبل minDays..maxDays يوماً، ولا طلب أحدث بعده، وليسوا في القائمة السوداء، ولم يُراسَلوا خلال 45 يوماً */
@@ -5587,7 +5632,8 @@ const Admin = {
   },
   renderRepeat(){
     const R = this.repeat || this.repeatDefaults(); if(!$f("rp-min")) return;
-    if(!this._rpFilled){ $f("rp-min").value = R.minDays; $f("rp-max").value = R.maxDays; $f("rp-code").value = R.code; $f("rp-days").value = R.validDays; $f("rp-type").value = R.type; $f("rp-value").value = R.value; $f("rp-invite").checked = R.invite !== false; $f("rp-msg").value = R.message; this._rpFilled = true; }
+    if(!this._rpFilled){ $f("rp-min").value = R.minDays; $f("rp-max").value = R.maxDays; $f("rp-code").value = R.code; $f("rp-days").value = R.validDays; $f("rp-type").value = R.type; $f("rp-value").value = R.value; $f("rp-invite").checked = R.invite !== false; this.rpSet(R.message); this._rpSnap = JSON.parse(JSON.stringify(R)); this._rpFilled = true; }
+    this.rpBindEditor();
     const q = ($f("rp-search").value || "").trim().toLowerCase(), all = this._rpMode === "all";
     $f("rp-m-due").className = "small " + (all ? "gray" : "blue"); $f("rp-m-all").className = "small " + (all ? "blue" : "gray");
     const due = this.repeatCandidates(false);
@@ -5598,6 +5644,7 @@ const Admin = {
     const opts = sel=>prods.map(p=>'<option value="' + PB.esc(p.slug) + '"' + (p.slug === sel ? " selected" : "") + '>' + PB.esc(p.title) + '</option>').join("");
     $f("rp-table").innerHTML = cs.length ? '<tr class="hd"><th>الزبون</th><th>المنتج (يمكن تغييره)</th><th>منذ</th><th>طلباته</th><th></th></tr>' + cs.map(c=>'<tr><td class="t"><b>' + PB.esc(c.name) + '</b> <small dir="ltr" style="color:#999">' + PB.esc(c.phone) + '</small>' + (c.sentAt ? '<br><small style="color:var(--ok)">راسلتَه منذ ' + Math.floor((Date.now() - c.sentAt) / 86400000) + ' يوم</small>' : "") + '</td><td data-l="المنتج"><select onchange="Admin.rpPick(\'' + c.ph + '\',this.value)" style="min-width:150px">' + opts(this._rpPick[c.ph] || c.slug) + '</select></td><td data-l="منذ">' + c.days + ' يوم</td><td data-l="طلباته">' + c.orders + '</td><td class="act"><button class="small blue" type="button" onclick="Admin.sendRepeat(\'' + c.ph + '\')">💬 واتساب</button>' + (all ? "" : '<button class="small gray" type="button" onclick="Admin.skipRepeat(\'' + c.ph + '\')">تجاهل</button>') + '</td></tr>').join("")
       : "<tr><td style='text-align:center;padding:1.5rem;color:#999'>" + (all ? "لا يوجد زبائن مُسلَّمة طلباتهم بعد" : "لا يوجد زبائن مرشّحون الآن — يظهرون بعد مرور " + R.minDays + " يوماً على تسليم طلبهم دون طلب جديد، أو اعرض «كل من اشترى»") + "</td></tr>";
+    const pv = $f("rp-pv"); if(pv){ const keep = pv.value, seen = {}, list = [].concat(cs, this.repeatCandidates(true)).filter(c=>!seen[c.ph] && (seen[c.ph] = 1)).slice(0, 80); pv.innerHTML = list.map(c=>'<option value="' + PB.esc(c.ph) + '"' + (c.ph === keep ? " selected" : "") + '>' + PB.esc((c.name || "زبون") + " — " + c.phone + " — " + c.product) + '</option>').join(""); this.rpPreview(); }
     this.setBadge("nb-repeat", due.length);
   },
   /* كود شخصي لهذا الزبون (هاتفه فقط، مرة واحدة، صلاحية محدودة) — يتطلب خلفية Supabase أو PHP؛ وإلا يُستعمل الكود العام المشترك */
@@ -5611,9 +5658,9 @@ const Admin = {
     if(res === null) throw new Error("تعذّر إنشاء الكود — تأكد من تسجيل دخولك أو تواصل مع الدعم");
     return code;
   },
-  repeatText(c, code){
+  repeatText(c, code, msgOverride){
     const R = this.repeat || this.repeatDefaults(), slug = this._rpPick[c.ph] || c.slug, pr = this.products.find(p=>p.slug === slug), title = pr ? pr.title : c.product, o = this.siteOrigin();
-    let msg = String(R.message || this.repeatMsgDefault()).replace(/https?:\/\/[^\s\/]+\/?\s*$/, "{link}");   // رسالة قديمة تنتهي برابط الرئيسية العاري ⟵ رابط المنتج تلقائياً
+    let msg = String(msgOverride != null ? msgOverride : (R.message || this.repeatMsgDefault())).replace(/https?:\/\/[^\s\/]+\/?\s*$/, "{link}");   // رسالة قديمة تنتهي برابط الرئيسية العاري ⟵ رابط المنتج تلقائياً
     const hasReg = msg.includes("{register}") || msg.includes("?register");
     const cd = String(code || R.code || "").toUpperCase(), link = slug ? (o + "/p/" + slug + "/" + (cd ? "?code=" + encodeURIComponent(cd) : "")) : (o + "/");
     msg = msg.replace(/\{name\}/g, (c.name||"").split(" ")[0]).replace(/\{product\}/g, title).replace(/\{link\}/g, link).replace(/\{code\}/g, cd).replace(/\{offer\}/g, this.repeatOffer(R)).replace(/\{days\}/g, R.validDays).replace(/\{register\}/g, R.invite === false ? "" : this.registerLine());
@@ -5636,13 +5683,13 @@ const Admin = {
   skipRepeat(ph){ const s = this.repeatSent(); s[ph] = Date.now(); localStorage.setItem("alyssum_repeat_sent", JSON.stringify(s)); this.renderRepeat(); },
   async saveRepeat(silent){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    const R = { minDays: Math.max(1, n("rp-min", 21)), maxDays: Math.max(1, n("rp-max", 90)), code: $f("rp-code").value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, ""), validDays: Math.max(1, n("rp-days", 14)), type: $f("rp-type").value, value: n("rp-value", 0), invite: $f("rp-invite").checked, message: $f("rp-msg").value };
+    const R = { minDays: Math.max(1, n("rp-min", 21)), maxDays: Math.max(1, n("rp-max", 90)), code: $f("rp-code").value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, ""), validDays: Math.max(1, n("rp-days", 14)), type: $f("rp-type").value, value: n("rp-value", 0), invite: $f("rp-invite").checked, message: this.rpGet() };
     if(R.type !== "freeship" && R.value <= 0){ if(!silent) toast("أدخل قيمة الخصم"); return }
     if(!R.code) R.code = R.type === "freeship" ? "BACKSHIP" : ("BACK" + R.value);        // يُولَّد تلقائياً
     try{
       const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(R, null, 2))));
       const res = await GH.putFile("assets/data/repeat.json", b64, this.repeatSha, "إعدادات إعادة الشراء عبر لوحة التحكم");
-      this.repeatSha = res && res.content ? res.content.sha : undefined; this.repeat = R;
+      this.repeatSha = res && res.content ? res.content.sha : undefined; this.repeat = R; if(!silent) this._rpSnap = JSON.parse(JSON.stringify(R));
       const mark = ()=>{ const el = $f("rp-saved"); if(el){ el.textContent = "✓ حُفظ تلقائياً"; setTimeout(()=>{ el.textContent = ""; }, 3000); } };
       if(this.personalPromoBackend()){ this.renderRepeat(); mark(); if(!silent) toast("✅ حُفظت الإعدادات — لكل زبون يُنشأ كود شخصي يُستعمل مرة واحدة عند الضغط على «واتساب»"); return }
       /* بلا خلفية: كود عام مشترك يُنشر في أكواد الخصم بصلاحية تنتهي بعد validDays من اليوم (غير شخصي) */
