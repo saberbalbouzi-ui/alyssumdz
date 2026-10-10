@@ -12,7 +12,7 @@
   const CST = { lead: "محتمل", active: "نشط", suspended: "موقوف", churned: "مفقود" };
   const DST = { none: "—", requested: "مطلوب", dns_ready: "DNS جاهز", connected: "مربوط", rejected: "مرفوض" };
   const DMODE = { platform: "دومين المنصة", own: "دومين خاص", request: "دومين جديد مطلوب" };
-  const TABS = { home: "نظرة عامة", inbox: "الطلبات", sites: "المواقع", customers: "الزبائن", stats: "التحليلات", settings: "الإعدادات" };
+  const TABS = { home: "نظرة عامة", inbox: "الطلبات", sites: "المواقع", customers: "الزبائن", subs: "الاشتراكات والإغلاق", api: "إعدادات API", outbox: "الإشعارات الصادرة", stats: "التحليلات", settings: "الإعدادات" };
   const CANNED = [
     ["تم الاستلام", "مرحباً، استلمنا طلبك وسنعالجه في أقرب وقت. شكراً لثقتك."],
     ["نحتاج معلومات", "لنتابع طلبك نحتاج منك بعض المعلومات الإضافية. هل يمكنك تزويدنا بالتفاصيل؟"],
@@ -21,7 +21,7 @@
     ["DNS غير صحيح", "راجعنا إعدادات DNS لدومينك ولم تكتمل بعد. تأكد من إضافة السجلات المعروضة في صفحة الدومين ثم اضغط «تحقق من الدومين»، وقد يستغرق الانتشار حتى 24 ساعة."]
   ];
 
-  const S = { tab: "home", tk: [], si: [], cu: [], stats: null, days: 30, sel: null, msgs: {}, f: { q: "", st: "active", kind: "", pr: "" }, sv: "board", known: null, live: false, user: "", loading: false };
+  const S = { tab: "home", tk: [], si: [], cu: [], stats: null, days: 30, sel: null, msgs: {}, f: { q: "", st: "active", kind: "", pr: "" }, sv: "board", known: null, live: false, user: "", loading: false, v2: false, pl: [], set: {}, ob: [], dl: {}, s2: null, ai: {}, of: "pending", obKnown: null };
   let sb = null;
   const pref = () => { try { return Object.assign({ sound: true, desktop: false }, JSON.parse(localStorage.getItem("saas_prefs") || "{}")); } catch (e) { return { sound: true, desktop: false }; } };
   const setPref = p => { try { localStorage.setItem("saas_prefs", JSON.stringify(Object.assign(pref(), p))); } catch (e) { } };
@@ -53,6 +53,7 @@
     const un = S.tk.filter(t => !t.admin_read && t.status !== "resolved" && t.status !== "rejected").length;
     const b = $("bd-inbox"); b.hidden = !un; b.textContent = un;
     const rq = S.si.filter(s => s.status === "requested").length, bs = $("bd-sites"); bs.hidden = !rq; bs.textContent = rq;
+    const po = (S.ob || []).filter(x => x.status === "pending").length, bo = $("bd-outbox"); if (bo) { bo.hidden = !po; bo.textContent = po; }
     document.title = (un ? "(" + un + ") " : "") + "لوحة منصة أليسوم";
   }
   const setLive = on => { S.live = on; const e = $("live"); e.classList.toggle("on", on); e.lastElementChild.textContent = on ? "مباشر" : "تحديث دوري"; };
@@ -110,7 +111,7 @@
           else if (old[x.id].split("|")[0] !== String(x.last_customer_at) && !x.admin_read) ping("رد جديد من الزبون #" + x.num, x.subject, false, () => openTicket(x.id));
         });
       }
-      S.known = nk; badges();
+      S.known = nk; await loadExtra(); badges();
       if (S.tab === "home" || S.tab === "stats") await loadStats();
       render(true);
     } catch (e) { setLive(false); } finally { S.loading = false; }
@@ -125,10 +126,12 @@
     document.querySelectorAll(".nv").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
     $("ttl").textContent = TABS[tab]; if (tab === "home" || tab === "stats") await loadStats(); render();
   }
+  const v0 = () => $("view");
   function render(soft) {
     if (!$("view")) return;
     if (S.tab === "inbox") return inbox(soft);
-    const v = $("view"), keep = v.scrollTop; v.innerHTML = ({ home, sites, customers, stats: statsView, settings })[S.tab](); v.scrollTop = keep; wire();
+    if (soft) { const ae = document.activeElement; if (ae && v0().contains(ae) && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) return; }
+    const v = $("view"), keep = v.scrollTop; v.innerHTML = ({ home, sites, customers, subs, api, outbox, stats: statsView, settings })[S.tab](); v.scrollTop = keep; wire();
   }
 
   /* ── النظرة العامة ── */
@@ -260,7 +263,7 @@
   function siteModal(id) {
     const s = id ? byId(S.si, id) : { name: "", sub: "", origin: "", domain: "", domain_mode: "platform", domain_status: "none", status: "requested", plan: "", notes: "", customer_id: "" };
     if (!s) return; const tks = S.tk.filter(t => t.site_id === s.id).slice(0, 8);
-    modal('<h3>' + (id ? "الموقع: " + esc(s.name) : "موقع جديد") + '</h3><div class="fr"><div><label class="f">اسم الموقع</label><input data-f="name" value="' + esc(s.name) + '"></div><div><label class="f">الاسم على المنصة (sub)</label><input data-f="sub" dir="ltr" value="' + esc(s.sub || "") + '"></div><div><label class="f">عنوان اللوحة (origin)</label><input data-f="origin" dir="ltr" placeholder="https://name.alyssumdz.com" value="' + esc(s.origin || "") + '"></div><div><label class="f">الزبون</label><select data-f="customer_id"><option value="">—</option>' + S.cu.map(c => '<option value="' + c.id + '"' + (c.id === s.customer_id ? " selected" : "") + '>' + esc(c.name) + '</option>').join("") + '</select></div><div><label class="f">الحالة</label><select data-f="status">' + opts(SST, s.status) + '</select></div><div><label class="f">الخطة</label><input data-f="plan" value="' + esc(s.plan || "") + '" list="plans"></div><div><label class="f">نوع الدومين</label><select data-f="domain_mode">' + opts(DMODE, s.domain_mode) + '</select></div><div><label class="f">الدومين</label><input data-f="domain" dir="ltr" value="' + esc(s.domain || "") + '"></div><div><label class="f">حالة الدومين</label><select data-f="domain_status">' + opts(DST, s.domain_status) + '</select></div></div><label class="f">ملاحظات</label><textarea data-f="notes">' + esc(s.notes || "") + '</textarea>' +
+    modal('<h3>' + (id ? "الموقع: " + esc(s.name) : "موقع جديد") + '</h3><div class="fr"><div><label class="f">اسم الموقع</label><input data-f="name" value="' + esc(s.name) + '"></div><div><label class="f">الاسم على المنصة (sub)</label><input data-f="sub" dir="ltr" value="' + esc(s.sub || "") + '"></div><div><label class="f">عنوان اللوحة (origin)</label><input data-f="origin" dir="ltr" placeholder="https://name.alyssumdz.com" value="' + esc(s.origin || "") + '"></div><div><label class="f">الزبون</label><select data-f="customer_id"><option value="">—</option>' + S.cu.map(c => '<option value="' + c.id + '"' + (c.id === s.customer_id ? " selected" : "") + '>' + esc(c.name) + '</option>').join("") + '</select></div><div><label class="f">الحالة</label><select data-f="status">' + opts(SST, s.status) + '</select></div><div><label class="f">الخطة</label>' + (S.v2 && S.pl.length ? '<select data-f="plan">' + S.pl.map(p => '<option value="' + esc(p.plan) + '"' + (p.plan === (s.plan || "public") ? " selected" : "") + '>' + esc(p.label) + '</option>').join("") + '</select>' : '<input data-f="plan" value="' + esc(s.plan || "") + '" list="plans">') + '</div>' + (S.v2 ? '<div><label class="f">نمط API</label><select data-f="api_mode">' + opts(AMODE, s.api_mode || "shared") + '</select></div><div><label class="f">نهاية الاشتراك (اختياري)</label><input data-f="sub_ends_at" type="date" value="' + (s.sub_ends_at ? String(s.sub_ends_at).slice(0, 10) : "") + '"></div>' : "") + '<div><label class="f">نوع الدومين</label><select data-f="domain_mode">' + opts(DMODE, s.domain_mode) + '</select></div><div><label class="f">الدومين</label><input data-f="domain" dir="ltr" value="' + esc(s.domain || "") + '"></div><div><label class="f">حالة الدومين</label><select data-f="domain_status">' + opts(DST, s.domain_status) + '</select></div></div><label class="f">ملاحظات</label><textarea data-f="notes">' + esc(s.notes || "") + '</textarea>' +
       (id ? '<div class="sm mut" style="margin-top:.5rem">أُنشئ ' + fmt(s.created_at) + (s.activated_at ? " · فُعّل " + fmt(s.activated_at) : "") + (s.last_seen ? " · آخر نشاط " + fmt(s.last_seen) : "") + (s.version ? " · نسخة " + esc(s.version) : "") + '</div>' + (tks.length ? '<h3 style="margin-top:.8rem">طلبات الموقع</h3>' + tks.map(t => '<div class="tk" data-a="open" data-v="' + t.id + '" style="margin-bottom:5px"><div class="s">#' + t.num + " " + esc(t.subject) + '</div><div class="m">' + pill(t.status, ST[t.status]) + '<span>' + ago(t.created_at) + '</span></div></div>').join("") : "") : "") +
       '<div class="act" style="margin-top:1rem"><button class="btn" data-a="savesite" data-v="' + (id || "") + '">حفظ</button>' + (s.origin ? '<a class="btn g" target="_blank" rel="noopener" href="' + esc(s.origin) + '/admin.html">فتح لوحة الموقع</a>' : "") + '<button class="btn g" data-a="close">إغلاق</button></div>');
   }
@@ -268,6 +271,7 @@
     const m = $("mod"), g = {}; m.querySelectorAll("[data-f]").forEach(e => g[e.dataset.f] = e.value.trim());
     if (!g.name) return toast("اسم الموقع مطلوب", "", true);
     const row = { name: g.name, sub: g.sub ? g.sub.toLowerCase() : null, origin: g.origin ? g.origin.replace(/\/+$/, "").replace(/\/admin\.html$/, "").toLowerCase() : null, customer_id: g.customer_id || null, status: g.status, plan: g.plan || null, domain_mode: g.domain_mode, domain: g.domain || null, domain_status: g.domain_status, notes: g.notes };
+    if (S.v2) { row.api_mode = g.api_mode || "shared"; row.sub_ends_at = g.sub_ends_at ? new Date(g.sub_ends_at + "T23:59:59").toISOString() : null; }
     const r = id ? await sb.from("saas_sites").update(row).eq("id", id) : await sb.from("saas_sites").insert(row);
     if (r.error) return toast("تعذّر الحفظ", /duplicate|unique/i.test(r.error.message) ? "الاسم أو العنوان مستعمل لموقع آخر" : r.error.message, true);
     closeModal(); toast("تم الحفظ", ""); load();
@@ -332,15 +336,116 @@
       '<div class="card"><h3>كيف تصلك الطلبات؟</h3><p class="mut sm">لوحات الزبائن (ومنها لوحة أليسوم) ترسل طلباتها هنا مباشرة بدل واتساب: إنشاء موقع، حذف/إلغاء حذف، طلب دومين، ربط دومين خاص، والدعم الفني. كل طلب يُنشئ سجلاً ويصلك بإشعار فوري، وتردّ عليه من هنا فيصل الرد إلى لوحة الزبون.</p></div></div>';
   }
 
+
+  /* ── الاشتراكات وAPI والإشعارات الصادرة (تتطلب تحديث قاعدة البيانات v1.89.41) ── */
+  const NK = { warn: "تنبيه قبل الإغلاق", suspended: "إغلاق الموقع", reactivated: "إعادة التفعيل", deleting: "جدولة الحذف", delwarn: "تذكير بالحذف", deleted: "تم الحذف" };
+  const CHN = { email: "بريد", whatsapp: "واتساب" };
+  const OST = { pending: "بانتظار الإرسال", sent: "أُرسل", failed: "فشل", skipped: "متجاهَل" };
+  const AMODE = { shared: "API المنصة (عام)", own: "مفتاح خاص بالمشترك", off: "متوقف" };
+  const planOf = k => (S.pl || []).find(p => p.plan === (k || "public"));
+  const planLbl = k => { const p = planOf(k); return p ? p.label : (k || "عام"); };
+  const dleft = iso => iso ? Math.ceil((new Date(iso).getTime() - Date.now()) / 864e5) : null;
+  const dchip = iso => { const d = dleft(iso); if (d == null) return '<span class="mut">بلا إغلاق</span>'; return pill(d <= 1 ? "urgent" : d <= 7 ? "high" : "active", d <= 0 ? "منتهٍ" : "بعد " + d + " يوم") + ' <span class="sm mut">' + fmt(iso).split("،")[0] + '</span>'; };
+  const num = v => (v == null || v === "" ? null : Math.max(0, Math.round(Number(v))));
+  const infin = v => (v == null ? "∞" : v);
+  const v2off = () => '<div class="card"><h3>يلزم تحديث قاعدة البيانات</h3><p class="mut">شغّل الملف <span class="ltr">saas/schema.sql</span> من جديد في SQL Editor (آمن للتكرار) لتفعيل الاشتراكات وAPI والإشعارات الصادرة.</p></div>';
+  async function loadExtra() {
+    const R = await Promise.all([sb.from("saas_plans").select("*").order("sort"), sb.from("saas_settings").select("*"), sb.from("saas_outbox").select("*").order("id", { ascending: false }).limit(300), sb.rpc("saas_deadlines"), sb.rpc("saas_stats2"), sb.rpc("saas_ai_summary")]);
+    const [pl, se, ob, dl, s2, ai] = R; S.v2 = !(pl.error || se.error || ob.error); if (!S.v2) return;
+    S.pl = pl.data || []; S.set = {}; (se.data || []).forEach(x => { S.set[x.key] = x.value; });
+    S.ob = ob.data || []; S.dl = {}; (dl.data || []).forEach(x => { S.dl[x.id] = x.deadline; }); S.s2 = s2.error ? null : s2.data;
+    S.ai = {}; (ai.data || []).forEach(x => { (S.ai[x.site_id] = S.ai[x.site_id] || {})[x.kind] = x.n; });
+    const ids = new Set(S.ob.map(x => x.id));
+    if (S.obKnown) { const n = S.ob.filter(x => x.status === "pending" && !S.obKnown.has(x.id)).length; if (n) ping("إشعارات بانتظار الإرسال", n + " إشعار للزبائن (بريد/واتساب)", false, () => go("outbox")); }
+    S.obKnown = ids;
+    const last = (S.set.lifecycle || {}).last_run;
+    if (!S.lcBusy && (!last || Date.now() - new Date(last).getTime() > 6 * 36e5)) { S.lcBusy = true; runLifecycle(true).finally(() => { S.lcBusy = false; }); }
+  }
+  async function runLifecycle(auto) {
+    const r = await sb.rpc("saas_lifecycle_run"); if (r.error) { if (!auto) toast("تعذّر الفحص", r.error.message, true); return; }
+    const d = r.data || {}; if (!auto || d.suspended || d.queued) toast("تم الفحص", "أُغلق " + (d.suspended || 0) + " موقع · تنبيهات جديدة " + (d.warned || 0) + " · إشعارات في الصادر " + (d.queued || 0), !!d.suspended);
+    setTimeout(() => load(), 400);
+  }
+  function subs() {
+    if (!S.v2) return v2off();
+    const s2 = S.s2 || {}, lc = S.set.lifecycle || {}, nt = S.set.notify || { channels: ["email", "whatsapp"], country: "213" }, ch = nt.channels || [];
+    const rows = S.si.filter(x => x.status !== "deleted").map(x => ({ x, d: S.dl[x.id] })).sort((a, b) => (a.d ? new Date(a.d).getTime() : 9e15) - (b.d ? new Date(b.d).getTime() : 9e15));
+    return '<div class="grid kpis">' + kpi(s2.closing_7d || 0, "تُغلق خلال 7 أيام", (s2.closing_7d ? "var(--amb)" : "var(--grn)")) + kpi(s2.suspended || 0, "مواقع مغلقة", "var(--red)") + kpi(s2.pending_notices || 0, "إشعارات بانتظار الإرسال", "var(--blu)", "outbox") + kpi(S.pl.length, "خطط", "var(--vio)") + '</div>' +
+      '<div class="card" style="margin-top:12px"><div class="dh"><h3>الخطط (نوع الاشتراك)</h3><button class="btn s" data-a="newplan">إضافة خطة</button></div><div class="tw"><table><tr><th>الخطة</th><th>الاسم</th><th>إغلاق عند الخمول</th><th>مدة الاشتراك</th><th>رصيد API نص</th><th>رصيد API صور</th><th>السعر</th><th>مواقع</th><th></th></tr>' +
+      S.pl.map(p => '<tr><td class="ltr">' + esc(p.plan) + '</td><td class="b">' + esc(p.label) + '</td><td>' + (p.inactive_days ? p.inactive_days + " يوماً" : "—") + '</td><td>' + (p.period_days ? p.period_days + " يوماً" : "بلا انتهاء") + '</td><td>' + infin(p.text_credits) + '</td><td>' + infin(p.image_credits) + '</td><td>' + (p.price == null ? "—" : esc(p.price)) + '</td><td>' + S.si.filter(s => s.plan === p.plan && s.status !== "deleted").length + '</td><td><button class="btn g s" data-a="plan" data-v="' + esc(p.plan) + '">تعديل</button></td></tr>').join("") + '</table></div>' +
+      '<p class="mut sm" style="margin:.5rem 0 0">الخطة «عام» هي الحالية لكل المشتركين: تجريبية، وإن لم يُستعمل الموقع (فتح لوحة التحكم) خلال المدة المحددة يُغلق تلقائياً بعد تنبيهات مسبقة. الأرصدة المتروكة فارغة = بلا حدّ.</p></div>' +
+      '<div class="card" style="margin-top:12px"><h3>سياسة التنبيه والإغلاق</h3><div class="fr"><div><label class="f">أيام التنبيه قبل الإغلاق (مفصولة بفواصل)</label><input id="lc-warn" dir="ltr" value="' + esc((lc.warn_days || [7, 3, 1]).join(",")) + '"></div><div><label class="f">أيام التذكير قبل الحذف</label><input id="lc-dwarn" dir="ltr" value="' + esc((lc.delete_warn_days || [7, 1]).join(",")) + '"></div><div><label class="f">مفتاح الدولة لأرقام واتساب</label><input id="lc-cc" dir="ltr" value="' + esc(nt.country || "213") + '"></div></div>' +
+      '<div style="display:flex;gap:1rem;flex-wrap:wrap;margin:.6rem 0"><label style="display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="lc-email"' + (ch.indexOf("email") >= 0 ? " checked" : "") + '> إرسال بالبريد</label><label style="display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="lc-wa"' + (ch.indexOf("whatsapp") >= 0 ? " checked" : "") + '> إرسال بواتساب</label></div>' +
+      '<div class="act"><button class="btn" data-a="savelc">حفظ السياسة</button><button class="btn o" data-a="runlc">تشغيل الفحص الآن</button></div><div class="sm mut">آخر فحص: ' + (lc.last_run ? fmt(lc.last_run) : "لم يُشغَّل بعد") + ' — يعمل تلقائياً كل 6 ساعات ما دامت هذه الصفحة مفتوحة (ويمكن جدولته يومياً على الخادم). تُسجَّل الإشعارات في «الإشعارات الصادرة» ويُرسَل بواتساب/بريد عند الزبون المسجَّل لدينا.</div></div>' +
+      '<div class="card" style="margin-top:12px"><h3>المواقع وموعد الإغلاق</h3><div class="tw"><table><tr><th>الموقع</th><th>الزبون</th><th>الخطة</th><th>آخر استعمال</th><th>موعد الإغلاق</th><th>الحالة</th><th></th></tr>' +
+      rows.map(({ x, d }) => '<tr><td class="b">' + esc(x.name) + '</td><td>' + esc(custName(x.customer_id) || "—") + '</td><td><select data-sp="' + x.id + '" style="width:auto;padding:.2rem .5rem">' + S.pl.map(p => '<option value="' + esc(p.plan) + '"' + (p.plan === x.plan ? " selected" : "") + '>' + esc(p.label) + '</option>').join("") + '</select></td><td>' + (x.last_seen ? ago(x.last_seen) : "—") + '</td><td>' + (x.status === "active" || x.status === "provisioning" ? dchip(d) : "—") + '</td><td>' + pill(x.status, SST[x.status]) + (x.closed_reason ? ' <span class="sm mut">' + esc({ inactive: "خمول", expired: "انتهاء الاشتراك", manual: "إداري" }[x.closed_reason] || x.closed_reason) + '</span>' : "") + '</td><td style="white-space:nowrap">' +
+        (x.status === "suspended" ? '<button class="btn s" data-a="react" data-v="' + x.id + '">إعادة التفعيل</button>' : x.status === "active" ? '<button class="btn g s" data-a="ext" data-v="' + x.id + '">تمديد 30 يوماً</button> <button class="btn r s" data-a="closenow" data-v="' + x.id + '">إغلاق</button>' : "") + '</td></tr>').join("") + '</table></div></div>';
+  }
+  function planModal(key) {
+    const p = key ? planOf(key) : { plan: "", label: "", inactive_days: 30, period_days: null, text_credits: 30, image_credits: 3, price: null, note: "" }; if (!p) return;
+    modal('<h3>' + (key ? "خطة: " + esc(p.label) : "خطة جديدة") + '</h3><div class="fr"><div><label class="f">المعرّف (لاتيني)</label><input data-f="plan" dir="ltr" value="' + esc(p.plan) + '"' + (key ? " readonly" : "") + '></div><div><label class="f">الاسم المعروض</label><input data-f="label" value="' + esc(p.label) + '"></div><div><label class="f">إغلاق عند الخمول (أيام، فارغ = بلا)</label><input data-f="inactive_days" type="number" min="1" value="' + (p.inactive_days == null ? "" : p.inactive_days) + '"></div><div><label class="f">مدة الاشتراك (أيام، فارغ = بلا انتهاء)</label><input data-f="period_days" type="number" min="1" value="' + (p.period_days == null ? "" : p.period_days) + '"></div><div><label class="f">رصيد API للنص (فارغ = بلا حدّ)</label><input data-f="text_credits" type="number" min="0" value="' + (p.text_credits == null ? "" : p.text_credits) + '"></div><div><label class="f">رصيد API للصور (فارغ = بلا حدّ)</label><input data-f="image_credits" type="number" min="0" value="' + (p.image_credits == null ? "" : p.image_credits) + '"></div><div><label class="f">السعر</label><input data-f="price" type="number" min="0" value="' + (p.price == null ? "" : p.price) + '"></div></div><label class="f">ملاحظة</label><textarea data-f="note">' + esc(p.note || "") + '</textarea><div class="act" style="margin-top:1rem"><button class="btn" data-a="saveplan" data-v="' + esc(key || "") + '">حفظ</button>' + (key ? '<button class="btn r" data-a="delplan" data-v="' + esc(key) + '">حذف الخطة</button>' : "") + '<button class="btn g" data-a="close">إغلاق</button></div>');
+  }
+  async function savePlan(key) {
+    const g = {}; $("mod").querySelectorAll("[data-f]").forEach(e => { g[e.dataset.f] = e.value.trim(); });
+    if (!/^[a-z0-9_-]{1,30}$/.test(g.plan)) return toast("المعرّف غير صالح", "حروف لاتينية صغيرة وأرقام وشرطة فقط", true); if (!g.label) return toast("الاسم مطلوب", "", true);
+    const row = { plan: g.plan, label: g.label, inactive_days: num(g.inactive_days), period_days: num(g.period_days), text_credits: num(g.text_credits), image_credits: num(g.image_credits), price: g.price === "" ? null : Number(g.price), note: g.note };
+    const r = key ? await sb.from("saas_plans").update(row).eq("plan", key) : await sb.from("saas_plans").insert(row);
+    if (r.error) return toast("تعذّر الحفظ", /duplicate/i.test(r.error.message) ? "المعرّف مستعمل" : r.error.message, true); closeModal(); toast("تم الحفظ", ""); load();
+  }
+  async function saveLifecycle() {
+    const arr = v => String($(v).value).split(/[,،\s]+/).map(x => parseInt(x, 10)).filter(x => x > 0 && x < 400).sort((a, b) => b - a);
+    const ch = []; if ($("lc-email").checked) ch.push("email"); if ($("lc-wa").checked) ch.push("whatsapp");
+    const up = (key, value) => sb.from("saas_settings").upsert({ key, value, updated_at: new Date().toISOString() });
+    const a = await up("lifecycle", Object.assign({}, S.set.lifecycle || {}, { warn_days: arr("lc-warn"), delete_warn_days: arr("lc-dwarn") })), b = await up("notify", { channels: ch, country: ($("lc-cc").value || "213").replace(/\D/g, "") || "213" });
+    if (a.error || b.error) return toast("تعذّر الحفظ", (a.error || b.error).message, true); toast("تم حفظ السياسة", ""); load();
+  }
+  /* ── API ── */
+  function api() {
+    if (!S.v2) return v2off();
+    const mask = t => (t ? "••••" + String(t).slice(-6) : "—");
+    return '<div class="card"><h3>كيف تعمل واجهة API؟</h3><p class="sm" style="margin:.2rem 0 .5rem"><b>الموصى به: API واحد عام للجميع.</b> مفتاح المزوّد (Alyssum API) يبقى سراً على الخادم داخل الوسيط <span class="ltr">ai</span> ولا يصل إلى أي موقع؛ ولكل موقع <b>رمز خاص ورصيد</b> يُخصم منه عند كل استعمال (نص وصور بعدّادين منفصلين) وتتوقف الخدمة تلقائياً بانتهاء الرصيد أو إغلاق الموقع أو انتهاء الاشتراك. فوائد النمط العام: تكلفة مقيسة لكل مشترك، تغيير المزوّد أو النموذج مرة واحدة للجميع، ولا مفاتيح مبعثرة عند الزبائن.</p>' +
+      '<p class="sm mut" style="margin:0"><b>مفتاح خاص بالمشترك</b> مناسب فقط لمن يدفع تكلفة استعماله بنفسه ويضع مفتاحه في لوحته (يخرج من حساب الرصيد هنا). <b>متوقف</b> يعطّل الخدمة لذلك الموقع. الأرصدة الافتراضية تأتي من خطة الموقع، وتُشحن يدوياً من هنا.</p>' +
+      '<p class="sm mut" style="margin:.4rem 0 0">الاستهلاك الذكي في لوحات الزبائن يمرّ عبر هذا الوسيط بعد ربطه (المرحلة التالية)؛ الإعدادات والأرصدة جاهزة الآن.</p></div>' +
+      '<div class="card" style="margin-top:12px"><h3>إعدادات كل مشترك</h3><div class="tw"><table><tr><th>الموقع</th><th>الخطة</th><th>النمط</th><th>الرمز</th><th>رصيد النص</th><th>رصيد الصور</th><th>استهلاك 30 يوماً</th><th></th></tr>' +
+      S.si.filter(x => x.status !== "deleted").map(x => { const u = S.ai[x.id] || {}; return '<tr><td class="b">' + esc(x.name) + '</td><td>' + esc(planLbl(x.plan)) + '</td><td><select data-am="' + x.id + '" style="width:auto;padding:.2rem .5rem">' + opts(AMODE, x.api_mode) + '</select></td><td class="ltr"><span class="mut">' + mask(x.api_token) + '</span> <button class="btn g s" data-a="cptok" data-v="' + x.id + '">نسخ</button> <button class="btn o s" data-a="rottok" data-v="' + x.id + '">تدوير</button></td><td>' + infin(x.ai_text_left) + '</td><td>' + infin(x.ai_image_left) + '</td><td>نص ' + (u.text || 0) + ' · صور ' + (u.image || 0) + '</td><td style="white-space:nowrap"><button class="btn s" data-a="topup" data-v="' + x.id + '">شحن</button> <button class="btn g s" data-a="resetcr" data-v="' + x.id + '">رصيد الخطة</button></td></tr>'; }).join("") + '</table></div></div>';
+  }
+  function topupModal(id) {
+    const x = byId(S.si, id); if (!x) return;
+    modal('<h3>شحن رصيد API: ' + esc(x.name) + '</h3><p class="mut sm">الرصيد الحالي: نص ' + infin(x.ai_text_left) + ' · صور ' + infin(x.ai_image_left) + ' (الرصيد غير المحدود لا يتأثر بالشحن)</p><div class="fr"><div><label class="f">إضافة رصيد نص</label><input data-f="t" type="number" value="0"></div><div><label class="f">إضافة رصيد صور</label><input data-f="i" type="number" value="0"></div></div><div class="act" style="margin-top:1rem"><button class="btn" data-a="dotopup" data-v="' + id + '">شحن</button><button class="btn g" data-a="close">إغلاق</button></div>');
+  }
+  /* ── الإشعارات الصادرة ── */
+  function outbox() {
+    if (!S.v2) return v2off();
+    const cnt = k => S.ob.filter(x => x.status === k).length, L = S.ob.filter(x => S.of === "all" || x.status === S.of);
+    const tp = S.set.templates || {}, tk = S.tk0 || "warn", t = tp[tk] || { subject: "", body: "" };
+    return '<div class="top" style="margin-bottom:.7rem"><div class="seg">' + [["pending", "بانتظار الإرسال"], ["sent", "أُرسل"], ["failed", "فشل"], ["all", "الكل"]].map(([k, l]) => '<button class="' + (S.of === k ? "on" : "") + '" data-a="of" data-v="' + k + '">' + l + (k !== "all" ? " (" + cnt(k) + ")" : "") + '</button>').join("") + '</div><span style="flex:1"></span><button class="btn" data-a="autosend">إرسال تلقائي للمعلّق</button></div>' +
+      '<div class="card">' + (L.length ? L.map(x => '<div class="tk" style="cursor:default;margin-bottom:8px"><div class="s">' + esc(x.subject || NK[x.kind] || x.kind) + '</div><div class="m">' + pill(x.status === "sent" ? "resolved" : x.status === "failed" ? "urgent" : "open", OST[x.status]) + pill("none", CHN[x.channel]) + pill("none", NK[x.kind] || x.kind) + '<span class="ltr">' + esc(x.to_addr) + '</span><span>' + esc(siteName(x.site_id)) + '</span><span>' + ago(x.created_at) + '</span></div><div class="sm mut" style="white-space:pre-wrap;margin:.4rem 0">' + esc(x.body) + '</div>' + (x.error ? '<div class="sm" style="color:#fca5a5">' + esc(x.error) + '</div>' : "") +
+        '<div class="act" style="margin:.3rem 0 0">' + (x.status !== "sent" ? (x.channel === "whatsapp" ? '<a class="btn s" target="_blank" rel="noopener" data-a="obsent" data-v="' + x.id + '" href="https://wa.me/' + esc(x.to_addr) + '?text=' + encodeURIComponent(x.body) + '">فتح واتساب وتعليم «أُرسل»</a>' : '<a class="btn s" data-a="obsent" data-v="' + x.id + '" href="mailto:' + esc(x.to_addr) + '?subject=' + encodeURIComponent(x.subject) + '&body=' + encodeURIComponent(x.body) + '">فتح البريد وتعليم «أُرسل»</a>') + ' <button class="btn g s" data-a="obskip" data-v="' + x.id + '">تجاهل</button>' : "") + (x.status === "failed" ? ' <button class="btn o s" data-a="obretry" data-v="' + x.id + '">إعادة المحاولة</button>' : "") + ' <button class="btn r s" data-a="obdel" data-v="' + x.id + '">حذف</button></div></div>').join("") : '<div class="empty">لا إشعارات في هذه القائمة</div>') + '</div>' +
+      '<div class="card" style="margin-top:12px"><h3>نصوص الرسائل</h3><p class="mut sm" style="margin:0 0 .4rem">العناصر المتاحة: <span class="ltr">{name} {site} {days} {date} {url} {reason} {plan}</span></p><div class="fr"><div><label class="f">الرسالة</label><select id="tpk">' + opts(NK, tk) + '</select></div></div><label class="f">العنوان (للبريد)</label><input id="tps" value="' + esc(t.subject) + '"><label class="f">النص</label><textarea id="tpb" rows="6">' + esc(t.body) + '</textarea><div class="act"><button class="btn" data-a="savetpl">حفظ النص</button></div></div>' +
+      '<div class="card" style="margin-top:12px"><h3>الإرسال التلقائي</h3><p class="mut sm" style="margin:0">زر «إرسال تلقائي» يستدعي الدالة <span class="ltr">saas-notify</span> (بريد عبر Resend وواتساب عبر Cloud API) بعد نشرها وضبط أسرارها (<span class="ltr">saas/functions/saas-notify/index.ts</span>). قبل ذلك أرسل الرسائل بنقرة من الأزرار أعلاه: يفتح واتساب/البريد برسالة جاهزة.</p></div>';
+  }
+  async function obSet(id, patch) { const r = await sb.from("saas_outbox").update(patch).eq("id", id); if (r.error) toast("تعذّر التحديث", r.error.message, true); await load(); }
+  async function autoSend() {
+    const r = await sb.functions.invoke("saas-notify", { body: {} });
+    if (r.error) return toast("تعذّر الإرسال التلقائي", "الدالة غير منشورة أو غير مضبوطة بعد.", true);
+    const d = r.data || {}; toast("الإرسال التلقائي", "أُرسل " + (d.sent || 0) + " · فشل " + (d.failed || 0) + " · متروك " + (d.skipped || 0) + (d.skipped ? " (لم يُضبط مزوّد البريد/واتساب)" : ""), !!d.failed); load();
+  }
+
   /* ── النوافذ والأحداث ── */
   function modal(html) { closeModal(); const d = document.createElement("div"); d.className = "mbg"; d.id = "mbg"; d.innerHTML = '<div class="mod" id="mod">' + html + '</div><datalist id="plans"><option>free</option><option>basic</option><option>pro</option><option>owner</option></datalist>'; d.addEventListener("mousedown", e => { if (e.target === d) closeModal(); }); d.onclick = onClick; document.body.appendChild(d); }
   function closeModal() { const m = $("mbg"); if (m) m.remove(); }
   document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
   function wire() {
-    const v = $("view"); v.onclick = onClick;
+    const v = $("view"); v.onclick = onClick; v.onchange = onChange;
     const cq = $("cq"); if (cq) { const ap = () => { S.cq = cq.value; const q = cq.value.trim().toLowerCase(); v.querySelectorAll("tr[data-n]").forEach(r => r.hidden = !!q && r.dataset.n.indexOf(q) < 0); }; cq.oninput = ap; ap(); }
     const ps = $("psound"); if (ps) ps.onchange = () => setPref({ sound: ps.checked });
     const pd = $("pdesk"); if (pd) pd.onchange = async () => { if (pd.checked) { const r = await Notification.requestPermission(); if (r !== "granted") { pd.checked = false; setPref({ desktop: false }); return; } } setPref({ desktop: pd.checked }); };
+  }
+  async function onChange(e) {
+    const sp = e.target.closest("[data-sp]"), am = e.target.closest("[data-am]"), tk = e.target.id === "tpk";
+    if (sp) { const r = await sb.from("saas_sites").update({ plan: sp.value }).eq("id", sp.dataset.sp); if (r.error) toast("تعذّر التغيير", r.error.message, true); else toast("تم تغيير الخطة", ""); return load(); }
+    if (am) { const r = await sb.from("saas_sites").update({ api_mode: am.value }).eq("id", am.dataset.am); if (r.error) toast("تعذّر التغيير", r.error.message, true); else toast("تم تغيير نمط API", ""); return load(); }
+    if (tk) { S.tk0 = e.target.value; render(); }
   }
   async function onClick(e) {
     const el = e.target.closest("[data-a]"); if (!el) return; const a = el.dataset.a, v = el.dataset.v; if (el.tagName === "A" && el.getAttribute("href") === "#") e.preventDefault();
@@ -361,6 +466,27 @@
       el.disabled = true; const ok = await sendReply(t, txt, $("rint").checked, $("rst").value); el.disabled = false;
       if (ok) { $("rtxt").value = ""; await load(); await fetchMsgs(t.id); detail(); } return;
     }
+    if (a === "newplan") return planModal("");
+    if (a === "plan") return planModal(v);
+    if (a === "saveplan") return savePlan(v);
+    if (a === "delplan") { if (S.si.some(s => s.plan === v)) return toast("لا يمكن الحذف", "توجد مواقع على هذه الخطة", true); if (!confirm("حذف الخطة؟")) return; const r = await sb.from("saas_plans").delete().eq("plan", v); if (r.error) return toast("تعذّر الحذف", r.error.message, true); closeModal(); return load(); }
+    if (a === "savelc") return saveLifecycle();
+    if (a === "runlc") { el.disabled = true; await runLifecycle(false); el.disabled = false; return; }
+    if (a === "ext") { const x = byId(S.si, v); const base = Math.max(Date.now(), x.extended_until ? new Date(x.extended_until).getTime() : 0, S.dl[v] ? new Date(S.dl[v]).getTime() : 0); if (await updSite(v, { extended_until: new Date(base + 30 * 864e5).toISOString() })) toast("تم التمديد", "30 يوماً إضافية"); return load(); }
+    if (a === "closenow") { const x = byId(S.si, v); if (!confirm("إغلاق موقع «" + x.name + "» الآن؟ يصل الزبون إشعار.")) return; await updSite(v, { status: "suspended", closed_reason: "manual" }); return load(); }
+    if (a === "react") { const x = byId(S.si, v), p = planOf(x.plan); await updSite(v, { status: "active", closed_reason: null, extended_until: new Date(Date.now() + ((p && p.inactive_days) || 30) * 864e5).toISOString() }); return load(); }
+    if (a === "cptok") { const x = byId(S.si, v); try { await navigator.clipboard.writeText(x.api_token || ""); toast("تم النسخ", "رمز API للموقع " + x.name); } catch (er) { toast("تعذّر النسخ", "", true); } return; }
+    if (a === "rottok") { const x = byId(S.si, v); if (!confirm("تدوير رمز API لموقع «" + x.name + "»؟ سيتوقف الرمز القديم.")) return; const r = await sb.rpc("saas_rotate_token", { p_site: v }); if (r.error) toast("تعذّر", r.error.message, true); else toast("تم تدوير الرمز", ""); return load(); }
+    if (a === "topup") return topupModal(v);
+    if (a === "dotopup") { const g = {}; $("mod").querySelectorAll("[data-f]").forEach(e2 => { g[e2.dataset.f] = parseInt(e2.value, 10) || 0; }); const r = await sb.rpc("saas_ai_topup", { p_site: v, p_text: g.t, p_image: g.i }); if (r.error) return toast("تعذّر الشحن", r.error.message, true); closeModal(); toast("تم الشحن", ""); return load(); }
+    if (a === "resetcr") { const x = byId(S.si, v), p = planOf(x.plan); if (!p || !confirm("إعادة رصيد «" + x.name + "» إلى رصيد خطته؟")) return; await updSite(v, { ai_text_left: p.text_credits, ai_image_left: p.image_credits }); return load(); }
+    if (a === "of") { S.of = v; return render(); }
+    if (a === "obsent") { obSet(v, { status: "sent", sent_at: new Date().toISOString() }); return; }
+    if (a === "obskip") return obSet(v, { status: "skipped" });
+    if (a === "obretry") return obSet(v, { status: "pending", error: null });
+    if (a === "obdel") { if (!confirm("حذف هذا الإشعار؟")) return; const r = await sb.from("saas_outbox").delete().eq("id", v); if (r.error) toast("تعذّر", r.error.message, true); return load(); }
+    if (a === "autosend") { el.disabled = true; await autoSend(); el.disabled = false; return; }
+    if (a === "savetpl") { const k = $("tpk").value, tp = Object.assign({}, S.set.templates || {}); tp[k] = { subject: $("tps").value, body: $("tpb").value }; const r = await sb.from("saas_settings").upsert({ key: "templates", value: tp, updated_at: new Date().toISOString() }); if (r.error) return toast("تعذّر الحفظ", r.error.message, true); toast("تم حفظ النص", ""); return load(); }
     if (a === "testnotif") return ping("إشعار تجريبي", "هكذا تصلك الطلبات الجديدة.");
     if (a === "chpw") { const pw = $("npw").value; if (pw.length < 8) return toast("كلمة المرور قصيرة", "8 أحرف على الأقل", true); const r = await sb.auth.updateUser({ password: pw }); if (r.error) return toast("تعذّر التغيير", r.error.message, true); $("npw").value = ""; return toast("تم تغيير كلمة المرور", ""); }
   }

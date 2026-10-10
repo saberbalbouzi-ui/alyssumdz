@@ -1,3 +1,4 @@
+// ملاحظة (v1.89.41): الرصيد والرموز صارا في جدول saas_sites (saas/schema.sql) وتديرهما لوحة المزوّد (saas/index.html ← API)؛ ai-credits.sql القديم لم يعد مطلوباً.
 // وسيط الذكاء الاصطناعي لمواقع SaaS: يستقبل طلب موقع (بتوكنه)، يخصم من رصيده، يستدعي Gemini بمفتاحك أنت، ويعيد النتيجة.
 // يُنشر في مشروع Supabase الخاص بك (مزوّد الخدمة): Edge Functions ← Deploy a new function ← الاسم: ai ← الصق هذا الكود ← أطفئ Verify JWT ← Deploy.
 // الأسرار (Edge Functions ← Secrets): GEMINI_API_KEY (إلزامي)، AI_TEXT_MODELS و AI_IMAGE_MODELS (اختياريان: قوائم مفصولة بفواصل).
@@ -37,7 +38,7 @@ Deno.serve(async (req) => {
   const cfg: Record<string, unknown> = {};
   for (const k of CFG_KEYS) if (b.cfg && k in b.cfg) cfg[k] = b.cfg[k];
 
-  const ch = await rpc("ai_charge", { p_token: token, p_kind: kind });
+  const ch = await rpc("saas_ai_charge", { p_token: token, p_kind: kind });
   if (!ch) return json({ error: "billing_unavailable" }, 502);
   if (!ch.ok) return json({ error: ch.reason, message: MSG[ch.reason] ?? "مرفوض" }, ch.reason === "unknown_token" ? 401 : 402);
 
@@ -52,6 +53,6 @@ Deno.serve(async (req) => {
       last = r.status;
     } catch { last = 504; }
   }
-  await rpc("ai_refund", { p_token: token, p_kind: kind });            // لا يُحاسَب الموقع على طلب لم ينجح
+  await rpc("saas_ai_refund", { p_token: token, p_kind: kind });            // لا يُحاسَب الموقع على طلب لم ينجح
   return json({ error: "upstream_failed", status: last, message: "تعذّر الذكاء الاصطناعي مؤقتاً — لم يُخصم من رصيدك" }, 502);
 });

@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>لوحة منصة أليسوم</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314532d'/%3E%3Cpath d='M9 22l7-13 7 13' fill='none' stroke='%2386f06a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="app.css?v=1">
+<link rel="stylesheet" href="app.css?v=2">
 </head>
 <body>
 <section id="login" hidden>
@@ -29,6 +29,9 @@
     <button class="nv" data-tab="inbox"><span>الطلبات</span><span class="bd" id="bd-inbox" hidden>0</span></button>
     <button class="nv" data-tab="sites"><span>المواقع</span><span class="bd" id="bd-sites" hidden>0</span></button>
     <button class="nv" data-tab="customers"><span>الزبائن</span></button>
+    <button class="nv" data-tab="subs"><span>الاشتراكات والإغلاق</span></button>
+    <button class="nv" data-tab="api"><span>إعدادات API</span></button>
+    <button class="nv" data-tab="outbox"><span>الإشعارات الصادرة</span><span class="bd" id="bd-outbox" hidden>0</span></button>
     <button class="nv" data-tab="stats"><span>التحليلات</span></button>
     <button class="nv" data-tab="settings"><span>الإعدادات</span></button>
     <div class="spacer"></div>
@@ -43,6 +46,6 @@
 <div id="toasts"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js?v=1"></script>
-<script src="app.js?v=1"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>

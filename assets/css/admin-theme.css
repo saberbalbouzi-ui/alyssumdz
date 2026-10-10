@@ -125,3 +125,21 @@ html.white .atm-pv.w{background:#e3e7ed}
 html.white th{background:#eef1f6}
 html.white tbody tr:nth-child(even) td{background:#f7f9fb}
 html.white .hint{color:#5b6677}
+
+/* ── الهاتف: ترتيب موحّد لأزرار الشريط العلوي (المظهر أولاً، العنوان، اسألني تحته، ثم أزرار بأحجام متساوية) ── */
+@media (max-width:760px){
+  #app .top{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;padding:12px!important}
+  #app .top>*{min-width:0;margin:0!important;box-sizing:border-box}
+  #app .top>#pending-badge:empty{display:none}
+  #app .top>#theme-sw{order:0;grid-column:1/-1;display:flex!important;width:100%}
+  #app .top>#theme-sw button{flex:1;justify-content:center}
+  #app .top>h1{order:1;grid-column:1/-1;text-align:start}
+  #app .top>#ah-btn{order:2;grid-column:1/-1;justify-self:start;width:auto;min-height:44px;padding:.4rem 1.1rem .4rem .7rem}
+  #app .top>#ah-btn span.t{display:inline!important}
+  #app .top>#sec-title{order:3;grid-column:1/-1;text-align:center}
+  #app .top>#live-now{order:4;grid-column:1/-1;text-align:center;justify-content:center}
+  #app .top>#store-sw,#app .top>button[onclick*="previewHomeBuilder"]{display:none!important}
+  #app .top>button:not(#ah-btn),#app .top>.logout{order:5;width:100%;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;font-size:.9rem;padding:.45rem .6rem;white-space:nowrap}
+  #app .top>.logout{order:9}
+  #app .top>button.hidden{display:none!important}
+}

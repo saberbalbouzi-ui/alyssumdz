@@ -28,6 +28,7 @@ window.SaasClient = (() => {
     const a = mine(); if (!a.length || !on()) return [];
     try { return await rpc("saas_ticket_view", { p: { ids: a.map(x => x.id) } }) || []; } catch (e) { return null; }
   }
+  async function status() { try { return await rpc("saas_site_status", { p: { origin: location.origin } }); } catch (e) { return null; } }
   async function reply(id, body) { try { await rpc("saas_ticket_reply", { p: { id, body } }); return { ok: true }; } catch (e) { return { ok: false, err: e.message }; } }
   const seenMap = () => { try { return JSON.parse(localStorage.getItem(SEEN) || "{}"); } catch (e) { return {}; } };
   const adminCount = t => (t.messages || []).filter(m => m.author === "admin").length;
@@ -38,5 +39,5 @@ window.SaasClient = (() => {
   function watch(cb) { clearInterval(_t); const tick = async () => { if (document.hidden) return; const ts = await list(); if (!ts) return; const u = unseen(ts); if (u.length) cb(u, ts); }; setTimeout(tick, 4000); _t = setInterval(tick, 60000); }
   /* نبضة يومية: تُعلِم المنصة بأن الموقع يعمل ونسخته */
   function ping(version) { try { if (!on()) return; const d = new Date().toISOString().slice(0, 10); if (localStorage.getItem(PING) === d) return; localStorage.setItem(PING, d); rpc("saas_site_ping", { p: { origin: location.origin, version: version || "" } }).catch(() => { }); } catch (e) { } }
-  return { on, send, list, reply, mine, watch, markSeen, unseen, ping };
+  return { on, send, list, status, reply, mine, watch, markSeen, unseen, ping };
 })();

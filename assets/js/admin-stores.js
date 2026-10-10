@@ -266,6 +266,16 @@ const AdminStores = (() => {
   }
   function dnsTell(key) { const ref = domRef(key); if (!ref) return; notify("DNS جاهز لدومين خاص\nالدومين: " + ref.dm.value + "\nالموقع: " + (key === "cur" ? curName() : ((stores().find(x => x.id === key) || {}).name || "")) + "\nمن موقع: " + curName() + "\nنرجو تفعيل الدومين وإصدار شهادة الأمان.", "domain_dns", { domain: ref.dm.value, mode: "own", dns: ref.dm.dns ? { apex: ref.dm.dns.a, www: ref.dm.dns.w, live: ref.dm.dns.live, found: ref.dm.dns.found } : undefined, target_origin: key === "cur" ? location.origin : orig((stores().find(x => x.id === key) || {}).url) }, "DNS جاهز: " + ref.dm.value); }
 
+  /* ── اشتراك الموقع (الخطة وموعد الإغلاق عند عدم الاستعمال) ── */
+  function subInner() {
+    const st = S.sub; if (!st || !st.known) return "";
+    const days = st.days_left, dl = st.deadline ? new Date(st.deadline).toLocaleDateString("ar-DZ", { dateStyle: "medium" }) : "";
+    const sm = { active: ["نشط", "ok"], provisioning: ["قيد التجهيز", "mid"], suspended: ["متوقف", "no"], deleting: ["جارٍ الحذف", "no"], requested: ["قيد الإنشاء", "mid"] }[st.status] || [st.status, "mid"];
+    return '<h3>اشتراك الموقع</h3><div class="row"><div><label class="f">نوع الاشتراك</label><b>' + esc(st.plan_label || "عام") + '</b></div><div><label class="f">حالة الموقع</label><span class="stp-b ' + sm[1] + '">' + sm[0] + '</span></div>' + (st.sub_ends_at ? '<div><label class="f">ينتهي الاشتراك</label><b>' + esc(new Date(st.sub_ends_at).toLocaleDateString("ar-DZ", { dateStyle: "medium" })) + '</b></div>' : '') + '</div>' +
+      (st.status === "suspended" ? '<div class="hint" style="margin-top:.5rem;color:#fca5a5">موقعك متوقف' + ({ inactive: " لعدم استعماله خلال المدة المحددة", expired: " لانتهاء الاشتراك" }[st.closed_reason] || "") + '. تواصل مع الدعم من «طلبات الدعم» أدناه لإعادة تفعيله.</div>' : dl && days != null ? '<div class="hint" style="margin-top:.5rem">في الفترة التجريبية يُغلق الموقع تلقائياً إن لم يُستعمل قبل <b>' + esc(dl) + '</b> (بعد ' + days + ' يوماً)، وتتجدّد المهلة كلما دخلت إلى لوحة التحكم. تصلك تنبيهات مسبقة بالبريد وواتساب.</div>' : '');
+  }
+  const subCard = () => window.SaasClient && window.SaasClient.on() ? '<div class="card" id="stp-sub"' + (subInner() ? '' : ' hidden') + '>' + subInner() + '</div>' : '';
+  async function subLoad() { const SC = window.SaasClient; if (!SC || !SC.on()) return; const r = await SC.status(); if (r) S.sub = r; const e = $("stp-sub"); if (e) { e.innerHTML = subInner(); e.hidden = !e.innerHTML; } }
   /* ── طلبات الدعم (تصل إلى فريق المنصة مباشرة ويصلك ردّه هنا) ── */
   const SUPK = { site_create: "طلب موقع جديد", site_delete: "طلب حذف موقع", site_delete_cancel: "إلغاء حذف", domain_request: "طلب دومين", domain_link: "ربط دومين", domain_dns: "تفعيل دومين", support: "دعم فني", billing: "الاشتراك", other: "أخرى" };
   const SUPS = { new: ["تم الاستلام", "mid"], open: ["قيد المعالجة", "mid"], waiting: ["بانتظار ردّك", "no"], resolved: ["تم الحل", "ok"], rejected: ["مرفوض", "no"] };
@@ -418,12 +428,12 @@ const AdminStores = (() => {
       row("cur", curName(), here().replace(/^https?:\/\//, ""), true, d.deletion, settingsHtml()) +
       list.map(s => row(s.id, s.name, s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, ""), false, s.del, other(s))).join("") +
       ((d.deletion && d.deletion.at) || list.some(s => s.del) ? '<div class="hint" style="margin-top:.5rem">⏳ الموقع المحدّد للحذف يبقى كما هو حتى انتهاء المدة، ويمكنك إلغاء الحذف بالضغط على زر «جارٍ الحذف».</div>' : '') + '</div>' +
-      supCard() + '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اكتب اسم الموقع (حروف لاتينية) فيظهر عنوانه على دومين المنصة تلقائياً، ثم اختر: إنشاء الموقع بهذا العنوان، أو إضافة دومين تملكه، أو طلب دومين جديد.</div><div style="margin-top:.5rem;max-width:420px"><label class="f">اسم الموقع</label><input id="stp-nw-n" dir="ltr" placeholder="boutique" value="' + esc((S.nw && S.nw.n) || "") + '" oninput="AdminStores.nwIn()"></div><div class="stp-nwa"><label class="f">عنوان الموقع</label><div class="stp-nwd" dir="ltr"><b id="stp-nw-d">' + esc(((S.nw && S.nw.n) || "name") + "." + PLATFORM()) + '</b></div><div id="stp-nw-res" class="stp-nwr"></div></div>' +
+      subCard() + supCard() + '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اكتب اسم الموقع (حروف لاتينية) فيظهر عنوانه على دومين المنصة تلقائياً، ثم اختر: إنشاء الموقع بهذا العنوان، أو إضافة دومين تملكه، أو طلب دومين جديد.</div><div style="margin-top:.5rem;max-width:420px"><label class="f">اسم الموقع</label><input id="stp-nw-n" dir="ltr" placeholder="boutique" value="' + esc((S.nw && S.nw.n) || "") + '" oninput="AdminStores.nwIn()"></div><div class="stp-nwa"><label class="f">عنوان الموقع</label><div class="stp-nwd" dir="ltr"><b id="stp-nw-d">' + esc(((S.nw && S.nw.n) || "name") + "." + PLATFORM()) + '</b></div><div id="stp-nw-res" class="stp-nwr"></div></div>' +
       '<div class="stp-nwb"><button class="small" type="button" onclick="AdminStores.createSite(\'platform\')">إنشاء الموقع على هذا العنوان</button><button class="small gold" type="button" onclick="AdminStores.nwOwn()">إضافة دومين خاص</button><button class="small gold" type="button" onclick="AdminStores.nwRequest()">طلب دومين خاص</button></div>' +
       '<div id="stp-nw-own" class="stp-nwo" hidden><label class="f">اسم الدومين الذي تملكه</label><div style="display:flex;gap:.5rem;flex-wrap:wrap"><input id="stp-nw-ownv" dir="ltr" placeholder="example.com" style="flex:1;min-width:200px"><button class="small" type="button" onclick="AdminStores.createSite(\'own\')">إضافة الدومين</button></div></div>' +
       '</div></div>';
     if (S.nw && S.nw.n) nwCheck(S.nw.n);
-    if (window.SaasClient && S.sup === undefined && !S.supGo) { S.supGo = true; supLoad(); }
+    if (window.SaasClient && S.sup === undefined && !S.supGo) { S.supGo = true; supLoad(); subLoad(); }
     const t = $("stp-tz"); if (t) t.onchange = tick; tick(); clearInterval(S.clock); S.clock = setInterval(() => { if (!$("stp-clock")) return clearInterval(S.clock); tick(); }, 1000);
   }
   function tog(id) { if ($("stp-name")) collect(); S.open = S.open === id ? "" : id; renderAll(); }

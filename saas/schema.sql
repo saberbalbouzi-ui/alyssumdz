@@ -369,3 +369,349 @@ do $$ declare cid uuid; begin
     insert into public.saas_sites (customer_id, name, origin, domain, domain_mode, domain_status, status, plan) values (cid, 'أليسوم ALYSSUM', 'https://alyssumdz.com', 'alyssumdz.com', 'own', 'connected', 'active', 'owner');
   end if;
 end $$;
+
+
+-- ════════════════════════════════════════════════════════════════════
+-- 9) الاشتراكات وAPI وإغلاق المواقع الخاملة والإشعارات (v1.89.41) — آمن لإعادة التشغيل
+-- ════════════════════════════════════════════════════════════════════
+create table if not exists public.saas_settings (
+  key text primary key,
+  value jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.saas_settings enable row level security;
+revoke all on public.saas_settings from anon, authenticated;
+grant select, insert, update, delete on public.saas_settings to authenticated;
+drop policy if exists "saas admin all" on public.saas_settings;
+create policy "saas admin all" on public.saas_settings for all to authenticated using (public.is_saas_admin()) with check (public.is_saas_admin());
+
+-- الخطط: inactive_days = إغلاق الموقع الذي لا يُستعمل هذه المدة (null = بلا إغلاق تلقائي)، period_days = مدة الاشتراك المدفوع (null = بلا انتهاء)
+create table if not exists public.saas_plans (
+  plan text primary key check (plan ~ '^[a-z0-9_-]{1,30}$'),
+  label text not null check (char_length(label) between 1 and 60),
+  inactive_days int check (inactive_days is null or inactive_days between 1 and 3650),
+  period_days int check (period_days is null or period_days between 1 and 3650),
+  text_credits int check (text_credits is null or text_credits >= 0),      -- رصيد API للنص (null = بلا حدّ)
+  image_credits int check (image_credits is null or image_credits >= 0),   -- رصيد API للصور (null = بلا حدّ)
+  price numeric check (price is null or price >= 0),
+  note text not null default '' check (char_length(note) <= 500),
+  active boolean not null default true,
+  sort int not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table public.saas_plans enable row level security;
+revoke all on public.saas_plans from anon, authenticated;
+grant select, insert, update, delete on public.saas_plans to authenticated;
+drop policy if exists "saas admin all" on public.saas_plans;
+create policy "saas admin all" on public.saas_plans for all to authenticated using (public.is_saas_admin()) with check (public.is_saas_admin());
+insert into public.saas_plans (plan, label, inactive_days, period_days, text_credits, image_credits, note, sort) values
+  ('public', 'عام', 30, null, 30, 3, 'الخطة الحالية لكل المشتركين: تجريبية، يُغلق الموقع إن لم يُستعمل 30 يوماً.', 1),
+  ('owner', 'مالك المنصة', null, null, null, null, 'بلا إغلاق تلقائي ولا حدّ للرصيد.', 99)
+on conflict (plan) do nothing;
+
+alter table public.saas_sites add column if not exists api_mode text not null default 'shared';
+alter table public.saas_sites add column if not exists api_token text default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+alter table public.saas_sites add column if not exists ai_text_left int;
+alter table public.saas_sites add column if not exists ai_image_left int;
+alter table public.saas_sites add column if not exists sub_ends_at timestamptz;
+alter table public.saas_sites add column if not exists extended_until timestamptz;
+alter table public.saas_sites add column if not exists closed_reason text;
+do $$ begin
+  begin alter table public.saas_sites add constraint saas_sites_api_mode_chk check (api_mode in ('shared', 'own', 'off')); exception when duplicate_object then null; end;
+end $$;
+create unique index if not exists saas_sites_api_token_uq on public.saas_sites (api_token);
+create index if not exists saas_sites_plan_idx on public.saas_sites (plan);
+
+-- أول تشغيل: الخطة الافتراضية + رصيد الخطة للمواقع الموجودة (مرة واحدة فقط: ما لم يُضبط رصيد)
+update public.saas_sites s set plan = 'public' where plan is null or not exists (select 1 from public.saas_plans p where p.plan = s.plan);
+update public.saas_sites s set ai_text_left = p.text_credits, ai_image_left = p.image_credits
+  from public.saas_plans p where p.plan = s.plan and s.ai_text_left is null and s.ai_image_left is null and (p.text_credits is not null or p.image_credits is not null);
+
+-- موقع جديد: خطة «عام» افتراضياً مع رصيدها ومدة اشتراكها
+create or replace function public._saas_site_bi() returns trigger
+language plpgsql as $$
+declare p public.saas_plans;
+begin
+  if new.plan is null then new.plan := 'public'; end if;
+  select * into p from public.saas_plans where plan = new.plan;
+  if found then
+    new.ai_text_left := coalesce(new.ai_text_left, p.text_credits);
+    new.ai_image_left := coalesce(new.ai_image_left, p.image_credits);
+    if new.sub_ends_at is null and p.period_days is not null then new.sub_ends_at := now() + (p.period_days || ' days')::interval; end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists saas_sites_bi on public.saas_sites;
+create trigger saas_sites_bi before insert on public.saas_sites for each row execute function public._saas_site_bi();
+
+-- استهلاك API لكل موقع
+create table if not exists public.saas_ai_usage (
+  id bigint generated always as identity primary key,
+  site_id uuid references public.saas_sites (id) on delete cascade,
+  kind text not null check (kind in ('text', 'image')),
+  ok boolean not null default true,
+  at timestamptz not null default now()
+);
+create index if not exists saas_ai_usage_site_idx on public.saas_ai_usage (site_id, at desc);
+alter table public.saas_ai_usage enable row level security;
+revoke all on public.saas_ai_usage from anon, authenticated;
+grant select on public.saas_ai_usage to authenticated;
+drop policy if exists "saas admin read" on public.saas_ai_usage;
+create policy "saas admin read" on public.saas_ai_usage for select to authenticated using (public.is_saas_admin());
+
+-- الإشعارات الصادرة (بريد/واتساب): يضعها النظام ويرسلها المدير بنقرة أو الدالة saas-notify تلقائياً
+create table if not exists public.saas_outbox (
+  id bigint generated always as identity primary key,
+  site_id uuid references public.saas_sites (id) on delete set null,
+  customer_id uuid references public.saas_customers (id) on delete set null,
+  kind text not null,
+  channel text not null check (channel in ('email', 'whatsapp')),
+  to_addr text not null,
+  subject text not null default '',
+  body text not null,
+  dedupe text,
+  status text not null default 'pending' check (status in ('pending', 'sent', 'failed', 'skipped')),
+  error text,
+  attempts int not null default 0,
+  created_at timestamptz not null default now(),
+  sent_at timestamptz
+);
+create unique index if not exists saas_outbox_dedupe_uq on public.saas_outbox (site_id, kind, channel, dedupe) where dedupe is not null;
+create index if not exists saas_outbox_status_idx on public.saas_outbox (status, created_at desc);
+alter table public.saas_outbox enable row level security;
+revoke all on public.saas_outbox from anon, authenticated;
+grant select, insert, update, delete on public.saas_outbox to authenticated;
+drop policy if exists "saas admin all" on public.saas_outbox;
+create policy "saas admin all" on public.saas_outbox for all to authenticated using (public.is_saas_admin()) with check (public.is_saas_admin());
+
+-- الإعدادات الافتراضية (لا تُستبدل إن عدّلتها): سياسة التنبيه + القنوات + نصوص الرسائل
+insert into public.saas_settings (key, value) values
+  ('lifecycle', '{"warn_days":[7,3,1],"delete_warn_days":[7,1],"last_run":null}'),
+  ('notify', '{"channels":["email","whatsapp"],"country":"213"}'),
+  ('templates', $t${
+    "warn": {"subject": "تنبيه: موقعك {site} سيُغلق بعد {days} يوم", "body": "مرحباً {name}،\nلاحظنا أن موقعك «{site}» لم يُستعمل منذ مدة. سيُغلق تلقائياً بتاريخ {date} (بعد {days} يوم) إن لم تدخل إلى لوحة التحكم.\nادخل الآن للإبقاء عليه نشطاً: {url}\nفريق منصة أليسوم"},
+    "suspended": {"subject": "تم إغلاق موقعك {site}", "body": "مرحباً {name}،\nتم إغلاق موقعك «{site}» ({reason}). بياناتك محفوظة ويمكن إعادة تفعيله بالرد على هذه الرسالة أو التواصل مع الدعم.\nفريق منصة أليسوم"},
+    "reactivated": {"subject": "تمت إعادة تفعيل موقعك {site}", "body": "مرحباً {name}،\nتمت إعادة تفعيل موقعك «{site}» ويمكنك متابعة العمل: {url}\nفريق منصة أليسوم"},
+    "deleting": {"subject": "تم جدولة حذف موقعك {site}", "body": "مرحباً {name}،\nتم جدولة حذف موقعك «{site}» نهائياً بتاريخ {date}. يمكنك إلغاء الحذف قبل ذلك من لوحة التحكم (إعدادات الموقع).\nفريق منصة أليسوم"},
+    "delwarn": {"subject": "تذكير: سيُحذف موقعك {site} بعد {days} يوم", "body": "مرحباً {name}،\nتذكير بأن موقعك «{site}» سيُحذف نهائياً بتاريخ {date} (بعد {days} يوم). لإلغاء الحذف ادخل إلى لوحة التحكم: {url}\nفريق منصة أليسوم"},
+    "deleted": {"subject": "تم حذف موقعك {site}", "body": "مرحباً {name}،\nتم حذف موقعك «{site}» وجميع بياناته من المنصة نهائياً.\nفريق منصة أليسوم"}
+  }$t$)
+on conflict (key) do nothing;
+
+-- أدوات داخلية: موعد الإغلاق (الأقرب من: آخر استعمال + مدة الخمول، ونهاية الاشتراك) ما لم يُمدَّد
+create or replace function public._saas_deadline(s public.saas_sites) returns timestamptz
+language plpgsql stable set search_path = public as $$
+declare p public.saas_plans; d1 timestamptz; d timestamptz;
+begin
+  select * into p from public.saas_plans where plan = coalesce(s.plan, 'public');
+  if p.inactive_days is not null then d1 := coalesce(s.last_seen, s.created_at) + (p.inactive_days || ' days')::interval; end if;
+  d := case when d1 is null then s.sub_ends_at when s.sub_ends_at is null then d1 else least(d1, s.sub_ends_at) end;
+  if d is not null and s.extended_until is not null then d := greatest(d, s.extended_until); end if;
+  return d;
+end $$;
+
+create or replace function public._saas_fill(t text, s public.saas_sites, c public.saas_customers, v jsonb) returns text
+language plpgsql immutable as $$
+declare r text := coalesce(t, '');
+begin
+  r := replace(r, '{site}', coalesce(s.name, ''));
+  r := replace(r, '{name}', coalesce(c.name, 'عميلنا'));
+  r := replace(r, '{url}', coalesce(s.origin, '') || case when s.origin is null then '' else '/admin.html' end);
+  r := replace(r, '{days}', coalesce(v ->> 'days', ''));
+  r := replace(r, '{date}', coalesce(v ->> 'date', ''));
+  r := replace(r, '{reason}', coalesce(v ->> 'reason', ''));
+  r := replace(r, '{plan}', coalesce(s.plan, ''));
+  return r;
+end $$;
+
+-- وضع إشعار في الصادر لكل قناة متاحة (بريد/واتساب) للزبون صاحب الموقع؛ التكرار ممنوع بمفتاح dedupe. يعيد عدد ما أُضيف
+create or replace function public._saas_queue(s public.saas_sites, k text, dd text, v jsonb) returns int
+language plpgsql security definer set search_path = public as $$
+declare c public.saas_customers; tpl jsonb; chs jsonb; cc text; ph text; n int := 0; r int; subj text; bdy text;
+begin
+  select * into c from public.saas_customers where id = s.customer_id;
+  if c.id is null then return 0; end if;
+  select value -> k into tpl from public.saas_settings where key = 'templates'; if tpl is null then return 0; end if;
+  select coalesce(value -> 'channels', '["email","whatsapp"]'::jsonb), coalesce(value ->> 'country', '213') into chs, cc from public.saas_settings where key = 'notify';
+  if chs is null then chs := '["email","whatsapp"]'::jsonb; cc := '213'; end if;
+  subj := public._saas_fill(tpl ->> 'subject', s, c, v); bdy := public._saas_fill(tpl ->> 'body', s, c, v);
+  if chs ? 'email' and coalesce(btrim(c.email), '') <> '' then
+    insert into public.saas_outbox (site_id, customer_id, kind, channel, to_addr, subject, body, dedupe) values (s.id, c.id, k, 'email', btrim(c.email), subj, bdy, dd) on conflict do nothing;
+    get diagnostics r = row_count; n := n + r;
+  end if;
+  ph := regexp_replace(coalesce(c.phone, ''), '[^0-9]', '', 'g');
+  if ph like '00%' then ph := substr(ph, 3); elsif ph like '0%' then ph := cc || substr(ph, 2); end if;
+  if chs ? 'whatsapp' and char_length(ph) >= 9 then
+    insert into public.saas_outbox (site_id, customer_id, kind, channel, to_addr, subject, body, dedupe) values (s.id, c.id, k, 'whatsapp', ph, subj, bdy, dd) on conflict do nothing;
+    get diagnostics r = row_count; n := n + r;
+  end if;
+  return n;
+end $$;
+revoke all on function public._saas_queue(public.saas_sites, text, text, jsonb) from public, anon, authenticated;
+
+-- إشعار فوري عند تغيّر حالة الموقع: إغلاق / إعادة تفعيل / جدولة حذف / حذف
+create or replace function public._saas_site_notify() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare k text; v jsonb;
+begin
+  if new.status is not distinct from old.status then return new; end if;
+  v := jsonb_build_object('date', to_char(coalesce(new.deletion_at, now()), 'YYYY-MM-DD'), 'reason', case coalesce(new.closed_reason, '') when 'inactive' then 'لعدم الاستعمال خلال المدة المحددة' when 'expired' then 'لانتهاء الاشتراك' else 'بقرار إداري' end);
+  k := case when new.status = 'suspended' then 'suspended' when new.status = 'active' and old.status = 'suspended' then 'reactivated' when new.status = 'deleting' then 'deleting' when new.status = 'deleted' then 'deleted' else null end;
+  if k is not null then perform public._saas_queue(new, k, new.status || ':' || extract(epoch from now())::bigint, v); end if;
+  return new;
+end $$;
+drop trigger if exists saas_sites_notify on public.saas_sites;
+create trigger saas_sites_notify after update of status on public.saas_sites for each row execute function public._saas_site_notify();
+
+-- الفحص الدوري: يُغلق المواقع التي انتهت مهلتها ويضع تنبيهات قبل الإغلاق وقبل الحذف. يُشغَّل من اللوحة أو من pg_cron (آمن للتكرار)
+create or replace function public.saas_lifecycle_run() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare s public.saas_sites; d timestamptz; dl int; w int; lc jsonb; wd jsonb; dw jsonb; susp int := 0; warned int := 0; queued int := 0; r int;
+begin
+  if not (public.is_saas_admin() or coalesce(auth.jwt() ->> 'role', '') = 'service_role' or session_user in ('postgres', 'supabase_admin')) then raise exception 'unauthorized' using errcode = '42501'; end if;
+  select value into lc from public.saas_settings where key = 'lifecycle'; lc := coalesce(lc, '{}'::jsonb);
+  wd := coalesce(lc -> 'warn_days', '[7,3,1]'::jsonb); dw := coalesce(lc -> 'delete_warn_days', '[7,1]'::jsonb);
+  for s in select * from public.saas_sites where status in ('active', 'provisioning') loop
+    d := public._saas_deadline(s); continue when d is null;
+    dl := ceil(extract(epoch from (d - now())) / 86400)::int;
+    if d <= now() then
+      update public.saas_sites set status = 'suspended', closed_reason = case when sub_ends_at is not null and sub_ends_at <= now() then 'expired' else 'inactive' end where id = s.id;
+      susp := susp + 1;
+    else
+      select min(x::int) into w from jsonb_array_elements_text(wd) x where x::int >= dl;
+      if w is not null then
+        r := public._saas_queue(s, 'warn', 'w' || w || ':' || to_char(d, 'YYYY-MM-DD'), jsonb_build_object('days', dl, 'date', to_char(d, 'YYYY-MM-DD')));
+        if r > 0 then warned := warned + 1; queued := queued + r; end if;
+      end if;
+    end if;
+  end loop;
+  for s in select * from public.saas_sites where status = 'deleting' and deletion_at is not null and deletion_at > now() loop
+    dl := ceil(extract(epoch from (s.deletion_at - now())) / 86400)::int;
+    select min(x::int) into w from jsonb_array_elements_text(dw) x where x::int >= dl;
+    if w is not null then
+      r := public._saas_queue(s, 'delwarn', 'w' || w || ':' || to_char(s.deletion_at, 'YYYY-MM-DD'), jsonb_build_object('days', dl, 'date', to_char(s.deletion_at, 'YYYY-MM-DD')));
+      if r > 0 then queued := queued + r; end if;
+    end if;
+  end loop;
+  insert into public.saas_settings (key, value) values ('lifecycle', lc || jsonb_build_object('last_run', now())) on conflict (key) do update set value = excluded.value, updated_at = now();
+  return jsonb_build_object('suspended', susp, 'warned', warned, 'queued', queued);
+end $$;
+revoke all on function public.saas_lifecycle_run() from public, anon;
+grant execute on function public.saas_lifecycle_run() to authenticated, service_role;
+
+-- مواعيد الإغلاق لكل موقع (مصدر واحد للمنطق)
+create or replace function public.saas_deadlines() returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_saas_admin() then raise exception 'unauthorized' using errcode = '42501'; end if;
+  return coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'deadline', public._saas_deadline(s))) from public.saas_sites s where s.status in ('active', 'provisioning') and public._saas_deadline(s) is not null), '[]'::jsonb);
+end $$;
+revoke all on function public.saas_deadlines() from public, anon;
+grant execute on function public.saas_deadlines() to authenticated;
+
+-- حالة الموقع لصاحبه (بلا أي سرّ): الخطة وموعد الإغلاق إن وُجد
+create or replace function public.saas_site_status(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare o text := public._saas_origin(p ->> 'origin'); s public.saas_sites; pl public.saas_plans; d timestamptz;
+begin
+  if o is null then return jsonb_build_object('known', false); end if;
+  select * into s from public.saas_sites where origin = o;
+  if s.id is null then return jsonb_build_object('known', false); end if;
+  select * into pl from public.saas_plans where plan = s.plan;
+  d := case when s.status = 'active' then public._saas_deadline(s) else null end;
+  return jsonb_build_object('known', true, 'status', s.status, 'deletion_at', s.deletion_at, 'domain_status', s.domain_status,
+    'plan', s.plan, 'plan_label', coalesce(pl.label, s.plan), 'deadline', d,
+    'days_left', case when d is null then null else greatest(0, ceil(extract(epoch from (d - now())) / 86400))::int end,
+    'closed_reason', s.closed_reason, 'sub_ends_at', s.sub_ends_at);
+end $$;
+
+-- أدوات API (للمدير): شحن الرصيد وتدوير الرمز
+create or replace function public.saas_ai_topup(p_site uuid, p_text int, p_image int) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_saas_admin() then raise exception 'unauthorized' using errcode = '42501'; end if;
+  update public.saas_sites set
+    ai_text_left = case when ai_text_left is null or p_text is null then ai_text_left else greatest(0, ai_text_left + p_text) end,
+    ai_image_left = case when ai_image_left is null or p_image is null then ai_image_left else greatest(0, ai_image_left + p_image) end
+  where id = p_site;
+end $$;
+create or replace function public.saas_rotate_token(p_site uuid) returns text
+language plpgsql security definer set search_path = public as $$
+declare t text := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+begin
+  if not public.is_saas_admin() then raise exception 'unauthorized' using errcode = '42501'; end if;
+  update public.saas_sites set api_token = t where id = p_site;
+  return t;
+end $$;
+revoke all on function public.saas_ai_topup(uuid, int, int), public.saas_rotate_token(uuid) from public, anon;
+grant execute on function public.saas_ai_topup(uuid, int, int), public.saas_rotate_token(uuid) to authenticated;
+
+-- خصم/إعادة رصيد API (تستدعيهما الدالة ai بمفتاح الخدمة فقط)
+create or replace function public.saas_ai_charge(p_token text, p_kind text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare s public.saas_sites; l int;
+begin
+  if p_kind not in ('text', 'image') then return jsonb_build_object('ok', false, 'reason', 'bad_kind'); end if;
+  select * into s from public.saas_sites where api_token = p_token for update;
+  if not found then return jsonb_build_object('ok', false, 'reason', 'unknown_token'); end if;
+  if s.status <> 'active' or s.api_mode <> 'shared' then return jsonb_build_object('ok', false, 'reason', 'suspended'); end if;
+  if s.sub_ends_at is not null and s.sub_ends_at < now() then return jsonb_build_object('ok', false, 'reason', 'expired'); end if;
+  l := case p_kind when 'text' then s.ai_text_left else s.ai_image_left end;
+  if l is not null and l <= 0 then return jsonb_build_object('ok', false, 'reason', 'no_credits'); end if;
+  if l is not null then
+    if p_kind = 'text' then update public.saas_sites set ai_text_left = ai_text_left - 1 where id = s.id;
+    else update public.saas_sites set ai_image_left = ai_image_left - 1 where id = s.id; end if;
+  end if;
+  insert into public.saas_ai_usage (site_id, kind) values (s.id, p_kind);
+  return jsonb_build_object('ok', true, 'left', case when l is null then null else l - 1 end);
+end $$;
+create or replace function public.saas_ai_refund(p_token text, p_kind text) returns void
+language plpgsql security definer set search_path = public as $$
+declare s public.saas_sites;
+begin
+  select * into s from public.saas_sites where api_token = p_token for update; if not found then return; end if;
+  if p_kind = 'text' and s.ai_text_left is not null then update public.saas_sites set ai_text_left = ai_text_left + 1 where id = s.id;
+  elsif p_kind = 'image' and s.ai_image_left is not null then update public.saas_sites set ai_image_left = ai_image_left + 1 where id = s.id; end if;
+  insert into public.saas_ai_usage (site_id, kind, ok) values (s.id, p_kind, false);
+end $$;
+revoke all on function public.saas_ai_charge(text, text), public.saas_ai_refund(text, text) from public, anon, authenticated;
+grant execute on function public.saas_ai_charge(text, text), public.saas_ai_refund(text, text) to service_role;
+
+-- إحصاءات إضافية للوحة (تُدمج مع saas_stats)
+create or replace function public.saas_stats2() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not public.is_saas_admin() then raise exception 'unauthorized' using errcode = '42501'; end if;
+  select jsonb_build_object(
+    'closing_7d', (select count(*) from public.saas_sites s where s.status = 'active' and public._saas_deadline(s) is not null and public._saas_deadline(s) <= now() + interval '7 days'),
+    'suspended', (select count(*) from public.saas_sites where status = 'suspended'),
+    'pending_notices', (select count(*) from public.saas_outbox where status = 'pending'),
+    'failed_notices', (select count(*) from public.saas_outbox where status = 'failed'),
+    'ai_30d', coalesce((select jsonb_object_agg(kind, c) from (select kind, count(*)::int c from public.saas_ai_usage where ok and at > now() - interval '30 days' group by kind) a), '{}'::jsonb),
+    'by_plan', coalesce((select jsonb_object_agg(plan, c) from (select coalesce(plan, 'public') plan, count(*)::int c from public.saas_sites where status <> 'deleted' group by 1) a), '{}'::jsonb)
+  ) into r;
+  return r;
+end $$;
+revoke all on function public.saas_stats2() from public, anon;
+grant execute on function public.saas_stats2() to authenticated;
+
+-- ملخص استهلاك API آخر 30 يوماً لكل موقع (للوحة)
+create or replace function public.saas_ai_summary() returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_saas_admin() then raise exception 'unauthorized' using errcode = '42501'; end if;
+  return coalesce((select jsonb_agg(jsonb_build_object('site_id', site_id, 'kind', kind, 'n', n)) from (
+    select site_id, kind, count(*)::int n from public.saas_ai_usage where ok and at > now() - interval '30 days' group by site_id, kind) x), '[]'::jsonb);
+end $$;
+revoke all on function public.saas_ai_summary() from public, anon;
+grant execute on function public.saas_ai_summary() to authenticated;
+
+do $$ begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    begin alter publication supabase_realtime add table public.saas_outbox; exception when duplicate_object then null; end;
+  end if;
+end $$;
+
+-- جدولة يومية اختيارية (تلزم إضافة pg_cron من Database ← Extensions):
+-- select cron.schedule('saas-lifecycle', '0 6 * * *', $$ select public.saas_lifecycle_run() $$);

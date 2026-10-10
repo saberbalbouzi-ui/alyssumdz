@@ -449,6 +449,28 @@ async function initCheckout(){
     PhoneDZ.setup(cfg);
   }catch(e){ /* تجاهل */ }
   try{ applyStore(await loadStore()); }catch(e){ /* تجاهل */ }
+  try{ siteGate(); }catch(e){ /* تجاهل */ }
+}
+/* حالة الاشتراك: الموقع الذي أغلقته المنصة (خمول/انتهاء اشتراك/قرار إداري) تظهر فيه رسالة بدل المتجر للزوار؛ أي فشل اتصال = المتجر يعمل.
+   المدير (alyssum_admin_on) لا تُحجب عنه الصفحات. للتعطيل: CONFIG.SAAS_GATE = false */
+async function siteGate(){
+  if(/admin\.html/.test(location.pathname) || localStorage.getItem("alyssum_admin_on") === "1") return;
+  const C = (typeof CONFIG !== "undefined" && CONFIG) || {}; if(C.SAAS_GATE === false) return;
+  const url = String(C.SAAS_URL || "https://qvdaiundlkfbmjlummni.supabase.co").replace(/\/+$/, ""), key = C.SAAS_KEY || "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h";
+  let st = null; try{ const c = JSON.parse(localStorage.getItem("alyssum_gate") || "null"); if(c && Date.now() - c.t < 18e5) st = c.s; }catch(e){}
+  if(!st){
+    try{
+      const r = await fetch(url + "/rest/v1/rpc/saas_site_status", {method:"POST", headers:{apikey:key, Authorization:"Bearer " + key, "Content-Type":"application/json"}, body:JSON.stringify({p:{origin:location.origin}})});
+      if(!r.ok) return; const j = await r.json(); st = {known:!!j.known, status:j.status || ""};
+      try{ localStorage.setItem("alyssum_gate", JSON.stringify({t:Date.now(), s:st})); }catch(e){}
+    }catch(e){ return; }
+  }
+  if(!st.known || st.status !== "suspended" || document.getElementById("store-closed")) return;
+  const d = document.createElement("div"); d.id = "store-closed";
+  d.style.cssText = "position:fixed;inset:0;z-index:2147483001;background:#0b1511;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font-family:inherit";
+  const h = document.createElement("h1"); h.style.cssText = "font-size:1.6rem;margin:0"; h.textContent = "هذا المتجر متوقف مؤقتاً";
+  const p = document.createElement("p"); p.style.cssText = "max-width:480px;line-height:1.9;margin:0;opacity:.9"; p.textContent = "إن كنت صاحب المتجر فادخل إلى لوحة التحكم أو تواصل مع الدعم لإعادة التفعيل.";
+  d.append(h, p); document.body.appendChild(d);
 }
 /* إعدادات المتجر (assets/data/store.json، من لوحة التحكم ← إعدادات الموقع): الاسم، واتساب، انستغرام، اللغة، العملة، وضع الصيانة */
 async function loadStore(){
