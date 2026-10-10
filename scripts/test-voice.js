@@ -148,6 +148,18 @@ chat([["شحال سعر عسل السدر", r => r.kind === "answer" && /4 000/.
 chat([["كم سعر حنة", r => r.kind === "answer"], ["son prix ?", r => r.kind === "answer" && /1 500|1500/.test(r.say)]], "فرنسي");
 chat([["ما أكثر منتج مبيعاً", r => r.kind === "answer" && /حنة الشفاء \(7\)/.test(r.say)], ["ما أكثر ولاية طلباً", r => r.kind === "answer" && /الجزائر \(3\)/.test(r.say)], ["ما متوسط قيمة الطلب", r => r.kind === "answer" && /متوسط/.test(r.say)], ["كم عدد الزبائن", r => r.kind === "answer" && /5/.test(r.say)], ["ما نسبة الإلغاء", r => r.kind === "answer" && /%/.test(r.say)], ["عدد الطلبات", r => r.kind === "answer" && /5/.test(r.say)]], "تحليل");
 chat([["ماهي المبيعات", r => r.kind === "answer"], ["وأمس", r => r.kind === "answer" && /أمس/.test(r.say)]], "مبيعات2");
+// ═══ أوامر الطلبات (بحراسة الحالات) ═══
+chat([["آخر طلب", r => r.kind === "answer" && r.mem.order.id === "1"], ["أكده", r => r.kind === "orderAction" && r.confirm && r.act.op === "confirm" && r.act.id === "1"]], "تأكيد بالضمير");
+chat([["ألغ طلب سارة", r => r.kind === "answer" && /سُلِّم/.test(r.say)]], "إلغاء مسلَّم");
+chat([["أكد طلب ياسين", r => r.kind === "answer" && /مؤكَّد أصلاً/.test(r.say)]], "مؤكَّد أصلاً");
+chat([["ارسل طلب ياسين لشركة التوصيل", r => r.kind === "orderAction" && r.act.op === "send" && r.act.id === "4" && /طرداً حقيقياً/.test(r.say)]], "إرسال");
+chat([["آخر طلب", r => r.kind === "answer"], ["أرسله لشركة التوصيل", r => r.kind === "answer" && /أكّده أولاً/.test(r.say)]], "إرسال قبل التأكيد");
+chat([["ألغ الطلب", r => r.kind === "need" && r.slot === "order"]], "إلغاء بلا هدف");
+{ n++; const nd = V.parse("ألغ الطلب", Object.assign({}, data, { orders: cOrders })); const f1 = V.fillSlot(nd, "كريم", Object.assign({}, data, { orders: cOrders })); const f2 = V.fillSlot(nd, "احمد", Object.assign({}, data, { orders: cOrders })); if (!(f1.kind === "answer" && /ملغى أصلاً/.test(f1.say) && f2.kind === "orderAction" && f2.act.op === "cancel" && f2.act.id === "1")) { fail++; console.log("✗ إكمال هدف الطلب", JSON.stringify([f1.kind, f1.say, f2.kind])); } }
+chat([["اكد طلب ياسين", r => r.kind === "answer"], ["علمه مسلم", r => r.kind === "orderAction" && r.act.op === "status" && r.act.status === "livree" && r.act.id === "4"]], "حالة بالضمير");
+chat([["annule la commande 0550111111", r => r.kind === "orderAction" && r.act.op === "cancel" && r.act.id === "1"]], "فرنسي بالهاتف");
+chat([["بدل حالة طلب نور الى مسلم", r => r.kind === "orderAction" && r.act.op === "status" && r.act.status === "livree" && r.act.id === "5"]], "تغيير حالة باسم");
+chat([["الغ الطلب الاخير", r => r.kind === "orderAction" && r.act.op === "cancel"]], "الأخير");
 // أمثلة القاموس (expect: kind + حقول اختيارية)
 lex.examples.forEach(ex => {
   n++; const r = V.parse(ex.u, data), e = ex.expect; let ok = r.kind === e.kind;
