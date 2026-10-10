@@ -195,3 +195,4 @@ html.white #ord-prev-b .kv td{border-bottom-color:#dde3ec}
   table.orders-compact td[data-l="الهاتف"]{display:flex!important;align-items:center;gap:.6rem;flex-wrap:wrap}
   table.orders-compact td[data-l="الهاتف"]::before{display:none}
 }
+.ord-prev-act a.small{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;min-height:44px;padding:.4rem .9rem;border-radius:12px;cursor:pointer;font-weight:800;color:#fff}
