@@ -1,7 +1,7 @@
 /* الأوامر الصوتية للوحة التحكم (عربية فصحى + دارجة جزائرية + فرنسية) — بلا خدمة خارجية ولا مفتاح.
    الاستماع: SpeechRecognition في المتصفح (Chrome/Edge). الفهم: قواعد محلية (parse) نقية قابلة للاختبار؛ التنفيذ: استدعاء دوال اللوحة نفسها.
    المرحلة 1: تنقّل، بحث وتصفية الطلبات، أسئلة أرقام (طلبات/مبيعات/مخزون)، منتج جديد، تعديل منتج بالاسم، تبديل المظهر، تحديث اللوحة، أسئلة «اسألني».
-   أي أمر يغيّر بيانات يمرّ بتأكيد (نعم/لا أو زر). الميكروفون داخل أيقونة «اسألني»: أصفر = متوقف (ردود كتابية)، أخضر = يعمل (استماع بكلمة النداء «hi boutique» + ردود صوتية).
+   أي أمر يغيّر بيانات يمرّ بتأكيد (نعم/لا أو زر). الميكروفون داخل أيقونة «اسألني»: أصفر = متوقف (ردود كتابية)، أخضر = يعمل (استماع بكلمة النداء «hi + اسم المتجر» + ردود صوتية).
    أمر جديد = أضف قاعدة في parse() واسطراً في HELP_TXT، ثم اختبرها في scripts/test-voice.js. */
 const AdminVoice = (() => {
   /* ── تطبيع: حروف صغيرة، بلا لهجات/تشكيل، توحيد الألف والتاء المربوطة والياء، أرقام لاتينية ── */
@@ -638,7 +638,7 @@ const AdminVoice = (() => {
   const mirrorUser = txt => { if (panelOpen() && txt) AH().post("u", txt); };
 
   /* ── الميكروفون: أصفر = متوقف (ردود كتابية)، أخضر = يعمل (استماع بكلمة النداء + ردود صوتية) ── */
-  const boutique = () => wakeNames().first;
+  const boutique = () => wakeNames().first;   /* اسم المتجر المعروض في تلميحات كلمة النداء */
   function paintMic() {
     const cls = !SR ? "na" : micOn ? "on" : "off";
     ["ah-mic", "ah-mic2"].forEach(id => { const x = $h(id); if (!x) return; x.classList.remove("on", "off", "na"); x.classList.add(cls); x.classList.toggle("live", micOn && listening); x.title = !SR ? "متصفحك لا يدعم الأوامر الصوتية" : micOn ? "الميكروفون يعمل — اضغط لإيقافه" : "الميكروفون متوقف — اضغط لتشغيله"; });
@@ -682,15 +682,53 @@ const AdminVoice = (() => {
   function stopRec() { clearTimeout(restartT); try { if (rec) { rec.onend = null; rec.abort ? rec.abort() : rec.stop(); } } catch (e) { } listening = false; }
   function toggleLang() { lang = lang === "ar-DZ" ? "fr-FR" : "ar-DZ"; LS("alyssum_voice_lang", lang); if (micOn) { stopRec(); setTimeout(startRec, 250); } sink({ out: lang === "fr-FR" ? "Langue : français" : "اللغة: العربية (الجزائر)" }); }
 
-  /* كلمة النداء: «hi boutique» (+ اسم المتجر + «مساعد»؛ مع صيغ النطق المحتملة) */
-  const BOUT = ["boutique", "boutik", "bootique", "botique", "butik", "بوتيك", "بوتيج", "بوتيق"];
+  /* كلمة النداء: «hi + اسم المتجر» (اسم المتجر من إعدادات الموقع)، مع الصيغ التي تعلّمتها معايرة صوت صاحب المتجر */
+  let STORE_NAME = "", WAKEV = null, WAKE_RX = null, calibrating = false;
+  try { WAKEV = JSON.parse(LS("alyssum_voice_wake") || "null"); } catch (e) { WAKEV = null; }
+  const siteName = () => { let nm = STORE_NAME; if (!nm) { try { nm = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || ""; } catch (e) { } } return nm; };
   function wakeNames() {
-    let nm = ""; try { nm = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || ""; } catch (e) { }
-    const ws = norm(nm).split(" ").filter(w => w.length >= 3);
-    return { ws: BOUT.concat(ws, ["مساعد", "assistant"]), first: "boutique" };
+    const nm = siteName(), full = norm(nm), set = new Set(full.split(" ").filter(w => w.length >= 3));
+    if (full.includes(" ") && full.length >= 4) set.add(full);
+    ((WAKEV && WAKEV.variants) || []).forEach(v => set.add(v));
+    if (!set.size) { set.add("مساعد"); set.add("assistant"); }
+    return { ws: [...set], first: (nm || "").trim().split(/\s+/)[0] || "المساعد" };
   }
-  let WAKE_RX = null;
-  const wakeRx = () => WAKE_RX || (WAKE_RX = new RegExp("^(?:(?:يا|ya|hey|hi|high|hello|هاي|هاى|اوكي|ok|okay|مرحبا|اهلا|salut|bonjour)\\s+)*(?:" + wakeNames().ws.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\s*"));
+  const GREET = /^(?:(?:يا|ya|hey|hi|high|hello|هاي|هاى|اوكي|ok|okay|مرحبا|اهلا|salut|bonjour)\s+)+/;
+  const wakeRx = () => WAKE_RX || (WAKE_RX = new RegExp("^(?:(?:يا|ya|hey|hi|high|hello|هاي|هاى|اوكي|ok|okay|مرحبا|اهلا|salut|bonjour)\\s+)*(?:" + wakeNames().ws.sort((a, b) => b.length - a.length).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\s*"));
+  async function loadStoreName() { try { const r = await fetch("assets/data/store.json", { cache: "no-cache" }); if (r.ok) { const d = await r.json(); if (d && d.name) { STORE_NAME = String(d.name); WAKE_RX = null; paintMic(); } } } catch (e) { } }
+
+  /* ── معايرة صوت صاحب المتجر: يقول «hi اسم متجره» ثلاث مرات فتُحفظ الصيغ التي يلتقطها المتصفح لنطقه ── */
+  function oneShot() {
+    return new Promise(res => {
+      if (!SR) return res(null);
+      const r = new SR(); r.lang = lang; r.interimResults = false; r.continuous = false; r.maxAlternatives = 5; let done = false;
+      const fin = v => { if (done) return; done = true; clearTimeout(tm); try { r.abort && r.abort(); } catch (e) { } res(v); }, tm = setTimeout(() => fin(null), 9000);
+      r.onresult = e => { const rr = e.results[e.results.length - 1], out = []; for (let k = 0; k < rr.length; k++) out.push(rr[k].transcript); fin(out); };
+      r.onerror = () => fin(null); r.onend = () => fin(null);
+      try { r.start(); } catch (e) { fin(null); }
+    });
+  }
+  async function calibrate() {
+    if (!SR) { sink({ out: "متصفحك لا يدعم الأوامر الصوتية. استعمل Chrome أو Edge.", err: true }); return; }
+    if (calibrating) return; calibrating = true;
+    const was = micOn; stopRec(); micOn = false; paintMic(); pending = null;
+    const resume = () => { calibrating = false; if (was) { micOn = true; startRec(); paintMic(); } };
+    const nm = wakeNames().first, takes = [];
+    for (let i = 1; i <= 3; i++) {
+      sink({ out: "المرة " + i + " من 3: قل «hi " + nm + "» بصوتك الآن…", tx: "<i>أسمعك…</i>" });
+      const alts = await oneShot();
+      if (!alts) { sink({ out: "لم أسمع شيئاً. اضغط «اضبط كلمة النداء» وأعد المحاولة بصوت أوضح.", err: true }); resume(); return; }
+      takes.push(alts); await new Promise(r => setTimeout(r, 450));
+    }
+    const parts = new Map();
+    takes.forEach(alts => alts.forEach((a, k) => { const n = norm(a); if (!n || n.split(" ").length > 4) return; const m = GREET.exec(n), rest = (m ? n.slice(m[0].length) : n).trim(); if (rest.length >= 3) parts.set(rest, (parts.get(rest) || 0) + (k === 0 ? 2 : 1)); }));
+    const variants = [...parts.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]).slice(0, 12);
+    if (!variants.length) { sink({ out: "لم أتمكن من التقاط الكلمة. أعد المحاولة في مكان أهدأ وانطقها بوضوح.", err: true }); resume(); return; }
+    WAKEV = { variants, lang, at: Date.now() }; LS("alyssum_voice_wake", JSON.stringify(WAKEV)); WAKE_RX = null;
+    sink({ out: "تم الضبط. سأستجيب لـ: " + variants.map(v => "«hi " + v + "»").join("، ") + ".\nجرّب الآن: قل «hi " + nm + "» ثم أمرك." });
+    speak(lang === "fr-FR" ? "C'est réglé" : "تم الضبط", lang === "fr-FR"); resume(); paintMic();
+  }
+  function resetWake() { WAKEV = null; WAKE_RX = null; LS("alyssum_voice_wake", ""); paintMic(); sink({ out: "أُعيد ضبط كلمة النداء إلى اسم المتجر." }); }
 
   function handle(alts, opt) {
     opt = opt || {}; const norms = alts.map(norm);
@@ -781,13 +819,13 @@ const AdminVoice = (() => {
 
   function init() {
     const saved = LS("alyssum_voice_lang"); if (saved === "fr-FR" || saved === "ar-DZ") lang = saved;
-    loadKB(); loadLex();
+    loadKB(); loadLex(); loadStoreName();
     let tries = 0; const tick = () => { paintMic(); if (!$h("ah-mic") && tries++ < 40) setTimeout(tick, 500); }; tick();
     if (LS("alyssum_voice_mic") === "1" && SR) setTimeout(() => { if (!micOn) { micOn = true; startRec(); paintMic(); } }, 1500);   /* يستأنف إن كان الإذن ممنوحاً سابقاً */
     document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
+  const api = { calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();
