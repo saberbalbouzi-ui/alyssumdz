@@ -1,0 +1,1089 @@
+{
+ "_doc": "قاموس الأوامر الصوتية للوحة التحكم (فصحى + دارجة جزائرية + فرنسية). يُحمَّل عند تشغيل الأوامر الصوتية ويُدمج مع المفردات الأساسية في assets/js/admin-voice.js. verbs.*.words مرادفات الفعل؛ implemented=false أفعال مسجَّلة للمستقبل؛ confirm=التأكيد قبل التنفيذ؛ examples أمثلة مع التوقّع تُجرَّب في scripts/test-voice.js. أضف صيغة جديدة هنا بلا تعديل الشيفرة.",
+ "version": 1,
+ "verbs": {
+  "add": {
+   "intent": "product.add",
+   "implemented": true,
+   "confirm": false,
+   "words": [
+    "زيد",
+    "زيدلي",
+    "زيدلو",
+    "زيد واحد",
+    "زيد وحدة",
+    "زيد آخر",
+    "زيد واحد آخر",
+    "ضيف",
+    "ضيفلي",
+    "أضف",
+    "أضيف",
+    "اضافة",
+    "حط",
+    "حطلي",
+    "حطلو",
+    "دير",
+    "ديرلي",
+    "ديرلو",
+    "سوي",
+    "اصنع",
+    "انشئ",
+    "أنشئ",
+    "نزيد",
+    "نزيدلو",
+    "نضيف",
+    "نحب نضيف",
+    "نحب نزيد",
+    "ajoute",
+    "ajouter",
+    "rajoute",
+    "rajouter",
+    "crée",
+    "creer",
+    "nouveau",
+    "nouvelle",
+    "new",
+    "add",
+    "create"
+   ]
+  },
+  "increase": {
+   "intent": "inventory.increase | price.increase",
+   "implemented": true,
+   "confirm": true,
+   "words": [
+    "زيد",
+    "زيدلي",
+    "ارفع",
+    "ارفعلي",
+    "كبر",
+    "ضاعف",
+    "augmente",
+    "augmenter",
+    "majore",
+    "monte",
+    "increase",
+    "plus"
+   ]
+  },
+  "decrease": {
+   "intent": "inventory.decrease | price.decrease",
+   "implemented": true,
+   "confirm": true,
+   "words": [
+    "نقص",
+    "نقصلي",
+    "نقصه",
+    "نقصها",
+    "انقص",
+    "انقص من",
+    "قلل",
+    "قللي",
+    "هبط",
+    "هبطلي",
+    "نحي شوية",
+    "حيد شوية",
+    "نقص شوية",
+    "نقص بزاف",
+    "نقص للنصف",
+    "baisse",
+    "baisser",
+    "diminue",
+    "diminuer",
+    "réduis",
+    "reduire",
+    "moins",
+    "decrease",
+    "lower"
+   ]
+  },
+  "set": {
+   "intent": "inventory.set | price.set",
+   "implemented": true,
+   "confirm": true,
+   "words": [
+    "خلي",
+    "خليه",
+    "خليها",
+    "ديرها",
+    "ديرها كيما",
+    "بدل",
+    "بدلها",
+    "بدله",
+    "بدلها إلى",
+    "غير",
+    "غيره",
+    "غيرها",
+    "عدل",
+    "صحح",
+    "صلح",
+    "ضع",
+    "اجعل",
+    "اجعله",
+    "حط",
+    "fixe",
+    "fixer",
+    "définis",
+    "definir",
+    "mets",
+    "mettre",
+    "modifie",
+    "modifier",
+    "change",
+    "changer",
+    "passe",
+    "set"
+   ]
+  },
+  "hide": {
+   "intent": "product.hide",
+   "implemented": true,
+   "confirm": true,
+   "words": [
+    "خبي",
+    "خبيه",
+    "خبيها",
+    "اخف",
+    "أخفي",
+    "اخفه",
+    "عطل",
+    "طفي",
+    "طفيه",
+    "cache",
+    "cacher",
+    "masque",
+    "masquer",
+    "désactive",
+    "desactiver",
+    "hide"
+   ]
+  },
+  "show": {
+   "intent": "product.show",
+   "implemented": true,
+   "confirm": true,
+   "words": [
+    "رجع",
+    "رجعه",
+    "رجعلي",
+    "ارجع",
+    "رجعه للواجهة",
+    "اظهر",
+    "أظهره",
+    "فعل",
+    "فعله",
+    "شغل",
+    "شغله",
+    "réactive",
+    "reactiver",
+    "active",
+    "activer",
+    "remets",
+    "remettre",
+    "republie"
+   ]
+  },
+  "delete": {
+   "intent": "product.delete",
+   "implemented": true,
+   "confirm": "click",
+   "note": "لا يُنفَّذ بالصوت: يفتح العنصر ليحذفه المستخدم بزر الحذف.",
+   "words": [
+    "نحي",
+    "نحيه",
+    "نحيها",
+    "نحيهالي",
+    "نحيلي",
+    "حيد",
+    "حيده",
+    "حيدها",
+    "امسح",
+    "امسحه",
+    "امسحها",
+    "احذف",
+    "احذفه",
+    "فسخ",
+    "فسخه",
+    "ارمي",
+    "تنحى",
+    "supprime",
+    "supprimer",
+    "efface",
+    "effacer",
+    "enlève",
+    "enleve",
+    "retire",
+    "retirer",
+    "delete",
+    "remove"
+   ]
+  },
+  "open": {
+   "intent": "nav.open",
+   "implemented": true,
+   "confirm": false,
+   "words": [
+    "افتح",
+    "فتح",
+    "افتحلي",
+    "حل",
+    "حلي",
+    "حللي",
+    "اذهب",
+    "روح",
+    "رح",
+    "خذني",
+    "ديني",
+    "دخلني",
+    "دخلني ل",
+    "وريني",
+    "ورني",
+    "ورلي",
+    "وريلي",
+    "وري",
+    "بينلي",
+    "اعرض",
+    "اعرضلي",
+    "عرضلي",
+    "طلعلي",
+    "جيبلي",
+    "جيب",
+    "شوف",
+    "شوفلي",
+    "انتقل",
+    "رجعني",
+    "ouvre",
+    "ouvrir",
+    "va",
+    "aller",
+    "montre",
+    "montrer",
+    "affiche",
+    "afficher",
+    "voir",
+    "open",
+    "show",
+    "go"
+   ]
+  },
+  "search": {
+   "intent": "search",
+   "implemented": true,
+   "confirm": false,
+   "words": [
+    "ابحث",
+    "ابحثلي",
+    "دور",
+    "دورلي",
+    "لوج",
+    "لوجلي",
+    "قلب",
+    "قلب على",
+    "فتش",
+    "لقالي",
+    "وين نلقى",
+    "cherche",
+    "chercher",
+    "recherche",
+    "rechercher",
+    "trouve",
+    "trouver",
+    "find",
+    "search"
+   ]
+  },
+  "edit": {
+   "intent": "product.edit",
+   "implemented": true,
+   "confirm": false,
+   "words": [
+    "عدل",
+    "عدلي",
+    "تعديل",
+    "modifie",
+    "modifier",
+    "edit",
+    "editer"
+   ]
+  },
+  "update": {
+   "intent": "panel.update",
+   "implemented": true,
+   "confirm": true,
+   "words": [
+    "حدث",
+    "حدثي",
+    "رفرش",
+    "actualise",
+    "actualiser",
+    "rafraîchis",
+    "update",
+    "refresh",
+    "mise à jour"
+   ]
+  },
+  "move": {
+   "intent": "layout.move",
+   "implemented": false,
+   "words": [
+    "نقل",
+    "دوز",
+    "حول",
+    "طلع",
+    "هبط",
+    "قدم",
+    "اخر",
+    "deplace",
+    "déplace",
+    "move"
+   ]
+  },
+  "sort": {
+   "intent": "list.sort",
+   "implemented": false,
+   "words": [
+    "رتب",
+    "نظم",
+    "صف",
+    "حط الأول",
+    "trie",
+    "trier",
+    "classe",
+    "sort"
+   ]
+  },
+  "copy": {
+   "intent": "item.copy",
+   "implemented": false,
+   "words": [
+    "كوبي",
+    "انسخ",
+    "دوبليكي",
+    "كرر",
+    "دير نسخة",
+    "عاود نفس الشي",
+    "copie",
+    "copier",
+    "dupliquer",
+    "duplique",
+    "clone"
+   ]
+  },
+  "close": {
+   "intent": "ui.close",
+   "implemented": false,
+   "words": [
+    "سد",
+    "غلق",
+    "سكر",
+    "خرج",
+    "اخرج",
+    "خبي",
+    "ferme",
+    "fermer",
+    "close"
+   ]
+  },
+  "enable": {
+   "intent": "feature.enable",
+   "implemented": false,
+   "confirm": true,
+   "words": [
+    "فعل",
+    "شغل",
+    "اون",
+    "خدم",
+    "رجع يخدم",
+    "active",
+    "activer"
+   ]
+  },
+  "disable": {
+   "intent": "feature.disable",
+   "implemented": false,
+   "confirm": true,
+   "words": [
+    "عطل",
+    "طفي",
+    "حبس",
+    "ستوب",
+    "ديزاكتيفي",
+    "ما تخليهش يخدم",
+    "désactive"
+   ]
+  },
+  "save": {
+   "intent": "page.save",
+   "implemented": false,
+   "words": [
+    "سجل",
+    "احفظ",
+    "صوني",
+    "خزن",
+    "دير sauvegarde",
+    "sauvegarde",
+    "enregistre",
+    "save"
+   ]
+  },
+  "publish": {
+   "intent": "page.publish",
+   "implemented": false,
+   "confirm": true,
+   "words": [
+    "انشر",
+    "بوبليي",
+    "طلع للموقع",
+    "خرج للواجهة",
+    "خليه اونلاين",
+    "publie",
+    "publier",
+    "publish"
+   ]
+  },
+  "undo": {
+   "intent": "edit.undo",
+   "implemented": false,
+   "words": [
+    "تراجع",
+    "رجع الخطوة",
+    "رجع قبل",
+    "رجع كيما كان",
+    "اندو",
+    "annule",
+    "annuler",
+    "undo"
+   ]
+  },
+  "redo": {
+   "intent": "edit.redo",
+   "implemented": false,
+   "words": [
+    "عاود",
+    "كرر",
+    "ريبيت",
+    "ديرها مرة أخرى",
+    "refais",
+    "repete",
+    "redo"
+   ]
+  }
+ },
+ "objects": {
+  "product": {
+   "words": [
+    "منتج",
+    "منتجا",
+    "منتوج",
+    "منتوجا",
+    "سلعة",
+    "سلعا",
+    "بضاعة",
+    "برودوي",
+    "برودي",
+    "produit",
+    "article",
+    "product"
+   ]
+  },
+  "products": {
+   "words": [
+    "منتجات",
+    "منتوجات",
+    "سلع",
+    "برودويات",
+    "produits",
+    "products",
+    "articles"
+   ]
+  },
+  "order": {
+   "words": [
+    "طلب",
+    "طلبات",
+    "طلبية",
+    "طلبيات",
+    "كوموند",
+    "كوموندات",
+    "كوموندا",
+    "commande",
+    "commandes",
+    "order",
+    "orders"
+   ]
+  },
+  "customer": {
+   "words": [
+    "زبون",
+    "عميل",
+    "كليون",
+    "كليان",
+    "client",
+    "customer"
+   ]
+  },
+  "stock": {
+   "words": [
+    "مخزون",
+    "ستوك",
+    "كمية",
+    "كميات",
+    "جرد",
+    "stock",
+    "inventaire",
+    "quantité"
+   ]
+  },
+  "price": {
+   "words": [
+    "سعر",
+    "أسعار",
+    "ثمن",
+    "بريكس",
+    "prix",
+    "price",
+    "tarif"
+   ]
+  },
+  "discount": {
+   "words": [
+    "تخفيض",
+    "تخفيضات",
+    "خصم",
+    "ريدوكسيون",
+    "بروموسيون",
+    "remise",
+    "réduction",
+    "promo",
+    "promotion",
+    "soldes",
+    "discount"
+   ]
+  },
+  "shop": {
+   "words": [
+    "بوتيك",
+    "البوتيك",
+    "متجر",
+    "المتجر",
+    "boutique",
+    "magasin",
+    "shop",
+    "store"
+   ]
+  },
+  "image": {
+   "words": [
+    "صورة",
+    "صور",
+    "image",
+    "images",
+    "photo",
+    "photos"
+   ]
+  },
+  "section": {
+   "words": [
+    "سكسيون",
+    "قسم",
+    "بلوك",
+    "بانير",
+    "section",
+    "bloc",
+    "bannière",
+    "banner"
+   ]
+  }
+ },
+ "units": {
+  "piece": {
+   "words": [
+    "حبة",
+    "حبات",
+    "وحدة",
+    "وحدات",
+    "قطعة",
+    "قطع",
+    "pièce",
+    "pièces",
+    "pcs",
+    "unité",
+    "unités"
+   ]
+  },
+  "percent": {
+   "words": [
+    "بالمية",
+    "بالمائة",
+    "في المية",
+    "فالمية",
+    "pourcent",
+    "pour cent",
+    "pourcentage",
+    "percent",
+    "%"
+   ]
+  },
+  "currency": {
+   "words": [
+    "دينار",
+    "دنانير",
+    "دج",
+    "da",
+    "dzd",
+    "dinar",
+    "dinars"
+   ]
+  }
+ },
+ "pointers": {
+  "this": {
+   "words": [
+    "هذا",
+    "هذه",
+    "هذي",
+    "هاذا",
+    "هاذي",
+    "هاذ",
+    "هذاك",
+    "هذوك",
+    "هادا",
+    "هادي",
+    "هاد",
+    "تاع هذا",
+    "اللي هنا",
+    "ce",
+    "cet",
+    "cette",
+    "celui-ci",
+    "celle-ci",
+    "ceci",
+    "this",
+    "نفسه"
+   ]
+  },
+  "other": {
+   "note": "مرجع غير مدعوم بعد",
+   "words": [
+    "الثاني",
+    "الأخير",
+    "اللي فوق",
+    "اللي قبل",
+    "الآخر"
+   ]
+  }
+ },
+ "quantity": {
+  "vague": {
+   "note": "كمية غير محددة: يسأل المساعد عن العدد",
+   "words": [
+    "بزاف",
+    "برشة",
+    "كثير",
+    "شوية",
+    "شوي",
+    "قليل",
+    "ضاعف",
+    "نصف",
+    "double"
+   ]
+  },
+  "all": {
+   "words": [
+    "كامل",
+    "كاملين",
+    "قاع",
+    "كلشي",
+    "الكل",
+    "جميع",
+    "الكل مع بعض",
+    "tous",
+    "toutes",
+    "tout",
+    "all"
+   ]
+  },
+  "part": {
+   "note": "للمستقبل",
+   "words": [
+    "غير",
+    "برك",
+    "فقط",
+    "وحدو",
+    "هاذو برك",
+    "غير هذا"
+   ]
+  },
+  "repeat": {
+   "note": "للمستقبل",
+   "words": [
+    "مرة أخرى",
+    "عاود",
+    "زيد واحد آخر",
+    "نفس الشي",
+    "كررها"
+   ]
+  },
+  "urgency": {
+   "note": "للمستقبل",
+   "words": [
+    "بسرعة",
+    "ديراكت",
+    "توا",
+    "دروك",
+    "الآن",
+    "في الحين",
+    "بلا ما تطول"
+   ]
+  },
+  "postpone": {
+   "note": "للمستقبل",
+   "words": [
+    "من بعد",
+    "غدوة",
+    "لاحقا",
+    "مازال",
+    "خليها لوقت آخر"
+   ]
+  }
+ },
+ "modifiers": {
+  "new": {
+   "words": [
+    "جديد",
+    "جديدة",
+    "آخر",
+    "أخرى",
+    "ثاني",
+    "ثانية",
+    "nouveau",
+    "nouvelle",
+    "autre",
+    "another",
+    "new"
+   ]
+  }
+ },
+ "negation": {
+  "words": [
+   "ما",
+   "مش",
+   "ميش",
+   "ماشي",
+   "لا",
+   "بلاش",
+   "ne",
+   "pas",
+   "non",
+   "no",
+   "don't",
+   "do not"
+  ],
+  "note": "«ما تنحيش» عكس «نحي»: يُلغى التنفيذ"
+ },
+ "confirm": {
+  "yes": {
+   "words": [
+    "نعم",
+    "ايوه",
+    "ايه",
+    "واه",
+    "صح",
+    "صحيح",
+    "بالضبط",
+    "هاك",
+    "مليح",
+    "كمل",
+    "كمّل",
+    "توكل",
+    "موافق",
+    "اكيد",
+    "تمام",
+    "نفذ",
+    "oui",
+    "ok",
+    "d'accord",
+    "vas-y",
+    "ouais",
+    "yes",
+    "confirme",
+    "wah"
+   ]
+  },
+  "no": {
+   "words": [
+    "لا",
+    "لأ",
+    "ماشي",
+    "ما تديرهاش",
+    "ما تكملش",
+    "non",
+    "no",
+    "annule",
+    "الغاء"
+   ]
+  }
+ },
+ "control": {
+  "stop": {
+   "words": [
+    "الغاء",
+    "الغي",
+    "توقف",
+    "وقف",
+    "بطل",
+    "خلاص",
+    "annule",
+    "annuler",
+    "stop",
+    "arrête",
+    "cancel",
+    "laisse tomber"
+   ]
+  },
+  "help": {
+   "words": [
+    "اوامر",
+    "الأوامر",
+    "ماذا اقول",
+    "واش نقدر نقول",
+    "شنو نقدر نقول",
+    "واش تقدر تدير",
+    "عاوني",
+    "ما فهمتش",
+    "اشرحلي بالدارجة",
+    "aide",
+    "help",
+    "commandes vocales",
+    "que puis-je dire"
+   ]
+  }
+ },
+ "examples": [
+  {
+   "u": "زيدلي منتوج جديد",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "زيد منتوج آخر",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "حطلي سلعة جديدة",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "ديرلي برودوي جديد",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "نحب نضيف منتوج",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "أضف منتجًا جديدًا",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "زيدلي produit جديد في البوتيك",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "ajoute un nouveau produit",
+   "expect": {
+    "kind": "newProduct"
+   }
+  },
+  {
+   "u": "زيدلي بزاف منتجات",
+   "expect": {
+    "kind": "choose"
+   }
+  },
+  {
+   "u": "زيد",
+   "expect": {
+    "kind": "choose"
+   }
+  },
+  {
+   "u": "زيد 20 حبة لحنة الشفاء",
+   "expect": {
+    "kind": "stockChange",
+    "to": 20
+   }
+  },
+  {
+   "u": "زيدلي 10 حبات من حنة",
+   "expect": {
+    "kind": "stockChange",
+    "to": 10
+   }
+  },
+  {
+   "u": "نقص 2 حبات من عسل السدر",
+   "expect": {
+    "kind": "stockChange",
+    "to": 1
+   }
+  },
+  {
+   "u": "خلي المخزون ديال زيت اللحية 100",
+   "expect": {
+    "kind": "stockChange",
+    "to": 100
+   }
+  },
+  {
+   "u": "بدل الكمية لحنة إلى 50",
+   "expect": {
+    "kind": "stockChange",
+    "to": 50
+   }
+  },
+  {
+   "u": "زيد السعر ديال حنة 10 بالمية",
+   "expect": {
+    "kind": "priceChange",
+    "to": 1650
+   }
+  },
+  {
+   "u": "نقص سعر عسل السدر 500 دينار",
+   "expect": {
+    "kind": "priceChange",
+    "to": 3500
+   }
+  },
+  {
+   "u": "نقص السعر 10 بالمية لحنة",
+   "expect": {
+    "kind": "priceChange",
+    "to": 1350
+   }
+  },
+  {
+   "u": "خلي سعر حنة 2500 دينار",
+   "expect": {
+    "kind": "priceChange",
+    "to": 2500
+   }
+  },
+  {
+   "u": "غير سعر حنة إلى ألفين وخمسمية",
+   "expect": {
+    "kind": "priceChange",
+    "to": 2500
+   }
+  },
+  {
+   "u": "mets le prix de prod-a à 2000",
+   "expect": {
+    "kind": "priceChange",
+    "to": 2000
+   }
+  },
+  {
+   "u": "دير تخفيض 15 بالمية على حنة",
+   "expect": {
+    "kind": "discount",
+    "to": 1275
+   }
+  },
+  {
+   "u": "دير تخفيض 15 بالمية على كامل المنتجات",
+   "expect": {
+    "kind": "nav",
+    "tab": "bulkp"
+   }
+  },
+  {
+   "u": "خبي منتوج حنة وما تمسحوش",
+   "expect": {
+    "kind": "visibility"
+   }
+  },
+  {
+   "u": "رجع حنة للواجهة",
+   "expect": {
+    "kind": "visibility"
+   }
+  },
+  {
+   "u": "نحي منتوج حنة",
+   "expect": {
+    "kind": "editProduct",
+    "slug": "prod-a"
+   }
+  },
+  {
+   "u": "ما تنحيش الصورة",
+   "expect": {
+    "kind": "negated"
+   }
+  },
+  {
+   "u": "ne supprime pas ce produit",
+   "expect": {
+    "kind": "negated"
+   }
+  },
+  {
+   "u": "ما تمسحش المنتوج",
+   "expect": {
+    "kind": "negated"
+   }
+  },
+  {
+   "u": "نحي كامل الصور",
+   "expect": {
+    "kind": "unknown"
+   }
+  },
+  {
+   "u": "شحال بقالنا في الستوك",
+   "expect": {
+    "kind": "answer"
+   }
+  },
+  {
+   "u": "ورّيني المنتجات اللي راهم يخلصو",
+   "expect": {
+    "kind": "answer"
+   }
+  },
+  {
+   "u": "ورّيني الطلبات الجديدة",
+   "expect": {
+    "kind": "orders",
+    "status": "nouvelle"
+   }
+  },
+  {
+   "u": "شحال عندي كوموند اليوم",
+   "expect": {
+    "kind": "answer"
+   }
+  },
+  {
+   "u": "شحال بعنا اليوم",
+   "expect": {
+    "kind": "answer"
+   }
+  }
+ ]
+}
