@@ -108,4 +108,5 @@
 
 ## 14) دومين التطوير المعتمد
 - **`alyssumhub.fyi`** (اشتراه صاحب المتجر من Cloudflare Registrar، ≈5.20$/سنة، تسجيل «perso»، للتطوير والتجارب فقط؛ دومين التسويق يُشترى بعد حسم الاسم). وُضع في `saas/worker/wrangler.toml` (`PLATFORM_DOMAIN`، والمسار `*/*` ما زال معلَّقاً حتى تفعيل Custom Hostnames والمضيف الاحتياطي).
+- **حالة 2026-10-10 (نُفِّذ بالرمز):** سجل `service.alyssumhub.fyi` AAAA `100::` مفعَّل البروكسي أُنشئ ✅؛ الموزّع `alyssum-tenant-router` مرفوع على الحساب ✅ (بلا مسار بعد). **معلَّق:** (أ) تفعيل Custom Hostnames/SSL for SaaS على المنطقة (الخطأ 1404 قبل التفعيل، وقد يطلب وسيلة دفع) ثم تعيين Fallback Origin؛ (ب) مسار `*/*` يحتاج إلى صلاحية «Workers Routes: Edit» على المنطقة في الرمز (أو إنشاؤه من لوحة Cloudflare). Zone ID: `2c1b59d33ef58b35683c06bf4c6da40b`.
 - **المتبقي لتشغيله:** `CF_API_TOKEN` كسرّ في بيئة الجلسة (مضيف `api.cloudflare.com`) ثم جلسة جديدة؛ بعدها: سجل `service` (AAAA `100::` مُفعَّل البروكسي)، تعيين Fallback Origin، تفعيل Custom Hostnames، نشر الموزّع، وموقع تجريبي.
