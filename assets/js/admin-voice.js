@@ -79,6 +79,7 @@ const AdminVoice = (() => {
     if (!lex) return; const extra = {};
     Object.keys(LEXMAP).forEach(path => { const [a, b] = path.split("."), w = lex[a] && lex[a][b] && lex[a][b].words; if (Array.isArray(w)) extra[LEXMAP[path]] = w.filter(x => typeof x === "string" && x.trim()); });
     buildRx(extra);
+    if (lex.ui && lex.ui.aliases && typeof lex.ui.aliases === "object") Object.keys(lex.ui.aliases).forEach(k => { const v = lex.ui.aliases[k]; if (Array.isArray(v)) UI_ALIAS[fold(k)] = v.map(fold); });
   }
   const ASK_ME = /^(?:ي?ا?سالني|اسالني|demande moi|ask me)\s+(.+)/;
   const GENERIC = new Set("اداه ادوات قسم اقسام تبويب onglet section outil outils فضلك".split(" "));
@@ -222,6 +223,12 @@ const AdminVoice = (() => {
     return null;
   }
 
+
+  /* أوامر عناصر اللوحة: عبارات + أنماط (نقية، تُستعمل في parse) */
+  const UI_CLICK = ["اضغط", "اضغطلي", "انقر", "انقرلي", "كليكي", "كليك", "click", "clique", "cliquer", "appuie", "appuyer", "presse"];
+  const UI_WHERE = ["وين", "فين", "اين", "اريني", "وريني وين", "ou est", "ou se trouve", "where", "montre moi ou"];
+  const UI_TYPE_RX = /^(?:اكتب|ادخل|دخل|tape|ecris|saisis|type)\s+(.+?)\s+(?:في|فى|داخل|dans|in)\s+(.+)$/;
+  let UIRX = null; const uiRegex = () => UIRX || (UIRX = { click: re(UI_CLICK), where: re(UI_WHERE) });
 
   /* ═════════ الطبقة الدلالية: نية + عنصر + كمية + سياق (دارجة/فرنسية/فصحى) ═════════ */
   /* أرقام منطوقة: (قيمة، نوع) — add: يُجمع، m100: يضرب ما قبله في 100، m1000: يضرب ما قبله في 1000 */
@@ -386,6 +393,32 @@ const AdminVoice = (() => {
     if (/(?:^| )(?:اوقف|ايقاف|طفي|عطل|بلا|بدون|ما نبغيش|لا تحرك|stop|sans|desactive)(?: \S+)? (?:ال)?(?:يد|main)(?: |$)/.test(t)) return { kind: "hand", say: L("أوقفت اليد، سأنفّذ مباشرة.", "Main désactivée."), act: { type: "hand", on: false } };
     if (/(?:^| )(?:شغل|فعل|ارني|وريني|اظهر|active|montre)(?: \S+)? (?:ال)?(?:يد|main)(?: |$)/.test(t)) return { kind: "hand", say: L("شغّلت اليد.", "Main activée."), act: { type: "hand", on: true } };
     const orders = data.orders || [], products = data.products || [];
+    /* عناصر اللوحة بالكلمات المفتاحية (حيّة من الصفحة): «اضغط حفظ»، «اكتب 3000 في سعر البيع»، «وين زر…» */
+    if (data.ui && data.ui.find) {
+      const UR = uiRegex(), PH = UI_CLICK.concat(UI_WHERE).map(fold).sort((x, y) => y.length - x.length);
+      const strip = s => { let z = " " + s + " "; PH.forEach(ph => { z = z.split(" " + ph + " ").join(" "); z = z.split(" " + ph + " ").join(" "); }); return tokens(z.trim()).join(" "); };
+      const tab = id => TAB_LABEL[id] || id, show = c => "«" + c.label + "»" + (c.tab ? " في قسم " + tab(c.tab) : "");
+      const mk = (c, mode, extra) => Object.assign({ kind: "ui", say: "", confirm: false, act: Object.assign({ type: "ui", mode, item: c, label: c.label, tab: c.tab }, extra || {}) }, {});
+      const pickOne = (cands, builder) => {
+        if (cands.length === 1 || (cands.length > 1 && cands[0].label !== cands[1].label && false)) return builder(cands[0]);
+        return { kind: "choose", single: false, say: L("أيّ عنصر تقصد؟ " + cands.slice(0, 4).map((c, i) => (i + 1) + "- " + c.label + (c.tab ? " (" + tab(c.tab) + ")" : "")).join("، "), "Lequel ?"), options: cands.slice(0, 4).map(c => { const r = builder(c); return { label: c.label + (c.tab ? " — " + tab(c.tab) : ""), act: r.act, confirm: r.confirm, say: r.say }; }) };
+      };
+      const mt = UI_TYPE_RX.exec(t);
+      if (mt) {
+        const cands = data.ui.find(mt[2], 4).filter(c => c.kind !== "button");
+        if (cands.length) return pickOne(cands, c => Object.assign(mk(c, "type", { value: mt[1] }), { say: L("أكتب «" + mt[1] + "» في " + show(c), "J'écris « " + mt[1] + " » dans " + c.label) , confirm: c.risk !== "ok" }));
+      }
+      if (has(UR.click, t) && !has(V_OPEN, t)) {
+        const q = strip(t), cands = q ? data.ui.find(q, 5) : [];
+        if (cands.length) return pickOne(cands, c => c.risk === "danger"
+          ? Object.assign(mk(c, "point"), { say: L("هذا الزر يحذف أو يمسح؛ لا أضغطه بالصوت. أشير إليه فقط: اضغطه بنفسك. " + show(c), "Action destructive : je la montre seulement.") })
+          : Object.assign(mk(c, "click"), { say: L("أضغط " + show(c), "Je clique : " + c.label), confirm: c.risk === "confirm" }));
+      }
+      if (has(UR.where, t)) {
+        const q = strip(t), cands = q ? data.ui.find(q, 4) : [];
+        if (cands.length) { const c = cands[0], rest = cands.slice(1).filter(x => x.label === c.label && x.tab !== c.tab); return Object.assign(mk(c, "point"), { say: L("هنا: " + show(c) + (rest.length ? " (وله نظير في " + rest.map(x => tab(x.tab)).join("، ") + ")" : ""), "Ici : " + c.label) }); }
+      }
+    }
     const sem = understand(raw, t, data, L); if (sem) return sem;
     const isOpen = has(V_OPEN, t), ask = has(COUNT_Q, t) || has(WHAT_Q, t);
 
@@ -576,11 +609,81 @@ const AdminVoice = (() => {
         try { toast(act.type === "active" ? (act.on ? "تم إظهار المنتج (يُنشر خلال ثوانٍ)" : "تم إخفاء المنتج (يُنشر خلال ثوانٍ)") : "تم تطبيق التخفيض (يُنشر خلال ثوانٍ)"); } catch (e) { }
         lastSlug = act.slug; return true;
       }
+      case "ui": {
+        const it = act.item; if (!it || !it.el) return false;
+        const go = () => { if (act.mode === "type") { it.el.focus(); it.el.value = act.value; it.el.dispatchEvent(new Event("input", { bubbles: true })); it.el.dispatchEvent(new Event("change", { bubbles: true })); } else if (act.mode === "click") it.el.click(); else { it.el.scrollIntoView({ block: "center" }); it.el.classList.add("aly-hl"); setTimeout(() => it.el.classList.remove("aly-hl"), 1400); } };
+        if (it.tab && it.el.offsetParent === null) { const b = tabBtn(it.tab); if (b) { b.click(); setTimeout(go, 250); return true; } return false; }
+        go(); return true;
+      }
       case "hand": if (typeof AdminHand === "undefined") return false; AdminHand.setEnabled(!!act.on); paintMic(); return true;
       case "site": window.open("index.html", "_blank"); return true;
       case "search": if (typeof AdminSearch === "undefined") return false; AdminSearch.show(); setTimeout(() => { const i = document.getElementById("as-in"); if (i && act.q) { i.value = act.q; i.dispatchEvent(new Event("input")); } }, 60); return true;
     }
     return false;
+  }
+
+  /* ── فهرس اللوحة الحيّ: كل زر/خانة/قائمة بكلماته المفتاحية (يُعاد بناؤه تلقائياً عند أي تغيير في الصفحة)،
+        فتعرف اليد و«اسألني» أي أداة أو إعداد جديد بعد أي تحديث دون صيانة يدوية ── */
+  const UI_RISK_DANGER = /حذف|احذف|مسح|امسح|supprim|delete|remove|effac|اعاده ضبط|reset|استرجاع|تسجيل الخروج|خروج|logout|الغاء الطلب|الغ(?:اء|ي) نهائ/;
+  const UI_RISK_CONFIRM = /نشر|publish|ارسال|send|تاكيد|confirm|حفظ ونشر|تحديث|update|تفعيل|activer|ارسل/;
+  /* مرادفات فرنسية/إنجليزية/دارجة لكلمات واجهة اللوحة العربية (تُوسَّع من القاموس ui.aliases) */
+  let UI_ALIAS = { save: ["حفظ"], sauvegarde: ["حفظ"], enregistre: ["حفظ"], enregistrer: ["حفظ"], delete: ["حذف"], supprimer: ["حذف"], supprime: ["حذف"], export: ["تصدير"], exporter: ["تصدير"], import: ["استيراد"], importer: ["استيراد"], add: ["اضافه", "اضف", "جديد"], ajouter: ["اضافه", "اضف", "جديد"], search: ["بحث", "ابحث"], recherche: ["بحث", "ابحث"], chercher: ["بحث"], price: ["سعر"], prix: ["سعر"], stock: ["مخزون"], quantite: ["كميه"], order: ["طلب", "طلبات"], commande: ["طلب", "طلبات"], customer: ["عميل", "زبون"], client: ["عميل", "زبون"], product: ["منتج"], produit: ["منتج"], publish: ["نشر"], publier: ["نشر"], edit: ["تعديل", "عدل"], modifier: ["تعديل", "عدل"], cancel: ["الغاء"], annuler: ["الغاء"], confirm: ["تاكيد", "اكد"], confirmer: ["تاكيد"], send: ["ارسال", "ارسل"], envoyer: ["ارسال"], print: ["طباعه", "طباعة"], imprimer: ["طباعه"], download: ["تحميل", "تنزيل"], telecharger: ["تحميل", "تنزيل"], name: ["اسم"], nom: ["اسم"], phone: ["هاتف"], telephone: ["هاتف"], image: ["صوره", "صور"], photo: ["صوره", "صور"], coupon: ["كود", "كوبون"], discount: ["خصم", "تخفيض"], remise: ["خصم", "تخفيض"], filter: ["تصفيه", "فلتر"], filtre: ["تصفيه", "فلتر"], date: ["تاريخ"], status: ["حاله"], statut: ["حاله"], wilaya: ["ولايه"], category: ["تصنيف"], categorie: ["تصنيف"], sstock: ["مخزون"] };
+  let UIX = { items: [], at: 0, dirty: true }, uiObs = null;
+  const uiLabel = e => {
+    const own = s => (s || "").replace(/\s+/g, " ").trim();
+    let l = own(e.getAttribute("aria-label")) || own(e.title);
+    const tag = e.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
+      const td = e.closest("td[data-l]"), tr = e.closest("tr"), first = tr && tr.querySelector("td.t, th.t, td:not([data-l])");
+      if (td) l = own(td.dataset.l) + " " + (first ? own(first.textContent).slice(0, 40) : "");
+      else {
+        const f = e.closest(".field,.row,div"), lb = (e.id && document.querySelector('label[for="' + e.id + '"]')) || (f && f.querySelector("label"));
+        l = own(lb && lb.textContent) || l || own(e.placeholder) || own(e.name) || own(e.id);
+      }
+    } else l = own(e.textContent).slice(0, 60) || l;
+    return l;
+  };
+  /* جداول بعض الأقسام لا تُرسم إلا عند فتحها: نرسمها (بصمت) قبل الفهرسة/الفحص ليراها اليد و«اسألني» */
+  let primedAt = 0;
+  function prime() {
+    if (Date.now() - primedAt < 30000) return; primedAt = Date.now();
+    const a = A(); ["renderFinance", "renderProducts"].forEach(f => { try { if (typeof a[f] === "function" && (a.products || []).length) a[f](); } catch (e) { } });
+  }
+  function uiBuild() {
+    prime();
+    const items = [], root = document.getElementById("app") || document.body;
+    root.querySelectorAll('button, a[onclick], input:not([type="hidden"]):not([type="file"]), select, textarea, [role="button"], summary').forEach(e => {
+      if (e.closest("#av-hud,#ah-panel,#aly-hand,#as-box,.pbx,#pb-app,.modal-bg")) return;
+      const label = uiLabel(e); if (!label || label.length < 2) return;
+      const tabEl = e.closest('[id^="tab-"]'), tab = tabEl ? tabEl.id.slice(4) : "", t = tk(label);
+      if (!t.length) return;
+      const oc = (e.getAttribute("onclick") || "") + " " + label, risk = UI_RISK_DANGER.test(fold(oc)) ? "danger" : UI_RISK_CONFIRM.test(fold(label)) ? "confirm" : "ok";
+      items.push({ el: e, label, tab, t, kind: e.tagName === "SELECT" ? "select" : (e.tagName === "INPUT" || e.tagName === "TEXTAREA") ? "input" : "button", risk });
+    });
+    UIX = { items, at: Date.now(), dirty: false };
+    return items;
+  }
+  function uiItems() {
+    if (UIX.dirty || !UIX.items.length || Date.now() - UIX.at > 60000) uiBuild();
+    if (!uiObs && typeof MutationObserver !== "undefined") {
+      let tm = 0; uiObs = new MutationObserver(() => { clearTimeout(tm); tm = setTimeout(() => { UIX.dirty = true; }, 500); });
+      try { uiObs.observe(document.getElementById("app") || document.body, { childList: true, subtree: true }); } catch (e) { }
+    }
+    return UIX.items;
+  }
+  /* بحث بكلمات مفتاحية عن عنصر في اللوحة (الأقرب لما يظهر الآن أولاً) */
+  function findUI(q, n) {
+    const GEN = new Set(["زر", "خانه", "حقل", "قائمه", "مفتاح", "button", "bouton", "champ", "case", "menu"]);
+    const qs = tk(q).filter(w => !GEN.has(w)); if (!qs.length) return [];
+    const alt = w => [w].concat(UI_ALIAS[w] || []);
+    const cur = (document.querySelector(".nav-btn.on") && (/'([a-z]+)'/.exec(document.querySelector(".nav-btn.on").getAttribute("onclick") || "") || [])[1]) || "";
+    const res = [];
+    uiItems().forEach(it => {
+      let sc = 0; for (const q0 of qs) { let s = 0; for (const w of alt(q0)) { const v = it.t.some(x => x === w) ? 3 : it.t.some(x => w.length >= 3 && x.length >= 3 && (x.startsWith(w) || w.startsWith(x))) ? 1.6 : 0; if (v > s) s = v; } if (!s) { sc = -1; break; } sc += s; }
+      if (sc > 0) res.push({ it, sc: sc + (it.tab === cur ? 1 : 0) + (it.el.offsetParent !== null ? 0.5 : 0) - Math.abs(it.t.length - qs.length) * 0.15 });
+    });
+    res.sort((a, b) => b.sc - a.sc);
+    return res.slice(0, n || 5).map(r => r.it);
   }
 
   /* ── التنفيذ باليد الافتراضية: تنقر وتكتب في عناصر اللوحة الحقيقية؛ وعند غياب العنصر يعود التنفيذ المباشر ── */
@@ -589,11 +692,46 @@ const AdminVoice = (() => {
   const isoD = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   function periodDates(per) { const now = new Date(); if (per === "today") return [isoD(now), isoD(now)]; if (per === "yesterday") { const y = isoD(new Date(now - 86400000)); return [y, y]; } if (per === "week") return [isoD(new Date(now - 6 * 86400000)), ""]; if (per === "month") return [isoD(new Date(now - 29 * 86400000)), ""]; return ["", ""]; }
   let working = false;
+  const editBtn = slug => [...document.querySelectorAll('[onclick*="editProduct("]')].find(b => (b.getAttribute("onclick") || "").includes(slug) && !/editProduct\(null\)/.test(b.getAttribute("onclick")));
+
+  /* ── مراقبة ذاتية: ما تعذّر على اليد إيجاده يُسجَّل (لتنبيه المطوّر بعد أي تحديث) والتنفيذ يرجع مباشراً ── */
+  function logMiss(act, why) {
+    try {
+      const a = JSON.parse(LS("alyssum_hand_misses") || "[]"), v = (document.querySelector('meta[name="admin-version"]') || {}).content || "";
+      a.push({ type: act && act.type, why: String(why || "").slice(0, 120), v, at: Date.now() }); LS("alyssum_hand_misses", JSON.stringify(a.slice(-30)));
+      if (typeof console !== "undefined") console.warn("[AdminVoice] اليد لم تجد العنصر:", act && act.type, why);
+    } catch (e) { }
+  }
+  const fb = (act, why) => { logMiss(act, why); return exec(act); };
+  /* عناصر اعتمدت عليها اليد؛ تُفحص تلقائياً فيظهر أي تغيّر بعد تحديث (يقابلها scripts/test-hand.js قبل كل دمج) */
+  const HAND_CHECKS = [["زر منتج جديد", '[onclick="Admin.editProduct(null)"]', 0], ["خانة السعر", 'input[onchange*="setPrice(\'"]', 1], ["خانة المخزون", 'input[onchange*="setStock(\'"]', 1],
+    ["بحث الطلبات", "#order-filter-q", 0], ["حالة الطلبات", "#order-filter-status", 0], ["تاريخ من", "#order-filter-from", 0], ["تاريخ إلى", "#order-filter-to", 0],
+    ["مفتاح المظهر", '#theme-sw button[data-m="dark"]', 0], ["زر البحث", "#as-btn", 0], ["زر تعديل منتج", '[onclick*="editProduct("]:not([onclick*="editProduct(null)"])', 1], ["مجموعات القائمة", ".ng[data-g]", 0]];
+  function selfTest() {
+    prime();
+    const has = (A().products || []).length > 0, missing = HAND_CHECKS.filter(c => (c[2] ? has : true) && !document.querySelector(c[1])).map(c => c[0]);
+    const res = { ok: !missing.length, missing, checked: HAND_CHECKS.length, version: (document.querySelector('meta[name="admin-version"]') || {}).content || "" };
+    if (missing.length) logMiss({ type: "selftest" }, missing.join("، "));
+    return res;
+  }
+  /* بعد كل تحديث: ما ظهر من أدوات جديدة في القائمة يُعلَن في «اسألني» مع زر «أرني» تنقر اليد به */
+  function announceNew() {
+    const ver = (document.querySelector('meta[name="admin-version"]') || {}).content || "", navs = navNow(); if (!navs.length || !ver) return;
+    const cur = {}; navs.forEach(n => { cur[n.id] = n.label; });
+    let prev = null; try { prev = JSON.parse(LS("alyssum_ui_seen") || "null"); } catch (e) { }
+    LS("alyssum_ui_seen", JSON.stringify({ v: ver, items: cur }));
+    if (!prev || prev.v === ver) return;
+    const fresh = Object.keys(cur).filter(k => !(k in (prev.items || {}))); if (!fresh.length) return;
+    const names = fresh.map(k => cur[k]), msg = "جديد في اللوحة بعد التحديث: " + names.join("، ") + ". اضغط اسم الأداة لأوصلك إليها.";
+    try { if (AH() && AH().post) AH().post("a", msg, fresh.slice(0, 4).map(k => [cur[k], () => showTab(k), true])); } catch (e) { }
+    try { toast("جديد في اللوحة: " + names.join("، ")); } catch (e) { }
+  }
+  const showTab = id => execVia({ type: "nav", tab: id });
   async function execVia(act) {
     const H = (typeof AdminHand !== "undefined" && AdminHand.enabled()) ? AdminHand : null;
     if (!H || !act || act.type === "hand") return exec(act);
     const dims = [$h("ah-panel"), $h("av-hud")].filter(Boolean); dims.forEach(x => x.classList.add("ah-dim")); working = true;
-    const a = A(), goTab = async id => { const b = tabBtn(id); if (!b) return false; if (b.classList.contains("on")) return true; return H.click(b); };
+    const a = A(), goTab = async id => { const b = tabBtn(id); if (!b) return false; if (b.classList.contains("on")) return true; return await H.click(b); };
     try {
       switch (act.type) {
         case "nav": { const b = tabBtn(act.tab); if (!b) return false; if (!(await H.click(b))) b.click(); return true; }
@@ -606,28 +744,38 @@ const AdminVoice = (() => {
           if (from) await H.type(q$("#order-filter-from"), from); if (to) await H.type(q$("#order-filter-to"), to);
           try { a.applyOrderFilters(); } catch (e) { } return true;
         }
-        case "newProduct": { await goTab("products"); const btn = await waitFor(() => q$('[onclick="Admin.editProduct(null)"]')); if (btn && await H.click(btn)) return true; return exec(act); }
-        case "editProduct": { await goTab("products"); const btn = await waitFor(() => q$('[onclick*="editProduct(\'' + act.slug + '\')"]')); if (btn && await H.click(btn)) return true; return exec(act); }
+        case "ui": {
+          let it = act.item;
+          const fresh = () => { if (it && it.el.isConnected) return it; uiBuild(); const f = findUI(act.label, 3).find(x => x.tab === (it && it.tab)) || findUI(act.label, 1)[0]; if (f) it = act.item = f; return f || null; };
+          if (!fresh()) return fb(act, "عنصر مفقود: " + act.label);
+          if (it.tab && !H.visible(it.el)) { await goTab(it.tab); await H.sleep(250); }
+          await waitFor(() => { const f = fresh(); return f && H.visible(f.el); }, 2600); if (!it || !it.el.isConnected || !H.visible(it.el)) return fb(act, "غير ظاهر: " + act.label);
+          if (act.mode === "point") { await H.point(it.el); return true; }
+          if (act.mode === "type") return await H.type(it.el, act.value);
+          return await H.click(it.el);
+        }
+        case "newProduct": { await goTab("products"); const btn = await waitFor(() => q$('[onclick="Admin.editProduct(null)"]')); if (btn && await H.click(btn)) return true; return fb(act, "زر منتج جديد"); }
+        case "editProduct": { await goTab("products"); const btn = await waitFor(() => editBtn(act.slug)); if (btn && await H.click(btn)) return true; return fb(act, "زر تعديل المنتج " + act.slug); }
         case "stock": case "price": {
           await goTab("finance"); const fn = act.type === "stock" ? "setStock" : "setPrice";
           const inp = await waitFor(() => q$('input[onchange*="' + fn + "('" + act.slug + "'" + '"]'));
-          if (inp && await H.type(inp, String(act.to))) { lastSlug = act.slug; return true; } return exec(act);
+          if (inp && await H.type(inp, String(act.to))) { lastSlug = act.slug; return true; } return fb(act, "خانة " + fn + " للمنتج " + act.slug);
         }
         case "theme": {
           const m = act.mode === "toggle" ? (typeof AdminTheme !== "undefined" && AdminTheme.mode() === "dark" ? "white" : "dark") : act.mode;
-          const b = q$('#theme-sw button[data-m="' + m + '"]'); if (b && await H.click(b)) return true; return exec(act);
+          const b = q$('#theme-sw button[data-m="' + m + '"]'); if (b && await H.click(b)) return true; return fb(act, "مفتاح المظهر");
         }
         case "update": { const b = q$("#au-btn"); if (b) await H.point(b); return exec(act); }
         case "search": {
-          const b = q$("#as-btn"); if (b && await H.click(b)) { const i = await waitFor(() => q$("#as-in")); if (i && act.q) await H.type(i, act.q); return true; } return exec(act);
+          const b = q$("#as-btn"); if (b && await H.click(b)) { const i = await waitFor(() => q$("#as-in")); if (i && act.q) await H.type(i, act.q); return true; } return fb(act, "زر البحث");
         }
-        case "active": case "discount": { await goTab("products"); const ok = exec(act); const row = q$('[onclick*="editProduct(\'' + act.slug + '\')"]'); if (row) await H.point(row.closest("tr") || row); return ok; }
+        case "active": case "discount": { await goTab("products"); const ok = exec(act); const row = editBtn(act.slug); if (row) await H.point(row.closest("tr") || row); return ok; }
         default: return exec(act);
       }
-    } catch (e) { return exec(act); }
+    } catch (e) { logMiss(act, "استثناء: " + (e && e.message)); return exec(act); }
     finally { dims.forEach(x => x.classList.remove("ah-dim")); working = false; }
   }
-  const dataNow = () => { const a = A(); let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { ctx: { slug: (a.editingSlug || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
+  const dataNow = () => { const a = A(); let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { ui: { find: findUI }, ctx: { slug: (a.editingSlug || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
 
   /* ── المخارج: لوحة «اسألني» إن كانت مفتوحة، وإلا شريط عائم صغير ── */
   const $h = id => document.getElementById(id);
@@ -872,12 +1020,13 @@ const AdminVoice = (() => {
   function init() {
     const saved = LS("alyssum_voice_lang"); if (saved === "fr-FR" || saved === "ar-DZ") lang = saved;
     loadKB(); loadLex(); loadStoreName();
+    setTimeout(() => { try { const r = selfTest(); if (!r.ok) console.warn("[AdminVoice] عناصر اليد المتغيّرة:", r.missing.join("، ")); announceNew(); } catch (e) { } }, 9000);
     let tries = 0; const tick = () => { paintMic(); if (!$h("ah-mic") && tries++ < 40) setTimeout(tick, 500); }; tick();
     if (LS("alyssum_voice_mic") === "1" && SR) setTimeout(() => { if (!micOn) { micOn = true; startRec(); paintMic(); } }, 1500);   /* يستأنف إن كان الإذن ممنوحاً سابقاً */
     document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
+  const api = { exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();

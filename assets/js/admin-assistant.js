@@ -28,7 +28,7 @@ const AdminHelp = (() => {
   const curTab = () => { const b = document.querySelector(".nav-btn.on"), m = b && /Admin\.tab\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""); return m ? m[1] : ""; };
   function goTab(id) {
     if (id === "builder" || !id) { }
-    const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + id + "'")); if (b && typeof Admin !== "undefined") { Admin.tab(id, b); close(); }
+    const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + id + "'")); if (b && typeof Admin !== "undefined") { close(); if (typeof AdminVoice !== "undefined" && AdminVoice.showTab) AdminVoice.showTab(id); else Admin.tab(id, b); }
   }
   function css() {
     if ($("ah-css")) return; const st = document.createElement("style"); st.id = "ah-css";
@@ -66,7 +66,12 @@ const AdminHelp = (() => {
     if (/^(اشرح|ماذا يفعل|ما هذا).*(القسم|الصفحه|هذا)/.test(norm(q)) || /هذا القسم|هذه الصفحه/.test(norm(q))) { const t = curTab(), e = KB.find(x => x.go === t && x.id === t) || KB.find(x => x.id === t); if (e) return answer(e); }
     const r = search(q, 4);
     /* الأفضل ألا أجيب بجواب خاطئ: إن لم يكن السؤال واضحاً أطلب إعادة الصياغة باسم الإعداد/العنصر */
-    if (!r.length || r[0].sc < 6 || r[0].cov < .6) { const d = bubble("a", "أعد طرح السؤال رجاءً مع ذكر اسم الإعداد أو العنصر الذي تريده 🙏 (مثل: الهيرو، الطبقات، التحريك الحر، رسوم التوصيل، الشارات). أو اختر موضوعاً:"); chips(SUGG.map(s => [s, () => ask(s)]), d); return; }
+    if (!r.length || r[0].sc < 6 || r[0].cov < .6) {
+      try {   /* ليس في قاعدة المعرفة: ابحث في عناصر اللوحة الحيّة (تتبع أي تحديث تلقائياً) وأرِ مكانها باليد */
+        const seen = new Set(), ui = ((typeof AdminVoice !== "undefined" && AdminVoice.findUI) ? AdminVoice.findUI(q, 12) : []).filter(c => { const k = c.label + "|" + c.tab; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 4);
+        if (ui.length) { const d = bubble("a", "لم أجد شرحاً مكتوباً لهذا، لكن وجدت في اللوحة:"); chips(ui.map(c => [c.label.slice(0, 40) + (c.tab ? " — " + AdminVoice.tabLabel(c.tab) : ""), () => AdminVoice.showMe(c), true]), d); return; }
+      } catch (e) { }
+      const d = bubble("a", "أعد طرح السؤال رجاءً مع ذكر اسم الإعداد أو العنصر الذي تريده 🙏 (مثل: الهيرو، الطبقات، التحريك الحر، رسوم التوصيل، الشارات). أو اختر موضوعاً:"); chips(SUGG.map(s => [s, () => ask(s)]), d); return; }
     const close = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01);
     if (close.length) { const d = bubble("a", "سؤالك يحتمل أكثر من موضوع — أيها تقصد؟"); chips([r[0]].concat(close).slice(0, 4).map(x => [x.e.t, () => { bubble("u", esc(x.e.t)); answer(x.e); }]), d); return; }
     answer(r[0].e, r.slice(1, 4).filter(x => x.sc > r[0].sc * .45));

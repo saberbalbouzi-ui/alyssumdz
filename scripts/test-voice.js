@@ -108,6 +108,20 @@ T("اسم غير موجود نهائيا", { kind: "unknown" });
 const opts = V.parse("مطور", data).options;
 const P = (s, exp) => { n++; const g = V.pickOption(opts, s); if (g !== exp) { fail++; console.log("✗ pick", s, "→", g, "متوقع", exp); } };
 P("الأول", 0); P("الثاني", 1); P("2", 1); P("نعم", 0); P("مطور الصفحات", 0); P("المطور الذكي", 1); P("deuxième", 1); P("لا", -1); P("إلغاء", -1); P("blabla", null);
+// عناصر اللوحة (فهرس تجريبي): اضغط/اكتب/وين
+const mkUI = (label, tab, kind, risk) => ({ label, tab, kind, risk, el: {}, t: V.norm(label).split(" ") });
+const uiItems = [mkUI("حفظ", "store", "button", "ok"), mkUI("حفظ", "seo", "button", "ok"), mkUI("حذف الطلبات المحددة", "orders", "button", "danger"), mkUI("نشر الصفحة", "builder", "button", "confirm"), mkUI("سعر البيع منتج تجريبي", "finance", "input", "ok"), mkUI("تصدير CSV", "orders", "button", "ok")];
+const uiData = Object.assign({}, data, { ui: { find: (q, n) => { const AL = { export: "تصدير", save: "حفظ" }; const qs =  V.norm(q).split(" ").filter(w => w.length > 1 && !/^(زر|خانه|حقل|ال|bouton|le|la)$/.test(w)).map(w => AL[w] || w.replace(/^ال/, "")); return uiItems.filter(it => qs.every(w => it.t.some(x => x.replace(/^ال/, "").startsWith(w) || w.startsWith(x.replace(/^ال/, ""))))).slice(0, n || 5); } } });
+const U = (text, fn, why) => { n++; const r = V.parse(text, uiData); if (!fn(r)) { fail++; console.log("✗ ui", JSON.stringify(text), "→", JSON.stringify({ kind: r.kind, act: r.act && { mode: r.act.mode, label: r.act.label, value: r.act.value }, say: r.say, opts: (r.options || []).map(o => o.label) }), why || ""); } };
+U("اضغط تصدير", r => r.kind === "ui" && r.act.mode === "click" && r.act.label === "تصدير CSV");
+U("اضغط على زر حذف الطلبات", r => r.kind === "ui" && r.act.mode === "point" && /لا أضغطه/.test(r.say), "الحذف يُشار إليه فقط");
+U("اضغط نشر الصفحة", r => r.kind === "ui" && r.act.mode === "click" && r.confirm === true, "النشر يطلب تأكيداً");
+U("اكتب 3000 في سعر البيع", r => r.kind === "ui" && r.act.mode === "type" && r.act.value === "3000");
+U("وين زر تصدير", r => r.kind === "ui" && r.act.mode === "point");
+U("اريني حفظ", r => r.kind === "ui" && r.act.mode === "point" && /وله نظير/.test(r.say), "«وين/أريني»: يشير لأفضل نتيجة ويذكر النظير");
+U("اضغط حفظ", r => r.kind === "choose" && r.options.length === 2, "النقر على عنصرين متشابهين ← يسأل أيهما");
+U("ou est le bouton export", r => r.kind === "ui" && r.act.mode === "point" && /CSV/.test(r.act.label), "فرنسي ← عنصر عربي عبر المرادفات");
+U("اضغط عنصر غير موجود ابدا", r => r.kind !== "ui");
 // أمثلة القاموس (expect: kind + حقول اختيارية)
 lex.examples.forEach(ex => {
   n++; const r = V.parse(ex.u, data), e = ex.expect; let ok = r.kind === e.kind;
