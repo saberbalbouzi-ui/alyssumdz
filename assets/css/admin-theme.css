@@ -188,11 +188,22 @@ html.white #ord-prev-b .kv td{border-bottom-color:#dde3ec}
   table.orders-compact tr{display:grid;grid-template-columns:1fr 1fr;gap:.35rem .8rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:14px;padding:.7rem .8rem;margin-bottom:.6rem}
   table.orders-compact td{display:block!important;border:none!important;padding:0!important;max-width:none!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;min-width:0;background:transparent!important}
   table.orders-compact td[data-l]::before{content:attr(data-l) ": ";color:#8a8f8c;font-size:.72rem;font-weight:700}
-  table.orders-compact td.c-items,table.orders-compact td[data-l="الهاتف"],table.orders-compact td.o-act,table.orders-compact td.o-ship{grid-column:1/-1}
-  table.orders-compact td.o-ship{display:flex!important;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line,rgba(255,255,255,.14))!important;padding-top:.5rem!important}
-  table.orders-compact td.o-ship::before{display:none}
-  table.orders-compact td.o-ship .small{flex:1;min-height:42px}
+  table.orders-compact td.nm,table.orders-compact td.c-items,table.orders-compact td.o-act,table.orders-compact td.o-btns{grid-column:1/-1}
+  table.orders-compact td.o-btns{display:flex!important;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line,rgba(255,255,255,.14))!important;padding-top:.5rem!important}
+  table.orders-compact td.o-btns .small{flex:1;min-height:42px;white-space:nowrap}
+  table.orders-compact td.o-act{display:flex!important;align-items:center;gap:.5rem;flex-wrap:wrap}
+  table.orders-compact td.o-act::before{display:none}
   table.orders-compact td[data-l="الهاتف"]{display:flex!important;align-items:center;gap:.6rem;flex-wrap:wrap}
   table.orders-compact td[data-l="الهاتف"]::before{display:none}
 }
 .ord-prev-act a.small{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;min-height:44px;padding:.4rem .9rem;border-radius:12px;cursor:pointer;font-weight:800;color:#fff}
+
+/* ── الطلبات: صف مضغوط بسطر واحد على الشاشات الكبيرة + زر إغلاق المعاينة ── */
+.orders-compact td.nm{max-width:210px}.orders-compact td.c-items{max-width:260px}
+.orders-compact .o-wil{color:#8a8f8c;font-weight:600}
+.orders-compact td.o-btns{white-space:nowrap}.orders-compact td.o-btns .small{padding:.28rem .6rem;margin:0 .1rem}
+.orders-compact .ord-sent{font-weight:800}
+.ord-x{position:absolute;top:.7rem;inset-inline-end:.8rem;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font-size:1rem;cursor:pointer;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s,background .15s}
+.ord-x:hover{transform:translateY(-2px);background:rgba(239,68,68,.35)}
+html.white .ord-x{color:#334155;border-color:#cdd5e0;background:#eef1f6}
+@media (max-width:760px){.orders-compact td.nm,.orders-compact td.c-items{max-width:none}}

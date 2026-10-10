@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.50">
+<meta name="admin-version" content="1.89.51">
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -34,9 +34,6 @@ button{cursor:pointer;border:none;font-family:inherit}
 .orders-compact td.nw{white-space:nowrap}
 .orders-compact td.cut{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .orders-compact td.nm{max-width:110px}
-@container (max-width:1080px){.orders-compact .c-items{display:none}}
-@container (max-width:880px){.orders-compact .c-wil{display:none}}
-@container (max-width:800px){.orders-compact .c-date{display:none}}
 @container (max-width:760px){.orders-compact td.nm{max-width:80px}.orders-compact .act-sel{max-width:96px}}
 .orders-compact .pill{font-size:.7rem;padding:.12rem .45rem}
 .orders-compact .act-sel{width:auto;max-width:112px;padding:.25rem .3rem;font-size:.74rem;margin:0}
@@ -231,7 +228,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
 <link rel="stylesheet" href="assets/css/admin-glass.css?v=14">
-<link rel="stylesheet" href="assets/css/admin-theme.css?v=11">
+<link rel="stylesheet" href="assets/css/admin-theme.css?v=12">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#86f06a",fs:17.5},white:{accent:"#059669",fs:17.5}},
 mode:function(){var m=null;try{m=localStorage.getItem(this.K)}catch(e){}return(m==="white"||m==="classic")?"white":"dark"},
 cfg:function(){var c={};try{c=JSON.parse(localStorage.getItem(this.C)||"{}")||{}}catch(e){}return{dark:Object.assign({},this.D.dark,c.dark||{}),white:Object.assign({},this.D.white,c.white||{})}},
@@ -399,7 +396,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div id="cs-svc"></div>
     <div id="orders-banner"></div>
     <div class="card" id="auto-reg-card" style="padding:.7rem 1rem">
-      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:0;font-weight:700"><input id="auto-reg" type="checkbox" onchange="Admin.setAutoReg(this.checked)" style="width:auto"> تسجيل الطلبات الجديدة تلقائياً لدى شركة التوصيل (برقم تسلسلي حسب عدد طرودك عندها)</label>
+      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:0;font-weight:700"><input id="auto-reg" type="checkbox" onchange="Admin.setAutoReg(this.checked)" style="width:auto"> تسجيل الطلبات الجديدة تلقائياً لدى شركة التوصيل دون انتظار التأكيد (اختياري)</label>
     </div>
     <div class="card">
       <div class="search-bar">
@@ -1584,20 +1581,20 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.50"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.50"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.50"></script>
+<script src="assets/js/ctl-help.js?v=1.89.51"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.51"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.51"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.50"></script>
-<script src="assets/js/admin-coname.js?v=1.89.50"></script>
-<script src="assets/js/admin-tplsite.js?v=1.89.50"></script>
+<script src="assets/js/admin-nav.js?v=1.89.51"></script>
+<script src="assets/js/admin-coname.js?v=1.89.51"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.51"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
-<script src="assets/js/saas-client.js?v=1.89.50"></script>
-<script src="assets/js/admin-stores.js?v=1.89.50"></script>
+<script src="assets/js/saas-client.js?v=1.89.51"></script>
+<script src="assets/js/admin-stores.js?v=1.89.51"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.50"></script>
+<script src="assets/js/admin-update.js?v=1.89.51"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-inventory.js?v=1.84.0"></script>
 <script src="assets/js/admin-social.js?v=1.89.0"></script>
@@ -1606,8 +1603,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-yalidine.js?v=1.89.16"></script>
 <script src="assets/js/admin-shoppages.js?v=1.77.0"></script>
 <script src="assets/js/admin-home.js?v=1.60.0"></script>
-<script src="assets/js/admin-tablesel.js?v=1.89.50"></script>
-<script src="assets/js/admin-orders-plus.js?v=1.89.50"></script>
+<script src="assets/js/admin-tablesel.js?v=1.89.51"></script>
+<script src="assets/js/admin-orders-plus.js?v=1.89.51"></script>
 <script src="assets/js/admin-keys.js?v=1.61.0"></script>
 <script src="assets/js/admin-customers.js?v=1.84.0"></script>
 <script src="assets/js/admin-bulk-products.js?v=1.89.16"></script>
@@ -1619,7 +1616,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-seo.js?v=1.89.16"></script>
 <script src="assets/js/admin-blog.js?v=1.83.0"></script>
 <script src="assets/js/admin-insights.js?v=1.83.0"></script>
-<script src="assets/js/admin-confirm-svc.js?v=1.89.50"></script>
+<script src="assets/js/admin-confirm-svc.js?v=1.89.51"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
@@ -2696,7 +2693,7 @@ const Admin = {
     return this.orders
       .map((o,i)=>({o,i}))
       .filter(({o})=>{
-        if(!f.showShipped && this.trackingOf(o)) return false;      // الطلبات المسجلة لها صفحتها الخاصة
+        if(!f.showShipped && this.trackingOf(o) && o.status !== "nouvelle" && o.status !== "confirmee") return false;      // الطلبات المسجلة لها صفحتها الخاصة
         if(f.status && o.status!==f.status) return false;
         if(f.wilaya && o.wilaya!==f.wilaya) return false;
         if(q && !(String(o.name||"").toLowerCase().includes(q) || String(o.phone||"").includes(q) || String(o.id||"").toLowerCase().includes(q))) return false;
@@ -2789,22 +2786,16 @@ const Admin = {
 
     const gdup = this.giftDupes();
     el.classList.add("orders-compact");
-    el.innerHTML = '<tr><th>الرقم</th><th class="c-date">التاريخ</th><th>الزبون</th><th>الهاتف</th><th class="c-wil">الولاية</th><th class="c-items">المنتجات</th><th>الإجمالي</th><th>الحالة</th><th>الإجراء</th><th>🚚</th></tr>' +
+    const nE = v=>String(v==null?"":v).replace(/[<>&"]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+    el.innerHTML = '<tr><th>الزبون / الولاية</th><th class="c-items">المنتج</th><th>المبلغ</th><th>حالة الطلب</th><th>إرسال</th></tr>' +
       pageItems.map(({o,i})=>{
-        const items = this.itemsDisplay(o).replace(/\n/g, " • "), tr = this.trackingOf(o), at = this.attemptsOf(o);
+        const items = this.itemsDisplay(o).replace(/\n/g, " • "), at = this.attemptsOf(o), cm = this.callMark(o);
         return '<tr>' +
-        '<td data-l="الرقم" class="nw" title="' + o.id + '"><b dir="ltr">' + String(o.id).replace(/^S\d{6}-/, "") + '</b></td>' +
-        '<td data-l="التاريخ" class="nw c-date">' + new Date(o.date).toLocaleDateString("fr-DZ", { day:"2-digit", month:"2-digit" }) + '</td>' +
-        '<td data-l="الزبون" class="cut nm" title="' + String(o.name||"").replace(/"/g,"&quot;") + '">' + (o.name||"") + '</td>' +
-        '<td data-l="الهاتف" class="nw" dir="ltr">' + o.phone + this.callLinkHtml(o.phone) + this.whatsappLinkHtml(o.phone) + this.blacklistCellHtml(o.phone) + (gdup.has(o.id) ? ' <span class="pill st-pending" title="هذا الهاتف استعمل كود الهدية الترحيبية من قبل">⚠️</span>' : '') + (o.extra && o.extra.promo_invalid ? ' <span class="pill st-echec" title="كود تخفيض شخصي غير صالح أو مستعمل من قبل: ' + String(o.extra.promo_invalid).replace(/[<>&"]/g,"") + '">⚠️ كود غير صالح</span>' : '') + '</td>' +
-        '<td data-l="الولاية" class="nw c-wil">' + (o.wilaya||"") + '</td>' +
-        '<td data-l="المنتجات" class="cut c-items" title="' + items.replace(/"/g,"&quot;") + '">' + items + '</td>' +
-        '<td class="nw" data-l="الإجمالي"><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
-        '<td class="nw" data-l="الحالة"><span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>' + (at ? ' <small style="color:#B26A00;font-weight:800" title="محاولات الاتصال">📞' + at + '</small>' : "") + (this.callMark(o) === "later" ? ' <small style="color:#B26A00;font-weight:800" title="نتيجة الاتصال">⏰ أعد الاتصال</small>' : this.callMark(o) === "wrong" ? ' <small style="color:#c0392b;font-weight:800" title="نتيجة الاتصال">📵 رقم خاطئ</small>' : "") + '</td>' +
-        '<td class="nw o-act" data-l="الإجراء">' + this.statusCellHtml(o, i) + '</td>' +
-        '<td class="nw o-ship" data-l="🚚">' + (tr ? '<small dir="ltr" style="color:#777" title="رقم التتبع">' + tr.tracking + '</small> ' : this.deliveryOrderCellHtml(i)) +
-          '<button class="small blue ord-pv" type="button" style="padding:.15rem .4rem" onclick="Admin.openOrderPreview(' + i + ')" title="معاينة الطلب">👁️</button> ' +
-          '<button class="small gray" type="button" style="padding:.15rem .4rem" onclick="Admin.printOrderSlip(' + i + ')" title="طباعة وصل">🖨️</button></td>' +
+        '<td data-l="الزبون" class="cut nm" title="' + nE(o.name) + ' — ' + nE(o.wilaya) + '"><b>' + nE(o.name) + '</b> <small class="o-wil">· ' + nE(o.wilaya) + '</small></td>' +
+        '<td data-l="المنتج" class="cut c-items" title="' + nE(items) + '">' + nE(items) + '</td>' +
+        '<td data-l="المبلغ" class="nw"><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
+        '<td class="nw o-act" data-l="الحالة"><span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>' + (at ? ' <small style="color:#B26A00;font-weight:800" title="محاولات الاتصال">📞' + at + '</small>' : "") + (cm === "later" ? ' <small style="color:#B26A00;font-weight:800">⏰</small>' : cm === "wrong" ? ' <small style="color:#c0392b;font-weight:800">📵</small>' : "") + ' ' + this.statusCellHtml(o, i) + '</td>' +
+        '<td class="nw o-btns">' + this.sendBtnHtml(o, i) + '<button class="small blue ord-pv" type="button" onclick="Admin.openOrderPreview(' + i + ')" title="معاينة الطلب">👁️ معاينة</button></td>' +
       '</tr>'; }).join("");
 
     this.renderOrdersPagination(totalPages);
@@ -7102,12 +7093,12 @@ const Admin = {
 
   /* ───── التسجيل التلقائي للطلبات الجديدة لدى شركة التوصيل (بأرقام تسلسلية حسب عدد طرودك عندها) ───── */
   autoRegCfg(){
-    try{ const c = JSON.parse(localStorage.getItem("alyssum_auto_reg") || "null"); if(c && c.since) return c; }catch(e){}
-    const c = { on:true, since:new Date().toISOString() }; try{ localStorage.setItem("alyssum_auto_reg", JSON.stringify(c)); }catch(e){} return c;
+    try{ const c = JSON.parse(localStorage.getItem("alyssum_auto_reg2") || "null"); if(c && c.since) return c; }catch(e){}
+    const c = { on:false, since:new Date().toISOString() }; try{ localStorage.setItem("alyssum_auto_reg2", JSON.stringify(c)); }catch(e){} return c;
   },
   setAutoReg(on){
     const c = this.autoRegCfg(); c.on = !!on; if(on) c.since = new Date().toISOString();       // يسري على الطلبات الواصلة من الآن فقط
-    try{ localStorage.setItem("alyssum_auto_reg", JSON.stringify(c)); }catch(e){}
+    try{ localStorage.setItem("alyssum_auto_reg2", JSON.stringify(c)); }catch(e){}
     toast(on ? "✅ سيُسجَّل كل طلب جديد تلقائياً لدى شركة التوصيل" : "⏸️ أُوقف التسجيل التلقائي — سجّل الطلبات يدوياً بزر 🚚");
     if(on) this.autoRegisterNew();
   },
@@ -7286,7 +7277,7 @@ const Admin = {
   statusCellHtml(o, i){
     if(o.status === "nouvelle"){
       return '<select class="act-sel" onchange="Admin.orderAction(' + i + ',this)" title="نتيجة الاتصال بالزبون وإجراءات الطلب">' +
-        '<option value="">☎️ نتيجة الاتصال…</option><option value="confirm">✅ أكّد الطلب — إرسال للشركة</option>' +
+        '<option value="">☎️ نتيجة الاتصال…</option><option value="confirm">✅ أكّد الطلب</option>' +
         [1,2,3].map(n=>'<option value="a' + n + '">📞 لم يُجب — محاولة ' + n + '</option>').join("") +
         '<option value="later">⏰ أعد الاتصال لاحقاً</option><option value="wrong">📵 رقم خاطئ / خارج الخدمة</option>' +
         '<option value="cancel">❌ ألغى الطلب</option></select>';
@@ -7320,18 +7311,42 @@ const Admin = {
     }catch(err){ toast("⚠️ تعذّر إلغاء الطرد عند الشركة: " + err.message + " — ألغِه يدوياً"); }
   },
   /* تأكيد الطلب ⟵ إرسال تلقائي إلى شركة التوصيل النشطة ⟵ ينتقل إلى «الطلبات المسجلة» */
-  async confirmOrder(i){
+  /* زر الإرسال: يظهر للطلب المؤكَّد فقط؛ وبعد الإرسال يصير «أُرسل ↩» وبالضغط عليه مرة ثانية يُتراجع عن الإرسال */
+  sendBtnHtml(o, i){
+    const t = this.trackingOf(o);
+    if(t && (o.status === "confirmee" || o.status === "nouvelle")) return '<button class="small green ord-sent" type="button" onclick="Admin.unsendOrder(' + i + ')" title="أُرسل (التتبع ' + t.tracking + ') — اضغط مرة ثانية للتراجع عن الإرسال">✓ أُرسل ↩</button> ';
+    if(o.status !== "confirmee") return "";
+    const k = this.orderCompanyKey(o);
+    if(!k) return '<button class="small gold ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')">🚚 إرسال</button> ';
+    const en = this.enabledCompanyKeys(), all = this.allDeliveryCompanies();
+    return '<button class="small blue ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')" title="إرسال الطلب إلى ' + (all[k] ? all[k].name : "") + '">🚚 إرسال</button> ' +
+      (en.length > 1 ? '<select class="dlv-pick" title="إرسال عبر شركة أخرى" onchange="Admin.sendConfirmed(' + i + ', this.value); this.selectedIndex = 0"><option value="">▾</option>' + en.filter(x=>x !== k).map(x=>'<option value="' + x + '">' + all[x].name + '</option>').join("") + '</select> ' : "");
+  },
+  async sendConfirmed(i, key){
+    const o = this.orders[i]; if(!o) return;
+    const k = key || this.orderCompanyKey(o);
+    if(!k){ toast("⚠️ لا توجد شركة توصيل نشطة — فعّل واحدة من تبويب «شركات التوصيل»"); this.renderDeliveryBanners(); return }
+    const ok = await this.sendOrderToDelivery(i, k);
+    if(ok){ this.enqueueNotify(o, "registered"); this.renderOrders(); this.renderShippedBadge(); }
+  },
+  async unsendOrder(i){
+    const o = this.orders[i], t = o && this.trackingOf(o); if(!t) return;
+    if(o.status !== "confirmee" && o.status !== "nouvelle"){ toast("⚠️ لا يمكن التراجع بعد انطلاق الطرد"); return }
+    this.setNoteTag(o, /🚚[a-z0-9_]+:[A-Za-z0-9._-]+\s*/g, "");
+    this.renderOrders(); this.renderShipped && this.renderShipped();
+    toast("↩️ أُلغي الإرسال");
+    const co = this.allDeliveryCompanies()[t.company], cfg = this.deliveryCfg[t.company] || {};
+    if(!co || !co.cancelRequest){ toast("ℹ️ ألغِ الطرد " + t.tracking + " يدوياً من حساب الشركة"); return }
+    try{ const r = await this.courierFetch(co.cancelRequest(cfg, t.tracking));
+      toast(r.ok ? "↩️ أُلغي الإرسال وأُلغي الطرد " + t.tracking + " عند " + co.name : "⚠️ أُلغي الإرسال هنا، لكن لم تقبل " + co.name + " إلغاء الطرد (رمز " + r.status + ") — ألغِه يدوياً من حسابها");
+    }catch(err){ toast("⚠️ أُلغي الإرسال هنا، وتعذّر إلغاء الطرد عند الشركة: " + err.message + " — ألغِه يدوياً"); }
+  },
+  /* تأكيد الطلب: يغيّر الحالة إلى «مؤكَّد» فقط ويظهر زر «إرسال» لإرساله إلى شركة التوصيل */
+  confirmOrder(i){
     const o = this.orders[i]; if(!o) return;
     API.updateOrder(this.key, o.id, "confirmee"); this.onStatusChange(i, "confirmee");
     this.setNoteTag(o, /(📞[1-3]|⏰لاحقاً|📵خطأ)\s*/g, "");
-    this.renderOrders();
-    const all = this.allDeliveryCompanies();
-    const key = this.orderCompanyKey(o);
-    if(this.trackingOf(o)){ toast("✅ أُكّد الطلب — وهو مسجَّل مسبقاً لدى شركة التوصيل"); return }
-    if(!key){ toast("✅ تم التأكيد — لكن لم يُرسل: فعّل ياليدين من «شركات التوصيل» ثم اضغط 🚚 إرسال"); this.renderDeliveryBanners(); return }
-    const ok = await this.sendOrderToDelivery(i, key);
-    if(ok){ this.enqueueNotify(o, "registered"); toast("✅ أُكّد الطلب وأُرسل إلى " + all[key].name + " — يظهر في «الطلبات المسجلة»" + (this.notifyCfg && this.notifyCfg.enabled ? "، ورسالة التتبع جاهزة في «📣 إشعارات الزبائن»" : "")); }
-    this.renderShippedBadge();
+    this.renderOrders(); toast("✅ أُكّد الطلب — اضغط «🚚 إرسال» لإرساله إلى شركة التوصيل");
   },
 
   /* ════════ الطلبات المسجلة (المرسلة لشركة التوصيل) ════════ */
@@ -7465,7 +7480,7 @@ const Admin = {
     let bg = document.getElementById("ord-prev-bg");
     if(!bg){
       bg = document.createElement("div"); bg.className = "modal-bg"; bg.id = "ord-prev-bg";
-      bg.innerHTML = '<div class="modal" style="max-width:580px"><h3 id="ord-prev-t" style="margin-bottom:.6rem"></h3><div id="ord-prev-b"></div><div class="action-bar ord-prev-act" id="ord-prev-a" style="flex-wrap:wrap"></div></div>';
+      bg.innerHTML = '<div class="modal" style="max-width:580px;position:relative"><button type="button" class="ord-x" title="إغلاق" aria-label="إغلاق" onclick="document.getElementById(\'ord-prev-bg\').classList.remove(\'open\')">✕</button><h3 id="ord-prev-t" style="margin:0 0 .6rem;padding-inline-end:2.4rem"></h3><div id="ord-prev-b"></div><div class="action-bar ord-prev-act" id="ord-prev-a" style="flex-wrap:wrap"></div></div>';
       bg.addEventListener("click", e=>{ if(e.target === bg) bg.classList.remove("open"); });
       document.body.appendChild(bg);
     }
@@ -7477,9 +7492,10 @@ const Admin = {
     const bl = this.isBlacklisted(o.phone);
     document.getElementById("ord-prev-t").innerHTML = '👁️ الطلب <span dir="ltr">' + esc(o.id) + '</span> <span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>';
     document.getElementById("ord-prev-b").innerHTML = '<table style="width:100%;border-collapse:collapse" class="kv">' +
+      row("رقم الطلب", '<b dir="ltr">' + esc(o.id) + '</b>') +
       row("التاريخ", esc(new Date(o.date).toLocaleString("ar-DZ"))) +
       row("الزبون", '<b>' + esc(o.name) + '</b>') +
-      row("الهاتف", '<span dir="ltr">' + esc(o.phone) + '</span>' + (bl ? ' <span class="pill st-annulee">🚫 محظور</span>' : "")) +
+      row("الهاتف", '<span dir="ltr">' + esc(o.phone) + '</span> ' + (bl ? '<button type="button" class="pill st-annulee bl-tg" style="cursor:pointer;border:0;font-family:inherit" title="اضغط لإلغاء الحظر" onclick="Admin.toggleBlacklist(\'' + bl.phone + '\');Admin.openOrderPreview(' + i + ')">🚫 محظور ✕</button>' : '<button type="button" class="small gray" style="padding:.15rem .5rem" onclick="Admin.blacklistFromOrder(\'' + esc(o.phone) + '\');Admin.openOrderPreview(' + i + ')">🚫 حظر الرقم</button>')) +
       row("العنوان", esc(o.wilaya) + (o.commune ? " — " + esc(o.commune) : "") + (o.address ? "<br><small>" + esc(o.address) + "</small>" : "")) +
       row("التوصيل", o.dtype==="stop" ? "مكتب Stop Desk" + (o.desk ? " — " + esc(o.desk) : "") : "إلى المنزل") +
       row("المنتجات", esc(this.itemsDisplay(o)).replace(/\n/g,"<br>")) +
@@ -7493,7 +7509,7 @@ const Admin = {
     const a = document.getElementById("ord-prev-a"), close = "document.getElementById('ord-prev-bg').classList.remove('open')";
     const dg = String(o.phone||"").replace(/\D/g,""), intl = dg ? (dg.startsWith("0") ? "213"+dg.slice(1) : (dg.startsWith("213")?dg:"213"+dg)) : "";
     a.innerHTML = (intl ? '<a class="small green call-lnk" href="tel:+' + intl + '" style="text-decoration:none;text-align:center">📞 اتصل</a><a class="small blue" target="_blank" rel="noopener" href="https://wa.me/' + intl + '" style="text-decoration:none;text-align:center">💬 واتساب</a>' : "") + (o.status === "nouvelle" ? '<button class="small green" type="button" onclick="' + close + ';Admin.confirmOrder(' + i + ')">✅ أكّد الطلب</button><button class="small warn" type="button" onclick="' + close + ';Admin.cancelOrder(' + i + ')">❌ إلغاء الطلب</button>' : "") +
-      '<button class="small gray" type="button" onclick="Admin.printOrderSlip(' + i + ')">🖨️ وصل</button><button class="small gray" type="button" onclick="' + close + '">إغلاق</button>';
+      '<button class="small gray" type="button" onclick="Admin.printOrderSlip(' + i + ')">🖨️ وصل</button>';
     bg.classList.add("open");
   },
   openShipDetail(i){
