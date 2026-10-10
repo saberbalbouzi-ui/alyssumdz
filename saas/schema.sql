@@ -60,7 +60,7 @@ create index if not exists saas_sites_status_idx on public.saas_sites (status);
 create table if not exists public.saas_tickets (
   id uuid primary key default gen_random_uuid(),               -- هو أيضاً الرمز السرّي الذي يتابع به الزبون طلبه
   num bigint generated always as identity,
-  kind text not null check (kind in ('site_create', 'site_delete', 'site_delete_cancel', 'domain_request', 'domain_link', 'domain_dns', 'support', 'billing', 'other')),
+  kind text not null check (kind in ('site_create', 'site_delete', 'site_delete_cancel', 'domain_request', 'domain_link', 'domain_dns', 'support', 'billing', 'service_activation', 'other')),
   status text not null default 'new' check (status in ('new', 'open', 'waiting', 'resolved', 'rejected')),
   priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
   subject text not null check (char_length(subject) between 1 and 200),
@@ -180,7 +180,7 @@ declare
   sid uuid; cid uuid; tid uuid; tnum bigint; pr text := 'normal'; nsub text; norg text;
 begin
   if octet_length(p::text) > 12000 then raise exception 'too_large' using errcode = '22023'; end if;
-  if k not in ('site_create', 'site_delete', 'site_delete_cancel', 'domain_request', 'domain_link', 'domain_dns', 'support', 'billing', 'other') then raise exception 'bad_kind' using errcode = '22023'; end if;
+  if k not in ('site_create', 'site_delete', 'site_delete_cancel', 'domain_request', 'domain_link', 'domain_dns', 'support', 'billing', 'service_activation', 'other') then raise exception 'bad_kind' using errcode = '22023'; end if;
   if char_length(subj) not between 1 and 200 then raise exception 'bad_subject' using errcode = '22023'; end if;
   if char_length(bdy) > 6000 then bdy := left(bdy, 6000); end if;
   if org is null then raise exception 'bad_origin' using errcode = '22023'; end if;
@@ -416,6 +416,9 @@ alter table public.saas_sites add column if not exists ai_image_left int;
 alter table public.saas_sites add column if not exists sub_ends_at timestamptz;
 alter table public.saas_sites add column if not exists extended_until timestamptz;
 alter table public.saas_sites add column if not exists closed_reason text;
+alter table public.saas_sites add column if not exists services jsonb not null default '{}'::jsonb;     -- الخدمات الاختيارية المفعّلة للموقع (مثل order_confirm)
+alter table public.saas_tickets drop constraint if exists saas_tickets_kind_check;
+alter table public.saas_tickets add constraint saas_tickets_kind_check check (kind in ('site_create', 'site_delete', 'site_delete_cancel', 'domain_request', 'domain_link', 'domain_dns', 'support', 'billing', 'service_activation', 'other'));
 do $$ begin
   begin alter table public.saas_sites add constraint saas_sites_api_mode_chk check (api_mode in ('shared', 'own', 'off')); exception when duplicate_object then null; end;
 end $$;
@@ -622,7 +625,7 @@ begin
   return jsonb_build_object('known', true, 'status', s.status, 'deletion_at', s.deletion_at, 'domain_status', s.domain_status,
     'plan', s.plan, 'plan_label', coalesce(pl.label, s.plan), 'deadline', d,
     'days_left', case when d is null then null else greatest(0, ceil(extract(epoch from (d - now())) / 86400))::int end,
-    'closed_reason', s.closed_reason, 'sub_ends_at', s.sub_ends_at);
+    'closed_reason', s.closed_reason, 'sub_ends_at', s.sub_ends_at, 'services', coalesce(s.services, '{}'::jsonb));
 end $$;
 
 -- أدوات API (للمدير): شحن الرصيد وتدوير الرمز

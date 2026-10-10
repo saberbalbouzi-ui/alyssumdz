@@ -5,7 +5,7 @@
   const C = window.SAAS_CFG || {}, $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const KIND = { site_create: "طلب إنشاء موقع", site_delete: "طلب حذف موقع", site_delete_cancel: "إلغاء حذف موقع", domain_request: "طلب دومين جديد", domain_link: "ربط دومين خاص", domain_dns: "DNS جاهز", support: "دعم فني", billing: "الاشتراك والفوترة", other: "أخرى" };
+  const KIND = { site_create: "طلب إنشاء موقع", site_delete: "طلب حذف موقع", site_delete_cancel: "إلغاء حذف موقع", domain_request: "طلب دومين جديد", domain_link: "ربط دومين خاص", domain_dns: "DNS جاهز", support: "دعم فني", billing: "الاشتراك والفوترة", service_activation: "طلب تفعيل خدمة", other: "أخرى" };
   const ST = { new: "جديد", open: "قيد المعالجة", waiting: "بانتظار الزبون", resolved: "تم الحل", rejected: "مرفوض" };
   const PR = { low: "منخفضة", normal: "عادية", high: "عالية", urgent: "عاجلة" };
   const SST = { requested: "مطلوب", provisioning: "قيد التجهيز", active: "نشط", suspended: "موقوف", deleting: "جارٍ الحذف", deleted: "محذوف" };
@@ -209,7 +209,7 @@
     const th = $("th"); if (th) th.scrollTop = th.scrollHeight; 
   }
   function payHtml(t) {
-    const p = t.payload || {}, rows = [], L = { name: "الاسم", sub: "الاسم على المنصة", url: "العنوان", mode: "نوع الدومين", domain: "الدومين", site: "الموقع", target_name: "الموقع المستهدف", target_origin: "عنوان الموقع", at: "موعد الحذف", store: "اسم المتجر", names: "الأسماء المطلوبة" };
+    const p = t.payload || {}, rows = [], L = { name: "الاسم", sub: "الاسم على المنصة", url: "العنوان", mode: "نوع الدومين", domain: "الدومين", site: "الموقع", target_name: "الموقع المستهدف", target_origin: "عنوان الموقع", at: "موعد الحذف", store: "اسم المتجر", names: "الأسماء المطلوبة", service: "الخدمة", note: "ملاحظة الزبون" };
     const val = (k, v) => k === "mode" ? (DMODE[v] || v) : k === "at" ? fmt(v) : (typeof v === "object" ? JSON.stringify(v) : v);
     const walk = (o, pre) => Object.keys(o || {}).forEach(k => { const v = o[k]; if (v == null || v === "") return; if (k === "items" && Array.isArray(v)) { rows.push('<div><b>الأسماء المطلوبة:</b> ' + v.map(i => '<span class="ltr">' + esc(i.d) + '</span> ' + pill(i.s === "free" ? "active" : i.s === "taken" ? "rejected" : "waiting", { free: "متاح", taken: "محجوز", manual: "يتحقق منه الدعم", unknown: "غير معروف", pending: "قيد الفحص" }[i.s] || i.s)).join(" · ") + '</div>'); return; } if (k === "dns" && typeof v === "object") { rows.push('<div><b>نتيجة فحص DNS:</b> ' + esc(JSON.stringify(v)) + '</div>'); return; } if (v && typeof v === "object" && !Array.isArray(v)) return walk(v, k); rows.push('<div><b>' + esc(L[k] || k) + ':</b> <span class="' + (/url|domain|origin|sub/.test(k) ? "ltr" : "") + '">' + esc(val(k, v)) + '</span></div>'); });
     walk(p); return rows.length ? '<div class="pay">' + rows.join("") + '</div>' : "";
@@ -222,6 +222,7 @@
     else if (t.kind === "domain_link" || t.kind === "domain_dns") { b("domon", "تفعيل الدومين"); b("domdns", "DNS غير صحيح", "o"); }
     else if (t.kind === "site_delete") { b("delsched", "اعتماد الحذف بعد 14 يوماً", "o"); b("delnow", "تنفيذ الحذف الآن", "r"); }
     else if (t.kind === "site_delete_cancel") { b("delcancel", "اعتماد إلغاء الحذف"); }
+    else if (t.kind === "service_activation") { b("svcon", "تفعيل الخدمة"); b("svcoff", "إيقاف الخدمة", "o"); }
     if (!done) b("resolve", "إغلاق كمحلول", "g"); else b("reopen", "إعادة فتح", "g");
     return '<div class="act">' + a.join("") + '</div>';
   }
@@ -248,6 +249,10 @@
     if (act === "delsched") { if (!s) return toast("لا يوجد سجل موقع", "", true); const at = p.at || new Date(Date.now() + 14 * 864e5).toISOString(); return R("تم اعتماد حذف موقعك وسيُحذف نهائياً بتاريخ " + fmt(at) + ". يمكنك إلغاء الحذف قبلها من لوحة التحكم.", "open", { status: "deleting", deletion_at: at }); }
     if (act === "delnow") { if (!s || !confirm("حذف موقع «" + s.name + "» نهائياً الآن؟")) return; return R("تم حذف موقعك نهائياً من المنصة.", "resolved", { status: "deleted" }); }
     if (act === "delcancel") return R("تم إلغاء حذف موقعك وأعيد إلى العمل.", "resolved", s ? { status: "active", deletion_at: null } : null);
+    if (act === "svcon" || act === "svcoff") {
+      if (!s) return toast("لا يوجد سجل موقع", "اربط الطلب بموقع أولاً", true); const on = act === "svcon", sv = Object.assign({}, s.services || {}); sv.order_confirm = { on, at: new Date().toISOString() };
+      return R(on ? "تم تفعيل خدمة تأكيد الزبائن لموقعك. سيتواصل معك فريقنا لإتمام الإعداد." : "تم إيقاف خدمة تأكيد الزبائن لموقعك.", "resolved", { services: sv });
+    }
     if (act === "resolve") return R(null, "resolved");
     if (act === "reopen") return R(null, "open");
   }
@@ -264,7 +269,7 @@
     const s = id ? byId(S.si, id) : { name: "", sub: "", origin: "", domain: "", domain_mode: "platform", domain_status: "none", status: "requested", plan: "", notes: "", customer_id: "" };
     if (!s) return; const tks = S.tk.filter(t => t.site_id === s.id).slice(0, 8);
     modal('<h3>' + (id ? "الموقع: " + esc(s.name) : "موقع جديد") + '</h3><div class="fr"><div><label class="f">اسم الموقع</label><input data-f="name" value="' + esc(s.name) + '"></div><div><label class="f">الاسم على المنصة (sub)</label><input data-f="sub" dir="ltr" value="' + esc(s.sub || "") + '"></div><div><label class="f">عنوان اللوحة (origin)</label><input data-f="origin" dir="ltr" placeholder="https://name.alyssumdz.com" value="' + esc(s.origin || "") + '"></div><div><label class="f">الزبون</label><select data-f="customer_id"><option value="">—</option>' + S.cu.map(c => '<option value="' + c.id + '"' + (c.id === s.customer_id ? " selected" : "") + '>' + esc(c.name) + '</option>').join("") + '</select></div><div><label class="f">الحالة</label><select data-f="status">' + opts(SST, s.status) + '</select></div><div><label class="f">الخطة</label>' + (S.v2 && S.pl.length ? '<select data-f="plan">' + S.pl.map(p => '<option value="' + esc(p.plan) + '"' + (p.plan === (s.plan || "public") ? " selected" : "") + '>' + esc(p.label) + '</option>').join("") + '</select>' : '<input data-f="plan" value="' + esc(s.plan || "") + '" list="plans">') + '</div>' + (S.v2 ? '<div><label class="f">نمط API</label><select data-f="api_mode">' + opts(AMODE, s.api_mode || "shared") + '</select></div><div><label class="f">نهاية الاشتراك (اختياري)</label><input data-f="sub_ends_at" type="date" value="' + (s.sub_ends_at ? String(s.sub_ends_at).slice(0, 10) : "") + '"></div>' : "") + '<div><label class="f">نوع الدومين</label><select data-f="domain_mode">' + opts(DMODE, s.domain_mode) + '</select></div><div><label class="f">الدومين</label><input data-f="domain" dir="ltr" value="' + esc(s.domain || "") + '"></div><div><label class="f">حالة الدومين</label><select data-f="domain_status">' + opts(DST, s.domain_status) + '</select></div></div><label class="f">ملاحظات</label><textarea data-f="notes">' + esc(s.notes || "") + '</textarea>' +
-      (id ? '<div class="sm mut" style="margin-top:.5rem">أُنشئ ' + fmt(s.created_at) + (s.activated_at ? " · فُعّل " + fmt(s.activated_at) : "") + (s.last_seen ? " · آخر نشاط " + fmt(s.last_seen) : "") + (s.version ? " · نسخة " + esc(s.version) : "") + '</div>' + (tks.length ? '<h3 style="margin-top:.8rem">طلبات الموقع</h3>' + tks.map(t => '<div class="tk" data-a="open" data-v="' + t.id + '" style="margin-bottom:5px"><div class="s">#' + t.num + " " + esc(t.subject) + '</div><div class="m">' + pill(t.status, ST[t.status]) + '<span>' + ago(t.created_at) + '</span></div></div>').join("") : "") : "") +
+      (id ? '<div class="sm mut" style="margin-top:.5rem">أُنشئ ' + fmt(s.created_at) + (s.activated_at ? " · فُعّل " + fmt(s.activated_at) : "") + (s.last_seen ? " · آخر نشاط " + fmt(s.last_seen) : "") + (s.version ? " · نسخة " + esc(s.version) : "") + ((s.services || {}).order_confirm && s.services.order_confirm.on ? " · خدمة تأكيد الزبائن مفعّلة" : "") + '</div>' + (tks.length ? '<h3 style="margin-top:.8rem">طلبات الموقع</h3>' + tks.map(t => '<div class="tk" data-a="open" data-v="' + t.id + '" style="margin-bottom:5px"><div class="s">#' + t.num + " " + esc(t.subject) + '</div><div class="m">' + pill(t.status, ST[t.status]) + '<span>' + ago(t.created_at) + '</span></div></div>').join("") : "") : "") +
       '<div class="act" style="margin-top:1rem"><button class="btn" data-a="savesite" data-v="' + (id || "") + '">حفظ</button>' + (s.origin ? '<a class="btn g" target="_blank" rel="noopener" href="' + esc(s.origin) + '/admin.html">فتح لوحة الموقع</a>' : "") + '<button class="btn g" data-a="close">إغلاق</button></div>');
   }
   async function saveSite(id) {

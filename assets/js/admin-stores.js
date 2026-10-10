@@ -137,7 +137,7 @@ const AdminStores = (() => {
     if (SC && SC.on()) {
       const r = await SC.send({ kind: kind || "support", subject: subject || String(txt).split("\n")[0], body: txt, payload: payload || {}, contact: { name: curName(), email: S.d.email, phone: S.d.phone || S.d.wa }, site: { name: curName() } });
       if (r.ok) { toast("✅ وصل طلبك إلى فريق الدعم — رقم #" + r.num + " (تتابعه في «طلبات الدعم»)"); S.sup = null; supLoad(); return r; }
-      if (r.err === "rate") return toast("⚠️ أرسلت طلبات كثيرة، حاول لاحقاً");
+      if (r.err === "rate") { toast("⚠️ أرسلت طلبات كثيرة، حاول لاحقاً"); return false; }
     }
     const wa = (typeof CONFIG !== "undefined" && CONFIG.SUPPORT_WA) || "";
     if (wa) window.open("https://wa.me/" + String(wa).replace(/\D/g, "") + "?text=" + encodeURIComponent(txt), "_blank", "noopener");
@@ -444,5 +444,5 @@ const AdminStores = (() => {
 
   function boot() { mountSwitch(); load(); supWatch(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
-  return { save, delSite, supNew, supTog, supReply, supLoad, dnsCheck, dnsTell, copy: copyTxt, live, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
+  return { notify, save, delSite, supNew, supTog, supReply, supLoad, dnsCheck, dnsTell, copy: copyTxt, live, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
 })();
