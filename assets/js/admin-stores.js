@@ -62,16 +62,6 @@ const AdminStores = (() => {
   }
   const here = () => location.origin + location.pathname.replace(/[^/]*$/, "");
   const curName = () => S.d.name || SITE().name || location.hostname;
-  function addStore() {
-    const n = ($("stp-add-n") || {}).value.trim(), u = adminUrl(($("stp-add-u") || {}).value);
-    if (!n) return toast("⚠️ أدخل اسم الموقع");
-    if (!u) return toast("⚠️ أدخل عنوان الموقع (مثل: example.com)");
-    const a = stores(); if (a.some(s => s.url === u)) return toast("⚠️ هذا الموقع مضاف مسبقاً");
-    a.push({ id: "s" + Date.now().toString(36), name: n, url: u }); saveStores(a); renderAll(); toast("✅ أُضيف الموقع إلى قائمتك");
-  }
-  /* الحذف الفعلي مجدول: المنصة تحذف بيانات الموقع بعد 14 يوماً ويمكن الإلغاء قبلها */
-  const DEL_DAYS = 14, DAY = 864e5;
-  const daysLeft = iso => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / DAY));
   function renameStore(id) { const a = stores(), s = a.find(x => x.id === id); if (!s) return; const n = prompt("اسم الموقع في قائمتك:", s.name); if (n && n.trim()) { s.name = n.trim(); saveStores(a); renderAll(); } }
   function open(id) { const s = stores().find(x => x.id === id); if (s) location.href = s.url; }
 
@@ -319,7 +309,7 @@ const AdminStores = (() => {
       '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اكتب اسم الموقع (حروف لاتينية) فيظهر عنوانه على دومين المنصة تلقائياً، ثم اختر: إنشاء الموقع بهذا العنوان، أو إضافة دومين تملكه، أو طلب دومين جديد.</div><div style="margin-top:.5rem;max-width:420px"><label class="f">اسم الموقع</label><input id="stp-nw-n" dir="ltr" placeholder="boutique" value="' + esc((S.nw && S.nw.n) || "") + '" oninput="AdminStores.nwIn()"></div><div class="stp-nwa"><label class="f">عنوان الموقع</label><div class="stp-nwd" dir="ltr"><b id="stp-nw-d">' + esc(((S.nw && S.nw.n) || "name") + "." + PLATFORM()) + '</b></div><div id="stp-nw-res" class="stp-nwr"></div></div>' +
       '<div class="stp-nwb"><button class="small" type="button" onclick="AdminStores.createSite(\'platform\')">إنشاء الموقع على هذا العنوان</button><button class="small gold" type="button" onclick="AdminStores.nwOwn()">إضافة دومين خاص</button><button class="small gold" type="button" onclick="AdminStores.nwRequest()">طلب دومين خاص</button></div>' +
       '<div id="stp-nw-own" class="stp-nwo" hidden><label class="f">اسم الدومين الذي تملكه</label><div style="display:flex;gap:.5rem;flex-wrap:wrap"><input id="stp-nw-ownv" dir="ltr" placeholder="example.com" style="flex:1;min-width:200px"><button class="small" type="button" onclick="AdminStores.createSite(\'own\')">إضافة الدومين</button></div></div>' +
-      '<details style="margin-top:.9rem"><summary style="cursor:pointer;font-weight:800">لدي موقع جاهز — أضفه إلى قائمتي</summary><div class="row" style="margin-top:.5rem"><div><label class="f">اسم الموقع</label><input id="stp-add-n" placeholder="مثال: أليسوم 2"></div><div><label class="f">عنوان الموقع</label><input id="stp-add-u" dir="ltr" placeholder="example.com"></div></div><button class="small" type="button" onclick="AdminStores.add()">إضافة إلى قائمتي</button></details></div></div>';
+      '</div></div>';
     if (S.nw && S.nw.n) nwCheck(S.nw.n);
     const t = $("stp-tz"); if (t) t.onchange = tick; tick(); clearInterval(S.clock); S.clock = setInterval(() => { if (!$("stp-clock")) return clearInterval(S.clock); tick(); }, 1000);
   }
@@ -331,5 +321,5 @@ const AdminStores = (() => {
 
   function boot() { mountSwitch(); load(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
-  return { save, add: addStore, delSite, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
+  return { save, delSite, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
 })();
