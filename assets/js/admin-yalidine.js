@@ -15,6 +15,7 @@ const AdminYd = (() => {
   function tone(st) {
     const s = norm(st);
     if (/^livre/.test(s)) return "g";
+    if (/preparation|prepar|pret a expedier/.test(s)) return "p";
     if (/retour a retirer|a retirer/.test(s)) return "a";
     if (/retourn|echec|annul|refus/.test(s)) return "r";
     if (/retour/.test(s)) return "a";
@@ -55,13 +56,14 @@ const AdminYd = (() => {
 #yd-card .yd-chip:hover{transform:translateY(-2px)}
 #yd-card .yd-chip b{background:rgba(255,255,255,.18);border-radius:999px;padding:1px 9px;font-size:.8rem}
 #yd-card .yd-chip.g{background:rgba(34,197,94,.28);border-color:rgba(34,197,94,.6)}
+#yd-card .yd-chip.p{color:#86efac;background:rgba(34,197,94,.16);border-color:#22c55e}#yd-card .yd-chip.p b{background:rgba(34,197,94,.3);color:#bbf7d0}
 #yd-card .yd-chip.a{background:rgba(245,158,11,.28);border-color:rgba(245,158,11,.6)}
 #yd-card .yd-chip.r{background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.55)}
 #yd-card .yd-chip.on{outline:2px solid #fff}
 #yd-card .yd-f{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;padding:10px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
 #yd-card .yd-f input,#yd-card .yd-f select{flex:1 1 140px;min-width:120px}
 #yd-card .yd-b{padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);white-space:nowrap}
-#yd-card .yd-b.g{background:rgba(34,197,94,.3)}#yd-card .yd-b.a{background:rgba(245,158,11,.3)}#yd-card .yd-b.r{background:rgba(239,68,68,.28)}
+#yd-card .yd-b.p{color:#86efac;background:rgba(34,197,94,.16);border:1px solid #22c55e}#yd-card .yd-b.g{background:rgba(34,197,94,.3)}#yd-card .yd-b.a{background:rgba(245,158,11,.3)}#yd-card .yd-b.r{background:rgba(239,68,68,.28)}
 #yd-card td.m{direction:ltr;text-align:right;font-family:monospace}`;
     document.head.appendChild(st);
   }
