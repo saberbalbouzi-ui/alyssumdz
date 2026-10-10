@@ -63,7 +63,21 @@ const AdminStores = (() => {
   const here = () => location.origin + location.pathname.replace(/[^/]*$/, "");
   const curName = () => S.d.name || SITE().name || location.hostname;
   function renameStore(id) { const a = stores(), s = a.find(x => x.id === id); if (!s) return; const n = prompt("اسم الموقع في قائمتك:", s.name); if (n && n.trim()) { s.name = n.trim(); saveStores(a); renderAll(); } }
-  function open(id) { const s = stores().find(x => x.id === id); if (s) location.href = s.url; }
+  /* فتح لوحة موقع آخر: إن كان في مرحلة الحذف يُسأل المستخدم عن إلغاء الحذف أولاً؛ وإن كان قيد التفعيل يُتحقق من جاهزيته */
+  async function open(id) {
+    const a = stores(), s = a.find(x => x.id === id); if (!s) return;
+    if (s.del) {
+      if (!confirm("«" + s.name + "» في مرحلة الحذف.\n\nهل تريد إلغاء الحذف وفتح لوحة التحكم؟")) return;
+      delete s.del; saveStores(a); notify("إلغاء طلب حذف الموقع: " + s.name); renderAll();
+    }
+    if (s.pending && !(await live(s.url))) return toast("⏳ «" + s.name + "» قيد التفعيل لدى المنصة — سيفتح هنا فور جاهزيته");
+    if (s.pending) { s.pending = false; saveStores(a); }
+    location.href = s.url;
+  }
+  /* هل الموقع على هذا العنوان يعمل؟ (قراءة ملف الإصدار؛ تفشل إن لم يوجد الموقع بعد) */
+  async function live(url) {
+    try { const o = new URL(url).origin, c = new AbortController(), t = setTimeout(() => c.abort(), 7000); const r = await fetch(o + "/VERSION?t=" + Date.now(), { cache: "no-store", signal: c.signal }); clearTimeout(t); return r.ok && /^\s*\d+\.\d+/.test(await r.text()); } catch (e) { return false; }
+  }
 
   /* مفتاح التنقل في الشريط العلوي */
   function mountSwitch() {
@@ -186,10 +200,64 @@ const AdminStores = (() => {
       dom = { mode: "own", value: own, status: "requested", requests: [] }; url = "https://" + own + "/admin.html";
     } else { dom = { mode: "request", value: "", status: "requested", requests: rq ? [rq] : [] }; url = "https://" + n + "." + PLATFORM() + "/admin.html"; }
     const a = stores(), e = { id: "s" + Date.now().toString(36), name: lab || n, sub: n, url, domain: dom, created: new Date().toISOString(), pending: true };
+    if (mode === "platform") {
+      e.pending = false; a.push(e); saveStores(a); S.nw = null; toast("⏳ جارٍ إنشاء الموقع وفتح لوحة التحكم…");
+      return live(url).then(ok => {
+        if (ok) { location.href = url; return; }
+        const b = stores(), x = b.find(z => z.id === e.id); if (x) { x.pending = true; saveStores(b); } S.open = e.id;
+        notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\nالعنوان: " + n + "." + PLATFORM() + "\nمن موقع: " + curName());
+        renderAll(); toast("✅ أُضيف الموقع — العنوان قيد التفعيل وسيفتح لوحة التحكم فور جاهزيته");
+      });
+    }
     a.push(e); saveStores(a); S.open = e.id; S.nw = null;
     notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\n" + (mode === "platform" ? "العنوان: " + n + "." + PLATFORM() : mode === "own" ? "دومين خاص: " + dom.value : "طلب دومين جديد:\n" + (dom.requests[0] ? dom.requests[0].items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n") : "—")) + "\nمن موقع: " + curName());
-    renderAll(); toast("✅ أُضيف الموقع إلى قائمتك — طلب الإنشاء وصل إلى الدعم");
+    renderAll(); toast(mode === "own" ? "✅ أُضيف الدومين — أدخل إعدادات DNS الموضّحة ثم اضغط «تحقق من الدومين»" : "✅ أُضيف الموقع إلى قائمتك — طلب الدومين وصل إلى الدعم");
   }
+  /* الحذف الفعلي مجدول: المنصة تحذف بيانات الموقع بعد 14 يوماً ويمكن الإلغاء قبلها */
+  const DEL_DAYS = 14, DAY = 864e5;
+  const daysLeft = iso => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / DAY));
+  /* ── ربط دومين خاص: إعدادات DNS المطلوبة + تحقق فعلي ── */
+  const DNS_IPS = () => (typeof CONFIG !== "undefined" && CONFIG.PLATFORM_DNS && CONFIG.PLATFORM_DNS.a) || ["185.199.108.153", "185.199.109.153", "185.199.110.153", "185.199.111.153"];
+  const DNS_CN = () => (typeof CONFIG !== "undefined" && CONFIG.PLATFORM_DNS && CONFIG.PLATFORM_DNS.cname) || PLATFORM();
+  const isApex = d => { const p = String(d).split("."); return p.length === 2 || (p.length === 3 && p[2].length === 2 && /^(com|co|org|net|gov|edu|ac)$/.test(p[1])); };
+  async function doh(name, type) { try { const r = await fetch("https://cloudflare-dns.com/dns-query?name=" + encodeURIComponent(name) + "&type=" + type, { headers: { accept: "application/dns-json" } }); const j = await r.json(); return { ok: true, ans: (j.Answer || []).filter(x => x.type === (type === "A" ? 1 : 5)).map(x => String(x.data).replace(/\.$/, "")) }; } catch (e) { return { ok: false, ans: [] }; } }
+  const domRef = key => { if (key === "cur") return { dm: S.d.domain, save: () => save() }; const a = stores(), s = a.find(x => x.id === key); return s ? { dm: s.domain = s.domain || {}, save: () => { saveStores(a); renderAll(); } } : null; };
+  const dnsRows = d => isApex(d)
+    ? [["A", "@", DNS_IPS()[0]], ["A", "@", DNS_IPS()[1]], ["A", "@", DNS_IPS()[2]], ["A", "@", DNS_IPS()[3]], ["CNAME", "www", DNS_CN()]]
+    : [["CNAME", d.split(".")[0], DNS_CN()]];
+  const copyTxt = t => { try { navigator.clipboard.writeText(t); toast("📋 نُسخ"); } catch (e) { } };
+  const DS = { ok: ["ok", "✔ صحيح"], part: ["mid", "⚠ ناقص"], bad: ["no", "✖ يشير لجهة أخرى"], none: ["no", "✖ غير موجود"], err: ["mid", "تعذّر الفحص"] };
+  function dnsHtml(key, dm) {
+    const d = String(dm.value || "").toLowerCase(); if (!d) return "";
+    const rows = dnsRows(d), r = dm.dns, bd = k => '<span class="stp-b ' + (DS[k] || DS.err)[0] + '">' + (DS[k] || DS.err)[1] + '</span>';
+    return '<div class="stp-dns"><label class="f">إعدادات DNS لربط <b dir="ltr">' + esc(d) + '</b></label><div class="hint">ادخل إلى لوحة مزوّد الدومين (حيث اشتريته) ← إدارة DNS، ثم أضف السجلات التالية واحذف أي سجلات A أو CNAME قديمة لنفس الاسم. إن كان الدومين خلف حماية/وكيل (سحابة برتقالية) فاجعله «DNS فقط».</div>' +
+      '<table class="stp-rt" dir="ltr"><tr><td><b>Type</b></td><td><b>Host / Name</b></td><td><b>Value / Target</b></td><td></td></tr>' + rows.map(x => '<tr><td>' + x[0] + '</td><td>' + esc(x[1]) + '</td><td>' + esc(x[2]) + '</td><td><button type="button" class="small gray" onclick="AdminStores.copy(\'' + esc(x[2]) + '\')">نسخ</button></td></tr>').join("") + '</table>' +
+      '<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.5rem"><button type="button" class="small gold" onclick="AdminStores.dnsCheck(\'' + key + '\')">🔍 تحقق من الدومين</button>' +
+      (r ? '<span class="stp-b ' + (r.ok ? "ok" : "mid") + '">' + (r.ok ? "✔ الدومين مربوط ويعمل" : r.dnsOk ? "DNS صحيح — بانتظار تفعيل الدومين لدى المنصة" : "لم يكتمل الربط بعد") + '</span> <small>آخر فحص: ' + esc(String(r.at).slice(0, 16).replace("T", " ")) + '</small>' : "") + '</div>' +
+      (r ? '<div class="stp-dnsr" style="margin-top:.5rem">' + (isApex(d) ? '<div>الدومين الرئيسي (A): ' + bd(r.a) + (r.found && r.found.length ? ' <small dir="ltr">' + esc(r.found.join(" , ")) + '</small>' : '') + '</div><div>www (CNAME): ' + bd(r.w) + '</div>' : '<div>' + esc(d.split(".")[0]) + ' (CNAME): ' + bd(r.a) + '</div>') + '<div>تشغيل الموقع على الدومين: ' + (r.live ? bd("ok") : '<span class="stp-b mid">لم يعمل بعد</span>') + '</div></div>' : "") +
+      '<div class="hint" style="margin-top:.4rem">قد يستغرق انتشار DNS من دقائق إلى 24 ساعة. بعد صحة السجلات تُفعِّل المنصة الدومين لموقعك وتُصدر له شهادة الأمان (https) تلقائياً — يمكنك إبلاغ الدعم بزر «أبلغ الدعم».</div>' +
+      (r && r.dnsOk && !r.ok ? '<button type="button" class="small" onclick="AdminStores.dnsTell(\'' + key + '\')">أبلغ الدعم بجاهزية DNS</button>' : '') + '</div>';
+  }
+  async function dnsCheck(key) {
+    const ref = domRef(key); if (!ref) return; const dm = ref.dm, d = String(dm.value || "").toLowerCase(); if (!d) return toast("⚠️ اكتب الدومين أولاً");
+    toast("🔍 جارٍ فحص الدومين…");
+    const ips = DNS_IPS(), cn = DNS_CN().toLowerCase(), r = { at: new Date().toISOString() };
+    const grade = (found, okFn) => !found.length ? "none" : found.every(okFn) ? "ok" : found.some(okFn) ? "part" : "bad";
+    if (isApex(d)) {
+      const A = await doh(d, "A"), W = await doh("www." + d, "CNAME"), WA = await doh("www." + d, "A");
+      r.found = A.ans; r.a = !A.ok ? "err" : grade(A.ans, x => ips.indexOf(x) >= 0);
+      r.w = !W.ok ? "err" : W.ans.length ? (W.ans.some(x => x.toLowerCase() === cn || x.toLowerCase() === d) ? "ok" : "bad") : (WA.ans.length && WA.ans.every(x => ips.indexOf(x) >= 0) ? "ok" : WA.ans.length ? "bad" : "none");
+      r.dnsOk = r.a === "ok";
+    } else {
+      const C = await doh(d, "CNAME"), A = await doh(d, "A");
+      r.found = C.ans.concat(A.ans); r.a = !C.ok ? "err" : C.ans.length ? (C.ans.some(x => x.toLowerCase() === cn) ? "ok" : "bad") : (A.ans.length && A.ans.every(x => ips.indexOf(x) >= 0) ? "ok" : A.ans.length ? "bad" : "none");
+      r.dnsOk = r.a === "ok";
+    }
+    r.live = r.dnsOk ? await live("https://" + d + "/") : false; r.ok = r.dnsOk && r.live;
+    dm.dns = r; if (r.ok) dm.status = "connected"; ref.save(); toast(r.ok ? "✅ الدومين مربوط ويعمل" : r.dnsOk ? "✔ DNS صحيح — بانتظار التفعيل لدى المنصة" : "⚠️ إعدادات DNS لم تكتمل بعد");
+  }
+  function dnsTell(key) { const ref = domRef(key); if (!ref) return; notify("DNS جاهز لدومين خاص\nالدومين: " + ref.dm.value + "\nالموقع: " + (key === "cur" ? curName() : ((stores().find(x => x.id === key) || {}).name || "")) + "\nمن موقع: " + curName() + "\nنرجو تفعيل الدومين وإصدار شهادة الأمان."); }
+
   /* ── حذف مجدول بعد 14 يوماً (قابل للإلغاء) ── */
   function delSite(id) {
     const cur = id === "cur", a = stores(), s = cur ? null : a.find(x => x.id === id), nm = cur ? curName() : (s && s.name); if (!cur && !s) return;
@@ -283,7 +351,7 @@ const AdminStores = (() => {
     const dmo = (v, t, body) => '<label class="stp-r"><input type="radio" name="stp-dm" value="' + v + '"' + (dm.mode === v ? " checked" : "") + ' onchange="AdminStores.dm()"><b>' + t + '</b></label><div class="stp-dv" id="stp-dvb-' + v + '"' + (dm.mode === v ? "" : " hidden") + '>' + body + '</div>';
     return '<div class="card"><h3>هوية الموقع</h3><div class="row"><div><label class="f">اسم المتجر</label><input id="stp-name" value="' + esc(d.name) + '"></div><div><label class="f">وصف مختصر (شعار المتجر)</label><input id="stp-tagline" value="' + esc(d.tagline) + '" placeholder="جملة قصيرة تعرّف متجرك"></div></div></div>' +
       '<div class="card"><h3>عنوان الموقع (الدومين)</h3><div class="hint">الحالي: <b dir="ltr">' + esc(SITE().domain || location.hostname) + '</b>' + (dm.status === "requested" ? ' — <span class="stp-st">لديك طلب قيد المعالجة</span>' : '') + '</div>' +
-      dmo("own", "لدي دومين خاص بي", '<input id="stp-dv-own" dir="ltr" placeholder="example.com" value="' + esc(dm.mode === "own" ? dm.value : "") + '"><button class="small gold" type="button" onclick="AdminStores.request(\'domain\')">طلب ربط الدومين بموقعي</button>') +
+      dmo("own", "لدي دومين خاص بي", '<input id="stp-dv-own" dir="ltr" placeholder="example.com" value="' + esc(dm.mode === "own" ? dm.value : "") + '"><button class="small gold" type="button" onclick="AdminStores.request(\'domain\')">طلب ربط الدومين بموقعي</button>' + (dm.mode === "own" ? dnsHtml("cur", dm) : "")) +
       dmo("request", "أريد دومين جديداً", '<button class="small gold" type="button" onclick="AdminStores.domainDlg()">🔍 البحث عن اسم وطلب دومين جديد</button>' + (reqs.length ? '<div style="margin-top:.6rem">' + reqs.map(reqHtml).join("") + '</div>' : '')) +
       dmo("platform", "استعمال دومين المنصة", '<div style="display:flex;gap:.4rem;align-items:center"><input id="stp-dv-platform" dir="ltr" placeholder="mystore" value="' + esc(dm.mode === "platform" ? dm.value : "") + '" style="max-width:220px"><b dir="ltr">.' + esc(PLATFORM()) + '</b></div><button class="small gold" type="button" onclick="AdminStores.request(\'domain\')">طلب هذا العنوان</button>') + '</div>' +
       '<div class="card"><h3>الاتصال بالمتجر</h3><div class="row"><div><label class="f">البريد الإلكتروني للمتجر</label><input id="stp-email" type="email" dir="ltr" value="' + esc(d.email) + '"></div><div><label class="f">رقم الهاتف</label><input id="stp-phone" dir="ltr" value="' + esc(d.phone) + '" placeholder="0550000000"></div><div><label class="f">رقم واتساب (بالصيغة الدولية)</label><input id="stp-wa" dir="ltr" value="' + esc(d.wa) + '" placeholder="213550000000"></div></div><label class="f">العنوان</label><input id="stp-address" value="' + esc(d.address) + '" placeholder="الولاية، البلدية، الشارع"></div>' +
@@ -299,9 +367,9 @@ const AdminStores = (() => {
   function renderAll() {
     mountSwitch();
     const box = $("stores-app"); if (!box) return; const d = S.d, list = stores(), open = S.open || "";
-    const row = (id, nm, url, cur, dl, body) => '<div class="stp-site' + (open === id ? " on" : "") + '"><div class="stp-sh"><div class="stp-sn"><button type="button" class="stp-car" onclick="AdminStores.tog(\'' + id + '\')" title="إعدادات الموقع" aria-expanded="' + (open === id) + '">' + CAR + '</button><div><b>' + esc(nm) + '</b>' + (cur ? ' <span class="stp-badge">الحالي</span>' : '') + '<br><small dir="ltr">' + esc(url) + '</small></div></div><div>' + (cur ? '' : '<button class="small" type="button" onclick="AdminStores.open(\'' + id + '\')">فتح لوحة التحكم</button>') + delBtn(id, dl) + '</div></div>' + (open === id ? '<div class="stp-sb">' + body + '</div>' : '') + '</div>';
+    const row = (id, nm, url, cur, dl, body) => '<div class="stp-site' + (open === id ? " on" : "") + '"><div class="stp-sh"><div class="stp-sn"><button type="button" class="stp-car" onclick="AdminStores.tog(\'' + id + '\')" title="إعدادات الموقع" aria-expanded="' + (open === id) + '">' + CAR + '</button><div><b>' + esc(nm) + '</b>' + (cur ? ' <span class="stp-badge">الحالي</span>' : '') + '<br><small dir="ltr">' + esc(url) + '</small></div></div><div>' + delBtn(id, dl) + '</div></div>' + (open === id ? '<div class="stp-sb">' + body + '</div>' : '') + '</div>';
     const rqRO = rq => '<div class="stp-rq"><div>' + rq.items.map(i => '<b dir="ltr" class="stp-dn">' + esc(i.d) + '</b> <span class="stp-b ' + (ST[i.s] || ["", "mid"])[1] + '">' + (ST[i.s] || ["؟"])[0] + '</span>').join("<br>") + '</div><small>' + esc(String(rq.at).slice(0, 10)) + '</small></div>';
-    const other = s => { const dm = s.domain || {}, addr = dm.mode === "own" ? dm.value : (s.sub ? s.sub + "." + PLATFORM() : s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, "")); return '<div class="row"><div><label class="f">اسم الموقع في قائمتي</label><div style="display:flex;gap:.4rem;align-items:center"><b>' + esc(s.name) + '</b><button class="small gray" type="button" onclick="AdminStores.rename(\'' + s.id + '\')">تغيير الاسم</button></div></div><div><label class="f">عنوان الموقع</label><b dir="ltr">' + esc(addr) + '</b>' + (s.pending ? ' <span class="stp-b mid">طلب الإنشاء قيد المعالجة لدى الدعم</span>' : '') + '</div></div>' + (dm.mode === "request" && (dm.requests || []).length ? '<label class="f">طلب الدومين</label>' + dm.requests.map(rqRO).join("") : '') + '<div class="hint">الهوية والاتصال والتوقيت وبقية الإعدادات لهذا الموقع تظهر في لوحة تحكمه عند جاهزيته.</div><button class="small" type="button" onclick="AdminStores.open(\'' + s.id + '\')">فتح لوحة تحكم ' + esc(s.name) + '</button>'; };
+    const other = s => { const dm = s.domain || {}, addr = dm.mode === "own" ? dm.value : (s.sub ? s.sub + "." + PLATFORM() : s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, "")); return '<div class="row"><div><label class="f">اسم الموقع في قائمتي</label><div style="display:flex;gap:.4rem;align-items:center"><b>' + esc(s.name) + '</b><button class="small gray" type="button" onclick="AdminStores.rename(\'' + s.id + '\')">تغيير الاسم</button></div></div><div><label class="f">عنوان الموقع</label><b dir="ltr">' + esc(addr) + '</b>' + (s.pending ? ' <span class="stp-b mid">قيد التفعيل لدى المنصة</span>' : '') + '</div></div>' + (dm.mode === "own" ? dnsHtml(s.id, dm) : '') + (dm.mode === "request" && (dm.requests || []).length ? '<label class="f">طلب الدومين</label>' + dm.requests.map(rqRO).join("") : '') + '<div class="hint">الهوية والاتصال والتوقيت وبقية الإعدادات لهذا الموقع تظهر في لوحة تحكمه عند جاهزيته.</div><button class="small" type="button" onclick="AdminStores.open(\'' + s.id + '\')">فتح لوحة تحكم ' + esc(s.name) + '</button>'; };
     box.innerHTML = CSS + '<div class="stp"><div class="card"><h3>مواقعي</h3><div class="hint">لكل موقع لوحة تحكم خاصة به. اضغط السهم لفتح إعدادات الموقع، ويمكنك التنقل بين مواقعك من أعلى اللوحة.</div>' +
       row("cur", curName(), here().replace(/^https?:\/\//, ""), true, d.deletion, settingsHtml()) +
       list.map(s => row(s.id, s.name, s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, ""), false, s.del, other(s))).join("") +
@@ -321,5 +389,5 @@ const AdminStores = (() => {
 
   function boot() { mountSwitch(); load(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
-  return { save, delSite, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
+  return { save, delSite, dnsCheck, dnsTell, copy: copyTxt, live, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
 })();
