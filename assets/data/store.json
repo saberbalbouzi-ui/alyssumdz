@@ -1,0 +1,24 @@
+{
+  "name": "أليسوم ALYSSUM",
+  "tagline": "",
+  "email": "",
+  "phone": "",
+  "wa": "213559237239",
+  "instagram": "alyssumdzofficiel",
+  "address": "",
+  "lang": "ar",
+  "tz": "Africa/Algiers",
+  "dateFmt": "DD/MM/YYYY",
+  "timeFmt": "24",
+  "weekStart": "sat",
+  "currency": "دج",
+  "maintenance": false,
+  "maintMsg": "",
+  "domain": {
+    "mode": "own",
+    "value": "alyssumdz.com",
+    "status": "requested",
+    "at": "2026-10-10T00:02:10.784Z"
+  },
+  "updatedAt": "2026-10-10T00:02:10.846Z"
+}
