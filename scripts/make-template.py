@@ -28,7 +28,9 @@ if a.update:
     if OUT.exists(): shutil.rmtree(OUT)
     keep = json.loads((ROOT / "shared-files.json").read_text(encoding="utf-8"))["shared"] + ["version.json"]
     for rel in keep:
-        (OUT / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(tmp / rel, OUT / rel)
+        src = tmp / rel if (tmp / rel).exists() else ROOT / rel     # ما لا يدخل الحزمة الأساسية (قوالب، صور) يُنسخ من المصدر
+        if not src.exists(): print("تحذير: ملف مشترك مفقود في المصدر:", rel); continue
+        (OUT / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, OUT / rel)
     if not a.remote:
         # تحديث يدوي: يحمل أيضاً ملفات إعداد المحدِّث لتفعيل التحديث عن بُعد في المواقع القديمة (لا تدخل القناة البعيدة)
         for rel in ("api/update-config.php", "api/update-key.pem"):
@@ -107,7 +109,7 @@ for f, v in {"coupons": "[]", "pixels": "[]", "agent-faq": "[]", "agent-training
 # بيانات الموقع الخاصة بك لا تنتقل للزبون: إعدادات محايدة باسم الزبون ورقمه، ومنشورات/حملات فارغة
 (OUT / "assets/data/store.json").write_text(json.dumps({"name": a.name, "tagline": "", "email": "", "phone": "", "wa": a.wa, "instagram": "", "address": "", "lang": "ar", "tz": "Africa/Algiers", "dateFmt": "DD/MM/YYYY", "timeFmt": "24", "weekStart": "sat", "currency": "دج", "maintenance": False, "maintMsg": "", "domain": {"mode": "own", "value": "", "status": ""}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 (OUT / "assets/data/social.json").write_text(json.dumps({"v": 1, "settings": {"domain": "", "runner": False, "fbNative": True, "hashtags": []}, "rule": {"perDay": 3, "start": "10:00", "end": "21:00", "days": [0, 1, 2, 3, 4, 5, 6], "channels": ["fb", "ig"], "jitter": True}, "posts": [], "campaigns": []}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-for f in ("checkout.json",):
+for f in ("checkout.json", "landing-template-anti-acne.txt"):   # الثاني: تعليمات صور منتجك الخاصة
     (OUT / "assets/data" / f).unlink(missing_ok=True)
 
 # الإعدادات: هوية محايدة وبلا مفاتيح
@@ -148,7 +150,7 @@ ag.write_text(t, encoding="utf-8")
 
 # إزالة أي أثر لهويتك من نصوص الشيفرة (مفاتيح التخزين، أمثلة، اسم العلامة…)
 NAME = a.name.replace('"', "'").replace("\\", "")
-SCRUB = [("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
+SCRUB = [("0559 23 72 39", a.wa), ("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
          ("213559237239", "213550000000"), ("anti-acne", "demo"), ("ALYSSUM DZ", NAME), ("ALYSSUM", NAME), ("أليسوم", NAME), ("alyssum", "store"), ("qvdaiundlkfbmjlummni", "YOUR_PROJECT_REF")]
 for f in OUT.rglob("*"):
     if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".css", ".sql", ".sh", ".py", ".webmanifest"} and f.name not in ("make-template.py",):
@@ -203,8 +205,10 @@ if a.target == "php":
 (OUT / "version.json").write_text(json.dumps({"version": (ROOT / "VERSION").read_text(encoding="utf-8").strip()}) + "\n", encoding="utf-8")
 
 # فحص التسرّب
-bad = [r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s != "demo"]
-ALLOWED_BRAND = re.compile(r"alyssum\s+(?:api|الذكية|الذكي)", re.I)
+bad = [r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s not in ("demo", "test")]
+# مفتاح منصة SaaS العام (anon/publishable) مقصود وجوده في عميل المنصة؛ يُستثنى من الفحص بنصّه الحرفي فقط
+_sk = re.search(r'SAAS_KEY:\s*"(sb_publishable_[^"]+)"', (ROOT / "assets/js/config.js").read_text(encoding="utf-8"))
+ALLOWED_BRAND = re.compile(r"alyssum\s+(?:api|الذكية|الذكي)" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
 hits = []
 for f in OUT.rglob("*"):
     if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:

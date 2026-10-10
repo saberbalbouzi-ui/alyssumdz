@@ -21,7 +21,6 @@
     "assets/js/admin-keys.js",
     "assets/js/admin-inventory.js",
     "assets/js/admin-coupons2.js",
-    "assets/data/inventory.json",
     "assets/js/admin-social.js",
     "assets/js/admin-customers.js",
     "assets/js/admin-zones.js",
@@ -288,7 +287,8 @@
       "assets/img/** (الصور المرفوعة)"
     ],
     "البيانات": [
-      "api/_data/** (الطلبات، الزيارات، النسخ الاحتياطية)"
+      "api/_data/** (الطلبات، الزيارات، النسخ الاحتياطية)",
+      "assets/data/inventory.json"
     ]
   }
 }
