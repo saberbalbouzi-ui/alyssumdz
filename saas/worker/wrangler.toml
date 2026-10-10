@@ -6,10 +6,10 @@ compatibility_date = "2026-01-01"
 [vars]
 SUPABASE_URL = "https://qvdaiundlkfbmjlummni.supabase.co"
 SUPABASE_KEY = "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h"   # المفتاح العام فقط
-PLATFORM_DOMAIN = "CHANGE-ME.example"   # دومين المنصة بلا www؛ يقبل عدة دومينات مفصولة بفواصل ("قديم.com,جديد.com") للانتقال بلا انقطاع
+PLATFORM_DOMAIN = "alyssumhub.fyi"   # دومين المنصة بلا www؛ يقبل عدة دومينات مفصولة بفواصل ("قديم.com,جديد.com") للانتقال بلا انقطاع
 
 # بعد شراء الدومين وإضافته لـCloudflare (خطة Free) وتفعيل Cloudflare for SaaS عليه:
 #  1) سجل DNS بلا خادم أصل للمضيف الاحتياطي (fallback origin):  service  AAAA  100::   (Proxied)
 #  2) عيّنه Fallback Origin من SSL/TLS ← Custom Hostnames (أو بدالة domains: action "fallback")
 #  3) مسار الـWorker على المنطقة نفسها (يلتقط الدومينات المخصصة والأسماء الفرعية معاً، بحسب توثيق Cloudflare):
-# routes = [{ pattern = "*/*", zone_name = "CHANGE-ME.example" }]
+# routes = [{ pattern = "*/*", zone_name = "alyssumhub.fyi" }]
