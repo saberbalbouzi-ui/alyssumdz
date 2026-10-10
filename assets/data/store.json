@@ -15,10 +15,10 @@
   "maintenance": false,
   "maintMsg": "",
   "domain": {
-    "mode": "own",
-    "value": "alyssumdz.com",
+    "mode": "request",
+    "value": "",
     "status": "requested",
-    "at": "2026-10-10T00:02:10.784Z"
+    "at": "2026-10-10T00:10:57.026Z"
   },
-  "updatedAt": "2026-10-10T00:02:10.846Z"
+  "updatedAt": "2026-10-10T00:10:57.092Z"
 }
