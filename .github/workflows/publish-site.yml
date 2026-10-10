@@ -1,0 +1,29 @@
+# ينشر موقعاً (واجهة ثابتة من قالب الزبون) إلى المخزن المركزي للمنصة (Supabase Storage، حاوية tenants).
+# يلزم سرّ المستودع SUPABASE_SERVICE_KEY (مفتاح service_role من لوحة Supabase ← Settings ← API). بعد النشر:
+#   update saas_sites set source = 'sb:<site_id>' where id = '<site_id>';   -- فيقدّمه الموزّع على عنوان الموقع
+name: publish-site
+on:
+  workflow_dispatch:
+    inputs:
+      site_id: { description: "معرّف الموقع (saas_sites.id)", required: true }
+      name: { description: "اسم المتجر", required: true }
+      wa: { description: "رقم واتساب دولي (أرقام فقط)", required: false, default: "213000000000" }
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and publish
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_ID: ${{ inputs.site_id }}
+          SITE_NAME: ${{ inputs.name }}
+          SITE_WA: ${{ inputs.wa }}
+        run: |
+          [[ "$SITE_ID" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || { echo "معرّف غير صالح"; exit 1; }
+          [[ "$SITE_WA" =~ ^[0-9]{8,15}$ ]] || { echo "رقم واتساب غير صالح"; exit 1; }
+          [ -n "$SUPABASE_SERVICE_KEY" ] || { echo "السرّ SUPABASE_SERVICE_KEY غير مضبوط"; exit 1; }
+          python3 scripts/make-template.py --target php --out dist/site --name "$SITE_NAME" --wa "$SITE_WA"
+          python3 saas/tools/publish-site.py dist/site "$SITE_ID" --prune

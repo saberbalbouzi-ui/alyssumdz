@@ -1,5 +1,6 @@
 // موزّع المستأجرين: يحدّد موقع الزبون من اسم المضيف (Host) ويقدّم محتواه.
-// المرحلة 1: المحتوى من GitHub Pages لمستودع الزبون (source = "gh:owner/repo").
+// المصادر: gh:owner/repo ← GitHub Pages لمستودع الزبون (المرحلة 1)،
+//          sb:<معرّف> ← مخزن مركزي في Supabase Storage (حاوية tenants العامة، المرحلة 4) فلا مستودع ولا CNAME لكل زبون.
 // لا يمسّ هذا الملف أي موقع حالي؛ المضيف غير المعروف يعرض صفحة «غير موجود».
 const LOOKUP_TTL = 60_000;          // مدة تخزين نتيجة البحث في الذاكرة
 const CONTENT_TTL = 300;            // ثوانٍ (Cache API)
@@ -11,7 +12,23 @@ const page = (title, msg, status) => new Response(
   `<div><h1 style="font-size:22px">${title}</h1><p style="opacity:.8">${msg}</p></div></body></html>`,
   { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 
+const TYPES = { html: "text/html; charset=utf-8", htm: "text/html; charset=utf-8", css: "text/css; charset=utf-8", js: "text/javascript; charset=utf-8", mjs: "text/javascript; charset=utf-8",
+  json: "application/json; charset=utf-8", webmanifest: "application/manifest+json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg",
+  webp: "image/webp", gif: "image/gif", ico: "image/x-icon", avif: "image/avif", woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", txt: "text/plain; charset=utf-8",
+  xml: "application/xml; charset=utf-8", mp4: "video/mp4", webm: "video/webm", pdf: "application/pdf", zip: "application/zip" };
+
+// يحوّل مسار الطلب إلى مسار ملف داخل المخزن (المجلد ← index.html)؛ null للمسارات الخطرة.
+export function storePath(pathname) {
+  let p; try { p = decodeURIComponent(pathname); } catch (_) { return null; }
+  if (p.includes("\\") || p.includes("\0") || p.split("/").some(s => s === "..")) return null;
+  if (p.endsWith("/")) p += "index.html";
+  return p.replace(/^\/+/, "");
+}
+export const typeOf = path => TYPES[(path.split(".").pop() || "").toLowerCase()] || "application/octet-stream";
+
 export function parseSource(src) {
+  const sb = /^sb:([A-Za-z0-9._-]{1,64})$/.exec(src || "");
+  if (sb) return { sb: sb[1] };
   const m = /^gh:([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)$/.exec(src || "");
   if (!m) return null;
   const [, owner, repo] = m;
@@ -46,6 +63,35 @@ async function lookup(env, host) {
   return v;
 }
 
+// المخزن المركزي: https://<مشروع>.supabase.co/storage/v1/object/public/tenants/<معرّف>/<مسار>
+async function serveStore(req, env, ctx, id, url) {
+  const path = storePath(url.pathname);
+  if (path === null) return page("طلب غير صالح", "المسار غير مسموح.", 400);
+  const cache = typeof caches !== "undefined" ? caches.default : null;
+  const tryGet = async rel => {
+    const target = `${env.SUPABASE_URL}/storage/v1/object/public/tenants/${id}/${rel.split("/").map(encodeURIComponent).join("/")}`;
+    const key = new Request(target, { method: "GET" });
+    if (cache) { const c = await cache.match(key); if (c) return c; }
+    const up = await fetch(target, { headers: { "user-agent": "alyssum-tenant-router" } });
+    if (up.status !== 200) return null;
+    const h = new Headers();
+    h.set("content-type", typeOf(rel));                     // Supabase يقدّم HTML كنص عادي، فنضبط النوع بالامتداد
+    h.set("cache-control", `public, max-age=${CONTENT_TTL}`);
+    h.set("x-content-type-options", "nosniff");
+    h.set("x-frame-options", "SAMEORIGIN");
+    const res = new Response(up.body, { status: 200, headers: h });
+    if (cache) ctx.waitUntil(cache.put(key, res.clone()));
+    return res;
+  };
+  let res = await tryGet(path);
+  if (!res && !path.endsWith("index.html") && !/\.[A-Za-z0-9]{1,8}$/.test(path)) res = await tryGet(path + "/index.html");   // /shop ← /shop/index.html
+  if (!res) {
+    const nf = await tryGet("404.html");
+    return nf ? new Response(await nf.text(), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } }) : page("الصفحة غير موجودة", "تأكد من الرابط.", 404);
+  }
+  return req.method === "HEAD" ? new Response(null, { status: 200, headers: res.headers }) : res;
+}
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -58,6 +104,8 @@ export default {
     if (site.status !== "active") return page("الموقع متوقف مؤقتاً", "صاحب هذا الموقع أوقفه مؤقتاً. حاول لاحقاً.", 503);
     const src = parseSource(site.source);
     if (!src) return page("الموقع قيد الإعداد", "سيكون جاهزاً قريباً.", 503);
+
+    if (src.sb) return serveStore(req, env, ctx, src.sb, url);
 
     const target = src.base + src.prefix + url.pathname + url.search;
     const cache = typeof caches !== "undefined" ? caches.default : null;

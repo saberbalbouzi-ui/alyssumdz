@@ -748,3 +748,12 @@ begin
 end $$;
 revoke all on function public.saas_site_by_host(text, text) from public;
 grant execute on function public.saas_site_by_host(text, text) to anon, authenticated;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 11) المخزن المركزي لمواقع المنصة (المرحلة 4): حاوية عامة للقراءة فقط.
+--     الكتابة بمفتاح service_role حصراً (أداة saas/tools/publish-site.py)، ولا سياسات كتابة للمستخدمين.
+--     الموزّع (saas/worker) يجلب من: /storage/v1/object/public/tenants/<site-id>/<path> عند source = 'sb:<site-id>'.
+-- ═══════════════════════════════════════════════════════════════════════════
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('tenants', 'tenants', true, 20971520)
+on conflict (id) do update set public = true, file_size_limit = 20971520;
