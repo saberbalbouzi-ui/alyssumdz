@@ -84,7 +84,7 @@ const AdminStores = (() => {
     let sw = $("store-sw");
     if (!sw) { const host = $("as-btn") || $("theme-sw"); if (!host) return; sw = document.createElement("div"); sw.id = "store-sw"; sw.className = "ssw"; host.parentNode.insertBefore(sw, host); }
     const list = stores();
-    sw.innerHTML = '<button type="button" class="small ssw-b" onclick="AdminStores.menu()" title="التنقل بين مواقعك">' + esc("لوحة تحكم " + curName()) + (list.length ? " ▾" : "") + '</button>' +
+    sw.innerHTML = '<button type="button" class="small ssw-b" onclick="AdminStores.menu()" title="التنقل بين مواقعك">مواقعي ▾</button>' +
       '<div class="ssw-m" id="ssw-m" hidden><div class="ssw-i on">' + esc("لوحة تحكم " + curName()) + '<small>الحالي</small></div>' +
       list.map(s => '<button type="button" class="ssw-i" onclick="AdminStores.open(\'' + s.id + '\')">' + esc("لوحة تحكم " + s.name) + '<small dir="ltr">' + esc(s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, "")) + '</small></button>').join("") +
       '<button type="button" class="ssw-i add" onclick="AdminStores.go()">＋ إضافة موقع / إدارة مواقعي</button></div>';
