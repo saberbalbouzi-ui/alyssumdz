@@ -366,6 +366,22 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[2]) && cc.mat === "100" && cc.tot === "250", cc);
   ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
   ok("جدول التكلفة: «اعتماد» يجعل الإجمالي سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
+  // ── مكتبة المواد الأولية: تغيير السعر مرة واحدة يحدّث الوصفات والتكلفة ──
+  const ml = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
+    Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }, { slug: "cc2", title: "زيت", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] };
+    Admin.fin.mats = { m1: { n: "زيت الأرغان", pr: 5000, u: "kg" } };
+    Admin.fin.cc = { cc1: { unit: "kg", raw: 1500, ml: 50, pack: 100, oth: 50, adopt: true, rec: [{ m: "m1", n: "زيت الأرغان", pct: 30, pr: 5000 }] }, cc2: { unit: "kg", raw: 500, ml: 100, rec: [{ m: "m1", n: "زيت الأرغان", pct: 10, pr: 5000 }] } };
+    Admin.fin.costs = { cc1: 225 }; Admin.renderCostCalc(true);
+    Admin.ccmOpen(0); const linked = document.getElementById("ccm-m0").value === "m1" && document.getElementById("ccm-r0").readOnly && !document.getElementById("ccm-n0"); document.getElementById("ccm-bg").classList.remove("open");
+    Admin.matOpen(); const e = document.querySelector('#mat-bg [data-mf="pr"][data-id="m1"]'); e.value = 6000; Admin.matSave(); await wait(80);
+    const out = { linked, raw1: Admin.fin.cc.cc1.raw, raw2: Admin.fin.cc.cc2.raw, rp: Admin.fin.cc.cc1.rec[0].pr, buy1: Admin.fin.costs.cc1, buy2: Admin.fin.costs.cc2 == null, cell: document.getElementById("cc0-tot").textContent };
+    // «+» يحفظ مادة حرة في المكتبة
+    Admin.fin.cc.cc2.rec = [{ n: "شمع", pct: 5, pr: 800 }]; Admin.ccmOpen(1); await Admin.ccmToLib(0); out.lib = Object.values(Admin.fin.mats).map(m => m.n).join(","); out.afterLink = !!document.getElementById("ccm-m0").value; document.getElementById("ccm-bg").classList.remove("open");
+    Admin.products = pr0; Priv.set = set0; Admin.renderFinance = rf0; return out;
+  });
+  ok("مكتبة المواد: السعر في الوصفة من المكتبة (للقراءة فقط) وتغييره مرة واحدة يحدّث كل الوصفات (1800 و600) وسعر شراء المنتج المعتمَد (240) دون غيره", ml.linked && ml.raw1 === 1800 && ml.raw2 === 600 && ml.rp === 6000 && ml.buy1 === 240 && ml.buy2, ml);
+  ok("مكتبة المواد: زر «+» يضيف مادة حرة إلى المكتبة ويربط الصف بها", /شمع/.test(ml.lib) && ml.afterLink, ml);
   // ── طباعة بوردرو الطلبات المسجلة ──
   const bd = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.96">
+<meta name="admin-version" content="1.89.97">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -557,7 +557,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       </div>
     </div>
     <div class="card" id="fin-cc">
-      <b style="color:var(--green);font-size:1.02rem">🧪 تكلفة المنتجات</b>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"><b style="color:var(--green);font-size:1.02rem">🧪 تكلفة المنتجات</b><button class="small blue" type="button" onclick="Admin.matOpen()" title="المواد الأولية وأسعارها في مكان واحد تُستعمل في كل الوصفات">📚 مكتبة المواد الأولية</button></div>
       <details style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب التكلفة؟</summary><div class="hint" style="margin:.4rem 0">أدخل لكل منتج <b>الوحدة (لتر أو كلغ)</b> و<b>سعرها</b> و<b>حجم العبوة (مل أو غ)</b> فتُحسب <b>تكلفة المادة للعلبة = السعر × الحجم ÷ 1000</b>. وإن كنتَ تصنّع المنتج فزر <b>🧪 الوصفة</b> يحسب سعر اللتر/الكلغ من <b>نسب المواد الأولية</b> وأسعارها، ثم أضف تكلفة <b>العبوة والتغليف</b> و<b>مصاريف أخرى</b> (يد عاملة، ملصق…) فتظهر <b>التكلفة الإجمالية للعلبة</b> فورياً. زر <b>«اعتماد»</b> يجعلها <b>سعر الشراء</b> للمنتج في جدول المخزون والأرباح.</div></details>
       <div id="fin-cc-rows" style="overflow-x:auto"></div>
     </div>
@@ -1598,12 +1598,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.96"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.96"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.96"></script>
+<script src="assets/js/ctl-help.js?v=1.89.97"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.97"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.97"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.96"></script>
+<script src="assets/js/admin-nav.js?v=1.89.97"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1614,7 +1614,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.96"></script>
+<script src="assets/js/admin-update.js?v=1.89.97"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -5242,7 +5242,7 @@ const Admin = {
     if(old.delVal == null && old.carrierPct != null) S0.delVal = old.carrierPct;      // ترحيل الإعدادات القديمة
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
     if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
-    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     this.reconcileStatusChanges();
   },
@@ -5553,7 +5553,7 @@ const Admin = {
   ccLive(i){ const r = this.ccCalc(this.ccRead(i)), n = v=>(Math.round(v * 100) / 100).toLocaleString("fr-DZ"); $f("cc" + i + "-mat").textContent = n(r.mat); $f("cc" + i + "-tot").textContent = n(r.total); },
   async ccSave(i, adopt){
     const p = this.ccList()[i]; if(!p) return; const old = (this.fin.cc || {})[p.slug] || {}, c = this.ccRead(i), cc = Object.assign({}, this.fin.cc || {});
-    if(old.rec && old.rec.length) c.rec = old.rec;
+    if(old.rec && old.rec.length) c.rec = old.rec; if(old.adopt || adopt) c.adopt = true;
     if(Object.keys(c).filter(k=>k !== "unit" && k !== "rec").length || c.rec) cc[p.slug] = c; else delete cc[p.slug];
     this.fin.cc = cc; await Priv.set("costcalc", cc);
     if(adopt){ const t = Math.round(this.ccCalc(c).total); if(!(t > 0)){ toast("⚠️ أدخل بيانات التكلفة أولاً"); return; } this.setCost(p.slug, t); toast("✅ اعتُمد " + t.toLocaleString("fr-DZ") + " دج سعر شراء لـ«" + (p.title || p.slug) + "»"); }
@@ -5574,7 +5574,8 @@ const Admin = {
       '<div class="hint" style="margin:0 0 .6rem">أدخل المواد الأولية بنسبها في الخلطة وسعر ' + (kg ? "الكلغ" : "اللتر") + ' من كل مادة؛ يُحسب <b>سعر ' + (kg ? "الكلغ" : "اللتر") + '</b> للمنتج، ثم <b>حجم العبوة</b> ليعطي <b>سعر العلبة الواحدة</b>.</div>' +
       '<label style="font-weight:700">الوحدة <select id="ccm-unit" onchange="Admin.ccmUnit(this.value)" style="margin-inline-start:.4rem"><option value="L"' + (kg ? "" : " selected") + '>لتر</option><option value="kg"' + (kg ? " selected" : "") + '>كلغ</option></select></label>' +
       '<div style="overflow:auto;margin:.6rem 0"><table style="width:100%;border-collapse:collapse"><tr class="hd"><th style="text-align:right;padding:.3rem">المادة الأولية</th><th style="text-align:right;padding:.3rem">النسبة %</th><th style="text-align:right;padding:.3rem">سعر ' + (kg ? "الكلغ" : "اللتر") + ' (دج)</th><th style="text-align:right;padding:.3rem">مساهمتها (دج)</th><th></th></tr>' +
-      m.rows.map((r, k)=>'<tr oninput="Admin.ccmLive()"><td style="padding:.25rem"><input id="ccm-n' + k + '" value="' + esc(r.n) + '" placeholder="مثال: زيت الأرغان" style="min-width:150px"></td><td style="padding:.25rem"><input id="ccm-p' + k + '" type="number" min="0" max="100" step="any" value="' + esc(r.pct) + '" style="max-width:90px"></td><td style="padding:.25rem"><input id="ccm-r' + k + '" type="number" min="0" step="any" value="' + esc(r.pr) + '" style="max-width:120px"></td><td style="padding:.25rem"><b id="ccm-c' + k + '">0</b></td><td style="padding:.25rem"><button class="small warn" type="button" onclick="Admin.ccmDel(' + k + ')">🗑</button></td></tr>').join("") + '</table></div>' +
+      m.rows.map((r, k)=>{ const mats = (this.fin && this.fin.mats) || {}, lk = r.m && mats[r.m];
+        return '<tr oninput="Admin.ccmLive()"><td style="padding:.25rem"><select id="ccm-m' + k + '" onchange="Admin.ccmPick(' + k + ')" style="min-width:150px"><option value="">✎ مادة حرة</option>' + Object.keys(mats).map(id=>'<option value="' + esc(id) + '"' + (r.m === id ? " selected" : "") + '>' + esc(mats[id].n) + ' (' + (mats[id].u === "kg" ? "دج/كلغ" : "دج/لتر") + ')</option>').join("") + '</select>' + (lk ? '' : '<br><input id="ccm-n' + k + '" value="' + esc(r.n) + '" placeholder="اسم المادة" style="min-width:150px;margin-top:.2rem">') + '</td><td style="padding:.25rem"><input id="ccm-p' + k + '" type="number" min="0" max="100" step="any" value="' + esc(r.pct) + '" style="max-width:90px"></td><td style="padding:.25rem"><input id="ccm-r' + k + '" type="number" min="0" step="any" value="' + esc(lk ? lk.pr : r.pr) + '" style="max-width:120px"' + (lk ? ' readonly title="من مكتبة المواد — عدّله من هناك"' : '') + '></td><td style="padding:.25rem"><b id="ccm-c' + k + '">0</b></td><td style="padding:.25rem;white-space:nowrap">' + (lk ? '' : '<button class="small gray" type="button" onclick="Admin.ccmToLib(' + k + ')" title="احفظ هذه المادة في المكتبة لتستعملها في وصفات أخرى">📚+</button> ') + '<button class="small warn" type="button" onclick="Admin.ccmDel(' + k + ')">🗑</button></td></tr>'; }).join("") + '</table></div>' +
       '<div class="action-bar" style="margin-bottom:.6rem"><button class="small gray" type="button" onclick="Admin.ccmAdd()">➕ إضافة مادة</button></div>' +
       '<div id="ccm-sum" style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem 1rem;line-height:2"></div>' +
       '<label style="display:block;margin:.7rem 0 .2rem;font-weight:700">حجم العبوة (' + (kg ? "غرام" : "مل") + ')</label><input id="ccm-size" type="number" min="0" step="any" value="' + esc(m.size) + '" placeholder="مثال: 50" style="max-width:160px" oninput="Admin.ccmLive()">' +
@@ -5583,7 +5584,9 @@ const Admin = {
   },
   ccmRead(){
     const m = this._ccm; if(!m) return; m.unit = ($f("ccm-unit") || {}).value === "kg" ? "kg" : "L"; m.size = ($f("ccm-size") || {}).value || "";
-    m.rows = m.rows.map((r, k)=>({ n: ($f("ccm-n" + k) || {}).value || "", pct: ($f("ccm-p" + k) || {}).value || "", pr: ($f("ccm-r" + k) || {}).value || "" }));
+    const mats = (this.fin && this.fin.mats) || {};
+    m.rows = m.rows.map((r, k)=>{ const sel = ($f("ccm-m" + k) || {}).value || "", lk = sel && mats[sel], pct = ($f("ccm-p" + k) || {}).value || "";
+      return lk ? { m: sel, n: lk.n, pct, pr: lk.pr } : { n: ($f("ccm-n" + k) || {}).value || "", pct, pr: ($f("ccm-r" + k) || {}).value || "" }; });
   },
   ccmCalc(){
     const m = this._ccm, rows = m.rows.map(r=>({ pct: Math.max(0, Number(r.pct) || 0), pr: Math.max(0, Number(r.pr) || 0) })), unitCost = rows.reduce((a, r)=>a + r.pct * r.pr / 100, 0), pct = rows.reduce((a, r)=>a + r.pct, 0), size = Math.max(0, Number(m.size) || 0);
@@ -5594,6 +5597,46 @@ const Admin = {
     r.rows.forEach((x, k)=>{ const e = $f("ccm-c" + k); if(e) e.textContent = n(x.pct * x.pr / 100); });
     const e = $f("ccm-sum"); if(e) e.innerHTML = 'مجموع النسب: <b style="color:' + (Math.abs(r.pct - 100) < 0.01 ? "var(--green)" : "#fb923c") + '">' + n(r.pct) + '%</b>' + (r.pct > 100.01 ? " ⚠️ أكثر من 100%" : (r.pct < 99.99 && r.pct > 0 ? " (الباقي " + n(100 - r.pct) + "% يُعدّ بلا تكلفة، مثل الماء)" : "")) + '<br>سعر ' + (kg ? "الكلغ" : "اللتر") + ' من المنتج: <b style="color:var(--green);font-size:1.1rem">' + n(r.unitCost) + ' دج</b><br>سعر العلبة الواحدة (مادة فقط): <b style="color:var(--green);font-size:1.1rem">' + n(r.box) + ' دج</b>' + (r.size ? ' <small>(' + n(r.unitCost) + ' × ' + n(r.size) + ' ' + (kg ? "غ" : "مل") + ' ÷ 1000)</small>' : "");
   },
+  ccmPick(k){ this.ccmRead(); this.ccmDraw(); },
+  async ccmToLib(k){
+    this.ccmRead(); const r = this._ccm.rows[k]; if(!r || !String(r.n).trim() || !(Number(r.pr) > 0)){ toast("⚠️ اكتب اسم المادة وسعرها أولاً"); return; }
+    const mats = Object.assign({}, this.fin.mats || {}), id = "m" + Date.now().toString(36); mats[id] = { n: String(r.n).trim(), pr: Number(r.pr), u: this._ccm.unit }; this.fin.mats = mats; await Priv.set("costmats", mats);
+    r.m = id; this.ccmDraw(); toast("📚 أُضيفت «" + mats[id].n + "» إلى مكتبة المواد");
+  },
+  /* مكتبة المواد الأولية: اسم + سعر لتر/كلغ؛ تغيير السعر يُحدّث كل الوصفات المرتبطة بها وتكلفة منتجاتها */
+  matUsage(id){ return Object.keys(this.fin.cc || {}).filter(sl=>((this.fin.cc[sl] || {}).rec || []).some(r=>r.m === id)); },
+  matOpen(){
+    this._mat = JSON.parse(JSON.stringify(this.fin.mats || {})); if(!Object.keys(this._mat).length) this._mat["m" + Date.now().toString(36)] = { n: "", pr: "", u: "L" };
+    let bg = document.getElementById("mat-bg");
+    if(!bg){ bg = document.createElement("div"); bg.className = "modal-bg"; bg.id = "mat-bg"; bg.dir = "rtl"; bg.addEventListener("click", e=>{ if(e.target === bg) bg.classList.remove("open"); }); document.body.appendChild(bg); }
+    this.matDraw(); bg.classList.add("open");
+  },
+  matDraw(){
+    const bg = document.getElementById("mat-bg"), M = this._mat; if(!bg || !M) return; const esc = v=>String(v == null ? "" : v).replace(/[<>&"]/g, c=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;" }[c])), th = 'style="text-align:right;padding:.3rem"';
+    bg.innerHTML = '<div class="modal" style="max-width:720px;position:relative"><button type="button" class="ord-x" title="إغلاق" aria-label="إغلاق" onclick="document.getElementById(\'mat-bg\').classList.remove(\'open\')">✕</button><h3 style="margin:0 0 .5rem;padding-inline-end:2.4rem">📚 مكتبة المواد الأولية</h3><div class="hint" style="margin:0 0 .6rem">اكتب كل مادة مرة واحدة مع سعرها. تُختار من قائمة داخل أي وصفة، وعند تغيير سعرها هنا وحفظه <b>تتحدّث تكلفة كل المنتجات</b> التي تدخل فيها (وسعر الشراء للمنتجات التي اعتمدتَ تكلفتها).</div>' +
+      '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><tr class="hd"><th ' + th + '>المادة</th><th ' + th + '>الوحدة</th><th ' + th + '>السعر (دج)</th><th ' + th + '>تدخل في</th><th></th></tr>' +
+      Object.keys(M).map(id=>'<tr><td style="padding:.25rem"><input data-mf="n" data-id="' + esc(id) + '" value="' + esc(M[id].n) + '" placeholder="مثال: زيت الأرغان" style="min-width:160px"></td><td style="padding:.25rem"><select data-mf="u" data-id="' + esc(id) + '"><option value="L"' + (M[id].u === "kg" ? "" : " selected") + '>لتر</option><option value="kg"' + (M[id].u === "kg" ? " selected" : "") + '>كلغ</option></select></td><td style="padding:.25rem"><input data-mf="pr" data-id="' + esc(id) + '" type="number" min="0" step="any" value="' + esc(M[id].pr) + '" style="max-width:130px"></td><td style="padding:.25rem">' + this.matUsage(id).length + ' منتج</td><td style="padding:.25rem"><button class="small warn" type="button" onclick="Admin.matDel(\'' + esc(id) + '\')">🗑</button></td></tr>').join("") + '</table></div>' +
+      '<div class="action-bar" style="margin-top:.7rem"><button class="small gray" type="button" onclick="Admin.matAdd()">➕ إضافة مادة</button><button class="small green" type="button" onclick="Admin.matSave()">💾 حفظ وتحديث التكاليف</button><button class="small gray" type="button" onclick="document.getElementById(\'mat-bg\').classList.remove(\'open\')">إغلاق</button></div></div>';
+  },
+  matRead(){ document.querySelectorAll("#mat-bg [data-mf]").forEach(e=>{ const m = this._mat[e.dataset.id]; if(m) m[e.dataset.mf] = e.value; }); },
+  matAdd(){ this.matRead(); this._mat["m" + Date.now().toString(36) + Math.floor(Math.random() * 99)] = { n: "", pr: "", u: "L" }; this.matDraw(); },
+  matDel(id){ this.matRead(); const n = this.matUsage(id).length; if(n && !confirm("هذه المادة داخلة في " + n + " منتج — تبقى في وصفاتها كمادة حرة بآخر سعر. حذفها من المكتبة؟")) return; delete this._mat[id]; this.matDraw(); },
+  async matSave(){
+    this.matRead(); const mats = {}; Object.keys(this._mat).forEach(id=>{ const m = this._mat[id]; if(String(m.n).trim() && Number(m.pr) >= 0 && String(m.pr) !== "") mats[id] = { n: String(m.n).trim(), pr: Number(m.pr), u: m.u === "kg" ? "kg" : "L" }; });
+    const old = this.fin.mats || {}; this.fin.mats = mats; await Priv.set("costmats", mats);
+    const cc = Object.assign({}, this.fin.cc || {}), costs = Object.assign({}, this.fin.costs || {}); let nProd = 0, nBuy = 0;
+    Object.keys(cc).forEach(sl=>{
+      const c = Object.assign({}, cc[sl]); if(!c.rec || !c.rec.length) return; let touched = false;
+      c.rec = c.rec.map(r=>{ if(!r.m) return r; if(!mats[r.m]){ const x = Object.assign({}, r); delete x.m; return x; } if(old[r.m] && old[r.m].pr === mats[r.m].pr && r.pr === mats[r.m].pr && r.n === mats[r.m].n) return r; touched = true; return Object.assign({}, r, { n: mats[r.m].n, pr: mats[r.m].pr }); });
+      if(!touched) { cc[sl] = c; return; }
+      const prev = Math.round(this.ccCalc(cc[sl]).total); c.raw = Math.round(c.rec.reduce((a, r)=>a + (Number(r.pct) || 0) * (Number(r.pr) || 0) / 100, 0) * 100) / 100; cc[sl] = c; nProd++;
+      if(c.adopt && (costs[sl] == null || Math.round(Number(costs[sl])) === prev)){ costs[sl] = Math.round(this.ccCalc(c).total); nBuy++; }
+    });
+    this.fin.cc = cc; await Priv.set("costcalc", cc);
+    if(nBuy){ this.fin.costs = costs; await Priv.set("costs", costs); }
+    document.getElementById("mat-bg").classList.remove("open"); toast("✅ حُفظت المكتبة" + (nProd ? " — حُدّثت تكلفة " + nProd + " منتج" + (nBuy ? " (وسعر الشراء لـ" + nBuy + ")" : "") : ""));
+    this.renderCostCalc(true); if(nBuy) this.renderFinance(true);
+  },
   ccmAdd(){ this.ccmRead(); this._ccm.rows.push({ n: "", pct: "", pr: "" }); this.ccmDraw(); },
   ccmDel(k){ this.ccmRead(); this._ccm.rows.splice(k, 1); if(!this._ccm.rows.length) this._ccm.rows.push({ n: "", pct: "", pr: "" }); this.ccmDraw(); },
   ccmUnit(u){ this.ccmRead(); this._ccm.unit = u; this.ccmDraw(); },
@@ -5601,7 +5644,7 @@ const Admin = {
     const m = this._ccm; if(!m) return; this.ccmRead(); const r = this.ccmCalc(), cc = Object.assign({}, this.fin.cc || {}), c = Object.assign({}, cc[m.slug] || {});
     c.unit = m.unit;
     if(clear){ delete c.rec; }
-    else { if(!(r.unitCost > 0)){ toast("⚠️ أدخل نسب المواد وأسعارها أولاً"); return; } c.rec = m.rows.filter(x=>x.n || Number(x.pct) || Number(x.pr)).map(x=>({ n: x.n, pct: Number(x.pct) || 0, pr: Number(x.pr) || 0 })); c.raw = Math.round(r.unitCost * 100) / 100; if(r.size > 0) c.ml = r.size; }
+    else { if(!(r.unitCost > 0)){ toast("⚠️ أدخل نسب المواد وأسعارها أولاً"); return; } c.rec = m.rows.filter(x=>x.n || Number(x.pct) || Number(x.pr)).map(x=>Object.assign({ n: x.n, pct: Number(x.pct) || 0, pr: Number(x.pr) || 0 }, x.m ? { m: x.m } : {})); c.raw = Math.round(r.unitCost * 100) / 100; if(r.size > 0) c.ml = r.size; }
     cc[m.slug] = c; this.fin.cc = cc; await Priv.set("costcalc", cc); document.getElementById("ccm-bg").classList.remove("open");
     toast(clear ? "↩ مُسحت الوصفة" : "✅ حُفظت الوصفة — سعر " + (m.unit === "kg" ? "الكلغ" : "اللتر") + " " + Math.round(c.raw).toLocaleString("fr-DZ") + " دج"); this.renderCostCalc(true);
   },
