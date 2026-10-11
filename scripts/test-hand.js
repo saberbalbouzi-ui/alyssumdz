@@ -415,6 +415,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("طلب يدوي: النموذج يحسب (2×2000 − 100 + رسم الولاية) ويحفظ طلباً «جديداً» بعلامة يدوي ويظهر في القائمة", mo.opened && mo.o1 && mo.o1.name === "عمر خليل" && mo.o1.phone === "0550112233" && mo.o1.n === 1 && mo.o1.title === "منتج ب" && mo.o1.qty === 2 && mo.o1.disc === 100 && mo.o1.total === 3900 + mo.fee1 && mo.o1.manual === "نعم" && mo.inList && mo.closed1, mo);
   ok("نسخ كطلب جديد: من طلب مسجَّل بكل بياناته (منتجان بمجموع 5000) بلا وسم تتبع وبعلامة «نسخة من»", mo.pre.name === "سعاد" && mo.pre.phone === "0661000000" && mo.pre.wil === "Oran" && mo.pre.rows === 2 && /5[\s,.\u202f\u00a0]?000/.test(mo.pre.tot) && mo.o2 && mo.o2.n === 2 && mo.o2.from === "R1" && mo.secondNoTrack, mo);
   ok("تعديل كامل: طلب جديد تتغيّر منتجاته وهاتفه ويُرسل التعديل (3 علب = 3000 + 600)", mo.upd && mo.upd.id === "N1" && mo.upd.phone === "0771234567" && mo.upd.total === 3600 && mo.upd.items === 1 && /منتج أ ×3 = 3000/.test(mo.upd.text) && mo.n1.phone === "0771234567" && mo.n1.total === 3600, mo);
+  // ── الجرد اليدوي يسبق: إلغاء طلب خُصم قبله لا يُعيد علبه ──
+  const sk2 = await p.evaluate(async () => {
+    const pr0 = Admin.products, fin0 = Admin.fin, qp0 = Admin.queueStockPublish, un0 = API.updateOrder; Admin.queueStockPublish = () => { }; API.updateOrder = () => { };
+    const mkp = () => [{ slug: "sp", title: "كريم المخزون", price: 1000, stock: 8, active: true }]; Admin.products = mkp(); Admin.fin = Object.assign({}, Admin.fin || {}, { log: [], costs: (Admin.fin && Admin.fin.costs) || {}, cfg: {} });
+    const ord = id => ({ id, date: "2026-10-10T10:00:00.000Z", status: "annulee", items: "كريم المخزون ×3 = 3000 DA", note: "📦" });
+    const iso = ms => new Date(Date.now() + ms).toISOString();
+    // أ) خُصم ثم جرد يدوي ثم إلغاء ⟵ لا إرجاع
+    Admin.fin.log = [{ ts: iso(-5000), slug: "sp", title: "x", delta: -3, after: 7, ref: "A1", why: "خصم" }, { ts: iso(-1000), slug: "sp", title: "x", delta: 1, after: 8, ref: "يدوي", why: "تعديل يدوي" }];
+    const a = ord("A1"); Admin.syncStockForOrder(a, "annulee"); const stockA = Admin.products[0].stock, tagA = /📦/.test(a.note);
+    // ب) جرد يدوي ثم خصم لاحق ثم إلغاء ⟵ إرجاع
+    Admin.products = mkp(); Admin.fin.log = [{ ts: iso(-5000), slug: "sp", title: "x", delta: 1, after: 8, ref: "يدوي", why: "تعديل يدوي" }, { ts: iso(-1000), slug: "sp", title: "x", delta: -3, after: 5, ref: "B1", why: "خصم" }];
+    const b = ord("B1"); Admin.syncStockForOrder(b, "annulee"); const stockB = Admin.products[0].stock, tagB = /📦/.test(b.note);
+    // ج) بلا أي جرد يدوي ⟵ إرجاع
+    Admin.products = mkp(); Admin.fin.log = [{ ts: iso(-1000), slug: "sp", title: "x", delta: -3, after: 5, ref: "C1", why: "خصم" }];
+    const c = ord("C1"); Admin.syncStockForOrder(c, "annulee"); const stockC = Admin.products[0].stock;
+    Admin.products = pr0; Admin.fin = fin0; Admin.queueStockPublish = qp0; API.updateOrder = un0; return { stockA, tagA, stockB, tagB, stockC };
+  });
+  ok("المخزون: إلغاء طلب خُصم قبل الجرد اليدوي لا يُعيد علبه (يبقى 8)، وبعد الجرد أو بلا جرد تعود (11)", sk2.stockA === 8 && !sk2.tagA && sk2.stockB === 11 && !sk2.tagB && sk2.stockC === 11, sk2);
   // ── تفصيل سعر التوصيل (ولاية + بلدية) يظهر للمدير في المعاينة فقط ──
   const bdp = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {};
