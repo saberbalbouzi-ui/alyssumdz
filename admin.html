@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.83">
+<meta name="admin-version" content="1.89.84">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -521,11 +521,6 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <div><b>🛒 سعر الشراء</b><div class="hint" style="margin:.15rem 0 0">يُدخَل لكل منتج في عمود «سعر الشراء» بالجدول أسفله (ثمن ما دفعته لشراء القطعة).</div></div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><b id="fin-miss" style="align-self:center"></b></div>
         </div>
-        <div style="padding:.65rem 0;border-bottom:1px solid var(--line)">
-          <b>📣 سعر الإعلان (كم يكلّفك الطلب الواحد)</b>
-          <div class="hint" style="margin:.15rem 0 .4rem">طريقة الحساب العامة لكل المنتجات. ولكل منتج طريقته الخاصة من بطاقة «الإعلان لكل منتج» أسفله.</div>
-          <div id="fin-adbox"></div>
-        </div>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
           <div><b>🚚 تكلفة التوصيل المدمجة</b><div class="hint" style="margin:.15rem 0 0">ما تدفعه لشركة التوصيل: نسبة من رسوم جدول الولايات، أو قيمة ثابتة لكل طلب.</div></div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-del-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من رسوم الجدول</option><option value="val">قيمة ثابتة لكل طلب (دج)</option></select><input id="fin-del" type="number" min="0" placeholder="100" style="max-width:130px"></div>
@@ -551,12 +546,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="small gold" style="margin-top:.6rem" onclick="Admin.saveFinSettings()">💾 حفظ</button>
     </div>
     <div class="card">
-      <details id="fin-ads">
-        <summary style="cursor:pointer;font-weight:800;color:var(--green)">📣 الإعلان لكل منتج — اختر طريقة الحساب لكل منتج</summary>
-        <div class="hint" style="margin:.4rem 0">الطرق الثلاث: <b>قيمة ثابتة</b> لكل طلب · <b>سعر النتيجة (Cost) × معامل</b> (مثلاً 2 أو 3 لأن ليس كل طلب ينجح؛ وإن لم تعرف الـ Cost تُحسب تلقائياً بقسمة إنفاق الحملة على عدد الطلبات الناجحة) · <b>إنفاق الحملة ÷ عدد الطلبات</b> (اترك العدد فارغاً ليُؤخذ عدد الطلبات الناجحة تلقائياً). الناتج المعروض لكل منتج هو «تكلفة الإعلان لكل طلب ناجح».</div>
-        <div id="fin-ads-rows"></div>
-        <button class="small gold" type="button" onclick="Admin.saveAds()">💾 حفظ إعلانات المنتجات</button>
-      </details>
+      <div id="fin-ads">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem"><b style="color:var(--green);font-size:1.02rem">📣 الإعلان لكل منتج</b><button class="small green" type="button" onclick="Admin.addAdRow()">➕ إضافة حملة</button></div>
+        <details style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب تكلفة الإعلان؟</summary><div class="hint" style="margin:.4rem 0">اختر المنتج ثم «كيفية الحساب»: <b>قيمة ثابتة</b> لكل طلب · <b>سعر النتيجة (Cost) × معامل</b> (مثلاً 2 أو 3 لأن ليس كل طلب ينجح؛ وإن لم تعرف الـ Cost تُحسب تلقائياً بقسمة إنفاق الحملة على عدد الطلبات الناجحة) · <b>إنفاق الحملة ÷ عدد الطلبات</b> (اترك العدد فارغاً ليُؤخذ عدد الطلبات الناجحة تلقائياً). تتغير «تكلفة الإعلان» فور تغيير الأرقام، ثم اضغط «حفظ» في نهاية السطر. المنتج الذي لا حملة له تكلفة إعلانه 0.</div></details>
+        <div id="fin-ads-rows" style="overflow-x:auto"></div>
+      </div>
     </div>
     <div class="card">
       <details>
@@ -1584,12 +1578,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.83"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.83"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.83"></script>
+<script src="assets/js/ctl-help.js?v=1.89.84"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.84"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.84"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.83"></script>
+<script src="assets/js/admin-nav.js?v=1.89.84"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1600,7 +1594,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.83"></script>
+<script src="assets/js/admin-update.js?v=1.89.84"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -5326,7 +5320,7 @@ const Admin = {
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    this.fin.set = { packaging: n("fin-pack", 0), ad: this.adRead("fin-g"), delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: $f("fin-prof-mode").value, profVal: n("fin-prof", 30) };
+    this.fin.set = { packaging: n("fin-pack", 0), ad: this.fin.set.ad || { method:"fixed", a:0 }, delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: $f("fin-prof-mode").value, profVal: n("fin-prof", 30) };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
   /* ════════ استيراد كشف دفع ياليدين: أرقام فعلية لكل طرد (توصيل، إرجاع، COD، تأمين) تحلّ محلّ التقدير ════════ */
@@ -5463,7 +5457,7 @@ const Admin = {
       });
       if(o.status === "livree") K.delivered++; else if(o.status === "echec") K.failed++; else K.open++;
     });
-    this.products.forEach(p=>adFor(p.slug)); this._adNow = adNow; K.lossTotal = Object.values(per).reduce((a,x)=>a + x.loss, 0);
+    this.products.forEach(p=>adFor(p.slug)); this._adNow = adNow; this._adSucc = succ; K.lossTotal = Object.values(per).reduce((a,x)=>a + x.loss, 0);
     /* مرتجعات ما بعد التسليم (تبويب المرتجعات): تُطرح المبالغ المستردة المؤكَّدة من صافي الربح المحقق */
     K.refunds = (typeof AdminReturns !== "undefined" && AdminReturns.refunds) ? AdminReturns.refunds(since) : 0; K.real -= K.refunds;
     return { per, K };
@@ -5484,23 +5478,54 @@ const Admin = {
       '<span id="' + pf + '-f-a">' + inp("a", "…", c.a) + '</span><span id="' + pf + '-f-b">' + inp("b", "إنفاق الحملة (اختياري)", c.b) + '</span>' +
       '<span id="' + pf + '-f-m"><select id="' + pf + '-m" style="width:110px">' + [1, 1.5, 2, 2.5, 3, 4].map(x=>'<option value="' + x + '"' + (Number(c.m || 2) === x ? " selected" : "") + '>× ' + x + '</option>').join("") + '</select></span><span id="' + pf + '-f-n">' + inp("n", "عدد الطلبات (فارغ = الناجحة)", c.n) + '</span></div>';
   },
-  adUI(pf){
+  adUI(pf, quiet){
     const m = ($f(pf + "-method") || {}).value, show = (k, on)=>{ const el = $f(pf + "-f-" + k); if(el) el.style.display = on ? "" : "none"; };
     show("a", m === "fixed" || m === "costx" || m === "spend"); show("b", m === "costx"); show("m", m === "costx"); show("n", m === "spend");
     const a = $f(pf + "-a"); if(a) a.placeholder = m === "fixed" ? "دج لكل طلب" : m === "costx" ? "سعر النتيجة Cost (فارغ = يُحسب)" : "إنفاق الحملة (دج)";
+    const k = /^fin-p(\d+)$/.exec(pf); if(k && !quiet) this.adLive(Number(k[1]));
   },
   adRead(pf){ const n = id=>{ const el = $f(pf + "-" + id); const x = el ? Number(el.value) : 0; return isFinite(x) ? x : 0; }; return { method: ($f(pf + "-method") || {}).value || "fixed", a: n("a"), b: n("b"), m: n("m") || 2, n: n("n") }; },
-  renderAds(){
-    const g = $f("fin-adbox"); if(!g) return; const busy = document.activeElement && g.contains(document.activeElement);
-    if(!busy){ g.innerHTML = this.adEditorHtml("fin-g", this.fin.set.ad, false); this.adUI("fin-g"); }
-    const box = $f("fin-ads-rows"); if(!box || (document.activeElement && box.contains(document.activeElement))) return;
-    const act = this.products.filter(p=>p.slug !== "test" && p.active !== false), nf = x=>Math.round(x).toLocaleString("fr-DZ");
-    box.innerHTML = act.map((p, i)=>'<div style="display:grid;grid-template-columns:minmax(140px,.8fr) minmax(280px,2fr) auto;gap:.5rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--line)"><b>' + PB.esc(p.title) + '</b><div>' + this.adEditorHtml("fin-p" + i, (this.fin.ads || {})[p.slug], true) + '</div><small style="color:var(--green);font-weight:800;white-space:nowrap">= ' + nf((this._adNow && this._adNow[p.slug]) || 0) + ' دج/طلب</small></div>').join("");
-    act.forEach((p, i)=>this.adUI("fin-p" + i)); this._adProds = act.map(p=>p.slug);
+  /* جدول «الإعلان لكل منتج»: صف لكل حملة (المنتج قائمة منسدلة)، والنتيجة «تكلفة الإعلان» تتحدّث فور تغيير الأرقام، وحفظ لكل صف */
+  adSync(){ (this._adRows || []).forEach((r, i)=>{ if($f("fin-p" + i + "-method")) r.cfg = this.adRead("fin-p" + i); const sel = $f("fin-p" + i + "-prod"); if(sel) r.slug = sel.value; }); },
+  adRowsInit(){
+    const sig = JSON.stringify(this.fin.ads || {}); if(this._adRows && this._adSig === sig) return; this._adSig = sig;
+    const drafts = (this._adRows || []).filter(r=>!r.saved);
+    this._adRows = Object.keys(this.fin.ads || {}).filter(sl=>this.products.some(p=>p.slug === sl)).map(sl=>({ slug: sl, orig: sl, saved: true, cfg: Object.assign({}, this.fin.ads[sl]) })).concat(drafts);
   },
-  async saveAds(){
-    const ads = {}; (this._adProds || []).forEach((sl, i)=>{ const c = this.adRead("fin-p" + i); if(c.method !== "inherit") ads[sl] = c; });
-    this.fin.ads = ads; await Priv.set("adcfg", ads); toast("✅ حُفظت طرق حساب الإعلان لكل منتج"); this.renderFinance();
+  renderAds(force){
+    const box = $f("fin-ads-rows"); if(!box) return;
+    if(!force && document.activeElement && box.contains(document.activeElement)) return;
+    this.adRowsInit(); const rows = this._adRows, nf = x=>Math.round(x).toLocaleString("fr-DZ"), act = this.products.filter(p=>p.slug !== "test" && p.active !== false);
+    if(!rows.length){ box.innerHTML = '<div class="hint" style="padding:.8rem 0">لا توجد حملات بعد — اضغط «➕ إضافة حملة» ثم اختر المنتج وطريقة الحساب.</div>'; return; }
+    const th = 'style="text-align:start;padding:.45rem .5rem;border-bottom:2px solid var(--line);white-space:nowrap"', td = 'style="padding:.5rem;border-bottom:1px solid var(--line);vertical-align:middle"';
+    box.innerHTML = '<table style="width:100%;min-width:760px;border-collapse:collapse"><thead><tr><th ' + th + '>المنتج</th><th ' + th + '>كيفية الحساب</th><th ' + th + '>تكلفة الإعلان</th><th ' + th + '></th></tr></thead><tbody>' + rows.map((r, i)=>{
+      const used = new Set(rows.filter((x, j)=>j !== i).map(x=>x.slug)), opts = '<option value="">اختر منتجاً…</option>' + act.filter(p=>!used.has(p.slug) || p.slug === r.slug).map(p=>'<option value="' + PB.esc(p.slug) + '"' + (p.slug === r.slug ? " selected" : "") + '>' + PB.esc(p.title) + '</option>').join("");
+      return '<tr data-ar="' + i + '"><td ' + td + '><select id="fin-p' + i + '-prod" onchange="Admin.adLive(' + i + ')" style="min-width:170px">' + opts + '</select></td>' +
+        '<td ' + td + '><div oninput="Admin.adLive(' + i + ')">' + this.adEditorHtml("fin-p" + i, r.cfg, false) + '</div></td>' +
+        '<td ' + td + '><b id="fin-p' + i + '-res" style="color:var(--green);font-size:1rem;white-space:nowrap">' + nf(this.adCalc(r.cfg, ((this._adSucc || {})[r.slug]) || 0)) + ' دج / طلب</b></td>' +
+        '<td ' + td + '><div style="display:flex;gap:.35rem;white-space:nowrap"><button class="small green" type="button" onclick="Admin.saveAdRow(' + i + ')">💾 حفظ</button><button class="small warn" type="button" onclick="Admin.delAdRow(' + i + ')" title="حذف الحملة">🗑</button></div></td></tr>';
+    }).join("") + '</tbody></table>';
+    rows.forEach((r, i)=>this.adUI("fin-p" + i, true));
+  },
+  adLive(i){
+    const r = (this._adRows || [])[i]; if(!r) return; const cfg = this.adRead("fin-p" + i), sel = $f("fin-p" + i + "-prod"), sl = sel ? sel.value : r.slug, el = $f("fin-p" + i + "-res");
+    if(el) el.textContent = Math.round(this.adCalc(cfg, ((this._adSucc || {})[sl]) || 0)).toLocaleString("fr-DZ") + " دج / طلب";
+  },
+  addAdRow(){
+    this.adSync(); const used = new Set((this._adRows || []).map(r=>r.slug)), free = this.products.filter(p=>p.slug !== "test" && p.active !== false && !used.has(p.slug));
+    if(!free.length){ toast("كل المنتجات لها حملة بالفعل"); return }
+    this.adRowsInit(); this._adRows.push({ slug: "", orig: "", saved: false, cfg: { method: "fixed", a: 0 } }); this.renderAds(true);
+  },
+  async saveAdRow(i){
+    this.adSync(); const r = (this._adRows || [])[i]; if(!r) return; if(!r.slug){ toast("اختر المنتج أولاً"); return }
+    const ads = Object.assign({}, this.fin.ads || {}); if(r.orig && r.orig !== r.slug) delete ads[r.orig]; ads[r.slug] = r.cfg;
+    this.fin.ads = ads; await Priv.set("adcfg", ads); r.orig = r.slug; r.saved = true; this._adSig = null; toast("✅ حُفظت حملة المنتج"); this.renderFinance(true); this.renderAds(true);
+  },
+  async delAdRow(i){
+    this.adSync(); const r = (this._adRows || [])[i]; if(!r) return;
+    if(r.saved && r.orig){ if(!confirm("حذف حملة هذا المنتج؟ ستصير تكلفة إعلانه 0.")) return; const ads = Object.assign({}, this.fin.ads || {}); delete ads[r.orig]; this.fin.ads = ads; await Priv.set("adcfg", ads); this._adSig = null; this.renderFinance(true); }
+    else this._adRows.splice(i, 1);
+    this.renderAds(true);
   },
   /* سعر البيع الأدنى = (الشراء + التغليف + الإعلان + عبء التوصيل + احتياطي الإرجاع + الفائدة) ÷ (1 − نسبة التأمين)، مقرَّباً لأعلى إلى أقرب 50 دج */
   suggestPrice(p, r, K){

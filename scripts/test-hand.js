@@ -223,6 +223,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("نافذة المعاينة: نتيجة الاتصال قائمة منسدلة (8 خيارات للجديد) ولا زر إلغاء في الأسفل", pr.btns === 8 && !pr.cancelBtm, pr);
   ok("نافذة المعاينة: «لم يُجب 2» تظهر محدَّدة ثم «لاحقاً» ثم «مسح» والنافذة تبقى مفتوحة", /📞2/.test(pr.n1) && pr.hi && /⏰لاحقاً/.test(pr.n2) && !/⏰لاحقاً|📞/.test(pr.n3) && pr.open1, pr);
   ok("نافذة المعاينة: «أكّد الطلب» من القائمة يؤكّد، والقائمة تبقى لكل الحالات (بلا تأكيد/إلغاء للمُسلَّم)", pr.st === "confirmee" && pr.editBtn && pr.afterSel && pr.afterOpts.includes("cancel") && !pr.afterOpts.includes("confirm") && !pr.livOpts.includes("cancel") && pr.livOpts.includes("a1"), pr);
+  // ── جدول «الإعلان لكل منتج» ──
+  const ad = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms));
+    const saved = []; Priv.set = async (k, v) => { saved.push([k, JSON.stringify(v)]); }; Admin.fin.ads = {}; Admin._adRows = null; Admin._adSig = null;
+    Admin.renderFinance(true);
+    const empty = document.getElementById("fin-ads-rows").textContent.includes("لا توجد حملات"), globalGone = !document.getElementById("fin-adbox") && !document.getElementById("fin-g-method");
+    Admin.addAdRow(); const sel = document.getElementById("fin-p0-prod"), opts = sel ? sel.options.length : 0;
+    const slug = Admin.products.find(x => x.slug !== "test" && x.active !== false).slug; sel.value = slug; sel.dispatchEvent(new Event("change"));
+    const m = document.getElementById("fin-p0-method"); m.value = "fixed"; m.dispatchEvent(new Event("change"));
+    const a = document.getElementById("fin-p0-a"); a.value = "350"; a.dispatchEvent(new Event("input", { bubbles: true }));
+    const live1 = document.getElementById("fin-p0-res").textContent;
+    m.value = "costx"; m.dispatchEvent(new Event("change")); a.value = "200"; a.dispatchEvent(new Event("input", { bubbles: true })); const live2 = document.getElementById("fin-p0-res").textContent;
+    const before = saved.length; await Admin.saveAdRow(0); await wait(50);
+    const svd = saved.length - before, hasTitle = /تكلفة الإعلان/.test(document.getElementById("fin-ads-rows").textContent), rowsAfter = document.querySelectorAll("#fin-ads-rows tbody tr").length, stored = Admin.fin.ads[slug];
+    Admin.addAdRow(); const opts2 = Array.from(document.querySelectorAll("#fin-p1-prod option")).map(o => o.value);
+    window.confirm = () => true; await Admin.delAdRow(0); await wait(50);
+    return { empty, globalGone, opts, live1, live2, saved: svd, rowsAfter, stored, dupHidden: !opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
+  });
+  ok("إعلان لكل منتج: لا إعداد عام، ولا صفوف قبل إضافة حملة", ad.empty && ad.globalGone, ad);
+  ok("إعلان لكل منتج: النتيجة تتغير فور تغيير الأرقام (ثابت 350 ثم Cost 200 × 2 = 400)", /350/.test(ad.live1) && /400/.test(ad.live2), ad);
+  ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل لا يتكرر في القائمة، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "costx" && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
