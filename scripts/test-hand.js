@@ -345,6 +345,20 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("السلة: إعادة الإدراج تُرجع الطلب بلا وسم وتفرّغ مكانه من السلة", tr.rowsOpen === 1 && tr.restored === "T1,T2" && tr.clean && tr.trashEmpty === 0, tr);
   ok("السلة: تفريغ السلة يحذف الكل نهائياً", tr.two === 2 && tr.purged === "T1,T2" && tr.emptyMsg, tr);
   ok("الطلبات المسجلة: الحذف يلغي الطرد ويُبقي الطلب (لا يمرّ بالسلة) ولا يظهر زر حذف الطلب", /المسجلة/.test(tr.btnTxt) && !tr.sh && tr.kept && tr.untagged && tr.cancelled, tr);
+  // ── جدول تكلفة المنتجات ──
+  const cc = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set; Priv.set = async () => { }; Admin.renderFinance = () => { };
+    Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = Admin.fin.costs || {}; Admin.fin.cc = {};
+    Admin.renderCostCalc(true); const heads = Array.from(document.querySelectorAll("#fin-cc-rows tr.hd th")).map(t => t.textContent);
+    const set = (k, v) => { const e = document.getElementById("cc0-" + k); e.value = v; e.dispatchEvent(new Event("input", { bubbles: true })); };
+    set("raw", 2000); set("ml", 50); set("pack", 100); set("oth", 50);
+    const mat = document.getElementById("cc0-mat").textContent, tot = document.getElementById("cc0-tot").textContent;
+    Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /اعتماد/.test(b.textContent)).click(); await wait(60);
+    const out = { heads, mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
+    Admin.products = pr0; Priv.set = set0; return out;
+  });
+  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[1]) && cc.mat === "100" && cc.tot === "250", cc);
+  ok("جدول التكلفة: «اعتماد» يجعل الإجمالي سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
