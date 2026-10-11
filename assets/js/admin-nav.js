@@ -1,5 +1,5 @@
 /* تنظيم عناوين لوحة التحكم في تبويبات كبيرة (المظهر / ecommerce / تطبيقات) تحتها إعداداتها.
-   كل زر في القائمة الجانبية يحمل data-grp (look|shop|apps)؛ الضغط على تبويب كبير يُظهر مجموعته فقط ويفتح أول عنصر فيها،
+   كل زر في القائمة الجانبية يحمل data-grp (gen|products|shop|look|apps)؛ الضغط على تبويب كبير يُظهر مجموعته فقط ويفتح أول عنصر فيها،
    وأي انتقال برمجي إلى قسم (Admin.tab) يُبدّل المجموعة تلقائياً. التطبيقات: أدوات تُفتح من هنا (مطوّر الصفحات، المطوّر الذكي،
    أدوات تعديل الصور، الوكيل الذكي، الوكيل الناطق، اسألني، ناسخ القوالب). */
 /* إعدادات أدوات الصور والقوالب (لكل متصفح): ImgCfg.get(أداة، مفتاح، افتراضي) — تقرؤها الأدوات عند التشغيل */
@@ -8,7 +8,7 @@ window.ImgCfg = (() => { const K = "pbx_imgcfg"; let C = {}; try { C = JSON.pars
 const AdminNav = (() => {
   const $ = id => document.getElementById(id), nav = () => document.querySelector(".side-nav");
   const toast = m => { try { if (typeof toast2 === "function") return toast2(m); window.toast && window.toast(m); } catch (e) { } };
-  let cur = "shop";
+  let cur = "gen";
   const btns = g => [...document.querySelectorAll(".side-nav .nav-btn")].filter(b => b.dataset.grp === g);
   function apply(g) { cur = g; const n = nav(); if (n) n.dataset.g = g; document.querySelectorAll("#nav-groups .ng").forEach(b => b.classList.toggle("on", b.dataset.g === g)); }
   /* «مظهر الموقع» ← سهم يفتح/يطوي الهيدر والفوتر والقوالب تحته (يُحفظ في المتصفح، ويُفتح تلقائياً عند الانتقال لأحدها) */
@@ -558,19 +558,25 @@ const AdminNav = (() => {
     if (!IT.res) return; const png = IT.mode === "png", b = await new Promise(r => IT.res.toBlob(r, png ? "image/png" : "image/webp", IT.q || .9)); if (!b) return;
     const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = IT.name + (png ? "-nobg.png" : ".webp"); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
+  /* «إعدادات الموقع» و«تجهيز المتجر» صفحتان في قسم واحد: شريط تبديل أعلى كلٍّ منهما، وزر القائمة الجانبية واحد */
+  function seg() {
+    [["store", "tab-store"], ["setup", "tab-setup"]].forEach(([, id]) => { const t = $(id); if (!t || t.querySelector(":scope>.tab-seg")) return; const d = document.createElement("div"); d.className = "tab-seg"; d.innerHTML = '<button type="button" class="small green" data-sg="store">⚙️ إعدادات الموقع</button><button type="button" class="small gold" data-sg="setup">🚀 تجهيز المتجر</button>'; d.addEventListener("click", e => { const b = e.target.closest("[data-sg]"); if (b) goto(b.dataset.sg); }); t.insertBefore(d, t.firstChild); });
+  }
+  function goto(t) { const b = [...document.querySelectorAll(".side-nav .nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("Admin.tab('" + t + "'")); if (b && typeof Admin !== "undefined") Admin.tab(t, b); }
+  function segMark(t) { document.querySelectorAll(".tab-seg button").forEach(b => b.classList.toggle("on", b.dataset.sg === t)); if (t === "setup") { const st = [...document.querySelectorAll(".side-nav .nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("Admin.tab('store'")); document.querySelectorAll(".side-nav .nav-btn").forEach(x => x.classList.remove("on")); if (st) st.classList.add("on"); } }
   function init() {
-    apply("shop");
+    apply("gen"); seg();
     /* أي Admin.tab (من أزرار أو برمجياً) يُبدّل المجموعة ويضبط عرض الوكيل */
     if (typeof Admin !== "undefined" && !Admin.__navHook) {
       const orig = Admin.tab; Admin.__navHook = 1;
     function secTitle() { const el = document.getElementById("sec-title"); if (!el) return; const b = document.querySelector(".nav-btn.on .nav-txt b"); if (!b) return; const c = b.cloneNode(true); c.querySelectorAll(".nb").forEach(x => x.remove()); const t = (c.textContent || "").trim(); if (t) el.textContent = t; }
     setTimeout(secTitle, 400); setTimeout(secTitle, 1500);
-      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn); try { secTitle(); if (btn && btn.dataset && btn.dataset.grp && btn.dataset.grp !== cur) apply(btn.dataset.grp); if (t === "agent" && !VOICE) agentView("agent"); if (t === "appcfg" && btn && btn.dataset.app) renderApp(btn.dataset.app); if (t === "tpl") renderTpl(); if (t === "imggen") { const bb = workBtn("builder"); if (bb) { Admin.tab("builder", bb); if (typeof PBAdmin !== "undefined") PBAdmin.mode("ad"); } } } catch (e) { } return r; };
+      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn); try { if (t === "store" || t === "setup") segMark(t); secTitle(); if (btn && btn.dataset && btn.dataset.grp && btn.dataset.grp !== cur) apply(btn.dataset.grp); if (t === "agent" && !VOICE) agentView("agent"); if (t === "appcfg" && btn && btn.dataset.app) renderApp(btn.dataset.app); if (t === "tpl") renderTpl(); if (t === "imggen") { const bb = workBtn("builder"); if (bb) { Admin.tab("builder", bb); if (typeof PBAdmin !== "undefined") PBAdmin.mode("ad"); } } } catch (e) { } return r; };
     }
     agentView("agent");
     loadOff();
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

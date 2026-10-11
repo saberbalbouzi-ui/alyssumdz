@@ -278,6 +278,20 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { stock: ok && ok.p[0].stock, cat: ok && ok.c.a, bad };
   });
   ok("المخزون: قراءة المنتجات من النسخة المنشورة الأحدث، وعند الفشل يعود للملف المحلي", fr.stock === 2 && fr.cat === "أ" && fr.bad === null, fr);
+  // ── ترتيب القائمة الجانبية: خمس مجموعات ──
+  const nv = await p.evaluate(() => {
+    const out = {}; const vis = () => Array.from(document.querySelectorAll(".side-nav .nav-btn")).filter(b => b.offsetParent !== null).map(b => { const c = b.querySelector(".nav-txt b").cloneNode(true); c.querySelectorAll(".nb,.app-off-tag").forEach(x => x.remove()); return c.textContent.trim(); });
+    ["gen", "products", "shop", "look", "apps"].forEach(g => { AdminNav.group(g); out[g] = vis(); });
+    AdminNav.group("gen"); Admin.tab("setup", Array.from(document.querySelectorAll(".side-nav .nav-btn")).find(b => (b.getAttribute("onclick") || "").includes("'setup'")));
+    out.segOn = Array.from(document.querySelectorAll(".tab-seg .on")).map(b => b.dataset.sg).join(); out.storeOn = (document.querySelector(".side-nav .nav-btn.on .nav-txt b") || {}).textContent;
+    out.setupShown = !document.getElementById("tab-setup").classList.contains("hidden"); out.groups = document.querySelectorAll("#nav-groups .ng").length; out.pend = !Array.from(document.querySelectorAll(".side-nav .nav-btn")).some(b => (b.getAttribute("onclick") || "").includes("'pending'"));
+    return out;
+  });
+  const j = a => a.map(x => x.replace(/\s+/g, " ")).join("|");
+  ok("القائمة: الإعدادات العامة = لوحة التحكم + إعدادات الموقع + المدونة (بلا تجهيز ولا بانتظار التأكيد)", j(nv.gen) === "لوحة التحكم|إعدادات الموقع|المدوّنة والسياسات" && nv.pend && nv.groups === 5, nv.gen);
+  ok("القائمة: المنتجات = المنتجات، الصفحات، التصنيفات، السمات، التحليلات", j(nv.products) === "المنتجات|الصفحات|التصنيفات|السمات|التحليلات", nv.products);
+  ok("القائمة: ecommerce تبدأ بالبكسلات ثم الطلبات والمسجلة والمخزون والأرباح والمدفوعات", j(nv.shop).startsWith("البكسلات|الطلبات|الطلبات المسجلة|المخزون والأرباح|المدفوعات|") && !nv.shop.includes("نموذج الطلب"), nv.shop);
+  ok("القائمة: نموذج الطلب ضمن التطبيقات، وتجهيز المتجر يفتح من شريط إعدادات الموقع", nv.apps.includes("نموذج الطلب") && nv.setupShown && /^setup(,setup)*$/.test(nv.segOn) && /إعدادات الموقع/.test(nv.storeOn || ""), nv);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
