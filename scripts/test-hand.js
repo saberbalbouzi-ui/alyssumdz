@@ -201,6 +201,23 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تعديل الطلب: عند تعذّر حفظ القاعدة يُحفظ التعديل في اللوحة ويُطبَّق عند التحميل", oe.stored && oe.re === "اسم جديد|" + oe.wilaya && /commune,desk,dtype,fee,name,total,wilaya/.test(oe.savedFields), oe);
   ok("تحديث الشركة: طلب PATCH بحقول التعديل فقط، وطرد مسجَّل يُحدَّث وغير المسجَّل يُتخطّى", oe.patch === "PATCH" && oe.bodyKeys === "address,declared_value,firstname,familyname,freeshipping,is_stopdesk,price,stopdesk_id,to_commune_name,to_wilaya_name".split(",").sort().join(",") && oe.ur.ok === true && oe.sentMethod === "PATCH" && /yal-9/.test(oe.sentUrl) && oe.skip.skipped === true, oe);
   ok("الإرسال الجماعي: يرسل المؤكَّدة غير المرسَلة فقط (اثنان) ويعرض الملخص", oe.notes.join() === "true,true,false,true" && oe.ntxt === true, oe);
+  // ── تسجيل نتيجة الاتصال من نافذة المعاينة ──
+  const pr = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); window.confirm = () => true; const wait = ms => new Promise(r => setTimeout(r, ms));
+    const t = Admin.products[0].title; Admin.products[0].stock = null;
+    Admin.orders = [{ id: "P1", date: new Date().toISOString(), status: "nouvelle", name: "زبون", phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", dtype: "home", items: t + " ×1 = 3000 DA", subtotal: 3000, fee: 400, total: 3400, note: "" }];
+    Admin.renderOrders(); Admin.openOrderPreview(0); await wait(80);
+    const btns = Array.from(document.querySelectorAll("#ord-prev-b .oc-res button")).map(b => b.getAttribute("onclick")).length;
+    document.querySelector('#ord-prev-b .oc-res button[onclick*="\'a2\'"]').click(); await wait(150);
+    const n1 = Admin.orders[0].note, hi = !!document.querySelector('#ord-prev-b .oc-res button[onclick*="\'a2\'"][style*="inset"]');
+    document.querySelector('#ord-prev-b .oc-res button[onclick*="\'later\'"]').click(); await wait(150); const n2 = Admin.orders[0].note;
+    const open1 = document.getElementById("ord-prev-bg").classList.contains("open");
+    document.querySelector('#ord-prev-b .oc-res button[onclick*="\'confirm\'"]').click(); await wait(200);
+    return { btns, n1, hi, n2, open1, st: Admin.orders[0].status, editBtn: !!document.querySelector('#ord-prev-a [onclick^="OrderEdit.open"]'), resRow: !!document.querySelector("#ord-prev-b .oc-res") };
+  });
+  ok("نافذة المعاينة: أزرار تسجيل نتيجة الاتصال (7) للطلب الجديد", pr.btns === 7, pr);
+  ok("نافذة المعاينة: تسجيل «لم يُجب 2» يظهر مظلَّلاً ثم «لاحقاً» والنافذة تبقى مفتوحة", /📞2/.test(pr.n1) && pr.hi && /⏰لاحقاً/.test(pr.n2) && pr.open1, pr);
+  ok("نافذة المعاينة: «أكّد الطلب» يؤكّد والنافذة تتحدّث (يختفي الصف ويظهر تعديل)", pr.st === "confirmee" && pr.editBtn && !pr.resRow, pr);
   // ── مكتبة الملصقات (بحث متعدد اللغات + إضافة بنقرة) ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار ملصقات", ""); pg.slug = "stk-t"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => PBApp.ltoggle("stk")); await p.waitForFunction(() => document.querySelectorAll("#stk-out .stk-i").length > 20, null, { timeout: 15000 }).catch(() => { });
