@@ -149,6 +149,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-ep [data-ept="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); const cv = document.getElementById("pbst-cv"); return { tab: true, panel: !!document.getElementById("pbst"), cv: !!cv && cv.width > 10, btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
   ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.cv && ui.btns >= 4 && ui.sw >= 10, ui);
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  // ── مكتبة الملصقات (بحث متعدد اللغات + إضافة بنقرة) ──
+  await p.evaluate(() => { const pg = PB.newPage("اختبار ملصقات", ""); pg.slug = "stk-t"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
+  await p.evaluate(() => PBApp.ltoggle("stk")); await p.waitForFunction(() => document.querySelectorAll("#stk-out .stk-i").length > 20, null, { timeout: 15000 }).catch(() => { });
+  const sk = await p.evaluate(async () => {
+    const n0 = document.querySelectorAll("#stk-out .stk-i").length, tot = PBStickers._S.data ? PBStickers._S.data.i.length : 0, first = q => { const r = PBStickers.search(q); return r.slice(0, 6).map(x => x[0]); };
+    const q = document.getElementById("stk-q"); q.value = "عسل"; q.dispatchEvent(new Event("input", { bubbles: true })); await new Promise(r => setTimeout(r, 450));
+    const honeyUi = Array.from(document.querySelectorAll("#stk-out .stk-i")).map(x => x.dataset.stk);
+    const el = document.querySelector('#stk-out .stk-i[data-stk="honey-pot"]'); if (el) el.click(); await new Promise(r => setTimeout(r, 600));
+    const j = PBApp.pageJson(), added = /assets\/img\/stickers\/honey-pot\.svg/.test(j);
+    const w = (JSON.parse(j).sections[0].free || []).find(x => x.type === "image" && /honey-pot/.test(x.set.src || ""));
+    return { n0, tot, fire: first("نار"), miel: first("miel"), gift: first("gift"), truck: first("توصيل شاحنة"), none: PBStickers.search("zzzzqq").length, honeyUi: honeyUi.slice(0, 5), added, fw: w && w.set.fwd && w.set.fwd.d, rec: JSON.parse(localStorage.getItem("pbx_stk_recent") || "[]")[0] };
+  });
+  ok("الملصقات: الفهرس يُحمَّل (أكثر من 1000) وتظهر شبكة", sk.tot > 1000 && sk.n0 > 20, sk);
+  ok("الملصقات: بحث عربي وفرنسي وإنجليزي يعطي النتيجة الصحيحة", sk.fire.includes("fire") && sk.miel.includes("honey-pot") && sk.truck.includes("delivery-truck") && sk.none === 0, sk);
+  ok("الملصقات: بحث «عسل» يعرض جرة العسل", sk.honeyUi.includes("honey-pot"), sk.honeyUi);
+  ok("الملصقات: النقر يضيف عنصر صورة بحجم صغير ويُسجَّل في «مؤخراً»", sk.added && sk.fw === 18 && sk.rec === "honey-pot", sk);
+  await p.screenshot({ path: "/tmp/stk-ui.png" });
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
   // ── مسار المنتج الرئيسي من إعدادات الصفحة ──
   await p.evaluate(() => { if (window.__origPub) PBApp.publish = window.__origPub; });
   await p.evaluate(() => { const pg = PB.newPage("هبوط مسار", ""); pg.slug = "route-lp"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1800);

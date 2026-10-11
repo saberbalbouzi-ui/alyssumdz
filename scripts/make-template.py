@@ -27,7 +27,11 @@ if a.update:
     if r.returncode != 0: print(r.stdout, r.stderr); sys.exit("فشل توليد الحزمة (فحص التسرّب؟)")
     if OUT.exists(): shutil.rmtree(OUT)
     keep = json.loads((ROOT / "shared-files.json").read_text(encoding="utf-8"))["shared"] + ["version.json"]
-    for rel in keep:
+    exp = []
+    for rel in keep:                                            # «dir/**» = كل ملفات المجلد (مكتبة الملصقات)
+        if rel.endswith("/**"): exp += sorted(str(f.relative_to(ROOT)) for f in (ROOT / rel[:-3]).rglob("*") if f.is_file())
+        else: exp.append(rel)
+    for rel in exp:
         src = tmp / rel if (tmp / rel).exists() else ROOT / rel     # ما لا يدخل الحزمة الأساسية (قوالب، صور) يُنسخ من المصدر
         if not src.exists(): print("تحذير: ملف مشترك مفقود في المصدر:", rel); continue
         (OUT / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, OUT / rel)
@@ -64,7 +68,7 @@ def cp(rel):
     d.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(s, d) if s.is_dir() else shutil.copy2(s, d)
 
-for rel in ["admin.html", "assets/css", "assets/js", "assets/data", "supabase", "p/_template", "assets/img/placeholder", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", "assets/ext"]:
+for rel in ["admin.html", "assets/css", "assets/js", "assets/data", "supabase", "p/_template", "assets/img/placeholder", "assets/img/stickers", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", "assets/ext"]:
     cp(rel)
 
 vals = {"SITE_NAME": a.name, "SITE_EN": a.name, "WA": a.wa, "YEAR": str(datetime.date.today().year)}

@@ -1,0 +1,3 @@
+Fluent Emoji (Flat) — Copyright (c) Microsoft Corporation — MIT License.
+https://github.com/microsoft/fluentui-emoji
+Keywords: Unicode CLDR annotations (Unicode License v3).

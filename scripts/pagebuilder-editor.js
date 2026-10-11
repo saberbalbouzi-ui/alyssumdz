@@ -246,7 +246,7 @@ body{overflow-x:hidden;margin:0}`;
 </div>
 <div class="pbx-main">
   <aside class="pbx-left" id="pbx-lside">
-    <div class="pbx-tabs"><button class="pbx-ah" data-lt="add" onclick="PBApp.ltoggle('add')">${ico('tab_add',17)} عناصر</button><button class="pbx-ah" data-lt="def" onclick="PBApp.ltoggle('def')" title="أقسام وعناصر جاهزة: فارغة، شبكية، وبتنسيق الموقع">${ico('tab_tpl',17)} أقسام وعناصر جاهزة</button><button class="pbx-ah" data-lt="smart" onclick="PBApp.ltoggle('smart')" title="رفع صورة، التقاط العناصر">${ico('t_magic',17)} أدوات ذكية</button><button class="pbx-ah" data-lt="lay" onclick="PBApp.ltoggle('lay')">${ico('tab_lay',17)} الطبقات</button><button class="pbx-ah" data-lt="pg" onclick="PBApp.ltoggle('pg')">${ico('tab_pg',17)} إعدادات الصفحة</button><div class="pbx-pane" id="pbx-lpane"></div></div>
+    <div class="pbx-tabs"><button class="pbx-ah" data-lt="add" onclick="PBApp.ltoggle('add')">${ico('tab_add',17)} عناصر</button><button class="pbx-ah" data-lt="def" onclick="PBApp.ltoggle('def')" title="أقسام وعناصر جاهزة: فارغة، شبكية، وبتنسيق الموقع">${ico('tab_tpl',17)} أقسام وعناصر جاهزة</button><button class="pbx-ah" data-lt="smart" onclick="PBApp.ltoggle('smart')" title="رفع صورة، التقاط العناصر">${ico('t_magic',17)} أدوات ذكية</button><button class="pbx-ah" data-lt="stk" onclick="PBApp.ltoggle('stk')" title="آلاف الملصقات الملوّنة مع بحث">${ico('iconbox',17)} ملصقات</button><button class="pbx-ah" data-lt="lay" onclick="PBApp.ltoggle('lay')">${ico('tab_lay',17)} الطبقات</button><button class="pbx-ah" data-lt="pg" onclick="PBApp.ltoggle('pg')">${ico('tab_pg',17)} إعدادات الصفحة</button><div class="pbx-pane" id="pbx-lpane"></div></div>
   </aside>
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
   <div class="pbx-stage" id="pbx-stage">
@@ -447,6 +447,8 @@ body{overflow-x:hidden;margin:0}`;
         + PB.DFLT.map(x => `<button type="button" class="pbx-dfc" draggable="true" data-dflt="${x.k}" title="${esc(x.d)}"><svg viewBox="0 0 64 44" width="100%" height="44" aria-hidden="true">${DIC[x.k] || '<rect x="8" y="8" width="48" height="28" rx="5" fill="#e6dfcf"/>'}</svg><span>${esc(x.n.replace(/\s*\(.*$/, ""))}</span></button>`).join("") + `</div>`;
     } else if (E.ltab === "smart") {
       pane.innerHTML = PBSmart.pane();
+    } else if (E.ltab === "stk") {
+      if (!pane.querySelector("#stk-root")) pane.innerHTML = PBStickers.pane(); PBStickers.bind(pane.querySelector("#stk-root"));
     } else if (E.ltab === "lay") {
       let h = "";
       E.page.sections.forEach((sec, i) => {
@@ -617,12 +619,12 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* الجوال: ضغط مطوّل على أيقونة في قائمة الأدوات ثم سحب إلى مكانها في الصفحة (السحب الأصلي لا يعمل باللمس) */
   function listTouchDrag() {
     let timer = null, p0 = null, ghost = null, active = false;
-    const sel = "[data-add],[data-tpl],[data-dflt],[data-pimg-i]", fake = (x, y) => { const f0 = $("pbx-fw").getBoundingClientRect(); return { clientX: (x - f0.left) / E.scale, clientY: (y - f0.top) / E.scale, preventDefault() { }, dataTransfer: {} }; };
+    const sel = "[data-add],[data-tpl],[data-dflt],[data-pimg-i],[data-stk]", fake = (x, y) => { const f0 = $("pbx-fw").getBoundingClientRect(); return { clientX: (x - f0.left) / E.scale, clientY: (y - f0.top) / E.scale, preventDefault() { }, dataTransfer: {} }; };
     const stop = () => { clearTimeout(timer); timer = null; if (ghost) { ghost.remove(); ghost = null; } active = false; };
     document.addEventListener("touchstart", e => {
       const it = e.target.closest && e.target.closest(sel); if (!it || e.touches.length !== 1) return; const t0 = e.touches[0]; p0 = { x: t0.clientX, y: t0.clientY };
       timer = setTimeout(() => {
-        active = true; E.drag = it.dataset.pimgI != null ? dragOfImg(it) : it.dataset.add ? { add: it.dataset.add } : it.dataset.dflt ? { dflt: it.dataset.dflt } : { tpl: it.dataset.tpl };
+        active = true; E.drag = it.dataset.pimgI != null ? dragOfImg(it) : it.dataset.stk ? { stk: it.dataset.stk } : it.dataset.add ? { add: it.dataset.add } : it.dataset.dflt ? { dflt: it.dataset.dflt } : { tpl: it.dataset.tpl };
         try { navigator.vibrate && navigator.vibrate(18); } catch (x) { }
         ghost = document.createElement("div"); ghost.style.cssText = "position:fixed;z-index:10050;pointer-events:none;background:#173f35;color:#fff;border-radius:10px;padding:.4rem .8rem;font-weight:800;font-size:.8rem;box-shadow:0 6px 20px rgba(0,0,0,.4);transform:translate(-50%,-130%)";
         ghost.textContent = ((it.querySelector("span") || it).textContent.trim().slice(0, 28) || "صورة") + " ⇢ اسحب إلى الصفحة"; ghost.style.left = p0.x + "px"; ghost.style.top = p0.y + "px"; document.body.appendChild(ghost);
@@ -1730,6 +1732,13 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     else { const sec = PB.mkCanvas(); w = PB.mkFree("pgal", 62, 24, 1); sec.free = [w]; sec.set.mh = { d: (Number(w.set.fh.d) || 520) + 64 }; let at = 0; while (at < L.length && allW(L[at]).length && allW(L[at]).every(x => x.type === "shdr" || x.type === "sbar")) at++; L.splice(at, 0, sec); E.nextLabel = "إضافة معرض المنتج"; }
     afterEdit(w.id); if (isMob()) panel("l", false); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60);
   }
+  /* ملصق: عنصر صورة حر صغير مربّع (يُحرَّك ويُكبَّر كأي صورة) */
+  function addSticker(name, sec, x, y) {
+    const pth = PBStickers.DIR + name + ".svg"; PBStickers.used(name); E.nextLabel = "إضافة ملصق";
+    const init = w => { w.set.src = pth; w.set.hauto = true; w.set.alt = name.replace(/-/g, " "); w.set.fwd = { d: 18, t: 22, m: 34 }; w.set.fh = { d: 180, t: 160, m: 110 }; };
+    const t = sec ? { sec } : target(); if (t.sec) return addFree("image", t.sec, x, y, init);
+    const w = PB.mkW("image"); init(w); t.col.widgets.push(w); afterEdit(w.id); if (isMob()) panel("l", false);
+  }
   function addWidget(type, col, at) {
     if (type === "pgal" && !col) return addGalleryTop();
     if (type === "shdr" || type === "sbar") return addTopPart(type);
@@ -2064,6 +2073,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   function hideDrop() { const d = fdoc && fdoc.getElementById("pbdrop"); if (d) d.remove(); }
   function onDrop(e) {
     if (!E.drag) return; e.preventDefault(); if (E.drag.img) { const dr0 = E.drag; E.drag = null; hideDrop(); imgDrop(e, dr0); return; } const tg = dropTarget(e), dr = E.drag; E.drag = null; hideDrop(); if (!tg) return;
+    if (dr.stk) { if (tg.type === "free") addSticker(dr.stk, tg.sec, Math.max(0, Math.round(tg.px)), Math.max(0, Math.round(tg.py))); else addSticker(dr.stk); return; }
     if (dr.tpl) { addSection(dr.tpl, tg.at); return; }
     if (dr.dflt) { addDefault(dr.dflt, tg.at); return; }
     if (dr.move) { const q = find(dr.move); if (q && q.kind === "section") { const list = E.page.sections, from = list.indexOf(q.node); list.splice(from, 1); list.splice(Math.min(tg.at, list.length), 0, q.node); afterEdit(q.node.id); return; } }
@@ -2074,11 +2084,12 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (dr.add) { addWidget(dr.add, tg.col, tg.at); return; }
     if (dr.move) { const inf = find(dr.move); if (!inf) return; if (inf.kind === "widget") { inf.list.splice(inf.idx, 1); tg.col.widgets.splice(Math.min(tg.at, tg.col.widgets.length), 0, inf.node); afterEdit(inf.node.id); } }
   }
-  document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest("[data-add],[data-tpl],[data-dflt]"); if (!w) return; E.drag = w.dataset.add ? { add: w.dataset.add } : w.dataset.dflt ? { dflt: w.dataset.dflt } : { tpl: w.dataset.tpl }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
+  document.addEventListener("dragstart", e => { const w = e.target.closest && e.target.closest("[data-add],[data-tpl],[data-dflt],[data-stk]"); if (!w) return; E.drag = w.dataset.stk ? { stk: w.dataset.stk } : w.dataset.add ? { add: w.dataset.add } : w.dataset.dflt ? { dflt: w.dataset.dflt } : { tpl: w.dataset.tpl }; e.dataTransfer.setData("text/plain", "pb"); e.dataTransfer.effectAllowed = "copyMove"; });
   document.addEventListener("dragend", () => { E.drag = null; hideDrop(); clearImgHi(); });
   document.addEventListener("click", e => {
     if (!$("pb-app") || !$("pb-app").contains(e.target)) return;
     const a = e.target.closest("[data-add]"); if (a) return addWidget(a.dataset.add);
+    const sk = e.target.closest("[data-stk]"); if (sk) return addSticker(sk.dataset.stk);
     if (e.target.closest("[data-grid]")) return addGrid();
     const t = e.target.closest("[data-tpl]"); if (t) return addSection(t.dataset.tpl);
     const df = e.target.closest("[data-dflt]"); if (df) return addDefault(df.dataset.dflt);
@@ -2669,7 +2680,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
