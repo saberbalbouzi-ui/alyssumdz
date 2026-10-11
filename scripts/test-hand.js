@@ -353,13 +353,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     // «مشترى جاهز» (الافتراضي): السعر المكتوب = سعر الشراء مباشرة
     const modeDef = document.getElementById("cc0-mode").value, noMade = !document.getElementById("cc0-raw"); document.getElementById("cc0-buy").value = 1234; document.querySelector("#fin-cc-rows button.green").click(); await wait(60);
     const boughtCost = Admin.fin.costs.cc1, boughtMode = Admin.fin.cc.cc1.mode;
+    // مسح الخانة وحفظ = حذف سعر الشراء فعلياً
+    document.getElementById("cc0-buy").value = ""; document.querySelector("#fin-cc-rows button.green").click(); await wait(60);
+    const clearedCost = Admin.fin.costs.cc1 === undefined, clearedCc = Admin.fin.cc.cc1 === undefined, clearedUi = document.getElementById("cc0-buy").value === "";
     // «أصنّعه بنفسي»
     const ms = document.getElementById("cc0-mode"); ms.value = "made"; ms.dispatchEvent(new Event("change", { bubbles: true }));
     const set = (k, v) => { const e = document.getElementById("cc0-" + k); e.value = v; e.dispatchEvent(new Event("input", { bubbles: true })); };
     set("raw", 2000); set("ml", 50); set("pack", 100); set("oth", 50);
     const mat = document.getElementById("cc0-mat").textContent, tot = document.getElementById("cc0-tot").textContent;
     Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
-    const out = { heads, modeDef, noMade, boughtCost, boughtMode, noCurCol: !heads.some(h => /سعر الشراء الحالي/.test(h)), tabBtn: Array.from(document.querySelectorAll(".nav-btn")).some(b => /تكلفة المنتجات/.test(b.textContent)), inOwnTab: !!document.querySelector("#tab-costs #fin-cc") && !document.querySelector("#tab-finance #fin-cc"), mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
+    const out = { clearedCost, clearedCc, clearedUi, heads, modeDef, noMade, boughtCost, boughtMode, noCurCol: !heads.some(h => /سعر الشراء الحالي/.test(h)), tabBtn: Array.from(document.querySelectorAll(".nav-btn")).some(b => /تكلفة المنتجات/.test(b.textContent)), inOwnTab: !!document.querySelector("#tab-costs #fin-cc") && !document.querySelector("#tab-finance #fin-cc"), mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
     // وصفة بنسب المواد الأولية
     Admin.ccmOpen(0); const v = (id, x) => { const e = document.getElementById(id); e.value = x; e.dispatchEvent(new Event("input", { bubbles: true })); };
     document.getElementById("ccm-unit").value = "kg"; document.getElementById("ccm-unit").dispatchEvent(new Event("change", { bubbles: true }));
@@ -371,6 +374,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[3]) && cc.mat === "100" && cc.tot === "250", cc);
   ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
   ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
+  ok("تكلفة المنتجات: مسح خانة سعر الشراء وحفظها يحذف السعر فعلاً (لا يعود بعد التحديث)", cc.clearedCost && cc.clearedCc && cc.clearedUi, cc);
   ok("جدول التكلفة: «حفظ» لمن يصنّع يجعل الإجمالي المحسوب سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
   // ── التغليف بجمع أعداد كإكسل + مصاريف أخرى ثابتة أو نسبة ──
   const xp = await p.evaluate(async () => {
