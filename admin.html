@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.92">
+<meta name="admin-version" content="1.89.93">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -421,6 +421,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <label class="date-field">إلى<input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ"></label>
         <label class="date-field" style="white-space:nowrap"><input id="order-show-shipped" type="checkbox" onchange="Admin.applyOrderFilters()" style="width:auto"> إظهار المسجلة</label>
         <button class="small gray" type="button" onclick="Admin.resetOrderFilters()">↩️ مسح الفلاتر</button>
+        <button class="small gray" type="button" id="trash-btn" onclick="Admin.openTrash()" title="الطلبات المحذوفة: إعادة إدراج أو حذف نهائي أو تفريغ السلة">🗑 سلة المهملات <b id="trash-count"></b></button>
         <button class="small gold" type="button" onclick="Admin.exportOrdersCsv()">⬇️ تصدير CSV</button>
         <button class="small blue" type="button" onclick="Admin.exportOrdersToSheets()">📊 نسخ لـ Google Sheets</button>
         <button class="small" type="button" id="sync-btn" onclick="Admin.syncShipping()" title="يجلب حالة كل طرد مرسَل إلى شركة التوصيل ويحدّث حالات الطلبات">🔄 تحديث حالات الشحن</button>
@@ -1591,12 +1592,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.92"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.92"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.92"></script>
+<script src="assets/js/ctl-help.js?v=1.89.93"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.93"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.93"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.92"></script>
+<script src="assets/js/admin-nav.js?v=1.89.93"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1607,7 +1608,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.92"></script>
+<script src="assets/js/admin-update.js?v=1.89.93"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -2462,8 +2463,8 @@ const Admin = {
     $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
-      const changed = o.orders.length !== this.orders.length || o.orders.some((x,i)=>{ const old = this.orders.find(y=>y.id === x.id); return old && (old.status !== x.status || old.note !== x.note); });
-      this.orders = this.liveOrders(o.orders);
+      const fresh0 = this.liveOrders(o.orders), changed = fresh0.length !== this.orders.length || fresh0.some(x=>{ const old = this.orders.find(y=>y.id === x.id); return old && (old.status !== x.status || old.note !== x.note); });
+      this.orders = fresh0;
       this.reconcileStatusChanges();
       if(changed){ this.renderStats(); this.renderOrders(); this.renderShipped(); }
       this.autoRegisterNew();
@@ -2785,7 +2786,7 @@ const Admin = {
   },
 
   renderOrders(){
-    this._blMap = null;
+    this._blMap = null; this.renderTrashBadge();
     setTimeout(()=>this.refreshPreview(), 0);   // إن كانت نافذة المعاينة مفتوحة وتغيّر طلبها (نتيجة اتصال/تأكيد/تعديل) تتحدّث فوراً
     { const ar = $f("auto-reg"); if(ar) ar.checked = !!this.autoRegCfg().on; const as = $f("auto-send"), ad = $f("auto-del"); if(as) as.checked = this.autoOpt("send"); if(ad) ad.checked = this.autoOpt("del"); }
     this.renderDeliveryBanners();
@@ -7186,28 +7187,80 @@ const Admin = {
     const i = this.orders.findIndex(x=>x.id === orderId); if(i > -1) this.sendOrderToDelivery(i, companyKey);
   },
 
-  /* ───── حذف الطلبات: حذف فعلي إن سمحت قاعدة البيانات، وإلا إخفاء دائم بوسم 🗑 في الملاحظة ───── */
-  liveOrders(list){ const L = (list || []).filter(o=>!/🗑/.test(String((o && o.note) || ""))); return window.OrderEdit ? OrderEdit.apply(L) : L; },       // + تعديلات بيانات الطلب المحفوظة في اللوحة
+  /* ───── حذف الطلبات = نقلها إلى «سلة المهملات» (وسم 🗑@التاريخ في الملاحظة)؛ منها تُعاد أو تُحذف نهائياً (حذف فعلي إن سمحت القاعدة وإلا 🗑✕ إخفاء دائم) ───── */
+  TRASH_RE: /🗑(@[0-9-]+)?\s*/g,
+  liveOrders(list){ list = list || []; const has = o=>/🗑/.test(String((o && o.note) || "")); this.trash = list.filter(o=>has(o) && !/🗑✕/.test(String(o.note||""))); const L = list.filter(o=>!has(o)); return window.OrderEdit ? OrderEdit.apply(L) : L; },       // + تعديلات بيانات الطلب المحفوظة في اللوحة
+  trashedAt(o){ const m = String((o && o.note) || "").match(/🗑@([0-9-]+)/); return m ? m[1] : ""; },
+  renderTrashBadge(){ const n = (this.trash || []).length, b = $f("trash-count"); if(b) b.textContent = n ? "(" + n + ")" : ""; },
   async deleteOrders(list, opts){
     list = (list || []).filter(Boolean); if(!list.length) return false;
     const tracked = list.filter(o=>this.trackingOf(o) && (o.status === "nouvelle" || o.status === "confirmee"));
-    if(!(opts && opts.silent) && !confirm("حذف " + list.length + " طلب نهائياً؟" + (tracked.length ? "\n(" + tracked.length + " منها مسجَّل لدى شركة التوصيل — سيُحاوَل إلغاء طرده أيضاً)" : "") + "\nلا يمكن التراجع عن الحذف.")) return false;
-    let hard = 0, soft = 0;
+    if(!(opts && opts.silent) && !confirm("نقل " + list.length + " طلب إلى سلة المهملات؟" + (tracked.length ? "\n(" + tracked.length + " منها مسجَّل لدى شركة التوصيل — سيُحاوَل إلغاء طرده أيضاً)" : "") + "\nيمكنك إعادة إدراجها من «🗑 سلة المهملات» في الطلبات.")) return false;
+    this.trash = this.trash || [];
     for(const o of list.slice()){
-      const t = this.trackingOf(o);
+      const t = this.trackingOf(o); let note = String(o.note || "");
       if(t && (o.status === "nouvelle" || o.status === "confirmee")){
         const co = this.allDeliveryCompanies()[t.company], cfg = this.deliveryCfg[t.company] || {};
         if(co && co.cancelRequest){ try{ await this.courierFetch(co.cancelRequest(cfg, t.tracking)); }catch(e){} }
+        note = note.replace(/🚚[a-z0-9_]+:[A-Za-z0-9._-]+\s*/g, "");          // يعود الطلب غير مرسَل عند إعادته
       }
       const i = this.orders.indexOf(o);
-      try{ if(/📦/.test(String(o.note||""))) this.moveStock(o, +1); }catch(e){}
-      const ok = await API.deleteOrder(this.key, o.id);
-      if(ok) hard++; else { soft++; this.setNoteTag(o, /🗑\s*/g, "🗑"); }
+      try{ if(/📦/.test(note) && this.moveStock(o, +1)) note = note.replace(/📦\s*/g, ""); }catch(e){}
+      note = note.replace(this.TRASH_RE, "").replace(/\s+/g, " ").trim(); o.note = (note ? note + " " : "") + "🗑@" + new Date().toISOString().slice(0, 10);
+      API.updateOrder(this.key, o.id, undefined, o.note);
       if(i >= 0) this.orders.splice(i, 1);
+      this.trash.unshift(o);
     }
-    this.renderStats(); this.renderOrders(); this.renderShipped && this.renderShipped();
-    toast((opts && opts.silent ? "🗑 حُذف الطلب الملغى تلقائياً" : "🗑 حُذف " + list.length + " طلب"));
+    this.renderStats(); this.renderOrders(); this.renderShipped && this.renderShipped(); this.refreshTrash();
+    toast((opts && opts.silent ? "🗑 نُقل الطلب الملغى إلى سلة المهملات" : "🗑 نُقل " + list.length + " طلب إلى سلة المهملات"));
     return true;
+  },
+  /* إعادة إدراج طلبات من السلة: تعود لقائمة الطلبات بحالتها (وتُخصم كميتها من المخزون من جديد إن كانت مؤكَّدة) */
+  restoreOrders(ids){
+    const L = (this.trash || []).filter(o=>ids.includes(o.id)); if(!L.length) return;
+    L.forEach(o=>{
+      o.note = String(o.note || "").replace(this.TRASH_RE, "").replace(/\s+/g, " ").trim(); API.updateOrder(this.key, o.id, undefined, o.note);
+      this.orders.push(o);
+    });
+    this.trash = this.trash.filter(o=>!ids.includes(o.id));
+    const desc = this.orders.length < 2 || new Date(this.orders[0].date) >= new Date(this.orders[this.orders.length - 1].date);
+    this.orders.sort((a, b)=>desc ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date));
+    L.forEach(o=>this.syncStockForOrder(o, o.status));
+    this.renderStats(); this.renderOrders(); this.renderShipped && this.renderShipped(); this.refreshTrash();
+    toast("↩️ أُعيد إدراج " + L.length + " طلب");
+  },
+  async purgeOrders(ids, all){
+    const L = (this.trash || []).filter(o=>ids.includes(o.id)); if(!L.length) return;
+    if(!confirm((all ? "تفريغ السلة: حذف " + L.length + " طلب" : "حذف " + L.length + " طلب") + " نهائياً؟\nلا يمكن التراجع عن هذا الحذف.")) return;
+    for(const o of L){
+      let ok = false; try{ ok = await API.deleteOrder(this.key, o.id); }catch(e){}
+      if(!ok){ o.note = String(o.note || "") + " 🗑✕"; API.updateOrder(this.key, o.id, undefined, o.note); }
+    }
+    this.trash = this.trash.filter(o=>!ids.includes(o.id)); this.refreshTrash(); this.renderOrders();
+    toast("🗑 حُذف " + L.length + " طلب نهائياً");
+  },
+  openTrash(){
+    let bg = document.getElementById("trash-bg");
+    if(!bg){
+      bg = document.createElement("div"); bg.className = "modal-bg"; bg.id = "trash-bg"; bg.dir = "rtl";
+      bg.innerHTML = '<div class="modal" style="max-width:900px;position:relative"><button type="button" class="ord-x" title="إغلاق" aria-label="إغلاق" data-tr="close">✕</button><h3 style="margin:0 0 .4rem;padding-inline-end:2.4rem">🗑 سلة المهملات</h3><div class="hint" style="margin:0 0 .6rem">الطلبات المحذوفة تبقى هنا حتى تعيدها أو تحذفها نهائياً.</div><div id="trash-b"></div></div>';
+      bg.addEventListener("click", e=>{
+        if(e.target === bg) { bg.classList.remove("open"); return; }
+        const b = e.target.closest("[data-tr]"); if(!b) return; const k = b.dataset.tr, id = b.dataset.id;
+        if(k === "close") bg.classList.remove("open"); else if(k === "restore") this.restoreOrders([id]); else if(k === "restoreall") this.restoreOrders((this.trash || []).map(o=>o.id));
+        else if(k === "purge") this.purgeOrders([id]); else if(k === "empty") this.purgeOrders((this.trash || []).map(o=>o.id), true);
+      });
+      document.body.appendChild(bg);
+    }
+    this.refreshTrash(); bg.classList.add("open");
+  },
+  refreshTrash(){
+    this.renderTrashBadge(); const b = document.getElementById("trash-b"); if(!b) return;
+    const L = this.trash || [], esc = v=>String(v==null?"":v).replace(/[<>&"]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+    if(!L.length){ b.innerHTML = '<p style="text-align:center;padding:1.5rem;color:#999">السلة فارغة</p>'; return; }
+    b.innerHTML = '<div class="action-bar" style="margin-bottom:.6rem"><button class="small green" type="button" data-tr="restoreall">↩ إعادة إدراج الكل</button><button class="small" type="button" style="background:var(--red)" data-tr="empty">🗑 تفريغ السلة</button></div>' +
+      '<div style="overflow:auto;max-height:60vh"><table class="rt" style="width:100%"><tr class="hd"><th>الطلب</th><th>الزبون</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th>حُذف</th><th></th></tr>' +
+      L.map(o=>'<tr><td dir="ltr">' + esc(String(o.id).slice(-6)) + '<br><small>' + esc(String(o.date).slice(0, 10)) + '</small></td><td>' + esc(o.name) + '<br><small dir="ltr">' + esc(o.phone) + '</small></td><td>' + esc(this.itemsDisplay(o)).replace(/\n/g, "<br>") + '</td><td>' + (Number(o.total) || 0).toLocaleString("fr-DZ") + ' دج</td><td><span class="pill st-' + esc(o.status) + '">' + esc(this.ST_AR[o.status] || o.status) + '</span></td><td>' + esc(this.trashedAt(o) || "—") + '</td><td class="act" style="white-space:nowrap"><button class="small green" type="button" data-tr="restore" data-id="' + esc(o.id) + '">↩ إعادة إدراج</button> <button class="small" type="button" style="background:var(--red)" data-tr="purge" data-id="' + esc(o.id) + '" title="حذف نهائي">🗑</button></td></tr>').join("") + '</table></div>';
   },
 
   /* ───── التسجيل التلقائي للطلبات الجديدة لدى شركة التوصيل (بأرقام تسلسلية حسب عدد طرودك عندها) ───── */
@@ -7694,7 +7747,8 @@ const Admin = {
       (window.OrderEdit && OrderEdit.canEdit(o) ? '<button class="small gold" type="button" onclick="OrderEdit.open(' + i + ')" title="تعديل الاسم والولاية والبلدية وطريقة التوصيل">✏️ تعديل</button>' : '') +
       (t ? '<button class="small blue" type="button" onclick="Admin.openLabel(' + i + ')" title="بوليصة شركة التوصيل الأصلية">🏷️ بوليصة الشركة</button>' : '') +
       '<button class="small gray" type="button" onclick="Admin.printOrderSlip(' + i + ')">🖨️ وصل</button>' +
-      '<button class="small" type="button" style="background:var(--red)" onclick="' + close + ';Admin.deleteOrders([Admin.orders[' + i + ']])" title="حذف الطلب نهائياً' + (t ? ' (يُحاوَل إلغاء طرده لدى الشركة إن لم يُسلَّم بعد)' : '') + '">🗑 حذف</button>';
+      ((t && !($f("tab-shipped") || {classList:{contains:()=>true}}).classList.contains("hidden")) ? ((o.status === "confirmee" || o.status === "nouvelle") ? '<button class="small" type="button" style="background:var(--red)" onclick="if(confirm(\'حذف الطرد ' + esc(t.tracking) + ' من الطلبات المسجلة؟\\nيُلغى الطرد لدى الشركة ويعود الطلب إلى قائمة الطلبات (لا يُحذف الطلب).\')){' + close + ';Admin.unsendOrder(' + i + ')}" title="يُلغى الطرد ويعود الطلب إلى قائمة الطلبات">🗑 حذف من المسجلة</button>' : '<span class="hint" style="margin:0">الطرد انطلق فلا يمكن حذفه من المسجلة.</span>') :
+      '<button class="small" type="button" style="background:var(--red)" onclick="' + close + ';Admin.deleteOrders([Admin.orders[' + i + ']])" title="ينقل الطلب إلى سلة المهملات' + (t ? ' (ويُحاوَل إلغاء طرده لدى الشركة إن لم يُسلَّم بعد)' : '') + '">🗑 حذف</button>');
     bg.dataset.oid = o.id; bg.dataset.sig = this.previewSig(o); bg.classList.add("open");
   },
   openShipDetail(i){

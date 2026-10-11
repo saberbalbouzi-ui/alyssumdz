@@ -54,7 +54,7 @@ const AdminOrdersPlus = (() => {
   const ordRows = L => L.map(o => [o.id, new Date(o.date).toLocaleString("ar-DZ"), o.name, o.phone, o.wilaya || "", o.commune || "", String(o.items || "").replace(/\n/g, " "), Number(o.total) || 0, (A().ST_AR || {})[o.status] || o.status]);
   function actionMenu() {
     if (!window.TableSel) return "";
-    return window.TableSel.menuHtml([{ g: "طباعة", k: "print-invoice", l: "🧾 فواتير (A4)" }, { g: "طباعة", k: "print-waybill", l: "📦 بوليصات توصيل (A6)" }, { g: "طباعة", k: "print-table", l: "🖨 جدول الطلبات المحددة" }, { g: "تحميل", k: "csv", l: "⬇ ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "⬇ ملف Excel" }, { g: "إجراءات", k: "delete", l: "🗑 حذف الطلبات المحددة", c: "danger" }], "data-b");
+    return window.TableSel.menuHtml([{ g: "طباعة", k: "print-invoice", l: "🧾 فواتير (A4)" }, { g: "طباعة", k: "print-waybill", l: "📦 بوليصات توصيل (A6)" }, { g: "طباعة", k: "print-table", l: "🖨 جدول الطلبات المحددة" }, { g: "تحميل", k: "csv", l: "⬇ ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "⬇ ملف Excel" }, { g: "إجراءات", k: "delete", l: "🗑 نقل المحدد إلى سلة المهملات", c: "danger" }], "data-b");
   }
   const chosen = () => (A().orders || []).filter(o => sel.has(String(o.id)));
   function bulk(a) {

@@ -316,6 +316,35 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("طرود ياليدين: نموذج التعديل يُبقي المعلومات الحالية وفيه قوائم الولاية والبلدية ونوع التوصيل محدَّدة بالقيم الحالية", yp.infoKept && yp.lists && yp.curW === "Alger" && yp.nCom > 5 && yp.curC, yp);
   ok("طرود ياليدين: تحويل التوصيل إلى مكتب يُظهر قائمة المكاتب ويرسل is_stopdesk وstopdesk_id، ويحفظ النوع", yp.dshown && yp.nDesk > 0 && yp.body2 && yp.body2.is_stopdesk === true && typeof yp.body2.stopdesk_id === "number" && yp.t3 === "stop", yp);
   ok("طرود ياليدين: حذف الطرد يرسل DELETE ويزيله من الجدول ويغلق النافذة", /yal-AAA$/.test(yp.del || "") && yp.left === "yal-BBB" && yp.closed, yp);
+  // ── سلة مهملات الطلبات + الحذف من المسجلة لا يحذف الطلب ──
+  const tr = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
+    const upd = [], dels = []; API.updateOrder = async (k, id, st, note) => { upd.push(id + ":" + note); return { ok: true }; }; API.deleteOrder = async (k, id) => { dels.push(id); return true; };
+    const mk = (id, st, note) => ({ id, date: new Date().toISOString(), status: st, name: "ز" + id, phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", items: "", subtotal: 3000, fee: 0, total: 3000, note: note || "" });
+    Admin.orders = [mk("T1", "nouvelle"), mk("T2", "nouvelle")]; Admin.trash = []; Admin.renderOrders();
+    await Admin.deleteOrders([Admin.orders[0]]);
+    const afterDel = Admin.orders.map(o => o.id).join(), inTrash = Admin.trash.map(o => o.id).join(), tagged = /🗑@\d{4}-\d\d-\d\d/.test(Admin.trash[0].note), noHard = dels.length === 0, badge = document.getElementById("trash-count").textContent;
+    // التحميل التالي يُخفيها ويُبقيها في السلة
+    const raw = [Object.assign({}, Admin.trash[0]), mk("T2", "nouvelle")], live = Admin.liveOrders(raw), trashAfter = Admin.trash.map(o => o.id).join();
+    document.getElementById("trash-btn").click(); const rowsOpen = document.querySelectorAll("#trash-b [data-tr=restore]").length;
+    document.querySelector("#trash-b [data-tr=restore]").click(); await wait(30);
+    const restored = Admin.orders.map(o => o.id).sort().join(), clean = !/🗑/.test(Admin.orders.find(o => o.id === "T1").note), trashEmpty = Admin.trash.length;
+    await Admin.deleteOrders([Admin.orders[0], Admin.orders[1]]); document.getElementById("trash-btn").click(); const two = document.querySelectorAll("#trash-b [data-tr=purge]").length;
+    document.querySelector("#trash-b [data-tr=empty]").click(); await wait(60);
+    const purged = dels.slice().sort().join(), emptyMsg = /السلة فارغة/.test(document.getElementById("trash-b").textContent); document.getElementById("trash-bg").classList.remove("open");
+    // الحذف من «الطلبات المسجلة»: يلغي الطرد ويُبقي الطلب
+    Admin.listCompanyKey = () => "yalidine"; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: { apiId: "a", apiToken: "b", enabled: true } }); const cf0 = Admin.courierFetch, creq = []; Admin.courierFetch = async rq => { creq.push(rq.method); return { ok: true, status: 200, text: "{}" }; };
+    Admin.orders = [mk("S1", "confirmee", "🚚yalidine:yal-ZZZ")]; document.getElementById("tab-shipped").classList.remove("hidden"); Admin.openOrderPreview(0);
+    const btnTxt = (Array.from(document.querySelectorAll("#ord-prev-a button")).find(b => /حذف/.test(b.textContent)) || {}).textContent || "", sh = !!document.querySelector('#ord-prev-a [onclick*="Admin.deleteOrders"]');
+    Array.from(document.querySelectorAll("#ord-prev-a button")).find(b => /حذف/.test(b.textContent)).click(); await wait(80);
+    const kept = Admin.orders.length === 1 && !Admin.trashed, untagged = !Admin.trackingOf(Admin.orders[0]), cancelled = creq.includes("DELETE"); Admin.courierFetch = cf0; document.getElementById("tab-shipped").classList.add("hidden");
+    return { afterDel, inTrash, tagged, noHard, badge, live: live.map(o => o.id).join(), trashAfter, rowsOpen, restored, clean, trashEmpty, two, purged, emptyMsg, btnTxt, sh, kept, untagged, cancelled };
+  });
+  ok("السلة: حذف الطلب ينقله للسلة بوسم التاريخ دون حذف نهائي ويظهر العدّاد", tr.afterDel === "T2" && tr.inTrash === "T1" && tr.tagged && tr.noHard && /1/.test(tr.badge), tr);
+  ok("السلة: إعادة تحميل الطلبات تُخفي المحذوف وتُبقيه في السلة", tr.live === "T2" && tr.trashAfter === "T1", tr);
+  ok("السلة: إعادة الإدراج تُرجع الطلب بلا وسم وتفرّغ مكانه من السلة", tr.rowsOpen === 1 && tr.restored === "T1,T2" && tr.clean && tr.trashEmpty === 0, tr);
+  ok("السلة: تفريغ السلة يحذف الكل نهائياً", tr.two === 2 && tr.purged === "T1,T2" && tr.emptyMsg, tr);
+  ok("الطلبات المسجلة: الحذف يلغي الطرد ويُبقي الطلب (لا يمرّ بالسلة) ولا يظهر زر حذف الطلب", /المسجلة/.test(tr.btnTxt) && !tr.sh && tr.kept && tr.untagged && tr.cancelled, tr);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
