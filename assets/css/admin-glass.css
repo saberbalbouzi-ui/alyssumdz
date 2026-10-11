@@ -331,6 +331,7 @@ html.glass .pbx-ep .ep-tabs button:nth-child(1){--t:59,130,246}
 html.glass .pbx-ep .ep-tabs button:nth-child(2){--t:168,85,247}
 html.glass .pbx-ep .ep-tabs button:nth-child(3){--t:251,146,60}
 html.glass .pbx-ep .ep-tabs button:nth-child(4){--t:74,222,128}
+html.glass .pbx-ep .ep-tabs button:nth-child(5){--t:236,72,153}
 html.glass .pbx-ep .ep-tabs button svg{width:28px;height:28px;color:#fff!important;stroke:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
 html.glass .pbx-ep .ep-tabs button:hover{transform:translateY(-2px);background:rgba(var(--t),.34)!important}
 html.glass .pbx-ep .ep-tabs button.on{background:rgba(var(--t),.46)!important;border-color:rgba(255,255,255,.75)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.45),inset 0 -8px 12px rgba(0,0,0,.22),0 6px 16px rgba(0,0,0,.3)}

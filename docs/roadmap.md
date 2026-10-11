@@ -37,4 +37,4 @@
 - كل أداة تُسجَّل في `assets/data/admin-help.json` (اسألني) وفي CLAUDE.md، وتُرفع `VERSION` ثم `scripts/build-admin-pb.py`.
 
 ## أدوات صور المنتجات والإعلانات (PhotoRoom-like)
-التقرير الكامل وخارطته في `docs/photoroom-tools-report.md`: المرحلة 1 (تحسين الصورة محلياً) ✅ v1.89.72؛ التالي: المرحلة 2 «استوديو المنتج» ثم الدفعات الكاملة وCatalog Consistency.
+التقرير الكامل وخارطته في `docs/photoroom-tools-report.md`: المرحلة 1 (تحسين الصورة محلياً) ✅ v1.89.72؛ المرحلة 2 «استوديو المنتج» ✅ v1.89.74؛ التالي: ملصقات البيع ثم الدفعات الكاملة وCatalog Consistency.
