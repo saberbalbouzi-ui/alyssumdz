@@ -269,6 +269,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { stock: pr.stock, notes: Admin.orders.map(o => o.note), lines: Admin.orderLines(Admin.orders[1]).map(l => l.qty), st: Admin.orders.map(o => o.status) };
   });
   ok("المخزون: تأكيد طلب ×1 وطلب عرض ×3 (علبتان + مجانية) يخصم 4 علب (8 ← 4)", skf.stock === 4 && skf.lines[0] === 3, skf);
+  // ── المخزون لا يرجع لرقم قديم بعد إعادة تحميل اللوحة (قراءة النسخة المنشورة الأحدث) ──
+  const fr = await p.evaluate(async () => {
+    const orig = GH.getFile, cfg0 = GH.cfg; GH.cfg = () => ({ token: "t", owner: "o", repo: "r", branch: "main" });
+    const txt = 'var CATEGORIES = {"a":"أ"};\nvar PRODUCTS = [{"slug":"anti-acne","title":"ك","price":1,"stock":2}];\n';
+    GH.getFile = async () => ({ sha: "x", content: btoa(unescape(encodeURIComponent(txt))) });
+    const ok = await Admin.freshData(); GH.getFile = async () => { throw new Error("net"); }; const bad = await Admin.freshData(); GH.getFile = orig; GH.cfg = cfg0;
+    return { stock: ok && ok.p[0].stock, cat: ok && ok.c.a, bad };
+  });
+  ok("المخزون: قراءة المنتجات من النسخة المنشورة الأحدث، وعند الفشل يعود للملف المحلي", fr.stock === 2 && fr.cat === "أ" && fr.bad === null, fr);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
