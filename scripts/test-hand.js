@@ -372,6 +372,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
   ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
   ok("جدول التكلفة: «حفظ» لمن يصنّع يجعل الإجمالي المحسوب سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
+  // ── التغليف بجمع أعداد كإكسل + مصاريف أخرى ثابتة أو نسبة ──
+  const xp = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
+    const E = Admin.ccEval.bind(Admin), ev = { a: E("50+30+20"), b: E("=(40+10)*2"), c: E("٥٠+٣٠"), d: E("1/0"), e: E("abc"), f: E(""), g: E("10,5+4.5"), h: E("5++") };
+    Admin.products = [{ slug: "cx", title: "كريم إكسل", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = {}; Admin.fin.cc = { cx: { mode: "made", raw: 2000, ml: 50 } }; Admin.renderCostCalc(true); await wait(30);
+    const $ = id => document.getElementById(id), fire = (e, n) => e.dispatchEvent(new Event(n, { bubbles: true }));
+    $("cc0-pack").value = "50+30+20"; fire($("cc0-pack"), "input"); $("cc0-oth").value = "10"; $("cc0-othm").value = "pct"; fire($("cc0-othm"), "change");
+    const tot = $("cc0-tot").textContent, pv = $("cc0-packv").textContent, ov = $("cc0-othv").textContent;
+    $("cc0-othm").value = "fixed"; fire($("cc0-othm"), "change"); const totFixed = $("cc0-tot").textContent; $("cc0-othm").value = "pct"; fire($("cc0-othm"), "change");
+    Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
+    const saved = Admin.fin.cc.cx, cost = Admin.fin.costs.cx;
+    $("cc0-pack").value = "5++"; fire($("cc0-pack"), "input"); const bad = /غير مفهومة/.test($("cc0-packv").textContent); Admin.fin.costs.cx = 999; Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /حفظ/.test(b.textContent)).click(); await wait(40);
+    const out = { ev, tot, pv, ov, totFixed, packx: saved.packx, pack: saved.pack, othm: saved.othm, oth: saved.oth, cost, bad, rejected: Admin.fin.costs.cx === 999 };
+    Admin.products = pr0; Priv.set = set0; Admin.renderFinance = rf0; return out;
+  });
+  ok("إكسل في التغليف: المجموع والأقواس والأرقام العربية والفاصلة، وغير المفهوم/القسمة على صفر = غير صالح", xp.ev.a === 100 && xp.ev.b === 100 && xp.ev.c === 80 && Number.isNaN(xp.ev.d) && Number.isNaN(xp.ev.e) && xp.ev.f === 0 && xp.ev.g === 15 && Number.isNaN(xp.ev.h), xp);
+  ok("مصاريف أخرى: نسبة 10% من (تكلفة المادة 100 + العبوة 50+30+20) = 20 ⟵ الإجمالي 220؛ وكقيمة ثابتة 10 ⟵ 210؛ والحفظ يُبقي الصيغة", xp.tot === "220" && /100/.test(xp.pv) && /20/.test(xp.ov) && xp.totFixed === "210" && xp.packx === "50+30+20" && xp.pack === 100 && xp.othm === "pct" && xp.oth === 10 && xp.cost === 220, xp);
+  ok("صيغة غير مفهومة في التغليف: تحذير ولا يُحفظ", xp.bad && xp.rejected, xp);
   // ── مكتبة المواد الأولية: تغيير السعر مرة واحدة يحدّث الوصفات والتكلفة ──
   const ml = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
