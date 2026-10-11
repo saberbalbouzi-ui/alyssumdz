@@ -10,7 +10,7 @@ const AdminYd = (() => {
   const masked = v => /\*/.test(String(v || ""));
   const S = { rows: [], total: 0, partial: false, at: 0, st: "", q: "", wil: "", from: "", to: "", link: "", fopen: false, page: 1, busy: false, prog: "" };
   const A = () => (typeof Admin !== "undefined" ? Admin : null);
-  const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const norm = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f\u064b-\u065f\u0670]/g, "").toLowerCase().replace(/[\u0623\u0625\u0622]/g, "\u0627").replace(/\u0629/g, "\u0647").replace(/\u0649/g, "\u064a").trim();
   /* لون الحالة: أخضر للتسليم، عنبري للمرتجع الذي ينتظر، أحمر للمرتجع/الفشل، داكن لغيرها */
   function tone(st) {
     const s = norm(st);
@@ -171,7 +171,7 @@ const AdminYd = (() => {
     } else {
       body = info + '<p id="ydp-msg" style="min-height:1.3em;margin:.4rem 0;font-size:.85rem"></p><div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
         (can ? '<button class="small gold" type="button" data-ydp-do="edit">✏️ تعديل</button><button class="small" type="button" style="background:var(--red)" data-ydp-do="del">🗑 حذف الطرد</button>' : '<span class="hint" style="margin:0">التعديل والحذف متاحان فقط للطرد في مرحلة التحضير (En préparation) — بعدها لا تقبلهما الشركة.</span>') +
-        (idx >= 0 ? '<button class="small blue" type="button" data-ydp-do="order">📋 فتح الطلب</button>' : '') + '</div>';
+        (idx >= 0 ? '<button class="small blue" type="button" data-ydp-do="order">📋 فتح الطلب</button>' : '') + '<button class="small gold" type="button" data-ydp-do="copy" title="ينسخ الزبون (وطلبه إن كان مرتبطاً) إلى طلب جديد تعدّله وتحفظه">📄 نسخ الزبون كطلب جديد</button></div>';
     }
     bg.innerHTML = '<div class="modal" style="max-width:520px;position:relative"><button type="button" class="ord-x" data-ydp-do="close" title="إغلاق" aria-label="إغلاق">✕</button><h3 style="margin:0 0 .6rem;padding-inline-end:2.4rem">📦 معاينة الطرد</h3>' + body + '</div>';
     bg.addEventListener("click", ev => { if (ev.target === bg) pvClose(); });
@@ -179,6 +179,7 @@ const AdminYd = (() => {
       const b = ev.target.closest("[data-ydp-do]"); if (!b) return; const k = b.dataset.ydpDo, msg = t => { const m = $("ydp-msg"); if (m) m.textContent = t; };
       if (k === "close") pvClose(); else if (k === "back") pvOpen(tr); else if (k === "edit") pvOpen(tr, true);
       else if (k === "order") { pvClose(); a.openOrderPreview(idx); }
+      else if (k === "copy") pvCopy(r, o);
       else if (k === "del") pvDel(r, o, idx, msg); else if (k === "save") pvSave(r, msg);
     });
     bg.addEventListener("change", ev => {
@@ -187,6 +188,14 @@ const AdminYd = (() => {
       if (id === "ydp-t") { const dw = $("ydp-dw"); if (dw) dw.style.display = ev.target.value === "stop" ? "" : "none"; }
     });
     document.body.appendChild(bg);
+  }
+  /* نسخ الزبون إلى طلب جديد: الطرد المرتبط بطلب ينسخ الطلب كله، وغيره ينسخ الزبون (الاسم والهاتف والوجهة) إن لم يكن مقنَّعاً */
+  function pvCopy(r, o) {
+    const M = window.ManualOrder, a = A(); if (!M || !a) return; const rl = real(r, o);
+    if (masked(rl.name) || masked(rl.phone)) { if (typeof toast === "function") toast("⚠️ اسم وهاتف هذا الزبون مقنَّعان عند الشركة — النسخ متاح للطرد المرتبط بطلب في لوحتك"); return; }
+    let src = o;
+    if (!src) { const W = typeof WILAYAS !== "undefined" ? WILAYAS : [], w = W.find(x => norm(x.name) === norm(r.wilaya)); src = { id: r.tracking, name: rl.name, phone: rl.phone, wilaya: w ? w.name : r.wilaya, commune: r.commune, dtype: r.stop ? "stop" : "home", desk: "", items: "", fee: w ? (Number(r.stop ? w.stop : w.home) || 0) : 0, discount: 0, subtotal: 0, total: 0, status: "nouvelle" }; }
+    pvClose(); M.open({ mode: "copy", order: src });
   }
   async function pvDel(r, o, idx, msg) {
     if (!confirm("حذف الطرد " + r.tracking + " من شركة التوصيل؟" + (o ? "\nسيعود الطلب المرتبط إلى قائمة الطلبات." : ""))) return;
@@ -236,6 +245,7 @@ const AdminYd = (() => {
   });
   document.addEventListener("input", e => {
     const f = e.target.closest("#yd-card [data-yd-in]"); if (!f) return; S[f.dataset.ydIn] = f.value; S.page = 1;
+    if (f.dataset.ydIn === "q") { const sq = $("ship-q"); if (sq && sq.value !== f.value) { sq.value = f.value; try { A().renderShipped(); } catch (x) { } } }
     const pos = f.selectionStart; draw(); const n = document.querySelector('#yd-card [data-yd-in="' + f.dataset.ydIn + '"]'); if (n && f.tagName === "INPUT" && f.type !== "date") { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { } }
   });
   function init() {
@@ -244,5 +254,7 @@ const AdminYd = (() => {
     if (!$("tab-shipped").classList.contains("hidden")) { draw(); auto(); }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
-  return { set, draw, load, S };
+  /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
+  function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
+  return { set, draw, load, S, setQuery };
 })();

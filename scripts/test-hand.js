@@ -376,6 +376,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
   ok("تكلفة المنتجات: مسح خانة سعر الشراء وحفظها يحذف السعر فعلاً (لا يعود بعد التحديث)", cc.clearedCost && cc.clearedCc && cc.clearedUi, cc);
   ok("جدول التكلفة: «حفظ» لمن يصنّع يجعل الإجمالي المحسوب سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
+  // ── بحث الطلبات المسجلة تلقائي ويصفّي البطاقتين + نسخ الزبون من معاينة الطرد ──
+  const sq = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); Admin.refreshAlerts = async () => {}; document.getElementById("tab-shipped").classList.remove("hidden");
+    const mk = (id, name, trk, ph) => ({ id, date: "2026-10-10T20:00:00.000Z", status: "confirmee", name, phone: ph, wilaya: "Alger", commune: "Kouba", dtype: "home", desk: "", items: "منتج أ ×1 = 1000 DA", subtotal: 1000, fee: 600, total: 1600, discount: 0, coupon: "", extra: {}, note: "🚚yalidine:" + trk });
+    const pr0 = Admin.products; Admin.products = [{ slug: "pa", title: "منتج أ", price: 1000, active: true }];
+    Admin.orders = [mk("A1", "نسرين بن علي", "yal-1", "0550111111"), mk("A2", "كريم", "yal-2", "0660222222")];
+    AdminYd.set([{ tracking: "yal-1", date: "2026-10-10", name: "ن*** ب**", phone: "05*****11", wilaya: "Alger", commune: "Kouba", price: 1600, status: "En préparation" }, { tracking: "yal-2", date: "2026-10-10", name: "ك***", phone: "06*****22", wilaya: "Alger", commune: "Kouba", price: 1600, status: "En préparation" }, { tracking: "yal-3", date: "2026-10-10", name: "ع*** ا**", phone: "07*****33", wilaya: "Oran", commune: "Es Senia", price: 2000, status: "En préparation" }], 3, false);
+    Admin.renderShipped();
+    const before = { yd: document.querySelectorAll("#yd-card tbody tr").length, ship: document.querySelectorAll("#ship-table tr:not(.hd)").length };
+    const inp = document.getElementById("ship-q"); inp.value = "نِسْرين"; inp.dispatchEvent(new Event("input", { bubbles: true })); await wait(50);
+    const after = { yd: document.querySelectorAll("#yd-card tbody tr").length, ship: document.querySelectorAll("#ship-table tr:not(.hd)").length, ydName: (document.querySelector("#yd-card tbody tr td:nth-child(3)") || {}).textContent };
+    inp.value = ""; inp.dispatchEvent(new Event("input", { bubbles: true })); await wait(30); const reset = document.querySelectorAll("#yd-card tbody tr").length;
+    // نسخ الزبون: طرد مرتبط ثم طرد مقنَّع
+    window.confirm = () => true; document.querySelector('#yd-card [data-ydp="yal-1"]').click(); const cb = document.querySelector("#ydp-bg [data-ydp-do=copy]"); const hasBtn = !!cb; cb.click(); await wait(30);
+    const linked = { open: !!document.getElementById("mo-bg"), name: (document.getElementById("mo-name") || {}).value, phone: (document.getElementById("mo-phone") || {}).value, rows: document.querySelectorAll("#mo-lines tr[data-i]").length }; const mb = document.getElementById("mo-bg"); if (mb) mb.remove();
+    document.querySelector('#yd-card [data-ydp="yal-3"]').click(); document.querySelector("#ydp-bg [data-ydp-do=copy]").click(); await wait(30); const masked = !document.getElementById("mo-bg");
+    const bg = document.getElementById("ydp-bg"); if (bg) bg.remove(); document.getElementById("tab-shipped").classList.add("hidden"); Admin.products = pr0;
+    return { before, after, reset, hasBtn, linked, masked };
+  });
+  ok("بحث الطلبات المسجلة: أثناء الكتابة يصفّي الجدولين معاً (بطاقة طرود حسابك وجدول الطلبات) بتطبيع الأحرف والتشكيل ويُلغى بمسح الخانة", sq.before.yd === 3 && sq.before.ship === 2 && sq.after.yd === 1 && sq.after.ship === 1 && /نسرين/.test(sq.after.ydName || "") && sq.reset === 3, sq);
+  ok("معاينة الطرد: «نسخ الزبون كطلب جديد» يفتح نموذج طلب جديد ببيانات الزبون وطلبه للمرتبط، ويرفض الطرد المقنَّع", sq.hasBtn && sq.linked.open && sq.linked.name === "نسرين بن علي" && sq.linked.phone === "0550111111" && sq.linked.rows === 1 && sq.masked, sq);
   // ── مطابقة ياليدين: طلب ملغى طرده «Expédié» يعود قائماً، والمؤكَّد بلا طرد عند الشركة يُعرض للإلغاء ──
   const rc = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
