@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.116">
+<meta name="admin-version" content="1.89.117">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -789,9 +789,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-returns" class="hidden admin-extra-tab"><div id="returns-content"></div></div>
   <div id="tab-payments" class="hidden admin-extra-tab"><div id="payments-content"></div></div>
   <div id="tab-costs" class="hidden">
+    <div class="tab-seg" id="cc-seg"><button type="button" class="small green" data-cv="rcp" onclick="Admin.ccView('rcp')">🧪 الوصفات</button><button type="button" class="small gold on" data-cv="cost" onclick="Admin.ccView('cost')">🏭 التكلفة</button></div>
     <div class="card" id="fin-cc">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"><b style="color:var(--green);font-size:1.02rem">🧪 تكلفة المنتجات</b><span style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small blue" type="button" onclick="Admin.matOpen()" title="المواد الأولية وأسعارها في مكان واحد تُستعمل في كل الوصفات">📚 مكتبة المواد الأولية</button><button class="small warn" type="button" onclick="Admin.ccClearAll()" title="يحذف سعر الشراء وبيانات التكلفة لكل المنتجات لتبدأ من جديد">🗑 مسح كل الأسعار</button></span></div>
-      <details style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب التكلفة؟</summary><div class="hint" style="margin:.4rem 0">القسمان أدناه <b>يحدّدان سعر الشراء لكل منتج</b> (يظهر في «المخزون والأرباح») ويُفتح كل منهما ويُغلق: <b>🏭 التكلفة الإنتاجية</b> للمنتجات التي تصنّعها، و<b>🛒 المنتجات الجاهزة</b> للتي تشتريها جاهزة. أضف أي منتج من قائمة <b>＋ إضافة منتج</b> في القسم، وتبديل <b>نوع المنتج</b> ينقله إلى القسم الآخر. في «الجاهز» اكتب <b>سعر شراء العلبة</b> مباشرة؛ أو وفي «التكلفة الإنتاجية» أدخل <b>الوحدة (لتر/كلغ)</b> و<b>سعرها</b> و<b>حجم العبوة (مل/غ)</b> فتُحسب <b>تكلفة المادة = السعر × الحجم ÷ 1000</b> ثم أضف <b>سعر العلبة والتغليف</b> و<b>مصاريف أخرى</b>، أو زر <b>🧪 الوصفة</b> لحساب سعر اللتر/الكلغ من <b>نسب المواد الأولية</b>. زر <b>💾 حفظ</b> يحفظ ويجعل الناتج سعر شراء المنتج. و<b>📚 مكتبة المواد الأولية</b> تُحدّث تكلفة كل المنتجات عند تغيير سعر مادة.</div></details>
+      <details id="cc-help" style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب التكلفة؟</summary><div class="hint" style="margin:.4rem 0">القسمان أدناه <b>يحدّدان سعر الشراء لكل منتج</b> (يظهر في «المخزون والأرباح») ويُفتح كل منهما ويُغلق. <b>🏭 التكلفة الإنتاجية</b> للمنتجات التي تصنّعها: <b>سعر اللتر/الكلغ</b> يأتي تلقائياً من تبويب <b>🧪 الوصفات</b> (ويتغيّر معها)، وتُدخل <b>حجم العبوة (مل/غ)</b> فتُحسب <b>تكلفة المادة = السعر × الحجم ÷ 1000</b> ثم <b>سعر العلبة والتغليف</b> و<b>مصاريف أخرى</b>. <b>🛒 المنتجات الجاهزة</b> للتي تشتريها جاهزة: اكتب <b>سعر شراء العلبة</b> مباشرة. أضف أي منتج من قائمة <b>＋ إضافة منتج</b> (اختيار أو كتابة اسم). زر <b>💾 حفظ</b> يجعل الناتج سعر شراء المنتج. و<b>📚 مكتبة المواد الأولية</b> تُحدّث الوصفات وتكلفة المنتجات عند تغيير سعر مادة.</div></details>
+      <div id="rcp-view" class="hidden"></div>
       <div id="fin-cc-rows" style="overflow-x:auto"></div>
     </div>
   </div>
@@ -1604,12 +1606,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.116"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.116"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.116"></script>
+<script src="assets/js/ctl-help.js?v=1.89.117"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.117"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.117"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.116"></script>
+<script src="assets/js/admin-nav.js?v=1.89.117"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1621,7 +1623,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.116"></script>
+<script src="assets/js/admin-update.js?v=1.89.117"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -2585,7 +2587,7 @@ const Admin = {
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="finance") this.renderFinance();
-    if(t==="costs"){ this._ccDraft = {}; this._ccPend = {}; this.renderCostCalc(true); }
+    if(t==="costs"){ this._ccDraft = {}; this._ccPend = {}; this._rc = null; this.ccView(this._ccV || "cost"); }
     if(t==="setup") this.renderSetup();
     if(t==="repeat") this.renderRepeat();
     if(t==="shipped"){ this.renderShipped(); this.autoSyncShipped(); }
@@ -5250,8 +5252,9 @@ const Admin = {
     if(old.delVal == null && old.carrierPct != null) S0.delVal = old.carrierPct;      // ترحيل الإعدادات القديمة
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
     if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
-    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
+    try{ this.rcpMigrate(); }catch(e){ }
     this.reconcileStatusChanges();
   },
   /* رابط الـ Webhook: نسخة PHP تستقبله مباشرة (api/index.php?r=webhook)، ونسخة Supabase عبر دالة Edge باسم yalidine-webhook (انظر supabase/README.md) */
@@ -5568,22 +5571,24 @@ const Admin = {
   },
   /* مصاريف أخرى: قيمة ثابتة (دج) أو نسبة مئوية (othm:"pct") من (تكلفة المادة + سعر العلبة والتغليف) */
   ccCalc(c){ const f = k=>Math.max(0, Number(c && c[k]) || 0), mat = f("raw") * f("ml") / 1000, pack = f("pack"), oth = c && c.othm === "pct" ? (mat + pack) * f("oth") / 100 : f("oth"); return { mat, pack, oth, total: mat + pack + oth }; },
-  ccList(){ return this.products.filter(p=>p.slug !== "test"); },
+  ccList(){ const cc = (this.fin && this.fin.cc) || {}; return this.products.filter(p=>p.slug !== "test").concat(Object.keys(cc).filter(k=>k.indexOf("x:") === 0).map(k=>({ slug: k, title: cc[k].name || k, manual: true }))); },
   ccModeOf(slug){ const c = ((this.fin && this.fin.cc) || {})[slug] || {}; return c.mode || ((c.raw || c.ml || (c.rec && c.rec.length)) ? "made" : "bought"); },
   ccRowHtml(i, mode){
-    const L = this.ccList(), p = L[i], cc = (this.fin && this.fin.cc) || {}, dr = (this._ccDraft || {})[p.slug] || {}, c = dr.c ? Object.assign({}, { rec: (cc[p.slug] || {}).rec }, dr.c) : (cc[p.slug] || {}), td = 'style="padding:.35rem .5rem;border-top:1px solid var(--line);vertical-align:middle"', n = v=>(Math.round(v * 100) / 100).toLocaleString("fr-DZ");
-    mode = mode || this.ccModeOf(p.slug); const made = mode === "made", r = this.ccCalc(c), rec = c.rec && c.rec.length, kg = c.unit === "kg", dash = '<td ' + td + ' style="opacity:.35">—</td>';
-    const inp = (k, ph, w, ro)=>'<input id="cc' + i + '-' + k + '" type="number" min="0" step="any" placeholder="' + ph + '" value="' + (c[k] || "") + '" style="max-width:' + w + 'px"' + (ro ? ' readonly title="محسوب من الوصفة — عدّله من زر الوصفة" ' : '') + '>';
-    const buy = dr.buy != null ? dr.buy : this.fin.costs[p.slug];
-    return '<tr data-cc="' + i + '" oninput="Admin.ccLive(' + i + ')" onchange="Admin.ccLive(' + i + ')"><td ' + td + '><b>' + String(p.title || p.slug).replace(/[<>&]/g, "") + '</b></td>' +
-      '<td ' + td + '><select id="cc' + i + '-mode" onchange="Admin.ccMode(' + i + ',this.value)"><option value="bought"' + (made ? "" : " selected") + '>مشترى جاهز</option><option value="made"' + (made ? " selected" : "") + '>أصنّعه بنفسي</option></select></td>' +
-      (made ? '<td ' + td + '><select id="cc' + i + '-unit"><option value="L"' + (kg ? "" : " selected") + '>لتر</option><option value="kg"' + (kg ? " selected" : "") + '>كلغ</option></select></td>' +
-        '<td ' + td + '>' + inp("raw", "0", 120, rec) + (rec ? '<div class="hint" style="margin:.15rem 0 0">من الوصفة</div>' : '') + '</td><td ' + td + '>' + inp("ml", "0", 100) + '</td>' +
+    const L = this.ccList(), p = L[i], cc = (this.fin && this.fin.cc) || {}, dr = (this._ccDraft || {})[p.slug] || {}, td = 'style="padding:.35rem .5rem;border-top:1px solid var(--line);vertical-align:middle"', n = v=>(Math.round(v * 100) / 100).toLocaleString("fr-DZ");
+    let c = dr.c ? Object.assign({}, dr.c) : Object.assign({}, cc[p.slug] || {});
+    const made = mode === "made", rcp = made ? this.rcpOf(p.slug, cc[p.slug]) : null;
+    if(rcp){ c.raw = this.rcpUnitCost(rcp); if(rcp.unit === "kg") c.unit = "kg"; else delete c.unit; }       // سعر اللتر/الكلغ تلقائي من الوصفة ويتغير معها
+    const r = this.ccCalc(c), kg = c.unit === "kg", buy = dr.buy != null ? dr.buy : this.fin.costs[p.slug];
+    const inp = (k, ph, w, ro)=>'<input id="cc' + i + '-' + k + '" type="number" min="0" step="any" placeholder="' + ph + '" value="' + (c[k] || "") + '" style="max-width:' + w + 'px"' + (ro ? ' readonly title="محسوب من الوصفة — عدّله من تبويب الوصفات" ' : '') + '>';
+    const name = '<td style="padding:.35rem .5rem;border-top:1px solid var(--line);vertical-align:middle;white-space:nowrap;min-width:150px"><b>' + String(p.title || p.slug).replace(/[<>&"]/g, "") + '</b>' + (p.manual ? ' <small class="hint" style="margin:0">(يدوي)</small>' : '') + '</td>';
+    return '<tr data-cc="' + i + '" data-sec="' + (made ? "made" : "bought") + '" oninput="Admin.ccLive(' + i + ')" onchange="Admin.ccLive(' + i + ')">' + name +
+      (made ? '<td ' + td + '><select id="cc' + i + '-unit"' + (rcp ? ' disabled title="الوحدة من الوصفة"' : '') + '><option value="L"' + (kg ? "" : " selected") + '>لتر</option><option value="kg"' + (kg ? " selected" : "") + '>كلغ</option></select></td>' +
+        '<td ' + td + '>' + inp("raw", "0", 120, !!rcp) + (rcp ? '<div class="hint" style="margin:.15rem 0 0">من الوصفة</div>' : '') + '</td><td ' + td + '>' + inp("ml", "0", 100) + '</td>' +
         '<td ' + td + '><b id="cc' + i + '-mat">' + n(r.mat) + '</b> دج</td><td ' + td + '><input id="cc' + i + '-pack" type="text" inputmode="decimal" dir="ltr" placeholder="مثال: 50+30+20" value="' + String(c.packx || c.pack || "").replace(/"/g, "") + '" title="اكتب رقماً أو مجموعاً كما في إكسل مثل 50+30+20" style="max-width:150px"><div class="hint" id="cc' + i + '-packv" style="margin:.15rem 0 0"></div></td>' +
         '<td ' + td + '><div style="display:flex;gap:.3rem;align-items:center"><input id="cc' + i + '-oth" type="text" inputmode="decimal" dir="ltr" placeholder="0" value="' + String(c.othx || c.oth || "").replace(/"/g, "") + '" style="max-width:90px"><select id="cc' + i + '-othm" title="قيمة ثابتة بالدينار أو نسبة مئوية من (تكلفة المادة + سعر العلبة والتغليف)"><option value="fixed"' + (c.othm === "pct" ? "" : " selected") + '>دج</option><option value="pct"' + (c.othm === "pct" ? " selected" : "") + '>%</option></select></div><div class="hint" id="cc' + i + '-othv" style="margin:.15rem 0 0"></div></td>' +
         '<td ' + td + '><b id="cc' + i + '-tot" style="color:var(--green);font-size:1.05rem">' + n(r.total) + '</b> دج</td>'
-                   : '<td ' + td + '><input id="cc' + i + '-buy" type="number" min="0" step="any" placeholder="سعر شراء العلبة" value="' + (buy == null ? "" : buy) + '" style="max-width:150px;font-weight:800"> دج</td>') +
-      '<td ' + td + '><div style="display:flex;gap:.35rem;white-space:nowrap">' + (made ? '<button class="small blue" type="button" onclick="Admin.ccmOpen(' + i + ')" title="احسب سعر اللتر/الكلغ من نسب المواد الأولية">🧪 الوصفة' + (rec ? " ✓" : "") + '</button>' : '') + '<button class="small green" type="button" onclick="Admin.ccSave(' + i + ')" title="يحفظ ويجعل الناتج سعر شراء هذا المنتج">💾 حفظ</button><button class="small warn" type="button" onclick="Admin.ccRemove(' + i + ')" title="إزالة هذا المنتج من القائمة وحذف سعره">🗑</button></div></td></tr>';
+       : '<td ' + td + '><input id="cc' + i + '-buy" type="number" min="0" step="any" placeholder="سعر شراء العلبة" value="' + (buy == null ? "" : buy) + '" style="max-width:150px;font-weight:800"> دج</td>') +
+      '<td ' + td + '><div style="display:flex;gap:.35rem;white-space:nowrap">' + (made ? '<button class="small blue" type="button" onclick="Admin.rcpGo(' + i + ')" title="افتح وصفة هذا المنتج في تبويب الوصفات">🧪 الوصفة' + (rcp ? " ✓" : "") + '</button>' : '') + '<button class="small green" type="button" onclick="Admin.ccSave(' + i + ')" title="يحفظ ويجعل الناتج سعر شراء هذا المنتج">💾 حفظ</button><button class="small warn" type="button" onclick="Admin.ccRemove(' + i + ')" title="إزالة هذا المنتج من القائمة وحذف سعره">🗑</button></div></td></tr>';
   },
   /* المنتج في قسم «مصنَّع» أم «جاهز»: النوع المحفوظ أو المعلّق (إضافة/تبديل لم يُحفظ بعد)؛ والجاهز يظهر إن كان له سعر أو نوع محفوظ أو أُضيف للتو */
   ccSec(slug){
@@ -5601,28 +5606,49 @@ const Admin = {
   },
   renderCostCalc(force){
     const box = $f("fin-cc-rows"); if(!box) return; if(!force && document.activeElement && box.contains(document.activeElement)) return;
-    const th = 'style="padding:.45rem .5rem;text-align:right;white-space:nowrap"', L = this.ccList(), st = this.ccOpenState();
-    const list = {made: [], bought: [], none: []}; L.forEach((p, i)=>list[this.ccSec(p.slug)].push(i));
-    const opt = idxs=>idxs.map(i=>'<option value="' + i + '">' + String(L[i].title || L[i].slug).replace(/[<>&"]/g, "") + '</option>').join("");
-    const addBar = (k, idxs)=>idxs.length ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.6rem"><select id="cc-add-' + k + '" style="min-width:220px"><option value="">— اختر منتجاً —</option>' + opt(idxs) + '</select><button class="small green" type="button" onclick="Admin.ccAdd(\'' + k + '\')">＋ إضافة منتج</button></div>' : '<div class="hint" style="margin-top:.5rem">كل المنتجات مضافة.</div>';
+    const th = 'style="padding:.45rem .5rem;text-align:right;white-space:nowrap"', L = this.ccList(), st = this.ccOpenState(), esc = v=>String(v == null ? "" : v).replace(/[<>&"]/g, "");
+    const list = { made: [], bought: [], none: [] }; L.forEach((p, i)=>list[this.ccSec(p.slug)].push(i));
+    const opt = idxs=>idxs.map(i=>'<option value="p:' + i + '">' + esc(L[i].title || L[i].slug) + '</option>').join("");
+    const madeKeys = new Set(list.made.map(i=>L[i].slug)), rcpFree = Object.values(this.fin.rcp || {}).filter(r=>!madeKeys.has(r.slug && L.some(p=>p.slug === r.slug) ? r.slug : "x:" + r.id) && !list.made.some(i=>L[i].manual && this.rcpNorm(L[i].title) === this.rcpNorm(r.name)));
+    const addMade = (list.bought.length + list.none.length + rcpFree.length) ?
+      '<div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.6rem"><select id="cc-add-made" style="min-width:230px"><option value="">— اختر من القائمة —</option>' +
+        (rcpFree.length ? '<optgroup label="المنتجات المسجّلة في الوصفات">' + rcpFree.map(r=>'<option value="r:' + esc(r.id) + '">' + esc(r.name) + '</option>').join("") + '</optgroup>' : '') +
+        ((list.bought.length + list.none.length) ? '<optgroup label="منتجات المتجر">' + opt(list.bought.concat(list.none).filter(i=>!L[i].manual)) + '</optgroup>' : '') + '</select>' +
+        '<input id="cc-add-made-t" placeholder="أو اكتب اسم منتج" style="min-width:170px"><button class="small green" type="button" onclick="Admin.ccAdd(\'made\')">＋ إضافة منتج</button></div>'
+      : '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem"><input id="cc-add-made-t" placeholder="اكتب اسم منتج" style="min-width:200px"><button class="small green" type="button" onclick="Admin.ccAdd(\'made\')">＋ إضافة منتج</button></div>';
+    const addBought = list.none.length ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.6rem"><select id="cc-add-bought" style="min-width:230px"><option value="">— اختر منتجاً —</option>' + opt(list.none.filter(i=>!L[i].manual)) + '</select><button class="small green" type="button" onclick="Admin.ccAdd(\'bought\')">＋ إضافة منتج</button></div>' : '<div class="hint" style="margin-top:.5rem">كل المنتجات مضافة.</div>';
     const rows = k=>list[k].map(i=>this.ccRowHtml(i, k)).join("");
-    const madeAdd = list.bought.concat(list.none), boughtAdd = list.none;
     box.innerHTML =
       '<details class="cc-sec" data-k="made"' + (st.made ? " open" : "") + ' ontoggle="Admin.ccToggle(\'made\',this.open)" style="margin:.4rem 0 .9rem"><summary style="cursor:pointer;font-weight:800;font-size:1.02rem;padding:.4rem 0">🏭 التكلفة الإنتاجية — المنتجات المصنَّعة <small style="opacity:.7">(' + list.made.length + ')</small></summary>' +
-        '<div class="hint" style="margin:.2rem 0 .5rem">تُحسب تكلفة العلبة من موادها الأولية: سعر اللتر/الكلغ × حجم العبوة + العبوة والتغليف + مصاريف أخرى. «🧪 الوصفة» تحسب سعر الخلطة من نسب المواد.</div>' +
-        '<div style="overflow-x:auto">' + (list.made.length ? '<table style="width:100%;border-collapse:collapse;min-width:1150px"><tr class="hd"><th ' + th + '>المنتج</th><th ' + th + '>نوع المنتج</th><th ' + th + '>الوحدة</th><th ' + th + '>سعر اللتر / الكلغ (دج)</th><th ' + th + '>حجم العبوة (مل / غ)</th><th ' + th + '>تكلفة المادة للعلبة</th><th ' + th + '>سعر العلبة والتغليف (دج)</th><th ' + th + '>مصاريف أخرى (ثابتة أو %)</th><th ' + th + '>التكلفة الإجمالية للعلبة</th><th ' + th + '></th></tr>' + rows("made") + '</table>' : '<div class="hint">لا منتجات مصنَّعة بعد. أضف منتجاً من القائمة أدناه.</div>') + '</div>' + addBar("made", madeAdd) + '</details>' +
+        '<div class="hint" style="margin:.2rem 0 .5rem">سعر اللتر/الكلغ <b>تلقائي من تبويب الوصفات</b> ويتغيّر معها (يدوي إن لم تكن للمنتج وصفة). أدخل حجم العبوة والعبوة والتغليف ومصاريف أخرى فتُحسب تكلفة العلبة: السعر × الحجم ÷ 1000 + العبوة + المصاريف.</div>' +
+        '<div style="overflow-x:auto">' + (list.made.length ? '<table style="width:100%;border-collapse:collapse;min-width:1050px"><tr class="hd"><th ' + th + '>المنتج</th><th ' + th + '>الوحدة</th><th ' + th + '>سعر اللتر / الكلغ (دج)</th><th ' + th + '>حجم العبوة (مل / غ)</th><th ' + th + '>تكلفة المادة للعلبة</th><th ' + th + '>سعر العلبة والتغليف (دج)</th><th ' + th + '>مصاريف أخرى (ثابتة أو %)</th><th ' + th + '>التكلفة الإجمالية للعلبة</th><th ' + th + '></th></tr>' + rows("made") + '</table>' : '<div class="hint">لا منتجات مصنَّعة بعد. أضف منتجاً من القائمة أو اكتب اسمه.</div>') + '</div>' + addMade + '</details>' +
       '<details class="cc-sec" data-k="bought"' + (st.bought ? " open" : "") + ' ontoggle="Admin.ccToggle(\'bought\',this.open)" style="margin:.4rem 0"><summary style="cursor:pointer;font-weight:800;font-size:1.02rem;padding:.4rem 0">🛒 تكلفة المنتجات الجاهزة (المشتراة) <small style="opacity:.7">(' + list.bought.length + ')</small></summary>' +
         '<div class="hint" style="margin:.2rem 0 .5rem">منتجات تشتريها جاهزة: اكتب سعر شراء العلبة مباشرة.</div>' +
-        '<div style="overflow-x:auto">' + (list.bought.length ? '<table style="width:100%;border-collapse:collapse;min-width:620px"><tr class="hd"><th ' + th + '>المنتج</th><th ' + th + '>نوع المنتج</th><th ' + th + '>سعر شراء العلبة (دج)</th><th ' + th + '></th></tr>' + rows("bought") + '</table>' : '<div class="hint">لا منتجات جاهزة بعد. أضف منتجاً من القائمة أدناه.</div>') + '</div>' + addBar("bought", boughtAdd) + '</details>';
+        '<div style="overflow-x:auto">' + (list.bought.length ? '<table style="width:100%;border-collapse:collapse;min-width:520px"><tr class="hd"><th ' + th + '>المنتج</th><th ' + th + '>سعر شراء العلبة (دج)</th><th ' + th + '></th></tr>' + rows("bought") + '</table>' : '<div class="hint">لا منتجات جاهزة بعد. أضف منتجاً من القائمة أدناه.</div>') + '</div>' + addBought + '</details>';
     setTimeout(()=>{ L.forEach((p, i)=>this.ccLive(i)); }, 0);
   },
-  /* إضافة منتج لقسم: يصير معلّقاً حتى «حفظ»؛ إضافته لـ«مصنَّع» تنقله من «جاهز» */
-  ccAdd(k){
-    const sel = $f("cc-add-" + k), i = sel ? parseInt(sel.value, 10) : NaN, p = this.ccList()[i]; if(!p){ toast("⚠️ اختر منتجاً أولاً"); return; }
-    this.ccSnap(); this._ccPend = this._ccPend || {}; this._ccPend[p.slug] = k === "made" ? "made" : "bought"; this.renderCostCalc(true);
+  /* تبويبا الصفحة: «الوصفات» و«التكلفة» */
+  ccView(v){
+    this._ccV = v === "rcp" ? "rcp" : "cost"; const rcp = this._ccV === "rcp";
+    document.querySelectorAll("#cc-seg button").forEach(b=>b.classList.toggle("on", b.dataset.cv === this._ccV));
+    const a = $f("rcp-view"), b = $f("fin-cc-rows"), h = $f("cc-help"); if(a) a.classList.toggle("hidden", !rcp); if(b) b.classList.toggle("hidden", rcp); if(h) h.classList.toggle("hidden", rcp);
+    if(rcp){ if(!this._rc) this.rcpOpen(); this.rcpDraw(); } else this.renderCostCalc(true);
   },
-  /* تبديل نوع صف: ينتقل فوراً إلى القسم الآخر (يُحذف من القسم الذي لا ينتمي إليه) */
-  ccMode(i, v){ const p = this.ccList()[i]; if(!p) return; this.ccSnap(); this._ccPend = this._ccPend || {}; this._ccPend[p.slug] = v === "made" ? "made" : "bought"; this.renderCostCalc(true); },
+  /* إضافة منتج لقسم: من قائمة الوصفات/المتجر أو باسم يُكتب؛ المصنَّع اليدوي يُحفظ فوراً، ومنتج المتجر معلّق حتى «حفظ» */
+  async ccAdd(k){
+    const sel = $f("cc-add-" + k), txt = $f("cc-add-" + k + "-t"), L = this.ccList(); let v = sel ? sel.value : "", t = txt ? String(txt.value || "").trim() : "";
+    this.ccSnap(); this._ccPend = this._ccPend || {};
+    const addManual = async (name, rid)=>{ const key = "x:" + (rid || Date.now().toString(36) + Math.floor(Math.random() * 99)), cc = Object.assign({}, this.fin.cc || {}); if(!cc[key]) cc[key] = rid ? { mode: "made", name, rid } : { mode: "made", name }; this.fin.cc = cc; await Priv.set("costcalc", cc); this.renderCostCalc(true); };
+    if(t){
+      const hit = L.findIndex(p=>this.rcpNorm(p.title) === this.rcpNorm(t) || this.rcpNorm(p.slug) === this.rcpNorm(t));
+      if(hit >= 0) v = "p:" + hit;
+      else { const rc = Object.values(this.fin.rcp || {}).find(r=>this.rcpNorm(r.name) === this.rcpNorm(t)); if(rc) v = "r:" + rc.id; else if(k === "made") return addManual(t); else { toast("⚠️ اختر منتجاً من القائمة"); return; } }
+    }
+    if(!v){ toast("⚠️ اختر منتجاً أو اكتب اسمه"); return; }
+    if(v.indexOf("r:") === 0){ const rc = (this.fin.rcp || {})[v.slice(2)]; if(!rc) return; const idx = rc.slug ? L.findIndex(p=>p.slug === rc.slug) : -1; if(idx < 0) return addManual(rc.name, rc.id); v = "p:" + idx; }
+    const p = L[parseInt(v.slice(2), 10)]; if(!p){ toast("⚠️ اختر منتجاً أولاً"); return; }
+    this._ccPend[p.slug] = k === "made" ? "made" : "bought"; this.renderCostCalc(true);
+  },
   async ccRemove(i){
     const p = this.ccList()[i]; if(!p) return; const cc = Object.assign({}, this.fin.cc || {}), saved = cc[p.slug] || this.fin.costs[p.slug] != null;
     if(saved && !confirm("إزالة «" + (p.title || p.slug) + "» من القائمة وحذف سعر شراءه؟")) return;
@@ -5650,12 +5676,13 @@ const Admin = {
   /* مسح الصف كاملاً: يُحذف سعر الشراء وبيانات التكلفة (ويبقى المنتج بلا سعر شراء حتى تُدخله) */
   async ccClear(p, cc){
     if(this._ccPend) delete this._ccPend[p.slug]; if(this._ccDraft) delete this._ccDraft[p.slug];
+    if(p.manual){ delete cc[p.slug]; this.fin.cc = cc; await Priv.set("costcalc", cc); toast("🗑 أُزيل «" + (p.title || p.slug) + "»"); this.renderCostCalc(true); return; }
     delete cc[p.slug]; this.fin.cc = cc; await Priv.set("costcalc", cc); this.setCost(p.slug, "");
     toast("🗑 حُذف سعر شراء «" + (p.title || p.slug) + "»"); this.renderCostCalc(true);
   },
   /* حفظ صف: «مشترى جاهز» = السعر المكتوب هو سعر الشراء؛ «أصنّعه» = التكلفة الإجمالية المحسوبة هي سعر الشراء */
   async ccSave(i){
-    const p = this.ccList()[i]; if(!p) return; const mode = ($f("cc" + i + "-mode") || {}).value === "made" ? "made" : "bought", old = (this.fin.cc || {})[p.slug] || {}, cc = Object.assign({}, this.fin.cc || {});
+    const p = this.ccList()[i]; if(!p) return; const trI = document.querySelector('#fin-cc-rows tr[data-cc="' + i + '"]'), mode = trI && trI.dataset.sec === "made" ? "made" : "bought", old = (this.fin.cc || {})[p.slug] || {}, cc = Object.assign({}, this.fin.cc || {});
     let price;
     if(mode === "bought"){
       const raw = String(($f("cc" + i + "-buy") || {}).value || "").trim(); price = Number(raw);
@@ -5664,58 +5691,111 @@ const Admin = {
       cc[p.slug] = Object.assign({}, old, { mode: "bought" }); delete cc[p.slug].adopt;
     } else {
       const c = this.ccRead(i); if(c.packBad || c.othBad){ toast("⚠️ صيغة العبوة أو المصاريف غير مفهومة — اكتب أرقاماً أو مجموعاً مثل 50+30"); return; }
-      if(old.rec && old.rec.length) c.rec = old.rec; c.mode = "made"; c.adopt = true; price = Math.round(this.ccCalc(c).total);
+      if(old.rid) c.rid = old.rid; if(p.manual) c.name = p.title; c.mode = "made"; c.adopt = true; price = Math.round(this.ccCalc(c).total);
       if(!(price > 0)){ if(!Object.keys(c).some(k=>["raw", "ml", "pack", "oth", "rec"].includes(k))) return this.ccClear(p, cc); toast("⚠️ التكلفة الإجمالية صفر — أكمل البيانات أو امسحها كلها لحذف السعر"); return; }
       cc[p.slug] = c;
     }
-    this.fin.cc = cc; await Priv.set("costcalc", cc); if(this._ccPend) delete this._ccPend[p.slug]; if(this._ccDraft) delete this._ccDraft[p.slug]; this.setCost(p.slug, Math.round(price));
-    toast("✅ سعر شراء «" + (p.title || p.slug) + "»: " + Math.round(price).toLocaleString("fr-DZ") + " دج"); this.renderCostCalc(true);
+    this.fin.cc = cc; await Priv.set("costcalc", cc); if(this._ccPend) delete this._ccPend[p.slug]; if(this._ccDraft) delete this._ccDraft[p.slug]; if(!p.manual) this.setCost(p.slug, Math.round(price));
+    toast("✅ " + (p.manual ? "تكلفة" : "سعر شراء") + " «" + (p.title || p.slug) + "»: " + Math.round(price).toLocaleString("fr-DZ") + " دج"); this.renderCostCalc(true);
   },
-  /* وصفة المنتج: مواد أولية بنسب مئوية وسعر وحدتها ← سعر اللتر/الكلغ للخلطة ← × حجم العبوة = تكلفة العلبة */
-  ccmOpen(i){
-    const p = this.ccList()[i]; if(!p) return; const c = ((this.fin.cc || {})[p.slug]) || {}, cur = this.ccRead(i);
-    this._ccm = { i, slug: p.slug, title: p.title || p.slug, unit: (cur.unit === "kg" ? "kg" : "L"), size: cur.ml || "", rows: (c.rec && c.rec.length ? c.rec : [{ n: "", pct: "", pr: "" }]).map(r=>Object.assign({}, r)) };
-    let bg = document.getElementById("ccm-bg");
-    if(!bg){ bg = document.createElement("div"); bg.className = "modal-bg"; bg.id = "ccm-bg"; bg.dir = "rtl"; bg.addEventListener("click", e=>{ if(e.target === bg) bg.classList.remove("open"); }); document.body.appendChild(bg); }
-    this.ccmDraw(); bg.classList.add("open");
+  /* ═══ الوصفات: fin.rcp {id:{id,name,slug,unit,rec:[{m?,n,pct,pr}],at}} — مصدر سعر اللتر/الكلغ للتكلفة الإنتاجية ═══ */
+  rcpUnitCost(r){ return Math.round(((r && r.rec) || []).reduce((a, x)=>a + (Number(x.pct) || 0) * (Number(x.pr) || 0) / 100, 0) * 100) / 100; },
+  rcpNorm(s){ return String(s == null ? "" : s).trim().toLowerCase().replace(/\s+/g, " "); },
+  /* وصفة مرتبطة بمنتج التكلفة: بمعرّف منتج المتجر، أو بالرابط/الاسم للمنتج اليدوي */
+  rcpOf(key, c){
+    const R = Object.values((this.fin && this.fin.rcp) || {}); c = c || ((this.fin && this.fin.cc) || {})[key] || {};
+    if(String(key).indexOf("x:") !== 0) return R.find(r=>r.slug && r.slug === key) || (c.rid && this.fin.rcp[c.rid]) || null;
+    return (c.rid && this.fin.rcp[c.rid]) || R.find(r=>!r.slug && this.rcpNorm(r.name) === this.rcpNorm(c.name)) || null;
   },
-  ccmDraw(){
-    const m = this._ccm, bg = document.getElementById("ccm-bg"); if(!m || !bg) return; const kg = m.unit === "kg", esc = v=>String(v == null ? "" : v).replace(/[<>&"]/g, c=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;" }[c]));
-    bg.innerHTML = '<div class="modal" style="max-width:760px;position:relative"><button type="button" class="ord-x" title="إغلاق" aria-label="إغلاق" onclick="document.getElementById(\'ccm-bg\').classList.remove(\'open\')">✕</button><h3 style="margin:0 0 .5rem;padding-inline-end:2.4rem">🧪 وصفة «' + esc(m.title) + '»</h3>' +
-      '<div class="hint" style="margin:0 0 .6rem">أدخل المواد الأولية بنسبها في الخلطة وسعر ' + (kg ? "الكلغ" : "اللتر") + ' من كل مادة؛ يُحسب <b>سعر ' + (kg ? "الكلغ" : "اللتر") + '</b> للمنتج، ثم <b>حجم العبوة</b> ليعطي <b>سعر العلبة الواحدة</b>.</div>' +
-      '<label style="font-weight:700">الوحدة <select id="ccm-unit" onchange="Admin.ccmUnit(this.value)" style="margin-inline-start:.4rem"><option value="L"' + (kg ? "" : " selected") + '>لتر</option><option value="kg"' + (kg ? " selected" : "") + '>كلغ</option></select></label>' +
-      '<div style="overflow:auto;margin:.6rem 0"><table style="width:100%;border-collapse:collapse"><tr class="hd"><th style="text-align:right;padding:.3rem">المادة الأولية</th><th style="text-align:right;padding:.3rem">النسبة %</th><th style="text-align:right;padding:.3rem">سعر ' + (kg ? "الكلغ" : "اللتر") + ' (دج)</th><th style="text-align:right;padding:.3rem">مساهمتها (دج)</th><th></th></tr>' +
-      m.rows.map((r, k)=>{ const mats = (this.fin && this.fin.mats) || {}, lk = r.m && mats[r.m];
-        return '<tr oninput="Admin.ccmLive()"><td style="padding:.25rem"><select id="ccm-m' + k + '" onchange="Admin.ccmPick(' + k + ')" style="min-width:150px"><option value="">✎ مادة حرة</option>' + Object.keys(mats).map(id=>'<option value="' + esc(id) + '"' + (r.m === id ? " selected" : "") + '>' + esc(mats[id].n) + ' (' + (mats[id].u === "kg" ? "دج/كلغ" : "دج/لتر") + ')</option>').join("") + '</select>' + (lk ? '' : '<br><input id="ccm-n' + k + '" value="' + esc(r.n) + '" placeholder="اسم المادة" style="min-width:150px;margin-top:.2rem">') + '</td><td style="padding:.25rem"><input id="ccm-p' + k + '" type="number" min="0" max="100" step="any" value="' + esc(r.pct) + '" style="max-width:90px"></td><td style="padding:.25rem"><input id="ccm-r' + k + '" type="number" min="0" step="any" value="' + esc(lk ? lk.pr : r.pr) + '" style="max-width:120px"' + (lk ? ' readonly title="من مكتبة المواد — عدّله من هناك"' : '') + '></td><td style="padding:.25rem"><b id="ccm-c' + k + '">0</b></td><td style="padding:.25rem;white-space:nowrap">' + (lk ? '' : '<button class="small gray" type="button" onclick="Admin.ccmToLib(' + k + ')" title="احفظ هذه المادة في المكتبة لتستعملها في وصفات أخرى">📚+</button> ') + '<button class="small warn" type="button" onclick="Admin.ccmDel(' + k + ')">🗑</button></td></tr>'; }).join("") + '</table></div>' +
-      '<div class="action-bar" style="margin-bottom:.6rem"><button class="small gray" type="button" onclick="Admin.ccmAdd()">➕ إضافة مادة</button></div>' +
-      '<div id="ccm-sum" style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem 1rem;line-height:2"></div>' +
-      '<label style="display:block;margin:.7rem 0 .2rem;font-weight:700">حجم العبوة (' + (kg ? "غرام" : "مل") + ')</label><input id="ccm-size" type="number" min="0" step="any" value="' + esc(m.size) + '" placeholder="مثال: 50" style="max-width:160px" oninput="Admin.ccmLive()">' +
-      '<div class="action-bar" style="margin-top:.8rem"><button class="small green" type="button" onclick="Admin.ccmSave()">💾 حفظ الوصفة</button><button class="small gray" type="button" onclick="Admin.ccmSave(true)" title="يمسح الوصفة ويُبقي الأرقام اليدوية">مسح الوصفة</button><button class="small gray" type="button" onclick="document.getElementById(\'ccm-bg\').classList.remove(\'open\')">إلغاء</button></div></div>';
-    this.ccmLive();
+  /* ترحيل الوصفات القديمة المخزّنة داخل بيانات المنتج إلى قائمة الوصفات (مرة واحدة) */
+  rcpMigrate(){
+    const F = this.fin; if(!F || Object.keys(F.rcp || {}).length) return; const cc = F.cc || {}, R = {}; let n = 0;
+    Object.keys(cc).forEach(sl=>{ const c = cc[sl]; if(!c || !c.rec || !c.rec.length || String(sl).indexOf("x:") === 0) return; const p = (this.products || []).find(x=>x.slug === sl), id = "r" + Date.now().toString(36) + (n++);
+      R[id] = { id, name: p ? (p.title || sl) : sl, slug: sl, unit: c.unit === "kg" ? "kg" : "L", rec: c.rec.map(x=>Object.assign({}, x)), at: Date.now() + n }; });
+    if(n){ F.rcp = R; Priv.set("recipes", R); }
   },
-  ccmRead(){
-    const m = this._ccm; if(!m) return; m.unit = ($f("ccm-unit") || {}).value === "kg" ? "kg" : "L"; m.size = ($f("ccm-size") || {}).value || "";
+  /* بعد تغيّر وصفة/مادة: يُحدَّث سعر اللتر/الكلغ في كل منتج تكلفة مرتبط بها، وسعر الشراء للمعتمَد تلقائياً */
+  async rcpSync(){
+    const cc = Object.assign({}, this.fin.cc || {}), costs = Object.assign({}, this.fin.costs || {}); let nP = 0, nB = 0;
+    Object.keys(cc).forEach(k=>{ const c = Object.assign({}, cc[k]), r = this.rcpOf(k, c); if(!r) return; const raw = this.rcpUnitCost(r), unit = r.unit === "kg" ? "kg" : "L";
+      if(c.raw === raw && (c.unit === "kg" ? "kg" : "L") === unit) return;
+      const prev = Math.round(this.ccCalc(c).total); c.raw = raw; if(unit === "kg") c.unit = "kg"; else delete c.unit; cc[k] = c; nP++;
+      if(String(k).indexOf("x:") !== 0 && c.adopt && (costs[k] == null || Math.round(Number(costs[k])) === prev)){ costs[k] = Math.round(this.ccCalc(c).total); nB++; } });
+    if(nP){ this.fin.cc = cc; await Priv.set("costcalc", cc); } if(nB){ this.fin.costs = costs; await Priv.set("costs", costs); }
+    return { nP, nB };
+  },
+  rcpBlank(name, slug){ return { id: "r" + Date.now().toString(36) + Math.floor(Math.random() * 999), name: name || "", slug: slug || "", unit: "L", rec: [{ n: "", pct: "", pr: "" }], at: Date.now(), _new: true }; },
+  rcpOpen(){ const R = Object.values(this.fin.rcp || {}).sort((a, b)=>(a.at || 0) - (b.at || 0)); this._rc = R.map(r=>JSON.parse(JSON.stringify(r))); if(!this._rc.length) this._rc.push(this.rcpBlank()); },
+  rcpRead(){
     const mats = (this.fin && this.fin.mats) || {};
-    m.rows = m.rows.map((r, k)=>{ const sel = ($f("ccm-m" + k) || {}).value || "", lk = sel && mats[sel], pct = ($f("ccm-p" + k) || {}).value || "";
-      return lk ? { m: sel, n: lk.n, pct, pr: lk.pr } : { n: ($f("ccm-n" + k) || {}).value || "", pct, pr: ($f("ccm-r" + k) || {}).value || "" }; });
+    (this._rc || []).forEach((r, k)=>{ const nm = $f("rc" + k + "-name"); if(!nm) return; r.name = nm.value; r.unit = ($f("rc" + k + "-unit") || {}).value === "kg" ? "kg" : "L";
+      r.rec = r.rec.map((x, j)=>{ const sel = ($f("rc" + k + "-m" + j) || {}).value || "", lk = sel && mats[sel], pct = ($f("rc" + k + "-p" + j) || {}).value || "";
+        return lk ? { m: sel, n: lk.n, pct, pr: lk.pr } : { n: ($f("rc" + k + "-n" + j) || {}).value || "", pct, pr: ($f("rc" + k + "-r" + j) || {}).value || "" }; }); });
   },
-  ccmCalc(){
-    const m = this._ccm, rows = m.rows.map(r=>({ pct: Math.max(0, Number(r.pct) || 0), pr: Math.max(0, Number(r.pr) || 0) })), unitCost = rows.reduce((a, r)=>a + r.pct * r.pr / 100, 0), pct = rows.reduce((a, r)=>a + r.pct, 0), size = Math.max(0, Number(m.size) || 0);
-    return { rows, unitCost, pct, size, box: unitCost * size / 1000 };
+  rcpDraw(){
+    const box = $f("rcp-view"); if(!box) return; if(!this._rc) this.rcpOpen(); const esc = v=>String(v == null ? "" : v).replace(/[<>&"]/g, c=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;" }[c]));
+    const mats = (this.fin && this.fin.mats) || {}, th = 'style="text-align:right;padding:.3rem;white-space:nowrap"';
+    const prods = (this.products || []).filter(p=>p.slug !== "test").map(p=>'<option value="' + esc(p.title || p.slug) + '">').join("");
+    box.innerHTML = '<datalist id="rcp-prods">' + prods + '</datalist><div class="hint" style="margin:0 0 .7rem">لكل منتج وصفته: المواد الأولية بنسبها وسعر وحدتها (لتر/كلغ). اختر المنتج من القائمة أو اكتب اسمه. يُحسب <b>سعر اللتر/الكلغ</b> تلقائياً ويدخل في «التكلفة الإنتاجية» ويتغيّر معها كلما عدّلت الوصفة أو سعر مادة في المكتبة.</div>' +
+      this._rc.map((r, k)=>{ const kg = r.unit === "kg", saved = !!(this.fin.rcp || {})[r.id];
+        return '<div class="rcp-card" data-rk="' + k + '" style="border:1px solid var(--line);border-radius:16px;padding:.8rem 1rem;margin-bottom:.9rem;background:rgba(255,255,255,.04)" oninput="Admin.rcpLive(' + k + ')" onchange="Admin.rcpLive(' + k + ')">' +
+          '<div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem"><b style="color:var(--green);white-space:nowrap">منتج ' + (k + 1) + '</b><input id="rc' + k + '-name" list="rcp-prods" value="' + esc(r.name) + '" placeholder="اختر المنتج أو اكتب اسمه" style="min-width:220px;flex:1"><select id="rc' + k + '-unit" onchange="Admin.rcpUnit()"><option value="L"' + (kg ? "" : " selected") + '>لتر</option><option value="kg"' + (kg ? " selected" : "") + '>كلغ</option></select>' + (saved ? '<span class="hint" style="margin:0">✓ محفوظة</span>' : '<span class="hint" style="margin:0;color:#fb923c">غير محفوظة</span>') + '<button class="small warn" type="button" onclick="Admin.rcpDel(' + k + ')" title="حذف هذه الوصفة">🗑</button></div>' +
+          '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><tr class="hd"><th ' + th + '>المادة الأولية</th><th ' + th + '>النسبة %</th><th ' + th + '>سعر ' + (kg ? "الكلغ" : "اللتر") + ' (دج)</th><th ' + th + '>مساهمتها (دج)</th><th></th></tr>' +
+          r.rec.map((x, j)=>{ const lk = x.m && mats[x.m];
+            return '<tr><td style="padding:.25rem;white-space:nowrap"><select id="rc' + k + '-m' + j + '" onchange="Admin.rcpPick()" style="min-width:150px"><option value="">✎ مادة حرة</option>' + Object.keys(mats).map(id=>'<option value="' + esc(id) + '"' + (x.m === id ? " selected" : "") + '>' + esc(mats[id].n) + ' (' + (mats[id].u === "kg" ? "دج/كلغ" : "دج/لتر") + ')</option>').join("") + '</select>' + (lk ? '' : '<input id="rc' + k + '-n' + j + '" value="' + esc(x.n) + '" placeholder="اسم المادة" style="min-width:150px;margin-inline-start:.3rem">') + '</td>' +
+              '<td style="padding:.25rem"><input id="rc' + k + '-p' + j + '" type="number" min="0" max="100" step="any" value="' + esc(x.pct) + '" style="max-width:90px"></td>' +
+              '<td style="padding:.25rem">' + (lk ? '<b>' + esc(lk.pr) + '</b> <small class="hint" style="margin:0">من المكتبة</small>' : '<input id="rc' + k + '-r' + j + '" type="number" min="0" step="any" value="' + esc(x.pr) + '" style="max-width:120px">') + '</td>' +
+              '<td style="padding:.25rem"><b id="rc' + k + '-c' + j + '">0</b></td><td style="padding:.25rem;white-space:nowrap">' + (lk ? '' : '<button class="small gray" type="button" onclick="Admin.rcpToLib(' + k + ',' + j + ')" title="أضف المادة إلى مكتبة المواد">📚+</button> ') + '<button class="small gray" type="button" onclick="Admin.rcpRowDel(' + k + ',' + j + ')" title="حذف المادة">✕</button></td></tr>'; }).join("") + '</table></div>' +
+          '<div class="action-bar" style="margin:.4rem 0"><button class="small gray" type="button" onclick="Admin.rcpRowAdd(' + k + ')">➕ إضافة مادة</button></div>' +
+          '<div id="rc' + k + '-sum" style="background:rgba(255,255,255,.05);border-radius:12px;padding:.6rem 1rem;line-height:1.9"></div>' +
+          '<div class="action-bar" style="margin-top:.6rem"><button class="small green" type="button" onclick="Admin.rcpSave(' + k + ')">💾 حفظ الوصفة</button></div></div>'; }).join("") +
+      '<div class="action-bar"><button class="small green" type="button" onclick="Admin.rcpAdd()">＋ إضافة منتج آخر</button></div>';
+    this._rc.forEach((r, k)=>this.rcpLive(k));
   },
-  ccmLive(){
-    const m = this._ccm; if(!m) return; this.ccmRead(); const r = this.ccmCalc(), kg = m.unit === "kg", n = v=>(Math.round(v * 100) / 100).toLocaleString("fr-DZ");
-    r.rows.forEach((x, k)=>{ const e = $f("ccm-c" + k); if(e) e.textContent = n(x.pct * x.pr / 100); });
-    const e = $f("ccm-sum"); if(e) e.innerHTML = 'مجموع النسب: <b style="color:' + (Math.abs(r.pct - 100) < 0.01 ? "var(--green)" : "#fb923c") + '">' + n(r.pct) + '%</b>' + (r.pct > 100.01 ? " ⚠️ أكثر من 100%" : (r.pct < 99.99 && r.pct > 0 ? " (الباقي " + n(100 - r.pct) + "% يُعدّ بلا تكلفة، مثل الماء)" : "")) + '<br>سعر ' + (kg ? "الكلغ" : "اللتر") + ' من المنتج: <b style="color:var(--green);font-size:1.1rem">' + n(r.unitCost) + ' دج</b><br>سعر العلبة الواحدة (مادة فقط): <b style="color:var(--green);font-size:1.1rem">' + n(r.box) + ' دج</b>' + (r.size ? ' <small>(' + n(r.unitCost) + ' × ' + n(r.size) + ' ' + (kg ? "غ" : "مل") + ' ÷ 1000)</small>' : "");
+  rcpLive(k){
+    this.rcpRead(); const r = (this._rc || [])[k]; if(!r) return; const kg = r.unit === "kg", n = v=>(Math.round(v * 100) / 100).toLocaleString("fr-DZ");
+    const pct = r.rec.reduce((a, x)=>a + (Number(x.pct) || 0), 0), unitCost = this.rcpUnitCost(r);
+    r.rec.forEach((x, j)=>{ const e = $f("rc" + k + "-c" + j); if(e) e.textContent = n((Number(x.pct) || 0) * (Number(x.pr) || 0) / 100); });
+    const e = $f("rc" + k + "-sum"); if(e) e.innerHTML = 'مجموع النسب: <b style="color:' + (Math.abs(pct - 100) < 0.01 ? "var(--green)" : "#fb923c") + '">' + n(pct) + '%</b>' + (pct > 100.01 ? " ⚠️ أكثر من 100%" : (pct < 99.99 && pct > 0 ? " (الباقي " + n(100 - pct) + "% يُعدّ بلا تكلفة، مثل الماء)" : "")) + '<br>سعر ' + (kg ? "الكلغ" : "اللتر") + ' من هذا المنتج: <b style="color:var(--green);font-size:1.1rem">' + n(unitCost) + ' دج</b>';
   },
-  ccmPick(k){ this.ccmRead(); this.ccmDraw(); },
-  async ccmToLib(k){
-    this.ccmRead(); const r = this._ccm.rows[k]; if(!r || !String(r.n).trim() || !(Number(r.pr) > 0)){ toast("⚠️ اكتب اسم المادة وسعرها أولاً"); return; }
-    const mats = Object.assign({}, this.fin.mats || {}), id = "m" + Date.now().toString(36); mats[id] = { n: String(r.n).trim(), pr: Number(r.pr), u: this._ccm.unit }; this.fin.mats = mats; await Priv.set("costmats", mats);
-    r.m = id; this.ccmDraw(); toast("📚 أُضيفت «" + mats[id].n + "» إلى مكتبة المواد");
+  rcpPick(){ this.rcpRead(); this.rcpDraw(); },
+  rcpUnit(){ this.rcpRead(); this.rcpDraw(); },
+  rcpAdd(){ this.rcpRead(); this._rc.push(this.rcpBlank()); this.rcpDraw(); const cards = document.querySelectorAll("#rcp-view .rcp-card"); const l = cards[cards.length - 1]; if(l && l.scrollIntoView) l.scrollIntoView({ block: "center", behavior: "smooth" }); },
+  rcpRowAdd(k){ this.rcpRead(); this._rc[k].rec.push({ n: "", pct: "", pr: "" }); this.rcpDraw(); },
+  rcpRowDel(k, j){ this.rcpRead(); const r = this._rc[k]; r.rec.splice(j, 1); if(!r.rec.length) r.rec.push({ n: "", pct: "", pr: "" }); this.rcpDraw(); },
+  async rcpToLib(k, j){
+    this.rcpRead(); const r = this._rc[k], x = r && r.rec[j]; if(!x || !String(x.n).trim() || !(Number(x.pr) > 0)){ toast("⚠️ اكتب اسم المادة وسعرها أولاً"); return; }
+    const mats = Object.assign({}, this.fin.mats || {}), id = "m" + Date.now().toString(36); mats[id] = { n: String(x.n).trim(), pr: Number(x.pr), u: r.unit }; this.fin.mats = mats; await Priv.set("costmats", mats);
+    x.m = id; this.rcpDraw(); toast("📚 أُضيفت «" + mats[id].n + "» إلى مكتبة المواد");
+  },
+  async rcpDel(k){
+    this.rcpRead(); const r = this._rc[k]; if(!r) return; const saved = !!(this.fin.rcp || {})[r.id];
+    if(saved && !confirm("حذف وصفة «" + (r.name || "") + "»؟ تبقى تكلفة المنتج المرتبط بها بآخر سعر ويصير سعر اللتر/الكلغ يدوياً.")) return;
+    if(saved){ const rcp = Object.assign({}, this.fin.rcp); delete rcp[r.id]; this.fin.rcp = rcp; await Priv.set("recipes", rcp); }
+    this._rc.splice(k, 1); if(!this._rc.length) this._rc.push(this.rcpBlank()); this.rcpDraw(); this.renderCostCalc(true);
+  },
+  async rcpSave(k){
+    this.rcpRead(); const r = this._rc[k]; if(!r) return; const name = String(r.name || "").trim(); if(!name){ toast("⚠️ اختر المنتج أو اكتب اسمه"); return; }
+    const rec = r.rec.filter(x=>String(x.n).trim() || Number(x.pct) || Number(x.pr)).map(x=>{ const o = { n: String(x.n).trim(), pct: Number(x.pct) || 0, pr: Number(x.pr) || 0 }; if(x.m) o.m = x.m; return o; });
+    if(!rec.length || !(this.rcpUnitCost({ rec }) > 0)){ toast("⚠️ أدخل المواد الأولية بنسبها وأسعارها أولاً"); return; }
+    const P = (this.products || []).find(p=>p.slug !== "test" && (this.rcpNorm(p.title) === this.rcpNorm(name) || p.slug === name)), slug = P ? P.slug : "";
+    const dup = Object.values(this.fin.rcp || {}).find(x=>x.id !== r.id && (slug ? x.slug === slug : (!x.slug && this.rcpNorm(x.name) === this.rcpNorm(name))));
+    if(dup){ toast("⚠️ لهذا المنتج وصفة محفوظة بالفعل — عدّلها بدل إنشاء أخرى"); return; }
+    const rcp = Object.assign({}, this.fin.rcp || {}); rcp[r.id] = { id: r.id, name: P ? (P.title || P.slug) : name, slug, unit: r.unit === "kg" ? "kg" : "L", rec, at: r.at || Date.now() };
+    this.fin.rcp = rcp; await Priv.set("recipes", rcp); Object.assign(r, rcp[r.id]); delete r._new;
+    const s = await this.rcpSync(), n = Math.round(this.rcpUnitCost(rcp[r.id]) * 100) / 100;
+    toast("✅ حُفظت وصفة «" + rcp[r.id].name + "» — سعر " + (r.unit === "kg" ? "الكلغ" : "اللتر") + " " + n.toLocaleString("fr-DZ") + " دج" + (s.nP ? " — حُدّثت تكلفة المنتج المرتبط" : ""));
+    this.rcpDraw(); this.renderCostCalc(true); if(s.nB) this.renderFinance(true);
+  },
+  /* من زر «الوصفة» في صف التكلفة: افتح تبويب الوصفات عند وصفة هذا المنتج (أو أنشئ واحدة باسمه) */
+  rcpGo(i){
+    const p = this.ccList()[i]; if(!p) return; this.ccSnap(); this.ccView("rcp"); this.rcpRead();
+    const cc = (this.fin.cc || {})[p.slug] || {}, ex = this.rcpOf(p.slug, cc); let k = ex ? this._rc.findIndex(r=>r.id === ex.id) : -1;
+    if(k < 0){ this._rc = this._rc.filter(r=>!r._new || r.name || r.rec.some(x=>x.n || x.pct || x.pr)); this._rc.push(this.rcpBlank(p.title || p.slug, p.manual ? "" : p.slug)); k = this._rc.length - 1; }
+    this.rcpDraw(); const card = document.querySelectorAll("#rcp-view .rcp-card")[k]; if(card && card.scrollIntoView) card.scrollIntoView({ block: "start", behavior: "smooth" });
   },
   /* مكتبة المواد الأولية: اسم + سعر لتر/كلغ؛ تغيير السعر يُحدّث كل الوصفات المرتبطة بها وتكلفة منتجاتها */
-  matUsage(id){ return Object.keys(this.fin.cc || {}).filter(sl=>((this.fin.cc[sl] || {}).rec || []).some(r=>r.m === id)); },
+  matUsage(id){ return Object.values(this.fin.rcp || {}).filter(r=>(r.rec || []).some(x=>x.m === id)); },
   matOpen(){
     this._mat = JSON.parse(JSON.stringify(this.fin.mats || {})); if(!Object.keys(this._mat).length) this._mat["m" + Date.now().toString(36)] = { n: "", pr: "", u: "L" };
     let bg = document.getElementById("mat-bg");
@@ -5735,29 +5815,14 @@ const Admin = {
   async matSave(){
     this.matRead(); const mats = {}; Object.keys(this._mat).forEach(id=>{ const m = this._mat[id]; if(String(m.n).trim() && Number(m.pr) >= 0 && String(m.pr) !== "") mats[id] = { n: String(m.n).trim(), pr: Number(m.pr), u: m.u === "kg" ? "kg" : "L" }; });
     const old = this.fin.mats || {}; this.fin.mats = mats; await Priv.set("costmats", mats);
-    const cc = Object.assign({}, this.fin.cc || {}), costs = Object.assign({}, this.fin.costs || {}); let nProd = 0, nBuy = 0;
-    Object.keys(cc).forEach(sl=>{
-      const c = Object.assign({}, cc[sl]); if(!c.rec || !c.rec.length) return; let touched = false;
-      c.rec = c.rec.map(r=>{ if(!r.m) return r; if(!mats[r.m]){ const x = Object.assign({}, r); delete x.m; return x; } if(old[r.m] && old[r.m].pr === mats[r.m].pr && r.pr === mats[r.m].pr && r.n === mats[r.m].n) return r; touched = true; return Object.assign({}, r, { n: mats[r.m].n, pr: mats[r.m].pr }); });
-      if(!touched) { cc[sl] = c; return; }
-      const prev = Math.round(this.ccCalc(cc[sl]).total); c.raw = Math.round(c.rec.reduce((a, r)=>a + (Number(r.pct) || 0) * (Number(r.pr) || 0) / 100, 0) * 100) / 100; cc[sl] = c; nProd++;
-      if(c.adopt && (costs[sl] == null || Math.round(Number(costs[sl])) === prev)){ costs[sl] = Math.round(this.ccCalc(c).total); nBuy++; }
-    });
-    this.fin.cc = cc; await Priv.set("costcalc", cc);
-    if(nBuy){ this.fin.costs = costs; await Priv.set("costs", costs); }
+    const rcp = Object.assign({}, this.fin.rcp || {}); let nRec = 0;
+    Object.keys(rcp).forEach(id=>{ const r = Object.assign({}, rcp[id]); let t = false;
+      r.rec = (r.rec || []).map(x=>{ if(!x.m) return x; if(!mats[x.m]){ const y = Object.assign({}, x); delete y.m; return y; } if(x.pr === mats[x.m].pr && x.n === mats[x.m].n) return x; t = true; return Object.assign({}, x, { n: mats[x.m].n, pr: mats[x.m].pr }); });
+      rcp[id] = r; if(t) nRec++; });
+    this.fin.rcp = rcp; await Priv.set("recipes", rcp); const sy = await this.rcpSync(), nProd = sy.nP, nBuy = sy.nB; this._rc = null;
     document.getElementById("mat-bg").classList.remove("open"); toast("✅ حُفظت المكتبة" + (nProd ? " — حُدّثت تكلفة " + nProd + " منتج" + (nBuy ? " (وسعر الشراء لـ" + nBuy + ")" : "") : ""));
+    if(this._ccV === "rcp") this.ccView("rcp");
     this.renderCostCalc(true); if(nBuy) this.renderFinance(true);
-  },
-  ccmAdd(){ this.ccmRead(); this._ccm.rows.push({ n: "", pct: "", pr: "" }); this.ccmDraw(); },
-  ccmDel(k){ this.ccmRead(); this._ccm.rows.splice(k, 1); if(!this._ccm.rows.length) this._ccm.rows.push({ n: "", pct: "", pr: "" }); this.ccmDraw(); },
-  ccmUnit(u){ this.ccmRead(); this._ccm.unit = u; this.ccmDraw(); },
-  async ccmSave(clear){
-    const m = this._ccm; if(!m) return; this.ccmRead(); const r = this.ccmCalc(), cc = Object.assign({}, this.fin.cc || {}), c = Object.assign({}, cc[m.slug] || {});
-    c.unit = m.unit; c.mode = "made";
-    if(clear){ delete c.rec; }
-    else { if(!(r.unitCost > 0)){ toast("⚠️ أدخل نسب المواد وأسعارها أولاً"); return; } c.rec = m.rows.filter(x=>x.n || Number(x.pct) || Number(x.pr)).map(x=>Object.assign({ n: x.n, pct: Number(x.pct) || 0, pr: Number(x.pr) || 0 }, x.m ? { m: x.m } : {})); c.raw = Math.round(r.unitCost * 100) / 100; if(r.size > 0) c.ml = r.size; }
-    cc[m.slug] = c; this.fin.cc = cc; await Priv.set("costcalc", cc); document.getElementById("ccm-bg").classList.remove("open");
-    toast(clear ? "↩ مُسحت الوصفة" : "✅ حُفظت الوصفة — سعر " + (m.unit === "kg" ? "الكلغ" : "اللتر") + " " + Math.round(c.raw).toLocaleString("fr-DZ") + " دج"); this.renderCostCalc(true);
   },
   adLive(i){
     const r = (this._adRows || [])[i]; if(!r) return; const cfg = this.adReadRow(i), sel = $f("fin-p" + i + "-prod"), sl = sel ? sel.value : r.slug, nS = ((this._adSucc || {})[sl]) || 0, md = $f("fin-p" + i + "-mode"), fx = $f("fin-p" + i + "-fx");

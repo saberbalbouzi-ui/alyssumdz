@@ -348,33 +348,37 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   // ── جدول تكلفة المنتجات ──
   const cc = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set; Priv.set = async () => { }; Admin.renderFinance = () => { };
-    Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = Admin.fin.costs || {}; Admin.fin.cc = {};
+    Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = Admin.fin.costs || {}; Admin.fin.cc = {}; Admin.fin.rcp = {}; Admin._rc = null; Admin._ccPend = {}; Admin._ccDraft = {};
     (Admin.ccList().forEach(p => { if (Admin.ccSec(p.slug) === "none") { Admin._ccPend = Admin._ccPend || {}; Admin._ccPend[p.slug] = "bought"; } }), Admin.renderCostCalc(true)); const heads = Array.from(document.querySelectorAll("#fin-cc-rows tr.hd th")).map(t => t.textContent);
     // «مشترى جاهز» (الافتراضي): السعر المكتوب = سعر الشراء مباشرة
-    const modeDef = document.getElementById("cc0-mode").value, noMade = !document.getElementById("cc0-raw"); document.getElementById("cc0-buy").value = 1234; Array.from(document.querySelectorAll("#fin-cc-rows button.green")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
+    const modeDef = document.querySelector('#fin-cc-rows tr[data-cc="0"]').dataset.sec, noMade = !document.getElementById("cc0-raw"); document.getElementById("cc0-buy").value = 1234; Array.from(document.querySelectorAll("#fin-cc-rows button.green")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
     const boughtCost = Admin.fin.costs.cc1, boughtMode = Admin.fin.cc.cc1.mode;
     // مسح الخانة وحفظ = حذف سعر الشراء فعلياً
     document.getElementById("cc0-buy").value = ""; Array.from(document.querySelectorAll("#fin-cc-rows button.green")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
     const clearedCost = Admin.fin.costs.cc1 === undefined, clearedCc = Admin.fin.cc.cc1 === undefined, clearedUi = !document.getElementById("cc0-buy");
-    // «أصنّعه بنفسي» (يُعاد المنتج للقائمة ثم يُنقل إلى قسم المصنَّع)
-    Admin._ccPend = { cc1: "bought" }; Admin.renderCostCalc(true);
-    const ms = document.getElementById("cc0-mode"); ms.value = "made"; ms.dispatchEvent(new Event("change", { bubbles: true }));
+    // التكلفة الإنتاجية: المنتج ينتقل إلى قسم المصنَّع (بلا عمود «نوع المنتج»)
+    Admin._ccPend = { cc1: "made" }; Admin.renderCostCalc(true);
     const mheads = Array.from(document.querySelectorAll("#fin-cc-rows tr.hd th")).map(t => t.textContent), secs = Array.from(document.querySelectorAll("#fin-cc-rows details.cc-sec")).map(d => d.dataset.k + ":" + d.querySelectorAll("tr[data-cc]").length).join(",");
     const set = (k, v) => { const e = document.getElementById("cc0-" + k); e.value = v; e.dispatchEvent(new Event("input", { bubbles: true })); };
     set("raw", 2000); set("ml", 50); set("pack", 100); set("oth", 50);
     const mat = document.getElementById("cc0-mat").textContent, tot = document.getElementById("cc0-tot").textContent;
     Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
-    const out = { clearedCost, clearedCc, clearedUi, heads, mheads, secs, modeDef, noMade, boughtCost, boughtMode, noCurCol: !heads.some(h => /سعر الشراء الحالي/.test(h)), tabBtn: Array.from(document.querySelectorAll(".nav-btn")).some(b => /تكلفة المنتجات/.test(b.textContent)), inOwnTab: !!document.querySelector("#tab-costs #fin-cc") && !document.querySelector("#tab-finance #fin-cc"), mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
-    // وصفة بنسب المواد الأولية
-    Admin.ccmOpen(0); const v = (id, x) => { const e = document.getElementById(id); e.value = x; e.dispatchEvent(new Event("input", { bubbles: true })); };
-    document.getElementById("ccm-unit").value = "kg"; document.getElementById("ccm-unit").dispatchEvent(new Event("change", { bubbles: true }));
-    v("ccm-n0", "زيت"); v("ccm-p0", 30); v("ccm-r0", 5000); Admin.ccmAdd(); v("ccm-n1", "مستخلص"); v("ccm-p1", 10); v("ccm-r1", 12000); Admin.ccmAdd(); v("ccm-n2", "ماء"); v("ccm-p2", 60); v("ccm-r2", 0); v("ccm-size", 50);
-    out.sum = document.getElementById("ccm-sum").textContent; out.lbl = /الكلغ/.test(document.getElementById("ccm-bg").textContent);
-    Admin.ccmSave(); await wait(60); out.recRaw = document.getElementById("cc0-raw").value; out.recRo = document.getElementById("cc0-raw").readOnly; out.recUnit = document.getElementById("cc0-unit").value; out.recSaved = JSON.stringify(Admin.fin.cc.cc1).length > 0 && Admin.fin.cc.cc1.rec.length === 3 && Admin.fin.cc.cc1.unit === "kg"; out.recMat = document.getElementById("cc0-mat").textContent;
+    const out = { clearedCost, clearedCc, clearedUi, heads, mheads, secs, modeDef, noMade, boughtCost, boughtMode, noCurCol: !heads.some(h => /سعر الشراء الحالي/.test(h)), noTypeCol: !mheads.includes("نوع المنتج") && !heads.includes("نوع المنتج"), tabBtn: Array.from(document.querySelectorAll(".nav-btn")).some(b => /تكلفة المنتجات/.test(b.textContent)), inOwnTab: !!document.querySelector("#tab-costs #fin-cc") && !document.querySelector("#tab-finance #fin-cc"), mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
+    // تبويب الوصفات: وصفة بنسب المواد الأولية تُحدّد سعر الكلغ تلقائياً في التكلفة الإنتاجية
+    Admin.ccView("rcp"); const v = (id, x) => { const e = document.getElementById(id); e.value = x; e.dispatchEvent(new Event("input", { bubbles: true })); };
+    out.rcpShown = !document.getElementById("rcp-view").classList.contains("hidden") && document.getElementById("fin-cc-rows").classList.contains("hidden") && document.querySelector('#cc-seg button[data-cv="rcp"]').classList.contains("on");
+    v("rc0-name", "كريم تجريبي"); document.getElementById("rc0-unit").value = "kg"; document.getElementById("rc0-unit").dispatchEvent(new Event("change", { bubbles: true }));
+    v("rc0-n0", "زيت"); v("rc0-p0", 30); v("rc0-r0", 5000); Admin.rcpRowAdd(0); v("rc0-n1", "مستخلص"); v("rc0-p1", 10); v("rc0-r1", 12000); Admin.rcpRowAdd(0); v("rc0-n2", "ماء"); v("rc0-p2", 60); v("rc0-r2", 0);
+    out.sum = document.getElementById("rc0-sum").textContent; out.lbl = /الكلغ/.test(out.sum);
+    await Admin.rcpSave(0); const rc = Object.values(Admin.fin.rcp);
+    out.rcpSaved = rc.length === 1 && rc[0].slug === "cc1" && rc[0].rec.length === 3 && rc[0].unit === "kg";
+    Admin.ccView("cost"); await wait(30); out.recRaw = document.getElementById("cc0-raw").value; out.recRo = document.getElementById("cc0-raw").readOnly; out.recUnit = document.getElementById("cc0-unit").value; out.recUnitDis = document.getElementById("cc0-unit").disabled; out.recMat = document.getElementById("cc0-mat").textContent;
+    // تعديل الوصفة يغيّر سعر الكلغ في التكلفة تلقائياً
+    Admin.ccView("rcp"); v("rc0-r0", 6000); await Admin.rcpSave(0); Admin.ccView("cost"); await wait(30); out.recRaw2 = document.getElementById("cc0-raw").value; out.recMat2 = document.getElementById("cc0-mat").textContent;
     Admin.products = pr0; Priv.set = set0; return out;
   });
-  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.mheads[0] === "المنتج" && /لتر/.test(cc.mheads[3]) && cc.mat === "100" && cc.tot === "250", cc);
-  ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
+  ok("جدول التكلفة الإنتاجية: المنتج أولاً ثم الوحدة وسعر اللتر/الكلغ بلا عمود «نوع المنتج»، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.mheads[0] === "المنتج" && /لتر/.test(cc.mheads[2]) && cc.noTypeCol && cc.mat === "100" && cc.tot === "250", cc);
+  ok("تبويب الوصفات: وصفة بنسب المواد (30%×5000 + 10%×12000 = 2700 دج/كلغ) تُحفظ وتُربط بالمنتج، وسعر الكلغ والوحدة يظهران تلقائياً (للقراءة فقط) في التكلفة الإنتاجية، وتعديل الوصفة يغيّره (6000: 1800+1200 = 3000 × 50غ = 150)", cc.rcpShown && /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && cc.lbl && cc.rcpSaved && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recUnitDis && cc.recMat === "135" && cc.recRaw2 === "3000" && cc.recMat2 === "150", cc);
   ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
   ok("تكلفة المنتجات: مسح خانة سعر الشراء وحفظها يحذف السعر فعلاً (لا يعود بعد التحديث)", cc.clearedCost && cc.clearedCc && cc.clearedUi, cc);
   ok("جدول التكلفة: «حفظ» لمن يصنّع يجعل الإجمالي المحسوب سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
@@ -462,24 +466,30 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const sec = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
     Admin.products = [{ slug: "s1", title: "مصنوع", active: true }, { slug: "s2", title: "جاهز", active: true }, { slug: "s3", title: "غير مضاف", active: true }];
-    Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = { s2: 300 }; Admin.fin.cc = { s1: { mode: "made", raw: 1000, ml: 100 }, s2: { mode: "bought" } }; Admin._ccPend = {}; Admin._ccDraft = {};
+    Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = { s2: 300 }; Admin.fin.cc = { s1: { mode: "made", raw: 1000, ml: 100 }, s2: { mode: "bought" } }; Admin.fin.rcp = { r9: { id: "r9", name: "وصفة حرة", slug: "", unit: "L", rec: [{ n: "مادة", pct: 50, pr: 1000 }], at: 1 } }; Admin._ccPend = {}; Admin._ccDraft = {};
     Admin.renderCostCalc(true);
     const cnt = () => Array.from(document.querySelectorAll("#fin-cc-rows details.cc-sec")).map(d => d.dataset.k + ":" + d.querySelectorAll("tr[data-cc]").length).join(",");
     const c0 = cnt(), sums = Array.from(document.querySelectorAll("#fin-cc-rows details.cc-sec > summary")).map(s => s.textContent.trim());
     const addOpts = ["made", "bought"].map(k => Array.from(document.querySelectorAll("#cc-add-" + k + " option")).map(o => o.textContent).join("/"));
     // إضافة «غير مضاف» إلى الجاهز
-    const sel = document.getElementById("cc-add-bought"); sel.value = sel.querySelector("option[value='2']").value; Admin.ccAdd("bought"); const c1 = cnt();
-    // نقل «جاهز» إلى المصنَّع ← يُحذف من الجاهز
-    const i2 = 1, ms = document.getElementById("cc" + i2 + "-mode"); ms.value = "made"; ms.dispatchEvent(new Event("change", { bubbles: true })); const c2 = cnt();
+    const sel = document.getElementById("cc-add-bought"); sel.value = "p:2"; await Admin.ccAdd("bought"); const c1 = cnt();
+    // «جاهز» ← المصنَّع عبر قائمة إضافة المصنَّع ← يُحذف من الجاهز
+    document.getElementById("cc-add-made").value = "p:1"; await Admin.ccAdd("made"); const c2 = cnt();
+    // إدخال يدوي لاسم منتج جديد، واختيار منتج مسجَّل في الوصفات من القائمة
+    document.getElementById("cc-add-made-t").value = "عطر يدوي"; await Admin.ccAdd("made"); const c3 = cnt();
+    const hasRcpOpt = !!Array.from(document.querySelectorAll("#cc-add-made option")).find(o => /وصفة حرة/.test(o.textContent));
+    document.getElementById("cc-add-made").value = "r:r9"; await Admin.ccAdd("made"); const c4 = cnt(), names = Array.from(document.querySelectorAll('#fin-cc-rows tr[data-sec="made"] td:first-child')).map(x => x.textContent.trim()).join("|");
+    const rowRaw = Array.from(document.querySelectorAll('#fin-cc-rows tr[data-sec="made"]')).map(tr => tr.querySelector("input[id$=-raw]")).filter(x => x && x.readOnly).length;
+    const manKeys = Object.keys(Admin.fin.cc).filter(k => k.indexOf("x:") === 0).length;
     // فتح وإغلاق مع الحفظ (المفتاح يتبدّل اسمه في حزمة العميل، فالقراءة عبر الدالة)
     const d = document.querySelector("#fin-cc-rows details[data-k=made]"); d.open = false; d.dispatchEvent(new Event("toggle")); await wait(30);
     const closedSaved = Admin.ccOpenState().made === false; Admin.renderCostCalc(true); const stillClosed = !document.querySelector("#fin-cc-rows details[data-k=made]").open;
     Admin.ccToggle("made", true); Admin.renderCostCalc(true); const reopened = document.querySelector("#fin-cc-rows details[data-k=made]").open;
     Admin.products = pr0; Priv.set = set0; Admin.renderFinance = rf0; Admin._ccPend = {}; Admin._ccDraft = {};
-    return { c0, sums, addOpts, c1, c2, closedSaved, stillClosed, reopened };
+    return { c0, sums, addOpts, c1, c2, c3, c4, hasRcpOpt, names, rowRaw, manKeys, closedSaved, stillClosed, reopened };
   });
   ok("تكلفة المنتجات: قسم «التكلفة الإنتاجية» (المصنَّع) وقسم «المنتجات الجاهزة» كلٌّ يُفتح ويُغلق وحالته محفوظة، وفي كل قسم قائمة إضافة منتج", sec.c0 === "made:1,bought:1" && /الإنتاجية/.test(sec.sums[0]) && /الجاهزة/.test(sec.sums[1]) && /غير مضاف/.test(sec.addOpts[0]) && /غير مضاف/.test(sec.addOpts[1]) && sec.closedSaved && sec.stillClosed && sec.reopened, sec);
-  ok("تكلفة المنتجات: إضافة منتج للجاهز تُظهره هناك، ونقل «جاهز» إلى «أصنّعه» يحذفه من قسم الجاهز", sec.c1 === "made:1,bought:2" && sec.c2 === "made:2,bought:1", sec);
+  ok("تكلفة المنتجات: إضافة منتج للجاهز تُظهره هناك، ونقل «جاهز» إلى «أصنّعه» يحذفه من قسم الجاهز", sec.c1 === "made:1,bought:2" && sec.c2 === "made:2,bought:1" && sec.c3 === "made:3,bought:1" && sec.hasRcpOpt && sec.c4 === "made:4,bought:1" && sec.manKeys === 2 && /عطر يدوي/.test(sec.names) && /وصفة حرة/.test(sec.names) && sec.rowRaw === 1, sec);
   // ── مسح كل أسعار الشراء ──
   const ca = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; const saved = {}; Priv.set = async (k, v) => { saved[k] = JSON.stringify(v); }; Admin.renderFinance = () => { }; window.confirm = () => true;
@@ -512,13 +522,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
     Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }, { slug: "cc2", title: "زيت", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] };
     Admin.fin.mats = { m1: { n: "زيت الأرغان", pr: 5000, u: "kg" } };
-    Admin.fin.cc = { cc1: { unit: "kg", raw: 1500, ml: 50, pack: 100, oth: 50, adopt: true, rec: [{ m: "m1", n: "زيت الأرغان", pct: 30, pr: 5000 }] }, cc2: { unit: "kg", raw: 500, ml: 100, rec: [{ m: "m1", n: "زيت الأرغان", pct: 10, pr: 5000 }] } };
-    Admin.fin.costs = { cc1: 225 }; (Admin.ccList().forEach(p => { if (Admin.ccSec(p.slug) === "none") { Admin._ccPend = Admin._ccPend || {}; Admin._ccPend[p.slug] = "bought"; } }), Admin.renderCostCalc(true));
-    Admin.ccmOpen(0); const linked = document.getElementById("ccm-m0").value === "m1" && document.getElementById("ccm-r0").readOnly && !document.getElementById("ccm-n0"); document.getElementById("ccm-bg").classList.remove("open");
+    Admin.fin.rcp = { r1: { id: "r1", name: "كريم تجريبي", slug: "cc1", unit: "kg", rec: [{ m: "m1", n: "زيت الأرغان", pct: 30, pr: 5000 }], at: 1 }, r2: { id: "r2", name: "زيت", slug: "cc2", unit: "kg", rec: [{ m: "m1", n: "زيت الأرغان", pct: 10, pr: 5000 }], at: 2 } };
+    Admin.fin.cc = { cc1: { mode: "made", unit: "kg", raw: 1500, ml: 50, pack: 100, oth: 50, adopt: true }, cc2: { mode: "made", unit: "kg", raw: 500, ml: 100 } };
+    Admin.fin.costs = { cc1: 225 }; Admin._rc = null; Admin._ccPend = {}; Admin._ccDraft = {}; Admin.renderCostCalc(true);
+    Admin.ccView("rcp"); const linked = document.getElementById("rc0-m0").value === "m1" && !document.getElementById("rc0-r0") && !document.getElementById("rc0-n0");
     Admin.matOpen(); const e = document.querySelector('#mat-bg [data-mf="pr"][data-id="m1"]'); e.value = 6000; Admin.matSave(); await wait(80);
-    const out = { linked, raw1: Admin.fin.cc.cc1.raw, raw2: Admin.fin.cc.cc2.raw, rp: Admin.fin.cc.cc1.rec[0].pr, buy1: Admin.fin.costs.cc1, buy2: Admin.fin.costs.cc2 == null, cell: document.getElementById("cc0-tot").textContent };
+    Admin.ccView("cost"); await wait(30);
+    const out = { linked, raw1: Admin.fin.cc.cc1.raw, raw2: Admin.fin.cc.cc2.raw, rp: Admin.fin.rcp.r1.rec[0].pr, buy1: Admin.fin.costs.cc1, buy2: Admin.fin.costs.cc2 == null, cell: document.getElementById("cc0-tot").textContent };
     // «+» يحفظ مادة حرة في المكتبة
-    Admin.fin.cc.cc2.rec = [{ n: "شمع", pct: 5, pr: 800 }]; Admin.ccmOpen(1); await Admin.ccmToLib(0); out.lib = Object.values(Admin.fin.mats).map(m => m.n).join(","); out.afterLink = !!document.getElementById("ccm-m0").value; document.getElementById("ccm-bg").classList.remove("open");
+    Admin.ccView("rcp"); Admin._rc[1].rec = [{ n: "شمع", pct: 5, pr: 800 }]; Admin.rcpDraw(); await Admin.rcpToLib(1, 0); out.lib = Object.values(Admin.fin.mats).map(m => m.n).join(","); out.afterLink = !!document.getElementById("rc1-m0").value; Admin._rc = null; Admin._ccV = "cost";
     Admin.products = pr0; Priv.set = set0; Admin.renderFinance = rf0; return out;
   });
   ok("مكتبة المواد: السعر في الوصفة من المكتبة (للقراءة فقط) وتغييره مرة واحدة يحدّث كل الوصفات (1800 و600) وسعر شراء المنتج المعتمَد (240) دون غيره", ml.linked && ml.raw1 === 1800 && ml.raw2 === 600 && ml.rp === 6000 && ml.buy1 === 240 && ml.buy2, ml);
