@@ -69,6 +69,53 @@ const AdminPayments = (() => {
     if (it.manual && !(r&&r.status)) Object.assign(base,{status:"paid",amount:it.total,method:"cash",date:it.date,auto:false});
     return base;
   }
+
+  /* تسوية ياليدين كما في كشف exportation_paiement بالضبط:
+     prix à ramasser (المحصَّل) = ما يدفعه الزبون (سعر + توصيل) — 0 للإرجاع وللتوصيل المجاني
+     Taxe COD = نسبة COD × سعر المنتج (بلا التوصيل) · Taxe d'assurance = نسبة التأمين × القيمة المصرَّحة
+     Taxe retour للإرجاع فقط (ولا يُحتسب frais livraison معه)
+     net client = prix à ramasser − frais livraison − Taxe COD − Taxe assurance − Taxe retour
+     الأرقام الفعلية من الكشف المستورد (ydactual) تسبق التقدير من تعريفة الشركة */
+  const DEF_COD = 0.75, DEF_RET = 250;
+  function settle(it) {
+    if (it.manual) return null; const o=it.o, st=it.ship, A_=A();
+    if (!["livree","echec","expediee","confirmee"].includes(st)) return null;
+    const trk=A_.trackingOf?A_.trackingOf(o):null; if (st==="confirmee"&&!trk) return null;
+    const act=A_.actualFees?A_.actualFees(o):null, fee=Number(o.fee)||0, total=Number(o.total)||0;
+    let price, del=0, cod=0, ins=0, ret=0, net, got, src="est";
+    if (act) {
+      src="file"; price=Number(act.price)||0; del=Number(act.del)||0; ret=Number(act.ret)||0; ins=Number(act.ins)||0; cod=Number(act.cod)||0; net=Number(act.net)||0;
+      got=Math.round((net+del+cod+ins+ret)*1000)/1000;
+    } else {
+      const rf=A_.realFees?A_.realFees(o):null; price=Math.max(0,total-fee);
+      if (st==="echec") { ret=rf&&rf.retour!=null?Number(rf.retour):(A_.retCost?A_.retCost(A_.carrierCost?A_.carrierCost(o):0):DEF_RET); if(!(ret>0))ret=DEF_RET; got=0; }
+      else {
+        del=rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee);
+        cod=price*((rf&&rf.cod!=null?Number(rf.cod):DEF_COD)/100); ins=price*((rf&&rf.ins!=null?Number(rf.ins):0)/100); got=total;
+      }
+      net=got-del-cod-ins-ret;
+    }
+    const kind=st==="echec"?"ret":(st==="livree"?"done":"exp");
+    return { price, got, del, cod, ins, ret, net, src, kind, free:!(fee>0)&&st!=="echec" };
+  }
+  function cogs(it) { try { const A_=A(), L=A_.orderLines?A_.orderLines(it.o)||[]:[]; return L.reduce((n,l)=>n+(Number(A_.fin&&A_.fin.costs&&A_.fin.costs[l.p&&l.p.slug])||0)*(Number(l.qty)||1),0); } catch (_) { return 0; } }
+  function sumSettle(list) {
+    const T={ net:0, netDone:0, netExp:0, retLoss:0, del:0, cod:0, ins:0, ret:0, cogs:0, pack:0, n:0, nDone:0, nExp:0, nRet:0, nFile:0 };
+    const pk=Number(A().fin&&A().fin.set&&A().fin.set.packaging)||0;
+    list.forEach(it=>{ const x=settle(it); if(!x)return; T.n++; if(x.src==="file")T.nFile++;
+      if(x.kind==="exp"){ T.netExp+=x.net; T.nExp++; return; }
+      T.net+=x.net; T.del+=x.del; T.cod+=x.cod; T.ins+=x.ins; T.ret+=x.ret;
+      if(x.kind==="ret"){ T.nRet++; T.retLoss+=x.ret; } else { T.nDone++; T.netDone+=x.net; T.cogs+=cogs(it); T.pack+=pk; } });
+    T.profit=T.net-T.cogs-T.pack; return T;
+  }
+  const dz=n=>Math.round(Number(n)||0).toLocaleString("fr-DZ");
+  function settleCells(it) {
+    const x=settle(it); if(!x) return '<td class="pm-note">—</td><td>—</td>';
+    const tip=`المحصَّل ${dz(x.got)} − توصيل ${dz(x.del)} − COD ${dz(x.cod)}`+(x.ins?` − تأمين ${dz(x.ins)}`:"")+(x.ret?` − إرجاع ${dz(x.ret)}`:"")+(x.src==="file"?" (من كشف ياليدين)":" (تقدير من التعريفة)");
+    const parts=x.kind==="ret"?[`إرجاع ${dz(x.ret)}`]:[`توصيل ${dz(x.del)}`,`COD ${dz(x.cod)}`].concat(x.ins?[`تأمين ${dz(x.ins)}`]:[]);
+    const col=x.net<0?"#fca5a5":(x.kind==="exp"?"#fde047":"#86efac");
+    return `<td title="${esc(tip)}" style="font-size:.76rem;white-space:nowrap">${x.free?'<b style="color:#fdba74">توصيل مجاني</b> · ':""}${esc(parts.join(" · "))}<br><small>${x.src==="file"?"✓ كشف ياليدين":"≈ تقدير"}</small></td><td title="${esc(tip)}" style="color:${col};font-weight:700;white-space:nowrap">${dz(x.net)} دج${x.kind==="exp"?'<br><small style="font-weight:400">متوقع</small>':""}</td>`;
+  }
   function view(it) { const r=rawRec(it)||{}, ov=r.ov||{}; return { name:ov.name!=null?ov.name:it.name, phone:ov.phone!=null?ov.phone:it.phone, product:ov.product!=null?ov.product:it.product, total:ov.total!=null?Number(ov.total):it.total }; }
   function amount(it, r) { return Number(r.amount)>0?Number(r.amount):view(it).total; }
   function filtered() {
@@ -91,15 +138,35 @@ const AdminPayments = (() => {
   }
   function row(it) {
     const r=draftFor(it), oid=esc(it.id), src=it.manual?'<span class="pm-src pm-man">يدوي</span>':(isMan(it)?'<span class="pm-src pm-man" title="عُدّل يدوياً؛ زر ↺ يعيده للتلقائي">معدَّل</span>':'<span class="pm-src pm-auto" title="من حالة شحن شركة التوصيل">⚡ تلقائي</span>');
-    return `<tr data-id="${oid}"><td><input class="pm-check" type="checkbox" data-id="${oid}"${S.selected.has(it.id)?" checked":""}></td><td dir="ltr">#${oid.replace(/^m/,"M")} · ${esc(String(it.date||"").slice(0,10))}</td><td><input class="pm-name" data-id="${oid}" type="text" value="${esc(r.name)}"></td><td><input class="pm-phone" data-id="${oid}" dir="ltr" type="text" value="${esc(r.phone)}"></td><td><input class="pm-prod" data-id="${oid}" type="text" value="${esc(r.product)}"></td><td>${it.manual?"—":esc((A().ST_AR&&A().ST_AR[it.ship])||it.ship||"—")}</td><td>${it.manual?`<input class="pm-total" data-id="${oid}" type="number" min="1" value="${Math.max(0,Number(r.total)||0)}" style="width:95px">`:money(r.total)}</td><td>${src}</td><td><select class="pm-status" data-id="${oid}">${Object.keys(labels).map(k=>`<option value="${k}"${k===r.status?" selected":""}>${labels[k]}</option>`).join("")}</select></td><td><input class="pm-amount" data-id="${oid}" type="number" min="0" step="1" value="${Math.max(0,Number(r.amount)||0)}"></td><td><select class="pm-method" data-id="${oid}">${Object.keys(methods).map(k=>`<option value="${k}"${k===(r.method||"cod")?" selected":""}>${methods[k]}</option>`).join("")}</select></td><td><input class="pm-date" data-id="${oid}" type="date" value="${esc(String(r.date||"").slice(0,10))}"></td><td><input class="pm-note-input" data-id="${oid}" type="text" maxlength="300" value="${esc(r.note||"")}"></td><td><button class="pm-btn pm-mini pm-save" type="button" data-id="${oid}" ${S.saving?"disabled":""}>حفظ</button>${it.manual?` <button class="pm-btn pm-mini pm-del" type="button" data-id="${oid}" title="حذف">🗑</button>`:(isMan(it)?` <button class="pm-btn pm-mini pm-reset" type="button" data-id="${oid}" title="إعادة للتلقائي">↺</button>`:"")}</td></tr>`;
+    return `<tr data-id="${oid}"><td><input class="pm-check" type="checkbox" data-id="${oid}"${S.selected.has(it.id)?" checked":""}></td><td dir="ltr">#${oid.replace(/^m/,"M")} · ${esc(String(it.date||"").slice(0,10))}</td><td><input class="pm-name" data-id="${oid}" type="text" value="${esc(r.name)}"></td><td><input class="pm-phone" data-id="${oid}" dir="ltr" type="text" value="${esc(r.phone)}"></td><td><input class="pm-prod" data-id="${oid}" type="text" value="${esc(r.product)}"></td><td>${it.manual?"—":esc((A().ST_AR&&A().ST_AR[it.ship])||it.ship||"—")}</td><td>${it.manual?`<input class="pm-total" data-id="${oid}" type="number" min="1" value="${Math.max(0,Number(r.total)||0)}" style="width:95px">`:money(r.total)}</td>${settleCells(it)}<td>${src}</td><td><select class="pm-status" data-id="${oid}">${Object.keys(labels).map(k=>`<option value="${k}"${k===r.status?" selected":""}>${labels[k]}</option>`).join("")}</select></td><td><input class="pm-amount" data-id="${oid}" type="number" min="0" step="1" value="${Math.max(0,Number(r.amount)||0)}"></td><td><select class="pm-method" data-id="${oid}">${Object.keys(methods).map(k=>`<option value="${k}"${k===(r.method||"cod")?" selected":""}>${methods[k]}</option>`).join("")}</select></td><td><input class="pm-date" data-id="${oid}" type="date" value="${esc(String(r.date||"").slice(0,10))}"></td><td><input class="pm-note-input" data-id="${oid}" type="text" maxlength="300" value="${esc(r.note||"")}"></td><td><button class="pm-btn pm-mini pm-save" type="button" data-id="${oid}" ${S.saving?"disabled":""}>حفظ</button>${it.manual?` <button class="pm-btn pm-mini pm-del" type="button" data-id="${oid}" title="حذف">🗑</button>`:(isMan(it)?` <button class="pm-btn pm-mini pm-reset" type="button" data-id="${oid}" title="إعادة للتلقائي">↺</button>`:"")}</td></tr>`;
+  }
+
+  function totRow(list) {
+    const T=sumSettle(list); if(!T.n) return "";
+    return `<tfoot><tr style="font-weight:700"><td colspan="6">TOTAUX (${T.nDone+T.nRet} طرد منتهٍ)</td><td></td><td style="white-space:nowrap;font-size:.76rem">توصيل ${dz(T.del)} · COD ${dz(T.cod)}${T.ret?" · إرجاع "+dz(T.ret):""}</td><td style="color:${T.net<0?"#fca5a5":"#86efac"};white-space:nowrap">${dz(T.net)} دج</td><td colspan="7"></td></tr></tfoot>`;
+  }
+  function settleCard() {
+    const T=sumSettle(items()); if(!T.n) return `<section class="pm-card"><b>🧾 تسوية ياليدين</b><p class="pm-note">لا طلبات مسجَّلة بعد. عند التسجيل تظهر هنا الأرقام تلقائياً؛ ولأدقّ النتائج استورد كشف الدفع من حساب ياليدين.</p><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين (xlsx / csv)</button></section>`;
+    const c=(l,v,k,t)=>`<div class="pm-card pm-stat"${t?` title="${esc(t)}"`:""}><small>${l}</small><b${k?` style="color:${k}"`:""}>${v}</b></div>`;
+    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% من سعر المنتج) − التأمين؛ والمرتجع يخسر رسم الإرجاع فقط. ${T.nFile}/${T.n} طرد بأرقام الكشف الفعلية والباقي تقدير من التعريفة.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
+      <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        ${c("صافي ما يخصّك (مسلَّم + مرتجع)",dz(T.net)+" دج",T.net<0?"#fca5a5":"#86efac","مثل «net client» في كشف ياليدين")}
+        ${c("رسوم التوصيل المدفوعة لياليدين",dz(T.del)+" دج")}
+        ${c("عمولة COD"+(T.ins?" + التأمين":""),dz(T.cod+T.ins)+" دج")}
+        ${c("خسارة المرتجعات ("+T.nRet+")",dz(T.retLoss)+" دج","#fdba74")}
+        ${c("تكلفة منتجات المسلَّم",dz(T.cogs)+" دج",null,"من تبويب «تكلفة المنتجات»")}
+        ${c("التغليف",dz(T.pack)+" دج")}
+        ${c("الربح النهائي (بعد التكلفة والتغليف)",dz(T.profit)+" دج",T.profit<0?"#fca5a5":"#86efac","الإعلان لا يدخل هنا؛ تجده في «المخزون والأرباح»")}
+        ${c("صافٍ متوقع (في الطريق: "+T.nExp+")",dz(T.netExp)+" دج","#fde047")}
+      </div></section>`;
   }
   function draw() {
     const host=$("payments-content"); if(!host)return;
     const t=totals(), list=filtered();
     host.innerHTML=`<style>#pm{display:grid;gap:14px;color:#fff}#pm *{box-sizing:border-box}#pm .pm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}#pm .pm-card{padding:15px;border:1px solid rgba(255,255,255,.14);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 10px 24px rgba(0,0,0,.22)}#pm .pm-stat small{display:block;color:#b4c9be}#pm .pm-stat b{display:block;margin-top:5px;font-size:1.2rem}#pm .pm-head,#pm .pm-tools{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}#pm input,#pm select,#pm textarea{padding:8px 10px;border:1px solid rgba(255,255,255,.17);border-radius:10px;color:#fff;background:rgba(255,255,255,.07);font:inherit}#pm select option{background:#10231b;color:#fff}#pm input[type=checkbox]{width:18px;height:18px}#pm .pm-tools input[type=search]{min-width:200px;flex:1}#pm .pm-btn{padding:9px 13px;border-radius:12px;color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -5px 9px rgba(0,0,0,.2),0 5px 13px rgba(0,0,0,.22);backdrop-filter:blur(8px);font:inherit;font-weight:800;cursor:pointer;transition:transform .18s,background .18s}#pm .pm-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.13)}#pm .pm-primary{background:rgba(74,222,128,.18);border-color:rgba(134,239,172,.42)}#pm .pm-table{overflow:auto}#pm table{width:100%;min-width:1500px;border-collapse:collapse}#pm td,#pm th{white-space:nowrap}#pm th,#pm td{text-align:start;padding:8px;border-bottom:1px solid rgba(255,255,255,.1);vertical-align:middle}#pm th{color:#b4c9be;font-size:.84rem}#pm td input[type=number]{width:105px}#pm td input[type=date]{width:145px}#pm td input[type=text]{width:130px}#pm td input.pm-name{width:140px}#pm td input.pm-phone{width:112px}#pm td input.pm-prod{width:170px}#pm td input.pm-note-input{width:150px}#pm td select{max-width:130px}#pm .pm-src{font-size:.78rem;font-weight:800;padding:3px 8px;border-radius:99px;border:1px solid rgba(255,255,255,.2)}#pm .pm-auto{color:#86efac;border-color:rgba(134,239,172,.45)}#pm .pm-man{color:#fcd34d;border-color:rgba(252,211,77,.45)}#pm .pm-add{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow:auto;padding:10px;border:1px dashed rgba(134,239,172,.4);border-radius:14px;margin-top:10px}#pm .pm-add input,#pm .pm-add select{flex:none}#pm .pm-add .pm-n{width:150px}#pm .pm-add .pm-p{width:115px}#pm .pm-add .pm-pr{width:180px}#pm .pm-add .pm-a{width:105px}#pm .pm-add .pm-d{width:145px}#pm .pm-add .pm-nt{width:150px}#pm .pm-del{background:rgba(244,63,94,.16);border-color:rgba(253,164,175,.45)}#pm .pm-mini{padding:6px 10px}#pm td input,#pm td select{height:36px;padding:4px 8px}#pm td select.pm-status{width:125px;max-width:none}#pm td select.pm-method{width:150px;max-width:none}#pm td input[type=checkbox]{height:18px;padding:0}#pm .pm-badge{display:inline-block;padding:4px 9px;border-radius:99px;font-weight:800;background:rgba(255,255,255,.1)}#pm .pm-paid{color:#86efac}#pm .pm-refunded{color:#fda4af}#pm .pm-error{color:#ff9aa2}#pm .pm-note{color:#b4c9be;font-size:.88rem}@media(max-width:700px){#pm .pm-grid{grid-template-columns:1fr}}</style>
       <div id="pm"><div class="pm-head"><div><h2>المدفوعات</h2><div class="pm-note">⚡ تلقائية من شركة التوصيل: الطلب المسلَّم = مدفوع. عدّل أي صف يدوياً أو أضف دفعة يدوية.</div></div><div><button id="pm-add-btn" type="button" class="pm-btn pm-primary">＋ دفعة يدوية</button> <button id="pm-export" type="button" class="pm-btn">تصدير CSV</button></div></div>
-      <div class="pm-grid"><div class="pm-card pm-stat"><small>المبالغ المستلمة</small><b>${money(t.received)}</b></div><div class="pm-card pm-stat"><small>مبالغ لدى شركة التوصيل (قيد التوصيل)</small><b>${money(t.pending)}</b></div><div class="pm-card pm-stat"><small>المبالغ المستردّة</small><b>${money(t.refunded)}</b></div></div>
-      <section class="pm-card"><div class="pm-tools"><input id="pm-search" type="search" placeholder="بحث برقم الطلب أو الاسم أو الهاتف أو المنتج" value="${esc(S.query)}"><select id="pm-filter"><option value="all"${S.filter==="all"?" selected":""}>كل الحالات</option><option value="unpaid"${S.filter==="unpaid"?" selected":""}>غير مدفوع</option><option value="paid"${S.filter==="paid"?" selected":""}>مدفوع</option><option value="refunded"${S.filter==="refunded"?" selected":""}>مسترد</option></select><button id="pm-bulk-paid" type="button" class="pm-btn pm-primary" ${S.selected.size?"":"disabled"}>تعليم المحدّد كمدفوع (${S.selected.size})</button><button id="pm-export2" type="button" class="pm-btn">تصدير CSV</button></div>${S.addOpen?addForm():""}${S.err?`<p class="pm-error">${esc(S.err)}</p>`:""}<div class="pm-table"><table><thead><tr><th><input id="pm-all" type="checkbox" aria-label="تحديد الكل"></th><th>رقم / تاريخ</th><th>الاسم</th><th>الهاتف</th><th>المنتج</th><th>الشحن</th><th>المبلغ</th><th>المصدر</th><th>حالة الدفع</th><th>المسجّل</th><th>الطريقة</th><th>تاريخ الدفع</th><th>ملاحظة</th><th></th></tr></thead><tbody>${list.length?list.map(row).join(""):`<tr><td colspan="14" class="pm-note">لا توجد مدفوعات تطابق البحث.</td></tr>`}</tbody></table></div><p class="pm-note">تغيير حالة الدفع لا يغيّر حالة الشحن أو المخزون. الاسترداد يُسجَّل يدوياً لطلب مدفوع أو مسلَّم.</p></section></div>`;
+      ${settleCard()}<div class="pm-grid"><div class="pm-card pm-stat"><small>المبالغ المستلمة</small><b>${money(t.received)}</b></div><div class="pm-card pm-stat"><small>مبالغ لدى شركة التوصيل (قيد التوصيل)</small><b>${money(t.pending)}</b></div><div class="pm-card pm-stat"><small>المبالغ المستردّة</small><b>${money(t.refunded)}</b></div></div>
+      <section class="pm-card"><div class="pm-tools"><input id="pm-search" type="search" placeholder="بحث برقم الطلب أو الاسم أو الهاتف أو المنتج" value="${esc(S.query)}"><select id="pm-filter"><option value="all"${S.filter==="all"?" selected":""}>كل الحالات</option><option value="unpaid"${S.filter==="unpaid"?" selected":""}>غير مدفوع</option><option value="paid"${S.filter==="paid"?" selected":""}>مدفوع</option><option value="refunded"${S.filter==="refunded"?" selected":""}>مسترد</option></select><button id="pm-bulk-paid" type="button" class="pm-btn pm-primary" ${S.selected.size?"":"disabled"}>تعليم المحدّد كمدفوع (${S.selected.size})</button><button id="pm-export2" type="button" class="pm-btn">تصدير CSV</button></div>${S.addOpen?addForm():""}${S.err?`<p class="pm-error">${esc(S.err)}</p>`:""}<div class="pm-table"><table><thead><tr><th><input id="pm-all" type="checkbox" aria-label="تحديد الكل"></th><th>رقم / تاريخ</th><th>الاسم</th><th>الهاتف</th><th>المنتج</th><th>الشحن</th><th>المبلغ</th><th>تفصيل ياليدين</th><th>الصافي لك</th><th>المصدر</th><th>حالة الدفع</th><th>المسجّل</th><th>الطريقة</th><th>تاريخ الدفع</th><th>ملاحظة</th><th></th></tr></thead><tbody>${list.length?list.map(row).join(""):`<tr><td colspan="16" class="pm-note">لا توجد مدفوعات تطابق البحث.</td></tr>`}</tbody>${list.length?totRow(list):""}</table></div><p class="pm-note">تغيير حالة الدفع لا يغيّر حالة الشحن أو المخزون. الاسترداد يُسجَّل يدوياً لطلب مدفوع أو مسلَّم.</p></section></div>`;
     const search=$("pm-search"); if(search)search.oninput=()=>{const pos=search.selectionStart;S.query=search.value;draw();const n=$("pm-search");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(_){}}};
     const filter=$("pm-filter"); if(filter)filter.onchange=()=>{S.filter=filter.value;S.selected.clear();draw();};
     const all=$("pm-all"); if(all)all.onchange=()=>{list.forEach(it=>all.checked?S.selected.add(it.id):S.selected.delete(it.id));draw();};
@@ -108,6 +175,7 @@ const AdminPayments = (() => {
     host.querySelectorAll(".pm-save").forEach(el=>el.onclick=()=>commit(el.dataset.id));
     host.querySelectorAll(".pm-del").forEach(el=>el.onclick=()=>delManual(el.dataset.id));
     host.querySelectorAll(".pm-reset").forEach(el=>el.onclick=()=>resetAuto(el.dataset.id));
+    const imp=$("pm-imp");if(imp)imp.onclick=()=>{const f=document.getElementById("fin-import");if(f)f.click();else S.err="تعذّر فتح نافذة الاستيراد.";};
     const bulk=$("pm-bulk-paid");if(bulk)bulk.onclick=bulkPaid;
     [$("pm-export"),$("pm-export2")].filter(Boolean).forEach(el=>el.onclick=csv);
     const ab=$("pm-add-btn");if(ab)ab.onclick=()=>{S.addOpen=!S.addOpen;draw();};
@@ -156,5 +224,5 @@ const AdminPayments = (() => {
     if(typeof Admin==="undefined"||Admin._paymentsTabWrapped)return;
     const original=Admin.tab;Admin.tab=function(t,btn){const result=original.call(this,t,btn),el=$("tab-payments");if(el)el.classList.toggle("hidden",t!=="payments");if(t==="payments")AdminPayments.render();return result;};Admin._paymentsTabWrapped=true;
   });
-  return { render, items, record, view, autoRec, S };
+  return { render, items, record, view, autoRec, settle, sumSettle, S };
 })();

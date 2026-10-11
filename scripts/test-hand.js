@@ -433,6 +433,18 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { shown, warmed, pageWarm, gone, stored };
   });
   ok("إشعار التحديث: يظهر عند وجود نسخة أحدث ويُحدّث كاش الصفحة والسكربتات في الخلفية (فيختفي بعد إعادة التحميل العادية)، وإغلاقه يُحفظ لتلك النسخة", upd.shown && upd.warmed >= 3 && upd.pageWarm && upd.gone && upd.stored === "99.0.0", upd);
+  // ── المدفوعات: تسوية ياليدين (صافي لك) ──
+  const pay = await p.evaluate(async () => {
+    const o0 = Admin.orders, a0 = Admin.ydActual, t0 = Admin.trackingOf;
+    Admin.orders = [{ id: "pz1", name: "ز", phone: "0550000001", status: "livree", total: 8000, fee: 750, date: "2026-09-10", wilaya: "Tipaza", commune: "Larhat", note: "" }, { id: "pz2", name: "ر", phone: "0550000002", status: "echec", total: 3000, fee: 700, date: "2026-09-10", wilaya: "Adrar", commune: "Adrar", note: "" }];
+    Admin.ydActual = { "yal-T1": { st: "Livré", price: 7250, del: 750, ret: 0, ins: 0, cod: 54.375, net: 7195.625 }, "yal-T2": { st: "Retourné au vendeur", price: 0, del: 0, ret: 250, ins: 0, cod: 0, net: -250 } };
+    Admin.trackingOf = o => ({ company: "yalidine", tracking: o.id === "pz1" ? "yal-T1" : "yal-T2" });
+    let html = "", nets = [];
+    try { const host = document.getElementById("payments-content"); AdminPayments.S.loaded = true; await AdminPayments.render(); html = host ? host.innerHTML : ""; nets = AdminPayments.items().map(it => (AdminPayments.settle(it) || {}).net); } catch (e) { html = "ERR " + e.message; }
+    Admin.orders = o0; Admin.ydActual = a0; Admin.trackingOf = t0; AdminPayments.S.loaded = false;
+    return { card: html.includes("تسوية ياليدين"), cols: html.includes("الصافي لك") && html.includes("تفصيل ياليدين"), tot: html.includes("TOTAUX"), nets, imp: html.includes("pm-imp") };
+  });
+  ok("المدفوعات: بطاقة «تسوية ياليدين» وعمودا التفصيل والصافي وصف TOTAUX وزر الاستيراد، والصافي يطابق الكشف (7195.625 و−250)", pay.card && pay.cols && pay.tot && pay.imp && Math.abs(pay.nets[0] - 7195.625) < 1e-6 && pay.nets[1] === -250, pay);
   // ── مسح كل أسعار الشراء ──
   const ca = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; const saved = {}; Priv.set = async (k, v) => { saved[k] = JSON.stringify(v); }; Admin.renderFinance = () => { }; window.confirm = () => true;
