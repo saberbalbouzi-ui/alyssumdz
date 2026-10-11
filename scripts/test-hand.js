@@ -239,9 +239,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const svd = saved.length - before, hasTitle = /تكلفة الإعلان/.test(document.getElementById("fin-ads-rows").textContent), rowsAfter = document.querySelectorAll("#fin-ads-rows tbody tr").length, stored = Admin.fin.ads[slug];
     Admin.addAdRow(); const opts2 = Array.from(document.querySelectorAll("#fin-p1-prod option")).map(o => o.value);
     window.confirm = () => true; await Admin.delAdRow(0); await wait(50);
-    return { empty, globalGone, opts, live1, live2, saved: svd, rowsAfter, stored, dupHidden: !opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
+    const tblOk = /المخزون والأرباح لكل منتج/.test(document.getElementById("fin-table").closest(".card").textContent) && Array.from(document.querySelectorAll("#fin-table th")).some(h => h.textContent === "الربح المتوقع");
+    return { tblOk, empty, globalGone, opts, live1, live2, saved: svd, rowsAfter, stored, dupHidden: !opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
   });
   ok("إعلان لكل منتج: لا إعداد عام، ولا صفوف قبل إضافة حملة", ad.empty && ad.globalGone, ad);
+  ok("جدول المخزون والأرباح: له عنوان وعمود «الربح المتوقع»", ad.tblOk, ad);
   ok("إعلان لكل منتج: النتيجة تتغير فور تغيير الأرقام (ثابت 350 ثم Cost 200 × 2 = 400)", /350/.test(ad.live1) && /400/.test(ad.live2), ad);
   ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل لا يتكرر في القائمة، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "costx" && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
