@@ -296,19 +296,25 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const yp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
     Admin.listCompanyKey = () => "yalidine"; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: { apiId: "a", apiToken: "b", enabled: true } });
-    const reqs = [], cf0 = Admin.courierFetch, lk0 = Admin.listCompanyKey; Admin.courierFetch = async rq => { reqs.push({ m: rq.method, u: rq.url, b: rq.body }); return { ok: true, status: 200, text: "{}" }; };
+    const reqs = [], cf0 = Admin.courierFetch, lk0 = Admin.listCompanyKey; Admin.courierFetch = async rq => { reqs.push({ m: rq.method, u: rq.url, b: rq.body }); if (/\/v1\/centers\//.test(rq.url)) return { ok: true, status: 200, text: JSON.stringify({ data: WILAYAS.reduce((a, w) => a.concat((w.desks || []).map(d => ({ center_id: d.id, name: d.name, address: "", commune_name: d.commune || "", wilaya_id: w.id }))), []), has_more: false }) }; return { ok: true, status: 200, text: "{}" }; };
     Admin.orders = []; AdminYd.set([{ tracking: "yal-AAA", date: "2026-10-10", name: "ع** ا", phone: "0*****1", wilaya: "Alger", commune: "Bab Ezzouar", price: 3000, status: "En préparation" }, { tracking: "yal-BBB", date: "2026-10-09", name: "س** ", phone: "0*****2", wilaya: "Oran", commune: "Es Senia", price: 2000, status: "Livré" }], 2, false);
     const btns = document.querySelectorAll("#yd-card [data-ydp]").length;
     document.querySelector('#yd-card [data-ydp="yal-BBB"]').click(); const doneBtns = document.querySelectorAll("#ydp-bg [data-ydp-do=edit],#ydp-bg [data-ydp-do=del]").length, doneNote = /مرحلة التحضير/.test(document.getElementById("ydp-bg").textContent); document.querySelector("#ydp-bg [data-ydp-do=close]").click();
     document.querySelector('#yd-card [data-ydp="yal-AAA"]').click(); const prepBtns = document.querySelectorAll("#ydp-bg [data-ydp-do=edit],#ydp-bg [data-ydp-do=del]").length;
-    document.querySelector("#ydp-bg [data-ydp-do=edit]").click(); document.getElementById("ydp-c").value = "Kouba"; document.getElementById("ydp-p").value = "3400"; document.querySelector("#ydp-bg [data-ydp-do=save]").click(); await wait(80);
+    document.querySelector("#ydp-bg [data-ydp-do=edit]").click(); const infoKept = /Bab Ezzouar/.test(document.getElementById("ydp-bg").textContent), lists = ["ydp-w", "ydp-c", "ydp-t"].every(i => document.getElementById(i) && document.getElementById(i).tagName === "SELECT"), curW = document.getElementById("ydp-w").value, curC = document.getElementById("ydp-c").value, nCom = document.getElementById("ydp-c").options.length;
+    document.getElementById("ydp-c").value = "Kouba"; document.getElementById("ydp-p").value = "3400"; document.querySelector("#ydp-bg [data-ydp-do=save]").click(); await wait(120);
     const patch = reqs.find(r => r.m === "PATCH"), body = patch ? JSON.parse(patch.b) : null, row = AdminYd.S.rows.find(r => r.tracking === "yal-AAA");
+    document.querySelector("#ydp-bg [data-ydp-do=edit]").click(); const tt = document.getElementById("ydp-t"); tt.value = "stop"; tt.dispatchEvent(new Event("change", { bubbles: true })); const nDesk = document.getElementById("ydp-d").options.length, dshown = document.getElementById("ydp-dw").style.display !== "none"; document.querySelector("#ydp-bg [data-ydp-do=save]").click(); await wait(150);
+    const patch2 = reqs.filter(r => r.m === "PATCH")[1], body2 = patch2 ? JSON.parse(patch2.b) : null; document.querySelector("#ydp-bg [data-ydp-do=edit]").click(); const t3 = document.getElementById("ydp-t").value;
+    document.querySelector("#ydp-bg [data-ydp-do=back]").click();
     document.querySelector("#ydp-bg [data-ydp-do=del]").click(); await wait(80);
     const del = reqs.find(r => r.m === "DELETE"); Admin.courierFetch = cf0; Admin.listCompanyKey = lk0;
-    return { btns, doneBtns, doneNote, prepBtns, body, rowC: row && row.commune, rowP: row && row.price, del: del && del.u, left: AdminYd.S.rows.map(r => r.tracking).join(), closed: !document.getElementById("ydp-bg") };
+    return { btns, doneBtns, doneNote, prepBtns, infoKept, lists, curW, curC, nCom, nDesk, dshown, body2, t3, body, rowC: row && row.commune, rowP: row && row.price, del: del && del.u, left: AdminYd.S.rows.map(r => r.tracking).join(), closed: !document.getElementById("ydp-bg") };
   });
   ok("طرود ياليدين: زر معاينة لكل طرد، والطرد المُسلَّم بلا تعديل/حذف", yp.btns === 2 && yp.doneBtns === 0 && yp.doneNote, yp);
-  ok("طرود ياليدين: تعديل طرد En préparation يرسل PATCH بالحقول المغيَّرة فقط ويحدّث الجدول", yp.prepBtns === 2 && yp.body && yp.body.to_commune_name === "Kouba" && yp.body.price === 3400 && !("firstname" in yp.body) && yp.rowC === "Kouba" && yp.rowP === 3400, yp);
+  ok("طرود ياليدين: تعديل طرد En préparation يرسل PATCH بالحقول المغيَّرة فقط ويحدّث الجدول", yp.prepBtns === 2 && yp.body && yp.body.to_commune_name === "Kouba" && yp.body.to_wilaya_name === "Alger" && yp.body.is_stopdesk === false && yp.body.price === 3400 && !("firstname" in yp.body) && yp.rowC === "Kouba" && yp.rowP === 3400, yp);
+  ok("طرود ياليدين: نموذج التعديل يُبقي المعلومات الحالية وفيه قوائم الولاية والبلدية ونوع التوصيل محدَّدة بالقيم الحالية", yp.infoKept && yp.lists && yp.curW === "Alger" && yp.nCom > 5 && yp.curC, yp);
+  ok("طرود ياليدين: تحويل التوصيل إلى مكتب يُظهر قائمة المكاتب ويرسل is_stopdesk وstopdesk_id، ويحفظ النوع", yp.dshown && yp.nDesk > 0 && yp.body2 && yp.body2.is_stopdesk === true && typeof yp.body2.stopdesk_id === "number" && yp.t3 === "stop", yp);
   ok("طرود ياليدين: حذف الطرد يرسل DELETE ويزيله من الجدول ويغلق النافذة", /yal-AAA$/.test(yp.del || "") && yp.left === "yal-BBB" && yp.closed, yp);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {

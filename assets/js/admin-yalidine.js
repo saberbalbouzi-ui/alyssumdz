@@ -155,9 +155,19 @@ const AdminYd = (() => {
     const info = '<table style="width:100%;border-collapse:collapse">' + row("التتبع", '<b dir="ltr">' + esc(r.tracking) + '</b>') + row("التاريخ", esc(String(r.date).slice(0, 10))) + row("الاسم", esc(rl.name)) + row("الهاتف", '<span dir="ltr">' + esc(rl.phone) + '</span>' + contact(rl.phone)) + row("الوجهة", esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "")) + row("السعر", esc(r.price || "—")) + row("الحالة", '<span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span>') + row("الطلب", o ? "#" + esc(String(o.id).slice(-6)) + " — " + esc(o.name || "") : "غير مرتبط بطلب في لوحتك") + '</table>';
     let body;
     if (edit && can) {
-      body = '<h3 style="margin:0 0 .5rem">✏️ تعديل الطرد</h3><div class="hint" style="margin:0 0 .6rem">اترك الحقل فارغاً إن لم ترد تغييره.</div>' +
-        inp("fn", "الاسم الأول (اختياري)", "") + inp("ln", "اللقب (اختياري)", "") + inp("w", "الولاية بالفرنسية (اختياري)", "") + inp("c", "البلدية بالفرنسية (اختياري)", "") + inp("p", "السعر عند الاستلام دج (اختياري)", "") +
+      const W = typeof WILAYAS !== "undefined" ? WILAYAS : [], nn = a && a.normName ? t => a.normName(t) : t => String(t || "").toLowerCase(), cw = W.find(w => nn(w.name) === nn(r.wilaya)) || null;
+      const sel = (id, opts, cur) => '<select id="ydp-' + id + '" style="width:100%;margin:.15rem 0 .5rem">' + opts.map(o => '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? " selected" : "") + '>' + esc(o[1]) + '</option>').join("") + '</select>', lbl = t => '<label style="display:block;font-size:.8rem;opacity:.8">' + t + '</label>';
+      const comOpts = (w, cur) => { const l = ((w && w.communes) || []).map(c => [c, c]); if (cur && !l.some(x => nn(x[0]) === nn(cur))) l.unshift([cur, cur + " (الحالية)"]); return l; };
+      const deskOpts = (w, cur) => { const w2 = w && a && a.wCo ? a.wCo(w.name) : w; return ((w2 && w2.desks) || []).map(d => [d.id, d.name + (d.commune ? " — " + d.commune : "")]); };
+      body = info + '<h3 style="margin:.8rem 0 .4rem">✏️ تعديل الطرد</h3><div class="hint" style="margin:0 0 .6rem">القيم الحالية محدَّدة مسبقاً — غيّر ما تريد فقط، ولا يُرسَل للشركة إلا ما تغيّر.</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 .6rem"><div>' + lbl("الاسم الأول (اختياري)") + inp("fn", "اتركه فارغاً بلا تغيير", "") + '</div><div>' + lbl("اللقب (اختياري)") + inp("ln", "اتركه فارغاً بلا تغيير", "") + '</div></div>' +
+        lbl("الولاية") + sel("w", W.map(w => [w.name, w.id + " — " + w.name]), cw ? cw.name : "") +
+        lbl("البلدية") + sel("c", comOpts(cw, r.commune), r.commune) +
+        lbl("نوع التوصيل") + sel("t", [["home", "🏠 إلى المنزل"], ["stop", "🏢 مكتب Stop Desk"]], r.stop ? "stop" : "home") +
+        '<div id="ydp-dw"' + (r.stop ? "" : ' style="display:none"') + '>' + lbl("المكتب") + sel("d", deskOpts(cw), r.deskId) + '</div>' +
+        lbl("السعر عند الاستلام دج (اختياري)") + inp("p", "اتركه فارغاً بلا تغيير", "") +
         '<p id="ydp-msg" style="min-height:1.3em;margin:.2rem 0 .6rem;font-size:.85rem"></p><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="small green" type="button" data-ydp-do="save">💾 حفظ</button><button class="small gray" type="button" data-ydp-do="back">رجوع</button></div>';
+      bg._lists = { W, comOpts, deskOpts, nn };
     } else {
       body = info + '<p id="ydp-msg" style="min-height:1.3em;margin:.4rem 0;font-size:.85rem"></p><div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
         (can ? '<button class="small gold" type="button" data-ydp-do="edit">✏️ تعديل</button><button class="small" type="button" style="background:var(--red)" data-ydp-do="del">🗑 حذف الطرد</button>' : '<span class="hint" style="margin:0">التعديل والحذف متاحان فقط للطرد في مرحلة التحضير (En préparation) — بعدها لا تقبلهما الشركة.</span>') +
@@ -170,6 +180,11 @@ const AdminYd = (() => {
       if (k === "close") pvClose(); else if (k === "back") pvOpen(tr); else if (k === "edit") pvOpen(tr, true);
       else if (k === "order") { pvClose(); a.openOrderPreview(idx); }
       else if (k === "del") pvDel(r, o, idx, msg); else if (k === "save") pvSave(r, msg);
+    });
+    bg.addEventListener("change", ev => {
+      const L = bg._lists; if (!L) return; const id = ev.target.id, fill = (el, opts) => { el.innerHTML = opts.map(o => '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>').join(""); };
+      if (id === "ydp-w") { const w = L.W.find(x => x.name === ev.target.value); fill($("ydp-c"), L.comOpts(w)); fill($("ydp-d"), L.deskOpts(w)); }
+      if (id === "ydp-t") { const dw = $("ydp-dw"); if (dw) dw.style.display = ev.target.value === "stop" ? "" : "none"; }
     });
     document.body.appendChild(bg);
   }
@@ -185,15 +200,26 @@ const AdminYd = (() => {
     } catch (e) { msg("تعذّر الحذف: " + (e.message || e)); }
   }
   async function pvSave(r, msg) {
-    const v = id => ($("ydp-" + id).value || "").trim(), f = {}; if (v("fn")) f.firstname = v("fn"); if (v("ln")) f.familyname = v("ln"); if (v("w")) f.to_wilaya_name = v("w"); if (v("c")) f.to_commune_name = v("c");
-    if (v("p")) { const n = Number(v("p")); if (!(n >= 0)) { msg("السعر غير صحيح"); return; } f.price = n; f.declared_value = n; }
-    if (!Object.keys(f).length) { msg("لم تغيّر شيئاً"); return; }
+    const g = id => { const e = $("ydp-" + id); return e ? (e.value || "").trim() : ""; }, f = {}; if (g("fn")) f.firstname = g("fn"); if (g("ln")) f.familyname = g("ln");
+    if (g("p")) { const n = Number(g("p")); if (!(n >= 0)) { msg("السعر غير صحيح"); return; } f.price = n; f.declared_value = n; }
     const { a, co, cfg } = comp(); if (!co || !co.patchRequest) { msg("هذه الشركة لا تدعم التعديل آلياً"); return; }
+    const nn = t => a.normName(t), W = typeof WILAYAS !== "undefined" ? WILAYAS : [], cw = W.find(w => nn(w.name) === nn(r.wilaya)), stop = g("t") === "stop";
+    const chg = g("w") !== (cw ? cw.name : "") || nn(g("c")) !== nn(r.commune) || stop !== !!r.stop || (stop && Number(g("d")) !== Number(r.deskId || 0));
+    let nz = null;
+    if (chg) {
+      const w = W.find(x => x.name === g("w")), d = stop && w ? (a.wCo(w.name).desks || []).find(x => String(x.id) === g("d")) : null;
+      if (stop && !d) { msg("اختر مكتب Stop Desk لهذه الولاية"); return; }
+      msg("⏳ جارِ مطابقة الولاية والبلدية مع قوائم الشركة…");
+      try { nz = await a.normForCompany(co, cfg, a.coOrder({ id: r.tracking, name: "", wilaya: g("w"), commune: g("c"), dtype: stop ? "stop" : "home", desk: d ? d.name : "" })); } catch (e) { msg("تعذّر التحقق من القوائم: " + (e.message || e)); return; }
+      if (!nz.ok) { msg("❌ " + nz.msg); return; }
+      f.to_wilaya_name = nz.ord.wilaya; f.to_commune_name = nz.ord.commune; f.is_stopdesk = stop; if (stop) f.stopdesk_id = nz.ord.__deskId;
+    }
+    if (!Object.keys(f).length) { msg("لم تغيّر شيئاً"); return; }
     msg("⏳ جارِ الحفظ…");
     try {
       const res = await a.courierFetch(co.patchRequest(cfg, r.tracking, f));
-      if (!res.ok) { let why = ""; try { const j = JSON.parse(res.text); why = j.message || j.error || ""; } catch (e) { } msg("رفضت الشركة التعديل (رمز " + res.status + ")" + (why ? ": " + why : "")); return; }
-      if (f.to_wilaya_name) r.wilaya = f.to_wilaya_name; if (f.to_commune_name) r.commune = f.to_commune_name; if (f.price != null) r.price = f.price;
+      if (!res.ok) { let why = ""; try { const j = JSON.parse(res.text); why = j.message || j.error || ""; } catch (e) { } msg("رفضت الشركة التعديل (رمز " + res.status + ")" + (why ? ": " + why : "") + " — غالباً خرج الطرد من مرحلة التحضير"); return; }
+      if (f.to_wilaya_name) { r.wilaya = f.to_wilaya_name; r.commune = f.to_commune_name; r.stop = stop; r.deskId = stop ? f.stopdesk_id : 0; } if (f.price != null) r.price = f.price;
       if (f.firstname || f.familyname) r.name = [f.firstname, f.familyname].filter(Boolean).join(" ");
       save(); draw(); pvOpen(r.tracking); const m = $("ydp-msg"); if (m) m.textContent = "✅ تم الحفظ"; if (typeof toast === "function") toast("✅ تعديل الطرد " + r.tracking);
     } catch (e) { msg("تعذّر الحفظ: " + (e.message || e)); }
