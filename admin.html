@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.106">
+<meta name="admin-version" content="1.89.107">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1602,12 +1602,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.106"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.106"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.106"></script>
+<script src="assets/js/ctl-help.js?v=1.89.107"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.107"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.107"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.106"></script>
+<script src="assets/js/admin-nav.js?v=1.89.107"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1619,7 +1619,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.106"></script>
+<script src="assets/js/admin-update.js?v=1.89.107"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -7749,6 +7749,8 @@ const Admin = {
     this.setNoteTag(o, /📞[1-3]\s*/g, n === cur ? "" : "📞" + n);       // الضغط مرة ثانية على الرقم نفسه يلغيه
     this.renderOrders(); toast(n === cur ? "↩️ أُلغيت المحاولة" : "📞 سُجّلت المحاولة " + n);
   },
+  /* إلغاء طلب بمعرّفه (من نتيجة المطابقة): الطرد غير موجود عند الشركة فلا طلب إلغاء لها */
+  cancelById(id){ const i = this.orders.findIndex(x=>x.id === id), o = this.orders[i]; if(i < 0 || !confirm("إلغاء الطلب " + String(o.id).slice(-5) + " (" + (o.name || "") + ")؟")) return; this.changeStatus(i, "annulee"); toast("❌ أُلغي الطلب " + String(o.id).slice(-5)); this.renderShipped(); },
   async cancelOrder(i){
     const o = this.orders[i]; if(!o || !confirm("إلغاء الطلب " + o.id + " (" + (o.name||"") + ")؟")) return;
     this.changeStatus(i, "annulee");
@@ -7878,16 +7880,21 @@ const Admin = {
         }
         const o = this.orders[i]; if(p.status) this.setShipRaw(o.id, p.status);
         const m = co.mapStatus(p.status);
-        if(!m || m === "__alert" || m === o.status || ["livree","annulee"].includes(o.status)) continue;
-        if((m === "expediee" || m === "confirmee") && (this.STATUS_RANK[m] ?? 0) <= (this.STATUS_RANK[o.status] ?? 0)) continue;
-        API.updateOrder(this.key, o.id, m); this.onStatusChange(i, m); changed++; changes.push(o.id + " ← " + (this.ST_AR[m] || m));
+        const revive = o.status === "annulee" && (m === "expediee" || m === "livree");          // ملغى في اللوحة لكن طرده انطلق/سُلّم عند الشركة ⟵ الطلب في الواقع قائم
+        if(!m || m === "__alert" || m === o.status) continue;
+        if(["livree","annulee"].includes(o.status) && !revive) continue;
+        if(!revive && (m === "expediee" || m === "confirmee") && (this.STATUS_RANK[m] ?? 0) <= (this.STATUS_RANK[o.status] ?? 0)) continue;
+        API.updateOrder(this.key, o.id, m); this.onStatusChange(i, m); changed++; changes.push(o.id.slice(-5) + " ← " + (this.ST_AR[m] || m) + (revive ? " (كان ملغى)" : ""));
       }
+      /* طلبات مؤكَّدة/جديدة مسجَّلة محلياً بطرد لا وجود له في قائمة الشركة (حُذف هناك) */
+      const orphans = parcels.length ? this.orders.filter(o=>{ const t = this.trackingOf(o); return t && !listed.has(t.tracking) && ["confirmee","nouvelle"].includes(o.status) && tms(o.date) >= oldest; }) : [];
       this._lastShipSync = Date.now(); this.renderOrders(); this.renderStats(); this.renderShipped();
       const esc = v=>String(v == null ? "" : v).replace(/[&<>"]/g, c=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
-      if(opts.bg){ if(attached || changed) toast("🔁 مطابقة ياليدين: رُبط " + attached + " وتغيّرت حالة " + changed); return; }
+      if(opts.bg){ if(attached || changed) toast("🔁 مطابقة ياليدين: رُبط " + attached + " وتغيّرت حالة " + changed); if(orphans.length && !this._orphanToast){ this._orphanToast = true; toast("⚠️ " + orphans.length + " طلب مؤكَّد طرده غير موجود عند الشركة — افتح «🔁 مطابقة» في الطلبات المسجلة لإلغائه"); } return; }
       this.showNotice("🔁 مطابقة ياليدين", "قُرئ <b>" + parcels.length + "</b> طرداً (الأحدث) — رُبط بطلبات اللوحة (مطابقة نمطية للاسم والهاتف المقنَّعَين + الولاية والبلدية والسعر): <b>" + attached + "</b> جديداً، تغيّرت حالة <b>" + changed + "</b>" + (changes.length ? "<br><small>" + changes.map(esc).join("، ") + "</small>" : "") +
         "<br>طرود في ياليدين <b>بلا طلب مطابق</b> في اللوحة: <b>" + unmatched.length + "</b> (أُنشئت يدوياً في موقع ياليدين أو بهاتف مختلف)." +
-        (unmatched.length ? '<div style="overflow:auto;max-height:260px;margin-top:.6rem"><table style="width:100%;border-collapse:collapse;font-size:.85rem"><tr><th>التتبع</th><th>الاسم</th><th>الهاتف</th><th>الولاية/البلدية</th><th>الحالة</th></tr>' + unmatched.slice(0, 40).map(p=>"<tr><td dir='ltr'>" + esc(p.tracking) + "</td><td>" + esc(p.name) + "</td><td dir='ltr'>" + esc(p.phone) + "</td><td>" + esc(p.wilaya) + " / " + esc(p.commune) + "</td><td>" + esc(p.status) + "</td></tr>").join("") + "</table></div>" : ""));
+        (unmatched.length ? '<div style="overflow:auto;max-height:260px;margin-top:.6rem"><table style="width:100%;border-collapse:collapse;font-size:.85rem"><tr><th>التتبع</th><th>الاسم</th><th>الهاتف</th><th>الولاية/البلدية</th><th>الحالة</th></tr>' + unmatched.slice(0, 40).map(p=>"<tr><td dir='ltr'>" + esc(p.tracking) + "</td><td>" + esc(p.name) + "</td><td dir='ltr'>" + esc(p.phone) + "</td><td>" + esc(p.wilaya) + " / " + esc(p.commune) + "</td><td>" + esc(p.status) + "</td></tr>").join("") + "</table></div>" : "") +
+        (orphans.length ? '<div style="margin-top:.8rem;padding:.6rem .8rem;border-radius:10px;background:rgba(245,158,11,.14)"><b>⚠️ طلبات مؤكَّدة طرودها غير موجودة عند الشركة (' + orphans.length + ')</b><div class="hint" style="margin:.2rem 0">حُذف طردها هناك (أو لم يُسجَّل) فلا تُشحن؛ ألغِها لتخرج من المؤكَّد وتنتهي آثارها على المخزون.</div>' + orphans.map(o=>'<div style="display:flex;justify-content:space-between;gap:.5rem;align-items:center;margin:.25rem 0"><span>' + esc(String(o.id).slice(-5)) + " — " + esc(o.name) + " — " + esc(this.itemsDisplay(o).replace(/\n/g, "، ")) + '</span><button class="small warn" type="button" onclick="Admin.cancelById(\'' + esc(o.id) + '\')">❌ إلغاء الطلب</button></div>').join("") + "</div>" : ""));
     }catch(err){ if(!opts.bg) toast("❌ تعذّرت المطابقة: " + (err.cors ? "حجب المتصفح — تواصل مع الدعم" : err.message)); }
     finally{ this._reconciling = false; if(btn){ btn.disabled = false; btn.textContent = "🔁 مطابقة مع ياليدين"; } }
   },

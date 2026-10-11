@@ -376,6 +376,22 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
   ok("تكلفة المنتجات: مسح خانة سعر الشراء وحفظها يحذف السعر فعلاً (لا يعود بعد التحديث)", cc.clearedCost && cc.clearedCc && cc.clearedUi, cc);
   ok("جدول التكلفة: «حفظ» لمن يصنّع يجعل الإجمالي المحسوب سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
+  // ── مطابقة ياليدين: طلب ملغى طرده «Expédié» يعود قائماً، والمؤكَّد بلا طرد عند الشركة يُعرض للإلغاء ──
+  const rc = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
+    Admin.listCompanyKey = () => "yalidine"; Admin.activeCompanyKey = () => "yalidine"; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: { apiId: "a", apiToken: "b", enabled: true } });
+    const mk = (id, st, note, date) => ({ id, date: date || "2026-10-10T20:00:00.000Z", status: st, name: "ز" + id, phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", items: "كريم ×3 = 3000 DA", subtotal: 3000, fee: 0, total: 3000, note: note || "" });
+    Admin.orders = [mk("F5D05", "annulee", "🚚yalidine:yal-74"), mk("F851C", "confirmee", "🚚yalidine:yal-25 📦"), mk("2FB29", "expediee", "🚚yalidine:yal-35 📦")];
+    const st = [], un0 = API.updateOrder, os0 = Admin.onStatusChange, yf0 = Admin.ydFetchParcels, sn0 = Admin.showNotice; let html = "";
+    API.updateOrder = (k, id, status) => { st.push(id + ":" + status); }; Admin.onStatusChange = (i, status) => { Admin.orders[i].status = status; };
+    Admin.ydFetchParcels = async () => ({ rows: [{ tracking: "yal-74", status: "Expédié", name: "", phone: "", wilaya: "Béjaïa", commune: "", date: "2026-10-10 10:00:00", price: 2400 }, { tracking: "yal-35", status: "Vers Wilaya", name: "", phone: "", wilaya: "El Oued", commune: "", date: "2026-10-10 11:00:00", price: 2300 }], total: 2 });
+    Admin.showNotice = (t, h) => { html = h; };
+    await Admin.reconcileShipping(); await wait(50);
+    const out = { f5: Admin.orders[0].status, f8: Admin.orders[1].status, upd: st.join(), orphanShown: /F851C|F851C/.test(html) && /غير موجودة عند الشركة/.test(html), twoBtn: (html.match(/cancelById/g) || []).length };
+    Admin.cancelById("F851C"); await wait(30); out.f8after = Admin.orders[1].status;
+    API.updateOrder = un0; Admin.onStatusChange = os0; Admin.ydFetchParcels = yf0; Admin.showNotice = sn0; return out;
+  });
+  ok("مطابقة ياليدين: F5D05 الملغى وطرده «Expédié» يعود «في الطريق»، والمؤكَّد F851C بلا طرد عند الشركة يظهر للإلغاء ويُلغى بزر، و2FB29 لا يتغيّر", rc.f5 === "expediee" && /F5D05:expediee/.test(rc.upd) && rc.orphanShown && rc.twoBtn === 1 && rc.f8 === "confirmee" && rc.f8after === "annulee", rc);
   // ── المخزون والأرباح: عمود «الربح الحقيقي» بدل سعر البيع الأدنى ──
   const rpf = await p.evaluate(async () => {
     const S0 = Admin.fin && Admin.fin.set, fin0 = Admin.fin; Admin.fin = Object.assign({}, Admin.fin || {}, { set: Object.assign({}, S0 || {}, { insMode: "pct", insVal: 1 }) });
