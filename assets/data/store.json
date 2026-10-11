@@ -5,20 +5,27 @@
   "phone": "",
   "wa": "213559237239",
   "instagram": "alyssumdzofficiel",
+  "social": {
+    "instagram": "https://instagram.com/alyssumdzofficiel"
+  },
   "address": "",
+  "country": "DZ",
   "lang": "ar",
   "tz": "Africa/Algiers",
   "dateFmt": "DD/MM/YYYY",
   "timeFmt": "24",
   "weekStart": "sat",
   "currency": "دج",
+  "currencyCode": "DZD",
   "maintenance": false,
   "maintMsg": "",
+  "deletion": null,
   "domain": {
     "mode": "request",
     "value": "",
     "status": "requested",
-    "at": "2026-10-10T00:10:57.026Z"
+    "at": "2026-10-10T00:10:57.026Z",
+    "requests": []
   },
-  "updatedAt": "2026-10-10T00:10:57.092Z"
+  "updatedAt": "2026-10-11T12:59:44.410Z"
 }
