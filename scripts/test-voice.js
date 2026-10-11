@@ -180,5 +180,39 @@ else { const f = V.fillSlot(part, "حنة الشفاء", data); n++; if (f.kind 
 const dctx = Object.assign({}, data, { ctx: { slug: "miel-sidr" } });
 const th = V.parse("نقص السعر ديال هذا المنتوج 200 دينار", dctx); n++; if (th.kind !== "priceChange" || th.act.to !== 3800) { fail++; console.log("✗ هذا", JSON.stringify(th)); }
 const th2 = V.parse("زيد 10 حبات لهذا المنتوج", dctx); n++; if (th2.kind !== "stockChange" || th2.act.to !== 13) { fail++; console.log("✗ هذا مخزون", JSON.stringify(th2)); }
+// ── مطوّر الصفحات (data.pb) ──
+const WID = [["heading", "عنوان"], ["text", "نص"], ["image", "صورة"], ["button", "زر"], ["shape", "شكل / خط"], ["slider", "سلايدر"], ["gallery", "معرض صور"], ["video", "فيديو"], ["marquee", "شريط متحرّك"], ["accordion", "أسئلة شائعة"], ["divider", "فاصل"], ["table", "جدول"], ["map", "خريطة"], ["counter", "عدّاد"], ["contact", "نموذج اتصال"], ["sbar", "الشريط العلوي (إعلان)"], ["pcard", "بطاقة منتج"], ["products", "منتجات المتجر"], ["addcart", "زر اطلب الآن"], ["countdown", "عدّ تنازلي"], ["gallery2", "معرض المنتج 1+4"]].map(a => ({ type: a[0], label: a[1] }));
+const pbd = (sel) => Object.assign({}, data, { pb: { open: true, widgets: WID, selKind: sel || "" } });
+const PBT = (text, exp, d) => {
+  n++; const r = V.parse(text, d || pbd()); let ok = r.kind === exp.kind;
+  if (ok && exp.op) ok = r.act && r.act.op === exp.op;
+  for (const k of ["dev", "widget", "tool", "q", "panel", "title", "n"]) if (ok && exp[k] != null) ok = r.act && r.act[k] === exp[k];
+  if (ok && exp.confirm != null) ok = !!r.confirm === exp.confirm;
+  if (!ok) { fail++; console.log("✗ مطوّر", JSON.stringify(text), "→", JSON.stringify({ kind: r.kind, act: r.act, say: r.say, opts: (r.options || []).map(o => o.label) }), "متوقع", JSON.stringify(exp)); }
+};
+PBT("تراجع", { kind: "builder", op: "undo" }); PBT("تراجع 3 خطوات", { kind: "builder", op: "undo", n: 3 }); PBT("ارجع خطوة", { kind: "builder", op: "undo" }); PBT("annule la dernière action", { kind: "builder", op: "undo" }); PBT("undo", { kind: "builder", op: "undo" });
+PBT("اعد الخطوة", { kind: "builder", op: "redo" }); PBT("refais", { kind: "builder", op: "redo" }); PBT("تقدم خطوة", { kind: "builder", op: "redo" });
+PBT("معاينة", { kind: "builder", op: "preview" }); PBT("عاين الصفحة", { kind: "builder", op: "preview" }); PBT("aperçu de la page", { kind: "builder", op: "preview" });
+PBT("احفظ وانشر الصفحة", { kind: "builder", op: "publish", confirm: true }); PBT("publie la page", { kind: "builder", op: "publish", confirm: true }); PBT("احفظ", { kind: "builder", op: "publish", confirm: true });
+PBT("اغلق المحرر", { kind: "builder", op: "close", confirm: true });
+PBT("شوفها على الهاتف", { kind: "builder", op: "dev", dev: "m" }); PBT("وضع التابلت", { kind: "builder", op: "dev", dev: "t" }); PBT("عرض المكتب", { kind: "builder", op: "dev", dev: "d" }); PBT("vue mobile", { kind: "builder", op: "dev", dev: "m" }); PBT("نسخة الجوال", { kind: "builder", op: "dev", dev: "m" });
+PBT("اضف قسم جديد", { kind: "builder", op: "addSection" }); PBT("ajoute une section", { kind: "builder", op: "addSection" });
+PBT("اضف عنوان", { kind: "builder", op: "widget", widget: "heading" }); PBT("ضيف زر", { kind: "builder", op: "widget", widget: "button" }); PBT("حط صورة", { kind: "builder", op: "widget", widget: "image" }); PBT("ajoute un bouton", { kind: "builder", op: "widget", widget: "button" }); PBT("ajoute un texte", { kind: "builder", op: "widget", widget: "text" });
+PBT("اضف ثلاثة ازرار", { kind: "builder", op: "widget", widget: "button", n: 3 }); PBT("اضف فيديو", { kind: "builder", op: "widget", widget: "video" }); PBT("اضف جدول", { kind: "builder", op: "widget", widget: "table" }); PBT("اضف سلايدر", { kind: "builder", op: "widget", widget: "slider" }); PBT("اضف شريط متحرك", { kind: "builder", op: "widget", widget: "marquee" });
+PBT("اضف زر اطلب الان", { kind: "builder", op: "widget", widget: "addcart" }); PBT("اضف بطاقة منتج", { kind: "builder", op: "widget", widget: "pcard" }); PBT("اضف عد تنازلي", { kind: "builder", op: "widget", widget: "countdown" });
+PBT("اضف معرض", { kind: "builder", op: "widget", widget: "gallery" }); PBT("اضف أسئلة شائعة", { kind: "builder", op: "widget", widget: "accordion" });
+PBT("افتح الطبقات", { kind: "builder", op: "panel", panel: "lay" }); PBT("اخف الادوات", { kind: "builder", op: "panel", panel: "l" }); PBT("اظهر الاعدادات", { kind: "builder", op: "panel", panel: "r" }); PBT("اعدادات الصفحة", { kind: "builder", op: "panel", panel: "pg" }); PBT("افتح الاقسام الجاهزة", { kind: "builder", op: "panel", panel: "def" });
+PBT("كرر القسم", { kind: "builder", op: "tool", tool: "dupsec" }); PBT("كرر العنصر", { kind: "builder", op: "tool", tool: "dupel" }); PBT("انسخ هذا", { kind: "builder", op: "tool", tool: "dupel" }, pbd("widget")); PBT("كرر", { kind: "builder", op: "tool", tool: "dupsec" }, pbd("section"));
+PBT("اخف القسم", { kind: "builder", op: "tool", tool: "hidesec" }); PBT("اقفل القسم", { kind: "builder", op: "tool", tool: "locksec" }); PBT("اقفل العنصر", { kind: "builder", op: "tool", tool: "lockel" });
+PBT("انقل القسم للاعلى", { kind: "builder", op: "tool", tool: "secup" }); PBT("نزل القسم للاسفل", { kind: "builder", op: "tool", tool: "secdown" }); PBT("ارفع القسم", { kind: "builder", op: "tool", tool: "secup" });
+PBT("احذف القسم", { kind: "builder", op: "point", tool: "delsec" }); PBT("احذف العنصر", { kind: "builder", op: "point", tool: "delel" }); PBT("supprime cet élément", { kind: "builder", op: "point", tool: "delel" });
+PBT("كبر الخط", { kind: "builder", op: "fmt", q: "fs+" }); PBT("كبر الخط ثلاث مرات", { kind: "builder", op: "fmt", q: "fs+", n: 3 }); PBT("صغر الخط", { kind: "builder", op: "fmt", q: "fs-" }); PBT("خليه عريض", { kind: "builder", op: "fmt", q: "bold" }); PBT("mets en italique", { kind: "builder", op: "fmt", q: "italic" }); PBT("اجعل النص مسطر", { kind: "builder", op: "fmt", q: "under" });
+PBT("وسط العنصر", { kind: "builder", op: "fmt", q: "al-center" }); PBT("حاذي العنصر يمين", { kind: "builder", op: "fmt", q: "al-right" }); PBT("حاذي لليسار", { kind: "builder", op: "fmt", q: "al-left" });
+PBT("انشئ صفحة جديدة باسم عروض الصيف", { kind: "builder", op: "newPage" });
+PBT("اضف صفحة جديدة", { kind: "need" });
+{ const pn = V.parse("اضف صفحة جديدة", data); n++; const f = pn.kind === "need" ? V.fillSlot(pn, "تخفيضات رمضان", data) : null; if (!f || f.kind !== "builder" || f.act.title !== "تخفيضات رمضان") { fail++; console.log("✗ اسم الصفحة", JSON.stringify(f)); } }
+// خارج المحرّر لا تتأثر الأوامر العادية
+PBT("كم طلب اليوم", { kind: "answer" }, data); PBT("اضف منتج جديد", { kind: "newProduct" }, data); PBT("اضف منتج جديد", { kind: "newProduct" }); PBT("مبيعات اليوم", { kind: "answer" });
+PBT("توقف", { kind: "stop" }); PBT("احفظ المنتج", { kind: "unknown" }, data);
 console.log(fail ? `✗ فشل ${fail} من ${n}` : `✓ نجح ${n} من ${n}`);
 process.exit(fail ? 1 : 0);

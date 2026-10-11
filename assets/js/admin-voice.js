@@ -152,7 +152,7 @@ const AdminVoice = (() => {
   const TAB_RX = [];
   Object.keys(TABS).forEach(id => TABS[id].forEach(p => { const f = fold(p); TAB_RX.push({ id, len: f.length, rx: re([p]) }); }));
   TAB_RX.sort((a, b) => b.len - a.len);
-  const TAB_LABEL = { home: "لوحة التحكم", orders: "الطلبات", shipped: "الطلبات المسجلة", repeat: "إعادة الشراء", setup: "تجهيز المتجر", finance: "المخزون والأرباح", analytics: "التحليلات", products: "المنتجات", social: "السوشيال والإعلانات", inventory: "المخزون", bulkp: "التعديل الجماعي", reports: "التقارير", audit: "فحص المنتجات", returns: "المرتجعات", payments: "المدفوعات", seo: "SEO", blog: "المدوّنة والسياسات", builder: "مطوّر الصفحات", smart: "المطوّر الذكي", voice: "الوكيل الناطق", ask: "اسألني", cloner: "ناسخ القوالب", floaters: "الأيقونات العائمة", imgtools: "أدوات الصور", imggen: "مولّد الصور", agent: "الوكيل الذكي", attributes: "السمات", categories: "التصنيفات", fees: "رسوم التوصيل", delivery: "شركات التوصيل", coupons: "أكواد الخصم", blacklist: "القائمة السوداء", loyalty: "الزبائن الأوفياء", customers: "العملاء", admtheme: "مظهر لوحة التحكم", theme: "مظهر الموقع", chromeh: "الهيدر", chromef: "الفوتر", checkout: "نموذج الطلب", pixels: "البكسلات", store: "إعدادات الموقع", pending: "بانتظار التأكيد" };
+  const TAB_LABEL = { pb: "مطوّر الصفحات (المحرّر)", home: "لوحة التحكم", orders: "الطلبات", shipped: "الطلبات المسجلة", repeat: "إعادة الشراء", setup: "تجهيز المتجر", finance: "المخزون والأرباح", analytics: "التحليلات", products: "المنتجات", social: "السوشيال والإعلانات", inventory: "المخزون", bulkp: "التعديل الجماعي", reports: "التقارير", audit: "فحص المنتجات", returns: "المرتجعات", payments: "المدفوعات", seo: "SEO", blog: "المدوّنة والسياسات", builder: "مطوّر الصفحات", smart: "المطوّر الذكي", voice: "الوكيل الناطق", ask: "اسألني", cloner: "ناسخ القوالب", floaters: "الأيقونات العائمة", imgtools: "أدوات الصور", imggen: "مولّد الصور", agent: "الوكيل الذكي", attributes: "السمات", categories: "التصنيفات", fees: "رسوم التوصيل", delivery: "شركات التوصيل", coupons: "أكواد الخصم", blacklist: "القائمة السوداء", loyalty: "الزبائن الأوفياء", customers: "العملاء", admtheme: "مظهر لوحة التحكم", theme: "مظهر الموقع", chromeh: "الهيدر", chromef: "الفوتر", checkout: "نموذج الطلب", pixels: "البكسلات", store: "إعدادات الموقع", pending: "بانتظار التأكيد" };
 
   /* حالات الطلب (القيم كما في مرشّح الطلبات) */
   const STATUS = [
@@ -325,6 +325,10 @@ const AdminVoice = (() => {
       if (!list.length) return need("order", partial, L("لم أجد هذا الطلب. قل اسم الزبون أو رقم هاتفه.", "Je n'ai pas trouvé cette commande."));
       if (list.length > 1) return { kind: "choose", single: false, say: L("وجدت عدة طلبات، أيها تقصد؟ " + list.slice(0, 4).map((o, i) => (i + 1) + "- " + oDesc(o)).join("، "), "Laquelle ?"), options: list.slice(0, 4).map(o => ({ label: oDesc(o), text: ({ send: "ارسل", cancel: "الغ", confirm: "اكد", status: "علم" })[partial.op] + " طلب " + (o.phone || o.id) + (partial.op === "status" ? " " + (STATUS.find(s => s[0] === partial.status) || [])[2] : "") })) };
       return mkOrderCmd(list[0], partial.op, partial.status, L);
+    }
+    if (slot === "pbname") {
+      const name = String(raw || "").replace(/\s+/g, " ").trim().slice(0, 80); if (!name) return need("pbname", partial, L("ما عنوان الصفحة الجديدة؟", "Quel titre ?"));
+      return { kind: "builder", say: L("أنشئ صفحة جديدة «" + name + "».", "Je crée la page."), confirm: false, act: { type: "pb", op: "newPage", title: name } };
     }
     if (slot === "product") {
       let p = null;
@@ -570,6 +574,96 @@ const AdminVoice = (() => {
     return mkOrderCmd(list[0], op, status, L);
   }
 
+  /* ── مطوّر الصفحات: أوامر تعمل والمحرّر مفتوح (data.pb = {open, widgets:[{type,label}], selKind}) ──
+     التراجع/الإعادة، المعاينة، حفظ ونشر (بتأكيد)، عرض المكتب/التابلت/الهاتف، إضافة قسم أو عنصر بالاسم، لوحات الجانب، أدوات القسم/العنصر المحدد، تنسيق النص.
+     الحذف يُشار إليه فقط ولا يُنفَّذ بالصوت. act = {type:"pb", op, ...} ويُنفَّذ في pbDo بعناصر المحرّر الحقيقية. */
+  const PB_ALIAS = {
+    heading: ["عنوان", "عناوين", "titre", "titres", "heading", "title"], text: ["نص", "نصا", "فقره", "paragraphe", "texte", "text"], image: ["صوره", "صور", "image", "images", "photo", "img"],
+    button: ["زر", "ازرار", "bouton", "boutons", "button", "buttons"], video: ["فيديو", "video", "فيديوهات"], divider: ["فاصل", "فواصل", "separateur", "divider", "ligne"], spacer: ["فراغ", "espace", "spacer"],
+    table: ["جدول", "tableau", "table"], map: ["خريطه", "خرائط", "carte", "map"], counter: ["عداد", "compteur", "counter"], slider: ["سلايدر", "سلايدير", "carrousel", "slider", "diaporama"],
+    gallery: ["معرض صور", "معرض", "galerie", "gallery"], accordion: ["اسئله شائعه", "اسئله", "faq", "accordeon"], countdown: ["عد تنازلي", "تنازلي", "compte a rebours", "countdown"],
+    contact: ["نموذج اتصال", "نموذج تواصل", "formulaire", "contact"], testimonial: ["رايزبون", "راي زبون", "ارا", "avis", "temoignage", "testimonial"], social: ["ايقونات التواصل", "تواصل اجتماعي", "reseaux sociaux", "social"],
+  };
+  const PB_VIEW = /(?:^| )(?:شوف|شوفها|اعرض|اعرضها|عرض|وريني|ورني|وضع|بدل|حول|غير|انتقل|نسخه|نسخت|vue|affiche|montre|passe|mode|version|view|show|switch|sur)(?: |$)/;
+  const PB_DEV = { m: /(?:^| )(?:ال)?(?:هاتف|موبايل|جوال|تلفون|telephone|mobile|portable|smartphone|phone)(?: |$)/, t: /(?:^| )(?:ال)?(?:تابلت|لوحي|tablette|tablet|ipad)(?: |$)/, d: /(?:^| )(?:ال)?(?:مكتب|حاسوب|كمبيوتر|ordinateur|desktop|pc|bureau|computer)(?: |$)/ };
+  const PB_SEC = /(?:^| )(?:ال)?(?:قسم|اقسام|section|sections)(?: |$)/, PB_EL = /(?:^| )(?:ال)?(?:عنصر|element)(?: |$)|(?:^| )(?:هذا|هاذا|هذه|هادا|هادي|ce|cet|cette)(?: |$)/;
+  function pbWidget(t, pb) {
+    const ws = new Set(tk(t)), phrases = " " + t + " ", cands = [];
+    (pb.widgets || []).forEach(w => {
+      let hit = 0, tot = 1, alias = false;
+      (PB_ALIAS[w.type] || []).forEach(a => { const f = fold(a); if (phrases.includes(" " + f + " ") || phrases.includes(" ال" + f + " ")) { alias = true; hit = Math.max(hit, f.split(" ").length); } });
+      const lt = tk(w.label); tot = lt.length || 1; const lh = lt.filter(x => ws.has(x)).length;
+      if (!alias && (!lh || lh / tot < 0.6)) return;
+      cands.push({ type: w.type, label: w.label, hit: Math.max(hit, lh), exact: lh === tot || alias });
+    });
+    if (!cands.length) return [];
+    const top = Math.max(...cands.map(c => c.hit * 10 + (c.exact ? 1 : 0)));
+    return cands.filter(c => c.hit * 10 + (c.exact ? 1 : 0) === top);
+  }
+  function builderCmd(t, data, L) {
+    const pb = data.pb || {}, add = has(V_ADD, t) || /(?:^| )(?:اضف|ضيف|زيد|حط|ajoute|ajouter|insere|inserer|add|insert)(?: |$)/.test(t);
+    const mk = (op, say, extra, conf) => ({ kind: "builder", say, confirm: !!conf, act: Object.assign({ type: "pb", op }, extra || {}) });
+    /* صفحة جديدة (تعمل ولو كان المحرّر مغلقاً) */
+    if (add && /(?:^| )(?:ال)?(?:صفحه|page)(?: |$)/.test(t) && /(?:^| )(?:جديده|جديد|nouvelle|nouveau|new)(?: |$)/.test(t) && !has(W_PRODUCT, t)) {
+      const m = /(?:باسم|اسمها|اسمه|عنوانها|عنوان|nommee|appelee|intitulee|titre|named|called)\s+(.+)$/.exec(norm(data.raw || "")) , name = m ? m[1].trim() : "";
+      if (!name) return need("pbname", { op: "newPage" }, L("ما عنوان الصفحة الجديدة؟", "Quel titre pour la nouvelle page ?"));
+      return mk("newPage", L("أنشئ صفحة جديدة «" + name + "».", "Je crée la page « " + name + " »."), { title: name });
+    }
+    if (!pb.open) return null;
+    const hasObjW = has(W_PRODUCT, t) || has(W_PRODUCTS, t) || has(W_ORDER, t) || has(W_CLIENT, t);
+    if (/(?:^| )(?:تراجع|تراجعي|undo|ctrl z)(?: |$)|(?:^| )(?:ارجع|رجع|رجعني|reviens)(?: \S+)? (?:خطوه|خطوات|للخلف|للوراء|لورا|en arriere)(?: |$)|(?:^| )خطوه (?:للوراء|للخلف|ورا|الي الوراء)(?: |$)|(?:^| )annule (?:la |le )?(?:derniere|dernier|action|modif|modification|etape|changement)|(?:^| )(?:الغ|الغي) (?:اخر|آخر) (?:تعديل|خطوه|عمليه)/.test(t)) {
+      const n = numberIn(t), k = n && n.value >= 1 && n.value <= 10 ? n.value : 1; return mk("undo", L("تراجعت" + (k > 1 ? " " + k + " خطوات." : " خطوة."), "Annulé."), { n: k });
+    }
+    if (/(?:^| )(?:redo|refais|retablis|rejoue)(?: |$)|(?:^| )(?:اعد|اعاده) (?:ال)?(?:تعديل|خطوه|عمليه)|(?:^| )(?:تقدم خطوه|(?:تقدم|ارجع|رجع) (?:خطوه )?(?:للامام|لقدام))|(?:^| )خطوه (?:للامام|لقدام)/.test(t)) return mk("redo", L("أعدت الخطوة.", "Rétabli."), {});
+    if (/(?:^| )(?:معاينه|عاين|عاينلي|عاينها|apercu|previsualise|previsualiser|preview)(?: |$)|(?:^| )(?:وريني|ورني|شوف) (?:كيف|كيفاش) (?:تبان|تبدو|تظهر)/.test(t)) return mk("preview", L("أفتح المعاينة.", "J'ouvre l'aperçu."), {});
+    if (/(?:^| )(?:اغلق|سكر|اقفل|ferme|fermer|close|اخرج من) (?:ال)?(?:محرر|مطور|editeur|builder)(?: |$)/.test(t)) return mk("close", L("هل أغلق المحرّر؟ التعديلات غير المحفوظة قد تضيع.", "Fermer l'éditeur ? Les modifications non enregistrées seront perdues."), {}, true);
+    if (!hasObjW && /(?:^| )(?:احفظ|احفظها|حفظ|انشر|انشرها|نشر|publie|publier|sauvegarde|sauvegarder|enregistre|enregistrer|save|publish)(?: |$)/.test(t) && (t.split(" ").length <= 5 || /(?:صفحه|page|تعديلات|modifications|الان|maintenant)/.test(t))) return mk("publish", L("هل أحفظ الصفحة وأنشرها الآن؟", "Enregistrer et publier la page maintenant ?"), {}, true);
+    /* عرض الجهاز */
+    const dev = ["m", "t", "d"].find(k => PB_DEV[k].test(t));
+    if (dev && (PB_VIEW.test(t) || t.split(" ").length <= 3) && !hasObjW && !has(W_ORDER, t)) { const nm = { m: "الهاتف", t: "التابلت", d: "المكتب" }[dev]; return mk("dev", L("عرض " + nm + ".", { m: "Vue mobile.", t: "Vue tablette.", d: "Vue ordinateur." }[dev]), { dev }); }
+    /* قسم/عنصر جديد */
+    if (add && PB_SEC.test(t) && !has(W_PRODUCT, t) && !/(?:^| )(?:بعد|تحت|فوق|قبل)(?: |$)/.test(t)) return mk("addSection", L("أضيف قسماً جديداً.", "J'ajoute une section."), {});
+    if (add && !hasObjW || add && /(?:بطاقه|carte) (?:منتج|produit)/.test(t)) {
+      const q = t.split(" ").filter(w => !isVerb(w)).join(" "), c = pbWidget(q, pb), n0 = numberIn(t), cnt = n0 && n0.value >= 2 && n0.value <= 6 && !c.some(x => tk(x.label).some(w => /^\d+$/.test(w))) ? n0.value : 1;
+      if (c.length === 1 && (!hasObjW || c[0].hit >= 2)) return mk("widget", L("أضيف عنصر «" + c[0].label + "»" + (cnt > 1 ? " " + cnt + " مرات." : "."), "J'ajoute : " + c[0].label), { widget: c[0].type, label: c[0].label, n: cnt });
+      if (c.length > 1) return { kind: "choose", single: false, say: L("أيّ عنصر تقصد؟ " + c.slice(0, 4).map((x, i) => (i + 1) + "- " + x.label).join("، "), "Lequel ?"), options: c.slice(0, 4).map(x => ({ label: x.label, act: { type: "pb", op: "widget", widget: x.type, label: x.label, n: cnt }, say: "" })) };
+    }
+    /* لوحات الجانب */
+    const show = /(?:^| )(?:افتح|فتح|اظهر|اعرض|وريني|ouvre|montre|affiche|open|show|اخف|خبي|سكر|اغلق|cache|masque|ferme|hide|close)(?: |$)/.test(t), hide = /(?:^| )(?:اخف|خبي|سكر|اغلق|cache|masque|ferme|hide|close)(?: |$)/.test(t);
+    if (show || t.split(" ").length <= 3) {
+      if (/(?:^| )(?:ال)?(?:طبقات|calques|layers)(?: |$)/.test(t)) return mk("panel", L("لوحة الطبقات.", "Calques."), { panel: "lay" });
+      if (/(?:^| )(?:اعدادات|reglages|parametres) (?:ال)?(?:صفحه|page)(?: |$)|(?:^| )(?:ال)?(?:صفحه|page) (?:اعدادات|settings)(?: |$)/.test(t)) return mk("panel", L("إعدادات الصفحة.", "Réglages de la page."), { panel: "pg" });
+      if (/(?:^| )(?:ال)?(?:اقسام|عناصر|قوالب) (?:ال)?جاهزه(?: |$)|(?:^| )(?:ال)?جاهزه(?: |$)|(?:^| )(?:modeles|prets a l emploi)(?: |$)/.test(t)) return mk("panel", L("الأقسام الجاهزة.", "Modèles prêts."), { panel: "def" });
+      if (/(?:^| )(?:ال)?ادوات (?:ال)?ذكيه(?: |$)/.test(t)) return mk("panel", L("الأدوات الذكية.", "Outils intelligents."), { panel: "smart" });
+      if (/(?:^| )(?:ال)?(?:عناصر|palette|elements)(?: |$)/.test(t) && !add && !hasObjW) return mk("panel", L("لوحة العناصر.", "Éléments."), { panel: "add" });
+      if (show && /(?:^| )(?:ال)?(?:ادوات|outils)(?: |$)/.test(t)) return mk("panel", hide ? L("أخفيت شريط الأدوات.", "Barre d'outils masquée.") : L("شريط الأدوات.", "Barre d'outils."), { panel: "l" });
+      if (show && /(?:^| )(?:ال)?(?:اعدادات|parametres|reglages|settings)(?: |$)/.test(t)) return mk("panel", hide ? L("أخفيت شريط الإعدادات.", "Réglages masqués.") : L("شريط الإعدادات.", "Réglages."), { panel: "r" });
+    }
+    /* أدوات القسم المحدد */
+    const isSec = PB_SEC.test(t), isEl = PB_EL.test(t) && !isSec, kind = isSec ? "sec" : isEl ? "el" : (pb.selKind === "section" ? "sec" : pb.selKind ? "el" : "");
+    const sayK = kind === "sec" ? L("القسم", "la section") : L("العنصر", "l'élément");
+    if (/(?:^| )(?:احذف|احذفه|احذفها|امسح|امسحه|امسحها|نحي|نحيه|نحيها|حيد|حيده|supprime|supprimer|efface|effacer|delete|remove)(?: |$)/.test(t) && (isSec || isEl || t.split(" ").length <= 3)) return mk("point", L("لا أحذف بالصوت. أشير إلى زر الحذف: اضغطه بنفسك.", "Je ne supprime pas par la voix : je montre le bouton."), { tool: (kind || "el") === "sec" ? "delsec" : "delel" });
+    if (kind && /(?:^| )(?:كرر|كررها|كرره|انسخ|انسخه|انسخها|ضاعف|duplique|dupliquer|copie|copier|duplicate|clone)(?: |$)/.test(t)) return mk("tool", L("أكرّر " + sayK + ".", "Je duplique."), { tool: kind === "sec" ? "dupsec" : "dupel" });
+    if (kind && /(?:^| )(?:اقفل|اقفله|اقفلها|قفل|verrouille|verrouiller|lock)(?: |$)/.test(t)) return mk("tool", L("أقفل " + sayK + ".", "Je verrouille."), { tool: kind === "sec" ? "locksec" : "lockel" });
+    if (isSec && /(?:^| )(?:اخف|اخفيه|اخفها|خبي|خبيه|خبيها|cache|cacher|masque|masquer|hide)(?: |$)/.test(t)) return mk("tool", L("أخفي القسم.", "Je masque la section."), { tool: "hidesec" });
+    const UPW = /(?:^| )(?:لفوق|للاعلي|الي الاعلي|فوق|ارفع|ارفعه|en haut|haut|monte|up)(?: |$)/, DNW = /(?:^| )(?:لتحت|للاسفل|الي الاسفل|تحت|اسفل|نزل|نزله|انزل|en bas|bas|descend|down)(?: |$)/;
+    if (isSec && UPW.test(t) && !DNW.test(t)) return mk("tool", L("أنقل القسم للأعلى.", "Section vers le haut."), { tool: "secup" });
+    if (isSec && DNW.test(t) && !UPW.test(t)) return mk("tool", L("أنقل القسم للأسفل.", "Section vers le bas."), { tool: "secdown" });
+    /* تنسيق النص المحدد */
+    const sz = /(?:^| )(?:ال)?(?:خط|حجم|كتابه|نص|texte|police|taille|font|text)(?: |$)/.test(t), nn = numberIn(t), kk = nn && nn.value >= 1 && nn.value <= 10 ? nn.value : 1;
+    if (sz && /(?:^| )(?:كبر|كبرلي|كبره|كبرها|اكبر|ضخم|ارفع|زيد|agrandis|agrandir|augmente|plus grand|bigger|increase)(?: |$)/.test(t)) return mk("fmt", L("أكبّر الخط.", "Police plus grande."), { q: "fs+", n: kk });
+    if (sz && /(?:^| )(?:صغر|صغرلي|صغره|صغرها|اصغر|نقص|قلل|diminue|reduis|reduire|plus petit|smaller|decrease)(?: |$)/.test(t)) return mk("fmt", L("أصغّر الخط.", "Police plus petite."), { q: "fs-", n: kk });
+    if (/(?:^| )(?:عريض|غليظ|bold|gras|ثخين)(?: |$)/.test(t)) return mk("fmt", L("نص عريض.", "Gras."), { q: "bold" });
+    if (/(?:^| )(?:مائل|مايل|italique|italic|اتاليك)(?: |$)/.test(t)) return mk("fmt", L("نص مائل.", "Italique."), { q: "italic" });
+    if (/(?:^| )(?:تحته خط|مسطر|underline|souligne|سطر تحته)(?: |$)/.test(t)) return mk("fmt", L("تسطير.", "Souligné."), { q: "under" });
+    if (/(?:^| )(?:وسط|توسيط|وسطه|وسطها|centre|centrer|center)(?: |$)/.test(t) && (isEl || PB_SEC.test(t) === false) && (isEl || /(?:^| )(?:الصفحه|page)(?: |$)/.test(t) || t.split(" ").length <= 3)) return mk("fmt", L("أوسّط العنصر.", "Centré."), { q: "al-center" });
+    if (/(?:^| )(?:حاذي|محاذاه|align|aligne|aligner)(?: |$)/.test(t) && /(?:^| )(?:يمين|لليمين|droite|right)(?: |$)/.test(t)) return mk("fmt", L("محاذاة لليمين.", "À droite."), { q: "al-right" });
+    if (/(?:^| )(?:حاذي|محاذاه|align|aligne|aligner)(?: |$)/.test(t) && /(?:^| )(?:يسار|لليسار|gauche|left)(?: |$)/.test(t)) return mk("fmt", L("محاذاة لليسار.", "À gauche."), { q: "al-left" });
+    if (/(?:^| )(?:قدام|للامام|امام|premier plan|devant|front)(?: |$)/.test(t) && (isEl || /(?:^| )(?:الكل|الجميع)(?: |$)/.test(t))) return mk("fmt", L("للأمام.", "Au premier plan."), { q: "front" });
+    if (/(?:^| )(?:للخلف|خلف|ورا|الخلفيه|arriere plan|derriere|back)(?: |$)/.test(t) && isEl) return mk("fmt", L("للخلف.", "À l'arrière-plan."), { q: "back" });
+    return null;
+  }
+
   /* ── الفهم: النص + بيانات اللوحة ← أمر ──
      النتيجة: { kind, say, act, ... } حيث kind: nav|orders|answer|newProduct|editProduct|theme|update|ask|search|site|help|stop|unknown
      say: ما يُقال/يُعرض، act: وصف التنفيذ (يُنفَّذ في exec)، confirm: يحتاج تأكيداً. */
@@ -578,6 +672,7 @@ const AdminVoice = (() => {
     const t = splitPron(norm(raw)), fr = /[a-z]{3,}/.test(t) && !/[ء-ي]/.test(t);
     const L = (ar, f) => (fr ? f : ar);
     if (!t) return { kind: "unknown", say: "" };
+    { const bc = builderCmd(t, Object.assign({ raw }, data), L); if (bc) return bc; }
     if (has(STOP, t) && t.split(" ").length <= 3 && !has(WHAT_Q, t) && !has(COUNT_Q, t) && !has(W_RATE, t) && !has(W_ORDER, t) && !has(W_THIS, t)) return { kind: "stop", say: "" };
     if (has(HELP, t)) return { kind: "help", say: L("هذه أمثلة على الأوامر.", "Voici des exemples de commandes.") };
     const am = ASK_ME.exec(t); if (am) return { kind: "ask", q: am[1], say: "", explicit: true };
@@ -741,6 +836,7 @@ const AdminVoice = (() => {
     ["الطلبات", "الطلبات الجديدة · طلبات اليوم · ابحث عن طلب أحمد · cherche commande 0550…"],
     ["أرقام", "قداش من طلب اليوم؟ · كم المبيعات هذا الأسبوع؟ · شنو نفد من المنتجات؟ · آخر طلب"],
     ["منتجات", "زيد منتج جديد · افتح منتج حنة · عدّل منتج عسل"],
+    ["مطوّر الصفحات", "اضف عنوان · ضيف زر · تراجع · شوفها على الهاتف · معاينة · احفظ وانشر · كرر القسم · كبّر الخط"],
     ["اللوحة", "بدّل المظهر · المظهر الداكن · حدّث اللوحة · افتح الموقع"],
     ["مساعدة", "كيفاش نزيد صنف؟ · اسألني عن الكوبونات · ماذا أقول"],
   ];
@@ -788,6 +884,7 @@ const AdminVoice = (() => {
       case "editProduct": if (!a.editProduct) return false; a.editProduct(act.slug); return true;
       case "theme": if (typeof AdminTheme === "undefined") return false; if (act.mode === "toggle") AdminTheme.toggle(); else AdminTheme.set(act.mode); return true;
       case "update": if (typeof AdminUpdate === "undefined") return false; AdminUpdate.apply(); return true;
+      case "pb": pbDo(act, null); return true;
       case "kb": {
         const b = act.go ? tabBtn(act.go) : null; if (b) b.click();
         if (!b && typeof AdminHelp !== "undefined") { AdminHelp.show().then(() => AdminHelp.ask(act.label)); }
@@ -852,20 +949,20 @@ const AdminVoice = (() => {
   }
   function uiBuild() {
     prime();
-    const items = [], root = document.getElementById("app") || document.body;
+    const pbo = pbOpen(), items = [], root = (pbo ? document.getElementById("pb-app") : document.getElementById("app")) || document.body;
     root.querySelectorAll('button, a[onclick], input:not([type="hidden"]):not([type="file"]), select, textarea, [role="button"], summary').forEach(e => {
-      if (e.closest("#av-hud,#ah-panel,#aly-hand,#as-box,.pbx,#pb-app,.modal-bg")) return;
+      if (e.closest(pbo ? "#av-hud,#ah-panel,#aly-hand,#as-box,.pbx-wi,.modal-bg" : "#av-hud,#ah-panel,#aly-hand,#as-box,.pbx,#pb-app,.modal-bg")) return;
       const label = uiLabel(e); if (!label || label.length < 2) return;
-      const tabEl = e.closest('[id^="tab-"]'), tab = tabEl ? tabEl.id.slice(4) : "", t = tk(label);
+      const tabEl = pbo ? null : e.closest('[id^="tab-"]'), tab = pbo ? "pb" : tabEl ? tabEl.id.slice(4) : "", t = tk(label);
       if (!t.length) return;
       const oc = (e.getAttribute("onclick") || "") + " " + label, risk = UI_RISK_DANGER.test(fold(oc)) ? "danger" : UI_RISK_CONFIRM.test(fold(label)) ? "confirm" : "ok";
       items.push({ el: e, label, tab, t, kind: e.tagName === "SELECT" ? "select" : (e.tagName === "INPUT" || e.tagName === "TEXTAREA") ? "input" : "button", risk });
     });
-    UIX = { items, at: Date.now(), dirty: false };
+    UIX = { items, at: Date.now(), dirty: false, pb: pbo };
     return items;
   }
   function uiItems() {
-    if (UIX.dirty || !UIX.items.length || Date.now() - UIX.at > 60000) uiBuild();
+    if (UIX.dirty || !UIX.items.length || UIX.pb !== pbOpen() || Date.now() - UIX.at > (UIX.pb ? 6000 : 60000)) uiBuild();
     if (!uiObs && typeof MutationObserver !== "undefined") {
       let tm = 0; uiObs = new MutationObserver(() => { clearTimeout(tm); tm = setTimeout(() => { UIX.dirty = true; }, 500); });
       try { uiObs.observe(document.getElementById("app") || document.body, { childList: true, subtree: true }); } catch (e) { }
@@ -894,6 +991,69 @@ const AdminVoice = (() => {
   function periodDates(per) { const now = new Date(); if (per === "today") return [isoD(now), isoD(now)]; if (per === "yesterday") { const y = isoD(new Date(now - 86400000)); return [y, y]; } if (per === "week") return [isoD(new Date(now - 6 * 86400000)), ""]; if (per === "month") return [isoD(new Date(now - 29 * 86400000)), ""]; return ["", ""]; }
   let working = false;
   const editBtn = slug => [...document.querySelectorAll('[onclick*="editProduct("]')].find(b => (b.getAttribute("onclick") || "").includes(slug) && !/editProduct\(null\)/.test(b.getAttribute("onclick")));
+
+  /* ── مطوّر الصفحات: التنفيذ بعناصر المحرّر الحقيقية (اليد إن وُجدت وإلا نقرة مباشرة) ── */
+  const pbOpen = () => !!q$("#pb-app.on");
+  function pbInfo() {
+    if (!pbOpen()) return { open: false };
+    let widgets = []; try { if (typeof PB !== "undefined" && PB.WIDGETS) widgets = Object.keys(PB.WIDGETS).filter(k => PB.WIDGETS[k] && PB.WIDGETS[k].label).map(k => ({ type: k, label: PB.WIDGETS[k].label })); } catch (e) { }
+    const box = q$("#pbx-ovl .pbx-box"), selKind = box ? (box.classList.contains("section") ? "section" : box.classList.contains("widget") ? "widget" : "column") : "";
+    return { open: true, widgets, selKind };
+  }
+  const PB_SEL = {
+    undo: "#pbx-undo", redo: "#pbx-redo", preview: '[onclick="PBApp.preview()"]', publish: '[onclick="PBApp.publish()"]', close: '#pb-app [onclick="PBApp.close()"]', addSection: "#pbx-add2",
+    dev_m: "[onclick=\"PBApp.setDev('m')\"]", dev_t: "[onclick=\"PBApp.setDev('t')\"]", dev_d: "[onclick=\"PBApp.setDev('d')\"]",
+    panel_l: "#pbx-tgl", panel_r: "#pbx-tgr", panel_lay: "[onclick=\"PBApp.ltoggle('lay')\"]", panel_pg: "[onclick=\"PBApp.ltoggle('pg')\"]", panel_def: "[onclick=\"PBApp.ltoggle('def')\"]", panel_smart: "[onclick=\"PBApp.ltoggle('smart')\"]", panel_add: "[onclick=\"PBApp.ltoggle('add')\"]",
+  };
+  const PB_TOOL = { secup: "نقل القسم للأعلى", secdown: "نقل القسم للأسفل", hidesec: "إخفاء القسم", locksec: "قفل القسم", dupsec: "تكرار القسم", delsec: "حذف القسم", lockel: "قفل العنصر", dupel: "تكرار", delel: "حذف" };
+  const pbTool = key => { const want = fold(PB_TOOL[key]); return [...document.querySelectorAll("#pbx-ovl button")].find(b => fold(b.title || "").startsWith(want) && (key === "dupel" ? !/قسم/.test(b.title) : key === "delel" ? !/قسم/.test(b.title) : true)); };
+  async function pbDo(act, H) {
+    const click = async el => { if (H) { if (await H.click(el)) return true; } try { el.click(); return true; } catch (e) { return false; } };
+    const miss = why => { logMiss(act, why); sink({ out: why, err: true }); return true; };
+    const wait = (sel, ms) => waitFor(() => { const e = q$(sel); return e && (e.offsetParent !== null || getComputedStyle(e).position === "fixed") ? e : null; }, ms || 1800);
+    const stable = () => new Promise(r => setTimeout(r, 160));
+    switch (act.op) {
+      case "undo": case "redo": { const b = await wait(PB_SEL[act.op]); if (!b) return miss("المحرّر غير مفتوح."); for (let i = 0; i < (act.n || 1); i++) { await click(b); await stable(); } return true; }
+      case "preview": case "publish": case "close": case "addSection": { const b = await wait(PB_SEL[act.op]); if (!b) return miss("المحرّر غير مفتوح."); await click(b); return true; }
+      case "dev": { const b = await wait(PB_SEL["dev_" + act.dev]); if (!b) return miss("المحرّر غير مفتوح."); await click(b); return true; }
+      case "panel": { const b = await wait(PB_SEL["panel_" + act.panel]); if (!b) return miss("المحرّر غير مفتوح."); if (/^(?:lay|pg|def|smart|add)$/.test(act.panel) && typeof PBApp !== "undefined" && PBApp.E && PBApp.E.ltab === act.panel) return true; await click(b); return true; }
+      case "widget": {
+        const sel = '#pbx-lpane .pbx-wi[data-add="' + act.widget + '"]';
+        let tile = q$(sel);
+        if (!tile || tile.offsetParent === null) {
+          const lt = q$(PB_SEL.panel_add), open = typeof PBApp !== "undefined" && PBApp.E && PBApp.E.ltab === "add";
+          if (!pbOpen()) return miss("افتح المحرّر أولاً.");
+          const lp = q$("#pbx-lside"); if (lp && lp.offsetParent === null) { const tg = q$("#pbx-tgl"); if (tg) await click(tg); await stable(); }
+          if (!open && lt) await click(lt);
+          tile = await wait(sel);
+        }
+        if (!tile) return miss("لم أجد العنصر «" + (act.label || act.widget) + "» في لوحة العناصر.");
+        for (let i = 0; i < (act.n || 1); i++) { await click(tile); await stable(); }
+        return true;
+      }
+      case "tool": case "point": {
+        const key = act.tool, b = pbTool(key);
+        if (!b) return miss(/sec/.test(key) ? "حدّد القسم أولاً (انقر عليه) ثم أعد الأمر." : "حدّد العنصر أولاً (انقر عليه) ثم أعد الأمر.");
+        if (act.op === "point") { if (H) await H.point(b); return true; }
+        await click(b); return true;
+      }
+      case "fmt": {
+        const q = act.q, b = q$('#pb-app [data-qb="' + q + '"]') || q$('#pb-app [data-q="' + q + '"]');
+        if (!b) return miss("حدّد عنصراً نصياً أولاً ثم أعد الأمر.");
+        for (let i = 0; i < (act.n || 1); i++) { await click(b); await stable(); } return true;
+      }
+      case "newPage": {
+        if (typeof PBAdmin === "undefined") return false;
+        const old = window.prompt; window.prompt = () => act.title;
+        try {
+          if (H) { const tb = tabBtn("builder"); if (tb && !tb.classList.contains("on")) await H.click(tb); await H.sleep(250); const nb = q$('[onclick*="PBAdmin.newPage"]'); if (nb && await H.click(nb)) return true; }
+          PBAdmin.newPage();
+        } finally { setTimeout(() => { window.prompt = old; }, 400); }
+        return true;
+      }
+    }
+    return false;
+  }
 
   /* ── مراقبة ذاتية: ما تعذّر على اليد إيجاده يُسجَّل (لتنبيه المطوّر بعد أي تحديث) والتنفيذ يرجع مباشراً ── */
   function logMiss(act, why) {
@@ -974,6 +1134,7 @@ const AdminVoice = (() => {
           const b = q$('#theme-sw button[data-m="' + m + '"]'); if (b && await H.click(b)) return true; return fb(act, "مفتاح المظهر");
         }
         case "update": { const b = q$("#au-btn"); if (b) await H.point(b); return exec(act); }
+        case "pb": return await pbDo(act, H);
         case "search": {
           const b = q$("#as-btn"); if (b && await H.click(b)) { const i = await waitFor(() => q$("#as-in")); if (i && act.q) await H.type(i, act.q); return true; } return fb(act, "زر البحث");
         }
@@ -990,7 +1151,7 @@ const AdminVoice = (() => {
     const base = Date.now() - MEM.at < 600000 ? MEM : null;
     MEM = Object.assign(memUpdate(base, r), { at: Date.now() }); if (r && r.act && r.act.slug) lastSlug = r.act.slug;
   }
-  const dataNow = () => { const a = A(); let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { mem: memNow(), ui: { find: findUI }, ctx: { slug: (a.editingSlug || (memNow().kind === "product" ? memNow().slug : "") || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
+  const dataNow = () => { const a = A();  let lowAt = 5; try { lowAt = Number((a.inventory && a.inventory.low) || 5); } catch (e) { } return { mem: memNow(), pb: pbInfo(), ui: { find: findUI }, ctx: { slug: (a.editingSlug || (memNow().kind === "product" ? memNow().slug : "") || lastSlug || "") }, nav: navNow(), kb: KB || [], orders: a.orders || [], products: a.products || [], stockInfo: a.stockInfo ? p => a.stockInfo(p) : null, lowAt }; };
 
   /* ── المخارج: لوحة «اسألني» إن كانت مفتوحة، وإلا شريط عائم صغير ── */
   const $h = id => document.getElementById(id);
@@ -1245,10 +1406,10 @@ const AdminVoice = (() => {
       sink({ out: r.say, buttons: [["نعم", () => confirmPending(true), "ok"], ["لا", () => confirmPending(false), "no"]] }); speak(r.say, fr); return;
     }
     if (r.kind === "unknown") { sink({ out: r.say, err: true }); speak(r.say, fr); return; }
-    sink({ out: r.say }); if (r.act && ["nav","orders","newProduct","editProduct","stock","price","theme","search"].includes(r.act.type)) speak(r.say, fr);
+    sink({ out: r.say }); if (r.act && ["nav","orders","newProduct","editProduct","stock","price","theme","search","pb"].includes(r.act.type)) speak(r.say, fr);
     const ok = await execVia(r.act);
     if (ok && r.act && r.act.slug) lastSlug = r.act.slug;
-    if (!ok) sink({ out: "هذا القسم غير متاح في لوحتك.", err: true }); else if (!(r.act && ["nav","orders","newProduct","editProduct","stock","price","theme","search"].includes(r.act.type))) speak(r.say, fr);
+    if (!ok) sink({ out: "هذا القسم غير متاح في لوحتك.", err: true }); else if (!(r.act && ["nav","orders","newProduct","editProduct","stock","price","theme","search","pb"].includes(r.act.type))) speak(r.say, fr);
   }
   const optBtns = opts => opts.map((o, i) => [(i + 1) + "- " + o.label, () => chooseOpt(i), i === 0 ? "ok" : ""]);
   async function chooseOpt(i) {
@@ -1268,7 +1429,7 @@ const AdminVoice = (() => {
     sink({ out: ok ? "تم." : "تعذّر التنفيذ.", err: !ok }); if (ok) speak("تم", false);
   }
   /* أمر مكتوب في محادثة «اسألني»: ينفَّذ إن كان أمراً مفهوماً، وإلا يبقى سؤالاً لقاعدة المعرفة */
-  const TYPED_OK = new Set(["orderAction", "hand", "nav", "orders", "answer", "newProduct", "editProduct", "theme", "update", "site", "search", "stockChange", "priceChange", "visibility", "discount", "need", "negated"]);
+  const TYPED_OK = new Set(["builder", "orderAction", "hand", "nav", "orders", "answer", "newProduct", "editProduct", "theme", "update", "site", "search", "stockChange", "priceChange", "visibility", "discount", "need", "negated"]);
   function tryCommand(q) {
     if (pending) { handle([q], { typed: true }); return true; }
     const r = parse(q, dataNow()); if (!TYPED_OK.has(r.kind)) return false;
