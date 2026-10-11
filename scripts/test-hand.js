@@ -355,9 +355,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const mat = document.getElementById("cc0-mat").textContent, tot = document.getElementById("cc0-tot").textContent;
     Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /اعتماد/.test(b.textContent)).click(); await wait(60);
     const out = { heads, mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
+    // وصفة بنسب المواد الأولية
+    Admin.ccmOpen(0); const v = (id, x) => { const e = document.getElementById(id); e.value = x; e.dispatchEvent(new Event("input", { bubbles: true })); };
+    document.getElementById("ccm-unit").value = "kg"; document.getElementById("ccm-unit").dispatchEvent(new Event("change", { bubbles: true }));
+    v("ccm-n0", "زيت"); v("ccm-p0", 30); v("ccm-r0", 5000); Admin.ccmAdd(); v("ccm-n1", "مستخلص"); v("ccm-p1", 10); v("ccm-r1", 12000); Admin.ccmAdd(); v("ccm-n2", "ماء"); v("ccm-p2", 60); v("ccm-r2", 0); v("ccm-size", 50);
+    out.sum = document.getElementById("ccm-sum").textContent; out.lbl = /الكلغ/.test(document.getElementById("ccm-bg").textContent);
+    Admin.ccmSave(); await wait(60); out.recRaw = document.getElementById("cc0-raw").value; out.recRo = document.getElementById("cc0-raw").readOnly; out.recUnit = document.getElementById("cc0-unit").value; out.recSaved = JSON.stringify(Admin.fin.cc.cc1).length > 0 && Admin.fin.cc.cc1.rec.length === 3 && Admin.fin.cc.cc1.unit === "kg"; out.recMat = document.getElementById("cc0-mat").textContent;
     Admin.products = pr0; Priv.set = set0; return out;
   });
-  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[1]) && cc.mat === "100" && cc.tot === "250", cc);
+  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[2]) && cc.mat === "100" && cc.tot === "250", cc);
+  ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
   ok("جدول التكلفة: «اعتماد» يجعل الإجمالي سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
