@@ -350,11 +350,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set; Priv.set = async () => { }; Admin.renderFinance = () => { };
     Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = Admin.fin.costs || {}; Admin.fin.cc = {};
     Admin.renderCostCalc(true); const heads = Array.from(document.querySelectorAll("#fin-cc-rows tr.hd th")).map(t => t.textContent);
+    // «مشترى جاهز» (الافتراضي): السعر المكتوب = سعر الشراء مباشرة
+    const modeDef = document.getElementById("cc0-mode").value, noMade = !document.getElementById("cc0-raw"); document.getElementById("cc0-buy").value = 1234; document.querySelector("#fin-cc-rows button.green").click(); await wait(60);
+    const boughtCost = Admin.fin.costs.cc1, boughtMode = Admin.fin.cc.cc1.mode;
+    // «أصنّعه بنفسي»
+    const ms = document.getElementById("cc0-mode"); ms.value = "made"; ms.dispatchEvent(new Event("change", { bubbles: true }));
     const set = (k, v) => { const e = document.getElementById("cc0-" + k); e.value = v; e.dispatchEvent(new Event("input", { bubbles: true })); };
     set("raw", 2000); set("ml", 50); set("pack", 100); set("oth", 50);
     const mat = document.getElementById("cc0-mat").textContent, tot = document.getElementById("cc0-tot").textContent;
-    Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /اعتماد/.test(b.textContent)).click(); await wait(60);
-    const out = { heads, mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
+    Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
+    const out = { heads, modeDef, noMade, boughtCost, boughtMode, noCurCol: !heads.some(h => /سعر الشراء الحالي/.test(h)), tabBtn: Array.from(document.querySelectorAll(".nav-btn")).some(b => /تكلفة المنتجات/.test(b.textContent)), inOwnTab: !!document.querySelector("#tab-costs #fin-cc") && !document.querySelector("#tab-finance #fin-cc"), mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
     // وصفة بنسب المواد الأولية
     Admin.ccmOpen(0); const v = (id, x) => { const e = document.getElementById(id); e.value = x; e.dispatchEvent(new Event("input", { bubbles: true })); };
     document.getElementById("ccm-unit").value = "kg"; document.getElementById("ccm-unit").dispatchEvent(new Event("change", { bubbles: true }));
@@ -363,9 +368,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.ccmSave(); await wait(60); out.recRaw = document.getElementById("cc0-raw").value; out.recRo = document.getElementById("cc0-raw").readOnly; out.recUnit = document.getElementById("cc0-unit").value; out.recSaved = JSON.stringify(Admin.fin.cc.cc1).length > 0 && Admin.fin.cc.cc1.rec.length === 3 && Admin.fin.cc.cc1.unit === "kg"; out.recMat = document.getElementById("cc0-mat").textContent;
     Admin.products = pr0; Priv.set = set0; return out;
   });
-  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[2]) && cc.mat === "100" && cc.tot === "250", cc);
+  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[3]) && cc.mat === "100" && cc.tot === "250", cc);
   ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
-  ok("جدول التكلفة: «اعتماد» يجعل الإجمالي سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
+  ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
+  ok("جدول التكلفة: «حفظ» لمن يصنّع يجعل الإجمالي المحسوب سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
   // ── مكتبة المواد الأولية: تغيير السعر مرة واحدة يحدّث الوصفات والتكلفة ──
   const ml = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
