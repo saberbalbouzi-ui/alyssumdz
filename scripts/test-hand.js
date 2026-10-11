@@ -376,6 +376,14 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
   ok("تكلفة المنتجات: مسح خانة سعر الشراء وحفظها يحذف السعر فعلاً (لا يعود بعد التحديث)", cc.clearedCost && cc.clearedCc && cc.clearedUi, cc);
   ok("جدول التكلفة: «حفظ» لمن يصنّع يجعل الإجمالي المحسوب سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
+  // ── المخزون والأرباح: عمود «الربح الحقيقي» بدل سعر البيع الأدنى ──
+  const rpf = await p.evaluate(async () => {
+    const S0 = Admin.fin && Admin.fin.set, fin0 = Admin.fin; Admin.fin = Object.assign({}, Admin.fin || {}, { set: Object.assign({}, S0 || {}, { insMode: "pct", insVal: 1 }) });
+    const v = Admin.realUnitProfit({ price: 3000 }, { parts: { buy: 1200, pack: 50, ad: 100, burden: 150, risk: 50, ins: 0, profit: 0 } }), none = Admin.realUnitProfit({ price: 3000 }, null);
+    Admin.fin = fin0; let heads = []; try { Admin.renderFinance(true); heads = Array.from(document.querySelectorAll("#fin-table tr.hd th")).map(t => t.textContent); } catch (e) { }
+    return { v, none, heads: heads.join("|"), hasReal: heads.includes("الربح الحقيقي"), noMin: !heads.includes("سعر البيع الأدنى") };
+  });
+  ok("المخزون والأرباح: «الربح الحقيقي» = 3000 − (1200+50+100+150+50 + تأمين 1% = 30) = 1420 للقطعة، وبلا سعر الشراء يظهر فارغاً، والعمود يحلّ محل «سعر البيع الأدنى»", rpf.v === 1420 && rpf.none === null && rpf.hasReal && rpf.noMin, rpf);
   // ── التغليف بجمع أعداد كإكسل + مصاريف أخرى ثابتة أو نسبة ──
   const xp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
