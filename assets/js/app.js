@@ -766,6 +766,15 @@ function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender, getItems){
 function initProduct(slug){
   const p = PRODUCTS.find(p=>p.slug===slug);
   if(!p) return;
+  /* «مسار المنتج»: إن اختيرت صفحة هبوط لهذا المنتج فهي مساره الرئيسي، فيُحوَّل إليها أي دخول مباشر لصفحته (إعلان، واتساب، بحث، رابط محفوظ) بنفس معاملات الرابط؛ لا يُحوَّل داخل الإطارات والمعاينة، ولا مع ?noroute=1 للوصول للصفحة الأصلية */
+  try{
+    if(p.route && self===top && !/[?&](noroute|embed|preview)=/.test(location.search)){
+      let pg = p.route, v = "";
+      if(p.ab && p.ab.b){ const k = "alyssum_ab_" + p.slug; let g = ""; try{ g = localStorage.getItem(k) || ""; }catch(e){} if(g !== "A" && g !== "B"){ g = Math.random()*100 < (Number(p.ab.pct)||50) ? "B" : "A"; try{ localStorage.setItem(k, g); }catch(e){} } if(g === "B") pg = p.ab.b; v = g; }
+      const q = location.search + (v && !/[?&]ab=/.test(location.search) ? (location.search ? "&" : "?") + "ab=" + v : "");
+      location.replace(REL + "lp/" + pg + "/" + q + location.hash); return;
+    }
+  }catch(e){}
   // العرض الافتراضي المُحدَّد مسبقاً هو نفسه العرض "الأكثر طلباً" (bestIdx) — قبل هذا التصحيح
   // كان يُحدَّد افتراضياً «قطعة واحدة» بينما شارة «الأكثر طلباً 🔥» تظهر على عرض آخر، ما يُشتّت الزبون
   const bestIdx = 2;

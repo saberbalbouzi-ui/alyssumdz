@@ -470,6 +470,7 @@ body{overflow-x:hidden;margin:0}`;
 <div class="pbx-f"><label>الرابط (slug) — حروف لاتينية وأرقام وشرطات</label><input type="text" dir="ltr" id="pg-slug" value="${esc(P.slug)}" ${E.isNew ? "" : "disabled"} oninput="PBApp.slugEdit(this.value)"><small style="color:#888">${E.isNew ? "سيكون: /lp/…/" : "لا يتغير بعد النشر"}</small></div>
 <div id="pg-seo"></div>
 <div class="pbx-f"><label>المنتج المرتبط (نموذج الطلب والصفحة تخصّه)</label><select onchange="PBApp.linkProduct(this.value)"><option value="">— بدون —</option>${((typeof Admin !== "undefined" && Admin.products) || []).map(x => `<option value="${esc(x.slug)}"${P.product === x.slug ? " selected" : ""}>${esc(x.title)}</option>`).join("")}</select></div>
+${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5rem;align-items:center;font-weight:700"><input type="checkbox" ${routeOn() ? "checked" : ""} onchange="PBApp.setMainRoute(this.checked)"> اجعلها مسار المنتج الرئيسي (يُحوَّل إليها كل من يفتح صفحة المنتج أو يضغط عليه في الموقع)</label><small style="color:#888">تُطبَّق عند «حفظ ونشر».</small></div>` : ""}
 <div class="pbx-f" style="display:flex;gap:.4rem;flex-wrap:wrap"><button type="button" class="pbx-btn" style="flex:1;background:#173f35;color:#fff;border:0;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.publish()">💾 حفظ ونشر</button><button type="button" class="pbx-btn" style="flex:1;background:#f3f1ea;border:1px solid #d9d2c3;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.dupCurrent()">⧉ نسخ الصفحة</button></div>
 <div class="pbx-f"><label>لون خلفية الصفحة</label><input type="color" value="${esc(P.bg || "#ffffff")}" oninput="PBApp.meta('bg',this.value)"></div>
 <div class="pbx-f"><label>الخط</label><select onchange="PBApp.meta('ff',this.value)">${PB.F_FONT.slice(0, 3).concat(PB.F_FONT.slice(4)).map(o => `<option value="${esc(o[0])}"${P.ff === o[0] ? " selected" : ""}>${o[1]}</option>`).join("")}</select></div>
@@ -486,11 +487,22 @@ body{overflow-x:hidden;margin:0}`;
       }
     }
   }
+  /* مسار المنتج الرئيسي: تُطبَّق قيمة المنتج (route) عند نشر الصفحة */
+  const prodOf = () => ((typeof Admin !== "undefined" && Admin.products) || []).find(x => x.slug === E.page.product);
+  function routeOn() { const c = prodOf(); return E.mr && E.mr.slug === E.page.slug ? E.mr.on : !!(c && c.route === E.page.slug); }
+  function setMainRoute(on) { E.mr = { slug: E.page.slug, on: !!on }; E.dirty = true; }
+  async function syncRoute(P) {
+    if (typeof Admin === "undefined" || !Admin.products || !E.mr || E.mr.slug !== P.slug) return; const want = E.mr.on; E.mr = null;
+    let chg = false; const cur = Admin.products.find(x => x.slug === P.product);
+    Admin.products.forEach(x => { if (x !== cur && x.route === P.slug) { delete x.route; chg = true; } });
+    if (cur) { if (want && cur.route !== P.slug) { cur.route = P.slug; chg = true; } else if (!want && cur.route === P.slug) { delete cur.route; chg = true; } }
+    if (chg) { await Admin.publishDataJs(); try { Admin.renderProducts(); } catch (e) { } }
+  }
   /* ربط الصفحة بمنتج: يخصّ نموذج الطلب الأصلي (orderorig) فيها */
   function linkProduct(slug) {
     const prev = E.page.product || ""; E.page.product = slug || "";
     const walk = n => { (n.cols || []).forEach(walk); (n.widgets || []).forEach(walk); (n.free || []).forEach(walk); if (n.type === "orderorig" && slug) n.set.prod = slug; };
-    E.page.sections.forEach(walk); E.dirty = true; commitHist(); renderCanvas(); updateTop(); toast(slug ? "🔗 رُبطت الصفحة بالمنتج" : "أُزيل الربط");
+    E.page.sections.forEach(walk); E.dirty = true; E.mr = null; commitHist(); renderCanvas(); updateTop(); if (E.ltab === "pg") renderLeft(); toast(slug ? "🔗 رُبطت الصفحة بالمنتج" : "أُزيل الربط");
   }
   /* نسخ الصفحة الحالية كصفحة جديدة (تُفتح للتعديل ثم تُنشر) */
   function dupCurrent() {
@@ -2650,12 +2662,13 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       const i = idx.findIndex(x => x.slug === slug); if (i >= 0) idx[i] = row; else idx.push(row);
       await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط");
       if (typeof PBBind !== "undefined") await PBBind.commit();
+      await syncRoute(P);
       E.isNew = false; E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
       toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)");
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
