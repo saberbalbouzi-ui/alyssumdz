@@ -382,6 +382,39 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("مكتبة المواد: السعر في الوصفة من المكتبة (للقراءة فقط) وتغييره مرة واحدة يحدّث كل الوصفات (1800 و600) وسعر شراء المنتج المعتمَد (240) دون غيره", ml.linked && ml.raw1 === 1800 && ml.raw2 === 600 && ml.rp === 6000 && ml.buy1 === 240 && ml.buy2, ml);
   ok("مكتبة المواد: زر «+» يضيف مادة حرة إلى المكتبة ويربط الصف بها", /شمع/.test(ml.lib) && ml.afterLink, ml);
+  // ── طلب يدوي + نسخ كطلب جديد + تعديل كامل ──
+  const mo = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
+    const pr0 = Admin.products; Admin.products = [{ slug: "pa", title: "منتج أ", price: 1000, active: true }, { slug: "pb", title: "منتج ب", price: 2000, active: true }];
+    const added = [], up = [], a0 = API.addOrder, uf0 = API.updateOrderFields, uo0 = API.updateOrder; API.addOrder = async o => { added.push(o); return { ok: true, id: "M-TEST1" }; }; API.updateOrderFields = async (k, id, f) => { up.push({ id, f }); return true; }; API.updateOrder = () => { };
+    const $ = id => document.getElementById(id), fire = (e, ev) => e.dispatchEvent(new Event(ev, { bubbles: true }));
+    Admin.orders = []; Admin.renderOrders();
+    // 1) طلب يدوي جديد
+    document.getElementById("mo-btn").click(); const opened = !!$("mo-bg");
+    $("mo-name").value = "عمر خليل"; $("mo-phone").value = "0550 11 22 33"; $("mo-wil").value = "Alger"; fire($("mo-wil"), "change"); $("mo-com").selectedIndex = 1;
+    const sel = document.querySelector('#mo-lines select[data-f="sel"]'); sel.value = "1"; fire(sel, "change");      // منتج ب
+    const qty = document.querySelector('#mo-lines input[data-f="qty"]'); qty.value = 2; fire(qty, "input"); $("mo-disc").value = 100; fire($("mo-disc"), "input");
+    const tot1 = $("mo-tot").textContent, fee1 = Number($("mo-fee").value);
+    $("mo-save").click(); await wait(80);
+    const o1 = added[0], inList = Admin.orders.length === 1 && Admin.orders[0].status === "nouvelle" && Admin.orders[0].id === "M-TEST1" && /منتج ب ×2 = 4000/.test(Admin.orders[0].items), closed1 = !$("mo-bg");
+    // 2) نسخ طلب مسجَّل كطلب جديد
+    Admin.orders = [{ id: "R1", date: new Date().toISOString(), status: "confirmee", name: "سعاد", phone: "0661000000", wilaya: "Oran", commune: "Es Senia", dtype: "stop", desk: "", items: "منتج أ ×3 = 3000 DA\nمنتج ب ×1 = 2000 DA", subtotal: 5000, fee: 500, total: 5500, discount: 0, coupon: "", extra: {}, note: "🚚yalidine:yal-9" }];
+    Admin.openOrderPreview(0); const cp = Array.from(document.querySelectorAll("#ord-prev-a button")).find(b => /نسخ كطلب جديد/.test(b.textContent)); cp.click();
+    const pre = { name: $("mo-name").value, phone: $("mo-phone").value, wil: $("mo-wil").value, rows: document.querySelectorAll("#mo-lines tr[data-i]").length, tot: $("mo-sub").textContent, dt: document.querySelector('input[name="mo-dt"]:checked').value };
+    if (pre.dt === "stop") { const ds = $("mo-desk").options.length; pre.hasDesk = ds > 0 && $("mo-desk").value !== ""; if (!pre.hasDesk) { document.querySelector('input[name="mo-dt"][value="home"]').checked = true; fire(document.querySelector('input[name="mo-dt"][value="home"]'), "change"); } }
+    $("mo-save").click(); await wait(80);
+    const o2 = added[1], second = Admin.orders[0];
+    // 3) تعديل كامل لطلب جديد
+    Admin.orders = [{ id: "N1", date: new Date().toISOString(), status: "nouvelle", name: "كريم", phone: "0770000000", wilaya: "Alger", commune: "Kouba", dtype: "home", desk: "", items: "منتج أ ×1 = 1000 DA", subtotal: 1000, fee: 600, total: 1600, discount: 0, coupon: "", extra: {}, note: "" }];
+    Admin.openOrderPreview(0); const eb = Array.from(document.querySelectorAll("#ord-prev-a button")).find(b => /تعديل كامل/.test(b.textContent)); eb.click();
+    const q2 = document.querySelector('#mo-lines input[data-f="qty"]'); q2.value = 3; fire(q2, "input"); $("mo-phone").value = "0771234567"; $("mo-save").click(); await wait(80);
+    const n1 = Admin.orders[0], upd = up[up.length - 1];
+    const out = { opened, tot1, fee1, o1: o1 && { name: o1.name, phone: o1.phone, status: o1.status, n: o1.items.length, title: o1.items[0].title, qty: o1.items[0].qty, total: o1.total, disc: o1.discount, manual: o1.extra["✍️ طلب يدوي"] }, inList, closed1, pre, o2: o2 && { phone: o2.phone, n: o2.items.length, total: o2.total, dtype: o2.dtype, from: o2.extra["📄 نسخة من"], note: o2.note }, secondNoTrack: !/🚚/.test(second.note || ""), n1: { items: n1.items, phone: n1.phone, total: n1.total }, upd: upd && { id: upd.id, phone: upd.f.phone, total: upd.f.total, items: upd.f.items.length, text: upd.f.items_text } };
+    Admin.products = pr0; API.addOrder = a0; API.updateOrderFields = uf0; API.updateOrder = uo0; return out;
+  });
+  ok("طلب يدوي: النموذج يحسب (2×2000 − 100 + رسم الولاية) ويحفظ طلباً «جديداً» بعلامة يدوي ويظهر في القائمة", mo.opened && mo.o1 && mo.o1.name === "عمر خليل" && mo.o1.phone === "0550112233" && mo.o1.n === 1 && mo.o1.title === "منتج ب" && mo.o1.qty === 2 && mo.o1.disc === 100 && mo.o1.total === 3900 + mo.fee1 && mo.o1.manual === "نعم" && mo.inList && mo.closed1, mo);
+  ok("نسخ كطلب جديد: من طلب مسجَّل بكل بياناته (منتجان بمجموع 5000) بلا وسم تتبع وبعلامة «نسخة من»", mo.pre.name === "سعاد" && mo.pre.phone === "0661000000" && mo.pre.wil === "Oran" && mo.pre.rows === 2 && /5[\s,.\u202f\u00a0]?000/.test(mo.pre.tot) && mo.o2 && mo.o2.n === 2 && mo.o2.from === "R1" && mo.secondNoTrack, mo);
+  ok("تعديل كامل: طلب جديد تتغيّر منتجاته وهاتفه ويُرسل التعديل (3 علب = 3000 + 600)", mo.upd && mo.upd.id === "N1" && mo.upd.phone === "0771234567" && mo.upd.total === 3600 && mo.upd.items === 1 && /منتج أ ×3 = 3000/.test(mo.upd.text) && mo.n1.phone === "0771234567" && mo.n1.total === 3600, mo);
   // ── إضافة البلدية من ياليدين (Supplément commune) ──
   const sp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), cf0 = Admin.courierFetch, pj0 = typeof PBApp !== "undefined" ? PBApp.putJson : null, set0 = Priv.set; Priv.set = async () => { };

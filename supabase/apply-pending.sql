@@ -734,4 +734,4 @@ end $$;
 -- select cron.schedule('saas-lifecycle', '0 6 * * *', $$ select public.saas_lifecycle_run() $$);
 
 -- v1.89.79: تعديل بيانات الطلب بعد التأكيد (الاسم/الولاية/البلدية/طريقة التوصيل/الرسم) من اللوحة
-grant update (status, note, name, wilaya, commune, dtype, desk, fee, total) on public.orders to authenticated;
+grant update (status, note, name, wilaya, commune, dtype, desk, fee, total, phone, subtotal, discount, items, items_text) on public.orders to authenticated;

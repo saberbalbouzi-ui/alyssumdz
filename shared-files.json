@@ -267,7 +267,8 @@
     "assets/img/stickers/**",
     "assets/js/hub.js",
     "assets/js/admin-stockcheck.js",
-    "assets/js/admin-orderedit.js"
+    "assets/js/admin-orderedit.js",
+    "assets/js/admin-manualorder.js"
   ],
   "local": {
     "الهوية والإعدادات": [

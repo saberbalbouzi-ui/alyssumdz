@@ -264,6 +264,20 @@ const API = {
     } catch (e) { }
     return false;
   },
+  /* إضافة طلب يدوي من لوحة المدير: {ok,id} (id فارغ مع sheets). supabase: إدراج بجلسة المدير؛ php: نقطة order بعلم manual (مدير فقط) */
+  async addOrder(order) {
+    try {
+      if (this.php.on()) { const r = await fetch(this.php.url("order"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ order: Object.assign({}, order, { manual: true }) }), credentials: "same-origin" }); const j = await r.json().catch(() => ({})); return r.ok && j.ok ? { ok: true, id: j.id } : { ok: false }; }
+      const b = this.ordersBackend();
+      if (b !== "sheets" && this.sb.enabled()) {
+        const id = "M" + (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); })() + "-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+        const row = { id, name: order.name, phone: order.phone, wilaya: order.wilaya || null, commune: order.commune || null, dtype: order.dtype || null, desk: order.desk || null, items: order.items || [], items_text: (order.items || []).map(l => l.title + " ×" + l.qty + " = " + Math.round(l.qty * l.price) + " DA").join("\n"), subtotal: order.subtotal || 0, fee: order.fee || 0, total: order.total || 0, coupon: null, discount: order.discount || 0, extra: order.extra || {}, status: "nouvelle", note: order.note || "", source: "manual" };
+        const r = await this.sb.adminFetch("/rest/v1/orders", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify(row) });
+        return r === null ? { ok: false } : { ok: true, id };
+      }
+      this.post({ type: "order", order }); return { ok: true, id: "" };
+    } catch (e) { return { ok: false }; }
+  },
   updateOrder(key, id, status, note) {
     if (this.php.on()) { const body = { id, status }; if (note !== undefined) body.note = note; return this.php.send("order_update", body); }
     const b = this.ordersBackend();

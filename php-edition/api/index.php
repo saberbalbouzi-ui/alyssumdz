@@ -280,8 +280,9 @@ switch ($route) {
 
     case 'order':
         if ($method !== 'POST') out(405, ['error' => 'method']);
-        $ip = clientIp(); rateLimit('ord' . $ip, 20, 3600);
         $o = body()['order'] ?? [];
+        $manual = $isAdmin && !empty($o['manual']);          // طلب يدوي من لوحة المدير: بلا حمايات الزوار
+        $ip = clientIp(); if (!$manual) rateLimit('ord' . $ip, 20, 3600);
         $name = cut($o['name'] ?? '', 120); $phone = preg_replace('/[^0-9+]/', '', (string)($o['phone'] ?? ''));
         $items = is_array($o['items'] ?? null) ? array_slice($o['items'], 0, 50) : [];
         $total = is_numeric($o['total'] ?? null) ? (float)$o['total'] : -1;
@@ -292,7 +293,7 @@ switch ($route) {
         $d = db();
         /* حماية الطلبات: روبوتات وتكرار حسب IP — تُفعَّل من لوحة الإدارة ← نموذج الطلب */
         $g = kvGet('guard') ?: []; $iph = ipHash();
-        if (!empty($g['antibot'])) {
+        if (!$manual && !empty($g['antibot'])) {
             if (trim((string)($o['hp'] ?? '')) !== '') out(422, ['error' => 'bot']);
             $tk = explode('.', (string)($o['ftok'] ?? '')); $age = time() - (int)($tk[0] ?? 0);
             if (count($tk) !== 2 || !hash_equals(guardSig($tk[0]), $tk[1]) || $age < 3 || $age > 7200) out(422, ['error' => 'bot']);
@@ -301,7 +302,7 @@ switch ($route) {
             $c = $d->prepare('SELECT COUNT(*) FROM orders WHERE ip_hash = ? AND created_at > ?'); $c->execute([$iph, time() - 3600]);
             if ((int)$c->fetchColumn() >= 8) out(429, ['error' => 'rate_limited']);
         }
-        if (!empty($g['dup'])) {
+        if (!$manual && !empty($g['dup'])) {
             $slugs = array_values(array_filter(array_map(fn($i) => is_array($i) ? cut($i['slug'] ?? '', 80) : '', $items)));
             if ($slugs) {
                 $hrs = max(1, (int)($g['hours'] ?? 24));
@@ -310,7 +311,7 @@ switch ($route) {
             }
         }
         $st = $d->prepare('SELECT COUNT(*) FROM orders WHERE phone = ? AND created_at > ?'); $st->execute([$phone, time() - 600]);
-        if ((int)$st->fetchColumn() >= 5) out(429, ['error' => 'rate_limited']);
+        if (!$manual && (int)$st->fetchColumn() >= 5) out(429, ['error' => 'rate_limited']);
         $lines = []; $clean = [];
         foreach ($items as $i) {
             if (!is_array($i)) continue;
@@ -318,7 +319,7 @@ switch ($route) {
             $lines[] = "$title ×$qty = " . round($price * $qty) . ' DA';
             $clean[] = ['slug' => cut($i['slug'] ?? '', 80), 'title' => $title, 'qty' => $qty, 'price' => $price];
         }
-        $id = 'S' . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 5));
+        $id = ($manual ? 'M' : 'S') . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 5));
         $cust = custFromToken((string)($o['ctoken'] ?? ''));
         /* كود تخفيض شخصي: يُستهلك مرة واحدة ولصاحب الهاتف؛ إن لم يصلح لا يُرفض الطلب بل يُعلَّم ليراه المدير */
         $promo = strtoupper(trim((string)($o['promo'] ?? '')));
@@ -332,6 +333,7 @@ switch ($route) {
         $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra, customer_id, ip_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
           ->execute([$id, time(), $name, $phone, cut($o['wilaya'] ?? '', 80), cut($o['commune'] ?? '', 120), cut($o['dtype'] ?? '', 10), cut($o['desk'] ?? '', 160),
             implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust, $iph]);
+        if ($manual && trim((string)($o['note'] ?? '')) !== '') $d->prepare('UPDATE orders SET note = ? WHERE id = ?')->execute([cut($o['note'], 500), $id]);
         out(200, ['ok' => true, 'id' => $id]);
 
     /* ── حسابات الزبائن («حسابي») ── */
@@ -547,7 +549,10 @@ switch ($route) {
         /* تعديل بيانات الطلب بعد التأكيد (v1.89.79): الاسم/الولاية/البلدية/طريقة التوصيل/المكتب/الرسم/الإجمالي */
         foreach (['name', 'wilaya', 'commune', 'desk'] as $f) { if (isset($b[$f])) { $set[] = "$f = ?"; $args[] = cut((string)$b[$f], 120); } }
         if (isset($b['dtype'])) { if (!in_array($b['dtype'], ['home', 'stop'], true)) out(422, ['error' => 'invalid_dtype']); $set[] = 'dtype = ?'; $args[] = $b['dtype']; }
-        foreach (['fee', 'total'] as $f) { if (isset($b[$f])) { $v = (float)$b[$f]; if ($v < 0 || $v > 10000000) out(422, ['error' => 'invalid_amount']); $set[] = "$f = ?"; $args[] = $v; } }
+        if (isset($b['phone'])) { $ph = preg_replace('/[^0-9+]/', '', (string)$b['phone']); if (strlen($ph) < 6 || strlen($ph) > 20) out(422, ['error' => 'invalid_phone']); $set[] = 'phone = ?'; $args[] = $ph; }
+        if (isset($b['items_text'])) { $set[] = 'items_text = ?'; $args[] = cut((string)$b['items_text'], 4000); }
+        if (isset($b['items']) && is_array($b['items'])) { $set[] = 'items = ?'; $args[] = json_encode(array_slice($b['items'], 0, 50), JSON_UNESCAPED_UNICODE); }
+        foreach (['fee', 'total', 'subtotal', 'discount'] as $f) { if (isset($b[$f])) { $v = (float)$b[$f]; if ($v < 0 || $v > 10000000) out(422, ['error' => 'invalid_amount']); $set[] = "$f = ?"; $args[] = $v; } }
         if (!$set || $id === '') out(422, ['error' => 'nothing_to_update']);
         $args[] = $id;
         db()->prepare('UPDATE orders SET ' . implode(', ', $set) . ' WHERE id = ?')->execute($args);

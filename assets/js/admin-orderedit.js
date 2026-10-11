@@ -76,5 +76,6 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
       close(); try { ad.renderOrders(); ad.openOrderPreview(ad.orders.indexOf(o)); } catch (e) { } toast("✅ " + msg);
     };
   }
-  return { open, apply, canEdit, load };
+  const stash = (id, f) => { const ed = load(); ed[id] = f; save(ed); }, unstash = id => { const ed = load(); delete ed[id]; save(ed); };
+  return { open, apply, canEdit, load, stash, unstash };
 })();
