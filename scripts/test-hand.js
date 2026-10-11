@@ -421,6 +421,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { v, none, heads: heads.join("|"), hasReal: heads.includes("الربح الحقيقي"), noMin: !heads.includes("سعر البيع الأدنى") };
   });
   ok("المخزون والأرباح: «الربح الحقيقي» = 3000 − (1200+50+100+150+50 + تأمين 1% = 30) = 1420 للقطعة، وبلا سعر الشراء يظهر فارغاً، والعمود يحلّ محل «سعر البيع الأدنى»", rpf.v === 1420 && rpf.none === null && rpf.hasReal && rpf.noMin, rpf);
+  // ── مسح كل أسعار الشراء ──
+  const ca = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; const saved = {}; Priv.set = async (k, v) => { saved[k] = JSON.stringify(v); }; Admin.renderFinance = () => { }; window.confirm = () => true;
+    Admin.products = [{ slug: "k1", title: "أ", active: true }, { slug: "k2", title: "ب", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = { k1: 100, k2: 200 }; Admin.fin.cc = { k1: { mode: "bought" } }; Admin.renderCostCalc(true);
+    const btn = Array.from(document.querySelectorAll("#tab-costs button")).find(b => /مسح كل الأسعار/.test(b.textContent)); const has = !!btn; btn.click(); await wait(50);
+    const out = { has, costs: JSON.stringify(Admin.fin.costs), cc: JSON.stringify(Admin.fin.cc), savedCosts: saved.costs, savedCc: saved.costcalc, buy: document.getElementById("cc0-buy").value };
+    Admin.products = pr0; Priv.set = set0; Admin.renderFinance = rf0; return out;
+  });
+  ok("تكلفة المنتجات: «مسح كل الأسعار» يحذف أسعار الشراء وبيانات التكلفة ويحفظ الفراغ", ca.has && ca.costs === "{}" && ca.cc === "{}" && ca.savedCosts === "{}" && ca.savedCc === "{}" && ca.buy === "", ca);
   // ── التغليف بجمع أعداد كإكسل + مصاريف أخرى ثابتة أو نسبة ──
   const xp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
