@@ -83,8 +83,8 @@ const AdminYd = (() => {
     const chips = keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr><td class="m">' + esc(r.tracking) + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + contact(real(r, o).phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td></tr>';
-    }).join("") || '<tr><td colspan="8" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
+      return '<tr><td class="m">' + esc(r.tracking) + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + contact(real(r, o).phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
+    }).join("") || '<tr><td colspan="9" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
       '<button class="small" type="button" data-yd="csv"' + (S.rows.length ? "" : " disabled") + '>⬇ CSV</button><button class="small" type="button" data-yd="gs"' + (S.rows.length ? "" : " disabled") + ' title="ينسخ الجدول ويفتح Google Sheets جديداً — ألصقه في الخلية A1">📊 Google Sheets</button></div>' +
@@ -94,7 +94,7 @@ const AdminYd = (() => {
         '<input type="date" data-yd-in="from" value="' + esc(S.from) + '" title="من تاريخ"><input type="date" data-yd-in="to" value="' + esc(S.to) + '" title="إلى تاريخ">' +
         '<select data-yd-in="link"><option value="">مرتبط وغير مرتبط</option><option value="yes"' + (S.link === "yes" ? " selected" : "") + '>مرتبط بطلب في اللوحة</option><option value="no"' + (S.link === "no" ? " selected" : "") + '>بلا طلب في اللوحة</option></select></div>' : "") +
       (S.rows.length ? '<div class="hint">' + list.length + ' من أصل ' + (S.total || S.rows.length) + ' طرد' + (S.rows.length < S.total ? " (حُمِّل منها " + S.rows.length + ")" : "") + ' — الاسم والهاتف الحقيقيان يظهران للطرود المرتبطة بطلب في لوحتك، وغيرها تُقنِّعه ياليدين في القائمة.</div>' +
-        '<div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th>التتبع</th><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>الوجهة</th><th>السعر</th><th>الحالة</th><th>الطلب</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th>التتبع</th><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>الوجهة</th><th>السعر</th><th>الحالة</th><th>الطلب</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
         (pages > 1 ? '<div style="text-align:center;margin-top:8px"><button class="small" data-yd="prev"' + (S.page <= 1 ? " disabled" : "") + '>›</button> <span class="hint">' + S.page + ' / ' + pages + '</span> <button class="small" data-yd="next"' + (S.page >= pages ? " disabled" : "") + '>‹</button></div>' : "") : "");
   }
   async function load(auto) {
@@ -143,7 +143,63 @@ const AdminYd = (() => {
         (list.length ? '<div style="overflow:auto;max-height:240px;margin-top:.6rem"><table style="width:100%;border-collapse:collapse;font-size:.82rem"><tr><th>التاريخ</th><th>الحالة</th><th>السبب</th><th>المركز</th></tr>' + list.slice(0, 8).map(row).join("") + '</table></div>' : ''));
     } catch (e) { a.showNotice(title, "❌ تعذّر جلب التفاصيل: " + esc(e.message || e)); }
   }
+
+  /* ═ معاينة طرد: بياناته + تعديل + حذف. التعديل والحذف مقبولان من الشركة غالباً ما دام الطرد في مرحلة التحضير (En préparation) ═ */
+  const prep = st => /prepar|en attente|pret a expedier/.test(norm(st || ""));
+  const comp = () => { const a = A(), k = a && (a.listCompanyKey ? a.listCompanyKey() : a.activeCompanyKey()), co = k && a.allDeliveryCompanies()[k]; return { a, k, co, cfg: (k && (a.deliveryCfg || {})[k]) || {} }; };
+  function pvClose() { const b = $("ydp-bg"); if (b) b.remove(); }
+  function pvOpen(tr, edit) {
+    const r = S.rows.find(x => x.tracking === tr); if (!r) return; const o = trackMap()[tr], rl = real(r, o), a = A(), idx = o && a ? a.orders.indexOf(o) : -1, can = prep(r.status);
+    pvClose(); const bg = document.createElement("div"); bg.id = "ydp-bg"; bg.className = "modal-bg open"; bg.dir = "rtl";
+    const row = (k, v) => '<tr><td style="color:#8a8f8c;width:110px;vertical-align:top">' + k + '</td><td>' + v + '</td></tr>', inp = (id, ph, v) => '<input id="ydp-' + id + '" placeholder="' + esc(ph) + '" value="' + esc(v == null ? "" : v) + '" style="width:100%;margin:.15rem 0 .5rem">';
+    const info = '<table style="width:100%;border-collapse:collapse">' + row("التتبع", '<b dir="ltr">' + esc(r.tracking) + '</b>') + row("التاريخ", esc(String(r.date).slice(0, 10))) + row("الاسم", esc(rl.name)) + row("الهاتف", '<span dir="ltr">' + esc(rl.phone) + '</span>' + contact(rl.phone)) + row("الوجهة", esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "")) + row("السعر", esc(r.price || "—")) + row("الحالة", '<span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span>') + row("الطلب", o ? "#" + esc(String(o.id).slice(-6)) + " — " + esc(o.name || "") : "غير مرتبط بطلب في لوحتك") + '</table>';
+    let body;
+    if (edit && can) {
+      body = '<h3 style="margin:0 0 .5rem">✏️ تعديل الطرد</h3><div class="hint" style="margin:0 0 .6rem">اترك الحقل فارغاً إن لم ترد تغييره.</div>' +
+        inp("fn", "الاسم الأول (اختياري)", "") + inp("ln", "اللقب (اختياري)", "") + inp("w", "الولاية بالفرنسية (اختياري)", "") + inp("c", "البلدية بالفرنسية (اختياري)", "") + inp("p", "السعر عند الاستلام دج (اختياري)", "") +
+        '<p id="ydp-msg" style="min-height:1.3em;margin:.2rem 0 .6rem;font-size:.85rem"></p><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="small green" type="button" data-ydp-do="save">💾 حفظ</button><button class="small gray" type="button" data-ydp-do="back">رجوع</button></div>';
+    } else {
+      body = info + '<p id="ydp-msg" style="min-height:1.3em;margin:.4rem 0;font-size:.85rem"></p><div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+        (can ? '<button class="small gold" type="button" data-ydp-do="edit">✏️ تعديل</button><button class="small" type="button" style="background:var(--red)" data-ydp-do="del">🗑 حذف الطرد</button>' : '<span class="hint" style="margin:0">التعديل والحذف متاحان فقط للطرد في مرحلة التحضير (En préparation) — بعدها لا تقبلهما الشركة.</span>') +
+        (idx >= 0 ? '<button class="small blue" type="button" data-ydp-do="order">📋 فتح الطلب</button>' : '') + '</div>';
+    }
+    bg.innerHTML = '<div class="modal" style="max-width:520px;position:relative"><button type="button" class="ord-x" data-ydp-do="close" title="إغلاق" aria-label="إغلاق">✕</button><h3 style="margin:0 0 .6rem;padding-inline-end:2.4rem">📦 معاينة الطرد</h3>' + body + '</div>';
+    bg.addEventListener("click", ev => { if (ev.target === bg) pvClose(); });
+    bg.addEventListener("click", ev => {
+      const b = ev.target.closest("[data-ydp-do]"); if (!b) return; const k = b.dataset.ydpDo, msg = t => { const m = $("ydp-msg"); if (m) m.textContent = t; };
+      if (k === "close") pvClose(); else if (k === "back") pvOpen(tr); else if (k === "edit") pvOpen(tr, true);
+      else if (k === "order") { pvClose(); a.openOrderPreview(idx); }
+      else if (k === "del") pvDel(r, o, idx, msg); else if (k === "save") pvSave(r, msg);
+    });
+    document.body.appendChild(bg);
+  }
+  async function pvDel(r, o, idx, msg) {
+    if (!confirm("حذف الطرد " + r.tracking + " من شركة التوصيل؟" + (o ? "\nسيعود الطلب المرتبط إلى قائمة الطلبات." : ""))) return;
+    const { a, co, cfg } = comp(); if (!co || !co.cancelRequest) { msg("هذه الشركة لا تدعم الحذف آلياً"); return; }
+    msg("⏳ جارِ الحذف…");
+    try {
+      const res = await a.courierFetch(co.cancelRequest(cfg, r.tracking));
+      if (!res.ok) { msg("لم تقبل الشركة حذف الطرد (رمز " + res.status + ") — غالباً خرج من مرحلة التحضير"); return; }
+      if (o && idx >= 0 && a.setNoteTag) { a.setNoteTag(o, /🚚[a-z0-9_]+:[A-Za-z0-9._-]+\s*/g, ""); a.renderOrders(); a.renderShipped && a.renderShipped(); }
+      S.rows = S.rows.filter(x => x.tracking !== r.tracking); S.total = Math.max(0, (S.total || 1) - 1); save(); draw(); pvClose(); if (typeof toast === "function") toast("🗑 حُذف الطرد " + r.tracking);
+    } catch (e) { msg("تعذّر الحذف: " + (e.message || e)); }
+  }
+  async function pvSave(r, msg) {
+    const v = id => ($("ydp-" + id).value || "").trim(), f = {}; if (v("fn")) f.firstname = v("fn"); if (v("ln")) f.familyname = v("ln"); if (v("w")) f.to_wilaya_name = v("w"); if (v("c")) f.to_commune_name = v("c");
+    if (v("p")) { const n = Number(v("p")); if (!(n >= 0)) { msg("السعر غير صحيح"); return; } f.price = n; f.declared_value = n; }
+    if (!Object.keys(f).length) { msg("لم تغيّر شيئاً"); return; }
+    const { a, co, cfg } = comp(); if (!co || !co.patchRequest) { msg("هذه الشركة لا تدعم التعديل آلياً"); return; }
+    msg("⏳ جارِ الحفظ…");
+    try {
+      const res = await a.courierFetch(co.patchRequest(cfg, r.tracking, f));
+      if (!res.ok) { let why = ""; try { const j = JSON.parse(res.text); why = j.message || j.error || ""; } catch (e) { } msg("رفضت الشركة التعديل (رمز " + res.status + ")" + (why ? ": " + why : "")); return; }
+      if (f.to_wilaya_name) r.wilaya = f.to_wilaya_name; if (f.to_commune_name) r.commune = f.to_commune_name; if (f.price != null) r.price = f.price;
+      if (f.firstname || f.familyname) r.name = [f.firstname, f.familyname].filter(Boolean).join(" ");
+      save(); draw(); pvOpen(r.tracking); const m = $("ydp-msg"); if (m) m.textContent = "✅ تم الحفظ"; if (typeof toast === "function") toast("✅ تعديل الطرد " + r.tracking);
+    } catch (e) { msg("تعذّر الحفظ: " + (e.message || e)); }
+  }
   document.addEventListener("click", e => {
+    const pv = e.target.closest("#yd-card [data-ydp]"); if (pv) { pvOpen(pv.dataset.ydp); return; }
     const dd = e.target.closest("#yd-card [data-ydd]"); if (dd) { detail(dd.dataset.ydd); return; }
     const chip = e.target.closest("#yd-card [data-yd-st]"), btn = e.target.closest("#yd-card [data-yd]");
     if (chip) { const k = chip.dataset.ydSt; S.st = S.st === k ? "" : k; S.page = 1; draw(); return; }

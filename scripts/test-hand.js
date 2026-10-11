@@ -292,6 +292,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("القائمة: المنتجات = المنتجات، الصفحات، التصنيفات، السمات، التحليلات", j(nv.products) === "المنتجات|الصفحات|التصنيفات|السمات|التحليلات|تعديل جماعي|فحص المنتجات|SEO", nv.products);
   ok("القائمة: ecommerce تبدأ بالبكسلات ثم الطلبات والمسجلة والمخزون والأرباح والمدفوعات", j(nv.shop).startsWith("البكسلات|الطلبات|الطلبات المسجلة|المخزون والأرباح|المدفوعات|") && !nv.shop.includes("نموذج الطلب"), nv.shop);
   ok("القائمة: نموذج الطلب ضمن التطبيقات، وتجهيز المتجر يفتح من شريط إعدادات الموقع", nv.apps.includes("نموذج الطلب") && nv.setupShown && /^setup(,setup)*$/.test(nv.segOn) && /إعدادات الموقع/.test(nv.storeOn || ""), nv);
+  // ── معاينة طرد ياليدين: تعديل + حذف للطرد في مرحلة التحضير ──
+  const yp = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
+    Admin.listCompanyKey = () => "yalidine"; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: { apiId: "a", apiToken: "b", enabled: true } });
+    const reqs = [], cf0 = Admin.courierFetch, lk0 = Admin.listCompanyKey; Admin.courierFetch = async rq => { reqs.push({ m: rq.method, u: rq.url, b: rq.body }); return { ok: true, status: 200, text: "{}" }; };
+    Admin.orders = []; AdminYd.set([{ tracking: "yal-AAA", date: "2026-10-10", name: "ع** ا", phone: "0*****1", wilaya: "Alger", commune: "Bab Ezzouar", price: 3000, status: "En préparation" }, { tracking: "yal-BBB", date: "2026-10-09", name: "س** ", phone: "0*****2", wilaya: "Oran", commune: "Es Senia", price: 2000, status: "Livré" }], 2, false);
+    const btns = document.querySelectorAll("#yd-card [data-ydp]").length;
+    document.querySelector('#yd-card [data-ydp="yal-BBB"]').click(); const doneBtns = document.querySelectorAll("#ydp-bg [data-ydp-do=edit],#ydp-bg [data-ydp-do=del]").length, doneNote = /مرحلة التحضير/.test(document.getElementById("ydp-bg").textContent); document.querySelector("#ydp-bg [data-ydp-do=close]").click();
+    document.querySelector('#yd-card [data-ydp="yal-AAA"]').click(); const prepBtns = document.querySelectorAll("#ydp-bg [data-ydp-do=edit],#ydp-bg [data-ydp-do=del]").length;
+    document.querySelector("#ydp-bg [data-ydp-do=edit]").click(); document.getElementById("ydp-c").value = "Kouba"; document.getElementById("ydp-p").value = "3400"; document.querySelector("#ydp-bg [data-ydp-do=save]").click(); await wait(80);
+    const patch = reqs.find(r => r.m === "PATCH"), body = patch ? JSON.parse(patch.b) : null, row = AdminYd.S.rows.find(r => r.tracking === "yal-AAA");
+    document.querySelector("#ydp-bg [data-ydp-do=del]").click(); await wait(80);
+    const del = reqs.find(r => r.m === "DELETE"); Admin.courierFetch = cf0; Admin.listCompanyKey = lk0;
+    return { btns, doneBtns, doneNote, prepBtns, body, rowC: row && row.commune, rowP: row && row.price, del: del && del.u, left: AdminYd.S.rows.map(r => r.tracking).join(), closed: !document.getElementById("ydp-bg") };
+  });
+  ok("طرود ياليدين: زر معاينة لكل طرد، والطرد المُسلَّم بلا تعديل/حذف", yp.btns === 2 && yp.doneBtns === 0 && yp.doneNote, yp);
+  ok("طرود ياليدين: تعديل طرد En préparation يرسل PATCH بالحقول المغيَّرة فقط ويحدّث الجدول", yp.prepBtns === 2 && yp.body && yp.body.to_commune_name === "Kouba" && yp.body.price === 3400 && !("firstname" in yp.body) && yp.rowC === "Kouba" && yp.rowP === 3400, yp);
+  ok("طرود ياليدين: حذف الطرد يرسل DELETE ويزيله من الجدول ويغلق النافذة", /yal-AAA$/.test(yp.del || "") && yp.left === "yal-BBB" && yp.closed, yp);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
