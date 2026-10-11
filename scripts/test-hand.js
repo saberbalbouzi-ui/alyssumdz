@@ -366,6 +366,19 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[2]) && cc.mat === "100" && cc.tot === "250", cc);
   ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
   ok("جدول التكلفة: «اعتماد» يجعل الإجمالي سعر الشراء ويحفظ المدخلات", cc.cost === 250 && /"raw":2000/.test(cc.saved) && /"ml":50/.test(cc.saved), cc);
+  // ── طباعة بوردرو الطلبات المسجلة ──
+  const bd = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
+    Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: { apiId: "a", apiToken: "b", enabled: true } });
+    const mk = (id, st, note) => ({ id, date: new Date().toISOString(), status: st, name: "ز" + id, phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", items: "", subtotal: 3000, fee: 0, total: 3000, note: note || "" });
+    Admin.orders = [mk("B1", "confirmee", "🚚yalidine:yal-111"), mk("B2", "confirmee", "🚚yalidine:yal-222"), mk("B3", "livree", "🚚yalidine:yal-333")];
+    const reqs = [], cf0 = Admin.courierFetch, wo0 = window.open; Admin.courierFetch = async rq => { reqs.push(rq.url); const tr = decodeURIComponent(rq.url.split("/").pop()); return { ok: true, status: 200, text: JSON.stringify({ data: [{ label: "https://yalidine.app/app/bordereau/?tracking=" + tr }] }) }; };
+    let html = ""; window.open = () => ({ document: { open() { }, write(h) { html = h; }, close() { } }, close() { } });
+    Admin.renderShipped(); const label = document.getElementById("ship-bord-btn").textContent; Admin.printBordereaux(); await wait(1500);
+    Admin.courierFetch = cf0; window.open = wo0;
+    return { label, nreq: reqs.length, html: html.length > 500, has1: html.includes("yal-111"), has2: html.includes("yal-222"), has3: html.includes("yal-333"), printBtn: /طباعة الكل/.test(html), frames: (html.match(/<iframe/g) || []).length };
+  });
+  ok("بوردرو المسجلة: يطبع الطرود قيد التجهيز فقط (2) ويجلب بوردرو كل طرد ويعرضها في صفحة واحدة للطباعة", /\(2\)/.test(bd.label) && bd.nreq === 2 && bd.html && bd.has1 && bd.has2 && !bd.has3 && bd.printBtn && bd.frames === 2, bd);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
