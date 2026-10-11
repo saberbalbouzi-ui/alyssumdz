@@ -1303,6 +1303,25 @@ const AdminVoice = (() => {
   const panelOpen = () => { const p = $h("ah-panel"); return !!p && p.classList.contains("on") && !!AH() && !!AH().post; };
   const speakOn = () => micOn;                                   /* الردّ بالصوت فقط والميكروفون أخضر */
   let speakingUntil = 0;                                         /* أثناء نطق المساعد لا يُلتقط كلامه كأمر (منع الصدى) */
+  /* منع سماع المساعد لنفسه: (1) يُوقَف الاستماع فعلياً من بدء النطق الحقيقي (onstart/onplay) حتى نهايته ثم يُستأنف بعد 750ms؛
+     (2) كل جملة نطقها تُحفظ فتُهمَل الأصداء المتأخرة المطابقة لها (isEcho) */
+  let speakingNow = false, ttsGen = 0, spoken = [], spokenEnd = 0, wdT = 0, ttsEst = 0;
+  function speakBegin(g) {
+    if (g !== ttsGen) return; speakingNow = true; clearTimeout(wdT); wdT = setTimeout(() => speakDone(g), Math.min(60000, ttsEst * 2 + 4000));
+    if (micOn) { try { stopRec(); } catch (e) { } }
+  }
+  function speakDone(g) {
+    if (g !== ttsGen) return; clearTimeout(wdT); const was = speakingNow; speakingNow = false; spokenEnd = Date.now(); speakingUntil = Math.max(speakingUntil, Date.now() + 700);
+    if (was && micOn) { clearTimeout(restartT); restartT = setTimeout(() => { if (micOn && !listening && !speakingNow && !calibrating) startRec(); }, 750); }
+  }
+  function isEcho(alts) {
+    const now = Date.now(), recent = spoken.filter(x => now - x.t < 60000); if (!recent.length) return false;
+    if (speakingNow) return true; const since = now - spokenEnd; if (since > 3000) return false;
+    const bag = new Set(); recent.forEach(x => x.n.split(/\s+/).forEach(w => w && bag.add(w)));
+    const toks = norm(alts[0] || "").split(/\s+/).filter(Boolean); if (!toks.length) return false;
+    const hit = toks.filter(w => bag.has(w)).length / toks.length;
+    return since < 1500 ? hit >= .99 : (toks.length >= 3 && hit >= .85);
+  }
   /* ── النطق: أفضل صوت عربي متاح + تحضير النص (أرقام/رموز/لاتينية) + الصوت الاحترافي اختيارياً ── */
   let curAudio = null; const elCache = new Map();
   const ttsRate = () => { const r = Number(LS("alyssum_voice_rate")); return r >= .6 && r <= 1.4 ? r : .95; };
@@ -1313,7 +1332,7 @@ const AdminVoice = (() => {
   }
   const premiumKey = () => (LS("alyssum_el_key") || "").trim();
   const premiumOn = () => !!premiumKey() && LS("alyssum_voice_premium") !== "0";
-  function ttsStop() { try { speechSynthesis.cancel(); } catch (e) { } try { if (curAudio) { curAudio.pause(); curAudio = null; } } catch (e) { } }
+  function ttsStop() { ttsGen++; speakingNow = false; clearTimeout(wdT); try { speechSynthesis.cancel(); } catch (e) { } try { if (curAudio) { curAudio.pause(); curAudio = null; } } catch (e) { } }
   async function speakPremium(t) {
     const key = premiumKey(), voice = LS("alyssum_el_voice") || "21m00Tcm4TlvDq8ikWAM", txt = t.slice(0, 400);
     let url = elCache.get(txt);
@@ -1323,24 +1342,25 @@ const AdminVoice = (() => {
       url = URL.createObjectURL(await r.blob()); elCache.set(txt, url);
       if (elCache.size > 40) { const k0 = elCache.keys().next().value; try { URL.revokeObjectURL(elCache.get(k0)); } catch (e) { } elCache.delete(k0); }
     }
-    ttsStop(); const a = new Audio(url); curAudio = a;
-    a.onloadedmetadata = () => { if (a.duration) speakingUntil = Date.now() + a.duration * 1000 + 600; }; a.onended = () => { speakingUntil = Date.now() + 500; };
+    ttsStop(); const g = ++ttsGen, a = new Audio(url); curAudio = a;
+    a.onplay = () => speakBegin(g); a.onerror = () => speakDone(g);
+    a.onloadedmetadata = () => { if (a.duration) speakingUntil = Date.now() + a.duration * 1000 + 600; }; a.onended = () => { speakingUntil = Date.now() + 500; speakDone(g); };
     await a.play();
   }
   function speakBrowser(clean, fr) {
-    ttsStop(); const parts = [];
+    ttsStop(); const g = ++ttsGen, parts = [];
     chunkSpeech(clean).forEach(ch => splitScripts(ch).forEach(sg => parts.push(sg)));
     parts.forEach((sg, i) => {
       const kind = fr ? (sg.lang === "ar" ? "ar" : "fr") : (sg.lang === "ar" ? "ar" : "en"), u = new SpeechSynthesisUtterance(sg.t), v = ttsPick(kind);
       if (v) { u.voice = v; u.lang = v.lang; } else u.lang = kind === "ar" ? "ar-SA" : kind === "fr" ? "fr-FR" : "en-US";
-      u.rate = ttsRate(); if (i === parts.length - 1) u.onend = () => { speakingUntil = Date.now() + 500; };
+      u.rate = ttsRate(); if (i === 0) u.onstart = () => speakBegin(g); if (i === parts.length - 1) u.onend = u.onerror = () => { speakingUntil = Date.now() + 500; speakDone(g); };
       try { speechSynthesis.speak(u); } catch (e) { }
     });
   }
   function speak(text, fr, force) {
     if (!text || !(speakOn() || force) || typeof speechSynthesis === "undefined") return;
     const clean = prepSpeech(text, TTS_LEX); if (!clean) return;
-    speakingUntil = Date.now() + Math.min(24000, 900 + clean.length * 80);
+    ttsEst = Math.min(24000, 900 + clean.length * 80); speakingUntil = Date.now() + ttsEst; spoken.push({ n: norm(clean), t: Date.now() }); if (spoken.length > 6) spoken.shift();
     if (!force && premiumOn()) { speakPremium(clean).catch(() => speakBrowser(clean, fr)); return; }
     speakBrowser(clean, fr);
   }
@@ -1353,7 +1373,9 @@ const AdminVoice = (() => {
     btns.push(["تلقائي (الأفضل)", () => { LS("alyssum_voice_tts", ""); test(); chooseVoice(); }, !cur ? "ok" : ""]);
     btns.push(["أبطأ", () => { LS("alyssum_voice_rate", String(Math.max(.6, +(ttsRate() - .1).toFixed(2)))); test(); }], ["أسرع", () => { LS("alyssum_voice_rate", String(Math.min(1.4, +(ttsRate() + .1).toFixed(2)))); test(); }]);
     if (premiumKey()) btns.push(["الصوت الاحترافي: " + (premiumOn() ? "يعمل" : "متوقف"), () => { LS("alyssum_voice_premium", premiumOn() ? "0" : "1"); chooseVoice(); }, premiumOn() ? "ok" : ""]);
-    const out = ar.length ? "اختر صوتاً لأسمعك إياه. السرعة الحالية: " + ttsRate().toFixed(2) + (premiumOn() ? ". الصوت الاحترافي يعمل ويُستعمل بدل صوت المتصفح." : ".")
+    const natural = ar.some(v => /natural|neural|online/i.test(v.name || "")), edge = /Edg\//.test(navigator.userAgent || "");
+    const tip = natural ? " أصوات «Online (Natural)» هي الأوضح." : edge ? " لم تظهر الأصوات الطبيعية بعد: أعد تحميل الصفحة وافتح هذه القائمة ثانية." : " للحصول على أوضح نطق افتح اللوحة بمتصفح Microsoft Edge: تظهر فيه أصوات عربية طبيعية (مثل الجزائر والسعودية) تلقائياً هنا.";
+    const out = ar.length ? "اختر صوتاً لأسمعك إياه. السرعة الحالية: " + ttsRate().toFixed(2) + (premiumOn() ? ". الصوت الاحترافي يعمل ويُستعمل بدل صوت المتصفح." : ".") + tip
       : "لا يوجد صوت عربي في متصفحك. للحصول على صوت أوضح: استعمل Microsoft Edge (أصوات طبيعية) أو ثبّت حزمة صوت عربية من إعدادات النظام، أو فعّل الصوت الاحترافي.";
     sink({ out, buttons: btns }); if (!ar.length && !premiumKey()) return; return true;
   }
@@ -1538,7 +1560,7 @@ const AdminVoice = (() => {
   function handle(alts, opt) {
     opt = opt || {};
     if (working) return;                              /* اليد تعمل: لا أقاطعها */
-    if (!opt.typed && Date.now() < speakingUntil) return;   /* المساعد يتكلم الآن: لا نلتقط صوته */ const norms = alts.map(norm);
+    if (!opt.typed && (Date.now() < speakingUntil || speakingNow || isEcho(alts))) return;   /* المساعد يتكلم الآن أو هذا صدى كلامه: لا نلتقطه */ const norms = alts.map(norm);
     /* ردّ على سؤال قائم (إكمال/اختيار/تأكيد): لا يحتاج كلمة النداء */
     if (pending) {
       if (!opt.typed) mirrorUser(alts[0]);
@@ -1638,7 +1660,7 @@ const AdminVoice = (() => {
     document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { chooseVoice, arNum, prepSpeech, chunkSpeech, splitScripts, rankVoices, memUpdate, examples: () => EXAMPLES_Q.slice(), memory: () => memNow(), quiet: () => Date.now() >= speakingUntil, toggleWakeReq, enroll, exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
+  const api = { _spk: (t, ago) => { spoken.push({ n: norm(t), t: Date.now() }); spokenEnd = Date.now() - (ago || 0); speakingNow = false; }, _echo: isEcho, chooseVoice, arNum, prepSpeech, chunkSpeech, splitScripts, rankVoices, memUpdate, examples: () => EXAMPLES_Q.slice(), memory: () => memNow(), quiet: () => Date.now() >= speakingUntil, toggleWakeReq, enroll, exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();

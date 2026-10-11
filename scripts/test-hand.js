@@ -129,6 +129,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("إعدادات الصورة: مجموعة «تحسين الصورة» وفلتر جاهز وظل", await p.evaluate(() => { const t = (document.getElementById("pbx-insp") || {}).textContent || ""; return /تحسين الصورة/.test(t); }));
   ok("فلتر الصورة يُرسم في CSS", await p.evaluate(() => { const pg = JSON.parse(PBApp.pageJson()); const w = pg.sections[0].cols[0].widgets[0]; w.set.iprs = "vivid"; w.set.ish = "medium"; const h = PB.fullHtml(pg, { base: "./", site: {}, products: [], meta: { tabs: [], cats: {} } }); return /saturate\(135%\)/.test(h) && /drop-shadow\(0px 10px 18px/.test(h); }));
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  // ── منع سماع المساعد لنفسه ──
+  const ec = await p.evaluate(() => { AdminVoice._spk("مرحباً أليسوم، أنا أسمعك. تكلّم مباشرة", 800); const a = AdminVoice._echo(["مرحبا"]), b = AdminVoice._echo(["افتح الطلبات"]); AdminVoice._spk("مرحباً أليسوم، أنا أسمعك", 2500); const c = AdminVoice._echo(["نعم"]), d = AdminVoice._echo(["أنا أسمعك تكلم مباشرة"]); return { a, b, c, d }; });
+  ok("صدى المساعد: كلمة من كلامه بعد انتهائه تُهمَل", ec.a === true, ec);
+  ok("صدى المساعد: أمر المستخدم الحقيقي لا يُهمَل", ec.b === false && ec.c === false, ec);
+  ok("صدى المساعد: جملة كاملة منسوخة من كلامه تُهمَل", ec.d === true, ec);
   // ── استوديو المنتج (تركيب بالبكسل + اللوحة) ──
   const stu = await p.evaluate(() => {
     const c = document.createElement("canvas"); c.width = 400; c.height = 300; const g = c.getContext("2d"); g.fillStyle = "#e11"; g.fillRect(100, 50, 200, 200);
