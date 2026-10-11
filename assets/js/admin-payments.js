@@ -58,7 +58,7 @@ const AdminPayments = (() => {
     const t=A_.trackingOf?A_.trackingOf(o):null; if(!t) return false;
     if(A_.ydActual&&A_.ydActual[t.tracking]) return true;
     const rows=(typeof AdminYd!=="undefined"&&AdminYd.S&&AdminYd.S.rows)||[];
-    if(!rows.length) return true;
+    if(!rows.length) return A_.listCompanyKey&&A_.listCompanyKey() ? false : true;   /* شركة قراءة الطرود مفعّلة ولم تُحمَّل قائمتها: لا نخمّن، نخفي حتى تُجلب */
     return rows.some(r=>String(r.tracking)===String(t.tracking));
   }
   /* عناصر الجدول: طلبات الموقع + المدفوعات اليدوية (m…) بنفس الشكل */
