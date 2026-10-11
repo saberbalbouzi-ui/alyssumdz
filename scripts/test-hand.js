@@ -246,6 +246,29 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("جدول المخزون والأرباح: له عنوان وعمود «الربح المتوقع»", ad.tblOk, ad);
   ok("إعلان لكل منتج: القائمة تعرض Cost الحقيقي (6000÷10=600) وتتغير فوراً (×2=1200، وبـ20 طلباً 600، وثابت 350)", /Cost الحقيقي/.test(ad.live1) && /600/.test(ad.live1) && /1[\s,.\u202f\u00a0]?200/.test(ad.live2) && /600/.test(ad.live3) && ad.fxShown && /350/.test(ad.live4), ad);
   ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل لا يتكرر في القائمة، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "spend" && ad.stored.a === 6000 && ad.stored.m === 2 && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
+  // ── معاينة من «الطلبات المسجلة»: تعديل + حذف + طباعة ──
+  const rg = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; API.updateOrder = async () => ({ ok: true });
+    Admin.orders = [{ id: "R1", date: new Date().toISOString(), status: "confirmee", name: "مسجل", phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", dtype: "home", desk: "", items: "منتج ×1 = 3000 DA", subtotal: 3000, fee: 400, total: 3400, note: "🚚yalidine:yal-123" }];
+    Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: Object.assign({}, (Admin.deliveryCfg || {}).yalidine, { enabled: true }) });
+    Admin.renderShipped(); const pv = Array.from(document.querySelectorAll("#ship-table .act button")).find(b => /openOrderPreview/.test(b.getAttribute("onclick") || ""));
+    if (pv) pv.click(); await wait(80);
+    const has = s => !!document.querySelector("#ord-prev-a " + s), calls = [], origDel = Admin.deleteOrders; Admin.deleteOrders = async l => { calls.push(l.map(o => o.id).join()); };
+    const out = { tableBtn: !!pv, edit: has('[onclick^="OrderEdit.open"]'), slip: has('[onclick^="Admin.printOrderSlip"]'), label: has('[onclick^="Admin.openLabel"]'), del: has('[onclick*="Admin.deleteOrders"]'), tr: /yal-123/.test(document.getElementById("ord-prev-b").textContent) };
+    document.querySelector('#ord-prev-a [onclick*="Admin.deleteOrders"]').click(); await wait(30); Admin.deleteOrders = origDel; out.calls = calls.join("|"); out.closed = !document.getElementById("ord-prev-bg").classList.contains("open"); return out;
+  });
+  ok("الطلبات المسجلة: زر «معاينة» يفتح نافذة فيها تعديل ووصل (طباعة) وبوليصة الشركة وحذف مع التتبع", rg.tableBtn && rg.edit && rg.slip && rg.label && rg.del && rg.tr, rg);
+  ok("الطلبات المسجلة: زر الحذف في المعاينة يحذف الطلب ويغلق النافذة", rg.calls === "R1" && rg.closed, rg);
+  // ── خصم المخزون عند التأكيد: عرض «علبتان + الثالثة مجاناً» (×3) ──
+  const skf = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); window.confirm = () => true; Admin.queueStockPublish = () => {}; Admin.fin.cfg.since = "2000-01-01"; Admin.orderFilters = {};
+    const wait = ms => new Promise(r => setTimeout(r, ms)), pr = Admin.products.find(x => x.slug === "anti-acne") || Admin.products.find(x => x.slug !== "test" && !x.variations);
+    pr.stock = 8; const mk = (id, q, v) => ({ id, date: new Date().toISOString(), status: "nouvelle", name: "ز" + id, phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", dtype: "home", desk: "", items: pr.title + " ×" + q + " = " + v + " DA", subtotal: v, fee: 0, total: v, note: "" });
+    Admin.orders = [mk("S1", 1, 2400), mk("S2", 3, 4800)];
+    await Admin.confirmOrder(0, true); await wait(50); await Admin.confirmOrder(1, true); await wait(50);
+    return { stock: pr.stock, notes: Admin.orders.map(o => o.note), lines: Admin.orderLines(Admin.orders[1]).map(l => l.qty), st: Admin.orders.map(o => o.status) };
+  });
+  ok("المخزون: تأكيد طلب ×1 وطلب عرض ×3 (علبتان + مجانية) يخصم 4 علب (8 ← 4)", skf.stock === 4 && skf.lines[0] === 3, skf);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
