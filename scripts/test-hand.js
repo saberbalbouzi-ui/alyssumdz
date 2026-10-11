@@ -231,21 +231,21 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const empty = document.getElementById("fin-ads-rows").textContent.includes("لا توجد حملات"), globalGone = !document.getElementById("fin-adbox") && !document.getElementById("fin-g-method");
     Admin.addAdRow(); const sel = document.getElementById("fin-p0-prod"), opts = sel ? sel.options.length : 0;
     const slug = Admin.products.find(x => x.slug !== "test" && x.active !== false).slug; sel.value = slug; sel.dispatchEvent(new Event("change"));
-    const m = document.getElementById("fin-p0-method"); m.value = "fixed"; m.dispatchEvent(new Event("change"));
-    const a = document.getElementById("fin-p0-a"); a.value = "350"; a.dispatchEvent(new Event("input", { bubbles: true }));
-    const live1 = document.getElementById("fin-p0-res").textContent;
-    m.value = "costx"; m.dispatchEvent(new Event("change")); a.value = "200"; a.dispatchEvent(new Event("input", { bubbles: true })); const live2 = document.getElementById("fin-p0-res").textContent;
+    const E = (id, v) => { const el = document.getElementById("fin-p0-" + id); el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); };
+    E("spend", "6000"); E("n", "10"); const live1 = document.getElementById("fin-p0-mode").selectedOptions[0].textContent;
+    E("mode", "m:2"); const live2 = document.getElementById("fin-p0-mode").selectedOptions[0].textContent; E("n", "20"); const live3 = document.getElementById("fin-p0-mode").selectedOptions[0].textContent;
+    E("mode", "fixed"); E("fx", "350"); const fxShown = document.getElementById("fin-p0-fx").style.display !== "none", live4 = document.getElementById("fin-p0-mode").selectedOptions[0].textContent; E("mode", "m:2"); E("n", "10");
     const before = saved.length; await Admin.saveAdRow(0); await wait(50);
     const svd = saved.length - before, hasTitle = /تكلفة الإعلان/.test(document.getElementById("fin-ads-rows").textContent), rowsAfter = document.querySelectorAll("#fin-ads-rows tbody tr").length, stored = Admin.fin.ads[slug];
     Admin.addAdRow(); const opts2 = Array.from(document.querySelectorAll("#fin-p1-prod option")).map(o => o.value);
     window.confirm = () => true; await Admin.delAdRow(0); await wait(50);
     const tblOk = /المخزون والأرباح لكل منتج/.test(document.getElementById("fin-table").closest(".card").textContent) && Array.from(document.querySelectorAll("#fin-table th")).some(h => h.textContent === "الربح المتوقع");
-    return { tblOk, empty, globalGone, opts, live1, live2, saved: svd, rowsAfter, stored, dupHidden: !opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
+    return { tblOk, empty, globalGone, opts, live1, live2, live3, live4, fxShown, saved: svd, rowsAfter, stored, dupHidden: !opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
   });
   ok("إعلان لكل منتج: لا إعداد عام، ولا صفوف قبل إضافة حملة", ad.empty && ad.globalGone, ad);
   ok("جدول المخزون والأرباح: له عنوان وعمود «الربح المتوقع»", ad.tblOk, ad);
-  ok("إعلان لكل منتج: النتيجة تتغير فور تغيير الأرقام (ثابت 350 ثم Cost 200 × 2 = 400)", /350/.test(ad.live1) && /400/.test(ad.live2), ad);
-  ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل لا يتكرر في القائمة، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "costx" && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
+  ok("إعلان لكل منتج: القائمة تعرض Cost الحقيقي (6000÷10=600) وتتغير فوراً (×2=1200، وبـ20 طلباً 600، وثابت 350)", /Cost الحقيقي/.test(ad.live1) && /600/.test(ad.live1) && /1[\s,.\u202f\u00a0]?200/.test(ad.live2) && /600/.test(ad.live3) && ad.fxShown && /350/.test(ad.live4), ad);
+  ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل لا يتكرر في القائمة، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "spend" && ad.stored.a === 6000 && ad.stored.m === 2 && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
