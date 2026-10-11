@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.89">
+<meta name="admin-version" content="1.89.90">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -318,6 +318,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="products" onclick="Admin.tab('categories',this)"><span class="nav-ic">🗂️</span><span class="nav-txt"><b>التصنيفات</b><small>تصنيفات المتجر التي تظهر في الصفحة الرئيسية</small></span></button>
       <button class="nav-btn" data-grp="products" onclick="Admin.tab('attributes',this)"><span class="nav-ic">🏷️</span><span class="nav-txt"><b>السمات</b><small>مكتبة سمات (اللون، الحجم...) تُستعمل في المنتجات</small></span></button>
       <button class="nav-btn" data-grp="products" onclick="Admin.tab('analytics',this)"><span class="nav-ic">📊</span><span class="nav-txt"><b>التحليلات</b><small>الأكثر مبيعاً وتوزيع الطلبات حسب الولاية</small></span></button>
+      <button class="nav-btn" data-grp="products" onclick="Admin.tab('bulkp',this)"><span class="nav-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16M3 14h18"/></svg></span><span class="nav-txt"><b>تعديل جماعي</b><small>تحرير أسعار وحقول عدة منتجات دفعة واحدة</small></span></button>
+      <button class="nav-btn" data-grp="products" onclick="Admin.tab('audit',this)"><span class="nav-ic">✓</span><span class="nav-txt"><b>فحص المنتجات</b><small>جودة الصور والوصف والأسعار والروابط</small></span></button>
+      <button class="nav-btn" data-grp="products" onclick="Admin.tab('seo',this)"><span class="nav-ic">⌕</span><span class="nav-txt"><b>SEO</b><small>عناوين وأوصاف المنتجات وبيانات المشاركة وnoindex</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pixels',this)"><span class="nav-ic">🎯</span><span class="nav-txt"><b>البكسلات</b><small>ربط بكسلات فيسبوك/تيك توك/جوجل للتتبع</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('orders',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>الطلبات<span class="nb hidden" id="nb-orders"></span></b><small>عرض، بحث، وتأكيد طلبات الزبائن</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
@@ -334,9 +337,6 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('reports',this)"><span class="nav-ic">▥</span><span class="nav-txt"><b>التقارير</b><small>مبيعات حسب الفترة والفئة والولاية والحملة</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('loyalty',this)"><span class="nav-ic">⭐</span><span class="nav-txt"><b>الزبائن الأوفياء<span class="nb hidden" id="nb-loyalty"></span></b><small>زبائن أتمّوا عدداً من الطلبات، مع مكافأة وإشعار</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('blacklist',this)"><span class="nav-ic">🚫</span><span class="nav-txt"><b>القائمة السوداء<span class="nb hidden" id="nb-blacklist"></span></b><small>أرقام هاتف لتنبيهك عند تكرار طلباتها</small></span></button>
-      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('bulkp',this)"><span class="nav-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16M3 14h18"/></svg></span><span class="nav-txt"><b>تعديل جماعي</b><small>تحرير أسعار وحقول عدة منتجات دفعة واحدة</small></span></button>
-      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('audit',this)"><span class="nav-ic">✓</span><span class="nav-txt"><b>فحص المنتجات</b><small>جودة الصور والوصف والأسعار والروابط</small></span></button>
-      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('seo',this)"><span class="nav-ic">⌕</span><span class="nav-txt"><b>SEO</b><small>عناوين وأوصاف المنتجات وبيانات المشاركة وnoindex</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="builder" onclick="Admin.tab('builder',this)"><span class="nav-ic">📄</span><span class="nav-txt"><b>مطوّر الصفحات</b><small>صفحاتك + المحرر المرئي + أدوات ذكية (التقاط العناصر)</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="smart" id="nav-pbgen" onclick="Admin.tab('pbgen',this)"><span class="nav-ic">🪄</span><span class="nav-txt"><b>المطوّر الذكي</b><small>توليد صفحة جديدة ← تحرير بالأدوات الذكية ← حفظ</small></span></button>
       <button class="nav-btn nav-work" data-grp="apps" data-work="imgtools" data-ic="imgtools" onclick="Admin.tab('imgtools',this)"><span class="nav-ic">🖼️</span><span class="nav-txt"><b>أدوات تعديل الصور</b><small>نزع الخلفية وضغط الصور وتحويلها، وبقية أدوات الصور داخل المطوّر</small></span></button>
@@ -1591,12 +1591,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.89"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.89"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.89"></script>
+<script src="assets/js/ctl-help.js?v=1.89.90"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.90"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.90"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.89"></script>
+<script src="assets/js/admin-nav.js?v=1.89.90"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1607,7 +1607,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.89"></script>
+<script src="assets/js/admin-update.js?v=1.89.90"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
