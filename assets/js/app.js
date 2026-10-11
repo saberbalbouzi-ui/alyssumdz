@@ -18,11 +18,11 @@ function shipBlocked(w, commune, type){
 }
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
-let __SHIPCO = null, __SHIPDEF = "";
+let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {};
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; if(__SHIPDEF || Object.keys(__SHIPCO).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
@@ -48,6 +48,10 @@ function shipQuote(w, commune, type, sub, co, pf){
   } else if(src !== "zones"){
     const key = src || __SHIPDEF;
     if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0) base = v; }
+  }
+  if(src !== "free"){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
+    const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
+    if(d){ const add = Number(type === "stop" ? d[1] : d[0]) || 0; if(add) base = Math.max(0, base + add); }
   }
   const free = flatFree || !!(type === "stop" ? w.fs : w.fh) || !!(w.fo && sub >= w.fo);
   return { fee: free ? 0 : base, free, blocked:false, msg:"" };

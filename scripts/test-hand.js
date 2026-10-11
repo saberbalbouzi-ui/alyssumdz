@@ -382,6 +382,18 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("مكتبة المواد: السعر في الوصفة من المكتبة (للقراءة فقط) وتغييره مرة واحدة يحدّث كل الوصفات (1800 و600) وسعر شراء المنتج المعتمَد (240) دون غيره", ml.linked && ml.raw1 === 1800 && ml.raw2 === 600 && ml.rp === 6000 && ml.buy1 === 240 && ml.buy2, ml);
   ok("مكتبة المواد: زر «+» يضيف مادة حرة إلى المكتبة ويربط الصف بها", /شمع/.test(ml.lib) && ml.afterLink, ml);
+  // ── إضافة البلدية من ياليدين (Supplément commune) ──
+  const sp = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), cf0 = Admin.courierFetch, pj0 = typeof PBApp !== "undefined" ? PBApp.putJson : null, set0 = Priv.set; Priv.set = async () => { };
+    Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: { apiId: "a", apiToken: "b", enabled: true, fromWilayaName: "Alger" } }); Admin.ydFees = {}; Admin._feesBusy = false;
+    const pub = []; PBApp.putJson = async (path, data) => { pub.push({ path, data }); return true; };
+    Admin.courierFetch = async rq => { const to = Number(/to_wilaya_id=(\d+)/.exec(rq.url)[1]); return { ok: true, status: 200, text: JSON.stringify({ retour_fee: 200, cod_percentage: 1, insurance_percentage: 1, per_commune: { 1: { commune_name: "Kouba", express_home: 800, express_desk: 500 }, 2: { commune_name: "Bab Ezzouar", express_home: 750, express_desk: 500 }, 3: { commune_name: "Dar El Beida", express_home: 750, express_desk: 500 }, 4: { commune_name: "Hussein Dey", express_home: 750, express_desk: 500 } } }) }; };
+    await Admin.fetchCommuneFees({ force: true }); await wait(100);
+    const sup = Admin.communeSup(), last = pub[pub.length - 1], ok16 = sup[16] && sup[16].kouba && sup[16].kouba[0] === 50 && !sup[16].babezzouar;
+    Admin.courierFetch = cf0; if (pj0) PBApp.putJson = pj0; Priv.set = set0;
+    return { ok16, keys: Object.keys(sup).length, published: !!(last && last.data && last.data.sup && last.data.sup[16] && last.data.sup[16].kouba) };
+  });
+  ok("إضافة البلدية: يُحسب فرق سعر البلدية عن ولايتها (Kouba +50 دج) ويُنشر ملف الأسعار للمتجر", sp.ok16 && sp.keys > 10 && sp.published, sp);
   // ── طباعة بوردرو الطلبات المسجلة ──
   const bd = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

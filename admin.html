@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.97">
+<meta name="admin-version" content="1.89.98">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1598,12 +1598,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.97"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.97"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.97"></script>
+<script src="assets/js/ctl-help.js?v=1.89.98"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.98"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.98"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.97"></script>
+<script src="assets/js/admin-nav.js?v=1.89.98"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1614,7 +1614,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.97"></script>
+<script src="assets/js/admin-update.js?v=1.89.98"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -2546,7 +2546,7 @@ const Admin = {
     try{ localStorage.setItem("alyssum_admin_on","1"); }catch(e){}
     this.loadDeliveryCfg();
     this.loadBlacklist();
-    this.startAlerts(); this.startShipAutoSync();
+    this.startAlerts(); this.startShipAutoSync(); setTimeout(()=>{ try{ this.fetchCommuneFees({ auto:true }); }catch(e){} }, 40000);
     try{ Updater.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadCollections(), this.loadRepeat(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
@@ -6893,6 +6893,7 @@ const Admin = {
     const k = Object.keys(all).find(x=>all[x].feesRequest && this.deliveryCfg[x] && (this.deliveryCfg[x].apiId || this.deliveryCfg[x].apiToken));
     if(!k) return Object.keys(all).some(x=>all[x].feesRequest) ? '<div class="hint">لجلب الأسعار تلقائياً: أدخل مفاتيح ياليدين من «⚙️ إعداد» أولاً</div>' : "";
     return '<button class="small gold" type="button" style="margin-top:.6rem" onclick="Admin.fetchCompanyPrices(\'' + k + '\')">⬇️ جلب أسعار ' + all[k].name + ' من حسابي</button> ' +
+      (all[k].feesDetailRequest ? '<button class="small gold" type="button" style="margin-top:.6rem" onclick="Admin.fetchCommuneFees({force:true})" title="يجلب سعر التوصيل لكل بلدية (إضافة البلدية) ليُحسب في المتجر كما تحسبه الشركة">⬇️ جلب إضافة البلديات من ' + all[k].name + '</button> ' : "") +
       (all[k].centersRequest ? '<button class="small blue" type="button" style="margin-top:.6rem" onclick="Admin.syncDesksFromCompany(\'' + k + '\')">🏢 مزامنة مكاتب Stop Desk من ' + all[k].name + '</button>' : "");
   },
   async fetchCompanyPrices(key, opts){
@@ -6914,6 +6915,7 @@ const Admin = {
       this.saveDeliveryCfgToStorage();
       toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name + " تلقائياً");
       this.publishShipCo();
+      if(co.feesDetailRequest) this.fetchCommuneFees({ auto:true });
       this.renderDelivery(); if(this.editingDeliveryKey === key) this.renderDeliveryPriceBox(key);
       this.renderDeliveryPriceSourceCard();
     }catch(err){
@@ -6924,13 +6926,43 @@ const Admin = {
   },
 
   /* نشر أسعار كل الشركات المفعّلة في ملف عام يقرؤه المتجر لحساب توصيل المنتجات المرتبطة بشركة غير الافتراضية */
+  /* إضافة البلدية عند ياليدين (Supplément commune): الفرق بين سعر البلدية وسعر ولايتها من /v1/fees؛ يُنشر {معرّف الولاية الأم:{بلدية:[فرق المنزل, فرق المكتب]}} فيضيفه المتجر لسعر الولاية */
+  communeSup(){
+    const cfg = this.deliveryCfg.yalidine || {}, out = {}; if(!(cfg.enabled || cfg.apiId) || typeof WILAYAS === "undefined") return out;
+    const from = this.fromWilayaId(), mode = a=>{ const c = {}; a.forEach(v=>{ c[v] = (c[v] || 0) + 1; }); let b = null; Object.keys(c).forEach(k=>{ if(b === null || c[k] > c[b] || (c[k] === c[b] && Number(k) < Number(b))) b = k; }); return b === null ? 0 : Number(b); };
+    WILAYAS.filter(w=>!w.par).forEach(w=>{
+      const f = this.ydFees && this.ydFees[from + "-" + w.id]; if(!f || !f.pc) return; const P = f.pc, ks = Object.keys(P), pr = (cfg.prices || {})[w.id];
+      const bh = pr && Number(pr.home) > 0 ? Number(pr.home) : mode(ks.map(k=>P[k].h).filter(v=>v != null)), bd = pr && Number(pr.stop) > 0 ? Number(pr.stop) : mode(ks.map(k=>P[k].d).filter(v=>v != null));
+      ks.forEach(k=>{ const dh = P[k].h != null ? P[k].h - bh : 0, dd = P[k].d != null ? P[k].d - bd : 0; if(dh || dd) (out[w.id] = out[w.id] || {})[k] = [dh, dd]; });
+    });
+    return out;
+  },
+  /* يجلب سعر كل بلدية لكل الولايات (58 طلباً متتابعاً) ثم ينشر الإضافات للمتجر */
+  async fetchCommuneFees(opts){
+    opts = opts || {}; const co = this.allDeliveryCompanies().yalidine, cfg = this.deliveryCfg.yalidine || {};
+    if(!co || !co.feesDetailRequest || !(cfg.apiId || cfg.apiToken)){ if(!opts.auto) toast("⚠️ أدخل مفاتيح ياليدين أولاً"); return }
+    if(this._feesBusy){ if(!opts.auto) toast("⏳ الجلب قيد التنفيذ"); return } this._feesBusy = true;
+    const from = this.fromWilayaId(), L = WILAYAS.filter(w=>!w.par); let got = 0, k = 0;
+    try{
+      for(const w of L){
+        k++; const key = from + "-" + w.id, f = this.ydFees[key];
+        if(!opts.force && f && f.ts && Date.now() - f.ts < 30 * 86400000) continue;
+        if(!opts.auto && k % 8 === 0) toast("⏳ جلب سعر البلديات… " + k + " / " + L.length);
+        try{ const r = await this.courierFetch(co.feesDetailRequest(cfg, from, w.id)); if(r.ok){ const d = co.parseFeesDetail(JSON.parse(r.text)); if(d){ this.ydFees[key] = d; got++; } } }catch(e){ if(e.cors) break }
+        await new Promise(res=>setTimeout(res, 150));
+      }
+      if(got) await Priv.set("ydfees", this.ydFees);
+    } finally { this._feesBusy = false; }
+    await this.publishShipCo(); const n = Object.values(this.communeSup()).reduce((a, o)=>a + Object.keys(o).length, 0);
+    if(!opts.auto || got) toast(got ? "✅ جُلبت أسعار البلديات (" + n + " بلدية بإضافة) وطُبّقت في المتجر" : "ℹ️ أسعار البلديات محدّثة (" + n + " بلدية بإضافة)");
+  },
   async publishShipCo(){
     try{
       const companies = {}, all = this.allDeliveryCompanies();
       this.enabledCompanyKeys().forEach(k=>{ const pr = (this.deliveryCfg[k]||{}).prices; if(all[k].feesRequest && pr && Object.keys(pr).length) companies[k] = { name: all[k].name, prices: pr }; });
       const st = this.pricingState();
       if(typeof PBApp === "undefined" || !PBApp.putJson) return;
-      await PBApp.putJson("assets/data/ship-co.json", { updated: new Date().toISOString(), def: st.key || "", companies }, "أسعار شركات التوصيل (لمنتجات بشركة غير الافتراضية)");
+      await PBApp.putJson("assets/data/ship-co.json", { updated: new Date().toISOString(), def: st.key || "", companies, sup: this.communeSup() }, "أسعار شركات التوصيل (لمنتجات بشركة غير الافتراضية)");
     }catch(e){ console.warn("ship-co", e); }
   },
   /* خانة «شركة التوصيل لهذا المنتج» في تعديل المنتج */
@@ -7020,7 +7052,7 @@ const Admin = {
     if(!on){ box.innerHTML = '<div class="hint">🏷️ الأسعار تُجلب <b>تلقائياً</b> من حساب الشركة عند تفعيلها — لا حاجة لإدخالها الآن.</div>'; return }
     if(co.feesRequest){
       const at = cfg.pricesAt ? new Date(cfg.pricesAt).toLocaleDateString("ar-DZ") : "";
-      box.innerHTML = '<div class="hint">🏷️ الأسعار تلقائية من حساب ' + co.name + ': ' + (n ? '<b style="color:#86efac">' + n + ' ولاية محفوظة</b>' + (at ? " (آخر جلب " + at + ")" : "") : '<b style="color:#f5b04a">لم تُجلب بعد</b>') + '</div><button class="small gold" type="button" onclick="Admin.fetchCompanyPrices(\'' + key + '\')">⬇️ ' + (n ? "تحديث" : "جلب") + ' الأسعار الآن</button>';
+      box.innerHTML = '<div class="hint">🏷️ الأسعار تلقائية من حساب ' + co.name + ': ' + (n ? '<b style="color:#86efac">' + n + ' ولاية محفوظة</b>' + (at ? " (آخر جلب " + at + ")" : "") : '<b style="color:#f5b04a">لم تُجلب بعد</b>') + '</div><button class="small gold" type="button" onclick="Admin.fetchCompanyPrices(\'' + key + '\')">⬇️ ' + (n ? "تحديث" : "جلب") + ' الأسعار الآن</button>' + (co.feesDetailRequest ? ' <button class="small gold" type="button" onclick="Admin.fetchCommuneFees({force:true})" title="سعر التوصيل لكل بلدية (إضافة البلدية)">⬇️ جلب إضافة البلديات</button>' : "");
       return;
     }
     box.innerHTML = '<div class="hint">🏷️ هذه الشركة لا تدعم جلب الأسعار تلقائياً، فلا فرق بينها وبين التوصيل الحر: يبقى التسعير <b>حسب المناطق</b> (تبويب «رسوم التوصيل»).</div>';
