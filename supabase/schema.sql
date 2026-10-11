@@ -174,7 +174,7 @@ create index if not exists orders_phone_idx on public.orders (phone, created_at)
 alter table public.orders enable row level security;
 revoke all on public.orders from anon, authenticated;
 grant select, insert on public.orders to authenticated;
-grant update (status, note) on public.orders to authenticated;
+grant update (status, note, name, wilaya, commune, dtype, desk, fee, total) on public.orders to authenticated;   -- تعديل بيانات الطلب بعد التأكيد (v1.89.79)
 grant delete on public.orders to authenticated;                      -- حذف الطلبات من لوحة المدير (v1.89.54)
 drop policy if exists "admin delete orders" on public.orders;
 create policy "admin delete orders" on public.orders for delete to authenticated using (public.is_admin());

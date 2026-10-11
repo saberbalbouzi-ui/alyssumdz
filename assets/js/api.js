@@ -256,6 +256,14 @@ const API = {
   deleteProduct(key, slug) { this.post({ type: "delete_product", key, slug }); },
   saveFees(key, fees) { this.post({ type: "save_fees", key, fees }); },
   saveCategories(key, categories) { this.post({ type: "save_categories", key, categories }); },
+  /* تعديل بيانات طلب (الاسم/الولاية/البلدية/التوصيل…) — يعيد true إن حُفظ في قاعدة الطلبات (وإلا يبقى التعديل محفوظاً محلياً في اللوحة) */
+  async updateOrderFields(key, id, f) {
+    try {
+      if (this.php.on()) { const r = await this.php.send("order_update", Object.assign({ id }, f)); return !!(r && r.ok); }
+      if (this.ordersBackend() !== "sheets" && this.sb.enabled()) { const r = await this.sb.adminFetch("/rest/v1/orders?id=eq." + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(f), headers: { Prefer: "return=representation" } }); return Array.isArray(r) && r.length > 0; }
+    } catch (e) { }
+    return false;
+  },
   updateOrder(key, id, status, note) {
     if (this.php.on()) { const body = { id, status }; if (note !== undefined) body.note = note; return this.php.send("order_update", body); }
     const b = this.ordersBackend();

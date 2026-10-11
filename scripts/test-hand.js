@@ -170,6 +170,37 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("المخزون: إلغاء الاتصال لا يسجّل شيئاً، وإجراؤه يسجّل المحاولة", stk.afterCancel.dlg === false && !/📞/.test(stk.afterCancel.note) && /📞1/.test(stk.afterGo), stk);
   ok("المخزون: التأكيد يمرّ بنافذة (إلغاء / تأكيد رغم ذلك) ولا يؤكّد عند الإلغاء", stk.clabels && stk.clabels[1] === "تأكيد رغم ذلك" && stk.st1 === "nouvelle", stk);
   ok("المخزون: طلب يكفيه المخزون يُؤكَّد مباشرة بلا نافذة", stk.st0 === "confirmee", stk.st0);
+  // ── تعديل الطلب بعد التأكيد + تحديث الشركة + الإرسال الجماعي ──
+  const oe = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; API.updateOrder = async () => ({ ok: true });
+    const mk = (id, st, extra) => Object.assign({ id, date: new Date().toISOString(), status: st, name: "زبون " + id, phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", dtype: "home", desk: "", items: "منتج ×1 = 3000 DA", subtotal: 3000, fee: 400, total: 3400, note: "" }, extra || {});
+    Admin.orders = [mk("E1", "confirmee"), mk("E2", "nouvelle")]; Admin.renderOrders(); Admin.openOrderPreview(0); await wait(100);
+    const btn = !!document.querySelector("#ord-prev-a [onclick^=\"OrderEdit.open\"]"); Admin.openOrderPreview(1); await wait(50); const btnNew = !!document.querySelector("#ord-prev-a [onclick^=\"OrderEdit.open\"]");
+    let saved = null; API.updateOrderFields = async (k, id, f) => { saved = { id, f }; return false; };
+    OrderEdit.open(0); await wait(100); const bg = document.getElementById("oe-bg"), q = i => bg.querySelector("#" + i);
+    const wilOpts = q("oe-wil").options.length, w2 = WILAYAS.find(w => w.name !== "Alger" && w.communes && w.communes.length && w.home > 0);
+    q("oe-name").value = "اسم جديد"; q("oe-wil").value = w2.name; q("oe-wil").dispatchEvent(new Event("change")); await wait(50);
+    const feeAfter = Number(q("oe-fee").value), comOpts = q("oe-com").options.length, totTxt = q("oe-tot").textContent;
+    q("oe-save").click(); await wait(300);
+    const o = Admin.orders[0], stored = OrderEdit.load(), re = Admin.liveOrders([{ id: "E1", name: "قديم", wilaya: "Alger", status: "confirmee" }])[0];
+    // تحديث الشركة
+    const ycfg = Admin.DELIVERY_COMPANIES.yalidine; const rq = ycfg.updateRequest({ apiId: "a", apiToken: "b" }, "yal-1", Object.assign({}, mk("E3", "confirmee"), { commune: "Alger Centre", wilaya: "Alger" }));
+    const body = JSON.parse(rq.body); Admin.deliveryCfg.yalidine = { enabled: true, apiId: "a", apiToken: "b" };
+    Admin.companyWilayas = async () => ({}); Admin.resolveCommune = async (co, cfg, ord) => ({ ok: true, name: ord.commune }); let sentReq = null; Admin.courierFetch = async r => { sentReq = r; return { ok: true, status: 200, text: "{}" }; };
+    Admin.orders.push(mk("E4", "confirmee", { note: "🚚yalidine:yal-9" })); const ur = await Admin.updateAtCompany(Admin.orders.length - 1), skip = await Admin.updateAtCompany(0);
+    // إرسال جماعي
+    Admin.orders = [mk("B1", "confirmee"), mk("B2", "confirmee"), mk("B3", "nouvelle"), mk("B4", "confirmee", { note: "🚚yalidine:zz-1" })];
+    Admin.activeCompanyKey = () => "yalidine"; Admin.orderCompanyKey = () => "yalidine"; Admin.enqueueNotify = () => { };
+    Admin.sendOrderToDelivery = async i => { Admin.orders[i].note = (Admin.orders[i].note || "") + " 🚚yalidine:t" + i; return true; };
+    await Admin.bulkSend(Admin.orders.slice()); await wait(100);
+    const nt = document.getElementById("notice-modal-bg"), ntxt = nt ? nt.textContent : "";
+    return { btn, btnNew, wilOpts, feeAfter, w2: w2.home, comOpts, totTxt, name: o.name, wilaya: o.wilaya, fee: o.fee, total: o.total, savedFields: saved && Object.keys(saved.f).sort().join(","), stored: !!stored.E1 && stored.E1.name === "اسم جديد", re: re.name + "|" + re.wilaya, patch: rq.method, bodyKeys: Object.keys(body).sort().join(","), home: body.is_stopdesk, ur, skip, sentMethod: sentReq && sentReq.method, sentUrl: sentReq && sentReq.url, notes: Admin.orders.map(x => /🚚/.test(x.note)), ntxt: /أُرسل 2/.test(ntxt) };
+  });
+  ok("تعديل الطلب: الزر يظهر للمؤكَّد فقط (لا للجديد)", oe.btn === true && oe.btnNew === false, oe);
+  ok("تعديل الطلب: الاسم والولاية والرسم والإجمالي تتغير وتُحفظ", oe.name === "اسم جديد" && oe.wilaya !== "Alger" && oe.fee === oe.w2 && oe.total === 3000 + oe.w2 && oe.feeAfter === oe.w2 && oe.comOpts > 1, oe);
+  ok("تعديل الطلب: عند تعذّر حفظ القاعدة يُحفظ التعديل في اللوحة ويُطبَّق عند التحميل", oe.stored && oe.re === "اسم جديد|" + oe.wilaya && /commune,desk,dtype,fee,name,total,wilaya/.test(oe.savedFields), oe);
+  ok("تحديث الشركة: طلب PATCH بحقول التعديل فقط، وطرد مسجَّل يُحدَّث وغير المسجَّل يُتخطّى", oe.patch === "PATCH" && oe.bodyKeys === "address,declared_value,firstname,familyname,freeshipping,is_stopdesk,price,stopdesk_id,to_commune_name,to_wilaya_name".split(",").sort().join(",") && oe.ur.ok === true && oe.sentMethod === "PATCH" && /yal-9/.test(oe.sentUrl) && oe.skip.skipped === true, oe);
+  ok("الإرسال الجماعي: يرسل المؤكَّدة غير المرسَلة فقط (اثنان) ويعرض الملخص", oe.notes.join() === "true,true,false,true" && oe.ntxt === true, oe);
   // ── مكتبة الملصقات (بحث متعدد اللغات + إضافة بنقرة) ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار ملصقات", ""); pg.slug = "stk-t"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => PBApp.ltoggle("stk")); await p.waitForFunction(() => document.querySelectorAll("#stk-out .stk-i").length > 20, null, { timeout: 15000 }).catch(() => { });

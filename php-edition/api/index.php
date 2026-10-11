@@ -544,6 +544,10 @@ switch ($route) {
         $b = body(); $id = (string)($b['id'] ?? ''); $set = []; $args = [];
         if (isset($b['status'])) { if (!in_array($b['status'], ['nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'], true)) out(422, ['error' => 'invalid_status']); $set[] = 'status = ?'; $args[] = $b['status']; }
         if (isset($b['note'])) { $set[] = 'note = ?'; $args[] = cut($b['note'], 500); }
+        /* تعديل بيانات الطلب بعد التأكيد (v1.89.79): الاسم/الولاية/البلدية/طريقة التوصيل/المكتب/الرسم/الإجمالي */
+        foreach (['name', 'wilaya', 'commune', 'desk'] as $f) { if (isset($b[$f])) { $set[] = "$f = ?"; $args[] = cut((string)$b[$f], 120); } }
+        if (isset($b['dtype'])) { if (!in_array($b['dtype'], ['home', 'stop'], true)) out(422, ['error' => 'invalid_dtype']); $set[] = 'dtype = ?'; $args[] = $b['dtype']; }
+        foreach (['fee', 'total'] as $f) { if (isset($b[$f])) { $v = (float)$b[$f]; if ($v < 0 || $v > 10000000) out(422, ['error' => 'invalid_amount']); $set[] = "$f = ?"; $args[] = $v; } }
         if (!$set || $id === '') out(422, ['error' => 'nothing_to_update']);
         $args[] = $id;
         db()->prepare('UPDATE orders SET ' . implode(', ', $set) . ' WHERE id = ?')->execute($args);
@@ -674,7 +678,7 @@ switch ($route) {
         if (!$isAdmin) out(401, ['error' => 'unauthorized']);
         if ($method !== 'POST') out(405, ['error' => 'method']);
         $b = body(); $url = (string)($b['url'] ?? ''); $m = strtoupper((string)($b['method'] ?? 'GET'));
-        if (!in_array($m, ['GET', 'POST', 'PUT', 'DELETE'], true)) out(400, ['error' => 'method']);
+        if (!in_array($m, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], true)) out(400, ['error' => 'method']);
         $pu = parse_url($url); $host = (string)($pu['host'] ?? ''); $sc = (string)($pu['scheme'] ?? '');
         $localOk = !empty($cfg['allow_local_courier']) && in_array($host, ['127.0.0.1', 'localhost'], true) && $sc === 'http';
         if ($host === '' || ($sc !== 'https' && !$localOk)) out(400, ['error' => 'insecure_url']);

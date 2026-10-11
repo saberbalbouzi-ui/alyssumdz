@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   let u: URL; try { u = new URL(String(b.url ?? "")); } catch { return json({ error: "bad_url" }, 400); }
   if (u.protocol !== "https:" || !HOSTS.some((h) => u.hostname === h || u.hostname.endsWith("." + h))) return json({ error: "host_not_allowed" }, 400);
   const method = String(b.method ?? "GET").toUpperCase();
-  if (!["GET", "POST", "PUT", "DELETE"].includes(method)) return json({ error: "method" }, 400);
+  if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) return json({ error: "method" }, 400);
   const headers: Record<string, string> = {};
   for (const [k, v] of Object.entries((b.headers ?? {}) as Record<string, unknown>)) if (/^[A-Za-z0-9-]{1,40}$/.test(k) && !/[\r\n]/.test(String(v))) headers[k] = String(v);
   try {
