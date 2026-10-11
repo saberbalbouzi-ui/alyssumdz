@@ -29,7 +29,9 @@ const Agent = (() => {
   /* ── المنتج الحالي حسب مسار الصفحة (p/<slug>/) — يجعل الردود دقيقة حسب صفحة المنتج المفتوحة ── */
   const currentSlug = (() => {
     const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
-    return m ? m[1] : null;
+    if(m) return m[1];
+    const f = location.pathname.split("/").filter(Boolean)[0];       /* الرابط النظيف /<slug>/ */
+    return f && (window.PRODUCTS || []).some(p => p.slug === f) ? f : null;
   })();
   const currentProduct = () => (window.PRODUCTS || []).find(p => p.slug === currentSlug) || null;
 

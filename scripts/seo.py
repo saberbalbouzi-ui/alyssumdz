@@ -36,7 +36,8 @@ def excluded(slug, path):
     return any(k and k in noindex for k in keys) or normalized in noindex_paths
 
 def url_path(slug):
-    return f"{BASE}/p/{slug}/"
+    """الرابط النظيف الأساسي للمنتج (جذر الموقع)؛ يبقى /p/<slug>/ يعمل كنسخة قديمة."""
+    return f"{BASE}/{slug}/" if slug in MIRROR_SLUGS else f"{BASE}/p/{slug}/"
 
 def abs_img(value):
     value = str(value or "")
@@ -54,9 +55,18 @@ def robots_tag(text, enabled):
 
 live = [p for p in products if p.get("active", True) and p["slug"] != "test" and (ROOT / "p" / p["slug"] / "index.html").exists()]
 
-# Sitemap contains the home page plus active, published products and live page-builder pages.
-urls = [] if excluded("", "/") else [f"{BASE}/"]
-urls += [url_path(p["slug"]) for p in live if not excluded(p["slug"], f"/p/{p['slug']}/")]
+# ── روابط نظيفة بلا /p و/lp: نسخة حقيقية من كل صفحة في جذر الموقع (alyssumdz.com/<slug>/) تُولَّد هنا ──
+REDIRECT_MARK, MIRROR_MARK = "<!--seo-redirect-->", "<!--seo-mirror-->"
+RESERVED = {"p", "lp", "assets", "admin", "api", "supabase", "scripts", "releases", "php-edition", "sales", "dist", "apps-script", "blog", "policy", "editor", "extension", "docs", "saas", "node_modules", "cart", "shop", "account", "index"}
+SLUG_OK = re.compile(r"[a-z0-9][a-z0-9_-]*")
+def managed_dir(name):
+    d = ROOT / name; t = d / "index.html"
+    if not d.exists():
+        return True
+    if not d.is_dir() or not t.is_file():
+        return False
+    txt = t.read_text(encoding="utf-8")
+    return MIRROR_MARK in txt or REDIRECT_MARK in txt
 pages_path = ROOT / "assets/pages/index.json"
 pages = []
 if pages_path.exists():
@@ -64,10 +74,33 @@ if pages_path.exists():
         pages = json.loads(pages_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         pages = []
+live_pages = {}
 for page in pages if isinstance(pages, list) else []:
-    slug = str(page.get("slug") or "").strip("/") if isinstance(page, dict) else ""
-    if slug and page.get("live", True) and not excluded(slug, f"/lp/{slug}/"):
-        urls.append(f"{BASE}/lp/{slug}/")
+    ps = str(page.get("slug") or "").strip("/") if isinstance(page, dict) else ""
+    if ps and page.get("live", True) and (ROOT / "lp" / ps / "index.html").is_file():
+        live_pages[ps] = page
+ROUTED = {p["slug"]: p["route"] for p in live if p.get("route") in live_pages}          # منتج ← صفحة الهبوط المختارة مساراً له
+ROUTE_TARGETS = set(ROUTED.values())
+MIRROR_SLUGS = {p["slug"] for p in live if SLUG_OK.fullmatch(p["slug"]) and p["slug"] not in RESERVED and managed_dir(p["slug"])}
+all_slugs = {p.get("slug") for p in products}
+PAGE_MIRRORS = {s for s in live_pages if s not in ROUTE_TARGETS and s not in all_slugs and SLUG_OK.fullmatch(s) and s not in RESERVED and managed_dir(s)}
+def page_url(slug):
+    """رابط صفحة الهبوط: مساراً لمنتج ← رابط المنتج؛ وإلا جذرها النظيف أو /lp/ القديم."""
+    for ps, r in ROUTED.items():
+        if r == slug and ps in MIRROR_SLUGS:
+            return f"{BASE}/{ps}/"
+    return f"{BASE}/{slug}/" if slug in PAGE_MIRRORS else f"{BASE}/lp/{slug}/"
+# سكربت صغير: يجعل شريط العنوان نظيفاً إن فتح الزائر الرابط القديم (العنوان المعتمد canonical في الجذر)
+CLEAN_JS = ("<script>try{var c=document.querySelector('link[rel=canonical]');if(c&&self===top&&!/[?&](noroute|embed|preview)=/.test(location.search)){var u=new URL(c.href);"
+            "if(u.host===location.host&&u.pathname!==location.pathname)history.replaceState(null,'',u.pathname+location.search+location.hash)}}catch(e){}</script>")
+
+# Sitemap contains the home page plus active, published products and live page-builder pages.
+urls = [] if excluded("", "/") else [f"{BASE}/"]
+urls += [url_path(p["slug"]) for p in live if not excluded(p["slug"], f"/p/{p['slug']}/")]
+for slug in live_pages:
+    if slug in ROUTE_TARGETS or excluded(slug, f"/lp/{slug}/"):
+        continue
+    urls.append(page_url(slug))
 # Published blog articles and policy pages are included once their generated files exist.
 blog_path = ROOT / "assets/data/blog.json"
 published_posts = []
@@ -95,7 +128,7 @@ urls = list(dict.fromkeys(urls))
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     "".join(f"  <url><loc>{esc(u)}</loc></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")
 (ROOT / "robots.txt").write_text(
-    f"User-agent: *\nAllow: /\nDisallow: /admin.html\n\nSitemap: {BASE}/sitemap.xml\n", encoding="utf-8")
+    f"User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /admin\n\nSitemap: {BASE}/sitemap.xml\n", encoding="utf-8")
 
 # Canonical, Open Graph, Product JSON-LD and noindex for published product pages.
 S, E = "<!--seo:start-->", "<!--seo:end-->"
@@ -131,12 +164,12 @@ for p in live:
                      "availability": "https://schema.org/OutOfStock" if is_out else "https://schema.org/InStock",
                      "itemCondition": "https://schema.org/NewCondition"}}
     no_idx = bool(p.get("noindex")) or excluded(p["slug"], f"/p/{p['slug']}/")
-    block = (f'{S}\n<link rel="canonical" href="{esc(url_path(p["slug"]))}">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(SITE)}">\n'
+    block = (f'{S}\n<link rel="canonical" href="{esc(url_path(p["slug"]))}">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(SITE)}">\n' +
              (f'<meta name="keywords" content="{esc(", ".join(x for x in [p.get("seoFocus"), p.get("seoKw")] if x))}">' if (p.get("seoFocus") or p.get("seoKw")) else "") +
              f'<meta property="og:type" content="product"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(url_path(p["slug"]))}">'
              + (f'<meta property="og:image" content="{esc(images[0])}">' if images else "") +
              ( '<!--seo:noindex:start--><meta name="robots" content="noindex" data-seo-managed="1"><!--seo:noindex:end-->' if no_idx else "") +
-             f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n{E}\n')
+             f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n' + (CLEAN_JS + "\n" if p["slug"] in MIRROR_SLUGS else "") + f'{E}\n')
     text = text.replace("</head>", block + "</head>", 1)
     f.write_text(text, encoding="utf-8")
     n_seo += 1
@@ -166,46 +199,67 @@ home_block = (f'{S}\n<link rel="canonical" href="{BASE}/">\n<meta property="og:l
 text = text.replace("</head>", home_block + "</head>", 1)
 index.write_text(text, encoding="utf-8")
 
-# Mark noindex on live page-builder pages; only live pages enter the sitemap.
+# صفحات الهبوط: noindex عند الاستبعاد، والرابط المعتمد (canonical/og:url) هو الجذر النظيف أو رابط المنتج الذي هي مساره
+LS_, LE_ = "<!--seo:lp:start-->", "<!--seo:lp:end-->"
 n_pages = 0
-for page in pages if isinstance(pages, list) else []:
-    slug = str(page.get("slug") or "").strip("/") if isinstance(page, dict) else ""
-    if not slug or not page.get("live", True):
-        continue
+for slug in live_pages:
     target = ROOT / "lp" / slug / "index.html"
-    if not target.is_file():
-        continue
     text = target.read_text(encoding="utf-8")
     text = robots_tag(text, excluded(slug, f"/lp/{slug}/"))
+    text = re.sub(re.escape(LS_) + r".*?" + re.escape(LE_) + r"\s*", "", text, flags=re.S)
+    canon = page_url(slug)
+    if canon != f"{BASE}/lp/{slug}/":
+        text = re.sub(r'(<link rel="canonical" href=")[^"]*(")', lambda m: m.group(1) + esc(canon) + m.group(2), text, count=1)
+        text = re.sub(r'(<meta property="og:url" content=")[^"]*(")', lambda m: m.group(1) + esc(canon) + m.group(2), text, count=1)
+        text = text.replace("</head>", LS_ + CLEAN_JS + LE_ + "\n</head>", 1)
     target.write_text(text, encoding="utf-8")
     n_pages += 1
 
-# Legacy WordPress-style routes redirect to each published product URL.
-MARK = "<!--seo-redirect-->"
-aliases = {k: v for k, v in json.loads((ROOT / "redirects.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
-want = {p["slug"]: p["slug"] for p in live}
-want.update({a: s for a, s in aliases.items() if s in by_slug})
-RESERVED = {"p", "assets", "admin", "api", "supabase", "scripts", "releases", "php-edition", "sales", "dist", "apps-script"}
+# نسخ جذرية حقيقية (بلا تحويل): المنتج ← صفحته أو صفحة الهبوط المختارة مساراً له؛ وصفحات الهبوط الأخرى ← جذرها
+def write_mirror(name, src_file):
+    text = src_file.read_text(encoding="utf-8").replace("../../", "../")
+    text = text.replace(MIRROR_MARK, "")
+    text = re.sub(r"<head>", "<head>" + MIRROR_MARK, text, count=1) if "<head>" in text else MIRROR_MARK + text
+    d = ROOT / name
+    d.mkdir(exist_ok=True)
+    (d / "index.html").write_text(text, encoding="utf-8")
 made = 0
-for old, new in want.items():
-    if not re.fullmatch(r"[a-z0-9][a-z0-9_-]*", old) or old in RESERVED:
+for slug in sorted(MIRROR_SLUGS):
+    route = ROUTED.get(slug)
+    write_mirror(slug, ROOT / "lp" / route / "index.html" if route else ROOT / "p" / slug / "index.html")
+    made += 1
+for slug in sorted(PAGE_MIRRORS):
+    write_mirror(slug, ROOT / "lp" / slug / "index.html")
+    made += 1
+
+# روابط ووردبريس القديمة تحوّل إلى الرابط النظيف الجديد
+aliases = {k: v for k, v in json.loads((ROOT / "redirects.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
+stubs = 0
+alias_names = set()
+for old, new in aliases.items():
+    if new not in by_slug or not SLUG_OK.fullmatch(old) or old in RESERVED or old in MIRROR_SLUGS or old in PAGE_MIRRORS:
         continue
     directory = ROOT / old
     target = directory / "index.html"
-    if directory.exists() and not (target.exists() and MARK in target.read_text(encoding="utf-8")):
+    if directory.exists() and not (target.exists() and REDIRECT_MARK in target.read_text(encoding="utf-8")):
         continue
     directory.mkdir(exist_ok=True)
-    href = f"/p/{new}/"
+    href = f"/{new}/" if new in MIRROR_SLUGS else f"/p/{new}/"
     abs_target = url_path(new)
     title = by_slug[new]["title"]
-    target.write_text(f'<!DOCTYPE html>\n<html lang="ar" dir="rtl"><head>{MARK}<meta charset="utf-8"><title>{esc(title)} — {esc(SITE)}</title>'
+    target.write_text(f'<!DOCTYPE html>\n<html lang="ar" dir="rtl"><head>{REDIRECT_MARK}<meta charset="utf-8"><title>{esc(title)} — {esc(SITE)}</title>'
                       f'<link rel="canonical" href="{esc(abs_target)}"><meta http-equiv="refresh" content="0;url={esc(href)}"><meta name="viewport" content="width=device-width,initial-scale=1">'
                       f'<script>location.replace({json.dumps(href)}+location.search+location.hash)</script></head>'
                       f'<body><p>انتقلت هذه الصفحة إلى <a href="{esc(href)}">{esc(title)}</a></p></body></html>\n', encoding="utf-8")
-    made += 1
+    alias_names.add(old)
+    stubs += 1
+# ما لم يعد له مصدر (منتج مُعطَّل أو صفحة محذوفة) تُحذف نسخته الجذرية
+keep = MIRROR_SLUGS | PAGE_MIRRORS | alias_names
 for directory in ROOT.iterdir():
     target = directory / "index.html"
-    if directory.is_dir() and directory.name not in want and target.exists() and MARK in target.read_text(encoding="utf-8"):
-        target.unlink()
-        directory.rmdir()
-print(f"sitemap: {len(urls)} رابط | SEO: {n_seo} منتج، {n_pages} صفحة منشورة | تحويلات: {made} | النطاق: {DOMAIN}")
+    if directory.is_dir() and directory.name not in keep and target.exists():
+        txt = target.read_text(encoding="utf-8")
+        if MIRROR_MARK in txt or REDIRECT_MARK in txt:
+            target.unlink()
+            directory.rmdir()
+print(f"sitemap: {len(urls)} رابط | SEO: {n_seo} منتج، {n_pages} صفحة منشورة | نسخ جذرية: {made} | تحويلات قديمة: {stubs} | النطاق: {DOMAIN}")

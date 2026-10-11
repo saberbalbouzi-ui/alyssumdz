@@ -50,11 +50,11 @@ window.FloatIcons = (function () {
     a.innerHTML = '<span class="fli-c" style="width:' + sz + 'px;height:' + sz + 'px;border-radius:' + rad + ';background:' + esc(c.color) + ';color:' + esc(c.iconColor) + '">' + glyph(k, Math.round(sz * .5)) + '</span>' + lab;
     return a;
   }
-  function pageType() { const p = location.pathname.replace(/index\.html$/, ""), parts = p.split("/").filter(Boolean); if (!parts.length) return "home"; if (parts.indexOf("p") >= 0) return "product"; if (/shop\.html|account\.html|cart/.test(p)) return "shop"; return "other"; }
+  function pageType() { const p = location.pathname.replace(/index\.html$/, ""), parts = p.split("/").filter(Boolean); if (!parts.length) return "home"; if (parts.indexOf("p") >= 0 || (parts.length === 1 && (window.PRODUCTS || []).some(x => x.slug === parts[0]))) return "product"; if (/shop\.html|account\.html|cart/.test(p)) return "shop"; return "other"; }
   function deviceOk(d) { const m = window.matchMedia && window.matchMedia("(max-width:767px)").matches; return d === "all" || (d === "mobile" && m) || (d === "desktop" && !m); }
   async function init(rel) {
     try {
-      if (window.parent !== window || /admin\.html/.test(location.pathname)) return;
+      if (window.parent !== window || /\/admin(\.html)?\/?$/.test(location.pathname)) return;
       rel = rel || (typeof REL !== "undefined" ? REL : "");
       let off = []; try { const r = await fetch(rel + "assets/data/apps.json", { cache: "no-store" }); if (r.ok) off = (await r.json()).off || []; } catch (e) { }
       if (off.indexOf("floaters") >= 0) return;

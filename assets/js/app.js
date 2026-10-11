@@ -230,7 +230,10 @@ async function loadPixels(){
 }
 function currentProductSlugFromUrl(){
   const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
-  return m ? m[1] : null;
+  if(m) return m[1];
+  /* الرابط النظيف: alyssumdz.com/<slug>/ */
+  const f = location.pathname.split("/").filter(Boolean)[0];
+  return f && typeof PRODUCTS !== "undefined" && PRODUCTS.some(p=>p.slug===f) ? f : null;
 }
 function pixelApplies(px, slug){
   if(!px || px.active===false) return false;
@@ -454,7 +457,7 @@ async function initCheckout(){
 /* حالة الاشتراك: الموقع الذي أغلقته المنصة (خمول/انتهاء اشتراك/قرار إداري) تظهر فيه رسالة بدل المتجر للزوار؛ أي فشل اتصال = المتجر يعمل.
    المدير (alyssum_admin_on) لا تُحجب عنه الصفحات. للتعطيل: CONFIG.SAAS_GATE = false */
 async function siteGate(){
-  if(/admin\.html/.test(location.pathname) || localStorage.getItem("alyssum_admin_on") === "1") return;
+  if(/\/admin(\.html)?\/?$/.test(location.pathname) || localStorage.getItem("alyssum_admin_on") === "1") return;
   const C = (typeof CONFIG !== "undefined" && CONFIG) || {}; if(C.SAAS_GATE === false) return;
   const url = String(C.SAAS_URL || "https://qvdaiundlkfbmjlummni.supabase.co").replace(/\/+$/, ""), key = C.SAAS_KEY || "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h";
   let st = null; try{ const c = JSON.parse(localStorage.getItem("alyssum_gate") || "null"); if(c && Date.now() - c.t < 18e5) st = c.s; }catch(e){}
@@ -492,7 +495,7 @@ function applyStore(c){
       WA_NUMBER = wa;
       document.querySelectorAll('a[href*="wa.me/"]').forEach(a=>{ const m = (a.getAttribute("href")||"").match(/wa\.me\/\d*(.*)$/); if(m) a.setAttribute("href", "https://wa.me/" + WA_NUMBER + (m[1]||"")); });
     }
-    if(c.maintenance && !/admin\.html/.test(location.pathname) && localStorage.getItem("alyssum_admin_on") !== "1" && !document.getElementById("store-maint")){
+    if(c.maintenance && !/\/admin(\.html)?\/?$/.test(location.pathname) && localStorage.getItem("alyssum_admin_on") !== "1" && !document.getElementById("store-maint")){
       const d = document.createElement("div"); d.id = "store-maint";
       d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#0b1511;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font-family:inherit";
       const h = document.createElement("h1"); h.style.cssText = "font-size:1.6rem;margin:0"; h.textContent = c.name || "الموقع";
@@ -1408,8 +1411,8 @@ function initCartDrawer(){
 (function(){
   try{
     if(window.parent !== window || typeof CONFIG === "undefined" || typeof API === "undefined" || !API.hit || (!CONFIG.API_URL && !(API.sb && API.sb.enabled()) && !(API.php && API.php.on()))) return;
-    const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
-    const page = m ? m[1] : (/\/(index\.html)?$/.test(location.pathname) ? "home" : "other");
+    const cs = currentProductSlugFromUrl();
+    const page = cs ? cs : (/\/(index\.html)?$/.test(location.pathname) ? "home" : "other");
     const k = "alyssum_hit_" + page;
     if(!sessionStorage.getItem(k)){ sessionStorage.setItem(k, "1"); API.hit(page); }
     let beats = 0;
