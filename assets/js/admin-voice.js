@@ -93,8 +93,9 @@ const AdminVoice = (() => {
   const LEXMAP = { "verbs.add": "V_ADD", "verbs.increase": "V_INC", "verbs.decrease": "V_DEC", "verbs.set": "V_SET", "verbs.hide": "V_HIDE", "verbs.show": "V_SHOWON", "verbs.delete": "V_DEL", "verbs.open": "V_OPEN", "verbs.search": "V_SEARCH", "verbs.edit": "V_EDIT", "verbs.update": "V_UPDATE", "verbs.confirm": "V_CONFIRM", "verbs.cancel": "V_CANCEL", "verbs.send": "V_SEND",
     "objects.product": "W_PRODUCT", "objects.products": "W_PRODUCTS", "objects.order": "W_ORDER", "objects.customer": "W_CLIENT", "objects.stock": "W_STOCK", "objects.price": "W_PRICE", "objects.discount": "W_DISC", "objects.shop": "W_SHOPW",
     "units.piece": "W_PIECE", "units.percent": "U_PCT", "units.currency": "U_CUR", "pointers.this": "W_THIS", "quantity.vague": "W_VAGUE", "quantity.all": "W_ALLP", "modifiers.new": "W_NEWW", "confirm.yes": "YES", "control.stop": "STOP", "control.help": "HELP" };
+  let TTS_LEX = null;
   function useLexicon(lex) {
-    if (!lex) return; const extra = {};
+    if (!lex) return; const extra = {}; TTS_LEX = lex;
     Object.keys(LEXMAP).forEach(path => { const [a, b] = path.split("."), w = lex[a] && lex[a][b] && lex[a][b].words; if (Array.isArray(w)) extra[LEXMAP[path]] = w.filter(x => typeof x === "string" && x.trim()); });
     buildRx(extra);
     if (lex.ui && lex.ui.aliases && typeof lex.ui.aliases === "object") Object.keys(lex.ui.aliases).forEach(k => { const v = lex.ui.aliases[k]; if (Array.isArray(v)) UI_ALIAS[fold(k)] = v.map(fold); });
@@ -291,7 +292,7 @@ const AdminVoice = (() => {
   };
   const pName = p => p.title.replace(/\s*[-–]\s*\d+\s*غ?$/, "");
   /* سؤال لإكمال معلومة ناقصة */
-  const need = (slot, partial, say) => ({ kind: "need", slot, partial, say });
+  const need = (slot, partial, say, chips) => ({ kind: "need", slot, partial, say, chips });
   const cmpl = (partial, data, L) => {
     const p = (data.products || []).find(x => x.slug === partial.slug); if (!p) return { kind: "unknown", say: L("لم أجد المنتج.", "Produit introuvable.") };
     const q = pName(p), fm = n => fmtN(n);
@@ -318,6 +319,7 @@ const AdminVoice = (() => {
   /* يكمل أمراً ناقصاً (منتج/قيمة) بجواب المستخدم */
   function fillSlot(prev, raw, data, L) {
     const partial = prev.partial, slot = prev.slot, t = norm(raw); L = L || ((a, f) => a);
+    if (slot === "flow") return flowAnswer(partial, raw, data, L);
     if (has(STOP, t) || has(NO, t)) return { kind: "stop", say: "" };
     const pt = Object.assign({}, partial);
     if (slot === "order") {
@@ -672,6 +674,7 @@ const AdminVoice = (() => {
     const t = splitPron(norm(raw)), fr = /[a-z]{3,}/.test(t) && !/[ء-ي]/.test(t);
     const L = (ar, f) => (fr ? f : ar);
     if (!t) return { kind: "unknown", say: "" };
+    { const fl = flowStart(t, data, L); if (fl) return fl; }
     { const bc = builderCmd(t, Object.assign({ raw }, data), L); if (bc) return bc; }
     if (has(STOP, t) && t.split(" ").length <= 3 && !has(WHAT_Q, t) && !has(COUNT_Q, t) && !has(W_RATE, t) && !has(W_ORDER, t) && !has(W_THIS, t)) return { kind: "stop", say: "" };
     if (has(HELP, t)) return { kind: "help", say: L("هذه أمثلة على الأوامر.", "Voici des exemples de commandes.") };
@@ -841,6 +844,118 @@ const AdminVoice = (() => {
     ["مساعدة", "كيفاش نزيد صنف؟ · اسألني عن الكوبونات · ماذا أقول"],
   ];
 
+  /* ═════════ نطق عربي أوضح (دوال نقية قابلة للاختبار) ═════════
+     Web Speech يقرأ الأرقام والرموز واللاتينية بصوت واحد فيخطئ؛ هنا نُحضّر النص: أرقام ← كلمات عربية، «دج» ← دينار، «%» ← بالمئة،
+     حذف الإيموجي والروابط، تقطيع إلى جمل قصيرة، وفصل الكلمات اللاتينية (أسماء العلامات) لتُقرأ بصوت لاتيني. */
+  const TTS_ONES = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
+  const TTS_TENS = ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
+  const TTS_HUND = ["", "مئة", "مئتان", "ثلاثمئة", "أربعمئة", "خمسمئة", "ستمئة", "سبعمئة", "ثمانمئة", "تسعمئة"];
+  function arNum(n) {
+    n = Math.floor(Math.abs(Number(n) || 0)); if (!n) return "صفر";
+    const u3 = k => { const o = [], h = Math.floor(k / 100), r = k % 100; if (h) o.push(TTS_HUND[h]); if (r) { if (r < 20) o.push(TTS_ONES[r]); else { const a = r % 10, t = Math.floor(r / 10); o.push(a ? TTS_ONES[a] + " و" + TTS_TENS[t] : TTS_TENS[t]); } } return o.join(" و"); };
+    const out = [];
+    [[1e9, "مليار", "ملياران", "مليارات"], [1e6, "مليون", "مليونان", "ملايين"], [1e3, "ألف", "ألفان", "آلاف"]].forEach(([sc, one, two, pl]) => {
+      const q = Math.floor(n / sc); n %= sc; if (!q) return;
+      out.push(q === 1 ? one : q === 2 ? two : q <= 10 ? u3(q) + " " + pl : u3(q) + " " + one);
+    });
+    if (n) out.push(u3(n));
+    return out.join(" و");
+  }
+  const digitsSpoken = d => String(d).split("").map(c => (c === "0" ? "صفر" : TTS_ONES[Number(c)])).join(" ");
+  function prepSpeech(text, lex) {
+    let t = String(text == null ? "" : text);
+    t = t.replace(/https?:\/\/\S+/g, " ").replace(/\*\*|`|^#{1,6}\s?/gm, "").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}←→↑↓•▪●■▶►✓✔✖✕]/gu, " ").replace(/[«»“”"]/g, " ");
+    const rep = lex && lex.tts && lex.tts.replace; if (rep && typeof rep === "object") Object.keys(rep).sort((a, b) => b.length - a.length).forEach(k => { if (k) t = t.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), /^[A-Za-z]/.test(k) ? "gi" : "g"), rep[k]); });
+    t = t.replace(/(\d)\s*(?:دج|DA|DZD)(?![؀-ۿA-Za-z])/g, "$1 دينار").replace(/(\d)\s*[%٪]/g, "$1 بالمئة").replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+    t = t.replace(/\d{1,3}(?:[ ,]\d{3})+(?!\d)|\d+(?:\.\d+)?/g, m => {
+      const raw = m.replace(/[ ,]/g, "");
+      if (/^0\d{8,}$/.test(raw) || raw.replace(/\D/g, "").length >= 10) return " " + digitsSpoken(raw.replace(/\D/g, "")) + " ";
+      if (raw.includes(".")) { const [a, b] = raw.split("."); return " " + arNum(a) + " فاصلة " + digitsSpoken(b) + " "; }
+      return " " + arNum(raw) + " ";
+    });
+    return t.replace(/\n+/g, ". ").replace(/\s+/g, " ").trim();
+  }
+  /* تقطيع إلى جمل ≤ 180 حرفاً (كروم يوقف المقاطع الطويلة) */
+  function chunkSpeech(t) {
+    const parts = String(t || "").split(/(?<=[.؟?!؛])\s+/), out = [];
+    parts.forEach(pt => { let x = pt.trim(); while (x.length > 180) { let i = x.lastIndexOf("،", 180); if (i < 40) i = x.lastIndexOf(" ", 180); if (i < 40) i = 180; out.push(x.slice(0, i + 1).trim()); x = x.slice(i + 1).trim(); } if (x) out.push(x); });
+    return out;
+  }
+  /* يفصل المقاطع العربية عن اللاتينية (أسماء علامات/كلمات إنجليزية) ← [{t, lang:"ar"|"lat"}] */
+  function splitScripts(t) {
+    const out = []; let cur = null;
+    String(t || "").split(/\s+/).filter(Boolean).forEach(w => {
+      const lat = /[A-Za-zÀ-ÿ]/.test(w) && !/[؀-ۿ]/.test(w), k = lat ? "lat" : "ar";
+      if (cur && cur.lang === k) cur.t += " " + w; else { cur = { t: w, lang: k }; out.push(cur); }
+    });
+    return out;
+  }
+  /* ترتيب أصوات المتصفح: الأفضل أولاً (الاسم المحفوظ، ثم الطبيعية/العصبية، ثم جوجل/مايكروسوفت، وتُستبعد الآلية الرديئة) */
+  function rankVoices(list, saved) {
+    const sc = v => { const n = v.name || "", l = (v.lang || "").toLowerCase(); let x = 0;
+      if (saved && n === saved) x += 1000;
+      if (/natural|neural|online|multilingual|enhanced|premium/i.test(n)) x += 10; if (/google/i.test(n)) x += 5; if (/microsoft/i.test(n)) x += 4; if (/espeak|festival|robot/i.test(n)) x -= 20;
+      if (l === "ar-dz") x += 8; else if (/^ar-(sa|ae|kw|qa)/.test(l)) x += 6; else if (/^ar-(ma|tn|eg|jo|lb)/.test(l)) x += 3;
+      if (v.localService === false) x += 1; return x; };
+    return (list || []).slice().sort((a, b) => sc(b) - sc(a));
+  }
+
+  /* ═════════ المسارات الحوارية (Flows) ═════════
+     مهمة مركّبة = أسئلة متتابعة تملأ «خانات» (تُملأ من الجملة الأولى ما أمكن فتُتخطّى أسئلتها) ثم ملخّص يُؤكَّد ثم تنفيذ بعناصر اللوحة الحقيقية.
+     الحالة تنتقل داخل `need` (slot "flow") فتعمل بالصوت والكتابة دون حالة عامة؛ الدوال نقية. أضف مساراً = أضف تعريفاً في FL (+ تنفيذه في flowDo). */
+  const FSTOP = new Set(("صفحه هبوط landing page لمنتج للمنتج منتج المنتج نموذج الطلب الطلبات طلب طلبات عداد تنازلي العداد مسار رئيسي الرئيسي اجعلها اجعله واجعلها اضف وضيف ضيف لها له مع ثم هذه هده هاد بسيطه جديده جديد انشئ انشي اصنع اعمل سوي ابني بني ولد حضر جهز create cree creer fais faire genere generer build make add formulaire compte rebours pour de la le un une avec et ترويجيه اعلانيه").split(" ").map(fold));
+  const flowQuery = t => tokens(t).filter(w => !isVerb(w) && !FSTOP.has(w) && !FSTOP.has(stripAl(w))).join(" ");
+  const extrasIn = t => { const o = []; if (/نموذج (?:ال)?طلب|formulaire|اطلب الان|order form|استمار/.test(t)) o.push("orderform"); if (/عداد|عد تنازلي|تنازلي|compte a rebours|countdown|compteur/.test(t)) o.push("countdown"); return o; };
+  const BOTHW = /(?:^| )(?:الاثنين|الاثنان|كلاهما|كليهما|كلهم|الكل|كل شيء|كلشي|both|les deux|tout|tous)(?: |$)/, NONEW = /(?:^| )(?:لا شيء|ولا واحد|بدون|لا احد|rien|aucun|aucune|sans|nothing|none)(?: |$)/;
+  const FL = {
+    landing: {
+      id: "landing", order: ["product", "extras", "route"],
+      match: t => /(?:^| )(?:انشئ|انشي|اصنع|اعمل|سوي|ابني|بني|ولد|حضر|جهز|زيد|ضيف|اضف|دير|create|cree|creer|fais|faire|genere|generer|build|make|add)(?: |$)/.test(t) && (/(?:^| )(?:ال)?(?:صفحه|page)(?: \S+)? (?:ال)?(?:هبوط|landing|atterrissage|ترويجيه|اعلانيه)(?: |$)/.test(t) || /(?:^| )landing(?: page)?(?: |$)/.test(t)),
+      fromAll(t, data) {
+        const o = {}, prod = matchProduct(flowQuery(t), data.products || []); if (prod) o.product = prod.slug;
+        const ex = extrasIn(t); if (ex.length) o.extras = ex; else if (BOTHW.test(t) && /(?:نموذج|عداد)/.test(t)) o.extras = ["orderform", "countdown"];
+        if (/مسار|رئيس|اساسي|principal|route|(?:^| )main(?: |$)/.test(t)) o.route = true;
+        return o;
+      },
+      parse(k, t, data) {
+        if (k === "product") { if (has(W_THIS, t)) { const sl = refSlug(data); if (sl) return sl; } const m = matchProduct(flowQuery(t) || t, data.products || []); return m ? m.slug : undefined; }
+        if (k === "extras") { if (BOTHW.test(t)) return ["orderform", "countdown"]; const ex = extrasIn(t); if (ex.length) return ex; if (NONEW.test(t) || has(NO, t)) return []; return undefined; }
+        if (k === "route") { if (has(YES, t) || /اجعلها|رئيس|مسار|principal|route/.test(t)) return true; if (has(NO, t) || NONEW.test(t)) return false; return undefined; }
+      },
+      ask(k, st, data, L, retry) {
+        const pre = retry ? L("لم أفهم. ", "Je n'ai pas compris. ") : "";
+        if (k === "product") { const ps = (data.products || []).filter(p => p.active !== false).slice(0, 4); return need("flow", { flow: st }, pre + L("لأي منتج أنشئ صفحة الهبوط؟", "Pour quel produit ?"), ps.map(p => pName(p))); }
+        if (k === "extras") return need("flow", { flow: st }, pre + L("ماذا أضيف إلى الصفحة؟ نموذج الطلب، عدّاد تنازلي، أو الاثنين؟", "Que dois-je ajouter ? Formulaire de commande, compte à rebours, ou les deux ?"), [L("نموذج الطلب", "Formulaire"), L("عدّاد تنازلي", "Compte à rebours"), L("الاثنان", "Les deux"), L("لا شيء", "Rien")]);
+        if (k === "route") return need("flow", { flow: st }, pre + L("هل أجعلها المسار الرئيسي للمنتج؟ أي يصل إليها كل من يفتح المنتج.", "La définir comme page principale du produit ?"), [L("نعم", "Oui"), L("لا", "Non")]);
+      },
+      done(st, data, L) {
+        const p = (data.products || []).find(x => x.slug === st.slots.product), nm = p ? pName(p) : st.slots.product, ex = st.slots.extras || [];
+        const list = [].concat(ex.includes("countdown") ? [L("عدّاد تنازلي", "compte à rebours")] : [], ex.includes("orderform") ? [L("نموذج الطلب", "formulaire de commande")] : []);
+        const say = L("سأنشئ صفحة هبوط للمنتج «" + nm + "»" + (list.length ? " وأضيف: " + list.join(" و") : "") + (st.slots.route ? "، وأجعلها المسار الرئيسي للمنتج" : "") + ". أنفّذ؟",
+          "Je crée une page d'atterrissage pour « " + nm + " »" + (list.length ? " avec " + list.join(" et ") : "") + (st.slots.route ? " et la définis comme page principale" : "") + ". J'exécute ?");
+        return { kind: "flow", confirm: true, say, mem: { slug: st.slots.product, kind: "product" }, act: { type: "flow", id: "landing", slots: Object.assign({}, st.slots) } };
+      },
+    },
+  };
+  function flowNext(st, data, L) {
+    const D = FL[st.id]; const k = D.order.find(x => st.slots[x] === undefined);
+    if (!k) return D.done(st, data, L);
+    st.ask = k; return D.ask(k, st, data, L, false);
+  }
+  function flowStart(t, data, L) {
+    for (const id of Object.keys(FL)) { const D = FL[id]; if (!D.match(t)) continue; const st = { id, slots: Object.assign({}, D.fromAll(t, data)), ask: null, fails: 0 }; return flowNext(st, data, L); }
+    return null;
+  }
+  function flowAnswer(prev, raw, data, L) {
+    const st = JSON.parse(JSON.stringify(prev.flow)), D = FL[st.id], t = splitPron(norm(raw)), k = st.ask;
+    if (has(STOP, t) || /(?:^| )(?:الغ|الغي|الغاء|توقف|وقف|بطل|annule|annuler|stop|arrete|cancel)(?: |$)/.test(t) || (k === "product" && has(NO, t))) return { kind: "negated", say: L("ألغيتُ المسار.", "Parcours annulé.") };
+    const v = D.parse(k, t, data);
+    if (v === undefined) { st.fails = (st.fails || 0) + 1; if (st.fails >= 3) return { kind: "negated", say: L("لم أفهم؛ ألغيتُ المسار. ابدأ من جديد متى شئت.", "Je n'ai pas compris ; parcours annulé.") }; return D.ask(k, st, data, L, true); }
+    st.slots[k] = v;
+    const more = D.fromAll(t, data); Object.keys(more).forEach(x => { if (st.slots[x] === undefined && x !== k) st.slots[x] = more[x]; });
+    return flowNext(st, data, L);
+  }
+
   /* ═════════ التنفيذ والواجهة (المتصفح فقط) ═════════ */
   const A = () => (typeof Admin !== "undefined" ? Admin : {});
   const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { } return null; };
@@ -885,6 +1000,7 @@ const AdminVoice = (() => {
       case "theme": if (typeof AdminTheme === "undefined") return false; if (act.mode === "toggle") AdminTheme.toggle(); else AdminTheme.set(act.mode); return true;
       case "update": if (typeof AdminUpdate === "undefined") return false; AdminUpdate.apply(); return true;
       case "pb": pbDo(act, null); return true;
+      case "flow": flowDo(act, null); return true;
       case "kb": {
         const b = act.go ? tabBtn(act.go) : null; if (b) b.click();
         if (!b && typeof AdminHelp !== "undefined") { AdminHelp.show().then(() => AdminHelp.ask(act.label)); }
@@ -1055,6 +1171,33 @@ const AdminVoice = (() => {
     return false;
   }
 
+  /* ── تنفيذ المسارات الحوارية بعناصر اللوحة الحقيقية (اليد إن وُجدت) ── */
+  async function flowDo(act, H) {
+    if (act.id !== "landing") return false;
+    const a = A(), slots = act.slots || {}, p = (a.products || []).find(x => x.slug === slots.product);
+    if (!p) { sink({ out: "لم أجد المنتج.", err: true }); return true; }
+    const say = m => sink({ out: m }), ex = slots.extras || [];
+    say("أنشئ صفحة جديدة للمنتج «" + (p.title || p.slug) + "»…");
+    await pbDo({ op: "newPage", title: (p.title || p.slug) + " — صفحة هبوط" }, H);
+    if (!(await waitFor(() => pbOpen(), 9000))) { sink({ out: "تعذّر فتح المحرّر.", err: true }); return true; }
+    await new Promise(r => setTimeout(r, 400));
+    const taken = new Set(((typeof PBAdmin !== "undefined" && PBAdmin.list) || []).map(x => x.slug)); let slug = (p.slug + "-lp").toLowerCase().replace(/[^a-z0-9-]/g, ""), i = 1; while (!slug || taken.has(slug)) slug = (p.slug + "-lp").replace(/[^a-z0-9-]/g, "") + "-" + (++i);
+    try { PBApp.slugEdit(slug); const inp = q$("#pg-slug"); if (inp) inp.value = slug; PBApp.linkProduct(p.slug); } catch (e) { }
+    const setSel = fn => { try { const inf = PBApp.find(PBApp.E.sel); if (inf) { fn(inf.set); PBApp.E.dirty = true; PBApp.renderCanvas(); } } catch (e) { } };
+    say("أضيف العنوان وصورة المنتج…");
+    await pbDo({ op: "widget", widget: "heading", label: "عنوان", n: 1 }, H); setSel(st => { st.text = p.title || p.slug; });
+    const cover = p.cover || (p.images && p.images[0]) || "";
+    await pbDo({ op: "widget", widget: "image", label: "صورة", n: 1 }, H); if (cover) setSel(st => { st.src = cover; st.hauto = true; });
+    if (ex.includes("countdown")) { say("أضيف العدّاد التنازلي…"); await pbDo({ op: "widget", widget: "countdown", label: "عدّ تنازلي", n: 1 }, H); }
+    if (ex.includes("orderform")) { say("أضيف نموذج الطلب…"); await pbDo({ op: "widget", widget: "orderorig", label: "نموذج الطلب", n: 1 }, H); }
+    try { PBApp.linkProduct(p.slug); if (slots.route) PBApp.setMainRoute(true); PBApp.renderCanvas(); } catch (e) { }
+    const msg = "الصفحة جاهزة في المطوّر" + (slots.route ? " وستصبح المسار الرئيسي للمنتج عند النشر" : "") + ". هل أفتح المعاينة؟";
+    pending = { kind: "flow", confirm: true, say: msg, act: { type: "pb", op: "preview" } }; clearTimeout(pendingT); pendingT = setTimeout(() => { pending = null; }, 60000);
+    sink({ out: msg, buttons: [["معاينة", () => { pending = null; execVia({ type: "pb", op: "preview" }); }, "ok"], ["حفظ ونشر", () => { pending = null; run({ kind: "builder", confirm: true, say: "هل أحفظ الصفحة وأنشرها الآن؟", act: { type: "pb", op: "publish" } }, ""); }, ""], ["لاحقاً", () => { pending = null; }, ""]] });
+    speak(msg, false);
+    return true;
+  }
+
   /* ── مراقبة ذاتية: ما تعذّر على اليد إيجاده يُسجَّل (لتنبيه المطوّر بعد أي تحديث) والتنفيذ يرجع مباشراً ── */
   function logMiss(act, why) {
     try {
@@ -1135,6 +1278,7 @@ const AdminVoice = (() => {
         }
         case "update": { const b = q$("#au-btn"); if (b) await H.point(b); return exec(act); }
         case "pb": return await pbDo(act, H);
+        case "flow": return await flowDo(act, H);
         case "search": {
           const b = q$("#as-btn"); if (b && await H.click(b)) { const i = await waitFor(() => q$("#as-in")); if (i && act.q) await H.type(i, act.q); return true; } return fb(act, "زر البحث");
         }
@@ -1159,10 +1303,59 @@ const AdminVoice = (() => {
   const panelOpen = () => { const p = $h("ah-panel"); return !!p && p.classList.contains("on") && !!AH() && !!AH().post; };
   const speakOn = () => micOn;                                   /* الردّ بالصوت فقط والميكروفون أخضر */
   let speakingUntil = 0;                                         /* أثناء نطق المساعد لا يُلتقط كلامه كأمر (منع الصدى) */
-  function speak(text, fr) {
-    if (!text || !speakOn() || typeof speechSynthesis === "undefined") return;
-    speakingUntil = Date.now() + Math.min(14000, 900 + String(text).length * 75);
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = fr ? "fr-FR" : "ar-SA"; u.rate = 1.02; u.onend = () => { speakingUntil = Date.now() + 500; }; speechSynthesis.speak(u); } catch (e) { }
+  /* ── النطق: أفضل صوت عربي متاح + تحضير النص (أرقام/رموز/لاتينية) + الصوت الاحترافي اختيارياً ── */
+  let curAudio = null; const elCache = new Map();
+  const ttsRate = () => { const r = Number(LS("alyssum_voice_rate")); return r >= .6 && r <= 1.4 ? r : .95; };
+  const ttsVoices = () => { try { return speechSynthesis.getVoices() || []; } catch (e) { return []; } };
+  function ttsPick(kind) {
+    const re = kind === "ar" ? /^ar/i : kind === "fr" ? /^fr/i : /^en/i;
+    return rankVoices(ttsVoices().filter(v => re.test(v.lang || "")), kind === "ar" ? LS("alyssum_voice_tts") : "")[0] || null;
+  }
+  const premiumKey = () => (LS("alyssum_el_key") || "").trim();
+  const premiumOn = () => !!premiumKey() && LS("alyssum_voice_premium") !== "0";
+  function ttsStop() { try { speechSynthesis.cancel(); } catch (e) { } try { if (curAudio) { curAudio.pause(); curAudio = null; } } catch (e) { } }
+  async function speakPremium(t) {
+    const key = premiumKey(), voice = LS("alyssum_el_voice") || "21m00Tcm4TlvDq8ikWAM", txt = t.slice(0, 400);
+    let url = elCache.get(txt);
+    if (!url) {
+      const r = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voice) + "?output_format=mp3_44100_128", { method: "POST", headers: { "xi-api-key": key, "Content-Type": "application/json", "Accept": "audio/mpeg" }, body: JSON.stringify({ text: txt, model_id: "eleven_multilingual_v2" }) });
+      if (!r.ok) throw new Error("tts " + r.status);
+      url = URL.createObjectURL(await r.blob()); elCache.set(txt, url);
+      if (elCache.size > 40) { const k0 = elCache.keys().next().value; try { URL.revokeObjectURL(elCache.get(k0)); } catch (e) { } elCache.delete(k0); }
+    }
+    ttsStop(); const a = new Audio(url); curAudio = a;
+    a.onloadedmetadata = () => { if (a.duration) speakingUntil = Date.now() + a.duration * 1000 + 600; }; a.onended = () => { speakingUntil = Date.now() + 500; };
+    await a.play();
+  }
+  function speakBrowser(clean, fr) {
+    ttsStop(); const parts = [];
+    chunkSpeech(clean).forEach(ch => splitScripts(ch).forEach(sg => parts.push(sg)));
+    parts.forEach((sg, i) => {
+      const kind = fr ? (sg.lang === "ar" ? "ar" : "fr") : (sg.lang === "ar" ? "ar" : "en"), u = new SpeechSynthesisUtterance(sg.t), v = ttsPick(kind);
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = kind === "ar" ? "ar-SA" : kind === "fr" ? "fr-FR" : "en-US";
+      u.rate = ttsRate(); if (i === parts.length - 1) u.onend = () => { speakingUntil = Date.now() + 500; };
+      try { speechSynthesis.speak(u); } catch (e) { }
+    });
+  }
+  function speak(text, fr, force) {
+    if (!text || !(speakOn() || force) || typeof speechSynthesis === "undefined") return;
+    const clean = prepSpeech(text, TTS_LEX); if (!clean) return;
+    speakingUntil = Date.now() + Math.min(24000, 900 + clean.length * 80);
+    if (!force && premiumOn()) { speakPremium(clean).catch(() => speakBrowser(clean, fr)); return; }
+    speakBrowser(clean, fr);
+  }
+  /* اختيار صوت المساعد وسرعته (من زر «الصوت» في «اسألني») */
+  function chooseVoice() {
+    const cur = LS("alyssum_voice_tts"), ar = rankVoices(ttsVoices().filter(v => /^ar/i.test(v.lang || "")), cur), sample = "مرحباً، هذا صوت المساعد. السعر ألفان وخمسمئة دينار.";
+    const short = v => v.name.replace(/^(Microsoft|Google)\s+/i, "").replace(/\s*-\s*Arabic.*$/i, "").replace(/\(.*?\)/g, "").trim() + " · " + v.lang;
+    const test = () => speakBrowser(prepSpeech(sample, TTS_LEX), false);
+    const btns = ar.slice(0, 5).map(v => [short(v) + (v.name === cur ? " ✓" : ""), () => { LS("alyssum_voice_tts", v.name); test(); chooseVoice(); }, v.name === cur ? "ok" : ""]);
+    btns.push(["تلقائي (الأفضل)", () => { LS("alyssum_voice_tts", ""); test(); chooseVoice(); }, !cur ? "ok" : ""]);
+    btns.push(["أبطأ", () => { LS("alyssum_voice_rate", String(Math.max(.6, +(ttsRate() - .1).toFixed(2)))); test(); }], ["أسرع", () => { LS("alyssum_voice_rate", String(Math.min(1.4, +(ttsRate() + .1).toFixed(2)))); test(); }]);
+    if (premiumKey()) btns.push(["الصوت الاحترافي: " + (premiumOn() ? "يعمل" : "متوقف"), () => { LS("alyssum_voice_premium", premiumOn() ? "0" : "1"); chooseVoice(); }, premiumOn() ? "ok" : ""]);
+    const out = ar.length ? "اختر صوتاً لأسمعك إياه. السرعة الحالية: " + ttsRate().toFixed(2) + (premiumOn() ? ". الصوت الاحترافي يعمل ويُستعمل بدل صوت المتصفح." : ".")
+      : "لا يوجد صوت عربي في متصفحك. للحصول على صوت أوضح: استعمل Microsoft Edge (أصوات طبيعية) أو ثبّت حزمة صوت عربية من إعدادات النظام، أو فعّل الصوت الاحترافي.";
+    sink({ out, buttons: btns }); if (!ar.length && !premiumKey()) return; return true;
   }
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function css() {
@@ -1247,7 +1440,7 @@ const AdminVoice = (() => {
     if (user) greet(!LS("alyssum_voice_greeted")); if (user) LS("alyssum_voice_greeted", "1");
   }
   function micOff(user) {
-    micOn = false; LS("alyssum_voice_mic", "0"); stopRec(); paintMic(); try { speechSynthesis.cancel(); } catch (e) { }
+    micOn = false; LS("alyssum_voice_mic", "0"); stopRec(); paintMic(); ttsStop();
     if (user) sink({ out: "الميكروفون متوقف. أردّ بالكتابة." });
   }
   function startRec() {
@@ -1393,8 +1586,8 @@ const AdminVoice = (() => {
       return;
     }
     if (r.kind === "need") {
-      pending = r; clearTimeout(pendingT); pendingT = setTimeout(() => { pending = null; }, 30000);
-      sink({ out: r.say, buttons: [["إلغاء", () => { pending = null; sink({ out: "تم الإلغاء." }); }, "no"]] }); speak(r.say, fr); return;
+      pending = r; clearTimeout(pendingT); pendingT = setTimeout(() => { pending = null; }, r.slot === "flow" ? 120000 : 30000);
+      sink({ out: r.say, buttons: (r.chips || []).map((c, i) => [c, () => handle([c], { typed: true }), i === 0 ? "ok" : ""]).concat([["إلغاء", () => { pending = null; sink({ out: "تم الإلغاء." }); }, "no"]]) }); speak(r.say, fr); return;
     }
     if (r.kind === "negated") { sink({ out: r.say }); speak(r.say, fr); return; }
     if (r.kind === "choose") {
@@ -1424,12 +1617,12 @@ const AdminVoice = (() => {
   async function confirmPending(yes) {
     const p = pending; pending = null; clearTimeout(pendingT); if (!p) return;
     if (!yes) { sink({ out: "تم الإلغاء." }); return; }
-    sink({ out: "أنفّذ…" });
+    const isFlow = p.act && p.act.type === "flow"; sink({ out: isFlow ? "أبدأ التنفيذ…" : "أنفّذ…" });
     const ok = await execVia(p.act); if (ok && p.act && p.act.slug) lastSlug = p.act.slug;
-    sink({ out: ok ? "تم." : "تعذّر التنفيذ.", err: !ok }); if (ok) speak("تم", false);
+    if (!isFlow || !ok) sink({ out: ok ? "تم." : "تعذّر التنفيذ.", err: !ok }); if (ok && !isFlow) speak("تم", false);
   }
   /* أمر مكتوب في محادثة «اسألني»: ينفَّذ إن كان أمراً مفهوماً، وإلا يبقى سؤالاً لقاعدة المعرفة */
-  const TYPED_OK = new Set(["builder", "orderAction", "hand", "nav", "orders", "answer", "newProduct", "editProduct", "theme", "update", "site", "search", "stockChange", "priceChange", "visibility", "discount", "need", "negated"]);
+  const TYPED_OK = new Set(["flow", "builder", "orderAction", "hand", "nav", "orders", "answer", "newProduct", "editProduct", "theme", "update", "site", "search", "stockChange", "priceChange", "visibility", "discount", "need", "negated"]);
   function tryCommand(q) {
     if (pending) { handle([q], { typed: true }); return true; }
     const r = parse(q, dataNow()); if (!TYPED_OK.has(r.kind)) return false;
@@ -1438,14 +1631,14 @@ const AdminVoice = (() => {
 
   function init() {
     const saved = LS("alyssum_voice_lang"); if (saved === "fr-FR" || saved === "ar-DZ") lang = saved;
-    loadKB(); loadLex(); loadStoreName();
+    loadKB(); loadLex(); loadStoreName(); try { speechSynthesis.getVoices(); } catch (e) { }
     setTimeout(() => { try { const r = selfTest(); if (!r.ok) console.warn("[AdminVoice] عناصر اليد المتغيّرة:", r.missing.join("، ")); announceNew(); } catch (e) { } }, 9000);
     let tries = 0; const tick = () => { paintMic(); if (!$h("ah-mic") && tries++ < 40) setTimeout(tick, 500); }; tick();
     if (LS("alyssum_voice_mic") === "1" && SR) setTimeout(() => { if (!micOn) { micOn = true; startRec(); paintMic(); } }, 1500);   /* يستأنف إن كان الإذن ممنوحاً سابقاً */
     document.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "v" || e.key === "V" || e.key === "م")) { e.preventDefault(); toggleMic(); } });
   }
   if (typeof document !== "undefined" && typeof window !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  const api = { memUpdate, examples: () => EXAMPLES_Q.slice(), memory: () => memNow(), quiet: () => Date.now() >= speakingUntil, toggleWakeReq, enroll, exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
+  const api = { chooseVoice, arNum, prepSpeech, chunkSpeech, splitScripts, rankVoices, memUpdate, examples: () => EXAMPLES_Q.slice(), memory: () => memNow(), quiet: () => Date.now() >= speakingUntil, toggleWakeReq, enroll, exec: execVia, busy: () => working, tabLabel: id => { const n = navNow().find(x => x.id === id); return n ? n.label : (TAB_LABEL[id] || id); }, showMe: c => execVia({ type: "ui", mode: "point", item: c, label: c.label, tab: c.tab }), findUI, showTab, selfTest, announceNew, toggleHand: () => { if (typeof AdminHand !== "undefined") { AdminHand.setEnabled(!AdminHand.enabled()); paintMic(); } }, calibrate, resetWake, wakeNames, _rx: () => ({ V_INC, V_ADD, V_DEC, V_SET, V_CHANGE, V_EDIT, V_HIDE, V_SHOWON, V_DEL, W_PIECE, W_STOCK, W_PRICE, W_DISC, W_THIS, W_PRODUCT }), parse, pickOption, fillSlot, findCands, numberIn, norm, useLexicon, handle, tryCommand, toggleMic, micStart, micOff, paint: paintMic, isMic: () => micOn, HELP_TXT, matchProduct, phoneOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   return api;
 })();

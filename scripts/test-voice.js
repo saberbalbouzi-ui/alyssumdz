@@ -214,5 +214,35 @@ PBT("اضف صفحة جديدة", { kind: "need" });
 // خارج المحرّر لا تتأثر الأوامر العادية
 PBT("كم طلب اليوم", { kind: "answer" }, data); PBT("اضف منتج جديد", { kind: "newProduct" }, data); PBT("اضف منتج جديد", { kind: "newProduct" }); PBT("مبيعات اليوم", { kind: "answer" });
 PBT("توقف", { kind: "stop" }); PBT("احفظ المنتج", { kind: "unknown" }, data);
+// ── نطق عربي أوضح ──
+const TT = (name, got, exp) => { n++; if (got !== exp) { fail++; console.log("✗ نطق", name, JSON.stringify(got), "متوقع", JSON.stringify(exp)); } };
+TT("2500", V.arNum(2500), "ألفان وخمسمئة"); TT("3000", V.arNum(3000), "ثلاثة آلاف"); TT("21", V.arNum(21), "واحد وعشرون"); TT("150", V.arNum(150), "مئة وخمسون"); TT("1e6", V.arNum(1000000), "مليون"); TT("11000", V.arNum(11000), "أحد عشر ألف"); TT("0", V.arNum(0), "صفر"); TT("1999", V.arNum(1999), "ألف وتسعمئة وتسعة وتسعون");
+TT("سعر ودج", V.prepSpeech("السعر 2500 دج وخصم 10%"), "السعر ألفان وخمسمئة دينار وخصم عشرة بالمئة");
+TT("مسافات الآلاف", V.prepSpeech("المبيعات 7 500 دج"), "المبيعات سبعة آلاف وخمسمئة دينار");
+TT("هاتف", V.prepSpeech("اتصل بـ 0550123456"), "اتصل بـ صفر خمسة خمسة صفر واحد اثنان ثلاثة أربعة خمسة ستة");
+TT("إيموجي وماركداون", V.prepSpeech("**تم** ✅ الحفظ 🎉"), "تم الحفظ");
+TT("قاموس", V.prepSpeech("ALYSSUM جيد", { tts: { replace: { ALYSSUM: "أليسوم" } } }), "أليسوم جيد");
+TT("لاتيني", JSON.stringify(V.splitScripts("مرحباً Mystore أنا أسمعك")), JSON.stringify([{ t: "مرحباً", lang: "ar" }, { t: "Mystore", lang: "lat" }, { t: "أنا أسمعك", lang: "ar" }]));
+TT("تقطيع", V.chunkSpeech("جملة أولى. جملة ثانية؟ ثالثة").length, 3);
+TT("ترتيب الأصوات", V.rankVoices([{ name: "eSpeak Arabic", lang: "ar" }, { name: "Microsoft Hamed Online (Natural)", lang: "ar-SA", localService: false }, { name: "Google العربية", lang: "ar-XA" }])[0].name, "Microsoft Hamed Online (Natural)");
+TT("الصوت المحفوظ", V.rankVoices([{ name: "A", lang: "ar-SA" }, { name: "B", lang: "ar" }], "B")[0].name, "B");
+// ── مسار صفحة الهبوط ──
+const FT = (name, ok, extra) => { n++; if (!ok) { fail++; console.log("✗ مسار", name, extra === undefined ? "" : JSON.stringify(extra)); } };
+{
+  const r0 = V.parse("أنشئ صفحة هبوط للمنتج حنة الشفاء مع نموذج الطلب والعداد واجعلها المسار الرئيسي", data);
+  FT("كل شيء في جملة واحدة ← ملخّص بتأكيد", r0.kind === "flow" && r0.confirm && r0.act.id === "landing" && r0.act.slots.product === "prod-a" && r0.act.slots.extras.length === 2 && r0.act.slots.route === true, r0);
+  const a1 = V.parse("انشئ صفحة هبوط", data); FT("بلا منتج ← يسأل", a1.kind === "need" && a1.slot === "flow" && /لأي منتج/.test(a1.say) && a1.chips.length > 0, a1);
+  const a2 = V.fillSlot(a1, "عسل السدر", data); FT("بعد المنتج ← يسأل عمّا يضاف", a2.kind === "need" && /ماذا أضيف/.test(a2.say), a2);
+  const a3 = V.fillSlot(a2, "الاثنين", data); FT("الاثنان ← يسأل عن المسار", a3.kind === "need" && /المسار الرئيسي/.test(a3.say), a3);
+  const a4 = V.fillSlot(a3, "نعم", data); FT("نعم ← ملخّص", a4.kind === "flow" && a4.confirm && a4.act.slots.route === true && a4.act.slots.product === "miel-sidr" && a4.act.slots.extras.join() === "orderform,countdown", a4);
+  const b3 = V.fillSlot(a3, "لا", data); FT("لا ← المسار false ولا يُلغى", b3.kind === "flow" && b3.act.slots.route === false, b3);
+  const c2 = V.fillSlot(a2, "عداد فقط", data); FT("عدّاد فقط", c2.kind === "need" && /المسار/.test(c2.say), c2);
+  const d2 = V.fillSlot(a2, "لا شيء", data); FT("لا شيء ← تجاوز الإضافات", d2.kind === "need" && /المسار/.test(d2.say), d2);
+  const x1 = V.fillSlot(a1, "الغ", data); FT("الإلغاء", x1.kind === "negated", x1);
+  let q = a1; for (let i = 0; i < 3; i++) q = V.fillSlot(q, "بلابلا", data); FT("3 إخفاقات ← إلغاء", q.kind === "negated", q);
+  const e1 = V.parse("create a landing page for miel sidr", data); FT("إنجليزي", e1.kind === "need" || e1.kind === "flow", e1);
+  const f1 = V.parse("crée une page landing pour huile barbe avec formulaire de commande", data); FT("فرنسي", f1.kind === "need" || f1.kind === "flow", f1);
+  FT("لا يعترض أمر صفحة جديدة عادي", V.parse("اضف صفحة جديدة باسم عروض", data).kind !== "flow");
+}
 console.log(fail ? `✗ فشل ${fail} من ${n}` : `✓ نجح ${n} من ${n}`);
 process.exit(fail ? 1 : 0);
