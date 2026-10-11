@@ -42,6 +42,7 @@ const AdminSearch = (() => {
   }
   async function loadExtra() {
     if (help === null) { help = []; try { const r = await fetch("assets/data/admin-help.json", { cache: "no-cache" }); if (r.ok) help = await r.json(); } catch (e) { } }
+    if (!help._ctl) { try { const ce = typeof CtlHelp !== "undefined" && CtlHelp.entries ? CtlHelp.entries() : []; if (ce.length) { const have = new Set(help.map(h => h.id)); help = help.concat(ce.filter(c => !have.has(c.id))); } if (ce.length) help._ctl = 1; } catch (e) { } }
     if (pages === null) { pages = []; try { const r = await fetch("assets/pages/index.json", { cache: "no-cache" }); if (r.ok) pages = await r.json(); } catch (e) { } }
   }
   function all() {
@@ -72,7 +73,7 @@ const AdminSearch = (() => {
   const paintSel = () => { [...list.querySelectorAll(".as-it")].forEach((r, i) => { r.classList.toggle("on", i === sel); if (i === sel) r.scrollIntoView({ block: "nearest" }); }); };
   const move = d => { if (!items.length) return; sel = (sel + d + items.length) % items.length; paintSel(); };
   function run(i) { const it = items[i]; if (!it) return; close(); try { it.go(); } catch (e) { console.warn("AdminSearch", e); } }
-  async function show() { build(); open = true; box.classList.add("on"); inp.value = ""; draw(); setTimeout(() => inp.focus(), 30); await loadExtra(); if (open) draw(); }
+  async function show(q) { build(); open = true; box.classList.add("on"); inp.value = typeof q === "string" ? q : ""; draw(); setTimeout(() => inp.focus(), 30); await loadExtra(); if (open) draw(); }
   function close() { if (!box) return; open = false; box.classList.remove("on"); }
   function init() {
     document.addEventListener("keydown", e => {

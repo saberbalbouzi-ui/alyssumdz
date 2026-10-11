@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.113">
+<meta name="admin-version" content="1.89.114">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,6 +26,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .btn{background:var(--green);color:#fff;font-weight:800;border-radius:10px;padding:.8rem;width:100%;font-size:1rem}
 .admin-body{display:flex;gap:1.2rem;align-items:flex-start}
 .side-nav{width:280px;flex:none;background:#fff;border-radius:16px;padding:1rem;display:flex;flex-direction:column;gap:.4rem;box-shadow:0 4px 14px rgba(0,0,0,.04);position:sticky;top:1rem}
+.nav-q{display:flex;align-items:center;gap:.6rem;margin:.1rem .1rem .8rem;padding:0 1rem;height:56px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.06);cursor:text;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 14px rgba(0,0,0,.14);backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,background .15s}.nav-q:hover,.nav-q:focus-within{transform:translateY(-2px);border-color:var(--green);background:rgba(255,255,255,.1)}.nav-q svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.8}.nav-q input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;color:inherit;font:inherit;font-size:1.02rem;font-weight:700;padding:0}.nav-q input::placeholder{color:inherit;opacity:.65}html.white .nav-q{background:#fff;color:#1f2a26;box-shadow:0 2px 8px rgba(0,0,0,.08)}@media(max-width:900px){.nav-q{height:52px}}
 .side-nav-intro{padding:.3rem .4rem .9rem;border-bottom:1.5px solid var(--line);margin-bottom:.3rem}
 .side-nav-intro b{color:var(--green);font-size:1.05rem;display:block;margin-bottom:.3rem}
 .side-nav-intro p{color:#6B7672;font-size:.8rem;line-height:1.55}
@@ -298,6 +299,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div class="stat" id="stats"></div>
   <div class="admin-body">
     <nav class="side-nav" data-g="gen">
+      <label class="nav-q" for="nav-q"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="nav-q" type="search" autocomplete="off" placeholder="بحث سريع عن أي إعداد أو قسم…" aria-label="بحث سريع عن أي إعداد" onfocus="AdminSearch.show(this.value);this.value='';this.blur()" oninput="AdminSearch.show(this.value);this.value='';this.blur()"></label>
       <div class="side-nav-intro">
         <b>📋 دليل الاستخدام</b>
         <p>اختر قسماً من القائمة، ثم استعمل الأزرار داخل كل قسم لإضافة أو تعديل أو نشر التغييرات. زر «🏠 تعديل الصفحة الرئيسية» أعلى الصفحة يفتح محرراً مباشراً للموقع نفسه.</p>
@@ -1602,12 +1604,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.113"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.113"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.113"></script>
+<script src="assets/js/ctl-help.js?v=1.89.114"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.114"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.114"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.113"></script>
+<script src="assets/js/admin-nav.js?v=1.89.114"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1619,7 +1621,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.113"></script>
+<script src="assets/js/admin-update.js?v=1.89.114"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>

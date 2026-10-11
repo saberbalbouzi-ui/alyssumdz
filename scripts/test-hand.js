@@ -433,6 +433,17 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { shown, warmed, pageWarm, gone, stored };
   });
   ok("إشعار التحديث: يظهر عند وجود نسخة أحدث ويُحدّث كاش الصفحة والسكربتات في الخلفية (فيختفي بعد إعادة التحميل العادية)، وإغلاقه يُحفظ لتلك النسخة", upd.shown && upd.warmed >= 3 && upd.pageWarm && upd.gone && upd.stored === "99.0.0", upd);
+  // ── خانة البحث السريع الكبيرة فوق دليل الاستخدام ──
+  const nq = await p.evaluate(async () => {
+    const el = document.getElementById("nav-q"), intro = document.querySelector(".side-nav-intro"); if (!el || !intro) return { err: "missing" };
+    const lab = el.closest(".nav-q"), h = lab.getBoundingClientRect().height, above = !!(lab.compareDocumentPosition(intro) & Node.DOCUMENT_POSITION_FOLLOWING);
+    el.focus(); await new Promise(r => setTimeout(r, 300));
+    const box = document.getElementById("as-box"), on = !!(box && box.classList.contains("on")), inp = document.getElementById("as-in");
+    const had = !!inp; if (typeof AdminSearch !== "undefined") AdminSearch.show("المدفوعات"); await new Promise(r => setTimeout(r, 400));
+    const hit = [...document.querySelectorAll("#as-list .as-t")].map(x => x.textContent).join("|");
+    AdminSearch.close(); return { h, above, on, had, hit };
+  });
+  ok("البحث السريع: خانة كبيرة (≥48px) فوق «دليل الاستخدام»، والنقر فيها يفتح البحث الشامل، والبحث يجد قسم المدفوعات", nq.h >= 48 && nq.above && nq.on && /المدفوعات/.test(nq.hit || ""), nq);
   // ── المدفوعات: تسوية ياليدين (صافي لك) ──
   const pay = await p.evaluate(async () => {
     const o0 = Admin.orders, a0 = Admin.ydActual, t0 = Admin.trackingOf;
