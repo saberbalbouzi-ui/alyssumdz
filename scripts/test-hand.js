@@ -149,6 +149,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-ep [data-ept="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); const cv = document.getElementById("pbst-cv"); return { tab: true, panel: !!document.getElementById("pbst"), cv: !!cv && cv.width > 10, btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
   ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.cv && ui.btns >= 4 && ui.sw >= 10, ui);
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  // ── ربط المخزون بالطلبات: شارة + نافذة «المخزون لا يكفي» ──
+  const stk = await p.evaluate(async () => {
+    API.updateOrder = async () => ({ ok: true }); const pr = Admin.products[0], t = pr.title; pr.stock = 3; Admin.fin.cfg = Object.assign({}, Admin.fin.cfg, { since: "2000-01-01T00:00:00Z" });
+    const mk = (id, d, q) => ({ id, date: new Date(Date.now() - (3 - d) * 600000).toISOString(), status: "nouvelle", name: "زبون " + id, phone: "0550000000", wilaya: "الجزائر", items: t + " ×" + q + " = " + (q * 2000) + " DA", subtotal: q * 2000, total: q * 2000, note: "" });
+    Admin.orders = [mk("S1", 1, 3), mk("S2", 2, 2)]; Admin.renderOrders(); await new Promise(r => setTimeout(r, 100));
+    const pills = document.querySelectorAll("#orders-table .sc-pill, .sc-pill").length, sum = StockCheck.summary();
+    const sel = { value: "a1" }; Admin.orderAction(1, sel); await new Promise(r => setTimeout(r, 100));
+    const dlg = document.getElementById("sc-bg"), txt = dlg ? dlg.textContent : "", noBtn = dlg && dlg.querySelector("#sc-no"), goBtn = dlg && dlg.querySelector("#sc-go");
+    const labels = [noBtn && noBtn.textContent, goBtn && goBtn.textContent]; noBtn && noBtn.click(); await new Promise(r => setTimeout(r, 100));
+    const afterCancel = { dlg: !!document.getElementById("sc-bg"), note: Admin.orders[1].note };
+    Admin.orderAction(1, { value: "a1" }); await new Promise(r => setTimeout(r, 100)); document.querySelector("#sc-go").click(); await new Promise(r => setTimeout(r, 100));
+    const afterGo = Admin.orders[1].note;
+    Admin.products[0].stock = 1; Admin.confirmOrder(1); await new Promise(r => setTimeout(r, 100)); const cdlg = document.getElementById("sc-bg"), clabels = cdlg ? [cdlg.querySelector("#sc-no").textContent, cdlg.querySelector("#sc-go").textContent] : null; cdlg && cdlg.querySelector("#sc-no").click();
+    const st1 = Admin.orders[1].status; Admin.products[0].stock = 3; Admin.confirmOrder(0); await new Promise(r => setTimeout(r, 100));
+    return { pills, sum: sum.orders, txt: /المخزون لا يكفي لهذا الطلب/.test(txt), labels, afterCancel, afterGo, clabels, st1, st0: Admin.orders[0].status };
+  });
+  ok("المخزون: طلب واحد خارج المخزون يحمل شارة والملخص 1", stk.pills >= 1 && stk.sum === 1, stk);
+  ok("المخزون: نافذة «المخزون لا يكفي لهذا الطلب» بزرّي إلغاء الاتصال / إجراء الاتصال", stk.txt && stk.labels[0] === "إلغاء الاتصال" && stk.labels[1] === "إجراء الاتصال", stk.labels);
+  ok("المخزون: إلغاء الاتصال لا يسجّل شيئاً، وإجراؤه يسجّل المحاولة", stk.afterCancel.dlg === false && !/📞/.test(stk.afterCancel.note) && /📞1/.test(stk.afterGo), stk);
+  ok("المخزون: التأكيد يمرّ بنافذة (إلغاء / تأكيد رغم ذلك) ولا يؤكّد عند الإلغاء", stk.clabels && stk.clabels[1] === "تأكيد رغم ذلك" && stk.st1 === "nouvelle", stk);
+  ok("المخزون: طلب يكفيه المخزون يُؤكَّد مباشرة بلا نافذة", stk.st0 === "confirmee", stk.st0);
   // ── مكتبة الملصقات (بحث متعدد اللغات + إضافة بنقرة) ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار ملصقات", ""); pg.slug = "stk-t"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => PBApp.ltoggle("stk")); await p.waitForFunction(() => document.querySelectorAll("#stk-out .stk-i").length > 20, null, { timeout: 15000 }).catch(() => { });
