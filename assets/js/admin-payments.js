@@ -76,7 +76,7 @@ const AdminPayments = (() => {
      Taxe retour للإرجاع فقط (ولا يُحتسب frais livraison معه)
      net client = prix à ramasser − frais livraison − Taxe COD − Taxe assurance − Taxe retour
      الأرقام الفعلية من الكشف المستورد (ydactual) تسبق التقدير من تعريفة الشركة */
-  const DEF_COD = 0.75, DEF_RET = 250;
+  const DEF_COD = 0.75, DEF_RET = 250; /* ثابتان بقرار صاحب المتجر: عمولة COD 0.75% من سعر المنتج، ورسم الإرجاع 250 دج */
   function settle(it) {
     if (it.manual) return null; const o=it.o, st=it.ship, A_=A();
     if (!["livree","echec","expediee","confirmee"].includes(st)) return null;
@@ -88,10 +88,10 @@ const AdminPayments = (() => {
       got=Math.round((net+del+cod+ins+ret)*1000)/1000;
     } else {
       const rf=A_.realFees?A_.realFees(o):null; price=Math.max(0,total-fee);
-      if (st==="echec") { ret=rf&&rf.retour!=null?Number(rf.retour):(A_.retCost?A_.retCost(A_.carrierCost?A_.carrierCost(o):0):DEF_RET); if(!(ret>0))ret=DEF_RET; got=0; }
+      if (st==="echec") { ret=DEF_RET; got=0; }
       else {
         del=rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee);
-        cod=price*((rf&&rf.cod!=null?Number(rf.cod):DEF_COD)/100); ins=price*((rf&&rf.ins!=null?Number(rf.ins):0)/100); got=total;
+        cod=price*DEF_COD/100; ins=0; got=total;
       }
       net=got-del-cod-ins-ret;
     }
@@ -148,7 +148,7 @@ const AdminPayments = (() => {
   function settleCard() {
     const T=sumSettle(items()); if(!T.n) return `<section class="pm-card"><b>🧾 تسوية ياليدين</b><p class="pm-note">لا طلبات مسجَّلة بعد. عند التسجيل تظهر هنا الأرقام تلقائياً؛ ولأدقّ النتائج استورد كشف الدفع من حساب ياليدين.</p><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين (xlsx / csv)</button></section>`;
     const c=(l,v,k,t)=>`<div class="pm-card pm-stat"${t?` title="${esc(t)}"`:""}><small>${l}</small><b${k?` style="color:${k}"`:""}>${v}</b></div>`;
-    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% من سعر المنتج) − التأمين؛ والمرتجع يخسر رسم الإرجاع فقط. ${T.nFile}/${T.n} طرد بأرقام الكشف الفعلية والباقي تقدير من التعريفة.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
+    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع فقط (${DEF_RET} دج ثابتة). ${T.nFile}/${T.n} طرد بأرقام الكشف الفعلية والباقي تقدير من التعريفة.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
       <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
         ${c("صافي ما يخصّك (مسلَّم + مرتجع)",dz(T.net)+" دج",T.net<0?"#fca5a5":"#86efac","مثل «net client» في كشف ياليدين")}
         ${c("رسوم التوصيل المدفوعة لياليدين",dz(T.del)+" دج")}
