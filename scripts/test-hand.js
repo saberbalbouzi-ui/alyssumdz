@@ -207,17 +207,22 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const t = Admin.products[0].title; Admin.products[0].stock = null;
     Admin.orders = [{ id: "P1", date: new Date().toISOString(), status: "nouvelle", name: "زبون", phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", dtype: "home", items: t + " ×1 = 3000 DA", subtotal: 3000, fee: 400, total: 3400, note: "" }];
     Admin.renderOrders(); Admin.openOrderPreview(0); await wait(80);
-    const btns = Array.from(document.querySelectorAll("#ord-prev-b .oc-res button")).map(b => b.getAttribute("onclick")).length;
-    document.querySelector('#ord-prev-b .oc-res button[onclick*="\'a2\'"]').click(); await wait(150);
-    const n1 = Admin.orders[0].note, hi = !!document.querySelector('#ord-prev-b .oc-res button[onclick*="\'a2\'"][style*="inset"]');
-    document.querySelector('#ord-prev-b .oc-res button[onclick*="\'later\'"]').click(); await wait(150); const n2 = Admin.orders[0].note;
+    const sel = () => document.querySelector("#ord-prev-b select.oc-res"), pick = v => { const s = sel(); s.value = v; s.dispatchEvent(new Event("change")); };
+    const btns = sel().options.length, cancelBtm = !!document.querySelector('#ord-prev-a [onclick*="cancelOrder"]');
+    pick("a2"); await wait(150);
+    const n1 = Admin.orders[0].note, hi = sel().value === "a2";
+    pick("later"); await wait(150); const n2 = Admin.orders[0].note;
     const open1 = document.getElementById("ord-prev-bg").classList.contains("open");
-    document.querySelector('#ord-prev-b .oc-res button[onclick*="\'confirm\'"]').click(); await wait(200);
-    return { btns, n1, hi, n2, open1, st: Admin.orders[0].status, editBtn: !!document.querySelector('#ord-prev-a [onclick^="OrderEdit.open"]'), resRow: !!document.querySelector("#ord-prev-b .oc-res") };
+    pick("clear"); await wait(150); const n3 = Admin.orders[0].note;
+    pick("confirm"); await wait(200);
+    const st1 = Admin.orders[0].status, eb1 = !!document.querySelector('#ord-prev-a [onclick^="OrderEdit.open"]'), afterSel = !!sel(), afterOpts = afterSel ? Array.from(sel().options).map(o => o.value).join() : "";
+    Admin.orders[0].status = "livree"; Admin.openOrderPreview(0); await wait(50);
+    const livOpts = sel() ? Array.from(sel().options).map(o => o.value).join() : "";
+    return { btns, cancelBtm, n1, hi, n2, n3, open1, st: st1, editBtn: eb1, afterSel, afterOpts, livOpts };
   });
-  ok("نافذة المعاينة: أزرار تسجيل نتيجة الاتصال (7) للطلب الجديد", pr.btns === 7, pr);
-  ok("نافذة المعاينة: تسجيل «لم يُجب 2» يظهر مظلَّلاً ثم «لاحقاً» والنافذة تبقى مفتوحة", /📞2/.test(pr.n1) && pr.hi && /⏰لاحقاً/.test(pr.n2) && pr.open1, pr);
-  ok("نافذة المعاينة: «أكّد الطلب» يؤكّد والنافذة تتحدّث (يختفي الصف ويظهر تعديل)", pr.st === "confirmee" && pr.editBtn && !pr.resRow, pr);
+  ok("نافذة المعاينة: نتيجة الاتصال قائمة منسدلة (8 خيارات للجديد) ولا زر إلغاء في الأسفل", pr.btns === 8 && !pr.cancelBtm, pr);
+  ok("نافذة المعاينة: «لم يُجب 2» تظهر محدَّدة ثم «لاحقاً» ثم «مسح» والنافذة تبقى مفتوحة", /📞2/.test(pr.n1) && pr.hi && /⏰لاحقاً/.test(pr.n2) && !/⏰لاحقاً|📞/.test(pr.n3) && pr.open1, pr);
+  ok("نافذة المعاينة: «أكّد الطلب» من القائمة يؤكّد، والقائمة تبقى لكل الحالات (بلا تأكيد/إلغاء للمُسلَّم)", pr.st === "confirmee" && pr.editBtn && pr.afterSel && pr.afterOpts.includes("cancel") && !pr.afterOpts.includes("confirm") && !pr.livOpts.includes("cancel") && pr.livOpts.includes("a1"), pr);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
