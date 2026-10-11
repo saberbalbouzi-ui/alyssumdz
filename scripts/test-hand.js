@@ -349,20 +349,22 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const cc = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set; Priv.set = async () => { }; Admin.renderFinance = () => { };
     Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = Admin.fin.costs || {}; Admin.fin.cc = {};
-    Admin.renderCostCalc(true); const heads = Array.from(document.querySelectorAll("#fin-cc-rows tr.hd th")).map(t => t.textContent);
+    (Admin.ccList().forEach(p => { if (Admin.ccSec(p.slug) === "none") { Admin._ccPend = Admin._ccPend || {}; Admin._ccPend[p.slug] = "bought"; } }), Admin.renderCostCalc(true)); const heads = Array.from(document.querySelectorAll("#fin-cc-rows tr.hd th")).map(t => t.textContent);
     // «مشترى جاهز» (الافتراضي): السعر المكتوب = سعر الشراء مباشرة
-    const modeDef = document.getElementById("cc0-mode").value, noMade = !document.getElementById("cc0-raw"); document.getElementById("cc0-buy").value = 1234; document.querySelector("#fin-cc-rows button.green").click(); await wait(60);
+    const modeDef = document.getElementById("cc0-mode").value, noMade = !document.getElementById("cc0-raw"); document.getElementById("cc0-buy").value = 1234; Array.from(document.querySelectorAll("#fin-cc-rows button.green")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
     const boughtCost = Admin.fin.costs.cc1, boughtMode = Admin.fin.cc.cc1.mode;
     // مسح الخانة وحفظ = حذف سعر الشراء فعلياً
-    document.getElementById("cc0-buy").value = ""; document.querySelector("#fin-cc-rows button.green").click(); await wait(60);
-    const clearedCost = Admin.fin.costs.cc1 === undefined, clearedCc = Admin.fin.cc.cc1 === undefined, clearedUi = document.getElementById("cc0-buy").value === "";
-    // «أصنّعه بنفسي»
+    document.getElementById("cc0-buy").value = ""; Array.from(document.querySelectorAll("#fin-cc-rows button.green")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
+    const clearedCost = Admin.fin.costs.cc1 === undefined, clearedCc = Admin.fin.cc.cc1 === undefined, clearedUi = !document.getElementById("cc0-buy");
+    // «أصنّعه بنفسي» (يُعاد المنتج للقائمة ثم يُنقل إلى قسم المصنَّع)
+    Admin._ccPend = { cc1: "bought" }; Admin.renderCostCalc(true);
     const ms = document.getElementById("cc0-mode"); ms.value = "made"; ms.dispatchEvent(new Event("change", { bubbles: true }));
+    const mheads = Array.from(document.querySelectorAll("#fin-cc-rows tr.hd th")).map(t => t.textContent), secs = Array.from(document.querySelectorAll("#fin-cc-rows details.cc-sec")).map(d => d.dataset.k + ":" + d.querySelectorAll("tr[data-cc]").length).join(",");
     const set = (k, v) => { const e = document.getElementById("cc0-" + k); e.value = v; e.dispatchEvent(new Event("input", { bubbles: true })); };
     set("raw", 2000); set("ml", 50); set("pack", 100); set("oth", 50);
     const mat = document.getElementById("cc0-mat").textContent, tot = document.getElementById("cc0-tot").textContent;
     Array.from(document.querySelectorAll("#fin-cc-rows button")).find(b => /حفظ/.test(b.textContent)).click(); await wait(60);
-    const out = { clearedCost, clearedCc, clearedUi, heads, modeDef, noMade, boughtCost, boughtMode, noCurCol: !heads.some(h => /سعر الشراء الحالي/.test(h)), tabBtn: Array.from(document.querySelectorAll(".nav-btn")).some(b => /تكلفة المنتجات/.test(b.textContent)), inOwnTab: !!document.querySelector("#tab-costs #fin-cc") && !document.querySelector("#tab-finance #fin-cc"), mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
+    const out = { clearedCost, clearedCc, clearedUi, heads, mheads, secs, modeDef, noMade, boughtCost, boughtMode, noCurCol: !heads.some(h => /سعر الشراء الحالي/.test(h)), tabBtn: Array.from(document.querySelectorAll(".nav-btn")).some(b => /تكلفة المنتجات/.test(b.textContent)), inOwnTab: !!document.querySelector("#tab-costs #fin-cc") && !document.querySelector("#tab-finance #fin-cc"), mat, tot, cost: Admin.fin.costs.cc1, saved: JSON.stringify(Admin.fin.cc.cc1) };
     // وصفة بنسب المواد الأولية
     Admin.ccmOpen(0); const v = (id, x) => { const e = document.getElementById(id); e.value = x; e.dispatchEvent(new Event("input", { bubbles: true })); };
     document.getElementById("ccm-unit").value = "kg"; document.getElementById("ccm-unit").dispatchEvent(new Event("change", { bubbles: true }));
@@ -371,7 +373,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.ccmSave(); await wait(60); out.recRaw = document.getElementById("cc0-raw").value; out.recRo = document.getElementById("cc0-raw").readOnly; out.recUnit = document.getElementById("cc0-unit").value; out.recSaved = JSON.stringify(Admin.fin.cc.cc1).length > 0 && Admin.fin.cc.cc1.rec.length === 3 && Admin.fin.cc.cc1.unit === "kg"; out.recMat = document.getElementById("cc0-mat").textContent;
     Admin.products = pr0; Priv.set = set0; return out;
   });
-  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.heads[0] === "المنتج" && /لتر/.test(cc.heads[3]) && cc.mat === "100" && cc.tot === "250", cc);
+  ok("جدول التكلفة: المنتج أولاً (يمين) ثم المادة الخام باللتر، والحساب فوري (2000 دج/لتر × 50مل = 100 + عبوة 100 + أخرى 50 = 250)", cc.mheads[0] === "المنتج" && /لتر/.test(cc.mheads[3]) && cc.mat === "100" && cc.tot === "250", cc);
   ok("وصفة المنتج: نسب المواد × أسعارها = سعر الكلغ (2700) × حجم العبوة 50 غ = 135 دج للعلبة، وتُحفظ بالوحدة وتنتقل للجدول", /2[,\s.\u202f\u00a0]?700/.test(cc.sum) && /135/.test(cc.sum) && cc.lbl && cc.recRaw === "2700" && cc.recRo && cc.recUnit === "kg" && cc.recSaved && cc.recMat === "135", cc);
   ok("تبويب تكلفة المنتجات: في تبويب مستقل بلا عمود «سعر الشراء الحالي»، والافتراضي «مشترى جاهز» (1234 ← سعر الشراء مباشرة)", cc.tabBtn && cc.inOwnTab && cc.noCurCol && cc.modeDef === "bought" && cc.noMade && cc.boughtCost === 1234 && cc.boughtMode === "bought", cc);
   ok("تكلفة المنتجات: مسح خانة سعر الشراء وحفظها يحذف السعر فعلاً (لا يعود بعد التحديث)", cc.clearedCost && cc.clearedCc && cc.clearedUi, cc);
@@ -456,12 +458,34 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { card: html.includes("تسوية ياليدين"), cols: html.includes("الصافي لك") && html.includes("تفصيل ياليدين"), tot: html.includes("TOTAUX"), nets, imp: html.includes("pm-imp") };
   });
   ok("المدفوعات: بطاقة «تسوية ياليدين» وعمودا التفصيل والصافي وصف TOTAUX وزر الاستيراد، والصافي يطابق الكشف (7195.625 و−250)", pay.card && pay.cols && pay.tot && pay.imp && Math.abs(pay.nets[0] - 7195.625) < 1e-6 && pay.nets[1] === -250, pay);
+  // ── تكلفة المنتجات: قسمان يُفتحان ويُغلقان (مصنَّع / جاهز) مع إضافة منتج ونقله ──
+  const sec = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
+    Admin.products = [{ slug: "s1", title: "مصنوع", active: true }, { slug: "s2", title: "جاهز", active: true }, { slug: "s3", title: "غير مضاف", active: true }];
+    Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = { s2: 300 }; Admin.fin.cc = { s1: { mode: "made", raw: 1000, ml: 100 }, s2: { mode: "bought" } }; Admin._ccPend = {}; Admin._ccDraft = {};
+    Admin.renderCostCalc(true);
+    const cnt = () => Array.from(document.querySelectorAll("#fin-cc-rows details.cc-sec")).map(d => d.dataset.k + ":" + d.querySelectorAll("tr[data-cc]").length).join(",");
+    const c0 = cnt(), sums = Array.from(document.querySelectorAll("#fin-cc-rows details.cc-sec > summary")).map(s => s.textContent.trim());
+    const addOpts = ["made", "bought"].map(k => Array.from(document.querySelectorAll("#cc-add-" + k + " option")).map(o => o.textContent).join("/"));
+    // إضافة «غير مضاف» إلى الجاهز
+    const sel = document.getElementById("cc-add-bought"); sel.value = sel.querySelector("option[value='2']").value; Admin.ccAdd("bought"); const c1 = cnt();
+    // نقل «جاهز» إلى المصنَّع ← يُحذف من الجاهز
+    const i2 = 1, ms = document.getElementById("cc" + i2 + "-mode"); ms.value = "made"; ms.dispatchEvent(new Event("change", { bubbles: true })); const c2 = cnt();
+    // فتح وإغلاق مع الحفظ (المفتاح يتبدّل اسمه في حزمة العميل، فالقراءة عبر الدالة)
+    const d = document.querySelector("#fin-cc-rows details[data-k=made]"); d.open = false; d.dispatchEvent(new Event("toggle")); await wait(30);
+    const closedSaved = Admin.ccOpenState().made === false; Admin.renderCostCalc(true); const stillClosed = !document.querySelector("#fin-cc-rows details[data-k=made]").open;
+    Admin.ccToggle("made", true); Admin.renderCostCalc(true); const reopened = document.querySelector("#fin-cc-rows details[data-k=made]").open;
+    Admin.products = pr0; Priv.set = set0; Admin.renderFinance = rf0; Admin._ccPend = {}; Admin._ccDraft = {};
+    return { c0, sums, addOpts, c1, c2, closedSaved, stillClosed, reopened };
+  });
+  ok("تكلفة المنتجات: قسم «التكلفة الإنتاجية» (المصنَّع) وقسم «المنتجات الجاهزة» كلٌّ يُفتح ويُغلق وحالته محفوظة، وفي كل قسم قائمة إضافة منتج", sec.c0 === "made:1,bought:1" && /الإنتاجية/.test(sec.sums[0]) && /الجاهزة/.test(sec.sums[1]) && /غير مضاف/.test(sec.addOpts[0]) && /غير مضاف/.test(sec.addOpts[1]) && sec.closedSaved && sec.stillClosed && sec.reopened, sec);
+  ok("تكلفة المنتجات: إضافة منتج للجاهز تُظهره هناك، ونقل «جاهز» إلى «أصنّعه» يحذفه من قسم الجاهز", sec.c1 === "made:1,bought:2" && sec.c2 === "made:2,bought:1", sec);
   // ── مسح كل أسعار الشراء ──
   const ca = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; const saved = {}; Priv.set = async (k, v) => { saved[k] = JSON.stringify(v); }; Admin.renderFinance = () => { }; window.confirm = () => true;
-    Admin.products = [{ slug: "k1", title: "أ", active: true }, { slug: "k2", title: "ب", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = { k1: 100, k2: 200 }; Admin.fin.cc = { k1: { mode: "bought" } }; Admin.renderCostCalc(true);
+    Admin.products = [{ slug: "k1", title: "أ", active: true }, { slug: "k2", title: "ب", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = { k1: 100, k2: 200 }; Admin.fin.cc = { k1: { mode: "bought" } }; (Admin.ccList().forEach(p => { if (Admin.ccSec(p.slug) === "none") { Admin._ccPend = Admin._ccPend || {}; Admin._ccPend[p.slug] = "bought"; } }), Admin.renderCostCalc(true));
     const btn = Array.from(document.querySelectorAll("#tab-costs button")).find(b => /مسح كل الأسعار/.test(b.textContent)); const has = !!btn; btn.click(); await wait(50);
-    const out = { has, costs: JSON.stringify(Admin.fin.costs), cc: JSON.stringify(Admin.fin.cc), savedCosts: saved.costs, savedCc: saved.costcalc, buy: document.getElementById("cc0-buy").value };
+    const out = { has, costs: JSON.stringify(Admin.fin.costs), cc: JSON.stringify(Admin.fin.cc), savedCosts: saved.costs, savedCc: saved.costcalc, buy: (document.getElementById("cc0-buy") || { value: "" }).value };
     Admin.products = pr0; Priv.set = set0; Admin.renderFinance = rf0; return out;
   });
   ok("تكلفة المنتجات: «مسح كل الأسعار» يحذف أسعار الشراء وبيانات التكلفة ويحفظ الفراغ", ca.has && ca.costs === "{}" && ca.cc === "{}" && ca.savedCosts === "{}" && ca.savedCc === "{}" && ca.buy === "", ca);
@@ -469,7 +493,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const xp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; Priv.set = async () => { }; Admin.renderFinance = () => { };
     const E = Admin.ccEval.bind(Admin), ev = { a: E("50+30+20"), b: E("=(40+10)*2"), c: E("٥٠+٣٠"), d: E("1/0"), e: E("abc"), f: E(""), g: E("10,5+4.5"), h: E("5++") };
-    Admin.products = [{ slug: "cx", title: "كريم إكسل", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = {}; Admin.fin.cc = { cx: { mode: "made", raw: 2000, ml: 50 } }; Admin.renderCostCalc(true); await wait(30);
+    Admin.products = [{ slug: "cx", title: "كريم إكسل", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] }; Admin.fin.costs = {}; Admin.fin.cc = { cx: { mode: "made", raw: 2000, ml: 50 } }; (Admin.ccList().forEach(p => { if (Admin.ccSec(p.slug) === "none") { Admin._ccPend = Admin._ccPend || {}; Admin._ccPend[p.slug] = "bought"; } }), Admin.renderCostCalc(true)); await wait(30);
     const $ = id => document.getElementById(id), fire = (e, n) => e.dispatchEvent(new Event(n, { bubbles: true }));
     $("cc0-pack").value = "50+30+20"; fire($("cc0-pack"), "input"); $("cc0-oth").value = "10"; $("cc0-othm").value = "pct"; fire($("cc0-othm"), "change");
     const tot = $("cc0-tot").textContent, pv = $("cc0-packv").textContent, ov = $("cc0-othv").textContent;
@@ -489,7 +513,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.products = [{ slug: "cc1", title: "كريم تجريبي", active: true }, { slug: "cc2", title: "زيت", active: true }]; Admin.fin = Admin.fin || { costs: {}, ads: {}, set: {}, cfg: {}, log: [] };
     Admin.fin.mats = { m1: { n: "زيت الأرغان", pr: 5000, u: "kg" } };
     Admin.fin.cc = { cc1: { unit: "kg", raw: 1500, ml: 50, pack: 100, oth: 50, adopt: true, rec: [{ m: "m1", n: "زيت الأرغان", pct: 30, pr: 5000 }] }, cc2: { unit: "kg", raw: 500, ml: 100, rec: [{ m: "m1", n: "زيت الأرغان", pct: 10, pr: 5000 }] } };
-    Admin.fin.costs = { cc1: 225 }; Admin.renderCostCalc(true);
+    Admin.fin.costs = { cc1: 225 }; (Admin.ccList().forEach(p => { if (Admin.ccSec(p.slug) === "none") { Admin._ccPend = Admin._ccPend || {}; Admin._ccPend[p.slug] = "bought"; } }), Admin.renderCostCalc(true));
     Admin.ccmOpen(0); const linked = document.getElementById("ccm-m0").value === "m1" && document.getElementById("ccm-r0").readOnly && !document.getElementById("ccm-n0"); document.getElementById("ccm-bg").classList.remove("open");
     Admin.matOpen(); const e = document.querySelector('#mat-bg [data-mf="pr"][data-id="m1"]'); e.value = 6000; Admin.matSave(); await wait(80);
     const out = { linked, raw1: Admin.fin.cc.cc1.raw, raw2: Admin.fin.cc.cc2.raw, rp: Admin.fin.cc.cc1.rec[0].pr, buy1: Admin.fin.costs.cc1, buy2: Admin.fin.costs.cc2 == null, cell: document.getElementById("cc0-tot").textContent };

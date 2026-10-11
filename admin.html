@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.114">
+<meta name="admin-version" content="1.89.115">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -791,7 +791,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-costs" class="hidden">
     <div class="card" id="fin-cc">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"><b style="color:var(--green);font-size:1.02rem">🧪 تكلفة المنتجات</b><span style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small blue" type="button" onclick="Admin.matOpen()" title="المواد الأولية وأسعارها في مكان واحد تُستعمل في كل الوصفات">📚 مكتبة المواد الأولية</button><button class="small warn" type="button" onclick="Admin.ccClearAll()" title="يحذف سعر الشراء وبيانات التكلفة لكل المنتجات لتبدأ من جديد">🗑 مسح كل الأسعار</button></span></div>
-      <details style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب التكلفة؟</summary><div class="hint" style="margin:.4rem 0">هذا الجدول <b>يحدّد سعر الشراء لكل منتج</b> (يظهر في «المخزون والأرباح»). اختر <b>نوع المنتج</b>: <b>«مشترى جاهز»</b> فاكتب <b>سعر شراء العلبة</b> مباشرة؛ أو <b>«أصنّعه بنفسي»</b> فأدخل <b>الوحدة (لتر/كلغ)</b> و<b>سعرها</b> و<b>حجم العبوة (مل/غ)</b> فتُحسب <b>تكلفة المادة = السعر × الحجم ÷ 1000</b> ثم أضف <b>سعر العلبة والتغليف</b> و<b>مصاريف أخرى</b>، أو زر <b>🧪 الوصفة</b> لحساب سعر اللتر/الكلغ من <b>نسب المواد الأولية</b>. زر <b>💾 حفظ</b> يحفظ ويجعل الناتج سعر شراء المنتج. و<b>📚 مكتبة المواد الأولية</b> تُحدّث تكلفة كل المنتجات عند تغيير سعر مادة.</div></details>
+      <details style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب التكلفة؟</summary><div class="hint" style="margin:.4rem 0">القسمان أدناه <b>يحدّدان سعر الشراء لكل منتج</b> (يظهر في «المخزون والأرباح») ويُفتح كل منهما ويُغلق: <b>🏭 التكلفة الإنتاجية</b> للمنتجات التي تصنّعها، و<b>🛒 المنتجات الجاهزة</b> للتي تشتريها جاهزة. أضف أي منتج من قائمة <b>＋ إضافة منتج</b> في القسم، وتبديل <b>نوع المنتج</b> ينقله إلى القسم الآخر. في «الجاهز» اكتب <b>سعر شراء العلبة</b> مباشرة؛ أو وفي «التكلفة الإنتاجية» أدخل <b>الوحدة (لتر/كلغ)</b> و<b>سعرها</b> و<b>حجم العبوة (مل/غ)</b> فتُحسب <b>تكلفة المادة = السعر × الحجم ÷ 1000</b> ثم أضف <b>سعر العلبة والتغليف</b> و<b>مصاريف أخرى</b>، أو زر <b>🧪 الوصفة</b> لحساب سعر اللتر/الكلغ من <b>نسب المواد الأولية</b>. زر <b>💾 حفظ</b> يحفظ ويجعل الناتج سعر شراء المنتج. و<b>📚 مكتبة المواد الأولية</b> تُحدّث تكلفة كل المنتجات عند تغيير سعر مادة.</div></details>
       <div id="fin-cc-rows" style="overflow-x:auto"></div>
     </div>
   </div>
@@ -1604,12 +1604,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.114"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.114"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.114"></script>
+<script src="assets/js/ctl-help.js?v=1.89.115"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.115"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.115"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.114"></script>
+<script src="assets/js/admin-nav.js?v=1.89.115"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1621,7 +1621,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.114"></script>
+<script src="assets/js/admin-update.js?v=1.89.115"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -2585,7 +2585,7 @@ const Admin = {
       if(el) el.classList.toggle("hidden", x!==t);
     });
     if(t==="finance") this.renderFinance();
-    if(t==="costs") this.renderCostCalc(true);
+    if(t==="costs"){ this._ccDraft = {}; this._ccPend = {}; this.renderCostCalc(true); }
     if(t==="setup") this.renderSetup();
     if(t==="repeat") this.renderRepeat();
     if(t==="shipped"){ this.renderShipped(); this.autoSyncShipped(); }
@@ -5571,10 +5571,10 @@ const Admin = {
   ccList(){ return this.products.filter(p=>p.slug !== "test"); },
   ccModeOf(slug){ const c = ((this.fin && this.fin.cc) || {})[slug] || {}; return c.mode || ((c.raw || c.ml || (c.rec && c.rec.length)) ? "made" : "bought"); },
   ccRowHtml(i, mode){
-    const L = this.ccList(), p = L[i], cc = (this.fin && this.fin.cc) || {}, c = cc[p.slug] || {}, td = 'style="padding:.35rem .5rem;border-top:1px solid var(--line);vertical-align:middle"', n = v=>(Math.round(v * 100) / 100).toLocaleString("fr-DZ");
+    const L = this.ccList(), p = L[i], cc = (this.fin && this.fin.cc) || {}, dr = (this._ccDraft || {})[p.slug] || {}, c = dr.c ? Object.assign({}, { rec: (cc[p.slug] || {}).rec }, dr.c) : (cc[p.slug] || {}), td = 'style="padding:.35rem .5rem;border-top:1px solid var(--line);vertical-align:middle"', n = v=>(Math.round(v * 100) / 100).toLocaleString("fr-DZ");
     mode = mode || this.ccModeOf(p.slug); const made = mode === "made", r = this.ccCalc(c), rec = c.rec && c.rec.length, kg = c.unit === "kg", dash = '<td ' + td + ' style="opacity:.35">—</td>';
     const inp = (k, ph, w, ro)=>'<input id="cc' + i + '-' + k + '" type="number" min="0" step="any" placeholder="' + ph + '" value="' + (c[k] || "") + '" style="max-width:' + w + 'px"' + (ro ? ' readonly title="محسوب من الوصفة — عدّله من زر الوصفة" ' : '') + '>';
-    const buy = this.fin.costs[p.slug];
+    const buy = dr.buy != null ? dr.buy : this.fin.costs[p.slug];
     return '<tr data-cc="' + i + '" oninput="Admin.ccLive(' + i + ')" onchange="Admin.ccLive(' + i + ')"><td ' + td + '><b>' + String(p.title || p.slug).replace(/[<>&]/g, "") + '</b></td>' +
       '<td ' + td + '><select id="cc' + i + '-mode" onchange="Admin.ccMode(' + i + ',this.value)"><option value="bought"' + (made ? "" : " selected") + '>مشترى جاهز</option><option value="made"' + (made ? " selected" : "") + '>أصنّعه بنفسي</option></select></td>' +
       (made ? '<td ' + td + '><select id="cc' + i + '-unit"><option value="L"' + (kg ? "" : " selected") + '>لتر</option><option value="kg"' + (kg ? " selected" : "") + '>كلغ</option></select></td>' +
@@ -5582,16 +5582,53 @@ const Admin = {
         '<td ' + td + '><b id="cc' + i + '-mat">' + n(r.mat) + '</b> دج</td><td ' + td + '><input id="cc' + i + '-pack" type="text" inputmode="decimal" dir="ltr" placeholder="مثال: 50+30+20" value="' + String(c.packx || c.pack || "").replace(/"/g, "") + '" title="اكتب رقماً أو مجموعاً كما في إكسل مثل 50+30+20" style="max-width:150px"><div class="hint" id="cc' + i + '-packv" style="margin:.15rem 0 0"></div></td>' +
         '<td ' + td + '><div style="display:flex;gap:.3rem;align-items:center"><input id="cc' + i + '-oth" type="text" inputmode="decimal" dir="ltr" placeholder="0" value="' + String(c.othx || c.oth || "").replace(/"/g, "") + '" style="max-width:90px"><select id="cc' + i + '-othm" title="قيمة ثابتة بالدينار أو نسبة مئوية من (تكلفة المادة + سعر العلبة والتغليف)"><option value="fixed"' + (c.othm === "pct" ? "" : " selected") + '>دج</option><option value="pct"' + (c.othm === "pct" ? " selected" : "") + '>%</option></select></div><div class="hint" id="cc' + i + '-othv" style="margin:.15rem 0 0"></div></td>' +
         '<td ' + td + '><b id="cc' + i + '-tot" style="color:var(--green);font-size:1.05rem">' + n(r.total) + '</b> دج</td>'
-       : dash + dash + dash + dash + dash + dash + '<td ' + td + '><input id="cc' + i + '-buy" type="number" min="0" step="any" placeholder="سعر شراء العلبة" value="' + (buy == null ? "" : buy) + '" style="max-width:150px;font-weight:800"> دج</td>') +
-      '<td ' + td + '><div style="display:flex;gap:.35rem;white-space:nowrap">' + (made ? '<button class="small blue" type="button" onclick="Admin.ccmOpen(' + i + ')" title="احسب سعر اللتر/الكلغ من نسب المواد الأولية">🧪 الوصفة' + (rec ? " ✓" : "") + '</button>' : '') + '<button class="small green" type="button" onclick="Admin.ccSave(' + i + ')" title="يحفظ ويجعل الناتج سعر شراء هذا المنتج">💾 حفظ</button></div></td></tr>';
+                   : '<td ' + td + '><input id="cc' + i + '-buy" type="number" min="0" step="any" placeholder="سعر شراء العلبة" value="' + (buy == null ? "" : buy) + '" style="max-width:150px;font-weight:800"> دج</td>') +
+      '<td ' + td + '><div style="display:flex;gap:.35rem;white-space:nowrap">' + (made ? '<button class="small blue" type="button" onclick="Admin.ccmOpen(' + i + ')" title="احسب سعر اللتر/الكلغ من نسب المواد الأولية">🧪 الوصفة' + (rec ? " ✓" : "") + '</button>' : '') + '<button class="small green" type="button" onclick="Admin.ccSave(' + i + ')" title="يحفظ ويجعل الناتج سعر شراء هذا المنتج">💾 حفظ</button><button class="small warn" type="button" onclick="Admin.ccRemove(' + i + ')" title="إزالة هذا المنتج من القائمة وحذف سعره">🗑</button></div></td></tr>';
+  },
+  /* المنتج في قسم «مصنَّع» أم «جاهز»: النوع المحفوظ أو المعلّق (إضافة/تبديل لم يُحفظ بعد)؛ والجاهز يظهر إن كان له سعر أو نوع محفوظ أو أُضيف للتو */
+  ccSec(slug){
+    const pend = (this._ccPend || {})[slug], cc = (this.fin && this.fin.cc) || {}, mode = pend || this.ccModeOf(slug);
+    if(mode === "made") return "made";
+    return (pend === "bought" || (cc[slug] && cc[slug].mode === "bought") || (this.fin.costs || {})[slug] != null) ? "bought" : "none";
+  },
+  ccOpenState(){ try{ return Object.assign({ made: true, bought: true }, JSON.parse(localStorage.getItem("alyssum_cc_open") || "{}")); }catch(e){ return { made: true, bought: true }; } },
+  ccToggle(k, on){ try{ const o = this.ccOpenState(); o[k] = !!on; localStorage.setItem("alyssum_cc_open", JSON.stringify(o)); }catch(e){} },
+  /* لقطة لما كُتب ولم يُحفظ في كل الصفوف الظاهرة كي لا يضيع عند نقل منتج بين القسمين */
+  ccSnap(){
+    this._ccDraft = this._ccDraft || {};
+    this.ccList().forEach((p, i)=>{ const tr = document.querySelector('#fin-cc-rows tr[data-cc="' + i + '"]'); if(!tr) return;
+      const d = {}; if($f("cc" + i + "-buy")) d.buy = $f("cc" + i + "-buy").value; if($f("cc" + i + "-raw")) d.c = this.ccRead(i); this._ccDraft[p.slug] = d; });
   },
   renderCostCalc(force){
     const box = $f("fin-cc-rows"); if(!box) return; if(!force && document.activeElement && box.contains(document.activeElement)) return;
-    const th = 'style="padding:.45rem .5rem;text-align:right;white-space:nowrap"';
-    setTimeout(()=>{ this.ccList().forEach((p, i)=>this.ccLive(i)); }, 0);
-    box.innerHTML = '<table style="width:100%;border-collapse:collapse;min-width:1150px"><tr class="hd"><th ' + th + '>المنتج</th><th ' + th + '>نوع المنتج</th><th ' + th + '>الوحدة</th><th ' + th + '>سعر اللتر / الكلغ (دج)</th><th ' + th + '>حجم العبوة (مل / غ)</th><th ' + th + '>تكلفة المادة للعلبة</th><th ' + th + '>سعر العلبة والتغليف (دج)</th><th ' + th + '>مصاريف أخرى (ثابتة أو %)</th><th ' + th + '>سعر الشراء / التكلفة للعلبة</th><th ' + th + '></th></tr>' + this.ccList().map((p, i)=>this.ccRowHtml(i)).join("") + '</table>';
+    const th = 'style="padding:.45rem .5rem;text-align:right;white-space:nowrap"', L = this.ccList(), st = this.ccOpenState();
+    const list = {made: [], bought: [], none: []}; L.forEach((p, i)=>list[this.ccSec(p.slug)].push(i));
+    const opt = idxs=>idxs.map(i=>'<option value="' + i + '">' + String(L[i].title || L[i].slug).replace(/[<>&"]/g, "") + '</option>').join("");
+    const addBar = (k, idxs)=>idxs.length ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.6rem"><select id="cc-add-' + k + '" style="min-width:220px"><option value="">— اختر منتجاً —</option>' + opt(idxs) + '</select><button class="small green" type="button" onclick="Admin.ccAdd(\'' + k + '\')">＋ إضافة منتج</button></div>' : '<div class="hint" style="margin-top:.5rem">كل المنتجات مضافة.</div>';
+    const rows = k=>list[k].map(i=>this.ccRowHtml(i, k)).join("");
+    const madeAdd = list.bought.concat(list.none), boughtAdd = list.none;
+    box.innerHTML =
+      '<details class="cc-sec" data-k="made"' + (st.made ? " open" : "") + ' ontoggle="Admin.ccToggle(\'made\',this.open)" style="margin:.4rem 0 .9rem"><summary style="cursor:pointer;font-weight:800;font-size:1.02rem;padding:.4rem 0">🏭 التكلفة الإنتاجية — المنتجات المصنَّعة <small style="opacity:.7">(' + list.made.length + ')</small></summary>' +
+        '<div class="hint" style="margin:.2rem 0 .5rem">تُحسب تكلفة العلبة من موادها الأولية: سعر اللتر/الكلغ × حجم العبوة + العبوة والتغليف + مصاريف أخرى. «🧪 الوصفة» تحسب سعر الخلطة من نسب المواد.</div>' +
+        '<div style="overflow-x:auto">' + (list.made.length ? '<table style="width:100%;border-collapse:collapse;min-width:1150px"><tr class="hd"><th ' + th + '>المنتج</th><th ' + th + '>نوع المنتج</th><th ' + th + '>الوحدة</th><th ' + th + '>سعر اللتر / الكلغ (دج)</th><th ' + th + '>حجم العبوة (مل / غ)</th><th ' + th + '>تكلفة المادة للعلبة</th><th ' + th + '>سعر العلبة والتغليف (دج)</th><th ' + th + '>مصاريف أخرى (ثابتة أو %)</th><th ' + th + '>التكلفة الإجمالية للعلبة</th><th ' + th + '></th></tr>' + rows("made") + '</table>' : '<div class="hint">لا منتجات مصنَّعة بعد. أضف منتجاً من القائمة أدناه.</div>') + '</div>' + addBar("made", madeAdd) + '</details>' +
+      '<details class="cc-sec" data-k="bought"' + (st.bought ? " open" : "") + ' ontoggle="Admin.ccToggle(\'bought\',this.open)" style="margin:.4rem 0"><summary style="cursor:pointer;font-weight:800;font-size:1.02rem;padding:.4rem 0">🛒 تكلفة المنتجات الجاهزة (المشتراة) <small style="opacity:.7">(' + list.bought.length + ')</small></summary>' +
+        '<div class="hint" style="margin:.2rem 0 .5rem">منتجات تشتريها جاهزة: اكتب سعر شراء العلبة مباشرة.</div>' +
+        '<div style="overflow-x:auto">' + (list.bought.length ? '<table style="width:100%;border-collapse:collapse;min-width:620px"><tr class="hd"><th ' + th + '>المنتج</th><th ' + th + '>نوع المنتج</th><th ' + th + '>سعر شراء العلبة (دج)</th><th ' + th + '></th></tr>' + rows("bought") + '</table>' : '<div class="hint">لا منتجات جاهزة بعد. أضف منتجاً من القائمة أدناه.</div>') + '</div>' + addBar("bought", boughtAdd) + '</details>';
+    setTimeout(()=>{ L.forEach((p, i)=>this.ccLive(i)); }, 0);
   },
-  ccMode(i, v){ const tr = document.querySelector('#fin-cc-rows tr[data-cc="' + i + '"]'); if(!tr) return; const t = document.createElement("tbody"); t.innerHTML = this.ccRowHtml(i, v === "made" ? "made" : "bought"); tr.replaceWith(t.firstElementChild); this.ccLive(i); },
+  /* إضافة منتج لقسم: يصير معلّقاً حتى «حفظ»؛ إضافته لـ«مصنَّع» تنقله من «جاهز» */
+  ccAdd(k){
+    const sel = $f("cc-add-" + k), i = sel ? parseInt(sel.value, 10) : NaN, p = this.ccList()[i]; if(!p){ toast("⚠️ اختر منتجاً أولاً"); return; }
+    this.ccSnap(); this._ccPend = this._ccPend || {}; this._ccPend[p.slug] = k === "made" ? "made" : "bought"; this.renderCostCalc(true);
+  },
+  /* تبديل نوع صف: ينتقل فوراً إلى القسم الآخر (يُحذف من القسم الذي لا ينتمي إليه) */
+  ccMode(i, v){ const p = this.ccList()[i]; if(!p) return; this.ccSnap(); this._ccPend = this._ccPend || {}; this._ccPend[p.slug] = v === "made" ? "made" : "bought"; this.renderCostCalc(true); },
+  async ccRemove(i){
+    const p = this.ccList()[i]; if(!p) return; const cc = Object.assign({}, this.fin.cc || {}), saved = cc[p.slug] || this.fin.costs[p.slug] != null;
+    if(saved && !confirm("إزالة «" + (p.title || p.slug) + "» من القائمة وحذف سعر شراءه؟")) return;
+    this.ccSnap(); if(this._ccPend) delete this._ccPend[p.slug]; if(this._ccDraft) delete this._ccDraft[p.slug];
+    if(saved) return this.ccClear(p, cc); this.renderCostCalc(true);
+  },
   ccRead(i){
     const o = {}; ["raw", "ml"].forEach(k=>{ const v = Number(($f("cc" + i + "-" + k) || {}).value); if(v > 0) o[k] = v; });
     ["pack", "oth"].forEach(k=>{ const raw = String(($f("cc" + i + "-" + k) || {}).value || "").trim(), v = this.ccEval(raw); if(isFinite(v) && v > 0){ o[k] = v; if(!/^[0-9]*\.?[0-9]+$/.test(raw)) o[k + "x"] = raw; } else if(raw && !isFinite(v)) o[k + "Bad"] = true; });
@@ -5612,6 +5649,7 @@ const Admin = {
   },
   /* مسح الصف كاملاً: يُحذف سعر الشراء وبيانات التكلفة (ويبقى المنتج بلا سعر شراء حتى تُدخله) */
   async ccClear(p, cc){
+    if(this._ccPend) delete this._ccPend[p.slug]; if(this._ccDraft) delete this._ccDraft[p.slug];
     delete cc[p.slug]; this.fin.cc = cc; await Priv.set("costcalc", cc); this.setCost(p.slug, "");
     toast("🗑 حُذف سعر شراء «" + (p.title || p.slug) + "»"); this.renderCostCalc(true);
   },
@@ -5630,7 +5668,7 @@ const Admin = {
       if(!(price > 0)){ if(!Object.keys(c).some(k=>["raw", "ml", "pack", "oth", "rec"].includes(k))) return this.ccClear(p, cc); toast("⚠️ التكلفة الإجمالية صفر — أكمل البيانات أو امسحها كلها لحذف السعر"); return; }
       cc[p.slug] = c;
     }
-    this.fin.cc = cc; await Priv.set("costcalc", cc); this.setCost(p.slug, Math.round(price));
+    this.fin.cc = cc; await Priv.set("costcalc", cc); if(this._ccPend) delete this._ccPend[p.slug]; if(this._ccDraft) delete this._ccDraft[p.slug]; this.setCost(p.slug, Math.round(price));
     toast("✅ سعر شراء «" + (p.title || p.slug) + "»: " + Math.round(price).toLocaleString("fr-DZ") + " دج"); this.renderCostCalc(true);
   },
   /* وصفة المنتج: مواد أولية بنسب مئوية وسعر وحدتها ← سعر اللتر/الكلغ للخلطة ← × حجم العبوة = تكلفة العلبة */
