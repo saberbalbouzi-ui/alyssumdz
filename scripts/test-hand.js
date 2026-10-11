@@ -218,6 +218,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("نافذة المعاينة: أزرار تسجيل نتيجة الاتصال (7) للطلب الجديد", pr.btns === 7, pr);
   ok("نافذة المعاينة: تسجيل «لم يُجب 2» يظهر مظلَّلاً ثم «لاحقاً» والنافذة تبقى مفتوحة", /📞2/.test(pr.n1) && pr.hi && /⏰لاحقاً/.test(pr.n2) && pr.open1, pr);
   ok("نافذة المعاينة: «أكّد الطلب» يؤكّد والنافذة تتحدّث (يختفي الصف ويظهر تعديل)", pr.st === "confirmee" && pr.editBtn && !pr.resRow, pr);
+  // ── ترتيب الطلبات تلقائياً بالحالة ──
+  const srt = await p.evaluate(() => {
+    Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
+    const mk = (id, st) => ({ id, date: new Date().toISOString(), status: st, name: "ز" + id, phone: "0550000000", wilaya: "Alger", items: "", subtotal: 0, total: 0, note: "" });
+    Admin.orders = [mk("a", "annulee"), mk("b", "confirmee"), mk("c", "nouvelle"), mk("d", "confirmee"), mk("e", "nouvelle"), mk("f", "annulee")];
+    const before = Admin.getFilteredOrders().map(x => x.o.id).join("");
+    Admin.orders[2].status = "annulee"; Admin.orders[0].status = "confirmee";
+    return { before, after: Admin.getFilteredOrders().map(x => x.o.id).join("") };
+  });
+  ok("ترتيب الطلبات: في انتظار التأكيد أولاً ثم المؤكَّدة ثم الملغاة (ثابت داخل المجموعة)", srt.before === "cebdaf" && srt.after === "eabdcf", srt);
   // ── مكتبة الملصقات (بحث متعدد اللغات + إضافة بنقرة) ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار ملصقات", ""); pg.slug = "stk-t"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => PBApp.ltoggle("stk")); await p.waitForFunction(() => document.querySelectorAll("#stk-out .stk-i").length > 20, null, { timeout: 15000 }).catch(() => { });
