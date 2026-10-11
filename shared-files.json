@@ -264,7 +264,8 @@
     "assets/data/voice-lexicon.json",
     "assets/js/admin-hand.js",
     "assets/data/stickers.json",
-    "assets/img/stickers/**"
+    "assets/img/stickers/**",
+    "assets/js/hub.js"
   ],
   "local": {
     "الهوية والإعدادات": [
