@@ -7,7 +7,7 @@ const AdminPayments = (() => {
   const today = () => new Date().toISOString().slice(0, 10);
   const labels = { unpaid:"غير مدفوع", paid:"مدفوع", refunded:"مستردّ" };
   const methods = { cod:"الدفع عند الاستلام", ccp:"CCP", baridimob:"بريدي موب", cash:"نقداً" };
-  const S = { byOrder:{}, manual:[], sha:null, loaded:false, loading:false, saving:false, localOnly:false, filter:"all", query:"", selected:new Set(), drafts:{}, err:"", add:null, addOpen:false };
+  const S = { fetchedCo:false, byOrder:{}, manual:[], sha:null, loaded:false, loading:false, saving:false, localOnly:false, filter:"all", query:"", selected:new Set(), drafts:{}, err:"", add:null, addOpen:false };
 
   function decode(raw) { return JSON.parse(decodeURIComponent(escape(atob(String(raw || "").replace(/\s/g, ""))))); }
   function encode(value) { return btoa(unescape(encodeURIComponent(JSON.stringify(value, null, 2)))); }
@@ -51,9 +51,19 @@ const AdminPayments = (() => {
   function id(o) { return String(o&&(o.id||o.orderId||o.number)||""); }
   function status(o) { return String(o&&o.status||"").toLowerCase(); }
   function productOf(o) { try { const L=A().orderLines&&A().orderLines(o)||[]; if(L.length) return L.map(l=>(l.p&&l.p.title||"")+(l.qty>1?" ×"+l.qty:"")).join("، "); } catch (_) { } return String(o.product||o.items||""); }
+  /* الجدول يضم الطلبات المسجَّلة عند شركة التوصيل فقط: لها رقم تتبع وحالتها مؤكَّد/في الطريق/مسلَّم/مرتجع،
+     وطرفها موجود فعلاً في قائمة طرود الشركة أو في كشف الدفع المستورد (طلب بتتبع غير موجود عندها لا يظهر) */
+  function inCo(o) {
+    const A_=A(), st=status(o); if(!["confirmee","expediee","livree","echec"].includes(st)) return false;
+    const t=A_.trackingOf?A_.trackingOf(o):null; if(!t) return false;
+    if(A_.ydActual&&A_.ydActual[t.tracking]) return true;
+    const rows=(typeof AdminYd!=="undefined"&&AdminYd.S&&AdminYd.S.rows)||[];
+    if(!rows.length) return true;
+    return rows.some(r=>String(r.tracking)===String(t.tracking));
+  }
   /* عناصر الجدول: طلبات الموقع + المدفوعات اليدوية (m…) بنفس الشكل */
   function items() {
-    const os=(A().orders||[]).filter(o=>o&&id(o)).map(o=>({ o, id:id(o), date:o.date||"", name:o.name||"", phone:o.phone||"", product:productOf(o), total:Number(o.total)||0, ship:status(o), manual:false }));
+    const os=(A().orders||[]).filter(o=>o&&id(o)&&inCo(o)).map(o=>({ o, id:id(o), date:o.date||"", name:o.name||"", phone:o.phone||"", product:productOf(o), total:Number(o.total)||0, ship:status(o), manual:false }));
     const ms=(S.manual||[]).map(m=>({ o:m, id:String(m.id), date:m.date||"", name:m.name||"", phone:m.phone||"", product:m.product||"", total:Number(m.total)||0, ship:"", manual:true }));
     return os.concat(ms);
   }
@@ -219,7 +229,9 @@ const AdminPayments = (() => {
     is.forEach(it=>{const r=Object.assign({},record(it),S.drafts[it.id]||{}),V=view(it),prev=S.byOrder[it.id]||{};r.status="paid";if(!(Number(r.amount)>0))r.amount=V.total;if(!r.date)r.date=today();r.method=methods[r.method]?r.method:"cod";S.byOrder[it.id]=Object.assign({},prev,{status:r.status,amount:r.amount,date:r.date,method:r.method,note:r.note||"",manual:true});delete S.drafts[it.id];});
     S.selected.clear();S.err="";const ok=await save();S.err=ok?(S.localOnly?"حُفظت التغييرات محلياً فقط؛ لم تُنشر بعد.":""):S.err;draw();
   }
-  async function render() { const host=$("payments-content");if(!host)return;host.innerHTML='<p class="pm-note">جارٍ تحميل سجلات الدفع…</p>';await load();draw(); }
+  async function render() { const host=$("payments-content");if(!host)return;host.innerHTML='<p class="pm-note">جارٍ تحميل سجلات الدفع…</p>';await load();
+    try{ const empty=!(typeof AdminYd!=="undefined"&&AdminYd.S&&AdminYd.S.rows&&AdminYd.S.rows.length); if(empty&&A().ydFetchParcels&&!S.fetchedCo){ S.fetchedCo=true; await A().ydFetchParcels(10); } }catch(_){ }
+    draw(); }
   document.addEventListener("DOMContentLoaded",()=>{
     if(typeof Admin==="undefined"||Admin._paymentsTabWrapped)return;
     const original=Admin.tab;Admin.tab=function(t,btn){const result=original.call(this,t,btn),el=$("tab-payments");if(el)el.classList.toggle("hidden",t!=="payments");if(t==="payments")AdminPayments.render();return result;};Admin._paymentsTabWrapped=true;

@@ -40,4 +40,26 @@ const AP = build(false), it = AP.items()[1], x = AP.settle(it);
 ok("تفصيل طرد مسلَّم: محصَّل 8000، توصيل 750، COD 54.375", x.got === 8000 && x.del === 750 && Math.abs(x.cod - 54.375) < 1e-9, x);
 const free = AP.settle(AP.items()[5]);
 ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم free", free.net === -750 && free.free === true, free);
+
+// الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
+{
+  const orders = [
+    { id: "F5D05", status: "expediee", total: 4000, fee: 700, _trk: "yal-A" },
+    { id: "2FB29", status: "expediee", total: 3000, fee: 700, _trk: "yal-B" },
+    { id: "F851C", status: "confirmee", total: 3000, fee: 700, _trk: "yal-ORPHAN" },   // وسم تتبع غير موجود عند الشركة
+    { id: "NEW1", status: "nouvelle", total: 3000, fee: 700 },                          // لم يُرسل
+    { id: "CAN1", status: "annulee", total: 3000, fee: 700, _trk: "yal-C" },            // ملغى
+  ];
+  const Admin = { orders, fin: { costs: {}, set: {} }, ST_AR: {}, ydActual: {},
+    trackingOf: o => o._trk ? { company: "yalidine", tracking: o._trk } : null, actualFees() { return null; },
+    realFees: o => ({ delivery: 700, retour: 250, cod: 0.75, ins: 0 }), orderLines: () => [], carrierCost: () => 700, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, AdminYd: { S: { rows: [{ tracking: "yal-A" }, { tracking: "yal-B" }, { tracking: "yal-C" }] } }, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  const ids = sb.AP.items().map(i => i.id).sort().join(",");
+  ok("الجدول: طلبان فقط (F5D05 و2FB29)؛ يُستبعد اليتيم والجديد والملغى", ids === "2FB29,F5D05", ids);
+  sb.AdminYd.S.rows = [];   // قائمة الشركة لم تُحمَّل بعد: يكفي التتبع والحالة
+  const ids2 = sb.AP.items().map(i => i.id).sort().join(",");
+  ok("بلا قائمة شركة محمّلة: الطلبات المتتبَّعة المؤكَّدة/المرسَلة فقط (بلا الجديد والملغى)", ids2 === "2FB29,F5D05,F851C", ids2);
+}
 console.log(fail ? "✗ فشل " + fail : "✓ نجح " + pass + " من " + pass); process.exit(fail ? 1 : 0);
