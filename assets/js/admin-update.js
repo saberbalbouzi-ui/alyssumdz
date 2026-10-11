@@ -9,10 +9,16 @@ const AdminUpdate = (() => {
     document.querySelectorAll("[data-au]").forEach(b => { b.classList.toggle("au-new", avail); b.title = avail ? "يتوفر تحديث جديد " + latest + " — اضغط لتحديث هذه الصفحة" : "تحديث الصفحة لآخر نسخة (الحالية " + (cur || "؟") + ")"; const t = b.querySelector(".au-t"); if (t) t.textContent = avail ? "تحديث " + latest : "تحديث"; });
   }
   function banner() {
-    if (!avail || noted === latest) return; noted = latest; try { if (sessionStorage.getItem("au_dismiss") === latest) return; } catch (e) { }
+    if (!avail || noted === latest) return; noted = latest; warm(); try { if (localStorage.getItem("au_dismiss") === latest || sessionStorage.getItem("au_dismiss") === latest) return; } catch (e) { }
     const d = document.createElement("div"); d.id = "au-banner"; d.style.cssText = "position:fixed;bottom:18px;inset-inline-start:18px;z-index:10080;background:#173f35;color:#fff;border-radius:14px;padding:.7rem 1rem;box-shadow:0 10px 34px rgba(0,0,0,.4);display:flex;gap:.7rem;align-items:center;font-family:inherit;direction:rtl;max-width:min(92vw,420px)";
     d.innerHTML = `<span style="font-size:1.3rem">🔔</span><div style="flex:1;font-weight:800;font-size:.86rem;line-height:1.6">يتوفر تحديث جديد للوحة <span dir="ltr">${latest}</span><br><small style="font-weight:600;opacity:.8">تعديلاتك غير المنشورة في المطوّر تُحفظ كمسودة وتُستعاد</small></div><button type="button" id="au-go" style="background:#c8a24b;color:#173f35;border:0;border-radius:10px;padding:.45rem .9rem;font-weight:900;cursor:pointer;font-family:inherit">حدّث الآن</button><button type="button" id="au-x" style="background:none;border:0;color:#fff;opacity:.7;cursor:pointer;font-size:1rem" aria-label="لاحقاً">✕</button>`;
-    document.body.appendChild(d); d.querySelector("#au-go").onclick = apply; d.querySelector("#au-x").onclick = () => { try { sessionStorage.setItem("au_dismiss", latest); } catch (e) { } d.remove(); };
+    document.body.appendChild(d); d.querySelector("#au-go").onclick = apply; d.querySelector("#au-x").onclick = () => { try { localStorage.setItem("au_dismiss", latest); sessionStorage.setItem("au_dismiss", latest); } catch (e) { } d.remove(); };
+  }
+  /* عند اكتشاف نسخة أحدث: يُحدَّث كاش المتصفح للصفحة وسكربتاتها في الخلفية، فإعادة التحميل العادية (F5) تأتي بالنسخة الجديدة ويختفي الإشعار (كان الكاش القديم يعيده بعد كل إعادة تحميل) */
+  let warmed = "";
+  function warm() {
+    if (warmed === latest) return; warmed = latest;
+    try { const urls = [location.pathname, ...[...document.scripts].map(x => x.src), ...[...document.querySelectorAll('link[rel="stylesheet"]')].map(x => x.href)].filter(Boolean); urls.forEach(u => fetch(u, { cache: "reload" }).catch(() => 0)); } catch (e) { }
   }
   async function check(force) {
     try { const r = await fetch("VERSION?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) return; const v = (await r.text()).trim(); if (!/^\d+\.\d+\.\d+$/.test(v)) return; latest = v; avail = !!cur && cmp(v, cur) > 0; paint(); if (avail) banner(); else if (force) toast("✅ أنت على آخر نسخة (" + cur + ")"); } catch (e) { if (force) toast("تعذّر التحقق من وجود تحديث"); }
@@ -48,7 +54,7 @@ const AdminUpdate = (() => {
   }
   /* تحديث: يتحقق من آخر نسخة ويعيد تحميل الصفحة نفسها بها، وتعود إلى التبويب/صفحة المطوّر المفتوحة بما فيها من تعديلات */
   async function apply() {
-    if (busy) return; setBusy("up"); await new Promise(r => setTimeout(r, 50)); try { await check(false); } catch (e) { }
+    if (busy) return; try { localStorage.removeItem("au_dismiss"); } catch (e) { } setBusy("up"); await new Promise(r => setTimeout(r, 50)); try { await check(false); } catch (e) { }
     await reloadFresh("u", Date.now().toString(36));
   }
   /* مسح الكاش: يحذف Cache Storage ويلغي عمّال الخدمة (PWA) ثم يعيد تحميل الصفحة نفسها. لا يمسّ localStorage (تسجيل الدخول، المفاتيح، المسودات). */

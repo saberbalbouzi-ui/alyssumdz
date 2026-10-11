@@ -421,6 +421,18 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { v, none, heads: heads.join("|"), hasReal: heads.includes("الربح الحقيقي"), noMin: !heads.includes("سعر البيع الأدنى") };
   });
   ok("المخزون والأرباح: «الربح الحقيقي» = 3000 − (1200+50+100+150+50 + تأمين 1% = 30) = 1420 للقطعة، وبلا سعر الشراء يظهر فارغاً، والعمود يحلّ محل «سعر البيع الأدنى»", rpf.v === 1420 && rpf.none === null && rpf.hasReal && rpf.noMin, rpf);
+  // ── إشعار التحديث: يُحدّث الكاش في الخلفية ولا يعود بعد إغلاقه ──
+  const upd = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), f0 = window.fetch, reqs = []; try { localStorage.removeItem("au_dismiss"); sessionStorage.removeItem("au_dismiss"); } catch (e) { }
+    window.fetch = async (u, o) => { const url = String(u); reqs.push({ url, cache: o && o.cache }); if (/VERSION/.test(url)) return { ok: true, text: async () => "99.0.0" }; return { ok: true, text: async () => "", json: async () => ({}) }; };
+    const old = document.getElementById("au-banner"); if (old) old.remove();
+    await AdminUpdate.check(false); await wait(50);
+    const shown = !!document.getElementById("au-banner"), warmed = reqs.filter(r => r.cache === "reload").length, pageWarm = reqs.some(r => r.cache === "reload" && /admin/.test(r.url));
+    document.querySelector("#au-x").click(); const gone = !document.getElementById("au-banner"), stored = localStorage.getItem("au_dismiss");
+    window.fetch = f0; localStorage.removeItem("au_dismiss"); sessionStorage.removeItem("au_dismiss");
+    return { shown, warmed, pageWarm, gone, stored };
+  });
+  ok("إشعار التحديث: يظهر عند وجود نسخة أحدث ويُحدّث كاش الصفحة والسكربتات في الخلفية (فيختفي بعد إعادة التحميل العادية)، وإغلاقه يُحفظ لتلك النسخة", upd.shown && upd.warmed >= 3 && upd.pageWarm && upd.gone && upd.stored === "99.0.0", upd);
   // ── مسح كل أسعار الشراء ──
   const ca = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), pr0 = Admin.products, set0 = Priv.set, rf0 = Admin.renderFinance; const saved = {}; Priv.set = async (k, v) => { saved[k] = JSON.stringify(v); }; Admin.renderFinance = () => { }; window.confirm = () => true;
