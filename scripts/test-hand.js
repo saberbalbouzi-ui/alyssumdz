@@ -415,6 +415,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("طلب يدوي: النموذج يحسب (2×2000 − 100 + رسم الولاية) ويحفظ طلباً «جديداً» بعلامة يدوي ويظهر في القائمة", mo.opened && mo.o1 && mo.o1.name === "عمر خليل" && mo.o1.phone === "0550112233" && mo.o1.n === 1 && mo.o1.title === "منتج ب" && mo.o1.qty === 2 && mo.o1.disc === 100 && mo.o1.total === 3900 + mo.fee1 && mo.o1.manual === "نعم" && mo.inList && mo.closed1, mo);
   ok("نسخ كطلب جديد: من طلب مسجَّل بكل بياناته (منتجان بمجموع 5000) بلا وسم تتبع وبعلامة «نسخة من»", mo.pre.name === "سعاد" && mo.pre.phone === "0661000000" && mo.pre.wil === "Oran" && mo.pre.rows === 2 && /5[\s,.\u202f\u00a0]?000/.test(mo.pre.tot) && mo.o2 && mo.o2.n === 2 && mo.o2.from === "R1" && mo.secondNoTrack, mo);
   ok("تعديل كامل: طلب جديد تتغيّر منتجاته وهاتفه ويُرسل التعديل (3 علب = 3000 + 600)", mo.upd && mo.upd.id === "N1" && mo.upd.phone === "0771234567" && mo.upd.total === 3600 && mo.upd.items === 1 && /منتج أ ×3 = 3000/.test(mo.upd.text) && mo.n1.phone === "0771234567" && mo.n1.total === 3600, mo);
+  // ── تفصيل سعر التوصيل (ولاية + بلدية) يظهر للمدير في المعاينة فقط ──
+  const bdp = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {};
+    const mk = (fee, bd) => ({ id: "D" + fee, date: new Date().toISOString(), status: "nouvelle", name: "ز", phone: "0550000000", wilaya: "Alger", commune: "Kouba", dtype: "home", desk: "", items: "", subtotal: 2400, fee, total: 2400 + fee, discount: 0, coupon: "", extra: bd ? { "🚚 تفصيل التوصيل": bd, "📄 الصفحة": "p/x" } : {}, note: "" });
+    Admin.orders = [mk(800, "750+50"), mk(900, "750+50"), mk(750, "")];
+    const txt = i => { Admin.openOrderPreview(i); return document.getElementById("ord-prev-b").textContent; };
+    const a = txt(0), b = txt(1), c = txt(2);
+    return { a: /تفصيل/.test(a) && /750/.test(a) && /إضافة البلدية/.test(a) && !/750\+50/.test(a), b: !/تفصيل/.test(b), c: !/تفصيل/.test(c) };
+  });
+  ok("معاينة الطلب: يظهر للمدير تفصيل التوصيل (ولاية 750 + إضافة البلدية 50) عند وجوده فقط، ويختفي إن عُدّل الرسم", bdp.a && bdp.b && bdp.c, bdp);
   // ── إضافة البلدية من ياليدين (Supplément commune) ──
   const sp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), cf0 = Admin.courierFetch, pj0 = typeof PBApp !== "undefined" ? PBApp.putJson : null, set0 = Priv.set; Priv.set = async () => { };

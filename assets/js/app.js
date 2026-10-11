@@ -40,7 +40,7 @@ function cartShipPf(items){
 function shipQuote(w, commune, type, sub, co, pf){
   if(!w) return { fee:null, free:false, blocked:false, msg:"" };
   const msg = shipBlocked(w, commune, type); if(msg) return { fee:0, free:false, blocked:true, msg };
-  let base = type === "stop" ? w.stop : w.home, flatFree = false;
+  let base = type === "stop" ? w.stop : w.home, flatFree = false, supAdd = 0;
   let src = co || ""; if(src === "free" && !pf) src = "";
   if(src === "free"){
     const v = type === "stop" ? (pf.stop !== null ? pf.stop : pf.home) : (pf.home !== null ? pf.home : pf.stop);
@@ -51,10 +51,10 @@ function shipQuote(w, commune, type, sub, co, pf){
   }
   if(src !== "free"){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
     const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
-    if(d){ const add = Number(type === "stop" ? d[1] : d[0]) || 0; if(add) base = Math.max(0, base + add); }
+    if(d){ const add = Number(type === "stop" ? d[1] : d[0]) || 0; if(add){ const nb = Math.max(0, base + add); supAdd = nb - base; base = nb; } }
   }
   const free = flatFree || !!(type === "stop" ? w.fs : w.fh) || !!(w.fo && sub >= w.fo);
-  return { fee: free ? 0 : base, free, blocked:false, msg:"" };
+  return { fee: free ? 0 : base, free, blocked:false, msg:"", sup: free ? 0 : supAdd };      // sup: إضافة البلدية داخل fee (لا تُعرض للزبون؛ تُسجَّل في الطلب لمعاينة المدير)
 }
 /* تعطيل خيار المنزل/المكتب المحجوب في بلدية مستثناة وتحويل الاختيار إلى الآخر إن أمكن */
 function shipRadios(name, w, commune){
@@ -188,7 +188,7 @@ const Cart = {
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record && (disc.couponDiscount > 0 || couponFreeShip() || couponGiftTitle()) ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && disc.couponDiscount > 0 && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
@@ -1125,7 +1125,7 @@ function initProduct(slug){
       items: orderItems(),
       subtotal: state.offer.price, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);

@@ -13,4 +13,5 @@ t("اسم البلدية بحروف/تشكيل مختلفة يطابق", q(w, "K
 t("سعر حر لمنتج: لا إضافة", q(w, "Kouba", "home", 2400, "free", { home: 600, stop: null }).fee === 600);
 t("شحن مجاني للولاية يبقى 0", q(Object.assign({}, w, { fh: true }), "Kouba", "home", 2400, "", null).fee === 0);
 t("ولاية جديدة (par) تأخذ إضافات أمها", make({ 16: { x: [30, 0] } })({ id: 59, par: 16, name: "N", home: 700, stop: 400 }, "X", "home", 1, "", null).fee === 730);
+t("الإضافة تُعاد في sup (50) ولا تُحسب مجاناً", q(w, "Kouba", "home", 2400, "", null).sup === 50 && q(w, "Bab Ezzouar", "home", 2400, "", null).sup === 0 && q(Object.assign({}, w, { fh: true }), "Kouba", "home", 2400, "", null).sup === 0);
 console.log(bad ? "✗ فشل " + bad : "✓ نجح " + ok + " من " + ok); process.exit(bad ? 1 : 0);
