@@ -370,3 +370,4 @@ html.glass input[type=checkbox]:disabled,html.glass input[type=radio]:disabled{o
 .dlv-sw input:focus-visible + i{outline:2px solid rgba(134,239,172,.5);outline-offset:2px}
 .dlv-sw span{color:#fff}
 select.dlv-pick{width:auto;padding:.15rem .3rem;border-radius:9px;font-size:.78rem}
+html.glass .st-fresh{background:rgba(74,222,128,.22);color:#86efac;border:1px solid rgba(134,239,172,.5)}

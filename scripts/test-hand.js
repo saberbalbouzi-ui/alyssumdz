@@ -228,6 +228,25 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { before, after: Admin.getFilteredOrders().map(x => x.o.id).join("") };
   });
   ok("ترتيب الطلبات: في انتظار التأكيد أولاً ثم المؤكَّدة ثم الملغاة (ثابت داخل المجموعة)", srt.before === "cebdaf" && srt.after === "eabdcf", srt);
+  // ── أتمتة: جديد/في انتظار التأكيد، إرسال المؤكَّد تلقائياً، حذف الملغى ──
+  const au = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); API.deleteOrder = async () => true; window.confirm = () => true; Admin.orderFilters = {}; Admin.enqueueNotify = () => { };
+    const wait = ms => new Promise(r => setTimeout(r, ms)), mk = (id, st, note) => ({ id, date: new Date().toISOString(), status: st, name: "ز" + id, phone: "0550000000", wilaya: "Alger", commune: "Alger Centre", items: "", subtotal: 3000, fee: 0, total: 3000, note: note || "" });
+    Admin.orders = [mk("w", "annulee"), mk("z", "confirmee"), mk("y", "nouvelle", "📞1"), mk("x", "nouvelle")];
+    const order1 = Admin.getFilteredOrders().map(r => r.o.id).join(""), badge = (() => { Admin.renderOrders(); return document.querySelectorAll("#orders-table .st-fresh").length; })();
+    Admin.orderCompanyKey = () => "yalidine"; Admin.activeCompanyKey = () => "yalidine"; let sentIds = [];
+    Admin.sendOrderToDelivery = async i => { sentIds.push(Admin.orders[i].id); Admin.orders[i].note = ((Admin.orders[i].note || "") + " 🚚yalidine:T" + i).trim(); return true; };
+    Admin.confirmOrder(Admin.orders.findIndex(o => o.id === "x")); await wait(200);
+    const sentFirst = sentIds.join(), x = Admin.orders.find(o => o.id === "x"), listed = Admin.getFilteredOrders().map(r => r.o.id).join(""), shipped = Admin.shippedOrders().map(r => r.o.id).join("");
+    Admin.setAutoOpt("send", false); Admin.confirmOrder(Admin.orders.findIndex(o => o.id === "z")); await wait(150); const noAuto = sentIds.join(); Admin.setAutoOpt("send", true);
+    await Admin.changeStatus(Admin.orders.findIndex(o => o.id === "y"), "annulee"); await wait(150); const ids2 = Admin.orders.map(o => o.id).join("");
+    Admin.orders.push(mk("t", "nouvelle", "🚚yalidine:TT")); await Admin.changeStatus(Admin.orders.length - 1, "annulee"); await wait(100); const keepTracked = Admin.orders.some(o => o.id === "t");
+    return { order1, badge, sent: sentFirst, x: x.status, listed, shipped, noAuto, ids2, keepTracked };
+  });
+  ok("الأتمتة: «جديد» (بلا اتصال) في الأعلى ثم «في انتظار التأكيد» ثم المؤكَّد ثم الملغى + شارة جديد", au.order1 === "xyzw" && au.badge === 1, au);
+  ok("الأتمتة: تأكيد الطلب يرسله للشركة وينتقل فوراً من الطلبات إلى المسجلة", au.sent === "x" && au.x === "confirmee" && !au.listed.includes("x") && au.shipped.includes("x"), au);
+  ok("الأتمتة: إيقاف مفتاح الإرسال التلقائي يمنع الإرسال", au.noAuto === "x", au);
+  ok("الأتمتة: الطلب الملغى غير المرسَل يُحذف تلقائياً، والمرسَل لا يُحذف", !au.ids2.includes("y") && au.keepTracked === true, au);
   // ── مكتبة الملصقات (بحث متعدد اللغات + إضافة بنقرة) ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار ملصقات", ""); pg.slug = "stk-t"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => PBApp.ltoggle("stk")); await p.waitForFunction(() => document.querySelectorAll("#stk-out .stk-i").length > 20, null, { timeout: 15000 }).catch(() => { });

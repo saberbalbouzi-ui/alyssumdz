@@ -78,6 +78,7 @@ const AdminOrdersPlus = (() => {
       if (!confirm("تغيير حالة " + L.length + " طلب إلى «" + ((A().ST_AR || {})[st] || st) + "»؟\nلن يُرسَل شيء لشركة التوصيل؛ هذا تغيير حالة فقط.")) return;
       const ad = A(); L.forEach(o => { const i = ad.orders.indexOf(o); if (i >= 0 && o.status !== st) { try { API.updateOrder(ad.key, o.id, st); ad.onStatusChange && ad.onStatusChange(i, st); o.status = st; } catch (e) { console.warn(e); } } });
       sel.clear(); ad.renderOrders(); try { ad.renderStats(); } catch (e) { } toast("✅ حُدِّثت الحالات");
+      if (ad.afterManualStatus && (st === "confirmee" || st === "annulee")) (async () => { for (const o of L) { await ad.afterManualStatus(o, st, true); } try { ad.renderOrders(); ad.renderShipped && ad.renderShipped(); } catch (e) { } })();
     }
   }
   function decorate() {
