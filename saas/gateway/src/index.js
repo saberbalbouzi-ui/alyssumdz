@@ -2,8 +2,18 @@ import { createApp } from "./app.js";
 import { Vault } from "./crypto.js";
 import DOCS from "./docs.js";
 
+/** مُرحِّل خارج Cloudflare لطلبات الشركات (ياليدين ترفض عناوين Workers بـ403). يُفعَّل بوجود RELAY_URL وRELAY_SECRET. */
+function relayFetch(env) {
+  if (!env.RELAY_URL || !env.RELAY_SECRET) return null;
+  return async (url, init = {}) => {
+    const r = await fetch(env.RELAY_URL, { method: "POST", signal: init.signal, headers: { "Content-Type": "application/json", "x-relay-secret": env.RELAY_SECRET }, body: JSON.stringify({ url, method: init.method, headers: init.headers, body: init.body }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status !== 200 || typeof j.status !== "number") throw new Error("relay_" + r.status + (j.error ? ":" + j.error : ""));
+    return { status: j.status, text: async () => j.body ?? "" };
+  };
+}
 function build(env) {
-  return createApp({ d1: env.DB, vault: Vault.fromEnv(env), baseUrl: env.PUBLIC_URL || "", adminToken: env.ADMIN_TOKEN || "", docsHtml: DOCS });
+  return createApp({ carrierFetch: relayFetch(env), d1: env.DB, vault: Vault.fromEnv(env), baseUrl: env.PUBLIC_URL || "", adminToken: env.ADMIN_TOKEN || "", docsHtml: DOCS });
 }
 export default {
   async fetch(request, env) {

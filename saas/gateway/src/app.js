@@ -20,8 +20,8 @@ const REF = /^[A-Za-z0-9._-]{1,64}$/;
  * بوابة الشحن (Cloudflare Worker + D1). handle() نقية: لا تقرأ كائن Request ولا تعتمد على البيئة فتُختبر بلا خادم.
  * وضعان للمفاتيح: inline (مع كل طلب، لا تُخزَّن) أو vault (مشفّرة في gw_connections).
  */
-export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "" }) {
-  const db = new DB(d1), tenants = new Tenants(db, vault), limiter = new Limiter(db, clock), dispatcher = new Dispatcher(db, tenants, fetchFn, clock), http = makeHttp(fetchFn);
+export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "", carrierFetch = null }) {
+  const db = new DB(d1), tenants = new Tenants(db, vault), limiter = new Limiter(db, clock), dispatcher = new Dispatcher(db, tenants, fetchFn, clock), http = makeHttp(carrierFetch ?? fetchFn);
   const aadConn = (tid, code) => `tenant:${tid}|carrier:${code}`;
 
   async function handle(method, path, query, headers, raw, ip = "0") {

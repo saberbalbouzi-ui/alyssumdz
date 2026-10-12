@@ -12,7 +12,7 @@ export function makeHttp(fetchFn = fetch) {
     if (!safeHttpsUrl(url)) return { status: 0, body: "", error: "insecure_url", ok: false, json: () => null };
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 25000);
     try {
-      const r = await fetchFn(url, { method, headers, body: body == null ? undefined : (typeof body === "string" ? body : JSON.stringify(body)), redirect: "manual", signal: ctl.signal });
+      const r = await fetchFn(url, { method, headers: { "User-Agent": "Mozilla/5.0 (compatible; ShippingGateway/1.0)", Accept: "application/json", ...headers }, body: body == null ? undefined : (typeof body === "string" ? body : JSON.stringify(body)), redirect: "manual", signal: ctl.signal });
       const text = (await r.text()).slice(0, 2_000_000);
       return { status: r.status, body: text, error: "", ok: r.status >= 200 && r.status < 300, json: () => { try { const j = JSON.parse(text); return j && typeof j === "object" ? j : null; } catch { return null; } } };
     } catch (e) { return { status: 0, body: "", error: String(e.message || e), ok: false, json: () => null }; }
