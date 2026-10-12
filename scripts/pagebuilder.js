@@ -1309,6 +1309,7 @@ ${FX_JS}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 ${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); return u ? `<link href="${u}" rel="stylesheet" media="print" onload="this.media='all'">` : ""; })()}
+<noscript><style>[data-anim],.pb-bl[data-ia] .pb-bi{opacity:1!important;transform:none!important}</style></noscript>
 <style>${BASE_CSS}
 .pb-page{background:${esc(page.bg || "#fff")}${page.ff ? ";font-family:" + page.ff : ""}}
 ${r.css}

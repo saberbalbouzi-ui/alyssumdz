@@ -665,3 +665,9 @@ a[href^="tel:"]{direction:ltr}
 .pb-ct{overflow:visible;line-height:1.25}                    /* حرف الإحصاء السفلي لا يُقصّ */
 :focus-visible{outline:3px solid var(--gold,#c8a24b);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){body::before,body::after{animation:none!important}}
+/* v1.89.134 — تباين صفحات المنتجات (تسريب --green الداكن) وهيدر الجوال الضيّق */
+html body .lp-head h2{color:#F5FAF5!important}
+html body #related .price{color:#BEF264!important}
+html body #fee{color:#A7C4B2!important}
+@media(max-width:420px){header.site .container{gap:.5rem}header.site .logo{font-size:1.25rem!important}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}

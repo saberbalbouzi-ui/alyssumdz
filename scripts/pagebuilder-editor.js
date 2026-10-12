@@ -377,6 +377,7 @@ body{overflow-x:hidden;margin:0}`;
     const kd = e => { if (e.key === "Enter") { e.preventDefault(); i.blur(); } else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); i.removeEventListener("blur", bl); end(false); i.blur(); } };
     const bl = () => end(true); i.addEventListener("keydown", kd); i.addEventListener("blur", bl);
   }
+  try { window.addEventListener("beforeunload", e => { if (E.dirty && document.querySelector("#pb-app.on")) { e.preventDefault(); e.returnValue = ""; } }); } catch (e) { }
   function meta(k, v) { E.page[k] = v; if (k === "title" && E.isNew && !E.slugTouched) { E.page.slug = slugify(v); } E.dirty = true; clearTimeout(saveT); saveT = setTimeout(() => { commitHist(); saveDraft(); }, 600); if (k === "title") { updateTop(); if (E.ltab === "pg") { const s = $("pg-slug"); if (s && E.isNew && !E.slugTouched) s.value = E.page.slug; } } else renderCanvas(); }
   const slugify = t => String(t || "").toLowerCase().trim().replace(/[^a-z0-9؀-ۿ]+/g, "-").replace(/[؀-ۿ]+/g, "").replace(/^-+|-+$/g, "") || "page-" + Date.now().toString(36).slice(-4);
 
@@ -842,7 +843,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const build = (list, id) => { const m = document.createElement("div"); m.id = id; m.className = "pbx-ctx" + (id === "pbx-ctx2" ? " pbx-ctx2" : "");
       if (id === "pbx-ctx") { const gh = document.createElement("div"); gh.className = "ctx-h"; gh.title = "اسحب لتحريك القائمة"; gh.textContent = "⋯⋯⋯"; gh.onpointerdown = ev => { ev.preventDefault(); const r = m.getBoundingClientRect(), dx = ev.clientX - r.left, dy = ev.clientY - r.top; try { gh.setPointerCapture(ev.pointerId); } catch (x) { } const o2 = $("pbx-ctx2"); if (o2) o2.remove(); gh.onpointermove = e2 => { m.style.left = Math.max(0, Math.min(e2.clientX - dx, innerWidth - 40)) + "px"; m.style.top = Math.max(0, Math.min(e2.clientY - dy, innerHeight - 24)) + "px"; }; gh.onpointerup = gh.onpointercancel = () => { gh.onpointermove = gh.onpointerup = gh.onpointercancel = null; }; }; m.appendChild(gh); }
       list.forEach(it => { if (it === "-") { m.appendChild(document.createElement("hr")); return; } const b = document.createElement("button"); b.type = "button"; if (it[4]) b.className = "dng"; if (it[6]) b.classList.add("off"); if (it[5]) b.classList.add("has-sub");
-        b.innerHTML = `<span style="width:18px;text-align:center">${it[0]}</span>${esc(it[1])}${it[3] ? `<kbd>${esc(it[3])}</kbd>` : ""}`;
+        b.innerHTML = `<span style="width:18px;text-align:center">${it[0]}</span>${esc(it[1])}${it[3] ? `<kbd dir="ltr">${esc(it[3])}</kbd>` : ""}`;
         if (it[5]) { const open = () => { const o = $("pbx-ctx2"); if (o) o.remove(); const sm = build(it[5], "pbx-ctx2"), r = b.getBoundingClientRect(); document.body.appendChild(sm); const w = sm.offsetWidth; place(sm, r.right + w + 6 > innerWidth ? r.left - w - 4 : r.right + 4, r.top - 6); }; b.onmouseenter = open; b.onclick = ev => { ev.stopPropagation(); open(); }; }
         else { b.onmouseenter = () => { const o = $("pbx-ctx2"); if (o && id === "pbx-ctx") o.remove(); }; b.onclick = ev => { ev.stopPropagation(); if (it[6]) return; hideCtx(); it[2](); }; }
         m.appendChild(b); }); return m; };
