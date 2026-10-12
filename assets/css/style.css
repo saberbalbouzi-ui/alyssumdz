@@ -671,3 +671,39 @@ html body #related .price{color:#BEF264!important}
 html body #fee{color:#A7C4B2!important}
 @media(max-width:420px){header.site .container{gap:.5rem}header.site .logo{font-size:1.25rem!important}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+/* ========== v1.89.135 — نظام تصميم موحّد للمتجر (قرار صاحب المتجر) ==========
+   أزرار: زجاج شفاف منتفخ بنص أبيض (أخضر أساسي / رمادي ثانوي / أحمر خطر)، ارتفاع 48px، تحويم = تلوين + translateY(-2px)
+   خطوط: Cairo، سلّم 12/14/16/18/22/28/36/44، أوزان 400/700/800/900، أدنى حجم 12px */
+html body{--ds-glass-g:rgba(74,222,128,.22);--ds-glass-g2:rgba(74,222,128,.34);--ds-line-g:rgba(134,239,172,.45);--ds-glass-w:rgba(255,255,255,.08);--ds-glass-w2:rgba(255,255,255,.16);--ds-line-w:rgba(255,255,255,.28);--ds-inset:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -6px 12px rgba(0,0,0,.18),0 8px 20px rgba(0,0,0,.25)}
+html body .btn-order,html body .btn-wa,html body .btn-gold,html body .cta,html body .bb-btn,html body .lp-btn-gold,html body .lp-btn-green,html body .cart-btn,html body .chip.active,html body .chip:hover{
+  background:var(--ds-glass-g)!important;background-image:none!important;color:#fff!important;border:1px solid var(--ds-line-g)!important;border-radius:14px!important;
+  box-shadow:var(--ds-inset)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);text-shadow:none!important;
+  min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:800;text-decoration:none;cursor:pointer;
+  transition:background .2s,transform .2s,border-color .2s}
+html body .btn-order,html body .btn-wa{display:flex;width:100%}
+html body .cart-btn{min-height:44px;min-width:44px;width:44px;height:44px;padding:0}
+html body .btn-order:hover,html body .btn-wa:hover,html body .btn-gold:hover,html body .cta:hover,html body .bb-btn:hover,html body .lp-btn-gold:hover,html body .lp-btn-green:hover,html body .cart-btn:hover{background:var(--ds-glass-g2)!important;transform:translateY(-2px)!important}
+html body .btn-cart2,html body #prod-coupon-btn,html body #cart-coupon-btn{
+  background:var(--ds-glass-w)!important;color:#fff!important;border:1px solid var(--ds-line-w)!important;border-radius:14px!important;box-shadow:var(--ds-inset)!important;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);min-height:48px;font-weight:800;cursor:pointer;transition:background .2s,transform .2s}
+html body .btn-cart2:hover,html body #prod-coupon-btn:hover,html body #cart-coupon-btn:hover{background:var(--ds-glass-w2)!important;transform:translateY(-2px)}
+html body .btn-danger,html body .cart-del{background:rgba(239,68,68,.22)!important;border:1px solid rgba(252,165,165,.5)!important;color:#fff!important;border-radius:14px}
+html body .cart-count{background:#b83232;color:#fff;font-weight:800}
+/* سلّم الخطوط */
+html body{font-family:"Cairo",system-ui,sans-serif}
+html body:not(.pb-edit) h1:not(#hero *):not(.pb-hro *):not(.hero *){font-size:clamp(2rem,4vw,2.75rem)!important;font-weight:900!important;line-height:1.25}
+html body:not(.pb-edit) h2:not(#hero *):not(.pb-hro *):not(.hero *){font-size:clamp(1.5rem,3vw,2.25rem)!important;font-weight:800!important;line-height:1.3}
+h3{font-size:1.125rem;font-weight:800}
+.mi-c,.best,.av-tag,.cart-count,small,.hint{font-size:max(12px,.75rem)}
+/* أهداف اللمس والتباين */
+html body .chip,html body .ch-share-btn,html body .mb-burger,html body #coupon,html body #prod-coupon,html body #cart-coupon{min-height:44px}
+html body .ch-share-btn{min-width:44px;justify-content:center}
+html body footer.site a{padding-block:.5rem;display:inline-block}
+html body header.site .ch-share-btn,html body header.site .ch-share-btn svg{color:#ecfdf5;fill:currentColor}
+/* h2 داخل بطاقات داكنة: حجم الصفحة نفسه لكن لا يتجاوز عرض الشاشة */
+html body h1,html body h2{overflow-wrap:anywhere}
+html body #chips .chip.active,html body #chips .chip:hover{background:var(--ds-glass-g)!important;background-image:none!important;color:#fff!important;border:1px solid var(--ds-line-g)!important}
+html body .aly-buybar .bb-btn{background:var(--ds-glass-g)!important;background-image:none!important;color:#fff!important;border:1px solid var(--ds-line-g)!important;border-radius:14px!important;box-shadow:var(--ds-inset)!important;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
+html body .aly-buybar .bb-btn:hover{background:var(--ds-glass-g2)!important;transform:translateY(-2px)}
+@media(max-width:420px){html body header.site .ch-share-btn:not(.ch-share-wide){display:none}}
+@media(max-width:420px){html body header .ch-share-btn:not(.ch-share-wide){display:none!important}html body header .container,html body header.pb-hd{gap:.5rem!important}html body header .logo{font-size:1.25rem!important}html body header .container{padding-inline:12px!important}}

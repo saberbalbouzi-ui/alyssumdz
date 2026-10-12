@@ -800,6 +800,14 @@ function injectCouponBox(idPrefix, beforeEl, getSubtotal, rerender, getItems){
 function initProduct(slug){
   const p = PRODUCTS.find(p=>p.slug===slug);
   if(!p) return;
+  /* تنبيه طبي لمنتجات الصحة (assets/data/med-notes.json): يظهر قبل نموذج الطلب */
+  try{ fetch(REL + "assets/data/med-notes.json", {cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{
+    if(!j || !(j.slugs||[]).includes(p.slug) || document.getElementById("med-note")) return;
+    const f = document.getElementById("order-form") || document.getElementById("pb-order"); if(!f) return;
+    const d = document.createElement("p"); d.id = "med-note"; d.textContent = j.text || "";
+    d.style.cssText = "margin:.8rem 0;padding:.7rem .9rem;border:1px solid rgba(251,191,36,.45);border-radius:12px;background:rgba(245,158,11,.12);color:#fde68a;font-size:.88rem;line-height:1.7";
+    f.parentNode.insertBefore(d, f);
+  }).catch(()=>{}); }catch(e){}
   /* «مسار المنتج»: إن اختيرت صفحة هبوط لهذا المنتج فهي مساره الرئيسي، فيُحوَّل إليها أي دخول مباشر لصفحته (إعلان، واتساب، بحث، رابط محفوظ) بنفس معاملات الرابط؛ لا يُحوَّل داخل الإطارات والمعاينة، ولا مع ?noroute=1 للوصول للصفحة الأصلية */
   try{
     if(p.route && self===top && !/[?&](noroute|embed|preview)=/.test(location.search)){
