@@ -386,3 +386,7 @@ html.glass #gen-card #gen-adv input:not([type=checkbox]):not([type=radio]),
 html.glass #gen-card #gen-adv select,
 html.glass #gen-card #gen-adv textarea{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.28)}
 html.glass #gen-card #gen-adv select option{background:#0b1f17;color:#fff}
+
+/* v1.89.128: كلمة «تعديل» وسهما الرجوع/العودة في شريط الصورة بلون تمييز المظهر */
+html.glass .pbx-qbar button[data-qb="edit"] .tx,html.glass .pbx-qbar button[data-qb="undo"],html.glass .pbx-qbar button[data-qb="redo"]{color:var(--g-mint)}
+html.white .pbx-qbar button[data-qb="edit"] .tx,html.white .pbx-qbar button[data-qb="undo"],html.white .pbx-qbar button[data-qb="redo"]{color:var(--ac,#16a34a)}

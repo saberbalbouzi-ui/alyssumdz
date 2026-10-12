@@ -162,7 +162,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-ac{border:1.5px solid #eadfc4;border-radius:10px;margin-bottom:.55rem;background:#fff;overflow:hidden}.pbx-ach{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:#faf6ec;padding:.55rem .7rem;font-family:inherit;font-weight:800;font-size:.86rem;color:#173f35;cursor:pointer}.pbx-ach.on{background:#f1ebdd}.pbx-ach i{font-style:normal;color:#a08a55}.pbx-acb{padding:.6rem .6rem .2rem}
 .pbx-qbar{position:fixed;z-index:21;display:flex;align-items:center;gap:2px;background:#fff;border-radius:14px;padding:5px 8px;box-shadow:0 3px 16px rgba(14,19,24,.22),0 0 0 1px rgba(64,87,109,.08);overflow-x:auto;overflow-y:hidden;white-space:nowrap;font-family:inherit;color:#0e1318}
 .pbx-qbar button,.pbx-qbar label.qa{flex:none;min-width:34px;height:36px;border:0;background:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 8px;font-family:inherit;font-weight:700;font-size:.82rem;color:inherit;position:relative}
-.pbx-qbar button:hover,.pbx-qbar label.qa:hover{background:#ebeef2}.pbx-qbar button.on{background:#e8dcff;color:#4b1fa8}.pbx-qbar button svg{width:18px;height:18px}
+.pbx-qbar button:hover,.pbx-qbar label.qa:hover{background:#ebeef2}.pbx-qbar button.on{background:#e8dcff;color:#4b1fa8}.pbx-qbar button[data-qb="edit"] .tx{color:var(--g-mint,var(--ac,#16a34a));font-weight:700}.pbx-qbar button[data-qb="undo"],.pbx-qbar button[data-qb="redo"]{color:var(--g-mint,var(--ac,#16a34a))}.pbx-qbar button:disabled{opacity:.35;cursor:default}.pbx-qbar button svg{width:18px;height:18px}
 .pbx-qbar select{flex:none;height:36px;border:1px solid #d9dbe3;border-radius:8px;padding:0 .4rem!important;margin:0!important;width:auto!important;font-family:inherit;font-size:.82rem;background:#fff;max-width:150px}
 .pbx-qbar .qn{display:inline-flex;align-items:center;border:1px solid #d9dbe3;border-radius:8px;height:36px;flex:none;margin:0 3px}.pbx-qbar .qn button{min-width:26px;padding:0}.pbx-qbar .qn input{padding:0!important;margin:0!important;box-shadow:none!important;width:44px;border:0;text-align:center;font-family:inherit;font-weight:700;font-size:.85rem;background:none;height:34px}
 .pbx-qbar .ic{display:none}.pbx-qbar .ic svg{width:19px;height:19px}.pbx-qbar select{max-width:130px}
@@ -356,12 +356,12 @@ body{overflow-x:hidden;margin:0}`;
   function histGo(i) { const en = (E.log || [])[i]; if (!en) return; E.page = JSON.parse(en.snap); E.nextLabel = "رجوع إلى المرحلة " + (i + 1) + ": " + en.label; E.dirty = true; if (E.sel && !find(E.sel)) E.sel = null; commitHist(); afterHist(); toast("↩ رُجع إلى المرحلة " + (i + 1) + " — «" + en.label + "» (يمكنك التراجع عن هذا الرجوع أيضاً)"); }
   function undo() { if (E.hi <= 0) return; E.hi--; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
   function redo() { if (E.hi >= E.hist.length - 1) return; E.hi++; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
-  function afterHist() { E.mwp = null; if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); }
+  function afterHist() { E.mwp = null; if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); drawQbarSoon(); }
   const draftKey = () => "pb_draft_" + (E.slug || "new");
   function saveDraftNow() { saveDraft(); }
   function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(E.page)); } catch (e) { } }
   function updateTop() {
-    $("pbx-undo").disabled = E.hi <= 0; $("pbx-redo").disabled = E.hi >= E.hist.length - 1;
+    $("pbx-undo").disabled = E.hi <= 0; $("pbx-redo").disabled = E.hi >= E.hist.length - 1; document.querySelectorAll('.pbx-qbar [data-qb="undo"]').forEach(b => b.disabled = E.hi <= 0); document.querySelectorAll('.pbx-qbar [data-qb="redo"]').forEach(b => b.disabled = E.hi >= E.hist.length - 1);
     $("pbx-dirty").textContent = E.dirty ? "● تعديلات غير منشورة" : "";
     document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap); const lv = $("pbx-live"); if (lv) lv.classList.toggle("on", E.live); const fxb = $("pbx-fx"); if (fxb) fxb.classList.toggle("on", E.fx);
   }
@@ -1122,6 +1122,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
 
   /* ───────────────── شريط الإعدادات السريعة أعلى الصفحة (نمط Canva): يتغيّر حسب نوع العنصر المحدد ───────────────── */
   const QI = {
+    undo: SVG('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>'), redo: SVG('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/>'),
     B: '<b style="font-size:1.05rem">B</b>', I: '<i style="font-size:1.05rem;font-family:serif">I</i>', U: '<u style="font-size:1rem">U</u>', S: '<s style="font-size:1rem">S</s>', case: '<span style="font-size:.95rem">aA</span>',
     al: { start: SVG('<path d="M4 6h16M4 12h10M4 18h14"/>'), center: SVG('<path d="M4 6h16M7 12h10M5 18h14"/>'), end: SVG('<path d="M4 6h16M10 12h10M6 18h14"/>') },
     list: SVG('<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/>'),
@@ -1146,7 +1147,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   const qDone = (inf, k, v, r) => { qSet(inf, k, v, r); afterEdit(); };
   const qFont = inf => { const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"] .pb-t`); return el ? fdoc.defaultView.getComputedStyle(el) : null; };
   function qbarHtml(inf) {
-    const t = inf.node.type, set = inf.set, dev = E.dev, isTx = t === "heading" || t === "text", isImg = t === "image", btn = (k, ic, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}>${ic}</button>`, tb = (k, label, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}><span class="ic">${QI[k] || QI.flip}</span><span class="tx">${label}</span></button>`, sep = '<span class="qsep"></span>';
+    const t = inf.node.type, set = inf.set, dev = E.dev, isTx = t === "heading" || t === "text", isImg = t === "image", btn = (k, ic, tt, on, dis) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${ic}</button>`, tb = (k, label, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}><span class="ic">${QI[k] || QI.flip}</span><span class="tx">${label}</span></button>`, sep = '<span class="qsep"></span>';
     let h = "";
     if (isTx) {
       const cs = qFont(inf), fs = Number(eff(set, "fs", dev)) || (cs ? Math.round(parseFloat(cs.fontSize)) : 17), fw = Number(set.fw || (cs && cs.fontWeight) || 400), col = /^#[0-9a-f]{6}$/i.test(set.color || "") ? set.color : (cs ? "#" + (cs.color.match(/\d+/g) || [0, 0, 0]).slice(0, 3).map(n => Number(n).toString(16).padStart(2, "0")).join("") : "#000000");
@@ -1157,7 +1158,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
         + btn("bold", QI.B, "عريض", fw >= 600) + btn("italic", QI.I, "مائل", set.fst === "italic") + btn("under", QI.U, "تحته خط", set.td === "underline") + btn("strike", QI.S, "يتوسطه خط", set.td === "line-through") + btn("case", QI.case, "حالة الأحرف: كبيرة / أول حرف / عادي", !!set.tt && set.tt !== "none")
         + btn("align", QI.al[ta] || QI.al.start, "محاذاة النص (تتبدّل: بداية / وسط / نهاية)") + btn("dir", set.tdir === "ltr" ? QI.ltr : QI.rtl, "اتجاه النص: من اليمين لليسار / من اليسار لليمين") + btn("list", QI.list, "قائمة بنقطة أو أيقونة", t === "text" ? /<[uo]l/i.test(set.html || "") : !!set.lm) + `<label class="qa" title="لون رمز القائمة (الافتراضي: لون النص)"><b>${esc(set.lm && set.lm !== "num" ? set.lm : "•")}</b><i style="background:${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></i><input type="color" data-qi="lmc" value="${/^#[0-9a-f]{6}$/i.test(set.lmc || "") ? set.lmc : col}"></label>` + btn("spacing", QI.sp, "التباعد: بين الحروف وبين الأسطر") + sep;
     } else if (isImg) {
-      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("edit", "تعديل", "أدوات الصورة في شريط جانبي: بازل، ماسك، نزع الخلفية، التقاط العناصر", !!$("pbx-ep")) + (ERASER_ON ? tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") : "") + sep
+      h += tb("replace", "استبدال", "استبدال الصورة (رفع صورة جديدة)") + tb("edit", "تعديل", "أدوات الصورة في شريط جانبي: بازل، ماسك، نزع الخلفية، التقاط العناصر", !!$("pbx-ep")) + ($("pbx-ep") ? btn("undo", QI.undo, "رجوع (تراجع عن آخر تعديل)", false, E.hi <= 0) + btn("redo", QI.redo, "عودة (إعادة التعديل الذي تراجعت عنه)", false, E.hi >= E.hist.length - 1) : "") + (ERASER_ON ? tb("eraser", "ممحاة", "ممحاة بالفرشاة: ارسم على ما تريد حذفه فتُرمَّم الخلفية تلقائياً") : "") + sep
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + btn("crop", QI.crop, "قصّ الصورة", !!set.crop) + tb("flip", "قلب", "قلب الصورة أفقياً أو عمودياً", !!(set.flx || set.fly)) + sep;
     } else {
       const cks = [...new Map((inf.def.ctl || []).filter(c => c.t === "color").map(c => [c.k, c])).values()].slice(0, 6);
@@ -1454,6 +1455,8 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "style") return qPop(btn, `<h6>نمط العنصر</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-a="copy">🖌️ نسخ النمط</button><button type="button" class="pb2"${E.styleClip ? "" : " disabled style=\"opacity:.4\""} data-a="paste">🎨 لصق النمط</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { b.dataset.a === "copy" ? copyStyle() : pasteStyle(); qAct("style", btn); }), { dock: true });
     if (k === "border") { const bw = Number(set.bw) || 0, bs = (qDef(inf, "bs") || { o: [] }).o; return qPop(btn, qRange(inf, null, "bw", "سماكة الإطار (px)", 0, 40, 1, bw) + `<h6>النمط</h6><select data-pa>${bs.map(([v, n]) => `<option value="${v}"${(set.bs || "solid") === v ? " selected" : ""}>${n}</option>`).join("")}</select><h6>اللون</h6><input type="color" data-pc value="${/^#[0-9a-f]{6}$/i.test(set.bc || "") ? set.bc : "#333333"}">`, p => { p.querySelector("[data-pa]").onchange = e => qDone(inf, "bs", e.target.value); p.querySelector("[data-pc]").oninput = e => qLive(inf, "bc", e.target.value); p.querySelector("[data-pc]").onchange = () => { commitHist(); renderInspector(); }; bindRanges(p, inf, (kk, v) => qLive(inf, kk, v || "")); }, { dock: true }); }
     if (k === "radius") return qPop(btn, qRange(inf, null, "rad", "تدوير الزوايا (px)", 0, 200, 1, Number(eff(set, "rad", dev)) || 0), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)));
+    if (k === "undo") { undo(); return; }
+    if (k === "redo") { redo(); return; }
     if (k === "edit") return epToggle();
     if (k === "replace") return uploadFor(inf);
     if (k === "mw") return mwPanel(inf, btn);

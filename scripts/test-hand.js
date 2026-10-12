@@ -148,6 +148,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); document.querySelector('[data-qb="edit"]') && document.querySelector('[data-qb="edit"]').click(); }); await p.waitForTimeout(500);
   const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-ep [data-ept="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); return { tab: true, panel: !!document.getElementById("pbst"), btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
   ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.btns >= 4 && ui.sw >= 10, ui);
+  const qb = await p.evaluate(async () => {
+    const q = document.querySelector(".pbx-qbar"), tx = q && q.querySelector('[data-qb="edit"] .tx'), u = q && q.querySelector('[data-qb="undo"]'), r = q && q.querySelector('[data-qb="redo"]'); const o = { tx: !!tx, u: !!u, r: !!r };
+    if (tx) { const probe = document.createElement("i"); probe.style.color = getComputedStyle(document.documentElement).getPropertyValue("--g-mint") || ""; o.col = getComputedStyle(tx).color; o.mint = getComputedStyle(probe).color; o.green = /^rgb\((\d+), (\d+), (\d+)\)/.test(o.col) && +RegExp.$2 > +RegExp.$1 && +RegExp.$2 > +RegExp.$3; }
+    PBApp.E.nextLabel = "اختبار"; const inf = PBApp.E.page; const before = PBApp.E.hi; PBApp.E.hist.length; o.hi0 = before;
+    u && !u.disabled && u.click(); o.hi1 = PBApp.E.hi; r && r.click && (await new Promise(x => setTimeout(x, 50)), document.querySelector('.pbx-qbar [data-qb="redo"]').click()); o.hi2 = PBApp.E.hi;
+    document.querySelector('[data-qb="edit"]').click(); await new Promise(x => setTimeout(x, 150)); o.closed = !document.getElementById("pbx-ep") && !document.querySelector('.pbx-qbar [data-qb="undo"]');
+    document.querySelector('[data-qb="edit"]').click(); await new Promise(x => setTimeout(x, 300)); return o;
+  });
+  ok("شريط الصورة: كلمة «تعديل» خضراء بلون المظهر، وسهما رجوع/عودة يظهران مع لوحة التعديل ويعملان ويختفيان بإغلاقها", qb.tx && qb.u && qb.r && qb.green && qb.hi1 <= qb.hi0 && qb.hi2 === qb.hi0 && qb.closed, qb);
   const st2 = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const o = {};
     try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-st="cut"]') && document.querySelector('[data-st="cut"]').click(); for (let i = 0; i < 60 && !PBStudio._S.cut; i++) await w(300);
