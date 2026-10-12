@@ -52,3 +52,18 @@ CREATE TABLE IF NOT EXISTS hk_deliveries (
   state TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, last_error TEXT NULL, created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_hk_due ON hk_deliveries (state, next_at);
+-- وحدة المنتجات الرقمية: الأصول، المنح (روابط تنزيل بمدة وعدد محدودين). الرمز يُخزَّن مجزّأً، والبريد لا يُخزَّن (بصمة فقط)
+CREATE TABLE IF NOT EXISTS dg_assets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, sku TEXT NOT NULL, name TEXT NOT NULL,
+  location_enc TEXT NOT NULL, file_name TEXT NOT NULL, content_type TEXT NOT NULL DEFAULT 'application/octet-stream', active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL,
+  UNIQUE (tenant_id, sku)
+);
+CREATE TABLE IF NOT EXISTS dg_grants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, asset_id INTEGER NOT NULL REFERENCES dg_assets(id) ON DELETE CASCADE, token_hash TEXT NOT NULL UNIQUE,
+  order_ref TEXT NULL, email_h TEXT NULL, expires_at INTEGER NOT NULL, max_downloads INTEGER NOT NULL, downloads INTEGER NOT NULL DEFAULT 0, last_download_at INTEGER NULL,
+  created_at TEXT NOT NULL, revoked_at TEXT NULL, UNIQUE (tenant_id, order_ref, asset_id)
+);
+-- وحدة WhatsApp: ربط المستلم بالطلب لمطابقة ردّ «نعم/لا»، ونقطة استقبال لكل مستأجر
+CREATE TABLE IF NOT EXISTS wa_hooks (tenant_id INTEGER PRIMARY KEY REFERENCES pf_tenants(id) ON DELETE CASCADE, hook_id TEXT NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS wa_sent (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, to_h TEXT NOT NULL, order_id TEXT NOT NULL, at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_wa_sent ON wa_sent (tenant_id, to_h, at);
