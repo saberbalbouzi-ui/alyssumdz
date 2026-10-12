@@ -146,8 +146,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الاستوديو: مقاس 500×1000 والمنتج على الأرض (أسفل) والأعلى خلفية", stu.tall[0] === 500 && stu.tall[1] === 1000 && stu.bottom[0] < 60 && stu.top[1] > 250 && stu.top[0] < 5, stu);
   ok("الاستوديو: كشف الخلفية الشفافة (شفافة نعم، معتمة لا)", stu.alpha === true && stu.opaque === false, stu);
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); document.querySelector('[data-qb="edit"]') && document.querySelector('[data-qb="edit"]').click(); }); await p.waitForTimeout(500);
-  const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-ep [data-ept="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); return { tab: true, panel: !!document.getElementById("pbst"), btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
+  const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-lpane [data-imgt="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); return { tab: true, panel: !!document.getElementById("pbst"), btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
   ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.btns >= 4 && ui.sw >= 10, ui);
+  const it = await p.evaluate(async () => {
+    const tabs = [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt), pane = document.getElementById("pbx-lpane"), imgs = [...pane.querySelectorAll(".pbx-tt img")];
+    await new Promise(r => setTimeout(r, 600)); const o = { second: tabs[1], tabOn: document.querySelector('.pbx-tabs [data-lt="img"]').classList.contains("on"), tools: pane.querySelectorAll("[data-imgt]").length, sub: pane.querySelectorAll("[data-imgs]").length, sm: pane.querySelectorAll("[data-imgm]").length, loaded: imgs.filter(i => i.naturalWidth > 0).length, imgsN: imgs.length };
+    o.tabsHidden = getComputedStyle(document.querySelector("#pbx-ep .pbst-tabs")).display === "none"; o.hasEpTabs = !!document.querySelector("#pbx-ep .ep-tabs");
+    pane.querySelector('[data-imgs="txt"]').click(); await new Promise(r => setTimeout(r, 700)); o.head = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.visPane = [...document.querySelectorAll("#pbst .pbst-pane")].filter(x => !x.hidden).map(x => x.dataset.stp).join(",");
+    pane.querySelector('[data-imgt="pz"]').click(); await new Promise(r => setTimeout(r, 400)); o.pzHead = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.subGone = !pane.querySelector("[data-imgs]");
+    PBApp.ltoggle("add"); await new Promise(r => setTimeout(r, 200)); o.closedByTab = !document.getElementById("pbx-ep");
+    PBApp.ltoggle("img"); document.querySelector('#pbx-lpane [data-imgt="st"]').click(); await new Promise(r => setTimeout(r, 600)); return o;
+  });
+  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 5 أدوات وصور حقيقية محمّلة وأدوات ذكية", it.second === "img" && it.tabOn && it.tools === 5 && it.sub === 5 && it.sm === 2 && it.imgsN >= 12 && it.loaded === it.imgsN, it);
+  ok("تعديل الصورة: اسم الأداة والإعدادات في الشريط الأيمن (بلا شريط تبويبات داخلي)، وأدوات الاستوديو تُفتح من القائمة اليسرى", it.tabsHidden && !it.hasEpTabs && /استوديو المنتج/.test(it.head) && /ملصقات/.test(it.head) && it.visPane === "txt" && /بازل/.test(it.pzHead) && it.subGone, it);
+  ok("تعديل الصورة: فتح تبويب آخر يغلق لوحة الأداة (كل تبويب يغلق الذي قبله)", it.closedByTab, it);
+  const cx = await p.evaluate(async () => {
+    PBApp.E.sel = window.__imgId; PBApp.openCtx(300, 200); await new Promise(r => setTimeout(r, 100)); const m = document.getElementById("pbx-ctx"), b = m.querySelector("button"), h = m.querySelector(".ctx-h"), cs = getComputedStyle(m), bs = getComputedStyle(b); const r0 = m.getBoundingClientRect();
+    const o = { bg: cs.backgroundColor, col: bs.color, fs: parseFloat(bs.fontSize), hasH: !!h };
+    h.dispatchEvent(new PointerEvent("pointerdown", { clientX: r0.left + 20, clientY: r0.top + 5, pointerId: 1, bubbles: true })); h.dispatchEvent(new PointerEvent("pointermove", { clientX: r0.left + 120, clientY: r0.top + 85, pointerId: 1, bubbles: true })); h.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1, bubbles: true }));
+    const r1 = m.getBoundingClientRect(); o.dx = Math.round(r1.left - r0.left); o.dy = Math.round(r1.top - r0.top); document.getElementById("pbx-ctx").remove(); return o;
+  });
+  ok("قائمة الزر الأيمن: خلفية بيضاء معتمة وخط أسود صغير وتتحرك بالسحب من أعلاها", cx.bg === "rgb(255, 255, 255)" && cx.col === "rgb(17, 17, 17)" && cx.fs <= 12.5 && cx.hasH && Math.abs(cx.dx - 100) <= 3 && Math.abs(cx.dy - 80) <= 3, cx);
   const qb = await p.evaluate(async () => {
     const q = document.querySelector(".pbx-qbar"), tx = q && q.querySelector('[data-qb="edit"] .tx'), u = q && q.querySelector('[data-qb="undo"]'), r = q && q.querySelector('[data-qb="redo"]'); const o = { tx: !!tx, u: !!u, r: !!r };
     if (tx) { const probe = document.createElement("i"); probe.style.color = getComputedStyle(document.documentElement).getPropertyValue("--g-mint") || ""; o.col = getComputedStyle(tx).color; o.mint = getComputedStyle(probe).color; o.green = /^rgb\((\d+), (\d+), (\d+)\)/.test(o.col) && +RegExp.$2 > +RegExp.$1 && +RegExp.$2 > +RegExp.$3; }

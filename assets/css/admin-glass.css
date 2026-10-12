@@ -390,3 +390,20 @@ html.glass #gen-card #gen-adv select option{background:#0b1f17;color:#fff}
 /* v1.89.128: كلمة «تعديل» وسهما الرجوع/العودة في شريط الصورة بلون تمييز المظهر */
 html.glass .pbx-qbar button[data-qb="edit"] .tx,html.glass .pbx-qbar button[data-qb="undo"],html.glass .pbx-qbar button[data-qb="redo"]{color:var(--g-mint)}
 html.white .pbx-qbar button[data-qb="edit"] .tx,html.white .pbx-qbar button[data-qb="undo"],html.white .pbx-qbar button[data-qb="redo"]{color:var(--ac,#16a34a)}
+
+/* v1.89.129: قائمة الزر الأيمن على العناصر: خلفية بيضاء معتمة وخط أسود صغير (قابلة للتحريك من أعلاها) */
+html.glass .pbx-ctx,html.white .pbx-ctx{background:#fff!important;border-color:#d9d9d9!important;backdrop-filter:none!important}
+html.glass .pbx-ctx button,html.white .pbx-ctx button{color:#111!important;font-size:12px!important}
+html.glass .pbx-ctx button:hover{background:#eef0f2!important}
+html.glass .pbx-ctx button.dng{color:#c62828!important}
+html.glass .pbx-ctx hr{border-top-color:#e5e5e5!important}
+html.glass .pbx-ctx kbd{color:#888!important}
+html.glass .pbx-ctx .ctx-h{background:#f1f1f1!important;color:#888!important}
+
+/* v1.89.129: بطاقات تبويب «تعديل الصورة» اليساري بصور حقيقية (قبل/بعد) */
+html.glass .pbx-tt{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.18)!important;color:#fff!important}
+html.glass .pbx-tt:hover{background:rgba(255,255,255,.12)!important}
+html.glass .pbx-tt.on{border-color:var(--g-mint)!important;box-shadow:0 0 0 2px rgba(134,240,106,.35)!important}
+html.glass .pbx-tt span{color:#fff!important}
+html.glass .pbx-tn{color:rgba(255,255,255,.75)!important}html.glass .pbx-tn.ok{color:var(--g-mint)!important}
+html.white .pbx-tn.ok{color:var(--ac,#15803d)}
