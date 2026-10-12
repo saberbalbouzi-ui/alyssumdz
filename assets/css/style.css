@@ -655,3 +655,13 @@ footer.site a:hover{color:var(--green)}
 [data-builder-effect="glass"]{--builder-glass:1}
 [data-builder-effect="lift"]{transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s ease}
 [data-builder-effect="lift"]:hover{transform:translateY(-6px)}
+
+/* ── إصلاحات لجنة الخبراء (v1.89.132) ── */
+.lp-head h2{color:inherit}                                   /* كان أخضر داكناً شبه مخفي على الصفحات الداكنة */
+.pb-sci span{padding-inline:46px!important}                   /* اسم الفئة لا يتداخل مع سهم البطاقة */
+a[href^="tel:"],a[href*="wa.me/"]{unicode-bidi:isolate}      /* أرقام الهاتف لا تنعكس داخل نص عربي */
+a[href^="tel:"]{direction:ltr}
+@media(max-width:767px){#agent-avatar{bottom:96px!important}#agent-avatar .av-btn{width:52px;height:52px}}
+.pb-ct{overflow:visible;line-height:1.25}                    /* حرف الإحصاء السفلي لا يُقصّ */
+:focus-visible{outline:3px solid var(--gold,#c8a24b);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){body::before,body::after{animation:none!important}}

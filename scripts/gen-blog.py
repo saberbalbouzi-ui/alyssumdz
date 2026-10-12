@@ -100,6 +100,9 @@ def shell():
         raise ValueError("index.html is missing the shared page shell markers")
     head = source[:source.index(icon_match.group(0))]
     head = re.sub(r'<link rel="preload"[^>]*>', "", head)
+    # الصفحات تُولَّد في مجلدات فرعية (blog/، policy/x/) وغلاف الرئيسية روابطه نسبية: <base> يجعلها تُحَلّ من الجذر (v1.89.132)
+    if "<base " not in head:
+        head = re.sub(r'<head([^>]*)>', r'<head\1><base href="/">', head, count=1)
     tpl = re.search(r'<style id="pb-tpl-css">.*?</style>', source, re.S)
     css = tpl.group(0) if tpl else ""
     b0 = source.index("<body>") + len("<body>")
@@ -148,7 +151,10 @@ def main():
         "".join(article_card(p) for p in posts) or "<p>لا توجد مقالات منشورة حالياً.</p>")
     blog_dir = OUT / "blog"
     blog_dir.mkdir(parents=True, exist_ok=True)
-    (blog_dir / "index.html").write_text(make_page(parts, "المدوّنة", "مقالات وأخبار المتجر", blog_body), encoding="utf-8")
+    blog_html = make_page(parts, "المدوّنة", "مقالات وأخبار المتجر", blog_body)
+    if not posts:      # مدوّنة فارغة لا تُفهرَس حتى أول مقال (لجنة الخبراء v1.89.132)
+        blog_html = blog_html.replace("</head>", '<meta name="robots" content="noindex,follow"></head>', 1)
+    (blog_dir / "index.html").write_text(blog_html, encoding="utf-8")
     for post in posts:
         slug = str(post["slug"])
         title = str(post["title"]).strip()

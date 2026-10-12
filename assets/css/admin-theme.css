@@ -209,3 +209,6 @@ html.white .ord-x{color:#334155;border-color:#cdd5e0;background:#eef1f6}
 @media (max-width:760px){.orders-compact td.nm,.orders-compact td.c-items{max-width:none}}
 .ts-menu .ts-i.danger{color:#fca5a5!important}.ts-menu .ts-i.danger:hover{background:rgba(239,68,68,.28)!important}
 #yd-card .yd-b.ydc{cursor:pointer;transition:transform .15s}#yd-card .yd-b.ydc:hover{transform:translateY(-2px)}
+
+/* ── إصلاحات لجنة الخبراء (v1.89.132) ── */
+html.white .sec-title,html.white #sec-title{color:#92400e!important;background:rgba(217,119,6,.14)!important;border-color:rgba(146,64,14,.35)!important}   /* كان عنبرياً فاتحاً على كريمي (تباين ~1.7) */

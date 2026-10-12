@@ -103,6 +103,7 @@ const Cart = {
     const ex = items.find(i => i.slug===slug && Math.abs(i.price-unitPrice) < 1e-6 && (i.vid||"")===(vid||""));
     if(ex) ex.qty += qty; else { const it = {slug, qty, price: unitPrice}; if(vid){ it.vid = vid; it.vlabel = vlabel||""; } items.push(it); }
     Cart.save(items);
+    try{ trackEvent("AddToCart", { slug, title: p ? p.title : slug, qty, value: Math.round(unitPrice * qty) }); }catch(e){}
     toast(`تمت إضافة «${p?p.title:slug}${vlabel?" — "+vlabel:""}» إلى السلة ✓`);
   },
   setQty(idx, delta){
@@ -204,6 +205,7 @@ const Cart = {
     msg += `\nالتوصيل (${dtype==="stop"?"مكتب":"للمنزل"} - ${wl.name}${commune?" / "+commune:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
+    try{ const f0 = items[0] && (PRODUCTS.find(x=>x.slug===items[0].slug) || items[0]); trackEvent("Lead", { slug: items[0] && items[0].slug, title: f0 && f0.title, qty: items.reduce((a,i)=>a+i.qty,0), value: total }); if(f0) firePixelPurchase(f0, total, items.reduce((a,i)=>a+i.qty,0)); }catch(e){}
     Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
     Thanks.show({ name, total, lines: items.map(it=>{ const q = PRODUCTS.find(x=>x.slug===it.slug)||it; return q.title + (it.qty>1?" ×"+it.qty:""); }), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   }
@@ -295,9 +297,34 @@ async function initPixels(){
       try{ injectPixelBase(px); }catch(e){ console.error("pixel init error", px.id, e); }
     });
   }catch(e){ /* تجاهل — البكسلات ليست حرجة لعمل الموقع */ }
+  window.__pxReady = true; const q = window.__pxq || []; window.__pxq = []; q.forEach(x=>trackEvent(x[0], x[1]));
+}
+/* أحداث القمع (لجنة الخبراء v1.89.132): ViewContent / AddToCart / InitiateCheckout / Lead — تُحفظ في طابور إن لم تكن البكسلات جاهزة بعد */
+const __PX_EVENTS = {
+  ViewContent:      { facebook:"ViewContent",      tiktok:"ViewContent",      ga4:"view_item" },
+  AddToCart:        { facebook:"AddToCart",        tiktok:"AddToCart",        ga4:"add_to_cart" },
+  InitiateCheckout: { facebook:"InitiateCheckout", tiktok:"InitiateCheckout", ga4:"begin_checkout" },
+  Lead:             { facebook:"Lead",             tiktok:"SubmitForm",       ga4:"generate_lead" }
+};
+function trackEvent(name, d){
+  if(!window.__pxReady){ (window.__pxq = window.__pxq || []).push([name, d]); return }
+  d = d || {};
+  (window.__activePixels || []).forEach(px=>{
+    try{
+      const m = __PX_EVENTS[name]; if(!m) return;
+      const currency = px.currency || "DZD", val = Number(d.value) || 0, qty = Number(d.qty) || 1;
+      if(px.platform === "facebook" && window.fbq){
+        fbq("track", m.facebook, { value: val, currency, content_ids: d.slug ? [d.slug] : [], content_type:"product", contents: d.slug ? [{ id: d.slug, quantity: qty }] : [] }, d.eventId ? { eventID: d.eventId } : undefined);
+      } else if(px.platform === "tiktok" && window.ttq){
+        ttq.track(m.tiktok, { value: val, currency, content_id: d.slug || "", content_type:"product", quantity: qty });
+      } else if(px.platform === "ga4" && window.gtag){
+        gtag("event", m.ga4, { value: val, currency, items: d.slug ? [{ item_id: d.slug, item_name: d.title || d.slug, quantity: qty, price: val }] : [] });
+      }
+    }catch(e){ console.error("pixel event error", name, px.id, e); }
+  });
 }
 /* يُستدعى عند نجاح تأكيد الطلب (زر «تأكيد الطلب») في initProduct أدناه */
-function firePixelPurchase(p, total, qty){
+function firePixelPurchase(p, total, qty, orderId){
   (window.__activePixels||[]).forEach(px=>{
     try{
       const currency = px.currency || "DZD";
@@ -306,9 +333,9 @@ function firePixelPurchase(p, total, qty){
       } else if(px.platform === "tiktok" && window.ttq){
         ttq.track("CompletePayment", { value: total, currency, content_id: p.slug, content_type:"product", quantity: qty });
       } else if(px.platform === "google_ads" && window.gtag){
-        gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? ("/" + px.conversionLabel) : ""), value: total, currency, transaction_id: String(Date.now()) });
+        gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? ("/" + px.conversionLabel) : ""), value: total, currency, transaction_id: String(orderId || Date.now()) });
       } else if(px.platform === "ga4" && window.gtag){
-        gtag("event", "purchase", { value: total, currency, transaction_id: String(Date.now()), items:[{item_id:p.slug, item_name:p.title, quantity: qty, price: total}] });
+        gtag("event", "purchase", { value: total, currency, transaction_id: String(orderId || Date.now()), items:[{item_id:p.slug, item_name:p.title, quantity: qty, price: total}] });
       }
     }catch(e){ console.error("pixel purchase error", px.id, e); }
   });
@@ -949,29 +976,30 @@ function initProduct(slug){
     });
   }
 
-  // العد التنازلي 48 ساعة — عرض «اشترِ 2 والثالثة مجاناً»
+  // العدّاد التنازلي: لا يظهر إلا لعرض له تاريخ انتهاء حقيقي (p.dealEnd). كان يُعاد 48 ساعة لكل زائر فيبدو ضغطاً مصطنعاً (لجنة الخبراء v1.89.132)
   (function dealCountdown(){
     const boxes = document.querySelectorAll(".deal-timer");
     if(!boxes.length) return;
-    const KEY = "alyssum_deal_"+slug;
-    let end = parseInt(localStorage.getItem(KEY)||"0",10);
-    if(!end || end < Date.now()){
-      end = Date.now() + 48*3600*1000;
-      localStorage.setItem(KEY, String(end));
+    let end = 0;
+    try{ const pp = (typeof PRODUCTS !== "undefined") && PRODUCTS.find(x=>x.slug === slug); end = pp && pp.dealEnd ? Date.parse(pp.dealEnd) : 0; }catch(e){ end = 0; }
+    if(!(end > Date.now())){
+      boxes.forEach(b=>{
+        const info = b.previousElementSibling, sm = info && info.querySelector("small"), bb = info && info.querySelector("b");
+        if(sm && /ينتهي/.test(sm.textContent)) sm.remove();
+        if(bb) bb.textContent = bb.textContent.replace(/^\s*عرض محدود\s*:?\s*/, "عرض الباقة: ");
+        b.remove();
+      });
+      return;
     }
     function tick(){
-      let left = end - Date.now();
-      if(left <= 0){
-        end = Date.now() + 48*3600*1000;
-        localStorage.setItem(KEY, String(end));
-        left = 48*3600*1000;
-      }
+      const left = end - Date.now();
+      if(left <= 0){ boxes.forEach(b=>{ b.textContent = "انتهى العرض"; }); clearInterval(iv); return; }
       const h = Math.floor(left/3600000), m = Math.floor(left%3600000/60000), s = Math.floor(left%60000/1000);
       const txt = `${String(h).padStart(2,"0")} : ${String(m).padStart(2,"0")} : ${String(s).padStart(2,"0")}`;
       boxes.forEach(b=>b.textContent = txt);
     }
+    const iv = setInterval(tick, 1000);
     tick();
-    setInterval(tick, 1000);
   })();
 
   // الولايات والبلديات — قوائم منسدلة متوافقة مع الهاتف
@@ -1130,6 +1158,7 @@ function initProduct(slug){
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
+    try{ trackEvent("Lead", { slug: p.slug, title: p.title, qty: state.offer.qty, value: total }); }catch(e){}
     firePixelPurchase(p, total, state.offer.qty);
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n` + (type==="grouped"
       ? state.group.kids.map((c,i)=> state.group.qty[i] ? `\n• ${c.title}\n  الكمية: ${state.group.qty[i]} × ${fmt(c.price)} = ${fmt(state.group.qty[i]*c.price)}` : "").join("")
@@ -1162,13 +1191,14 @@ function initProduct(slug){
     Cart.add(p.slug, state.offer.qty, state.offer.price / state.offer.qty);
   };
 
-  // عدد الزوار العشوائي (إلحاح خفيف)
-  // (عدّاد ترويجي غير حقيقي عمداً في صفحة المنتج — العدّاد الحقيقي يظهر في لوحة الإدارة فقط)
+  // «يشاهدون الآن»: أُزيل — كان رقماً عشوائياً غير حقيقي (لجنة الخبراء v1.89.132). المتجر لا يملك عدّاداً حقيقياً للزوار فلا يُعرض شيء.
   const vn = document.getElementById("viewers");
-  if(vn){ let v = 8 + Math.floor(Math.random()*10); vn.textContent = v;
-    const tag = vn.closest(".tag"); if(tag){ tag.classList.add("live-badge"); tag.innerHTML = '<i class="live-dot"></i> <b id="viewers">' + v + '</b> يشاهدون هذا المنتج الآن'; }
-    const vn2 = document.getElementById("viewers");
-    setInterval(()=>{ v = Math.max(5, v + (Math.random()>.5?1:-1)); if(vn2) vn2.textContent = v; }, 7000); }
+  if(vn){ const tag = vn.closest(".tag"); if(tag) tag.remove(); else vn.remove(); }
+  try{
+    trackEvent("ViewContent", { slug: p.slug, title: p.title, value: Number(p.price) || 0 });
+    const of0 = document.getElementById("order-form");
+    if(of0){ let sent = false; of0.addEventListener("focusin", ()=>{ if(sent) return; sent = true; trackEvent("InitiateCheckout", { slug: p.slug, title: p.title, value: Number(p.price) || 0 }); }); }
+  }catch(e){}
 }
 
 /* ── بطاقة منتج (مشتركة بين الشبكة الرئيسية والأكثر مبيعاً) ── */
@@ -1180,7 +1210,7 @@ function isOutOfStock(p){
 }
 /* مصدر الطلب (أي صفحة جاء منها): من ?src= أو ?utm_content= ويُحفظ للجلسة؛ يُسجَّل في حقل «📄 الصفحة» داخل extra لمقارنة صفحات المنتج في الإحصاءات */
 /* مصدر الحملة: utm_source/utm_campaign من رابط الإعلان أو المنشور يُحفظان 14 يوماً ويُسجَّلان في extra الطلب («📣 الحملة») ليحسب تبويب «السوشيال ← الحملات» الطلبات والإيراد لكل حملة */
-const Attrib = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("utm_source"), c = q.get("utm_campaign"); if(s || c){ localStorage.setItem("alyssum_utm", JSON.stringify({ s: s || "", m: q.get("utm_medium") || "", c: c || "", t: Date.now() })); } const o = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); if(o && Date.now() - o.t < 14*864e5 && o.s !== "home" && o.c) return { "📣 الحملة": (o.s ? o.s + "/" : "") + o.c }; }catch(e){} return {}; })();
+const Attrib = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("utm_source"), c = q.get("utm_campaign"), ck = q.get("fbclid") ? "facebook" : q.get("ttclid") ? "tiktok" : q.get("gclid") ? "google" : ""; let old0 = null; try{ old0 = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); }catch(e){} if((s || c || ck) && !(s === "home" && old0 && old0.s && old0.s !== "home" && Date.now() - old0.t < 14*864e5)){ localStorage.setItem("alyssum_utm", JSON.stringify({ s: s || ck, m: q.get("utm_medium") || "", c: c || "(بدون حملة)", t: Date.now() })); } const o = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); if(o && Date.now() - o.t < 14*864e5 && o.s !== "home" && o.c) return { "📣 الحملة": (o.s ? o.s + "/" : "") + o.c }; }catch(e){} return {}; })();
 const PageSrc = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("src") || q.get("utm_content"); if(s) sessionStorage.setItem("alyssum_src", s); return sessionStorage.getItem("alyssum_src") || ""; }catch(e){ return ""; } })();
 /* رابط المنتج في البطاقات: صفحة «المسار» المختارة (صفحة هبوط) إن وُجدت وإلا صفحته الرسمية؛ ومع اختبار A/B (p.ab = {b, pct}) يُوزَّع الزوار على النسختين بنسبة pct% للثانية ويثبت اختيار كل زائر؛ ويُضاف رمز تتبع UTM */
 function productHref(p){
@@ -1203,7 +1233,7 @@ function productCardHTML(p, opts){
     <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" decoding="async" width="500" height="500" src="${REL}${p.cover||p.images[0]}" srcset="${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w480.webp"))} 480w, ${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w720.webp"))} 720w, ${encodeURI(REL+(p.cover||p.images[0]))} 1100w" sizes="(max-width:700px) 92vw, 330px" onerror="if(this.srcset){this.removeAttribute('srcset');this.src=this.src}" alt="${p.title}"></div>
     <div class="body">
       <h3>${p.title}</h3>
-      <div class="stars">★★★★★ <small>(${20+Math.floor(Math.random()*60)} تقييم)</small></div>
+      ${(p.reviews && Number(p.reviews.count) > 0) ? `<div class="stars">★ ${Number(p.reviews.avg||5).toFixed(1)} <small>(${Number(p.reviews.count)} تقييم)</small></div>` : ""}
       <div class="price-row"><span class="price">${ptype!=="simple" && hasPriceRange(p) ? "من " : ""}${fmt(ptype==="simple" ? p.price : minPrice(p))}</span>${(ptype==="simple" && p.old)?`<span class="old">${fmt(p.old)}</span>`:""}</div>
       <div class="cta">${oos?"نفدت الكمية":(document.querySelector(".aly-grid")?"عرض المنتج":"اطلب الآن — الدفع عند الاستلام")}</div>
     </div>`;

@@ -193,7 +193,8 @@ if site_desc:
 ld = {"@context": "https://schema.org", "@graph": [{"@type": "Organization", "name": site_title, "url": BASE + "/", "logo": BASE + "/assets/img/icon-512.png"},
                                                    {"@type": "WebSite", "name": site_title, "url": BASE + "/"}]}
 home_block = (f'{S}\n<link rel="canonical" href="{BASE}/">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(site_title)}"><meta property="og:url" content="{BASE}/">' + ('<!--seo:noindex:start--><meta name="robots" content="noindex"><!--seo:noindex:end-->' if excluded("", "/") else "")
-              + (f'<meta property="og:title" content="{esc(site_title)}"><meta property="og:description" content="{esc(site_desc)}">' if site_desc else "")
+              + f'<meta property="og:type" content="website"><meta property="og:title" content="{esc(site_title)}">' + (f'<meta property="og:description" content="{esc(site_desc)}">' if site_desc else "")
+              + '<meta name="twitter:card" content="summary_large_image">'
               + (f'<meta property="og:image" content="{esc(abs_img(seo.get("ogImage")))}">' if seo.get("ogImage") else "")
               + f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n{E}\n')
 text = text.replace("</head>", home_block + "</head>", 1)

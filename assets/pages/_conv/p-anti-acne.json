@@ -360,34 +360,6 @@
        }
       },
       {
-       "id": "j0p8uw7",
-       "type": "text",
-       "set": {
-        "html": "<p><small>(+86 تقييم إيجابي)</small></p>",
-        "fs": {
-         "d": 14
-        },
-        "lh": {
-         "d": 1.7
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#bb8c36",
-        "ls": {
-         "d": 2
-        },
-        "mar": {
-         "d": [
-          0,
-          0,
-          11,
-          0
-         ]
-        }
-       }
-      },
-      {
        "id": "suadv2e",
        "type": "text",
        "set": {
@@ -1414,100 +1386,6 @@
         "src": "assets/img/anti-acne/body/anti-acne 05.webp",
         "alt": "كريمة ضد حب الشباب",
         "fit": "cover",
-        "mar": {
-         "d": [
-          0,
-          0,
-          0,
-          0
-         ]
-        }
-       }
-      }
-     ]
-    }
-   ],
-   "grp": "main",
-   "free": []
-  },
-  {
-   "id": "3as2gxw",
-   "set": {
-    "layout": "boxed",
-    "cw": {
-     "d": 1140
-    },
-    "pad": {
-     "d": [
-      60,
-      20,
-      60,
-      20
-     ],
-     "m": [
-      36,
-      16,
-      36,
-      16
-     ]
-    },
-    "gap": {
-     "d": 20
-    }
-   },
-   "cols": [
-    {
-     "id": "fs5d94v",
-     "set": {},
-     "widgets": [
-      {
-       "id": "yk08ecm",
-       "type": "heading",
-       "set": {
-        "text": "آراء بعض الزبائن",
-        "tag": "h2",
-        "fs": {
-         "d": 38,
-         "m": 27
-        },
-        "fw": "800",
-        "ta": {
-         "d": "center"
-        },
-        "bindTitle": false,
-        "prod": "anti-acne",
-        "color": "#ecfdf5",
-        "lh": {
-         "d": 1.7
-        },
-        "ls": {
-         "d": -0.6
-        },
-        "mar": {
-         "d": [
-          0,
-          0,
-          6,
-          0
-         ]
-        }
-       }
-      },
-      {
-       "id": "cuaizzi",
-       "type": "text",
-       "set": {
-        "html": "<p>تجارب حقيقية من زبائننا في مختلف الولايات</p>",
-        "fs": {
-         "d": 16
-        },
-        "lh": {
-         "d": 1.7
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#ecfdf5",
         "mar": {
          "d": [
           0,

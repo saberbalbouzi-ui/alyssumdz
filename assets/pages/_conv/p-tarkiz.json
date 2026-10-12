@@ -360,34 +360,6 @@
        }
       },
       {
-       "id": "gultyx5",
-       "type": "text",
-       "set": {
-        "html": "<p><small>(+48 تقييم إيجابي)</small></p>",
-        "fs": {
-         "d": 14
-        },
-        "lh": {
-         "d": 1.7
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#bb8c36",
-        "ls": {
-         "d": 2
-        },
-        "mar": {
-         "d": [
-          0,
-          0,
-          11,
-          0
-         ]
-        }
-       }
-      },
-      {
        "id": "b88mor5",
        "type": "text",
        "set": {
@@ -1455,100 +1427,6 @@
         "src": "assets/img/tarkiz/body/02.webp",
         "alt": "أم تقدم ملعقة عسل التركيز لطفلتها",
         "fit": "cover",
-        "mar": {
-         "d": [
-          0,
-          0,
-          0,
-          0
-         ]
-        }
-       }
-      }
-     ]
-    }
-   ],
-   "grp": "main",
-   "free": []
-  },
-  {
-   "id": "m73jwk8",
-   "set": {
-    "layout": "boxed",
-    "cw": {
-     "d": 1140
-    },
-    "pad": {
-     "d": [
-      60,
-      20,
-      60,
-      20
-     ],
-     "m": [
-      36,
-      16,
-      36,
-      16
-     ]
-    },
-    "gap": {
-     "d": 20
-    }
-   },
-   "cols": [
-    {
-     "id": "ktu5pql",
-     "set": {},
-     "widgets": [
-      {
-       "id": "wpibu65",
-       "type": "heading",
-       "set": {
-        "text": "آراء بعض الزبائن",
-        "tag": "h2",
-        "fs": {
-         "d": 38,
-         "m": 27
-        },
-        "fw": "800",
-        "ta": {
-         "d": "center"
-        },
-        "bindTitle": false,
-        "prod": "tarkiz",
-        "color": "#ecfdf5",
-        "lh": {
-         "d": 1.7
-        },
-        "ls": {
-         "d": -0.6
-        },
-        "mar": {
-         "d": [
-          0,
-          0,
-          6,
-          0
-         ]
-        }
-       }
-      },
-      {
-       "id": "8flophu",
-       "type": "text",
-       "set": {
-        "html": "<p>تجارب حقيقية من زبائننا في مختلف الولايات</p>",
-        "fs": {
-         "d": 16
-        },
-        "lh": {
-         "d": 1.7
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#ecfdf5",
         "mar": {
          "d": [
           0,

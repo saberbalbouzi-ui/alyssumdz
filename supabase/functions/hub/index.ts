@@ -23,11 +23,11 @@ const ALLOW = [
   /^git\/(blobs|trees|commits)(\/[0-9a-f]{40})?$/,
   /^git\/refs\/heads\/[A-Za-z0-9._\/-]+$/,
   /^git\/ref\/heads\/[A-Za-z0-9._\/-]+$/,
-  /^actions\/workflows\/[A-Za-z0-9._-]+\.yml\/(dispatches|runs)$/,
+  /^actions\/workflows\/(clone-page|release)\.yml\/(dispatches|runs)$/,       // قائمة بيضاء: لا تشغيل لسكربتات الأسرار (publish-site/social-publish) من الحساب المشترك
   /^actions\/runs(\/[0-9]+)?$/,
   /^(commits|branches)(\/[A-Za-z0-9._\/-]+)?$/,
 ];
-const BLOCKED_PATH = /^(\.github\/|\.git\/|api\/_data\/|api\/config|CNAME$)/i;     // لا كتابة في مسارات تتيح رفع صلاحيات أو تغيير النطاق
+const BLOCKED_PATH = /^(\.github\/|\.git\/|api\/_data\/|api\/config|CNAME$|scripts\/|saas\/|supabase\/|php-edition\/|extension\/)/i;     // لا كتابة في مسارات تتيح رفع صلاحيات أو تغيير النطاق
 const okPath = (p) => typeof p === "string" && !p.includes("..") && !p.startsWith("/") && !BLOCKED_PATH.test(p);
 
 /* ── تشفير الرمز AES-GCM ── */

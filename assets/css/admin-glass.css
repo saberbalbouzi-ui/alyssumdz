@@ -412,3 +412,7 @@ html.white .pbx-tn.ok{color:var(--ac,#15803d)}
 html.glass .pbx-qbar button[data-qb="edit"].on{background:color-mix(in srgb,var(--g-mint) 52%,#052e16)!important;border-color:rgba(255,255,255,.35)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -4px 8px rgba(0,0,0,.25)!important}
 html.white .pbx-qbar button[data-qb="edit"].on{background:color-mix(in srgb,var(--ac,#16a34a) 88%,#000)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -4px 8px rgba(0,0,0,.2)!important}
 html.glass .pbx-qbar button[data-qb="edit"].on .tx,html.glass .pbx-qbar button[data-qb="edit"].on svg,html.white .pbx-qbar button[data-qb="edit"].on .tx,html.white .pbx-qbar button[data-qb="edit"].on svg{color:#fff!important}
+
+/* ── إصلاحات لجنة الخبراء (v1.89.132) ── */
+html .nav-q input{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}      /* صندوق داخل صندوق ونص مقصوص */
+:focus-visible{outline:2px solid var(--g-mint,#a3e635);outline-offset:2px}

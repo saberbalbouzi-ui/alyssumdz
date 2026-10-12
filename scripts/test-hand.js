@@ -301,6 +301,47 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("الإرسال لياليدين: ثلاث نداءات متزامنة لطلب واحد = طرد واحد فقط", dup.t1 && dup.total === 2 && dup.results.filter(Boolean).length === 1, dup);
   ok("الإرسال لياليدين: تبدّل فهرس الطلب أثناء الإرسال لا يحفظ التتبع على طلب آخر", !dup.wrongOrder && dup.right, dup);
+  // ── إصلاحات لجنة الخبراء (v1.89.132): XSS، المخزون المنتفخ، حذف المسلَّم، فشل إلغاء الطرد، إعلان بلا طلبات ──
+  const cm = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); const R = {};
+    const SV = { wo: window.open, cf: Admin.courierFetch, uo: API.updateOrder, or: Admin.orders, sn: Admin.showNotice, ol: Admin.orderLines, qs: Admin.queueStockPublish, sl: Admin.stockLog, ms: Admin.moveStock, ro: Admin.renderOrders, rs: Admin.renderShipped, fc: window.confirm, pr: Admin.products, fin: Admin.fin, sr: Admin.stockReturnWanted, dc: Admin.deliveryCfg, tr: Admin.trash };
+    window.confirm = () => true; API.updateOrder = async () => ({ ok: true }); Admin.renderOrders = () => { }; Admin.renderShipped = () => { };
+    // 1) تعقيم بيانات الزبون ووصل الطباعة
+    const evil = '<img src=x onerror=alert(1)>', cl = Admin.cleanOrderText([{ name: evil, phone: "0550", wilaya: "A<b>", items: "x<script>y</script>" }])[0];
+    R.clean = !/[<>]/.test(cl.name + cl.wilaya + cl.items);
+    let html = ""; window.open = () => ({ document: { write: h => { html += h; }, close() { } } });
+    Admin.orders = [{ id: "X1", date: new Date().toISOString(), status: "nouvelle", name: evil, phone: "0550", wilaya: "<i>A</i>", commune: "", dtype: "home", items: "<u>x</u> ×1 = 100 DA", total: 100, note: "" }];
+    Admin.printOrderSlip(0); R.slipSafe = html.length > 100 && !/<img src=x|<i>A|<u>x/.test(html) && /&lt;img/.test(html);
+    // 2) المخزون: خصم أكبر من المتاح ثم إلغاء يعيد نفس العدد
+    const pr = { slug: "cm-t", title: "T", price: 100, stock: 1 }; Admin.queueStockPublish = () => { }; Admin.stockLog = () => { }; Admin.orderLines = () => [{ p: pr, v: null, qty: 2, total: 200 }];
+    Admin.moveStock({ id: "S1" }, -1); const afterOut = pr.stock; Admin.moveStock({ id: "S1" }, +1); R.stock = [afterOut, pr.stock]; Admin.orderLines = SV.ol;
+    // 3) حذف طلب مسلَّم لا يعيد علبه
+    let moved = 0; Admin.moveStock = () => { moved++; return true; }; Admin.stockReturnWanted = () => true;
+    Admin.orders = [{ id: "L1", date: new Date().toISOString(), status: "livree", name: "n", phone: "0550", items: "", total: 1, note: "📦 🚚yalidine:trk1" }]; Admin.trash = [];
+    await Admin.deleteOrders([Admin.orders[0]], { silent: true }); R.deliveredStock = moved;
+    // 4) فشل إلغاء الطرد: لا يُحذف الطلب ولا يُنزع تتبعه
+    let notice = 0; Admin.showNotice = () => { notice++; }; Admin.courierFetch = async () => ({ ok: false, status: 400, text: "{}" });
+    Admin.moveStock = SV.ms;
+    Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: Object.assign({}, (Admin.deliveryCfg || {}).yalidine, { enabled: true, apiId: "a", apiToken: "b" }) });
+    Admin.orders = [{ id: "C1", date: new Date().toISOString(), status: "confirmee", name: "n", phone: "0550", items: "", total: 1, note: "🚚yalidine:trkC1" }]; Admin.trash = [];
+    await Admin.deleteOrders([Admin.orders[0]], { silent: true });
+    R.delKept = Admin.orders.length === 1 && /trkC1/.test(Admin.orders[0].note) && notice >= 1;
+    await Admin.unsendOrder(0); R.unsendKept = /trkC1/.test(Admin.orders[0].note) && notice >= 2;
+    Admin.courierFetch = async () => ({ ok: true, status: 200, text: "{}" }); await Admin.unsendOrder(0); R.unsendOk = !/trkC1/.test(Admin.orders[0].note);
+    // 5) Admin.tab بلا زر لا يرمي
+    try { Admin.tab("orders"); R.tabNoBtn = true; } catch (e) { R.tabNoBtn = false; }
+    // 6) إنفاق إعلاني بلا طلبات ناجحة يُخصم من الربح
+    Admin.products = [{ slug: "cm-ad", title: "AD", price: 100, active: true }]; Admin.orders = []; Admin.fin = Object.assign({}, Admin.fin, { ads: { "cm-ad": { method: "spend", a: 5000, n: 0, m: 1 } } });
+    const fc = Admin.computeFinance(0); R.adIdle = fc.K.adIdle === 5000 && fc.K.real <= -5000;
+    window.open = SV.wo; Admin.courierFetch = SV.cf; API.updateOrder = SV.uo; Admin.orders = SV.or; Admin.showNotice = SV.sn; Admin.orderLines = SV.ol; Admin.queueStockPublish = SV.qs; Admin.stockLog = SV.sl; Admin.moveStock = SV.ms; Admin.renderOrders = SV.ro; Admin.renderShipped = SV.rs; window.confirm = SV.fc; Admin.products = SV.pr; Admin.fin = SV.fin; Admin.stockReturnWanted = SV.sr; Admin.deliveryCfg = SV.dc; Admin.trash = SV.tr;
+    return R;
+  });
+  ok("أمان: بيانات الزبون تُعقَّم (<>) ووصل الطباعة يهرب كل حقل", cm.clean && cm.slipSafe, cm);
+  ok("المخزون: خصم أكبر من المتاح ثم إلغاء يعيد نفس العدد (لا انتفاخ)", cm.stock[0] === -1 && cm.stock[1] === 1, cm.stock);
+  ok("حذف طلب مسلَّم لا يعيد علبه للمخزون", cm.deliveredStock === 0, cm);
+  ok("رفض الشركة إلغاء الطرد: الطلب لا يُحذف ولا يُنزع تتبعه، وبعد قبولها يُنزع", cm.delKept && cm.unsendKept && cm.unsendOk, cm);
+  ok("Admin.tab بلا زر لا يرمي خطأ", cm.tabNoBtn, cm);
+  ok("إنفاق حملة بلا طلبات ناجحة يُخصم من الربح بدل أن يُحسب 0", cm.adIdle, cm);
   // ── تعديل الطلب بعد التأكيد + تحديث الشركة + الإرسال الجماعي ──
   const oe = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; API.updateOrder = async () => ({ ok: true });
