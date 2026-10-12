@@ -2,7 +2,7 @@
 const fs = require("fs"), vm = require("vm");
 let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; console.log("✗ " + n + (x === undefined ? "" : " " + JSON.stringify(x))); } };
 const src = fs.readFileSync(__dirname + "/../assets/js/admin-shipagg.js", "utf8");
-const calls = [], tracked = [], updates = [];
+const calls = [], tracked = [], updates = [], notices = [], slip = [];
 let gwReply = (m, p, b, q) => ({ status: 200, data: {} });
 const ctx = {
   console, setInterval: () => 0, clearInterval() {}, alert() {}, confirm: () => true, toast() {},
@@ -12,7 +12,7 @@ const ctx = {
   WILAYAS: [{ id: 16, name: "Alger" }, { id: 3, name: "Laghouat" }, { id: 59, name: "Aflou" }],
   Admin: { key: "k", orders: [], STATUS_RANK: { nouvelle: 0, confirmee: 1, expediee: 2, livree: 3 },
     wCo: (n) => ({ desks: [{ id: 161, name: "Bab Ezzouar Desk" }] }), trackingOf(o) { const m = String(o.note || "").match(/🚚([a-z0-9_]+):([A-Za-z0-9._-]+)/); return m ? { company: m[1], tracking: m[2] } : null; },
-    saveTracking(o, c, t) { tracked.push([o.id, c, t]); o.note = "🚚" + c + ":" + t; }, renderOrders() {}, renderStats() {}, renderShipped() {}, onStatusChange(i, m) { this.orders[i].status = m; }, syncShipping: async () => "orig" },
+    saveTracking(o, c, t) { tracked.push([o.id, c, t]); o.note = "🚚" + c + ":" + t; }, renderOrders() {}, renderStats() {}, renderShipped() {}, onStatusChange(i, m) { this.orders[i].status = m; }, syncShipping: async () => "orig", deliveryCfg: {}, unsendOrder: async () => "orig-unsend", openLabel: async () => "orig-label", setNoteTag(o, re, t) { o.note = String(o.note || "").replace(re, "") + t; }, showNotice(a, b) { notices.push([a, b]); }, printOrderSlip() { slip.push(1); } },
   fetch: async (url, init) => { const b = JSON.parse(init.body); calls.push(b); const r = gwReply(b.method, b.path, b.body, b.query); return { status: 200, ok: true, json: async () => ({ ok: true, ...r }) }; },
 };
 ctx.window = ctx; vm.createContext(ctx); vm.runInContext(src.replace(/^const ShipAgg =/m, "var ShipAgg ="), ctx);
@@ -41,6 +41,15 @@ const SA = ctx.ShipAgg; (async () => {
   gwReply = (m, path) => path === "/v1/orders" ? { status: 200, data: { orders: [{ reference: "F5D05", trackingNumber: "yal-ABC", status: "delivered" }], next: null } } : {};
   ok("المزامنة: delivered ← livree", (await SA.syncGw()) === 1 && o.status === "livree");
   ok("owns", SA.owns("yalidine") && !SA.owns("noest"));
+  /* التراجع والبوليصة لطرود البوابة */
+  { const o2 = { id: "Z1", status: "confirmee", note: "🚚yalidine:yal-ZZ" }; ctx.Admin.orders = [o2]; ctx.window.open = () => ({ location: {}, close() {} }); ctx.Admin.deliveryCfg = {};
+    gwReply = (m, path) => path === "/v1/cancel" ? { status: 409, data: { error: { code: "cancel_refused", message: "رفضت" } } } : { status: 200, data: {} };
+    await ctx.Admin.unsendOrder(0); ok("التراجع المرفوض يُبقي التتبع", o2.note.includes("🚚yalidine:yal-ZZ") && notices.length === 1, notices);
+    gwReply = (m, path) => path === "/v1/cancel" ? { status: 200, data: { ok: true, status: "cancelled" } } : { status: 200, data: {} };
+    await ctx.Admin.unsendOrder(0); ok("التراجع المقبول ينزع التتبع", !o2.note.includes("🚚"), o2.note);
+    o2.note = "🚚noest:xx"; ok("طرد شركة غير مفعّلة في البوابة يمرّ للأصل", (await ctx.Admin.unsendOrder(0)) === "orig-unsend");
+    o2.note = "🚚yalidine:yal-ZZ"; gwReply = (m, path) => path === "/v1/label" ? { status: 404, data: { error: { code: "label_unavailable", message: "x" } } } : { status: 200, data: {} };
+    await ctx.Admin.openLabel(0); ok("بوليصة غير متاحة ← وصل الطلب", slip.length === 1); }
   /* دالة غير منشورة */
   ctx.fetch = async () => ({ status: 404, ok: false, json: async () => ({}) }); SA.S.noGw = false;
   ok("404 ← تُخفى البطاقة", (await SA.load()) === false && SA.S.noGw === true && SA.mode() === null);

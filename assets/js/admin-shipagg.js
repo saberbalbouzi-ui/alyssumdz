@@ -118,6 +118,7 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
   }
 
   /* مزامنة الحالات في وضع البوابة: قائمة طلبات البوابة (المرجع = رقم الطلب) ثم تطبيق الحالة بقواعد المزامنة نفسها (لا رجوع للخلف) */
+  const owns = code => mode() === "gw" && S.on.some(c => c.carrier_code === code);
   const ST = { shipped: "expediee", out_for_delivery: "expediee", delivered: "livree", returned: "echec" };
   async function syncGw() {
     if (mode() !== "gw" || !S.on.length || typeof Admin === "undefined" || !Admin.orders) return 0;
@@ -136,6 +137,28 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     if (changed) { try { Admin.renderOrders(); Admin.renderStats(); Admin.renderShipped(); } catch (e) { } }
     return changed;
   }
+  /* إلغاء الإرسال/البوليصة لطرود البوابة (دون ضبط الشركة في اللوحة): الإلغاء عند الشركة أولاً ولا يُنزع التتبع إلا بعد قبولها */
+  const ownedOrder = i => { const o = Admin.orders[i], t = o && Admin.trackingOf(o); return t && owns(t.company) && !(Admin.deliveryCfg && (Admin.deliveryCfg[t.company] || {}).enabled) ? { o, t } : null; };
+  function wrapOrderActions() {
+    if (typeof Admin === "undefined" || !Admin.unsendOrder || Admin.unsendOrder.__sa) return !!(typeof Admin !== "undefined" && Admin.unsendOrder && Admin.unsendOrder.__sa);
+    const un = Admin.unsendOrder, lb = Admin.openLabel;
+    Admin.unsendOrder = async function (i) {
+      const h = ownedOrder(i); if (!h) return un.apply(this, arguments);
+      const { o, t } = h; if (o.status !== "confirmee" && o.status !== "nouvelle") { toast("⚠️ لا يمكن التراجع بعد انطلاق الطرد"); return; }
+      const r = await gwCall("POST", "/v1/cancel", { courier: t.company, trackingNumber: t.tracking });
+      if (r.ok) { try { if (typeof AdminYd !== "undefined" && AdminYd.forget) AdminYd.forget(t.tracking); } catch (e) { } Admin.setNoteTag(o, /🚚[a-z0-9_]+:[A-Za-z0-9._-]+\s*/g, ""); Admin.renderOrders(); if (Admin.renderShipped) Admin.renderShipped(); toast("↩️ أُلغي الإرسال وأُلغي الطرد " + t.tracking + " عند الشركة"); return; }
+      Admin.showNotice("⚠️ لم تقبل الشركة إلغاء الطرد", esc((r.j && (r.j.message || MSG[r.j.error] || r.j.error)) || "خطأ") + ". قد يكون الطرد انطلق، لذلك بقي الطلب «مُرسَلاً» هنا حتى لا يُرسل مرة ثانية.");
+    };
+    Admin.unsendOrder.__sa = 1;
+    Admin.openLabel = async function (i) {
+      const h = ownedOrder(i); if (!h) return lb.apply(this, arguments);
+      const w = window.open("", "_blank"); const r = await gwCall("POST", "/v1/label", { courier: h.t.company, trackingNumber: h.t.tracking });
+      if (r.ok && r.j.labelUrl) { if (w) w.location.href = r.j.labelUrl; else location.href = r.j.labelUrl; return; }
+      if (w) w.close(); toast("ℹ️ بوليصة هذه الشركة غير متاحة عبر الخدمة — تُفتح عوضاً عنها نسخة وصل الطلب"); return Admin.printOrderSlip(i);
+    };
+    return true;
+  }
+
   function wrapSync() {
     if (typeof Admin === "undefined" || !Admin.syncShipping) return false; if (Admin.syncShipping.__sa) return true;
     const orig = Admin.syncShipping;
@@ -173,8 +196,7 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     });
   }
 
-  function init() { if (!mode()) return; let n = 0; const t = setInterval(() => { mount(); wrapSync(); const w = wrapPreview(); if (++n > 40 || (w && $("sa-card"))) clearInterval(t); }, 800); load().then(() => { wrapPreview(); wrapSync(); }); }
+  function init() { if (!mode()) return; let n = 0; const t = setInterval(() => { mount(); wrapSync(); wrapOrderActions(); const w = wrapPreview(); if (++n > 40 || (w && $("sa-card"))) clearInterval(t); }, 800); load().then(() => { wrapPreview(); wrapSync(); wrapOrderActions(); }); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  const owns = code => mode() === "gw" && S.on.some(c => c.carrier_code === code);
   return { load, send, S, mode, gwPayload, syncGw, owns };
 })();
