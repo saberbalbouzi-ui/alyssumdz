@@ -67,7 +67,7 @@ window.TableSel = (() => {
   function drawBar(t, sk, title) {
     const b = barOf(t, sk), S = sel[sk]; b.dataset.tsTitle = title; const n = S.size, ks = [...t.querySelectorAll("input.ts-ck[data-k]")], allOn = !!ks.length && ks.every(c => c.checked);
     b.classList.toggle("on", n > 0);
-    b.innerHTML = '<label class="ts-all"><input type="checkbox" class="ts-ck" data-barall="1"' + (allOn ? " checked" : "") + "> تحديد الكل</label><span>محدَّد: <b>" + n + "</b></span>" + menuHtml(BASE_ITEMS, "data-ts", !n) + (n ? '<button type="button" class="ts-btn al" data-ts="clear">إلغاء التحديد</button>' : "");
+    b.innerHTML = '<label class="ts-all"><input type="checkbox" class="ts-ck" data-barall="1"' + (allOn ? " checked" : "") + "> تحديد الكل</label><span>محدَّد: <b>" + n + "</b></span>" + menuHtml(t.querySelector("tr[data-trk]") ? BASE_ITEMS.concat([{ g: "طباعة", k: "bord", l: "🏷️ طباعة البوردرو الأصلي (PDF)" }]) : BASE_ITEMS, "data-ts", !n) + (n ? '<button type="button" class="ts-btn al" data-ts="clear">إلغاء التحديد</button>' : "");
   }
   function collect(t, sk) {
     const S = sel[sk], rows = [...t.rows].filter(tr => !isHead(tr) && tr.dataset.tsKey && S.has(tr.dataset.tsKey)), head = [...t.rows].find(isHead);
@@ -92,6 +92,7 @@ window.TableSel = (() => {
     if (k === "menu") return toggleMenu(b);
     if (!t) return; const S = sel[sk];
     if (k === "clear") { S.clear(); t.querySelectorAll("input.ts-ck").forEach(x => { x.checked = false; }); t.querySelectorAll("tr.ts-sel").forEach(r => r.classList.remove("ts-sel")); syncAll(t); drawBar(t, sk, bar.dataset.tsTitle); return; }
+    if (k === "bord") { const S2 = sel[sk], trs = [...t.querySelectorAll("tr[data-trk]")].filter(tr => tr.dataset.tsKey && S2.has(tr.dataset.tsKey)).map(tr => ({ tracking: tr.dataset.trk, company: tr.dataset.co || "" })); document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); if (!trs.length) return toast("حدد طرداً واحداً على الأقل"); const ad = window.Admin; if (ad && ad.printBordereauxFor) ad.printBordereauxFor(trs); return; }
     const d = collect(t, sk), title = bar.dataset.tsTitle || document.title, name = "export-" + (title || "table").replace(/\s+/g, "-");
     document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; });
     if (!d.rows.length) return toast("حدد صفاً واحداً على الأقل");

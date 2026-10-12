@@ -277,6 +277,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("المخزون: إلغاء الاتصال لا يسجّل شيئاً، وإجراؤه يسجّل المحاولة", stk.afterCancel.dlg === false && !/📞/.test(stk.afterCancel.note) && /📞1/.test(stk.afterGo), stk);
   ok("المخزون: التأكيد يمرّ بنافذة (إلغاء / تأكيد رغم ذلك) ولا يؤكّد عند الإلغاء", stk.clabels && stk.clabels[1] === "تأكيد رغم ذلك" && stk.st1 === "nouvelle", stk);
   ok("المخزون: طلب يكفيه المخزون يُؤكَّد مباشرة بلا نافذة", stk.st0 === "confirmee", stk.st0);
+  const fe = await p.evaluate(async () => {
+    const w = WILAYAS.find(x => x.id === 2), cs = Admin.communeSup, sp = Admin._supPub; Admin.communeSup = () => ({}); Admin._supPub = { 2: { dahra: [50, 0], tenes: [0, 30] } };
+    const a = Admin.shipFeeFor(w, "Dahra", "home"), b = Admin.shipFeeFor(w, "Chlef", "home"), c = Admin.shipFeeFor(w, "Ténès", "stop"); Admin.communeSup = cs; Admin._supPub = sp;
+    AdminYd.noteSent({ id: "Z1", name: "اسم حقيقي", phone: "0550123456" }, "yalidine", "yal-ZZ1"); AdminYd.set([{ tracking: "yal-ZZ1", date: "2026-10-12", name: "ا** ح****", phone: "0*******56", wilaya: "Alger", commune: "X", price: 1000, status: "En préparation" }], 1, false);
+    const card = document.getElementById("yd-card"), txt = card ? card.textContent : "", trk = card && card.querySelector("tr[data-trk]"); AdminYd.forget("yal-ZZ1");
+    return { a, b, c, base: w.home, txtReal: /اسم حقيقي/.test(txt), trk: !!trk };
+  });
+  ok("رسم التوصيل في الطلب اليدوي/التعديل يضيف إضافة البلدية إلى سعر الولاية (منزل ومكتب)", fe.a.fee === fe.base + 50 && fe.a.sup === 50 && fe.b.fee === fe.base && fe.c.sup === 30, fe);
+  ok("طرد أرسلته اللوحة يبقى مرتبطاً باسم الزبون وهاتفه الحقيقيين (بدل النقاط) وصفه قابل لطباعة البوردرو", fe.txtReal && fe.trk, fe);
   // ── منع تكرار الإرسال لياليدين ──
   const dup = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); const SV = { ro: Admin.renderOrders, uo: API.updateOrder, cf: Admin.courierFetch, cw: Admin.companyWilayas, rc: Admin.resolveCommune, en: Admin.enqueueNotify, rb: Admin.renderShippedBadge, or: Admin.orders, dc: Admin.deliveryCfg }; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg); Admin.deliveryCfg.yalidine = { enabled: true, apiId: "a", apiToken: "b" }; Admin.companyWilayas = async () => ({}); Admin.resolveCommune = async (co, cfg, ord) => ({ ok: true, name: ord.commune }); Admin.renderOrders = () => { }; API.updateOrder = async () => ({ ok: true });

@@ -43,14 +43,14 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
       $("oe-deskw").style.display = dt() === "stop" ? "" : "none";
     }
     function autoFee() {
-      const w = wOf($("oe-wil").value), base = w ? num(dt() === "stop" ? w.stop : w.home) : num(o.fee), same = $("oe-wil").value === o.wilaya && dt() === (o.dtype === "stop" ? "stop" : "home");
+      const w = wOf($("oe-wil").value), q = w && ad.shipFeeFor ? ad.shipFeeFor(w, $("oe-com").value, dt()) : { fee: w ? num(dt() === "stop" ? w.stop : w.home) : num(o.fee), base: 0, sup: 0 }, base = q.fee, same = $("oe-wil").value === o.wilaya && $("oe-com").value === o.commune && dt() === (o.dtype === "stop" ? "stop" : "home");
       $("oe-fee").value = same ? num(o.fee) : (free0 ? 0 : base);
-      $("oe-fh").textContent = same ? "" : "رسم المنطقة الجديدة: " + base.toLocaleString("fr-DZ") + " دج" + (free0 ? " (الطلب الأصلي بتوصيل مجاني فبقي مجانياً — عدّل الرسم إن لزم)" : "");
+      $("oe-fh").textContent = same ? "" : "رسم التوصيل الجديد: " + base.toLocaleString("fr-DZ") + " دج" + (q.sup ? " (الولاية " + q.base.toLocaleString("fr-DZ") + " + البلدية " + q.sup.toLocaleString("fr-DZ") + ")" : "") + (free0 ? " (الطلب الأصلي بتوصيل مجاني فبقي مجانياً — عدّل الرسم إن لزم)" : "");
       total();
     }
     const total = () => { $("oe-tot").textContent = Math.max(0, sub - disc + num($("oe-fee").value)).toLocaleString("fr-DZ") + " دج"; };
     fillCom(); fillDesk(); total();
-    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); };
+    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); }; $("oe-com").onchange = autoFee;
     bg.querySelectorAll('input[name="oe-dt"]').forEach(r => r.onchange = () => { fillDesk($("oe-desk").value); autoFee(); });
     $("oe-fee").oninput = total;
     const close = () => bg.remove(); $("oe-x").onclick = close; $("oe-no").onclick = close; bg.addEventListener("click", e => { if (e.target === bg) close(); });
