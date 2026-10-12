@@ -31,6 +31,7 @@ $g = new Geo();
 ok('جغرافيا: 69 ولاية و58 للشركات', count($g->wilayas(true)) === 69 && count($g->wilayas()) === 58);
 ok('جغرافيا: مطابقة تامة بلا حساسية للحروف', $g->matchCommune(16, 'bab ezzouar')['commune'] === 'Bab Ezzouar');
 ok('جغرافيا: تصحيح خطأ إملائي واحد', ($m = $g->matchCommune(16, 'Bab Ezzouarr'))['status'] === 'corrected' && $m['commune'] === 'Bab Ezzouar', $m);
+ok('جغرافيا: بلدية ولاية جديدة (Aflou ← 59) تُقبل تحت الأم (3 لغواط) كما تفعل ياليدين', $g->matchCommune(3, 'Aflou')['status'] === 'exact' && $g->matchCommune(59, 'Aflou')['status'] === 'exact');
 ok('جغرافيا: اسم غريب = unknown', $g->matchCommune(16, 'Zzzzzz')['status'] === 'unknown');
 
 /* عامّة */

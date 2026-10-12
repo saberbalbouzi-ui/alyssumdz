@@ -186,5 +186,11 @@ ok('webhook: عائلة Ecotrack بالرابط نفسه', json_decode($body, tr
 $vaultB = new CredentialVault(['k1' => $k1, 'k2' => $k2], 'k2'); $repoB = new ConnectionRepository($pdo, $vaultB);
 ok('التدوير: يعيد تشفير كل الصفوف ويبقى الفكّ سليماً', $repoB->rotate() === 2 && $repoB->adapterFor($repoB->find(7, 'yalidine')) instanceof YalidineAdapter && $pdo->query("SELECT key_id FROM user_carriers WHERE carrier_code='dhd'")->fetchColumn() === 'k2');
 
+
+/* ───── حالات حقيقية رُصدت في حساب ياليدين الفعلي (1216 طرداً، أكتوبر 2026) ───── */
+foreach (['Livré' => 'delivered', 'Retourné au vendeur' => 'returned', 'Vers Wilaya' => 'shipped', 'Centre' => 'shipped', 'Tentative échouée' => 'failed_attempt', 'Retour vers centre' => 'returned', 'En localisation' => 'shipped', 'Retour à retirer' => 'returned'] as $raw => $exp) {
+    ok("ياليدين (حقيقي): «{$raw}» ← {$exp}", StatusMapper::map('yalidine', $raw) === $exp);
+}
+
 echo "\n" . ($fails ? "✗ أخفق $fails من $total\n" : "✓ نجح $total من $total\n");
 exit($fails ? 1 : 0);

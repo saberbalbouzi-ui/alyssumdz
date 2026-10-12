@@ -17,6 +17,12 @@ final class Geo
             $c = (int)$w['code']; $this->w[$c] = $w;
             foreach ($w['communes'] as $n) { $this->idx[$c][self::norm($n)] = $n; }
         }
+        // الولايات الجديدة (59–69): شركات التوصيل ما زالت تسجّل بلدياتها تحت الولاية الأم (تحقّقنا من 1541 بلدية عند ياليدين)،
+        // فيجب أن تُقبل بلديتها حين يختار الزبون الولاية الأم أيضاً.
+        foreach ($this->w as $c => $w) {
+            $par = $w['parent'] ?? null;
+            if ($par !== null && isset($this->w[(int)$par])) { foreach ($w['communes'] as $n) { $this->idx[(int)$par][self::norm($n)] ??= $n; } }
+        }
     }
 
     public static function norm(string $s): string
