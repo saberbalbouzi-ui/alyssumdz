@@ -30,6 +30,10 @@ jobs:
         run: node scripts/test-shipsup.js
       - name: النشر التلقائي (hub)
         run: node scripts/test-hub.js
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', extensions: 'openssl, pdo_sqlite, mbstring, curl' }
+      - name: وحدة تجميع شركات التوصيل (PHP)
+        run: php scripts/test-shipping.php
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
