@@ -33,8 +33,8 @@ body{overflow-x:hidden;margin:0}`;
   const css = `
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
-.pbx-adx{display:none!important}#pb-app.pbx-ad .pbx-adx{display:inline-flex!important}
-#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2{display:none!important}
+.pbx-adx,.pbx-adsz{display:none!important}#pb-app.pbx-ad .pbx-adx,#pb-app.pbx-ad .pbx-adsz{display:inline-flex!important}
+#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx):not(.pbx-adsz),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2{display:none!important}
 .pbx-top{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#173f35;color:#fff;flex-wrap:wrap}
 .pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
 .pbx-top input{background:#fff;border:0;border-radius:8px;padding:.4rem .7rem;font-weight:800;width:auto;flex:0 1 240px;min-width:120px;font-family:inherit;color:#173f35}
@@ -241,6 +241,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
+  <button class="pub pbx-adsz" id="pbx-adsz" type="button" onclick="PBApp.adResizeUi()" title="تغيير مقاس التصميم: مع تحجيم العناصر أو تغيير مقاس الصفحة فقط">📐 المقاس</button>
   <button class="pub pbx-adx" id="pbx-adx" type="button" onclick="ImgGen.exportAd()" title="يحوّل التصميم إلى صورة بمقاس المنصة بالبكسل للتنزيل أو الحفظ في المكتبة">⬇ تصدير الصورة</button>
   <button class="pub" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
 </div>
@@ -1684,9 +1685,42 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* بازل: تثبيت الترتيب التلقائي للهاتف قبل إنشاء القطع حتى لا تُعاد صياغة بقية العناصر */
   function prepMobile(sec) { if (sec.set.kind !== "canvas" || sec.set.scaled || sec.set.autoM === false) return; const fr = sec.free || []; if (!fr.length || fr.some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined)) || own(sec.set, "mh", "m") !== undefined) return; writeMobile(sec); }
   const layoutOf = id => { const el = fdoc && fdoc.querySelector(`[data-pb="${id}"]`); return el ? layoutRect(el) : null; };
+  /* لوحة التصميم بمقاس: تغيير المقاس مع تحجيم العناصر (scale=true: المواضع والارتفاعات والخطوط بنسبة المقاس الجديد) أو تغيير مقاس الصفحة فقط */
+  function adResize(W, H, scale, label, id) {
+    const P = E.page, ad = P && P.ad; W = Math.round(W); H = Math.round(H); if (!ad || !(W >= 50 && H >= 50)) return false;
+    const kx = W / ad.w, ky = H / ad.h;
+    (P.sections || []).forEach(sec => {
+      if (sec.set.kind !== "canvas") return; sec.set.dw = W; setR(sec.set, "mh", "d", H);
+      if (scale) (sec.free || []).forEach(w => {
+        ["fy", "fh"].forEach(k => { const v = Number(eff(w.set, k, "d")); if (Number.isFinite(v) && v) setR(w.set, k, "d", Math.round(v * ky)); });
+        const fs = Number(eff(w.set, "fs", "d")); if (Number.isFinite(fs) && fs) setR(w.set, "fs", "d", Math.round(fs * kx));
+      });
+    });
+    ad.w = W; ad.h = H; ad.id = id || "custom"; ad.platform = label || ("مخصّص " + W + "×" + H);
+    E.nextLabel = "تغيير مقاس التصميم"; afterEdit(); toast("✅ المقاس الآن " + W + "×" + H + (scale ? " (العناصر مُحجَّمة)" : " (الصفحة فقط)")); return true;
+  }
+  function adResizeUi() {
+    const ad = E.page && E.page.ad; if (!ad) return; document.getElementById("pbar-bg") && document.getElementById("pbar-bg").remove();
+    const groups = (typeof ImgGen !== "undefined" && ImgGen.sizes) ? ImgGen.sizes() : [["أخرى", [["custom", "مخصّص…", ad.w, ad.h]]]];
+    const opts = groups.map(g => `<optgroup label="${esc(g[0])}">${g[1].map(z => `<option value="${z[0]}" data-w="${z[2]}" data-h="${z[3]}">${esc(z[1])}</option>`).join("")}</optgroup>`).join("");
+    const bg = document.createElement("div"); bg.id = "pbar-bg"; bg.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem");
+    const f = "width:100%;padding:.55rem .6rem;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font:inherit", bt = "flex:1;padding:.7rem;border-radius:12px;font-weight:800;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);font-family:inherit";
+    bg.innerHTML = `<div style="width:min(440px,100%);max-height:92vh;overflow:auto;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(134,239,172,.35);border-radius:16px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.7rem;direction:rtl"><b style="font-size:1.05rem">📐 تغيير مقاس التصميم</b>
+<div style="opacity:.85;font-size:.8rem">المقاس الحالي: ${ad.w}×${ad.h}</div>
+<div><label style="font-weight:800;font-size:.82rem;display:block;margin-bottom:.25rem">المقاس</label><select id="pbar-sel" style="${f}">${opts}</select></div>
+<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:.4rem;align-items:end"><div><label style="font-weight:800;font-size:.82rem">العرض</label><input type="number" id="pbar-w" min="50" max="6000" value="${ad.w}" style="${f}"></div><span style="padding-bottom:.55rem">×</span><div><label style="font-weight:800;font-size:.82rem">الارتفاع</label><input type="number" id="pbar-h" min="50" max="6000" value="${ad.h}" style="${f}"></div></div>
+<div style="display:flex;flex-direction:column;gap:.4rem"><label style="display:flex;gap:.5rem;align-items:flex-start;font-weight:700"><input type="radio" name="pbar-m" value="scale" checked style="margin-top:.25rem"><span>تغيير العناصر حسب المقاس<br><small style="font-weight:500;opacity:.8">تُحجَّم المواضع والارتفاعات والخطوط بنسبة المقاس الجديد.</small></span></label>
+<label style="display:flex;gap:.5rem;align-items:flex-start;font-weight:700"><input type="radio" name="pbar-m" value="page" style="margin-top:.25rem"><span>تغيير مقاس الصفحة فقط<br><small style="font-weight:500;opacity:.8">تبقى العناصر كما هي بمواضعها وأحجامها.</small></span></label></div>
+<div style="display:flex;gap:.5rem"><button type="button" data-ar="go" style="${bt};background:rgba(34,197,94,.3);border-color:rgba(74,222,128,.7)">تطبيق</button><button type="button" data-ar="x" style="${bt}">إلغاء</button></div></div>`;
+    document.body.appendChild(bg); const q = i => bg.querySelector("#" + i), sel = q("pbar-sel");
+    const cur = [...sel.options].find(o => +o.dataset.w === ad.w && +o.dataset.h === ad.h); sel.value = cur ? cur.value : "custom";
+    sel.onchange = () => { const o = sel.selectedOptions[0]; if (o && o.value !== "custom") { q("pbar-w").value = o.dataset.w; q("pbar-h").value = o.dataset.h; } };
+    ["pbar-w", "pbar-h"].forEach(i => q(i).oninput = () => { const w = +q("pbar-w").value, h = +q("pbar-h").value, m = [...sel.options].find(o => +o.dataset.w === w && +o.dataset.h === h); sel.value = m ? m.value : "custom"; });
+    bg.onclick = e => { if (e.target === bg || (e.target.dataset && e.target.dataset.ar === "x")) return bg.remove(); if (e.target.dataset && e.target.dataset.ar === "go") { const w = +q("pbar-w").value, h = +q("pbar-h").value, o = sel.selectedOptions[0], sc = bg.querySelector('input[name="pbar-m"]:checked').value === "scale"; if (!(w >= 50 && w <= 6000 && h >= 50 && h <= 6000)) { toast("المقاس بين 50 و6000 بكسل"); return; } adResize(w, h, sc, o && o.value !== "custom" ? o.textContent : "", o ? o.value : "custom"); bg.remove(); } };
+  }
   /* بلا أقسام: القماش يكبر تلقائياً ليتسع لأسفل عنصر حر (لا مقبض لتحجيم القسم) */
   function growCanvas(sec) {
-    if (!FREE_ONLY || sec.set.kind !== "canvas") return; const dev = E.dev;
+    if (!FREE_ONLY || sec.set.kind !== "canvas" || E.page.ad) return; const dev = E.dev;      // لوحة التصميم بمقاس ثابت: لا تكبر مع العناصر
     const hOf = w => { if (["text", "heading"].includes(w.type) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; };
     const tight = !!sec.set.tight, need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))) + (tight ? 0 : 40), cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
     if (tight ? Math.abs(need - cur) > 0.5 : need > cur) setR(sec.set, "mh", dev, Math.round(need));
@@ -1694,12 +1728,14 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
   function addFree(type, sec, x, y, init) {
     if (type === "shdr" || type === "sbar") return addTopPart(type);
+    const adFull = !!(E.page.ad && type === "image" && x == null && y == null && sec.set.kind === "canvas");      // لوحة التصميم: مربع الصورة بمقاس الصفحة المختار
     if (x == null && y == null) { const ref = selInfo() || (E.last ? find(E.last) : null); if (ref && ref.kind === "widget" && ref.free && ref.sec === sec) { x = Number(eff(ref.set, "fx", "d")) || 6; y = (Number(eff(ref.set, "fy", "d")) || 0) + (Number(eff(ref.set, "fh", "d")) || 0) + 18; } }      // تحت آخر عنصر مفتوح
     const fr = sec.free || [], bottom = fr.reduce((m, q) => Math.max(m, (Number(eff(q.set, "fy", "d")) || 0) + (Number(eff(q.set, "fh", "d")) || 0)), 0);
-    const w = PB.mkFree(type, x != null ? x : 6, y != null ? y : (fr.length ? bottom + 20 : 24), Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1);
+    const w = PB.mkFree(type, adFull ? 0 : x != null ? x : 6, adFull ? 0 : y != null ? y : (fr.length ? bottom + 20 : 24), adFull ? 1 : Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1);
+    if (adFull) { const H = Number(eff(sec.set, "mh", "d")) || E.page.ad.h; w.set.fx = { d: 0 }; w.set.fy = { d: 0 }; w.set.fwd = { d: 100 }; w.set.fh = { d: Math.round(H) }; w.set.fit = "cover"; w.set.hauto = false; fr.forEach(q => { if ((Number(q.set.zi) || 0) < 2) q.set.zi = 2; }); }      // الصورة خلف العناصر الموجودة
     if (init) init(w);
     (sec.free = sec.free || []).push(w);
-    if (sec.set.kind === "canvas") { const need = (Number(w.set.fy.d) || 0) + (Number(w.set.fh.d) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); }   // يكبر القماش ليتسع للعنصر
+    if (sec.set.kind === "canvas" && !E.page.ad) { const need = (Number(w.set.fy.d) || 0) + (Number(w.set.fh.d) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); }   // يكبر القماش ليتسع للعنصر
     afterEdit(w.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50);
   }
   /* إضافة عنصر/قسم افتراضي بعد القسم المحدد (أو في آخر الصفحة) */
@@ -2680,7 +2716,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

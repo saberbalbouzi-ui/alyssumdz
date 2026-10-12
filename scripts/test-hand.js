@@ -177,6 +177,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("صفحة جديدة: نافذة بالاسم ونوعين (ويب/مقاس) وقائمة مقاسات مجمّعة", np.dlg && np.groups >= 6 && np.opts >= 20 && np.szHidden && np.szShown, np);
   ok("صفحة جديدة: اختيار مقاس يملأ العرض والارتفاع، وتعديلهما يحوّل القائمة إلى «مخصّص»", np.w === "1080" && np.h === "1920" && np.selCustom === "custom", np);
   ok("صفحة جديدة: تصميم بمقاس مخصّص يفتح لوحة 800×1920 باسمها، وصفحة الويب تفتح صفحة عادية", np.closed && np.ad && np.ad[0] === 800 && np.ad[1] === 1920 && np.title === "ستوري تجريبي" && np.web, np);
+  const ar = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; const out = {};
+    ImgGen.openSized({ W: 1080, H: 1920, id: "ig_story", label: "ستوري", name: "تصميم مقاس", textMode: "none", lang: "ar" }); await w(1800);
+    const sec = () => PBApp.E.page.sections.find(s => s.set.kind === "canvas"), freeOf = t => (sec().free || []).filter(x => x.type === t);
+    const tile = t => document.querySelector('#pbx-lpane .pbx-wi[data-add="' + t + '"]');
+    out.tiles = !!tile("image") && !!tile("heading");
+    tile("heading").click(); await w(500); tile("image").click(); await w(700);
+    const img = freeOf("image")[0], h = freeOf("heading")[0], S = sec();
+    out.img = img ? [img.set.fx.d, img.set.fy.d, img.set.fwd.d, img.set.fh.d] : null; out.mh = S.set.mh.d; out.dw = S.set.dw; out.btn = !!document.getElementById("pbx-adsz") && getComputedStyle(document.getElementById("pbx-adsz")).display !== "none";
+    out.hFy = h ? h.set.fy.d : null; const hFs = h && h.set.fs && h.set.fs.d;
+    PBApp.adResize(540, 960, true, "", "custom"); await w(300); const S2 = sec(), h2 = freeOf("heading")[0], i2 = freeOf("image")[0];
+    out.sc = { mh: S2.set.mh.d, dw: S2.set.dw, ad: [PBApp.E.page.ad.w, PBApp.E.page.ad.h], hFy: h2.set.fy.d, hFs: h2.set.fs && h2.set.fs.d, iH: i2.set.fh.d };
+    out.hFsOrig = hFs;
+    PBApp.adResize(1080, 1920, false, "", "custom"); await w(300); const S3 = sec(), h3 = freeOf("heading")[0];
+    out.pg = { mh: S3.set.mh.d, dw: S3.set.dw, hFy: h3.set.fy.d };
+    PBApp.adResizeUi(); await w(200); out.dlg = !!document.getElementById("pbar-bg") && document.querySelectorAll("#pbar-sel option").length > 20 && document.querySelectorAll('#pbar-bg input[name="pbar-m"]').length === 2; document.getElementById("pbar-bg").click(); await w(100);
+    PBApp.close(); await w(400); return out;
+  });
+  ok("تصميم بمقاس: إضافة صورة تملأ الصفحة المختارة (1080×1920) خلف العناصر دون تكبير الصفحة", ar.tiles && ar.img && ar.img[0] === 0 && ar.img[1] === 0 && ar.img[2] === 100 && ar.img[3] === 1920 && ar.mh === 1920 && ar.dw === 1080 && ar.btn, ar);
+  ok("تصميم بمقاس: تغيير المقاس مع تحجيم العناصر (المواضع والارتفاع والخط بنسبة المقاس) ثم للصفحة فقط", ar.sc && ar.sc.mh === 960 && ar.sc.dw === 540 && ar.sc.ad[0] === 540 && ar.sc.iH === 960 && Math.abs(ar.sc.hFy - ar.hFy / 2) <= 1 && ar.pg.mh === 1920 && ar.pg.dw === 1080 && ar.pg.hFy === ar.sc.hFy, ar);
+  ok("تصميم بمقاس: نافذة تغيير المقاس بقائمة المقاسات وخياري التحجيم", ar.dlg, ar);
   // ── ربط المخزون بالطلبات: شارة + نافذة «المخزون لا يكفي» ──
   const stk = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); const pr = Admin.products[0], t = pr.title; pr.stock = 3; Admin.fin.cfg = Object.assign({}, Admin.fin.cfg, { since: "2000-01-01T00:00:00Z" });
