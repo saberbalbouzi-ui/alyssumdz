@@ -67,3 +67,16 @@ CREATE TABLE IF NOT EXISTS dg_grants (
 CREATE TABLE IF NOT EXISTS wa_hooks (tenant_id INTEGER PRIMARY KEY REFERENCES pf_tenants(id) ON DELETE CASCADE, hook_id TEXT NOT NULL UNIQUE);
 CREATE TABLE IF NOT EXISTS wa_sent (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, to_h TEXT NOT NULL, order_id TEXT NOT NULL, at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_wa_sent ON wa_sent (tenant_id, to_h, at);
+-- وحدة اختبار A/B: التوزيع حتمي (هاش الزائر) فلا تخزين لكل زائر إلا بصمة المشاهدة/التحويل لمنع التكرار
+CREATE TABLE IF NOT EXISTS ab_experiments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, key TEXT NOT NULL, name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft', created_at TEXT NOT NULL, started_at TEXT NULL, UNIQUE (tenant_id, key)
+);
+CREATE TABLE IF NOT EXISTS ab_variants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, exp_id INTEGER NOT NULL REFERENCES ab_experiments(id) ON DELETE CASCADE, vkey TEXT NOT NULL, weight INTEGER NOT NULL DEFAULT 1, payload TEXT NOT NULL DEFAULT '{}', ord INTEGER NOT NULL,
+  UNIQUE (exp_id, vkey)
+);
+CREATE TABLE IF NOT EXISTS ab_stats (exp_id INTEGER NOT NULL, vkey TEXT NOT NULL, views INTEGER NOT NULL DEFAULT 0, conversions INTEGER NOT NULL DEFAULT 0, revenue INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (exp_id, vkey));
+CREATE TABLE IF NOT EXISTS ab_seen (exp_id INTEGER NOT NULL, visitor_h TEXT NOT NULL, kind TEXT NOT NULL, PRIMARY KEY (exp_id, visitor_h, kind));
+-- وحدة الذكاء: حصة يومية لكل مستأجر
+CREATE TABLE IF NOT EXISTS ai_usage (tenant_id INTEGER NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, day));
