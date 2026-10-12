@@ -387,6 +387,83 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
       PBApp.open(adPage(meta, cv, path), "", true); toast("✅ فُتحت لوحة " + meta.W + "×" + meta.H + " في المطوّر — عدّل ثم اضغط «تصدير الصورة»");
     } catch (e) { toast("❌ " + e.message); }
   }
+
+  /* ═══ نشر متعدد المنصات: من تصميم واحد ← صور بمقاس كل منصة (تُعرض مصغّرة في الشريط الجانبي، تحميل المحدد، وتُحفظ في المكتبة) ═══ */
+  const PUB = { sel: null, fmt: "webp", items: [], busy: false, msg: "" };
+  const pubSel = () => { if (!PUB.sel) { try { PUB.sel = JSON.parse(LS.get("alyssum_pub_sel", "null")) || null; } catch (e) { } if (!Array.isArray(PUB.sel)) PUB.sel = ["fb_post", "ig_sq", "ig_story"]; } return PUB.sel; };
+  const pubSizes = () => SIZES.map(g => [g[0], g[1].filter(z => z[0] !== "custom")]).filter(g => g[1].length);
+  /* نسخة من التصميم بمقاس آخر: تحجيم منتظم (لا تشوّه) وتوسيط المحتوى، والخلفية الكاملة (صورة تملأ الصفحة) تُمدَّد لتملأ المقاس الجديد */
+  function scaledPage(P, W, H) {
+    const Q = JSON.parse(JSON.stringify(P)), oW = P.ad.w, oH = P.ad.h, sc = Math.min(W / oW, H / oH), offX = (W - oW * sc) / 2, offY = (H - oH * sc) / 2, num = (v, d) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+    const dv = (set, k) => num(PB.eff(set, k, "d"), 0), put = (set, k, v) => PB.setR(set, k, "d", v);
+    (Q.sections || []).forEach(sec => {
+      if (sec.set.kind !== "canvas") return; sec.set.dw = W; PB.setR(sec.set, "mh", "d", H);
+      (sec.free || []).forEach(w => {
+        const fx = dv(w.set, "fx"), fy = dv(w.set, "fy"), fw = dv(w.set, "fwd"), fh = dv(w.set, "fh"), bgFull = w.type === "image" && fx <= .5 && fy <= 2 && fw >= 99 && fh >= oH * .97;
+        if (bgFull) { put(w.set, "fx", 0); put(w.set, "fy", 0); put(w.set, "fwd", 100); put(w.set, "fh", H); w.set.fit = "cover"; w.set.hauto = false; return; }
+        put(w.set, "fx", +((offX + fx / 100 * oW * sc) / W * 100).toFixed(3)); put(w.set, "fwd", +(fw / 100 * oW * sc / W * 100).toFixed(3)); put(w.set, "fy", Math.round(offY + fy * sc)); if (fh) put(w.set, "fh", Math.round(fh * sc));
+        const fs = dv(w.set, "fs"); if (fs) put(w.set, "fs", Math.round(fs * sc * 10) / 10);
+      });
+    });
+    Q.ad = Object.assign({}, P.ad, { w: W, h: H }); return Q;
+  }
+  const pubDraw = () => { const b = $("pub-root"); if (b) b.innerHTML = pubHtml(); };
+  function pubHtml() {
+    const sel = new Set(pubSel()), card = z => `<label class="pub-pl"><input type="checkbox" data-pub-p="${z[0]}" ${sel.has(z[0]) ? "checked" : ""}><span>${esc(z[1])}</span></label>`;
+    const grid = PUB.items.map((it, i) => `<div class="pub-it ${it.checked ? "on" : ""}" data-pub-i="${i}"><label class="pub-ck"><input type="checkbox" data-pub-c="${i}" ${it.checked ? "checked" : ""}></label><div class="pub-th" style="aspect-ratio:${it.W} / ${it.H}"><img src="${it.url}" alt="${esc(it.label)}"></div><b>${esc(it.label)}</b><small>${it.W}×${it.H}${it.path ? " · ✓ في المكتبة" : ""}</small></div>`).join("");
+    const nSel = PUB.items.filter(i => i.checked).length;
+    return `<style id="pbpub-css">#pub-root .pub-g{font-weight:900;margin:.5rem 0 .2rem;font-size:.8rem}#pub-root .pub-pl{display:flex;gap:.4rem;align-items:center;padding:.2rem 0;font-size:.78rem;cursor:pointer}#pub-root .pub-b{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0}#pub-root button{padding:.5rem .7rem;border-radius:10px;border:1px solid rgba(128,128,128,.45);background:rgba(128,128,128,.14);font-weight:800;cursor:pointer;font-family:inherit;color:inherit}#pub-root button.go{background:rgba(34,197,94,.3);border-color:rgba(74,222,128,.7);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 4px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.2)}#pub-root button:disabled{opacity:.5;cursor:default}#pub-root button:not(:disabled):hover{transform:translateY(-2px)}
+#pub-root .pub-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}#pub-root .pub-it{border:1.5px solid rgba(128,128,128,.4);border-radius:12px;padding:.4rem;position:relative;display:flex;flex-direction:column;gap:.15rem}#pub-root .pub-it.on{border-color:#4ade80;background:rgba(74,222,128,.1)}#pub-root .pub-th{background:repeating-conic-gradient(#cfcfcf 0 25%,#fff 0 50%) 50%/12px 12px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;max-height:150px;margin:0 auto;width:100%}#pub-root .pub-th img{width:100%;height:100%;object-fit:contain;display:block}#pub-root .pub-ck{position:absolute;top:6px;inset-inline-start:6px;z-index:2;background:rgba(0,0,0,.55);border-radius:6px;padding:2px 4px;display:flex}#pub-root .pub-it b{font-size:.72rem;line-height:1.3}#pub-root .pub-it small{opacity:.8;font-size:.66rem}#pub-root .pub-m{font-size:.74rem;line-height:1.6;opacity:.9;min-height:1.2em}</style>
+<div style="font-weight:900;color:inherit">📣 النشر على عدّة منصات</div>
+<div style="font-size:.74rem;line-height:1.7;opacity:.85;margin:.2rem 0 .3rem">اختر المنصات ثم «انشر»: تُنشأ صورة لكل منصة من هذا التصميم بمقاسها، وتظهر هنا مصغّرة لتختار منها وتحمّلها، وتُحفظ كلها في مكتبة الصور.</div>
+${pubSizes().map(g => `<div class="pub-g">${esc(g[0])}</div>${g[1].map(card).join("")}`).join("")}
+<div class="pub-b"><button type="button" data-pub="all">تحديد الكل</button><button type="button" data-pub="none">مسح</button><select data-pub-fmt style="padding:.4rem;border-radius:10px">${[["webp", "WebP"], ["png", "PNG"], ["jpeg", "JPEG"]].map(([k, n]) => `<option value="${k}" ${PUB.fmt === k ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+<div class="pub-b"><button type="button" class="go" data-pub="run" ${PUB.busy ? "disabled" : ""} style="flex:1">${PUB.busy ? "⏳ جارٍ النشر…" : "🚀 انشر (" + pubSel().length + " منصة)"}</button></div>
+<div class="pub-m" id="pub-msg">${esc(PUB.msg)}</div>
+${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) — المحدد ${nSel}</div><div class="pub-b"><button type="button" data-pub="rall">تحديد الكل</button><button type="button" data-pub="rnone">إلغاء التحديد</button><button type="button" class="go" data-pub="dl" ${nSel ? "" : "disabled"}>⬇ تحميل المحدد (${nSel})</button><button type="button" data-pub="clear">🗑 مسح النتائج</button></div><div class="pub-grid">${grid}</div>` : ""}`;
+  }
+  const pubMsg = t => { PUB.msg = t; const m = $("pub-msg"); if (m) m.textContent = t; };
+  async function pubRun() {
+    const P = typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page; if (!P || !P.ad) return toast("افتح تصميماً بمقاس أولاً");
+    const ids = pubSel(); if (!ids.length) return pubMsg("اختر منصة واحدة على الأقل"); if (PUB.busy) return;
+    PUB.busy = true; PUB.items.forEach(i => { try { URL.revokeObjectURL(i.url); } catch (e) { } }); PUB.items = []; pubDraw();
+    const fmt = PUB.fmt, mime = fmt === "png" ? "image/png" : fmt === "jpeg" ? "image/jpeg" : "image/webp", name = (P.title || "design").replace(/[^\w؀-ۿ-]+/g, "-").slice(0, 30) || "design";
+    let ok = 0;
+    for (let k = 0; k < ids.length; k++) {
+      const z = sizeOf(ids[k]); if (!z) continue; pubMsg("⏳ " + (k + 1) + "/" + ids.length + " — " + z.label);
+      try {
+        const cv = await renderAd(scaledPage(P, z.w, z.h)), blob = await new Promise(r => cv.toBlob(r, mime, .92)); if (!blob) throw new Error("تعذّر إنشاء الصورة");
+        const it = { id: z.id, label: z.label, W: z.w, H: z.h, blob, url: URL.createObjectURL(blob), checked: true, path: "", file: name + "-" + z.id + "-" + z.w + "x" + z.h + "." + (fmt === "jpeg" ? "jpg" : fmt) };
+        PUB.items.push(it); ok++; pubDraw();
+        try { it.path = await PBApp.uploadBlob(blob, "pub-" + z.id + "-" + Date.now().toString(36), { max: 4096, q: .92 }); pubDraw(); } catch (e) { console.warn("pub lib", e); }
+      } catch (e) { console.warn("pub", z.id, e); }
+    }
+    PUB.busy = false; pubMsg(ok ? "✅ تم إنشاء " + ok + " صورة" + (PUB.items.every(i => i.path) ? " وحُفظت في مكتبة الصور" : " (بعضها لم يُحفظ في المكتبة)") : "❌ تعذّر إنشاء الصور"); pubDraw();
+  }
+  async function pubDownload() {
+    const list = PUB.items.filter(i => i.checked); if (!list.length) return;
+    if (list.length === 1) { const a = document.createElement("a"); a.href = list[0].url; a.download = list[0].file; document.body.appendChild(a); a.click(); a.remove(); return; }
+    if (typeof AdminImgBatch !== "undefined" && AdminImgBatch.zip) { const b = await AdminImgBatch.zip(list.map(i => ({ name: i.file, blob: i.blob }))), a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "publish-" + Date.now().toString(36) + ".zip"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); return; }
+    for (const it of list) { const a = document.createElement("a"); a.href = it.url; a.download = it.file; document.body.appendChild(a); a.click(); a.remove(); await new Promise(r => setTimeout(r, 300)); }
+  }
+  function pubBind(root) {
+    if (!root || root.__pub) { pubDraw(); return; } root.__pub = 1;
+    root.addEventListener("click", e => {
+      const b = e.target.closest("[data-pub]"); if (!b) return; const a = b.dataset.pub;
+      if (a === "all") { PUB.sel = pubSizes().flatMap(g => g[1].map(z => z[0])); LS.set("alyssum_pub_sel", JSON.stringify(PUB.sel)); pubDraw(); }
+      else if (a === "none") { PUB.sel = []; LS.set("alyssum_pub_sel", "[]"); pubDraw(); }
+      else if (a === "run") pubRun();
+      else if (a === "rall" || a === "rnone") { PUB.items.forEach(i => { i.checked = a === "rall"; }); pubDraw(); }
+      else if (a === "dl") pubDownload();
+      else if (a === "clear") { PUB.items.forEach(i => { try { URL.revokeObjectURL(i.url); } catch (x) { } }); PUB.items = []; pubMsg(""); pubDraw(); }
+    });
+    root.addEventListener("change", e => {
+      const t = e.target; if (t.dataset.pubP) { const s = new Set(pubSel()); t.checked ? s.add(t.dataset.pubP) : s.delete(t.dataset.pubP); PUB.sel = [...s]; LS.set("alyssum_pub_sel", JSON.stringify(PUB.sel)); const go = root.querySelector('[data-pub="run"]'); if (go && !PUB.busy) go.textContent = "🚀 انشر (" + PUB.sel.length + " منصة)"; }
+      else if (t.dataset.pubC != null) { const it = PUB.items[+t.dataset.pubC]; if (it) { it.checked = t.checked; pubDraw(); } }
+      else if (t.hasAttribute && t.hasAttribute("data-pub-fmt")) PUB.fmt = t.value;
+    });
+    pubDraw();
+  }
   const H2I = "assets/js/vendor/html-to-image.min.js";
   function loadH2I() { if (window.htmlToImage) return Promise.resolve(); return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = (typeof REL !== "undefined" ? REL : "") + H2I + "?v=1.11.11"; sc.onload = res; sc.onerror = () => rej(new Error("تعذّر تحميل مكتبة التصدير")); document.head.appendChild(sc); }); }
   /* يرسم صفحة الإعلان في إطار مخفي بعرض المقاس تماماً ثم يحوّلها إلى لوحة بكسلات */
@@ -434,7 +511,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) LS.set(FALKEY, k.trim()); toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) LS.set(KEY, k); toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); estimate(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
-    sizes: () => SIZES, generate, quick, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

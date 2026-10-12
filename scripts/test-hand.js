@@ -146,18 +146,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الاستوديو: مقاس 500×1000 والمنتج على الأرض (أسفل) والأعلى خلفية", stu.tall[0] === 500 && stu.tall[1] === 1000 && stu.bottom[0] < 60 && stu.top[1] > 250 && stu.top[0] < 5, stu);
   ok("الاستوديو: كشف الخلفية الشفافة (شفافة نعم، معتمة لا)", stu.alpha === true && stu.opaque === false, stu);
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); document.querySelector('[data-qb="edit"]') && document.querySelector('[data-qb="edit"]').click(); }); await p.waitForTimeout(500);
-  const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-ep [data-ept="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); const cv = document.getElementById("pbst-cv"); return { tab: true, panel: !!document.getElementById("pbst"), cv: !!cv && cv.width > 10, btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
-  ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.cv && ui.btns >= 4 && ui.sw >= 10, ui);
+  const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-ep [data-ept="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); return { tab: true, panel: !!document.getElementById("pbst"), btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
+  ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.btns >= 4 && ui.sw >= 10, ui);
   const st2 = await p.evaluate(async () => {
-    const z = document.getElementById("pbst-sz"); z.value = "1080x1920"; z.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 500));
-    const cv = document.getElementById("pbst-cv"), pv = document.getElementById("pbst-pv"), rb = pv.getBoundingClientRect();
-    document.querySelector('[data-st-tab="txt"]').click(); document.querySelector('[data-st="addov"][data-i="0"]').click(); await new Promise(r => setTimeout(r, 300));
-    const ov = PBStudio.opts().ov.length, tabs = document.querySelectorAll("#pbst [data-st-tab]").length, hid = [...document.querySelectorAll("#pbst [data-stp]")].filter(x => !x.hidden).map(x => x.dataset.stp);
+    const w = ms => new Promise(r => setTimeout(r, ms)); const o = {};
+    try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-st="cut"]') && document.querySelector('[data-st="cut"]').click(); for (let i = 0; i < 60 && !PBStudio._S.cut; i++) await w(300);
+    o.cut = !!PBStudio._S.cut; o.msg = PBStudio._S.msg; const z = document.getElementById("pbst-sz"); z.value = "1080x1920"; z.dispatchEvent(new Event("change", { bubbles: true })); for (let i = 0; i < 30 && !PBStudio.pending(); i++) await w(300); await w(600);
+    const el = document.querySelector("#pbx-frame") && document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.live = !!el && /^blob:/.test(el.src); o.ratio = el ? +(el.naturalWidth / el.naturalHeight).toFixed(3) : 0; o.small = !document.getElementById("pbst-cv");
+    const f = document.getElementById("pbx-epf"); o.bar = !!f && /تطبيق/.test(f.textContent) && /إلغاء/.test(f.textContent);
+    f && f.querySelector('[data-epf="no"]').click(); await w(700); const el2 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.restored = !!el2 && !/^blob:/.test(el2.src); o.pend = PBStudio.pending();
+    document.querySelector('[data-st-tab="txt"]').click(); document.querySelector('[data-st="addov"][data-i="0"]').click(); await w(300);
+    o.ov = PBStudio.opts().ov.length; { const fs = document.querySelector('#pbst [data-stk="font"]'); o.fontOpts = fs ? fs.options.length : 0; o.fontDef = fs ? fs.options[0].textContent : ""; if (fs) { fs.value = "Amiri"; fs.dispatchEvent(new Event("input", { bubbles: true })); } o.font = PBStudio.opts().font; o.ovFont = !!document.querySelector('#pbst [data-ovk="font"]'); } o.tabs = document.querySelectorAll("#pbst [data-st-tab]").length; o.hid = [...document.querySelectorAll("#pbst [data-stp]")].filter(q => !q.hidden).map(q => q.dataset.stp);
     const out = PBStudio.compose((() => { const c = document.createElement("canvas"); c.width = 200; c.height = 300; const g = c.getContext("2d"); g.fillStyle = "#c00"; g.fillRect(40, 40, 120, 220); return c; })(), null, { size: [540, 960], bg: { type: "color", c1: "#ffffff" }, pad: .1, align: "center", shadow: "none", ov: [{ t: "-50%", pos: 2, st: "circle", bg: "#e11d48", fg: "#ffffff", s: 8 }] });
     const d = out.getContext("2d").getImageData(0, 0, 540, 960).data, px = (x, y) => [d[(y * 540 + x) * 4], d[(y * 540 + x) * 4 + 1], d[(y * 540 + x) * 4 + 2]];
-    return { ratioC: +(cv.width / cv.height).toFixed(3), ratioB: +(rb.width / rb.height).toFixed(3), ov, tabs, hid, badge: px(540 - 70, 70), prod: px(270, 480), bgp: px(10, 940) };
+    o.badge = px(540 - 70, 70); o.prod = px(270, 480); o.bgp = px(10, 940); return o;
   });
-  ok("الاستوديو: المعاينة بنسبة المقاس تماماً (9:16 كاملة بلا قص)", Math.abs(st2.ratioC - 0.5625) < .01 && Math.abs(st2.ratioB - 0.5625) < .02, st2);
+  ok("الاستوديو: التعديلات تظهر مباشرة على صورة الصفحة بنسبة المقاس (9:16) بلا صورة مصغّرة، وتحتها «تطبيق/إلغاء»", st2.cut && st2.live && Math.abs(st2.ratio - 0.5625) < .02 && st2.small && st2.bar, st2);
+  ok("الاستوديو: «إلغاء» يعيد الصورة الأصلية ويُنهي المعاينة", st2.restored && !st2.pend, st2);
+  ok("الاستوديو: تغيير الخط للملصقات (الافتراضي خط الموقع) عاماً ولكل ملصق", st2.fontOpts > 8 && /الموقع/.test(st2.fontDef) && st2.font === "Amiri" && st2.ovFont, st2);
   ok("الاستوديو: خمسة تبويبات وتبويب واحد ظاهر، وإضافة ملصق بيع", st2.tabs === 5 && st2.hid.length === 1 && st2.hid[0] === "txt" && st2.ov >= 1, st2);
   ok("الاستوديو: الملصق يُرسم على الصورة (أحمر) والمنتج في الوسط والخلفية بيضاء", st2.badge[0] > 200 && st2.badge[1] < 90 && st2.prod[0] > 150 && st2.prod[1] < 60 && st2.bgp[0] > 250, st2);
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
@@ -198,6 +204,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تصميم بمقاس: إضافة صورة تملأ الصفحة المختارة (1080×1920) خلف العناصر دون تكبير الصفحة", ar.tiles && ar.img && ar.img[0] === 0 && ar.img[1] === 0 && ar.img[2] === 100 && ar.img[3] === 1920 && ar.mh === 1920 && ar.dw === 1080 && ar.btn, ar);
   ok("تصميم بمقاس: تغيير المقاس مع تحجيم العناصر (المواضع والارتفاع والخط بنسبة المقاس) ثم للصفحة فقط", ar.sc && ar.sc.mh === 960 && ar.sc.dw === 540 && ar.sc.ad[0] === 540 && ar.sc.iH === 960 && Math.abs(ar.sc.hFy - ar.hFy / 2) <= 1 && ar.pg.mh === 1920 && ar.pg.dw === 1080 && ar.pg.hFy === ar.sc.hFy, ar);
   ok("تصميم بمقاس: نافذة تغيير المقاس بقائمة المقاسات وخياري التحجيم", ar.dlg, ar);
+  const pb = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; const o = {};
+    ImgGen.openSized({ W: 1080, H: 1080, id: "ig_sq", label: "مربع", name: "نشر تجريبي", textMode: "none", lang: "ar" }); await w(1800);
+    const tile = t => document.querySelector('#pbx-lpane .pbx-wi[data-add="' + t + '"]'); tile("heading").click(); await w(500);
+    o.tabBtn = !!document.querySelector('[data-lt="pub"]') && getComputedStyle(document.querySelector('[data-lt="pub"]')).display !== "none";
+    document.querySelector('[data-lt="pub"]').click(); await w(500); o.root = !!document.getElementById("pub-root"); o.plat = document.querySelectorAll("#pub-root [data-pub-p]").length;
+    const sel = ImgGen.pubState; sel.sel = ["fb_post", "ig_story", "yt_thumb"]; document.querySelector('#pub-root [data-pub="all"]') && 0;
+    PBApp.uploadBlob = async (bl, nm) => "assets/img/pages/" + nm + ".webp";
+    document.querySelector('#pub-root [data-pub="run"]').click(); for (let i = 0; i < 60 && (ImgGen.pubState.busy || !ImgGen.pubState.items.length); i++) await w(500); await w(800);
+    const it = ImgGen.pubState.items; o.n = it.length; o.dims = it.map(q => q.W + "x" + q.H).join(","); o.thumbs = document.querySelectorAll("#pub-root .pub-th img").length; o.lib = it.every(q => !!q.path); o.checked = it.every(q => q.checked);
+    const sc = ImgGen.scaledPage(PBApp.E.page, 1080, 1920), sec = sc.sections.find(s => s.set.kind === "canvas"), h = (sec.free || []).find(q => q.type === "heading"); o.scaled = sc.ad.w === 1080 && sc.ad.h === 1920 && sec.set.mh.d === 1920 && !!h && h.set.fy.d >= 420;
+    document.querySelectorAll('#pub-root [data-pub-c]')[1].click(); await w(200); o.unchecked = ImgGen.pubState.items.filter(q => q.checked).length;
+    let dl = 0; const oc = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function () { if (this.download) dl++; }; document.querySelector('#pub-root [data-pub="dl"]').click(); await w(800); HTMLAnchorElement.prototype.click = oc; o.dl = dl;
+    PBApp.close(); await w(400); return o;
+  });
+  ok("نشر متعدد المنصات: تبويب الشريط الجانبي وقائمة المنصات وزر «انشر»", pb.tabBtn && pb.root && pb.plat >= 15, pb);
+  ok("نشر متعدد المنصات: صورة مصغّرة لكل منصة بمقاسها ومحدّدة وتُحفظ في المكتبة", pb.n === 3 && pb.dims === "1200x630,1080x1920,1280x720" && pb.thumbs === 3 && pb.lib && pb.checked, pb);
+  ok("نشر متعدد المنصات: التحجيم المنتظم للتصميم، واختيار بعضها ثم تحميل المحدد", pb.scaled && pb.unchecked === 2 && pb.dl >= 1, pb);
   // ── ربط المخزون بالطلبات: شارة + نافذة «المخزون لا يكفي» ──
   const stk = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); const pr = Admin.products[0], t = pr.title; pr.stock = 3; Admin.fin.cfg = Object.assign({}, Admin.fin.cfg, { since: "2000-01-01T00:00:00Z" });
