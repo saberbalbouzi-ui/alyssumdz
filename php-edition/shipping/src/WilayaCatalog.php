@@ -87,7 +87,7 @@ final class WilayaCatalog
     public static function list(): array
     {
         $out = [];
-        foreach (self::ALL as $code => [$name, $parent]) { $out[] = [code => $code, name => $name, parent => $parent]; }
+        foreach (self::ALL as $code => [$name, $parent]) { $out[] = ['code' => $code, 'name' => $name, 'parent' => $parent]; }
         return $out;
     }
 }

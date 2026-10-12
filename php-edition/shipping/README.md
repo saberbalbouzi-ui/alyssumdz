@@ -63,3 +63,9 @@ $res = $svc->ship($userId, 'yalidine', Parcel::fromArray([...]));
 - صيغ webhook للشركات غير ياليدين عامة (`tracking` + `status`) وتحتاج مطابقة مع ما ترسله كل شركة فعلاً.
 - مطابقة الولايات/البلديات: يُرسَل اسم الولاية الأم للولايات 59–69 عند الشركات ذات الترقيم القديم؛ أسماء البلديات تُرسل كما أدخلها التاجر (قد ترفضها الشركة إن اختلفت تهجئتها — راجع `communes` في `assets/js/wilayas.js`).
 - الوحدة مستقلة عن `php-edition/api/index.php` الحالي ولم تُدمج في حزم العملاء بعد.
+
+
+## التشغيل داخل نسخة PHP (v1.89.138)
+
+تُشغَّل الوحدة تلقائياً من `api/index.php` عبر `integration.php` (انظر CLAUDE.md): مسارات `ship_*` للمدير و`ship_webhook` العام، قاعدة `api/_data/shipping.sqlite` ومفتاح `api/_data/ship.key` يُولَّدان تلقائياً. `webhook.php` و`bootstrap.php` هنا للاستعمال المستقل (منصة منفصلة) ولا يدخلان حزمة العميل.
+الاختبار: `php scripts/test-ship-php.php`.

@@ -113,6 +113,7 @@ for f, v in {"coupons": "[]", "pixels": "[]", "agent-faq": "[]", "agent-training
 # بيانات الموقع الخاصة بك لا تنتقل للزبون: إعدادات محايدة باسم الزبون ورقمه، ومنشورات/حملات فارغة
 (OUT / "assets/data/store.json").write_text(json.dumps({"name": a.name, "tagline": "", "email": "", "phone": "", "wa": a.wa, "instagram": "", "address": "", "lang": "ar", "tz": "Africa/Algiers", "dateFmt": "DD/MM/YYYY", "timeFmt": "24", "weekStart": "sat", "currency": "دج", "maintenance": False, "maintMsg": "", "domain": {"mode": "own", "value": "", "status": ""}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 (OUT / "assets/data/social.json").write_text(json.dumps({"v": 1, "settings": {"domain": "", "runner": False, "fbNative": True, "hashtags": []}, "rule": {"perDay": 3, "start": "10:00", "end": "21:00", "days": [0, 1, 2, 3, 4, 5, 6], "channels": ["fb", "ig"], "jitter": True}, "posts": [], "campaigns": []}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+(OUT / "assets/data/med-notes.json").write_text(json.dumps({"slugs": [], "text": json.loads((ROOT / "assets/data/med-notes.json").read_text(encoding="utf-8"))["text"]}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")   # قائمة المنتجات الصحية خاصة بكل موقع (أسماء منتجاتك لا تُشحن)
 for f in ("checkout.json", "landing-template-anti-acne.txt"):   # الثاني: تعليمات صور منتجك الخاصة
     (OUT / "assets/data" / f).unlink(missing_ok=True)
 
@@ -183,6 +184,10 @@ if a.target == "php":
     shutil.rmtree(OUT / "scripts", ignore_errors=True)          # أدوات البائع (Python) لا تلزم الزبون، وتمنع استيراد Hostinger للأرشيف
     (OUT / "scripts/setup-supabase.sh").unlink(missing_ok=True)
     shutil.copytree(ROOT / "php-edition/api", OUT / "api")
+    # وحدة تجميع شركات التوصيل: المصدر + الربط + مخطط SQLite فقط (بلا webhook/bootstrap/README/data المستقلة)
+    _sh = OUT / "api/shipping"; shutil.copytree(ROOT / "php-edition/shipping/src", _sh / "src")
+    for _f in ("integration.php", "schema.sqlite.sql"): shutil.copy2(ROOT / "php-edition/shipping" / _f, _sh / _f)
+    (_sh / ".htaccess").write_text("<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n", encoding="utf-8")
     code = "-".join(secrets.token_hex(2).upper() for _ in range(4))
     import subprocess
     h = subprocess.check_output(["php", "-r", "echo password_hash($argv[1], PASSWORD_DEFAULT);", code], text=True)

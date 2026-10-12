@@ -7,6 +7,9 @@ use Alyssum\Shipping\Http\HttpClient;
 /** منطق التاجر: «أرسل هذا الطلب عبر الشركة X». عدم التكرار مضمون في قاعدة البيانات (UNIQUE connection+order). */
 final class ShippingService
 {
+    /** نداء اختياري بعد كل تغيير حالة فعلي: fn(string $orderRef, string $carrier, string $tracking, string $status): void — تستعمله النسخة المدمجة لتحديث حالة الطلب. */
+    public ?\Closure $onStatus = null;
+
     public function __construct(private \PDO $db, private ConnectionRepository $repo, private ?HttpClient $http = null) {}
 
     public function ship(int $userId, string $carrier, Parcel $parcel): ShipmentResult
@@ -50,9 +53,9 @@ final class ShippingService
     /** يطبّق حالة على طرد إن كان الانتقال مسموحاً. @return bool هل تغيّرت الحالة */
     public function applyStatus(int $connectionId, string $tracking, string $raw, string $status, string $orderRef = ''): bool
     {
-        $st = $this->db->prepare('SELECT id,status FROM shipments WHERE connection_id=? AND tracking=?'); $st->execute([$connectionId, $tracking]);
+        $st = $this->db->prepare('SELECT id,status,order_ref,carrier_code FROM shipments WHERE connection_id=? AND tracking=?'); $st->execute([$connectionId, $tracking]);
         $row = $st->fetch(\PDO::FETCH_ASSOC);
-        if (!$row && $orderRef !== '') { $st = $this->db->prepare('SELECT id,status FROM shipments WHERE connection_id=? AND order_ref=?'); $st->execute([$connectionId, $orderRef]); $row = $st->fetch(\PDO::FETCH_ASSOC); }
+        if (!$row && $orderRef !== '') { $st = $this->db->prepare('SELECT id,status,order_ref,carrier_code FROM shipments WHERE connection_id=? AND order_ref=?'); $st->execute([$connectionId, $orderRef]); $row = $st->fetch(\PDO::FETCH_ASSOC); }
         if (!$row) { return false; }
         $hash = sha1($connectionId . '|' . $tracking . '|' . $raw . '|' . $status);
         $now = gmdate('Y-m-d H:i:s');
@@ -60,6 +63,7 @@ final class ShippingService
         catch (\PDOException) { return false; }                                  // حدث مكرَّر (إعادة إرسال)
         if (!Status::canTransition((string)$row['status'], $status)) { return false; }
         $this->db->prepare('UPDATE shipments SET status=?, raw_status=?, last_event_at=? WHERE id=?')->execute([$status, mb_substr($raw, 0, 190), $now, $row['id']]);
+        if ($this->onStatus) { try { ($this->onStatus)((string)$row['order_ref'], (string)$row['carrier_code'], $tracking, $status); } catch (\Throwable $e) { error_log('shipping onStatus: ' . $e->getMessage()); } }
         return true;
     }
 }

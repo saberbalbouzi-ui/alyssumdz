@@ -27,7 +27,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $isAdmin = !empty($_SESSION['admin']);
 
 /* الكتابة والدخول تتطلب ترويسة مخصصة (تمنع الطلبات العابرة للمواقع CSRF) */
-if ($method !== 'GET' && $route !== 'webhook' && ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') out(403, ['error' => 'bad_request']);   // webhook ياليدين خادم-لخادم: يُصادَق عليه بالسر لا بالترويسة
+if ($method !== 'GET' && $route !== 'webhook' && $route !== 'ship_webhook' && ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') out(403, ['error' => 'bad_request']);   // webhook ياليدين خادم-لخادم: يُصادَق عليه بالسر لا بالترويسة
 
 function body(): array {
     $max = 12 * 1024 * 1024;
@@ -683,6 +683,21 @@ switch ($route) {
         updReplaceFile("$root/version.json", json_encode(['version' => $ver]) . "\n");
         @rename($path, $path . '.used');
         out(200, ['ok' => true, 'version' => $ver]);
+
+    /* وحدة تجميع شركات التوصيل (shipping/): تفعيل الشركات بمفاتيح التاجر (مشفّرة) وإرسال/تتبع/إلغاء الطرود. للمدير فقط عدا webhook الموحَّد (يُصادَق عليه بالسرّ في الرابط) */
+    case 'ship_carriers': case 'ship_connect': case 'ship_disconnect': case 'ship_send': case 'ship_track': case 'ship_cancel': case 'ship_label': case 'ship_webhook':
+        $shipLib = is_file(__DIR__ . '/shipping/integration.php') ? __DIR__ . '/shipping/integration.php' : (is_file(__DIR__ . '/../shipping/integration.php') ? __DIR__ . '/../shipping/integration.php' : '');
+        if ($shipLib === '') out(501, ['error' => 'ship_not_installed']);
+        if ($route === 'ship_webhook') {
+            rateLimit('shwh' . clientIp(), 600, 60);
+            if ($method === 'GET' && isset($_GET['subscribe'], $_GET['crc_token'])) { http_response_code(200); header('Content-Type: text/plain; charset=utf-8'); echo (string)$_GET['crc_token']; exit; }   // تحقق CRC من الشركة
+        } else {
+            if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+            rateLimit('sh' . clientIp(), 120, 60);
+        }
+        require_once $shipLib;
+        [$shCode, $shBody] = shipx_route($route, $method, $method === 'POST' ? body() : [], $dataDir, db());
+        out($shCode, $shBody);
 
     /* وسيط شركات التوصيل (إرسال الطرود وتتبع الحالات) — للمدير فقط. يمنع الوصول إلى عناوين داخلية (SSRF). */
     case 'courier':
