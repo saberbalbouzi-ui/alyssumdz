@@ -161,6 +161,7 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     const type = String(o.deliveryType ?? "home"); if (!["home", "stopdesk"].includes(type)) f["order.deliveryType"] = "home أو stopdesk";
     const prod = String(o.productList ?? "").trim(); if (!prod) f["order.productList"] = "مطلوب";
     const cod = o.codAmount; if (typeof cod === "boolean" || cod === null || cod === undefined || cod === "" || !isFinite(+cod) || +cod < 0 || +cod > 1_000_000) f["order.codAmount"] = "عدد صحيح بالدينار (0 = مدفوع مسبقاً)";
+    const fee = o.shippingFee === undefined || o.shippingFee === null || o.shippingFee === "" ? 0 : +o.shippingFee; if (!isFinite(fee) || fee < 0 || fee > 100000) f["order.shippingFee"] = "عدد صحيح بالدينار (جزء رسم التوصيل داخل codAmount)";
     const ref = String(o.reference ?? ""); if (ref && !REF.test(ref)) f["order.reference"] = "أحرف وأرقام و . _ - (حتى 64)";
     if (Object.keys(f).length) throw new HttpError(400, "validation_error", "حقول غير صالحة", f);
     const ph = phone(r.phone); if (!ph) throw new HttpError(422, "invalid_phone", "رقم هاتف جزائري محمول غير صالح (05/06/07…)", { "order.recipient.phone": "غير صالح" });
@@ -169,7 +170,7 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     if (mc.commune !== commune) corr.push({ field: "order.recipient.communeName", from: commune, to: mc.commune });
     const desk = o.stopDeskId !== undefined && o.stopDeskId !== "" && o.stopDeskId !== null ? String(o.stopDeskId) : null;
     if (type === "stopdesk" && desk === null) throw new HttpError(422, "validation_error", "stopDeskId مطلوب مع stopdesk", { "order.stopDeskId": "مطلوب" });
-    return [{ reference: ref, name, phone: ph, phoneAlt: alt ?? "", wilaya: w, commune: mc.commune, address: String(r.addressLine ?? "").trim(), type, desk, products: prod, cod: Math.round(+cod),
+    return [{ reference: ref, name, phone: ph, phoneAlt: alt ?? "", wilaya: w, commune: mc.commune, address: String(r.addressLine ?? "").trim(), type, desk, products: prod, cod: Math.round(+cod), fee: Math.round(fee),
       notes: String(o.notes ?? "").trim().slice(0, 200), canOpen: !("hasOpenPackage" in o) || !!o.hasOpenPackage }, corr];
   }
 
@@ -197,7 +198,7 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     let res;
     try {
       if (n.type === "stopdesk" && !/^\d+$/.test(n.desk)) { await release(); throw new HttpError(422, "not_supported", "معرّف المكتب غير رقمي: هذه الشركة لا تدعمه بعد في البوابة"); }
-      res = await ad.create(makeParcel(geo, { orderRef: ref, name: n.name, phone: n.phone, wilayaCode: n.wilaya, commune: n.commune, address: n.address, total: n.cod, shippingFee: 0, products: n.products, phone2: n.phoneAlt, stopDesk: n.type === "stopdesk", deskId: n.desk, note: n.notes, canOpen: n.canOpen }));
+      res = await ad.create(makeParcel(geo, { orderRef: ref, name: n.name, phone: n.phone, wilayaCode: n.wilaya, commune: n.commune, address: n.address, total: n.cod, shippingFee: n.fee, products: n.products, phone2: n.phoneAlt, stopDesk: n.type === "stopdesk", deskId: n.desk, note: n.notes, canOpen: n.canOpen }));
     } catch (e) {
       if (!(e instanceof HttpError)) await release();
       if (e instanceof HttpError) throw e;
@@ -307,26 +308,45 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
       const w = await limiter.window("adm:" + ip, 20, 60); if (w !== null) throw new HttpError(429, "rate_limited", "محاولات كثيرة", null, { "Retry-After": String(w) });
       throw new HttpError(401, "unauthorized", "رمز الإدارة غير صالح");
     }
-    let mm;
+    let mm; const actor = String(hd["x-actor"] ?? "admin").slice(0, 80);
+    const audit = (action, target, detail) => db.run("INSERT INTO gw_audit (at,actor,action,target,detail) VALUES (?,?,?,?,?)", nowStr(clock()), actor, action, target == null ? null : String(target), detail == null ? null : JSON.stringify(detail).slice(0, 500));
+    if (m === "GET" && p === "/admin/summary") {
+      const day = limiter.day(), since = new Date(clock() - 29 * 864e5).toISOString().slice(0, 10);
+      return ok({ day, tenants: await db.all(`SELECT t.id,t.name,t.email,t.site_ref,t.plan,t.status,p.name AS plan_name,p.orders_hour,p.orders_day,p.track_min,p.vault_max,p.webhooks,p.price_dzd,
+        (SELECT COALESCE(SUM(n),0) FROM gw_usage u WHERE u.tenant_id=t.id AND u.day=? AND u.kind='order') AS today,
+        (SELECT COALESCE(SUM(n),0) FROM gw_usage u WHERE u.tenant_id=t.id AND u.day>=? AND u.kind='order') AS last30,
+        (SELECT COUNT(*) FROM gw_orders o WHERE o.tenant_id=t.id AND o.tracking IS NOT NULL) AS orders,
+        (SELECT MAX(created_at) FROM gw_orders o WHERE o.tenant_id=t.id) AS last_order,
+        (SELECT COUNT(*) FROM gw_keys k WHERE k.tenant_id=t.id AND k.revoked_at IS NULL) AS keys,
+        (SELECT COUNT(*) FROM gw_connections c WHERE c.tenant_id=t.id AND c.is_active=1) AS connections
+        FROM gw_tenants t JOIN gw_plans p ON p.id=t.plan ORDER BY t.id`, day, since) });
+    }
+    if (m === "GET" && p === "/admin/audit") return ok({ audit: await db.all("SELECT id,at,actor,action,target,detail FROM gw_audit ORDER BY id DESC LIMIT 200") });
     if (m === "GET" && p === "/admin/tenants") return ok({ tenants: await db.all("SELECT t.id,t.name,t.email,t.site_ref,t.plan,t.status,t.created_at,(SELECT COUNT(*) FROM gw_orders o WHERE o.tenant_id=t.id) AS orders,(SELECT COUNT(*) FROM gw_keys k WHERE k.tenant_id=t.id AND k.revoked_at IS NULL) AS keys FROM gw_tenants t ORDER BY t.id") });
     if (m === "POST" && p === "/admin/tenants") {
       const b = json(raw); if (!String(b.name ?? "").trim()) throw new HttpError(400, "validation_error", "name مطلوب");
-      try { const id = await tenants.createTenant(b.name, b.email ?? "", b.plan ?? "free", b.site_ref ?? null); return ok({ id }, 201); }
+      try { const id = await tenants.createTenant(b.name, b.email ?? "", b.plan ?? "free", b.site_ref ?? null); await audit("tenant.create", id, { plan: b.plan ?? "free", site_ref: b.site_ref ?? null }); return ok({ id }, 201); }
       catch (e) { if (DB.isUnique(e)) throw new HttpError(409, "site_ref_taken", "هذا الموقع مرتبط بمستأجر آخر"); throw new HttpError(400, "validation_error", e.message); }
     }
-    if (m === "POST" && (mm = p.match(/^\/admin\/tenants\/(\d+)\/keys$/))) { const b = raw ? json(raw) : {}; return ok({ key: await tenants.issueKey(+mm[1], b.mode ?? "live", b.label ?? ""), note: "يظهر مرة واحدة" }, 201); }
+    if (m === "POST" && (mm = p.match(/^\/admin\/tenants\/(\d+)\/keys$/))) {
+      const b = raw ? json(raw) : {}; if (!(await db.one("SELECT id FROM gw_tenants WHERE id=?", +mm[1]))) throw new HttpError(404, "not_found", "مستأجر غير موجود");
+      let key; try { key = await tenants.issueKey(+mm[1], b.mode ?? "live", b.label ?? ""); } catch (e) { throw new HttpError(400, "validation_error", e.message); }
+      await audit("key.issue", mm[1], { mode: b.mode ?? "live", label: b.label ?? "" }); return ok({ key, note: "يظهر مرة واحدة" }, 201);
+    }
     if (m === "PATCH" && (mm = p.match(/^\/admin\/tenants\/(\d+)$/))) {
       const b = json(raw);
-      if (b.plan) { try { await tenants.setPlan(+mm[1], b.plan); } catch (e) { throw new HttpError(400, "validation_error", e.message); } }
-      if (b.status) { if (!["active", "suspended"].includes(b.status)) throw new HttpError(400, "validation_error", "status: active|suspended"); await tenants.setStatus(+mm[1], b.status); }
+      if (!(await db.one("SELECT id FROM gw_tenants WHERE id=?", +mm[1]))) throw new HttpError(404, "not_found", "مستأجر غير موجود");
+      if (b.status && !["active", "suspended"].includes(b.status)) throw new HttpError(400, "validation_error", "status: active|suspended");
+      if (b.plan) { try { await tenants.setPlan(+mm[1], b.plan); } catch (e) { throw new HttpError(400, "validation_error", e.message); } await audit("tenant.plan", mm[1], { plan: b.plan }); }
+      if (b.status) { await tenants.setStatus(+mm[1], b.status); await audit("tenant." + b.status, mm[1]); }
       return ok({ ok: true });
     }
-    if (m === "DELETE" && (mm = p.match(/^\/admin\/keys\/(\d+)$/))) { await tenants.revokeKey(+mm[1]); return ok({ ok: true }); }
+    if (m === "DELETE" && (mm = p.match(/^\/admin\/keys\/(\d+)$/))) { await tenants.revokeKey(+mm[1]); await audit("key.revoke", mm[1]); return ok({ ok: true }); }
     if (m === "PUT" && (mm = p.match(/^\/admin\/plans\/([a-z0-9_-]{2,20})$/))) {
       const b = json(raw), cur = await tenants.plan(mm[1]); if (!cur) throw new HttpError(404, "not_found", "خطة غير موجودة");
       const num = (v, d) => (v === undefined ? d : Math.max(0, Math.floor(+v) || 0));
       await db.run("UPDATE gw_plans SET name=?, orders_hour=?, orders_day=?, track_min=?, vault_max=?, webhooks=?, price_dzd=? WHERE id=?", b.name ?? cur.name, num(b.orders_hour, cur.orders_hour), num(b.orders_day, cur.orders_day), num(b.track_min, cur.track_min), num(b.vault_max, cur.vault_max), b.webhooks === undefined ? cur.webhooks : (b.webhooks ? 1 : 0), b.price_dzd === undefined ? cur.price_dzd : (b.price_dzd === null ? null : num(b.price_dzd, 0)), mm[1]);
-      return ok({ ok: true });
+      await audit("plan.update", mm[1], b); return ok({ ok: true });
     }
     if (m === "GET" && p === "/admin/plans") return ok({ plans: await db.all("SELECT * FROM gw_plans") });
     if (m === "GET" && p === "/admin/usage") return ok({ usage: await db.all("SELECT tenant_id,day,kind,n FROM gw_usage ORDER BY day DESC, tenant_id LIMIT 200") });

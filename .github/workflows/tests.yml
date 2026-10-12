@@ -40,7 +40,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - name: بوابة الشحن (Worker + D1)
-        run: node --no-warnings saas/gateway/test/gateway.test.mjs
+        run: |
+          node --no-warnings saas/gateway/test/gateway.test.mjs
+          node scripts/test-shipagg.js
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest

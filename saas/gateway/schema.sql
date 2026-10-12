@@ -39,6 +39,9 @@ CREATE INDEX IF NOT EXISTS ix_gw_events_due ON gw_events (state, next_at);
 CREATE TABLE IF NOT EXISTS gw_usage (
   tenant_id INTEGER NOT NULL, day TEXT NOT NULL, kind TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, day, kind)
 );
+CREATE TABLE IF NOT EXISTS gw_audit (   -- سجلّ تدقيق إجراءات الإدارة (بلا أسرار): من فعل ماذا ومتى
+  id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, action TEXT NOT NULL, target TEXT NULL, detail TEXT NULL
+);
 CREATE TABLE IF NOT EXISTS gw_rl (k TEXT NOT NULL, t INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_gw_rl ON gw_rl (k, t);
 INSERT OR IGNORE INTO gw_plans (id,name,orders_hour,orders_day,track_min,vault_max,webhooks,price_dzd) VALUES

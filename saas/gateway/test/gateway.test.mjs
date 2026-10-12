@@ -95,6 +95,10 @@ ok("ياليدين inline: 201 وتتبع", c === 201 && b.trackingNumber === "y
 { const last = fake.calls[fake.calls.length - 1]; const body = JSON.parse(last.init.body)[0];
   ok("ياليدين: المفاتيح وصلت الترويسات ولم تُخزَّن", last.init.headers["X-API-TOKEN"] === "SECRET-TOK-777" && !JSON.stringify(sqlAll("SELECT * FROM gw_orders")).includes("SECRET-TOK-777"));
   ok("ياليدين: ولاية الانطلاق رقم 16 ← اسم، والهاتف محلي", body.from_wilaya_name === "Alger" && body.contact_phone === "0551234567" && body.price === 4500, body); }
+reply(200, { YF: { success: true, tracking: "yal-FEE1" } });
+[c, b] = await call("POST", "/v1/orders", { ...order({ reference: "YF", codAmount: 4900, shippingFee: 400 }), ...yal }, kA);
+{ const body = JSON.parse(fake.calls[fake.calls.length - 1].init.body)[0]; ok("shippingFee: السعر بلا التوصيل وfreeshipping=false", c === 201 && body.price === 4500 && body.freeshipping === false, body); }
+[c, b] = await call("POST", "/v1/orders", order({ reference: "YF2", shippingFee: -1 }), kA); ok("shippingFee سالب 400", c === 400 && !!b.error.fields["order.shippingFee"]);
 reply(200, { Y2: { success: false, message: "Commune invalide" } });
 [c, b] = await call("POST", "/v1/orders", { ...order({ reference: "Y2" }), ...yal }, kA); ok("رفض الشركة 502 ويحرّر المرجع", c === 502 && b.error.code === "courier_error" && sql("SELECT COUNT(*) n FROM gw_orders WHERE reference='Y2'").n === 0, b);
 reply(200, { Y2: { success: true, tracking: "yal-RETRY" } });
@@ -196,6 +200,12 @@ const adm = (m, p, body = null, tok = "adm-secret-token") => call(m, p, body, nu
 [c, b] = await adm("PUT", "/admin/plans/pro", { orders_day: 5000, price_dzd: 4900 }); [c2, b] = await adm("GET", "/admin/plans"); ok("إدارة: تعديل خطة", c === 200 && b.plans.find((p) => p.id === "pro").orders_day === 5000 && b.plans.find((p) => p.id === "pro").price_dzd === 4900);
 [c, b] = await adm("GET", "/admin/tenants"); ok("إدارة: قائمة المستأجرين بالعدادات", c === 200 && b.tenants.find((t) => t.id === tA).orders >= 4 && b.tenants.find((t) => t.id === idX).site_ref === "site-123");
 [c, b] = await adm("GET", "/admin/usage"); ok("إدارة: الاستعمال", c === 200 && b.usage.some((u) => u.tenant_id === tA && u.kind === "order"));
+[c, b] = await adm("GET", "/admin/summary"); { const t = b.tenants.find((x) => x.id === tA); ok("إدارة: الملخص بحدود الخطة والاستعمال", c === 200 && t && t.orders_day === 5000 && t.today >= 1 && t.last30 >= t.today && t.connections === 0 && t.plan_name, t); }
+[c] = await adm("POST", "/admin/tenants/9999/keys", { mode: "live" }); ok("إدارة: مفتاح لمستأجر مجهول 404", c === 404);
+[c] = await adm("POST", `/admin/tenants/${idX}/keys`, { mode: "bad" }); ok("إدارة: وضع مفتاح خاطئ 400", c === 400);
+[c] = await adm("PATCH", "/admin/tenants/9999", { plan: "pro" }); ok("إدارة: تعديل مستأجر مجهول 404", c === 404);
+[c, b] = await call("GET", "/admin/audit", null, null, {}, { authorization: "Bearer adm-secret-token", "x-actor": "owner@x.dz" }); ok("إدارة: سجلّ التدقيق بلا أسرار", c === 200 && b.audit.some((a) => a.action === "tenant.create") && !JSON.stringify(b).includes("gk_live_"), b.audit.slice(0, 2));
+[c] = await call("PATCH", `/admin/tenants/${idX}`, { status: "active" }, null, {}, { authorization: "Bearer adm-secret-token", "x-actor": "owner@x.dz" }); [c2, b] = await adm("GET", "/admin/audit"); ok("التدقيق يسجّل الفاعل", b.audit.some((a) => a.action === "tenant.active" && a.actor === "owner@x.dz"));
 ok("التوقيع مطابق للصيغة", (await Dispatcher.sign("s", 1, "{}")).startsWith("t=1,v1="));
 
 console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);

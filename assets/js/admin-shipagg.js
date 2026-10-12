@@ -1,16 +1,48 @@
-/* تجميع شركات التوصيل (نسخة الاستضافة): بطاقة في «شركات التوصيل» لتفعيل أي شركة بمفاتيح حسابك (تُحفظ مشفّرة على خادمك)
-   وزر «إرسال عبر …» في معاينة الطلب. تعمل فقط حين تكون الخلفية PHP وتتوفر وحدة الشحن على الخادم؛ وإلا لا تظهر. */
+/* تجميع شركات التوصيل: بطاقة في «شركات التوصيل» لتفعيل أي شركة بمفاتيح حسابك (تُحفظ مشفّرة)
+   وزر «إرسال عبر …» في معاينة الطلب. وضعان: php (نسخة الاستضافة: وحدة الشحن على خادمك) أو gw (النسخة السحابية: بوابة الشحن عبر دالة ship-gateway
+   التي تحمل مفتاح الخدمة في الخادم فلا يصل المتصفح)؛ وإلا لا تظهر البطاقة. */
 const ShipAgg = (() => {
   const $ = id => document.getElementById(id), S = { cat: null, on: [], base: "", err: "" };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const php = () => typeof PHPAPI !== "undefined" && PHPAPI.on();
-  const call = async (r, body, q) => { try { return await PHPAPI.call(r, body === undefined ? {} : { method: "POST", body: JSON.stringify(body) }, q); } catch (e) { return { ok: false, status: 0, j: {} }; } };
-  const MAT = { documented: "موثّقة", experimental: "تجريبية", planned: "قريباً" };
-  const MSG = { already_sent: "الطلب أُرسل سابقاً", order_closed: "الطلب مغلق", unknown_wilaya: "ولاية الطلب غير معروفة", carrier_rejected: "رفضت الشركة الطلب", ship_unavailable: "الخدمة غير متاحة على هذا الخادم", ship_not_installed: "وحدة الشحن غير مثبتة في هذه النسخة" };
+  const gw = () => !php() && typeof API !== "undefined" && !!API.sb && API.sb.enabled() && API.ordersBackend() !== "sheets" && S.noGw !== true;
+  const mode = () => php() ? "php" : gw() ? "gw" : null;
+  /* بوابة الشحن عبر دالة ship-gateway: تُرجع {ok,status,j} بصيغة j الموحّدة (خطأ البوابة {error:{code,message}} ← {error:code,message}) */
+  async function gwCall(method, path, body, query) {
+    try {
+      const t = await API.sb.token(); if (!t) return { ok: false, status: 401, j: { error: "unauthorized" } };
+      const r = await fetch(API.sb.url("/functions/v1/ship-gateway"), { method: "POST", headers: API.sb.headers(t), body: JSON.stringify({ method, path, body, query }) });
+      if (r.status === 404) { S.noGw = true; return { ok: false, status: 404, j: { error: "ship_not_installed" } }; }
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) return { ok: false, status: r.status, j: { error: j.error === "not_configured" ? "ship_unavailable" : (j.error || "http_" + r.status) } };
+      let d = j.data; if (d && typeof d === "object" && d.error && typeof d.error === "object") d = { error: d.error.code, message: d.error.message };
+      return { ok: j.status >= 200 && j.status < 300, status: j.status, j: d || {} };
+    } catch (e) { return { ok: false, status: 0, j: { error: "network" } }; }
+  }
+  const GW_ROUTES = {
+    async ship_carriers() {
+      const [c, k] = await Promise.all([gwCall("GET", "/v1/couriers"), gwCall("GET", "/v1/connections")]);
+      if (!c.ok) return c;
+      const carriers = (c.j.couriers || []).filter(x => x.courier !== "sandbox").map(x => ({ code: x.courier, label: x.label, maturity: x.maturity, activatable: true, needs_base_url: !!x.needsBaseUrl,
+        fields: (x.credentials || []).map(f => ({ key: f.key, label: f.label, required: f.required !== false, secret: /token|secret|password|key/i.test(f.key) })) }));
+      return { ok: true, status: 200, j: { carriers, connected: ((k.ok && k.j.connections) || []).map(x => ({ carrier_code: x.carrier_code })), webhook_base: "" } };
+    },
+    async ship_connect(b) {
+      const r = await gwCall("POST", "/v1/connections", { courier: b.carrier, credentials: b.credentials, ...(b.base_url ? { baseUrl: b.base_url } : {}) });
+      if (r.ok) r.j.webhook_url = r.j.carrierWebhookUrl || ""; return r;
+    },
+    ship_disconnect: (b) => gwCall("DELETE", "/v1/connections/" + encodeURIComponent(b.carrier)),
+  };
+  const call = async (r, body, q) => {
+    if (mode() === "gw") { const f = GW_ROUTES[r]; return f ? f(body || {}) : { ok: false, status: 0, j: {} }; }
+    try { return await PHPAPI.call(r, body === undefined ? {} : { method: "POST", body: JSON.stringify(body) }, q); } catch (e) { return { ok: false, status: 0, j: {} }; }
+  };
+  const MAT = { verified: "مُتحقَّق منها", documented: "موثّقة", experimental: "تجريبية", planned: "قريباً" };
+  const MSG = { unauthorized: "سجّل الدخول من جديد", network: "تعذّر الاتصال بالخدمة", plan_limit: "خطتك لا تسمح بذلك", rate_limited: "تجاوزت الحدّ المسموح، أعد المحاولة بعد قليل", reference_conflict: "الطلب أُرسل سابقاً بمحتوى مختلف", already_sent: "الطلب أُرسل سابقاً", order_closed: "الطلب مغلق", unknown_wilaya: "ولاية الطلب غير معروفة", carrier_rejected: "رفضت الشركة الطلب", ship_unavailable: "الخدمة غير متاحة على هذا الخادم", ship_not_installed: "وحدة الشحن غير مثبتة في هذه النسخة" };
   const say = (t, k) => { const m = (k === "err" ? "❌ " : k === "ok" ? "✅ " : "") + t; typeof toast === "function" ? toast(m) : alert(m); };
 
   async function load() {
-    if (!php()) return false;
+    if (!mode()) return false;
     const r = await call("ship_carriers", undefined);
     if (!r.ok) { S.cat = null; S.err = (r.j && r.j.error) || ""; return false; }
     S.cat = r.j.carriers || []; S.on = r.j.connected || []; S.base = r.j.webhook_base || ""; S.err = ""; return true;
@@ -57,12 +89,58 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     };
   }
 
+  /* طلب اللوحة ← صيغة البوابة (المرجع = رقم الطلب فيمنع التكرار في الخادم أيضاً) */
+  function gwPayload(o, code) {
+    const w = (typeof WILAYAS !== "undefined" && WILAYAS.find(x => x.name === o.wilaya)) || null; if (!w) throw new Error("ولاية الطلب غير معروفة: " + (o.wilaya || "؟"));
+    const stop = o.dtype === "stop"; let desk = null;
+    if (stop) { const wc = Admin.wCo ? Admin.wCo(o.wilaya) : null, d = wc && (wc.desks || []).find(x => x.name === o.desk); desk = d ? String(d.id) : null; if (!desk) throw new Error("مكتب Stop Desk «" + (o.desk || "؟") + "» غير معروف — حوّل التوصيل إلى المنزل أو اختر مكتباً"); }
+    const products = String(o.items || "").split(/\n/).map(l => l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250) || "منتجات";
+    const order = { reference: String(o.id).replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 64), recipient: { fullName: String(o.name || "").trim(), phone: String(o.phone || ""), wilayaCode: w.id, communeName: String(o.commune || ""), addressLine: String(o.address || "") },
+      deliveryType: stop ? "stopdesk" : "home", productList: products, codAmount: Math.max(0, Math.round(Number(o.total) || 0)), shippingFee: Math.max(0, Math.round(Number(o.fee) || 0)), notes: "" };
+    if (desk) order.stopDeskId = desk; return { courier: code, order };
+  }
   async function send(orderId, code) {
     const lab = (S.cat.find(c => c.code === code) || {}).label || code;
     if (!confirm("إرسال هذا الطلب عبر " + lab + "؟ لا يمكن إرساله مرتين.")) return;
-    const r = await call("ship_send", { carrier: code, order_id: orderId });
+    let r;
+    if (mode() === "gw") {
+      const o = Admin.orders.find(x => x.id === orderId); if (!o) { say("لم يُعثر على الطلب", "err"); return; }
+      try { r = await gwCall("POST", "/v1/orders", gwPayload(o, code)); } catch (e) { say("لم يُرسل: " + e.message, "err"); return; }
+      if (r.ok && r.j.trackingNumber) {
+        Admin.saveTracking(o, code, r.j.trackingNumber); try { Admin.renderOrders(); if (Admin.setShipRaw) Admin.setShipRaw(o.id, "تم الإرسال للشركة"); document.getElementById("ord-prev-bg").classList.remove("open"); } catch (e) { }
+        say("أُرسل الطلب — رقم التتبع " + r.j.trackingNumber + ((r.j.corrections || []).length ? " (صُحّح اسم البلدية إلى " + r.j.corrections[0].to + ")" : ""), "ok"); return;
+      }
+      say("لم يُرسل: " + ((r.j && (r.j.message || MSG[r.j.error] || r.j.error)) || "خطأ غير معروف"), "err"); return;
+    }
+    r = await call("ship_send", { carrier: code, order_id: orderId });
     if (r.ok && r.j.ok) { say("أُرسل الطلب — رقم التتبع " + r.j.tracking, "ok"); try { document.getElementById("ord-prev-bg").classList.remove("open"); if (Admin.load) Admin.load(); } catch (e) { } return; }
     say("لم يُرسل: " + ((r.j && (r.j.message || MSG[r.j.error] || r.j.error)) || "خطأ غير معروف"), "err");
+  }
+
+  /* مزامنة الحالات في وضع البوابة: قائمة طلبات البوابة (المرجع = رقم الطلب) ثم تطبيق الحالة بقواعد المزامنة نفسها (لا رجوع للخلف) */
+  const ST = { shipped: "expediee", out_for_delivery: "expediee", delivered: "livree", returned: "echec" };
+  async function syncGw() {
+    if (mode() !== "gw" || !S.on.length || typeof Admin === "undefined" || !Admin.orders) return 0;
+    const cand = Admin.orders.map((o, i) => ({ o, i, t: Admin.trackingOf(o) })).filter(x => x.t && S.on.some(c => c.carrier_code === x.t.company) && !["livree", "echec", "annulee"].includes(x.o.status));
+    if (!cand.length) return 0; const by = {}; cand.forEach(x => { by[x.t.tracking] = x; });
+    let changed = 0, after = null;
+    for (let page = 0; page < 5; page++) {
+      const r = await gwCall("GET", "/v1/orders", undefined, { limit: 100, ...(after ? { after } : {}) }); if (!r.ok) break;
+      for (const g of r.j.orders || []) {
+        const x = by[g.trackingNumber], m = ST[g.status]; if (!x || !m || m === x.o.status) continue;
+        if ((m === "expediee") && (Admin.STATUS_RANK[m] ?? 0) <= (Admin.STATUS_RANK[x.o.status] ?? 0)) continue;
+        API.updateOrder(Admin.key, x.o.id, m); Admin.onStatusChange(x.i, m); changed++;
+      }
+      after = r.j.next; if (!after) break;
+    }
+    if (changed) { try { Admin.renderOrders(); Admin.renderStats(); Admin.renderShipped(); } catch (e) { } }
+    return changed;
+  }
+  function wrapSync() {
+    if (typeof Admin === "undefined" || !Admin.syncShipping) return false; if (Admin.syncShipping.__sa) return true;
+    const orig = Admin.syncShipping;
+    Admin.syncShipping = async function () { const rv = await orig.apply(this, arguments); try { await syncGw(); } catch (e) { } return rv; };
+    Admin.syncShipping.__sa = 1; return true;
   }
 
   function wrapPreview() {
@@ -82,7 +160,7 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
   }
 
   function mount() {
-    if (!php()) return;
+    if (!mode()) return;
     const tab = $("tab-delivery"); if (!tab || $("sa-card")) return;
     css(); const c = document.createElement("div"); c.className = "card"; c.id = "sa-card"; c.style.display = "none";
     const anchor = tab.querySelector("#delivery-table"); const host = anchor ? anchor.closest(".card") : null;
@@ -95,7 +173,8 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     });
   }
 
-  function init() { if (!php()) return; let n = 0; const t = setInterval(() => { mount(); const w = wrapPreview(); if (++n > 40 || (w && $("sa-card"))) clearInterval(t); }, 800); load().then(() => wrapPreview()); }
+  function init() { if (!mode()) return; let n = 0; const t = setInterval(() => { mount(); wrapSync(); const w = wrapPreview(); if (++n > 40 || (w && $("sa-card"))) clearInterval(t); }, 800); load().then(() => { wrapPreview(); wrapSync(); }); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { load, send, S };
+  const owns = code => mode() === "gw" && S.on.some(c => c.carrier_code === code);
+  return { load, send, S, mode, gwPayload, syncGw, owns };
 })();
