@@ -187,6 +187,14 @@ $vaultB = new CredentialVault(['k1' => $k1, 'k2' => $k2], 'k2'); $repoB = new Co
 ok('التدوير: يعيد تشفير كل الصفوف ويبقى الفكّ سليماً', $repoB->rotate() === 2 && $repoB->adapterFor($repoB->find(7, 'yalidine')) instanceof YalidineAdapter && $pdo->query("SELECT key_id FROM user_carriers WHERE carrier_code='dhd'")->fetchColumn() === 'k2');
 
 
+/* ردّ إنشاء حقيقي من ياليدين (اختبار كتابة بإذن صاحب المتجر، أكتوبر 2026) */
+$hr = new FakeHttp(); $yr = (new YalidineAdapter($hr))->authenticate(['apiId' => 'A', 'apiToken' => 'B']);
+$hr->reply(200, ['TEST-205706' => ['success' => true, 'order_id' => 'TEST-205706', 'tracking' => 'yal-XR42NY', 'import_id' => 335, 'label' => 'https://yalidine.app/app/bordereau.php?tracking=yal-XR42NY&token=T', 'labels' => 'https://yalidine.app/app/bordereau.php?import_id=335&si=1605&token=U', 'message' => '', 'do_insurance' => true]]);
+$rr = $yr->createParcel(new Parcel('TEST-205706', 'Test Alyssum', '0550000000', 16, 'Bab Ezzouar', 'x', 100));
+ok('ياليدين (حقيقي): تحليل ردّ الإنشاء والبوليصة', $rr->ok && $rr->tracking === 'yal-XR42NY' && str_contains((string)$rr->labelUrl, 'bordereau.php?tracking=yal-XR42NY'));
+$hr->reply(200, ['total_data' => 1, 'data' => [['tracking' => 'yal-XR42NY', 'last_status' => 'En préparation']]]);
+ok('ياليدين (حقيقي): «En préparation» ← pending', $yr->trackParcel('yal-XR42NY')->status === 'pending');
+
 /* ───── حالات حقيقية رُصدت في حساب ياليدين الفعلي (1216 طرداً، أكتوبر 2026) ───── */
 foreach (['Livré' => 'delivered', 'Retourné au vendeur' => 'returned', 'Vers Wilaya' => 'shipped', 'Centre' => 'shipped', 'Tentative échouée' => 'failed_attempt', 'Retour vers centre' => 'returned', 'En localisation' => 'shipped', 'Retour à retirer' => 'returned'] as $raw => $exp) {
     ok("ياليدين (حقيقي): «{$raw}» ← {$exp}", StatusMapper::map('yalidine', $raw) === $exp);
