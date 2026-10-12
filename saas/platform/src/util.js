@@ -10,3 +10,14 @@ export const randHex = (n) => hex(crypto.getRandomValues(new Uint8Array(n)));
 export function safeEq(a, b) { a = String(a); b = String(b); let d = a.length ^ b.length; for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0); return d === 0; }
 /** رقم جزائري محمول بصيغته المحلية 0[567]XXXXXXXX أو null */
 export function localPhone(p) { let d = String(p ?? "").replace(/\D/g, ""); if (d.startsWith("00213")) d = d.slice(5); else if (d.startsWith("213")) d = d.slice(3); if (d.length === 9) d = "0" + d; return /^0[567]\d{8}$/.test(d) ? d : null; }
+export const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+export const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+/** رابط خارجي آمن لاستدعاء الخادم: https، بلا IP مباشر ولا أسماء داخلية. */
+export function safeHttpsUrl(u) {
+  try { const p = new URL(u); if (p.protocol !== "https:" || p.username || p.password) return false; const h = p.hostname.toLowerCase();
+    if (!h.includes(".") || /^[0-9.]+$/.test(h) || h.includes(":") || /(^|\.)(localhost|local|internal|lan|home|corp)$/.test(h)) return false; return true; } catch { return false; }
+}
+/** رقم جزائري بصيغة E.164 بلا + (213551234567) أو null */
+export function e164(p) { const l = localPhone(p); return l ? "213" + l.slice(1) : null; }
+/** تهريب HTML للقوالب النصية (البريد) */
+export const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

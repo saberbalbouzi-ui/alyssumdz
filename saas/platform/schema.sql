@@ -10,10 +10,18 @@ CREATE TABLE IF NOT EXISTS pf_keys (
   created_at TEXT NOT NULL, last_used_at TEXT NULL, revoked_at TEXT NULL
 );
 CREATE TABLE IF NOT EXISTS pf_events (          -- صندوق الأحداث (outbox): تعالجه الوحدات في cron
-  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, type TEXT NOT NULL, payload TEXT NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, type TEXT NOT NULL, payload TEXT NOT NULL, ext_id TEXT NULL, done TEXT NOT NULL DEFAULT '[]',
   state TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, last_error TEXT NULL, created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_pf_events_due ON pf_events (state, next_at);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_pf_events_ext ON pf_events (tenant_id, ext_id) WHERE ext_id IS NOT NULL;   -- منع تكرار الحدث نفسه
+CREATE TABLE IF NOT EXISTS pf_integrations (     -- إعداد كل مزوّد خارجي لكل مستأجر؛ الأسرار مشفّرة (AES-GCM بـaad=مستأجر|مزوّد)
+  tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, provider TEXT NOT NULL, config TEXT NOT NULL DEFAULT '{}', secret_enc TEXT NULL, updated_at TEXT NOT NULL,
+  PRIMARY KEY (tenant_id, provider)
+);
+CREATE TABLE IF NOT EXISTS pf_idem (             -- Idempotency-Key للطلبات المعدِّلة (تطبيق الجوال يعيد الإرسال عند ضعف الشبكة)
+  tenant_id INTEGER NOT NULL, k TEXT NOT NULL, hash TEXT NOT NULL, status INTEGER NOT NULL, body TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (tenant_id, k)
+);
 CREATE TABLE IF NOT EXISTS pf_audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, action TEXT NOT NULL, target TEXT NULL, detail TEXT NULL);
 CREATE TABLE IF NOT EXISTS pf_rl (k TEXT NOT NULL, t INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_pf_rl ON pf_rl (k, t);
@@ -30,3 +38,17 @@ CREATE TABLE IF NOT EXISTS fr_reports (          -- بلاغات المستأج�
   UNIQUE (tenant_id, phone_h, reason, day)
 );
 CREATE INDEX IF NOT EXISTS ix_fr_reports_phone ON fr_reports (phone_h);
+-- وحدة CAPI: سجلّ الإرسال (بلا بيانات شخصية)
+CREATE TABLE IF NOT EXISTS cp_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, provider TEXT NOT NULL, event_name TEXT NOT NULL, event_id TEXT NOT NULL, http INTEGER NOT NULL, ok INTEGER NOT NULL, at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_cp_log ON cp_log (tenant_id, id);
+-- وحدة hooks: webhooks صادرة موقَّعة (Zapier/Make/أي خادم)
+CREATE TABLE IF NOT EXISTS hk_endpoints (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, url TEXT NOT NULL, events TEXT NOT NULL, secret_enc TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS hk_deliveries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, endpoint_id INTEGER NOT NULL, event_id INTEGER NOT NULL, type TEXT NOT NULL, payload TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, last_error TEXT NULL, created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_hk_due ON hk_deliveries (state, next_at);
