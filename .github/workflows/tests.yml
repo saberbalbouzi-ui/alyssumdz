@@ -37,6 +37,10 @@ jobs:
           php scripts/test-shipping.php
           php scripts/test-ship-php.php
           php scripts/test-gateway.php
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: بوابة الشحن (Worker + D1)
+        run: node --no-warnings saas/gateway/test/gateway.test.mjs
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
