@@ -12,6 +12,7 @@
 
 ## المهارات (Skills) المحفوظة في المستودع
 - `.claude/skills/`: `alyssum-release` (الإصدار والنشر)، `alyssum-testing`، `alyssum-admin-ui` (اتفاقيات اللوحة)، `alyssum-image-tools` (أدوات الصور)، `alyssum-ecommerce-ops` (الطلبات والشحن والمخزون والمالية)، `alyssum-templates` (القوالب)، `alyssum-saas-platform` (المنصة وحزم العملاء)، `alyssum-voice-assistant` (الصوت و«اسألني»). **حدّث المهارة المعنية مع كل ميزة جديدة تغيّر قاعدة أو بنية فيها.**
+- **مهارات خارجية منسوخة (Apache-2.0، رخصها في `.claude/skills/`):** `frontend-design` (تصميم واجهات مميّزة — استعملها لواجهة اللوحة والقوالب مع الالتزام باتفاقيات `alyssum-admin-ui`)، و`mkt-*` من Anthropic Marketing: `mkt-seo-audit`، `mkt-content-creation`، `mkt-draft-content`، `mkt-campaign-plan`، `mkt-email-sequence`، `mkt-brand-review`، `mkt-competitive-brief`، `mkt-performance-report` (لنصوص المنتجات والمنشورات والحملات وSEO؛ أي ناتج يخصّ واجهة اللوحة يُكتب بقواعد النصوص عندنا). لم تُنسخ Superdesign لأنها تتطلب حساباً وتسجيل دخول لخدمتها الخارجية.
 
 ## بنية المشروع
 - موقع ثابت (GitHub Pages، النطاق في `CNAME`): `index.html`، صفحات المنتجات في `p/<slug>/index.html`، لوحة التحكم `admin.html`.
