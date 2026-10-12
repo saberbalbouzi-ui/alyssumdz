@@ -2793,8 +2793,40 @@ ${this.quickImg(this.q.cover)}
     inp.onchange = async () => { try { const p = JSON.parse(await inp.files[0].text()); if (!p || !Array.isArray(p.sections)) throw new Error("ملف صفحة غير صالح"); this.fresh(p); p.slug = String(p.slug || "").toLowerCase().replace(/[^a-z0-9-]/g, "") || "page-" + Date.now().toString(36).slice(-4); PBApp.open(p, "", true); } catch (e) { toast("❌ " + e.message); } };
     inp.click();
   },
-  newPage() {
-    const t = prompt("عنوان الصفحة الجديدة:", "عرض خاص"); if (!t) return;
+  /* صفحة جديدة: نافذة (الاسم + نوعها: صفحة ويب أو تصميم بمقاس من القائمة/مخصّص). newPage({title}) ينشئ صفحة ويب مباشرة (الأوامر الصوتية) */
+  newPage(arg) {
+    if (arg && arg.title) return PBAdmin.mkPage(arg.title);
+    document.getElementById("pbnp-bg") && document.getElementById("pbnp-bg").remove();
+    if (!document.getElementById("pbnp-css")) { const st = document.createElement("style"); st.id = "pbnp-css"; st.textContent = "#pbnp-bg{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem}#pbnp{width:min(460px,100%);max-height:92vh;overflow:auto;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(134,239,172,.35);border-radius:16px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.7rem;direction:rtl;font-family:inherit}#pbnp h3{margin:0;font-size:1.05rem}#pbnp label{font-weight:800;font-size:.82rem;display:block;margin-bottom:.25rem}#pbnp input[type=text],#pbnp input[type=number],#pbnp select{width:100%;padding:.55rem .6rem;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font:inherit}#pbnp select option,#pbnp select optgroup{background:#0b1f17;color:#fff}#pbnp .np-t{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}#pbnp .np-t button{padding:.7rem .5rem;border-radius:12px;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.07);color:#fff;font-weight:800;cursor:pointer;line-height:1.5}#pbnp .np-t button.on{border-color:#4ade80;background:rgba(74,222,128,.18)}#pbnp .np-s{display:flex;flex-direction:column;gap:.55rem}#pbnp .np-s[hidden]{display:none}#pbnp .np-wh{display:grid;grid-template-columns:1fr auto 1fr;gap:.4rem;align-items:end}#pbnp .np-wh span{padding-bottom:.55rem;font-weight:800}#pbnp .np-pv{align-self:center;border:1px dashed rgba(255,255,255,.4);border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.7rem;opacity:.9}#pbnp .np-b{display:flex;gap:.5rem}#pbnp .np-b button{flex:1;padding:.7rem;border-radius:12px;font-weight:800;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1)}#pbnp .np-b .go{background:rgba(34,197,94,.3);border-color:rgba(74,222,128,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 4px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.25)}#pbnp .np-b button:hover{transform:translateY(-2px)}"; document.head.appendChild(st); }
+    const groups = (typeof ImgGen !== "undefined" && ImgGen.sizes) ? ImgGen.sizes() : [["أخرى", [["custom", "مخصّص…", 1080, 1080]]]];
+    const opts = groups.map(g => `<optgroup label="${PB.esc(g[0])}">${g[1].map(z => `<option value="${z[0]}" data-w="${z[2]}" data-h="${z[3]}">${PB.esc(z[1])}</option>`).join("")}</optgroup>`).join("");
+    const bg = document.createElement("div"); bg.id = "pbnp-bg";
+    bg.innerHTML = `<div id="pbnp" role="dialog" aria-label="صفحة جديدة"><h3>＋ صفحة جديدة</h3>
+<div><label>اسم الصفحة</label><input type="text" id="np-name" value="عرض خاص" maxlength="80"></div>
+<div><label>نوع الصفحة</label><div class="np-t"><button type="button" data-np="web" class="on">🌐 صفحة ويب<br><small>صفحة هبوط/موقع تُنشر برابط</small></button><button type="button" data-np="size">📐 تصميم بمقاس<br><small>صورة إعلان أو منشور بأبعاد محددة</small></button></div></div>
+<div class="np-s" id="np-sz" hidden><div><label>المقاس</label><select id="np-sel">${opts}</select></div>
+<div class="np-wh"><div><label>العرض (px)</label><input type="number" id="np-w" min="50" max="6000" value="1080"></div><span>×</span><div><label>الارتفاع (px)</label><input type="number" id="np-h" min="50" max="6000" value="1080"></div></div><div class="np-pv" id="np-pv"></div></div>
+<div class="np-b"><button type="button" class="go" data-np="go">إنشاء</button><button type="button" data-np="x">إلغاء</button></div></div>`;
+    document.body.appendChild(bg);
+    const $ = i => bg.querySelector("#" + i); let mode = "web";
+    const pv = () => { const w = Math.max(1, +$("np-w").value || 1), h = Math.max(1, +$("np-h").value || 1), k = Math.min(150 / w, 110 / h); const e = $("np-pv"); e.style.width = Math.round(w * k) + "px"; e.style.height = Math.round(h * k) + "px"; e.textContent = w + "×" + h; };
+    const setMode = m => { mode = m; bg.querySelectorAll(".np-t button").forEach(b => b.classList.toggle("on", b.dataset.np === m)); $("np-sz").hidden = m !== "size"; if (m === "size") pv(); };
+    const sel = () => { const o = $("np-sel").selectedOptions[0]; if (o && o.value !== "custom") { $("np-w").value = o.dataset.w; $("np-h").value = o.dataset.h; } pv(); };
+    $("np-sel").addEventListener("change", sel); sel();
+    ["np-w", "np-h"].forEach(i => $(i).addEventListener("input", () => { const s = $("np-sel"), w = +$("np-w").value, h = +$("np-h").value, m = [...s.options].find(o => +o.dataset.w === w && +o.dataset.h === h); s.value = m ? m.value : "custom"; pv(); }));
+    const close = () => bg.remove();
+    const go = () => {
+      const t = ($("np-name").value || "").trim(); if (!t) { $("np-name").focus(); return; }
+      if (mode === "web") { close(); PBAdmin.mkPage(t); return; }
+      const w = Math.round(+$("np-w").value), h = Math.round(+$("np-h").value); if (!(w >= 50 && w <= 6000 && h >= 50 && h <= 6000)) { toast("المقاس بين 50 و6000 بكسل"); return; }
+      if (typeof ImgGen === "undefined" || !ImgGen.openSized) { toast("أداة التصاميم غير متاحة"); return; }
+      const o = $("np-sel").selectedOptions[0]; close(); ImgGen.openSized({ W: w, H: h, id: o ? o.value : "custom", label: o && o.value !== "custom" ? o.textContent : "مخصّص " + w + "×" + h, name: t, textMode: "none", lang: "ar" });
+    };
+    bg.addEventListener("click", e => { if (e.target === bg) return close(); const b = e.target.closest("[data-np]"); if (!b) return; const a = b.dataset.np; if (a === "x") close(); else if (a === "go") go(); else setMode(a); });
+    bg.addEventListener("keydown", e => { if (e.key === "Escape") close(); else if (e.key === "Enter" && e.target.id === "np-name") go(); });
+    $("np-name").focus(); $("np-name").select();
+  },
+  mkPage(t) {
     const p = PB.newPage(t, ""); p.slug = ""; PBApp.E.slugTouched = false; if (PBApp.FREE_ONLY) p.sections = [PB.TPLS.canvas.f()];
     p.slug = (t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4);
     PBApp.open(p, "", true);

@@ -148,7 +148,35 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); document.querySelector('[data-qb="edit"]') && document.querySelector('[data-qb="edit"]').click(); }); await p.waitForTimeout(500);
   const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-ep [data-ept="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); const cv = document.getElementById("pbst-cv"); return { tab: true, panel: !!document.getElementById("pbst"), cv: !!cv && cv.width > 10, btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
   ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.cv && ui.btns >= 4 && ui.sw >= 10, ui);
+  const st2 = await p.evaluate(async () => {
+    const z = document.getElementById("pbst-sz"); z.value = "1080x1920"; z.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 500));
+    const cv = document.getElementById("pbst-cv"), pv = document.getElementById("pbst-pv"), rb = pv.getBoundingClientRect();
+    document.querySelector('[data-st-tab="txt"]').click(); document.querySelector('[data-st="addov"][data-i="0"]').click(); await new Promise(r => setTimeout(r, 300));
+    const ov = PBStudio.opts().ov.length, tabs = document.querySelectorAll("#pbst [data-st-tab]").length, hid = [...document.querySelectorAll("#pbst [data-stp]")].filter(x => !x.hidden).map(x => x.dataset.stp);
+    const out = PBStudio.compose((() => { const c = document.createElement("canvas"); c.width = 200; c.height = 300; const g = c.getContext("2d"); g.fillStyle = "#c00"; g.fillRect(40, 40, 120, 220); return c; })(), null, { size: [540, 960], bg: { type: "color", c1: "#ffffff" }, pad: .1, align: "center", shadow: "none", ov: [{ t: "-50%", pos: 2, st: "circle", bg: "#e11d48", fg: "#ffffff", s: 8 }] });
+    const d = out.getContext("2d").getImageData(0, 0, 540, 960).data, px = (x, y) => [d[(y * 540 + x) * 4], d[(y * 540 + x) * 4 + 1], d[(y * 540 + x) * 4 + 2]];
+    return { ratioC: +(cv.width / cv.height).toFixed(3), ratioB: +(rb.width / rb.height).toFixed(3), ov, tabs, hid, badge: px(540 - 70, 70), prod: px(270, 480), bgp: px(10, 940) };
+  });
+  ok("الاستوديو: المعاينة بنسبة المقاس تماماً (9:16 كاملة بلا قص)", Math.abs(st2.ratioC - 0.5625) < .01 && Math.abs(st2.ratioB - 0.5625) < .02, st2);
+  ok("الاستوديو: خمسة تبويبات وتبويب واحد ظاهر، وإضافة ملصق بيع", st2.tabs === 5 && st2.hid.length === 1 && st2.hid[0] === "txt" && st2.ov >= 1, st2);
+  ok("الاستوديو: الملصق يُرسم على الصورة (أحمر) والمنتج في الوسط والخلفية بيضاء", st2.badge[0] > 200 && st2.badge[1] < 90 && st2.prod[0] > 150 && st2.prod[1] < 60 && st2.bgp[0] > 250, st2);
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  const np = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
+    PBAdmin.newPage(); await w(200); const d = document.getElementById("pbnp"); if (!d) return { dlg: false };
+    const info = { dlg: true, groups: d.querySelectorAll("#np-sel optgroup").length, opts: d.querySelectorAll("#np-sel option").length, szHidden: document.getElementById("np-sz").hidden };
+    d.querySelector('[data-np="size"]').click(); await w(100); info.szShown = !document.getElementById("np-sz").hidden;
+    const sel = document.getElementById("np-sel"); sel.value = "ig_story"; sel.dispatchEvent(new Event("change", { bubbles: true })); await w(50); info.w = document.getElementById("np-w").value; info.h = document.getElementById("np-h").value;
+    document.getElementById("np-w").value = 800; document.getElementById("np-w").dispatchEvent(new Event("input", { bubbles: true })); info.selCustom = document.getElementById("np-sel").value;
+    document.getElementById("np-name").value = "ستوري تجريبي"; d.querySelector('[data-np="go"]').click(); await w(1800);
+    info.ad = PBApp.E && PBApp.E.page && PBApp.E.page.ad ? [PBApp.E.page.ad.w, PBApp.E.page.ad.h] : null; info.title = PBApp.E && PBApp.E.page && PBApp.E.page.title; info.closed = !document.getElementById("pbnp");
+    PBApp.close(); await w(500);
+    PBAdmin.newPage(); await w(200); document.getElementById("np-name").value = "Web Test"; document.querySelector('#pbnp [data-np="go"]').click(); await w(1800);
+    info.web = !!(PBApp.E && PBApp.E.page && !PBApp.E.page.ad && PBApp.E.page.title === "Web Test"); PBApp.close(); await w(400); return info;
+  });
+  ok("صفحة جديدة: نافذة بالاسم ونوعين (ويب/مقاس) وقائمة مقاسات مجمّعة", np.dlg && np.groups >= 6 && np.opts >= 20 && np.szHidden && np.szShown, np);
+  ok("صفحة جديدة: اختيار مقاس يملأ العرض والارتفاع، وتعديلهما يحوّل القائمة إلى «مخصّص»", np.w === "1080" && np.h === "1920" && np.selCustom === "custom", np);
+  ok("صفحة جديدة: تصميم بمقاس مخصّص يفتح لوحة 800×1920 باسمها، وصفحة الويب تفتح صفحة عادية", np.closed && np.ad && np.ad[0] === 800 && np.ad[1] === 1920 && np.title === "ستوري تجريبي" && np.web, np);
   // ── ربط المخزون بالطلبات: شارة + نافذة «المخزون لا يكفي» ──
   const stk = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); const pr = Admin.products[0], t = pr.title; pr.stock = 3; Admin.fin.cfg = Object.assign({}, Admin.fin.cfg, { since: "2000-01-01T00:00:00Z" });

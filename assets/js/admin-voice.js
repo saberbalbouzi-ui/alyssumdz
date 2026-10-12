@@ -1160,11 +1160,8 @@ const AdminVoice = (() => {
       }
       case "newPage": {
         if (typeof PBAdmin === "undefined") return false;
-        const old = window.prompt; window.prompt = () => act.title;
-        try {
-          if (H) { const tb = tabBtn("builder"); if (tb && !tb.classList.contains("on")) await H.click(tb); await H.sleep(250); const nb = q$('[onclick*="PBAdmin.newPage"]'); if (nb && await H.click(nb)) return true; }
-          PBAdmin.newPage();
-        } finally { setTimeout(() => { window.prompt = old; }, 400); }
+        if (H) { const tb = tabBtn("builder"); if (tb && !tb.classList.contains("on")) await H.click(tb); await H.sleep(250); }
+        PBAdmin.newPage({ title: act.title });
         return true;
       }
     }
