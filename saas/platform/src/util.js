@@ -1,0 +1,12 @@
+export const enc = new TextEncoder();
+export const nowStr = (t = Date.now()) => new Date(t).toISOString().slice(0, 19).replace("T", " ");
+export const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+export const sha256Hex = async (s) => hex(await crypto.subtle.digest("SHA-256", enc.encode(s)));
+export async function hmacHex(secret, msg) {
+  const k = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return hex(await crypto.subtle.sign("HMAC", k, enc.encode(msg)));
+}
+export const randHex = (n) => hex(crypto.getRandomValues(new Uint8Array(n)));
+export function safeEq(a, b) { a = String(a); b = String(b); let d = a.length ^ b.length; for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0); return d === 0; }
+/** رقم جزائري محمول بصيغته المحلية 0[567]XXXXXXXX أو null */
+export function localPhone(p) { let d = String(p ?? "").replace(/\D/g, ""); if (d.startsWith("00213")) d = d.slice(5); else if (d.startsWith("213")) d = d.slice(3); if (d.length === 9) d = "0" + d; return /^0[567]\d{8}$/.test(d) ? d : null; }

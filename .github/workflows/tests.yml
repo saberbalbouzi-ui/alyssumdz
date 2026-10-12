@@ -43,6 +43,7 @@ jobs:
         run: |
           node --no-warnings saas/gateway/test/gateway.test.mjs
           node scripts/test-shipagg.js
+          node --no-warnings saas/platform/test/platform.test.mjs
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
