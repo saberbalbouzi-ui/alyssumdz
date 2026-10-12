@@ -82,6 +82,18 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await say(p, "hi mystore وين زر منتج جديد"); ok("وين: تشير اليد لزر", await p.evaluate(() => document.querySelectorAll(".aly-hl").length >= 0));
   // ── مطوّر الصفحات بالصوت ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار صوتي", ""); pg.slug = "voice-pb"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(2200);
+  { /* v1.89.136 واجهة المطوّر: تبويبات أفقية يسرى، تكبير، قائمة ⋯، تبويبات إعدادات لاصقة */
+    const u = await p.evaluate(async () => { const q = s => document.querySelector(s), w = ms => new Promise(r => setTimeout(r, ms)), o = {};
+      const tabs = [...document.querySelectorAll(".pbx-tabs .pbx-ah")].filter(b => b.offsetParent); o.rows = new Set(tabs.map(b => Math.round(b.getBoundingClientRect().top))).size; o.pane = q("#pbx-lpane").getBoundingClientRect().top > tabs[0].getBoundingClientRect().top;
+      const z0 = q("#pbx-zv").textContent; q('[data-z="+"]').click(); await w(150); o.zoom = q("#pbx-zv").textContent !== z0; q('[data-z="0"]').click(); await w(150); o.fit = q("#pbx-zv").textContent === z0;
+      q("#pbx-moreb").click(); o.more = getComputedStyle(q("#pbx-moremenu")).display === "flex" && !!q("#pbx-upd") && !!q("#pbx-cc"); q("#pbx-moreb").click();
+      const b = document.querySelector('[data-add="heading"]'); if (b) b.click(); await w(700); const el = q("#pbx-insp"); el.scrollTop = 600; await w(150);
+      o.stk = !!q(".pbx-stk .pbx-itabs") && q(".pbx-itabs").getBoundingClientRect().top - el.getBoundingClientRect().top < 140; return o; });
+    ok("المطوّر: التبويبات اليسرى أفقية والمحتوى تحتها", u.rows >= 2 && u.pane, u);
+    ok("المطوّر: أزرار التكبير والملاءمة تعمل", u.zoom && u.fit, u);
+    ok("المطوّر: التحديث والكاش داخل قائمة ⋯", u.more, u);
+    ok("المطوّر: تبويبات الإعدادات لاصقة أعلى اللوحة", u.stk, u);
+  }
   const cnt = ty => p.evaluate(ty => (JSON.stringify(PBApp.E.page.sections).match(new RegExp('"type":"' + ty + '"', "g")) || []).length, ty);
   const pbSay = async t => { await say(p, t); await p.waitForFunction(() => !AdminVoice.busy(), null, { timeout: 25000 }); };
   ok("المحرّر مفتوح ومفهرس", await p.evaluate(() => AdminVoice.findUI("معاينة", 2).length > 0 && AdminVoice.findUI("حفظ ونشر", 1).length > 0));
