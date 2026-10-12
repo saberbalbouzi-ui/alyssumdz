@@ -84,13 +84,13 @@ const PBStudio = (() => {
     return `<div id="pbst"><p class="pbst-n">حوّل صورة منتجك إلى صورة متجر احترافية: تُنزع الخلفية داخل متصفحك ثم تختار الخلفية والظل والمقاس.</p>
 <div class="pbst-pv"><canvas id="pbst-cv" width="10" height="10"></canvas><div class="pbst-ms" id="pbst-ms"></div></div>
 <div class="pbst-act"><button type="button" class="pbx-small pz-go" data-st="cut" id="pbst-cut">① انزع الخلفية</button></div>
+<div class="pbst-act"><button type="button" class="pbx-small pz-go" data-st="apply">تطبيق على الصورة</button><button type="button" class="pbx-small" data-st="dl">تنزيل</button><button type="button" class="pbx-small" data-st="reset">استعادة الافتراضي</button></div>
 <div><label class="pbst-l">الخلفية</label><div class="pbst-sw">${sw}</div><input type="color" id="pbst-c1" value="${esc(o.c1 || "#ffffff")}" style="width:100%;margin-top:.3rem;display:${o.bg === "custom" ? "block" : "none"}"></div>
 <div class="pbst-row"><div><label class="pbst-l">الظل</label><select id="pbst-sh"><option value="contact">ملامسة (الأنسب)</option><option value="contactStrong">ملامسة قوية</option><option value="soft">ناعم</option><option value="strong">قوي</option><option value="none">بدون</option></select></div>
 <div><label class="pbst-l">الموضع</label><select id="pbst-al"><option value="center">في الوسط</option><option value="bottom">على الأرض</option></select></div></div>
 <div><label class="pbst-l">حجم المنتج <span id="pbst-pv-n"></span></label><input type="range" id="pbst-pad" min="2" max="35" step="1" value="${Math.round((1 - o.pad * 2) * 100) ? Math.round(o.pad * 100) : 10}"></div>
 <label class="pbst-ck"><input type="checkbox" id="pbst-pod" ${o.podium ? "checked" : ""}> منصة عرض تحت المنتج</label>
-<div><label class="pbst-l">المقاس</label><select id="pbst-sz">${SIZES.map(([v, n]) => `<option value="${v}">${esc(n)}</option>`).join("")}</select></div>
-<div class="pbst-act"><button type="button" class="pbx-small pz-go" data-st="apply">تطبيق على الصورة</button><button type="button" class="pbx-small" data-st="dl">تنزيل</button><button type="button" class="pbx-small" data-st="reset">استعادة الافتراضي</button></div></div>`;
+<div><label class="pbst-l">المقاس</label><select id="pbst-sz">${SIZES.map(([v, n]) => `<option value="${v}">${esc(n)}</option>`).join("")}</select></div></div>`;
   }
   let drawT = 0;
   async function draw() {

@@ -286,13 +286,19 @@ const PBBgRemove = (function () {
   }
   const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
+  /* خلفية استوديو متجانسة من الحواف (أبيض/رمادي/لون واحد)؟ عندها الفصل اللوني أدقّ من نماذج الكشف (التي قد تلتقط جزءاً من المنتج فقط) */
+  function uniformBg(srcC) {
+    try { const k = Math.min(1, LO / Math.max(srcC.width, srcC.height)), w = Math.max(8, Math.round(srcC.width * k)), h = Math.max(8, Math.round(srcC.height * k)), c = scaledCanvas(srcC, w, h), d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, w, h).data; let t = 0; for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] < 40) t++; if (t > w * h * .01) return false; return !!floodBg(rgbOf(c).rgb, w, h); } catch (e) { return false; }
+  }
   async function autoCut(srcC, o) {
-    o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true; const order = o.methods || ((window.ImgCfg && ImgCfg.get("bg", "method", "auto") === "classic") ? ["classic"] : (aiOK() ? ["ai", "classic"] : ["classic"])); let err = null, last = null;
+    o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
+    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), order = o.methods || (cfgM === "classic" ? ["classic"] : aiOK() ? (uniformBg(srcC) ? ["classic", "ai"] : ["ai", "classic"]) : ["classic"]); let err = null, last = null; const tried = [];
     for (const m of order) {
-      try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; if (cov > .02 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
+      try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
     }
-    if (last) return last; throw err || new Error("تعذّر نزع الخلفية من هذه الصورة");
+    const ok = tried.filter(t => t.cov > .02 && t.cov < .985).sort((a, b) => b.cov - a.cov)[0];      // لا نتيجة مقبولة: الأكبر تغطية (أقرب لعدم مسح الصورة كلها)
+    if (ok) return ok; if (last) return last; throw err || new Error("تعذّر نزع الخلفية من هذه الصورة");
   }
   async function open(inf) {
     if (!inf || inf.node.type !== "image" || !inf.node.set.src) { alert("حدّد صورة أولاً"); return; }
@@ -332,5 +338,5 @@ const PBBgRemove = (function () {
     run(null);
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, autoCut, _t: { matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, autoCut, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();
