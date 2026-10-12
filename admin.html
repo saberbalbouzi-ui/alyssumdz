@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.117">
+<meta name="admin-version" content="1.89.118">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -517,6 +517,31 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div class="hint" id="fin-note"></div>
     </div>
     <div class="stat" id="fin-kpi"></div>
+    <div class="tab-seg" id="fin-seg" style="margin-top:.8rem"><button type="button" class="small green on" data-fv="prod" onclick="Admin.finView('prod')">📦 المنتجات</button><button type="button" class="small gold" data-fv="set" onclick="Admin.finView('set')">⚙️ الإعدادات العامة</button></div>
+    <div id="fin-v-prod">
+    <div id="cs-fin"></div>
+    <div class="card" id="fin-list-card">
+      <b style="color:var(--green);font-size:1.02rem">📦 المنتجات</b>
+      <div class="hint">اضغط على اسم منتج لفتح تبويباته: التكاليف والمصاريف · الحملة الإعلانية · المخزون والأرباح · المدفوعات · التحاليل. الأرقام حسب الفترة المختارة في الأعلى.</div>
+      <div class="rtw" style="overflow:auto"><table id="fin-table" class="rt"></table></div>
+    </div>
+    <div class="card hidden" id="fin-panel">
+      <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><button class="small gray" type="button" onclick="Admin.finClose()">◀ كل المنتجات</button><b id="fp-title" style="color:var(--green);font-size:1.05rem"></b><span id="fp-verdict"></span></div>
+      <div class="tab-seg" id="fp-tabs" style="margin-top:.7rem"><button type="button" class="small green on" data-fp="1" onclick="Admin.finTab(1)">🧾 التكاليف والمصاريف</button><button type="button" class="small green" data-fp="2" onclick="Admin.finTab(2)">📣 الحملة الإعلانية</button><button type="button" class="small green" data-fp="3" onclick="Admin.finTab(3)">📦 المخزون والأرباح</button><button type="button" class="small green" data-fp="4" onclick="Admin.finTab(4)">💳 المدفوعات</button><button type="button" class="small green" data-fp="5" onclick="Admin.finTab(5)">🔍 التحاليل</button></div>
+      <div id="fp-1" class="fp-pane"></div>
+      <div id="fp-2" class="fp-pane hidden">
+      <div id="fin-ads">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem"><b style="color:var(--green);font-size:1.02rem">📣 الإعلان لكل منتج</b><button class="small green" type="button" onclick="Admin.addAdRow()">➕ إضافة حملة</button></div>
+        <details style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب تكلفة الإعلان؟</summary><div class="hint" style="margin:.4rem 0">اختر المنتج ثم أدخل <b>تكلفة الحملة</b> (ما أنفقته على الإعلان) و<b>عدد الطلبات</b> (اتركه فارغاً ليُؤخذ عدد الطلبات الناجحة تلقائياً). القائمة في عمود «تكلفة الإعلان» تعرض <b>Cost الحقيقي</b> = التكلفة ÷ الطلبات، وخيارات <b>Cost × 1.5 … × 4</b> لأن ليس كل طلب ينجح، أو <b>قيمة ثابتة</b> لكل طلب تكتبها بنفسك. الرقم المختار هو الذي يدخل حساب الربح، ويتغير فور تغيير الأرقام؛ ثم اضغط «حفظ» في نهاية السطر. المنتج الذي لا حملة له تكلفة إعلانه 0.</div></details>
+        <div id="fin-ads-rows" style="overflow-x:auto"></div>
+      </div>
+      </div>
+      <div id="fp-3" class="fp-pane hidden"><div class="rtw" style="overflow:auto"><table id="fp-stock" class="rt"></table></div></div>
+      <div id="fp-4" class="fp-pane hidden"></div>
+      <div id="fp-5" class="fp-pane hidden"></div>
+    </div>
+    </div>
+    <div id="fin-v-set" class="hidden">
     <div class="card">
       <b style="color:var(--green)">⚙️ مصاريفك وتكاليفك</b>
       <div class="hint">أدخل كل بند مرة واحدة، والنظام يحسب ربح كل طلب وكل منتج تلقائياً. البنود التي تقبل «قيمة أو نسبة» تختار نوعها من القائمة.</div>
@@ -554,13 +579,6 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="small gold" style="margin-top:.6rem" onclick="Admin.saveFinSettings()">💾 حفظ</button>
     </div>
     <div class="card">
-      <div id="fin-ads">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem"><b style="color:var(--green);font-size:1.02rem">📣 الإعلان لكل منتج</b><button class="small green" type="button" onclick="Admin.addAdRow()">➕ إضافة حملة</button></div>
-        <details style="margin:.2rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف تُحسب تكلفة الإعلان؟</summary><div class="hint" style="margin:.4rem 0">اختر المنتج ثم أدخل <b>تكلفة الحملة</b> (ما أنفقته على الإعلان) و<b>عدد الطلبات</b> (اتركه فارغاً ليُؤخذ عدد الطلبات الناجحة تلقائياً). القائمة في عمود «تكلفة الإعلان» تعرض <b>Cost الحقيقي</b> = التكلفة ÷ الطلبات، وخيارات <b>Cost × 1.5 … × 4</b> لأن ليس كل طلب ينجح، أو <b>قيمة ثابتة</b> لكل طلب تكتبها بنفسك. الرقم المختار هو الذي يدخل حساب الربح، ويتغير فور تغيير الأرقام؛ ثم اضغط «حفظ» في نهاية السطر. المنتج الذي لا حملة له تكلفة إعلانه 0.</div></details>
-        <div id="fin-ads-rows" style="overflow-x:auto"></div>
-      </div>
-    </div>
-    <div class="card">
       <details>
         <summary style="cursor:pointer;font-weight:800;color:var(--green)">📖 كيف يعمل الحساب وكيف أقرأ الجدول؟</summary>
         <div style="line-height:2;font-size:.9rem;margin-top:.5rem">
@@ -576,20 +594,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <div id="fin-example" style="background:#faf6ec;border-radius:12px;padding:.8rem 1rem;margin-top:.6rem;font-size:.88rem;line-height:1.9"></div>
       </details>
     </div>
-    <div id="cs-fin"></div>
-    <div class="card">
-      <b style="color:var(--green);font-size:1.02rem">📊 المخزون والأرباح لكل منتج</b>
-      <details style="margin:.4rem 0 .6rem"><summary style="cursor:pointer;font-weight:700">كيف يُحسب الربح الصافي والربح المتوقع وربح القطعة؟</summary>
-        <div style="line-height:2;font-size:.88rem;margin-top:.4rem">
-          <b>الربح الصافي</b> (محقَّق): من الطلبات التي <b>سُلّمت فعلاً</b> فقط = الإيراد − سعر شراء البضاعة − التوصيل والتأمين − التغليف − الإعلان، <b>ثم تُطرح منه خسارة الطلبات المرتجعة</b> (رسم الإرجاع + التغليف + الإعلان).<br>
-          <b>الربح المتوقع</b>: الحساب نفسه للطلبات <b>المؤكَّدة أو في الطريق</b> التي لم تُسلَّم بعد. لا يدخل في الصافي حتى تُسلَّم، ولا يخصم احتمال أن يُرجع الزبون الطلب.<br>
-          <b>ربح القطعة</b> = الربح الصافي ÷ عدد القطع المُسلَّمة. الفرق بينه وبين «الربح الحقيقي» (المحسوب بالتقدير من سعر بيعك الحالي) أنه يعكس الواقع: خسارة المرتجعات تُقسَّم على القطع المُسلَّمة فينخفض كلما زادت المرتجعات، بينما الربح المتوقع لا يدخل فيه.<br>
-          <small>النقطة الخضراء ● بجانب ربح القطعة: الحساب بأرقام شركة التوصيل الفعلية؛ البرتقالية: بعض الطلبات بتقدير من إعداداتك.</small>
-        </div>
-      </details>
-      <div class="rtw" style="overflow:auto"><table id="fin-table" class="rt"></table></div>
-    </div>
     <div class="card"><b style="color:var(--green)">🧾 آخر حركات المخزون</b><div class="rtw" style="overflow:auto;margin-top:.5rem"><table id="fin-log" class="rt"></table></div></div>
+    </div>
   </div>
 
   <div id="tab-analytics" class="hidden">
@@ -1606,12 +1612,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.117"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.117"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.117"></script>
+<script src="assets/js/ctl-help.js?v=1.89.118"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.118"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.118"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.117"></script>
+<script src="assets/js/admin-nav.js?v=1.89.118"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1623,7 +1629,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.117"></script>
+<script src="assets/js/admin-update.js?v=1.89.118"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -5545,10 +5551,12 @@ const Admin = {
   renderAds(force){
     const box = $f("fin-ads-rows"); if(!box) return;
     if(!force && document.activeElement && box.contains(document.activeElement)) return;
-    this.adRowsInit(); const rows = this._adRows, act = this.products.filter(p=>p.slug !== "test" && p.active !== false);
+    this.adRowsInit(); const rows = this._adRows, sel = this._finSel || "", act = this.products.filter(p=>p.slug !== "test" && p.active !== false && (!sel || p.slug === sel));
+    if(sel && !rows.some(r=>r.slug === sel)){ box.innerHTML = '<div class="hint" style="padding:.8rem 0">لا توجد حملة لهذا المنتج بعد — تكلفة إعلانه الآن ' + Math.round((this._adNow || {})[sel] || 0).toLocaleString("fr-DZ") + ' دج للطلب. اضغط «➕ إضافة حملة» وأدخل تكلفة الحملة وعدد الطلبات.</div>'; return; }
     if(!rows.length){ box.innerHTML = '<div class="hint" style="padding:.8rem 0">لا توجد حملات بعد — اضغط «➕ إضافة حملة» ثم اختر المنتج وأدخل تكلفة الحملة وعدد الطلبات.</div>'; return; }
     const th = 'style="text-align:start;padding:.45rem .5rem;border-bottom:2px solid var(--line);white-space:nowrap"', td = 'style="padding:.5rem;border-bottom:1px solid var(--line);vertical-align:middle"', v = x=>(x == null || x === 0 || x === "") ? "" : x;
     box.innerHTML = '<table style="width:100%;min-width:820px;border-collapse:collapse"><thead><tr><th ' + th + '>المنتج</th><th ' + th + '>تكلفة الحملة (دج)</th><th ' + th + '>عدد الطلبات</th><th ' + th + '>تكلفة الإعلان (لكل طلب)</th><th ' + th + '></th></tr></thead><tbody>' + rows.map((r, i)=>{
+      if(sel && r.slug !== sel) return "";
       const c = r.cfg, used = new Set(rows.filter((x, j)=>j !== i).map(x=>x.slug)), nS = ((this._adSucc || {})[r.slug]) || 0, mode = c.method === "fixed" ? "fixed" : "m:" + (Number(c.m) || 1);
       const opts = '<option value="">اختر منتجاً…</option>' + act.filter(p=>!used.has(p.slug) || p.slug === r.slug).map(p=>'<option value="' + PB.esc(p.slug) + '"' + (p.slug === r.slug ? " selected" : "") + '>' + PB.esc(p.title) + '</option>').join("");
       return '<tr data-ar="' + i + '" oninput="Admin.adLive(' + i + ')" onchange="Admin.adLive(' + i + ')"><td ' + td + '><select id="fin-p' + i + '-prod" style="min-width:170px">' + opts + '</select></td>' +
@@ -5831,9 +5839,9 @@ const Admin = {
     const au = $f("fin-p" + i + "-auto"); if(au) au.textContent = "الفارغ = الناجحة (" + nS + ")";
   },
   addAdRow(){
-    this.adSync(); const used = new Set((this._adRows || []).map(r=>r.slug)), free = this.products.filter(p=>p.slug !== "test" && p.active !== false && !used.has(p.slug));
-    if(!free.length){ toast("كل المنتجات لها حملة بالفعل"); return }
-    this.adRowsInit(); this._adRows.push({ slug: "", orig: "", saved: false, cfg: { method: "spend", a: 0, n: 0, m: 1 } }); this.renderAds(true);
+    this.adSync(); const used = new Set((this._adRows || []).map(r=>r.slug)), free = this.products.filter(p=>p.slug !== "test" && p.active !== false && !used.has(p.slug) && (!this._finSel || p.slug === this._finSel));
+    if(!free.length){ toast(this._finSel ? "لهذا المنتج حملة بالفعل" : "كل المنتجات لها حملة بالفعل"); return }
+    this.adRowsInit(); this._adRows.push({ slug: this._finSel || "", orig: "", saved: false, cfg: { method: "spend", a: 0, n: 0, m: 1 } }); this.renderAds(true);
   },
   async saveAdRow(i){
     this.adSync(); const r = (this._adRows || [])[i]; if(!r) return; if(!r.slug){ toast("اختر المنتج أولاً"); return }
@@ -5872,6 +5880,172 @@ const Admin = {
       'الربح = ' + n(sale) + ' + ' + n(fee) + ' − ' + n(buy) + ' (البضاعة) − ' + n(est) + ' (التوصيل) − ' + n(ins) + ' (التأمين) − ' + n(pack) + ' (التغليف) − ' + n(ad) + ' (الإعلان) = <b style="color:' + (profit >= 0 ? "var(--ok)" : "var(--red)") + '">' + n(profit) + ' دج</b><br>' +
       'لو رجع الطلب: الخسارة ≈ ' + n(ret) + ' (إرجاع) + ' + n(pack) + ' (تغليف) + ' + n(ad) + ' (إعلان) + ' + n(est) + ' (توصيل تقديري) = <b style="color:var(--red)">' + n(loss) + ' دج</b>' + (S.ad && (S.ad.method === "spend" || (S.ad.method === "costx" && !(Number(S.ad.a) > 0))) ? '<br><small>الإعلان بطريقة «الإنفاق ÷ الطلبات» يُحسب من طلباتك الناجحة الفعلية فلا يظهر في هذا المثال.</small>' : "");
   },
+  /* ════════ المنتجات: قائمة ← 5 تبويبات لكل منتج (تكاليف · حملة · مخزون وأرباح · مدفوعات · تحاليل) ════════ */
+  _finV: "prod", _finSel: "", _finTab: 1, _finAi: {},
+  finView(v){ this._finV = v === "set" ? "set" : "prod"; this.finApplyView(); },
+  finApplyView(){
+    if(!$f("fin-v-prod")) return; const open = !!this._finSel;
+    document.querySelectorAll("#fin-seg button").forEach(b=>b.classList.toggle("on", b.dataset.fv === this._finV));
+    $f("fin-v-prod").classList.toggle("hidden", this._finV !== "prod"); $f("fin-v-set").classList.toggle("hidden", this._finV !== "set");
+    $f("fin-list-card").classList.toggle("hidden", open); $f("cs-fin").classList.toggle("hidden", open); $f("fin-panel").classList.toggle("hidden", !open);
+  },
+  finOpen(slug, tab){ this._finSel = slug; this._finTab = tab || 1; this._finV = "prod"; this._adSig = null; this._finFetched = false; this.finApplyView(); this.renderFinance(true); this.renderAds(true); const el = $f("fin-panel"); if(el && el.scrollIntoView) el.scrollIntoView({ block: "start" }); },
+  finClose(){ this._finSel = ""; this.finApplyView(); this.renderFinance(true); },
+  finTab(n){ this._finTab = n; this.finPanelRender(true); if(n === 2){ this._adSig = null; this.renderAds(true); } },
+  /* حكم المنتج: الفائدة الحقيقية بسعر البيع الحالي (وإن توفرت 3 قطع مسلَّمة فأحوط الرقمين: التقديري والمحقَّق) مقابل الفائدة المطلوبة */
+  finVerdict(p, r, sg){
+    const rp = this.realUnitProfit(p, sg); if(rp == null) return { k: "nodata", t: "أدخل سعر الشراء", c: "#999", rp: null };
+    const tg = sg.parts.profit, unit = r.units >= 3 ? r.profit / r.units : null, eff = unit != null ? Math.min(rp, unit) : rp;
+    return eff < 0 ? { k: "loss", t: "خاسر", c: "var(--red)", rp, eff, tg } : (eff < tg ? { k: "low", t: "ربح أقل من المطلوب", c: "#f59e0b", rp, eff, tg } : { k: "good", t: "مربح", c: "var(--ok)", rp, eff, tg });
+  },
+  finChip(v){ return '<span style="display:inline-block;padding:.12rem .6rem;border-radius:999px;border:1px solid ' + v.c + ';color:' + v.c + ';font-weight:800;font-size:.82rem;white-space:nowrap">' + (v.k === "good" ? "✅ " : v.k === "loss" ? "⛔ " : v.k === "low" ? "⚠️ " : "") + v.t + '</span>'; },
+  /* ملخص مدفوعات منتج: تسوية شركة التوصيل لكل طلب (حصة المنتج من الطلب) */
+  finPayAgg(p){
+    const T = { rows: [], unitsDone: 0, netDone: 0, got: 0, del: 0, cod: 0, ins: 0, ret: 0, retLoss: 0, nDone: 0, nRet: 0, nExp: 0, netExp: 0, unitsRet: 0, unitsExp: 0, nFile: 0 };
+    if(typeof AdminPayments === "undefined" || !AdminPayments.items || !AdminPayments.settle) return T;
+    AdminPayments.items().forEach(it=>{
+      if(it.manual) return; const x = AdminPayments.settle(it); if(!x) return;
+      const ls = this.orderLines(it.o) || [], mine = ls.filter(l=>l.p && l.p.slug === p.slug); if(!mine.length) return;
+      const sum = ls.reduce((a,l)=>a + l.total, 0), qty = mine.reduce((a,l)=>a + l.qty, 0), part = mine.reduce((a,l)=>a + l.total, 0), sh = sum ? part / sum : mine.length / ls.length;
+      const row = { it, x, qty, sh, got: x.got * sh, del: x.del * sh, cod: x.cod * sh, ins: x.ins * sh, ret: x.ret * sh, net: x.net * sh };
+      T.rows.push(row); if(x.src === "file") T.nFile++;
+      if(x.kind === "exp"){ T.nExp++; T.netExp += row.net; T.unitsExp += qty; }
+      else if(x.kind === "ret"){ T.nRet++; T.ret += row.ret; T.retLoss += row.ret; T.unitsRet += qty; }
+      else { T.nDone++; T.unitsDone += qty; T.netDone += row.net; T.got += row.got; T.del += row.del; T.cod += row.cod; T.ins += row.ins; }
+    });
+    return T;
+  },
+  /* اللوحة: تُرسم بعد كل renderFinance (إن كان منتج مفتوحاً) */
+  finPanelRender(force){
+    const sel = this._finSel, C = this._finC; if(!sel || !C || !$f("fin-panel")) return;
+    const p = this.products.find(x=>x.slug === sel); if(!p){ this._finSel = ""; this.finApplyView(); return; }
+    const ae = document.activeElement; if(!force && ae && $f("fin-panel").contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return;
+    const r = C.per[sel] || { units: 0, expUnits: 0, retUnits: 0, revenue: 0, cogs: 0, delivery: 0, pack: 0, loss: 0, profit: 0, expProfit: 0 }, sg = this.suggestPrice(p, r, C.K), v = this.finVerdict(p, r, sg), n = this._finTab || 1;
+    $f("fp-title").textContent = p.title; $f("fp-verdict").innerHTML = this.finChip(v);
+    document.querySelectorAll("#fp-tabs button").forEach(b=>b.classList.toggle("on", Number(b.dataset.fp) === n));
+    for(let i = 1; i <= 5; i++) $f("fp-" + i).classList.toggle("hidden", i !== n);
+    if(n === 1) $f("fp-1").innerHTML = this.finCostsHtml(p, sg);
+    else if(n === 3) this.finStockDraw(p, r, sg, C);
+    else if(n === 4) $f("fp-4").innerHTML = this.finPayHtml(p);
+    else if(n === 5) $f("fp-5").innerHTML = this.finAnalysisHtml(p, r, sg, C, v);
+  },
+  /* التبويب 1 — كل بنود التكلفة والمصاريف للقطعة الواحدة */
+  finCostsHtml(p, sg){
+    const nf = x=>Math.round(x).toLocaleString("fr-DZ"), cost = this.fin.costs[p.slug], cc = (this.fin.cc || {})[p.slug], made = !!(cc && cc.mode === "made");
+    const buyIn = '<input id="fp-buy" type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:110px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"> دج';
+    const go = (t, fn)=>'<button class="small gray" type="button" onclick="' + fn + '">' + t + '</button>';
+    const S = this.fin.set, t = sg ? sg.parts : null;
+    const line = (ic, name, val, note, act, col)=>'<tr><td style="white-space:nowrap"><b>' + ic + ' ' + name + '</b></td><td style="white-space:nowrap">' + val + '</td><td class="hint" style="margin:0">' + note + '</td><td>' + (act || "") + '</td></tr>';
+    const rows = [
+      line("🛒", "سعر الشراء", buyIn, made ? "منتج مصنَّع: يُحسب من الوصفة والمواد الأولية" : "ثمن شراء القطعة الواحدة", go("تكلفة المنتجات", "Admin.tab('costs')")),
+      line("📦", "التغليف والمصاريف", t ? nf(t.pack) + " دج" : "—", "تُحسب على كل طلب — من الإعدادات العامة", go("تعديل", "Admin.finView('set')")),
+      line("📣", "الإعلان", t ? nf(t.ad) + " دج" : "—", "تكلفة الإعلان لكل طلب — من حملة هذا المنتج", go("الحملة", "Admin.finTab(2)")),
+      line("🚚", "توصيل تتحمله", t ? nf(t.burden) + " دج" : "—", p.freeShip ? "المنتج بشحن مجاني: تتحمل تكلفة التوصيل كلها" : "الفرق بين تكلفة شركة التوصيل وما يدفعه الزبون", go("الإعدادات", "Admin.finView('set')")),
+      line("↩️", "احتياطي الإرجاع", t ? nf(t.risk) + " دج" : "—", "خسارة المرتجعات موزَّعة على القطع المُسلَّمة", ""),
+      line("🛡️", "التأمين", t ? nf(t.ins) + " دج" : "—", S.insMode === "pct" ? "نسبة " + (Number(S.insVal) || 0) + "% من قيمة الطلب" : "قيمة ثابتة لكل طلب", go("تعديل", "Admin.finView('set')")),
+      line("💰", "الفائدة المطلوبة", t ? nf(t.profit) + " دج" : "—", S.profMode === "val" ? "قيمة ثابتة للقطعة" : "نسبة " + (S.profVal == null ? 30 : S.profVal) + "% من سعر الشراء", go("تعديل", "Admin.finView('set')"))
+    ].join("");
+    let sum = "";
+    if(t){ const base = t.buy + t.pack + t.ad + t.burden + t.risk + t.ins, parts = [["شراء", t.buy, "#22c55e"], ["تغليف", t.pack, "#38bdf8"], ["إعلان", t.ad, "#f59e0b"], ["توصيل", t.burden, "#a78bfa"], ["إرجاع", t.risk, "#f43f5e"], ["تأمين", t.ins, "#94a3b8"], ["فائدة", t.profit, "#bef264"]], tot = parts.reduce((a,x)=>a + x[1], 0) || 1;
+      sum = '<div style="display:flex;height:16px;border-radius:8px;overflow:hidden;margin:.8rem 0 .3rem">' + parts.filter(x=>x[1] > 0).map(x=>'<div title="' + x[0] + ' ' + nf(x[1]) + ' دج" style="width:' + (x[1] / tot * 100) + '%;background:' + x[2] + '"></div>').join("") + '</div><div class="hint" style="display:flex;gap:.7rem;flex-wrap:wrap;margin:0 0 .6rem">' + parts.filter(x=>x[1] > 0).map(x=>'<span><i style="display:inline-block;width:.7rem;height:.7rem;border-radius:3px;background:' + x[2] + ';margin-inline-end:.25rem"></i>' + x[0] + ' ' + nf(x[1]) + '</span>').join("") + '</div>' +
+        '<div class="stat"><div><b>' + nf(base) + ' دج</b><span>التكلفة الكاملة للقطعة</span></div><div><b>' + nf(sg.price) + ' دج</b><span>سعر البيع الأدنى</span></div><div><b>' + nf(Number(p.price) || 0) + ' دج</b><span>سعر البيع الحالي</span></div></div>'; }
+    else sum = '<div class="hint" style="color:var(--red)">أدخل سعر الشراء أعلاه لتظهر بقية الأرقام.</div>';
+    return '<div class="hint" style="margin:.6rem 0">كل ما يُخصم من القطعة الواحدة حتى تُحسب فائدتك. أدخل سعر الشراء هنا مباشرة؛ بقية البنود تأتي من الإعدادات العامة والحملة وأرقام طلباتك.</div><div class="rtw" style="overflow:auto"><table class="rt"><tr class="hd"><th>البند</th><th>القيمة للقطعة</th><th>المصدر</th><th></th></tr>' + rows + '</table></div>' + sum;
+  },
+  /* التبويب 3 — صف المنتج حتى «الربح الحقيقي» */
+  finStockDraw(p, r, sg, C){
+    const nf = x=>Math.round(x).toLocaleString("fr-DZ"), low = C.low, si = this.stockInfo(p), st = si.total, avg = (C.sold14[p.slug] || 0) / 14, cover = st == null ? "∞" : (avg > 0 ? Math.floor(st / avg) + " يوم" : "—"), cost = this.fin.costs[p.slug], rp = this.realUnitProfit(p, sg);
+    const stCls = st != null && st <= 0 ? "color:var(--red);font-weight:800" : (st != null && st <= low ? "color:#B26A00;font-weight:800" : "");
+    const tip = sg ? ("شراء " + nf(sg.parts.buy) + " + تغليف " + nf(sg.parts.pack) + " + إعلان " + nf(sg.parts.ad) + " + توصيل تتحمله " + nf(sg.parts.burden) + " + احتياطي إرجاع " + nf(sg.parts.risk) + " + تأمين " + nf(sg.parts.ins) + " + فائدتك " + nf(sg.parts.profit) + " ⟵ سعر البيع الأدنى: " + nf(sg.price) + " دج") : "أدخل سعر الشراء أولاً";
+    const vsRows = (p.type === "variable" && si.vars) ? (p.variations || []).filter(v=>v.active !== false).map(v=>'<div style="display:flex;gap:.3rem;align-items:center;margin-top:.2rem"><small style="min-width:70px">' + this.varLabel(v) + '</small><input type="number" min="0" value="' + (v.stock == null ? "" : v.stock) + '" placeholder="∞" style="width:64px" onchange="Admin.setVarStock(\'' + p.slug + '\', \'' + v.id + '\', this.value)"></div>').join("") : "";
+    $f("fp-stock").innerHTML = '<tr class="hd"><th title="الكمية المتوفرة — عدّلها مباشرة">المخزون</th><th title="كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً">تغطية</th><th>سعر الشراء</th><th>سعر البيع</th><th title="ربحك الحقيقي في القطعة الواحدة بسعر بيعك الحالي (بعد كل التكاليف)">الربح الحقيقي</th></tr><tr>' +
+      '<td data-l="المخزون">' + (si.vars ? '<small style="color:#999">المجموع: <b style="color:inherit">' + (st == null ? "∞" : st) + '</b> · عام:</small> ' : "") + '<input type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)">' + vsRows + '</td>' +
+      '<td data-l="تغطية" style="' + (cover !== "∞" && cover !== "—" && parseInt(cover) < 7 ? "color:var(--red);font-weight:800" : "") + '">' + cover + '</td>' +
+      '<td data-l="سعر الشراء"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
+      '<td data-l="سعر البيع"><input type="number" min="1" value="' + (Number(p.price) || "") + '" style="width:84px;font-weight:800" title="سعر البيع في المتجر — عدّله مباشرة" onchange="Admin.setPrice(\'' + p.slug + '\', this.value)"></td>' +
+      '<td data-l="الربح الحقيقي" title="' + tip + '">' + (rp == null ? '<small style="color:#999">أدخل سعر الشراء أولاً</small>' : '<b style="color:' + (rp >= 0 ? "var(--ok)" : "var(--red)") + ';font-size:1.02rem">' + (rp >= 0 ? "+" : "") + nf(rp) + ' دج</b><div style="color:#8a8f8c;font-size:.78rem;margin-top:.15rem">في القطعة · سعر البيع ' + nf(Number(p.price) || 0) + '</div>') + '</td></tr>';
+  },
+  /* التبويب 4 — مدفوعات المنتج: تكلفة التوصيل الحقيقية والسعر الصافي من تسوية شركة التوصيل */
+  finPayHtml(p){
+    const nf = x=>Math.round(x).toLocaleString("fr-DZ");
+    if(typeof AdminPayments === "undefined") return '<div class="hint">قسم المدفوعات غير متاح.</div>';
+    const empty = !(typeof AdminYd !== "undefined" && AdminYd.S && AdminYd.S.rows && AdminYd.S.rows.length);
+    if(empty && this.listCompanyKey && this.listCompanyKey() && !this._finFetched){ this._finFetched = true; Promise.resolve(this.ydFetchParcels(10)).then(()=>{ if(this._finSel === p.slug && this._finTab === 4) this.finPanelRender(true); }).catch(()=>{}); }
+    const T = this.finPayAgg(p);
+    if(!T.rows.length) return '<div class="hint" style="padding:1rem 0">لا طلبات لهذا المنتج مسجَّلة عند شركة التوصيل بعد' + (empty && this.listCompanyKey && this.listCompanyKey() ? " (تُحمَّل قائمة طرود الشركة…)" : "") + '. تظهر هنا الطلبات المؤكَّدة المرسلة والمسلَّمة والمرتجعة.</div>';
+    const stL = { livree: "مسلَّم ✅", echec: "مرتجع ↩️", expediee: "في الطريق 🚚", confirmee: "مؤكَّد" }, avgDel = T.nDone ? T.del / T.nDone : 0;
+    const cards = '<div class="stat"><div><b style="color:var(--ok)">' + nf(T.netDone) + ' دج</b><span>صافي المسلَّم (' + T.nDone + ' طلب)</span></div><div><b>' + (T.unitsDone ? nf(T.netDone / T.unitsDone) : "—") + ' دج</b><span>السعر الصافي للقطعة</span></div><div><b>' + nf(avgDel) + ' دج</b><span>تكلفة التوصيل الحقيقية للطلب</span></div><div><b style="color:' + (T.retLoss ? "var(--red)" : "inherit") + '">' + nf(T.retLoss) + ' دج</b><span>رسوم الإرجاع (' + T.nRet + ')</span></div><div><b>' + nf(T.netExp) + ' دج</b><span>صافي قيد التوصيل (' + T.nExp + ')</span></div></div>';
+    const body = T.rows.map(w=>{ const x = w.x; return '<tr><td dir="ltr" style="white-space:nowrap">#' + PB.esc(String(w.it.id)) + ' · ' + PB.esc(String(w.it.date || "").slice(0, 10)) + '</td><td>' + (stL[w.it.ship] || w.it.ship) + '</td><td>' + w.qty + '</td><td>' + nf(w.got) + '</td><td>' + (x.kind === "ret" ? "—" : nf(w.del)) + '</td><td>' + (x.kind === "ret" ? "—" : nf(w.cod + w.ins)) + '</td><td style="color:' + (w.ret ? "var(--red)" : "inherit") + '">' + (w.ret ? nf(w.ret) : "—") + '</td><td><b style="color:' + (w.net >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(w.net) + '</b></td><td title="' + (x.src === "file" ? "من كشف ياليدين" : "تقدير من التعريفة") + '">' + (x.src === "file" ? "✓" : "≈") + '</td></tr>'; }).join("");
+    return '<div class="hint" style="margin:.6rem 0">حصة هذا المنتج من كل طلب مسجَّل عند شركة التوصيل: السعر الصافي = المحصَّل − التوصيل − عمولة COD − التأمين − رسم الإرجاع. ✓ من كشف الدفع المستورد، ≈ تقدير من التعريفة.</div>' + cards +
+      '<div class="rtw" style="overflow:auto;margin-top:.6rem"><table class="rt"><tr class="hd"><th>الطلب</th><th>الحالة</th><th>القطع</th><th>المحصَّل</th><th>توصيل حقيقي</th><th>COD + تأمين</th><th>إرجاع</th><th>الصافي</th><th></th></tr>' + body + '</table></div>';
+  },
+  /* التبويب 5 — مقارنة السعر الصافي بالفائدة الحقيقية + رأي + محلل ذكي */
+  finAnalysisHtml(p, r, sg, C, v){
+    const nf = x=>Math.round(x).toLocaleString("fr-DZ"), T = this.finPayAgg(p);
+    if(!sg) return '<div class="hint" style="padding:1rem 0;color:var(--red)">أدخل سعر شراء هذا المنتج (التبويب 1) لنحلل ربحه.</div>';
+    const t = sg.parts, netU = T.unitsDone ? T.netDone / T.unitsDone : null, realU = r.units > 0 ? r.profit / r.units : null, rate = (r.units + r.retUnits) ? r.retUnits / (r.units + r.retUnits) : 0, price = Number(p.price) || 0;
+    const col = x=>x == null ? "inherit" : (x >= 0 ? "var(--ok)" : "var(--red)"), cell = x=>x == null ? "—" : '<b style="color:' + col(x) + '">' + (x >= 0 ? "+" : "") + nf(x) + ' دج</b>';
+    const rowT = (a, b, n)=>'<tr><td>' + a + '</td><td>' + b + '</td><td class="hint" style="margin:0">' + (n || "") + '</td></tr>';
+    const table = '<div class="rtw" style="overflow:auto"><table class="rt"><tr class="hd"><th>المقارنة (للقطعة)</th><th>القيمة</th><th>ملاحظة</th></tr>' +
+      rowT("السعر الصافي بعد شركة التوصيل", netU == null ? "—" : '<b>' + nf(netU) + ' دج</b>', netU == null ? "لا طلبات مسلَّمة بعد" : "من " + T.unitsDone + " قطعة مسلَّمة (تبويب المدفوعات)") +
+      rowT("− سعر الشراء", nf(t.buy) + " دج", "") + rowT("− تغليف وإعلان", nf(t.pack + t.ad) + " دج", "تغليف " + nf(t.pack) + " + إعلان " + nf(t.ad)) +
+      rowT("الفائدة الحقيقية المحقَّقة", cell(realU), realU == null ? "لا قطع مسلَّمة بعد" : "من أرقام الطلبات المسلَّمة بعد خسارة المرتجعات") +
+      rowT("الفائدة الحقيقية بسعر البيع الحالي (" + nf(price) + ")", cell(v.rp), "تقدير من تكاليفك الحالية") +
+      rowT("الفائدة المطلوبة", '<b>' + nf(t.profit) + ' دج</b>', "") +
+      rowT("نسبة الإرجاع", Math.round(rate * 100) + "%", r.retUnits + " قطعة مرتجعة من " + (r.units + r.retUnits)) + '</table></div>';
+    const eff = v.eff, opinion = v.k === "good" ? "✅ <b>منتج مربح</b>: فائدتك الحقيقية " + nf(eff) + " دج للقطعة تغطي المطلوب (" + nf(t.profit) + ")." : v.k === "low" ? "⚠️ <b>يربح لكن أقل من المطلوب</b>: فائدتك " + nf(eff) + " دج للقطعة والمطلوب " + nf(t.profit) + " (ينقصك " + nf(t.profit - eff) + " دج)." : "⛔ <b>منتج خاسر</b>: تخسر " + nf(-eff) + " دج في القطعة الواحدة بالسعر والتكاليف الحالية.";
+    const adv = this.finAdvice(p, r, sg, T, v), cache = this._finAi[p.slug];
+    return '<div style="padding:.7rem 1rem;border-radius:12px;border:1px solid ' + v.c + ';margin:.6rem 0;line-height:1.9">' + opinion + (r.units >= 3 && realU != null && realU < v.rp - 1 ? "<br><small>الفائدة المحقَّقة أقل من التقدير بـ " + nf(v.rp - realU) + " دج — غالباً بسبب المرتجعات.</small>" : "") + '</div>' + table +
+      '<div style="margin-top:.9rem"><b style="color:var(--green)">🧠 المحلل الذكي — حلول مقترحة</b>' + (adv.length ? adv.map(a=>'<div style="display:flex;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--line)"><span style="font-size:1.3rem">' + a.i + '</span><div><b>' + a.t + '</b><div class="hint" style="margin:.15rem 0 0">' + a.d + '</div></div></div>').join("") : '<div class="hint">لا اقتراحات: الأرقام جيدة.</div>') + '</div>' +
+      '<div style="margin-top:.9rem"><button class="small green" type="button" onclick="Admin.finAi()">🤖 تحليل أعمق بـ Alyssum API</button> <span class="hint" id="fp-ai-st"></span><div id="fp-ai-out" style="white-space:pre-wrap;line-height:1.9;margin-top:.5rem">' + (cache ? PB.esc(cache) : "") + '</div></div>';
+  },
+  /* المحلل الذكي (حسابي بلا اتصال): يقترح حلولاً مرقَّمة لبلوغ الفائدة المطلوبة */
+  finAdvice(p, r, sg, T, v){
+    const nf = x=>Math.round(x).toLocaleString("fr-DZ"), out = [], t = sg.parts, S = this.fin.set, price = Number(p.price) || 0, rp = v.rp, tg = t.profit, gap = tg - v.eff;
+    if(v.k === "loss") out.push({ i: "🛑", t: "أوقف الإعلان مؤقتاً", d: "كل قطعة تباع تخسر " + nf(-v.eff) + " دج؛ زيادة المبيعات تزيد الخسارة. عالج السعر أو التكلفة أولاً." });
+    if(gap > 0){
+      const dp = sg.price - price;
+      if(dp > 0) out.push({ i: "💲", t: "ارفع سعر البيع إلى " + nf(sg.price) + " دج", d: "زيادة " + nf(dp) + " دج (" + Math.round(dp / Math.max(1, price) * 100) + "%) تحقق فائدتك المطلوبة " + nf(tg) + " دج للقطعة." + (dp / Math.max(1, price) > .15 ? " الزيادة كبيرة: جرّبها تدريجياً أو قدّمها مع هدية/عرض." : "") });
+      if(t.ad > 0){ const cut = Math.min(t.ad, gap); out.push({ i: "📣", t: "خفّض تكلفة الإعلان للطلب من " + nf(t.ad) + " إلى " + nf(t.ad - cut) + " دج", d: "حسّن الاستهداف أو الإبداع، أو اختر معاملاً أقل في خيار «تكلفة الإعلان» (تبويب الحملة)." + (cut >= gap ? " وهذا وحده يكفي لبلوغ فائدتك." : " يغطي " + nf(cut) + " من أصل " + nf(gap) + " دج ناقصة.") }); }
+      const pctP = S.profMode === "val" ? 0 : (Number(S.profVal) || 0) / 100, newBuy = Math.max(0, t.buy - gap / (1 + pctP));
+      out.push({ i: "🛒", t: "فاوض على سعر الشراء: ≤ " + nf(newBuy) + " دج", d: "بدل " + nf(t.buy) + " دج. إن كان المنتج مصنَّعاً فراجع الوصفة وسعر المواد (تبويب تكلفة المنتجات)." });
+      if(t.burden > 0) out.push({ i: "🚚", t: "لا تتحمل التوصيل كاملاً", d: "تدفع " + nf(t.burden) + " دج للقطعة فوق ما يدفعه الزبون" + (p.freeShip ? " (الشحن المجاني)" : "") + ". اجعل الشحن المجاني مشروطاً بقطعتين أو بحد أدنى للسلة." });
+      const insPct = S.insMode === "pct" ? (Number(S.insVal) || 0) : 0, insVal = S.insMode === "val" ? (Number(S.insVal) || 0) : 0, fixed = t.pack + t.ad + t.burden + t.risk + insVal;
+      const p2 = Math.ceil(((2 * (t.buy + tg)) + fixed) / Math.max(.2, 1 - insPct / 100) / 50) * 50;
+      if(p2 < 2 * price) out.push({ i: "🎁", t: "عرض قطعتين بـ " + nf(p2) + " دج", d: "خصم " + Math.round((1 - p2 / (2 * price)) * 100) + "% عن شراء قطعتين منفصلتين، ومع ذلك تحقق فائدتك لأن التغليف والإعلان والتوصيل تُدفع مرة واحدة للطلب." });
+    }
+    else {
+      out.push({ i: "✅", t: "فائدتك أعلى من المطلوب بـ " + nf(-gap) + " دج", d: "يمكنك تخفيض السعر حتى " + nf(sg.price) + " دج لزيادة المبيعات، أو رفع ميزانية الإعلان: تتحمل حتى " + nf(t.ad + (-gap)) + " دج إعلان للطلب." });
+    }
+    const rate = (r.units + r.retUnits) ? r.retUnits / (r.units + r.retUnits) : 0;
+    if(r.retUnits >= 2 && rate >= .15) out.push({ i: "↩️", t: "نسبة الإرجاع مرتفعة (" + Math.round(rate * 100) + "%)", d: "تكلفك " + nf(t.risk) + " دج للقطعة. شدّد التأكيد الهاتفي قبل الإرسال وتجاهل الأرقام المشبوهة (القائمة السوداء)." });
+    const byW = {}; let nFail = 0; this.orders.forEach(o=>{ if(o.status !== "echec") return; if(!this.orderLines(o).some(l=>l.p && l.p.slug === p.slug)) return; nFail++; if(o.wilaya) byW[o.wilaya] = (byW[o.wilaya] || 0) + 1; });
+    const top = Object.entries(byW).sort((a,b)=>b[1] - a[1])[0];
+    if(top && top[1] >= 2 && top[1] / nFail >= .4) out.push({ i: "📍", t: "ولاية " + top[0] + " تتكرر في المرتجعات", d: top[1] + " من " + nFail + " مرتجع. فكّر في تأكيد إضافي أو حصر التوصيل هناك على المكتب (Stop Desk)." });
+    return out;
+  },
+  /* تحليل أعمق عبر Alyssum API (يستعمل مفتاح الاتصال نفسه ومفتاح التفعيل في السوشيال) */
+  async finAi(){
+    const p = this.products.find(x=>x.slug === this._finSel), C = this._finC, st = $f("fp-ai-st"), out = $f("fp-ai-out"); if(!p || !C) return;
+    let key = "", on = true; try{ key = (localStorage.getItem("alyssum_gp_gkey") || "").trim(); on = localStorage.getItem("alyssum_ai_text") !== "0"; }catch(e){}
+    if(!on){ st.textContent = "التوليد الذكي للنص معطّل — فعّله من السوشيال ← الاتصال والإعدادات."; return; }
+    if(!key){ st.textContent = "أدخل مفتاح Alyssum API أولاً من السوشيال ← الاتصال والإعدادات."; return; }
+    const r = C.per[p.slug] || { units: 0, retUnits: 0, revenue: 0, profit: 0 }, sg = this.suggestPrice(p, r, C.K), v = this.finVerdict(p, r, sg), T = this.finPayAgg(p);
+    if(!sg){ st.textContent = "أدخل سعر الشراء أولاً."; return; }
+    const D = { product: p.title, sellingPrice: Number(p.price) || 0, oldPrice: Number(p.old) || 0, perUnitCosts: sg.parts, minPriceForTarget: sg.price, realProfitPerUnit: v.rp, targetProfitPerUnit: sg.parts.profit, deliveredUnits: r.units, returnedUnits: r.retUnits, realizedProfitTotal: Math.round(r.profit), netPerUnitFromCourier: T.unitsDone ? Math.round(T.netDone / T.unitsDone) : null, avgCourierDeliveryCost: T.nDone ? Math.round(T.del / T.nDone) : null, returnFeesTotal: Math.round(T.retLoss), freeShipping: !!p.freeShip, verdict: v.t };
+    const prompt = ["You are a sharp e-commerce profit analyst for an Algerian cash-on-delivery store (prices in DZD).", "Analyze this single product's numbers and answer in clear Arabic (Modern Standard, short sentences):", "1) A verdict: profitable / weak / losing, with the main reason.", "2) The 3 biggest levers to reach the target profit per unit, each with a concrete number (new price, max ad cost per order, max buy price, bundle offer, etc.).", "3) One risk to watch.", "Be concrete, do not invent data, do not promise results. Max 180 words.", "DATA (JSON): " + JSON.stringify(D)].join("\n");
+    st.textContent = "⏳ جارِ التحليل…"; out.textContent = "";
+    let last = null;
+    for(const m of ["gemini-2.5-flash", "gemini-2.0-flash"]){
+      try{
+        const rs = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: .4, maxOutputTokens: 1200 } }) });
+        const j = await rs.json().catch(()=>({}));
+        if(rs.ok){ const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x=>x.text || "").join("").trim(); if(t){ this._finAi[p.slug] = t; if(this._finSel === p.slug && $f("fp-ai-out")){ $f("fp-ai-out").textContent = t; $f("fp-ai-st").textContent = ""; } return; } last = new Error("ردّ فارغ"); continue; }
+        last = new Error(rs.status === 400 || rs.status === 403 ? "المفتاح غير صالح أو غير مفعّل" : ((j.error && j.error.message) || "HTTP " + rs.status)); if(rs.status !== 404 && rs.status !== 503) break;
+      }catch(e){ last = e; break; }
+    }
+    if($f("fp-ai-st")) $f("fp-ai-st").textContent = "❌ " + ((last && last.message) || "تعذّر التحليل");
+  },
   renderFinance(noFetch){
     if(!$f("fin-table")) return;
     if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
@@ -5897,32 +6071,23 @@ const Admin = {
       '<div><b style="color:' + (missing ? "var(--red)" : "var(--ok)") + '">' + missing + '</b><span>منتجات بلا سعر تكلفة</span></div>';
     const rows = active.map(p=>{ const r = per[p.slug] || { units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 }; return Object.assign({ p }, r); })
       .sort((a,b)=>((b.units + b.retUnits + b.expUnits) > 0) - ((a.units + a.retUnits + a.expUnits) > 0) || b.profit - a.profit);
-    const low = Number(S.low) || 0;
-    $f("fin-table").innerHTML = '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("fin") : "") + '<th>المنتج</th><th title="الكمية المتوفرة — عدّلها مباشرة">المخزون</th><th title="كم يوماً يكفي المخزون بحسب مبيعات آخر 14 يوماً">تغطية</th><th title="ثمن شراء القطعة الواحدة — أدخله لكل منتج">سعر الشراء</th><th title="سعر البيع الحالي في المتجر">سعر البيع</th><th title="ربحك الحقيقي في القطعة الواحدة بسعر بيعك الحالي بعد كل التكاليف: الشراء + التغليف + الإعلان + ما تتحمله من التوصيل + احتياطي الإرجاع + التأمين">الربح الحقيقي</th><th title="عدد القطع المُسلَّمة (وبين قوسين المُرجَعة)">سُلّم</th><th title="ما دفعه الزبائن عن المنتجات بعد الخصم">الإيراد</th><th title="البضاعة + التوصيل والتأمين + التغليف + الإعلان (مرّر المؤشر لرؤية التفصيل)">التكاليف</th><th title="خسارة الطلبات المرتجعة">خسارة الإرجاع</th><th title="ما تحقق فعلاً من الطلبات المُسلَّمة: الإيراد − التكاليف − خسارة الإرجاع">الربح الصافي</th><th title="ربح الطلبات المؤكَّدة أو في الطريق التي لم تُسلَّم بعد (بنفس القاعدة، دون احتمال الإرجاع). لا يدخل في الربح الصافي حتى تُسلَّم">الربح المتوقع</th><th title="الربح الصافي ÷ عدد القطع المُسلَّمة (بعد احتساب المرتجعات). النقطة الخضراء = بأرقام شركة التوصيل الفعلية">ربح القطعة</th></tr>' +
-      rows.map(r=>{ const p = r.p, si = this.stockInfo(p), st = si.total, avg = (sold14[p.slug] || 0) / 14, cover = st == null ? "∞" : (avg > 0 ? Math.floor(st / avg) + " يوم" : "—");
+    const low = Number(S.low) || 0; this._finC = { per, K, sold14, pend, low };
+    if(!this._finSel){
+    $f("fin-table").innerHTML = '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("fin") : "") + '<th>المنتج</th><th title="الكمية المتوفرة">المخزون</th><th title="سعر البيع الحالي في المتجر">سعر البيع</th><th title="ربحك الحقيقي في القطعة الواحدة بسعر البيع الحالي">الربح الحقيقي</th><th title="مربح أو خاسر مقارنةً بفائدتك المطلوبة">الحكم</th><th></th></tr>' +
+      rows.map(r=>{ const p = r.p, si = this.stockInfo(p), st = si.total, sg = this.suggestPrice(p, r, K), v = this.finVerdict(p, r, sg), rp = v.rp;
         const stCls = st != null && st <= 0 ? "color:var(--red);font-weight:800" : (st != null && st <= low ? "color:#B26A00;font-weight:800" : "");
-        const cost = this.fin.costs[p.slug], sg = this.suggestPrice(p, r, K), costs = r.cogs + r.delivery + r.pack + (r.ad || 0);
-        const unit = r.units > 0 ? Math.round(r.profit / r.units) : null, dot = r.units > 0 ? ('<span title="' + (r.estN ? "بعض الطلبات بتقدير من إعداداتك" : "بأرقام شركة التوصيل الفعلية") + '" style="color:' + (r.estN ? "#B26A00" : "var(--ok)") + '">●</span> ') : "";
-        const rp = this.realUnitProfit(p, sg);
-        const tip = sg ? ("شراء " + nf(sg.parts.buy) + " + تغليف " + nf(sg.parts.pack) + " + إعلان " + nf(sg.parts.ad) + " + توصيل تتحمله " + nf(sg.parts.burden) + " + احتياطي إرجاع " + nf(sg.parts.risk) + " + تأمين " + nf(sg.parts.ins) + " + فائدتك " + nf(sg.parts.profit) + " ⟵ سعر البيع الأدنى لفائدتك المطلوبة: " + nf(sg.price) + " دج") : "أدخل سعر الشراء أولاً";
-        const vsRows = (p.type === "variable" && si.vars) ? (p.variations||[]).filter(v=>v.active !== false).map(v=>'<div style="display:flex;gap:.3rem;align-items:center;margin-top:.2rem"><small style="min-width:70px">' + this.varLabel(v) + '</small><input type="number" min="0" value="' + (v.stock == null ? "" : v.stock) + '" placeholder="∞" style="width:64px" onchange="Admin.setVarStock(\'' + p.slug + '\', \'' + v.id + '\', this.value)"></div>').join("") : "";
-        return '<tr>' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.cell("fin", p.slug) : "") + '<td class="t"><b>' + p.title + '</b>' + (pend[p.slug] ? '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>' : "") + '</td>' +
-          '<td data-l="المخزون">' + (si.vars ? '<small style="color:#999">المجموع: <b style="color:inherit">' + (st == null ? "∞" : st) + '</b> · عام:</small> ' : "") + '<input type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)">' + vsRows + '</td>' +
-          '<td data-l="تغطية" style="' + (cover !== "∞" && cover !== "—" && parseInt(cover) < 7 ? "color:var(--red);font-weight:800" : "") + '">' + cover + '</td>' +
-          '<td data-l="سعر الشراء"><input type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:84px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"></td>' +
+        return '<tr>' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.cell("fin", p.slug) : "") + '<td class="t"><a href="#" onclick="Admin.finOpen(\'' + p.slug + '\');return false" style="color:inherit"><b>' + p.title + '</b></a>' + (pend[p.slug] ? '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>' : "") + '</td>' +
+          '<td data-l="المخزون">' + (si.vars ? '<small style="color:#999">المجموع: <b style="color:inherit">' + (st == null ? "∞" : st) + '</b> · عام:</small> ' : "") + '<input type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)"></td>' +
           '<td data-l="سعر البيع"><input type="number" min="1" value="' + (Number(p.price) || "") + '" style="width:84px;font-weight:800" title="سعر البيع في المتجر — عدّله مباشرة" onchange="Admin.setPrice(\'' + p.slug + '\', this.value)"></td>' +
-          '<td data-l="الربح الحقيقي" title="' + tip + '">' + (rp == null ? '<small style="color:#999">أدخل سعر الشراء أولاً</small>' : '<b style="color:' + (rp >= 0 ? "var(--ok)" : "var(--red)") + ';font-size:1.02rem">' + (rp >= 0 ? "+" : "") + nf(rp) + ' دج</b><div style="color:#8a8f8c;font-size:.78rem;margin-top:.15rem">في القطعة · سعر البيع ' + nf(Number(p.price) || 0) + '</div>') + '</td>' +
-          '<td data-l="سُلّم">' + r.units + (r.retUnits ? ' <small style="color:var(--red)">(-' + r.retUnits + ')</small>' : "") + '</td>' +
-          '<td data-l="الإيراد">' + nf(r.revenue) + '</td>' +
-          '<td data-l="التكاليف" title="بضاعة ' + nf(r.cogs) + ' · توصيل وتأمين ' + nf(r.delivery) + ' · تغليف ' + nf(r.pack) + ' · إعلان ' + nf(r.ad || 0) + '">' + nf(costs) + '</td>' +
-          '<td data-l="خسارة الإرجاع" style="color:' + (r.loss ? "var(--red)" : "inherit") + '">' + nf(r.loss) + '</td>' +
-          '<td data-l="الربح الصافي"><b style="color:' + (r.profit >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(r.profit) + '</b></td>' +
-          '<td data-l="الربح المتوقع">' + (r.expUnits ? '<b style="color:' + (r.expProfit >= 0 ? "#fde047" : "var(--red)") + '">' + (r.expProfit >= 0 ? "+" : "") + nf(r.expProfit) + '</b><br><small style="color:#777">' + r.expUnits + ' قطعة قيد التوصيل</small>' : "—") + '</td>' +
-          '<td data-l="ربح القطعة">' + (unit == null ? "—" : dot + '<b style="color:' + (unit >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(unit) + '</b>') + '</td></tr>'; }).join("");
+          '<td data-l="الربح الحقيقي">' + (rp == null ? '<small style="color:#999">أدخل سعر الشراء</small>' : '<b style="color:' + (rp >= 0 ? "var(--ok)" : "var(--red)") + '">' + (rp >= 0 ? "+" : "") + nf(rp) + ' دج</b>') + '</td>' +
+          '<td data-l="الحكم">' + this.finChip(v) + '</td>' +
+          '<td><button class="small green" type="button" onclick="Admin.finOpen(\'' + p.slug + '\')">فتح ▸</button></td></tr>'; }).join("");
+    }
     $f("fin-log").innerHTML = this.fin.log.length ? '<tr class="hd"><th>الوقت</th><th>المنتج</th><th>التغيّر</th><th>المخزون بعده</th><th>السبب</th></tr>' +
       this.fin.log.slice(0, 15).map(l=>'<tr><td>' + new Date(l.ts).toLocaleString("ar-DZ") + '</td><td>' + l.title + '</td><td dir="ltr" style="color:' + (l.delta < 0 ? "var(--red)" : "var(--ok)") + '">' + (l.delta > 0 ? "+" : "") + l.delta + '</td><td>' + (l.after == null ? "∞" : l.after) + '</td><td>' + l.why + (l.ref ? ' <small dir="ltr" style="color:#999">' + l.ref + '</small>' : "") + '</td></tr>').join("")
       : "<tr><td style='text-align:center;padding:1.2rem;color:#999'>لا حركات بعد — تظهر هنا عند تأكيد أو إلغاء الطلبات</td></tr>";
-    if((typeof AdminCopySet !== "undefined")) AdminCopySet.mount("fin");
+    if((typeof AdminCopySet !== "undefined") && !this._finSel) AdminCopySet.mount("fin");
+    this.finApplyView(); this.finPanelRender(noFetch === true);
     this.setBadge("nb-finance", active.filter(p=>{ const t = this.stockInfo(p).total; return p.active !== false && t != null && t <= low; }).length);
   },
 

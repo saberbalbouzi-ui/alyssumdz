@@ -1268,7 +1268,7 @@ const AdminVoice = (() => {
         case "newProduct": { await goTab("products"); const btn = await waitFor(() => q$('[onclick="Admin.editProduct(null)"]')); if (btn && await H.click(btn)) return true; return fb(act, "زر منتج جديد"); }
         case "editProduct": { await goTab("products"); const btn = await waitFor(() => editBtn(act.slug)); if (btn && await H.click(btn)) return true; return fb(act, "زر تعديل المنتج " + act.slug); }
         case "stock": case "price": {
-          await goTab("finance"); const fn = act.type === "stock" ? "setStock" : "setPrice";
+          await goTab("finance"); if (A().finClose && A()._finSel) A().finClose(); const fn = act.type === "stock" ? "setStock" : "setPrice";
           const inp = await waitFor(() => q$('input[onchange*="' + fn + "('" + act.slug + "'" + '"]'));
           if (inp && await H.type(inp, String(act.to))) { lastSlug = act.slug; return true; } return fb(act, "خانة " + fn + " للمنتج " + act.slug);
         }

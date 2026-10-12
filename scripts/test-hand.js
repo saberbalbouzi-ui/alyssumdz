@@ -151,7 +151,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
   // ── ربط المخزون بالطلبات: شارة + نافذة «المخزون لا يكفي» ──
   const stk = await p.evaluate(async () => {
-    API.updateOrder = async () => ({ ok: true }); const pr = Admin.products[0], t = pr.title; pr.stock = 3; Admin.fin.cfg = Object.assign({}, Admin.fin.cfg, { since: "2000-01-01T00:00:00Z" });
+    Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); const pr = Admin.products[0], t = pr.title; pr.stock = 3; Admin.fin.cfg = Object.assign({}, Admin.fin.cfg, { since: "2000-01-01T00:00:00Z" });
     const mk = (id, d, q) => ({ id, date: new Date(Date.now() - (3 - d) * 600000).toISOString(), status: "nouvelle", name: "زبون " + id, phone: "0550000000", wilaya: "الجزائر", items: t + " ×" + q + " = " + (q * 2000) + " DA", subtotal: q * 2000, total: q * 2000, note: "" });
     Admin.orders = [mk("S1", 1, 3), mk("S2", 2, 2)]; Admin.renderOrders(); await new Promise(r => setTimeout(r, 100));
     const pills = document.querySelectorAll("#orders-table .sc-pill, .sc-pill").length, sum = StockCheck.summary();
@@ -227,8 +227,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const ad = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms));
     const saved = []; Priv.set = async (k, v) => { saved.push([k, JSON.stringify(v)]); }; Admin.fin.ads = {}; Admin._adRows = null; Admin._adSig = null;
-    Admin.renderFinance(true);
-    const empty = document.getElementById("fin-ads-rows").textContent.includes("لا توجد حملات"), globalGone = !document.getElementById("fin-adbox") && !document.getElementById("fin-g-method");
+    Admin.finClose(); const slug0 = Admin.products.find(x => x.slug !== "test" && x.active !== false).slug; Admin.finOpen(slug0, 2);
+    const empty = document.getElementById("fin-ads-rows").textContent.includes("لا توجد حملة لهذا المنتج"), globalGone = !document.getElementById("fin-adbox") && !document.getElementById("fin-g-method");
     Admin.addAdRow(); const sel = document.getElementById("fin-p0-prod"), opts = sel ? sel.options.length : 0;
     const slug = Admin.products.find(x => x.slug !== "test" && x.active !== false).slug; sel.value = slug; sel.dispatchEvent(new Event("change"));
     const E = (id, v) => { const el = document.getElementById("fin-p0-" + id); el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); };
@@ -239,13 +239,43 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const svd = saved.length - before, hasTitle = /تكلفة الإعلان/.test(document.getElementById("fin-ads-rows").textContent), rowsAfter = document.querySelectorAll("#fin-ads-rows tbody tr").length, stored = Admin.fin.ads[slug];
     Admin.addAdRow(); const opts2 = Array.from(document.querySelectorAll("#fin-p1-prod option")).map(o => o.value);
     window.confirm = () => true; await Admin.delAdRow(0); await wait(50);
-    const tblOk = /المخزون والأرباح لكل منتج/.test(document.getElementById("fin-table").closest(".card").textContent) && Array.from(document.querySelectorAll("#fin-table th")).some(h => h.textContent === "الربح المتوقع");
+    Admin.finClose(); const tblOk = /المنتجات/.test(document.getElementById("fin-table").closest(".card").textContent) && Array.from(document.querySelectorAll("#fin-table th")).some(h => h.textContent === "الحكم");
     return { tblOk, empty, globalGone, opts, live1, live2, live3, live4, fxShown, saved: svd, rowsAfter, stored, dupHidden: !opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
   });
   ok("إعلان لكل منتج: لا إعداد عام، ولا صفوف قبل إضافة حملة", ad.empty && ad.globalGone, ad);
-  ok("جدول المخزون والأرباح: له عنوان وعمود «الربح المتوقع»", ad.tblOk, ad);
+  ok("المخزون والأرباح: قائمة المنتجات بعمود «الحكم»", ad.tblOk, ad);
   ok("إعلان لكل منتج: القائمة تعرض Cost الحقيقي (6000÷10=600) وتتغير فوراً (×2=1200، وبـ20 طلباً 600، وثابت 350)", /Cost الحقيقي/.test(ad.live1) && /600/.test(ad.live1) && /1[\s,.\u202f\u00a0]?200/.test(ad.live2) && /600/.test(ad.live3) && ad.fxShown && /350/.test(ad.live4), ad);
   ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل لا يتكرر في القائمة، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "spend" && ad.stored.a === 6000 && ad.stored.m === 2 && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
+  // ── المخزون والأرباح: قائمة المنتجات + 5 تبويبات لكل منتج ──
+  const fpn = await p.evaluate(async () => {
+    Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); Priv.set = async () => {};
+    const o0 = Admin.orders, a0 = Admin.ydActual, t0 = Admin.trackingOf, pr = Admin.products.find(x => x.slug !== "test" && x.active !== false), slug = pr.slug, price0 = pr.price, cost0 = Admin.fin.costs[slug];
+    pr.price = 3000; Admin.fin.costs = Object.assign({}, Admin.fin.costs, { [slug]: 1000 }); Admin.fin.ads = {}; Admin._adRows = null; Admin._adSig = null;
+    const d = new Date().toISOString();
+    Admin.orders = [{ id: "fp1", name: "أ", phone: "0550000011", status: "livree", total: 3600, fee: 600, subtotal: 3000, date: d, wilaya: "Tipaza", commune: "Larhat", items: pr.title + " ×1 = 3000 DA", note: "" }, { id: "fp2", name: "ب", phone: "0550000012", status: "echec", total: 3600, fee: 600, subtotal: 3000, date: d, wilaya: "Tipaza", commune: "Larhat", items: pr.title + " ×1 = 3000 DA", note: "" }];
+    Admin.ydActual = { "T-fp1": { st: "Livré", price: 3600, del: 600, ret: 0, ins: 0, cod: 22.5, net: 2977.5 }, "T-fp2": { st: "Retourné au vendeur", price: 0, del: 0, ret: 250, ins: 0, cod: 0, net: -250 } };
+    Admin.trackingOf = o => ({ company: "yalidine", tracking: "T-" + o.id });
+    Admin.finClose(); Admin.finView("prod"); await wait(30);
+    const list = document.getElementById("fin-table"), listRow = Array.from(list.querySelectorAll("tr")).some(r => r.textContent.includes(pr.title) && /مربح|خاسر|أقل من المطلوب|أدخل/.test(r.textContent)), seg = !!document.querySelector('#fin-seg [data-fv="set"]');
+    Admin.finOpen(slug); await wait(30);
+    const panelOpen = !document.getElementById("fin-panel").classList.contains("hidden") && document.getElementById("fin-list-card").classList.contains("hidden"), t1 = document.getElementById("fp-1").textContent, buy = document.getElementById("fp-buy") && document.getElementById("fp-buy").value;
+    Admin.finTab(3); const heads = Array.from(document.querySelectorAll("#fp-stock tr.hd th")).map(t => t.textContent), lastHead = heads[heads.length - 1];
+    Admin.finTab(2); const adsIn = !!document.getElementById("fin-ads").closest("#fp-2") && !document.getElementById("fp-2").classList.contains("hidden");
+    Admin.finTab(4); const t4 = document.getElementById("fp-4").textContent, rows4 = document.querySelectorAll("#fp-4 table tr").length - 1, agg = Admin.finPayAgg(pr);
+    Admin.finTab(5); const t5 = document.getElementById("fp-5").textContent, verdictGood = document.getElementById("fp-verdict").textContent;
+    let lowB = 1000; for (; lowB <= 4000; lowB += 25) { Admin.fin.costs[slug] = lowB; const r0 = Admin._finC.per[slug] || { units: 0, retUnits: 0, profit: 0 }; if (Admin.finVerdict(pr, r0, Admin.suggestPrice(pr, r0, Admin._finC.K)).k === "low") break; }
+    Admin.fin.costs[slug] = lowB; Admin.finTab(5); const t5b = document.getElementById("fp-5").textContent, verdictLow = document.getElementById("fp-verdict").textContent;
+    Admin.fin.costs[slug] = 6000; Admin.finTab(5); const t5c = document.getElementById("fp-5").textContent, verdictLoss = document.getElementById("fp-verdict").textContent;
+    await Admin.finAi(); const aiSt = document.getElementById("fp-ai-st").textContent;
+    Admin.finClose(); const back = !document.getElementById("fin-list-card").classList.contains("hidden") && document.getElementById("fin-panel").classList.contains("hidden");
+    Admin.orders = o0; Admin.ydActual = a0; Admin.trackingOf = t0; pr.price = price0; if(cost0 == null) delete Admin.fin.costs[slug]; else Admin.fin.costs[slug] = cost0;
+    return { listRow, seg, panelOpen, t1: /سعر الشراء/.test(t1) && /الفائدة المطلوبة/.test(t1) && /سعر البيع الأدنى/.test(t1), buy, lastHead, noExp: !heads.includes("الربح المتوقع") && !heads.includes("ربح القطعة"), adsIn, rows4, nd: agg.nDone, nr: agg.nRet, net: agg.netDone, retLoss: agg.retLoss, t4: /السعر الصافي للقطعة/.test(t4), good: verdictGood, low: verdictLow, loss: verdictLoss, t5: /مربح/.test(t5) && /المقارنة/.test(t5), t5b: /ارفع سعر البيع/.test(t5b), t5c: /خاسر/.test(t5c) && /أوقف الإعلان/.test(t5c), aiSt, back };
+  });
+  ok("المخزون والأرباح: قائمة المنتجات بحكم لكل منتج وشريط (المنتجات | الإعدادات العامة)، وفتح منتج يخفي القائمة ويُظهر لوحته، والإغلاق يعيدها", fpn.listRow && fpn.seg && fpn.panelOpen && fpn.back, fpn);
+  ok("تبويب التكاليف والمصاريف: جدول بنود (سعر الشراء 1000 قابل للتعديل، الفائدة المطلوبة، سعر البيع الأدنى)", fpn.t1 && fpn.buy === "1000", fpn);
+  ok("تبويب المخزون والأرباح: يتوقف الجدول عند «الربح الحقيقي» بلا أعمدة المتوقع وربح القطعة، وبطاقة الحملة داخل تبويب الحملة", fpn.lastHead === "الربح الحقيقي" && fpn.noExp && fpn.adsIn, fpn);
+  ok("تبويب المدفوعات: طلب مسلَّم (صافي 2977.5) وآخر مرتجع (250) لهذا المنتج فقط", fpn.rows4 === 2 && fpn.nd === 1 && fpn.nr === 1 && Math.abs(fpn.net - 2977.5) < 1e-6 && fpn.retLoss === 250 && fpn.t4, fpn);
+  ok("تبويب التحاليل: حكم مربح (شراء 1000)، أقل من المطلوب (سعر شراء وسيط)، خاسر (6000) مع اقتراح رفع السعر وإيقاف الإعلان، وزر التحليل الذكي يطلب المفتاح أولاً", /مربح/.test(fpn.good) && /أقل من المطلوب/.test(fpn.low) && /خاسر/.test(fpn.loss) && fpn.t5 && fpn.t5b && fpn.t5c && /مفتاح/.test(fpn.aiSt), fpn);
   // ── معاينة من «الطلبات المسجلة»: تعديل + حذف + طباعة ──
   const rg = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; API.updateOrder = async () => ({ ok: true });
