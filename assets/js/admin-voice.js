@@ -1648,6 +1648,7 @@ const AdminVoice = (() => {
   function tryCommand(q) {
     if (pending) { handle([q], { typed: true }); return true; }
     const r = parse(q, dataNow()); if (!TYPED_OK.has(r.kind)) return false;
+    if (r.kind === "nav" && !V_OPEN.test(" " + norm(q) + " ")) return false;   /* اسم قسم بلا فعل «افتح»: لا يفتح القسم، بل يبحث في الشروحات */
     run(r, q); return true;
   }
 

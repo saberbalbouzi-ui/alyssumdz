@@ -75,7 +75,7 @@ const AdminSearch = (() => {
   function nclose() { if (nres) nres.classList.remove("on"); }
   function ndraw() {
     if (!nq.value.trim()) { nclose(); return; }
-    nitems = results(nq.value); nsel = 0; nres.innerHTML = rowsHtml(nitems); nres.classList.add("on"); npaint();
+    nitems = results(nq.value).filter(x => x.k === "قسم"); nsel = 0; nres.innerHTML = rowsHtml(nitems); nres.classList.add("on"); npaint();
   }
   function nrun(i) { const it = nitems[i]; if (!it) return; nq.value = ""; nclose(); try { it.go(); } catch (e) { console.warn("AdminSearch", e); } }
   function attach() {

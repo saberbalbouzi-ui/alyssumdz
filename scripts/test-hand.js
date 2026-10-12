@@ -476,11 +476,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const type = async v => { el.focus(); el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); await new Promise(r => setTimeout(r, 500)); };
     await type("المدفوعات"); const box = document.getElementById("as-box"), dlg = !!(box && box.classList.contains("on")), res = document.getElementById("nav-res"), shown = !!(res && res.classList.contains("on")), under = !!(res && (el.closest(".nav-q").compareDocumentPosition(res) & Node.DOCUMENT_POSITION_FOLLOWING));
     const hit = [...document.querySelectorAll("#nav-res .as-t")].map(x => x.textContent).join("|"); const kept = el.value === "المدفوعات";
+    const kinds = [...new Set([...document.querySelectorAll("#nav-res .as-k")].map(x => x.textContent))].join(",");
+    const onBefore = (document.querySelector(".nav-btn.on") || {}).textContent; AdminHelp.ask("الدفع"); await new Promise(r => setTimeout(r, 200)); const stay = (document.querySelector(".nav-btn.on") || {}).textContent === onBefore;
     await type("اسألني"); const ask = [...document.querySelectorAll("#nav-res .as-t")].some(x => x.textContent.trim() === "اسألني"), askSub = /اسألني/.test(document.getElementById("nav-res").textContent);
     await type(""); const closed = !document.getElementById("nav-res").classList.contains("on");
-    return { h, above, dlg, shown, under, kept, hit, ask, askSub, closed };
+    return { h, above, dlg, shown, under, kept, hit, ask, askSub, closed, kinds, stay };
   });
-  ok("البحث السريع: خانة كبيرة (≥48px) فوق «دليل الاستخدام»، والكتابة فيها تعرض قائمة نتائج تحتها بلا نافذة (وتبقى الكلمة)، وتجد قسم المدفوعات، ولا تظهر «اسألني» في النتائج، وتُغلق بمسح النص", nq.h >= 48 && nq.above && !nq.dlg && nq.shown && nq.under && nq.kept && /المدفوعات/.test(nq.hit || "") && !nq.ask && nq.closed, nq);
+  ok("البحث السريع: خانة كبيرة (≥48px) فوق «دليل الاستخدام»، والكتابة فيها تعرض قائمة نتائج تحتها بلا نافذة (وتبقى الكلمة)، وتجد قسم المدفوعات، وفيها الأقسام فقط (بلا شروح)، ولا تظهر «اسألني»، وتُغلق بمسح النص، والكتابة في «اسألني» لا تفتح قسماً", nq.h >= 48 && nq.above && !nq.dlg && nq.shown && nq.under && nq.kept && /المدفوعات/.test(nq.hit || "") && !nq.ask && nq.closed && nq.kinds === "قسم" && nq.stay, nq);
   // ── المدفوعات: تسوية ياليدين (صافي لك) ──
   const pay = await p.evaluate(async () => {
     const o0 = Admin.orders, a0 = Admin.ydActual, t0 = Admin.trackingOf;
