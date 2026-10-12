@@ -276,6 +276,30 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تبويب المخزون والأرباح: يتوقف الجدول عند «الربح الحقيقي» بلا أعمدة المتوقع وربح القطعة، وبطاقة الحملة داخل تبويب الحملة", fpn.lastHead === "الربح الحقيقي" && fpn.noExp && fpn.adsIn, fpn);
   ok("تبويب المدفوعات: طلب مسلَّم (صافي 2977.5) وآخر مرتجع (250) لهذا المنتج فقط", fpn.rows4 === 2 && fpn.nd === 1 && fpn.nr === 1 && Math.abs(fpn.net - 2977.5) < 1e-6 && fpn.retLoss === 250 && fpn.t4, fpn);
   ok("تبويب التحاليل: حكم مربح (شراء 1000)، أقل من المطلوب (سعر شراء وسيط)، خاسر (6000) مع اقتراح رفع السعر وإيقاف الإعلان، وزر التحليل الذكي يطلب المفتاح أولاً", /مربح/.test(fpn.good) && /أقل من المطلوب/.test(fpn.low) && /خاسر/.test(fpn.loss) && fpn.t5 && fpn.t5b && fpn.t5c && /مفتاح/.test(fpn.aiSt), fpn);
+  // ── مولّد الصور: نوع الصورة (مشهد | PNG بلون موحّد | PNG شفافة) + خيارات الإضافة + زرّا التوليد ──
+  const igt = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); const $ = id => document.getElementById(id);
+    window.confirm = () => true; ImgGen.open(); ImgGen.tab("set"); const k = $("ig-key"); k.value = "TESTKEY"; ImgGen.saveKey(); ImgGen.tab("make"); ImgGen.mode("ad"); await wait(30);
+    const ui = { bgm: !!$("ig-bgm"), opts: $("ig-bgm") ? Array.from($("ig-bgm").options).map(o => o.value).join() : "", tn: !!$("ig-t-name"), td: !!$("ig-t-desc"), tg: !!$("ig-t-goal"), go: !!$("ig-go") && /توليد صورة ذكية/.test($("ig-go").textContent), go2: !!$("ig-go2") && /في المطوّر/.test($("ig-go2").textContent), cbox: $("ig-bgcbox").style.display };
+    ImgGen.mode("product"); await wait(30); const noGoalInProduct = !$("ig-t-goal"); ImgGen.mode("ad"); await wait(30);
+    $("ig-name").value = "عسل السدر"; $("ig-desc").value = "عسل جبلي طبيعي"; $("ig-goal").value = "خصم 30%";
+    $("ig-t-name").checked = true; ImgGen.tog(); const l1 = $("ig-txt").value; $("ig-t-desc").checked = true; $("ig-t-goal").checked = true; ImgGen.tog(); const l3 = $("ig-txt").value, boxShown = $("ig-txtbox").style.display;
+    $("ig-t-name").checked = $("ig-t-desc").checked = $("ig-t-goal").checked = false; ImgGen.tog(); const cleared = $("ig-txt").value === "" && $("ig-txtbox").style.display === "none";
+    const pr = ImgGen._t.buildPrompt({ mode: "product", name: "x", desc: "", w: 1000, h: 1000, ar: "1:1", bgMode: "solid", bgColor: "#ffcc00" }), pr2 = ImgGen._t.buildPrompt({ mode: "product", name: "x", desc: "", w: 1000, h: 1000, ar: "1:1" });
+    const mkSrc = () => { const c = document.createElement("canvas"); c.width = c.height = 400; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 400, 400); g.fillStyle = "#b45309"; g.fillRect(130, 90, 140, 230); return c; };
+    const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
+    const srcC = mkSrc(), srcB = await toBlob(srcC), genB64 = () => new Promise(r => { const rd = new FileReader(); rd.onload = () => r(String(rd.result).split(",")[1]); toBlob(mkSrc()).then(b => rd.readAsDataURL(b)); });
+    const b64 = await genB64(), of = window.fetch; window.fetch = async (u, o) => /generativelanguage/.test(String(u)) ? (/models\?/.test(String(u)) ? new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-image" }] }), { status: 200 }) : new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: b64 } }] } }] }), { status: 200 })) : of(u, o);
+    ImgGen._t.S.srcBlob = srcB; ImgGen.mode("product"); await wait(30); $("ig-name").value = "منتج"; $("ig-bgm").value = "transp"; ImgGen.bgm("transp"); $("ig-size").value = "shop"; ImgGen.size("shop");
+    await ImgGen.generate(); await wait(300);
+    const S = ImgGen._t.S, cv = S.res, g = cv && cv.getContext("2d"), px = (x, y) => g ? Array.from(g.getImageData(x, y, 1, 1).data) : [], out = { meta: S.meta && S.meta.bgMode, fmtPng: S.meta && S.meta.bgMode === "transp", corner: px(3, 3), center: px(Math.round(cv.width / 2), Math.round(cv.height / 2)), prompt: /BACKGROUND/.test(S.lastPrompt || "") && /no cast shadow/.test(S.lastPrompt || ""), msg: ($("ig-msg") || {}).textContent };
+    window.fetch = of; ImgGen.bgm("scene");
+    return { ui, noGoalInProduct, l1, l3, boxShown, cleared, flat: /#FFCC00/.test(pr) && /perfectly flat/.test(pr) && !/ART DIRECTION/.test(pr), scene: /ART DIRECTION/.test(pr2) && !/perfectly flat/.test(pr2), out };
+  });
+  ok("مولّد الصور: قائمة نوع الخلفية (مشهد/لون موحّد/شفافة) وثلاثة خيارات إضافة (الحملة للإشهارية فقط) وزرّا «توليد صورة ذكية» و«إنشاء الصورة في المطوّر»", igt.ui.bgm && igt.ui.opts === "scene,solid,transp" && igt.ui.tn && igt.ui.td && igt.ui.tg && igt.ui.go && igt.ui.go2 && igt.ui.cbox === "none" && igt.noGoalInProduct, igt);
+  ok("مولّد الصور: تفعيل الخيارات يملأ النص (اسم ثم وصف ثم الحملة) ويُظهر طريقة الإضافة، وإلغاؤها يُفرغه", igt.l1 === "عسل السدر" && igt.l3 === "عسل السدر\nعسل جبلي طبيعي\nخصم 30%" && igt.boxShown === "block" && igt.cleared, igt);
+  ok("مولّد الصور: تعليمات الخلفية الموحّدة بلون محدد بلا مشهد فني، وتعليمات المشهد كما كانت", igt.flat && igt.scene, igt);
+  ok("مولّد الصور: الخلفية الشفافة تُنتج PNG بزوايا شفافة والمنتج معتم", igt.out.meta === "transp" && igt.out.prompt && igt.out.corner[3] < 40 && igt.out.center[3] > 200, igt);
   // ── معاينة من «الطلبات المسجلة»: تعديل + حذف + طباعة ──
   const rg = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; API.updateOrder = async () => ({ ok: true });

@@ -70,7 +70,12 @@ const ImgGen = (() => {
     const kind = layoutKind(o.w, o.h), art = artOf(o.name, o.desc), sz = o.w + "x" + o.h + " px (aspect ratio " + o.ar + ", " + kind + " format)";
     const tm = o.textMode || (o.text ? "gemini" : "none");
     const textPart = tm === "gemini" && o.text ? textBlock(o.text, o.lang) : (tm === "builder" ? "NO TEXT: render absolutely no text, letters, numbers, logos or captions — text will be added later by the designer.\n" + textArea(kind, o.lang) : "NO TEXT: render absolutely no text, letters, numbers, logos or captions anywhere in the image.");
-    const head = o.mode === "product"
+    const flat = o.bgMode === "solid" || o.bgMode === "transp", hex = (o.bgColor || "#FFFFFF").toUpperCase();
+    const flatTxt = "BACKGROUND (highest priority): a perfectly flat, uniform, solid " + hex + " background (exact color " + hex + ") filling the ENTIRE frame edge to edge — no gradient, no vignette, no texture, no floor or horizon line, no props, no scenery, no reflections on the backdrop" + (o.bgMode === "transp" ? "; absolutely no cast shadow, glow or contact shadow, and keep every edge of the product crisp and sharply separated from the background so the background can be removed cleanly; the product itself must not contain the color " + hex : "; only a very soft contact shadow directly under the product is allowed") + ". The product is the only subject, centered, upright, completely visible, filling about 60-70% of the frame.";
+    const head = flat ? (o.mode === "product"
+      ? ["ROLE: you are a world-class commercial product photographer and retoucher.", "BRIEF: create a clean e-commerce PRODUCT PACKSHOT.", "PRODUCT: " + (o.name || "see attached photo") + (o.desc ? "\nDETAILS: " + o.desc : ""), flatTxt]
+      : ["ROLE: you are an award-winning advertising art director creating a clean ad-ready packshot.", "BRIEF: create an ADVERTISING PRODUCT IMAGE for the platform below on a plain background.", "PRODUCT: " + (o.name || "see attached photo") + (o.desc ? "\nKEY BENEFIT / DETAILS: " + o.desc : "") + (o.goal ? "\nCAMPAIGN ANGLE / OFFER: " + o.goal : ""), "PLATFORM: " + (o.platform || "social") + ".", flatTxt])
+      : o.mode === "product"
       ? ["ROLE: you are a world-class commercial product photographer and retoucher.", "BRIEF: create a professional e-commerce PRODUCT PHOTO.",
         "PRODUCT: " + (o.name || "see attached photo") + (o.desc ? "\nDETAILS: " + o.desc : ""),
         "ART DIRECTION (" + art.id + "): " + art.text,
@@ -79,7 +84,7 @@ const ImgGen = (() => {
         "PRODUCT: " + (o.name || "see attached photo") + (o.desc ? "\nKEY BENEFIT / DETAILS: " + o.desc : "") + (o.goal ? "\nCAMPAIGN ANGLE / OFFER: " + o.goal : ""),
         "PLATFORM: " + (o.platform || "social") + ". Design for that placement" + (kind === "story" ? " (full-screen vertical: keep key content inside the safe zone, away from the top 12% and bottom 18% where app UI overlays appear)" : "") + ".",
         "ART DIRECTION (" + art.id + "): " + art.text + " Push it further for advertising: dramatic depth, dynamic composition with a strong focal point, rich lighting and a clear visual hierarchy; the product is large, sharp and unmistakably the star; add a few supporting elements that reinforce the benefit (ingredients, light effects, splashes) without clutter."];
-    return [head.join("\n"), "CAMERA & LIGHT: " + CAMERA, "The attached photo shows the product on a plain (usually white) background — cleanly remove that background and place the product into the new scene.", "OUTPUT: exactly " + sz + ". Fill the whole frame edge to edge.", textPart, RULES, "FINAL CHECK before answering: product identical to the reference, nothing cropped, no extra text or logos, no people, clean photorealistic result."].join("\n\n");
+    return [head.join("\n"), "CAMERA & LIGHT: " + (flat ? "Evenly lit studio packshot: soft diffused light from the front, no harsh shadows, true colors, razor-sharp edges, 4K detail, no noise." : CAMERA), (flat ? "The attached photo shows the product on a plain background — keep only the product and place it on the flat background described above." : "The attached photo shows the product on a plain (usually white) background — cleanly remove that background and place the product into the new scene."), "OUTPUT: exactly " + sz + ". Fill the whole frame edge to edge.", textPart, RULES, "FINAL CHECK before answering: product identical to the reference, nothing cropped, no extra text or logos, no people, clean photorealistic result."].join("\n\n");
   }
 
   /* ───────── الاتصال بـ Alyssum API ───────── */
@@ -163,7 +168,7 @@ const ImgGen = (() => {
     const tabs = [["make", "إنشاء صورة"], ["set", "الإعدادات"]];
     const hd = `<div class="ap-h"><h3>مولّد الصور</h3></div><div class="ap-tabs">${tabs.map(x => `<button type="button" class="${x[0] === t ? "on" : ""}" onclick="ImgGen.tab('${x[0]}')">${x[1]}</button>`).join("")}</div>` + costBar();
     if (t === "set") { box.innerHTML = hd + settingsHtml(); return; }
-    const sizeId = LS.get("alyssum_ig_size_" + m, m === "product" ? "shop" : "ig_sq"), sz = sizeOf(sizeId) || sizeOf("shop"), lang = cfg.lang(), tm = txtMode();
+    const sizeId = LS.get("alyssum_ig_size_" + m, m === "product" ? "shop" : "ig_sq"), sz = sizeOf(sizeId) || sizeOf("shop"), lang = cfg.lang(), tm = txtMode(), bgm = LS.get("alyssum_ig_bgm", "scene");
     box.innerHTML = hd + `
 <div class="ig-modes"><button type="button" class="${m === "product" ? "on" : ""}" onclick="ImgGen.mode('product')"><b>صورة منتج</b><small>خلفية مناسبة لنوع المنتج بالمقاس المحدّد</small></button><button type="button" class="${m === "ad" ? "on" : ""}" onclick="ImgGen.mode('ad')"><b>صورة إشهارية</b><small>تصميم إعلاني لمنصات التواصل والإعلانات</small></button></div>
 <div class="ig-grid">
@@ -181,13 +186,21 @@ const ImgGen = (() => {
   <div class="field"><label>3) اسم المنتج</label><input id="ig-name" type="text" value="${esc(LS.get("alyssum_ig_name", ""))}" placeholder="مثال: عسل السدر الجبلي"></div>
   <div class="field"><label>الوصف</label><textarea id="ig-desc" rows="3" placeholder="مكوّنات، فائدة، نوع المنتج…">${esc(LS.get("alyssum_ig_desc", ""))}</textarea></div>
   ${m === "ad" ? `<div class="field"><label>فكرة الحملة / العرض (اختياري)</label><input id="ig-goal" type="text" placeholder="مثال: خصم 30% لفترة محدودة — الدفع عند الاستلام"></div>` : ""}
-  <div class="field"><label>4) النص على الصورة (اختياري)</label>
-   <select id="ig-txtm" onchange="ImgGen.txtm(this.value)"><option value="none"${tm === "none" ? " selected" : ""}>بلا نص — صورة نظيفة فقط</option><option value="builder"${tm === "builder" ? " selected" : ""}>نص في المطوّر (موصى به: عربي سليم وقابل للتعديل)</option><option value="gemini"${tm === "gemini" ? " selected" : ""}>نص مرسوم بـ Alyssum API (داخل الصورة، لا يُعدَّل)</option></select>
-   <div id="ig-txtbox" style="display:${tm === "none" ? "none" : "block"}"><textarea id="ig-txt" rows="4" placeholder="كل سطر = عبارة. السطر الأول عنوان، الوسطى وصف، وآخر سطر قصير يصير زراً (عند 3 أسطر فأكثر)">${esc(LS.get("alyssum_ig_txt", ""))}</textarea>
-   <select id="ig-lang" onchange="ImgGen.lang(this.value)">${Object.keys(LANGS).map(k => `<option value="${k}"${k === lang ? " selected" : ""}>لغة النص: ${LANGS[k][0]}</option>`).join("")}</select></div></div>
+  <div class="field"><label>4) نوع الصورة وخلفيتها</label>
+   <select id="ig-bgm" onchange="ImgGen.bgm(this.value)"><option value="scene"${bgm === "scene" ? " selected" : ""}>مشهد مناسب للمنتج (خلفية فنية)</option><option value="solid"${bgm === "solid" ? " selected" : ""}>PNG بخلفية بلون موحّد</option><option value="transp"${bgm === "transp" ? " selected" : ""}>PNG بخلفية شفافة</option></select>
+   <div id="ig-bgcbox" style="display:${bgm === "solid" ? "flex" : "none"};align-items:center;gap:.5rem;margin-top:.4rem"><span class="hint" style="margin:0">لون الخلفية</span><input id="ig-bgc" type="color" value="${esc(LS.get("alyssum_ig_bgc", "#ffffff"))}" onchange="ImgGen.bgc(this.value)" style="width:56px;height:36px;padding:2px"></div>
+   <div class="hint">الخلفية الموحّدة والشفافة تُحفظان بصيغة PNG. الشفافة تُزال خلفيتها تلقائياً بعد التوليد.</div></div>
+  <div class="field"><label>5) ما يُضاف إلى الصورة</label>
+   <label class="tl-r" style="cursor:pointer"><span>إضافة اسم المنتج إلى الصورة</span><input type="checkbox" id="ig-t-name"${LS.get("alyssum_ig_t_name", "0") === "1" ? " checked" : ""} onchange="ImgGen.tog()"></label>
+   <label class="tl-r" style="cursor:pointer"><span>إضافة الوصف إلى الصورة</span><input type="checkbox" id="ig-t-desc"${LS.get("alyssum_ig_t_desc", "0") === "1" ? " checked" : ""} onchange="ImgGen.tog()"></label>
+   ${m === "ad" ? `<label class="tl-r" style="cursor:pointer"><span>إضافة فكرة الحملة إلى الصورة</span><input type="checkbox" id="ig-t-goal"${LS.get("alyssum_ig_t_goal", "0") === "1" ? " checked" : ""} onchange="ImgGen.tog()"></label>` : ""}
+   <div id="ig-txtbox" style="display:${tm === "none" ? "none" : "block"}">
+    <select id="ig-txtm" onchange="ImgGen.txtm(this.value)"><option value="builder"${tm !== "gemini" ? " selected" : ""}>النص في المطوّر (عربي سليم وقابل للتعديل)</option><option value="gemini"${tm === "gemini" ? " selected" : ""}>النص مرسوم داخل الصورة بـ Alyssum API (لا يُعدَّل)</option></select>
+    <textarea id="ig-txt" rows="4" oninput="ImgGen.txtEdited()" placeholder="كل سطر = عبارة. السطر الأول عنوان، الوسطى وصف، وآخر سطر قصير يصير زراً (عند 3 أسطر فأكثر)">${esc(LS.get("alyssum_ig_txt", ""))}</textarea>
+    <select id="ig-lang" onchange="ImgGen.lang(this.value)">${Object.keys(LANGS).map(k => `<option value="${k}"${k === lang ? " selected" : ""}>لغة النص: ${LANGS[k][0]}</option>`).join("")}</select></div></div>
  </div>
 </div>
-<div class="action-bar"><button type="button" class="small" id="ig-go" onclick="ImgGen.generate()">توليد الصورة</button>${m === "ad" ? `<button type="button" class="small gray" onclick="ImgGen.blank()" title="يفتح المطوّر بصفحة فارغة بمقاس المنصة لتصمّم عليها بلا توليد">لوحة فارغة بهذا المقاس</button>` : ""}<span class="hint" id="ig-est"></span></div>
+<div class="action-bar"><button type="button" class="small" id="ig-go" onclick="ImgGen.generate()">✨ توليد صورة ذكية</button><button type="button" class="small gold" id="ig-go2" onclick="ImgGen.generate('editor')">🧩 إنشاء الصورة في المطوّر</button>${m === "ad" ? `<button type="button" class="small gray" onclick="ImgGen.blank()" title="يفتح المطوّر بصفحة فارغة بمقاس المنصة لتصمّم عليها بلا توليد">لوحة فارغة بهذا المقاس</button>` : ""}<span class="hint" id="ig-est"></span></div>
 <div class="hint" id="ig-msg"></div>
 <div id="ig-res" class="ig-res"></div>`;
     paintPrev(); estimate();
@@ -231,32 +244,69 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
   }
   function readForm() { ["name", "desc", "txt"].forEach(k => { const e = $("ig-" + k); if (e) LS.set("alyssum_ig_" + k, e.value); }); }
 
-  async function generate() {
+  /* لون خلفية مفتاحي للخلفية الشفافة: الأبعد عن ألوان المنتج (أبيض مفضَّل ما لم يكن المنتج فاتحاً) ليسهل نزع الخلفية بدقة */
+  async function pickKey(blob) {
+    try {
+      const bm = await createImageBitmap(blob), c = document.createElement("canvas"); c.width = c.height = 48; const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(bm, 0, 0, 48, 48);
+      const d = g.getImageData(0, 0, 48, 48).data; let r = 0, gg = 0, b = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 128 || (d[i] > 235 && d[i + 1] > 235 && d[i + 2] > 235)) continue; r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++; }
+      if (n < 20) return "#FFFFFF"; r /= n; gg /= n; b /= n;
+      const cand = [["#FFFFFF", [255, 255, 255], 70], ["#00D26A", [0, 210, 106], 0], ["#FF2BD6", [255, 43, 214], 0], ["#1E88FF", [30, 136, 255], 0]];
+      return cand.map(k => [k[0], Math.hypot(r - k[1][0], gg - k[1][1], b - k[1][2]) + k[2]]).sort((x, y) => y[1] - x[1])[0][0];
+    } catch (e) { return "#FFFFFF"; }
+  }
+  const autoLines = () => {
+    const L = [], on = k => { const e = $("ig-t-" + k); return !!(e && e.checked); }, v = id => (($(id) || {}).value || "").trim();
+    if (on("name") && v("ig-name")) L.push(v("ig-name"));
+    if (on("desc") && v("ig-desc")) L.push(v("ig-desc").replace(/\s+/g, " ").slice(0, 110));
+    if (on("goal") && v("ig-goal")) L.push(v("ig-goal"));
+    return L;
+  };
+  function tog() {
+    ["name", "desc", "goal"].forEach(k => { const e = $("ig-t-" + k); if (e) LS.set("alyssum_ig_t_" + k, e.checked ? "1" : "0"); });
+    const any = ["name", "desc", "goal"].some(k => { const e = $("ig-t-" + k); return e && e.checked; }), t = $("ig-txt"), box = $("ig-txtbox");
+    S.txtDirty = false; if (any) { if (txtMode() === "none") LS.set("alyssum_ig_txtm", "builder"); t.value = autoLines().join("\n"); } else { LS.set("alyssum_ig_txtm", "none"); t.value = ""; }
+    LS.set("alyssum_ig_txt", t.value); const tm = txtMode(); box.style.display = tm === "none" ? "none" : "block"; const sel = $("ig-txtm"); if (sel && tm !== "none") sel.value = tm;
+  }
+  const fmtNow = () => (S.meta && S.meta.bgMode && S.meta.bgMode !== "scene") ? "png" : cfg.fmt();
+  async function generate(after) {
     if (S.busy) return; const msg = $("ig-msg"), fal = cfg.provider() === "fal", key = fal ? LS.get(FALKEY, "") : (getKey() || LS.get(KEY, ""));
     const fs = formSize(), sz = fs, W = fs.W, H = fs.H;
     if (LS.get("alyssum_ai_img", "1") === "0") { if (msg) msg.textContent = "⛔ توليد الصور الذكي معطّل — فعّله من الإعدادات."; return; }
     if (!key) { S.tab = "set"; render(); toast("أدخل مفتاح Alyssum API أولاً"); return; }
     if (!S.srcBlob) { msg.textContent = "❌ اختر صورة المنتج أولاً (رفع أو من منتجاتك)"; return; }
     const name = $("ig-name").value.trim(), desc = $("ig-desc").value.trim(); if (!name && !desc) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه"; return; }
-    const tmode = $("ig-txtm").value, txt = tmode !== "none" ? ($("ig-txt").value || "").trim() : ""; if (tmode !== "none" && !txt) { msg.textContent = "❌ اكتب النص المطلوب أو اختر «بلا نص»"; return; }
+    const bgMode = ($("ig-bgm") || {}).value || "scene"; let bgColor = bgMode === "solid" ? (($("ig-bgc") || {}).value || "#ffffff") : "#FFFFFF";
+    const anyT = ["name", "desc", "goal"].some(k => { const e = $("ig-t-" + k); return e && e.checked; }); if (anyT && !S.txtDirty) { const t0 = $("ig-txt"); if (t0) t0.value = autoLines().join("\n"); if (txtMode() === "none") LS.set("alyssum_ig_txtm", "builder"); }
+    let tmode = anyT ? (($("ig-txtm") || {}).value || "builder") : "none";
+    if (bgMode === "transp" && tmode === "gemini") { tmode = "builder"; msg.textContent = "ℹ️ مع الخلفية الشفافة يُضاف النص في المطوّر (لا داخل الصورة)."; }
+    const txt = tmode !== "none" ? ($("ig-txt").value || "").trim() : ""; if (tmode !== "none" && !txt) { msg.textContent = "❌ اكتب النص المطلوب أو ألغِ خيارات الإضافة"; return; }
     readForm();
     const models = cfg.model(), est = fal ? cfg.falPrice() : models === "auto" ? PRICE[PREF[0]] : priceOf(models), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { msg.textContent = "⛔ بلغتَ حدّ الإنفاق (" + money(cfg.budget()) + ") — ارفعه من الإعدادات أو صفّر العدّاد."; return; }
     if (!confirm("توليد صورة واحدة بتكلفة تقريبية " + money(est) + "\nالمقاس: " + W + "×" + H + " — " + (S.mode === "product" ? "صورة منتج" : "صورة إشهارية") + "\nمتابعة؟")) return;
-    S.busy = true; $("ig-go").disabled = true; msg.textContent = "⏳ جارِ التوليد (قد يستغرق 10–40 ثانية)…";
+    S.busy = true; $("ig-go").disabled = true; if ($("ig-go2")) $("ig-go2").disabled = true; msg.textContent = "⏳ جارِ التوليد (قد يستغرق 10–40 ثانية)…";
     try {
-      const ar = nearAr(W, H), prompt = buildPrompt({ mode: S.mode, name, desc, goal: ($("ig-goal") || {}).value ? $("ig-goal").value.trim() : "", text: txt, textMode: tmode, lang: $("ig-lang") ? $("ig-lang").value : "ar", w: W, h: H, ar, platform: sz.label });
+      if (bgMode === "transp") bgColor = await pickKey(S.srcBlob);
+      const ar = nearAr(W, H), prompt = buildPrompt({ mode: S.mode, name, desc, goal: ($("ig-goal") || {}).value ? $("ig-goal").value.trim() : "", text: txt, textMode: tmode, lang: $("ig-lang") ? $("ig-lang").value : "ar", w: W, h: H, ar, platform: sz.label, bgMode, bgColor });
       S.lastPrompt = prompt; const small = await shrink(S.srcBlob, 1400);
       const out = fal ? await callFal(key, prompt, "data:image/jpeg;base64," + await b64(small), ar) : await callModel(key, [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: await b64(small) } }], ar);
-      const cv = await fit(out.blob, W, H); S.res = cv; S.lastModel = out.model; S.resName = (name || "image").slice(0, 40); S.meta = { W, H, id: fs.id, label: fs.label, textMode: tmode, text: txt, lang: $("ig-lang") ? $("ig-lang").value : "ar", name };
+      let cv = await fit(out.blob, W, H), note = "";
+      if (bgMode === "transp") {
+        msg.textContent = "⏳ إزالة الخلفية…";
+        try { if (typeof PBBgRemove === "undefined") throw new Error("أداة نزع الخلفية غير متاحة"); const r = await PBBgRemove.autoCut(cv, { methods: ["classic"], onStep: m => { msg.textContent = m; } }); cv = r.canvas; }
+        catch (e) { note = " — ⚠️ تعذّرت إزالة الخلفية تلقائياً (" + (e.message || e) + ") فاستعمل «نزع الخلفية» من الأدوات"; }
+      }
+      S.res = cv; S.lastModel = out.model; S.resName = (name || "image").slice(0, 40); S.meta = { W, H, id: fs.id, label: fs.label, bgMode, bgColor, textMode: tmode, text: txt, lang: $("ig-lang") ? $("ig-lang").value : "ar", name };
       LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
-      showRes(cv, W, H); msg.textContent = "✅ تمّ بنموذج " + out.model + " — " + W + "×" + H + "px"; const cb = document.querySelector(".ig-cost"); if (cb) cb.outerHTML = costBar(); estimate();
-    } catch (e) { msg.textContent = "❌ " + e.message; } finally { S.busy = false; const g = $("ig-go"); if (g) g.disabled = false; }
+      showRes(cv, W, H); msg.textContent = "✅ تمّ بنموذج " + out.model + " — " + W + "×" + H + "px" + (bgMode !== "scene" ? " · PNG" : "") + note; const cb = document.querySelector(".ig-cost"); if (cb) cb.outerHTML = costBar(); estimate();
+      if (after === "editor") { S.busy = false; await ((S.mode === "ad" || (tmode === "builder" && txt)) ? openAd() : toEditor("current")); }
+    } catch (e) { msg.textContent = "❌ " + e.message; } finally { S.busy = false; ["ig-go", "ig-go2"].forEach(i => { const g = $(i); if (g) g.disabled = false; }); }
   }
   function showRes(cv, W, H) {
-    const r = $("ig-res"); if (!r) return; const u = cv.toDataURL("image/webp", .92);
+    const r = $("ig-res"); if (!r) return; const u = cv.toDataURL((S.meta || {}).bgMode && S.meta.bgMode !== "scene" ? "image/png" : "image/webp", .92);
     const ad = S.mode === "ad", tm = (S.meta || {}).textMode;
-    r.innerHTML = `<div class="ig-out"><img src="${u}" alt=""></div><div class="action-bar">${ad ? `<button type="button" class="small" onclick="ImgGen.openAd()">فتح في المطوّر${tm === "builder" ? " (مع النص كطبقات قابلة للتعديل)" : " للتعديل والتصدير"}</button>` : `<button type="button" class="small" onclick="ImgGen.toEditor('current')">فتح في المطوّر (الصفحة المفتوحة)</button><button type="button" class="small" onclick="ImgGen.toEditor('new')">فتح في صفحة جديدة</button>`}<button type="button" class="small gold" onclick="ImgGen.toLibrary()">حفظ في المكتبة</button><button type="button" class="small gray" onclick="ImgGen.download()">تنزيل</button><button type="button" class="small gray" onclick="ImgGen.copyPrompt()">نسخ التعليمات</button></div>`;
+    r.innerHTML = `<div class="ig-out"${(S.meta || {}).bgMode === "transp" ? ' style="background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/18px 18px"' : ""}><img src="${u}" alt=""></div><div class="action-bar">${ad ? `<button type="button" class="small" onclick="ImgGen.openAd()">فتح في المطوّر${tm === "builder" ? " (مع النص كطبقات قابلة للتعديل)" : " للتعديل والتصدير"}</button>` : `<button type="button" class="small" onclick="ImgGen.toEditor('current')">فتح في المطوّر (الصفحة المفتوحة)</button><button type="button" class="small" onclick="ImgGen.toEditor('new')">فتح في صفحة جديدة</button>`}<button type="button" class="small gold" onclick="ImgGen.toLibrary()">حفظ في المكتبة</button><button type="button" class="small gray" onclick="ImgGen.download()">تنزيل</button><button type="button" class="small gray" onclick="ImgGen.copyPrompt()">نسخ التعليمات</button></div>`;
   }
   const blobOf = (cv, fmt) => new Promise(res => cv.toBlob(res, fmt === "png" ? "image/png" : "image/webp", .92));
   /* توليد صورة واحدة دون واجهة المولّد (يستعمله تبويب السوشيال): o = {blob مرجع, name, desc, goal, W, H, label} ← {blob, model, cost} أو null إن ألغى المستخدم */
@@ -275,11 +325,11 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     return { blob: await blobOf(cv, "webp"), model: out.model, cost: est };
   }
   async function toLibrary(quiet) {
-    if (!S.res) return null; const blob = await blobOf(S.res, cfg.fmt());
+    if (!S.res) return null; const blob = await blobOf(S.res, fmtNow());
     try {
       let path;
       if (typeof PBApp !== "undefined" && PBApp.uploadBlob && PBApp.E && PBApp.E.page && $("pb-app") && $("pb-app").classList.contains("on")) path = await PBApp.uploadBlob(blob, "ig-" + Date.now().toString(36), { max: 4096, q: .92 });
-      else { const f = new File([blob], "ig." + (cfg.fmt() === "png" ? "png" : "webp"), { type: blob.type }); path = await Admin.uploadImageFile(f, "assets/img/pages", "gen-", { max: 4096, q: .92, noVariants: true, uniq: true }); try { PBApp && PBApp.mediaAdd && PBApp.mediaAdd([path]); } catch (e) { } }
+      else { const f = new File([blob], "ig." + (fmtNow() === "png" ? "png" : "webp"), { type: blob.type }); path = await Admin.uploadImageFile(f, "assets/img/pages", "gen-", { max: 4096, q: .92, noVariants: true, uniq: true }); try { PBApp && PBApp.mediaAdd && PBApp.mediaAdd([path]); } catch (e) { } }
       if (!quiet) { toast("✅ حُفظت في مكتبة الصور: " + path); try { if (typeof AdminSocial !== "undefined" && AdminSocial.onLibraryImage) AdminSocial.onLibraryImage(path); } catch (e) { } } return path;
     } catch (e) { toast("❌ تعذّر الحفظ: " + e.message); return null; }
   }
@@ -367,7 +417,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
       document.body.appendChild(ov);
     } catch (e) { toast("❌ تعذّر التصدير: " + e.message); }
   }
-  async function download(fmt) { if (!S.res) return; fmt = fmt === "png" || fmt === "webp" ? fmt : cfg.fmt(); const blob = await blobOf(S.res, fmt), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = (S.resName || "image") + "." + (fmt === "png" ? "png" : "webp"); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+  async function download(fmt) { if (!S.res) return; fmt = fmt === "png" || fmt === "webp" ? fmt : fmtNow(); const blob = await blobOf(S.res, fmt), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = (S.resName || "image") + "." + (fmt === "png" ? "png" : "webp"); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
   function copyPrompt() { try { navigator.clipboard.writeText(S.lastPrompt || ""); toast("✅ نُسخت التعليمات المرسلة"); } catch (e) { toast("تعذّر النسخ"); } }
   async function test() {
     const el = $("ig-tmsg"), key = getKey(); if (!key) { el.textContent = "❌ أدخل المفتاح"; return; } LS.set(KEY, key); el.textContent = "⏳ اختبار…"; S.models = null;
@@ -379,7 +429,8 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     file(inp) { const f = inp.files && inp.files[0]; if (!f) return; S.srcBlob = f; S.srcName = f.name; S.prod = null; const g = $("ig-gal"); if (g) g.innerHTML = ""; paintPrev(); const n = $("ig-name"); if (n && !n.value) n.value = f.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "); },
     pickProd: loadFrom, useImg, size(id) { LS.set("alyssum_ig_size_" + S.mode, id); const s = sizeOf(id); $("ig-cus").style.display = id === "custom" ? "flex" : "none"; const w = id === "custom" ? Number($("ig-w").value) : s.w, h = id === "custom" ? Number($("ig-h").value) : s.h; $("ig-sz").textContent = w + "×" + h + "px — النسبة المُرسلة للنموذج " + nearAr(w, h) + " ثم تُقصّ بدقة"; },
     cus() { LS.set("alyssum_ig_w", $("ig-w").value); LS.set("alyssum_ig_h", $("ig-h").value); api.size("custom"); },
-    txtm(v) { LS.set("alyssum_ig_txtm", v); $("ig-txtbox").style.display = v === "none" ? "none" : "block"; }, lang(v) { LS.set("alyssum_ig_lang", v); },
+    txtm(v) { LS.set("alyssum_ig_txtm", v); $("ig-txtbox").style.display = v === "none" ? "none" : "block"; }, tog, txtEdited() { S.txtDirty = true; },
+    bgm(v) { LS.set("alyssum_ig_bgm", v); const b = $("ig-bgcbox"); if (b) b.style.display = v === "solid" ? "flex" : "none"; }, bgc(v) { LS.set("alyssum_ig_bgc", v); }, lang(v) { LS.set("alyssum_ig_lang", v); },
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) LS.set(FALKEY, k.trim()); toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) LS.set(KEY, k); toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); estimate(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
