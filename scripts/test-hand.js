@@ -473,13 +473,14 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const nq = await p.evaluate(async () => {
     const el = document.getElementById("nav-q"), intro = document.querySelector(".side-nav-intro"); if (!el || !intro) return { err: "missing" };
     const lab = el.closest(".nav-q"), h = lab.getBoundingClientRect().height, above = !!(lab.compareDocumentPosition(intro) & Node.DOCUMENT_POSITION_FOLLOWING);
-    el.focus(); await new Promise(r => setTimeout(r, 300));
-    const box = document.getElementById("as-box"), on = !!(box && box.classList.contains("on")), inp = document.getElementById("as-in");
-    const had = !!inp; if (typeof AdminSearch !== "undefined") AdminSearch.show("المدفوعات"); await new Promise(r => setTimeout(r, 400));
-    const hit = [...document.querySelectorAll("#as-list .as-t")].map(x => x.textContent).join("|");
-    AdminSearch.close(); return { h, above, on, had, hit };
+    const type = async v => { el.focus(); el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); await new Promise(r => setTimeout(r, 500)); };
+    await type("المدفوعات"); const box = document.getElementById("as-box"), dlg = !!(box && box.classList.contains("on")), res = document.getElementById("nav-res"), shown = !!(res && res.classList.contains("on")), under = !!(res && (el.closest(".nav-q").compareDocumentPosition(res) & Node.DOCUMENT_POSITION_FOLLOWING));
+    const hit = [...document.querySelectorAll("#nav-res .as-t")].map(x => x.textContent).join("|"); const kept = el.value === "المدفوعات";
+    await type("اسألني"); const ask = [...document.querySelectorAll("#nav-res .as-t")].some(x => x.textContent.trim() === "اسألني"), askSub = /اسألني/.test(document.getElementById("nav-res").textContent);
+    await type(""); const closed = !document.getElementById("nav-res").classList.contains("on");
+    return { h, above, dlg, shown, under, kept, hit, ask, askSub, closed };
   });
-  ok("البحث السريع: خانة كبيرة (≥48px) فوق «دليل الاستخدام»، والنقر فيها يفتح البحث الشامل، والبحث يجد قسم المدفوعات", nq.h >= 48 && nq.above && nq.on && /المدفوعات/.test(nq.hit || ""), nq);
+  ok("البحث السريع: خانة كبيرة (≥48px) فوق «دليل الاستخدام»، والكتابة فيها تعرض قائمة نتائج تحتها بلا نافذة (وتبقى الكلمة)، وتجد قسم المدفوعات، ولا تظهر «اسألني» في النتائج، وتُغلق بمسح النص", nq.h >= 48 && nq.above && !nq.dlg && nq.shown && nq.under && nq.kept && /المدفوعات/.test(nq.hit || "") && !nq.ask && nq.closed, nq);
   // ── المدفوعات: تسوية ياليدين (صافي لك) ──
   const pay = await p.evaluate(async () => {
     const o0 = Admin.orders, a0 = Admin.ydActual, t0 = Admin.trackingOf;

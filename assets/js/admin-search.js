@@ -10,7 +10,6 @@ const AdminSearch = (() => {
     ["السوشيال والإعلانات", "جدولة منشورات فيسبوك وإنستغرام وإدارة الحملات", () => { const b = document.querySelector('.nav-btn[onclick*="social"]'); if (b) b.click(); }, "فيسبوك انستغرام منشور حملة اعلان ميتا جدولة"],
     ["منتج جديد", "إضافة منتج جديد للمتجر", () => A().editProduct && A().editProduct(null), "اضافة منتج جديد"],
     ["مظهر اللوحة", "التبديل بين المظهر الداكن والفاتح", () => typeof AdminTheme !== "undefined" && AdminTheme.toggle(), "الوضع الداكن المظهر ثيم"],
-    ["اسألني", "مساعد اللوحة: اسأل عن أي أداة أو إعداد", () => typeof AdminHelp !== "undefined" && AdminHelp.show(), "مساعدة شرح"],
     ["تحديث اللوحة", "جلب آخر نسخة منشورة", () => typeof AdminUpdate !== "undefined" && AdminUpdate.apply(), "تحديث نسخة"],
     ["فتح العملاء", "عرض شرائح العملاء وسجلّ طلباتهم", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'customers'")); if (b) b.click(); }, "عملاء زبائن"],
     ["فتح التقارير", "عرض التقارير المتقدمة حسب الفترة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'reports'")); if (b) b.click(); }, "تقارير مبيعات فئة ولاية حملة قمع"],
@@ -52,7 +51,7 @@ const AdminSearch = (() => {
     (a.products || []).forEach(p => out.push({ k: "منتج", t: p.title, s: (p.price != null ? p.price + " دج" : "") + (p.cat ? " · " + p.cat : "") + " · تعديل المنتج", n: norm(p.title + " " + p.slug + " " + (p.cat || "")), go: () => a.editProduct && a.editProduct(p.slug) }));
     (a.orders || []).slice(0, 600).forEach(o => out.push({ k: "طلب", t: (o.name || "—") + " — " + (o.phone || ""), s: (o.status || "") + " · " + (o.wilaya || "") + (o.total ? " · " + o.total + " دج" : ""), n: norm((o.name || "") + " " + (o.phone || "") + " " + (o.id || "")), go: () => openOrder(o) }));
     (pages || []).forEach(p => out.push({ k: "صفحة", t: p.title || p.slug, s: "/lp/" + p.slug + "/ · تعديل في المطوّر", n: norm((p.title || "") + " " + p.slug), go: () => typeof PBAdmin !== "undefined" && PBAdmin.edit(p.slug) }));
-    (help || []).forEach(h => out.push({ k: "مساعدة", t: h.t, s: "اسألني", n: norm(h.t + " " + (h.k || "")), go: () => { try { AdminHelp.ask(h.t); } catch (e) { } } }));
+    (help || []).forEach(h => out.push({ k: "شرح", t: h.t, s: String(h.a || "").replace(/[*_`#>]|\n+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80), n: norm(h.t + " " + (h.k || "")), go: () => { try { if (h.go && a.tab) a.tab(h.go); else AdminHelp.ask(h.t); } catch (e) { } } }));
     return out;
   }
   function openOrder(o) {
@@ -63,12 +62,34 @@ const AdminSearch = (() => {
     let s = 0; for (const w of words) { const i = it.n.indexOf(w); if (i < 0) return -1; s += i === 0 ? 5 : (it.n[i - 1] === " " ? 3 : 1); }
     return s + (it.k === "قسم" ? 3 : it.k === "إجراء" ? 2 : 0);
   }
-  function draw() {
-    const q = norm(inp.value), words = q.split(/\s+/).filter(Boolean), src = all();
-    let res = !words.length ? src.filter(x => x.k === "قسم" || x.k === "إجراء") : src.map(x => ({ x, s: score(x, words) })).filter(r => r.s >= 0).sort((a, b) => b.s - a.s).map(r => r.x);
-    items = res.slice(0, 40); sel = 0;
-    list.innerHTML = items.length ? items.map((x, i) => '<div class="as-it" role="option" data-i="' + i + '"><span class="as-k">' + esc(x.k) + '</span><span class="as-t">' + esc(x.t) + '</span><span class="as-s">' + esc(x.s) + '</span></div>').join("") : '<div class="as-no">لا نتائج — جرّب كلمة أخرى، أو اسأل «اسألني».</div>';
-    paintSel();
+  function results(text) {
+    const words = norm(text).split(/\s+/).filter(Boolean), src = all();
+    const res = !words.length ? src.filter(x => x.k === "قسم" || x.k === "إجراء") : src.map(x => ({ x, s: score(x, words) })).filter(r => r.s >= 0).sort((a, b) => b.s - a.s).map(r => r.x);
+    return res.slice(0, 40);
+  }
+  const rowsHtml = its => its.length ? its.map((x, i) => '<div class="as-it" role="option" data-i="' + i + '"><span class="as-k">' + esc(x.k) + '</span><span class="as-t">' + esc(x.t) + '</span><span class="as-s">' + esc(x.s) + '</span></div>').join("") : '<div class="as-no">لا نتائج — جرّب كلمة أخرى.</div>';
+  function draw() { items = results(inp.value); sel = 0; list.innerHTML = rowsHtml(items); paintSel(); }
+  /* بحث مباشر في خانة القائمة الجانبية: قائمة نتائج تحت الخانة بلا نافذة (حسب الكلمات المفتاحية) */
+  let nq = null, nres = null, nitems = [], nsel = 0;
+  const npaint = () => { [...nres.querySelectorAll(".as-it")].forEach((r, i) => { r.classList.toggle("on", i === nsel); if (i === nsel) r.scrollIntoView({ block: "nearest" }); }); };
+  function nclose() { if (nres) nres.classList.remove("on"); }
+  function ndraw() {
+    if (!nq.value.trim()) { nclose(); return; }
+    nitems = results(nq.value); nsel = 0; nres.innerHTML = rowsHtml(nitems); nres.classList.add("on"); npaint();
+  }
+  function nrun(i) { const it = nitems[i]; if (!it) return; nq.value = ""; nclose(); try { it.go(); } catch (e) { console.warn("AdminSearch", e); } }
+  function attach() {
+    nq = $("nav-q"); if (!nq || nres) return;
+    const lab = nq.closest(".nav-q"); nres = document.createElement("div"); nres.id = "nav-res"; nres.setAttribute("role", "listbox"); lab.parentNode.insertBefore(nres, lab.nextSibling);
+    const go = () => { loadExtra().then(() => { if (nq.value.trim()) ndraw(); }); ndraw(); };
+    nq.addEventListener("input", go); nq.addEventListener("focus", go);
+    nq.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (nitems.length) { nsel = (nsel + (e.key === "ArrowDown" ? 1 : -1) + nitems.length) % nitems.length; npaint(); } }
+      else if (e.key === "Enter") { e.preventDefault(); nrun(nsel); } else if (e.key === "Escape") { e.preventDefault(); nq.value = ""; nclose(); }
+    });
+    nres.addEventListener("mousedown", e => { const r = e.target.closest("[data-i]"); if (r) { e.preventDefault(); nrun(+r.dataset.i); } });
+    nres.addEventListener("mousemove", e => { const r = e.target.closest("[data-i]"); if (r && +r.dataset.i !== nsel) { nsel = +r.dataset.i; npaint(); } });
+    document.addEventListener("mousedown", e => { if (!lab.contains(e.target) && !nres.contains(e.target)) nclose(); });
   }
   const paintSel = () => { [...list.querySelectorAll(".as-it")].forEach((r, i) => { r.classList.toggle("on", i === sel); if (i === sel) r.scrollIntoView({ block: "nearest" }); }); };
   const move = d => { if (!items.length) return; sel = (sel + d + items.length) % items.length; paintSel(); };
@@ -76,6 +97,7 @@ const AdminSearch = (() => {
   async function show(q) { build(); open = true; box.classList.add("on"); inp.value = typeof q === "string" ? q : ""; draw(); setTimeout(() => inp.focus(), 30); await loadExtra(); if (open) draw(); }
   function close() { if (!box) return; open = false; box.classList.remove("on"); }
   function init() {
+    attach();
     document.addEventListener("keydown", e => {
       const k = e.key.toLowerCase(), t = e.target, typing = t && (/^(input|textarea|select)$/i.test(t.tagName) || t.isContentEditable);
       if ((e.ctrlKey || e.metaKey) && k === "k") { e.preventDefault(); open ? close() : show(); }
@@ -84,5 +106,5 @@ const AdminSearch = (() => {
     });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { show, close };
+  return { show, close, attach };
 })();
