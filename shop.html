@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar"><head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&amp;display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="icon" href="assets/img/favicon.png">
-<title>المتجر | أليسوم ALYSSUM</title><meta name="description" content="تصفّح كل المنتجات والتصنيفات والعروض — الدفع عند الاستلام">
+<title>المتجر | أليسوم ALYSSUM</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#173F35"><link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png"><meta name="description" content="تصفّح كل المنتجات والتصنيفات والعروض — الدفع عند الاستلام">
 <style id="pb-tpl-css">
 html{background:#020a06!important}
 body,.pb-page{background:transparent!important;color:#e7f5ec}
@@ -189,12 +191,12 @@ body:not(.pb-edit) .pb-sec:has(.pb-w.x-gj8ewld .pb-hd[data-stk]){position:sticky
   <div class="items" id="cart-items"></div>
   <div class="foot">
     <div class="frow" style="grid-template-columns:1fr 1fr">
-      <div class="field"><label>الاسم الكامل</label><input id="cname" placeholder="مثال: أحمد بن علي"></div>
-      <div class="field"><label>رقم الهاتف</label><input id="cphone" placeholder="05XXXXXXXX" inputmode="tel"></div>
+      <div class="field"><label for="cname">الاسم الكامل</label><input id="cname" placeholder="مثال: أحمد بن علي"></div>
+      <div class="field"><label for="cphone">رقم الهاتف</label><input id="cphone" placeholder="05XXXXXXXX" inputmode="tel"></div>
     </div>
     <div class="frow" style="grid-template-columns:1fr 1fr">
-      <div class="field"><label>الولاية</label><select id="cwilaya" aria-label="الولاية"><option value="">— اختر —</option></select></div>
-      <div class="field"><label>البلدية</label><input id="ccommune" placeholder="اختياري"></div>
+      <div class="field"><label for="cwilaya">الولاية</label><select id="cwilaya" aria-label="الولاية"><option value="">— اختر —</option></select></div>
+      <div class="field"><label for="ccommune">البلدية</label><input id="ccommune" placeholder="اختياري"></div>
     </div>
     <div class="dtype">
       <label><input type="radio" name="cdtype" value="home" checked=""><span>🏠 إلى المنزل</span></label>

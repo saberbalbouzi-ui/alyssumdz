@@ -13,7 +13,10 @@
 var AY_QUESTIONS_SHEET = "AgentQuestions";
 var AY_PRESENCE_TTL_SEC = 75;      // يُعدّ الزائر «يشاهد الآن» إن وصل نبضه خلال هذه المدة
 
-function _ayKey() { return (typeof ADMIN_KEY !== "undefined") ? ADMIN_KEY : "ALYSSUM-ADMIN-2026"; }
+/* لجنة الخبراء v1.89.133: لا مفتاح احتياطي معروف في المستودع العام — إن غاب ADMIN_KEY ترفض كل أوامر الإدارة، والمقارنة بزمن ثابت */
+function _ayKey() { return (typeof ADMIN_KEY !== "undefined" && ADMIN_KEY) ? String(ADMIN_KEY) : null; }
+function _ayEq(a, b) { a = String(a == null ? "" : a); b = String(b == null ? "" : b); var d = a.length ^ b.length; for (var i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0); return d === 0; }
+function _ayAuth(k) { var real = _ayKey(); return real !== null && _ayEq(k, real); }
 function _ayNorm(s) { return String(s || "").toLowerCase().replace(/[ً-ٟـ]/g, "").replace(/[إأآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/[^a-z0-9\u0621-\u064A\u066E-\u06D3\u0660-\u0669]+/g, " ").trim(); }
 function _ayDay(d) { return Utilities.formatDate(d || new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd"); }
 function _ayOut(e, obj) {
@@ -68,7 +71,7 @@ function handleExtraPost(e, body) {
     } finally { lock2.releaseLock(); }
     return ContentService.createTextOutput("ok");
   }
-  if (t === "resolve_question" && body.key === _ayKey()) {   // من لوحة الإدارة بعد الإجابة/التجاهل
+  if (t === "resolve_question" && _ayAuth(body.key)) {   // من لوحة الإدارة بعد الإجابة/التجاهل
     var sh2 = _ayQuestionsSheet(), d2 = sh2.getDataRange().getValues();
     for (var j = 1; j < d2.length; j++) if (d2[j][0] === body.id) { sh2.getRange(j + 1, 9, 1, 1).setValue("done"); break; }
     return ContentService.createTextOutput("ok");
@@ -86,7 +89,7 @@ function _ayQuestionsSheet() {
 function handleExtraGet(e) {
   var a = e && e.parameter && e.parameter.action;
   if (["presence", "analytics", "agent_questions"].indexOf(a) < 0) return null;
-  if (e.parameter.key !== _ayKey()) return _ayOut(e, { ok: false, error: "unauthorized" });
+  if (!_ayAuth(e.parameter.key)) return _ayOut(e, { ok: false, error: "unauthorized" });
   if (a === "presence") {
     var map = JSON.parse(CacheService.getScriptCache().get("presence") || "{}"), now = Date.now(), by = {}, total = 0;
     for (var k in map) if (now - map[k].t < AY_PRESENCE_TTL_SEC * 1000) { total++; by[map[k].p] = (by[map[k].p] || 0) + 1; }

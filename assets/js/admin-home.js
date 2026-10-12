@@ -185,7 +185,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
     const a = A(); if (!a || a.__homeWrap || typeof a.renderAll !== "function") return setTimeout(init, 400);
     a.__homeWrap = 1; const o = a.renderAll;
     a.renderAll = function () { const r = o.apply(this, arguments); try { render(); if (!S.shown) { S.shown = true; open(); } } catch (e) { console.warn("AdminHome", e); } return r; };
-    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t === "home"); if (t === "home") render(); return r; };
+    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); return r; };
     if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); } }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();

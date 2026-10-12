@@ -144,7 +144,13 @@ function allowedPath(string $p): bool {
     if (preg_match('#^assets/img/[a-z0-9_-]+(/[a-z0-9_ ()-]+)*/[a-zA-Z0-9_ ()-]+\.(webp|png|jpe?g|gif)$#', $p)) return true;
     return false;
 }
-function ensureData(string $d): void { if (!is_dir($d)) @mkdir($d, 0750, true); if (!is_file("$d/.htaccess")) @file_put_contents("$d/.htaccess", "Require all denied\n"); }
+/* حماية مجلد القاعدة على أكثر من خادم (لجنة الخبراء v1.89.133): Apache (.htaccess) + IIS (web.config) + ملف index فارغ؛ على Nginx يلزم منع المسار /api/_data/ في إعداد الخادم (انظر HANDOVER.md) */
+function ensureData(string $d): void {
+    if (!is_dir($d)) @mkdir($d, 0750, true);
+    if (!is_file("$d/.htaccess")) @file_put_contents("$d/.htaccess", "Require all denied\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n");
+    if (!is_file("$d/web.config")) @file_put_contents("$d/web.config", "<?xml version=\"1.0\"?><configuration><system.webServer><authorization><deny users=\"*\" /></authorization></system.webServer></configuration>\n");
+    if (!is_file("$d/index.html")) @file_put_contents("$d/index.html", "");
+}
 
 /* ══════════ التحديث عن بُعد من قناة موقَّعة (GitHub) ══════════
    الأمان: لا يُقبل إلا بيان (manifest) موقَّع بمفتاح البائع الخاص (ECDSA P-256)، وحزمة يطابق sha256 فيه،

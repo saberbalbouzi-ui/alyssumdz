@@ -1210,7 +1210,7 @@ function isOutOfStock(p){
 }
 /* مصدر الطلب (أي صفحة جاء منها): من ?src= أو ?utm_content= ويُحفظ للجلسة؛ يُسجَّل في حقل «📄 الصفحة» داخل extra لمقارنة صفحات المنتج في الإحصاءات */
 /* مصدر الحملة: utm_source/utm_campaign من رابط الإعلان أو المنشور يُحفظان 14 يوماً ويُسجَّلان في extra الطلب («📣 الحملة») ليحسب تبويب «السوشيال ← الحملات» الطلبات والإيراد لكل حملة */
-const Attrib = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("utm_source"), c = q.get("utm_campaign"), ck = q.get("fbclid") ? "facebook" : q.get("ttclid") ? "tiktok" : q.get("gclid") ? "google" : ""; let old0 = null; try{ old0 = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); }catch(e){} if((s || c || ck) && !(s === "home" && old0 && old0.s && old0.s !== "home" && Date.now() - old0.t < 14*864e5)){ localStorage.setItem("alyssum_utm", JSON.stringify({ s: s || ck, m: q.get("utm_medium") || "", c: c || "(بدون حملة)", t: Date.now() })); } const o = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); if(o && Date.now() - o.t < 14*864e5 && o.s !== "home" && o.c) return { "📣 الحملة": (o.s ? o.s + "/" : "") + o.c }; }catch(e){} return {}; })();
+const Attrib = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("utm_source"), c = q.get("utm_campaign"), ck = q.get("fbclid") ? "facebook" : q.get("ttclid") ? "tiktok" : q.get("gclid") ? "google" : ""; let old0 = null; try{ old0 = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); }catch(e){} if((s || c || ck) && !(s === "home" && old0 && old0.s && old0.s !== "home" && Date.now() - old0.t < 14*864e5)){ localStorage.setItem("alyssum_utm", JSON.stringify({ s: s || ck, m: q.get("utm_medium") || "", c: c || "(بدون حملة)", k: (q.get("fbclid") || q.get("ttclid") || q.get("gclid") || "").slice(0, 120), t: Date.now() })); } const o = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); if(o && Date.now() - o.t < 14*864e5 && o.s !== "home" && o.c) return Object.assign({ "📣 الحملة": (o.s ? o.s + "/" : "") + o.c }, o.k ? { "🔗 معرّف النقرة": o.k } : {}); }catch(e){} return {}; })();
 const PageSrc = (function(){ try{ const q = new URLSearchParams(location.search), s = q.get("src") || q.get("utm_content"); if(s) sessionStorage.setItem("alyssum_src", s); return sessionStorage.getItem("alyssum_src") || ""; }catch(e){ return ""; } })();
 /* رابط المنتج في البطاقات: صفحة «المسار» المختارة (صفحة هبوط) إن وُجدت وإلا صفحته الرسمية؛ ومع اختبار A/B (p.ab = {b, pct}) يُوزَّع الزوار على النسختين بنسبة pct% للثانية ويثبت اختيار كل زائر؛ ويُضاف رمز تتبع UTM */
 function productHref(p){
@@ -1222,8 +1222,8 @@ function productHref(p){
     if(g === "B") page = p.ab.b;
     v = g;
   }
-  const src = page ? "lp/" + page : "p/" + p.slug;
-  return REL + src + "/?utm_source=home&utm_medium=product-card&utm_campaign=" + encodeURIComponent(p.slug) + "&utm_content=" + encodeURIComponent(src) + (v ? "&ab=" + v : "");
+  const src = page ? "lp/" + page : "p/" + p.slug, to = page ? src : p.slug;      // المنتج بلا مسار ⟵ الرابط النظيف في الجذر (النسخ الجذرية جاهزة)
+  return REL + to + "/?utm_source=home&utm_medium=product-card&utm_campaign=" + encodeURIComponent(p.slug) + "&utm_content=" + encodeURIComponent(src) + (v ? "&ab=" + v : "");
 }
 function productCardHTML(p, opts){
   opts = opts || {};

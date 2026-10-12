@@ -19,7 +19,7 @@ const AdminReports = (() => {
   function compare(cur, prev) { if (!prev) return cur ? "جديد" : "—"; const p = Math.round((cur - prev) / prev * 100); return (p > 0 ? "▲ " : p < 0 ? "▼ " : "") + Math.abs(p) + "%"; }
   function metrics(list) {
     const delivered = list.filter(o => o.status === "livree").length;
-    return { orders: list.length, revenue: list.filter(active).reduce((n, o) => n + (Number(o.total) || 0), 0), delivered, rate: list.length ? delivered / list.length * 100 : 0 };
+    return { orders: list.length, revenue: list.filter(active).reduce((n, o) => n + (Number(o.total) || 0), 0), delivered, rate: (delivered + list.filter(o => o.status === "echec").length) ? delivered / (delivered + list.filter(o => o.status === "echec").length) * 100 : 0 };      // نسبة التسليم من الطلبات المحسومة (مسلَّم/فاشل) لا من كل الطلبات (الجديدة وقيد التوصيل تخفضها كذباً)
   }
   function svg(vals, labels, previous) {
     const w = 760, h = 230, pad = 30, max = Math.max(1, ...vals), x = i => pad + i * (w - pad * 2) / Math.max(1, vals.length - 1), y = v => h - pad - v / max * (h - pad * 2);
@@ -54,12 +54,12 @@ const AdminReports = (() => {
     return [...map.values()].sort((a,b) => b.revenue - a.revenue);
   }
   function byWilaya(os) {
-    const map = new Map(); os.forEach(o => { const name = String(o.wilaya || "غير محدد"), x = map.get(name) || { name, orders: 0, delivered: 0, failed: 0 }; x.orders++; if (o.status === "livree") x.delivered++; if (["echec", "annulee"].includes(o.status)) x.failed++; map.set(name, x); });
-    return [...map.values()].map(x => ({ ...x, delivered: x.orders ? (x.delivered / x.orders * 100).toFixed(1) : "0.0", failed: x.orders ? (x.failed / x.orders * 100).toFixed(1) : "0.0" })).sort((a,b) => b.orders-a.orders);
+    const map = new Map(); os.forEach(o => { const name = String(o.wilaya || "غير محدد"), x = map.get(name) || { name, orders: 0, delivered: 0, failed: 0 }; x.orders++; if (o.status === "livree") x.delivered++; if (["echec", "annulee"].includes(o.status)) x.failed++; if (o.status === "echec") x.bad = (x.bad || 0) + 1; map.set(name, x); });
+    return [...map.values()].map(x => ({ ...x, delivered: (x.delivered + (x.bad || 0)) ? (x.delivered / (x.delivered + (x.bad || 0)) * 100).toFixed(1) : "0.0", failed: x.orders ? (x.failed / x.orders * 100).toFixed(1) : "0.0" })).sort((a,b) => b.orders-a.orders);
   }
   function byCampaign(os) {
-    const map = new Map(); os.forEach(o => { const raw = String(parseExtra(o)["📣 الحملة"] || "").trim(); if (!raw) return; const key = raw.split("/").pop(); const x = map.get(key) || { name: key, orders: 0, revenue: 0, delivered: 0 }; x.orders++; if (active(o)) x.revenue += Number(o.total) || 0; if (o.status === "livree") x.delivered++; map.set(key, x); });
-    return [...map.values()].map(x => ({ ...x, delivery: x.orders ? (x.delivered / x.orders * 100).toFixed(1) : "0.0" })).sort((a,b) => b.orders-a.orders);
+    const map = new Map(); os.forEach(o => { const raw = String(parseExtra(o)["📣 الحملة"] || "").trim(); if (!raw) return; const key = raw.split("/").pop(); const x = map.get(key) || { name: key, orders: 0, revenue: 0, delivered: 0 }; x.orders++; if (active(o)) x.revenue += Number(o.total) || 0; if (o.status === "livree") x.delivered++; if (o.status === "echec") x.bad = (x.bad || 0) + 1; map.set(key, x); });
+    return [...map.values()].map(x => ({ ...x, delivery: (x.delivered + (x.bad || 0)) ? (x.delivered / (x.delivered + (x.bad || 0)) * 100).toFixed(1) : "0.0" })).sort((a,b) => b.orders-a.orders);
   }
   function funnel(os) {
     const stages = [["جديد", o => true], ["مؤكد", o => ["confirmee", "confirmed", "expediee", "shipped", "livree"].includes(o.status)], ["مرسل", o => ["expediee", "shipped", "livree"].includes(o.status)], ["مسلَّم", o => o.status === "livree"]];

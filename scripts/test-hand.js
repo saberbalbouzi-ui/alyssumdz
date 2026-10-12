@@ -342,6 +342,29 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("رفض الشركة إلغاء الطرد: الطلب لا يُحذف ولا يُنزع تتبعه، وبعد قبولها يُنزع", cm.delKept && cm.unsendKept && cm.unsendOk, cm);
   ok("Admin.tab بلا زر لا يرمي خطأ", cm.tabNoBtn, cm);
   ok("إنفاق حملة بلا طلبات ناجحة يُخصم من الربح بدل أن يُحسب 0", cm.adIdle, cm);
+  // ── دفعة اللجنة الثانية (v1.89.133): تدقيق السعر، النسخة الاحتياطية، حرس الرجوع، التنبيهات ──
+  const c2 = await p.evaluate(async () => {
+    const R = {}; const SV = { pr: Admin.products, cf: window.confirm, uo: API.updateOrder, or: Admin.orders, ro: Admin.renderOrders };
+    Admin.products = [{ slug: "pc-t", title: "منتج تدقيق", price: 1000, active: true, offers: [{ qty: 2, price: 1900, free: 0 }] }];
+    const mk = (extra) => Object.assign({ id: "PC1", date: new Date().toISOString(), status: "nouvelle", name: "n", phone: "0550", wilaya: "Alger", items: "منتج تدقيق ×1 = 1000 DA", subtotal: 1000, discount: 0, fee: 400, total: 1400, note: "" }, extra || {});
+    R.pcOk = Admin.priceCheck(mk()).ok; R.pcTotal = !Admin.priceCheck(mk({ total: 900 })).ok; R.pcCheap = !Admin.priceCheck(mk({ items: "منتج تدقيق ×1 = 100 DA", subtotal: 100, total: 500 })).ok;
+    // حرس الرجوع بطلب مسلَّم
+    let asked = 0; window.confirm = () => { asked++; return false; }; API.updateOrder = async () => ({ ok: true }); Admin.renderOrders = () => { };
+    Admin.orders = [mk({ status: "livree" })]; Admin.changeStatus(0, "nouvelle"); R.guard = asked === 1 && Admin.orders[0].status === "livree";
+    // النسخة الاحتياطية بلا أسرار
+    localStorage.setItem("alyssum_el_key", "SECRET-KEY-123"); localStorage.setItem("alyssum_gh_cfg", '{"token":"ghp_x"}'); localStorage.setItem("admin_test_pref", "ok");
+    let a0 = null; const oc = document.createElement.bind(document); document.createElement = t => { const e = oc(t); if (String(t).toLowerCase() === "a") e.click = () => { a0 = e; }; return e; };
+    const bk = Admin.backupNow(); document.createElement = oc;
+    const dump = JSON.stringify(bk || {}); R.bkd = [!!bk, !/SECRET-KEY-123|ghp_x/.test(dump), /_test_pref/.test(dump), !!a0, a0 && a0.download]; R.backup = !!bk && !/SECRET-KEY-123|ghp_x/.test(dump) && /_test_pref/.test(dump) && !!a0 && /^backup-/.test(a0.download);
+    // التنبيهات
+    toast("❌ فشل"); R.toastErr = $f("toast2").dataset.k === "err"; toast("✅ تم"); R.toastOk = $f("toast2").dataset.k === "ok";
+    window.confirm = SV.cf; API.updateOrder = SV.uo; Admin.products = SV.pr; Admin.orders = SV.or; Admin.renderOrders = SV.ro; localStorage.removeItem("admin_test_pref"); localStorage.removeItem("alyssum_el_key"); localStorage.removeItem("alyssum_gh_cfg");
+    return R;
+  });
+  ok("تدقيق السعر: طلب سليم يمر، وإجمالي مخالف أو سعر قطعة أقل من نصف الأدنى يُنبَّه عليه", c2.pcOk && c2.pcTotal && c2.pcCheap, c2);
+  ok("الرجوع بطلب مسلَّم إلى حالة سابقة يطلب تأكيداً ولا يغيّر الحالة عند الرفض", c2.guard, c2);
+  ok("النسخة الاحتياطية تحوي البيانات والإعدادات بلا مفاتيح أو رموز وتنزَّل كملف backup-*.json", c2.backup, c2);
+  ok("إشعار اللوحة يميّز الخطأ (❌) عن النجاح بسمة لون", c2.toastErr && c2.toastOk, c2);
   // ── تعديل الطلب بعد التأكيد + تحديث الشركة + الإرسال الجماعي ──
   const oe = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; API.updateOrder = async () => ({ ok: true });

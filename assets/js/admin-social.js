@@ -53,7 +53,7 @@ const AdminSocial = (() => {
   function persist() { clearTimeout(S.saveT); status("جارِ الحفظ…"); S.saveT = setTimeout(writeData, 1200); }
   function status(t) { S.msg = t; const e = $("sm-status"); if (e) e.textContent = t; }
   /* ───────── القوالب وأدوات النص ───────── */
-  const OBJ = [["offer", "عرض / تخفيض"], ["new", "منتج جديد"], ["benefit", "فوائد المنتج"], ["urgent", "استعجال (كمية محدودة)"], ["proof", "رأي زبون"], ["tip", "نصيحة / معلومة"], ["ask", "سؤال للتفاعل"], ["bundle", "باقة / عرض كمية"], ["story", "لماذا اخترناه"], ["faq", "أسئلة شائعة"]];
+  const OBJ = [["offer", "عرض / تخفيض"], ["new", "منتج جديد"], ["benefit", "فوائد المنتج"], ["urgent", "استعجال (استعمله فقط إن كانت الكمية محدودة فعلاً)"], ["proof", "رأي زبون"], ["tip", "نصيحة / معلومة"], ["ask", "سؤال للتفاعل"], ["bundle", "باقة / عرض كمية"], ["story", "لماذا اخترناه"], ["faq", "أسئلة شائعة"]];
   const TPL = {
     offer: ["🔥 عرض لا يتكرر على {name}\n\nتبحث عن جودة حقيقية بسعر مناسب؟ هذه فرصتك.\n\n✅ {b1}\n✅ {b2}\n✅ {b3}\n\n💰 السعر الآن {price} دج فقط{save}\n🚚 توصيل لكل الولايات\n💵 الدفع عند الاستلام: تستلم، تفحص، ثم تدفع\n\n⏰ العرض لفترة محدودة وقد ينتهي في أي لحظة.\n\n👇 اطلب الآن بنقرة واحدة:\n{link}\n📞 أو عبر واتساب: {wa}", "هل ما زلت تؤجّل شراء {name}؟\n\nاليوم لديك سببان لتقرّر:\n1️⃣ سعر خاص {price} دج{save}\n2️⃣ دفع عند الاستلام بلا أي مخاطرة\n\nما يميّزه:\n• {b1}\n• {b2}\n• {b3}\n\nنؤكد طلبك هاتفياً قبل الشحن ونوصّله إلى ولايتك.\n\nاحجز قطعتك الآن 👇\n{link}", "عرض خاص على {name}\nالسعر الآن {price} دج فقط{save}\nالدفع عند الاستلام • توصيل لكل الولايات\n\nاطلب الآن:\n{link}"],
     new: ["🆕 وصل حديثاً إلى متجرنا: {name}\n\n{desc}\n\nلماذا انتظرناه؟ لأنه يجمع:\n✅ {b1}\n✅ {b2}\n✅ {b3}\n\nالسعر التعريفي: {price} دج{save}\n💵 الدفع عند الاستلام • 🚚 توصيل لكل الولايات\n\nكن من أوائل من يجرّبه 👇\n{link}", "جديدنا اليوم: {name}\n{desc}\nالسعر: {price} دج{save}\nالدفع عند الاستلام\n\nاكتشفه الآن:\n{link}"],
@@ -67,12 +67,12 @@ const AdminSocial = (() => {
     faq: ["❓ أسئلة شائعة عن {name}\n\n🔹 هل الدفع عند الاستلام؟ نعم.\n🔹 كم مدة التوصيل؟ من 24 إلى 72 ساعة حسب الولاية.\n🔹 هل يمكنني الاستفسار قبل الطلب؟ بالتأكيد: {wa}\n🔹 كيف أطلب؟ من الرابط أدناه ثم نؤكد طلبك هاتفياً.\n\n{name} بـ {price} دج{save}\n{link}"],
   };
   const TIPS = ["الاستمرار في الاستعمال أهم من كثرته، فالنتائج تأتي بالانتظام", "اختر المنتجات الطبيعية الموثوقة واقرأ طريقة الاستعمال قبل البدء", "احفظ المنتج في مكان بارد وجاف بعيداً عن الشمس", "الشرب الكافي للماء مع العناية الجيدة يعطيان أفضل النتائج"];
-  const CTA = ["اطلب الآن والدفع عند الاستلام", "راسلنا على واتساب للطلب", "توصيل لكل الولايات خلال 24 إلى 72 ساعة", "الكمية محدودة، اطلب قبل النفاد"];
+  const CTA = ["اطلب الآن والدفع عند الاستلام", "راسلنا على واتساب للطلب", "توصيل لكل الولايات خلال 24 إلى 72 ساعة", "اطلب اليوم واستلم طلبك في بيتك"];
   const EMO = ["🔥", "✅", "🚚", "💚", "🌿", "🍯", "✨", "⭐", "🎁", "📞", "👇", "⏰"];
   function link(p, camp) { if (p && p.ext) { if (!p.url) return "https://" + domain() + "/"; return p.url + (p.url.includes("?") ? "&" : "?") + "utm_source=social&utm_medium=organic&utm_campaign=" + encodeURIComponent(camp || "post"); } return p ? "https://" + domain() + "/p/" + p.slug + "/?utm_source=social&utm_medium=organic&utm_campaign=" + encodeURIComponent(camp || "post") : "https://" + domain() + "/"; }
   function fill(t, p, camp, k) {
     const o = p || {}, disc = o.old && o.old > o.price ? Math.round((1 - o.price / o.old) * 100) : 0, wa = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "";
-    const bl = (o.benefits || o.features || []), b = i => (typeof bl[i] === "string" ? bl[i] : (bl[i] && bl[i].t) || ["طبيعي وآمن", "نتائج ملموسة", "توصيل سريع ودفع عند الاستلام"][i]);
+    const bl = (o.benefits || o.features || []), b = i => (typeof bl[i] === "string" ? bl[i] : (bl[i] && bl[i].t) || ["دفع عند الاستلام", "توصيل إلى ولايات الجزائر", "تأكيد هاتفي قبل الشحن"][i]);
     const map = { name: o.title || "منتجنا", price: o.price != null ? num(o.price) : "", old: o.old ? num(o.old) : "", disc: disc || "", link: link(p, camp), wa, desc: String(o.desc || o.sub || "").slice(0, 90), cat: ((A().categories || {})[o.cat]) || "المنتجات", b1: b(0), b2: b(1), b3: b(2), tip: TIPS[(k || 0) % TIPS.length], save: disc ? " بدل " + num(o.old) + " دج (وفّر " + disc + "%)" : "" };
     let x = String(t).replace(/\{(\w+)\}/g, (m, key) => (map[key] != null ? map[key] : m));
     if (!disc) x = x.replace(/\(خصم\s*%\)/g, "").replace(/\n?بدل\s+دج، الآن/g, "\nالآن").replace(/خصم\s*%\s*على/g, "عرض خاص على");

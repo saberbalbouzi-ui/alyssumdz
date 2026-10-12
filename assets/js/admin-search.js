@@ -9,6 +9,7 @@ const AdminSearch = (() => {
     ["فتح المخزون", "فتح تبويب إدارة المخزون", () => { const b = document.querySelector('.nav-btn[onclick*="inventory"]'); if (b) b.click(); }, "المخزون الكمية تنبيه نافد منخفض"],
     ["السوشيال والإعلانات", "جدولة منشورات فيسبوك وإنستغرام وإدارة الحملات", () => { const b = document.querySelector('.nav-btn[onclick*="social"]'); if (b) b.click(); }, "فيسبوك انستغرام منشور حملة اعلان ميتا جدولة"],
     ["منتج جديد", "إضافة منتج جديد للمتجر", () => A().editProduct && A().editProduct(null), "اضافة منتج جديد"],
+    ["نسخة احتياطية", "تنزيل ملف بكل طلباتك ومنتجاتك وتكاليفك", () => A().backupNow && A().backupNow(), "نسخة احتياطية تصدير حفظ البيانات backup"],
     ["مظهر اللوحة", "التبديل بين المظهر الداكن والفاتح", () => typeof AdminTheme !== "undefined" && AdminTheme.toggle(), "الوضع الداكن المظهر ثيم"],
     ["تحديث اللوحة", "جلب آخر نسخة منشورة", () => typeof AdminUpdate !== "undefined" && AdminUpdate.apply(), "تحديث نسخة"],
     ["فتح العملاء", "عرض شرائح العملاء وسجلّ طلباتهم", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'customers'")); if (b) b.click(); }, "عملاء زبائن"],

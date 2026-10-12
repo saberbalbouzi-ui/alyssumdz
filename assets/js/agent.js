@@ -162,7 +162,7 @@ const Agent = (() => {
         ? `أهلاً وسهلاً بك في <b>${SITE_NAME}</b> 🌿<br>أنت الآن في صفحة «<b>${p.title}</b>» — اسألني عن أي تفصيل فيه (السعر، المكوّنات، التوصيل، الدفع...) وسأجيبك بدقة.`
         : `أهلاً وسهلاً بك في <b>${SITE_NAME}</b> 🌿<br>أنا مساعدك الشخصي قبل الطلب. اسألني عن أي منتج، الأسعار، التوصيل أو الدفع — أو أخبرني بما تبحث عنه وسأرشح لك الأنسب.`,
       salam: () => `وعليكم السلام وأهلاً بك في ${SITE_NAME} 👋 أنا مساعدك الشخصي. هل تبحث عن منتج معين؟ أو أخبرني بما تشكو منه (تساقط الشعر، البشرة، آلام...) وأرشح لك الأنسب.`,
-      payment: () => `الدفع عند الاستلام 💵 تدفع فقط عندما يصلك المنتج وتتأكد منه. لا نطلب أي دفع مسبق أبداً. نقبل أيضاً الحوالة البريدية أو الدفع عبر بريدي موب، بعد التواصل معنا على واتساب لترتيب ذلك.`,
+      payment: () => `الدفع عند الاستلام 💵 تدفع فقط عندما يصلك المنتج وتتأكد منه. الأصل هو الدفع عند الاستلام دون دفع مسبق. ولمن يفضّل الدفع المسبق (الحوالة البريدية أو بريدي موب) يمكن ترتيبه بعد التواصل معنا على واتساب لترتيب ذلك.`,
       returnPolicy: () => `نعم، نسترجع المنتج في حالة وجود خطأ فيه أو تلف عند الاستلام 🔄 إذا واجهت مشكلة من هذا النوع، تواصل معنا مباشرة على واتساب وسنتكفل بطلبك فوراً.`,
       tracking: () => `بعد تأكيد طلبك، نرسل لك رابط تتبّع مباشر عبر موقع شركة التوصيل 📦 لتتبع مسار طلبك لحظة بلحظة حتى استلامه.`,
       pregnancy: () => `منتجاتنا من مكوّنات طبيعية 🌿 ولكن في حالة الحمل أو الرضاعة، ننصحك دوماً بمراجعة الطبيب أو الصيدلي أولاً للتأكد من ملاءمته لحالتك الخاصة، فصحتك وصحة طفلك أولويتنا.`,
@@ -212,7 +212,7 @@ const Agent = (() => {
         ? `Bienvenue chez <b>ALYSSUM</b> 🌿<br>Vous êtes sur la page « <b>${p.title}</b> » — posez-moi vos questions (prix, composition, livraison, paiement...) et je vous répondrai précisément.`
         : `Bienvenue chez <b>ALYSSUM</b> 🌿<br>Je suis votre assistant avant commande. Demandez-moi un produit, les prix, la livraison ou le paiement — ou décrivez votre besoin et je vous conseille.`,
       salam: () => `Bonjour et bienvenue chez ALYSSUM 👋 Je suis votre assistant personnel. Vous cherchez un produit précis ? Ou décrivez votre besoin (chute de cheveux, peau, douleurs...) et je vous conseille le plus adapté.`,
-      payment: () => `Paiement à la livraison 💵 Vous ne payez qu'à la réception du produit, une fois vérifié. Aucun paiement à l'avance n'est jamais demandé. Nous acceptons aussi le mandat postal ou Baridimob, à organiser en nous contactant sur WhatsApp.`,
+      payment: () => `Paiement à la livraison 💵 Vous ne payez qu'à la réception du produit, une fois vérifié. Le paiement à la livraison est la règle, sans avance. Pour ceux qui préfèrent payer d'avance, nous acceptons aussi le mandat postal ou Baridimob, à organiser en nous contactant sur WhatsApp.`,
       returnPolicy: () => `Oui, nous reprenons le produit en cas de défaut ou de dommage à la réception 🔄 Si cela vous arrive, contactez-nous directement sur WhatsApp, nous prendrons en charge votre commande immédiatement.`,
       tracking: () => `Après confirmation de votre commande, nous vous envoyons un lien de suivi direct sur le site du transporteur 📦 pour suivre votre colis étape par étape jusqu'à la livraison.`,
       pregnancy: () => `Nos produits sont à base d'ingrédients naturels 🌿 Toutefois, en cas de grossesse ou d'allaitement, nous vous conseillons de consulter un médecin ou un pharmacien au préalable, pour vous assurer qu'il convient à votre situation — votre santé et celle de votre enfant sont notre priorité.`,

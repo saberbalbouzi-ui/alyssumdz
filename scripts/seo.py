@@ -123,10 +123,27 @@ for slug in ("privacy", "returns", "shipping", "terms"):
     path = f"/policy/{slug}/"
     if (ROOT / "policy" / slug / "index.html").exists() and not excluded(slug, path):
         urls.append(f"{BASE}{path}")
+if (ROOT / "shop.html").exists() and not excluded("", "/shop.html"):
+    urls.append(f"{BASE}/shop.html")
 urls = list(dict.fromkeys(urls))
+import subprocess, datetime
+def lastmod(u):
+    """تاريخ آخر تعديل للصفحة (آخر commit يمسّ ملفها، وإلا تاريخ الملف) — لجنة الخبراء v1.89.132"""
+    path = u[len(BASE):].strip("/")
+    cands = [ROOT / "index.html"] if not path else [ROOT / path / "index.html", ROOT / "p" / path / "index.html", ROOT / path]
+    f = next((c for c in cands if c.exists()), None)
+    if not f:
+        return ""
+    try:
+        d = subprocess.run(["git", "log", "-1", "--format=%cs", "--", str(f.relative_to(ROOT))], cwd=ROOT, capture_output=True, text=True, timeout=10).stdout.strip()
+        if d:
+            return d
+    except Exception:
+        pass
+    return datetime.date.fromtimestamp(f.stat().st_mtime).isoformat()
 (ROOT / "sitemap.xml").write_text(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    "".join(f"  <url><loc>{esc(u)}</loc></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")
+    "".join(f"  <url><loc>{esc(u)}</loc>" + (f"<lastmod>{lastmod(u)}</lastmod>" if lastmod(u) else "") + "</url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")
 (ROOT / "robots.txt").write_text(
     f"User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /admin\n\nSitemap: {BASE}/sitemap.xml\n", encoding="utf-8")
 
@@ -169,7 +186,8 @@ for p in live:
              f'<meta property="og:type" content="product"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(url_path(p["slug"]))}">'
              + (f'<meta property="og:image" content="{esc(images[0])}">' if images else "") +
              ( '<!--seo:noindex:start--><meta name="robots" content="noindex" data-seo-managed="1"><!--seo:noindex:end-->' if no_idx else "") +
-             f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n' + (CLEAN_JS + "\n" if p["slug"] in MIRROR_SLUGS else "") + f'{E}\n')
+             f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n' +
+             f'<script type="application/ld+json">{json.dumps({"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": SITE, "item": BASE + "/"}, {"@type": "ListItem", "position": 2, "name": p["title"], "item": url_path(p["slug"])}]}, ensure_ascii=False)}</script>\n' + (CLEAN_JS + "\n" if p["slug"] in MIRROR_SLUGS else "") + f'{E}\n')
     text = text.replace("</head>", block + "</head>", 1)
     f.write_text(text, encoding="utf-8")
     n_seo += 1
@@ -190,7 +208,14 @@ if site_desc:
         text = re.sub(r'<meta\s+name="description"[^>]*>', meta, text, count=1, flags=re.I)
     else:
         text = text.replace("</head>", meta + "\n</head>", 1)
-ld = {"@context": "https://schema.org", "@graph": [{"@type": "Organization", "name": site_title, "url": BASE + "/", "logo": BASE + "/assets/img/icon-512.png"},
+try:
+    _soc = [u for u in (json.loads((ROOT / "assets/data/store.json").read_text(encoding="utf-8")).get("social") or {}).values() if isinstance(u, str) and u.startswith("http")]
+except (OSError, ValueError):
+    _soc = []
+_org = {"@type": "Organization", "name": site_title, "url": BASE + "/", "logo": BASE + "/assets/img/icon-512.png"}
+if _soc:
+    _org["sameAs"] = _soc
+ld = {"@context": "https://schema.org", "@graph": [_org,
                                                    {"@type": "WebSite", "name": site_title, "url": BASE + "/"}]}
 home_block = (f'{S}\n<link rel="canonical" href="{BASE}/">\n<meta property="og:locale" content="ar_DZ"><meta property="og:site_name" content="{esc(site_title)}"><meta property="og:url" content="{BASE}/">' + ('<!--seo:noindex:start--><meta name="robots" content="noindex"><!--seo:noindex:end-->' if excluded("", "/") else "")
               + f'<meta property="og:type" content="website"><meta property="og:title" content="{esc(site_title)}">' + (f'<meta property="og:description" content="{esc(site_desc)}">' if site_desc else "")
@@ -263,4 +288,10 @@ for directory in ROOT.iterdir():
         if MIRROR_MARK in txt or REDIRECT_MARK in txt:
             target.unlink()
             directory.rmdir()
+# صفحة حساب الزبون لا تُفهرَس
+_acc = ROOT / "account.html"
+if _acc.exists():
+    _t = _acc.read_text(encoding="utf-8")
+    if 'name="robots"' not in _t:
+        _acc.write_text(_t.replace("</head>", '<meta name="robots" content="noindex,nofollow">\n</head>', 1), encoding="utf-8")
 print(f"sitemap: {len(urls)} رابط | SEO: {n_seo} منتج، {n_pages} صفحة منشورة | نسخ جذرية: {made} | تحويلات قديمة: {stubs} | النطاق: {DOMAIN}")

@@ -1,0 +1,43 @@
+# اختبارات تلقائية عند كل دفع (لجنة الخبراء v1.89.133): لا يُنشر شيء إلى main إلا وقد نجحت هنا أو يراها صاحب المتجر حمراء.
+name: tests
+on:
+  push:
+    branches: ['**']
+  pull_request:
+jobs:
+  domain:
+    name: اختبارات المنطق (بلا متصفح)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: فحص صياغة ملفات JavaScript
+        run: |
+          fail=0
+          for f in assets/js/*.js scripts/pagebuilder*.js sw.js; do
+            node -e "new Function(require('fs').readFileSync('$f','utf8'))" 2>/tmp/err || { echo "::error file=$f::$(head -c 300 /tmp/err)"; fail=1; }
+          done
+          exit $fail
+      - name: الأوامر الصوتية
+        run: node scripts/test-voice.js
+      - name: المخزون
+        run: node scripts/test-stock.js
+      - name: المدفوعات
+        run: node scripts/test-payments.js
+      - name: رسوم البلديات
+        run: node scripts/test-shipsup.js
+      - name: النشر التلقائي (hub)
+        run: node scripts/test-hub.js
+  ui:
+    name: اختبار اللوحة في متصفح حقيقي
+    runs-on: ubuntu-latest
+    continue-on-error: true      # معلوماتي في البداية: يصبح إلزامياً بعد استقراره على GitHub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
+      - run: npm i --no-save playwright && npx playwright install --with-deps chromium
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
