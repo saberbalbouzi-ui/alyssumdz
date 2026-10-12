@@ -1,0 +1,9 @@
+Options -Indexes
+<FilesMatch "^(bootstrap|admin|cron)\.php$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+</IfModule>

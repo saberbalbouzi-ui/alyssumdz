@@ -36,6 +36,7 @@ jobs:
         run: |
           php scripts/test-shipping.php
           php scripts/test-ship-php.php
+          php scripts/test-gateway.php
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
