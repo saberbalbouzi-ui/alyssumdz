@@ -36,7 +36,7 @@
 كل ما سبق REST/JSON خالص: ترقيم بمؤشر (`limit/after`)، أخطاء موحّدة، `Idempotency-Key` لإعادة الإرسال عند ضعف الشبكة، OpenAPI على `/openapi.json`، ومفاتيح بنطاقات (تطبيق Android للتاجر بمفتاح `events:read` + `integrations:*`؛ ومتصفح الزائر بـ`pk_pub_`). **نقطة البيع (POS)** تحتاج نموذج بيانات للطلبات والمخزون داخل المنصة (اليوم تبقى الطلبات في Supabase/PHP) — تُبنى كوحدة `orders` عند بدء الخلفية متعددة المستأجرين؛ لا تُحاكى هنا.
 
 ## ما لم يُنجز / حدود صريحة
-- **لم تُنشر** منصة API على Cloudflare بعد (أداة `saas/platform/tools/deploy.mjs` جاهزة: D1 + Worker + أسرار `APP_ENCRYPTION_KEY/ADMIN_TOKEN/PLATFORM_SECRET` + مسار `api.alyssumhub.fyi/*`) ولا رُبطت بالمتجر؛ الاختبار بمحاكاة D1 فقط (201 فحص).
+- **نُشرت** على `https://api.alyssumhub.fyi` (Worker + D1 + cron كل دقيقة) وتحقّقنا حياً من المصادقة والفحص والأحداث والمفتاح العام/CORS؛ **لم تُربط بالمتجر بعد**، وبقية الاختبارات بمحاكاة D1 (201 فحص).
 - **صيغ المنصات الخارجية غير مُجرَّبة على حسابات حقيقية**: Meta CAPI وTikTok Events API وSnapchat CAPI وWhatsApp Cloud API وResend بُنيت من الوثائق العامة وتُراجع بـ«حدث اختبار» (`test_event_code`) قبل أي إنفاق؛ نقطة Snapchat (`tr.snapchat.com/v3/<pixel>/events`) أقلّها يقيناً.
 - **R2** (ملفات المنتجات الرقمية) غير متاح برمز Cloudflare الحالي؛ حتى يُفعَّل تعمل الروابط الخارجية https (مثل تخزين موقّع) فقط.
 - WhatsApp: القوالب يعتمدها Meta ويلزم حساب Business؛ ولا ردّ آلي حرّ خارج نافذة 24 ساعة.
