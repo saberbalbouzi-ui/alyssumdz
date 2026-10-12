@@ -156,7 +156,7 @@ ${fontSel('data-ovk="font"', v.font || "", "حسب الخط العام")}
     return `<div id="pbst"><p class="pbst-n">حوّل صورة منتجك إلى صورة متجر أو إعلان: تُنزع الخلفية داخل متصفحك ثم تختار الخلفية والظل والملصقات والمقاس. تظهر التعديلات مباشرة على الصورة في الصفحة، وتحتها «تطبيق» أو «إلغاء».</p>
 <div class="pbst-ms" id="pbst-ms"></div>
 <div class="pbst-act"><button type="button" class="pbx-small pz-go" data-st="cut" id="pbst-cut">① انزع الخلفية</button></div>
-<div class="pbst-act"><button type="button" class="pbx-small pz-go" data-st="apply">تطبيق على الصورة</button><button type="button" class="pbx-small" data-st="dl">تنزيل</button><button type="button" class="pbx-small" data-st="reset">استعادة الافتراضي</button></div>
+<div class="pbst-act"><button type="button" class="pbx-small" data-st="dl">تنزيل</button><button type="button" class="pbx-small" data-st="reset">استعادة الافتراضي</button></div>
 <div class="pbst-tabs">${tab("bg", "🎨 الخلفية")}${tab("prod", "📦 المنتج")}${tab("fx", "✨ تأثيرات")}${tab("txt", "🏷️ ملصقات وشعار")}${tab("out", "📐 المقاس والإخراج")}</div>
 <div ${pane("bg")}><div><label class="pbst-l">الخلفية</label><div class="pbst-sw">${sw}</div><input type="color" id="pbst-c1" value="${esc(o.c1 || "#ffffff")}" style="width:100%;margin-top:.3rem;display:${o.bg === "custom" ? "block" : "none"}"></div>
 <div id="pbst-blurbox" style="display:${o.bg === "blur" ? "block" : "none"}">${rg("blur", "قوة الطمس", 4, 60, 1, o.blur)}</div></div>
@@ -180,18 +180,20 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
   /* معاينة مباشرة على الصورة في الصفحة (بعد نزع الخلفية): تُركَّب بالمقاس المختار وتُعرض مكان الصورة؛ «تطبيق/إلغاء» تحتها */
   async function draw() {
     if (!document.getElementById("pbst")) return; const tok = ++S.dtok;
-    if (!S.cut) { if (S.pv) { S.pv = ""; A().stRestore(); } return; }
+    const base = S.cut || S.srcC; if (!base) { if (S.pv) { S.pv = ""; A().stRestore(); } return; }      // قبل نزع الخلفية: تُعرض التعديلات على الصورة كما هي
+    const bbx = S.cut ? S.bb : (S.bbSrc || (S.bbSrc = bbox(S.srcC)));
     const [W, H] = sizeOf(S.opt, S.srcC), k = Math.min(1, 900 / Math.max(W, H)), PW = Math.max(1, Math.round(W * k)), PH = Math.max(1, Math.round(H * k)), o = optsFor(PW, PH);
     if (/^sc\d$/.test(S.opt.bg)) { try { o.scene = await sceneImg(S.opt.bg); } catch (e) { } }
     await loadSite(); o.siteFf = S.site.ff; await loadFonts(o); if (tok !== S.dtok) return;
-    const out = compose(S.cut, S.bb, o), bl = await toBlob(out, "image/png"); if (tok !== S.dtok || S.off || !document.getElementById("pbst")) return;
+    const out = compose(base, bbx, o), bl = await toBlob(out, "image/png"); if (tok !== S.dtok || S.off || !document.getElementById("pbst")) return;
     const url = URL.createObjectURL(bl), prev = S.pvUrl; S.pvUrl = url;
-    if (A().stPreview(S.id, url)) { S.pv = S.id; A().epFloatNow(); say("👁️ معاينة مباشرة على الصورة — " + W + "×" + H); }
+    if (A().stPreview(S.id, url)) { S.pv = S.id; A().epFloatNow(); say("👁️ معاينة مباشرة على الصورة — " + W + "×" + H + (S.cut ? "" : " — اضغط «انزع الخلفية» لتظهر الخلفية الجديدة")); }
     if (prev) setTimeout(() => { try { URL.revokeObjectURL(prev); } catch (e) { } }, 2000);
   }
   function cancel() { S.dtok++; S.off = true; const had = S.pv; S.pv = ""; if (S.pvUrl) { const u = S.pvUrl; S.pvUrl = ""; setTimeout(() => { try { URL.revokeObjectURL(u); } catch (e) { } }, 2000); } say(""); if (had) A().stRestore(); }
   const redraw = () => { S.off = false; clearTimeout(drawT); drawT = setTimeout(draw, 120); };
   function say(t) { S.msg = t; const m = document.getElementById("pbst-ms"); if (m) { m.textContent = t; m.classList.toggle("on", !!t); } }
+  async function ensureSrc(inf) { if (!S.srcC) { say("⏳ جارِ تحميل الصورة…"); S.srcC = await loadImg(inf.node.set.src); } if (!S.cut && hasAlpha(S.srcC)) { S.cut = S.srcC; S.bb = bbox(S.cut); } say(""); }      // بلا نزع خلفية: كما في المعاينة
   async function ensureCut(inf) {
     if (S.cut) return true;
     say("⏳ جارِ تحميل الصورة…"); S.srcC = S.srcC || await loadImg(inf.node.set.src);
@@ -201,18 +203,18 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
   }
   async function render() {
     const [W, H] = sizeOf(S.opt, S.srcC), o = optsFor(W, H);
-    if (/^sc\d$/.test(S.opt.bg)) o.scene = await sceneImg(S.opt.bg); await loadSite(); o.siteFf = S.site.ff; await loadFonts(o); return compose(S.cut, S.bb, o);
+    if (/^sc\d$/.test(S.opt.bg)) o.scene = await sceneImg(S.opt.bg); await loadSite(); o.siteFf = S.site.ff; await loadFonts(o); return compose(S.cut || S.srcC, S.cut ? S.bb : (S.bbSrc || (S.bbSrc = bbox(S.srcC))), o);
   }
   const MIME = { png: "image/png", webp: "image/webp", jpeg: "image/jpeg" }, toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type || "image/png", q));
   async function applyCore(inf) {
-    const id = inf.node.id; await ensureCut(inf); say("⏳ جارِ تجهيز الصورة…"); const c = await render(), bl = await toBlob(c); say("⏳ جارِ رفع الصورة…");
+    const id = inf.node.id; await ensureSrc(inf); say("⏳ جارِ تجهيز الصورة…"); const c = await render(), bl = await toBlob(c); say("⏳ جارِ رفع الصورة…");
     const path = await A().uploadBlob(bl, "studio-" + Date.now().toString(36), { max: 2600, q: .92 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
-    S.dtok++; S.pv = ""; S.off = true; q.node.set.src = path; delete q.node.set.crop; q.node.set.hauto = true; A().E.nextLabel = "استوديو المنتج"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); say("✅ طُبِّقت على الصورة (Ctrl+Z للتراجع)"); S.src = path; S.cut = null; S.bb = null; S.srcC = null;
+    S.dtok++; S.pv = ""; S.off = true; q.node.set.src = path; delete q.node.set.crop; q.node.set.hauto = true; A().E.nextLabel = "استوديو المنتج"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); say("✅ طُبِّقت على الصورة (Ctrl+Z للتراجع)"); S.src = path; S.cut = null; S.bb = null; S.bbSrc = null; S.srcC = null;
   }
   async function applyExt(inf) { if (S.busy) return; S.busy = true; try { await applyCore(inf); } catch (e) { say("⚠️ " + (e && e.message || e)); console.error(e); } S.busy = false; }
   function mount(root, inf) {
     if (!root) return; css(); const id = inf.node.id, src = inf.node.set.src;
-    if (S.id !== id || S.src !== src) { S.id = id; S.src = src; S.cut = null; S.bb = null; S.srcC = null; S.msg = ""; S.off = false; S.pv = ""; }
+    if (S.id !== id || S.src !== src) { S.id = id; S.src = src; S.cut = null; S.bb = null; S.bbSrc = null; S.srcC = null; S.msg = ""; S.off = false; S.pv = ""; }
     const $ = i => root.querySelector("#" + i), o = S.opt;
     $("pbst-sh").value = o.shadow; $("pbst-al").value = o.align; $("pbst-sz").value = o.size; $("pbst-pv-n").textContent = Math.round((1 - o.pad * 2) * 100) + "%";
     const sync = () => { $("pbst-cut").style.display = S.cut ? "none" : ""; };
@@ -230,7 +232,7 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
       else if (act === "addov") { const i = +a.dataset.i, bd = BADGES[i] || ["نص", "#16a34a", "#ffffff", "pill"]; if (o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: bd[3], pos: [2, 0, 8, 6][o.ov.length % 4], s: bd[3] === "circle" ? 7 : 6 }); save(); redrawPanel(); redraw(); }
       else if (act === "ovdel") { o.ov.splice(+a.dataset.i, 1); save(); redrawPanel(); redraw(); }
       else if (act === "logodel") { S.logo = null; const f = $("pbst-logo"); if (f) f.value = ""; redraw(); }
-      else if (act === "dl") run(async () => { await ensureCut(inf); const c = await render(), fmt = o.fmt || "png", bl = await toBlob(c, MIME[fmt], fmt === "png" ? undefined : (o.q || 92) / 100); const u = URL.createObjectURL(bl), l = document.createElement("a"); l.href = u; l.download = "product-studio." + (fmt === "jpeg" ? "jpg" : fmt); document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); say("✅ نُزّلت الصورة"); setTimeout(() => say(""), 2500); });
+      else if (act === "dl") run(async () => { await ensureSrc(inf); const c = await render(), fmt = o.fmt || "png", bl = await toBlob(c, MIME[fmt], fmt === "png" ? undefined : (o.q || 92) / 100); const u = URL.createObjectURL(bl), l = document.createElement("a"); l.href = u; l.download = "product-studio." + (fmt === "jpeg" ? "jpg" : fmt); document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); say("✅ نُزّلت الصورة"); setTimeout(() => say(""), 2500); });
       else if (act === "apply") run(() => applyCore(inf));
     });
     $("pbst-c1").addEventListener("input", e => { o.c1 = e.target.value; o.bg = "custom"; const cb = root.querySelector('[data-st-bg="custom"]'); if (cb) { cb.style.background = o.c1; root.querySelectorAll("[data-st-bg]").forEach(x => x.classList.toggle("on", x === cb)); } save(); redraw(); });

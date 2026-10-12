@@ -148,6 +148,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); document.querySelector('[data-qb="edit"]') && document.querySelector('[data-qb="edit"]').click(); }); await p.waitForTimeout(500);
   const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-lpane [data-imgt="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); return { tab: true, panel: !!document.getElementById("pbst"), btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
   ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.btns >= 4 && ui.sw >= 10, ui);
+  const op = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); const o = { applyBtn: !!document.querySelector('#pbst [data-st="apply"]') }; const ed = document.querySelector('.pbx-qbar [data-qb="edit"]');
+    if (ed) { const cs = getComputedStyle(ed), tx = getComputedStyle(ed.querySelector(".tx")); o.edBg = cs.backgroundColor; o.edCol = tx.color; o.edOn = ed.classList.contains("on"); }
+    return o;
+  });
+  ok("شريط الصورة: «تعديل» بعد فتح اللوحة كلمته بيضاء وخلفيته خضراء، ولا زر «تطبيق على الصورة» في الإعدادات", op.edOn && op.edCol === "rgb(255, 255, 255)" && (() => { const m = String(op.edBg).match(/[\d.]+/g) || []; const n = /^color/.test(op.edBg) ? m.slice(-3).map(Number) : m.slice(0, 3).map(Number); return n.length === 3 && n[1] > n[0] && n[1] > n[2]; })() && !op.applyBtn, op);
   const it = await p.evaluate(async () => {
     const tabs = [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt), pane = document.getElementById("pbx-lpane"), imgs = [...pane.querySelectorAll(".pbx-tt img")];
     await new Promise(r => setTimeout(r, 600)); const o = { second: tabs[1], tabOn: document.querySelector('.pbx-tabs [data-lt="img"]').classList.contains("on"), tools: pane.querySelectorAll("[data-imgt]").length, sub: pane.querySelectorAll("[data-imgs]").length, sm: pane.querySelectorAll("[data-imgm]").length, loaded: imgs.filter(i => i.naturalWidth > 0).length, imgsN: imgs.length };
@@ -169,17 +175,17 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("قائمة الزر الأيمن: خلفية بيضاء معتمة وخط أسود صغير وتتحرك بالسحب من أعلاها", cx.bg === "rgb(255, 255, 255)" && cx.col === "rgb(17, 17, 17)" && cx.fs <= 12.5 && cx.hasH && Math.abs(cx.dx - 100) <= 3 && Math.abs(cx.dy - 80) <= 3, cx);
   const qb = await p.evaluate(async () => {
     const q = document.querySelector(".pbx-qbar"), tx = q && q.querySelector('[data-qb="edit"] .tx'), u = q && q.querySelector('[data-qb="undo"]'), r = q && q.querySelector('[data-qb="redo"]'); const o = { tx: !!tx, u: !!u, r: !!r };
-    if (tx) { const probe = document.createElement("i"); probe.style.color = getComputedStyle(document.documentElement).getPropertyValue("--g-mint") || ""; o.col = getComputedStyle(tx).color; o.mint = getComputedStyle(probe).color; o.green = /^rgb\((\d+), (\d+), (\d+)\)/.test(o.col) && +RegExp.$2 > +RegExp.$1 && +RegExp.$2 > +RegExp.$3; }
+    if (tx) { const probe = document.createElement("i"); probe.style.color = getComputedStyle(document.documentElement).getPropertyValue("--g-mint") || ""; o.col = getComputedStyle(tx).color; o.mint = getComputedStyle(probe).color; o.white = o.col === "rgb(255, 255, 255)"; }
     PBApp.E.nextLabel = "اختبار"; const inf = PBApp.E.page; const before = PBApp.E.hi; PBApp.E.hist.length; o.hi0 = before;
     u && !u.disabled && u.click(); o.hi1 = PBApp.E.hi; r && r.click && (await new Promise(x => setTimeout(x, 50)), document.querySelector('.pbx-qbar [data-qb="redo"]').click()); o.hi2 = PBApp.E.hi;
-    document.querySelector('[data-qb="edit"]').click(); await new Promise(x => setTimeout(x, 150)); o.closed = !document.getElementById("pbx-ep") && !document.querySelector('.pbx-qbar [data-qb="undo"]');
+    document.querySelector('[data-qb="edit"]').click(); await new Promise(x => setTimeout(x, 150)); o.closed = !document.getElementById("pbx-ep") && !document.querySelector('.pbx-qbar [data-qb="undo"]'); { const t2 = document.querySelector('.pbx-qbar [data-qb="edit"] .tx'); const m2 = t2 && getComputedStyle(t2).color.match(/\d+/g); o.green = !!m2 && +m2[1] > +m2[0] && +m2[1] > +m2[2]; }
     document.querySelector('[data-qb="edit"]').click(); await new Promise(x => setTimeout(x, 300)); return o;
   });
-  ok("شريط الصورة: كلمة «تعديل» خضراء بلون المظهر، وسهما رجوع/عودة يظهران مع لوحة التعديل ويعملان ويختفيان بإغلاقها", qb.tx && qb.u && qb.r && qb.green && qb.hi1 <= qb.hi0 && qb.hi2 === qb.hi0 && qb.closed, qb);
+  ok("شريط الصورة: «تعديل» خضراء بلون المظهر وتصير بيضاء عند الفتح، وسهما رجوع/عودة يظهران مع لوحة التعديل ويعملان ويختفيان بإغلاقها", qb.tx && qb.u && qb.r && qb.white && qb.green && qb.hi1 <= qb.hi0 && qb.hi2 === qb.hi0 && qb.closed, qb);
   const st2 = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const o = {};
     try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-st="cut"]') && document.querySelector('[data-st="cut"]').click(); for (let i = 0; i < 60 && !PBStudio._S.cut; i++) await w(300);
-    o.cut = !!PBStudio._S.cut; o.msg = PBStudio._S.msg; const z = document.getElementById("pbst-sz"); z.value = "1080x1920"; z.dispatchEvent(new Event("change", { bubbles: true })); for (let i = 0; i < 30 && !PBStudio.pending(); i++) await w(300); await w(600);
+    o.cut = !!PBStudio._S.cut; o.msg = PBStudio._S.msg; const z = document.getElementById("pbst-sz"); z.value = "1080x1920"; z.dispatchEvent(new Event("change", { bubbles: true })); for (let i = 0; i < 40; i++) { const e0 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); if (e0 && /^blob:/.test(e0.src) && e0.naturalHeight && Math.abs(e0.naturalWidth / e0.naturalHeight - 0.5625) < .02) break; await w(300); } await w(300);
     const el = document.querySelector("#pbx-frame") && document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.live = !!el && /^blob:/.test(el.src); o.ratio = el ? +(el.naturalWidth / el.naturalHeight).toFixed(3) : 0; o.small = !document.getElementById("pbst-cv");
     const f = document.getElementById("pbx-epf"); o.bar = !!f && /تطبيق/.test(f.textContent) && /إلغاء/.test(f.textContent);
     f && f.querySelector('[data-epf="no"]').click(); await w(700); const el2 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.restored = !!el2 && !/^blob:/.test(el2.src); o.pend = PBStudio.pending();
@@ -271,6 +277,21 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("المخزون: إلغاء الاتصال لا يسجّل شيئاً، وإجراؤه يسجّل المحاولة", stk.afterCancel.dlg === false && !/📞/.test(stk.afterCancel.note) && /📞1/.test(stk.afterGo), stk);
   ok("المخزون: التأكيد يمرّ بنافذة (إلغاء / تأكيد رغم ذلك) ولا يؤكّد عند الإلغاء", stk.clabels && stk.clabels[1] === "تأكيد رغم ذلك" && stk.st1 === "nouvelle", stk);
   ok("المخزون: طلب يكفيه المخزون يُؤكَّد مباشرة بلا نافذة", stk.st0 === "confirmee", stk.st0);
+  // ── منع تكرار الإرسال لياليدين ──
+  const dup = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); const SV = { ro: Admin.renderOrders, uo: API.updateOrder, cf: Admin.courierFetch, cw: Admin.companyWilayas, rc: Admin.resolveCommune, en: Admin.enqueueNotify, rb: Admin.renderShippedBadge, or: Admin.orders, dc: Admin.deliveryCfg }; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg); Admin.deliveryCfg.yalidine = { enabled: true, apiId: "a", apiToken: "b" }; Admin.companyWilayas = async () => ({}); Admin.resolveCommune = async (co, cfg, ord) => ({ ok: true, name: ord.commune }); Admin.renderOrders = () => { }; API.updateOrder = async () => ({ ok: true });
+    const posts = []; Admin.courierFetch = async rq => { if (rq.method === "POST") { posts.push(rq.body); await wait(150); return { ok: true, status: 200, text: JSON.stringify({ data: [{ success: true, tracking: "yal-D" + posts.length }] }) }; } return { ok: true, status: 200, text: JSON.stringify({ total_data: 3, data: [] }) }; };
+    const mk = id => ({ id, date: new Date().toISOString(), status: "confirmee", name: "Test Dup", phone: "0550000001", wilaya: "Alger", commune: "Alger Centre", dtype: "home", total: 3000, subtotal: 3000, fee: 0, items: "x ×1 = 3000 DA", note: "" });
+    Admin.orders = [mk("DUP1"), mk("DUP2")]; Admin.enqueueNotify = () => { }; Admin.renderShippedBadge = () => { };
+    const r1 = await Promise.all([Admin.sendOrderToDelivery(0, "yalidine"), Admin.sendOrderToDelivery(0, "yalidine"), Admin.sendConfirmed(0)]); await wait(300);
+    const t1 = Admin.trackingOf(Admin.orders[0]);
+    // الفهرس يتبدّل أثناء الإرسال (تحديث القائمة): يجب أن يُحفظ التتبع على الطلب الصحيح
+    const p2 = Admin.sendOrderToDelivery(1, "yalidine"); Admin.orders = [{ id: "OTHER", status: "nouvelle", note: "" }, Admin.orders[0], Admin.orders[1]]; await p2; await wait(100);
+    const res = { posts: posts.length, results: r1, t1: !!t1, wrongOrder: Admin.trackingOf(Admin.orders[0]), right: !!Admin.trackingOf(Admin.orders.find(x => x.id === "DUP2")), total: posts.length };
+    Admin.renderOrders = SV.ro; API.updateOrder = SV.uo; Admin.courierFetch = SV.cf; Admin.companyWilayas = SV.cw; Admin.resolveCommune = SV.rc; Admin.enqueueNotify = SV.en; Admin.renderShippedBadge = SV.rb; Admin.orders = SV.or; Admin.deliveryCfg = SV.dc; return res;
+  });
+  ok("الإرسال لياليدين: ثلاث نداءات متزامنة لطلب واحد = طرد واحد فقط", dup.t1 && dup.total === 2 && dup.results.filter(Boolean).length === 1, dup);
+  ok("الإرسال لياليدين: تبدّل فهرس الطلب أثناء الإرسال لا يحفظ التتبع على طلب آخر", !dup.wrongOrder && dup.right, dup);
   // ── تعديل الطلب بعد التأكيد + تحديث الشركة + الإرسال الجماعي ──
   const oe = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; API.updateOrder = async () => ({ ok: true });

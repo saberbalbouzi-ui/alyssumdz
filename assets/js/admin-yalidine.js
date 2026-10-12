@@ -35,13 +35,21 @@ const AdminYd = (() => {
   function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); }
   function trackMap() { const a = A(), m = {}; if (a && a.orders) a.orders.forEach(o => { const t = a.trackingOf(o); if (t) m[t.tracking || t] = o; }); return m; }
   function counts() { const c = {}; S.rows.forEach(r => { const k = r.status || "—"; c[k] = (c[k] || 0) + 1; }); return c; }
+  /* طرود مكرّرة: الاسم والهاتف والوجهة والسعر نفسها خلال 3 أيام (نتيجة إرسال الطلب مرتين) ← {تتبع: عدد المجموعة} */
+  function dupMap() {
+    const g = {}, out = {};
+    S.rows.forEach(r => { const k = [norm(r.name), String(r.phone || "").replace(/\s/g, ""), norm(r.wilaya), norm(r.commune), r.price || 0].join("|"); (g[k] = g[k] || []).push(r); });
+    Object.keys(g).forEach(k => { const L = g[k].filter(r => !/(retourn|annul)/i.test(r.status || "")).sort((a, b) => String(a.date).localeCompare(String(b.date))); for (let i = 0; i < L.length; i++) { const near = L.filter((x, j) => j !== i && Math.abs(new Date(x.date) - new Date(L[i].date)) < 3 * 864e5); if (near.length) out[L[i].tracking] = near.length + 1; } });
+    return out;
+  }
   function filtered() {
-    const tm = trackMap(), q = norm(S.q);
+    const tm = trackMap(), q = norm(S.q), dm = S.dup ? dupMap() : null;
     return S.rows.filter(r => {
       if (S.st && (r.status || "—") !== S.st) return false;
       if (S.wil && norm(r.wilaya) !== norm(S.wil)) return false;
       if (S.from && String(r.date).slice(0, 10) < S.from) return false;
       if (S.to && String(r.date).slice(0, 10) > S.to) return false;
+      if (dm && !dm[r.tracking]) return false;
       if (S.link === "yes" && !tm[r.tracking]) return false;
       if (S.link === "no" && tm[r.tracking]) return false;
       if (q && !norm([r.tracking, real(r, tm[r.tracking]).name, real(r, tm[r.tracking]).phone, r.name, r.phone, r.wilaya, r.commune, r.orderId].join(" ")).includes(q)) return false;
@@ -79,17 +87,18 @@ const AdminYd = (() => {
     const c = ensure(); if (!c) return; css();
     const cn = counts(), keys = Object.keys(cn).sort((a, b) => cn[b] - cn[a]), list = filtered(), pages = Math.max(1, Math.ceil(list.length / PER));
     if (S.page > pages) S.page = pages;
-    const tm = trackMap(), wils = [...new Set(S.rows.map(r => r.wilaya).filter(Boolean))].sort();
-    const chips = keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
+    const tm = trackMap(), dmp = dupMap(), ndup = Object.keys(dmp).length, wils = [...new Set(S.rows.map(r => r.wilaya).filter(Boolean))].sort();
+    const dupChip = ndup ? '<span class="yd-chip r' + (S.dup ? " on" : "") + '" data-yd-dup="1" title="طرود بالاسم والهاتف والوجهة والسعر نفسها خلال 3 أيام — غالباً إرسال مكرر">⚠️ مكرّر <b>' + ndup + '</b></span>' : "";
+    const chips = dupChip + keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr><td class="m">' + esc(r.tracking) + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + contact(real(r, o).phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
+      return '<tr><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + contact(real(r, o).phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
     }).join("") || '<tr><td colspan="9" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
       '<button class="small" type="button" data-yd="csv"' + (S.rows.length ? "" : " disabled") + '>⬇ CSV</button><button class="small" type="button" data-yd="gs"' + (S.rows.length ? "" : " disabled") + ' title="ينسخ الجدول ويفتح Google Sheets جديداً — ألصقه في الخلية A1">📊 Google Sheets</button></div>' +
       (S.rows.length ? '<div class="yd-top"><span class="yd-total">Total ' + (S.total || S.rows.length) + '</span><span class="hint" style="margin:0">par statut:</span><div class="yd-chips">' + chips + '</div>' +
-        '<button class="small" type="button" data-yd="fl">⚙ Filtre' + (S.q || S.wil || S.from || S.to || S.link ? " •" : "") + '</button>' + (S.st || S.q || S.wil || S.from || S.to || S.link ? '<button class="small" type="button" data-yd="clr">✖ مسح التصفية</button>' : "") + '</div>' : '<div class="hint">اضغط «تحميل / تحديث الطرود» لعرض إحصاءات حسابك في ياليدين حسب الحالة.</div>') +
+        '<button class="small" type="button" data-yd="fl">⚙ Filtre' + (S.q || S.wil || S.from || S.to || S.link ? " •" : "") + '</button>' + (S.st || S.q || S.wil || S.from || S.to || S.link || S.dup ? '<button class="small" type="button" data-yd="clr">✖ مسح التصفية</button>' : "") + '</div>' : '<div class="hint">اضغط «تحميل / تحديث الطرود» لعرض إحصاءات حسابك في ياليدين حسب الحالة.</div>') +
       (S.fopen && S.rows.length ? '<div class="yd-f"><input data-yd-in="q" placeholder="🔍 تتبع / اسم / هاتف…" value="' + esc(S.q) + '"><select data-yd-in="wil"><option value="">كل الولايات</option>' + wils.map(w => '<option' + (norm(S.wil) === norm(w) ? " selected" : "") + '>' + esc(w) + '</option>').join("") + '</select>' +
         '<input type="date" data-yd-in="from" value="' + esc(S.from) + '" title="من تاريخ"><input type="date" data-yd-in="to" value="' + esc(S.to) + '" title="إلى تاريخ">' +
         '<select data-yd-in="link"><option value="">مرتبط وغير مرتبط</option><option value="yes"' + (S.link === "yes" ? " selected" : "") + '>مرتبط بطلب في اللوحة</option><option value="no"' + (S.link === "no" ? " selected" : "") + '>بلا طلب في اللوحة</option></select></div>' : "") +
@@ -237,10 +246,11 @@ const AdminYd = (() => {
     const pv = e.target.closest("#yd-card [data-ydp]"); if (pv) { pvOpen(pv.dataset.ydp); return; }
     const dd = e.target.closest("#yd-card [data-ydd]"); if (dd) { detail(dd.dataset.ydd); return; }
     const chip = e.target.closest("#yd-card [data-yd-st]"), btn = e.target.closest("#yd-card [data-yd]");
+    const dchip = e.target.closest("#yd-card [data-yd-dup]"); if (dchip) { S.dup = !S.dup; S.page = 1; draw(); return; }
     if (chip) { const k = chip.dataset.ydSt; S.st = S.st === k ? "" : k; S.page = 1; draw(); return; }
     if (!btn) return; const k = btn.dataset.yd;
     if (k === "load") load(); else if (k === "csv") csv(); else if (k === "gs") sheets(); else if (k === "fl") { S.fopen = !S.fopen; draw(); }
-    else if (k === "clr") { S.st = S.q = S.wil = S.from = S.to = S.link = ""; S.page = 1; draw(); }
+    else if (k === "clr") { S.st = S.q = S.wil = S.from = S.to = S.link = ""; S.dup = false; S.page = 1; draw(); }
     else if (k === "prev") { S.page--; draw(); } else if (k === "next") { S.page++; draw(); }
   });
   document.addEventListener("input", e => {
