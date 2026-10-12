@@ -16,7 +16,8 @@ jobs:
         run: |
           fail=0
           for f in assets/js/*.js scripts/pagebuilder*.js sw.js; do
-            node -e "new Function(require('fs').readFileSync('$f','utf8'))" 2>/tmp/err || { echo "::error file=$f::$(head -c 300 /tmp/err)"; fail=1; }
+            if grep -q '^import ' "$f"; then cp "$f" /tmp/mod.mjs; node --check /tmp/mod.mjs 2>/tmp/err || { echo "::error file=$f::$(head -c 300 /tmp/err)"; fail=1; }      # وحدة ES (عامل الرؤية)
+            else node -e "new Function(require('fs').readFileSync('$f','utf8'))" 2>/tmp/err || { echo "::error file=$f::$(head -c 300 /tmp/err)"; fail=1; }; fi
           done
           exit $fail
       - name: الأوامر الصوتية
@@ -39,5 +40,5 @@ jobs:
         with: { node-version: '20' }
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
-      - run: npm i --no-save playwright && npx playwright install --with-deps chromium
+      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
       - run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js

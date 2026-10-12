@@ -15,7 +15,7 @@ jobs:
           PASS: ${{ secrets.BACKUP_PASSPHRASE }}
           URL: https://qvdaiundlkfbmjlummni.supabase.co
         run: |
-          [ -n "$SVC" ] && [ -n "$PASS" ] || { echo "::warning::السرّان SUPABASE_SERVICE_KEY و BACKUP_PASSPHRASE غير مضبوطين — لم تُؤخذ نسخة"; exit 0; }
+          [ -n "$SVC" ] && [ -n "$PASS" ] || { echo "::error::السرّان SUPABASE_SERVICE_KEY و BACKUP_PASSPHRASE غير مضبوطين — لم تُؤخذ نسخة"; exit 1; }
           mkdir out
           for t in orders admin_kv; do
             curl -fsS -H "apikey: $SVC" -H "Authorization: Bearer $SVC" "$URL/rest/v1/$t?select=*" -o out/$t.json || { echo "::error::فشل تصدير $t"; exit 1; }
