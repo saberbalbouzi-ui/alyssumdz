@@ -95,6 +95,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     const w = await ctx.window("ip:" + ip, 600, 60); if (w !== null) throw new HttpError(429, "rate_limited", "طلبات كثيرة", null, { "Retry-After": String(w) });
     if (m === "GET" && p === "/health") return ok({ ok: true, modules: modules.map((x) => x.id) });
     if (m === "GET" && p === "/openapi.json") return { status: 200, headers: { "Cache-Control": "public, max-age=300" }, body: JSON.stringify(openapi()) };
+    if (m === "POST" && p === "/admin/cron") { const actor = authAdmin(hd); const out = await cron(); await ctx.audit(actor, "cron.manual", null, out); return ok({ ok: true, ...out }); }   // تشغيل يدوي/تشخيص
     for (const rt of routes) {
       if (rt.method !== m) continue; const mm = rt.re.exec(p); if (!mm) continue;
       const req = { method: m, path: p, params: mm.groups ?? {}, query: q, headers: hd, ip, raw, json() { try { const j = JSON.parse(raw); if (j && typeof j === "object" && !Array.isArray(j)) return j; } catch { /* يسقط إلى الخطأ */ } throw new HttpError(400, "validation_error", "جسم الطلب يجب أن يكون JSON"); } };

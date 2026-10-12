@@ -93,4 +93,6 @@ await call("POST", "/v1/fraud/report", { phone: "0688888888", reason: "fraud" },
 [c, b] = await adm("GET", "/admin/audit"); ok("سجلّ التدقيق بلا أسرار ويسجّل الفاعل", b.audit.some((a) => a.action === "fraud.erase" && a.actor === "owner@x.dz") && !JSON.stringify(b).includes("pk_live_"));
 await adm("PATCH", `/admin/tenants/${tA}`, { status: "suspended" }); [c] = await chk(kA, { phone: "0551234567", name: "Amine Bouzid", total: 1 }); ok("مستأجر موقوف 401", c === 401);
 await adm("PATCH", `/admin/tenants/${tA}`, { status: "active", settings: { fraud: { review: 5 } } }); [c, b] = await chk(kA, { phone: "0551234567", name: "Amine Bouzid", total: 1 }); ok("إعداد الحدّ لكل مستأجر", c === 200 && b.action === "review", b);
+[c] = await call("POST", "/admin/cron"); ok("cron يدوي يتطلب رمز الإدارة", c === 401);
+[c, b] = await adm("POST", "/admin/cron"); ok("cron يدوي للمدير", c === 200 && b.ok === true && "events" in b, b);
 console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);
