@@ -49,3 +49,12 @@ CREATE TABLE IF NOT EXISTS shipment_events (
   KEY ix_ship (shipment_id),
   CONSTRAINT fk_ev_ship FOREIGN KEY (shipment_id) REFERENCES shipments (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ملف معايرة الحساب (Calibrator): يُبنى عند أول ربط ويصحّح البلديات والمكاتب والحالات لحساب هذه الشركة بعينه.
+CREATE TABLE IF NOT EXISTS carrier_profiles (
+  connection_id BIGINT UNSIGNED NOT NULL,
+  profile_json  MEDIUMTEXT NOT NULL,
+  updated_at    DATETIME   NOT NULL,
+  PRIMARY KEY (connection_id),
+  CONSTRAINT fk_prof_conn FOREIGN KEY (connection_id) REFERENCES user_carriers (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

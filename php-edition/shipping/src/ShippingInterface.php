@@ -17,6 +17,16 @@ interface ShippingInterface
     /** فحص المفاتيح بطلب قراءة فقط (لا ينشئ طرداً): ok=true صالحة، false مرفوضة، null تعذّر الحكم (شبكة/غير مدعوم). @return array{ok:?bool,message:string} */
     public function ping(): array;
 
+    /** يحقن ملف معايرة الحساب (نتيجة Calibrator): خريطة البلديات الصحيحة، المكاتب، تصحيحات الحالات. */
+    public function withProfile(array $profile): static;
+
+    /**
+     * التقاط بيانات حساب الشركة بقراءة فقط (لا ينشئ شيئاً): بلديات الولايات المطلوبة، المكاتب، التعريفة، حالات الطرود الموجودة.
+     * @param list<int> $wilayas ولايات قديمة (1–58) للجزء الجغرافي @param array<string,bool> $want communes|desks|fees|statuses
+     * @return array{communes:array<int,list<array{name:string,id?:int|string,deliverable?:bool}>>,desks:array<int,list<array{id:string,name:string,commune:string}>>,fees:array<int,array{home:int,stop:int}>,statuses:array<string,int>,trackings:list<string>,notes:list<string>}
+     */
+    public function discover(array $wilayas, array $want = []): array;
+
     public function createParcel(Parcel $parcel): ShipmentResult;
 
     public function trackParcel(string $tracking): TrackingResult;
@@ -32,6 +42,13 @@ interface ShippingInterface
 
     /** ترجمة حالة الشركة النصية إلى الحالات الموحَّدة (انظر Status). */
     public function mapStatus(string $rawStatus): string;
+
+    /** كيف تُترجم حالة خام: [الحالة الموحدة، المصدر exact|code|event_key|override|fallback|unknown|empty]. @return array{0:string,1:string} */
+    public function explainStatus(string $rawStatus): array;
+
+    /** التحقق من توقيع الـwebhook إن زوّد التاجر سرّ التوقيع: null = لا سرّ مضبوط (لا تحقق)، true/false = صحيح/خاطئ. @param array<string,string> $headers */
+    public function verifyWebhook(string $rawBody, array $headers): ?bool;
+
 
     /**
      * يستخرج أحداث الحالة من جسم webhook الوارد (بلا حاجة إلى مفاتيح التاجر).

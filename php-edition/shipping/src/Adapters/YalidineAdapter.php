@@ -17,6 +17,7 @@ final class YalidineAdapter extends AbstractAdapter
             ['key' => 'apiId', 'label' => 'API ID', 'secret' => false],
             ['key' => 'apiToken', 'label' => 'API Token', 'secret' => true],
             ['key' => 'fromWilaya', 'label' => 'ولاية الانطلاق (مثال: Alger)', 'secret' => false, 'required' => false],
+            ['key' => 'webhookSecret', 'label' => 'المفتاح السرّي للـwebhook (من حسابك لدى الشركة، اختياري — للتحقق من توقيع الإشعارات)', 'secret' => true, 'required' => false],
         ];
     }
 
@@ -31,11 +32,18 @@ final class YalidineAdapter extends AbstractAdapter
         [$first, $family] = $p->nameParts();
         $price = $p->priceWithoutShipping();
         if ($p->stopDesk && !$p->deskId) { return new ShipmentResult(false, error: 'مكتب Stop Desk غير محدد'); }
+        $pc = $this->profileCommune($p->legacyWilaya(), $p->commune, $p->wilayaName());                // تصحيح حسابك من المعايرة (إن وُجدت)
+        if ($pc['block'] !== null) { return new ShipmentResult(false, error: $pc['block']); }
+        $communeName = $pc['name'] ?? $p->commune;
+        $known = $this->profile['desks'][(string)$p->legacyWilaya()] ?? null;
+        if ($p->stopDesk && is_array($known) && $known && !in_array((string)$p->deskId, array_map(static fn($d) => (string)$d['id'], $known), true)) {
+            return new ShipmentResult(false, error: 'مكتب Stop Desk رقم ' . $p->deskId . ' غير موجود عند الشركة في ' . $p->wilayaName() . ' (حسب معايرة حسابك)');
+        }
         $body = [
             'order_id' => $p->orderRef, 'from_wilaya_name' => $this->cred['fromWilaya'] ?? 'Alger',
             'firstname' => $first, 'familyname' => $family, 'contact_phone' => $p->localPhone(),
             'address' => $p->address !== '' ? $p->address : $p->commune . '، ' . $p->wilayaName(),
-            'to_commune_name' => $p->commune, 'to_wilaya_name' => WilayaCatalog::name($p->legacyWilaya()),   // الجديدة تُرسَل باسم الأم
+            'to_commune_name' => $communeName, 'to_wilaya_name' => WilayaCatalog::name($p->legacyWilaya()),   // الجديدة تُرسَل باسم الأم
             'product_list' => $p->productsText(), 'price' => $price, 'do_insurance' => true, 'declared_value' => $price,
             'freeshipping' => $p->shippingFee <= 0, 'is_stopdesk' => $p->stopDesk, 'has_exchange' => false, 'can_open' => $p->canOpen, 'weight' => 1,
         ];
@@ -77,6 +85,65 @@ final class YalidineAdapter extends AbstractAdapter
             $r = $this->send('GET', self::BASE . '/v1/wilayas/?page_size=1', $this->h());
             return $r->ok() ? [true, 'المفاتيح صالحة'] : [null, 'ردّ غير متوقع (HTTP ' . $r->status . ')'];
         });
+    }
+
+    /** @return list<array<string,mixed>> صفوف data عبر الصفحات (حدّ أقصى 6 صفحات) */
+    private function pages(string $path, string $sep = '?'): array
+    {
+        $rows = [];
+        for ($page = 1; $page <= 6; $page++) {
+            $j = $this->getJson(self::BASE . $path . $sep . 'page_size=100&page=' . $page, $this->h());
+            foreach ((array)($j['data'] ?? []) as $r) { if (is_array($r)) { $rows[] = $r; } }
+            if (!($j['has_more'] ?? false)) { break; }
+            $this->breath();
+        }
+        return $rows;
+    }
+
+    public function discover(array $wilayas, array $want = []): array
+    {
+        $d = self::emptyDiscovery();
+        try {
+            if ($want['communes'] ?? false) {
+                foreach ($wilayas as $w) {
+                    $this->breath();
+                    $list = [];
+                    foreach ($this->pages('/v1/communes/?wilaya_id=' . (int)$w, '&') as $r) {
+                        $nm = trim((string)($r['name'] ?? '')); if ($nm === '') { continue; }
+                        $dv = $r['is_deliverable'] ?? 1;
+                        $list[] = ['name' => $nm, 'deliverable' => !($dv === 0 || $dv === false || $dv === '0')];
+                    }
+                    $d['communes'][(int)$w] = $list;
+                }
+            }
+            if ($want['desks'] ?? false) {
+                foreach ($wilayas as $w) {
+                    $this->breath();
+                    $list = [];
+                    foreach ($this->pages('/v1/centers/?wilaya_id=' . (int)$w, '&') as $r) {
+                        if (!isset($r['center_id'])) { continue; }
+                        $list[] = ['id' => (string)$r['center_id'], 'name' => (string)($r['name'] ?? ''), 'commune' => (string)($r['commune_name'] ?? '')];
+                    }
+                    $d['desks'][(int)$w] = $list;
+                }
+            }
+            if ($want['fees'] ?? false) {
+                foreach ($this->pages('/v1/deliveryfees/') as $r) {
+                    $id = (int)($r['wilaya_id'] ?? 0); if ($id < 1) { continue; }
+                    $d['fees'][$id] = ['home' => (int)($r['home_fee'] ?? 0), 'stop' => (int)($r['desk_fee'] ?? $r['stop_fee'] ?? 0)];
+                }
+            }
+            if ($want['statuses'] ?? false) {
+                $j = $this->getJson(self::BASE . '/v1/parcels/?page_size=100&order_by=date_creation&order=desc', $this->h());
+                foreach ((array)($j['data'] ?? []) as $r) {
+                    if (!is_array($r)) { continue; }
+                    $st = $this->statusText($r['last_status'] ?? '');
+                    if ($st !== '') { $d['statuses'][$st] = ($d['statuses'][$st] ?? 0) + 1; }
+                    $t = (string)($r['tracking'] ?? ''); if ($t !== '' && count($d['trackings']) < 3 && !in_array($t, $d['trackings'], true)) { $d['trackings'][] = $t; }
+                }
+            }
+        } catch (CarrierApiException $e) { $d['notes'][] = $e->getMessage(); }
+        return $d;
     }
 
     public function wilayas(): array

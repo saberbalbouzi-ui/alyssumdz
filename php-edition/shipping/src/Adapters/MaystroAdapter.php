@@ -51,13 +51,34 @@ final class MaystroAdapter extends AbstractAdapter
         return $this->communes[$key] = $out;
     }
 
+    public function discover(array $wilayas, array $want = []): array
+    {
+        $d = self::emptyDiscovery(['Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة']);
+        try {
+            if ($want['communes'] ?? false) {
+                foreach ($wilayas as $w) {
+                    $this->breath();
+                    $list = [];
+                    foreach ($this->communes((int)$w) as $c) { $list[] = ['name' => $c['name'], 'id' => $c['id']]; }
+                    $d['communes'][(int)$w] = $list;
+                }
+            }
+        } catch (CarrierApiException $e) { $d['notes'][] = $e->getMessage(); }
+        return $d;
+    }
+
     public function createParcel(Parcel $p): ShipmentResult
     {
         $w = $p->legacyWilaya();
-        $list = $this->communes($w);
-        if (!$list) { return new ShipmentResult(false, error: 'تعذّر جلب بلديات ولاية ' . $w . ' من Maystro (راجع المفتاح أو أعد المحاولة)'); }
-        $m = CommuneMatcher::best($list, $p->commune);
-        if (!$m) { return new ShipmentResult(false, error: 'بلدية «' . $p->commune . '» غير موجودة عند Maystro في ' . $p->wilayaName() . ' — الأقرب: ' . implode('، ', CommuneMatcher::suggest($list, $p->commune))); }
+        $pc = $this->profileCommune($w, $p->commune, $p->wilayaName());
+        if ($pc['block'] !== null) { return new ShipmentResult(false, error: $pc['block']); }
+        if ($pc['id'] !== null) { $m = ['id' => $pc['id'], 'name' => (string)$pc['name']]; }          // معرّف البلدية جاهز من ملف المعايرة
+        else {
+            $list = $this->communes($w);
+            if (!$list) { return new ShipmentResult(false, error: 'تعذّر جلب بلديات ولاية ' . $w . ' من Maystro (راجع المفتاح أو أعد المحاولة)'); }
+            $m = CommuneMatcher::best($list, $p->commune);
+            if (!$m) { return new ShipmentResult(false, error: 'بلدية «' . $p->commune . '» غير موجودة عند Maystro في ' . $p->wilayaName() . ' — الأقرب: ' . implode('، ', CommuneMatcher::suggest($list, $p->commune))); }
+        }
         $v1 = ($this->cred['scheme'] ?? 'v2') === 'v1';
         $price = (($this->cred['priceMode'] ?? 'items') === 'total') ? (int)round($p->total) : $p->priceWithoutShipping();
         $r = $this->send('POST', self::BASE . '/stores/orders/', $this->h(), [

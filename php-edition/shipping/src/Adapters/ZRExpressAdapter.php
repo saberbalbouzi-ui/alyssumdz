@@ -35,6 +35,11 @@ final class ZRExpressAdapter extends AbstractAdapter
         });
     }
 
+    public function discover(array $wilayas, array $want = []): array
+    {
+        return self::emptyDiscovery(['ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط']);
+    }
+
     public function createParcel(Parcel $p): ShipmentResult
     {
         $row = [

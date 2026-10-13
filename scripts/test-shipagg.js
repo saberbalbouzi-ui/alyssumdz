@@ -53,6 +53,17 @@ const SA = ctx.ShipAgg; (async () => {
   /* دالة غير منشورة */
   ctx.fetch = async () => ({ status: 404, ok: false, json: async () => ({}) }); SA.S.noGw = false;
   ok("404 ← تُخفى البطاقة", (await SA.load()) === false && SA.S.noGw === true && SA.mode() === null);
+  /* المعايرة عند أول ربط: حلقة المتابعة حتى done + تقرير بلا حقن HTML */
+  {
+    let step = 0; ctx.fetch = async (u, init) => { const b = JSON.parse(init.body); calls.push(b); const left = [30, 10, 0][Math.min(step++, 2)]; const sm = { done: left === 0, progress: { left, phase: left ? "geo" : "done" }, communes: { wilayas: 58, mapped: 12, unmatched: 2, undeliverable: 3, fuzzy: 1 }, unmatched_examples: ["<b>Zeralda</b>"], desks: 40, fees: 58, statuses: { seen: 5, unknown: 1 }, verify: { ok: 3, fail: 0 }, warnings: ["<i>تحذير</i>"], notes: [], ping: { ok: true } }; return { status: 200, ok: true, json: async () => ({ ok: true, status: 200, data: { calibration: sm } }) }; };
+    SA.S.noGw = false; const box = { innerHTML: "" };
+    const sm = await SA.calibrate("yalidine", box, null);
+    ok("المعايرة: تتابع حتى done عبر /calibrate", sm && sm.done === true && calls.filter((c) => /\/calibrate$/.test(c.path)).length === 3, calls.slice(-3));
+    const rep = SA.calReport(sm);
+    ok("التقرير: أرقام البلديات والمكاتب والتعريفة والتتبع", /58/.test(rep) && /12/.test(rep) && /40/.test(rep) && /3<\/b> طرد/.test(rep), rep);
+    ok("التقرير: هروب HTML في الأمثلة والتحذيرات", !/<b>Zeralda<\/b>/.test(rep) && /&lt;b&gt;Zeralda/.test(rep) && !/<i>تحذير<\/i>/.test(rep));
+    ok("التقرير: بلا معايرة ← عبارة واضحة", /لم تُجرَ/.test(SA.calReport(null)));
+  }
   /* لوحة المزوّد (saas/shipping.js) */
   {
     const src2 = fs.readFileSync(__dirname + "/../saas/shipping.js", "utf8"), sent = [];

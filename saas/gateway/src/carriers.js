@@ -1,6 +1,6 @@
-import { pick, safeHttpsUrl } from "./util.js";
-import { explain, mapStatus, S } from "./status.js";
-import { best as bestCommune, suggest as suggestCommunes } from "./commune.js";
+import { hmacHex, pick, safeEq, safeHttpsUrl } from "./util.js";
+import { ALL, explain, mapStatus, normText, S } from "./status.js";
+import { best as bestCommune, suggest as suggestCommunes, normalize as ck } from "./commune.js";
 
 export class CarrierError extends Error {}
 export class CredentialsError extends CarrierError {}
@@ -22,7 +22,7 @@ export function makeHttp(fetchFn = fetch) {
 }
 
 class Adapter {
-  constructor(http) { this.http = http; this.cred = {}; }
+  constructor(http) { this.http = http; this.cred = {}; this.profile = {}; this.pause = null; }
   static fields() { return []; }
   authenticate(c) {
     for (const f of this.constructor.fields()) if ((f.required ?? true) && !String(c[f.key] ?? "").trim()) throw new CredentialsError("الحقل مطلوب: " + f.label);
@@ -30,7 +30,50 @@ class Adapter {
   }
   /** عائلة قاموس الحالات (الشركات التي تتشارك المنصة نفسها تتشارك القاموس). */
   family() { return this.code; }
-  mapStatus(raw) { return mapStatus(raw, this.family()); }
+  /** ملف المعايرة الخاص بحساب هذه الشركة (بلديات/مكاتب/حالات مثبَّتة). */
+  withProfile(p) { this.profile = p ?? {}; return this; }
+  mapStatus(raw) {
+    const ov = this.profile?.status_overrides?.[normText(raw)];
+    if (typeof ov === "string" && ALL.includes(ov)) return ov;
+    return mapStatus(raw, this.family());
+  }
+  explainStatus(raw) {
+    const ov = this.profile?.status_overrides?.[normText(raw)];
+    if (typeof ov === "string" && ALL.includes(ov)) return [ov, "override"];
+    return explain(this.family(), raw);
+  }
+  /** التحقق من توقيع الـwebhook إن زوّد التاجر سرّ التوقيع: null = لا سرّ مضبوط، true/false = صحيح/خاطئ. */
+  async verifyWebhook(raw, headers = {}) {
+    const secret = String(this.cred.webhookSecret ?? ""); if (!secret) return null;
+    const want = await hmacHex(secret, raw);
+    for (const h of ["x-yalidine-signature", "x-signature", "x-hub-signature-256", "x-webhook-signature"]) {
+      let v = String(headers[h] ?? "").trim().toLowerCase(); if (!v) continue; if (v.startsWith("sha256=")) v = v.slice(7);
+      if (safeEq(want, v)) return true;
+    }
+    return false;
+  }
+  async breath(ms = 250) { if (this.pause) await this.pause(ms); }
+  static emptyDiscovery(notes = []) { return { communes: {}, desks: {}, fees: {}, statuses: {}, trackings: [], notes }; }
+  /** اكتشاف حساب الشركة بقراءة فقط للمعايرة (الافتراضي: غير متاح). */
+  async discover() { return Adapter.emptyDiscovery(["الشركة لا توفّر واجهة قراءة للمعايرة"]); }
+  /** GET يعيد JSON مع إعادة محاولة (حتى 3) عند 429 (حدود المعدّل أثناء الاكتشاف). */
+  async getJson(url, headers) {
+    for (let i = 0; ; i++) {
+      try { return (await this.send("GET", url, headers)).json() ?? {}; }
+      catch (e) { if (!(e instanceof ApiError) || i >= 3 || !String(e.message).includes("429")) throw e; await this.breath([2500, 6000, 15000][i]); }   // تمهّل متصاعد عند حدّ المعدّل
+    }
+  }
+  /** قرار البلدية من ملف المعايرة: {name,id,block} — مطابق لـAbstractAdapter::profileCommune في PHP. */
+  profileCommune(legacyWilaya, commune, wilayaName) {
+    const w = this.profile?.communes?.[String(legacyWilaya)];
+    if (!w || typeof w !== "object") return { name: null, id: null, block: null };
+    const k = ck(commune); let name = w.map?.[k] ?? null;
+    if (name === null && (w.n ?? 0) > 0) name = commune;
+    const id = name !== null ? (w.ids?.[ck(String(name))] ?? null) : null;
+    if ((w.undeliverable ?? []).map(ck).includes(k)) return { name, id, block: `الشركة لا توصّل حالياً إلى بلدية «${commune}» في ${wilayaName} (حسب معايرة حسابك)` };
+    if ((w.unmatched ?? []).map(ck).includes(k)) return { name: null, id: null, block: `بلدية «${commune}» غير موجودة في قائمة الشركة لولاية ${wilayaName} (حسب معايرة حسابك) — اختر بلدية أخرى أو راجع الشركة` };
+    return { name, id, block: null };
+  }
   async send(method, url, headers = {}, body = null) {
     const r = await this.http(method, url, headers, body);
     if (r.status === 0) throw new ApiError("تعذّر الاتصال بالشركة: " + (r.error || "خطأ شبكة"));
@@ -70,7 +113,8 @@ const missing = () => new ApiError("حالة الطرد غير موجودة في
 /* ───── Yalidine (مُتحقَّق منه على حساب حقيقي: إنشاء/تتبع/بوليصة/إلغاء) ───── */
 class Yalidine extends Adapter {
   static BASE = "https://api.yalidine.app";
-  static fields() { return [{ key: "apiId", label: "API ID", secret: false }, { key: "apiToken", label: "API Token", secret: true }, { key: "fromWilaya", label: "ولاية الانطلاق (مثال: Alger)", secret: false, required: false }]; }
+  static fields() { return [{ key: "apiId", label: "API ID", secret: false }, { key: "apiToken", label: "API Token", secret: true }, { key: "fromWilaya", label: "ولاية الانطلاق (مثال: Alger)", secret: false, required: false },
+    { key: "webhookSecret", label: "المفتاح السرّي للـwebhook (من حسابك لدى الشركة، اختياري — للتحقق من توقيع الإشعارات)", secret: true, required: false }]; }
   h(json = false) { const h = { "X-API-ID": this.cred.apiId, "X-API-TOKEN": this.cred.apiToken }; return json ? { ...h, "Content-Type": "application/json" } : h; }
   statusText(v) { return v && typeof v === "object" ? String(v.name ?? v.label ?? "").trim() : String(v ?? "").trim(); }
   async ping() {
@@ -79,9 +123,12 @@ class Yalidine extends Adapter {
   async create(p) {
     const [first, family] = p.nameParts(), price = p.priceWithoutShipping();
     if (p.stopDesk && !p.deskId) return fail("مكتب Stop Desk غير محدد");
+    const pc = this.profileCommune(p.legacyWilaya, p.commune, p.wilayaName); if (pc.block !== null) return fail(pc.block);   // تصحيح حسابك من المعايرة (إن وُجدت)
+    const known = this.profile?.desks?.[String(p.legacyWilaya)];
+    if (p.stopDesk && Array.isArray(known) && known.length && !known.map((d) => String(d.id)).includes(String(p.deskId))) return fail(`مكتب Stop Desk رقم ${p.deskId} غير موجود عند الشركة في ${p.wilayaName} (حسب معايرة حسابك)`);
     const from = this.cred.fromWilaya || "Alger";   // الاسم؛ الطبقة العليا تحوّل الرقم إلى اسم
     const body = { order_id: p.orderRef, from_wilaya_name: from, firstname: first, familyname: family, contact_phone: p.localPhone(), address: p.address || `${p.commune}، ${p.wilayaName}`,
-      to_commune_name: p.commune, to_wilaya_name: p.legacyName, product_list: p.productsText(), price, do_insurance: true, declared_value: price, freeshipping: p.shippingFee <= 0,
+      to_commune_name: pc.name ?? p.commune, to_wilaya_name: p.legacyName, product_list: p.productsText(), price, do_insurance: true, declared_value: price, freeshipping: p.shippingFee <= 0,
       is_stopdesk: p.stopDesk, has_exchange: false, can_open: p.canOpen, weight: 1 };
     if (p.stopDesk) body.stopdesk_id = +p.deskId;
     const r = await this.send("POST", Yalidine.BASE + "/v1/parcels/", this.h(true), [body]); const j = r.json() ?? {};
@@ -92,6 +139,39 @@ class Yalidine extends Adapter {
   async track(trk) {
     const j = (await this.send("GET", `${Yalidine.BASE}/v1/parcels/${encodeURIComponent(trk)}`, this.h())).json() ?? {}; const d = j.data?.[0] ?? j; const raw = this.statusText(d.last_status);
     if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
+  }
+  async pages(path, sep = "?") {
+    const rows = [];
+    for (let page = 1; page <= 6; page++) {
+      const j = await this.getJson(Yalidine.BASE + path + sep + "page_size=100&page=" + page, this.h());
+      for (const r of Array.isArray(j.data) ? j.data : []) if (r && typeof r === "object") rows.push(r);
+      if (!j.has_more) break; await this.breath();
+    }
+    return rows;
+  }
+  async discover(wilayas, want = {}) {
+    const d = Adapter.emptyDiscovery();
+    try {
+      if (want.communes) for (const w of wilayas) {
+        await this.breath(); const list = [];
+        for (const r of await this.pages("/v1/communes/?wilaya_id=" + (+w), "&")) { const nm = String(r.name ?? "").trim(); if (!nm) continue; const dv = r.is_deliverable ?? 1; list.push({ name: nm, deliverable: !(dv === 0 || dv === false || dv === "0") }); }
+        d.communes[+w] = list;
+      }
+      if (want.desks) for (const w of wilayas) {
+        await this.breath(); const list = [];
+        for (const r of await this.pages("/v1/centers/?wilaya_id=" + (+w), "&")) { if (r.center_id === undefined || r.center_id === null) continue; list.push({ id: String(r.center_id), name: String(r.name ?? ""), commune: String(r.commune_name ?? "") }); }
+        d.desks[+w] = list;
+      }
+      if (want.fees) for (const r of await this.pages("/v1/deliveryfees/")) { const id = +(r.wilaya_id ?? 0); if (id < 1) continue; d.fees[id] = { home: +(r.home_fee ?? 0), stop: +(r.desk_fee ?? r.stop_fee ?? 0) }; }
+      if (want.statuses) {
+        const j = await this.getJson(Yalidine.BASE + "/v1/parcels/?page_size=100&order_by=date_creation&order=desc", this.h());
+        for (const r of Array.isArray(j.data) ? j.data : []) {
+          if (!r || typeof r !== "object") continue; const st = this.statusText(r.last_status ?? ""); if (st) d.statuses[st] = (d.statuses[st] ?? 0) + 1;
+          const t = String(r.tracking ?? ""); if (t && d.trackings.length < 3 && !d.trackings.includes(t)) d.trackings.push(t);
+        }
+      }
+    } catch (e) { if (e instanceof ApiError) d.notes.push(e.message); else throw e; }
+    return d;
   }
   async cancel(trk) { return (await this.send("DELETE", `${Yalidine.BASE}/v1/parcels/${encodeURIComponent(trk)}`, this.h())).ok; }
   async labelUrl(trk) { const j = (await this.send("GET", `${Yalidine.BASE}/v1/parcels/${encodeURIComponent(trk)}`, this.h())).json() ?? {}; const d = j.data?.[0] ?? j; return httpsOnly(d.label ?? d.labels); }
@@ -112,6 +192,7 @@ class Yalidine extends Adapter {
 class ZRExpress extends Adapter {
   static BASE = "https://procolis.com/api_v1";
   static fields() { return [{ key: "token", label: "Token", secret: true }, { key: "key", label: "Key", secret: true }]; }
+  async discover() { return Adapter.emptyDiscovery(["ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط"]); }
   h() { return { token: this.cred.token, key: this.cred.key, "Content-Type": "application/json" }; }
   async ping() {
     return this.probe(async () => {
@@ -157,10 +238,22 @@ class Maystro extends Adapter {
     const rows = Array.isArray(j.results) ? j.results : Array.isArray(j) ? j : [];
     return (this._c[w] = rows.filter((c) => c && typeof c === "object" && c.id !== undefined && c.name !== undefined).map((c) => ({ id: c.id, name: String(c.name) })));
   }
+  async discover(wilayas, want = {}) {
+    const d = Adapter.emptyDiscovery(["Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة"]);
+    try { if (want.communes) for (const w of wilayas) { await this.breath(); d.communes[+w] = (await this.communes(+w)).map((c) => ({ name: c.name, id: c.id })); } }
+    catch (e) { if (e instanceof ApiError) d.notes.push(e.message); else throw e; }
+    return d;
+  }
   async create(p) {
-    const w = p.legacyWilaya, list = await this.communes(w);
-    if (!list.length) return fail(`تعذّر جلب بلديات ولاية ${w} من Maystro (راجع المفتاح أو أعد المحاولة)`);
-    const m = this.resolveCommune(list, p, "Maystro"); if (m.error) return fail(m.error);
+    const w = p.legacyWilaya;
+    const pc = this.profileCommune(w, p.commune, p.wilayaName); if (pc.block !== null) return fail(pc.block);
+    let m;
+    if (pc.id !== null) m = { id: pc.id, name: String(pc.name) };           // معرّف البلدية جاهز من ملف المعايرة
+    else {
+      const list = await this.communes(w);
+      if (!list.length) return fail(`تعذّر جلب بلديات ولاية ${w} من Maystro (راجع المفتاح أو أعد المحاولة)`);
+      m = this.resolveCommune(list, p, "Maystro"); if (m.error) return fail(m.error);
+    }
     const v1 = (this.cred.scheme || "v2") === "v1", price = (this.cred.priceMode || "items") === "total" ? Math.round(p.total) : p.priceWithoutShipping();
     const r = await this.send("POST", Maystro.BASE + "/stores/orders/", this.h(), { wilaya: w, commune: parseInt(m.id, 10), destination_text: p.address ? clip(p.address, 255) : p.commune,
       customer_name: p.name, customer_phone: p.localPhone(), product_price: price, delivery_type: v1 ? (p.stopDesk ? 1 : 0) : (p.stopDesk ? 2 : 1), express: false, note_to_driver: clip(p.note, 250),
@@ -196,10 +289,23 @@ class Noest extends Adapter {
     let j; try { j = (await this.send("GET", `${Noest.BASE}/get/communes/${w}`, this.h())).json() ?? []; } catch (e) { if (e instanceof ApiError) return []; throw e; }
     return (this._c[w] = (Array.isArray(j) ? j : []).filter((c) => c && typeof c === "object" && c.nom !== undefined).map((c) => ({ id: String(c.nom), name: String(c.nom) })));
   }
+  async discover(wilayas, want = {}) {
+    const d = Adapter.emptyDiscovery(["NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"]);
+    try {
+      if (want.communes) for (const w of wilayas) {
+        await this.breath(); const j = await this.getJson(`${Noest.BASE}/get/communes/${+w}`, this.h()); const list = [];
+        for (const c of Array.isArray(j) ? j : []) { if (!c || typeof c !== "object" || c.nom === undefined) continue; const on = c.is_active ?? 1; list.push({ name: String(c.nom), deliverable: !(on === 0 || on === false || on === "0") }); }
+        d.communes[+w] = list;
+      }
+    } catch (e) { if (e instanceof ApiError) d.notes.push(e.message); else throw e; }
+    return d;
+  }
   async create(p) {
     if (p.stopDesk && p.deskCode === "") return fail("NOEST يحتاج رمز مكتب Stop Desk (station_code مثل 16A) — اختر المكتب أو أرسل للمنزل");
-    let commune = p.commune; const list = await this.communes(p.legacyWilaya);
-    if (list.length) { const m = this.resolveCommune(list, p, "NOEST"); if (m.error) return fail(m.error); commune = m.name; }
+    const pc = this.profileCommune(p.legacyWilaya, p.commune, p.wilayaName); if (pc.block !== null) return fail(pc.block);
+    let commune = p.commune;
+    if (pc.name !== null) commune = String(pc.name);
+    else { const list = await this.communes(p.legacyWilaya); if (list.length) { const m = this.resolveCommune(list, p, "NOEST"); if (m.error) return fail(m.error); commune = m.name; } }
     const body = this.auth({ reference: p.orderRef, client: p.name, phone: p.localPhone(), adresse: p.address ? clip(p.address, 255) : p.commune, wilaya_id: p.legacyWilaya, commune, montant: Math.round(p.total),
       produit: clip(p.productsText() || "Produit", 255), type_id: 1, poids: 1, stop_desk: p.stopDesk ? 1 : 0, can_open: p.canOpen ? 1 : 0, stock: 0 });
     if (p.phone2) body.phone_2 = p.localPhone(p.phone2);
@@ -258,9 +364,22 @@ class Ecotrack extends Adapter {
     const msg = pick(j, "message") + (j.errors ? " — " + JSON.stringify(j.errors) : "");
     return `${known[code] ?? ""} ${msg}`.trim() || "HTTP " + status;
   }
+  async discover(wilayas, want = {}) {
+    const d = Adapter.emptyDiscovery();
+    try {
+      if (want.communes || want.desks) for (const w of wilayas) {
+        await this.breath(); const j = await this.getJson(`${this.base}/api/v1/get/communes?wilaya_id=${+w}`, this.h()); const list = [], desks = [];
+        for (const c of Object.values(j)) { if (!c || typeof c !== "object" || c.nom === undefined) continue; list.push({ name: String(c.nom) }); if (c.has_stop_desk && String(c.code_postal ?? "") !== "") desks.push({ id: String(c.code_postal), name: String(c.nom), commune: String(c.nom) }); }
+        if (want.communes) d.communes[+w] = list; if (want.desks) d.desks[+w] = desks;
+      }
+    } catch (e) { if (e instanceof ApiError) d.notes.push(e.message); else throw e; }
+    return d;
+  }
   async create(p) {
-    let commune = p.commune; const list = await this.communes(p.legacyWilaya);
-    if (list.length) { const m = this.resolveCommune(list, p, "الشركة"); if (m.error) return fail(m.error); commune = m.name; }
+    const pc = this.profileCommune(p.legacyWilaya, p.commune, p.wilayaName); if (pc.block !== null) return fail(pc.block);
+    let commune = p.commune;
+    if (pc.name !== null) commune = String(pc.name);                        // من ملف المعايرة: بلا طلب إضافي للقائمة
+    else { const list = await this.communes(p.legacyWilaya); if (list.length) { const m = this.resolveCommune(list, p, "الشركة"); if (m.error) return fail(m.error); commune = m.name; } }
     if (p.stopDesk && p.deskCode === "") return fail("Ecotrack يحتاج رمز مكتب Stop Desk (code_postal) — اختر المكتب أو أرسل للمنزل");
     const q = { reference: p.orderRef, nom_client: p.name, telephone: p.localPhone(), telephone_2: p.phone2 ? p.localPhone(p.phone2) : "", adresse: p.address || `${p.commune}، ${p.wilayaName}`, commune,
       code_wilaya: p.legacyWilaya, montant: Math.round(p.total), type: 1, stop_desk: p.stopDesk ? 1 : 0, code_postal: p.stopDesk ? p.deskCode : "", remarque: clip(p.note, 255), produit: clip(p.productsText(), 255), boutique: this.cred.boutique || "" };

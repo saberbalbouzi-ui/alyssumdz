@@ -81,10 +81,30 @@ ok('إلغاء الطرد وإزالة الوسم من الطلب', in_array($c,
 [$c2] = $r('ship_send', ['carrier' => 'yalidine', 'order_id' => 'O2']);
 ok('بعد فصل الشركة لا إرسال', $c === 200 && $c2 === 422);
 
+/* المعايرة عند أول ربط: ship_connect يلتقط الحساب، وship_calibrate يتابع/يعيد، وملخّصها يظهر في الكتالوج، والإرسال يستعمل الملف */
+require_once __DIR__ . '/lib/carrier-sims.php';
+$sim = new YalidineSim(); $geoAll = Alyssum\Shipping\OurGeo::load(__DIR__ . '/../php-edition/shipping/data/geo.json');
+$sim->catalog = [16 => $geoAll->communes(16), 31 => $geoAll->communes(31)];
+$GLOBALS['SHIPX_HTTP'] = $sim; $GLOBALS['SHIPX_PAUSE'] = static function (int $ms): void {};
+[$c, $b] = $r('ship_connect', ['carrier' => 'yalidine', 'credentials' => ['apiId' => 'AID', 'apiToken' => 'TOK']]);
+ok('ship_connect: يعيد ملخّص المعايرة مع الرابط', $c === 200 && is_array($b['calibration'] ?? null) && isset($b['calibration']['progress']), $b);
+$g = 0; do { [$c, $b2] = $r('ship_calibrate', ['carrier' => 'yalidine']); } while ($c === 200 && empty($b2['calibration']['done']) && $g++ < 60);
+ok('ship_calibrate: تتقدّم حتى الانتهاء', $c === 200 && ($b2['calibration']['done'] ?? false) === true, $b2);
+ok('المعايرة: التُقطت ولايتان على الأقل وتحذير لغير المتاحة', ($b2['calibration']['communes']['wilayas'] ?? 0) >= 2 && count($b2['calibration']['warnings'] ?? []) >= 1, $b2['calibration'] ?? null);
+[$c, $b3] = $r('ship_calibrate', [], 'GET'); ok('ship_calibrate GET: بلا شركة ← 404', $c === 404);
+$_GET['carrier'] = 'yalidine'; [$c, $b3] = $r('ship_calibrate', [], 'GET'); unset($_GET['carrier']);
+ok('ship_calibrate GET: الملخّص فقط', $c === 200 && ($b3['calibration']['done'] ?? false) === true);
+[$c, $b4] = $r('ship_carriers', [], 'GET');
+ok('الكتالوج يعرض معايرة كل شركة مفعّلة بلا معرّفات داخلية', $c === 200 && ($b4['connected'][0]['calibration']['done'] ?? false) === true && !isset($b4['connected'][0]['id']), $b4['connected'] ?? null);
+[$c, $b5] = $r('ship_calibrate', ['carrier' => 'yalidine', 'restart' => true]);
+ok('إعادة المعايرة (restart) تبدأ من جديد', $c === 200 && isset($b5['calibration']['progress']));
+[$c] = $r('ship_disconnect', ['carrier' => 'yalidine']);
+$GLOBALS['SHIPX_HTTP'] = $http;
+
 /* مسارات index.php عبر خادم PHP حقيقي: صلاحية المدير وCSRF وwebhook العام */
 $root = sys_get_temp_dir() . '/shipsrv_' . bin2hex(random_bytes(4)); mkdir("$root/api", 0777, true);
 copy(__DIR__ . '/../php-edition/api/index.php', "$root/api/index.php");
-$sh = "$root/api/shipping"; mkdir($sh); exec('cp -r ' . escapeshellarg(__DIR__ . '/../php-edition/shipping/src') . ' ' . escapeshellarg("$sh/src")); copy(__DIR__ . '/../php-edition/shipping/integration.php', "$sh/integration.php"); copy(__DIR__ . '/../php-edition/shipping/schema.sqlite.sql', "$sh/schema.sqlite.sql");
+$sh = "$root/api/shipping"; mkdir($sh); exec('cp -r ' . escapeshellarg(__DIR__ . '/../php-edition/shipping/src') . ' ' . escapeshellarg("$sh/src")); copy(__DIR__ . '/../php-edition/shipping/integration.php', "$sh/integration.php"); mkdir("$sh/data"); copy(__DIR__ . '/../php-edition/shipping/data/geo.json', "$sh/data/geo.json"); copy(__DIR__ . '/../php-edition/shipping/schema.sqlite.sql', "$sh/schema.sqlite.sql");
 file_put_contents("$root/api/config.php", "<?php return ['admin_hash' => " . var_export(password_hash('pw', PASSWORD_DEFAULT), true) . ", 'max_upload_mb' => 8];");
 $port = random_int(20000, 40000);
 $p = proc_open(['php', '-S', "127.0.0.1:$port", '-t', $root], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);

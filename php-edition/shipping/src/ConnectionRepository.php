@@ -30,6 +30,7 @@ final class ConnectionRepository
         if ($row) {
             $st = $this->db->prepare('UPDATE user_carriers SET credentials_enc=?, key_id=?, base_url=?, webhook_token_hash=?, is_active=1, updated_at=? WHERE id=?');
             $st->execute([$enc, $this->vault->currentKid(), $baseUrl, $hash, $now, $row['id']]);
+            $this->ensureProfiles(); $this->db->prepare('DELETE FROM carrier_profiles WHERE connection_id=?')->execute([$row['id']]);   // مفاتيح جديدة = حساب قد يختلف ← تُعاد المعايرة
             return ['id' => (int)$row['id'], 'public_id' => (string)$row['public_id'], 'webhook_secret' => $secret, 'ping' => $ping];
         }
         $pub = bin2hex(random_bytes(12));
@@ -65,7 +66,38 @@ final class ConnectionRepository
     {
         if (!(int)$row['is_active']) { throw new CredentialsException('الشركة غير مفعّلة'); }
         $cred = $this->vault->decryptArray((string)$row['credentials_enc'], self::aad((int)$row['user_id'], (string)$row['carrier_code']));
-        return ShippingFactory::make((string)$row['carrier_code'], $http, $row['base_url'] !== null ? (string)$row['base_url'] : null)->authenticate($cred);
+        $ad = ShippingFactory::make((string)$row['carrier_code'], $http, $row['base_url'] !== null ? (string)$row['base_url'] : null)->authenticate($cred);
+        $prof = $this->profile((int)$row['id']);
+        return $prof ? $ad->withProfile($prof) : $ad;                    // ملف المعايرة يصحّح البلديات/المكاتب/الحالات لهذا الحساب
+    }
+
+    private function ensureProfiles(): void
+    {
+        static $done = [];
+        $k = spl_object_id($this->db); if (isset($done[$k])) { return; }
+        $done[$k] = true;
+        $my = $this->db->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql';
+        $this->db->exec($my
+            ? 'CREATE TABLE IF NOT EXISTS carrier_profiles (connection_id BIGINT UNSIGNED NOT NULL, profile_json MEDIUMTEXT NOT NULL, updated_at DATETIME NOT NULL, PRIMARY KEY (connection_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+            : 'CREATE TABLE IF NOT EXISTS carrier_profiles (connection_id INTEGER PRIMARY KEY, profile_json TEXT NOT NULL, updated_at TEXT NOT NULL)');
+    }
+
+    /** @return array<string,mixed> ملف المعايرة المحفوظ أو [] */
+    public function profile(int $connectionId): array
+    {
+        $this->ensureProfiles();
+        $st = $this->db->prepare('SELECT profile_json FROM carrier_profiles WHERE connection_id=?'); $st->execute([$connectionId]);
+        $j = $st->fetchColumn();
+        return $j ? ((array)json_decode((string)$j, true)) : [];
+    }
+
+    /** @param array<string,mixed> $profile */
+    public function saveProfile(int $connectionId, array $profile): void
+    {
+        $this->ensureProfiles();
+        $json = json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); $now = gmdate('Y-m-d H:i:s');
+        $st = $this->db->prepare('UPDATE carrier_profiles SET profile_json=?, updated_at=? WHERE connection_id=?'); $st->execute([$json, $now, $connectionId]);
+        if ($st->rowCount() === 0) { $this->db->prepare('INSERT INTO carrier_profiles (connection_id,profile_json,updated_at) VALUES (?,?,?)')->execute([$connectionId, $json, $now]); }
     }
 
     /** يعيد تشفير كل المفاتيح بالمفتاح الحالي (بعد تدوير الحلقة). @return int عدد الصفوف */

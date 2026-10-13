@@ -33,6 +33,12 @@ const ShipAgg = (() => {
     },
     ship_disconnect: (b) => gwCall("DELETE", "/v1/connections/" + encodeURIComponent(b.carrier)),
     ship_ping: (b) => gwCall("POST", "/v1/connections/" + encodeURIComponent(b.carrier) + "/ping"),
+    async ship_calibrate(b) {
+      const base = "/v1/connections/" + encodeURIComponent(b.carrier) + "/calibrate";
+      const r = b.__get ? await gwCall("GET", base) : await gwCall("POST", base, b.restart ? { restart: true } : {});
+      if (r.ok) r.j = { calibration: r.j.calibration || r.j };
+      return r;
+    },
     async ship_unknown() { return { ok: true, status: 200, j: { unknown: [] } }; },
   };
   const call = async (r, body, q) => {
@@ -66,12 +72,58 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     const cards = S.cat.map(c => {
       const on = connected(c.code);
       const act = !c.activatable ? '<span class="sa-b">غير متاحة بعد</span>' : on
-        ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small" type="button" data-sa="ping" data-c="' + esc(c.code) + '">اختبار الاتصال</button><button class="small" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تحديث المفاتيح</button><button class="small" type="button" style="background:var(--red)" data-sa="off" data-c="' + esc(c.code) + '">فصل</button></div>'
+        ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small" type="button" data-sa="ping" data-c="' + esc(c.code) + '">اختبار الاتصال</button><button class="small" type="button" data-sa="cal" data-c="' + esc(c.code) + '">' + (on.calibration && on.calibration.done ? "تقرير المعايرة" : "معايرة الحساب") + '</button><button class="small" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تحديث المفاتيح</button><button class="small" type="button" style="background:var(--red)" data-sa="off" data-c="' + esc(c.code) + '">فصل</button></div>'
         : '<button class="small green" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تفعيل</button>';
       return '<div class="sa-c' + (on ? ' on' : '') + '"><b>' + esc(c.label) + (on ? ' ✅' : '') + '</b><span class="sa-b">' + esc(MAT[c.maturity] || c.maturity) + (c.maturity === "experimental" ? " — جرّبها بطلب واحد أولاً" : "") + '</span>' + act + '</div>';
     }).join("");
     const unk = (S.unk || []).length ? '<div class="hint" style="border:1px solid #f59e0b;border-radius:10px;padding:.5rem .7rem;margin:.5rem 0">⚠️ حالات أرسلتها الشركات ولم نتعرف عليها (لم تُطبَّق على الطلبات): ' + S.unk.map(u => esc(u.carrier) + " «" + esc(u.raw) + "» ×" + u.n).join("، ") + ' — أرسلها للدعم لإضافتها.</div>' : "";
     h.innerHTML = unk + '<b style="color:var(--green)">🌐 تجميع شركات التوصيل</b><div class="hint">فعّل أي شركة بمفاتيح حسابك أنت؛ تُحفظ مشفّرة على خادمك ولا تظهر بعد الحفظ. بعد التفعيل يظهر زر «إرسال عبر …» في معاينة كل طلب، وتتحدّث حالة الطلب تلقائياً إذا وضعتَ رابط التحديث (الذي يظهر عند التفعيل) في حسابك لدى الشركة. لا يُرسل الطلب مرتين: يمنع النظام التكرار.</div><div class="sa-grid">' + cards + '</div>';
+  }
+
+
+  /* ═══ المعايرة عند أول ربط: يلتقط النظام حساب الشركة (بلدياتها ومكاتبها وتعريفتها وحالات طرودها) ويصحّح نفسه قبل أول طلب حقيقي ═══ */
+  const li = (t, k) => '<div style="margin:.15rem 0' + (k === "w" ? ";color:#fbbf24" : k === "g" ? ";color:#86efac" : "") + '">' + t + '</div>';
+  function calReport(sm) {
+    if (!sm) return '<p class="hint">لم تُجرَ معايرة لهذا الحساب بعد.</p>';
+    const c = sm.communes || {}, st = sm.statuses || {}, v = sm.verify, w = sm.webhook;
+    let h = '<div class="sa-rep">';
+    if ((sm.ping || {}).ok === false) h += li("❌ رفضت الشركة المفاتيح — لم تتم المعايرة", "w");
+    else {
+      if (c.wilayas) {
+        h += li("📍 قُرئت بلديات <b>" + c.wilayas + "</b> ولاية من حسابك" + (c.mapped ? " — صُحّحت تهجئة <b>" + c.mapped + "</b> بلدية تلقائياً" : ""), "g");
+        if (c.undeliverable) h += li("⛔ <b>" + c.undeliverable + "</b> بلدية لا توصّل إليها الشركة حالياً (يُمنع الإرسال إليها مسبقاً برسالة واضحة)", "w");
+        if (c.unmatched) h += li("❓ <b>" + c.unmatched + "</b> بلدية عندنا غير موجودة في قائمة الشركة" + ((sm.unmatched_examples || []).length ? " (مثل: " + sm.unmatched_examples.map(esc).join("، ") + ")" : ""), "w");
+      } else h += li("ℹ️ هذه الشركة لا تتيح قراءة بلدياتها؛ تُتحقَّق البلدية وقت الإرسال", "");
+      if (sm.desks) h += li("🏢 التُقط <b>" + sm.desks + "</b> مكتب Stop Desk حقيقي من حسابك", "g");
+      if (sm.fees) h += li("💰 التُقطت تعريفة <b>" + sm.fees + "</b> ولاية من حسابك", "g");
+      if (st.seen) h += li("📦 حالات طرودك الحالية: <b>" + st.seen + "</b> نوعاً" + (st.unknown ? " — <b>" + st.unknown + "</b> منها غير معروفة" : " — كلها مفهومة"), st.unknown ? "w" : "g");
+      if (v) h += li(v.fail ? "⚠️ تحليل ردّ التتبع: نجح " + v.ok + " وفشل " + v.fail : (v.ok ? "✅ تحقّقنا من قراءة ردّ التتبع على <b>" + v.ok + "</b> طرد حقيقي من حسابك" : "ℹ️ لا طرود في حسابك للتحقق من التتبع بعد"), v.fail ? "w" : (v.ok ? "g" : ""));
+      if (w && w.received) h += li("🔔 الـwebhook: وصل <b>" + w.received + "</b> إشعار، حُلِّل منها <b>" + w.parsed + "</b>" + (w.empty ? " — <b>" + w.empty + "</b> بشكل غير مفهوم" : "") + (w.signed === true ? " (التوقيع صحيح)" : ""), w.empty ? "w" : "g");
+      else h += li("🔔 الـwebhook: لم يصل أي إشعار بعد — سيظهر هنا عند أول طرد", "");
+    }
+    (sm.warnings || []).forEach(t => { h += li("⚠️ " + esc(t), "w"); });
+    (sm.notes || []).forEach(t => { h += li("ℹ️ " + esc(t), ""); });
+    return h + '</div>';
+  }
+  function calProgress(sm) {
+    const left = ((sm || {}).progress || {}).left || 0, ph = ((sm || {}).progress || {}).phase || "geo";
+    const pct = ph === "geo" ? Math.round((1 - left / Math.max(58, left || 1)) * 80) : ph === "meta" ? 85 : ph === "verify" ? 95 : 100;
+    const lab = ph === "geo" ? "نقرأ بلديات ومكاتب حسابك…" : ph === "meta" ? "نقرأ التعريفة وحالات طرودك…" : ph === "verify" ? "نتحقق من قراءة ردّ التتبع…" : "اكتملت المعايرة";
+    return '<div style="margin:.6rem 0"><b>🔍 معايرة حسابك مع الشركة</b><div class="hint">نلتقط كل ما يخص حسابك ونصحّح النظام قبل أن تبدأ العمل (قراءة فقط — لا يُنشأ أي طرد).</div>' +
+      '<div style="height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:.5rem 0"><div style="height:100%;width:' + pct + '%;background:#34d399;transition:width .3s"></div></div><div class="hint">' + lab + ' (' + pct + '%)</div></div>';
+  }
+  /* يتابع المعايرة دفعةً بعد دفعة حتى تنتهي ويعرض تقدمها في `box`. يُرجع الملخّص النهائي (أو null عند الفشل). */
+  async function calibrate(code, box, first, restart) {
+    let sm = first || null, n = 0;
+    if (restart) { const r0 = await call("ship_calibrate", { carrier: code, restart: true }); if (!r0.ok) return null; sm = r0.j.calibration; }
+    while (n++ < 150) {
+      if (box) box.innerHTML = calProgress(sm);
+      if (sm && sm.done) break;
+      const r = await call("ship_calibrate", { carrier: code });
+      if (!r.ok || !r.j.calibration) return sm && sm.done ? sm : null;
+      sm = r.j.calibration;
+    }
+    return sm;
   }
 
   function modal(code, label, fields, needBase) {
@@ -87,12 +139,27 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
       const body = { carrier: code, credentials: cred }; if (needBase) body.base_url = ($("sa-base") || {}).value || "";
       $("sa-go").disabled = true; const r = await call("ship_connect", body); $("sa-go").disabled = false;
       if (!r.ok) { say("تعذّر التفعيل: " + ((r.j && (r.j.message || MSG[r.j.error] || r.j.error)) || "تحقق من المفاتيح"), "err"); return; }
-      await load(); draw();
       const vnote = r.j.verified === true ? '<p>✅ تحققنا من المفاتيح لدى الشركة وهي صالحة.</p>' : '<p>⚠️ حُفظت المفاتيح لكن تعذّر التحقق منها الآن' + (r.j.verify_note ? ' (' + esc(r.j.verify_note) + ')' : '') + '؛ جرّب «اختبار الاتصال» لاحقاً.</p>';
-      $("sa-body").innerHTML = vnote + '<p>ضع هذا الرابط في حسابك لدى الشركة ليصلك تحديث حالات الطرود تلقائياً (<b>يظهر هذه المرة فقط</b>):</p><div class="sa-url" id="sa-wh">' + esc(r.j.webhook_url) + '</div><button class="small blue" type="button" id="sa-cp" style="margin-top:.5rem">نسخ الرابط</button>';
-      $("sa-go").style.display = "none"; $("sa-x").textContent = "تم";
+      $("sa-go").style.display = "none"; $("sa-x").style.display = "none";
+      let sm = null;
+      if (r.j.verified === true) { $("sa-body").innerHTML = vnote + '<div id="sa-cal"></div>'; sm = await calibrate(code, $("sa-cal"), r.j.calibration); }
+      await load(); draw();
+      const rep = sm ? calReport(sm) : "";
+      $("sa-body").innerHTML = vnote + rep + '<p>ضع هذا الرابط في حسابك لدى الشركة ليصلك تحديث حالات الطرود تلقائياً (<b>يظهر هذه المرة فقط</b>):</p><div class="sa-url" id="sa-wh">' + esc(r.j.webhook_url) + '</div><button class="small blue" type="button" id="sa-cp" style="margin-top:.5rem">نسخ الرابط</button>';
+      $("sa-x").style.display = ""; $("sa-x").textContent = "تم";
       $("sa-cp").onclick = () => { try { navigator.clipboard.writeText(r.j.webhook_url); say("نُسخ الرابط", "ok"); } catch (e) { var s = window.getSelection(), g = document.createRange(); g.selectNodeContents($("sa-wh")); s.removeAllRanges(); s.addRange(g); } };
     };
+  }
+
+  /* تقرير المعايرة المحفوظ لشركة مفعّلة + زر إعادتها (بعد تغيير ما في حسابك عند الشركة: بلديات جديدة، مكاتب…) */
+  async function calModal(code, label) {
+    css(); const d = document.createElement("div"); d.className = "sa-mbg"; d.id = "sa-mbg";
+    d.innerHTML = '<div class="sa-mod"><h3 style="margin:0 0 .6rem">معايرة حسابك — ' + esc(label) + '</h3><div id="sa-body"><p class="hint">جارٍ التحميل…</p></div><div style="display:flex;gap:.5rem;margin-top:.6rem"><button class="small green" type="button" id="sa-go">إعادة المعايرة</button><button class="small gray" type="button" id="sa-x">إغلاق</button></div></div>';
+    d.addEventListener("mousedown", e => { if (e.target === d) d.remove(); }); document.body.appendChild(d);
+    $("sa-x").onclick = () => d.remove();
+    const show = async () => { const r = mode() === "php" ? await call("ship_calibrate", undefined, "&carrier=" + encodeURIComponent(code)) : await call("ship_calibrate", { carrier: code, __get: true }); $("sa-body").innerHTML = calReport(r.ok ? r.j.calibration : null); };
+    $("sa-go").onclick = async () => { $("sa-go").disabled = true; $("sa-x").disabled = true; const sm = await calibrate(code, $("sa-body"), null, true); $("sa-go").disabled = false; $("sa-x").disabled = false; if (sm) { $("sa-body").innerHTML = calReport(sm); await load(); draw(); } else say("تعذّرت المعايرة الآن، حاول لاحقاً", "err"); };
+    show();
   }
 
   /* طلب اللوحة ← صيغة البوابة (المرجع = رقم الطلب فيمنع التكرار في الخادم أيضاً) */
@@ -198,6 +265,7 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     c.addEventListener("click", async e => {
       const b = e.target.closest("[data-sa]"); if (!b) return; const code = b.dataset.c, meta = (S.cat || []).find(x => x.code === code); if (!meta) return;
       if (b.dataset.sa === "ping") { b.disabled = true; const r = await call("ship_ping", { carrier: code }); b.disabled = false; const j = r.j || {}; say(j.ok === true ? "المفاتيح صالحة لدى الشركة" : j.ok === false ? "الشركة ترفض المفاتيح: " + (j.message || "") : "تعذّر الحكم الآن: " + (j.message || "حاول لاحقاً"), j.ok === true ? "ok" : "err"); }
+      else if (b.dataset.sa === "cal") calModal(code, meta.label);
       else if (b.dataset.sa === "conn") modal(code, meta.label, meta.fields || [], !!meta.needs_base_url);
       else if (b.dataset.sa === "off" && confirm("فصل " + meta.label + "؟ تبقى الطرود المرسلة كما هي.")) { await call("ship_disconnect", { carrier: code }); await load(); draw(); }
     });
@@ -205,5 +273,5 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
 
   function init() { if (!mode()) return; let n = 0; const t = setInterval(() => { mount(); wrapSync(); wrapOrderActions(); const w = wrapPreview(); if (++n > 40 || (w && $("sa-card"))) clearInterval(t); }, 800); load().then(() => { wrapPreview(); wrapSync(); wrapOrderActions(); }); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { load, send, S, mode, gwPayload, syncGw, owns };
+  return { load, send, S, mode, gwPayload, syncGw, owns, calReport, calibrate };
 })();

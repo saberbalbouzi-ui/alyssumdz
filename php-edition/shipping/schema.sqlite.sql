@@ -38,3 +38,9 @@ CREATE TABLE IF NOT EXISTS shipment_events (
   event_hash TEXT NOT NULL UNIQUE,
   created_at TEXT NOT NULL
 );
+-- ملف معايرة الحساب (Calibrator): يُبنى عند أول ربط ويصحّح البلديات والمكاتب والحالات لحساب هذه الشركة بعينه.
+CREATE TABLE IF NOT EXISTS carrier_profiles (
+  connection_id INTEGER PRIMARY KEY REFERENCES user_carriers(id) ON DELETE CASCADE,
+  profile_json TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);

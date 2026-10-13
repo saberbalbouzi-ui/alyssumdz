@@ -44,6 +44,9 @@ CREATE TABLE IF NOT EXISTS gw_audit (   -- سجلّ تدقيق إجراءات ا
 );
 CREATE TABLE IF NOT EXISTS gw_rl (k TEXT NOT NULL, t INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_gw_rl ON gw_rl (k, t);
+CREATE TABLE IF NOT EXISTS gw_profiles (   -- ملف معايرة حساب الشركة (يُبنى عند أول ربط ويصحّح البلديات والمكاتب والحالات لهذا الحساب)
+  connection_id INTEGER PRIMARY KEY, profile_json TEXT NOT NULL, updated_at TEXT NOT NULL
+);
 INSERT OR IGNORE INTO gw_plans (id,name,orders_hour,orders_day,track_min,vault_max,webhooks,price_dzd) VALUES
  ('free','مجانية',20,100,30,0,0,NULL),
  ('pro','احترافية',200,2000,120,5,1,NULL),

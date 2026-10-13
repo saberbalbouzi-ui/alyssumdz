@@ -7,7 +7,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../php-edition/shipping/src/autoload.php';
 require_once __DIR__ . '/carrier-sims.php';
 
-use Alyssum\Shipping\{Parcel, ShippingFactory, StatusMapper};
+use Alyssum\Shipping\{Calibrator, OurGeo, Parcel, ShippingFactory, StatusMapper};
 use Alyssum\Shipping\Http\{HttpClient, HttpResponse};
 
 final class RecSim implements HttpClient
@@ -113,6 +113,41 @@ function carrier_golden(): array
             $pay = ['type' => 'parcel_status_updated', 'data' => [['tracking' => 'yal-1AB', 'last_status' => 'Livré', 'order_id' => 'G1'], ['tracking' => 'yal-2AB', 'last_status' => ['name' => 'Tentative échouée']]]];
             $ad = ShippingFactory::make('yalidine', new RecSim(new YalidineSim()))->authenticate($c['good']);
             $steps[] = ['name' => 'webhook', 'op' => 'webhook', 'arg' => $pay, 'cred' => $c['good'], 'calls' => [], 'result' => array_map(fn($e) => ['tracking' => $e->tracking, 'rawStatus' => $e->rawStatus, 'status' => $e->status, 'orderRef' => $e->orderRef], $ad->parseWebhook($pay, []))];
+        }
+        /* ═══ المعايرة عند أول ربط: اكتشاف الحساب وبناء الملف ثم الإرسال بالملف (كتالوجنا بتهجئة مخالفة لكتالوج الشركة عمداً) ═══ */
+        $oursArr = [16 => ['Alger Centre', 'Bab-Ezzouar', 'Kouba', 'Bordj El Kiffan', 'El Harrach', 'Zeralda'], 31 => ['Oran', 'Es Senia'], 32 => ['El Bayadh'], 17 => ['Djelfa', 'Ain Ouessara']];
+        $theirs = [16 => ['Alger Centre', 'Bab Ezzouar', 'Kouba', 'Bordj El Kiffane', 'El Harrach', 'Rouiba'], 31 => ['Oran', 'Es Senia'], 32 => ['El Bayadh'], 17 => ['Djelfa', 'Aïn Oussera']];
+        $prep = function () use ($c, $theirs, $code): Sim {
+            $sim = ($c['sim'])(); $sim->catalog = $theirs;
+            if ($code === 'yalidine') {
+                $sim->closed = ['El Harrach'];
+                $sim->centers = [16 => [['center_id' => 161601, 'name' => 'Bab Ezzouar Desk', 'address' => 'x', 'commune_name' => 'Bab Ezzouar', 'wilaya_id' => 16]]];
+                foreach (['Livré', 'Retourné au vendeur', 'Statut Jamais Vu 77', 'Sorti en livraison'] as $i => $st) { $sim->setStatus('ext-' . $i, $st); }
+            }
+            return $sim;
+        };
+        $sim = $prep(); $rec = new RecSim($sim);
+        $adC = ShippingFactory::make($code, $rec)->authenticate($c['good']);
+        $prof = (new Calibrator(new OurGeo($oursArr), 10))->run($adC);
+        unset($prof['at']);
+        $profJson = json_decode(json_encode($prof, JSON_UNESCAPED_UNICODE), true);
+        $steps[] = ['name' => 'calibrate', 'op' => 'calibrate', 'arg' => ['ours' => $oursArr, 'chunk' => 10], 'cred' => $c['good'], 'calls' => $rec->rec, 'result' => $profJson];
+        $pl = [['Bab-Ezzouar', 16], ['Bordj El Kiffan', 16], ['Zeralda', 16], ['El Harrach', 16], ['Ain Ouessara', 17]];
+        foreach ($pl as $i => [$cm, $wl]) {
+            $a = ['commune' => $cm, 'wilaya' => $wl, 'order_ref' => 'G-cal' . $i];
+            $sim = $prep(); $rec = new RecSim($sim); $ad = ShippingFactory::make($code, $rec)->authenticate($c['good'])->withProfile($profJson);
+            $res = $cre($ad->createParcel($P($a)));
+            $steps[] = ['name' => 'create_calibrated_' . $cm, 'op' => 'create_profile', 'arg' => $a + $base, 'profile' => $profJson, 'cred' => $c['good'], 'calls' => $rec->rec, 'result' => $res];
+        }
+        if ($code === 'yalidine') {
+            $a = ['commune' => 'Kouba', 'stop_desk' => true, 'desk_id' => 999999, 'order_ref' => 'G-cald'];
+            $sim = $prep(); $rec = new RecSim($sim); $ad = ShippingFactory::make($code, $rec)->authenticate($c['good'])->withProfile($profJson);
+            $res = $cre($ad->createParcel($P($a)));
+            $steps[] = ['name' => 'create_calibrated_bad_desk', 'op' => 'create_profile', 'arg' => $a + $base, 'profile' => $profJson, 'cred' => $c['good'], 'calls' => $rec->rec, 'result' => $res];
+            $sim = $prep(); $rec = new RecSim($sim); $ad = ShippingFactory::make($code, $rec)->authenticate($c['good'] + ['webhookSecret' => 'shh'])->withProfile($profJson);
+            $body = json_encode(['type' => 'parcel_status_updated', 'data' => [['tracking' => 'x', 'last_status' => 'Livré']]]);
+            $steps[] = ['name' => 'webhook_signature', 'op' => 'verify_webhook', 'arg' => ['body' => $body, 'secret' => 'shh', 'sig' => hash_hmac('sha256', $body, 'shh')], 'cred' => $c['good'] + ['webhookSecret' => 'shh'], 'calls' => [],
+                'result' => [$ad->verifyWebhook($body, []), $ad->verifyWebhook($body, ['x-yalidine-signature' => 'bad']), $ad->verifyWebhook($body, ['x-yalidine-signature' => hash_hmac('sha256', $body, 'shh')]), $ad->verifyWebhook($body, ['x-hub-signature-256' => 'sha256=' . hash_hmac('sha256', $body, 'shh')])]];
         }
         $out[$code] = $steps;
     }
