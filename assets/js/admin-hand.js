@@ -55,6 +55,7 @@ const AdminHand = (() => {
   /* ينتظر حتى يستقر العنصر في مكانه (التمرير السلس على الجوال قد يطول) */
   async function settle(e) {
     let last = null, same = 0; const t0 = Date.now();
+    await sleep(160);                 // التمرير السلس قد يبدأ متأخراً تحت الحمل: لا نحكم بالاستقرار قبل أن يبدأ
     while (Date.now() - t0 < 2200) { await sleep(70); const r = e.getBoundingClientRect(), k = Math.round(r.top) + ":" + Math.round(r.left); if (k === last) { if (++same >= 3) return; } else same = 0; last = k; }
   }
   const center = e => { const r = e.getBoundingClientRect(); return { x: r.left + Math.min(r.width * 0.5, 90), y: r.top + r.height * 0.5 }; };
