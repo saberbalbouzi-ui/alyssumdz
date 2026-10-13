@@ -38,8 +38,43 @@
 - **تحقق قبل البناء:** الأدوار والصلاحيات اليوم محصورة بمدير واحد (`is_admin`) — الأدوار الفرعية تحتاج تصميماً في Supabase (RLS) وPHP؛ يوصى ببدء الواجهة للمدير ثم إضافة الأدوار كمرحلة ثانية.
 - **القبول:** معالجة 100 طلب بنقرات قليلة بلا تمرير جدول؛ كل قرار يمرّ بالمنطق الحالي نفسه (لا منطق موازٍ)؛ اختبار Playwright للمسار على الحاسوب والجوال.
 
+## M6 — «شبكة الخبراء»: دليل B2B للمستقلين الجزائريين ⏳
+- **الفكرة:** سوق مصغّر داخل المنصة يربط التجار بمستقلين جزائريين (هوية/تغليف، مشتري إعلانات، مؤكِّدات طلبات، موزّعون، صنّاع UGC). **الدفع والتعاقد خارج المنصة** (تواصل مباشر بواتساب) — نحن دليل لا وسيط مالي، فلا ضمان ولا نزاعات مالية علينا.
+- **اليوم:** لا شيء. تفيد منه M5 (إيجاد مؤكِّدات) والمنصة عالمياً (حسابات تجار متعددة).
+- **أين تُبنى:** وحدة `experts` في منصة API (`saas/platform/src/modules/experts.js`، D1، نمط الوحدات الحالي) + تبويب «شبكة الخبراء» في لوحة التاجر + صفحة تسجيل المستقل (عامة) + إدارة/إشراف في لوحة المزوّد (`saas/`). الدخول: التاجر بحساب لوحته؛ المستقل بحساب خاص (بريد/هاتف + تحقق) — **حسابات المستقلين غير موجودة اليوم** (لا نموذج هوية غير المدير)، وهي أكبر اعتماد في المهمة.
+- **مخطط مقترح (مسوّدة):**
+```sql
+CREATE TABLE expert_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT UNIQUE NOT NULL, name_ar TEXT NOT NULL, name_fr TEXT NOT NULL, ord INTEGER NOT NULL DEFAULT 0);
+-- بذور: branding_packaging · media_buyers · confirmatrices · livreurs · ugc_creators
+CREATE TABLE experts_profiles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_ref TEXT UNIQUE NOT NULL,            -- هوية المستقل
+  display_name TEXT NOT NULL, headline TEXT NOT NULL, bio TEXT NOT NULL,
+  category_id INTEGER NOT NULL REFERENCES expert_categories(id), wilaya INTEGER NULL, remote INTEGER NOT NULL DEFAULT 1,
+  rate_type TEXT NOT NULL,                 -- hourly | per_task | monthly | per_order | quote
+  rate_from INTEGER NULL, rate_to INTEGER NULL, currency TEXT NOT NULL DEFAULT 'DZD',
+  whatsapp_h TEXT NOT NULL,                -- رقم واتساب مشفّر؛ لا يُعرض إلا لتاجر مسجَّل (انظر الخصوصية)
+  socials TEXT NOT NULL DEFAULT '{}',      -- JSON {instagram,tiktok,facebook,behance,youtube,linkedin}
+  portfolio TEXT NOT NULL DEFAULT '[]',    -- JSON [{type:image|video|link, url, title}] ≤ 12
+  languages TEXT NOT NULL DEFAULT '["ar"]', status TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | suspended
+  rating_avg REAL NOT NULL DEFAULT 0, rating_count INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE TABLE expert_reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, expert_id INTEGER NOT NULL REFERENCES experts_profiles(id) ON DELETE CASCADE,
+  tenant_id INTEGER NOT NULL, stars INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5), comment TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'visible',  -- visible | hidden (إشراف) ؛ created_at TEXT NOT NULL,
+  UNIQUE (expert_id, tenant_id)            -- تقييم واحد لكل تاجر لكل خبير (يُعدَّل لا يتكرر)
+);
+CREATE TABLE expert_contacts (id INTEGER PRIMARY KEY AUTOINCREMENT, expert_id INTEGER NOT NULL, tenant_id INTEGER NOT NULL, at INTEGER NOT NULL);  -- سجلّ نقرات «تواصل» لإتاحة التقييم ولتحليلات
+```
+- **المطلوب:** (أ) API: بحث/تصفية (`q`، فئة، ولاية، نطاق سعر، تقييم أدنى، ترتيب)، ملف خبير، إنشاء/تعديل الملف الشخصي، رفع المعرض (صور عبر تخزين الملفات — **R2 غير متاح الآن** فالمرحلة الأولى روابط خارجية/صور مضغوطة صغيرة)، تقييم وتعديله، إبلاغ عن ملف. (ب) واجهة التاجر: شبكة بطاقات (صورة، اسم، فئة، تقييم، سعر «من»، ولاية)، بحث ومرشّحات، صفحة الملف، **زر واتساب مباشر** `https://wa.me/<رقم>?text=<رسالة جاهزة>` يُنشأ عند النقر ويُسجَّل في `expert_contacts`. (ج) استمارة المستقل: تسجيل + إدارة الملف + المعرض + التعرفة + الروابط الاجتماعية، وحالة «بانتظار الموافقة». (د) إشراف المزوّد: قائمة المعلّقين، موافقة/إيقاف، إخفاء تقييم.
+- **قرارات يلزم حسمها قبل البناء:** (1) من يسجّل ويُعتمد؟ (موافقة يدوية من المزوّد أولاً — مقترح)؛ (2) هل التقييم مفتوح لأي تاجر أم لمن تواصل فعلاً (مقترح: لمن نقر «تواصل» قبل ≥48 ساعة، لمنع التقييمات المزيفة والتبادلية)؛ (3) مجاني أم باشتراك/ترتيب مميّز للخبراء (مصدر دخل محتمل، يتطلب M1)؛ (4) العملة/اللغات (المنصة عالمية: ar/fr/en، DZD وغيره)؛ (5) النطاق: داخل كل متجر أم دليل واحد مشترك لكل مواقع المنصة (مقترح: **مشترك**، وهذا يستلزم أن الدليل خارج عزل المستأجر).
+- **الخصوصية والثقة (القانون 18-07 ومراجعة الخبراء):** رقم الواتساب هو بيانات شخصية للمستقل: لا يظهر للزوار العامين، بل لتاجر مسجَّل الدخول فقط، وبموافقة صريحة من المستقل عند التسجيل، وحق الحذف الكامل؛ لا ادعاءات «معتمد» إلا بعد فحص فعلي؛ كل نص يُهرَّب، والروابط تُفلتر (https فقط، لا `javascript:`)، وحدّ معدّل على التسجيل والتقييم؛ لا تُعرض تقييمات مخفية؛ سجلّ تدقيق للإشراف.
+- **تحقق قبل البناء:** هل نموذج «المستقل يدفع/يُميَّز» مقبول تجارياً؟ أي شروط استخدام يوافق عليها المستقل (لا مسؤولية عن العقد)، وحماية المحتوى المرفوع (صور بلا حقوق/محتوى مسيء ← إشراف قبل النشر).
+- **القبول:** تسجيل مستقل ← يظهر «بانتظار الموافقة» ← المزوّد يعتمد ← يظهر في بحث التاجر؛ البحث والمرشّحات يعطيان نتائج صحيحة (اختبار)؛ زر واتساب يفتح رابطاً صحيحاً برسالة جاهزة ويسجّل النقرة؛ تقييم واحد لكل تاجر؛ المتوسط يُعاد حسابه ذرّياً؛ لا يرى الزائر رقم واتساب؛ اختبارات وحدة (D1 محاكاة) + مسار Playwright للواجهتين.
+
 ## ترتيب مقترح (قابل للتغيير بأمر صاحب المتجر)
 1. **M5** (يعتمد على موجود، أثر يومي مباشر، بلا اعتماد خارجي).
 2. **M3** (يخفض المرتجعات؛ بلا حساب خارجي).
 3. **M4** ثم **M1** (يحتاجان اختيار مزوّد وقراءة وثائقه، ويشتركان في الفوترة/الرصيد).
 4. **M2** (يحتاج مراجعة محاسب قبل البناء).
+5. **M6** بعد حسم القرارات الخمسة أعلاه (أكبرها: حسابات المستقلين)؛ تفيد M5 في إيجاد المؤكِّدات.
