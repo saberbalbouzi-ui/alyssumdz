@@ -1367,6 +1367,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   await p.setViewportSize({ width: 1280, height: 800 });
   ok("نافذة «صفحة جديدة»: الزر «افتح» ظاهر كاملاً بالشاشة العادية والقصيرة (520px) والنافذة لا تتجاوز الشاشة", npT.label === "افتح" && npT.tall && npT.fits && npS.short && npS.fits, { npT, npS });
+  // ── نافذة التقاط العناصر: كاملة الارتفاع، والصورة كاملة بلا شريط تمرير، ولا رسالة «من ذاكرة المتصفح» ──
+  const cwT = await p.evaluate(async () => {
+    const R = {}; const sh = PBSmart._shell("التقاط العناصر", "عنصر", "كل العناصر", "h", "h2"), view = sh.host.querySelector("#pbs-view"), box = view.parentElement;
+    R.boxH = Math.round(box.getBoundingClientRect().height); R.vh = innerHeight; R.full = box.getBoundingClientRect().height >= innerHeight * .9 - 2;
+    R.noScroll = getComputedStyle(view).overflowY === "hidden" && getComputedStyle(view).overflowX === "hidden"; R.viewH = view.clientHeight;
+    const cv = document.createElement("canvas"); cv.width = 600; cv.height = 1800; cv.getContext("2d").fillRect(0, 0, 600, 1800); const stop = PBSmart._scanFx(sh, cv);      // صورة طولية جداً
+    const img = sh.host.querySelector("#pbs-stage canvas"), r = img.getBoundingClientRect(), v = view.getBoundingClientRect(); R.fits = r.top >= v.top - 1 && r.bottom <= v.bottom + 1 && r.left >= v.left - 1 && r.right <= v.right + 1; R.ratio = Math.round(r.width / r.height * 100) / 100;
+    stop(); sh.close(); R.noMsg = !/من ذاكرة المتصفح/.test(await (await fetch("assets/js/ai-vision.js")).text()); return R;
+  });
+  ok("نافذة التقاط العناصر: النافذة كاملة الارتفاع والصورة (حتى الطولية جداً) كاملة بلا شريط تمرير، ولا رسالة «من ذاكرة المتصفح»", cwT.full && cwT.noScroll && cwT.fits && Math.abs(cwT.ratio - .33) < .02 && cwT.noMsg, cwT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
