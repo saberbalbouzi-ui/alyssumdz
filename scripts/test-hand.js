@@ -45,7 +45,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
 
   // ═══ حاسوب ═══
   let { p, errs } = await open({ viewport: { width: 1280, height: 800 } });
-  await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; });
+  await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; window.__sodReal = Admin.sendOrderToDelivery; });
   // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
   await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);
   ok("أول فتح: يطلب التعرّف ولا يشغّل الميكروفون بعد", await p.evaluate(() => document.getElementById("ah-mic").classList.contains("off") && /مرة واحدة/.test(document.getElementById("av-out").textContent)));
@@ -1119,6 +1119,32 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("التوجيه: الشرق ← ZR، الجنوب ← ياليدين، والوسط (بلا قاعدة) ← الافتراضية", dp.keys.join() === "zrexpress,yalidine,yalidine" && dp.ui, dp);
   ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) ووصل بباركود لشركة بلا بوردرو", dp.sentTo.join() === "P0001:zrexpress,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 1 && dp.page.svg, dp);
   ok("محطة المسح: مسح جديد ثم مكرّر (يتجاهل حالة الأحرف والمسافات) ثم مجهول، والعدّاد وكشف التسليم لما مُسح فقط", dp.scan.s1 === "ok" && dp.scan.s2 === "dup" && dp.scan.s3 === "unknown" && dp.scan.count === 2 && dp.scan.txt && dp.manifest.has, dp);
+  // ── إعادة التوجيه التلقائي عند رفض الشركة ──
+  const fbt = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); const e0 = Admin.enabledCompanyKeys, a0 = Admin.activeCompanyKey, i0 = Admin._sendOrderToDelivery, sn0 = Admin.showNotice;
+    Admin.sendOrderToDelivery = window.__sodReal; Admin.enabledCompanyKeys = () => ["yalidine", "zrexpress"]; Admin.activeCompanyKey = () => "yalidine"; localStorage.removeItem("alyssum_fb_log"); localStorage.removeItem("store_fb_log");
+    const notices = []; Admin.showNotice = (t) => { notices.push(t); };
+    const mkO = id => ({ id, date: new Date().toISOString(), status: "confirmee", name: "ف" + id, phone: "0550002222", wilaya: "Alger", commune: "X", dtype: "home", items: "عنصر ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" });
+    const run = async (id, behave, cfgFb) => {
+      Admin.orders = [mkO(id)]; AdminDispatch._S.cfg = Object.assign({ on: false }, cfgFb === undefined ? {} : { fallback: cfgFb }); const calls = [];
+      Admin._sendOrderToDelivery = async function (ix, k) { calls.push(k + (this._fbQuiet ? "~" : "")); const b = behave[k]; if (b === "ok") { this.orders[ix].note = "🚚" + k + ":T" + id; return true; } this._sendFail = b ? { kind: b, title: "فشل " + k, html: "x", co: k, key: k } : null; if (!this._fbQuiet && b && b !== "amb") this.showNotice("فشل " + k, "x"); return false; };
+      const r = await Admin.sendOrderToDelivery(0, "yalidine"); await wait(30); return { r, calls: calls.join(), note: Admin.orders[0].note };
+    };
+    const out = {};
+    out.reroute = await run("F0001", { yalidine: "reject", zrexpress: "ok" });
+    out.log = JSON.parse(localStorage.getItem("alyssum_fb_log") || localStorage.getItem("store_fb_log") || "[]");
+    out.area = await run("F0002", { yalidine: "area", zrexpress: "ok" });
+    out.input = await run("F0003", { yalidine: "input", zrexpress: "ok" });
+    out.amb = await run("F0004", { yalidine: "amb", zrexpress: "ok" });
+    out.cancel = await run("F0005", { yalidine: null, zrexpress: "ok" });
+    notices.length = 0; out.allfail = await run("F0006", { yalidine: "reject", zrexpress: "reject" }); out.allfailNotices = notices.length; out.quietOff = !Admin._fbQuiet;
+    out.off = await run("F0007", { yalidine: "reject", zrexpress: "ok" }, false);
+    Admin.enabledCompanyKeys = e0; Admin.activeCompanyKey = a0; Admin._sendOrderToDelivery = i0; Admin.showNotice = sn0; AdminDispatch._S.cfg = { on: false };
+    return out;
+  });
+  ok("إعادة التوجيه: رفض ياليدين ← تُرسل عبر الشركة الثانية بصمت، ويُسجَّل في السجل", fbt.reroute.r === true && fbt.reroute.calls === "yalidine~,zrexpress~" && /zrexpress:T/.test(fbt.reroute.note) && fbt.log.length === 1 && fbt.log[0].from === "yalidine" && fbt.log[0].to === "zrexpress", fbt);
+  ok("إعادة التوجيه: ولاية غير مخدومة أو بلدية بلا مطابقة ← بديل؛ والإخفاق الملتبس (مهلة/5xx) وإلغاء المستخدم لا يُعاد توجيههما (منعاً لتكرار الطرد)", fbt.area.r === true && fbt.input.r === true && fbt.amb.r === false && fbt.amb.calls === "yalidine~" && fbt.cancel.r === false && fbt.cancel.calls === "yalidine~", fbt);
+  ok("إعادة التوجيه: إن رفضتها كل الشركات يُجرَّب الجميع ثم تظهر خلاصة واحدة، والتعطيل يرسل لشركة واحدة بلا صمت", fbt.allfail.r === false && fbt.allfail.calls === "yalidine~,zrexpress~" && fbt.allfailNotices >= 1 && fbt.quietOff && fbt.off.r === false && fbt.off.calls === "yalidine", fbt);
   // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
   const plk = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));

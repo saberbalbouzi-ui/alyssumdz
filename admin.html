@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.169">
+<meta name="admin-version" content="1.89.170">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1622,12 +1622,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.169"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.169"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.169"></script>
+<script src="assets/js/ctl-help.js?v=1.89.170"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.170"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.170"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.169"></script>
+<script src="assets/js/admin-nav.js?v=1.89.170"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1639,7 +1639,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.169"></script>
+<script src="assets/js/admin-update.js?v=1.89.170"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -7902,8 +7902,36 @@ const Admin = {
       if(infl[id] && Date.now() - infl[id] < 90000){ toast("ℹ️ هذا الطلب يُرسَل إلى الشركة الآن من نافذة أخرى — لا حاجة لإرساله مرة ثانية"); return false }
       this._sendLock[id] = 1; infl[id] = Date.now(); try{ localStorage.setItem("alyssum_send_inflight", JSON.stringify(infl)); }catch(e){}
     }
-    try{ const p = (this._sendChain || Promise.resolve()).catch(()=>{}).then(()=>{ const ix = id ? this.orders.findIndex(x=>x.id === id) : -1; return this._sendOrderToDelivery(ix < 0 ? orderIndex : ix, companyKey); }); this._sendChain = p; return await p; }      // بالتتابع: كي لا يأخذ طلبان رقم ياليدين نفسه
+    try{ const p = (this._sendChain || Promise.resolve()).catch(()=>{}).then(()=>{ const ix = id ? this.orders.findIndex(x=>x.id === id) : -1; return this._sendWithFallback(ix < 0 ? orderIndex : ix, companyKey); }); this._sendChain = p; return await p; }      // بالتتابع: كي لا يأخذ طلبان رقم ياليدين نفسه
     finally{ if(id){ delete this._sendLock[id]; try{ const c = JSON.parse(localStorage.getItem("alyssum_send_inflight") || "{}") || {}; delete c[id]; localStorage.setItem("alyssum_send_inflight", JSON.stringify(c)); }catch(e){} } }
+  },
+  /* إعادة التوجيه التلقائي: إن لم تقبل شركة الطلب (ولاية غير مخدومة، بلدية/مكتب لا يطابق، أو رفض صريح 4xx) يُجرَّب غيرها من الشركات المفعّلة
+     بالتتابع (الأفضل أداءً في الولاية أولاً ثم الافتراضية) حتى تقبله إحداها، فلا يبقى طلب مؤكَّد عالقاً. الإخفاق الملتبس (مهلة، 5xx، استلام بلا تتبع)
+     لا يُعاد توجيهه كي لا يتكرر الطرد. يُعطَّل من «التوجيه والبوردرو». */
+  fallbackOn(){ try{ const c = window.AdminDispatch && AdminDispatch._S && AdminDispatch._S.cfg; return !c || c.fallback !== false; }catch(e){ return true; } },
+  fallbackChain(o, key){
+    const en = this.enabledCompanyKeys(); let rest = en.filter(k=>k !== key);
+    try{ if(window.AdminDispatch && AdminDispatch.fallbackOrder) rest = AdminDispatch.fallbackOrder(o, rest, this.activeCompanyKey()); }catch(e){}
+    return [key].concat(rest);
+  },
+  fbLog(o, from, to, why){ try{ const l = JSON.parse(localStorage.getItem("alyssum_fb_log") || "[]"); l.unshift({ id: o.id, name: o.name || "", wilaya: o.wilaya || "", from, to, why: String(why || "").slice(0, 120), at: Date.now() }); localStorage.setItem("alyssum_fb_log", JSON.stringify(l.slice(0, 100))); }catch(e){} },
+  async _sendWithFallback(ix, key){
+    const o = this.orders[ix]; if(!o) return this._sendOrderToDelivery(ix, key);
+    const chain = this.fallbackOn() ? this.fallbackChain(o, key) : [key];
+    if(chain.length < 2) return this._sendOrderToDelivery(ix, key);
+    const cos = this.allDeliveryCompanies(), nm = k=>(cos[k] && cos[k].name) || k, fails = [];
+    for(let n = 0; n < chain.length; n++){
+      const k = chain[n]; this._fbQuiet = true; this._sendFail = null; let ok;
+      try{ ok = await this._sendOrderToDelivery(this.orders.findIndex(x=>x.id === o.id), k); }finally{ this._fbQuiet = false; }
+      if(ok){ if(n > 0){ const f0 = fails[0]; this.fbLog(o, f0.key, k, f0.kind); toast("↪ لم تقبل " + nm(f0.key) + " الطلب فأُرسل عبر " + nm(k)); } return true; }
+      const f = this._sendFail; if(!f || !["area", "input", "reject"].includes(f.kind)) { if(f){ fails.push(f); } break; }        // ملتبس أو إلغاء المستخدم: توقّف
+      fails.push(f);
+    }
+    /* لم تقبله أي شركة: نعرض إخفاق الشركة الأولى كما كان، وخلاصة المحاولات إن تعدّدت */
+    const f0 = fails[0]; if(!f0) return false;
+    const inp = fails.find(f=>f.thunk); if(inp) inp.thunk(); else if(f0.title) this.showNotice(f0.title, f0.html);
+    if(fails.length > 1){ const why = f=>f.kind === "area" ? "لا تخدم الولاية" : f.kind === "input" ? "تحتاج اختيار بلدية/مكتب" : "رفضت الطلب"; toast("⚠️ جُرّبت " + fails.length + " شركات ولم تقبله أي منها: " + fails.map(f=>nm(f.key) + " (" + why(f) + ")").join("، ")); }
+    return false;
   },
   async _sendOrderToDelivery(orderIndex, companyKey){
     if(!companyKey){ toast("⚠️ لا توجد شركة توصيل نشطة — فعّل واحدة من تبويب «شركات التوصيل»"); return }
@@ -7912,6 +7940,9 @@ const Admin = {
     const co = this.allDeliveryCompanies()[companyKey];
     const cfg = this.deliveryCfg[companyKey] || {};
     if(!co || !cfg.enabled){ toast("⚠️ فعّل " + (co?co.name:companyKey) + " أولاً من تبويب «شركات التوصيل»"); return }
+    /* إخفاق قابل لإعادة التوجيه (لم يُنشأ طرد قطعاً): kind = area (ولاية/منطقة غير مخدومة) | input (مكتب/بلدية يحتاج اختياراً) | reject (رفض صريح 4xx).
+       أثناء المحاولات الصامتة (_fbQuiet) لا نافذة ولا حوار: يُسجَّل فقط، ويعرض _sendWithFallback الخلاصة إن فشلت كل الشركات. غير ذلك (مهلة/5xx/استلام بلا تتبع) لا يُعاد توجيهه حتى لا يتكرر الطرد. */
+    const fail = (kind, title, html, thunk)=>{ this._sendFail = { kind, title, html, thunk, co: co.name, key: companyKey }; if(!this._fbQuiet){ if(thunk) thunk(); else if(title) this.showNotice(title, html); } return false; };
     if(this.trackingOf(order)){ const tk = this.trackingOf(order).tracking; if(this._autoReg) this._autoFail = "أُرسل سابقاً"; this.showNotice("ℹ️ الطلب أُرسل إلى الشركة", "الطلب <b>" + String(order.id).slice(-6) + "</b> أُرسل إلى " + co.name + " من قبل (رقم التتبع <b>" + tk + "</b>) فلا يُرسل مرة ثانية كي لا يتكرر الطرد.<br><small>إن حذفتَ الطرد عند الشركة فاضغط «✓ أُرسل ↩» للتراجع ثم أرسله من جديد.</small>"); return false }
     toast("⏳ جارِ إرسال الطلب #" + order.id + " إلى " + co.name + "...");
     try{
@@ -7920,7 +7951,7 @@ const Admin = {
         const wl = await this.companyWilayas(co, cfg), w0 = Admin.wCo(order.wilaya);
         const off = w0 && wl[w0.id];
         if(off){
-          if(!off.ok){ this.showNotice("🚫 الولاية غير مخدومة", "ياليدين لا تخدم حالياً ولاية <b>" + off.name + "</b>. سلّم هذا الطلب بشركة أخرى."); return false }
+          if(!off.ok) return fail("area", "🚫 الولاية غير مخدومة", "ياليدين لا تخدم حالياً ولاية <b>" + off.name + "</b>. سلّم هذا الطلب بشركة أخرى.");
           ord = Object.assign({}, ord, { wilaya: off.name });
         }
       }
@@ -7930,12 +7961,12 @@ const Admin = {
         const d0 = w0 && (w0.desks||[]).find(x=>x.name === order.desk);
         const ov = (this._deskOverride||{})[order.id];
         const id = ov || (d0 && centers.some(c=>c.id === d0.id) ? d0.id : null);
-        if(!id){ this.askDesk(orderIndex, companyKey, centers.filter(c=>w0 && c.wilaya_id === w0.id), order); return false }
+        if(!id) return fail("input", "", "", ()=>this.askDesk(orderIndex, companyKey, centers.filter(c=>w0 && c.wilaya_id === w0.id), order));
         ord = Object.assign({}, ord, { __deskId: id });
       }
       if(co.communesRequest){                               // تطبيع اسم البلدية على قائمة ياليدين الرسمية قبل الإرسال
         const fix = await this.resolveCommune(co, cfg, order);
-        if(!fix.ok){ this.askCommune(orderIndex, companyKey, fix); return false }
+        if(!fix.ok) return fail("input", "", "", ()=>this.askCommune(orderIndex, companyKey, fix));
         ord = Object.assign({}, ord, { commune: fix.name });
       }
       /* رقم الطلب في ياليدين = العدد الكلي لطرودك عندها «Mes colis — Total» + 1 (تلقائي للتسجيل اليدوي والآلي)،
@@ -7977,17 +8008,16 @@ const Admin = {
       /* لم يُنشأ طرد: نعرض سبب الرفض كما ردّت به الشركة، في نافذة تبقى حتى تغلقها */
       const why = (json && (co.parseError ? co.parseError(json) : "")) || (json && (json.message || json.error || json.msg) ? String(json.message || json.error || json.msg) : "");
       const esc = t=>String(t).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-      this.showNotice("❌ لم تُنشئ " + co.name + " الطرد للطلب " + order.id,
+      const kind = (!r.ok && r.status >= 400 && r.status < 500) ? "reject" : "amb";           // 4xx = رفض صريح (لا طرد)؛ غيره قد يكون الطرد أُنشئ فلا نعيد التوجيه
+      return fail(kind, "❌ لم تُنشئ " + co.name + " الطرد للطلب " + order.id,
         (r.ok ? "الشركة استلمت الطلب لكنها لم تُرجع رقم تتبع." : "رفضت الشركة الطلب (رمز " + r.status + ").") +
         (why ? "<br><b>السبب:</b> " + esc(why) : "") +
         "<br><br><small>الرد الكامل من الشركة (أرسله لي إن لم يتضح السبب):</small><pre dir='ltr' style='white-space:pre-wrap;background:#f6f3ea;padding:.6rem;border-radius:10px;font-size:.78rem;max-height:200px;overflow:auto'>" + esc((r.text || "").slice(0, 900)) + "</pre>" +
         "<small>أسباب شائعة: اسم البلدية أو الولاية لا يطابق قائمة ياليدين، رقم الهاتف غير صالح، أو مفاتيح API خاطئة.</small>");
-      return false;
     }catch(err){
       console.error(err);
-      if(err.cors){ this.explainCors(co); return false }
-      this.showNotice("❌ تعذّر إرسال الطلب " + order.id + " إلى " + co.name, String(err.message).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])));
-      return false;
+      if(err.cors) return fail("amb", "", "", ()=>this.explainCors(co));
+      return fail("amb", "❌ تعذّر إرسال الطلب " + order.id + " إلى " + co.name, String(err.message).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])));
     }
   },
 
