@@ -13,7 +13,7 @@ const PBApp = (() => {
 
   const EDIT_CSS = `
 .pb-edit.pb-fx .pb-sl-off,.pb-edit.pb-fx .pb-gx-off{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-color:rgba(255,128,24,.62) transparent}}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-color:rgba(255,128,24,.62) transparent}}
 .pb-edit [data-pb]{cursor:pointer}
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}

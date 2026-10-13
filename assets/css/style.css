@@ -429,7 +429,7 @@ section[id]{scroll-margin-top:84px}
 @media (max-width:640px){.coll-tabs{justify-content:flex-start}}
 
 /* شريط التمرير: أكريليك برتقالي فلورسنت شفاف رقيق 6px بزوايا مدوّرة */
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}
 
 /* ── بطاقات أكريليك فلورسنت شفاف (أخضر/أزرق/أصفر/برتقالي بالتناوب) بزوايا مدوّرة ── */
 .card,.feat,.review,.lp-card,.lp-textcard,.benefits,.form,.trust div,.mini-points div,.faq details{--ac:255,118,24;background:linear-gradient(145deg,rgba(var(--ac),.17),rgba(255,255,255,.62) 52%,rgba(var(--ac),.1));-webkit-backdrop-filter:blur(10px) saturate(1.35);backdrop-filter:blur(10px) saturate(1.35);border:1px solid rgba(var(--ac),.42);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(255,255,255,.4),0 10px 26px rgba(var(--ac),.18)}
@@ -637,7 +637,7 @@ footer.site a:hover{color:var(--green)}
 
 ::-webkit-scrollbar-thumb{
   background:linear-gradient(180deg,rgba(183,255,74,.78),rgba(116,220,30,.54));
-  box-shadow:inset 0 0 0 1px rgba(230,255,202,.42),0 0 10px rgba(183,255,74,.25);
+  box-shadow:inset 0 0 0 1px rgba(230,255,202,.42);
 }
 @supports not selector(::-webkit-scrollbar){*{scrollbar-color:rgba(183,255,74,.62) transparent}}
 
