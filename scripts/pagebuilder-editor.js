@@ -8,7 +8,7 @@ const PBApp = (() => {
   const DEVW = { d: 1280, t: 820, m: 390 };
   /* مؤقتاً: تعطيل «القسم» و«العمود» — كل العناصر حرة (موضع مطلق فوق قماش الصفحة). غيّر القيمة إلى false لإرجاع الأقسام والأعمدة كما كانت. */
   const FREE_ONLY = true;
-  const E = { sl: {}, snap: true, fx: (() => { try { return localStorage.getItem("pbx_fx") !== "0"; } catch (e) { return true; } })(), live: (() => { try { return localStorage.getItem("pbx_live") !== "0"; } catch (e) { return true; } })(), page: null, sel: null, dev: "d", hist: [], hi: -1, slug: "", isNew: true, dirty: false, tab: "c", ltab: "add", drag: null, scale: 1, sha: {} };
+  const E = { sl: {}, snap: true, nogrid: (() => { try { return localStorage.getItem("pbx_grid") !== "1"; } catch (e) { return true; } })(), fx: (() => { try { return localStorage.getItem("pbx_fx") !== "0"; } catch (e) { return true; } })(), live: (() => { try { return localStorage.getItem("pbx_live") !== "0"; } catch (e) { return true; } })(), page: null, sel: null, dev: "d", hist: [], hi: -1, slug: "", isNew: true, dirty: false, tab: "c", ltab: "add", drag: null, scale: 1, sha: {} };
   let frame, fdoc, root, styleEl, built = false, raf = 0, saveT = 0;
 
   const EDIT_CSS = `
@@ -245,6 +245,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-anim" onclick="PBApp.playAnims(PBApp.animTarget())" title="تشغيل حركات الظهور: يعيد تشغيل حركة ظهور العنصر المحدّد (أو كل عناصر الصفحة إن لم يُحدَّد شيء) لتراها كما ستظهر للزائر.">▶ حركات الظهور</button>
   <button id="pbx-fx" onclick="PBApp.toggleFx()" title="تأثيرات حيّة: تعمل السلايدرات والتبويبات والأكورديون والقوائم المنسدلة وتحويم البطاقات داخل المحرّر نفسه (الثبات عند التمرير وParallax تظهر في المعاينة والصفحة المنشورة).">تأثيرات حيّة</button>
   <button id="pbx-live" onclick="PBApp.toggleLive()" title="تعديل مباشر: التعديلات تُطبَّق على الصفحة فوراً بلا شريط تأكيد. عطّله لتظهر أزرار تأكيد/إلغاء لكل عنصر.">✏️ تعديل مباشر</button>
+  <button id="pbx-grid" onclick="PBApp.toggleGrid()" title="إظهار شبكة المحاذاة على الصفحة (الافتراضي: صفحة بيضاء بلا شبكة)">▦ شبكة</button>
   <button id="pbx-snap" onclick="PBApp.toggleSnap()" title="الالتصاق بحواف العناصر الأخرى والمنتصف (اضغط Alt أثناء السحب لتعطيله مؤقتاً)">${ico('snap',16)} التصاق</button>
   <button id="pbx-undo" onclick="PBApp.undo()" title="تراجع (Ctrl+Z)">${ico('undo',16)}</button>
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
@@ -281,7 +282,8 @@ body{overflow-x:hidden;margin:0}`;
 <div class="pbx-msg" id="pbx-msg"></div>`;
     document.body.appendChild(d);
     frame = $("pbx-frame");
-    const FRAMEDOC = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style></head><body class="pb-page pb-edit"><div id="pbr"></div></body></html>`;
+    const gridOn = () => { try { return localStorage.getItem("pbx_grid") === "1"; } catch (e) { return false; } };      // الافتراضي: صفحة بيضاء بلا شبكة، والشبكة اختيارية
+    const FRAMEDOC = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style></head><body class="pb-page pb-edit${gridOn() ? "" : " pbx-nogrid"}"><div id="pbr"></div></body></html>`;
     frame.srcdoc = FRAMEDOC;
     frame.addEventListener("load", () => { let off = false; try { off = frame.contentWindow.location.href !== "about:srcdoc"; } catch (x) { off = true; } if (off) { frame.srcdoc = FRAMEDOC; return; }      // حماية: إن انتقل الإطار إلى صفحة أخرى يُعاد إلى إطار المحرر تلقائياً
       fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
@@ -381,7 +383,7 @@ body{overflow-x:hidden;margin:0}`;
   function updateTop() {
     $("pbx-undo").disabled = E.hi <= 0; $("pbx-redo").disabled = E.hi >= E.hist.length - 1; document.querySelectorAll('.pbx-qbar [data-qb="undo"]').forEach(b => b.disabled = E.hi <= 0); document.querySelectorAll('.pbx-qbar [data-qb="redo"]').forEach(b => b.disabled = E.hi >= E.hist.length - 1);
     $("pbx-dirty").textContent = E.dirty ? "● تعديلات غير منشورة" : "";
-    document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap); const lv = $("pbx-live"); if (lv) lv.classList.toggle("on", E.live); const fxb = $("pbx-fx"); if (fxb) fxb.classList.toggle("on", E.fx);
+    document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap); const gb = $("pbx-grid"); if (gb) gb.classList.toggle("on", !E.nogrid); const lv = $("pbx-live"); if (lv) lv.classList.toggle("on", E.live); const fxb = $("pbx-fx"); if (fxb) fxb.classList.toggle("on", E.fx);
   }
   /* تعديل اسم الصفحة من الشريط العلوي: الحقل للقراءة افتراضياً، وزر «تعديل الاسم» يفتحه (Enter يؤكّد وEsc يلغي) */
   function rename() {
@@ -868,7 +870,8 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
 
 
   /* ───────────────── قائمة خلفية الصفحة/القسم (الزر الأيمن على الخلفية، نمط Canva) ───────────────── */
-  function setGrid(on) { E.nogrid = !on; if (fdoc && fdoc.body) fdoc.body.classList.toggle("pbx-nogrid", !on); }
+  function setGrid(on) { E.nogrid = !on; try { localStorage.setItem("pbx_grid", on ? "1" : "0"); } catch (e) { } if (fdoc && fdoc.body) fdoc.body.classList.toggle("pbx-nogrid", !on); updateTop(); }
+  function toggleGrid() { setGrid(!!E.nogrid); toast(E.nogrid ? "الصفحة بيضاء بلا شبكة" : "▦ الشبكة ظاهرة (تساعد على المحاذاة)"); }
   /* «إضافة الخلفية» من قائمة الزر الأيمن على القسم: يُحدَّد القسم وتُفتح مجموعة «تنسيق الخلفية» في تبويب التنسيق بشريط الإعدادات */
   function openSecBg(sec) {
     select(sec.id); E.tab = "s"; (E.accT = E.accT || {}).s = { bg: true }; if (isMob()) panel("r", true); renderInspector();
@@ -2828,7 +2831,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
