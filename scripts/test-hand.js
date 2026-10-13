@@ -1393,6 +1393,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(); await w(400); return R;
   });
   ok("تبويب «تعديل الصورة» (تخطيط فعلي): مربعات ≥90px بالاسم تحتها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.below && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
+  // ── تبويب «أدوات ذكية» محذوف من القائمة اليسرى (أدواته داخل «تعديل الصورة») ──
+  const nsT = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; PBAdmin.mkPage("بلا ذكية"); await w(1500); const R = { smart: !!document.querySelector('.pbx-tabs [data-lt="smart"]'), img: !!document.querySelector('.pbx-tabs [data-lt="img"]'), tabs: [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt).join(",") }; PBApp.close(); await w(400); return R; });
+  ok("القائمة اليسرى: لا تبويب «أدوات ذكية» (موجودة داخل «تعديل الصورة»)", !nsT.smart && nsT.img, nsT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

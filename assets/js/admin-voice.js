@@ -637,7 +637,7 @@ const AdminVoice = (() => {
       if (/(?:^| )(?:ال)?(?:طبقات|calques|layers)(?: |$)/.test(t)) return mk("panel", L("لوحة الطبقات.", "Calques."), { panel: "lay" });
       if (/(?:^| )(?:اعدادات|reglages|parametres) (?:ال)?(?:صفحه|page)(?: |$)|(?:^| )(?:ال)?(?:صفحه|page) (?:اعدادات|settings)(?: |$)/.test(t)) return mk("panel", L("إعدادات الصفحة.", "Réglages de la page."), { panel: "pg" });
       if (/(?:^| )(?:ال)?(?:اقسام|عناصر|قوالب) (?:ال)?جاهزه(?: |$)|(?:^| )(?:ال)?جاهزه(?: |$)|(?:^| )(?:modeles|prets a l emploi)(?: |$)/.test(t)) return mk("panel", L("الأقسام الجاهزة.", "Modèles prêts."), { panel: "def" });
-      if (/(?:^| )(?:ال)?ادوات (?:ال)?ذكيه(?: |$)/.test(t)) return mk("panel", L("الأدوات الذكية.", "Outils intelligents."), { panel: "smart" });
+      if (/(?:^| )(?:ال)?ادوات (?:ال)?ذكيه(?: |$)/.test(t)) return mk("panel", L("تعديل الصورة (فيه الأدوات الذكية).", "Retouche d'image (outils intelligents)."), { panel: "img" });
       if (/(?:^| )(?:ال)?(?:عناصر|palette|elements)(?: |$)/.test(t) && !add && !hasObjW) return mk("panel", L("لوحة العناصر.", "Éléments."), { panel: "add" });
       if (show && /(?:^| )(?:ال)?(?:ادوات|outils)(?: |$)/.test(t)) return mk("panel", hide ? L("أخفيت شريط الأدوات.", "Barre d'outils masquée.") : L("شريط الأدوات.", "Barre d'outils."), { panel: "l" });
       if (show && /(?:^| )(?:ال)?(?:اعدادات|parametres|reglages|settings)(?: |$)/.test(t)) return mk("panel", hide ? L("أخفيت شريط الإعدادات.", "Réglages masqués.") : L("شريط الإعدادات.", "Réglages."), { panel: "r" });
@@ -1120,7 +1120,7 @@ const AdminVoice = (() => {
   const PB_SEL = {
     undo: "#pbx-undo", redo: "#pbx-redo", preview: '[onclick="PBApp.preview()"]', publish: '[onclick="PBApp.publish()"]', close: '#pb-app [onclick="PBApp.close()"]', addSection: "#pbx-add2",
     dev_m: "[onclick=\"PBApp.setDev('m')\"]", dev_t: "[onclick=\"PBApp.setDev('t')\"]", dev_d: "[onclick=\"PBApp.setDev('d')\"]",
-    panel_l: "#pbx-tgl", panel_r: "#pbx-tgr", panel_lay: "[onclick=\"PBApp.ltoggle('lay')\"]", panel_pg: "[onclick=\"PBApp.ltoggle('pg')\"]", panel_def: "[onclick=\"PBApp.ltoggle('def')\"]", panel_smart: "[onclick=\"PBApp.ltoggle('smart')\"]", panel_add: "[onclick=\"PBApp.ltoggle('add')\"]",
+    panel_l: "#pbx-tgl", panel_r: "#pbx-tgr", panel_lay: "[onclick=\"PBApp.ltoggle('lay')\"]", panel_pg: "[onclick=\"PBApp.ltoggle('pg')\"]", panel_def: "[onclick=\"PBApp.ltoggle('def')\"]", panel_img: "[onclick=\"PBApp.ltoggle('img')\"]", panel_add: "[onclick=\"PBApp.ltoggle('add')\"]",
   };
   const PB_TOOL = { secup: "نقل القسم للأعلى", secdown: "نقل القسم للأسفل", hidesec: "إخفاء القسم", locksec: "قفل القسم", dupsec: "تكرار القسم", delsec: "حذف القسم", lockel: "قفل العنصر", dupel: "تكرار", delel: "حذف" };
   const pbTool = key => { const want = fold(PB_TOOL[key]); return [...document.querySelectorAll("#pbx-ovl button")].find(b => fold(b.title || "").startsWith(want) && (key === "dupel" ? !/قسم/.test(b.title) : key === "delel" ? !/قسم/.test(b.title) : true)); };
@@ -1133,7 +1133,7 @@ const AdminVoice = (() => {
       case "undo": case "redo": { const b = await wait(PB_SEL[act.op]); if (!b) return miss("المحرّر غير مفتوح."); for (let i = 0; i < (act.n || 1); i++) { await click(b); await stable(); } return true; }
       case "preview": case "publish": case "close": case "addSection": { const b = await wait(PB_SEL[act.op]); if (!b) return miss("المحرّر غير مفتوح."); await click(b); return true; }
       case "dev": { const b = await wait(PB_SEL["dev_" + act.dev]); if (!b) return miss("المحرّر غير مفتوح."); await click(b); return true; }
-      case "panel": { const b = await wait(PB_SEL["panel_" + act.panel]); if (!b) return miss("المحرّر غير مفتوح."); if (/^(?:lay|pg|def|smart|add)$/.test(act.panel) && typeof PBApp !== "undefined" && PBApp.E && PBApp.E.ltab === act.panel) return true; await click(b); return true; }
+      case "panel": { const b = await wait(PB_SEL["panel_" + act.panel]); if (!b) return miss("المحرّر غير مفتوح."); if (/^(?:lay|pg|def|img|add)$/.test(act.panel) && typeof PBApp !== "undefined" && PBApp.E && PBApp.E.ltab === act.panel) return true; await click(b); return true; }
       case "widget": {
         const sel = '#pbx-lpane .pbx-wi[data-add="' + act.widget + '"]';
         let tile = q$(sel);
