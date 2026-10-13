@@ -188,6 +188,7 @@ if a.target == "php":
     # وحدة تجميع شركات التوصيل: المصدر + الربط + مخطط SQLite فقط (بلا webhook/bootstrap/README/data المستقلة)
     _sh = OUT / "api/shipping"; shutil.copytree(ROOT / "php-edition/shipping/src", _sh / "src")
     for _f in ("integration.php", "schema.sqlite.sql"): shutil.copy2(ROOT / "php-edition/shipping" / _f, _sh / _f)
+    (_sh / "data").mkdir(exist_ok=True); shutil.copy2(ROOT / "php-edition/shipping/data/status-dict.json", _sh / "data/status-dict.json")   # قواميس الحالات (StatusMapper)
     (_sh / ".htaccess").write_text("<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n", encoding="utf-8")
     code = "-".join(secrets.token_hex(2).upper() for _ in range(4))
     import subprocess

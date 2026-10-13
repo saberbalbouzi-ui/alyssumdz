@@ -871,7 +871,7 @@ switch ($route) {
         out(200, ['ok' => true, 'version' => $ver]);
 
     /* وحدة تجميع شركات التوصيل (shipping/): تفعيل الشركات بمفاتيح التاجر (مشفّرة) وإرسال/تتبع/إلغاء الطرود. للمدير فقط عدا webhook الموحَّد (يُصادَق عليه بالسرّ في الرابط) */
-    case 'ship_carriers': case 'ship_connect': case 'ship_disconnect': case 'ship_send': case 'ship_track': case 'ship_cancel': case 'ship_label': case 'ship_webhook':
+    case 'ship_carriers': case 'ship_connect': case 'ship_disconnect': case 'ship_send': case 'ship_track': case 'ship_cancel': case 'ship_label': case 'ship_ping': case 'ship_unknown': case 'ship_webhook':
         $shipLib = is_file(__DIR__ . '/shipping/integration.php') ? __DIR__ . '/shipping/integration.php' : (is_file(__DIR__ . '/../shipping/integration.php') ? __DIR__ . '/../shipping/integration.php' : '');
         if ($shipLib === '') out(501, ['error' => 'ship_not_installed']);
         if ($route === 'ship_webhook') {

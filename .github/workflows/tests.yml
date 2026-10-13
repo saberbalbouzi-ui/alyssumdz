@@ -37,6 +37,7 @@ jobs:
       - name: وحدة تجميع شركات التوصيل (PHP)
         run: |
           php scripts/test-shipping.php
+          php scripts/test-carriers.php
           php scripts/test-ship-php.php
           php scripts/test-gateway.php
           php scripts/test-roles-php.php
@@ -45,6 +46,7 @@ jobs:
       - name: بوابة الشحن (Worker + D1)
         run: |
           node --no-warnings saas/gateway/test/gateway.test.mjs
+          node --no-warnings saas/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
           for t in platform core-modules commerce-modules growth-modules carts payments sms commerce; do node --no-warnings saas/platform/test/$t.test.mjs; done
   ui:

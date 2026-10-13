@@ -4,7 +4,7 @@ export function makeParcel(geo, o) {
   const p = {
     orderRef: String(o.orderRef ?? ""), name: String(o.name ?? "").trim(), phone: String(o.phone ?? ""), wilayaCode: +o.wilayaCode, commune: String(o.commune ?? "").trim(),
     address: String(o.address ?? "").trim(), total: +o.total, shippingFee: +(o.shippingFee ?? 0), products: String(o.products ?? ""), phone2: String(o.phone2 ?? ""),
-    stopDesk: !!o.stopDesk, deskId: o.deskId ?? null, note: String(o.note ?? ""), canOpen: o.canOpen !== false,
+    stopDesk: !!o.stopDesk, deskId: o.deskId == null || o.deskId === "" ? null : (/^\d+$/.test(String(o.deskId)) ? +o.deskId : null), deskCode: String(o.deskCode ?? o.deskId ?? "").trim(), note: String(o.note ?? ""), canOpen: o.canOpen !== false,
   };
   if (!p.orderRef.trim()) throw new ValidationError("orderRef مطلوب");
   if (!geo.name(p.wilayaCode)) throw new ValidationError("ولاية غير معروفة: " + o.wilayaCode);

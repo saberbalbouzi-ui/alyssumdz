@@ -1,5 +1,6 @@
 import { pick, safeHttpsUrl } from "./util.js";
-import { mapStatus, S } from "./status.js";
+import { explain, mapStatus, S } from "./status.js";
+import { best as bestCommune, suggest as suggestCommunes } from "./commune.js";
 
 export class CarrierError extends Error {}
 export class CredentialsError extends CarrierError {}
@@ -27,12 +28,27 @@ class Adapter {
     for (const f of this.constructor.fields()) if ((f.required ?? true) && !String(c[f.key] ?? "").trim()) throw new CredentialsError("الحقل مطلوب: " + f.label);
     this.cred = Object.fromEntries(Object.entries(c).map(([k, v]) => [k, String(v ?? "").trim()])); return this;
   }
-  mapStatus(raw) { return mapStatus(raw); }
+  /** عائلة قاموس الحالات (الشركات التي تتشارك المنصة نفسها تتشارك القاموس). */
+  family() { return this.code; }
+  mapStatus(raw) { return mapStatus(raw, this.family()); }
   async send(method, url, headers = {}, body = null) {
     const r = await this.http(method, url, headers, body);
     if (r.status === 0) throw new ApiError("تعذّر الاتصال بالشركة: " + (r.error || "خطأ شبكة"));
     if (r.status === 401 || r.status === 403) throw new CredentialsError("رفضت الشركة المفاتيح (HTTP " + r.status + ")");
+    if (r.status === 429) throw new ApiError("الشركة تطلب التمهل (429): أعد المحاولة بعد قليل");
     return r;
+  }
+  /** فحص المفاتيح بطلب قراءة فقط: ok=true صالحة، false مرفوضة، null تعذّر الحكم (شبكة/ردّ غير متوقع). */
+  async probe(fn) {
+    try { const [ok, message] = await fn(); return { ok, message }; }
+    catch (e) { return e instanceof CredentialsError ? { ok: false, message: e.message } : { ok: null, message: String(e.message || e) }; }
+  }
+  async ping() { return { ok: null, message: "الفحص غير مدعوم لهذه الشركة" }; }
+  /** يحلّ اسم البلدية على قائمة الشركة: يصحّح التهجئة أو يُرجع {error} واضحاً مع الأقرب. */
+  resolveCommune(list, p, label) {
+    const m = bestCommune(list, p.commune);
+    if (m) return { name: String(m.name), id: m.id };
+    return { error: `بلدية «${p.commune}» غير موجودة عند ${label} في ${p.wilayaName} — الأقرب: ${suggestCommunes(list, p.commune).join("، ")}` };
   }
   async cancel() { return false; }
   async labelUrl() { return null; }
@@ -45,9 +61,11 @@ class Adapter {
     return out;
   }
 }
-const ok = (tracking, labelUrl = null, raw = {}) => ({ ok: true, tracking, labelUrl, error: "", raw });
+const ok = (tracking, labelUrl = null, raw = {}, warn = "") => ({ ok: true, tracking, labelUrl, error: warn, raw });
 const fail = (error, raw = {}) => ({ ok: false, tracking: "", labelUrl: null, error, raw });
 const httpsOnly = (u) => (typeof u === "string" && u.startsWith("https://") ? u : null);
+const clip = (s, n) => String(s ?? "").slice(0, n);
+const missing = () => new ApiError("حالة الطرد غير موجودة في ردّ الشركة");
 
 /* ───── Yalidine (مُتحقَّق منه على حساب حقيقي: إنشاء/تتبع/بوليصة/إلغاء) ───── */
 class Yalidine extends Adapter {
@@ -55,6 +73,9 @@ class Yalidine extends Adapter {
   static fields() { return [{ key: "apiId", label: "API ID", secret: false }, { key: "apiToken", label: "API Token", secret: true }, { key: "fromWilaya", label: "ولاية الانطلاق (مثال: Alger)", secret: false, required: false }]; }
   h(json = false) { const h = { "X-API-ID": this.cred.apiId, "X-API-TOKEN": this.cred.apiToken }; return json ? { ...h, "Content-Type": "application/json" } : h; }
   statusText(v) { return v && typeof v === "object" ? String(v.name ?? v.label ?? "").trim() : String(v ?? "").trim(); }
+  async ping() {
+    return this.probe(async () => { const r = await this.send("GET", Yalidine.BASE + "/v1/wilayas/?page_size=1", this.h()); return r.ok ? [true, "المفاتيح صالحة"] : [null, `ردّ غير متوقع (HTTP ${r.status})`]; });
+  }
   async create(p) {
     const [first, family] = p.nameParts(), price = p.priceWithoutShipping();
     if (p.stopDesk && !p.deskId) return fail("مكتب Stop Desk غير محدد");
@@ -70,7 +91,7 @@ class Yalidine extends Adapter {
   }
   async track(trk) {
     const j = (await this.send("GET", `${Yalidine.BASE}/v1/parcels/${encodeURIComponent(trk)}`, this.h())).json() ?? {}; const d = j.data?.[0] ?? j; const raw = this.statusText(d.last_status);
-    if (!raw) throw new ApiError("حالة الطرد غير موجودة في ردّ الشركة"); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
+    if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
   }
   async cancel(trk) { return (await this.send("DELETE", `${Yalidine.BASE}/v1/parcels/${encodeURIComponent(trk)}`, this.h())).ok; }
   async labelUrl(trk) { const j = (await this.send("GET", `${Yalidine.BASE}/v1/parcels/${encodeURIComponent(trk)}`, this.h())).json() ?? {}; const d = j.data?.[0] ?? j; return httpsOnly(d.label ?? d.labels); }
@@ -87,84 +108,183 @@ class Yalidine extends Adapter {
   }
 }
 
-/* ───── ZR Express (Procolis) — تجريبي ───── */
+/* ───── ZR Express (Procolis القديمة): ترويستا token/key، add_colis {Colis:[…]}، الرفض HTTP 200 + MessageRetour ───── */
 class ZRExpress extends Adapter {
   static BASE = "https://procolis.com/api_v1";
   static fields() { return [{ key: "token", label: "Token", secret: true }, { key: "key", label: "Key", secret: true }]; }
   h() { return { token: this.cred.token, key: this.cred.key, "Content-Type": "application/json" }; }
+  async ping() {
+    return this.probe(async () => {
+      const r = await this.send("GET", ZRExpress.BASE + "/token", this.h()); const j = r.json() ?? {}; const s = pick(j, "Statut", "statut", "status");
+      if (r.ok && /acc[eè]s activ/iu.test(s)) return [true, "المفاتيح صالحة"];
+      return r.ok ? [false, "الحساب غير مفعّل للواجهة البرمجية: " + (s || "ردّ فارغ")] : [null, `ردّ غير متوقع (HTTP ${r.status})`];
+    });
+  }
   async create(p) {
-    const row = { Tracking: p.orderRef, TypeLivraison: p.stopDesk ? "1" : "0", TypeColis: "0", Confrimee: "1", Client: p.name, MobileA: p.localPhone(), MobileB: p.phone2 ? p.localPhone(p.phone2) : "",
-      Adresse: p.address || p.wilayaName, IDWilaya: String(p.legacyWilaya), Commune: p.commune, Total: String(Math.round(p.total)), Note: p.note, TProduit: p.productsText() };
-    const r = await this.send("POST", ZRExpress.BASE + "/add_colis", this.h(), { Colis: [row] }); const j = r.json() ?? {}; const first = j.Colis?.[0] ?? j[0] ?? j;
-    const f = first && typeof first === "object" ? first : {}; const trk = pick(f, "Tracking", "tracking", "tracking_code");
-    if (r.ok && trk && !/erreur|error|fail/i.test(pick(f, "MessageRetour", "message", "status"))) return ok(trk, null, j);
-    return fail(pick(f, "MessageRetour", "message", "error") || "HTTP " + r.status, j);
+    const row = { Tracking: "", TypeLivraison: p.stopDesk ? "1" : "0", TypeColis: "0", Confrimee: "1",   // «Confrimee» تهجئة الشركة نفسها
+      Client: p.name, MobileA: p.localPhone(), MobileB: p.phone2 ? p.localPhone(p.phone2) : "", Adresse: p.address || p.commune, IDWilaya: String(p.legacyWilaya), Commune: p.commune,
+      Total: String(Math.round(p.total)), Note: clip(p.note, 250), TProduit: p.productsText(250), id_Externe: p.orderRef, Source: "Alyssum" };
+    const r = await this.send("POST", ZRExpress.BASE + "/add_colis", this.h(), { Colis: [row] }); const j = r.json() ?? {};
+    const first = j.Colis?.[0] && typeof j.Colis[0] === "object" ? j.Colis[0] : (j[0] && typeof j[0] === "object" ? j[0] : j);
+    const trk = pick(first, "Tracking", "tracking", "tracking_code"), msg = pick(first, "MessageRetour", "message", "status");
+    if (msg === "Double Tracking") return fail("طرد مكرّر عند ZR (Double Tracking) — لا يُرسل ثانية", j);
+    return r.ok && trk && (msg === "" || msg.toLowerCase() === "good") ? ok(trk, null, j) : fail(msg || "HTTP " + r.status, j);
   }
   async track(trk) {
-    const j = (await this.send("POST", ZRExpress.BASE + "/lire", this.h(), { Colis: [{ Tracking: trk }] })).json() ?? {}; const row = j.Colis?.[0] ?? j[0] ?? j;
+    const r = await this.send("POST", ZRExpress.BASE + "/lire", this.h(), { Colis: [{ Tracking: trk }] }); const body = String(r.body ?? "").trim();
+    if (body === "null" || body === "") throw new ApiError("لم تجد الشركة هذا الطرد");
+    const j = r.json() ?? {}; const row = j.Colis?.[0] ?? j[0] ?? j;
     const raw = pick(row && typeof row === "object" ? row : {}, "Situation", "situation", "Statut", "status");
-    if (!raw) throw new ApiError("حالة الطرد غير موجودة في ردّ الشركة"); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
+    if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
   }
 }
 
-/* ───── Maystro — تجريبي ───── */
+/* ───── Maystro: Authorization: Token، معرّف بلدية رقمي من base/communes، products[] وsource ───── */
 class Maystro extends Adapter {
   static BASE = "https://backend.maystro-delivery.com/api";
-  static fields() { return [{ key: "apiKey", label: "API Key", secret: true }]; }
-  h() { return { Authorization: "Token " + this.cred.apiKey, "Content-Type": "application/json" }; }
+  static fields() {
+    return [{ key: "apiKey", label: "API Key (Token)", secret: true },
+      { key: "scheme", label: "نمط نوع التوصيل: v2 (1 منزل، 2 مكتب — الافتراضي) أو v1 (0/1)", secret: false, required: false },
+      { key: "priceMode", label: "سعر المنتج المرسل: items (بلا التوصيل — الافتراضي) أو total (شاملاً التوصيل)", secret: false, required: false }];
+  }
+  h() { return { Authorization: "Token " + this.cred.apiKey, "Content-Type": "application/json", Accept: "application/json" }; }
+  async ping() {
+    return this.probe(async () => { const r = await this.send("GET", Maystro.BASE + "/base/wilayas/?country=1&language=fr", this.h()); return r.ok ? [true, "المفتاح صالح"] : [null, `ردّ غير متوقع (HTTP ${r.status})`]; });
+  }
+  async communes(w) {
+    this._c ??= {}; if (this._c[w]) return this._c[w];
+    const j = (await this.send("GET", `${Maystro.BASE}/base/communes/?wilaya=${w}`, this.h())).json() ?? {};
+    const rows = Array.isArray(j.results) ? j.results : Array.isArray(j) ? j : [];
+    return (this._c[w] = rows.filter((c) => c && typeof c === "object" && c.id !== undefined && c.name !== undefined).map((c) => ({ id: c.id, name: String(c.name) })));
+  }
   async create(p) {
-    const r = await this.send("POST", Maystro.BASE + "/stores/orders/", this.h(), { external_order_id: p.orderRef, customer_name: p.name, customer_phone: p.localPhone(), wilaya: p.wilayaCode, commune: p.commune,
-      destination_text: p.address || p.wilayaName, product_price: Math.round(p.total), delivery_type: p.stopDesk ? 1 : 0, note_to_driver: p.note, product_name: p.productsText() });
-    const j = r.json() ?? {}; const trk = pick(j, "display_id", "tracking", "id", "order_id");
-    return r.ok && trk ? ok(trk, null, j) : fail(pick(j, "detail", "message", "error") || "HTTP " + r.status, j);
+    const w = p.legacyWilaya, list = await this.communes(w);
+    if (!list.length) return fail(`تعذّر جلب بلديات ولاية ${w} من Maystro (راجع المفتاح أو أعد المحاولة)`);
+    const m = this.resolveCommune(list, p, "Maystro"); if (m.error) return fail(m.error);
+    const v1 = (this.cred.scheme || "v2") === "v1", price = (this.cred.priceMode || "items") === "total" ? Math.round(p.total) : p.priceWithoutShipping();
+    const r = await this.send("POST", Maystro.BASE + "/stores/orders/", this.h(), { wilaya: w, commune: parseInt(m.id, 10), destination_text: p.address ? clip(p.address, 255) : p.commune,
+      customer_name: p.name, customer_phone: p.localPhone(), product_price: price, delivery_type: v1 ? (p.stopDesk ? 1 : 0) : (p.stopDesk ? 2 : 1), express: false, note_to_driver: clip(p.note, 250),
+      products: [{ logistical_description: p.productsText() || "Produit", quantity: 1 }], source: 4, external_order_id: p.orderRef });
+    let j = r.json() ?? {}; if (Array.isArray(j) && j[0] && typeof j[0] === "object") j = j[0];
+    const id = pick(j, "id", "order_id");
+    if (r.ok && id) return ok(id, null, j);
+    const code = parseInt(j.code ?? j.error_code ?? 0, 10) || 0;
+    const known = { 40: "الولاية أو البلدية غير موجودة عند Maystro", 45: "هذا النوع من التوصيل غير متاح في هذه البلدية", 50: "منتجات الطلب غير صالحة" };
+    return fail(`${known[code] ?? ""} ${pick(j, "detail", "message", "error")}`.trim() || "HTTP " + r.status, j);
   }
   async track(trk) {
-    const j = (await this.send("GET", `${Maystro.BASE}/stores/orders/${encodeURIComponent(trk)}/`, this.h())).json() ?? {}; const raw = pick(j, "status_name", "status", "state");
-    if (!raw) throw new ApiError("حالة الطرد غير موجودة في ردّ الشركة"); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
+    const j = (await this.send("GET", `${Maystro.BASE}/stores/orders/${encodeURIComponent(trk)}/`, this.h())).json() ?? {}; const raw = pick(j, "status", "status_name", "state");
+    if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
   }
+  async cancel(trk) { return (await this.send("PATCH", `${Maystro.BASE}/orders/${encodeURIComponent(trk)}/status/`, this.h(), { status: 50 })).ok; }
 }
 
-/* ───── NOEST — تجريبي ───── */
+/* ───── NOEST: Bearer + api_token/user_guid في الجسم، الطرد مسوّدة حتى valid/order ───── */
 class Noest extends Adapter {
   static BASE = "https://app.noest-dz.com/api/public";
-  static fields() { return [{ key: "apiToken", label: "api_token", secret: true }, { key: "userGuid", label: "user_guid", secret: true }]; }
+  static fields() {
+    return [{ key: "apiToken", label: "api_token", secret: true }, { key: "userGuid", label: "user_guid", secret: true },
+      { key: "autoValidate", label: "تصديق الطرد تلقائياً بعد الإنشاء (1 افتراضي، 0 يبقى مسوّدة)", secret: false, required: false }];
+  }
   auth(x = {}) { return { api_token: this.cred.apiToken, user_guid: this.cred.userGuid, ...x }; }
+  h() { return { Authorization: "Bearer " + this.cred.apiToken, "Content-Type": "application/json", Accept: "application/json" }; }
+  async ping() {
+    return this.probe(async () => { const r = await this.send("GET", Noest.BASE + "/get/wilayas", this.h()); const j = r.json(); return r.ok && Array.isArray(j) ? [true, "المفتاح صالح"] : [null, `ردّ غير متوقع (HTTP ${r.status})`]; });
+  }
+  async communes(w) {
+    this._c ??= {}; if (this._c[w]) return this._c[w];
+    let j; try { j = (await this.send("GET", `${Noest.BASE}/get/communes/${w}`, this.h())).json() ?? []; } catch (e) { if (e instanceof ApiError) return []; throw e; }
+    return (this._c[w] = (Array.isArray(j) ? j : []).filter((c) => c && typeof c === "object" && c.nom !== undefined).map((c) => ({ id: String(c.nom), name: String(c.nom) })));
+  }
   async create(p) {
-    const r = await this.send("POST", Noest.BASE + "/create/order", { "Content-Type": "application/json" }, this.auth({ reference: p.orderRef, client: p.name, phone: p.localPhone(), phone_2: p.phone2 ? p.localPhone(p.phone2) : "",
-      adresse: p.address || p.wilayaName, wilaya_id: p.legacyWilaya, commune: p.commune, montant: Math.round(p.total), produit: p.productsText(), remarque: p.note, stop_desk: p.stopDesk ? 1 : 0, stock: 0 }));
-    const j = r.json() ?? {}; const trk = pick(j, "tracking", "tracking_number");
-    return r.ok && trk && j.success !== false ? ok(trk, null, j) : fail(pick(j, "message", "error") || "HTTP " + r.status, j);
+    if (p.stopDesk && p.deskCode === "") return fail("NOEST يحتاج رمز مكتب Stop Desk (station_code مثل 16A) — اختر المكتب أو أرسل للمنزل");
+    let commune = p.commune; const list = await this.communes(p.legacyWilaya);
+    if (list.length) { const m = this.resolveCommune(list, p, "NOEST"); if (m.error) return fail(m.error); commune = m.name; }
+    const body = this.auth({ reference: p.orderRef, client: p.name, phone: p.localPhone(), adresse: p.address ? clip(p.address, 255) : p.commune, wilaya_id: p.legacyWilaya, commune, montant: Math.round(p.total),
+      produit: clip(p.productsText() || "Produit", 255), type_id: 1, poids: 1, stop_desk: p.stopDesk ? 1 : 0, can_open: p.canOpen ? 1 : 0, stock: 0 });
+    if (p.phone2) body.phone_2 = p.localPhone(p.phone2);
+    if (p.note) body.remarque = clip(p.note, 255);
+    if (p.stopDesk) body.station_code = p.deskCode;
+    const r = await this.send("POST", Noest.BASE + "/create/order", this.h(), body); const j = r.json() ?? {}; const trk = pick(j, "tracking", "tracking_number");
+    if (r.ok && trk && j.success !== false) {
+      let warn = "";
+      if ((this.cred.autoValidate ?? "1") !== "0") {
+        const v = await this.send("POST", Noest.BASE + "/valid/order", this.h(), this.auth({ tracking: trk })); const vj = v.json() ?? {};
+        if (!v.ok || vj.success === false) warn = "أُنشئ الطرد لكن لم يُصدَّق عند الشركة: " + (pick(vj, "message") || "HTTP " + v.status);
+      }
+      return ok(trk, null, j, warn);
+    }
+    const msg = pick(j, "message", "error") + (j.errors ? " — " + JSON.stringify(j.errors) : "");
+    return fail(msg.trim() || "HTTP " + r.status, j);
   }
   async track(trk) {
-    const j = (await this.send("POST", Noest.BASE + "/get/trackings/info", { "Content-Type": "application/json" }, this.auth({ trackings: [trk] }))).json() ?? {};
-    const row = j[trk] ?? j.data?.[0] ?? j[0] ?? j; const a = row && typeof row === "object" ? row.activity : null; const last = Array.isArray(a) && a.length ? a[a.length - 1] : null;
-    const raw = pick(last ?? {}, "status", "event") || pick(row && typeof row === "object" ? row : {}, "status", "last_status");
-    if (!raw) throw new ApiError("حالة الطرد غير موجودة في ردّ الشركة"); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
+    const j = (await this.send("POST", Noest.BASE + "/get/trackings/info", this.h(), this.auth({ trackings: [trk] }))).json() ?? {};
+    if (j.message !== undefined && j[trk] === undefined) throw new ApiError("لم تجد الشركة الطرد: " + pick(j, "message"));
+    const row = j[trk] ?? j.data?.[0] ?? j[0] ?? j; const a = row && typeof row === "object" ? row.activity : null; let raw = "";
+    if (Array.isArray(a)) for (const ev of [...a].reverse()) { const k = pick(ev && typeof ev === "object" ? ev : {}, "event_key", "status", "event"); if (k && explain("noest", k)[0] !== "ignore") { raw = k; break; } }
+    if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
   }
-  async cancel(trk) { return (await this.send("POST", Noest.BASE + "/delete/order", { "Content-Type": "application/json" }, this.auth({ tracking: trk }))).ok; }
+  async cancel(trk) { const r = await this.send("POST", Noest.BASE + "/delete/order", this.h(), this.auth({ tracking: trk })); const j = r.json() ?? {}; return r.ok && j.success !== false; }
 }
 
-/* ───── عائلة Ecotrack: محوّل واحد برابط لكل شركة — تجريبي ───── */
+/* ───── عائلة Ecotrack: محوّل واحد برابط لكل شركة؛ create/order بمعاملات استعلام وبلا جسم ───── */
 class Ecotrack extends Adapter {
   constructor(http, code = "ecotrack", base = "") { super(http); this.code = code; this.base = String(base || "").replace(/\/+$/, ""); }
-  static fields() { return [{ key: "baseUrl", label: "رابط المنصة (مثال: https://dhd.ecotrack.dz)", secret: false, required: false }, { key: "token", label: "API Token (Bearer)", secret: true }, { key: "boutique", label: "اسم المتجر عند الشركة (اختياري)", secret: false, required: false }]; }
+  family() { return "ecotrack"; }
+  static fields() {
+    return [{ key: "baseUrl", label: "رابط المنصة (مثال: https://dhd.ecotrack.dz)", secret: false, required: false }, { key: "token", label: "API Token (Bearer)", secret: true },
+      { key: "boutique", label: "اسم المتجر عند الشركة (اختياري)", secret: false, required: false },
+      { key: "autoValidate", label: "تصديق الطرد تلقائياً بعد الإنشاء (1 افتراضي، 0 يبقى مسوّدة)", secret: false, required: false }];
+  }
   authenticate(c) { super.authenticate(c); if (this.cred.baseUrl) this.base = this.cred.baseUrl.replace(/\/+$/, ""); if (!safeHttpsUrl(this.base)) throw new CredentialsError("رابط المنصة مطلوب ويبدأ بـ https://"); return this; }
-  h(json = false) { const h = { Authorization: "Bearer " + this.cred.token, Accept: "application/json" }; return json ? { ...h, "Content-Type": "application/json" } : h; }
+  h() { return { Authorization: "Bearer " + this.cred.token, Accept: "application/json" }; }
+  async ping() {
+    return this.probe(async () => {
+      const j = (await this.send("GET", this.base + "/api/v1/validate/token?api_token=" + encodeURIComponent(this.cred.token), this.h())).json() ?? {}; const m = pick(j, "message");
+      if (m === "VALID_TOKEN") return [true, "المفتاح صالح"];
+      if (m === "TOKEN_NOT_ALLOWED") return [false, "الواجهة البرمجية غير مفعّلة لحسابك عند الشركة (TOKEN_NOT_ALLOWED)"];
+      if (m === "INVALID_TOKEN") return [false, "المفتاح غير صالح (INVALID_TOKEN)"];
+      return [null, "ردّ غير متوقع من الشركة: " + (m || "فارغ")];
+    });
+  }
+  async communes(w) {
+    this._c ??= {}; if (this._c[w]) return this._c[w];
+    let j; try { j = (await this.send("GET", `${this.base}/api/v1/get/communes?wilaya_id=${w}`, this.h())).json() ?? {}; } catch (e) { if (e instanceof ApiError) return []; throw e; }
+    return (this._c[w] = Object.values(j).filter((c) => c && typeof c === "object" && c.nom !== undefined).map((c) => ({ id: String(c.nom), name: String(c.nom), desk: String(c.code_postal ?? "") })));
+  }
+  errorText(j, status) {
+    const code = parseInt(j.code ?? j.error_code ?? 0, 10) || 0;
+    const known = { 10001: "الطلب مُصدَّق ولا يقبل التعديل", 10002: "الشركة لا توصّل إلى هذه الولاية", 10003: "لا يمكن طلب الإرجاع الآن" };
+    const msg = pick(j, "message") + (j.errors ? " — " + JSON.stringify(j.errors) : "");
+    return `${known[code] ?? ""} ${msg}`.trim() || "HTTP " + status;
+  }
   async create(p) {
-    const r = await this.send("POST", this.base + "/api/v1/create/order", this.h(true), { reference: p.orderRef, nom_client: p.name, telephone: p.localPhone(), telephone_2: p.phone2 ? p.localPhone(p.phone2) : "",
-      adresse: p.address || `${p.commune}، ${p.wilayaName}`, code_postal: "", commune: p.commune, code_wilaya: p.legacyWilaya, montant: Math.round(p.total), remarque: p.note, produit: p.productsText(),
-      boutique: this.cred.boutique || "", type: 1, stop_desk: p.stopDesk ? 1 : 0, quantite: 1 });
-    const j = r.json() ?? {}; const trk = pick(j, "tracking", "tracking_number") || pick(j.data ?? {}, "tracking");
-    if (r.ok && trk) return ok(trk, null, j);
-    return fail((pick(j, "message") + (j.errors ? " — " + JSON.stringify(j.errors) : "")).trim() || "HTTP " + r.status, j);
+    let commune = p.commune; const list = await this.communes(p.legacyWilaya);
+    if (list.length) { const m = this.resolveCommune(list, p, "الشركة"); if (m.error) return fail(m.error); commune = m.name; }
+    if (p.stopDesk && p.deskCode === "") return fail("Ecotrack يحتاج رمز مكتب Stop Desk (code_postal) — اختر المكتب أو أرسل للمنزل");
+    const q = { reference: p.orderRef, nom_client: p.name, telephone: p.localPhone(), telephone_2: p.phone2 ? p.localPhone(p.phone2) : "", adresse: p.address || `${p.commune}، ${p.wilayaName}`, commune,
+      code_wilaya: p.legacyWilaya, montant: Math.round(p.total), type: 1, stop_desk: p.stopDesk ? 1 : 0, code_postal: p.stopDesk ? p.deskCode : "", remarque: clip(p.note, 255), produit: clip(p.productsText(), 255), boutique: this.cred.boutique || "" };
+    const qs = new URLSearchParams(); for (const [k, v] of Object.entries(q)) if (v !== "" && v !== null && v !== undefined) qs.set(k, String(v));
+    const r = await this.send("POST", `${this.base}/api/v1/create/order?${qs}`, this.h()); const j = r.json() ?? {};
+    const trk = pick(j, "tracking", "tracking_number") || pick(j.data && typeof j.data === "object" ? j.data : {}, "tracking");
+    if (r.ok && trk && j.success !== false) {
+      let warn = "";
+      if ((this.cred.autoValidate ?? "1") !== "0") {
+        const v = await this.send("POST", `${this.base}/api/v1/valid/order?tracking=${encodeURIComponent(trk)}`, this.h()); const vj = v.json() ?? {};
+        if (!v.ok || vj.success === false) warn = "أُنشئ الطرد لكن لم يُصدَّق عند الشركة: " + (pick(vj, "message") || "HTTP " + v.status);
+      }
+      return ok(trk, null, j, warn);
+    }
+    return fail(this.errorText(j, r.status), j);
   }
   async track(trk) {
-    const j = (await this.send("GET", `${this.base}/api/v1/get/tracking/info?tracking=${encodeURIComponent(trk)}`, this.h())).json() ?? {}; const d = j.activity ? j : (j.data ?? j);
-    const a = d.activity ?? d.history ?? null; const last = Array.isArray(a) && a.length ? a[a.length - 1] : null;
-    const raw = pick(last ?? {}, "status", "event") || pick(d && typeof d === "object" ? d : {}, "status", "last_status");
-    if (!raw) throw new ApiError("حالة الطرد غير موجودة في ردّ الشركة"); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
+    const j = (await this.send("GET", `${this.base}/api/v1/get/tracking/info?tracking=${encodeURIComponent(trk)}`, this.h())).json() ?? {};
+    const d = j.activity !== undefined ? j : (j.data && typeof j.data === "object" ? j.data : j); const rows = d.activity ?? d.history ?? null; let raw = "";
+    if (Array.isArray(rows)) for (const row of [...rows].reverse()) { const c = pick(row && typeof row === "object" ? row : {}, "status", "event"); if (c && explain("ecotrack", c)[0] !== "ignore") { raw = c; break; } }
+    if (!raw) raw = pick(d && typeof d === "object" ? d : {}, "status", "last_status");
+    if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
   }
-  async cancel(trk) { return (await this.send("DELETE", `${this.base}/api/v1/delete/order?tracking=${encodeURIComponent(trk)}`, this.h())).ok; }
+  async cancel(trk) { const r = await this.send("DELETE", `${this.base}/api/v1/delete/order?tracking=${encodeURIComponent(trk)}`, this.h()); const j = r.json() ?? {}; return r.ok && (j.delete === undefined || j.delete === "success"); }
 }
 
 const E = (label, base = null, verified = false, aliases = []) => ({ label, cls: "eco", maturity: "experimental", base, base_verified: verified, aliases });

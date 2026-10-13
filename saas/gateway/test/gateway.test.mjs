@@ -106,7 +106,7 @@ reply(200, { Y2: { success: true, tracking: "yal-RETRY" } });
 [c, b] = await call("POST", "/v1/orders", { ...order({ reference: "Y3" }), courier: "yalidine", credentials: { apiId: "x" } }, kA); ok("مفاتيح ناقصة 422", c === 422 && b.error.code === "invalid_credentials");
 [c, b] = await call("POST", "/v1/orders", { ...order({ reference: "Y4" }), courier: "yalidine" }, kA); ok("بلا مفاتيح ولا خزنة 422", c === 422 && b.error.code === "credentials_required");
 [c, b] = await call("POST", "/v1/orders", { ...order({ reference: "Y5" }), courier: "nope" }, kA); ok("شركة مجهولة 400", c === 400 && b.error.code === "unknown_courier");
-[c, b] = await call("POST", "/v1/orders", { ...order({ reference: "Y6", deliveryType: "stopdesk", stopDeskId: "16A" }), ...yal }, kA); ok("مكتب غير رقمي يُرفض ويحرّر المرجع", c === 422 && sql("SELECT COUNT(*) n FROM gw_orders WHERE reference='Y6'").n === 0, b);
+[c, b] = await call("POST", "/v1/orders", { ...order({ reference: "Y6", deliveryType: "stopdesk", stopDeskId: "16A" }), ...yal }, kA); ok("ياليدين: مكتب برمز غير رقمي يُرفض برسالة واضحة ويحرّر المرجع", c === 502 && /Stop Desk/.test(b.error.message) && sql("SELECT COUNT(*) n FROM gw_orders WHERE reference='Y6'").n === 0, b);
 
 /* التتبع */
 [c, b] = await call("POST", "/v1/track", { courier: "sandbox", trackingNumber: trk }, kA); ok("تتبع sandbox", c === 200 && ["pending", "shipped", "out_for_delivery", "delivered"].includes(b.status), b);

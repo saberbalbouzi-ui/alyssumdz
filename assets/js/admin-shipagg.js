@@ -32,6 +32,8 @@ const ShipAgg = (() => {
       if (r.ok) r.j.webhook_url = r.j.carrierWebhookUrl || ""; return r;
     },
     ship_disconnect: (b) => gwCall("DELETE", "/v1/connections/" + encodeURIComponent(b.carrier)),
+    ship_ping: (b) => gwCall("POST", "/v1/connections/" + encodeURIComponent(b.carrier) + "/ping"),
+    async ship_unknown() { return { ok: true, status: 200, j: { unknown: [] } }; },
   };
   const call = async (r, body, q) => {
     if (mode() === "gw") { const f = GW_ROUTES[r]; return f ? f(body || {}) : { ok: false, status: 0, j: {} }; }
@@ -45,7 +47,9 @@ const ShipAgg = (() => {
     if (!mode()) return false;
     const r = await call("ship_carriers", undefined);
     if (!r.ok) { S.cat = null; S.err = (r.j && r.j.error) || ""; return false; }
-    S.cat = r.j.carriers || []; S.on = r.j.connected || []; S.base = r.j.webhook_base || ""; S.err = ""; return true;
+    S.cat = r.j.carriers || []; S.on = r.j.connected || []; S.base = r.j.webhook_base || ""; S.err = "";
+    try { const u = await call("ship_unknown", undefined); S.unk = (u.ok && u.j.unknown) || []; } catch (e) { S.unk = []; }
+    return true;
   }
   const connected = code => S.on.find(x => x.carrier_code === code);
 
@@ -62,11 +66,12 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     const cards = S.cat.map(c => {
       const on = connected(c.code);
       const act = !c.activatable ? '<span class="sa-b">غير متاحة بعد</span>' : on
-        ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تحديث المفاتيح</button><button class="small" type="button" style="background:var(--red)" data-sa="off" data-c="' + esc(c.code) + '">فصل</button></div>'
+        ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small" type="button" data-sa="ping" data-c="' + esc(c.code) + '">اختبار الاتصال</button><button class="small" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تحديث المفاتيح</button><button class="small" type="button" style="background:var(--red)" data-sa="off" data-c="' + esc(c.code) + '">فصل</button></div>'
         : '<button class="small green" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تفعيل</button>';
       return '<div class="sa-c' + (on ? ' on' : '') + '"><b>' + esc(c.label) + (on ? ' ✅' : '') + '</b><span class="sa-b">' + esc(MAT[c.maturity] || c.maturity) + (c.maturity === "experimental" ? " — جرّبها بطلب واحد أولاً" : "") + '</span>' + act + '</div>';
     }).join("");
-    h.innerHTML = '<b style="color:var(--green)">🌐 تجميع شركات التوصيل</b><div class="hint">فعّل أي شركة بمفاتيح حسابك أنت؛ تُحفظ مشفّرة على خادمك ولا تظهر بعد الحفظ. بعد التفعيل يظهر زر «إرسال عبر …» في معاينة كل طلب، وتتحدّث حالة الطلب تلقائياً إذا وضعتَ رابط التحديث (الذي يظهر عند التفعيل) في حسابك لدى الشركة. لا يُرسل الطلب مرتين: يمنع النظام التكرار.</div><div class="sa-grid">' + cards + '</div>';
+    const unk = (S.unk || []).length ? '<div class="hint" style="border:1px solid #f59e0b;border-radius:10px;padding:.5rem .7rem;margin:.5rem 0">⚠️ حالات أرسلتها الشركات ولم نتعرف عليها (لم تُطبَّق على الطلبات): ' + S.unk.map(u => esc(u.carrier) + " «" + esc(u.raw) + "» ×" + u.n).join("، ") + ' — أرسلها للدعم لإضافتها.</div>' : "";
+    h.innerHTML = unk + '<b style="color:var(--green)">🌐 تجميع شركات التوصيل</b><div class="hint">فعّل أي شركة بمفاتيح حسابك أنت؛ تُحفظ مشفّرة على خادمك ولا تظهر بعد الحفظ. بعد التفعيل يظهر زر «إرسال عبر …» في معاينة كل طلب، وتتحدّث حالة الطلب تلقائياً إذا وضعتَ رابط التحديث (الذي يظهر عند التفعيل) في حسابك لدى الشركة. لا يُرسل الطلب مرتين: يمنع النظام التكرار.</div><div class="sa-grid">' + cards + '</div>';
   }
 
   function modal(code, label, fields, needBase) {
@@ -83,7 +88,8 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
       $("sa-go").disabled = true; const r = await call("ship_connect", body); $("sa-go").disabled = false;
       if (!r.ok) { say("تعذّر التفعيل: " + ((r.j && (r.j.message || MSG[r.j.error] || r.j.error)) || "تحقق من المفاتيح"), "err"); return; }
       await load(); draw();
-      $("sa-body").innerHTML = '<p>✅ تم التفعيل. ضع هذا الرابط في حسابك لدى الشركة ليصلك تحديث حالات الطرود تلقائياً (<b>يظهر هذه المرة فقط</b>):</p><div class="sa-url" id="sa-wh">' + esc(r.j.webhook_url) + '</div><button class="small blue" type="button" id="sa-cp" style="margin-top:.5rem">نسخ الرابط</button>';
+      const vnote = r.j.verified === true ? '<p>✅ تحققنا من المفاتيح لدى الشركة وهي صالحة.</p>' : '<p>⚠️ حُفظت المفاتيح لكن تعذّر التحقق منها الآن' + (r.j.verify_note ? ' (' + esc(r.j.verify_note) + ')' : '') + '؛ جرّب «اختبار الاتصال» لاحقاً.</p>';
+      $("sa-body").innerHTML = vnote + '<p>ضع هذا الرابط في حسابك لدى الشركة ليصلك تحديث حالات الطرود تلقائياً (<b>يظهر هذه المرة فقط</b>):</p><div class="sa-url" id="sa-wh">' + esc(r.j.webhook_url) + '</div><button class="small blue" type="button" id="sa-cp" style="margin-top:.5rem">نسخ الرابط</button>';
       $("sa-go").style.display = "none"; $("sa-x").textContent = "تم";
       $("sa-cp").onclick = () => { try { navigator.clipboard.writeText(r.j.webhook_url); say("نُسخ الرابط", "ok"); } catch (e) { var s = window.getSelection(), g = document.createRange(); g.selectNodeContents($("sa-wh")); s.removeAllRanges(); s.addRange(g); } };
     };
@@ -191,7 +197,8 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     load().then(ok => { if (ok) { c.style.display = ""; draw(); } });
     c.addEventListener("click", async e => {
       const b = e.target.closest("[data-sa]"); if (!b) return; const code = b.dataset.c, meta = (S.cat || []).find(x => x.code === code); if (!meta) return;
-      if (b.dataset.sa === "conn") modal(code, meta.label, meta.fields || [], !!meta.needs_base_url);
+      if (b.dataset.sa === "ping") { b.disabled = true; const r = await call("ship_ping", { carrier: code }); b.disabled = false; const j = r.j || {}; say(j.ok === true ? "المفاتيح صالحة لدى الشركة" : j.ok === false ? "الشركة ترفض المفاتيح: " + (j.message || "") : "تعذّر الحكم الآن: " + (j.message || "حاول لاحقاً"), j.ok === true ? "ok" : "err"); }
+      else if (b.dataset.sa === "conn") modal(code, meta.label, meta.fields || [], !!meta.needs_base_url);
       else if (b.dataset.sa === "off" && confirm("فصل " + meta.label + "؟ تبقى الطرود المرسلة كما هي.")) { await call("ship_disconnect", { carrier: code }); await load(); draw(); }
     });
   }

@@ -105,21 +105,23 @@ ok('ZR: IDWilaya والإجمالي والهاتف', $b['IDWilaya'] === '16' && 
 $h->reply(200, ['Colis' => [['Tracking' => 'ZR-9', 'Situation' => 'En transit']]]); ok('ZR: التتبع', $z->trackParcel('ZR-9')->status === 'shipped');
 
 $m = (new MaystroAdapter($h))->authenticate(['apiKey' => 'MK']);
-$h->reply(201, ['display_id' => 'MY-5']); $r = $m->createParcel($parcel);
-ok('Maystro: Authorization Token', $r->ok && $r->tracking === 'MY-5' && $h->last()[2]['Authorization'] === 'Token MK');
+$h->reply(200, [['id' => 16033, 'wilaya' => 16, 'name' => 'Bab Ezzouar']])->reply(201, ['id' => 'uuid-5', 'display_id' => '000217543', 'status' => 4]); $r = $m->createParcel($parcel);
+ok('Maystro: Authorization Token + معرّف البلدية الرقمي + الطرد بمعرّف UUID', $r->ok && $r->tracking === 'uuid-5' && $h->last()[2]['Authorization'] === 'Token MK' && $h->body()['commune'] === 16033 && $h->body()['products'][0]['quantity'] === 1 && $h->body()['source'] === 4 && $h->body()['delivery_type'] === 1);
 
 $n = (new NoestAdapter($h))->authenticate(['apiToken' => 'NT', 'userGuid' => 'GUID']);
-$h->reply(200, ['success' => true, 'tracking' => 'NO-3']); $r = $n->createParcel($parcel); $b = $h->body();
-ok('NOEST: المفاتيح داخل الجسم والمبلغ', $r->ok && $r->tracking === 'NO-3' && $b['api_token'] === 'NT' && $b['user_guid'] === 'GUID' && $b['montant'] === 4200 && $b['wilaya_id'] === 16);
+$h->reply(200, [])->reply(200, ['success' => true, 'tracking' => 'NO-3'])->reply(200, ['success' => true]); $r = $n->createParcel($parcel);
+$nb = json_decode((string)$h->calls[count($h->calls) - 2][3], true);
+ok('NOEST: Bearer + المفاتيح في الجسم والمبلغ والحقول المطلوبة + تصديق', $r->ok && $r->tracking === 'NO-3' && $nb['api_token'] === 'NT' && $nb['user_guid'] === 'GUID' && $nb['montant'] === 4200 && $nb['wilaya_id'] === 16 && $nb['type_id'] === 1 && $nb['poids'] === 1 && $nb['stop_desk'] === 0 && $h->calls[count($h->calls) - 2][2]['Authorization'] === 'Bearer NT' && str_ends_with($h->last()[1], '/valid/order'));
 
 $d = ShippingFactory::make('dhd', $h)->authenticate(['token' => 'EK']);
-$h->reply(200, ['tracking' => 'DH-1']); $r = $d->createParcel($parcel);
-ok('DHD: رابط Ecotrack وBearer', $r->ok && $h->last()[1] === 'https://dhd.ecotrack.dz/api/v1/create/order' && $h->last()[2]['Authorization'] === 'Bearer EK' && $h->body()['code_wilaya'] === 16);
+$h->reply(200, [])->reply(200, ['tracking' => 'DH-1']); $r = $d->createParcel($parcel);   // الأول: جلب البلديات (فارغ ← الاسم يُرسل كما هو)
+$ec = $h->calls[count($h->calls) - 2];
+ok('DHD: رابط Ecotrack وBearer ومعاملات الاستعلام بلا جسم + تصديق', $r->ok && str_starts_with($ec[1], 'https://dhd.ecotrack.dz/api/v1/create/order?') && str_contains($ec[1], 'code_wilaya=16') && str_contains($ec[1], 'nom_client=') && $ec[3] === null && $ec[2]['Authorization'] === 'Bearer EK' && str_contains($h->last()[1], '/valid/order?tracking=DH-1'));
 $c = ShippingFactory::make('conexlog', $h);
 ok('Conexlog: رابط مجهول يتطلب إدخال التاجر', throwsA(CredentialsException::class, fn() => $c->authenticate(['token' => 'x'])));
 $c = ShippingFactory::make('conexlog', $h)->authenticate(['token' => 'x', 'baseUrl' => 'https://conexlog.ecotrack.dz/']);
-$h->reply(200, ['data' => ['tracking' => 'CX-2']]); $c->createParcel($parcel);
-ok('Conexlog: يعمل برابط التاجر', $h->last()[1] === 'https://conexlog.ecotrack.dz/api/v1/create/order');
+$h->reply(200, [])->reply(200, ['data' => ['tracking' => 'CX-2']]); $c->createParcel($parcel);
+ok('Conexlog: يعمل برابط التاجر', str_starts_with($h->calls[count($h->calls) - 2][1], 'https://conexlog.ecotrack.dz/api/v1/create/order?'));
 ok('Ecotrack: رابط http مرفوض', throwsA(CredentialsException::class, fn() => ShippingFactory::make('ecotrack', $h)->authenticate(['token' => 'x', 'baseUrl' => 'http://x.dz'])));
 $h->reply(200, ['activity' => [['status' => 'Expédié'], ['status' => 'Livré']]]); ok('Ecotrack: آخر نشاط يحدّد الحالة', $d->trackParcel('DH-1')->status === 'delivered');
 
@@ -140,6 +142,12 @@ ok('DB: المفاتيح مشفَّرة (لا نص صريح)', !str_contains(jso
 ok('DB: سرّ الـwebhook مجزَّأ لا صريح', !str_contains(json_encode($row), $conn['webhook_secret']) && $row['webhook_token_hash'] === hash('sha256', $conn['webhook_secret']));
 ok('DB: التفعيل الناقص يُرفض', throwsA(CredentialsException::class, fn() => $repo->connect(8, 'yalidine', ['apiId' => 'x'])));
 ok('DB: Mylers لا يُفعَّل', throwsA(UnsupportedCarrierException::class, fn() => $repo->connect(8, 'mylers', ['a' => 'b'])));
+$hv = new FakeHttp();
+ok('التفعيل مع الفحص: شركة ترفض المفاتيح ⇒ لا تُحفظ', throwsA(CredentialsException::class, fn() => $repo->connect(9, 'yalidine', ['apiId' => 'A', 'apiToken' => 'BAD'], null, true, $hv->reply(401, ['message' => 'Unauthorized']))) && $repo->find(9, 'yalidine') === null);
+$okc = $repo->connect(9, 'yalidine', ['apiId' => 'A', 'apiToken' => 'GOOD'], null, true, $hv->reply(200, ['data' => []]));
+ok('التفعيل مع الفحص: مفاتيح صالحة ⇒ تُحفظ مع ping.ok=true', $okc['ping']['ok'] === true && $repo->find(9, 'yalidine') !== null, $okc['ping']);
+$un = $repo->connect(9, 'zrexpress', ['token' => 'T', 'key' => 'K'], null, true, $hv->reply(500, 'oops'));
+ok('التفعيل مع الفحص: ردّ غامض ⇒ تُحفظ وping.ok=null', $un['ping']['ok'] === null && $repo->find(9, 'zrexpress') !== null, $un['ping']);
 // صف منسوخ إلى مستخدم آخر لا يُفكّ (ربط AAD)
 $pdo->prepare("UPDATE user_carriers SET user_id = 99 WHERE id = ?")->execute([$row['id']]);
 ok('DB: نقل الصف لمستخدم آخر يفشل فكّه', throwsA(CredentialsException::class, fn() => $repo->adapterFor($repo->find(99, 'yalidine'))));
@@ -179,12 +187,12 @@ ok('webhook: طريقة غير مسموحة', $wh->handle('DELETE', $q, [], '')[
 ok('webhook: جسم ضخم يُرفض', $wh->handle('POST', $q, [], str_repeat('x', 1_000_001))[0] === 413);
 // شركة من عائلة Ecotrack عبر الـwebhook نفسه (صيغة عامة)
 $ec = $repo->connect(7, 'dhd', ['token' => 'EK']);
-$http->reply(200, ['tracking' => 'DH-55']); $svc->ship(7, 'dhd', new Parcel('E1', 'A B', '0770000000', 31, 'Oran', 'x', 2000));
+$http->reply(200, [])->reply(200, ['tracking' => 'DH-55']); $svc->ship(7, 'dhd', new Parcel('E1', 'A B', '0770000000', 31, 'Oran', 'x', 2000));
 [, , $body] = $wh->handle('POST', ['c' => $ec['public_id'], 't' => $ec['webhook_secret']], [], json_encode(['tracking' => 'DH-55', 'status' => 'Expédié']));
 ok('webhook: عائلة Ecotrack بالرابط نفسه', json_decode($body, true)['updated'] === 1 && $pdo->query("SELECT status FROM shipments WHERE tracking='DH-55'")->fetchColumn() === 'shipped', $body);
 // تدوير المفاتيح
 $vaultB = new CredentialVault(['k1' => $k1, 'k2' => $k2], 'k2'); $repoB = new ConnectionRepository($pdo, $vaultB);
-ok('التدوير: يعيد تشفير كل الصفوف ويبقى الفكّ سليماً', $repoB->rotate() === 2 && $repoB->adapterFor($repoB->find(7, 'yalidine')) instanceof YalidineAdapter && $pdo->query("SELECT key_id FROM user_carriers WHERE carrier_code='dhd'")->fetchColumn() === 'k2');
+ok('التدوير: يعيد تشفير كل الصفوف ويبقى الفكّ سليماً', $repoB->rotate() === 4 && $repoB->adapterFor($repoB->find(7, 'yalidine')) instanceof YalidineAdapter && $pdo->query("SELECT key_id FROM user_carriers WHERE carrier_code='dhd'")->fetchColumn() === 'k2');
 
 
 /* ردّ إنشاء حقيقي من ياليدين (اختبار كتابة بإذن صاحب المتجر، أكتوبر 2026) */

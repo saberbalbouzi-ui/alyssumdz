@@ -71,6 +71,14 @@ final class YalidineAdapter extends AbstractAdapter
         return self::url($d['label'] ?? $d['labels'] ?? null);
     }
 
+    public function ping(): array
+    {
+        return $this->probe(function (): array {
+            $r = $this->send('GET', self::BASE . '/v1/wilayas/?page_size=1', $this->h());
+            return $r->ok() ? [true, 'المفاتيح صالحة'] : [null, 'ردّ غير متوقع (HTTP ' . $r->status . ')'];
+        });
+    }
+
     public function wilayas(): array
     {
         $j = $this->send('GET', self::BASE . '/v1/wilayas/?page_size=100', $this->h())->json() ?? [];

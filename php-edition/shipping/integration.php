@@ -87,8 +87,16 @@ function shipx_route(string $route, string $method, array $b, string $dataDir, P
                 $cred = []; foreach ((array)($b['credentials'] ?? []) as $k => $v) { if (is_string($k) && is_scalar($v)) { $cred[$k] = trim((string)$v); } }
                 $base = isset($b['base_url']) && trim((string)$b['base_url']) !== '' ? trim((string)$b['base_url']) : null;
                 if ($base !== null && !preg_match('#^https://[a-z0-9.-]+(/[^\s]*)?$#i', $base)) { return [400, ['error' => 'bad_base_url']]; }
-                $r = $repo->connect(SHIPX_USER, (string)($b['carrier'] ?? ''), $cred, $base);
-                return [200, ['ok' => true, 'webhook_url' => shipx_origin() . '/index.php?r=ship_webhook&c=' . $r['public_id'] . '&t=' . $r['webhook_secret'], 'note' => 'الرابط يظهر مرة واحدة فقط — ضعه في حسابك عند الشركة']];
+                $r = $repo->connect(SHIPX_USER, (string)($b['carrier'] ?? ''), $cred, $base, true);   // يفحص المفاتيح عند الشركة قبل الحفظ
+                return [200, ['ok' => true, 'verified' => $r['ping']['ok'] === true, 'verify_note' => $r['ping']['ok'] === true ? '' : (string)$r['ping']['message'], 'webhook_url' => shipx_origin() . '/index.php?r=ship_webhook&c=' . $r['public_id'] . '&t=' . $r['webhook_secret'], 'note' => 'الرابط يظهر مرة واحدة فقط — ضعه في حسابك عند الشركة']];
+
+            case 'ship_ping':                                                  // اختبار اتصال شركة مفعّلة بمفاتيحها المحفوظة (قراءة فقط)
+                $conn = $repo->find(SHIPX_USER, (string)($b['carrier'] ?? $_GET['carrier'] ?? '')) ?? null;
+                if (!$conn || !(int)$conn['is_active']) { return [404, ['error' => 'not_connected']]; }
+                return [200, $repo->adapterFor($conn)->ping()];
+
+            case 'ship_unknown':                                               // حالات أرجعتها الشركات ولا يعرفها القاموس (للمراجعة بدل الصمت)
+                return [200, ['unknown' => $svc->unknownStatuses(SHIPX_USER)]];
 
             case 'ship_disconnect':
                 if ($method !== 'POST') { return [405, ['error' => 'method']]; }
@@ -106,7 +114,7 @@ function shipx_route(string $route, string $method, array $b, string $dataDir, P
                 $extra = json_decode((string)$o['extra'], true) ?: [];
                 $parcel = new Parcel(orderRef: (string)$o['id'], name: (string)$o['name'], phone: (string)$o['phone'], wilayaCode: $w, commune: (string)($o['commune'] ?? ''),
                     address: trim((string)($extra['address'] ?? $extra['العنوان'] ?? '') ?: (string)($o['commune'] ?? '')), total: (float)$o['total'], shippingFee: (float)$o['fee'],
-                    products: str_replace("\n", ' + ', trim((string)$o['items_text'])), stopDesk: ($o['dtype'] ?? '') === 'stop', deskId: ctype_digit((string)($o['desk'] ?? '')) ? (int)$o['desk'] : null);
+                    products: str_replace("\n", ' + ', trim((string)$o['items_text'])), stopDesk: ($o['dtype'] ?? '') === 'stop', deskId: ctype_digit((string)($o['desk'] ?? '')) ? (int)$o['desk'] : null, deskCode: (string)($o['desk'] ?? ''));
                 $r = $svc->ship(SHIPX_USER, $carrier, $parcel);
                 if (!$r->ok) { return [502, ['error' => 'carrier_rejected', 'message' => $r->error]]; }
                 $code = CarrierRegistry::resolve($carrier) ?? $carrier;

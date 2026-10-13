@@ -71,6 +71,11 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
       if (m === "GET") return ok({ connections: await db.all("SELECT carrier_code, public_id, updated_at FROM gw_connections WHERE tenant_id=? AND is_active=1", tid) });
       if (m === "POST") return connect(auth, json(raw));
     }
+    if (m === "POST" && (mm = p.match(/^\/v1\/connections\/([a-z0-9_]{2,30})\/ping$/))) {     // اختبار اتصال شركة مفعّلة بمفاتيحها المحفوظة (قراءة فقط)
+      const conn = await db.one("SELECT * FROM gw_connections WHERE tenant_id=? AND carrier_code=? AND is_active=1", tid, resolveCarrier(mm[1]) ?? mm[1]);
+      if (!conn) throw new HttpError(404, "not_connected", "الشركة غير مفعّلة");
+      return ok(await (await adapterForConn(conn)).ping());
+    }
     if (m === "DELETE" && (mm = p.match(/^\/v1\/connections\/([a-z0-9_]{2,30})$/))) {
       await db.run("UPDATE gw_connections SET is_active=0, updated_at=? WHERE tenant_id=? AND carrier_code=?", nowStr(clock()), tid, resolveCarrier(mm[1]) ?? mm[1]); return ok({ ok: true });
     }
@@ -197,7 +202,6 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     const release = () => db.run("DELETE FROM gw_orders WHERE id=?", id);
     let res;
     try {
-      if (n.type === "stopdesk" && !/^\d+$/.test(n.desk)) { await release(); throw new HttpError(422, "not_supported", "معرّف المكتب غير رقمي: هذه الشركة لا تدعمه بعد في البوابة"); }
       res = await ad.create(makeParcel(geo, { orderRef: ref, name: n.name, phone: n.phone, wilayaCode: n.wilaya, commune: n.commune, address: n.address, total: n.cod, shippingFee: n.fee, products: n.products, phone2: n.phoneAlt, stopDesk: n.type === "stopdesk", deskId: n.desk, note: n.notes, canOpen: n.canOpen }));
     } catch (e) {
       if (!(e instanceof HttpError)) await release();
@@ -220,6 +224,10 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
   }
 
   async function advance(row, status, raw, plan) {
+    if (status === S.UNKNOWN && String(raw ?? "").trim()) {                                // حالة لا يعرفها القاموس: تُسجَّل (مرة لكل حالة/شهر) بدل أن تضيع صامتة
+      const tgt = `${row.courier}:${String(raw).slice(0, 120)}`;
+      if (!(await db.val("SELECT 1 FROM gw_audit WHERE action='status.unknown' AND target=? AND at>=?", tgt, nowStr(clock() - 30 * 864e5)))) await db.run("INSERT INTO gw_audit (at,actor,action,target,detail) VALUES (?,?,?,?,?)", nowStr(clock()), "system", "status.unknown", tgt, JSON.stringify({ tracking: row.tracking }).slice(0, 500));
+    }
     if (!canTransition(row.status, status)) return false;
     await db.run("UPDATE gw_orders SET status=?, raw_status=?, updated_at=? WHERE id=?", status, String(raw).slice(0, 190), nowStr(clock()), row.id);
     await dispatcher.enqueue(row.tenant_id, row.id, "shipment.status_changed", { reference: row.reference, courier: row.courier, trackingNumber: row.tracking, status, previousStatus: row.status, rawStatus: raw }, plan);
@@ -275,12 +283,14 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     if ((!had || !had.is_active) && n >= auth.plan.vault_max) throw new HttpError(402, "plan_limit", "خطتك لا تسمح بمزيد من الشركات المحفوظة");
     const cred = Object.fromEntries(Object.entries(b.credentials && typeof b.credentials === "object" ? b.credentials : {}).map(([k, v]) => [k, typeof v === "string" || typeof v === "number" ? String(v).trim() : ""]));
     const base = b.baseUrl ? String(b.baseUrl) : null; if (base !== null && !safeHttpsUrl(base)) throw new HttpError(400, "validation_error", "baseUrl يجب أن يبدأ بـ https://");
-    try { makeAdapter(code, http, base).authenticate(cred); } catch (e) { if (e instanceof UnsupportedError) throw new HttpError(422, "not_supported", e.message); if (e instanceof CredentialsError) throw new HttpError(422, "invalid_credentials", e.message); throw e; }
+    let ping = { ok: null, message: "" };
+    try { const ad = makeAdapter(code, http, base).authenticate(cred); ping = await ad.ping(); } catch (e) { if (e instanceof UnsupportedError) throw new HttpError(422, "not_supported", e.message); if (e instanceof CredentialsError) throw new HttpError(422, "invalid_credentials", e.message); throw e; }
+    if (ping.ok === false) throw new HttpError(422, "invalid_credentials", "رفضت الشركة هذه المفاتيح: " + ping.message);   // لا نحفظ مفاتيح مرفوضة: يُكتشف الخطأ الآن لا عند أول طلب حقيقي
     const enc = await vault.encrypt(cred, aadConn(tid, code)), secret = randHex(24), hash = await sha256Hex(secret), now = nowStr(clock());
     let pub;
     if (had) { pub = had.public_id; await db.run("UPDATE gw_connections SET credentials_enc=?, key_id=?, base_url=?, webhook_token_hash=?, is_active=1, updated_at=? WHERE id=?", enc, vault.kid, base, hash, now, had.id); }
     else { pub = randHex(12); await db.run("INSERT INTO gw_connections (public_id,tenant_id,carrier_code,credentials_enc,key_id,base_url,webhook_token_hash,is_active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,1,?,?)", pub, tid, code, enc, vault.kid, base, hash, now, now); }
-    return ok({ ok: true, courier: code, carrierWebhookUrl: `${baseUrl.replace(/\/+$/, "")}/v1/hooks/${pub}?t=${secret}`, note: "ضع هذا الرابط في حسابك لدى الشركة لتصلك حالات الطرود لحظياً — يظهر هذه المرة فقط" }, 201);
+    return ok({ ok: true, courier: code, verified: ping.ok === true, ...(ping.ok === true ? {} : { verifyNote: ping.message }), carrierWebhookUrl: `${baseUrl.replace(/\/+$/, "")}/v1/hooks/${pub}?t=${secret}`, note: "ضع هذا الرابط في حسابك لدى الشركة لتصلك حالات الطرود لحظياً — يظهر هذه المرة فقط" }, 201);
   }
   async function setWebhook(auth, b) {
     if (!auth.plan.webhooks) throw new HttpError(402, "plan_limit", "الـwebhook غير متاح في خطتك");
