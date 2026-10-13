@@ -214,8 +214,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const it = await p.evaluate(async () => {
     const tabs = [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt), pane = document.getElementById("pbx-lpane"), imgs = [...pane.querySelectorAll(".pbx-tt img")];
     await new Promise(r => setTimeout(r, 600)); const o = { second: tabs[1], tabOn: document.querySelector('.pbx-tabs [data-lt="img"]').classList.contains("on"), tools: pane.querySelectorAll("[data-imgt]").length, sub: pane.querySelectorAll("[data-imgs]").length, sm: pane.querySelectorAll("[data-imgm]").length, loaded: imgs.filter(i => i.naturalWidth > 0).length, imgsN: imgs.length };
-    const t0 = pane.querySelector(".pbx-tt"), im0 = t0.querySelector("img"), sp0 = t0.querySelector("span"), r1 = im0.getBoundingClientRect(), r2 = sp0.getBoundingClientRect(), cols = new Set([...pane.querySelectorAll(".pbx-tg:first-of-type .pbx-tt")].map(x => Math.round(x.getBoundingClientRect().left))).size;
-    o.square = Math.abs(r1.width - r1.height) < 2 && r1.width > 90; o.nameBelow = r2.top >= r1.bottom - 1; o.twoCols = cols === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
+    const t0 = pane.querySelector(".pbx-tt"), im0 = t0.querySelector("img"), sp0 = t0.querySelector("span"), r1 = im0.getBoundingClientRect(), r2 = sp0.getBoundingClientRect(), cols = new Set([...pane.querySelector(".pbx-tg").querySelectorAll(".pbx-tt")].map(x => Math.round(x.getBoundingClientRect().left))).size;
+    o.tw = Math.round(r1.width); o.th = Math.round(r1.height); o.square = Math.abs(r1.width - r1.height) < 2 && r1.width > 70; o.nameBelow = r2.top >= r1.bottom - 1; o.twoCols = cols === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
     o.tabsHidden = getComputedStyle(document.querySelector("#pbx-ep .pbst-tabs")).display === "none"; o.hasEpTabs = !!document.querySelector("#pbx-ep .ep-tabs");
     pane.querySelector('[data-imgs="txt"]').click(); await new Promise(r => setTimeout(r, 700)); o.head = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.visPane = [...document.querySelectorAll("#pbst .pbst-pane")].filter(x => !x.hidden).map(x => x.dataset.stp).join(",");
     pane.querySelector('[data-imgt="pz"]').click(); await new Promise(r => setTimeout(r, 400)); o.pzHead = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.subGone = !pane.querySelector("[data-imgs]");
@@ -1295,6 +1295,17 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     q('#pbs-seg button[data-m="all"]').click(); R.afterClick = ratio(q('#pbs-seg button[data-m="all"]')); sh.close(); return R;
   });
   ok("نافذة التقاط العناصر بالمظهر الداكن: الخلفية داكنة معتمة وكل النصوص (العنوان، التلميح، «عنصر/كل العناصر») بتباين ≥ 4.5", Math.max(...cqT.wrap) < 60 && cqT.title >= 4.5 && cqT.hint >= 4.5 && cqT.segOn >= 4.5 && cqT.segOff >= 4.5 && cqT.afterClick >= 4.5 && cqT.go >= 4.5, cqT);
+  // ── التقاط العناصر: يبدأ التحليل مباشرة بلا خطوة «تحليل الصورة كاملة»، والمسح أخضر شفاف بخط أخضر ضوئي بلا نقاط زرقاء ──
+  const scT = await p.evaluate(() => {
+    const R = {}; document.documentElement.classList.add("glass");
+    const cv = document.createElement("canvas"); cv.width = 400; cv.height = 300; cv.getContext("2d").fillRect(0, 0, 400, 300);
+    const sh = PBSmart._shell("التقاط العناصر", "عنصر", "كل العناصر", "h", "h2"); const stop = PBSmart._scanFx(sh, cv);
+    const tint = sh.host.querySelector("#pbs-tint"), ln = sh.host.querySelector("#pbs-scanline"), g = el => el ? getComputedStyle(el) : null;
+    R.dots = sh.host.querySelectorAll(".pbs-dot,#pbs-dots").length; R.tint = !!tint && /34, 197, 94|16, 185, 129/.test(g(tint).backgroundImage); R.line = !!ln && /74, 222, 128|34, 197, 94/.test(g(ln).boxShadow) && !/96, 165, 250/.test(g(ln).boxShadow);
+    R.noZoneStep = !/pickZone/.test(PBSmart.captureElements.toString()); R.goText = sh.host.querySelector("#pbs-go").textContent;
+    stop(); sh.close(); return R;
+  });
+  ok("التقاط العناصر: يبدأ التحليل مباشرة، ومسح أخضر شفاف بخط أخضر ضوئي بلا نقاط زرقاء", scT.dots === 0 && scT.tint && scT.line && scT.noZoneStep && /المسح/.test(scT.goText), scT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

@@ -291,7 +291,6 @@ html.glass .pbx-tsx button{background:rgba(255,255,255,.06);color:var(--g-tx);bo
 html.glass .pbx-tsx button:hover{background:rgba(255,255,255,.06)}
 html.glass #pbs-modal.pbs-m #pbs-panel{background:rgba(255,255,255,.06)}
 html.glass #pbs-fab button.no{background:rgba(255,255,255,.06);color:hsl(0,90%,70%)}
-html.glass .pbs-dot{background:hsla(204,100%,62%,.14)}
 html.glass .pbx-pz .pz-pat{background:rgba(255,255,255,.06);color:var(--g-mint);border-color:rgba(255,255,255,.14)}
 html.glass .pbx-pz .pz-pat.on{background:hsla(251,100%,62%,.14);color:hsl(251,100%,74%)}
 html.glass .pbx-pz .pz-pend{background:rgba(255,255,255,.06);color:var(--g-mint)}

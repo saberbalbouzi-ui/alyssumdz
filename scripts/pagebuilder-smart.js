@@ -76,9 +76,9 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   function bindSeg(sh, repaint) { sh.host.querySelectorAll("#pbs-seg button").forEach(b => b.onclick = () => { sh.S.mode = b.dataset.m; sh.S.onMode && sh.S.onMode(); sh.host.querySelectorAll("#pbs-seg button").forEach(x => { const on = x === b; x.classList.toggle("on", on); x.style.background = on ? "#fff" : "transparent"; x.style.boxShadow = on ? "0 1px 4px rgba(0,0,0,.15)" : "none"; }); sh.$("pbs-hint").textContent = sh.S.mode === "all" ? sh.S.hintAll : sh.S.hintOne; repaint(); }); }
   /* أثناء التحليل: الصورة ظاهرة وخط مضيء يمسحها ذهاباً وإياباً حتى ينتهي المسح ← يعيد دالة الإيقاف */
   function scanFx(sh, cv) {
-    if (!document.getElementById("pbs-scan-css3")) { const st = document.createElement("style"); st.id = "pbs-scan-css3"; st.textContent = "@keyframes pbsScan{0%{top:0}100%{top:calc(100% - 2px)}}@keyframes pbsDot{0%{opacity:0;transform:translate(var(--x0),var(--y0)) scale(.6)}12%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translate(var(--x1),var(--y1)) scale(1)}}#pbs-dots{position:absolute;inset:0;overflow:hidden;pointer-events:none}.pbs-dot{position:absolute;left:0;top:0;width:4px;height:4px;border-radius:50%;background:#e0f2fe;box-shadow:0 0 6px 2px rgba(96,165,250,.85);opacity:0;animation:pbsDot var(--d) linear infinite;animation-delay:var(--l);will-change:transform,opacity}#pbs-scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#60a5fa 10%,#dbeafe 50%,#60a5fa 90%,transparent);box-shadow:0 0 8px 2px rgba(96,165,250,.55);animation:pbsScan 1.7s ease-in-out infinite alternate;pointer-events:none}"; document.head.appendChild(st); }
-    const stage = sh.$("pbs-stage"); stage.innerHTML = ""; const { vw, vh } = viewSize(sh, cv.width, cv.height), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff;filter:saturate(.85)"; stage.appendChild(img);
-    const dots = document.createElement("div"); dots.id = "pbs-dots"; { const n = innerWidth <= 820 ? 16 : 36; let h = ""; for (let i = 0; i < n; i++) { const R = () => Math.random(), x0 = Math.round(R() * vw), y0 = Math.round(R() * vh), x1 = Math.round(R() * vw), y1 = Math.round(R() * vh); h += `<i class="pbs-dot" style="--x0:${x0}px;--y0:${y0}px;--x1:${x1}px;--y1:${y1}px;--d:${(.7 + R() * .9).toFixed(2)}s;--l:-${(R() * 1.6).toFixed(2)}s"></i>`; } dots.innerHTML = h; } stage.appendChild(dots); const ln = document.createElement("div"); ln.id = "pbs-scanline"; stage.appendChild(ln); sh.$("pbs-load").style.display = "flex"; sh.$("pbs-go").disabled = true; sh.$("pbs-go").textContent = "⏳ جارِ المسح…";
+    if (!document.getElementById("pbs-scan-css4")) { const st = document.createElement("style"); st.id = "pbs-scan-css4"; st.textContent = "@keyframes pbsScan{0%{top:0}100%{top:calc(100% - 3px)}}@keyframes pbsTint{0%,100%{opacity:.7}50%{opacity:1}}#pbs-tint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(34,197,94,.26),rgba(16,185,129,.2));animation:pbsTint 2.2s ease-in-out infinite}#pbs-scanline{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#22c55e 8%,#d9ffe6 50%,#22c55e 92%,transparent);box-shadow:0 0 14px 4px rgba(74,222,128,.75),0 0 34px 10px rgba(34,197,94,.4);animation:pbsScan 1.7s ease-in-out infinite alternate;pointer-events:none}"; document.head.appendChild(st); }
+    const stage = sh.$("pbs-stage"); stage.innerHTML = ""; const { vw, vh } = viewSize(sh, cv.width, cv.height), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
+    const tint = document.createElement("div"); tint.id = "pbs-tint"; stage.appendChild(tint); const ln = document.createElement("div"); ln.id = "pbs-scanline"; stage.appendChild(ln); sh.$("pbs-load").style.display = "flex"; sh.$("pbs-go").disabled = true; sh.$("pbs-go").textContent = "⏳ جارِ المسح…";
     return () => { stage.innerHTML = ""; };
   }
   function viewSize(sh, W, H) { const view = sh.$("pbs-view"), vw = Math.max(260, Math.min(W, view.clientWidth - 24)), k = vw / W; return { vw, vh: Math.round(H * k), k }; }
@@ -149,10 +149,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
     const lite = LITE(); cv = capCanvas(cv, lite ? 1280 : 2200);
     await new Promise(r => setTimeout(r, 40)); let Z = null;
-    if (window.AIVision && AIVision.supported()) {                     // «منطقة» قبل التحليل: مستطيل حول العنصر ← تحليل ذلك الجزء وحده بدقة أعلى
-      var z = await pickZone(sh, cv); if (sh.S.closed) return;
-      if (z) { const c = document.createElement("canvas"); c.width = z[2] - z[0]; c.height = z[3] - z[1]; c.getContext("2d", { willReadFrequently: true }).drawImage(cv, z[0], z[1], c.width, c.height, 0, 0, c.width, c.height); Z = { full: cv, ox: z[0], oy: z[1] }; cv = c; }
-    }
+    /* التحليل يبدأ مباشرة بلا خطوة وسيطة؛ لتحليل منطقة أدق يوجد زر «✏️ منطقة أخرى» بعد ظهور النتائج */
     if (lite && sh.setCollapsed) sh.setCollapsed(true);
     const stopScan = scanFx(sh, cv);
     let res = null, note = !window.AIVision ? "نسخة قديمة من لوحة التحكم محمّلة — اضغط Ctrl+Shift+R لتحديثها" : !AIVision.supported() ? "متصفحك لا يدعم تشغيل النماذج (Web Worker) — جرّب Chrome على الحاسوب" : "";
@@ -464,5 +461,5 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     };
     redrawBase();
   }
-  return { pane, capture, captureElements, importImages, eraser, warm, setGem, _shell: shell };
+  return { pane, capture, captureElements, importImages, eraser, warm, setGem, _shell: shell, _scanFx: scanFx };
 })();
