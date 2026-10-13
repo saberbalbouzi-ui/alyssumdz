@@ -87,3 +87,14 @@ CREATE TABLE IF NOT EXISTS cr_carts (
   status TEXT NOT NULL DEFAULT 'open', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE (tenant_id, phone_h)
 );
 CREATE INDEX IF NOT EXISTS ix_cr_carts ON cr_carts (tenant_id, status, updated_at);
+
+-- الدفع الإلكتروني (Chargily Pay): جلسات دفع لكل طلب + رابط استقبال الإشعارات
+CREATE TABLE IF NOT EXISTS pay_checkouts (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, order_id TEXT NOT NULL, provider TEXT NOT NULL, ext_id TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', amount INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'dzd', url TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE (tenant_id, provider, ext_id));
+CREATE INDEX IF NOT EXISTS ix_pay_order ON pay_checkouts (tenant_id, order_id, id);
+CREATE TABLE IF NOT EXISTS pay_hooks (tenant_id INTEGER PRIMARY KEY REFERENCES pf_tenants(id) ON DELETE CASCADE, hook_id TEXT NOT NULL UNIQUE);
+
+-- SMS: رصيد لكل مستأجر (وحدة = شريحة رسالة) + دفتر حركات + سجل إرسال (فريد لكل حدث/قالب)
+CREATE TABLE IF NOT EXISTS sms_credits (tenant_id INTEGER PRIMARY KEY REFERENCES pf_tenants(id) ON DELETE CASCADE, balance INTEGER NOT NULL DEFAULT 0, low_notified INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS sms_ledger (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, delta INTEGER NOT NULL, reason TEXT NOT NULL, ref TEXT, at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_sms_ledger ON sms_ledger (tenant_id, id);
+CREATE TABLE IF NOT EXISTS sms_log (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, event_id INTEGER NOT NULL, event_type TEXT NOT NULL, to_h TEXT NOT NULL, segments INTEGER NOT NULL, status TEXT NOT NULL, error TEXT, at INTEGER NOT NULL, UNIQUE (tenant_id, event_id, event_type));

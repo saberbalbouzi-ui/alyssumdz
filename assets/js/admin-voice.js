@@ -122,6 +122,7 @@ const AdminVoice = (() => {
     audit: ["فحص المنتجات", "audit des produits"],
     returns: ["المرتجعات", "مرتجعات", "ريتور", "retours", "retour", "استرجاع"],
     payments: ["المدفوعات", "مدفوعات", "paiements", "paiement", "payments"],
+    callcenter: ["مركز الاتصال", "مركز الاتصالات", "التاكيد", "تاكيد الطلبات", "centre d appel", "call center"],
     seo: ["seo", "سيو", "سي او"],
     blog: ["المدونه", "مدونه", "السياسات", "blog"],
     builder: ["مطور الصفحات", "محرر الصفحات", "page builder", "editeur de pages", "constructeur de pages"],
@@ -153,7 +154,7 @@ const AdminVoice = (() => {
   const TAB_RX = [];
   Object.keys(TABS).forEach(id => TABS[id].forEach(p => { const f = fold(p); TAB_RX.push({ id, len: f.length, rx: re([p]) }); }));
   TAB_RX.sort((a, b) => b.len - a.len);
-  const TAB_LABEL = { pb: "مطوّر الصفحات (المحرّر)", home: "لوحة التحكم", orders: "الطلبات", shipped: "الطلبات المسجلة", repeat: "إعادة الشراء", setup: "تجهيز المتجر", finance: "المخزون والأرباح", analytics: "التحليلات", products: "المنتجات", social: "السوشيال والإعلانات", inventory: "المخزون", bulkp: "التعديل الجماعي", reports: "التقارير", audit: "فحص المنتجات", returns: "المرتجعات", payments: "المدفوعات", seo: "SEO", blog: "المدوّنة والسياسات", builder: "مطوّر الصفحات", smart: "المطوّر الذكي", voice: "الوكيل الناطق", ask: "اسألني", cloner: "ناسخ القوالب", floaters: "الأيقونات العائمة", imgtools: "أدوات الصور", imggen: "مولّد الصور", agent: "الوكيل الذكي", attributes: "السمات", categories: "التصنيفات", fees: "رسوم التوصيل", delivery: "شركات التوصيل", coupons: "أكواد الخصم", blacklist: "القائمة السوداء", loyalty: "الزبائن الأوفياء", customers: "العملاء", admtheme: "مظهر لوحة التحكم", theme: "مظهر الموقع", chromeh: "الهيدر", chromef: "الفوتر", checkout: "نموذج الطلب", pixels: "البكسلات", store: "إعدادات الموقع", pending: "بانتظار التأكيد" };
+  const TAB_LABEL = { callcenter: "مركز الاتصال", pb: "مطوّر الصفحات (المحرّر)", home: "لوحة التحكم", orders: "الطلبات", shipped: "الطلبات المسجلة", repeat: "إعادة الشراء", setup: "تجهيز المتجر", finance: "المخزون والأرباح", analytics: "التحليلات", products: "المنتجات", social: "السوشيال والإعلانات", inventory: "المخزون", bulkp: "التعديل الجماعي", reports: "التقارير", audit: "فحص المنتجات", returns: "المرتجعات", payments: "المدفوعات", seo: "SEO", blog: "المدوّنة والسياسات", builder: "مطوّر الصفحات", smart: "المطوّر الذكي", voice: "الوكيل الناطق", ask: "اسألني", cloner: "ناسخ القوالب", floaters: "الأيقونات العائمة", imgtools: "أدوات الصور", imggen: "مولّد الصور", agent: "الوكيل الذكي", attributes: "السمات", categories: "التصنيفات", fees: "رسوم التوصيل", delivery: "شركات التوصيل", coupons: "أكواد الخصم", blacklist: "القائمة السوداء", loyalty: "الزبائن الأوفياء", customers: "العملاء", admtheme: "مظهر لوحة التحكم", theme: "مظهر الموقع", chromeh: "الهيدر", chromef: "الفوتر", checkout: "نموذج الطلب", pixels: "البكسلات", store: "إعدادات الموقع", pending: "بانتظار التأكيد" };
 
   /* حالات الطلب (القيم كما في مرشّح الطلبات) */
   const STATUS = [

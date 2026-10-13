@@ -946,6 +946,36 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const misses = await p.evaluate(() => JSON.parse(localStorage.getItem("store_hand_misses") || "[]").filter(x => x.type !== "ui"));
   ok("لا إخفاق في إيجاد عناصر اليد", misses.length === 0, misses);
 
+  // ── مركز الاتصال: طابور بالدور، كل قرار يمرّ بالمنطق القائم ──
+  const ccm = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {}; Admin.enqueueNotify = () => { }; Admin.renderShippedBadge = () => { };
+    const uo0 = API.updateOrder, ups = []; API.updateOrder = async (k, id, st) => { ups.push([id, st]); return true; };
+    const sa = Admin.afterManualStatus; Admin.afterManualStatus = () => { };
+    const mk = (id, name, mins, extra) => Object.assign({ id, date: new Date(Date.now() - mins * 60000).toISOString(), status: "nouvelle", name, phone: "055000" + id.slice(-4).padStart(4, "0"), wilaya: "Alger", commune: "Kouba", dtype: "home", items: "منتج ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" }, extra || {});
+    Admin.orders = [mk("C0001", "الأحدث", 5), mk("C0002", "الأقدم", 90), mk("C0003", "خاطئ", 200, { note: "📵خطأ" }), mk("C0004", "مؤكد", 10, { status: "confirmee" })];
+    Admin.tab("callcenter"); await wait(200);
+    const first = () => (document.querySelector("#ccm .ccm-card h2") || {}).textContent;
+    const r = { shown: !document.getElementById("tab-callcenter").classList.contains("hidden"), first: first(), remain: (document.querySelector("#ccm .ccm-chip b") || {}).textContent, hasTel: !!document.querySelector("#ccm a[href^='tel:+21355']") };
+    document.querySelector('#ccm [data-d="noans"]').click(); await wait(150); r.afterNoans = first(); r.att = Admin.attemptsOf(Admin.orders[1]);
+    document.querySelector('#ccm [data-d="confirm"]').click(); await wait(700); r.afterConfirm = first(); r.status = Admin.orders.find(o => o.id === "C0001").status; r.ups = JSON.stringify(ups);
+    r.stats = (document.querySelectorAll("#ccm .ccm-chip")[1] || {}).textContent;
+    document.querySelector('#ccm [data-d="cancel"]') && document.querySelector('#ccm [data-d="cancel"]').click(); await wait(700); r.empty = /لا طلبات/.test(document.getElementById("callcenter-content").textContent) || first();
+    API.updateOrder = uo0; Admin.afterManualStatus = sa; Admin.tab("orders"); await wait(100); r.hidden = document.getElementById("tab-callcenter").classList.contains("hidden");
+    return r;
+  });
+  ok("مركز الاتصال: الأقدم أولاً، المتبقي 2 (الخاطئ والمؤكَّد خارج الطابور)، زر اتصال tel:", ccm.shown && ccm.first === "الأقدم" && ccm.remain === "2" && ccm.hasTel, ccm);
+  ok("مركز الاتصال: «لم يُجب» يسجّل المحاولة ويمرّر للتالي، والتأكيد يمرّ بالمنطق القائم", ccm.afterNoans === "الأحدث" && ccm.att === 1 && ccm.status === "confirmee" && /C0001/.test(ccm.ups), ccm);
+  ok("مركز الاتصال: بعد التأكيد يعود إلى من لم يُجب، والإلغاء يفرّغ الطابور ويختفي التبويب بتغيير الصفحة", ccm.afterConfirm === "الأقدم" && /^\s*1\s*·\s*0\s*·\s*1/.test(ccm.stats || "") && ccm.empty === true && ccm.hidden, ccm);
+  // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
+  const plk = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const mk = (id, st) => ({ id, date: new Date().toISOString(), status: st, name: "سعاد", phone: "0661000000", wilaya: "Oran", commune: "Es Senia", dtype: "home", items: "منتج ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" });
+    Admin.orders = [mk("P1", "confirmee"), mk("P2", "livree")]; Admin.renderOrders();
+    Admin.openOrderPreview(0); await wait(60); const a = document.querySelector("#ord-prev-a"), r = { pay: !!a.querySelector("[data-paylink]"), reviewOnConfirmed: !!a.querySelector("[data-reviewask]") };
+    Admin.openOrderPreview(1); await wait(60); const b = document.querySelector("#ord-prev-a"), l = b.querySelector("[data-reviewask]"); r.review = !!l && /wa\.me\/213661000000/.test(l.href); r.payOnDelivered = !!b.querySelector("[data-paylink]");
+    return r;
+  });
+  ok("معاينة الطلب: «رابط دفع» للمؤكَّد فقط و«اطلب تقييماً» للمسلَّم فقط (رابط واتساب بالرقم الدولي)", plk.pay && !plk.reviewOnConfirmed && plk.review && !plk.payOnDelivered, plk);
   // ═══ جوال: دائرة خضراء تقع فوق الهدف ═══
   ({ p, errs } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }));
   await p.evaluate(() => localStorage.setItem("store_voice_enrolled", "1"));

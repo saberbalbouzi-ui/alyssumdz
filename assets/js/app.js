@@ -189,7 +189,7 @@ const Cart = {
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record && (disc.couponDiscount > 0 || couponFreeShip() || couponGiftTitle()) ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && disc.couponDiscount > 0 && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (window.GeoPin && GeoPin.link()) ? { "📍 الموقع": GeoPin.link() } : {}, Attrib),
     };
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
@@ -1149,6 +1149,7 @@ function initProduct(slug){
       if(f.required && !v){ toast(`يرجى ملء حقل «${f.label||f.id}»`); if(el) el.focus(); return }
       if(v) extraValues[f.label||f.id] = v;
     }
+    try{ const __gp = window.GeoPin && GeoPin.link(); if(__gp) extraValues["📍 الموقع"] = __gp; }catch(e){}
     const fee = (offerFreeShip(p, state.offer) || couponFreeShip()) ? 0 : __sq.fee;
     const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
     const total = Math.max(0, state.offer.price - discount) + fee;
@@ -2025,5 +2026,7 @@ const PhoneDZ = {
   const boot = () => { scan(); try { new MutationObserver(later).observe(document.body, { childList: true, subtree: true }); } catch (e) { } };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
+/* دبوس الموقع على الخريطة (اختياري) */
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();

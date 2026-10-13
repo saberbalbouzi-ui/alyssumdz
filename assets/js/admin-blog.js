@@ -2,6 +2,14 @@
 const AdminBlog = (() => {
   const FILE="assets/data/blog.json";
   const LABELS={privacy:"سياسة الخصوصية",returns:"سياسة الاسترجاع",shipping:"سياسة الشحن",terms:"الشروط والأحكام"};
+  const NM=()=>(typeof CONFIG!=="undefined"&&CONFIG.SITE&&CONFIG.SITE.name)||"المتجر";
+  /* قوالب استرشادية: عدّل الأقواس [ ] بمعلوماتك الفعلية وراجعها مع مختص قبل الاعتماد */
+  const TPL={
+    privacy:()=>"نحترم خصوصيتك وفق القانون 18-07 المتعلق بحماية الأشخاص الطبيعيين في معالجة المعطيات ذات الطابع الشخصي.\n\nما نجمعه: الاسم، رقم الهاتف، الولاية والبلدية والعنوان، ومحتوى طلبك، وموقعك على الخريطة إن اخترت تحديده بنفسك. وعند إدخال رقمك دون إكمال الطلب قد نحتفظ به وبمنتجاتك لمدة أقصاها 30 يوماً لنتصل بك لمساعدتك على إتمامه.\n\nلماذا: لمعالجة طلبك وتوصيله وتأكيده هاتفياً، ولخدمة ما بعد البيع. لا نبيع بياناتك. نشاركها فقط مع شركة التوصيل اللازمة لإيصال طلبك ومزوّدي الخدمة التقنيين اللازمين لتشغيل المتجر.\n\nمدة الحفظ: [مدة حفظ الطلبات، مثلاً 3 سنوات لأغراض محاسبية] ثم تُحذف أو تُجهَّل هويتها.\n\nحقوقك: الاطلاع على بياناتك وتصحيحها وطلب حذفها أو الاعتراض على معالجتها، بمراسلتنا على [البريد الإلكتروني أو واتساب].\n\nالمسؤول عن المعالجة: "+NM()+"، [العنوان]. [رقم تصريح الهيئة الوطنية لحماية المعطيات الشخصية إن وُجد].",
+    returns:()=>"يمكنك طلب استرجاع أو استبدال المنتج خلال [عدد] أيام من تاريخ الاستلام، بشرط أن يكون في حالته الأصلية وغير مستعمل.\n\nلا يُقبل الاسترجاع للمنتجات المفتوحة التي تمس الصحة أو النظافة [عدّل حسب منتجاتك].\n\nراسلنا على [واتساب/البريد] مع رقم الطلب وصورة للمنتج. بعد الفحص نرد المبلغ أو نستبدل المنتج خلال [عدد] أيام. تكلفة الإرجاع: [على من تقع].\n\nإن وصلك المنتج تالفاً أو مخالفاً لما طلبت فالإرجاع على حسابنا.",
+    shipping:()=>"نوصّل إلى [عدد] ولاية عبر شركات توصيل متعاقد معها. يظهر رسم التوصيل في صفحة الطلب قبل التأكيد حسب الولاية وطريقة التسليم (للمنزل أو مكتب شركة التوصيل).\n\nمدة التوصيل المتوقعة: [من–إلى] أيام عمل بعد تأكيد الطلب هاتفياً. قد تتأخر في الظروف الاستثنائية.\n\nالدفع عند الاستلام. يحق لك فتح الطرد ومعاينته أمام الموزّع قبل الدفع. يُرجى تجهيز المبلغ كاملاً وإبقاء هاتفك مفتوحاً.\n\nبعد 3 محاولات اتصال دون رد قد يُلغى الطلب.",
+    terms:()=>"باستعمالك موقع "+NM()+" وتقديم طلب فإنك توافق على هذه الشروط.\n\nالطلب لا يُعتبر نهائياً إلا بعد تأكيده هاتفياً من فريقنا. الأسعار بالدينار الجزائري وتشمل [الضرائب إن وُجدت] ولا تشمل رسم التوصيل المعروض قبل التأكيد.\n\nنحتفظ بحق رفض أو إلغاء أي طلب في حال نفاد المخزون أو خطأ ظاهر في السعر أو بيانات غير صحيحة، مع إعلامك.\n\nالمحتوى الصحي على الموقع إرشادي ولا يغني عن استشارة الطبيب.\n\nأي نزاع يُحلّ ودياً أولاً، ثم أمام الجهات القضائية الجزائرية المختصة."
+  };
   const $=id=>document.getElementById(id);
   const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   let data={posts:[],policies:{}},sha,host;
@@ -25,7 +33,8 @@ const AdminBlog = (() => {
     list.innerHTML='<h3>المقالات</h3>'+data.posts.map((p,i)=>'<div class="card" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.5rem;margin:.35rem 0"><b>'+esc(p.title)+'</b><code dir="ltr">'+esc(p.slug)+'</code><span>'+(p.published?"منشور":"مسودة")+'</span><button type="button" data-edit="'+i+'">تعديل</button><button type="button" data-delete="'+i+'">حذف</button></div>').join("")||'<p>لا توجد مقالات.</p>';
     list.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>fill(Number(b.dataset.edit)));
     list.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>{data.posts.splice(Number(b.dataset.delete),1);draw();});
-    const policies=$("policy-list");policies.innerHTML=Object.keys(LABELS).map(k=>'<label class="hint" style="display:block;margin:.6rem 0">'+LABELS[k]+'<textarea data-policy="'+k+'" rows="6" style="width:100%">'+esc(data.policies[k]||"")+'</textarea></label>').join("");
+    const policies=$("policy-list");policies.innerHTML=Object.keys(LABELS).map(k=>'<label class="hint" style="display:block;margin:.6rem 0">'+LABELS[k]+' <button type="button" class="small gray" data-tpl="'+k+'" title="يملأ نصاً استرشادياً تعدّله بمعلوماتك وتراجعه مع مختص">📄 قالب جاهز</button><textarea data-policy="'+k+'" rows="6" style="width:100%">'+esc(data.policies[k]||"")+'</textarea></label>').join("");
+    policies.querySelectorAll("[data-tpl]").forEach(b=>b.onclick=()=>{const t=policies.querySelector('[data-policy="'+b.dataset.tpl+'"]');if(t.value.trim()&&!confirm("استبدال النص الحالي بالقالب؟"))return;t.value=TPL[b.dataset.tpl]();data.policies[b.dataset.tpl]=t.value;toast("عدّل ما بين [ ] بمعلوماتك ثم احفظ");});
     policies.querySelectorAll("[data-policy]").forEach(t=>t.oninput=()=>{data.policies[t.dataset.policy]=t.value;});
   }
   function fill(i){const p=data.posts[i];if(!p)return;$("blog-title").value=p.title||"";$("blog-slug").value=p.slug||"";$("blog-cover").value=p.cover||"";$("blog-summary").value=p.summary||"";$("blog-date").value=p.date||"";$("blog-content").value=p.content||"";$("blog-published").checked=!!p.published;$("blog-add").dataset.edit=String(i);$("blog-add").textContent="حفظ المقال";}
@@ -40,6 +49,8 @@ const AdminBlog = (() => {
   async function save(){
     data.policies={...data.policies};document.querySelectorAll("[data-policy]").forEach(t=>data.policies[t.dataset.policy]=t.value);
     const json=JSON.stringify(data,null,2);
+    const ph=Object.keys(LABELS).filter(k=>/\[[^\]]+\]/.test(data.policies[k]||"")).map(k=>LABELS[k]);
+    if(ph.length&&!confirm("ما زال في ("+ph.join("، ")+") نص بين [ ] لم تستبدله. الحفظ والنشر رغم ذلك؟"))return;
     try{
       if(typeof GH==="undefined"||!GH.cfg||!GH.cfg().token){localStorage.setItem("alyssum_blog_draft",json);toast("حُفظت مسودة محلية؛ اربط النشر للنشر");return;}
       if(!sha){try{sha=(await GH.getFile(FILE)).sha;}catch(e){}}

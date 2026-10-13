@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.150">
+<meta name="admin-version" content="1.89.153">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -329,6 +329,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('payments',this)"><span class="nav-ic">₪</span><span class="nav-txt"><b>المدفوعات</b><small>حالة الدفع اليدوية: مدفوع/غير مدفوع/مسترد والمبالغ المعلّقة</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('callcenter',this)"><span class="nav-ic">☎️</span><span class="nav-txt"><b>مركز الاتصال</b><small>طلب واحد بالدور وأزرار كبيرة: تأكيد، لم يُجب، لاحقاً، رقم خاطئ، إلغاء</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('costs',this)"><span class="nav-ic">🧪</span><span class="nav-txt"><b>تكلفة المنتجات</b><small>سعر الشراء: مباشرة للمشترى جاهزاً، أو يُحسب من المواد الأولية للمصنَّع</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('fees',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>رسوم التوصيل</b><small>سعر التوصيل لكل ولاية من 58 ولاية</small></span></button>
@@ -795,6 +796,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-audit" class="hidden admin-extra-tab"><div id="admin-audit-app"></div></div>
   <div id="tab-returns" class="hidden admin-extra-tab"><div id="returns-content"></div></div>
   <div id="tab-payments" class="hidden admin-extra-tab"><div id="payments-content"></div></div>
+  <div id="tab-callcenter" class="hidden admin-extra-tab"><div id="callcenter-content"></div></div>
   <div id="tab-costs" class="hidden">
     <div class="tab-seg" id="cc-seg"><button type="button" class="small green" data-cv="rcp" onclick="Admin.ccView('rcp')">🧪 الوصفات</button><button type="button" class="small gold on" data-cv="cost" onclick="Admin.ccView('cost')">🏭 التكلفة</button></div>
     <div class="card" id="fin-cc">
@@ -1613,12 +1615,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.150"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.150"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.150"></script>
+<script src="assets/js/ctl-help.js?v=1.89.153"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.153"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.153"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.150"></script>
+<script src="assets/js/admin-nav.js?v=1.89.153"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1630,7 +1632,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.150"></script>
+<script src="assets/js/admin-update.js?v=1.89.153"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -1656,7 +1658,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-insights.js?v=1.83.0"></script>
 <script src="assets/js/admin-confirm-svc.js?v=1.89.56"></script>
 <script src="assets/js/admin-carts.js?v=1.89.150"></script>
+<script src="assets/js/admin-paylink.js?v=1.89.152"></script>
 <script src="assets/js/admin-platform-sync.js?v=1.89.150"></script>
+<script src="assets/js/admin-callcenter.js?v=1.89.151"></script>
 <script src="assets/js/admin-shipagg.js?v=1"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
@@ -6999,7 +7003,7 @@ const Admin = {
           from_wilaya_name: cfg.fromWilayaName || "Alger",
           firstname: first, familyname: family,
           contact_phone: ph,
-          address: order.address || [order.commune, order.wilaya].filter(Boolean).join("، "),
+          address: ((order.address || [order.commune, order.wilaya].filter(Boolean).join("، ")) + (order.extra && /^https:\/\/maps\.google\.com\//.test(String(order.extra["📍 الموقع"] || "")) ? " " + order.extra["📍 الموقع"] : "")).slice(0, 250),
           to_commune_name: order.commune || "",
           to_wilaya_name: order.wilaya || "",
           product_list: products,
@@ -8336,7 +8340,7 @@ const Admin = {
       (at || cm ? row("نتيجة الاتصال", (at ? "📞 محاولة " + at : "") + (cm === "later" ? " ⏰ أعد الاتصال لاحقاً" : cm === "wrong" ? " 📵 رقم خاطئ" : "")) : "") +
       (t ? row("التتبع", '<b dir="ltr">' + esc(t.tracking) + '</b>') : "") +
       (note ? row("ملاحظة", esc(note)) : "") +
-      ex.map(([k,v])=>row(esc(k), esc(typeof v === "object" ? JSON.stringify(v) : v))).join("") + '</table>';
+      ex.map(([k,v])=>row(esc(k), /^https:\/\/(maps\.google\.com|www\.openstreetmap\.org)\//.test(String(v)) ? '<a href="' + esc(v) + '" target="_blank" rel="noopener">📍 فتح على الخريطة</a>' : esc(typeof v === "object" ? JSON.stringify(v) : v))).join("") + '</table>';
     const a = document.getElementById("ord-prev-a"), close = "document.getElementById('ord-prev-bg').classList.remove('open')";
     const dg = String(o.phone||"").replace(/\D/g,""), intl = dg ? (dg.startsWith("0") ? "213"+dg.slice(1) : (dg.startsWith("213")?dg:"213"+dg)) : "";
     a.innerHTML = (intl ? '<a class="small green call-lnk" href="tel:+' + intl + '" style="text-decoration:none;text-align:center">📞 اتصل</a><a class="small blue" target="_blank" rel="noopener" href="https://wa.me/' + intl + '" style="text-decoration:none;text-align:center">💬 واتساب</a>' : "") + (o.status === "nouvelle" ? '<button class="small green" type="button" onclick="' + close + ';Admin.confirmOrder(' + i + ')">✅ أكّد الطلب</button>' : "") +
