@@ -74,10 +74,24 @@
   /* تلوين زمن أول استجابة: ≤15 د أخضر، ≤60 د أصفر، أكثر أحمر */
   const respTone = m => (m == null ? "" : m <= 15 ? "#86efac" : m <= 60 ? "#fcd34d" : "#fca5a5");
   const fmtMin = m => (m == null ? "—" : m < 90 ? Math.round(m) + " د" : (m / 60).toFixed(1) + " س");
+  /* هدف كل موظفة (callgoal.per[actor] يغلب الافتراضي)، وتوزيع الطلبات المسبق: وزن كل موظفة (0 = خارج التوزيع) وإسناد ثابت بتجزئة معرّف الطلب
+     (نفس الطلب ← نفس الموظفة دائماً دون تخزين، فلا يتبدّل المسند إليه حين تتغيّر القائمة) */
+  const goalFor = (g, actor) => { g = g || {}; const p = (g.per && actor && g.per[actor]) || {}; return { daily: +p.daily || +g.daily || 0, rate: +p.rate || +g.rate || 0 }; };
+  const fnv = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; };
+  function assigneeOf(id, assign) {
+    if (!assign || !assign.on) return ""; const w = assign.weights || {}, ks = Object.keys(w).filter(k => Math.round(+w[k]) > 0).sort();
+    if (!ks.length) return ""; const tot = ks.reduce((t, k) => t + Math.round(+w[k]), 0); let r = fnv(String(id)) % tot;
+    for (const k of ks) { const x = Math.round(+w[k]); if (r < x) return k; r -= x; } return "";
+  }
+  /* ترتيب الفريق: أكثر تأكيدات، ثم أعلى نسبة، ثم أسرع استجابة */
+  function leaderboard(rows, perfRows) {
+    return (rows || []).filter(r => r.confirmed + r.cancelled > 0).map(r => { const pf = (perfRows || []).find(x => x.actor === r.actor); return { actor: r.actor, confirmed: r.confirmed, rate: r.rate, med: pf ? pf.med_min : null }; })
+      .sort((a, b) => b.confirmed - a.confirmed || (b.rate || 0) - (a.rate || 0) || (a.med == null ? 1e9 : a.med) - (b.med == null ? 1e9 : b.med)).map((x, i) => Object.assign(x, { rank: i + 1 }));
+  }
   const ACTION_LBL = { "order.status": "تغيير حالة طلب", "order.call": "نتيجة اتصال", "order.edit": "تعديل طلب", "order.create": "إنشاء طلب", "order.delete": "حذف طلب", login: "دخول", logout: "خروج", "mfa.enroll": "تفعيل المصادقة الثنائية", "mfa.disable": "إيقاف المصادقة الثنائية", "mfa.verify_fail": "رمز مصادقة خاطئ", "staff.create": "إضافة موظف", "staff.update": "تعديل موظف", "staff.disable": "إيقاف موظف", "staff.password": "كلمة مرور موظف", "staff.reset_mfa": "إعادة ضبط مصادقة موظف", "staff.delete": "حذف موظف" };
   const STATUS_LBL = { nouvelle: "جديد", confirmee: "مؤكد", annulee: "ملغى", expediee: "مرسل", livree: "مسلَّم", echec: "فشل" };
 
-  const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL, CANCEL_REASONS, respTone, fmtMin };
+  const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL, CANCEL_REASONS, respTone, fmtMin, goalFor, assigneeOf, leaderboard };
   if (typeof module !== "undefined" && module.exports) { module.exports = model; }
   if (typeof document === "undefined") return;
 
@@ -250,9 +264,22 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     return h + '</div>';
   }
   function goalHtml(own) {
-    if (own) { const g = (S.perf && S.perf.goal) || {}; return g.daily || g.rate ? '<p class="rl-m">🎯 هدفك: ' + (g.daily ? g.daily + " تأكيد يومياً" : "") + (g.daily && g.rate ? " · " : "") + (g.rate ? "نسبة تأكيد ≥ " + g.rate + "%" : "") + '</p>' : ""; }
     const g = (S.perf && S.perf.goal) || {};
-    return '<div class="rl-row" style="margin-top:.6rem"><b>🎯 الأهداف:</b><input id="rl-g-daily" type="number" min="0" max="500" placeholder="تأكيدات يومياً" value="' + esc(g.daily || "") + '" style="width:9rem"><input id="rl-g-rate" type="number" min="0" max="100" placeholder="نسبة التأكيد %" value="' + esc(g.rate || "") + '" style="width:9rem"><button class="rl-b g" data-rl="goal-save">حفظ الأهداف</button></div>';
+    if (own) { const me = S.me && S.me.email ? String(S.me.email).toLowerCase() : "", e = goalFor(g, me); return e.daily || e.rate ? '<p class="rl-m">🎯 هدفك: ' + (e.daily ? e.daily + " تأكيد يومياً" : "") + (e.daily && e.rate ? " · " : "") + (e.rate ? "نسبة تأكيد ≥ " + e.rate + "%" : "") + '</p>' : ""; }
+    const st = ((S.team && S.team.staff) || []).filter(x => x.active), per = g.per || {}, as = g.assign || {}, w = as.weights || {};
+    let h = '<h4 style="margin:.9rem 0 .3rem">🎯 الأهداف وتوزيع الطلبات</h4><div class="rl-row"><input id="rl-g-daily" type="number" min="0" max="500" placeholder="هدف تأكيدات يومي افتراضي" value="' + esc(g.daily || "") + '" style="width:11rem"><input id="rl-g-rate" type="number" min="0" max="100" placeholder="نسبة التأكيد % افتراضية" value="' + esc(g.rate || "") + '" style="width:11rem"><input id="rl-g-alert" type="number" min="5" max="600" placeholder="تنبيه بلا استجابة (د)" title="تنبيه حين يبقى طلب جديد بلا أي نتيجة اتصال أكثر من هذه الدقائق (الافتراضي 30)" value="' + esc(g.alertMin || "") + '" style="width:11rem"></div>';
+    if (st.length) {
+      h += '<div style="overflow-x:auto"><table><thead><tr><th>الموظفة</th><th>هدفها اليومي</th><th>نسبتها المستهدفة %</th><th>حصتها من الطلبات</th></tr></thead><tbody>';
+      st.forEach((x, i) => { const em = String(x.email).toLowerCase(), p = per[em] || {}; h += '<tr data-gem="' + esc(em) + '"><td dir="ltr">' + esc(x.name || em) + '<br><small class="rl-m">' + esc(em) + '</small></td><td><input type="number" min="0" max="500" data-gd placeholder="افتراضي" value="' + esc(p.daily || "") + '" style="width:6rem"></td><td><input type="number" min="0" max="100" data-gr placeholder="افتراضي" value="' + esc(p.rate || "") + '" style="width:6rem"></td><td><input type="number" min="0" max="10" data-gw placeholder="0" value="' + esc(w[em] != null ? w[em] : "") + '" style="width:5rem"></td></tr>'; });
+      h += '</tbody></table></div><div class="rl-row" style="margin-top:.4rem"><label><input type="checkbox" id="rl-g-on"' + (as.on ? " checked" : "") + '> فعّل التوزيع المسبق (كل طلب جديد يُسند لموظفة بحسب الحصة؛ الحصة 0 = خارج التوزيع)</label><input id="rl-g-over" type="number" min="5" max="240" placeholder="مساندة بعد (د)" title="الطلب الذي لم يُجب عنه صاحبه بعد هذه الدقائق يظهر لبقية الموظفات (الافتراضي 20)" value="' + esc(as.overflow || "") + '" style="width:9rem"></div>';
+    }
+    return h + '<div class="rl-row" style="margin-top:.5rem"><button class="rl-b g" data-rl="goal-save">حفظ الأهداف والتوزيع</button></div>';
+  }
+  function boardHtml() {
+    if (!S.me || !S.me.owner) return ""; const lb = leaderboard(summarize(S.stats || []), S.perf && S.perf.rows); if (!lb.length) return "";
+    const nm = a => { const t = ((S.team && S.team.staff) || []).find(x => String(x.email).toLowerCase() === a); return (t && t.name) || a; }, med = ["🥇", "🥈", "🥉"];
+    return '<h4 style="margin:.9rem 0 .3rem">🏆 ترتيب الفريق <small class="rl-m">(الفترة المختارة)</small></h4><div style="overflow-x:auto"><table><thead><tr><th>#</th><th>الموظفة</th><th>تأكيدات</th><th>النسبة</th><th>أول استجابة</th></tr></thead><tbody>' +
+      lb.map(x => '<tr><td>' + (med[x.rank - 1] || x.rank) + '</td><td dir="ltr">' + esc(nm(x.actor)) + '</td><td><b>' + x.confirmed + '</b></td><td>' + (x.rate == null ? "—" : x.rate + "%") + '</td><td>' + fmtMin(x.med) + '</td></tr>').join("") + '</tbody></table></div><div class="rl-row" style="margin-top:.4rem"><button class="rl-b s" data-rl="lb-copy">📋 نسخ الترتيب للفريق (واتساب)</button></div>';
   }
   function reasonsHtml() {
     const rs = (S.perf && S.perf.reasons) || []; if (!rs.length) return "";
@@ -263,14 +290,14 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
   function statsHtml(own) {
     const rows = summarize(S.stats || []);
     let h = '<div class="card"><h3>📊 ' + (own ? "حصيلتي" : "نشاط الفريق") + '</h3><div class="rl-row"><select id="rl-days">' + [[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(x => '<option value="' + x[0] + '"' + (S.days === x[0] ? " selected" : "") + '>' + x[1] + '</option>').join("") + '</select></div>';
-    if (!rows.length) return h + '<p class="rl-m">لا نشاط مسجَّل في هذه الفترة.</p></div>';
+    if (!rows.length) return h + '<p class="rl-m">لا نشاط مسجَّل في هذه الفترة.</p>' + (own ? "" : goalHtml(false)) + '</div>';
     const tot = rows.reduce((t, r) => { t.c += r.confirmed; t.x += r.cancelled; return t; }, { c: 0, x: 0 }), avg = tot.c + tot.x ? Math.round(tot.c / (tot.c + tot.x) * 100) : null;
     const tone = r => (r.rate == null ? "" : r.rate >= 70 ? "#86efac" : r.rate >= 50 ? "#fcd34d" : "#fca5a5");
     h += '<div class="rl-row" style="margin:.4rem 0">' + (avg == null ? "" : '<span class="rl-chip">متوسط الفريق: <b>' + avg + '%</b></span>') + '<button class="rl-b s" data-rl="stats-csv">⬇ CSV</button></div>';
     h += '<div style="overflow-x:auto"><table><thead><tr><th>الحساب</th><th>اليوم / الهدف</th><th>تأكيد</th><th>منها بتعديل عنوان</th><th>إلغاء</th><th>نسبة التأكيد</th><th>أول استجابة (وسيط)</th><th>≤15 د</th><th>غير متاح 1 / 2 / 3</th><th>لاحقاً</th><th>مؤجَّل لغد</th><th>رقم خاطئ</th><th>تعديلات</th><th>طلبات يدوية</th><th>آخر نشاط</th></tr></thead><tbody>';
-    rows.forEach(r => { const pf = ((S.perf && S.perf.rows) || []).find(x => x.actor === r.actor), td = ((S.perf && S.perf.today) || []).find(x => x.actor === r.actor), gl = (S.perf && S.perf.goal) || {}, tc = td ? td.conf : 0;
+    rows.forEach(r => { const pf = ((S.perf && S.perf.rows) || []).find(x => x.actor === r.actor), td = ((S.perf && S.perf.today) || []).find(x => x.actor === r.actor), gl = goalFor(S.perf && S.perf.goal, r.actor), tc = td ? td.conf : 0;
       h += '<tr><td dir="ltr">' + esc(r.actor) + '<br><small class="rl-m">' + esc(label(r.role)) + '</small></td><td style="font-weight:900;color:' + (gl.daily ? (tc >= gl.daily ? "#86efac" : "#fcd34d") : "inherit") + '">' + tc + (gl.daily ? " / " + gl.daily : "") + '</td><td><b>' + r.confirmed + '</b></td><td>' + r.addr + '</td><td>' + r.cancelled + '</td><td style="color:' + tone(r) + ';font-weight:900">' + (r.rate == null ? "—" : r.rate + "%") + (gl.rate && r.rate != null ? '<br><small class="rl-m">الهدف ' + gl.rate + '%</small>' : "") + '</td><td style="color:' + respTone(pf && pf.med_min) + ';font-weight:800">' + fmtMin(pf && pf.med_min) + '</td><td>' + (pf ? pf.fast_pct + "%" : "—") + '</td><td>' + r.try1 + ' / ' + r.try2 + ' / ' + r.try3 + '</td><td>' + r.later + '</td><td>' + r.tomorrow + '</td><td>' + r.wrong + '</td><td>' + r.edits + '</td><td>' + r.created + '</td><td>' + when(r.last) + '</td></tr>'; });
-    return h + '</tbody></table></div><p class="rl-m" style="margin-top:.4rem">نسبة التأكيد = المؤكَّد ÷ (المؤكَّد + الملغى). أول استجابة = الزمن من وصول الطلب إلى أول نتيجة اتصال/حالة تسجّلها الموظفة. أعمدة الاتصال تعدّ كل مرة سُجّلت فيها النتيجة.</p>' + goalHtml(own) + reasonsHtml() + '</div>';
+    return h + '</tbody></table></div><p class="rl-m" style="margin-top:.4rem">نسبة التأكيد = المؤكَّد ÷ (المؤكَّد + الملغى). أول استجابة = الزمن من وصول الطلب إلى أول نتيجة اتصال/حالة تسجّلها الموظفة. أعمدة الاتصال تعدّ كل مرة سُجّلت فيها النتيجة.</p>' + reasonsHtml() + boardHtml() + goalHtml(own) + '</div>';
   }
   function teamHtml() {
     const T = S.team; if (!T) return '<div class="card"><h3>👥 فريق العمل</h3><p class="rl-m">جارٍ التحميل…</p></div>';
@@ -343,8 +370,16 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
       }
       else if (a === "rec-done") { S.recovery = null; draw(); }
       else if (a === "goal-save") {
-        const g = { daily: Math.max(0, Math.min(500, +($("rl-g-daily") || {}).value || 0)), rate: Math.max(0, Math.min(100, +($("rl-g-rate") || {}).value || 0)) };
-        await Priv.set("callgoal", g); toastf("🎯 حُفظت الأهداف"); await refresh();
+        const n = (id, mx) => Math.max(0, Math.min(mx, Math.round(+($(id) || {}).value || 0))), per = {}, weights = {};
+        document.querySelectorAll("#rl tr[data-gem]").forEach(r => { const em = r.dataset.gem, d = Math.max(0, Math.min(500, Math.round(+r.querySelector("[data-gd]").value || 0))), rt = Math.max(0, Math.min(100, Math.round(+r.querySelector("[data-gr]").value || 0))), w = Math.max(0, Math.min(10, Math.round(+r.querySelector("[data-gw]").value || 0)));
+          if (d || rt) per[em] = Object.assign(d ? { daily: d } : {}, rt ? { rate: rt } : {}); if (w) weights[em] = w; });
+        const g = { daily: n("rl-g-daily", 500), rate: n("rl-g-rate", 100), alertMin: n("rl-g-alert", 600), per, assign: { on: !!($("rl-g-on") || {}).checked && Object.keys(weights).length > 0, weights, overflow: n("rl-g-over", 240) } };
+        await Priv.set("callgoal", g); toastf("🎯 حُفظت الأهداف والتوزيع"); await refresh();
+      }
+      else if (a === "lb-copy") {
+        const lb = leaderboard(summarize(S.stats || []), S.perf && S.perf.rows), nm = x => { const t = ((S.team && S.team.staff) || []).find(y => String(y.email).toLowerCase() === x); return (t && t.name) || x; }, med = ["🥇", "🥈", "🥉"];
+        const txt = "🏆 ترتيب الفريق (" + (S.days === 1 ? "اليوم" : S.days + " أيام") + ")\n" + lb.map(x => (med[x.rank - 1] || x.rank + ".") + " " + nm(x.actor) + " — " + x.confirmed + " تأكيد · " + (x.rate == null ? "—" : x.rate + "%") + " · ⏱ " + fmtMin(x.med)).join("\n");
+        try { await navigator.clipboard.writeText(txt); toastf("📋 نُسخ الترتيب"); } catch (e) { window.prompt("انسخ النص:", txt); }
       }
       else if (a === "stats-csv") {
         const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', rows = [["الحساب", "الدور", "تأكيد", "تأكيد بتعديل عنوان", "إلغاء", "نسبة التأكيد %", "غير متاح 1", "غير متاح 2", "غير متاح 3", "لاحقاً", "مؤجَّل لغد", "رقم خاطئ", "تعديلات", "طلبات يدوية", "أول استجابة وسيط (د)", "استجابة ≤15 د %", "تأكيدات اليوم"]]

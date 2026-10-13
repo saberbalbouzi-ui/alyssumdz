@@ -22,11 +22,24 @@ const CallCenter = (() => {
   }
   const parkedCount = () => base().filter(x => parked(x.o)).length;
   const lockedCount = () => base().filter(x => !parked(x.o) && foreign(x.o)).length;
+  /* التوزيع المسبق (يضبطه المالك في «نشاط الفريق»): كل طلب مُسنَد بتجزئة معرّفه إلى موظفة بحسب حصتها؛ من هي في القائمة ترى طلباتها أولاً،
+     ثم طلبات الزميلات التي بقيت بلا استجابة أكثر من «مساندة بعد» دقيقة (الافتراضي 20). المالك والموظفة خارج القائمة يريان الجميع. */
+  const assignCfg = () => { const g = (S.perf && S.perf.goal) || {}; return g.assign && g.assign.on ? g.assign : null; };
+  const meInPlan = as => !!as && Math.round(+((as.weights || {})[meId()]) || 0) > 0;
+  const overMs = as => Math.max(5, +as.overflow || 20) * 60000;
+  function mineOrHelp(o, as) {
+    const who = window.AdminRoles && AdminRoles.assigneeOf ? AdminRoles.assigneeOf(o.id, as) : "";
+    if (!who || who === meId()) return 0;
+    return Date.now() - new Date(o.date) >= overMs(as) ? 1 : -1;      // 1 = مساندة، -1 = ليس لي الآن
+  }
   function queue() {
     const a = A(); if (!a) return [];
-    const rank = o => (dueNow(o) ? -1 : a.callMark(o) === "later" ? 4 : a.attemptsOf(o) ? a.attemptsOf(o) : 0);
-    return base().filter(x => !parked(x.o) && !foreign(x.o)).sort((p, q) => rank(p.o) - rank(q.o) || new Date(p.o.date) - new Date(q.o.date));
+    const rank = o => (dueNow(o) ? -1 : a.callMark(o) === "later" ? 4 : a.attemptsOf(o) ? a.attemptsOf(o) : 0), as = assignCfg(), plan = meInPlan(as);
+    return base().filter(x => !parked(x.o) && !foreign(x.o) && (!plan || mineOrHelp(x.o, as) >= 0))
+      .sort((p, q) => (plan ? mineOrHelp(p.o, as) - mineOrHelp(q.o, as) : 0) || rank(p.o) - rank(q.o) || new Date(p.o.date) - new Date(q.o.date));
   }
+  const helpCount = () => { const as = assignCfg(); return meInPlan(as) ? queue().filter(x => mineOrHelp(x.o, as) === 1).length : 0; };
+  const hiddenCount = () => { const as = assignCfg(); return meInPlan(as) ? base().filter(x => !parked(x.o) && !foreign(x.o) && mineOrHelp(x.o, as) < 0).length : 0; };
   function pick(q) {
     const f = q.filter(x => !S.skip[x.o.id]); const keep = S.cur && f.find(x => x.o.id === S.cur); if (keep) return keep;
     const n = f[0] || q[0] || null; S.cur = n ? n.o.id : null; return n;
@@ -54,7 +67,7 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
   function kpiHtml() {
     const P = S.perf, R = window.AdminRoles; if (!P) return '<div id="ccm-kpi"></div>';
     const me = meObj(), mine = l => (me.owner && me.email ? (l || []).filter(x => x.actor === String(me.email).toLowerCase()) : (l || []));
-    const conf = mine(P.today).reduce((t, x) => t + (+x.conf || 0), 0), g = P.goal || {}, rs = mine(P.rows), med = rs.length ? rs.reduce((t, x) => t + (+x.med_min || 0), 0) / rs.length : null, fast = rs.length ? Math.round(rs.reduce((t, x) => t + (+x.fast_pct || 0), 0) / rs.length) : null;
+    const conf = mine(P.today).reduce((t, x) => t + (+x.conf || 0), 0), g = (R && R.goalFor ? R.goalFor(P.goal, me.owner ? "" : String(me.email || "").toLowerCase()) : (P.goal || {})), rs = mine(P.rows), med = rs.length ? rs.reduce((t, x) => t + (+x.med_min || 0), 0) / rs.length : null, fast = rs.length ? Math.round(rs.reduce((t, x) => t + (+x.fast_pct || 0), 0) / rs.length) : null;
     const pct = g.daily ? Math.min(100, Math.round(conf / g.daily * 100)) : 0;
     return '<div id="ccm-kpi" class="ccm-bar">' + (g.daily ? '<span class="ccm-chip" style="flex:1;min-width:210px">🎯 هدف اليوم: <b>' + conf + ' / ' + g.daily + '</b> تأكيد' + (conf >= g.daily ? ' ✅' : '') + '<span style="display:block;height:6px;border-radius:6px;background:rgba(255,255,255,.14);margin-top:.3rem"><i style="display:block;height:6px;border-radius:6px;width:' + pct + '%;background:' + (pct >= 100 ? '#22c55e' : '#fbbf24') + '"></i></span></span>' : '<span class="ccm-chip">✅ تأكيدات اليوم: <b>' + conf + '</b></span>') +
       '<span class="ccm-chip" style="color:' + (R ? R.respTone(med) : "") + '">⏱ أول استجابة: <b>' + (R ? R.fmtMin(med) : "—") + '</b>' + (fast == null ? "" : ' · ≤15 د: ' + fast + '%') + '</span>' + (g.rate ? '<span class="ccm-chip">هدف النسبة ≥ ' + g.rate + '%</span>' : "") + '</div>';
@@ -89,7 +102,7 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
   function render0() {
     const host = $("callcenter-content"); if (!host) return; css(); const a = A(); if (!a) return;
     const q = queue(), cur = pick(q), st = S.st, done = st.conf + st.canc, mins = Math.max(1, Math.round((Date.now() - st.t0) / 60000));
-    const bar = `<div class="ccm-bar"><span class="ccm-chip">المتبقي: <b>${q.length}</b></span><span class="ccm-chip">✅ ${st.conf}${st.addr ? " (🏠" + st.addr + ")" : ""} · ❌ ${st.canc} · 📞 ${st.noans} · ⏰ ${st.later} · 📅 ${st.tomo}</span>${parkedCount() ? `<span class="ccm-chip">📅 مؤجَّل لاحقاً: <b>${parkedCount()}</b></span>` : ""}${lockedCount() ? `<span class="ccm-chip">🔒 عند زميلاتك: <b>${lockedCount()}</b></span>` : ""}
+    const bar = `<div class="ccm-bar"><span class="ccm-chip">المتبقي: <b>${q.length}</b></span><span class="ccm-chip">✅ ${st.conf}${st.addr ? " (🏠" + st.addr + ")" : ""} · ❌ ${st.canc} · 📞 ${st.noans} · ⏰ ${st.later} · 📅 ${st.tomo}</span>${parkedCount() ? `<span class="ccm-chip">📅 مؤجَّل لاحقاً: <b>${parkedCount()}</b></span>` : ""}${lockedCount() ? `<span class="ccm-chip">🔒 عند زميلاتك: <b>${lockedCount()}</b></span>` : ""}${assignCfg() && meInPlan(assignCfg()) ? `<span class="ccm-chip">👤 للزميلات: <b>${hiddenCount()}</b> · 🤝 مساندة: <b>${helpCount()}</b></span>` : ""}${(a.overdueList && a.overdueList().length) ? `<span class="ccm-chip" style="color:#fca5a5;border-color:#fca5a5">⚠ بلا استجابة >${a.overdueMin()} د: <b>${a.overdueList().length}</b></span>` : ""}
 <span class="ccm-chip">نسبة التأكيد: <b>${done ? Math.round(st.conf / done * 100) : 0}%</b> · ${(done / mins * 60).toFixed(0)} قرار/ساعة</span></div>`;
     const kp = kpiHtml();
     if (!cur) { host.innerHTML = `<div id="ccm">${bar}${kp}<div class="ccm-card"><h2>🎉 لا طلبات بانتظار الاتصال</h2><p class="ccm-m">سيظهر الطلب الجديد هنا تلقائياً.</p></div></div>`; return; }

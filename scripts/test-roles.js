@@ -42,6 +42,11 @@ const rows2 = [
 const s2 = R.summarize(rows2)[0];
 ok("إحصاء الاتصال المفصَّل: غير متاح 1/2، لاحقاً، مؤجَّل لغد، رقم خاطئ، تعديل عنوان (والفارغ لا يُعدّ)", s2.try1 === 4 && s2.try2 === 2 && s2.try3 === 0 && s2.later === 3 && s2.tomorrow === 2 && s2.wrong === 1 && s2.addr === 2 && s2.calls === 21 && s2.rate === 50, s2);
 ok("زمن الاستجابة: تنسيق وتلوين وأسباب الإلغاء", R.fmtMin(9) === "9 د" && R.fmtMin(120) === "2.0 س" && R.fmtMin(null) === "—" && R.respTone(10) === "#86efac" && R.respTone(40) === "#fcd34d" && R.respTone(200) === "#fca5a5" && Object.keys(R.CANCEL_REASONS).length === 7 && R.CANCEL_REASONS.expensive);
+const as0 = { on: true, weights: { "a@x": 1, "b@x": 3, "z@x": 0 } }, cnt = {}; for (let i = 0; i < 4000; i++) { const w = R.assigneeOf("ORD" + i, as0); cnt[w] = (cnt[w] || 0) + 1; }
+ok("توزيع مسبق: ثابت لنفس الطلب، يحترم الحصص (1:3)، والحصة 0 والتعطيل بلا إسناد", R.assigneeOf("ORD7", as0) === R.assigneeOf("ORD7", as0) && !cnt["z@x"] && cnt["b@x"] > cnt["a@x"] * 2 && cnt["b@x"] < cnt["a@x"] * 4 && (cnt["a@x"] + cnt["b@x"]) === 4000 && R.assigneeOf("X", { on: false, weights: { a: 1 } }) === "" && R.assigneeOf("X", null) === "" && R.assigneeOf("X", { on: true, weights: {} }) === "", cnt);
+ok("هدف لكل موظفة يغلب الافتراضي", R.goalFor({ daily: 10, rate: 70, per: { "a@x": { daily: 4 } } }, "a@x").daily === 4 && R.goalFor({ daily: 10, rate: 70, per: { "a@x": { daily: 4 } } }, "a@x").rate === 70 && R.goalFor({ daily: 10 }, "b@x").daily === 10 && R.goalFor(null, "x").daily === 0);
+const lb = R.leaderboard([{ actor: "a", confirmed: 5, cancelled: 5, rate: 50 }, { actor: "b", confirmed: 9, cancelled: 1, rate: 90 }, { actor: "c", confirmed: 5, cancelled: 1, rate: 83 }, { actor: "d", confirmed: 0, cancelled: 0, rate: null }], [{ actor: "b", med_min: 5 }]);
+ok("ترتيب الفريق: بالتأكيدات ثم النسبة، ويستثني من بلا قرارات", lb.length === 3 && lb[0].actor === "b" && lb[0].rank === 1 && lb[1].actor === "c" && lb[2].actor === "a" && lb[0].med === 5, lb);
 ok("إحصاء فارغ", R.summarize([]).length === 0 && R.summarize(null).length === 0);
 
 /* اتساق القوائم عبر المنصات */
