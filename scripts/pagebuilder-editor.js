@@ -288,8 +288,12 @@ body{overflow-x:hidden;margin:0}`;
     frame.addEventListener("load", () => { let off = false; try { off = frame.contentWindow.location.href !== "about:srcdoc"; } catch (x) { off = true; } if (off) { frame.srcdoc = FRAMEDOC; return; }      // حماية: إن انتقل الإطار إلى صفحة أخرى يُعاد إلى إطار المحرر تلقائياً
       fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
     $("pbx-stage").addEventListener("scroll", () => positionOverlay());
-    const wheelZoom = e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom((E.zoom || 1) * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); } };
+    const wheelZoom = e => { if (wheelOn(e)) { e.preventDefault(); setZoom((E.zoom || 1) * wheelStep(e)); } };
     $("pbx-stage").addEventListener("wheel", wheelZoom, { passive: false });
+    { let pz = null; const st = $("pbx-stage"), d2 = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+      st.addEventListener("touchstart", e => { if (e.touches.length === 2 && E.page && E.page.ad) pz = { d: d2(e.touches), z: E.zoom || 1 }; }, { passive: true });
+      st.addEventListener("touchmove", e => { if (pz && e.touches.length === 2) { e.preventDefault(); setZoom(pz.z * d2(e.touches) / pz.d); } }, { passive: false });
+      st.addEventListener("touchend", e => { if (e.touches.length < 2) pz = null; }); }
     d.addEventListener("click", e => {
       const z = e.target.closest("[data-z]"); if (z) { const c = z.dataset.z; setZoom(c === "0" ? 1 : (E.zoom || 1) * (c === "+" ? 1.15 : 1 / 1.15)); return; }
       const mb = e.target.closest("#pbx-moreb"), mw = $("pbx-more"); if (mb) { const o = mw.classList.toggle("open"); mb.setAttribute("aria-expanded", o ? "true" : "false"); return; }
@@ -615,7 +619,10 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function mact(a) { if (a === "up") move(-1); else if (a === "down") move(1); else if (a === "dup") dup(); else if (a === "del") del(); else if (a === "undo") undo(); else if (a === "multi") toggleMM(); else if (a === "set") panel("r", true); }
   function updateMbar() { const app = $("pb-app"); if (!app) return; const mo = multiOn(); app.classList.toggle("pbx-ms", !!E.sel && !!selInfo() && !mo && !E.mm); app.classList.toggle("pbx-mm", !!E.mm || mo); const n = $("pbx-mmn"); if (n) n.textContent = "☑ " + selIds().length; }
-  function setZoom(z) { E.zoom = Math.max(.4, Math.min(3, z)); fitStage(); positionOverlay(); }
+  function setZoom(z) { E.zoom = Math.max(E.page && E.page.ad ? .2 : .4, Math.min(E.page && E.page.ad ? 6 : 3, z)); fitStage(); positionOverlay(); }
+  /* عجلة الفأرة تكبّر/تصغّر مباشرة في «تصميم بمقاس» (وبـCtrl في الصفحات العادية)؛ والقرص بإصبعين على الهاتف */
+  const wheelOn = e => e.ctrlKey || e.metaKey || !!(E.page && E.page.ad);
+  const wheelStep = e => e.deltaY < 0 ? 1.1 : 1 / 1.1;
   function syncPanels() { const app = $("pb-app"); [["l", "pbx-hl"], ["r", "pbx-hr"]].forEach(([w, c]) => { const b = $("pbx-tg" + w); if (b) b.classList.toggle("off", app.classList.contains(c)); }); }
   /* اللمس: السحب بالإصبع على مقابض التحجيم/التدوير وعلى العنصر المحدد يُترجم إلى أحداث فأرة (تمرير الصفحة يبقى طبيعياً في بقية المواضع) */
   function touchBridge(doc, isFrame) {
@@ -703,9 +710,12 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function fitStage() {
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
-    const gut = FREE_ONLY && !isMob() ? 132 : 0; st.style.paddingRight = gut ? gut + "px" : ""; st.style.paddingTop = FREE_ONLY ? (gut ? "62px" : "56px") : "";      // أعلى الصفحة مكان شريط الإعدادات السريعة      // يمين الصفحة: شريط القسم ومصغّرات الأقسام
-    const w = DEVW[E.dev], s = Math.min(1, Math.max(300, st.clientWidth - gut - 36) / w) * (E.zoom || 1); E.scale = s;
+    const isAd = !!(E.page && E.page.ad), gut = FREE_ONLY && !isMob() && !isAd ? 132 : 0; st.style.paddingRight = gut ? gut + "px" : ""; st.style.paddingTop = isAd ? "0" : FREE_ONLY ? (gut ? "62px" : "56px") : ""; st.style.paddingBottom = isAd ? "0" : "";      // أعلى الصفحة مكان شريط الإعدادات السريعة      // يمين الصفحة: شريط القسم ومصغّرات الأقسام
+    const w = DEVW[E.dev];
     const h = FREE_ONLY ? Math.max(200, root ? root.offsetHeight : 0) : Math.max(500, (root ? root.offsetHeight : 0) + 40);      // بلا أقسام عادية: لا شريط أبيض تحت آخر قسم
+    /* «تصميم بمقاس»: تظهر الصفحة كاملة (العرض والارتفاع معاً) داخل مجال الرؤية مهما كان مقاسها، والتكبير/التصغير نسبة إليها؛ لا شريط فارغ أعلاها ولا فراغ تحتها */
+    const pad = isAd ? 16 : 0, fit = isAd ? Math.min(Math.max(120, st.clientWidth - 2 * pad) / w, Math.max(120, st.clientHeight - 2 * pad) / h) : Math.min(1, Math.max(300, st.clientWidth - gut - 36) / w), s = fit * (E.zoom || 1); E.scale = s;
+    sc.style.margin = isAd ? Math.max(pad, Math.round((st.clientHeight - h * s) / 2)) + "px auto" : "";
     fw.style.width = w + "px"; fw.style.height = h + "px"; fw.style.transform = `scale(${s})`; frame.style.height = h + "px";
     sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
     const ad = $("pbx-add2"); if (ad) ad.style.width = (w * s) + "px";
@@ -716,7 +726,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* ───────────────── الأحداث داخل القماش ───────────────── */
   function wireFrame() {
     touchBridge(fdoc, true);
-    fdoc.addEventListener("wheel", e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom((E.zoom || 1) * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); } }, { passive: false });
+    fdoc.addEventListener("wheel", e => { if (wheelOn(e)) { e.preventDefault(); setZoom((E.zoom || 1) * wheelStep(e)); } }, { passive: false });
     fdoc.addEventListener("click", e => {
       if (E.skipClick && Date.now() - E.skipClick < 700) { E.skipClick = 0; e.preventDefault(); e.stopPropagation(); return; }      // نقرة انتهت بتحديد متعدد/مستطيل: لا تُغيّر التحديد
       const a = e.target.closest("a"); if (a) e.preventDefault();      // لا تنتقل الصفحة أبداً بالنقر على رابط/زر داخل المحرر (حتى أثناء تحرير نصه) وإلا فُتحت لوحة الإدارة داخل الإطار
