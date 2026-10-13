@@ -989,7 +989,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const r = await p.evaluate(() => { const h = document.getElementById("aly-hand"); if (!h || !h.classList.contains("press")) return null; const r = h.getBoundingClientRect(), cx = r.x + r.width / 2, cy = r.y + r.height / 2; h.style.display = "none"; const u = document.elementFromPoint(cx, cy); h.style.display = ""; const nb = u && u.closest(".nav-btn"); return { cls: h.className, t: nb ? nb.textContent.trim().slice(0, 12) : "" }; });
     if (r) { under = r.t; cls = r.cls; }
   }
-  ok("الدائرة الخضراء تضغط زر «التقارير» على الجوال", /dot/.test(cls) && /التقارير/.test(under || ""), { cls, under });
+  const dbgU = under === "" ? await p.evaluate(() => { const h = document.getElementById("aly-hand"), r = h && h.getBoundingClientRect(); if (!r) return null; h.style.display = "none"; const u = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); h.style.display = ""; const b = [...document.querySelectorAll(".nav-btn")].find(x => /التقارير/.test(x.textContent)), br = b && b.getBoundingClientRect(); return { at: [Math.round(r.x), Math.round(r.y)], el: u && (u.tagName + "." + u.className + "#" + u.id), txt: u && u.textContent.trim().slice(0, 30), btn: br && [Math.round(br.x), Math.round(br.y), Math.round(br.width), Math.round(br.height)], tab: (document.querySelector(".nav-btn.on .nav-txt b") || {}).textContent }; }) : null;
+  ok("الدائرة الخضراء تضغط زر «التقارير» على الجوال", /dot/.test(cls) && /التقارير/.test(under || ""), { cls, under, dbgU });
   await p.waitForFunction(() => !AdminVoice.busy(), null, { timeout: 20000 });
   ok("التنقل نجح على الجوال", (await tab(p)) === "التقارير", await tab(p));
   ok("لا أخطاء جافاسكربت (جوال)", errs.length === 0, errs.slice(0, 3));
