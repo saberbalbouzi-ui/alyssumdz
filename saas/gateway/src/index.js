@@ -25,5 +25,9 @@ export default {
     catch (e) { console.error("boot:", e?.message); res = { status: 503, headers: { "Content-Type": "application/json; charset=utf-8" }, body: '{"error":{"code":"unavailable","message":"الخدمة غير جاهزة"}}' }; }
     return new Response(res.body, { status: res.status, headers: res.headers });
   },
-  async scheduled(_event, env, ctx) { ctx.waitUntil(build(env).cron().then((r) => console.log("cron", JSON.stringify(r)))); },
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(build(env).cron().then((r) => console.log("cron", JSON.stringify(r))));
+    // نبضة منصة API: cron هذا الـWorker يعمل كل دقيقة على الحساب بينما لم يُطلَق cron الـWorker الجديد؛ الربط بخدمة داخلية (Service Binding) بلا إنترنت
+    if (env.PLATFORM && env.PLATFORM_ADMIN_TOKEN) ctx.waitUntil(env.PLATFORM.fetch("https://api.alyssumhub.fyi/admin/cron", { method: "POST", headers: { Authorization: "Bearer " + env.PLATFORM_ADMIN_TOKEN, "X-Actor": "gateway-tick" } }).then(async (r) => console.log("platform-cron", r.status)).catch((e) => console.error("platform-cron", e?.message)));
+  },
 };

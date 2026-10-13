@@ -25,7 +25,7 @@ function files(dir, base = "") { return readdirSync(new URL(dir, here("")), { wi
 async function stepWorker() {
   const id = await dbId(); if (!id) throw new Error("نفّذ خطوة db أولاً");
   const fd = new FormData();
-  const meta = { main_module: "index.js", compatibility_date: "2026-01-01", bindings: [{ type: "d1", name: "DB", id }, { type: "plain_text", name: "PUBLIC_URL", text: "https://" + HOST }], keep_bindings: ["secret_text"] };
+  const meta = { main_module: "index.js", compatibility_date: "2026-01-01", bindings: [{ type: "d1", name: "DB", id }, { type: "plain_text", name: "PUBLIC_URL", text: "https://" + HOST }, { type: "service", name: "PLATFORM", service: "alyssum-platform-api" }], keep_bindings: ["secret_text"] };
   fd.append("metadata", new Blob([JSON.stringify(meta)], { type: "application/json" }));
   for (const f of files("src/")) fd.append(f, new Blob([readFileSync(here("src/" + f))], { type: "application/javascript+module" }), f);
   await cf("PUT", `/accounts/${ACCOUNT}/workers/scripts/${NAME}`, fd); console.log("Worker رُفع");
