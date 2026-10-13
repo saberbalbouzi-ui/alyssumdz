@@ -12,7 +12,7 @@ const srv = http.createServer((q, r) => { let f = path.join(root, decodeURICompo
 /* خادم مُحاكى: يطابق عقد الدوالّ (هيئة الجسم {p:{…}} ورموز الأخطاء) */
 const CATS = [{ id: 1, slug: "branding", ar: "هوية وتغليف", fr: "Branding", en: "Branding", icon: "🎨", n: 2 }, { id: 2, slug: "media_buyers", ar: "مشترو إعلانات", fr: "Media Buyers", en: "Media Buyers", icon: "📣", n: 1 }];
 const DB = { experts: [
-  { id: "11111111-1111-1111-1111-111111111111", name: "Sara Design <b>x</b>", headline: "مصممة تغليف", cat: "branding", cat_ar: "هوية وتغليف", wilaya: 16, city: "Alger", remote: true, rate_type: "per_task", rate_from: 5000, rate_to: 12000, cur: "DZD", rating: 4.5, count: 2, thumb: "", langs: ["ar", "fr"], bio: "خبرة 5 سنوات", socials: { instagram: "https://instagram.com/sara", facebook: "javascript:alert(1)" }, portfolio: [{ t: "link", u: "https://behance.net/sara", title: "Behance" }], whatsapp: "213555123456", reviews: [{ stars: 5, comment: "ممتازة", at: "2026-10-01", by: "متجر س" }] },
+  { id: "11111111-1111-1111-1111-111111111111", name: "Sara Design <b>x</b>", headline: "مصممة تغليف", cat: "branding", cat_ar: "هوية وتغليف", wilaya: 16, city: "Alger", remote: true, rate_type: "per_task", rate_from: 5000, rate_to: 12000, cur: "DZD", rating: 4.5, count: 2, thumb: "", verified: true, langs: ["ar", "fr"], bio: "خبرة 5 سنوات", socials: { instagram: "https://instagram.com/sara", facebook: "javascript:alert(1)" }, portfolio: [{ t: "link", u: "https://behance.net/sara", title: "Behance" }], whatsapp: "213555123456", reviews: [{ stars: 5, comment: "ممتازة", at: "2026-10-01", by: "متجر س" }] },
   { id: "22222222-2222-2222-2222-222222222222", name: "Karim Ads", headline: "مشتري إعلانات فيسبوك", cat: "media_buyers", cat_ar: "مشترو إعلانات", wilaya: 31, city: "Oran", remote: false, rate_type: "monthly", rate_from: 40000, rate_to: null, cur: "DZD", rating: 0, count: 0, thumb: "", langs: ["ar"], bio: "", socials: {}, portfolio: [], whatsapp: "213666000111", reviews: [] }],
   me: null, calls: [], contacts: 0 };
 const ERRS = { unknown: null };
@@ -21,7 +21,7 @@ function handle(fn, p) {
   const E = (m, c) => { const e = new Error(m); e.status = 400; e.body = { message: m, code: c || "P0001" }; throw e; };
   switch (fn) {
     case "experts_categories": return CATS;
-    case "experts_search": { let L = DB.experts.filter(x => (!p.p.cat || x.cat === p.p.cat) && (!p.p.q || (x.name + x.headline).toLowerCase().includes(String(p.p.q).toLowerCase())) && (!p.p.remote || x.remote) && (!p.p.min_rating || x.rating >= +p.p.min_rating)); return { total: L.length, page: 1, per: 12, items: L.map(x => Object.assign({}, x, { whatsapp: undefined, bio: undefined, reviews: undefined })) }; }
+    case "experts_search": { let L = DB.experts.filter(x => (!p.p.cat || x.cat === p.p.cat) && (!p.p.q || (x.name + x.headline).toLowerCase().includes(String(p.p.q).toLowerCase())) && (!p.p.remote || x.remote) && (!p.p.verified || x.verified) && (!p.p.min_rating || x.rating >= +p.p.min_rating)); return { total: L.length, page: 1, per: 12, items: L.map(x => Object.assign({}, x, { whatsapp: undefined, bio: undefined, reviews: undefined })) }; }
     case "expert_get": { const x = DB.experts.find(e => e.id === p.p.id); if (!x) E("not_found"); return Object.assign({}, x, { whatsapp: undefined }); }
     case "expert_contact": { if (p.p.origin.indexOf("unknown") >= 0) E("unknown_site"); DB.contacts++; const x = DB.experts.find(e => e.id === p.p.id); return { wa: x.whatsapp, name: x.name }; }
     case "expert_review": { if (p.p.stars < 1) E("bad_stars"); return { rating: 4.7, count: 3 }; }
@@ -115,12 +115,22 @@ async function mockRoutes(ctx) {
   ok("الملف: روابط https فقط (javascript: يُهمَل) + التقييمات", await m.evaluate(() => { const h = document.getElementById("ex-modal").innerHTML; return h.indexOf("javascript:") < 0 && h.indexOf("behance.net/sara") >= 0 && /ممتازة/.test(h); }));
   await m.click('#ex-modal [data-ex="star"][data-n="4"]'); await m.fill("#ex-cm", "عمل جيد"); await m.click('#ex-modal [data-ex="rate"]'); await m.waitForFunction(() => /شكراً/.test(document.getElementById("ex-modal").textContent));
   const rv = DB.calls.find(c => c[0] === "expert_review")[1].p; ok("التقييم يُرسل 4 نجوم وأصل الموقع", rv.stars === 4 && rv.comment === "عمل جيد" && /^http/.test(rv.origin), rv);
+  ok("التقييم يحدّث الملف من الخادم", await m.evaluate(() => /ممتازة/.test(document.getElementById("ex-modal").textContent)) && DB.calls.filter(c => c[0] === "expert_get").length >= 2);
+  // شارة موثّق + مرشّح موثّقين + مفضلة + رابط مباشر
+  await m.evaluate(() => { document.getElementById("ex-modal") && document.getElementById("ex-modal").remove(); AdminExperts.S.q = ""; AdminExperts.S.cat = ""; AdminExperts.load(false); });
+  await m.waitForFunction(() => document.querySelectorAll(".ex-card").length === 2);
+  ok("شارة «موثّق» على الموثَّق فقط", await m.evaluate(() => document.querySelectorAll(".ex-card .ex-vf").length === 1 && /Sara/.test(document.querySelector(".ex-card .ex-vf").closest(".ex-card").textContent)));
+  await m.check("#ex-ver"); await m.waitForFunction(() => document.querySelectorAll(".ex-card").length === 1);
+  ok("مرشّح الموثّقين يرسل verified ويُصفّي", DB.calls.filter(c => c[0] === "experts_search").pop()[1].p.verified === "true" && await m.evaluate(() => /Sara/.test(document.querySelector(".ex-card").textContent)));
+  await m.uncheck("#ex-ver"); await m.waitForFunction(() => document.querySelectorAll(".ex-card").length === 2);
+  await m.click('.ex-card[data-id="22222222-2222-2222-2222-222222222222"] [data-ex="fav"]');
+  ok("نجمة المفضلة تُحفظ محلياً", await m.evaluate(() => JSON.stringify(AdminExperts.favs()) === '["22222222-2222-2222-2222-222222222222"]' && document.querySelector('.ex-card[data-id="22222222-2222-2222-2222-222222222222"] .ex-fav.on') !== null));
+  await m.click('[data-ex="favs"]'); await m.waitForFunction(() => document.querySelectorAll(".ex-card").length === 1);
+  ok("«مفضلتي» تعرض المحفوظين فقط", await m.evaluate(() => /Karim/.test(document.querySelector(".ex-card").textContent)));
+  await m.click('[data-ex="favs"]'); await m.waitForFunction(() => document.querySelectorAll(".ex-card").length === 2);
+  await m.evaluate(() => { location.hash = "#expert=11111111-1111-1111-1111-111111111111"; }); await m.evaluate(() => { document.getElementById("ex-modal") && document.getElementById("ex-modal").remove(); });
   ok("لا أخطاء جافاسكربت (تبويب التاجر)", merrs.length === 0, merrs);
   // موقع غير مسجَّل
-  ok("التقييم يحدّث الملف من الخادم", await m.evaluate(() => /ممتازة/.test(document.getElementById("ex-modal").textContent)) && DB.calls.filter(c => c[0] === "expert_get").length >= 2);
-  // موقع غير مسجَّل ← رسالة إرشادية بدل واتساب
-  await m.evaluate(() => { window.__opened.length = 0; document.getElementById("ex-modal").remove(); }); DB.calls.length = 0;
-  ok("(احتياط) لا واتساب بلا رقم", await m.evaluate(() => window.__opened.length === 0));
   // تبويب المزوّد: عرض الملفات وحقن آمن
   const a = await ctx.newPage(), aerrs = []; a.on("pageerror", e => aerrs.push(e.message)); a.on("dialog", d => d.accept());
   await a.goto(base + "/__blank");
@@ -136,8 +146,19 @@ async function mockRoutes(ctx) {
   await a.click("[data-ex=open]"); await a.waitForSelector("[data-ex=st]");
   ok("المزوّد: لا تنفيذ لمحتوى المستقل", await a.evaluate(() => !window.__pwn && !document.querySelector("img[src=x]") && document.body.innerHTML.indexOf("javascript:alert") < 0));
   await a.fill("#ex-note", "ناقص"); await a.click('[data-ex=st][data-v="approved"]'); await a.waitForTimeout(300);
+  ok("المزوّد: زر التوثيق وإشعار واتساب برابط الملف", await a.evaluate(() => !!document.querySelector('[data-ex="vf"]') && /wa\.me\/213555.*قيد المراجعة/.test(decodeURIComponent(document.querySelector('a[href^="https://wa.me/"]').href))));
+  await a.click('[data-ex="vf"]'); await a.waitForTimeout(200);
+  ok("المزوّد: التوثيق يستدعي experts_admin_verify", await a.evaluate(() => window.__rpc.some(x => x[0] === "experts_admin_verify" && x[1].p.id === "a1" && x[1].p.verified === "true")));
   ok("المزوّد: الاعتماد يستدعي الدالة بالمعرّف والملاحظة", await a.evaluate(() => { const c = window.__rpc.find(x => x[0] === "experts_admin_status"); return c && c[1].p.id === "a1" && c[1].p.status === "approved" && c[1].p.note === "ناقص"; }));
   ok("لا أخطاء جافاسكربت (تبويب المزوّد)", aerrs.length === 0, aerrs);
+  const pp = await ctx.newPage(), perrs = []; pp.on("pageerror", e => perrs.push(e.message));
+  await pp.goto(base + "/saas/expert.html?id=11111111-1111-1111-1111-111111111111"); await pp.waitForSelector(".card h1");
+  ok("الصفحة العامة: اسم مهرَّب وشارة موثّق وبلا رقم واتساب", await pp.evaluate(() => /Sara Design/.test(document.querySelector("h1").textContent) && !document.querySelector("h1 b") && /موثّق/.test(document.body.textContent) && !/213555123456/.test(document.documentElement.innerHTML)));
+  ok("الصفحة العامة: روابط https فقط وتوجيه للوحة", await pp.evaluate(() => document.body.innerHTML.indexOf("javascript:") < 0 && /شبكة الخبراء/.test(document.body.textContent) && /behance\.net\/sara/.test(document.body.innerHTML)));
+  await pp.goto(base + "/saas/expert.html?id=bad"); ok("الصفحة العامة: معرّف غير صالح", await pp.evaluate(() => /غير صالح/.test(document.body.textContent)));
+  ok("لا أخطاء جافاسكربت (الصفحة العامة)", perrs.length === 0, perrs);
+  // رابط الملف العام يظهر للمستقل المعتمد
+  await p.evaluate(() => { localStorage.removeItem("alyssum_expert_me"); });
   await browser.close(); srv.close();
   console.log(fails ? `\nفشل ${fails} من ${total}` : `\nنجح ${total}/${total}`); process.exit(fails ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

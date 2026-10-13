@@ -57,6 +57,7 @@ select public.chk('تصفية بالفئة', (public.experts_search('{"cat":"med
 select public.chk('بحث نصي (اسم/نبذة) يتجاهل حالة الأحرف', (public.experts_search('{"q":"cod"}') ->> 'total')::int = 1 and (public.experts_search('{"q":"SARA"}') ->> 'total')::int = 1);
 select public.chk('رمزا % و _ لا يعملان كشرطين عامين', (public.experts_search('{"q":"%"}') ->> 'total')::int = 0 and (public.experts_search('{"q":"_"}') ->> 'total')::int = 0);
 select public.chk('الولاية: من هو في ولايتي أو عن بُعد', (public.experts_search('{"wilaya":16}') ->> 'total')::int = 2 and (public.experts_search('{"wilaya":31}') ->> 'total')::int = 3);
+select public.chk('الأقرب أولاً: عند اختيار ولاية يتقدّم أهلها على «عن بُعد»', public.experts_search('{"wilaya":31}') -> 'items' -> 0 ->> 'name' = 'Karim Ads' and public.experts_search('{"wilaya":16}') -> 'items' -> 0 ->> 'name' like 'Sara%');
 select public.chk('سقف السعر (من)', (public.experts_search('{"max_rate":10000}') ->> 'total')::int = 2);
 select public.chk('عن بُعد فقط', (public.experts_search('{"remote":true}') ->> 'total')::int = 2);
 select public.chk('الترتيب بالسعر تصاعدياً', public.experts_search('{"sort":"price_asc"}') -> 'items' -> 0 ->> 'name' = 'Lina UGC' and public.experts_search('{"sort":"price_desc"}') -> 'items' -> 0 ->> 'name' = 'Karim Ads');
@@ -116,6 +117,15 @@ insert into rk select public.experts_admin_reset_key(jsonb_build_object('id', j 
 select public.experts_admin_status(jsonb_build_object('id', j ->> 'id', 'status', 'approved')) from r1;
 set role anon;
 select public.chk('المفتاح الجديد يعمل والقديم لا يعمل', (select (public.expert_me(jsonb_build_object('id', r1.j ->> 'id', 'key', rk.k ->> 'key')) ->> 'status') = 'approved' from r1, rk) and public.err(format($$select public.expert_me('{"id":"%s","key":"%s"}')$$, (select j ->> 'id' from r1), (select j ->> 'key' from r1))) like '%bad_key%');
+-- شارة «موثّق»
+select public.chk('الافتراضي غير موثّق ولا مرشّح موثّقين بلا توثيق', (public.experts_search('{"verified":true}') ->> 'total')::int = 0 and (public.experts_search('{}') -> 'items' -> 0 ->> 'verified') = 'false');
+select public.chk('المستقل لا يوثّق نفسه ولا anon', public.err($$select public.experts_admin_verify('{"id":"00000000-0000-0000-0000-000000000000"}')$$) like '%permission denied%');
+set role authenticated; select public.jwt_as('other@x.com');
+select public.chk('غير المدير لا يوثّق', public.err($$select public.experts_admin_verify('{"id":"00000000-0000-0000-0000-000000000000"}')$$) like '%unauthorized%');
+select public.jwt_as('boss@x.com');
+select public.experts_admin_verify(jsonb_build_object('id', j ->> 'id', 'verified', 'true')) from r1;
+set role anon;
+select public.chk('التوثيق يظهر في البحث ويصلح مرشّحاً', (public.experts_search('{"verified":true}') ->> 'total')::int = 1 and (public.experts_search('{"verified":true}') -> 'items' -> 0 ->> 'verified') = 'true');
 create temp table u2 (a jsonb, b jsonb, n1 int); grant all on u2 to public;
 insert into u2 (a) select public.expert_pause(jsonb_build_object('id', r1.j ->> 'id', 'key', rk.k ->> 'key', 'paused', 'true')) from r1, rk;
 update u2 set n1 = (public.experts_search('{}') ->> 'total')::int;

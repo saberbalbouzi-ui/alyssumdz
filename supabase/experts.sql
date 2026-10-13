@@ -42,6 +42,7 @@ create table if not exists public.experts_profiles (
   admin_note text not null default '' check (char_length(admin_note) <= 600),
   created_at timestamptz not null default now(), updated_at timestamptz not null default now(), approved_at timestamptz
 );
+alter table public.experts_profiles add column if not exists verified boolean not null default false;   -- «موثّق» بقرار المدير (هوية/أعمال تم التحقق منها)
 create unique index if not exists experts_wa_uq on public.experts_profiles (whatsapp);
 create index if not exists experts_list_idx on public.experts_profiles (status, category_id, rating_avg desc);
 
@@ -122,7 +123,7 @@ $$;
 -- صف الملف العلني (بلا واتساب ولا مفتاح)
 create or replace function public._ex_card(e public.experts_profiles, fl boolean) returns jsonb language sql stable security definer set search_path = public as $$
   select jsonb_build_object('id', e.id, 'name', e.display_name, 'headline', e.headline, 'cat', c.slug, 'cat_ar', c.name_ar, 'cat_fr', c.name_fr, 'wilaya', e.wilaya, 'city', e.city,
-    'remote', e.remote, 'rate_type', e.rate_type, 'rate_from', e.rate_from, 'rate_to', e.rate_to, 'cur', e.currency, 'rating', e.rating_avg, 'count', e.rating_count, 'thumb', e.thumb, 'langs', e.languages)
+    'remote', e.remote, 'rate_type', e.rate_type, 'rate_from', e.rate_from, 'rate_to', e.rate_to, 'cur', e.currency, 'rating', e.rating_avg, 'count', e.rating_count, 'thumb', e.thumb, 'langs', e.languages, 'verified', e.verified)
     || case when fl then jsonb_build_object('bio', e.bio, 'socials', e.socials, 'portfolio', e.portfolio, 'since', e.created_at) else '{}'::jsonb end
   from public.expert_categories c where c.id = e.category_id
 $$;
@@ -139,16 +140,16 @@ $$;
 -- بحث: p = {q, cat, wilaya, min_rating, max_rate, remote, sort: rating|new|price_asc|price_desc, page, per}
 create or replace function public.experts_search(p jsonb default '{}') returns jsonb language plpgsql stable security definer set search_path = public as $$
 declare q text := nullif(btrim(coalesce(p ->> 'q', '')), ''); cat text := nullif(p ->> 'cat', ''); wil int := nullif(p ->> 'wilaya', '')::int;
-  mr numeric := coalesce(nullif(p ->> 'min_rating', '')::numeric, 0); mx int := nullif(p ->> 'max_rate', '')::int; rem boolean := case when p ->> 'remote' = 'true' then true else null end;
+  mr numeric := coalesce(nullif(p ->> 'min_rating', '')::numeric, 0); mx int := nullif(p ->> 'max_rate', '')::int; rem boolean := case when p ->> 'remote' = 'true' then true else null end; ver boolean := case when p ->> 'verified' = 'true' then true else null end;
   srt text := coalesce(p ->> 'sort', 'rating'); per int := least(greatest(coalesce(nullif(p ->> 'per', '')::int, 12), 1), 24); pg int := greatest(coalesce(nullif(p ->> 'page', '')::int, 1), 1);
   pat text; tot int; items jsonb;
 begin
   if q is not null then q := left(q, 60); pat := '%' || replace(replace(replace(q, '\', '\\'), '%', '\%'), '_', '\_') || '%'; end if;
   with f as (select e.* from public.experts_profiles e join public.expert_categories c on c.id = e.category_id
       where e.status = 'approved' and (cat is null or c.slug = cat) and (wil is null or e.wilaya = wil or e.remote) and e.rating_avg >= mr
-        and (mx is null or e.rate_from is null or e.rate_from <= mx) and (rem is null or e.remote)
+        and (mx is null or e.rate_from is null or e.rate_from <= mx) and (rem is null or e.remote) and (ver is null or e.verified)
         and (pat is null or e.display_name ilike pat or e.headline ilike pat or e.bio ilike pat or e.city ilike pat)),
-    pg_ as (select f.*, row_number() over (order by
+    pg_ as (select f.*, row_number() over (order by case when wil is not null and wilaya = wil then 0 else 1 end,
       case when srt = 'rating' then rating_avg end desc nulls last, case when srt = 'rating' then rating_count end desc,
       case when srt = 'new' then created_at end desc, case when srt = 'price_asc' then coalesce(rate_from, 2147483647) end asc,
       case when srt = 'price_desc' then coalesce(rate_from, 0) end desc, created_at desc) as rn from f)
@@ -295,6 +296,12 @@ begin
   update public.experts_profiles set key_hash = public._ex_hash(k), updated_at = now() where id = nullif(p ->> 'id', '')::uuid;
   return jsonb_build_object('key', k);
 end $$;
+create or replace function public.experts_admin_verify(p jsonb) returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_saas_admin() then raise exception 'unauthorized' using errcode = '42501'; end if;
+  update public.experts_profiles set verified = coalesce(p ->> 'verified', 'true') = 'true', updated_at = now() where id = nullif(p ->> 'id', '')::uuid;
+  return jsonb_build_object('ok', true);
+end $$;
 create or replace function public.experts_admin_review(p jsonb) returns jsonb language plpgsql security definer set search_path = public as $$
 declare eid uuid;
 begin
@@ -309,7 +316,7 @@ do $$ declare f text; begin
   foreach f in array array['experts_categories(), experts_search(jsonb)', 'expert_get(jsonb)', 'expert_contact(jsonb)', 'expert_review(jsonb)', 'expert_report(jsonb)', 'expert_register(jsonb)', 'expert_me(jsonb)', 'expert_update(jsonb)', 'expert_pause(jsonb)', 'expert_delete(jsonb)'] loop
     execute 'revoke all on function public.' || f || ' from public'; execute 'grant execute on function public.' || f || ' to anon, authenticated';
   end loop;
-  foreach f in array array['experts_admin_status(jsonb)', 'experts_admin_reset_key(jsonb)', 'experts_admin_review(jsonb)'] loop
+  foreach f in array array['experts_admin_status(jsonb)', 'experts_admin_reset_key(jsonb)', 'experts_admin_review(jsonb)', 'experts_admin_verify(jsonb)'] loop
     execute 'revoke all on function public.' || f || ' from public, anon'; execute 'grant execute on function public.' || f || ' to authenticated';
   end loop;
 end $$;

@@ -17,7 +17,7 @@ const ExpertsPage = (() => {
       save: "حفظ التعديلات", send: "إرسال الملف للمراجعة", pause: "إيقاف الظهور", resume: "استئناف الظهور", del: "حذف ملفي نهائياً", sure: "حذف الملف والتقييمات نهائياً؟ لا يمكن التراجع.",
       status: { pending: "بانتظار الموافقة", approved: "معتمد ومنشور", rejected: "مرفوض", suspended: "موقوف", paused: "متوقف بطلبك" },
       stNote: { pending: "تتم مراجعة ملفك يدوياً قبل ظهوره (عادةً خلال يوم أو يومين).", approved: "ملفك ظاهر للتجار. تعديل الاسم أو العنوان أو النبذة أو المعرض يعيده للمراجعة.", rejected: "رُفض ملفك.", suspended: "الملف موقوف من الإدارة.", paused: "ملفك مخفي حتى تستأنف الظهور." },
-      adminNote: "ملاحظة الإدارة", stats: "تواصل معك", times: "مرّة", rating: "التقييم", keyTitle: "احتفظ بمفتاحك السرّي الآن!", keyWarn: "يظهر هذا المفتاح مرة واحدة فقط ولا نستطيع استرجاعه. به تدخل وتعدّل ملفك. إن ضاع تطلب إعادة تعيينه من الإدارة.", copy: "نسخ", dl: "تنزيل ملف", copied: "تم النسخ ✓", cont: "متابعة إلى ملفي", mid: "معرّف ملفك",
+      adminNote: "ملاحظة الإدارة", stats: "تواصل معك", share: "رابط ملفي العام (للمشاركة)", copyLink: "نسخ الرابط", times: "مرّة", rating: "التقييم", keyTitle: "احتفظ بمفتاحك السرّي الآن!", keyWarn: "يظهر هذا المفتاح مرة واحدة فقط ولا نستطيع استرجاعه. به تدخل وتعدّل ملفك. إن ضاع تطلب إعادة تعيينه من الإدارة.", copy: "نسخ", dl: "تنزيل ملف", copied: "تم النسخ ✓", cont: "متابعة إلى ملفي", mid: "معرّف ملفك",
       saved: "تم الحفظ ✓", saved2: "تم الحفظ — الملف عاد للمراجعة لأنك عدّلت المحتوى.", busy: "جارٍ المعالجة…", imgErr: "تعذّر تجهيز الصورة", maxP: "الحد الأقصى 8 عناصر",
       err: { consent_required: "يجب الموافقة على الشروط.", bad_name: "أدخل اسماً وعنواناً صحيحين.", bad_headline: "العنوان قصير جداً.", bad_category: "اختر التخصص.", bad_whatsapp: "رقم واتساب غير صالح (مثال: 0555123456).", bad_rate: "التسعير غير صالح.", already_registered: "هذا الرقم مسجَّل مسبقاً — ادخل بمفتاحك.", rate_limited: "محاولات كثيرة، أعد المحاولة لاحقاً.", bad_key: "المعرّف أو المفتاح غير صحيح.", locked: "الملف مقفل من الإدارة.", too_large: "الحجم كبير جداً — قلّل الصور.", def: "تعذّر تنفيذ الطلب، حاول مجدداً." }
     },
@@ -29,7 +29,7 @@ const ExpertsPage = (() => {
       save: "Enregistrer", send: "Envoyer pour validation", pause: "Masquer mon profil", resume: "Réafficher mon profil", del: "Supprimer définitivement", sure: "Supprimer le profil et les avis définitivement ?",
       status: { pending: "En attente de validation", approved: "Validé et publié", rejected: "Refusé", suspended: "Suspendu", paused: "Masqué par vous" },
       stNote: { pending: "Votre profil est relu manuellement avant publication (généralement 1 à 2 jours).", approved: "Votre profil est visible. Modifier nom, titre, présentation ou portfolio le renvoie en validation.", rejected: "Votre profil a été refusé.", suspended: "Profil suspendu par l'administration.", paused: "Votre profil est masqué jusqu'à réaffichage." },
-      adminNote: "Note de l'administration", stats: "Contacts reçus", times: "fois", rating: "Note", keyTitle: "Conservez votre clé secrète maintenant !", keyWarn: "Cette clé n'est affichée qu'une fois et ne peut pas être récupérée. Elle sert à modifier votre profil. Perdue, demandez sa réinitialisation à l'administration.", copy: "Copier", dl: "Télécharger", copied: "Copié ✓", cont: "Accéder à mon profil", mid: "ID de votre profil",
+      adminNote: "Note de l'administration", stats: "Contacts reçus", share: "Lien public de mon profil", copyLink: "Copier le lien", times: "fois", rating: "Note", keyTitle: "Conservez votre clé secrète maintenant !", keyWarn: "Cette clé n'est affichée qu'une fois et ne peut pas être récupérée. Elle sert à modifier votre profil. Perdue, demandez sa réinitialisation à l'administration.", copy: "Copier", dl: "Télécharger", copied: "Copié ✓", cont: "Accéder à mon profil", mid: "ID de votre profil",
       saved: "Enregistré ✓", saved2: "Enregistré — le profil repasse en validation car le contenu a changé.", busy: "Traitement…", imgErr: "Image illisible", maxP: "Maximum 8 éléments",
       err: { consent_required: "Vous devez accepter les conditions.", bad_name: "Nom ou titre invalide.", bad_headline: "Titre trop court.", bad_category: "Choisissez une spécialité.", bad_whatsapp: "Numéro WhatsApp invalide (ex : 0555123456).", bad_rate: "Tarif invalide.", already_registered: "Ce numéro est déjà inscrit — connectez-vous avec votre clé.", rate_limited: "Trop de tentatives, réessayez plus tard.", bad_key: "ID ou clé incorrect.", locked: "Profil verrouillé par l'administration.", too_large: "Trop volumineux — réduisez les images.", def: "Action impossible, réessayez." }
     }
@@ -37,6 +37,7 @@ const ExpertsPage = (() => {
   const S = { lang: "ar", cats: [], me: null, view: "home", form: null, msg: null, busy: false, secret: null };
   try { const l = localStorage.getItem(LL); S.lang = l === "fr" ? "fr" : "ar"; } catch (e) { }
   const L = () => T[S.lang];
+  const pubUrl = id => location.origin + location.pathname.replace(/experts\.html$/, "") + "expert.html?id=" + id;
 
   /* ── RPC ── */
   async function rpc(fn, p) {
@@ -128,7 +129,7 @@ const ExpertsPage = (() => {
   function meH() {
     const l = L(), m = S.me, st = m.status;
     const head = '<div class="card"><div class="row" style="justify-content:space-between"><div><b style="font-size:1.15rem">' + esc(m.name) + '</b><div class="mut">' + esc(m.headline) + '</div></div><span class="st ' + esc(st) + '">' + esc(l.status[st] || st) + '</span></div><p class="mut" style="margin-top:.6rem">' + esc(l.stNote[st] || "") + "</p>" +
-      (m.note ? '<div class="msg e">' + esc(l.adminNote) + ": " + esc(m.note) + "</div>" : "") + '<div class="row mut"><span>' + esc(l.stats) + ": <b>" + (+m.contacts || 0) + "</b> " + esc(l.times) + "</span><span>· " + esc(l.rating) + ": <b>" + (m.count ? (+m.rating).toFixed(1) + " (" + m.count + ")" : "—") + '</b></span></div><div class="row" style="margin-top:.6rem">' +
+      (m.note ? '<div class="msg e">' + esc(l.adminNote) + ": " + esc(m.note) + "</div>" : "") + '<div class="row mut"><span>' + esc(l.stats) + ": <b>" + (+m.contacts || 0) + "</b> " + esc(l.times) + "</span><span>· " + esc(l.rating) + ": <b>" + (m.count ? (+m.rating).toFixed(1) + " (" + m.count + ")" : "—") + '</b></span></div>' + (st === "approved" ? '<p class="mut" style="margin-top:.6rem">' + esc(l.share) + ': <span dir="ltr" style="user-select:all">' + esc(pubUrl(m.id)) + '</span> <button class="btn g" style="padding:.2rem .7rem" data-a="copylink">' + esc(l.copyLink) + "</button></p>" : "") + '<div class="row" style="margin-top:.6rem">' +
       (st === "approved" ? '<button class="btn o" data-a="pause">' + esc(l.pause) + "</button>" : st === "paused" ? '<button class="btn" data-a="resume">' + esc(l.resume) + "</button>" : "") + '<button class="btn r" data-a="del">' + esc(l.del) + '</button><button class="btn g" data-a="logout">' + esc(l.out) + "</button></div></div>";
     return head + (st === "suspended" || st === "rejected" ? "" : formH(false));
   }
@@ -163,6 +164,7 @@ const ExpertsPage = (() => {
       else if (a === "copykey") { try { await navigator.clipboard.writeText(S.secret.key); el.textContent = l.copied; } catch (e) { const r = document.createRange(); r.selectNodeContents($("k-val")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } return; }
       else if (a === "dlkey") { const b = new Blob(["Experts ID: " + S.secret.id + "\nKey: " + S.secret.key + "\n"], { type: "text/plain" }), u = URL.createObjectURL(b), x = document.createElement("a"); x.href = u; x.download = "expert-key.txt"; x.click(); setTimeout(() => URL.revokeObjectURL(u), 2000); return; }
       else if (a === "keydone") { const s = S.secret; S.secret = null; await enter(s.id, s.key); }
+      else if (a === "copylink") { try { await navigator.clipboard.writeText(pubUrl(S.me.id)); el.textContent = l.copied; } catch (e) { prompt("URL", pubUrl(S.me.id)); } return; }
       else if (a === "addimg") { $("pf-file").click(); return; }
       else if (a === "addlink") { if (S.form.portfolio.length >= MAXP) { say(l.maxP); return view(); } S.form.portfolio.push({ t: "link", u: "", title: "" }); }
       else if (a === "rmp") { S.form.portfolio.splice(+el.dataset.i, 1); S.form.thumb = S.form.portfolio.some(x => x.t === "img") ? S.form.thumb : ""; }
