@@ -29,6 +29,10 @@ const ALLOW: [string, RegExp][] = [
   ["POST", /^\/v1\/sources\/\d{1,12}\/(sync|pause)$/],
   ["DELETE", /^\/v1\/sources\/\d{1,12}$/],
   ["POST", /^\/v1\/sources\/orders\/\d{1,12}\/imported$/],
+  ["GET", /^\/v1\/ads\/(accounts|spend)$/],
+  ["PUT", /^\/v1\/ads\/accounts$/],
+  ["POST", /^\/v1\/ads\/accounts\/\d{1,12}\/(sync|pause)$/],
+  ["DELETE", /^\/v1\/ads\/accounts\/\d{1,12}$/],
 ];
 
 Deno.serve(async (req) => {

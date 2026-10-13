@@ -119,3 +119,14 @@ CREATE TABLE IF NOT EXISTS src_orders (
 );
 CREATE INDEX IF NOT EXISTS ix_src_orders_feed ON src_orders (tenant_id, created_at DESC, id DESC);
 CREATE INDEX IF NOT EXISTS ix_src_orders_phone ON src_orders (tenant_id, phone_h);
+-- إنفاق الإعلانات (Meta/TikTok): حسابات بأسرار مشفّرة + إنفاق يومي لكل حملة بعملة الحساب (التحويل للدينار عند القراءة بـfx).
+CREATE TABLE IF NOT EXISTS ad_accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, provider TEXT NOT NULL, account_id TEXT NOT NULL, name TEXT NOT NULL DEFAULT '',
+  currency TEXT NOT NULL DEFAULT 'USD', fx REAL NOT NULL DEFAULT 1, config TEXT NOT NULL DEFAULT '{}', secret_enc TEXT NULL, status TEXT NOT NULL DEFAULT 'active',
+  last_sync_at INTEGER NULL, last_ok_at INTEGER NULL, last_error TEXT NULL, created_at TEXT NOT NULL, UNIQUE (tenant_id, provider, account_id)
+);
+CREATE TABLE IF NOT EXISTS ad_spend (
+  tenant_id INTEGER NOT NULL, account_id INTEGER NOT NULL REFERENCES ad_accounts(id) ON DELETE CASCADE, day TEXT NOT NULL, campaign_id TEXT NOT NULL, campaign_name TEXT NOT NULL DEFAULT '',
+  spend REAL NOT NULL DEFAULT 0, impressions INTEGER NOT NULL DEFAULT 0, clicks INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, day, campaign_id)
+);
+CREATE INDEX IF NOT EXISTS ix_ad_spend_t ON ad_spend (tenant_id, day);

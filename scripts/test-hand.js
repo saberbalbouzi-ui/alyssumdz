@@ -1155,6 +1155,46 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return r;
   });
   ok("معاينة الطلب: «رابط دفع» للمؤكَّد فقط و«اطلب تقييماً» للمسلَّم فقط (رابط واتساب بالرقم الدولي)", plk.pay && !plk.reviewOnConfirmed && plk.review && !plk.payOnDelivered, plk);
+  // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
+  const pfT = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
+    const sets = []; const ps0 = Priv.set; Priv.set = async (k, v) => { sets.push([k, JSON.stringify(v)]); };
+    const pr = Admin.products.find(x => x.slug !== "test" && x.active !== false), slug = pr.slug; Admin.fin.costs = { [slug]: 1000 }; Admin.fin.ads = {}; Admin.fin.set = Object.assign({}, Admin.fin.set, { packaging: 0, ad: { method: "fixed", a: 0, b: 0, m: 2, n: 0 }, useReal: false });
+    const mk = (id, st, ex) => Object.assign({ id, date: new Date(Date.now() - 86400000).toISOString(), status: st, name: "ز" + id, phone: "055100" + id.slice(-4), wilaya: "Alger", commune: "Kouba", dtype: "home", items: pr.title + " ×1 = 3000 DA", subtotal: 3000, fee: 0, total: 3000, note: "", extra: { "📣 الحملة": "Summer-A" } }, ex);
+    Admin.orders = [mk("PF0001", "livree"), mk("PF0002", "livree"), mk("PF0003", "echec"), mk("PF0004", "confirmee")];
+    const calls = []; const t0 = API.sb.token, u0 = API.sb.url, h0 = API.sb.headers, f0 = window.fetch;
+    API.sb.token = async () => "tok"; API.sb.url = p => "http://x" + p; API.sb.headers = () => ({});
+    const day = new Date(Date.now() - 86400000), dk = Admin.isoDay(day); let accounts = [];
+    window.fetch = async (u, o) => { if (!/platform-proxy/.test(String(u))) return f0(u, o); const b = JSON.parse(o.body); calls.push(b); const E = (d, st) => ({ ok: true, status: 200, json: async () => ({ ok: true, status: st || 200, data: d }) });
+      if (b.path === "/v1/ads/accounts" && b.method === "GET") return E({ accounts });
+      if (b.path === "/v1/ads/accounts" && b.method === "PUT") { accounts = [{ id: 7, provider: b.body.provider, account_id: b.body.account_id, name: b.body.name, currency: b.body.config.currency, fx: b.body.config.fx, status: "active", has_token: true, last_ok_at: Math.floor(Date.now() / 1000) }]; return E({ ok: true, id: 7 }, 201); }
+      if (/\/sync$/.test(b.path)) return E({ ok: true, rows: 1 });
+      if (b.path === "/v1/ads/spend") return E({ total_dzd: accounts.length ? 1500 : 0, spend: accounts.length ? [{ day: dk, campaign_id: "c1", campaign_name: "Summer-A", provider: "meta", currency: "USD", spend: 10, spend_dzd: 1500, impressions: 1000, clicks: 40 }] : [] });
+      return E({}); };
+    const r = {}; Admin.tab("profit"); await wait(500);
+    const hero = () => (document.querySelector("#pf-app .pf-big") || {}).textContent || "";
+    r.shown = !document.getElementById("tab-profit").classList.contains("hidden"); r.hero0 = hero();
+    const g = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 29); return { from: d.getTime(), to: Date.now() + 1 }; })(), K = Admin.computeFinance(0, g).K;
+    const fm = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("fr-DZ") + " دج";
+    r.expect0 = fm(K.real); r.rows = document.querySelectorAll("#pf-app .pf-wf > div").length; r.tbl = document.querySelectorAll("#pf-app .pf-tbl").length; r.noAccounts = /لم تربط أي حساب/.test(document.getElementById("pf-app").textContent);
+    r.parts = JSON.stringify(K.parts); r.byDay = Object.keys(K.byDay).length; r.src = K.bySrc["Summer-A"] ? K.bySrc["Summer-A"].n : 0; r.preOk = K.real + K.adTotal === K.parts.rev - K.parts.cogs - K.parts.del - K.parts.pack - K.parts.retLoss - K.refunds;
+    document.querySelector('#pf-app [data-pf="add"]').click(); await wait(100);
+    const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event("input", { bubbles: true })); e.dispatchEvent(new Event("change", { bubbles: true })); };
+    set("pf-acc", "123456"); set("pf-name", "حسابي"); set("pf-cur", "USD"); set("pf-fx", "150"); set("pf-tok", "SECRET_TOKEN_1");
+    document.querySelector('#pf-app [data-pf="save"]').click(); await wait(700);
+    const put = calls.find(c => c.method === "PUT"); r.put = put ? JSON.stringify({ p: put.body.provider, a: put.body.account_id, fx: put.body.config.fx, t: put.body.secrets.token }) : "";
+    r.synced = calls.some(c => /\/accounts\/7\/sync$/.test(c.path)); r.leak = document.getElementById("pf-app").innerHTML.includes("SECRET_TOKEN_1") || JSON.stringify(localStorage).includes("SECRET_TOKEN_1");
+    r.hero1 = hero(); r.expect1 = fm(K.real + K.adTotal - 1500); r.acc = /حسابي/.test(document.getElementById("pf-app").textContent); r.camp = /Summer-A/.test(document.querySelectorAll("#pf-app .pf-tbl")[0].textContent);
+    r.spendCell = /1[\s ]?500/.test(document.querySelectorAll("#pf-app .pf-tbl")[0].textContent);
+    set("pf-fixed", "30000"); document.querySelector('#pf-app [data-pf="fixed"]').click(); await wait(150); r.fixedSaved = sets.some(x => x[0] === "profitset" && /30000/.test(x[1])); r.hero2 = hero();
+    API.sb.token = t0; API.sb.url = u0; API.sb.headers = h0; window.fetch = f0; Priv.set = ps0; Admin.tab("orders"); await wait(100); r.hidden = document.getElementById("tab-profit").classList.contains("hidden");
+    return r;
+  });
+  ok("الربح الحقيقي: التبويب يظهر والرقم الرئيسي = صافي computeFinance بلا ربط (تقدير الإعلان)", pfT.shown && pfT.hero0.trim() === pfT.expect0, pfT);
+  ok("الربح الحقيقي: الشلال 8 خطوات وجدولا الحملات/الولايات، والمعادلة قبل الإعلان صحيحة", pfT.rows === 9 && pfT.tbl >= 2 && pfT.preOk && pfT.byDay === 1 && pfT.src === 3 && pfT.noAccounts, pfT);
+  ok("الربح الحقيقي: ربط حساب يرسل الرمز مرة واحدة ويزامن ولا يبقى الرمز في الصفحة أو المتصفح", /"p":"meta"/.test(pfT.put) && /"fx":150/.test(pfT.put) && /SECRET_TOKEN_1/.test(pfT.put) && pfT.synced && !pfT.leak, pfT);
+  ok("الربح الحقيقي: بعد الربط الإنفاق الفعلي يحل محل التقدير وتظهر الحملة بإنفاقها", pfT.hero1.trim() === pfT.expect1 && pfT.acc && pfT.camp && pfT.spendCell, pfT);
+  ok("الربح الحقيقي: المصاريف الثابتة تُحفظ وتُطرح، والتبويب يختفي عند الخروج", pfT.fixedSaved && pfT.hero2 !== pfT.hero1 && pfT.hidden, pfT);
   // ═══ جوال: دائرة خضراء تقع فوق الهدف ═══
   ({ p, errs } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }));
   await p.evaluate(() => localStorage.setItem("store_voice_enrolled", "1"));
