@@ -137,7 +137,9 @@ final class Calibrator
             foreach ($x['unmatched'] as $u) { if (count($ex) < 8) { $ex[] = $u; } }
         }
         $st = ['seen' => count((array)($p['statuses'] ?? [])), 'unknown' => 0, 'learned' => count((array)($p['status_overrides'] ?? []))];
-        foreach ((array)($p['statuses'] ?? []) as $s) { if (($s['src'] ?? '') === 'unknown') { $st['unknown']++; } }
+        $unk = [];
+        foreach ((array)($p['statuses'] ?? []) as $raw => $s) { if (($s['src'] ?? '') === 'unknown') { $st['unknown']++; if (count($unk) < 20) { $unk[] = ['raw' => (string)$raw, 'n' => (int)($s['n'] ?? 0)]; } } }
+        $st['unknown_list'] = $unk;
         return ['carrier' => $p['carrier'] ?? '', 'at' => $p['at'] ?? '', 'done' => (bool)($p['done'] ?? false), 'phase' => $p['phase'] ?? '', 'ping' => $p['ping'] ?? null,
             'progress' => ['left' => count((array)($p['pending'] ?? [])), 'phase' => $p['phase'] ?? ''],
             'communes' => $c, 'unmatched_examples' => $ex, 'desks' => array_sum(array_map('count', (array)($p['desks'] ?? []))), 'fees' => count((array)($p['fees'] ?? [])),

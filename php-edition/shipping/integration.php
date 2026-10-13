@@ -107,6 +107,11 @@ function shipx_route(string $route, string $method, array $b, string $dataDir, P
                 if ($method !== 'POST') { return [200, ['calibration' => $cal->summary($conn)]]; }
                 return [200, ['calibration' => !empty($b['restart']) ? $cal->start($conn, 10.0) : $cal->advance($conn, 10.0)]];
 
+            case 'ship_fixes':                                                 // قرارات إدارة المنصة للحالات المجهولة (تُجلب من المنصة في المتصفح وتُدمج في ملفات الاتصالات)
+                if ($method !== 'POST') { return [405, ['error' => 'method']]; }
+                $fx = []; foreach (array_slice((array)($b['fixes'] ?? []), 0, 2000) as $f) { if (is_array($f)) { $fx[] = ['c' => (string)($f['c'] ?? ''), 'n' => (string)($f['n'] ?? ''), 'u' => (string)($f['u'] ?? '')]; } }
+                return [200, ['changed' => $repo->applyFixes(SHIPX_USER, $fx)]];
+
             case 'ship_ping':                                                  // اختبار اتصال شركة مفعّلة بمفاتيحها المحفوظة (قراءة فقط)
                 $conn = $repo->find(SHIPX_USER, (string)($b['carrier'] ?? $_GET['carrier'] ?? '')) ?? null;
                 if (!$conn || !(int)$conn['is_active']) { return [404, ['error' => 'not_connected']]; }

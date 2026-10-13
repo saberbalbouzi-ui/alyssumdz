@@ -55,8 +55,8 @@ const ShipAgg = (() => {
     if (!r.ok) { S.cat = null; S.err = (r.j && r.j.error) || ""; return false; }
     S.cat = r.j.carriers || []; S.on = r.j.connected || []; S.base = r.j.webhook_base || ""; S.err = "";
     try { const u = await call("ship_unknown", undefined); S.unk = (u.ok && u.j.unknown) || []; } catch (e) { S.unk = []; }
-    flushOutbox();
-    if ((S.unk || []).length) reportIssues("status", "حالات طرود غير معروفة", { warnings: S.unk.map(u => u.carrier + " «" + u.raw + "» ×" + u.n) });
+    flushOutbox(); syncFixes();
+    if ((S.unk || []).length) reportIssues("status", "حالات طرود غير معروفة", { warnings: S.unk.map(u => u.carrier + " «" + u.raw + "» ×" + u.n), unknown_extra: S.unk.map(u => ({ carrier: u.carrier, raw: u.raw, n: u.n })) });
     S.on.forEach(x => { const sm = x.calibration; if (sm && sm.done && sm.webhook && sm.webhook.empty) reportIssues(x.carrier_code, ((S.cat || []).find(c => c.code === x.carrier_code) || {}).label || x.carrier_code, sm); });
     return true;
   }
@@ -105,6 +105,8 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     const x = await SC.send({ kind: "support", silent: true, subject: r.subject, body: r.body, payload: r.payload, contact: r.contact, site: r.site });
     return !!x.ok;
   }
+  /* الحالات المجهولة بصيغة منظَّمة [{carrier, raw, n}] ليعتمدها المدير بنقرة من لوحة المزوّد */
+  const unknownOf = (code, sm) => (sm && sm.unknown_extra) || ((sm && sm.statuses && sm.statuses.unknown_list) || []).map(u => ({ carrier: code, raw: u.raw, n: u.n }));
   async function reportIssues(code, label, sm) {
     try {
       const issues = calIssues(sm); if (!issues.length) return;
@@ -113,9 +115,20 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
       const nm = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || location.hostname;
       const keep = sm ? { communes: sm.communes, unmatched_examples: sm.unmatched_examples, statuses: sm.statuses, verify: sm.verify, webhook: sm.webhook, warnings: sm.warnings, notes: sm.notes, ping: sm.ping, desks: sm.desks, fees: sm.fees } : null;
       const rep = { subject: "[معايرة] " + label + " — " + nm, body: "بلاغ تلقائي من معايرة حساب شركة التوصيل «" + label + "» للموقع " + nm + " (" + location.origin + "):\n" + issues.map(t => "• " + t).join("\n"),
-        payload: { type: "carrier_calibration", carrier: code, issues, summary: keep }, contact: { name: nm }, site: { name: nm } };
+        payload: { type: "carrier_calibration", carrier: code, issues, unknown: unknownOf(code, sm), summary: keep }, contact: { name: nm }, site: { name: nm } };
       if (await pushReport(rep)) { sent[code] = { h, at: Date.now() }; lsSet(SENT, sent); }
       else { const q = lsGet(OUTBOX, []); q.push({ ...rep, h, code }); lsSet(OUTBOX, q.slice(-5)); }
+    } catch (e) { }
+  }
+  /* قرارات الإدارة للحالات المجهولة: تُجلب من المنصة (عامة) وتُدمج في ملفات الاتصالات (PHP: ship_fixes، البوابة: /v1/connections/fixes)؛ بصمتها تمنع التكرار */
+  async function syncFixes() {
+    try {
+      const SC = window.SaasClient; if (!SC || !SC.on() || !S.on.length) return;
+      const fx = await SC.fixes(); if (!fx) return;
+      const mine = fx.filter(f => f.c === "*" || S.on.some(x => x.carrier_code === f.c)), h = hashStr(JSON.stringify(mine) + "|" + S.on.map(x => x.carrier_code).sort().join(","));
+      if (localStorage.getItem("alyssum_fixes_h") === h) return;
+      const r = mode() === "gw" ? await gwCall("POST", "/v1/connections/fixes", { fixes: mine }) : await call("ship_fixes", { fixes: mine });
+      if (r.ok) { localStorage.setItem("alyssum_fixes_h", h); if (r.j && r.j.changed) await load(); }
     } catch (e) { }
   }
   async function flushOutbox() {
@@ -304,5 +317,5 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
 
   function init() { if (!mode()) return; let n = 0; const t = setInterval(() => { mount(); wrapSync(); wrapOrderActions(); const w = wrapPreview(); if (++n > 40 || (w && $("sa-card"))) clearInterval(t); }, 800); load().then(() => { wrapPreview(); wrapSync(); wrapOrderActions(); }); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { load, send, S, mode, gwPayload, syncGw, owns, calReport, calibrate, calIssues, reportIssues };
+  return { load, send, S, mode, gwPayload, syncGw, owns, calReport, calibrate, calIssues, reportIssues, syncFixes };
 })();

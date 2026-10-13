@@ -212,6 +212,15 @@ ok("cron: الحالة النهائية", sql("SELECT status FROM gw_orders WHER
   [c, b] = await call("POST", "/v1/hooks/" + hid2, whb, null, hq2); [c, b] = await call("POST", "/v1/hooks/" + hid2, { weird: 1 }, null, hq2);
   [c, b] = await call("GET", "/v1/connections/yalidine/calibrate", null, kA);
   ok("webhook: التُقط شكل الإشعارات وعدد المحلَّل", b.calibration.webhook && b.calibration.webhook.received >= 2 && b.calibration.webhook.empty >= 1 && b.calibration.webhook.parsed >= 1, b.calibration.webhook);
+  /* قرارات إدارة المنصة: تُدمج وتسبق القاموس وتبقى بعد إعادة المعايرة */
+  { const { normText } = await import("../src/status.js"); const n5 = normText("Statut Inconnu 5");
+    [c, b] = await call("POST", "/v1/connections/fixes", { fixes: [{ c: "yalidine", n: n5, u: "returned" }, { c: "noest", n: "x", u: "delivered" }, { c: "yalidine", n: "bad", u: "zzz" }] }, kA);
+    ok("fixes: تُدمج لشركة الاتصال فقط", c === 200 && b.changed === 1, b);
+    [c, b] = await call("POST", "/v1/connections/fixes", { fixes: [{ c: "yalidine", n: n5, u: "returned" }] }, kA); ok("fixes: إعادة التطبيق بلا تغيير", b.changed === 0, b);
+    fake.handler = (u) => { const x = new URL(u); if (x.pathname === "/v1/parcels/" && !x.pathname.slice(11)) return [200, { has_more: false, data: [{ tracking: "yal-1", last_status: "Statut Inconnu 5" }] }]; if (x.pathname === "/v1/wilayas/") return [200, { data: [] }]; if (x.pathname.startsWith("/v1/parcels/")) return [200, { data: [{ tracking: "yal-1", last_status: "En préparation" }] }]; return [200, { has_more: false, data: [] }]; };
+    n = 0; do { [c, b] = await call("POST", "/v1/connections/yalidine/calibrate", { restart: n === 0 }, kA); } while (c === 200 && !b.calibration.done && ++n < 40);
+    ok("fixes: الحالة لم تعد مجهولة بعد إعادة المعايرة والقرار باقٍ", b.calibration.statuses.unknown === 0 && b.calibration.statuses.unknown_list.length === 0, b.calibration.statuses);
+    fake.handler = null; [c, b] = await call("POST", "/v1/connections/fixes", { fixes: [] }, kA); ok("fixes: إزالة القرار", b.changed === 1); }
   [c, b] = await call("POST", "/v1/connections/zzz/calibrate", {}, kA); ok("معايرة: شركة غير مفعّلة 404", c === 404);
   [c, b] = await call("POST", "/v1/connections", { courier: "yalidine", credentials: { apiId: "AID2", apiToken: "VAULT-TOK-888" } }, kA);
   [c, b] = await call("GET", "/v1/connections/yalidine/calibrate", null, kA); ok("إعادة الربط تمسح الملف القديم وتبدأ جديداً", b.calibration && b.calibration.done === false && !b.calibration.webhook, b.calibration);

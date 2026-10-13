@@ -97,7 +97,8 @@ export function summary(p) {
     c.wilayas++; c.mapped += Object.keys(x.map).length; c.unmatched += x.unmatched.length; c.undeliverable += x.undeliverable.length; c.fuzzy += x.fuzzy.length; c.carrierOnly += x.carrierOnly ?? 0;
     for (const u of x.unmatched) if (ex.length < 8) ex.push(u);
   }
-  const sts = Object.values(p.statuses ?? {}), st = { seen: sts.length, unknown: sts.filter((s) => s.src === "unknown").length, learned: Object.keys(p.status_overrides ?? {}).length };
+  const sts = Object.values(p.statuses ?? {}), st = { seen: sts.length, unknown: sts.filter((s) => s.src === "unknown").length, learned: Object.keys(p.status_overrides ?? {}).length,
+    unknown_list: Object.entries(p.statuses ?? {}).filter(([, s]) => s.src === "unknown").slice(0, 20).map(([raw, s]) => ({ raw, n: s.n ?? 0 })) };
   return { carrier: p.carrier ?? "", at: p.at ?? "", done: !!p.done, phase: p.phase ?? "", ping: p.ping ?? null, progress: { left: (p.pending ?? []).length, phase: p.phase ?? "" },
     communes: c, unmatched_examples: ex, desks: Object.values(p.desks ?? {}).reduce((a, l) => a + l.length, 0), fees: Object.keys(p.fees ?? {}).length,
     statuses: st, verify: p.verify?.track ?? null, warnings: p.warnings ?? [], notes: p.notes ?? [], webhook: p.webhook ?? null };

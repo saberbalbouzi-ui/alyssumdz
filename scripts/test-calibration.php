@@ -170,5 +170,21 @@ $connO = $repo->connect(3, 'yalidine', ['apiId' => 'AID', 'apiToken' => 'TOK'], 
 $repo->saveProfile((int)$rowO['id'], ['v' => 1, 'communes' => [], 'status_overrides' => [\Alyssum\Shipping\StatusMapper::normalize('Statut Maison X') => Status::DELIVERED]]);
 ok('تثبيت حالة خاصة بالحساب يُطبَّق عبر mapStatus', $repo->adapterFor($rowO, $simW)->mapStatus('Statut Maison X') === Status::DELIVERED);
 
+/* قرارات إدارة المنصة للحالات المجهولة تُدمج في ملف كل اتصال وتسبق القاموس والتثبيت المحلي */
+echo "\n── fixes ──\n";
+$n1 = \Alyssum\Shipping\StatusMapper::normalize('Statut Jamais Vu 77');
+$fx = [['c' => 'yalidine', 'n' => $n1, 'u' => Status::OUT_FOR_DELIVERY], ['c' => 'noest', 'n' => 'x', 'u' => Status::DELIVERED], ['c' => 'yalidine', 'n' => 'bad', 'u' => 'nonsense']];
+$rowF = $repo->find(3, 'yalidine');
+ok('fixes: تُدمج لشركة الاتصال فقط وتتجاهل القيم الخاطئة', $repo->applyFixes(3, $fx) === 1 && array_keys($repo->profile((int)$rowF['id'])['fixes']) === [$n1]);
+$adF = $repo->adapterFor($rowF, $simW);
+ok('fixes: الحالة المجهولة تصير مفهومة بقرار الإدارة', $adF->mapStatus('Statut Jamais Vu 77') === Status::OUT_FOR_DELIVERY && $adF->explainStatus('Statut Jamais Vu 77')[1] === 'override');
+ok('fixes: لا تغيّر قرارات غيرها', $adF->mapStatus('Livré') === Status::DELIVERED);
+ok('fixes: إعادة التطبيق بلا تغيير ← 0', $repo->applyFixes(3, $fx) === 0);
+$svcF = new CalibrationService($repo, $ours, $simW, $pause, 2); $simW->catalog = $theirs; $simW->setStatus('ext-9', 'Statut Jamais Vu 77');
+$sF = $svcF->start($rowF, 0.0); $g = 0; while (!$sF['done'] && $g++ < 50) { $sF = $svcF->advance($rowF, 0.001); }
+ok('fixes: تبقى بعد إعادة المعايرة والحالة لا تُعدّ مجهولة', !empty($repo->profile((int)$rowF['id'])['fixes']) && $sF['statuses']['unknown'] === 0, $sF['statuses']);
+$repo->applyFixes(3, []);
+ok('fixes: إزالة القرار من المنصة تزيله من الملف', ($repo->profile((int)$rowF['id'])['fixes'] ?? []) === []);
+
 echo "\n" . ($fails ? "✗ أخفق $fails من $total" : "✓ $total فحصاً ناجحاً") . "\n";
 exit($fails ? 1 : 0);
