@@ -1306,6 +1306,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     stop(); sh.close(); return R;
   });
   ok("التقاط العناصر: يبدأ التحليل مباشرة، ومسح أخضر شفاف بخط أخضر ضوئي بلا نقاط زرقاء", scT.dots === 0 && scT.tint && scT.line && scT.noZoneStep && /المسح/.test(scT.goText), scT);
+  // ── دقة حواف الالتقاط: القناع مقيّد بصندوق كشفه، والمنطقة المشتركة بين عنصرين متجاورين للأقرب ──
+  const teT = await p.evaluate(() => {
+    const T = AIVision._t, S = { W: 100, H: 100, lw: 100, lh: 100, fx: 1, fy: 1 };
+    const mk = (x0, x1, y0, y1, box) => { const lo = new Float32Array(10000).fill(-2); for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) lo[y * 100 + x] = 1; return T.stats({ lo, lw: 100, lh: 100, score: .9, obj: 1, label: "عبوة", box }, S); };
+    const R = {}; const a = mk(10, 90, 10, 60, [10, 10, 40, 60]); const before = a.area; T.trimEdges([a], S); R.clamp = before > a.area && a.x1 <= 46;      // بلغ القناع 90 والصندوق ينتهي عند 40(+هامش 2)
+    const b = mk(10, 50, 10, 60, [10, 10, 50, 60]), c = mk(44, 90, 10, 60, [44, 10, 90, 60]); const ov0 = (() => { let n = 0; for (let i = 0; i < 10000; i++) if (b.lo[i] > 0 && c.lo[i] > 0) n++; return n; })();
+    T.trimEdges([b, c], S); let ov1 = 0; for (let i = 0; i < 10000; i++) if (b.lo[i] > 0 && c.lo[i] > 0) ov1++; R.ov0 = ov0; R.ov1 = ov1; R.bx = b.x1; R.cx = c.x0;
+    return R;
+  });
+  ok("حواف الالتقاط: قناع العنصر مقيّد بصندوقه والمنطقة المشتركة بين عبوتين تُعطى لأقربهما ولا يبقى تداخل", teT.clamp && teT.ov0 > 0 && teT.ov1 === 0 && teT.bx <= 50 && teT.cx >= 44, teT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
