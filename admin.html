@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.174">
+<meta name="admin-version" content="1.89.175">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1585,6 +1585,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     </details>
     <div class="action-bar">
       <button class="small gold" onclick="Admin.saveDeliveryConfig()">💾 حفظ</button>
+      <button class="small gray" type="button" id="dlv-test-btn" onclick="Admin.testDeliveryKeys()">🧪 اختبر المفاتيح قبل الحفظ</button>
       <button class="small warn hidden" id="dlv-delete-btn" onclick="Admin.deleteCustomCompany()">🗑️ حذف الشركة</button>
       <button class="small gray" onclick="document.getElementById('delivery-modal-bg').classList.remove('open')">إلغاء</button>
     </div>
@@ -1624,12 +1625,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.174"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.174"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.174"></script>
+<script src="assets/js/ctl-help.js?v=1.89.175"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.175"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.175"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.174"></script>
+<script src="assets/js/admin-nav.js?v=1.89.175"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1641,7 +1642,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.174"></script>
+<script src="assets/js/admin-update.js?v=1.89.175"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -7586,7 +7587,7 @@ const Admin = {
     const co = this.allDeliveryCompanies()[key];
     if(!co) return;
     const cfg = Object.assign({}, this.deliveryCfg[key]);
-    (co.fields||[]).forEach(f=>{ cfg[f.key] = ($f("dlv-f-" + f.key)||{}).value ? $f("dlv-f-" + f.key).value.trim() : ""; });
+    (co.fields||[]).forEach(f=>{ cfg[f.key] = ($f("dlv-f-" + f.key)||{}).value ? $f("dlv-f-" + f.key).value.trim() : ""; if(f.key === "apiId" || f.key === "apiToken") cfg[f.key] = cfg[f.key].replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g,""); });          // مفاتيح الـAPI: نزع المسافات والأحرف الخفية وعلامات الاقتباس الملتصقة عند النسخ
     if(this._dlvManual) cfg.prices = this.collectDeliveryPriceGrid();      // يدوي فقط للشركات التي لا تُجلب أسعارها تلقائياً (لئلا تُمحى التعريفة المجلوبة)
     const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
     const missing = requiredFields.filter(f=>!cfg[f.key]);
@@ -8369,6 +8370,29 @@ const Admin = {
     else if(!was || was.ok !== false) toast("🔴 " + co.name + " ترفض مفاتيح الحساب (" + status + ") — حدّثها من «شركات التوصيل»");
   },
   coHttpErr(co, key, r){ if(r && (r.status === 401 || r.status === 403)){ this.keyBad(key, r.status); return "مفاتيح " + co.name + " مرفوضة (" + r.status + ") — حدّثها من «شركات التوصيل»"; } return "رد الشركة " + (r && r.status); },
+  /* اختبار المفاتيح المكتوبة في النافذة (قراءة فقط، بلا حفظ) مع تشخيص الأخطاء الشائعة: تبديل الخانتين، مسافات، علامات اقتباس */
+  async testDeliveryKeys(){
+    const key = this.editingDeliveryKey, co = this.allDeliveryCompanies()[key]; if(!co || !co.pingRequest){ toast("هذه الشركة لا تدعم اختبار المفاتيح"); return }
+    const clean = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g,"");
+    const cfg = Object.assign({}, this.deliveryCfg[key]);
+    (co.fields||[]).forEach(f=>{ const el = $f("dlv-f-" + f.key); if(el && f.type !== "select" && (f.key === "apiId" || f.key === "apiToken")) cfg[f.key] = clean(el.value); });
+    if(!cfg.apiId || !cfg.apiToken){ toast("⚠️ اكتب المعرّف والتوكن أولاً"); return }
+    const b = $f("dlv-test-btn"); if(b){ b.disabled = true; b.textContent = "… يجري الفحص" }
+    let r; try{ r = await this.courierFetch(co.pingRequest(cfg)); }catch(e){ r = null }
+    if(b){ b.disabled = false; b.textContent = "🧪 اختبر المفاتيح قبل الحفظ" }
+    const I = cfg.apiId, T = cfg.apiToken, fp = "المعرّف: <b dir=ltr>" + nE(I.slice(0,3) + "…" + I.slice(-3)) + "</b> (" + I.length + " حرفاً) — التوكن: <b dir=ltr>" + nE(T.slice(0,3) + "…" + T.slice(-3)) + "</b> (" + T.length + " حرفاً)";
+    if(!r) return this.showNotice("⚠️ تعذّر الاتصال بالشركة", "لم نصل إلى خادم الشركة لإجراء الفحص — أعد المحاولة بعد قليل.<br><small>" + fp + "</small>");
+    if(r.ok){ let n = ""; try{ const j = JSON.parse(r.text); if(j.total_data != null) n = " — في حسابك " + j.total_data + " طرد"; }catch(e){} return this.showNotice("✅ المفاتيح صحيحة", "قبلتها " + nE(co.name) + n + ". اضغط «💾 حفظ» لتثبيتها.<br><small>" + fp + "</small>"); }
+    if(r.status === 401 || r.status === 403){
+      const hints = [];
+      if(I.length > T.length) hints.push("المعرّف أطول من التوكن — يبدو أنك بدّلت الخانتين (المعرّف أقصر، والتوكن الطويل في خانته).");
+      if(I.length !== 20) hints.push("طول المعرّف " + I.length + " (المعتاد 20 حرفاً) — قد يكون ناقصاً أو زائداً.");
+      if(T.length !== 62) hints.push("طول التوكن " + T.length + " (المعتاد 62 حرفاً) — قد يكون ناقصاً أو زائداً.");
+      if(!hints.length) hints.push("الشكل سليم لكن الشركة لا تعرف هذه القيم: غالباً توكن قديم أُبطل بتوليد توكن جديد، أو مفاتيح حساب آخر. ولّد/انسخ التوكن الحالي من صفحة الـAPI في حسابك.");
+      return this.showNotice("🔴 " + nE(co.name) + " ترفض هذه المفاتيح (" + r.status + ")", hints.map(nE).join("<br>") + "<br><br><small>" + fp + "</small>");
+    }
+    this.showNotice("⚠️ رد غير متوقع من الشركة (" + r.status + ")", "لا يمكن الحكم على المفاتيح الآن.<br><small>" + fp + "</small>");
+  },
   async checkCompanyKeys(key, opts){
     opts = opts || {}; const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
     if(!co || !co.pingRequest || !(cfg.apiId || cfg.apiToken)) return null;
