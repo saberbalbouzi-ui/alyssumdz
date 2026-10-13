@@ -25,6 +25,7 @@ session_start();
 $route = $_GET['r'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 $isAdmin = !empty($_SESSION['admin']);
+$staffRow = null; $staffPerms = [];          // موظف مسجَّل الدخول (يُحمَّل من الجلسة أدناه بعد تعريف الدوال)
 
 /* الكتابة والدخول تتطلب ترويسة مخصصة (تمنع الطلبات العابرة للمواقع CSRF) */
 if ($method !== 'GET' && $route !== 'webhook' && $route !== 'ship_webhook' && ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') out(403, ['error' => 'bad_request']);   // webhook ياليدين خادم-لخادم: يُصادَق عليه بالسر لا بالترويسة
@@ -63,6 +64,9 @@ function db(): PDO {
       CREATE TABLE IF NOT EXISTS admin_kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS webhook_log (id INTEGER PRIMARY KEY, ts INTEGER NOT NULL, tracking TEXT, raw TEXT, result TEXT, payload TEXT);
       CREATE TABLE IF NOT EXISTS promo_codes (code TEXT PRIMARY KEY, phone TEXT NOT NULL, type TEXT NOT NULL, value REAL NOT NULL DEFAULT 0, min_order REAL NOT NULL DEFAULT 0, expires INTEGER NOT NULL, used_order TEXT, used_at INTEGER, created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS staff (user TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', role TEXT NOT NULL, perms TEXT NOT NULL DEFAULT '[]', pass_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, totp TEXT, tstep INTEGER NOT NULL DEFAULT 0, rec TEXT NOT NULL DEFAULT '[]', created_at INTEGER NOT NULL, last_login INTEGER);
+      CREATE TABLE IF NOT EXISTS audit_log (id INTEGER PRIMARY KEY, at INTEGER NOT NULL, actor TEXT NOT NULL, role TEXT NOT NULL DEFAULT '', action TEXT NOT NULL, ref TEXT NOT NULL DEFAULT '', detail TEXT NOT NULL DEFAULT '{}');
+      CREATE INDEX IF NOT EXISTS audit_at ON audit_log(at);
       CREATE TABLE IF NOT EXISTS rl (k TEXT NOT NULL, t INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS rl_k ON rl(k, t);
     ");
@@ -108,6 +112,7 @@ function ydMap(string $raw): ?string {
     return null;
 }
 /* ── حماية الطلبات (إعداداتها في admin_kv: guard / guard_secret) ── */
+function kvSet(string $k, $v): void { db()->prepare('INSERT INTO admin_kv (k, v, updated) VALUES (?,?,?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated = excluded.updated')->execute([$k, json_encode($v, JSON_UNESCAPED_UNICODE), time()]); }
 function kvGet(string $k) { $st = db()->prepare('SELECT v FROM admin_kv WHERE k = ?'); $st->execute([$k]); $v = $st->fetchColumn(); return $v === false ? null : json_decode((string)$v, true); }
 function guardSecret(): string {
     $s = kvGet('guard_secret'); if (is_string($s) && $s !== '') return $s;
@@ -132,6 +137,77 @@ function clientIp(): string { return preg_replace('/[^0-9a-f:.]/i', '', $_SERVER
 function cut(mixed $v, int $n): string { return mb_substr(trim((string)$v), 0, $n); }
 function iso(int $t): string { return gmdate('Y-m-d\\TH:i:s\\Z', $t); }
 function normQ(string $q): string { $q = mb_strtolower($q); $q = preg_replace('/[^a-z0-9\x{0621}-\x{064A}\x{066E}-\x{06D3}\x{0660}-\x{0669}]+/u', ' ', $q); return trim((string)$q); }
+
+/* ══════════ الأدوار والمصادقة الثنائية (TOTP) وسجلّ النشاط (v1.89.155) ══════════
+   المالك = كلمة مرور المدير؛ الموظف = حساب في جدول staff بصلاحيات نصية (تُفرض في المسارات أدناه).
+   TOTP حسب RFC 6238 (HMAC-SHA1، 6 أرقام، 30 ثانية، نافذة ±1) مع منع إعادة استعمال الرمز، ورموز طوارئ تُخزَّن مجزّأة. */
+const STAFF_PERMS = ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics', 'ship', 'customers', 'products', 'marketing', 'finance', 'site'];
+const STAFF_ROLES = ['manager', 'agent', 'support', 'accountant'];
+const STAFF_PRESETS = [
+    'manager' => ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics'],
+    'agent' => ['orders', 'orders.write', 'callcenter'],
+    'support' => ['orders', 'orders.write', 'orders.edit', 'callcenter'],
+    'accountant' => ['orders', 'analytics'],
+];
+function b32enc(string $bin): string {
+    $a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; $bits = ''; $o = '';
+    foreach (str_split($bin) as $c) $bits .= str_pad(decbin(ord($c)), 8, '0', STR_PAD_LEFT);
+    foreach (str_split($bits, 5) as $ch) $o .= $a[bindec(str_pad($ch, 5, '0'))];
+    return $o;
+}
+function b32dec(string $s): string {
+    $a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; $s = strtoupper(preg_replace('/[^A-Za-z2-7]/', '', $s)); $bits = ''; $o = '';
+    foreach (str_split($s) as $c) $bits .= str_pad(decbin(strpos($a, $c)), 5, '0', STR_PAD_LEFT);
+    foreach (str_split($bits, 8) as $b) if (strlen($b) === 8) $o .= chr(bindec($b));
+    return $o;
+}
+function totp_code(string $secretB32, int $step, int $digits = 6): string {
+    $h = hash_hmac('sha1', pack('N*', 0, $step), b32dec($secretB32), true); $o = ord($h[19]) & 15;
+    $v = ((ord($h[$o]) & 0x7f) << 24) | (ord($h[$o + 1]) << 16) | (ord($h[$o + 2]) << 8) | ord($h[$o + 3]);
+    return str_pad((string)($v % (10 ** $digits)), $digits, '0', STR_PAD_LEFT);
+}
+/** الخطوة المطابقة للرمز (أو null). نافذة ±1 خطوة لتفاوت الساعة. */
+function totp_match(string $secretB32, string $code, ?int $now = null, int $window = 1): ?int {
+    $code = preg_replace('/\s+/', '', $code); if (!preg_match('/^\d{6}$/', $code)) return null;
+    $cur = intdiv($now ?? time(), 30);
+    for ($d = -$window; $d <= $window; $d++) if (hash_equals(totp_code($secretB32, $cur + $d), $code)) return $cur + $d;
+    return null;
+}
+function rec_codes(): array { $o = []; for ($i = 0; $i < 8; $i++) { $r = strtolower(b32enc(random_bytes(6))); $o[] = substr($r, 0, 5) . '-' . substr($r, 5, 5); } return $o; }
+function rec_norm(string $c): string { return strtolower(preg_replace('/[^a-z0-9]/i', '', $c)); }
+function rec_hash(string $c): string { return hash('sha256', rec_norm($c)); }
+/** يتحقق من رمز التطبيق أو رمز طوارئ لحساب. $acct: ['secret','tstep','rec'] ← يعيد null أو حساباً محدَّثاً (خطوة جديدة / رمز طوارئ مستهلك) */
+function mfa_check(array $acct, string $code): ?array {
+    $st = totp_match((string)$acct['secret'], $code);
+    if ($st !== null && $st > (int)($acct['tstep'] ?? 0)) { $acct['tstep'] = $st; return $acct; }
+    if ($st === null && preg_match('/^[a-z0-9]{5}-?[a-z0-9]{5}$/i', trim($code))) {
+        $h = rec_hash($code); $rec = (array)($acct['rec'] ?? []); $i = array_search($h, $rec, true);
+        if ($i !== false) { array_splice($rec, (int)$i, 1); $acct['rec'] = $rec; return $acct; }
+    }
+    return null;
+}
+function ownerMfa(): ?array { $v = kvGet('owner_mfa'); return is_array($v) && !empty($v['secret']) ? $v : null; }
+function staffGet(string $u): ?array { $st = db()->prepare('SELECT * FROM staff WHERE user = ?'); $st->execute([$u]); $r = $st->fetch(); return $r ?: null; }
+function actorName(): string { global $isAdmin; return $isAdmin ? 'owner' : (string)($_SESSION['staff'] ?? ''); }
+function actorRole(): string { global $isAdmin, $staffRow; return $isAdmin ? 'owner' : (string)($staffRow['role'] ?? ''); }
+function auditAs(string $actor, string $role, string $action, string $ref = '', array $detail = []): void {
+    try { db()->prepare('INSERT INTO audit_log (at, actor, role, action, ref, detail) VALUES (?,?,?,?,?,?)')->execute([time(), $actor, $role, $action, mb_substr($ref, 0, 80), json_encode($detail ?: new stdClass, JSON_UNESCAPED_UNICODE)]); } catch (Throwable $e) {}
+}
+function audit(string $action, string $ref = '', array $detail = []): void { auditAs(actorName(), actorRole(), $action, $ref, $detail); }
+function can(string $p): bool { global $isAdmin, $staffPerms; return $isAdmin || in_array($p, $staffPerms, true); }
+function needPerm(string $p): void { global $staffRow; if (!can($p)) out($staffRow ? 403 : 401, ['error' => $staffRow ? 'forbidden' : 'unauthorized']); }
+function needOwner(): void { global $isAdmin, $staffRow; if (!$isAdmin) out($staffRow ? 403 : 401, ['error' => $staffRow ? 'forbidden' : 'unauthorized']); }
+function callMarks(string $n): string { return (preg_match('/📞\d+/u', $n, $m) ? $m[0] : '') . (str_contains($n, '⏰') ? '⏰' : '') . (str_contains($n, '📵') ? '📵' : ''); }
+function cleanStaffPerms($p, string $role): array {
+    $arr = is_array($p) ? array_values(array_filter(array_map('strval', $p), fn($x) => in_array($x, STAFF_PERMS, true))) : (STAFF_PRESETS[$role] ?? []);
+    if (array_intersect($arr, ['orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter'])) $arr[] = 'orders';
+    return array_values(array_unique($arr));
+}
+if (!$isAdmin && !empty($_SESSION['staff'])) {                       // تحميل الموظف (يُعطَّل الحساب الموقوف فوراً)
+    $staffRow = staffGet((string)$_SESSION['staff']);
+    if (!$staffRow || !(int)$staffRow['active']) { unset($_SESSION['staff']); $staffRow = null; }
+    else $staffPerms = json_decode((string)$staffRow['perms'], true) ?: [];
+}
 
 /* قائمة بيضاء لمسارات الكتابة — لا شيء خارجها */
 function allowedPath(string $p): bool {
@@ -234,23 +310,121 @@ switch ($route) {
         $st = is_file($f) ? (json_decode((string)file_get_contents($f), true) ?: []) : [];
         $st = array_values(array_filter($st, fn($t) => $t > time() - 600));
         if (count($st) >= 5) out(429, ['error' => 'too_many_attempts']);
-        $pw = (string)(body()['password'] ?? '');
-        if (!password_verify($pw, (string)$cfg['admin_hash'])) {
-            $st[] = time(); file_put_contents($f, json_encode($st));
-            usleep(400000);
-            out(401, ['error' => 'invalid_credentials']);
+        $lb = body(); $pw = (string)($lb['password'] ?? ''); $luser = strtolower(cut($lb['user'] ?? '', 40)); $lcode = trim((string)($lb['code'] ?? ''));
+        $failLogin = function () use (&$st, $f): never { $st[] = time(); file_put_contents($f, json_encode($st)); usleep(400000); out(401, ['error' => 'invalid_credentials']); };
+        $srow = null; $acct = null;
+        if ($luser === '') {                                           // المالك: كلمة مرور المدير فقط
+            if (!password_verify($pw, (string)$cfg['admin_hash'])) $failLogin();
+            $om = ownerMfa(); if ($om) $acct = ['secret' => $om['secret'], 'tstep' => (int)($om['tstep'] ?? 0), 'rec' => $om['rec'] ?? []];
+        } else {                                                       // موظف: اسم مستخدم + كلمة مرور
+            $srow = preg_match('/^[a-z0-9._@-]{3,64}$/', $luser) ? staffGet($luser) : null;
+            $hash = $srow ? (string)$srow['pass_hash'] : (string)$cfg['admin_hash'];                // مقارنة وهمية لتساوي الزمن
+            if (!password_verify($pw, $hash) || !$srow || !(int)$srow['active']) $failLogin();
+            if ($srow['totp']) $acct = ['secret' => $srow['totp'], 'tstep' => (int)$srow['tstep'], 'rec' => json_decode((string)$srow['rec'], true) ?: []];
+        }
+        if ($acct) {
+            if ($lcode === '') out(401, ['error' => 'otp_required']);               // كلمة المرور صحيحة؛ يلزم الرمز (لا يُحتسب فشلاً)
+            $upd = mfa_check($acct, $lcode);
+            if (!$upd) { $st[] = time(); file_put_contents($f, json_encode($st)); usleep(400000); auditAs($luser === '' ? 'owner' : $luser, $luser === '' ? 'owner' : (string)$srow['role'], 'mfa.verify_fail'); out(401, ['error' => 'otp_required']); }
+            if ($luser === '') kvSet('owner_mfa', ['secret' => $upd['secret'], 'tstep' => $upd['tstep'], 'rec' => $upd['rec']]);
+            else db()->prepare('UPDATE staff SET tstep = ?, rec = ? WHERE user = ?')->execute([$upd['tstep'], json_encode(array_values($upd['rec'])), $luser]);
         }
         @unlink($f);
         session_regenerate_id(true);
-        $_SESSION['admin'] = true;
+        if ($luser === '') { $_SESSION['admin'] = true; unset($_SESSION['staff']); $isAdmin = true; }
+        else { $_SESSION['staff'] = $luser; unset($_SESSION['admin']); $staffRow = $srow; $staffPerms = json_decode((string)$srow['perms'], true) ?: []; db()->prepare('UPDATE staff SET last_login = ? WHERE user = ?')->execute([time(), $luser]); }
+        audit('login');
         out(200, ['ok' => true]);
 
     case 'logout':
+        if ($isAdmin || $staffRow) audit('logout');
         $_SESSION = []; session_destroy();
         out(200, ['ok' => true]);
 
     case 'me':
-        out(200, ['admin' => $isAdmin]);
+        if ($isAdmin) out(200, ['admin' => true, 'role' => 'owner', 'perms' => ['*'], 'mfa' => ownerMfa() !== null]);
+        if ($staffRow) out(200, ['admin' => false, 'role' => $staffRow['role'], 'perms' => $staffPerms, 'name' => $staffRow['name'], 'user' => $staffRow['user'], 'mfa' => !empty($staffRow['totp'])]);
+        out(200, ['admin' => false]);
+
+    /* المصادقة الثنائية لصاحب الجلسة (مالك أو موظف): status | setup | enable {code} | disable {code} */
+    case 'mfa':
+        if (!$isAdmin && !$staffRow) out(401, ['error' => 'unauthorized']);
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $mb = body(); $ma = (string)($mb['action'] ?? '');
+        $cur = $isAdmin ? ownerMfa() : ($staffRow['totp'] ? ['secret' => $staffRow['totp'], 'tstep' => (int)$staffRow['tstep'], 'rec' => json_decode((string)$staffRow['rec'], true) ?: []] : null);
+        if ($ma === 'status') out(200, ['ok' => true, 'enabled' => $cur !== null, 'recovery_left' => $cur ? count($cur['rec'] ?? []) : 0]);
+        if ($ma === 'setup') {
+            if ($cur) out(409, ['error' => 'already_enabled']);
+            $secret = b32enc(random_bytes(20)); $_SESSION['mfa_pending'] = $secret;
+            $label = rawurlencode('Alyssum:' . ($isAdmin ? 'owner' : $staffRow['user']));
+            out(200, ['ok' => true, 'secret' => $secret, 'uri' => 'otpauth://totp/' . $label . '?secret=' . $secret . '&issuer=Alyssum&algorithm=SHA1&digits=6&period=30']);
+        }
+        if ($ma === 'enable') {
+            $secret = (string)($_SESSION['mfa_pending'] ?? ''); if ($secret === '') out(400, ['error' => 'no_setup']);
+            rateLimit('mfa' . clientIp(), 10, 600);
+            $stp = totp_match($secret, (string)($mb['code'] ?? '')); if ($stp === null) out(422, ['error' => 'bad_code']);
+            $codes = rec_codes(); $hashes = array_map('rec_hash', $codes);
+            if ($isAdmin) kvSet('owner_mfa', ['secret' => $secret, 'tstep' => $stp, 'rec' => $hashes]);
+            else db()->prepare('UPDATE staff SET totp = ?, tstep = ?, rec = ? WHERE user = ?')->execute([$secret, $stp, json_encode($hashes), $staffRow['user']]);
+            unset($_SESSION['mfa_pending']); audit('mfa.enroll');
+            out(200, ['ok' => true, 'recovery' => $codes]);
+        }
+        if ($ma === 'disable') {
+            if (!$cur) out(200, ['ok' => true]);
+            rateLimit('mfa' . clientIp(), 10, 600);
+            if (!mfa_check($cur, (string)($mb['code'] ?? ''))) out(422, ['error' => 'bad_code']);
+            if ($isAdmin) db()->prepare('DELETE FROM admin_kv WHERE k = ?')->execute(['owner_mfa']);
+            else db()->prepare("UPDATE staff SET totp = NULL, tstep = 0, rec = '[]' WHERE user = ?")->execute([$staffRow['user']]);
+            audit('mfa.disable'); out(200, ['ok' => true]);
+        }
+        out(400, ['error' => 'unknown_action']);
+
+    /* فريق العمل (للمالك): list | create | update | password | reset_mfa | delete | audit | stats(days) — والموظف يرى إحصاءه فقط */
+    case 'team':
+        if (!$isAdmin && !$staffRow) out(401, ['error' => 'unauthorized']);
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $tb = body(); $ta = (string)($tb['action'] ?? '');
+        if ($ta === 'stats') {
+            $days = max(1, min(90, (int)($tb['days'] ?? 7)));
+            $st = db()->prepare("SELECT actor, role, action, detail, at FROM audit_log WHERE at > ? AND action IN ('order.status','order.call','order.edit','order.create','order.delete','login')" . ($isAdmin ? '' : ' AND actor = ?') . ' ORDER BY at DESC LIMIT 20000');
+            $st->execute($isAdmin ? [time() - $days * 86400] : [time() - $days * 86400, actorName()]);
+            $agg = [];
+            foreach ($st->fetchAll() as $r) { $to = (string)((json_decode($r['detail'], true) ?: [])['to'] ?? ''); $k = $r['actor'] . '|' . $r['action'] . '|' . ($r['action'] === 'order.status' ? $to : ''); if (!isset($agg[$k])) $agg[$k] = ['actor' => $r['actor'], 'role' => $r['role'], 'action' => $r['action'], 'to_status' => $r['action'] === 'order.status' ? $to : '', 'n' => 0, 'last_at' => iso((int)$r['at'])]; $agg[$k]['n']++; }
+            out(200, ['ok' => true, 'rows' => array_values($agg)]);
+        }
+        needOwner();
+        $tu = strtolower(cut($tb['email'] ?? ($tb['user'] ?? ''), 64));
+        if ($ta === 'list') {
+            $rows = db()->query('SELECT user, name, role, perms, active, totp, created_at, last_login FROM staff ORDER BY created_at')->fetchAll();
+            out(200, ['ok' => true, 'presets' => STAFF_PRESETS, 'perms' => STAFF_PERMS, 'staff' => array_map(fn($r) => ['email' => $r['user'], 'name' => $r['name'], 'role' => $r['role'], 'perms' => json_decode($r['perms'], true) ?: [], 'active' => (bool)$r['active'], 'mfa' => !empty($r['totp']), 'user' => true, 'last_sign_in' => $r['last_login'] ? iso((int)$r['last_login']) : null], $rows)]);
+        }
+        if ($ta === 'audit') {
+            $rows = db()->query('SELECT at, actor, role, action, ref, detail FROM audit_log ORDER BY id DESC LIMIT 80')->fetchAll();
+            out(200, ['ok' => true, 'rows' => array_map(fn($r) => ['at' => iso((int)$r['at']), 'actor' => $r['actor'], 'role' => $r['role'], 'action' => $r['action'], 'ref' => $r['ref'], 'detail' => json_decode($r['detail'], true) ?: new stdClass], $rows)]);
+        }
+        if (!preg_match('/^[a-z0-9._@-]{3,64}$/', $tu) || $tu === 'owner') out(422, ['error' => 'invalid_email', 'detail' => 'اسم مستخدم غير صالح']);
+        if ($ta === 'create') {
+            $role = (string)($tb['role'] ?? 'agent'); if (!in_array($role, STAFF_ROLES, true)) out(422, ['error' => 'invalid_role']);
+            $pw = (string)($tb['password'] ?? ''); if (mb_strlen($pw) < 10) out(422, ['error' => 'weak_password', 'detail' => '10 أحرف على الأقل']);
+            if (staffGet($tu)) out(409, ['error' => 'exists', 'detail' => 'الحساب موجود']);
+            $perms = cleanStaffPerms($tb['perms'] ?? null, $role);
+            db()->prepare('INSERT INTO staff (user, name, role, perms, pass_hash, created_at) VALUES (?,?,?,?,?,?)')->execute([$tu, cut($tb['name'] ?? '', 80), $role, json_encode($perms), password_hash($pw, PASSWORD_DEFAULT), time()]);
+            audit('staff.create', $tu, ['role' => $role, 'perms' => $perms]); out(200, ['ok' => true]);
+        }
+        $row = staffGet($tu); if (!$row) out(404, ['error' => 'not_found']);
+        if ($ta === 'update') {
+            $set = []; $args = [];
+            if (isset($tb['role'])) { if (!in_array($tb['role'], STAFF_ROLES, true)) out(422, ['error' => 'invalid_role']); $set[] = 'role = ?'; $args[] = $tb['role']; }
+            if (isset($tb['name'])) { $set[] = 'name = ?'; $args[] = cut($tb['name'], 80); }
+            if (isset($tb['perms']) || isset($tb['role'])) { $set[] = 'perms = ?'; $args[] = json_encode(cleanStaffPerms($tb['perms'] ?? null, (string)($tb['role'] ?? $row['role']))); }
+            if (isset($tb['active'])) { $set[] = 'active = ?'; $args[] = $tb['active'] ? 1 : 0; }
+            if ($set) { $args[] = $tu; db()->prepare('UPDATE staff SET ' . implode(', ', $set) . ' WHERE user = ?')->execute($args); }
+            audit(isset($tb['active']) && !$tb['active'] ? 'staff.disable' : 'staff.update', $tu); out(200, ['ok' => true]);
+        }
+        if ($ta === 'password') { $pw = (string)($tb['password'] ?? ''); if (mb_strlen($pw) < 10) out(422, ['error' => 'weak_password', 'detail' => '10 أحرف على الأقل']); db()->prepare('UPDATE staff SET pass_hash = ? WHERE user = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $tu]); audit('staff.password', $tu); out(200, ['ok' => true]); }
+        if ($ta === 'reset_mfa') { db()->prepare("UPDATE staff SET totp = NULL, tstep = 0, rec = '[]' WHERE user = ?")->execute([$tu]); audit('staff.reset_mfa', $tu); out(200, ['ok' => true]); }
+        if ($ta === 'delete') { db()->prepare('DELETE FROM staff WHERE user = ?')->execute([$tu]); audit('staff.delete', $tu); out(200, ['ok' => true]); }
+        out(400, ['error' => 'unknown_action']);
 
     /* ── عمليات الزوار (بلا تسجيل دخول) ── */
     case 'hit':
@@ -287,7 +461,7 @@ switch ($route) {
     case 'order':
         if ($method !== 'POST') out(405, ['error' => 'method']);
         $o = body()['order'] ?? [];
-        $manual = $isAdmin && !empty($o['manual']);          // طلب يدوي من لوحة المدير: بلا حمايات الزوار
+        $manual = can('orders.create') && !empty($o['manual']);          // طلب يدوي من لوحة المدير: بلا حمايات الزوار
         $ip = clientIp(); if (!$manual) rateLimit('ord' . $ip, 20, 3600);
         $name = cut($o['name'] ?? '', 120); $phone = preg_replace('/[^0-9+]/', '', (string)($o['phone'] ?? ''));
         $items = is_array($o['items'] ?? null) ? array_slice($o['items'], 0, 50) : [];
@@ -340,6 +514,7 @@ switch ($route) {
           ->execute([$id, time(), $name, $phone, cut($o['wilaya'] ?? '', 80), cut($o['commune'] ?? '', 120), cut($o['dtype'] ?? '', 10), cut($o['desk'] ?? '', 160),
             implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust, $iph]);
         if ($manual && trim((string)($o['note'] ?? '')) !== '') $d->prepare('UPDATE orders SET note = ? WHERE id = ?')->execute([cut($o['note'], 500), $id]);
+        if ($manual) audit('order.create', $id, ['source' => 'manual']);
         out(200, ['ok' => true, 'id' => $id]);
 
     /* ── حسابات الزبائن («حسابي») ── */
@@ -539,7 +714,7 @@ switch ($route) {
 
     /* ── قراءات وتعديلات المدير ── */
     case 'orders':
-        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        needPerm('orders');
         $rows = db()->query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 2000')->fetchAll();
         out(200, ['ok' => true, 'orders' => array_map(fn($r) => [
             'id' => $r['id'], 'date' => iso((int)$r['created_at']), 'name' => $r['name'], 'phone' => $r['phone'], 'wilaya' => $r['wilaya'], 'commune' => $r['commune'],
@@ -547,9 +722,12 @@ switch ($route) {
             'coupon' => $r['coupon'], 'discount' => (float)$r['discount'], 'extra' => json_decode($r['extra'], true) ?: new stdClass, 'status' => $r['status'], 'note' => $r['note']], $rows)]);
 
     case 'order_update':
-        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        needPerm('orders.write');
         if ($method !== 'POST') out(405, ['error' => 'method']);
         $b = body(); $id = (string)($b['id'] ?? ''); $set = []; $args = [];
+        $editKeys = array_values(array_filter(['name', 'wilaya', 'commune', 'desk', 'dtype', 'phone', 'items_text', 'items', 'fee', 'total', 'subtotal', 'discount'], fn($k) => isset($b[$k])));
+        if ($editKeys && !can('orders.edit')) out(403, ['error' => 'forbidden']);                       // الموظف بلا «تعديل بيانات الطلب» يغيّر الحالة والملاحظة فقط
+        $oldRow = null; if ($id !== '') { $os = db()->prepare('SELECT status, note FROM orders WHERE id = ?'); $os->execute([$id]); $oldRow = $os->fetch() ?: null; }
         if (isset($b['status'])) { if (!in_array($b['status'], ['nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'], true)) out(422, ['error' => 'invalid_status']); $set[] = 'status = ?'; $args[] = $b['status']; }
         if (isset($b['note'])) { $set[] = 'note = ?'; $args[] = cut($b['note'], 500); }
         /* تعديل بيانات الطلب بعد التأكيد (v1.89.79): الاسم/الولاية/البلدية/طريقة التوصيل/المكتب/الرسم/الإجمالي */
@@ -562,24 +740,30 @@ switch ($route) {
         if (!$set || $id === '') out(422, ['error' => 'nothing_to_update']);
         $args[] = $id;
         db()->prepare('UPDATE orders SET ' . implode(', ', $set) . ' WHERE id = ?')->execute($args);
+        if ($oldRow) {
+            if (isset($b['status']) && $b['status'] !== $oldRow['status']) audit('order.status', $id, ['from' => $oldRow['status'], 'to' => $b['status']]);
+            if (isset($b['note']) && callMarks(cut($b['note'], 500)) !== callMarks((string)$oldRow['note'])) audit('order.call', $id, ['from' => callMarks((string)$oldRow['note']), 'to' => callMarks(cut($b['note'], 500))]);
+            if ($editKeys) audit('order.edit', $id);
+        }
         out(200, ['ok' => true]);
 
     case 'order_delete':
-        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        needPerm('orders.delete');
         if ($method !== 'POST') out(405, ['error' => 'method']);
         $b = body(); $id = (string)($b['id'] ?? '');
         if ($id === '') out(422, ['error' => 'nothing_to_delete']);
         db()->prepare('DELETE FROM orders WHERE id = ?')->execute([$id]);
+        audit('order.delete', $id);
         out(200, ['ok' => true]);
 
     case 'presence':
-        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        needPerm('analytics');
         $st = db()->prepare('SELECT page, COUNT(*) c FROM presence WHERE seen_at > ? GROUP BY page'); $st->execute([time() - 75]);
         $by = []; $now = 0; foreach ($st->fetchAll() as $r) { $by[$r['page']] = (int)$r['c']; $now += (int)$r['c']; }
         out(200, ['ok' => true, 'now' => $now, 'byPage' => $by ?: new stdClass]);
 
     case 'analytics':
-        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        needPerm('analytics');
         $d = db(); $day0 = strtotime('today');
         $map = function (string $sql, array $a = []) use ($d) { $st = $d->prepare($sql); $st->execute($a); $o = []; foreach ($st->fetchAll() as $r) $o[$r['k']] = (int)$r['c']; return $o ?: new stdClass; };
         out(200, ['ok' => true,
@@ -692,7 +876,7 @@ switch ($route) {
             rateLimit('shwh' . clientIp(), 600, 60);
             if ($method === 'GET' && isset($_GET['subscribe'], $_GET['crc_token'])) { http_response_code(200); header('Content-Type: text/plain; charset=utf-8'); echo (string)$_GET['crc_token']; exit; }   // تحقق CRC من الشركة
         } else {
-            if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+            needPerm('ship');
             rateLimit('sh' . clientIp(), 120, 60);
         }
         require_once $shipLib;

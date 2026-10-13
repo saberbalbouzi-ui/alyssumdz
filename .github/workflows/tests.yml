@@ -30,6 +30,8 @@ jobs:
         run: node scripts/test-shipsup.js
       - name: النشر التلقائي (hub)
         run: node scripts/test-hub.js
+      - name: الأدوار (نموذج + اتساق الصلاحيات)
+        run: node scripts/test-roles.js
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.2', extensions: 'openssl, pdo_sqlite, mbstring, curl' }
       - name: وحدة تجميع شركات التوصيل (PHP)
@@ -37,6 +39,7 @@ jobs:
           php scripts/test-shipping.php
           php scripts/test-ship-php.php
           php scripts/test-gateway.php
+          php scripts/test-roles-php.php
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - name: بوابة الشحن (Worker + D1)

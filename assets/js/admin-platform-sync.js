@@ -38,6 +38,7 @@ const PlatformSync = (() => {
     try { localStorage.setItem("alyssum_pf_cat", String(h)); } catch (e) { }
   }
   async function tick() {
+    if (window.AdminRoles && AdminRoles.state.me && !AdminRoles.state.me.owner) return;        // مزامنة المنصة للمالك فقط
     if (S.off || S.busy || document.hidden || typeof Admin === "undefined" || !Array.isArray(Admin.orders)) return;
     S.busy = true;
     try {

@@ -178,6 +178,32 @@ const API = {
       const t = await this.token(); if (!t) return false;
       try { const r = await fetch(this.url("/rest/v1/rpc/is_admin"), { method: "POST", headers: this.headers(t), body: "{}" }); return r.ok && (await r.json()) === true; } catch (e) { return false; }
     },
+    /* هوية صاحب الجلسة (مالك/موظف) من staff_me؛ قاعدة بلا ملف الأدوار (الدالة غير موجودة) تعود لفحص المالك القديم */
+    async me() {
+      const t = await this.token(); if (!t) return null;
+      try {
+        const r = await fetch(this.url("/rest/v1/rpc/staff_me"), { method: "POST", headers: this.headers(t), body: "{}" });
+        if (r.status === 404) return (await this.isAdmin()) ? { owner: true, role: "owner", perms: ["*"], email: (this.session() || {}).email || "", legacy: true } : null;
+        return r.ok ? await r.json() : null;
+      } catch (e) { return null; }
+    },
+    aal() { try { const s = this.session(); return JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).aal || "aal1"; } catch (e) { return "aal1"; } },
+    /* المصادقة الثنائية (TOTP) عبر خدمة الدخول: عوامل الحساب، تسجيل عامل، تحدٍّ+تحقق (يرفع الجلسة إلى aal2)، حذف */
+    async factors() { const t = await this.token(); if (!t) return []; const r = await fetch(this.url("/auth/v1/user"), { headers: this.headers(t) }); const j = await r.json().catch(() => ({})); return (j && j.factors) || []; },
+    async mfaPending() { if (this.aal() === "aal2") return null; const f = (await this.factors()).filter(x => x.factor_type === "totp" && x.status === "verified"); return f.length ? f[0].id : null; },
+    async mfaEnroll(name) {
+      const t = await this.token(); const r = await fetch(this.url("/auth/v1/factors"), { method: "POST", headers: this.headers(t), body: JSON.stringify({ factor_type: "totp", friendly_name: name, issuer: "Alyssum" }) });
+      const j = await r.json().catch(() => ({})); if (!r.ok || !j.id) throw new Error(j.msg || j.error_description || "تعذّر بدء التفعيل"); return j;
+    },
+    async mfaVerify(id, code) {
+      const t = await this.token(); const c = await fetch(this.url("/auth/v1/factors/" + encodeURIComponent(id) + "/challenge"), { method: "POST", headers: this.headers(t), body: "{}" });
+      const cj = await c.json().catch(() => ({})); if (!c.ok || !cj.id) throw new Error("تعذّر طلب التحدّي");
+      const v = await fetch(this.url("/auth/v1/factors/" + encodeURIComponent(id) + "/verify"), { method: "POST", headers: this.headers(t), body: JSON.stringify({ challenge_id: cj.id, code: String(code).trim() }) });
+      const vj = await v.json().catch(() => ({})); if (!v.ok || !vj.access_token) throw new Error("الرمز غير صحيح");
+      this.saveSession(vj); return vj;
+    },
+    async mfaRemove(id) { const t = await this.token(); const r = await fetch(this.url("/auth/v1/factors/" + encodeURIComponent(id)), { method: "DELETE", headers: this.headers(t) }); if (!r.ok) throw new Error("تعذّر الحذف"); },
+    rpc(name, args) { try { this.token().then(t => { if (t) fetch(this.url("/rest/v1/rpc/" + name), { method: "POST", headers: this.headers(t), body: JSON.stringify(args || {}), keepalive: true }).catch(() => {}); }); } catch (e) {} },
     async token() {                                   // توكن المدير (مع تجديد تلقائي)
       const s = this.session(); if (!s) return null;
       if (Date.now() < s.expires_at) return s.access_token;
