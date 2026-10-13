@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.170">
+<meta name="admin-version" content="1.89.171">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -333,6 +333,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('callcenter',this)"><span class="nav-ic">☎️</span><span class="nav-txt"><b>مركز الاتصال<span class="nb hidden" id="nb-callcenter" title="طلبات بلا أي استجابة منذ مدة"></span></b><small>طلب واحد بالدور وأزرار كبيرة: تأكيد، لم يُجب، لاحقاً، رقم خاطئ، إلغاء</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('experts',this)"><span class="nav-ic">🤝</span><span class="nav-txt"><b>شبكة الخبراء</b><small>مستقلون جزائريون: مصممون، مشترو إعلانات، مؤكِّدات، موزّعون، صنّاع UGC — تواصل مباشر بواتساب</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('dispatch',this)"><span class="nav-ic">🧭</span><span class="nav-txt"><b>التوجيه والبوردرو</b><small>توجيه الطلبات لشركات التوصيل بحسب المنطقة والأداء، إرسال وطباعة مئات البوردرو بنقرة، ومحطة مسح الباركود</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('profit',this)"><span class="nav-ic">💰</span><span class="nav-txt"><b>الربح الحقيقي</b><small>صافي ما دخل جيبك بعد التوصيل والمرتجعات والبضاعة وإعلانات Meta وتيك توك</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('sources',this)"><span class="nav-ic">🏬</span><span class="nav-txt"><b>مركز المتاجر</b><small>طلبات Shopify وWooCommerce وجداول Google من كل متاجرك في لوحة واحدة</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('costs',this)"><span class="nav-ic">🧪</span><span class="nav-txt"><b>تكلفة المنتجات</b><small>سعر الشراء: مباشرة للمشترى جاهزاً، أو يُحسب من المواد الأولية للمصنَّع</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('delivery',this)"><span class="nav-ic">🔗</span><span class="nav-txt"><b>شركات التوصيل</b><small>ربط حسابات ومفاتيح API لشركات التوصيل</small></span></button>
@@ -803,6 +804,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-callcenter" class="hidden admin-extra-tab"><div id="callcenter-content"></div></div>
   <div id="tab-experts" class="hidden admin-extra-tab"><div id="experts-content"></div></div>
   <div id="tab-dispatch" class="hidden admin-extra-tab"><div id="dispatch-content"></div></div>
+  <div id="tab-profit" class="hidden admin-extra-tab"><div id="profit-content"></div></div>
   <div id="tab-sources" class="hidden admin-extra-tab"><div id="sources-content"></div></div>
   <div id="tab-costs" class="hidden">
     <div class="tab-seg" id="cc-seg"><button type="button" class="small green" data-cv="rcp" onclick="Admin.ccView('rcp')">🧪 الوصفات</button><button type="button" class="small gold on" data-cv="cost" onclick="Admin.ccView('cost')">🏭 التكلفة</button></div>
@@ -1622,12 +1624,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.170"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.170"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.170"></script>
+<script src="assets/js/ctl-help.js?v=1.89.171"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.171"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.171"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.170"></script>
+<script src="assets/js/admin-nav.js?v=1.89.171"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1639,7 +1641,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.170"></script>
+<script src="assets/js/admin-update.js?v=1.89.171"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -1669,6 +1671,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-platform-sync.js?v=1.89.150"></script>
 <script src="assets/js/admin-callcenter.js?v=1.89.168"></script>
 <script src="assets/js/admin-dispatch.js?v=1.89.169"></script>
+<script src="assets/js/admin-profit.js?v=1.89.171"></script>
 <script src="assets/js/admin-experts.js?v=1.89.164"></script>
 <script src="assets/js/admin-sources.js?v=1.89.165"></script>
 <script src="assets/js/admin-roles.js?v=1.89.168"></script>
@@ -5561,13 +5564,14 @@ const Admin = {
   insCost(price){ const S = this.fin.set; return S.insMode === "val" ? (Number(S.insVal) || 0) : Math.round(price * (Number(S.insVal) || 0) / 100); },
   retCost(est){ const S = this.fin.set; return S.retMode === "val" ? (Number(S.retVal) || 0) : Math.round(est * (Number(S.retVal) || 0) / 100); },
   /* حساب الأرباح لكل منتج في فترة: livree = محقق، echec = خسارة (توصيل + إرجاع + تغليف؛ البضاعة تعود للمخزون)، confirmee/expediee = متوقع */
-  computeFinance(days){
-    const since = days > 0 ? Date.now() - days * 86400000 : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0, adTotal:0 };
-    const succ = {}, succAll = { n:0 }; this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(o.status !== "livree") return; const ls = this.orderLines(o); if(!ls.length) return; succAll.n++; new Set(ls.map(l=>l.p.slug)).forEach(sl=>{ succ[sl] = (succ[sl] || 0) + 1; }); });
+  computeFinance(days, range){
+    /* range = {from,to} بالمللي ثانية (اختياري) يغلب days؛ to حصرية. يملأ أيضاً K.parts/pre/byDay/bySrc/byWil لتبويب «الربح الحقيقي» (إضافة فقط: لا يغيّر الأرقام الأصلية) */
+    const since = range && range.from != null ? range.from : (days > 0 ? Date.now() - days * 86400000 : 0), until = range && range.to != null ? range.to : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0, adTotal:0, parts:{ rev:0, cogs:0, del:0, pack:0, retLoss:0 }, byDay:{}, bySrc:{}, byWil:{} };
+    const succ = {}, succAll = { n:0 }; this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(until && !(t < until)) return; if(o.status !== "livree") return; const ls = this.orderLines(o); if(!ls.length) return; succAll.n++; new Set(ls.map(l=>l.p.slug)).forEach(sl=>{ succ[sl] = (succ[sl] || 0) + 1; }); });
     const adNow = {}, adFor = sl=>{ if(adNow[sl] !== undefined) return adNow[sl]; const c = this.adCfgFor(sl); return (adNow[sl] = this.adCalc(c, c === S.ad ? succAll.n : (succ[sl] || 0))); }, adFixed = sl=>this.adCfgFor(sl).method === "fixed" ? adFor(sl) : 0;   // الطرق الأخرى تحمل كلفة الطلبات الفاشلة داخلها
     const row = p=>per[p.slug] || (per[p.slug] = { p, units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, ad:0, feeIn:0, realN:0, estN:0, loss:0, profit:0, expProfit:0 });
     this.orders.forEach(o=>{
-      const t = new Date(o.date).getTime(); if(since && !(t >= since)) return;
+      const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(until && !(t < until)) return;
       if(!["livree","echec","confirmee","expediee"].includes(o.status)) return;
       const lines = this.orderLines(o); if(!lines.length) return;
       const sum = lines.reduce((a,l)=>a + l.total, 0) || lines.length, fee = Number(o.fee) || 0, disc = Number(o.discount) || 0, est = this.carrierCost(o), act = this.actualFees(o), real = this.realFees(o), price = Math.max(0, (Number(o.total) || 0) - fee), pack = S.packaging,
@@ -5575,23 +5579,29 @@ const Admin = {
         car = useAct ? act.del + act.cod + act.ins : (useReal ? real.delivery + Math.round(price * real.cod / 100) + this.insCost(price) : est + this.insCost(price) + Math.round(price * (((window.AdminPayments && AdminPayments.DEF_COD) || 0.75)) / 100)),      // وضع التقدير يشمل عمولة COD أيضاً كما في التسوية
         ret = useAct ? act.ret : (useReal ? real.retour : this.retCost(est));
       K.actN = (K.actN || 0) + (useAct ? 1 : 0); K.realN = (K.realN || 0) + (!useAct && useReal ? 1 : 0); K.estN = (K.estN || 0) + (!useAct && !useReal ? 1 : 0);
+      let od = 0, odPre = 0;      // أثر الطلب على الربح المحقق (od) وقبل الإعلان (odPre)
       lines.forEach(l=>{
         const share = (sum === lines.length && !lines.reduce((a,x)=>a + x.total, 0)) ? 1 / lines.length : l.total / sum, r = row(l.p);
         const cost = Number(this.fin.costs[l.p.slug]) || 0;
-        if(o.status === "echec"){ const adF = Math.round(adFixed(l.p.slug)); K.adTotal += adF; const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share) + adF; r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; }
+        if(o.status === "echec"){ const adF = Math.round(adFixed(l.p.slug)); K.adTotal += adF; const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share) + adF; r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; od -= loss; odPre -= (loss - adF); K.parts.retLoss += loss - adF; }
         else{
           const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), ad = Math.round(adFor(l.p.slug)), pr = rev - cogs - del - pk - ad; K.adTotal += ad;
-          if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.ad += ad; r.feeIn += Math.round(fee * share); (useReal || useAct) ? r.realN++ : r.estN++; r.profit += pr; K.real += pr; K.revenue += rev; }
+          if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.ad += ad; r.feeIn += Math.round(fee * share); (useReal || useAct) ? r.realN++ : r.estN++; r.profit += pr; K.real += pr; K.revenue += rev; od += pr; odPre += pr + ad; K.parts.rev += rev; K.parts.cogs += cogs; K.parts.del += del; K.parts.pack += pk; }
           else { r.expUnits += l.qty; r.expProfit += pr; K.exp += pr; }
         }
       });
       if(o.status === "livree") K.delivered++; else if(o.status === "echec") K.failed++; else K.open++;
+      if(o.status === "livree" || o.status === "echec"){
+        const dk = this.isoDay(new Date(o.date)), sk = String((o.extra && (o.extra["📣 الحملة"] || o.extra["📣 campaign"])) || "").trim(), wk = String(o.wilaya || ""), ok = o.status === "livree";
+        const add = (m, k, init)=>{ const x = m[k] || (m[k] = Object.assign({ n:0, ok:0, ko:0, rev:0, net:0, pre:0 }, init || {})); x.n++; ok ? x.ok++ : x.ko++; if(ok) x.rev += Number(o.total) || 0; x.net += od; x.pre += odPre; };
+        add(K.byDay, dk); add(K.bySrc, sk || "—"); add(K.byWil, wk || "—");
+      }
     });
     /* v1.89.132 (لجنة الخبراء): إنفاق حملة بلا أي طلب ناجح كان يُحسب 0 فيبدو الربح سليماً — صار خسارة صريحة */
     K.adIdle = 0; Object.keys(this.fin.ads || {}).forEach(sl=>{ const c = this.fin.ads[sl]; if(c && c.method === "spend" && (Number(c.a) || 0) > 0 && !(Number(c.n) > 0) && !(succ[sl] > 0) && this.products.some(p=>p.slug === sl)) K.adIdle += Number(c.a) || 0; }); K.adIdle = Math.round(K.adIdle); K.real -= K.adIdle; K.adTotal += K.adIdle;
     this.products.forEach(p=>adFor(p.slug)); this._adNow = adNow; this._adSucc = succ; K.lossTotal = Object.values(per).reduce((a,x)=>a + x.loss, 0);
     /* مرتجعات ما بعد التسليم (تبويب المرتجعات): تُطرح المبالغ المستردة المؤكَّدة من صافي الربح المحقق */
-    K.refunds = (typeof AdminReturns !== "undefined" && AdminReturns.refunds) ? AdminReturns.refunds(since) : 0; K.real -= K.refunds;
+    K.refunds = (typeof AdminReturns !== "undefined" && AdminReturns.refunds) ? AdminReturns.refunds(since, until || undefined) : 0; K.real -= K.refunds;
     return { per, K };
   },
   /* ── طرق حساب سعر الإعلان: ثابتة | Cost × معامل | إنفاق ÷ عدد الطلبات ── */
