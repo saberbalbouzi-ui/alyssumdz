@@ -28,6 +28,19 @@ const rows = [
 ];
 const sm = R.summarize(rows);
 ok("إحصاء الفريق: ترتيب بالتأكيدات ونسبة التأكيد", sm.length === 2 && sm[0].actor === "b@x" && sm[0].confirmed === 10 && sm[0].rate === 100 && sm[1].actor === "a@x" && sm[1].confirmed === 6 && sm[1].cancelled === 2 && sm[1].rate === 75 && sm[1].calls === 9 && sm[1].last === "2026-10-13T11:00:00Z", sm);
+const rows2 = [
+  { actor: "c@x", role: "agent", action: "order.status", to_status: "confirmee", n: 5, last_at: "2026-10-13T10:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.status", to_status: "annulee", n: 5, last_at: "2026-10-13T10:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.call", to_status: "📞1", n: 4, last_at: "2026-10-13T09:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.call", to_status: "📞2", n: 2, last_at: "2026-10-13T09:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.call", to_status: "⏰", n: 3, last_at: "2026-10-13T09:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.call", to_status: "⏰📅", n: 2, last_at: "2026-10-13T09:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.call", to_status: "📵", n: 1, last_at: "2026-10-13T09:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.call", to_status: "🏠", n: 2, last_at: "2026-10-13T09:00:00Z" },
+  { actor: "c@x", role: "agent", action: "order.call", to_status: "", n: 7, last_at: "2026-10-13T09:00:00Z" },
+];
+const s2 = R.summarize(rows2)[0];
+ok("إحصاء الاتصال المفصَّل: غير متاح 1/2، لاحقاً، مؤجَّل لغد، رقم خاطئ، تعديل عنوان (والفارغ لا يُعدّ)", s2.try1 === 4 && s2.try2 === 2 && s2.try3 === 0 && s2.later === 3 && s2.tomorrow === 2 && s2.wrong === 1 && s2.addr === 2 && s2.calls === 21 && s2.rate === 50, s2);
 ok("إحصاء فارغ", R.summarize([]).length === 0 && R.summarize(null).length === 0);
 
 /* اتساق القوائم عبر المنصات */

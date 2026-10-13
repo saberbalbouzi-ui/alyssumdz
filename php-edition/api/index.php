@@ -197,7 +197,7 @@ function audit(string $action, string $ref = '', array $detail = []): void { aud
 function can(string $p): bool { global $isAdmin, $staffPerms; return $isAdmin || in_array($p, $staffPerms, true); }
 function needPerm(string $p): void { global $staffRow; if (!can($p)) out($staffRow ? 403 : 401, ['error' => $staffRow ? 'forbidden' : 'unauthorized']); }
 function needOwner(): void { global $isAdmin, $staffRow; if (!$isAdmin) out($staffRow ? 403 : 401, ['error' => $staffRow ? 'forbidden' : 'unauthorized']); }
-function callMarks(string $n): string { return (preg_match('/📞\d+/u', $n, $m) ? $m[0] : '') . (str_contains($n, '⏰') ? '⏰' : '') . (str_contains($n, '📵') ? '📵' : ''); }
+function callMarks(string $n): string { return (preg_match('/📞\d+/u', $n, $m) ? $m[0] : '') . (str_contains($n, '⏰') ? '⏰' : '') . (str_contains($n, '📵') ? '📵' : '') . (str_contains($n, '📅') ? '📅' : '') . (str_contains($n, '🏠') ? '🏠' : ''); }
 function cleanStaffPerms($p, string $role): array {
     $arr = is_array($p) ? array_values(array_filter(array_map('strval', $p), fn($x) => in_array($x, STAFF_PERMS, true))) : (STAFF_PRESETS[$role] ?? []);
     if (array_intersect($arr, ['orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter'])) $arr[] = 'orders';
@@ -389,7 +389,7 @@ switch ($route) {
             $st = db()->prepare("SELECT actor, role, action, detail, at FROM audit_log WHERE at > ? AND action IN ('order.status','order.call','order.edit','order.create','order.delete','login')" . ($isAdmin ? '' : ' AND actor = ?') . ' ORDER BY at DESC LIMIT 20000');
             $st->execute($isAdmin ? [time() - $days * 86400] : [time() - $days * 86400, actorName()]);
             $agg = [];
-            foreach ($st->fetchAll() as $r) { $to = (string)((json_decode($r['detail'], true) ?: [])['to'] ?? ''); $k = $r['actor'] . '|' . $r['action'] . '|' . ($r['action'] === 'order.status' ? $to : ''); if (!isset($agg[$k])) $agg[$k] = ['actor' => $r['actor'], 'role' => $r['role'], 'action' => $r['action'], 'to_status' => $r['action'] === 'order.status' ? $to : '', 'n' => 0, 'last_at' => iso((int)$r['at'])]; $agg[$k]['n']++; }
+            foreach ($st->fetchAll() as $r) { $to = (string)((json_decode($r['detail'], true) ?: [])['to'] ?? ''); $keepTo = in_array($r['action'], ['order.status', 'order.call'], true); $k = $r['actor'] . '|' . $r['action'] . '|' . ($keepTo ? $to : ''); if (!isset($agg[$k])) $agg[$k] = ['actor' => $r['actor'], 'role' => $r['role'], 'action' => $r['action'], 'to_status' => $keepTo ? $to : '', 'n' => 0, 'last_at' => iso((int)$r['at'])]; $agg[$k]['n']++; }
             out(200, ['ok' => true, 'rows' => array_values($agg)]);
         }
         needOwner();

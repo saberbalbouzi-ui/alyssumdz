@@ -123,7 +123,7 @@ create policy "staff delete orders" on public.orders for delete to authenticated
 
 create or replace function public._call_marks(n text) returns text
 language sql immutable as $$
-  select coalesce(substring(n from '📞[0-9]+'), '') || case when position('⏰' in coalesce(n, '')) > 0 then '⏰' else '' end || case when position('📵' in coalesce(n, '')) > 0 then '📵' else '' end;
+  select coalesce(substring(n from '📞[0-9]+'), '') || case when position('⏰' in coalesce(n, '')) > 0 then '⏰' else '' end || case when position('📵' in coalesce(n, '')) > 0 then '📵' else '' end || case when position('📅' in coalesce(n, '')) > 0 then '📅' else '' end || case when position('🏠' in coalesce(n, '')) > 0 then '🏠' else '' end;
 $$;
 
 create or replace function public.orders_guard() returns trigger
