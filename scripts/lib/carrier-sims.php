@@ -11,6 +11,9 @@ abstract class Sim implements HttpClient
     /** @var list<array{0:string,1:string,2:array,3:mixed}> */ public array $log = [];
     /** @var array<string,string> tracking → آخر حالة خام */ public array $state = [];
     public bool $rateLimit = false;
+    /** كتالوج بلديات بديل (للمعايرة: تهجئة الشركة تختلف عن كتالوجنا). null = COMMUNES */
+    public ?array $catalog = null;
+    protected function cat(): array { return $this->catalog ?? self::COMMUNES; }
 
     /** البلديات المعروفة: ولاية قديمة (1–58) ← [اسم بالتهجئة الدقيقة عند الشركة]. */
     public const COMMUNES = [16 => ['Alger Centre', 'Bab Ezzouar', 'Kouba', 'Dar El Beida', 'El Harrach'], 31 => ['Oran', 'Es Senia'], 32 => ['El Bayadh', 'El Abiodh Sidi Cheikh'], 17 => ['Djelfa', 'Aïn Oussera']];
@@ -45,7 +48,7 @@ abstract class Sim implements HttpClient
 
     protected function communeKnown(int $w, string $name, bool $exact = true): bool
     {
-        foreach (self::COMMUNES[$w] ?? [] as $c) { if ($exact ? $c === $name : strcasecmp($c, $name) === 0) { return true; } }
+        foreach ($this->cat()[$w] ?? [] as $c) { if ($exact ? $c === $name : strcasecmp($c, $name) === 0) { return true; } }
         return false;
     }
     public function setStatus(string $tracking, string $raw): void { $this->state[$tracking] = $raw; }
@@ -56,10 +59,27 @@ abstract class Sim implements HttpClient
 final class YalidineSim extends Sim
 {
     private int $n = 0; public array $orders = [];
+    /** @var list<string> بلديات لا توصّل إليها الشركة (is_deliverable=0) */ public array $closed = [];
+    /** @var array<int,list<array{center_id:int,name:string,address:string,commune_name:string,wilaya_id:int}>> */ public array $centers = [];
+    public int $pageSize = 100;
     protected function handle(string $m, string $path, array $q, array $h, mixed $d, ?string $raw): HttpResponse
     {
         if (($h['x-api-id'] ?? '') !== 'AID' || ($h['x-api-token'] ?? '') !== 'TOK') { return $this->js(401, ['message' => 'Unauthorized']); }
         if ($m === 'GET' && $path === '/v1/wilayas/') { return $this->js(200, ['data' => [['id' => 16, 'name' => 'Alger']]]); }
+        if ($m === 'GET' && $path === '/v1/communes/') {
+            $w = (int)($q['wilaya_id'] ?? 0); if (!$w) { return $this->bad('Yalidine: communes يحتاج wilaya_id'); }
+            $rows = array_map(fn($c) => ['id' => crc32($c) % 99999, 'name' => $c, 'wilaya_id' => $w, 'is_deliverable' => in_array($c, $this->closed, true) ? 0 : 1], $this->cat()[$w] ?? []);
+            return $this->page($rows, $q);
+        }
+        if ($m === 'GET' && $path === '/v1/centers/') { return $this->page($this->centers[(int)($q['wilaya_id'] ?? 0)] ?? [], $q); }
+        if ($m === 'GET' && $path === '/v1/deliveryfees/') {
+            $rows = []; foreach ([16 => [500, 300], 31 => [700, 450], 32 => [900, 600], 17 => [800, 500]] as $w => [$hf, $df]) { $rows[] = ['wilaya_id' => $w, 'wilaya_name' => 'W' . $w, 'home_fee' => $hf, 'desk_fee' => $df]; }
+            return $this->page($rows, $q);
+        }
+        if ($m === 'GET' && $path === '/v1/parcels/') {
+            $rows = []; foreach ($this->state as $trk => $st) { $rows[] = ['tracking' => $trk, 'last_status' => $st, 'order_id' => 'x']; }
+            return $this->page($rows, $q);
+        }
         if ($m === 'POST' && $path === '/v1/parcels/') {
             if (!is_array($d) || !array_is_list($d) || !$d) { return $this->bad('Yalidine: الجسم يجب أن يكون مصفوفة طرود'); }
             $out = [];
@@ -71,6 +91,8 @@ final class YalidineSim extends Sim
                 $wilCode = ['Alger' => 16, 'Oran' => 31, 'El Bayadh' => 32, 'Djelfa' => 17][$p['to_wilaya_name']] ?? 0;
                 if (!$wilCode) { return $this->bad('Yalidine: to_wilaya_name غير معروف (الولايات الجديدة تُرسل باسم الأم): ' . $p['to_wilaya_name']); }
                 if (!$this->communeKnown($wilCode, $p['to_commune_name'], false)) { $out[$p['order_id']] = ['success' => false, 'message' => 'Commune introuvable']; continue; }
+                if (in_array($p['to_commune_name'], $this->closed, true)) { $out[$p['order_id']] = ['success' => false, 'message' => 'Commune non desservie']; continue; }
+                if (!empty($p['stopdesk_id']) && $this->centers && !$this->centerExists((int)$p['stopdesk_id'])) { $out[$p['order_id']] = ['success' => false, 'message' => 'stopdesk_id invalide']; continue; }
                 if (isset($this->orders[$p['order_id']])) { $out[$p['order_id']] = ['success' => false, 'message' => 'Duplicate order_id']; continue; }
                 $trk = 'yal-' . (++$this->n . 'AB'); $this->orders[$p['order_id']] = $trk; $this->state[$trk] = 'En préparation';
                 $out[$p['order_id']] = ['success' => true, 'order_id' => $p['order_id'], 'tracking' => $trk, 'label' => 'https://yalidine.app/app/bordereau.php?tracking=' . $trk];
@@ -87,6 +109,14 @@ final class YalidineSim extends Sim
         }
         return $this->bad("Yalidine: مسار غير موثّق $m $path", 404);
     }
+
+    private function centerExists(int $id): bool { foreach ($this->centers as $l) { foreach ($l as $c) { if ($c['center_id'] === $id) { return true; } } } return false; }
+    /** ترقيم صفحات ياليدين: {has_more,total_data,data} */
+    private function page(array $rows, array $q): HttpResponse
+    {
+        $size = min($this->pageSize, (int)($q['page_size'] ?? 100)); $pg = max(1, (int)($q['page'] ?? 1));
+        return $this->js(200, ['has_more' => $pg * $size < count($rows), 'total_data' => count($rows), 'data' => array_slice($rows, ($pg - 1) * $size, $size)]);
+    }
 }
 
 /** Ecotrack (وثيقة الشركة): Bearer، create/order بمعاملات استعلام وبلا جسم، valid/order، delete قبل التصديق، get/tracking/info، validate/token. */
@@ -101,7 +131,7 @@ final class EcotrackSim extends Sim
         if (!$auth) { return $this->js(401, ['message' => 'Unauthenticated.']); }
         if ($m === 'GET' && $path === '/api/v1/get/communes') {
             $w = (int)($q['wilaya_id'] ?? 0); $out = [];
-            foreach (self::COMMUNES[$w] ?? [] as $i => $c) { $out[(string)$i] = ['nom' => $c, 'wilaya_id' => $w, 'code_postal' => $w . 'A', 'has_stop_desk' => 1]; }
+            foreach ($this->cat()[$w] ?? [] as $i => $c) { $out[(string)$i] = ['nom' => $c, 'wilaya_id' => $w, 'code_postal' => $w . 'A', 'has_stop_desk' => 1]; }
             return $this->js(200, $out);
         }
         if ($m === 'POST' && $path === '/api/v1/create/order') {
@@ -144,7 +174,7 @@ final class NoestSim extends Sim
         $p = preg_replace('#^/api/public#', '', $path);
         if ($m === 'GET' && $p === '/get/wilayas') { return $this->js(200, [['code' => 16, 'nom' => 'Alger', 'is_active' => 1]]); }
         if ($m === 'GET' && preg_match('#^/get/communes/(\d+)$#', $p, $mm)) {
-            $out = []; foreach (self::COMMUNES[(int)$mm[1]] ?? [] as $c) { $out[] = ['nom' => $c, 'wilaya_id' => (int)$mm[1], 'code_postal' => '16000', 'is_active' => 1]; }
+            $out = []; foreach ($this->cat()[(int)$mm[1]] ?? [] as $c) { $out[] = ['nom' => $c, 'wilaya_id' => (int)$mm[1], 'code_postal' => '16000', 'is_active' => 1]; }
             return $this->js(200, $out);
         }
         if ($m !== 'POST') { return $this->bad("NOEST: $m $p غير موثّق", 404); }
@@ -175,7 +205,7 @@ final class NoestSim extends Sim
 final class MaystroSim extends Sim
 {
     private int $n = 0; public array $seen = [];
-    private function idOf(int $w, string $c): int { return $w * 1000 + array_search($c, self::COMMUNES[$w], true) + 1; }
+    private function idOf(int $w, string $c): int { return $w * 1000 + array_search($c, $this->cat()[$w], true) + 1; }
     protected function handle(string $m, string $path, array $q, array $h, mixed $d, ?string $raw): HttpResponse
     {
         $a = $h['authorization'] ?? '';
@@ -184,7 +214,7 @@ final class MaystroSim extends Sim
         $p = preg_replace('#^/api#', '', $path);
         if ($m === 'GET' && $p === '/base/wilayas/') { return $this->js(200, [[16, 'Alger'], [31, 'Oran']]); }
         if ($m === 'GET' && $p === '/base/communes/') {
-            $w = (int)($q['wilaya'] ?? 0); $out = []; foreach (self::COMMUNES[$w] ?? [] as $c) { $out[] = ['id' => $this->idOf($w, $c), 'wilaya' => $w, 'name' => $c, 'postcode' => $w * 1000, 'zone' => 1]; }
+            $w = (int)($q['wilaya'] ?? 0); $out = []; foreach ($this->cat()[$w] ?? [] as $c) { $out[] = ['id' => $this->idOf($w, $c), 'wilaya' => $w, 'name' => $c, 'postcode' => $w * 1000, 'zone' => 1]; }
             return $this->js(200, $out);
         }
         if ($m === 'POST' && $p === '/stores/orders/') {
@@ -192,7 +222,7 @@ final class MaystroSim extends Sim
             if (!is_array($d['products'] ?? null) || !$d['products'] || !isset($d['products'][0]['logistical_description'], $d['products'][0]['quantity'])) { return $this->bad('Maystro: products[] مع logistical_description وquantity مطلوبة'); }
             if ($d['wilaya'] < 1 || $d['wilaya'] > 58) { return $this->bad('Maystro: wilaya خارج 1–58'); }
             if (!in_array($d['delivery_type'], [1, 2, 3], true)) { return $this->bad('Maystro: delivery_type يجب 1|2|3 في النمط الحالي'); }
-            $ok = false; foreach (self::COMMUNES[$d['wilaya']] ?? [] as $c) { if ($this->idOf($d['wilaya'], $c) === $d['commune']) { $ok = true; } }
+            $ok = false; foreach ($this->cat()[$d['wilaya']] ?? [] as $c) { if ($this->idOf($d['wilaya'], $c) === $d['commune']) { $ok = true; } }
             if (!$ok) { return $this->js(400, ['code' => 40, 'detail' => 'wilaya or commune does not exist']); }
             $k = date('Ymd') . '|' . mb_strtolower($d['customer_name']) . '|' . $d['customer_phone'];
             if (isset($this->seen[$k])) { return $this->js(400, ['detail' => 'Duplicate order for this customer today']); }

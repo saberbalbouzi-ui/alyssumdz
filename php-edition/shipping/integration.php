@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 require_once __DIR__ . '/src/autoload.php';
 
-use Alyssum\Shipping\{CarrierRegistry, ConnectionRepository, CredentialVault, Parcel, ShippingService, ShippingException, Status, WebhookProcessor, WilayaCatalog};
+use Alyssum\Shipping\{CalibrationService, CarrierRegistry, ConnectionRepository, OurGeo, CredentialVault, Parcel, ShippingService, ShippingException, Status, WebhookProcessor, WilayaCatalog};
 
 const SHIPX_USER = 1;
 
@@ -70,6 +70,12 @@ function shipx_origin(): string
     return ($https ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . rtrim(dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/api/index.php')), '/');
 }
 
+function shipx_calibrator(array $x): CalibrationService
+{
+    static $geo = null; $geo ??= OurGeo::load(__DIR__ . '/data/geo.json');
+    return new CalibrationService($x['repo'], $geo, $GLOBALS['SHIPX_HTTP'] ?? null, $GLOBALS['SHIPX_PAUSE'] ?? null);   // SHIPX_* للاختبار فقط
+}
+
 /** @return array{0:int,1:array<string,mixed>} */
 function shipx_route(string $route, string $method, array $b, string $dataDir, PDO $orders): array
 {
@@ -79,7 +85,9 @@ function shipx_route(string $route, string $method, array $b, string $dataDir, P
     try {
         switch ($route) {
             case 'ship_carriers':
-                $rows = $x['pdo']->query('SELECT carrier_code, public_id, base_url, updated_at FROM user_carriers WHERE is_active=1 AND user_id=' . SHIPX_USER)->fetchAll();
+                $rows = $x['pdo']->query('SELECT id, carrier_code, public_id, base_url, updated_at FROM user_carriers WHERE is_active=1 AND user_id=' . SHIPX_USER)->fetchAll();
+                $cal = shipx_calibrator($x);
+                foreach ($rows as &$rw) { $rw['calibration'] = $cal->summary($rw); unset($rw['id']); } unset($rw);
                 return [200, ['carriers' => CarrierRegistry::catalog(), 'connected' => $rows, 'webhook_base' => shipx_origin() . '/index.php?r=ship_webhook']];
 
             case 'ship_connect':
@@ -87,8 +95,17 @@ function shipx_route(string $route, string $method, array $b, string $dataDir, P
                 $cred = []; foreach ((array)($b['credentials'] ?? []) as $k => $v) { if (is_string($k) && is_scalar($v)) { $cred[$k] = trim((string)$v); } }
                 $base = isset($b['base_url']) && trim((string)$b['base_url']) !== '' ? trim((string)$b['base_url']) : null;
                 if ($base !== null && !preg_match('#^https://[a-z0-9.-]+(/[^\s]*)?$#i', $base)) { return [400, ['error' => 'bad_base_url']]; }
-                $r = $repo->connect(SHIPX_USER, (string)($b['carrier'] ?? ''), $cred, $base, true);   // يفحص المفاتيح عند الشركة قبل الحفظ
-                return [200, ['ok' => true, 'verified' => $r['ping']['ok'] === true, 'verify_note' => $r['ping']['ok'] === true ? '' : (string)$r['ping']['message'], 'webhook_url' => shipx_origin() . '/index.php?r=ship_webhook&c=' . $r['public_id'] . '&t=' . $r['webhook_secret'], 'note' => 'الرابط يظهر مرة واحدة فقط — ضعه في حسابك عند الشركة']];
+                $r = $repo->connect(SHIPX_USER, (string)($b['carrier'] ?? ''), $cred, $base, true, $GLOBALS['SHIPX_HTTP'] ?? null);   // يفحص المفاتيح عند الشركة قبل الحفظ
+                $calib = null;                                                  // المعايرة عند أول ربط: يلتقط حساب الشركة ويصحّح النظام قبل أن يُعاد التحكم للتاجر (الواجهة تتابع بـship_calibrate حتى الانتهاء)
+                if ($r['ping']['ok'] === true) { try { $calib = shipx_calibrator($x)->start((array)$repo->find(SHIPX_USER, (string)($b['carrier'] ?? '')), 8.0); } catch (Throwable $e) { error_log('shipx calibrate: ' . $e->getMessage()); } }
+                return [200, ['ok' => true, 'calibration' => $calib, 'verified' => $r['ping']['ok'] === true, 'verify_note' => $r['ping']['ok'] === true ? '' : (string)$r['ping']['message'], 'webhook_url' => shipx_origin() . '/index.php?r=ship_webhook&c=' . $r['public_id'] . '&t=' . $r['webhook_secret'], 'note' => 'الرابط يظهر مرة واحدة فقط — ضعه في حسابك عند الشركة']];
+
+            case 'ship_calibrate':                                             // متابعة/إعادة المعايرة. POST {carrier, restart?} ← يتقدّم دفعة (≈10ث)؛ GET ← الملخّص فقط
+                $conn = $repo->find(SHIPX_USER, (string)($b['carrier'] ?? $_GET['carrier'] ?? '')) ?? null;
+                if (!$conn || !(int)$conn['is_active']) { return [404, ['error' => 'not_connected']]; }
+                $cal = shipx_calibrator($x);
+                if ($method !== 'POST') { return [200, ['calibration' => $cal->summary($conn)]]; }
+                return [200, ['calibration' => !empty($b['restart']) ? $cal->start($conn, 10.0) : $cal->advance($conn, 10.0)]];
 
             case 'ship_ping':                                                  // اختبار اتصال شركة مفعّلة بمفاتيحها المحفوظة (قراءة فقط)
                 $conn = $repo->find(SHIPX_USER, (string)($b['carrier'] ?? $_GET['carrier'] ?? '')) ?? null;

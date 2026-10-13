@@ -38,6 +38,7 @@ jobs:
         run: |
           php scripts/test-shipping.php
           php scripts/test-carriers.php
+          php scripts/test-calibration.php
           php scripts/test-ship-php.php
           php scripts/test-gateway.php
           php scripts/test-roles-php.php

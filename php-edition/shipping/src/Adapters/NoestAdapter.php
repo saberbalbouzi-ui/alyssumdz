@@ -50,15 +50,41 @@ final class NoestAdapter extends AbstractAdapter
         return $this->communes[$key] = $out;
     }
 
+    public function discover(array $wilayas, array $want = []): array
+    {
+        $d = self::emptyDiscovery(['NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة']);
+        try {
+            if ($want['communes'] ?? false) {
+                foreach ($wilayas as $w) {
+                    $this->breath();
+                    $j = $this->getJson(self::BASE . '/get/communes/' . (int)$w, $this->h());
+                    $list = [];
+                    foreach ((array_is_list($j) ? $j : []) as $c) {
+                        if (!is_array($c) || !isset($c['nom'])) { continue; }
+                        $on = $c['is_active'] ?? 1;
+                        $list[] = ['name' => (string)$c['nom'], 'deliverable' => !($on === 0 || $on === false || $on === '0')];
+                    }
+                    $d['communes'][(int)$w] = $list;
+                }
+            }
+        } catch (CarrierApiException $e) { $d['notes'][] = $e->getMessage(); }
+        return $d;
+    }
+
     public function createParcel(Parcel $p): ShipmentResult
     {
         if ($p->stopDesk && $p->deskCode === '') { return new ShipmentResult(false, error: 'NOEST يحتاج رمز مكتب Stop Desk (station_code مثل 16A) — اختر المكتب أو أرسل للمنزل'); }
+        $pc = $this->profileCommune($p->legacyWilaya(), $p->commune, $p->wilayaName());
+        if ($pc['block'] !== null) { return new ShipmentResult(false, error: $pc['block']); }
         $commune = $p->commune;
-        $list = $this->communes($p->legacyWilaya());
-        if ($list) {                                                          // القائمة متاحة: التهجئة تُصحَّح أو يُرفض الطلب بوضوح (الاسم حساس لدى الشركة)
-            $m = CommuneMatcher::best($list, $p->commune);
-            if (!$m) { return new ShipmentResult(false, error: 'بلدية «' . $p->commune . '» غير موجودة عند NOEST في ' . $p->wilayaName() . ' — الأقرب: ' . implode('، ', CommuneMatcher::suggest($list, $p->commune))); }
-            $commune = (string)$m['name'];
+        if ($pc['name'] !== null) { $commune = (string)$pc['name']; }
+        else {
+            $list = $this->communes($p->legacyWilaya());
+            if ($list) {                                                          // القائمة متاحة: التهجئة تُصحَّح أو يُرفض الطلب بوضوح (الاسم حساس لدى الشركة)
+                $m = CommuneMatcher::best($list, $p->commune);
+                if (!$m) { return new ShipmentResult(false, error: 'بلدية «' . $p->commune . '» غير موجودة عند NOEST في ' . $p->wilayaName() . ' — الأقرب: ' . implode('، ', CommuneMatcher::suggest($list, $p->commune))); }
+                $commune = (string)$m['name'];
+            }
         }
         $body = $this->auth([
             'reference' => $p->orderRef, 'client' => $p->name, 'phone' => $p->localPhone(), 'adresse' => $p->address !== '' ? mb_substr($p->address, 0, 255) : $p->commune,

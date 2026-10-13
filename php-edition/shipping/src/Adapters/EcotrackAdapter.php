@@ -68,14 +68,41 @@ final class EcotrackAdapter extends AbstractAdapter
         return $this->communes[$key] = $out;
     }
 
+    public function discover(array $wilayas, array $want = []): array
+    {
+        $d = self::emptyDiscovery();
+        try {
+            if (($want['communes'] ?? false) || ($want['desks'] ?? false)) {
+                foreach ($wilayas as $w) {
+                    $this->breath();
+                    $j = $this->getJson($this->base . '/api/v1/get/communes?wilaya_id=' . (int)$w, $this->h());
+                    $list = []; $desks = [];
+                    foreach ($j as $c) {
+                        if (!is_array($c) || !isset($c['nom'])) { continue; }
+                        $list[] = ['name' => (string)$c['nom']];
+                        if (!empty($c['has_stop_desk']) && (string)($c['code_postal'] ?? '') !== '') { $desks[] = ['id' => (string)$c['code_postal'], 'name' => (string)$c['nom'], 'commune' => (string)$c['nom']]; }
+                    }
+                    if ($want['communes'] ?? false) { $d['communes'][(int)$w] = $list; }
+                    if ($want['desks'] ?? false) { $d['desks'][(int)$w] = $desks; }
+                }
+            }
+        } catch (CarrierApiException $e) { $d['notes'][] = $e->getMessage(); }
+        return $d;
+    }
+
     public function createParcel(Parcel $p): ShipmentResult
     {
+        $pc = $this->profileCommune($p->legacyWilaya(), $p->commune, $p->wilayaName());
+        if ($pc['block'] !== null) { return new ShipmentResult(false, error: $pc['block']); }
         $commune = $p->commune;
-        $list = $this->communes($p->legacyWilaya());
-        if ($list) {
-            $m = CommuneMatcher::best($list, $p->commune);
-            if (!$m) { return new ShipmentResult(false, error: 'بلدية «' . $p->commune . '» غير موجودة عند الشركة في ' . $p->wilayaName() . ' — الأقرب: ' . implode('، ', CommuneMatcher::suggest($list, $p->commune))); }
-            $commune = (string)$m['name'];
+        if ($pc['name'] !== null) { $commune = (string)$pc['name']; }                        // من ملف المعايرة: بلا طلب إضافي للقائمة
+        else {
+            $list = $this->communes($p->legacyWilaya());
+            if ($list) {
+                $m = CommuneMatcher::best($list, $p->commune);
+                if (!$m) { return new ShipmentResult(false, error: 'بلدية «' . $p->commune . '» غير موجودة عند الشركة في ' . $p->wilayaName() . ' — الأقرب: ' . implode('، ', CommuneMatcher::suggest($list, $p->commune))); }
+                $commune = (string)$m['name'];
+            }
         }
         $q = array_filter([
             'reference' => $p->orderRef, 'nom_client' => $p->name, 'telephone' => $p->localPhone(), 'telephone_2' => $p->phone2 !== '' ? $p->localPhone($p->phone2) : '',

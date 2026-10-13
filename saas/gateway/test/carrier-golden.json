@@ -1592,6 +1592,1309 @@
                     "orderRef": ""
                 }
             ]
+        },
+        {
+            "name": "calibrate",
+            "op": "calibrate",
+            "arg": {
+                "ours": {
+                    "16": [
+                        "Alger Centre",
+                        "Bab-Ezzouar",
+                        "Kouba",
+                        "Bordj El Kiffan",
+                        "El Harrach",
+                        "Zeralda"
+                    ],
+                    "31": [
+                        "Oran",
+                        "Es Senia"
+                    ],
+                    "32": [
+                        "El Bayadh"
+                    ],
+                    "17": [
+                        "Djelfa",
+                        "Ain Ouessara"
+                    ]
+                },
+                "chunk": 10
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/wilayas/?page_size=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"id\":16,\"name\":\"Alger\"}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/communes/?wilaya_id=16&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":6,\"data\":[{\"id\":67103,\"name\":\"Alger Centre\",\"wilaya_id\":16,\"is_deliverable\":1},{\"id\":57764,\"name\":\"Bab Ezzouar\",\"wilaya_id\":16,\"is_deliverable\":1},{\"id\":42111,\"name\":\"Kouba\",\"wilaya_id\":16,\"is_deliverable\":1},{\"id\":62568,\"name\":\"Bordj El Kiffane\",\"wilaya_id\":16,\"is_deliverable\":1},{\"id\":81457,\"name\":\"El Harrach\",\"wilaya_id\":16,\"is_deliverable\":0},{\"id\":76544,\"name\":\"Rouiba\",\"wilaya_id\":16,\"is_deliverable\":1}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/communes/?wilaya_id=17&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":2,\"data\":[{\"id\":89640,\"name\":\"Djelfa\",\"wilaya_id\":17,\"is_deliverable\":1},{\"id\":59370,\"name\":\"Aïn Oussera\",\"wilaya_id\":17,\"is_deliverable\":1}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/communes/?wilaya_id=31&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":2,\"data\":[{\"id\":18081,\"name\":\"Oran\",\"wilaya_id\":31,\"is_deliverable\":1},{\"id\":58294,\"name\":\"Es Senia\",\"wilaya_id\":31,\"is_deliverable\":1}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/communes/?wilaya_id=32&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":1,\"data\":[{\"id\":76179,\"name\":\"El Bayadh\",\"wilaya_id\":32,\"is_deliverable\":1}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/centers/?wilaya_id=16&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":1,\"data\":[{\"center_id\":161601,\"name\":\"Bab Ezzouar Desk\",\"address\":\"x\",\"commune_name\":\"Bab Ezzouar\",\"wilaya_id\":16}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/centers/?wilaya_id=17&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":0,\"data\":[]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/centers/?wilaya_id=31&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":0,\"data\":[]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/centers/?wilaya_id=32&page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":0,\"data\":[]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/deliveryfees/?page_size=100&page=1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":4,\"data\":[{\"wilaya_id\":16,\"wilaya_name\":\"W16\",\"home_fee\":500,\"desk_fee\":300},{\"wilaya_id\":31,\"wilaya_name\":\"W31\",\"home_fee\":700,\"desk_fee\":450},{\"wilaya_id\":32,\"wilaya_name\":\"W32\",\"home_fee\":900,\"desk_fee\":600},{\"wilaya_id\":17,\"wilaya_name\":\"W17\",\"home_fee\":800,\"desk_fee\":500}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/parcels/?page_size=100&order_by=date_creation&order=desc",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"has_more\":false,\"total_data\":4,\"data\":[{\"tracking\":\"ext-0\",\"last_status\":\"Livré\",\"order_id\":\"x\"},{\"tracking\":\"ext-1\",\"last_status\":\"Retourné au vendeur\",\"order_id\":\"x\"},{\"tracking\":\"ext-2\",\"last_status\":\"Statut Jamais Vu 77\",\"order_id\":\"x\"},{\"tracking\":\"ext-3\",\"last_status\":\"Sorti en livraison\",\"order_id\":\"x\"}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/parcels/ext-0",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"total_data\":1,\"data\":[{\"tracking\":\"ext-0\",\"last_status\":\"Livré\"}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/parcels/ext-1",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"total_data\":1,\"data\":[{\"tracking\":\"ext-1\",\"last_status\":\"Retourné au vendeur\"}]}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://api.yalidine.app/v1/parcels/ext-2",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"total_data\":1,\"data\":[{\"tracking\":\"ext-2\",\"last_status\":\"Statut Jamais Vu 77\"}]}"
+                }
+            ],
+            "result": {
+                "v": 1,
+                "carrier": "yalidine",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [
+                            "El Harrach"
+                        ],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "161601",
+                            "name": "Bab Ezzouar Desk",
+                            "commune": "Bab Ezzouar"
+                        }
+                    ]
+                },
+                "fees": {
+                    "16": {
+                        "home": 500,
+                        "stop": 300
+                    },
+                    "31": {
+                        "home": 700,
+                        "stop": 450
+                    },
+                    "32": {
+                        "home": 900,
+                        "stop": 600
+                    },
+                    "17": {
+                        "home": 800,
+                        "stop": 500
+                    }
+                },
+                "statuses": {
+                    "Livré": {
+                        "u": "delivered",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Retourné au vendeur": {
+                        "u": "returned",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Statut Jamais Vu 77": {
+                        "u": "unknown",
+                        "src": "unknown",
+                        "n": 1
+                    },
+                    "Sorti en livraison": {
+                        "u": "out_for_delivery",
+                        "src": "exact",
+                        "n": 1
+                    }
+                },
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 3,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [
+                    "حالات موجودة في حسابك ولا يعرفها النظام (لن تُطبَّق على الطلبات حتى تُضاف): Statut Jamais Vu 77 ×1"
+                ],
+                "notes": [],
+                "done": true
+            }
+        },
+        {
+            "name": "create_calibrated_Bab-Ezzouar",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bab-Ezzouar",
+                "wilaya": 16,
+                "order_ref": "G-cal0",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "yalidine",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [
+                            "El Harrach"
+                        ],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "161601",
+                            "name": "Bab Ezzouar Desk",
+                            "commune": "Bab Ezzouar"
+                        }
+                    ]
+                },
+                "fees": {
+                    "16": {
+                        "home": 500,
+                        "stop": 300
+                    },
+                    "31": {
+                        "home": 700,
+                        "stop": 450
+                    },
+                    "32": {
+                        "home": 900,
+                        "stop": 600
+                    },
+                    "17": {
+                        "home": 800,
+                        "stop": 500
+                    }
+                },
+                "statuses": {
+                    "Livré": {
+                        "u": "delivered",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Retourné au vendeur": {
+                        "u": "returned",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Statut Jamais Vu 77": {
+                        "u": "unknown",
+                        "src": "unknown",
+                        "n": 1
+                    },
+                    "Sorti en livraison": {
+                        "u": "out_for_delivery",
+                        "src": "exact",
+                        "n": 1
+                    }
+                },
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 3,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [
+                    "حالات موجودة في حسابك ولا يعرفها النظام (لن تُطبَّق على الطلبات حتى تُضاف): Statut Jamais Vu 77 ×1"
+                ],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://api.yalidine.app/v1/parcels/",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal0\",\"from_wilaya_name\":\"Alger\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":true,\"declared_value\":3800,\"freeshipping\":false,\"is_stopdesk\":false,\"has_exchange\":false,\"can_open\":true,\"weight\":1}]",
+                    "s": 200,
+                    "r": "{\"G-cal0\":{\"success\":true,\"order_id\":\"G-cal0\",\"tracking\":\"yal-1AB\",\"label\":\"https:\\/\\/yalidine.app\\/app\\/bordereau.php?tracking=yal-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "yal-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Bordj El Kiffan",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bordj El Kiffan",
+                "wilaya": 16,
+                "order_ref": "G-cal1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "yalidine",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [
+                            "El Harrach"
+                        ],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "161601",
+                            "name": "Bab Ezzouar Desk",
+                            "commune": "Bab Ezzouar"
+                        }
+                    ]
+                },
+                "fees": {
+                    "16": {
+                        "home": 500,
+                        "stop": 300
+                    },
+                    "31": {
+                        "home": 700,
+                        "stop": 450
+                    },
+                    "32": {
+                        "home": 900,
+                        "stop": 600
+                    },
+                    "17": {
+                        "home": 800,
+                        "stop": 500
+                    }
+                },
+                "statuses": {
+                    "Livré": {
+                        "u": "delivered",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Retourné au vendeur": {
+                        "u": "returned",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Statut Jamais Vu 77": {
+                        "u": "unknown",
+                        "src": "unknown",
+                        "n": 1
+                    },
+                    "Sorti en livraison": {
+                        "u": "out_for_delivery",
+                        "src": "exact",
+                        "n": 1
+                    }
+                },
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 3,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [
+                    "حالات موجودة في حسابك ولا يعرفها النظام (لن تُطبَّق على الطلبات حتى تُضاف): Statut Jamais Vu 77 ×1"
+                ],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://api.yalidine.app/v1/parcels/",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal1\",\"from_wilaya_name\":\"Alger\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bordj El Kiffane\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":true,\"declared_value\":3800,\"freeshipping\":false,\"is_stopdesk\":false,\"has_exchange\":false,\"can_open\":true,\"weight\":1}]",
+                    "s": 200,
+                    "r": "{\"G-cal1\":{\"success\":true,\"order_id\":\"G-cal1\",\"tracking\":\"yal-1AB\",\"label\":\"https:\\/\\/yalidine.app\\/app\\/bordereau.php?tracking=yal-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "yal-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Zeralda",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Zeralda",
+                "wilaya": 16,
+                "order_ref": "G-cal2",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "yalidine",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [
+                            "El Harrach"
+                        ],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "161601",
+                            "name": "Bab Ezzouar Desk",
+                            "commune": "Bab Ezzouar"
+                        }
+                    ]
+                },
+                "fees": {
+                    "16": {
+                        "home": 500,
+                        "stop": 300
+                    },
+                    "31": {
+                        "home": 700,
+                        "stop": 450
+                    },
+                    "32": {
+                        "home": 900,
+                        "stop": 600
+                    },
+                    "17": {
+                        "home": 800,
+                        "stop": 500
+                    }
+                },
+                "statuses": {
+                    "Livré": {
+                        "u": "delivered",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Retourné au vendeur": {
+                        "u": "returned",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Statut Jamais Vu 77": {
+                        "u": "unknown",
+                        "src": "unknown",
+                        "n": 1
+                    },
+                    "Sorti en livraison": {
+                        "u": "out_for_delivery",
+                        "src": "exact",
+                        "n": 1
+                    }
+                },
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 3,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [
+                    "حالات موجودة في حسابك ولا يعرفها النظام (لن تُطبَّق على الطلبات حتى تُضاف): Statut Jamais Vu 77 ×1"
+                ],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK"
+            },
+            "calls": [],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "بلدية «Zeralda» غير موجودة في قائمة الشركة لولاية Alger (حسب معايرة حسابك) — اختر بلدية أخرى أو راجع الشركة"
+            }
+        },
+        {
+            "name": "create_calibrated_El Harrach",
+            "op": "create_profile",
+            "arg": {
+                "commune": "El Harrach",
+                "wilaya": 16,
+                "order_ref": "G-cal3",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "yalidine",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [
+                            "El Harrach"
+                        ],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "161601",
+                            "name": "Bab Ezzouar Desk",
+                            "commune": "Bab Ezzouar"
+                        }
+                    ]
+                },
+                "fees": {
+                    "16": {
+                        "home": 500,
+                        "stop": 300
+                    },
+                    "31": {
+                        "home": 700,
+                        "stop": 450
+                    },
+                    "32": {
+                        "home": 900,
+                        "stop": 600
+                    },
+                    "17": {
+                        "home": 800,
+                        "stop": 500
+                    }
+                },
+                "statuses": {
+                    "Livré": {
+                        "u": "delivered",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Retourné au vendeur": {
+                        "u": "returned",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Statut Jamais Vu 77": {
+                        "u": "unknown",
+                        "src": "unknown",
+                        "n": 1
+                    },
+                    "Sorti en livraison": {
+                        "u": "out_for_delivery",
+                        "src": "exact",
+                        "n": 1
+                    }
+                },
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 3,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [
+                    "حالات موجودة في حسابك ولا يعرفها النظام (لن تُطبَّق على الطلبات حتى تُضاف): Statut Jamais Vu 77 ×1"
+                ],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK"
+            },
+            "calls": [],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "الشركة لا توصّل حالياً إلى بلدية «El Harrach» في Alger (حسب معايرة حسابك)"
+            }
+        },
+        {
+            "name": "create_calibrated_Ain Ouessara",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Ain Ouessara",
+                "wilaya": 17,
+                "order_ref": "G-cal4",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "yalidine",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [
+                            "El Harrach"
+                        ],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "161601",
+                            "name": "Bab Ezzouar Desk",
+                            "commune": "Bab Ezzouar"
+                        }
+                    ]
+                },
+                "fees": {
+                    "16": {
+                        "home": 500,
+                        "stop": 300
+                    },
+                    "31": {
+                        "home": 700,
+                        "stop": 450
+                    },
+                    "32": {
+                        "home": 900,
+                        "stop": 600
+                    },
+                    "17": {
+                        "home": 800,
+                        "stop": 500
+                    }
+                },
+                "statuses": {
+                    "Livré": {
+                        "u": "delivered",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Retourné au vendeur": {
+                        "u": "returned",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Statut Jamais Vu 77": {
+                        "u": "unknown",
+                        "src": "unknown",
+                        "n": 1
+                    },
+                    "Sorti en livraison": {
+                        "u": "out_for_delivery",
+                        "src": "exact",
+                        "n": 1
+                    }
+                },
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 3,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [
+                    "حالات موجودة في حسابك ولا يعرفها النظام (لن تُطبَّق على الطلبات حتى تُضاف): Statut Jamais Vu 77 ×1"
+                ],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://api.yalidine.app/v1/parcels/",
+                    "h": {
+                        "X-API-ID": "AID",
+                        "X-API-TOKEN": "TOK",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal4\",\"from_wilaya_name\":\"Alger\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Aïn Oussera\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":true,\"declared_value\":3800,\"freeshipping\":false,\"is_stopdesk\":false,\"has_exchange\":false,\"can_open\":true,\"weight\":1}]",
+                    "s": 200,
+                    "r": "{\"G-cal4\":{\"success\":true,\"order_id\":\"G-cal4\",\"tracking\":\"yal-1AB\",\"label\":\"https:\\/\\/yalidine.app\\/app\\/bordereau.php?tracking=yal-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "yal-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_bad_desk",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Kouba",
+                "stop_desk": true,
+                "desk_id": 999999,
+                "order_ref": "G-cald",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "yalidine",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [
+                            "El Harrach"
+                        ],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "161601",
+                            "name": "Bab Ezzouar Desk",
+                            "commune": "Bab Ezzouar"
+                        }
+                    ]
+                },
+                "fees": {
+                    "16": {
+                        "home": 500,
+                        "stop": 300
+                    },
+                    "31": {
+                        "home": 700,
+                        "stop": 450
+                    },
+                    "32": {
+                        "home": 900,
+                        "stop": 600
+                    },
+                    "17": {
+                        "home": 800,
+                        "stop": 500
+                    }
+                },
+                "statuses": {
+                    "Livré": {
+                        "u": "delivered",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Retourné au vendeur": {
+                        "u": "returned",
+                        "src": "exact",
+                        "n": 1
+                    },
+                    "Statut Jamais Vu 77": {
+                        "u": "unknown",
+                        "src": "unknown",
+                        "n": 1
+                    },
+                    "Sorti en livraison": {
+                        "u": "out_for_delivery",
+                        "src": "exact",
+                        "n": 1
+                    }
+                },
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 3,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [
+                    "حالات موجودة في حسابك ولا يعرفها النظام (لن تُطبَّق على الطلبات حتى تُضاف): Statut Jamais Vu 77 ×1"
+                ],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK"
+            },
+            "calls": [],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "مكتب Stop Desk رقم 999999 غير موجود عند الشركة في Alger (حسب معايرة حسابك)"
+            }
+        },
+        {
+            "name": "webhook_signature",
+            "op": "verify_webhook",
+            "arg": {
+                "body": "{\"type\":\"parcel_status_updated\",\"data\":[{\"tracking\":\"x\",\"last_status\":\"Livr\\u00e9\"}]}",
+                "secret": "shh",
+                "sig": "ac6210dc967cc789ecef74730ac4e3d9522f622aa0ba72b4d7f455beb4542dd6"
+            },
+            "cred": {
+                "apiId": "AID",
+                "apiToken": "TOK",
+                "webhookSecret": "shh"
+            },
+            "calls": [],
+            "result": [
+                false,
+                false,
+                true,
+                true
+            ]
         }
     ],
     "dhd": [
@@ -3329,6 +4632,1164 @@
                 }
             ],
             "result": true
+        },
+        {
+            "name": "calibrate",
+            "op": "calibrate",
+            "arg": {
+                "ours": {
+                    "16": [
+                        "Alger Centre",
+                        "Bab-Ezzouar",
+                        "Kouba",
+                        "Bordj El Kiffan",
+                        "El Harrach",
+                        "Zeralda"
+                    ],
+                    "31": [
+                        "Oran",
+                        "Es Senia"
+                    ],
+                    "32": [
+                        "El Bayadh"
+                    ],
+                    "17": [
+                        "Djelfa",
+                        "Ain Ouessara"
+                    ]
+                },
+                "chunk": 10
+            },
+            "cred": {
+                "token": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://dhd.ecotrack.dz/api/v1/validate/token?api_token=TOK",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true,\"message\":\"VALID_TOKEN\"}"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://dhd.ecotrack.dz/api/v1/get/communes?wilaya_id=16",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"Alger Centre\",\"wilaya_id\":16,\"code_postal\":\"16A\",\"has_stop_desk\":1},{\"nom\":\"Bab Ezzouar\",\"wilaya_id\":16,\"code_postal\":\"16A\",\"has_stop_desk\":1},{\"nom\":\"Kouba\",\"wilaya_id\":16,\"code_postal\":\"16A\",\"has_stop_desk\":1},{\"nom\":\"Bordj El Kiffane\",\"wilaya_id\":16,\"code_postal\":\"16A\",\"has_stop_desk\":1},{\"nom\":\"El Harrach\",\"wilaya_id\":16,\"code_postal\":\"16A\",\"has_stop_desk\":1},{\"nom\":\"Rouiba\",\"wilaya_id\":16,\"code_postal\":\"16A\",\"has_stop_desk\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://dhd.ecotrack.dz/api/v1/get/communes?wilaya_id=17",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"Djelfa\",\"wilaya_id\":17,\"code_postal\":\"17A\",\"has_stop_desk\":1},{\"nom\":\"Aïn Oussera\",\"wilaya_id\":17,\"code_postal\":\"17A\",\"has_stop_desk\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://dhd.ecotrack.dz/api/v1/get/communes?wilaya_id=31",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"Oran\",\"wilaya_id\":31,\"code_postal\":\"31A\",\"has_stop_desk\":1},{\"nom\":\"Es Senia\",\"wilaya_id\":31,\"code_postal\":\"31A\",\"has_stop_desk\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://dhd.ecotrack.dz/api/v1/get/communes?wilaya_id=32",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"El Bayadh\",\"wilaya_id\":32,\"code_postal\":\"32A\",\"has_stop_desk\":1}]"
+                }
+            ],
+            "result": {
+                "v": 1,
+                "carrier": "dhd",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "16A",
+                            "name": "Alger Centre",
+                            "commune": "Alger Centre"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bab Ezzouar",
+                            "commune": "Bab Ezzouar"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Kouba",
+                            "commune": "Kouba"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bordj El Kiffane",
+                            "commune": "Bordj El Kiffane"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "El Harrach",
+                            "commune": "El Harrach"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Rouiba",
+                            "commune": "Rouiba"
+                        }
+                    ],
+                    "17": [
+                        {
+                            "id": "17A",
+                            "name": "Djelfa",
+                            "commune": "Djelfa"
+                        },
+                        {
+                            "id": "17A",
+                            "name": "Aïn Oussera",
+                            "commune": "Aïn Oussera"
+                        }
+                    ],
+                    "31": [
+                        {
+                            "id": "31A",
+                            "name": "Oran",
+                            "commune": "Oran"
+                        },
+                        {
+                            "id": "31A",
+                            "name": "Es Senia",
+                            "commune": "Es Senia"
+                        }
+                    ],
+                    "32": [
+                        {
+                            "id": "32A",
+                            "name": "El Bayadh",
+                            "commune": "El Bayadh"
+                        }
+                    ]
+                },
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [],
+                "done": true
+            }
+        },
+        {
+            "name": "create_calibrated_Bab-Ezzouar",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bab-Ezzouar",
+                "wilaya": 16,
+                "order_ref": "G-cal0",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "dhd",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "16A",
+                            "name": "Alger Centre",
+                            "commune": "Alger Centre"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bab Ezzouar",
+                            "commune": "Bab Ezzouar"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Kouba",
+                            "commune": "Kouba"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bordj El Kiffane",
+                            "commune": "Bordj El Kiffane"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "El Harrach",
+                            "commune": "El Harrach"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Rouiba",
+                            "commune": "Rouiba"
+                        }
+                    ],
+                    "17": [
+                        {
+                            "id": "17A",
+                            "name": "Djelfa",
+                            "commune": "Djelfa"
+                        },
+                        {
+                            "id": "17A",
+                            "name": "Aïn Oussera",
+                            "commune": "Aïn Oussera"
+                        }
+                    ],
+                    "31": [
+                        {
+                            "id": "31A",
+                            "name": "Oran",
+                            "commune": "Oran"
+                        },
+                        {
+                            "id": "31A",
+                            "name": "Es Senia",
+                            "commune": "Es Senia"
+                        }
+                    ],
+                    "32": [
+                        {
+                            "id": "32A",
+                            "name": "El Bayadh",
+                            "commune": "El Bayadh"
+                        }
+                    ]
+                },
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "token": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/create/order?reference=G-cal0&nom_client=Karim+Benali&telephone=0550123456&adresse=Cit%C3%A9+5+Juillet&commune=Bab+Ezzouar&code_wilaya=16&montant=4200&type=1&stop_desk=0&produit=%D8%B9%D8%B3%D9%84+%C3%972%D8%8C+%D8%B2%D9%8A%D8%AA+%C3%971",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"ECO1Z\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/valid/order?tracking=ECO1Z",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "ECO1Z",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Bordj El Kiffan",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bordj El Kiffan",
+                "wilaya": 16,
+                "order_ref": "G-cal1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "dhd",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "16A",
+                            "name": "Alger Centre",
+                            "commune": "Alger Centre"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bab Ezzouar",
+                            "commune": "Bab Ezzouar"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Kouba",
+                            "commune": "Kouba"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bordj El Kiffane",
+                            "commune": "Bordj El Kiffane"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "El Harrach",
+                            "commune": "El Harrach"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Rouiba",
+                            "commune": "Rouiba"
+                        }
+                    ],
+                    "17": [
+                        {
+                            "id": "17A",
+                            "name": "Djelfa",
+                            "commune": "Djelfa"
+                        },
+                        {
+                            "id": "17A",
+                            "name": "Aïn Oussera",
+                            "commune": "Aïn Oussera"
+                        }
+                    ],
+                    "31": [
+                        {
+                            "id": "31A",
+                            "name": "Oran",
+                            "commune": "Oran"
+                        },
+                        {
+                            "id": "31A",
+                            "name": "Es Senia",
+                            "commune": "Es Senia"
+                        }
+                    ],
+                    "32": [
+                        {
+                            "id": "32A",
+                            "name": "El Bayadh",
+                            "commune": "El Bayadh"
+                        }
+                    ]
+                },
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "token": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/create/order?reference=G-cal1&nom_client=Karim+Benali&telephone=0550123456&adresse=Cit%C3%A9+5+Juillet&commune=Bordj+El+Kiffane&code_wilaya=16&montant=4200&type=1&stop_desk=0&produit=%D8%B9%D8%B3%D9%84+%C3%972%D8%8C+%D8%B2%D9%8A%D8%AA+%C3%971",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"ECO1Z\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/valid/order?tracking=ECO1Z",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "ECO1Z",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Zeralda",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Zeralda",
+                "wilaya": 16,
+                "order_ref": "G-cal2",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "dhd",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "16A",
+                            "name": "Alger Centre",
+                            "commune": "Alger Centre"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bab Ezzouar",
+                            "commune": "Bab Ezzouar"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Kouba",
+                            "commune": "Kouba"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bordj El Kiffane",
+                            "commune": "Bordj El Kiffane"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "El Harrach",
+                            "commune": "El Harrach"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Rouiba",
+                            "commune": "Rouiba"
+                        }
+                    ],
+                    "17": [
+                        {
+                            "id": "17A",
+                            "name": "Djelfa",
+                            "commune": "Djelfa"
+                        },
+                        {
+                            "id": "17A",
+                            "name": "Aïn Oussera",
+                            "commune": "Aïn Oussera"
+                        }
+                    ],
+                    "31": [
+                        {
+                            "id": "31A",
+                            "name": "Oran",
+                            "commune": "Oran"
+                        },
+                        {
+                            "id": "31A",
+                            "name": "Es Senia",
+                            "commune": "Es Senia"
+                        }
+                    ],
+                    "32": [
+                        {
+                            "id": "32A",
+                            "name": "El Bayadh",
+                            "commune": "El Bayadh"
+                        }
+                    ]
+                },
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "token": "TOK"
+            },
+            "calls": [],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "بلدية «Zeralda» غير موجودة في قائمة الشركة لولاية Alger (حسب معايرة حسابك) — اختر بلدية أخرى أو راجع الشركة"
+            }
+        },
+        {
+            "name": "create_calibrated_El Harrach",
+            "op": "create_profile",
+            "arg": {
+                "commune": "El Harrach",
+                "wilaya": 16,
+                "order_ref": "G-cal3",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "dhd",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "16A",
+                            "name": "Alger Centre",
+                            "commune": "Alger Centre"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bab Ezzouar",
+                            "commune": "Bab Ezzouar"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Kouba",
+                            "commune": "Kouba"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bordj El Kiffane",
+                            "commune": "Bordj El Kiffane"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "El Harrach",
+                            "commune": "El Harrach"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Rouiba",
+                            "commune": "Rouiba"
+                        }
+                    ],
+                    "17": [
+                        {
+                            "id": "17A",
+                            "name": "Djelfa",
+                            "commune": "Djelfa"
+                        },
+                        {
+                            "id": "17A",
+                            "name": "Aïn Oussera",
+                            "commune": "Aïn Oussera"
+                        }
+                    ],
+                    "31": [
+                        {
+                            "id": "31A",
+                            "name": "Oran",
+                            "commune": "Oran"
+                        },
+                        {
+                            "id": "31A",
+                            "name": "Es Senia",
+                            "commune": "Es Senia"
+                        }
+                    ],
+                    "32": [
+                        {
+                            "id": "32A",
+                            "name": "El Bayadh",
+                            "commune": "El Bayadh"
+                        }
+                    ]
+                },
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "token": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/create/order?reference=G-cal3&nom_client=Karim+Benali&telephone=0550123456&adresse=Cit%C3%A9+5+Juillet&commune=El+Harrach&code_wilaya=16&montant=4200&type=1&stop_desk=0&produit=%D8%B9%D8%B3%D9%84+%C3%972%D8%8C+%D8%B2%D9%8A%D8%AA+%C3%971",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"ECO1Z\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/valid/order?tracking=ECO1Z",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "ECO1Z",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Ain Ouessara",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Ain Ouessara",
+                "wilaya": 17,
+                "order_ref": "G-cal4",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "dhd",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": {
+                    "16": [
+                        {
+                            "id": "16A",
+                            "name": "Alger Centre",
+                            "commune": "Alger Centre"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bab Ezzouar",
+                            "commune": "Bab Ezzouar"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Kouba",
+                            "commune": "Kouba"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Bordj El Kiffane",
+                            "commune": "Bordj El Kiffane"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "El Harrach",
+                            "commune": "El Harrach"
+                        },
+                        {
+                            "id": "16A",
+                            "name": "Rouiba",
+                            "commune": "Rouiba"
+                        }
+                    ],
+                    "17": [
+                        {
+                            "id": "17A",
+                            "name": "Djelfa",
+                            "commune": "Djelfa"
+                        },
+                        {
+                            "id": "17A",
+                            "name": "Aïn Oussera",
+                            "commune": "Aïn Oussera"
+                        }
+                    ],
+                    "31": [
+                        {
+                            "id": "31A",
+                            "name": "Oran",
+                            "commune": "Oran"
+                        },
+                        {
+                            "id": "31A",
+                            "name": "Es Senia",
+                            "commune": "Es Senia"
+                        }
+                    ],
+                    "32": [
+                        {
+                            "id": "32A",
+                            "name": "El Bayadh",
+                            "commune": "El Bayadh"
+                        }
+                    ]
+                },
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [],
+                "done": true
+            },
+            "cred": {
+                "token": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/create/order?reference=G-cal4&nom_client=Karim+Benali&telephone=0550123456&adresse=Cit%C3%A9+5+Juillet&commune=A%C3%AFn+Oussera&code_wilaya=17&montant=4200&type=1&stop_desk=0&produit=%D8%B9%D8%B3%D9%84+%C3%972%D8%8C+%D8%B2%D9%8A%D8%AA+%C3%971",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"ECO1Z\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://dhd.ecotrack.dz/api/v1/valid/order?tracking=ECO1Z",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "ECO1Z",
+                "error": ""
+            }
         }
     ],
     "noest": [
@@ -5696,6 +8157,811 @@
                 }
             ],
             "result": true
+        },
+        {
+            "name": "calibrate",
+            "op": "calibrate",
+            "arg": {
+                "ours": {
+                    "16": [
+                        "Alger Centre",
+                        "Bab-Ezzouar",
+                        "Kouba",
+                        "Bordj El Kiffan",
+                        "El Harrach",
+                        "Zeralda"
+                    ],
+                    "31": [
+                        "Oran",
+                        "Es Senia"
+                    ],
+                    "32": [
+                        "El Bayadh"
+                    ],
+                    "17": [
+                        "Djelfa",
+                        "Ain Ouessara"
+                    ]
+                },
+                "chunk": 10
+            },
+            "cred": {
+                "apiToken": "TOK",
+                "userGuid": "GUID"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://app.noest-dz.com/api/public/get/wilayas",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"code\":16,\"nom\":\"Alger\",\"is_active\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://app.noest-dz.com/api/public/get/communes/16",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"Alger Centre\",\"wilaya_id\":16,\"code_postal\":\"16000\",\"is_active\":1},{\"nom\":\"Bab Ezzouar\",\"wilaya_id\":16,\"code_postal\":\"16000\",\"is_active\":1},{\"nom\":\"Kouba\",\"wilaya_id\":16,\"code_postal\":\"16000\",\"is_active\":1},{\"nom\":\"Bordj El Kiffane\",\"wilaya_id\":16,\"code_postal\":\"16000\",\"is_active\":1},{\"nom\":\"El Harrach\",\"wilaya_id\":16,\"code_postal\":\"16000\",\"is_active\":1},{\"nom\":\"Rouiba\",\"wilaya_id\":16,\"code_postal\":\"16000\",\"is_active\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://app.noest-dz.com/api/public/get/communes/17",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"Djelfa\",\"wilaya_id\":17,\"code_postal\":\"16000\",\"is_active\":1},{\"nom\":\"Aïn Oussera\",\"wilaya_id\":17,\"code_postal\":\"16000\",\"is_active\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://app.noest-dz.com/api/public/get/communes/31",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"Oran\",\"wilaya_id\":31,\"code_postal\":\"16000\",\"is_active\":1},{\"nom\":\"Es Senia\",\"wilaya_id\":31,\"code_postal\":\"16000\",\"is_active\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://app.noest-dz.com/api/public/get/communes/32",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"nom\":\"El Bayadh\",\"wilaya_id\":32,\"code_postal\":\"16000\",\"is_active\":1}]"
+                }
+            ],
+            "result": {
+                "v": 1,
+                "carrier": "noest",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"
+                ],
+                "done": true
+            }
+        },
+        {
+            "name": "create_calibrated_Bab-Ezzouar",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bab-Ezzouar",
+                "wilaya": 16,
+                "order_ref": "G-cal0",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "noest",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiToken": "TOK",
+                "userGuid": "GUID"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/create/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G-cal0\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/valid/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"tracking\":\"NOE1X\"}",
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "NOE1X",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Bordj El Kiffan",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bordj El Kiffan",
+                "wilaya": 16,
+                "order_ref": "G-cal1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "noest",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiToken": "TOK",
+                "userGuid": "GUID"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/create/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G-cal1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bordj El Kiffane\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/valid/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"tracking\":\"NOE1X\"}",
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "NOE1X",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Zeralda",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Zeralda",
+                "wilaya": 16,
+                "order_ref": "G-cal2",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "noest",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiToken": "TOK",
+                "userGuid": "GUID"
+            },
+            "calls": [],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "بلدية «Zeralda» غير موجودة في قائمة الشركة لولاية Alger (حسب معايرة حسابك) — اختر بلدية أخرى أو راجع الشركة"
+            }
+        },
+        {
+            "name": "create_calibrated_El Harrach",
+            "op": "create_profile",
+            "arg": {
+                "commune": "El Harrach",
+                "wilaya": 16,
+                "order_ref": "G-cal3",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "noest",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiToken": "TOK",
+                "userGuid": "GUID"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/create/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G-cal3\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"El Harrach\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/valid/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"tracking\":\"NOE1X\"}",
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "NOE1X",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Ain Ouessara",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Ain Ouessara",
+                "wilaya": 17,
+                "order_ref": "G-cal4",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "noest",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": [],
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": [],
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiToken": "TOK",
+                "userGuid": "GUID"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/create/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G-cal4\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":17,\"commune\":\"Aïn Oussera\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "s": 200,
+                    "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://app.noest-dz.com/api/public/valid/order",
+                    "h": {
+                        "Authorization": "Bearer TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"tracking\":\"NOE1X\"}",
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "NOE1X",
+                "error": ""
+            }
         }
     ],
     "maystro": [
@@ -6979,6 +10245,847 @@
                 }
             ],
             "result": false
+        },
+        {
+            "name": "calibrate",
+            "op": "calibrate",
+            "arg": {
+                "ours": {
+                    "16": [
+                        "Alger Centre",
+                        "Bab-Ezzouar",
+                        "Kouba",
+                        "Bordj El Kiffan",
+                        "El Harrach",
+                        "Zeralda"
+                    ],
+                    "31": [
+                        "Oran",
+                        "Es Senia"
+                    ],
+                    "32": [
+                        "El Bayadh"
+                    ],
+                    "17": [
+                        "Djelfa",
+                        "Ain Ouessara"
+                    ]
+                },
+                "chunk": 10
+            },
+            "cred": {
+                "apiKey": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://backend.maystro-delivery.com/api/base/wilayas/?country=1&language=fr",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[[16,\"Alger\"],[31,\"Oran\"]]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://backend.maystro-delivery.com/api/base/communes/?wilaya=16",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"id\":16001,\"wilaya\":16,\"name\":\"Alger Centre\",\"postcode\":16000,\"zone\":1},{\"id\":16002,\"wilaya\":16,\"name\":\"Bab Ezzouar\",\"postcode\":16000,\"zone\":1},{\"id\":16003,\"wilaya\":16,\"name\":\"Kouba\",\"postcode\":16000,\"zone\":1},{\"id\":16004,\"wilaya\":16,\"name\":\"Bordj El Kiffane\",\"postcode\":16000,\"zone\":1},{\"id\":16005,\"wilaya\":16,\"name\":\"El Harrach\",\"postcode\":16000,\"zone\":1},{\"id\":16006,\"wilaya\":16,\"name\":\"Rouiba\",\"postcode\":16000,\"zone\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://backend.maystro-delivery.com/api/base/communes/?wilaya=17",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"id\":17001,\"wilaya\":17,\"name\":\"Djelfa\",\"postcode\":17000,\"zone\":1},{\"id\":17002,\"wilaya\":17,\"name\":\"Aïn Oussera\",\"postcode\":17000,\"zone\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://backend.maystro-delivery.com/api/base/communes/?wilaya=31",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"id\":31001,\"wilaya\":31,\"name\":\"Oran\",\"postcode\":31000,\"zone\":1},{\"id\":31002,\"wilaya\":31,\"name\":\"Es Senia\",\"postcode\":31000,\"zone\":1}]"
+                },
+                {
+                    "m": "GET",
+                    "u": "https://backend.maystro-delivery.com/api/base/communes/?wilaya=32",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "[{\"id\":32001,\"wilaya\":32,\"name\":\"El Bayadh\",\"postcode\":32000,\"zone\":1}]"
+                }
+            ],
+            "result": {
+                "v": 1,
+                "carrier": "maystro",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": {
+                            "algrcntre": 16001,
+                            "bbezzr": 16002,
+                            "kba": 16003,
+                            "brdjelkffne": 16004,
+                            "elhrrch": 16005,
+                            "rba": 16006
+                        },
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "djlfa": 17001,
+                            "anussra": 17002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "orn": 31001,
+                            "essna": 31002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "elbdh": 32001
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة"
+                ],
+                "done": true
+            }
+        },
+        {
+            "name": "create_calibrated_Bab-Ezzouar",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bab-Ezzouar",
+                "wilaya": 16,
+                "order_ref": "G-cal0",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "maystro",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": {
+                            "algrcntre": 16001,
+                            "bbezzr": 16002,
+                            "kba": 16003,
+                            "brdjelkffne": 16004,
+                            "elhrrch": 16005,
+                            "rba": 16006
+                        },
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "djlfa": 17001,
+                            "anussra": 17002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "orn": 31001,
+                            "essna": 31002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "elbdh": 32001
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://backend.maystro-delivery.com/api/stores/orders/",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"wilaya\":16,\"commune\":16002,\"destination_text\":\"Cité 5 Juillet\",\"customer_name\":\"Karim Benali\",\"customer_phone\":\"0550123456\",\"product_price\":3800,\"delivery_type\":1,\"express\":false,\"note_to_driver\":\"\",\"products\":[{\"logistical_description\":\"عسل ×2، زيت ×1\",\"quantity\":1}],\"source\":4,\"external_order_id\":\"G-cal0\"}",
+                    "s": 201,
+                    "r": "{\"id\":\"uuid-1\",\"display_id\":\"000000001\",\"status\":4}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "uuid-1",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Bordj El Kiffan",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bordj El Kiffan",
+                "wilaya": 16,
+                "order_ref": "G-cal1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "maystro",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": {
+                            "algrcntre": 16001,
+                            "bbezzr": 16002,
+                            "kba": 16003,
+                            "brdjelkffne": 16004,
+                            "elhrrch": 16005,
+                            "rba": 16006
+                        },
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "djlfa": 17001,
+                            "anussra": 17002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "orn": 31001,
+                            "essna": 31002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "elbdh": 32001
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://backend.maystro-delivery.com/api/stores/orders/",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"wilaya\":16,\"commune\":16004,\"destination_text\":\"Cité 5 Juillet\",\"customer_name\":\"Karim Benali\",\"customer_phone\":\"0550123456\",\"product_price\":3800,\"delivery_type\":1,\"express\":false,\"note_to_driver\":\"\",\"products\":[{\"logistical_description\":\"عسل ×2، زيت ×1\",\"quantity\":1}],\"source\":4,\"external_order_id\":\"G-cal1\"}",
+                    "s": 201,
+                    "r": "{\"id\":\"uuid-1\",\"display_id\":\"000000001\",\"status\":4}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "uuid-1",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Zeralda",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Zeralda",
+                "wilaya": 16,
+                "order_ref": "G-cal2",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "maystro",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": {
+                            "algrcntre": 16001,
+                            "bbezzr": 16002,
+                            "kba": 16003,
+                            "brdjelkffne": 16004,
+                            "elhrrch": 16005,
+                            "rba": 16006
+                        },
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "djlfa": 17001,
+                            "anussra": 17002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "orn": 31001,
+                            "essna": 31002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "elbdh": 32001
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "TOK"
+            },
+            "calls": [],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "بلدية «Zeralda» غير موجودة في قائمة الشركة لولاية Alger (حسب معايرة حسابك) — اختر بلدية أخرى أو راجع الشركة"
+            }
+        },
+        {
+            "name": "create_calibrated_El Harrach",
+            "op": "create_profile",
+            "arg": {
+                "commune": "El Harrach",
+                "wilaya": 16,
+                "order_ref": "G-cal3",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "maystro",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": {
+                            "algrcntre": 16001,
+                            "bbezzr": 16002,
+                            "kba": 16003,
+                            "brdjelkffne": 16004,
+                            "elhrrch": 16005,
+                            "rba": 16006
+                        },
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "djlfa": 17001,
+                            "anussra": 17002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "orn": 31001,
+                            "essna": 31002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "elbdh": 32001
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://backend.maystro-delivery.com/api/stores/orders/",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"wilaya\":16,\"commune\":16005,\"destination_text\":\"Cité 5 Juillet\",\"customer_name\":\"Karim Benali\",\"customer_phone\":\"0550123456\",\"product_price\":3800,\"delivery_type\":1,\"express\":false,\"note_to_driver\":\"\",\"products\":[{\"logistical_description\":\"عسل ×2، زيت ×1\",\"quantity\":1}],\"source\":4,\"external_order_id\":\"G-cal3\"}",
+                    "s": 201,
+                    "r": "{\"id\":\"uuid-1\",\"display_id\":\"000000001\",\"status\":4}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "uuid-1",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Ain Ouessara",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Ain Ouessara",
+                "wilaya": 17,
+                "order_ref": "G-cal4",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "maystro",
+                "ping": {
+                    "ok": true,
+                    "message": "المفتاح صالح"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": {
+                    "16": {
+                        "n": 6,
+                        "map": {
+                            "bbezzr": "Bab Ezzouar",
+                            "brdjelkffn": "Bordj El Kiffane"
+                        },
+                        "unmatched": [
+                            "Zeralda"
+                        ],
+                        "undeliverable": [],
+                        "fuzzy": [
+                            [
+                                "Bordj El Kiffan",
+                                "Bordj El Kiffane",
+                                0.909
+                            ]
+                        ],
+                        "ids": {
+                            "algrcntre": 16001,
+                            "bbezzr": 16002,
+                            "kba": 16003,
+                            "brdjelkffne": 16004,
+                            "elhrrch": 16005,
+                            "rba": 16006
+                        },
+                        "carrierOnly": 1,
+                        "ambiguous": 0
+                    },
+                    "17": {
+                        "n": 2,
+                        "map": {
+                            "anussra": "Aïn Oussera"
+                        },
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "djlfa": 17001,
+                            "anussra": 17002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "31": {
+                        "n": 2,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "orn": 31001,
+                            "essna": 31002
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    },
+                    "32": {
+                        "n": 1,
+                        "map": [],
+                        "unmatched": [],
+                        "undeliverable": [],
+                        "fuzzy": [],
+                        "ids": {
+                            "elbdh": 32001
+                        },
+                        "carrierOnly": 0,
+                        "ambiguous": 0
+                    }
+                },
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "Maystro لا تعرض مكاتبها ولا تعريفتها عبر الواجهة العامة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "TOK"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://backend.maystro-delivery.com/api/stores/orders/",
+                    "h": {
+                        "Authorization": "Token TOK",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    "b": "{\"wilaya\":17,\"commune\":17002,\"destination_text\":\"Cité 5 Juillet\",\"customer_name\":\"Karim Benali\",\"customer_phone\":\"0550123456\",\"product_price\":3800,\"delivery_type\":1,\"express\":false,\"note_to_driver\":\"\",\"products\":[{\"logistical_description\":\"عسل ×2، زيت ×1\",\"quantity\":1}],\"source\":4,\"external_order_id\":\"G-cal4\"}",
+                    "s": 201,
+                    "r": "{\"id\":\"uuid-1\",\"display_id\":\"000000001\",\"status\":4}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "uuid-1",
+                "error": ""
+            }
         }
     ],
     "zrexpress": [
@@ -9023,6 +13130,404 @@
             },
             "calls": [],
             "result": false
+        },
+        {
+            "name": "calibrate",
+            "op": "calibrate",
+            "arg": {
+                "ours": {
+                    "16": [
+                        "Alger Centre",
+                        "Bab-Ezzouar",
+                        "Kouba",
+                        "Bordj El Kiffan",
+                        "El Harrach",
+                        "Zeralda"
+                    ],
+                    "31": [
+                        "Oran",
+                        "Es Senia"
+                    ],
+                    "32": [
+                        "El Bayadh"
+                    ],
+                    "17": [
+                        "Djelfa",
+                        "Ain Ouessara"
+                    ]
+                },
+                "chunk": 10
+            },
+            "cred": {
+                "token": "TK",
+                "key": "KY"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://procolis.com/api_v1/token",
+                    "h": {
+                        "token": "TK",
+                        "key": "KY",
+                        "Content-Type": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"Statut\":\"Accès activé\"}"
+                }
+            ],
+            "result": {
+                "v": 1,
+                "carrier": "zrexpress",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط"
+                ],
+                "done": true
+            }
+        },
+        {
+            "name": "create_calibrated_Bab-Ezzouar",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bab-Ezzouar",
+                "wilaya": 16,
+                "order_ref": "G-cal0",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "zrexpress",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط"
+                ],
+                "done": true
+            },
+            "cred": {
+                "token": "TK",
+                "key": "KY"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://procolis.com/api_v1/add_colis",
+                    "h": {
+                        "token": "TK",
+                        "key": "KY",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "{\"Colis\":[{\"Tracking\":\"\",\"TypeLivraison\":\"0\",\"TypeColis\":\"0\",\"Confrimee\":\"1\",\"Client\":\"Karim Benali\",\"MobileA\":\"0550123456\",\"MobileB\":\"\",\"Adresse\":\"Cité 5 Juillet\",\"IDWilaya\":\"16\",\"Commune\":\"Bab-Ezzouar\",\"Total\":\"4200\",\"Note\":\"\",\"TProduit\":\"عسل ×2، زيت ×1\",\"id_Externe\":\"G-cal0\",\"Source\":\"Alyssum\"}]}",
+                    "s": 200,
+                    "r": "{\"Colis\":[{\"Tracking\":\"\",\"MessageRetour\":\"Commune introuvable\"}]}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_calibrated_Bordj El Kiffan",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bordj El Kiffan",
+                "wilaya": 16,
+                "order_ref": "G-cal1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "zrexpress",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط"
+                ],
+                "done": true
+            },
+            "cred": {
+                "token": "TK",
+                "key": "KY"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://procolis.com/api_v1/add_colis",
+                    "h": {
+                        "token": "TK",
+                        "key": "KY",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "{\"Colis\":[{\"Tracking\":\"\",\"TypeLivraison\":\"0\",\"TypeColis\":\"0\",\"Confrimee\":\"1\",\"Client\":\"Karim Benali\",\"MobileA\":\"0550123456\",\"MobileB\":\"\",\"Adresse\":\"Cité 5 Juillet\",\"IDWilaya\":\"16\",\"Commune\":\"Bordj El Kiffan\",\"Total\":\"4200\",\"Note\":\"\",\"TProduit\":\"عسل ×2، زيت ×1\",\"id_Externe\":\"G-cal1\",\"Source\":\"Alyssum\"}]}",
+                    "s": 200,
+                    "r": "{\"Colis\":[{\"Tracking\":\"\",\"MessageRetour\":\"Commune introuvable\"}]}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_calibrated_Zeralda",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Zeralda",
+                "wilaya": 16,
+                "order_ref": "G-cal2",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "zrexpress",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط"
+                ],
+                "done": true
+            },
+            "cred": {
+                "token": "TK",
+                "key": "KY"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://procolis.com/api_v1/add_colis",
+                    "h": {
+                        "token": "TK",
+                        "key": "KY",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "{\"Colis\":[{\"Tracking\":\"\",\"TypeLivraison\":\"0\",\"TypeColis\":\"0\",\"Confrimee\":\"1\",\"Client\":\"Karim Benali\",\"MobileA\":\"0550123456\",\"MobileB\":\"\",\"Adresse\":\"Cité 5 Juillet\",\"IDWilaya\":\"16\",\"Commune\":\"Zeralda\",\"Total\":\"4200\",\"Note\":\"\",\"TProduit\":\"عسل ×2، زيت ×1\",\"id_Externe\":\"G-cal2\",\"Source\":\"Alyssum\"}]}",
+                    "s": 200,
+                    "r": "{\"Colis\":[{\"Tracking\":\"\",\"MessageRetour\":\"Commune introuvable\"}]}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_calibrated_El Harrach",
+            "op": "create_profile",
+            "arg": {
+                "commune": "El Harrach",
+                "wilaya": 16,
+                "order_ref": "G-cal3",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "zrexpress",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط"
+                ],
+                "done": true
+            },
+            "cred": {
+                "token": "TK",
+                "key": "KY"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://procolis.com/api_v1/add_colis",
+                    "h": {
+                        "token": "TK",
+                        "key": "KY",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "{\"Colis\":[{\"Tracking\":\"\",\"TypeLivraison\":\"0\",\"TypeColis\":\"0\",\"Confrimee\":\"1\",\"Client\":\"Karim Benali\",\"MobileA\":\"0550123456\",\"MobileB\":\"\",\"Adresse\":\"Cité 5 Juillet\",\"IDWilaya\":\"16\",\"Commune\":\"El Harrach\",\"Total\":\"4200\",\"Note\":\"\",\"TProduit\":\"عسل ×2، زيت ×1\",\"id_Externe\":\"G-cal3\",\"Source\":\"Alyssum\"}]}",
+                    "s": 200,
+                    "r": "{\"Colis\":[{\"Tracking\":\"ZR000001\",\"MessageRetour\":\"Good\"}]}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "ZR000001",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Ain Ouessara",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Ain Ouessara",
+                "wilaya": 17,
+                "order_ref": "G-cal4",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "zrexpress",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "ZR Express (Procolis) لا توفّر واجهة قراءة للبلديات أو الطرود: تُتحقَّق الحساب بفحص المفاتيح فقط"
+                ],
+                "done": true
+            },
+            "cred": {
+                "token": "TK",
+                "key": "KY"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://procolis.com/api_v1/add_colis",
+                    "h": {
+                        "token": "TK",
+                        "key": "KY",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "{\"Colis\":[{\"Tracking\":\"\",\"TypeLivraison\":\"0\",\"TypeColis\":\"0\",\"Confrimee\":\"1\",\"Client\":\"Karim Benali\",\"MobileA\":\"0550123456\",\"MobileB\":\"\",\"Adresse\":\"Cité 5 Juillet\",\"IDWilaya\":\"17\",\"Commune\":\"Ain Ouessara\",\"Total\":\"4200\",\"Note\":\"\",\"TProduit\":\"عسل ×2، زيت ×1\",\"id_Externe\":\"G-cal4\",\"Source\":\"Alyssum\"}]}",
+                    "s": 200,
+                    "r": "{\"Colis\":[{\"Tracking\":\"\",\"MessageRetour\":\"Commune introuvable\"}]}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
         }
     ]
 }

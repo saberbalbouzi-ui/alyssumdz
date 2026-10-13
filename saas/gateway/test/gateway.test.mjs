@@ -26,13 +26,13 @@ const d1 = makeD1(), sql = (q, ...a) => d1.raw.prepare(q).get(...a), sqlAll = (q
 /* ───── fetch وهمي ───── */
 const fake = { calls: [], queue: [] };
 const fetchFn = async (url, init = {}) => {
-  fake.calls.push({ url, init }); const r = fake.queue.shift() ?? [200, "{}"];
+  fake.calls.push({ url, init }); const r = (fake.handler && fake.handler(url, init)) ?? fake.queue.shift() ?? [200, "{}"];
   return { status: r[0], text: async () => (typeof r[1] === "string" ? r[1] : JSON.stringify(r[1])) };
 };
 const reply = (s, b) => { fake.queue.push([s, b]); };
 
 const vault = new Vault({ k1: webcrypto.getRandomValues(new Uint8Array(32)) }, "k1");
-const app = createApp({ d1, vault, fetchFn, baseUrl: "https://gw.example", adminToken: "adm-secret-token", docsHtml: "<html>docs</html>" });
+const app = createApp({ d1, vault, fetchFn, pause: async () => {}, baseUrl: "https://gw.example", adminToken: "adm-secret-token", docsHtml: "<html>docs</html>" });
 const T = app.tenants;
 const tA = await T.createTenant("Boutique A", "a@x.dz", "pro"), kA = await T.issueKey(tA, "live", "prod"), kAt = await T.issueKey(tA, "test");
 const tB = await T.createTenant("Boutique B", "b@x.dz", "free"), kB = await T.issueKey(tB, "live");
@@ -177,6 +177,45 @@ exec("UPDATE gw_orders SET status='pending' WHERE reference='V1X'"); fake.calls 
 reply(200, { data: [{ tracking: "yal-VAULT1", last_status: "Livré" }] }); reply(200, {});
 r = await app.cron(); ok("cron: يزامن ويرسل الحدث", r.checked >= 1 && r.changed === 1 && r.sent === 1, r);
 ok("cron: الحالة النهائية", sql("SELECT status FROM gw_orders WHERE reference='V1X'").status === "delivered");
+/* المعايرة عند أول ربط: دفعات عبر /calibrate ثم يُطبَّق الملف على الإرسال */
+{
+  const CAT = { 16: ["Bab Ezzouar", "Kouba", "Bordj El Kiffane", "Rouiba"], 31: ["Oran"] }, pg = (rows, u) => { const q = new URL(u).searchParams, size = +q.get("page_size") || 100, pgn = +q.get("page") || 1; return [200, { has_more: pgn * size < rows.length, data: rows.slice((pgn - 1) * size, pgn * size) }]; };
+  const made = {};
+  fake.handler = (u, init) => {
+    const x = new URL(u), q = x.searchParams;
+    if (x.pathname === "/v1/wilayas/") return [200, { data: [] }];
+    if (x.pathname === "/v1/communes/") return pg((CAT[q.get("wilaya_id")] ?? []).map((n) => ({ name: n, is_deliverable: n === "Rouiba" ? 0 : 1 })), u);
+    if (x.pathname === "/v1/centers/") return pg(q.get("wilaya_id") === "16" ? [{ center_id: 161601, name: "Desk", commune_name: "Bab Ezzouar" }] : [], u);
+    if (x.pathname === "/v1/deliveryfees/") return pg([{ wilaya_id: 16, home_fee: 500, desk_fee: 300 }], u);
+    if (x.pathname === "/v1/parcels/" && init.method === "GET") return pg([{ tracking: "yal-1", last_status: "Livré" }, { tracking: "yal-2", last_status: "Statut Inconnu 5" }], u);
+    if (x.pathname.startsWith("/v1/parcels/") && init.method === "GET") return [200, { data: [{ tracking: x.pathname.split("/")[3], last_status: "En préparation" }] }];
+    if (x.pathname === "/v1/parcels/" && init.method === "POST") { const b = JSON.parse(init.body)[0]; made.last = b; return [200, { [b.order_id]: { success: true, tracking: "yal-CAL1" } }]; }
+    return [404, "{}"];
+  };
+  [c, b] = await call("POST", "/v1/connections", { courier: "yalidine", credentials: { apiId: "AID2", apiToken: "VAULT-TOK-888" } }, kA);
+  const hk2 = new URL(b.carrierWebhookUrl), hid2 = hk2.pathname.split("/").pop(), hq2 = Object.fromEntries(hk2.searchParams);
+  ok("معايرة: التفعيل يبدأها (مرحلة geo)", c === 201 && b.calibration && b.calibration.done === false && b.calibration.progress.phase === "geo", b.calibration);
+  let n = 0; do { [c, b] = await call("POST", "/v1/connections/yalidine/calibrate", {}, kA); } while (c === 200 && !b.calibration.done && ++n < 40);
+  const cal = b.calibration;
+  ok("معايرة: تنتهي بدفعات", c === 200 && cal.done === true && n >= 2, { c, n, cal });
+  ok("معايرة: التُقطت بلديات ولايتين ومكتب وتعريفة", cal.communes.wilayas >= 2 && cal.desks === 1 && cal.fees === 1, cal);
+  ok("معايرة: حالة مجهولة معلنة وتحقّق التتبع نجح", cal.statuses.unknown === 1 && cal.verify && cal.verify.ok === 2 && cal.warnings.some((w) => /Statut Inconnu 5/.test(w)), cal);
+  [c, b] = await call("GET", "/v1/connections/yalidine/calibrate", null, kA); ok("معايرة: GET ملخّص محفوظ", c === 200 && b.calibration.done === true);
+  fake.calls = [];
+  [c, b] = await call("POST", "/v1/orders", { ...order({ reference: "CAL1" }, { communeName: "Rouiba" }), courier: "yalidine" }, kA);
+  ok("بعد المعايرة: بلدية لا توصّل إليها الشركة ← منع مبكر بلا طلب", c >= 400 && /لا توصّل/.test(JSON.stringify(b)) && !fake.calls.some((x) => x.init.method === "POST"), b);
+  [c, b] = await call("POST", "/v1/orders", { ...order({ reference: "CAL2" }, { communeName: "Bordj El Kiffan" }), courier: "yalidine" }, kA);
+  ok("بعد المعايرة: تهجئة مقاربة تُصحَّح عند الإرسال", c === 201 && made.last && made.last.to_commune_name === "Bordj El Kiffane", { c, last: made.last, b });
+  /* webhook: التقاط الشكل */
+  fake.handler = null;
+  const whb = { type: "parcel_status_updated", data: [{ tracking: "yal-CAL1", last_status: "Livré" }] };
+  [c, b] = await call("POST", "/v1/hooks/" + hid2, whb, null, hq2); [c, b] = await call("POST", "/v1/hooks/" + hid2, { weird: 1 }, null, hq2);
+  [c, b] = await call("GET", "/v1/connections/yalidine/calibrate", null, kA);
+  ok("webhook: التُقط شكل الإشعارات وعدد المحلَّل", b.calibration.webhook && b.calibration.webhook.received >= 2 && b.calibration.webhook.empty >= 1 && b.calibration.webhook.parsed >= 1, b.calibration.webhook);
+  [c, b] = await call("POST", "/v1/connections/zzz/calibrate", {}, kA); ok("معايرة: شركة غير مفعّلة 404", c === 404);
+  [c, b] = await call("POST", "/v1/connections", { courier: "yalidine", credentials: { apiId: "AID2", apiToken: "VAULT-TOK-888" } }, kA);
+  [c, b] = await call("GET", "/v1/connections/yalidine/calibrate", null, kA); ok("إعادة الربط تمسح الملف القديم وتبدأ جديداً", b.calibration && b.calibration.done === false && !b.calibration.webhook, b.calibration);
+}
 [c] = await call("DELETE", "/v1/connections/yalidine", null, kA); { const [c2] = await call("POST", "/v1/orders", { ...order({ reference: "V2X" }), courier: "yalidine" }, kA); ok("فصل الشركة من الخزنة", c === 200 && c2 === 422); }
 
 /* أخرى */

@@ -7,6 +7,7 @@ import { S, ALL as ALL_STATUS, canTransition } from "./status.js";
 import { makeParcel, ValidationError } from "./parcel.js";
 import { CARRIERS, catalog, makeAdapter, makeHttp, resolveCarrier, CarrierError, CredentialsError, UnsupportedError, ApiError } from "./carriers.js";
 import { nowStr, randHex, safeEq, safeHttpsUrl, sha256Hex } from "./util.js";
+import * as Cal from "./calibrator.js";
 
 const MAX_BODY = 262144;
 export class HttpError extends Error {
@@ -20,9 +21,19 @@ const REF = /^[A-Za-z0-9._-]{1,64}$/;
  * بوابة الشحن (Cloudflare Worker + D1). handle() نقية: لا تقرأ كائن Request ولا تعتمد على البيئة فتُختبر بلا خادم.
  * وضعان للمفاتيح: inline (مع كل طلب، لا تُخزَّن) أو vault (مشفّرة في gw_connections).
  */
-export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "", carrierFetch = null }) {
+export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "", carrierFetch = null, pause = (ms) => new Promise((r) => setTimeout(r, Math.min(ms, 600))) }) {
   const db = new DB(d1), tenants = new Tenants(db, vault), limiter = new Limiter(db, clock), dispatcher = new Dispatcher(db, tenants, fetchFn, clock), http = makeHttp(carrierFetch ?? fetchFn);
   const aadConn = (tid, code) => `tenant:${tid}|carrier:${code}`;
+  const ours = Cal.ourGeo(geo);
+  /* ملف معايرة الحساب (gw_profiles): يُنشأ الجدول عند أول استعمال كي لا يتوقف النشر على تحديث المخطط */
+  let profTable = false;
+  async function ensureProfiles() { if (profTable) return; await db.run("CREATE TABLE IF NOT EXISTS gw_profiles (connection_id INTEGER PRIMARY KEY, profile_json TEXT NOT NULL, updated_at TEXT NOT NULL)"); profTable = true; }
+  async function getProfile(connId) { await ensureProfiles(); const r = await db.one("SELECT profile_json FROM gw_profiles WHERE connection_id=?", connId); try { return r ? JSON.parse(r.profile_json) : {}; } catch { return {}; } }
+  async function saveProfile(connId, prof) {
+    await ensureProfiles(); const j = JSON.stringify(prof), now = nowStr(clock());
+    const u = await db.run("UPDATE gw_profiles SET profile_json=?, updated_at=? WHERE connection_id=?", j, now, connId);
+    if (!u.changes) await db.run("INSERT INTO gw_profiles (connection_id,profile_json,updated_at) VALUES (?,?,?)", connId, j, now);
+  }
 
   async function handle(method, path, query, headers, raw, ip = "0") {
     const rid = "req_" + randHex(6); let res;
@@ -75,6 +86,11 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
       const conn = await db.one("SELECT * FROM gw_connections WHERE tenant_id=? AND carrier_code=? AND is_active=1", tid, resolveCarrier(mm[1]) ?? mm[1]);
       if (!conn) throw new HttpError(404, "not_connected", "الشركة غير مفعّلة");
       return ok(await (await adapterForConn(conn)).ping());
+    }
+    if ((m === "POST" || m === "GET") && (mm = p.match(/^\/v1\/connections\/([a-z0-9_]{2,30})\/calibrate$/))) {   // المعايرة: POST يتقدّم دفعات (أو {restart:true} يبدأ من جديد)، GET ملخّص فقط
+      const conn = await db.one("SELECT * FROM gw_connections WHERE tenant_id=? AND carrier_code=? AND is_active=1", tid, resolveCarrier(mm[1]) ?? mm[1]);
+      if (!conn) throw new HttpError(404, "not_connected", "الشركة غير مفعّلة");
+      return calibrate(conn, m, m === "POST" ? json(raw) : {});
     }
     if (m === "DELETE" && (mm = p.match(/^\/v1\/connections\/([a-z0-9_]{2,30})$/))) {
       await db.run("UPDATE gw_connections SET is_active=0, updated_at=? WHERE tenant_id=? AND carrier_code=?", nowStr(clock()), tid, resolveCarrier(mm[1]) ?? mm[1]); return ok({ ok: true });
@@ -151,7 +167,8 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
   async function adapterForConn(conn) {
     const cred = await vault.decryptJson(conn.credentials_enc, aadConn(conn.tenant_id, conn.carrier_code));
     if (/^\d+$/.test(cred.fromWilaya ?? "")) cred.fromWilaya = geo.name(+cred.fromWilaya) ?? cred.fromWilaya;
-    return makeAdapter(conn.carrier_code, http, conn.base_url).authenticate(cred);
+    const ad = makeAdapter(conn.carrier_code, http, conn.base_url).authenticate(cred);
+    const prof = await getProfile(conn.id); return Object.keys(prof).length ? ad.withProfile(prof) : ad;   // ملف المعايرة يصحّح البلديات/المكاتب/الحالات لهذا الحساب
   }
 
   function phone(p) { let d = String(p ?? "").replace(/\D/g, ""); if (d.startsWith("00213")) d = d.slice(5); else if (d.startsWith("213")) d = d.slice(3); if (d.length === 9) d = "0" + d; return /^0[567]\d{8}$/.test(d) ? d : null; }
@@ -288,9 +305,25 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     if (ping.ok === false) throw new HttpError(422, "invalid_credentials", "رفضت الشركة هذه المفاتيح: " + ping.message);   // لا نحفظ مفاتيح مرفوضة: يُكتشف الخطأ الآن لا عند أول طلب حقيقي
     const enc = await vault.encrypt(cred, aadConn(tid, code)), secret = randHex(24), hash = await sha256Hex(secret), now = nowStr(clock());
     let pub;
+    if (had) { await ensureProfiles(); await db.run("DELETE FROM gw_profiles WHERE connection_id=?", had.id); }          // مفاتيح جديدة = حساب قد يختلف ← تُعاد المعايرة
     if (had) { pub = had.public_id; await db.run("UPDATE gw_connections SET credentials_enc=?, key_id=?, base_url=?, webhook_token_hash=?, is_active=1, updated_at=? WHERE id=?", enc, vault.kid, base, hash, now, had.id); }
     else { pub = randHex(12); await db.run("INSERT INTO gw_connections (public_id,tenant_id,carrier_code,credentials_enc,key_id,base_url,webhook_token_hash,is_active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,1,?,?)", pub, tid, code, enc, vault.kid, base, hash, now, now); }
-    return ok({ ok: true, courier: code, verified: ping.ok === true, ...(ping.ok === true ? {} : { verifyNote: ping.message }), carrierWebhookUrl: `${baseUrl.replace(/\/+$/, "")}/v1/hooks/${pub}?t=${secret}`, note: "ضع هذا الرابط في حسابك لدى الشركة لتصلك حالات الطرود لحظياً — يظهر هذه المرة فقط" }, 201);
+    let calibration = null;
+    if (ping.ok === true) {                                                              // يبدأ المعايرة (حالة أولية فقط)؛ العميل يتابع بـPOST /v1/connections/:c/calibrate حتى done
+      const cid = await db.val("SELECT id FROM gw_connections WHERE public_id=?", pub); const ad = makeAdapter(code, http, base).authenticate(cred);
+      const prof = await Cal.start(ad, ours, ping); await saveProfile(cid, prof); calibration = Cal.summary(prof);
+    }
+    return ok({ ok: true, courier: code, calibration, verified: ping.ok === true, ...(ping.ok === true ? {} : { verifyNote: ping.message }), carrierWebhookUrl: `${baseUrl.replace(/\/+$/, "")}/v1/hooks/${pub}?t=${secret}`, note: "ضع هذا الرابط في حسابك لدى الشركة لتصلك حالات الطرود لحظياً — يظهر هذه المرة فقط" }, 201);
+  }
+  /* دفعات المعايرة: ≤4 خطوات أو ≈10ث لكل طلب (حدّ الطلبات الفرعية في Workers)، وتُحفظ الحالة بعد كل خطوة فتستأنف من حيث وقفت */
+  async function calibrate(conn, m, b) {
+    let prof = await getProfile(conn.id);
+    if (m === "GET") return ok({ calibration: prof.phase ? Cal.summary(prof) : null });
+    const ad = await adapterForConn(conn); ad.pause = pause;
+    if (b.restart || !prof.phase) { const web = prof.webhook; prof = await Cal.start(ad, ours); if (web) prof.webhook = web; await saveProfile(conn.id, prof); }
+    const t0 = clock();
+    for (let i = 0; i < 4 && !prof.done && (i === 0 || clock() - t0 < 10000); i++) { prof = await Cal.step(ad, ours, prof, 3); await saveProfile(conn.id, prof); }
+    return ok({ calibration: Cal.summary(prof) });
   }
   async function setWebhook(auth, b) {
     if (!auth.plan.webhooks) throw new HttpError(402, "plan_limit", "الـwebhook غير متاح في خطتك");
@@ -305,7 +338,18 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     if (!conn || !safeEq(conn.webhook_token_hash, await sha256Hex(String(q.t ?? "")))) throw new HttpError(401, "unauthorized", "رابط غير صالح");
     let p; try { p = JSON.parse(raw); } catch { p = null; } if (!p || typeof p !== "object") throw new HttpError(400, "validation_error", "JSON غير صالح");
     const plan = await tenants.plan((await db.val("SELECT plan FROM gw_tenants WHERE id=?", conn.tenant_id)) ?? "free"); let events = [];
-    try { events = makeAdapter(conn.carrier_code, http, conn.base_url).parseWebhook(p, hd); } catch (e) { if (!(e instanceof UnsupportedError)) throw e; }
+    let ad = null, signed = null;
+    try { ad = await adapterForConn(conn); } catch (e) { if (!(e instanceof UnsupportedError)) { try { ad = makeAdapter(conn.carrier_code, http, conn.base_url); } catch (e2) { if (!(e2 instanceof UnsupportedError)) throw e2; } } }
+    if (ad) {
+      signed = await ad.verifyWebhook(raw, hd); if (signed === false) throw new HttpError(401, "bad_signature", "توقيع الإشعار غير صالح");
+      events = ad.parseWebhook(p, hd);
+    }
+    try {                                                                                  // يلتقط شكل أول الإشعارات الحقيقية في ملف المعايرة (اختياري)
+      const prof = await getProfile(conn.id); const w = prof.webhook ?? { received: 0, parsed: 0, empty: 0, shapes: [] };
+      w.received++; if (events.length) w.parsed++; else w.empty++; w.last_at = new Date(clock()).toISOString(); w.signed = signed;
+      const shape = Object.keys(p).slice(0, 12).join(","); if (!w.shapes.includes(shape) && w.shapes.length < 5) w.shapes.push(shape);
+      prof.webhook = w; await saveProfile(conn.id, { v: Cal.V, communes: {}, statuses: {}, warnings: [], notes: [], ...prof });
+    } catch { /* اختياري */ }
     let n = 0;
     for (const e of events) { const row = await db.one("SELECT * FROM gw_orders WHERE tenant_id=? AND courier=? AND tracking=?", conn.tenant_id, conn.carrier_code, e.tracking); if (row && await advance(row, e.status, e.rawStatus, plan)) n++; }
     return ok({ ok: true, received: events.length, updated: n });

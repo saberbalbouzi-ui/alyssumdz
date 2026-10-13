@@ -28,7 +28,78 @@ abstract class AbstractAdapter implements ShippingInterface
     /** عائلة قاموس الحالات (شركات تتشارك المنصة نفسها تتشارك القاموس). */
     protected function statusFamily(): string { return $this->code(); }
 
-    public function mapStatus(string $rawStatus): string { return StatusMapper::map($this->statusFamily(), $rawStatus); }
+    public function mapStatus(string $rawStatus): string
+    {
+        $ov = $this->profile['status_overrides'][StatusMapper::normalize($rawStatus)] ?? null;          // تصحيح خاص بحساب هذه الشركة (يُضاف عند المعايرة أو من اللوحة)
+        if (is_string($ov) && in_array($ov, Status::ALL, true)) { return $ov; }
+        return StatusMapper::map($this->statusFamily(), $rawStatus);
+    }
+
+    public function explainStatus(string $rawStatus): array
+    {
+        $ov = $this->profile['status_overrides'][StatusMapper::normalize($rawStatus)] ?? null;
+        if (is_string($ov) && in_array($ov, Status::ALL, true)) { return [$ov, 'override']; }
+        return StatusMapper::explain($this->statusFamily(), $rawStatus);
+    }
+
+    /** @var array<string,mixed> */
+    protected array $profile = [];
+    /** نداء يُستدعى بين طلبات الاكتشاف الكثيرة لاحترام حدود المعدّل (يُعطَّل في الاختبارات). */
+    public ?\Closure $pause = null;
+
+    public function withProfile(array $profile): static { $this->profile = $profile; return $this; }
+
+    public function discover(array $wilayas, array $want = []): array { return self::emptyDiscovery(['الشركة لا توفّر واجهة قراءة للمعايرة']); }
+
+    /** @param list<string> $notes */
+    protected static function emptyDiscovery(array $notes = []): array { return ['communes' => [], 'desks' => [], 'fees' => [], 'statuses' => [], 'trackings' => [], 'notes' => $notes]; }
+
+    protected function breath(int $ms = 250): void { if ($this->pause) { ($this->pause)($ms); } }
+
+    /** GET يعيد JSON مع إعادة محاولة (حتى 3) عند 429 (حدود المعدّل أثناء الاكتشاف). @return array<mixed> */
+    protected function getJson(string $url, array $headers): array
+    {
+        for ($i = 0; ; $i++) {
+            try { return $this->send('GET', $url, $headers)->json() ?? []; }
+            catch (CarrierApiException $e) { if ($i >= 3 || !str_contains($e->getMessage(), '429')) { throw $e; } $this->breath([2500, 6000, 15000][$i]); }   // تمهّل متصاعد عند حدّ المعدّل
+        }
+    }
+
+    /** مفتاح مقارنة موحَّد لاسم البلدية. */
+    public static function ck(string $name): string { return CommuneMatcher::normalize($name); }
+
+    /**
+     * قرار البلدية من ملف المعايرة: ['name'=>الاسم الصحيح عند الشركة أو null (لا قرار)، 'id'=>معرّفها إن عُرف، 'block'=>رسالة منع إن كانت مرفوضة سلفاً].
+     * @return array{name:?string,id:int|string|null,block:?string}
+     */
+    protected function profileCommune(int $legacyWilaya, string $commune, string $wilayaName): array
+    {
+        $w = $this->profile['communes'][(string)$legacyWilaya] ?? null;
+        if (!is_array($w)) { return ['name' => null, 'id' => null, 'block' => null]; }
+        $k = self::ck($commune);
+        $name = $w['map'][$k] ?? null;
+        if ($name === null && (int)($w['n'] ?? 0) > 0) { $name = $commune; }            // المعايَرة تغطّي هذه الولاية وهذا الاسم مطابق تماماً عند الشركة
+        $id = $name !== null ? ($w['ids'][self::ck((string)$name)] ?? null) : null;
+        if (in_array($k, array_map([self::class, 'ck'], (array)($w['undeliverable'] ?? [])), true)) {
+            return ['name' => $name, 'id' => $id, 'block' => "الشركة لا توصّل حالياً إلى بلدية «{$commune}» في {$wilayaName} (حسب معايرة حسابك)"];
+        }
+        if (in_array($k, array_map([self::class, 'ck'], (array)($w['unmatched'] ?? [])), true)) {
+            return ['name' => null, 'id' => null, 'block' => "بلدية «{$commune}» غير موجودة في قائمة الشركة لولاية {$wilayaName} (حسب معايرة حسابك) — اختر بلدية أخرى أو راجع الشركة"];
+        }
+        return ['name' => $name, 'id' => $id, 'block' => null];
+    }
+
+    public function verifyWebhook(string $rawBody, array $headers): ?bool
+    {
+        $secret = (string)($this->cred['webhookSecret'] ?? ''); if ($secret === '') { return null; }
+        $want = hash_hmac('sha256', $rawBody, $secret);
+        foreach (['x-yalidine-signature', 'x-signature', 'x-hub-signature-256', 'x-webhook-signature'] as $h) {
+            $v = strtolower(trim((string)($headers[$h] ?? ''))); if ($v === '') { continue; }
+            if (str_starts_with($v, 'sha256=')) { $v = substr($v, 7); }
+            if (hash_equals($want, $v)) { return true; }
+        }
+        return false;
+    }
 
     public function ping(): array { return ['ok' => null, 'message' => 'الفحص غير مدعوم لهذه الشركة']; }
 
