@@ -96,7 +96,28 @@ const totp = (sec, step) => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigI
   const txt = await O.p.evaluate(() => document.getElementById("rl").textContent);
   ok("المالك: نشاط الموظف في الإحصاء والسجلّ", /amel/.test(txt) && /تغيير حالة طلب → مؤكد/.test(txt) && /تفعيل المصادقة الثنائية/.test(txt), txt.slice(-500));
   ok("المالك: 2FA الموظف ✅ وزر إعادة الضبط", await O.p.evaluate(() => !!document.querySelector('#rl tr[data-em="amel"] [data-rl="resetmfa"]')));
-  const errsAll = [...O.errs, ...S.errs, ...S2.errs];
+
+  // ═══ المحاسب: المالية قراءةً فقط ═══
+  await O.p.evaluate(async () => { await Priv.set("costs", { "demo-slug": 640 }); await PHPAPI.call("team", { method: "POST", body: JSON.stringify({ action: "create", email: "acct", name: "Acc", role: "accountant", password: "acctpass-12345" }) }); });
+  const A = await ctx(); await login(A.p, "acct", "acctpass-12345"); await ready(A.p); await A.p.waitForTimeout(1800);
+  const visA = await A.p.evaluate(() => [...document.querySelectorAll(".nav-btn:not(.rl-hid):not(.nav-hid):not(.nav-work)")].map(b => (b.querySelector(".nav-txt b") || b).textContent.trim().replace(/\s+/g, " ")));
+  console.log("   أقسام المحاسب:", visA.join(" | "));
+  ok("المحاسب: المالية والمدفوعات والتكلفة والعملاء والتقارير ظاهرة", ["المخزون والأرباح", "المدفوعات", "تكلفة المنتجات", "العملاء", "التقارير", "لوحة التحكم"].every(t => visA.some(v => v.startsWith(t))), visA);
+  ok("المحاسب: الاتصال والشحن والإعدادات مخفية", !visA.some(v => /مركز الاتصال|شركات التوصيل|رسوم التوصيل|إعدادات الموقع|الصفحات|البكسلات/.test(v)), visA);
+  ok("المحاسب: يقرأ أسعار الشراء التي حفظها المالك", await A.p.evaluate(() => Admin.fin && Admin.fin.costs && Admin.fin.costs["demo-slug"] === 640), await A.p.evaluate(() => Admin.fin && Admin.fin.costs));
+  await A.p.evaluate(() => Admin.tab("finance")); await A.p.waitForTimeout(600);
+  ok("المحاسب: شريط «عرض فقط» في المالية", await A.p.evaluate(() => !!document.querySelector("#tab-finance > .rl-robar")));
+  await A.p.evaluate(() => Priv.set("costs", { "demo-slug": 1 })); await A.p.waitForTimeout(400);
+  ok("المحاسب: الكتابة في التخزين الخاص مرفوضة", await A.p.evaluate(() => /عرض فقط/.test(document.getElementById("toast2").textContent)));
+  const stillCost = await O.p.evaluate(async () => (await Priv.remote("costs"))["demo-slug"]);
+  ok("قيمة المالك لم تتغيّر", stillCost === 640, stillCost);
+  await A.p.evaluate(() => Admin.tab("payments")); await A.p.waitForTimeout(1200);
+  ok("المحاسب: تبويب المدفوعات يعمل", await A.p.evaluate(() => !document.getElementById("tab-payments").classList.contains("hidden") && !!document.querySelector("#tab-payments > .rl-robar")));
+  await A.p.evaluate(() => Admin.tab("customers")); await A.p.waitForTimeout(1200);
+  ok("المحاسب: تبويب العملاء يعمل (عرض فقط)", await A.p.evaluate(() => !document.getElementById("tab-customers").classList.contains("hidden") && !!document.querySelector("#tab-customers > .rl-robar")));
+  await A.p.evaluate(() => Admin.tab("callcenter")); await A.p.waitForTimeout(300);
+  ok("المحاسب: مركز الاتصال مرفوض", await A.p.evaluate(() => document.getElementById("tab-callcenter").classList.contains("hidden")));
+  const errsAll = [...O.errs, ...S.errs, ...S2.errs, ...A.errs];
   ok("لا أخطاء جافاسكربت في أي جلسة", errsAll.length === 0, errsAll.slice(0, 5));
   await browser.close(); kill();
   console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `\n✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);

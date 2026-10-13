@@ -12,12 +12,12 @@ const CORS = {
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 const ROLES = ["manager", "agent", "support", "accountant"];
 // صلاحيات معروفة فقط (الباقي يُرفض): تطابق AdminRoles.PERMS في اللوحة
-const PERMS = ["orders", "orders.write", "orders.edit", "orders.create", "orders.delete", "callcenter", "analytics", "ship", "customers", "products", "marketing", "finance", "site"];
+const PERMS = ["orders", "orders.write", "orders.edit", "orders.create", "orders.delete", "callcenter", "analytics", "customers", "finance", "ship", "products", "marketing", "site"];
 const PRESETS: Record<string, string[]> = {
-  manager: ["orders", "orders.write", "orders.edit", "orders.create", "orders.delete", "callcenter", "analytics"],
+  manager: ["orders", "orders.write", "orders.edit", "orders.create", "orders.delete", "callcenter", "analytics", "customers"],
   agent: ["orders", "orders.write", "callcenter"],
-  support: ["orders", "orders.write", "orders.edit", "callcenter"],
-  accountant: ["orders", "analytics"],
+  support: ["orders", "orders.write", "orders.edit", "callcenter", "customers"],
+  accountant: ["orders", "analytics", "finance", "customers"],
 };
 const svc = (extra: Record<string, string> = {}) => ({ apikey: SVC, Authorization: "Bearer " + SVC, "Content-Type": "application/json", ...extra });
 const rest = (path: string, init: RequestInit = {}) => fetch(`${URL_}/rest/v1${path}`, { ...init, headers: svc({ Prefer: "return=representation", ...(init.headers as Record<string, string> ?? {}) }) });

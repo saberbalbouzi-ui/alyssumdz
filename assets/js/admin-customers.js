@@ -121,6 +121,7 @@ const AdminCustomers = (() => {
     try{localStorage.setItem(LS,JSON.stringify(notes));}catch(_){}
   }
   async function persist(next, msg) {
+    if (window.AdminRoles && AdminRoles.isReadOnly()) throw new Error("عرض فقط — التعديل للمالك");
     const a=A(), configured=typeof PHPAPI!=="undefined"&&PHPAPI.on()||(a&&typeof GH!=="undefined"&&GH.cfg&&GH.cfg()?.token), json=JSON.stringify(next,null,2);
     if(configured){const b64=btoa(unescape(encodeURIComponent(json))),res=await GH.putFile(FILE,b64,sha,msg || "حفظ ملاحظات العملاء والوسوم");sha=res&&res.content?res.content.sha:sha;}
     else localStorage.setItem(LS,json);

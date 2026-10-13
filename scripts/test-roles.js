@@ -11,12 +11,13 @@ ok("المالك يدخل كل قسم حتى غير المعروف", R.tabAllowe
 ok("موظف الاتصال: الطلبات ومركز الاتصال فقط", R.tabAllowed(agent, "orders") && R.tabAllowed(agent, "callcenter") && !R.tabAllowed(agent, "finance") && !R.tabAllowed(agent, "payments") && !R.tabAllowed(agent, "delivery") && !R.tabAllowed(agent, "customers") && !R.tabAllowed(agent, "builder"));
 ok("الرفض الافتراضي: قسم غير مسجَّل = للمالك فقط", !R.tabAllowed(agent, "new-unknown-tab") && !R.tabAllowed(acct, "setup") && !R.tabAllowed(acct, "store"));
 ok("الفريق والمظهر الشخصي متاحان للجميع", R.tabAllowed(agent, "team") && R.tabAllowed(acct, "admtheme"));
-ok("المحاسب (قراءة): لوحة المبيعات والتقارير فقط الآن", R.tabAllowed(acct, "reports") && R.tabAllowed(acct, "home") && R.tabAllowed(acct, "orders") && !R.tabAllowed(acct, "finance") && !R.tabAllowed(acct, "payments") && !R.tabAllowed(acct, "builder") && !R.tabAllowed(acct, "callcenter"));
-ok("صلاحيات «قريباً» لا تفتح أقساماً حتى لو مُنحت عبر الخادم", !R.tabAllowed({ owner: false, perms: ["finance", "products", "site", "customers", "ship", "marketing"] }, "finance") && !R.tabAllowed({ owner: false, perms: ["products"] }, "products") && R.SOON.length === 6);
+ok("المحاسب: المالية والمدفوعات والتكاليف والعملاء والتقارير، لا التصميم ولا الاتصال", ["finance", "payments", "costs", "customers", "reports", "home", "orders"].every(t => R.tabAllowed(acct, t)) && !R.tabAllowed(acct, "builder") && !R.tabAllowed(acct, "callcenter") && !R.tabAllowed(acct, "delivery") && !R.tabAllowed(acct, "setup"));
+ok("أقسام المالية للقراءة فقط (RO_TABS)", R.RO_TABS.finance && R.RO_TABS.payments && R.RO_TABS.costs && R.RO_TABS.customers && !R.RO_TABS.orders);
+ok("صلاحيات «قريباً» لا تفتح أقساماً حتى لو مُنحت عبر الخادم", !R.tabAllowed({ owner: false, perms: ["products", "site", "ship", "marketing"] }, "delivery") && !R.tabAllowed({ owner: false, perms: ["products"] }, "products") && !R.tabAllowed({ owner: false, perms: ["site"] }, "builder") && R.SOON.slice().sort().join() === "marketing,products,ship,site");
 ok("بلا هوية لا يُسمح بشيء", !R.tabAllowed(null, "orders") && !R.has(null, "orders"));
 ok("تطبيقات: اسألني للجميع والمطوّر بصلاحية الموقع", R.appAllowed(agent, "ask") && !R.appAllowed(agent, "builder") && R.appAllowed(owner, "cloner"));
 ok("الصفحة الأولى: الاتصال للموظف ثم الطلبات", R.firstTab(agent) === "callcenter" && R.firstTab({ owner: false, perms: ["orders"] }) === "orders" && R.firstTab({ owner: false, perms: [] }) === "team" && R.firstTab(owner) === "callcenter");
-ok("صلاحية نجمية لا تتجاوز «قريباً»", R.has({ owner: false, perms: ["*"] }, "orders") && !R.has({ owner: false, perms: ["*"] }, "finance"));
+ok("صلاحية نجمية لا تتجاوز «قريباً»", R.has({ owner: false, perms: ["*"] }, "orders") && !R.has({ owner: false, perms: ["*"] }, "products"));
 
 const rows = [
   { actor: "a@x", role: "agent", action: "order.status", to_status: "confirmee", n: 6, last_at: "2026-10-13T10:00:00Z" },
@@ -52,5 +53,6 @@ const OWNER_ONLY = ["store", "setup", "agent", "analytics", "returns", "blacklis
 const unmapped = tabs.filter(t => !R.TAB_PERM[t] && !["team", "admtheme"].includes(t));
 ok("أقسام القائمة: غير المسجَّلة هي المالك-فقط المعروفة", JSON.stringify(unmapped.sort()) === JSON.stringify(OWNER_ONLY.sort()), unmapped);
 ok("لا قسم مسجَّل بصلاحية مجهولة", Object.values(R.TAB_PERM).concat(Object.values(R.APP_PERM)).every(p => jsPerms.includes(p)));
-ok("لا صلاحية مالية لدور الاتصال", !R.has(agent, "finance") && !R.has(agent, "ship") && !R.has(agent, "site"));
+ok("لا صلاحية مالية لدور الاتصال", !R.has(agent, "finance") && !R.has(agent, "ship") && !R.has(agent, "site") && !R.has(agent, "customers"));
+ok("المالية للمحاسب وحده افتراضياً", R.ROLES.accountant.perms.includes("finance") && !R.ROLES.manager.perms.includes("finance") && !R.ROLES.support.perms.includes("finance"));
 console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);

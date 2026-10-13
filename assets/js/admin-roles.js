@@ -3,7 +3,7 @@
    هذه الوحدة تُخفي ما لا يحقّ للموظف رؤيته وتدير شاشة «الفريق والأمان». أي قسم غير مذكور في TAB_PERM يبقى للمالك فقط (رفض افتراضي). */
 (function (root) {
   "use strict";
-  /* soon: صلاحية مسجَّلة لكن بياناتها (منتجات/ملفات/تخزين المالك) لا تصل الموظف بعد، فلا تُمنح من الواجهة ولا تفتح قسماً. تُنقل من SOON حين تُفرض في الخادم. */
+  /* READ_ONLY: صلاحيات تفتح أقساماً للقراءة فقط (الخادم يرفض الكتابة). soon: صلاحية مسجَّلة لكن بياناتها (منتجات/ملفات النشر) لا تصل الموظف بعد، فلا تُمنح من الواجهة ولا تفتح قسماً. تُنقل من SOON حين تُفرض في الخادم. */
   const PERMS = [
     { id: "orders", label: "عرض الطلبات" },
     { id: "orders.write", label: "تأكيد/إلغاء الطلبات وتسجيل نتيجة الاتصال" },
@@ -12,20 +12,21 @@
     { id: "orders.delete", label: "حذف الطلبات" },
     { id: "callcenter", label: "مركز الاتصال" },
     { id: "analytics", label: "لوحة المبيعات والتقارير (من الطلبات)" },
+    { id: "customers", label: "العملاء (عرض)" },
+    { id: "finance", label: "المالية والمدفوعات والتكاليف (عرض)" },
     { id: "ship", label: "الشحن وشركات التوصيل", soon: true },
-    { id: "customers", label: "العملاء وملاحظاتهم", soon: true },
     { id: "products", label: "المنتجات والمخزون", soon: true },
     { id: "marketing", label: "التسويق (الأكواد، الولاء، السوشيال، البكسلات)", soon: true },
-    { id: "finance", label: "المالية والمدفوعات والتكاليف", soon: true },
     { id: "site", label: "تصميم الموقع وصفحاته", soon: true },
   ];
   const SOON = PERMS.filter(p => p.soon).map(p => p.id);
+  const RO_TABS = { finance: 1, payments: 1, costs: 1, customers: 1 };      // أقسام تُفتح للموظف قراءةً فقط
   const ROLES = {
     owner: { label: "المالك", perms: ["*"] },
-    manager: { label: "مدير مساعد", perms: ["orders", "orders.write", "orders.edit", "orders.create", "orders.delete", "callcenter", "analytics"] },
+    manager: { label: "مدير مساعد", perms: ["orders", "orders.write", "orders.edit", "orders.create", "orders.delete", "callcenter", "analytics", "customers"] },
     agent: { label: "موظف اتصال", perms: ["orders", "orders.write", "callcenter"] },
-    support: { label: "دعم الزبائن", perms: ["orders", "orders.write", "orders.edit", "callcenter"] },
-    accountant: { label: "محاسب (قراءة)", perms: ["orders", "analytics"] },
+    support: { label: "دعم الزبائن", perms: ["orders", "orders.write", "orders.edit", "callcenter", "customers"] },
+    accountant: { label: "محاسب", perms: ["orders", "analytics", "finance", "customers"] },
   };
   const TAB_PERM = {
     home: "analytics", orders: "orders", callcenter: "callcenter",
@@ -64,7 +65,7 @@
   const ACTION_LBL = { "order.status": "تغيير حالة طلب", "order.call": "نتيجة اتصال", "order.edit": "تعديل طلب", "order.create": "إنشاء طلب", "order.delete": "حذف طلب", login: "دخول", logout: "خروج", "mfa.enroll": "تفعيل المصادقة الثنائية", "mfa.disable": "إيقاف المصادقة الثنائية", "mfa.verify_fail": "رمز مصادقة خاطئ", "staff.create": "إضافة موظف", "staff.update": "تعديل موظف", "staff.disable": "إيقاف موظف", "staff.password": "كلمة مرور موظف", "staff.reset_mfa": "إعادة ضبط مصادقة موظف", "staff.delete": "حذف موظف" };
   const STATUS_LBL = { nouvelle: "جديد", confirmee: "مؤكد", annulee: "ملغى", expediee: "مرسل", livree: "مسلَّم", echec: "فشل" };
 
-  const model = { PERMS, SOON, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL };
+  const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL };
   if (typeof module !== "undefined" && module.exports) { module.exports = model; }
   if (typeof document === "undefined") return;
 
@@ -85,12 +86,16 @@
     S.me = me && me.role ? me : null; return S.me;
   }
   const can = p => has(S.me, p);
+  const isRO = () => !!S.me && !S.me.owner;                  // غير المالك لا يكتب في التخزين الخاص ولا ملفات النشر
+  let roMsgAt = 0;
+  function denyWrite() { if (!isRO()) return false; if (Date.now() - roMsgAt > 8000) { roMsgAt = Date.now(); if (typeof toast === "function") toast("⛔ عرض فقط — التعديل للمالك"); } return true; }
   const allowed = t => !S.me || tabAllowed(S.me, t);        // بلا هوية معروفة (وضع قديم) لا قيود
 
   /* ── إخفاء ما لا يحق للموظف (الخادم يفرض الأصل) ── */
   function css() {
     if ($("rl-css")) return; const st = document.createElement("style"); st.id = "rl-css";
     st.textContent = `html.rl-staff .rl-hid,html.rl-staff [data-owner]{display:none!important}
+.rl-robar{margin:0 0 .8rem;padding:.55rem .8rem;border-radius:12px;font-weight:800;background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.5)}
 #rl{max-width:980px;margin:0 auto;display:grid;gap:1rem}#rl .card{padding:1.1rem}#rl h3{margin:.1rem 0 .6rem}#rl .rl-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
 #rl .rl-chip{padding:.25rem .65rem;border-radius:999px;font-weight:800;font-size:.8rem;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07)}
 #rl .rl-ok{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.55)}#rl .rl-no{background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.55)}
@@ -122,12 +127,23 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
       g.classList.toggle("rl-hid", vis === 0);
     });
   }
+  function roBar(t) {
+    const el = $("tab-" + t); if (!el || el.querySelector(":scope > .rl-robar")) return;
+    const b = document.createElement("div"); b.className = "rl-robar"; b.textContent = "👁️ عرض فقط — حفظ التعديلات للمالك"; el.prepend(b);
+  }
+  function guardWrites() {
+    if (typeof Priv !== "undefined" && Priv.set && !Priv.set._rl) { const o = Priv.set; Priv.set = async function () { if (denyWrite()) return; return o.apply(this, arguments); }; Priv.set._rl = true; }
+    if (typeof GH !== "undefined" && GH.putFile && !GH.putFile._rl) { const o = GH.putFile; GH.putFile = function () { if (isRO()) { denyWrite(); return Promise.reject(new Error("عرض فقط — التعديل للمالك")); } return o.apply(this, arguments); }; GH.putFile._rl = true; }
+  }
   function wrapTab() {
+    guardWrites();
     if (typeof Admin === "undefined" || !Admin.tab || Admin.tab._rl) return;
     const orig = Admin.tab;
     const fn = function (t, btn) {
       if (S.me && !tabAllowed(S.me, t)) { if (typeof toast === "function") toast("⛔ ليست لديك صلاحية لهذا القسم"); return; }
-      return orig.call(this, t, btn);
+      const r = orig.call(this, t, btn);
+      if (isRO() && RO_TABS[t]) roBar(t);
+      return r;
     };
     fn._rl = true; Admin.tab = fn;
     if (!Admin._rlAuto && Admin.autoOpt) { const ao = Admin.autoOpt; Admin._rlAuto = true; Admin.autoOpt = function (k) { if (S.me && !S.me.owner && !can("ship")) return false; return ao.apply(this, arguments); }; }
@@ -316,5 +332,5 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     if (e.target && e.target.id === "rl-role") { const r = ROLES[e.target.value]; if (r) document.querySelectorAll("#rl [data-perm]").forEach(c => { c.checked = r.perms.indexOf(c.dataset.perm) >= 0; }); }
   });
 
-  root.AdminRoles = Object.assign({ boot, apply, land, can, allowed, render, state: S, backend, _MFA: MFA, mfaStatus: () => MFA.status() }, model);
+  root.AdminRoles = Object.assign({ boot, apply, land, can, isReadOnly: isRO, denyWrite, allowed, render, state: S, backend, _MFA: MFA, mfaStatus: () => MFA.status() }, model);
 })(typeof window !== "undefined" ? window : globalThis);

@@ -173,3 +173,8 @@ begin
 end $$;
 revoke all on function public.audit_stats(int) from public;
 grant execute on function public.audit_stats(int) to authenticated;
+
+-- 6) المالية للقراءة: الموظف بصلاحية finance يقرأ مفاتيح المالية فقط من التخزين الخاص (الكتابة للمالك وحده)
+drop policy if exists "staff finance read kv" on public.admin_kv;
+create policy "staff finance read kv" on public.admin_kv for select to authenticated
+  using (key in ('costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes') and public.has_perm('finance'));

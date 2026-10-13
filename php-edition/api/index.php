@@ -141,13 +141,13 @@ function normQ(string $q): string { $q = mb_strtolower($q); $q = preg_replace('/
 /* ══════════ الأدوار والمصادقة الثنائية (TOTP) وسجلّ النشاط (v1.89.155) ══════════
    المالك = كلمة مرور المدير؛ الموظف = حساب في جدول staff بصلاحيات نصية (تُفرض في المسارات أدناه).
    TOTP حسب RFC 6238 (HMAC-SHA1، 6 أرقام، 30 ثانية، نافذة ±1) مع منع إعادة استعمال الرمز، ورموز طوارئ تُخزَّن مجزّأة. */
-const STAFF_PERMS = ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics', 'ship', 'customers', 'products', 'marketing', 'finance', 'site'];
+const STAFF_PERMS = ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics', 'customers', 'finance', 'ship', 'products', 'marketing', 'site'];
 const STAFF_ROLES = ['manager', 'agent', 'support', 'accountant'];
 const STAFF_PRESETS = [
-    'manager' => ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics'],
+    'manager' => ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics', 'customers'],
     'agent' => ['orders', 'orders.write', 'callcenter'],
-    'support' => ['orders', 'orders.write', 'orders.edit', 'callcenter'],
-    'accountant' => ['orders', 'analytics'],
+    'support' => ['orders', 'orders.write', 'orders.edit', 'callcenter', 'customers'],
+    'accountant' => ['orders', 'analytics', 'finance', 'customers'],
 ];
 function b32enc(string $bin): string {
     $a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; $bits = ''; $o = '';
@@ -700,7 +700,9 @@ switch ($route) {
 
     /* تخزين خاص بالمدير (أسعار التكلفة، إعدادات الأرباح، سجل المخزون) — لا يصل إليه الزوار */
     case 'kv':
-        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        /* الموظف بصلاحية «المالية» يقرأ مفاتيح المالية فقط (GET)؛ الكتابة وبقية المفاتيح للمالك */
+        $finKeys = ['costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes'];
+        if (!$isAdmin && !($method === 'GET' && can('finance') && in_array((string)($_GET['k'] ?? ''), $finKeys, true))) needOwner();
         if ($method === 'GET') {
             $k = (string)($_GET['k'] ?? ''); if (!preg_match('/^[a-z0-9_]{1,40}$/', $k)) out(400, ['error' => 'bad_key']);
             $st = db()->prepare('SELECT v FROM admin_kv WHERE k = ?'); $st->execute([$k]); $v = $st->fetchColumn();
@@ -907,7 +909,12 @@ switch ($route) {
         out(200, ['ok' => true, 'status' => $code, 'body' => substr((string)$resp, 0, 200000)]);
 
     case 'file':
-        if (!$isAdmin) out(401, ['error' => 'unauthorized']);
+        /* قراءة ملفين فقط للموظف: المدفوعات (صلاحية المالية) وملاحظات العملاء (صلاحية العملاء)؛ بقية الملفات والكتابة للمالك */
+        if (!$isAdmin) {
+            $fp = (string)($_GET['path'] ?? '');
+            $okRead = $method === 'GET' && (($fp === 'assets/data/payments.json' && can('finance')) || ($fp === 'assets/data/customers.json' && can('customers')));
+            if (!$okRead) needOwner();
+        }
         if ($method === 'GET') {
             $p = (string)($_GET['path'] ?? '');
             if (!allowedPath($p)) out(400, ['error' => 'path_not_allowed']);

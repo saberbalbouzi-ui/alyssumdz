@@ -24,6 +24,8 @@ const AdminPayments = (() => {
         if (r.ok && r.j && r.j.content) { take(decode(r.j.content)); S.sha=r.j.sha; remote=true; }
       } else if (typeof GH !== "undefined" && GH.cfg && GH.cfg() && GH.cfg().token) {
         const f=await GH.getFile(PATH); take(decode(f.content)); S.sha=f.sha; remote=true;
+      } else if (window.AdminRoles && AdminRoles.isReadOnly()) {
+        const r=await fetch(PATH+"?t="+Date.now(), { cache:"no-store" }); if (r.ok) { take(await r.json()); remote=true; }      // حساب موظف بلا ربط نشر: قراءة النسخة المنشورة
       }
     } catch (_) { }
     const l=local();
@@ -32,6 +34,7 @@ const AdminPayments = (() => {
   }
   async function save() {
     if (S.saving) return false;
+    if (window.AdminRoles && AdminRoles.denyWrite()) return false;
     S.saving=true; S.updatedAt=new Date().toISOString(); let persistedRemote=false; const hadBackup=backup(), body=encode(pack());
     try {
       if (typeof PHPAPI !== "undefined" && PHPAPI.on()) {

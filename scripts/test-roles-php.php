@@ -95,6 +95,24 @@ ok('إحصاء المالك: تأكيد واحد للموظف', ($ag['n'] ?? 0) 
 [$c] = $call('login', 'POST', ['user' => 'amel', 'password' => 'agentpass-123'], $stf2); ok('الموقوف لا يدخل', $c === 401);
 [$c] = $call('team', 'POST', ['action' => 'update', 'email' => 'amel', 'active' => true], $own);
 
+
+/* المحاسب: قراءة المالية فقط */
+[$c] = $call('team', 'POST', ['action' => 'create', 'email' => 'acct', 'name' => 'Acc', 'role' => 'accountant', 'password' => 'acctpass-12345'], $own); ok('محاسب: إنشاء', $c === 200);
+$acj = "$root/acj";
+[$c] = $call('login', 'POST', ['user' => 'acct', 'password' => 'acctpass-12345'], $acj); ok('محاسب: دخول', $c === 200);
+[$c] = $call('kv', 'POST', ['k' => 'costs', 'v' => ['p1' => 500]], $own); ok('مالك: يكتب مفتاح مالية', $c === 200);
+[$c, $j] = $call('kv&k=costs', 'GET', null, $acj); ok('محاسب: يقرأ مفتاح المالية', $c === 200 && ($j['v']['p1'] ?? 0) === 500, $j);
+[$c] = $call('kv&k=guard_secret', 'GET', null, $acj); ok('محاسب: لا يقرأ مفاتيح غير مالية', $c === 403);
+[$c] = $call('kv', 'POST', ['k' => 'costs', 'v' => ['p1' => 1]], $acj); ok('محاسب: لا يكتب في المالية', $c === 403);
+[$c, $j] = $call('kv&k=costs', 'GET', null, $own); ok('القيمة لم تتغيّر', ($j['v']['p1'] ?? 0) === 500);
+[$c] = $call('file&path=' . rawurlencode('assets/data/payments.json'), 'GET', null, $acj); ok('محاسب: ملف المدفوعات (404 إن لم يوجد لا 403)', $c === 200 || $c === 404, $c);
+[$c] = $call('file&path=' . rawurlencode('assets/js/data.js'), 'GET', null, $acj); ok('محاسب: لا يقرأ ملفاً آخر', $c === 403);
+[$c] = $call('file&path=' . rawurlencode('assets/data/customers.json'), 'GET', null, $acj); ok('محاسب: ملاحظات العملاء (بصلاحية العملاء)', $c === 200 || $c === 404, $c);
+[$c] = $call('file', 'PUT', ['path' => 'assets/data/payments.json', 'content' => base64_encode('{}')], $acj); ok('محاسب: لا يكتب ملفاً', $c === 403);
+[$c] = $call('orders', 'GET', null, $acj); ok('محاسب: يقرأ الطلبات', $c === 200);
+[$c] = $call('order_update', 'POST', ['id' => $oid, 'status' => 'livree'], $acj); ok('محاسب: لا يغيّر حالة طلب', $c === 403);
+[$c] = $call('kv&k=costs', 'GET', null, $stf); ok('موظف اتصال: لا يقرأ المالية', $c === 401 || $c === 403);
+
 /* المصادقة الثنائية للمالك */
 [$c, $j] = $call('mfa', 'POST', ['action' => 'setup'], $own); $secret = $j['secret'] ?? ''; ok('2FA: إعداد يعطي مفتاحاً وuri', $c === 200 && strlen($secret) === 32 && str_starts_with($j['uri'], 'otpauth://totp/'), $j);
 [$c] = $call('mfa', 'POST', ['action' => 'enable', 'code' => '000000'], $own); ok('2FA: رمز خاطئ يُرفض', $c === 422);
