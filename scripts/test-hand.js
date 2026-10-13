@@ -277,6 +277,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("صفحة جديدة: نافذة بالاسم ونوعين (ويب/مقاس) وقائمة مقاسات مجمّعة", np.dlg && np.groups >= 6 && np.opts >= 20 && np.szHidden && np.szShown, np);
   ok("صفحة جديدة: اختيار مقاس يملأ العرض والارتفاع، وتعديلهما يحوّل القائمة إلى «مخصّص»", np.w === "1080" && np.h === "1920" && np.selCustom === "custom", np);
   ok("صفحة جديدة: تصميم بمقاس مخصّص يفتح لوحة 800×1920 باسمها، وصفحة الويب تفتح صفحة عادية", np.closed && np.ad && np.ad[0] === 800 && np.ad[1] === 1920 && np.title === "ستوري تجريبي" && np.web, np);
+  // ── «تصميم بمقاس»: الصفحة تظهر كاملة داخل مجال الرؤية مهما كان مقاسها (بلا شريط فارغ أعلى ولا فراغ تحتها)، وعجلة الفأرة تكبّر/تصغّر ──
+  const fitR = {};
+  for (const [W, H] of [[1000, 1000], [1080, 1920], [1920, 1080]]) {
+    fitR[W + "x" + H] = await p.evaluate(async ([W, H]) => {
+      const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W, H, id: "custom", label: "t", name: "fit", textMode: "none", lang: "ar" }); await w(1800);
+      const st = document.getElementById("pbx-stage"), sc = document.getElementById("pbx-sc"), a = st.getBoundingClientRect(), b = sc.getBoundingClientRect(), fr = document.getElementById("pbx-frame");
+      const o = { padTop: getComputedStyle(st).paddingTop, inside: b.top >= a.top - 1 && b.bottom <= a.bottom + 1 && b.left >= a.left - 1 && b.right <= a.right + 1, gapTop: Math.round(b.top - a.top), gapBot: Math.round(a.bottom - b.bottom), ratio: Math.round((b.width / b.height) * 100) / 100, want: Math.round((W / H) * 100) / 100, noScroll: st.scrollHeight <= st.clientHeight + 2 };
+      const s0 = PBApp.E.scale; st.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true })); await w(50); const s1 = PBApp.E.scale; st.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true })); st.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true })); await w(50); const s2 = PBApp.E.scale;
+      o.zoomIn = s1 > s0 * 1.05; o.zoomOut = s2 < s1 * 0.9; PBApp.setZoomTest && 0; PBApp.close(); await w(500); return o;
+    }, [W, H]);
+  }
+  await p.setViewportSize({ width: 390, height: 780 });
+  fitR.mobile = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "fit", textMode: "none", lang: "ar" }); await w(1800);
+    const st = document.getElementById("pbx-stage"), sc = document.getElementById("pbx-sc"), a = st.getBoundingClientRect(), b = sc.getBoundingClientRect(); const o = { inside: b.top >= a.top - 1 && b.bottom <= a.bottom + 1 && b.left >= a.left - 1 && b.right <= a.right + 1 };
+    const t = (x, y, id) => new Touch({ identifier: id, target: st, clientX: x, clientY: y }); const s0 = PBApp.E.scale; st.dispatchEvent(new TouchEvent("touchstart", { touches: [t(100, 300, 1), t(200, 300, 2)], bubbles: true, cancelable: true })); st.dispatchEvent(new TouchEvent("touchmove", { touches: [t(60, 300, 1), t(240, 300, 2)], bubbles: true, cancelable: true })); st.dispatchEvent(new TouchEvent("touchend", { touches: [], bubbles: true })); await w(50);
+    o.pinch = PBApp.E.scale > s0 * 1.3; PBApp.close(); await w(500); return o;
+  });
+  await p.setViewportSize({ width: 1280, height: 800 });
+  ok("تصميم بمقاس: الصفحة كاملة داخل مجال الرؤية بكل المقاسات (مربع/طولي/عرضي) والنسبة صحيحة بلا شريط علوي ولا تمرير", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].inside && fitR[k].padTop === "0px" && Math.abs(fitR[k].ratio - fitR[k].want) < .03 && fitR[k].noScroll), fitR);
+  ok("تصميم بمقاس: عجلة الفأرة تكبّر وتصغّر بلا Ctrl، والقرص بإصبعين يكبّر على الهاتف", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].zoomIn && fitR[k].zoomOut) && fitR.mobile.inside && fitR.mobile.pinch, fitR);
   const ar = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; const out = {};
     ImgGen.openSized({ W: 1080, H: 1920, id: "ig_story", label: "ستوري", name: "تصميم مقاس", textMode: "none", lang: "ar" }); await w(1800);
