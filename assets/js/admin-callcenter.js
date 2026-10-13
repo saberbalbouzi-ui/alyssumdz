@@ -1,10 +1,17 @@
 /* مركز الاتصال: بطاقة طلب واحدة بالدور وأزرار كبيرة لقرار الاتصال. كل قرار يمرّ بالمنطق القائم نفسه (Admin.previewResult ← فحص المخزون،
    التأكيد، المحاولات، الإلغاء) بلا منطق موازٍ. الطابور: الطلبات الجديدة الأقدم أولاً، ثم من لم يُجب، ثم «لاحقاً»؛ «رقم خاطئ» مخفي. */
 const CallCenter = (() => {
-  const $ = id => document.getElementById(id), S = { cur: null, skip: {}, st: { conf: 0, canc: 0, noans: 0, later: 0, tomo: 0, addr: 0, wrong: 0, t0: Date.now() }, timer: 0 };
+  const $ = id => document.getElementById(id), S = { cur: null, skip: {}, st: { conf: 0, canc: 0, noans: 0, later: 0, tomo: 0, addr: 0, wrong: 0, t0: Date.now() }, timer: 0, perf: null, perfAt: 0, lockBusy: false, lastRef: 0 };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const A = () => (typeof Admin !== "undefined" ? Admin : null);
   const fmt = n => (Math.round(+n || 0)).toLocaleString("fr-DZ") + " دج";
+  /* قفل ناعم (توزيع الطلبات بين المؤكِّدات): وسم 🔒<هويتي>#<دقيقة> في الملاحظة يُكتب عند عرض الطلب عليّ ويُمسح مع أي قرار؛ ينتهي بعد 10 دقائق.
+     الطلب المقفول لزميلة يخرج من طابوري، فيذهب كل طلب لمؤكِّدة واحدة. حدّه: نافذة سباق قصيرة (تحديث الطلبات قبل القفل) لا قفل ذرّي في الخادم. */
+  const LOCK_MIN = 10, nowMin = () => Math.floor(Date.now() / 60000);
+  const meObj = () => { const R = window.AdminRoles; return (R && R.state && R.state.me) || {}; };
+  const meId = () => String(meObj().email || (meObj().owner ? "owner" : meObj().name) || "me").replace(/[\s#]/g, "").toLowerCase();
+  const lockOf = o => { const m = String((o && o.note) || "").match(/🔒(\S+)#(\d+)/); return m ? { who: m[1], min: +m[2] } : null; };
+  const foreign = o => { const l = lockOf(o); return !!l && l.who !== meId() && nowMin() - l.min < LOCK_MIN; };
   const today = () => (A() && A().isoDay ? A().isoDay() : new Date().toISOString().slice(0, 10));
   /* مؤجَّل إلى تاريخ لم يحلّ بعد ⟵ خارج الطابور؛ إذا حلّ التاريخ صار في المقدمة (قبل الجديد) كي لا يُنسى */
   const parked = o => { const a = A(), d = a && a.callDue ? a.callDue(o) : ""; return !!d && d > today(); };
@@ -14,10 +21,11 @@ const CallCenter = (() => {
     return a.orders.map((o, i) => ({ o, i })).filter(x => x.o.status === "nouvelle" && a.callMark(x.o) !== "wrong" && !(x.o.note && /🗑/.test(x.o.note)) && !a.trackingOf(x.o));
   }
   const parkedCount = () => base().filter(x => parked(x.o)).length;
+  const lockedCount = () => base().filter(x => !parked(x.o) && foreign(x.o)).length;
   function queue() {
     const a = A(); if (!a) return [];
     const rank = o => (dueNow(o) ? -1 : a.callMark(o) === "later" ? 4 : a.attemptsOf(o) ? a.attemptsOf(o) : 0);
-    return base().filter(x => !parked(x.o)).sort((p, q) => rank(p.o) - rank(q.o) || new Date(p.o.date) - new Date(q.o.date));
+    return base().filter(x => !parked(x.o) && !foreign(x.o)).sort((p, q) => rank(p.o) - rank(q.o) || new Date(p.o.date) - new Date(q.o.date));
   }
   function pick(q) {
     const f = q.filter(x => !S.skip[x.o.id]); const keep = S.cur && f.find(x => x.o.id === S.cur); if (keep) return keep;
@@ -38,23 +46,64 @@ const CallCenter = (() => {
 html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white .ccm-it{background:#f3f5f9}html.white .ccm-quick a,html.white .ccm-act button{color:#0f172a}html.white .ccm-chip{background:#f3f5f9;border-color:#d2d9e3}`;
     document.head.appendChild(st);
   };
-  function render() {
+  /* مؤشرات الموظفة: هدف التأكيد اليومي وزمن أول استجابة (من الخادم؛ للمالك: حسابه إن عُرف وإلا مجموع الفريق) */
+  async function loadPerf(force) {
+    const R = window.AdminRoles; if (!R || !R.perf || (!force && Date.now() - S.perfAt < 45000)) return; S.perfAt = Date.now();
+    const j = await R.perf(7); if (j) { S.perf = j; if ($("ccm") && !$("tab-callcenter").classList.contains("hidden")) { const k = $("ccm-kpi"); if (k) k.outerHTML = kpiHtml(); } }
+  }
+  function kpiHtml() {
+    const P = S.perf, R = window.AdminRoles; if (!P) return '<div id="ccm-kpi"></div>';
+    const me = meObj(), mine = l => (me.owner && me.email ? (l || []).filter(x => x.actor === String(me.email).toLowerCase()) : (l || []));
+    const conf = mine(P.today).reduce((t, x) => t + (+x.conf || 0), 0), g = P.goal || {}, rs = mine(P.rows), med = rs.length ? rs.reduce((t, x) => t + (+x.med_min || 0), 0) / rs.length : null, fast = rs.length ? Math.round(rs.reduce((t, x) => t + (+x.fast_pct || 0), 0) / rs.length) : null;
+    const pct = g.daily ? Math.min(100, Math.round(conf / g.daily * 100)) : 0;
+    return '<div id="ccm-kpi" class="ccm-bar">' + (g.daily ? '<span class="ccm-chip" style="flex:1;min-width:210px">🎯 هدف اليوم: <b>' + conf + ' / ' + g.daily + '</b> تأكيد' + (conf >= g.daily ? ' ✅' : '') + '<span style="display:block;height:6px;border-radius:6px;background:rgba(255,255,255,.14);margin-top:.3rem"><i style="display:block;height:6px;border-radius:6px;width:' + pct + '%;background:' + (pct >= 100 ? '#22c55e' : '#fbbf24') + '"></i></span></span>' : '<span class="ccm-chip">✅ تأكيدات اليوم: <b>' + conf + '</b></span>') +
+      '<span class="ccm-chip" style="color:' + (R ? R.respTone(med) : "") + '">⏱ أول استجابة: <b>' + (R ? R.fmtMin(med) : "—") + '</b>' + (fast == null ? "" : ' · ≤15 د: ' + fast + '%') + '</span>' + (g.rate ? '<span class="ccm-chip">هدف النسبة ≥ ' + g.rate + '%</span>' : "") + '</div>';
+  }
+  /* سبب الإلغاء: أزرار سريعة؛ يُكتب الوسم ويُنتظر حفظه قبل تغيير الحالة كي يلتقطه سجلّ التدقيق */
+  function reasonDialog(o, done) {
+    const old = $("ccr-bg"); if (old) old.remove(); const L = (window.AdminRoles && AdminRoles.CANCEL_REASONS) || { other: "سبب آخر" };
+    const bg = document.createElement("div"); bg.id = "ccr-bg"; bg.className = "modal-bg open"; bg.dir = "rtl";
+    bg.innerHTML = `<div class="modal" style="max-width:440px"><h3>❌ لماذا أُلغي الطلب؟</h3><p class="hint">يُسجَّل السبب لتعرف أكثر أسباب الإلغاء.</p><div class="ccm-act" style="grid-template-columns:repeat(2,1fr)">${Object.entries(L).map(([k, v]) => `<button type="button" data-r="${esc(k)}">${esc(v)}</button>`).join("")}<button type="button" data-r="" style="grid-column:1/-1;opacity:.75">بدون سبب</button></div><div style="margin-top:.6rem"><button type="button" class="small warn" id="ccr-no">تراجع</button></div></div>`;
+    document.body.appendChild(bg); const close = () => bg.remove(); bg.querySelector("#ccr-no").onclick = close; bg.addEventListener("click", e => { if (e.target === bg) close(); });
+    bg.querySelectorAll("[data-r]").forEach(b => b.onclick = async () => {
+      const k = b.dataset.r, a = A(); close();
+      if (k) { const clean = String(o.note || "").replace(/❌سبب:\S+\s*/g, "").trim(); o.note = (clean ? clean + " " : "") + "❌سبب:" + k; try { await API.updateOrder(a.key, o.id, undefined, o.note); } catch (e) { } }
+      done();
+    });
+  }
+  /* يأخذ القفل على الطلب المعروض: يحدّث الطلبات أولاً، فإن سبقتني زميلة إليه انتقلتُ لغيره */
+  async function ensureLock() {
+    const a = A(), id = S.cur; if (!a || !id || S.lockBusy) return; let i = idxOf(id); if (i < 0) return;
+    const l = lockOf(a.orders[i]); if (l && l.who === meId() && nowMin() - l.min < LOCK_MIN / 2) return;
+    S.lockBusy = true; let redo = false;
+    try {
+      if (a.refreshAlerts && Date.now() - S.lastRef > 4000) { S.lastRef = Date.now(); await a.refreshAlerts(); }
+      i = idxOf(id); const o2 = a.orders[i];
+      if (!o2 || o2.status !== "nouvelle" || foreign(o2)) { if (S.cur === id) { S.skip[id] = 1; S.cur = null; } redo = true; }
+      else a.setNoteTag(o2, /🔒\S+\s*/g, "🔒" + meId() + "#" + nowMin());
+    } catch (e) { } finally { S.lockBusy = false; }
+    if (redo) render();
+  }
+  const unlock = o => { const a = A(); if (a && o && lockOf(o)) a.setNoteTag(o, /🔒\S+\s*/g, ""); };
+  function render() { render0(); if (S.cur) ensureLock(); loadPerf(); }
+  function render0() {
     const host = $("callcenter-content"); if (!host) return; css(); const a = A(); if (!a) return;
     const q = queue(), cur = pick(q), st = S.st, done = st.conf + st.canc, mins = Math.max(1, Math.round((Date.now() - st.t0) / 60000));
-    const bar = `<div class="ccm-bar"><span class="ccm-chip">المتبقي: <b>${q.length}</b></span><span class="ccm-chip">✅ ${st.conf}${st.addr ? " (🏠" + st.addr + ")" : ""} · ❌ ${st.canc} · 📞 ${st.noans} · ⏰ ${st.later} · 📅 ${st.tomo}</span>${parkedCount() ? `<span class="ccm-chip">📅 مؤجَّل لاحقاً: <b>${parkedCount()}</b></span>` : ""}
+    const bar = `<div class="ccm-bar"><span class="ccm-chip">المتبقي: <b>${q.length}</b></span><span class="ccm-chip">✅ ${st.conf}${st.addr ? " (🏠" + st.addr + ")" : ""} · ❌ ${st.canc} · 📞 ${st.noans} · ⏰ ${st.later} · 📅 ${st.tomo}</span>${parkedCount() ? `<span class="ccm-chip">📅 مؤجَّل لاحقاً: <b>${parkedCount()}</b></span>` : ""}${lockedCount() ? `<span class="ccm-chip">🔒 عند زميلاتك: <b>${lockedCount()}</b></span>` : ""}
 <span class="ccm-chip">نسبة التأكيد: <b>${done ? Math.round(st.conf / done * 100) : 0}%</b> · ${(done / mins * 60).toFixed(0)} قرار/ساعة</span></div>`;
-    if (!cur) { host.innerHTML = `<div id="ccm">${bar}<div class="ccm-card"><h2>🎉 لا طلبات بانتظار الاتصال</h2><p class="ccm-m">سيظهر الطلب الجديد هنا تلقائياً.</p></div></div>`; return; }
+    const kp = kpiHtml();
+    if (!cur) { host.innerHTML = `<div id="ccm">${bar}${kp}<div class="ccm-card"><h2>🎉 لا طلبات بانتظار الاتصال</h2><p class="ccm-m">سيظهر الطلب الجديد هنا تلقائياً.</p></div></div>`; return; }
     const o = cur.o, i = cur.i, at = a.attemptsOf(o), cm = a.callMark(o), ph = String(o.phone || "").replace(/\D/g, ""), intl = ph.startsWith("0") ? "213" + ph.slice(1) : ph;
     let short = null; try { short = window.StockCheck && StockCheck.shortOf ? StockCheck.shortOf(o) : null; } catch (e) { }
     const age = Math.max(0, Math.round((Date.now() - new Date(o.date)) / 60000));
-    host.innerHTML = `<div id="ccm" data-i="${i}" data-id="${esc(o.id)}">${bar}
-<div class="ccm-card"><div class="ccm-bar"><h2>${esc(o.name || "بدون اسم")}</h2><span class="ccm-chip">${at ? "📞 غير متاح — محاولة " + at + "/3" : dueNow(o) ? "📅 موعد اليوم" : cm === "later" ? "⏰ لاحقاً" : "🆕 جديد"} · منذ ${age < 90 ? age + " د" : Math.round(age / 60) + " س"}</span></div>
+    host.innerHTML = `<div id="ccm" data-i="${i}" data-id="${esc(o.id)}">${bar}${kp}
+<div class="ccm-card"><div class="ccm-bar"><h2>${esc(o.name || "بدون اسم")}</h2><span class="ccm-chip">${at ? "📞 غير متاح — محاولة " + at + "/3" : dueNow(o) ? "📅 موعد اليوم" : cm === "later" ? "⏰ لاحقاً" : "🆕 جديد"} · <span style="color:${age <= 15 ? "#86efac" : age <= 60 ? "#fcd34d" : "#fca5a5"}">منذ ${age < 90 ? age + " د" : Math.round(age / 60) + " س"}</span></span></div>
 <div class="ccm-ph" dir="ltr">${esc(o.phone)}</div>
 <div class="ccm-quick"><a class="t" href="tel:${esc(ph.startsWith("0") ? "+213" + ph.slice(1) : "+" + ph)}">📞 اتصل</a><a href="https://wa.me/${intl}" target="_blank" rel="noopener">💬 واتساب</a></div>
 <div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>
 <div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
 ${short ? '<div class="ccm-warn">⚠️ المخزون لا يكفي لهذا الطلب — سيُطلب منك تأكيد قبل أي اتصال أو تأكيد.</div>' : ""}
-${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?/g, "").trim())}</div>` : ""}
+${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|🔒\S+|❌سبب:\S+/g, "").trim())}</div>` : ""}
 <div class="ccm-act"><button class="ok" data-d="confirm">✅ تأكيد الطلب <span class="ccm-k">C</span></button>
 <button class="ok2" data-d="addr">🏠 تأكيد مع تعديل العنوان <span class="ccm-k">A</span></button>
 <button data-d="noans">📞 غير متاح — محاولة ${Math.min(3, at + 1)} <span class="ccm-k">N</span></button><button class="wa" data-d="later">⏰ لاحقاً اليوم <span class="ccm-k">L</span></button>
@@ -96,9 +145,9 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
   const idxOf = id => (A().orders || []).findIndex(x => x.id === id);
   async function decide(d) {
     const a = A(), id = S.cur; if (!a || !id) return; let i = idxOf(id); if (i < 0) return render(); const o = a.orders[i], st = S.st;
-    if (d === "skip") { S.skip[id] = 1; S.cur = null; return render(); }
+    if (d === "skip") { unlock(o); S.skip[id] = 1; S.cur = null; return render(); }
     if (d === "confirm") { await a.previewResult(i, "confirm"); }
-    else if (d === "cancel") { await a.previewResult(i, "cancel"); }
+    else if (d === "cancel") { return reasonDialog(o, async () => { const j = idxOf(id); if (j < 0) return render(); await a.previewResult(j, "cancel"); afterDecision(id); }); }
     else if (d === "noans") { const n = Math.min(3, a.attemptsOf(o) + 1); a.previewResult(i, "a" + n); st.noans++; S.skip[id] = 1; S.cur = null; return render(); }
     else if (d === "tomorrow") { a.previewResult(i, "tomorrow"); st.tomo++; S.cur = null; return render(); }
     else if (d === "addr") { return addrDialog(i); }
@@ -107,7 +156,7 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
     afterDecision(id);
   }
   function afterDecision(id, addr) {
-    const a = A(), st = S.st; setTimeout(() => { const j = idxOf(id), o2 = a.orders[j]; if (o2 && o2.status === "confirmee") { st.conf++; if (addr) st.addr++; } else if (o2 && o2.status === "annulee") st.canc++; if (!o2 || o2.status !== "nouvelle") S.cur = null; render(); }, 450);
+    const a = A(), st = S.st; setTimeout(() => { const j = idxOf(id), o2 = a.orders[j]; if (o2 && o2.status === "confirmee") { st.conf++; if (addr) st.addr++; } else if (o2 && o2.status === "annulee") st.canc++; if (!o2 || o2.status !== "nouvelle") S.cur = null; render(); loadPerf(true); }, 450);
   }
   function key(e) {
     if (!$("ccm") || $("tab-callcenter").classList.contains("hidden") || /INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -117,10 +166,10 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
     document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("#ccm [data-d]"); if (b) decide(b.dataset.d); });
     document.addEventListener("keydown", key);
     const w = () => { if (typeof Admin === "undefined" || !Admin.tab || Admin._ccmWrapped) return; const orig = Admin.tab;
-      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn), el = $("tab-callcenter"); if (el) el.classList.toggle("hidden", t !== "callcenter"); if (t === "callcenter") { render(); clearInterval(S.timer); S.timer = setInterval(() => { if (!$("tab-callcenter").classList.contains("hidden") && !document.hidden) render(); }, 8000); } else clearInterval(S.timer); return r; };
+      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn), el = $("tab-callcenter"); if (el) el.classList.toggle("hidden", t !== "callcenter"); if (t === "callcenter") { render(); clearInterval(S.timer); S.timer = setInterval(() => { if ($("tab-callcenter").classList.contains("hidden") || document.hidden) return; if (Admin.refreshAlerts && Date.now() - S.lastRef > 20000) { S.lastRef = Date.now(); Admin.refreshAlerts().then(render, render); } else render(); }, 8000); } else clearInterval(S.timer); return r; };
       Admin._ccmWrapped = true; };
     w(); setTimeout(w, 500);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { render, queue, decide, _s: S };
+  return { render, queue, decide, ensureLock, lockOf, kpiHtml, loadPerf, _s: S };
 })();

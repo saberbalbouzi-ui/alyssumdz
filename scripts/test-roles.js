@@ -41,6 +41,7 @@ const rows2 = [
 ];
 const s2 = R.summarize(rows2)[0];
 ok("إحصاء الاتصال المفصَّل: غير متاح 1/2، لاحقاً، مؤجَّل لغد، رقم خاطئ، تعديل عنوان (والفارغ لا يُعدّ)", s2.try1 === 4 && s2.try2 === 2 && s2.try3 === 0 && s2.later === 3 && s2.tomorrow === 2 && s2.wrong === 1 && s2.addr === 2 && s2.calls === 21 && s2.rate === 50, s2);
+ok("زمن الاستجابة: تنسيق وتلوين وأسباب الإلغاء", R.fmtMin(9) === "9 د" && R.fmtMin(120) === "2.0 س" && R.fmtMin(null) === "—" && R.respTone(10) === "#86efac" && R.respTone(40) === "#fcd34d" && R.respTone(200) === "#fca5a5" && Object.keys(R.CANCEL_REASONS).length === 7 && R.CANCEL_REASONS.expensive);
 ok("إحصاء فارغ", R.summarize([]).length === 0 && R.summarize(null).length === 0);
 
 /* اتساق القوائم عبر المنصات */

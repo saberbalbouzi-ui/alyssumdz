@@ -89,6 +89,16 @@ $cl = array_values(array_filter($j['rows'], fn($r) => $r['actor'] === 'amel' && 
 ok('إحصاء المالك: نتيجة الاتصال تحمل وسومها (to_status) لتفصيل غير متاح/لاحقاً/غداً', count($cl) >= 1 && ($cl[0]['to_status'] ?? '') !== '' && str_contains($cl[0]['to_status'], '📞'), $cl);
 ok('إحصاء المالك: تأكيد واحد للموظف', ($ag['n'] ?? 0) === 1 && ($ag['to_status'] ?? '') === 'confirmee', $j);
 
+/* أداء الاتصال: زمن أول استجابة + حصيلة اليوم + أسباب الإلغاء + الهدف */
+[$c] = $call('kv', 'POST', ['k' => 'callgoal', 'v' => ['daily' => 12, 'rate' => 70]], $own);
+[$c, $j] = $call('order_update', 'POST', ['id' => $oid, 'note' => '📞1 ❌سبب:expensive'], $stf);
+[$c] = $call('order_update', 'POST', ['id' => $oid, 'status' => 'annulee'], $stf); ok('موظف: يلغي بسبب مسجَّل', $c === 200);
+[$c, $j] = $call('team', 'POST', ['action' => 'perf', 'days' => 7], $stf);
+ok('أداء الموظف: نفسه فقط + الهدف + حصيلة اليوم + أول استجابة', $c === 200 && ($j['goal']['daily'] ?? 0) === 12 && count($j['rows']) === 1 && $j['rows'][0]['actor'] === 'amel' && $j['rows'][0]['orders'] >= 1 && isset($j['rows'][0]['med_min']) && !array_filter($j['today'], fn($r) => $r['actor'] !== 'amel') && array_sum(array_column($j['today'], 'conf')) >= 1, $j);
+ok('أداء: سبب الإلغاء يظهر في التجميع', count(array_filter($j['reasons'], fn($r) => $r['reason'] === 'expensive' && $r['n'] >= 1)) === 1, $j['reasons'] ?? null);
+[$c, $j] = $call('team', 'POST', ['action' => 'perf', 'days' => 7], $own); ok('أداء المالك: يرى الجميع', $c === 200 && count($j['rows']) >= 1, $j);
+[$c] = $call('order_update', 'POST', ['id' => $oid, 'status' => 'confirmee'], $stf);
+
 /* منح صلاحية التعديل ثم الإيقاف */
 [$c] = $call('team', 'POST', ['action' => 'update', 'email' => 'amel', 'role' => 'support'], $own); ok('تعديل الدور', $c === 200);
 [$c] = $call('order_update', 'POST', ['id' => $oid, 'name' => 'Zayd Edited'], $stf); ok('بعد منح التعديل: الاسم 200 فوراً (الصلاحيات تُقرأ كل طلب)', $c === 200);
