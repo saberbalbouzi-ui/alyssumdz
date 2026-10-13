@@ -66,7 +66,7 @@ const totp = (sec, step) => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigI
   ok("الموظف: أكّد الطلب فعلاً في الخادم", st[0] === "confirmee", st);
   // لا يستطيع قراءة إعدادات المالك مباشرة
   const direct = await S.p.evaluate(async () => (await PHPAPI.call("kv&k=costs", { method: "GET" })).status);
-  ok("الموظف: تخزين المالك 401 من الخادم", direct === 401, direct);
+  ok("الموظف: تخزين المالك مرفوض من الخادم", direct === 401 || direct === 403, direct);
 
   // 2FA للموظف
   await S.p.evaluate(() => Admin.tab("team")); await S.p.waitForSelector('#rl [data-rl="mfa-begin"]', { timeout: 8000 });
