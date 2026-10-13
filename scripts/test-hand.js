@@ -1324,6 +1324,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     try { if (navigator.storage && SV) navigator.storage.persist = SV; } catch (e) { } return R;
   });
   ok("ذاكرة النماذج: تُقرأ معلومات الحفظ (ملفات/حجم/دائم) ويُطلب الحفظ الدائم حتى لا تُمسح عند امتلاء القرص", mcT.has && mcT.shape && mcT.asked === 1, mcT);
+  // ── إغلاق المطوّر يغلق كل النوافذ العائمة (مكتبة الصور، تحميل الصور، لوحة تعديل الصورة…) ──
+  const cfT = await p.evaluate(() => {
+    const ids = ["pbx-pimg", "pbx-lib", "pbx-ep", "pbx-epf", "pbar-bg", "pbnp-bg", "pbx-ctx", "pbx-pop"]; ids.forEach(i => { if (!document.getElementById(i)) { const d = document.createElement("div"); d.id = i; document.body.appendChild(d); } });
+    const before = ids.filter(i => document.getElementById(i)).length; PBApp.closeFloating(); const left = ids.filter(i => document.getElementById(i));
+    return { before, left, wired: /closeFloating/.test(PBApp.close.toString()) };
+  });
+  ok("إغلاق المطوّر: كل النوافذ العائمة (مكتبة الصور وتحميلها ولوحة الأداة والقوائم) تُغلق معه", cfT.before === 8 && cfT.left.length === 0 && cfT.wired, cfT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
