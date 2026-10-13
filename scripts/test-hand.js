@@ -1003,7 +1003,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     document.querySelector('#ccm [data-d="noans"]').click(); await wait(150); r.afterNoans = first(); r.att = Admin.attemptsOf(Admin.orders[1]);
     document.querySelector('#ccm [data-d="confirm"]').click(); await wait(700); r.afterConfirm = first(); r.status = Admin.orders.find(o => o.id === "C0001").status; r.ups = JSON.stringify(ups);
     r.stats = (document.querySelectorAll("#ccm .ccm-chip")[1] || {}).textContent;
-    document.querySelector('#ccm [data-d="cancel"]') && document.querySelector('#ccm [data-d="cancel"]').click(); await wait(700); r.empty = /لا طلبات/.test(document.getElementById("callcenter-content").textContent) || first();
+    document.querySelector('#ccm [data-d="cancel"]') && document.querySelector('#ccm [data-d="cancel"]').click(); await wait(150); { const nb = document.querySelector('#ccr-bg [data-r=""]'); if (nb) nb.click(); } await wait(700); r.empty = /لا طلبات/.test(document.getElementById("callcenter-content").textContent) || first();
     API.updateOrder = uo0; Admin.afterManualStatus = sa; Admin.tab("orders"); await wait(100); r.hidden = document.getElementById("tab-callcenter").classList.contains("hidden");
     return r;
   });
@@ -1046,6 +1046,29 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("مركز الاتصال: «مؤجَّل إلى الغد» يكتب ⏰لاحقاً + 📅 التاريخ ويُخرج الطلب من الطابور", /⏰لاحقاً/.test(cc2.tomoNote) && /📅\d{4}-\d{2}-\d{2}/.test(cc2.tomoNote) && cc2.tomoDue && cc2.afterTomo !== "موعد اليوم" && cc2.remainAfter === "2", cc2);
   ok("تأكيد مع تعديل العنوان (مالك): يُطبَّق الولاية ويُؤكَّد ويوسَم 🏠✔ في كتابة ملاحظة واحدة", cc2.dlg && cc2.own.st === "confirmee" && cc2.own.w === "Oran" && cc2.own.tag && cc2.own.tag.applied && cc2.own.fields === "Oran" && /🏠✔ «[^»]*وهران|🏠✔ «Oran/.test(cc2.own.note || "") && /حي 5 جويلية/.test(cc2.own.note), cc2.own);
   ok("تأكيد مع تعديل العنوان (مؤكِّدة بلا صلاحية): يدوّن 🏠⏳ ولا يعدّل حقول الطلب، والإرسال اليدوي يطلب مراجعة العنوان", cc2.agent.st === "confirmee" && cc2.agent.w === "Alger" && cc2.agent.tag && !cc2.agent.tag.applied && cc2.agent.fields === 0 && cc2.guard.asked && cc2.guard.sentCalls === 0, cc2);
+  // ── مركز الاتصال: قفل ناعم بين المؤكِّدات، سبب الإلغاء، هدف اليوم وزمن أول استجابة ──
+  const cc3 = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {}; Admin.enqueueNotify = () => { };
+    const notes = {}, statuses = []; const uo0 = API.updateOrder; API.updateOrder = async (k, id, st, note) => { if (note !== undefined) notes[id] = note; if (st) statuses.push([id, st]); return true; };
+    const sa = Admin.afterManualStatus; Admin.afterManualStatus = async () => { }; const pf0 = AdminRoles.perf;
+    AdminRoles.state.me = { owner: true, email: "", perms: ["*"] };
+    AdminRoles.perf = async () => ({ goal: { daily: 10, rate: 70 }, rows: [{ actor: "a@x", orders: 5, avg_min: 12, med_min: 9, fast_pct: 80 }], today: [{ actor: "a@x", conf: 4, canc: 1 }], reasons: [] });
+    const nm = Math.floor(Date.now() / 60000), mk = (id, name, mins, note) => ({ id, date: new Date(Date.now() - mins * 60000).toISOString(), status: "nouvelle", name, phone: "055000" + id.slice(-4).padStart(4, "0"), wilaya: "Alger", commune: "Kouba", dtype: "home", items: "منتج ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: note || "" });
+    Admin.orders = [mk("L0001", "مقفول لزميلة", 500, "🔒zoulikha@x#" + nm), mk("L0002", "حرّ", 300), mk("L0003", "قفل منتهٍ", 200, "🔒zoulikha@x#" + (nm - 30))];
+    CallCenter._s.perfAt = 0; CallCenter._s.perf = null; Admin.tab("callcenter"); await wait(500);
+    const first = () => (document.querySelector("#ccm .ccm-card h2") || {}).textContent, txt = () => document.getElementById("callcenter-content").textContent;
+    const r = { first: first(), lockedChip: /عند زميلاتك:\s*1/.test(txt()), kpi: /4\s*\/\s*10/.test(txt()) && /أول استجابة/.test(txt()), myLock: /🔒owner#\d+/.test(Admin.orders.find(o => o.id === "L0002").note) };
+    document.querySelector('#ccm [data-d="skip"]').click(); await wait(300);
+    r.unlocked = !/🔒owner/.test(Admin.orders.find(o => o.id === "L0002").note); r.next = first(); r.nextLock = /🔒owner#\d+/.test(Admin.orders.find(o => o.id === "L0003").note);
+    document.querySelector('#ccm [data-d="cancel"]').click(); await wait(100); r.dlg = !!document.getElementById("ccr-bg") && document.querySelectorAll("#ccr-bg [data-r]").length >= 7;
+    document.querySelector('#ccr-bg [data-r="expensive"]').click(); await wait(900);
+    const c3 = Admin.orders.find(o => o.id === "L0003"); r.reason = { tag: Admin.cancelReasonOf(c3), st: c3.status, saved: /❌سبب:expensive/.test(notes.L0003 || ""), statusCalls: JSON.stringify(statuses) };
+    r.foreignGone = Admin.orders.find(o => o.id === "L0001").status === "nouvelle";
+    API.updateOrder = uo0; Admin.afterManualStatus = sa; AdminRoles.perf = pf0; Admin.tab("orders"); await wait(50);
+    return r;
+  });
+  ok("مركز الاتصال: الطلب المقفول لزميلة خارج طابوري (وشريحة «عند زميلاتك»)، ومؤشر الهدف اليومي وأول استجابة ظاهران، والطلب المعروض يُقفل باسمي", cc3.first === "حرّ" && cc3.lockedChip && cc3.kpi && cc3.myLock, cc3);
+  ok("مركز الاتصال: التخطّي يفكّ القفل، والقفل المنتهي (>10 د) لا يمنع، والإلغاء يسأل عن السبب (7 أسباب) ويكتبه قبل تغيير الحالة", cc3.unlocked && cc3.next === "قفل منتهٍ" && cc3.nextLock && cc3.dlg && cc3.reason.tag === "expensive" && cc3.reason.st === "annulee" && cc3.reason.saved && cc3.foreignGone, cc3);
   // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
   const plk = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));

@@ -392,6 +392,32 @@ switch ($route) {
             foreach ($st->fetchAll() as $r) { $to = (string)((json_decode($r['detail'], true) ?: [])['to'] ?? ''); $keepTo = in_array($r['action'], ['order.status', 'order.call'], true); $k = $r['actor'] . '|' . $r['action'] . '|' . ($keepTo ? $to : ''); if (!isset($agg[$k])) $agg[$k] = ['actor' => $r['actor'], 'role' => $r['role'], 'action' => $r['action'], 'to_status' => $keepTo ? $to : '', 'n' => 0, 'last_at' => iso((int)$r['at'])]; $agg[$k]['n']++; }
             out(200, ['ok' => true, 'rows' => array_values($agg)]);
         }
+        if ($ta === 'perf') {
+            /* أداء الاتصال: زمن أول استجابة لكل طلب (ينسب لصاحب أول نتيجة اتصال/حالة)، حصيلة اليوم، أسباب الإلغاء، والهدف اليومي */
+            $days = max(1, min(90, (int)($tb['days'] ?? 7))); $since = time() - $days * 86400; $me = actorName();
+            $g = db()->prepare("SELECT v FROM admin_kv WHERE k = 'callgoal'"); $g->execute(); $gv = $g->fetchColumn(); $goal = $gv === false ? new stdClass : (json_decode((string)$gv, true) ?: new stdClass);
+            $first = []; $st = db()->prepare("SELECT actor, ref, at FROM audit_log WHERE action IN ('order.call','order.status') AND at > ? AND role <> '' ORDER BY at ASC LIMIT 50000"); $st->execute([$since]);
+            foreach ($st->fetchAll() as $r) if (!isset($first[$r['ref']])) $first[$r['ref']] = [$r['actor'], (int)$r['at']];
+            $per = [];
+            if ($first) {
+                $co = db()->prepare('SELECT created_at FROM orders WHERE id = ?');
+                foreach ($first as $ref => [$act, $at]) {
+                    if (!$isAdmin && $act !== $me) continue;
+                    $co->execute([$ref]); $ca = $co->fetchColumn(); if ($ca === false) continue; $m = ($at - (int)$ca) / 60; if ($m < 0 || $m >= 10080) continue;
+                    $per[$act][] = $m;
+                }
+            }
+            $rows = [];
+            foreach ($per as $act => $ms) { sort($ms); $n = count($ms); $med = $n % 2 ? $ms[intdiv($n, 2)] : ($ms[$n / 2 - 1] + $ms[$n / 2]) / 2; $rows[] = ['actor' => $act, 'orders' => $n, 'avg_min' => round(array_sum($ms) / $n, 1), 'med_min' => round($med, 1), 'fast_pct' => (int)round(100 * count(array_filter($ms, fn($x) => $x <= 15)) / $n)]; }
+            $t0 = (new DateTime('today', new DateTimeZone('Africa/Algiers')))->getTimestamp(); $today = []; $reasons = [];
+            $st = db()->prepare("SELECT actor, detail, at FROM audit_log WHERE action = 'order.status' AND at > ?" . ($isAdmin ? '' : ' AND actor = ?')); $st->execute($isAdmin ? [min($since, $t0)] : [min($since, $t0), $me]);
+            foreach ($st->fetchAll() as $r) {
+                $d = json_decode($r['detail'], true) ?: []; $to = (string)($d['to'] ?? '');
+                if ((int)$r['at'] >= $t0) { if (!isset($today[$r['actor']])) $today[$r['actor']] = ['actor' => $r['actor'], 'conf' => 0, 'canc' => 0]; if ($to === 'confirmee') $today[$r['actor']]['conf']++; elseif ($to === 'annulee') $today[$r['actor']]['canc']++; }
+                if ((int)$r['at'] > $since && $to === 'annulee' && !empty($d['reason'])) { $k = $r['actor'] . '|' . $d['reason']; if (!isset($reasons[$k])) $reasons[$k] = ['actor' => $r['actor'], 'reason' => (string)$d['reason'], 'n' => 0]; $reasons[$k]['n']++; }
+            }
+            out(200, ['ok' => true, 'goal' => $goal, 'rows' => $rows, 'today' => array_values($today), 'reasons' => array_values($reasons)]);
+        }
         needOwner();
         $tu = strtolower(cut($tb['email'] ?? ($tb['user'] ?? ''), 64));
         if ($ta === 'list') {
@@ -743,7 +769,7 @@ switch ($route) {
         $args[] = $id;
         db()->prepare('UPDATE orders SET ' . implode(', ', $set) . ' WHERE id = ?')->execute($args);
         if ($oldRow) {
-            if (isset($b['status']) && $b['status'] !== $oldRow['status']) audit('order.status', $id, ['from' => $oldRow['status'], 'to' => $b['status']]);
+            if (isset($b['status']) && $b['status'] !== $oldRow['status']) audit('order.status', $id, ['from' => $oldRow['status'], 'to' => $b['status']] + ($b['status'] === 'annulee' && preg_match('/❌سبب:(\S+)/u', (string)$oldRow['note'] . ' ' . (string)($b['note'] ?? ''), $rm) ? ['reason' => $rm[1]] : []));
             if (isset($b['note']) && callMarks(cut($b['note'], 500)) !== callMarks((string)$oldRow['note'])) audit('order.call', $id, ['from' => callMarks((string)$oldRow['note']), 'to' => callMarks(cut($b['note'], 500))]);
             if ($editKeys) audit('order.edit', $id);
         }

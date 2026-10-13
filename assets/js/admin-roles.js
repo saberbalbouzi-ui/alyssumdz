@@ -69,17 +69,22 @@
     return Object.values(by).map(a => Object.assign(a, { rate: a.confirmed + a.cancelled ? Math.round(a.confirmed / (a.confirmed + a.cancelled) * 100) : null }))
       .sort((x, y) => y.confirmed - x.confirmed || y.calls - x.calls);
   }
+  /* أسباب الإلغاء (وسم ❌سبب:<مفتاح> في ملاحظة الطلب ← حقل reason في سجلّ التدقيق) */
+  const CANCEL_REASONS = { expensive: "السعر غالٍ", changed: "غيّر رأيه", duplicate: "طلب مكرّر", notordered: "لم يطلب", later: "سيشتري لاحقاً", far: "التوصيل بعيد/بطيء", other: "سبب آخر" };
+  /* تلوين زمن أول استجابة: ≤15 د أخضر، ≤60 د أصفر، أكثر أحمر */
+  const respTone = m => (m == null ? "" : m <= 15 ? "#86efac" : m <= 60 ? "#fcd34d" : "#fca5a5");
+  const fmtMin = m => (m == null ? "—" : m < 90 ? Math.round(m) + " د" : (m / 60).toFixed(1) + " س");
   const ACTION_LBL = { "order.status": "تغيير حالة طلب", "order.call": "نتيجة اتصال", "order.edit": "تعديل طلب", "order.create": "إنشاء طلب", "order.delete": "حذف طلب", login: "دخول", logout: "خروج", "mfa.enroll": "تفعيل المصادقة الثنائية", "mfa.disable": "إيقاف المصادقة الثنائية", "mfa.verify_fail": "رمز مصادقة خاطئ", "staff.create": "إضافة موظف", "staff.update": "تعديل موظف", "staff.disable": "إيقاف موظف", "staff.password": "كلمة مرور موظف", "staff.reset_mfa": "إعادة ضبط مصادقة موظف", "staff.delete": "حذف موظف" };
   const STATUS_LBL = { nouvelle: "جديد", confirmee: "مؤكد", annulee: "ملغى", expediee: "مرسل", livree: "مسلَّم", echec: "فشل" };
 
-  const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL };
+  const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL, CANCEL_REASONS, respTone, fmtMin };
   if (typeof module !== "undefined" && module.exports) { module.exports = model; }
   if (typeof document === "undefined") return;
 
   /* ═══════════════ الواجهة ═══════════════ */
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const S = { me: null, days: 7, team: null, stats: null, audit: null, enroll: null, mfa: null, busy: false };
+  const S = { me: null, days: 7, team: null, stats: null, perf: null, audit: null, enroll: null, mfa: null, busy: false };
   const backend = () => (typeof PHPAPI !== "undefined" && PHPAPI.on()) ? "php" : (typeof API !== "undefined" && API.sb && API.sb.enabled() && API.sb.session()) ? "sb" : null;
   const ERR = { unauthorized: "غير مصرّح", invalid_email: "بريد غير صالح", invalid_role: "دور غير صالح", weak_password: "كلمة المرور ضعيفة (10 أحرف على الأقل)", is_owner: "هذا الحساب هو المالك", not_found: "غير موجود", create_failed: "تعذّر إنشاء الحساب" };
 
@@ -244,6 +249,17 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     } else h += '<div class="rl-row"><button class="rl-b g" data-rl="mfa-begin">تفعيل المصادقة الثنائية</button></div>';
     return h + '</div>';
   }
+  function goalHtml(own) {
+    if (own) { const g = (S.perf && S.perf.goal) || {}; return g.daily || g.rate ? '<p class="rl-m">🎯 هدفك: ' + (g.daily ? g.daily + " تأكيد يومياً" : "") + (g.daily && g.rate ? " · " : "") + (g.rate ? "نسبة تأكيد ≥ " + g.rate + "%" : "") + '</p>' : ""; }
+    const g = (S.perf && S.perf.goal) || {};
+    return '<div class="rl-row" style="margin-top:.6rem"><b>🎯 الأهداف:</b><input id="rl-g-daily" type="number" min="0" max="500" placeholder="تأكيدات يومياً" value="' + esc(g.daily || "") + '" style="width:9rem"><input id="rl-g-rate" type="number" min="0" max="100" placeholder="نسبة التأكيد %" value="' + esc(g.rate || "") + '" style="width:9rem"><button class="rl-b g" data-rl="goal-save">حفظ الأهداف</button></div>';
+  }
+  function reasonsHtml() {
+    const rs = (S.perf && S.perf.reasons) || []; if (!rs.length) return "";
+    const by = {}; rs.forEach(r => { by[r.reason] = (by[r.reason] || 0) + (+r.n || 0); });
+    const tot = Object.values(by).reduce((a, b) => a + b, 0);
+    return '<h4 style="margin:.8rem 0 .3rem">❌ أسباب الإلغاء</h4><div class="rl-row">' + Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, n]) => '<span class="rl-chip">' + esc(CANCEL_REASONS[k] || k) + ': <b>' + n + '</b> (' + Math.round(n / tot * 100) + '%)</span>').join("") + '</div>';
+  }
   function statsHtml(own) {
     const rows = summarize(S.stats || []);
     let h = '<div class="card"><h3>📊 ' + (own ? "حصيلتي" : "نشاط الفريق") + '</h3><div class="rl-row"><select id="rl-days">' + [[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(x => '<option value="' + x[0] + '"' + (S.days === x[0] ? " selected" : "") + '>' + x[1] + '</option>').join("") + '</select></div>';
@@ -251,9 +267,10 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     const tot = rows.reduce((t, r) => { t.c += r.confirmed; t.x += r.cancelled; return t; }, { c: 0, x: 0 }), avg = tot.c + tot.x ? Math.round(tot.c / (tot.c + tot.x) * 100) : null;
     const tone = r => (r.rate == null ? "" : r.rate >= 70 ? "#86efac" : r.rate >= 50 ? "#fcd34d" : "#fca5a5");
     h += '<div class="rl-row" style="margin:.4rem 0">' + (avg == null ? "" : '<span class="rl-chip">متوسط الفريق: <b>' + avg + '%</b></span>') + '<button class="rl-b s" data-rl="stats-csv">⬇ CSV</button></div>';
-    h += '<div style="overflow-x:auto"><table><thead><tr><th>الحساب</th><th>تأكيد</th><th>منها بتعديل عنوان</th><th>إلغاء</th><th>نسبة التأكيد</th><th>غير متاح 1 / 2 / 3</th><th>لاحقاً</th><th>مؤجَّل لغد</th><th>رقم خاطئ</th><th>تعديلات</th><th>طلبات يدوية</th><th>آخر نشاط</th></tr></thead><tbody>';
-    rows.forEach(r => { h += '<tr><td dir="ltr">' + esc(r.actor) + '<br><small class="rl-m">' + esc(label(r.role)) + '</small></td><td><b>' + r.confirmed + '</b></td><td>' + r.addr + '</td><td>' + r.cancelled + '</td><td style="color:' + tone(r) + ';font-weight:900">' + (r.rate == null ? "—" : r.rate + "%") + '</td><td>' + r.try1 + ' / ' + r.try2 + ' / ' + r.try3 + '</td><td>' + r.later + '</td><td>' + r.tomorrow + '</td><td>' + r.wrong + '</td><td>' + r.edits + '</td><td>' + r.created + '</td><td>' + when(r.last) + '</td></tr>'; });
-    return h + '</tbody></table></div><p class="rl-m" style="margin-top:.4rem">نسبة التأكيد = المؤكَّد ÷ (المؤكَّد + الملغى). أعمدة الاتصال تعدّ كل مرة سُجّلت فيها النتيجة.</p></div>';
+    h += '<div style="overflow-x:auto"><table><thead><tr><th>الحساب</th><th>اليوم / الهدف</th><th>تأكيد</th><th>منها بتعديل عنوان</th><th>إلغاء</th><th>نسبة التأكيد</th><th>أول استجابة (وسيط)</th><th>≤15 د</th><th>غير متاح 1 / 2 / 3</th><th>لاحقاً</th><th>مؤجَّل لغد</th><th>رقم خاطئ</th><th>تعديلات</th><th>طلبات يدوية</th><th>آخر نشاط</th></tr></thead><tbody>';
+    rows.forEach(r => { const pf = ((S.perf && S.perf.rows) || []).find(x => x.actor === r.actor), td = ((S.perf && S.perf.today) || []).find(x => x.actor === r.actor), gl = (S.perf && S.perf.goal) || {}, tc = td ? td.conf : 0;
+      h += '<tr><td dir="ltr">' + esc(r.actor) + '<br><small class="rl-m">' + esc(label(r.role)) + '</small></td><td style="font-weight:900;color:' + (gl.daily ? (tc >= gl.daily ? "#86efac" : "#fcd34d") : "inherit") + '">' + tc + (gl.daily ? " / " + gl.daily : "") + '</td><td><b>' + r.confirmed + '</b></td><td>' + r.addr + '</td><td>' + r.cancelled + '</td><td style="color:' + tone(r) + ';font-weight:900">' + (r.rate == null ? "—" : r.rate + "%") + (gl.rate && r.rate != null ? '<br><small class="rl-m">الهدف ' + gl.rate + '%</small>' : "") + '</td><td style="color:' + respTone(pf && pf.med_min) + ';font-weight:800">' + fmtMin(pf && pf.med_min) + '</td><td>' + (pf ? pf.fast_pct + "%" : "—") + '</td><td>' + r.try1 + ' / ' + r.try2 + ' / ' + r.try3 + '</td><td>' + r.later + '</td><td>' + r.tomorrow + '</td><td>' + r.wrong + '</td><td>' + r.edits + '</td><td>' + r.created + '</td><td>' + when(r.last) + '</td></tr>'; });
+    return h + '</tbody></table></div><p class="rl-m" style="margin-top:.4rem">نسبة التأكيد = المؤكَّد ÷ (المؤكَّد + الملغى). أول استجابة = الزمن من وصول الطلب إلى أول نتيجة اتصال/حالة تسجّلها الموظفة. أعمدة الاتصال تعدّ كل مرة سُجّلت فيها النتيجة.</p>' + goalHtml(own) + reasonsHtml() + '</div>';
   }
   function teamHtml() {
     const T = S.team; if (!T) return '<div class="card"><h3>👥 فريق العمل</h3><p class="rl-m">جارٍ التحميل…</p></div>';
@@ -295,10 +312,16 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     Object.keys(keep).forEach(id => { const e = $(id); if (e && keep[id] !== "" && id !== "rl-days" && (id !== "rl-pw" || !e.value || true)) e.value = keep[id]; });
     if (perms && !S.edit) perms.forEach(([k, c]) => { const e = host.querySelector('[data-perm="' + k + '"]:not(:disabled)'); if (e) e.checked = c; });
   }
+  /* أداء الاتصال (زمن أول استجابة، حصيلة اليوم، أسباب الإلغاء، الأهداف): المالك للجميع والموظف لنفسه */
+  async function perf(days) {
+    const b = backend(); if (!b) return null;
+    try { const j = b === "sb" ? await API.sb.adminFetch("/rest/v1/rpc/audit_perf", { method: "POST", body: JSON.stringify({ p_days: days || 7 }) }) : await api("perf", { days: days || 7 }); return j && typeof j === "object" ? j : null; } catch (e) { return null; }
+  }
   async function refresh() {
     const b = backend(); if (!b || !S.me) return;
     try { S.mfa = await MFA.status(); } catch (e) { S.mfa = { enabled: !!S.me.mfa, factors: [] }; }
     try { S.stats = b === "sb" ? await API.sb.adminFetch("/rest/v1/rpc/audit_stats", { method: "POST", body: JSON.stringify({ p_days: S.days }) }) : (await api("stats", { days: S.days })).rows; } catch (e) { S.stats = []; }
+    S.perf = await perf(S.days);
     if (S.me.owner) {
       try { S.team = await api("list"); } catch (e) { S.team = { staff: [] }; if (typeof toast === "function") toast("❌ " + e.message); }
       try { S.audit = b === "sb" ? await API.sb.adminFetch("/rest/v1/audit_log?order=at.desc&limit=80") : (await api("audit")).rows; } catch (e) { S.audit = []; }
@@ -319,9 +342,13 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
         const r = await MFA.confirm(S.enroll.id, code); S.enroll = null; S.recovery = r.recovery || null; toastf("✅ فُعّلت المصادقة الثنائية"); await refresh();
       }
       else if (a === "rec-done") { S.recovery = null; draw(); }
+      else if (a === "goal-save") {
+        const g = { daily: Math.max(0, Math.min(500, +($("rl-g-daily") || {}).value || 0)), rate: Math.max(0, Math.min(100, +($("rl-g-rate") || {}).value || 0)) };
+        await Priv.set("callgoal", g); toastf("🎯 حُفظت الأهداف"); await refresh();
+      }
       else if (a === "stats-csv") {
-        const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', rows = [["الحساب", "الدور", "تأكيد", "تأكيد بتعديل عنوان", "إلغاء", "نسبة التأكيد %", "غير متاح 1", "غير متاح 2", "غير متاح 3", "لاحقاً", "مؤجَّل لغد", "رقم خاطئ", "تعديلات", "طلبات يدوية"]]
-          .concat(summarize(S.stats || []).map(r => [r.actor, label(r.role), r.confirmed, r.addr, r.cancelled, r.rate == null ? "" : r.rate, r.try1, r.try2, r.try3, r.later, r.tomorrow, r.wrong, r.edits, r.created]));
+        const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', rows = [["الحساب", "الدور", "تأكيد", "تأكيد بتعديل عنوان", "إلغاء", "نسبة التأكيد %", "غير متاح 1", "غير متاح 2", "غير متاح 3", "لاحقاً", "مؤجَّل لغد", "رقم خاطئ", "تعديلات", "طلبات يدوية", "أول استجابة وسيط (د)", "استجابة ≤15 د %", "تأكيدات اليوم"]]
+          .concat(summarize(S.stats || []).map(r => [r.actor, label(r.role), r.confirmed, r.addr, r.cancelled, r.rate == null ? "" : r.rate, r.try1, r.try2, r.try3, r.later, r.tomorrow, r.wrong, r.edits, r.created].concat((() => { const pf = ((S.perf && S.perf.rows) || []).find(x => x.actor === r.actor), td = ((S.perf && S.perf.today) || []).find(x => x.actor === r.actor); return [pf ? pf.med_min : "", pf ? pf.fast_pct : "", td ? td.conf : 0]; })())));
         const blob = new Blob(["\ufeff" + rows.map(r => r.map(q).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" }), l = document.createElement("a");
         l.href = URL.createObjectURL(blob); l.download = "team-performance-" + new Date().toISOString().slice(0, 10) + ".csv"; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(l.href), 2000);
       }
@@ -352,5 +379,5 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     if (e.target && e.target.id === "rl-role") { const r = ROLES[e.target.value]; if (r) document.querySelectorAll("#rl [data-perm]").forEach(c => { c.checked = r.perms.indexOf(c.dataset.perm) >= 0; }); }
   });
 
-  root.AdminRoles = Object.assign({ boot, apply, land, can, isReadOnly: isRO, denyWrite, allowed, render, state: S, backend, _MFA: MFA, mfaStatus: () => MFA.status() }, model);
+  root.AdminRoles = Object.assign({ perf, boot, apply, land, can, isReadOnly: isRO, denyWrite, allowed, render, state: S, backend, _MFA: MFA, mfaStatus: () => MFA.status() }, model);
 })(typeof window !== "undefined" ? window : globalThis);

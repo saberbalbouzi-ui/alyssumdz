@@ -137,7 +137,7 @@ begin
       raise exception 'forbidden: orders.edit' using errcode = '42501';
     end if;
     if new.status is distinct from old.status then
-      perform public._audit('order.status', new.id::text, jsonb_build_object('from', old.status, 'to', new.status));
+      perform public._audit('order.status', new.id::text, jsonb_build_object('from', old.status, 'to', new.status) || case when new.status = 'annulee' and new.note ~ '❌سبب:' then jsonb_build_object('reason', substring(new.note from '❌سبب:([^ ]+)')) else '{}'::jsonb end);
     end if;
     if public._call_marks(new.note) is distinct from public._call_marks(old.note) then
       perform public._audit('order.call', new.id::text, jsonb_build_object('from', public._call_marks(old.note), 'to', public._call_marks(new.note)));
@@ -173,6 +173,37 @@ begin
 end $$;
 revoke all on function public.audit_stats(int) from public;
 grant execute on function public.audit_stats(int) to authenticated;
+
+-- 5b) أداء الاتصال (v1.89.167): زمن أول استجابة لكل طلب (أول نتيجة اتصال/حالة بعد وصوله ينسبها لصاحبها)، حصيلة اليوم، أسباب الإلغاء،
+--     والهدف اليومي من admin_kv (مفتاح callgoal) — المالك يرى الجميع والموظف نفسه فقط
+create or replace function public.audit_perf(p_days int default 7) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare me text := lower(coalesce(auth.jwt() ->> 'email', '')); own boolean := public.is_admin();
+        d int := greatest(1, least(coalesce(p_days, 7), 90)); t0 timestamptz := (date_trunc('day', now() at time zone 'Africa/Algiers') at time zone 'Africa/Algiers');
+begin
+  if not own and not exists (select 1 from public.staff where lower(email) = me and active) then raise exception 'unauthorized' using errcode = '42501'; end if;
+  return jsonb_build_object(
+    'goal', coalesce((select value from public.admin_kv where key = 'callgoal'), '{}'::jsonb),
+    'rows', coalesce((select jsonb_agg(x) from (
+      select f.actor, count(*)::int as orders,
+             round(avg(extract(epoch from (f.at - o.created_at)) / 60)::numeric, 1) as avg_min,
+             round((percentile_cont(0.5) within group (order by extract(epoch from (f.at - o.created_at)) / 60))::numeric, 1) as med_min,
+             round(100.0 * count(*) filter (where f.at - o.created_at <= interval '15 minutes') / count(*), 0)::int as fast_pct
+      from (select distinct on (ref) ref, actor, at from public.audit_log
+            where action in ('order.call', 'order.status') and at > now() - make_interval(days => d) and role <> '' order by ref, at) f
+      join public.orders o on o.id = f.ref
+      where f.at >= o.created_at and f.at - o.created_at < interval '7 days' and (own or f.actor = me)
+      group by f.actor) x), '[]'::jsonb),
+    'today', coalesce((select jsonb_agg(x) from (
+      select actor, count(*) filter (where detail ->> 'to' = 'confirmee')::int as conf, count(*) filter (where detail ->> 'to' = 'annulee')::int as canc
+      from public.audit_log where action = 'order.status' and at >= t0 and (own or actor = me) group by actor) x), '[]'::jsonb),
+    'reasons', coalesce((select jsonb_agg(x) from (
+      select actor, detail ->> 'reason' as reason, count(*)::int as n from public.audit_log
+      where action = 'order.status' and detail ->> 'to' = 'annulee' and detail ? 'reason' and at > now() - make_interval(days => d) and (own or actor = me)
+      group by actor, detail ->> 'reason') x), '[]'::jsonb));
+end $$;
+revoke all on function public.audit_perf(int) from public;
+grant execute on function public.audit_perf(int) to authenticated;
 
 -- 6) المالية للقراءة: الموظف بصلاحية finance يقرأ مفاتيح المالية فقط من التخزين الخاص (الكتابة للمالك وحده)
 drop policy if exists "staff finance read kv" on public.admin_kv;
