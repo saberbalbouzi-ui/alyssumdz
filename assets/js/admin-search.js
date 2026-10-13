@@ -8,6 +8,7 @@ const AdminSearch = (() => {
   const ACTIONS = [
     ["فتح المخزون", "فتح تبويب إدارة المخزون", () => { const b = document.querySelector('.nav-btn[onclick*="inventory"]'); if (b) b.click(); }, "المخزون الكمية تنبيه نافد منخفض"],
     ["السوشيال والإعلانات", "جدولة منشورات فيسبوك وإنستغرام وإدارة الحملات", () => { const b = document.querySelector('.nav-btn[onclick*="social"]'); if (b) b.click(); }, "فيسبوك انستغرام منشور حملة اعلان ميتا جدولة"],
+    ["التوجيه والبوردرو", "توجيه الطلبات لشركات التوصيل بالمنطقة والأداء، إرسال وطباعة البوردرو بنقرة، ومحطة مسح الباركود", () => { const b = document.querySelector('.nav-btn[onclick*="dispatch"]'); if (b) b.click(); }, "توجيه تلقائي auto routing شركة توصيل ياليدين زد ار بوردرو طباعة جماعية باركود مسح سكانر كشف تسليم ليفريزون dispatch"],
     ["مركز المتاجر", "طلبات متاجر Shopify وWooCommerce وجداول Google في لوحة واحدة", () => { const b = document.querySelector('.nav-btn[onclick*="sources"]'); if (b) b.click(); }, "متاجر متعددة هب مركزي shopify woocommerce شوبيفاي ووكومرس جدول قوقل شيت ربط متجر استيراد طلبات codflow"],
     ["شبكة الخبراء", "البحث عن مستقلين جزائريين (تصميم، إعلانات، تأكيد، توصيل، UGC) والتواصل بواتساب", () => { const b = document.querySelector('.nav-btn[onclick*="experts"]'); if (b) b.click(); }, "خبير مستقل freelance مصمم media buyer مؤكدة موزع ugc تغليف براندينغ توظيف"],
     ["منتج جديد", "إضافة منتج جديد للمتجر", () => A().editProduct && A().editProduct(null), "اضافة منتج جديد"],

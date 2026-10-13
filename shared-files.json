@@ -39,6 +39,7 @@
     "assets/js/admin-carts.js",
     "assets/js/admin-paylink.js",
     "assets/js/admin-callcenter.js",
+    "assets/js/admin-dispatch.js",
     "assets/js/admin-experts.js",
     "assets/js/admin-sources.js",
     "assets/js/admin-roles.js",
