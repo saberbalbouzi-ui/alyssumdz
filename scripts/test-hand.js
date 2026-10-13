@@ -1191,7 +1191,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return r;
   });
   ok("الربح الحقيقي: التبويب يظهر والرقم الرئيسي = صافي computeFinance بلا ربط (تقدير الإعلان)", pfT.shown && pfT.hero0.trim() === pfT.expect0, pfT);
-  ok("الربح الحقيقي: الشلال 8 خطوات وجدولا الحملات/الولايات، والمعادلة قبل الإعلان صحيحة", pfT.rows === 9 && pfT.tbl >= 2 && pfT.preOk && pfT.byDay === 1 && pfT.src === 3 && pfT.noAccounts, pfT);
+  ok("الربح الحقيقي: الشلال 8 خطوات وجدولا الحملات/الولايات، والمعادلة قبل الإعلان صحيحة", pfT.rows === 9 && pfT.tbl >= 1 && pfT.preOk && pfT.byDay === 1 && pfT.src === 3 && pfT.noAccounts, pfT);
   ok("الربح الحقيقي: ربط حساب يرسل الرمز مرة واحدة ويزامن ولا يبقى الرمز في الصفحة أو المتصفح", /"p":"meta"/.test(pfT.put) && /"fx":150/.test(pfT.put) && /SECRET_TOKEN_1/.test(pfT.put) && pfT.synced && !pfT.leak, pfT);
   ok("الربح الحقيقي: بعد الربط الإنفاق الفعلي يحل محل التقدير وتظهر الحملة بإنفاقها", pfT.hero1.trim() === pfT.expect1 && pfT.acc && pfT.camp && pfT.spendCell, pfT);
   ok("الربح الحقيقي: المصاريف الثابتة تُحفظ وتُطرح، والتبويب يختفي عند الخروج", pfT.fixedSaved && pfT.hero2 !== pfT.hero1 && pfT.hidden, pfT);

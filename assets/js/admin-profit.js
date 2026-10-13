@@ -61,7 +61,7 @@ const AdminProfit = (() => {
     if (S.ads.length) { const g = range(), q = await call("GET", "/v1/ads/spend", null, { since: g.since, until: g.until }); S.spend = q.ok ? q.j : null; } else S.spend = null;
   }
   async function loadSet() { if (S.loadedSet) return; S.loadedSet = true; try { const v = await Priv.get("profitset", {}); S.fixed = Math.max(0, +(v && v.fixed) || 0); } catch (e) {} }
-  async function refresh() { if (S.busy) return; S.busy = true; draw(); S.err = ""; await loadSet(); if (typeof Admin !== "undefined" && Admin.loadFinance) { try { await Admin.loadFinance(); } catch (e) {} } await loadAds(); S.busy = false; draw(); }
+  async function refresh() { if (S.busy) return; S.busy = true; draw(); S.err = ""; await loadSet(); await loadAds(); S.busy = false; draw(); }
 
   /* ── واجهة ── */
   const css = () => {
