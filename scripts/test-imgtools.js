@@ -9,7 +9,8 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     window.__up = []; window.__commit = [];
     window.PBApp = { localize: s => s, uploadBlob: async (blob, name) => { window.__up.push([blob.type, blob.size, name]); return "assets/img/pages/" + name + ".png"; }, find: id => window.__node && window.__node.id === id ? { node: window.__node } : null, E: {}, commitAfter: id => window.__commit.push(id) };
   });
-  for (const f of ["pagebuilder-retouch.js", "pagebuilder-ai.js"]) await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, f), "utf8") });
+  for (const f of ["pagebuilder-retouch.js", "pagebuilder-ai.js", "pagebuilder-studio.js", "pagebuilder-more.js"]) await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, f), "utf8") });
+  await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, "../assets/js/admin-imgqa.js"), "utf8") });
   const T = fn => p.evaluate(fn);
   /* ── لمسات وتصحيح (دوال نقية) ── */
   ok("تحسين تلقائي: يمدّ مدى الإضاءة لصورة باهتة", await T(() => { const c = document.createElement("canvas"); c.width = 64; c.height = 64; const g = c.getContext("2d"); for (let x = 0; x < 64; x++) { const v = 90 + x; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, 0, 1, 64); } const o = PBRetouch._t.autoEnhance(c), d = o.getContext("2d").getImageData(0, 0, 64, 1).data; return d[(63) * 4] - d[0] > 150; }));
@@ -57,6 +58,74 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("تعديل بالوصف: يرفض تعليمات فارغة", /اكتب التعليمات/.test(flow.noText), flow.noText);
   ok("تعديل بالوصف: الاقتراح يملأ النص ثم ينفّذ بحجم الأصل", /لون المنتج/.test(flow.preset) && flow.editCall === true && flow.editSize === "10x10", flow);
   ok("بلا مفتاح: تحذير واضح ورسالة تفعيل Alyssum API", flow.warn && /مفتاح Alyssum API/.test(flow.nokey) && !/Gemini|fal/i.test(flow.nokey), flow.nokey);
+  /* ── جودة وتناسق الصور (AdminImgQA) ── */
+  const qa = await T(() => {
+    const mkc = (w, h, fn) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); fn(g, w, h); return c; };
+    const sharp = mkc(900, 900, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#222"; for (let y = 0; y < h; y += 20) for (let x = (y / 20) % 2 ? 0 : 20; x < w; x += 40) g.fillRect(x, y, 20, 20); });
+    const blur = mkc(900, 900, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#222"; g.fillRect(300, 300, 300, 300); g.filter = "blur(30px)"; g.drawImage(g.canvas, 0, 0); });
+    const tiny = mkc(1000, 1000, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#a33"; g.fillRect(450, 450, 100, 100); });
+    const good = mkc(1000, 1000, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#a33"; g.fillRect(200, 100, 600, 800); for (let i = 0; i < 60; i++) { g.fillStyle = i % 2 ? "#fcc" : "#600"; g.fillRect(210 + i * 9, 120, 5, 760); } });
+    const dark = mkc(1000, 1000, (g, w, h) => { g.fillStyle = "#101010"; g.fillRect(0, 0, w, h); g.fillStyle = "#303030"; g.fillRect(300, 300, 400, 400); });
+    const low = mkc(300, 300, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#a33"; g.fillRect(50, 50, 200, 200); });
+    const wide = mkc(1600, 900, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#a33"; g.fillRect(500, 150, 600, 600); });
+    const T_ = AdminImgQA._t, ms = { sharp: T_.metrics(sharp), blur: T_.metrics(blur), tiny: T_.metrics(tiny), good: T_.metrics(good), dark: T_.metrics(dark), low: T_.metrics(low), wide: T_.metrics(wide) }, std = T_.standard([ms.good, ms.tiny, ms.dark, ms.sharp, ms.blur]);
+    return { lapS: ms.sharp.lap, lapB: ms.blur.lap, v: Object.fromEntries(Object.entries(ms).map(([k, m]) => [k, T_.verdict(m, std)])), fillTiny: ms.tiny.fill, fillGood: ms.good.fill, std, allSolved: Object.values(T_.ISSUES).every(i => i[1] && i[1].length > 10) };
+  });
+  ok("جودة: الوضوح — الحادّ أعلى بكثير من الضبابي", qa.lapS > 500 && qa.lapB < 35, qa);
+  ok("جودة: صورة ضبابية تُرصد، والجيدة لا ملاحظات عليها", qa.v.blur.includes("blur") && qa.v.good.length === 0, qa.v);
+  ok("جودة: منتج صغير في الإطار + داكنة + دقة منخفضة + نسبة مخالفة", qa.v.tiny.includes("tiny") && qa.v.dark.includes("dark") && qa.v.low.includes("lowres") && qa.v.wide.includes("ratio"), qa.v);
+  ok("جودة: كل ملاحظة تحمل حلاً (لا تقرير بلا حل)", qa.allSolved);
+  const rs = await T(async () => {
+    const c = document.createElement("canvas"); c.width = 400; c.height = 300; const g = c.getContext("2d"); g.fillStyle = "#b33"; g.fillRect(150, 60, 100, 180);
+    const real = PBStudio.hasAlpha; window.PBBgRemove = { autoCut: async src => ({ canvas: src }) }; const out = await AdminImgQA.restyle(c, { removeBg: false, enhance: false }); const d = out.getContext("2d").getImageData(2, 2, 1, 1).data, m = out.getContext("2d").getImageData(out.width / 2, out.height / 2, 1, 1).data;
+    return { w: out.width, h: out.height, corner: [d[0], d[1], d[2]], mid: [m[0], m[1], m[2]] };
+  });
+  ok("توحيد النمط: المنتج يُركَّب بمقاس المتجر وخلفيته (مربع، زوايا بيضاء، المنتج بالوسط)", rs.w === rs.h && rs.w >= 800 && rs.corner.every(v => v > 235) && rs.mid[0] > rs.mid[2], rs);
+  /* ── حواف ناعمة (Contour fondu) ── */
+  const ff = await T(() => {
+    const src = document.createElement("canvas"); src.width = 200; src.height = 120; const g = src.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(0, 0, 200, 120);
+    const al = (c, x, y) => c.getContext("2d").getImageData(x, y, 1, 1).data[3], F = PBFade._t.feather;
+    const sq0 = F(src, { shape: "rect", blur: 0 }), sq = F(src, { shape: "rect", blur: 60 }), ci = F(src, { shape: "circle", blur: 30 }), ci0 = F(src, { shape: "circle", blur: 0 });
+    const row = [0, 5, 10, 15, 20, 30, 40, 60].map(x => al(sq, x, 60));
+    return { sq0c: al(sq0, 0, 0), sq0m: al(sq0, 100, 60), sqEdge: al(sq, 0, 60), sqMid: al(sq, 100, 60), row, ciCorner: al(ci, 1, 1), ciMid: al(ci, 100, 60), ciSide: al(ci, 100, 0), ci0corner: al(ci0, 2, 2), ci0mid: al(ci0, 100, 60), w: sq.width, h: sq.height, color: Array.from(sq.getContext("2d").getImageData(100, 60, 1, 1).data) };
+  });
+  ok("حواف ناعمة: بلا تمويه المربع يبقى كاملاً", ff.sq0c === 255 && ff.sq0m === 255, ff);
+  ok("حواف ناعمة: بتمويه، الحافة شفافة والوسط معتم وبينهما تدرّج متصاعد", ff.sqEdge < 10 && ff.sqMid > 200 && ff.row.every((v, i, a) => !i || v >= a[i - 1]) && ff.row[3] > 0 && ff.row[3] < 255, ff);
+  ok("حواف ناعمة: الدائرة تقصّ الزوايا وتبقي الوسط", ff.ciCorner === 0 && ff.ciMid === 255 && ff.ci0corner === 0 && ff.ci0mid === 255, ff);
+  ok("حواف ناعمة: الحجم واللون محفوظان", ff.w === 200 && ff.h === 120 && ff.color[0] === 204 && ff.color[1] === 51, ff);
+  const ffp = await T(async () => {
+    const host = document.getElementById("host"); const c = document.createElement("canvas"); c.width = 80; c.height = 60; c.getContext("2d").fillRect(0, 0, 80, 60); const url = c.toDataURL();
+    window.__node = { id: "w9", set: { src: url } }; window.__prev = []; PBApp.stPreview = (id, u) => { window.__prev.push([id, u]); return true; }; PBApp.stRestore = () => { window.__restored = (window.__restored || 0) + 1; };
+    host.innerHTML = PBFade.panel(); await PBFade.mount(host, { node: window.__node, set: window.__node.set }); await new Promise(r => setTimeout(r, 500));
+    const first = window.__prev.length; document.querySelector('[data-ff="shape"][data-v="circle"]').click(); await new Promise(r => setTimeout(r, 500)); const b = document.getElementById("pbff-b"); b.value = "80"; b.dispatchEvent(new Event("input", { bubbles: true })); await new Promise(r => setTimeout(r, 500));
+    const after = window.__prev.length; PBFade.cancel(); const restored = window.__restored; document.querySelector('[data-ff="apply"]').click(); await new Promise(r => setTimeout(r, 700));
+    return { first, after, restored, shape: PBFade.state.shape, blur: PBFade.state.blur, src: window.__node.set.src.slice(0, 22), up: window.__up.length };
+  });
+  ok("حواف ناعمة: معاينة حيّة على الصورة مع كل تغيير في الشكل والتمويه", ffp.first >= 1 && ffp.after > ffp.first && ffp.shape === "circle" && ffp.blur === 80, ffp);
+  ok("حواف ناعمة: الإلغاء يعيد الصورة والتطبيق يرفع PNG بمصدر جديد", ffp.restored === 1 && /^assets\/img\/pages\/ff-/.test(ffp.src) && ffp.up >= 1, ffp);
+  /* ── كولاج / إطار وهوية / فيديو من الصورة ── */
+  const mo = await T(async () => {
+    const col = c => { const k = document.createElement("canvas"); k.width = 100; k.height = 100; const g = k.getContext("2d"); g.fillStyle = c; g.fillRect(0, 0, 100, 100); return k; };
+    const px = (cv, x, y) => Array.from(cv.getContext("2d").getImageData(x, y, 1, 1).data);
+    const cl = PBCollage._t.render([col("#ff0000"), col("#00ff00"), col("#0000ff"), col("#ffff00")], { layout: "g4", W: 200, H: 200, gap: 10, radius: 0, bg: "#ffffff" }), cr = PBCollage._t.render([col("#ff0000")], { layout: "h2", W: 200, H: 100, gap: 0, radius: 40, bg: "#ffffff" });
+    const src = document.createElement("canvas"); src.width = 100; src.height = 60; src.getContext("2d").fillStyle = "#336699"; src.getContext("2d").fillRect(0, 0, 100, 60);
+    const logo = document.createElement("canvas"); logo.width = 20; logo.height = 20; logo.getContext("2d").fillStyle = "#ff00ff"; logo.getContext("2d").fillRect(0, 0, 20, 20);
+    const f1 = PBFrame._t.frame(src, { border: 5, bcolor: "#ffffff", radius: 0, pad: 0, bg: "#fff", shadow: 0 }), f2 = PBFrame._t.frame(src, { border: 0, radius: 20, pad: 0, shadow: 6 }), f3 = PBFrame._t.frame(src, { border: 0, radius: 0, pad: 0, shadow: 0, logo: true, lpos: "br", lsize: 20, lop: 100 }, logo);
+    const half = document.createElement("canvas"); half.width = 200; half.height = 100; const hg = half.getContext("2d"); hg.fillStyle = "#f00"; hg.fillRect(0, 0, 100, 100); hg.fillStyle = "#00f"; hg.fillRect(100, 0, 100, 100);
+    const mkv = (fx, t) => { const c = document.createElement("canvas"); c.width = 100; c.height = 100; PBVideo._t.frameAt(c.getContext("2d"), half, 100, 100, t, fx, "#000"); return c; };
+    const a0 = px(mkv("pl", 0), 50, 50), a1 = px(mkv("pl", 1), 50, 50), z0 = mkv("zin", 0), z1 = mkv("zin", 1);
+    let vid = null; if (PBVideo.supported()) { window.__node = { id: "v1", set: { src: half.toDataURL() } }; PBVideo.state.dur = 2; const host = document.getElementById("host"); host.innerHTML = PBVideo.panel(); await PBVideo.mount(host, { node: window.__node, set: window.__node.set }); const b = await PBVideo.make(); vid = b ? [b.size, b.type] : null; }
+    return { cl: [px(cl, 40, 40), px(cl, 160, 40), px(cl, 40, 160), px(cl, 160, 160), px(cl, 100, 100)], cr: [px(cr, 1, 1), px(cr, 50, 50)], clEmpty: px(PBCollage._t.render([], { layout: "h2", W: 100, H: 100, gap: 0, bg: "#fff" }), 20, 20),
+      f1: [f1.width, f1.height, px(f1, 2, 2), px(f1, 50, 40)], f2: [f2.width > 100, px(f2, 0, 0)[3] === 0], f3: px(f3, 90, 55), pl: [a0[0] > a0[2], a1[2] > a1[0]], zin: [px(z0, 50, 50), px(z1, 95, 50)], vid, sup: PBVideo.supported(), lay: Object.keys(PBCollage._t.LAYOUTS).length };
+  });
+  ok("كولاج: كل خلية بلون صورتها والفاصل بلون الخلفية", mo.cl[0][0] === 255 && mo.cl[1][1] === 255 && mo.cl[2][2] === 255 && mo.cl[3][0] === 255 && mo.cl[3][1] === 255 && mo.cl[4].every(v => v === 255), mo.cl);
+  ok("كولاج: الزوايا المدوّرة تكشف الخلفية، والخلية الناقصة رمادية فاتحة", mo.cr[0][1] === 255 && mo.cr[0][0] === 255 && mo.cr[1][1] < 80 && mo.clEmpty[0] > 200, mo);
+  ok("كولاج: ثمانية قوالب جاهزة", mo.lay === 8);
+  ok("إطار: الحدّ يوسّع الأبعاد ويلوّن الحافة", mo.f1[0] === 106 && mo.f1[1] === 66 && mo.f1[2][0] === 255 && mo.f1[3][2] > mo.f1[3][0], mo.f1);
+  ok("إطار: الزوايا المدوّرة والظل (شفافية الزاوية وحجم أكبر)", mo.f2[0] && mo.f2[1], mo.f2);
+  ok("إطار: ختم الشعار في الزاوية", mo.f3[0] === 255 && mo.f3[2] === 255, mo.f3);
+  ok("فيديو: التحريك الأفقي يغيّر ما في المنتصف بين البداية والنهاية والتقريب يكبّر", mo.pl[0] && mo.pl[1], mo);
+  ok("فيديو: التسجيل ينتج ملفاً حقيقياً (إن دعمه المتصفح)", !mo.sup || (mo.vid && mo.vid[0] > 1000 && /video/.test(mo.vid[1])), mo.vid);
   ok("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `\n✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);
 })();

@@ -40,11 +40,18 @@ const PBAI = (() => {
     + "Keep the product's exact shape, proportions, label artwork, packaging text and logos unchanged unless the instruction explicitly says otherwise. Keep the same framing and composition, photorealistic result, natural lighting, no watermark, no added text unless requested, no borders. Output the edited image.";
 
   /* ── حالة اللوحات ── */
-  const S = { kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const S = { shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
+  /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
+  const SHOTS = [["studio", "استوديو أبيض نظيف", "a clean seamless white studio with soft shadows"], ["marble", "رخام فاخر", "a luxurious white marble surface with soft gold accents and gentle window light"], ["nature", "أعشاب وطبيعة", "a natural setting with fresh green leaves and herbs, soft morning sunlight"], ["wood", "خشب ريفي دافئ", "a warm rustic wooden table with soft golden-hour light"], ["kitchen", "مطبخ عصري", "a bright modern kitchen counter with blurred background"], ["spa", "حمام وسبا", "a calm spa bathroom setting with towels, stones and soft steam"], ["gift", "هدية وتغليف", "a festive gift flat-lay with ribbons and tasteful wrapping paper"], ["beach", "صيف وشاطئ", "a sunny summer beach setting with sand and soft bokeh sea"], ["lantern", "أجواء رمضانية دافئة", "a warm festive evening mood with soft lantern light and elegant dark background"], ["neon", "نيون ليلي", "a dark stylish background with colorful neon rim lighting and reflections"], ["splash", "انتعاش وماء", "a fresh dynamic scene with water droplets and splashes, cool bright light"], ["pop", "لون صارخ بسيط", "a bold minimal solid color backdrop that contrasts with the product, hard shadow, pop-art feel"]];
+  const shotPrompt = (desc, extra) => "RE-SHOOT THIS PRODUCT PHOTO. Keep the product exactly as it is — same shape, proportions, label artwork, packaging text, logos and colors — and place it in this scene: " + desc + ". " + (extra ? "Extra direction: " + extra + ". " : "") + "Photorealistic commercial photography, natural contact shadows and reflections, same camera angle, product centered and fully visible, no people, no extra text, no watermark. Output the new image.";
   const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُحسب التكلفة وتُطلب موافقتك قبل كل توليد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   function panel(kind) {
     const o = S.opt;
+    if (kind === "sl") return `<div class="pbx-pz" id="pbai"><p>اختر أسلوب تصوير جاهزاً ويُعاد تصوير منتجك فيه بالذكاء الاصطناعي مع حفظ شكله وملصقاته.</p>${stateBar()}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem">${SHOTS.map((x, i) => `<button type="button" class="pbx-small" data-ai="shot" data-i="${i}" style="padding:.5rem .3rem;white-space:normal">${x[1]}</button>`).join("")}</div>
+<div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
+<div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     if (kind === "xp") return `<div class="pbx-pz" id="pbai"><p>وسّع خلفية الصورة بالذكاء الاصطناعي ليكبر المشهد حول المنتج (لتحويل صورة مربعة إلى طولية أو عريضة…). يبقى المنتج كما هو بالبكسل.</p>${stateBar()}
 <div class="rt-g"><label>طريقة التوسيع <select id="pbai-mode" class="pbx-small"><option value="ratio"${o.mode === "ratio" ? " selected" : ""}>إلى نسبة معيّنة</option><option value="dirs"${o.mode === "dirs" ? " selected" : ""}>بنسبة % لكل اتجاه</option></select></label></div>
 <div class="rt-g" id="pbai-ratio" style="${o.mode === "ratio" ? "" : "display:none"}"><label>النسبة <select id="pbai-r" class="pbx-small">${RATIOS.map(([n, v]) => `<option value="${v}"${Math.abs(o.ratio - v) < .001 ? " selected" : ""}>${n}</option>`).join("")}</select></label><label>موضع الأصل <select id="pbai-a" class="pbx-small">${ANCH.map(a => `<option value="${a[0]}"${o.anchor === a[0] ? " selected" : ""}>${a[1]}</option>`).join("")}</select></label></div>
@@ -77,6 +84,10 @@ const PBAI = (() => {
         const o = S.opt, p = plan(src.width, src.height, o.mode === "dirs" ? { dirs: { l: o.l, r: o.r, t: o.t, b: o.b } } : { ratio: o.ratio, anchor: o.anchor }); if (!p.grow) { say("النسبة المطلوبة لا تحتاج توسيعاً — اختر نسبة مختلفة أو زد الاتجاهات"); S.busy = false; return; }
         const pad = padded(src, p), r = await ImgGen.edit({ blob: await blobOf(pad, "image/png"), prompt: expandPrompt(o.hint.trim()), W: p.W, H: p.H, title: "توسيع الخلفية بالذكاء الاصطناعي" }); if (!r) { say(""); S.busy = false; return; }
         const fin = restore(r.canvas, src, p); S.resP = p; showRes(fin, "الحجم الناتج " + p.W + "×" + p.H + " — المنتج الأصلي محفوظ كما هو."); say("✅ تمّ التوسيع — راجع النتيجة ثم طبّقها");
+      } else if (kind === "shot") {
+        const sh = SHOTS[S.shotI]; if (!sh) { S.busy = false; return; }
+        const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: shotPrompt(sh[2], S.opt.hint.trim()), W: src.width, H: src.height, title: "إعادة تصوير المنتج — " + sh[1] }); if (!r) { say(""); S.busy = false; return; }
+        showRes(r.canvas, "أسلوب: " + sh[1]); say("✅ تمّ — راجع النتيجة ثم طبّقها");
       } else {
         const text = S.opt.text.trim(); if (!text) { say("اكتب التعليمات أولاً أو اختر اقتراحاً"); S.busy = false; return; }
         const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: editPrompt(text), W: src.width, H: src.height, title: "تعديل الصورة بالوصف" }); if (!r) { say(""); S.busy = false; return; }
@@ -87,7 +98,7 @@ const PBAI = (() => {
   }
   async function apply(inf) {
     if (!S.res || S.busy) return; S.busy = true; say("⏳ جارٍ الرفع…");
-    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
+    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
     catch (e) { say("⚠️ " + (e.message || e)); }
     S.busy = false;
   }
@@ -98,11 +109,11 @@ const PBAI = (() => {
     root.addEventListener("input", readForm);
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
-      if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf);
+      if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf);
       else if (k === "discard") { S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; say(""); }
       else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
     });
   }
   const reset = () => { S.res = null; S.id = ""; S.msg = ""; S.busy = false; };
-  return { panel, mount, reset, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt } };
+  return { panel, mount, reset, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS } };
 })();

@@ -17,6 +17,8 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 ## أدوات المرحلة 3 (v1.89.161)
 - `scripts/pagebuilder-retouch.js` (`PBRetouch`، محلي بلا مفتاح: تحسين تلقائي/ضوضاء/منظور/تغيير لون بالنقر/قص/تعتيم/حبيبات؛ دوال نقية في `_t`) و`scripts/pagebuilder-ai.js` (`PBAI`: توسيع الخلفية + تعديل بالوصف عبر `ImgGen.edit`؛ التوسيع يلصق الأصل فوق الناتج بحافة مُنعَّمة فلا يمسّ المنتج). الأدوات الجديدة = أضفها لـ`EP_TABS`/`IMG_TOOLS`/`IMG_SM` في المحرّر + `epBody/epDraw` + صورة بطاقة في `gen-tool-thumbs.py`. الممحاة بالفرشاة (`PBSmart.eraser`) مفعَّلة (`ERASER_ON=true`) وتعمل محلياً. اختبار: `node scripts/test-imgtools.js` + حالات «الأدوات الذكية» في test-hand.
 
+- أدوات v1.89.161 الإضافية: `PBFade/PBFrame/PBCollage/PBVideo` (`pagebuilder-more.js` + آخر `pagebuilder-retouch.js`) و`AdminImgQA` (جودة الأغلفة وتوحيد النمط، `assets/js/admin-imgqa.js`)؛ كل أداة جديدة: لوحة + دالة نقية في `_t` + بطاقة نصف/نصف + حالات في `test-imgtools.js` وtest-hand (وعدّل أعداد الأدوات في حالة «تبويب تعديل الصورة»).
+
 ## قواعد
 - غير مدمّر: كل تعديل يمرّ بـ`afterEdit()`/`commitAfter` (يدخل سجلّ التراجع) والمعاينة لا تكتب في البيانات حتى «تطبيق».
 - حقول الصورة: `fx/fwd` نسب %، `fy/fh/fs` بكسل تصميم؛ لا هوامش سالبة جانبية.

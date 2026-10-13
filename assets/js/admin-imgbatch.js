@@ -6,7 +6,7 @@ const AdminImgBatch = (() => {
   const KEY = "alyssum_imgbatch";
   const PRESETS = [["orig", "المقاس الأصلي (بدون قص)"], ["1000x1000", "منتج مربع 1000×1000"], ["1080x1080", "مربع 1080×1080 (فيسبوك/إنستغرام)"], ["1080x1350", "عمودي 4:5 — 1080×1350 (إنستغرام)"], ["1080x1920", "قصة 9:16 — 1080×1920 (تيك توك/ريلز)"], ["1920x1080", "أفقي 16:9 — 1920×1080 (يوتيوب)"], ["1200x628", "بانر إعلان 1200×628"], ["1200x400", "غلاف عريض 1200×400"], ["custom", "مخصص…"]];
   const POS = [["tl", "↖"], ["tc", "↑"], ["tr", "↗"], ["ml", "←"], ["mc", "•"], ["mr", "→"], ["bl", "↙"], ["bc", "↓"], ["br", "↘"]];
-  const D = { preset: "orig", w: 1000, h: 1000, maxw: 1600, fit: "cover", bg: "#ffffff", fmt: "webp", q: 85, wm: "none", wmText: "", wmColor: "#ffffff", wmSize: 5, wmOp: 60, wmPos: "br", wmMar: 3, wmLogo: "" };
+  const D = { preset: "orig", w: 1000, h: 1000, maxw: 1600, fit: "cover", bg: "#ffffff", fmt: "webp", q: 85, wm: "none", wmText: "", wmColor: "#ffffff", wmSize: 5, wmOp: 60, wmPos: "br", wmMar: 3, wmLogo: "", pipe: false, pbg: true, penh: true };
   const S = Object.assign({ files: [], out: [], busy: false, prod: "" }, { cfg: Object.assign({}, D) });
   try { Object.assign(S.cfg, JSON.parse(localStorage.getItem(KEY) || "{}")); S.cfg.wmLogo = ""; } catch (e) { }
   const save = () => { try { const c = Object.assign({}, S.cfg); delete c.wmLogo; localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) { } };
@@ -20,7 +20,11 @@ const AdminImgBatch = (() => {
   function target(c) { if (c.preset === "orig") return null; if (c.preset === "custom") return { w: Math.max(16, Math.min(6000, +c.w || 1000)), h: Math.max(16, Math.min(6000, +c.h || 1000)) }; const m = c.preset.split("x"); return { w: +m[0], h: +m[1] }; }
 
   async function render(item, c) {
-    const im = await loadImg(item.src), tg = target(c); let W, H;
+    let im = await loadImg(item.src); let tg = target(c); let W, H;
+    if (c.pipe && typeof AdminImgQA !== "undefined") {      // قالب المعالجة: نزع خلفية ← تحسين ← نمط استوديو المنتج المحفوظ (مقاسه يحلّ محلّ المقاس هنا)
+      const src = document.createElement("canvas"), k = Math.min(1, 2400 / Math.max(im.naturalWidth, im.naturalHeight)); src.width = Math.round(im.naturalWidth * k); src.height = Math.round(im.naturalHeight * k); src.getContext("2d").drawImage(im, 0, 0, src.width, src.height);
+      const pc = await AdminImgQA.restyle(src, { removeBg: !!c.pbg, enhance: !!c.penh }); pc.naturalWidth = pc.width; pc.naturalHeight = pc.height; im = pc; tg = null;
+    }
     if (tg) { W = tg.w; H = tg.h; } else { const k = Math.min(1, (+c.maxw || 1600) / im.naturalWidth); W = Math.round(im.naturalWidth * k); H = Math.round(im.naturalHeight * k); }
     const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d"); g.imageSmoothingQuality = "high";
     const flat = c.fmt === "jpeg" || (c.fit === "contain" && c.bg !== "transparent");
@@ -104,6 +108,7 @@ ${g.preset === "orig" ? `<label>أقصى عرض (px)<input id="ib-maxw" type="nu
 ${tg && g.fit === "contain" ? `<label>لون الخلفية<input id="ib-bg" type="color" value="${esc(g.bg === "transparent" ? "#ffffff" : g.bg)}"></label>` : ""}
 <label>الصيغة${sel("ib-fmt", [["webp", "WebP (الأخف)"], ["jpeg", "JPEG"], ["png", "PNG (شفافية)"]], g.fmt)}</label>
 <label>الجودة ${g.q}%<input id="ib-q" type="range" min="40" max="100" value="${g.q}"></label></div>
+<div class="ib-g"><label style="grid-column:1/-1"><span><input type="checkbox" id="ib-pipe" ${g.pipe ? "checked" : ""}> طبّق نمط المتجر (استوديو المنتج) قبل المقاس — ينزع الخلفية ويركّب الخلفية والظل المحفوظين</span></label>${g.pipe ? `<label><span><input type="checkbox" id="ib-pbg" ${g.pbg ? "checked" : ""}> نزع الخلفية</span></label><label><span><input type="checkbox" id="ib-penh" ${g.penh ? "checked" : ""}> تحسين تلقائي</span></label><div class="hint" style="grid-column:1/-1">يُستعمل مقاس النمط المحفوظ في استوديو المنتج بدل «المقاس» أعلاه.</div>` : ""}</div>
 <div class="ib-g"><label>العلامة المائية${sel("ib-wm", [["none", "بلا علامة"], ["text", "نص"], ["logo", "شعار (صورة)"]], g.wm)}</label>
 ${g.wm === "text" ? `<label>النص<input id="ib-wmt" maxlength="60" placeholder="اسم متجرك أو موقعك" value="${esc(g.wmText)}"></label><label>لون النص<input id="ib-wmc" type="color" value="${esc(g.wmColor)}"></label>` : ""}
 ${g.wm === "logo" ? `<label class="small" style="cursor:pointer">اختيار الشعار<input id="ib-logo" type="file" accept="image/*" style="display:none"></label><div class="hint" style="margin:0">${logoImg ? "✅ تم اختيار الشعار" : "لم يُختر شعار"}</div>` : ""}
@@ -124,6 +129,7 @@ ${g.wm !== "none" ? `<label>الحجم ${g.wmSize}%<input id="ib-wms" type="rang
     on("ib-logo", "onchange", async e => { const f = e.target.files[0]; if (!f) return; try { logoImg = await loadImg(URL.createObjectURL(f)); } catch (x) { logoImg = null; } S.out = []; draw(); });
     document.querySelectorAll("#ib-card [data-pos]").forEach(b => b.onclick = () => { g.wmPos = b.dataset.pos; save(); draw(); });
     document.querySelectorAll("#ib-card [data-dl]").forEach(b => b.onclick = () => dl(+b.dataset.dl));
+    [["ib-pipe", "pipe", true], ["ib-pbg", "pbg", false], ["ib-penh", "penh", false]].forEach(([id, k, rd]) => on(id, "onchange", e => { g[k] = e.target.checked; save(); S.out = []; if (rd) draw(); }));
     on("ib-run", "onclick", run); on("ib-zip", "onclick", dlZip);
   }
   function init() { if (!$("tab-imgtools")) return setTimeout(init, 300); draw(); const a = typeof Admin !== "undefined" ? Admin : null; if (a && !a.__ibWrapped && a.tab) { a.__ibWrapped = true; const o = a.tab.bind(a); a.tab = function (t) { const r = o.apply(a, arguments); if (t === "imgtools") draw(); return r; }; } }

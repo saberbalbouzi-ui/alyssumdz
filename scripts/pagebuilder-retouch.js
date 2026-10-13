@@ -158,3 +158,55 @@ const PBRetouch = (() => {
   const reset = () => { S.id = ""; S.src = ""; S.work = null; S.base = null; S.hist = []; S.from = null; S.pickMode = false; S.msg = ""; };
   return { panel, mount, reset, state: S, _t: { autoEnhance, denoise, keystone, recolor, trim, vignette, grain, pick, hasAlpha, rgb2hsl, hsl2rgb } };
 })();
+
+/* «حواف ناعمة» (Contour fondu): تذويب أطراف الصورة تدريجياً حتى الشفافية بشكل مربع أو دائرة بدرجة تمويه غاوسي يضبطها المستخدم؛ معاينة حيّة على الصورة نفسها في الصفحة ثم «تطبيق». */
+const PBFade = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const S = { id: "", src: "", base: null, shape: "rect", blur: 40, url: "", t: 0, busy: false, msg: "", tok: 0 };
+  /* نقية: يُرجع قماشاً جديداً بحواف مُذوَّبة. blur 0..100 = نسبة من 25% من أصغر بُعد (تمويه غاوسي)؛ الشكل يُصغَّر للداخل فتكتمل الشفافية قبل الحافة */
+  function feather(src, o) {
+    const w = src.width, h = src.height, m = Math.min(w, h), b = Math.max(0, Math.min(100, +o.blur || 0)) / 100 * m * .25, inset = Math.min(m / 2 - 1, b * 1.8), mask = mk(w, h), g = mask.getContext("2d");
+    const hasF = "filter" in g; if (hasF && b > .5) g.filter = "blur(" + b.toFixed(2) + "px)";
+    g.fillStyle = "#fff"; g.beginPath();
+    if (o.shape === "circle") g.ellipse(w / 2, h / 2, Math.max(1, w / 2 - inset), Math.max(1, h / 2 - inset), 0, 0, Math.PI * 2); else g.rect(inset, inset, Math.max(1, w - 2 * inset), Math.max(1, h - 2 * inset));
+    g.fill(); g.filter = "none";
+    let mk2 = mask; if (!hasF && b > .5) { const k = Math.max(.02, 1 / (1 + b / 3)), s = mk(w * k, h * k); s.getContext("2d").drawImage(mask, 0, 0, s.width, s.height); mk2 = mk(w, h); const q = mk2.getContext("2d"); q.imageSmoothingQuality = "high"; q.drawImage(s, 0, 0, w, h); }
+    const out = mk(w, h), og = out.getContext("2d"); og.drawImage(src, 0, 0); og.globalCompositeOperation = "destination-in"; og.drawImage(mk2, 0, 0); return out;
+  }
+  const hasAlpha = c => PBRetouch._t.hasAlpha(c);
+  function panel() {
+    const sh = (k, t) => `<button type="button" class="pbx-small pz-pat${S.shape === k ? " on" : ""}" data-ff="shape" data-v="${k}">${t}</button>`;
+    return `<div class="pbx-pz" id="pbff"><p>تذويب أطراف الصورة تدريجياً (Contour fondu): تُطبَّق المعاينة مباشرة على الصورة في الصفحة، ثم «تطبيق».</p>
+<div class="pbrt-row"><b>الشكل</b>${sh("rect", "▢ مربع")}${sh("circle", "◯ دائرة")}</div>
+<div class="rt-g"><label>درجة التمويه (غاوسي) <b id="pbff-v">${S.blur}</b><input type="range" id="pbff-b" min="0" max="100" value="${S.blur}"></label></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ff="apply">✔ تطبيق على الصورة</button><button type="button" class="pbx-small" data-ff="cancel">إلغاء المعاينة</button></div><div id="pbff-msg" class="ep-n" style="min-height:1.3em">${S.msg}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbff-msg"); if (e) e.textContent = t; };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const k = Math.min(1, 4096 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
+  async function preview() {
+    if (!S.base) return; const tok = ++S.tok, k = Math.min(1, 1200 / Math.max(S.base.width, S.base.height)), c = k < 1 ? mk(S.base.width * k, S.base.height * k) : S.base; if (k < 1) c.getContext("2d").drawImage(S.base, 0, 0, c.width, c.height);
+    const out = feather(c, { shape: S.shape, blur: S.blur }), blob = await new Promise(r => out.toBlob(r, "image/png")); if (tok !== S.tok) return;
+    if (S.url) URL.revokeObjectURL(S.url); S.url = URL.createObjectURL(blob); try { A().stPreview(S.id, S.url); } catch (e) { }
+  }
+  const later = () => { clearTimeout(S.t); S.t = setTimeout(preview, 90); };
+  async function mount(host, inf) {
+    const id = inf.node.id, src = inf.set.src; if (S.id !== id || S.src !== src || !S.base) { S.id = id; S.src = src; S.base = null; try { S.base = await loadImg(src); } catch (e) { say("⚠️ " + e.message); return; } }
+    const root = host.querySelector("#pbff"); if (!root || root._ff) { preview(); return; } root._ff = 1;
+    root.addEventListener("input", e => { if (e.target.id === "pbff-b") { S.blur = +e.target.value; const v = $("pbff-v"); if (v) v.textContent = S.blur; later(); } });
+    root.addEventListener("click", async e => {
+      const t = e.target.closest("[data-ff]"); if (!t) return; const k = t.dataset.ff;
+      if (k === "shape") { S.shape = t.dataset.v; root.querySelectorAll('[data-ff="shape"]').forEach(b => b.classList.toggle("on", b.dataset.v === S.shape)); later(); }
+      else if (k === "cancel") { cancel(); say("أُلغيت المعاينة"); }
+      else if (k === "apply") await apply();
+    }); preview();
+  }
+  async function apply() {
+    if (!S.base || S.busy) return; S.busy = true; say("⏳ جارٍ التطبيق…");
+    try { const out = feather(S.base, { shape: S.shape, blur: S.blur }), blob = await new Promise(r => out.toBlob(r, "image/png")), path = await A().uploadBlob(blob, "ff-" + Date.now().toString(36), { max: 4096, q: .95 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "حواف ناعمة"; S.src = path; S.base = out; if (S.url) { URL.revokeObjectURL(S.url); S.url = ""; } A().commitAfter(S.id); say("✅ طُبِّقت الحواف الناعمة"); } }
+    catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+  }
+  function cancel() { S.tok++; clearTimeout(S.t); if (S.url) { URL.revokeObjectURL(S.url); S.url = ""; try { A().stRestore(); } catch (e) { } } }
+  const reset = () => { cancel(); S.id = ""; S.src = ""; S.base = null; S.msg = ""; };
+  return { panel, mount, cancel, reset, state: S, _t: { feather } };
+})();

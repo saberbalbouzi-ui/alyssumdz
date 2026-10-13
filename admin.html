@@ -1666,6 +1666,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-shipagg.js?v=1"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
+<script src="assets/js/admin-imgqa.js?v=1.89.161"></script>
 <script src="assets/js/img-upscale.js?v=1.86.0"></script>
 <script src="assets/js/admin-copyset.js?v=1.89.16"></script>
 <script src="assets/js/ai-vision.js?v=51"></script>
@@ -11110,7 +11111,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
-  const EP_TABS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"]];
+  const EP_TABS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["cl", "كولاج", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
   const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
   function epBody(inf) {
     const t = E.ept || "";
@@ -11118,7 +11119,11 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (!t) return `<p class="ep-n">اختر أداة من «تعديل الصورة» في القائمة اليمنى لتظهر هنا إعداداتها.</p>`;
     if (t === "st") return PBStudio.panel();
     if (t === "rt") return PBRetouch.panel();
-    if (t === "xp" || t === "ai") return PBAI.panel(t);
+    if (t === "ff") return PBFade.panel();
+    if (t === "fr") return PBFrame.panel();
+    if (t === "cl") return PBCollage.panel();
+    if (t === "vd") return PBVideo.panel();
+    if (t === "xp" || t === "ai" || t === "sl") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
     if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button></div>`;
@@ -11130,12 +11135,12 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function epDraw() {
     const p = $("pbx-ep"); if (!p) return; const inf = epInf(); if (!inf) { epClose(); return; }
-    const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel();
+    const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); if (cur !== "ff" && typeof PBFade !== "undefined" && PBFade.state.url) PBFade.cancel();
     const tn = EP_TABS.find(x => x[0] === cur), sn = cur === "st" && typeof PBStudio !== "undefined" ? (IMG_ST.find(x => x[0] === PBStudio.tab()) || [])[1] : "";
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
-    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
+    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); try { PBRetouch.reset(); PBAI.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -11147,9 +11152,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     epDraw(); drawQbarSoon(); if (E.ltab === "img") renderLeft();
   }
   /* تبويب «تعديل الصورة» اليساري: بطاقات أدوات بصور حقيقية (نصفها قبل ونصفها بعد) */
-  const IMG_TOOLS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "bg"], ["cap", "التقاط العناصر", "capture"], ["st", "استوديو المنتج", "studio"], ["rt", "لمسات وتصحيح", "rt"]];
+  const IMG_TOOLS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "bg"], ["cap", "التقاط العناصر", "capture"], ["st", "استوديو المنتج", "studio"], ["rt", "لمسات وتصحيح", "rt"], ["ff", "حواف ناعمة", "ff"], ["fr", "إطار وهوية", "fr"], ["cl", "كولاج", "cl"], ["vd", "فيديو من الصورة", "vd"]];
   const IMG_ST = [["bg", "الخلفية", "st_bg"], ["prod", "المنتج", "st_prod"], ["fx", "تأثيرات", "st_fx"], ["txt", "ملصقات وشعار", "st_stk"], ["out", "المقاس والإخراج", "st_size"]];
-  const IMG_SM = [["scene", "مشهد ذكي للمنتج", "sm_scene", true], ["xp", "توسيع الخلفية بالذكاء", "sm_expand", true], ["ai", "تعديل بالوصف", "sm_magic", true], ["erase", "ممحاة ذكية بالفرشاة", "sm_erase", ERASER_ON]];
+  const IMG_SM = [["scene", "مشهد ذكي للمنتج", "sm_scene", true], ["xp", "توسيع الخلفية بالذكاء", "sm_expand", true], ["ai", "تعديل بالوصف", "sm_magic", true], ["sl", "أساليب تصوير ذكية", "sm_shots", true], ["erase", "ممحاة ذكية بالفرشاة", "sm_erase", ERASER_ON]];
   function imgPane() {
     const inf = epInf(), open = !!$("pbx-ep"), cur = open ? (E.ept || "") : "", st = typeof PBStudio !== "undefined" ? PBStudio.tab() : "";
     const tile = (attr, label, img, on, badge) => `<button type="button" class="pbx-tt${on ? " on" : ""}" ${attr} title="${esc(label)}"><img src="assets/img/tools/${img}.webp" alt="" draggable="false"><span>${esc(label)}</span>${badge ? `<i class="tt-b">${badge}</i>` : ""}</button>`;
@@ -11164,7 +11169,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   async function imgSmart(k) {
     const inf = epInf(); if (!inf || !inf.set.src) { toast("حدّد صورة في الصفحة أولاً"); return; }
     if (k === "erase") { if (typeof PBSmart === "undefined") { toast("الممحاة غير متاحة"); return; } return PBSmart.eraser(inf); }
-    if (k === "xp" || k === "ai") { imgPick(k); return; }
+    if (k === "xp" || k === "ai" || k === "sl") { imgPick(k); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.quick) { toast("مولّد الصور غير متاح"); return; }
     try {
       const blob = await (await fetch(localize(String(inf.set.src)))).blob(), im = await createImageBitmap(blob), s = Math.min(1, 1600 / Math.max(im.width, im.height)), W = Math.round(im.width * s), H = Math.round(im.height * s);
@@ -15435,6 +15440,58 @@ const PBRetouch = (() => {
   return { panel, mount, reset, state: S, _t: { autoEnhance, denoise, keystone, recolor, trim, vignette, grain, pick, hasAlpha, rgb2hsl, hsl2rgb } };
 })();
 
+/* «حواف ناعمة» (Contour fondu): تذويب أطراف الصورة تدريجياً حتى الشفافية بشكل مربع أو دائرة بدرجة تمويه غاوسي يضبطها المستخدم؛ معاينة حيّة على الصورة نفسها في الصفحة ثم «تطبيق». */
+const PBFade = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const S = { id: "", src: "", base: null, shape: "rect", blur: 40, url: "", t: 0, busy: false, msg: "", tok: 0 };
+  /* نقية: يُرجع قماشاً جديداً بحواف مُذوَّبة. blur 0..100 = نسبة من 25% من أصغر بُعد (تمويه غاوسي)؛ الشكل يُصغَّر للداخل فتكتمل الشفافية قبل الحافة */
+  function feather(src, o) {
+    const w = src.width, h = src.height, m = Math.min(w, h), b = Math.max(0, Math.min(100, +o.blur || 0)) / 100 * m * .25, inset = Math.min(m / 2 - 1, b * 1.8), mask = mk(w, h), g = mask.getContext("2d");
+    const hasF = "filter" in g; if (hasF && b > .5) g.filter = "blur(" + b.toFixed(2) + "px)";
+    g.fillStyle = "#fff"; g.beginPath();
+    if (o.shape === "circle") g.ellipse(w / 2, h / 2, Math.max(1, w / 2 - inset), Math.max(1, h / 2 - inset), 0, 0, Math.PI * 2); else g.rect(inset, inset, Math.max(1, w - 2 * inset), Math.max(1, h - 2 * inset));
+    g.fill(); g.filter = "none";
+    let mk2 = mask; if (!hasF && b > .5) { const k = Math.max(.02, 1 / (1 + b / 3)), s = mk(w * k, h * k); s.getContext("2d").drawImage(mask, 0, 0, s.width, s.height); mk2 = mk(w, h); const q = mk2.getContext("2d"); q.imageSmoothingQuality = "high"; q.drawImage(s, 0, 0, w, h); }
+    const out = mk(w, h), og = out.getContext("2d"); og.drawImage(src, 0, 0); og.globalCompositeOperation = "destination-in"; og.drawImage(mk2, 0, 0); return out;
+  }
+  const hasAlpha = c => PBRetouch._t.hasAlpha(c);
+  function panel() {
+    const sh = (k, t) => `<button type="button" class="pbx-small pz-pat${S.shape === k ? " on" : ""}" data-ff="shape" data-v="${k}">${t}</button>`;
+    return `<div class="pbx-pz" id="pbff"><p>تذويب أطراف الصورة تدريجياً (Contour fondu): تُطبَّق المعاينة مباشرة على الصورة في الصفحة، ثم «تطبيق».</p>
+<div class="pbrt-row"><b>الشكل</b>${sh("rect", "▢ مربع")}${sh("circle", "◯ دائرة")}</div>
+<div class="rt-g"><label>درجة التمويه (غاوسي) <b id="pbff-v">${S.blur}</b><input type="range" id="pbff-b" min="0" max="100" value="${S.blur}"></label></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ff="apply">✔ تطبيق على الصورة</button><button type="button" class="pbx-small" data-ff="cancel">إلغاء المعاينة</button></div><div id="pbff-msg" class="ep-n" style="min-height:1.3em">${S.msg}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbff-msg"); if (e) e.textContent = t; };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const k = Math.min(1, 4096 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
+  async function preview() {
+    if (!S.base) return; const tok = ++S.tok, k = Math.min(1, 1200 / Math.max(S.base.width, S.base.height)), c = k < 1 ? mk(S.base.width * k, S.base.height * k) : S.base; if (k < 1) c.getContext("2d").drawImage(S.base, 0, 0, c.width, c.height);
+    const out = feather(c, { shape: S.shape, blur: S.blur }), blob = await new Promise(r => out.toBlob(r, "image/png")); if (tok !== S.tok) return;
+    if (S.url) URL.revokeObjectURL(S.url); S.url = URL.createObjectURL(blob); try { A().stPreview(S.id, S.url); } catch (e) { }
+  }
+  const later = () => { clearTimeout(S.t); S.t = setTimeout(preview, 90); };
+  async function mount(host, inf) {
+    const id = inf.node.id, src = inf.set.src; if (S.id !== id || S.src !== src || !S.base) { S.id = id; S.src = src; S.base = null; try { S.base = await loadImg(src); } catch (e) { say("⚠️ " + e.message); return; } }
+    const root = host.querySelector("#pbff"); if (!root || root._ff) { preview(); return; } root._ff = 1;
+    root.addEventListener("input", e => { if (e.target.id === "pbff-b") { S.blur = +e.target.value; const v = $("pbff-v"); if (v) v.textContent = S.blur; later(); } });
+    root.addEventListener("click", async e => {
+      const t = e.target.closest("[data-ff]"); if (!t) return; const k = t.dataset.ff;
+      if (k === "shape") { S.shape = t.dataset.v; root.querySelectorAll('[data-ff="shape"]').forEach(b => b.classList.toggle("on", b.dataset.v === S.shape)); later(); }
+      else if (k === "cancel") { cancel(); say("أُلغيت المعاينة"); }
+      else if (k === "apply") await apply();
+    }); preview();
+  }
+  async function apply() {
+    if (!S.base || S.busy) return; S.busy = true; say("⏳ جارٍ التطبيق…");
+    try { const out = feather(S.base, { shape: S.shape, blur: S.blur }), blob = await new Promise(r => out.toBlob(r, "image/png")), path = await A().uploadBlob(blob, "ff-" + Date.now().toString(36), { max: 4096, q: .95 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "حواف ناعمة"; S.src = path; S.base = out; if (S.url) { URL.revokeObjectURL(S.url); S.url = ""; } A().commitAfter(S.id); say("✅ طُبِّقت الحواف الناعمة"); } }
+    catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+  }
+  function cancel() { S.tok++; clearTimeout(S.t); if (S.url) { URL.revokeObjectURL(S.url); S.url = ""; try { A().stRestore(); } catch (e) { } } }
+  const reset = () => { cancel(); S.id = ""; S.src = ""; S.base = null; S.msg = ""; };
+  return { panel, mount, cancel, reset, state: S, _t: { feather } };
+})();
+
 /* أدوات الصور الذكية (Alyssum API) داخل لوحة «تعديل الصورة»: ① توسيع الخلفية (Generative Expand) ② تعديل بالوصف (Magic Edit: لون المنتج، إضاءة، خلفية، إزالة…).
    تستعمل خدمة التوليد نفسها وضوابط التكلفة (ImgGen.edit: تأكيد قبل كل طلب، حدّ إنفاق، لا إعادة محاولة تلقائية). تُحفظ الصورة الأصلية بعد التوليد كما هي:
    في التوسيع تُلصق المنطقة الأصلية فوق الناتج بحافة مُنعَّمة فلا يغيّر النموذج بكسلاً واحداً من المنتج. تعمل الأدوات المحلية (الممحاة، لمسات وتصحيح) بلا مفتاح. */
@@ -15477,11 +15534,18 @@ const PBAI = (() => {
     + "Keep the product's exact shape, proportions, label artwork, packaging text and logos unchanged unless the instruction explicitly says otherwise. Keep the same framing and composition, photorealistic result, natural lighting, no watermark, no added text unless requested, no borders. Output the edited image.";
 
   /* ── حالة اللوحات ── */
-  const S = { kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const S = { shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
+  /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
+  const SHOTS = [["studio", "استوديو أبيض نظيف", "a clean seamless white studio with soft shadows"], ["marble", "رخام فاخر", "a luxurious white marble surface with soft gold accents and gentle window light"], ["nature", "أعشاب وطبيعة", "a natural setting with fresh green leaves and herbs, soft morning sunlight"], ["wood", "خشب ريفي دافئ", "a warm rustic wooden table with soft golden-hour light"], ["kitchen", "مطبخ عصري", "a bright modern kitchen counter with blurred background"], ["spa", "حمام وسبا", "a calm spa bathroom setting with towels, stones and soft steam"], ["gift", "هدية وتغليف", "a festive gift flat-lay with ribbons and tasteful wrapping paper"], ["beach", "صيف وشاطئ", "a sunny summer beach setting with sand and soft bokeh sea"], ["lantern", "أجواء رمضانية دافئة", "a warm festive evening mood with soft lantern light and elegant dark background"], ["neon", "نيون ليلي", "a dark stylish background with colorful neon rim lighting and reflections"], ["splash", "انتعاش وماء", "a fresh dynamic scene with water droplets and splashes, cool bright light"], ["pop", "لون صارخ بسيط", "a bold minimal solid color backdrop that contrasts with the product, hard shadow, pop-art feel"]];
+  const shotPrompt = (desc, extra) => "RE-SHOOT THIS PRODUCT PHOTO. Keep the product exactly as it is — same shape, proportions, label artwork, packaging text, logos and colors — and place it in this scene: " + desc + ". " + (extra ? "Extra direction: " + extra + ". " : "") + "Photorealistic commercial photography, natural contact shadows and reflections, same camera angle, product centered and fully visible, no people, no extra text, no watermark. Output the new image.";
   const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُحسب التكلفة وتُطلب موافقتك قبل كل توليد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   function panel(kind) {
     const o = S.opt;
+    if (kind === "sl") return `<div class="pbx-pz" id="pbai"><p>اختر أسلوب تصوير جاهزاً ويُعاد تصوير منتجك فيه بالذكاء الاصطناعي مع حفظ شكله وملصقاته.</p>${stateBar()}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem">${SHOTS.map((x, i) => `<button type="button" class="pbx-small" data-ai="shot" data-i="${i}" style="padding:.5rem .3rem;white-space:normal">${x[1]}</button>`).join("")}</div>
+<div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
+<div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     if (kind === "xp") return `<div class="pbx-pz" id="pbai"><p>وسّع خلفية الصورة بالذكاء الاصطناعي ليكبر المشهد حول المنتج (لتحويل صورة مربعة إلى طولية أو عريضة…). يبقى المنتج كما هو بالبكسل.</p>${stateBar()}
 <div class="rt-g"><label>طريقة التوسيع <select id="pbai-mode" class="pbx-small"><option value="ratio"${o.mode === "ratio" ? " selected" : ""}>إلى نسبة معيّنة</option><option value="dirs"${o.mode === "dirs" ? " selected" : ""}>بنسبة % لكل اتجاه</option></select></label></div>
 <div class="rt-g" id="pbai-ratio" style="${o.mode === "ratio" ? "" : "display:none"}"><label>النسبة <select id="pbai-r" class="pbx-small">${RATIOS.map(([n, v]) => `<option value="${v}"${Math.abs(o.ratio - v) < .001 ? " selected" : ""}>${n}</option>`).join("")}</select></label><label>موضع الأصل <select id="pbai-a" class="pbx-small">${ANCH.map(a => `<option value="${a[0]}"${o.anchor === a[0] ? " selected" : ""}>${a[1]}</option>`).join("")}</select></label></div>
@@ -15514,6 +15578,10 @@ const PBAI = (() => {
         const o = S.opt, p = plan(src.width, src.height, o.mode === "dirs" ? { dirs: { l: o.l, r: o.r, t: o.t, b: o.b } } : { ratio: o.ratio, anchor: o.anchor }); if (!p.grow) { say("النسبة المطلوبة لا تحتاج توسيعاً — اختر نسبة مختلفة أو زد الاتجاهات"); S.busy = false; return; }
         const pad = padded(src, p), r = await ImgGen.edit({ blob: await blobOf(pad, "image/png"), prompt: expandPrompt(o.hint.trim()), W: p.W, H: p.H, title: "توسيع الخلفية بالذكاء الاصطناعي" }); if (!r) { say(""); S.busy = false; return; }
         const fin = restore(r.canvas, src, p); S.resP = p; showRes(fin, "الحجم الناتج " + p.W + "×" + p.H + " — المنتج الأصلي محفوظ كما هو."); say("✅ تمّ التوسيع — راجع النتيجة ثم طبّقها");
+      } else if (kind === "shot") {
+        const sh = SHOTS[S.shotI]; if (!sh) { S.busy = false; return; }
+        const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: shotPrompt(sh[2], S.opt.hint.trim()), W: src.width, H: src.height, title: "إعادة تصوير المنتج — " + sh[1] }); if (!r) { say(""); S.busy = false; return; }
+        showRes(r.canvas, "أسلوب: " + sh[1]); say("✅ تمّ — راجع النتيجة ثم طبّقها");
       } else {
         const text = S.opt.text.trim(); if (!text) { say("اكتب التعليمات أولاً أو اختر اقتراحاً"); S.busy = false; return; }
         const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: editPrompt(text), W: src.width, H: src.height, title: "تعديل الصورة بالوصف" }); if (!r) { say(""); S.busy = false; return; }
@@ -15524,7 +15592,7 @@ const PBAI = (() => {
   }
   async function apply(inf) {
     if (!S.res || S.busy) return; S.busy = true; say("⏳ جارٍ الرفع…");
-    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
+    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
     catch (e) { say("⚠️ " + (e.message || e)); }
     S.busy = false;
   }
@@ -15535,13 +15603,165 @@ const PBAI = (() => {
     root.addEventListener("input", readForm);
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
-      if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf);
+      if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf);
       else if (k === "discard") { S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; say(""); }
       else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
     });
   }
   const reset = () => { S.res = null; S.id = ""; S.msg = ""; S.busy = false; };
-  return { panel, mount, reset, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt } };
+  return { panel, mount, reset, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS } };
+})();
+
+/* أدوات صور إضافية محلية (بلا API): ① كولاج (شبكات جاهزة من صور الصفحة) ② فيديو من الصورة (تقريب/تحريك Ken Burns بصيغة WebM/MP4) ③ إطار وهوية (حدّ، زوايا، بطاقة بظل، شعار محفوظ).
+   كل أداة لها دوال نقية على Canvas في `_t` (قابلة للاختبار) ولوحة داخل «تعديل الصورة». المخرجات ترفع عبر PBApp.uploadBlob وتستبدل مصدر الصورة المحدّدة (التراجع عبر Ctrl+Z)، والفيديو يُنزَّل. */
+const PBCollage = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  /* قوالب: خلايا نسبية [x,y,w,h] داخل مساحة 0..1 */
+  const LAYOUTS = { h2: ["صورتان أفقياً", [[0, 0, .5, 1], [.5, 0, .5, 1]]], v2: ["صورتان عمودياً", [[0, 0, 1, .5], [0, .5, 1, .5]]], g4: ["شبكة 2×2", [[0, 0, .5, .5], [.5, 0, .5, .5], [0, .5, .5, .5], [.5, .5, .5, .5]]], r3: ["3 صفوف", [[0, 0, 1, 1 / 3], [0, 1 / 3, 1, 1 / 3], [0, 2 / 3, 1, 1 / 3]]], c3: ["3 أعمدة", [[0, 0, 1 / 3, 1], [1 / 3, 0, 1 / 3, 1], [2 / 3, 0, 1 / 3, 1]]], m3: ["كبيرة + صغيرتان", [[0, 0, .62, 1], [.62, 0, .38, .5], [.62, .5, .38, .5]]], m4: ["كبيرة + ثلاث", [[0, 0, 1, .62], [0, .62, 1 / 3, .38], [1 / 3, .62, 1 / 3, .38], [2 / 3, .62, 1 / 3, .38]]], g6: ["شبكة 3×2", [[0, 0, 1 / 3, .5], [1 / 3, 0, 1 / 3, .5], [2 / 3, 0, 1 / 3, .5], [0, .5, 1 / 3, .5], [1 / 3, .5, 1 / 3, .5], [2 / 3, .5, 1 / 3, .5]]] };
+  const SIZES = [["1080x1080", "مربع 1080×1080"], ["1080x1350", "عمودي 4:5 — 1080×1350"], ["1080x1920", "طولي 9:16 — 1080×1920"], ["1600x900", "عريض 16:9 — 1600×900"]];
+  /* نقية: يرسم الكولاج. imgs = قماش/صورة لكل خلية بالترتيب (الناقص يبقى فارغاً)، o = {layout, W, H, gap(px), radius(px), bg} */
+  function render(imgs, o) {
+    const W = o.W, H = o.H, c = mk(W, H), g = c.getContext("2d"), lay = (LAYOUTS[o.layout] || LAYOUTS.g4)[1], gap = Math.max(0, o.gap || 0), r = Math.max(0, o.radius || 0);
+    g.fillStyle = o.bg || "#ffffff"; g.fillRect(0, 0, W, H);
+    lay.forEach((cell, i) => {
+      const x = cell[0] * W + gap / 2, y = cell[1] * H + gap / 2, w = cell[2] * W - gap, h = cell[3] * H - gap, im = imgs[i]; if (w <= 0 || h <= 0) return;
+      g.save(); g.beginPath(); if (r > 0 && g.roundRect) g.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); else g.rect(x, y, w, h); g.clip();
+      if (im) { const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, k = Math.max(w / iw, h / ih); g.drawImage(im, x + (w - iw * k) / 2, y + (h - ih * k) / 2, iw * k, ih * k); } else { g.fillStyle = "#e9e5da"; g.fillRect(x, y, w, h); }
+      g.restore();
+    });
+    return c;
+  }
+  const S = { id: "", layout: "g4", size: "1080x1080", gap: 12, radius: 14, bg: "#ffffff", picks: [], pool: [], res: null, busy: false, msg: "" };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => rej(new Error("تعذّر تحميل صورة")); im.src = A().localize(String(src)); });
+  function poolOf(curSrc) {
+    const out = [], add = u => { u = String(u || ""); if (u && !/^data:|\.svg(\?|$)/i.test(u) && !out.includes(u)) out.push(u); }; add(curSrc);
+    try { const E = A().E; (E.page.media || []).forEach(add); const walk = ws => ws.forEach(w => { if (w.type === "image" && w.set) add(w.set.src); }); (E.page.sections || []).forEach(sec => { (sec.cols || []).forEach(c => walk(c.widgets || [])); walk(sec.free || []); }); } catch (e) { }
+    return out.slice(0, 40);
+  }
+  function panel() {
+    const need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length;
+    return `<div class="pbx-pz" id="pbcl"><p>اصنع كولاجاً من صور الصفحة: اختر القالب ثم انقر الصور بالترتيب (حتى ${need}).</p>
+<div class="pbrt-row"><select id="pbcl-l" class="pbx-small">${Object.entries(LAYOUTS).map(([k, v]) => `<option value="${k}"${S.layout === k ? " selected" : ""}>${v[0]}</option>`).join("")}</select><select id="pbcl-s" class="pbx-small">${SIZES.map(([v, t]) => `<option value="${v}"${S.size === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>
+<div class="rt-g"><label>المسافة <input type="range" id="pbcl-g" min="0" max="60" value="${S.gap}"></label><label>الزوايا <input type="range" id="pbcl-r" min="0" max="80" value="${S.radius}"></label><label>الخلفية <input type="color" id="pbcl-b" value="${S.bg}"></label></div>
+<div class="ep-n">الصور المختارة: <b id="pbcl-n">${S.picks.length}</b> / ${need} <button type="button" class="pbx-small" data-cl="clear">مسح</button></div>
+<div id="pbcl-pool" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:150px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-cl="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(i) ? "3px solid #7c3aed" : "none"}">`).join("")}</div>
+<div style="margin:.4rem 0;text-align:center"><canvas id="pbcl-pv" style="max-width:100%;border-radius:6px;border:1px solid rgba(128,128,128,.3)"></canvas></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-cl="apply" id="pbcl-ap" disabled>✔ تطبيق على الصورة</button></div><div id="pbcl-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbcl-msg"); if (e) e.textContent = t; };
+  async function draw() {
+    const cv = $("pbcl-pv"); if (!cv) return; const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 300 / Math.max(W, H)), need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length, picks = S.picks.slice(0, need);
+    const ims = []; for (const i of picks) { try { ims.push(await loadImg(S.pool[i])); } catch (e) { ims.push(null); } }
+    S.res = render(ims, { layout: S.layout, W: Math.round(W * k), H: Math.round(H * k), gap: S.gap * k, radius: S.radius * k, bg: S.bg }); cv.width = S.res.width; cv.height = S.res.height; cv.getContext("2d").drawImage(S.res, 0, 0);
+    const n = $("pbcl-n"); if (n) n.textContent = picks.length; const ap = $("pbcl-ap"); if (ap) ap.disabled = !picks.length;
+  }
+  async function apply() {
+    if (S.busy || !S.picks.length) return; S.busy = true; say("⏳ جارٍ إنشاء الكولاج…");
+    try { const [W, H] = S.size.split("x").map(Number), need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length, ims = []; for (const i of S.picks.slice(0, need)) ims.push(await loadImg(S.pool[i])); const out = render(ims, { layout: S.layout, W, H, gap: S.gap, radius: S.radius, bg: S.bg }), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "cl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "كولاج الصور"; A().commitAfter(S.id); say("✅ طُبِّق الكولاج"); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+  }
+  function mount(host, inf) {
+    if (S.id !== inf.node.id) { S.id = inf.node.id; S.picks = []; } S.pool = poolOf(inf.set.src); const root = host.querySelector("#pbcl"); if (!root) return; draw();
+    root.addEventListener("change", e => { const t = e.target; if (t.id === "pbcl-l") { S.layout = t.value; S.picks = S.picks.slice(0, (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length); root.parentNode.innerHTML = panel(); mount(host, inf); } else if (t.id === "pbcl-s") { S.size = t.value; draw(); } else if (t.id === "pbcl-b") { S.bg = t.value; draw(); } });
+    root.addEventListener("input", e => { const t = e.target; if (t.id === "pbcl-g") { S.gap = +t.value; draw(); } else if (t.id === "pbcl-r") { S.radius = +t.value; draw(); } });
+    root.addEventListener("click", e => { const t = e.target.closest("[data-cl]"); if (!t) return; const k = t.dataset.cl, need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length;
+      if (k === "pick") { const i = +t.dataset.i, at = S.picks.indexOf(i); if (at >= 0) S.picks.splice(at, 1); else if (S.picks.length < need) S.picks.push(i); else { say("اكتمل العدد — أزل صورة أو غيّر القالب"); return; } root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = S.picks.includes(+im.dataset.i) ? "3px solid #7c3aed" : "none"; }); draw(); }
+      else if (k === "clear") { S.picks = []; root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = "none"; }); draw(); } else if (k === "apply") apply(); });
+  }
+  return { panel, mount, reset: () => { S.id = ""; S.picks = []; S.msg = ""; }, state: S, _t: { render, LAYOUTS } };
+})();
+
+const PBFrame = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const LSK = "pbx_brand_logo";
+  const S = { id: "", base: null, o: { border: 0, bcolor: "#ffffff", radius: 0, pad: 0, bg: "#ffffff", card: false, shadow: 0, logo: false, lpos: "br", lsize: 16, lop: 90 }, logo: null, msg: "", busy: false };
+  try { const d = localStorage.getItem(LSK); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  /* نقية: إطار (هامش بخلفية + حدّ + زوايا مدوّرة + ظل بطاقة) وختم شعار؛ تُرجع قماشاً جديداً أكبر قليلاً عند وجود هامش/ظل */
+  function frame(src, o, logo) {
+    const w = src.width, h = src.height, m = Math.min(w, h), pad = Math.round(m * (o.pad || 0) / 100), bw = Math.round(m * (o.border || 0) / 100), sh = Math.round(m * (o.shadow || 0) / 100), rad = Math.round(m * (o.radius || 0) / 100), ext = sh * 2 + (sh ? Math.round(sh * .3) : 0);
+    const W = w + 2 * (pad + bw) + ext, H = h + 2 * (pad + bw) + ext, c = mk(W, H), g = c.getContext("2d"), cx = ext / 2 + (sh ? 0 : 0), cy = ext / 2, bx = cx, by = cy, bW = w + 2 * (pad + bw), bH = h + 2 * (pad + bw);
+    const path = (x, y, ww, hh, r) => { g.beginPath(); if (r > 0 && g.roundRect) g.roundRect(x, y, ww, hh, Math.min(r, ww / 2, hh / 2)); else g.rect(x, y, ww, hh); };
+    if (sh) { g.save(); g.shadowColor = "rgba(0,0,0,.35)"; g.shadowBlur = sh; g.shadowOffsetY = Math.round(sh * .35); g.fillStyle = "#fff"; path(bx, by, bW, bH, rad + bw); g.fill(); g.restore(); }
+    if (bw || pad || o.card) { g.fillStyle = bw ? o.bcolor : o.bg; path(bx, by, bW, bH, rad + bw); g.fill(); if (bw && (pad || o.card)) { g.fillStyle = o.bg; path(bx + bw, by + bw, bW - 2 * bw, bH - 2 * bw, rad); g.fill(); } }
+    g.save(); path(bx + bw + pad, by + bw + pad, w, h, Math.max(0, rad - (pad ? 0 : 0))); g.clip(); g.drawImage(src, bx + bw + pad, by + bw + pad, w, h); g.restore();
+    if (o.logo && logo) { const lw = W * (o.lsize || 16) / 100, lh = lw * logo.height / logo.width, mm = W * .03, p = o.lpos || "br", x = p[1] === "l" ? mm : p[1] === "r" ? W - lw - mm : (W - lw) / 2, y = p[0] === "t" ? mm : p[0] === "b" ? H - lh - mm : (H - lh) / 2; g.save(); g.globalAlpha = Math.max(.05, Math.min(1, (o.lop == null ? 90 : o.lop) / 100)); g.drawImage(logo, x, y, lw, lh); g.restore(); }
+    return c;
+  }
+  const rg = (id, k, min, max, t, v) => `<label>${t} <input type="range" id="${id}" min="${min}" max="${max}" value="${v}" data-fr="${k}"></label>`;
+  function panel() {
+    const o = S.o;
+    return `<div class="pbx-pz" id="pbfr"><p>إطار وهوية: حدّ وزوايا وهامش وظل بطاقة، وختم شعار علامتك (يُحفظ في متصفحك).</p>
+<div class="rt-g">${rg("pbfr-b", "border", 0, 12, "سماكة الحدّ", o.border)}<label>لون الحدّ <input type="color" data-fr="bcolor" value="${o.bcolor}"></label>${rg("pbfr-r", "radius", 0, 40, "الزوايا", o.radius)}${rg("pbfr-p", "pad", 0, 20, "الهامش الداخلي", o.pad)}<label>لون الهامش <input type="color" data-fr="bg" value="${o.bg}"></label>${rg("pbfr-s", "shadow", 0, 12, "ظل البطاقة", o.shadow)}</div>
+<div class="rt-g"><label><input type="checkbox" data-fr="logo" ${o.logo ? "checked" : ""}> ختم شعار العلامة</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbfr-lf" style="display:none"></label><span class="ep-n">${S.logo ? "✔ الشعار محفوظ" : "لم يُرفع شعار بعد"}</span>
+<label>الموضع <select data-fr="lpos" class="pbx-small">${[["tl", "أعلى يسار"], ["tr", "أعلى يمين"], ["bl", "أسفل يسار"], ["br", "أسفل يمين"], ["mc", "الوسط"]].map(([k, t]) => `<option value="${k}"${o.lpos === k ? " selected" : ""}>${t}</option>`).join("")}</select></label>${rg("pbfr-ls", "lsize", 5, 50, "حجم الشعار", o.lsize)}${rg("pbfr-lo", "lop", 10, 100, "الشفافية", o.lop)}</div>
+<div style="text-align:center;margin:.4rem 0;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px;border-radius:6px"><canvas id="pbfr-pv" style="max-width:100%"></canvas></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-frb="apply">✔ تطبيق على الصورة</button><button type="button" class="pbx-small" data-frb="reset">تصفير</button></div><div id="pbfr-msg" class="ep-n" style="min-height:1.2em">${S.msg}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbfr-msg"); if (e) e.textContent = t; };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const k = Math.min(1, 3000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
+  function draw() { const cv = $("pbfr-pv"); if (!cv || !S.base) return; const k = Math.min(1, 320 / Math.max(S.base.width, S.base.height)), s = mk(S.base.width * k, S.base.height * k); s.getContext("2d").drawImage(S.base, 0, 0, s.width, s.height); const out = frame(s, S.o, S.logo); cv.width = out.width; cv.height = out.height; cv.getContext("2d").drawImage(out, 0, 0); }
+  async function mount(host, inf) {
+    const id = inf.node.id; if (S.id !== id || !S.base) { S.id = id; try { S.base = await loadImg(inf.set.src); } catch (e) { say("⚠️ " + e.message); return; } }
+    const root = host.querySelector("#pbfr"); if (!root) return; draw();
+    const upd = e => { const t = e.target, k = t.dataset && t.dataset.fr; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : t.value; draw(); };
+    root.addEventListener("input", upd); root.addEventListener("change", upd);
+    const lf = $("pbfr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { if (String(r.result).length < 600000) localStorage.setItem(LSK, String(r.result)); } catch (e) { } host.innerHTML = panel(); mount(host, inf); }; im.src = String(r.result); }; r.readAsDataURL(f); };
+    root.addEventListener("click", async e => { const t = e.target.closest("[data-frb]"); if (!t) return; if (t.dataset.frb === "reset") { Object.assign(S.o, { border: 0, radius: 0, pad: 0, shadow: 0, card: false, logo: false }); host.innerHTML = panel(); mount(host, inf); } else await apply(); });
+  }
+  async function apply() {
+    if (S.busy || !S.base) return; S.busy = true; say("⏳ جارٍ التطبيق…");
+    try { const out = frame(S.base, S.o, S.logo), alpha = !!(S.o.radius || S.o.shadow), blob = await new Promise(r => out.toBlob(r, alpha ? "image/png" : "image/webp", .93)), path = await A().uploadBlob(blob, "fr-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "إطار وهوية"; S.base = out; A().commitAfter(S.id); say("✅ طُبِّق"); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+  }
+  return { panel, mount, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { frame } };
+})();
+
+const PBVideo = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const EFFECTS = [["zin", "تقريب تدريجي"], ["zout", "ابتعاد تدريجي"], ["pl", "تحريك لليسار"], ["pr", "تحريك لليمين"], ["pu", "تحريك للأعلى"], ["pd", "تحريك للأسفل"], ["pulse", "نبض هادئ"]];
+  const SIZES = [["720x720", "مربع 1:1"], ["720x900", "عمودي 4:5"], ["720x1280", "طولي 9:16 (ريلز/ستوري)"], ["1280x720", "عريض 16:9"]];
+  /* نقية: يرسم الإطار t∈[0,1] من الحركة على اللوحة g (W×H) من صورة src بوضع cover مع زوم احتياطي لتتحرك داخله */
+  function frameAt(g, src, W, H, t, fx, bg) {
+    const e = t * t * (3 - 2 * t), iw = src.naturalWidth || src.width, ih = src.naturalHeight || src.height, base = Math.max(W / iw, H / ih); let z = 1.0, ox = 0, oy = 0; const room = .16;
+    if (fx === "zin") z = 1 + room * e; else if (fx === "zout") z = 1 + room * (1 - e); else if (fx === "pulse") z = 1 + .06 * Math.sin(t * Math.PI * 2); else z = 1 + room;
+    const dw = iw * base * z, dh = ih * base * z, mx = Math.max(0, dw - W) / 2, my = Math.max(0, dh - H) / 2;
+    if (fx === "pl") ox = mx * (1 - 2 * e); else if (fx === "pr") ox = -mx * (1 - 2 * e); else if (fx === "pu") oy = my * (1 - 2 * e); else if (fx === "pd") oy = -my * (1 - 2 * e);
+    g.fillStyle = bg || "#000"; g.fillRect(0, 0, W, H); g.drawImage(src, (W - dw) / 2 + ox, (H - dh) / 2 + oy, dw, dh);
+  }
+  const S = { id: "", src: null, fx: "zin", size: "720x720", dur: 5, bg: "#000000", busy: false, url: "", mime: "", msg: "", raf: 0 };
+  const supported = () => typeof MediaRecorder !== "undefined" && !!HTMLCanvasElement.prototype.captureStream;
+  const pickMime = () => ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || "";
+  function panel() {
+    return `<div class="pbx-pz" id="pbvd"><p>حوّل الصورة إلى فيديو قصير بحركة ناعمة (Ken Burns) للإعلانات والستوريز — محلياً بلا خادم. ${supported() ? "" : "<b style='color:#b45309'>متصفحك لا يدعم التسجيل من اللوحة.</b>"}</p>
+<div class="pbrt-row"><select id="pbvd-f" class="pbx-small">${EFFECTS.map(([k, t]) => `<option value="${k}"${S.fx === k ? " selected" : ""}>${t}</option>`).join("")}</select><select id="pbvd-s" class="pbx-small">${SIZES.map(([k, t]) => `<option value="${k}"${S.size === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
+<div class="rt-g"><label>المدة (ثانية) <b id="pbvd-dv">${S.dur}</b><input type="range" id="pbvd-d" min="2" max="12" value="${S.dur}"></label><label>لون الخلفية <input type="color" id="pbvd-b" value="${S.bg}"></label></div>
+<div style="text-align:center;margin:.4rem 0"><canvas id="pbvd-pv" style="max-width:100%;border-radius:6px;border:1px solid rgba(128,128,128,.3)"></canvas></div>
+<div class="pbrt-row"><button type="button" class="pbx-small" data-vd="play">▶ معاينة الحركة</button><button type="button" class="pbx-small pz-go" data-vd="make" ${supported() ? "" : "disabled"}>🎬 أنشئ الفيديو</button></div>
+<div id="pbvd-out"></div><div id="pbvd-msg" class="ep-n" style="min-height:1.2em">${S.msg}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbvd-msg"); if (e) e.textContent = t; };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
+  function still() { const cv = $("pbvd-pv"); if (!cv || !S.src) return; const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 280 / Math.max(W, H)); cv.width = Math.round(W * k); cv.height = Math.round(H * k); frameAt(cv.getContext("2d"), S.src, cv.width, cv.height, 0, S.fx, S.bg); }
+  function play(ms) { cancelAnimationFrame(S.raf); const cv = $("pbvd-pv"); if (!cv || !S.src) return; const g = cv.getContext("2d"), t0 = performance.now(), dur = (ms || S.dur * 1000); const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, cv.width, cv.height, t, S.fx, S.bg); if (t < 1) S.raf = requestAnimationFrame(step); }; S.raf = requestAnimationFrame(step); }
+  async function make() {
+    if (S.busy || !S.src || !supported()) return; const mime = pickMime(); if (!mime) { say("لا يدعم المتصفح تسجيل الفيديو"); return; }
+    S.busy = true; const [W, H] = S.size.split("x").map(Number), c = mk(W, H), g = c.getContext("2d"), stream = c.captureStream(30), rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4e6 }), chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const done = new Promise(r => { rec.onstop = r; }); rec.start(200); const t0 = performance.now(), dur = S.dur * 1000; frameAt(g, S.src, W, H, 0, S.fx, S.bg);
+    await new Promise(res => { const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, W, H, t, S.fx, S.bg); say("⏳ تسجيل " + Math.round(t * 100) + "%"); if (t < 1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); });
+    rec.stop(); await done; const blob = new Blob(chunks, { type: mime.split(";")[0] }); if (S.url) URL.revokeObjectURL(S.url); S.url = URL.createObjectURL(blob); S.mime = mime;
+    const ext = /mp4/.test(mime) ? "mp4" : "webm", out = $("pbvd-out"); if (out) out.innerHTML = `<video src="${S.url}" controls loop muted playsinline style="max-width:100%;border-radius:6px"></video><div class="pbrt-row"><a class="pbx-small pz-go" href="${S.url}" download="alyssum-video.${ext}" style="text-decoration:none;display:inline-block">⬇ تنزيل الفيديو (${(blob.size / 1048576).toFixed(1)}MB)</a></div>`;
+    say("✅ جاهز — يمكنك رفعه من «فيديو» في عناصر الصفحة"); S.busy = false; return blob;
+  }
+  async function mount(host, inf) {
+    const id = inf.node.id; if (S.id !== id || !S.src) { S.id = id; try { S.src = await loadImg(inf.set.src); } catch (e) { say("⚠️ " + e.message); return; } }
+    const root = host.querySelector("#pbvd"); if (!root) return; still();
+    root.addEventListener("change", e => { const t = e.target; if (t.id === "pbvd-f") { S.fx = t.value; still(); play(1600); } else if (t.id === "pbvd-s") { S.size = t.value; still(); } else if (t.id === "pbvd-b") { S.bg = t.value; still(); } });
+    root.addEventListener("input", e => { if (e.target.id === "pbvd-d") { S.dur = +e.target.value; const v = $("pbvd-dv"); if (v) v.textContent = S.dur; } });
+    root.addEventListener("click", e => { const t = e.target.closest("[data-vd]"); if (!t) return; if (t.dataset.vd === "play") play(1800); else if (t.dataset.vd === "make") make(); });
+  }
+  return { panel, mount, reset: () => { cancelAnimationFrame(S.raf); S.id = ""; S.src = null; S.msg = ""; }, state: S, make, supported, _t: { frameAt, EFFECTS } };
 })();
 
 /* مكتبة الملصقات (v1.89.76): آلاف الملصقات الملوّنة بحث عربي/فرنسي/إنجليزي، تُضاف للصفحة بنقرة أو سحب.

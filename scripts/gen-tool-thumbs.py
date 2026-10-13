@@ -108,4 +108,20 @@ for x0 in (6, W - 22): d.rectangle([x0, 6, x0 + 16, H - 6], outline=(255, 255, 2
 d.polygon([(W // 2 - 8, 14), (W // 2 + 8, 14), (W // 2, 6)], fill=(255, 255, 255, 230)); split(a, b, 'sm_expand')
 a = scene(4); jar(a, CREAM, cx=W // 2, h=104); b = scene(4); tint = Image.new('RGBA', prod(CREAM, 104).size, (30, 120, 90, 255)); pr = prod(CREAM, 104); rec = ImageChops.blend(pr.convert('RGB'), tint.convert('RGB'), .35).convert('RGBA'); rec.putalpha(pr.getchannel('A')); put(b, rec, W // 2, H - 14); split(a, b, 'sm_magic')
 a = busy(); jar(a, HONEY, cx=W // 2, h=100, sh=False); a = ImageEnhance.Color(ImageEnhance.Contrast(a.convert('RGB')).enhance(.62)).enhance(.55).convert('RGBA'); b = busy(); jar(b, HONEY, cx=W // 2, h=100, sh=False); b = ImageEnhance.Contrast(ImageEnhance.Color(b.convert('RGB')).enhance(1.25)).enhance(1.15).convert('RGBA'); split(a, b, 'rt')
+# ── حواف ناعمة (قبل: صورة بحواف حادة على خلفية بيضاء، بعد: تتلاشى حوافها بشكل دائرة)
+src3 = scene(3); a = Image.new('RGBA', (W, H), (255, 255, 255, 255)); a.alpha_composite(src3.crop((20, 10, 20 + 96, 10 + 96)).resize((100, 100)), (LX - 50, 30)); b = Image.new('RGBA', (W, H), (255, 255, 255, 255)); sq = src3.crop((20, 10, 116, 106)).resize((120, 120)); m = Image.new('L', (120, 120), 0); ImageDraw.Draw(m).ellipse([10, 10, 110, 110], fill=255); m = m.filter(ImageFilter.GaussianBlur(11)); sq.putalpha(m); b.alpha_composite(sq, (RX - 60, 20)); split(a, b, 'ff')
+# ── إطار وهوية / كولاج / فيديو من الصورة / أساليب تصوير ذكية
+a = scene(3); jar(a, HONEY, cx=LX, h=96, sh=False); b = Image.new('RGBA', (W, H), (240, 238, 232, 255)); card = scene(3).crop((0, 0, 110, 110)); jar(card, HONEY, cx=55, by=104, h=88, sh=False); mm = Image.new('L', card.size, 0); ImageDraw.Draw(mm).rounded_rectangle([0, 0, card.width - 1, card.height - 1], 16, fill=255)
+shd = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ImageDraw.Draw(shd).rounded_rectangle([RX - 54, 22, RX + 62, 140], 18, fill=(0, 0, 0, 90)); shd = shd.filter(ImageFilter.GaussianBlur(5)); b.alpha_composite(shd); fr_ = Image.new('RGBA', (122, 122), (255, 255, 255, 255)); fm = Image.new('L', (122, 122), 0); ImageDraw.Draw(fm).rounded_rectangle([0, 0, 121, 121], 20, fill=255); fr_.putalpha(fm); b.alpha_composite(fr_, (RX - 61, 16)); card.putalpha(mm); b.alpha_composite(card, (RX - 55, 22)); ImageDraw.Draw(b).ellipse([RX + 28, 100, RX + 52, 124], fill=(23, 63, 53, 255)); split(a, b, 'fr')
+a = scene(1); jar(a, HONEY, cx=LX, h=100, sh=False); b = Image.new('RGBA', (W, H), (255, 255, 255, 255))
+for i, (x0, y0, w0, h0) in enumerate([(RX - 58, 6, 56, 74), (RX + 2, 6, 56, 74), (RX - 58, 84, 56, 70), (RX + 2, 84, 56, 70)]):
+    tile = scene(1 + i, w0, h0); jar(tile, [HONEY, CREAM, KOHL, HONEY][i], cx=w0 // 2, by=h0 - 4, h=int(h0 * .72), sh=False); tm = Image.new('L', (w0, h0), 0); ImageDraw.Draw(tm).rounded_rectangle([0, 0, w0 - 1, h0 - 1], 8, fill=255); tile.putalpha(tm); b.alpha_composite(tile, (x0, y0))
+split(a, b, 'cl')
+a = scene(2); jar(a, HONEY, cx=LX, h=96, sh=False); b = scene(2); jar(b, HONEY, cx=RX, h=96, sh=False); bd = ImageDraw.Draw(b)
+for i, o in enumerate((10, 22, 34)): bd.rectangle([W // 2 + 6 + o // 2, 6 + o // 2, W - 6 - o // 2, H - 6 - o // 2], outline=(255, 255, 255, 220 - i * 60), width=2)
+bd.ellipse([RX - 20, H // 2 - 20, RX + 20, H // 2 + 20], fill=(0, 0, 0, 120)); bd.polygon([(RX - 6, H // 2 - 11), (RX - 6, H // 2 + 11), (RX + 13, H // 2)], fill=(255, 255, 255, 240)); split(a, b, 'vd')
+a = gray(); jar(a, HONEY, cx=LX, h=100, sh=False); b = Image.new('RGBA', (W, H), (255, 255, 255, 255))
+for i, (x0, y0) in enumerate([(W // 2 + 2, 0), (W * 3 // 4 + 1, 0), (W // 2 + 2, H // 2), (W * 3 // 4 + 1, H // 2)]):
+    tile = scene(3 + i, W // 4 - 3, H // 2 - 2); jar(tile, HONEY, cx=tile.width // 2, by=tile.height - 3, h=int(tile.height * .72), sh=False); b.alpha_composite(tile, (x0, y0))
+split(a, b, 'sm_shots')
 print('ok', len(os.listdir(OUT)))

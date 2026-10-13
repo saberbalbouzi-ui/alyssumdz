@@ -147,7 +147,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تبويب الصورة: لا بطاقة «قريباً» بعد الآن", !tools.soon.some(t => /قريباً/.test(t)), tools.soon);
   await p.evaluate(() => document.querySelector('[data-imgm="xp"]').click()); await p.waitForTimeout(500);
   ok("توسيع الخلفية: تفتح لوحته مع تنبيه تفعيل Alyssum API عند غياب المفتاح", await p.evaluate(() => { const e = document.getElementById("pbai"); return !!e && /توسيع|وسّع/.test(e.textContent) && /Alyssum API/.test(e.textContent); }));
-  await p.evaluate(() => { localStorage.setItem("alyssum_gp_gkey", "TESTKEY"); window.__aiCalls = []; const of = window.fetch; window.fetch = async (u, i) => { if (/generativelanguage/.test(String(u))) { const cv = document.createElement("canvas"); cv.width = 200; cv.height = 360; const g = cv.getContext("2d"); g.fillStyle = "#2a8"; g.fillRect(0, 0, 200, 360); const d = cv.toDataURL("image/png").split(",")[1]; window.__aiCalls.push(String(u)); if (/models\?/.test(String(u))) return of(u, i); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: d } }] } }] }), { status: 200, headers: { "Content-Type": "application/json" } }); } return of(u, i); }; window.confirm = () => true; ImgGen.ready && 0; });
+  await p.evaluate(() => { localStorage.setItem("alyssum_gp_gkey", "TESTKEY"); localStorage.setItem("store_gp_gkey", "TESTKEY"); window.__aiCalls = []; const of = window.fetch; window.fetch = async (u, i) => { if (/generativelanguage/.test(String(u))) { const cv = document.createElement("canvas"); cv.width = 200; cv.height = 360; const g = cv.getContext("2d"); g.fillStyle = "#2a8"; g.fillRect(0, 0, 200, 360); const d = cv.toDataURL("image/png").split(",")[1]; window.__aiCalls.push(String(u)); if (/models\?/.test(String(u))) return of(u, i); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: d } }] } }] }), { status: 200, headers: { "Content-Type": "application/json" } }); } return of(u, i); }; window.confirm = () => true; ImgGen.ready && 0; });
   await p.evaluate(() => { document.querySelector('[data-imgm="ai"]').click(); }); await p.waitForTimeout(500);
   ok("تعديل بالوصف: تظهر اقتراحات جاهزة وحقل التعليمات", await p.evaluate(() => !!document.getElementById("pbai-text") && document.querySelectorAll('#pbai [data-ai="preset"]').length >= 5));
   await p.evaluate(() => { document.getElementById("pbai-text").value = "غيّر لون المنتج إلى الذهبي"; document.getElementById("pbai-text").dispatchEvent(new Event("input", { bubbles: true })); document.querySelector('#pbai [data-ai="edit"]').click(); }); await p.waitForTimeout(3500);
@@ -159,7 +159,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("لمسات وتصحيح: تفتح لوحتها بمعاينة وأزرارها", await p.evaluate(() => !!document.getElementById("pbrt") && !!document.getElementById("pbrt-pv") && document.querySelectorAll("#pbrt [data-rt]").length >= 8));
   await p.evaluate(() => { document.querySelector('#pbrt [data-rt="auto"]').click(); }); await p.waitForTimeout(1200);
   ok("لمسات وتصحيح: تحسين تلقائي يُفعَّل ويفتح زر «تطبيق»", await p.evaluate(() => !document.getElementById("pbrt-apply").disabled));
-  await p.evaluate(() => { localStorage.removeItem("alyssum_gp_gkey"); });
+  for (const [k, root, txt] of [["ff", "pbff", /Contour fondu|حواف/], ["fr", "pbfr", /إطار/], ["cl", "pbcl", /كولاج/], ["vd", "pbvd", /فيديو/]]) {
+    await p.evaluate(kk => document.querySelector('[data-imgt="' + kk + '"]').click(), k); await p.waitForTimeout(700);
+    ok("أداة «" + k + "»: تفتح لوحتها", await p.evaluate(([r, t]) => { const e = document.getElementById(r); return !!e && new RegExp(t).test(e.textContent); }, [root, txt.source]));
+  }
+  await p.evaluate(() => document.querySelector('[data-imgm="sl"]').click()); await p.waitForTimeout(600);
+  ok("أساليب التصوير الذكية: اثنا عشر أسلوباً", await p.evaluate(() => document.querySelectorAll('#pbai [data-ai="shot"]').length === 12));
+  await p.evaluate(() => { localStorage.removeItem("alyssum_gp_gkey"); localStorage.removeItem("store_gp_gkey"); });
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
   // ── منع سماع المساعد لنفسه ──
   const ec = await p.evaluate(() => { AdminVoice._spk("مرحباً أليسوم، أنا أسمعك. تكلّم مباشرة", 800); const a = AdminVoice._echo(["مرحبا"]), b = AdminVoice._echo(["افتح الطلبات"]); AdminVoice._spk("مرحباً أليسوم، أنا أسمعك", 2500); const c = AdminVoice._echo(["نعم"]), d = AdminVoice._echo(["أنا أسمعك تكلم مباشرة"]); return { a, b, c, d }; });
@@ -195,7 +201,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.ltoggle("add"); await new Promise(r => setTimeout(r, 200)); o.closedByTab = !document.getElementById("pbx-ep");
     PBApp.ltoggle("img"); document.querySelector('#pbx-lpane [data-imgt="st"]').click(); await new Promise(r => setTimeout(r, 600)); return o;
   });
-  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 5 أدوات وصور حقيقية محمّلة وأدوات ذكية", it.second === "img" && it.tabOn && it.tools === 5 && it.sub === 5 && it.sm === 2 && it.imgsN >= 12 && it.loaded === it.imgsN, it);
+  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 10 أدوات وصور حقيقية محمّلة وأدوات ذكية", it.second === "img" && it.tabOn && it.tools === 10 && it.sub === 5 && it.sm === 5 && it.imgsN >= 12 && it.loaded === it.imgsN, it);
   ok("تعديل الصورة: اسم الأداة والإعدادات في الشريط الأيمن (بلا شريط تبويبات داخلي)، وأدوات الاستوديو تُفتح من القائمة اليسرى", it.tabsHidden && !it.hasEpTabs && /استوديو المنتج/.test(it.head) && /ملصقات/.test(it.head) && it.visPane === "txt" && /بازل/.test(it.pzHead) && it.subGone, it);
   ok("تعديل الصورة: فتح تبويب آخر يغلق لوحة الأداة (كل تبويب يغلق الذي قبله)", it.closedByTab, it);
   const cx = await p.evaluate(async () => {
