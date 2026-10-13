@@ -1331,6 +1331,21 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { before, left, wired: /closeFloating/.test(PBApp.close.toString()) };
   });
   ok("إغلاق المطوّر: كل النوافذ العائمة (مكتبة الصور وتحميلها ولوحة الأداة والقوائم) تُغلق معه", cfT.before === 8 && cfT.left.length === 0 && cfT.wired, cfT);
+  // ── نافذة «صفحة جديدة»: زر «افتح» ظاهر دائماً حتى على شاشة قصيرة (المحتوى يتمرّر والأزرار ثابتة) ──
+  const npT = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBAdmin.newPage(); await w(200); const d = document.getElementById("pbnp");
+    d.querySelector('[data-np="size"]').click(); await w(100); const go = d.querySelector('[data-np="go"]'); R.label = go.textContent.trim();
+    const vis = () => { const b = go.getBoundingClientRect(), r = d.getBoundingClientRect(); return b.height > 20 && b.top >= r.top - 1 && b.bottom <= r.bottom + 1 && b.bottom <= innerHeight; };
+    R.tall = vis(); R.fits = d.getBoundingClientRect().height <= innerHeight; const bp = document.getElementById("pbnp-bg"); bp.remove(); return R;
+  });
+  await p.setViewportSize({ width: 1280, height: 520 });
+  const npS = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBAdmin.newPage(); await w(200); const d = document.getElementById("pbnp");
+    d.querySelector('[data-np="size"]').click(); await w(150); const go = d.querySelector('[data-np="go"]'), b = go.getBoundingClientRect(), r = d.getBoundingClientRect();
+    R.short = b.height > 20 && b.bottom <= innerHeight && b.top >= 0; R.fits = r.height <= innerHeight; document.getElementById("pbnp-bg").remove(); return R;
+  });
+  await p.setViewportSize({ width: 1280, height: 800 });
+  ok("نافذة «صفحة جديدة»: الزر «افتح» ظاهر كاملاً بالشاشة العادية والقصيرة (520px) والنافذة لا تتجاوز الشاشة", npT.label === "افتح" && npT.tall && npT.fits && npS.short && npS.fits, { npT, npS });
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
