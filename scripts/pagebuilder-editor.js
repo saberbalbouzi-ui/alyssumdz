@@ -34,10 +34,10 @@ body{overflow-x:hidden;margin:0}`;
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
 .pbx-tabs button.pbx-ah[data-lt="pub"]{display:none}#pb-app.pbx-ad .pbx-tabs button.pbx-ah[data-lt="pub"]{display:flex}.pbx-adx,.pbx-adsz{display:none!important}#pb-app.pbx-ad .pbx-adx,#pb-app.pbx-ad .pbx-adsz{display:inline-flex!important}
-#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx):not(.pbx-adsz),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2{display:none!important}
-.pbx-top{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#173f35;color:#fff;flex-wrap:wrap}
+#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx):not(.pbx-adsz),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2,#pb-app.pbx-ad #pbx-prev{display:none!important}#pbx-upd{display:none!important}
+.pbx-top{display:flex;align-items:center;gap:.4rem;padding:.45rem .8rem;background:#173f35;color:#fff;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;white-space:nowrap}.pbx-top>*{flex:none}
 .pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
-.pbx-top input{background:#fff;border:0;border-radius:8px;padding:.4rem .7rem;font-weight:800;width:auto;flex:0 1 240px;min-width:120px;font-family:inherit;color:#173f35}
+.pbx-top input{background:#fff;border:0;border-radius:8px;padding:.3rem .55rem;font-weight:800;width:auto;field-sizing:content;flex:0 1 auto;min-width:6ch;max-width:26ch;font-family:inherit;font-size:.85rem;color:#173f35}#pbx-rn{padding:.42rem .5rem!important}
 .pbx-top button{display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:8px;padding:.42rem .75rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.85rem}
 .pbx-top button:hover{background:rgba(255,255,255,.22)}.pbx-top button.on{background:#c8a24b;color:#173f35}.pbx-top button.pub{background:#c8a24b;color:#173f35}.pbx-top button:disabled{opacity:.35;cursor:default}
 .pbx-top .sp{margin-inline-start:auto}.pbx-dirty{font-size:.78rem;opacity:.8}
@@ -233,10 +233,9 @@ body{overflow-x:hidden;margin:0}`;
   <button onclick="PBApp.close()" title="إغلاق المحرر">${ico('close',16)} إغلاق</button>
   <button class="pbx-tg" id="pbx-tgl" onclick="PBApp.panel('l')" title="إظهار/إخفاء شريط الأدوات">${ico('tab_add',16)} الأدوات</button>
   <button class="pbx-tg" id="pbx-tgr" onclick="PBApp.panel('r')" title="إظهار/إخفاء شريط الإعدادات">${ico('tab_pg',16)} الإعدادات</button>
-  <input id="pbx-title" placeholder="عنوان الصفحة" readonly oninput="PBApp.meta('title',this.value)"><button id="pbx-rn" type="button" onclick="PBApp.rename()" title="تعديل اسم الصفحة (Enter للتأكيد، Esc للإلغاء)">${ico('pencil',15)}<span>تعديل الاسم</span></button><button id="pbx-clb" type="button" onclick="PBClone.open()" title="نسخ قالب: افتح موقعاً برابطه أو صورة وحوّل محتواه إلى عناصر قابلة للتعديل">${ico('clone',15)}<span>نسخ قالب</span></button>
+  <input id="pbx-title" placeholder="عنوان الصفحة" readonly oninput="PBApp.meta('title',this.value)"><button id="pbx-rn" type="button" onclick="PBApp.rename()" title="تعديل اسم الصفحة (Enter للتأكيد، Esc للإلغاء)">${ico('pencil',15)}</button><button id="pbx-clb" type="button" onclick="PBClone.open()" title="نسخ قالب: افتح موقعاً برابطه أو صورة وحوّل محتواه إلى عناصر قابلة للتعديل">${ico('clone',15)}<span>نسخ قالب</span></button>
   <div class="pbx-more" id="pbx-more"><button type="button" id="pbx-moreb" title="المزيد: تحديث اللوحة ومسح الكاش" aria-haspopup="true" aria-expanded="false">⋯</button><div class="pbx-moremenu" id="pbx-moremenu"><button id="pbx-upd" data-au="1" type="button" onclick="AdminUpdate.apply()" title="تحديث الصفحة لآخر نسخة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg> <span class="au-t">تحديث</span></button><button id="pbx-cc" type="button" onclick="AdminUpdate.clearCache()" title="مسح كاش المتصفح وإعادة تحميل الصفحة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></svg> <span>الكاش</span></button></div></div>
   <span class="sp"></span>
-  <span class="pbx-dirty" id="pbx-dirty"></span>
   <span id="pbx-upb" class="pbx-upb" style="display:none"></span>
   <button data-dv="d" onclick="PBApp.setDev('d')" title="المكتب">${ico('dev_d',16)} المكتب</button>
   <button data-dv="t" onclick="PBApp.setDev('t')" title="التابلت">${ico('dev_t',16)} تابلت</button>
@@ -244,13 +243,10 @@ body{overflow-x:hidden;margin:0}`;
   <span class="pbx-zm" id="pbx-zm" title="تكبير القماش: Ctrl + عجلة الفأرة"><button type="button" data-z="-" title="تصغير" aria-label="تصغير">−</button><b id="pbx-zv">100%</b><button type="button" data-z="+" title="تكبير" aria-label="تكبير">+</button><button type="button" data-z="0" title="ملاءمة العرض" aria-label="ملاءمة العرض">⤢</button></span>
   <button id="pbx-anim" onclick="PBApp.playAnims(PBApp.animTarget())" title="تشغيل حركات الظهور: يعيد تشغيل حركة ظهور العنصر المحدّد (أو كل عناصر الصفحة إن لم يُحدَّد شيء) لتراها كما ستظهر للزائر.">▶ حركات الظهور</button>
   <button id="pbx-fx" onclick="PBApp.toggleFx()" title="تأثيرات حيّة: تعمل السلايدرات والتبويبات والأكورديون والقوائم المنسدلة وتحويم البطاقات داخل المحرّر نفسه (الثبات عند التمرير وParallax تظهر في المعاينة والصفحة المنشورة).">تأثيرات حيّة</button>
-  <button id="pbx-live" onclick="PBApp.toggleLive()" title="تعديل مباشر: التعديلات تُطبَّق على الصفحة فوراً بلا شريط تأكيد. عطّله لتظهر أزرار تأكيد/إلغاء لكل عنصر.">✏️ تعديل مباشر</button>
-  <button id="pbx-grid" onclick="PBApp.toggleGrid()" title="إظهار شبكة المحاذاة على الصفحة (الافتراضي: صفحة بيضاء بلا شبكة)">▦ شبكة</button>
-  <button id="pbx-snap" onclick="PBApp.toggleSnap()" title="الالتصاق بحواف العناصر الأخرى والمنتصف (اضغط Alt أثناء السحب لتعطيله مؤقتاً)">${ico('snap',16)} التصاق</button>
   <button id="pbx-undo" onclick="PBApp.undo()" title="تراجع (Ctrl+Z)">${ico('undo',16)}</button>
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
-  <button onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
+  <button id="pbx-prev" onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
   <button class="pub pbx-adsz" id="pbx-adsz" type="button" onclick="PBApp.adResizeUi()" title="تغيير مقاس التصميم: مع تحجيم العناصر أو تغيير مقاس الصفحة فقط">📐 المقاس</button>
   <button class="pub pbx-adx" id="pbx-adx" type="button" onclick="ImgGen.exportAd()" title="يحوّل التصميم إلى صورة بمقاس المنصة بالبكسل للتنزيل أو الحفظ في المكتبة">⬇ تصدير الصورة</button>
   <button class="pub" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
@@ -393,7 +389,7 @@ body{overflow-x:hidden;margin:0}`;
   function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(E.page)); } catch (e) { } }
   function updateTop() {
     $("pbx-undo").disabled = E.hi <= 0; $("pbx-redo").disabled = E.hi >= E.hist.length - 1; document.querySelectorAll('.pbx-qbar [data-qb="undo"]').forEach(b => b.disabled = E.hi <= 0); document.querySelectorAll('.pbx-qbar [data-qb="redo"]').forEach(b => b.disabled = E.hi >= E.hist.length - 1);
-    $("pbx-dirty").textContent = E.dirty ? "● تعديلات غير منشورة" : "";
+    const dty = $("pbx-dirty"); if (dty) dty.textContent = E.dirty ? "● تعديلات غير منشورة" : "";
     document.querySelectorAll("[data-dv]").forEach(b => b.classList.toggle("on", b.dataset.dv === E.dev)); const sn = $("pbx-snap"); if (sn) sn.classList.toggle("on", E.snap); const gb = $("pbx-grid"); if (gb) gb.classList.toggle("on", !E.nogrid); const lv = $("pbx-live"); if (lv) lv.classList.toggle("on", E.live); const fxb = $("pbx-fx"); if (fxb) fxb.classList.toggle("on", E.fx);
   }
   /* تعديل اسم الصفحة من الشريط العلوي: الحقل للقراءة افتراضياً، وزر «تعديل الاسم» يفتحه (Enter يؤكّد وEsc يلغي) */
