@@ -12,6 +12,9 @@ const CONFIG = {
   },
   SUPPORT_WA: "213559237239",   /* رقم واتساب الدعم الذي تُرسل إليه طلبات الدومين والمواقع الجديدة من اللوحة */
   PLATFORM_DOMAIN: "alyssumdz.com",   /* دومين المنصة لمن يختار عنواناً فرعياً */
+  /* منصة API: التقاط السلال المتروكة (مفتاح عام بنطاق cart:capture وحده، ومقيّد بأصول الموقع في المنصة) */
+  PLATFORM_URL: "https://api.alyssumhub.fyi",
+  PLATFORM_CART_KEY: "pk_pub_90e24ae20d7981de4c264669320ccfd23199ad75",
   API_URL: "https://script.google.com/macros/s/AKfycbx8hfWsiB4UCn9u0Z7ySDZYVwvNXTAZMqoc-6SXFDi38m7EFGHr-eGPficx10gepj2C/exec",
   /* ملاحظة أمنية: حُذف ADMIN_KEY من هذا الملف العلني (لم يكن مستعملاً في الكود). المفتاح الذي كان هنا يجب اعتباره مكشوفاً:
      غيّره في Code.gs (Apps Script) إلى قيمة جديدة، ثم أدخل القيمة الجديدة عند تسجيل الدخول إلى لوحة التحكم. */

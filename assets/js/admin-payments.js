@@ -236,5 +236,5 @@ const AdminPayments = (() => {
     if(typeof Admin==="undefined"||Admin._paymentsTabWrapped)return;
     const original=Admin.tab;Admin.tab=function(t,btn){const result=original.call(this,t,btn),el=$("tab-payments");if(el)el.classList.toggle("hidden",t!=="payments");if(t==="payments")AdminPayments.render();return result;};Admin._paymentsTabWrapped=true;
   });
-  return { render, items, record, view, autoRec, settle, sumSettle, S, DEF_COD, DEF_RET };
+  return { render, items, record, view, autoRec, settle, sumSettle, totals, S, DEF_COD, DEF_RET };
 })();

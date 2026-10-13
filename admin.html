@@ -1655,6 +1655,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-blog.js?v=1.83.0"></script>
 <script src="assets/js/admin-insights.js?v=1.83.0"></script>
 <script src="assets/js/admin-confirm-svc.js?v=1.89.56"></script>
+<script src="assets/js/admin-carts.js?v=1.89.150"></script>
+<script src="assets/js/admin-platform-sync.js?v=1.89.150"></script>
 <script src="assets/js/admin-shipagg.js?v=1"></script>
 <script src="assets/js/admin-order-docs.js?v=1.83.0"></script>
 <script src="assets/js/admin-imgbatch.js?v=1.80.0"></script>
@@ -6095,6 +6097,8 @@ const Admin = {
     const active = this.products.filter(p=>p.slug !== "test");
     const missing = active.filter(p=>p.active !== false && this.fin.costs[p.slug] == null).length;
     const done = K.delivered + K.failed, margin = K.revenue ? Math.round(K.real / K.revenue * 100) : 0;
+    let cashPend = 0; try{ cashPend = (typeof AdminPayments !== "undefined" && AdminPayments.totals) ? AdminPayments.totals().pending : 0; }catch(e){}
+    const grossPer = K.delivered ? (K.real + K.adTotal) / K.delivered : 0, beN = grossPer > 0 ? Math.ceil(K.adTotal / grossPer) : 0;
     const srcNote = (K.actN || K.realN || K.estN) ? " التكاليف: " + (K.actN ? K.actN + " طلب بالأرقام الفعلية من كشف ياليدين، " : "") + (K.realN || 0) + " بتعريفة ياليدين الرسمية (توصيل البلدية + COD + رسم الإرجاع)" + (K.estN ? "، و" + K.estN + " بتقدير من جدول الرسوم" : "") + "." : "";
     $f("fin-note").textContent = srcNote + " تتبّع المخزون التلقائي للطلبات منذ " + new Date(this.fin.cfg.since).toLocaleDateString("ar-DZ") + " — الطلبات الأقدم لا تُخصم. الربح المحقق = طلبات سُلّمت − طلبات فشلت (توصيل + إرجاع + تغليف).";
     $f("fin-miss").innerHTML = (missing ? '<span style="color:var(--red)">⚠️ ' + missing + ' منتج بلا سعر شراء — أرباحه المعروضة غير موثوقة، أدخله في الجدول</span>' : '<span style="color:var(--ok)">✅ كل المنتجات لها سعر شراء</span>') + ((K.adIdle) ? ' <span style="color:var(--red)">· ⚠️ ' + K.adIdle.toLocaleString("fr-DZ") + ' دج إنفاق إعلاني بلا طلبات ناجحة (خُصم من الربح)</span>' : "");
@@ -6103,6 +6107,8 @@ const Admin = {
       '<div><b>' + (done ? Math.round(K.delivered / done * 100) : 0) + '%</b><span>نسبة التسليم (' + K.delivered + ' / ' + done + ')</span></div>' +
       '<div><b>' + margin + '%</b><span>هامش الربح على المبيعات</span></div>' +
       (K.adTotal ? '<div><b>' + nf(K.adTotal) + ' دج</b><span>إنفاق إعلاني محتسب</span></div>' : "") +
+      (cashPend > 0 ? '<div title="طلبات سُلّمت أو في الطريق وقبضتها شركة التوصيل ولم تُحوَّل إليك بعد (حسب سجل المدفوعات)"><b style="color:#B26A00">' + nf(cashPend) + ' دج</b><span>عند شركة التوصيل (لم تصلك بعد)</span></div>' : "") +
+      (K.adTotal && K.delivered ? '<div title="عدد الطلبات المسلَّمة اللازمة لتغطية الإنفاق الإعلاني بمتوسط الربح الحالي قبل الإعلان"><b style="color:' + (beN && K.delivered >= beN ? "var(--ok)" : "#B26A00") + '">' + (beN ? K.delivered + ' / ' + beN : "—") + '</b><span>نقطة تعادل الإعلان (مسلَّم / لازم)</span></div>' : "") +
       (K.refunds ? '<div><b style="color:var(--red)">−' + nf(K.refunds) + ' دج</b><span>مبالغ مستردة (مرتجعات بعد التسليم)</span></div>' : "") +
       '<div><b style="color:' + (missing ? "var(--red)" : "var(--ok)") + '">' + missing + '</b><span>منتجات بلا سعر تكلفة</span></div>';
     const rows = active.map(p=>{ const r = per[p.slug] || { units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, loss:0, profit:0, expProfit:0 }; return Object.assign({ p }, r); })

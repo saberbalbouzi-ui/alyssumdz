@@ -2025,3 +2025,5 @@ const PhoneDZ = {
   const boot = () => { scan(); try { new MutationObserver(later).observe(document.body, { childList: true, subtree: true }); } catch (e) { } };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
+/* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
