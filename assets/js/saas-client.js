@@ -19,8 +19,10 @@ window.SaasClient = (() => {
   async function send(o) {
     try {
       const r = await rpc("saas_submit", { p: { kind: o.kind || "support", subject: String(o.subject || "").slice(0, 200), body: String(o.body || "").slice(0, 6000), origin: location.origin, contact: o.contact || {}, site: o.site || {}, payload: o.payload || {} } });
-      const a = mine(); a.unshift({ id: r.id, num: r.num, kind: o.kind || "support", subject: String(o.subject || "").slice(0, 120), at: new Date().toISOString() }); save(a);
-      try { const s = JSON.parse(localStorage.getItem(SEEN) || "{}"); s[r.id] = 0; localStorage.setItem(SEEN, JSON.stringify(s)); } catch (e) { }
+      if (!o.silent) {     // الطلب الصامت (بلاغ تقني للإدارة) لا يظهر في «طلبات الدعم» عند الزبون
+        const a = mine(); a.unshift({ id: r.id, num: r.num, kind: o.kind || "support", subject: String(o.subject || "").slice(0, 120), at: new Date().toISOString() }); save(a);
+        try { const s = JSON.parse(localStorage.getItem(SEEN) || "{}"); s[r.id] = 0; localStorage.setItem(SEEN, JSON.stringify(s)); } catch (e) { }
+      }
       return { ok: true, id: r.id, num: r.num };
     } catch (e) { return { ok: false, err: e.code === "53400" ? "rate" : (e.message || "err") }; }
   }

@@ -55,6 +55,9 @@ const ShipAgg = (() => {
     if (!r.ok) { S.cat = null; S.err = (r.j && r.j.error) || ""; return false; }
     S.cat = r.j.carriers || []; S.on = r.j.connected || []; S.base = r.j.webhook_base || ""; S.err = "";
     try { const u = await call("ship_unknown", undefined); S.unk = (u.ok && u.j.unknown) || []; } catch (e) { S.unk = []; }
+    flushOutbox();
+    if ((S.unk || []).length) reportIssues("status", "حالات طرود غير معروفة", { warnings: S.unk.map(u => u.carrier + " «" + u.raw + "» ×" + u.n) });
+    S.on.forEach(x => { const sm = x.calibration; if (sm && sm.done && sm.webhook && sm.webhook.empty) reportIssues(x.carrier_code, ((S.cat || []).find(c => c.code === x.carrier_code) || {}).label || x.carrier_code, sm); });
     return true;
   }
   const connected = code => S.on.find(x => x.carrier_code === code);
@@ -72,14 +75,54 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     const cards = S.cat.map(c => {
       const on = connected(c.code);
       const act = !c.activatable ? '<span class="sa-b">غير متاحة بعد</span>' : on
-        ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small" type="button" data-sa="ping" data-c="' + esc(c.code) + '">اختبار الاتصال</button><button class="small" type="button" data-sa="cal" data-c="' + esc(c.code) + '">' + (on.calibration && on.calibration.done ? "تقرير المعايرة" : "معايرة الحساب") + '</button><button class="small" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تحديث المفاتيح</button><button class="small" type="button" style="background:var(--red)" data-sa="off" data-c="' + esc(c.code) + '">فصل</button></div>'
+        ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="small" type="button" data-sa="ping" data-c="' + esc(c.code) + '">اختبار الاتصال</button><button class="small" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تحديث المفاتيح</button><button class="small" type="button" style="background:var(--red)" data-sa="off" data-c="' + esc(c.code) + '">فصل</button></div>'
         : '<button class="small green" type="button" data-sa="conn" data-c="' + esc(c.code) + '">تفعيل</button>';
       return '<div class="sa-c' + (on ? ' on' : '') + '"><b>' + esc(c.label) + (on ? ' ✅' : '') + '</b><span class="sa-b">' + esc(MAT[c.maturity] || c.maturity) + (c.maturity === "experimental" ? " — جرّبها بطلب واحد أولاً" : "") + '</span>' + act + '</div>';
     }).join("");
-    const unk = (S.unk || []).length ? '<div class="hint" style="border:1px solid #f59e0b;border-radius:10px;padding:.5rem .7rem;margin:.5rem 0">⚠️ حالات أرسلتها الشركات ولم نتعرف عليها (لم تُطبَّق على الطلبات): ' + S.unk.map(u => esc(u.carrier) + " «" + esc(u.raw) + "» ×" + u.n).join("، ") + ' — أرسلها للدعم لإضافتها.</div>' : "";
+    const unk = "";   // الحالات المجهولة تُرسل صامتةً إلى الإدارة (reportIssues) ولا يقرأ الزبون شيئاً
     h.innerHTML = unk + '<b style="color:var(--green)">🌐 تجميع شركات التوصيل</b><div class="hint">فعّل أي شركة بمفاتيح حسابك أنت؛ تُحفظ مشفّرة على خادمك ولا تظهر بعد الحفظ. بعد التفعيل يظهر زر «إرسال عبر …» في معاينة كل طلب، وتتحدّث حالة الطلب تلقائياً إذا وضعتَ رابط التحديث (الذي يظهر عند التفعيل) في حسابك لدى الشركة. لا يُرسل الطلب مرتين: يمنع النظام التكرار.</div><div class="sa-grid">' + cards + '</div>';
   }
 
+
+  /* ═══ بلاغات المعايرة للإدارة: الزبون لا يقرأ أي تقرير؛ أي مشكلة تُرسل صامتةً إلى الإدارة (ولا تظهر في «طلبات الدعم» عنده) ═══ */
+  function calIssues(sm) {
+    const out = []; if (!sm) return ["تعذّر إكمال المعايرة"];
+    const c = sm.communes || {}, st = sm.statuses || {}, v = sm.verify, w = sm.webhook;
+    if ((sm.ping || {}).ok === false) out.push("رفضت الشركة المفاتيح: " + ((sm.ping || {}).message || ""));
+    if (c.unmatched) out.push(c.unmatched + " بلدية عندنا غير موجودة في قائمة الشركة" + ((sm.unmatched_examples || []).length ? " (مثل: " + sm.unmatched_examples.join("، ") + ")" : ""));
+    if (st.unknown) out.push(st.unknown + " حالة طرد غير معروفة للنظام");
+    if (v && v.fail) out.push("فشل تحليل ردّ التتبع لـ" + v.fail + " من " + (v.ok + v.fail) + " طرد حقيقي");
+    if (w && w.empty) out.push("وصلت " + w.empty + " إشعارات webhook بشكل غير مفهوم");
+    (sm.warnings || []).forEach(t => { if (!out.includes(t)) out.push(t); });
+    return out;
+  }
+  const hashStr = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return String(h); };
+  const OUTBOX = "alyssum_cal_outbox", SENT = "alyssum_cal_rep";
+  const lsGet = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch (e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } };
+  async function pushReport(r) {
+    const SC = window.SaasClient; if (!SC || !SC.on()) return false;
+    const x = await SC.send({ kind: "support", silent: true, subject: r.subject, body: r.body, payload: r.payload, contact: r.contact, site: r.site });
+    return !!x.ok;
+  }
+  async function reportIssues(code, label, sm) {
+    try {
+      const issues = calIssues(sm); if (!issues.length) return;
+      const h = hashStr(code + "|" + issues.join("|")), sent = lsGet(SENT, {});
+      if (sent[code] && sent[code].h === h && Date.now() - sent[code].at < 7 * 864e5) return;       // البلاغ نفسه لا يتكرر خلال أسبوع
+      const nm = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || location.hostname;
+      const keep = sm ? { communes: sm.communes, unmatched_examples: sm.unmatched_examples, statuses: sm.statuses, verify: sm.verify, webhook: sm.webhook, warnings: sm.warnings, notes: sm.notes, ping: sm.ping, desks: sm.desks, fees: sm.fees } : null;
+      const rep = { subject: "[معايرة] " + label + " — " + nm, body: "بلاغ تلقائي من معايرة حساب شركة التوصيل «" + label + "» للموقع " + nm + " (" + location.origin + "):\n" + issues.map(t => "• " + t).join("\n"),
+        payload: { type: "carrier_calibration", carrier: code, issues, summary: keep }, contact: { name: nm }, site: { name: nm } };
+      if (await pushReport(rep)) { sent[code] = { h, at: Date.now() }; lsSet(SENT, sent); }
+      else { const q = lsGet(OUTBOX, []); q.push({ ...rep, h, code }); lsSet(OUTBOX, q.slice(-5)); }
+    } catch (e) { }
+  }
+  async function flushOutbox() {
+    const q = lsGet(OUTBOX, []); if (!q.length) return; const left = [], sent = lsGet(SENT, {});
+    for (const r of q) { if (await pushReport(r)) { sent[r.code] = { h: r.h, at: Date.now() }; } else left.push(r); }
+    lsSet(OUTBOX, left); lsSet(SENT, sent);
+  }
 
   /* ═══ المعايرة عند أول ربط: يلتقط النظام حساب الشركة (بلدياتها ومكاتبها وتعريفتها وحالات طرودها) ويصحّح نفسه قبل أول طلب حقيقي ═══ */
   const li = (t, k) => '<div style="margin:.15rem 0' + (k === "w" ? ";color:#fbbf24" : k === "g" ? ";color:#86efac" : "") + '">' + t + '</div>';
@@ -108,8 +151,8 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
   function calProgress(sm) {
     const left = ((sm || {}).progress || {}).left || 0, ph = ((sm || {}).progress || {}).phase || "geo";
     const pct = ph === "geo" ? Math.round((1 - left / Math.max(58, left || 1)) * 80) : ph === "meta" ? 85 : ph === "verify" ? 95 : 100;
-    const lab = ph === "geo" ? "نقرأ بلديات ومكاتب حسابك…" : ph === "meta" ? "نقرأ التعريفة وحالات طرودك…" : ph === "verify" ? "نتحقق من قراءة ردّ التتبع…" : "اكتملت المعايرة";
-    return '<div style="margin:.6rem 0"><b>🔍 معايرة حسابك مع الشركة</b><div class="hint">نلتقط كل ما يخص حسابك ونصحّح النظام قبل أن تبدأ العمل (قراءة فقط — لا يُنشأ أي طرد).</div>' +
+    const lab = ph === "done" ? "اكتمل التجهيز" : "جارٍ التجهيز";
+    return '<div style="margin:.6rem 0"><b>⚙️ نجهّز الربط مع الشركة</b><div class="hint">لحظات ويكون كل شيء جاهزاً.</div>' +
       '<div style="height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:.5rem 0"><div style="height:100%;width:' + pct + '%;background:#34d399;transition:width .3s"></div></div><div class="hint">' + lab + ' (' + pct + '%)</div></div>';
   }
   /* يتابع المعايرة دفعةً بعد دفعة حتى تنتهي ويعرض تقدمها في `box`. يُرجع الملخّص النهائي (أو null عند الفشل). */
@@ -139,27 +182,16 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
       const body = { carrier: code, credentials: cred }; if (needBase) body.base_url = ($("sa-base") || {}).value || "";
       $("sa-go").disabled = true; const r = await call("ship_connect", body); $("sa-go").disabled = false;
       if (!r.ok) { say("تعذّر التفعيل: " + ((r.j && (r.j.message || MSG[r.j.error] || r.j.error)) || "تحقق من المفاتيح"), "err"); return; }
-      const vnote = r.j.verified === true ? '<p>✅ تحققنا من المفاتيح لدى الشركة وهي صالحة.</p>' : '<p>⚠️ حُفظت المفاتيح لكن تعذّر التحقق منها الآن' + (r.j.verify_note ? ' (' + esc(r.j.verify_note) + ')' : '') + '؛ جرّب «اختبار الاتصال» لاحقاً.</p>';
+      const vnote = r.j.verified === true ? '<p>✅ تم ربط الشركة بنجاح.</p>' : '<p>✅ تم حفظ الربط.</p>';
       $("sa-go").style.display = "none"; $("sa-x").style.display = "none";
       let sm = null;
-      if (r.j.verified === true) { $("sa-body").innerHTML = vnote + '<div id="sa-cal"></div>'; sm = await calibrate(code, $("sa-cal"), r.j.calibration); }
+      if (r.j.verified === true) { $("sa-body").innerHTML = '<div id="sa-cal"></div>'; sm = await calibrate(code, $("sa-cal"), r.j.calibration); }
+      reportIssues(code, label, r.j.verified === true ? sm : { ping: { ok: null }, warnings: ["تعذّر التحقق من المفاتيح عند التفعيل: " + (r.j.verify_note || "")] });   // أي مشكلة تذهب للإدارة مباشرة ولا يقرأ الزبون تقريراً
       await load(); draw();
-      const rep = sm ? calReport(sm) : "";
-      $("sa-body").innerHTML = vnote + rep + '<p>ضع هذا الرابط في حسابك لدى الشركة ليصلك تحديث حالات الطرود تلقائياً (<b>يظهر هذه المرة فقط</b>):</p><div class="sa-url" id="sa-wh">' + esc(r.j.webhook_url) + '</div><button class="small blue" type="button" id="sa-cp" style="margin-top:.5rem">نسخ الرابط</button>';
+      $("sa-body").innerHTML = vnote + '<p>ضع هذا الرابط في حسابك لدى الشركة ليصلك تحديث حالات الطرود تلقائياً (<b>يظهر هذه المرة فقط</b>):</p><div class="sa-url" id="sa-wh">' + esc(r.j.webhook_url) + '</div><button class="small blue" type="button" id="sa-cp" style="margin-top:.5rem">نسخ الرابط</button>';
       $("sa-x").style.display = ""; $("sa-x").textContent = "تم";
       $("sa-cp").onclick = () => { try { navigator.clipboard.writeText(r.j.webhook_url); say("نُسخ الرابط", "ok"); } catch (e) { var s = window.getSelection(), g = document.createRange(); g.selectNodeContents($("sa-wh")); s.removeAllRanges(); s.addRange(g); } };
     };
-  }
-
-  /* تقرير المعايرة المحفوظ لشركة مفعّلة + زر إعادتها (بعد تغيير ما في حسابك عند الشركة: بلديات جديدة، مكاتب…) */
-  async function calModal(code, label) {
-    css(); const d = document.createElement("div"); d.className = "sa-mbg"; d.id = "sa-mbg";
-    d.innerHTML = '<div class="sa-mod"><h3 style="margin:0 0 .6rem">معايرة حسابك — ' + esc(label) + '</h3><div id="sa-body"><p class="hint">جارٍ التحميل…</p></div><div style="display:flex;gap:.5rem;margin-top:.6rem"><button class="small green" type="button" id="sa-go">إعادة المعايرة</button><button class="small gray" type="button" id="sa-x">إغلاق</button></div></div>';
-    d.addEventListener("mousedown", e => { if (e.target === d) d.remove(); }); document.body.appendChild(d);
-    $("sa-x").onclick = () => d.remove();
-    const show = async () => { const r = mode() === "php" ? await call("ship_calibrate", undefined, "&carrier=" + encodeURIComponent(code)) : await call("ship_calibrate", { carrier: code, __get: true }); $("sa-body").innerHTML = calReport(r.ok ? r.j.calibration : null); };
-    $("sa-go").onclick = async () => { $("sa-go").disabled = true; $("sa-x").disabled = true; const sm = await calibrate(code, $("sa-body"), null, true); $("sa-go").disabled = false; $("sa-x").disabled = false; if (sm) { $("sa-body").innerHTML = calReport(sm); await load(); draw(); } else say("تعذّرت المعايرة الآن، حاول لاحقاً", "err"); };
-    show();
   }
 
   /* طلب اللوحة ← صيغة البوابة (المرجع = رقم الطلب فيمنع التكرار في الخادم أيضاً) */
@@ -265,7 +297,6 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     c.addEventListener("click", async e => {
       const b = e.target.closest("[data-sa]"); if (!b) return; const code = b.dataset.c, meta = (S.cat || []).find(x => x.code === code); if (!meta) return;
       if (b.dataset.sa === "ping") { b.disabled = true; const r = await call("ship_ping", { carrier: code }); b.disabled = false; const j = r.j || {}; say(j.ok === true ? "المفاتيح صالحة لدى الشركة" : j.ok === false ? "الشركة ترفض المفاتيح: " + (j.message || "") : "تعذّر الحكم الآن: " + (j.message || "حاول لاحقاً"), j.ok === true ? "ok" : "err"); }
-      else if (b.dataset.sa === "cal") calModal(code, meta.label);
       else if (b.dataset.sa === "conn") modal(code, meta.label, meta.fields || [], !!meta.needs_base_url);
       else if (b.dataset.sa === "off" && confirm("فصل " + meta.label + "؟ تبقى الطرود المرسلة كما هي.")) { await call("ship_disconnect", { carrier: code }); await load(); draw(); }
     });
@@ -273,5 +304,5 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
 
   function init() { if (!mode()) return; let n = 0; const t = setInterval(() => { mount(); wrapSync(); wrapOrderActions(); const w = wrapPreview(); if (++n > 40 || (w && $("sa-card"))) clearInterval(t); }, 800); load().then(() => { wrapPreview(); wrapSync(); wrapOrderActions(); }); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { load, send, S, mode, gwPayload, syncGw, owns, calReport, calibrate };
+  return { load, send, S, mode, gwPayload, syncGw, owns, calReport, calibrate, calIssues, reportIssues };
 })();
