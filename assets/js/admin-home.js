@@ -108,6 +108,7 @@ const AdminHome = (() => {
     const cur = all.filter(o => { const t = new Date(o.date).getTime(); return t >= f1 && t < t1; }), prev = all.filter(o => { const t = new Date(o.date).getTime(); return t >= f0 && t < t0; });
     const step = hourly ? 36e5 : DAY, ok = cur.filter(okOrder), okp = prev.filter(okOrder);
     const sales = sum(ok.map(o => Number(o.total) || 0)), salesP = sum(okp.map(o => Number(o.total) || 0));
+    const od = a.overdueList ? a.overdueList().length : 0;
     const waiting = all.filter(o => o.status === "nouvelle" || !o.status).length;
     const avg = ok.length ? sales / ok.length : 0, avgP = okp.length ? salesP / okp.length : 0;
     const sb = hourly ? bucket(all, day0(Date.now()) - 6 * DAY, t1, DAY, o => okOrder(o) ? Number(o.total) || 0 : 0) : bucket(all, f1, t1, step, o => okOrder(o) ? Number(o.total) || 0 : 0);
@@ -147,6 +148,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <button type="button" class="${low.length ? "w" : "ok"}" data-go="products"><b>${num(low.length)}</b><span>منتج مخزونه منخفض (5 أو أقل)</span></button>
 <button type="button" class="${out.length ? "w" : "ok"}" data-go="products"><b>${num(out.length)}</b><span>منتج نفد من المخزون</span></button>
 <button type="button" class="${sOver.orders ? "w" : "ok"}" data-go="orders-new" title="${sOver.products.map(x => x.title + ": المطلوب " + x.demand + " والمتاح " + x.stock).join(" | ").replace(/"/g, "")}"><b>${num(sOver.orders)}</b><span>طلب جديد يفوق المخزون</span></button>
+<button type="button" class="${od ? "w" : "ok"}" data-go="callcenter"><b>${num(od)}</b><span>طلب بلا استجابة منذ مدة</span></button>
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
 <h3 style="margin-top:16px">أفضل المنتجات مبيعاً</h3>${top.length ? `<div class="tp">${top.map(([t, q], i) => `<div class="r"><span class="n">${i + 1}</span><span class="t"></span><span class="q">${num(q)} قطعة</span><span class="bar"><i style="width:${Math.max(6, q / topMax * 100)}%"></i></span></div>`).join("")}</div>` : '<div class="em" style="padding:10px">لا مبيعات في هذه الفترة.</div>'}</div>
 </div>`;

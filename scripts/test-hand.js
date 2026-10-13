@@ -1069,6 +1069,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("مركز الاتصال: الطلب المقفول لزميلة خارج طابوري (وشريحة «عند زميلاتك»)، ومؤشر الهدف اليومي وأول استجابة ظاهران، والطلب المعروض يُقفل باسمي", cc3.first === "حرّ" && cc3.lockedChip && cc3.kpi && cc3.myLock, cc3);
   ok("مركز الاتصال: التخطّي يفكّ القفل، والقفل المنتهي (>10 د) لا يمنع، والإلغاء يسأل عن السبب (7 أسباب) ويكتبه قبل تغيير الحالة", cc3.unlocked && cc3.next === "قفل منتهٍ" && cc3.nextLock && cc3.dlg && cc3.reason.tag === "expensive" && cc3.reason.st === "annulee" && cc3.reason.saved && cc3.foreignGone, cc3);
+  // ── مركز الاتصال: توزيع مسبق بحصص (مساندة بعد مهلة)، تنبيه بلا استجابة، شارة القائمة ──
+  const cc4 = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); Admin.refreshAlerts = async () => {}; const uo0 = API.updateOrder; API.updateOrder = async () => true;
+    AdminRoles.state.me = { owner: false, email: "amel@x", perms: ["orders", "orders.write", "callcenter"] };
+    const as = { on: true, weights: { "amel@x": 1, "nora@x": 1 }, overflow: 20 };
+    const mk = (id, mins) => ({ id, date: new Date(Date.now() - mins * 60000).toISOString(), status: "nouvelle", name: id, phone: "0550000000", wilaya: "Alger", commune: "Kouba", dtype: "home", items: "منتج ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" });
+    const young = Array.from({ length: 14 }, (_, i) => mk("Y" + (1000 + i), 2)), old = Array.from({ length: 4 }, (_, i) => mk("O" + (2000 + i), 90));
+    Admin.orders = young.concat(old); const mineY = young.filter(o => AdminRoles.assigneeOf(o.id, as) === "amel@x").length, otherY = young.length - mineY, oldMine = old.filter(o => AdminRoles.assigneeOf(o.id, as) === "amel@x").length;
+    CallCenter._s.perf = { goal: { daily: 10, alertMin: 30, assign: as, per: { "amel@x": { daily: 3 } } }, rows: [], today: [{ actor: "amel@x", conf: 1 }] }; CallCenter._s.perfAt = Date.now(); CallCenter._s.skip = {};
+    const q1 = CallCenter.queue().length, mineFirst = AdminRoles.assigneeOf(CallCenter.queue()[0].o.id, as) === "amel@x" || CallCenter.queue()[0].o.id.startsWith("O");
+    Admin.tab("callcenter"); await wait(400); const txt = document.getElementById("callcenter-content").textContent;
+    const chips = /للزميلات:\s*(\d+)/.exec(txt), kpi = /1\s*\/\s*3/.test(txt);
+    const od = Admin.overdueList().length; Admin.overdueAlert && await Admin.overdueAlert(); const badge = document.getElementById("nb-callcenter"), bt = badge && badge.textContent, bh = badge && badge.classList.contains("hidden");
+    // التوزيع معطّل أو الموظفة خارجه ← ترى الجميع
+    CallCenter._s.perf.goal.assign = { on: false, weights: {} }; const qAll = CallCenter.queue().length;
+    AdminRoles.state.me = { owner: true, email: "", perms: ["*"] }; CallCenter._s.perf.goal.assign = as; const qOwner = CallCenter.queue().length;
+    API.updateOrder = uo0; Admin.tab("orders"); await wait(50);
+    return { mineY, otherY, oldMine, q1, expected: mineY + old.length, mineFirst, hidden: chips && +chips[1], kpi, od, bt, bh, qAll, qOwner, total: young.length + old.length };
+  });
+  ok("توزيع الطلبات: الموظفة ترى طلباتها + طلبات الزميلات المتأخرة (مساندة) فقط، والمالك أو التوزيع المعطّل يريان الجميع", cc4.q1 === cc4.expected && cc4.hidden === cc4.otherY && cc4.qAll === cc4.total && cc4.qOwner >= cc4.total - 1 && cc4.mineY > 0 && cc4.otherY > 0, cc4);
+  ok("هدف مخصص للموظفة (1/3 بدل الافتراضي 10) وتنبيه «بلا استجابة»: الطلبات الأقدم من 30 د تُعدّ وتظهر في شارة القائمة", cc4.kpi && cc4.od === 4 && cc4.bt === "4" && cc4.bh === false, cc4);
   // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
   const plk = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));
