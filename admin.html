@@ -8389,7 +8389,7 @@ const Admin = {
       if(I.length !== 20) hints.push("طول المعرّف " + I.length + " (المعتاد 20 حرفاً) — قد يكون ناقصاً أو زائداً.");
       if(T.length !== 62) hints.push("طول التوكن " + T.length + " (المعتاد 62 حرفاً) — قد يكون ناقصاً أو زائداً.");
       if(!hints.length) hints.push("الشكل سليم لكن الشركة لا تعرف هذه القيم: غالباً توكن قديم أُبطل بتوليد توكن جديد، أو مفاتيح حساب آخر. ولّد/انسخ التوكن الحالي من صفحة الـAPI في حسابك.");
-      return this.showNotice("🔴 " + nE(co.name) + " ترفض هذه المفاتيح (" + r.status + ")", hints.map(esc).join("<br>") + "<br><br><small>" + fp + "</small>");
+      return this.showNotice("🔴 " + nE(co.name) + " ترفض هذه المفاتيح (" + r.status + ")", hints.map(nE).join("<br>") + "<br><br><small>" + fp + "</small>");
     }
     this.showNotice("⚠️ رد غير متوقع من الشركة (" + r.status + ")", "لا يمكن الحكم على المفاتيح الآن.<br><small>" + fp + "</small>");
   },
