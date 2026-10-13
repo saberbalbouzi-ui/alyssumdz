@@ -49,13 +49,20 @@
   function appAllowed(me, app) { if (!me) return false; if (me.owner === true || SELF_APPS.indexOf(app) >= 0) return true; const p = APP_PERM[app]; return p ? has(me, p) : false; }
   const LAND = ["callcenter", "orders", "home", "finance", "customers", "products", "reports", "team"];
   function firstTab(me) { for (const t of LAND) if (tabAllowed(me, t)) return t; return "team"; }
+  /* نتيجة الاتصال المسجَّلة في الملاحظة (to_status لأحداث order.call = وسوم الملاحظة): 📞1..3 غير متاح، ⏰ لاحقاً، 📅 غداً/مؤجَّل، 📵 رقم خاطئ، 🏠 عنوان معدَّل */
+  function callKinds(a, marks, n) {
+    const m = String(marks || ""); if (!m) return;
+    if (/📞1/.test(m)) a.try1 += n; if (/📞2/.test(m)) a.try2 += n; if (/📞3/.test(m)) a.try3 += n;
+    if (/📅/.test(m)) a.tomorrow += n; else if (/⏰/.test(m)) a.later += n;
+    if (/📵/.test(m)) a.wrong += n; if (/🏠/.test(m)) a.addr += n;
+  }
   function summarize(rows) {
     const by = {};
     (rows || []).forEach(r => {
-      const a = by[r.actor] || (by[r.actor] = { actor: r.actor, role: r.role, confirmed: 0, cancelled: 0, otherStatus: 0, calls: 0, edits: 0, created: 0, deleted: 0, logins: 0, last: "" });
+      const a = by[r.actor] || (by[r.actor] = { actor: r.actor, role: r.role, confirmed: 0, cancelled: 0, otherStatus: 0, calls: 0, edits: 0, created: 0, deleted: 0, logins: 0, try1: 0, try2: 0, try3: 0, later: 0, tomorrow: 0, wrong: 0, addr: 0, last: "" });
       const n = +r.n || 0;
       if (r.action === "order.status") { if (r.to_status === "confirmee") a.confirmed += n; else if (r.to_status === "annulee") a.cancelled += n; else a.otherStatus += n; }
-      else if (r.action === "order.call") a.calls += n; else if (r.action === "order.edit") a.edits += n; else if (r.action === "order.create") a.created += n;
+      else if (r.action === "order.call") { a.calls += n; callKinds(a, r.to_status, n); } else if (r.action === "order.edit") a.edits += n; else if (r.action === "order.create") a.created += n;
       else if (r.action === "order.delete") a.deleted += n; else if (r.action === "login") a.logins += n;
       if (r.last_at && r.last_at > a.last) a.last = r.last_at;
     });
@@ -241,9 +248,12 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     const rows = summarize(S.stats || []);
     let h = '<div class="card"><h3>📊 ' + (own ? "حصيلتي" : "نشاط الفريق") + '</h3><div class="rl-row"><select id="rl-days">' + [[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(x => '<option value="' + x[0] + '"' + (S.days === x[0] ? " selected" : "") + '>' + x[1] + '</option>').join("") + '</select></div>';
     if (!rows.length) return h + '<p class="rl-m">لا نشاط مسجَّل في هذه الفترة.</p></div>';
-    h += '<div style="overflow-x:auto"><table><thead><tr><th>الحساب</th><th>تأكيد</th><th>إلغاء</th><th>نسبة التأكيد</th><th>مكالمات مسجَّلة</th><th>تعديلات</th><th>طلبات يدوية</th><th>آخر نشاط</th></tr></thead><tbody>';
-    rows.forEach(r => { h += '<tr><td dir="ltr">' + esc(r.actor) + '<br><small class="rl-m">' + esc(label(r.role)) + '</small></td><td><b>' + r.confirmed + '</b></td><td>' + r.cancelled + '</td><td>' + (r.rate == null ? "—" : r.rate + "%") + '</td><td>' + r.calls + '</td><td>' + r.edits + '</td><td>' + r.created + '</td><td>' + when(r.last) + '</td></tr>'; });
-    return h + '</tbody></table></div></div>';
+    const tot = rows.reduce((t, r) => { t.c += r.confirmed; t.x += r.cancelled; return t; }, { c: 0, x: 0 }), avg = tot.c + tot.x ? Math.round(tot.c / (tot.c + tot.x) * 100) : null;
+    const tone = r => (r.rate == null ? "" : r.rate >= 70 ? "#86efac" : r.rate >= 50 ? "#fcd34d" : "#fca5a5");
+    h += '<div class="rl-row" style="margin:.4rem 0">' + (avg == null ? "" : '<span class="rl-chip">متوسط الفريق: <b>' + avg + '%</b></span>') + '<button class="rl-b s" data-rl="stats-csv">⬇ CSV</button></div>';
+    h += '<div style="overflow-x:auto"><table><thead><tr><th>الحساب</th><th>تأكيد</th><th>منها بتعديل عنوان</th><th>إلغاء</th><th>نسبة التأكيد</th><th>غير متاح 1 / 2 / 3</th><th>لاحقاً</th><th>مؤجَّل لغد</th><th>رقم خاطئ</th><th>تعديلات</th><th>طلبات يدوية</th><th>آخر نشاط</th></tr></thead><tbody>';
+    rows.forEach(r => { h += '<tr><td dir="ltr">' + esc(r.actor) + '<br><small class="rl-m">' + esc(label(r.role)) + '</small></td><td><b>' + r.confirmed + '</b></td><td>' + r.addr + '</td><td>' + r.cancelled + '</td><td style="color:' + tone(r) + ';font-weight:900">' + (r.rate == null ? "—" : r.rate + "%") + '</td><td>' + r.try1 + ' / ' + r.try2 + ' / ' + r.try3 + '</td><td>' + r.later + '</td><td>' + r.tomorrow + '</td><td>' + r.wrong + '</td><td>' + r.edits + '</td><td>' + r.created + '</td><td>' + when(r.last) + '</td></tr>'; });
+    return h + '</tbody></table></div><p class="rl-m" style="margin-top:.4rem">نسبة التأكيد = المؤكَّد ÷ (المؤكَّد + الملغى). أعمدة الاتصال تعدّ كل مرة سُجّلت فيها النتيجة.</p></div>';
   }
   function teamHtml() {
     const T = S.team; if (!T) return '<div class="card"><h3>👥 فريق العمل</h3><p class="rl-m">جارٍ التحميل…</p></div>';
@@ -309,6 +319,12 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
         const r = await MFA.confirm(S.enroll.id, code); S.enroll = null; S.recovery = r.recovery || null; toastf("✅ فُعّلت المصادقة الثنائية"); await refresh();
       }
       else if (a === "rec-done") { S.recovery = null; draw(); }
+      else if (a === "stats-csv") {
+        const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', rows = [["الحساب", "الدور", "تأكيد", "تأكيد بتعديل عنوان", "إلغاء", "نسبة التأكيد %", "غير متاح 1", "غير متاح 2", "غير متاح 3", "لاحقاً", "مؤجَّل لغد", "رقم خاطئ", "تعديلات", "طلبات يدوية"]]
+          .concat(summarize(S.stats || []).map(r => [r.actor, label(r.role), r.confirmed, r.addr, r.cancelled, r.rate == null ? "" : r.rate, r.try1, r.try2, r.try3, r.later, r.tomorrow, r.wrong, r.edits, r.created]));
+        const blob = new Blob(["\ufeff" + rows.map(r => r.map(q).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" }), l = document.createElement("a");
+        l.href = URL.createObjectURL(blob); l.download = "team-performance-" + new Date().toISOString().slice(0, 10) + ".csv"; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(l.href), 2000);
+      }
       else if (a === "mfa-off") {
         if (!confirm("إيقاف المصادقة الثنائية يضعف حماية حسابك. متابعة؟")) return;
         let code = ""; if (backend() === "php") { code = prompt("أدخل رمز التطبيق الحالي (أو رمز طوارئ):") || ""; if (!code) return; }

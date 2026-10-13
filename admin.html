@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.165">
+<meta name="admin-version" content="1.89.166">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1620,12 +1620,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.165"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.165"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.165"></script>
+<script src="assets/js/ctl-help.js?v=1.89.166"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.166"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.166"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.165"></script>
+<script src="assets/js/admin-nav.js?v=1.89.166"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1637,7 +1637,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.165"></script>
+<script src="assets/js/admin-update.js?v=1.89.166"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -2786,6 +2786,7 @@ const Admin = {
     try{
       if(status === "confirmee" && this.autoOpt("send") && !this.trackingOf(o) && !this.isBlacklisted(o.phone) && this.orderCompanyKey(o)){
         const i = this.orders.indexOf(o); if(i < 0) return;
+        const af0 = this.addrFix(o); if(af0 && !af0.applied){ this.showNotice("⚠️ لم يُرسل الطلب تلقائياً — عنوان معدَّل", "عدّلت المؤكِّدة العنوان في الملاحظة فقط (" + nE(af0.text) + "). عدّل ولاية/بلدية الطلب ثم أرسله يدوياً."); return }
         const pc = this.priceCheck(o); if(!pc.ok){ this.showNotice("⚠️ لم يُرسل الطلب تلقائياً — تدقيق السعر", "<ul style='margin:.3rem 1rem'>" + pc.msgs.map(m=>"<li>" + nE(m) + "</li>").join("") + "</ul>راجع الطلب ثم أرسله يدوياً إن كان صحيحاً."); return }
         if(quiet) this._autoReg = true;
         try{ await this.sendConfirmed(i); }finally{ if(quiet) this._autoReg = false; }
@@ -8095,9 +8096,24 @@ const Admin = {
     API.updateOrder(this.key, o.id, undefined, o.note);
   },
   callMark(o){ const m = String((o && o.note) || "").match(/⏰لاحقاً|📵خطأ/); return m ? (m[0] === "⏰لاحقاً" ? "later" : "wrong") : ""; },
+  /* «مؤجَّل إلى تاريخ» (Reporté à demain): وسم ⏰لاحقاً + 📅YYYY-MM-DD؛ يختفي من طابور الاتصال حتى يحلّ التاريخ */
+  callDue(o){ const m = String((o && o.note) || "").match(/📅(\d{4}-\d{2}-\d{2})/); return m ? m[1] : ""; },
+  isoDay(d){ const x = d || new Date(); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); },
+  /* عنوان عدّلته المؤكِّدة: 🏠✔ طُبّق على الطلب، 🏠⏳ مدوَّن في الملاحظة فقط وينتظر مراجعة من يملك التعديل */
+  addrFix(o){ const m = String((o && o.note) || "").match(/🏠([✔⏳])(?: «([^»]*)»)?/); return m ? { applied: m[1] === "✔", text: m[2] || "" } : null; },
+  setAddrFix(o, applied, text, noSave){
+    const clean = String(o.note || "").replace(/🏠[✔⏳](?: «[^»]*»)?\s*/g, "").trim(), t = String(text || "").replace(/[«»]/g, "").trim().slice(0, 160);
+    o.note = ((clean ? clean + " " : "") + "🏠" + (applied ? "✔" : "⏳") + (t ? " «" + t + "»" : "")).trim();
+    if(!noSave) API.updateOrder(this.key, o.id, undefined, o.note);
+  },
+  postponeOrder(i, days){
+    const o = this.orders[i]; if(!o) return; const d = new Date(); d.setDate(d.getDate() + Math.max(1, Number(days) || 1)); const due = this.isoDay(d);
+    this.setNoteTag(o, /(⏰لاحقاً|📅\d{4}-\d{2}-\d{2})\s*/g, "⏰لاحقاً 📅" + due);
+    this.renderOrders(); toast("📅 أُجِّل الاتصال إلى " + due);
+  },
   setCallMark(i, k){
     const o = this.orders[i]; if(!o) return; const cur = this.callMark(o);
-    this.setNoteTag(o, /(⏰لاحقاً|📵خطأ)\s*/g, k === cur ? "" : (k === "later" ? "⏰لاحقاً" : "📵خطأ"));
+    this.setNoteTag(o, /(⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2})\s*/g, k === cur ? "" : (k === "later" ? "⏰لاحقاً" : "📵خطأ"));
     this.renderOrders(); toast(k === cur ? "↩️ أُلغيت النتيجة" : (k === "later" ? "⏰ سُجّل: أعد الاتصال لاحقاً" : "📵 سُجّل: رقم خاطئ"));
   },
   statusCellHtml(o, i){
@@ -8105,7 +8121,7 @@ const Admin = {
       return '<select class="act-sel" onchange="Admin.orderAction(' + i + ',this)" title="نتيجة الاتصال بالزبون وإجراءات الطلب">' +
         '<option value="">☎️ نتيجة الاتصال…</option><option value="confirm">✅ أكّد الطلب</option>' +
         [1,2,3].map(n=>'<option value="a' + n + '">📞 لم يُجب — محاولة ' + n + '</option>').join("") +
-        '<option value="later">⏰ أعد الاتصال لاحقاً</option><option value="wrong">📵 رقم خاطئ / خارج الخدمة</option>' +
+        '<option value="later">⏰ أعد الاتصال لاحقاً</option><option value="tomorrow">📅 مؤجَّل إلى الغد</option><option value="wrong">📵 رقم خاطئ / خارج الخدمة</option>' +
         '<option value="cancel">❌ ألغى الطلب</option></select>';
     }
     return '<select class="act-sel" onchange="Admin.changeStatus(' + i + ',this.value)">' +
@@ -8122,6 +8138,7 @@ const Admin = {
     else if(v === "cancel") this.cancelOrder(i);
     else if(/^a[123]$/.test(v)) this.setAttempt(i, Number(v[1]));
     else if(v === "later" || v === "wrong") this.setCallMark(i, v);
+    else if(v === "tomorrow") this.postponeOrder(i, 1);
   },
   changeStatus(i, status){
     const o = this.orders[i]; if(!o) return;
@@ -8167,6 +8184,11 @@ const Admin = {
     const o = this.orders[i]; if(!o) return;
     const k = key || this.orderCompanyKey(o);
     if(!k){ toast("⚠️ لا توجد شركة توصيل نشطة — فعّل واحدة من تبويب «شركات التوصيل»"); this.renderDeliveryBanners(); return }
+    const af = this.addrFix(o);
+    if(af && !af.applied){
+      if(!confirm("⚠️ عدّلت المؤكِّدة عنوان هذا الطلب في الملاحظة فقط:\n«" + af.text + "»\n\nهل عدّلتَ الولاية/البلدية في الطلب نفسه؟ (موافق = أرسل الآن)")) return;
+      o.note = String(o.note || "").replace("🏠⏳", "🏠✔"); API.updateOrder(this.key, o.id, undefined, o.note);
+    }
     const ok = await this.sendOrderToDelivery(i, k);
     if(ok){ this.enqueueNotify(o, "registered"); this.renderOrders(); this.renderShippedBadge(); }
   },
@@ -8189,7 +8211,7 @@ const Admin = {
     const sh = (!stockOk && window.StockCheck) ? StockCheck.directOf(o) : null;
     if(sh) return StockCheck.ask(o, "confirm", ()=>this.confirmOrder(i, true), sh);      // المخزون الحالي لا يكفي
     API.updateOrder(this.key, o.id, "confirmee"); this.onStatusChange(i, "confirmee");
-    this.setNoteTag(o, /(📞[1-3]|⏰لاحقاً|📵خطأ)\s*/g, "");
+    this.setNoteTag(o, /(📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2})\s*/g, "");
     this.renderOrders();
     if(this.autoOpt("send") && this.orderCompanyKey(o) && !this.isBlacklisted(o.phone)){ toast("✅ أُكّد الطلب — يُرسل إلى شركة التوصيل…"); this.afterManualStatus(o, "confirmee"); }
     else toast("✅ أُكّد الطلب — اضغط «🚚 إرسال» لإرساله إلى شركة التوصيل");
@@ -8341,7 +8363,7 @@ const Admin = {
     const n = v=>(Number(v)||0).toLocaleString("fr-DZ") + " دج", esc = v=>String(v==null?"":v).replace(/[<>&"]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
     const row = (k, v)=>'<tr><td style="color:#8a8f8c;width:120px;vertical-align:top">' + k + '</td><td>' + v + '</td></tr>';
     const t = this.trackingOf(o), at = this.attemptsOf(o), cm = this.callMark(o);
-    const note = String(o.note||"").replace(/(📞[1-3]|⏰لاحقاً|📵خطأ|📦|🚚[^\s]+)\s*/g, "").trim();
+    const note = String(o.note||"").replace(/(📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|📦|🚚[^\s]+)\s*/g, "").trim();
     const ex = o.extra && typeof o.extra === "object" ? Object.entries(o.extra).filter(([k,v])=>v!==""&&v!=null&&!/promo_invalid/.test(k)&&!/تفصيل التوصيل/.test(k)) : [];
     const bdm = o.extra && typeof o.extra === "object" ? String(o.extra["🚚 تفصيل التوصيل"] || "").match(/^(\d+)\+(\d+)$/) : null, bd = bdm && Number(bdm[1]) + Number(bdm[2]) === Math.round(Number(o.fee) || 0) ? [Number(bdm[1]), Number(bdm[2])] : null;      // يظهر التفصيل للمدير فقط ما دام الرسم لم يُعدَّل
     const bl = this.isBlacklisted(o.phone);
@@ -8359,10 +8381,11 @@ const Admin = {
       (Number(o.discount) ? row("الخصم", "-" + n(o.discount) + (o.coupon ? " (" + esc(o.coupon) + ")" : "")) : "") +
       row("الإجمالي", '<b style="color:var(--green)">' + n(o.total) + '</b>') +
       ((window.StockCheck && o.status === "nouvelle" && StockCheck.shortOf(o)) ? row("المخزون", '<b style="color:#fb923c">⚠ لا يكفي هذا الطلب: ' + StockCheck.shortOf(o).map(x=>esc(x.title) + " (المطلوب " + x.need + "، المتاح " + x.have + ")").join("، ") + '</b>') : "") +
-      row("سجّل نتيجة الاتصال", (()=>{ const can = ["nouvelle","confirmee"].includes(o.status), cur = at ? "a" + at : cm, opts = [["","اختر نتيجة الاتصال…",true]].concat(o.status === "nouvelle" ? [["confirm","✅ أكّد الطلب"]] : []).concat([["a1","📞 لم يُجب — محاولة 1"],["a2","📞 لم يُجب — محاولة 2"],["a3","📞 لم يُجب — محاولة 3"],["later","⏰ أعد الاتصال لاحقاً"],["wrong","📵 رقم خاطئ / خارج الخدمة"]]).concat(can ? [["cancel","❌ ألغى الطلب"]] : []).concat(cur ? [["clear","↩ مسح النتيجة المسجَّلة"]] : []);
+      row("سجّل نتيجة الاتصال", (()=>{ const can = ["nouvelle","confirmee"].includes(o.status), cur = at ? "a" + at : (cm === "later" && this.callDue(o) ? "tomorrow" : cm), opts = [["","اختر نتيجة الاتصال…",true]].concat(o.status === "nouvelle" ? [["confirm","✅ أكّد الطلب"]] : []).concat([["a1","📞 لم يُجب — محاولة 1"],["a2","📞 لم يُجب — محاولة 2"],["a3","📞 لم يُجب — محاولة 3"],["later","⏰ أعد الاتصال لاحقاً"],["tomorrow","📅 مؤجَّل إلى الغد"],["wrong","📵 رقم خاطئ / خارج الخدمة"]]).concat(can ? [["cancel","❌ ألغى الطلب"]] : []).concat(cur ? [["clear","↩ مسح النتيجة المسجَّلة"]] : []);
         return '<select class="act-sel oc-res" style="width:100%" onchange="Admin.previewResult(' + i + ',this.value)">' + opts.map(([v,l,ph])=>'<option value="' + v + '"' + ((ph && !cur) || (v && v === cur) ? " selected" : "") + '>' + l + '</option>').join("") + '</select>'; })()) +
-      (at || cm ? row("نتيجة الاتصال", (at ? "📞 محاولة " + at : "") + (cm === "later" ? " ⏰ أعد الاتصال لاحقاً" : cm === "wrong" ? " 📵 رقم خاطئ" : "")) : "") +
+      (at || cm ? row("نتيجة الاتصال", (at ? "📞 محاولة " + at : "") + (cm === "later" ? (this.callDue(o) ? " 📅 مؤجَّل إلى " + this.callDue(o) : " ⏰ أعد الاتصال لاحقاً") : cm === "wrong" ? " 📵 رقم خاطئ" : "")) : "") +
       (t ? row("التتبع", '<b dir="ltr">' + esc(t.tracking) + '</b>') : "") +
+      (()=>{ const af = this.addrFix(o); return af ? row("🏠 عنوان معدَّل", af.applied ? "✔ طُبّق على الطلب" + (af.text ? " — " + esc(af.text) : "") : '<b style="color:#fb923c">⏳ دوّنته المؤكِّدة فقط — عدّل العنوان في الطلب ثم أرسله</b>' + (af.text ? "<br>" + esc(af.text) : "")) : ""; })() +
       (note ? row("ملاحظة", esc(note)) : "") +
       ex.map(([k,v])=>row(esc(k), /^https:\/\/(maps\.google\.com|www\.openstreetmap\.org)\//.test(String(v)) ? '<a href="' + esc(v) + '" target="_blank" rel="noopener">📍 فتح على الخريطة</a>' : esc(typeof v === "object" ? JSON.stringify(v) : v))).join("") + '</table>';
     const a = document.getElementById("ord-prev-a"), close = "document.getElementById('ord-prev-bg').classList.remove('open')";

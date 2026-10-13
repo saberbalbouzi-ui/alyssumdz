@@ -85,6 +85,8 @@ ok('سجلّ: محاولة التعديل الممنوعة لم تُنفَّذ �
 ok('الطلب: الحالة والاسم كما يجب', ($o1['status'] ?? '') === 'confirmee' && ($o1['name'] ?? '') === 'Zayd Test', $o1);
 [$c, $j] = $call('team', 'POST', ['action' => 'stats', 'days' => 7], $own);
 $ag = array_values(array_filter($j['rows'], fn($r) => $r['actor'] === 'amel' && $r['action'] === 'order.status'))[0] ?? [];
+$cl = array_values(array_filter($j['rows'], fn($r) => $r['actor'] === 'amel' && $r['action'] === 'order.call'));
+ok('إحصاء المالك: نتيجة الاتصال تحمل وسومها (to_status) لتفصيل غير متاح/لاحقاً/غداً', count($cl) >= 1 && ($cl[0]['to_status'] ?? '') !== '' && str_contains($cl[0]['to_status'], '📞'), $cl);
 ok('إحصاء المالك: تأكيد واحد للموظف', ($ag['n'] ?? 0) === 1 && ($ag['to_status'] ?? '') === 'confirmee', $j);
 
 /* منح صلاحية التعديل ثم الإيقاف */

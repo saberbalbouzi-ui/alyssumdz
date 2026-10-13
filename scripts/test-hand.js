@@ -471,7 +471,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const livOpts = sel() ? Array.from(sel().options).map(o => o.value).join() : "";
     return { btns, cancelBtm, n1, hi, n2, n3, open1, st: st1, editBtn: eb1, afterSel, afterOpts, livOpts };
   });
-  ok("نافذة المعاينة: نتيجة الاتصال قائمة منسدلة (8 خيارات للجديد) ولا زر إلغاء في الأسفل", pr.btns === 8 && !pr.cancelBtm, pr);
+  ok("نافذة المعاينة: نتيجة الاتصال قائمة منسدلة (9 خيارات للجديد) ولا زر إلغاء في الأسفل", pr.btns === 9 && !pr.cancelBtm, pr);
   ok("نافذة المعاينة: «لم يُجب 2» تظهر محدَّدة ثم «لاحقاً» ثم «مسح» والنافذة تبقى مفتوحة", /📞2/.test(pr.n1) && pr.hi && /⏰لاحقاً/.test(pr.n2) && !/⏰لاحقاً|📞/.test(pr.n3) && pr.open1, pr);
   ok("نافذة المعاينة: «أكّد الطلب» من القائمة يؤكّد، والقائمة تبقى لكل الحالات (بلا تأكيد/إلغاء للمُسلَّم)", pr.st === "confirmee" && pr.editBtn && pr.afterSel && pr.afterOpts.includes("cancel") && !pr.afterOpts.includes("confirm") && !pr.livOpts.includes("cancel") && pr.livOpts.includes("a1"), pr);
   // ── جدول «الإعلان لكل منتج» ──
@@ -1010,6 +1010,42 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("مركز الاتصال: الأقدم أولاً، المتبقي 2 (الخاطئ والمؤكَّد خارج الطابور)، زر اتصال tel:", ccm.shown && ccm.first === "الأقدم" && ccm.remain === "2" && ccm.hasTel, ccm);
   ok("مركز الاتصال: «لم يُجب» يسجّل المحاولة ويمرّر للتالي، والتأكيد يمرّ بالمنطق القائم", ccm.afterNoans === "الأحدث" && ccm.att === 1 && ccm.status === "confirmee" && /C0001/.test(ccm.ups), ccm);
   ok("مركز الاتصال: بعد التأكيد يعود إلى من لم يُجب، والإلغاء يفرّغ الطابور ويختفي التبويب بتغيير الصفحة", ccm.afterConfirm === "الأقدم" && /^\s*1\s*·\s*0\s*·\s*1/.test(ccm.stats || "") && ccm.empty === true && ccm.hidden, ccm);
+  // ── مركز الاتصال: مؤجَّل لغد، موعد اليوم يتقدّم، تأكيد مع تعديل العنوان (مالك يطبّق / مؤكِّدة تدوّن فقط) ──
+  const cc2 = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {}; Admin.enqueueNotify = () => { };
+    const notes = {}, fields = []; const uo0 = API.updateOrder, uf0 = API.updateOrderFields; API.updateOrder = async (k, id, st, note) => { if (note !== undefined) notes[id] = note; return true; }; API.updateOrderFields = async (k, id, f) => { fields.push([id, f]); return true; };
+    const sa = Admin.afterManualStatus; let sent = 0; Admin.afterManualStatus = async () => { sent++; };
+    const today = Admin.isoDay(), tm = new Date(); tm.setDate(tm.getDate() + 1); const tomorrow = Admin.isoDay(tm), yd = new Date(); yd.setDate(yd.getDate() - 1);
+    const mk = (id, name, mins, extra) => Object.assign({ id, date: new Date(Date.now() - mins * 60000).toISOString(), status: "nouvelle", name, phone: "055000" + id.slice(-4).padStart(4, "0"), wilaya: "Alger", commune: "Kouba", dtype: "home", items: "منتج ×1 = 1000 DA", subtotal: 1000, fee: 600, total: 1600, note: "" }, extra || {});
+    Admin.orders = [mk("D0001", "جديد", 5), mk("D0002", "مؤجل لغد", 300, { note: "⏰لاحقاً 📅" + tomorrow }), mk("D0003", "موعد اليوم", 100, { note: "⏰لاحقاً 📅" + Admin.isoDay(yd) }), mk("D0004", "للعنوان", 400)];
+    Admin.tab("callcenter"); await wait(200);
+    const first = () => (document.querySelector("#ccm .ccm-card h2") || {}).textContent, chips = () => document.getElementById("callcenter-content").textContent;
+    const r = { first: first(), parked: /مؤجَّل لاحقاً:\s*1/.test(chips()), remain: (document.querySelector("#ccm .ccm-chip b") || {}).textContent, btn: !!document.querySelector('#ccm [data-d="tomorrow"]') && !!document.querySelector('#ccm [data-d="addr"]') && /محاولة 1/.test(document.querySelector('#ccm [data-d="noans"]').textContent) };
+    // «غداً»: يسجّل ⏰لاحقاً + 📅 ويخرج من الطابور
+    const cur = first(); document.querySelector('#ccm [data-d="tomorrow"]').click(); await wait(150);
+    const co = Admin.orders.find(o => o.name === cur); r.tomoNote = co.note; r.tomoDue = Admin.callDue(co); r.afterTomo = first(); r.remainAfter = (document.querySelector("#ccm .ccm-chip b") || {}).textContent;
+    // تأكيد مع تعديل العنوان بصفة المالك: يُطبَّق الحقل ويُحسب الرسم ويُؤكَّد
+    const target = Admin.orders.find(o => o.name === "للعنوان"); const tid = target.id; await (async () => { for (let k = 0; k < 6 && first() !== "للعنوان"; k++) { document.querySelector('#ccm [data-d="skip"]').click(); await wait(60); } })();
+    document.querySelector('#ccm [data-d="addr"]').click(); await wait(100);
+    r.dlg = !!document.getElementById("cca-bg"); const w = document.getElementById("cca-w"); w.value = "Oran"; w.dispatchEvent(new Event("change")); document.getElementById("cca-n").value = "حي 5 جويلية";
+    document.getElementById("cca-ok").click(); await wait(900);
+    const t1 = Admin.orders.find(o => o.id === tid); r.own = { st: t1.status, w: t1.wilaya, tag: Admin.addrFix(t1), fields: fields.length ? fields[0][1].wilaya : "", sent, note: notes[tid] };
+    // مؤكِّدة بلا صلاحية التعديل: تدوّن فقط ويُمنع الإرسال التلقائي
+    window.AdminRoles.state.me = { owner: false, perms: ["orders", "orders.write", "callcenter"] };
+    const o5 = mk("D0005", "مؤكدة", 3); Admin.orders.push(o5); Admin.tab("orders"); Admin.tab("callcenter"); await wait(150);
+    for (let k = 0; k < 8 && first() !== "مؤكدة"; k++) { document.querySelector('#ccm [data-d="skip"]').click(); await wait(60); }
+    fields.length = 0; document.querySelector('#ccm [data-d="addr"]').click(); await wait(100); document.getElementById("cca-w").value = "Blida"; document.getElementById("cca-w").dispatchEvent(new Event("change")); document.getElementById("cca-ok").click(); await wait(900);
+    const t2 = Admin.orders.find(o => o.id === "D0005"); r.agent = { st: t2.status, w: t2.wilaya, tag: Admin.addrFix(t2), fields: fields.length };
+    // الإرسال اليدوي يطلب مراجعة العنوان
+    let asked = ""; window.confirm = m => { asked = m; return false; }; let sentCalls = 0; const so = Admin.sendOrderToDelivery; Admin.sendOrderToDelivery = async () => { sentCalls++; return true; }; Admin.orderCompanyKey = () => "x";
+    await Admin.sendConfirmed(Admin.orders.indexOf(t2)); r.guard = { asked: /عدّلت المؤكِّدة/.test(asked), sentCalls };
+    Admin.sendOrderToDelivery = so; API.updateOrder = uo0; API.updateOrderFields = uf0; Admin.afterManualStatus = sa; Admin.tab("orders"); await wait(50);
+    return r;
+  });
+  ok("مركز الاتصال: مؤجَّل لغد خارج الطابور ومعدود، وموعد اليوم يتقدّم، والأزرار الجديدة (غداً/عنوان/محاولة n) موجودة", cc2.first === "موعد اليوم" && cc2.parked && cc2.remain === "3" && cc2.btn, cc2);
+  ok("مركز الاتصال: «مؤجَّل إلى الغد» يكتب ⏰لاحقاً + 📅 التاريخ ويُخرج الطلب من الطابور", /⏰لاحقاً/.test(cc2.tomoNote) && /📅\d{4}-\d{2}-\d{2}/.test(cc2.tomoNote) && cc2.tomoDue && cc2.afterTomo !== "موعد اليوم" && cc2.remainAfter === "2", cc2);
+  ok("تأكيد مع تعديل العنوان (مالك): يُطبَّق الولاية ويُؤكَّد ويوسَم 🏠✔ في كتابة ملاحظة واحدة", cc2.dlg && cc2.own.st === "confirmee" && cc2.own.w === "Oran" && cc2.own.tag && cc2.own.tag.applied && cc2.own.fields === "Oran" && /🏠✔ «[^»]*وهران|🏠✔ «Oran/.test(cc2.own.note || "") && /حي 5 جويلية/.test(cc2.own.note), cc2.own);
+  ok("تأكيد مع تعديل العنوان (مؤكِّدة بلا صلاحية): يدوّن 🏠⏳ ولا يعدّل حقول الطلب، والإرسال اليدوي يطلب مراجعة العنوان", cc2.agent.st === "confirmee" && cc2.agent.w === "Alger" && cc2.agent.tag && !cc2.agent.tag.applied && cc2.agent.fields === 0 && cc2.guard.asked && cc2.guard.sentCalls === 0, cc2);
   // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
   const plk = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));
