@@ -1253,6 +1253,21 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.courierFetch = SV.cf; Admin.deliveryCfg = SV.dc; Admin.showNotice = SV.sn; Admin._keyState = SV.ks; document.getElementById("delivery-modal-bg").classList.remove("open"); return R;
   });
   ok("اختبار المفاتيح: يكشف تبديل الخانتين والطول الناقص، ويؤكد الصحيحة، ولا يحفظ", /بدّلت/.test(tkT.swap) && /10 حرفاً/.test(tkT.short) && /صحيحة/.test(tkT.good) && /7 طرد/.test(tkT.good) && tkT.kept, tkT);
+  // ── رقم الطلب الحقيقي عند الشركة: يُحفظ عند الإرسال ويُقرأ من قائمة الطرود للقديم ويظهر في المعاينة ──
+  const coT = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); const SV = { uo: API.updateOrder, or: Admin.orders, rows: AdminYd.S.rows };
+    API.updateOrder = async () => ({ ok: true }); const R = {};
+    const mk = (id, note) => ({ id, date: new Date().toISOString(), status: "confirmee", name: "ع", phone: "0550000009", wilaya: "Alger", commune: "Kouba", items: "x ×1 = 100 DA", total: 100, note: note || "" });
+    const a = mk("CN01"); Admin.saveTracking(a, "yalidine", "yal-AAA111", 1219); R.note = a.note; R.no = Admin.coNoOf(a);
+    Admin.saveTracking(a, "yalidine", "yal-BBB222", 1300); R.resave = a.note;                    // إعادة الحفظ لا تكرّر الوسم
+    const b = mk("CN02", "🚚yalidine:yal-OLD333"); AdminYd.S.rows = [{ tracking: "yal-OLD333", orderId: "1180", status: "x" }]; R.old = Admin.coNoOf(b);
+    const c = mk("CN03"); Admin.saveTracking(c, "yalidine", "yal-CCC", "CN03"); R.same = c.note;      // الرقم نفسه رقم الطلب فلا يُكرَّر
+    Admin.orders = [a, b, c]; Admin.openOrderPreview(0); await wait(100);
+    const html = (document.getElementById("ord-prev-bg") || {}).innerHTML || ""; R.shown = /رقم الطلب عند الشركة/.test(html) && />1300</.test(html); R.noTag = !/🔢/.test(html);
+    document.getElementById("ord-prev-bg").classList.remove("open");
+    API.updateOrder = SV.uo; Admin.orders = SV.or; AdminYd.S.rows = SV.rows; return R;
+  });
+  ok("رقم الطلب عند الشركة: وسم عند الإرسال، قراءة القديم من الطرود، عرض في المعاينة بلا وسم ظاهر", /🚚yalidine:yal-AAA111 🔢1219/.test(coT.note) && coT.no === "1219" && (coT.resave.match(/🔢/g) || []).length === 1 && coT.old === "1180" && !/🔢/.test(coT.same) && coT.shown && coT.noTag, coT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
