@@ -1377,6 +1377,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     stop(); sh.close(); R.noMsg = !/من ذاكرة المتصفح/.test(await (await fetch("assets/js/ai-vision.js")).text()); return R;
   });
   ok("نافذة التقاط العناصر: النافذة كاملة الارتفاع والصورة (حتى الطولية جداً) كاملة بلا شريط تمرير، ولا رسالة «من ذاكرة المتصفح»", cwT.full && cwT.noScroll && cwT.fits && Math.abs(cwT.ratio - .33) < .02 && cwT.noMsg, cwT);
+  // ── شريط التمرير: 6px بلا توهج خارجي، ومخفي في نافذة «صفحة جديدة» وبقية النوافذ ──
+  const sbT = await p.evaluate(async () => {
+    const R = { glow: 0, w: new Set() }; for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) { const t = r.selectorText || ""; if (/^::-webkit-scrollbar-thumb$/.test(t.trim()) && r.style.boxShadow && /0px 0px \d+px/.test(r.style.boxShadow.replace(/\s+/g, " ")) && !/inset/.test(r.style.boxShadow.split(/,(?![^(]*\))/).pop())) R.glow++; if (/^::-webkit-scrollbar$/.test(t.trim()) && r.style.width) R.w.add(r.style.width); } }
+    R.w = [...R.w]; PBAdmin.newPage(); await new Promise(r => setTimeout(r, 200)); const b = document.querySelector("#pbnp .np-body"); R.npNone = getComputedStyle(b).scrollbarWidth === "none"; R.m = getComputedStyle(document.querySelector("#pbnp")).scrollbarWidth === "none"; document.getElementById("pbnp-bg").remove(); return R;
+  });
+  ok("شريط التمرير: سمكه 6px في كل الأنماط وبلا توهج خارجي، ومخفي في نافذة صفحة جديدة", sbT.glow === 0 && sbT.w.every(x => x === "6px") && sbT.npNone && sbT.m, sbT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

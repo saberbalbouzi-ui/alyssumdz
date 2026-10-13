@@ -434,3 +434,9 @@ html.glass #pbs-panel [style*="background:#fff"],html.glass #pbs-panel [style*="
 html.glass #pbs-panel [style*="color:#8a8472"],html.glass #pbs-panel [style*="color:#a8a294"]{color:rgba(236,253,245,.62)!important}
 html.glass #pbs-panel [style*="border-top:1px solid #eee"]{border-top-color:rgba(255,255,255,.14)!important}
 html.glass #pbs-panel button[style*="color:#0d9488"]{color:#86efac!important}
+
+/* شريط التمرير: سمكه 6px فقط بلا توهج خارجي (كان التوهج يجعله يبدو أسمك بكثير)، ومخفي في النوافذ واللوحات العائمة حيث لا حاجة إليه (التمرير بالعجلة/اللمس يعمل) */
+::-webkit-scrollbar{width:6px!important;height:6px!important}
+::-webkit-scrollbar-thumb{box-shadow:none!important}
+.modal,.modal *,#pbnp,#pbnp *,#pbs-panel,#pbs-panel *,#pbx-pimg,#pbx-pimg *,#pbx-ep,#pbx-ep *,#pbx-lib,#pbx-lib *,#pbar-bg,#pbar-bg *{scrollbar-width:none}
+.modal::-webkit-scrollbar,.modal *::-webkit-scrollbar,#pbnp::-webkit-scrollbar,#pbnp *::-webkit-scrollbar,#pbs-panel::-webkit-scrollbar,#pbs-panel *::-webkit-scrollbar,#pbx-pimg::-webkit-scrollbar,#pbx-pimg *::-webkit-scrollbar,#pbx-ep::-webkit-scrollbar,#pbx-ep *::-webkit-scrollbar,#pbx-lib::-webkit-scrollbar,#pbx-lib *::-webkit-scrollbar,#pbar-bg::-webkit-scrollbar,#pbar-bg *::-webkit-scrollbar{display:none}
