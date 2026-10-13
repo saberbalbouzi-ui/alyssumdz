@@ -55,7 +55,7 @@ const PBCollage = (() => {
       if (k === "pick") { const i = +t.dataset.i, at = S.picks.indexOf(i); if (at >= 0) S.picks.splice(at, 1); else if (S.picks.length < need) S.picks.push(i); else { say("اكتمل العدد — أزل صورة أو غيّر القالب"); return; } root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = S.picks.includes(+im.dataset.i) ? "3px solid #7c3aed" : "none"; }); draw(); }
       else if (k === "clear") { S.picks = []; root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = "none"; }); draw(); } else if (k === "apply") apply(); });
   }
-  return { panel, mount, reset: () => { S.id = ""; S.picks = []; S.msg = ""; }, state: S, _t: { render, LAYOUTS } };
+  return { panel, mount, poolOf, reset: () => { S.id = ""; S.picks = []; S.msg = ""; }, state: S, _t: { render, LAYOUTS } };
 })();
 
 const PBFrame = (() => {
@@ -148,4 +148,51 @@ const PBVideo = (() => {
     root.addEventListener("click", e => { const t = e.target.closest("[data-vd]"); if (!t) return; if (t.dataset.vd === "play") play(1800); else if (t.dataset.vd === "make") make(); });
   }
   return { panel, mount, reset: () => { cancelAnimationFrame(S.raf); S.id = ""; S.src = null; S.msg = ""; }, state: S, make, supported, _t: { frameAt, EFFECTS } };
+})();
+
+/* «دمج صورة داخل صورة»: صورة صغيرة تُدمج في الكبيرة بحواف ناعمة (Contour fondu: مربع/دائرة + تمويه غاوسي) مع التحكم بالموضع (سحب على المعاينة) والحجم والشفافية وأسلوب المزج. */
+const PBBlend = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const MODES = [["source-over", "عادي"], ["multiply", "تعتيم (Multiply)"], ["screen", "إضاءة (Screen)"], ["overlay", "تراكب (Overlay)"], ["soft-light", "ضوء ناعم"], ["lighten", "الأفتح"], ["darken", "الأغمق"]];
+  /* نقية: o = {x,y مركز الصورة الصغيرة كنسبة 0..1 من الكبيرة، size % من عرض الكبيرة، shape rect|circle، blur 0..100 (تمويه الحواف)، op 5..100، mode} */
+  function blend(base, over, o) {
+    const W = base.width, H = base.height, c = mk(W, H), g = c.getContext("2d"); g.drawImage(base, 0, 0);
+    const ow = over.naturalWidth || over.width, oh = over.naturalHeight || over.height, w = Math.max(8, W * Math.max(3, Math.min(100, o.size || 40)) / 100), h = w * oh / ow, k = Math.min(1, 1600 / Math.max(ow, oh)), s = mk(ow * k, oh * k); s.getContext("2d").drawImage(over, 0, 0, s.width, s.height);
+    const f = PBFade._t.feather(s, { shape: o.shape || "rect", blur: o.blur == null ? 40 : o.blur }), x = (o.x == null ? .5 : o.x) * W - w / 2, y = (o.y == null ? .5 : o.y) * H - h / 2;
+    g.save(); g.globalAlpha = Math.max(.05, Math.min(1, (o.op == null ? 100 : o.op) / 100)); try { g.globalCompositeOperation = o.mode || "source-over"; } catch (e) { } g.drawImage(f, x, y, w, h); g.restore(); return c;
+  }
+  const S = { id: "", base: null, over: null, o: { x: .5, y: .5, size: 40, shape: "circle", blur: 45, op: 100, mode: "source-over" }, pool: [], msg: "", busy: false, drag: false };
+  const loadImg = (src, cap) => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const k = Math.min(1, (cap || 3000) / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = /^data:|^blob:/.test(String(src)) ? src : A().localize(String(src)); });
+  function panel() {
+    const o = S.o, sh = (k, t) => `<button type="button" class="pbx-small pz-pat${o.shape === k ? " on" : ""}" data-bl="shape" data-v="${k}">${t}</button>`;
+    return `<div class="pbx-pz" id="pbbl"><p>ادمج صورة صغيرة داخل الصورة الكبيرة بحواف ناعمة (Contour fondu): اختر الصورة الصغيرة، اسحبها على المعاينة، واضبط الحجم والتمويه.</p>
+<div id="pbbl-pool" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:96px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-bl="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.overSrc === u ? "3px solid #7c3aed" : "none"}">`).join("")}</div>
+<div class="pbrt-row"><label class="pbx-small" style="cursor:pointer">＋ رفع صورة صغيرة<input type="file" accept="image/*" id="pbbl-f" style="display:none"></label></div>
+<div class="pbrt-row"><b>الشكل</b>${sh("rect", "▢ مربع")}${sh("circle", "◯ دائرة")}</div>
+<div class="rt-g"><label>الحجم % <input type="range" id="pbbl-z" min="8" max="100" value="${o.size}"></label><label>تمويه الحواف (غاوسي) <input type="range" id="pbbl-b" min="0" max="100" value="${o.blur}"></label><label>الشفافية % <input type="range" id="pbbl-o" min="10" max="100" value="${o.op}"></label>
+<label>أسلوب المزج <select id="pbbl-m" class="pbx-small">${MODES.map(([k, t]) => `<option value="${k}"${o.mode === k ? " selected" : ""}>${t}</option>`).join("")}</select></label></div>
+<div style="text-align:center;margin:.4rem 0;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px;border-radius:6px"><canvas id="pbbl-pv" style="max-width:100%;cursor:move;touch-action:none"></canvas></div><div class="ep-n">اسحب الصورة الصغيرة على المعاينة لتحريكها.</div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-bl="apply" id="pbbl-ap" disabled>✔ تطبيق على الصورة</button></div><div id="pbbl-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbbl-msg"); if (e) e.textContent = t; };
+  function draw() {
+    const cv = $("pbbl-pv"); if (!cv || !S.base) return; const k = Math.min(1, 300 / Math.max(S.base.width, S.base.height)), b = mk(S.base.width * k, S.base.height * k); b.getContext("2d").drawImage(S.base, 0, 0, b.width, b.height);
+    const out = S.over ? blend(b, S.over, S.o) : b; cv.width = out.width; cv.height = out.height; cv.getContext("2d").drawImage(out, 0, 0); const ap = $("pbbl-ap"); if (ap) ap.disabled = !S.over;
+  }
+  async function setOver(src) { try { S.over = await loadImg(src, 1600); S.overSrc = src; say(""); const root = $("pbbl"); if (root) root.querySelectorAll('[data-bl="pick"]').forEach(im => { im.style.outline = S.pool[+im.dataset.i] === src ? "3px solid #7c3aed" : "none"; }); draw(); } catch (e) { say("⚠️ " + e.message); } }
+  async function mount(host, inf) {
+    const id = inf.node.id; if (S.id !== id || !S.base) { S.id = id; S.over = null; S.overSrc = ""; S.pool = PBCollage.poolOf(inf.set.src).filter(u => u !== inf.set.src); try { S.base = await loadImg(inf.set.src, 3000); } catch (e) { say("⚠️ " + e.message); return; } host.innerHTML = panel(); }
+    const root = host.querySelector("#pbbl"); if (!root) return; draw();
+    root.addEventListener("input", e => { const t = e.target; if (t.id === "pbbl-z") S.o.size = +t.value; else if (t.id === "pbbl-b") S.o.blur = +t.value; else if (t.id === "pbbl-o") S.o.op = +t.value; else return; draw(); });
+    root.addEventListener("change", e => { if (e.target.id === "pbbl-m") { S.o.mode = e.target.value; draw(); } else if (e.target.id === "pbbl-f") { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => setOver(String(r.result)); r.readAsDataURL(f); } });
+    root.addEventListener("click", e => { const t = e.target.closest("[data-bl]"); if (!t) return; const k = t.dataset.bl; if (k === "shape") { S.o.shape = t.dataset.v; root.querySelectorAll('[data-bl="shape"]').forEach(b => b.classList.toggle("on", b.dataset.v === S.o.shape)); draw(); } else if (k === "pick") setOver(S.pool[+t.dataset.i]); else if (k === "apply") apply(); });
+    const cv = $("pbbl-pv"); if (cv && !cv._bl) { cv._bl = 1; const mv = e => { const r = cv.getBoundingClientRect(); S.o.x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); S.o.y = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); draw(); }; cv.addEventListener("pointerdown", e => { if (!S.over) return; S.drag = true; cv.setPointerCapture(e.pointerId); mv(e); }); cv.addEventListener("pointermove", e => { if (S.drag) mv(e); }); cv.addEventListener("pointerup", () => { S.drag = false; }); }
+  }
+  async function apply() {
+    if (S.busy || !S.over || !S.base) return; S.busy = true; say("⏳ جارٍ الدمج…");
+    try { const out = blend(S.base, S.over, S.o), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "bl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "دمج صورة داخل صورة"; S.base = out; S.over = null; S.overSrc = ""; A().commitAfter(S.id); say("✅ تمّ الدمج"); draw(); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+  }
+  return { panel, mount, reset: () => { S.id = ""; S.base = null; S.over = null; S.overSrc = ""; S.msg = ""; }, state: S, _t: { blend, MODES } };
 })();

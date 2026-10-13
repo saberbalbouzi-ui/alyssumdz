@@ -126,6 +126,24 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("إطار: ختم الشعار في الزاوية", mo.f3[0] === 255 && mo.f3[2] === 255, mo.f3);
   ok("فيديو: التحريك الأفقي يغيّر ما في المنتصف بين البداية والنهاية والتقريب يكبّر", mo.pl[0] && mo.pl[1], mo);
   ok("فيديو: التسجيل ينتج ملفاً حقيقياً (إن دعمه المتصفح)", !mo.sup || (mo.vid && mo.vid[0] > 1000 && /video/.test(mo.vid[1])), mo.vid);
+  /* ── دمج صورة داخل صورة (حواف ناعمة) ── */
+  const bl = await T(async () => {
+    const mkc = (w, h, c) => { const k = document.createElement("canvas"); k.width = w; k.height = h; const g = k.getContext("2d"); g.fillStyle = c; g.fillRect(0, 0, w, h); return k; }, px = (c, x, y) => Array.from(c.getContext("2d").getImageData(x, y, 1, 1).data);
+    const base = mkc(200, 200, "#0000ff"), over = mkc(100, 100, "#ff0000"), B = PBBlend._t.blend;
+    const circ = B(base, over, { x: .5, y: .5, size: 50, shape: "circle", blur: 30, op: 100 }), hard = B(base, over, { x: .5, y: .5, size: 50, shape: "rect", blur: 0, op: 100 }), half = B(base, over, { x: .5, y: .5, size: 50, shape: "rect", blur: 0, op: 50 }), mul = B(base, over, { x: .5, y: .5, size: 50, shape: "rect", blur: 0, mode: "multiply" }), moved = B(base, over, { x: .25, y: .25, size: 30, shape: "rect", blur: 0 });
+    const edge = []; for (let x = 52; x <= 100; x += 8) edge.push(px(circ, x, 100)[0]);
+    window.__node = { id: "b1", set: { src: base.toDataURL() } }; const host = document.getElementById("host"); window.__up.length = 0; window.__commit.length = 0;
+    const ob = await new Promise(r => over.toBlob(r, "image/png")); PBApp.E = { page: { media: [URL.createObjectURL(ob)], sections: [] } }; host.innerHTML = PBBlend.panel(); await PBBlend.mount(host, { node: window.__node, set: window.__node.set }); await new Promise(r => setTimeout(r, 300));
+    const pool = document.querySelectorAll('#pbbl [data-bl="pick"]').length; document.querySelector('#pbbl [data-bl="pick"]').click(); await new Promise(r => setTimeout(r, 400)); const enabled = !document.getElementById("pbbl-ap").disabled;
+    document.getElementById("pbbl-z").value = "60"; document.getElementById("pbbl-z").dispatchEvent(new Event("input", { bubbles: true })); document.querySelector('#pbbl [data-bl="apply"]').click(); await new Promise(r => setTimeout(r, 700));
+    return { center: px(circ, 100, 100), corner: px(circ, 10, 10), edge, hard: px(hard, 100, 100), hardOut: px(hard, 20, 20), half: px(half, 100, 100), mul: px(mul, 100, 100), moved: [px(moved, 50, 50), px(moved, 150, 150)], pool, enabled, size: PBBlend.state.o.size, up: window.__up.length, commit: window.__commit.slice() };
+  });
+  ok("دمج: مركز الصورة الصغيرة بلونها والخارج بلون الكبيرة", bl.center[0] > 240 && bl.corner[2] === 255 && bl.corner[0] === 0, bl);
+  ok("دمج: حواف ناعمة — التدرّج من الخارج للداخل متصاعد", bl.edge.every((v, i, a) => !i || v >= a[i - 1]) && bl.edge[0] < 60 && bl.edge[bl.edge.length - 1] > 200, bl.edge);
+  ok("دمج: بلا تمويه تبقى الحافة حادّة، والشفافية 50% تمزج اللونين", bl.hard[0] === 255 && bl.hardOut[2] === 255 && bl.half[0] > 100 && bl.half[0] < 160 && bl.half[2] > 100, bl);
+  ok("دمج: أسلوب Multiply يعتّم (أحمر × أزرق = أسود)", bl.mul[0] < 10 && bl.mul[2] < 10, bl.mul);
+  ok("دمج: الموضع x,y يحرّك الصورة الصغيرة", bl.moved[0][0] > 240 && bl.moved[1][2] === 255, bl.moved);
+  ok("دمج (اللوحة): تعرض صور الصفحة، تفعّل التطبيق بعد الاختيار، وترفع وتثبّت التعديل", bl.pool === 1 && bl.enabled && bl.size === 60 && bl.up === 1 && bl.commit[0] === "b1", bl);
   ok("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `\n✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);
 })();

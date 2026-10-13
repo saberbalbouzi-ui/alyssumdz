@@ -124,4 +124,7 @@ a = gray(); jar(a, HONEY, cx=LX, h=100, sh=False); b = Image.new('RGBA', (W, H),
 for i, (x0, y0) in enumerate([(W // 2 + 2, 0), (W * 3 // 4 + 1, 0), (W // 2 + 2, H // 2), (W * 3 // 4 + 1, H // 2)]):
     tile = scene(3 + i, W // 4 - 3, H // 2 - 2); jar(tile, HONEY, cx=tile.width // 2, by=tile.height - 3, h=int(tile.height * .72), sh=False); b.alpha_composite(tile, (x0, y0))
 split(a, b, 'sm_shots')
+# ── دمج صورة داخل صورة (قبل: صورتان منفصلتان، بعد: الصغيرة مندمجة بحواف ناعمة)
+big = scene(5); a = big.copy(); sm = scene(2, 70, 70); jar(sm, HONEY, cx=35, by=66, h=50, sh=False); a.alpha_composite(sm, (LX + 6, 18)); b = scene(5)
+sm2 = scene(2, 80, 80); jar(sm2, HONEY, cx=40, by=76, h=58, sh=False); mk_ = Image.new('L', (80, 80), 0); ImageDraw.Draw(mk_).ellipse([8, 8, 72, 72], fill=255); mk_ = mk_.filter(ImageFilter.GaussianBlur(9)); sm2.putalpha(mk_); b.alpha_composite(sm2, (RX - 36, 22)); split(a, b, 'bl')
 print('ok', len(os.listdir(OUT)))

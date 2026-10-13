@@ -1196,7 +1196,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
-  const EP_TABS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["cl", "كولاج", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
+  const EP_TABS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
   const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
   function epBody(inf) {
     const t = E.ept || "";
@@ -1207,6 +1207,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "ff") return PBFade.panel();
     if (t === "fr") return PBFrame.panel();
     if (t === "cl") return PBCollage.panel();
+    if (t === "bl") return PBBlend.panel();
     if (t === "vd") return PBVideo.panel();
     if (t === "xp" || t === "ai" || t === "sl") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
@@ -1223,9 +1224,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); if (cur !== "ff" && typeof PBFade !== "undefined" && PBFade.state.url) PBFade.cancel();
     const tn = EP_TABS.find(x => x[0] === cur), sn = cur === "st" && typeof PBStudio !== "undefined" ? (IMG_ST.find(x => x[0] === PBStudio.tab()) || [])[1] : "";
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
-    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
+    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -1237,7 +1238,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     epDraw(); drawQbarSoon(); if (E.ltab === "img") renderLeft();
   }
   /* تبويب «تعديل الصورة» اليساري: بطاقات أدوات بصور حقيقية (نصفها قبل ونصفها بعد) */
-  const IMG_TOOLS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "bg"], ["cap", "التقاط العناصر", "capture"], ["st", "استوديو المنتج", "studio"], ["rt", "لمسات وتصحيح", "rt"], ["ff", "حواف ناعمة", "ff"], ["fr", "إطار وهوية", "fr"], ["cl", "كولاج", "cl"], ["vd", "فيديو من الصورة", "vd"]];
+  const IMG_TOOLS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "bg"], ["cap", "التقاط العناصر", "capture"], ["st", "استوديو المنتج", "studio"], ["rt", "لمسات وتصحيح", "rt"], ["ff", "حواف ناعمة", "ff"], ["fr", "إطار وهوية", "fr"], ["cl", "كولاج", "cl"], ["bl", "دمج صور", "bl"], ["vd", "فيديو من الصورة", "vd"]];
   const IMG_ST = [["bg", "الخلفية", "st_bg"], ["prod", "المنتج", "st_prod"], ["fx", "تأثيرات", "st_fx"], ["txt", "ملصقات وشعار", "st_stk"], ["out", "المقاس والإخراج", "st_size"]];
   const IMG_SM = [["scene", "مشهد ذكي للمنتج", "sm_scene", true], ["xp", "توسيع الخلفية بالذكاء", "sm_expand", true], ["ai", "تعديل بالوصف", "sm_magic", true], ["sl", "أساليب تصوير ذكية", "sm_shots", true], ["erase", "ممحاة ذكية بالفرشاة", "sm_erase", ERASER_ON]];
   function imgPane() {
