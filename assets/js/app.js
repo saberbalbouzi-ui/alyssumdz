@@ -191,8 +191,10 @@ const Cart = {
       coupon: AppliedCoupon.record && (disc.couponDiscount > 0 || couponFreeShip() || couponGiftTitle()) ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && disc.couponDiscount > 0 && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (window.GeoPin && GeoPin.link()) ? { "📍 الموقع": GeoPin.link() } : {}, Attrib),
     };
+    const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
+    try{ if(window.PFOrder) PFOrder.send(__order, __pfr, items.map(it=>({ slug: it.slug, vid: it.vid || "", qty: it.qty, price: it.price, title: it.slug }))); }catch(e){}
     let msg = `السلام عليكم ${SITE_NAME}، أريد تأكيد طلبي:\n`;
     items.forEach(it=>{
       const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
@@ -1164,8 +1166,10 @@ function initProduct(slug){
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
     };
+    const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
+    try{ if(window.PFOrder) PFOrder.send(__order, __pfr, __order.items.map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" }))); }catch(e){}
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     try{ trackEvent("Lead", { slug: p.slug, title: p.title, qty: state.offer.qty, value: total }); }catch(e){}
     firePixelPurchase(p, total, state.offer.qty);
@@ -2028,5 +2032,7 @@ const PhoneDZ = {
 })();
 /* دبوس الموقع على الخريطة (اختياري) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
+/* مرآة الطلب إلى المنصة (مراقبة الأسعار والمخزون) */
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/platform-order.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();

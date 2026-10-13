@@ -37,7 +37,14 @@ html.white .acr-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whit
 <div class="acr-act"><a class="g" href="tel:+213${esc(String(c.phone).replace(/^0/, ""))}">📞 اتصل</a><a href="${wa(c)}" target="_blank" rel="noopener">💬 واتساب</a>
 ${c.status === "open" ? '<button data-s="contacted">تم الاتصال</button>' : ""}<button data-s="recovered">اكتمل الطلب</button>${c.status !== "dismissed" ? '<button class="r" data-s="dismissed">إهمال</button>' : '<button data-s="open">إعادة فتح</button>'}</div></div>`).join("");
   }
+  const FL = { price_mismatch: "سعر لا يطابق الكتالوج", subtotal_mismatch: "مجموع المنتجات لا يطابق", total_mismatch: "الإجمالي لا يطابق", discount_unverified: "تخفيض بلا كود معروف", coupon_mismatch: "تخفيض أكبر من الكود", fee_out_of_range: "رسم توصيل غير معتاد", stock_short: "كمية أكبر من المخزون", unknown_product: "منتج غير معروف", inactive: "منتج غير نشط", qty_invalid: "كمية غير صالحة" };
+  const flagTxt = f => { const [k, v] = String(f).split(":"); return (FL[k] || k) + (v ? " (" + esc(v) + ")" : ""); };
+  function flagRows() {
+    if (!S.flag.length) return '<p style="opacity:.7">لا طلبات مخالفة. كل الطلبات المرصودة تطابق الأسعار والمخزون.</p>';
+    return S.flag.map(o => `<div class="acr-row"><div class="t"><span>${esc(o.name || "—")} · <bdi dir="ltr">${esc(o.phone)}</bdi></span><span>${fmt(o.total)}</span></div><div class="m">${(o.items || []).map(i => esc(i.title || i.id) + " ×" + i.qty + " @" + Math.round(i.price)).join("، ")}</div><div class="m" style="color:#fca5a5">⚠️ ${o.flags.map(flagTxt).join(" · ")}</div></div>`).join("");
+  }
   async function load() {
+    if (S.st === "__flag") { const r = await call("GET", "/v1/orders", null, { flagged: 1, limit: 50 }); S.flag = r.ok ? (r.j.orders || []) : []; S.err = r.ok ? "" : S.off ? "الخدمة غير مفعّلة على هذا الموقع" : "تعذّر الاتصال بالخدمة"; return draw(); }
     const [l, s] = await Promise.all([call("GET", "/v1/carts", null, { status: S.st, limit: 100 }), call("GET", "/v1/carts/stats")]);
     if (l.ok) S.list = l.j.carts || []; S.stats = s.ok ? s.j : null; S.err = l.ok ? "" : S.off ? "الخدمة غير مفعّلة على هذا الموقع" : l.st === 401 ? "سجّل الدخول من جديد" : "تعذّر الاتصال بالخدمة";
     draw(); badge();
@@ -46,8 +53,8 @@ ${c.status === "open" ? '<button data-s="contacted">تم الاتصال</button>
     const m = $("acr-mod"); if (!m) return; const by = (S.stats && S.stats.by) || {};
     m.innerHTML = `<h3>📞 السلال المتروكة</h3><p style="opacity:.75;margin:0">زبائن أدخلوا رقمهم (بموافقتهم) ولم يُكملوا الطلب. تظهر السلة بعد 15 دقيقة من آخر نشاط.</p>
 ${S.stats ? `<p style="margin:.4rem 0">نسبة الاسترداد: <b>${Math.round((S.stats.recovery_rate || 0) * 100)}%</b> · قيمة المعلّق: <b>${fmt(((by.open || {}).value || 0))}</b></p>` : ""}
-<div class="acr-tabs">${Object.keys(ST).map(k => `<button data-st="${k}" class="${S.st === k ? "on" : ""}">${ST[k]}${by[k] ? " (" + by[k].n + ")" : ""}</button>`).join("")}<button id="acr-x" style="margin-inline-start:auto">إغلاق</button></div>
-${S.err ? `<p style="color:#fca5a5">${esc(S.err)}</p>` : rows()}`;
+<div class="acr-tabs">${Object.keys(ST).map(k => `<button data-st="${k}" class="${S.st === k ? "on" : ""}">${ST[k]}${by[k] ? " (" + by[k].n + ")" : ""}</button>`).join("")}<button data-st="__flag" class="${S.st === "__flag" ? "on" : ""}" title="طلبات سعرها أو مخزونها لا يطابق الكتالوج">🛡 طلبات مخالفة</button><button id="acr-x" style="margin-inline-start:auto">إغلاق</button></div>
+${S.err ? `<p style="color:#fca5a5">${esc(S.err)}</p>` : S.st === "__flag" ? flagRows() : rows()}`;
   }
   async function open() {
     css(); if ($("acr-bg")) return; const d = document.createElement("div"); d.className = "acr-bg"; d.id = "acr-bg"; d.innerHTML = '<div class="acr-mod" id="acr-mod"></div>'; document.body.appendChild(d);

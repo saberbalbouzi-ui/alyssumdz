@@ -6,7 +6,7 @@ const PayLink = (() => {
   const say = (t, k) => { const m = (k === "err" ? "❌ " : k === "ok" ? "✅ " : "") + t; typeof toast === "function" ? toast(m) : alert(m); };
   const call = (m, p, b) => (typeof AdminCarts !== "undefined" ? AdminCarts.call(m, p, b) : Promise.resolve({ ok: false, st: 0 }));
   async function make(o) {
-    const r = await call("POST", "/v1/payments/checkouts", { order_id: String(o.id), amount: Math.round(+o.total || 0), description: ("طلب " + String(o.id).slice(-6)), success_url: location.origin + "/" });
+    const r = await call("POST", "/v1/payments/checkouts", { order_id: String((o.extra && o.extra["🔗 مرجع"]) || o.id), amount: Math.round(+o.total || 0), description: ("طلب " + String(o.id).slice(-6)), success_url: location.origin + "/" });
     if (!r.ok) { const code = r.j && r.j.error && (r.j.error.code || r.j.error); return say(MSG[code] || (r.st === 404 || r.st === 0 ? "الخدمة غير مفعّلة على هذا الموقع" : "تعذّر إنشاء رابط الدفع"), "err"); }
     const url = r.j.checkout_url, nm = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "", ph = String(o.phone || "").replace(/\D/g, ""), intl = ph.startsWith("0") ? "213" + ph.slice(1) : ph;
     const wa = "https://wa.me/" + intl + "?text=" + encodeURIComponent(`السلام عليكم ${o.name || ""}، رابط الدفع الإلكتروني لطلبك من ${nm} (${Math.round(o.total)} دج):\n${url}`);
@@ -27,7 +27,7 @@ const PayLink = (() => {
       if (!o || !host || !["nouvelle", "confirmee", "expediee"].includes(o.status) || host.querySelector("[data-paylink]")) return r;
       const b = document.createElement("button"); b.type = "button"; b.className = "small blue"; b.setAttribute("data-paylink", "1"); b.textContent = "💳 رابط دفع"; b.title = "ينشئ رابط دفع إلكتروني (بطاقة) بمبلغ هذا الطلب لإرساله للزبون";
       b.onclick = async () => { b.disabled = true; try { await make(o); } finally { b.disabled = false; } }; host.appendChild(b);
-      call("GET", "/v1/payments/checkouts/" + encodeURIComponent(o.id)).then(s => { if (s.ok && s.j && s.j.paid) { b.textContent = "✅ مدفوع إلكترونياً"; b.disabled = true; } });
+      call("GET", "/v1/payments/checkouts/" + encodeURIComponent((o.extra && o.extra["🔗 مرجع"]) || o.id)).then(s => { if (s.ok && s.j && s.j.paid) { b.textContent = "✅ مدفوع إلكترونياً"; b.disabled = true; } });
       return r;
     };
   }

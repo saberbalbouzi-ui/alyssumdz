@@ -11,9 +11,10 @@ import { ai } from "./modules/ai.js";
 import { carts } from "./modules/carts.js";
 import { payments } from "./modules/payments.js";
 import { sms } from "./modules/sms.js";
+import { commerce } from "./modules/commerce.js";
 import { Vault } from "./crypto.js";
 
-const MODULES = [adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, payments, sms];
+const MODULES = [adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, payments, sms, commerce];
 const build = (env) => createPlatform({ d1: env.DB, secret: env.PLATFORM_SECRET, adminToken: env.ADMIN_TOKEN || "", vault: env.APP_ENCRYPTION_KEY || env.APP_ENCRYPTION_KEYS ? Vault.fromEnv(env) : null, files: env.FILES || null, baseUrl: env.PUBLIC_URL || "",
   modules: [platformModule([...new Set(MODULES.flatMap((m) => m.providers ?? []))]), ...MODULES] });
 export default {

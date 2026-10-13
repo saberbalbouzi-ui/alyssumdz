@@ -18,6 +18,8 @@ const ALLOW: [string, RegExp][] = [
   ["PATCH", /^\/v1\/carts\/\d{1,12}$/],
   ["DELETE", /^\/v1\/carts\/phone\/[0-9+]{8,16}$/],
   ["POST", /^\/v1\/events$/],
+  ["PUT", /^\/v1\/catalog\/(products|coupons)$/],
+  ["GET", /^\/v1\/(catalog\/products|orders|orders\/stats)$/],
   ["POST", /^\/v1\/fraud\/check$/],
   ["POST", /^\/v1\/payments\/(checkouts|setup)$/],
   ["GET", /^\/v1\/payments\/checkouts\/[A-Za-z0-9._:-]{1,80}$/],

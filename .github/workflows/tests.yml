@@ -43,7 +43,7 @@ jobs:
         run: |
           node --no-warnings saas/gateway/test/gateway.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts payments sms; do node --no-warnings saas/platform/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts payments sms commerce; do node --no-warnings saas/platform/test/$t.test.mjs; done
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest

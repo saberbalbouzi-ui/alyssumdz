@@ -124,7 +124,7 @@ cfg = re.sub(r'API_URL:\s*"[^"]*"', 'API_URL: ""', cfg)
 cfg = re.sub(r'ORDERS_BACKEND:\s*"[^"]*"', 'ORDERS_BACKEND: "supabase"', cfg)
 cfg = re.sub(r'SUPABASE_URL:\s*"[^"]*"', 'SUPABASE_URL: ""', cfg)
 cfg = re.sub(r'SUPABASE_ANON_KEY:\s*"[^"]*"', 'SUPABASE_ANON_KEY: ""', cfg)
-cfg = re.sub(r'PLATFORM_(?:URL|CART_KEY):\s*"[^"]*",?\s*', '', cfg)   # مفتاح التقاط السلال خاص بأليسوم
+cfg = re.sub(r'PLATFORM_(?:URL|CART_KEY|ORDER_KEY):\s*"[^"]*",?\s*', '', cfg)   # مفتاح التقاط السلال خاص بأليسوم
 cfg = re.sub(r'HUB_SITE:\s*"[^"]*"', 'HUB_SITE: ""', cfg)      # معرّف متجر أليسوم في خدمة النشر لا يدخل قوالب العملاء
 site = 'SITE: {\n    name: %s,\n    domain: "example.com",\n    waNumber: %s,\n    instagram: "",\n    repoOwner: "",\n    repoName: "",\n  },' % (json.dumps(a.name, ensure_ascii=False), json.dumps(a.wa))
 cfg = re.sub(r"SITE:\s*\{.*?\n  \},", site, cfg, flags=re.S)
