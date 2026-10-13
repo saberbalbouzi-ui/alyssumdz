@@ -279,7 +279,11 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     const host = $("rl"); if (!host) return; css();
     const owner = S.me && S.me.owner, b = backend();
     if (!b || (S.me && S.me.legacy)) { host.innerHTML = '<div class="card"><h3>🛡️ الفريق والأمان</h3><p class="rl-m">هذه الميزة غير مفعّلة في إعداد موقعك بعد. تواصل مع الدعم لتفعيل حسابات الفريق والمصادقة الثنائية.</p></div>'; return; }
+    const keep = {}; host.querySelectorAll("input[id^=rl-],select[id^=rl-]").forEach(x => { keep[x.id] = x.value; });                     // إعادة الرسم بعد التحميل لا تمسح ما بدأ المستخدم بكتابته
+    const perms = host.querySelector("[data-perm]") ? [...host.querySelectorAll("[data-perm]")].map(x => [x.dataset.perm, x.checked]) : null;
     host.innerHTML = secHtml() + (owner ? teamHtml() + statsHtml(false) + auditHtml() : statsHtml(true));
+    Object.keys(keep).forEach(id => { const e = $(id); if (e && keep[id] !== "" && id !== "rl-days" && (id !== "rl-pw" || !e.value || true)) e.value = keep[id]; });
+    if (perms && !S.edit) perms.forEach(([k, c]) => { const e = host.querySelector('[data-perm="' + k + '"]:not(:disabled)'); if (e) e.checked = c; });
   }
   async function refresh() {
     const b = backend(); if (!b || !S.me) return;

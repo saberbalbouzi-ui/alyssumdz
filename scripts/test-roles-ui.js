@@ -42,7 +42,6 @@ const totp = (sec, step) => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigI
   ok("المالك: زر «الفريق والأمان» موجود", await O.p.evaluate(() => !!document.querySelector(".nav-btn[onclick*=\"'team'\"]")));
   await O.p.evaluate(() => Admin.tab("team")); await O.p.waitForSelector("#rl .rl-perms", { timeout: 8000 });
   ok("المالك: شاشة الفريق تعرض الأمان والإضافة", await O.p.evaluate(() => /حسابي وأمانه/.test(document.getElementById("rl").textContent) && /إضافة موظف/.test(document.getElementById("rl").textContent)));
-  console.log("   dbg:", JSON.stringify(await O.p.evaluate(() => { const e = document.getElementById("rl-email"), t = document.getElementById("tab-team"); const r = e && e.getBoundingClientRect(); return { tabHidden: t.className, rect: r && [r.x, r.y, r.width, r.height], disp: e && getComputedStyle(e).display, vis: e && getComputedStyle(e).visibility, parent: e && e.parentElement.className, cnt: document.querySelectorAll("#rl-email").length, rlTxt: document.getElementById("rl").textContent.length }; })));
   await O.p.fill("#rl-email", "amel"); await O.p.fill("#rl-name", "Amel"); await O.p.selectOption("#rl-role", "agent");
   const tmpPw = await O.p.inputValue("#rl-pw");
   ok("كلمة مرور مؤقتة مولَّدة قوية", tmpPw.length >= 14, tmpPw.length);
