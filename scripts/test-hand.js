@@ -358,6 +358,28 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("الإرسال لياليدين: ثلاث نداءات متزامنة لطلب واحد = طرد واحد فقط", dup.t1 && dup.total === 2 && dup.results.filter(Boolean).length === 1, dup);
   ok("الإرسال لياليدين: تبدّل فهرس الطلب أثناء الإرسال لا يحفظ التتبع على طلب آخر", !dup.wrongOrder && dup.right, dup);
+  // ── ولاية الانطلاق: قائمة في إعدادات الشركة، وتجاوز لطلب واحد، وولاية مستودع الطلب ──
+  const frm = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
+    const SV = { ro: Admin.renderOrders, uo: API.updateOrder, cf: Admin.courierFetch, cw: Admin.companyWilayas, rc: Admin.resolveCommune, en: Admin.enqueueNotify, rb: Admin.renderShippedBadge, or: Admin.orders, dc: Admin.deliveryCfg, wh: Admin.wh, ps: Priv.set };
+    Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg); Admin.deliveryCfg.yalidine = { enabled: true, apiId: "a", apiToken: "b", fromWilayaName: "Alger" }; Admin.companyWilayas = async () => ({}); Priv.set = async () => { };
+    Admin.renderOrders = () => { }; API.updateOrder = async () => ({ ok: true }); Admin.enqueueNotify = () => { }; Admin.renderShippedBadge = () => { };
+    const posts = []; Admin.courierFetch = async rq => { if (rq.method === "POST") { posts.push(JSON.parse(rq.body)); return { ok: true, status: 200, text: JSON.stringify({ data: [{ success: true, tracking: "yal-F" + posts.length }] }) }; } return { ok: true, status: 200, text: JSON.stringify({ total_data: 3, data: [] }) }; };
+    const mk = (id, note) => ({ id, date: new Date().toISOString(), status: "confirmee", name: "Test From", phone: "0550000002", wilaya: "Alger", commune: "Alger Centre", dtype: "home", total: 3000, subtotal: 3000, fee: 0, items: "x ×1 = 3000 DA", note: note || "" });
+    const fromOf = x => { const b = x && (Array.isArray(x) ? x[0] : x); return b && (b.from_wilaya_name || (Array.isArray(b) ? "" : "")); };
+    Admin.orders = [mk("FR1"), mk("FR2"), mk("FR3", "📦@w1"), mk("FR4")];
+    Admin.wh = { cfg: AdminWh.normCfg({ on: true, list: [{ id: "w1", name: "مستودع", from: "Constantine" }] }), stock: {} };
+    const R = {};
+    await Admin.sendOrderToDelivery(0, "yalidine"); R.def = fromOf(posts[0]);
+    Admin._fromOv.FR2 = "Oran"; await Admin.sendOrderToDelivery(1, "yalidine"); R.ov = fromOf(posts[1]); delete Admin._fromOv.FR2;
+    await Admin.sendOrderToDelivery(2, "yalidine"); R.wh = fromOf(posts[2]);
+    Admin.sendFromDlg(3); await wait(50); const sel = document.getElementById("sf-w"); R.dlg = !!sel && sel.options.length; if (sel) sel.value = "Tlemcen"; document.getElementById("sf-go").click(); await wait(400); R.dlgSent = fromOf(posts[3]); R.dlgGone = !document.getElementById("sf-bg"); R.cleared = !Admin._fromOv.FR4;
+    Admin.openDeliveryConfig("yalidine"); await wait(100); const fs = document.getElementById("dlv-f-fromWilayaName"); R.sel = fs ? [fs.tagName, fs.options.length, fs.value] : null;
+    Admin.renderOrders = SV.ro; API.updateOrder = SV.uo; Admin.courierFetch = SV.cf; Admin.companyWilayas = SV.cw; Admin.resolveCommune = SV.rc; Admin.enqueueNotify = SV.en; Admin.renderShippedBadge = SV.rb; Admin.orders = SV.or; Admin.deliveryCfg = SV.dc; Admin.wh = SV.wh; Priv.set = SV.ps;
+    const mb = document.querySelector("#delivery-modal-bg"); if (mb) mb.classList.remove("open"); return R;
+  });
+  ok("ولاية الانطلاق: الافتراضية من إعدادات الشركة، والتجاوز لطلب واحد، وولاية المستودع تلقائياً", frm.def === "Alger" && frm.ov === "Oran" && frm.wh === "Constantine", frm);
+  ok("ولاية الانطلاق: نافذة 📍 تختار ولاية وتُرسل منها ثم تُغلق ولا يبقى تجاوز، وإعدادات الشركة قائمة منسدلة بالولايات", frm.dlg >= 58 && frm.dlgSent === "Tlemcen" && frm.dlgGone && frm.cleared && frm.sel && frm.sel[0] === "SELECT" && frm.sel[1] >= 58 && frm.sel[2] === "Alger", frm);
   // ── إصلاحات لجنة الخبراء (v1.89.132): XSS، المخزون المنتفخ، حذف المسلَّم، فشل إلغاء الطرد، إعلان بلا طلبات ──
   const cm = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); const R = {};
@@ -1182,9 +1204,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     // تالف
     const e = ord("W5", 1, "confirmee"); Admin.syncStockForOrder(e, "confirmee"); e.status = "echec"; const s2 = Admin.products[0].stock; Admin.syncStockForOrder(e, "echec", { damaged: true }); R.dmg = [s2, Admin.products[0].stock, /📦(?!livree)/.test(e.note)];
     // واجهة
-    Admin.orders = [Object.assign(ord("W6", 1, "echec"), { name: "زبون مرتجع", note: "📦 🔁transit" })]; Admin.shipRaw = {}; Admin.tab("inventory"); await wait(500);
-    R.ui = !!document.getElementById("wh-card"); R.uiRows = document.querySelectorAll("#wh-card [data-wh=recv]").length; R.uiTbl = document.querySelectorAll("#wh-card table tr").length;
-    R.host = !!document.getElementById("wh-host"); R.tabHidden = document.getElementById("tab-inventory").className; R.hostLen = (document.getElementById("wh-host") || {}).innerHTML ? document.getElementById("wh-host").innerHTML.length : -1; const rb = document.querySelector('#wh-card [data-wh="recv"]'); if (rb) rb.click(); await wait(200); R.manual = [Admin.orders[0].note, document.querySelectorAll("#wh-card [data-wh=recv]").length];
+    Admin.shipRaw = {}; Admin.tab("inventory"); await wait(900); Admin.orders = [Object.assign(ord("W6", 1, "echec"), { name: "زبون مرتجع", note: "📦 🔁transit" })]; AdminWh.draw(); await wait(200);
+    R.ui = !!document.getElementById("wr-card"); R.uiRows = document.querySelectorAll("#wr-card [data-wh=recv]").length; R.uiTbl = document.querySelectorAll("#wr-card table tr").length;
+    R.host = !!document.getElementById("wr-host"); R.tabHidden = document.getElementById("tab-inventory").className; R.hostLen = (document.getElementById("wr-host") || {}).innerHTML ? document.getElementById("wr-host").innerHTML.length : -1; const rb = document.querySelector('#wr-card [data-wh="recv"]'); if (rb) rb.click(); await wait(200); R.manual = [Admin.orders[0].note, document.querySelectorAll("#wr-card [data-wh=recv]").length];
     Admin.products = sv.pr; Admin.fin = sv.fin; Admin.queueStockPublish = sv.qp; API.updateOrder = sv.uo; Admin.wh = sv.wh; Admin.orders = sv.or; Admin.shipRaw = sv.raw; Priv.set = sv.ps; Admin.tab("orders"); return R;
   });
   ok("مستودعات: الطلب يخصم من مستودع ولايته (10→7، وهران 4→1) ويُوسم 📦@w1، وإن لم يكفِ يخصم من الرئيسي", whT.a[0] === 7 && whT.a[1] === 1 && /📦@w1/.test(whT.a[2]) && whT.b[0] === 1 && whT.b[1] === 1 && !/@/.test(whT.b[2]), whT);

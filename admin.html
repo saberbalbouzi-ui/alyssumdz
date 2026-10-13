@@ -7064,7 +7064,7 @@ const Admin = {
       fields: [
         { key:"apiId", label:"API ID", type:"text" },
         { key:"apiToken", label:"API Token", type:"password" },
-        { key:"fromWilayaName", label:"ولاية الانطلاق (مثال: Alger)", type:"text", required:false },
+        { key:"fromWilayaName", label:"ولاية الانطلاق الافتراضية", type:"select", options:"wilayas", required:false },
         { key:"extraJson", label:"حقول إضافية للطرد بصيغة متقدمة (اختياري، مثال: {\"can_open\":true})", type:"text", required:false },
         { key:"lastOrderNo", label:"آخر رقم طلب استُعمل في ياليدين (يتزايد تلقائياً)", type:"text", required:false },
         { key:"askOrderNo", label:"اكتب «نعم» ليُسأل عن رقم الطلب قبل كل إرسال (لتعديله يدوياً)", type:"text", required:false },
@@ -7565,9 +7565,14 @@ const Admin = {
     const cfg = this.deliveryCfg[key] || {};
     $f("delivery-modal-title").textContent = "إعداد " + co.name;
     $f("delivery-modal-note").textContent = co.note || "";
-    $f("delivery-modal-fields").innerHTML = (co.fields||[]).map(f=>
-      '<input id="dlv-f-' + f.key + '" type="' + (f.type||"text") + '" placeholder="' + f.label + (f.required===false?" (اختياري)":"") + '" dir="ltr" value="' + (cfg[f.key]||"").toString().replace(/"/g,"&quot;") + '">'
-    ).join("");
+    $f("delivery-modal-fields").innerHTML = (co.fields||[]).map(f=>{
+      const cur = (cfg[f.key]||"").toString();
+      if(f.type === "select"){          // ولاية الانطلاق: قائمة بدل نص حرّ (القيمة المحفوظة القديمة تبقى محدّدة)
+        const L = f.options === "wilayas" ? WILAYAS.filter(w=>!w.par).map(w=>[w.name, w.id + " — " + w.name]) : (f.options || []);
+        return '<label style="display:grid;gap:.2rem;font-size:.85rem">' + f.label + '<select id="dlv-f-' + f.key + '" dir="ltr">' + '<option value="">' + (f.key === "fromWilayaName" ? "Alger (الافتراضي)" : "—") + '</option>' + (cur && !L.some(x=>x[0] === cur) ? '<option value="' + nE(cur) + '" selected>' + nE(cur) + '</option>' : "") + L.map(x=>'<option value="' + nE(x[0]) + '"' + (x[0] === cur ? " selected" : "") + '>' + nE(x[1]) + '</option>').join("") + '</select></label>';
+      }
+      return '<input id="dlv-f-' + f.key + '" type="' + (f.type||"text") + '" placeholder="' + f.label + (f.required===false?" (اختياري)":"") + '" dir="ltr" value="' + cur.replace(/"/g,"&quot;") + '">';
+    }).join("");
     $f("dlv-price-search").value = "";
     this.renderDeliveryPriceBox(key);
     const delBtn = $f("dlv-delete-btn");
@@ -8039,10 +8044,11 @@ const Admin = {
         }
         ord = Object.assign({}, ord, { __ydId: String(next) });
       }
-      let cfg2 = cfg;
-      if(co.wilayasRequest && cfg.fromWilayaName){                                    // ولاية الانطلاق بالاسم الرسمي
-        const wl = await this.companyWilayas(co, cfg), want = this.normName(cfg.fromWilayaName), hit = Object.values(wl).find(v=>this.normName(v.name) === want);
-        if(hit) cfg2 = Object.assign({}, cfg, { fromWilayaName: hit.name });
+      const fromOv = (this._fromOv && this._fromOv[order.id]) || this.whFromName(order);          // ولاية انطلاق لهذا الطلب: اختيار يدوي، وإلا ولاية مستودعه
+      let cfg2 = fromOv ? Object.assign({}, cfg, { fromWilayaName: fromOv }) : cfg;
+      if(co.wilayasRequest && cfg2.fromWilayaName){                                    // ولاية الانطلاق بالاسم الرسمي
+        const wl = await this.companyWilayas(co, cfg2), want = this.normName(cfg2.fromWilayaName), hit = Object.values(wl).find(v=>this.normName(v.name) === want);
+        if(hit) cfg2 = Object.assign({}, cfg2, { fromWilayaName: hit.name });
       }
       const fresh0 = this.orders.find(x=>x.id === order.id);                             // قد يكون وصله تتبع من مسار آخر أثناء الانتظار
       if(fresh0 && this.trackingOf(fresh0)){ toast("ℹ️ الطلب أُرسل إلى الشركة بالفعل (التتبع " + this.trackingOf(fresh0).tracking + ")"); return false }
@@ -8285,8 +8291,20 @@ const Admin = {
     const k = this.orderCompanyKey(o);
     if(!k) return '<button class="small gold ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')">🚚 إرسال</button> ';
     const en = this.enabledCompanyKeys(), all = this.allDeliveryCompanies();
-    return '<button class="small blue ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')" title="إرسال الطلب إلى ' + (all[k] ? all[k].name : "") + '">🚚 إرسال</button> ' +
+    return '<button class="small blue ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')" title="إرسال الطلب إلى ' + (all[k] ? all[k].name : "") + '">🚚 إرسال</button> <button class="small ord-from" type="button" onclick="Admin.sendFromDlg(' + i + ')" title="إرسال من ولاية انطلاق أخرى" style="padding:.15rem .45rem">📍</button> ' +
       (en.length > 1 ? '<select class="dlv-pick" title="إرسال عبر شركة أخرى" onchange="Admin.sendConfirmed(' + i + ', this.value); this.selectedIndex = 0"><option value="">▾</option>' + en.filter(x=>x !== k).map(x=>'<option value="' + x + '">' + all[x].name + '</option>').join("") + '</select> ' : "");
+  },
+  _fromOv: {},
+  /* ولاية الانطلاق الخاصة بمستودع الطلب (إن حُدّدت في بطاقة المستودعات) */
+  whFromName(o){ try{ const W = this._W(), c = this.wh && this.wh.cfg; if(!W || !c || !c.on) return ""; const id = W.tagOf(o.note).wh; const w = id === "main" ? null : c.list.find(x=>x.id === id); return (w && w.from) || ""; }catch(e){ return ""; } },
+  /* إرسال هذا الطلب من ولاية أخرى غير الافتراضية (أحياناً تُشحن البضاعة من مخزن في ولاية ثانية) */
+  sendFromDlg(i){
+    const o = this.orders[i]; if(!o) return; const k = this.orderCompanyKey(o), cfg = this.deliveryCfg[k] || {}, def = cfg.fromWilayaName || "Alger";
+    let bg = $f("sf-bg"); if(bg) bg.remove(); bg = document.createElement("div"); bg.id = "sf-bg"; bg.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:1rem";
+    const btn = "padding:.55rem 1rem;border-radius:12px;font:inherit;font-weight:800;color:#fff;cursor:pointer;border:1px solid rgba(34,197,94,.6);background:linear-gradient(180deg,rgba(34,197,94,.45),rgba(34,197,94,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 6px rgba(0,0,0,.22),0 3px 10px rgba(0,0,0,.25)";
+    bg.innerHTML = '<div style="background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:1.1rem;max-width:380px;width:100%;display:grid;gap:.6rem"><b>📍 إرسال الطلب ' + nE(o.id) + ' من ولاية أخرى</b><div class="hint" style="margin:0">الولاية الافتراضية للانطلاق: ' + nE(def) + '. اختر الولاية التي ستُسلَّم منها البضاعة لشركة التوصيل.</div><select id="sf-w" dir="ltr" style="padding:.55rem;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22)">' + WILAYAS.filter(w=>!w.par).map(w=>'<option value="' + nE(w.name) + '" style="color:#111"' + (w.name === def ? " selected" : "") + '>' + w.id + ' — ' + nE(w.name) + '</option>').join("") + '</select><div style="display:flex;gap:.5rem;justify-content:flex-end"><button type="button" id="sf-no" style="' + btn.replace(/34,197,94/g, "255,255,255") + '">إلغاء</button><button type="button" id="sf-go" style="' + btn + '">🚚 أرسل من هذه الولاية</button></div></div>';
+    document.body.appendChild(bg); $f("sf-no").onclick = ()=>bg.remove();
+    $f("sf-go").onclick = ()=>{ const v = $f("sf-w").value; bg.remove(); this._fromOv[o.id] = v; Promise.resolve(this.sendConfirmed(i)).finally(()=>{ delete this._fromOv[o.id]; }); };
   },
   async sendConfirmed(i, key){
     const o = this.orders[i]; if(!o) return;
