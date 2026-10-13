@@ -1,7 +1,7 @@
 {
  "v": 1,
  "title": "عسل التركيز وتنشيط الذاكرة للأطفال",
- "slug": "tarkiz-landing",
+ "slug": "honey-landing",
  "desc": "",
  "bg": "#ffffff",
  "ff": "",
@@ -156,7 +156,7 @@
        "id": "j5i0aru",
        "type": "image",
        "set": {
-        "src": "assets/img/tarkiz/presentation/03.webp",
+        "src": "assets/img/tpl/honey_amber.webp",
         "alt": "عسل التركيز وتنشيط الذاكرة للأطفال",
         "fit": "contain",
         "rad": {
@@ -282,7 +282,7 @@
        "id": "1yrlxvp",
        "type": "image",
        "set": {
-        "src": "assets/img/tarkiz/body/01.webp",
+        "src": "assets/img/tpl/honey_bee.webp",
         "alt": "طفل متعب أثناء المذاكرة مع والدته",
         "fit": "cover",
         "rad": {
@@ -339,7 +339,7 @@
        "id": "x912t6v",
        "type": "image",
        "set": {
-        "src": "assets/img/tarkiz/presentation/02.webp",
+        "src": "assets/img/tpl/honey_dipper.webp",
         "alt": "طفل سعيد يحمل عسل التركيز",
         "fit": "cover",
         "rad": {
@@ -545,7 +545,7 @@
        "id": "bu1ppu0",
        "type": "image",
        "set": {
-        "src": "assets/img/tarkiz/body/02.webp",
+        "src": "assets/img/tpl/herb_sprout.webp",
         "alt": "بعد: طفل سعيد ومتفوق",
         "fit": "cover",
         "rad": {
@@ -587,7 +587,7 @@
        "id": "ciw0diw",
        "type": "image",
        "set": {
-        "src": "assets/img/tarkiz/body/01.webp",
+        "src": "assets/img/tpl/honey_bee.webp",
         "alt": "قبل: طفل متعب ومشتّت",
         "fit": "cover",
         "rad": {
@@ -663,7 +663,7 @@
        "id": "z5rfw7i",
        "type": "image",
        "set": {
-        "src": "assets/img/tarkiz/presentation/04.webp",
+        "src": "assets/img/tpl/herb_jars.webp",
         "alt": "مكوّنات عسل التركيز الطبيعية",
         "fit": "cover",
         "rad": {
@@ -1079,7 +1079,7 @@
        "id": "6dznz5j",
        "type": "image",
        "set": {
-        "src": "assets/img/tarkiz/presentation/01.webp",
+        "src": "assets/img/tpl/honey_jar.webp",
         "alt": "طفلة تدرس بتركيز",
         "fit": "cover",
         "rad": {
@@ -1171,7 +1171,7 @@
        "id": "rejlsnq",
        "type": "gallery",
        "set": {
-        "imgs": "assets/img/tarkiz/avis/avis02.webp\nassets/img/tarkiz/avis/avis03.webp\nassets/img/tarkiz/avis/SmartSelect_20250225_231134_Messenger.webp",
+        "imgs": "assets/img/tpl/av_m1.webp\nassets/img/tpl/av_m2.webp\nassets/img/tpl/av_m3.webp",
         "cols": {
          "d": 3,
          "m": 2
@@ -1362,7 +1362,7 @@
        "id": "gldjznt",
        "type": "orderorig",
        "set": {
-        "prod": "tarkiz",
+        "prod": "",
         "auto": true
        }
       }

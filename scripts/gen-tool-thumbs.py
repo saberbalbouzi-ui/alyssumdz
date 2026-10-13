@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""يولّد صور أدوات «تعديل الصورة» (assets/img/tools/*.webp): كل صورة نصفها قبل ونصفها بعد، من صور منتجات المتجر الحقيقية. بلا ذكاء اصطناعي."""
+"""يولّد صور أدوات «تعديل الصورة» (assets/img/tools/*.webp): كل صورة نصفها قبل ونصفها بعد، من صور منتجات عامة بلا علامة (scripts/gen-generic-products.py). بلا ذكاء اصطناعي."""
 import os, random, math
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageFont, ImageChops
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -8,9 +8,9 @@ W, H = 240, 160
 def P(*a): return os.path.join(R, *a)
 def trim(im):
     bb = im.getchannel('A').point(lambda v: 255 if v > 24 else 0).getbbox(); return im.crop(bb) if bb else im
-HONEY = trim(Image.open(P('assets/img/miel-sidr/0.webp')).convert('RGBA'))
-CREAM = trim(Image.open(P('assets/img/anti-acne/cover-1791483275654.webp')).convert('RGBA'))
-KOHL = trim(Image.open(P('assets/img/ithmed/0.webp')).convert('RGBA'))
+HONEY = trim(Image.open(P('assets/img/tpl/generic-honey.webp')).convert('RGBA'))
+CREAM = trim(Image.open(P('assets/img/tpl/generic-cream.webp')).convert('RGBA'))
+KOHL = trim(Image.open(P('assets/img/tpl/generic-bottle.webp')).convert('RGBA'))
 def prod(im, h): return im.resize((max(1, round(im.width * h / im.height)), h), Image.LANCZOS)
 def scene(i, w=W, h=H):
     im = Image.open(P('assets/img/tpl/alyssum-sc%d.webp' % i)).convert('RGB'); s = max(w / im.width, h / im.height)
