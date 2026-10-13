@@ -1215,6 +1215,28 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("سياسة «فوراً» تعيد عند أول حالة فشل، وحالة «Retourné au vendeur» عبر المزامنة تعيد بعد الحجز", whT.imm[1] === whT.imm[0] + 2 && whT.raw[1] === whT.raw[0] + 1 && whT.raw[2] === 1, whT);
   ok("مرتجع تالف لا تعود علبه ويُنزع وسمه", whT.dmg[0] === whT.dmg[1] && !whT.dmg[2], whT.dmg);
   ok("بطاقة المرتجعات والمستودعات في تبويب المخزون: قائمة المنتظِر، جدول الكميات، و«استلمتُه» يعيد الطرد", whT.ui && whT.uiRows === 1 && whT.uiTbl >= 2 && !/📦(?!livree)/.test(whT.manual[0]) && whT.manual[1] === 0, whT);
+  // ── فحص مفاتيح الشركة استباقياً: 401 ← شريط أحمر ويقف الفحص العشوائي، وحفظ المفاتيح يفحصها فوراً ──
+  const kyT = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
+    const SV = { cf: Admin.courierFetch, dc: Admin.deliveryCfg, or: Admin.orders, sn: Admin.showNotice, ro: Admin.renderOrders, rs: Admin.renderShipped, uo: API.updateOrder, ks: Admin._keyState, cw: Admin.companyWilayas };
+    Admin.deliveryCfg = { yalidine: { enabled: true, isDefault: true, apiId: "bad", apiToken: "bad" } }; Admin._keyState = {}; Admin.renderOrders = () => { }; Admin.renderShipped = () => { }; API.updateOrder = async () => ({ ok: true });
+    let mode = 401, calls = 0, notices = []; Admin.showNotice = (t, h) => { notices.push(t); };
+    Admin.courierFetch = async rq => { calls++; return mode === 401 ? { ok: false, status: 401, text: '{"error":{"message":"API ID and/or Token are wrong","code":401}}' } : { ok: true, status: 200, text: JSON.stringify({ total_data: 5, data: [] }) }; };
+    const R = {}; const mkO = n => ({ id: "K" + n, date: new Date().toISOString(), status: "expediee", name: "ك", phone: "0550000003", wilaya: "Alger", items: "x ×1 = 100 DA", total: 100, note: "🚚yalidine:TRK" + n });
+    R.res = await Admin.checkCompanyKeys("yalidine", { explain: true }); R.state = Admin._keyState.yalidine; R.notice = notices[0] || "";
+    Admin.renderDeliveryBanners(); R.banner = (document.getElementById("orders-banner") || {}).innerHTML || "";
+    // المزامنة: ثلاثة طرود، يكفي طلب واحد مرفوض
+    Admin._keyState = {}; Admin.orders = [mkO(1), mkO(2), mkO(3)]; calls = 0; await Admin.syncShipping({ silent: true, bg: true }); R.syncCalls = calls; R.syncState = (Admin._keyState.yalidine || {}).ok;
+    // مفاتيح صحيحة ← يزول الشريط
+    mode = 200; R.ok = await Admin.checkCompanyKeys("yalidine"); Admin.renderDeliveryBanners(); R.bannerGone = !/ترفض مفاتيح/.test((document.getElementById("orders-banner") || {}).innerHTML || ""); R.okState = Admin._keyState.yalidine && Admin._keyState.yalidine.ok;
+    // حفظ مفاتيح جديدة يفحصها فوراً
+    mode = 401; Admin._keyState = {}; notices = []; Admin.openDeliveryConfig("yalidine"); await wait(100); document.getElementById("dlv-f-apiId").value = "newid"; document.getElementById("dlv-f-apiToken").value = "newtoken"; Admin.saveDeliveryConfig(); await wait(900);
+    R.saveChecked = (Admin._keyState.yalidine || {}).ok === false && notices.some(t => /رفضت/.test(t));
+    Admin.courierFetch = SV.cf; Admin.deliveryCfg = SV.dc; Admin.orders = SV.or; Admin.showNotice = SV.sn; Admin.renderOrders = SV.ro; Admin.renderShipped = SV.rs; API.updateOrder = SV.uo; Admin._keyState = SV.ks; return R;
+  });
+  ok("مفاتيح الشركة: رفض 401 يُعلَّم ويظهر شريط أحمر بزر «تحديث المفاتيح» وإشعار بالخطوات", kyT.res === false && kyT.state && kyT.state.ok === false && kyT.state.status === 401 && /رفضت/.test(kyT.notice) && /ترفض مفاتيح/.test(kyT.banner) && /تحديث المفاتيح/.test(kyT.banner), kyT);
+  ok("مفاتيح الشركة: المزامنة تقف بعد أول 401 (طلب واحد لثلاثة طرود لا ثلاثة)", kyT.syncCalls === 1 && kyT.syncState === false, kyT);
+  ok("مفاتيح الشركة: عودة المفاتيح الصحيحة تزيل الشريط، وحفظ مفاتيح مرفوضة يفحصها فوراً ويشرح", kyT.ok === true && kyT.bannerGone && kyT.okState && kyT.saveChecked, kyT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.172">
+<meta name="admin-version" content="1.89.173">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1624,12 +1624,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.172"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.172"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.172"></script>
+<script src="assets/js/ctl-help.js?v=1.89.173"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.173"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.173"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.172"></script>
+<script src="assets/js/admin-nav.js?v=1.89.173"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1641,7 +1641,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.172"></script>
+<script src="assets/js/admin-update.js?v=1.89.173"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -7104,6 +7104,7 @@ const Admin = {
         return { url: this.base + "/v1/parcels/", method: "POST", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify([body]) };
       },
       /* مراكز Stop Desk الرسمية: GET /v1/centers/ ⟵ [{center_id, name, address, commune_name, wilaya_id}] */
+      pingRequest(cfg){ return { url: this.base + "/v1/parcels/?page_size=1", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },      // فحص المفاتيح بقراءة فقط
       lastParcelsRequest(cfg){ return { url: this.base + "/v1/parcels/?page_size=100", method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       /* التكاليف الحقيقية: GET /v1/fees/?from_wilaya_id=&to_wilaya_id= ⟵ {retour_fee, cod_percentage, insurance_percentage, per_commune:{id:{commune_name, express_home, express_desk}}} */
       feesDetailRequest(cfg, fromId, toId){ return { url: this.base + "/v1/fees/?from_wilaya_id=" + fromId + "&to_wilaya_id=" + toId, method: "GET", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
@@ -7596,6 +7597,7 @@ const Admin = {
     this.deliveryCfg[key] = cfg;
     this.saveDeliveryCfgToStorage();
     document.getElementById("delivery-modal-bg").classList.remove("open");
+    if(cfg.apiId && cfg.apiToken) setTimeout(()=>{ this.checkCompanyKeys(key, { explain:true }); }, 400);          // فحص فوري للمفاتيح التي أُدخلت للتو
     /* شركة مكتملة المفاتيح ولا توجد شركة نشطة ⟵ تُفعَّل مباشرة (كان يلزم الضغط على نقطة التفعيل في الجدول فيبقى التنبيه) */
     const complete = !missing.length;
     if(complete && !this.activeCompanyKey()){ this.setCompanyEnabled(key, true, { makeDefault:true }); return }
@@ -8054,6 +8056,7 @@ const Admin = {
       if(fresh0 && this.trackingOf(fresh0)){ toast("ℹ️ الطلب أُرسل إلى الشركة بالفعل (التتبع " + this.trackingOf(fresh0).tracking + ")"); return false }
       const req = co.buildRequest(cfg2, ord);
       const r = await this.courierFetch(req);
+      if(r && (r.status === 401 || r.status === 403)) this.keyBad(companyKey, r.status);
       let json = null; try{ json = JSON.parse(r.text); }catch(e){}
       let tracking = "";
       try{ if(r.ok && json) tracking = co.parseSent ? co.parseSent(json, ord) : this.genericTracking(json); }catch(e){}
@@ -8147,16 +8150,17 @@ const Admin = {
     const cands = this.orders.map((o,i)=>({ o, i, t: this.trackingOf(o) })).filter(x=>x.t && !["livree","echec","annulee"].includes(x.o.status) && !(typeof ShipAgg !== "undefined" && ShipAgg.owns && ShipAgg.owns(x.t.company) && !(this.deliveryCfg[x.t.company] || {}).enabled));      // طرود البوابة تزامنها ShipAgg
     if(!cands.length){ this._shipSync = { ts: Date.now(), checked: 0, changed: 0, failed: 0, err: "" }; this.renderShipSyncStatus(); if(!opts.bg) toast("ℹ️ لا توجد طلبات مرسَلة إلى شركة توصيل بانتظار التتبع (أرسل طلباً بزر 🚚 أولاً)"); return }
     const btns = [$f("sync-btn"), $f("ship-sync-btn")].filter(Boolean); this._syncing = true; btns.forEach(b=>b.disabled = true);
-    const rows = []; let changed = 0, failed = 0, n = 0, corsHit = null;
+    const rows = []; let changed = 0, failed = 0, n = 0, corsHit = null; const deadCo = new Set();
     for(const { o, i, t } of cands){
       n++; btns.forEach(b=>b.textContent = "⏳ " + n + "/" + cands.length);
       const co = all[t.company], cfg = this.deliveryCfg[t.company] || {};
       const row = { o, t, raw:"", result:"", cls:"" };
+      if(deadCo.has(t.company)){ failed++; row.result = "❌ مفاتيح " + (co ? co.name : "الشركة") + " مرفوضة — لم يُفحص"; row.cls = "st-annulee"; rows.push(row); continue }          // لا نكرّر طلباً محكوماً بالرفض على كل الطرود
       try{
         if(!co || !co.trackRequest || !co.mapStatus) throw new Error("المزامنة غير مدعومة لهذه الشركة بعد");
         if(!cfg.apiId && !cfg.apiToken && !cfg.enabled) throw new Error("لم تُضبط مفاتيح " + co.name);
         const r = await this.courierFetch(co.trackRequest(cfg, t.tracking));
-        if(!r.ok) throw new Error("رد الشركة " + r.status);
+        if(!r.ok) throw new Error(this.coHttpErr(co, t.company, r));
         let body = r.text; try{ row.raw = co.parseStatus(JSON.parse(r.text)); }catch(e){ row.raw = ""; }
         if(!row.raw && co.trackListRequest){ try{ const r2 = await this.courierFetch(co.trackListRequest(cfg, t.tracking)); body = "[1] " + String(r.text).slice(0, 160) + " [2] " + String(r2.text).slice(0, 160); row.raw = co.parseStatus(JSON.parse(r2.text)); }catch(e){} }
         if(!row.raw) row.body = String(body || "").replace(/\s+/g, " ").slice(0, 340);
@@ -8169,6 +8173,7 @@ const Admin = {
         else { API.updateOrder(this.key, o.id, m); this.onStatusChange(i, m); changed++; row.result = "✅ ← " + m; row.cls = m === "echec" ? "st-echec" : "st-livree"; }
       }catch(err){ failed++; if(err.cors) corsHit = co; row.result = "❌ " + (err.cors ? "حجب المتصفح" : err.message); row.cls = "st-annulee"; }
       rows.push(row);
+      if((this._keyState[t.company] || {}).ok === false){ deadCo.add(t.company); continue }
       await new Promise(res=>setTimeout(res, 250));   // احترام حدود طلبات الشركة
     }
     this._syncing = false; btns.forEach(b=>{ b.disabled = false; }); if($f("sync-btn")) $f("sync-btn").textContent = "🔄 تحديث حالات الشحن"; if($f("ship-sync-btn")) $f("ship-sync-btn").textContent = "🔄 تحديث الحالة";
@@ -8354,8 +8359,30 @@ const Admin = {
   enabledCompanyKeys(){ const all = this.allDeliveryCompanies(); return Object.keys(all).filter(k=>this.deliveryCfg[k] && this.deliveryCfg[k].enabled); },
   /* الشركة الافتراضية: المعلَّمة isDefault بين المفعّلة، وإلا أول مفعّلة */
   activeCompanyKey(){ const en = this.enabledCompanyKeys(); return en.find(k=>this.deliveryCfg[k].isDefault) || en[0] || null; },
+  /* ═════ فحص مفاتيح شركة التوصيل استباقياً (قراءة فقط): نعرف أنها مرفوضة قبل أن تتعطل الطلبات ═════ */
+  _keyState: {},
+  keyBad(key, status, opts){
+    const co = this.allDeliveryCompanies()[key]; if(!co) return; const was = this._keyState[key];
+    this._keyState[key] = { ok: false, status, ts: Date.now() };
+    try{ this.renderDeliveryBanners(); }catch(e){}
+    if(opts && opts.explain) this.showNotice("🔑 رفضت " + nE(co.name) + " المفاتيح (" + status + ")", "المعرّف (API ID) أو التوكن غير صحيح أو أُلغي، فلن تُرسَل الطلبات ولن تتحدّث حالاتها حتى تُحدِّث المفاتيح.<br><br>١) في حسابك لدى الشركة افتح صفحة الـAPI وانسخ المعرّف والتوكن <b>الحاليين</b> (توليد توكن جديد يُبطل القديم).<br>٢) ألصقهما في «إعدادات الشركة» دون مسافات زائدة ثم احفظ — سنفحصهما فوراً.");
+    else if(!was || was.ok !== false) toast("🔴 " + co.name + " ترفض مفاتيح الحساب (" + status + ") — حدّثها من «شركات التوصيل»");
+  },
+  coHttpErr(co, key, r){ if(r && (r.status === 401 || r.status === 403)){ this.keyBad(key, r.status); return "مفاتيح " + co.name + " مرفوضة (" + r.status + ") — حدّثها من «شركات التوصيل»"; } return "رد الشركة " + (r && r.status); },
+  async checkCompanyKeys(key, opts){
+    opts = opts || {}; const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
+    if(!co || !co.pingRequest || !(cfg.apiId || cfg.apiToken)) return null;
+    let r; try{ r = await this.courierFetch(co.pingRequest(cfg)); }catch(e){ if(opts.explain) toast("⚠️ تعذّر الاتصال بـ" + co.name + " لفحص المفاتيح"); return null; }
+    if(r.status === 401 || r.status === 403){ this.keyBad(key, r.status, opts); return false; }
+    if(!r.ok) return null;
+    const was = (this._keyState[key] || {}).ok; this._keyState[key] = { ok: true, ts: Date.now() };
+    try{ this.renderDeliveryBanners(); }catch(e){}
+    if(opts.explain || was === false){ let n = ""; try{ const j = JSON.parse(r.text); if(j.total_data != null) n = " — في حسابك " + j.total_data + " طرد"; }catch(e){} toast("✅ مفاتيح " + co.name + " صحيحة" + n); }
+    return true;
+  },
   deliveryBannerHtml(){
-    const k = this.activeCompanyKey(), all = this.allDeliveryCompanies();
+    const k = this.activeCompanyKey(), all = this.allDeliveryCompanies(), ks = k && this._keyState[k];
+    if(ks && ks.ok === false) return '<div class="card" style="border-right:4px solid var(--red);background:#FFF5F5"><b style="color:var(--red)">🔑 ' + nE(all[k].name) + ' ترفض مفاتيح حسابك (' + ks.status + ')</b><div class="hint" style="margin:.3rem 0">لا يمكن إرسال الطلبات ولا تحديث حالاتها حتى تُحدَّث المفاتيح. انسخ المعرّف والتوكن الحاليين من حسابك لدى الشركة (توليد توكن جديد يُبطل القديم) وألصقهما في الإعدادات.</div><button class="small gold" type="button" onclick="Admin.openDeliveryConfig(\'' + k + '\')">🔑 تحديث المفاتيح</button> <button class="small gray" type="button" onclick="Admin.checkCompanyKeys(\'' + k + '\',{explain:true})">⟳ إعادة الفحص</button></div>';
     if(!k){                                                  // مُعدّة (مفاتيح مكتملة) لكن غير مفعّلة ⟵ زر تفعيل بنقرة
       const ready = Object.keys(all).find(x=>{ const req = (all[x].fields||[]).filter(f=>f.required!==false); const c = this.deliveryCfg[x] || {}; return req.length && req.every(f=>String(c[f.key]||"").trim()); });
       if(ready) return '<div class="card" style="border-right:4px solid #F0A53A;background:#FFFAF0"><b style="color:#B26A00">⚠️ ' + all[ready].name + ' مُعدّة لكن غير مفعّلة</b>' +
@@ -8377,7 +8404,7 @@ const Admin = {
     for(let pg = 1; pg <= (maxPages || 20) && more; pg++){
       let r = await this.courierFetch(co.listRequest(cfg, pg, plain));
       if(!r.ok && pg === 1 && !plain){ plain = true; r = await this.courierFetch(co.listRequest(cfg, pg, true)); }
-      if(!r.ok) throw new Error("رد الشركة " + r.status);
+      if(!r.ok) throw new Error(this.coHttpErr(co, key, r));
       const j = JSON.parse(r.text), d = co.parseList(j); total = d.total || total; rows.push(...d.rows); more = d.more;
       if(onPage) onPage(pg, rows.length, total);
       await new Promise(res=>setTimeout(res, 250));
@@ -8444,7 +8471,7 @@ const Admin = {
   },
   /* مزامنة خلفية: أول مرة بعد تحميل اللوحة بقليل ثم كل 5 دقائق (والتبويب ظاهر) — بلا حاجة لفتح «الطلبات المسجلة» */
   startShipAutoSync(){
-    if(this._shipTimer) return; let n = 0; const run = ()=>{ if(document.hidden || !this.key || !this.activeCompanyKey()) return; n++; const swp = ()=>{ try{ this.returnsSweep({ net: n % 3 === 0 }); }catch(e){} }; if(n % 3 === 1) this.reconcileShipping({ bg:true }).finally(()=>this.syncShipping({ silent:true, bg:true }).finally(swp)); else this.syncShipping({ silent:true, bg:true }).finally(swp); };
+    if(this._shipTimer) return; let n = 0; const run = ()=>{ if(document.hidden || !this.key || !this.activeCompanyKey()) return; n++; if(n === 1 || n % 6 === 0){ const ak = this.activeCompanyKey(); if(ak) this.checkCompanyKeys(ak, { quiet:true }); } const swp = ()=>{ try{ this.returnsSweep({ net: n % 3 === 0 }); }catch(e){} }; if(n % 3 === 1) this.reconcileShipping({ bg:true }).finally(()=>this.syncShipping({ silent:true, bg:true }).finally(swp)); else this.syncShipping({ silent:true, bg:true }).finally(swp); };
     setTimeout(run, 20000); this._shipTimer = setInterval(run, 300000);
   },
   autoSyncShipped(){ if(!this._lastShipSync || Date.now() - this._lastShipSync > 180000) this.syncShipping({silent:true}); },
@@ -8579,7 +8606,7 @@ const Admin = {
       try{
         let r = await this.courierFetch(co.labelRequest(cfg, t.tracking));
         if(r.status === 429){ msg("⏳ بلغت الشركة حدّ الطلبات — انتظار 20 ثانية ثم نكمل… " + k + " / " + list.length); await new Promise(x=>setTimeout(x, 20000)); r = await this.courierFetch(co.labelRequest(cfg, t.tracking)); }
-        if(!r.ok) throw new Error("رد الشركة " + r.status);
+        if(!r.ok) throw new Error(this.coHttpErr(co, t.company, r));
         const url = co.parseLabel(JSON.parse(r.text)); if(!url) throw new Error("لا رابط بوردرو لهذا الطرد");
         got.push({ o, t, url, co: co.name }); this.cacheLabel(o.id, url);
       }catch(e){ bad.push({ o, t, why: String((e && e.message) || e) }); }
