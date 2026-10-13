@@ -1385,10 +1385,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("شريط التمرير: سمكه 6px في كل الأنماط وبلا توهج خارجي، ومخفي في نافذة صفحة جديدة", sbT.glow === 0 && sbT.w.every(x => x === "6px") && sbT.npNone && sbT.m, sbT);
   // ── تبويب «تعديل الصورة»: التخطيط الفعلي (لا المعرَّف فقط): مربعات كبيرة بالاسم تحتها، اثنان في كل صف ──
   const lyT = await p.evaluate(async () => {
-    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBApp.ltoggle("img"); await w(300);
+    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(400); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
     const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = tiles[0].querySelector("span").getBoundingClientRect();
     R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width - im.height) < 2 && im.width >= 90; R.below = sp.top >= im.bottom - 1;
-    R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.ltoggle("img"); return R;
+    R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; return R;
   });
   ok("تبويب «تعديل الصورة» (تخطيط فعلي): مربعات ≥90px بالاسم تحتها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.below && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
