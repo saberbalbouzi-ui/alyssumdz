@@ -49,7 +49,11 @@ const AdminHand = (() => {
       if (!visible(e)) return false;
     }
     const r = e.getBoundingClientRect();
-    if (r.top < 70 || r.bottom > innerHeight - 20) { try { e.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }); } catch (x) { } await settle(e); }
+    if (r.top < 70 || r.bottom > innerHeight - 20) {
+      try { e.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }); } catch (x) { } await settle(e);
+      /* تحت الحمل قد يتأخر بدء التمرير السلس فيبدو العنصر «مستقراً» وهو خارج الشاشة: نتحقق ثم نمرّر فوراً بلا حركة */
+      for (let i = 0; i < 2; i++) { const q = e.getBoundingClientRect(); if (q.top >= 0 && q.bottom <= innerHeight) break; try { e.scrollIntoView({ block: "center", behavior: "auto" }); } catch (x) { } await settle(e); }
+    }
     return true;
   }
   /* ينتظر حتى يستقر العنصر في مكانه (التمرير السلس على الجوال قد يطول) */

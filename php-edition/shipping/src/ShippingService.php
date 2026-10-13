@@ -61,9 +61,18 @@ final class ShippingService
         $now = gmdate('Y-m-d H:i:s');
         try { $this->db->prepare('INSERT INTO shipment_events (shipment_id,raw_status,status,event_hash,created_at) VALUES (?,?,?,?,?)')->execute([$row['id'], mb_substr($raw, 0, 190), $status, $hash, $now]); }
         catch (\PDOException) { return false; }                                  // حدث مكرَّر (إعادة إرسال)
+        if ($status === Status::UNKNOWN) { error_log('shipping: حالة غير معروفة «' . $raw . '» من ' . $row['carrier_code'] . ' — أضفها إلى data/status-dict.json'); }
         if (!Status::canTransition((string)$row['status'], $status)) { return false; }
         $this->db->prepare('UPDATE shipments SET status=?, raw_status=?, last_event_at=? WHERE id=?')->execute([$status, mb_substr($raw, 0, 190), $now, $row['id']]);
         if ($this->onStatus) { try { ($this->onStatus)((string)$row['order_ref'], (string)$row['carrier_code'], $tracking, $status); } catch (\Throwable $e) { error_log('shipping onStatus: ' . $e->getMessage()); } }
         return true;
+    }
+
+    /** حالات خام لم يتعرف عليها القاموس (آخر 30 يوماً) مع عددها — تُعرض للتاجر/المطوّر بدل أن تضيع صامتة. @return list<array{carrier:string,raw:string,n:int}> */
+    public function unknownStatuses(int $userId): array
+    {
+        $st = $this->db->prepare("SELECT s.carrier_code AS carrier, e.raw_status AS raw, COUNT(*) AS n FROM shipment_events e JOIN shipments s ON s.id=e.shipment_id WHERE s.user_id=? AND e.status=? AND e.created_at >= ? GROUP BY s.carrier_code, e.raw_status ORDER BY n DESC LIMIT 50");
+        $st->execute([$userId, Status::UNKNOWN, gmdate('Y-m-d H:i:s', time() - 30 * 86400)]);
+        return array_map(static fn($r) => ['carrier' => (string)$r['carrier'], 'raw' => (string)$r['raw'], 'n' => (int)$r['n']], $st->fetchAll(\PDO::FETCH_ASSOC));
     }
 }

@@ -14,6 +14,9 @@ interface ShippingInterface
     /** يحقن مفاتيح التاجر (بعد فكّ تشفيرها). يُرمى CredentialsException إن نقص حقل مطلوب. @param array<string,string> $credentials */
     public function authenticate(array $credentials): static;
 
+    /** فحص المفاتيح بطلب قراءة فقط (لا ينشئ طرداً): ok=true صالحة، false مرفوضة، null تعذّر الحكم (شبكة/غير مدعوم). @return array{ok:?bool,message:string} */
+    public function ping(): array;
+
     public function createParcel(Parcel $parcel): ShipmentResult;
 
     public function trackParcel(string $tracking): TrackingResult;

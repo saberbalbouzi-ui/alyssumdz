@@ -20,6 +20,7 @@ final class Parcel
         public readonly ?int $deskId = null,       // معرّف مكتب Stop Desk عند الشركة إن لزم
         public readonly string $note = '',
         public readonly bool $canOpen = true,
+        public readonly string $deskCode = '',     // رمز المكتب النصي عند الشركات التي تستعمله (NOEST: 16A، Ecotrack: code_postal)
     ) {
         if (trim($orderRef) === '') { throw new \InvalidArgumentException('orderRef مطلوب'); }
         if (WilayaCatalog::name($wilayaCode) === null) { throw new \InvalidArgumentException("ولاية غير معروفة: $wilayaCode"); }
@@ -34,7 +35,7 @@ final class Parcel
             wilayaCode: (int)($a['wilaya'] ?? $a['wilaya_code'] ?? 0), commune: trim((string)($a['commune'] ?? '')), address: trim((string)($a['address'] ?? '')),
             total: (float)($a['total'] ?? 0), shippingFee: (float)($a['fee'] ?? $a['shipping_fee'] ?? 0), products: (string)($a['products'] ?? $a['items'] ?? ''),
             phone2: (string)($a['phone2'] ?? ''), stopDesk: (bool)($a['stop_desk'] ?? (($a['dtype'] ?? '') === 'stop')),
-            deskId: isset($a['desk_id']) ? (int)$a['desk_id'] : null, note: (string)($a['note'] ?? ''), canOpen: (bool)($a['can_open'] ?? true),
+            deskId: isset($a['desk_id']) ? (int)$a['desk_id'] : null, note: (string)($a['note'] ?? ''), canOpen: (bool)($a['can_open'] ?? true), deskCode: trim((string)($a['desk_code'] ?? '')),
         );
     }
 

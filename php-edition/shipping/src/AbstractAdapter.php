@@ -25,7 +25,20 @@ abstract class AbstractAdapter implements ShippingInterface
 
     public function wilayas(): array { return WilayaCatalog::list(); }
 
-    public function mapStatus(string $rawStatus): string { return StatusMapper::map($this->code(), $rawStatus); }
+    /** عائلة قاموس الحالات (شركات تتشارك المنصة نفسها تتشارك القاموس). */
+    protected function statusFamily(): string { return $this->code(); }
+
+    public function mapStatus(string $rawStatus): string { return StatusMapper::map($this->statusFamily(), $rawStatus); }
+
+    public function ping(): array { return ['ok' => null, 'message' => 'الفحص غير مدعوم لهذه الشركة']; }
+
+    /** @param \Closure():array{0:bool,1:string} $probe يُرجع [صالحة؟، رسالة]؛ رفض المفاتيح = false، وتعذّر الاتصال = null (لا يُحكم). @return array{ok:?bool,message:string} */
+    protected function probe(\Closure $probe): array
+    {
+        try { [$ok, $msg] = $probe(); return ['ok' => $ok, 'message' => $msg]; }
+        catch (CredentialsException $e) { return ['ok' => false, 'message' => $e->getMessage()]; }
+        catch (\Throwable $e) { return ['ok' => null, 'message' => $e->getMessage()]; }
+    }
 
     public function labelUrl(string $tracking): ?string { return null; }
 
@@ -52,6 +65,7 @@ abstract class AbstractAdapter implements ShippingInterface
         $r = $this->http->request($method, $url, $headers, $payload);
         if ($r->status === 0) { throw new CarrierApiException('تعذّر الاتصال بالشركة: ' . ($r->error ?: 'خطأ شبكة')); }
         if ($r->status === 401 || $r->status === 403) { throw new CredentialsException('رفضت الشركة المفاتيح (HTTP ' . $r->status . ')'); }
+        if ($r->status === 429) { throw new CarrierApiException('الشركة تطلب التمهل (429): أعد المحاولة بعد قليل'); }
         return $r;
     }
 

@@ -14,23 +14,28 @@ final class ConnectionRepository
      * @param array<string,string> $credentials
      * @return array{id:int,public_id:string,webhook_secret:string} السرّ يُعرض للتاجر مرة واحدة فقط.
      */
-    public function connect(int $userId, string $carrier, array $credentials, ?string $baseUrl = null): array
+    public function connect(int $userId, string $carrier, array $credentials, ?string $baseUrl = null, bool $verify = false, ?Http\HttpClient $http = null): array
     {
         $code = CarrierRegistry::resolve($carrier) ?? throw new UnsupportedCarrierException("شركة غير معروفة: $carrier");
-        $adapter = ShippingFactory::make($code, null, $baseUrl);        // يرمي إن كانت planned
+        $adapter = ShippingFactory::make($code, $http, $baseUrl);       // يرمي إن كانت planned
         $adapter->authenticate($credentials);                           // يتحقق من الحقول المطلوبة
+        $ping = ['ok' => null, 'message' => ''];
+        if ($verify) {                                                  // لا نحفظ مفاتيح ترفضها الشركة: يُكتشف الخطأ الآن لا عند أول طلب حقيقي
+            $ping = $adapter->ping();
+            if ($ping['ok'] === false) { throw new CredentialsException('رفضت الشركة هذه المفاتيح: ' . $ping['message']); }
+        }
         $enc = $this->vault->encrypt($credentials, self::aad($userId, $code));
         $secret = bin2hex(random_bytes(24)); $hash = hash('sha256', $secret); $now = gmdate('Y-m-d H:i:s');
         $row = $this->find($userId, $code);
         if ($row) {
             $st = $this->db->prepare('UPDATE user_carriers SET credentials_enc=?, key_id=?, base_url=?, webhook_token_hash=?, is_active=1, updated_at=? WHERE id=?');
             $st->execute([$enc, $this->vault->currentKid(), $baseUrl, $hash, $now, $row['id']]);
-            return ['id' => (int)$row['id'], 'public_id' => (string)$row['public_id'], 'webhook_secret' => $secret];
+            return ['id' => (int)$row['id'], 'public_id' => (string)$row['public_id'], 'webhook_secret' => $secret, 'ping' => $ping];
         }
         $pub = bin2hex(random_bytes(12));
         $st = $this->db->prepare('INSERT INTO user_carriers (public_id,user_id,carrier_code,credentials_enc,key_id,base_url,webhook_token_hash,is_active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,1,?,?)');
         $st->execute([$pub, $userId, $code, $enc, $this->vault->currentKid(), $baseUrl, $hash, $now, $now]);
-        return ['id' => (int)$this->db->lastInsertId(), 'public_id' => $pub, 'webhook_secret' => $secret];
+        return ['id' => (int)$this->db->lastInsertId(), 'public_id' => $pub, 'webhook_secret' => $secret, 'ping' => $ping];
     }
 
     /** @return array<string,mixed>|null */
