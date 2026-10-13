@@ -64,6 +64,22 @@ const SA = ctx.ShipAgg; (async () => {
     ok("التقرير: هروب HTML في الأمثلة والتحذيرات", !/<b>Zeralda<\/b>/.test(rep) && /&lt;b&gt;Zeralda/.test(rep) && !/<i>تحذير<\/i>/.test(rep));
     ok("التقرير: بلا معايرة ← عبارة واضحة", /لم تُجرَ/.test(SA.calReport(null)));
   }
+  /* بلاغات المعايرة للإدارة: صامتة، مرة واحدة، ولا تظهر عند الزبون */
+  {
+    const sent = []; const store = {};
+    ctx.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
+    ctx.location = { origin: "https://shop.example", hostname: "shop.example" };
+    ctx.CONFIG = { SITE: { name: "Boutique X" } };
+    ctx.SaasClient = { on: () => true, send: async (o) => { sent.push(o); return { ok: true, num: 1 }; } };
+    const sm = { done: true, ping: { ok: true }, communes: { unmatched: 2 }, unmatched_examples: ["Zeralda"], statuses: { unknown: 1 }, verify: { ok: 2, fail: 0 }, warnings: ["تحذير"], webhook: { empty: 1 } };
+    ok("calIssues: يجمع المشاكل", SA.calIssues(sm).length >= 4 && SA.calIssues({ done: true, ping: { ok: true }, communes: {}, statuses: {}, warnings: [] }).length === 0);
+    await SA.reportIssues("yalidine", "Yalidine", sm);
+    ok("البلاغ: يُرسل صامتاً إلى الإدارة بنوع تقني", sent.length === 1 && sent[0].silent === true && sent[0].payload.type === "carrier_calibration" && /Zeralda/.test(sent[0].body) && /Boutique X/.test(sent[0].subject), sent);
+    await SA.reportIssues("yalidine", "Yalidine", sm); ok("البلاغ نفسه لا يتكرر", sent.length === 1);
+    await SA.reportIssues("noest", "NOEST", { done: true, ping: { ok: true }, communes: {}, statuses: {}, warnings: [] }); ok("بلا مشاكل ← لا بلاغ", sent.length === 1);
+    ctx.SaasClient = { on: () => true, send: async () => ({ ok: false, err: "net" }) }; await SA.reportIssues("maystro", "Maystro", sm);
+    ok("فشل الإرسال ← يُحفظ في الصندوق للمحاولة لاحقاً", JSON.parse(store.alyssum_cal_outbox).length === 1);
+  }
   /* لوحة المزوّد (saas/shipping.js) */
   {
     const src2 = fs.readFileSync(__dirname + "/../saas/shipping.js", "utf8"), sent = [];
