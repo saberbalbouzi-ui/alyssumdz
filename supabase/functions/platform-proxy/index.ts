@@ -23,6 +23,12 @@ const ALLOW: [string, RegExp][] = [
   ["POST", /^\/v1\/fraud\/check$/],
   ["POST", /^\/v1\/payments\/(checkouts|setup)$/],
   ["GET", /^\/v1\/payments\/checkouts\/[A-Za-z0-9._:-]{1,80}$/],
+  // الهَب المركزي للمصادر (Shopify/WooCommerce/Google Sheets): الأسرار تُرسل من اللوحة مرة واحدة وتُشفَّر في المنصة
+  ["GET", /^\/v1\/sources(\/orders|\/stats)?$/],
+  ["PUT", /^\/v1\/sources$/],
+  ["POST", /^\/v1\/sources\/\d{1,12}\/(sync|pause)$/],
+  ["DELETE", /^\/v1\/sources\/\d{1,12}$/],
+  ["POST", /^\/v1\/sources\/orders\/\d{1,12}\/imported$/],
 ];
 
 Deno.serve(async (req) => {

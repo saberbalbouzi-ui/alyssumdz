@@ -105,3 +105,17 @@ CREATE TABLE IF NOT EXISTS cm_skus (tenant_id INTEGER NOT NULL REFERENCES pf_ten
 CREATE TABLE IF NOT EXISTS cm_coupons (tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, code TEXT NOT NULL, type TEXT NOT NULL, value INTEGER NOT NULL DEFAULT 0, min INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, from_at INTEGER, to_at INTEGER, PRIMARY KEY (tenant_id, code));
 CREATE TABLE IF NOT EXISTS cm_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, ref TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'nouvelle', name TEXT NOT NULL DEFAULT '', phone_h TEXT NOT NULL, phone_enc TEXT NOT NULL, wilaya TEXT NOT NULL DEFAULT '', commune TEXT NOT NULL DEFAULT '', dtype TEXT NOT NULL DEFAULT 'home', desk TEXT NOT NULL DEFAULT '', items TEXT NOT NULL, subtotal INTEGER NOT NULL, discount INTEGER NOT NULL DEFAULT 0, fee INTEGER NOT NULL DEFAULT 0, total INTEGER NOT NULL, coupon TEXT NOT NULL DEFAULT '', flags TEXT NOT NULL DEFAULT '[]', mode TEXT NOT NULL DEFAULT 'observe', reserved INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE (tenant_id, ref));
 CREATE INDEX IF NOT EXISTS ix_cm_orders ON cm_orders (tenant_id, id);
+-- الهَب المركزي للمصادر: متاجر خارجية (Shopify/WooCommerce/Google Sheets) تُسحب طلباتها للقراءة فقط. الأسرار والهاتف والعنوان مشفّرة.
+CREATE TABLE IF NOT EXISTS src_sources (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, kind TEXT NOT NULL, name TEXT NOT NULL, config TEXT NOT NULL DEFAULT '{}', secret_enc TEXT NULL,
+  status TEXT NOT NULL DEFAULT 'active', cursor TEXT NULL, last_sync_at INTEGER NULL, last_ok_at INTEGER NULL, last_error TEXT NULL, order_count INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_src_sources_t ON src_sources (tenant_id, status);
+CREATE TABLE IF NOT EXISTS src_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, source_id INTEGER NOT NULL REFERENCES src_sources(id) ON DELETE CASCADE, ext_id TEXT NOT NULL, number TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL, status TEXT NOT NULL, raw_status TEXT NOT NULL DEFAULT '', paid INTEGER NOT NULL DEFAULT 0, name TEXT NOT NULL DEFAULT '', pii_enc TEXT NOT NULL, phone_h TEXT NULL,
+  city TEXT NOT NULL DEFAULT '', wilaya TEXT NOT NULL DEFAULT '', items TEXT NOT NULL DEFAULT '[]', total REAL NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'DZD', sig TEXT NOT NULL, imported INTEGER NOT NULL DEFAULT 0,
+  first_seen INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE (source_id, ext_id)
+);
+CREATE INDEX IF NOT EXISTS ix_src_orders_feed ON src_orders (tenant_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS ix_src_orders_phone ON src_orders (tenant_id, phone_h);

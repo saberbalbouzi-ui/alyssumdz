@@ -39,6 +39,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
 <div style="display:flex;justify-content:space-between;align-items:center;margin:.3rem 0 .8rem;font-weight:900"><span>سعر المنتجات <span id="mo-sub"></span></span><span>الإجمالي <span id="mo-tot" style="color:var(--green)"></span></span></div>
 <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button type="button" class="small green" id="mo-save">${mode === "edit" ? "💾 حفظ التعديل" : "💾 حفظ الطلب"}</button><button type="button" class="small warn" id="mo-no">إلغاء</button></div></div>`;
     document.body.appendChild(bg);
+    if (opt.hint) { const h = bg.querySelector(".hint"); if (h) h.textContent = String(opt.hint).slice(0, 300); }       // نص إرشادي مخصّص (مثلاً عند النقل من مركز المتاجر)
     const $ = id => bg.querySelector("#" + id), dt = () => (bg.querySelector('input[name="mo-dt"]:checked') || {}).value || "home";
     function fillCom(keep) { const w = wOf($("mo-wil").value), list = (w && w.communes) || [], cur = keep == null ? (src && src.commune) : keep; $("mo-com").innerHTML = (list.includes(cur) || !cur ? "" : `<option value="${esc(cur)}">${esc(cur)}</option>`) + list.map(c => `<option value="${esc(c)}"${c === cur ? " selected" : ""}>${esc(c)}</option>`).join(""); }
     function fillDesk(keep) { const w = ad.wCo ? ad.wCo($("mo-wil").value) : wOf($("mo-wil").value), ds = (w && w.desks) || [], cur = keep == null ? (src && src.desk) : keep; $("mo-desk").innerHTML = (ds.length ? "" : `<option value="">لا توجد مكاتب معروفة لهذه الولاية</option>`) + (cur && !ds.some(d => d.name === cur) ? `<option value="${esc(cur)}">${esc(cur)}</option>` : "") + ds.map(d => `<option value="${esc(d.name)}"${d.name === cur ? " selected" : ""}>${esc(d.name)}${d.commune ? " — " + esc(d.commune) : ""}</option>`).join(""); $("mo-deskw").style.display = dt() === "stop" ? "" : "none"; }
@@ -77,12 +78,12 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
           close(); ad.renderStats(); ad.renderOrders(); try { ad.openOrderPreview(ad.orders.indexOf(src)); } catch (e) { }
           toast(saved ? "✅ حُفظ تعديل الطلب" : "✅ حُفظ التعديل في اللوحة"); return;
         }
-        const extra = { "✍️ طلب يدوي": "نعم" }; if (mode === "copy" && src) extra["📄 نسخة من"] = String(src.id).slice(-6);
+        const extra = { "✍️ طلب يدوي": "نعم" }; if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
         const order = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, items: clean, subtotal: c.sub, fee: c.fee, total: c.total, coupon: "", discount: c.disc, extra, note: $("mo-note").value.trim() };
         const r = await API.addOrder(order);
         if (!r || !r.ok) { b.disabled = false; b.textContent = lab; toast("❌ تعذّر حفظ الطلب — تحقق من الاتصال وصلاحية الدخول"); return; }
         const o = { id: r.id || ("M" + Date.now().toString(36).toUpperCase()), date: new Date().toISOString(), name, phone, wilaya: order.wilaya, commune: order.commune, dtype: dtp, desk, items: txt, subtotal: c.sub, fee: c.fee, total: c.total, coupon: "", discount: c.disc, extra, status: "nouvelle", note: order.note };
-        ad.orders.unshift(o); close(); ad.renderStats(); ad.renderOrders(); setTimeout(() => { try { ad.refreshAlerts(); } catch (e) { } }, 2500);
+        ad.orders.unshift(o); close(); if (typeof opt.onSaved === "function") { try { opt.onSaved(o); } catch (e) { } } ad.renderStats(); ad.renderOrders(); setTimeout(() => { try { ad.refreshAlerts(); } catch (e) { } }, 2500);
         toast("✅ أُضيف الطلب " + String(o.id).slice(-6) + " — في انتظار التأكيد"); return;
       } catch (e) { b.disabled = false; b.textContent = lab; toast("❌ " + (e && e.message || e)); }
     };

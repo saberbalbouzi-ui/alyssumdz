@@ -14,6 +14,8 @@ export class DB {
   async all(sql, ...a) { return (await this.stmt(sql, a).all()).results ?? []; }
   async run(sql, ...a) { const r = await this.stmt(sql, a).run(); return { id: r.meta?.last_row_id ?? 0, changes: r.meta?.changes ?? 0 }; }
   async val(sql, ...a) { const r = await this.one(sql, ...a); return r ? Object.values(r)[0] : null; }
+  /** عدة أوامر دفعة واحدة: [[sql, ...args], ...] (D1 batch إن وُجد وإلا بالتتابع) */
+  async batch(list) { for (let i = 0; i < list.length; i += 50) { const part = list.slice(i, i + 50); if (typeof this.d1.batch === "function") await this.d1.batch(part.map(([sql, ...a]) => this.stmt(sql, a))); else for (const [sql, ...a] of part) await this.stmt(sql, a).run(); } }
   static isUnique(e) { return /UNIQUE|constraint/i.test(String(e?.message || e)); }
 }
 

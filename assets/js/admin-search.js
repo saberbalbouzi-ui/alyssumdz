@@ -8,6 +8,7 @@ const AdminSearch = (() => {
   const ACTIONS = [
     ["فتح المخزون", "فتح تبويب إدارة المخزون", () => { const b = document.querySelector('.nav-btn[onclick*="inventory"]'); if (b) b.click(); }, "المخزون الكمية تنبيه نافد منخفض"],
     ["السوشيال والإعلانات", "جدولة منشورات فيسبوك وإنستغرام وإدارة الحملات", () => { const b = document.querySelector('.nav-btn[onclick*="social"]'); if (b) b.click(); }, "فيسبوك انستغرام منشور حملة اعلان ميتا جدولة"],
+    ["مركز المتاجر", "طلبات متاجر Shopify وWooCommerce وجداول Google في لوحة واحدة", () => { const b = document.querySelector('.nav-btn[onclick*="sources"]'); if (b) b.click(); }, "متاجر متعددة هب مركزي shopify woocommerce شوبيفاي ووكومرس جدول قوقل شيت ربط متجر استيراد طلبات codflow"],
     ["شبكة الخبراء", "البحث عن مستقلين جزائريين (تصميم، إعلانات، تأكيد، توصيل، UGC) والتواصل بواتساب", () => { const b = document.querySelector('.nav-btn[onclick*="experts"]'); if (b) b.click(); }, "خبير مستقل freelance مصمم media buyer مؤكدة موزع ugc تغليف براندينغ توظيف"],
     ["منتج جديد", "إضافة منتج جديد للمتجر", () => A().editProduct && A().editProduct(null), "اضافة منتج جديد"],
     ["نسخة احتياطية", "تنزيل ملف بكل طلباتك ومنتجاتك وتكاليفك", () => A().backupNow && A().backupNow(), "نسخة احتياطية تصدير حفظ البيانات backup"],
