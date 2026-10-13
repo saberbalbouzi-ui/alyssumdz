@@ -358,6 +358,28 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("الإرسال لياليدين: ثلاث نداءات متزامنة لطلب واحد = طرد واحد فقط", dup.t1 && dup.total === 2 && dup.results.filter(Boolean).length === 1, dup);
   ok("الإرسال لياليدين: تبدّل فهرس الطلب أثناء الإرسال لا يحفظ التتبع على طلب آخر", !dup.wrongOrder && dup.right, dup);
+  // ── ولاية الانطلاق: قائمة في إعدادات الشركة، وتجاوز لطلب واحد، وولاية مستودع الطلب ──
+  const frm = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
+    const SV = { ro: Admin.renderOrders, uo: API.updateOrder, cf: Admin.courierFetch, cw: Admin.companyWilayas, rc: Admin.resolveCommune, en: Admin.enqueueNotify, rb: Admin.renderShippedBadge, or: Admin.orders, dc: Admin.deliveryCfg, wh: Admin.wh, ps: Priv.set };
+    Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg); Admin.deliveryCfg.yalidine = { enabled: true, apiId: "a", apiToken: "b", fromWilayaName: "Alger" }; Admin.companyWilayas = async () => ({}); Priv.set = async () => { };
+    Admin.renderOrders = () => { }; API.updateOrder = async () => ({ ok: true }); Admin.enqueueNotify = () => { }; Admin.renderShippedBadge = () => { };
+    const posts = []; Admin.courierFetch = async rq => { if (rq.method === "POST") { posts.push(JSON.parse(rq.body)); return { ok: true, status: 200, text: JSON.stringify({ data: [{ success: true, tracking: "yal-F" + posts.length }] }) }; } return { ok: true, status: 200, text: JSON.stringify({ total_data: 3, data: [] }) }; };
+    const mk = (id, note) => ({ id, date: new Date().toISOString(), status: "confirmee", name: "Test From", phone: "0550000002", wilaya: "Alger", commune: "Alger Centre", dtype: "home", total: 3000, subtotal: 3000, fee: 0, items: "x ×1 = 3000 DA", note: note || "" });
+    const fromOf = x => { const b = x && (Array.isArray(x) ? x[0] : x); return b && (b.from_wilaya_name || (Array.isArray(b) ? "" : "")); };
+    Admin.orders = [mk("FR1"), mk("FR2"), mk("FR3", "📦@w1"), mk("FR4")];
+    Admin.wh = { cfg: AdminWh.normCfg({ on: true, list: [{ id: "w1", name: "مستودع", from: "Constantine" }] }), stock: {} };
+    const R = {};
+    await Admin.sendOrderToDelivery(0, "yalidine"); R.def = fromOf(posts[0]);
+    Admin._fromOv.FR2 = "Oran"; await Admin.sendOrderToDelivery(1, "yalidine"); R.ov = fromOf(posts[1]); delete Admin._fromOv.FR2;
+    await Admin.sendOrderToDelivery(2, "yalidine"); R.wh = fromOf(posts[2]);
+    Admin.sendFromDlg(3); await wait(50); const sel = document.getElementById("sf-w"); R.dlg = !!sel && sel.options.length; if (sel) sel.value = "Tlemcen"; document.getElementById("sf-go").click(); await wait(400); R.dlgSent = fromOf(posts[3]); R.dlgGone = !document.getElementById("sf-bg"); R.cleared = !Admin._fromOv.FR4;
+    Admin.openDeliveryConfig("yalidine"); await wait(100); const fs = document.getElementById("dlv-f-fromWilayaName"); R.sel = fs ? [fs.tagName, fs.options.length, fs.value] : null;
+    Admin.renderOrders = SV.ro; API.updateOrder = SV.uo; Admin.courierFetch = SV.cf; Admin.companyWilayas = SV.cw; Admin.resolveCommune = SV.rc; Admin.enqueueNotify = SV.en; Admin.renderShippedBadge = SV.rb; Admin.orders = SV.or; Admin.deliveryCfg = SV.dc; Admin.wh = SV.wh; Priv.set = SV.ps;
+    const mb = document.querySelector("#delivery-modal-bg"); if (mb) mb.classList.remove("open"); return R;
+  });
+  ok("ولاية الانطلاق: الافتراضية من إعدادات الشركة، والتجاوز لطلب واحد، وولاية المستودع تلقائياً", frm.def === "Alger" && frm.ov === "Oran" && frm.wh === "Constantine", frm);
+  ok("ولاية الانطلاق: نافذة 📍 تختار ولاية وتُرسل منها ثم تُغلق ولا يبقى تجاوز، وإعدادات الشركة قائمة منسدلة بالولايات", frm.dlg >= 58 && frm.dlgSent === "Tlemcen" && frm.dlgGone && frm.cleared && frm.sel && frm.sel[0] === "SELECT" && frm.sel[1] >= 58 && frm.sel[2] === "Alger", frm);
   // ── إصلاحات لجنة الخبراء (v1.89.132): XSS، المخزون المنتفخ، حذف المسلَّم، فشل إلغاء الطرد، إعلان بلا طلبات ──
   const cm = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); const R = {};
@@ -1155,6 +1177,44 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return r;
   });
   ok("معاينة الطلب: «رابط دفع» للمؤكَّد فقط و«اطلب تقييماً» للمسلَّم فقط (رابط واتساب بالرقم الدولي)", plk.pay && !plk.reviewOnConfirmed && plk.review && !plk.payOnDelivered, plk);
+  // ── المستودعات والمرتجعات: خصم من مستودع الولاية، وإعادة الطرد حين يصل فعلاً فقط ──
+  const whT = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
+    const sv = { pr: Admin.products, fin: Admin.fin, qp: Admin.queueStockPublish, uo: API.updateOrder, wh: Admin.wh, or: Admin.orders, raw: Admin.shipRaw, ps: Priv.set };
+    Admin.queueStockPublish = () => { }; API.updateOrder = () => { }; Priv.set = async () => { };
+    const mkp = () => [{ slug: "sp", title: "كريم المخزون", price: 1000, stock: 10, active: true }];
+    Admin.products = mkp(); Admin.fin = Object.assign({}, Admin.fin || {}, { log: [], costs: {}, cfg: {} });
+    const oran = WILAYAS.find(w => w.name === "Oran");
+    Admin.wh = { cfg: AdminWh.normCfg({ on: true, list: [{ id: "w1", name: "مستودع وهران" }], routing: { [oran.id]: "w1" } }), stock: { sp: { w1: 4 } } };
+    const ord = (id, qty, st, note) => ({ id, date: "2026-10-12T10:00:00.000Z", status: st, wilaya: "Oran", items: "كريم المخزون ×" + qty + " = " + qty * 1000 + " DA", note: note || "" });
+    const R = {};
+    const a = ord("W1", 3, "confirmee"); Admin.syncStockForOrder(a, "confirmee"); R.a = [Admin.products[0].stock, Admin.wh.stock.sp.w1, a.note];
+    const b = ord("W2", 6, "confirmee"); Admin.syncStockForOrder(b, "confirmee"); R.b = [Admin.products[0].stock, Admin.wh.stock.sp.w1, b.note];          // مستودع وهران لا يكفي ← الرئيسي
+    // مرتجع في الطريق: لا يعود
+    a.status = "echec"; Admin.shipRaw = { W1: { raw: "Retour vers centre", ts: 1 } }; Admin.syncStockForOrder(a, "echec"); R.hold = [Admin.products[0].stock, Admin.wh.stock.sp.w1, /📦@w1/.test(a.note), /🔁transit/.test(a.note)];
+    // وصل (الـwebhook كتب 🔁received) ← المسح يعيده إلى مستودع وهران نفسه
+    a.note = a.note.replace(/🔁\w+/, "🔁received"); Admin.orders = [a, b]; const back = await Admin.returnsSweep(); R.back = [back, Admin.products[0].stock, Admin.wh.stock.sp.w1, /📦(?!livree)/.test(a.note), /🔁received/.test(a.note)];
+    R.log = (Admin.fin.log[0] || {}).why;
+    // سياسة «فوراً» تعيد عند أول حالة فشل
+    const c = ord("W3", 2, "confirmee"); Admin.syncStockForOrder(c, "confirmee"); const t0 = Admin.products[0].stock; Admin.wh.cfg.retPolicy = "immediate"; c.status = "echec"; Admin.shipRaw = { W3: { raw: "Retour vers centre", ts: 1 } }; Admin.syncStockForOrder(c, "echec"); R.imm = [t0, Admin.products[0].stock];
+    Admin.wh.cfg.retPolicy = "received";
+    // حالة الشركة تصل «Retourné au vendeur» عبر المزامنة ← إعادة
+    const d = ord("W4", 1, "confirmee"); Admin.syncStockForOrder(d, "confirmee"); d.status = "echec"; Admin.shipRaw = { W4: { raw: "Retour vers centre", ts: 1 } }; Admin.orders = [d]; Admin.syncStockForOrder(d, "echec"); const s1 = Admin.products[0].stock;
+    Admin.shipRaw = { W4: { raw: "Retourné au vendeur", ts: 2 } }; const b2 = await Admin.returnsSweep(); R.raw = [s1, Admin.products[0].stock, b2];
+    // تالف
+    const e = ord("W5", 1, "confirmee"); Admin.syncStockForOrder(e, "confirmee"); e.status = "echec"; const s2 = Admin.products[0].stock; Admin.syncStockForOrder(e, "echec", { damaged: true }); R.dmg = [s2, Admin.products[0].stock, /📦(?!livree)/.test(e.note)];
+    // واجهة
+    Admin.shipRaw = {}; Admin.tab("inventory"); await wait(900); Admin.orders = [Object.assign(ord("W6", 1, "echec"), { name: "زبون مرتجع", note: "📦 🔁transit" })]; AdminWh.draw(); await wait(200);
+    R.ui = !!document.getElementById("wr-card"); R.uiRows = document.querySelectorAll("#wr-card [data-wh=recv]").length; R.uiTbl = document.querySelectorAll("#wr-card table tr").length;
+    R.host = !!document.getElementById("wr-host"); R.tabHidden = document.getElementById("tab-inventory").className; R.hostLen = (document.getElementById("wr-host") || {}).innerHTML ? document.getElementById("wr-host").innerHTML.length : -1; const rb = document.querySelector('#wr-card [data-wh="recv"]'); if (rb) rb.click(); await wait(200); R.manual = [Admin.orders[0].note, document.querySelectorAll("#wr-card [data-wh=recv]").length];
+    Admin.products = sv.pr; Admin.fin = sv.fin; Admin.queueStockPublish = sv.qp; API.updateOrder = sv.uo; Admin.wh = sv.wh; Admin.orders = sv.or; Admin.shipRaw = sv.raw; Priv.set = sv.ps; Admin.tab("orders"); return R;
+  });
+  ok("مستودعات: الطلب يخصم من مستودع ولايته (10→7، وهران 4→1) ويُوسم 📦@w1، وإن لم يكفِ يخصم من الرئيسي", whT.a[0] === 7 && whT.a[1] === 1 && /📦@w1/.test(whT.a[2]) && whT.b[0] === 1 && whT.b[1] === 1 && !/@/.test(whT.b[2]), whT);
+  ok("مرتجع في طريق العودة لا يعود للمخزون ويُوسم 🔁transit", whT.hold[0] === 1 && whT.hold[1] === 1 && whT.hold[2] && whT.hold[3], whT.hold);
+  ok("وصول الطرد (وسم الـwebhook) يعيده تلقائياً إلى مستودع وهران نفسه ويُسجَّل", whT.back[0] === 1 && whT.back[1] === 4 && whT.back[2] === 4 && !whT.back[3] && whT.back[4] && /مرتجع/.test(whT.log), whT);
+  ok("سياسة «فوراً» تعيد عند أول حالة فشل، وحالة «Retourné au vendeur» عبر المزامنة تعيد بعد الحجز", whT.imm[1] === whT.imm[0] + 2 && whT.raw[1] === whT.raw[0] + 1 && whT.raw[2] === 1, whT);
+  ok("مرتجع تالف لا تعود علبه ويُنزع وسمه", whT.dmg[0] === whT.dmg[1] && !whT.dmg[2], whT.dmg);
+  ok("بطاقة المرتجعات والمستودعات في تبويب المخزون: قائمة المنتظِر، جدول الكميات، و«استلمتُه» يعيد الطرد", whT.ui && whT.uiRows === 1 && whT.uiTbl >= 2 && !/📦(?!livree)/.test(whT.manual[0]) && whT.manual[1] === 0, whT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

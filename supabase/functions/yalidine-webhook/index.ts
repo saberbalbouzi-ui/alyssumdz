@@ -17,6 +17,15 @@ function map(raw: string): string | null {
   if (/expedie|transfert|centre|localisation|vers wilaya|recu a wilaya|sorti en livraison|en attente du client|pret pour livreur|ramasse|en livraison/.test(t)) return "expediee";
   return null;
 }
+// مرحلة رجوع الطرد (تطابق AdminWh.returnPhase في اللوحة): received = سُلِّم للبائع، ready = جاهز للسحب من مركز الشركة، transit = في طريق العودة
+function retPhase(raw: string): string {
+  const t = raw.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+  if (!t) return "";
+  if (/retourne\w*\s+(au|chez)\s+(le\s+)?(vendeur|expediteur|marchand|fournisseur)|retour\s+(recu|termine|livre|remis)|returned\s+to\s+(the\s+)?(sender|seller|vendor|merchant)/.test(t)) return "received";
+  if (/retour\s+a\s+retirer|retour.*(disponible|en attente de retrait|a recuperer)|return.*(ready|available)/.test(t)) return "ready";
+  if (/retour|retourn|return|echec livraison|echange.*(echou|echec)/.test(t)) return "transit";
+  return "";
+}
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 const rest = (path: string, init: RequestInit = {}) => fetch(`${URL_}/rest/v1/${path}`, { ...init, headers: { ...H, ...(init.headers ?? {}) } });
 
@@ -62,8 +71,15 @@ Deno.serve(async (req) => {
     const nw = map(rawSt);
     if (!row || !nw || ["livree", "annulee"].includes(row.status)) continue;
     const allowed = nw === "echec" || (RANK[nw] ?? 0) > (RANK[row.status] ?? 0);
-    if (allowed && nw !== row.status) {
-      await rest(`orders?id=eq.${encodeURIComponent(row.id)}`, { method: "PATCH", body: JSON.stringify({ status: nw }), headers: { Prefer: "return=minimal" } });
+    // وسم 🔁مرحلة في ملاحظة الطلب: تقرؤه اللوحة لتعيد الطرد إلى المخزون حين يصل فعلاً (حتى لو كانت مغلقة وقت الحدث)
+    let note: string | undefined;
+    if (nw === "echec") {
+      const ph = retPhase(rawSt), cur = /🔁(transit|ready|received)/.exec(row.note ?? "")?.[1] ?? "", rk: Record<string, number> = { "": 0, transit: 1, ready: 2, received: 3 };
+      if (ph && (rk[ph] ?? 0) > (rk[cur] ?? 0)) note = ((row.note ?? "").replace(/🔁\w+\s*/g, "").replace(/\s+/g, " ").trim() + " 🔁" + ph).trim();
+    }
+    if ((allowed && nw !== row.status) || note) {
+      const body: Record<string, unknown> = {}; if (allowed && nw !== row.status) body.status = nw; if (note) body.note = note;
+      await rest(`orders?id=eq.${encodeURIComponent(row.id)}`, { method: "PATCH", body: JSON.stringify(body), headers: { Prefer: "return=minimal" } });
       updated++;
     }
   }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.171">
+<meta name="admin-version" content="1.89.172">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1624,12 +1624,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.171"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.171"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.171"></script>
+<script src="assets/js/ctl-help.js?v=1.89.172"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.172"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.172"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.171"></script>
+<script src="assets/js/admin-nav.js?v=1.89.172"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1641,7 +1641,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.171"></script>
+<script src="assets/js/admin-update.js?v=1.89.172"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -1672,6 +1672,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-callcenter.js?v=1.89.168"></script>
 <script src="assets/js/admin-dispatch.js?v=1.89.169"></script>
 <script src="assets/js/admin-profit.js?v=1.89.171"></script>
+<script src="assets/js/admin-wh.js?v=1.89.172"></script>
 <script src="assets/js/admin-experts.js?v=1.89.164"></script>
 <script src="assets/js/admin-sources.js?v=1.89.165"></script>
 <script src="assets/js/admin-roles.js?v=1.89.168"></script>
@@ -5294,6 +5295,7 @@ const Admin = {
      المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
      علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
   finDefaults(){ return { packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }; },
+  wh: { cfg:{ on:false, main:"المستودع الرئيسي", list:[], routing:{}, retPolicy:"received" }, stock:{} },
   fin: { costs:{}, ads:{}, set:{ packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }, cfg:{ since:null }, log:[] },
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
@@ -5303,6 +5305,7 @@ const Admin = {
     if(old.delVal == null && old.carrierPct != null) S0.delVal = old.carrierPct;      // ترحيل الإعدادات القديمة
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
     if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
+    try{ if(window.AdminWh && AdminWh.load) this.wh = await AdminWh.load(); }catch(e){}
     this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     try{ this.rcpMigrate(); }catch(e){ }
@@ -5327,6 +5330,7 @@ const Admin = {
       this.orders.forEach((o,i)=>{ if(seen[o.id] !== undefined && seen[o.id] !== o.status) this.onStatusChange(i, o.status); });
     }
     this.markStatusSeen();
+    setTimeout(()=>{ try{ this.returnsSweep(); }catch(e){} }, 1500);
   },
   markStatusSeen(){ try{ const m = {}; this.orders.forEach(o=>{ m[o.id] = o.status; }); localStorage.setItem("alyssum_status_seen", JSON.stringify(m)); }catch(e){} },
   /* نص منتجات الطلب بمبالغ متسقة مع «سعر المنتجات»: طلبات قديمة بعرض «2+1» سُجّلت بسعر القطعة الكامل فتجاوز مجموع الأسطر المجموع الحقيقي، فنوزّع المجموع الحقيقي على الأسطر بالتناسب */
@@ -5388,30 +5392,70 @@ const Admin = {
     });
     return !(any && all);
   },
-  syncStockForOrder(o, status){
+  /* v1.89.172 — المستودعات + المرتجعات: وسم 📦 أو 📦@مستودع على الطلب المخصوم؛ الطرد المرتجع لا يعود للمخزون إلا حين يُسلَّم للبائع (سياسة قابلة للتغيير) */
+  _W(){ return window.AdminWh || null; },
+  returnPhase(o){ const W = this._W(); if(!W) return ""; return W.maxPhase(W.phaseOfNote(o.note), W.returnPhase((this.shipRaw[o.id] || {}).raw || "")); },
+  holdReturn(ph){ const W = this._W(); return !!W && W.hold(ph, this.wh && this.wh.cfg && this.wh.cfg.retPolicy); },
+  markReturn(o, ph){ const W = this._W(); if(!W || W.phaseOfNote(o.note) === ph) return; o.note = W.withPhase(o.note, ph); API.updateOrder(this.key, o.id, undefined, o.note); },
+  whPick(o){
+    const W = this._W(), c = this.wh && this.wh.cfg; if(!W || !c || !c.on) return "main";
+    const w = typeof WILAYAS !== "undefined" ? WILAYAS.find(x=>x.name === o.wilaya) : null, want = W.pickWh(c, w ? (w.par || w.id) : 0); if(want === "main") return "main";
+    return this.orderLines(o).every(l=>{ const tgt = (l.v && l.v.stock != null) ? l.v : (l.p.stock != null ? l.p : null); return !tgt || W.qtyIn(this.wh.stock, W.keyOf(l.p.slug, l.v), want) >= l.qty; }) ? want : "main";      // مستودع الولاية لا يكفي ← الرئيسي
+  },
+  syncStockForOrder(o, status, opt){
     try{
-      if(!o || !o.id) return;
+      if(!o || !o.id) return; opt = opt || {};
       const since = this.fin && this.fin.cfg && this.fin.cfg.since; if(since && new Date(o.date) < new Date(since)) return;
-      const tagged = /📦/.test(o.note || "");
+      const W = this._W(), tg = W ? W.tagOf(o.note) : { has: /📦(?!livree)/.test(o.note || ""), wh: "main" }, tagged = tg.has, RE = W ? W.TAG_RE_G : /📦(?!livree)\s*/g;
       const take = ["confirmee","expediee","livree"].includes(status), give = ["annulee","echec","nouvelle"].includes(status);
-      if(take && !tagged) { if(this.moveStock(o, -1)) this.setNoteTag(o, /📦\s*/g, "📦"); }
+      if(take && !tagged) { const wh = this.whPick(o); if(this.moveStock(o, -1, wh)) this.setNoteTag(o, RE, W ? W.tagText(wh) : "📦"); }
       else if(give && tagged) {
-        if(this.stockReturnWanted(o)) { if(this.moveStock(o, +1)) this.setNoteTag(o, /📦\s*/g, ""); }
-        else { this.setNoteTag(o, /📦\s*/g, ""); this.orderLines(o).forEach(l=>this.stockLog(l.p, 0, (l.v && l.v.stock != null ? l.v : l.p).stock, o.id, "طلب مُلغى بعد جرد يدوي — لم تُعَد علبه")); toast("ℹ️ لم تُعَد علب الطلب إلى المخزون لأن مخزونك عُدّل يدوياً بعد تأكيده"); }
+        if(status === "echec" && opt.damaged){          // مرتجع تالف: لا تعود علبه، ويُسجَّل
+          this.setNoteTag(o, RE, ""); this.markReturn(o, "received"); this.orderLines(o).forEach(l=>this.stockLog(l.p, 0, (l.v && l.v.stock != null ? l.v : l.p).stock, o.id, "مرتجع تالف — لم تُعَد علبه")); return;
+        }
+        if(status === "echec" && !opt.force){          // لا يُعاد قبل وصوله فعلاً
+          const ph = this.returnPhase(o); if(this.holdReturn(ph)){ this.markReturn(o, ph); return; }
+        }
+        const why = status === "echec" ? "مرتجع: أُعيد تلقائياً بعد وصول الطرد" : "";
+        if(this.stockReturnWanted(o)) { if(this.moveStock(o, +1, tg.wh, why)) { this.setNoteTag(o, RE, ""); if(status === "echec") this.markReturn(o, "received"); } }
+        else { this.setNoteTag(o, RE, ""); this.orderLines(o).forEach(l=>this.stockLog(l.p, 0, (l.v && l.v.stock != null ? l.v : l.p).stock, o.id, "طلب مُلغى بعد جرد يدوي — لم تُعَد علبه")); toast("ℹ️ لم تُعَد علب الطلب إلى المخزون لأن مخزونك عُدّل يدوياً بعد تأكيده"); }
       }
     }catch(err){ console.error(err); }
   },
-  moveStock(o, dir){
+  /* مسح المرتجعات: طرد مرتجع (echec) ما زال موسوماً 📦 وقد وصل فعلاً ← يعود للمخزون؛ net: يسأل الشركة عن حالة الطرود التي ما زالت في الطريق */
+  async returnsSweep(opts){
+    opts = opts || {}; if(this._rsBusy) return 0; this._rsBusy = true; let back = 0, asked = 0;
+    try{
+      const W = this._W(); if(!W) return 0;
+      const list = (this.orders || []).filter(o=>o.status === "echec" && W.tagOf(o.note).has), before = list.length;
+      for(const o of list){
+        let ph = this.returnPhase(o);
+        if(this.holdReturn(ph) && opts.net && asked < 15){
+          const t = this.trackingOf(o), co = t && this.allDeliveryCompanies()[t.company], cfg = t && (this.deliveryCfg[t.company] || {});
+          if(co && co.trackRequest && (cfg.apiId || cfg.apiToken || cfg.enabled)){
+            asked++; try{ const r = await this.courierFetch(co.trackRequest(cfg, t.tracking)); if(r.ok){ const raw = co.parseStatus(JSON.parse(r.text)); if(raw){ this.setShipRaw(o.id, raw); ph = this.returnPhase(o); } } }catch(e){}
+            await new Promise(res=>setTimeout(res, 250));
+          }
+        }
+        if(!this.holdReturn(ph)){ this.syncStockForOrder(o, "echec"); if(!W.tagOf(o.note).has) back++; } else this.markReturn(o, ph);
+      }
+      if(back){ toast("↩ أُعيد " + back + " طرد مرتجع إلى المخزون تلقائياً"); try{ this.renderFinance && this.renderFinance(); this.renderOrders(); }catch(e){} }
+      else if(opts.manual) toast(before ? "ℹ️ لا طرد مرتجعاً وصل بعد (" + before + " في الطريق)" : "ℹ️ لا طرود مرتجعة بانتظار العودة");
+    }catch(e){ console.error(e); } finally { this._rsBusy = false; }
+    return back;
+  },
+  moveStock(o, dir, wh, why){
     const lines = this.orderLines(o); if(!lines.length) return false;
-    let changed = false;
+    let changed = false; const W = this._W(), wc = this.wh && this.wh.cfg, wn = (wh && wh !== "main" && W && wc) ? " — " + W.nameOf(wc, wh) : "";
     lines.forEach(l=>{
       const tgt = (l.v && l.v.stock != null) ? l.v : (l.p.stock != null ? l.p : null);
       if(!tgt) return;                                             // غير محدود ⟵ لا تتبّع
       const before = Number(tgt.stock) || 0, after = before + dir * l.qty;      // بلا قصّ عند 0: القيمة السالبة تكشف البيع الزائد، ويعود عند الإلغاء نفس ما خُصم (كان الحدّ 0 يضخّم المخزون)
       tgt.stock = after; changed = true;
-      this.stockLog(l.p, after - before, after, o.id, dir < 0 ? "خصم: طلب مؤكَّد" : "إرجاع للمخزون");
+      if(W && wh && wh !== "main" && this.wh) { W.addStock(this.wh.stock, W.keyOf(l.p.slug, l.v), wh, dir * l.qty); }
+      this.stockLog(l.p, after - before, after, o.id, (dir < 0 ? "خصم: طلب مؤكَّد" : (why || "إرجاع للمخزون")) + wn);
     });
-    if(changed) this.queueStockPublish();
+    if(changed){ this.queueStockPublish(); if(W && W.saveStock && wh && wh !== "main") W.saveStock(); }
     return true;
   },
   _stockTimer: null, _stockBusy: false, _stockDirty: false,
@@ -7020,7 +7064,7 @@ const Admin = {
       fields: [
         { key:"apiId", label:"API ID", type:"text" },
         { key:"apiToken", label:"API Token", type:"password" },
-        { key:"fromWilayaName", label:"ولاية الانطلاق (مثال: Alger)", type:"text", required:false },
+        { key:"fromWilayaName", label:"ولاية الانطلاق الافتراضية", type:"select", options:"wilayas", required:false },
         { key:"extraJson", label:"حقول إضافية للطرد بصيغة متقدمة (اختياري، مثال: {\"can_open\":true})", type:"text", required:false },
         { key:"lastOrderNo", label:"آخر رقم طلب استُعمل في ياليدين (يتزايد تلقائياً)", type:"text", required:false },
         { key:"askOrderNo", label:"اكتب «نعم» ليُسأل عن رقم الطلب قبل كل إرسال (لتعديله يدوياً)", type:"text", required:false },
@@ -7521,9 +7565,14 @@ const Admin = {
     const cfg = this.deliveryCfg[key] || {};
     $f("delivery-modal-title").textContent = "إعداد " + co.name;
     $f("delivery-modal-note").textContent = co.note || "";
-    $f("delivery-modal-fields").innerHTML = (co.fields||[]).map(f=>
-      '<input id="dlv-f-' + f.key + '" type="' + (f.type||"text") + '" placeholder="' + f.label + (f.required===false?" (اختياري)":"") + '" dir="ltr" value="' + (cfg[f.key]||"").toString().replace(/"/g,"&quot;") + '">'
-    ).join("");
+    $f("delivery-modal-fields").innerHTML = (co.fields||[]).map(f=>{
+      const cur = (cfg[f.key]||"").toString();
+      if(f.type === "select"){          // ولاية الانطلاق: قائمة بدل نص حرّ (القيمة المحفوظة القديمة تبقى محدّدة)
+        const L = f.options === "wilayas" ? WILAYAS.filter(w=>!w.par).map(w=>[w.name, w.id + " — " + w.name]) : (f.options || []);
+        return '<label style="display:grid;gap:.2rem;font-size:.85rem">' + f.label + '<select id="dlv-f-' + f.key + '" dir="ltr">' + '<option value="">' + (f.key === "fromWilayaName" ? "Alger (الافتراضي)" : "—") + '</option>' + (cur && !L.some(x=>x[0] === cur) ? '<option value="' + nE(cur) + '" selected>' + nE(cur) + '</option>' : "") + L.map(x=>'<option value="' + nE(x[0]) + '"' + (x[0] === cur ? " selected" : "") + '>' + nE(x[1]) + '</option>').join("") + '</select></label>';
+      }
+      return '<input id="dlv-f-' + f.key + '" type="' + (f.type||"text") + '" placeholder="' + f.label + (f.required===false?" (اختياري)":"") + '" dir="ltr" value="' + cur.replace(/"/g,"&quot;") + '">';
+    }).join("");
     $f("dlv-price-search").value = "";
     this.renderDeliveryPriceBox(key);
     const delBtn = $f("dlv-delete-btn");
@@ -7807,7 +7856,7 @@ const Admin = {
       }
       const i = this.orders.indexOf(o);
       const gone = o.status === "expediee" || o.status === "livree";          // العلب خرجت أو سُلِّمت فلا تُعاد للمخزون عند نقل الطلب إلى السلة
-      try{ if(/📦/.test(note) && (gone || !this.stockReturnWanted(o) || this.moveStock(o, +1))) note = note.replace(/📦\s*/g, ""); }catch(e){}
+      try{ const W = this._W(), tg = W ? W.tagOf(note) : { has: /📦(?!livree)/.test(note), wh: "main" }; if(tg.has && (gone || !this.stockReturnWanted(o) || this.moveStock(o, +1, tg.wh))) note = note.replace(W ? W.TAG_RE_G : /📦(?!livree)\s*/g, ""); }catch(e){}
       note = note.replace(this.TRASH_RE, "").replace(/\s+/g, " ").trim(); o.note = (note ? note + " " : "") + "🗑@" + new Date().toISOString().slice(0, 10);
       API.updateOrder(this.key, o.id, undefined, o.note);
       if(i >= 0) this.orders.splice(i, 1);
@@ -7995,10 +8044,11 @@ const Admin = {
         }
         ord = Object.assign({}, ord, { __ydId: String(next) });
       }
-      let cfg2 = cfg;
-      if(co.wilayasRequest && cfg.fromWilayaName){                                    // ولاية الانطلاق بالاسم الرسمي
-        const wl = await this.companyWilayas(co, cfg), want = this.normName(cfg.fromWilayaName), hit = Object.values(wl).find(v=>this.normName(v.name) === want);
-        if(hit) cfg2 = Object.assign({}, cfg, { fromWilayaName: hit.name });
+      const fromOv = (this._fromOv && this._fromOv[order.id]) || this.whFromName(order);          // ولاية انطلاق لهذا الطلب: اختيار يدوي، وإلا ولاية مستودعه
+      let cfg2 = fromOv ? Object.assign({}, cfg, { fromWilayaName: fromOv }) : cfg;
+      if(co.wilayasRequest && cfg2.fromWilayaName){                                    // ولاية الانطلاق بالاسم الرسمي
+        const wl = await this.companyWilayas(co, cfg2), want = this.normName(cfg2.fromWilayaName), hit = Object.values(wl).find(v=>this.normName(v.name) === want);
+        if(hit) cfg2 = Object.assign({}, cfg2, { fromWilayaName: hit.name });
       }
       const fresh0 = this.orders.find(x=>x.id === order.id);                             // قد يكون وصله تتبع من مسار آخر أثناء الانتظار
       if(fresh0 && this.trackingOf(fresh0)){ toast("ℹ️ الطلب أُرسل إلى الشركة بالفعل (التتبع " + this.trackingOf(fresh0).tracking + ")"); return false }
@@ -8241,8 +8291,20 @@ const Admin = {
     const k = this.orderCompanyKey(o);
     if(!k) return '<button class="small gold ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')">🚚 إرسال</button> ';
     const en = this.enabledCompanyKeys(), all = this.allDeliveryCompanies();
-    return '<button class="small blue ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')" title="إرسال الطلب إلى ' + (all[k] ? all[k].name : "") + '">🚚 إرسال</button> ' +
+    return '<button class="small blue ord-send" type="button" onclick="Admin.sendConfirmed(' + i + ')" title="إرسال الطلب إلى ' + (all[k] ? all[k].name : "") + '">🚚 إرسال</button> <button class="small ord-from" type="button" onclick="Admin.sendFromDlg(' + i + ')" title="إرسال من ولاية انطلاق أخرى" style="padding:.15rem .45rem">📍</button> ' +
       (en.length > 1 ? '<select class="dlv-pick" title="إرسال عبر شركة أخرى" onchange="Admin.sendConfirmed(' + i + ', this.value); this.selectedIndex = 0"><option value="">▾</option>' + en.filter(x=>x !== k).map(x=>'<option value="' + x + '">' + all[x].name + '</option>').join("") + '</select> ' : "");
+  },
+  _fromOv: {},
+  /* ولاية الانطلاق الخاصة بمستودع الطلب (إن حُدّدت في بطاقة المستودعات) */
+  whFromName(o){ try{ const W = this._W(), c = this.wh && this.wh.cfg; if(!W || !c || !c.on) return ""; const id = W.tagOf(o.note).wh; const w = id === "main" ? null : c.list.find(x=>x.id === id); return (w && w.from) || ""; }catch(e){ return ""; } },
+  /* إرسال هذا الطلب من ولاية أخرى غير الافتراضية (أحياناً تُشحن البضاعة من مخزن في ولاية ثانية) */
+  sendFromDlg(i){
+    const o = this.orders[i]; if(!o) return; const k = this.orderCompanyKey(o), cfg = this.deliveryCfg[k] || {}, def = cfg.fromWilayaName || "Alger";
+    let bg = $f("sf-bg"); if(bg) bg.remove(); bg = document.createElement("div"); bg.id = "sf-bg"; bg.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:1rem";
+    const btn = "padding:.55rem 1rem;border-radius:12px;font:inherit;font-weight:800;color:#fff;cursor:pointer;border:1px solid rgba(34,197,94,.6);background:linear-gradient(180deg,rgba(34,197,94,.45),rgba(34,197,94,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 6px rgba(0,0,0,.22),0 3px 10px rgba(0,0,0,.25)";
+    bg.innerHTML = '<div style="background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:1.1rem;max-width:380px;width:100%;display:grid;gap:.6rem"><b>📍 إرسال الطلب ' + nE(o.id) + ' من ولاية أخرى</b><div class="hint" style="margin:0">الولاية الافتراضية للانطلاق: ' + nE(def) + '. اختر الولاية التي ستُسلَّم منها البضاعة لشركة التوصيل.</div><select id="sf-w" dir="ltr" style="padding:.55rem;border-radius:12px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22)">' + WILAYAS.filter(w=>!w.par).map(w=>'<option value="' + nE(w.name) + '" style="color:#111"' + (w.name === def ? " selected" : "") + '>' + w.id + ' — ' + nE(w.name) + '</option>').join("") + '</select><div style="display:flex;gap:.5rem;justify-content:flex-end"><button type="button" id="sf-no" style="' + btn.replace(/34,197,94/g, "255,255,255") + '">إلغاء</button><button type="button" id="sf-go" style="' + btn + '">🚚 أرسل من هذه الولاية</button></div></div>';
+    document.body.appendChild(bg); $f("sf-no").onclick = ()=>bg.remove();
+    $f("sf-go").onclick = ()=>{ const v = $f("sf-w").value; bg.remove(); this._fromOv[o.id] = v; Promise.resolve(this.sendConfirmed(i)).finally(()=>{ delete this._fromOv[o.id]; }); };
   },
   async sendConfirmed(i, key){
     const o = this.orders[i]; if(!o) return;
@@ -8382,7 +8444,7 @@ const Admin = {
   },
   /* مزامنة خلفية: أول مرة بعد تحميل اللوحة بقليل ثم كل 5 دقائق (والتبويب ظاهر) — بلا حاجة لفتح «الطلبات المسجلة» */
   startShipAutoSync(){
-    if(this._shipTimer) return; let n = 0; const run = ()=>{ if(document.hidden || !this.key || !this.activeCompanyKey()) return; n++; if(n % 3 === 1) this.reconcileShipping({ bg:true }).finally(()=>this.syncShipping({ silent:true, bg:true })); else this.syncShipping({ silent:true, bg:true }); };
+    if(this._shipTimer) return; let n = 0; const run = ()=>{ if(document.hidden || !this.key || !this.activeCompanyKey()) return; n++; const swp = ()=>{ try{ this.returnsSweep({ net: n % 3 === 0 }); }catch(e){} }; if(n % 3 === 1) this.reconcileShipping({ bg:true }).finally(()=>this.syncShipping({ silent:true, bg:true }).finally(swp)); else this.syncShipping({ silent:true, bg:true }).finally(swp); };
     setTimeout(run, 20000); this._shipTimer = setInterval(run, 300000);
   },
   autoSyncShipped(){ if(!this._lastShipSync || Date.now() - this._lastShipSync > 180000) this.syncShipping({silent:true}); },
