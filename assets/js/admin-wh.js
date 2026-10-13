@@ -44,7 +44,7 @@
   if (typeof document === "undefined") return;
 
   /* ═════ الحالة والتخزين (Priv: لا تُنشر للموقع) ═════ */
-  const A = () => root.Admin, $ = id => document.getElementById(id);
+  const A = () => (typeof Admin !== "undefined" ? Admin : null), $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const toast = t => { const a = A(); if (a && a.toast) a.toast(t); };
   let saveT = null;
