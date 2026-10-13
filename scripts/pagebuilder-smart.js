@@ -50,7 +50,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   <div id="pbs-panel" style="width:320px;flex:0 0 320px;padding:1.1rem;display:flex;flex-direction:column;gap:.9rem;overflow:auto">
     <div style="display:flex;align-items:center;gap:.6rem"><button id="pbs-back" title="رجوع" style="border:0;background:none;font-size:1.3rem;cursor:pointer">→</button><b style="font-size:1.05rem;flex:1">${title}</b><button id="pbs-x" title="إغلاق" style="border:0;background:none;font-size:1.4rem;cursor:pointer">✕</button></div>
     <div style="font-weight:800;line-height:1.6">حدّد ما تريد التقاطه.</div>
-    <div id="pbs-seg" style="display:flex;background:#f3f2f6;border-radius:12px;padding:4px"><button data-m="one" style="flex:1;border:0;border-radius:9px;padding:.55rem;cursor:pointer;font-weight:700;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)">✨ ${oneLabel}</button><button data-m="all" style="flex:1;border:0;border-radius:9px;padding:.55rem;cursor:pointer;font-weight:700;background:transparent">${allLabel}</button></div>
+    <div id="pbs-seg" style="display:flex;background:#f3f2f6;border-radius:12px;padding:4px"><button data-m="one" class="on" style="flex:1;border:0;border-radius:9px;padding:.55rem;cursor:pointer;font-weight:700;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)">✨ ${oneLabel}</button><button data-m="all" style="flex:1;border:0;border-radius:9px;padding:.55rem;cursor:pointer;font-weight:700;background:transparent">${allLabel}</button></div>
     <div id="pbs-hint" style="font-size:.8rem;color:#6b6556;line-height:1.7">${hintOne}</div>
     <div id="pbs-extra" style="display:flex;flex-direction:column;gap:.5rem"></div>
     <button id="pbs-go" disabled style="border:0;border-radius:12px;padding:.8rem;font-weight:800;font-size:1rem;cursor:pointer;background:#0d9488;color:#fff">التقاط</button>
@@ -73,7 +73,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const close = () => { S.closed = true; clearInterval(S.fabT); window.removeEventListener("resize", onR); host.remove(); }; $("pbs-x").onclick = $("pbs-back").onclick = close;
     return { host, $, S, close, setCollapsed };
   }
-  function bindSeg(sh, repaint) { sh.host.querySelectorAll("#pbs-seg button").forEach(b => b.onclick = () => { sh.S.mode = b.dataset.m; sh.S.onMode && sh.S.onMode(); sh.host.querySelectorAll("#pbs-seg button").forEach(x => { const on = x === b; x.style.background = on ? "#fff" : "transparent"; x.style.boxShadow = on ? "0 1px 4px rgba(0,0,0,.15)" : "none"; }); sh.$("pbs-hint").textContent = sh.S.mode === "all" ? sh.S.hintAll : sh.S.hintOne; repaint(); }); }
+  function bindSeg(sh, repaint) { sh.host.querySelectorAll("#pbs-seg button").forEach(b => b.onclick = () => { sh.S.mode = b.dataset.m; sh.S.onMode && sh.S.onMode(); sh.host.querySelectorAll("#pbs-seg button").forEach(x => { const on = x === b; x.classList.toggle("on", on); x.style.background = on ? "#fff" : "transparent"; x.style.boxShadow = on ? "0 1px 4px rgba(0,0,0,.15)" : "none"; }); sh.$("pbs-hint").textContent = sh.S.mode === "all" ? sh.S.hintAll : sh.S.hintOne; repaint(); }); }
   /* أثناء التحليل: الصورة ظاهرة وخط مضيء يمسحها ذهاباً وإياباً حتى ينتهي المسح ← يعيد دالة الإيقاف */
   function scanFx(sh, cv) {
     if (!document.getElementById("pbs-scan-css3")) { const st = document.createElement("style"); st.id = "pbs-scan-css3"; st.textContent = "@keyframes pbsScan{0%{top:0}100%{top:calc(100% - 2px)}}@keyframes pbsDot{0%{opacity:0;transform:translate(var(--x0),var(--y0)) scale(.6)}12%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translate(var(--x1),var(--y1)) scale(1)}}#pbs-dots{position:absolute;inset:0;overflow:hidden;pointer-events:none}.pbs-dot{position:absolute;left:0;top:0;width:4px;height:4px;border-radius:50%;background:#e0f2fe;box-shadow:0 0 6px 2px rgba(96,165,250,.85);opacity:0;animation:pbsDot var(--d) linear infinite;animation-delay:var(--l);will-change:transform,opacity}#pbs-scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#60a5fa 10%,#dbeafe 50%,#60a5fa 90%,transparent);box-shadow:0 0 8px 2px rgba(96,165,250,.55);animation:pbsScan 1.7s ease-in-out infinite alternate;pointer-events:none}"; document.head.appendChild(st); }
@@ -464,5 +464,5 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     };
     redrawBase();
   }
-  return { pane, capture, captureElements, importImages, eraser, warm, setGem };
+  return { pane, capture, captureElements, importImages, eraser, warm, setGem, _shell: shell };
 })();

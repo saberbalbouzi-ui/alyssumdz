@@ -419,3 +419,18 @@ html .nav-q input{border:0!important;background:transparent!important;box-shadow
 :focus-visible{outline:2px solid var(--g-mint,#a3e635);outline-offset:2px}
 #toast2[data-k="err"]{border-color:rgba(252,165,165,.7)!important;color:#fecaca!important;background:rgba(127,29,29,.88)!important}
 #toast2[data-k="warn"]{border-color:rgba(253,186,116,.7)!important;color:#fed7aa!important;background:rgba(124,45,18,.88)!important}
+
+/* نافذة التقاط العناصر/النص (#pbs-modal): غلافها أبيض مضمّن فكان نص المظهر الداكن يصير أبيض على أبيض وتبدو شفافة؛ تُعامل كسطح عائم معتم بنص فاتح (ملاحظة: كل سطح عائم جديد يُعطى خلفية معتمة صراحةً) */
+html.glass #pbs-modal>div{background:rgba(9,24,18,.985)!important;border:1px solid rgba(255,255,255,.14);color:#ecfdf5}
+html.glass #pbs-modal.pbs-m #pbs-panel{background:rgba(9,24,18,.985)!important}
+html.glass #pbs-panel,html.glass #pbs-panel b{color:#ecfdf5}
+html.glass #pbs-hint{color:rgba(236,253,245,.86)!important}
+html.glass #pbs-msg{color:#bbf7d0!important}
+html.glass #pbs-back,html.glass #pbs-x{color:#ecfdf5!important}
+html.glass #pbs-seg{background:rgba(255,255,255,.08)!important}
+html.glass #pbs-seg button{color:#ecfdf5!important;background:transparent!important;box-shadow:none!important}
+html.glass #pbs-seg button.on{background:linear-gradient(180deg,rgba(80,227,138,.34),rgba(80,227,138,.16))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 6px rgba(0,0,0,.35)!important;color:#fff!important}
+html.glass #pbs-panel [style*="background:#fff"],html.glass #pbs-panel [style*="background: rgb(255, 255, 255)"]{background:rgba(255,255,255,.08)!important;color:#ecfdf5!important}
+html.glass #pbs-panel [style*="color:#8a8472"],html.glass #pbs-panel [style*="color:#a8a294"]{color:rgba(236,253,245,.62)!important}
+html.glass #pbs-panel [style*="border-top:1px solid #eee"]{border-top-color:rgba(255,255,255,.14)!important}
+html.glass #pbs-panel button[style*="color:#0d9488"]{color:#86efac!important}
