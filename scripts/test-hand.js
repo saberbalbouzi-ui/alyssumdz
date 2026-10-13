@@ -214,6 +214,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const it = await p.evaluate(async () => {
     const tabs = [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt), pane = document.getElementById("pbx-lpane"), imgs = [...pane.querySelectorAll(".pbx-tt img")];
     await new Promise(r => setTimeout(r, 600)); const o = { second: tabs[1], tabOn: document.querySelector('.pbx-tabs [data-lt="img"]').classList.contains("on"), tools: pane.querySelectorAll("[data-imgt]").length, sub: pane.querySelectorAll("[data-imgs]").length, sm: pane.querySelectorAll("[data-imgm]").length, loaded: imgs.filter(i => i.naturalWidth > 0).length, imgsN: imgs.length };
+    const t0 = pane.querySelector(".pbx-tt"), im0 = t0.querySelector("img"), sp0 = t0.querySelector("span"), gs = getComputedStyle(pane.querySelector(".pbx-tg"));
+    o.ar = getComputedStyle(im0).aspectRatio; o.cols = gs.gridTemplateColumns; o.square = /^1\s*\/\s*1$/.test(o.ar); o.nameBelow = getComputedStyle(t0).flexDirection === "column" && !!sp0 && sp0.compareDocumentPosition(im0) & Node.DOCUMENT_POSITION_PRECEDING ? true : false; o.twoCols = o.cols.trim().split(/\s+/).length === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
     o.tabsHidden = getComputedStyle(document.querySelector("#pbx-ep .pbst-tabs")).display === "none"; o.hasEpTabs = !!document.querySelector("#pbx-ep .ep-tabs");
     pane.querySelector('[data-imgs="txt"]').click(); await new Promise(r => setTimeout(r, 700)); o.head = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.visPane = [...document.querySelectorAll("#pbst .pbst-pane")].filter(x => !x.hidden).map(x => x.dataset.stp).join(",");
     pane.querySelector('[data-imgt="pz"]').click(); await new Promise(r => setTimeout(r, 400)); o.pzHead = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.subGone = !pane.querySelector("[data-imgs]");
@@ -221,6 +223,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.ltoggle("img"); document.querySelector('#pbx-lpane [data-imgt="st"]').click(); await new Promise(r => setTimeout(r, 600)); return o;
   });
   ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 11 أداة وصور حقيقية محمّلة وأدوات ذكية", it.second === "img" && it.tabOn && it.tools === 11 && it.sub === 5 && it.sm === 5 && it.imgsN >= 12 && it.loaded === it.imgsN, it);
+  ok("تعديل الصورة: المصغّرات مربعة كبيرة بالاسم تحتها صفّان في كل صف، وعبارة «الصورة المحدّدة جاهزة» محذوفة", it.square && it.nameBelow && it.twoCols && it.noReady, it);
   ok("تعديل الصورة: اسم الأداة والإعدادات في الشريط الأيمن (بلا شريط تبويبات داخلي)، وأدوات الاستوديو تُفتح من القائمة اليسرى", it.tabsHidden && !it.hasEpTabs && /استوديو المنتج/.test(it.head) && /ملصقات/.test(it.head) && it.visPane === "txt" && /بازل/.test(it.pzHead) && it.subGone, it);
   ok("تعديل الصورة: فتح تبويب آخر يغلق لوحة الأداة (كل تبويب يغلق الذي قبله)", it.closedByTab, it);
   const cx = await p.evaluate(async () => {
@@ -1292,6 +1295,35 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     q('#pbs-seg button[data-m="all"]').click(); R.afterClick = ratio(q('#pbs-seg button[data-m="all"]')); sh.close(); return R;
   });
   ok("نافذة التقاط العناصر بالمظهر الداكن: الخلفية داكنة معتمة وكل النصوص (العنوان، التلميح، «عنصر/كل العناصر») بتباين ≥ 4.5", Math.max(...cqT.wrap) < 60 && cqT.title >= 4.5 && cqT.hint >= 4.5 && cqT.segOn >= 4.5 && cqT.segOff >= 4.5 && cqT.afterClick >= 4.5 && cqT.go >= 4.5, cqT);
+  // ── التقاط العناصر: يبدأ التحليل مباشرة بلا خطوة «تحليل الصورة كاملة»، والمسح أخضر شفاف بخط أخضر ضوئي بلا نقاط زرقاء ──
+  const scT = await p.evaluate(() => {
+    const R = {}; document.documentElement.classList.add("glass");
+    const cv = document.createElement("canvas"); cv.width = 400; cv.height = 300; cv.getContext("2d").fillRect(0, 0, 400, 300);
+    const sh = PBSmart._shell("التقاط العناصر", "عنصر", "كل العناصر", "h", "h2"); const stop = PBSmart._scanFx(sh, cv);
+    const tint = sh.host.querySelector("#pbs-tint"), ln = sh.host.querySelector("#pbs-scanline"), g = el => el ? getComputedStyle(el) : null;
+    R.dots = sh.host.querySelectorAll(".pbs-dot,#pbs-dots").length; R.tint = !!tint && /34, 197, 94|16, 185, 129/.test(g(tint).backgroundImage); R.line = !!ln && /74, 222, 128|34, 197, 94/.test(g(ln).boxShadow) && !/96, 165, 250/.test(g(ln).boxShadow);
+    R.noZoneStep = !/pickZone/.test(PBSmart.captureElements.toString()); R.goText = sh.host.querySelector("#pbs-go").textContent;
+    stop(); sh.close(); return R;
+  });
+  ok("التقاط العناصر: يبدأ التحليل مباشرة، ومسح أخضر شفاف بخط أخضر ضوئي بلا نقاط زرقاء", scT.dots === 0 && scT.tint && scT.line && scT.noZoneStep && /المسح/.test(scT.goText), scT);
+  // ── دقة حواف الالتقاط: القناع مقيّد بصندوق كشفه، والمنطقة المشتركة بين عنصرين متجاورين للأقرب ──
+  const teT = await p.evaluate(() => {
+    const T = AIVision._t, S = { W: 100, H: 100, lw: 100, lh: 100, fx: 1, fy: 1 };
+    const mk = (x0, x1, y0, y1, box) => { const lo = new Float32Array(10000).fill(-2); for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) lo[y * 100 + x] = 1; return T.stats({ lo, lw: 100, lh: 100, score: .9, obj: 1, label: "عبوة", box }, S); };
+    const R = {}; const a = mk(10, 90, 10, 60, [10, 10, 40, 60]); const before = a.area; T.trimEdges([a], S); R.clamp = before > a.area && a.x1 <= 46;      // بلغ القناع 90 والصندوق ينتهي عند 40(+هامش 2)
+    const b = mk(10, 50, 10, 60, [10, 10, 50, 60]), c = mk(44, 90, 10, 60, [44, 10, 90, 60]); const ov0 = (() => { let n = 0; for (let i = 0; i < 10000; i++) if (b.lo[i] > 0 && c.lo[i] > 0) n++; return n; })();
+    T.trimEdges([b, c], S); let ov1 = 0; for (let i = 0; i < 10000; i++) if (b.lo[i] > 0 && c.lo[i] > 0) ov1++; R.ov0 = ov0; R.ov1 = ov1; R.bx = b.x1; R.cx = c.x0;
+    return R;
+  });
+  ok("حواف الالتقاط: قناع العنصر مقيّد بصندوقه والمنطقة المشتركة بين عبوتين تُعطى لأقربهما ولا يبقى تداخل", teT.clamp && teT.ov0 > 0 && teT.ov1 === 0 && teT.bx <= 50 && teT.cx >= 44, teT);
+  // ── ذاكرة النماذج: معلومات الحفظ تُقرأ (ملفات/حجم/دائم)، وتُطلب الدائمة، ولا تُسمّى «تنزيلاً» إن كانت محفوظة ──
+  const mcT = await p.evaluate(async () => {
+    const R = {}; R.has = typeof AIVision.cacheInfo === "function" && typeof AIVision.keepModels === "function";
+    let asked = 0; const SV = navigator.storage && navigator.storage.persist; try { if (navigator.storage) navigator.storage.persist = async () => { asked++; return true; }; } catch (e) { }
+    AIVision.keepModels(); await new Promise(r => setTimeout(r, 200)); R.asked = asked; const c = await AIVision.cacheInfo(); R.shape = ["files", "bytes", "usage", "quota", "persisted"].every(k => k in c);
+    try { if (navigator.storage && SV) navigator.storage.persist = SV; } catch (e) { } return R;
+  });
+  ok("ذاكرة النماذج: تُقرأ معلومات الحفظ (ملفات/حجم/دائم) ويُطلب الحفظ الدائم حتى لا تُمسح عند امتلاء القرص", mcT.has && mcT.shape && mcT.asked === 1, mcT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

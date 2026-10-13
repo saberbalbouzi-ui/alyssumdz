@@ -24,10 +24,21 @@ window.AIVision = (function () {
     const k = Math.min(1, max / Math.max(cv.width, cv.height)), w = Math.max(1, Math.round(cv.width * k)), h = Math.max(1, Math.round(cv.height * k)), c = document.createElement("canvas"); c.width = w; c.height = h;
     const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h); return { data: g.getImageData(0, 0, w, h).data.buffer, w, h, k };
   }
-  /* تقدّم التنزيل لكل الملفات معاً ← نص عربي */
+  /* ذاكرة المتصفح للنماذج (Cache Storage): هل الملفات محفوظة؟ كم حجمها؟ وهل هي دائمة (لا يمسحها المتصفح عند امتلاء القرص)؟ */
+  let CINFO = null, PERSIST = null;
+  async function cacheInfo() {
+    const r = { files: 0, bytes: 0, usage: 0, quota: 0, persisted: PERSIST === true };
+    try { if (typeof caches !== "undefined") for (const n of await caches.keys()) if (/transformers|alyssum-ai|onnx|huggingface/i.test(n)) r.files += (await (await caches.open(n)).keys()).length; } catch (e) { }
+    try { const e = navigator.storage && await navigator.storage.estimate(); if (e) { r.usage = e.usage || 0; r.quota = e.quota || 0; r.bytes = (e.usageDetails && e.usageDetails.caches) || 0; } if (navigator.storage && navigator.storage.persisted) r.persisted = await navigator.storage.persisted(); } catch (e) { }
+    CINFO = r; return r;
+  }
+  /* نطلب من المتصفح حفظ ملفات النماذج بشكل دائم فلا يمسحها عند ضيق مساحة القرص (فتُعاد تنزيلاتها كل مرة) */
+  function keepModels() { try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => { PERSIST = !!ok; }, () => { }); } catch (e) { } cacheInfo().catch(() => { }); }
+  const modelsCached = () => !!CINFO && (CINFO.bytes > 60e6 || CINFO.files >= 12);
+  /* تقدّم تحميل الملفات معاً ← نص عربي؛ تُقرأ الملفات المحفوظة بنفس أحداث التقدّم فلا نقول «تنزيل» إلا إن لم تكن محفوظة */
   function progress(step) {
     const files = {}; let last = 0;
-    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط) " + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
+    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? (modelsCached() ? "⚡ تحميل أداة القص من ذاكرة المتصفح (بلا تنزيل) " : "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط، ثم تُحفظ) ") + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
   }
   /* خريطة عمق نسبية (أكبر = أقرب) لصورة بحجم ≤640 ← {w,h,data} */
   const DC = new Map();      // ذاكرة قصيرة لخرائط العمق (للتحضير المسبق)
@@ -156,6 +167,18 @@ window.AIVision = (function () {
     out.forEach(it => { if (it.parts > 1 && it.label === "كتاب") it.label = "كتب"; if (it.parts > 1 && it.label === "قلم") it.label = "أقلام"; });
     return out;
   }
+  /* تضييق حدود العناصر بعد الدمج: (١) قناع العنصر لا يتجاوز صندوق كشفه إلا بهامش 4% فلا «يلتقط» ما جاوره من عبوات/خلفية؛ (٢) المنطقة المشتركة بين قناعين متداخلين جزئياً تُعطى للأقرب لمركز صندوقه (احتواء كامل = جزء أو عنصر فوق آخر ويُترك لقواعد الدمج) */
+  function trimEdges(items, S) {
+    const boxOf = it => it.box || [it.x0, it.y0, it.x1, it.y1], ok = it => it.area && !it.zoneMain && !it.manual && !it.poly && !PERSON.test(it.label || "");
+    items.forEach(it => { if (!ok(it) || !it.box || (it.parts || 1) > 1) return; const b = it.box, m = .04 * Math.max(b[2] - b[0], b[3] - b[1]), { lw, lh, lo } = it; let ch = false;
+      for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { const i = y * lw + x; if (lo[i] <= 0) continue; const ix = (x + .5) / S.fx, iy = (y + .5) / S.fy; if (ix < b[0] - m || ix > b[2] + m || iy < b[1] - m || iy > b[3] + m) { lo[i] = -2; ch = true; } }
+      if (ch) { cleanLo(lo, lw, lh); stats(it, S); } });
+    for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) { const a = items[i], c = items[j]; if (!ok(a) || !ok(c) || !a.area || !c.area) continue; const ov = both(a, c); if (!ov || ov / Math.min(a.area, c.area) > .4) continue;
+      const A = boxOf(a), C = boxOf(c), ca = [(A[0] + A[2]) / 2, (A[1] + A[3]) / 2, Math.max(1, A[2] - A[0]), Math.max(1, A[3] - A[1])], cc = [(C[0] + C[2]) / 2, (C[1] + C[3]) / 2, Math.max(1, C[2] - C[0]), Math.max(1, C[3] - C[1])], { lw, lh } = a;
+      for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { const k = y * lw + x; if (a.lo[k] > 0 && c.lo[k] > 0) { const ix = (x + .5) / S.fx, iy = (y + .5) / S.fy, da = Math.pow((ix - ca[0]) / ca[2], 2) + Math.pow((iy - ca[1]) / ca[3], 2), dc = Math.pow((ix - cc[0]) / cc[2], 2) + Math.pow((iy - cc[1]) / cc[3], 2); if (da <= dc) c.lo[k] = -2; else a.lo[k] = -2; } }
+      cleanLo(a.lo, a.lw, a.lh); cleanLo(c.lo, c.lw, c.lh); stats(a, S); stats(c, S); }
+    return items;
+  }
   /* ذاكرة التحليل: إعادة فتح الأداة على الصورة نفسها (والترميز ما زال في العامل) تعيد النتيجة فوراً بلا ترميز ولا كشف ولا أقنعة */
   let AC = null;
   const fingerprint = cv => { const g = cv.getContext("2d", { willReadFrequently: true }), W = cv.width, H = cv.height; let h = 2166136261; for (let j = 0; j < 12; j++) for (let i = 0; i < 12; i++) { const d = g.getImageData(Math.min(W - 1, Math.floor((i + .5) * W / 12)), Math.min(H - 1, Math.floor((j + .5) * H / 12)), 1, 1).data; for (let k = 0; k < 3; k++) h = Math.imul(h ^ d[k], 16777619); } return W + "x" + H + ":" + (h >>> 0); };
@@ -171,6 +194,7 @@ window.AIVision = (function () {
   }
   async function analyze0(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
+    keepModels();
     let fp = fpOf(cv, o);
     if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحلي المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: "local", note: "", dets: AC.dets, later: null }; }
     step("⏳ تجهيز أداة القص…");
@@ -199,7 +223,7 @@ window.AIVision = (function () {
         step("⏳ رسم حدود العناصر (" + (i + 1) + "/" + dets.length + ")…");
         try {
           const m = await maskFor(S, { box: d.box });
-          masked[i] = m && m.area ? Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src, zoneMain: !!d.zoneMain }) : null;
+          masked[i] = m && m.area ? Object.assign(m, { label: d.label, en: d.en || "", det: d.score, rank: i, src: d.src, zoneMain: !!d.zoneMain, box: d.box }) : null;
         } catch (e) {
           masked[i] = null;
           console.warn("SAM mask", i, e);
@@ -207,7 +231,7 @@ window.AIVision = (function () {
       }
     }));
     masked.forEach(m => { if (m) items.push(m); });
-    const out = mergeItems(items, S), main = out.find(i => i.zoneMain);
+    const out = trimEdges(mergeItems(items, S), S), main = out.find(i => i.zoneMain);
     if (main) {                                                       // «منطقة»: أجزاء الشيء نفسه (شرائح كشف داخل المستطيل) تُضمّ إليه؛ الأشخاص/الأيدي تبقى منفصلة لتُطرح الأصابع
       const mb = [main.x0, main.y0, main.x1, main.y1], ex = .1 * Math.max(mb[2] - mb[0], mb[3] - mb[1]), eb = [mb[0] - ex, mb[1] - ex, mb[2] + ex, mb[3] + ex];
       for (let i = out.length - 1; i >= 0; i--) { const o = out[i]; if (o === main || PERSON.test(o.label)) continue; const ob = [o.x0, o.y0, o.x1, o.y1]; if (bInter(ob, eb) > .7 * bArea(ob)) { unite(main, o, S); out.splice(i, 1); } }
@@ -350,8 +374,9 @@ window.AIVision = (function () {
     return { a, f: fv, dx, dy, dw, dh, lx: dx + (nx ? sx / nx : dw / 2), ly: dy + Math.max(0, ly), cx: dx + (cnt ? cx / cnt : dw / 2), cy: dy + (cnt ? cy / cnt : dh / 2) };      // lx/ly: أعلى العنصر (لاسمه)، cx/cy: مركزه
   }
   /* معاينة بالدقة الكاملة (نفس قصّ «التقاط») مصغّرة للعرض: للحواف الدقيقة كالأصابع */
+  let DCACHE = {};
   function fineView(S, cv, it, k, items) {
-    const D = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, S.W, S.H).data, A = fullAlpha(S, it, D, { matte: false });
+    const D = (DCACHE.cv === cv && DCACHE.w === S.W && DCACHE.h === S.H) ? DCACHE.D : (DCACHE = { cv, w: S.W, h: S.H, D: cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, S.W, S.H).data }).D, A = fullAlpha(S, it, D, { matte: false });
     (items || []).filter(J => J.holder === it).forEach(J => { const B = fullAlpha(S, J, D, { matte: false }); for (let y = Math.max(A.y0, B.y0); y < Math.min(A.y0 + A.h, B.y0 + B.h); y++) for (let x = Math.max(A.x0, B.x0); x < Math.min(A.x0 + A.w, B.x0 + B.w); x++) A.a[(y - A.y0) * A.w + x - A.x0] *= 1 - B.a[(y - B.y0) * B.w + x - B.x0]; });      // اليد = حدودها ناقص الشيء الذي تمسكه
     const dx = Math.floor(A.x0 * k), dy = Math.floor(A.y0 * k), dw = Math.max(2, Math.ceil((A.x0 + A.w) * k) - dx), dh = Math.max(2, Math.ceil((A.y0 + A.h) * k) - dy), a = new Uint8Array(dw * dh), fv = new Float32Array(dw * dh).fill(-4); let ly = -1, sx = 0, nx = 0, n = 0, cx = 0, cy = 0;
     for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) { const gx = Math.min(A.w - 1, Math.floor((dx + x + .5) / k) - A.x0), gy = Math.min(A.h - 1, Math.floor((dy + y + .5) / k) - A.y0); if (gx >= 0 && gy >= 0) fv[y * dw + x] = (A.a[gy * A.w + gx] - .5) * 8; if (gx >= 0 && gy >= 0 && A.a[gy * A.w + gx] > .5) { a[y * dw + x] = 1; n++; cx += x; cy += y; if (ly < 0 || y <= ly + 2) { if (ly < 0) ly = y; sx += x; nx++; } } }
@@ -568,5 +593,5 @@ window.AIVision = (function () {
     return { out: mk(lineA), fill: mk(fillA) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
-  return { _t: { mergeItems, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
+  return { cacheInfo, keepModels, _t: { mergeItems, trimEdges, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
 })();
