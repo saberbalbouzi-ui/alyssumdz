@@ -38,7 +38,7 @@ window.AIVision = (function () {
   /* تقدّم تحميل الملفات معاً ← نص عربي؛ تُقرأ الملفات المحفوظة بنفس أحداث التقدّم فلا نقول «تنزيل» إلا إن لم تكن محفوظة */
   function progress(step) {
     const files = {}; let last = 0;
-    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? (modelsCached() ? "⚡ تحميل أداة القص من ذاكرة المتصفح (بلا تنزيل) " : "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط، ثم تُحفظ) ") + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
+    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; if (T > 1048576 && modelsCached()) return;      /* الملفات محفوظة في المتصفح: لا رسالة تحميل أصلاً */ step(T > 1048576 ? "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط، ثم تُحفظ) " + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
   }
   /* خريطة عمق نسبية (أكبر = أقرب) لصورة بحجم ≤640 ← {w,h,data} */
   const DC = new Map();      // ذاكرة قصيرة لخرائط العمق (للتحضير المسبق)

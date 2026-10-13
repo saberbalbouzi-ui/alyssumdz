@@ -277,6 +277,27 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("صفحة جديدة: نافذة بالاسم ونوعين (ويب/مقاس) وقائمة مقاسات مجمّعة", np.dlg && np.groups >= 6 && np.opts >= 20 && np.szHidden && np.szShown, np);
   ok("صفحة جديدة: اختيار مقاس يملأ العرض والارتفاع، وتعديلهما يحوّل القائمة إلى «مخصّص»", np.w === "1080" && np.h === "1920" && np.selCustom === "custom", np);
   ok("صفحة جديدة: تصميم بمقاس مخصّص يفتح لوحة 800×1920 باسمها، وصفحة الويب تفتح صفحة عادية", np.closed && np.ad && np.ad[0] === 800 && np.ad[1] === 1920 && np.title === "ستوري تجريبي" && np.web, np);
+  // ── «تصميم بمقاس»: الصفحة تظهر كاملة داخل مجال الرؤية مهما كان مقاسها (بلا شريط فارغ أعلى ولا فراغ تحتها)، وعجلة الفأرة تكبّر/تصغّر ──
+  const fitR = {};
+  for (const [W, H] of [[1000, 1000], [1080, 1920], [1920, 1080]]) {
+    fitR[W + "x" + H] = await p.evaluate(async ([W, H]) => {
+      const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W, H, id: "custom", label: "t", name: "fit", textMode: "none", lang: "ar" }); await w(1800);
+      const st = document.getElementById("pbx-stage"), sc = document.getElementById("pbx-sc"), a = st.getBoundingClientRect(), b = sc.getBoundingClientRect(), fr = document.getElementById("pbx-frame");
+      const o = { padTop: getComputedStyle(st).paddingTop, inside: b.top >= a.top - 1 && b.bottom <= a.bottom + 1 && b.left >= a.left - 1 && b.right <= a.right + 1, gapTop: Math.round(b.top - a.top), gapBot: Math.round(a.bottom - b.bottom), ratio: Math.round((b.width / b.height) * 100) / 100, want: Math.round((W / H) * 100) / 100, noScroll: st.scrollHeight <= st.clientHeight + 2 };
+      const s0 = PBApp.E.scale; st.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true })); await w(50); const s1 = PBApp.E.scale; st.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true })); st.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true })); await w(50); const s2 = PBApp.E.scale;
+      o.zoomIn = s1 > s0 * 1.05; o.zoomOut = s2 < s1 * 0.9; PBApp.setZoomTest && 0; PBApp.close(); await w(500); return o;
+    }, [W, H]);
+  }
+  await p.setViewportSize({ width: 390, height: 780 });
+  fitR.mobile = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "fit", textMode: "none", lang: "ar" }); await w(1800);
+    const st = document.getElementById("pbx-stage"), sc = document.getElementById("pbx-sc"), a = st.getBoundingClientRect(), b = sc.getBoundingClientRect(); const o = { inside: b.top >= a.top - 1 && b.bottom <= a.bottom + 1 && b.left >= a.left - 1 && b.right <= a.right + 1 };
+    const t = (x, y, id) => new Touch({ identifier: id, target: st, clientX: x, clientY: y }); const s0 = PBApp.E.scale; st.dispatchEvent(new TouchEvent("touchstart", { touches: [t(100, 300, 1), t(200, 300, 2)], bubbles: true, cancelable: true })); st.dispatchEvent(new TouchEvent("touchmove", { touches: [t(60, 300, 1), t(240, 300, 2)], bubbles: true, cancelable: true })); st.dispatchEvent(new TouchEvent("touchend", { touches: [], bubbles: true })); await w(50);
+    o.pinch = PBApp.E.scale > s0 * 1.3; PBApp.close(); await w(500); return o;
+  });
+  await p.setViewportSize({ width: 1280, height: 800 });
+  ok("تصميم بمقاس: الصفحة كاملة داخل مجال الرؤية بكل المقاسات (مربع/طولي/عرضي) والنسبة صحيحة بلا شريط علوي ولا تمرير", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].inside && fitR[k].padTop === "0px" && Math.abs(fitR[k].ratio - fitR[k].want) < .03 && fitR[k].noScroll), fitR);
+  ok("تصميم بمقاس: عجلة الفأرة تكبّر وتصغّر بلا Ctrl، والقرص بإصبعين يكبّر على الهاتف", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].zoomIn && fitR[k].zoomOut) && fitR.mobile.inside && fitR.mobile.pinch, fitR);
   const ar = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; const out = {};
     ImgGen.openSized({ W: 1080, H: 1920, id: "ig_story", label: "ستوري", name: "تصميم مقاس", textMode: "none", lang: "ar" }); await w(1800);
@@ -1324,6 +1345,38 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     try { if (navigator.storage && SV) navigator.storage.persist = SV; } catch (e) { } return R;
   });
   ok("ذاكرة النماذج: تُقرأ معلومات الحفظ (ملفات/حجم/دائم) ويُطلب الحفظ الدائم حتى لا تُمسح عند امتلاء القرص", mcT.has && mcT.shape && mcT.asked === 1, mcT);
+  // ── إغلاق المطوّر يغلق كل النوافذ العائمة (مكتبة الصور، تحميل الصور، لوحة تعديل الصورة…) ──
+  const cfT = await p.evaluate(() => {
+    const ids = ["pbx-pimg", "pbx-lib", "pbx-ep", "pbx-epf", "pbar-bg", "pbnp-bg", "pbx-ctx", "pbx-pop"]; ids.forEach(i => { if (!document.getElementById(i)) { const d = document.createElement("div"); d.id = i; document.body.appendChild(d); } });
+    const before = ids.filter(i => document.getElementById(i)).length; PBApp.closeFloating(); const left = ids.filter(i => document.getElementById(i));
+    return { before, left, wired: /closeFloating/.test(PBApp.close.toString()) };
+  });
+  ok("إغلاق المطوّر: كل النوافذ العائمة (مكتبة الصور وتحميلها ولوحة الأداة والقوائم) تُغلق معه", cfT.before === 8 && cfT.left.length === 0 && cfT.wired, cfT);
+  // ── نافذة «صفحة جديدة»: زر «افتح» ظاهر دائماً حتى على شاشة قصيرة (المحتوى يتمرّر والأزرار ثابتة) ──
+  const npT = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBAdmin.newPage(); await w(200); const d = document.getElementById("pbnp");
+    d.querySelector('[data-np="size"]').click(); await w(100); const go = d.querySelector('[data-np="go"]'); R.label = go.textContent.trim();
+    const vis = () => { const b = go.getBoundingClientRect(), r = d.getBoundingClientRect(); return b.height > 20 && b.top >= r.top - 1 && b.bottom <= r.bottom + 1 && b.bottom <= innerHeight; };
+    R.tall = vis(); R.fits = d.getBoundingClientRect().height <= innerHeight; const bp = document.getElementById("pbnp-bg"); bp.remove(); return R;
+  });
+  await p.setViewportSize({ width: 1280, height: 520 });
+  const npS = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBAdmin.newPage(); await w(200); const d = document.getElementById("pbnp");
+    d.querySelector('[data-np="size"]').click(); await w(150); const go = d.querySelector('[data-np="go"]'), b = go.getBoundingClientRect(), r = d.getBoundingClientRect();
+    R.short = b.height > 20 && b.bottom <= innerHeight && b.top >= 0; R.fits = r.height <= innerHeight; document.getElementById("pbnp-bg").remove(); return R;
+  });
+  await p.setViewportSize({ width: 1280, height: 800 });
+  ok("نافذة «صفحة جديدة»: الزر «افتح» ظاهر كاملاً بالشاشة العادية والقصيرة (520px) والنافذة لا تتجاوز الشاشة", npT.label === "افتح" && npT.tall && npT.fits && npS.short && npS.fits, { npT, npS });
+  // ── نافذة التقاط العناصر: كاملة الارتفاع، والصورة كاملة بلا شريط تمرير، ولا رسالة «من ذاكرة المتصفح» ──
+  const cwT = await p.evaluate(async () => {
+    const R = {}; const sh = PBSmart._shell("التقاط العناصر", "عنصر", "كل العناصر", "h", "h2"), view = sh.host.querySelector("#pbs-view"), box = view.parentElement;
+    R.boxH = Math.round(box.getBoundingClientRect().height); R.vh = innerHeight; R.full = box.getBoundingClientRect().height >= innerHeight * .9 - 2;
+    R.noScroll = getComputedStyle(view).overflowY === "hidden" && getComputedStyle(view).overflowX === "hidden"; R.viewH = view.clientHeight;
+    const cv = document.createElement("canvas"); cv.width = 600; cv.height = 1800; cv.getContext("2d").fillRect(0, 0, 600, 1800); const stop = PBSmart._scanFx(sh, cv);      // صورة طولية جداً
+    const img = sh.host.querySelector("#pbs-stage canvas"), r = img.getBoundingClientRect(), v = view.getBoundingClientRect(); R.fits = r.top >= v.top - 1 && r.bottom <= v.bottom + 1 && r.left >= v.left - 1 && r.right <= v.right + 1; R.ratio = Math.round(r.width / r.height * 100) / 100;
+    stop(); sh.close(); R.noMsg = !/من ذاكرة المتصفح/.test(await (await fetch("assets/js/ai-vision.js")).text()); return R;
+  });
+  ok("نافذة التقاط العناصر: النافذة كاملة الارتفاع والصورة (حتى الطولية جداً) كاملة بلا شريط تمرير، ولا رسالة «من ذاكرة المتصفح»", cwT.full && cwT.noScroll && cwT.fits && Math.abs(cwT.ratio - .33) < .02 && cwT.noMsg, cwT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
