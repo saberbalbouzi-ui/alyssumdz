@@ -91,6 +91,28 @@ final class ConnectionRepository
         return $j ? ((array)json_decode((string)$j, true)) : [];
     }
 
+    /**
+     * يدمج قرارات إدارة المنصة (حالة خام مطبَّعة ← حالة موحَّدة) في ملف كل اتصال مفعّل لشركة القرار. @param list<array{c:string,n:string,u:string}> $fixes
+     * @return int عدد الاتصالات التي تغيّر ملفها
+     */
+    public function applyFixes(int $userId, array $fixes): int
+    {
+        $changed = 0;
+        $st = $this->db->prepare('SELECT id, carrier_code FROM user_carriers WHERE user_id=? AND is_active=1'); $st->execute([$userId]);
+        foreach ($st->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $map = [];
+            foreach ($fixes as $f) {
+                if (!is_array($f) || !in_array($f['u'] ?? '', Status::ALL, true) || !is_string($f['n'] ?? null) || $f['n'] === '') { continue; }
+                if (($f['c'] ?? '') === $row['carrier_code'] || ($f['c'] ?? '') === '*') { $map[$f['n']] = $f['u']; }
+            }
+            $p = $this->profile((int)$row['id']);
+            if (($p['fixes'] ?? []) == $map && ($p || !$map)) { continue; }
+            if (!$p) { $p = ['v' => Calibrator::V, 'communes' => [], 'statuses' => [], 'warnings' => [], 'notes' => []]; }
+            $p['fixes'] = $map; $this->saveProfile((int)$row['id'], $p); $changed++;
+        }
+        return $changed;
+    }
+
     /** @param array<string,mixed> $profile */
     public function saveProfile(int $connectionId, array $profile): void
     {

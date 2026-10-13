@@ -92,6 +92,18 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
       if (!conn) throw new HttpError(404, "not_connected", "الشركة غير مفعّلة");
       return calibrate(conn, m, m === "POST" ? json(raw) : {});
     }
+    if (m === "POST" && p === "/v1/connections/fixes") {      // قرارات إدارة المنصة للحالات المجهولة: تُدمج في ملف كل اتصال مفعّل لهذا المستأجر
+      const b = json(raw), fx = (Array.isArray(b.fixes) ? b.fixes : []).slice(0, 2000).filter((f) => f && typeof f === "object" && ALL_STATUS.includes(f.u) && typeof f.n === "string" && f.n);
+      const conns = await db.all("SELECT id, carrier_code FROM gw_connections WHERE tenant_id=? AND is_active=1", tid); let changed = 0;
+      for (const c of conns) {
+        const map = {}; for (const f of fx) if (f.c === c.carrier_code || f.c === "*") map[f.n] = f.u;
+        let prof = await getProfile(c.id); const cur = prof.fixes ?? {};
+        if (JSON.stringify(Object.entries(cur).sort()) === JSON.stringify(Object.entries(map).sort()) && (Object.keys(prof).length || !Object.keys(map).length)) continue;
+        if (!Object.keys(prof).length) prof = { v: Cal.V, communes: {}, statuses: {}, warnings: [], notes: [] };
+        prof.fixes = map; await saveProfile(c.id, prof); changed++;
+      }
+      return ok({ changed });
+    }
     if (m === "DELETE" && (mm = p.match(/^\/v1\/connections\/([a-z0-9_]{2,30})$/))) {
       await db.run("UPDATE gw_connections SET is_active=0, updated_at=? WHERE tenant_id=? AND carrier_code=?", nowStr(clock()), tid, resolveCarrier(mm[1]) ?? mm[1]); return ok({ ok: true });
     }
@@ -320,7 +332,7 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     let prof = await getProfile(conn.id);
     if (m === "GET") return ok({ calibration: prof.phase ? Cal.summary(prof) : null });
     const ad = await adapterForConn(conn); ad.pause = pause;
-    if (b.restart || !prof.phase) { const web = prof.webhook; prof = await Cal.start(ad, ours); if (web) prof.webhook = web; await saveProfile(conn.id, prof); }
+    if (b.restart || !prof.phase) { const web = prof.webhook, fx = prof.fixes; prof = await Cal.start(ad, ours); if (web) prof.webhook = web; if (fx) prof.fixes = fx; await saveProfile(conn.id, prof); }
     const t0 = clock();
     for (let i = 0; i < 4 && !prof.done && (i === 0 || clock() - t0 < 10000); i++) { prof = await Cal.step(ad, ours, prof, 3); await saveProfile(conn.id, prof); }
     return ok({ calibration: Cal.summary(prof) });

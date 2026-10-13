@@ -30,15 +30,18 @@ abstract class AbstractAdapter implements ShippingInterface
 
     public function mapStatus(string $rawStatus): string
     {
-        $ov = $this->profile['status_overrides'][StatusMapper::normalize($rawStatus)] ?? null;          // تصحيح خاص بحساب هذه الشركة (يُضاف عند المعايرة أو من اللوحة)
-        if (is_string($ov) && in_array($ov, Status::ALL, true)) { return $ov; }
+        [$u, $src] = $this->explainStatus($rawStatus);
+        if ($src === 'override') { return $u; }
         return StatusMapper::map($this->statusFamily(), $rawStatus);
     }
 
     public function explainStatus(string $rawStatus): array
     {
-        $ov = $this->profile['status_overrides'][StatusMapper::normalize($rawStatus)] ?? null;
-        if (is_string($ov) && in_array($ov, Status::ALL, true)) { return [$ov, 'override']; }
+        $n = StatusMapper::normalize($rawStatus);
+        foreach (['fixes', 'status_overrides'] as $k) {                                                  // fixes = قرارات إدارة المنصة (تسبق)، status_overrides = ما ثبّتته معايرة هذا الحساب
+            $ov = $this->profile[$k][$n] ?? null;
+            if (is_string($ov) && in_array($ov, Status::ALL, true)) { return [$ov, 'override']; }
+        }
         return StatusMapper::explain($this->statusFamily(), $rawStatus);
     }
 

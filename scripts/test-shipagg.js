@@ -80,6 +80,16 @@ const SA = ctx.ShipAgg; (async () => {
     ctx.SaasClient = { on: () => true, send: async () => ({ ok: false, err: "net" }) }; await SA.reportIssues("maystro", "Maystro", sm);
     ok("فشل الإرسال ← يُحفظ في الصندوق للمحاولة لاحقاً", JSON.parse(store.alyssum_cal_outbox).length === 1);
   }
+  /* قرارات الإدارة: تُجلب من المنصة وتُدمج في البوابة مرة واحدة لكل بصمة */
+  {
+    const seen = []; ctx.fetch = async (u, init) => { const b = JSON.parse(init.body); seen.push(b); return { status: 200, ok: true, json: async () => ({ ok: true, status: 200, data: { changed: 1, couriers: [], connections: [] } }) }; };
+    ctx.SaasClient = { on: () => true, send: async () => ({ ok: true }), fixes: async () => [{ c: "yalidine", n: "x y", u: "returned" }, { c: "noest", n: "z", u: "delivered" }] };
+    SA.S.on = [{ carrier_code: "yalidine" }]; delete ctx.localStorage.__h; ctx.localStorage.setItem("alyssum_fixes_h", "");
+    await SA.syncFixes();
+    const post = seen.find((b) => b.path === "/v1/connections/fixes");
+    ok("syncFixes: يرسل قرارات شركاتي فقط", post && post.body.fixes.length === 1 && post.body.fixes[0].c === "yalidine", seen);
+    seen.length = 0; await SA.syncFixes(); ok("syncFixes: لا تكرار لنفس البصمة", !seen.some((b) => b.path === "/v1/connections/fixes"));
+  }
   /* لوحة المزوّد (saas/shipping.js) */
   {
     const src2 = fs.readFileSync(__dirname + "/../saas/shipping.js", "utf8"), sent = [];
@@ -90,6 +100,25 @@ const SA = ctx.ShipAgg; (async () => {
     ok("المزوّد: الجدول يعرض الاستهلاك", /9500 \/ 10000/.test(root.innerHTML) && /أعمال/.test(root.innerHTML));
     ok("المزوّد: هروب HTML في الاسم والفاعل", !/<img src=x/.test(root.innerHTML) && !/<b>x<\/b>/.test(root.innerHTML) && /&lt;img/.test(root.innerHTML));
     ok("المزوّد: شريط الاستهلاك أحمر عند ≥90%", /#f87171/.test(root.innerHTML));
+  }
+  /* تبويب «المعايرة» في لوحة المزوّد */
+  {
+    const src3 = fs.readFileSync(__dirname + "/../saas/calibration.js", "utf8"), rpcs = [];
+    const root = { innerHTML: "", querySelector(sel) { return sel.includes("data-cb-sel") ? { value: "returned" } : null; } };
+    const issues = [
+      { id: "t1", num: 1, status: "new", at: "2026-10-13", site: "Shop A", origin: "https://a.dz", subject: "[معايرة] Yalidine", payload: { type: "carrier_calibration", carrier: "yalidine", issues: ["1 حالة طرد غير معروفة للنظام", "3 بلدية عندنا غير موجودة في قائمة الشركة (مثل: Zeralda)"], unknown: [{ carrier: "yalidine", raw: "Retour <b>en cours</b> (12)", n: 2 }] } },
+      { id: "t2", num: 2, status: "new", at: "2026-10-13", site: "Shop B", origin: "https://b.dz", subject: "[معايرة] Yalidine", payload: { type: "carrier_calibration", carrier: "yalidine", issues: ["5 بلدية عندنا غير موجودة في قائمة الشركة (مثل: Zeralda)"], unknown: [{ carrier: "yalidine", raw: "Retour <b>en cours</b> (12)", n: 1 }] } }];
+    const sb = { rpc: async (fn, a) => { rpcs.push([fn, a]); return fn === "saas_calib_issues" ? { data: issues } : fn === "saas_fixes_admin" ? { data: [] } : { data: null }; } };
+    const c3 = { console, alert() {}, confirm: () => true, setTimeout, document: { getElementById: () => null } }; c3.window = c3; vm.createContext(c3); vm.runInContext(src3, c3);
+    c3.window.SaasCalib.mount(root, sb); await new Promise((r) => setTimeout(r, 30));
+    ok("المعايرة: تجمّع الحالة المجهولة من موقعين وتهرب HTML", /<b>yalidine<\/b>/.test(root.innerHTML) && !/<b>en cours<\/b>/.test(root.innerHTML) && /&lt;b&gt;en cours/.test(root.innerHTML) && /<td>2<\/td><td>3<\/td>/.test(root.innerHTML), root.innerHTML.slice(0, 900));
+    ok("المعايرة: المشكلة الأخرى مجمّعة بعد توحيد الأرقام (موقعان)", /مثل: Zeralda/.test(root.innerHTML) && /<td>2<\/td><td>2<\/td>/.test(root.innerHTML));
+    ok("المعايرة: اقتراح «retour» = مرتجع", c3.window.SaasCalib.suggest("Retour en cours") === "returned" && c3.window.SaasCalib.suggest("Tentative échouée") === "failed_attempt" && c3.window.SaasCalib.suggest("xyz") === "");
+    { const { normText } = await import("../saas/gateway/src/status.js"); const samples = ["Retour <b>en cours</b> (12)", "Tentative échouée", "Pas encore expédié", "En préparation [2]", "Livré - paiement_ok", "  Œuvre  Ça  ", "وصل  للمركز", "Sortie_en-livraison (3)"];
+      ok("تطبيع لوحة المزوّد = تطبيع البوابة/PHP حرفياً", samples.every((x) => c3.window.SaasCalib.norm(x) === normText(x)), samples.map((x) => [c3.window.SaasCalib.norm(x), normText(x)])); }
+    await root.onclick({ target: { closest: () => ({ dataset: { cb: "fix", i: "0" } }) } });
+    const fx = rpcs.find((r) => r[0] === "saas_fix_set");
+    ok("المعايرة: الاعتماد يستدعي saas_fix_set بالتطبيع الصحيح ويغلق التذكرتين", fx && fx[1].p_carrier === "yalidine" && fx[1].p_norm === "retour <b>en cours</b>" && fx[1].p_unified === "returned" && rpcs.filter((r) => r[0] === "saas_reply").length === 2, rpcs);
   }
   console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);
 })();

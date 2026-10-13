@@ -32,16 +32,14 @@ class Adapter {
   family() { return this.code; }
   /** ملف المعايرة الخاص بحساب هذه الشركة (بلديات/مكاتب/حالات مثبَّتة). */
   withProfile(p) { this.profile = p ?? {}; return this; }
-  mapStatus(raw) {
-    const ov = this.profile?.status_overrides?.[normText(raw)];
-    if (typeof ov === "string" && ALL.includes(ov)) return ov;
-    return mapStatus(raw, this.family());
+  /** fixes = قرارات إدارة المنصة (تسبق)، status_overrides = ما ثبّتته معايرة هذا الحساب. */
+  override(raw) {
+    const n = normText(raw);
+    for (const k of ["fixes", "status_overrides"]) { const ov = this.profile?.[k]?.[n]; if (typeof ov === "string" && ALL.includes(ov)) return ov; }
+    return null;
   }
-  explainStatus(raw) {
-    const ov = this.profile?.status_overrides?.[normText(raw)];
-    if (typeof ov === "string" && ALL.includes(ov)) return [ov, "override"];
-    return explain(this.family(), raw);
-  }
+  mapStatus(raw) { return this.override(raw) ?? mapStatus(raw, this.family()); }
+  explainStatus(raw) { const ov = this.override(raw); return ov ? [ov, "override"] : explain(this.family(), raw); }
   /** التحقق من توقيع الـwebhook إن زوّد التاجر سرّ التوقيع: null = لا سرّ مضبوط، true/false = صحيح/خاطئ. */
   async verifyWebhook(raw, headers = {}) {
     const secret = String(this.cred.webhookSecret ?? ""); if (!secret) return null;

@@ -18,6 +18,7 @@ final class CalibrationService
         $old = $this->repo->profile((int)$conn['id']);
         $p = $cal->start($ad);
         if (!empty($old['webhook'])) { $p['webhook'] = $old['webhook']; }
+        if (!empty($old['fixes'])) { $p['fixes'] = $old['fixes']; }          // قرارات إدارة المنصة تبقى عبر إعادة المعايرة
         $this->repo->saveProfile((int)$conn['id'], $p);
         return $this->advance($conn, $budget);
     }
