@@ -60,5 +60,5 @@ const AdminOrderDocs = (() => {
     const obs=new MutationObserver(inject);obs.observe(document.body,{childList:true,subtree:true});inject();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-  return {print,lines,totals,barcodeSvg,invoice,waybill};
+  return {print,lines,totals,barcodeSvg,invoice,waybill,pageCss};
 })();

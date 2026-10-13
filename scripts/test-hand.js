@@ -45,6 +45,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
 
   // ═══ حاسوب ═══
   let { p, errs } = await open({ viewport: { width: 1280, height: 800 } });
+  await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; });
   // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
   await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);
   ok("أول فتح: يطلب التعرّف ولا يشغّل الميكروفون بعد", await p.evaluate(() => document.getElementById("ah-mic").classList.contains("off") && /مرة واحدة/.test(document.getElementById("av-out").textContent)));
@@ -1037,9 +1038,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     fields.length = 0; document.querySelector('#ccm [data-d="addr"]').click(); await wait(100); document.getElementById("cca-w").value = "Blida"; document.getElementById("cca-w").dispatchEvent(new Event("change")); document.getElementById("cca-ok").click(); await wait(900);
     const t2 = Admin.orders.find(o => o.id === "D0005"); r.agent = { st: t2.status, w: t2.wilaya, tag: Admin.addrFix(t2), fields: fields.length };
     // الإرسال اليدوي يطلب مراجعة العنوان
-    let asked = ""; window.confirm = m => { asked = m; return false; }; let sentCalls = 0; const so = Admin.sendOrderToDelivery; Admin.sendOrderToDelivery = async () => { sentCalls++; return true; }; Admin.orderCompanyKey = () => "x";
+    let asked = ""; window.confirm = m => { asked = m; return false; }; let sentCalls = 0; const so = Admin.sendOrderToDelivery; Admin.sendOrderToDelivery = async () => { sentCalls++; return true; }; const ock0 = Admin.orderCompanyKey; Admin.orderCompanyKey = () => "x";
     await Admin.sendConfirmed(Admin.orders.indexOf(t2)); r.guard = { asked: /عدّلت المؤكِّدة/.test(asked), sentCalls };
-    Admin.sendOrderToDelivery = so; API.updateOrder = uo0; API.updateOrderFields = uf0; Admin.afterManualStatus = sa; Admin.tab("orders"); await wait(50);
+    Admin.sendOrderToDelivery = so; Admin.orderCompanyKey = ock0; API.updateOrder = uo0; API.updateOrderFields = uf0; Admin.afterManualStatus = sa; Admin.tab("orders"); await wait(50);
     return r;
   });
   ok("مركز الاتصال: مؤجَّل لغد خارج الطابور ومعدود، وموعد اليوم يتقدّم، والأزرار الجديدة (غداً/عنوان/محاولة n) موجودة", cc2.first === "موعد اليوم" && cc2.parked && cc2.remain === "3" && cc2.btn, cc2);
@@ -1090,6 +1091,34 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("توزيع الطلبات: الموظفة ترى طلباتها + طلبات الزميلات المتأخرة (مساندة) فقط، والمالك أو التوزيع المعطّل يريان الجميع", cc4.q1 === cc4.expected && cc4.hidden === cc4.otherY && cc4.qAll === cc4.total && cc4.qOwner >= cc4.total - 1 && cc4.mineY > 0 && cc4.otherY > 0, cc4);
   ok("هدف مخصص للموظفة (1/3 بدل الافتراضي 10) وتنبيه «بلا استجابة»: الطلبات الأقدم من 30 د تُعدّ وتظهر في شارة القائمة", cc4.kpi && cc4.od === 4 && cc4.bt === "4" && cc4.bh === false, cc4);
+  // ── التوجيه اللوجستي: توجيه بالمنطقة، إرسال وطباعة بنقرة (بوردرو محفوظ + وصل بباركود)، محطة المسح وكشف التسليم ──
+  const dp = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.enqueueNotify = () => { }; Admin.renderShippedBadge = () => { }; Admin.refreshAlerts = async () => {};
+    const e0 = Admin.enabledCompanyKeys, a0 = Admin.activeCompanyKey, s0 = Admin.sendOrderToDelivery, c0 = Admin.courierFetch, o0 = window.open, u0 = API.updateOrder;
+    Admin.orderCompanyKey = window.__ockReal; Admin.enabledCompanyKeys = () => ["yalidine", "zrexpress"]; Admin.activeCompanyKey = () => "yalidine"; API.updateOrder = async () => true;
+    let fetches = 0; Admin.courierFetch = async () => { fetches++; return { ok: false, status: 500, text: "" }; };
+    const mk = (id, name, wil, extra) => Object.assign({ id, date: new Date().toISOString(), status: "confirmee", name, phone: "0550001111", wilaya: wil, commune: "X", dtype: "home", items: "عنصر توجيه تجريبي ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" }, extra || {});
+    Admin.orders = [mk("P0001", "قسنطيني", "Constantine"), mk("P0002", "تمنراستي", "Tamanrasset"), mk("P0003", "عاصمي", "Alger")];
+    AdminDispatch._S.cfg = { on: true, regions: { est: "zrexpress", sud: "yalidine" }, wil: {}, minSample: 8 };
+    const keys = Admin.orders.map(o => Admin.orderCompanyKey(o)), sentTo = [];
+    Admin.sendOrderToDelivery = async (i, k) => { const o = Admin.orders[i]; sentTo.push(o.id + ":" + k); const t = "T" + o.id.slice(-4) + (k === "yalidine" ? "Y" : "Z"); o.note = "🚚" + k + ":" + t; if (k === "yalidine") Admin.cacheLabel(o.id, "https://labels.test/" + t + ".pdf"); return true; };
+    let html = ""; const fakeWin = { document: { open() { html = ""; }, write(h) { html += h; }, close() { } }, close() { } }; window.open = () => fakeWin;
+    Admin.tab("dispatch"); await wait(200);
+    const r = { keys, ui: !!document.querySelector('#dp [data-dp="run"]') && /بانتظار الإرسال:\s*3/.test(document.getElementById("dispatch-content").textContent) };
+    await AdminDispatch.runAll(); await wait(300);
+    r.sentTo = sentTo; r.fetches = fetches;
+    r.page = { iframes: (html.match(/<iframe/g) || []).length, waybills: (html.match(/class="waybill"/g) || []).length, svg: /<svg/.test(html), grouped: html.indexOf("Yalidine") >= 0 || html.indexOf("ياليدين") >= 0 };
+    // محطة المسح
+    const trk = id => Admin.trackingOf(Admin.orders.find(o => o.id === id)).tracking;
+    AdminDispatch._S.scan = {}; AdminDispatch.onScan(trk("P0001")); const s1 = AdminDispatch._S.last.st; AdminDispatch.onScan(" " + trk("P0001").toLowerCase() + " "); const s2 = AdminDispatch._S.last.st; AdminDispatch.onScan("NOPE-12345"); const s3 = AdminDispatch._S.last.st;
+    AdminDispatch.onScan(trk("P0002")); r.scan = { s1, s2, s3, count: Object.keys(AdminDispatch._S.scan).length, txt: /جُهِّز اليوم:\s*2/.test(document.getElementById("dispatch-content").textContent) };
+    html = ""; AdminDispatch.manifest(); r.manifest = { has: /قسنطيني/.test(html) && /تمنراستي/.test(html) && !/عاصمي/.test(html), n: /عدد الطرود:\s*<b>1<\/b>/.test(html) };
+    Admin.enabledCompanyKeys = e0; Admin.activeCompanyKey = a0; Admin.sendOrderToDelivery = s0; Admin.courierFetch = c0; window.open = o0; API.updateOrder = u0; AdminDispatch._S.cfg.on = false; Admin.tab("orders"); await wait(50);
+    return r;
+  });
+  ok("التوجيه: الشرق ← ZR، الجنوب ← ياليدين، والوسط (بلا قاعدة) ← الافتراضية", dp.keys.join() === "zrexpress,yalidine,yalidine" && dp.ui, dp);
+  ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) ووصل بباركود لشركة بلا بوردرو", dp.sentTo.join() === "P0001:zrexpress,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 1 && dp.page.svg, dp);
+  ok("محطة المسح: مسح جديد ثم مكرّر (يتجاهل حالة الأحرف والمسافات) ثم مجهول، والعدّاد وكشف التسليم لما مُسح فقط", dp.scan.s1 === "ok" && dp.scan.s2 === "dup" && dp.scan.s3 === "unknown" && dp.scan.count === 2 && dp.scan.txt && dp.manifest.has, dp);
   // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
   const plk = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));

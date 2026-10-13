@@ -32,6 +32,8 @@ jobs:
         run: node scripts/test-hub.js
       - name: الأدوار (نموذج + اتساق الصلاحيات)
         run: node scripts/test-roles.js
+      - name: التوجيه اللوجستي (نقي)
+        run: node scripts/test-dispatch.js
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.2', extensions: 'openssl, pdo_sqlite, mbstring, curl' }
       - name: وحدة تجميع شركات التوصيل (PHP)
