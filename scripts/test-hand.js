@@ -1237,6 +1237,22 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("مفاتيح الشركة: رفض 401 يُعلَّم ويظهر شريط أحمر بزر «تحديث المفاتيح» وإشعار بالخطوات", kyT.res === false && kyT.state && kyT.state.ok === false && kyT.state.status === 401 && /رفضت/.test(kyT.notice) && /ترفض مفاتيح/.test(kyT.banner) && /تحديث المفاتيح/.test(kyT.banner), kyT);
   ok("مفاتيح الشركة: المزامنة تقف بعد أول 401 (طلب واحد لثلاثة طرود لا ثلاثة)", kyT.syncCalls === 1 && kyT.syncState === false, kyT);
   ok("مفاتيح الشركة: عودة المفاتيح الصحيحة تزيل الشريط، وحفظ مفاتيح مرفوضة يفحصها فوراً ويشرح", kyT.ok === true && kyT.bannerGone && kyT.okState && kyT.saveChecked, kyT);
+  // ── زر «اختبر المفاتيح قبل الحفظ»: تشخيص التبديل والطول، ولا يحفظ شيئاً ──
+  const tkT = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
+    const SV = { cf: Admin.courierFetch, dc: Admin.deliveryCfg, sn: Admin.showNotice, ks: Admin._keyState };
+    Admin.deliveryCfg = { yalidine: { enabled: true, isDefault: true, apiId: "keep", apiToken: "keep" } }; Admin._keyState = {};
+    let mode = 401, notices = []; Admin.showNotice = (t, h) => { notices.push(t + " | " + h); };
+    Admin.courierFetch = async rq => mode === 401 ? { ok: false, status: 401, text: "{}" } : { ok: true, status: 200, text: '{"total_data":7}' };
+    Admin.openDeliveryConfig("yalidine"); await wait(100); const R = {};
+    const set = (i, t) => { document.getElementById("dlv-f-apiId").value = i; document.getElementById("dlv-f-apiToken").value = t; };
+    set("T".repeat(62), "I".repeat(20)); await Admin.testDeliveryKeys(); R.swap = notices.pop() || "";
+    set(' "' + "a".repeat(10) + '" ', "b".repeat(62)); await Admin.testDeliveryKeys(); R.short = notices.pop() || "";
+    mode = 200; set("a".repeat(20), "b".repeat(62)); await Admin.testDeliveryKeys(); R.good = notices.pop() || "";
+    R.kept = Admin.deliveryCfg.yalidine.apiId === "keep";
+    Admin.courierFetch = SV.cf; Admin.deliveryCfg = SV.dc; Admin.showNotice = SV.sn; Admin._keyState = SV.ks; document.getElementById("delivery-modal-bg").classList.remove("open"); return R;
+  });
+  ok("اختبار المفاتيح: يكشف تبديل الخانتين والطول الناقص، ويؤكد الصحيحة، ولا يحفظ", /بدّلت/.test(tkT.swap) && /10 حرفاً/.test(tkT.short) && /صحيحة/.test(tkT.good) && /7 طرد/.test(tkT.good) && tkT.kept, tkT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
