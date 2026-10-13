@@ -185,6 +185,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   function elementsAI(sh, cv, inf, w, res, key, Z, lite) {
     const $ = sh.$, W = cv.width, H = cv.height, S = res.S, allItems = res.items, items = allItems.filter(i => !i.partial); $("pbs-load").style.display = "none";
     $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · " + (S.dev === "webgpu" ? "⚡ كرت الشاشة" : "المعالج") + " · كشف: " + (res.src === "gemini" ? "Alyssum API+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
+    if (AIVision.cacheInfo) AIVision.cacheInfo().then(c => { if (sh.S.closed || !$("pbs-ver")) return; const mb = n => Math.round(n / 1048576); $("pbs-ver").textContent += " · 🗂 محفوظ في المتصفح: " + (c.bytes ? mb(c.bytes) + "MB" : c.files + " ملف") + (c.quota ? " من " + Math.round(c.quota / 1073741824 * 10) / 10 + "GB" : "") + " · " + (c.persisted ? "دائم (لا يُمسح)" : "قابل للمسح عند امتلاء القرص"); }).catch(() => { });
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H);
     const img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);

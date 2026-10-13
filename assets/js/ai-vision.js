@@ -24,10 +24,21 @@ window.AIVision = (function () {
     const k = Math.min(1, max / Math.max(cv.width, cv.height)), w = Math.max(1, Math.round(cv.width * k)), h = Math.max(1, Math.round(cv.height * k)), c = document.createElement("canvas"); c.width = w; c.height = h;
     const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h); return { data: g.getImageData(0, 0, w, h).data.buffer, w, h, k };
   }
-  /* تقدّم التنزيل لكل الملفات معاً ← نص عربي */
+  /* ذاكرة المتصفح للنماذج (Cache Storage): هل الملفات محفوظة؟ كم حجمها؟ وهل هي دائمة (لا يمسحها المتصفح عند امتلاء القرص)؟ */
+  let CINFO = null, PERSIST = null;
+  async function cacheInfo() {
+    const r = { files: 0, bytes: 0, usage: 0, quota: 0, persisted: PERSIST === true };
+    try { if (typeof caches !== "undefined") for (const n of await caches.keys()) if (/transformers|alyssum-ai|onnx|huggingface/i.test(n)) r.files += (await (await caches.open(n)).keys()).length; } catch (e) { }
+    try { const e = navigator.storage && await navigator.storage.estimate(); if (e) { r.usage = e.usage || 0; r.quota = e.quota || 0; r.bytes = (e.usageDetails && e.usageDetails.caches) || 0; } if (navigator.storage && navigator.storage.persisted) r.persisted = await navigator.storage.persisted(); } catch (e) { }
+    CINFO = r; return r;
+  }
+  /* نطلب من المتصفح حفظ ملفات النماذج بشكل دائم فلا يمسحها عند ضيق مساحة القرص (فتُعاد تنزيلاتها كل مرة) */
+  function keepModels() { try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => { PERSIST = !!ok; }, () => { }); } catch (e) { } cacheInfo().catch(() => { }); }
+  const modelsCached = () => !!CINFO && (CINFO.bytes > 60e6 || CINFO.files >= 12);
+  /* تقدّم تحميل الملفات معاً ← نص عربي؛ تُقرأ الملفات المحفوظة بنفس أحداث التقدّم فلا نقول «تنزيل» إلا إن لم تكن محفوظة */
   function progress(step) {
     const files = {}; let last = 0;
-    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط) " + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
+    return what => p => { files[what + p.file] = [p.loaded, p.total]; const v = Object.values(files), L = v.reduce((s, x) => s + x[0], 0), T = v.reduce((s, x) => s + x[1], 0), now = Date.now(); if (now - last < 250 && L < T) return; last = now; step(T > 1048576 ? (modelsCached() ? "⚡ تحميل أداة القص من ذاكرة المتصفح (بلا تنزيل) " : "⏳ تنزيل ملفات أداة القص (مرة واحدة فقط، ثم تُحفظ) ") + Math.round(L / 1048576) + " / " + Math.round(T / 1048576) + "MB" : "⏳ تجهيز أداة القص…"); };
   }
   /* خريطة عمق نسبية (أكبر = أقرب) لصورة بحجم ≤640 ← {w,h,data} */
   const DC = new Map();      // ذاكرة قصيرة لخرائط العمق (للتحضير المسبق)
@@ -183,6 +194,7 @@ window.AIVision = (function () {
   }
   async function analyze0(cv, o) {
     o = o || {}; const step = o.onStep || (() => { }), prog = progress(step);
+    keepModels();
     let fp = fpOf(cv, o);
     if (fp && AC && AC.fp === fp && curS === AC.S) { step("⚡ استُعيد التحليل المحلي المحفوظ لهذه الصورة"); return { S: AC.S, items: cloneItems(AC.items), src: "local", note: "", dets: AC.dets, later: null }; }
     step("⏳ تجهيز أداة القص…");
@@ -581,5 +593,5 @@ window.AIVision = (function () {
     return { out: mk(lineA), fill: mk(fillA) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
-  return { _t: { mergeItems, trimEdges, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
+  return { cacheInfo, keepModels, _t: { mergeItems, trimEdges, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
 })();

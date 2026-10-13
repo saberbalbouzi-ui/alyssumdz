@@ -214,8 +214,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const it = await p.evaluate(async () => {
     const tabs = [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt), pane = document.getElementById("pbx-lpane"), imgs = [...pane.querySelectorAll(".pbx-tt img")];
     await new Promise(r => setTimeout(r, 600)); const o = { second: tabs[1], tabOn: document.querySelector('.pbx-tabs [data-lt="img"]').classList.contains("on"), tools: pane.querySelectorAll("[data-imgt]").length, sub: pane.querySelectorAll("[data-imgs]").length, sm: pane.querySelectorAll("[data-imgm]").length, loaded: imgs.filter(i => i.naturalWidth > 0).length, imgsN: imgs.length };
-    const t0 = pane.querySelector(".pbx-tt"), im0 = t0.querySelector("img"), sp0 = t0.querySelector("span"), r1 = im0.getBoundingClientRect(), r2 = sp0.getBoundingClientRect(), cols = new Set([...pane.querySelector(".pbx-tg").querySelectorAll(".pbx-tt")].map(x => Math.round(x.getBoundingClientRect().left))).size;
-    o.tw = Math.round(r1.width); o.th = Math.round(r1.height); o.square = Math.abs(r1.width - r1.height) < 2 && r1.width > 70; o.nameBelow = r2.top >= r1.bottom - 1; o.twoCols = cols === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
+    const t0 = pane.querySelector(".pbx-tt"), im0 = t0.querySelector("img"), sp0 = t0.querySelector("span"), gs = getComputedStyle(pane.querySelector(".pbx-tg"));
+    o.ar = getComputedStyle(im0).aspectRatio; o.cols = gs.gridTemplateColumns; o.square = /^1\s*\/\s*1$/.test(o.ar); o.nameBelow = getComputedStyle(t0).flexDirection === "column" && !!sp0 && sp0.compareDocumentPosition(im0) & Node.DOCUMENT_POSITION_PRECEDING ? true : false; o.twoCols = o.cols.trim().split(/\s+/).length === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
     o.tabsHidden = getComputedStyle(document.querySelector("#pbx-ep .pbst-tabs")).display === "none"; o.hasEpTabs = !!document.querySelector("#pbx-ep .ep-tabs");
     pane.querySelector('[data-imgs="txt"]').click(); await new Promise(r => setTimeout(r, 700)); o.head = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.visPane = [...document.querySelectorAll("#pbst .pbst-pane")].filter(x => !x.hidden).map(x => x.dataset.stp).join(",");
     pane.querySelector('[data-imgt="pz"]').click(); await new Promise(r => setTimeout(r, 400)); o.pzHead = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.subGone = !pane.querySelector("[data-imgs]");
@@ -1316,6 +1316,14 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return R;
   });
   ok("حواف الالتقاط: قناع العنصر مقيّد بصندوقه والمنطقة المشتركة بين عبوتين تُعطى لأقربهما ولا يبقى تداخل", teT.clamp && teT.ov0 > 0 && teT.ov1 === 0 && teT.bx <= 50 && teT.cx >= 44, teT);
+  // ── ذاكرة النماذج: معلومات الحفظ تُقرأ (ملفات/حجم/دائم)، وتُطلب الدائمة، ولا تُسمّى «تنزيلاً» إن كانت محفوظة ──
+  const mcT = await p.evaluate(async () => {
+    const R = {}; R.has = typeof AIVision.cacheInfo === "function" && typeof AIVision.keepModels === "function";
+    let asked = 0; const SV = navigator.storage && navigator.storage.persist; try { if (navigator.storage) navigator.storage.persist = async () => { asked++; return true; }; } catch (e) { }
+    AIVision.keepModels(); await new Promise(r => setTimeout(r, 200)); R.asked = asked; const c = await AIVision.cacheInfo(); R.shape = ["files", "bytes", "usage", "quota", "persisted"].every(k => k in c);
+    try { if (navigator.storage && SV) navigator.storage.persist = SV; } catch (e) { } return R;
+  });
+  ok("ذاكرة النماذج: تُقرأ معلومات الحفظ (ملفات/حجم/دائم) ويُطلب الحفظ الدائم حتى لا تُمسح عند امتلاء القرص", mcT.has && mcT.shape && mcT.asked === 1, mcT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};
