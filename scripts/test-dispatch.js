@@ -16,4 +16,6 @@ const orders = [{ status: "livree", note: "a" }, { status: "livree", note: "a" }
 const ps = D.perfStats(orders, o => ({ company: o.note === "a" ? "yal" : "zr", tracking: "T" }), () => 16);
 ok("perfStats: يعدّ المسلَّم والفاشل فقط لكل (شركة، ولاية)", ps.yal[16].d === 2 && ps.yal[16].f === 1 && ps.zr[16].d === 1 && !ps.zr[16].f, ps);
 ok("normScan: يطبّع المسافات وحالة الأحرف ويستخرج التتبع من رابط", D.normScan("  yal-12 34 ") === "YAL-1234" && D.normScan("https://x.dz/track?t=YAL-998877") === "YAL-998877" && D.normScan(null) === "");
+const st3 = Object.assign({}, merge(mk("a", 16, 9, 1), mk("b", 16, 6, 4)), mk("c", 16, 1, 0));
+ok("بدائل الرفض: الأعلى تسليماً أولاً، من لا بيانات لها بعدهم، والافتراضية تتقدّم عند التساوي", D.rankFallback(16, ["b", "c", "a"], st3, "c", 8).join() === "a,b,c" && D.rankFallback(16, ["x", "y"], {}, "y", 8).join() === "y,x" && D.rankFallback(16, [], {}, "", 8).length === 0);
 console.log(bad ? "✗ فشل " + bad + " من " + n : "✓ " + n + " فحصاً ناجحاً"); process.exit(bad ? 1 : 0);

@@ -22,6 +22,17 @@
     return out;
   }
   const smooth = x => (x.d + 1) / (x.d + x.f + 2);
+  /* نسبة تسليم مُنعَّمة لشركة في ولاية (عيّنة الولاية، وإلا عيّنة منطقتها)، أو null إن قلّت العيّنة عن الحد */
+  function rate(stats, k, pid, min) {
+    const c = (stats && stats[k]) || {}, reg = regionOf(pid); let x = c[pid];
+    if (!x || x.d + x.f < min) { x = { d: 0, f: 0 }; REGIONS[reg] && REGIONS[reg].ids.forEach(i => { if (c[i]) { x.d += c[i].d; x.f += c[i].f; } }); }
+    return x.d + x.f < min ? null : smooth(x);
+  }
+  /* ترتيب الشركات البديلة عند الرفض: الأعلى نسبة تسليم في الولاية أولاً، ثم من لا بيانات لها بترتيب الافتراضية أولاً */
+  function rankFallback(pid, rest, stats, def, min) {
+    min = Math.max(1, +min || 8);
+    return rest.slice().sort((a, b) => { const ra = rate(stats, a, pid, min), rb = rate(stats, b, pid, min); if (ra != null && rb != null && ra !== rb) return rb - ra; if (ra != null && rb == null) return -1; if (rb != null && ra == null) return 1; return (b === def) - (a === def); });
+  }
   /* يختار شركة ولاية بالقواعد: ولاية ← منطقة ← "" (الافتراضية)؛ والقيمة auto = الأفضل أداءً (عيّنة كافية في الولاية وإلا في منطقتها) */
   function pick(pid, cfg, enabled, stats, minSample) {
     if (!cfg || !cfg.on || !pid) return ""; const reg = regionOf(pid), min = Math.max(1, +minSample || +cfg.minSample || 8);
@@ -37,7 +48,7 @@
   }
   /* يحوّل ما يلتقطه الماسح (نص الباركود) إلى مفتاح مقارنة: بلا مسافات وبحروف كبيرة، وإن كان رابطاً أو فيه بادئة يؤخذ آخر مقطع طويل */
   const normScan = v => { let s = String(v == null ? "" : v).trim(); const m = s.match(/[A-Za-z0-9\-_]{6,}\s*$/); if (/[\/?=]/.test(s) && m) s = m[0]; return s.replace(/\s+/g, "").toUpperCase(); };
-  const model = { REGIONS, regionOf, perfStats, pick, normScan, smooth };
+  const model = { REGIONS, regionOf, perfStats, pick, normScan, smooth, rate, rankFallback };
   if (typeof module !== "undefined" && module.exports) { module.exports = model; }
   if (typeof document === "undefined") return;
 
@@ -60,12 +71,13 @@
     if (!S.cfg || !S.cfg.on || !A()) return ""; const pid = pidOf(o); if (!pid) return "";
     return pick(pid, S.cfg, en(), statsMemo());
   }
+  function fallbackOrder(o, rest, def) { return rankFallback(pidOf(o), rest, statsMemo(), def, S.cfg && S.cfg.minSample); }
   async function load() {
     try { const v = typeof Priv !== "undefined" ? await Priv.get("shiprouting", null) : null; if (v && typeof v === "object") S.cfg = Object.assign({ on: false, regions: {}, wil: {}, minSample: 8 }, v); } catch (e) { }
     S.loaded = true; loadScan();
   }
   async function save() {
-    const g = id => $(id) || {}, cfg = { on: !!g("dp-on").checked, minSample: Math.max(3, Math.min(100, Math.round(+g("dp-min").value || 8))), regions: {}, wil: {} };
+    const g = id => $(id) || {}, cfg = { on: !!g("dp-on").checked, fallback: g("dp-fb").checked !== false, minSample: Math.max(3, Math.min(100, Math.round(+g("dp-min").value || 8))), regions: {}, wil: {} };
     Object.keys(REGIONS).forEach(k => { const v = (g("dp-r-" + k).value || ""); if (v) cfg.regions[k] = v; });
     document.querySelectorAll("#dp-wil [data-w]").forEach(s => { if (s.value) cfg.wil[s.dataset.w] = s.value; });
     S.cfg = cfg; await Priv.set("shiprouting", cfg); toast("🧭 حُفظ التوجيه"); draw();
@@ -155,8 +167,10 @@
 <div class="dp-row"><span class="dp-chip">بانتظار الإرسال: <b>${pend.length}</b></span>${Object.keys(split).map(k => `<span class="dp-chip">${esc(k)}: <b>${split[k]}</b></span>`).join("")}<span class="dp-chip">قيد التجهيز (لها بوردرو): <b>${prt.length}</b></span></div>
 <div class="dp-row" style="margin-top:.6rem"><button class="small green dp-big" data-dp="run"${pend.length ? "" : " disabled"}>🚚 أرسل ${pend.length} طلب ثم اطبع البوردرو</button><button class="small blue dp-big" data-dp="print"${prt.length ? "" : " disabled"}>🖨 اطبع بوردرو قيد التجهيز (${prt.length})</button></div></div>
 <div class="card"><h3>🧭 التوجيه الذكي (Auto-Routing)</h3><p class="hint">اختر لكل منطقة شركتها، أو «الأفضل أداءً» ليختار النظام الشركة الأعلى نسبة تسليم في الولاية (من طلباتك المسلَّمة والفاشلة، بعد عيّنة كافية، وإلا الافتراضية). شركة المنتج المحدَّدة في بطاقة المنتج تتقدّم على التوجيه، والطرد المسجَّل يبقى عند شركته.</p>
-<div class="dp-row"><label><input type="checkbox" id="dp-on"${S.cfg.on ? " checked" : ""}> فعّل التوجيه التلقائي</label>${Object.keys(REGIONS).map(regionRow).join("")}<label class="dp-chip">أقل عيّنة <input id="dp-min" type="number" min="3" max="100" value="${esc(S.cfg.minSample || 8)}" style="width:4rem"></label></div>
+<div class="dp-row"><label><input type="checkbox" id="dp-on"${S.cfg.on ? " checked" : ""}> فعّل التوجيه التلقائي</label><label title="إن لم تقبل الشركة الطلب (ولاية غير مخدومة، بلدية لا تطابق، أو رفض صريح) يُجرَّب غيرها من المفعّلة تلقائياً"><input type="checkbox" id="dp-fb"${S.cfg.fallback !== false ? " checked" : ""}> أعد التوجيه تلقائياً عند الرفض</label>${Object.keys(REGIONS).map(regionRow).join("")}<label class="dp-chip">أقل عيّنة <input id="dp-min" type="number" min="3" max="100" value="${esc(S.cfg.minSample || 8)}" style="width:4rem"></label></div>
 <details style="margin-top:.5rem"><summary>تخصيص ولاية بعينها</summary><div id="dp-wil" class="dp-g" style="margin-top:.5rem">${W.map(w => `<label class="dp-chip">${w.id} ${esc(w.name)} <select data-w="${w.id}">${coOptions((S.cfg.wil || {})[w.id] || "", [["", "حسب المنطقة"], ["auto", "🤖 الأفضل أداءً"]])}</select></label>`).join("")}</div></details>
+<div class="dp-row" style="margin-top:.6rem"><span class="hint">الشركات المفعّلة:</span>${ens.length ? ens.map(k => `<span class="dp-chip">${esc(coName(k))}${k === a.activeCompanyKey() ? " ⭐" : ""}</span>`).join("") : '<span class="dp-chip">لا شركة</span>'}<button class="small blue" data-dp="companies">⚙ تفعيل شركات أخرى</button></div>
+${fbLog().length ? `<details style="margin-top:.5rem"><summary>↪ آخر إعادات التوجيه (${fbLog().length})</summary><table><tbody>${fbLog().slice(0, 10).map(x => `<tr><td>${esc(new Date(x.at).toLocaleString("fr-DZ"))}</td><td>${esc(x.name)}</td><td>${esc(x.wilaya)}</td><td>${esc(coName(x.from))} ← ${esc(coName(x.to))}</td></tr>`).join("")}</tbody></table></details>` : ""}
 <div class="dp-row" style="margin-top:.6rem"><button class="small green" data-dp="save">💾 حفظ التوجيه</button>${ens.length < 2 ? '<span class="hint">فعّل شركتين على الأقل من «شركات التوصيل» ليكون للتوجيه معنى.</span>' : ""}</div>
 <h4 style="margin:.8rem 0 .3rem">📊 نسبة التسليم لكل شركة حسب المنطقة <small class="hint">(مسلَّم/ (مسلَّم+فاشل))</small></h4>${ens.length ? `<div style="overflow-x:auto"><table><thead><tr><th>المنطقة</th>${ens.map(k => `<th>${esc(coName(k))}</th>`).join("")}</tr></thead><tbody>${perfRows}</tbody></table></div>` : '<p class="hint">لا شركة مفعّلة.</p>'}</div>
 <div class="card"><h3>📦 محطة المسح (تجهيز الطرود)</h3><p class="hint">امسح باركود كل بوردرو بجهاز الماسح (يكتب الرقم ويضغط Enter) أو بالكاميرا: يظهر محتوى الطلب للتحقق قبل وضعه في الصندوق، ويُسجَّل أنه جُهِّز اليوم.</p>
@@ -169,9 +183,10 @@ ${left.length ? `<details style="margin-top:.5rem"><summary>المتبقي لل�
     const inp = $("dp-scan"); if (inp && S.open && !S.cam) inp.focus();
     if (S.cam && S.cam.v) { const h = $("dp-cam"); if (h) { h.appendChild(S.cam.v); S.cam.v.style.cssText = "width:100%;max-height:240px;border-radius:12px"; } }
   }
+  const fbLog = () => { try { return JSON.parse(localStorage.getItem("alyssum_fb_log") || "[]") || []; } catch (e) { return []; } };
   function onClick(e) {
     const b = e.target.closest && e.target.closest("[data-dp]"); if (!b || !$("dispatch-content") || !$("dispatch-content").contains(b)) return; const a = b.dataset.dp;
-    if (a === "run") runAll(); else if (a === "print") printAll(); else if (a === "save") save(); else if (a === "cam") camToggle(); else if (a === "undo") undo();
+    if (a === "run") runAll(); else if (a === "print") printAll(); else if (a === "save") save(); else if (a === "cam") camToggle(); else if (a === "undo") undo(); else if (a === "companies") { const b = document.querySelector('.nav-btn[onclick*="\'delivery\'"]'); if (b) b.click(); else if (A()) A().tab("delivery"); }
     else if (a === "reset") { if (confirm("مسح سجل المسح لهذا اليوم؟")) { S.scan = {}; saveScan(); S.last = null; draw(); } }
     else if (a === "manifest") manifest(); else if (a.indexOf("manifest:") === 0) manifest(a.slice(9));
   }
@@ -186,5 +201,5 @@ ${left.length ? `<details style="margin-top:.5rem"><summary>المتبقي لل�
     w(); setTimeout(w, 600); setTimeout(w, 2500);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  root.AdminDispatch = Object.assign({ route, load, draw, onScan, runAll, manifest, findByCode, _S: S }, model);
+  root.AdminDispatch = Object.assign({ route, fallbackOrder, load, draw, onScan, runAll, manifest, findByCode, _S: S }, model);
 })(typeof window !== "undefined" ? window : globalThis);
