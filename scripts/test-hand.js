@@ -140,6 +140,26 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); }); await p.waitForTimeout(400);
   ok("إعدادات الصورة: مجموعة «تحسين الصورة» وفلتر جاهز وظل", await p.evaluate(() => { const t = (document.getElementById("pbx-insp") || {}).textContent || ""; return /تحسين الصورة/.test(t); }));
   ok("فلتر الصورة يُرسم في CSS", await p.evaluate(() => { const pg = JSON.parse(PBApp.pageJson()); const w = pg.sections[0].cols[0].widgets[0]; w.set.iprs = "vivid"; w.set.ish = "medium"; const h = PB.fullHtml(pg, { base: "./", site: {}, products: [], meta: { tabs: [], cats: {} } }); return /saturate\(135%\)/.test(h) && /drop-shadow\(0px 10px 18px/.test(h); }));
+  // ── الأدوات الذكية والمحلية الجديدة في تبويب «تعديل الصورة» (ظاهرة، مفعّلة، وتفتح لوحاتها) ──
+  await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.ltoggle("img"); }); await p.waitForTimeout(600);
+  const tools = await p.evaluate(() => { const q = k => document.querySelector('[data-imgm="' + k + '"]'); return { xp: !!q("xp"), ai: !!q("ai"), erase: !!q("erase"), scene: !!q("scene"), rt: !!document.querySelector('[data-imgt="rt"]'), soon: [...document.querySelectorAll(".pbx-tt .tt-b")].map(e => e.textContent), api: /Alyssum API/.test((document.getElementById("pbx-lpane") || document.body).textContent) }; });
+  ok("تبويب الصورة: أدوات ذكية ظاهرة (توسيع، تعديل بالوصف، ممحاة، مشهد) ولمسات وتصحيح", tools.xp && tools.ai && tools.erase && tools.scene && tools.rt && tools.api, tools);
+  ok("تبويب الصورة: لا بطاقة «قريباً» بعد الآن", !tools.soon.some(t => /قريباً/.test(t)), tools.soon);
+  await p.evaluate(() => document.querySelector('[data-imgm="xp"]').click()); await p.waitForTimeout(500);
+  ok("توسيع الخلفية: تفتح لوحته مع تنبيه تفعيل Alyssum API عند غياب المفتاح", await p.evaluate(() => { const e = document.getElementById("pbai"); return !!e && /توسيع|وسّع/.test(e.textContent) && /Alyssum API/.test(e.textContent); }));
+  await p.evaluate(() => { localStorage.setItem("alyssum_gp_gkey", "TESTKEY"); window.__aiCalls = []; const of = window.fetch; window.fetch = async (u, i) => { if (/generativelanguage/.test(String(u))) { const cv = document.createElement("canvas"); cv.width = 200; cv.height = 360; const g = cv.getContext("2d"); g.fillStyle = "#2a8"; g.fillRect(0, 0, 200, 360); const d = cv.toDataURL("image/png").split(",")[1]; window.__aiCalls.push(String(u)); if (/models\?/.test(String(u))) return of(u, i); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: d } }] } }] }), { status: 200, headers: { "Content-Type": "application/json" } }); } return of(u, i); }; window.confirm = () => true; ImgGen.ready && 0; });
+  await p.evaluate(() => { document.querySelector('[data-imgm="ai"]').click(); }); await p.waitForTimeout(500);
+  ok("تعديل بالوصف: تظهر اقتراحات جاهزة وحقل التعليمات", await p.evaluate(() => !!document.getElementById("pbai-text") && document.querySelectorAll('#pbai [data-ai="preset"]').length >= 5));
+  await p.evaluate(() => { document.getElementById("pbai-text").value = "غيّر لون المنتج إلى الذهبي"; document.getElementById("pbai-text").dispatchEvent(new Event("input", { bubbles: true })); document.querySelector('#pbai [data-ai="edit"]').click(); }); await p.waitForTimeout(3500);
+  ok("تعديل بالوصف: يُرسل الطلب ويعرض النتيجة (مفتاح تجريبي ومحاكاة الخدمة)", await p.evaluate(() => (window.__aiCalls || []).some(u => /generateContent/.test(u)) && !!document.querySelector("#pbai-res img")), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
+  await p.evaluate(() => document.querySelector('[data-imgm="erase"]').click()); await p.waitForTimeout(700);
+  ok("الممحاة الذكية: تفتح محرّر الفرشاة", await p.evaluate(() => !!document.getElementById("pbs-er")));
+  await p.evaluate(() => { const x = document.getElementById("er-x"); if (x) x.click(); const o = document.getElementById("pbs-er"); if (o) o.remove(); }); await p.waitForTimeout(200);
+  await p.evaluate(() => document.querySelector('[data-imgt="rt"]').click()); await p.waitForTimeout(900);
+  ok("لمسات وتصحيح: تفتح لوحتها بمعاينة وأزرارها", await p.evaluate(() => !!document.getElementById("pbrt") && !!document.getElementById("pbrt-pv") && document.querySelectorAll("#pbrt [data-rt]").length >= 8));
+  await p.evaluate(() => { document.querySelector('#pbrt [data-rt="auto"]').click(); }); await p.waitForTimeout(1200);
+  ok("لمسات وتصحيح: تحسين تلقائي يُفعَّل ويفتح زر «تطبيق»", await p.evaluate(() => !document.getElementById("pbrt-apply").disabled));
+  await p.evaluate(() => { localStorage.removeItem("alyssum_gp_gkey"); });
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
   // ── منع سماع المساعد لنفسه ──
   const ec = await p.evaluate(() => { AdminVoice._spk("مرحباً أليسوم، أنا أسمعك. تكلّم مباشرة", 800); const a = AdminVoice._echo(["مرحبا"]), b = AdminVoice._echo(["افتح الطلبات"]); AdminVoice._spk("مرحباً أليسوم، أنا أسمعك", 2500); const c = AdminVoice._echo(["نعم"]), d = AdminVoice._echo(["أنا أسمعك تكلم مباشرة"]); return { a, b, c, d }; });

@@ -10133,7 +10133,7 @@ body{overflow-x:hidden;margin:0}`;
 `;
 
   const toastUndo = m => { const t = $("pbx-msg"); if (!t) return; t.innerHTML = esc(m) + ' <button type="button" id="pbx-tu" style="margin-inline-start:.6rem;background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.2rem .7rem;font-weight:800;cursor:pointer;font-family:inherit">↩ إلغاء النسخ</button>'; t.style.display = "block"; $("pbx-tu").onclick = () => { undo(); t.style.display = "none"; toast("↩ أُلغي النسخ"); }; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 9000); };
-  const ERASER_ON = false;      // الممحاة بتقنية Alyssum الذكية (الفرشاة + MI-GAN) معطّلة مؤقتاً: ضعها true لإعادتها
+  const ERASER_ON = true;      // الممحاة الذكية بالفرشاة (MI-GAN محلي، وترميم محلي بسيط إن تعذّر النموذج) — تعمل بلا مفتاح
   const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
 
   /* ───────────────── بنية الواجهة ───────────────── */
@@ -11110,13 +11110,15 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
-  const EP_TABS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"]];
+  const EP_TABS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"]];
   const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
   function epBody(inf) {
     const t = E.ept || "";
     if (!inf.set.src && !inf.set.pz) return `<p class="ep-n">ارفع صورة أولاً لتظهر أدوات التعديل.</p>`;
     if (!t) return `<p class="ep-n">اختر أداة من «تعديل الصورة» في القائمة اليمنى لتظهر هنا إعداداتها.</p>`;
     if (t === "st") return PBStudio.panel();
+    if (t === "rt") return PBRetouch.panel();
+    if (t === "xp" || t === "ai") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
     if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button></div>`;
@@ -11131,9 +11133,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel();
     const tn = EP_TABS.find(x => x[0] === cur), sn = cur === "st" && typeof PBStudio !== "undefined" ? (IMG_ST.find(x => x[0] === PBStudio.tab()) || [])[1] : "";
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
-    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
+    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); try { PBRetouch.reset(); PBAI.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -11145,9 +11147,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     epDraw(); drawQbarSoon(); if (E.ltab === "img") renderLeft();
   }
   /* تبويب «تعديل الصورة» اليساري: بطاقات أدوات بصور حقيقية (نصفها قبل ونصفها بعد) */
-  const IMG_TOOLS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "bg"], ["cap", "التقاط العناصر", "capture"], ["st", "استوديو المنتج", "studio"]];
+  const IMG_TOOLS = [["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "bg"], ["cap", "التقاط العناصر", "capture"], ["st", "استوديو المنتج", "studio"], ["rt", "لمسات وتصحيح", "rt"]];
   const IMG_ST = [["bg", "الخلفية", "st_bg"], ["prod", "المنتج", "st_prod"], ["fx", "تأثيرات", "st_fx"], ["txt", "ملصقات وشعار", "st_stk"], ["out", "المقاس والإخراج", "st_size"]];
-  const IMG_SM = [["scene", "مشهد ذكي للمنتج", "sm_scene", true], ["erase", "ممحاة ذكية", "sm_erase", ERASER_ON]];
+  const IMG_SM = [["scene", "مشهد ذكي للمنتج", "sm_scene", true], ["xp", "توسيع الخلفية بالذكاء", "sm_expand", true], ["ai", "تعديل بالوصف", "sm_magic", true], ["erase", "ممحاة ذكية بالفرشاة", "sm_erase", ERASER_ON]];
   function imgPane() {
     const inf = epInf(), open = !!$("pbx-ep"), cur = open ? (E.ept || "") : "", st = typeof PBStudio !== "undefined" ? PBStudio.tab() : "";
     const tile = (attr, label, img, on, badge) => `<button type="button" class="pbx-tt${on ? " on" : ""}" ${attr} title="${esc(label)}"><img src="assets/img/tools/${img}.webp" alt="" draggable="false"><span>${esc(label)}</span>${badge ? `<i class="tt-b">${badge}</i>` : ""}</button>`;
@@ -11161,7 +11163,8 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   async function imgSmart(k) {
     const inf = epInf(); if (!inf || !inf.set.src) { toast("حدّد صورة في الصفحة أولاً"); return; }
-    if (k === "erase") { toast("الممحاة الذكية قيد التطوير"); return; }
+    if (k === "erase") { if (typeof PBSmart === "undefined") { toast("الممحاة غير متاحة"); return; } return PBSmart.eraser(inf); }
+    if (k === "xp" || k === "ai") { imgPick(k); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.quick) { toast("مولّد الصور غير متاح"); return; }
     try {
       const blob = await (await fetch(localize(String(inf.set.src)))).blob(), im = await createImageBitmap(blob), s = Math.min(1, 1600 / Math.max(im.width, im.height)), W = Math.round(im.width * s), H = Math.round(im.height * s);
@@ -15269,6 +15272,276 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
     });
   }
   return { panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
+})();
+
+/* «لمسات وتصحيح» (المرحلة 3 من docs/photoroom-tools-report.md): أدوات تحسين وتصحيح للصورة داخل المتصفح وبلا API ولا ذكاء اصطناعي:
+   تحسين تلقائي (توازن مستويات + ألوان) · تقليل الضوضاء · تصحيح انحراف المنظور · تغيير لون جزء من المنتج (بالنقر عليه) · قص الحواف الفارغة · تعتيم الأطراف (vignette) · حبيبات.
+   كل عملية دالة نقية على Canvas (قابلة للاختبار عبر PBRetouch._t) تُطبَّق على نسخة عمل داخل اللوحة ثم «تطبيق على الصورة» يرفعها ويستبدل مصدر العنصر. */
+const PBRetouch = (() => {
+  const A = () => PBApp;
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const ctx2 = c => c.getContext("2d", { willReadFrequently: true });
+  const clone = c => { const o = mk(c.width, c.height); ctx2(o).drawImage(c, 0, 0); return o; };
+  const cap = (c, max) => { const k = Math.min(1, max / Math.max(c.width, c.height)); if (k >= 1) return c; const o = mk(c.width * k, c.height * k); ctx2(o).drawImage(c, 0, 0, o.width, o.height); return o; };
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+  /* ── RGB ⇄ HSL ── */
+  function rgb2hsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, s = 0;
+    if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+    return [h, s, l];
+  }
+  function hsl2rgb(h, s, l) {
+    h = ((h % 360) + 360) % 360 / 360; if (!s) { const v = Math.round(l * 255); return [v, v, v]; }
+    const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q, f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+    return [Math.round(f(h + 1 / 3) * 255), Math.round(f(h) * 255), Math.round(f(h - 1 / 3) * 255)];
+  }
+  const hexRgb = hex => { let x = String(hex || "#000").replace("#", ""); if (x.length === 3) x = x.replace(/./g, "$&$&"); const n = parseInt(x, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+
+  /* ── العمليات النقية (تُرجع قماشاً جديداً) ── */
+  /* تحسين تلقائي: مدّ المستويات لكل قناة (قصّ 0.5% من الطرفين) + توازن رمادي محدود + تشبّع خفيف؛ يتجاهل البكسلات الشفافة */
+  function autoEnhance(src) {
+    const c = clone(src), g = ctx2(c), im = g.getImageData(0, 0, c.width, c.height), d = im.data, n = d.length / 4, H = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)]; let cnt = 0, sr = 0, sg = 0, sb = 0;
+    for (let i = 0; i < n; i++) { if (d[i * 4 + 3] < 20) continue; cnt++; H[0][d[i * 4]]++; H[1][d[i * 4 + 1]]++; H[2][d[i * 4 + 2]]++; sr += d[i * 4]; sg += d[i * 4 + 1]; sb += d[i * 4 + 2]; }
+    if (!cnt) return c;
+    const lo = [0, 0, 0], hi = [255, 255, 255], cut = cnt * .005;
+    for (let k = 0; k < 3; k++) { let a = 0; for (let v = 0; v < 256; v++) { a += H[k][v]; if (a > cut) { lo[k] = v; break; } } a = 0; for (let v = 255; v >= 0; v--) { a += H[k][v]; if (a > cut) { hi[k] = v; break; } } if (hi[k] - lo[k] < 40) { lo[k] = 0; hi[k] = 255; } }
+    const avg = (sr + sg + sb) / (3 * cnt), wb = [clamp(avg / (sr / cnt || 1), .88, 1.12), clamp(avg / (sg / cnt || 1), .88, 1.12), clamp(avg / (sb / cnt || 1), .88, 1.12)];
+    for (let i = 0; i < n; i++) {
+      if (d[i * 4 + 3] < 1) continue; let r = d[i * 4], gg = d[i * 4 + 1], b = d[i * 4 + 2];
+      r = (r - lo[0]) * 255 / (hi[0] - lo[0]) * wb[0]; gg = (gg - lo[1]) * 255 / (hi[1] - lo[1]) * wb[1]; b = (b - lo[2]) * 255 / (hi[2] - lo[2]) * wb[2];
+      const [h, s, l] = rgb2hsl(clamp(r, 0, 255), clamp(gg, 0, 255), clamp(b, 0, 255)), o = hsl2rgb(h, clamp(s * 1.08, 0, 1), l); d[i * 4] = o[0]; d[i * 4 + 1] = o[1]; d[i * 4 + 2] = o[2];
+    }
+    g.putImageData(im, 0, 0); return c;
+  }
+  /* تقليل الضوضاء: متوسط ثنائي الجانب 3×3 (يحفظ الحواف)؛ strength 1..3 يرفع عتبة التشابه */
+  function denoise(src, strength) {
+    const s = clamp(Math.round(strength) || 1, 1, 3), T = [0, 18, 32, 52][s], c0 = cap(src, 3000), c = c0 === src ? clone(src) : c0, w = c.width, h = c.height, g = ctx2(c), im = g.getImageData(0, 0, w, h), d = im.data, o = new Uint8ClampedArray(d);
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+      const i = (y * w + x) * 4; if (d[i + 3] < 8) continue; let sr = 0, sg = 0, sb = 0, sw = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const j = ((y + dy) * w + x + dx) * 4, df = Math.abs(d[j] - d[i]) + Math.abs(d[j + 1] - d[i + 1]) + Math.abs(d[j + 2] - d[i + 2]); if (df > T * 3) continue;
+        const wt = (dx || dy ? 1 : 2) * (1 - df / (T * 3 + 1)); sr += d[j] * wt; sg += d[j + 1] * wt; sb += d[j + 2] * wt; sw += wt;
+      }
+      if (sw) { o[i] = sr / sw; o[i + 1] = sg / sw; o[i + 2] = sb / sw; }
+    }
+    im.data.set(o); g.putImageData(im, 0, 0); return c;
+  }
+  /* تصحيح انحراف المنظور (تقريبي): v = انحراف رأسي (موجب = الأعلى أضيق فيُعاد فتحه)، h = أفقي؛ بالنسبة المئوية (-40..40). الزوايا الفارغة تبقى شفافة */
+  function keystone(src, v, hh) {
+    const W = src.width, H = src.height; let cur = src;
+    if (v) { const o = mk(W, H), g = ctx2(o), k = clamp(v, -40, 40) / 100; for (let y = 0; y < H; y++) { const s = 1 - k * (1 - y / H) * 2 + k; const sc = clamp(s, .3, 3); g.drawImage(cur, 0, y, W, 1, (W - W * sc) / 2, y, W * sc, 1); } cur = o; }
+    if (hh) { const o = mk(W, H), g = ctx2(o), k = clamp(hh, -40, 40) / 100; for (let x = 0; x < W; x++) { const s = 1 - k * (1 - x / W) * 2 + k; const sc = clamp(s, .3, 3); g.drawImage(cur, x, 0, 1, H, x, (H - H * sc) / 2, 1, H * sc); } cur = o; }
+    return cur === src ? clone(src) : cur;
+  }
+  /* لون نقطة (متوسط 5×5) من قماش */
+  function pick(c, x, y) {
+    const g = ctx2(c), r = 2, x0 = clamp(Math.round(x) - r, 0, c.width - 1), y0 = clamp(Math.round(y) - r, 0, c.height - 1), w = Math.min(2 * r + 1, c.width - x0), h = Math.min(2 * r + 1, c.height - y0), d = g.getImageData(x0, y0, w, h).data; let R = 0, G = 0, B = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 20) { R += d[i]; G += d[i + 1]; B += d[i + 2]; n++; }
+    return n ? [Math.round(R / n), Math.round(G / n), Math.round(B / n)] : null;
+  }
+  /* تغيير لون جزء: البكسلات القريبة من اللون المنقور (فرق درجة اللون ≤ tol، أو فرق الإضاءة للألوان المحايدة) تُحوَّل إلى اللون الهدف بحفظ الإضاءة */
+  function recolor(src, o) {
+    const c = clone(src), g = ctx2(c), im = g.getImageData(0, 0, c.width, c.height), d = im.data, p = o.from, [ph, ps, pl] = rgb2hsl(p[0], p[1], p[2]), [th, ts] = rgb2hsl(o.to[0], o.to[1], o.to[2]), tol = clamp(o.tol || 24, 4, 90), neutral = ps < .14;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 8) continue; const [h, s, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]); let w;
+      if (neutral) { if (s > .24) continue; w = 1 - Math.abs(l - pl) / (tol / 100 + .06); }
+      else { if (s < .1) continue; let dh = Math.abs(h - ph); dh = dh > 180 ? 360 - dh : dh; w = 1 - dh / tol; }
+      if (w <= 0) continue; w = Math.min(1, w * 1.4);
+      const ns = neutral ? clamp(ts, 0, 1) : clamp(s * (ts / (ps || 1)), 0, 1), nl = o.keepL === false ? rgb2hsl(o.to[0], o.to[1], o.to[2])[2] : l, r = hsl2rgb(th, neutral ? ts : ns, nl);
+      d[i] = d[i] + (r[0] - d[i]) * w; d[i + 1] = d[i + 1] + (r[1] - d[i + 1]) * w; d[i + 2] = d[i + 2] + (r[2] - d[i + 2]) * w;
+    }
+    g.putImageData(im, 0, 0); return c;
+  }
+  /* قص الحواف الفارغة: الشفافة، وإلا المتجانسة بلون الزوايا؛ pad = هامش % من الأبعاد */
+  function trim(src, pad) {
+    const w = src.width, h = src.height, g = ctx2(src), d = g.getImageData(0, 0, w, h).data; let hasA = false;
+    for (let i = 3; i < d.length; i += 4 * 97) if (d[i] < 250) { hasA = true; break; }
+    const c0 = [d[0], d[1], d[2]], tol = 14, empty = i => hasA ? d[i + 3] < 12 : (Math.abs(d[i] - c0[0]) + Math.abs(d[i + 1] - c0[1]) + Math.abs(d[i + 2] - c0[2]) < tol * 3);
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!empty((y * w + x) * 4)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return clone(src);
+    const px = Math.round((x1 - x0 + 1) * clamp(pad || 0, 0, 40) / 100), py = Math.round((y1 - y0 + 1) * clamp(pad || 0, 0, 40) / 100);
+    const X0 = Math.max(0, x0 - px), Y0 = Math.max(0, y0 - py), X1 = Math.min(w, x1 + 1 + px), Y1 = Math.min(h, y1 + 1 + py), o = mk(X1 - X0, Y1 - Y0); ctx2(o).drawImage(src, X0, Y0, X1 - X0, Y1 - Y0, 0, 0, X1 - X0, Y1 - Y0); return o;
+  }
+  function vignette(src, k) {
+    const c = clone(src), g = ctx2(c), a = clamp(k, 0, 100) / 100; if (!a) return c; g.globalCompositeOperation = "source-atop";
+    const gr = g.createRadialGradient(c.width / 2, c.height / 2, Math.min(c.width, c.height) * .28, c.width / 2, c.height / 2, Math.hypot(c.width, c.height) / 2); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0," + (a * .75).toFixed(3) + ")");
+    g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height); g.globalCompositeOperation = "source-over"; return c;
+  }
+  function grain(src, k, seed) {
+    const c = clone(src), g = ctx2(c), a = clamp(k, 0, 100) * .6, im = g.getImageData(0, 0, c.width, c.height), d = im.data; let s = (seed || 7) >>> 0;
+    const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 8) continue; const n = (rnd() - .5) * a; d[i] = clamp(d[i] + n, 0, 255); d[i + 1] = clamp(d[i + 1] + n, 0, 255); d[i + 2] = clamp(d[i + 2] + n, 0, 255); }
+    g.putImageData(im, 0, 0); return c;
+  }
+  const hasAlpha = c => { const t = cap(c, 64), d = ctx2(t).getImageData(0, 0, t.width, t.height).data; for (let i = 3; i < d.length; i += 4) if (d[i] < 240) return true; return false; };
+
+  /* ── اللوحة ── */
+  const S = { id: "", src: "", base: null, work: null, hist: [], pickMode: false, from: null, busy: false, msg: "" };
+  const $ = id => document.getElementById(id);
+  function panel() {
+    return `<div class="pbx-pz" id="pbrt"><p>لمسات وتصحيح بلا ذكاء اصطناعي: تُطبَّق على نسخة عمل ويمكن التراجع، ثم «تطبيق على الصورة».</p>
+<div id="pbrt-pvw" style="background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px;border-radius:8px;overflow:hidden;text-align:center;min-height:90px"><canvas id="pbrt-pv" style="max-width:100%;cursor:default"></canvas></div>
+<div id="pbrt-msg" class="ep-n" style="min-height:1.3em"></div>
+<div class="pbrt-row"><button type="button" class="pbx-small" data-rt="auto">✨ تحسين تلقائي</button><select id="pbrt-dn" class="pbx-small"><option value="1">ضوضاء خفيفة</option><option value="2">متوسطة</option><option value="3">قوية</option></select><button type="button" class="pbx-small" data-rt="denoise">🧼 تقليل الضوضاء</button></div>
+<div class="rt-g"><label>انحراف رأسي <input type="range" id="pbrt-kv" min="-30" max="30" value="0"></label><label>انحراف أفقي <input type="range" id="pbrt-kh" min="-30" max="30" value="0"></label><button type="button" class="pbx-small" data-rt="keystone">📐 تصحيح المنظور</button></div>
+<div class="rt-g"><b>🎨 تغيير لون جزء من المنتج</b><div class="pbrt-row"><button type="button" class="pbx-small" data-rt="pick" id="pbrt-pk">① انقر على اللون في الصورة</button><span id="pbrt-sw" style="display:inline-block;width:22px;height:22px;border-radius:50%;border:1px solid #888;background:#ccc"></span><input type="color" id="pbrt-to" value="#2f7d4f" title="اللون الجديد"></div>
+<label>التسامح <input type="range" id="pbrt-tol" min="6" max="70" value="26"></label><button type="button" class="pbx-small" data-rt="recolor">② غيّر اللون</button></div>
+<div class="rt-g"><label>هامش القص % <input type="range" id="pbrt-pad" min="0" max="20" value="4"></label><button type="button" class="pbx-small" data-rt="trim">✂️ قص الحواف الفارغة</button></div>
+<div class="rt-g"><label>تعتيم الأطراف <input type="range" id="pbrt-vg" min="0" max="100" value="35"></label><button type="button" class="pbx-small" data-rt="vig">تعتيم الأطراف</button><label>حبيبات <input type="range" id="pbrt-gr" min="0" max="100" value="25"></label><button type="button" class="pbx-small" data-rt="grain">إضافة حبيبات</button></div>
+<div class="pbrt-row"><button type="button" class="pbx-small" data-rt="undo" id="pbrt-undo" disabled>↶ تراجع</button><button type="button" class="pbx-small" data-rt="reset">إعادة الأصل</button><button type="button" class="pbx-small pz-go" data-rt="apply" id="pbrt-apply" disabled>✔ تطبيق على الصورة</button></div></div>`;
+  }
+  const msg = t => { S.msg = t; const e = $("pbrt-msg"); if (e) e.textContent = t; };
+  function draw() {
+    const cv = $("pbrt-pv"); if (!cv || !S.work) return; const k = Math.min(1, 300 / Math.max(S.work.width, S.work.height)); cv.width = Math.max(1, Math.round(S.work.width * k)); cv.height = Math.max(1, Math.round(S.work.height * k)); const g = cv.getContext("2d"); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(S.work, 0, 0, cv.width, cv.height);
+    const u = $("pbrt-undo"), a = $("pbrt-apply"); if (u) u.disabled = !S.hist.length; if (a) a.disabled = !S.hist.length;
+  }
+  function loadImg(src) {
+    return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); ctx2(c).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
+  }
+  async function mount(host, inf) {
+    const id = inf.node.id, src = inf.set.src; if (S.id !== id || S.src !== src || !S.work) { S.id = id; S.src = src; S.hist = []; S.from = null; S.pickMode = false; S.work = null; try { S.base = cap(await loadImg(src), 3600); S.work = clone(S.base); } catch (e) { msg("⚠️ " + e.message); return; } }
+    draw(); msg(S.msg || "");
+    const cv = $("pbrt-pv"); if (cv && !cv._rt) { cv._rt = 1; cv.addEventListener("click", e => { if (!S.pickMode || !S.work) return; const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * S.work.width, y = (e.clientY - r.top) / r.height * S.work.height, c = pick(S.work, x, y); if (!c) return msg("اختر نقطة على المنتج لا على الخلفية الشفافة"); S.from = c; S.pickMode = false; cv.style.cursor = "default"; const sw = $("pbrt-sw"); if (sw) sw.style.background = "rgb(" + c.join(",") + ")"; msg("اختر اللون الجديد ثم «غيّر اللون»"); }); }
+  }
+  const push = c => { S.hist.push(S.work); if (S.hist.length > 8) S.hist.shift(); S.work = c; draw(); };
+  async function click(t) {
+    const k = t.dataset.rt, v = id => ($(id) || {}).value; if (!S.work && k !== "apply") return;
+    if (S.busy) return;
+    const run = async (label, fn) => { S.busy = true; msg("⏳ " + label + "…"); await new Promise(r => setTimeout(r, 30)); try { push(fn()); msg("✅ تم — يمكنك المتابعة أو «تطبيق على الصورة»"); } catch (e) { msg("⚠️ " + (e.message || e)); } S.busy = false; };
+    if (k === "auto") return run("تحسين تلقائي", () => autoEnhance(S.work));
+    if (k === "denoise") return run("تقليل الضوضاء", () => denoise(S.work, +v("pbrt-dn")));
+    if (k === "keystone") { const a = +v("pbrt-kv"), b = +v("pbrt-kh"); if (!a && !b) return msg("حرّك أحد المنزلقين أولاً"); return run("تصحيح المنظور", () => keystone(S.work, a, b)); }
+    if (k === "pick") { S.pickMode = true; const cv = $("pbrt-pv"); if (cv) cv.style.cursor = "crosshair"; return msg("انقر على اللون المراد تغييره داخل المعاينة"); }
+    if (k === "recolor") { if (!S.from) return msg("انقر أولاً على اللون المراد تغييره (①)"); return run("تغيير اللون", () => recolor(S.work, { from: S.from, to: hexRgb(v("pbrt-to")), tol: +v("pbrt-tol") })); }
+    if (k === "trim") return run("قص الحواف", () => trim(S.work, +v("pbrt-pad")));
+    if (k === "vig") return run("تعتيم الأطراف", () => vignette(S.work, +v("pbrt-vg")));
+    if (k === "grain") return run("إضافة الحبيبات", () => grain(S.work, +v("pbrt-gr")));
+    if (k === "undo") { if (S.hist.length) { S.work = S.hist.pop(); draw(); msg("↶ تُرِك آخر تعديل"); } return; }
+    if (k === "reset") { S.work = clone(S.base); S.hist = []; S.from = null; draw(); return msg("أُعيدت الصورة الأصلية"); }
+    if (k === "apply") {
+      if (!S.hist.length) return; S.busy = true; msg("⏳ جارٍ الرفع…");
+      try {
+        const png = hasAlpha(S.work), blob = await new Promise(r => S.work.toBlob(r, png ? "image/png" : "image/webp", .93)), path = await A().uploadBlob(blob, "rt-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id);
+        if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "لمسات وتصحيح الصورة"; S.src = path; S.base = clone(S.work); S.hist = []; A().commitAfter(S.id); msg("✅ طُبّق على الصورة"); }
+      } catch (e) { msg("⚠️ " + (e.message || e)); } S.busy = false;
+    }
+  }
+  (() => { if (document.getElementById("pbrt-css")) return; const st = document.createElement("style"); st.id = "pbrt-css"; st.textContent = `.rt-g{display:flex;flex-direction:column;gap:.35rem;border:1px solid rgba(128,128,128,.28);border-radius:10px;padding:.5rem;margin:.4rem 0}.rt-g label{font-size:.76rem;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}.rt-g input[type=range]{flex:1;min-width:90px}.pbrt-row{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;margin:.35rem 0}#pbai textarea{border:1px solid rgba(128,128,128,.35);border-radius:8px;padding:.4rem;font:inherit;background:transparent;color:inherit}#pbrt-pv,#pbai-res img{border-radius:6px}`; document.head.appendChild(st); })();
+  document.addEventListener("click", e => { const t = e.target.closest && e.target.closest("[data-rt]"); if (t && t.closest("#pbrt")) click(t); });
+  const reset = () => { S.id = ""; S.src = ""; S.work = null; S.base = null; S.hist = []; S.from = null; S.pickMode = false; S.msg = ""; };
+  return { panel, mount, reset, state: S, _t: { autoEnhance, denoise, keystone, recolor, trim, vignette, grain, pick, hasAlpha, rgb2hsl, hsl2rgb } };
+})();
+
+/* أدوات الصور الذكية (Alyssum API) داخل لوحة «تعديل الصورة»: ① توسيع الخلفية (Generative Expand) ② تعديل بالوصف (Magic Edit: لون المنتج، إضاءة، خلفية، إزالة…).
+   تستعمل خدمة التوليد نفسها وضوابط التكلفة (ImgGen.edit: تأكيد قبل كل طلب، حدّ إنفاق، لا إعادة محاولة تلقائية). تُحفظ الصورة الأصلية بعد التوليد كما هي:
+   في التوسيع تُلصق المنطقة الأصلية فوق الناتج بحافة مُنعَّمة فلا يغيّر النموذج بكسلاً واحداً من المنتج. تعمل الأدوات المحلية (الممحاة، لمسات وتصحيح) بلا مفتاح. */
+const PBAI = (() => {
+  const A = () => PBApp;
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const MAXD = 2048;
+
+  /* ── نقية ── */
+  const RATIOS = [["1:1", 1], ["4:5", .8], ["9:16", 9 / 16], ["16:9", 16 / 9], ["3:2", 1.5], ["2:3", 2 / 3], ["21:9", 21 / 9]];
+  const ANCH = [["center", "الوسط", .5, .5], ["left", "يسار", 0, .5], ["right", "يمين", 1, .5], ["top", "أعلى", .5, 0], ["bottom", "أسفل", .5, 1]];
+  /* أبعاد القماش الجديد ومكان الصورة الأصلية: خياران — نسبة هدف (يكبر القماش ليحوي الأصل بتلك النسبة) أو نسب اتجاهات (يسار/يمين/أعلى/أسفل % من الأبعاد) */
+  function plan(w, h, o) {
+    let W, H, ox, oy;
+    if (o.dirs) { const L = Math.max(0, o.dirs.l || 0) / 100, R = Math.max(0, o.dirs.r || 0) / 100, T = Math.max(0, o.dirs.t || 0) / 100, B = Math.max(0, o.dirs.b || 0) / 100; W = Math.round(w * (1 + L + R)); H = Math.round(h * (1 + T + B)); ox = Math.round(w * L); oy = Math.round(h * T); }
+    else { const r = o.ratio || w / h; if (w / h < r) { H = h; W = Math.ceil(h * r); } else { W = w; H = Math.ceil(w / r); } const a = ANCH.find(x => x[0] === (o.anchor || "center")) || ANCH[0]; ox = Math.round((W - w) * a[2]); oy = Math.round((H - h) * a[3]); }
+    const k = Math.min(1, MAXD / Math.max(W, H));
+    return { W: Math.max(1, Math.round(W * k)), H: Math.max(1, Math.round(H * k)), ox: Math.round(ox * k), oy: Math.round(oy * k), w: Math.max(1, Math.round(w * k)), h: Math.max(1, Math.round(h * k)), k, grow: W > w || H > h };
+  }
+  /* قماش جديد: الهوامش بنسخة مموّهة ممدودة من الأصل (سياق لوني للنموذج) ثم الأصل في مكانه */
+  function padded(src, p) {
+    const c = mk(p.W, p.H), g = c.getContext("2d"), r = Math.max(p.W / src.width, p.H / src.height);
+    g.save(); try { g.filter = "blur(" + Math.round(Math.max(p.W, p.H) / 22) + "px)"; } catch (e) { } g.drawImage(src, (p.W - src.width * r) / 2, (p.H - src.height * r) / 2, src.width * r, src.height * r); g.restore();
+    g.drawImage(src, p.ox, p.oy, p.w, p.h); return c;
+  }
+  /* إعادة الأصل فوق الناتج بحافة مُنعَّمة (feather بكسل) فلا يمسّ النموذج المنتج */
+  function restore(result, src, p, feather) {
+    const out = mk(p.W, p.H), g = out.getContext("2d"); g.drawImage(result, 0, 0, p.W, p.H);
+    const f = Math.max(0, feather == null ? Math.round(Math.min(p.w, p.h) * .012) : feather), o = mk(p.w, p.h), og = o.getContext("2d"); og.drawImage(src, 0, 0, p.w, p.h);
+    if (f > 0) { const m = mk(p.w, p.h), mg = m.getContext("2d"); try { mg.filter = "blur(" + (f / 2).toFixed(1) + "px)"; } catch (e) { } mg.fillStyle = "#fff"; mg.fillRect(f, f, p.w - 2 * f, p.h - 2 * f); og.globalCompositeOperation = "destination-in"; og.drawImage(m, 0, 0); }
+    g.drawImage(o, p.ox, p.oy); return out;
+  }
+  const expandPrompt = hint => "OUTPAINT / EXTEND THE CANVAS. The attached image is a photo placed on a larger canvas: the central rectangle is the real original photo, and the surrounding border area contains only a blurred, stretched placeholder copy of the edges. "
+    + "Fill the border area with a seamless, natural, photorealistic continuation of the same scene — same lighting direction, perspective, color grading, depth of field, texture and materials — so the result looks like it was originally shot with a wider frame. "
+    + "STRICT RULES: do NOT change, move, resize, re-light or restyle anything in the central original photo; keep the product exactly as is; do not add text, logos, watermarks, borders or new people; do not leave blur placeholders visible. "
+    + (hint ? "Scene guidance for the extended area: " + hint + ". " : "") + "Output the complete image at the same aspect ratio as the input canvas.";
+  const editPrompt = text => "EDIT THIS IMAGE according to the following instruction: " + String(text).trim() + ". "
+    + "Keep the product's exact shape, proportions, label artwork, packaging text and logos unchanged unless the instruction explicitly says otherwise. Keep the same framing and composition, photorealistic result, natural lighting, no watermark, no added text unless requested, no borders. Output the edited image.";
+
+  /* ── حالة اللوحات ── */
+  const S = { kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
+  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُحسب التكلفة وتُطلب موافقتك قبل كل توليد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
+  function panel(kind) {
+    const o = S.opt;
+    if (kind === "xp") return `<div class="pbx-pz" id="pbai"><p>وسّع خلفية الصورة بالذكاء الاصطناعي ليكبر المشهد حول المنتج (لتحويل صورة مربعة إلى طولية أو عريضة…). يبقى المنتج كما هو بالبكسل.</p>${stateBar()}
+<div class="rt-g"><label>طريقة التوسيع <select id="pbai-mode" class="pbx-small"><option value="ratio"${o.mode === "ratio" ? " selected" : ""}>إلى نسبة معيّنة</option><option value="dirs"${o.mode === "dirs" ? " selected" : ""}>بنسبة % لكل اتجاه</option></select></label></div>
+<div class="rt-g" id="pbai-ratio" style="${o.mode === "ratio" ? "" : "display:none"}"><label>النسبة <select id="pbai-r" class="pbx-small">${RATIOS.map(([n, v]) => `<option value="${v}"${Math.abs(o.ratio - v) < .001 ? " selected" : ""}>${n}</option>`).join("")}</select></label><label>موضع الأصل <select id="pbai-a" class="pbx-small">${ANCH.map(a => `<option value="${a[0]}"${o.anchor === a[0] ? " selected" : ""}>${a[1]}</option>`).join("")}</select></label></div>
+<div class="rt-g" id="pbai-dirs" style="${o.mode === "dirs" ? "" : "display:none"}">${[["l", "يسار"], ["r", "يمين"], ["t", "أعلى"], ["b", "أسفل"]].map(([k, n]) => `<label>${n} % <input type="number" id="pbai-d${k}" min="0" max="100" value="${o[k]}" style="width:64px"></label>`).join("")}</div>
+<div class="rt-g"><label>وصف المشهد في المنطقة الجديدة (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: امتداد طاولة خشبية وضوء دافئ">${esc(o.hint)}</textarea></label></div>
+<button type="button" class="pbx-small pz-go" data-ai="expand">✨ وسّع الخلفية</button><div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
+    return `<div class="pbx-pz" id="pbai"><p>اكتب بالعربية ما تريد تغييره في الصورة، ويعدّلها الذكاء الاصطناعي مع الحفاظ على المنتج وملصقاته.</p>${stateBar()}
+<div class="pbrt-row">${PRESETS.map((p, i) => `<button type="button" class="pbx-small" data-ai="preset" data-i="${i}">${p[0]}</button>`).join("")}</div>
+<div class="rt-g"><label>التعليمات<textarea id="pbai-text" rows="4" style="width:100%" placeholder="مثال: غيّر لون الغطاء إلى الذهبي وأضف ظلاً ناعماً تحت المنتج">${esc(o.text)}</textarea></label></div>
+<button type="button" class="pbx-small pz-go" data-ai="edit">✨ نفّذ التعديل</button><div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbai-msg"); if (e) e.textContent = t; };
+  function loadImg(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
+  const blobOf = (c, type) => new Promise(r => c.toBlob(r, type || "image/webp", .93));
+  const readForm = () => {
+    const o = S.opt, v = id => ($(id) || {}).value; if ($("pbai-mode")) o.mode = v("pbai-mode") || o.mode; if ($("pbai-r")) o.ratio = +v("pbai-r") || o.ratio; if ($("pbai-a")) o.anchor = v("pbai-a") || o.anchor;
+    ["l", "r", "t", "b"].forEach(k => { if ($("pbai-d" + k)) o[k] = Math.max(0, Math.min(100, +v("pbai-d" + k) || 0)); }); if ($("pbai-hint")) o.hint = v("pbai-hint") || ""; if ($("pbai-text")) o.text = v("pbai-text") || "";
+  };
+  const errText = e => e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل هذه الأداة" : e && e.code === "OFF" ? "التوليد الذكي للصور معطّل من الإعدادات" : "⚠️ " + (e && e.message || e);
+  function showRes(cv, note) {
+    const r = $("pbai-res"); if (!r) return; S.res = cv; const u = cv.toDataURL("image/webp", .9);
+    r.innerHTML = `<div style="border-radius:8px;overflow:hidden;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px;margin:.4rem 0"><img src="${u}" alt="" style="max-width:100%;display:block;margin:auto"></div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="apply">✔ تطبيق على الصورة</button><button type="button" class="pbx-small" data-ai="discard">تجاهل</button></div>${note ? '<div class="ep-n">' + esc(note) + '</div>' : ""}`;
+  }
+  async function run(kind, inf) {
+    if (S.busy) return; readForm(); S.id = inf.node.id; S.busy = true;
+    try {
+      if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("مولّد الصور غير متاح");
+      say("⏳ جارٍ تجهيز الصورة…"); const src0 = await loadImg(inf.set.src), k0 = Math.min(1, 1600 / Math.max(src0.width, src0.height)), src = k0 < 1 ? (() => { const c = mk(src0.width * k0, src0.height * k0); c.getContext("2d").drawImage(src0, 0, 0, c.width, c.height); return c; })() : src0;
+      if (kind === "expand") {
+        const o = S.opt, p = plan(src.width, src.height, o.mode === "dirs" ? { dirs: { l: o.l, r: o.r, t: o.t, b: o.b } } : { ratio: o.ratio, anchor: o.anchor }); if (!p.grow) { say("النسبة المطلوبة لا تحتاج توسيعاً — اختر نسبة مختلفة أو زد الاتجاهات"); S.busy = false; return; }
+        const pad = padded(src, p), r = await ImgGen.edit({ blob: await blobOf(pad, "image/png"), prompt: expandPrompt(o.hint.trim()), W: p.W, H: p.H, title: "توسيع الخلفية بالذكاء الاصطناعي" }); if (!r) { say(""); S.busy = false; return; }
+        const fin = restore(r.canvas, src, p); S.resP = p; showRes(fin, "الحجم الناتج " + p.W + "×" + p.H + " — المنتج الأصلي محفوظ كما هو."); say("✅ تمّ التوسيع — راجع النتيجة ثم طبّقها");
+      } else {
+        const text = S.opt.text.trim(); if (!text) { say("اكتب التعليمات أولاً أو اختر اقتراحاً"); S.busy = false; return; }
+        const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: editPrompt(text), W: src.width, H: src.height, title: "تعديل الصورة بالوصف" }); if (!r) { say(""); S.busy = false; return; }
+        showRes(r.canvas, "الحجم الناتج " + src.width + "×" + src.height); say("✅ تمّ التعديل — راجع النتيجة ثم طبّقها");
+      }
+    } catch (e) { say(errText(e)); }
+    S.busy = false;
+  }
+  async function apply(inf) {
+    if (!S.res || S.busy) return; S.busy = true; say("⏳ جارٍ الرفع…");
+    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
+    catch (e) { say("⚠️ " + (e.message || e)); }
+    S.busy = false;
+  }
+  function mount(host, inf, kind) {
+    S.kind = kind; if (S.id !== inf.node.id) { S.res = null; S.msg = ""; } S.id = inf.node.id;
+    const root = host.querySelector("#pbai"); if (!root) return;
+    root.addEventListener("change", e => { readForm(); if (e.target.id === "pbai-mode") { $("pbai-ratio").style.display = S.opt.mode === "ratio" ? "" : "none"; $("pbai-dirs").style.display = S.opt.mode === "dirs" ? "" : "none"; } });
+    root.addEventListener("input", readForm);
+    root.addEventListener("click", e => {
+      const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
+      if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf);
+      else if (k === "discard") { S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; say(""); }
+      else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
+    });
+  }
+  const reset = () => { S.res = null; S.id = ""; S.msg = ""; S.busy = false; };
+  return { panel, mount, reset, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt } };
 })();
 
 /* مكتبة الملصقات (v1.89.76): آلاف الملصقات الملوّنة بحث عربي/فرنسي/إنجليزي، تُضاف للصفحة بنقرة أو سحب.

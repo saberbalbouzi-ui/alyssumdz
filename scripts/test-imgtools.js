@@ -1,0 +1,62 @@
+/* اختبار أدوات الصور الجديدة (لمسات وتصحيح + توسيع الخلفية + تعديل بالوصف) على Canvas حقيقي في Chromium بلا خادم ولا API:
+     NODE_PATH=/opt/node-tools/node_modules node scripts/test-imgtools.js */
+const { chromium } = require("playwright"), fs = require("fs"), path = require("path");
+let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x)); } else console.log("✓", n); };
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message));
+  await p.setContent("<!doctype html><html><body><div id=host></div></body></html>");
+  await p.evaluate(() => {
+    window.__up = []; window.__commit = [];
+    window.PBApp = { localize: s => s, uploadBlob: async (blob, name) => { window.__up.push([blob.type, blob.size, name]); return "assets/img/pages/" + name + ".png"; }, find: id => window.__node && window.__node.id === id ? { node: window.__node } : null, E: {}, commitAfter: id => window.__commit.push(id) };
+  });
+  for (const f of ["pagebuilder-retouch.js", "pagebuilder-ai.js"]) await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, f), "utf8") });
+  const T = fn => p.evaluate(fn);
+  /* ── لمسات وتصحيح (دوال نقية) ── */
+  ok("تحسين تلقائي: يمدّ مدى الإضاءة لصورة باهتة", await T(() => { const c = document.createElement("canvas"); c.width = 64; c.height = 64; const g = c.getContext("2d"); for (let x = 0; x < 64; x++) { const v = 90 + x; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, 0, 1, 64); } const o = PBRetouch._t.autoEnhance(c), d = o.getContext("2d").getImageData(0, 0, 64, 1).data; return d[(63) * 4] - d[0] > 150; }));
+  ok("تحسين تلقائي: يتجاهل البكسلات الشفافة", await T(() => { const c = document.createElement("canvas"); c.width = 8; c.height = 8; const o = PBRetouch._t.autoEnhance(c); return o.getContext("2d").getImageData(0, 0, 1, 1).data[3] === 0; }));
+  ok("تقليل الضوضاء: يخفض التباين العشوائي", await T(() => { const c = document.createElement("canvas"); c.width = 48; c.height = 48; const g = c.getContext("2d"), im = g.createImageData(48, 48); let s = 5; for (let i = 0; i < im.data.length; i += 4) { s = (s * 1103515245 + 12345) & 0x7fffffff; const v = 128 + ((s % 41) - 20); im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } g.putImageData(im, 0, 0); const vr = cv => { const d = cv.getContext("2d").getImageData(0, 0, 48, 48).data; let m = 0, q = 0; for (let i = 0; i < d.length; i += 4) { m += d[i]; q += d[i] * d[i]; } const n = d.length / 4; return q / n - (m / n) ** 2; }; return vr(PBRetouch._t.denoise(c, 3)) < vr(c) * .6; }));
+  ok("تقليل الضوضاء: يحفظ الحواف الحادة", await T(() => { const c = document.createElement("canvas"); c.width = 40; c.height = 40; const g = c.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, 20, 40); g.fillStyle = "#fff"; g.fillRect(20, 0, 20, 40); const d = PBRetouch._t.denoise(c, 2).getContext("2d").getImageData(0, 20, 40, 1).data; return d[19 * 4] < 10 && d[21 * 4] > 245; }));
+  ok("تصحيح المنظور: الحجم ثابت والرأس يضيق", await T(() => { const c = document.createElement("canvas"); c.width = 100; c.height = 100; const g = c.getContext("2d"); g.fillStyle = "#c00"; g.fillRect(0, 0, 100, 100); const o = PBRetouch._t.keystone(c, 20, 0), d = o.getContext("2d").getImageData(0, 0, 100, 100).data; return o.width === 100 && o.height === 100 && d[(2 * 100 + 1) * 4 + 3] === 0 && d[(98 * 100 + 50) * 4 + 3] > 200; }));
+  ok("تغيير اللون: الأحمر يصير أخضر والأزرق لا يتغيّر", await T(() => { const c = document.createElement("canvas"); c.width = 20; c.height = 10; const g = c.getContext("2d"); g.fillStyle = "#cc2222"; g.fillRect(0, 0, 10, 10); g.fillStyle = "#2233cc"; g.fillRect(10, 0, 10, 10); const o = PBRetouch._t.recolor(c, { from: [204, 34, 34], to: [34, 170, 68], tol: 24 }), d = o.getContext("2d").getImageData(0, 0, 20, 1).data; return d[1 * 4 + 1] > d[1 * 4] && d[1 * 4 + 1] > 100 && Math.abs(d[15 * 4] - 34) < 4 && Math.abs(d[15 * 4 + 2] - 204) < 4; }));
+  ok("تغيير اللون: الألوان المحايدة (أبيض) تُلوَّن بنقر عليها", await T(() => { const c = document.createElement("canvas"); c.width = 10; c.height = 10; const g = c.getContext("2d"); g.fillStyle = "#e8e8e8"; g.fillRect(0, 0, 10, 10); const o = PBRetouch._t.recolor(c, { from: [232, 232, 232], to: [30, 120, 220], tol: 30 }), d = o.getContext("2d").getImageData(5, 5, 1, 1).data; return d[2] > d[0] + 20; }));
+  ok("pick: متوسط لون النقطة ويتجاهل الشفاف", await T(() => { const c = document.createElement("canvas"); c.width = 10; c.height = 10; const g = c.getContext("2d"); g.fillStyle = "rgb(10,20,30)"; g.fillRect(0, 0, 10, 10); const p = PBRetouch._t.pick(c, 5, 5), e = document.createElement("canvas"); e.width = 5; e.height = 5; return p[0] === 10 && p[1] === 20 && p[2] === 30 && PBRetouch._t.pick(e, 2, 2) === null; }));
+  ok("قص الحواف: الشفافة", await T(() => { const c = document.createElement("canvas"); c.width = 100; c.height = 80; const g = c.getContext("2d"); g.fillStyle = "#333"; g.fillRect(30, 20, 40, 30); const o = PBRetouch._t.trim(c, 0); return o.width === 40 && o.height === 30; }));
+  ok("قص الحواف: خلفية متجانسة معتمة + هامش 10%", await T(() => { const c = document.createElement("canvas"); c.width = 100; c.height = 100; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 100, 100); g.fillStyle = "#900"; g.fillRect(40, 40, 20, 20); const o = PBRetouch._t.trim(c, 10); return o.width === 24 && o.height === 24; }));
+  ok("تعتيم الأطراف: الزوايا أغمق من الوسط", await T(() => { const c = document.createElement("canvas"); c.width = 100; c.height = 100; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 100, 100); const d = PBRetouch._t.vignette(c, 80).getContext("2d"); return d.getImageData(2, 2, 1, 1).data[0] < d.getImageData(50, 50, 1, 1).data[0] - 80; }));
+  ok("حبيبات: تغيّر البكسلات وتحفظ الشفافية", await T(() => { const c = document.createElement("canvas"); c.width = 20; c.height = 10; const g = c.getContext("2d"); g.fillStyle = "#808080"; g.fillRect(0, 0, 10, 10); const o = PBRetouch._t.grain(c, 80, 3).getContext("2d").getImageData(0, 0, 20, 10).data; let diff = 0; for (let i = 0; i < 10 * 4 * 10; i += 4) if (o[i] !== 128) diff++; return diff > 20 && o[(15) * 4 + 3] === 0; }));
+  ok("hasAlpha: يميّز الشفاف من المعتم", await T(() => { const a = document.createElement("canvas"); a.width = 10; a.height = 10; const b = document.createElement("canvas"); b.width = 10; b.height = 10; const g = b.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, 10, 10); return PBRetouch._t.hasAlpha(a) && !PBRetouch._t.hasAlpha(b); }));
+  /* ── توسيع الخلفية ── */
+  const pl = await T(() => ({ sq: PBAI._t.plan(1000, 1000, { ratio: 9 / 16 }), wide: PBAI._t.plan(1000, 1000, { ratio: 16 / 9, anchor: "left" }), dirs: PBAI._t.plan(800, 600, { dirs: { l: 25, r: 25, t: 0, b: 10 } }), same: PBAI._t.plan(1000, 500, { ratio: 2 }), big: PBAI._t.plan(4000, 3000, { ratio: 1 }) }));
+  ok("خطة: مربع ← طولي 9:16 (يزيد الارتفاع فقط والأصل بالوسط)", pl.sq.W === 1000 && pl.sq.H === 1778 && pl.sq.ox === 0 && pl.sq.oy === 389 && pl.sq.grow, pl.sq);
+  ok("خطة: مربع ← 16:9 والأصل على اليسار", pl.wide.W === 1778 && pl.wide.H === 1000 && pl.wide.ox === 0 && pl.wide.oy === 0, pl.wide);
+  ok("خطة: اتجاهات %", pl.dirs.W === 1200 && pl.dirs.H === 660 && pl.dirs.ox === 200 && pl.dirs.oy === 0, pl.dirs);
+  ok("خطة: نسبة مطابقة ← لا توسيع", pl.same.grow === false);
+  ok("خطة: يُقيَّد أكبر بُعد بـ2048 مع الحفاظ على النسبة", Math.max(pl.big.W, pl.big.H) === 2048 && pl.big.k < 1 && pl.big.W === pl.big.H && pl.big.h < pl.big.H, pl.big);
+  ok("استعادة الأصل: بكسلات المنتج لا يمسّها الناتج", await T(() => { const src = document.createElement("canvas"); src.width = 60; src.height = 60; let g = src.getContext("2d"); g.fillStyle = "#ff0000"; g.fillRect(0, 0, 60, 60); const p = PBAI._t.plan(60, 60, { dirs: { l: 50, r: 50, t: 0, b: 0 } }); const pad = PBAI._t.padded(src, p); const res = document.createElement("canvas"); res.width = p.W; res.height = p.H; g = res.getContext("2d"); g.fillStyle = "#00ff00"; g.fillRect(0, 0, p.W, p.H); const out = PBAI._t.restore(res, src, p, 4), d = out.getContext("2d"), c = d.getImageData(p.ox + 30, p.oy + 30, 1, 1).data, e = d.getImageData(5, 30, 1, 1).data; return pad.width === p.W && c[0] === 255 && c[1] === 0 && e[1] === 255 && e[0] === 0; }));
+  ok("تعليمات التوسيع: تمنع تغيير الأصل وتذكر التلميح", await T(() => { const t = PBAI._t.expandPrompt("طاولة خشبية"); return /do NOT change/i.test(t) && /طاولة خشبية/.test(t) && /OUTPAINT/.test(t); }));
+  ok("تعليمات التعديل: تحفظ المنتج وتذكر الطلب", await T(() => { const t = PBAI._t.editPrompt("غيّر اللون إلى الذهبي"); return /unchanged/.test(t) && /الذهبي/.test(t); }));
+  /* ── اللوحة (بمحاكاة ImgGen) ── */
+  const flow = await T(async () => {
+    const host = document.getElementById("host"); window.__node = { id: "w1", set: { src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8BQz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC" } };
+    const inf = { node: window.__node, set: window.__node.set }; const calls = []; window.ImgGen = { ready: () => ({ ok: true }), edit: async o => { calls.push(o); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d"); g.fillStyle = "#00aa00"; g.fillRect(0, 0, o.W, o.H); return { canvas: c, blob: null, model: "m" }; } };
+    host.innerHTML = PBAI.panel("xp"); PBAI.mount(host, inf, "xp"); document.getElementById("pbai-r").value = String(9 / 16); document.getElementById("pbai-r").dispatchEvent(new Event("change", { bubbles: true }));
+    document.querySelector('[data-ai="expand"]').click(); await new Promise(r => setTimeout(r, 900));
+    const res1 = !!document.querySelector("#pbai-res img"), p1 = calls[0] && calls[0].W + "x" + calls[0].H;
+    document.querySelector('[data-ai="apply"]').click(); await new Promise(r => setTimeout(r, 500));
+    const out = { res1, p1, prompt: calls[0] && /OUTPAINT/.test(calls[0].prompt), src: window.__node.set.src, up: window.__up.length, commit: window.__commit.slice() };
+    window.__node.set.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8BQz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC"; host.innerHTML = PBAI.panel("ai"); PBAI.mount(host, inf, "ai"); document.querySelector('[data-ai="edit"]').click(); await new Promise(r => setTimeout(r, 200)); out.noText = document.getElementById("pbai-msg").textContent;
+    document.querySelector('[data-ai="preset"][data-i="0"]').click(); out.preset = document.getElementById("pbai-text").value;
+    document.getElementById("pbai-text").value = "غيّر اللون إلى الأحمر"; document.getElementById("pbai-text").dispatchEvent(new Event("input", { bubbles: true })); document.querySelector('[data-ai="edit"]').click(); await new Promise(r => setTimeout(r, 900));
+    out.editCall = calls[1] && /الأحمر/.test(calls[1].prompt); out.editSize = calls[1] && calls[1].W + "x" + calls[1].H;
+    window.ImgGen = { ready: () => ({ ok: false, nokey: true }), edit: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } };
+    host.innerHTML = PBAI.panel("xp"); PBAI.mount(host, inf, "xp"); out.warn = /تحتاج تفعيل Alyssum API/.test(host.textContent); document.getElementById("pbai-a").value = "center"; document.querySelector('[data-ai="expand"]').click(); await new Promise(r => setTimeout(r, 700)); out.nokey = document.getElementById("pbai-msg").textContent;
+    return out;
+  });
+  ok("توسيع: يرسل قماشاً بنسبة 9:16 وتعليمات outpaint ويعرض النتيجة", flow.res1 && flow.prompt && /^10x18$|^1[0-9]x[0-9]+$/.test(flow.p1), flow);
+  ok("توسيع: التطبيق يرفع الصورة ويضع المصدر الجديد ويثبّت التعديل", /^assets\/img\/pages\/ai-/.test(flow.src) && flow.up === 1 && flow.commit[0] === "w1", flow);
+  ok("تعديل بالوصف: يرفض تعليمات فارغة", /اكتب التعليمات/.test(flow.noText), flow.noText);
+  ok("تعديل بالوصف: الاقتراح يملأ النص ثم ينفّذ بحجم الأصل", /لون المنتج/.test(flow.preset) && flow.editCall === true && flow.editSize === "10x10", flow);
+  ok("بلا مفتاح: تحذير واضح ورسالة تفعيل Alyssum API", flow.warn && /مفتاح Alyssum API/.test(flow.nokey) && !/Gemini|fal/i.test(flow.nokey), flow.nokey);
+  ok("لا أخطاء جافاسكربت", errs.length === 0, errs);
+  await b.close(); console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `\n✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);
+})();

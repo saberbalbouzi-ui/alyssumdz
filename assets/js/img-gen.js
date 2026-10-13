@@ -324,6 +324,27 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const cv = await fit(out.blob, o.W, o.H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
     return { blob: await blobOf(cv, "webp"), model: out.model, cost: est };
   }
+  /* هل الخدمة الذكية جاهزة؟ يستعملها محرّر الصور لإظهار الحالة بلا استدعاء: {ok, off, nokey} */
+  function ready() {
+    const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim(), off = LS.get("alyssum_ai_img", "1") === "0";
+    return { ok: !!key && !off, off, nokey: !key };
+  }
+  /* تعديل صورة بتعليمات حرّة (توسيع الخلفية، تعديل بالوصف…) بنفس خدمة التوليد وضوابط التكلفة: o = {blob, prompt, W, H, confirm, extra: [blob…]} ← {blob, model, cost} أو null إن ألغى المستخدم.
+     المقاس الناتج W×H (قصّ cover)؛ يرمي بالرمز OFF/NOKEY كما quick. */
+  async function edit(o) {
+    const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
+    if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
+    if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
+    if (!o || !o.blob || !o.prompt) throw new Error("الصورة والتعليمات مطلوبتان");
+    const W = Math.max(64, Math.round(o.W)), H = Math.max(64, Math.round(o.H)), est = fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
+    if (cfg.budget() && left < est) throw new Error("بلغتَ حدّ الإنفاق (" + money(est) + " مطلوب) — ارفعه من إعدادات مولّد الصور");
+    if (o.confirm !== false && !confirm((o.title || "تعديل ذكي للصورة") + " بتكلفة تقريبية " + money(est) + "\nالمقاس الناتج: " + W + "×" + H + "\nمتابعة؟")) return null;
+    const ar = nearAr(W, H), small = await shrink(o.blob, 1600), d = await b64(small), parts = [{ text: o.prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }];
+    for (const x of (o.extra || []).slice(0, 2)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(x, 1200)) } });
+    const out = fal ? await callFal(key, o.prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, parts, ar);
+    const cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
+    return { blob: await blobOf(cv, o.fmt === "png" ? "png" : "webp"), canvas: cv, model: out.model, cost: est };
+  }
   async function toLibrary(quiet) {
     if (!S.res) return null; const blob = await blobOf(S.res, fmtNow());
     try {
@@ -511,7 +532,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) LS.set(FALKEY, k.trim()); toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) LS.set(KEY, k); toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); estimate(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
-    sizes: () => SIZES, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

@@ -14,6 +14,9 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 - **لوحات الإعلان:** `page.ad={w,h,id,platform}`؛ `adResize` لتغيير المقاس؛ النشر على المنصات `ImgGen.pubPane/pubRun`.
 - **الذكاء:** Gemini/fal عبر `ImgGen.quick` فقط (بمفتاح المستخدم، تأكيد تكلفة، سقف إنفاق)؛ باقي الأدوات بلا AI. المرحلة التالية من الخارطة في `docs/photoroom-tools-report.md`.
 
+## أدوات المرحلة 3 (v1.89.161)
+- `scripts/pagebuilder-retouch.js` (`PBRetouch`، محلي بلا مفتاح: تحسين تلقائي/ضوضاء/منظور/تغيير لون بالنقر/قص/تعتيم/حبيبات؛ دوال نقية في `_t`) و`scripts/pagebuilder-ai.js` (`PBAI`: توسيع الخلفية + تعديل بالوصف عبر `ImgGen.edit`؛ التوسيع يلصق الأصل فوق الناتج بحافة مُنعَّمة فلا يمسّ المنتج). الأدوات الجديدة = أضفها لـ`EP_TABS`/`IMG_TOOLS`/`IMG_SM` في المحرّر + `epBody/epDraw` + صورة بطاقة في `gen-tool-thumbs.py`. الممحاة بالفرشاة (`PBSmart.eraser`) مفعَّلة (`ERASER_ON=true`) وتعمل محلياً. اختبار: `node scripts/test-imgtools.js` + حالات «الأدوات الذكية» في test-hand.
+
 ## قواعد
 - غير مدمّر: كل تعديل يمرّ بـ`afterEdit()`/`commitAfter` (يدخل سجلّ التراجع) والمعاينة لا تكتب في البيانات حتى «تطبيق».
 - حقول الصورة: `fx/fwd` نسب %، `fy/fh/fs` بكسل تصميم؛ لا هوامش سالبة جانبية.
