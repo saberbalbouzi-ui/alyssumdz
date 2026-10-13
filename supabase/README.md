@@ -72,3 +72,6 @@
 1. أسرار الدالة (Edge Functions ← Secrets): `PLATFORM_URL` = `https://api.alyssumhub.fyi` و`PLATFORM_KEY` = مفتاح الخادم `pk_live_…` لمستأجر الموقع (من ملف أسرار المنصة، لا يُكتب في المستودع).
 2. نشر الدالة `supabase/functions/platform-proxy` مع إطفاء Verify JWT (تتحقق بـ`is_admin` بنفسها): `functions/deploy?slug=platform-proxy`.
 3. تظهر في الطلبات أزرار «📞 السلال المتروكة» تلقائياً (`assets/js/admin-carts.js`) وتختفي إن لم تُنشر الدالة.
+
+## شبكة الخبراء (M6، v1.89.163)
+شغّل `supabase/experts.sql` في SQL Editor (idempotent؛ يتطلب `saas/schema.sql` قبله لأنه يستعمل `saas_sites` و`is_saas_admin`). الجداول مغلقة بـRLS والدوال `experts_*`/`expert_*` تُستدعى من المتصفح بالمفتاح العام؛ لا تُنشر دوال Edge. للتحقق محلياً: `bash scripts/test-experts.sh` (51 فحصاً). مساحة المستقل العامة: `saas/experts.html`، والإشراف من تبويب «شبكة الخبراء» في لوحة المزوّد.

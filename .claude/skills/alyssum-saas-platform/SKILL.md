@@ -12,3 +12,4 @@ description: العمل على منصة SaaS (متعددة المستأجرين)
 - **الموزّع:** `saas/worker/tenant-router.js` (Cloudflare Worker، مصدر `gh:` أو `sb:<site>`) — الواجهة ثابتة حتى تُبنى خلفية بـ`store_id`.
 - **الاشتراك والإغلاق:** `saas_lifecycle_run()` وحجب الواجهة للزوار (`siteGate`) — لا إيقاف استضافة؛ الإنشاء الفعلي للمواقع/النطاقات يدوي عند الدعم حالياً.
 - **العملاء يرون اللوحة كمنتج:** لا ذكر لتقنيات خلفية في نصوصها.
+- **شبكة الخبراء (M6):** `supabase/experts.sql` (RPC فقط، RLS مغلق، هوية المستقل بمفتاح سرّي مجزَّأ، واتساب لموقع مسجَّل فقط، تقييم بعد 48 ساعة من التواصل، موافقة يدوية) + تبويب التاجر `admin-experts.js` + `saas/experts.html|js|css` + `saas/experts-admin.js`. اختبارات: `bash scripts/test-experts.sh` و`node scripts/test-experts-ui.js`. دالة جديدة = أضفها لقائمة الصلاحيات في آخر experts.sql واختبرها.
