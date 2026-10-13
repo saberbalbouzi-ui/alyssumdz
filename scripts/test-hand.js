@@ -216,7 +216,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.ltoggle("add"); await new Promise(r => setTimeout(r, 200)); o.closedByTab = !document.getElementById("pbx-ep");
     PBApp.ltoggle("img"); document.querySelector('#pbx-lpane [data-imgt="st"]').click(); await new Promise(r => setTimeout(r, 600)); return o;
   });
-  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 10 أدوات وصور حقيقية محمّلة وأدوات ذكية", it.second === "img" && it.tabOn && it.tools === 10 && it.sub === 5 && it.sm === 5 && it.imgsN >= 12 && it.loaded === it.imgsN, it);
+  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 11 أداة وصور حقيقية محمّلة وأدوات ذكية", it.second === "img" && it.tabOn && it.tools === 11 && it.sub === 5 && it.sm === 5 && it.imgsN >= 12 && it.loaded === it.imgsN, it);
   ok("تعديل الصورة: اسم الأداة والإعدادات في الشريط الأيمن (بلا شريط تبويبات داخلي)، وأدوات الاستوديو تُفتح من القائمة اليسرى", it.tabsHidden && !it.hasEpTabs && /استوديو المنتج/.test(it.head) && /ملصقات/.test(it.head) && it.visPane === "txt" && /بازل/.test(it.pzHead) && it.subGone, it);
   ok("تعديل الصورة: فتح تبويب آخر يغلق لوحة الأداة (كل تبويب يغلق الذي قبله)", it.closedByTab, it);
   const cx = await p.evaluate(async () => {
