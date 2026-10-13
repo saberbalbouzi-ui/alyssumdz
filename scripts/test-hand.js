@@ -1184,7 +1184,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     // واجهة
     Admin.orders = [Object.assign(ord("W6", 1, "echec"), { name: "زبون مرتجع", note: "📦 🔁transit" })]; Admin.shipRaw = {}; Admin.tab("inventory"); await wait(500);
     R.ui = !!document.getElementById("wh-card"); R.uiRows = document.querySelectorAll("#wh-card [data-wh=recv]").length; R.uiTbl = document.querySelectorAll("#wh-card table tr").length;
-    document.querySelector('#wh-card [data-wh="recv"]').click(); await wait(200); R.manual = [Admin.orders[0].note, document.querySelectorAll("#wh-card [data-wh=recv]").length];
+    R.host = !!document.getElementById("wh-host"); R.tabHidden = document.getElementById("tab-inventory").className; R.hostLen = (document.getElementById("wh-host") || {}).innerHTML ? document.getElementById("wh-host").innerHTML.length : -1; const rb = document.querySelector('#wh-card [data-wh="recv"]'); if (rb) rb.click(); await wait(200); R.manual = [Admin.orders[0].note, document.querySelectorAll("#wh-card [data-wh=recv]").length];
     Admin.products = sv.pr; Admin.fin = sv.fin; Admin.queueStockPublish = sv.qp; API.updateOrder = sv.uo; Admin.wh = sv.wh; Admin.orders = sv.or; Admin.shipRaw = sv.raw; Priv.set = sv.ps; Admin.tab("orders"); return R;
   });
   ok("مستودعات: الطلب يخصم من مستودع ولايته (10→7، وهران 4→1) ويُوسم 📦@w1، وإن لم يكفِ يخصم من الرئيسي", whT.a[0] === 7 && whT.a[1] === 1 && /📦@w1/.test(whT.a[2]) && whT.b[0] === 1 && whT.b[1] === 1 && !/@/.test(whT.b[2]), whT);
