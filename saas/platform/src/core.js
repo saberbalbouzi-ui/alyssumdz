@@ -23,7 +23,7 @@ export class DB {
  * r.get/post/put/delete(pattern, { auth: "public" | "tenant" | "admin", scope?, limit?: {key,max,win} }, handler(req, ctx)).
  */
 /** المفاتيح العامة (pk_pub_) للمتصفح: نطاقات محصورة بهذه القائمة + أصل (Origin) مسموح من إعدادات المستأجر `origins` */
-export const PUBLIC_SCOPES = ["ab:assign", "ab:track", "fraud:check"];
+export const PUBLIC_SCOPES = ["ab:assign", "ab:track", "fraud:check", "cart:capture"];
 /** مساعد ترقيم بمؤشر: rows مرتبة تنازلياً بـid وطلب limit+1 ← { items, next } */
 export function paginate(rows, limit, idKey = "id") { const more = rows.length > limit, items = rows.slice(0, limit); return { items, next: more ? items[items.length - 1][idKey] : null }; }
 export const clampLimit = (v, def = 50, max = 100) => Math.max(1, Math.min(max, Math.floor(+v) || def));
