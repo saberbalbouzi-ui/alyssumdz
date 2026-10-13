@@ -83,6 +83,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-crumbs{display:flex;flex-wrap:wrap;gap:.15rem;align-items:center}.pbx-sep{color:#bbb;font-style:normal;font-size:.8rem}.pbx-crumb{border:1px solid #e0d9c8;background:#fff;border-radius:6px;padding:.12rem .4rem;font-size:.72rem;cursor:pointer;font-family:inherit}.pbx-crumb.on{background:#e67e22;color:#fff;border-color:#e67e22}
 .pbx-rz{width:18px;flex:0 0 18px;cursor:ew-resize;background:linear-gradient(90deg,transparent 7px,#cbbf9f 7px,#cbbf9f 11px,transparent 11px);position:relative;z-index:3;touch-action:none}.pbx-rz:before{content:'';position:absolute;left:50%;top:50%;width:6px;height:46px;margin:-23px 0 0 -3px;border-radius:3px;background:radial-gradient(circle,#8a7a4d 1.6px,transparent 2px) 0 0/6px 9px repeat-y}.pbx-rz:hover,.pbx-rz.on{background:linear-gradient(90deg,transparent 4px,rgba(200,162,75,.35) 4px,rgba(200,162,75,.35) 14px,transparent 14px),linear-gradient(90deg,transparent 7px,#c8a24b 7px,#c8a24b 11px,transparent 11px)}
 .pbx-h{position:absolute;pointer-events:auto;background:#fff;border:2px solid currentColor;border-radius:3px;color:#2d6cdf;z-index:3;width:11px;height:11px}
+.pbx-box.xp{pointer-events:none}.pbx-xps{position:absolute;pointer-events:none;background:repeating-linear-gradient(45deg,rgba(124,58,237,.16) 0 6px,rgba(124,58,237,.05) 6px 12px)}.pbx-xpin{position:absolute;pointer-events:none;border:2px dashed #fff;outline:1px dashed #7c3aed;box-sizing:border-box}.pbx-xpl{position:absolute;left:50%;top:-26px;transform:translateX(-50%);background:#7c3aed;color:#fff;font-size:.72rem;padding:.15rem .5rem;border-radius:99px;white-space:nowrap;pointer-events:none}.pbx-box.xp .pbx-h{pointer-events:auto;color:#7c3aed}
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
 .pbx-h.d-ne{top:-7px;right:-7px;cursor:nesw-resize}.pbx-h.d-nw{top:-7px;left:-7px;cursor:nwse-resize}.pbx-h.d-se{bottom:-7px;right:-7px;cursor:nwse-resize}.pbx-h.d-sw{bottom:-7px;left:-7px;cursor:nesw-resize}
@@ -992,7 +993,45 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   const snapEdge = (v, list) => { let b = v, bd = 8, g = null; list.forEach(p => { const d = Math.abs(v - p); if (d < bd) { bd = d; b = p; g = p; } }); return [b, g]; };
 
+  /* ───────────── توسيع الصورة بالذكاء: الإطار البنفسجي يُسحب خارج الصورة (للخارج فقط) والصورة تبقى في مكانها ───────────── */
+  const xpOn = inf => E.ept === "xp" && !!$("pbx-ep") && !!inf && inf.kind === "widget" && inf.node.type === "image" && !inf.set.pz && !!inf.set.src && !inf.set.rot;
+  function xpState(inf) { if (!E.xp || E.xp.id !== inf.node.id) E.xp = { id: inf.node.id, l: 0, r: 0, t: 0, b: 0 }; return E.xp; }
+  const xpGet = () => E.xp;
+  function xpGeom(id) { const el = fdoc && fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return null; const r = layoutRect(el); return { w: r.width, h: r.height }; }
+  const xpNotify = () => { try { PBAI.xpChanged(); } catch (x) { } };
+  function xpClamp(x, g) { const f = (v, m) => Math.max(0, Math.min(m * 1.5, Math.round(v || 0))); x.l = f(x.l, g.w); x.r = f(x.r, g.w); x.t = f(x.t, g.h); x.b = f(x.b, g.h); }
+  function xpSet(patch) { const inf = epInf(); if (!inf || E.ept !== "xp") return; const g = xpGeom(inf.node.id); if (!g) return; const x = xpState(inf); Object.assign(x, patch); xpClamp(x, g); positionOverlay(); xpNotify(); }
+  function drawXp(inf, r, o, ovl) {
+    const x = xpState(inf), s = o.s, box = document.createElement("div"); box.className = "pbx-box widget xp";
+    box.style.cssText = `left:${o.ox + (r.left - x.l) * s}px;top:${o.oy + (r.top - x.t) * s}px;width:${(r.width + x.l + x.r) * s}px;height:${(r.height + x.t + x.b) * s}px`;
+    const strip = (l, t, w, h) => { if (w <= 0 || h <= 0) return; const d = document.createElement("div"); d.className = "pbx-xps"; d.style.cssText = `left:${l * s}px;top:${t * s}px;width:${w * s}px;height:${h * s}px`; box.appendChild(d); };
+    const W = r.width + x.l + x.r;
+    strip(0, 0, W, x.t); strip(0, x.t + r.height, W, x.b); strip(0, x.t, x.l, r.height); strip(x.l + r.width, x.t, x.r, r.height);
+    const inn = document.createElement("div"); inn.className = "pbx-xpin"; inn.style.cssText = `left:${x.l * s}px;top:${x.t * s}px;width:${r.width * s}px;height:${r.height * s}px`; box.appendChild(inn);
+    const lb = document.createElement("div"); lb.className = "pbx-xpl"; lb.textContent = (x.l + x.r + x.t + x.b) ? `سيُنشئ الذكاء ${Math.round(W)}×${Math.round(r.height + x.t + x.b)}` : "اسحب أي مقبض للخارج لتوسيع الصورة"; box.appendChild(lb);
+    ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = "اسحب للخارج: تتوسّع الصورة بالذكاء الاصطناعي وتبقى الصورة الأصلية في مكانها"; h.onmousedown = ev => startXp(ev, d, inf); box.appendChild(h); });
+    ovl.appendChild(box);
+  }
+  function startXp(e, dir, inf) {
+    e.preventDefault(); e.stopPropagation(); const x = xpState(inf), x0 = Object.assign({}, x), g = xpGeom(inf.node.id), cursor = dir.length === 1 ? (dir === "n" || dir === "s" ? "ns-resize" : "ew-resize") : (dir === "nw" || dir === "se" ? "nwse-resize" : "nesw-resize");
+    const mv = (dx, dy) => { if (dir.includes("e")) x.r = x0.r + dx; if (dir.includes("w")) x.l = x0.l - dx; if (dir.includes("s")) x.b = x0.b + dy; if (dir.includes("n")) x.t = x0.t - dy; xpClamp(x, g); positionOverlay(); xpNotify(); };
+    dragTrack(e, cursor, mv, () => xpNotify());
+  }
+  /* بعد تطبيق الناتج: يكبر إطار العنصر الحر بقدر الإطار الموسَّع فيبقى الأصل في مكانه بنفس المقاس (غير الحر: تُستبدل الصورة فقط) */
+  function xpApply(id) {
+    const x = E.xp, q = find(id), el = fdoc && fdoc.querySelector(`[data-pb="${id}"]`); if (!x || x.id !== id || !q || !el) { E.xp = null; return false; }
+    if (q.kind === "widget" && q.free) {
+      ensureMobile(q.sec); const set = q.set, dev = E.dev, r0 = layoutRect(el), cont = el.closest(".pb-in"), cr = cont.getBoundingClientRect(), u = uOf(q.sec, cr);
+      const L = r0.left - cr.left - x.l, T = r0.top - cr.top - x.t, W = r0.width + x.l + x.r, H = r0.height + x.t + x.b;
+      setR(set, "fx", dev, Math.round(L / cr.width * 1000) / 10); setR(set, "fwd", dev, Math.round(W / cr.width * 1000) / 10); setR(set, "fy", dev, Math.round(T / u)); setR(set, "fh", dev, Math.round(H / u));
+      if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(set, k, "d") === undefined) setR(set, k, "d", eff(set, k, dev)); });
+      E.xp = null; return true;
+    }
+    E.xp = null; return false;
+  }
+
   function positionOverlay() {
+    if (E.xp && E.ept !== "xp") E.xp = null;
     try { epFloatPos(); if (typeof PBMask !== "undefined") PBMask.reposition(); } catch (x) { }
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
     if (E.mwp && E.mwp.id !== E.sel) { mwRestore(); toast("↩ أُلغيت مسوّدة الكتابة السحرية"); setTimeout(() => { renderCanvas(); renderInspector(); }, 0); }      // تغيير التحديد قبل الإدراج = إلغاء
@@ -1003,6 +1042,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (inf.kind === "widget" && selIds().length > 1) { drawMulti(ovl); return; }
     const el = fdoc.querySelector(`[data-pb="${E.sel}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, rotV = inf.kind === "widget" ? (num(eff(inf.set, "rot", E.dev)) || 0) : 0;
+    if (xpOn(inf)) { drawXp(inf, r, o, ovl); return; }      // توسيع بالذكاء: إطار يُسحب للخارج فقط والصورة ثابتة
     const isW = inf.kind === "widget", locked = isW && isLocked(inf);
     const box = document.createElement("div"); box.className = "pbx-box " + inf.kind + (locked ? " lk" : "");
     box.style.cssText = `left:${o.ox + r.left * s}px;top:${o.oy + r.top * s}px;width:${r.width * s}px;height:${r.height * s}px${rotV ? `;transform:rotate(${rotV}deg)` : ""}`;
@@ -1226,7 +1266,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
     const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -1250,7 +1290,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function imgPick(k) {
     if (!epInf()) { toast("حدّد صورة في الصفحة أولاً"); return; }
-    if (!$("pbx-ep")) epOpen(); if (typeof PBMask !== "undefined") PBMask.cancel(); PBPuzzle.cancelPrev(); E.ept = k; epDraw(); renderLeft();
+    if (!$("pbx-ep")) epOpen(); if (typeof PBMask !== "undefined") PBMask.cancel(); PBPuzzle.cancelPrev(); E.ept = k; epDraw(); renderLeft(); positionOverlay();
   }
   async function imgSmart(k) {
     const inf = epInf(); if (!inf || !inf.set.src) { toast("حدّد صورة في الصفحة أولاً"); return; }
@@ -2788,7 +2828,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

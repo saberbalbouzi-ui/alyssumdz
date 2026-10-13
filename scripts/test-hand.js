@@ -152,6 +152,21 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تعديل بالوصف: تظهر اقتراحات جاهزة وحقل التعليمات", await p.evaluate(() => !!document.getElementById("pbai-text") && document.querySelectorAll('#pbai [data-ai="preset"]').length >= 5));
   await p.evaluate(() => { document.getElementById("pbai-text").value = "غيّر لون المنتج إلى الذهبي"; document.getElementById("pbai-text").dispatchEvent(new Event("input", { bubbles: true })); document.querySelector('#pbai [data-ai="edit"]').click(); }); await p.waitForTimeout(3500);
   ok("تعديل بالوصف: يُرسل الطلب ويعرض النتيجة (مفتاح تجريبي ومحاكاة الخدمة)", await p.evaluate(() => (window.__aiCalls || []).some(u => /generateContent/.test(u)) && !!document.querySelector("#pbai-res img")), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
+
+  // ── توسيع بالذكاء: الإطار البنفسجي يُسحب للخارج دون تحريك الصورة، ثم خياران ──
+  await p.evaluate(() => { document.querySelector('[data-imgm="xp"]').click(); }); await p.waitForTimeout(600);
+  const xbox = await p.evaluate(() => { const b = document.querySelector("#pbx-ovl .pbx-box.xp"), h = b && b.querySelector(".pbx-h.d-e"); if (!h) return null; const r = h.getBoundingClientRect(), el = document.getElementById("pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"]'); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: el.getBoundingClientRect().width, n: b.querySelectorAll(".pbx-h").length }; });
+  ok("توسيع: إطار بنفسجي بثمانية مقابض فوق الصورة", !!xbox && xbox.n === 8, xbox);
+  if (xbox) {
+    await p.mouse.move(xbox.x, xbox.y); await p.mouse.down(); await p.mouse.move(xbox.x + 60, xbox.y, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(300);
+    const xs = await p.evaluate(() => { const x = PBApp.xpGet(), el = document.getElementById("pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"]'); return { r: x && x.r, l: x && x.l, w: el.getBoundingClientRect().width, info: (document.getElementById("pbai-xi") || {}).textContent }; });
+    ok("توسيع: السحب للخارج يوسّع الإطار فقط والصورة لا تتحرك ولا تتغير", xs.r > 20 && xs.l === 0 && Math.abs(xs.w - xbox.w) < 1 && /يمين/.test(xs.info || ""), xs);
+    await p.evaluate(() => { const h = document.querySelector("#pbx-ovl .pbx-box.xp .pbx-h.d-w"); const r = h.getBoundingClientRect(); window.__w = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }); const ww = await p.evaluate(() => window.__w);
+    await p.mouse.move(ww.x, ww.y); await p.mouse.down(); await p.mouse.move(ww.x + 80, ww.y, { steps: 4 }); await p.mouse.up(); await p.waitForTimeout(200);
+    ok("توسيع: لا يمكن سحب المقبض للداخل (الإطار لا يقلّ عن الصورة)", await p.evaluate(() => { const x = PBApp.xpGet(); return x.l === 0; }));
+    await p.evaluate(() => { window.__aiCalls = []; document.querySelector('#pbai [data-ai="expand"]').click(); }); await p.waitForTimeout(4500);
+    ok("توسيع: يُرسل طلبين ويعرض خيارين للاختيار", await p.evaluate(() => (window.__aiCalls || []).filter(u => /generateContent/.test(u)).length === 2 && document.querySelectorAll("#pbai-res img").length === 2 && document.querySelectorAll("#pbai-res input[name=pbai-v]").length === 2), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
+  }
   await p.evaluate(() => document.querySelector('[data-imgm="erase"]').click()); await p.waitForTimeout(700);
   ok("الممحاة الذكية: تفتح محرّر الفرشاة", await p.evaluate(() => !!document.getElementById("pbs-er")));
   await p.evaluate(() => { const x = document.getElementById("er-x"); if (x) x.click(); const o = document.getElementById("pbs-er"); if (o) o.remove(); }); await p.waitForTimeout(200);
