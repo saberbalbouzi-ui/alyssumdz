@@ -1268,6 +1268,30 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     API.updateOrder = SV.uo; Admin.orders = SV.or; AdminYd.S.rows = SV.rows; return R;
   });
   ok("رقم الطلب عند الشركة: وسم عند الإرسال، قراءة القديم من الطرود، عرض في المعاينة بلا وسم ظاهر", /🚚yalidine:yal-AAA111 🔢1219/.test(coT.note) && coT.no === "1219" && (coT.resave.match(/🔢/g) || []).length === 1 && coT.old === "1180" && !/🔢/.test(coT.same) && coT.shown && coT.noTag, coT);
+  // ── التقاط العناصر: عبوات متجاورة تبقى منفصلة ولا يبتلعها قناع المجموعة، والكتب المتلاصقة تُدمج كما كانت ──
+  const mgT = await p.evaluate(() => {
+    const T = AIVision._t, S = { W: 100, H: 100, lw: 100, lh: 100, fx: 1, fy: 1 };
+    const mk = (x0, x1, y0, y1, label) => { const lo = new Float32Array(10000); for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) lo[y * 100 + x] = 1; return T.stats({ lo, lw: 100, lh: 100, score: .9, obj: 1, label, det: .9 }, S); };
+    const R = {};
+    R.sep = T.mergeItems([mk(2, 14, 20, 60, "عبوة"), mk(13, 30, 20, 60, "عبوة"), mk(34, 46, 20, 60, "عبوة"), mk(50, 62, 20, 60, "عبوة")], S).length;
+    R.grp = T.mergeItems([mk(2, 62, 20, 60, "عبوة"), mk(2, 14, 20, 60, "عبوة"), mk(13, 30, 20, 60, "عبوة"), mk(34, 46, 20, 60, "عبوة"), mk(50, 62, 20, 60, "عبوة")], S).length;
+    R.single = T.mergeItems([mk(10, 50, 10, 70, "عبوة"), mk(10, 50, 10, 25, "عبوة")], S).length;          // غطاء داخل عبوة يبقى جزءاً منها
+    R.books = T.mergeItems([mk(2, 14, 20, 60, "كتاب"), mk(14, 30, 20, 60, "كتاب")], S).length;
+    return R;
+  });
+  ok("التقاط العناصر: أربع عبوات متجاورة تبقى أربعاً، وقناع المجموعة يُستبعد، والغطاء جزء من عبوته، والكتب المتلاصقة تُدمج", mgT.sep === 4 && mgT.grp === 4 && mgT.single === 1 && mgT.books === 1, mgT);
+  // ── تدقيق نافذة التقاط العناصر بالمظهر الداكن: خلفية معتمة داكنة ونص مقروء (كانت أبيض على أبيض) ──
+  const cqT = await p.evaluate(() => {
+    document.documentElement.classList.add("glass"); const sh = PBSmart._shell("التقاط العناصر", "عنصر", "كل العناصر", "تلميح", "تلميح الكل"); const R = {};
+    const lum = c => { const v = c.map(x => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
+    const rgba = s => { const m = String(s).match(/[\d.]+/g) || []; return [+m[0] || 0, +m[1] || 0, +m[2] || 0, m.length > 3 ? +m[3] : 1]; };
+    const bgOf = el => { let stack = []; for (let e = el; e; e = e.parentElement) { const c = rgba(getComputedStyle(e).backgroundColor); if (c[3] > 0) stack.push(c); if (c[3] >= .99) break; } let base = [0, 0, 0]; stack.reverse().forEach(c => { base = base.map((b, i) => b * (1 - c[3]) + c[i] * c[3]); }); return base; };
+    const ratio = el => { const f = rgba(getComputedStyle(el).color), b = bgOf(el), l1 = lum(f), l2 = lum(b); return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); };
+    const q = id => sh.host.querySelector(id);
+    R.wrap = bgOf(q("#pbs-panel")).map(Math.round); R.title = ratio(q("#pbs-panel b")); R.hint = ratio(q("#pbs-hint")); R.segOn = ratio(q('#pbs-seg button[data-m="one"]')); R.segOff = ratio(q('#pbs-seg button[data-m="all"]')); R.go = ratio(q("#pbs-go"));
+    q('#pbs-seg button[data-m="all"]').click(); R.afterClick = ratio(q('#pbs-seg button[data-m="all"]')); sh.close(); return R;
+  });
+  ok("نافذة التقاط العناصر بالمظهر الداكن: الخلفية داكنة معتمة وكل النصوص (العنوان، التلميح، «عنصر/كل العناصر») بتباين ≥ 4.5", Math.max(...cqT.wrap) < 60 && cqT.title >= 4.5 && cqT.hint >= 4.5 && cqT.segOn >= 4.5 && cqT.segOff >= 4.5 && cqT.afterClick >= 4.5 && cqT.go >= 4.5, cqT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {};

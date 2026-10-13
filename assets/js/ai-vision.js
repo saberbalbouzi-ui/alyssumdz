@@ -131,8 +131,15 @@ window.AIVision = (function () {
   const FAM = { "ملعقة": "cut", "سكين": "cut", "شوكة": "cut", "كتاب": "book", "كتب": "book", "دفتر": "book", "كراسة": "book", "مجموعة كتب": "book", "قلم": "pen", "أقلام": "pen", "قلم رصاص": "pen", "أقلام رصاص": "pen" };
   /* تنظيف القائمة: قناع مكرَّر = نفس العنصر (يُدمج)؛ قناع داخل آخر = جزء منه (غطاء/ملصق يُدمج) أو عنصر فوقه (ملعقة على صحن: يُقتطع منه)؛
      ومتشابهات متلاصقة (كتب/أعشاب/أقلام/أجزاء ملعقة) = عنصر واحد، إلا الأشخاص */
+  const SEPARATE = /عبوة|كوب|إناء|قارورة|علبة|إبريق|مستحضر|منتج|صابون|شمعة/;      // منتجات متجاورة (عبوات على طاولة) كل منها عنصر مستقل ولا تُدمج بالتلاصق
   function mergeItems(items, S) {
     const out = [], N = S.lw * S.lh;
+    /* قناع «مجموعة»: صندوق كشف يحيط بعدة عناصر منفصلة (عبوات متجاورة على خلفية واحدة) يُنتج قناعاً واحداً يبتلعها كلها؛ إن احتوى عنصرَين أو أكثر منفصلين فهو المجموعة لا عنصراً فيُستبعد وتبقى العناصر منفردة */
+    const grp = new Set();
+    items.forEach(g => { if (!g.area || g.manual || g.zoneMain || PERSON.test(g.label)) return; const kids = [];
+      items.forEach(o => { if (o === g || !o.area || PERSON.test(o.label) || o.area < .15 * g.area || o.area > .8 * g.area || both(g, o) / o.area < .7) return; if (!kids.some(k => both(k, o) / Math.min(k.area, o.area) > .4)) kids.push(o); });
+      if (kids.length >= 2) grp.add(g); });
+    if (grp.size) items = items.filter(g => !grp.has(g));
     items.forEach(it => {
       if (!it.area || (it.obj < 0 && !it.manual) || (it.score < (it.src === "gemini" ? .35 : .5) && !it.manual)) return; const fr = it.area / N; if (!it.manual && ((fr > .62 && !it.zoneMain) || fr < .0012)) return;
       const hit = out.find(o => both(o, it) / Math.min(o.area, it.area) > .6); if (!hit) return out.push(it);
@@ -145,7 +152,7 @@ window.AIVision = (function () {
     });
     const fam = l => FAM[l] || l;
     for (let again = true; again;) { again = false;
-      for (let i = 0; i < out.length && !again; i++) for (let j = i + 1; j < out.length; j++) { const a = out[i], b = out[j]; if (fam(a.label) !== fam(b.label) || PERSON.test(a.label) || a.manual || b.manual) continue; if (touching(a, b, 3)) { const lb = (a.det || 0) >= (b.det || 0) ? a.label : b.label; unite(a, b, S); a.label = lb; out.splice(j, 1); again = true; break; } } }
+      for (let i = 0; i < out.length && !again; i++) for (let j = i + 1; j < out.length; j++) { const a = out[i], b = out[j]; if (fam(a.label) !== fam(b.label) || PERSON.test(a.label) || SEPARATE.test(a.label) || a.manual || b.manual) continue; if (touching(a, b, 3)) { const lb = (a.det || 0) >= (b.det || 0) ? a.label : b.label; unite(a, b, S); a.label = lb; out.splice(j, 1); again = true; break; } } }
     out.forEach(it => { if (it.parts > 1 && it.label === "كتاب") it.label = "كتب"; if (it.parts > 1 && it.label === "قلم") it.label = "أقلام"; });
     return out;
   }
@@ -561,5 +568,5 @@ window.AIVision = (function () {
     return { out: mk(lineA), fill: mk(fillA) };
   }
   function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
-  return { supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
+  return { _t: { mergeItems, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
 })();
