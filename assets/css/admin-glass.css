@@ -457,3 +457,16 @@ html.glass #theme-sw button{color:#fff!important;background:transparent!importan
 html.glass #theme-sw button:hover{background:rgba(255,255,255,.12)!important;transform:translateY(-2px)}
 html.glass #theme-sw button.on{background:linear-gradient(180deg,rgba(var(--g-mint-rgb),.42),rgba(var(--g-mint-rgb),.16))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -5px 9px rgba(0,0,0,.22),0 2px 8px rgba(0,0,0,.25)!important}
 html.glass #theme-sw button.on:hover{background:linear-gradient(180deg,rgba(var(--g-mint-rgb),.56),rgba(var(--g-mint-rgb),.26))!important}
+
+/* v1.89.208: القائمة الجانبية تظهر كاملة في الصفحة (بلا تمرير داخلي) وبلا شروحات تحت عناوين الأقسام */
+.side-nav .nav-btn .nav-txt small{display:none!important}
+@media(min-width:901px){.side-nav{max-height:none!important;overflow:visible!important;position:static!important;align-self:flex-start}}
+
+/* v1.89.208: بطاقات المجموعات (الإعدادات/المنتجات/المتجر/المظهر/تطبيقات) شريط أفقي أنيق تحت الشريط العلوي */
+#app > .nav-groups,.nav-groups{display:flex!important;flex-wrap:nowrap;gap:.6rem;margin:.2rem 0 .9rem!important;padding:.45rem;border-radius:20px;overflow-x:auto;scrollbar-width:none;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 10px 26px -12px rgba(0,0,0,.7);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%)}
+.nav-groups::-webkit-scrollbar{display:none}
+.nav-groups .ng{flex:1 1 0;min-width:112px;flex-direction:row!important;justify-content:center;gap:.6rem!important;padding:.8rem 1rem!important;border-radius:15px!important}
+.nav-groups .ng .ng-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.08);flex:none}
+.nav-groups .ng.on .ng-ic{background:rgba(var(--g-mint-rgb),.3)}
+.nav-groups .ng b{font-size:.95rem;white-space:nowrap}
+@media(max-width:760px){.nav-groups{gap:.4rem;padding:.35rem}.nav-groups .ng{flex:0 0 auto;min-width:0;padding:.6rem .85rem!important}.nav-groups .ng .ng-ic{width:28px;height:28px}.nav-groups .ng b{font-size:.84rem}}
