@@ -1612,7 +1612,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     r.parts = JSON.stringify(K.parts); r.byDay = Object.keys(K.byDay).length; r.src = K.bySrc["Summer-A"] ? K.bySrc["Summer-A"].n : 0; r.preOk = K.real + K.adTotal === K.parts.rev - K.parts.cogs - K.parts.del - K.parts.pack - K.parts.retLoss - K.refunds;
     document.querySelector('#pf-app [data-pf="add"]').click(); await wait(100);
     const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event("input", { bubbles: true })); e.dispatchEvent(new Event("change", { bubbles: true })); };
-    set("pf-acc", "123456"); set("pf-name", "حسابي"); set("pf-cur", "USD"); set("pf-fx", "150"); set("pf-tok", "SECRET_TOKEN_1");
+    set("pf-tok", "Bearer SECRET_TOKEN_1_ABCDEFGHIJ\n"); document.querySelector('#pf-app [data-pf="save"]').click(); await wait(200);
+    const em = document.getElementById("pf-msg"); r.msgEmpty = em && em.style.display !== "none" && /رقم الحساب/.test(em.textContent) && !calls.some(c => c.method === "PUT");
+    set("pf-acc", "act_123456"); set("pf-cur", "USD"); AdminProfit.refresh(); await wait(500);
+    r.draft = (document.getElementById("pf-acc") || {}).value === "act_123456" && (document.getElementById("pf-tok") || {}).value.includes("SECRET_TOKEN_1_ABCDEFGHIJ") && (document.getElementById("pf-cur") || {}).value === "USD";
+    set("pf-acc", "act_123456"); set("pf-name", "حسابي"); set("pf-cur", "USD"); set("pf-fx", "150.5");
     document.querySelector('#pf-app [data-pf="save"]').click(); await wait(700);
     const put = calls.find(c => c.method === "PUT"); r.put = put ? JSON.stringify({ p: put.body.provider, a: put.body.account_id, fx: put.body.config.fx, t: put.body.secrets.token }) : "";
     r.synced = calls.some(c => /\/accounts\/7\/sync$/.test(c.path)); r.leak = document.getElementById("pf-app").innerHTML.includes("SECRET_TOKEN_1") || JSON.stringify(localStorage).includes("SECRET_TOKEN_1");
@@ -1624,7 +1628,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("الربح الحقيقي: التبويب يظهر والرقم الرئيسي = صافي computeFinance بلا ربط (تقدير الإعلان)", pfT.shown && pfT.hero0.trim() === pfT.expect0, pfT);
   ok("الربح الحقيقي: الشلال 8 خطوات وجدولا الحملات/الولايات، والمعادلة قبل الإعلان صحيحة", pfT.rows === 9 && pfT.tbl >= 1 && pfT.preOk && pfT.byDay === 1 && pfT.src === 3 && pfT.noAccounts, pfT);
-  ok("الربح الحقيقي: ربط حساب يرسل الرمز مرة واحدة ويزامن ولا يبقى الرمز في الصفحة أو المتصفح", /"p":"meta"/.test(pfT.put) && /"fx":150/.test(pfT.put) && /SECRET_TOKEN_1/.test(pfT.put) && pfT.synced && !pfT.leak, pfT);
+  ok("الربح الحقيقي: ربط حساب يرسل الرمز مرة واحدة ويزامن ولا يبقى الرمز في الصفحة أو المتصفح", /"p":"meta"/.test(pfT.put) && /"a":"123456"/.test(pfT.put) && /"fx":150.5/.test(pfT.put) && /"t":"SECRET_TOKEN_1_ABCDEFGHIJ"/.test(pfT.put) && pfT.synced && !pfT.leak, pfT);
+  ok("الربح الحقيقي: حقل رقم الحساب الفارغ يعرض رسالة واضحة بلا إرسال، والمكتوب يبقى بعد إعادة الرسم، وBearer واللصق بأسطر وact_ تُنظَّف", pfT.msgEmpty && pfT.draft, pfT);
   ok("الربح الحقيقي: بعد الربط الإنفاق الفعلي يحل محل التقدير وتظهر الحملة بإنفاقها", pfT.hero1.trim() === pfT.expect1 && pfT.acc && pfT.camp && pfT.spendCell, pfT);
   ok("الربح الحقيقي: المصاريف الثابتة تُحفظ وتُطرح، والتبويب يختفي عند الخروج", pfT.fixedSaved && pfT.hero2 !== pfT.hero1 && pfT.hidden, pfT);
   // ═══ جوال: دائرة خضراء تقع فوق الهدف ═══
