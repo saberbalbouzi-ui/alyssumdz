@@ -569,7 +569,7 @@ const AdminNav = (() => {
     /* أي Admin.tab (من أزرار أو برمجياً) يُبدّل المجموعة ويضبط عرض الوكيل */
     if (typeof Admin !== "undefined" && !Admin.__navHook) {
       const orig = Admin.tab; Admin.__navHook = 1;
-    function secTitle() { const el = document.getElementById("sec-title"); if (!el) return; const b = document.querySelector(".nav-btn.on .nav-txt b"); if (!b) return; const c = b.cloneNode(true); c.querySelectorAll(".nb").forEach(x => x.remove()); const t = (c.textContent || "").trim(); if (t) el.textContent = t; }
+    function secTitle() { const el = document.getElementById("sec-title"); if (!el) return; const b = document.querySelector(".nav-btn.on .nav-txt b"); if (!b) return; const c = b.cloneNode(true); c.querySelectorAll(".nb").forEach(x => x.remove()); const t = (c.textContent || "").trim(); const on = document.querySelector(".nav-btn.on"); el.textContent = (on && /'home'/.test(on.getAttribute("onclick") || "")) ? "" : (t || el.textContent); }
     setTimeout(secTitle, 400); setTimeout(secTitle, 1500);
       Admin.tab = function (t, btn) { const r = orig.call(this, t, btn); try { if (t === "store" || t === "setup") segMark(t); secTitle(); if (btn && btn.dataset && btn.dataset.grp && btn.dataset.grp !== cur) apply(btn.dataset.grp); if (t === "agent" && !VOICE) agentView("agent"); if (t === "appcfg" && btn && btn.dataset.app) renderApp(btn.dataset.app); if (t === "tpl") renderTpl(); if (t === "imggen") { const bb = workBtn("builder"); if (bb) { Admin.tab("builder", bb); if (typeof PBAdmin !== "undefined") PBAdmin.mode("ad"); } } } catch (e) { } return r; };
     }

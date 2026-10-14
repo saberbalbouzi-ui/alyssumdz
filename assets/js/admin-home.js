@@ -183,12 +183,18 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
     const b = btn(w); if (b) a.tab(w, b);
   }
   function open() { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'home'")); if (b && A().tab) A().tab("home", b); }
+  /* عند فتح اللوحة تبدأ دائماً على «لوحة التحكم»: إن انتقل قسم آخر تلقائياً أثناء التحميل (قبل أي نقر من المستخدم) نعيدها */
+  function guard() {
+    let touched = false; const mark = () => { touched = true; };
+    document.addEventListener("pointerdown", mark, { capture: true, once: true }); document.addEventListener("keydown", mark, { capture: true, once: true });
+    [1200, 3000].forEach(ms => setTimeout(() => { if (touched || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); if (on && !/'home'/.test(on.getAttribute("onclick") || "")) open(); }, ms));
+  }
   function init() {
     const a = A(); if (!a || a.__homeWrap || typeof a.renderAll !== "function") return setTimeout(init, 400);
     a.__homeWrap = 1; const o = a.renderAll;
-    a.renderAll = function () { const r = o.apply(this, arguments); try { render(); if (!S.shown) { S.shown = true; open(); } } catch (e) { console.warn("AdminHome", e); } return r; };
+    a.renderAll = function () { const r = o.apply(this, arguments); try { render(); if (!S.shown) { S.shown = true; open(); guard(); } } catch (e) { console.warn("AdminHome", e); } return r; };
     const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); return r; };
-    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); } }
+    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); } }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   return { render, open, S };
