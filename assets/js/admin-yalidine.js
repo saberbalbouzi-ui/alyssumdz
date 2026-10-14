@@ -32,8 +32,9 @@ const AdminYd = (() => {
   function contact(ph) {
     const d = String(ph || "").replace(/\D/g, ""); if (masked(ph) || d.length < 9) return "";
     const w = d.startsWith("213") ? d : "213" + d.replace(/^0/, "");
-    return ' <a href="tel:+' + w + '" title="اتصال" style="text-decoration:none">📞</a> <a href="https://wa.me/' + w + '" target="_blank" rel="noopener" title="واتساب" style="text-decoration:none">💬</a>';
+    return '<div class="yd-ct"><a class="yd-cb call" href="tel:+' + w + '">📞 اتصال</a><a class="yd-cb wa" href="https://wa.me/' + w + '" target="_blank" rel="noopener">💬 واتساب</a></div>';
   }
+
   function save() { try { localStorage.setItem(KEY, JSON.stringify({ rows: S.rows, total: S.total, partial: S.partial, at: S.at })); } catch (e) { } }
   function restore() { try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j && Array.isArray(j.rows)) { S.rows = j.rows; S.total = j.total || j.rows.length; S.partial = !!j.partial; S.at = j.at || 0; } } catch (e) { } }
   function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); try { window.AdminHome && AdminHome.refreshSoft && AdminHome.refreshSoft(); } catch (e) { } }
@@ -96,7 +97,7 @@ const AdminYd = (() => {
     const chips = dupChip + keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + contact(real(r, o).phone) + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
+      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + (tone(r.status) === 'y' ? contact(real(r, o).phone) : '') + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
     }).join("") || '<tr><td colspan="9" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
