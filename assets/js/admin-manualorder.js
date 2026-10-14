@@ -20,6 +20,11 @@ window.ManualOrder = (function () {
     });
     return out;
   }
+  /* ولاية الانطلاق: الافتراضية من إعدادات الشركة المفعّلة (وإلا الجزائر)، ويمكن تغييرها لهذا الطلب وحده */
+  function fromDef(ad) {
+    try { const k = ad.activeCompanyKey && ad.activeCompanyKey(), cfg = (k && ad.deliveryCfg && ad.deliveryCfg[k]) || {}, want = ad.normName ? ad.normName(cfg.fromWilayaName || "Alger") : String(cfg.fromWilayaName || "alger").toLowerCase(); const w = W().find(x => !x.par && (ad.normName ? ad.normName(x.name) : String(x.name).toLowerCase()) === want); return w ? w.name : ""; } catch (e) { return ""; }
+  }
+  function fromOpts(ad) { const d = fromDef(ad); return W().filter(x => !x.par).slice().sort((a, b) => a.id - b.id).map(w => `<option value="${esc(w.name)}"${w.name === d ? " selected" : ""}>${w.id} — ${esc(w.name)}${w.name === d ? " (الافتراضية)" : ""}</option>`).join(""); }
   function open(opt) {
     const ad = A(); if (!ad) return; opt = opt || {}; const mode = opt.mode || "new", src = opt.order || null;
     if (mode === "edit" && (!src || src.status !== "nouvelle" || (ad.trackingOf && ad.trackingOf(src)))) { toast("التعديل الكامل متاح للطلب الجديد غير المسجَّل لدى الشركة فقط — للمؤكَّد استعمل «✏️ تعديل»"); return; }
@@ -32,7 +37,7 @@ window.ManualOrder = (function () {
 <p class="hint" style="margin:.1rem 0 .7rem">${mode === "copy" ? "نُسخت بيانات الطلب <b dir=\"ltr\">" + esc(src.id) + "</b> إلى طلب جديد غير مسجَّل لدى الشركة؛ عدّل ما تريد ثم احفظ. يظهر «في انتظار التأكيد» ويمرّ بنفس مسار الطلبات." : mode === "edit" ? "هذا الطلب جديد وغير مسجَّل لدى الشركة، فيمكن تعديل كل بياناته بما فيها المنتجات والهاتف." : "يُسجَّل الطلب «في انتظار التأكيد» ويمرّ بنفس مسار أي طلب (اتصال، تأكيد، إرسال لشركة التوصيل…)."}</p>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 .7rem">${fld("الاسم واللقب", `<input id="mo-name" value="${esc(src ? src.name : "")}" placeholder="مثال: محمد بن علي">`)}${fld("الهاتف", `<input id="mo-phone" dir="ltr" inputmode="tel" value="${esc(src ? src.phone : "")}" placeholder="05XXXXXXXX">`)}
 ${fld("الولاية", `<select id="mo-wil">${wil.map(w => `<option value="${esc(w.name)}"${src && w.name === src.wilaya ? " selected" : ""}>${w.id} — ${esc(w.name)}</option>`).join("")}${src && src.wilaya && !wOf(src.wilaya) ? `<option value="${esc(src.wilaya)}" selected>${esc(src.wilaya)}</option>` : ""}</select>`)}${fld("البلدية", `<select id="mo-com"></select>`)}
-${fld("طريقة التوصيل", `<div style="display:flex;gap:1rem;flex-wrap:wrap"><label><input type="radio" name="mo-dt" value="home"${!src || src.dtype !== "stop" ? " checked" : ""}> إلى المنزل</label><label><input type="radio" name="mo-dt" value="stop"${src && src.dtype === "stop" ? " checked" : ""}> مكتب Stop Desk</label></div>`)}<div id="mo-deskw">${fld("المكتب", `<select id="mo-desk"></select>`)}</div></div>
+${fld("طريقة التوصيل", `<div style="display:flex;gap:1rem;flex-wrap:wrap"><label><input type="radio" name="mo-dt" value="home"${!src || src.dtype !== "stop" ? " checked" : ""}> إلى المنزل</label><label><input type="radio" name="mo-dt" value="stop"${src && src.dtype === "stop" ? " checked" : ""}> مكتب Stop Desk</label></div>`)}<div id="mo-deskw">${fld("المكتب", `<select id="mo-desk"></select>`)}</div>${mode === "edit" ? "" : fld("ولاية الانطلاق", `<select id="mo-from">${fromOpts(ad)}</select><small class="hint">الافتراضية من إعدادات شركة التوصيل — غيّرها إن كانت البضاعة ستُرسل من مخزن في ولاية أخرى</small>`)}</div>
 <div style="font-weight:800;margin:.4rem 0 .3rem">المنتجات</div><div id="mo-lines" style="overflow:auto"></div><div style="margin:.3rem 0 .6rem"><button type="button" class="small gray" id="mo-add">➕ إضافة منتج</button></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 .7rem">${fld("رسم التوصيل (دج)", `<input id="mo-fee" type="number" min="0" step="50" value="${src ? num(src.fee) : 0}"><small id="mo-fh" class="hint"></small>`)}${fld("الخصم (دج)", `<input id="mo-disc" type="number" min="0" step="50" value="${src ? num(src.discount) : 0}">`)}</div>
 ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder="تظهر في ملاحظات الطلب">`)}
@@ -84,7 +89,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
           close(); ad.renderStats(); ad.renderOrders(); try { ad.openOrderPreview(ad.orders.indexOf(src)); } catch (e) { }
           toast(saved ? "✅ حُفظ تعديل الطلب" : "✅ حُفظ التعديل في اللوحة"); return;
         }
-        const extra = { "✍️ طلب يدوي": "نعم" }; if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
+        const extra = { "✍️ طلب يدوي": "نعم" }; { const fe = $("mo-from"); if (fe && fe.value && fe.value !== fromDef(ad)) extra["📍 ولاية الانطلاق"] = fe.value; } if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
         const order = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, items: clean, subtotal: c.sub, fee: c.fee, total: c.total, coupon: "", discount: c.disc, extra, note: $("mo-note").value.trim() };
         const r = await API.addOrder(order);
         if (!r || !r.ok) { b.disabled = false; b.textContent = lab; toast("❌ تعذّر حفظ الطلب — تحقق من الاتصال وصلاحية الدخول"); return; }
@@ -94,5 +99,5 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       } catch (e) { b.disabled = false; b.textContent = lab; toast("❌ " + (e && e.message || e)); }
     };
   }
-  return { open, parseLines, calc, textOf };
+  return { open, parseLines, calc, textOf, fromDef };
 })();
