@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.212">
+<meta name="admin-version" content="1.89.213">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1644,12 +1644,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.212"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.212"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.212"></script>
+<script src="assets/js/ctl-help.js?v=1.89.213"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.213"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.213"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.212"></script>
+<script src="assets/js/admin-nav.js?v=1.89.213"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1661,7 +1661,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.212"></script>
+<script src="assets/js/admin-update.js?v=1.89.213"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -8231,6 +8231,16 @@ const Admin = {
 
   /* ════════ الطلبات الجديدة: تأكيد / محاولات اتصال / إلغاء ════════ */
   ST_AR: { nouvelle:"في انتظار التأكيد", confirmee:"مؤكَّد", expediee:"في الطريق", livree:"تم التسليم", annulee:"ملغاة", echec:"فشل التوصيل" },
+  /* متابعة التوصيل الفاشل: الطرد بحالة «Tentative échouée» عند الشركة يدخل مركز الاتصال تلقائياً؛ وسم 📲ok|no@اليوم يخفيه لبقية اليوم، و📲ref (رفض الاستلام) يُخرجه نهائياً */
+  rawShip(o){ const t = this.trackingOf(o); if(!t) return ""; let raw = ""; try{ const r = window.AdminYd && AdminYd.S.rows.find(x=>String(x.tracking) === String(t.tracking)); raw = (r && r.status) || ""; }catch(e){} return raw || ((this.shipRaw || {})[o.id] || {}).raw || ""; },
+  failedAttempt(o){
+    if(!o || !["confirmee","expediee"].includes(o.status) || /🗑/.test(o.note || "")) return false;
+    const raw = String(this.rawShip(o) || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); if(!/tentative|echou/.test(raw)) return false;
+    const note = String(o.note || ""); if(/📲ref/.test(note)) return false;
+    const m = note.match(/📲(?:ok|no)@(\d{4}-\d{2}-\d{2})/); return !(m && m[1] >= this.isoDay());
+  },
+  followList(){ return (this.orders || []).filter(o=>this.failedAttempt(o)); },
+  setFollow(o, res){ this.setNoteTag(o, /📲\S+\s*/g, "📲" + res + (res === "ref" ? "" : "@" + this.isoDay())); },
   attemptsOf(o){ const m = String((o && o.note) || "").match(/📞([1-3])/); return m ? Number(m[1]) : 0; },
   setNoteTag(o, tagRe, tag){
     const clean = String(o.note||"").replace(tagRe, "").replace(/\s+/g," ").trim();
@@ -8249,7 +8259,8 @@ const Admin = {
   async overdueAlert(){
     const me = window.AdminRoles && AdminRoles.state && AdminRoles.state.me, boss = !me || me.owner === true || (AdminRoles.has && AdminRoles.has(me, "orders.edit")), now = Date.now();
     if(boss && (!this._cg || now - (this._cgAt || 0) > 600000)){ this._cgAt = now; try{ this._cg = (await Priv.get("callgoal", {})) || {}; }catch(e){ this._cg = this._cg || {}; } }
-    const L = this.overdueList(); this.setBadge("nb-callcenter", L.length);
+    const L = this.overdueList(), F = this.followList(); this.setBadge("nb-callcenter", L.length + F.length);
+    this._flSeen = this._flSeen || new Set(); const nf = F.filter(o=>!this._flSeen.has(o.id)); if(nf.length){ nf.forEach(o=>this._flSeen.add(o.id)); if(this._flInit){ this.beep(); toast("📦 " + nf.length + " طلب فشلت محاولة توصيله — أُرسل إلى مركز الاتصال للمتابعة"); } } this._flInit = true;
     this._odSeen = this._odSeen || new Set(); const fresh = L.filter(o=>!this._odSeen.has(o.id));
     if(boss && fresh.length && now - (this._odAt || 0) > 300000){ this._odAt = now; fresh.forEach(o=>this._odSeen.add(o.id)); this.beep(); toast("⚠️ " + L.length + " طلب بلا أي استجابة منذ أكثر من " + this.overdueMin() + " دقيقة — افتح مركز الاتصال"); }
   },
