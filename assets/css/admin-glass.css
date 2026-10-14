@@ -443,8 +443,12 @@ html.glass #pbs-panel button[style*="color:#0d9488"]{color:#d4ff4d!important}
 /* شريط التمرير: سمكه 6px فقط بلا توهج خارجي (كان التوهج يجعله يبدو أسمك بكثير)، ومخفي في النوافذ واللوحات العائمة حيث لا حاجة إليه (التمرير بالعجلة/اللمس يعمل) */
 ::-webkit-scrollbar{width:6px!important;height:6px!important}
 ::-webkit-scrollbar-thumb{box-shadow:none!important}
-.modal,.modal *,#pbnp,#pbnp *,#pbs-panel,#pbs-panel *,#pbx-pimg,#pbx-pimg *,#pbx-ep,#pbx-ep *,#pbx-lib,#pbx-lib *,#pbar-bg,#pbar-bg *{scrollbar-width:none}
-.modal::-webkit-scrollbar,.modal *::-webkit-scrollbar,#pbnp::-webkit-scrollbar,#pbnp *::-webkit-scrollbar,#pbs-panel::-webkit-scrollbar,#pbs-panel *::-webkit-scrollbar,#pbx-pimg::-webkit-scrollbar,#pbx-pimg *::-webkit-scrollbar,#pbx-ep::-webkit-scrollbar,#pbx-ep *::-webkit-scrollbar,#pbx-lib::-webkit-scrollbar,#pbx-lib *::-webkit-scrollbar,#pbar-bg::-webkit-scrollbar,#pbar-bg *::-webkit-scrollbar{display:none}
+/* قاعدة واحدة لشريط التمرير البرتقالي العريض في كل النوافذ واللوحات العائمة والجانبية للمطوّر — أي نافذة/لوحة جديدة تُضاف إلى القائمة أدناه (لا تضع scrollbar-width فهو يعطّل هذا التنسيق في كروم) */
+:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside),:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside) *{scrollbar-width:auto}
+:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside)::-webkit-scrollbar,:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside) *::-webkit-scrollbar{width:16px!important;height:16px!important}
+:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside)::-webkit-scrollbar-track,:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside) *::-webkit-scrollbar-track{background:rgba(255,140,30,.12)!important;border-radius:10px}
+:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside)::-webkit-scrollbar-thumb,:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside) *::-webkit-scrollbar-thumb{min-height:60px;min-width:60px;border-radius:10px;border:3px solid transparent;background:linear-gradient(180deg,rgba(255,158,52,.95),rgba(255,106,0,.85)) padding-box!important;box-shadow:none!important}
+:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside)::-webkit-scrollbar-thumb:hover,:is(.modal,#pbnp,#pbs-panel,#pbx-pimg,#pbx-ep,#pbx-lib,#pbar-bg,#pbx-insp,#pbx-lside) *::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(255,176,82,1),rgba(255,120,10,.95)) padding-box!important}
 /* v1.89.199: القائمة الجانبية تُمرَّر بالعجلة/اللمس بلا شريط سحب ظاهر */
 .side-nav{scrollbar-width:none}
 .side-nav::-webkit-scrollbar{display:none}

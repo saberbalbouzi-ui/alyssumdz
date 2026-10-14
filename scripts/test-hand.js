@@ -1413,9 +1413,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   // ── شريط التمرير: 6px بلا توهج خارجي، ومخفي في نافذة «صفحة جديدة» وبقية النوافذ ──
   const sbT = await p.evaluate(async () => {
     const R = { glow: 0, w: new Set() }; for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) { const t = r.selectorText || ""; if (/^::-webkit-scrollbar-thumb$/.test(t.trim()) && r.style.boxShadow && /0px 0px \d+px/.test(r.style.boxShadow.replace(/\s+/g, " ")) && !/inset/.test(r.style.boxShadow.split(/,(?![^(]*\))/).pop())) R.glow++; if (/^::-webkit-scrollbar$/.test(t.trim()) && r.style.width) R.w.add(r.style.width); } }
-    R.w = [...R.w]; PBAdmin.newPage(); await new Promise(r => setTimeout(r, 200)); const b = document.querySelector("#pbnp .np-body"); R.npNone = getComputedStyle(b).scrollbarWidth === "none"; R.m = getComputedStyle(document.querySelector("#pbnp")).scrollbarWidth === "none"; document.getElementById("pbnp-bg").remove(); return R;
+    R.w = [...R.w]; PBAdmin.newPage(); await new Promise(r => setTimeout(r, 200)); const b = document.querySelector("#pbnp .np-body"); R.npNone = parseFloat(getComputedStyle(b, "::-webkit-scrollbar").width) >= 12; R.m = parseFloat(getComputedStyle(document.querySelector("#pbnp"), "::-webkit-scrollbar").width) >= 12; document.getElementById("pbnp-bg").remove(); return R;
   });
-  ok("شريط التمرير: سمكه 6px في كل الأنماط وبلا توهج خارجي، ومخفي في نافذة صفحة جديدة", sbT.glow === 0 && sbT.w.every(x => x === "6px") && sbT.npNone && sbT.m, sbT);
+  ok("شريط التمرير: 6px عام وبلا توهج، وعريض برتقالي موحّد في نوافذ المطوّر واللوحات العائمة (نافذة صفحة جديدة)", sbT.glow === 0 && sbT.w.every(x => x === "6px") && sbT.npNone && sbT.m, sbT);
   // ── تبويب «تعديل الصورة»: التخطيط الفعلي (لا المعرَّف فقط): مربعات كبيرة بالاسم تحتها، اثنان في كل صف ──
   const lyT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; window.confirm = () => true; PBAdmin.mkPage("تخطيط"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(500); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
