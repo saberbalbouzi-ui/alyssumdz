@@ -244,6 +244,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     document.querySelector('[data-qb="edit"]').click(); await new Promise(x => setTimeout(x, 300)); return o;
   });
   ok("شريط الصورة: «تعديل» خضراء بلون المظهر وتصير بيضاء عند الفتح، وسهما رجوع/عودة يظهران مع لوحة التعديل ويعملان ويختفيان بإغلاقها", qb.tx && qb.u && qb.r && qb.white && qb.green && qb.hi1 <= qb.hi0 && qb.hi2 === qb.hi0 && qb.closed, qb);
+  const qp = await p.evaluate(() => { const q = document.querySelector(".pbx-qbar"), b = document.querySelector("#pbx-ovl .pbx-box"); if (!q || !b || q.style.display === "none") return { none: true }; const a = q.getBoundingClientRect(), c = b.getBoundingClientRect(); return { qb: [Math.round(a.top), Math.round(a.bottom)], box: [Math.round(c.top), Math.round(c.bottom)], noOverlap: a.bottom <= c.top + 1 || a.top >= c.bottom - 1, tall: c.height > innerHeight * .8 }; });
+  ok("شريط الصورة العلوي فوق العنصر المحدّد ولا يغطيه", qp.none || qp.noOverlap || qp.tall, qp);
   const st2 = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const o = {};
     try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-st="cut"]') && document.querySelector('[data-st="cut"]').click(); for (let i = 0; i < 60 && !PBStudio._S.cut; i++) await w(300);

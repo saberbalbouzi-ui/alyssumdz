@@ -1084,6 +1084,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (!locked) dirs.forEach(d => { const h = document.createElement("div"); h.className = "pbx-h d-" + d; h.title = d === "nw" ? "اسحب لتكبير/تصغير العنصر كله (مع محتواه)" : "اسحب لتغيير الحجم"; h.onmousedown = ev => { if (ev.button === 0) fwdClickOnTap(ev); startResize(ev, d, inf); }; box.appendChild(h); });
     ovl.appendChild(box);
     if (isW && !E.busy) drawFloat(inf, box, ovl, locked);
+    try { placeQbar(); } catch (x) {}
   }
 
   function startRadius(e, inf, key, handle) {
@@ -1246,7 +1247,19 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function placeQbar() {
     const bar = $("pbx-qbar"), ovl = $("pbx-ovl"), st = $("pbx-stage"); if (!bar || !ovl || !st || bar.style.display === "none") return;
-    const o = ovl.getBoundingClientRect(), r = st.getBoundingClientRect(), gut = isMob() ? 0 : 132; bar.style.left = (o.left + 8) + "px"; bar.style.top = (r.top + (isMob() ? 6 : 8)) + "px"; bar.style.maxWidth = Math.max(240, o.width - gut - 16) + "px"; bar.style.width = isMob() ? (o.width - 16) + "px" : "";
+    const o = ovl.getBoundingClientRect(), r = st.getBoundingClientRect(), gut = isMob() ? 0 : 132; bar.style.maxWidth = Math.max(240, o.width - gut - 16) + "px"; bar.style.width = isMob() ? (o.width - 16) + "px" : "";
+    let left = o.left + 8, top = r.top + (isMob() ? 6 : 8);
+    /* فوق العنصر المحدّد (وفوق شريطه العائم) كي لا يغطي الصورة؛ تحته إن لم يتسع المكان؛ وإلا أعلى المنصة */
+    const bx = ovl.querySelector(".pbx-box"), ft = ovl.querySelector(".pbx-ft"), bh = bar.offsetHeight || 44, bw = bar.offsetWidth || 0;
+    if (bx) {
+      const rs = [bx.getBoundingClientRect()]; if (ft) rs.push(ft.getBoundingClientRect());
+      const U = { t: Math.min(...rs.map(q => q.top)), b: Math.max(...rs.map(q => q.bottom)), l: rs[0].left };
+      const above = U.t - bh - 8, below = U.b + 8;
+      if (above >= r.top + 4) { top = above; left = U.l; }
+      else if (below + bh <= r.bottom - 4) { top = below; left = U.l; }
+      left = Math.max(r.left + 4, Math.min(left, r.right - bw - 4));
+    }
+    bar.style.left = left + "px"; bar.style.top = top + "px";
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
