@@ -40,8 +40,11 @@ const AdminSearch = (() => {
   }
   function tabs() {
     return [...document.querySelectorAll(".nav-btn")].map(b => {
-      const t = (b.textContent || "").replace(/\s+/g, " ").trim(); if (!t || b.classList.contains("nav-work")) return null;
-      return { k: "قسم", t, s: "فتح القسم", n: norm(t), go: () => { try { b.click(); } catch (e) { } } };
+      const full = (b.textContent || "").replace(/\s+/g, " ").trim(); if (!full || b.classList.contains("nav-work")) return null;
+      /* العنوان من <b> وحده (النصوص المتجاورة بلا فاصل كانت تلتصق: «العملاءشرائح العملاء…»)؛ والشرح يدخل في المطابقة فقط */
+      const bb = b.querySelector(".nav-txt b, b"), t = bb ? [...bb.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join("").replace(/\s+/g, " ").trim() || full : full, sm = b.querySelector("small"), n = norm(t + " " + (sm ? sm.textContent : ""));
+      if (b.dataset.app === "ask" || t === "اسألني") return null;      // «اسألني» ليست قسماً: لا تظهر في نتائج البحث (v1.89.121)
+      return { k: "قسم", t, s: "فتح القسم", n, go: () => { try { b.click(); } catch (e) { } } };
     }).filter(Boolean);
   }
   async function loadExtra() {
