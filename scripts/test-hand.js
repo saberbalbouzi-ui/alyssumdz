@@ -303,6 +303,17 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تصميم بمقاس: الصفحة كاملة داخل مجال الرؤية بكل المقاسات (مربع/طولي/عرضي) والنسبة صحيحة ومكان علوي محجوز لشريط الأدوات بلا تمرير", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].inside && fitR[k].padTop === "64px" && Math.abs(fitR[k].ratio - fitR[k].want) < .03 && fitR[k].noScroll), fitR);
   const itb = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "itb", textMode: "none", lang: "ar" }); await w(1500); const t = document.querySelector("#pbx-insp .pbx-itabs"), o = { hidden: !t || getComputedStyle(t).display === "none" }; PBApp.close(); await w(400); return o; });
   ok("إنشاء الصور: تبويبات محتوى/تنسيق/متقدم مخفية (تبقى في صفحات الويب)", itb.hidden, itb);
+  const bgT = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "bgt", textMode: "none", lang: "ar" }); await w(1500);
+    const fd = document.getElementById("pbx-frame").contentDocument, sec = fd.querySelector(".pb-sec"), o = {};
+    sec.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientX: 20, clientY: 20 })); sec.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: 20, clientY: 20 })); await w(200);
+    o.noSecBox = !document.querySelector(".pbx-box.section") && !document.querySelector(".pbx-sbar") && !document.querySelector("#pbx-ovl .pbx-bar");
+    sec.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })); await w(200);
+    const m = document.getElementById("pbx-ctx"); o.menu = m ? m.textContent : ""; const it = m && [...m.querySelectorAll("button")].find(b => /إضافة لون الخلفية/.test(b.textContent)); o.hasItem = !!it; if (it) it.click(); await w(200);
+    const pop = document.getElementById("pbx-bgp"); o.pop = !!pop; if (pop) { o.eye = typeof window.EyeDropper === "function" ? !!pop.querySelector("#bgp-e") : true; pop.querySelector('.bgp-sw button[data-c="#e53935"]').click(); await w(300); o.bg = JSON.parse(PBApp.pageJson()).sections[0].set.bg; o.inFrame = getComputedStyle(fd.querySelector(".pb-sec")).backgroundColor; }
+    PBApp.close(); await w(400); o.closed = !document.getElementById("pbx-bgp"); return o;
+  });
+  ok("إنشاء الصور: الخلفية ليست قسماً (لا إطار ولا شريط قسم) وزر الأيمن ← «إضافة لون الخلفية» ← نافذة ألوان تغيّر الخلفية وتُغلق مع المحرر", bgT.noSecBox && bgT.hasItem && bgT.pop && bgT.eye && bgT.bg === "#e53935" && /229, 57, 53/.test(bgT.inFrame) && bgT.closed, bgT);
   ok("تصميم بمقاس: عجلة الفأرة تكبّر وتصغّر بلا Ctrl، والقرص بإصبعين يكبّر على الهاتف", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].zoomIn && fitR[k].zoomOut) && fitR.mobile.inside && fitR.mobile.pinch, fitR);
   const ar = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; const out = {};
