@@ -283,7 +283,7 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
   const MODES = [["weights", "حسب الحصص (تلقائي بالتساوي النسبي)"], ["company", "حسب شركة التوصيل"], ["wilaya", "حسب الولايات"], ["manual", "يدوي حر (أنت تسند الطلبات)"]];
   const wilNames = ids => (ids || []).map(id => { const w = (typeof WILAYAS !== "undefined" ? WILAYAS : []).find(x => String(x.id) === String(id)); return w ? w.name : id; });
   function distHtml(st, as) {
-    const mode = as.mode || "weights", A = window.Admin, byCo = as.byCo || {}, byWil = as.byWil || {};
+    const mode = as.mode || "weights", A = typeof Admin !== "undefined" ? Admin : null, byCo = as.byCo || {}, byWil = as.byWil || {};
     let h = '<div class="rl-row" style="margin-top:.6rem"><label>طريقة التوزيع: <select id="rl-g-mode">' + MODES.map(m => '<option value="' + m[0] + '"' + (m[0] === mode ? " selected" : "") + '>' + m[1] + '</option>').join("") + '</select></label></div>';
     h += '<div id="rl-d-company" style="display:' + (mode === "company" ? "block" : "none") + '"><p class="rl-m">اختر المندوبات اللواتي يعالجن طلبات كل شركة توصيل (إن اخترتَ أكثر من واحدة توزّع بينهن بالتساوي). الطلب بلا قاعدة تنطبق عليه يُوزَّع بالحصص.</p>';
     let cos = []; try { cos = (A && A.enabledCompanyKeys ? A.enabledCompanyKeys() : []).map(k => [k, ((A.allDeliveryCompanies() || {})[k] || {}).name || k]); } catch (e) { }

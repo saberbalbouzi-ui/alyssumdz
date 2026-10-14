@@ -46,7 +46,7 @@ window.TableSel = (() => {
   const cellText = c => { const k = c.cloneNode(true); k.querySelectorAll("button,select,input,textarea,script,style,.ts-c").forEach(x => x.remove()); return norm(k.textContent); };
   const isHead = tr => !!tr.querySelector("th") && !tr.querySelector("td");
   const hasOwnSel = t => !!t.querySelector('tr input[type="checkbox"]:not(.ts-ck)');
-  function rowKey(tr) { if (tr.dataset.tsk) return tr.dataset.tsk; const c = [...tr.cells].filter(x => !x.classList.contains("ts-c")); return norm((c[0] ? c[0].innerText || c[0].textContent : "") + "|" + (c[1] ? c[1].innerText || c[1].textContent : "")).slice(0, 140); }
+  function rowKey(tr) { if (tr.dataset.tsk) return tr.dataset.tsk; if (tr.dataset.trk) return "trk:" + tr.dataset.trk;   /* طرود الشركة: رقم التتبع ثابت (نصّ الخليتين يتغيّر بشارة «مكرّر»/تغيّر الحالة فيضيع التحديد) */ const c = [...tr.cells].filter(x => !x.classList.contains("ts-c")); return norm((c[0] ? c[0].innerText || c[0].textContent : "") + "|" + (c[1] ? c[1].innerText || c[1].textContent : "")).slice(0, 140); }
   function decorate(t, sk, title) {
     if (!t.rows || t.rows.length < 2) return;
     if (!t.dataset.ts && hasOwnSel(t)) { t.dataset.tsOff = "1"; return; }
@@ -92,7 +92,7 @@ window.TableSel = (() => {
     if (k === "menu") return toggleMenu(b);
     if (!t) return; const S = sel[sk];
     if (k === "clear") { S.clear(); t.querySelectorAll("input.ts-ck").forEach(x => { x.checked = false; }); t.querySelectorAll("tr.ts-sel").forEach(r => r.classList.remove("ts-sel")); syncAll(t); drawBar(t, sk, bar.dataset.tsTitle); return; }
-    if (k === "bord") { const S2 = sel[sk], trs = [...t.querySelectorAll("tr[data-trk]")].filter(tr => tr.dataset.tsKey && S2.has(tr.dataset.tsKey)).map(tr => ({ tracking: tr.dataset.trk, company: tr.dataset.co || "" })); document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); if (!trs.length) return toast("حدد طرداً واحداً على الأقل"); const ad = window.Admin; if (ad && ad.printBordereauxFor) ad.printBordereauxFor(trs); return; }
+    if (k === "bord") { const S2 = sel[sk], trs = [...t.querySelectorAll("tr[data-trk]")].filter(tr => { const ck = tr.querySelector("input.ts-ck[data-k]"); return (ck && ck.checked) || (tr.dataset.tsKey && S2.has(tr.dataset.tsKey)); }).map(tr => ({ tracking: tr.dataset.trk, company: tr.dataset.co || "" })); document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); if (!trs.length) return toast("حدد طرداً واحداً على الأقل"); const ad = typeof Admin !== "undefined" ? Admin : null; if (ad && ad.printBordereauxFor) ad.printBordereauxFor(trs); return; }
     const d = collect(t, sk), title = bar.dataset.tsTitle || document.title, name = "export-" + (title || "table").replace(/\s+/g, "-");
     document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; });
     if (!d.rows.length) return toast("حدد صفاً واحداً على الأقل");
