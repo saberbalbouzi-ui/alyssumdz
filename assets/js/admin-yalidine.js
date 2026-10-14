@@ -36,7 +36,7 @@ const AdminYd = (() => {
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify({ rows: S.rows, total: S.total, partial: S.partial, at: S.at })); } catch (e) { } }
   function restore() { try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j && Array.isArray(j.rows)) { S.rows = j.rows; S.total = j.total || j.rows.length; S.partial = !!j.partial; S.at = j.at || 0; } } catch (e) { } }
-  function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); }
+  function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); try { window.AdminHome && AdminHome.refreshSoft && AdminHome.refreshSoft(); } catch (e) { } }
   function trackMap() { const a = A(), m = {}; if (a && a.orders) { a.orders.forEach(o => { const t = a.trackingOf(o); if (t) m[t.tracking || t] = o; }); Object.keys(REG).forEach(tr => { if (!m[tr]) { const o = a.orders.find(x => x.id === REG[tr].id); if (o) m[tr] = o; } }); } return m; }
   function counts() { const c = {}; S.rows.forEach(r => { const k = r.status || "—"; c[k] = (c[k] || 0) + 1; }); return c; }
   /* طرود مكرّرة: الاسم والهاتف والوجهة والسعر نفسها خلال 3 أيام (نتيجة إرسال الطلب مرتين) ← {تتبع: عدد المجموعة} */

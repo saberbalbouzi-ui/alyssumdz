@@ -51,6 +51,15 @@ const AdminHome = (() => {
     wait: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', avg: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   };
   const stOf = s => (GROUPS.find(g => g.k === s) || (s === "echec" ? GROUPS[4] : GROUPS[0]));
+  /* الحالة الحقيقية عند الشركة: حالة الطرد من قائمة الشركة ثم آخر حالة خام مزامَنة، وإلا حالة الطلب المحلية (والجديد/المؤكَّد غير المرسَل بوسم صريح) */
+  function realSt(o) {
+    const a = A(), g = stOf(o.status); let t = null; try { t = a.trackingOf && a.trackingOf(o); } catch (e) { }
+    if (!t) return o.status === "nouvelle" || !o.status ? { t: "🆕 جديد — في انتظار التأكيد", c: g.c } : o.status === "confirmee" ? { t: "مؤكَّد — لم يُرسل للشركة", c: g.c } : { t: g.t, c: g.c };
+    let raw = ""; try { const r = window.AdminYd && AdminYd.S.rows.find(x => String(x.tracking) === String(t.tracking)); raw = (r && r.status) || ""; } catch (e) { }
+    if (!raw) { try { raw = ((a.shipRaw || {})[o.id] || {}).raw || ""; } catch (e) { } }
+    return { t: raw || (g.t + " (بانتظار الشركة)"), c: g.c };
+  }
+  let _soft = 0; function refreshSoft() { clearTimeout(_soft); _soft = setTimeout(() => { const r = $("ahome"); if (r && r.offsetParent !== null) { try { render(); } catch (e) { } } }, 600); }
   function orders() { return (A().orders || []).filter(o => o && o.date && !isNaN(new Date(o.date))); }
   const okOrder = o => !["annulee", "echec"].includes(o.status);
   function range(days, back) { /* [from, to) بمنتصف الليل المحلي */
@@ -118,7 +127,7 @@ const AdminHome = (() => {
     const fmt = S.metric === "sales" ? v => v >= 1000 ? Math.round(v / 1000) + "ك" : Math.round(v) : v => Math.round(v);
     const ch = chartSvg(series, labels, fmt);
     const counts = GROUPS.map((g, i) => cur.filter(o => stOf(o.status).g === i).length);
-    const last = all.slice().sort((p, q) => new Date(q.date) - new Date(p.date)).slice(0, 8);
+    const last = all.slice().sort((p, q) => new Date(q.date) - new Date(p.date)).slice(0, 8), lastSt = last.map(realSt);
     const prodMap = {}; cur.filter(okOrder).forEach(o => (a.parseOrderItems ? a.parseOrderItems(o.items) : []).forEach(it => { prodMap[it.title] = (prodMap[it.title] || 0) + it.qty; }));
     const top = Object.entries(prodMap).sort((p, q) => q[1] - p[1]).slice(0, 5), topMax = top.length ? top[0][1] : 1;
     const prods = (a.products || []).filter(p => p.active !== false), low = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) > 0 && Number(p.stock) <= 5), out = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) <= 0);
@@ -142,7 +151,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <div class="ah-card"><h3>الطلبات حسب الحالة <small>${days === 1 ? "اليوم" : "آخر " + days + " يوماً"}</small></h3><div class="dn-w">${donut(counts)}<div class="lg">${GROUPS.map((g, i) => `<div><i style="background:${g.c}"></i>${g.t}<b>${num(counts[i])}</b></div>`).join("")}</div></div></div>
 </div>
 <div class="ah-row2">
-<div class="ah-card"><h3>آخر الطلبات <button type="button" class="ah-btn gh" data-go="orders" style="padding:6px 11px;font-size:.78rem">عرض الكل</button></h3>${last.length ? `<div style="overflow:auto"><table><thead><tr><th>الزبون</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${last.map((o, i) => { const g = stOf(o.status); return `<tr class="cl" data-o="${i}"><td></td><td></td><td>${money(o.total)}</td><td><span class="bd" style="background:${g.c}33;border-color:${g.c}">${g.t}</span></td><td>${new Date(o.date).toLocaleDateString("ar-DZ", { day: "numeric", month: "short" })}</td></tr>`; }).join("")}</tbody></table></div>` : '<div class="em">لا توجد طلبات بعد. ستظهر هنا فور وصولها.</div>'}</div>
+<div class="ah-card"><h3>آخر الطلبات <button type="button" class="ah-btn gh" data-go="orders" style="padding:6px 11px;font-size:.78rem">عرض الكل</button></h3>${last.length ? `<div style="overflow:auto"><table><thead><tr><th>الزبون</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${last.map((o, i) => { const g = lastSt[i]; return `<tr class="cl" data-o="${i}"><td></td><td></td><td>${money(o.total)}</td><td><span class="bd" data-rs="${i}" style="background:${g.c}33;border-color:${g.c}"></span></td><td>${new Date(o.date).toLocaleDateString("ar-DZ", { day: "numeric", month: "short" })}</td></tr>`; }).join("")}</tbody></table></div>` : '<div class="em">لا توجد طلبات بعد. ستظهر هنا فور وصولها.</div>'}</div>
 <div class="ah-card"><h3>يحتاج انتباهك</h3><div class="at">
 <button type="button" class="${waiting ? "w" : "ok"}" data-go="orders-new"><b>${num(waiting)}</b><span>طلب في انتظار التأكيد</span></button>
 <button type="button" class="${low.length ? "w" : "ok"}" data-go="products"><b>${num(low.length)}</b><span>منتج مخزونه منخفض (5 أو أقل)</span></button>
@@ -154,6 +163,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 </div>`;
     /* نصوص من البيانات بـtextContent (لا innerHTML) */
     root.querySelectorAll("tr[data-o]").forEach(tr => { const o = last[+tr.dataset.o]; tr.cells[0].textContent = o.name || "—"; tr.cells[1].textContent = o.wilaya || "—"; tr._o = o; });
+    root.querySelectorAll("[data-rs]").forEach(el => { el.textContent = lastSt[+el.dataset.rs].t; });
     root.querySelectorAll(".tp .t").forEach((el, i) => { el.textContent = top[i][0]; el.title = top[i][0]; });
     bind(root, ch, series, labels, hourly);
   }
@@ -197,5 +207,5 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
     if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); } }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { render, open, S };
+  return { render, open, S, refreshSoft, realSt };
 })();
