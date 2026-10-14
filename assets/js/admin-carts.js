@@ -69,14 +69,15 @@ ${S.err ? `<p style="color:#fca5a5">${esc(S.err)}</p>` : S.st === "__flag" ? fla
   function close() { const d = $("acr-bg"); if (d) d.remove(); }
   async function badge() {
     const b = $("acr-btn"); if (!b) return; const r = await call("GET", "/v1/carts", null, { status: "open", limit: 100 }); if (!r.ok) { if (S.off) b.remove(); return; }
-    S.n = (r.j.carts || []).length; const c = $("acr-count"); if (c) c.textContent = S.n ? "(" + S.n + ")" : "";
+    S.n = (r.j.carts || []).length; const c = $("acr-count"); if (c) { c.textContent = S.n > 99 ? "99+" : String(S.n || ""); c.hidden = !S.n; }
   }
   function inject() {
+    if (!$("acr-bcss")) { const st = document.createElement("style"); st.id = "acr-bcss"; st.textContent = "#acr-btn{position:relative}.acr-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;margin-inline-start:.35rem;border-radius:999px;background:#ef4444;color:#fff;font-size:.78rem;font-weight:900;box-shadow:0 0 0 2px rgba(239,68,68,.35)}.acr-badge[hidden]{display:none}"; document.head.appendChild(st); }
     if ($("acr-btn")) return; const t = $("trash-btn"); if (!t || S.off) return;
-    const b = document.createElement("button"); b.type = "button"; b.id = "acr-btn"; b.className = "small gray"; b.title = "زبائن تركوا رقمهم ولم يُكملوا الطلب"; b.innerHTML = '📞 السلال المتروكة <b id="acr-count"></b>'; b.onclick = open;
+    const b = document.createElement("button"); b.type = "button"; b.id = "acr-btn"; b.className = "small gray"; b.title = "زبائن تركوا رقمهم ولم يُكملوا الطلب"; b.innerHTML = '📞 السلال المتروكة <b id="acr-count" class="acr-badge" hidden></b>'; b.onclick = open;
     t.parentNode.insertBefore(b, t); badge();
   }
-  function init() { setInterval(inject, 2500); setInterval(() => { if ($("acr-btn") && !document.hidden) badge(); }, 5 * 60 * 1000); }
+  function init() { setInterval(inject, 2500); setInterval(() => { if ($("acr-btn") && !document.hidden) badge(); }, 2 * 60 * 1000); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   return { open, close, call, _s: S };
 })();
