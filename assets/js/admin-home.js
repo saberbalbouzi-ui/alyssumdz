@@ -172,7 +172,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
     root.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { S.metric = b.dataset.m; render(); });
     root.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { S.table = !S.table; render(); });
     root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
-    root.querySelectorAll("tr[data-o]").forEach(tr => tr.onclick = () => { const o = tr._o; go("orders"); const q = $("order-filter-q"); if (q) { q.value = o.phone || o.id || ""; try { A().applyOrderFilters(); } catch (e) { } } });
+    root.querySelectorAll("tr[data-o]").forEach(tr => tr.onclick = () => { const o = tr._o, ix = (A().orders || []).indexOf(o); if (ix >= 0 && A().openOrderPreview) { try { A().openOrderPreview(ix); return; } catch (e) { } } go("orders"); const q = $("order-filter-q"); if (q) { q.value = o.phone || o.id || ""; try { A().applyOrderFilters(); } catch (e) { } } });
     const box = $("ah-ch"), svg = box && box.querySelector("svg"); if (!svg) return;
     const tip = $("ah-tip"), cx = $("ah-cx");
     const move = e => {

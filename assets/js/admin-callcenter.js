@@ -35,10 +35,11 @@ const CallCenter = (() => {
   function queue() {
     const a = A(); if (!a) return [];
     const rank = o => (dueNow(o) ? -1 : a.callMark(o) === "later" ? 4 : a.attemptsOf(o) ? a.attemptsOf(o) : 0), as = assignCfg(), plan = meInPlan(as);
-    return base().filter(x => !parked(x.o) && !foreign(x.o) && (!plan || mineOrHelp(x.o, as) >= 0))
-      .sort((p, q) => (plan ? mineOrHelp(p.o, as) - mineOrHelp(q.o, as) : 0) || rank(p.o) - rank(q.o) || new Date(p.o.date) - new Date(q.o.date));
+    const fol = (a.orders || []).map((o, i) => ({ o, i, f: true })).filter(x => a.failedAttempt && a.failedAttempt(x.o)).sort((p, q) => new Date(p.o.date) - new Date(q.o.date));
+    return fol.concat(base().filter(x => !parked(x.o) && !foreign(x.o) && (!plan || mineOrHelp(x.o, as) >= 0))
+      .sort((p, q) => (plan ? mineOrHelp(p.o, as) - mineOrHelp(q.o, as) : 0) || rank(p.o) - rank(q.o) || new Date(p.o.date) - new Date(q.o.date)));
   }
-  const helpCount = () => { const as = assignCfg(); return meInPlan(as) ? queue().filter(x => mineOrHelp(x.o, as) === 1).length : 0; };
+  const helpCount = () => { const as = assignCfg(); return meInPlan(as) ? queue().filter(x => !x.f && mineOrHelp(x.o, as) === 1).length : 0; };
   const hiddenCount = () => { const as = assignCfg(); return meInPlan(as) ? base().filter(x => !parked(x.o) && !foreign(x.o) && mineOrHelp(x.o, as) < 0).length : 0; };
   function pick(q) {
     const f = q.filter(x => !S.skip[x.o.id]); const keep = S.cur && f.find(x => x.o.id === S.cur); if (keep) return keep;
@@ -87,6 +88,7 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
   /* يأخذ القفل على الطلب المعروض: يحدّث الطلبات أولاً، فإن سبقتني زميلة إليه انتقلتُ لغيره */
   async function ensureLock() {
     const a = A(), id = S.cur; if (!a || !id || S.lockBusy) return; let i = idxOf(id); if (i < 0) return;
+    if (a.failedAttempt && a.failedAttempt(a.orders[i])) return;
     const l = lockOf(a.orders[i]); if (l && l.who === meId() && nowMin() - l.min < LOCK_MIN / 2) return;
     S.lockBusy = true; let redo = false;
     try {
@@ -102,10 +104,11 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
   function render0() {
     const host = $("callcenter-content"); if (!host) return; css(); const a = A(); if (!a) return;
     const q = queue(), cur = pick(q), st = S.st, done = st.conf + st.canc, mins = Math.max(1, Math.round((Date.now() - st.t0) / 60000));
-    const bar = `<div class="ccm-bar"><span class="ccm-chip">المتبقي: <b>${q.length}</b></span><span class="ccm-chip">✅ ${st.conf}${st.addr ? " (🏠" + st.addr + ")" : ""} · ❌ ${st.canc} · 📞 ${st.noans} · ⏰ ${st.later} · 📅 ${st.tomo}</span>${parkedCount() ? `<span class="ccm-chip">📅 مؤجَّل لاحقاً: <b>${parkedCount()}</b></span>` : ""}${lockedCount() ? `<span class="ccm-chip">🔒 عند زميلاتك: <b>${lockedCount()}</b></span>` : ""}${assignCfg() && meInPlan(assignCfg()) ? `<span class="ccm-chip">👤 للزميلات: <b>${hiddenCount()}</b> · 🤝 مساندة: <b>${helpCount()}</b></span>` : ""}${(a.overdueList && a.overdueList().length) ? `<span class="ccm-chip" style="color:#fca5a5;border-color:#fca5a5">⚠ بلا استجابة >${a.overdueMin()} د: <b>${a.overdueList().length}</b></span>` : ""}
+    const bar = `<div class="ccm-bar"><span class="ccm-chip">المتبقي: <b>${q.length}</b></span>${q.some(x => x.f) ? `<span class="ccm-chip" style="background:rgba(245,158,11,.25)">📦 متابعة توصيل: <b>${q.filter(x => x.f).length}</b></span>` : ""}<span class="ccm-chip">✅ ${st.conf}${st.addr ? " (🏠" + st.addr + ")" : ""} · ❌ ${st.canc} · 📞 ${st.noans} · ⏰ ${st.later} · 📅 ${st.tomo}</span>${parkedCount() ? `<span class="ccm-chip">📅 مؤجَّل لاحقاً: <b>${parkedCount()}</b></span>` : ""}${lockedCount() ? `<span class="ccm-chip">🔒 عند زميلاتك: <b>${lockedCount()}</b></span>` : ""}${assignCfg() && meInPlan(assignCfg()) ? `<span class="ccm-chip">👤 للزميلات: <b>${hiddenCount()}</b> · 🤝 مساندة: <b>${helpCount()}</b></span>` : ""}${(a.overdueList && a.overdueList().length) ? `<span class="ccm-chip" style="color:#fca5a5;border-color:#fca5a5">⚠ بلا استجابة >${a.overdueMin()} د: <b>${a.overdueList().length}</b></span>` : ""}
 <span class="ccm-chip">نسبة التأكيد: <b>${done ? Math.round(st.conf / done * 100) : 0}%</b> · ${(done / mins * 60).toFixed(0)} قرار/ساعة</span></div>`;
     const kp = kpiHtml();
     if (!cur) { host.innerHTML = `<div id="ccm">${bar}${kp}<div class="ccm-card"><h2>🎉 لا طلبات بانتظار الاتصال</h2><p class="ccm-m">سيظهر الطلب الجديد هنا تلقائياً.</p></div></div>`; return; }
+    if (cur.f) { host.innerHTML = `<div id="ccm" data-i="${cur.i}" data-id="${esc(cur.o.id)}">${bar}${kp}${followCard(cur.o, cur.i)}</div>`; return; }
     const o = cur.o, i = cur.i, at = a.attemptsOf(o), cm = a.callMark(o), ph = String(o.phone || "").replace(/\D/g, ""), intl = ph.startsWith("0") ? "213" + ph.slice(1) : ph;
     let short = null; try { short = window.StockCheck && StockCheck.shortOf ? StockCheck.shortOf(o) : null; } catch (e) { }
     const age = Math.max(0, Math.round((Date.now() - new Date(o.date)) / 60000));
@@ -116,7 +119,7 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
 <div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>
 <div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
 ${short ? '<div class="ccm-warn">⚠️ المخزون لا يكفي لهذا الطلب — سيُطلب منك تأكيد قبل أي اتصال أو تأكيد.</div>' : ""}
-${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|🔒\S+|❌سبب:\S+/g, "").trim())}</div>` : ""}
+${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|🔒\S+|❌سبب:\S+|📲\S+/g, "").trim())}</div>` : ""}
 <div class="ccm-act"><button class="ok" data-d="confirm">✅ تأكيد الطلب <span class="ccm-k">C</span></button>
 <button class="ok2" data-d="addr">🏠 تأكيد مع تعديل العنوان <span class="ccm-k">A</span></button>
 <button data-d="noans">📞 غير متاح — محاولة ${Math.min(3, at + 1)} <span class="ccm-k">N</span></button><button class="wa" data-d="later">⏰ لاحقاً اليوم <span class="ccm-k">L</span></button>
@@ -125,6 +128,21 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
 <button data-d="skip" style="grid-column:1/-1">⏭ تخطَّ إلى التالي <span class="ccm-k">→</span></button></div></div></div>`;
   }
 
+  /* بطاقة متابعة توصيل فاشل: الزبون لم يستلم الطرد (Tentative échouée) فيُتصل به لمعرفة سبب الفشل واتخاذ الإجراء */
+  function followCard(o, i) {
+    const a = A(), ph = String(o.phone || "").replace(/\D/g, ""), intl = ph.startsWith("0") ? "213" + ph.slice(1) : ph, t = a.trackingOf(o) || {}, raw = a.rawShip(o) || "Tentative échouée";
+    const co = (a.allDeliveryCompanies && (a.allDeliveryCompanies()[t.company] || {}).name) || t.company || "";
+    return `<div class="ccm-card"><div class="ccm-bar"><h2>${esc(o.name || "بدون اسم")}</h2><span class="ccm-chip" style="background:rgba(245,158,11,.25);border-color:rgba(245,158,11,.6)">📦 توصيل فاشل — يحتاج متابعة</span></div>
+<div class="ccm-warn">⚠️ حالة الطرد عند الشركة: <b>${esc(raw)}</b> · التتبع <b dir="ltr">${esc(t.tracking || "—")}</b>${co ? " · " + esc(co) : ""} — اتصل بالزبون لمعرفة السبب (غائب؟ عنوان خاطئ؟ رفض؟) ثم سجّل النتيجة.</div>
+<div class="ccm-ph" dir="ltr">${esc(o.phone)}</div>
+<div class="ccm-quick"><a class="t" href="tel:${esc(ph.startsWith("0") ? "+213" + ph.slice(1) : "+" + ph)}">📞 اتصل</a><a href="https://wa.me/${intl}" target="_blank" rel="noopener">💬 واتساب</a></div>
+<div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>
+<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
+<div class="ccm-act"><button class="ok" data-d="fok">✅ تواصلت — الزبون سيستلم</button>
+<button class="wa" data-d="fno">📞 لم يرد — أعد المحاولة غداً</button><button class="no" data-d="fref">🚫 رفض الاستلام</button>
+<button data-d="fopen" style="grid-column:1/-1">📋 فتح الطلب (تعديل العنوان أو غيره)</button>
+<button data-d="skip" style="grid-column:1/-1">⏭ تخطَّ إلى التالي</button></div></div>`;
+  }
   /* «تأكيد مع تعديل العنوان» (Confirmé avec modification d'adresse): تُصحَّح الولاية/البلدية/طريقة التوصيل (ونص حرّ) ثم يُؤكَّد الطلب.
      من يملك تعديل الطلبات (المالك/المدير) يُطبَّق التعديل فعلاً مع رسم التوصيل الجديد؛ المؤكِّدة بلا هذه الصلاحية تدوّنه في الملاحظة (🏠⏳)
      ويمنع النظام الإرسال التلقائي حتى يراجعه من يملك التعديل. */
@@ -158,6 +176,10 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
   const idxOf = id => (A().orders || []).findIndex(x => x.id === id);
   async function decide(d) {
     const a = A(), id = S.cur; if (!a || !id) return; let i = idxOf(id); if (i < 0) return render(); const o = a.orders[i], st = S.st;
+    if (d === "fok" || d === "fno" || d === "fref" || d === "fopen") {
+      if (d === "fopen") { try { a.openOrderPreview(i); } catch (e) { } return; }
+      a.setFollow(o, d === "fok" ? "ok" : d === "fno" ? "no" : "ref"); st.follow = (st.follow || 0) + 1; S.cur = null; toast(d === "fref" ? "🚫 سُجّل رفض الاستلام — يمكنك إلغاء الطلب أو إرجاعه من الطلبات" : d === "fok" ? "✅ سُجّلت المتابعة" : "📞 سيعود الطلب غداً إن بقي بلا استلام"); return render();
+    }
     if (d === "skip") { unlock(o); S.skip[id] = 1; S.cur = null; return render(); }
     if (d === "confirm") { await a.previewResult(i, "confirm"); }
     else if (d === "cancel") { return reasonDialog(o, async () => { const j = idxOf(id); if (j < 0) return render(); await a.previewResult(j, "cancel"); afterDecision(id); }); }
