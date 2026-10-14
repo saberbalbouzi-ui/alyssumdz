@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-14T20:45:47.534Z",
+ "updated": "2026-10-14T20:55:02.922Z",
  "def": "",
  "companies": {},
  "sup": {
@@ -8,19 +8,15 @@
     -200,
     0
    ],
-   "bouda": [
-    -150,
-    0
-   ],
-   "sebaa": [
-    -150,
-    0
-   ],
    "tamest": [
     -100,
     0
    ],
    "tsabit": [
+    -100,
+    0
+   ],
+   "zaouietkounta": [
     -100,
     0
    ],
@@ -32,25 +28,21 @@
     -100,
     0
    ],
-   "zaouietkounta": [
-    -100,
+   "ouledahmedtammi": [
+    -150,
     0
    ],
-   "ouledahmedtammi": [
+   "bouda": [
+    -150,
+    0
+   ],
+   "sebaa": [
     -150,
     0
    ]
   },
   "2": {
-   "chlef": [
-    -50,
-    0
-   ],
-   "dahra": [
-    50,
-    0
-   ],
-   "tenes": [
+   "benihaoua": [
     50,
     0
    ],
@@ -62,11 +54,35 @@
     -50,
     0
    ],
+   "chlef": [
+    -50,
+    0
+   ],
+   "dahra": [
+    50,
+    0
+   ],
    "elmarsa": [
     50,
     0
    ],
+   "labiodmedjadja": [
+    -50,
+    0
+   ],
+   "moussadek": [
+    50,
+    0
+   ],
+   "ouedgoussine": [
+    50,
+    0
+   ],
    "ouedsly": [
+    -50,
+    0
+   ],
+   "ouledfares": [
     -50,
     0
    ],
@@ -78,15 +94,11 @@
     -50,
     0
    ],
+   "sidiabderrahmane": [
+    50,
+    0
+   ],
    "talassa": [
-    50,
-    0
-   ],
-   "benihaoua": [
-    50,
-    0
-   ],
-   "moussadek": [
     50,
     0
    ],
@@ -94,57 +106,21 @@
     50,
     0
    ],
-   "ouledfares": [
-    -50,
-    0
-   ],
-   "ouedgoussine": [
-    50,
-    0
-   ],
-   "labiodmedjadja": [
-    -50,
-    0
-   ],
-   "sidiabderrahmane": [
+   "tenes": [
     50,
     0
    ]
   },
   "3": {
-   "kheneg": [
-    -200,
-    0
-   ],
-   "ainmadhi": [
-    -100,
-    0
-   ],
    "laghouat": [
     -200,
     0
    ],
-   "elhouaita": [
-    -150,
-    0
-   ],
-   "ouedmorra": [
-    -100,
-    0
-   ],
-   "tadjemout": [
-    -150,
-    0
-   ],
-   "tadjrouna": [
-    -100,
-    0
-   ],
-   "ainsidiali": [
-    -100,
-    0
-   ],
    "ksarelhirane": [
+    -150,
+    0
+   ],
+   "bennasserbenchohra": [
     -150,
     0
    ],
@@ -152,25 +128,45 @@
     -150,
     0
    ],
-   "bennasserbenchohra": [
+   "ainmadhi": [
+    -100,
+    0
+   ],
+   "tadjemout": [
+    -150,
+    0
+   ],
+   "kheneg": [
+    -200,
+    0
+   ],
+   "ainsidiali": [
+    -100,
+    0
+   ],
+   "tadjrouna": [
+    -100,
+    0
+   ],
+   "ouedmorra": [
+    -100,
+    0
+   ],
+   "elhouaita": [
     -150,
     0
    ]
   },
   "4": {
-   "zorg": [
-    50,
-    0
-   ],
-   "rahia": [
-    50,
-    0
-   ],
-   "dhalaa": [
-    50,
+   "oumelbouaghi": [
+    -50,
     0
    ],
    "ainmlila": [
+    50,
+    0
+   ],
+   "behirchergui": [
     50,
     0
    ],
@@ -178,23 +174,7 @@
     50,
     0
    ],
-   "eldjazia": [
-    50,
-    0
-   ],
-   "meskiana": [
-    50,
-    0
-   ],
-   "ouednini": [
-    50,
-    0
-   ],
-   "elharmilia": [
-    -50,
-    0
-   ],
-   "ouledgacem": [
+   "ainbabouche": [
     -50,
     0
    ],
@@ -202,15 +182,35 @@
     -50,
     0
    ],
-   "ainbabouche": [
-    -50,
-    0
-   ],
-   "behirchergui": [
+   "dhalaa": [
     50,
     0
    ],
-   "oumelbouaghi": [
+   "eldjazia": [
+    50,
+    0
+   ],
+   "zorg": [
+    50,
+    0
+   ],
+   "ouednini": [
+    50,
+    0
+   ],
+   "meskiana": [
+    50,
+    0
+   ],
+   "rahia": [
+    50,
+    0
+   ],
+   "ouledgacem": [
+    -50,
+    0
+   ],
+   "elharmilia": [
     -50,
     0
    ]
@@ -220,47 +220,7 @@
     -100,
     0
    ],
-   "bitam": [
-    100,
-    0
-   ],
-   "djerma": [
-    -50,
-    0
-   ],
-   "djezar": [
-    100,
-    0
-   ],
-   "fesdis": [
-    -100,
-    0
-   ],
-   "lazrou": [
-    -50,
-    0
-   ],
-   "timgad": [
-    -50,
-    0
-   ],
-   "ichmoul": [
-    -50,
-    0
-   ],
-   "mdoukel": [
-    100,
-    0
-   ],
    "seriana": [
-    -50,
-    0
-   ],
-   "tazoult": [
-    -100,
-    0
-   ],
-   "aintouta": [
     -50,
     0
    ],
@@ -268,11 +228,39 @@
     -50,
     0
    ],
-   "foumtoub": [
+   "tazoult": [
+    -100,
+    0
+   ],
+   "ouyounelassafir": [
+    -100,
+    0
+   ],
+   "djerma": [
     -50,
     0
    ],
-   "hidoussa": [
+   "bitam": [
+    100,
+    0
+   ],
+   "abdelkaderazil": [
+    100,
+    0
+   ],
+   "ainyagout": [
+    -50,
+    0
+   ],
+   "fesdis": [
+    -100,
+    0
+   ],
+   "ichmoul": [
+    -50,
+    0
+   ],
+   "foumtoub": [
     -50,
     0
    ],
@@ -280,27 +268,31 @@
     -50,
     0
    ],
-   "ouedtaga": [
-    -50,
-    0
-   ],
-   "ainyagout": [
-    -50,
-    0
-   ],
    "ouedchaaba": [
     -50,
     0
    ],
-   "ouledammar": [
+   "djezar": [
     100,
+    0
+   ],
+   "aintouta": [
+    -50,
+    0
+   ],
+   "hidoussa": [
+    -50,
+    0
+   ],
+   "ouedtaga": [
+    -50,
     0
    ],
    "ouledfadel": [
     -50,
     0
    ],
-   "boumiabatna": [
+   "timgad": [
     -50,
     0
    ],
@@ -308,29 +300,29 @@
     -50,
     0
    ],
-   "abdelkaderazil": [
+   "mdoukel": [
     100,
     0
    ],
-   "ouyounelassafir": [
-    -100,
+   "ouledammar": [
+    100,
+    0
+   ],
+   "lazrou": [
+    -50,
+    0
+   ],
+   "boumiabatna": [
+    -50,
     0
    ]
   },
   "6": {
-   "akbou": [
-    -50,
-    0
-   ],
-   "aokas": [
-    -50,
-    0
-   ],
-   "amalou": [
-    -50,
-    0
-   ],
    "bejaia": [
+    -50,
+    0
+   ],
+   "chellata": [
     -50,
     0
    ],
@@ -338,19 +330,15 @@
     -50,
     0
    ],
-   "aitksila": [
-    50,
-    0
-   ],
-   "chellata": [
+   "amalou": [
     -50,
     0
    ],
-   "kherrata": [
-    50,
+   "aokas": [
+    -50,
     0
    ],
-   "ouedghir": [
+   "akbou": [
     -50,
     0
    ],
@@ -358,17 +346,29 @@
     -50,
     0
    ],
-   "draaelkaid": [
+   "aitksila": [
     50,
     0
    ],
    "ouzellaguen": [
     -50,
     0
+   ],
+   "kherrata": [
+    50,
+    0
+   ],
+   "draaelkaid": [
+    50,
+    0
+   ],
+   "ouedghir": [
+    -50,
+    0
    ]
   },
   "7": {
-   "tolga": [
+   "ainnaga": [
     50,
     0
    ],
@@ -378,10 +378,6 @@
    ],
    "chetma": [
     -50,
-    0
-   ],
-   "ainnaga": [
-    50,
     0
    ],
    "elfeidh": [
@@ -404,25 +400,33 @@
     50,
     0
    ],
-   "zeribeteloued": [
+   "khenguetsidinadji": [
+    150,
+    0
+   ],
+   "tolga": [
     50,
     0
    ],
-   "khenguetsidinadji": [
-    150,
+   "zeribeteloued": [
+    50,
     0
    ]
   },
   "8": {
-   "abadla": [
-    -100,
-    0
-   ],
    "bechar": [
     -200,
     0
    ],
+   "meridja": [
+    -100,
+    0
+   ],
    "lahmar": [
+    -150,
+    0
+   ],
+   "kenadsa": [
     -150,
     0
    ],
@@ -430,61 +434,25 @@
     -100,
     0
    ],
-   "kenadsa": [
-    -150,
-    0
-   ],
-   "meridja": [
-    -100,
-    0
-   ],
    "mougheul": [
     -150,
+    0
+   ],
+   "abadla": [
+    -100,
     0
    ]
   },
   "9": {
-   "chrea": [
-    50,
-    0
-   ],
    "chebli": [
     50,
-    0
-   ],
-   "larbaa": [
-    100,
-    0
-   ],
-   "meftah": [
-    50,
-    0
-   ],
-   "bougara": [
-    100,
     0
    ],
    "bouinan": [
     50,
     0
    ],
-   "souhane": [
-    100,
-    0
-   ],
-   "djebabra": [
-    100,
-    0
-   ],
-   "oueddjer": [
-    50,
-    0
-   ],
-   "ainromana": [
-    50,
-    0
-   ],
-   "benkhelil": [
+   "chrea": [
     50,
     0
    ],
@@ -492,16 +460,68 @@
     50,
     0
    ],
+   "hammammelouane": [
+    100,
+    0
+   ],
+   "benkhelil": [
+    50,
+    0
+   ],
+   "souhane": [
+    100,
+    0
+   ],
+   "meftah": [
+    50,
+    0
+   ],
    "ouledslama": [
     50,
     0
    ],
-   "hammammelouane": [
+   "larbaa": [
+    100,
+    0
+   ],
+   "oueddjer": [
+    50,
+    0
+   ],
+   "bougara": [
+    100,
+    0
+   ],
+   "ainromana": [
+    50,
+    0
+   ],
+   "djebabra": [
     100,
     0
    ]
   },
   "10": {
+   "aghbalou": [
+    50,
+    0
+   ],
+   "ainelhadjar": [
+    -50,
+    0
+   ],
+   "bouderbala": [
+    50,
+    0
+   ],
+   "boukram": [
+    50,
+    0
+   ],
+   "bordjokhriss": [
+    50,
+    0
+   ],
    "bouira": [
     -50,
     0
@@ -514,7 +534,27 @@
     50,
     0
    ],
+   "elasnam": [
+    -50,
+    0
+   ],
+   "guerrouma": [
+    50,
+    0
+   ],
    "haizer": [
+    -50,
+    0
+   ],
+   "hadjerazerga": [
+    50,
+    0
+   ],
+   "mezdour": [
+    50,
+    0
+   ],
+   "ouedelberdi": [
     -50,
     0
    ],
@@ -522,23 +562,7 @@
     50,
     0
    ],
-   "boukram": [
-    50,
-    0
-   ],
-   "elasnam": [
-    -50,
-    0
-   ],
-   "mezdour": [
-    50,
-    0
-   ],
-   "zbarbar": [
-    50,
-    0
-   ],
-   "aghbalou": [
+   "taguedit": [
     50,
     0
    ],
@@ -546,99 +570,31 @@
     -50,
     0
    ],
-   "taguedit": [
-    50,
-    0
-   ],
-   "guerrouma": [
-    50,
-    0
-   ],
-   "bouderbala": [
-    50,
-    0
-   ],
-   "ainelhadjar": [
-    -50,
-    0
-   ],
-   "ouedelberdi": [
-    -50,
-    0
-   ],
-   "bordjokhriss": [
-    50,
-    0
-   ],
-   "hadjerazerga": [
+   "zbarbar": [
     50,
     0
    ]
   },
   "11": {
-   "abalessa": [
-    -100,
-    0
-   ],
    "tamanrasset": [
     -200,
+    0
+   ],
+   "abalessa": [
+    -100,
     0
    ]
   },
   "12": {
-   "cheria": [
-    -50,
-    0
-   ],
-   "birdheb": [
-    -50,
-    0
-   ],
-   "elkouif": [
-    -50,
-    0
-   ],
-   "ferkane": [
-    100,
-    0
-   ],
-   "morsott": [
-    -50,
-    0
-   ],
    "tebessa": [
     -100,
-    0
-   ],
-   "ainzerga": [
-    -50,
-    0
-   ],
-   "bekkaria": [
-    -100,
-    0
-   ],
-   "hammamet": [
-    -50,
     0
    ],
    "birelater": [
     -100,
     0
    ],
-   "boulhafdir": [
-    -100,
-    0
-   ],
-   "birmokkadem": [
-    -50,
-    0
-   ],
-   "elhouidjbet": [
-    -50,
-    0
-   ],
-   "elmalabiodh": [
+   "cheria": [
     -50,
     0
    ],
@@ -646,65 +602,57 @@
     100,
     0
    ],
+   "elhouidjbet": [
+    -50,
+    0
+   ],
    "safsafelouesra": [
     -50,
+    0
+   ],
+   "hammamet": [
+    -50,
+    0
+   ],
+   "birmokkadem": [
+    -50,
+    0
+   ],
+   "elkouif": [
+    -50,
+    0
+   ],
+   "morsott": [
+    -50,
+    0
+   ],
+   "birdheb": [
+    -50,
+    0
+   ],
+   "bekkaria": [
+    -100,
+    0
+   ],
+   "elmalabiodh": [
+    -50,
+    0
+   ],
+   "ainzerga": [
+    -50,
+    0
+   ],
+   "boulhafdir": [
+    -100,
+    0
+   ],
+   "ferkane": [
+    100,
     0
    ]
   },
   "13": {
-   "elgor": [
-    50,
-    0
-   ],
-   "remchi": [
-    -50,
-    0
-   ],
-   "zenata": [
-    -50,
-    0
-   ],
-   "hennaya": [
-    -50,
-    0
-   ],
-   "honaine": [
-    50,
-    0
-   ],
-   "maghnia": [
-    -50,
-    0
-   ],
    "tlemcen": [
-    -50,
-    0
-   ],
-   "ainfezza": [
-    -50,
-    0
-   ],
-   "elaricha": [
-    50,
-    0
-   ],
-   "elbouihi": [
-    50,
-    0
-   ],
-   "ainnehala": [
-    50,
-    0
-   ],
-   "ainyoucef": [
-    -50,
-    0
-   ],
-   "chetouane": [
-    -50,
-    0
-   ],
-   "mansourah": [
     -50,
     0
    ],
@@ -712,7 +660,47 @@
     -50,
     0
    ],
-   "sididjillali": [
+   "remchi": [
+    -50,
+    0
+   ],
+   "elgor": [
+    50,
+    0
+   ],
+   "ainfezza": [
+    -50,
+    0
+   ],
+   "ainyoucef": [
+    -50,
+    0
+   ],
+   "zenata": [
+    -50,
+    0
+   ],
+   "ternybenihdiel": [
+    -50,
+    0
+   ],
+   "ainnehala": [
+    50,
+    0
+   ],
+   "hennaya": [
+    -50,
+    0
+   ],
+   "maghnia": [
+    -50,
+    0
+   ],
+   "hammamboughrara": [
+    -50,
+    0
+   ],
+   "elaricha": [
     50,
     0
    ],
@@ -724,45 +712,41 @@
     50,
     0
    ],
-   "ternybenihdiel": [
+   "sididjillali": [
+    50,
+    0
+   ],
+   "elbouihi": [
+    50,
+    0
+   ],
+   "honaine": [
+    50,
+    0
+   ],
+   "chetouane": [
     -50,
     0
    ],
-   "hammamboughrara": [
+   "mansourah": [
     -50,
     0
    ]
   },
   "14": {
-   "madna": [
+   "aindeheb": [
     50,
     0
    ],
-   "faidja": [
+   "ainelhadid": [
     50,
     0
    ],
-   "tiaret": [
-    -50,
+   "ainkermes": [
+    50,
     0
    ],
    "bougara": [
-    50,
-    0
-   ],
-   "hamadia": [
-    50,
-    0
-   ],
-   "nadorah": [
-    50,
-    0
-   ],
-   "tagdemt": [
-    -50,
-    0
-   ],
-   "aindeheb": [
     50,
     0
    ],
@@ -774,7 +758,39 @@
     -50,
     0
    ],
+   "djebiletrosfa": [
+    50,
+    0
+   ],
+   "djillalibenamar": [
+    50,
+    0
+   ],
+   "faidja": [
+    50,
+    0
+   ],
+   "guertoufa": [
+    -50,
+    0
+   ],
+   "hamadia": [
+    50,
+    0
+   ],
+   "ksarchellala": [
+    150,
+    0
+   ],
+   "madna": [
+    50,
+    0
+   ],
    "medrissa": [
+    50,
+    0
+   ],
+   "nadorah": [
     50,
     0
    ],
@@ -786,40 +802,24 @@
     150,
     0
    ],
-   "ainkermes": [
-    50,
-    0
-   ],
-   "guertoufa": [
-    -50,
-    0
-   ],
-   "ainelhadid": [
-    50,
+   "sidiabderahmane": [
+    150,
     0
    ],
    "sidibakhti": [
     50,
     0
    ],
+   "tagdemt": [
+    -50,
+    0
+   ],
    "takhemaret": [
     50,
     0
    ],
-   "ksarchellala": [
-    150,
-    0
-   ],
-   "djebiletrosfa": [
-    50,
-    0
-   ],
-   "djillalibenamar": [
-    50,
-    0
-   ],
-   "sidiabderahmane": [
-    150,
+   "tiaret": [
+    -50,
     0
    ],
    "zmaletelemirabdelkader": [
@@ -828,6 +828,14 @@
    ]
   },
   "15": {
+   "tiziouzou": [
+    -50,
+    0
+   ],
+   "ainelhammam": [
+    50,
+    0
+   ],
    "akbil": [
     50,
     0
@@ -836,19 +844,15 @@
     -50,
     0
    ],
-   "zekri": [
-    50,
+   "beniaissi": [
+    -50,
+    0
+   ],
+   "benizmenzer": [
+    -50,
     0
    ],
    "azazga": [
-    -50,
-    0
-   ],
-   "ifigha": [
-    -50,
-    0
-   ],
-   "aghribs": [
     -50,
     0
    ],
@@ -856,7 +860,15 @@
     -50,
     0
    ],
-   "beniaissi": [
+   "zekri": [
+    50,
+    0
+   ],
+   "aitaissamimoun": [
+    -50,
+    0
+   ],
+   "ifigha": [
     -50,
     0
    ],
@@ -864,7 +876,7 @@
     -50,
     0
    ],
-   "tiziouzou": [
+   "draabenkhedda": [
     -50,
     0
    ],
@@ -872,24 +884,28 @@
     -50,
     0
    ],
-   "ainelhammam": [
-    50,
-    0
-   ],
-   "benizmenzer": [
-    -50,
-    0
-   ],
-   "draabenkhedda": [
-    -50,
-    0
-   ],
-   "aitaissamimoun": [
+   "aghribs": [
     -50,
     0
    ]
   },
   "17": {
+   "ainchouhada": [
+    100,
+    0
+   ],
+   "ainelibel": [
+    -50,
+    0
+   ],
+   "ainmaabed": [
+    -50,
+    0
+   ],
+   "ainoussara": [
+    -100,
+    0
+   ],
    "benhar": [
     -100,
     0
@@ -898,11 +914,11 @@
     -50,
     0
    ],
-   "djelfa": [
-    -100,
+   "bouiralahdab": [
+    -50,
     0
    ],
-   "zaccar": [
+   "darchioukh": [
     -50,
     0
    ],
@@ -910,12 +926,8 @@
     100,
     0
    ],
-   "mliliha": [
-    -50,
-    0
-   ],
-   "selmana": [
-    100,
+   "djelfa": [
+    -100,
     0
    ],
    "elkhemis": [
@@ -930,27 +942,15 @@
     100,
     0
    ],
-   "sedrahal": [
-    100,
-    0
-   ],
-   "ainelibel": [
-    -50,
-    0
-   ],
-   "ainmaabed": [
-    -50,
-    0
-   ],
    "hadsahary": [
     -50,
     0
    ],
-   "ainoussara": [
-    -100,
+   "hassibahbah": [
+    -50,
     0
    ],
-   "darchioukh": [
+   "mliliha": [
     -50,
     0
    ],
@@ -962,19 +962,19 @@
     100,
     0
    ],
+   "sedrahal": [
+    100,
+    0
+   ],
+   "selmana": [
+    100,
+    0
+   ],
    "sidiladjel": [
     -50,
     0
    ],
-   "ainchouhada": [
-    100,
-    0
-   ],
-   "hassibahbah": [
-    -50,
-    0
-   ],
-   "bouiralahdab": [
+   "zaccar": [
     -50,
     0
    ]
@@ -984,35 +984,7 @@
     -50,
     0
    ],
-   "kaous": [
-    -50,
-    0
-   ],
-   "djimla": [
-    50,
-    0
-   ],
-   "elmilia": [
-    50,
-    0
-   ],
-   "ghebala": [
-    50,
-    0
-   ],
-   "settara": [
-    50,
-    0
-   ],
    "eraguene": [
-    50,
-    0
-   ],
-   "ouledrabah": [
-    50,
-    0
-   ],
-   "sidimaarouf": [
     50,
     0
    ],
@@ -1020,7 +992,31 @@
     -50,
     0
    ],
+   "elmilia": [
+    50,
+    0
+   ],
+   "sidimaarouf": [
+    50,
+    0
+   ],
+   "settara": [
+    50,
+    0
+   ],
+   "kaous": [
+    -50,
+    0
+   ],
+   "ghebala": [
+    50,
+    0
+   ],
    "bouraouibelhadef": [
+    50,
+    0
+   ],
+   "djimla": [
     50,
     0
    ],
@@ -1031,70 +1027,14 @@
    "ouledyahiakhedrouche": [
     50,
     0
+   ],
+   "ouledrabah": [
+    50,
+    0
    ]
   },
   "19": {
-   "hamma": [
-    50,
-    0
-   ],
-   "setif": [
-    -50,
-    0
-   ],
-   "harbil": [
-    50,
-    0
-   ],
-   "ainsebt": [
-    50,
-    0
-   ],
-   "aittizi": [
-    50,
-    0
-   ],
-   "eleulma": [
-    -50,
-    0
-   ],
-   "guenzet": [
-    50,
-    0
-   ],
-   "mezloug": [
-    -50,
-    0
-   ],
    "ainarnat": [
-    -50,
-    0
-   ],
-   "bouandas": [
-    50,
-    0
-   ],
-   "boutaleb": [
-    50,
-    0
-   ],
-   "maoklane": [
-    50,
-    0
-   ],
-   "tachouda": [
-    -50,
-    0
-   ],
-   "birelarch": [
-    -50,
-    0
-   ],
-   "bousselam": [
-    50,
-    0
-   ],
-   "elouricia": [
     -50,
     0
    ],
@@ -1102,16 +1042,16 @@
     50,
     0
    ],
-   "benimouhli": [
+   "ainsebt": [
     50,
     0
    ],
-   "draakebila": [
+   "aitnaoualmezada": [
     50,
     0
    ],
-   "ouledsabor": [
-    -50,
+   "aittizi": [
+    50,
     0
    ],
    "aitwertilan": [
@@ -1126,11 +1066,47 @@
     50,
     0
    ],
+   "benimouhli": [
+    50,
+    0
+   ],
+   "birelarch": [
+    -50,
+    0
+   ],
+   "bouandas": [
+    50,
+    0
+   ],
+   "bousselam": [
+    50,
+    0
+   ],
+   "boutaleb": [
+    50,
+    0
+   ],
+   "draakebila": [
+    50,
+    0
+   ],
+   "eleulma": [
+    -50,
+    0
+   ],
+   "elouricia": [
+    -50,
+    0
+   ],
    "gueltazerka": [
     -50,
     0
    ],
-   "ouledtebben": [
+   "guenzet": [
+    50,
+    0
+   ],
+   "hamma": [
     50,
     0
    ],
@@ -1138,17 +1114,41 @@
     50,
     0
    ],
-   "aitnaoualmezada": [
+   "harbil": [
     50,
+    0
+   ],
+   "maoklane": [
+    50,
+    0
+   ],
+   "mezloug": [
+    -50,
+    0
+   ],
+   "ouledsabor": [
+    -50,
+    0
+   ],
+   "ouledtebben": [
+    50,
+    0
+   ],
+   "setif": [
+    -50,
+    0
+   ],
+   "tachouda": [
+    -50,
     0
    ]
   },
   "20": {
-   "saida": [
+   "ainelhadjar": [
     -50,
     0
    ],
-   "hounet": [
+   "ainsekhouna": [
     50,
     0
    ],
@@ -1156,11 +1156,7 @@
     50,
     0
    ],
-   "ainelhadjar": [
-    -50,
-    0
-   ],
-   "ainsekhouna": [
+   "hounet": [
     50,
     0
    ],
@@ -1171,18 +1167,26 @@
    "ouledkhaled": [
     -50,
     0
+   ],
+   "saida": [
+    -50,
+    0
    ]
   },
   "21": {
-   "collo": [
+   "bekkouchelakhdar": [
     50,
     0
    ],
-   "kanoua": [
+   "binelouiden": [
     50,
     0
    ],
-   "skikda": [
+   "benazzouz": [
+    50,
+    0
+   ],
+   "benibechir": [
     -50,
     0
    ],
@@ -1194,23 +1198,7 @@
     50,
     0
    ],
-   "elmarsa": [
-    50,
-    0
-   ],
-   "kerkera": [
-    50,
-    0
-   ],
-   "oumtoub": [
-    50,
-    0
-   ],
-   "zitouna": [
-    -50,
-    0
-   ],
-   "benazzouz": [
+   "collo": [
     50,
     0
    ],
@@ -1218,12 +1206,32 @@
     -50,
     0
    ],
-   "benibechir": [
+   "elmarsa": [
+    50,
+    0
+   ],
+   "hamadikrouma": [
     -50,
+    0
+   ],
+   "kanoua": [
+    50,
+    0
+   ],
+   "kerkera": [
+    50,
+    0
+   ],
+   "khenegmayoum": [
+    150,
     0
    ],
    "ouedzehour": [
     150,
+    0
+   ],
+   "ouldjaboulballout": [
+    50,
     0
    ],
    "ouledattia": [
@@ -1234,73 +1242,49 @@
     50,
     0
    ],
-   "binelouiden": [
+   "oumtoub": [
     50,
-    0
-   ],
-   "hamadikrouma": [
-    -50,
-    0
-   ],
-   "khenegmayoum": [
-    150,
     0
    ],
    "ramdanedjamel": [
     -50,
     0
    ],
-   "bekkouchelakhdar": [
-    50,
+   "skikda": [
+    -50,
     0
    ],
-   "ouldjaboulballout": [
-    50,
+   "zitouna": [
+    -50,
     0
    ]
   },
   "22": {
+   "ainthrid": [
+    -50,
+    0
+   ],
+   "aintindamine": [
+    50,
+    0
+   ],
+   "birelhammam": [
+    150,
+    0
+   ],
    "dhaya": [
     50,
     0
    ],
-   "merine": [
+   "elhacaiba": [
     50,
-    0
-   ],
-   "sfisef": [
-    50,
-    0
-   ],
-   "telagh": [
-    50,
-    0
-   ],
-   "tenira": [
-    150,
     0
    ],
    "marhoum": [
     150,
     0
    ],
-   "raselma": [
-    50,
-    0
-   ],
-   "ainthrid": [
-    -50,
-    0
-   ],
-   "tilmouni": [
-    -50,
-    0
-   ],
-   "zerouala": [
-    -50,
-    0
-   ],
-   "elhacaiba": [
+   "merine": [
     50,
     0
    ],
@@ -1308,12 +1292,48 @@
     50,
     0
    ],
+   "moulayslissen": [
+    50,
+    0
+   ],
    "ouedsebaa": [
     50,
     0
    ],
+   "ouedtaourira": [
+    50,
+    0
+   ],
+   "raselma": [
+    50,
+    0
+   ],
+   "redjemdemouche": [
+    150,
+    0
+   ],
+   "sfisef": [
+    50,
+    0
+   ],
+   "sidibelabbes": [
+    -50,
+    0
+   ],
+   "sidibrahim": [
+    -50,
+    0
+   ],
    "sidichaib": [
     50,
+    0
+   ],
+   "sidihamadouche": [
+    -50,
+    0
+   ],
+   "sidilahcene": [
+    -50,
     0
    ],
    "tafissour": [
@@ -1324,39 +1344,19 @@
     150,
     0
    ],
-   "sidibrahim": [
-    -50,
+   "telagh": [
+    50,
     0
    ],
-   "birelhammam": [
+   "tenira": [
     150,
     0
    ],
-   "sidilahcene": [
+   "tilmouni": [
     -50,
     0
    ],
-   "aintindamine": [
-    50,
-    0
-   ],
-   "ouedtaourira": [
-    50,
-    0
-   ],
-   "sidibelabbes": [
-    -50,
-    0
-   ],
-   "moulayslissen": [
-    50,
-    0
-   ],
-   "redjemdemouche": [
-    150,
-    0
-   ],
-   "sidihamadouche": [
+   "zerouala": [
     -50,
     0
    ]
@@ -1366,11 +1366,11 @@
     -50,
     0
    ],
-   "cheurfa": [
+   "elbouni": [
     -50,
     0
    ],
-   "elbouni": [
+   "cheurfa": [
     -50,
     0
    ],
@@ -1388,10 +1388,6 @@
    ]
   },
   "24": {
-   "guelma": [
-    -50,
-    0
-   ],
    "ainlarbi": [
     -50,
     0
@@ -1400,15 +1396,27 @@
     -50,
     0
    ],
-   "tamlouka": [
-    50,
-    0
-   ],
    "bendjerrah": [
     -50,
     0
    ],
+   "boumahraahmed": [
+    -50,
+    0
+   ],
+   "djeballahkhemissi": [
+    -50,
+    0
+   ],
    "elfedjoudj": [
+    -50,
+    0
+   ],
+   "guellatbousbaa": [
+    -50,
+    0
+   ],
+   "guelma": [
     -50,
     0
    ],
@@ -1420,66 +1428,22 @@
     -50,
     0
    ],
-   "boumahraahmed": [
-    -50,
-    0
-   ],
-   "guellatbousbaa": [
-    -50,
-    0
-   ],
-   "djeballahkhemissi": [
-    -50,
+   "tamlouka": [
+    50,
     0
    ]
   },
   "25": {
-   "elkhroub": [
+   "constantine": [
     -50,
     0
    ],
-   "constantine": [
+   "elkhroub": [
     -50,
     0
    ]
   },
   "26": {
-   "medea": [
-    -100,
-    0
-   ],
-   "derrag": [
-    100,
-    0
-   ],
-   "mihoub": [
-    100,
-    0
-   ],
-   "ouamri": [
-    -50,
-    0
-   ],
-   "ouzera": [
-    -100,
-    0
-   ],
-   "bouaiche": [
-    100,
-    0
-   ],
-   "elomaria": [
-    -50,
-    0
-   ],
-   "hannacha": [
-    -50,
-    0
-   ],
-   "zoubiria": [
-    -50,
-    0
-   ],
    "ainouksir": [
     100,
     0
@@ -1488,19 +1452,15 @@
     -50,
     0
    ],
-   "cheniguel": [
-    100,
-    0
-   ],
-   "meghraoua": [
-    100,
-    0
-   ],
-   "seghouane": [
+   "berrouaghia": [
     -50,
     0
    ],
-   "tizimahdi": [
+   "bouaiche": [
+    100,
+    0
+   ],
+   "bouaichoune": [
     -50,
     0
    ],
@@ -1512,7 +1472,47 @@
     100,
     0
    ],
+   "chellaleteladhaoura": [
+    100,
+    0
+   ],
+   "cheniguel": [
+    100,
+    0
+   ],
+   "derrag": [
+    100,
+    0
+   ],
+   "draaessamar": [
+    -100,
+    0
+   ],
    "elhamdania": [
+    -50,
+    0
+   ],
+   "elomaria": [
+    -50,
+    0
+   ],
+   "hannacha": [
+    -50,
+    0
+   ],
+   "meghraoua": [
+    100,
+    0
+   ],
+   "medea": [
+    -100,
+    0
+   ],
+   "mihoub": [
+    100,
+    0
+   ],
+   "ouamri": [
     -50,
     0
    ],
@@ -1520,7 +1520,19 @@
     -50,
     0
    ],
+   "ouledbouachra": [
+    -50,
+    0
+   ],
    "ouleddeide": [
+    -50,
+    0
+   ],
+   "ouzera": [
+    -100,
+    0
+   ],
+   "seghouane": [
     -50,
     0
    ],
@@ -1528,27 +1540,15 @@
     -50,
     0
    ],
-   "tamesguida": [
-    -100,
-    0
-   ],
-   "berrouaghia": [
-    -50,
-    0
-   ],
-   "bouaichoune": [
-    -50,
-    0
-   ],
-   "draaessamar": [
-    -100,
-    0
-   ],
    "sidinaamanez": [
     -50,
     0
    ],
-   "ouledbouachra": [
+   "tamesguida": [
+    -100,
+    0
+   ],
+   "tizimahdi": [
     -50,
     0
    ],
@@ -1556,17 +1556,57 @@
     -50,
     0
    ],
-   "chellaleteladhaoura": [
-    100,
+   "zoubiria": [
+    -50,
     0
    ]
   },
   "27": {
-   "mesra": [
+   "achaacha": [
+    50,
+    0
+   ],
+   "ainboudinar": [
+    -50,
+    0
+   ],
+   "hassimameche": [
     -50,
     0
    ],
    "khadra": [
+    50,
+    0
+   ],
+   "kheireddine": [
+    -50,
+    0
+   ],
+   "mansourah": [
+    -50,
+    0
+   ],
+   "mesra": [
+    -50,
+    0
+   ],
+   "mazagran": [
+    -50,
+    0
+   ],
+   "mostaganem": [
+    -50,
+    0
+   ],
+   "nekmaria": [
+    50,
+    0
+   ],
+   "ouledboughalem": [
+    50,
+    0
+   ],
+   "ouledmaallah": [
     50,
     0
    ],
@@ -1577,67 +1617,23 @@
    "tazgait": [
     50,
     0
-   ],
-   "achaacha": [
-    50,
-    0
-   ],
-   "mazagran": [
-    -50,
-    0
-   ],
-   "nekmaria": [
-    50,
-    0
-   ],
-   "mansourah": [
-    -50,
-    0
-   ],
-   "mostaganem": [
-    -50,
-    0
-   ],
-   "ainboudinar": [
-    -50,
-    0
-   ],
-   "kheireddine": [
-    -50,
-    0
-   ],
-   "hassimameche": [
-    -50,
-    0
-   ],
-   "ouledmaallah": [
-    50,
-    0
-   ],
-   "ouledboughalem": [
-    50,
-    0
    ]
   },
   "28": {
-   "slim": [
+   "ainelmelh": [
     100,
     0
    ],
-   "msila": [
+   "ainerrich": [
+    100,
+    0
+   ],
+   "ainfares": [
     -100,
     0
    ],
-   "maadid": [
-    -50,
-    0
-   ],
-   "maarif": [
-    -50,
-    0
-   ],
-   "mtarfa": [
-    -100,
+   "bensrour": [
+    100,
     0
    ],
    "berhoum": [
@@ -1652,55 +1648,51 @@
     -50,
     0
    ],
-   "souamaa": [
+   "hammamdhalaa": [
     -50,
     0
    ],
-   "zarzour": [
-    100,
+   "khettoutisedeldjir": [
+    -50,
     0
    ],
-   "ainfares": [
-    -100,
+   "maadid": [
+    -50,
     0
    ],
-   "bensrour": [
-    100,
+   "maarif": [
+    -50,
     0
    ],
    "medjedel": [
     100,
     0
    ],
-   "tarmount": [
+   "mohammedboudiaf": [
+    100,
+    0
+   ],
+   "msila": [
+    -100,
+    0
+   ],
+   "mtarfa": [
+    -100,
+    0
+   ],
+   "ouledaddiguebala": [
     -50,
-    0
-   ],
-   "ainelmelh": [
-    100,
-    0
-   ],
-   "ainerrich": [
-    100,
     0
    ],
    "ouledatia": [
     100,
     0
    ],
-   "ouledmadhi": [
-    -50,
-    0
-   ],
-   "sidimhamed": [
-    100,
-    0
-   ],
-   "hammamdhalaa": [
-    -50,
-    0
-   ],
    "ouledderradj": [
+    -50,
+    0
+   ],
+   "ouledmadhi": [
     -50,
     0
    ],
@@ -1712,33 +1704,29 @@
     100,
     0
    ],
-   "mohammedboudiaf": [
+   "sidimhamed": [
     100,
     0
    ],
-   "ouledaddiguebala": [
+   "slim": [
+    100,
+    0
+   ],
+   "souamaa": [
     -50,
     0
    ],
-   "khettoutisedeldjir": [
+   "tarmount": [
     -50,
+    0
+   ],
+   "zarzour": [
+    100,
     0
    ]
   },
   "29": {
-   "tizi": [
-    -50,
-    0
-   ],
-   "froha": [
-    -50,
-    0
-   ],
-   "chorfa": [
-    50,
-    0
-   ],
-   "zahana": [
+   "ainferah": [
     50,
     0
    ],
@@ -1750,11 +1738,31 @@
     50,
     0
    ],
+   "chorfa": [
+    50,
+    0
+   ],
    "elgaada": [
     50,
     0
    ],
+   "elghomri": [
+    50,
+    0
+   ],
    "elkeurt": [
+    -50,
+    0
+   ],
+   "froha": [
+    -50,
+    0
+   ],
+   "gharrous": [
+    50,
+    0
+   ],
+   "mamounia": [
     -50,
     0
    ],
@@ -1766,22 +1774,6 @@
     -50,
     0
    ],
-   "ainferah": [
-    50,
-    0
-   ],
-   "elghomri": [
-    50,
-    0
-   ],
-   "gharrous": [
-    50,
-    0
-   ],
-   "mamounia": [
-    -50,
-    0
-   ],
    "matemore": [
     -50,
     0
@@ -1789,19 +1781,27 @@
    "ouedelabtal": [
     50,
     0
+   ],
+   "tizi": [
+    -50,
+    0
+   ],
+   "zahana": [
+    50,
+    0
    ]
   },
   "30": {
-   "ngoussa": [
-    50,
-    0
-   ],
    "ainbeida": [
     50,
     0
    ],
    "hassibenabdellah": [
     100,
+    0
+   ],
+   "ngoussa": [
+    50,
     0
    ]
   },
@@ -1814,27 +1814,7 @@
     -50,
     0
    ],
-   "elbraya": [
-    -50,
-    0
-   ],
-   "elkerma": [
-    -50,
-    0
-   ],
-   "essenia": [
-    -50,
-    0
-   ],
    "bireldjir": [
-    -50,
-    0
-   ],
-   "sidichami": [
-    -50,
-    0
-   ],
-   "misserghin": [
     -50,
     0
    ],
@@ -1842,18 +1822,34 @@
     -50,
     0
    ],
+   "essenia": [
+    -50,
+    0
+   ],
+   "sidichami": [
+    -50,
+    0
+   ],
+   "elkerma": [
+    -50,
+    0
+   ],
+   "elbraya": [
+    -50,
+    0
+   ],
    "hassibenokba": [
+    -50,
+    0
+   ],
+   "misserghin": [
     -50,
     0
    ]
   },
   "32": {
-   "boualem": [
-    -50,
-    0
-   ],
-   "elbnoud": [
-    100,
+   "elbayadh": [
+    -100,
     0
    ],
    "rogassa": [
@@ -1864,24 +1860,20 @@
     -50,
     0
    ],
-   "bougtoub": [
-    100,
-    0
-   ],
-   "chellala": [
-    100,
-    0
-   ],
-   "elbayadh": [
-    -100,
-    0
-   ],
-   "elmehara": [
-    100,
-    0
-   ],
    "ghassoul": [
     -50,
+    0
+   ],
+   "boualem": [
+    -50,
+    0
+   ],
+   "elabiodhsidicheikh": [
+    100,
+    0
+   ],
+   "bougtoub": [
+    100,
     0
    ],
    "elkheiter": [
@@ -1896,7 +1888,15 @@
     100,
     0
    ],
-   "elabiodhsidicheikh": [
+   "chellala": [
+    100,
+    0
+   ],
+   "elbnoud": [
+    100,
+    0
+   ],
+   "elmehara": [
     100,
     0
    ]
@@ -1908,28 +1908,32 @@
    ]
   },
   "34": {
-   "elmain": [
+   "bendaoud": [
     50,
     0
    ],
-   "haraza": [
-    50,
+   "bordjbouarreridj": [
+    -50,
     0
    ],
    "elachir": [
     -50,
     0
    ],
-   "medjana": [
+   "elanseur": [
     -50,
     0
    ],
-   "bendaoud": [
+   "elhamadia": [
+    -50,
+    0
+   ],
+   "elmain": [
     50,
     0
    ],
-   "elanseur": [
-    -50,
+   "haraza": [
+    50,
     0
    ],
    "hasnaoua": [
@@ -1940,11 +1944,7 @@
     50,
     0
    ],
-   "elhamadia": [
-    -50,
-    0
-   ],
-   "sidiembarek": [
+   "medjana": [
     -50,
     0
    ],
@@ -1952,37 +1952,13 @@
     50,
     0
    ],
-   "bordjbouarreridj": [
+   "sidiembarek": [
     -50,
     0
    ]
   },
   "35": {
-   "afir": [
-    50,
-    0
-   ],
-   "corso": [
-    -50,
-    0
-   ],
-   "dellys": [
-    50,
-    0
-   ],
-   "thenia": [
-    -50,
-    0
-   ],
-   "taourga": [
-    50,
-    0
-   ],
-   "benchoud": [
-    50,
-    0
-   ],
-   "zemmouri": [
+   "boumerdes": [
     -50,
     0
    ],
@@ -1990,20 +1966,16 @@
     -50,
     0
    ],
-   "boumerdes": [
-    -50,
+   "afir": [
+    50,
     0
    ],
    "sididaoud": [
     50,
     0
    ],
-   "soukelhad": [
+   "zemmouri": [
     -50,
-    0
-   ],
-   "ouledaissa": [
-    50,
     0
    ],
    "simustapha": [
@@ -2014,14 +1986,42 @@
     -50,
     0
    ],
+   "thenia": [
+    -50,
+    0
+   ],
+   "corso": [
+    -50,
+    0
+   ],
+   "taourga": [
+    50,
+    0
+   ],
+   "ouledaissa": [
+    50,
+    0
+   ],
+   "benchoud": [
+    50,
+    0
+   ],
+   "dellys": [
+    50,
+    0
+   ],
+   "soukelhad": [
+    -50,
+    0
+   ],
    "boudouaouelbahri": [
     -50,
     0
    ]
   },
   "36": {
-   "drean": [
-    50,
+   "ainelassel": [
+    -50,
     0
    ],
    "asfour": [
@@ -2032,28 +2032,28 @@
     50,
     0
    ],
-   "eltarf": [
+   "bouteldja": [
     -50,
+    0
+   ],
+   "chebaitamokhtar": [
+    50,
     0
    ],
    "chihani": [
     50,
     0
    ],
+   "drean": [
+    50,
+    0
+   ],
+   "eltarf": [
+    -50,
+    0
+   ],
    "zitouna": [
     -50,
-    0
-   ],
-   "bouteldja": [
-    -50,
-    0
-   ],
-   "ainelassel": [
-    -50,
-    0
-   ],
-   "chebaitamokhtar": [
-    50,
     0
    ]
   },
@@ -2064,15 +2064,15 @@
    ]
   },
   "38": {
-   "larbaa": [
-    50,
-    0
-   ],
-   "melaab": [
-    50,
-    0
-   ],
    "boucaid": [
+    50,
+    0
+   ],
+   "bordjbounaama": [
+    50,
+    0
+   ],
+   "bordjelemirabdelkader": [
     50,
     0
    ],
@@ -2080,15 +2080,15 @@
     150,
     0
    ],
+   "larbaa": [
+    50,
+    0
+   ],
    "lazharia": [
     50,
     0
    ],
-   "tissemsilt": [
-    -50,
-    0
-   ],
-   "youssoufia": [
+   "melaab": [
     50,
     0
    ],
@@ -2100,25 +2100,17 @@
     50,
     0
    ],
-   "bordjbounaama": [
-    50,
+   "tissemsilt": [
+    -50,
     0
    ],
-   "bordjelemirabdelkader": [
+   "youssoufia": [
     50,
     0
    ]
   },
   "39": {
-   "elogla": [
-    50,
-    0
-   ],
    "eloued": [
-    -50,
-    0
-   ],
-   "ourmas": [
     -50,
     0
    ],
@@ -2130,57 +2122,61 @@
     -50,
     0
    ],
-   "hamraia": [
-    150,
-    0
-   ],
    "kouinine": [
     -50,
+    0
+   ],
+   "hamraia": [
+    150,
     0
    ],
    "taghzout": [
     -50,
     0
    ],
-   "trifaoui": [
+   "hassaniabdelkrim": [
     -50,
-    0
-   ],
-   "douarelma": [
-    150,
-    0
-   ],
-   "beniguecha": [
-    150,
     0
    ],
    "taleblarbi": [
     50,
     0
    ],
-   "hassaniabdelkrim": [
+   "douarelma": [
+    150,
+    0
+   ],
+   "trifaoui": [
     -50,
+    0
+   ],
+   "beniguecha": [
+    150,
+    0
+   ],
+   "ourmas": [
+    -50,
+    0
+   ],
+   "elogla": [
+    50,
     0
    ]
   },
   "40": {
-   "msara": [
-    50,
-    0
-   ],
    "baghai": [
     -50,
     0
    ],
-   "chelia": [
-    50,
-    0
-   ],
-   "yabous": [
+   "bouhmama": [
     50,
     0
    ],
    "chechar": [
+    50,
+    0
+   ],
+   "chelia": [
     50,
     0
    ],
@@ -2192,18 +2188,6 @@
     -50,
     0
    ],
-   "ensigha": [
-    -50,
-    0
-   ],
-   "khirane": [
-    50,
-    0
-   ],
-   "bouhmama": [
-    50,
-    0
-   ],
    "elmahmal": [
     -50,
     0
@@ -2212,41 +2196,33 @@
     50,
     0
    ],
+   "ensigha": [
+    -50,
+    0
+   ],
    "khenchela": [
     -50,
+    0
+   ],
+   "khirane": [
+    50,
+    0
+   ],
+   "msara": [
+    50,
+    0
+   ],
+   "yabous": [
+    50,
     0
    ]
   },
   "41": {
-   "drea": [
-    50,
-    0
-   ],
-   "zouabi": [
-    50,
-    0
-   ],
    "soukahras": [
     -50,
     0
    ],
-   "ainsoltane": [
-    50,
-    0
-   ],
-   "terraguelt": [
-    50,
-    0
-   ],
-   "ouedkeberit": [
-    50,
-    0
-   ],
-   "oumeladhaim": [
-    50,
-    0
-   ],
-   "birbouhaouch": [
+   "drea": [
     50,
     0
    ],
@@ -2254,33 +2230,49 @@
     50,
     0
    ],
+   "birbouhaouch": [
+    50,
+    0
+   ],
+   "oumeladhaim": [
+    50,
+    0
+   ],
+   "ainsoltane": [
+    50,
+    0
+   ],
    "safelelouiden": [
+    50,
+    0
+   ],
+   "ouedkeberit": [
+    50,
+    0
+   ],
+   "terraguelt": [
+    50,
+    0
+   ],
+   "zouabi": [
     50,
     0
    ]
   },
   "42": {
-   "nador": [
+   "tipaza": [
     -50,
-    0
-   ],
-   "aghbal": [
-    50,
-    0
-   ],
-   "damous": [
-    50,
     0
    ],
    "larhat": [
     50,
     0
    ],
-   "tipaza": [
-    -50,
+   "khemisti": [
+    150,
     0
    ],
-   "gouraya": [
+   "aghbal": [
     50,
     0
    ],
@@ -2288,46 +2280,50 @@
     -50,
     0
    ],
-   "khemisti": [
-    150,
+   "gouraya": [
+    50,
+    0
+   ],
+   "nador": [
+    -50,
+    0
+   ],
+   "aintagourait": [
+    -50,
+    0
+   ],
+   "damous": [
+    50,
     0
    ],
    "messelmoun": [
     150,
     0
    ],
-   "benimilleuk": [
-    50,
-    0
-   ],
    "sidisemiane": [
     50,
     0
    ],
-   "aintagourait": [
-    -50,
+   "benimilleuk": [
+    50,
     0
    ]
   },
   "43": {
-   "mila": [
-    -50,
-    0
-   ],
    "aintine": [
     -50,
     0
    ],
-   "zeghaia": [
+   "graremgouga": [
+    -50,
+    0
+   ],
+   "mila": [
     -50,
     0
    ],
    "minarzarza": [
     50,
-    0
-   ],
-   "graremgouga": [
-    -50,
     0
    ],
    "sidimerouane": [
@@ -2337,42 +2333,38 @@
    "tassadanehaddada": [
     50,
     0
+   ],
+   "zeghaia": [
+    -50,
+    0
    ]
   },
   "44": {
-   "bathia": [
-    50,
-    0
-   ],
-   "elamra": [
-    -50,
-    0
-   ],
-   "rouina": [
-    -50,
-    0
-   ],
-   "djendel": [
-    50,
-    0
-   ],
    "aindefla": [
     -50,
+    0
+   ],
+   "ainbenian": [
+    50,
+    0
+   ],
+   "ainlechiekh": [
+    50,
+    0
+   ],
+   "ainsoltane": [
+    50,
     0
    ],
    "aintorki": [
     50,
     0
    ],
+   "bathia": [
+    50,
+    0
+   ],
    "benallal": [
-    50,
-    0
-   ],
-   "hoceinia": [
-    50,
-    0
-   ],
-   "ainbenian": [
     50,
     0
    ],
@@ -2388,7 +2380,19 @@
     -50,
     0
    ],
-   "ainsoltane": [
+   "djendel": [
+    50,
+    0
+   ],
+   "elamra": [
+    -50,
+    0
+   ],
+   "hammamrigha": [
+    50,
+    0
+   ],
+   "hoceinia": [
     50,
     0
    ],
@@ -2396,12 +2400,8 @@
     50,
     0
    ],
-   "ainlechiekh": [
-    50,
-    0
-   ],
-   "hammamrigha": [
-    50,
+   "rouina": [
+    -50,
     0
    ],
    "tarikibnziad": [
@@ -2414,49 +2414,29 @@
     -100,
     0
    ],
-   "kasdir": [
-    100,
+   "mecheria": [
+    -50,
     0
    ],
    "moghrar": [
     100,
     0
    ],
-   "mecheria": [
-    -50,
+   "djenienebourezg": [
+    100,
     0
    ],
    "ainbenkhelil": [
     -50,
     0
    ],
-   "djenienebourezg": [
+   "kasdir": [
     100,
     0
    ]
   },
   "46": {
-   "elmalah": [
-    -50,
-    0
-   ],
    "ainkihal": [
-    -50,
-    0
-   ],
-   "chentouf": [
-    -50,
-    0
-   ],
-   "tamzoura": [
-    50,
-    0
-   ],
-   "ouledkihal": [
-    -50,
-    0
-   ],
-   "sidibenadda": [
     -50,
     0
    ],
@@ -2468,13 +2448,41 @@
     -50,
     0
    ],
+   "chentouf": [
+    -50,
+    0
+   ],
+   "elmalah": [
+    -50,
+    0
+   ],
+   "ouledkihal": [
+    -50,
+    0
+   ],
    "oulhacaelgheraba": [
+    50,
+    0
+   ],
+   "sidibenadda": [
+    -50,
+    0
+   ],
+   "tamzoura": [
     50,
     0
    ]
   },
   "47": {
-   "sebseb": [
+   "berriane": [
+    50,
+    0
+   ],
+   "elguerrara": [
+    200,
+    0
+   ],
+   "mansoura": [
     100,
     0
    ],
@@ -2482,29 +2490,37 @@
     50,
     0
    ],
+   "sebseb": [
+    100,
+    0
+   ],
    "zelfana": [
     100,
-    0
-   ],
-   "berriane": [
-    50,
-    0
-   ],
-   "mansoura": [
-    100,
-    0
-   ],
-   "elguerrara": [
-    200,
     0
    ]
   },
   "48": {
-   "ramka": [
+   "aintarek": [
     50,
     0
    ],
-   "lahlef": [
+   "ammimoussa": [
+    50,
+    0
+   ],
+   "belasselbouzegza": [
+    -50,
+    0
+   ],
+   "bendaoud": [
+    -50,
+    0
+   ],
+   "benizentis": [
+    50,
+    0
+   ],
+   "elguettar": [
     50,
     0
    ],
@@ -2512,31 +2528,27 @@
     50,
     0
    ],
-   "mazouna": [
-    50,
-    0
-   ],
-   "aintarek": [
-    50,
-    0
-   ],
-   "bendaoud": [
-    -50,
-    0
-   ],
    "elmatmar": [
     -50,
+    0
+   ],
+   "hadechkalla": [
+    50,
+    0
+   ],
+   "lahlef": [
+    50,
+    0
+   ],
+   "mazouna": [
+    50,
     0
    ],
    "mediouna": [
     50,
     0
    ],
-   "relizane": [
-    -50,
-    0
-   ],
-   "elguettar": [
+   "merdjasidiabed": [
     50,
     0
    ],
@@ -2548,31 +2560,15 @@
     50,
     0
    ],
-   "soukelhad": [
-    50,
-    0
-   ],
-   "ammimoussa": [
-    50,
-    0
-   ],
-   "benizentis": [
-    50,
-    0
-   ],
-   "hadechkalla": [
-    50,
-    0
-   ],
    "ouedeldjemaa": [
     -50,
     0
    ],
-   "merdjasidiabed": [
+   "ramka": [
     50,
     0
    ],
-   "belasselbouzegza": [
+   "relizane": [
     -50,
     0
    ],
@@ -2583,31 +2579,35 @@
    "sidimhamedbenaouda": [
     -50,
     0
+   ],
+   "soukelhad": [
+    50,
+    0
    ]
   },
   "49": {
-   "deldoul": [
-    100,
+   "charouine": [
+    -50,
     0
    ],
-   "metarfa": [
-    100,
+   "ksarkaddour": [
+    -50,
     0
    ],
    "timimoun": [
     -100,
     0
    ],
-   "charouine": [
-    -50,
-    0
-   ],
    "ouledsaid": [
     -50,
     0
    ],
-   "ksarkaddour": [
-    -50,
+   "deldoul": [
+    100,
+    0
+   ],
+   "metarfa": [
+    100,
     0
    ]
   },
@@ -2616,16 +2616,20 @@
     -50,
     0
    ],
-   "sidikhaled": [
-    -50,
-    0
-   ],
    "ouleddjellal": [
     -100,
+    0
+   ],
+   "sidikhaled": [
+    -50,
     0
    ]
   },
   "52": {
+   "beniikhlef": [
+    -100,
+    0
+   ],
    "igli": [
     -100,
     0
@@ -2636,10 +2640,6 @@
    ],
    "tamtert": [
     -150,
-    0
-   ],
-   "beniikhlef": [
-    -100,
     0
    ]
   },
@@ -2654,7 +2654,11 @@
    ]
   },
   "55": {
-   "taibet": [
+   "benaceur": [
+    50,
+    0
+   ],
+   "blidetamor": [
     50,
     0
    ],
@@ -2666,30 +2670,30 @@
     200,
     0
    ],
-   "mnaguer": [
-    50,
-    0
-   ],
-   "benaceur": [
-    50,
-    0
-   ],
    "elhadjira": [
     200,
     0
    ],
-   "blidetamor": [
+   "mnaguer": [
     50,
     0
    ],
    "sidislimane": [
     100,
     0
+   ],
+   "taibet": [
+    50,
+    0
    ]
   },
   "57": {
    "mrara": [
     50,
+    0
+   ],
+   "sidikhellil": [
+    -50,
     0
    ],
    "tendla": [
@@ -2702,10 +2706,6 @@
    ],
    "sidiamrane": [
     50,
-    0
-   ],
-   "sidikhellil": [
-    -50,
     0
    ]
   },
