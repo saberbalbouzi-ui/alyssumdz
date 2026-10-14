@@ -2,7 +2,7 @@
    النواة (mode/set/toggle/apply) في سكربت مبكر داخل admin.html؛ هذا الملف يرسم بطاقة الإعدادات ومفتاح التبديل. */
 (function(){
   var T = window.AdminTheme; if(!T) return;
-  var PRE = { dark:["#86f06a","#3be6ff","#b79bff","#ffd45e","#ff7a59"], white:["#059669","#2563eb","#7c3aed","#ea580c","#e11d48"] };
+  var PRE = { dark:["#c6fe17","#3be6ff","#b79bff","#ffd45e","#ff7a59"], white:["#059669","#2563eb","#7c3aed","#ea580c","#e11d48"] };
   var SIZES = [[16,"صغير"],[17.5,"متوسط (الافتراضي)"],[19,"كبير"]];
   var NAMES = { dark:"داكن", white:"فاتح" };
   var IC = { dark:'<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>', white:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>' };

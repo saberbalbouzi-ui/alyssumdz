@@ -110,7 +110,7 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
     let short = null; try { short = window.StockCheck && StockCheck.shortOf ? StockCheck.shortOf(o) : null; } catch (e) { }
     const age = Math.max(0, Math.round((Date.now() - new Date(o.date)) / 60000));
     host.innerHTML = `<div id="ccm" data-i="${i}" data-id="${esc(o.id)}">${bar}${kp}
-<div class="ccm-card"><div class="ccm-bar"><h2>${esc(o.name || "بدون اسم")}</h2><span class="ccm-chip">${at ? "📞 غير متاح — محاولة " + at + "/3" : dueNow(o) ? "📅 موعد اليوم" : cm === "later" ? "⏰ لاحقاً" : "🆕 جديد"} · <span style="color:${age <= 15 ? "#86efac" : age <= 60 ? "#fcd34d" : "#fca5a5"}">منذ ${age < 90 ? age + " د" : Math.round(age / 60) + " س"}</span></span></div>
+<div class="ccm-card"><div class="ccm-bar"><h2>${esc(o.name || "بدون اسم")}</h2><span class="ccm-chip">${at ? "📞 غير متاح — محاولة " + at + "/3" : dueNow(o) ? "📅 موعد اليوم" : cm === "later" ? "⏰ لاحقاً" : "🆕 جديد"} · <span style="color:${age <= 15 ? "#d4ff4d" : age <= 60 ? "#fcd34d" : "#fca5a5"}">منذ ${age < 90 ? age + " د" : Math.round(age / 60) + " س"}</span></span></div>
 <div class="ccm-ph" dir="ltr">${esc(o.phone)}</div>
 <div class="ccm-quick"><a class="t" href="tel:${esc(ph.startsWith("0") ? "+213" + ph.slice(1) : "+" + ph)}">📞 اتصل</a><a href="https://wa.me/${intl}" target="_blank" rel="noopener">💬 واتساب</a></div>
 <div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>

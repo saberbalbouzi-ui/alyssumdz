@@ -1381,15 +1381,15 @@ const AdminVoice = (() => {
   function css() {
     if (document.getElementById("av-css")) return;
     const st = document.createElement("style"); st.id = "av-css";
-    st.textContent = `#av-hud{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);width:min(520px,calc(100vw - 24px));z-index:99990;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(134,239,172,.35);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);padding:.9rem 1rem;opacity:0;pointer-events:none;transition:.22s;direction:rtl;font-family:inherit}
+    st.textContent = `#av-hud{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);width:min(520px,calc(100vw - 24px));z-index:99990;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(198,254,23,.35);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);padding:.9rem 1rem;opacity:0;pointer-events:none;transition:.22s;direction:rtl;font-family:inherit}
 #av-hud.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
 #av-hud .av-r{display:flex;align-items:center;gap:.6rem}#av-hud .av-dot{width:12px;height:12px;border-radius:50%;background:#4ade80;flex:none;animation:avp 1.2s infinite}@keyframes avp{50%{transform:scale(1.3)}}
 #av-hud .av-tx{flex:1;font-weight:800;font-size:.95rem;min-height:1.4em;color:#e2f7e8;word-break:break-word}#av-hud .av-tx i{opacity:.6;font-style:normal}
 #av-hud .av-out{margin-top:.55rem;font-size:.9rem;line-height:1.8;color:#bef264;white-space:pre-line}#av-hud .av-out.err{color:#fda4af}
-#av-hud .av-hp{margin-top:.6rem;display:none;font-size:.78rem;line-height:1.9;color:#cde8d6;border-top:1px solid rgba(255,255,255,.12);padding-top:.5rem}#av-hud.help .av-hp{display:block}.av-hp b{color:#86efac}
+#av-hud .av-hp{margin-top:.6rem;display:none;font-size:.78rem;line-height:1.9;color:#cde8d6;border-top:1px solid rgba(255,255,255,.12);padding-top:.5rem}#av-hud.help .av-hp{display:block}.av-hp b{color:#d4ff4d}
 #av-hud .av-bt{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.65rem}
 #av-hud button{font-family:inherit;font-weight:800;font-size:.8rem;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);backdrop-filter:blur(8px);border-radius:12px;padding:.42rem .85rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -5px 10px rgba(0,0,0,.18);transition:transform .15s,background .15s}
-#av-hud button:hover{transform:translateY(-2px);background:rgba(134,239,172,.22)}#av-hud button.ok{background:rgba(74,222,128,.22);border-color:rgba(134,239,172,.55)}#av-hud button.no{background:rgba(239,68,68,.2);border-color:rgba(248,113,113,.5)}
+#av-hud button:hover{transform:translateY(-2px);background:rgba(198,254,23,.22)}#av-hud button.ok{background:rgba(74,222,128,.22);border-color:rgba(198,254,23,.55)}#av-hud button.no{background:rgba(239,68,68,.2);border-color:rgba(248,113,113,.5)}
 @media(max-width:560px){#av-hud{bottom:12px}}`;
     document.head.appendChild(st);
   }

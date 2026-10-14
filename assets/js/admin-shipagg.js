@@ -138,7 +138,7 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
   }
 
   /* ═══ المعايرة عند أول ربط: يلتقط النظام حساب الشركة (بلدياتها ومكاتبها وتعريفتها وحالات طرودها) ويصحّح نفسه قبل أول طلب حقيقي ═══ */
-  const li = (t, k) => '<div style="margin:.15rem 0' + (k === "w" ? ";color:#fbbf24" : k === "g" ? ";color:#86efac" : "") + '">' + t + '</div>';
+  const li = (t, k) => '<div style="margin:.15rem 0' + (k === "w" ? ";color:#fbbf24" : k === "g" ? ";color:#d4ff4d" : "") + '">' + t + '</div>';
   function calReport(sm) {
     if (!sm) return '<p class="hint">لم تُجرَ معايرة لهذا الحساب بعد.</p>';
     const c = sm.communes || {}, st = sm.statuses || {}, v = sm.verify, w = sm.webhook;

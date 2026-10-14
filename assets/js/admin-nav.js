@@ -299,7 +299,7 @@ const AdminNav = (() => {
   /* تحويل ألوان عناصر الصفحة الفاتحة إلى زجاج أخضر داكن: الخلفيات الفاتحة ← زجاج شفاف بحدّ أخضر، والنصوص الداكنة ← فاتحة، وتدرّجات الأقسام الفاتحة تُحذف */
   const aRGB = c => { c = String(c || "").trim(); let m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(c); if (m) { let h = m[1]; if (h.length === 3) h = h.replace(/./g, "$&$&"); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4), 16), 1]; } m = /^rgba?\(([^)]+)\)$/i.exec(c); if (m) { const a = m[1].split(",").map(x => parseFloat(x)); return [a[0], a[1], a[2], a[3] == null ? 1 : a[3]]; } return null; };
   const aLum = r => (.299 * r[0] + .587 * r[1] + .114 * r[2]) / 255, aLight = c => { const r = aRGB(c); return !!r && r[3] > .5 && aLum(r) > .7; }, aDark = c => { const r = aRGB(c); return !!r && r[3] > .3 && aLum(r) < .5; };
-  const A_GLASS0 = "rgba(12,54,29,.82)", A_LINE0 = "rgba(134,239,172,.3)", A_TXT0 = "#ecfdf5";
+  const A_GLASS0 = "rgba(12,54,29,.82)", A_LINE0 = "rgba(198,254,23,.3)", A_TXT0 = "#ecfdf5";
   function alyDarken(sections, o) {
     o = o || {}; const A_GLASS = o.glass || A_GLASS0, A_LINE = o.line || A_LINE0, A_TXT = o.txt || A_TXT0, TB = o.tbg || "rgba(21,128,61,.2)", TC = o.tcc || "#d9f99d";
     (sections || []).forEach(sec => alyWalk(sec, n => {
