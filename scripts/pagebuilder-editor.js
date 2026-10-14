@@ -63,6 +63,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-fw iframe{border:0;width:100%;height:100%;display:block;background:#fff}
 #pbx-ovl{position:absolute;inset:0;pointer-events:none;overflow:visible}
 #pb-app.pbx-ad .pbx-sbar{display:none!important}
+.adp{margin-bottom:.9rem}.adp .adp-wh{display:grid;grid-template-columns:1fr auto 1fr;gap:.4rem;align-items:center;margin:.4rem 0}.adp .adp-ck{display:flex;gap:.4rem;align-items:center;font-weight:600;margin:.3rem 0}.adp select,.adp input[type=number]{width:100%}.adp input[type=range]{width:100%}
 #pbx-bgp{position:fixed;z-index:10006;width:244px;background:rgba(9,24,18,.985);border:1px solid rgba(var(--g-mint-rgb,198,254,23),.4);border-radius:14px;padding:.6rem;box-shadow:0 16px 40px rgba(0,0,0,.55);color:#fff;font-family:inherit;direction:rtl}#pbx-bgp .bgp-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;font-size:.85rem}#pbx-bgp .bgp-x{background:transparent;border:0;color:#fff;cursor:pointer;font-size:.9rem}#pbx-bgp .bgp-sw{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-bottom:.55rem}#pbx-bgp .bgp-sw button{aspect-ratio:1;border-radius:8px;border:1.5px solid rgba(255,255,255,.35);cursor:pointer;padding:0}#pbx-bgp .bgp-sw button:hover{transform:translateY(-2px);border-color:#fff}#pbx-bgp .bgp-r{display:flex;gap:6px;align-items:center}#pbx-bgp input[type=color]{width:42px;height:34px;padding:0;border:1.5px solid rgba(255,255,255,.35);border-radius:8px;background:transparent;cursor:pointer}#pbx-bgp input[type=text]{flex:1;min-width:0;height:34px;border-radius:8px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;padding:0 .5rem;font-family:monospace;font-size:.8rem}#pbx-bgp .bgp-b{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 .6rem;border-radius:10px;border:1px solid rgba(var(--g-mint-rgb,198,254,23),.45);background:linear-gradient(180deg,rgba(var(--g-mint-rgb,198,254,23),.34),rgba(var(--g-mint-rgb,198,254,23),.12));color:#fff;font-weight:800;font-size:.78rem;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -4px 8px rgba(0,0,0,.2);backdrop-filter:blur(6px)}#pbx-bgp .bgp-b:hover{transform:translateY(-2px)}#pbx-bgp .bgp-b svg{width:16px;height:16px}#pbx-bgp .bgp-n{margin-top:.5rem;font-size:.7rem;color:rgba(255,255,255,.7)}
 .pbx-box{position:absolute;border:2px solid #2d6cdf;pointer-events:none;box-sizing:border-box}
 .pbx-box.column{border-color:#9b59b6}.pbx-box.widget{border-color:#e67e22}
@@ -1868,6 +1869,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
         const fs = Number(eff(w.set, "fs", "d")); if (Number.isFinite(fs) && fs) setR(w.set, "fs", "d", Math.round(fs * kx));
       });
     });
+    if (scale) (P.sections || []).forEach(sec => { const r = Number(eff(sec.set, "rad", "d")); if (Number.isFinite(r) && r) setR(sec.set, "rad", "d", Math.round(r * Math.min(kx, ky))); });
     ad.w = W; ad.h = H; ad.id = id || "custom"; ad.platform = label || ("مخصّص " + W + "×" + H);
     E.nextLabel = "تغيير مقاس التصميم"; afterEdit(); toast("✅ المقاس الآن " + W + "×" + H + (scale ? " (العناصر مُحجَّمة)" : " (الصفحة فقط)")); return true;
   }
@@ -2625,13 +2627,37 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const native = inf.set.anim ? `<div class="pbx-fxi"><div class="fxh"><b>حركة الظهور بالتمرير</b><button type="button" class="pbx-small" data-fxplay="1" title="شغّل الحركة هنا لتراها كما ستظهر للزائر">▶ تشغيل</button></div><label class="fxf">النوع<select data-fxn="anim">${FX_ANIM.map(([v, n]) => `<option value="${v}"${inf.set.anim === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="fxf">المدة (ثانية)<input type="number" step="0.1" data-fxn="animDur" value="${X(inf.set.animDur != null ? inf.set.animDur : 0.6)}"></label><label class="fxf">التأخير (ثانية)<input type="number" step="0.1" data-fxn="animDelay" value="${X(inf.set.animDelay != null ? inf.set.animDelay : 0)}"></label></div>` : "";
     return `<p class="pbx-fxn">نُسخت هذه التأثيرات مع العنصر من الموقع الأصلي. عدّل إعداداتها أو عطّلها (إيقاف) أو احذفها. تظهر نتيجتها على الصفحة مباشرة (التحويم والحركات تعمل داخل المحرّر وفي المعاينة).</p>${native}` + its.map((it, i) => `<div class="pbx-fxi${it.on === false ? " off" : ""}"><div class="fxh"><b>${X(it.n || "تأثير")}</b><label><input type="checkbox" data-fxon="${i}" ${it.on === false ? "" : "checked"}> مفعّل</label><button type="button" data-fxdel="${i}" title="حذف هذا التأثير">حذف</button></div>${Object.keys(it.p || {}).map(k => fld(i, k, it.p[k])).join("")}</div>`).join("");
   }
+  /* «إنشاء صور»: لا إعدادات ويب (رابط، وسم HTML، نوع الزر، ظهور حسب الجهاز…) */
+  const AD_HIDE = new Set(["link", "cust", "llink", "tag", "bindTitle", "kind", "phone", "msg", "newTab", "alt"]);
+  /* «إنشاء صور» بلا تحديد: إعدادات الصفحة فقط — المقاس (قابل للتغيير) وتدوير الزوايا */
+  function adPagePanel(el) {
+    const P = E.page, ad = P.ad, sec = P.sections[0], dv = "d", rad = sec ? Math.max(0, Number(eff(sec.set, "rad", dv)) || 0) : 0, mx = Math.round(Math.min(ad.w, ad.h) / 2);
+    const groups = (typeof ImgGen !== "undefined" && ImgGen.sizes) ? ImgGen.sizes() : [["أخرى", [["custom", "مخصّص…", ad.w, ad.h]]]];
+    const opts = groups.map(g => `<optgroup label="${esc(g[0])}">${g[1].map(z => `<option value="${z[0]}" data-w="${z[2]}" data-h="${z[3]}">${esc(z[1])}</option>`).join("")}</optgroup>`).join("");
+    el.innerHTML = `<div class="pbx-ih">⚙️ إعدادات الصورة</div>
+<div class="field adp"><label>📐 المقاس</label><select id="adp-sel">${opts}</select>
+<div class="adp-wh"><input type="number" id="adp-w" min="50" max="6000" value="${ad.w}"><span>×</span><input type="number" id="adp-h" min="50" max="6000" value="${ad.h}"></div>
+<label class="adp-ck"><input type="checkbox" id="adp-sc" checked><span>تغيير العناصر حسب المقاس</span></label>
+<button type="button" id="adp-go" class="pbx-small">تطبيق المقاس</button></div>
+<div class="field adp"><label>◜ تدوير الزوايا <b id="adp-rv">${Math.round(rad)}px</b></label><input type="range" id="adp-r" min="0" max="${mx}" value="${Math.min(rad, mx)}"></div>
+<p style="color:#888;font-size:.78rem;line-height:1.8">انقر على أي عنصر لتعديله — وأدوات التعديل تظهر فوقه. الخلفية: زر الفأرة الأيمن عليها ← «إضافة لون الخلفية».</p>`;
+    const q = i => el.querySelector("#" + i), sel = q("adp-sel"), cur = [...sel.options].find(o => +o.dataset.w === ad.w && +o.dataset.h === ad.h); sel.value = cur ? cur.value : "custom";
+    sel.onchange = () => { const o = sel.selectedOptions[0]; if (o && o.value !== "custom") { q("adp-w").value = o.dataset.w; q("adp-h").value = o.dataset.h; } };
+    ["adp-w", "adp-h"].forEach(i => q(i).oninput = () => { const w = +q("adp-w").value, h = +q("adp-h").value, m = [...sel.options].find(o => +o.dataset.w === w && +o.dataset.h === h); sel.value = m ? m.value : "custom"; });
+    q("adp-go").onclick = () => { const w = +q("adp-w").value, h = +q("adp-h").value, o = sel.selectedOptions[0]; if (!(w >= 50 && w <= 6000 && h >= 50 && h <= 6000)) return toast("المقاس بين 50 و6000 بكسل"); adResize(w, h, q("adp-sc").checked, o && o.value !== "custom" ? o.textContent : "", o ? o.value : "custom"); };
+    const r = q("adp-r"); r.oninput = () => { if (!sec) return; setR(sec.set, "rad", dv, +r.value); q("adp-rv").textContent = r.value + "px"; schedule(); };
+    r.onchange = () => { E.nextLabel = "تدوير زوايا الصورة"; commitHist(); renderCanvas(); positionOverlay(); };
+  }
   function renderInspector() {
     updateMbar(); try { drawQbar(); } catch (x) { console.warn(x); }
     const el = $("pbx-insp"); if (!el) return; if (multiOn()) { multiPanel(el); return; } const inf = selInfo(), newSel = E.inspSel !== E.sel; E.inspSel = E.sel; if (newSel) setTimeout(() => { el.scrollTop = 0; }, 0);      // التحوّل لعنصر آخر: الإعدادات من أعلى القائمة، واسم العنصر ثابت أعلاها
+    const adM = !!(E.page && E.page.ad);
+    if (!inf && adM) { adPagePanel(el); return; }
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${E.page && E.page.ad ? "انقر على أي عنصر في الصفحة لتعديل إعداداته. للخلفية: زر الفأرة الأيمن على الخلفية ← «إضافة لون الخلفية»." : FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
     if (E.tab === "f" && !hasFx(inf) || (E.page && E.page.ad)) E.tab = "c";
-    const all = ctlsFor(inf).filter(c => c.tab === E.tab);
+    const all = ctlsFor(inf).filter(c => c.tab === E.tab && !(adM && AD_HIDE.has(c.k)));
+    if (adM) { el.innerHTML = `<div class="pbx-stk"><div class="pbx-ih">${lbl}<button type="button" class="pbx-pimgb" data-pimg="1" title="تحميل صورة">${ico("image", 14)}<span>تحميل صورة</span></button></div></div>${inspGroups(all, inf)}`; return; }
     el.innerHTML = `<div class="pbx-stk"><div class="pbx-ih">${lbl}<button type="button" class="pbx-pimgb" data-pimg="1" title="تحميل صورة: يفتح مكان شريط الإعدادات مكتبة صور هذه الصفحة لرفع صور جديدة وحذفها وسحبها إلى الصفحة">${ico("image", 14)}<span>تحميل صورة</span></button></div>
 <div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].concat(hasFx(inf) ? [["f", "تأثيرات منسوخة (" + (inf.set.fxs.length + (inf.set.anim ? 1 : 0)) + ")"]] : []).map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}"${k === "f" ? ' style="flex:2.3;white-space:nowrap;font-size:.74rem"' : ""}>${n}</button>`).join("")}</div></div>
 <div id="pbx-pend" class="pbx-pend" style="display:none"><span>👁 تعديلاتك تظهر مباشرة على الصفحة</span><button type="button" class="ok" data-pend="ok">✓ تأكيد</button><button type="button" class="no" data-pend="no">↩ إلغاء</button></div>

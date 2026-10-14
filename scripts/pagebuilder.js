@@ -1101,7 +1101,8 @@ const PB = (() => {
       if (curAuto) css.m.push(`${inx}{height:${curAuto.h}px}`);
       /* شفافية/تمويه صورة الخلفية: تُرسم الصورة في ::before فتتأثر هي وحدها لا محتوى القسم */
       const bgo = num(s.bgOp), bgb = num(s.bgBlur) || 0, usePs = !!s.bgImg && ((bgo != null && bgo < 1) || bgb > 0), sBox = usePs ? Object.assign({}, s, { bgImg: "" }) : s;
-      common2(sx, sBox, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")]].concat(kind === "canvas" ? [] : [["mh", px("min-height")]]));
+      common2(sx, sBox, [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", SC ? (v => num(v) != null ? `border-radius:${num(v)}px;` : "") : px("border-radius")]].concat(kind === "canvas" ? [] : [["mh", px("min-height")]]));
+      if (DEVS.some(dv => num(own(s, "rad", dv)) > 0)) css.d.push(`${sx}{overflow:hidden}`);
       if (usePs) css.d.push(`${sx}{position:relative;${bgb > 0 ? "overflow:hidden;" : ""}}${sx}::before{content:"";position:absolute;inset:${bgb > 0 ? -(bgb * 2) + "px" : "0"};border-radius:inherit;pointer-events:none;background:url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}') ${s.bgPos || "center"}/${s.bgSize || "cover"} no-repeat;opacity:${bgo ?? 1};${bgb > 0 ? "filter:blur(" + bgb + "px);" : ""}${s.bgFixed ? "background-attachment:fixed;" : ""}}`);
       if (s.ovl || num(s.bgDark) > 0) css.d.push(`${sx}>.pb-ov{position:absolute;inset:0;background:${s.ovl || "#000"};opacity:${s.ovl ? (num(s.ovlOp) ?? .5) : num(s.bgDark)};pointer-events:none}`);
       if (s.mh && kind !== "canvas") css.d.push(`${sx}{display:flex;flex-direction:column;justify-content:center}`);

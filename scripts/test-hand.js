@@ -313,6 +313,19 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const pop = document.getElementById("pbx-bgp"); o.pop = !!pop; if (pop) { o.eye = typeof window.EyeDropper === "function" ? !!pop.querySelector("#bgp-e") : true; pop.querySelector('.bgp-sw button[data-c="#e53935"]').click(); await w(300); o.bg = JSON.parse(PBApp.pageJson()).sections[0].set.bg; o.inFrame = getComputedStyle(fd.querySelector(".pb-sec")).backgroundColor; }
     PBApp.close(); await w(400); o.closed = !document.getElementById("pbx-bgp"); return o;
   });
+  const adS = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "adset", textMode: "none", lang: "ar" }); await w(1500);
+    const ip = document.getElementById("pbx-insp"), o = {}; o.page = !!ip.querySelector("#adp-sel") && !!ip.querySelector("#adp-r") && !ip.querySelector(".pbx-dv") && !ip.querySelector(".pbx-q") && !ip.querySelector(".pbx-itabs");
+    const r = ip.querySelector("#adp-r"); r.value = 80; r.dispatchEvent(new Event("input")); r.dispatchEvent(new Event("change")); await w(400);
+    const fd = document.getElementById("pbx-frame").contentDocument; o.rad = getComputedStyle(fd.querySelector(".pb-sec")).borderTopLeftRadius; o.ovf = getComputedStyle(fd.querySelector(".pb-sec")).overflow;
+    await ImgGen.exportAd(); await w(300); { const im = document.querySelector("#ig-exp img"); if (im) { await (im.decode ? im.decode().catch(() => 0) : 0); const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext("2d"); x.drawImage(im, 0, 0); o.cornerA = x.getImageData(2, 2, 1, 1).data[3]; o.centerA = x.getImageData(c.width >> 1, c.height >> 1, 1, 1).data[3]; } const ex = document.getElementById("ig-exp"); if (ex) ex.remove(); }
+    ip.querySelector("#adp-w").value = 1080; ip.querySelector("#adp-w").dispatchEvent(new Event("input")); ip.querySelector("#adp-h").value = 1920; ip.querySelector("#adp-h").dispatchEvent(new Event("input")); ip.querySelector("#adp-go").click(); await w(500);
+    o.size = JSON.parse(PBApp.pageJson()).ad.w + "x" + JSON.parse(PBApp.pageJson()).ad.h; o.rad2 = JSON.parse(PBApp.pageJson()).sections[0].set.rad;
+    const add = document.querySelector('#pbx-lpane .pbx-wi[data-add="button"]'); if (add) add.click(); await w(600);
+    const ip2 = document.getElementById("pbx-insp"); o.btnKeys = [...ip2.querySelectorAll("[data-k]")].map(x => x.dataset.k); o.noWeb = !ip2.querySelector(".pbx-dv,.pbx-cp,.pbx-q,.pbx-vis,.pbx-itabs") && !o.btnKeys.some(k => ["link", "kind", "phone", "msg", "newTab", "tag", "cust"].includes(k));
+    PBApp.close(); await w(400); return o;
+  });
+  ok("إنشاء الصور: الشريط الجانبي = المقاس + تدوير الزوايا فقط، والعنصر بلا إعدادات ويب (رابط/نوع/ظهور/أجهزة)", adS.page && /80/.test(adS.rad) && adS.ovf === "hidden" && adS.size === "1080x1920" && adS.cornerA === 0 && adS.centerA === 255 && adS.noWeb && adS.btnKeys.includes("text"), adS);
   const sbw = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "sbw", textMode: "none", lang: "ar" }); await w(1500); const el = document.getElementById("pbx-insp"), o = { lw: (l => l ? parseFloat(getComputedStyle(l.querySelector(".pbx-tabs"), "::-webkit-scrollbar").width) : -1)(document.getElementById("pbx-lside")), w: el ? parseFloat(getComputedStyle(el, "::-webkit-scrollbar").width) : -1, ov: el ? getComputedStyle(el).overflowY : "" }; PBApp.close(); await w(400); return o; });
   ok("المطوّر: شريط تمرير الإعدادات الأيمن عريض (≥12px) برتقالي", sbw.w >= 12 && /auto|scroll/.test(sbw.ov), sbw);
   ok("المطوّر: شريط تمرير القائمة اليسرى عريض أيضاً", sbw.lw >= 12, sbw);
