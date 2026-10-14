@@ -420,7 +420,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const Q = JSON.parse(JSON.stringify(P)), oW = P.ad.w, oH = P.ad.h, sc = Math.min(W / oW, H / oH), offX = (W - oW * sc) / 2, offY = (H - oH * sc) / 2, num = (v, d) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
     const dv = (set, k) => num(PB.eff(set, k, "d"), 0), put = (set, k, v) => PB.setR(set, k, "d", v);
     (Q.sections || []).forEach(sec => {
-      if (sec.set.kind !== "canvas") return; sec.set.dw = W; PB.setR(sec.set, "mh", "d", H);
+      if (sec.set.kind !== "canvas") return; sec.set.dw = W; PB.setR(sec.set, "mh", "d", H); { const r0 = dv(sec.set, "rad"); if (r0) PB.setR(sec.set, "rad", "d", Math.round(r0 * sc)); }
       (sec.free || []).forEach(w => {
         const fx = dv(w.set, "fx"), fy = dv(w.set, "fy"), fw = dv(w.set, "fwd"), fh = dv(w.set, "fh"), bgFull = w.type === "image" && fx <= .5 && fy <= 2 && fw >= 99 && fh >= oH * .97;
         if (bgFull) { put(w.set, "fx", 0); put(w.set, "fy", 0); put(w.set, "fwd", 100); put(w.set, "fh", H); w.set.fit = "cover"; w.set.hauto = false; return; }
@@ -500,7 +500,8 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
       const d = fr.contentDocument; try { await d.fonts.ready; } catch (e) { }
       await Promise.all([...d.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; }))); await new Promise(r => setTimeout(r, 400));
       const node = d.querySelector(".pb-sec") || d.body; node.style.width = W + "px"; node.style.height = H + "px"; node.style.overflow = "hidden";
-      const opt = { width: W, height: H, pixelRatio: 1, cacheBust: false, backgroundColor: P.bg || "#ffffff" };
+      const rad = Math.max(0, Number(PB.eff(((P.sections || [])[0] || { set: {} }).set, "rad", "d")) || 0); if (rad) { node.style.borderRadius = rad + "px"; d.documentElement.style.background = d.body.style.background = "transparent"; }      // زوايا مدوّرة: ما خارجها شفاف (PNG/WebP)
+      const opt = { width: W, height: H, pixelRatio: 1, cacheBust: false, backgroundColor: rad ? undefined : (P.bg || "#ffffff") };
       let cv; try { cv = await window.htmlToImage.toCanvas(node, opt); } catch (e) { cv = await window.htmlToImage.toCanvas(node, Object.assign({ skipFonts: true }, opt)); }
       if (cv.width !== W || cv.height !== H) { const c2 = document.createElement("canvas"); c2.width = W; c2.height = H; c2.getContext("2d").drawImage(cv, 0, 0, W, H); cv = c2; }
       return cv;
