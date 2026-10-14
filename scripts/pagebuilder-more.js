@@ -28,24 +28,27 @@ const PBCollage = (() => {
   }
   function panel() {
     const need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length;
-    return `<div class="pbx-pz" id="pbcl"><p>اصنع كولاجاً من صور الصفحة: اختر القالب ثم انقر الصور بالترتيب (حتى ${need}).</p>
+    return `<div class="pbx-pz" id="pbcl"><p>اصنع كولاجاً من صور الصفحة: اختر القالب ثم انقر الصور بالترتيب (حتى ${need}) — يظهر مباشرة على الصورة ثم «تنفيذ» أو «إلغاء».</p>
 <div class="pbrt-row"><select id="pbcl-l" class="pbx-small">${Object.entries(LAYOUTS).map(([k, v]) => `<option value="${k}"${S.layout === k ? " selected" : ""}>${v[0]}</option>`).join("")}</select><select id="pbcl-s" class="pbx-small">${SIZES.map(([v, t]) => `<option value="${v}"${S.size === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>
 <div class="rt-g"><label>المسافة <input type="range" id="pbcl-g" min="0" max="60" value="${S.gap}"></label><label>الزوايا <input type="range" id="pbcl-r" min="0" max="80" value="${S.radius}"></label><label>الخلفية <input type="color" id="pbcl-b" value="${S.bg}"></label></div>
 <div class="ep-n">الصور المختارة: <b id="pbcl-n">${S.picks.length}</b> / ${need} <button type="button" class="pbx-small" data-cl="clear">مسح</button></div>
 <div id="pbcl-pool" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:150px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-cl="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(i) ? "3px solid #7c3aed" : "none"}">`).join("")}</div>
-<div style="margin:.4rem 0;text-align:center"><canvas id="pbcl-pv" style="max-width:100%;border-radius:6px;border:1px solid rgba(128,128,128,.3)"></canvas></div>
-<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-cl="apply" id="pbcl-ap" disabled>✔ تطبيق على الصورة</button></div><div id="pbcl-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
+<div id="pbcl-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
   }
   const say = t => { S.msg = t; const e = $("pbcl-msg"); if (e) e.textContent = t; };
+  let ct = 0;
   async function draw() {
-    const cv = $("pbcl-pv"); if (!cv) return; const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 300 / Math.max(W, H)), need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length, picks = S.picks.slice(0, need);
-    const ims = []; for (const i of picks) { try { ims.push(await loadImg(S.pool[i])); } catch (e) { ims.push(null); } }
-    S.res = render(ims, { layout: S.layout, W: Math.round(W * k), H: Math.round(H * k), gap: S.gap * k, radius: S.radius * k, bg: S.bg }); cv.width = S.res.width; cv.height = S.res.height; cv.getContext("2d").drawImage(S.res, 0, 0);
-    const n = $("pbcl-n"); if (n) n.textContent = picks.length; const ap = $("pbcl-ap"); if (ap) ap.disabled = !picks.length;
+    const n = $("pbcl-n"), need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length, picks = S.picks.slice(0, need); if (n) n.textContent = picks.length;
+    clearTimeout(ct); ct = setTimeout(async () => {
+      if (!picks.length) { A().liveClear(true); return; }
+      const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 1100 / Math.max(W, H)), ims = []; for (const i of picks) { try { ims.push(await loadImg(S.pool[i])); } catch (e) { ims.push(null); } }
+      S.res = render(ims, { layout: S.layout, W: Math.round(W * k), H: Math.round(H * k), gap: S.gap * k, radius: S.radius * k, bg: S.bg });
+      await A().liveCanvas(S.id, S.res, { tab: "cl", apply, cancel: () => { S.picks = []; } });
+    }, 90);
   }
   async function apply() {
     if (S.busy || !S.picks.length) return; S.busy = true; say("⏳ جارٍ إنشاء الكولاج…");
-    try { const [W, H] = S.size.split("x").map(Number), need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length, ims = []; for (const i of S.picks.slice(0, need)) ims.push(await loadImg(S.pool[i])); const out = render(ims, { layout: S.layout, W, H, gap: S.gap, radius: S.radius, bg: S.bg }), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "cl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "كولاج الصور"; A().commitAfter(S.id); say("✅ طُبِّق الكولاج"); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+    try { const [W, H] = S.size.split("x").map(Number), need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length, ims = []; for (const i of S.picks.slice(0, need)) ims.push(await loadImg(S.pool[i])); const out = render(ims, { layout: S.layout, W, H, gap: S.gap, radius: S.radius, bg: S.bg }), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "cl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "كولاج الصور"; S.picks = []; A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ الكولاج"); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
   }
   function mount(host, inf) {
     if (S.id !== inf.node.id) { S.id = inf.node.id; S.picks = []; } S.pool = poolOf(inf.set.src); const root = host.querySelector("#pbcl"); if (!root) return; draw();
@@ -53,7 +56,7 @@ const PBCollage = (() => {
     root.addEventListener("input", e => { const t = e.target; if (t.id === "pbcl-g") { S.gap = +t.value; draw(); } else if (t.id === "pbcl-r") { S.radius = +t.value; draw(); } });
     root.addEventListener("click", e => { const t = e.target.closest("[data-cl]"); if (!t) return; const k = t.dataset.cl, need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length;
       if (k === "pick") { const i = +t.dataset.i, at = S.picks.indexOf(i); if (at >= 0) S.picks.splice(at, 1); else if (S.picks.length < need) S.picks.push(i); else { say("اكتمل العدد — أزل صورة أو غيّر القالب"); return; } root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = S.picks.includes(+im.dataset.i) ? "3px solid #7c3aed" : "none"; }); draw(); }
-      else if (k === "clear") { S.picks = []; root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = "none"; }); draw(); } else if (k === "apply") apply(); });
+      else if (k === "clear") { S.picks = []; root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = "none"; }); draw(); } });
   }
   return { panel, mount, poolOf, reset: () => { S.id = ""; S.picks = []; S.msg = ""; }, state: S, _t: { render, LAYOUTS } };
 })();
@@ -78,27 +81,34 @@ const PBFrame = (() => {
   const rg = (id, k, min, max, t, v) => `<label>${t} <input type="range" id="${id}" min="${min}" max="${max}" value="${v}" data-fr="${k}"></label>`;
   function panel() {
     const o = S.o;
-    return `<div class="pbx-pz" id="pbfr"><p>إطار وهوية: حدّ وزوايا وهامش وظل بطاقة، وختم شعار علامتك (يُحفظ في متصفحك).</p>
+    return `<div class="pbx-pz" id="pbfr"><p>إطار وهوية: حدّ وزوايا وهامش وظل بطاقة، وختم شعار علامتك — يظهر مباشرة على الصورة ثم «تنفيذ» أو «إلغاء».</p>
 <div class="rt-g">${rg("pbfr-b", "border", 0, 12, "سماكة الحدّ", o.border)}<label>لون الحدّ <input type="color" data-fr="bcolor" value="${o.bcolor}"></label>${rg("pbfr-r", "radius", 0, 40, "الزوايا", o.radius)}${rg("pbfr-p", "pad", 0, 20, "الهامش الداخلي", o.pad)}<label>لون الهامش <input type="color" data-fr="bg" value="${o.bg}"></label>${rg("pbfr-s", "shadow", 0, 12, "ظل البطاقة", o.shadow)}</div>
 <div class="rt-g"><label><input type="checkbox" data-fr="logo" ${o.logo ? "checked" : ""}> ختم شعار العلامة</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbfr-lf" style="display:none"></label><span class="ep-n">${S.logo ? "✔ الشعار محفوظ" : "لم يُرفع شعار بعد"}</span>
 <label>الموضع <select data-fr="lpos" class="pbx-small">${[["tl", "أعلى يسار"], ["tr", "أعلى يمين"], ["bl", "أسفل يسار"], ["br", "أسفل يمين"], ["mc", "الوسط"]].map(([k, t]) => `<option value="${k}"${o.lpos === k ? " selected" : ""}>${t}</option>`).join("")}</select></label>${rg("pbfr-ls", "lsize", 5, 50, "حجم الشعار", o.lsize)}${rg("pbfr-lo", "lop", 10, 100, "الشفافية", o.lop)}</div>
-<div style="text-align:center;margin:.4rem 0;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px;border-radius:6px"><canvas id="pbfr-pv" style="max-width:100%"></canvas></div>
-<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-frb="apply">✔ تطبيق على الصورة</button><button type="button" class="pbx-small" data-frb="reset">تصفير</button></div><div id="pbfr-msg" class="ep-n" style="min-height:1.2em">${S.msg}</div></div>`;
+<div class="pbrt-row"><button type="button" class="pbx-small" data-frb="reset">تصفير</button></div><div id="pbfr-msg" class="ep-n" style="min-height:1.2em">${S.msg}</div></div>`;
   }
   const say = t => { S.msg = t; const e = $("pbfr-msg"); if (e) e.textContent = t; };
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const k = Math.min(1, 3000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
-  function draw() { const cv = $("pbfr-pv"); if (!cv || !S.base) return; const k = Math.min(1, 320 / Math.max(S.base.width, S.base.height)), s = mk(S.base.width * k, S.base.height * k); s.getContext("2d").drawImage(S.base, 0, 0, s.width, s.height); const out = frame(s, S.o, S.logo); cv.width = out.width; cv.height = out.height; cv.getContext("2d").drawImage(out, 0, 0); }
+  const dirtyF = () => { const o = S.o; return !!(o.border || o.pad || o.radius || o.shadow || o.card || (o.logo && S.logo)); };
+  let ft = 0;
+  function draw() {
+    if (!S.base) return; clearTimeout(ft); ft = setTimeout(async () => {
+      if (!dirtyF()) { A().liveClear(true); return; }
+      const k = Math.min(1, 1100 / Math.max(S.base.width, S.base.height)), s = mk(S.base.width * k, S.base.height * k); s.getContext("2d").drawImage(S.base, 0, 0, s.width, s.height);
+      await A().liveCanvas(S.id, frame(s, S.o, S.logo), { tab: "fr", apply, cancel: () => { Object.assign(S.o, { border: 0, radius: 0, pad: 0, shadow: 0, card: false, logo: false }); } });
+    }, 70);
+  }
   async function mount(host, inf) {
     const id = inf.node.id; if (S.id !== id || !S.base) { S.id = id; try { S.base = await loadImg(inf.set.src); } catch (e) { say("⚠️ " + e.message); return; } }
     const root = host.querySelector("#pbfr"); if (!root) return; draw();
     const upd = e => { const t = e.target, k = t.dataset && t.dataset.fr; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : t.value; draw(); };
     root.addEventListener("input", upd); root.addEventListener("change", upd);
     const lf = $("pbfr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { if (String(r.result).length < 600000) localStorage.setItem(LSK, String(r.result)); } catch (e) { } host.innerHTML = panel(); mount(host, inf); }; im.src = String(r.result); }; r.readAsDataURL(f); };
-    root.addEventListener("click", async e => { const t = e.target.closest("[data-frb]"); if (!t) return; if (t.dataset.frb === "reset") { Object.assign(S.o, { border: 0, radius: 0, pad: 0, shadow: 0, card: false, logo: false }); host.innerHTML = panel(); mount(host, inf); } else await apply(); });
+    root.addEventListener("click", async e => { const t = e.target.closest("[data-frb]"); if (!t) return; if (t.dataset.frb === "reset") { Object.assign(S.o, { border: 0, radius: 0, pad: 0, shadow: 0, card: false, logo: false }); A().liveClear(true); host.innerHTML = panel(); mount(host, inf); } });
   }
   async function apply() {
-    if (S.busy || !S.base) return; S.busy = true; say("⏳ جارٍ التطبيق…");
-    try { const out = frame(S.base, S.o, S.logo), alpha = !!(S.o.radius || S.o.shadow), blob = await new Promise(r => out.toBlob(r, alpha ? "image/png" : "image/webp", .93)), path = await A().uploadBlob(blob, "fr-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "إطار وهوية"; S.base = out; A().commitAfter(S.id); say("✅ طُبِّق"); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+    if (S.busy || !S.base || !dirtyF()) return; S.busy = true; say("⏳ جارٍ التنفيذ…");
+    try { const out = frame(S.base, S.o, S.logo), alpha = !!(S.o.radius || S.o.shadow), blob = await new Promise(r => out.toBlob(r, alpha ? "image/png" : "image/webp", .93)), path = await A().uploadBlob(blob, "fr-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "إطار وهوية"; S.base = out; Object.assign(S.o, { border: 0, radius: 0, pad: 0, shadow: 0, card: false, logo: false }); A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ"); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
   }
   return { panel, mount, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { frame } };
 })();
@@ -173,13 +183,15 @@ const PBBlend = (() => {
 <div class="pbrt-row"><b>الشكل</b>${sh("rect", "▢ مربع")}${sh("circle", "◯ دائرة")}</div>
 <div class="rt-g"><label>الحجم % <input type="range" id="pbbl-z" min="8" max="100" value="${o.size}"></label><label>تمويه الحواف (غاوسي) <input type="range" id="pbbl-b" min="0" max="100" value="${o.blur}"></label><label>الشفافية % <input type="range" id="pbbl-o" min="10" max="100" value="${o.op}"></label>
 <label>أسلوب المزج <select id="pbbl-m" class="pbx-small">${MODES.map(([k, t]) => `<option value="${k}"${o.mode === k ? " selected" : ""}>${t}</option>`).join("")}</select></label></div>
-<div style="text-align:center;margin:.4rem 0;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px;border-radius:6px"><canvas id="pbbl-pv" style="max-width:100%;cursor:move;touch-action:none"></canvas></div><div class="ep-n">اسحب الصورة الصغيرة على المعاينة لتحريكها.</div>
-<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-bl="apply" id="pbbl-ap" disabled>✔ تطبيق على الصورة</button></div><div id="pbbl-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
+<div style="text-align:center;margin:.4rem 0;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px;border-radius:6px"><canvas id="pbbl-pv" style="max-width:100%;cursor:move;touch-action:none"></canvas></div><div class="ep-n">اسحب الصورة الصغيرة على هذه المصغّرة لتحريكها — وتظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء».</div>
+<div id="pbbl-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
   }
   const say = t => { S.msg = t; const e = $("pbbl-msg"); if (e) e.textContent = t; };
+  let bt = 0;
   function draw() {
     const cv = $("pbbl-pv"); if (!cv || !S.base) return; const k = Math.min(1, 300 / Math.max(S.base.width, S.base.height)), b = mk(S.base.width * k, S.base.height * k); b.getContext("2d").drawImage(S.base, 0, 0, b.width, b.height);
-    const out = S.over ? blend(b, S.over, S.o) : b; cv.width = out.width; cv.height = out.height; cv.getContext("2d").drawImage(out, 0, 0); const ap = $("pbbl-ap"); if (ap) ap.disabled = !S.over;
+    const out = S.over ? blend(b, S.over, S.o) : b; cv.width = out.width; cv.height = out.height; cv.getContext("2d").drawImage(out, 0, 0);
+    clearTimeout(bt); bt = setTimeout(async () => { if (!S.over || !S.base) { A().liveClear(true); return; } const k2 = Math.min(1, 1100 / Math.max(S.base.width, S.base.height)), b2 = mk(S.base.width * k2, S.base.height * k2); b2.getContext("2d").drawImage(S.base, 0, 0, b2.width, b2.height); await A().liveCanvas(S.id, blend(b2, S.over, S.o), { tab: "bl", apply, cancel: () => { S.over = null; S.overSrc = ""; } }); }, 80);
   }
   async function setOver(src) { try { S.over = await loadImg(src, 1600); S.overSrc = src; say(""); const root = $("pbbl"); if (root) root.querySelectorAll('[data-bl="pick"]').forEach(im => { im.style.outline = S.pool[+im.dataset.i] === src ? "3px solid #7c3aed" : "none"; }); draw(); } catch (e) { say("⚠️ " + e.message); } }
   async function mount(host, inf) {
@@ -187,12 +199,12 @@ const PBBlend = (() => {
     const root = host.querySelector("#pbbl"); if (!root) return; draw();
     root.addEventListener("input", e => { const t = e.target; if (t.id === "pbbl-z") S.o.size = +t.value; else if (t.id === "pbbl-b") S.o.blur = +t.value; else if (t.id === "pbbl-o") S.o.op = +t.value; else return; draw(); });
     root.addEventListener("change", e => { if (e.target.id === "pbbl-m") { S.o.mode = e.target.value; draw(); } else if (e.target.id === "pbbl-f") { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => setOver(String(r.result)); r.readAsDataURL(f); } });
-    root.addEventListener("click", e => { const t = e.target.closest("[data-bl]"); if (!t) return; const k = t.dataset.bl; if (k === "shape") { S.o.shape = t.dataset.v; root.querySelectorAll('[data-bl="shape"]').forEach(b => b.classList.toggle("on", b.dataset.v === S.o.shape)); draw(); } else if (k === "pick") setOver(S.pool[+t.dataset.i]); else if (k === "apply") apply(); });
+    root.addEventListener("click", e => { const t = e.target.closest("[data-bl]"); if (!t) return; const k = t.dataset.bl; if (k === "shape") { S.o.shape = t.dataset.v; root.querySelectorAll('[data-bl="shape"]').forEach(b => b.classList.toggle("on", b.dataset.v === S.o.shape)); draw(); } else if (k === "pick") setOver(S.pool[+t.dataset.i]); });
     const cv = $("pbbl-pv"); if (cv && !cv._bl) { cv._bl = 1; const mv = e => { const r = cv.getBoundingClientRect(); S.o.x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); S.o.y = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); draw(); }; cv.addEventListener("pointerdown", e => { if (!S.over) return; S.drag = true; cv.setPointerCapture(e.pointerId); mv(e); }); cv.addEventListener("pointermove", e => { if (S.drag) mv(e); }); cv.addEventListener("pointerup", () => { S.drag = false; }); }
   }
   async function apply() {
     if (S.busy || !S.over || !S.base) return; S.busy = true; say("⏳ جارٍ الدمج…");
-    try { const out = blend(S.base, S.over, S.o), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "bl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "دمج صورة داخل صورة"; S.base = out; S.over = null; S.overSrc = ""; A().commitAfter(S.id); say("✅ تمّ الدمج"); draw(); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+    try { const out = blend(S.base, S.over, S.o), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "bl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "دمج صورة داخل صورة"; S.base = out; S.over = null; S.overSrc = ""; A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ الدمج"); draw(); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
   }
   return { panel, mount, reset: () => { S.id = ""; S.base = null; S.over = null; S.overSrc = ""; S.msg = ""; }, state: S, _t: { blend, MODES } };
 })();
