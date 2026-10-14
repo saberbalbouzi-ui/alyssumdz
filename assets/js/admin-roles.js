@@ -138,7 +138,7 @@
     if ($("rl-css")) return; const st = document.createElement("style"); st.id = "rl-css";
     st.textContent = `html.rl-staff .rl-hid,html.rl-staff [data-owner]{display:none!important}
 .rl-robar{margin:0 0 .8rem;padding:.55rem .8rem;border-radius:12px;font-weight:800;background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.5)}
-#rl{max-width:980px;margin:0 auto;display:grid;gap:1rem}#rl .card{padding:1.1rem}#rl h3{margin:.1rem 0 .6rem}#rl .rl-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+#rl{max-width:980px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}#rl .card{padding:1.1rem;min-width:0;max-width:100%;overflow-x:auto}#rl input,#rl select,#rl textarea{max-width:100%;box-sizing:border-box}@media(max-width:700px){#rl .card{padding:.8rem}#rl .rl-row>*{flex:1 1 100%;min-width:0}#rl .rl-row>.rl-b,#rl .rl-row>.rl-chip{flex:1 1 auto}#rl table{font-size:.8rem}#rl .rl-perms{grid-template-columns:1fr}#rl .rl-qr img,#rl .rl-qr svg{width:150px;height:150px}}#rl h3{margin:.1rem 0 .6rem}#rl .rl-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
 #rl .rl-chip{padding:.25rem .65rem;border-radius:999px;font-weight:800;font-size:.8rem;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07)}
 #rl .rl-ok{background:rgba(170,220,10,.22);border-color:rgba(170,220,10,.55)}#rl .rl-no{background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.55)}
 #rl table{width:100%;border-collapse:collapse;font-size:.88rem}#rl th,#rl td{padding:.5rem .45rem;border-bottom:1px solid rgba(255,255,255,.1);text-align:right;vertical-align:middle}

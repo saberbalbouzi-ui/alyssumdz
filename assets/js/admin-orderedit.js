@@ -38,8 +38,9 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
       $("oe-com").innerHTML = (list.includes(cur) || !cur ? "" : `<option value="${esc(cur)}">${esc(cur)}</option>`) + list.map(c => `<option value="${esc(c)}"${c === cur ? " selected" : ""}>${esc(c)}</option>`).join("");
     }
     function fillDesk(keep) {
-      const w = ad.wCo ? ad.wCo($("oe-wil").value) : wOf($("oe-wil").value), ds = (w && w.desks) || [], cur = keep == null ? o.desk : keep;
-      $("oe-desk").innerHTML = (ds.length ? "" : `<option value="">لا توجد مكاتب معروفة لهذه الولاية</option>`) + (cur && !ds.some(d => d.name === cur) ? `<option value="${esc(cur)}">${esc(cur)}</option>` : "") + ds.map(d => `<option value="${esc(d.name)}"${d.name === cur ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+      const w = ad.wCo ? ad.wCo($("oe-wil").value) : wOf($("oe-wil").value), com = $("oe-com").value, ds = ad.desksIn ? ad.desksIn(w, com) : ((w && w.desks) || []), cur = keep == null ? o.desk : keep, has = ds.length > 0;
+      $("oe-desk").innerHTML = (has ? "" : `<option value="">${com ? "لا يوجد مكتب Stop Desk في بلدية " + esc(com) : "لا توجد مكاتب معروفة لهذه الولاية"}</option>`) + ds.map(d => `<option value="${esc(d.name)}"${d.name === cur ? " selected" : ""}>${esc(d.name)}</option>`).join("");
+      const sr = bg.querySelector('input[name="oe-dt"][value="stop"]'); if (sr) { sr.disabled = !has; sr.parentElement.style.opacity = has ? "" : ".45"; sr.parentElement.title = has ? "" : "لا يوجد مكتب Stop Desk في هذه البلدية — التوصيل للمنزل فقط"; if (!has && sr.checked) { bg.querySelector('input[name="oe-dt"][value="home"]').checked = true; } }
       $("oe-deskw").style.display = dt() === "stop" ? "" : "none";
     }
     function autoFee() {
@@ -50,7 +51,8 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
     }
     const total = () => { $("oe-tot").textContent = Math.max(0, sub - disc + num($("oe-fee").value)).toLocaleString("fr-DZ") + " دج"; };
     fillCom(); fillDesk(); total();
-    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); }; $("oe-com").onchange = autoFee;
+    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); }; $("oe-com").onchange = () => { fillDesk(""); autoFee(); };
+    if (ad.shipSupLoad) ad.shipSupLoad().then(() => { if (document.body.contains(bg)) autoFee(); });
     bg.querySelectorAll('input[name="oe-dt"]').forEach(r => r.onchange = () => { fillDesk($("oe-desk").value); autoFee(); });
     $("oe-fee").oninput = total;
     const close = () => bg.remove(); $("oe-x").onclick = close; $("oe-no").onclick = close; bg.addEventListener("click", e => { if (e.target === bg) close(); });

@@ -680,7 +680,10 @@ const Agent = (() => {
     const clean = s => (window.AvatarScript ? AvatarScript.clean(s) : String(s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
     const css = `#agent-avatar{position:fixed;right:14px;bottom:92px;z-index:72;font-family:inherit;direction:rtl}
 #agent-avatar .av-btn{width:78px;height:78px;border-radius:50%;border:2px solid var(--gold,#c8a24b);background:#f7f4ed;padding:0;cursor:pointer;box-shadow:0 10px 26px rgba(23,63,53,.35);overflow:hidden;display:block;position:relative}
-#agent-avatar .av-btn svg{width:100%;height:100%;display:block}
+#agent-avatar .av-btn>svg{width:100%;height:100%;display:block}
+#agent-avatar .av-tag svg{width:1em;height:1em;display:inline-block;vertical-align:-.15em;margin-inline-end:.2em}
+#agent-avatar .av-bub,#agent-avatar .av-txt{color:#173f35}
+#agent-avatar .av-in input{color:#173f35;background:#fff}
 #agent-avatar.idle .av-btn::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(200,162,75,.55);animation:avPulse 2.2s infinite}
 #agent-avatar.talk .av-btn{box-shadow:0 0 0 4px rgba(47,107,87,.35),0 10px 26px rgba(23,63,53,.35)}
 #agent-avatar .av-tag{position:absolute;right:50%;transform:translateX(50%);bottom:-8px;background:var(--green,#173f35);color:#fff;font-size:.68rem;font-weight:800;padding:.1rem .55rem;border-radius:999px;white-space:nowrap}
