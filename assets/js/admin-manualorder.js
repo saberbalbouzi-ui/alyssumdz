@@ -15,8 +15,8 @@ window.ManualOrder = (function () {
   function prodOpts() {
     const ad = A(), out = []; ((ad && ad.products) || []).filter(p => p.slug !== "test" && p.active !== false).forEach(p => {
       const t = p.type;
-      if (t === "variable") (p.variations || []).filter(v => v && v.active !== false).forEach(v => { const lb = ((p.attributes || []).filter(a => a.variation && v.attrs && v.attrs[a.name] != null).map(a => a.name + ": " + v.attrs[a.name]).join(" / ")); out.push({ slug: p.slug, title: p.title + (lb ? " — " + lb : ""), price: num(v.price) }); });
-      else if (t !== "grouped") out.push({ slug: p.slug, title: p.title, price: num(p.price) });
+      if (t === "variable") (p.variations || []).filter(v => v && v.active !== false).forEach(v => { const lb = ((p.attributes || []).filter(a => a.variation && v.attrs && v.attrs[a.name] != null).map(a => a.name + ": " + v.attrs[a.name]).join(" / ")); out.push({ slug: p.slug, title: (p.bord || p.title) + (lb ? " — " + lb : ""), name: p.title + (lb ? " — " + lb : ""), price: num(v.price) }); });
+      else if (t !== "grouped") out.push({ slug: p.slug, title: p.bord || p.title, name: p.title, price: num(p.price) });
     });
     return out;
   }
@@ -49,7 +49,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       const th = 'style="text-align:right;padding:.2rem"';
       $("mo-lines").innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:520px"><tr><th ${th}>المنتج</th><th ${th}>الكمية</th><th ${th}>سعر العلبة (دج)</th><th ${th}>المجموع</th><th></th></tr>` + lines.map((l, i) => {
         const known = P.some(p => p.title === l.title && p.slug === l.slug);
-        return `<tr data-i="${i}"><td style="padding:.2rem"><select data-f="sel"><option value="">اختر المنتج…</option>${P.map((p, k) => `<option value="${k}"${known && p.title === l.title ? " selected" : ""}>${esc(p.title)}</option>`).join("")}<option value="x"${!known && l.title ? " selected" : ""}>✎ منتج آخر…</option></select>${!known && l.title !== "" || l.__x ? `<input data-f="title" value="${esc(l.title)}" placeholder="اسم المنتج" style="margin-top:.2rem">` : ""}</td><td style="padding:.2rem"><input data-f="qty" type="number" min="1" step="1" value="${l.qty}" style="max-width:80px"></td><td style="padding:.2rem"><input data-f="price" type="number" min="0" step="50" value="${l.price}" style="max-width:110px"></td><td style="padding:.2rem"><b>${(num(l.qty) * num(l.price)).toLocaleString("fr-DZ")}</b></td><td style="padding:.2rem"><button type="button" class="small warn" data-f="del">🗑</button></td></tr>`;
+        return `<tr data-i="${i}"><td style="padding:.2rem"><select data-f="sel"><option value="">اختر المنتج…</option>${P.map((p, k) => `<option value="${k}"${known && p.title === l.title ? " selected" : ""}>${esc(p.name || p.title)}${p.name && p.name !== p.title ? " ← " + esc(p.title) : ""}</option>`).join("")}<option value="x"${!known && l.title ? " selected" : ""}>✎ منتج آخر…</option></select>${!known && l.title !== "" || l.__x ? `<input data-f="title" value="${esc(l.title)}" placeholder="اسم المنتج" style="margin-top:.2rem">` : ""}</td><td style="padding:.2rem"><input data-f="qty" type="number" min="1" step="1" value="${l.qty}" style="max-width:80px"></td><td style="padding:.2rem"><input data-f="price" type="number" min="0" step="50" value="${l.price}" style="max-width:110px"></td><td style="padding:.2rem"><b>${(num(l.qty) * num(l.price)).toLocaleString("fr-DZ")}</b></td><td style="padding:.2rem"><button type="button" class="small warn" data-f="del">🗑</button></td></tr>`;
       }).join("") + "</table>";
     }
     fillCom(); fillDesk(); drawLines(); total(); if (!src) autoFee();
