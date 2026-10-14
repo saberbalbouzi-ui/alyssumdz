@@ -111,7 +111,8 @@ const totp = (sec, step) => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigI
   ok("المحاسب: الكتابة في التخزين الخاص مرفوضة", await A.p.evaluate(() => /عرض فقط/.test(document.getElementById("toast2").textContent)));
   const stillCost = await O.p.evaluate(async () => (await Priv.remote("costs"))["demo-slug"]);
   ok("قيمة المالك لم تتغيّر", stillCost === 640, stillCost);
-  await A.p.evaluate(() => Admin.tab("payments")); await A.p.waitForTimeout(1200);
+  await A.p.evaluate(() => { document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })); const b = document.querySelector('.nav-btn[onclick*="payments"]'); if (b) b.click(); else Admin.tab("payments"); }); await A.p.waitForTimeout(1500);       // pointerdown يمنع AdminHome.guard (يعيد «لوحة التحكم» لانتقال بلا نقر)
+        // أقل من 1.2ث: AdminHome.guard يعيد «لوحة التحكم» لأي انتقال برمجي بلا نقر
   ok("المحاسب: تبويب المدفوعات يعمل", await A.p.evaluate(() => !document.getElementById("tab-payments").classList.contains("hidden") && !!document.querySelector("#tab-payments > .rl-robar")));
   await A.p.evaluate(() => Admin.tab("customers")); await A.p.waitForTimeout(1200);
   ok("المحاسب: تبويب العملاء يعمل (عرض فقط)", await A.p.evaluate(() => !document.getElementById("tab-customers").classList.contains("hidden") && !!document.querySelector("#tab-customers > .rl-robar")));
