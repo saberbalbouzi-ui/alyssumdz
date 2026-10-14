@@ -333,6 +333,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.close(); await w(400); return o;
   });
   ok("إنشاء الصور: الشريط الجانبي = المقاس + تدوير الزوايا فقط، والعنصر بلا إعدادات ويب (رابط/نوع/ظهور/أجهزة)", adS.page && /80/.test(adS.rad) && adS.ovf === "hidden" && adS.size === "1080x1920" && adS.cornerA === 0 && adS.centerA === 255 && adS.noWeb && adS.btnKeys.includes("text"), adS);
+  const fitT = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "fit1", textMode: "none", lang: "ar" }); await w(1500);
+    const mkU = (iw, ih) => { const c = document.createElement("canvas"); c.width = iw; c.height = ih; c.getContext("2d").fillRect(0, 0, iw, ih); return c.toDataURL("image/png"); }, o = {};
+    const geo = () => { const P = JSON.parse(PBApp.pageJson()), im = P.sections[0].free.filter(x => x.type === "image").pop(); return im ? [im.set.fx.d, im.set.fy.d, im.set.fwd.d, im.set.fh.d] : null; };
+    PBApp.addPageImage(mkU(200, 400)); await w(900); o.portrait = geo();
+    PBApp.addPageImage(mkU(400, 200)); await w(900); o.landscape = geo();
+    PBApp.close(); await w(400); return o;
+  });
+  ok("إنشاء الصور (مربع): الصورة الطولية ارتفاعها = ارتفاع الصفحة بالوسط، والعريضة عرضها = عرض الصفحة", !!fitT.portrait && Math.abs(fitT.portrait[3] - 1000) <= 1 && Math.abs(fitT.portrait[2] - 50) < .2 && Math.abs(fitT.portrait[0] - 25) < .2 && fitT.portrait[1] === 0 && Math.abs(fitT.landscape[2] - 100) < .2 && Math.abs(fitT.landscape[3] - 500) <= 1 && fitT.landscape[1] === 250, fitT);
   const sbw = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "sbw", textMode: "none", lang: "ar" }); await w(1500); const el = document.getElementById("pbx-insp"), o = { lw: (l => l ? parseFloat(getComputedStyle(l.querySelector(".pbx-tabs"), "::-webkit-scrollbar").width) : -1)(document.getElementById("pbx-lside")), w: el ? parseFloat(getComputedStyle(el, "::-webkit-scrollbar").width) : -1, ov: el ? getComputedStyle(el).overflowY : "" }; PBApp.close(); await w(400); return o; });
   ok("المطوّر: شريط تمرير الإعدادات الأيمن عريض (≥12px) برتقالي", sbw.w >= 12 && /auto|scroll/.test(sbw.ov), sbw);
   ok("المطوّر: شريط تمرير القائمة اليسرى عريض أيضاً", sbw.lw >= 12, sbw);
