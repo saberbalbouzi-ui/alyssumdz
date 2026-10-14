@@ -360,6 +360,14 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       const sup0 = A._supPub; A._supPub = { [W.id]: { [yesD.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")]: [150, 0] } }; const q = A.shipFeeFor(W, yesD, "home"); r.sup = q.sup === 150 && q.fee === q.base + 150; A._supPub = sup0; r.ready = typeof A.shipSupLoad === "function" && (await A.shipSupLoad(), true);
       bg.remove(); return r; });
     ok("طلب يدوي: Stop Desk يتعطل في البلدية بلا مكتب ويُفعَّل مع مكتب، وإضافة البلدية تُضاف لسعر الولاية", mo2.disabled && mo2.enabled && mo2.opts && mo2.sup && mo2.ready, mo2); }
+  { const mo3 = await p.evaluate(async () => { const A = Admin, r = {}; const W = WILAYAS.find(w => !w.par && (w.communes || []).length > 2), cn = x => String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+      const c1 = W.communes[0], c2 = W.communes[1], cs0 = A.communeSup, sp0 = A._supPub, W2 = WILAYAS.find(w => !w.par && w.id !== W.id && (w.communes || []).length);
+      A._supPub = { [W.id]: { [cn(c1)]: [60, 0] }, [W2.id]: { [cn(W2.communes[0])]: [-40, 0] } }; A.communeSup = () => ({ [W.id]: { [cn(c2)]: [90, 0] } });
+      const m = A.shipSup(); r.merge = m[W.id][cn(c1)][0] === 60 && m[W.id][cn(c2)][0] === 90 && !!m[W2.id];
+      ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), set = (id, v) => { const e = bg.querySelector("#" + id); e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); };
+      set("mo-wil", W.name); set("mo-com", c1); const h1 = bg.querySelector("#mo-fh").textContent; r.h1 = /البلدية \+60/.test(h1) && /الولاية/.test(h1); set("mo-com", W.communes[2]); r.h0 = /البلدية 0/.test(bg.querySelector("#mo-fh").textContent);
+      bg.remove(); A.communeSup = cs0; A._supPub = sp0; return r; });
+    ok("طلب يدوي: تفصيل «الولاية + البلدية» يظهر دائماً ويدمج الإضافات المحلية والمنشورة", mo3.merge && mo3.h1 && mo3.h0, mo3); }
   { const cs = await p.evaluate(async () => { const A = Admin, d = new Date().toISOString(); const o = { id: "CS-1", name: "زبون تناسق", phone: "0555111222", status: "nouvelle", note: "", date: d, wilaya: "Alger", commune: "x", total: 2000, items: "منتج ×1 = 2000 DA" }; A.orders.push(o); const r = {};
       const i = A.orders.indexOf(o); A.setAttempt(i, 1); r.stamp = /👤\S+@\d+/.test(o.note); r.last = CallSync.lastCallText(o); r.txt = /لم يُجب/.test(r.last) && /المدير/.test(r.last);
       o.note = ""; A.openOrderPreview(i); await new Promise(z => setTimeout(z, 150)); const lk = document.querySelector("#ord-prev-a a.call-lnk"); r.hasOid = !!lk && lk.dataset.oid === "CS-1"; lk.addEventListener("click", e => e.preventDefault(), true); lk.click(); r.locked = /🔒\S+#\d+/.test(o.note); document.getElementById("ord-prev-bg").classList.remove("open");
