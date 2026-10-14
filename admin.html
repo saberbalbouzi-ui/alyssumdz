@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.219">
+<meta name="admin-version" content="1.89.221">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1644,12 +1644,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.219"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.219"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.219"></script>
+<script src="assets/js/ctl-help.js?v=1.89.221"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.221"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.221"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.219"></script>
+<script src="assets/js/admin-nav.js?v=1.89.221"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1661,7 +1661,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.56"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.219"></script>
+<script src="assets/js/admin-update.js?v=1.89.221"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -2540,7 +2540,10 @@ const Admin = {
     $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
-      const fresh0 = this.liveOrders(o.orders), changed = fresh0.length !== this.orders.length || fresh0.some(x=>{ const old = this.orders.find(y=>y.id === x.id); return old && (old.status !== x.status || old.note !== x.note); });
+      const fresh0 = this.liveOrders(o.orders);
+      /* سباق الإرسال: حفظ وسم التتبع (PATCH) غير منتظَر، فقد تصل قائمة الخادم قبل وصوله فتُسقط التتبع من النسخة المحلية ويختفي الطلب من «المسجلة» ويعود للطلبات بلا تتبع — نُبقي وسم التتبع المحلي (وحالته) إن كان أحدث من 3 دقائق والخادم بلا تتبع */
+      try{ const now = Date.now(); fresh0.forEach((x, k)=>{ const old = this.orders.find(y=>y.id === x.id); if(old && this.trackingOf(old) && !this.trackingOf(x) && old._trkAt && now - old._trkAt < 180000){ x.note = old.note; if(old.status !== "nouvelle") x.status = old.status; x._trkAt = old._trkAt; } }); }catch(e){}
+      const changed = fresh0.length !== this.orders.length || fresh0.some(x=>{ const old = this.orders.find(y=>y.id === x.id); return old && (old.status !== x.status || old.note !== x.note); });
       this.orders = fresh0;
       this.reconcileStatusChanges();
       if(changed){ this.renderStats(); this.renderOrders(); this.renderShipped(); }
@@ -7771,7 +7774,7 @@ const Admin = {
   saveTracking(o, companyKey, tracking, coNo){
     const clean = String(o.note||"").replace(/🚚[a-z0-9_]+:[A-Za-z0-9._-]+\s*/g,"").replace(/🔢[A-Za-z0-9._-]+\s*/g,"").trim();
     o.note = (clean ? clean + " " : "") + "🚚" + companyKey + ":" + tracking + (coNo && String(coNo) !== String(o.id) ? " 🔢" + String(coNo).replace(/[^A-Za-z0-9._-]/g,"") : "");
-    API.updateOrder(this.key, o.id, undefined, o.note);
+    o._trkAt = Date.now(); API.updateOrder(this.key, o.id, undefined, o.note);
     try{ if(typeof AdminYd !== "undefined" && AdminYd.noteSent) AdminYd.noteSent(o, companyKey, tracking); }catch(e){}
   },
 
@@ -8704,11 +8707,10 @@ const Admin = {
       if(cached){ got.push({ o, t, url: cached, co: co && co.name }); continue }                       // رابط البوردرو محفوظ عند الإرسال: بلا أي طلب للشركة
       if(!co || !co.labelRequest){ got.push({ o, t, inline: true, co: co && co.name }); continue }       // شركة بلا بوردرو: وصلنا الخاص بباركود رقم التتبع
       try{
-        let r = await this.courierFetch(co.labelRequest(cfg, t.tracking));
-        if(r.status === 429){ msg("⏳ بلغت الشركة حدّ الطلبات — انتظار 20 ثانية ثم نكمل… " + k + " / " + list.length); await new Promise(x=>setTimeout(x, 20000)); r = await this.courierFetch(co.labelRequest(cfg, t.tracking)); }
-        if(!r.ok) throw new Error(this.coHttpErr(co, t.company, r));
-        const url = co.parseLabel(JSON.parse(r.text)); if(!url) throw new Error("لا رابط بوردرو لهذا الطرد");
-        got.push({ o, t, url, co: co.name }); this.cacheLabel(o.id, url);
+        let r = await this.labelUrlFor(o, t, co, cfg);
+        if(r.err && /حدّ الطلبات/.test(r.err)){ msg("⏳ بلغت الشركة حدّ الطلبات — انتظار 20 ثانية ثم نكمل… " + k + " / " + list.length); await new Promise(x=>setTimeout(x, 20000)); r = await this.labelUrlFor(o, t, co, cfg); }
+        if(!r.url) throw new Error(r.err || "لا رابط بوردرو لهذا الطرد");
+        got.push({ o, t, url: r.url, co: co.name });
       }catch(e){ bad.push({ o, t, why: String((e && e.message) || e) }); }
       if(k < list.length) await new Promise(r=>setTimeout(r, 350));
     }
@@ -8725,18 +8727,30 @@ const Admin = {
     toast("🖨 فُتح بوردرو " + got.length + " طرد" + (bad.length ? " — وتعذّر " + bad.length : ""));
   },
   /* بوردورو الشركة الأصلي: يُجلب رابطه من الشركة ويُفتح في تبويب جديد (منه الطباعة أو التنزيل) */
+  /* رابط بوردرو الشركة لطرد: المحفوظ عند الإرسال أولاً (بلا طلب للشركة)، وإلا يُجلب بقراءة الطرد ويُبحث عنه بعمق في الردّ (أي شكل) ثم يُحفظ */
+  async labelUrlFor(o, t, co, cfg){
+    const c = o && o.id && this.labelOf(o.id); if(c) return { url: c };
+    const r = await this.courierFetch(co.labelRequest(cfg, t.tracking));
+    if(r.status === 429) return { err: "بلغت الشركة حدّ الطلبات — أعد المحاولة بعد دقيقة" };
+    if(!r.ok) return { err: this.coHttpErr(co, t.company, r), cors: false };
+    let j = null; try{ j = JSON.parse(r.text); }catch(e){}
+    const url = (j && (co.parseLabel(j) || this.deepLabel(j))) || "";
+    if(!url) return { err: "ردّت الشركة بلا رابط بوردرو لهذا الطرد" + (j ? "" : " (ردّ غير مقروء)") };
+    if(o && o.id) this.cacheLabel(o.id, url); return { url };
+  },
+  /* بوردورو الشركة الأصلي: يُفتح رابطه في تبويب جديد (منه الطباعة أو التنزيل)؛ وإن تعذّر يُفتح وصل الطلب بباركود التتبع بدلاً من الفشل الصامت */
   async openLabel(i){
     const o = this.orders[i], t = o && this.trackingOf(o); if(!t) return;
     const co = this.allDeliveryCompanies()[t.company], cfg = this.deliveryCfg[t.company] || {};
     if(!co || !co.labelRequest){ toast("ℹ️ بوردورو هذه الشركة غير مدعوم هنا — تُفتح عوضاً عنه نسخة وصل الطلب"); return this.printOrderSlip(i) }
     const w = window.open("", "_blank");            // يُفتح فوراً حتى لا يحجبه المتصفح بعد الانتظار
+    if(!w) toast("⚠️ المتصفح حجب النافذة — اسمح بالنوافذ المنبثقة لهذا الموقع (أيقونة القفل بجانب العنوان) ثم أعد الضغط");
+    else try{ w.document.write('<!doctype html><meta charset="utf-8"><body dir="rtl" style="font-family:sans-serif;padding:2rem;text-align:center">⏳ جارِ جلب البوردرو من شركة التوصيل…</body>'); }catch(e){}
     try{
-      const r = await this.courierFetch(co.labelRequest(cfg, t.tracking));
-      if(!r.ok) throw new Error("رد الشركة " + r.status);
-      const url = co.parseLabel(JSON.parse(r.text));
-      if(!url) throw new Error("لم تُرجع الشركة رابط البوردورو لهذا الطرد");
-      if(w) w.location.href = url; else location.href = url;
-    }catch(err){ if(w) w.close(); if(err.cors){ this.explainCors(co); return } toast("❌ " + err.message + " — يمكنك طباعته من حساب الشركة مباشرة برقم التتبع " + t.tracking); }
+      const r = await this.labelUrlFor(o, t, co, cfg);
+      if(r.url){ if(w) w.location.href = r.url; else window.open(r.url, "_blank") || (location.href = r.url); return; }
+      if(w) w.close(); toast("⚠️ " + r.err + " — فُتح وصل الطلب بباركود التتبع بدلاً منه"); this.printOrderSlip(i);
+    }catch(err){ if(w) try{ w.close(); }catch(e){} if(err.cors){ this.explainCors(co); return } toast("❌ " + err.message + " — فُتح وصل الطلب بدلاً منه (والبوردرو الأصلي من حساب الشركة برقم التتبع " + t.tracking + ")"); try{ this.printOrderSlip(i); }catch(e){} }
   },
 
   /* ════════ 📣 إشعارات الزبائن عند تغيّر الحالة ════════ */
