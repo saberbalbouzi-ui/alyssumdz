@@ -313,6 +313,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const pop = document.getElementById("pbx-bgp"); o.pop = !!pop; if (pop) { o.eye = typeof window.EyeDropper === "function" ? !!pop.querySelector("#bgp-e") : true; pop.querySelector('.bgp-sw button[data-c="#e53935"]').click(); await w(300); o.bg = JSON.parse(PBApp.pageJson()).sections[0].set.bg; o.inFrame = getComputedStyle(fd.querySelector(".pb-sec")).backgroundColor; }
     PBApp.close(); await w(400); o.closed = !document.getElementById("pbx-bgp"); return o;
   });
+  const sbw = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "sbw", textMode: "none", lang: "ar" }); await w(1500); const el = document.getElementById("pbx-insp"), o = { w: el ? parseFloat(getComputedStyle(el, "::-webkit-scrollbar").width) : -1, ov: el ? getComputedStyle(el).overflowY : "" }; PBApp.close(); await w(400); return o; });
+  ok("المطوّر: شريط تمرير الإعدادات الأيمن عريض (≥12px) برتقالي", sbw.w >= 12 && /auto|scroll/.test(sbw.ov), sbw);
   ok("إنشاء الصور: الخلفية ليست قسماً (لا إطار ولا شريط قسم) وزر الأيمن ← «إضافة لون الخلفية» ← نافذة ألوان تغيّر الخلفية وتُغلق مع المحرر", bgT.noSecBox && bgT.hasItem && bgT.pop && bgT.eye && bgT.bg === "#e53935" && /229, 57, 53/.test(bgT.inFrame) && bgT.closed, bgT);
   ok("تصميم بمقاس: عجلة الفأرة تكبّر وتصغّر بلا Ctrl، والقرص بإصبعين يكبّر على الهاتف", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].zoomIn && fitR[k].zoomOut) && fitR.mobile.inside && fitR.mobile.pinch, fitR);
   const ar = await p.evaluate(async () => {
