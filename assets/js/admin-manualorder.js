@@ -54,7 +54,19 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       $("mo-deskw").style.display = dt() === "stop" ? "" : "none";
     }
     const total = () => { const c = calc(lines, $("mo-fee").value, $("mo-disc").value); $("mo-sub").textContent = c.sub.toLocaleString("fr-DZ") + " دج"; $("mo-tot").textContent = c.total.toLocaleString("fr-DZ") + " دج"; };
-    function autoFee() { const w = wOf($("mo-wil").value), q = w && ad.shipFeeFor ? ad.shipFeeFor(w, $("mo-com").value, dt()) : { fee: w ? num(dt() === "stop" ? w.stop : w.home) : 0, base: 0, sup: 0 }, base = q.fee; if (!src || $("mo-wil").value !== src.wilaya || $("mo-com").value !== src.commune || dt() !== (src.dtype === "stop" ? "stop" : "home")) { $("mo-fee").value = base; $("mo-fh").textContent = w ? "رسم التوصيل: " + base.toLocaleString("fr-DZ") + " دج" + (ad.feeNote ? ad.feeNote(q, $("mo-com").value) : "") + " — عدّله إن لزم" : ""; } total(); }
+    const ffFail = {};
+    function autoFee() {
+      const w = wOf($("mo-wil").value), q = w && ad.shipFeeFor ? ad.shipFeeFor(w, $("mo-com").value, dt()) : { fee: w ? num(dt() === "stop" ? w.stop : w.home) : 0, base: 0, sup: 0 }; let base = q.fee, note = ad.feeNote ? ad.feeNote(q, $("mo-com").value) : "";
+      /* ولاية انطلاق غير الافتراضية ← تعريفة ياليدين لذلك الزوج (انطلاق، وجهة) بدل سعر الولاية الافتراضي */
+      const fe = $("mo-from"), fw = fe && fe.value && fe.value !== fromDef(ad) ? wOf(fe.value) : null;
+      if (w && fw && $("mo-com").value && ad.fromFeeFor) {
+        const v = ad.fromFeeFor(fw.id, w, $("mo-com").value, dt()), key = fw.id + "-" + (w.par || w.id);
+        if (v != null) { base = v; note = " (تعريفة ياليدين من " + fw.name + ")"; }
+        else if (!ffFail[key] && ad.ensureFromFees) { ad.ensureFromFees(fw.id, w).then(okk => { if (!okk) ffFail[key] = true; if (document.body.contains(bg)) autoFee(); }); note = " ⏳ جارِ جلب تعريفة الانطلاق من " + fw.name + "…"; }
+        else note = " — تعذّر جلب تعريفة الانطلاق من " + fw.name + " فحُسب الرسم من الولاية الافتراضية";
+      }
+      if (!src || $("mo-wil").value !== src.wilaya || $("mo-com").value !== src.commune || dt() !== (src.dtype === "stop" ? "stop" : "home")) { $("mo-fee").value = base; $("mo-fh").textContent = w ? "رسم التوصيل: " + base.toLocaleString("fr-DZ") + " دج" + note + " — عدّله إن لزم" : ""; } total();
+    }
     function drawLines() {
       const th = 'style="text-align:right;padding:.2rem"';
       $("mo-lines").innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:520px"><tr><th ${th}>المنتج</th><th ${th}>الكمية</th><th ${th}>سعر العلبة (دج)</th><th ${th}>المجموع</th><th></th></tr>` + lines.map((l, i) => {
@@ -66,7 +78,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     $("mo-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); };
     if (ad.shipSupLoad) ad.shipSupLoad().then(() => { if (!src && document.body.contains(bg)) autoFee(); });
     bg.querySelectorAll('input[name="mo-dt"]').forEach(r => r.onchange = () => { fillDesk($("mo-desk").value); autoFee(); });
-    $("mo-com").onchange = () => { fillDesk(""); autoFee(); }; $("mo-fee").oninput = total; $("mo-disc").oninput = total;
+    $("mo-com").onchange = () => { fillDesk(""); autoFee(); }; if ($("mo-from")) $("mo-from").onchange = () => autoFee(); $("mo-fee").oninput = total; $("mo-disc").oninput = total;
     $("mo-add").onclick = () => { lines.push({ slug: "", title: "", qty: 1, price: 0 }); drawLines(); total(); };
     $("mo-lines").addEventListener("input", e => { const tr = e.target.closest("tr[data-i]"); if (!tr) return; const l = lines[+tr.dataset.i], f = e.target.dataset.f; if (f === "qty") l.qty = Math.max(1, num(e.target.value)); else if (f === "price") l.price = num(e.target.value); else if (f === "title") l.title = e.target.value; else return; tr.querySelector("b").textContent = (num(l.qty) * num(l.price)).toLocaleString("fr-DZ"); total(); });
     $("mo-lines").addEventListener("change", e => { const tr = e.target.closest("tr[data-i]"); if (!tr || e.target.dataset.f !== "sel") return; const l = lines[+tr.dataset.i], v = e.target.value; if (v === "x") { l.slug = ""; l.__x = true; l.title = l.title || ""; } else if (v === "") { l.slug = ""; l.title = ""; l.price = 0; delete l.__x; } else { const p = P[+v]; l.slug = p.slug; l.title = p.title; l.price = p.price; delete l.__x; } drawLines(); total(); });
