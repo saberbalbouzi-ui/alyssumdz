@@ -398,6 +398,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       A.courierFetch = async () => { throw new Error("boom"); }; await A.openLabel(0); r.slip2 = slip === 2;
       A.courierFetch = cf0; window.open = wo0; A.printOrderSlip = ps0; A.orders = ao0; A.labelCache = lc0; return r; });
     ok("بوردرو الشركة الأصلي: يُبحث عن الرابط بعمق في الردّ ويُحفظ، وإن تعذّر يُفتح وصل الطلب بدل الفشل الصامت", bl.deep && bl.cache && bl.slip && bl.slip2, bl); }
+  { const ff = await p.evaluate(async () => { const A = Admin, r = {}, f0 = A.ydFees, c0 = A.deliveryCfg.yalidine, cf0 = A.courierFetch, ps0 = Priv.set, W16 = WILAYAS.find(w => w.id === 16), W15 = WILAYAS.find(w => w.id === 15), W31 = WILAYAS.find(w => w.id === 31);
+      A.deliveryCfg.yalidine = Object.assign({}, c0 || {}, { apiId: "1", apiToken: "2", enabled: true, fromWilayaName: "Alger" }); A.ydFees = {}; let urls = []; Priv.set = async () => { };
+      const com = W31.communes[0]; A.courierFetch = async rq => { urls.push(rq.url); return { ok: true, status: 200, text: JSON.stringify({ retour_fee: 200, per_commune: { 1: { commune_name: com, express_home: 1234, express_desk: 777 } } }) }; };
+      ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), set = (id, v) => { const e = bg.querySelector("#" + id); e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); };
+      set("mo-wil", W31.name); set("mo-com", com); const d = bg.querySelector("#mo-fee").value; set("mo-from", W15.name); const h0 = bg.querySelector("#mo-fh").textContent; await new Promise(z => setTimeout(z, 400));
+      r.fetched = urls.length === 1 && /from_wilaya_id=15&to_wilaya_id=31/.test(urls[0]); r.fee = bg.querySelector("#mo-fee").value === "1234" && /من /.test(bg.querySelector("#mo-fh").textContent) && /تعريفة ياليدين/.test(bg.querySelector("#mo-fh").textContent); r.saved = !!(A.ydFees["15-31"]);
+      set("mo-from", W16.name); r.back = bg.querySelector("#mo-fee").value === d && urls.length === 1; set("mo-from", W15.name); r.cache = bg.querySelector("#mo-fee").value === "1234" && urls.length === 1;
+      A.courierFetch = async () => ({ ok: false, status: 500, text: "" }); A.ydFees = {}; set("mo-from", W16.name); set("mo-from", W15.name); await new Promise(z => setTimeout(z, 300)); r.fail = bg.querySelector("#mo-fee").value === d && /تعذّر/.test(bg.querySelector("#mo-fh").textContent);
+      bg.remove(); A.ydFees = f0; A.deliveryCfg.yalidine = c0; A.courierFetch = cf0; Priv.set = ps0; return r; });
+    ok("طلب يدوي: رسم التوصيل يتبع ولاية الانطلاق المختارة (يجلب تعريفة الزوج مرة ويخزّنها، ويعود للافتراضي عند العودة أو الفشل)", ff.fetched && ff.fee && ff.saved && ff.back && ff.cache && ff.fail, ff); }
   { const mo3 = await p.evaluate(async () => { const A = Admin, r = {}; const W = WILAYAS.find(w => !w.par && (w.communes || []).length > 2), cn = x => String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
       const c1 = W.communes[0], c2 = W.communes[1], cs0 = A.communeSup, sp0 = A._supPub, W2 = WILAYAS.find(w => !w.par && w.id !== W.id && (w.communes || []).length);
       A._supPub = { [W.id]: { [cn(c1)]: [60, 0] }, [W2.id]: { [cn(W2.communes[0])]: [-40, 0] } }; A.communeSup = () => ({ [W.id]: { [cn(c2)]: [90, 0] } });
