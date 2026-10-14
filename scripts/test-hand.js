@@ -152,7 +152,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { document.querySelector('[data-imgm="ai"]').click(); }); await p.waitForTimeout(500);
   ok("تعديل بالوصف: تظهر اقتراحات جاهزة وحقل التعليمات", await p.evaluate(() => !!document.getElementById("pbai-text") && document.querySelectorAll('#pbai [data-ai="preset"]').length >= 5));
   await p.evaluate(() => { document.getElementById("pbai-text").value = "غيّر لون المنتج إلى الذهبي"; document.getElementById("pbai-text").dispatchEvent(new Event("input", { bubbles: true })); document.querySelector('#pbai [data-ai="edit"]').click(); }); await p.waitForTimeout(3500);
-  ok("تعديل بالوصف: يُرسل الطلب ويعرض النتيجة (مفتاح تجريبي ومحاكاة الخدمة)", await p.evaluate(() => (window.__aiCalls || []).some(u => /generateContent/.test(u)) && !!document.querySelector("#pbai-res img")), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
+  ok("تعديل بالوصف: يُرسل الطلب وتظهر النتيجة مباشرة على الصورة (مفتاح تجريبي ومحاكاة الخدمة)", await p.evaluate(() => (window.__aiCalls || []).some(u => /generateContent/.test(u)) && PBApp.liveOn()), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
 
   // ── الشبكة اختيارية: الصفحة بيضاء بلا شبكة افتراضياً ──
   ok("المحرّر: الصفحة بيضاء بلا شبكة افتراضياً (الشبكة والالتصاق في قائمة الزر الأيمن لا الشريط العلوي)", await p.evaluate(() => { const b = document.getElementById("pbx-frame").contentDocument.body; return !document.getElementById("pbx-grid") && !document.getElementById("pbx-snap") && b.classList.contains("pbx-nogrid"); }));
@@ -177,9 +177,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الممحاة الذكية: تفتح محرّر الفرشاة", await p.evaluate(() => !!document.getElementById("pbs-er")));
   await p.evaluate(() => { const x = document.getElementById("er-x"); if (x) x.click(); const o = document.getElementById("pbs-er"); if (o) o.remove(); }); await p.waitForTimeout(200);
   await p.evaluate(() => document.querySelector('[data-imgt="rt"]').click()); await p.waitForTimeout(900);
-  ok("لمسات وتصحيح: تفتح لوحتها بمعاينة وأزرارها", await p.evaluate(() => !!document.getElementById("pbrt") && !!document.getElementById("pbrt-pv") && document.querySelectorAll("#pbrt [data-rt]").length >= 8));
-  await p.evaluate(() => { document.querySelector('#pbrt [data-rt="auto"]').click(); }); await p.waitForTimeout(1200);
-  ok("لمسات وتصحيح: تحسين تلقائي يُفعَّل ويفتح زر «تطبيق»", await p.evaluate(() => !document.getElementById("pbrt-apply").disabled));
+  ok("لمسات وتصحيح: تفتح لوحتها بمنزلقات مباشرة", await p.evaluate(() => !!document.getElementById("pbrt") && document.querySelectorAll("#pbrt [data-rtk]").length >= 8 && !document.getElementById("pbrt-apply")));
+  await p.evaluate(() => { const r = document.querySelector('#pbrt [data-rtk="auto"]'); r.value = 100; r.dispatchEvent(new Event("input", { bubbles: true })); }); await p.waitForTimeout(2200);
+  const lv = await p.evaluate(() => { const f = document.getElementById("pbx-epf"), im = document.getElementById("pbx-frame").contentDocument.querySelector("[data-pb] img"); return { on: PBApp.liveOn(), okTxt: f && f.querySelector(".ok span") && f.querySelector(".ok span").textContent, noTxt: f && f.querySelector(".no span") && f.querySelector(".no span").textContent, blob: !!im && /^blob:/.test(im.src) }; });
+  ok("لمسات وتصحيح: التعديل يظهر مباشرة على الصورة في الصفحة مع زرّي «تنفيذ» و«إلغاء»", lv.on && lv.blob && lv.okTxt === "تنفيذ" && lv.noTxt === "إلغاء", lv);
+  await p.evaluate(() => document.querySelector('#pbx-epf [data-epf="no"]').click()); await p.waitForTimeout(700);
+  ok("لمسات وتصحيح: «إلغاء» يعيد الصورة الأصلية ويصفّر المنزلقات", await p.evaluate(() => { const im = document.getElementById("pbx-frame").contentDocument.querySelector("[data-pb] img"); return !PBApp.liveOn() && !!im && !/^blob:/.test(im.src) && !document.getElementById("pbx-epf") && document.querySelector('#pbrt [data-rtk="auto"]').value === "0"; }));
+  await p.evaluate(() => { try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-imgt="bg"]').click(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-bgr="open"]').click()); await p.waitForTimeout(9000);
+  ok("نزع الخلفية: النتيجة تظهر مباشرة على الصورة مع «تنفيذ/إلغاء» (بلا نافذة منفصلة)", await p.evaluate(() => PBApp.liveOn() && !document.getElementById("pbbg") && !!document.querySelector('#pbx-epf [data-epf="ok"]')), await p.evaluate(() => ({ on: PBApp.liveOn(), chip: (document.getElementById("pbbg-chip") || {}).textContent })));
+  await p.evaluate(() => { const n = document.querySelector('#pbx-epf [data-epf="no"]'); if (n) n.click(); }); await p.waitForTimeout(500);
   for (const [k, root, txt] of [["ff", "pbff", /Contour fondu|حواف/], ["fr", "pbfr", /إطار/], ["cl", "pbcl", /كولاج/], ["vd", "pbvd", /فيديو/]]) {
     await p.evaluate(kk => document.querySelector('[data-imgt="' + kk + '"]').click(), k); await p.waitForTimeout(700);
     ok("أداة «" + k + "»: تفتح لوحتها", await p.evaluate(([r, t]) => { const e = document.getElementById(r); return !!e && new RegExp(t).test(e.textContent); }, [root, txt.source]));
@@ -251,7 +258,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-st="cut"]') && document.querySelector('[data-st="cut"]').click(); for (let i = 0; i < 60 && !PBStudio._S.cut; i++) await w(300);
     o.cut = !!PBStudio._S.cut; o.msg = PBStudio._S.msg; const z = document.getElementById("pbst-sz"); z.value = "1080x1920"; z.dispatchEvent(new Event("change", { bubbles: true })); for (let i = 0; i < 40; i++) { const e0 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); if (e0 && /^blob:/.test(e0.src) && e0.naturalHeight && Math.abs(e0.naturalWidth / e0.naturalHeight - 0.5625) < .02) break; await w(300); } await w(300);
     const el = document.querySelector("#pbx-frame") && document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.live = !!el && /^blob:/.test(el.src); o.ratio = el ? +(el.naturalWidth / el.naturalHeight).toFixed(3) : 0; o.small = !document.getElementById("pbst-cv");
-    const f = document.getElementById("pbx-epf"); o.bar = !!f && /تطبيق/.test(f.textContent) && /إلغاء/.test(f.textContent);
+    const f = document.getElementById("pbx-epf"); o.bar = !!f && /تنفيذ/.test(f.textContent) && /إلغاء/.test(f.textContent);
     f && f.querySelector('[data-epf="no"]').click(); await w(700); const el2 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.restored = !!el2 && !/^blob:/.test(el2.src); o.pend = PBStudio.pending();
     document.querySelector('[data-st-tab="txt"]').click(); document.querySelector('[data-st="addov"][data-i="0"]').click(); await w(300);
     o.ov = PBStudio.opts().ov.length; { const fs = document.querySelector('#pbst [data-stk="font"]'); o.fontOpts = fs ? fs.options.length : 0; o.fontDef = fs ? fs.options[0].textContent : ""; if (fs) { fs.value = "Amiri"; fs.dispatchEvent(new Event("input", { bubbles: true })); } o.font = PBStudio.opts().font; o.ovFont = !!document.querySelector('#pbst [data-ovk="font"]'); } o.tabs = document.querySelectorAll("#pbst [data-st-tab]").length; o.hid = [...document.querySelectorAll("#pbst [data-stp]")].filter(q => !q.hidden).map(q => q.dataset.stp);
@@ -259,7 +266,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const d = out.getContext("2d").getImageData(0, 0, 540, 960).data, px = (x, y) => [d[(y * 540 + x) * 4], d[(y * 540 + x) * 4 + 1], d[(y * 540 + x) * 4 + 2]];
     o.badge = px(540 - 70, 70); o.prod = px(270, 480); o.bgp = px(10, 940); return o;
   });
-  ok("الاستوديو: التعديلات تظهر مباشرة على صورة الصفحة بنسبة المقاس (9:16) بلا صورة مصغّرة، وتحتها «تطبيق/إلغاء»", st2.cut && st2.live && Math.abs(st2.ratio - 0.5625) < .02 && st2.small && st2.bar, st2);
+  ok("الاستوديو: التعديلات تظهر مباشرة على صورة الصفحة بنسبة المقاس (9:16) بلا صورة مصغّرة، وتحتها «تنفيذ/إلغاء»", st2.cut && st2.live && Math.abs(st2.ratio - 0.5625) < .02 && st2.small && st2.bar, st2);
   ok("الاستوديو: «إلغاء» يعيد الصورة الأصلية ويُنهي المعاينة", st2.restored && !st2.pend, st2);
   ok("الاستوديو: تغيير الخط للملصقات (الافتراضي خط الموقع) عاماً ولكل ملصق", st2.fontOpts > 8 && /الموقع/.test(st2.fontDef) && st2.font === "Amiri" && st2.ovFont, st2);
   ok("الاستوديو: خمسة تبويبات وتبويب واحد ظاهر، وإضافة ملصق بيع", st2.tabs === 5 && st2.hid.length === 1 && st2.hid[0] === "txt" && st2.ov >= 1, st2);

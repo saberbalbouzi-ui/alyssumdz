@@ -327,7 +327,7 @@ body{overflow-x:hidden;margin:0}`;
   function closeFloating() {
     try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
-    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-ip", "pbs-modal", "pbdrop"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-ip", "pbs-modal", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
@@ -986,6 +986,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (typeof PBMask !== "undefined" && PBMask.pending() && PBMask.pending() !== id) PBMask.cancel();      // معاينة ماسك غير مؤكَّدة تُلغى عند تحديد عنصر آخر
     if (typeof PBPuzzle !== "undefined" && PBPuzzle.previewing() && PBPuzzle.previewing() !== id) PBPuzzle.cancelPrev();
     if (typeof PBStudio !== "undefined" && PBStudio.pending() && PBStudio.pending() !== id) PBStudio.cancel();
+    if (E.live && E.live.id !== id) liveCancel();
     if (editing) { try { editing.el.blur(); } catch (e) { } }
     if (id) fxReveal(id);      // عنصر في شريحة/لوحة مخفية: تُعرض أولاً
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
@@ -1312,7 +1313,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "xp" || t === "ai" || t === "sl") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
-    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button></div>`;
+    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
     return `<div class="pbx-pz"><p>يفصل العناصر الكاملة في الصورة (أشخاص، منتجات…) كصور شفافة منفصلة ويضعها في الصفحة.</p><button type="button" class="pbx-small pz-go" data-q="smart-magic">${ico("cutout", 16)} التقاط العناصر</button></div>`;
   }
   function epPlace(p) {
@@ -1321,12 +1322,12 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function epDraw() {
     const p = $("pbx-ep"); if (!p) return; const inf = epInf(); if (!inf) { epClose(); return; }
-    const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); if (cur !== "ff" && typeof PBFade !== "undefined" && PBFade.state.url) PBFade.cancel();
+    const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (E.live && E.live.tab && E.live.tab !== cur) liveCancel(); if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); if (cur !== "ff" && typeof PBFade !== "undefined" && PBFade.state.url) PBFade.cancel();
     const tn = EP_TABS.find(x => x[0] === cur), sn = cur === "st" && typeof PBStudio !== "undefined" ? (IMG_ST.find(x => x[0] === PBStudio.tab()) || [])[1] : "";
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
     const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -1374,7 +1375,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t.dataset.mkp) { const v = t.dataset.mkp; if (v === "c") { PBMask.opt("px", 50); PBMask.opt("py", 50); } else PBMask.opt("size", Number(v)); epDraw(); return; }
     if (t.dataset.mksh) { PBMask.opt("target", t.dataset.mksh); epDraw(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); epDraw(); return; }
-    if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
+    if (t.dataset.bgr) { PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
     if (t.dataset.q === "smart-magic") { PBSmart.captureElements(); return; }
   }
   function epInput(e) {      // تحريك الأشرطة: معاينة حيّة بلا إعادة رسم اللوحة (حتى لا يُقطع السحب)
@@ -1387,13 +1388,13 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   /* أزرار تأكيد/إلغاء صغيرة عائمة تحت الصورة أثناء معاينة البازل أو الماسك */
   function epFloat() {
-    let f = $("pbx-epf"); const inf = epInf(), mk = typeof PBMask !== "undefined" ? PBMask.pending() : "", pz = typeof PBPuzzle !== "undefined" ? PBPuzzle.previewing() : "", stp = typeof PBStudio !== "undefined" ? PBStudio.pending() : "", kind = inf && mk === inf.node.id ? "mk" : inf && pz === inf.node.id ? "pz" : inf && stp === inf.node.id ? "st" : "";
+    let f = $("pbx-epf"); const inf = epInf(), mk = typeof PBMask !== "undefined" ? PBMask.pending() : "", pz = typeof PBPuzzle !== "undefined" ? PBPuzzle.previewing() : "", stp = typeof PBStudio !== "undefined" ? PBStudio.pending() : "", kind = inf && mk === inf.node.id ? "mk" : inf && pz === inf.node.id ? "pz" : inf && stp === inf.node.id ? "st" : inf && E.live && E.live.id === inf.node.id ? "lv" : "";
     if (!kind) { if (f) f.remove(); return; }
     if (!f) { f = document.createElement("div"); f.id = "pbx-epf"; f.className = "pbx-epf"; f.innerHTML = `<button type="button" class="ok" data-epf="ok" title="تأكيد">${ico("check", 15)}<span>تأكيد</span></button><button type="button" class="no" data-epf="no" title="إلغاء">${ico("x", 15)}<span>إلغاء</span></button>`; document.body.appendChild(f);
       f.addEventListener("click", async e => { const b = e.target.closest("[data-epf]"); if (!b) return; const i2 = epInf(), kd = f.dataset.k; if (!i2) return;
-        if (b.dataset.epf === "ok") { if (kd === "mk") PBMask.act("ok", i2); else if (kd === "st") await PBStudio.apply(i2); else await PBPuzzle.act("split", i2); } else { if (kd === "mk") PBMask.cancel(); else if (kd === "st") PBStudio.cancel(); else PBPuzzle.cancelPrev(); }
+        if (b.dataset.epf === "ok") { if (kd === "lv") { if (E.live && E.live.apply) await E.live.apply(); } else if (kd === "mk") PBMask.act("ok", i2); else if (kd === "st") await PBStudio.apply(i2); else await PBPuzzle.act("split", i2); } else { if (kd === "lv") liveCancel(); else if (kd === "mk") PBMask.cancel(); else if (kd === "st") PBStudio.cancel(); else PBPuzzle.cancelPrev(); }
         epFloat(); if ($("pbx-ep")) epDraw(); }); }
-    f.dataset.k = kind; { const o1 = f.querySelector(".ok span"), n1 = f.querySelector(".no span"); if (o1) o1.textContent = kind === "st" ? "تطبيق" : "تأكيد"; if (n1) n1.textContent = "إلغاء"; } epFloatPos();
+    f.dataset.k = kind; { const o1 = f.querySelector(".ok span"), n1 = f.querySelector(".no span"); if (o1) o1.textContent = "تنفيذ"; if (n1) n1.textContent = "إلغاء"; } epFloatPos();
   }
   /* معاينة مباشرة لاستوديو المنتج على صورة الصفحة نفسها (دون تعديل بياناتها): يبدّل الصورة المعروضة فقط؛ الإلغاء يعيد رسمها من البيانات */
   function stPreview(id, url) {
@@ -1401,6 +1402,18 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const done = () => { try { positionOverlay(); epFloatPos(); } catch (e) { } };
     [el, el.querySelector(".pb-cropbox"), im].forEach(x => { if (x) x.style.setProperty("height", "auto", "important"); }); im.removeAttribute("srcset"); im.loading = "eager"; im.onload = done; im.src = url; done(); return true;
   }
+  /* معاينة مباشرة موحَّدة لأدوات تعديل الصورة على صورة الصفحة نفسها + «تنفيذ / إلغاء» تحتها: الأداة تمرّر الصورة الناتجة (رابط أو قماش) وتعريف التنفيذ والإلغاء */
+  function liveShow(id, url, h) {
+    if (E.live && E.live.url && E.live.url !== url) { try { URL.revokeObjectURL(E.live.url); } catch (e) { } }
+    E.live = { id, url, apply: h && h.apply, cancel: h && h.cancel, tab: h && h.tab }; const ok = stPreview(id, url); epFloat(); return ok;
+  }
+  async function liveCanvas(id, cv, h) {
+    const alpha = (() => { try { const t = document.createElement("canvas"); t.width = t.height = 24; t.getContext("2d").drawImage(cv, 0, 0, 24, 24); const d = t.getContext("2d").getImageData(0, 0, 24, 24).data; for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return true; } catch (e) { } return false; })();
+    const blob = await new Promise(r => cv.toBlob(r, alpha ? "image/png" : "image/jpeg", .9)); if (!blob) return false; return liveShow(id, URL.createObjectURL(blob), h);
+  }
+  function liveClear(restore) { const L = E.live; if (!L) return; E.live = null; try { if (L.url) URL.revokeObjectURL(L.url); } catch (e) { } if (restore) stRestore(); else epFloat(); }
+  function liveCancel() { const L = E.live; liveClear(true); try { if (L && L.cancel) L.cancel(); } catch (e) { console.warn(e); } if ($("pbx-ep")) epDraw(); }
+  const liveOn = () => !!E.live;
   function stRestore() { try { renderCanvas(); positionOverlay(); } catch (e) { } epFloat(); }
   function epFloatPos() {
     const f = $("pbx-epf"); if (!f) return; const inf = epInf(), fw = $("pbx-fw"), L = inf && layoutOf(inf.node.id); if (!L || !fw) return; const r = fw.getBoundingClientRect(), s = E.scale || 1, w = f.offsetWidth || 150;
@@ -1619,7 +1632,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "edit") return epToggle();
     if (k === "replace") return uploadFor(inf);
     if (k === "mw") return mwPanel(inf, btn);
-    if (k === "bgremove") return PBBgRemove.open(inf);
+    if (k === "bgremove") return PBBgRemove.live(inf);
     if (k === "eraser") { if (!ERASER_ON) { toast("الممحاة بتقنية Alyssum الذكية معطّلة مؤقتاً"); return; } return PBSmart.eraser(inf); }
     if (k === "magic") return PBSmart.captureElements();
     if (k === "crop") return qPop(btn, `<h6>قصّ الصورة</h6><p>اسحب حواف الصورة للقصّ</p>${set.crop ? '<div class="pg" style="grid-template-columns:1fr;margin-top:.5rem"><button type="button" class="pb2" data-a="reset">↺ إلغاء القصّ</button></div>' : ""}`, p => { const r = p.querySelector("[data-a]"); if (r) r.onclick = () => { closePop(); delete set.crop; afterEdit(); }; }, { dock: true });
@@ -2825,7 +2838,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.pend) { pendAct(t.dataset.pend); return; }
     if (t.dataset.mksh) { if (PBMask.opt("target", t.dataset.mksh)) renderInspector(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); if (t.dataset.mk === "preview" || t.dataset.mk === "no") renderInspector(); return; }
-    if (t.dataset.bgr) { PBBgRemove.open(inf); return; }
+    if (t.dataset.bgr) { PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
     if (t.dataset.hsite) { if (E.dirty && !confirm("لديك تعديلات غير منشورة في الصفحة — سيُغلق المطوّر وتُحفظ مسودتها تلقائياً. متابعة؟")) return; try { saveDraftNow(); } catch (e) { } close(); const nb = [...document.querySelectorAll(".nav-btn")].find(x => /chromeh/.test(x.getAttribute("onclick") || "")); if (nb) nb.click(); return; }
     if (t.dataset.scins) { const ta = document.querySelector('#pbx-insp textarea[data-k="code"]'), cd = PB.SC_LIST[+t.dataset.scins][0], cur = String(inf.set.code || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.code = cur.slice(0, at) + cd + cur.slice(at); afterEdit(); return; }
     if (t.dataset.icins) { const r = t.getBoundingClientRect(), ta = document.querySelector('#pbx-insp textarea'); showIconPop(Math.max(6, r.left - 120), r.bottom + 6, "", v => { const tk = PB.isIconTok(v) ? "{" + v + "}" : v, cur = String(inf.set.txt || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.txt = cur.slice(0, at) + tk + cur.slice(at); afterEdit(); }); return; }
@@ -2913,7 +2926,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

@@ -337,6 +337,30 @@ const PBBgRemove = (function () {
     $("bg-save").onclick = () => save(false);
     run(null);
   }
+  /* نزع الخلفية مباشرة على صورة الصفحة: تُعرض النتيجة مكان الصورة مع «تنفيذ / إلغاء» تحتها؛ «طريقة أخرى» من اللوحة تجرّب خوارزمية بديلة */
+  const LV = { busy: false, id: "", path: "", src: null, res: null };
+  function chip(t, keep) {
+    let c = document.getElementById("pbbg-chip"); if (!t) { if (c) c.remove(); return; }
+    if (!c) { c = document.createElement("div"); c.id = "pbbg-chip"; c.style.cssText = "position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:10060;background:rgba(9,24,18,.96);color:#fff;border:1px solid rgba(198,254,23,.45);border-radius:12px;padding:.55rem 1rem;font:700 .85rem inherit;font-family:inherit;direction:rtl;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:90vw"; document.body.appendChild(c); }
+    c.textContent = t; clearTimeout(c._t); if (!keep) c._t = setTimeout(() => c.remove(), 4500);
+  }
+  async function lvApply() {
+    const r = LV.res; if (!r || LV.busy) return; LV.busy = true;
+    try { const blob = await new Promise(x => r.canvas.toBlob(x, "image/png")); chip("⏳ رفع الصورة…", true); const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(LV.id); if (!q) throw new Error("لم يعد العنصر موجوداً");
+      q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "نزع الخلفية"; LV.res = null; LV.path = ""; A().liveClear(false); A().commitAfter(LV.id); chip("✅ نُفِّذ نزع الخلفية"); }
+    catch (e) { chip("⚠️ " + (e.message || e)); } LV.busy = false;
+  }
+  async function live(inf, again) {
+    if (!inf || inf.node.type !== "image" || !inf.node.set.src) { alert("حدّد صورة أولاً"); return; } if (LV.busy) return;
+    const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
+    try {
+      if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
+      const all = aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"], i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
+      chip("⏳ جارٍ نزع الخلفية…", true); await tick();
+      const r = await autoCut(LV.src, { methods, onStep: m => chip(m, true) }); LV.res = r;
+      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)");
+    } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
+  }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, autoCut, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, autoCut, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();
