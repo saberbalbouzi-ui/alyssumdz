@@ -25,10 +25,12 @@ const CallCenter = (() => {
   /* التوزيع المسبق (يضبطه المالك في «نشاط الفريق»): كل طلب مُسنَد بتجزئة معرّفه إلى موظفة بحسب حصتها؛ من هي في القائمة ترى طلباتها أولاً،
      ثم طلبات الزميلات التي بقيت بلا استجابة أكثر من «مساندة بعد» دقيقة (الافتراضي 20). المالك والموظفة خارج القائمة يريان الجميع. */
   const assignCfg = () => { const g = (S.perf && S.perf.goal) || {}; return g.assign && g.assign.on ? g.assign : null; };
-  const meInPlan = as => !!as && Math.round(+((as.weights || {})[meId()]) || 0) > 0;
+  const meInPlan = as => !!as && (window.AdminRoles && AdminRoles.inPlan ? AdminRoles.inPlan(as, meId()) : Math.round(+((as.weights || {})[meId()]) || 0) > 0);
+  const wilIds = o => { const W = typeof WILAYAS !== "undefined" ? WILAYAS : [], w = W.find(x => x.name === o.wilaya); return w ? { wid: String(w.id), wpar: w.par ? String(w.par) : "" } : { wid: "", wpar: "" }; };
+  const ctxOf = o => { const a = A(); let company = ""; try { company = a.orderCompanyKey ? a.orderCompanyKey(o) : ""; } catch (e) { } return Object.assign({ id: o.id, note: o.note, company }, wilIds(o)); };
   const overMs = as => Math.max(5, +as.overflow || 20) * 60000;
   function mineOrHelp(o, as) {
-    const who = window.AdminRoles && AdminRoles.assigneeOf ? AdminRoles.assigneeOf(o.id, as) : "";
+    const who = window.AdminRoles && AdminRoles.assigneeOf ? AdminRoles.assigneeOf(ctxOf(o), as) : "";
     if (!who || who === meId()) return 0;
     return Date.now() - new Date(o.date) >= overMs(as) ? 1 : -1;      // 1 = مساندة، -1 = ليس لي الآن
   }
@@ -117,9 +119,9 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
 <div class="ccm-ph" dir="ltr">${esc(o.phone)}</div>
 <div class="ccm-quick"><a class="t" href="tel:${esc(ph.startsWith("0") ? "+213" + ph.slice(1) : "+" + ph)}">📞 اتصل</a><a href="https://wa.me/${intl}" target="_blank" rel="noopener">💬 واتساب</a></div>
 <div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>
-<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
+${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
 ${short ? '<div class="ccm-warn">⚠️ المخزون لا يكفي لهذا الطلب — سيُطلب منك تأكيد قبل أي اتصال أو تأكيد.</div>' : ""}
-${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|🔒\S+|❌سبب:\S+|📲\S+/g, "").trim())}</div>` : ""}
+${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|🔒\S+|❌سبب:\S+|📲\S+|👤\S+|👥\S+/g, "").trim())}</div>` : ""}
 <div class="ccm-act"><button class="ok" data-d="confirm">✅ تأكيد الطلب <span class="ccm-k">C</span></button>
 <button class="ok2" data-d="addr">🏠 تأكيد مع تعديل العنوان <span class="ccm-k">A</span></button>
 <button data-d="noans">📞 غير متاح — محاولة ${Math.min(3, at + 1)} <span class="ccm-k">N</span></button><button class="wa" data-d="later">⏰ لاحقاً اليوم <span class="ccm-k">L</span></button>
@@ -129,6 +131,8 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
   }
 
   /* بطاقة متابعة توصيل فاشل: الزبون لم يستلم الطرد (Tentative échouée) فيُتصل به لمعرفة سبب الفشل واتخاذ الإجراء */
+  /* من اتصل آخر مرة وما النتيجة + المسند إليها يدوياً (من CallSync) */
+  function csLine(o) { const cs = window.CallSync; if (!cs) return ""; const t = cs.lastCallText(o), as = cs.assigneeOfNote(o); return (t ? `<div class="ccm-m">🕘 آخر إجراء: <b>${esc(t)}</b></div>` : "") + (as ? `<div class="ccm-m">👥 مسنَد إلى: <b>${esc(cs.nameOf(as))}</b></div>` : ""); }
   function followCard(o, i) {
     const a = A(), ph = String(o.phone || "").replace(/\D/g, ""), intl = ph.startsWith("0") ? "213" + ph.slice(1) : ph, t = a.trackingOf(o) || {}, raw = a.rawShip(o) || "Tentative échouée";
     const co = (a.allDeliveryCompanies && (a.allDeliveryCompanies()[t.company] || {}).name) || t.company || "";
@@ -137,7 +141,7 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
 <div class="ccm-ph" dir="ltr">${esc(o.phone)}</div>
 <div class="ccm-quick"><a class="t" href="tel:${esc(ph.startsWith("0") ? "+213" + ph.slice(1) : "+" + ph)}">📞 اتصل</a><a href="https://wa.me/${intl}" target="_blank" rel="noopener">💬 واتساب</a></div>
 <div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>
-<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
+${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
 <div class="ccm-act"><button class="ok" data-d="fok">✅ تواصلت — الزبون سيستلم</button>
 <button class="wa" data-d="fno">📞 لم يرد — أعد المحاولة غداً</button><button class="no" data-d="fref">🚫 رفض الاستلام</button>
 <button data-d="fopen" style="grid-column:1/-1">📋 فتح الطلب (تعديل العنوان أو غيره)</button>
@@ -201,7 +205,7 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
     document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("#ccm [data-d]"); if (b) decide(b.dataset.d); });
     document.addEventListener("keydown", key);
     const w = () => { if (typeof Admin === "undefined" || !Admin.tab || Admin._ccmWrapped) return; const orig = Admin.tab;
-      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn), el = $("tab-callcenter"); if (el) el.classList.toggle("hidden", t !== "callcenter"); if (t === "callcenter") { render(); clearInterval(S.timer); S.timer = setInterval(() => { if ($("tab-callcenter").classList.contains("hidden") || document.hidden) return; if (Admin.refreshAlerts && Date.now() - S.lastRef > 20000) { S.lastRef = Date.now(); Admin.refreshAlerts().then(render, render); } else render(); }, 8000); } else clearInterval(S.timer); return r; };
+      Admin.tab = function (t, btn) { const r = orig.call(this, t, btn), el = $("tab-callcenter"); if (el) el.classList.toggle("hidden", t !== "callcenter"); if (t === "callcenter") { render(); clearInterval(S.timer); S.timer = setInterval(() => { if ($("tab-callcenter").classList.contains("hidden") || document.hidden) return; if (Admin.refreshAlerts && Date.now() - S.lastRef > 10000) { S.lastRef = Date.now(); Admin.refreshAlerts().then(render, render); } else render(); }, 6000); } else clearInterval(S.timer); return r; };
       Admin._ccmWrapped = true; };
     w(); setTimeout(w, 500);
   }
