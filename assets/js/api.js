@@ -180,12 +180,12 @@ const API = {
     },
     /* هوية صاحب الجلسة (مالك/موظف) من staff_me؛ قاعدة بلا ملف الأدوار (الدالة غير موجودة) تعود لفحص المالك القديم */
     async me() {
-      const t = await this.token(); if (!t) return null;
+      const t = await this.token(); if (!t) { this._meErr = !!this.session(); return null; }
       try {
         const r = await fetch(this.url("/rest/v1/rpc/staff_me"), { method: "POST", headers: this.headers(t), body: "{}" });
         if (r.status === 404) return (await this.isAdmin()) ? { owner: true, role: "owner", perms: ["*"], email: (this.session() || {}).email || "", legacy: true } : null;
-        return r.ok ? await r.json() : null;
-      } catch (e) { return null; }
+        this._meErr = !r.ok; return r.ok ? await r.json() : null;
+      } catch (e) { this._meErr = true; return null; }
     },
     aal() { try { const s = this.session(); return JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).aal || "aal1"; } catch (e) { return "aal1"; } },
     /* المصادقة الثنائية (TOTP) عبر خدمة الدخول: عوامل الحساب، تسجيل عامل، تحدٍّ+تحقق (يرفع الجلسة إلى aal2)، حذف */
@@ -204,14 +204,25 @@ const API = {
     },
     async mfaRemove(id) { const t = await this.token(); const r = await fetch(this.url("/auth/v1/factors/" + encodeURIComponent(id)), { method: "DELETE", headers: this.headers(t) }); if (!r.ok) throw new Error("تعذّر الحذف"); },
     rpc(name, args) { try { this.token().then(t => { if (t) fetch(this.url("/rest/v1/rpc/" + name), { method: "POST", headers: this.headers(t), body: JSON.stringify(args || {}), keepalive: true }).catch(() => {}); }); } catch (e) {} },
-    async token() {                                   // توكن المدير (مع تجديد تلقائي)
+    /* توكن المدير مع تجديد تلقائي. تجديد واحد مشترك بين كل المنادين في اللحظة نفسها (كان عدّة طلبات تستعمل رمز التجديد الواحد فيرفض الخادم الثاني ويُمسح
+       الدخول بعد كل تحديث)، وأخطاء الشبكة/الخادم لا تمسح الجلسة، ويُعاد قراءة الجلسة قبل المسح إن جدّدتها نافذة أخرى. */
+    async token() {
       const s = this.session(); if (!s) return null;
       if (Date.now() < s.expires_at) return s.access_token;
-      try {
-        const r = await fetch(this.url("/auth/v1/token?grant_type=refresh_token"), { method: "POST", headers: this.headers(), body: JSON.stringify({ refresh_token: s.refresh_token }) });
-        const j = await r.json(); if (!r.ok || !j.access_token) { this.saveSession(null); return null; }
-        this.saveSession(j); return j.access_token;
-      } catch (e) { return null; }
+      if (this._rp) return this._rp;
+      this._rp = (async () => {
+        try {
+          const ac = typeof AbortController !== "undefined" ? new AbortController() : null, to = ac ? setTimeout(() => ac.abort(), 15000) : 0;       // مهلة: لا يعلق التجديد للأبد
+          const r = await fetch(this.url("/auth/v1/token?grant_type=refresh_token"), { method: "POST", headers: this.headers(), body: JSON.stringify({ refresh_token: s.refresh_token }), signal: ac ? ac.signal : undefined }); clearTimeout(to);
+          const j = await r.json().catch(() => ({}));
+          if (r.ok && j.access_token) { if (!j.user) j.user = { email: s.email }; this.saveSession(j); return j.access_token; }
+          if (r.status >= 500 || r.status === 0 || r.status === 429) return null;       // عطل مؤقت: تبقى الجلسة
+          const cur = this.session(); if (cur && cur.refresh_token !== s.refresh_token && Date.now() < cur.expires_at) return cur.access_token;     // جدّدتها نافذة أخرى
+          this.saveSession(null); return null;                                              // الرمز مرفوض فعلاً
+        } catch (e) { return null; }                                                          // لا شبكة: تبقى الجلسة
+        finally { setTimeout(() => { this._rp = null; }, 0); }
+      })();
+      return this._rp;
     },
     async adminFetch(path, opts) {
       const t = await this.token(); if (!t) return null;

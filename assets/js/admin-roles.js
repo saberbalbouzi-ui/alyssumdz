@@ -78,10 +78,26 @@
      (نفس الطلب ← نفس الموظفة دائماً دون تخزين، فلا يتبدّل المسند إليه حين تتغيّر القائمة) */
   const goalFor = (g, actor) => { g = g || {}; const p = (g.per && actor && g.per[actor]) || {}; return { daily: +p.daily || +g.daily || 0, rate: +p.rate || +g.rate || 0 }; };
   const fnv = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; };
-  function assigneeOf(id, assign) {
-    if (!assign || !assign.on) return ""; const w = assign.weights || {}, ks = Object.keys(w).filter(k => Math.round(+w[k]) > 0).sort();
-    if (!ks.length) return ""; const tot = ks.reduce((t, k) => t + Math.round(+w[k]), 0); let r = fnv(String(id)) % tot;
+  /* المسند إليها: وسم يدوي 👥 في ملاحظة الطلب (يسبق كل شيء)، ثم بحسب وضع التوزيع: company (شركة التوصيل ← مندوبات)، wilaya (الولاية ← مندوبات)،
+     manual (حر: لا إسناد إلا يدوياً)، وإلا الحصص weights. الاختيار داخل القائمة بتجزئة ثابتة لمعرّف الطلب. يقبل معرّفاً نصياً أو كائن الطلب {id,note,company,wid,wpar}. */
+  function assigneeOf(o, assign) {
+    const ord = o && typeof o === "object" ? o : { id: o }; if (!assign || !assign.on) return "";
+    const m = String(ord.note || "").match(/👥(\S+)/); if (m) return m[1].toLowerCase();
+    const pick = list => { const l = [...new Set((list || []).map(x => String(x).toLowerCase()).filter(Boolean))].sort(); return l.length ? l[fnv(String(ord.id)) % l.length] : ""; };
+    const mode = assign.mode || "weights";
+    if (mode === "manual") return "";
+    if (mode === "company") { const r = pick((assign.byCo || {})[ord.company || ""]); if (r) return r; }
+    else if (mode === "wilaya") { const bw = assign.byWil || {}, r = pick(bw[String(ord.wid || "")]) || pick(bw[String(ord.wpar || "")]); if (r) return r; }
+    const w = assign.weights || {}, ks = Object.keys(w).filter(k => Math.round(+w[k]) > 0).sort();
+    if (!ks.length) return ""; const tot = ks.reduce((t, k) => t + Math.round(+w[k]), 0); let r = fnv(String(ord.id)) % tot;
     for (const k of ks) { const x = Math.round(+w[k]); if (r < x) return k; r -= x; } return "";
+  }
+  /* هل هذه الموظفة ضمن خطة التوزيع (فترى طلباتها أولاً وتُخفى عنها طلبات غيرها)؟ */
+  function inPlan(assign, who) {
+    if (!assign || !assign.on || !who) return false; who = String(who).toLowerCase();
+    if (Math.round(+((assign.weights || {})[who]) || 0) > 0) return true;
+    const lists = [].concat(Object.values(assign.byCo || {}), Object.values(assign.byWil || {}));
+    return lists.some(l => (l || []).some(x => String(x).toLowerCase() === who));
   }
   /* ترتيب الفريق: أكثر تأكيدات، ثم أعلى نسبة، ثم أسرع استجابة */
   function leaderboard(rows, perfRows) {
@@ -91,7 +107,7 @@
   const ACTION_LBL = { "order.status": "تغيير حالة طلب", "order.call": "نتيجة اتصال", "order.edit": "تعديل طلب", "order.create": "إنشاء طلب", "order.delete": "حذف طلب", login: "دخول", logout: "خروج", "mfa.enroll": "تفعيل المصادقة الثنائية", "mfa.disable": "إيقاف المصادقة الثنائية", "mfa.verify_fail": "رمز مصادقة خاطئ", "staff.create": "إضافة موظف", "staff.update": "تعديل موظف", "staff.disable": "إيقاف موظف", "staff.password": "كلمة مرور موظف", "staff.reset_mfa": "إعادة ضبط مصادقة موظف", "staff.delete": "حذف موظف" };
   const STATUS_LBL = { nouvelle: "جديد", confirmee: "مؤكد", annulee: "ملغى", expediee: "مرسل", livree: "مسلَّم", echec: "فشل" };
 
-  const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL, CANCEL_REASONS, respTone, fmtMin, goalFor, assigneeOf, leaderboard };
+  const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL, CANCEL_REASONS, respTone, fmtMin, goalFor, assigneeOf, inPlan, leaderboard };
   if (typeof module !== "undefined" && module.exports) { module.exports = model; }
   if (typeof document === "undefined") return;
 
@@ -107,7 +123,7 @@
     const b = backend();
     if (!b) { S.me = { owner: true, role: "owner", perms: ["*"], email: "" }; return S.me; }
     let me = null;
-    if (b === "sb") me = await API.sb.me();
+    if (b === "sb") { me = await API.sb.me(); for (let n = 0; n < 3 && !me && API.sb._meErr && API.sb.session(); n++) { await new Promise(r => setTimeout(r, 1200)); me = await API.sb.me(); } }       // عطل مؤقت (شبكة/تجديد الجلسة) لا يعني فقدان الصلاحية
     else { const r = await PHPAPI.call("me", { method: "GET" }).catch(() => ({ ok: false, j: {} })); const j = r.j || {}; me = j.admin ? { owner: true, role: "owner", perms: ["*"], email: "", mfa: !!j.mfa } : (j.role ? { owner: false, role: j.role, perms: j.perms || [], email: j.user || "", name: j.name || "", mfa: !!j.mfa } : null); }
     S.me = me && me.role ? me : null; return S.me;
   }
@@ -263,6 +279,25 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     } else h += '<div class="rl-row"><button class="rl-b g" data-rl="mfa-begin">تفعيل المصادقة الثنائية</button></div>';
     return h + '</div>';
   }
+  /* قواعد التوزيع: حصص / حسب شركة التوصيل / حسب الولاية / يدوي حر */
+  const MODES = [["weights", "حسب الحصص (تلقائي بالتساوي النسبي)"], ["company", "حسب شركة التوصيل"], ["wilaya", "حسب الولايات"], ["manual", "يدوي حر (أنت تسند الطلبات)"]];
+  const wilNames = ids => (ids || []).map(id => { const w = (typeof WILAYAS !== "undefined" ? WILAYAS : []).find(x => String(x.id) === String(id)); return w ? w.name : id; });
+  function distHtml(st, as) {
+    const mode = as.mode || "weights", A = window.Admin, byCo = as.byCo || {}, byWil = as.byWil || {};
+    let h = '<div class="rl-row" style="margin-top:.6rem"><label>طريقة التوزيع: <select id="rl-g-mode">' + MODES.map(m => '<option value="' + m[0] + '"' + (m[0] === mode ? " selected" : "") + '>' + m[1] + '</option>').join("") + '</select></label></div>';
+    h += '<div id="rl-d-company" style="display:' + (mode === "company" ? "block" : "none") + '"><p class="rl-m">اختر المندوبات اللواتي يعالجن طلبات كل شركة توصيل (إن اخترتَ أكثر من واحدة توزّع بينهن بالتساوي). الطلب بلا قاعدة تنطبق عليه يُوزَّع بالحصص.</p>';
+    let cos = []; try { cos = (A && A.enabledCompanyKeys ? A.enabledCompanyKeys() : []).map(k => [k, ((A.allDeliveryCompanies() || {})[k] || {}).name || k]); } catch (e) { }
+    h += cos.length ? '<div style="overflow-x:auto"><table><thead><tr><th>شركة التوصيل</th><th>المندوبات</th></tr></thead><tbody>' + cos.map(([k, n]) => '<tr data-co="' + esc(k) + '"><td>' + esc(n) + '</td><td>' + st.map(x => { const em = String(x.email).toLowerCase(); return '<label style="margin-inline-end:.8rem;white-space:nowrap"><input type="checkbox" data-coem="' + esc(em) + '"' + ((byCo[k] || []).map(String).map(y => y.toLowerCase()).includes(em) ? " checked" : "") + '> ' + esc(x.name || em) + '</label>'; }).join("") + '</td></tr>').join("") + '</tbody></table></div>' : '<p class="rl-m">لا توجد شركة توصيل مفعّلة بعد.</p>';
+    h += '</div><div id="rl-d-wilaya" style="display:' + (mode === "wilaya" ? "block" : "none") + '"><p class="rl-m">اكتب لكل مندوبة الولايات التي تعالجها مفصولة بفاصلة (أرقاماً أو أسماء، مثال: 16, 31, 9). الولايات الجديدة 59–69 تتبع ولايتها الأم إن لم تُذكر.</p><div style="overflow-x:auto"><table><thead><tr><th>المندوبة</th><th>ولاياتها</th></tr></thead><tbody>';
+    h += st.map(x => { const em = String(x.email).toLowerCase(), ids = Object.keys(byWil).filter(id => (byWil[id] || []).map(y => String(y).toLowerCase()).includes(em)); return '<tr data-wem="' + esc(em) + '"><td>' + esc(x.name || em) + '</td><td><input data-wil type="text" style="min-width:16rem" placeholder="مثال: 16, 31, 9" value="' + esc(ids.join(", ")) + '"></td></tr>'; }).join("");
+    h += '</tbody></table></div></div><p class="rl-m" id="rl-d-manual" style="display:' + (mode === "manual" ? "block" : "none") + '">في الوضع الحر لا تُسنَد الطلبات تلقائياً: حدّد طلبات في صفحة «الطلبات» واضغط «👥 إسناد لمندوبة»، أو افتح الطلب واختر المندوبة. الطلب غير المسنَد يراه الجميع.</p>';
+    return h;
+  }
+  function parseWilaya(txt) {
+    const W = typeof WILAYAS !== "undefined" ? WILAYAS : [], out = [];
+    String(txt || "").split(/[,،;\n]+/).map(t => t.trim()).filter(Boolean).forEach(t => { let w = /^\d+$/.test(t) ? W.find(x => String(x.id) === String(+t)) : W.find(x => String(x.name).toLowerCase() === t.toLowerCase()) || W.find(x => String(x.name).toLowerCase().startsWith(t.toLowerCase())); if (w) out.push(String(w.id)); });
+    return [...new Set(out)];
+  }
   function goalHtml(own) {
     const g = (S.perf && S.perf.goal) || {};
     if (own) { const me = S.me && S.me.email ? String(S.me.email).toLowerCase() : "", e = goalFor(g, me); return e.daily || e.rate ? '<p class="rl-m">🎯 هدفك: ' + (e.daily ? e.daily + " تأكيد يومياً" : "") + (e.daily && e.rate ? " · " : "") + (e.rate ? "نسبة تأكيد ≥ " + e.rate + "%" : "") + '</p>' : ""; }
@@ -271,7 +306,8 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
     if (st.length) {
       h += '<div style="overflow-x:auto"><table><thead><tr><th>الموظفة</th><th>هدفها اليومي</th><th>نسبتها المستهدفة %</th><th>حصتها من الطلبات</th></tr></thead><tbody>';
       st.forEach((x, i) => { const em = String(x.email).toLowerCase(), p = per[em] || {}; h += '<tr data-gem="' + esc(em) + '"><td dir="ltr">' + esc(x.name || em) + '<br><small class="rl-m">' + esc(em) + '</small></td><td><input type="number" min="0" max="500" data-gd placeholder="افتراضي" value="' + esc(p.daily || "") + '" style="width:6rem"></td><td><input type="number" min="0" max="100" data-gr placeholder="افتراضي" value="' + esc(p.rate || "") + '" style="width:6rem"></td><td><input type="number" min="0" max="10" data-gw placeholder="0" value="' + esc(w[em] != null ? w[em] : "") + '" style="width:5rem"></td></tr>'; });
-      h += '</tbody></table></div><div class="rl-row" style="margin-top:.4rem"><label><input type="checkbox" id="rl-g-on"' + (as.on ? " checked" : "") + '> فعّل التوزيع المسبق (كل طلب جديد يُسند لموظفة بحسب الحصة؛ الحصة 0 = خارج التوزيع)</label><input id="rl-g-over" type="number" min="5" max="240" placeholder="مساندة بعد (د)" title="الطلب الذي لم يُجب عنه صاحبه بعد هذه الدقائق يظهر لبقية الموظفات (الافتراضي 20)" value="' + esc(as.overflow || "") + '" style="width:9rem"></div>';
+      h += '</tbody></table></div>' + distHtml(st, as);
+      h += '<div class="rl-row" style="margin-top:.4rem"><label><input type="checkbox" id="rl-g-on"' + (as.on ? " checked" : "") + '> فعّل التوزيع المسبق (كل طلب جديد يُسند لموظفة بحسب الحصة؛ الحصة 0 = خارج التوزيع)</label><input id="rl-g-over" type="number" min="5" max="240" placeholder="مساندة بعد (د)" title="الطلب الذي لم يُجب عنه صاحبه بعد هذه الدقائق يظهر لبقية الموظفات (الافتراضي 20)" value="' + esc(as.overflow || "") + '" style="width:9rem"></div>';
     }
     return h + '<div class="rl-row" style="margin-top:.5rem"><button class="rl-b g" data-rl="goal-save">حفظ الأهداف والتوزيع</button></div>';
   }
@@ -373,7 +409,11 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
         const n = (id, mx) => Math.max(0, Math.min(mx, Math.round(+($(id) || {}).value || 0))), per = {}, weights = {};
         document.querySelectorAll("#rl tr[data-gem]").forEach(r => { const em = r.dataset.gem, d = Math.max(0, Math.min(500, Math.round(+r.querySelector("[data-gd]").value || 0))), rt = Math.max(0, Math.min(100, Math.round(+r.querySelector("[data-gr]").value || 0))), w = Math.max(0, Math.min(10, Math.round(+r.querySelector("[data-gw]").value || 0)));
           if (d || rt) per[em] = Object.assign(d ? { daily: d } : {}, rt ? { rate: rt } : {}); if (w) weights[em] = w; });
-        const g = { daily: n("rl-g-daily", 500), rate: n("rl-g-rate", 100), alertMin: n("rl-g-alert", 600), per, assign: { on: !!($("rl-g-on") || {}).checked && Object.keys(weights).length > 0, weights, overflow: n("rl-g-over", 240) } };
+        const mode = ($("rl-g-mode") || {}).value || "weights", byCo = {}, byWil = {};
+        document.querySelectorAll("#rl tr[data-co]").forEach(r => { const l = [...r.querySelectorAll("[data-coem]:checked")].map(c => c.dataset.coem); if (l.length) byCo[r.dataset.co] = l; });
+        document.querySelectorAll("#rl tr[data-wem]").forEach(r => { parseWilaya((r.querySelector("[data-wil]") || {}).value).forEach(id => { (byWil[id] = byWil[id] || []).push(r.dataset.wem); }); });
+        const hasRule = mode === "weights" ? Object.keys(weights).length > 0 : mode === "company" ? Object.keys(byCo).length > 0 : mode === "wilaya" ? Object.keys(byWil).length > 0 : true;
+        const g = { daily: n("rl-g-daily", 500), rate: n("rl-g-rate", 100), alertMin: n("rl-g-alert", 600), per, assign: { on: !!($("rl-g-on") || {}).checked && hasRule, mode, weights, byCo, byWil, overflow: n("rl-g-over", 240) } };
         await Priv.set("callgoal", g); toastf("🎯 حُفظت الأهداف والتوزيع"); await refresh();
       }
       else if (a === "lb-copy") {
@@ -411,6 +451,7 @@ html.white #rl .rl-b{color:#fff;background:linear-gradient(180deg,#64748b,#47556
   document.addEventListener("click", onClick);
   document.addEventListener("change", e => {
     if (e.target && e.target.id === "rl-days") { S.days = +e.target.value || 7; refresh(); }
+    if (e.target && e.target.id === "rl-g-mode") { const v = e.target.value; [["company", "rl-d-company"], ["wilaya", "rl-d-wilaya"], ["manual", "rl-d-manual"]].forEach(([m, id]) => { const el = document.getElementById(id); if (el) el.style.display = v === m ? "block" : "none"; }); }
     if (e.target && e.target.id === "rl-role") { const r = ROLES[e.target.value]; if (r) document.querySelectorAll("#rl [data-perm]").forEach(c => { c.checked = r.perms.indexOf(c.dataset.perm) >= 0; }); }
   });
 
