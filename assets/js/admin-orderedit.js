@@ -14,6 +14,9 @@ window.OrderEdit = (function () {
   const wOf = n => W().find(x => x.name === n) || null;
   const num = v => Math.max(0, Math.round(Number(v) || 0));
 
+  const fdef = ad => (window.ManualOrder && ManualOrder.fromDef ? ManualOrder.fromDef(ad) : "");
+  const fcur = (ad, o) => (ad.fromOf && ad.fromOf(o)) || fdef(ad);
+  function fromOpts(ad, o) { const d = fdef(ad), c = fcur(ad, o); return W().filter(x => !x.par).slice().sort((a, b) => a.id - b.id).map(w => `<option value="${esc(w.name)}"${w.name === c ? " selected" : ""}>${w.id} — ${esc(w.name)}${w.name === d ? " (الافتراضية)" : ""}</option>`).join(""); }
   function open(i) {
     const ad = A(), o = ad && ad.orders[i]; if (!o) return; if (!canEdit(o)) { toast("التعديل متاح للطلبات المؤكَّدة أو في الطريق فقط"); return; }
     let bg = document.getElementById("oe-bg"); if (bg) bg.remove();
@@ -27,6 +30,7 @@ ${fld("الولاية", `<select id="oe-wil">${wil.map(w => `<option value="${es
 ${fld("البلدية", `<select id="oe-com"></select>`)}
 ${fld("طريقة التوصيل", `<div style="display:flex;gap:1rem;flex-wrap:wrap"><label><input type="radio" name="oe-dt" value="home"${o.dtype !== "stop" ? " checked" : ""}> إلى المنزل</label><label><input type="radio" name="oe-dt" value="stop"${o.dtype === "stop" ? " checked" : ""}> مكتب Stop Desk</label></div>`)}
 <div id="oe-deskw">${fld("المكتب", `<select id="oe-desk"></select>`)}</div>
+${t ? "" : fld("ولاية الانطلاق", `<select id="oe-from">${fromOpts(ad, o)}</select><small class="hint">الافتراضية من إعدادات شركة التوصيل — يتبعها رسم التوصيل وتُرسل منها الطرد</small>`)}
 ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" step="50" value="${num(o.fee)}"><small id="oe-fh" class="hint"></small>`)}
 <div style="display:flex;justify-content:space-between;align-items:center;margin:.3rem 0 .8rem;font-weight:900">الإجمالي الجديد <span id="oe-tot" style="color:var(--green)"></span></div>
 <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button type="button" class="small green" id="oe-save">حفظ</button><button type="button" class="small warn" id="oe-no">إلغاء</button></div></div>`;
@@ -43,15 +47,25 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
       const sr = bg.querySelector('input[name="oe-dt"][value="stop"]'); if (sr) { sr.disabled = !has; sr.parentElement.style.opacity = has ? "" : ".45"; sr.parentElement.title = has ? "" : "لا يوجد مكتب Stop Desk في هذه البلدية — التوصيل للمنزل فقط"; if (!has && sr.checked) { bg.querySelector('input[name="oe-dt"][value="home"]').checked = true; } }
       $("oe-deskw").style.display = dt() === "stop" ? "" : "none";
     }
+    const ffFail = {};
     function autoFee() {
-      const w = wOf($("oe-wil").value), q = w && ad.shipFeeFor ? ad.shipFeeFor(w, $("oe-com").value, dt()) : { fee: w ? num(dt() === "stop" ? w.stop : w.home) : num(o.fee), base: 0, sup: 0 }, base = q.fee, same = $("oe-wil").value === o.wilaya && $("oe-com").value === o.commune && dt() === (o.dtype === "stop" ? "stop" : "home");
+      const w = wOf($("oe-wil").value), q = w && ad.shipFeeFor ? ad.shipFeeFor(w, $("oe-com").value, dt()) : { fee: w ? num(dt() === "stop" ? w.stop : w.home) : num(o.fee), base: 0, sup: 0 };
+      let base = q.fee, note = ad.feeNote ? ad.feeNote(q, $("oe-com").value) : "";
+      const fe = $("oe-from"), fw = fe && fe.value && fe.value !== fdef(ad) ? wOf(fe.value) : null;
+      if (w && fw && $("oe-com").value && ad.fromFeeFor) {
+        const v = ad.fromFeeFor(fw.id, w, $("oe-com").value, dt()), key = fw.id + "-" + (w.par || w.id);
+        if (v != null) { base = v; note = " (تعريفة ياليدين من " + fw.name + ")"; }
+        else if (!ffFail[key] && ad.ensureFromFees) { ad.ensureFromFees(fw.id, w).then(okk => { if (!okk) ffFail[key] = true; if (document.body.contains(bg)) autoFee(); }); note = " ⏳ جارِ جلب تعريفة الانطلاق من " + fw.name + "…"; }
+        else note = " — تعذّر جلب تعريفة الانطلاق من " + fw.name + " فحُسب الرسم من الولاية الافتراضية";
+      }
+      const same = $("oe-wil").value === o.wilaya && $("oe-com").value === o.commune && dt() === (o.dtype === "stop" ? "stop" : "home") && (!fe || fe.value === fcur(ad, o));
       $("oe-fee").value = same ? num(o.fee) : (free0 ? 0 : base);
-      $("oe-fh").textContent = same ? "" : "رسم التوصيل الجديد: " + base.toLocaleString("fr-DZ") + " دج" + (ad.feeNote ? ad.feeNote(q, $("oe-com").value) : "") + (free0 ? " (الطلب الأصلي بتوصيل مجاني فبقي مجانياً — عدّل الرسم إن لزم)" : "");
+      $("oe-fh").textContent = same ? "" : "رسم التوصيل الجديد: " + base.toLocaleString("fr-DZ") + " دج" + note + (free0 ? " (الطلب الأصلي بتوصيل مجاني فبقي مجانياً — عدّل الرسم إن لزم)" : "");
       total();
     }
     const total = () => { $("oe-tot").textContent = Math.max(0, sub - disc + num($("oe-fee").value)).toLocaleString("fr-DZ") + " دج"; };
     fillCom(); fillDesk(); total();
-    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); }; $("oe-com").onchange = () => { fillDesk(""); autoFee(); };
+    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); }; $("oe-com").onchange = () => { fillDesk(""); autoFee(); }; if ($("oe-from")) $("oe-from").onchange = () => autoFee();
     if (ad.shipSupLoad) ad.shipSupLoad().then(() => { if (document.body.contains(bg)) autoFee(); });
     bg.querySelectorAll('input[name="oe-dt"]').forEach(r => r.onchange = () => { fillDesk($("oe-desk").value); autoFee(); });
     $("oe-fee").oninput = total;
@@ -62,9 +76,11 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
       if (f.dtype === "stop" && !f.desk) { toast("اختر مكتب Stop Desk"); return; }
       f.total = Math.max(0, sub - disc + f.fee);
       const b = $("oe-save"); b.disabled = true; b.textContent = "جارٍ الحفظ…";
-      const changed = FIELDS.some(k => String(o[k] == null ? "" : o[k]) !== String(f[k]));
+      const fe = $("oe-from"), fromNew = fe ? (fe.value === fdef(ad) ? "" : fe.value) : null, fromChanged = fromNew !== null && fromNew !== (ad.fromOf && ad.fromOf(o) || "");
+      const changed = fromChanged || FIELDS.some(k => String(o[k] == null ? "" : o[k]) !== String(f[k]));
       if (!changed) { close(); toast("لا يوجد تغيير"); return; }
       Object.assign(o, f);
+      if (fromChanged) { try { const hadX = !!(o.extra && o.extra["📍 ولاية الانطلاق"]); ad.setNoteTag(o, /📍@\S+\s*/g, fromNew ? "📍@" + fromNew.replace(/\s+/g, "_") : (hadX ? "📍@-" : "")); } catch (e) { } }
       const ed = load(); ed[o.id] = f; save(ed);                                    // احتياط محلي (يتزامن بين الأجهزة)
       let saved = false; try { saved = await API.updateOrderFields(ad.key, o.id, f); } catch (e) { }
       if (saved) { const e2 = load(); delete e2[o.id]; save(e2); }                  // حُفظ في القاعدة: لا حاجة للاحتياط
