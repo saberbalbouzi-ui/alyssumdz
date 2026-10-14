@@ -366,6 +366,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       A._keyState.yalidine = { ok: false }; await A.checkCompanyKeys("yalidine", { quiet: true }); r.c = calls.length === 2 && calls[1].auto === true;
       A.courierFetch = cf; A.fetchCommuneFees = fc; A.deliveryCfg.yalidine = cfg0; A._keyState.yalidine = ks0; return r; });
     ok("جلب أسعار البلديات تلقائياً فور قبول مفاتيح الشركة (حفظ المفاتيح ← جلب فوري، والتكرار العادي لا يعيده)", kf.a && kf.b && kf.c, kf); }
+  { const cb = await p.evaluate(async () => { const A = Admin, r = {}, f0 = A.ydFees, c0 = A.deliveryCfg.yalidine, W = WILAYAS.find(w => w.id === 15), fw = A.fromWilayaId();
+      A.deliveryCfg.yalidine = Object.assign({}, c0 || {}, { apiId: "1", apiToken: "2", enabled: true, prices: {} });
+      A.ydFees = { [fw + "-15"]: { pc: { tiziouzou: { h: W.home, d: W.stop }, mkira: { h: W.home + 50, d: W.stop }, akbil: { h: W.home + 100, d: W.stop }, azazga: { h: W.home + 50, d: W.stop }, freha: { h: W.home + 50, d: W.stop }, zekri: { h: W.home + 50, d: W.stop } } } };
+      const s = A.communeSup()[15] || {}; r.mk = JSON.stringify(s.mkira) === JSON.stringify([50, 0]) && !s.tiziouzou; const q = A.shipFeeFor(W, "M'Kira", "home"); r.fee = q.fee === W.home + 50 && q.sup === 50;
+      A.ydFees = f0; A.deliveryCfg.yalidine = c0; return r; });
+    ok("إضافة البلدية تُحسب نسبة لسعر الولاية المطبَّق (لا لمنوال بلديات ياليدين) فبلدية M'Kira تأخذ +50", cb.mk && cb.fee, cb); }
   { const mo3 = await p.evaluate(async () => { const A = Admin, r = {}; const W = WILAYAS.find(w => !w.par && (w.communes || []).length > 2), cn = x => String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
       const c1 = W.communes[0], c2 = W.communes[1], cs0 = A.communeSup, sp0 = A._supPub, W2 = WILAYAS.find(w => !w.par && w.id !== W.id && (w.communes || []).length);
       A._supPub = { [W.id]: { [cn(c1)]: [60, 0] }, [W2.id]: { [cn(W2.communes[0])]: [-40, 0] } }; A.communeSup = () => ({ [W.id]: { [cn(c2)]: [90, 0] } });
@@ -1060,7 +1066,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const wait = ms => new Promise(r => setTimeout(r, ms)), cf0 = Admin.courierFetch, pj0 = typeof PBApp !== "undefined" ? PBApp.putJson : null, set0 = Priv.set; Priv.set = async () => { };
     Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: { apiId: "a", apiToken: "b", enabled: true, fromWilayaName: "Alger" } }); Admin.ydFees = {}; Admin._feesBusy = false;
     const pub = []; PBApp.putJson = async (path, data) => { pub.push({ path, data }); return true; };
-    Admin.courierFetch = async rq => { const to = Number(/to_wilaya_id=(\d+)/.exec(rq.url)[1]); return { ok: true, status: 200, text: JSON.stringify({ retour_fee: 200, cod_percentage: 1, insurance_percentage: 1, per_commune: { 1: { commune_name: "Kouba", express_home: 800, express_desk: 500 }, 2: { commune_name: "Bab Ezzouar", express_home: 750, express_desk: 500 }, 3: { commune_name: "Dar El Beida", express_home: 750, express_desk: 500 }, 4: { commune_name: "Hussein Dey", express_home: 750, express_desk: 500 } } }) }; };
+    const W16 = WILAYAS.find(w => w.id === 16), H = W16.home, D = W16.stop; Admin.courierFetch = async rq => { const to = Number(/to_wilaya_id=(\d+)/.exec(rq.url)[1]); return { ok: true, status: 200, text: JSON.stringify({ retour_fee: 200, cod_percentage: 1, insurance_percentage: 1, per_commune: { 1: { commune_name: "Kouba", express_home: H + 50, express_desk: D }, 2: { commune_name: "Bab Ezzouar", express_home: H, express_desk: D }, 3: { commune_name: "Dar El Beida", express_home: H, express_desk: D }, 4: { commune_name: "Hussein Dey", express_home: H, express_desk: D } } }) }; };
     await Admin.fetchCommuneFees({ force: true }); await wait(100);
     const sup = Admin.communeSup(), last = pub[pub.length - 1], ok16 = sup[16] && sup[16].kouba && sup[16].kouba[0] === 50 && !sup[16].babezzouar;
     Admin.courierFetch = cf0; if (pj0) PBApp.putJson = pj0; Priv.set = set0;
