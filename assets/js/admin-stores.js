@@ -81,6 +81,8 @@ const AdminStores = (() => {
 
   /* مفتاح التنقل في الشريط العلوي */
   function mountSwitch() {
+    const old = $("store-sw"); if (old) old.remove();   /* لا مفتاح مواقع في الشريط العلوي (التنقل من «إعدادات الموقع ← مواقعي») */
+    return;
     let sw = $("store-sw");
     if (!sw) { const host = $("as-btn") || $("theme-sw"); if (!host) return; sw = document.createElement("div"); sw.id = "store-sw"; sw.className = "ssw"; host.parentNode.insertBefore(sw, host); }
     const list = stores();

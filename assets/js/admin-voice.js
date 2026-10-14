@@ -1208,7 +1208,7 @@ const AdminVoice = (() => {
   /* عناصر اعتمدت عليها اليد؛ تُفحص تلقائياً فيظهر أي تغيّر بعد تحديث (يقابلها scripts/test-hand.js قبل كل دمج) */
   const HAND_CHECKS = [["زر منتج جديد", '[onclick="Admin.editProduct(null)"]', 0], ["خانة السعر", 'input[onchange*="setPrice(\'"]', 1], ["خانة المخزون", 'input[onchange*="setStock(\'"]', 1],
     ["بحث الطلبات", "#order-filter-q", 0], ["حالة الطلبات", "#order-filter-status", 0], ["تاريخ من", "#order-filter-from", 0], ["تاريخ إلى", "#order-filter-to", 0],
-    ["مفتاح المظهر", '#theme-sw button[data-m="dark"]', 0], ["زر البحث", "#as-btn", 0], ["زر تعديل منتج", '[onclick*="editProduct("]:not([onclick*="editProduct(null)"])', 1], ["مجموعات القائمة", ".ng[data-g]", 0]];
+    ["مفتاح المظهر", '#theme-sw button[data-m="dark"]', 0], ["زر البحث", "#nav-q", 0], ["زر تعديل منتج", '[onclick*="editProduct("]:not([onclick*="editProduct(null)"])', 1], ["مجموعات القائمة", ".ng[data-g]", 0]];
   function selfTest() {
     prime();
     const has = (A().products || []).length > 0, missing = HAND_CHECKS.filter(c => (c[2] ? has : true) && !document.querySelector(c[1])).map(c => c[0]);
@@ -1278,7 +1278,7 @@ const AdminVoice = (() => {
         case "pb": return await pbDo(act, H);
         case "flow": return await flowDo(act, H);
         case "search": {
-          const b = q$("#as-btn"); if (b && await H.click(b)) { const i = await waitFor(() => q$("#as-in")); if (i && act.q) await H.type(i, act.q); return true; } return fb(act, "زر البحث");
+          const b = q$("#nav-q"); if (b && await H.click(b)) { if (act.q) await H.type(b, act.q); return true; } return fb(act, "زر البحث");
         }
         case "active": case "discount": { await goTab("products"); const ok = exec(act); const row = editBtn(act.slug); if (row) await H.point(row.closest("tr") || row); return ok; }
         default: return exec(act);

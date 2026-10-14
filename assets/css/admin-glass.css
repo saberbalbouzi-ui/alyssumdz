@@ -445,3 +445,11 @@ html.glass #pbs-panel button[style*="color:#0d9488"]{color:#d4ff4d!important}
 ::-webkit-scrollbar-thumb{box-shadow:none!important}
 .modal,.modal *,#pbnp,#pbnp *,#pbs-panel,#pbs-panel *,#pbx-pimg,#pbx-pimg *,#pbx-ep,#pbx-ep *,#pbx-lib,#pbx-lib *,#pbar-bg,#pbar-bg *{scrollbar-width:none}
 .modal::-webkit-scrollbar,.modal *::-webkit-scrollbar,#pbnp::-webkit-scrollbar,#pbnp *::-webkit-scrollbar,#pbs-panel::-webkit-scrollbar,#pbs-panel *::-webkit-scrollbar,#pbx-pimg::-webkit-scrollbar,#pbx-pimg *::-webkit-scrollbar,#pbx-ep::-webkit-scrollbar,#pbx-ep *::-webkit-scrollbar,#pbx-lib::-webkit-scrollbar,#pbx-lib *::-webkit-scrollbar,#pbar-bg::-webkit-scrollbar,#pbar-bg *::-webkit-scrollbar{display:none}
+/* v1.89.199: القائمة الجانبية تُمرَّر بالعجلة/اللمس بلا شريط سحب ظاهر */
+.side-nav{scrollbar-width:none}
+.side-nav::-webkit-scrollbar{display:none}
+/* مفتاح المظهر: يبقى النص أبيض مقروءاً عند المرور (زجاج شفاف، بلا خلفية صلبة) */
+html.glass #theme-sw button{color:#fff!important;background:transparent!important;box-shadow:none!important}
+html.glass #theme-sw button:hover{background:rgba(255,255,255,.12)!important;transform:translateY(-2px)}
+html.glass #theme-sw button.on{background:linear-gradient(180deg,rgba(var(--g-mint-rgb),.42),rgba(var(--g-mint-rgb),.16))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -5px 9px rgba(0,0,0,.22),0 2px 8px rgba(0,0,0,.25)!important}
+html.glass #theme-sw button.on:hover{background:linear-gradient(180deg,rgba(var(--g-mint-rgb),.56),rgba(var(--g-mint-rgb),.26))!important}
