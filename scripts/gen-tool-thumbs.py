@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""يولّد صور أدوات «تعديل الصورة» (assets/img/tools/*.webp): كل صورة نصفها قبل ونصفها بعد، من صور منتجات عامة بلا علامة (scripts/gen-generic-products.py). بلا ذكاء اصطناعي."""
+"""يولّد صور أدوات «تعديل الصورة» (assets/img/tools/*.webp): «نزع الخلفية» و«لمسات وتصحيح» نصف قبل/نصف بعد، والبقية صورة كاملة مربعة، من صور منتجات عامة بلا علامة (scripts/gen-generic-products.py). بلا ذكاء اصطناعي."""
 import os, random, math
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageFont, ImageChops
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,10 +43,13 @@ def refl(cv, im, cx, by, k=.35):
     r = im.transpose(Image.FLIP_TOP_BOTTOM); g = Image.new('L', r.size, 0); gd = ImageDraw.Draw(g)
     for y in range(r.height): gd.line([(0, y), (r.width, y)], fill=int(255 * k * max(0, 1 - y / (r.height * .5))))
     r.putalpha(ImageChops.multiply(r.getchannel('A'), g)); cv.alpha_composite(r, (round(cx - r.width / 2), round(by)))
+HALF = ('bg', 'rt')  # فقط هاتان بنصف قبل/نصف بعد؛ البقية صورة كاملة مربعة (النتيجة)
+CX = {'sm_magic': W // 2, 'sm_expand': W // 2}
 def split(a, b, name):
-    out = Image.new('RGB', (W, H)); la = a.convert('RGB').crop((0, 0, W // 2, H))
-    if name not in ('bg', 'rt'): la = ImageEnhance.Brightness(ImageEnhance.Contrast(ImageEnhance.Color(la).enhance(.25)).enhance(.8)).enhance(1.08)  # «قبل» باهت ليظهر نصف/نصف بوضوح
-    out.paste(la, (0, 0)); out.paste(b.convert('RGB').crop((W // 2, 0, W, H)), (W // 2, 0))
+    if name not in HALF:
+        cx = CX.get(name, W * 3 // 4); x0 = max(0, min(W - H, cx - H // 2))
+        b.convert('RGB').crop((x0, 0, x0 + H, H)).save(os.path.join(OUT, name + '.webp'), quality=82, method=6); return
+    out = Image.new('RGB', (W, H)); out.paste(a.convert('RGB').crop((0, 0, W // 2, H)), (0, 0)); out.paste(b.convert('RGB').crop((W // 2, 0, W, H)), (W // 2, 0))
     d = ImageDraw.Draw(out); d.line([(W // 2, 0), (W // 2, H)], fill=(255, 255, 255), width=3); d.ellipse([W // 2 - 7, H // 2 - 7, W // 2 + 7, H // 2 + 7], fill=(255, 255, 255)); d.polygon([(W // 2 - 3, H // 2), (W // 2 + 2, H // 2 - 3), (W // 2 + 2, H // 2 + 3)], fill=(23, 63, 53))
     out.save(os.path.join(OUT, name + '.webp'), quality=82, method=6)
 LX, RX = W // 4, W * 3 // 4

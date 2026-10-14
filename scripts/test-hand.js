@@ -87,12 +87,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const u = await p.evaluate(async () => { const q = s => document.querySelector(s), w = ms => new Promise(r => setTimeout(r, ms)), o = {};
       const tabs = [...document.querySelectorAll(".pbx-tabs .pbx-ah")].filter(b => b.offsetParent); o.rows = new Set(tabs.map(b => Math.round(b.getBoundingClientRect().top))).size; o.pane = q("#pbx-lpane").getBoundingClientRect().top > tabs[0].getBoundingClientRect().top;
       const z0 = q("#pbx-zv").textContent; q('[data-z="+"]').click(); await w(150); o.zoom = q("#pbx-zv").textContent !== z0; q('[data-z="0"]').click(); await w(150); o.fit = q("#pbx-zv").textContent === z0;
-      q("#pbx-moreb").click(); o.more = getComputedStyle(q("#pbx-moremenu")).display === "flex" && !!q("#pbx-upd") && !!q("#pbx-cc"); q("#pbx-moreb").click();
+      o.moreHidden = getComputedStyle(q("#pbx-more")).display === "none"; q("#pbx-moreb").click(); o.more = getComputedStyle(q("#pbx-moremenu")).display === "flex" && !!q("#pbx-upd") && !!q("#pbx-cc"); q("#pbx-moreb").click();
       const b = document.querySelector('[data-add="heading"]'); if (b) b.click(); await w(700); const el = q("#pbx-insp"); el.scrollTop = 600; await w(150);
       o.stk = !!q(".pbx-stk .pbx-itabs") && q(".pbx-itabs").getBoundingClientRect().top - el.getBoundingClientRect().top < 140; return o; });
     ok("المطوّر: التبويبات اليسرى أفقية والمحتوى تحتها", u.rows >= 2 && u.pane, u);
     ok("المطوّر: أزرار التكبير والملاءمة تعمل", u.zoom && u.fit, u);
-    ok("المطوّر: التحديث والكاش داخل قائمة ⋯", u.more, u);
+    ok("المطوّر: التحديث والكاش موجودان في الصفحة وزر ⋯ مخفي", u.more && u.moreHidden, u);
     ok("المطوّر: تبويبات الإعدادات لاصقة أعلى اللوحة", u.stk, u);
   }
   const cnt = ty => p.evaluate(ty => (JSON.stringify(PBApp.E.page.sections).match(new RegExp('"type":"' + ty + '"', "g")) || []).length, ty);
@@ -300,7 +300,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     o.pinch = PBApp.E.scale > s0 * 1.3; PBApp.close(); await w(500); return o;
   });
   await p.setViewportSize({ width: 1280, height: 800 });
-  ok("تصميم بمقاس: الصفحة كاملة داخل مجال الرؤية بكل المقاسات (مربع/طولي/عرضي) والنسبة صحيحة بلا شريط علوي ولا تمرير", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].inside && fitR[k].padTop === "0px" && Math.abs(fitR[k].ratio - fitR[k].want) < .03 && fitR[k].noScroll), fitR);
+  ok("تصميم بمقاس: الصفحة كاملة داخل مجال الرؤية بكل المقاسات (مربع/طولي/عرضي) والنسبة صحيحة ومكان علوي محجوز لشريط الأدوات بلا تمرير", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].inside && fitR[k].padTop === "64px" && Math.abs(fitR[k].ratio - fitR[k].want) < .03 && fitR[k].noScroll), fitR);
+  const itb = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "itb", textMode: "none", lang: "ar" }); await w(1500); const t = document.querySelector("#pbx-insp .pbx-itabs"), o = { hidden: !t || getComputedStyle(t).display === "none" }; PBApp.close(); await w(400); return o; });
+  ok("إنشاء الصور: تبويبات محتوى/تنسيق/متقدم مخفية (تبقى في صفحات الويب)", itb.hidden, itb);
   ok("تصميم بمقاس: عجلة الفأرة تكبّر وتصغّر بلا Ctrl، والقرص بإصبعين يكبّر على الهاتف", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].zoomIn && fitR[k].zoomOut) && fitR.mobile.inside && fitR.mobile.pinch, fitR);
   const ar = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; const out = {};
