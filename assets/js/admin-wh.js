@@ -53,7 +53,7 @@
   M.saveCfg = function () { try { Priv.set("warehouses", A().wh.cfg); } catch (e) { } };
 
   /* ═════ الواجهة: بطاقة داخل تبويب المخزون ═════ */
-  const BTN = "padding:.45rem .85rem;border-radius:12px;font:inherit;font-weight:800;font-size:.84rem;color:#fff;cursor:pointer;border:1px solid rgba(34,197,94,.6);background:linear-gradient(180deg,rgba(34,197,94,.45),rgba(34,197,94,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 6px rgba(0,0,0,.22),0 3px 10px rgba(0,0,0,.25);backdrop-filter:blur(6px)";
+  const BTN = "padding:.45rem .85rem;border-radius:12px;font:inherit;font-weight:800;font-size:.84rem;color:#fff;cursor:pointer;border:1px solid rgba(170,220,10,.6);background:linear-gradient(180deg,rgba(170,220,10,.45),rgba(170,220,10,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 6px rgba(0,0,0,.22),0 3px 10px rgba(0,0,0,.25);backdrop-filter:blur(6px)";
   const BTN_O = BTN.replace(/34,197,94/g, "251,146,60"), BTN_R = BTN.replace(/34,197,94/g, "239,68,68"), BTN_G = BTN.replace(/rgba\(34,197,94,\.6\)/, "rgba(255,255,255,.22)").replace(/rgba\(34,197,94,\.45\)/, "rgba(255,255,255,.14)").replace(/rgba\(34,197,94,\.16\)/, "rgba(255,255,255,.04)");
   const IN = "padding:.4rem .6rem;border-radius:10px;font:inherit;background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.2);min-width:0";
   const PH_AR = { transit: ["في طريق العودة", "#fbbf24"], ready: ["جاهز للسحب من مركز الشركة", "#fb923c"], received: ["سُلِّم للبائع", "#4ade80"] };

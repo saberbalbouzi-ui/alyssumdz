@@ -1389,7 +1389,7 @@ const AdminVoice = (() => {
 #av-hud .av-hp{margin-top:.6rem;display:none;font-size:.78rem;line-height:1.9;color:#cde8d6;border-top:1px solid rgba(255,255,255,.12);padding-top:.5rem}#av-hud.help .av-hp{display:block}.av-hp b{color:#d4ff4d}
 #av-hud .av-bt{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.65rem}
 #av-hud button{font-family:inherit;font-weight:800;font-size:.8rem;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);backdrop-filter:blur(8px);border-radius:12px;padding:.42rem .85rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -5px 10px rgba(0,0,0,.18);transition:transform .15s,background .15s}
-#av-hud button:hover{transform:translateY(-2px);background:rgba(198,254,23,.22)}#av-hud button.ok{background:rgba(74,222,128,.22);border-color:rgba(198,254,23,.55)}#av-hud button.no{background:rgba(239,68,68,.2);border-color:rgba(248,113,113,.5)}
+#av-hud button:hover{transform:translateY(-2px);background:rgba(198,254,23,.22)}#av-hud button.ok{background:rgba(198,254,23,.22);border-color:rgba(198,254,23,.55)}#av-hud button.no{background:rgba(239,68,68,.2);border-color:rgba(248,113,113,.5)}
 @media(max-width:560px){#av-hud{bottom:12px}}`;
     document.head.appendChild(st);
   }
