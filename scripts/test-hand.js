@@ -360,6 +360,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       const sup0 = A._supPub; A._supPub = { [W.id]: { [yesD.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")]: [150, 0] } }; const q = A.shipFeeFor(W, yesD, "home"); r.sup = q.sup === 150 && q.fee === q.base + 150; A._supPub = sup0; r.ready = typeof A.shipSupLoad === "function" && (await A.shipSupLoad(), true);
       bg.remove(); return r; });
     ok("طلب يدوي: Stop Desk يتعطل في البلدية بلا مكتب ويُفعَّل مع مكتب، وإضافة البلدية تُضاف لسعر الولاية", mo2.disabled && mo2.enabled && mo2.opts && mo2.sup && mo2.ready, mo2); }
+  { const kf = await p.evaluate(async () => { const A = Admin, r = {}, cf = A.courierFetch, fc = A.fetchCommuneFees, cfg0 = A.deliveryCfg.yalidine, ks0 = A._keyState.yalidine; let calls = []; A.deliveryCfg.yalidine = Object.assign({}, cfg0 || {}, { apiId: "1", apiToken: "2", enabled: true }); A._keyState.yalidine = { ok: false };
+      A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ total_data: 3 }) }); A.fetchCommuneFees = async o => { calls.push(o); };
+      await A.checkCompanyKeys("yalidine", { explain: true }); r.a = calls.length === 1 && calls[0].force === true; await A.checkCompanyKeys("yalidine", {}); r.b = calls.length === 1;
+      A._keyState.yalidine = { ok: false }; await A.checkCompanyKeys("yalidine", { quiet: true }); r.c = calls.length === 2 && calls[1].auto === true;
+      A.courierFetch = cf; A.fetchCommuneFees = fc; A.deliveryCfg.yalidine = cfg0; A._keyState.yalidine = ks0; return r; });
+    ok("جلب أسعار البلديات تلقائياً فور قبول مفاتيح الشركة (حفظ المفاتيح ← جلب فوري، والتكرار العادي لا يعيده)", kf.a && kf.b && kf.c, kf); }
   { const mo3 = await p.evaluate(async () => { const A = Admin, r = {}; const W = WILAYAS.find(w => !w.par && (w.communes || []).length > 2), cn = x => String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
       const c1 = W.communes[0], c2 = W.communes[1], cs0 = A.communeSup, sp0 = A._supPub, W2 = WILAYAS.find(w => !w.par && w.id !== W.id && (w.communes || []).length);
       A._supPub = { [W.id]: { [cn(c1)]: [60, 0] }, [W2.id]: { [cn(W2.communes[0])]: [-40, 0] } }; A.communeSup = () => ({ [W.id]: { [cn(c2)]: [90, 0] } });
