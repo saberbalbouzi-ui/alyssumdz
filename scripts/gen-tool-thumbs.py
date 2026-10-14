@@ -44,8 +44,10 @@ def refl(cv, im, cx, by, k=.35):
     for y in range(r.height): gd.line([(0, y), (r.width, y)], fill=int(255 * k * max(0, 1 - y / (r.height * .5))))
     r.putalpha(ImageChops.multiply(r.getchannel('A'), g)); cv.alpha_composite(r, (round(cx - r.width / 2), round(by)))
 def split(a, b, name):
-    out = Image.new('RGB', (W, H)); out.paste(a.convert('RGB').crop((0, 0, W // 2, H)), (0, 0)); out.paste(b.convert('RGB').crop((W // 2, 0, W, H)), (W // 2, 0))
-    d = ImageDraw.Draw(out); d.line([(W // 2, 0), (W // 2, H)], fill=(255, 255, 255), width=2)
+    out = Image.new('RGB', (W, H)); la = a.convert('RGB').crop((0, 0, W // 2, H))
+    if name not in ('bg', 'rt'): la = ImageEnhance.Brightness(ImageEnhance.Contrast(ImageEnhance.Color(la).enhance(.25)).enhance(.8)).enhance(1.08)  # «قبل» باهت ليظهر نصف/نصف بوضوح
+    out.paste(la, (0, 0)); out.paste(b.convert('RGB').crop((W // 2, 0, W, H)), (W // 2, 0))
+    d = ImageDraw.Draw(out); d.line([(W // 2, 0), (W // 2, H)], fill=(255, 255, 255), width=3); d.ellipse([W // 2 - 7, H // 2 - 7, W // 2 + 7, H // 2 + 7], fill=(255, 255, 255)); d.polygon([(W // 2 - 3, H // 2), (W // 2 + 2, H // 2 - 3), (W // 2 + 2, H // 2 + 3)], fill=(23, 63, 53))
     out.save(os.path.join(OUT, name + '.webp'), quality=82, method=6)
 LX, RX = W // 4, W * 3 // 4
 def jar(cv, im, cx=W // 2, by=H - 14, h=104, **k): put(cv, prod(im, h), cx, by, **k)
