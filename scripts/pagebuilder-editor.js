@@ -1912,6 +1912,15 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (tight ? Math.abs(need - cur) > 0.5 : need > cur) setR(sec.set, "mh", dev, Math.round(need));
   }
   const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
+  /* لوحة «إنشاء صور»: صورة مضافة أو مستبدلة تُوضع في الوسط بحيث يطابق جانبها الأطول الصفحة (طولها للصورة الطولية، عرضها للعريضة) دون قصّ؛ الصفحة المربعة + صورة مستطيلة = طول الصورة بطول الصفحة */
+  function fitAdImage(id) {
+    const q = find(id); if (!q || !q.node.set.src || !E.page.ad) return; const W = E.page.ad.w, H = E.page.ad.h;
+    const im = new Image(); im.onload = () => {
+      const q2 = find(id); if (!q2 || !im.naturalWidth) return; const k = Math.min(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k, st = q2.node.set;
+      st.fx = { d: +(((W - w) / 2) / W * 100).toFixed(3) }; st.fy = { d: Math.round((H - h) / 2) }; st.fwd = { d: +(w / W * 100).toFixed(3) }; st.fh = { d: Math.round(h) }; st.fit = "cover"; st.hauto = false; delete st.crop;
+      E.nextLabel = "ملاءمة الصورة للصفحة"; afterEdit(id);
+    }; im.src = localize(String(q.node.set.src));
+  }
   function addFree(type, sec, x, y, init) {
     if (type === "shdr" || type === "sbar") return addTopPart(type);
     const adFull = !!(E.page.ad && type === "image" && x == null && y == null && sec.set.kind === "canvas");      // لوحة التصميم: مربع الصورة بمقاس الصفحة المختار
@@ -1920,6 +1929,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const w = PB.mkFree(type, adFull ? 0 : x != null ? x : 6, adFull ? 0 : y != null ? y : (fr.length ? bottom + 20 : 24), adFull ? 1 : Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1);
     if (adFull) { const H = Number(eff(sec.set, "mh", "d")) || E.page.ad.h; w.set.fx = { d: 0 }; w.set.fy = { d: 0 }; w.set.fwd = { d: 100 }; w.set.fh = { d: Math.round(H) }; w.set.fit = "cover"; w.set.hauto = false; fr.forEach(q => { if ((Number(q.set.zi) || 0) < 2) q.set.zi = 2; }); }      // الصورة خلف العناصر الموجودة
     if (init) init(w);
+    if (adFull && w.set.src) setTimeout(() => fitAdImage(w.id), 0);      // مقاس الصفحة: الصورة تُلائم الصفحة بجانبها الأطول (لا قصّ)
     (sec.free = sec.free || []).push(w);
     if (sec.set.kind === "canvas" && !E.page.ad) { const need = (Number(w.set.fy.d) || 0) + (Number(w.set.fh.d) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); }   // يكبر القماش ليتسع للعنصر
     afterEdit(w.id); setTimeout(() => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50);
@@ -2011,7 +2021,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function applyPaths(inf, paths) {
     const t = inf.node.type;
-    if (t === "image") { inf.set.src = paths[0]; if (!inf.set.clip && !(inf.set.crop && inf.set.crop.w)) inf.set.hauto = true; }      // تظهر بحجمها الحقيقي (ارتفاع تلقائي بنسبتها)
+    if (t === "image") { const full = E.page && E.page.ad && inf.free && Number(eff(inf.set, "fx", "d")) <= .5 && Number(eff(inf.set, "fy", "d")) <= 2 && Number(eff(inf.set, "fwd", "d")) >= 99 && Number(eff(inf.set, "fh", "d")) >= E.page.ad.h * .97; inf.set.src = paths[0]; if (full) { setTimeout(() => fitAdImage(inf.node.id), 0); } else if (!inf.set.clip && !(inf.set.crop && inf.set.crop.w)) inf.set.hauto = true; }      // تظهر بحجمها الحقيقي (ارتفاع تلقائي بنسبتها)
     else if (t === "pgal") { pgFill(inf, paths, -1); return; }
     else if (t === "gallery" && inf.set.grid) galFill(inf, paths, 0);
     else if (t === "gallery") inf.set.imgs = ((inf.set.imgs || "").trim() ? inf.set.imgs.trim() + "\n" : "") + paths.join("\n");
@@ -2926,7 +2936,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
