@@ -408,6 +408,18 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       A.courierFetch = async () => ({ ok: false, status: 500, text: "" }); A.ydFees = {}; set("mo-from", W16.name); set("mo-from", W15.name); await new Promise(z => setTimeout(z, 300)); r.fail = bg.querySelector("#mo-fee").value === d && /تعذّر/.test(bg.querySelector("#mo-fh").textContent);
       bg.remove(); A.ydFees = f0; A.deliveryCfg.yalidine = c0; A.courierFetch = cf0; Priv.set = ps0; return r; });
     ok("طلب يدوي: رسم التوصيل يتبع ولاية الانطلاق المختارة (يجلب تعريفة الزوج مرة ويخزّنها، ويعود للافتراضي عند العودة أو الفشل)", ff.fetched && ff.fee && ff.saved && ff.back && ff.cache && ff.fail, ff); }
+  { const oe = await p.evaluate(async () => { const A = Admin, r = {}, f0 = A.ydFees, c0 = A.deliveryCfg.yalidine, cf0 = A.courierFetch, ps0 = Priv.set, uf0 = API.updateOrderFields, uo0 = API.updateOrder, ao0 = A.orders, W15 = WILAYAS.find(w => w.id === 15), W16 = WILAYAS.find(w => w.id === 16), W31 = WILAYAS.find(w => w.id === 31), com = W31.communes[0];
+      A.deliveryCfg.yalidine = Object.assign({}, c0 || {}, { apiId: "1", apiToken: "2", enabled: true, fromWilayaName: "Alger" }); A.ydFees = {}; Priv.set = async () => { }; API.updateOrderFields = async () => true; API.updateOrder = () => { };
+      A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ per_commune: { 1: { commune_name: com, express_home: 1500, express_desk: 900 } } }) });
+      const o = { id: "OE-F1", date: new Date().toISOString(), name: "زبون", phone: "0555000222", wilaya: W31.name, commune: com, dtype: "home", desk: "", items: "منتج ×1 = 3000 DA", subtotal: 3000, fee: 900, total: 3900, discount: 0, extra: {}, status: "confirmee", note: "" }; A.orders = [o];
+      OrderEdit.open(0); await new Promise(z => setTimeout(z, 250)); let bg = document.getElementById("oe-bg"), f = bg.querySelector("#oe-from"); r.has = !!f && /الافتراضية/.test(f.selectedOptions[0].textContent) && /16/.test(f.selectedOptions[0].textContent);
+      f.value = W15.name; f.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 400)); r.fee = bg.querySelector("#oe-fee").value === "1500" && /تعريفة ياليدين من/.test(bg.querySelector("#oe-fh").textContent);
+      bg.querySelector("#oe-save").click(); await new Promise(z => setTimeout(z, 400)); r.tag = /📍@Tizi_Ouzou/.test(o.note) && A.fromOf(o) === W15.name && o.fee === 1500;
+      A.orders = [o]; OrderEdit.open(0); await new Promise(z => setTimeout(z, 250)); bg = document.getElementById("oe-bg"); f = bg.querySelector("#oe-from"); r.pre = f.value === W15.name;
+      f.value = W16.name; f.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 300)); bg.querySelector("#oe-save").click(); await new Promise(z => setTimeout(z, 400)); r.reset = !/📍/.test(o.note) && A.fromOf(o) === "";
+      const tr = Object.assign({}, o, { note: "🚚yalidine:yal-OEF1" }); A.orders = [tr]; OrderEdit.open(0); await new Promise(z => setTimeout(z, 250)); r.reg = !document.getElementById("oe-bg").querySelector("#oe-from"); document.getElementById("oe-bg").remove();
+      A.ydFees = f0; A.deliveryCfg.yalidine = c0; A.courierFetch = cf0; Priv.set = ps0; API.updateOrderFields = uf0; API.updateOrder = uo0; A.orders = ao0; return r; });
+    ok("تعديل الطلب: ولاية الانطلاق (للطلب غير المسجَّل) تغيّر الرسم وتُحفظ وسماً في الملاحظة وتُقرأ عند الإرسال، والعودة للافتراضية تزيلها", oe.has && oe.fee && oe.tag && oe.pre && oe.reset && oe.reg, oe); }
   { const mo3 = await p.evaluate(async () => { const A = Admin, r = {}; const W = WILAYAS.find(w => !w.par && (w.communes || []).length > 2), cn = x => String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
       const c1 = W.communes[0], c2 = W.communes[1], cs0 = A.communeSup, sp0 = A._supPub, W2 = WILAYAS.find(w => !w.par && w.id !== W.id && (w.communes || []).length);
       A._supPub = { [W.id]: { [cn(c1)]: [60, 0] }, [W2.id]: { [cn(W2.communes[0])]: [-40, 0] } }; A.communeSup = () => ({ [W.id]: { [cn(c2)]: [90, 0] } });
@@ -1090,11 +1102,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   // ── تفصيل سعر التوصيل (ولاية + بلدية) يظهر للمدير في المعاينة فقط ──
   const bdp = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {};
-    const mk = (fee, bd) => ({ id: "D" + fee, date: new Date().toISOString(), status: "nouvelle", name: "ز", phone: "0550000000", wilaya: "Alger", commune: "Kouba", dtype: "home", desk: "", items: "", subtotal: 2400, fee, total: 2400 + fee, discount: 0, coupon: "", extra: bd ? { "🚚 تفصيل التوصيل": bd, "📄 الصفحة": "p/x" } : {}, note: "" });
+    const mk = (fee, bd) => ({ id: "D" + fee, date: new Date().toISOString(), status: "nouvelle", name: "ز", phone: "0550000000", wilaya: "Alger", commune: "Kouba", dtype: "home", desk: "", items: "", subtotal: 2400, fee, total: 2400 + fee, discount: 0, coupon: "", extra: Object.assign({ "🔗 مرجع": "PF-REF-123", "🔗 معرّف النقرة": "fbclid-ABC" }, bd ? { "🚚 تفصيل التوصيل": bd, "📄 الصفحة": "p/x" } : {}), note: "" });
     Admin.orders = [mk(800, "750+50"), mk(900, "750+50"), mk(750, "")];
     const txt = i => { Admin.openOrderPreview(i); return document.getElementById("ord-prev-b").textContent; };
-    const a = txt(0), b = txt(1), c = txt(2);
-    return { a: /تفصيل/.test(a) && /750/.test(a) && /إضافة البلدية/.test(a) && !/750\+50/.test(a), b: !/تفصيل/.test(b), c: !/تفصيل/.test(c) };
+    const a = txt(0), b = txt(1), c = txt(2); const hid = !/PF-REF-123|fbclid-ABC|معرّف النقرة/.test(a + b + c);
+    return { a: /تفصيل/.test(a) && /750/.test(a) && /إضافة البلدية/.test(a) && !/750\+50/.test(a), b: !/تفصيل/.test(b), c: !/تفصيل/.test(c) && hid };
   });
   ok("معاينة الطلب: يظهر للمدير تفصيل التوصيل (ولاية 750 + إضافة البلدية 50) عند وجوده فقط، ويختفي إن عُدّل الرسم", bdp.a && bdp.b && bdp.c, bdp);
   // ── إضافة البلدية من ياليدين (Supplément commune) ──
