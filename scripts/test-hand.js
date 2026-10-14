@@ -380,6 +380,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       await run(false); await run(true); r.n = sent.length; r.none = sent[0] && !(sent[0].extra || {})["📍 ولاية الانطلاق"]; r.chg = sent[1] && (sent[1].extra || {})["📍 ولاية الانطلاق"] === tw.name;
       A.orders = A.orders.filter(o => !String(o.id).startsWith("M-FROM")); API.addOrder = add0; A.deliveryCfg.yalidine = c0; return r; });
     ok("طلب يدوي: خانة ولاية الانطلاق افتراضيها من إعدادات الشركة، ولا تُسجَّل في الطلب إلا إن تغيّرت", fo.has && fo.def && fo.n === 2 && fo.none && fo.chg, fo); }
+  { const rc = await p.evaluate(async () => { const A = Admin, r = {}, ord0 = API.orders, q0 = API.questions, ao0 = A.orders;
+      const mk = () => ({ id: "RC-1", date: new Date().toISOString(), name: "ز", phone: "0555000111", wilaya: "Alger", commune: "Kouba", dtype: "home", desk: "", items: "منتج ×1 = 1000 DA", subtotal: 1000, fee: 500, total: 1500, discount: 0, extra: {}, status: "confirmee", note: "" });
+      const loc = mk(); A.orders = [loc]; A.saveTracking(loc, "yalidine", "yal-RC1TEST", "1500"); API.questions = async () => ({ ok: true, questions: [] });
+      API.orders = async () => ({ ok: true, orders: [mk()] }); await A.refreshAlerts(); const a = A.orders.find(x => x.id === "RC-1"); r.keep = !!(a && A.trackingOf(a)) && a.status === "confirmee";
+      A.orders = [Object.assign(mk(), { _trkAt: Date.now() - 600000, note: "🚚yalidine:yal-OLD1" })]; API.orders = async () => ({ ok: true, orders: [mk()] }); await A.refreshAlerts(); r.old = !A.trackingOf(A.orders[0]);
+      API.orders = async () => ({ ok: true, orders: [Object.assign(mk(), { note: "🚚yalidine:yal-SRV1" })] }); A.orders = [Object.assign(mk(), { _trkAt: Date.now(), note: "🚚yalidine:yal-LOC1" })]; await A.refreshAlerts(); r.srv = (A.trackingOf(A.orders[0]) || {}).tracking === "yal-SRV1";
+      API.orders = ord0; API.questions = q0; A.orders = ao0; return r; });
+    ok("سباق الإرسال: قائمة الخادم القديمة لا تُسقط وسم التتبع المحفوظ حديثاً محلياً (ولا تحجب تتبع الخادم ولا تتجاوز 3 دقائق)", rc.keep && rc.old && rc.srv, rc); }
+  { const bl = await p.evaluate(async () => { const A = Admin, r = {}, cf0 = A.courierFetch, wo0 = window.open, ps0 = A.printOrderSlip, ao0 = A.orders, lc0 = A.labelCache; A.labelCache = {};
+      const o = { id: "BL-1", date: new Date().toISOString(), name: "ز", phone: "0555000111", wilaya: "Alger", commune: "Kouba", dtype: "home", desk: "", items: "منتج ×1 = 1000 DA", subtotal: 1000, fee: 500, total: 1500, discount: 0, extra: {}, status: "confirmee", note: "🚚yalidine:yal-BL1TEST" }; A.orders = [o];
+      const wins = []; window.open = (u) => { const w = { u, closed: false, location: { set href(v) { w.href = v; } }, document: { write() { } }, close() { w.closed = true; } }; wins.push(w); return w; };
+      let slip = 0; A.printOrderSlip = () => { slip++; }; let calls = 0;
+      A.courierFetch = async () => { calls++; return { ok: true, status: 200, text: JSON.stringify({ data: [{ tracking: "yal-BL1TEST", extra: { pdf: { label: "https://yalidine.app/p/BL1.pdf" } } }] }) }; };
+      await A.openLabel(0); r.deep = wins[0] && wins[0].href === "https://yalidine.app/p/BL1.pdf" && calls === 1; await A.openLabel(0); r.cache = calls === 1 && wins[1] && wins[1].href === "https://yalidine.app/p/BL1.pdf";
+      A.labelCache = {}; A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ data: [{ tracking: "x" }] }) }); await A.openLabel(0); r.slip = slip === 1 && wins[2] && wins[2].closed;
+      A.courierFetch = async () => { throw new Error("boom"); }; await A.openLabel(0); r.slip2 = slip === 2;
+      A.courierFetch = cf0; window.open = wo0; A.printOrderSlip = ps0; A.orders = ao0; A.labelCache = lc0; return r; });
+    ok("بوردرو الشركة الأصلي: يُبحث عن الرابط بعمق في الردّ ويُحفظ، وإن تعذّر يُفتح وصل الطلب بدل الفشل الصامت", bl.deep && bl.cache && bl.slip && bl.slip2, bl); }
   { const mo3 = await p.evaluate(async () => { const A = Admin, r = {}; const W = WILAYAS.find(w => !w.par && (w.communes || []).length > 2), cn = x => String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
       const c1 = W.communes[0], c2 = W.communes[1], cs0 = A.communeSup, sp0 = A._supPub, W2 = WILAYAS.find(w => !w.par && w.id !== W.id && (w.communes || []).length);
       A._supPub = { [W.id]: { [cn(c1)]: [60, 0] }, [W2.id]: { [cn(W2.communes[0])]: [-40, 0] } }; A.communeSup = () => ({ [W.id]: { [cn(c2)]: [90, 0] } });
