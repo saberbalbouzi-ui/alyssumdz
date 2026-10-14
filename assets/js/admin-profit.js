@@ -7,7 +7,7 @@ const AdminProfit = (() => {
   const nf = n => Math.round(Number(n) || 0).toLocaleString("fr-DZ");
   const dz = n => (n < 0 ? "−" : "") + nf(Math.abs(n)) + " دج";
   const pct = (a, b) => (b > 0 ? Math.round(a / b * 1000) / 10 : 0);
-  const S = { days: 30, ads: [], spend: null, off: false, err: "", busy: false, form: null, fixed: 0, loadedSet: false, tab: "ov" };
+  const S = { days: 30, ads: [], spend: null, off: false, err: "", busy: false, form: null, tok: "", fixed: 0, loadedSet: false, tab: "ov" };
   const PROV = { meta: { n: "Meta (فيسبوك وإنستغرام)", i: "🔵" }, tiktok: { n: "تيك توك", i: "⚫" } };
   const ERR = { validation_error: "تحقق من الحقول المُدخلة", limit_reached: "وصلت الحد الأقصى من الحسابات", rate_limited: "طلبات كثيرة، أعد المحاولة بعد قليل", vault_unavailable: "الخدمة غير جاهزة لحفظ الأسرار — تواصل مع الدعم" };
   const ago = ts => { if (!ts) return "لم تُزامَن بعد"; const m = Math.max(0, Math.round((Date.now() / 1000 - ts) / 60)); return m < 1 ? "الآن" : m < 90 ? "منذ " + m + " د" : m < 2880 ? "منذ " + Math.round(m / 60) + " س" : "منذ " + Math.round(m / 1440) + " يوماً"; };
@@ -52,7 +52,16 @@ const AdminProfit = (() => {
       return { ok: j.status >= 200 && j.status < 300, st: j.status, j: j.data || {} };
     } catch (e) { return { ok: false, st: 0 }; }
   }
-  const errOf = r => (r && r.j && r.j.error && (r.j.error.fields ? Object.values(r.j.error.fields)[0] : (ERR[r.j.error.code] || r.j.error.message))) || (r && r.st === 429 ? ERR.rate_limited : "تعذّر تنفيذ الطلب");
+  const errOf = r => {
+    const e = r && r.j && r.j.error;
+    if (e && typeof e === "object") { const m = e.fields ? Object.values(e.fields)[0] : (ERR[e.code] || e.message); if (m) return m; }
+    if (e && typeof e === "string") return ({ unauthorized: "انتهت جلستك أو لا تملك صلاحية المدير — أعد تسجيل الدخول", not_configured: "خدمة الربط غير مفعّلة بعد — تواصل مع الدعم", path_not_allowed: "العملية غير مسموحة", upstream_failed: "تعذّر الوصول إلى الخدمة، أعد المحاولة" })[e] || e;
+    if (r && r.off) return "ربط الحسابات غير متاح في هذا الإعداد";
+    if (r && r.st === 429) return ERR.rate_limited;
+    if (r && r.st === 401) return "انتهت جلستك — أعد تسجيل الدخول ثم حاول ثانية";
+    if (r && r.st === 0) return "تعذّر الاتصال بالإنترنت، أعد المحاولة";
+    return "تعذّر تنفيذ الطلب" + (r && r.st ? " (" + r.st + ")" : "");
+  };
   const range = () => { const d = new Date(); d.setHours(0, 0, 0, 0); const from = new Date(d); from.setDate(from.getDate() - (S.days - 1)); return { from: from.getTime(), to: Date.now() + 1, since: iso(from), until: iso(new Date()) }; };
 
   async function loadAds() {
@@ -110,8 +119,14 @@ const AdminProfit = (() => {
       <div id="pf-msg" class="pf-err" style="display:none"></div><div class="pf-row"><button class="pf-btn" data-pf="save">حفظ وسحب الإنفاق</button><button class="pf-btn g" data-pf="cancel">إلغاء</button></div></div>`;
   }
 
+  /* ما كتبه المستخدم في نموذج الربط يبقى عند أي إعادة رسم (تحديث/تبديل الفترة) بدل أن يُمسح قبل الضغط على «حفظ» */
+  function keepDraft() {
+    const f = S.form, g = id => $(id); if (!f || !g("pf-form")) return;
+    ["pf-acc:account_id", "pf-name:name", "pf-cur:currency", "pf-fx:fx", "pf-prov:provider"].forEach(x => { const [id, k] = x.split(":"); if (g(id) && !g(id).disabled) f[k] = g(id).value; });
+    if (g("pf-tok")) S.tok = g("pf-tok").value;
+  }
   function draw() {
-    css(); const host = $("pf-app"); if (!host) return;
+    css(); const host = $("pf-app"); if (!host) return; keepDraft();
     if (S.busy && !S.fin) { host.innerHTML = '<div class="pf-card"><div class="pf-sub">جارٍ الحساب…</div></div>'; return; }
     let body = "";
     if (typeof Admin === "undefined" || !Admin.computeFinance || !Admin.fin) body = '<div class="pf-card"><div class="pf-sub">بيانات الطلبات لم تُحمَّل بعد.</div></div>';
@@ -137,21 +152,32 @@ const AdminProfit = (() => {
     }
     host.innerHTML = `<div class="pf-head"><div><h2>💰 الربح الحقيقي</h2><small>ما دخل جيبك فعلاً بعد التوصيل والمرتجعات وكلفة البضاعة والإعلانات</small></div><div class="pf-seg">${[[7, "7 أيام"], [30, "30 يوماً"], [90, "90 يوماً"]].map(d => `<button data-pf="days" data-d="${d[0]}" class="${S.days === d[0] ? "on" : ""}">${d[1]}</button>`).join("")}<button class="pf-btn g" data-pf="refresh">⟳ تحديث</button></div></div>
       ${S.err ? `<div class="pf-err">${esc(S.err)}</div>` : ""}${body}${S.off ? '<div class="pf-note">ربط حسابات الإعلانات غير متاح في هذا الإعداد؛ الأرقام تعتمد على تقدير الإعلان في «المخزون والأرباح».</div>' : accounts()}`;
+    const tk = $("pf-tok"); if (tk && S.tok) tk.value = S.tok;
   }
 
   function readForm() {
     const v = id => ($(id) ? $(id).value.trim() : ""), f = S.form;
-    const cfg = { currency: v("pf-cur") || "DZD", fx: cfg0(v("pf-cur"), v("pf-fx")) }, secrets = {}; if (v("pf-tok")) secrets.token = v("pf-tok");
-    return { id: f.id, provider: v("pf-prov") || f.provider, account_id: v("pf-acc") || f.account_id, name: v("pf-name"), config: cfg, secrets };
+    const cfg = { currency: v("pf-cur") || "DZD", fx: cfg0(v("pf-cur"), v("pf-fx").replace(",", ".")) }, secrets = {};
+    const tok = v("pf-tok").replace(/^(authorization:\s*)?bearer\s+/i, "").replace(/^["']|["']$/g, "").replace(/\s+/g, ""); if (tok) secrets.token = tok;   // يقبل اللصق مع Bearer أو علامات اقتباس أو أسطر
+    return { id: f.id, provider: v("pf-prov") || f.provider, account_id: (v("pf-acc") || f.account_id || "").replace(/^act_/i, "").replace(/\s+/g, ""), name: v("pf-name"), config: cfg, secrets };
   }
   const cfg0 = (cur, fx) => (cur === "DZD" ? 1 : +fx || 0);
   async function save(btn) {
-    const b = readForm(), msg = $("pf-msg"), show = t => { msg.style.display = ""; msg.textContent = t; };
-    if (!b.account_id) return show("اكتب رقم الحساب الإعلاني"); if (!b.id && !b.secrets.token) return show("الصق رمز الوصول"); if (b.config.currency !== "DZD" && !(b.config.fx > 0)) return show("اكتب سعر الصرف إلى الدينار");
-    btn.disabled = true; const lab = btn.textContent; btn.textContent = "جارٍ الحفظ…";
-    const r = await call("PUT", "/v1/ads/accounts", b); if (!r.ok) { btn.disabled = false; btn.textContent = lab; return show(errOf(r)); }
-    btn.textContent = "جارٍ سحب الإنفاق…"; const sy = await call("POST", `/v1/ads/accounts/${r.j.id}/sync`); S.form = null;
-    await loadAds(); draw(); if (!sy.ok) toast("حُفظ الحساب لكن تعذّرت المزامنة: " + errOf(sy)); else if (sy.j && sy.j.ok === false) toast("حُفظ الحساب. المنصة ردّت: " + (sy.j.error || "تحقق من الرمز والصلاحيات")); else toast("تمّت المزامنة ✓");
+    const msg = $("pf-msg"), show = t => { if (msg) { msg.style.display = ""; msg.textContent = t; msg.scrollIntoView && msg.scrollIntoView({ block: "nearest" }); } toast(t); };
+    if (btn.disabled) return; const lab = btn.textContent;
+    try {
+      const b = readForm();
+      if (!b.account_id) return show("اكتب رقم الحساب الإعلاني (أرقام فقط، مثل 664829409857812)");
+      if (!/^\d{5,20}$/.test(b.account_id)) return show("رقم الحساب الإعلاني أرقام فقط — انسخه من مدير الإعلانات (بدون act_ وبدون مسافات)");
+      if (!b.id && !b.secrets.token) return show("الصق رمز الوصول في خانته");
+      if (b.secrets.token && !/^[A-Za-z0-9_\-.|]{20,600}$/.test(b.secrets.token)) return show("رمز الوصول يحوي رموزاً غير مقبولة — انسخه كاملاً دون إضافات");
+      if (b.config.currency !== "DZD" && !(b.config.fx > 0)) return show("اكتب سعر الصرف إلى الدينار (مثلاً 245 للدولار) لأن عملة الحساب ليست الدينار");
+      btn.disabled = true; btn.textContent = "جارٍ الحفظ…"; if (msg) msg.style.display = "none";
+      const r = await call("PUT", "/v1/ads/accounts", b); if (!r.ok) return show(errOf(r));
+      btn.textContent = "جارٍ سحب الإنفاق…"; const sy = await call("POST", `/v1/ads/accounts/${r.j.id}/sync`); S.form = null; S.tok = "";
+      await loadAds(); draw(); if (!sy.ok) toast("حُفظ الحساب لكن تعذّرت المزامنة: " + errOf(sy)); else if (sy.j && sy.j.ok === false) toast("حُفظ الحساب. المنصة ردّت: " + (sy.j.error || "تحقق من الرمز والصلاحيات")); else toast("تمّت المزامنة ✓");
+    } catch (er) { show("حدث خطأ غير متوقع: " + (er && er.message || er)); }
+    finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = lab; } }
   }
   async function onClick(e) {
     const t = e.target.closest("[data-pf]"); if (!t) return; const a = t.dataset.pf, id = +t.dataset.id;
@@ -159,7 +185,7 @@ const AdminProfit = (() => {
     else if (a === "refresh") refresh();
     else if (a === "add") { S.form = { provider: "meta", currency: "DZD", fx: 1 }; draw(); const f = $("pf-form"); if (f) f.scrollIntoView({ block: "nearest" }); }
     else if (a === "edit") { const x = S.ads.find(y => y.id === id); if (x) { S.form = { id: x.id, provider: x.provider, account_id: x.account_id, name: x.name, currency: x.currency, fx: x.fx }; draw(); } }
-    else if (a === "cancel") { S.form = null; draw(); }
+    else if (a === "cancel") { S.form = null; S.tok = ""; draw(); }
     else if (a === "save") save(t);
     else if (a === "sync") { t.disabled = true; t.textContent = "…"; const r = await call("POST", `/v1/ads/accounts/${id}/sync`); await loadAds(); draw(); toast(r.ok && !(r.j && r.j.ok === false) ? "تمّت المزامنة ✓" : "تعذّرت المزامنة: " + ((r.j && r.j.error) || errOf(r))); }
     else if (a === "pause") { await call("POST", `/v1/ads/accounts/${id}/pause`, { paused: t.dataset.p === "1" }); await loadAds(); draw(); }
