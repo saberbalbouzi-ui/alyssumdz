@@ -1,5 +1,5 @@
 /* لوحة مزوّد منصة أليسوم — زجاج داكن أخضر (نفس هوية لوحة التحكم) */
-:root{--bg:#06130e;--bg2:#0b2018;--sf:rgba(255,255,255,.055);--sf2:rgba(255,255,255,.09);--ln:rgba(255,255,255,.14);--tx:#eaf6ef;--mut:rgba(234,246,239,.72);--mint:#c6fe17;--grn:#22c55e;--amb:#f59e0b;--red:#ef4444;--blu:#38bdf8;--vio:#a78bfa;--rad:14px}
+:root{--bg:#06130e;--bg2:#0b2018;--sf:rgba(255,255,255,.055);--sf2:rgba(255,255,255,.09);--ln:rgba(255,255,255,.14);--tx:#eaf6ef;--mut:rgba(234,246,239,.72);--mint:#c6fe17;--mint-rgb:198,254,23;--grn:#22c55e;--amb:#f59e0b;--red:#ef4444;--blu:#38bdf8;--vio:#a78bfa;--rad:14px}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:radial-gradient(1200px 700px at 85% -10%,#12402c 0,transparent 60%),radial-gradient(900px 600px at -10% 110%,#0d3a2a 0,transparent 55%),var(--bg);color:var(--tx);line-height:1.55;font-size:15px}
@@ -9,8 +9,8 @@ a{color:var(--mint)}
 .mut{color:var(--mut)}.sm{font-size:.82rem}.b{font-weight:800}.ltr{direction:ltr;unicode-bidi:embed}
 
 /* أزرار: زجاج شفاف منتفخ بنص أبيض (أخضر أساسي، برتقالي تنبيه، أحمر حذف) */
-.btn{cursor:pointer;border:1px solid rgba(198,254,23,.45);color:#fff;font-weight:800;padding:.5rem 1rem;border-radius:12px;background:linear-gradient(180deg,rgba(198,254,23,.34),rgba(34,197,94,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 10px rgba(0,0,0,.22),0 4px 12px rgba(0,0,0,.28);backdrop-filter:blur(6px);transition:transform .15s,background .15s}
-.btn:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(198,254,23,.5),rgba(34,197,94,.26))}
+.btn{cursor:pointer;border:1px solid rgba(var(--mint-rgb),.45);color:#fff;font-weight:800;padding:.5rem 1rem;border-radius:12px;background:linear-gradient(180deg,rgba(var(--mint-rgb),.34),rgba(34,197,94,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 10px rgba(0,0,0,.22),0 4px 12px rgba(0,0,0,.28);backdrop-filter:blur(6px);transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(var(--mint-rgb),.5),rgba(34,197,94,.26))}
 .btn:disabled{opacity:.5;cursor:default;transform:none}
 .btn.o{border-color:rgba(245,158,11,.55);background:linear-gradient(180deg,rgba(245,158,11,.38),rgba(245,158,11,.16))}
 .btn.o:hover{background:linear-gradient(180deg,rgba(245,158,11,.55),rgba(245,158,11,.26))}
@@ -19,7 +19,7 @@ a{color:var(--mint)}
 .btn.g{border-color:var(--ln);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05))}
 .btn.s{padding:.25rem .65rem;font-size:.82rem;border-radius:10px}
 input,select,textarea{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--ln);border-radius:10px;padding:.5rem .7rem;outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(198,254,23,.15)}
+input:focus,select:focus,textarea:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(var(--mint-rgb),.15)}
 select option{background:#0b2018;color:#fff}
 textarea{resize:vertical;min-height:90px}
 label.f{display:block;font-size:.8rem;font-weight:800;margin:.5rem 0 .2rem;color:var(--mut)}
@@ -38,7 +38,7 @@ aside{background:rgba(6,19,14,.72);border-inline-end:1px solid var(--ln);padding
 .brand small{display:block;font-weight:600;color:var(--mut);font-size:.75rem}
 .nv{display:flex;align-items:center;justify-content:space-between;gap:.6rem;width:100%;text-align:start;cursor:pointer;border:1px solid transparent;background:none;border-radius:12px;padding:.65rem .8rem;font-weight:700;color:var(--mut)}
 .nv:hover{background:var(--sf);color:var(--tx)}
-.nv.on{background:linear-gradient(180deg,rgba(198,254,23,.3),rgba(34,197,94,.12));border-color:rgba(198,254,23,.4);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.nv.on{background:linear-gradient(180deg,rgba(var(--mint-rgb),.3),rgba(34,197,94,.12));border-color:rgba(var(--mint-rgb),.4);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
 .nv .bd{background:var(--red);color:#fff;border-radius:999px;font-size:.72rem;padding:.05rem .5rem;min-width:22px;text-align:center}
 .spacer{flex:1}
 main{padding:1.2rem 1.4rem 3rem;min-width:0}
@@ -75,7 +75,7 @@ main{padding:1.2rem 1.4rem 3rem;min-width:0}
 .tl{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 230px);overflow:auto;padding:2px}
 .tk{cursor:pointer;border:1px solid var(--ln);border-radius:12px;padding:.6rem .75rem;background:var(--sf);position:relative}
 .tk:hover{background:var(--sf2)}
-.tk.sel{border-color:var(--mint);background:rgba(198,254,23,.1)}
+.tk.sel{border-color:var(--mint);background:rgba(var(--mint-rgb),.1)}
 .tk.unr:before{content:"";position:absolute;inset-inline-end:10px;top:12px;width:9px;height:9px;border-radius:50%;background:var(--blu);box-shadow:0 0 8px var(--blu)}
 .tk .s{font-weight:800;margin-inline-end:1.2rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tk .m{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.3rem;font-size:.78rem;color:var(--mut)}
@@ -112,7 +112,7 @@ tr.clk{cursor:pointer}tr.clk:hover td{background:var(--sf)}
 .sc .s{font-weight:800}.sc .m{font-size:.78rem;color:var(--mut)}
 .seg{display:inline-flex;border:1px solid var(--ln);border-radius:12px;overflow:hidden}
 .seg button{border:0;background:none;padding:.4rem .9rem;cursor:pointer;font-weight:700;color:var(--mut)}
-.seg button.on{background:rgba(198,254,23,.25);color:#fff}
+.seg button.on{background:rgba(var(--mint-rgb),.25);color:#fff}
 
 /* الرسوم */
 .bars{display:grid;gap:7px}
@@ -132,7 +132,7 @@ svg.ch text{fill:rgba(234,246,239,.7);font-size:10px}
 
 /* إشعارات */
 #toasts{position:fixed;inset-inline-start:16px;bottom:16px;z-index:99;display:flex;flex-direction:column;gap:8px;max-width:min(380px,calc(100vw - 32px))}
-.toast{background:rgba(9,24,18,.97);border:1px solid rgba(198,254,23,.5);border-radius:14px;padding:.7rem .9rem;box-shadow:0 12px 34px rgba(0,0,0,.5);animation:ti .25s;cursor:pointer}
+.toast{background:rgba(9,24,18,.97);border:1px solid rgba(var(--mint-rgb),.5);border-radius:14px;padding:.7rem .9rem;box-shadow:0 12px 34px rgba(0,0,0,.5);animation:ti .25s;cursor:pointer}
 .toast b{display:block;color:var(--mint)}
 .toast.w{border-color:rgba(245,158,11,.6)}.toast.w b{color:#fcd34d}
 @keyframes ti{from{transform:translateY(14px);opacity:0}}
