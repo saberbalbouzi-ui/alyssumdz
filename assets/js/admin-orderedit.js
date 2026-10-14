@@ -46,7 +46,7 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
     function autoFee() {
       const w = wOf($("oe-wil").value), q = w && ad.shipFeeFor ? ad.shipFeeFor(w, $("oe-com").value, dt()) : { fee: w ? num(dt() === "stop" ? w.stop : w.home) : num(o.fee), base: 0, sup: 0 }, base = q.fee, same = $("oe-wil").value === o.wilaya && $("oe-com").value === o.commune && dt() === (o.dtype === "stop" ? "stop" : "home");
       $("oe-fee").value = same ? num(o.fee) : (free0 ? 0 : base);
-      $("oe-fh").textContent = same ? "" : "رسم التوصيل الجديد: " + base.toLocaleString("fr-DZ") + " دج" + (q.sup ? " (الولاية " + q.base.toLocaleString("fr-DZ") + " + البلدية " + q.sup.toLocaleString("fr-DZ") + ")" : "") + (free0 ? " (الطلب الأصلي بتوصيل مجاني فبقي مجانياً — عدّل الرسم إن لزم)" : "");
+      $("oe-fh").textContent = same ? "" : "رسم التوصيل الجديد: " + base.toLocaleString("fr-DZ") + " دج" + (ad.feeNote ? ad.feeNote(q, $("oe-com").value) : "") + (free0 ? " (الطلب الأصلي بتوصيل مجاني فبقي مجانياً — عدّل الرسم إن لزم)" : "");
       total();
     }
     const total = () => { $("oe-tot").textContent = Math.max(0, sub - disc + num($("oe-fee").value)).toLocaleString("fr-DZ") + " دج"; };
