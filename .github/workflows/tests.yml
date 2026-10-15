@@ -68,3 +68,4 @@ jobs:
       - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
       - run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
