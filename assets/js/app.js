@@ -1168,7 +1168,7 @@ function initProduct(slug){
     const total = Math.max(0, state.offer.price - discount) + bumpPrice + fee;
     if(p.digital){       // مسار المنتج الرقمي: لا توصيل؛ طلب + دفع مسبق (BaridiMob/CCP/بطاقة) ثم تسليم تلقائي — assets/js/digital-checkout.js
       if(!window.DigitalCheckout){ toast("حاول بعد لحظات"); return }
-      const __dOrder = { name, phone, wilaya:"رقمي", commune:"", dtype:"home", desk:"", items: orderItems(), subtotal: state.offer.price, fee:0, total: Math.max(0, state.offer.price - discount),
+      const __dOrder = { name, phone, wilaya:"رقمي", commune:"", dtype:"home", desk:"", items: orderItems().map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" })), subtotal: state.offer.price, fee:0, total: Math.max(0, state.offer.price - discount),
         coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, extra: Object.assign({}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }) };
       try{ trackEvent("Lead", { slug: p.slug, title: p.title, qty: state.offer.qty, value: __dOrder.total }); }catch(e){}
       Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);

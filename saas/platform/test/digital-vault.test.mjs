@@ -112,6 +112,35 @@ fake.handler = (u) => /graph\.facebook\.com/.test(u) ? [400, { error: { code: 13
 await call("POST", "/v1/digital/keys", { sku: "gift-card", text: "h1\nh2" }, A.key); await pay("WA-ORDER-5");
 ok("رفض Meta ← يبقى ready للإرسال اليدوي ويصدر digital.ready", sql("SELECT state s FROM dg_orders WHERE order_ref='WA-ORDER-5'").s === "ready" && sqlAll("SELECT id FROM pf_events WHERE type='digital.ready'").length >= 3);
 fake.handler = () => [200, { id: "x" }];
+/* ───── إعداد التسليم الآلي من اللوحة (dg_settings) ───── */
+[c] = await call("PUT", "/v1/digital/wa", { auto: true }, B.key); ok("تفعيل بلا معرّف ورمز مرفوض", c === 409);
+[c] = await call("PUT", "/v1/digital/wa", { access_token: "قصير" }, B.key); ok("رمز بشكل غير صالح مرفوض", c === 400);
+[c] = await call("PUT", "/v1/digital/wa", { template: "Bad Name" }, B.key); ok("اسم قالب غير صالح مرفوض", c === 400);
+[c] = await call("PUT", "/v1/digital/wa", { phone_number_id: "abc" }, B.key); ok("معرّف رقم غير صالح مرفوض", c === 400);
+const TOKB = "EAABpaneltoken" + "x".repeat(30);
+[c, b] = await call("PUT", "/v1/digital/wa", { phone_number_id: "555000111", access_token: "Bearer " + TOKB, template: "dg_keys", auto: true }, B.key); ok("ضبط كامل من اللوحة", c === 200 && b.auto === true && b.template === true, b);
+[c, b] = await call("GET", "/v1/digital/wa", null, B.key); ok("الحالة تُظهر المعرّف والقالب بلا رمز", b.configured && b.auto && b.source === "panel" && b.phone_number_id === "555000111" && b.template_name === "dg_keys" && !JSON.stringify(b).includes("EAAB"), b);
+ok("الرمز مشفّر في القاعدة", !JSON.stringify(sqlAll("SELECT wa_token_enc FROM dg_settings")).includes("EAAB"));
+[c, b] = await call("PUT", "/v1/digital/wa", { auto: false }, B.key); ok("إيقاف مع الإبقاء على الرمز", b.auto === false && b.configured === true, b);
+[c, b] = await call("PUT", "/v1/digital/wa", { clear_token: true }, B.key); ok("مسح الرمز", b.configured === false, b);
+[c, b] = await call("GET", "/v1/digital/wa", null, A.key); ok("عزل المستأجرين في الإعداد", b.phone_number_id === "", b);
+/* إعداد اللوحة يسبق تكامل المزوّد */
+await call("PUT", "/v1/digital/wa", { phone_number_id: "999000222", access_token: "EAApanelA" + "y".repeat(30), template: "" , auto: true }, A.key);
+await call("POST", "/v1/digital/keys", { sku: "gift-card", text: "p1\np2" }, A.key); waReq = null; fake.handler = (u, i) => /graph\.facebook\.com/.test(u) ? (waReq = { u, h: i.headers, b: JSON.parse(i.body) }, [200, { messages: [{ id: "x" }] }]) : [200, { id: "x" }];
+await pay("WA-ORDER-6");
+ok("الإرسال بمعرّف ورمز اللوحة لا التكامل", waReq && /\/999000222\/messages$/.test(waReq.u) && waReq.h.Authorization.includes("EAApanelA") && waReq.b.type === "template", waReq);
+fake.handler = () => [200, { id: "x" }];
+/* ───── منتج رقمي متغيّر (شهر / سنة): لكل تنويع مخزون مفاتيحه ───── */
+await call("PUT", "/v1/catalog/products", { products: [{ slug: "iptv", title: "IPTV", price: 1500, variations: [{ id: "m1", label: "شهر", price: 1500 }, { id: "y1", label: "سنة", price: 9000 }] }] }, A.key);
+await call("POST", "/v1/digital/keys", { sku: "iptv.m1", text: "month-1\nmonth-2" }, A.key); await call("POST", "/v1/digital/keys", { sku: "iptv.y1", text: "year-1" }, A.key);
+const vOrder = (ref, vid, price) => order(ref, { customer: { name: "ك", phone: "0661234567", email: "v@x.dz" }, items: [{ slug: "iptv", vid, qty: 1, price }], subtotal: price, total: price, pay: "ccp" });
+[c, b] = await pub("POST", "/v1/orders", vOrder("VAR-ORDER-1", "y1", 9000)); ok("طلب تنويع رقمي يُقبل", c === 201 && b.verified === true, b); await app.cron();
+ok("يُسجَّل بـsku التنويع", JSON.parse(sql("SELECT items i FROM dg_orders WHERE order_ref='VAR-ORDER-1'").i)[0].sku === "iptv.y1");
+await call("POST", "/v1/payments/manual/orders/VAR-ORDER-1/approve", {}, A.key); await app.cron();
+[c, b] = await call("GET", "/v1/digital/orders/VAR-ORDER-1", null, A.key); ok("يستلم مفتاح السنة فقط", sql("SELECT state s FROM dg_orders WHERE order_ref='VAR-ORDER-1'").s === "delivered" && JSON.stringify(b.keys) === JSON.stringify([{ sku: "iptv.y1", values: ["year-1"] }]), b);
+[c, b] = await call("GET", "/v1/digital/keys", null, A.key); ok("مخزون كل تنويع مستقل", b.skus.find((x) => x.sku === "iptv.m1").available === 2 && b.skus.find((x) => x.sku === "iptv.y1").available === 0, b);
+await pub("POST", "/v1/orders", vOrder("VAR-ORDER-2", "y1", 9000)); await app.cron(); await call("POST", "/v1/payments/manual/orders/VAR-ORDER-2/approve", {}, A.key); await app.cron();
+ok("نفاد تنويع واحد لا يمسّ الآخر ← short", sql("SELECT state s, detail d FROM dg_orders WHERE order_ref='VAR-ORDER-2'").s === "short" && sql("SELECT detail d FROM dg_orders WHERE order_ref='VAR-ORDER-2'").d === "iptv.y1" && sql("SELECT COUNT(*) n FROM dg_keys WHERE sku='iptv.m1' AND state='available'").n === 2);
 /* ───── الدفع الإلكتروني العام ───── */
 [c] = await pub("POST", "/v1/payments/pay", { order_id: "DG-ORDER-4", method: "edahabia", return_url: "https://evil.example/t" }); ok("return_url خارج أصول الموقع مرفوض", c === 400);
 [c] = await pub("POST", "/v1/payments/pay", { order_id: "NOPE-ORDER-1", method: "edahabia", return_url: "https://shop.example/t" }); ok("طلب غير معروف 404", c === 404);

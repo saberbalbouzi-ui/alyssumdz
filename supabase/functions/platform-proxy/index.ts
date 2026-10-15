@@ -53,6 +53,7 @@ const ALLOW: [string, RegExp][] = [
   // المنتجات الرقمية: مخزن المفاتيح، الطلبات الرقمية، وإثباتات الدفع اليدوي (BaridiMob/CCP). الرابط العام للتنزيل والمفاتيح العامة لا تمرّ هنا
   ["GET", /^\/v1\/digital\/(keys|orders|assets|wa)$/],
   ["POST", /^\/v1\/digital\/(keys|assets)$/],
+  ["PUT", /^\/v1\/digital\/wa$/],
   ["DELETE", /^\/v1\/digital\/keys\/[A-Za-z0-9._-]{1,80}$/],
   ["GET", /^\/v1\/digital\/orders\/[A-Za-z0-9._:-]{1,80}$/],
   ["POST", /^\/v1\/digital\/orders\/[A-Za-z0-9._:-]{1,80}\/(deliver|sent)$/],

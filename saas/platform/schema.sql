@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS dg_orders (
 CREATE INDEX IF NOT EXISTS ix_dg_orders ON dg_orders (tenant_id, state, id);
 -- هاتف زبون الطلب الرقمي (مشفّر) للتسليم الآلي عبر واتساب؛ جدول مستقل لأن ALTER غير مدعوم في مسار النشر
 CREATE TABLE IF NOT EXISTS dg_phone (tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, order_ref TEXT NOT NULL, phone_enc TEXT NOT NULL, PRIMARY KEY (tenant_id, order_ref));
+-- إعداد التسليم الآلي عبر واتساب للمنتجات الرقمية (يضبطه التاجر من اللوحة؛ الرمز مشفّر ولا يُعرض)
+CREATE TABLE IF NOT EXISTS dg_settings (tenant_id INTEGER PRIMARY KEY REFERENCES pf_tenants(id) ON DELETE CASCADE, wa_auto INTEGER NOT NULL DEFAULT 0, wa_template TEXT NULL, wa_pid TEXT NULL, wa_token_enc TEXT NULL, updated_at INTEGER NOT NULL DEFAULT 0);
 -- وحدة WhatsApp: ربط المستلم بالطلب لمطابقة ردّ «نعم/لا»، ونقطة استقبال لكل مستأجر
 CREATE TABLE IF NOT EXISTS wa_hooks (tenant_id INTEGER PRIMARY KEY REFERENCES pf_tenants(id) ON DELETE CASCADE, hook_id TEXT NOT NULL UNIQUE);
 CREATE TABLE IF NOT EXISTS wa_sent (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, to_h TEXT NOT NULL, order_id TEXT NOT NULL, at INTEGER NOT NULL);
