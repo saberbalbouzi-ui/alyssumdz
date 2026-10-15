@@ -26,4 +26,12 @@ ok("transfer: رئيسي ← مستودع، والكلي ثابت", (() => { con
 ok("transfer: مستودع ← رئيسي", (() => { const s = { k: { w1: 4 } }; const e = W.transfer(s, "k", 10, "w1", "main", 3); return e === "" && s.k.w1 === 1; })());
 ok("transfer: يرفض الزائد والتطابق والكمية الصفرية", W.transfer({}, "k", 2, "main", "w1", 5) !== "" && W.transfer({}, "k", 9, "w1", "w1", 1) !== "" && W.transfer({}, "k", 9, "main", "w1", 0) !== "");
 ok("keyOf: منتج أو تنويع", W.keyOf("a") === "a" && W.keyOf("a", { id: "v1" }) === "a:v1");
+const cm = W.normCfg({ on: true, list: [{ id: "w1", name: "وهران" }], min: { main: 5, w1: 3, zzz: 9, bad: -2 } });
+ok("normCfg يحفظ الحدّ الأدنى للموجود فقط", cm.min.main === 5 && cm.min.w1 === 3 && !("zzz" in cm.min) && W.normCfg({ on: true }).min.main === undefined && W.minOf(cm, "w1") === 3 && W.minOf(cm, "x") === 0);
+const rowsM = [{ key: "a", title: "A", total: 12 }, { key: "b", title: "B", total: 20 }];
+const stM = { a: { w1: 3 }, b: { w1: 10 } };
+const lowM = W.lowCells(cm, stM, rowsM);
+ok("lowCells: الرئيسي A=9>5 لا؛ w1 A=3<=3 نعم؛ B كلاهما فوق الحد", lowM.length === 1 && lowM[0].key === "a" && lowM[0].wh === "w1" && lowM[0].qty === 3, lowM);
+ok("lowCells: الرئيسي عند الحد يُنبَّه", W.lowCells(cm, { a: { w1: 7 } }, [{ key: "a", title: "A", total: 12 }]).some(x => x.wh === "main" && x.qty === 5));
+ok("lowCells: مطفأ أو بلا حدود ← فارغ", W.lowCells(W.normCfg({ on: false, min: { main: 99 } }), {}, rowsM).length === 0 && W.lowCells(W.normCfg({ on: true, list: [{ id: "w1" }] }), stM, rowsM).length === 0);
 console.log(bad ? "✗ فشل " + bad + " من " + n : "✓ " + n + " فحصاً ناجحاً"); process.exit(bad ? 1 : 0);

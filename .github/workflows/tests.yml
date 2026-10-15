@@ -34,6 +34,8 @@ jobs:
         run: node scripts/test-roles.js
       - name: التوجيه اللوجستي (نقي)
         run: node scripts/test-dispatch.js
+      - name: المستودعات والمرتجعات
+        run: node scripts/test-wh.js
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.2', extensions: 'openssl, pdo_sqlite, mbstring, curl' }
       - name: وحدة تجميع شركات التوصيل (PHP)
@@ -44,6 +46,7 @@ jobs:
           php scripts/test-ship-php.php
           php scripts/test-gateway.php
           php scripts/test-roles-php.php
+          php scripts/test-webhook-php.php
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - name: بوابة الشحن (Worker + D1)

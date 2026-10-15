@@ -1424,12 +1424,17 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.shipRaw = {}; Admin.tab("inventory"); await wait(900); Admin.orders = [Object.assign(ord("W6", 1, "echec"), { name: "زبون مرتجع", note: "📦 🔁transit" })]; AdminWh.draw(); await wait(200);
     R.ui = !!document.getElementById("wr-card"); R.uiRows = document.querySelectorAll("#wr-card [data-wh=recv]").length; R.uiTbl = document.querySelectorAll("#wr-card table tr").length;
     R.host = !!document.getElementById("wr-host"); R.tabHidden = document.getElementById("tab-inventory").className; R.hostLen = (document.getElementById("wr-host") || {}).innerHTML ? document.getElementById("wr-host").innerHTML.length : -1; const rb = document.querySelector('#wr-card [data-wh="recv"]'); if (rb) rb.click(); await wait(200); R.manual = [Admin.orders[0].note, document.querySelectorAll("#wr-card [data-wh=recv]").length];
+    // حدّ أدنى لكل مستودع + سجلّ المرتجعات المُعادة بمستودعها
+    { const p0 = Admin.products.find(x => x.stock != null); Admin.wh = { cfg: AdminWh.normCfg({ on: true, list: [{ id: "w1", name: "مستودع وهران" }], min: { main: 9999 } }), stock: {} };
+      Admin.fin = Object.assign({}, Admin.fin, { log: [{ ts: new Date().toISOString(), slug: p0.slug, title: p0.title, delta: 2, after: 5, ref: "WX1", why: "مرتجع: أُعيد تلقائياً بعد وصول الطرد — مستودع وهران" }] }); AdminWh.draw(); await wait(150);
+      const card = document.getElementById("wr-card"); R.lowUi = [!!card.querySelector('[data-whmin="main"]'), !!card.querySelector('[data-whmin="w1"]'), /حدّها الأدنى/.test(card.textContent), /→ مستودع وهران/.test(card.textContent) && /WX1/.test(card.textContent)]; }
     Admin.products = sv.pr; Admin.fin = sv.fin; Admin.queueStockPublish = sv.qp; API.updateOrder = sv.uo; Admin.wh = sv.wh; Admin.orders = sv.or; Admin.shipRaw = sv.raw; Priv.set = sv.ps; Admin.tab("orders"); return R;
   });
   ok("مستودعات: الطلب يخصم من مستودع ولايته (10→7، وهران 4→1) ويُوسم 📦@w1، وإن لم يكفِ يخصم من الرئيسي", whT.a[0] === 7 && whT.a[1] === 1 && /📦@w1/.test(whT.a[2]) && whT.b[0] === 1 && whT.b[1] === 1 && !/@/.test(whT.b[2]), whT);
   ok("مرتجع في طريق العودة لا يعود للمخزون ويُوسم 🔁transit", whT.hold[0] === 1 && whT.hold[1] === 1 && whT.hold[2] && whT.hold[3], whT.hold);
   ok("وصول الطرد (وسم الـwebhook) يعيده تلقائياً إلى مستودع وهران نفسه ويُسجَّل", whT.back[0] === 1 && whT.back[1] === 4 && whT.back[2] === 4 && !whT.back[3] && whT.back[4] && /مرتجع/.test(whT.log), whT);
   ok("سياسة «فوراً» تعيد عند أول حالة فشل، وحالة «Retourné au vendeur» عبر المزامنة تعيد بعد الحجز", whT.imm[1] === whT.imm[0] + 2 && whT.raw[1] === whT.raw[0] + 1 && whT.raw[2] === 1, whT);
+  ok("حدّ أدنى لكل مستودع: خانتا الإدخال، تنبيه «بلغت حدّها الأدنى»، وسجلّ المرتجع بمستودعه ورقم الطلب", whT.lowUi && whT.lowUi.every(Boolean), whT.lowUi);
   ok("مرتجع تالف لا تعود علبه ويُنزع وسمه", whT.dmg[0] === whT.dmg[1] && !whT.dmg[2], whT.dmg);
   ok("بطاقة المرتجعات والمستودعات في تبويب المخزون: قائمة المنتظِر، جدول الكميات، و«استلمتُه» يعيد الطرد", whT.ui && whT.uiRows === 1 && whT.uiTbl >= 2 && !/📦(?!livree)/.test(whT.manual[0]) && whT.manual[1] === 0, whT);
   // ── فحص مفاتيح الشركة استباقياً: 401 ← شريط أحمر ويقف الفحص العشوائي، وحفظ المفاتيح يفحصها فوراً ──
