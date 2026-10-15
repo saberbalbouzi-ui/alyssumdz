@@ -1214,6 +1214,25 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الملصقات: بحث عربي وفرنسي وإنجليزي يعطي النتيجة الصحيحة", sk.fire.includes("fire") && sk.miel.includes("honey-pot") && sk.truck.includes("delivery-truck") && sk.none === 0, sk);
   ok("الملصقات: بحث «عسل» يعرض جرة العسل", sk.honeyUi.includes("honey-pot"), sk.honeyUi);
   ok("الملصقات: النقر يضيف عنصر صورة بحجم صغير ويُسجَّل في «مؤخراً»", sk.added && sk.fw === 18 && sk.rec === "honey-pot", sk);
+  // ── مكتبة الأصول (Pixabay/Iconify) داخل المطوّر الحقيقي ──
+  const as = await p.evaluate(async () => {
+    const real = window.fetch, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 2h2"/></svg>';
+    window.fetch = async (u, o) => { u = String(u);
+      if (u.startsWith("https://api.iconify.design/search")) return new Response(JSON.stringify({ icons: ["tabler:cart"], total: 1, collections: { tabler: { name: "Tabler", license: { title: "MIT", spdx: "MIT" } } } }));
+      if (u.startsWith("https://api.iconify.design/collections")) return new Response("{}");
+      if (/api\.iconify\.design\/tabler\/cart\.svg/.test(u)) return new Response(svg);
+      return real(u, o); };
+    PBApp.ltoggle("ast"); await new Promise(r => setTimeout(r, 400));
+    const tabBtn = !!document.querySelector('.pbx-tabs [data-lt="ast"]'), root = !!document.querySelector("#ast-root"), noKey = /pixabay\.com\/api\/docs/.test(document.getElementById("ast-out").innerHTML);
+    document.querySelector('[data-ast-tab="ico"]').click(); await new Promise(r => setTimeout(r, 100));
+    document.getElementById("ast-iq").value = "cart"; document.querySelector("[data-ast-go]").click(); await new Promise(r => setTimeout(r, 500));
+    const it = document.querySelector(".ast-grid.ic .ast-i"); if (it) it.click(); await new Promise(r => setTimeout(r, 900));
+    const j = PBApp.pageJson(), added = /assets\/img\/pages\/ic-tabler-cart-[a-z0-9]+\.svg/.test(j);
+    window.fetch = real; PBApp.ltoggle("ast");
+    return { tabBtn, root, noKey, icons: !!it, added };
+  });
+  ok("مكتبة الأصول: التبويب موجود ويطلب مفتاح Pixabay عند غيابه", as.tabBtn && as.root && as.noKey, as);
+  ok("مكتبة الأصول: النقر على أيقونة يحفظها SVG ويضيفها عنصر صورة", as.icons && as.added, as);
   await p.screenshot({ path: "/tmp/stk-ui.png" });
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
   // ── مسار المنتج الرئيسي من إعدادات الصفحة ──

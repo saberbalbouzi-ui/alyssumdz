@@ -255,7 +255,7 @@ body{overflow-x:hidden;margin:0}`;
 </div>
 <div class="pbx-main">
   <aside class="pbx-left" id="pbx-lside">
-    <div class="pbx-tabs"><button class="pbx-ah" data-lt="add" onclick="PBApp.ltoggle('add')">${ico('tab_add',17)} عناصر</button><button class="pbx-ah" data-lt="img" onclick="PBApp.ltoggle('img')" title="بازل، ماسك، نزع الخلفية، التقاط العناصر، استوديو المنتج وأدوات ذكية">${ico('image',17)} تعديل الصورة</button><button class="pbx-ah" data-lt="def" onclick="PBApp.ltoggle('def')" title="أقسام وعناصر جاهزة: فارغة، شبكية، وبتنسيق الموقع">${ico('tab_tpl',17)} أقسام وعناصر جاهزة</button><button class="pbx-ah" data-lt="stk" onclick="PBApp.ltoggle('stk')" title="آلاف الملصقات الملوّنة مع بحث">${ico('iconbox',17)} ملصقات</button><button class="pbx-ah" data-lt="lay" onclick="PBApp.ltoggle('lay')">${ico('tab_lay',17)} الطبقات</button><button class="pbx-ah" data-lt="pub" onclick="PBApp.ltoggle('pub')" title="انشر التصميم على عدّة منصات بمقاساتها بنقرة واحدة">${ico('rocket',17)} نشر على المنصات</button><button class="pbx-ah" data-lt="pg" onclick="PBApp.ltoggle('pg')">${ico('tab_pg',17)} إعدادات الصفحة</button><div class="pbx-pane" id="pbx-lpane"></div></div>
+    <div class="pbx-tabs"><button class="pbx-ah" data-lt="add" onclick="PBApp.ltoggle('add')">${ico('tab_add',17)} عناصر</button><button class="pbx-ah" data-lt="img" onclick="PBApp.ltoggle('img')" title="بازل، ماسك، نزع الخلفية، التقاط العناصر، استوديو المنتج وأدوات ذكية">${ico('image',17)} تعديل الصورة</button><button class="pbx-ah" data-lt="def" onclick="PBApp.ltoggle('def')" title="أقسام وعناصر جاهزة: فارغة، شبكية، وبتنسيق الموقع">${ico('tab_tpl',17)} أقسام وعناصر جاهزة</button><button class="pbx-ah" data-lt="stk" onclick="PBApp.ltoggle('stk')" title="آلاف الملصقات الملوّنة مع بحث">${ico('iconbox',17)} ملصقات</button><button class="pbx-ah" data-lt="ast" onclick="PBApp.ltoggle('ast')" title="صور وفيديو وأيقونات بلا علامات مائية مع فلترة وتنزيل إلى موقعك">${ico('image',17)} مكتبة الأصول</button><button class="pbx-ah" data-lt="lay" onclick="PBApp.ltoggle('lay')">${ico('tab_lay',17)} الطبقات</button><button class="pbx-ah" data-lt="pub" onclick="PBApp.ltoggle('pub')" title="انشر التصميم على عدّة منصات بمقاساتها بنقرة واحدة">${ico('rocket',17)} نشر على المنصات</button><button class="pbx-ah" data-lt="pg" onclick="PBApp.ltoggle('pg')">${ico('tab_pg',17)} إعدادات الصفحة</button><div class="pbx-pane" id="pbx-lpane"></div></div>
   </aside>
   <div class="pbx-rz" id="pbx-rz2" title="اسحب لتوسيع شريط العناصر (نقر مزدوج = الافتراضي)"></div>
   <div class="pbx-stage" id="pbx-stage">
@@ -484,6 +484,8 @@ body{overflow-x:hidden;margin:0}`;
       pane.innerHTML = PBSmart.pane();
     } else if (E.ltab === "stk") {
       if (!pane.querySelector("#stk-root")) pane.innerHTML = PBStickers.pane(); PBStickers.bind(pane.querySelector("#stk-root"));
+    } else if (E.ltab === "ast") {
+      if (!pane.querySelector("#ast-root")) pane.innerHTML = PBAssets.pane(); PBAssets.bind(pane.querySelector("#ast-root"));
     } else if (E.ltab === "lay") {
       let h = "";
       E.page.sections.forEach((sec, i) => {
@@ -1971,6 +1973,16 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const t = sec ? { sec } : target(); if (t.sec) return addFree("image", t.sec, x, y, init);
     const w = PB.mkW("image"); init(w); t.col.widgets.push(w); afterEdit(w.id); if (isMob()) panel("l", false);
   }
+  /* مكتبة الأصول: فيديو منزَّل يُضاف عنصر «فيديو»، وSVG منزَّل يُحفظ كملف مستقل */
+  function addVideoFile(pth) {
+    const init = w => { w.set.url = pth; }, t = target();
+    if (t.sec) return addFree("video", t.sec, null, null, init);
+    const w = PB.mkW("video"); init(w); t.col.widgets.push(w); afterEdit(w.id);
+  }
+  function uploadSvg(txt, name) {
+    const A = Admin; A.localImg = A.localImg || {}; const p = { path: "assets/img/pages/" + String(name || "ic").replace(/[^a-z0-9-]+/gi, "-").slice(0, 40) + "-" + Date.now().toString(36) + ".svg", blob: new Blob([txt], { type: "image/svg+xml" }), ext: "svg" };
+    A.localImg[p.path] = URL.createObjectURL(p.blob); queueCommit(p); pmAdd(p.path); pimgRefresh(); return p.path;
+  }
   function addWidget(type, col, at) {
     if (type === "pgal" && !col) return addGalleryTop();
     if (type === "shdr" || type === "sbar") return addTopPart(type);
@@ -2936,7 +2948,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
