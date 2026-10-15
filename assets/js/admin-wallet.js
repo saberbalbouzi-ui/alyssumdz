@@ -3,14 +3,18 @@
 const AdminWallet = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const S = { bal: null, set: {}, escrow: [], wds: [], led: [], next: null, off: false, err: "", busy: false, quote: null, timer: null };
+  const S = { deps: [], depMin: 500, chg: false, bal: null, set: {}, escrow: [], wds: [], led: [], next: null, off: false, err: "", busy: false, quote: null, timer: null };
   const nf = n => Math.round(+n || 0).toLocaleString("fr-DZ");
   const usd = c => ((+c || 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const dt = ts => { try { return new Date(ts * 1000).toLocaleString("fr-DZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } };
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
-  const ERR = { insufficient_funds: "الرصيد المتاح غير كافٍ", rate_not_set: "سعر الدولار لم تحدّده الإدارة بعد — تواصل مع الدعم", validation_error: "تحقق من الحقول المُدخلة", rate_limited: "طلبات كثيرة، أعد المحاولة بعد قليل", not_cancellable: "لا يمكن إلغاء الطلب بعد مراجعته", module_disabled: "المحفظة غير مفعّلة لحسابك", vault_unavailable: "الخدمة غير جاهزة، تواصل مع الدعم" };
+  const ERR = { insufficient_funds: "الرصيد المتاح غير كافٍ", rate_not_set: "سعر الدولار لم تحدّده الإدارة بعد — تواصل مع الدعم", validation_error: "تحقق من الحقول المُدخلة", unavailable: "هذه الطريقة غير متاحة الآن", rate_limited: "طلبات كثيرة، أعد المحاولة بعد قليل", not_cancellable: "لا يمكن إلغاء الطلب بعد مراجعته", module_disabled: "المحفظة غير مفعّلة لحسابك", vault_unavailable: "الخدمة غير جاهزة، تواصل مع الدعم" };
   const KIND = { deposit: "إيداع", escrow_hold: "حجز ضمان", escrow_release: "تحرير ضمان", escrow_refund: "استرداد ضمان", withdrawal_request: "طلب سحب", withdrawal_paid: "صرف سحب", withdrawal_rejected: "رفض سحب", withdrawal_cancel: "إلغاء سحب", ads_topup: "شراء رصيد إعلانات", ads_spend: "إنفاق إعلاني", subscription: "اشتراك", platform_fee: "رسم المنصة", service_hold: "حجز خدمة تسويق (ضمان)", service_sale: "تسليم خدمة تسويق", service_refund: "استرداد خدمة تسويق" };
   const WST = { requested: ["قيد المراجعة", "var(--g-amber-rgb)"], approved: ["معتمد — بانتظار الصرف", "var(--g-blue-rgb)"], paid: ["تم الصرف", "var(--g-mint-rgb)"], rejected: ["مرفوض", "var(--g-rose-rgb)"], cancelled: ["ملغى", "var(--g-rose-rgb)"] };
+  const DST = { pending: ["قيد المراجعة/الدفع", "var(--g-amber-rgb)"], approved: ["أُضيف لرصيدك", "var(--g-mint-rgb)"], rejected: ["مرفوض", "var(--g-rose-rgb)"], failed: ["لم يكتمل الدفع", "var(--g-rose-rgb)"] };
+  const ccpInfo = () => { try { const c = typeof CONFIG !== "undefined" && CONFIG.PLATFORM_CCP; return c ? String(c) : ""; } catch (e) { return ""; } };
+  /* ضغط صورة الإثبات في المتصفح (JPEG ≤ ~230KB) */
+  function shrink(file) { return new Promise((res, rej) => { const fr = new FileReader(); fr.onerror = () => rej(new Error("read")); fr.onload = () => { const im = new Image(); im.onerror = () => rej(new Error("img")); im.onload = () => { let w = im.width, h = im.height, sc = Math.min(1, 1400 / Math.max(w, h)), q = .82; for (let i = 0; i < 8; i++) { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc)); const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); const u = c.toDataURL("image/jpeg", q); if (u.length <= 230000) return res(u); q = Math.max(.4, q - .1); sc *= .8; } rej(new Error("big")); }; im.src = fr.result; }; fr.readAsDataURL(file); }); }
   const METHODS = { ccp: "بريد الجزائر CCP", baridimob: "BaridiMob", bank: "تحويل بنكي", redotpay: "RedotPay", paypal: "PayPal" };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
@@ -27,7 +31,8 @@ const AdminWallet = (() => {
   const errOf = r => (r && r.j && r.j.error && (r.j.error.fields ? Object.values(r.j.error.fields)[0] : (ERR[r.j.error.code] || r.j.error.message))) || (r && r.st === 401 ? "انتهت الجلسة، أعد تسجيل الدخول" : "تعذّر تنفيذ الطلب، حاول لاحقاً");
 
   async function load(more) {
-    const [a, e, w, l] = await Promise.all([call("GET", "/v1/wallet"), call("GET", "/v1/wallet/escrow"), call("GET", "/v1/wallet/withdrawals"), call("GET", "/v1/wallet/ledger", null, { limit: 20, ...(more && S.next ? { after: S.next } : {}) })]);
+    const [a, e, w, l, dp] = await Promise.all([call("GET", "/v1/wallet"), call("GET", "/v1/wallet/escrow"), call("GET", "/v1/wallet/withdrawals"), call("GET", "/v1/wallet/ledger", null, { limit: 20, ...(more && S.next ? { after: S.next } : {}) }), call("GET", "/v1/wallet/deposits")]);
+    if (dp.ok) { S.deps = dp.j.deposits || []; S.depMin = dp.j.min || 500; S.chg = !!dp.j.chargily; }
     if (a.off) { S.off = true; return; } S.off = false;
     if (!a.ok) { S.err = errOf(a); return; } S.err = "";
     S.bal = a.j.balances; S.set = a.j.settings || {}; S.escrow = e.ok ? e.j.escrow || [] : []; S.wds = w.ok ? w.j.withdrawals || [] : [];
@@ -61,6 +66,13 @@ const AdminWallet = (() => {
  <div class="wl-card"><small>قيد السحب</small><b>${nf(b("withdraw_hold", "DZD"))} دج</b></div>
  <div class="wl-card"><small>رصيد الإعلانات</small><b>${usd(b("ads_credit", "USD"))} $</b></div>
 </div>
+<div class="wl-box"><h3>شحن الرصيد</h3>
+ <div class="wl-row"><label>المبلغ (دج)<input id="wl-dam" type="number" min="${S.depMin}" step="100" placeholder="5000"></label>
+ <label>طريقة الدفع<select id="wl-dme"><option value="ccp">حوالة CCP / بريدي موب (إثبات)</option>${S.chg ? '<option value="edahabia">بطاقة الذهبية (فوري)</option><option value="cib">بطاقة CIB (فوري)</option>' : ""}</select></label>
+ <label id="wl-dpf-l">صورة الوصل<input id="wl-dpf" type="file" accept="image/*"></label><label>اسم المحوِّل (اختياري)<input id="wl-dpy" maxlength="60"></label>
+ <button class="wl-btn" data-wl="dep" ${S.busy ? "disabled" : ""}>اشحن</button></div>
+ <p class="wl-hint">${ccpInfo() ? "حوّل المبلغ إلى: <b dir=ltr>" + esc(ccpInfo()) + "</b> ثم ارفع صورة الوصل — يُضاف الرصيد بعد تحقق الإدارة. " : "للحوالة اطلب بيانات الحساب من الدعم ثم ارفع صورة الوصل — يُضاف الرصيد بعد تحقق الإدارة. "}${S.chg ? "الدفع بالبطاقة يُضاف فوراً بعد نجاحه." : ""} الرصيد يغطي عمولات الأفلييت وشراء الخدمات.</p>
+ ${S.deps.length ? `<div class="wl-sc"><table class="wl-tbl"><thead><tr><th>#</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead><tbody>${S.deps.slice(0, 8).map(d => { const t = DST[d.status] || [d.status, "var(--g-blue-rgb)"]; return `<tr><td>${d.id}</td><td>${nf(d.amount)} دج</td><td>${d.method === "ccp" ? "حوالة" : "بطاقة"}</td><td><span class="wl-chip" style="--c:${t[1]}">${esc(t[0])}</span>${d.note ? ` <small>${esc(d.note)}</small>` : ""}</td><td>${dt(d.created_at)}</td><td>${d.status === "pending" && d.checkout_url ? `<a class="wl-btn o" href="${esc(d.checkout_url)}" target="_blank" rel="noopener">أكمل الدفع</a>` : ""}</td></tr>`; }).join("")}</tbody></table></div>` : ""}</div>
 <div class="wl-box"><h3>طلب سحب</h3>
  <div class="wl-row"><label>المبلغ (دج)<input id="wl-amt" type="number" min="${min}" step="100" placeholder="${min}"></label>
  <label>وسيلة الاستلام<select id="wl-met">${Object.entries(METHODS).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select></label>
@@ -87,6 +99,17 @@ ${S.wds.length ? `<div class="wl-box"><h3>طلبات السحب</h3><div class="
       S.busy = true; draw(); const r = await call("POST", "/v1/wallet/ads-topup", { usd: v }, null, uid()); S.busy = false;
       if (r.ok) { toast("✅ أُضيف رصيد الإعلانات"); S.quote = null; } else toast(errOf(r)); await refresh();
     }
+    else if (a === "dep") {
+      const amount = Math.round(+($("wl-dam") || {}).value), me = ($("wl-dme") || {}).value, f = ($("wl-dpf") || {}).files && $("wl-dpf").files[0], payer = (($("wl-dpy") || {}).value || "").trim();
+      if (!(amount >= S.depMin)) { toast("الحد الأدنى للشحن " + nf(S.depMin) + " دج"); return; }
+      let body = { amount };
+      if (me === "ccp") { if (!f) { toast("ارفع صورة الوصل"); return; } try { body.proof = await shrink(f); } catch (x) { toast("تعذّر قراءة الصورة، جرّب صورة أخرى"); return; } body.method = "ccp"; if (payer) body.payer = payer; }
+      else { body.method = "chargily"; body.payment_method = me; body.return_url = location.origin + location.pathname; }
+      S.busy = true; draw(); const r = await call("POST", "/v1/wallet/deposits", body, null, uid()); S.busy = false;
+      if (!r.ok) { toast(errOf(r)); await refresh(); return; }
+      if (r.j.checkout_url) { toast("جارٍ تحويلك لصفحة الدفع…"); location.href = r.j.checkout_url; return; }
+      toast("✅ أُرسل الوصل — يُضاف الرصيد بعد تحقق الإدارة"); await refresh();
+    }
     else if (a === "wd") {
       const amount = Math.round(+($("wl-amt") || {}).value), method = ($("wl-met") || {}).value, destination = (($("wl-dst") || {}).value || "").trim(), min = S.set.min_withdrawal || 1000;
       if (!(amount >= min)) { toast("الحد الأدنى للسحب " + nf(min) + " دج"); return; } if (destination.length < 4) { toast("اكتب رقم الحساب أو المحفظة"); return; }
@@ -98,7 +121,7 @@ ${S.wds.length ? `<div class="wl-box"><h3>طلبات السحب</h3><div class="
     else if (a === "cancel") { if (!confirm("إلغاء طلب السحب وإعادة المبلغ للمتاح؟")) return; const r = await call("DELETE", "/v1/wallet/withdrawals/" + el.dataset.id); toast(r.ok ? "تم الإلغاء" : errOf(r)); await refresh(); }
   }
   async function refresh() { await load(false); draw(); }
-  function bind() { const root = $("wl-app"); if (!root || root._b) return; root._b = 1; root.addEventListener("click", onClick); }
+  function bind() { const root = $("wl-app"); if (!root || root._b) return; root._b = 1; root.addEventListener("click", onClick); root.addEventListener("change", e => { if (e.target && e.target.id === "wl-dme") { const l = $("wl-dpf-l"), y = e.target.value === "ccp"; if (l) l.style.display = y ? "" : "none"; } }); }
   async function render() {
     css(); const host = $("wallet-content"); if (!host) return; if (!$("wl-app")) host.innerHTML = '<div id="wl-app"></div>'; bind(); draw();
     clearInterval(S.timer); S.timer = setInterval(() => { const t = $("tab-wallet"); if (t && !t.classList.contains("hidden") && !document.hidden && !S.busy && !(document.activeElement && document.activeElement.closest && document.activeElement.closest("#wl-app"))) refresh(); }, 60000);

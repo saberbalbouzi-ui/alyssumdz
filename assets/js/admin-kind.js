@@ -3,7 +3,7 @@
 const AdminKind = (() => {
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   /* أقسام لا معنى لها في متجر رقمي (توصيل، تجهيز طرود، مرتجعات مادية، مخزون علب…) */
-  const PHYS = ["shipped", "callcenter", "pack", "dispatch", "delivery", "fees", "returns", "inventory", "sources", "blacklist"];
+  const PHYS = ["shipped", "callcenter", "pack", "dispatch", "delivery", "fees", "returns", "inventory", "sources", "blacklist", "market"];
   const D = () => (typeof AdminStores !== "undefined" && AdminStores.data && AdminStores.data()) || {};
   const owner = () => { try { const m = AdminRoles.state && AdminRoles.state.me; return !m || m.owner !== false; } catch (e) { return true; } };
   const kind = () => (D().kind === "digital" ? "digital" : "physical");

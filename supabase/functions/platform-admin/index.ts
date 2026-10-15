@@ -11,6 +11,10 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/admin\/wallet\/(summary|tenants)$/], ["GET", /^\/admin\/wallet\/withdrawals\/list(\?status=[a-z]{4,10})?$/], ["GET", /^\/admin\/wallet\/\d+$/],
   ["PUT", /^\/admin\/wallet\/\d+\/settings$/], ["POST", /^\/admin\/wallet\/\d+\/(deposit|fee|ads-spend)$/],
   ["POST", /^\/admin\/wallet\/withdrawals\/\d+\/(approve|pay|reject)$/],
+  // شحن المحفظة (حوالات CCP) وسوق التوريد: مراجعة الإيداعات والمنتجات والنزاعات والإعدادات
+  ["GET", /^\/admin\/wallet\/deposits\/list(\?status=[a-z]{4,10})?$/], ["GET", /^\/admin\/wallet\/deposits\/\d+\/proof$/], ["POST", /^\/admin\/wallet\/deposits\/\d+\/(approve|reject)$/],
+  ["GET", /^\/admin\/marketplace\/products(\?status=[a-z]{4,10})?$/], ["POST", /^\/admin\/marketplace\/products\/\d+\/(approve|reject|suspend)$/],
+  ["GET", /^\/admin\/marketplace\/orders(\?state=[a-z_]{4,16})?$/], ["POST", /^\/admin\/marketplace\/orders\/\d+\/resolve$/], ["GET", /^\/admin\/marketplace\/settings$/], ["PUT", /^\/admin\/marketplace\/settings$/],
   // خدمات التسويق (وكالة بعلامة بيضاء): الكتالوج والطلبات وتحديث الحالة وإعدادات الشريك
   ["GET", /^\/admin\/agency\/services$/], ["POST", /^\/admin\/agency\/services$/], ["PUT", /^\/admin\/agency\/services\/\d+$/],
   ["GET", /^\/admin\/agency\/orders(\?[a-z]+=[A-Za-z0-9_]{1,12}(&[a-z]+=[A-Za-z0-9_]{1,12}){0,2})?$/], ["PATCH", /^\/admin\/agency\/orders\/\d+$/], ["POST", /^\/admin\/agency\/orders\/\d+\/resend$/],

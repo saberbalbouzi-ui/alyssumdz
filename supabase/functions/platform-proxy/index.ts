@@ -42,6 +42,14 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/v1\/wallet(\/ledger|\/escrow|\/withdrawals|\/ads-quote)?$/],
   ["POST", /^\/v1\/wallet\/(withdrawals|ads-topup)$/],
   ["DELETE", /^\/v1\/wallet\/withdrawals\/\d{1,12}$/],
+  // شحن المحفظة (Chargily على حساب المنصة / حوالة CCP بإثبات) — الإشعار العام والاعتماد خارج الوسيط
+  ["GET", /^\/v1\/wallet\/deposits$/],
+  ["POST", /^\/v1\/wallet\/deposits$/],
+  // سوق التسويق بالعمولة (مورّد/أفلييت): مسارات /admin/marketplace/* ممنوعة هنا
+  ["GET", /^\/v1\/marketplace\/(products|catalog|imports|orders|wallet)$/],
+  ["POST", /^\/v1\/marketplace\/(products|imports)$/],
+  ["PATCH", /^\/v1\/marketplace\/(products|imports)\/\d{1,12}$/],
+  ["POST", /^\/v1\/marketplace\/orders\/\d{1,12}\/status$/],
   // خدمات التسويق بعلامة بيضاء: قائمة الخدمات وشراؤها بالمحفظة وطلباتي (رد الوكالة يصل المنصة مباشرة بتوقيع، لا عبر هذا الوسيط)
   ["GET", /^\/v1\/agency\/(services|orders)$/],
   ["GET", /^\/v1\/agency\/orders\/\d{1,12}$/],

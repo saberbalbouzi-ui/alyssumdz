@@ -53,6 +53,7 @@
     "assets/js/admin-appstore.js",
     "assets/js/admin-appdev.js",
     "assets/js/admin-digital.js",
+    "assets/js/admin-marketplace.js",
     "assets/js/admin-kind.js",
     "assets/js/digital-checkout.js",
     "assets/js/admin-roles.js",

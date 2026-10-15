@@ -7,12 +7,14 @@ const ok = (n, c, x) => { total++; if (!c) { fails++; console.log("✗", n, x ==
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json" };
 const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u === "/__blank") { r.writeHead(200, { "Content-Type": "text/html" }); return r.end("<!doctype html><meta charset=utf-8><body></body>"); } const f = path.join(root, decodeURIComponent(u)); if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); } r.writeHead(200, { "Content-Type": MIME[path.extname(f)] || "application/octet-stream" }); r.end(fs.readFileSync(f)); });
 const NOW = Math.floor(Date.now() / 1000);
-const DB = { off: false, calls: [], avail: 34480, hold: 0, ads: 5000, rate: 260, wds: [{ id: 1, amount: 20000, currency: "DZD", method: "ccp", status: "paid", note: "", created_at: NOW - 86400, updated_at: NOW }, { id: 2, amount: 5000, currency: "DZD", method: "baridimob", status: "requested", note: "", created_at: NOW - 600, updated_at: NOW }],
+const DB = { deps: [{ id: 1, amount: 3000, method: "ccp", status: "approved", has_proof: true, note: "<b>x</b>", created_at: NOW - 5000 }], off: false, calls: [], avail: 34480, hold: 0, ads: 5000, rate: 260, wds: [{ id: 1, amount: 20000, currency: "DZD", method: "ccp", status: "paid", note: "", created_at: NOW - 86400, updated_at: NOW }, { id: 2, amount: 5000, currency: "DZD", method: "baridimob", status: "requested", note: "", created_at: NOW - 600, updated_at: NOW }],
   escrow: [{ order_id: "<b>W9</b>", amount: 5000, currency: "DZD", state: "held", fee: 0, created_at: NOW - 3600, settled_at: null }],
   led: [{ id: 9, ref: "r9", kind: "escrow_release", memo: "رسم المنصة 520", order_id: "W1", created_at: NOW - 100, legs: [{ account: "escrow", currency: "DZD", amount: -5000 }, { account: "available", currency: "DZD", amount: 4480 }, { account: "platform_fees", currency: "DZD", amount: 520 }] }, { id: 8, ref: "r8", kind: "deposit", memo: "<img src=x onerror=\"window.__pwn=1\">", order_id: null, created_at: NOW - 900, legs: [{ account: "available", currency: "DZD", amount: 50000 }] }] };
 function handle(b) {
   DB.calls.push(b); const m = b.method, p = b.path, q = b.query || {}; if (DB.off) return null;
   if (m === "GET" && p === "/v1/wallet") return { balances: { available: { DZD: DB.avail }, escrow: { DZD: 5000 }, withdraw_hold: { DZD: DB.hold }, ads_credit: { USD: DB.ads } }, settings: { fee_pct: 10, fee_fixed: 20, usd_rate: DB.rate, min_withdrawal: 1000 } };
+  if (m === "GET" && p === "/v1/wallet/deposits") return { deposits: DB.deps, min: 500, chargily: true };
+  if (m === "POST" && p === "/v1/wallet/deposits") { const id = DB.deps.length + 1; DB.deps.unshift({ id, amount: b.body.amount, method: b.body.method, status: "pending", has_proof: !!b.body.proof, checkout_url: b.body.method === "chargily" ? "https://pay.example/chk" : null, note: "", created_at: NOW }); return { id, status: "pending", checkout_url: b.body.method === "chargily" ? "https://pay.example/chk" : undefined }; }
   if (m === "GET" && p === "/v1/wallet/escrow") return { escrow: DB.escrow };
   if (m === "GET" && p === "/v1/wallet/withdrawals") return { withdrawals: DB.wds };
   if (m === "GET" && p === "/v1/wallet/ledger") return { entries: DB.led, next: null };
@@ -66,6 +68,16 @@ function handle(b) {
   const before = DB.ads; await p.fill("#wl-usd", "50"); await p.click('[data-wl="topup"]'); await p.waitForFunction((b) => document.getElementById("wl-app").textContent.includes("100.00 $"), before);
   ok("شراء الرصيد يزيد الدولار 50 → 100", DB.ads === 10000 && DB.calls.filter((c) => c.path === "/v1/wallet/ads-topup").pop().body.usd === 50);
   DB.rate = null; await p.evaluate(() => AdminWallet.refresh()); ok("بلا سعر صرف: لا نموذج شراء ورسالة واضحة", await p.evaluate(() => !document.getElementById("wl-usd") && /تحدّد الإدارة سعر الصرف/.test(document.getElementById("wl-app").textContent)));
+  /* شحن الرصيد */
+  ok("بطاقة شحن الرصيد وسجل الإيداعات (والملاحظة تُهرَّب)", await p.evaluate(() => !!document.getElementById("wl-dam") && /أُضيف لرصيدك/.test(document.getElementById("wl-app").textContent) && !document.querySelector("#wl-app .wl-tbl b")));
+  await p.fill("#wl-dam", "100"); await p.click('[data-wl="dep"]'); ok("أقل من الحد الأدنى للشحن لا يُرسل", !DB.calls.some((c) => c.method === "POST" && c.path === "/v1/wallet/deposits"));
+  await p.fill("#wl-dam", "5000"); await p.click('[data-wl="dep"]'); ok("حوالة بلا صورة لا تُرسل", !DB.calls.some((c) => c.method === "POST" && c.path === "/v1/wallet/deposits"));
+  const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  await p.setInputFiles("#wl-dpf", { name: "w.png", mimeType: "image/png", buffer: PNG }); await p.fill("#wl-dpy", "علي"); await p.click('[data-wl="dep"]');
+  await p.waitForFunction(() => /قيد المراجعة\/الدفع/.test(document.getElementById("wl-app").textContent));
+  const dp = DB.calls.filter((c) => c.method === "POST" && c.path === "/v1/wallet/deposits").pop();
+  ok("حوالة CCP: الصورة مضغوطة JPEG وطريقة ccp ومبلغ 5000", dp && dp.body.method === "ccp" && /^data:image\/jpeg;base64,/.test(dp.body.proof) && dp.body.proof.length < 240000 && dp.body.amount === 5000 && dp.body.payer === "علي", dp && dp.body.method);
+  await p.selectOption("#wl-dme", "cib"); ok("بالبطاقة يختفي حقل الصورة", await p.evaluate(() => document.getElementById("wl-dpf-l").style.display === "none"));
   /* غير مفعّلة + جوال */
   await p.setViewportSize({ width: 390, height: 800 }); await p.evaluate(() => AdminWallet.refresh()); ok("الجوال: بلا اتساع أفقي", await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), await p.evaluate(() => [document.documentElement.scrollWidth, innerWidth]));
   DB.off = true; await p.evaluate(() => AdminWallet.refresh()); ok("الوسيط غير منشور: رسالة «غير مفعّلة»", await p.evaluate(() => /غير مفعّلة/.test(document.getElementById("wl-app").textContent)));

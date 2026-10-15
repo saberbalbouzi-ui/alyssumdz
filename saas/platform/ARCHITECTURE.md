@@ -24,6 +24,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | **Logistics** | `saas/gateway` (Worker+D1 مستقل: محوّلات الشركات، webhooks، قواميس الحالات) + `sources.js` | منجَز؛ **البوابة تصدر `order.shipped|out_for_delivery|delivered|returned` إلى الناقل (v1.89.237)** عبر `POST /admin/events` (extId `gw:`) |
 | **CallCenter** | داخل لوحة التاجر (`admin-callcenter.js`: طابور، أدوار، أهداف) | **غير موجود كوحدة منصة** (ثغرة 2) |
 | **AppStore** (النظام البيئي) | **`appstore.js`** (v1.89.243: `apps`/`app_*`/`oauth_*`/`platform_revenues`؛ OAuth 2.0 بنطاقات مغلقة، مراجعة يدوية، تقاسم إيراد عبر المحفظة، webhooks صادرة موقَّعة) | منجَز؛ لم يُجرَّب مع تطبيق طرف ثالث حقيقي (دليل المطوّر: `docs/app-store-developers.md`) |
+| **Marketplace** (دروبشيبينغ/أفلييت B2B) | **`marketplace.js`** (v1.89.251: `mk_products/imports/orders/config`؛ مورّد يعرض، أفلييت يستورد بنقرة، عمولة بضمان escrow من رصيد المورّد، تسوية عند التسليم/المرتجع) | منجَز في المنصة؛ لم يُجرَّب مع ناقل/Chargily حقيقيين |
 | **MarketingAgency** | `ads.js` + `adsoauth.js` (إنفاق Meta/TikTok، OAuth) + `capi.js` + `whatsapp.js` + `sheets.js` + `antifraud.js` + **`agency.js`** (v1.89.241: بيع حسابات إعلانية بعلامة بيضاء: `marketing_services`/`agency_orders`) | منجَز؛ توفير الحسابات يدوي عند الوكالة الشريكة (webhook/بريد + رد موقَّع)، وحسابات Master BM يدوية (ثغرة 3) |
 
 ## 3) قاعدة الاعتماد (الملزِمة)
@@ -38,6 +39,9 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 - `wallet` يقرأ `pf_events` ليتحقق من مصدر `payment.confirmed`.
 - **`ctx.authProviders` (خطّاف مصادقة)**: النواة تحلّ رموز المفاتيح `pk_*` بنفسها، وأي وحدة تسجّل `{prefix, resolve}` لتحلّ رمزاً ببادئتها (`appstore` ← `at_`). الرمز المحلول لا يمرّ إلا على مسارات لها نطاق صريح ضمن نطاقات الرمز (غير المعلَن = 403 `insufficient_scope`)، وبحدّ معدّل لكل تثبيت. بيانات الزبائن في `commerce`/`carts` تُقنَّع تلقائياً لمن لا يملك `read_customers` (`util.seesPii`).
 - **`ctx.wallet` (استثناء مالي وحيد لقاعدة «لا استدعاء مباشر»)**: وحدة `wallet` تسجّل في `routes()` خدمة `ctx.wallet = { hold, release, refund, charge, payout, fee, unwind }` (الأربعة الأخيرة لتقاسم إيراد التطبيقات عبر الحساب الوسيط `app_clearing` الذي يعود صفراً بعد كل تسوية) (متاح→ضمان→رسوم المنصة، أو ضمان→متاح) ليشتري بها `agency` خدمات بالدينار **بشكل متزامن** (ردّ فوري «الرصيد غير كافٍ» بدل حدث غير متزامن). كل قيد مرجعه فريد (`svc:hold|rel|ref:<رقم الطلب>`) فلا يتكرر، والدفتر يبقى متوازناً؛ لا وحدة غير `wallet` تكتب جداول `wl_*`.
+- **`ctx.orderGuards` (خطّاف حراسة الطلب)**: `commerce` يستدعي كل حارس مسجَّل بعد التحقق وقبل حجز المخزون في `POST /v1/orders`؛ الحارس (`marketplace`) يحجز عمولة الأفلييت من رصيد المورّد ويخصم مخزونه ويُرجع دالة تراجع تُنفَّذ إن فشل ما بعده، أو يرفض الطلب (409 `supplier_unavailable|out_of_stock|price_too_low`). لا كتابة لجداول `cm_*` من `marketplace`؛ مرآة المنتج والمخزون عبر أحداث `marketplace.imported/stock` يستمع إليها `commerce`.
+- **خدمات المحفظة للسوق**: `ctx.wallet` يضيف `balance, mkHold` (متاح→`mk_escrow`) و`mkBack` (`mk_escrow`→متاح) و`mkOut` (`mk_escrow`→`mk_clearing`) و`mkIn` (`mk_clearing`→متاح الأفلييت مع رسم المنصة إلى `platform_fees`)؛ التحويل بين مستأجرين عبر الحساب الوسيط `mk_clearing` بقيدين مرجعاهما فريدان فتُعاد المحاولة بأمان.
+- **شحن المحفظة (`wl_deposits`)**: Chargily على **حساب المنصة نفسها** (أسرار الـWorker `CHARGILY_SECRET_KEY/CHARGILY_WEBHOOK_SECRET/CHARGILY_MODE`، لا مفاتيح التاجر لأن المال يدخل دفتر المنصة)، والإشعار `POST /v1/wallet/chargily-webhook` موقَّع ومطابق للمبلغ ويُقيَّد مرة واحدة؛ وCCP بصورة إثبات يوافق عليها المزوّد.
 - `adsoauth` يكتب `ad_accounts` (مملوك لـ`ads`) عند «الربط السريع»، ويستورد `MAX_ACCOUNTS` و`validateAccount` (دوال نقية بلا I/O) من `ads.js`؛ تحويله إلى حدث `ads.account_linked` مؤجَّل.
 
 ## 4) لماذا لم نعتمد PHP/Laravel (قرار)
@@ -56,6 +60,8 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | `wallet.escrow_held/released`, `refund_due`, `withdrawal_*`, `deposit`, `ads_topup` | `wallet` | hooks (وأي مشترك خارجي) |
 | `agency.order_paid/processing/delivered/rejected/client_mailed` | `agency` | hooks (وأي مشترك خارجي؛ التسليم يحمل `invite_link`) |
 | `appstore.installed/uninstalled/suspended` | `appstore` | hooks، وتطبيق التثبيت نفسه (webhook دورة الحياة) |
+| `marketplace.listed/product_approved/product_rejected/product_suspended/imported/stock/order_routed/supplier_low_funds/commission_released/commission_returned/return_claimed` | `marketplace` | commerce (`imported`,`stock`)، hooks |
+| `wallet.deposit_submitted/deposit_rejected/deposit_mismatch` | `wallet` | hooks |
 | `fraud.high_risk` | `antifraud` | hooks |
 | `ads.token_expiring/expired` | `adsoauth` | hooks |
 | `sms.credit_empty`, `digital.delivered`, `digital.ready`, `digital.short`, `payment.proof_submitted`, `whatsapp.sent`, `order.customer_confirmed/cancelled` | sms/digital/whatsapp | hooks, sheets |

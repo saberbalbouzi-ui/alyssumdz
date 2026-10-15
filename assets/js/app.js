@@ -99,6 +99,7 @@ const Cart = {
   add(slug, qty, unitPrice, vid, vlabel){
     const p = PRODUCTS.find(p=>p.slug===slug);
     if(p && p.digital){ toast("💾 المنتج الرقمي يُشترى مباشرة من صفحته (دفع مسبق وتسليم تلقائي)"); try{ if(!/\/p\/[^/]+\/?$/.test(location.pathname) || location.pathname.indexOf(slug)<0) location.href = productHref(p); }catch(e){} return }   // لا يدخل السلة: سلة التوصيل والدفع عند الاستلام لا تناسبه
+    if(p && p.mpId){ toast("🛒 هذا المنتج يُطلب مباشرة من صفحته (يتحقق من توفره لدى المورّد)"); try{ if(!/\/p\/[^/]+\/?$/.test(location.pathname) || location.pathname.indexOf(slug)<0) location.href = productHref(p); }catch(e){} return }   // منتج سوق التوريد: يُشترى من صفحته فقط
     if(p && itemOut({slug, vid})){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
     const items = Cart.all();
     const ex = items.find(i => i.slug===slug && Math.abs(i.price-unitPrice) < 1e-6 && (i.vid||"")===(vid||""));
@@ -1187,6 +1188,11 @@ function initProduct(slug){
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title, "🆔 قاعدة العرض": bumpSel.rule.id } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
     };
     const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
+    if(p.mpId){       // منتج سوق التوريد: لا يُقبل الطلب إلا إن حجز المورّد عمولته وكميته (فحص متزامن عند المنصة)
+      __order.extra["🛒 سوق التوريد"] = "1";
+      const __hold = window.PFOrder ? await PFOrder.hold(__order, __pfr, __order.items.map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" }))) : { ok:false, msg:"حاول بعد لحظات" };
+      if(!__hold.ok){ if(__pre) __pre.close(); toast(__hold.msg); return }
+    }
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
     try{ if(window.PFOrder) PFOrder.send(__order, __pfr, __order.items.map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" }))); }catch(e){}
