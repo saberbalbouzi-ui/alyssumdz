@@ -40,7 +40,8 @@ export async function post(ctx, tid, { ref, kind, memo = "", order_id = null, le
   } catch (e) { for (const a of applied) await ctx.db.run("UPDATE wl_accounts SET balance=balance-? WHERE id=?", a.amount, a.id); await ctx.db.run("DELETE FROM wl_legs WHERE tx_id=?", txId); await ctx.db.run("DELETE FROM wl_tx WHERE id=?", txId); throw e; }
   return { id: txId };
 }
-const walletSettings = async (ctx, tid) => JSON.parse((await ctx.db.val("SELECT settings FROM pf_tenants WHERE id=?", tid)) || "{}").wallet ?? {};
+/** إعدادات المحفظة في جدول الوحدة نفسها wl_settings؛ القراءة تعود إلى pf_tenants.settings.wallet القديمة (قراءة فقط) */
+const walletSettings = async (ctx, tid) => { const own = await ctx.db.val("SELECT settings FROM wl_settings WHERE tenant_id=?", tid); if (own) return JSON.parse(own); return JSON.parse((await ctx.db.val("SELECT settings FROM pf_tenants WHERE id=?", tid)) || "{}").wallet ?? {}; };
 
 /** تسوية ضمان طلب: delivered ← تحرير للمتاح بعد رسم المنصة، cancelled ← استرداد مستحق للزبون. يحجز الصف أولاً فلا تُنفَّذ مرتان. */
 async function settle(ctx, tid, orderId, outcome) {
@@ -119,10 +120,10 @@ export const wallet = {
     });
     r.get("/admin/wallet/:tid", { auth: "admin", summary: "محفظة مستأجر" }, async (req) => { await needTenant(req.params.tid); return ok({ balances: await balances(+req.params.tid), settings: await walletSettings(ctx, +req.params.tid) }); });
     r.put("/admin/wallet/:tid/settings", { auth: "admin", summary: "إعدادات محفظة المستأجر: fee_pct (0–50) · fee_fixed · usd_rate · min_withdrawal" }, async (req) => {
-      const tid = +req.params.tid; await needTenant(tid); const b = req.json(), t = JSON.parse((await db.val("SELECT settings FROM pf_tenants WHERE id=?", tid)) || "{}"), w = { ...(t.wallet ?? {}) };
+      const tid = +req.params.tid; await needTenant(tid); const b = req.json(), w = { ...(await walletSettings(ctx, tid)) };
       const num = (k, lo, hi) => { if (b[k] === undefined) return; const v = +b[k]; if (!Number.isFinite(v) || v < lo || v > hi) throw new HttpError(400, "validation_error", `${k} بين ${lo} و${hi}`); w[k] = v; };
-      num("fee_pct", 0, 50); num("fee_fixed", 0, 100000); num("usd_rate", 1, 1000); num("min_withdrawal", 1, MAX); t.wallet = w;
-      await db.run("UPDATE pf_tenants SET settings=? WHERE id=?", JSON.stringify(t), tid); await ctx.audit(req.actor, "wallet.settings", tid, w); return ok({ ok: true, settings: w });
+      num("fee_pct", 0, 50); num("fee_fixed", 0, 100000); num("usd_rate", 1, 1000); num("min_withdrawal", 1, MAX);
+      await db.run("INSERT INTO wl_settings (tenant_id,settings) VALUES (?,?) ON CONFLICT(tenant_id) DO UPDATE SET settings=excluded.settings", tid, JSON.stringify(w)); await ctx.audit(req.actor, "wallet.settings", tid, w); return ok({ ok: true, settings: w });
     });
     r.post("/admin/wallet/:tid/deposit", { auth: "admin", summary: "تأكيد إيداع وصل فعلاً (حوالة/RedotPay/PayPal) ← المتاح: { amount, ref, memo }" }, async (req) => {
       const tid = +req.params.tid; await needTenant(tid); const b = req.json(), amount = amountOf(b), ref = refOf(b);
