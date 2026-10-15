@@ -135,6 +135,7 @@ const AdminHome = (() => {
     const sOver = (typeof StockCheck !== "undefined") ? StockCheck.summary() : { orders: 0, products: [] };
     let mg = []; try { mg = window.AdminUpsell && AdminUpsell.mergeable ? AdminUpsell.mergeable(a.orders || []) : []; } catch (e) { }
     let ag = null; try { if (typeof AdminAgency !== "undefined") { ag = AdminAgency.alerts(); AdminAgency.warm(); } } catch (e) { }
+    let dg = null; try { if (typeof AdminDigital !== "undefined") { dg = AdminDigital.alerts(); AdminDigital.warm(); } } catch (e) { }
     let adLow = []; try { adLow = a.adStockAlerts ? a.adStockAlerts(5) : []; } catch (e) { }
     let dgHint = 0; try { if (typeof AdminKind !== "undefined" && AdminKind.kind() === "physical" && typeof AdminStores !== "undefined" && AdminStores.kind() !== "digital") dgHint = (a.products || []).filter(p => p && p.digital && p.active !== false).length; } catch (e) { }
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
@@ -166,6 +167,8 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 ${ag ? `<button type="button" class="${ag.ready ? "w" : "ok"}" data-go="agency"><b>${num(ag.ready)}</b><span>حساب إعلاني جاهز — استلم رابط الدعوة</span></button>
 <button type="button" class="${ag.late ? "w" : "ok"}" data-go="agency"><b>${num(ag.late)}</b><span>طلب خدمة تسويق تأخر عن مهلة التسليم</span></button>` : ""}
 ${dgHint ? `<button type="button" class="w" data-go="kinddg"><b>${num(dgHint)}</b><span>منتج رقمي في متجر مادي — أنشئ متجراً رقمياً (بلا توصيل) لها</span></button>` : ""}
+${dg ? `<button type="button" class="${dg.proofs ? "w" : "ok"}" data-go="digital"><b>${num(dg.proofs)}</b><span>إثبات دفع رقمي ينتظر موافقتك</span></button>
+<button type="button" class="${dg.low + dg.out + dg.short ? "w" : "ok"}" data-go="digital" title="${(dg.lowSkus || []).join(" | ").replace(/"/g, "")}"><b>${num(dg.low + dg.out + dg.short)}</b><span>منتج رقمي مخزون مفاتيحه ${dg.out ? "نفد" : "منخفض"}${dg.short ? " (وطلبات تنتظر مفاتيح)" : ""}</span></button>` : ""}
 <button type="button" class="${od ? "w" : "ok"}" data-go="callcenter"><b>${num(od)}</b><span>طلب بلا استجابة منذ مدة</span></button>
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
 <h3 style="margin-top:16px">أفضل المنتجات مبيعاً</h3>${top.length ? `<div class="tp">${top.map(([t, q], i) => `<div class="r"><span class="n">${i + 1}</span><span class="t"></span><span class="q">${num(q)} قطعة</span><span class="bar"><i style="width:${Math.max(6, q / topMax * 100)}%"></i></span></div>`).join("")}</div>` : '<div class="em" style="padding:10px">لا مبيعات في هذه الفترة.</div>'}</div>

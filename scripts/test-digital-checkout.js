@@ -48,6 +48,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   const ord = await page.evaluate(() => window.__orders[0]), po = PF.calls.find(c => c.p === "/v1/orders").b;
   ok("الطلب المحلي رقمي بلا ولاية وبوسم", ord.wilaya === "رقمي" && ord.fee === 0 && ord.extra["💾 منتج رقمي"] === "نعم" && /BaridiMob/.test(ord.extra["💳 طريقة الدفع"]) && ord.total > 0, ord);
   ok("طلب المنصة: بريد ووسيلة دفع ومرجع ومفتاح عام", po.customer.email === "buyer@example.com" && po.pay === "baridimob" && po.ref === ord.extra["🔗 مرجع"] && PF.calls.find(c => c.p === "/v1/orders").auth === "Bearer pk_pub_test", po);
+  ok("سطر الطلب يحمل vid (فارغ لغير المتغيّر) ليُسلَّم مفتاح التنويع المختار", po.items.length >= 1 && "vid" in po.items[0], po.items);
   const mt = await page.innerText("#dg-modal");
   ok("تعليمات الدفع: RIP والمبلغ ورقم الطلب", mt.includes("00799999001234567890") && mt.includes(ord.extra["🔗 مرجع"]) && /دج|DA|DZD/.test(mt), mt.slice(0, 300));
   await page.click("#dg-send"); ok("بلا صورة: رسالة ولا إرسال", /اختر صورة/.test(await page.innerText("#dg-msg")) && !PF.calls.some(c => c.p === "/v1/payments/proof"));

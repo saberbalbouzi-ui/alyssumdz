@@ -5,7 +5,7 @@ const root = path.join(__dirname, ".."); let fails = 0;
 const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x).slice(0, 300)); } else console.log("✓", n); };
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json" };
 const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u === "/__blank") { r.writeHead(200, { "Content-Type": "text/html" }); return r.end("<!doctype html><meta charset=utf-8><body></body>"); } const f = path.join(root, decodeURIComponent(u)); if (!f.startsWith(root) || !fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { "Content-Type": MIME[path.extname(f)] || "application/octet-stream" }); r.end(fs.readFileSync(f)); });
-const DB = { off: false, calls: [], keys: [{ sku: "iptv-1m", available: 2, sold: 5 }, { sku: "old-sku", available: 9, sold: 0 }], assets: [{ sku: "ebook" }],
+const DB = { off: false, wa: { configured: false, auto: false, template: false, template_name: "", phone_number_id: "" }, calls: [], keys: [{ sku: "iptv-1m", available: 2, sold: 5 }, { sku: "old-sku", available: 9, sold: 0 }], assets: [{ sku: "ebook" }],
   proofs: [{ id: 7, order_id: "W-ORDER-1", method: "baridimob", amount: 3000, payer: "أحمد <b>", state: "pending", has_proof: true, created_at: 1790000000 }],
   orders: [{ order_ref: "W-ORDER-1", name: "زبون <i>x</i>", items: [{ sku: "iptv-1m", qty: 2, title: "IPTV" }], paid: false, state: "awaiting", has_email: true, created_at: 1790000000 },
            { order_ref: "W-ORDER-2", name: "سعيد", items: [{ sku: "iptv-1m", qty: 1, title: "IPTV" }], paid: false, state: "awaiting", has_email: false, created_at: 1790000100 },
@@ -14,6 +14,8 @@ const DB = { off: false, calls: [], keys: [{ sku: "iptv-1m", available: 2, sold:
 function handle(b) {
   DB.calls.push(b); if (DB.off) return null; const m = b.method, p = b.path;
   if (m === "GET" && p === "/v1/digital/keys") return { skus: DB.keys };
+  if (m === "GET" && p === "/v1/digital/wa") return DB.wa;
+  if (m === "PUT" && p === "/v1/digital/wa") { const x = b.body; if (x.auto && !(x.access_token || DB.wa.configured) ) return { __err: { status: 409, error: { code: "wa_not_configured", message: "x" } } }; if (x.access_token) DB.wa.configured = true; if (x.clear_token) DB.wa.configured = false; DB.wa.phone_number_id = x.phone_number_id || ""; DB.wa.template_name = x.template || ""; DB.wa.template = !!x.template; DB.wa.auto = DB.wa.configured && !!x.auto; return { ok: true, auto: DB.wa.auto }; }
   if (m === "GET" && p === "/v1/digital/assets") return { assets: DB.assets };
   if (m === "GET" && p === "/v1/payments/manual") return { proofs: DB.proofs };
   if (m === "GET" && p === "/v1/digital/orders") return { orders: DB.orders };
@@ -38,7 +40,7 @@ function handle(b) {
     document.body.innerHTML = '<div id="tab-digital" class="hidden"><div id="digital-content"></div></div>'; window.__toasts = []; window.__open = [];
     window.open = (u) => { window.__open.push(u); return null; };
     window.API = { sb: { token: async () => "tok", url: (q) => "/sb" + q, headers: () => ({ "Content-Type": "application/json" }) } };
-    window.Admin = { products: [{ slug: "iptv-1m", title: "اشتراك <u>IPTV</u>", digital: true }, { slug: "plain", title: "عادي" }, { slug: "ebook", title: "كتاب", digital: true }],
+    window.Admin = { products: [{ slug: "iptv-1m", title: "اشتراك <u>IPTV</u>", digital: true }, { slug: "plain", title: "عادي" }, { slug: "ebook", title: "كتاب", digital: true }, { slug: "vp", title: "VPN", digital: true, variations: [{ id: "m1", attrs: { المدة: "شهر" } }, { id: "y1", attrs: { المدة: "سنة" } }, { id: "gone", attrs: { المدة: "قديم" }, active: false }] }],
       orders: [{ id: "o3", status: "confirmee", name: "علي", phone: "0550123456", extra: { "🔗 مرجع": "W-ORDER-3" } }], tab() { }, toast: (t) => window.__toasts.push(t), changeStatus(i, st) { window.__status = [i, st]; } };
     await new Promise((r) => { const e = document.createElement("script"); e.src = "/assets/js/admin-digital.js"; e.onload = r; document.body.appendChild(e); }); Admin.tab("digital");
   });
@@ -69,6 +71,21 @@ function handle(b) {
   ok("واتساب برقم الزبون بصيغة دولية ورسالة فيها المفتاح", wa.startsWith("https://wa.me/213550123456?text=") && decodeURIComponent(wa).includes("user9:pass9"), wa);
   await p.click('[data-dg=sent][data-ref="W-ORDER-3"]'); await p.waitForFunction(() => window.__status); ok("تم الإرسال ← الطلب مُسلَّم في اللوحة أيضاً", DB.calls.some((c) => c.path === "/v1/digital/orders/W-ORDER-3/sent") && (await p.evaluate(() => window.__status))[1] === "livree");
   await p.click('[data-dg=redeliver][data-ref="W-ORDER-4"]'); await p.waitForFunction(() => window.__toasts.some((x) => /ما زال لا يكفي/.test(x))); ok("إعادة المحاولة مع بقاء النفاد", true);
+  /* منتج رقمي متغيّر: صف مخزون لكل تنويع فعّال */
+  ok("صف لكل تنويع فعّال بـsku slug.vkey", await p.$('[data-dg=addkeys][data-sku="vp.m1"]') !== null && await p.$('[data-dg=addkeys][data-sku="vp.y1"]') !== null && await p.$('[data-dg=addkeys][data-sku="vp"]') === null && await p.$('[data-dg=addkeys][data-sku="vp.gone"]') === null);
+  ok("عنوان الصف يذكر المنتج والمدة", /VPN — سنة/.test(await txt()));
+  await p.click('[data-dg=addkeys][data-sku="vp.y1"]'); await p.waitForSelector("#dg-keys"); await p.fill("#dg-keys", "y1\ny2"); await p.click("[data-dg=keysave]"); await p.waitForFunction(() => !document.getElementById("dg-keys"));
+  ok("المفاتيح تُحفظ بـsku التنويع", DB.calls.filter((c) => c.method === "POST" && c.path === "/v1/digital/keys").pop().body.sku === "vp.y1");
+  ok("vsku يطابق المنصة", await p.evaluate(() => AdminDigital._t.vsku("a", "x y/1") === "a.x_y_1" && AdminDigital._t.vsku("a", "") === "a"));
+  /* التسليم الآلي عبر واتساب */
+  t = await txt(); ok("بطاقة التسليم الآلي بحالة متوقف", /التسليم الآلي عبر واتساب/.test(t) && /متوقف/.test(t));
+  await p.check("#dg-wa-on"); await p.click("[data-dg=wasave]"); await p.waitForFunction(() => window.__toasts.some((x) => /أدخل معرّف الرقم والرمز/.test(x))); ok("تفعيل بلا رمز يُرفض برسالة واضحة", true);
+  await p.fill("#dg-wa-pid", "555000111"); await p.fill("#dg-wa-tok", "EAAB" + "z".repeat(30)); await p.fill("#dg-wa-tpl", "order_keys"); await p.check("#dg-wa-on"); await p.click("[data-dg=wasave]"); await p.waitForFunction(() => window.__toasts.some((x) => /مفعّل/.test(x)));
+  const wc = DB.calls.filter((c) => c.method === "PUT" && c.path === "/v1/digital/wa").pop(); ok("الحفظ يرسل المعرّف والرمز والقالب والتفعيل", wc.body.phone_number_id === "555000111" && wc.body.access_token.startsWith("EAAB") && wc.body.template === "order_keys" && wc.body.auto === true, wc.body);
+  await p.waitForFunction(() => /مفعّل/.test(document.getElementById("dg-app").textContent) && document.getElementById("dg-wa-tok").value === ""); ok("الرمز لا يبقى في الخانة ولا في الصفحة", !(await p.evaluate(() => document.documentElement.outerHTML.includes("EAABzzzz"))));
+  await p.fill("#dg-wa-pid", "555000111"); await p.click("[data-dg=wasave]"); await p.waitForFunction(() => window.__toasts.filter((x) => /حُفظ|مفعّل/.test(x)).length >= 2); ok("حفظ بلا رمز يُبقي المحفوظ (لا access_token في الطلب)", !("access_token" in DB.calls.filter((c) => c.method === "PUT" && c.path === "/v1/digital/wa").pop().body));
+  /* تنبيهات الرئيسية */
+  DB.keys.push({ sku: "low-one", available: 1, sold: 4 }, { sku: "zero-one", available: 0, sold: 2 }); await p.evaluate(() => AdminDigital.refresh()); const al = await p.evaluate(() => AdminDigital.alerts()); ok("تنبيهات: إثبات معلّق ومخزون منخفض وطلب ينتظر مفاتيح", al && al.low === 1 && al.out === 1 && al.short === 1 && al.lowSkus.length === 2, al);
   /* طرق الدفع */
   await p.fill("#dg-b-rip", "0079 9999 0012 3456 7890abc"); await p.check("#dg-b-on"); await p.fill("#dg-b-name", "علي"); await p.click("[data-dg=paysave]");
   const saved = await p.evaluate(() => JSON.parse(localStorage.getItem("alyssum_pay_methods"))); ok("حفظ طرق الدفع بتنظيف الـRIP", saved.baridimob.on && saved.baridimob.rip === "0079 9999 0012 3456 7890" && saved.ccp.on === false, saved);

@@ -5,12 +5,12 @@ const AdminDigital = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const PAYP = "assets/data/pay-methods.json", PAYL = "alyssum_pay_methods";
-  const S = { keys: [], assets: [], proofs: [], orders: [], pay: null, sha: null, err: "", off: false, busy: false, open: null, shown: {}, timer: null, lowAt: 3 };
+  const S = { keys: [], assets: [], proofs: [], orders: [], pay: null, sha: null, err: "", off: false, busy: false, open: null, shown: {}, timer: null, lowAt: 3, wa: null, wat: 0 };
   const nf = n => Math.round(+n || 0).toLocaleString("fr-DZ");
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
   const dt = s => { const n = +s; return n ? new Date(n * 1000).toISOString().slice(0, 16).replace("T", " ") : ""; };
-  const ERR = { not_paid: "الطلب غير مدفوع بعد", already_paid: "هذا الطلب مدفوع سابقاً", bad_transition: "الحالة الحالية لا تسمح بهذا الإجراء", order_not_found: "الطلب غير معروف للمنصة", module_disabled: "الخدمة غير مفعّلة على حسابك — تواصل مع الدعم", vault_unavailable: "تخزين الأسرار غير مفعّل — تواصل مع الدعم", rate_limited: "طلبات كثيرة، حاول بعد قليل", plan_limit: "بلغت الحدّ الأقصى للمفاتيح" };
+  const ERR = { not_paid: "الطلب غير مدفوع بعد", already_paid: "هذا الطلب مدفوع سابقاً", bad_transition: "الحالة الحالية لا تسمح بهذا الإجراء", order_not_found: "الطلب غير معروف للمنصة", module_disabled: "الخدمة غير مفعّلة على حسابك — تواصل مع الدعم", vault_unavailable: "تخزين الأسرار غير مفعّل — تواصل مع الدعم", rate_limited: "طلبات كثيرة، حاول بعد قليل", plan_limit: "بلغت الحدّ الأقصى للمفاتيح", wa_not_configured: "أدخل معرّف الرقم والرمز أولاً ثم فعّل التسليم الآلي" };
   const ST = { awaiting: ["بانتظار الدفع", "var(--g-amber-rgb)"], short: ["نفد المخزون", "var(--g-rose-rgb)"], ready: ["جاهز للإرسال", "var(--g-blue-rgb)"], delivered: ["مُسلَّم", "var(--g-mint-rgb)"] };
   const MT = { baridimob: "BaridiMob", ccp: "CCP" };
   async function call(method, path, body, query) {
@@ -48,10 +48,15 @@ const AdminDigital = (() => {
   }
   /* ───── البيانات ───── */
   const digitalProducts = () => ((typeof Admin !== "undefined" && Admin.products) || []).filter(p => p && p.digital);
+  /** SKU التنويع (يطابق vsku في المنصة): منتج رقمي متغيّر (شهر/3 أشهر/سنة) لكل تنويع مخزون مفاتيحه */
+  const vsku = (slug, vkey) => { const k = String(vkey == null ? "" : vkey).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 40); return k ? (String(slug) + "." + k).slice(0, 80) : String(slug); };
+  const varLabel = v => Object.values(v.attrs || {}).join(" / ") || v.label || v.id;
+  /** صفوف المخزون: كل منتج رقمي، ومنتجه المتغيّر يتفرّع إلى صف لكل تنويع فعّال */
+  const skuRows = () => { const out = []; digitalProducts().forEach(p => { const vs = (p.variations || []).filter(v => v && v.id != null && v.active !== false); if (vs.length) vs.forEach(v => out.push({ slug: vsku(p.slug, v.id), title: p.title + " — " + varLabel(v) })); else out.push({ slug: p.slug, title: p.title }); }); return out; };
   const panelOrder = ref => ((typeof Admin !== "undefined" && Admin.orders) || []).find(o => o && String((o.extra && o.extra["🔗 مرجع"]) || o.id) === String(ref));
   async function load() {
     const [k, a, pr, o, wa] = await Promise.all([call("GET", "/v1/digital/keys"), call("GET", "/v1/digital/assets"), call("GET", "/v1/payments/manual", null, { state: "pending" }), call("GET", "/v1/digital/orders", null, { limit: 100 }), call("GET", "/v1/digital/wa")]);
-    S.wa = wa && wa.ok ? wa.j : null;
+    S.wa = wa && wa.ok ? wa.j : null; S.wat = Date.now();
     if (k.off) { S.off = true; return; } S.off = false; if (!k.ok) { S.err = errOf(k); return; } S.err = "";
     S.keys = k.j.skus || []; if (a.ok) S.assets = a.j.assets || []; if (pr.ok) S.proofs = pr.j.proofs || []; if (o.ok) S.orders = o.j.orders || [];
     if (!S.pay) await loadPay();
@@ -77,13 +82,24 @@ const AdminDigital = (() => {
 <div style="margin-top:.7rem"><button class="dgx-btn" data-dg="paysave">حفظ طرق الدفع</button></div></div>`;
   }
   function stockHtml() {
-    const kmap = new Map(S.keys.map(x => [x.sku, x])), amap = new Map(S.assets.map(x => [x.sku, x])), prods = digitalProducts();
+    const kmap = new Map(S.keys.map(x => [x.sku, x])), amap = new Map(S.assets.map(x => [x.sku, x])), prods = skuRows();
     const known = new Set(prods.map(p => p.slug)), extra = S.keys.filter(x => !known.has(x.sku)).map(x => ({ slug: x.sku, title: x.sku }));
     const rows = prods.concat(extra).map(p => { const k = kmap.get(p.slug) || { available: 0, sold: 0 }, a = amap.get(p.slug), low = k.available <= S.lowAt && (k.available + k.sold) > 0;
       return `<tr><td><b>${esc(p.title)}</b><div class="dgx-hint" dir="ltr">${esc(p.slug)}</div></td><td class="${low ? "dgx-low" : ""}">${k.available}${low ? " ⚠️" : ""}</td><td>${k.sold}</td><td>${a ? '<span class="dgx-chip" style="color:rgb(var(--g-mint-rgb))">ملف مربوط</span>' : '<span class="dgx-hint">—</span>'}</td>
 <td><button class="dgx-btn sm" data-dg="addkeys" data-sku="${esc(p.slug)}">＋ مفاتيح</button> <button class="dgx-btn g sm" data-dg="file" data-sku="${esc(p.slug)}" data-n="${esc(p.title)}">رابط ملف</button> ${k.available ? `<button class="dgx-btn r sm" data-dg="delkeys" data-sku="${esc(p.slug)}">حذف المتاح</button>` : ""}</td></tr>`; }).join("");
     const form = S.open ? `<div class="dgx-box" id="dg-keyform" style="margin-top:.8rem"><b>إضافة مفاتيح/حسابات إلى «${esc(S.open)}»</b><p class="dgx-hint">سطر لكل مفتاح (مثل <span dir="ltr">user:pass</span> أو <span dir="ltr">XXXX-YYYY-ZZZZ</span>). المكرر يُتجاهل، والمخزون مشفّر ولا يظهر بعد الحفظ.</p><textarea id="dg-keys" rows="6" dir="ltr" style="width:100%;box-sizing:border-box;padding:.5rem;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit"></textarea><div style="margin-top:.5rem"><button class="dgx-btn" data-dg="keysave">حفظ المفاتيح</button> <button class="dgx-btn g" data-dg="cancel">إلغاء</button></div></div>` : "";
     return `<div class="dgx-box"><h3>2) مخزون المنتجات الرقمية</h3>${rows ? `<div class="dgx-wrap"><table class="dgx-tbl"><thead><tr><th>المنتج</th><th>متاح</th><th>مباع</th><th>ملف</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="dgx-hint">لا منتجات رقمية بعد. افتح تعديل أي منتج وفعّل خانة «منتج رقمي».</p>'}${form}</div>`;
+  }
+  function waHtml() {
+    const w = S.wa || {}, on = !!w.auto;
+    return `<div class="dgx-box"><h3>5) التسليم الآلي عبر واتساب ${on ? '<span class="dgx-chip" style="color:rgb(var(--g-mint-rgb))">مفعّل</span>' : '<span class="dgx-chip" style="color:rgb(var(--g-amber-rgb))">متوقف</span>'}</h3>
+<p class="dgx-hint">للطلب الرقمي المدفوع الذي لا بريد له: تُرسل المفاتيح تلقائياً إلى رقم زبونك فور الموافقة على الدفع. تحتاج حساب واتساب للأعمال (معرّف الرقم + رمز الوصول من لوحة المطوّرين عندهم). إن لم تُقبل الرسالة يبقى الطلب «جاهز للإرسال» لترسله بنفسك.</p>
+<div class="dgx-fm"><label class="fl">معرّف رقم واتساب (أرقام)<input id="dg-wa-pid" dir="ltr" inputmode="numeric" value="${esc(w.phone_number_id || "")}" placeholder="1234567890"></label>
+<label class="fl">رمز الوصول ${w.configured ? "(محفوظ — اتركه فارغاً للإبقاء)" : ""}<input id="dg-wa-tok" type="password" dir="ltr" autocomplete="off" placeholder="${w.configured ? "••••••••••" : "EAAB…"}"></label>
+<label class="fl">اسم القالب المعتمد (اختياري، أضمن وصولاً)<input id="dg-wa-tpl" dir="ltr" value="${esc(w.template_name || "")}" placeholder="order_keys"></label></div>
+<p class="dgx-hint">القالب بثلاثة متغيّرات بالترتيب: ‏{{1}} الاسم، ‏{{2}} رقم الطلب، ‏{{3}} بيانات المنتج. بلا قالب تصل الرسالة الحرّة فقط ضمن 24 ساعة من آخر رسالة للزبون.</p>
+<div style="margin-top:.7rem"><label class="dgx-ck"><input type="checkbox" id="dg-wa-on" ${on ? "checked" : ""}> فعّل التسليم الآلي عبر واتساب</label></div>
+<div style="margin-top:.7rem"><button class="dgx-btn" data-dg="wasave">حفظ</button> ${w.configured ? '<button class="dgx-btn r sm" data-dg="waclear">مسح الرمز</button>' : ""}</div></div>`;
   }
   function proofsHtml() {
     const aw = S.orders.filter(o => o.state === "awaiting");
@@ -97,14 +113,14 @@ ${aws ? `<h4 style="margin:.8rem 0 .3rem">طلبات رقمية لم يصلها 
   function ordersHtml() {
     const rows = S.orders.filter(o => o.state !== "awaiting").slice(0, 60).map(o => { const act = o.state === "ready" ? `<button class="dgx-btn sm" data-dg="wa" data-ref="${esc(o.order_ref)}">📲 إرسال عبر واتساب</button> <button class="dgx-btn g sm" data-dg="sent" data-ref="${esc(o.order_ref)}">تم الإرسال</button>` : o.state === "short" ? `<button class="dgx-btn o sm" data-dg="redeliver" data-ref="${esc(o.order_ref)}">إعادة المحاولة</button>` : "";
       return `<tr><td dir="ltr">${esc(o.order_ref)}</td><td>${esc(o.name)}</td><td>${esc(o.items.map(i => (i.title || i.sku) + (i.qty > 1 ? " ×" + i.qty : "")).join("، "))}</td><td>${chip(ST, o.state)}${o.state === "short" ? `<div class="dgx-hint dgx-low">نفد: ${esc(o.detail || "")}</div>` : ""}${o.state === "ready" && !o.has_email ? '<div class="dgx-hint">لا بريد للزبون</div>' : ""}</td><td>${esc(dt(o.delivered_at || o.created_at))}</td><td>${act}</td></tr>`; }).join("");
-    const wa = S.wa, waNote = wa ? (wa.auto ? '<p class="dgx-hint">📲 <b>التسليم الآلي عبر واتساب مفعّل:</b> الطلب الذي لا بريد له يصل زبونه بياناته تلقائياً على هاتفه؛ إن لم تُقبل الرسالة يبقى «جاهز للإرسال» لترسله بنفسك.' + (wa.template ? "" : " بلا قالب معتمد لا تصل الرسالة إلا ضمن 24 ساعة من آخر رسالة للزبون.") + '</p>' : '<p class="dgx-hint">💡 لتسليم بيانات الطلب تلقائياً على واتساب الزبون بدل إرسالها يدوياً، تواصل مع الدعم لتفعيل «التسليم الآلي عبر واتساب».</p>') : "";
+    const waNote = S.wa && S.wa.auto ? '<p class="dgx-hint">📲 التسليم الآلي عبر واتساب <b>مفعّل</b> — الطلب الذي لا بريد له يصل زبونه تلقائياً؛ وإن رُفضت الرسالة يبقى «جاهز للإرسال».</p>' : '<p class="dgx-hint">💡 فعّل «التسليم الآلي عبر واتساب» أدناه ليصل زبونك بياناته تلقائياً دون إرسال يدوي.</p>';
     return `<div class="dgx-box"><h3>4) الطلبات الرقمية</h3>${waNote}${rows ? `<div class="dgx-wrap"><table class="dgx-tbl"><thead><tr><th>الطلب</th><th>الزبون</th><th>المنتج</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="dgx-hint">لا طلبات مدفوعة بعد.</p>'}</div>`;
   }
   function draw() {
     const host = $("dg-app"); if (!host) return;
     if (S.off) { host.innerHTML = '<div class="dgx-box dgx-off">المنتجات الرقمية غير مفعّلة بعد على حسابك — تواصل مع الدعم لتفعيلها.</div>'; return; }
     if (S.err) { host.innerHTML = `<div class="dgx-box dgx-off">${esc(S.err)} <button class="dgx-btn" data-dg="reload">إعادة المحاولة</button></div>`; return; }
-    host.innerHTML = proofsHtml() + stockHtml() + ordersHtml() + payHtml();
+    host.innerHTML = proofsHtml() + stockHtml() + ordersHtml() + payHtml() + waHtml();
   }
   /* ───── الإجراءات ───── */
   function markPanelDelivered(ref) { try { const o = panelOrder(ref); if (o && typeof Admin !== "undefined" && (o.status === "nouvelle" || o.status === "confirmee")) { const i = Admin.orders.indexOf(o); if (i >= 0) Admin.changeStatus(i, "livree"); } } catch (e) { } }
@@ -120,6 +136,13 @@ ${aws ? `<h4 style="margin:.8rem 0 .3rem">طلبات رقمية لم يصلها 
     const el = e.target.closest("[data-dg]"); if (!el) return; const a = el.dataset.dg, id = el.dataset.id, ref = el.dataset.ref, sku = el.dataset.sku; let r;
     if (a === "reload") { S.err = ""; return refresh(); }
     if (a === "paysave") return savePay();
+    if (a === "wasave" || a === "waclear") {
+      const g = id => ($(id) || {}), body = { phone_number_id: g("dg-wa-pid").value || "", template: g("dg-wa-tpl").value || "", auto: !!g("dg-wa-on").checked }, tok = (g("dg-wa-tok").value || "").trim();
+      if (a === "waclear") { if (!confirm("مسح رمز واتساب المحفوظ وإيقاف التسليم الآلي؟")) return; body.clear_token = true; body.auto = false; } else if (tok) body.access_token = tok;
+      el.disabled = true; r = await call("PUT", "/v1/digital/wa", body); el.disabled = false;
+      if (r.ok) { toast(a === "waclear" ? "✅ مُسح الرمز وأُوقف التسليم الآلي" : (r.j.auto ? "✅ التسليم الآلي عبر واتساب مفعّل" : "✅ حُفظ الإعداد")); return refresh(); }
+      return toast(errOf(r));
+    }
     if (a === "addkeys") { S.open = sku; draw(); const x = $("dg-keys"); if (x) { x.focus(); x.scrollIntoView({ block: "center" }); } return; }
     if (a === "cancel") { S.open = null; return draw(); }
     if (a === "keysave") { const t = ($("dg-keys") || {}).value || ""; if (!t.trim()) return toast("ألصق المفاتيح أولاً"); el.disabled = true; r = await call("POST", "/v1/digital/keys", { sku: S.open, text: t });
@@ -148,5 +171,19 @@ ${aws ? `<h4 style="margin:.8rem 0 .3rem">طلبات رقمية لم يصلها 
     w(); setTimeout(w, 500);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { render, refresh, S, _t: { normPay } };
+  /** تنبيهات الرئيسية: إثباتات دفع بانتظار موافقتك، ومنتجات رقمية مخزون مفاتيحها منخفض/نافد. null إن لم تُحمَّل البيانات أو لا نشاط رقمي */
+  function alerts() {
+    if (S.off || !S.wat || !(S.keys.length || S.proofs.length || S.orders.length)) return null;
+    const low = S.keys.filter(x => x.available <= S.lowAt && (x.available + x.sold) > 0), out = low.filter(x => x.available === 0), short = S.orders.filter(o => o.state === "short");
+    return { proofs: S.proofs.length, low: low.length - out.length, out: out.length, short: short.length, lowSkus: low.map(x => x.sku + ": " + x.available) };
+  }
+  /** جلب خفيف في الخلفية (مرة كل 3 دقائق) كي تظهر التنبيهات في الرئيسية دون فتح التبويب */
+  async function warm() {
+    if (S.busy || S.off || (S.wat && Date.now() - S.wat < 180000)) return; S.wat = Date.now();
+    const [k, pr, o] = await Promise.all([call("GET", "/v1/digital/keys"), call("GET", "/v1/payments/manual", null, { state: "pending" }), call("GET", "/v1/digital/orders", null, { limit: 30 })]);
+    if (k.off) { S.off = true; return; } if (!k.ok) return;
+    S.keys = k.j.skus || []; if (pr.ok) S.proofs = pr.j.proofs || []; if (o.ok) S.orders = o.j.orders || [];
+    try { if (typeof AdminHome !== "undefined" && AdminHome.refreshSoft) AdminHome.refreshSoft(); } catch (e) { }
+  }
+  return { render, refresh, S, alerts, warm, _t: { normPay, vsku, skuRows } };
 })();
