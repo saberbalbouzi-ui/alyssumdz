@@ -1,5 +1,5 @@
 import { HttpError, ok, paginate, clampLimit } from "../core.js";
-import { escHtml, hmacHex, nowStr, randHex, safeHttpsUrl, sha256Hex } from "../util.js";
+import { e164, escHtml, hmacHex, nowStr, randHex, safeHttpsUrl, sha256Hex } from "../util.js";
 
 const DEF = { expires_hours: 72, max_downloads: 3 };
 const SAFE_NAME = (n) => String(n ?? "file").replace(/[^\p{L}\p{N}._ -]/gu, "_").replace(/\.{2,}/g, ".").slice(0, 120) || "file";
@@ -30,6 +30,28 @@ export function deliveryHtml(lang, name, links, keyBlocks) {
   const lk = links.length ? `<p><b>${t.links}</b></p><ul>${links.map((l) => `<li><a href="${escHtml(l.url)}">${escHtml(l.name)}</a> — ${l.h} ${TXT[L].h} · ${l.n} ${TXT[L].n}</li>`).join("")}</ul>` : "";
   const ks = keyBlocks.map((b) => `<p><b>${escHtml(b.name)}</b></p>${b.values.map((v) => `<pre dir="ltr" style="background:#f3f4f6;padding:8px;border-radius:6px;white-space:pre-wrap;word-break:break-all">${escHtml(v)}</pre>`).join("")}`).join("");
   return `<div dir="${dir}" style="font-family:Arial,sans-serif"><p>${TXT[L].hello}${name ? " " + escHtml(name) : ""}،</p><p>${t.body}</p>${lk}${ks}</div>`;
+}
+const GRAPH = "https://graph.facebook.com/v21.0";
+/** نص التسليم لواتساب: روابط + مفاتيح بسطر لكل قيمة (القالب المعتمد لا يقبل أسطراً فيُدمج بـ « | ») */
+export function waText(lang, name, links, keyBlocks, oneLine) {
+  const L = KTXT[lang] ? lang : "ar", t = KTXT[L], nl = oneLine ? " | " : "\n", out = [];
+  for (const l of links) out.push(`${l.name}: ${l.url}`);
+  for (const b of keyBlocks) out.push(`${b.name}: ${b.values.join(oneLine ? " ، " : "\n")}`);
+  return oneLine ? out.join(nl) : `${t.body}\n\n${out.join("\n\n")}`;
+}
+/** تسليم آلي عبر WhatsApp Cloud API إن فُعِّل (تكامل whatsapp مع digital_auto:true). يُرجع true عند قبول Meta، وأي إخفاق ← false (يبقى الطلب ready للإرسال اليدوي).
+ *  بلا قالب (digital_template) يُرسل نصاً حراً وهو لا يصل إلا ضمن 24 ساعة من آخر رسالة للزبون؛ الأضمن قالب معتمد بثلاثة متغيّرات: الاسم، رقم الطلب، البيانات. */
+async function sendWhatsApp(ctx, tid, o, tenant, links, keyBlocks) {
+  const integ = await ctx.integration(tid, "whatsapp"); if (!integ || integ.config.enabled === false || !integ.config.digital_auto || !integ.config.phone_number_id || !integ.secrets.access_token || !ctx.vault) return false;
+  const pr = await ctx.db.one("SELECT phone_enc FROM dg_phone WHERE tenant_id=? AND order_ref=?", tid, o.order_ref); if (!pr) return false;
+  const to = e164(await ctx.vault.decrypt(pr.phone_enc, `dgp:${tid}`)); if (!to) return false;
+  const lang = tenant.settings?.lang, tpl = integ.config.digital_template;
+  const body = tpl ? { messaging_product: "whatsapp", to, type: "template", template: { name: tpl, language: { code: integ.config.lang ?? "ar" }, components: [{ type: "body", parameters: [o.name || "-", o.order_ref, waText(lang, o.name, links, keyBlocks, true).slice(0, 900) || "-"].map((text) => ({ type: "text", text: String(text).slice(0, 900) })) }] } }
+    : { messaging_product: "whatsapp", to, type: "text", text: { preview_url: false, body: waText(lang, o.name, links, keyBlocks, false).slice(0, 3800) } };
+  try {
+    const res = await ctx.fetchFn(`${GRAPH}/${encodeURIComponent(integ.config.phone_number_id)}/messages`, { method: "POST", redirect: "manual", headers: { Authorization: "Bearer " + integ.secrets.access_token, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return res.status >= 200 && res.status < 300;
+  } catch { return false; }
 }
 const cleanKey = (v) => String(v ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim();
 const okEmail = (v) => { const e = String(v ?? "").trim().toLowerCase(); return e.length <= 120 && /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]{2,}$/.test(e) ? e : ""; };
@@ -91,6 +113,10 @@ export const digital = {
       for (const k of rows) (by[k.sku] ??= []).push(await ctx.vault.decrypt(k.secret_enc, `dgk:${req.tenant.id}`));
       return ok({ order_ref: req.params.ref, state: o.state, keys: Object.entries(by).map(([sku, values]) => ({ sku, values })) });
     });
+    r.get("/v1/digital/wa", { scope: "digital:read", summary: "حالة التسليم الآلي عبر واتساب (بلا أسرار)" }, async (req) => {
+      const i = await ctx.integration(req.tenant.id, "whatsapp"), ready = !!(i && i.config.enabled !== false && i.config.phone_number_id && i.secrets.access_token);
+      return ok({ configured: ready, auto: ready && !!i.config.digital_auto, template: !!(i && i.config.digital_template) });
+    });
     r.post("/v1/digital/orders/:ref/deliver", { scope: "digital:write", limit: { key: "dgd", max: 120, win: 3600 }, summary: "إعادة محاولة التسليم لطلب مدفوع (بعد إضافة مخزون أو ضبط البريد)" }, async (req) => {
       const o = await db.one("SELECT * FROM dg_orders WHERE tenant_id=? AND order_ref=?", req.tenant.id, req.params.ref); if (!o) throw new HttpError(404, "not_found", "الطلب غير موجود");
       if (!o.paid) throw new HttpError(409, "not_paid", "الطلب غير مدفوع بعد"); if (o.state === "delivered") return ok({ ok: true, state: "delivered", duplicate: true });
@@ -131,6 +157,7 @@ export const digital = {
         if (await ctx.db.val("SELECT 1 FROM dg_assets WHERE tenant_id=? AND sku=? AND active=1", e.tenantId, sku) || await ctx.db.val("SELECT 1 FROM dg_keys WHERE tenant_id=? AND sku=? LIMIT 1", e.tenantId, sku)) items.push({ sku, qty: Math.max(1, Math.min(50, Math.round(+it.qty) || 1)), title: String(it.title ?? "").slice(0, 120) }); }
       if (!items.length || !ctx.vault) return; const em = okEmail(d.customer?.email);
       await ctx.db.run("INSERT OR IGNORE INTO dg_orders (tenant_id,order_ref,items,name,email_enc,paid,state,created_at) VALUES (?,?,?,?,?,0,'awaiting',?)", e.tenantId, ref, JSON.stringify(items), String(d.customer?.name ?? "").slice(0, 80), em ? await ctx.vault.encrypt(em, `dgo:${e.tenantId}`) : null, ctx.nowS());
+      const ph = e164(d.customer?.phone); if (ph) await ctx.db.run("INSERT OR IGNORE INTO dg_phone (tenant_id,order_ref,phone_enc) VALUES (?,?,?)", e.tenantId, ref, await ctx.vault.encrypt(ph, `dgp:${e.tenantId}`));
     },
     /** الدفع المؤكَّد (Chargily أو موافقة التاجر على دفع يدوي): طلب مسجَّل رقمياً ← تخصيص المفاتيح + روابط التنزيل + تسليم؛ وإلا المسار القديم بعناصر الحدث. */
     "payment.confirmed": async (e, ctx) => {
@@ -186,9 +213,10 @@ async function deliver(ctx, tenant, o) {
       const email = await ctx.vault.decrypt(o.email_enc, `dgo:${tid}`), lang = tenant.settings?.lang;
       sent = await sendEmail(ctx, tid, { to: email, subject: (KTXT[lang] ?? KTXT.ar).subject, html: deliveryHtml(lang, o.name, links, keyBlocks) });
     }
+    let channel = "email"; if (!sent && (links.length || keyBlocks.length) && await sendWhatsApp(ctx, tid, o, tenant, links, keyBlocks)) { sent = true; channel = "whatsapp"; }
     const state = sent ? "delivered" : "ready";
     await db.run("UPDATE dg_orders SET state=?, detail=NULL, delivered_at=? WHERE tenant_id=? AND order_ref=?", state, sent ? ctx.nowS() : null, tid, ref);
-    if (sent) await markDelivered(ctx, tid, ref, "email"); else await ctx.emit(tid, "digital.ready", { order_id: ref }, `digital:ready:${ref}`);
+    if (sent) await markDelivered(ctx, tid, ref, channel); else await ctx.emit(tid, "digital.ready", { order_id: ref }, `digital:ready:${ref}`);
     return state;
   } catch (x) { for (const id of created) await db.run("DELETE FROM dg_grants WHERE id=?", id); throw x; }       // المفاتيح المخصَّصة تبقى للطلب (إعادة المحاولة تجدها)، والروابط تُلغى لأنها لا تُسترد
 }

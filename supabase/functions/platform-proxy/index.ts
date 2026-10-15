@@ -51,7 +51,7 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/v1\/appstore\/apps\/\d{1,12}\/reviews$/],
   ["POST", /^\/v1\/appstore\/apps\/\d{1,12}\/review$/],
   // المنتجات الرقمية: مخزن المفاتيح، الطلبات الرقمية، وإثباتات الدفع اليدوي (BaridiMob/CCP). الرابط العام للتنزيل والمفاتيح العامة لا تمرّ هنا
-  ["GET", /^\/v1\/digital\/(keys|orders|assets)$/],
+  ["GET", /^\/v1\/digital\/(keys|orders|assets|wa)$/],
   ["POST", /^\/v1\/digital\/(keys|assets)$/],
   ["DELETE", /^\/v1\/digital\/keys\/[A-Za-z0-9._-]{1,80}$/],
   ["GET", /^\/v1\/digital\/orders\/[A-Za-z0-9._:-]{1,80}$/],

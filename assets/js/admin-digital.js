@@ -50,7 +50,8 @@ const AdminDigital = (() => {
   const digitalProducts = () => ((typeof Admin !== "undefined" && Admin.products) || []).filter(p => p && p.digital);
   const panelOrder = ref => ((typeof Admin !== "undefined" && Admin.orders) || []).find(o => o && String((o.extra && o.extra["🔗 مرجع"]) || o.id) === String(ref));
   async function load() {
-    const [k, a, pr, o] = await Promise.all([call("GET", "/v1/digital/keys"), call("GET", "/v1/digital/assets"), call("GET", "/v1/payments/manual", null, { state: "pending" }), call("GET", "/v1/digital/orders", null, { limit: 100 })]);
+    const [k, a, pr, o, wa] = await Promise.all([call("GET", "/v1/digital/keys"), call("GET", "/v1/digital/assets"), call("GET", "/v1/payments/manual", null, { state: "pending" }), call("GET", "/v1/digital/orders", null, { limit: 100 }), call("GET", "/v1/digital/wa")]);
+    S.wa = wa && wa.ok ? wa.j : null;
     if (k.off) { S.off = true; return; } S.off = false; if (!k.ok) { S.err = errOf(k); return; } S.err = "";
     S.keys = k.j.skus || []; if (a.ok) S.assets = a.j.assets || []; if (pr.ok) S.proofs = pr.j.proofs || []; if (o.ok) S.orders = o.j.orders || [];
     if (!S.pay) await loadPay();
@@ -96,7 +97,8 @@ ${aws ? `<h4 style="margin:.8rem 0 .3rem">طلبات رقمية لم يصلها 
   function ordersHtml() {
     const rows = S.orders.filter(o => o.state !== "awaiting").slice(0, 60).map(o => { const act = o.state === "ready" ? `<button class="dgx-btn sm" data-dg="wa" data-ref="${esc(o.order_ref)}">📲 إرسال عبر واتساب</button> <button class="dgx-btn g sm" data-dg="sent" data-ref="${esc(o.order_ref)}">تم الإرسال</button>` : o.state === "short" ? `<button class="dgx-btn o sm" data-dg="redeliver" data-ref="${esc(o.order_ref)}">إعادة المحاولة</button>` : "";
       return `<tr><td dir="ltr">${esc(o.order_ref)}</td><td>${esc(o.name)}</td><td>${esc(o.items.map(i => (i.title || i.sku) + (i.qty > 1 ? " ×" + i.qty : "")).join("، "))}</td><td>${chip(ST, o.state)}${o.state === "short" ? `<div class="dgx-hint dgx-low">نفد: ${esc(o.detail || "")}</div>` : ""}${o.state === "ready" && !o.has_email ? '<div class="dgx-hint">لا بريد للزبون</div>' : ""}</td><td>${esc(dt(o.delivered_at || o.created_at))}</td><td>${act}</td></tr>`; }).join("");
-    return `<div class="dgx-box"><h3>4) الطلبات الرقمية</h3>${rows ? `<div class="dgx-wrap"><table class="dgx-tbl"><thead><tr><th>الطلب</th><th>الزبون</th><th>المنتج</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="dgx-hint">لا طلبات مدفوعة بعد.</p>'}</div>`;
+    const wa = S.wa, waNote = wa ? (wa.auto ? '<p class="dgx-hint">📲 <b>التسليم الآلي عبر واتساب مفعّل:</b> الطلب الذي لا بريد له يصل زبونه بياناته تلقائياً على هاتفه؛ إن لم تُقبل الرسالة يبقى «جاهز للإرسال» لترسله بنفسك.' + (wa.template ? "" : " بلا قالب معتمد لا تصل الرسالة إلا ضمن 24 ساعة من آخر رسالة للزبون.") + '</p>' : '<p class="dgx-hint">💡 لتسليم بيانات الطلب تلقائياً على واتساب الزبون بدل إرسالها يدوياً، تواصل مع الدعم لتفعيل «التسليم الآلي عبر واتساب».</p>') : "";
+    return `<div class="dgx-box"><h3>4) الطلبات الرقمية</h3>${waNote}${rows ? `<div class="dgx-wrap"><table class="dgx-tbl"><thead><tr><th>الطلب</th><th>الزبون</th><th>المنتج</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="dgx-hint">لا طلبات مدفوعة بعد.</p>'}</div>`;
   }
   function draw() {
     const host = $("dg-app"); if (!host) return;
