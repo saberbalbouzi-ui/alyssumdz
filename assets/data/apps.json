@@ -1,6 +1,7 @@
 {
   "v": 1,
   "off": [
-    "floaters"
+    "floaters",
+    "voice"
   ]
 }
