@@ -486,3 +486,8 @@ html.glass #theme-sw button.on:hover{background:linear-gradient(180deg,rgba(var(
 html.glass .pbx-tt.card{background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
 html.glass .pbx-tt.card:hover{background:transparent!important;filter:brightness(1.12)}
 html.glass .pbx-tt.card.on{box-shadow:0 0 0 2px var(--g-mint)!important}
+/* v1.89.256: صفوف «إنشاء/تعديل/أتمتة» في تبويب تعديل الصورة — زجاج داكن بنص أبيض */
+html.glass .pbx-tr{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.18)!important;color:#fff!important}
+html.glass .pbx-tr:hover{background:rgba(255,255,255,.12)!important;border-color:var(--g-mint)!important}
+html.glass .pbx-tr i{background:rgba(255,255,255,.1)!important;color:var(--g-mint)}
+html.glass .pbx-tr small{color:rgba(255,255,255,.72)!important}

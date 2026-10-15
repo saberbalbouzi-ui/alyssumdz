@@ -1214,6 +1214,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الملصقات: بحث عربي وفرنسي وإنجليزي يعطي النتيجة الصحيحة", sk.fire.includes("fire") && sk.miel.includes("honey-pot") && sk.truck.includes("delivery-truck") && sk.none === 0, sk);
   ok("الملصقات: بحث «عسل» يعرض جرة العسل", sk.honeyUi.includes("honey-pot"), sk.honeyUi);
   ok("الملصقات: النقر يضيف عنصر صورة بحجم صغير ويُسجَّل في «مؤخراً»", sk.added && sk.fw === 18 && sk.rec === "honey-pot", sk);
+  // ── تبويب «تعديل الصورة»: ثلاث قوائم (إنشاء/تعديل/أتمتة) + أداة التكبير ──
+  const tm = await p.evaluate(async () => {
+    PBApp.ltoggle("img"); await new Promise(r => setTimeout(r, 300)); const pane = document.getElementById("pbx-lpane");
+    const heads = [...pane.querySelectorAll(".pbx-cat")].map(x => x.textContent.trim()).slice(0, 3), rows = [...pane.querySelectorAll("[data-imgx]")].map(x => x.dataset.imgx), cards = pane.querySelectorAll(".pbx-tt.card").length;
+    const soon = pane.querySelector('[data-imgx="logo"] .tt-b2') ? 1 : 0; const toasts = []; 
+    pane.querySelector('[data-imgx="logo"]').click(); await new Promise(r => setTimeout(r, 100)); const msg = (document.getElementById("pbx-msg") || {}).textContent || "";
+    PBApp.ltoggle("img"); return { heads, rows, cards, soon, msg };
+  });
+  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "model", "tryon", "up", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 16 && tm.soon === 1 && /قيد التطوير/.test(tm.msg), tm);
   // ── مكتبة الأصول (Pixabay/Iconify) داخل المطوّر الحقيقي ──
   const as = await p.evaluate(async () => {
     const real = window.fetch, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 2h2"/></svg>';
@@ -1235,6 +1244,14 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("مكتبة الأصول: النقر على أيقونة يحفظها SVG ويضيفها عنصر صورة", as.icons && as.added, as);
   await p.screenshot({ path: "/tmp/stk-ui.png" });
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  // ── تغيير المقاس والتكبير (صفحة مستقلة كي لا يتأثر تدفّق الاختبارات الأخرى) ──
+  await p.evaluate(() => { const pg = PB.newPage("اختبار تكبير", ""); pg.slug = "up-t"; const sec = PB.mkS([PB.mkC([PB.mkW("image", { src: "assets/img/favicon.png", hauto: true })])]); pg.sections = [sec]; window.__upId = sec.cols[0].widgets[0].id; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; PBApp.ltoggle("img"); }); await p.waitForTimeout(600);
+  await p.evaluate(() => document.querySelector('[data-imgx="up"]').click()); await p.waitForTimeout(600);
+  ok("تغيير المقاس والتكبير: تفتح لوحته بخيارات التكبير والحدّة", await p.evaluate(() => !!document.querySelector('#pbx-ep [data-upk="scale"]') && !!document.querySelector('#pbx-ep [data-upk="sharp"]') && /تغيير المقاس والتكبير/.test(document.querySelector("#pbx-ep .ep-h").textContent)));
+  await p.evaluate(() => { window.__preUp = PBApp.pageJson(); document.querySelector('#pbx-ep [data-upx="go"]').click(); }); await p.waitForTimeout(6000);
+  ok("تغيير المقاس والتكبير: التنفيذ يستبدل الصورة بنسخة أكبر محفوظة", await p.evaluate(() => { const j = PBApp.pageJson(); return j !== window.__preUp && /assets\/img\/pages\/gen-/.test(j); }));
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
   // ── مسار المنتج الرئيسي من إعدادات الصفحة ──
   await p.evaluate(() => { if (window.__origPub) PBApp.publish = window.__origPub; });
   await p.evaluate(() => { const pg = PB.newPage("هبوط مسار", ""); pg.slug = "route-lp"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1800);
@@ -1604,7 +1621,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const lyT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; window.confirm = () => true; PBAdmin.mkPage("تخطيط"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(500); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
     const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = im;
-    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 280 / 325) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll("[data-imgm]").length === 5;
+    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 280 / 325) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 5 && pane.querySelectorAll(".pbx-cat").length >= 3;
     R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(); await w(400); return R;
   });
   ok("تبويب «تعديل الصورة» (تخطيط فعلي): بطاقات ≥90px بنسبة 280:325 والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
