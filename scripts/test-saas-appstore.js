@@ -6,13 +6,13 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
 const lst = (f) => [...fs.readFileSync(path.join(root, f), "utf8").matchAll(/\["(GET|POST|PUT|PATCH|DELETE)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]);
 const AD = lst("supabase/functions/platform-admin/index.ts"), PX = lst("supabase/functions/platform-proxy/index.ts");
 const ad = (m, p) => AD.some(([x, re]) => x === m && re.test(p)), px = (m, p) => PX.some(([x, re]) => x === m && re.test(p));
-ok("المزوّد: المراجعة والإعدادات والإيرادات والمطوّرون", ad("POST", "/admin/appstore/developers") && ad("GET", "/admin/appstore/apps?status=pending") && ad("POST", "/admin/appstore/apps/5/review") && ad("GET", "/admin/appstore/settings") && ad("PUT", "/admin/appstore/settings") && ad("GET", "/admin/appstore/revenues") && ad("GET", "/admin/appstore/installations") && ad("GET", "/admin/appstore/installations?app_id=3"));
+ok("المزوّد: المراجعة والإعدادات والإيرادات والمطوّرون", ad("POST", "/admin/appstore/developers") && ad("GET", "/admin/appstore/apps?status=pending") && ad("POST", "/admin/appstore/apps/5/review") && ad("POST", "/admin/appstore/apps/5/feature") && ad("GET", "/admin/appstore/settings") && ad("PUT", "/admin/appstore/settings") && ad("GET", "/admin/appstore/revenues") && ad("GET", "/admin/appstore/installations") && ad("GET", "/admin/appstore/installations?app_id=3"));
 ok("المزوّد يرفض الخبيث", !ad("DELETE", "/admin/appstore/apps/5") && !ad("POST", "/admin/appstore/apps/x/review") && !ad("GET", "/admin/appstore/apps?status=a;drop") && !ad("GET", "/admin/appstore/../tenants") && !ad("PATCH", "/admin/appstore/settings"));
-ok("وسيط التاجر: التصفح والتثبيت والإلغاء فقط", px("GET", "/v1/appstore/apps") && px("GET", "/v1/appstore/apps/4") && px("POST", "/v1/appstore/apps/4/install") && px("GET", "/v1/appstore/installations") && px("POST", "/v1/appstore/installations/3/authorize") && px("DELETE", "/v1/appstore/installations/3"));
-ok("وسيط التاجر يمنع المطوّر وOAuth والإدارة", !px("POST", "/v1/appstore/dev/apps") && !px("GET", "/v1/appstore/dev/earnings") && !px("POST", "/oauth/token") && !px("POST", "/oauth/revoke") && !px("GET", "/v1/appstore/me") && !px("POST", "/admin/appstore/developers") && !px("POST", "/admin/appstore/apps/1/review") && !px("DELETE", "/v1/appstore/apps/1"));
+ok("وسيط التاجر: التصفح والتثبيت والإلغاء فقط", px("GET", "/v1/appstore/apps") && px("GET", "/v1/appstore/apps/4") && px("POST", "/v1/appstore/apps/4/install") && px("GET", "/v1/appstore/installations") && px("POST", "/v1/appstore/installations/3/authorize") && px("POST", "/v1/appstore/installations/3/refund") && px("POST", "/v1/appstore/apps/3/review") && px("GET", "/v1/appstore/apps/3/reviews") && px("DELETE", "/v1/appstore/installations/3"));
+ok("وسيط التاجر يمنع المطوّر وOAuth والإدارة", !px("POST", "/v1/appstore/dev/apps") && !px("GET", "/v1/appstore/dev/earnings") && !px("GET", "/v1/appstore/dev/deliveries") && !px("POST", "/v1/appstore/dev/deliveries/3/retry") && !px("POST", "/admin/appstore/apps/1/feature") && !px("POST", "/oauth/token") && !px("POST", "/oauth/revoke") && !px("GET", "/v1/appstore/me") && !px("POST", "/admin/appstore/developers") && !px("POST", "/admin/appstore/apps/1/review") && !px("DELETE", "/v1/appstore/apps/1"));
 (async () => {
   const br = await chromium.launch(), calls = [], page = await (await br.newContext({ viewport: { width: 390, height: 800 } })).newPage();
-  let APPS = [{ id: 4, slug: "sms-tools", name: "أدوات <img src=x onerror=window.__x=1>", developer: "Dev", developer_id: 9, price: 2000, billing: "monthly", scopes: [{ id: "read_orders", label: "قراءة الطلبات", sensitive: false }, { id: "read_customers", label: "هواتف الزبائن", sensitive: true }], events: ["order.created"], webhook_url: "https://app.example/hook", redirect_uris: ["https://app.example/cb"], status: "pending", review_note: null }];
+  let APPS = [{ id: 4, slug: "sms-tools", name: "أدوات <img src=x onerror=window.__x=1>", developer: "Dev", developer_id: 9, price: 2000, billing: "monthly", scopes: [{ id: "read_orders", label: "قراءة الطلبات", sensitive: false }, { id: "read_customers", label: "هواتف الزبائن", sensitive: true }], events: ["order.created"], webhook_url: "https://app.example/hook", redirect_uris: ["https://app.example/cb"], status: "pending", review_note: null, featured: false, domain_verified: true, rating: 3.5, rating_count: 2 }];
   await page.route("**/functions/v1/platform-admin", async route => {
     const b = JSON.parse(route.request().postData() || "{}"); calls.push(b); let data = {}, status = 200;
     if (b.path.startsWith("/admin/appstore/apps?")) data = { apps: APPS.filter(a => b.path.includes("status=" + a.status)) };
@@ -21,6 +21,7 @@ ok("وسيط التاجر يمنع المطوّر وOAuth والإدارة", !px
     else if (b.path === "/admin/appstore/revenues") data = { totals: { gross: 12000, fee: 2400, net: 9600, unsettled: 0 }, commission_pct: 20 };
     else if (b.path.startsWith("/admin/appstore/installations")) data = { installations: [{ app_id: 4, status: "active" }] };
     else if (/apps\/4\/review$/.test(b.path)) { APPS[0].status = b.body.status; data = { ok: true, status: b.body.status }; }
+    else if (/apps\/4\/feature$/.test(b.path)) { APPS[0].featured = !!b.body.featured; data = { ok: true, featured: APPS[0].featured }; }
     else if (b.path === "/admin/appstore/developers") data = { ok: true };
     else { data = { error: { code: "not_found", message: "x" } }; status = 404; }
     await route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: true, status, data }) });
@@ -37,7 +38,9 @@ ok("وسيط التاجر يمنع المطوّر وOAuth والإدارة", !px
   await page.click("[data-as=open]"); txt = await page.innerText("#r"); ok("التفاصيل: النطاقات والروابط وتحذير المراجعة", /read_customers/.test(txt) && /app\.example\/hook/.test(txt) && /راجع:/.test(txt));
   await page.click('[data-as=rev][data-to=approved]'); await page.waitForTimeout(200);
   const rv = calls.find(c => c.method === "POST" && /review$/.test(c.path)); ok("الاعتماد يرسل الحالة", rv && rv.body.status === "approved", rv);
+  ok("علامات النطاق والتقييم ظاهرة", /✔ نطاق موثّق/.test(txt) && /★ 3.5 \(2\)/.test(txt));
   await page.click('[data-as=st][data-st=approved]'); await page.waitForSelector("[data-as=rev][data-to=suspended]"); ok("المعتمد يعرض عدد التثبيتات وزر التعليق الفوري", /1 تثبيت/.test(await page.innerText("#r")));
+  await page.click('[data-as=feat]'); await page.waitForTimeout(200); ok("التمييز يرسل featured", calls.some(c => /feature$/.test(c.path) && c.body.featured === true));
   await page.click('[data-as=rev][data-to=suspended]'); await page.waitForTimeout(200);
   const sp = calls.filter(c => c.method === "POST" && /review$/.test(c.path)).pop(); ok("التعليق يرسل السبب", sp.body.status === "suspended" && sp.body.note === "نطاق مبالغ فيه", sp);
   ok("ملخص الإيرادات ظاهر", /12.?000/.test((await page.innerText("#r")).replace(/[  ]/g, "")) || /12/.test(await page.innerText("#r")));

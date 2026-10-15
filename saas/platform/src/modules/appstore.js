@@ -1,5 +1,5 @@
 import { DB, HttpError, ok, paginate, clampLimit, moduleOff } from "../core.js";
-import { hmacHex, nowStr, randHex, safeEq, safeHttpsUrl, sha256Hex } from "../util.js";
+import { hmacHex, maskName, nowStr, randHex, safeEq, safeHttpsUrl, sha256Hex } from "../util.js";
 
 /** متجر التطبيقات (Marketplace) لمطوّرين خارجيين: OAuth 2.0 بنطاقات دقيقة، سوق ببطاقات التطبيقات، فوترة بتقاسم الإيراد عبر المحفظة، وwebhooks صادرة موقَّعة.
  *  مبادئ الأمان: (1) كتالوج نطاقات مغلق لا يشمل المحفظة ولا المفاتيح ولا التكاملات؛ (2) رموز معتمة تُخزَّن مجزَّأة فقط وتدور (refresh rotation + كشف إعادة الاستعمال)؛
@@ -47,7 +47,9 @@ export function validateApp(b, cur = null) {
   return { errors, value: out };
 }
 const SENSITIVE = ["price", "billing", "scopes", "redirect_uris", "webhook_url", "events"];
-const pubApp = (a, dev) => ({ id: a.id, slug: a.slug, name: a.name, description: a.description, icon_url: a.icon_url, price: a.price, billing: a.billing, currency: "DZD", developer: dev ?? null,
+const hostOf = (u) => { try { return new URL(u).hostname.toLowerCase(); } catch { return null; } };
+const REFUND_DAYS = 7;
+const pubApp = (a, dev, m = {}) => ({ rating: m.rating ?? null, rating_count: m.rating_count ?? 0, featured: !!m.featured, domain_verified: !!(m.domain_host && m.domain_host === hostOf(a.webhook_url)), id: a.id, slug: a.slug, name: a.name, description: a.description, icon_url: a.icon_url, price: a.price, billing: a.billing, currency: "DZD", developer: dev ?? null,
   scopes: JSON.parse(a.scopes).map((s) => ({ id: s, label: APP_SCOPES[s]?.label ?? s, sensitive: !!APP_SCOPES[s]?.sensitive })), events: JSON.parse(a.events) });
 const oerr = (status, error, desc) => ({ status, headers: { "Cache-Control": "no-store", Pragma: "no-cache" }, body: JSON.stringify({ error, error_description: desc }) });
 const period = (ms) => new Date(ms).toISOString().slice(0, 7);
@@ -163,11 +165,29 @@ export const appstore = {
 
     /* ───────── واجهة التاجر: التصفح والتثبيت ───────── */
     const devName = async (id) => (await db.val("SELECT name FROM pf_tenants WHERE id=?", id)) ?? null;
-    r.get("/v1/appstore/apps", { scope: "appstore:read", summary: "التطبيقات المعتمدة في المتجر" }, async () => {
-      const rows = await db.all("SELECT * FROM apps WHERE status='approved' ORDER BY id DESC LIMIT 100"), out = []; for (const a of rows) out.push(pubApp(a, await devName(a.developer_id))); return ok({ apps: out, commission_pct: await commission() });
+    /** تقييم ووسم «مميّز» وتوثيق النطاق لكل تطبيق (جداول app_reviews/app_flags) */
+    const metaOf = async (id) => { const rt = await db.one("SELECT AVG(stars) avg, COUNT(*) n FROM app_reviews WHERE app_id=?", id), fl = await db.one("SELECT featured, domain_host FROM app_flags WHERE app_id=?", id);
+      return { rating: rt && rt.n ? Math.round(rt.avg * 10) / 10 : null, rating_count: rt ? rt.n : 0, featured: !!(fl && fl.featured), domain_host: fl ? fl.domain_host : null }; };
+    r.get("/v1/appstore/apps", { scope: "appstore:read", summary: "التطبيقات المعتمدة في المتجر (المميّزة أولاً)" }, async () => {
+      const rows = await db.all("SELECT * FROM apps WHERE status='approved' ORDER BY id DESC LIMIT 100"), out = []; for (const a of rows) out.push(pubApp(a, await devName(a.developer_id), await metaOf(a.id)));
+      out.sort((x, y) => (y.featured - x.featured) || ((y.rating ?? 0) - (x.rating ?? 0))); return ok({ apps: out, commission_pct: await commission(), refund_days: REFUND_DAYS });
     });
     r.get("/v1/appstore/apps/:id", { scope: "appstore:read", summary: "تفاصيل تطبيق معتمد" }, async (req) => {
-      const a = await db.one("SELECT * FROM apps WHERE id=? AND status='approved'", +req.params.id); if (!a) throw new HttpError(404, "not_found", "التطبيق غير موجود"); return ok({ app: pubApp(a, await devName(a.developer_id)) });
+      const a = await db.one("SELECT * FROM apps WHERE id=? AND status='approved'", +req.params.id); if (!a) throw new HttpError(404, "not_found", "التطبيق غير موجود"); return ok({ app: pubApp(a, await devName(a.developer_id), await metaOf(a.id)) });
+    });
+    r.get("/v1/appstore/apps/:id/reviews", { scope: "appstore:read", summary: "آخر تقييمات تطبيق (اسم المتجر مقنَّع)" }, async (req) => {
+      if (!(await db.one("SELECT id FROM apps WHERE id=? AND status='approved'", +req.params.id))) throw new HttpError(404, "not_found", "التطبيق غير موجود");
+      const rows = await db.all("SELECT v.stars, v.comment, v.created_at, t.name FROM app_reviews v LEFT JOIN pf_tenants t ON t.id=v.tenant_id WHERE v.app_id=? ORDER BY v.id DESC LIMIT 20", +req.params.id);
+      return ok({ reviews: rows.map((x) => ({ stars: x.stars, comment: x.comment, shop: maskName(x.name), at: x.created_at })) });
+    });
+    r.post("/v1/appstore/apps/:id/review", { scope: "appstore:write", limit: { key: "apprev", max: 20, win: 3600 }, summary: "تقييم تطبيق ثبّتَّه: { stars: 1..5, comment? } (تقييم واحد لكل متجر يُحدَّث)" }, async (req) => {
+      if (req.app) throw new HttpError(403, "forbidden", "غير متاح لرموز التطبيقات");
+      const b = req.json(), stars = Math.round(+b.stars); if (!(stars >= 1 && stars <= 5)) throw new HttpError(400, "validation_error", "النجوم من 1 إلى 5", { stars: "1..5" });
+      const inst = await db.one("SELECT id FROM app_installations WHERE tenant_id=? AND app_id=? AND installed_at IS NOT NULL", req.tenant.id, +req.params.id); if (!inst) throw new HttpError(403, "not_installed", "قيّم تطبيقاً ثبّتَّه فقط");
+      if (req.mode !== "live") return ok({ ok: true, sandbox: true });
+      const comment = String(b.comment ?? "").replace(/[<>]/g, "").trim().slice(0, 400) || null;
+      await db.run("INSERT INTO app_reviews (app_id,tenant_id,stars,comment,created_at) VALUES (?,?,?,?,?) ON CONFLICT(app_id,tenant_id) DO UPDATE SET stars=excluded.stars, comment=excluded.comment, created_at=excluded.created_at", +req.params.id, req.tenant.id, stars, comment, ctx.nowS());
+      return ok({ ok: true, ...(await metaOf(+req.params.id)) });
     });
     r.post("/v1/appstore/apps/:id/install", { scope: "appstore:write", idem: true, limit: { key: "appinst", max: 20, win: 3600 }, summary: "تثبيت تطبيق: { scopes: [...] } يجب أن تطابق النطاقات المطلوبة تماماً (موافقة التاجر). المدفوع يُخصم من المتاح." }, async (req) => {
       if (req.app) throw new HttpError(403, "forbidden", "لا تُثبَّت التطبيقات برمز تطبيق");
@@ -181,7 +201,7 @@ export const appstore = {
       else { await db.run("UPDATE app_installations SET status='pending', scopes=?, price=?, billing=? WHERE id=?", app.scopes, app.price, app.billing, inst.id); inst = await db.one("SELECT * FROM app_installations WHERE id=?", inst.id); }
       const monthly = inst.billing === "monthly", needPay = inst.price > 0 && (monthly || !inst.paid_once);
       if (needPay) {
-        try { await bill(app, inst, monthly ? period(ctx.clock()) : "once"); }
+        try { const nrf = await db.val("SELECT COUNT(*) FROM app_refunds WHERE installation_id=?", inst.id); await bill(app, inst, (monthly ? period(ctx.clock()) : "once") + (nrf ? `-r${nrf}` : "")); }       // بعد استرداد يلزم مرجع جديد وإلا عُدّ الدفع مكرراً فلا يُخصم
         catch (e) { if (fresh) await db.run("DELETE FROM app_installations WHERE id=?", inst.id); else await db.run("UPDATE app_installations SET status='uninstalled' WHERE id=?", inst.id); throw e; }      // الرصيد غير كافٍ ⇒ لا أثر
       }
       await db.run("UPDATE app_installations SET status='active', installed_at=?, uninstalled_at=NULL, paid_once=?, next_charge_at=? WHERE id=?", now, inst.price > 0 && !monthly ? 1 : inst.paid_once, monthly && inst.price > 0 ? now + TTL.month : null, inst.id);
@@ -190,9 +210,14 @@ export const appstore = {
       const cl = await clientOf(app.id), redirect_to = cl ? await authorizeUrl(app, inst, req.tenant, cl.client_id) : null;
       return ok({ installation: { id: inst.id, status: inst.status, scopes: JSON.parse(inst.scopes), price: inst.price, billing: inst.billing }, redirect_to }, 201);
     });
+    /** قابل للاسترداد: آخر دفعة مسوّاة وعمرها أقل من 7 أيام ولم تُسترد */
+    const refundInfo = async (inst) => { if (!["active", "past_due"].includes(inst.status)) return null;
+      const rev = await db.one("SELECT * FROM platform_revenues WHERE installation_id=? ORDER BY id DESC LIMIT 1", inst.id); if (!rev || rev.state !== "settled") return null;
+      if (ctx.nowS() - rev.created_at > REFUND_DAYS * 86400 || (await db.one("SELECT id FROM app_refunds WHERE revenue_id=?", rev.id))) return null; return rev; };
     r.get("/v1/appstore/installations", { scope: "appstore:read", summary: "تطبيقاتي المثبّتة" }, async (req) => {
-      const rows = await db.all("SELECT i.*, a.name, a.slug, a.icon_url FROM app_installations i JOIN apps a ON a.id=i.app_id WHERE i.tenant_id=? AND i.status<>'pending' ORDER BY i.id DESC", req.tenant.id);
-      return ok({ installations: rows.map((i) => ({ id: i.id, app_id: i.app_id, name: i.name, slug: i.slug, icon_url: i.icon_url, status: i.status, scopes: JSON.parse(i.scopes), price: i.price, billing: i.billing, next_charge_at: i.next_charge_at, installed_at: i.installed_at, uninstalled_at: i.uninstalled_at })) });
+      const rows = await db.all("SELECT i.*, a.name, a.slug, a.icon_url FROM app_installations i JOIN apps a ON a.id=i.app_id WHERE i.tenant_id=? AND i.status<>'pending' ORDER BY i.id DESC", req.tenant.id), my = new Set((await db.all("SELECT app_id FROM app_reviews WHERE tenant_id=?", req.tenant.id)).map((x) => x.app_id)), ref = {};
+      for (const i of rows) ref[i.id] = !!(await refundInfo(i));
+      return ok({ installations: rows.map((i) => ({ refundable: ref[i.id], reviewed: my.has(i.app_id), id: i.id, app_id: i.app_id, name: i.name, slug: i.slug, icon_url: i.icon_url, status: i.status, scopes: JSON.parse(i.scopes), price: i.price, billing: i.billing, next_charge_at: i.next_charge_at, installed_at: i.installed_at, uninstalled_at: i.uninstalled_at })) });
     });
     r.post("/v1/appstore/installations/:id/authorize", { scope: "appstore:write", limit: { key: "appauth", max: 30, win: 3600 }, summary: "رمز تفويض جديد لتثبيت قائم (إعادة ربط التطبيق)" }, async (req) => {
       if (req.app) throw new HttpError(403, "forbidden", "غير متاح لرموز التطبيقات");
@@ -206,6 +231,23 @@ export const appstore = {
       if (inst.status === "uninstalled") return ok({ ok: true, unchanged: true });
       await db.run("UPDATE app_installations SET status='uninstalled', uninstalled_at=?, next_charge_at=NULL WHERE id=?", ctx.nowS(), inst.id); await revokeInstallation(inst.id);
       await ctx.emit(req.tenant.id, "appstore.uninstalled", { app_id: inst.app_id, installation_id: inst.id }, `app:unin:${inst.id}:${ctx.nowS()}`); return ok({ ok: true });
+    });
+
+    r.post("/v1/appstore/installations/:id/refund", { scope: "appstore:write", idem: true, limit: { key: "apprefund", max: 10, win: 3600 }, summary: "استرداد ثمن التطبيق خلال 7 أيام من الدفع: يُسحب نصيب المطوّر وتُعاد العمولة ويُردّ المبلغ كاملاً لمتاحك ويُلغى التثبيت" }, async (req) => {
+      if (req.app) throw new HttpError(403, "forbidden", "غير متاح لرموز التطبيقات");
+      const inst = await db.one("SELECT * FROM app_installations WHERE id=? AND tenant_id=?", +req.params.id, req.tenant.id); if (!inst) throw new HttpError(404, "not_found", "التثبيت غير موجود");
+      if (req.mode !== "live") return ok({ ok: true, sandbox: true });
+      const rev = await refundInfo(inst); if (!rev) throw new HttpError(409, "not_refundable", `الاسترداد متاح خلال ${REFUND_DAYS} أيام من آخر دفعة فقط، ولمرة واحدة`);
+      const w = needWallet(), memo = `استرداد ${rev.period}`;
+      try { if (rev.net > 0) await w.clawback(rev.developer_id, { ref: `app:cb:${rev.ref}`, amount: rev.net, memo }); }
+      catch (e) { if (e?.code === "insufficient_funds") throw new HttpError(409, "refund_unavailable", "تعذّر الاسترداد الآلي لأن المطوّر سحب حصته — تواصل مع الدعم"); throw e; }
+      if (rev.fee > 0) await w.feeback(rev.tenant_id, { ref: `app:fb:${rev.ref}`, amount: rev.fee, memo });
+      await w.unwind(rev.tenant_id, { ref: `app:rf:${rev.ref}`, amount: rev.gross, memo });
+      await db.run("INSERT OR IGNORE INTO app_refunds (revenue_id,installation_id,tenant_id,amount,created_at) VALUES (?,?,?,?,?)", rev.id, inst.id, inst.tenant_id, rev.gross, ctx.nowS());
+      await db.run("UPDATE platform_revenues SET state='refunded' WHERE id=?", rev.id);
+      await db.run("UPDATE app_installations SET status='uninstalled', uninstalled_at=?, next_charge_at=NULL, paid_once=0 WHERE id=?", ctx.nowS(), inst.id); await revokeInstallation(inst.id);
+      await ctx.emit(req.tenant.id, "appstore.uninstalled", { app_id: inst.app_id, installation_id: inst.id, refunded: true }, `app:unin:${inst.id}:${ctx.nowS()}`);
+      return ok({ ok: true, refunded: rev.gross });
     });
 
     /* ───────── واجهة المطوّر (مفتاح مستأجر المطوّر + نطاق appstore:dev) ───────── */
@@ -240,6 +282,24 @@ export const appstore = {
       await needDev(req); const a = await myApp(req), s = await secrets(a.id); await db.run("UPDATE apps SET webhook_secret_enc=? WHERE id=?", s.enc, a.id);
       await db.run("UPDATE oauth_clients SET secret_hash=? WHERE app_id=? AND revoked_at IS NULL", s.hash, a.id); return ok({ client_secret: s.client_secret, webhook_secret: s.webhook_secret, note: "تظهر مرة واحدة" });
     });
+    r.get("/v1/appstore/dev/deliveries", { scope: "appstore:dev", summary: "سجلّ تسليمات webhooks لتطبيقاتي (?app_id= &state=pending|sent|failed)" }, async (req) => {
+      await needDev(req); const lim = clampLimit(req.query.limit), a = [req.tenant.id]; let q = "SELECT d.id, d.app_id, d.type, d.state, d.attempts, d.last_error, d.created_at, d.next_at, ap.name FROM app_deliveries d JOIN apps ap ON ap.id=d.app_id WHERE ap.developer_id=?";
+      if (req.query.app_id) { q += " AND d.app_id=?"; a.push(+req.query.app_id); } if (["pending", "sent", "failed"].includes(req.query.state)) { q += " AND d.state=?"; a.push(req.query.state); }
+      return ok({ deliveries: (await db.all(q + " ORDER BY d.id DESC LIMIT ?", ...a, lim)).map((x) => ({ id: x.id, app: x.name, app_id: x.app_id, type: x.type, state: x.state, attempts: x.attempts, error: x.last_error, created_at: x.created_at })) });
+    });
+    r.post("/v1/appstore/dev/deliveries/:id/retry", { scope: "appstore:dev", limit: { key: "appretry", max: 60, win: 3600 }, summary: "إعادة إرسال تسليم فاشل فوراً" }, async (req) => {
+      await needDev(req); const d = await db.one("SELECT d.id, d.state FROM app_deliveries d JOIN apps a ON a.id=d.app_id WHERE d.id=? AND a.developer_id=?", +req.params.id, req.tenant.id); if (!d) throw new HttpError(404, "not_found", "التسليم غير موجود");
+      if (d.state !== "failed") throw new HttpError(409, "bad_transition", "تُعاد التسليمات الفاشلة فقط");
+      await db.run("UPDATE app_deliveries SET state='pending', attempts=0, next_at=?, last_error=NULL WHERE id=?", ctx.nowS(), d.id); return ok({ ok: true });
+    });
+    r.post("/v1/appstore/dev/apps/:id/verify-domain", { scope: "appstore:dev", limit: { key: "appvd", max: 10, win: 3600 }, summary: "توثيق ملكية نطاق webhook: انشر https://<نطاقك>/.well-known/alyssum-app.json بمحتوى {\"client_id\":\"ci_…\"} ثم استدعِ هذا المسار" }, async (req) => {
+      await needDev(req); const a = await myApp(req), host = hostOf(a.webhook_url); if (!host) throw new HttpError(400, "validation_error", "حدّد webhook_url أولاً");
+      const cl = await clientOf(a.id); let got = null, err = "";
+      try { const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000), res = await ctx.fetchFn(`https://${host}/.well-known/alyssum-app.json`, { redirect: "manual", signal: ctl.signal, headers: { "User-Agent": "alyssum-appstore/1" } }); clearTimeout(to);
+        if (res.status === 200) got = JSON.parse(await res.text()); else err = "HTTP " + res.status; } catch (e) { err = String(e?.message || e).slice(0, 60); }
+      if (!cl || !got || typeof got.client_id !== "string" || !safeEq(got.client_id, cl.client_id)) throw new HttpError(422, "verification_failed", `لم يُعثر على الملف الصحيح في https://${host}/.well-known/alyssum-app.json${err ? " (" + err + ")" : ""}`);
+      await db.run("INSERT INTO app_flags (app_id,domain_host,domain_checked_at) VALUES (?,?,?) ON CONFLICT(app_id) DO UPDATE SET domain_host=excluded.domain_host, domain_checked_at=excluded.domain_checked_at", a.id, host, ctx.nowS()); return ok({ verified: true, host });
+    });
     r.get("/v1/appstore/dev/earnings", { scope: "appstore:dev", summary: "إيراداتي من التطبيقات (إجمالي/عمولة/صافي) — الصافي يُقيَّد في محفظتي" }, async (req) => {
       await needDev(req); const rows = await db.all("SELECT r.*, a.name FROM platform_revenues r JOIN apps a ON a.id=r.app_id WHERE r.developer_id=? ORDER BY r.id DESC LIMIT 100", req.tenant.id);
       const sum = await db.one("SELECT COALESCE(SUM(gross),0) gross, COALESCE(SUM(fee),0) fee, COALESCE(SUM(net),0) net FROM platform_revenues WHERE developer_id=?", req.tenant.id);
@@ -253,7 +313,7 @@ export const appstore = {
     });
     r.get("/admin/appstore/apps", { auth: "admin", summary: "كل التطبيقات (?status=)" }, async (req) => {
       const lim = clampLimit(req.query.limit), a = []; let q = "SELECT a.*, t.name dev_name FROM apps a LEFT JOIN pf_tenants t ON t.id=a.developer_id WHERE 1=1"; if (STATUSES.includes(req.query.status)) { q += " AND a.status=?"; a.push(req.query.status); }
-      const rows = await db.all(q + " ORDER BY a.id DESC LIMIT ?", ...a, lim); return ok({ apps: rows.map((x) => ({ ...pubApp(x, x.dev_name), status: x.status, developer_id: x.developer_id, webhook_url: x.webhook_url, redirect_uris: JSON.parse(x.redirect_uris), review_note: x.review_note })) });
+      const rows = await db.all(q + " ORDER BY a.id DESC LIMIT ?", ...a, lim), apps = []; for (const x of rows) apps.push({ ...pubApp(x, x.dev_name, await metaOf(x.id)), status: x.status, developer_id: x.developer_id, webhook_url: x.webhook_url, redirect_uris: JSON.parse(x.redirect_uris), review_note: x.review_note }); return ok({ apps });
     });
     r.post("/admin/appstore/apps/:id/review", { auth: "admin", summary: "قرار المراجعة: { status: approved|rejected|suspended, note } — suspended يُبطل رموز التطبيق فوراً" }, async (req) => {
       const b = req.json(), to = b.status, a = await db.one("SELECT * FROM apps WHERE id=?", +req.params.id); if (!a) throw new HttpError(404, "not_found", "التطبيق غير موجود");
@@ -263,6 +323,10 @@ export const appstore = {
       await db.run("UPDATE apps SET status=?, approved_once=CASE WHEN ?='approved' THEN 1 ELSE approved_once END, review_note=?, updated_at=? WHERE id=?", to, to, String(b.note ?? "").slice(0, 300) || null, ctx.nowS(), a.id);
       if (to === "suspended") { await db.run("UPDATE oauth_access_tokens SET revoked_at=? WHERE revoked_at IS NULL AND installation_id IN (SELECT id FROM app_installations WHERE app_id=?)", ctx.nowS(), a.id); }
       await ctx.audit(req.actor, "appstore.review", a.id, { status: to }); return ok({ ok: true, status: to });
+    });
+    r.post("/admin/appstore/apps/:id/feature", { auth: "admin", summary: "تمييز تطبيق في السوق: { featured: true|false }" }, async (req) => {
+      const a = await db.one("SELECT id FROM apps WHERE id=?", +req.params.id); if (!a) throw new HttpError(404, "not_found", "التطبيق غير موجود"); const f = req.json().featured ? 1 : 0;
+      await db.run("INSERT INTO app_flags (app_id,featured) VALUES (?,?) ON CONFLICT(app_id) DO UPDATE SET featured=excluded.featured", a.id, f); await ctx.audit(req.actor, "appstore.feature", a.id, { featured: f }); return ok({ ok: true, featured: !!f });
     });
     r.get("/admin/appstore/settings", { auth: "admin", summary: "نسبة عمولة المنصة" }, async () => ok({ commission_pct: await commission() }));
     r.put("/admin/appstore/settings", { auth: "admin", summary: "ضبط العمولة: { commission_pct: 0..50 } (تسري على الاشتراءات القادمة)" }, async (req) => {

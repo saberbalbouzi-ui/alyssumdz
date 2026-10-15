@@ -234,6 +234,68 @@ await adm("POST", `/admin/appstore/apps/${APP.id}/review`, { status: "approved" 
   ok("لا سحب بالسالب ولا دفتر مكسور", invariant() && sqlAll("SELECT balance FROM wl_accounts WHERE tenant_id>0").every((x) => x.balance >= 0));
 }
 
+/* ── تقييمات، مميّز، توثيق نطاق، سجلّ تسليمات المطوّر، استرداد 7 أيام ── */
+{
+  const [, rA] = await call("POST", "/v1/appstore/dev/apps", { ...okApp, slug: "refund-app", name: "تطبيق للاسترداد", price: 1000, events: ["order.created"], webhook_url: "https://ref.example/hook", redirect_uris: ["https://ref.example/cb"] }, D.key);
+  await call("POST", `/v1/appstore/dev/apps/${rA.id}/submit`, {}, D.key); await adm("POST", `/admin/appstore/apps/${rA.id}/review`, { status: "approved" });
+  [c] = await call("POST", `/v1/appstore/apps/${rA.id}/review`, { stars: 5 }, A.key); ok("لا تقييم لتطبيق غير مثبّت 403", c === 403);
+  await adm("PUT", "/admin/appstore/settings", { commission_pct: 20 });
+  await adm("POST", `/admin/wallet/${B.id}/deposit`, { amount: 9000, ref: "BANK-B2" }); await adm("PUT", `/admin/tenants/${B.id}/modules`, { off: [] });
+  const bBefore = (await bal(B.key)).available.DZD, dBefore = (await bal(D.key)).available.DZD, fBefore = sql("SELECT balance b FROM wl_accounts WHERE tenant_id=0 AND code='platform_fees'").b;
+  [c, b] = await call("POST", `/v1/appstore/apps/${rA.id}/install`, { scopes: ["read_orders"] }, B.key); ok("تثبيت للاسترداد", c === 201, b); const RI = b.installation.id;
+  [, b] = await call("GET", "/v1/appstore/installations", null, B.key); ok("قابل للاسترداد ولم يُقيَّم", b.installations.find((x) => x.id === RI).refundable === true && b.installations.find((x) => x.id === RI).reviewed === false);
+  /* تقييم */
+  [c] = await call("POST", `/v1/appstore/apps/${rA.id}/review`, { stars: 9 }, B.key); ok("نجوم خارج النطاق 400", c === 400);
+  [c, b] = await call("POST", `/v1/appstore/apps/${rA.id}/review`, { stars: 4, comment: "جيد <script>x</script>" }, B.key); ok("تقييم المثبِّت", c === 200 && b.rating === 4 && b.rating_count === 1, b);
+  await call("POST", `/v1/appstore/apps/${rA.id}/review`, { stars: 2 }, B.key); [, b] = await call("GET", `/v1/appstore/apps/${rA.id}/reviews`, null, A.key);
+  ok("تقييم واحد لكل متجر يُحدَّث والتعليق بلا HTML والاسم مقنَّع", b.reviews.length === 1 && b.reviews[0].stars === 2 && !/[<>]/.test(JSON.stringify(b)) && /•/.test(b.reviews[0].shop), b);
+  /* مميّز وترتيب */
+  [c] = await call("POST", `/admin/appstore/apps/${rA.id}/feature`, { featured: true }); ok("التمييز يتطلب الإدارة", c === 401);
+  [c] = await adm("POST", `/admin/appstore/apps/${rA.id}/feature`, { featured: true }); ok("تمييز تطبيق", c === 200);
+  [, b] = await call("GET", "/v1/appstore/apps", null, A.key); ok("المميّز أولاً بتقييمه", b.apps[0].id === rA.id && b.apps[0].featured === true && b.apps[0].rating === 2 && b.refund_days === 7, b.apps.map((x) => [x.id, x.featured]));
+  /* توثيق النطاق */
+  [c, b] = await call("POST", `/v1/appstore/dev/apps/${rA.id}/verify-domain`, {}, D.key); ok("بلا ملف .well-known: 422", c === 422 && b.error.code === "verification_failed", b);
+  const refCid = sql("SELECT client_id c FROM oauth_clients WHERE app_id=?", rA.id).c;
+  fake.handler = (u) => (u === "https://ref.example/.well-known/alyssum-app.json" ? [200, { client_id: "ci_wrong" }] : [200, "ok"]); [c] = await call("POST", `/v1/appstore/dev/apps/${rA.id}/verify-domain`, {}, D.key); ok("client_id خاطئ 422", c === 422);
+  fake.handler = (u) => (u === "https://ref.example/.well-known/alyssum-app.json" ? [200, { client_id: refCid }] : [200, "ok"]); [c, b] = await call("POST", `/v1/appstore/dev/apps/${rA.id}/verify-domain`, {}, D.key); ok("توثيق النطاق", c === 200 && b.verified && b.host === "ref.example", b);
+  [, b] = await call("GET", "/v1/appstore/apps", null, A.key); ok("شارة النطاق الموثّق", b.apps.find((x) => x.id === rA.id).domain_verified === true);
+  await call("PUT", `/v1/appstore/dev/apps/${rA.id}`, { webhook_url: "https://other.example/hook" }, D.key); await adm("POST", `/admin/appstore/apps/${rA.id}/review`, { status: "approved" });
+  [, b] = await call("GET", "/v1/appstore/apps", null, A.key); ok("تغيير النطاق يُسقط التوثيق", b.apps.find((x) => x.id === rA.id).domain_verified === false);
+  await call("PUT", `/v1/appstore/dev/apps/${rA.id}`, { webhook_url: "https://ref.example/hook" }, D.key); await adm("POST", `/admin/appstore/apps/${rA.id}/review`, { status: "approved" });
+  /* سجلّ التسليمات + إعادة */
+  await call("POST", "/v1/events", { type: "order.created", id: "ev-r1", data: { order_id: "W-R1" } }, B.key);
+  fake.handler = () => [500, "down"]; for (let i = 0; i < 8; i++) { await app.cron(); clock.t += 60000e3; }
+  [, b] = await call("GET", "/v1/appstore/dev/deliveries", null, D.key, { state: "failed" }); const fd = b.deliveries.find((x) => x.app_id === rA.id && x.type === "order.created");
+  ok("سجلّ المطوّر يعرض التسليم الفاشل بسببه", fd && fd.state === "failed" && /HTTP 500/.test(fd.error) && fd.attempts >= 6, b.deliveries);
+  [c] = await call("GET", "/v1/appstore/dev/deliveries", null, A.key); ok("تاجر عادي 403", c === 403);
+  fake.handler = () => [200, "ok"]; [c] = await call("POST", `/v1/appstore/dev/deliveries/${fd.id}/retry`, {}, D.key); ok("إعادة إرسال", c === 200); await app.cron();
+  ok("نجحت الإعادة", sql("SELECT state s FROM app_deliveries WHERE id=?", fd.id).s === "sent");
+  [c] = await call("POST", `/v1/appstore/dev/deliveries/${fd.id}/retry`, {}, D.key); ok("لا إعادة لتسليم ناجح 409", c === 409);
+  /* استرداد */
+  clock.t += 8 * 86400e3; const rev = sql("SELECT * FROM platform_revenues WHERE installation_id=?", RI);
+  [c, b] = await call("POST", `/v1/appstore/installations/${RI}/refund`, {}, A.key); ok("تاجر آخر لا يستردّ 404", c === 404);
+  ok("الاسترداد بعد 7 أيام مرفوض (الساعة تقدّمت)", (await call("POST", `/v1/appstore/installations/${RI}/refund`, {}, B.key))[0] === 409 && rev.state === "settled");
+  /* تثبيت جديد داخل المهلة */
+  const [, rB] = await call("POST", "/v1/appstore/dev/apps", { ...okApp, slug: "refund-two", name: "تطبيق ثانٍ", price: 500, events: [], webhook_url: "", redirect_uris: ["https://two.example/cb"] }, D.key);
+  await call("POST", `/v1/appstore/dev/apps/${rB.id}/submit`, {}, D.key); await adm("POST", `/admin/appstore/apps/${rB.id}/review`, { status: "approved" });
+  const b0 = (await bal(B.key)).available.DZD, d0 = (await bal(D.key)).available.DZD, f0 = sql("SELECT balance b FROM wl_accounts WHERE tenant_id=0 AND code='platform_fees'").b;
+  [c, b] = await call("POST", `/v1/appstore/apps/${rB.id}/install`, { scopes: ["read_orders"] }, B.key); ok("تثبيت جديد", c === 201); const RI2 = b.installation.id; const tk = await (async () => { const [, a] = await call("POST", `/v1/appstore/installations/${RI2}/authorize`, {}, B.key); const code = new URL(a.redirect_to).searchParams.get("code"), cid = sql("SELECT client_id c FROM oauth_clients WHERE app_id=?", rB.id).c; return (await tokenCall({ grant_type: "authorization_code", code, redirect_uri: "https://two.example/cb" }, basic(cid, rB.client_secret)))[1]; })();
+  ok("بعد الدفع: المتاح −500 والمطوّر +400 والمنصة +100", (await bal(B.key)).available.DZD === b0 - 500 && (await bal(D.key)).available.DZD === d0 + 400 && sql("SELECT balance b FROM wl_accounts WHERE tenant_id=0 AND code='platform_fees'").b === f0 + 100);
+  /* المطوّر يسحب حصته ← الاسترداد الآلي مرفوض بوضوح ولا أثر */
+  const dAvail = (await bal(D.key)).available.DZD; await adm("POST", `/admin/wallet/${D.id}/fee`, { amount: dAvail, ref: "DEV-TAKE-1", kind: "fee" }).catch(() => { });
+  const dNow = (await bal(D.key)).available.DZD;
+  if (dNow < 400) { [c, b] = await call("POST", `/v1/appstore/installations/${RI2}/refund`, {}, B.key); ok("المطوّر سحب حصته: الاسترداد الآلي مرفوض بلا أثر", c === 409 && b.error.code === "refund_unavailable" && (await bal(B.key)).available.DZD === b0 - 500 && invariant(), b); await adm("POST", `/admin/wallet/${D.id}/deposit`, { amount: 5000, ref: "DEV-TOPUP-1" }); }
+  const t1 = (await call("GET", "/v1/appstore/me", null, tk.access_token))[0]; ok("الرمز يعمل قبل الاسترداد", t1 === 200);
+  [, b] = await call("GET", "/v1/appstore/installations", null, B.key); ok("قابل للاسترداد", b.installations.find((x) => x.id === RI2).refundable === true);
+  const dBeforeRf = (await bal(D.key)).available.DZD, fPre = sql("SELECT balance b FROM wl_accounts WHERE tenant_id=0 AND code='platform_fees'").b;
+  [c, b] = await call("POST", `/v1/appstore/installations/${RI2}/refund`, {}, B.key, {}, { "idempotency-key": "rf-1" }); ok("استرداد خلال المهلة", c === 200 && b.refunded === 500, b);
+  ok("المتاح عاد كاملاً والمطوّر −400 والمنصة −100 والدفتر متوازن", (await bal(B.key)).available.DZD === b0 && (await bal(D.key)).available.DZD === dBeforeRf - 400 && sql("SELECT balance b FROM wl_accounts WHERE tenant_id=0 AND code='platform_fees'").b === fPre - 100 && sql("SELECT balance b FROM wl_accounts WHERE tenant_id=0 AND code='app_clearing'").b === 0 && invariant());
+  [c] = await call("GET", "/v1/appstore/me", null, tk.access_token); ok("الاسترداد يُبطل رموز التطبيق", c === 401);
+  ok("حالة الإيراد refunded وسجلّ الاسترداد", sql("SELECT state s FROM platform_revenues WHERE installation_id=?", RI2).s === "refunded" && sql("SELECT COUNT(*) n FROM app_refunds").n === 1);
+  [c] = await call("POST", `/v1/appstore/installations/${RI2}/refund`, {}, B.key); ok("لا استرداد ثانٍ 409", c === 409);
+  [c, b] = await call("POST", `/v1/appstore/apps/${rB.id}/install`, { scopes: ["read_orders"] }, B.key); ok("إعادة التثبيت بعد الاسترداد تُخصم من جديد", c === 201 && (await bal(B.key)).available.DZD === b0 - 500);
+}
+
 /* ── وحدة معطّلة ── */
 await adm("PUT", `/admin/tenants/${B.id}/modules`, { off: ["appstore"] }); [c, b] = await call("GET", "/v1/appstore/apps", null, B.key); ok("وحدة معطّلة 403", c === 403 && b.error.code === "module_disabled");
 ok("الدفتر متوازن في النهاية", invariant());

@@ -81,7 +81,9 @@ export const wallet = {
     };
     ctx.wallet = { hold: svc("service_hold", "available", "escrow"), release: svc("service_sale", "escrow", "platform_fees"), refund: svc("service_refund", "escrow", "available"),
       /* متجر التطبيقات (تقاسم الإيراد): charge يخصم من متاح المشتري إلى حساب وسيط app_clearing، ثم payout يوزّع منه نصيب المطوّر (متاح المطوّر) وfee عمولة المنصة، أو unwind يعيده للمشتري */
-      charge: svc("app_purchase", "available", "app_clearing"), payout: svc("app_revenue", "app_clearing", "available"), fee: svc("app_commission", "app_clearing", "platform_fees"), unwind: svc("app_refund", "app_clearing", "available") };
+      charge: svc("app_purchase", "available", "app_clearing"), payout: svc("app_revenue", "app_clearing", "available"), fee: svc("app_commission", "app_clearing", "platform_fees"), unwind: svc("app_refund", "app_clearing", "available"),
+      /* استرداد ثمن تطبيق: clawback يسحب حصة المطوّر من متاحه (يفشل إن سحبها)، feeback يعيد عمولة المنصة، ثم unwind يردّ المجموع للمشتري */
+      clawback: svc("app_clawback", "available", "app_clearing"), feeback: svc("app_commission_back", "platform_fees", "app_clearing") };
     const balances = async (tid) => { const out = {}; for (const a of await db.all("SELECT code,currency,balance FROM wl_accounts WHERE tenant_id=?", tid)) (out[a.code] ??= {})[a.currency] = a.balance; for (const c of TENANT_ACCTS) out[c] ??= {}; return out; };
 
     r.get("/v1/wallet", { scope: "wallet:read", summary: "أرصدة المحفظة: available · escrow · withdraw_hold · ads_credit لكل عملة (أصغر وحدة: دج، سنت)" }, async (req) => ok({ balances: await balances(req.tenant.id), settings: pickSettings(await walletSettings(ctx, req.tenant.id)) }));
