@@ -16,9 +16,10 @@ import { sources } from "./modules/sources.js";
 import { ads } from "./modules/ads.js";
 import { adsOauth } from "./modules/adsoauth.js";
 import { wallet } from "./modules/wallet.js";
+import { agency } from "./modules/agency.js";
 import { Vault } from "./crypto.js";
 
-const MODULES = [adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, payments, sms, commerce, sources, ads, adsOauth, wallet];
+const MODULES = [adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, payments, sms, commerce, sources, ads, adsOauth, wallet, agency];
 const build = (env) => createPlatform({ d1: env.DB, secret: env.PLATFORM_SECRET, adminToken: env.ADMIN_TOKEN || "", vault: env.APP_ENCRYPTION_KEY || env.APP_ENCRYPTION_KEYS ? Vault.fromEnv(env) : null, files: env.FILES || null, baseUrl: env.PUBLIC_URL || "", config: { META_APP_ID: env.META_APP_ID || "", META_APP_SECRET: env.META_APP_SECRET || "", META_SCOPES: env.META_SCOPES || "", META_API_VERSION: env.META_API_VERSION || "" },
   modules: [platformModule([...new Set(MODULES.flatMap((m) => m.providers ?? []))]), ...MODULES] });
 export default {

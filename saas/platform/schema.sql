@@ -163,3 +163,19 @@ CREATE TABLE IF NOT EXISTS wl_withdrawals (
   note TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_wl_wd ON wl_withdrawals (tenant_id, id);
+
+-- ───────── وكالة التسويق بعلامة بيضاء (وحدة agency) ─────────
+-- marketing_services: كتالوج المنصة (يديره المزوّد) بالدينار؛ agency_orders: طلبات التجار (السعر لقطة وقت الشراء). الحالات: pending ← processing ← delivered | rejected.
+CREATE TABLE IF NOT EXISTS marketing_services (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', kind TEXT NOT NULL DEFAULT 'other',
+  price INTEGER NOT NULL, needs_page INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, sort INTEGER NOT NULL DEFAULT 100, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS agency_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, service_id INTEGER NOT NULL, service_name TEXT NOT NULL, price INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'DZD',
+  store_name TEXT NOT NULL, client_email TEXT NOT NULL, facebook_page_url TEXT, status TEXT NOT NULL DEFAULT 'pending',
+  invite_link TEXT, note TEXT, partner_state TEXT NOT NULL DEFAULT 'queued', partner_ref TEXT, partner_attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT,
+  created_at TEXT NOT NULL, updated_at INTEGER NOT NULL, delivered_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS ix_agency_orders_t ON agency_orders (tenant_id, id);
+CREATE INDEX IF NOT EXISTS ix_agency_orders_s ON agency_orders (status, id);
+CREATE TABLE IF NOT EXISTS agency_settings (id INTEGER PRIMARY KEY CHECK (id=1), config TEXT NOT NULL, secret_enc TEXT, updated_at INTEGER NOT NULL);
