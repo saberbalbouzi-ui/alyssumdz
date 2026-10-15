@@ -15,6 +15,8 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/admin\/agency\/services$/], ["POST", /^\/admin\/agency\/services$/], ["PUT", /^\/admin\/agency\/services\/\d+$/],
   ["GET", /^\/admin\/agency\/orders(\?[a-z]+=[A-Za-z0-9_]{1,12}(&[a-z]+=[A-Za-z0-9_]{1,12}){0,2})?$/], ["PATCH", /^\/admin\/agency\/orders\/\d+$/], ["POST", /^\/admin\/agency\/orders\/\d+\/resend$/],
   ["GET", /^\/admin\/agency\/partner$/], ["PUT", /^\/admin\/agency\/partner$/],
+  ["POST", /^\/admin\/appstore\/developers$/], ["GET", /^\/admin\/appstore\/apps(\?[a-z]+=[A-Za-z0-9_]{1,12})?$/], ["POST", /^\/admin\/appstore\/apps\/\d+\/review$/],
+  ["GET", /^\/admin\/appstore\/settings$/], ["PUT", /^\/admin\/appstore\/settings$/], ["GET", /^\/admin\/appstore\/revenues$/], ["GET", /^\/admin\/appstore\/installations(\?[a-z_]+=[0-9]{1,12})?$/],
 ];
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });

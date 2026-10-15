@@ -79,7 +79,9 @@ export const wallet = {
       const n = Math.round(+amount); if (!Number.isSafeInteger(n) || n < 1 || n > MAX) throw new HttpError(400, "validation_error", "مبلغ غير صالح");
       return post(ctx, tid, { ref: String(ref), kind, memo, legs: [{ code: from, ccy: "DZD", amount: -n }, { code: to, ccy: "DZD", amount: n }] });
     };
-    ctx.wallet = { hold: svc("service_hold", "available", "escrow"), release: svc("service_sale", "escrow", "platform_fees"), refund: svc("service_refund", "escrow", "available") };
+    ctx.wallet = { hold: svc("service_hold", "available", "escrow"), release: svc("service_sale", "escrow", "platform_fees"), refund: svc("service_refund", "escrow", "available"),
+      /* متجر التطبيقات (تقاسم الإيراد): charge يخصم من متاح المشتري إلى حساب وسيط app_clearing، ثم payout يوزّع منه نصيب المطوّر (متاح المطوّر) وfee عمولة المنصة، أو unwind يعيده للمشتري */
+      charge: svc("app_purchase", "available", "app_clearing"), payout: svc("app_revenue", "app_clearing", "available"), fee: svc("app_commission", "app_clearing", "platform_fees"), unwind: svc("app_refund", "app_clearing", "available") };
     const balances = async (tid) => { const out = {}; for (const a of await db.all("SELECT code,currency,balance FROM wl_accounts WHERE tenant_id=?", tid)) (out[a.code] ??= {})[a.currency] = a.balance; for (const c of TENANT_ACCTS) out[c] ??= {}; return out; };
 
     r.get("/v1/wallet", { scope: "wallet:read", summary: "أرصدة المحفظة: available · escrow · withdraw_hold · ads_credit لكل عملة (أصغر وحدة: دج، سنت)" }, async (req) => ok({ balances: await balances(req.tenant.id), settings: pickSettings(await walletSettings(ctx, req.tenant.id)) }));
