@@ -1,7 +1,7 @@
 /* خدمات التسويق بعلامة بيضاء: شراء بالمحفظة (ضمان)، إبلاغ الوكالة (webhook موقَّع / بريد)، انتقالات الحالة، تحرير/استرداد الضمان، رد الوكالة الموقَّع، وعزل التجار. */
 import { makeEnv, Tally } from "./_harness.mjs";
 import { wallet } from "../src/modules/wallet.js";
-import { agency, validateOrder, canMove, partnerPayload } from "../src/modules/agency.js";
+import { agency, validateOrder, canMove, isLate } from "../src/modules/agency.js";
 import { createHmac } from "node:crypto";
 const { ok, done } = Tally();
 const E = makeEnv([wallet, agency]); const { call, adm, tenant, app, sql, sqlAll, fake, clock } = E;
@@ -16,6 +16,8 @@ let v = validateOrder({ store_name: "م", client_email: "x", facebook_page_url: 
 ok("تحقق النموذج: اسم قصير/بريد/رابط غير https", v.errors.store_name && v.errors.client_email && v.errors.facebook_page_url);
 v = validateOrder({ store_name: "متجر الورد", client_email: "A@Shop.DZ " }, { needs_page: 1 }); ok("رابط الصفحة مطلوب إن طلبته الخدمة", !!v.errors.facebook_page_url && !v.errors.client_email);
 v = validateOrder({ store_name: "متجر الورد", client_email: "A@Shop.DZ " }, { needs_page: 0 }); ok("اختياري إن لم تطلبه، والبريد يُطبَّع", !Object.keys(v.errors).length && v.value.client_email === "a@shop.dz" && v.value.facebook_page_url === null);
+
+ok("isLate: بعد المهلة فقط وللمعلّقة فقط", isLate({ status: "pending", created_at: "2026-10-12 00:00:00" }, Date.parse("2026-10-13T01:00:00Z"), 24) && !isLate({ status: "pending", created_at: "2026-10-12 00:00:00" }, Date.parse("2026-10-12T23:00:00Z"), 24) && !isLate({ status: "delivered", created_at: "2020-01-01 00:00:00" }, Date.now(), 24) && isLate({ status: "processing", created_at: "2026-10-12 00:00:00" }, Date.parse("2026-10-12T03:00:00Z"), 2));
 
 /* ── كتالوج الإدارة ── */
 let [c, b] = await adm("POST", "/admin/agency/services", { code: "tiktok-ads", name: "حساب TikTok Ads", price: 15000, kind: "tiktok", description: "حساب إعلاني جاهز" }); ok("إضافة خدمة TikTok", c === 201, b); const S1 = b.id;
@@ -110,6 +112,20 @@ const em = fake.calls.find((x) => x.url === "https://api.resend.com/emails"), em
 ok("بريد إلى الوكالة بهيدر الاعتماد", em.init.headers.Authorization === "Bearer re_test_key" && emb.to[0] === "ops@agency.example" && /AG-4/.test(emb.subject));
 ok("نص البريد مهرَّب (لا HTML من الزبون)", emb.html.includes("&lt;b&gt;متجر") && !emb.html.includes("<b>متجر") && emb.html.includes("https://facebook.com/shop4"));
 
+/* ── بريد الزبون عند التسليم + مهلة التأخر ── */
+fake.calls.length = 0; fake.handler = () => [200, { id: "em2" }];
+[c] = await adm("PATCH", "/admin/agency/orders/4", { status: "delivered", invite_link: "https://business.facebook.com/invite/q1" }); ok("تسليم طلب Meta", c === 200);
+const cm = fake.calls.find((x) => x.url === "https://api.resend.com/emails"), cmb = cm && JSON.parse(cm.init.body);
+ok("بريد الزبون برابط الدعوة (مهرَّب)", cmb && cmb.to[0] === "owner@rose.dz" && cmb.html.includes("https://business.facebook.com/invite/q1") && cmb.html.includes("&lt;b&gt;متجر") && !cmb.html.includes("<b>متجر</b> رابع"), cmb && cmb.to);
+await adm("PUT", "/admin/agency/partner", { notify_client: false }); fake.calls.length = 0;
+await call("POST", "/v1/agency/orders", { ...form, store_name: "متجر خامس" }, A.key, {}, { "idempotency-key": "buy-5" }); await adm("PATCH", "/admin/agency/orders/5", { status: "delivered", invite_link: "https://x.example/inv5" });
+ok("notify_client=false يوقف بريد الزبون", !fake.calls.some((x) => x.url === "https://api.resend.com/emails" && /inv5/.test(x.init.body) && /حسابك الإعلاني/.test(x.init.body)));
+[c] = await adm("PUT", "/admin/agency/partner", { sla_hours: 0 }); ok("sla_hours خارج النطاق 400", c === 400);
+await adm("PUT", "/admin/agency/partner", { sla_hours: 6 }); await call("POST", "/v1/agency/orders", { ...form, store_name: "متجر سادس" }, A.key); 
+clock.t += 7 * 3600e3;
+[, b] = await call("GET", "/v1/agency/orders", null, A.key); ok("التاجر يرى متأخر=true بعد المهلة", b.sla_hours === 6 && b.orders[0].ref === "AG-6" && b.orders[0].late === true && b.orders.find((x) => x.status === "delivered").late === false, b.orders.map((x) => [x.ref, x.late]));
+[, b] = await adm("GET", "/admin/agency/orders"); ok("الإدارة ترى late", b.orders.find((x) => x.id === 6).late === true);
+
 /* ── مفاتيح الاختبار (sandbox) لا تمسّ المال ── */
 const T = await tenant("T", ["*"], "test"); const before = sql("SELECT COUNT(*) n FROM wl_tx").n;
 [c, b] = await call("POST", "/v1/agency/orders", form, T.key); ok("sandbox بلا خصم ولا طلب", c === 201 && b.sandbox === true && sql("SELECT COUNT(*) n FROM wl_tx").n === before);
@@ -117,7 +133,7 @@ const T = await tenant("T", ["*"], "test"); const before = sql("SELECT COUNT(*) 
 /* ── تعطيل الوحدة لمستأجر ── */
 await adm("PUT", `/admin/tenants/${B.id}/modules`, { off: ["agency"] }); [c, b] = await call("GET", "/v1/agency/services", null, B.key); ok("وحدة معطّلة 403", c === 403 && b.error.code === "module_disabled");
 [c] = await call("GET", "/admin/agency/orders"); ok("مسارات الإدارة تتطلب رمز الإدارة", c === 401);
-[, b] = await adm("GET", "/admin/agency/orders"); ok("الإدارة ترى الطلبات مع اسم التاجر وحالة الإبلاغ", b.orders.length === 4 && b.orders[0].tenant_name === "A" && "partner_state" in b.orders[0], b.orders.length);
-[, b] = await adm("GET", "/admin/agency/orders", null); const f = await app.handle("GET", "/admin/agency/orders", { status: "delivered" }, { authorization: "Bearer adm-tok" }, ""); ok("تصفية بالحالة", JSON.parse(f.body).orders.length === 2);
+[, b] = await adm("GET", "/admin/agency/orders"); ok("الإدارة ترى الطلبات مع اسم التاجر وحالة الإبلاغ", b.orders.length === 6 && b.orders[0].tenant_name === "A" && "partner_state" in b.orders[0], b.orders.length);
+[, b] = await adm("GET", "/admin/agency/orders", null); const f = await app.handle("GET", "/admin/agency/orders", { status: "delivered" }, { authorization: "Bearer adm-tok" }, ""); ok("تصفية بالحالة", JSON.parse(f.body).orders.length === 4);
 ok("الدفتر متوازن في النهاية", invariant() && legsBalanced());
 done();

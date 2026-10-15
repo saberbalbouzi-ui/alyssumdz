@@ -3,13 +3,27 @@
 const AdminAgency = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const S = { svc: [], orders: [], next: null, avail: null, off: false, err: "", busy: false, form: null, timer: null };
+  const S = { at: 0, svc: [], orders: [], next: null, avail: null, off: false, err: "", busy: false, form: null, timer: null };
   const nf = n => Math.round(+n || 0).toLocaleString("fr-DZ");
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
   const ERR = { insufficient_funds: "رصيدك المتاح غير كافٍ — اشحن محفظتك أولاً", validation_error: "تحقق من الحقول المُدخلة", rate_limited: "طلبات كثيرة، حاول بعد قليل", wallet_unavailable: "المحفظة غير مفعّلة على حسابك — تواصل مع الدعم", not_found: "الخدمة لم تعد متاحة", module_disabled: "الخدمة غير مفعّلة على حسابك — تواصل مع الدعم" };
   const ST = { pending: ["قيد التجهيز", "var(--g-amber-rgb)"], processing: ["قيد التنفيذ", "var(--g-blue-rgb)"], delivered: ["تم التسليم", "var(--g-mint-rgb)"], rejected: ["مرفوض — رُدّ المبلغ", "var(--g-rose-rgb)"] };
   const KI = { tiktok: "🎵", meta: "📘", google: "🔎", snapchat: "👻", other: "📣" };
+  const SEEN_K = "alyssum_ag_seen";
+  const seenIds = () => { try { return JSON.parse(localStorage.getItem(SEEN_K) || "[]"); } catch (e) { return []; } };
+  const markSeen = () => { try { const ids = S.orders.filter(o => o.status === "delivered").map(o => o.id); localStorage.setItem(SEEN_K, JSON.stringify([...new Set(seenIds().concat(ids))].slice(-200))); } catch (e) { } };
+  /** تنبيهات الرئيسية: حسابات سُلِّمت ولم تُفتح بعد، وطلبات تجاوزت مهلة التسليم. null إن لم تُحمَّل البيانات أو لا طلبات. */
+  function alerts() {
+    if (S.off || !S.at || !S.orders.length) return null; const seen = new Set(seenIds()), rd = S.orders.filter(o => o.status === "delivered" && !seen.has(o.id)), lt = S.orders.filter(o => o.late);
+    return { ready: rd.length, late: lt.length };
+  }
+  /** جلب خفيف للطلبات في الخلفية (مرة كل 5 دقائق) كي تظهر التنبيهات في الرئيسية دون فتح التبويب */
+  async function warm() {
+    if (S.busy || S.at && Date.now() - S.at < 300000) return; S.at = Date.now();
+    const o = await call("GET", "/v1/agency/orders", null, { limit: 20 }); if (o.off) { S.off = true; return; } if (!o.ok) return;
+    S.orders = o.j.orders || []; try { if (typeof AdminHome !== "undefined" && AdminHome.refreshSoft) AdminHome.refreshSoft(); } catch (e) { }
+  }
   const dt = s => String(s || "").slice(0, 16).replace("T", " ");
 
   async function call(method, path, body, query, idem) {
@@ -28,7 +42,7 @@ const AdminAgency = (() => {
     const [s, o, w] = await Promise.all([call("GET", "/v1/agency/services"), call("GET", "/v1/agency/orders", null, { limit: 20, ...(more && S.next ? { after: S.next } : {}) }), call("GET", "/v1/wallet")]);
     if (s.off) { S.off = true; return; } S.off = false;
     if (!s.ok) { S.err = errOf(s); return; } S.err = "";
-    S.svc = s.j.services || []; if (o.ok) { S.orders = more ? S.orders.concat(o.j.orders || []) : o.j.orders || []; S.next = o.j.next || null; }
+    S.at = Date.now(); S.svc = s.j.services || []; if (o.ok) { S.orders = more ? S.orders.concat(o.j.orders || []) : o.j.orders || []; S.next = o.j.next || null; }
     S.avail = w.ok && w.j.balances && w.j.balances.available ? (w.j.balances.available.DZD || 0) : null;
   }
   function css() {
@@ -56,7 +70,8 @@ const AdminAgency = (() => {
  <p class="ag-hint">يُحجز المبلغ من رصيدك المتاح كضمان${S.avail != null ? ` (متاحك الآن ${nf(S.avail)} دج)` : ""}، ولا يُحرَّر إلا عند تسليم الحساب؛ وإن رُفض الطلب يعود إليك كاملاً.</p></div>` : "";
     const rows = S.orders.map(o => { const st = ST[o.status] || [o.status, "inherit"];
       const tail = o.status === "delivered" && o.invite_link ? `<div class="ag-inv"><a href="${esc(o.invite_link)}" target="_blank" rel="noopener noreferrer" dir="ltr">${esc(o.invite_link)}</a></div><button class="ag-btn g" data-ag="copy" data-l="${esc(o.invite_link)}">نسخ رابط الدعوة</button>` : o.status === "rejected" && o.note ? `<small>${esc(o.note)}</small>` : "";
-      return `<tr><td><b dir="ltr">${esc(o.ref)}</b><div class="ag-hint" dir="ltr">${esc(dt(o.created_at))}</div></td><td>${esc(o.service)}<div class="ag-hint">${nf(o.price)} دج</div></td><td>${esc(o.store_name)}<div class="ag-hint" dir="ltr">${esc(o.client_email)}</div></td><td><span class="ag-chip" style="color:rgb(${st[1]})">${esc(st[0])}</span></td><td>${tail}</td></tr>`; }).join("");
+      return `<tr><td><b dir="ltr">${esc(o.ref)}</b><div class="ag-hint" dir="ltr">${esc(dt(o.created_at))}</div></td><td>${esc(o.service)}<div class="ag-hint">${nf(o.price)} دج</div></td><td>${esc(o.store_name)}<div class="ag-hint" dir="ltr">${esc(o.client_email)}</div></td><td><span class="ag-chip" style="color:rgb(${st[1]})">${esc(st[0])}</span>${o.late ? ' <span class="ag-chip" style="color:rgb(var(--g-rose-rgb))">⏰ متأخر</span>' : ""}</td><td>${tail}</td></tr>`; }).join("");
+    markSeen();
     host.innerHTML = `<div class="ag-box"><h3>خدمات التسويق الجاهزة</h3>${S.avail != null ? `<p class="ag-hint" style="margin:0 0 .6rem">متاحك في المحفظة: <b>${nf(S.avail)} دج</b></p>` : ""}${cards ? `<div class="ag-grid">${cards}</div>` : '<p class="ag-hint">لا توجد خدمات متاحة حالياً.</p>'}</div>${form}
 <div class="ag-box"><h3>طلباتي</h3>${rows ? `<div class="ag-sc"><table class="ag-tbl"><thead><tr><th>الطلب</th><th>الخدمة</th><th>المتجر</th><th>الحالة</th><th>رابط الدعوة</th></tr></thead><tbody>${rows}</tbody></table></div>${S.next ? '<button class="ag-btn g" data-ag="more">عرض المزيد</button>' : ""}` : '<p class="ag-hint">لا طلبات بعد.</p>'}<p class="ag-hint">بعد الدفع يُرسل طلبك تلقائياً إلى فريق التنفيذ، وتظهر الحالة هنا وفي «يحتاج انتباهك» فور التسليم.</p></div>`;
   }
@@ -94,5 +109,5 @@ const AdminAgency = (() => {
     w(); setTimeout(w, 500);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { render, refresh, S };
+  return { render, refresh, S, alerts, warm };
 })();

@@ -30,7 +30,7 @@ window.SaasAgency = (() => {
     const [o, s, p] = await Promise.all([api("GET", "/admin/agency/orders?status=" + S.st + (more && S.next ? "&after=" + S.next : "")), api("GET", "/admin/agency/services"), api("GET", "/admin/agency/partner")]);
     S.busy = false;
     if (!o.ok) { S.err = why(o); draw(); return; } S.err = "";
-    S.orders = more ? S.orders.concat(o.j.orders || []) : o.j.orders || []; S.next = o.j.next || null; S.services = (s.ok && s.j.services) || []; S.partner = p.ok ? p.j : null; draw();
+    S.orders = more ? S.orders.concat(o.j.orders || []) : o.j.orders || []; S.next = o.j.next || null; S.sla = o.j.sla_hours || 24; S.services = (s.ok && s.j.services) || []; S.partner = p.ok ? p.j : null; draw();
   }
   function draw() {
     if (!root) return;
@@ -41,11 +41,11 @@ window.SaasAgency = (() => {
       const acts = o.status === "pending" || o.status === "processing" ? ((o.status === "pending" && (o.partner_state === "failed" || o.partner_state === "unconfigured") ? '<button class="btn g" data-ag="resend" data-id="' + o.id + '">إعادة الإرسال للوكالة</button> ' : "") +
         (o.status === "pending" ? '<button class="btn g" data-ag="proc" data-id="' + o.id + '">تعليم «قيد التنفيذ»</button> ' : "") +
         '<button class="btn" data-ag="deliver" data-id="' + o.id + '">تسليم + رابط الدعوة</button> <button class="btn r" data-ag="reject" data-id="' + o.id + '">رفض واسترداد</button>') : (o.invite_link ? '<span class="hint" dir="ltr">' + esc(o.invite_link) + '</span>' : esc(o.note || ""));
-      return '<tr><td><b dir="ltr">AG-' + o.id + '</b><div class="hint" dir="ltr">' + esc(String(o.created_at).slice(0, 16)) + '</div></td><td>' + esc(o.tenant_name || "#" + o.tenant_id) + '</td><td>' + esc(o.service_name) + '<div class="hint">' + nf(o.price) + ' دج</div></td>' +
+      return '<tr' + (o.late ? ' style="background:rgba(248,113,113,.08)"' : '') + '><td><b dir="ltr">AG-' + o.id + '</b><div class="hint" dir="ltr">' + esc(String(o.created_at).slice(0, 16)) + '</div></td><td>' + esc(o.tenant_name || "#" + o.tenant_id) + '</td><td>' + esc(o.service_name) + '<div class="hint">' + nf(o.price) + ' دج</div></td>' +
         '<td><b>' + esc(o.store_name) + '</b><div class="hint" dir="ltr">' + esc(o.client_email) + '</div>' + (o.facebook_page_url ? '<div class="hint" dir="ltr">' + esc(o.facebook_page_url) + '</div>' : "") + '</td>' +
-        '<td><span class="pill" style="color:' + ST[o.status][1] + ';border-color:currentColor">' + ST[o.status][0] + '</span><div class="hint">' + esc(PS[o.partner_state] || o.partner_state) + (o.last_error ? ' — <span style="color:#f87171">' + esc(o.last_error) + '</span>' : "") + '</div></td><td>' + acts + '</td></tr>';
+        '<td><span class="pill" style="color:' + ST[o.status][1] + ';border-color:currentColor">' + ST[o.status][0] + '</span>' + (o.late ? ' <span class="pill" style="color:var(--red);border-color:currentColor">⏰ متأخر</span>' : '') + '<div class="hint">' + esc(PS[o.partner_state] || o.partner_state) + (o.last_error ? ' — <span style="color:#f87171">' + esc(o.last_error) + '</span>' : "") + '</div></td><td>' + acts + '</td></tr>';
     }).join("");
-    const orders = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"><b>🧾 طلبات الحسابات الإعلانية</b><button class="btn" data-ag="reload">تحديث</button></div><div style="margin:.5rem 0">' + tabs + '</div>' +
+    const orders = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"><b>🧾 طلبات الحسابات الإعلانية</b>' + (S.orders.some(o => o.late) ? ' <span class="pill" style="color:var(--red);border-color:currentColor">⏰ ' + S.orders.filter(o => o.late).length + ' متأخر (مهلة ' + S.sla + ' ساعة)</span>' : '') + '<button class="btn" data-ag="reload">تحديث</button></div><div style="margin:.5rem 0">' + tabs + '</div>' +
       '<div style="overflow:auto"><table><thead><tr><th>الطلب</th><th>التاجر</th><th>الخدمة</th><th>المتجر والزبون</th><th>الحالة</th><th></th></tr></thead><tbody>' + (rows || '<tr><td colspan="6" class="hint">لا طلبات في هذه الحالة.</td></tr>') + '</tbody></table></div>' + (S.next ? '<button class="btn g" data-ag="more">عرض المزيد</button>' : "") +
       '<p class="hint">«تسليم» يحرّر مبلغ التاجر المحجوز كإيراد للمنصة ويُظهر له رابط الدعوة؛ «رفض» يردّ المبلغ لمتاحه فوراً.</p></div>';
     const svcRows = S.services.map(s => '<tr><td dir="ltr">' + esc(s.code) + '</td><td>' + esc(s.name) + '<div class="hint">' + esc(KINDS[s.kind] || s.kind) + (s.needs_page ? " · يتطلب رابط صفحة" : "") + '</div></td><td>' + nf(s.price) + ' دج</td><td>' + (s.active ? "✓ نشطة" : "معطّلة") + '</td><td><button class="btn g" data-ag="edit" data-id="' + s.id + '">تعديل</button></td></tr>').join("");
@@ -60,8 +60,8 @@ window.SaasAgency = (() => {
     const partner = '<div class="card"><b>🤝 الوكالة الشريكة</b><p class="hint">كل طلب مدفوع يُرسل تلقائياً إلى الوكالة: webhook موقَّع (HMAC-SHA256 في X-Agency-Signature) و/أو بريد منظَّم. الوكالة تردّ بالتسليم على <span dir="ltr">/v1/agency/partner/callback</span> بنفس التوقيع، أو تحدّث الحالة أنت من هنا. بيانات الشريك لا تظهر للتجار أبداً.</p>' +
       '<label class="f">طريقة الإبلاغ<select data-pf="notify">' + [["webhook", "Webhook فقط"], ["email", "بريد فقط"], ["both", "الاثنان"]].map(([k, l]) => '<option value="' + k + '"' + ((c.notify || "webhook") === k ? " selected" : "") + '>' + l + '</option>').join("") + '</select></label>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.6rem">' + pf("webhook_url", "رابط webhook الوكالة (https)", c.webhook_url, 'dir="ltr" placeholder="https://agency.example/hook"') + pf("webhook_secret", "سرّ التوقيع " + (p.has_webhook_secret ? "(محفوظ — اتركه فارغاً للإبقاء)" : "(مطلوب)"), "", 'type="password" autocomplete="new-password" dir="ltr"') +
-      pf("email_to", "بريد الوكالة", c.email_to, 'dir="ltr" placeholder="ops@agency.example"') + pf("email_from", "المرسل", c.email_from, 'dir="ltr" placeholder="Alyssum <noreply@yourdomain>"') + pf("resend_key", "مفتاح خدمة البريد " + (p.has_resend_key ? "(محفوظ)" : ""), "", 'type="password" autocomplete="new-password" dir="ltr"') + '</div>' +
-      '<button class="btn" data-ag="save-partner">حفظ إعدادات الشريك</button></div>';
+      pf("sla_hours", "مهلة التسليم (ساعات) قبل وسم «متأخر»", c.sla_hours || 24, 'type="number" min="1" max="720"') + pf("email_to", "بريد الوكالة", c.email_to, 'dir="ltr" placeholder="ops@agency.example"') + pf("email_from", "المرسل", c.email_from, 'dir="ltr" placeholder="Alyssum <noreply@yourdomain>"') + pf("resend_key", "مفتاح خدمة البريد " + (p.has_resend_key ? "(محفوظ)" : ""), "", 'type="password" autocomplete="new-password" dir="ltr"') + '</div>' +
+      '<label class="f" style="flex-direction:row;gap:.5rem;align-items:center"><input type="checkbox" data-pc="notify_client"' + (c.notify_client !== false ? " checked" : "") + '> أرسل بريداً للزبون برابط الدعوة عند التسليم (يتطلب مفتاح البريد والمرسل)</label><button class="btn" data-ag="save-partner">حفظ إعدادات الشريك</button></div>';
     root.innerHTML = orders + svc + partner;
   }
   const newSvc = () => ({ code: "", name: "", price: "", kind: "tiktok", description: "", needs_page: false, active: 1, sort: 100 });
@@ -73,7 +73,7 @@ window.SaasAgency = (() => {
     if (k === "edit") { const s = S.services.find(x => x.id === id); S.edit = s ? { ...s } : null; return draw(); }
     if (k === "save-svc") { const v = readSvc(), r = S.edit && S.edit.id ? await api("PUT", "/admin/agency/services/" + S.edit.id, v) : await api("POST", "/admin/agency/services", v); say(r.ok ? "✓ حُفظت الخدمة" : "فشل: " + why(r)); if (r.ok) S.edit = null; return load(); }
     if (k === "save-partner") {
-      const body = {}; root.querySelectorAll("[data-pf]").forEach(i => { if (i.value.trim() !== "" || !/secret|key/.test(i.dataset.pf)) body[i.dataset.pf] = i.value.trim(); });
+      const body = {}; root.querySelectorAll("[data-pf]").forEach(i => { if (i.value.trim() !== "" || !/secret|key/.test(i.dataset.pf)) body[i.dataset.pf] = i.dataset.pf === "sla_hours" ? Math.floor(+i.value) || 24 : i.value.trim(); }); const nc = root.querySelector("[data-pc=notify_client]"); if (nc) body.notify_client = nc.checked;
       const r = await api("PUT", "/admin/agency/partner", body); say(r.ok ? "✓ حُفظت إعدادات الشريك" + (r.j.requeued ? " — وأُعيد إرسال " + r.j.requeued + " طلب منتظر" : "") : "فشل: " + why(r)); return load();
     }
     if (!o) return;

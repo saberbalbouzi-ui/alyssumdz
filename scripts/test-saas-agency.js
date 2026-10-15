@@ -15,10 +15,10 @@ ok("وسيط التاجر: الخدمات والطلبات والشراء فقط
 (async () => {
   const br = await chromium.launch(), calls = [], page = await (await br.newContext({ viewport: { width: 390, height: 800 } })).newPage();
   const SV = [{ id: 1, code: "tiktok-ads", name: "حساب TikTok Ads", kind: "tiktok", price: 15000, needs_page: 0, active: 1, sort: 100 }];
-  let OR = [{ id: 7, tenant_id: 1, tenant_name: "Alyssum <img src=x onerror=window.__x=1>", service_name: "حساب TikTok Ads", price: 15000, store_name: "متجر <b>الورد</b>", client_email: "a@b.dz", facebook_page_url: null, status: "pending", partner_state: "failed", last_error: "webhook HTTP 500", created_at: "2026-10-15 10:00:00" }];
+  let OR = [{ id: 7, tenant_id: 1, tenant_name: "Alyssum <img src=x onerror=window.__x=1>", service_name: "حساب TikTok Ads", price: 15000, store_name: "متجر <b>الورد</b>", client_email: "a@b.dz", facebook_page_url: null, status: "pending", partner_state: "failed", last_error: "webhook HTTP 500", created_at: "2026-10-15 10:00:00", late: true }];
   await page.route("**/functions/v1/platform-admin", async route => {
     const b = JSON.parse(route.request().postData() || "{}"); calls.push(b); let data = {}, status = 200;
-    if (b.path.startsWith("/admin/agency/orders?")) data = { orders: OR.filter(o => b.path.includes("status=" + o.status)), next: null };
+    if (b.path.startsWith("/admin/agency/orders?")) data = { orders: OR.filter(o => b.path.includes("status=" + o.status)), sla_hours: 24, next: null };
     else if (b.path === "/admin/agency/services") data = { services: SV };
     else if (b.path === "/admin/agency/partner" && b.method === "GET") data = { config: { notify: "webhook", webhook_url: "https://ag.example/h" }, has_webhook_secret: true, has_resend_key: false };
     else if (b.path === "/admin/agency/partner") data = { ok: true, requeued: 2 };
@@ -35,6 +35,7 @@ ok("وسيط التاجر: الخدمات والطلبات والشراء فقط
   await page.waitForSelector("table");
   const txt = await page.innerText("#r");
   ok("الطلب يظهر بمتجره وتاجره وسعره وحالة الإبلاغ", /AG-7/.test(txt) && /15,?000|15 000|15000/.test(txt.replace(/ | /g, "")) && /فشل الإرسال/.test(txt) && /webhook HTTP 500/.test(txt));
+  ok("وسم المتأخر وعدّاده ظاهران", /⏰ متأخر/.test(txt) && /مهلة 24 ساعة/.test(txt));
   ok("لا XSS في اسم التاجر/المتجر", (await page.evaluate(() => window.__x)) === undefined && !(await page.$("#r img")) && !(await page.$("#r td b b")));
   ok("الجوال: لا فيض أفقي للصفحة", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await page.click("[data-ag=resend]"); await page.waitForTimeout(150);
@@ -51,6 +52,6 @@ ok("وسيط التاجر: الخدمات والطلبات والشراء فقط
   ok("حفظ خدمة بالسعر بالدينار", sc && sc.body.code === "meta-ads" && sc.body.price === 20000 && sc.body.kind === "meta" && sc.body.needs_page === true, sc);
   await page.fill("[data-pf=webhook_url]", "https://ag.example/new"); await page.click("[data-ag=save-partner]"); await page.waitForTimeout(150);
   const pc = calls.find(c => c.method === "PUT" && c.path === "/admin/agency/partner");
-  ok("حفظ الشريك لا يرسل الأسرار الفارغة", pc && pc.body.webhook_url === "https://ag.example/new" && !("webhook_secret" in pc.body) && !("resend_key" in pc.body), pc);
+  ok("حفظ الشريك لا يرسل الأسرار الفارغة", pc && pc.body.webhook_url === "https://ag.example/new" && !("webhook_secret" in pc.body) && !("resend_key" in pc.body) && pc.body.sla_hours === 24 && pc.body.notify_client === true, pc);
   await br.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })();
