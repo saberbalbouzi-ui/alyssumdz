@@ -50,6 +50,12 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/v1\/appstore\/apps(\/\d{1,12})?$/],
   ["GET", /^\/v1\/appstore\/apps\/\d{1,12}\/reviews$/],
   ["POST", /^\/v1\/appstore\/apps\/\d{1,12}\/review$/],
+  // بوابة المطوّر (تبويب «بوابة المطوّر»): تطبيقاتي وأسرارها وسجلّ التسليمات وإيراداتي وتوثيق النطاق. تعمل لمستأجر مفعَّل كمطوّر فقط (يتحقق الخادم)
+  ["GET", /^\/v1\/appstore\/dev\/(apps|deliveries|earnings)$/],
+  ["POST", /^\/v1\/appstore\/dev\/apps$/],
+  ["PUT", /^\/v1\/appstore\/dev\/apps\/\d{1,12}$/],
+  ["POST", /^\/v1\/appstore\/dev\/apps\/\d{1,12}\/(submit|rotate-secrets|verify-domain)$/],
+  ["POST", /^\/v1\/appstore\/dev\/deliveries\/\d{1,12}\/retry$/],
   ["POST", /^\/v1\/appstore\/installations\/\d{1,12}\/refund$/],
   ["POST", /^\/v1\/appstore\/apps\/\d{1,12}\/install$/],
   ["GET", /^\/v1\/appstore\/installations$/],

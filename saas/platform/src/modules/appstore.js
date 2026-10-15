@@ -264,7 +264,7 @@ export const appstore = {
       await db.run("UPDATE apps SET webhook_secret_enc=? WHERE id=?", s.enc, id); await db.run("INSERT INTO oauth_clients (app_id,client_id,secret_hash,created_at) VALUES (?,?,?,?)", id, client_id, s.hash, nowStr(ctx.clock()));
       return ok({ id, status: "draft", client_id, client_secret: s.client_secret, webhook_secret: s.webhook_secret, note: "الأسرار تظهر مرة واحدة فقط" }, 201);
     });
-    r.get("/v1/appstore/dev/apps", { scope: "appstore:dev", summary: "تطبيقاتي" }, async (req) => { await needDev(req); const rows = await db.all("SELECT * FROM apps WHERE developer_id=? ORDER BY id DESC", req.tenant.id); return ok({ apps: rows.map((a) => ({ ...pubApp(a), status: a.status, review_note: a.review_note, webhook_url: a.webhook_url, redirect_uris: JSON.parse(a.redirect_uris) })) }); });
+    r.get("/v1/appstore/dev/apps", { scope: "appstore:dev", summary: "تطبيقاتي" }, async (req) => { await needDev(req); const rows = await db.all("SELECT * FROM apps WHERE developer_id=? ORDER BY id DESC", req.tenant.id); const apps = []; for (const a of rows) apps.push({ ...pubApp(a, null, await metaOf(a.id)), status: a.status, review_note: a.review_note, webhook_url: a.webhook_url, redirect_uris: JSON.parse(a.redirect_uris) }); return ok({ apps }); });
     r.put("/v1/appstore/dev/apps/:id", { scope: "appstore:dev", summary: "تعديل تطبيق. الحقول الحسّاسة (السعر/النطاقات/الروابط/الأحداث) على تطبيق معتمد تعيده للمراجعة ويتوقف إرسال webhooks حتى الاعتماد" }, async (req) => {
       await needDev(req); const a = await myApp(req), b = req.json(); delete b.slug;
       const { errors, value: v } = validateApp(b, a); if (Object.keys(errors).length) throw new HttpError(400, "validation_error", "تحقق من الحقول", errors);

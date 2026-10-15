@@ -258,6 +258,7 @@ await adm("POST", `/admin/appstore/apps/${APP.id}/review`, { status: "approved" 
   const refCid = sql("SELECT client_id c FROM oauth_clients WHERE app_id=?", rA.id).c;
   fake.handler = (u) => (u === "https://ref.example/.well-known/alyssum-app.json" ? [200, { client_id: "ci_wrong" }] : [200, "ok"]); [c] = await call("POST", `/v1/appstore/dev/apps/${rA.id}/verify-domain`, {}, D.key); ok("client_id خاطئ 422", c === 422);
   fake.handler = (u) => (u === "https://ref.example/.well-known/alyssum-app.json" ? [200, { client_id: refCid }] : [200, "ok"]); [c, b] = await call("POST", `/v1/appstore/dev/apps/${rA.id}/verify-domain`, {}, D.key); ok("توثيق النطاق", c === 200 && b.verified && b.host === "ref.example", b);
+  [c, b] = await call("GET", "/v1/appstore/dev/apps", null, D.key); ok("قائمة المطوّر تُظهر نطاقاً موثّقاً بعد التوثيق", c === 200 && b.apps.find((x) => x.id === rA.id)?.domain_verified === true, b);
   [, b] = await call("GET", "/v1/appstore/apps", null, A.key); ok("شارة النطاق الموثّق", b.apps.find((x) => x.id === rA.id).domain_verified === true);
   await call("PUT", `/v1/appstore/dev/apps/${rA.id}`, { webhook_url: "https://other.example/hook" }, D.key); await adm("POST", `/admin/appstore/apps/${rA.id}/review`, { status: "approved" });
   [, b] = await call("GET", "/v1/appstore/apps", null, A.key); ok("تغيير النطاق يُسقط التوثيق", b.apps.find((x) => x.id === rA.id).domain_verified === false);
