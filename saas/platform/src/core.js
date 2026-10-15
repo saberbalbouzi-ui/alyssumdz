@@ -30,6 +30,11 @@ export const PUBLIC_SCOPES = ["ab:assign", "ab:track", "fraud:check", "cart:capt
 export function paginate(rows, limit, idKey = "id") { const more = rows.length > limit, items = rows.slice(0, limit); return { items, next: more ? items[items.length - 1][idKey] : null }; }
 export const clampLimit = (v, def = 50, max = 100) => Math.max(1, Math.min(max, Math.floor(+v) || def));
 
+/** وحدات النظام التي لا تُعطَّل أبداً (الإدارة وصندوق الأحداث/التكاملات) */
+export const CORE_MODULES = ["admin", "platform"];
+/** هل عُطّلت الوحدة لهذا المستأجر؟ (settings.modules_off) — الوحدات تعمل مستقلة: تعطيل واحدة لا يمسّ البقية */
+export const moduleOff = (settings, id) => !CORE_MODULES.includes(id) && Array.isArray(settings?.modules_off) && settings.modules_off.includes(id);
+
 export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn = fetch }) {
   if (!secret || String(secret).length < 16) throw new Error("PLATFORM_SECRET مطلوب (16 حرفاً فأكثر)");
   const db = new DB(d1), routes = [];
@@ -51,9 +56,11 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       await db.run("INSERT INTO pf_rl (k,t) VALUES (?,?)", key, now); if (Math.random() < 0.01) await db.run("DELETE FROM pf_rl WHERE t<?", now - 7200); return null;
     } };
   const compile = (p) => new RegExp("^" + p.replace(/:([a-z]+)/g, "(?<$1>[^/]+)") + "$");
-  const add = (method) => (pattern, opts, handler) => routes.push({ method, pattern, re: compile(pattern), opts: { auth: "tenant", ...opts }, handler });
+  let curMod = "";
+  const add = (method) => (pattern, opts, handler) => routes.push({ method, pattern, mod: curMod, re: compile(pattern), opts: { auth: "tenant", ...opts }, handler });
   const r = { get: add("GET"), post: add("POST"), put: add("PUT"), delete: add("DELETE"), patch: add("PATCH") };
-  for (const m of modules) m.routes(r, ctx);
+  ctx.moduleIds = modules.map((m) => m.id);
+  for (const m of modules) { curMod = m.id; m.routes(r, ctx); }
 
   async function authTenant(hd, scope, ip) {
     const b = String(hd.authorization ?? ""), tok = /^bearer /i.test(b) ? b.slice(7).trim() : "";
@@ -103,7 +110,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       const req = { method: m, path: p, params: mm.groups ?? {}, query: q, headers: hd, ip, raw, json() { try { const j = JSON.parse(raw); if (j && typeof j === "object" && !Array.isArray(j)) return j; } catch { /* يسقط إلى الخطأ */ } throw new HttpError(400, "validation_error", "جسم الطلب يجب أن يكون JSON"); } };
       if (rt.opts.auth === "admin") req.actor = authAdmin(hd);
       else if (rt.opts.auth === "tenant") {
-        const a = await authTenant(hd, rt.opts.scope, ip); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin;
+        const a = await authTenant(hd, rt.opts.scope, ip); if (moduleOff(a.tenant.settings, rt.mod)) throw new HttpError(403, "module_disabled", `وحدة ${rt.mod} معطّلة لهذا المستأجر`); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin;
         const lim = rt.opts.limit; if (lim) { const wt = await ctx.window(`t${a.tenant.id}:${lim.key}`, lim.max, lim.win); if (wt !== null) throw new HttpError(429, "rate_limited", "تجاوزت الحدّ المسموح", null, { "Retry-After": String(wt) }); }
       }
       let res;
@@ -124,12 +131,14 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
   /** للـcron: ينفّذ cron كل وحدة ويوزّع الأحداث المستحقة على معالجات الوحدات (مع إعادة محاولة بتباعد) */
   async function cron() {
     const out = { events: 0, failed: 0 }, handlers = {}; for (const m of modules) for (const [t, h] of Object.entries(m.on ?? {})) (handlers[t] ??= []).push({ mod: m.id, fn: h });
-    const rows = await db.all("SELECT * FROM pf_events WHERE state='pending' AND next_at<=? ORDER BY id LIMIT 50", Math.floor(clock() / 1000));
+    const rows = await db.all("SELECT * FROM pf_events WHERE state='pending' AND next_at<=? ORDER BY id LIMIT 50", Math.floor(clock() / 1000)), offCache = new Map();
+    const offFor = async (tid) => { if (!offCache.has(tid)) offCache.set(tid, JSON.parse((await db.val("SELECT settings FROM pf_tenants WHERE id=?", tid)) || "{}")); return offCache.get(tid); };
     for (const e of rows) {
       // كل معالج مستقل: ما نجح لا يُعاد عند إعادة المحاولة (done)، وفشل وحدة لا يعطّل بقية الوحدات
       const done = new Set(JSON.parse(e.done || "[]")); let err = null;
       for (const h of [...(handlers[e.type] ?? []), ...(handlers["*"] ?? [])]) {
         const key = h.mod + ":" + (handlers["*"]?.includes(h) ? "*" : e.type); if (done.has(key)) continue;
+        if (moduleOff(await offFor(e.tenant_id), h.mod)) { done.add(key); continue; }       // وحدة معطّلة لهذا المستأجر: لا تستقبل أحداثه (ولا تُعاد عند التفعيل لاحقاً)
         try { await h.fn({ id: e.id, tenantId: e.tenant_id, type: e.type, data: JSON.parse(e.payload) }, ctx); done.add(key); } catch (x) { err ??= x; }
       }
       if (!err) { await db.run("UPDATE pf_events SET state='done', attempts=attempts+1, done=? WHERE id=?", JSON.stringify([...done]), e.id); out.events++; continue; }
@@ -168,6 +177,13 @@ export const adminModule = {
       if (b.settings && typeof b.settings === "object") await db.run("UPDATE pf_tenants SET settings=? WHERE id=?", JSON.stringify(b.settings), id);
       await ctx.audit(req.actor, "tenant.update", id, { status: b.status ?? null }); return ok({ ok: true });
     });
+    r.put("/admin/tenants/:id/modules", { auth: "admin", summary: "تفعيل/تعطيل وحدات لمستأجر: { off: [معرّفات الوحدات] }" }, async (req) => {
+      const id = +req.params.id, t = await db.one("SELECT settings FROM pf_tenants WHERE id=?", id); if (!t) throw new HttpError(404, "not_found", "مستأجر غير موجود");
+      const off = req.json().off; if (!Array.isArray(off) || !off.every((x) => typeof x === "string" && ctx.moduleIds.includes(x) && !CORE_MODULES.includes(x))) throw new HttpError(400, "validation_error", "off: مصفوفة معرّفات وحدات موجودة (عدا " + CORE_MODULES.join("/") + ")", { modules: ctx.moduleIds.filter((x) => !CORE_MODULES.includes(x)) });
+      const st = JSON.parse(t.settings || "{}"); st.modules_off = [...new Set(off)]; await db.run("UPDATE pf_tenants SET settings=? WHERE id=?", JSON.stringify(st), id);
+      await ctx.audit(req.actor, "tenant.modules", id, { off: st.modules_off }); return ok({ ok: true, off: st.modules_off });
+    });
+    r.get("/v1/modules", { scope: "modules:read", summary: "وحدات المنصة وحالة تفعيلها لهذا المستأجر" }, async (req) => ok({ modules: ctx.moduleIds.map((id) => ({ id, core: CORE_MODULES.includes(id), enabled: !moduleOff(req.tenant.settings, id) })) }));
     r.get("/admin/audit", { auth: "admin" }, async () => ok({ audit: await db.all("SELECT id,at,actor,action,target,detail FROM pf_audit ORDER BY id DESC LIMIT 200") }));
   },
 };
