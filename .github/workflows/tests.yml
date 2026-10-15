@@ -67,3 +67,4 @@ jobs:
         with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
       - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
       - run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js

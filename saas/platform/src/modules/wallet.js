@@ -121,6 +121,11 @@ export const wallet = {
       const rows = await db.all("SELECT currency, SUM(balance) s FROM wl_accounts GROUP BY currency"), fees = await db.all("SELECT currency, balance FROM wl_accounts WHERE tenant_id=0 AND code='platform_fees'"), hold = await db.all("SELECT currency, SUM(balance) s FROM wl_accounts WHERE code IN ('available','escrow','withdraw_hold','ads_credit') AND tenant_id>0 GROUP BY currency");
       return ok({ balanced: rows.every((x) => x.s === 0), by_currency: rows, platform_fees: fees, owed_to_tenants: hold, pending_withdrawals: await db.val("SELECT COUNT(*) FROM wl_withdrawals WHERE status IN ('requested','approved')") });
     });
+    r.get("/admin/wallet/tenants", { auth: "admin", summary: "كل المستأجرين بأرصدتهم (المتاح · الضمان · محجوز السحب · رصيد الإعلانات) + عدد السحوبات المعلّقة" }, async () => {
+      const ts = await db.all("SELECT id,name,site_ref FROM pf_tenants ORDER BY id LIMIT 500"), out = [];
+      for (const t of ts) out.push({ id: t.id, name: t.name, site_ref: t.site_ref, balances: await balances(t.id), pending_withdrawals: await db.val("SELECT COUNT(*) FROM wl_withdrawals WHERE tenant_id=? AND status IN ('requested','approved')", t.id) });
+      return ok({ tenants: out });
+    });
     r.get("/admin/wallet/:tid", { auth: "admin", summary: "محفظة مستأجر" }, async (req) => { await needTenant(req.params.tid); return ok({ balances: await balances(+req.params.tid), settings: await walletSettings(ctx, +req.params.tid) }); });
     r.put("/admin/wallet/:tid/settings", { auth: "admin", summary: "إعدادات محفظة المستأجر: fee_pct (0–50) · fee_fixed · usd_rate · min_withdrawal · require_carrier (true = لا يُحرَّر الضمان إلا بتسليم مؤكَّد من بوابة الشحن)" }, async (req) => {
       const tid = +req.params.tid; await needTenant(tid); const b = req.json(), w = { ...(await walletSettings(ctx, tid)) };
