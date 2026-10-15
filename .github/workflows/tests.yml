@@ -54,7 +54,7 @@ jobs:
           node --no-warnings saas/gateway/test/gateway.test.mjs
           node --no-warnings saas/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts payments sms commerce sources ads adsoauth wallet logistics boundaries; do node --no-warnings saas/platform/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts payments sms commerce sources ads adsoauth wallet agency logistics boundaries; do node --no-warnings saas/platform/test/$t.test.mjs; done
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
@@ -69,6 +69,8 @@ jobs:
       - run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js

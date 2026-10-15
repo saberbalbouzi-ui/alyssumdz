@@ -42,6 +42,10 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/v1\/wallet(\/ledger|\/escrow|\/withdrawals|\/ads-quote)?$/],
   ["POST", /^\/v1\/wallet\/(withdrawals|ads-topup)$/],
   ["DELETE", /^\/v1\/wallet\/withdrawals\/\d{1,12}$/],
+  // خدمات التسويق بعلامة بيضاء: قائمة الخدمات وشراؤها بالمحفظة وطلباتي (رد الوكالة يصل المنصة مباشرة بتوقيع، لا عبر هذا الوسيط)
+  ["GET", /^\/v1\/agency\/(services|orders)$/],
+  ["GET", /^\/v1\/agency\/orders\/\d{1,12}$/],
+  ["POST", /^\/v1\/agency\/orders$/],
 ];
 
 Deno.serve(async (req) => {

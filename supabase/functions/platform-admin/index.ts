@@ -11,6 +11,10 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/admin\/wallet\/(summary|tenants)$/], ["GET", /^\/admin\/wallet\/withdrawals\/list(\?status=[a-z]{4,10})?$/], ["GET", /^\/admin\/wallet\/\d+$/],
   ["PUT", /^\/admin\/wallet\/\d+\/settings$/], ["POST", /^\/admin\/wallet\/\d+\/(deposit|fee|ads-spend)$/],
   ["POST", /^\/admin\/wallet\/withdrawals\/\d+\/(approve|pay|reject)$/],
+  // خدمات التسويق (وكالة بعلامة بيضاء): الكتالوج والطلبات وتحديث الحالة وإعدادات الشريك
+  ["GET", /^\/admin\/agency\/services$/], ["POST", /^\/admin\/agency\/services$/], ["PUT", /^\/admin\/agency\/services\/\d+$/],
+  ["GET", /^\/admin\/agency\/orders(\?[a-z]+=[A-Za-z0-9_]{1,12}(&[a-z]+=[A-Za-z0-9_]{1,12}){0,2})?$/], ["PATCH", /^\/admin\/agency\/orders\/\d+$/], ["POST", /^\/admin\/agency\/orders\/\d+\/resend$/],
+  ["GET", /^\/admin\/agency\/partner$/], ["PUT", /^\/admin\/agency\/partner$/],
 ];
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });

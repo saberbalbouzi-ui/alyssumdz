@@ -73,6 +73,13 @@ export const wallet = {
   id: "wallet",
   routes(r, ctx) {
     const { db } = ctx, sandbox = (req) => req.mode !== "live";
+    /** خدمة شراء الخدمات للوحدات الأخرى (الاستثناء الموثّق الوحيد لقاعدة «لا استدعاء مباشر بين الوحدات»، انظر ARCHITECTURE.md §3):
+     *  المبلغ يُحجز من المتاح إلى الضمان ثم يُحرَّر لرسوم المنصة عند التسليم أو يُردّ للمتاح عند الرفض. كل قيد مرجعه فريد فلا يتكرر. */
+    const svc = (kind, from, to) => (tid, { ref, amount, memo = "" }) => {
+      const n = Math.round(+amount); if (!Number.isSafeInteger(n) || n < 1 || n > MAX) throw new HttpError(400, "validation_error", "مبلغ غير صالح");
+      return post(ctx, tid, { ref: String(ref), kind, memo, legs: [{ code: from, ccy: "DZD", amount: -n }, { code: to, ccy: "DZD", amount: n }] });
+    };
+    ctx.wallet = { hold: svc("service_hold", "available", "escrow"), release: svc("service_sale", "escrow", "platform_fees"), refund: svc("service_refund", "escrow", "available") };
     const balances = async (tid) => { const out = {}; for (const a of await db.all("SELECT code,currency,balance FROM wl_accounts WHERE tenant_id=?", tid)) (out[a.code] ??= {})[a.currency] = a.balance; for (const c of TENANT_ACCTS) out[c] ??= {}; return out; };
 
     r.get("/v1/wallet", { scope: "wallet:read", summary: "أرصدة المحفظة: available · escrow · withdraw_hold · ads_credit لكل عملة (أصغر وحدة: دج، سنت)" }, async (req) => ok({ balances: await balances(req.tenant.id), settings: pickSettings(await walletSettings(ctx, req.tenant.id)) }));
