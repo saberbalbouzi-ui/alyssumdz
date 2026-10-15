@@ -71,3 +71,4 @@ jobs:
       - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js

@@ -148,6 +148,7 @@
   async function accept(c, o) {
     var cu = o.customer, extra = {};
     extra["🔼 عرض بعد الشراء"] = c.rule.title || c.product.title;
+    extra["🆔 قاعدة العرض"] = c.rule.id;
     if (o.grp) extra["🧺 مجموعة"] = o.grp;
     if (o.page) extra["📄 الصفحة"] = o.page;
     try { if (typeof Attrib !== "undefined") Object.assign(extra, Attrib); } catch (e) { }

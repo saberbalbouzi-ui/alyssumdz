@@ -133,6 +133,7 @@ const AdminHome = (() => {
     const prods = (a.products || []).filter(p => p.active !== false), low = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) > 0 && Number(p.stock) <= 5), out = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) <= 0);
     const fail = all.filter(o => o.status === "echec").length;
     const sOver = (typeof StockCheck !== "undefined") ? StockCheck.summary() : { orders: 0, products: [] };
+    let mg = []; try { mg = window.AdminUpsell && AdminUpsell.mergeable ? AdminUpsell.mergeable(a.orders || []) : []; } catch (e) { }
     let adLow = []; try { adLow = a.adStockAlerts ? a.adStockAlerts(5) : []; } catch (e) { }
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
@@ -159,6 +160,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <button type="button" class="${out.length ? "w" : "ok"}" data-go="products"><b>${num(out.length)}</b><span>منتج نفد من المخزون</span></button>
 <button type="button" class="${sOver.orders ? "w" : "ok"}" data-go="orders-new" title="${sOver.products.map(x => x.title + ": المطلوب " + x.demand + " والمتاح " + x.stock).join(" | ").replace(/"/g, "")}"><b>${num(sOver.orders)}</b><span>طلب جديد يفوق المخزون</span></button>
 <button type="button" class="${adLow.length ? "w" : "ok"}" data-go="ads" title="${adLow.map(x => x.p.title + ": " + x.stock + " علبة تكفي ≈ " + x.left + " يوم").join(" | ").replace(/"/g, "")}"><b>${num(adLow.length)}</b><span>حملة نشطة مخزونها يكفي 5 أيام أو أقل</span></button>
+<button type="button" class="${mg.length ? "w" : "ok"}" data-go="merge"><b>${num(mg.length)}</b><span>طلب مرتبط (عرض بعد الشراء) ينتظر الدمج</span></button>
 <button type="button" class="${od ? "w" : "ok"}" data-go="callcenter"><b>${num(od)}</b><span>طلب بلا استجابة منذ مدة</span></button>
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
 <h3 style="margin-top:16px">أفضل المنتجات مبيعاً</h3>${top.length ? `<div class="tp">${top.map(([t, q], i) => `<div class="r"><span class="n">${i + 1}</span><span class="t"></span><span class="q">${num(q)} قطعة</span><span class="bar"><i style="width:${Math.max(6, q / topMax * 100)}%"></i></span></div>`).join("")}</div>` : '<div class="em" style="padding:10px">لا مبيعات في هذه الفترة.</div>'}</div>
@@ -192,6 +194,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
     const a = A(), btn = k => [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
+    if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }
     if (w === "ads") { a.tab("finance", btn("finance")); try { a.finView("prod"); const x = a.adStockAlerts(5)[0]; if (x) a.finOpen(x.c.slug, 2); } catch (e) { } return; }
     const b = btn(w); if (b) a.tab(w, b);
   }

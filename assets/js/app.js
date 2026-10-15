@@ -191,7 +191,7 @@ const Cart = {
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record && (disc.couponDiscount > 0 || couponFreeShip() || couponGiftTitle()) ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && disc.couponDiscount > 0 && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, items.some(it=>it.up) ? { "➕ إضافة سريعة": (items.find(it=>it.up).upt || "") } : {}, __cgrp ? { "🧺 مجموعة": __cgrp } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (window.GeoPin && GeoPin.link()) ? { "📍 الموقع": GeoPin.link() } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, items.some(it=>it.up) ? { "➕ إضافة سريعة": (items.find(it=>it.up).upt || ""), "🆔 قاعدة العرض": items.find(it=>it.up).up } : {}, __cgrp ? { "🧺 مجموعة": __cgrp } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (window.GeoPin && GeoPin.link()) ? { "📍 الموقع": GeoPin.link() } : {}, Attrib),
     };
     const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
@@ -1174,7 +1174,7 @@ function initProduct(slug){
       items: orderItems().concat(bumpSel ? [{ slug: bumpSel.slug, title: bumpSel.title, qty: bumpSel.qty, price: bumpSel.price }] : []),
       subtotal: state.offer.price + bumpPrice, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title, "🆔 قاعدة العرض": bumpSel.rule.id } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
     };
     const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
