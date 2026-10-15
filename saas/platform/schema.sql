@@ -139,3 +139,26 @@ CREATE TABLE IF NOT EXISTS ad_oauth (
 );
 CREATE INDEX IF NOT EXISTS ix_ad_oauth_t ON ad_oauth (tenant_id);
 CREATE INDEX IF NOT EXISTS ix_ad_oauth_fb ON ad_oauth (fb_user_id);
+
+-- المحفظة والدفتر (Wallet & Ledger): قيد مزدوج غير قابل للتعديل. tenant_id=0 لحسابات النظام (المنصة/العالم الخارجي). المبالغ صحيحة بأصغر وحدة (دج، سنت).
+CREATE TABLE IF NOT EXISTS wl_accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, code TEXT NOT NULL, currency TEXT NOT NULL DEFAULT 'DZD', balance INTEGER NOT NULL DEFAULT 0, UNIQUE (tenant_id, code, currency)
+);
+CREATE TABLE IF NOT EXISTS wl_tx (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, ref TEXT NOT NULL, kind TEXT NOT NULL, memo TEXT NOT NULL DEFAULT '', order_id TEXT NULL, created_at INTEGER NOT NULL, UNIQUE (tenant_id, ref)
+);
+CREATE INDEX IF NOT EXISTS ix_wl_tx_t ON wl_tx (tenant_id, id);
+CREATE TABLE IF NOT EXISTS wl_legs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tx_id INTEGER NOT NULL REFERENCES wl_tx(id), account_id INTEGER NOT NULL REFERENCES wl_accounts(id), amount INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_wl_legs_tx ON wl_legs (tx_id);
+CREATE TABLE IF NOT EXISTS wl_escrow (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, order_id TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'DZD', state TEXT NOT NULL DEFAULT 'held',
+  fee INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, settled_at INTEGER NULL, UNIQUE (tenant_id, order_id)
+);
+CREATE TABLE IF NOT EXISTS wl_orders (tenant_id INTEGER NOT NULL, order_id TEXT NOT NULL, outcome TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (tenant_id, order_id));
+CREATE TABLE IF NOT EXISTS wl_withdrawals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, amount INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'DZD', method TEXT NOT NULL, dest_enc TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'requested',
+  note TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_wl_wd ON wl_withdrawals (tenant_id, id);
