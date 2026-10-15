@@ -16,6 +16,7 @@ ap.add_argument("--update", action="store_true", help="مع --target php: حزم
 ap.add_argument("--remote", action="store_true", help="مع --update: حزمة للتحديث عن بُعد (الملفات المشتركة فقط، بلا update.php)")
 ap.add_argument("--channel", default="https://raw.githubusercontent.com/saberbalbouzi-ui/alyssumdz/main/releases", help="رابط قناة التحديث (مجلد releases)")
 ap.add_argument("--pubkey", default="releases/pubkey.pem", help="المفتاح العام لتوقيع التحديثات")
+ap.add_argument("--kind", choices=["physical", "digital", "ask"], default="ask", help="نوع المتجر: physical مادي | digital رقمي | ask (الافتراضي) يختاره الزبون عند أول دخول للوحة")
 ap.add_argument("--target", choices=["github", "php"], default="github", help="github: القالب الحالي (Supabase+GitHub) | php: حزمة للاستضافة العادية")
 a = ap.parse_args()
 OUT = (ROOT / a.out).resolve()
@@ -111,7 +112,7 @@ for fn, sz in (("icon-192.png", 192), ("icon-512.png", 512), ("icon-maskable-512
 for f, v in {"coupons": "[]", "pixels": "[]", "agent-faq": "[]", "agent-training": '{"version":1,"scopes":{}}', "welcome": '{"enabled":false}'}.items():
     (OUT / "assets/data" / (f + ".json")).write_text(v + "\n", encoding="utf-8")
 # بيانات الموقع الخاصة بك لا تنتقل للزبون: إعدادات محايدة باسم الزبون ورقمه، ومنشورات/حملات فارغة
-(OUT / "assets/data/store.json").write_text(json.dumps({"name": a.name, "tagline": "", "email": "", "phone": "", "wa": a.wa, "instagram": "", "address": "", "lang": "ar", "tz": "Africa/Algiers", "dateFmt": "DD/MM/YYYY", "timeFmt": "24", "weekStart": "sat", "currency": "دج", "maintenance": False, "maintMsg": "", "domain": {"mode": "own", "value": "", "status": ""}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+(OUT / "assets/data/store.json").write_text(json.dumps({"name": a.name, "tagline": "", "email": "", "phone": "", "wa": a.wa, "instagram": "", "address": "", "lang": "ar", "tz": "Africa/Algiers", "dateFmt": "DD/MM/YYYY", "timeFmt": "24", "weekStart": "sat", "currency": "دج", "maintenance": False, "maintMsg": "", "domain": {"mode": "own", "value": "", "status": ""}, **({"kindAsk": True} if a.kind == "ask" else {"kind": a.kind, "kindAsk": False})}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 (OUT / "assets/data/social.json").write_text(json.dumps({"v": 1, "settings": {"domain": "", "runner": False, "fbNative": True, "hashtags": []}, "rule": {"perDay": 3, "start": "10:00", "end": "21:00", "days": [0, 1, 2, 3, 4, 5, 6], "channels": ["fb", "ig"], "jitter": True}, "posts": [], "campaigns": []}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 (OUT / "assets/data/med-notes.json").write_text(json.dumps({"slugs": [], "text": json.loads((ROOT / "assets/data/med-notes.json").read_text(encoding="utf-8"))["text"]}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")   # قائمة المنتجات الصحية خاصة بكل موقع (أسماء منتجاتك لا تُشحن)
 for f in ("checkout.json", "landing-template-anti-acne.txt"):   # الثاني: تعليمات صور منتجك الخاصة
