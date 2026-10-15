@@ -27,7 +27,7 @@ grant execute on function public.is_admin() to anon, authenticated;
 create table if not exists public.staff (
   email text primary key,
   name text not null default '',
-  role text not null default 'agent' check (role in ('manager', 'agent', 'support', 'accountant')),
+  role text not null default 'agent' check (role in ('manager', 'agent', 'support', 'accountant', 'warehouse')),
   perms text[] not null default '{}',
   active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -209,3 +209,41 @@ grant execute on function public.audit_perf(int) to authenticated;
 drop policy if exists "staff finance read kv" on public.admin_kv;
 create policy "staff finance read kv" on public.admin_kv for select to authenticated
   using (key in ('costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes') and public.has_perm('finance'));
+
+-- 7) أمين المخزن (v1.89.239): صلاحية pack فقط — لا يقرأ جدول الطلبات (لا سياسة له) بل دالتين تُرجعان ما يلزم للتجهيز:
+--    الطلبات المؤكَّدة/المرسَلة بلا هاتف ولا أسعار ولا مالية. علامة 🧰 في الملاحظة = «جُهِّز».
+alter table public.staff drop constraint if exists staff_role_check;
+alter table public.staff add constraint staff_role_check check (role in ('manager', 'agent', 'support', 'accountant', 'warehouse'));
+
+create or replace function public.pack_orders() returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.has_perm('pack') then raise exception 'unauthorized' using errcode = '42501'; end if;
+  return coalesce((select jsonb_agg(jsonb_build_object('id', o.id, 'date', o.created_at, 'name', o.name, 'wilaya', o.wilaya, 'commune', o.commune, 'dtype', o.dtype, 'desk', o.desk,
+      'items', o.items_text, 'status', o.status,
+      'company', case when position(':' in o.sh) > 0 then split_part(o.sh, ':', 1) else '' end,
+      'tracking', case when position(':' in o.sh) > 0 then substr(o.sh, position(':' in o.sh) + 1) else o.sh end,
+      'packed', position('🧰' in o.note) > 0) order by o.created_at desc)
+    from (select t.*, coalesce(substring(t.note from '🚚(\S+)'), '') as sh from public.orders t
+          where t.status in ('confirmee', 'expediee') and position('🗑' in t.note) = 0 order by t.created_at desc limit 300) o), '[]'::jsonb);
+end $$;
+revoke all on function public.pack_orders() from public;
+grant execute on function public.pack_orders() to authenticated;
+
+create or replace function public.pack_mark(p_id text, p_undo boolean default false) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare cur text; clean text; nw text;
+begin
+  if not public.has_perm('pack') then raise exception 'unauthorized' using errcode = '42501'; end if;
+  select note into cur from public.orders where id = p_id and status in ('confirmee', 'expediee');
+  if not found then raise exception 'not_found' using errcode = 'P0002'; end if;
+  clean := btrim(regexp_replace(coalesce(cur, ''), '🧰\S*\s*', '', 'g'));
+  nw := case when p_undo then clean else btrim(clean || ' 🧰@' || to_char(now() at time zone 'Africa/Algiers', 'YYYY-MM-DD')) end;
+  if nw is distinct from cur then
+    update public.orders set note = left(nw, 500) where id = p_id;
+    if not p_undo then perform public._audit('order.packed', p_id, '{}'); end if;
+  end if;
+  return jsonb_build_object('ok', true, 'packed', not p_undo);
+end $$;
+revoke all on function public.pack_mark(text, boolean) from public;
+grant execute on function public.pack_mark(text, boolean) to authenticated;

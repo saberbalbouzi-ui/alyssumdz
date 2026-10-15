@@ -125,6 +125,29 @@ $acj = "$root/acj";
 [$c] = $call('order_update', 'POST', ['id' => $oid, 'status' => 'livree'], $acj); ok('محاسب: لا يغيّر حالة طلب', $c === 403);
 [$c] = $call('kv&k=costs', 'GET', null, $stf); ok('موظف اتصال: لا يقرأ المالية', $c === 401 || $c === 403);
 
+/* أمين المخزن: قائمة تجهيز بلا هاتف ولا أسعار، ولا يقرأ الطلبات ولا المالية */
+[$c] = $call('team', 'POST', ['action' => 'create', 'email' => 'magasin', 'name' => 'Mag', 'role' => 'warehouse', 'password' => 'warepass-12345'], $own); ok('أمين المخزن: إنشاء', $c === 200);
+$whj = "$root/whj";
+[$c] = $call('login', 'POST', ['user' => 'magasin', 'password' => 'warepass-12345'], $whj); ok('أمين المخزن: دخول', $c === 200);
+[$c, $j] = $call('pack_orders', 'GET', null, $whj); $po = $j['orders'] ?? [];
+ok('أمين المخزن: يقرأ قائمة التجهيز (المؤكَّد)', $c === 200 && count($po) >= 1 && count(array_filter($po, fn($x) => $x['id'] === $oid)) === 1, $j);
+ok('قائمة التجهيز بلا هاتف ولا أسعار ولا ملاحظات', count(array_filter($po, fn($x) => isset($x['phone']) || isset($x['total']) || isset($x['subtotal']) || isset($x['fee']) || isset($x['note']) || isset($x['extra']))) === 0, $po[0] ?? null);
+[$c] = $call('orders', 'GET', null, $whj); ok('أمين المخزن: لا يقرأ الطلبات الكاملة', $c === 403);
+[$c] = $call('order_update', 'POST', ['id' => $oid, 'status' => 'livree'], $whj); ok('أمين المخزن: لا يغيّر حالة', $c === 403);
+[$c] = $call('kv&k=costs', 'GET', null, $whj); ok('أمين المخزن: لا يقرأ المالية', $c === 403);
+[$c] = $call('file&path=' . rawurlencode('assets/data/customers.json'), 'GET', null, $whj); ok('أمين المخزن: لا يقرأ ملاحظات العملاء', $c === 403);
+[$c] = $call('pack_orders', 'GET', null, $acj); ok('المحاسب: لا يملك التجهيز', $c === 403);
+[$c] = $call('pack_orders', 'GET', null, $stf); ok('موظف الدعم: لا يملك التجهيز', $c === 403 || $c === 401);
+[$c, $j] = $call('pack_mark', 'POST', ['id' => $oid], $whj); ok('تعليم جُهِّز', $c === 200 && ($j['packed'] ?? false) === true, $j);
+[$c, $j] = $call('pack_orders', 'GET', null, $whj); ok('القائمة تعكس «جُهِّز»', ($j['orders'] ? array_values(array_filter($j['orders'], fn($x) => $x['id'] === $oid))[0]['packed'] : null) === true);
+[$c, $j] = $call('orders', 'GET', null, $own); $ro = array_values(array_filter($j['orders'], fn($x) => $x['id'] === $oid))[0] ?? [];
+ok('المالك يرى علامة 🧰 في الملاحظة', str_contains((string)($ro['note'] ?? ''), '🧰'), $ro['note'] ?? null);
+[$c, $j] = $call('team', 'POST', ['action' => 'audit'], $own); ok('سجلّ النشاط يحوي order.packed باسم أمين المخزن', $c === 200 && count(array_filter($j['rows'] ?? $j['audit'] ?? [], fn($x) => ($x['action'] ?? '') === 'order.packed' && ($x['actor'] ?? '') === 'magasin')) >= 1, array_slice($j['rows'] ?? $j['audit'] ?? [], 0, 2));
+[$c] = $call('pack_mark', 'POST', ['id' => 'NOPE-1'], $whj); ok('طلب غير موجود/غير مؤكَّد ← 404', $c === 404);
+[$c, $j] = $call('pack_mark', 'POST', ['id' => $oid, 'undo' => true], $whj); ok('تراجع', $c === 200 && ($j['packed'] ?? true) === false);
+[$c, $j] = $call('orders', 'GET', null, $own); $ro = array_values(array_filter($j['orders'], fn($x) => $x['id'] === $oid))[0] ?? [];
+ok('بعد التراجع: لا علامة 🧰', !str_contains((string)($ro['note'] ?? ''), '🧰'));
+
 /* المصادقة الثنائية للمالك */
 [$c, $j] = $call('mfa', 'POST', ['action' => 'setup'], $own); $secret = $j['secret'] ?? ''; ok('2FA: إعداد يعطي مفتاحاً وuri', $c === 200 && strlen($secret) === 32 && str_starts_with($j['uri'], 'otpauth://totp/'), $j);
 [$c] = $call('mfa', 'POST', ['action' => 'enable', 'code' => '000000'], $own); ok('2FA: رمز خاطئ يُرفض', $c === 422);
