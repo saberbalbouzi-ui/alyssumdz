@@ -213,3 +213,14 @@ CREATE TABLE IF NOT EXISTS app_deliveries (
 );
 CREATE INDEX IF NOT EXISTS ix_app_deliv_due ON app_deliveries (state, next_at);
 CREATE TABLE IF NOT EXISTS app_settings (id INTEGER PRIMARY KEY CHECK (id=1), commission_pct INTEGER NOT NULL DEFAULT 20, updated_at INTEGER NOT NULL);
+
+/* متجر التطبيقات — تقييمات التجار، استردادات الـ7 أيام، وعلامات الإدارة (مميّز/نطاق موثّق) */
+CREATE TABLE IF NOT EXISTS app_reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, app_id INTEGER NOT NULL, tenant_id INTEGER NOT NULL, stars INTEGER NOT NULL, comment TEXT, created_at INTEGER NOT NULL, UNIQUE (app_id, tenant_id)
+);
+CREATE TABLE IF NOT EXISTS app_refunds (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, revenue_id INTEGER NOT NULL UNIQUE, installation_id INTEGER NOT NULL, tenant_id INTEGER NOT NULL, amount INTEGER NOT NULL, created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS app_flags (
+  app_id INTEGER PRIMARY KEY, featured INTEGER NOT NULL DEFAULT 0, domain_host TEXT, domain_checked_at INTEGER
+);

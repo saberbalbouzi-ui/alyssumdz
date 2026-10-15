@@ -48,6 +48,9 @@ const ALLOW: [string, RegExp][] = [
   ["POST", /^\/v1\/agency\/orders$/],
   // متجر التطبيقات (للتاجر فقط): التصفح والتثبيت وإعادة الربط وإلغاء التثبيت. مسارات المطوّر /dev/* وOAuth وكل /admin/appstore/* ممنوعة هنا
   ["GET", /^\/v1\/appstore\/apps(\/\d{1,12})?$/],
+  ["GET", /^\/v1\/appstore\/apps\/\d{1,12}\/reviews$/],
+  ["POST", /^\/v1\/appstore\/apps\/\d{1,12}\/review$/],
+  ["POST", /^\/v1\/appstore\/installations\/\d{1,12}\/refund$/],
   ["POST", /^\/v1\/appstore\/apps\/\d{1,12}\/install$/],
   ["GET", /^\/v1\/appstore\/installations$/],
   ["POST", /^\/v1\/appstore\/installations\/\d{1,12}\/authorize$/],

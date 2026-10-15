@@ -4,11 +4,11 @@
 const AdminAppStore = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const S = { at: 0, apps: [], inst: [], pct: 20, avail: null, off: false, err: "", busy: false, form: null, link: null, timer: null };
+  const S = { refundDays: 7, at: 0, apps: [], inst: [], pct: 20, avail: null, off: false, err: "", busy: false, form: null, link: null, timer: null };
   const nf = n => Math.round(+n || 0).toLocaleString("fr-DZ");
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
-  const ERR = { insufficient_funds: "رصيدك المتاح غير كافٍ — اشحن محفظتك أولاً", consent_mismatch: "يجب الموافقة على كل الصلاحيات المطلوبة", already_installed: "التطبيق مثبّت بالفعل", wallet_unavailable: "المحفظة غير مفعّلة على حسابك — تواصل مع الدعم", not_found: "التطبيق لم يعد متاحاً", rate_limited: "طلبات كثيرة، حاول بعد قليل", module_disabled: "المتجر غير مفعّل على حسابك — تواصل مع الدعم" };
+  const ERR = { not_refundable: "الاسترداد متاح خلال 7 أيام من الدفع ولمرة واحدة", refund_unavailable: "تعذّر الاسترداد الآلي — تواصل مع الدعم", not_installed: "قيّم تطبيقاً ثبّتَّه فقط", insufficient_funds: "رصيدك المتاح غير كافٍ — اشحن محفظتك أولاً", consent_mismatch: "يجب الموافقة على كل الصلاحيات المطلوبة", already_installed: "التطبيق مثبّت بالفعل", wallet_unavailable: "المحفظة غير مفعّلة على حسابك — تواصل مع الدعم", not_found: "التطبيق لم يعد متاحاً", rate_limited: "طلبات كثيرة، حاول بعد قليل", module_disabled: "المتجر غير مفعّل على حسابك — تواصل مع الدعم" };
   const ST = { active: ["مفعّل", "var(--g-mint-rgb)"], past_due: ["متأخر السداد", "var(--g-amber-rgb)"], suspended: ["موقوف", "var(--g-rose-rgb)"], uninstalled: ["أُلغي", "var(--g-blue-rgb)"] };
   const BL = { once: "دفعة واحدة", monthly: "شهرياً" };
   const dt = s => { const n = +s; return n ? new Date(n * 1000).toISOString().slice(0, 10) : ""; };
@@ -26,7 +26,7 @@ const AdminAppStore = (() => {
   async function load() {
     const [a, i, w] = await Promise.all([call("GET", "/v1/appstore/apps"), call("GET", "/v1/appstore/installations"), call("GET", "/v1/wallet")]);
     if (a.off) { S.off = true; return; } S.off = false; if (!a.ok) { S.err = errOf(a); return; } S.err = "";
-    S.at = Date.now(); S.apps = a.j.apps || []; S.pct = a.j.commission_pct == null ? 20 : a.j.commission_pct; if (i.ok) S.inst = i.j.installations || [];
+    S.at = Date.now(); S.apps = a.j.apps || []; S.pct = a.j.commission_pct == null ? 20 : a.j.commission_pct; S.refundDays = a.j.refund_days || 7; if (i.ok) S.inst = i.j.installations || [];
     S.avail = w.ok && w.j.balances && w.j.balances.available ? (w.j.balances.available.DZD || 0) : null;
   }
   function css() {
@@ -48,7 +48,8 @@ const AdminAppStore = (() => {
     if (S.err) { host.innerHTML = `<div class="as-box as-off">${esc(S.err)} <button class="as-btn" data-as="reload">إعادة المحاولة</button></div>`; return; }
     const mine = new Map(S.inst.filter(i => i.status !== "uninstalled").map(i => [i.app_id, i]));
     const cards = S.apps.map(a => { const m = mine.get(a.id);
-      return `<div class="as-app"><b>${esc(a.name)}</b><small>بواسطة ${esc(a.developer || "مطوّر مستقل")}</small>${a.description ? `<small>${esc(a.description)}</small>` : ""}<span class="pr">${esc(priceOf(a))}</span>${scopeList(a.scopes)}
+      const badges = (a.featured ? '<span class="as-chip" style="color:rgb(var(--g-amber-rgb))">⭐ مميّز</span> ' : "") + (a.domain_verified ? '<span class="as-chip" style="color:rgb(var(--g-mint-rgb))">✔ نطاق موثّق</span> ' : "") + (a.rating ? `<span class="as-chip" style="color:rgb(var(--g-amber-rgb))">★ ${esc(a.rating)} (${esc(a.rating_count)})</span>` : '<small>بلا تقييم بعد</small>');
+      return `<div class="as-app"><b>${esc(a.name)}</b><div>${badges}</div><small>بواسطة ${esc(a.developer || "مطوّر مستقل")}</small>${a.description ? `<small>${esc(a.description)}</small>` : ""}<span class="pr">${esc(priceOf(a))}</span>${scopeList(a.scopes)}
  ${m ? `<span class="as-chip" style="color:rgb(var(--g-mint-rgb))">✓ مثبّت</span>` : `<button class="as-btn" data-as="pick" data-id="${a.id}" ${S.busy ? "disabled" : ""}>تثبيت</button>`}</div>`; }).join("");
     const f = S.form, ap = f && S.apps.find(x => x.id === f.id);
     const sens = ap ? ap.scopes.filter(s => s.sensitive) : [];
@@ -58,9 +59,9 @@ const AdminAppStore = (() => {
  <div><button class="as-btn" data-as="install" ${S.busy ? "disabled" : ""}>وافق وثبّت</button> <button class="as-btn g" data-as="cancel">إلغاء</button></div></div>` : "";
     const link = S.link ? `<div class="as-box" style="border-color:rgba(var(--g-mint-rgb),.6)"><h3>✅ ثُبّت «${esc(S.link.name)}»</h3><p class="as-hint" style="margin:0 0 .6rem">أكمل ربط التطبيق بمتجرك من صفحته (الرابط صالح 10 دقائق):</p><a class="as-btn" href="${esc(S.link.url)}" target="_blank" rel="noopener noreferrer">فتح التطبيق وإكمال الربط</a> <button class="as-btn g" data-as="dismiss">إغلاق</button></div>` : "";
     const rows = S.inst.map(i => { const st = ST[i.status] || [i.status, "inherit"];
-      return `<tr><td><b>${esc(i.name)}</b><div class="as-hint">${i.price > 0 ? esc(nf(i.price) + " دج — " + (BL[i.billing] || "")) : "مجاني"}</div></td><td><span class="as-chip" style="color:rgb(${st[1]})">${esc(st[0])}</span>${i.next_charge_at && i.status !== "uninstalled" ? `<div class="as-hint">التجديد: ${esc(dt(i.next_charge_at))}</div>` : ""}</td><td>${esc((i.scopes || []).join("، "))}</td><td>${["active", "past_due"].includes(i.status) ? `<button class="as-btn g" data-as="relink" data-id="${i.id}" data-n="${esc(i.name)}">إعادة الربط</button> <button class="as-btn r" data-as="remove" data-id="${i.id}" data-n="${esc(i.name)}">إلغاء التثبيت</button>` : ""}</td></tr>`; }).join("");
+      return `<tr><td><b>${esc(i.name)}</b><div class="as-hint">${i.price > 0 ? esc(nf(i.price) + " دج — " + (BL[i.billing] || "")) : "مجاني"}</div></td><td><span class="as-chip" style="color:rgb(${st[1]})">${esc(st[0])}</span>${i.next_charge_at && i.status !== "uninstalled" ? `<div class="as-hint">التجديد: ${esc(dt(i.next_charge_at))}</div>` : ""}</td><td>${esc((i.scopes || []).join("، "))}</td><td>${i.installed_at && i.status !== "pending" ? `<button class="as-btn g" data-as="rate" data-app="${i.app_id}" data-n="${esc(i.name)}">${i.reviewed ? "تعديل تقييمي" : "قيّم التطبيق"}</button> ` : ""}${i.refundable ? `<button class="as-btn r" data-as="refund" data-id="${i.id}" data-n="${esc(i.name)}">استرداد المبلغ</button> ` : ""}${["active", "past_due"].includes(i.status) ? `<button class="as-btn g" data-as="relink" data-id="${i.id}" data-n="${esc(i.name)}">إعادة الربط</button> <button class="as-btn r" data-as="remove" data-id="${i.id}" data-n="${esc(i.name)}">إلغاء التثبيت</button>` : ""}</td></tr>`; }).join("");
     host.innerHTML = `${link}<div class="as-box"><h3>التطبيقات المتاحة</h3>${S.avail != null ? `<p class="as-hint" style="margin:0 0 .6rem">متاحك في المحفظة: <b>${nf(S.avail)} دج</b></p>` : ""}${cards ? `<div class="as-grid">${cards}</div>` : '<p class="as-hint">لا توجد تطبيقات متاحة حالياً.</p>'}</div>${form}
-<div class="as-box"><h3>تطبيقاتي</h3>${rows ? `<div class="as-wrap"><table class="as-tbl"><thead><tr><th>التطبيق</th><th>الحالة</th><th>الصلاحيات</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="as-hint">لم تثبّت أي تطبيق بعد.</p>'}<p class="as-hint">إلغاء التثبيت يقطع وصول التطبيق إلى متجرك فوراً. تتحقق الإدارة من كل تطبيق قبل ظهوره هنا.</p></div>`;
+<div class="as-box"><h3>تطبيقاتي</h3>${rows ? `<div class="as-wrap"><table class="as-tbl"><thead><tr><th>التطبيق</th><th>الحالة</th><th>الصلاحيات</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="as-hint">لم تثبّت أي تطبيق بعد.</p>'}<p class="as-hint">إلغاء التثبيت يقطع وصول التطبيق إلى متجرك فوراً، ويمكنك استرداد ثمن التطبيق خلال ${S.refundDays} أيام من الدفع. تتحقق الإدارة من كل تطبيق قبل ظهوره هنا.</p></div>`;
   }
   async function install() {
     const f = S.form, ap = f && S.apps.find(x => x.id === f.id); if (!ap) return;
@@ -79,6 +80,8 @@ const AdminAppStore = (() => {
     else if (a === "dismiss") { S.link = null; draw(); }
     else if (a === "install") await install();
     else if (a === "relink") { S.busy = true; const r = await call("POST", `/v1/appstore/installations/${+el.dataset.id}/authorize`, {}); S.busy = false; if (r.ok && r.j.redirect_to) { S.link = { name: el.dataset.n, url: r.j.redirect_to }; draw(); } else toast(errOf(r)); }
+    else if (a === "rate") { const v = prompt(`قيّم «${el.dataset.n}» من 1 إلى 5:`, "5"); if (v === null) return; const st = Math.round(+v); if (!(st >= 1 && st <= 5)) return toast("اكتب رقماً من 1 إلى 5"); const cm = prompt("تعليق (اختياري):", "") || ""; const r = await call("POST", `/v1/appstore/apps/${+el.dataset.app}/review`, { stars: st, comment: cm }); toast(r.ok ? "✓ شكراً لتقييمك" : errOf(r)); await refresh(); }
+    else if (a === "refund") { if (!confirm(`استرداد ثمن «${el.dataset.n}» كاملاً وإلغاء تثبيته؟ (متاح خلال ${S.refundDays} أيام من الدفع ولمرة واحدة)`)) return; const r = await call("POST", `/v1/appstore/installations/${+el.dataset.id}/refund`, {}, uid()); toast(r.ok ? "✓ رُدّ المبلغ إلى متاحك" : errOf(r)); await refresh(); }
     else if (a === "remove") { if (!confirm(`إلغاء تثبيت «${el.dataset.n}»؟ سيفقد التطبيق وصوله إلى متجرك فوراً.`)) return; const r = await call("DELETE", `/v1/appstore/installations/${+el.dataset.id}`); toast(r.ok ? "تم إلغاء التثبيت" : errOf(r)); await refresh(); }
   }
   async function refresh() { await load(); draw(); }
