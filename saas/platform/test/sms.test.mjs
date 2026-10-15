@@ -42,4 +42,11 @@ clock.t = Date.parse("2026-10-13T08:30:00Z"); await app.cron(); ok("داخل ا�
 [c] = await call("POST", "/admin/tenants/" + A.id + "/sms-credits", { credits: -1000 }, "adm-tok"); ok("خصم أكبر من الرصيد 409", c === 409);
 /* تعطيل */
 await call("PUT", "/v1/integrations/sms", { config: { ...cfg, enabled: false } }, A.key); fake.calls.length = 0; await ev("O8"); await app.cron(); ok("enabled=false يوقف الإرسال", fake.calls.length === 0);
+/* مصدران لنفس (النوع، الطلب) — معرّفا حدث مختلفان: رسالة واحدة فقط */
+await call("PUT", "/v1/integrations/sms", { config: cfg }, A.key); await call("POST", "/admin/tenants/" + A.id + "/sms-credits", { credits: 5 }, "adm-tok");
+fake.handler = (url, init) => { fake.last = { url, init }; return [200, { ok: true }]; }; fake.calls.length = 0;
+const evo = (eid, oid) => call("POST", "/v1/events", { type: "order.confirmed", id: eid, data: { order_id: oid, total: 1, customer: { name: "س", phone: "0551234567" } } }, A.key);
+const nb = (await call("GET", "/v1/sms/balance", null, A.key))[1].balance;
+await evo("src-a", "ORD-X"); await evo("src-b", "ORD-X"); await app.cron();
+ok("حدثان مختلفان لنفس الطلب والنوع ← رسالة واحدة وخصم واحد", fake.calls.length === 1 && (await call("GET", "/v1/sms/balance", null, A.key))[1].balance === nb - 1, fake.calls.length);
 done();

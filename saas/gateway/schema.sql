@@ -36,6 +36,15 @@ CREATE TABLE IF NOT EXISTS gw_events (
   attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, last_error TEXT NULL, created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_gw_events_due ON gw_events (state, next_at);
+-- ربط الطلب بمرجعه في المنصة (platformRef) + صندوق صادر نحو ناقل أحداث المنصة (order.shipped|delivered|returned)
+CREATE TABLE IF NOT EXISTS gw_links (order_id INTEGER PRIMARY KEY, tenant_id INTEGER NOT NULL, platform_ref TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS gw_bus (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, order_id INTEGER NOT NULL, site_ref TEXT NOT NULL,
+  type TEXT NOT NULL, ext_id TEXT NOT NULL, payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, last_error TEXT NULL, created_at TEXT NOT NULL,
+  UNIQUE (tenant_id, ext_id)
+);
+CREATE INDEX IF NOT EXISTS ix_gw_bus_due ON gw_bus (state, next_at);
 CREATE TABLE IF NOT EXISTS gw_usage (
   tenant_id INTEGER NOT NULL, day TEXT NOT NULL, kind TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, day, kind)
 );

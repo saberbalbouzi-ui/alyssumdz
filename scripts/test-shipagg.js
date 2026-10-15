@@ -23,6 +23,7 @@ const SA = ctx.ShipAgg; (async () => {
   const o = { id: "F5D05", name: "Amine Bouzid", phone: "0551234567", wilaya: "Alger", commune: "Bab Ezzouar", address: "حي 1", dtype: "home", total: 4900, fee: 400, items: "كريمة ×1 = 4500 DA\nعسل ×1 = 400 DA", status: "confirmee", note: "" };
   const p = SA.gwPayload(o, "yalidine");
   ok("الحمولة: مرجع ورمز ولاية وتوصيل", p.courier === "yalidine" && p.order.reference === "F5D05" && p.order.recipient.wilayaCode === 16 && p.order.codAmount === 4900 && p.order.shippingFee === 400 && p.order.deliveryType === "home" && !p.order.productList.includes("DA"), p);
+  ok("platformRef = رقم الطلب، ومرجع المتجر (🔗) يسبقه", p.order.platformRef === "F5D05" && SA.gwPayload({ ...o, extra: { "🔗 مرجع": "WEB-9Z" } }, "yalidine").order.platformRef === "WEB-9Z");
   const ps = SA.gwPayload({ ...o, id: "a/b c", dtype: "stop", desk: "Bab Ezzouar Desk" }, "yalidine");
   ok("stopdesk: المكتب ومرجع منظَّف", ps.order.deliveryType === "stopdesk" && ps.order.stopDeskId === "161" && ps.order.reference === "a-b-c", ps);
   let err = ""; try { SA.gwPayload({ ...o, dtype: "stop", desk: "؟" }, "yalidine"); } catch (e) { err = e.message; } ok("مكتب مجهول يرمي", /غير معروف/.test(err));

@@ -21,7 +21,7 @@ const REF = /^[A-Za-z0-9._-]{1,64}$/;
  * بوابة الشحن (Cloudflare Worker + D1). handle() نقية: لا تقرأ كائن Request ولا تعتمد على البيئة فتُختبر بلا خادم.
  * وضعان للمفاتيح: inline (مع كل طلب، لا تُخزَّن) أو vault (مشفّرة في gw_connections).
  */
-export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "", carrierFetch = null, pause = (ms) => new Promise((r) => setTimeout(r, Math.min(ms, 600))) }) {
+export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "", carrierFetch = null, platformEmit = null, pause = (ms) => new Promise((r) => setTimeout(r, Math.min(ms, 600))) }) {
   const db = new DB(d1), tenants = new Tenants(db, vault), limiter = new Limiter(db, clock), dispatcher = new Dispatcher(db, tenants, fetchFn, clock), http = makeHttp(carrierFetch ?? fetchFn);
   const aadConn = (tid, code) => `tenant:${tid}|carrier:${code}`;
   const ours = Cal.ourGeo(geo);
@@ -243,6 +243,7 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     if (!res.ok) { await release(); throw new HttpError(502, "courier_error", res.error || "رفضت الشركة الطلب"); }
     const out = { reference: ref, courier, trackingNumber: res.tracking, status: S.PENDING, labelUrl: res.labelUrl, sandbox: courier === "sandbox", ...(corr.length ? { corrections: corr } : {}) };
     await db.run("UPDATE gw_orders SET tracking=?, response_json=?, updated_at=? WHERE id=?", res.tracking, JSON.stringify(out), nowStr(clock()), id);
+    const pref = String(b.order?.platformRef ?? "").trim(); if (/^[A-Za-z0-9._:-]{1,60}$/.test(pref)) await db.run("INSERT OR REPLACE INTO gw_links (order_id,tenant_id,platform_ref) VALUES (?,?,?)", id, tid, pref);
     if (mode === "live") await limiter.count(tid, "order");
     return ok(out, 201);
   }
@@ -260,7 +261,30 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
     if (!canTransition(row.status, status)) return false;
     await db.run("UPDATE gw_orders SET status=?, raw_status=?, updated_at=? WHERE id=?", status, String(raw).slice(0, 190), nowStr(clock()), row.id);
     await dispatcher.enqueue(row.tenant_id, row.id, "shipment.status_changed", { reference: row.reference, courier: row.courier, trackingNumber: row.tracking, status, previousStatus: row.status, rawStatus: raw }, plan);
+    await queueBus(row, status, raw);
     return true;
+  }
+
+  /** ناقل أحداث المنصة: حالات الشحن النهائية/الفعلية تُرسل إلى المنصة (order.shipped|delivered|returned) كمصدر موثوق للضمان (المحفظة). صندوق صادر مع إعادة محاولة. */
+  const BUS_TYPE = { [S.SHIPPED]: "order.shipped", [S.OUT_FOR_DELIVERY]: "order.out_for_delivery", [S.DELIVERED]: "order.delivered", [S.RETURNED]: "order.returned" }, BUS_BACKOFF = [60, 300, 1800, 7200, 43200];
+  async function queueBus(row, status, raw) {
+    const type = BUS_TYPE[status]; if (!type || !platformEmit || row.courier === "sandbox") return;
+    const site = await db.val("SELECT site_ref FROM gw_tenants WHERE id=?", row.tenant_id); if (!site) return;
+    const pref = (await db.val("SELECT platform_ref FROM gw_links WHERE order_id=?", row.id)) || String(row.reference).slice(0, 60);
+    await db.run("INSERT OR IGNORE INTO gw_bus (tenant_id,order_id,site_ref,type,ext_id,payload,state,attempts,next_at,created_at) VALUES (?,?,?,?,?,?,'pending',0,?,?)", row.tenant_id, row.id, site, type, `${status}:${pref}`.slice(0, 77),
+      JSON.stringify({ order_id: pref, reference: row.reference, courier: row.courier, tracking: row.tracking, status, raw_status: String(raw ?? "").slice(0, 120), at: nowStr(clock()) }), Math.floor(clock() / 1000), nowStr(clock()));
+  }
+  async function flushBus(limit = 25) {
+    if (!platformEmit) return { bus_sent: 0, bus_failed: 0 };
+    const rows = await db.all("SELECT * FROM gw_bus WHERE state='pending' AND next_at<=? ORDER BY id LIMIT ?", Math.floor(clock() / 1000), limit); let sent = 0, failed = 0;
+    for (const e of rows) {
+      let st = 0; try { st = await platformEmit({ site_ref: e.site_ref, type: e.type, id: e.ext_id, data: JSON.parse(e.payload) }); } catch { st = 0; }
+      if (st >= 200 && st < 300) { await db.run("UPDATE gw_bus SET state='sent', attempts=attempts+1, last_error=NULL WHERE id=?", e.id); sent++; continue; }
+      failed++; const n = e.attempts + 1, msg = st ? "HTTP " + st : "network", perm = st >= 400 && st < 500 && st !== 429;   // 4xx دائم (موقع مجهول…) لا يُعاد
+      if (perm || n > BUS_BACKOFF.length) await db.run("UPDATE gw_bus SET state='failed', attempts=?, last_error=? WHERE id=?", n, msg, e.id);
+      else await db.run("UPDATE gw_bus SET attempts=?, next_at=?, last_error=? WHERE id=?", n, Math.floor(clock() / 1000) + BUS_BACKOFF[n - 1], msg, e.id);
+    }
+    return { bus_sent: sent, bus_failed: failed };
   }
 
   async function track(auth, b) {
@@ -430,7 +454,7 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
         if (await advance(row, r.status, r.rawStatus, plan)) changed++; else await db.run("UPDATE gw_orders SET updated_at=? WHERE id=?", nowStr(clock()), row.id);
       } catch { errors++; }
     }
-    return { checked, changed, errors, ...(await dispatcher.deliverDue()) };
+    return { checked, changed, errors, ...(await dispatcher.deliverDue()), ...(await flushBus()) };
   }
 
   function openapi() {
@@ -440,5 +464,5 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
         "/v1/cancel": { post: s("إلغاء طرد (حسب الشركة)") }, "/v1/label": { post: s("رابط البوليصة (حسب الشركة)") }, "/v1/desks": { post: s("مكاتب Stop Desk لولاية") }, "/v1/connections": { get: s("الشركات المحفوظة"), post: s("حفظ مفاتيح شركة مشفّرة") },
         "/v1/webhook": { get: s("إعداد webhook الصادر"), put: s("ضبط رابط webhook الصادر"), delete: s("حذفه") }, "/v1/usage": { get: s("الاستعمال والحدود") }, "/v1/couriers": { get: { summary: "الشركات المدعومة" } }, "/v1/wilayas": { get: { summary: "الولايات" } }, "/v1/communes": { get: { summary: "البلديات" } }, "/health": { get: { summary: "الحالة" } } } };
   }
-  return { handle, cron, tenants, limiter, dispatcher, geo, db };
+  return { handle, cron, tenants, limiter, dispatcher, geo, db, flushBus };
 }

@@ -31,8 +31,9 @@ const fetchFn = async (url, init = {}) => {
 };
 const reply = (s, b) => { fake.queue.push([s, b]); };
 
+const bus = { calls: [], status: 202 };
 const vault = new Vault({ k1: webcrypto.getRandomValues(new Uint8Array(32)) }, "k1");
-const app = createApp({ d1, vault, fetchFn, pause: async () => {}, baseUrl: "https://gw.example", adminToken: "adm-secret-token", docsHtml: "<html>docs</html>" });
+const app = createApp({ d1, vault, fetchFn, pause: async () => {}, baseUrl: "https://gw.example", adminToken: "adm-secret-token", docsHtml: "<html>docs</html>", platformEmit: async (body) => { bus.calls.push(body); return bus.status; } });
 const T = app.tenants;
 const tA = await T.createTenant("Boutique A", "a@x.dz", "pro"), kA = await T.issueKey(tA, "live", "prod"), kAt = await T.issueKey(tA, "test");
 const tB = await T.createTenant("Boutique B", "b@x.dz", "free"), kB = await T.issueKey(tB, "live");
@@ -254,6 +255,35 @@ const adm = (m, p, body = null, tok = "adm-secret-token") => call(m, p, body, nu
 [c] = await adm("PATCH", "/admin/tenants/9999", { plan: "pro" }); ok("إدارة: تعديل مستأجر مجهول 404", c === 404);
 [c, b] = await call("GET", "/admin/audit", null, null, {}, { authorization: "Bearer adm-secret-token", "x-actor": "owner@x.dz" }); ok("إدارة: سجلّ التدقيق بلا أسرار", c === 200 && b.audit.some((a) => a.action === "tenant.create") && !JSON.stringify(b).includes("gk_live_"), b.audit.slice(0, 2));
 [c] = await call("PATCH", `/admin/tenants/${idX}`, { status: "active" }, null, {}, { authorization: "Bearer adm-secret-token", "x-actor": "owner@x.dz" }); [c2, b] = await adm("GET", "/admin/audit"); ok("التدقيق يسجّل الفاعل", b.audit.some((a) => a.action === "tenant.active" && a.actor === "owner@x.dz"));
+
+/* ناقل أحداث المنصة: التسليم/المرتجع/الشحن من البوابة ← صندوق gw_bus ← platformEmit (المصدر الموثوق للضمان) */
+exec(`UPDATE gw_tenants SET site_ref='site-bus' WHERE id=${tA}`);
+reply(200, { BZ1: { success: true, tracking: "yal-BZ1" } });
+[c, b] = await call("POST", "/v1/orders", { ...order({ reference: "BZ1", platformRef: "PF-77" }), ...yal }, kA); ok("ناقل: إنشاء طلب بمرجع منصة", c === 201 && sql("SELECT platform_ref p FROM gw_links WHERE tenant_id=?", tA).p === "PF-77", b);
+reply(200, { BZ2: { success: true, tracking: "yal-BZ2" } });
+[c] = await call("POST", "/v1/orders", { ...order({ reference: "BZ2", platformRef: "bad ref!" }), ...yal }, kA); ok("ناقل: مرجع منصة غير صالح يُتجاهل (يبقى الطلب)", c === 201 && !sql("SELECT 1 x FROM gw_links WHERE platform_ref LIKE 'bad%'"));
+bus.calls.length = 0;
+reply(200, { data: [{ tracking: "yal-BZ1", last_status: "En préparation" }] }); await call("POST", "/v1/track", { ...yal, trackingNumber: "yal-BZ1" }, kA);
+ok("ناقل: pending لا يُصدر", sql("SELECT COUNT(*) n FROM gw_bus").n === 0);
+reply(200, { data: [{ tracking: "yal-BZ1", last_status: "Sorti en livraison" }] }); await call("POST", "/v1/track", { ...yal, trackingNumber: "yal-BZ1" }, kA);
+reply(200, { data: [{ tracking: "yal-BZ1", last_status: "Livré" }] }); await call("POST", "/v1/track", { ...yal, trackingNumber: "yal-BZ1" }, kA);
+reply(200, { data: [{ tracking: "yal-BZ1", last_status: "Livré" }] }); await call("POST", "/v1/track", { ...yal, trackingNumber: "yal-BZ1" }, kA);
+ok("ناقل: out_for_delivery وdelivered في الصندوق مرة واحدة", sqlAll("SELECT type FROM gw_bus WHERE tenant_id=? ORDER BY id", tA).map((x) => x.type).join() === "order.out_for_delivery,order.delivered", sqlAll("SELECT type FROM gw_bus"));
+let fl = await app.flushBus(); const dv = bus.calls.find((x) => x.type === "order.delivered");
+ok("ناقل: الإرسال بالمرجع والموقع والمعرّف", fl.bus_sent === 2 && dv.site_ref === "site-bus" && dv.id === "delivered:PF-77" && dv.data.order_id === "PF-77" && dv.data.tracking === "yal-BZ1", dv);
+ok("ناقل: حالة sent ولا إعادة إرسال", sql("SELECT COUNT(*) n FROM gw_bus WHERE state='sent'").n === 2 && (await app.flushBus()).bus_sent === 0);
+reply(200, { data: [{ tracking: "yal-BZ2", last_status: "Retourné au vendeur" }] }); await call("POST", "/v1/track", { ...yal, trackingNumber: "yal-BZ2" }, kA);
+bus.status = 503; fl = await app.flushBus(); const rt = sql("SELECT state, attempts, next_at, last_error FROM gw_bus WHERE type='order.returned'");
+ok("ناقل: فشل مؤقت 503 ← إعادة محاولة بتأجيل", fl.bus_failed === 1 && rt.state === "pending" && rt.attempts === 1 && rt.last_error === "HTTP 503" && rt.next_at > Math.floor(Date.now() / 1000), rt);
+ok("ناقل: المرتجع بلا platformRef يستعمل المرجع", bus.calls.at(-1).data.order_id === "BZ2");
+exec("UPDATE gw_bus SET next_at=0"); bus.status = 404; fl = await app.flushBus();
+ok("ناقل: 404 دائم لا يُعاد", sql("SELECT state FROM gw_bus WHERE type='order.returned'").state === "failed");
+bus.status = 202; bus.calls.length = 0;
+[c, b] = await call("POST", "/v1/orders", order({ reference: "SBX1" }), kA); await call("POST", "/v1/track", { courier: "sandbox", trackingNumber: b.trackingNumber }, kA);
+ok("ناقل: sandbox لا يصل المنصة", (await app.flushBus()).bus_sent === 0 && bus.calls.length === 0);
+const tN = await T.createTenant("NoSite", "n@x.dz", "pro"), kN = await T.issueKey(tN, "live"); reply(200, { BN1: { success: true, tracking: "yal-BN1" } });
+await call("POST", "/v1/orders", { ...order({ reference: "BN1" }), ...yal }, kN); reply(200, { data: [{ tracking: "yal-BN1", last_status: "Livré" }] }); await call("POST", "/v1/track", { ...yal, trackingNumber: "yal-BN1" }, kN);
+ok("ناقل: مستأجر بلا site_ref لا يُصدر", sql("SELECT COUNT(*) n FROM gw_bus WHERE tenant_id=?", tN).n === 0);
 ok("التوقيع مطابق للصيغة", (await Dispatcher.sign("s", 1, "{}")).startsWith("t=1,v1="));
 
 console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);

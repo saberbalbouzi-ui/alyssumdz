@@ -21,7 +21,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | **Core** (Auth/Tenant) | `core.js` + `platform.js` (`pf_*`: مستأجرون، مفاتيح بنطاقات، أحداث، تكاملات مشفّرة، تدقيق، idempotency) | منجَز |
 | **BillingWallet** | `wallet.js` (`wl_*`: دفتر قيد مزدوج، ضمان escrow، سحب، دولار إعلانات) + `payments.js` (Chargily) + `sms.js` (رصيد رسائل) | منجَز (واجهة اللوحة v1.89.235؛ شاشة المزوّد معلّقة) |
 | **Storefront** | `commerce.js` (`cm_*`: كتالوج، تحقق سعر/مخزون، طلبات) + `carts.js` + `ab.js` + `ai.js` + `digital.js` | منجَز (وضع المراقبة؛ `enforce` ينتظر نقل مصدر المخزون) |
-| **Logistics** | `saas/gateway` (Worker+D1 مستقل: محوّلات الشركات، webhooks، قواميس الحالات) + `sources.js` | منجَز لكن **البوابة لا تصدر أحداثاً إلى ناقل المنصة بعد** (ثغرة 1) |
+| **Logistics** | `saas/gateway` (Worker+D1 مستقل: محوّلات الشركات، webhooks، قواميس الحالات) + `sources.js` | منجَز؛ **البوابة تصدر `order.shipped|out_for_delivery|delivered|returned` إلى الناقل (v1.89.237)** عبر `POST /admin/events` (extId `gw:`) |
 | **CallCenter** | داخل لوحة التاجر (`admin-callcenter.js`: طابور، أدوار، أهداف) | **غير موجود كوحدة منصة** (ثغرة 2) |
 | **MarketingAgency** | `ads.js` + `adsoauth.js` (إنفاق Meta/TikTok، OAuth) + `capi.js` + `whatsapp.js` + `sheets.js` + `antifraud.js` | منجَز؛ توفير حسابات Master BM يدوي (ثغرة 3) |
 
@@ -47,7 +47,8 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | الحدث | يصدره | يستمع |
 |---|---|---|
 | `order.created` | `commerce` (وكذلك لوحة التاجر) | capi, whatsapp, sheets, carts, sms |
-| `order.confirmed/shipped/delivered/cancelled/failed/returned` | لوحة التاجر (`/v1/events`) | capi, sheets, sms, commerce, wallet |
+| `order.confirmed/cancelled/failed` | لوحة التاجر (`/v1/events`) | capi, sheets, sms, commerce, wallet |
+| `order.shipped/out_for_delivery/delivered/returned` | **بوابة الشحن** (`/admin/events`، extId `gw:…`) وللتسليم أيضاً لوحة التاجر | sheets, sms, commerce, wallet (`delivered` ضمان؛ `returned` استرداد) |
 | `payment.confirmed/failed/cancelled` | `payments` (Chargily موثَّق) | digital, sms, wallet |
 | `wallet.escrow_held/released`, `refund_due`, `withdrawal_*`, `deposit`, `ads_topup` | `wallet` | hooks (وأي مشترك خارجي) |
 | `fraud.high_risk` | `antifraud` | hooks |
@@ -57,7 +58,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 `hooks` يستمع إلى `*` ويوزّع كل حدث على نقاط المشتركين الخارجيين.
 
 ## 6) ثغرات معروفة (لا تُخفى)
-1. **Logistics → ناقل الأحداث:** بوابة الشحن لا تصدر `order.shipped/delivered/failed` إلى المنصة؛ التاجر هو من يدفعها من لوحته. تشديد الضمان يتطلب إصدارها من البوابة.
+1. ~~Logistics → ناقل الأحداث~~ **أُغلقت (v1.89.237):** البوابة تصدر الأحداث (صندوق `gw_bus` + إعادة محاولة) والمحفظة تقبل `wallet.require_carrier` فلا يُحرَّر الضمان إلا بتسليم مؤكَّد من الشركة. يبقى: الطلبات المرسلة مباشرة من اللوحة بلا البوابة (ياليدين المباشر) لا تمرّ بها فتحتاج `require_carrier=false`.
 2. **CallCenter** (طابور المؤكِّدات، أهداف، أداء) في اللوحة وSupabase فقط؛ لا وحدة `cc_*` على المنصة بعد.
 3. **Master BM:** إسناد حسابات إعلان للتجار يدوي؛ المحفظة تسجّل شراء الدولار فقط.
 4. **المخزون:** مصدره لوحة التاجر؛ لذلك `order_mode=observe`.

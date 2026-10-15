@@ -60,8 +60,11 @@ async function settle(ctx, tid, orderId, outcome) {
     await ctx.emit(tid, "wallet.refund_due", { order_id: orderId, amount: esc.amount, currency: esc.currency }, `wl:ref:${orderId}`); return "refunded";
   } catch (e) { await ctx.db.run("UPDATE wl_escrow SET state='held' WHERE id=? AND state IN ('releasing','refunding')", esc.id); throw e; }
 }
+/** بوابة الشحن (extId «gw:…» عبر /admin/events فقط) هي المصدر الموثوق للتسليم؛ مع wallet.require_carrier لا يحرّر الضمان إلا هي (حدث التاجر من /v1/events لا يكفي) */
+const CARRIER_PREFIX = "gw:";
 const terminal = (outcome) => async (e, ctx) => {
   const oid = String(e.data?.order_id ?? "").slice(0, 80); if (!oid) return;
+  if (outcome === "delivered" && (await walletSettings(ctx, e.tenantId)).require_carrier) { const src = String((await ctx.db.val("SELECT ext_id FROM pf_events WHERE id=?", e.id)) ?? ""); if (!src.startsWith(CARRIER_PREFIX)) return; }
   await ctx.db.run("INSERT OR IGNORE INTO wl_orders (tenant_id,order_id,outcome,at) VALUES (?,?,?,?)", e.tenantId, oid, outcome, ctx.nowS());      // أول حالة نهائية تُعتمد
   const o = await ctx.db.val("SELECT outcome FROM wl_orders WHERE tenant_id=? AND order_id=?", e.tenantId, oid); await settle(ctx, e.tenantId, oid, o);
 };
@@ -119,10 +122,10 @@ export const wallet = {
       return ok({ balanced: rows.every((x) => x.s === 0), by_currency: rows, platform_fees: fees, owed_to_tenants: hold, pending_withdrawals: await db.val("SELECT COUNT(*) FROM wl_withdrawals WHERE status IN ('requested','approved')") });
     });
     r.get("/admin/wallet/:tid", { auth: "admin", summary: "محفظة مستأجر" }, async (req) => { await needTenant(req.params.tid); return ok({ balances: await balances(+req.params.tid), settings: await walletSettings(ctx, +req.params.tid) }); });
-    r.put("/admin/wallet/:tid/settings", { auth: "admin", summary: "إعدادات محفظة المستأجر: fee_pct (0–50) · fee_fixed · usd_rate · min_withdrawal" }, async (req) => {
+    r.put("/admin/wallet/:tid/settings", { auth: "admin", summary: "إعدادات محفظة المستأجر: fee_pct (0–50) · fee_fixed · usd_rate · min_withdrawal · require_carrier (true = لا يُحرَّر الضمان إلا بتسليم مؤكَّد من بوابة الشحن)" }, async (req) => {
       const tid = +req.params.tid; await needTenant(tid); const b = req.json(), w = { ...(await walletSettings(ctx, tid)) };
       const num = (k, lo, hi) => { if (b[k] === undefined) return; const v = +b[k]; if (!Number.isFinite(v) || v < lo || v > hi) throw new HttpError(400, "validation_error", `${k} بين ${lo} و${hi}`); w[k] = v; };
-      num("fee_pct", 0, 50); num("fee_fixed", 0, 100000); num("usd_rate", 1, 1000); num("min_withdrawal", 1, MAX);
+      num("fee_pct", 0, 50); num("fee_fixed", 0, 100000); num("usd_rate", 1, 1000); num("min_withdrawal", 1, MAX); if (b.require_carrier !== undefined) w.require_carrier = !!b.require_carrier;
       await db.run("INSERT INTO wl_settings (tenant_id,settings) VALUES (?,?) ON CONFLICT(tenant_id) DO UPDATE SET settings=excluded.settings", tid, JSON.stringify(w)); await ctx.audit(req.actor, "wallet.settings", tid, w); return ok({ ok: true, settings: w });
     });
     r.post("/admin/wallet/:tid/deposit", { auth: "admin", summary: "تأكيد إيداع وصل فعلاً (حوالة/RedotPay/PayPal) ← المتاح: { amount, ref, memo }" }, async (req) => {
@@ -167,8 +170,8 @@ export const wallet = {
       await ctx.emit(e.tenantId, "wallet.escrow_held", { order_id: oid, amount, currency: ccy }, `wl:hold:${oid}`);
       const o = await ctx.db.val("SELECT outcome FROM wl_orders WHERE tenant_id=? AND order_id=?", e.tenantId, oid); if (o) await settle(ctx, e.tenantId, oid, o);   // وصل الحدث النهائي قبل الدفع
     },
-    "order.delivered": terminal("delivered"), "order.cancelled": terminal("cancelled"), "order.failed": terminal("cancelled"),
+    "order.delivered": terminal("delivered"), "order.cancelled": terminal("cancelled"), "order.failed": terminal("cancelled"), "order.returned": terminal("cancelled"),   // طرد مرتجع من البوابة ← استرداد الضمان
   },
 };
-const pickSettings = (w) => ({ fee_pct: +w.fee_pct || 0, fee_fixed: +w.fee_fixed || 0, usd_rate: +w.usd_rate || null, min_withdrawal: +w.min_withdrawal || 1000 });
+const pickSettings = (w) => ({ fee_pct: +w.fee_pct || 0, fee_fixed: +w.fee_fixed || 0, usd_rate: +w.usd_rate || null, min_withdrawal: +w.min_withdrawal || 1000, require_carrier: !!w.require_carrier });
 export { settle };
