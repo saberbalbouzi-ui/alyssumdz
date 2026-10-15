@@ -45,6 +45,7 @@
     "assets/js/admin-wh.js",
     "assets/js/admin-experts.js",
     "assets/js/admin-sources.js",
+    "assets/js/admin-wallet.js",
     "assets/js/admin-roles.js",
     "assets/js/admin-platform-sync.js",
     "assets/js/admin-shipagg.js",

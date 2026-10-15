@@ -38,6 +38,10 @@ const ALLOW: [string, RegExp][] = [
   ["POST", /^\/v1\/ads\/oauth\/meta\/start$/],
   ["POST", /^\/v1\/ads\/oauth\/\d{1,12}\/link$/],
   ["DELETE", /^\/v1\/ads\/oauth\/\d{1,12}$/],
+  // المحفظة (دفتر القيد المزدوج في المنصة): قراءة الأرصدة والضمان والدفتر، طلب سحب/إلغاؤه، شراء رصيد إعلانات. مسارات /admin/wallet/* ممنوعة هنا
+  ["GET", /^\/v1\/wallet(\/ledger|\/escrow|\/withdrawals|\/ads-quote)?$/],
+  ["POST", /^\/v1\/wallet\/(withdrawals|ads-topup)$/],
+  ["DELETE", /^\/v1\/wallet\/withdrawals\/\d{1,12}$/],
 ];
 
 Deno.serve(async (req) => {
