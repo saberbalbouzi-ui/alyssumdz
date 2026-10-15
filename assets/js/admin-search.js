@@ -22,6 +22,8 @@ const AdminSearch = (() => {
     ["فتح المرتجعات", "تسجيل ومتابعة مرتجعات الطلبات المسلَّمة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'returns'")); if (b) b.click(); }, "مرتجعات استبدال استرداد إعادة المخزون"],
     ["فتح المدفوعات", "حالة الدفع اليدوية والمبالغ المعلّقة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'payments'")); if (b) b.click(); }, "مدفوعات دفع تحصيل مدفوع مسترد معلق"],
     ["فتح المدوّنة والسياسات", "مقالات المدوّنة وصفحات الخصوصية والاسترجاع والشحن والشروط", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'blog'")); if (b) b.click(); }, "مدونة مقال مقالات سياسة الخصوصية الاسترجاع الشحن الشروط blog policy"],
+    ["فتح العروض الإضافية", "Order Bump وعرض بعد الشراء لرفع متوسط الطلب", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'upsell'")); if (b) b.click(); }, "order bump upsell عرض إضافي بعد الشراء"],
+    ["فتح تجهيز الطلبات", "قائمة الجمع ووصل التجهيز لأمين المخزن", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'pack'")); if (b) b.click(); }, "تجهيز المخزن magasinier جُهِّز"],
     ["فتح SEO", "عناوين وأوصاف المنتجات وبيانات المشاركة", () => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'seo'")); if (b) b.click(); }, "seo محركات البحث وصف عنوان noindex sitemap"],
   ];
   function build() {

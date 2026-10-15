@@ -14,3 +14,4 @@ description: اتفاقيات واجهة لوحة تحكم أليسوم: الم�
 - **الذاكرة المحلية:** مفاتيح `alyssum_*`؛ ما يجب مزامنته بين الأجهزة يمرّ بـ`Priv`/PrivSync.
 - **الجداول:** أضفها إلى `LIST` في admin-tablesel.js ليأخذ التحديد وقائمة Action؛ صفوف الطرود تحمل `data-trk`/`data-co` للبوردرو.
 - **الصوت واليد:** الفهرس الحي يلتقط أي زر جديد تلقائياً بتسمية واضحة (`aria-label`/`label`/نص)؛ سمِّ الأزرار بوضوح.
+- (v1.89.239) قسم جديد بصلاحية جديدة (مثل `pack`): أضف الصلاحية في `PERMS` بـ`admin-roles.js` و`staff-admin/index.ts` و`php-edition/api/index.php` (`STAFF_PERMS`) و`TAB_PERM`، ودور جديد يُضاف لـ`ROLES` وللثلاثة نفسها ولقيد `staff_role_check` في `supabase/roles.sql`؛ `test-roles.js` يتحقق من التطابق. دور لا يقرأ جدول الطلبات يحتاج دوال خادم تُرجع الحقول اللازمة فقط (نموذج `pack_orders`).

@@ -147,6 +147,7 @@ const Cart = {
     let sm = document.getElementById("cart-ship-msg");
     if(!sm && feeEl){ sm = document.createElement("div"); sm.id = "cart-ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.85rem;margin:.3rem 0;font-weight:700"; (feeEl.closest("div")||feeEl.parentNode).appendChild(sm); }
     if(sm) sm.textContent = items.length ? sq.msg : "";
+    try{ if(window.Upsell && Upsell.ready()){ const tb = totEl && (totEl.closest(".tot") || totEl.parentNode); if(tb) Upsell.cartSync(tb); } }catch(e){}   // Order Bump في السلة
   },
   fee(){
     const _all = Cart.all(); if(_all.length && (_all.every(cartItemFreeShip) || couponFreeShip())) return 0;   // كل منتجات السلة بشحن مجاني
@@ -181,6 +182,7 @@ const Cart = {
     const disc = currentCartDiscount(sub, couponCartItems());
     const discount = disc.discount;
     const total = Math.max(0, sub - discount) + fee;
+    const __cgrp = (window.Upsell && Upsell.hasType("post")) ? Upsell.gid() : "";
     // Enregistrement dans Google Sheets
     const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
     const __order = {
@@ -189,7 +191,7 @@ const Cart = {
         return { slug: it.slug, title: p.title + (it.vlabel ? " — " + it.vlabel : ""), qty: it.qty, price: Math.round(it.price) }; }),
       subtotal: sub, fee, total,
       coupon: AppliedCoupon.record && (disc.couponDiscount > 0 || couponFreeShip() || couponGiftTitle()) ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && disc.couponDiscount > 0 && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (window.GeoPin && GeoPin.link()) ? { "📍 الموقع": GeoPin.link() } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, items.some(it=>it.up) ? { "➕ إضافة سريعة": (items.find(it=>it.up).upt || "") } : {}, __cgrp ? { "🧺 مجموعة": __cgrp } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (window.GeoPin && GeoPin.link()) ? { "📍 الموقع": GeoPin.link() } : {}, Attrib),
     };
     const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
@@ -209,7 +211,7 @@ const Cart = {
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     try{ const f0 = items[0] && (PRODUCTS.find(x=>x.slug===items[0].slug) || items[0]); trackEvent("Lead", { slug: items[0] && items[0].slug, title: f0 && f0.title, qty: items.reduce((a,i)=>a+i.qty,0), value: total }); if(f0) firePixelPurchase(f0, total, items.reduce((a,i)=>a+i.qty,0)); }catch(e){}
     Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
-    Thanks.show({ name, total, lines: items.map(it=>{ const q = PRODUCTS.find(x=>x.slug===it.slug)||it; return q.title + (it.qty>1?" ×"+it.qty:""); }), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
+    Thanks.show({ name, total, up: { customer:{ name, phone, wilaya: wl.name, commune, dtype }, slugs: items.map(i=>i.slug), cats: items.map(i=>{ const q = PRODUCTS.find(x=>x.slug===i.slug); return q ? q.cat : ""; }), total, grp: __cgrp, page: PageSrc || "" }, lines: items.map(it=>{ const q = PRODUCTS.find(x=>x.slug===it.slug)||it; return q.title + (it.qty>1?" ×"+it.qty:""); }), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   }
 };
 
@@ -1098,6 +1100,8 @@ function initProduct(slug){
   }
 
   const feeEl = document.getElementById("fee"), totEl = document.getElementById("grand");
+  let bumpSel = null, bumpCtl = null;                                  // Order Bump المختار (خانة قبل زر التأكيد) — راجع assets/js/upsell.js
+  const bumpAmt = ()=> bumpSel ? bumpSel.price * bumpSel.qty : 0;
   function update(){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
     const sq = state.wilaya ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)) : null;
@@ -1107,7 +1111,7 @@ function initProduct(slug){
     if(!sm){ sm = document.createElement("div"); sm.id = "ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.88rem;margin:.4rem 0;font-weight:700"; const tb = feeEl.closest(".total-box"); if(tb) tb.parentNode.insertBefore(sm, tb); }
     sm.textContent = (!freeShip && sq) ? sq.msg : "";
     const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
-    const total = Math.max(0, state.offer.price - discount) + (fee||0);
+    const total = Math.max(0, state.offer.price - discount) + bumpAmt() + (fee||0);
     totEl.textContent = fmt(total);
     const st = document.getElementById("sticky-price");
     if(st) st.textContent = fmt(total);
@@ -1115,12 +1119,16 @@ function initProduct(slug){
     // مع تغيير العرض أو إضافة رسوم التوصيل — أصبح الآن يعكس نفس الإجمالي الحقيقي دوماً (يشمل خصم الكوبون إن وُجد)
     const bt = document.getElementById("btn-total");
     if(bt) bt.textContent = fmt(total);
+    if(bumpCtl) bumpCtl.refresh();      // تغيّر العرض/الكمية قد يغيّر أهلية الـOrder Bump
   }
   update();
   document.addEventListener("shipco:ready", ()=>{ try{ update(); }catch(e){} });
   // حقل كود الخصم — يُحقن ديناميكياً قبل مربع الإجمالي (لا حاجة لتعديل كل صفحة منتج يدوياً)
   const totalBoxEl = feeEl.closest(".total-box");
   if(totalBoxEl) injectCouponBox("prod", totalBoxEl, ()=>state.offer.price, update, ()=>[{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
+  // Order Bump: منتج مكمّل بسعر خاص بخانة اختيار قبل الإجمالي (القواعد من لوحة التحكم ⟵ العروض الإضافية)
+  const mountBump = ()=>{ if(bumpCtl || !totalBoxEl || !window.Upsell) return; try{ bumpCtl = Upsell.mountBump(totalBoxEl, ()=>({ slugs:[p.slug], cats:[p.cat], total: state.offer.price }), sel=>{ bumpSel = sel; update(); }); }catch(e){} };
+  if(window.Upsell && Upsell.ready()) mountBump(); else document.addEventListener("upsell:ready", mountBump, { once:true });
 
   // بنود الطلب حسب نوع المنتج (المتغيّر: عنوان التنويع داخل الاسم؛ المجمّع: بند لكل منتج بكمية)
   function orderItems(){
@@ -1154,17 +1162,19 @@ function initProduct(slug){
     try{ const __gp = window.GeoPin && GeoPin.link(); if(__gp) extraValues["📍 الموقع"] = __gp; }catch(e){}
     const fee = (offerFreeShip(p, state.offer) || couponFreeShip()) ? 0 : __sq.fee;
     const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
-    const total = Math.max(0, state.offer.price - discount) + fee;
+    const bumpPrice = bumpAmt();
+    const total = Math.max(0, state.offer.price - discount) + bumpPrice + fee;
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
+    const __grp = (bumpSel || (window.Upsell && Upsell.hasType("post"))) ? Upsell.gid() : "";    // مجموعة الطلب: تربط طلب «بعد الشراء» بهذا الطلب ليُدمجا في شحنة واحدة
     // Enregistrement dans Google Sheets
     const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
     const __order = {
       name, phone, wilaya: state.wilaya.name, commune,
       dtype: state.dtype, desk,
-      items: orderItems(),
-      subtotal: state.offer.price, fee, total,
+      items: orderItems().concat(bumpSel ? [{ slug: bumpSel.slug, title: bumpSel.title, qty: bumpSel.qty, price: bumpSel.price }] : []),
+      subtotal: state.offer.price + bumpPrice, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
     };
     const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
@@ -1176,6 +1186,7 @@ function initProduct(slug){
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n` + (type==="grouped"
       ? state.group.kids.map((c,i)=> state.group.qty[i] ? `\n• ${c.title}\n  الكمية: ${state.group.qty[i]} × ${fmt(c.price)} = ${fmt(state.group.qty[i]*c.price)}` : "").join("")
       : `\n• ${p.title}${state.variation?" — "+variationLabel(p,state.variation):""}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`);
+    if(bumpSel) msg += `\n\n• ${bumpSel.title} (إضافة سريعة)\n  الكمية: 1 × ${fmt(bumpSel.price)} = ${fmt(bumpSel.price)}`;
     if(state.offer.free) msg += `\n  🎁 العرض: اشترِ 2 واحصل على الثالثة مجاناً`;
     if(p.old) msg += `\n  (السعر الأصلي: ${fmt(p.old)} ✂️)`;
     if(discount>0) msg += `\n  🎟️ خصم الكود (${AppliedCoupon.code}): -${fmt(discount)}`;
@@ -1187,7 +1198,7 @@ function initProduct(slug){
     Object.entries(extraValues).forEach(([label,val])=>{ msg += `\n${label}: ${val}`; });
     msg += `\n\n💵 الدفع عند الاستلام`;
     Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
-    Thanks.show({ name, total, lines: type==="grouped" ? state.group.kids.filter((c,i)=>state.group.qty[i]).map(c=>c.title) : [p.title + (state.offer.qty>1?" ×"+state.offer.qty:"")], wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
+    Thanks.show({ name, total, up: { customer:{ name, phone, wilaya: state.wilaya.name, commune, dtype: state.dtype, desk }, slugs: __order.items.map(x=>x.slug), cats:[p.cat], total, grp: __grp, page: PageSrc || ("p/" + slug) }, lines: (type==="grouped" ? state.group.kids.filter((c,i)=>state.group.qty[i]).map(c=>c.title) : [p.title + (state.offer.qty>1?" ×"+state.offer.qty:"")]).concat(bumpSel ? [bumpSel.title] : []), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   });
 
   // أضف إلى السلة
@@ -1889,6 +1900,7 @@ const Thanks = {
         '<div class="thx-st"><span><i>1</i>سنؤكّد معك الطلب هاتفياً أو عبر واتساب.</span><span><i>2</i>نجهّز طلبك ونشحنه إلى ولايتك.</span><span><i>3</i>تعاين وتدفع عند الاستلام فقط.</span></div>' +
         '<div class="thx-act"><a class="pri" href="' + (typeof REL !== "undefined" ? REL : "") + 'index.html">متابعة التسوق</a>' + (o.wa ? '<a href="' + e(o.wa) + '" target="_blank" rel="noopener">إرسال الطلب على واتساب</a>' : "") + '<button type="button" id="thx-x">إغلاق</button></div></div>';
       document.body.appendChild(el);
+      try{ if(o.up && window.Upsell) Upsell.mountPost(el, o.up); }catch(_){}      // Upsell بعد الشراء (assets/js/upsell.js)
       const close = ()=>{ el.remove(); document.removeEventListener("keydown", kd); }, kd = ev=>{ if(ev.key === "Escape") close(); };
       document.addEventListener("keydown", kd); el.querySelector("#thx-x").onclick = close; el.addEventListener("mousedown", ev=>{ if(ev.target === el) close(); });
       try{ if(navigator.vibrate) navigator.vibrate(30); }catch(_){}
@@ -2034,5 +2046,6 @@ const PhoneDZ = {
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 /* مرآة الطلب إلى المنصة (مراقبة الأسعار والمخزون) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/platform-order.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=1'; s.async=true; document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} }); document.head.appendChild(s); }catch(e){} })();
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();

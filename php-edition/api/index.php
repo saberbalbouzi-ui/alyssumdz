@@ -156,13 +156,14 @@ function normQ(string $q): string { $q = mb_strtolower($q); $q = preg_replace('/
 /* ══════════ الأدوار والمصادقة الثنائية (TOTP) وسجلّ النشاط (v1.89.155) ══════════
    المالك = كلمة مرور المدير؛ الموظف = حساب في جدول staff بصلاحيات نصية (تُفرض في المسارات أدناه).
    TOTP حسب RFC 6238 (HMAC-SHA1، 6 أرقام، 30 ثانية، نافذة ±1) مع منع إعادة استعمال الرمز، ورموز طوارئ تُخزَّن مجزّأة. */
-const STAFF_PERMS = ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics', 'customers', 'finance', 'ship', 'products', 'marketing', 'site'];
-const STAFF_ROLES = ['manager', 'agent', 'support', 'accountant'];
+const STAFF_PERMS = ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics', 'customers', 'finance', 'ship', 'products', 'marketing', 'site', 'pack'];
+const STAFF_ROLES = ['manager', 'agent', 'support', 'accountant', 'warehouse'];
 const STAFF_PRESETS = [
     'manager' => ['orders', 'orders.write', 'orders.edit', 'orders.create', 'orders.delete', 'callcenter', 'analytics', 'customers'],
     'agent' => ['orders', 'orders.write', 'callcenter'],
     'support' => ['orders', 'orders.write', 'orders.edit', 'callcenter', 'customers'],
     'accountant' => ['orders', 'analytics', 'finance', 'customers'],
+    'warehouse' => ['pack'],
 ];
 function b32enc(string $bin): string {
     $a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; $bits = ''; $o = '';
@@ -766,6 +767,27 @@ switch ($route) {
             'id' => $r['id'], 'date' => iso((int)$r['created_at']), 'name' => $r['name'], 'phone' => $r['phone'], 'wilaya' => $r['wilaya'], 'commune' => $r['commune'],
             'dtype' => $r['dtype'], 'desk' => $r['desk'], 'items' => $r['items_text'], 'subtotal' => (float)$r['subtotal'], 'fee' => (float)$r['fee'], 'total' => (float)$r['total'],
             'coupon' => $r['coupon'], 'discount' => (float)$r['discount'], 'extra' => json_decode($r['extra'], true) ?: new stdClass, 'status' => $r['status'], 'note' => $r['note']], $rows)]);
+
+    /* أمين المخزن (v1.89.239): قائمة تجهيز بلا هاتف ولا أسعار ولا مالية — الطلبات المؤكَّدة/المرسَلة فقط، وعلامة 🧰 في الملاحظة تعني «جُهِّز» */
+    case 'pack_orders':
+        needPerm('pack');
+        $rows = db()->query("SELECT id, created_at, name, wilaya, commune, dtype, desk, items_text, status, note FROM orders WHERE status IN ('confirmee','expediee') AND note NOT LIKE '%🗑%' ORDER BY created_at DESC LIMIT 300")->fetchAll();
+        out(200, ['ok' => true, 'orders' => array_map(function ($r) {
+            $ship = preg_match('/🚚(\S+)/u', (string)$r['note'], $m) ? $m[1] : ''; $co = ''; $trk = $ship; if (strpos($ship, ':') !== false) [$co, $trk] = explode(':', $ship, 2);
+            return ['id' => $r['id'], 'date' => iso((int)$r['created_at']), 'name' => $r['name'], 'wilaya' => $r['wilaya'], 'commune' => $r['commune'], 'dtype' => $r['dtype'], 'desk' => $r['desk'],
+                'items' => $r['items_text'], 'status' => $r['status'], 'company' => $co, 'tracking' => $trk, 'packed' => (strpos((string)$r['note'], '🧰') !== false)];
+        }, $rows)]);
+
+    case 'pack_mark':
+        needPerm('pack');
+        if ($method !== 'POST') out(405, ['error' => 'method']);
+        $b = body(); $id = (string)($b['id'] ?? ''); $undo = !empty($b['undo']);
+        $os = db()->prepare("SELECT note FROM orders WHERE id = ? AND status IN ('confirmee','expediee')"); $os->execute([$id]); $note = $os->fetchColumn();
+        if ($note === false) out(404, ['error' => 'not_found']);
+        $note = (string)$note; $clean = trim(preg_replace('/🧰\S*\s*/u', '', $note));
+        $new = $undo ? $clean : trim($clean . ' 🧰@' . gmdate('Y-m-d'));
+        if ($new !== $note) { db()->prepare('UPDATE orders SET note = ? WHERE id = ?')->execute([cut($new, 500), $id]); if (!$undo) audit('order.packed', $id); }
+        out(200, ['ok' => true, 'packed' => !$undo]);
 
     case 'order_update':
         needPerm('orders.write');

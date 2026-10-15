@@ -119,9 +119,9 @@ html.white .ccm-card{background:#fff;color:#0f172a;border-color:#d2d9e3}html.whi
 <div class="ccm-ph" dir="ltr">${esc(o.phone)}</div>
 <div class="ccm-quick"><a class="t" href="tel:${esc(ph.startsWith("0") ? "+213" + ph.slice(1) : "+" + ph)}">📞 اتصل</a><a href="https://wa.me/${intl}" target="_blank" rel="noopener">💬 واتساب</a></div>
 <div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>
-${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
+${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>${window.AdminUpsell ? AdminUpsell.ccLine(o) : ""}
 ${short ? '<div class="ccm-warn">⚠️ المخزون لا يكفي لهذا الطلب — سيُطلب منك تأكيد قبل أي اتصال أو تأكيد.</div>' : ""}
-${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|🔒\S+|❌سبب:\S+|📲\S+|👤\S+|👥\S+/g, "").trim())}</div>` : ""}
+${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳](?: «[^»]*»)?|🔒\S+|❌سبب:\S+|📲\S+|👤\S+|👥\S+|🧰\S*/g, "").trim())}</div>` : ""}
 <div class="ccm-act"><button class="ok" data-d="confirm">✅ تأكيد الطلب <span class="ccm-k">C</span></button>
 <button class="ok2" data-d="addr">🏠 تأكيد مع تعديل العنوان <span class="ccm-k">A</span></button>
 <button data-d="noans">📞 غير متاح — محاولة ${Math.min(3, at + 1)} <span class="ccm-k">N</span></button><button class="wa" data-d="later">⏰ لاحقاً اليوم <span class="ccm-k">L</span></button>
@@ -141,7 +141,7 @@ ${o.note ? `<div class="ccm-m">📝 ${esc(String(o.note).replace(/📞[1-3]|⏰�
 <div class="ccm-ph" dir="ltr">${esc(o.phone)}</div>
 <div class="ccm-quick"><a class="t" href="tel:${esc(ph.startsWith("0") ? "+213" + ph.slice(1) : "+" + ph)}">📞 اتصل</a><a href="https://wa.me/${intl}" target="_blank" rel="noopener">💬 واتساب</a></div>
 <div class="ccm-m">${esc([o.wilaya, o.commune].filter(Boolean).join(" / ") || "—")} · ${o.dtype === "stop" ? "مكتب" : "للمنزل"} · <b>${fmt(o.total)}</b></div>
-${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
+${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>${window.AdminUpsell ? AdminUpsell.ccLine(o) : ""}
 <div class="ccm-act"><button class="ok" data-d="fok">✅ تواصلت — الزبون سيستلم</button>
 <button class="wa" data-d="fno">📞 لم يرد — أعد المحاولة غداً</button><button class="no" data-d="fref">🚫 رفض الاستلام</button>
 <button data-d="fopen" style="grid-column:1/-1">📋 فتح الطلب (تعديل العنوان أو غيره)</button>
@@ -184,6 +184,7 @@ ${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>
       if (d === "fopen") { try { a.openOrderPreview(i); } catch (e) { } return; }
       a.setFollow(o, d === "fok" ? "ok" : d === "fno" ? "no" : "ref"); st.follow = (st.follow || 0) + 1; S.cur = null; toast(d === "fref" ? "🚫 سُجّل رفض الاستلام — يمكنك إلغاء الطلب أو إرجاعه من الطلبات" : d === "fok" ? "✅ سُجّلت المتابعة" : "📞 سيعود الطلب غداً إن بقي بلا استلام"); return render();
     }
+    if (d === "merge") { const ok = window.AdminUpsell && await AdminUpsell.merge(o); return render(); }
     if (d === "skip") { unlock(o); S.skip[id] = 1; S.cur = null; return render(); }
     if (d === "confirm") { await a.previewResult(i, "confirm"); }
     else if (d === "cancel") { return reasonDialog(o, async () => { const j = idxOf(id); if (j < 0) return render(); await a.previewResult(j, "cancel"); afterDecision(id); }); }

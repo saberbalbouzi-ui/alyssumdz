@@ -60,7 +60,7 @@ const arr = (src, re) => { const m = re.exec(src); return m ? [...m[1].matchAll(
 const jsPerms = R.PERMS.map(p => p.id);
 ok("PERMS = الدالة الخادمية", JSON.stringify(arr(ts, /const PERMS = \[([^\]]*)\]/)) === JSON.stringify(jsPerms), arr(ts, /const PERMS = \[([^\]]*)\]/));
 ok("PERMS = PHP", JSON.stringify(arr(php, /const STAFF_PERMS = \[([^\]]*)\]/)) === JSON.stringify(jsPerms));
-for (const role of ["manager", "agent", "support", "accountant"]) {
+for (const role of ["manager", "agent", "support", "accountant", "warehouse"]) {
   const t = arr(ts, new RegExp(role + ":\\s*\\[([^\\]]*)\\]")), p = arr(php, new RegExp("'" + role + "' => \\[([^\\]]*)\\]"));
   ok("دور " + role + ": اللوحة = الدالة الخادمية", JSON.stringify(t) === JSON.stringify(R.ROLES[role].perms), t);
   ok("دور " + role + ": اللوحة = PHP", JSON.stringify(p) === JSON.stringify(R.ROLES[role].perms), p);
@@ -79,4 +79,9 @@ ok("أقسام القائمة: غير المسجَّلة هي المالك-فق�
 ok("لا قسم مسجَّل بصلاحية مجهولة", Object.values(R.TAB_PERM).concat(Object.values(R.APP_PERM)).every(p => jsPerms.includes(p)));
 ok("لا صلاحية مالية لدور الاتصال", !R.has(agent, "finance") && !R.has(agent, "ship") && !R.has(agent, "site") && !R.has(agent, "customers"));
 ok("المالية للمحاسب وحده افتراضياً", R.ROLES.accountant.perms.includes("finance") && !R.ROLES.manager.perms.includes("finance") && !R.ROLES.support.perms.includes("finance"));
+const wh = { owner: false, role: "warehouse", perms: R.ROLES.warehouse.perms };
+ok("أمين المخزن: قسم التجهيز فقط (ولا طلبات ولا مالية ولا عملاء ولا اتصال)", R.tabAllowed(wh, "pack") && ["orders", "callcenter", "finance", "payments", "customers", "home", "reports", "shipped", "builder", "coupons"].every(t => !R.tabAllowed(wh, t)) && R.firstTab(wh) === "pack");
+ok("صلاحية pack لأمين المخزن وحده افتراضياً", R.ROLES.warehouse.perms.join() === "pack" && ["manager", "agent", "support", "accountant"].every(r => !R.ROLES[r].perms.includes("pack")));
+ok("لا يملك أمين المخزن أي صلاحية قراءة طلبات (حتى لا يرى الهواتف)", !R.has(wh, "orders") && !R.has(wh, "orders.write") && !R.has(wh, "customers"));
+ok("SQL: دالتا pack_orders وpack_mark تتطلبان has_perm('pack') ولا تُرجعان phone", /pack_orders[\s\S]*has_perm\('pack'\)/.test(sql) && /pack_mark[\s\S]*has_perm\('pack'\)/.test(sql) && !/jsonb_build_object\('id', o\.id[^;]*'phone'/.test(sql));
 console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);

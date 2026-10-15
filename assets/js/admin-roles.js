@@ -18,6 +18,7 @@
     { id: "products", label: "المنتجات والمخزون", soon: true },
     { id: "marketing", label: "التسويق (الأكواد، الولاء، السوشيال، البكسلات)", soon: true },
     { id: "site", label: "تصميم الموقع وصفحاته", soon: true },
+    { id: "pack", label: "تجهيز الطلبات وطباعة وصل التجهيز (بلا أرقام الهاتف ولا الأسعار ولا المالية)" },
   ];
   const SOON = PERMS.filter(p => p.soon).map(p => p.id);
   const RO_TABS = { finance: 1, payments: 1, costs: 1, customers: 1 };      // أقسام تُفتح للموظف قراءةً فقط
@@ -27,13 +28,14 @@
     agent: { label: "موظف اتصال", perms: ["orders", "orders.write", "callcenter"] },
     support: { label: "دعم الزبائن", perms: ["orders", "orders.write", "orders.edit", "callcenter", "customers"] },
     accountant: { label: "محاسب", perms: ["orders", "analytics", "finance", "customers"] },
+    warehouse: { label: "أمين المخزن", perms: ["pack"] },
   };
   const TAB_PERM = {
     home: "analytics", orders: "orders", callcenter: "callcenter",
     shipped: "ship", delivery: "ship", fees: "ship",
     finance: "finance", payments: "finance", costs: "finance",
-    customers: "customers", repeat: "marketing", coupons: "marketing", loyalty: "marketing", social: "marketing", pixels: "marketing",
-    reports: "analytics",
+    customers: "customers", repeat: "marketing", coupons: "marketing", upsell: "marketing", loyalty: "marketing", social: "marketing", pixels: "marketing",
+    reports: "analytics", pack: "pack",
     products: "products", bulkp: "products", inventory: "products", categories: "products", attributes: "products", audit: "products",
     seo: "site", blog: "site", builder: "site", pbgen: "site", imgtools: "site", imggen: "site", theme: "site", chromeh: "site", chromef: "site", checkout: "site", tpl: "site",
   };
@@ -47,7 +49,7 @@
     const p = TAB_PERM[tab]; return p ? has(me, p) : false;
   }
   function appAllowed(me, app) { if (!me) return false; if (me.owner === true || SELF_APPS.indexOf(app) >= 0) return true; const p = APP_PERM[app]; return p ? has(me, p) : false; }
-  const LAND = ["callcenter", "orders", "home", "finance", "customers", "products", "reports", "team"];
+  const LAND = ["callcenter", "orders", "pack", "home", "finance", "customers", "products", "reports", "team"];
   function firstTab(me) { for (const t of LAND) if (tabAllowed(me, t)) return t; return "team"; }
   /* نتيجة الاتصال المسجَّلة في الملاحظة (to_status لأحداث order.call = وسوم الملاحظة): 📞1..3 غير متاح، ⏰ لاحقاً، 📅 غداً/مؤجَّل، 📵 رقم خاطئ، 🏠 عنوان معدَّل */
   function callKinds(a, marks, n) {
@@ -104,7 +106,7 @@
     return (rows || []).filter(r => r.confirmed + r.cancelled > 0).map(r => { const pf = (perfRows || []).find(x => x.actor === r.actor); return { actor: r.actor, confirmed: r.confirmed, rate: r.rate, med: pf ? pf.med_min : null }; })
       .sort((a, b) => b.confirmed - a.confirmed || (b.rate || 0) - (a.rate || 0) || (a.med == null ? 1e9 : a.med) - (b.med == null ? 1e9 : b.med)).map((x, i) => Object.assign(x, { rank: i + 1 }));
   }
-  const ACTION_LBL = { "order.status": "تغيير حالة طلب", "order.call": "نتيجة اتصال", "order.edit": "تعديل طلب", "order.create": "إنشاء طلب", "order.delete": "حذف طلب", login: "دخول", logout: "خروج", "mfa.enroll": "تفعيل المصادقة الثنائية", "mfa.disable": "إيقاف المصادقة الثنائية", "mfa.verify_fail": "رمز مصادقة خاطئ", "staff.create": "إضافة موظف", "staff.update": "تعديل موظف", "staff.disable": "إيقاف موظف", "staff.password": "كلمة مرور موظف", "staff.reset_mfa": "إعادة ضبط مصادقة موظف", "staff.delete": "حذف موظف" };
+  const ACTION_LBL = { "order.status": "تغيير حالة طلب", "order.call": "نتيجة اتصال", "order.edit": "تعديل طلب", "order.create": "إنشاء طلب", "order.delete": "حذف طلب", "order.packed": "تجهيز طلب", login: "دخول", logout: "خروج", "mfa.enroll": "تفعيل المصادقة الثنائية", "mfa.disable": "إيقاف المصادقة الثنائية", "mfa.verify_fail": "رمز مصادقة خاطئ", "staff.create": "إضافة موظف", "staff.update": "تعديل موظف", "staff.disable": "إيقاف موظف", "staff.password": "كلمة مرور موظف", "staff.reset_mfa": "إعادة ضبط مصادقة موظف", "staff.delete": "حذف موظف" };
   const STATUS_LBL = { nouvelle: "جديد", confirmee: "مؤكد", annulee: "ملغى", expediee: "مرسل", livree: "مسلَّم", echec: "فشل" };
 
   const model = { PERMS, SOON, RO_TABS, ROLES, TAB_PERM, APP_PERM, has, tabAllowed, appAllowed, firstTab, summarize, ACTION_LBL, CANCEL_REASONS, respTone, fmtMin, goalFor, assigneeOf, inPlan, leaderboard };
