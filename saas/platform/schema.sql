@@ -216,6 +216,16 @@ CREATE INDEX IF NOT EXISTS ix_mk_ord_sup ON mk_orders (supplier_id, id);
 CREATE INDEX IF NOT EXISTS ix_mk_ord_aff ON mk_orders (affiliate_id, id);
 CREATE TABLE IF NOT EXISTS mk_config (k TEXT PRIMARY KEY, v TEXT NOT NULL);
 
+-- mk_sellers: ملف البائع في السوق (جملة/تجزئة) وطلبات انضمام الموردين الخارجيين (مراجعة يدوية؛ الاعتماد ينشئ مستأجراً بمفتاح محدود النطاق). tenant_id يُملأ عند الاعتماد أو للمورّد الداخلي.
+CREATE TABLE IF NOT EXISTS mk_sellers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER, kind TEXT NOT NULL DEFAULT 'retail', name TEXT NOT NULL, contact TEXT NOT NULL DEFAULT '', phone_h TEXT NOT NULL DEFAULT '', phone_enc TEXT,
+  wilaya TEXT NOT NULL DEFAULT '', reg_no TEXT NOT NULL DEFAULT '', about TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'pending', note TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT 'portal', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_mk_sel_t ON mk_sellers (tenant_id);
+CREATE INDEX IF NOT EXISTS ix_mk_sel_s ON mk_sellers (status, id);
+-- mk_images: صور منتجات المورّدين الخارجيين (بلا استضافة خاصة): JPEG/PNG/WebP ≤240KB بصيغة base64
+CREATE TABLE IF NOT EXISTS mk_images (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, mime TEXT NOT NULL, data TEXT NOT NULL, created_at INTEGER NOT NULL);
+
 -- ───────── وكالة التسويق بعلامة بيضاء (وحدة agency) ─────────
 -- marketing_services: كتالوج المنصة (يديره المزوّد) بالدينار؛ agency_orders: طلبات التجار (السعر لقطة وقت الشراء). الحالات: pending ← processing ← delivered | rejected.
 CREATE TABLE IF NOT EXISTS marketing_services (

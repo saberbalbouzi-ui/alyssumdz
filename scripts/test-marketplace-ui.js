@@ -8,7 +8,7 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".
 const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u === "/__blank") { r.writeHead(200, { "Content-Type": "text/html" }); return r.end("<!doctype html><meta charset=utf-8><body></body>"); } const f = path.join(root, decodeURIComponent(u)); if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); } r.writeHead(200, { "Content-Type": MIME[path.extname(f)] || "application/octet-stream" }); r.end(fs.readFileSync(f)); });
 const NOW = Math.floor(Date.now() / 1000);
 const DB = { off: false, calls: [], stock: 4,
-  cat: [{ id: 7, slug: "serum", title: "سيروم <img src=x onerror=window.__pwn=1>", supplier: "مورّد", category: "skin", image: "https://cdn.example/s.jpg", supplier_price: 2000, commission: 400, rrp: 2800, stock: 4, imported: false }, { id: 8, slug: "oil", title: "زيت", supplier: "مورّد", image: "", supplier_price: 900, commission: 150, rrp: 1300, stock: null, imported: true }],
+  cat: [{ id: 7, slug: "serum", title: "سيروم <img src=x onerror=window.__pwn=1>", supplier: "مورّد", seller: { kind: "wholesale", delivered: 9, returned: 1, rate: 90 }, category: "skin", image: "https://cdn.example/s.jpg", supplier_price: 2000, commission: 400, rrp: 2800, stock: 4, imported: false }, { id: 8, slug: "oil", title: "زيت", supplier: "مورّد", image: "", supplier_price: 900, commission: 150, rrp: 1300, stock: null, imported: true }],
   imps: [], mine: [{ id: 3, slug: "honey", title: "عسل", supplier_price: 1500, commission: 300, rrp: 2200, stock: 9, status: "active", importers: 2, pending_orders: 1 }],
   ord: [{ id: 11, mko: "MKO-11", ref: "W1", title: "عسل", qty: 1, commission: 300, state: "pending", ship: "new", collect: 2200, created_at: NOW, customer: { name: "<b>علي</b>", phone: "0551234567", wilaya: "الجزائر", commune: "باب الزوار", dtype: "home" } }],
   aff: [{ id: 12, ref: "W9", title: "زيت", qty: 1, commission: 150, fee: 15, net_commission: 135, state: "pending", ship: "new", created_at: NOW, customer: { name: "سارة", wilaya: "وهران" } }] };
@@ -48,6 +48,9 @@ function handle(b) {
   ok("بطاقات الملخص: المتاح والضمان والعمولات", /9 000 دج/.test(t) && /600 دج/.test(t) && /800 دج/.test(t));
   ok("تنبيه رصيد المورّد غير الكافي (طلبان مرفوضان)", /رُفض 2 طلب/.test(t));
   ok("الكتالوج: سعر المورّد والعمولة والمقترح، والعنوان يُهرَّب", /2 000 دج/.test(t) && /400 دج/.test(t) && /2 800 دج/.test(t) && await p.evaluate(() => !window.__pwn && !document.querySelector("#mk-app .mk-p img[src=x]")));
+  ok("الكتالوج: شارة جملة ونسبة التسليم", /🏭 جملة/.test(t) && /90%/.test(t));
+  await p.selectOption("#mk-seller", "retail"); await p.click('[data-mk="search"]'); await p.waitForTimeout(200);
+  ok("فلتر البائع يُرسل seller", DB.calls.some((c) => c.path === "/v1/marketplace/catalog" && c.query && c.query.seller === "retail")); await p.selectOption("#mk-seller", ""); await p.click('[data-mk="search"]'); await p.waitForTimeout(200);
   ok("المنتج المستورد سابقاً يظهر «مستورد» بلا زر", /مستورد في متجرك/.test(t) && (await p.evaluate(() => document.querySelectorAll('[data-mk="imp"]').length === 1)));
   /* سعر أقل من الحد الأدنى */
   await p.fill("#mk-pr-7", "2300"); await p.click('[data-mk="imp"]'); ok("سعر أقل من (المورّد+العمولة) لا يُرسل", !DB.calls.some((c) => c.method === "POST" && c.path === "/v1/marketplace/imports"));
