@@ -6,7 +6,7 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json" };
 const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u === "/__blank") { r.writeHead(200, { "Content-Type": "text/html" }); return r.end("<!doctype html><meta charset=utf-8><body></body>"); } const f = path.join(root, decodeURIComponent(u)); if (!f.startsWith(root) || !fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { "Content-Type": MIME[path.extname(f)] || "application/octet-stream" }); r.end(fs.readFileSync(f)); });
 const DB = { off: false, calls: [], avail: 20000, orders: [
-  { id: 2, ref: "AG-2", service: "حساب Meta", price: 20000, currency: "DZD", store_name: "<b>x</b>", client_email: "a@b.dz", status: "delivered", invite_link: "https://business.facebook.com/invite/<i>z</i>", note: "تم", created_at: "2026-10-14 09:00:00" },
+  { id: 2, ref: "AG-2", service: "حساب Meta", price: 20000, currency: "DZD", store_name: "<b>x</b>", client_email: "a@b.dz", status: "delivered", late: false, invite_link: "https://business.facebook.com/invite/<i>z</i>", note: "تم", created_at: "2026-10-14 09:00:00" },
   { id: 1, ref: "AG-1", service: "حساب TikTok Ads", price: 15000, currency: "DZD", store_name: "متجر", client_email: "c@d.dz", status: "rejected", invite_link: null, note: "الصفحة <script>window.__x=1</script> مرفوضة", created_at: "2026-10-13 09:00:00" }],
   svc: [{ id: 1, code: "tiktok-ads", name: "حساب TikTok Ads", description: "حساب جاهز", kind: "tiktok", price: 15000, needs_page: false, currency: "DZD" }, { id: 2, code: "meta-ads", name: "حساب Meta Ads", description: "", kind: "meta", price: 25000, needs_page: true, currency: "DZD" }] };
 function handle(b) {
@@ -49,6 +49,11 @@ function handle(b) {
   await p.fill("#ag-page", "http://insecure.example"); await p.click("[data-ag=submit]"); ok("رابط http مرفوض", (await toasts()).some((x) => /https/.test(x)));
   const before = DB.calls.filter((c) => c.method === "POST").length;
   await p.fill("#ag-page", "https://facebook.com/shop"); await p.click("[data-ag=submit]"); ok("رصيد غير كافٍ يُمنع قبل الإرسال برسالة واضحة", (await toasts()).some((x) => /غير كافٍ/.test(x)) && DB.calls.filter((c) => c.method === "POST").length === before);
+  /* تنبيهات الرئيسية */
+  await p.evaluate(() => { localStorage.removeItem("alyssum_ag_seen"); AdminAgency.S.orders = [{ id: 2, status: "delivered", late: false }, { id: 3, status: "processing", late: true }]; AdminAgency.S.at = Date.now(); });
+  ok("تنبيه: حساب جاهز + طلب متأخر", JSON.stringify(await p.evaluate(() => AdminAgency.alerts())) === '{"ready":1,"late":1}');
+  await p.evaluate(() => AdminAgency.render()); await p.waitForSelector(".ag-svc");
+  ok("بعد فتح التبويب لا يبقى «جاهز» غير مقروء", (await p.evaluate(() => AdminAgency.alerts())).ready === 0);
   /* الوحدة غير مفعّلة */
   DB.off = true; await p.evaluate(() => AdminAgency.refresh()); ok("وحدة غير مفعّلة ← رسالة تواصل مع الدعم", /غير مفعّلة بعد/.test(await txt()));
   ok("بلا أخطاء جافاسكربت", errs.length === 0, errs);

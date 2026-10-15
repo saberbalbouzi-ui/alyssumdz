@@ -32,8 +32,12 @@ export function partnerEmailHtml(p) {
   return `<div style="font-family:Arial,sans-serif"><h2>طلب حساب إعلاني جديد — ${escHtml(p.order_id)}</h2><table style="border-collapse:collapse">` + row("الخدمة", p.service.name) + row("اسم المتجر", p.client.store_name) + row("بريد الزبون", p.client.email) + row("صفحة فيسبوك", p.client.facebook_page_url) + row("السعر", `${p.price} ${p.currency}`) + row("التاريخ", p.created_at) +
     `</table><p>عند التسليم أرسل رابط دعوة الحساب إلى ${escHtml(p.callback_url || "الإدارة")} (status=delivered, invite_link=…).</p></div>`;
 }
-const pub = (o) => ({ id: o.id, ref: "AG-" + o.id, service_id: o.service_id, service: o.service_name, price: o.price, currency: o.currency, store_name: o.store_name, client_email: o.client_email, facebook_page_url: o.facebook_page_url, status: o.status,
+export const SLA_DEFAULT = 24;
+/** متأخر: لم يُسلَّم/يُرفض بعد مرور مهلة الخدمة (ساعات). نقية. */
+export const isLate = (o, nowMs, slaH = SLA_DEFAULT) => (o.status === "pending" || o.status === "processing") && nowMs - Date.parse(String(o.created_at).replace(" ", "T") + "Z") > slaH * 3600e3;
+const pub = (o, late = false) => ({ late, id: o.id, ref: "AG-" + o.id, service_id: o.service_id, service: o.service_name, price: o.price, currency: o.currency, store_name: o.store_name, client_email: o.client_email, facebook_page_url: o.facebook_page_url, status: o.status,
   invite_link: o.status === "delivered" ? o.invite_link : null, note: o.status === "rejected" || o.status === "delivered" ? o.note || null : null, created_at: o.created_at, updated_at: o.updated_at, delivered_at: o.delivered_at });
+const CLIENT_MAIL = (o, link) => `<div dir="rtl" style="font-family:Arial,sans-serif"><h2>حسابك الإعلاني جاهز ✅</h2><p>الخدمة: <b>${escHtml(o.service_name)}</b><br>المتجر: <b>${escHtml(o.store_name)}</b></p><p>رابط دعوة الحساب الإعلاني:</p><p><a href="${escHtml(link)}">${escHtml(link)}</a></p><p style="color:#666">رقم الطلب AG-${o.id}</p></div>`;
 
 export const agency = {
   id: "agency",
@@ -47,6 +51,7 @@ export const agency = {
       const row = await db.one("SELECT config, secret_enc FROM agency_settings WHERE id=1"); if (!row) return { config: {}, secrets: {} };
       return { config: JSON.parse(row.config || "{}"), secrets: row.secret_enc && ctx.vault ? await ctx.vault.decryptJson(row.secret_enc, AAD) : {} };
     }
+    const slaHours = async () => { const row = await db.one("SELECT config FROM agency_settings WHERE id=1"); const h = +(row ? JSON.parse(row.config || "{}").sla_hours : 0); return h >= 1 ? h : SLA_DEFAULT; };
     /** يرسل الطلب إلى الوكالة: webhook موقَّع و/أو بريد منظَّم (Resend). يُرجع { sent, channels, ref } أو { sent:false, reason } */
     async function notifyPartner(o) {
       const svc = await db.one("SELECT * FROM marketing_services WHERE id=?", o.service_id), { config: c, secrets: s } = await partner(), mode = c.notify || "webhook", payload = partnerPayload(o, svc, ctx.baseUrl), channels = []; let ref = null, last = "";
@@ -97,6 +102,12 @@ export const agency = {
       } catch (e) { await db.run("UPDATE agency_orders SET status=?, updated_at=? WHERE id=? AND status=?", o.status, ctx.nowS(), id, to); throw e; }
       await db.run("UPDATE agency_orders SET invite_link=COALESCE(?,invite_link), note=COALESCE(?,note), partner_ref=COALESCE(?,partner_ref), delivered_at=CASE WHEN ?='delivered' THEN ? ELSE delivered_at END WHERE id=?", invite_link, note ? String(note).slice(0, 500) : null, partner_ref, to, now, id);
       await ctx.emit(o.tenant_id, `agency.order_${to}`, { order_id: "AG-" + id, service: o.service_name, ...(to === "delivered" ? { invite_link } : {}), ...(to === "rejected" && note ? { note: String(note).slice(0, 200) } : {}) }, `ag:${to}:${id}`);
+      if (to === "delivered") {          // بريد للزبون برابط الدعوة (اختياري، لا يفشل التسليم بسببه)
+        try { const { config: c, secrets: sc } = await partner(); if (c.notify_client !== false && sc.resend_key && c.email_from) {
+          const res = await ctx.fetchFn("https://api.resend.com/emails", { method: "POST", redirect: "manual", headers: { Authorization: "Bearer " + sc.resend_key, "Content-Type": "application/json" }, body: JSON.stringify({ from: c.email_from, to: [o.client_email], subject: `حسابك الإعلاني جاهز — ${o.service_name}`, html: CLIENT_MAIL(o, invite_link) }) });
+          if (res.status >= 200 && res.status < 300) await ctx.emit(o.tenant_id, "agency.client_mailed", { order_id: "AG-" + id }, `ag:mail:${id}`);
+        } } catch { /* البريد ثانوي */ }
+      }
       return { order: await db.one("SELECT * FROM agency_orders WHERE id=?", id) };
     }
 
@@ -119,10 +130,10 @@ export const agency = {
     r.get("/v1/agency/orders", { scope: "agency:read", summary: "طلباتك (الأحدث أولاً) — رابط دعوة الحساب يظهر عند التسليم" }, async (req) => {
       const lim = clampLimit(req.query.limit), after = +req.query.after || 0, a = [req.tenant.id]; let q = "SELECT * FROM agency_orders WHERE tenant_id=?";
       if (STATUSES.includes(req.query.status)) { q += " AND status=?"; a.push(req.query.status); } if (after) { q += " AND id<?"; a.push(after); }
-      const pg = paginate(await db.all(q + " ORDER BY id DESC LIMIT ?", ...a, lim + 1), lim); return ok({ orders: pg.items.map(pub), next: pg.next });
+      const pg = paginate(await db.all(q + " ORDER BY id DESC LIMIT ?", ...a, lim + 1), lim), sla = await slaHours(), now = ctx.clock(); return ok({ orders: pg.items.map((o) => pub(o, isLate(o, now, sla))), sla_hours: sla, next: pg.next });
     });
     r.get("/v1/agency/orders/:id", { scope: "agency:read", summary: "طلب واحد" }, async (req) => {
-      const o = await db.one("SELECT * FROM agency_orders WHERE id=? AND tenant_id=?", +req.params.id, req.tenant.id); if (!o) throw new HttpError(404, "not_found", "الطلب غير موجود"); return ok({ order: pub(o) });
+      const o = await db.one("SELECT * FROM agency_orders WHERE id=? AND tenant_id=?", +req.params.id, req.tenant.id); if (!o) throw new HttpError(404, "not_found", "الطلب غير موجود"); return ok({ order: pub(o, isLate(o, ctx.clock(), await slaHours())) });
     });
 
     /* ── رد الوكالة (API): موقَّع بنفس سرّ الـwebhook ── */
@@ -159,7 +170,7 @@ export const agency = {
     r.get("/admin/agency/orders", { auth: "admin", summary: "كل الطلبات (?status=&after=) مع بيانات المتجر والتاجر وحالة إبلاغ الوكالة" }, async (req) => {
       const lim = clampLimit(req.query.limit), after = +req.query.after || 0, a = []; let q = "SELECT o.*, t.name AS tenant_name FROM agency_orders o LEFT JOIN pf_tenants t ON t.id=o.tenant_id WHERE 1=1";
       if (STATUSES.includes(req.query.status)) { q += " AND o.status=?"; a.push(req.query.status); } if (after) { q += " AND o.id<?"; a.push(after); }
-      const pg = paginate(await db.all(q + " ORDER BY o.id DESC LIMIT ?", ...a, lim + 1), lim); return ok({ orders: pg.items, next: pg.next });
+      const pg = paginate(await db.all(q + " ORDER BY o.id DESC LIMIT ?", ...a, lim + 1), lim); const sla = await slaHours(), now = ctx.clock(); return ok({ orders: pg.items.map((o) => ({ ...o, late: isLate(o, now, sla) })), sla_hours: sla, next: pg.next });
     });
     r.patch("/admin/agency/orders/:id", { auth: "admin", summary: "تحديث الحالة: { status: processing|delivered|rejected, invite_link? (إلزامي عند delivered), note? } — delivered يحرّر الضمان، rejected يردّه للتاجر" }, async (req) => {
       const b = req.json(); if (!["processing", "delivered", "rejected"].includes(b.status)) throw new HttpError(400, "validation_error", "status: processing|delivered|rejected");
@@ -177,7 +188,8 @@ export const agency = {
       const to = b.email_to === undefined ? cur.config.email_to ?? "" : String(b.email_to).trim(), from = b.email_from === undefined ? cur.config.email_from ?? "" : String(b.email_from).trim();
       if (to && !EMAIL.test(to)) throw new HttpError(400, "validation_error", "email_to غير صالح", { email_to: "بريد" });
       const sec = { ...cur.secrets }; if (b.webhook_secret) sec.webhook_secret = String(b.webhook_secret).slice(0, 200); if (b.resend_key) sec.resend_key = String(b.resend_key).slice(0, 200);
-      const config = { notify, webhook_url: url, email_to: to, email_from: from.slice(0, 200) }, enc = await ctx.vault.encrypt(JSON.stringify(sec), AAD);
+      const sla = b.sla_hours === undefined ? cur.config.sla_hours ?? SLA_DEFAULT : Math.floor(+b.sla_hours); if (!(sla >= 1 && sla <= 720)) throw new HttpError(400, "validation_error", "sla_hours بين 1 و720", { sla_hours: "ساعات" });
+      const config = { notify, webhook_url: url, email_to: to, email_from: from.slice(0, 200), sla_hours: sla, notify_client: b.notify_client === undefined ? cur.config.notify_client !== false : !!b.notify_client }, enc = await ctx.vault.encrypt(JSON.stringify(sec), AAD);
       await db.run("INSERT INTO agency_settings (id,config,secret_enc,updated_at) VALUES (1,?,?,?) ON CONFLICT(id) DO UPDATE SET config=excluded.config, secret_enc=excluded.secret_enc, updated_at=excluded.updated_at", JSON.stringify(config), enc, ctx.nowS());
       const re = await db.run("UPDATE agency_orders SET partner_state='queued', partner_attempts=0 WHERE status='pending' AND partner_state='unconfigured'");   // طلبات انتظرت ضبط الشريك تُرسل الآن
       await ctx.audit(req.actor, "agency.partner_set", null, { notify, requeued: re.changes }); return ok({ ok: true, requeued: re.changes });

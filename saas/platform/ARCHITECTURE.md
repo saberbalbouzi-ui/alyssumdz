@@ -52,7 +52,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | `order.shipped/out_for_delivery/delivered/returned` | **بوابة الشحن** (`/admin/events`، extId `gw:…`) وللتسليم أيضاً لوحة التاجر | sheets, sms, commerce, wallet (`delivered` ضمان؛ `returned` استرداد) |
 | `payment.confirmed/failed/cancelled` | `payments` (Chargily موثَّق) | digital, sms, wallet |
 | `wallet.escrow_held/released`, `refund_due`, `withdrawal_*`, `deposit`, `ads_topup` | `wallet` | hooks (وأي مشترك خارجي) |
-| `agency.order_paid/processing/delivered/rejected` | `agency` | hooks (وأي مشترك خارجي؛ التسليم يحمل `invite_link`) |
+| `agency.order_paid/processing/delivered/rejected/client_mailed` | `agency` | hooks (وأي مشترك خارجي؛ التسليم يحمل `invite_link`) |
 | `fraud.high_risk` | `antifraud` | hooks |
 | `ads.token_expiring/expired` | `adsoauth` | hooks |
 | `sms.credit_empty`, `digital.delivered`, `whatsapp.sent`, `order.customer_confirmed/cancelled` | sms/digital/whatsapp | hooks, sheets |
