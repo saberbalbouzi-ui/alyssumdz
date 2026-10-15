@@ -12,7 +12,7 @@ const totp = (sec, step) => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigI
 (async () => {
   const out = path.join(root, "dist", "roles-test"), tmp = fs.mkdtempSync(path.join(os.tmpdir(), "roles-"));
   fs.rmSync(out, { recursive: true, force: true });
-  const b = spawnSync("python3", ["scripts/make-template.py", "--target", "php", "--out", "dist/roles-test", "--name", "Mystore", "--wa", "213000000000"], { cwd: root, encoding: "utf8" });
+  const b = spawnSync("python3", ["scripts/make-template.py", "--target", "php", "--out", "dist/roles-test", "--name", "Mystore", "--wa", "213000000000", "--kind", "physical"], { cwd: root, encoding: "utf8" });
   const code = (/([0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4})/.exec(b.stdout) || [])[1];
   if (!code) { console.log("تعذّر بناء الحزمة", b.stdout.slice(-300), b.stderr.slice(-300)); process.exit(2); }
   fs.cpSync(out, tmp, { recursive: true });

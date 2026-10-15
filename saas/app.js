@@ -209,8 +209,8 @@
     const th = $("th"); if (th) th.scrollTop = th.scrollHeight; 
   }
   function payHtml(t) {
-    const p = t.payload || {}, rows = [], L = { name: "الاسم", sub: "الاسم على المنصة", url: "العنوان", mode: "نوع الدومين", domain: "الدومين", site: "الموقع", target_name: "الموقع المستهدف", target_origin: "عنوان الموقع", at: "موعد الحذف", store: "اسم المتجر", names: "الأسماء المطلوبة", service: "الخدمة", note: "ملاحظة الزبون" };
-    const val = (k, v) => k === "mode" ? (DMODE[v] || v) : k === "at" ? fmt(v) : (typeof v === "object" ? JSON.stringify(v) : v);
+    const p = t.payload || {}, rows = [], L = { name: "الاسم", sub: "الاسم على المنصة", url: "العنوان", mode: "نوع الدومين", domain: "الدومين", site: "الموقع", target_name: "الموقع المستهدف", target_origin: "عنوان الموقع", at: "موعد الحذف", store: "اسم المتجر", names: "الأسماء المطلوبة", kind: "نوع المتجر", service: "الخدمة", note: "ملاحظة الزبون" };
+    const val = (k, v) => k === "kind" ? (v === "digital" ? "💾 رقمي (بلا توصيل)" : "🛍️ مادي") : k === "mode" ? (DMODE[v] || v) : k === "at" ? fmt(v) : (typeof v === "object" ? JSON.stringify(v) : v);
     const walk = (o, pre) => Object.keys(o || {}).forEach(k => { const v = o[k]; if (v == null || v === "") return; if (k === "items" && Array.isArray(v)) { rows.push('<div><b>الأسماء المطلوبة:</b> ' + v.map(i => '<span class="ltr">' + esc(i.d) + '</span> ' + pill(i.s === "free" ? "active" : i.s === "taken" ? "rejected" : "waiting", { free: "متاح", taken: "محجوز", manual: "يتحقق منه الدعم", unknown: "غير معروف", pending: "قيد الفحص" }[i.s] || i.s)).join(" · ") + '</div>'); return; } if (k === "dns" && typeof v === "object") { rows.push('<div><b>نتيجة فحص DNS:</b> ' + esc(JSON.stringify(v)) + '</div>'); return; } if (v && typeof v === "object" && !Array.isArray(v)) return walk(v, k); rows.push('<div><b>' + esc(L[k] || k) + ':</b> <span class="' + (/url|domain|origin|sub/.test(k) ? "ltr" : "") + '">' + esc(val(k, v)) + '</span></div>'); });
     walk(p); return rows.length ? '<div class="pay">' + rows.join("") + '</div>' : "";
   }

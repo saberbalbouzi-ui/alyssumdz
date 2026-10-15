@@ -44,11 +44,11 @@ const AdminStores = (() => {
   const ABASE = { instagram: "https://instagram.com/", facebook: "https://facebook.com/", tiktok: "https://www.tiktok.com/@", youtube: "https://www.youtube.com/@", telegram: "https://t.me/", x: "https://x.com/", snapchat: "https://www.snapchat.com/add/", linkedin: "https://www.linkedin.com/company/", pinterest: "https://www.pinterest.com/", threads: "https://www.threads.net/@" };
   function acctUrl(id, v) { v = String(v || "").trim(); if (!v) return ""; if (/^https?:\/\//i.test(v)) return v; if (/^(www\.)?[a-z0-9-]+\.[a-z]{2,}\//i.test(v)) return "https://" + v; return (ABASE[id] || "https://") + v.replace(/^@/, ""); }
   const handleOf = u => { try { return decodeURIComponent(new URL(u).pathname.split("/").filter(Boolean).pop() || "").replace(/^@/, ""); } catch (e) { return ""; } };
-  const defaults = () => ({ name: SITE().name || "", tagline: "", email: "", phone: "", wa: SITE().waNumber || "", instagram: SITE().instagram || "", social: {}, address: "", country: "DZ", lang: "ar", tz: "Africa/Algiers", dateFmt: "DD/MM/YYYY", timeFmt: "24", weekStart: "sat", currency: "دج", currencyCode: "DZD", maintenance: false, maintMsg: "", deletion: null, domain: { mode: "own", value: SITE().domain || "", status: "", at: "", requests: [] } });
+  const defaults = () => ({ name: SITE().name || "", tagline: "", email: "", phone: "", wa: SITE().waNumber || "", instagram: SITE().instagram || "", social: {}, address: "", country: "DZ", lang: "ar", tz: "Africa/Algiers", dateFmt: "DD/MM/YYYY", timeFmt: "24", weekStart: "sat", currency: "دج", currencyCode: "DZD", maintenance: false, maintMsg: "", kind: "", kindAsk: false, deletion: null, domain: { mode: "own", value: SITE().domain || "", status: "", at: "", requests: [] } });
   const S = { d: defaults(), sha: null, loaded: false, localOnly: false, err: "", clock: 0 };
   const dec = raw => JSON.parse(decodeURIComponent(escape(atob(String(raw || "").replace(/\s/g, "")))));
   const enc = v => btoa(unescape(encodeURIComponent(JSON.stringify(v, null, 2))));
-  const norm = x => { const d = defaults(), o = x && typeof x === "object" ? x : {}; const r = Object.assign(d, o); r.social = Object.assign({}, o.social || {}); if (r.instagram && !r.social.instagram) r.social.instagram = acctUrl("instagram", r.instagram); r.domain = Object.assign(defaults().domain, o.domain || {}); if (!Array.isArray(r.domain.requests)) r.domain.requests = []; return r; };
+  const norm = x => { const d = defaults(), o = x && typeof x === "object" ? x : {}; const r = Object.assign(d, o); r.social = Object.assign({}, o.social || {}); if (r.instagram && !r.social.instagram) r.social.instagram = acctUrl("instagram", r.instagram); r.kind = r.kind === "digital" ? "digital" : (r.kind === "physical" ? "physical" : ""); r.domain = Object.assign(defaults().domain, o.domain || {}); if (!Array.isArray(r.domain.requests)) r.domain.requests = []; return r; };
   const canRemote = () => (typeof PHPAPI !== "undefined" && PHPAPI.on && PHPAPI.on()) || (typeof GH !== "undefined" && GH.cfg && GH.cfg() && GH.cfg().token);
   const toast = m => (typeof window.toast === "function" ? window.toast(m) : null);
 
@@ -103,8 +103,10 @@ const AdminStores = (() => {
     let loc = null; try { loc = JSON.parse(localStorage.getItem(LOCAL) || "null"); } catch (e) { }
     S.d = norm(loc && (!remote || String(loc.updatedAt || "") > String(remote.updatedAt || "")) ? loc : remote);
     S.localOnly = !remote && !!loc; S.loaded = true; window.STORE_ADMIN = S.d;
-    syncTitle(); mountSwitch(); renderAll();
+    syncTitle(); mountSwitch(); renderAll(); try { if (typeof AdminKind !== "undefined") AdminKind.sync(); } catch (e) { }
   }
+  /* تعديل حقول محدّدة وحفظها (يستعملها اختيار نوع المتجر) */
+  function patch(o) { Object.assign(S.d, o || {}); return save(); }
   async function save() {
     collect(); const d = S.d; d.updatedAt = new Date().toISOString();
     try { localStorage.setItem(LOCAL, JSON.stringify(d)); } catch (e) { }
@@ -115,7 +117,7 @@ const AdminStores = (() => {
       const r = await GH.putFile(PATH, enc(d), S.sha, "إعدادات الموقع"); S.sha = (r && r.content && r.content.sha) || S.sha; S.localOnly = false; S.err = "";
       toast("✅ حُفظت إعدادات الموقع ونُشرت");
     } catch (e) { S.localOnly = true; S.err = "تعذّر النشر: " + (e.message || ""); toast("⚠️ " + S.err); }
-    syncTitle(); mountSwitch(); renderAll();
+    syncTitle(); mountSwitch(); renderAll(); try { if (typeof AdminKind !== "undefined") AdminKind.apply(); } catch (e) { }
   }
   function syncTitle() {
     const n = curName();
@@ -127,7 +129,7 @@ const AdminStores = (() => {
     const g = id => { const e = $(id); return e ? e.value.trim() : null; }, d = S.d, set = (k, id) => { const v = g(id); if (v !== null) d[k] = v; };
     ["name", "tagline", "email", "address", "currency", "maintMsg", "country", "lang", "tz", "dateFmt", "timeFmt", "weekStart", "currencyCode"].forEach(k => set(k, "stp-" + k));
     const ph = g("stp-phone"), wa = g("stp-wa"); d.phone = (ph || "").replace(/[^\d+]/g, ""); d.wa = (wa || "").replace(/[^\d]/g, ""); d.social = {}; ACCTS.forEach(a => { const u = acctUrl(a[0], g("stp-soc-" + a[0])); if (u) d.social[a[0]] = u; }); d.instagram = d.social.instagram ? handleOf(d.social.instagram) : "";
-    d.maintenance = !!($("stp-maintenance") || {}).checked;
+    d.maintenance = !!($("stp-maintenance") || {}).checked; const kk = g("stp-kind"); if (kk === "digital" || kk === "physical") { d.kind = kk; d.kindAsk = false; }
     const m = (document.querySelector('input[name="stp-dm"]:checked') || {}).value || "own";
     d.domain.mode = m; if (m !== "request") d.domain.value = g("stp-dv-" + m) || "";
   }
@@ -193,11 +195,14 @@ const AdminStores = (() => {
     r.innerHTML = '<span class="stp-b no">✖ هذا الاسم غير متوفر</span> ' + (sug.length ? '<span style="margin-inline-start:.5rem">جرّب:</span> ' + sug.map(x => '<button type="button" class="small stp-chip" dir="ltr" onclick="AdminStores.nwPick(\'' + x + '\')">' + esc(x + "." + PLATFORM()) + '</button>').join("") : '<small>جرّب اسماً آخر</small>');
   }
   function nwPick(x) { const e = $("stp-nw-n"); if (e) { e.value = x; nwIn(); } }
+  function nwKind(k) { S.nw = Object.assign(S.nw || {}, { k: k === "digital" ? "digital" : "physical" }); }
+  /* من لوحة المتجر الرقمي/المادي: افتح بطاقة الإضافة بالنوع المطلوب */
+  function newKind(k) { S.nw = Object.assign(S.nw || {}, { k: k === "digital" ? "digital" : "physical" }); try { Admin.tab("store", [...document.querySelectorAll(".nav-btn")].find(b => /'store'/.test(b.getAttribute("onclick") || ""))); } catch (e) { } renderAll(); setTimeout(() => { const i = $("stp-nw-n"); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); } }, 150); }
   function nwOwn() { const b = $("stp-nw-own"); if (b) { b.hidden = !b.hidden; if (!b.hidden) { const i = $("stp-nw-ownv"); if (i) i.focus(); } } }
   function nwRequest() { if (!cleanSub(($("stp-nw-n") || {}).value)) return toast("⚠️ اكتب اسم الموقع أولاً"); S.nw = Object.assign(S.nw || {}, { n: cleanSub($("stp-nw-n").value) }); domainDlg([S.nw.n], "new"); }
   /* إنشاء موقع في قائمتي: على دومين المنصة، أو بدومين خاص، أو بطلب دومين جديد؛ ويظهر مباشرة في القائمة وإعداداته */
   function createSite(mode, rq) {
-    const n = cleanSub(($("stp-nw-n") || {}).value || (S.nw && S.nw.n)), lab = (($("stp-nw-l") || {}).value || (S.nw && S.nw.l) || "").trim();
+    const kd = ((document.querySelector('input[name="stp-nw-k"]:checked') || {}).value) === "digital" || (S.nw && S.nw.k === "digital") ? "digital" : "physical", n = cleanSub(($("stp-nw-n") || {}).value || (S.nw && S.nw.n)), lab = (($("stp-nw-l") || {}).value || (S.nw && S.nw.l) || "").trim();
     if (!n) return toast("⚠️ اكتب اسم الموقع");
     let url = "", dom;
     if (mode === "platform") {
@@ -209,18 +214,18 @@ const AdminStores = (() => {
       if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(own)) return toast("⚠️ اكتب اسم دومين صحيحاً مثل example.com");
       dom = { mode: "own", value: own, status: "requested", requests: [] }; url = "https://" + own + "/admin.html";
     } else { dom = { mode: "request", value: "", status: "requested", requests: rq ? [rq] : [] }; url = "https://" + n + "." + PLATFORM() + "/admin.html"; }
-    const a = stores(), e = { id: "s" + Date.now().toString(36), name: lab || n, sub: n, url, domain: dom, created: new Date().toISOString(), pending: true };
+    const a = stores(), e = { id: "s" + Date.now().toString(36), name: lab || n, sub: n, url, kind: kd, domain: dom, created: new Date().toISOString(), pending: true };
     if (mode === "platform") {
       e.pending = false; a.push(e); saveStores(a); S.nw = null; toast("⏳ جارٍ إنشاء الموقع وفتح لوحة التحكم…");
       return live(url).then(ok => {
-        if (ok) { location.href = url; return; }
+        if (ok) { location.href = url + "#kind=" + kd; return; }
         const b = stores(), x = b.find(z => z.id === e.id); if (x) { x.pending = true; saveStores(b); } S.open = e.id;
-        notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\nالعنوان: " + n + "." + PLATFORM() + "\nمن موقع: " + curName(), "site_create", { new: { name: lab || n, sub: n, url, mode: "platform" } }, "طلب موقع جديد: " + n);
+        notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\nنوع المتجر: " + (kd === "digital" ? "رقمي (بلا توصيل)" : "مادي") + "\nالعنوان: " + n + "." + PLATFORM() + "\nمن موقع: " + curName(), "site_create", { new: { name: lab || n, sub: n, url, mode: "platform", kind: kd } }, "طلب موقع جديد: " + n);
         renderAll(); toast("✅ أُضيف الموقع — العنوان قيد التفعيل وسيفتح لوحة التحكم فور جاهزيته");
       });
     }
     a.push(e); saveStores(a); S.open = e.id; S.nw = null;
-    notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\n" + (mode === "platform" ? "العنوان: " + n + "." + PLATFORM() : mode === "own" ? "دومين خاص: " + dom.value : "طلب دومين جديد:\n" + (dom.requests[0] ? dom.requests[0].items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n") : "—")) + "\nمن موقع: " + curName(), "site_create", { new: { name: lab || n, sub: n, url, mode: dom.mode, domain: dom.value || undefined }, items: dom.requests[0] ? dom.requests[0].items : undefined }, "طلب موقع جديد: " + n);
+    notify("طلب موقع جديد\nاسم الموقع: " + n + (lab ? "\nاسم المتجر: " + lab : "") + "\nنوع المتجر: " + (kd === "digital" ? "رقمي (بلا توصيل)" : "مادي") + "\n" + (mode === "platform" ? "العنوان: " + n + "." + PLATFORM() : mode === "own" ? "دومين خاص: " + dom.value : "طلب دومين جديد:\n" + (dom.requests[0] ? dom.requests[0].items.map(i => "• " + i.d + " — " + (ST[i.s] || ["؟"])[0]).join("\n") : "—")) + "\nمن موقع: " + curName(), "site_create", { new: { name: lab || n, sub: n, url, mode: dom.mode, kind: kd, domain: dom.value || undefined }, items: dom.requests[0] ? dom.requests[0].items : undefined }, "طلب موقع جديد: " + n);
     renderAll(); toast(mode === "own" ? "✅ أُضيف الدومين — أدخل إعدادات DNS الموضّحة ثم اضغط «تحقق من الدومين»" : "✅ أُضيف الموقع إلى قائمتك — طلب الدومين وصل إلى الدعم");
   }
   /* الحذف الفعلي مجدول: المنصة تحذف بيانات الموقع بعد 14 يوماً ويمكن الإلغاء قبلها */
@@ -417,10 +422,12 @@ const AdminStores = (() => {
       '<div><label class="f">العملة</label><select id="stp-currencyCode" onchange="AdminStores.cur()">' + curOpts(d.currencyCode) + '</select></div><div><label class="f">رمز العملة المعروض</label><input id="stp-currency" value="' + esc(d.currency) + '"></div>' +
       '<div><label class="f">المنطقة الزمنية</label><select id="stp-tz">' + tzOpts(d.tz) + '</select><div class="hint" id="stp-clock"></div></div></div>' +
       '<div class="row" style="margin-top:.4rem"><div><label class="f">صيغة التاريخ</label>' + sel("stp-dateFmt", [["DD/MM/YYYY", "31/12/2026"], ["YYYY-MM-DD", "2026-12-31"], ["D MMMM YYYY", "31 ديسمبر 2026"]], d.dateFmt) + '</div><div><label class="f">صيغة الوقت</label>' + sel("stp-timeFmt", [["24", "24 ساعة"], ["12", "12 ساعة"]], d.timeFmt) + '</div><div><label class="f">بداية الأسبوع</label>' + sel("stp-weekStart", [["sat", "السبت"], ["sun", "الأحد"], ["mon", "الاثنين"]], d.weekStart) + '</div></div></div>' +
+      '<div class="card"><h3>نوع المتجر</h3><div class="hint">«رقمي» لمفاتيح وحسابات واشتراكات وملفات تُسلَّم بعد الدفع بلا توصيل؛ «مادي» لمنتجات تُشحن. يغيّر هذا ما يظهر في لوحة التحكم هذه فقط، ولإنشاء موقع آخر من النوع الثاني استعمل «إضافة موقع جديد» أدناه.</div><div style="max-width:320px;margin-top:.4rem">' + sel("stp-kind", [["physical", "🛍️ متجر منتجات مادية"], ["digital", "💾 متجر منتجات رقمية"]], d.kind || "physical") + '</div></div>' +
       '<div class="card"><h3>حالة الموقع</h3><label style="display:flex;gap:.5rem;align-items:center;font-weight:800"><input type="checkbox" id="stp-maintenance" style="width:auto;margin:0"' + (d.maintenance ? " checked" : "") + '> وضع الصيانة (يرى الزبائن رسالة بدل الموقع، وتبقى لوحة التحكم تعمل)</label><label class="f" style="margin-top:.5rem">رسالة الصيانة</label><input id="stp-maintMsg" value="' + esc(d.maintMsg) + '" placeholder="الموقع تحت الصيانة حالياً، نعود إليكم قريباً."></div>' +
       '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><button class="small" type="button" onclick="AdminStores.save()">💾 حفظ إعدادات الموقع</button>' + (S.localOnly ? '<span class="stp-st" style="color:#f5b04a">محفوظة في هذا المتصفح فقط — اربط النشر لتصل إلى موقعك</span><button class="small" type="button" style="background:rgba(251,146,60,.22);color:#fff;border:1px solid rgba(251,146,60,.6)" onclick="Admin.openGhSettings()">ربط النشر الآن</button>' : "") + (S.err ? '<span class="stp-st" style="color:#f87171">' + esc(S.err) + '</span>' : "") + '</div>';
   }
   const CAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  const kindBadge = k => k === "digital" ? ' <span class="stp-badge" style="background:rgba(96,165,250,.25)">💾 رقمي</span>' : (k === "physical" ? ' <span class="stp-badge" style="background:rgba(var(--g-mint-rgb,198,254,23),.2)">🛍️ مادي</span>' : '');
   function renderAll() {
     mountSwitch();
     const box = $("stores-app"); if (!box) return; const d = S.d, list = stores(), open = S.open || "";
@@ -432,6 +439,7 @@ const AdminStores = (() => {
       list.map(s => row(s.id, s.name, s.url.replace(/^https?:\/\//, "").replace(/\/admin\.html$/, ""), false, s.del, other(s))).join("") +
       ((d.deletion && d.deletion.at) || list.some(s => s.del) ? '<div class="hint" style="margin-top:.5rem">⏳ الموقع المحدّد للحذف يبقى كما هو حتى انتهاء المدة، ويمكنك إلغاء الحذف بالضغط على زر «جارٍ الحذف».</div>' : '') + '</div>' +
       subCard() + '<div class="card"><h3>＋ إضافة موقع جديد</h3><div class="hint">اكتب اسم الموقع (حروف لاتينية) فيظهر عنوانه على دومين المنصة تلقائياً، ثم اختر: إنشاء الموقع بهذا العنوان، أو إضافة دومين تملكه، أو طلب دومين جديد.</div><div style="margin-top:.5rem;max-width:420px"><label class="f">اسم الموقع</label><input id="stp-nw-n" dir="ltr" placeholder="boutique" value="' + esc((S.nw && S.nw.n) || "") + '" oninput="AdminStores.nwIn()"></div><div class="stp-nwa"><label class="f">عنوان الموقع</label><div class="stp-nwd" dir="ltr"><b id="stp-nw-d">' + esc(((S.nw && S.nw.n) || "name") + "." + PLATFORM()) + '</b></div><div id="stp-nw-res" class="stp-nwr"></div></div>' +
+      '<div style="margin:.6rem 0;max-width:420px"><label class="f">نوع المتجر</label><div style="display:flex;gap:1rem;flex-wrap:wrap"><label style="display:flex;gap:.35rem;align-items:center;font-weight:800"><input type="radio" name="stp-nw-k" value="physical" style="width:auto;margin:0"' + ((S.nw && S.nw.k) === "digital" ? "" : " checked") + ' onchange="AdminStores.nwKind(this.value)"> 🛍️ منتجات مادية (توصيل)</label><label style="display:flex;gap:.35rem;align-items:center;font-weight:800"><input type="radio" name="stp-nw-k" value="digital" style="width:auto;margin:0"' + ((S.nw && S.nw.k) === "digital" ? " checked" : "") + ' onchange="AdminStores.nwKind(this.value)"> 💾 منتجات رقمية (بلا توصيل)</label></div></div>' +
       '<div class="stp-nwb"><button class="small" type="button" onclick="AdminStores.createSite(\'platform\')">إنشاء الموقع على هذا العنوان</button><button class="small gold" type="button" onclick="AdminStores.nwOwn()">إضافة دومين خاص</button><button class="small gold" type="button" onclick="AdminStores.nwRequest()">طلب دومين خاص</button></div>' +
       '<div id="stp-nw-own" class="stp-nwo" hidden><label class="f">اسم الدومين الذي تملكه</label><div style="display:flex;gap:.5rem;flex-wrap:wrap"><input id="stp-nw-ownv" dir="ltr" placeholder="example.com" style="flex:1;min-width:200px"><button class="small" type="button" onclick="AdminStores.createSite(\'own\')">إضافة الدومين</button></div></div>' +
       '</div>' + backupCard() + supCard() + '</div>';
@@ -447,5 +455,5 @@ const AdminStores = (() => {
 
   function boot() { mountSwitch(); load(); supWatch(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
-  return { notify, save, delSite, supNew, supTog, supReply, supLoad, dnsCheck, dnsTell, copy: copyTxt, live, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
+  return { notify, save, delSite, supNew, supTog, supReply, supLoad, dnsCheck, dnsTell, copy: copyTxt, live, rename: renameStore, open, menu, go, request, dm, tog, country, cur, domainDlg, closeDlg: closeModal, search, sendDomain, recheck, rmReq, nwIn, nwPick, nwOwn, nwKind, newKind, patch, loaded: () => S.loaded, kind: () => S.d.kind || "", nwRequest, createSite, accounts: () => Object.assign({}, (S.d && S.d.social) || {}), render: renderAll, data: () => S.d, stores };
 })();

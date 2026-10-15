@@ -201,12 +201,12 @@ ${ag ? `<button type="button" class="${ag.ready ? "w" : "ok"}" data-go="agency">
     if (w === "ads") { a.tab("finance", btn("finance")); try { a.finView("prod"); const x = a.adStockAlerts(5)[0]; if (x) a.finOpen(x.c.slug, 2); } catch (e) { } return; }
     const b = btn(w); if (b) a.tab(w, b);
   }
-  function open() { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'home'")); if (b && A().tab) A().tab("home", b); }
+  function open() { try { if (typeof AdminKind !== "undefined" && AdminKind.landing() === "digital") { const d = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'digital'")); if (d && A().tab) return A().tab("digital", d); } } catch (e) { } const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'home'")); if (b && A().tab) A().tab("home", b); }
   /* عند فتح اللوحة تبدأ دائماً على «لوحة التحكم»: إن انتقل قسم آخر تلقائياً أثناء التحميل (قبل أي نقر من المستخدم) نعيدها */
   function guard() {
     let touched = false; const mark = () => { touched = true; };
     document.addEventListener("pointerdown", mark, { capture: true, once: true }); document.addEventListener("keydown", mark, { capture: true, once: true });
-    [1200, 3000].forEach(ms => setTimeout(() => { if (touched || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); if (on && !/'home'/.test(on.getAttribute("onclick") || "")) open(); }, ms));
+    [1200, 3000].forEach(ms => setTimeout(() => { if (touched || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); const land = (typeof AdminKind !== "undefined" && AdminKind.landing() === "digital") ? "digital" : "home"; if (on && !new RegExp("'" + land + "'").test(on.getAttribute("onclick") || "")) open(); }, ms));
   }
   function init() {
     const a = A(); if (!a || a.__homeWrap || typeof a.renderAll !== "function") return setTimeout(init, 400);
