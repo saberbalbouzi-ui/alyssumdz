@@ -224,15 +224,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const tabs = [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt), pane = document.getElementById("pbx-lpane"), imgs = [...pane.querySelectorAll(".pbx-tt img")];
     await new Promise(r => setTimeout(r, 600)); const o = { second: tabs[1], tabOn: document.querySelector('.pbx-tabs [data-lt="img"]').classList.contains("on"), tools: pane.querySelectorAll("[data-imgt]").length, sub: pane.querySelectorAll("[data-imgs]").length, sm: pane.querySelectorAll("[data-imgm]").length, loaded: imgs.filter(i => i.naturalWidth > 0).length, imgsN: imgs.length };
     const t0 = pane.querySelector(".pbx-tt"), im0 = t0.querySelector("img"), sp0 = t0.querySelector("span"), gs = getComputedStyle(pane.querySelector(".pbx-ttg"));
-    o.ar = getComputedStyle(im0).aspectRatio; o.cols = gs.gridTemplateColumns; o.square = /^1\s*\/\s*1$/.test(o.ar); o.nameBelow = getComputedStyle(t0).flexDirection === "column" && !!sp0 && sp0.compareDocumentPosition(im0) & Node.DOCUMENT_POSITION_PRECEDING ? true : false; o.twoCols = o.cols.trim().split(/\s+/).length === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
+    o.ar = getComputedStyle(im0).aspectRatio; o.cols = gs.gridTemplateColumns; o.square = /^280\s*\/\s*325$/.test(o.ar); o.nameBelow = !sp0 && t0.classList.contains("card"); o.twoCols = o.cols.trim().split(/\s+/).length === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
     o.tabsHidden = getComputedStyle(document.querySelector("#pbx-ep .pbst-tabs")).display === "none"; o.hasEpTabs = !!document.querySelector("#pbx-ep .ep-tabs");
     pane.querySelector('[data-imgs="txt"]').click(); await new Promise(r => setTimeout(r, 700)); o.head = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.visPane = [...document.querySelectorAll("#pbst .pbst-pane")].filter(x => !x.hidden).map(x => x.dataset.stp).join(",");
     pane.querySelector('[data-imgt="pz"]').click(); await new Promise(r => setTimeout(r, 400)); o.pzHead = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.subGone = !pane.querySelector("[data-imgs]");
     PBApp.ltoggle("add"); await new Promise(r => setTimeout(r, 200)); o.closedByTab = !document.getElementById("pbx-ep");
     PBApp.ltoggle("img"); document.querySelector('#pbx-lpane [data-imgt="st"]').click(); await new Promise(r => setTimeout(r, 600)); return o;
   });
-  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 11 أداة وصور حقيقية محمّلة وأدوات ذكية", it.second === "img" && it.tabOn && it.tools === 11 && it.sub === 5 && it.sm === 5 && it.imgsN >= 12 && it.loaded === it.imgsN, it);
-  ok("تعديل الصورة: المصغّرات مربعة كبيرة بالاسم تحتها صفّان في كل صف، وعبارة «الصورة المحدّدة جاهزة» محذوفة", it.square && it.nameBelow && it.twoCols && it.noReady, it);
+  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 11 أداة + 5 ذكية في شبكة واحدة وبطاقات حقيقية محمّلة", it.second === "img" && it.tabOn && it.tools === 11 && it.sub === 5 && it.sm === 5 && it.imgsN >= 16 && it.loaded === it.imgsN, it);
+  ok("تعديل الصورة: بطاقات كاملة بنسبة موحّدة (العنوان داخل الصورة) عمودان، وعبارة «الصورة المحدّدة جاهزة» محذوفة", it.square && it.nameBelow && it.twoCols && it.noReady, it);
   ok("تعديل الصورة: اسم الأداة والإعدادات في الشريط الأيمن (بلا شريط تبويبات داخلي)، وأدوات الاستوديو تُفتح من القائمة اليسرى", it.tabsHidden && !it.hasEpTabs && /استوديو المنتج/.test(it.head) && /ملصقات/.test(it.head) && it.visPane === "txt" && /بازل/.test(it.pzHead) && it.subGone, it);
   ok("تعديل الصورة: فتح تبويب آخر يغلق لوحة الأداة (كل تبويب يغلق الذي قبله)", it.closedByTab, it);
   const cx = await p.evaluate(async () => {
@@ -1603,11 +1603,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   // ── تبويب «تعديل الصورة»: التخطيط الفعلي (لا المعرَّف فقط): مربعات كبيرة بالاسم تحتها، اثنان في كل صف ──
   const lyT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; window.confirm = () => true; PBAdmin.mkPage("تخطيط"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(500); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
-    const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = tiles[0].querySelector("span").getBoundingClientRect();
-    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width - im.height) < 2 && im.width >= 90; R.below = sp.top >= im.bottom - 1;
+    const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = im;
+    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 280 / 325) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll("[data-imgm]").length === 5;
     R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(); await w(400); return R;
   });
-  ok("تبويب «تعديل الصورة» (تخطيط فعلي): مربعات ≥90px بالاسم تحتها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.below && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
+  ok("تبويب «تعديل الصورة» (تخطيط فعلي): بطاقات ≥90px بنسبة 280:325 والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
   // ── تبويب «أدوات ذكية» محذوف من القائمة اليسرى (أدواته داخل «تعديل الصورة») ──
   const nsT = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; PBAdmin.mkPage("بلا ذكية"); await w(1500); const R = { smart: !!document.querySelector('.pbx-tabs [data-lt="smart"]'), img: !!document.querySelector('.pbx-tabs [data-lt="img"]'), tabs: [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt).join(",") }; PBApp.close(); await w(400); return R; });
   ok("القائمة اليسرى: لا تبويب «أدوات ذكية» (موجودة داخل «تعديل الصورة»)", !nsT.smart && nsT.img, nsT);
