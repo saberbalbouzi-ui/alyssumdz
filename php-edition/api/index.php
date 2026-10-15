@@ -111,6 +111,21 @@ function ydMap(string $raw): ?string {
     if (preg_match('/expedie|transfert|centre|localisation|vers wilaya|recu a wilaya|sorti en livraison|en attente du client|pret pour livreur|ramasse|en livraison/', $t)) return 'expediee';
     return null;
 }
+/* مرحلة رجوع الطرد (تطابق retPhase في yalidine-webhook وAdminWh.returnPhase): received = سُلِّم للبائع، ready = جاهز للسحب، transit = في طريق العودة */
+function ydRetPhase(string $raw): string {
+    $t = preg_replace('/\s+/', ' ', trim(strtr(mb_strtolower($raw), ['é' => 'e', 'è' => 'e', 'ê' => 'e', 'à' => 'a', 'â' => 'a', 'î' => 'i', 'ï' => 'i', 'ô' => 'o', 'ù' => 'u', 'û' => 'u', 'ç' => 'c'])));
+    if ($t === '') return '';
+    if (preg_match('/retourne\w*\s+(au|chez)\s+(le\s+)?(vendeur|expediteur|marchand|fournisseur)|retour\s+(recu|termine|livre|remis)|returned\s+to\s+(the\s+)?(sender|seller|vendor|merchant)/', $t)) return 'received';
+    if (preg_match('/retour\s+a\s+retirer|retour.*(disponible|en attente de retrait|a recuperer)|return.*(ready|available)/', $t)) return 'ready';
+    if (preg_match('/retour|retourn|return|echec livraison|echange.*(echou|echec)/', $t)) return 'transit';
+    return '';
+}
+/* وسم 🔁مرحلة في ملاحظة الطلب (لا يتراجع): تقرؤه اللوحة لتعيد الطرد إلى المخزون حين يصل فعلاً */
+function ydNoteWithPhase(string $note, string $ph): ?string {
+    $rk = ['' => 0, 'transit' => 1, 'ready' => 2, 'received' => 3]; $cur = preg_match('/🔁(transit|ready|received)/u', $note, $m) ? $m[1] : '';
+    if ($ph === '' || $rk[$ph] <= $rk[$cur]) return null;
+    return trim(preg_replace('/\s+/u', ' ', trim(preg_replace('/🔁\w+\s*/u', '', $note))) . ' 🔁' . $ph);
+}
 /* ── حماية الطلبات (إعداداتها في admin_kv: guard / guard_secret) ── */
 function kvSet(string $k, $v): void { db()->prepare('INSERT INTO admin_kv (k, v, updated) VALUES (?,?,?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated = excluded.updated')->execute([$k, json_encode($v, JSON_UNESCAPED_UNICODE), time()]); }
 function kvGet(string $k) { $st = db()->prepare('SELECT v FROM admin_kv WHERE k = ?'); $st->execute([$k]); $v = $st->fetchColumn(); return $v === false ? null : json_decode((string)$v, true); }
@@ -716,7 +731,10 @@ switch ($route) {
             if ($row && $new) {
                 $cur = $row['status'];
                 $allowed = in_array($cur, ['livree', 'annulee'], true) ? false : (($new === 'echec') ? true : (($rank[$new] ?? 0) > ($rank[$cur] ?? 0)));
-                if ($allowed && $cur !== $new) { $d->prepare('UPDATE orders SET status = ? WHERE id = ?')->execute([$new, $row['id']]); $upd++; $result = "{$cur}→{$new}"; } else $result = 'no_change';
+                $nn = (!in_array($cur, ['livree', 'annulee'], true) && $new === 'echec') ? ydNoteWithPhase((string)$row['note'], ydRetPhase($rawSt)) : null;
+                if ($nn !== null) $d->prepare('UPDATE orders SET note = ? WHERE id = ?')->execute([$nn, $row['id']]);
+                if ($allowed && $cur !== $new) { $d->prepare('UPDATE orders SET status = ? WHERE id = ?')->execute([$new, $row['id']]); $upd++; $result = "{$cur}→{$new}"; } else $result = $nn !== null ? 'phase_noted' : 'no_change';
+                if ($nn !== null && $result === 'phase_noted') $upd++;
             } elseif (!$row) $result = 'order_not_found';
             $d->prepare('INSERT INTO webhook_log (ts, tracking, raw, result, payload) VALUES (?,?,?,?,?)')->execute([time(), $trk, $rawSt, $result, substr($raw, 0, 4000)]);
             $res[] = $result;
