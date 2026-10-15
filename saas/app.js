@@ -217,7 +217,7 @@
   function actHtml(t, s) {
     const a = [], b = (act, label, cls) => a.push('<button class="btn s ' + (cls || "") + '" data-a="qa" data-v="' + act + '">' + label + '</button>');
     const done = t.status === "resolved" || t.status === "rejected";
-    if (t.kind === "site_create") { b("prov", "بدء التجهيز", "o"); b("activate", "تفعيل الموقع وإبلاغ الزبون"); b("reject", "رفض الطلب", "r"); }
+    if (t.kind === "site_create") { b("prov", "بدء التجهيز", "o"); b("mkcmd", "نسخ أمر إنشاء الحزمة"); b("activate", "تفعيل الموقع وإبلاغ الزبون"); b("reject", "رفض الطلب", "r"); }
     else if (t.kind === "domain_request") { b("domdone", "تم تسجيل الدومين وتفعيله"); b("domtaken", "الأسماء غير متاحة", "o"); }
     else if (t.kind === "domain_link" || t.kind === "domain_dns") { b("domauto", "ربط تلقائي بالشهادة"); b("domstat", "فحص الشهادة", "o"); b("domon", "تفعيل الدومين يدوياً", "g"); b("domdns", "DNS غير صحيح", "o"); }
     else if (t.kind === "site_delete") { b("delsched", "اعتماد الحذف بعد 14 يوماً", "o"); b("delnow", "تنفيذ الحذف الآن", "r"); }
@@ -239,6 +239,7 @@
   async function quick(act) {
     const t = byId(S.tk, S.sel); if (!t) return; const s = byId(S.si, t.site_id), p = t.payload || {}, nw = p.new || {};
     const R = async (msg, status, sitePatch) => { if (sitePatch && s && !(await updSite(s.id, sitePatch))) return; if (msg !== null && !(await sendReply(t, msg, false, status))) return; if (msg === null && status) await sb.from("saas_tickets").update({ status }).eq("id", t.id); await load(); await fetchMsgs(t.id); detail(); toast("تم", "نُفّذ الإجراء وأُبلغ الزبون"); };
+    if (act === "mkcmd") { const sub = String(nw.sub || nw.name || "site").replace(/[^a-z0-9-]/gi, "").toLowerCase() || "site", wa = String((t.contact || {}).phone || "").replace(/\D/g, "") || "213000000000", kd = nw.kind === "digital" ? "digital" : "physical"; const cmd = 'python3 scripts/make-template.py --target php --out dist/' + sub + ' --name "' + String(nw.name || sub).replace(/["`$\\]/g, "") + '" --wa ' + wa + ' --kind ' + kd; try { await navigator.clipboard.writeText(cmd); toast("تم النسخ", "أمر إنشاء الحزمة (" + (kd === "digital" ? "رقمي" : "مادي") + ")"); } catch (er) { prompt("انسخ الأمر:", cmd); } return; }
     if (act === "prov") return R("بدأنا تجهيز موقعك وسنُعلمك فور جاهزيته.", "open", { status: "provisioning" });
     if (act === "activate") { if (!s) return toast("لا يوجد سجل موقع", "اربط الطلب بموقع أولاً", true); const url = nw.url || s.origin || ""; return R("تم تفعيل موقعك" + (url ? ": " + url : "") + ". يمكنك الدخول إلى لوحة التحكم وإكمال الإعدادات.", "resolved", { status: "active" }); }
     if (act === "reject") { const why = prompt("سبب الرفض (يصل للزبون):", "العنوان المطلوب غير متاح."); if (why === null) return; return R("نعتذر، تعذّر إنشاء الموقع. " + why, "rejected", s ? { status: "deleted" } : null); }

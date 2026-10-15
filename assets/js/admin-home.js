@@ -136,6 +136,7 @@ const AdminHome = (() => {
     let mg = []; try { mg = window.AdminUpsell && AdminUpsell.mergeable ? AdminUpsell.mergeable(a.orders || []) : []; } catch (e) { }
     let ag = null; try { if (typeof AdminAgency !== "undefined") { ag = AdminAgency.alerts(); AdminAgency.warm(); } } catch (e) { }
     let adLow = []; try { adLow = a.adStockAlerts ? a.adStockAlerts(5) : []; } catch (e) { }
+    let dgHint = 0; try { if (typeof AdminKind !== "undefined" && AdminKind.kind() === "physical" && typeof AdminStores !== "undefined" && AdminStores.kind() !== "digital") dgHint = (a.products || []).filter(p => p && p.digital && p.active !== false).length; } catch (e) { }
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
     root.innerHTML = `
@@ -164,6 +165,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <button type="button" class="${mg.length ? "w" : "ok"}" data-go="merge"><b>${num(mg.length)}</b><span>طلب مرتبط (عرض بعد الشراء) ينتظر الدمج</span></button>
 ${ag ? `<button type="button" class="${ag.ready ? "w" : "ok"}" data-go="agency"><b>${num(ag.ready)}</b><span>حساب إعلاني جاهز — استلم رابط الدعوة</span></button>
 <button type="button" class="${ag.late ? "w" : "ok"}" data-go="agency"><b>${num(ag.late)}</b><span>طلب خدمة تسويق تأخر عن مهلة التسليم</span></button>` : ""}
+${dgHint ? `<button type="button" class="w" data-go="kinddg"><b>${num(dgHint)}</b><span>منتج رقمي في متجر مادي — أنشئ متجراً رقمياً (بلا توصيل) لها</span></button>` : ""}
 <button type="button" class="${od ? "w" : "ok"}" data-go="callcenter"><b>${num(od)}</b><span>طلب بلا استجابة منذ مدة</span></button>
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
 <h3 style="margin-top:16px">أفضل المنتجات مبيعاً</h3>${top.length ? `<div class="tp">${top.map(([t, q], i) => `<div class="r"><span class="n">${i + 1}</span><span class="t"></span><span class="q">${num(q)} قطعة</span><span class="bar"><i style="width:${Math.max(6, q / topMax * 100)}%"></i></span></div>`).join("")}</div>` : '<div class="em" style="padding:10px">لا مبيعات في هذه الفترة.</div>'}</div>
@@ -198,6 +200,7 @@ ${ag ? `<button type="button" class="${ag.ready ? "w" : "ok"}" data-go="agency">
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
     if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }
+    if (w === "kinddg") { try { AdminStores.newKind("digital"); } catch (e) { } return; }
     if (w === "ads") { a.tab("finance", btn("finance")); try { a.finView("prod"); const x = a.adStockAlerts(5)[0]; if (x) a.finOpen(x.c.slug, 2); } catch (e) { } return; }
     const b = btn(w); if (b) a.tab(w, b);
   }
