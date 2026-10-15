@@ -23,6 +23,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | **Storefront** | `commerce.js` (`cm_*`: كتالوج، تحقق سعر/مخزون، طلبات) + `carts.js` + `ab.js` + `ai.js` + `digital.js` | منجَز (وضع المراقبة؛ `enforce` ينتظر نقل مصدر المخزون) |
 | **Logistics** | `saas/gateway` (Worker+D1 مستقل: محوّلات الشركات، webhooks، قواميس الحالات) + `sources.js` | منجَز؛ **البوابة تصدر `order.shipped|out_for_delivery|delivered|returned` إلى الناقل (v1.89.237)** عبر `POST /admin/events` (extId `gw:`) |
 | **CallCenter** | داخل لوحة التاجر (`admin-callcenter.js`: طابور، أدوار، أهداف) | **غير موجود كوحدة منصة** (ثغرة 2) |
+| **AppStore** (النظام البيئي) | **`appstore.js`** (v1.89.243: `apps`/`app_*`/`oauth_*`/`platform_revenues`؛ OAuth 2.0 بنطاقات مغلقة، مراجعة يدوية، تقاسم إيراد عبر المحفظة، webhooks صادرة موقَّعة) | منجَز؛ لم يُجرَّب مع تطبيق طرف ثالث حقيقي (دليل المطوّر: `docs/app-store-developers.md`) |
 | **MarketingAgency** | `ads.js` + `adsoauth.js` (إنفاق Meta/TikTok، OAuth) + `capi.js` + `whatsapp.js` + `sheets.js` + `antifraud.js` + **`agency.js`** (v1.89.241: بيع حسابات إعلانية بعلامة بيضاء: `marketing_services`/`agency_orders`) | منجَز؛ توفير الحسابات يدوي عند الوكالة الشريكة (webhook/بريد + رد موقَّع)، وحسابات Master BM يدوية (ثغرة 3) |
 
 ## 3) قاعدة الاعتماد (الملزِمة)
@@ -35,7 +36,8 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 ### الاستثناءات الموثّقة (الوحيدة)
 - قراءة `pf_tenants` و`pf_integrations` مسموحة للجميع (هوية المستأجر وأسرار التكاملات عبر الخزنة).
 - `wallet` يقرأ `pf_events` ليتحقق من مصدر `payment.confirmed`.
-- **`ctx.wallet` (استثناء مالي وحيد لقاعدة «لا استدعاء مباشر»)**: وحدة `wallet` تسجّل في `routes()` خدمة `ctx.wallet = { hold, release, refund }` (متاح→ضمان→رسوم المنصة، أو ضمان→متاح) ليشتري بها `agency` خدمات بالدينار **بشكل متزامن** (ردّ فوري «الرصيد غير كافٍ» بدل حدث غير متزامن). كل قيد مرجعه فريد (`svc:hold|rel|ref:<رقم الطلب>`) فلا يتكرر، والدفتر يبقى متوازناً؛ لا وحدة غير `wallet` تكتب جداول `wl_*`.
+- **`ctx.authProviders` (خطّاف مصادقة)**: النواة تحلّ رموز المفاتيح `pk_*` بنفسها، وأي وحدة تسجّل `{prefix, resolve}` لتحلّ رمزاً ببادئتها (`appstore` ← `at_`). الرمز المحلول لا يمرّ إلا على مسارات لها نطاق صريح ضمن نطاقات الرمز (غير المعلَن = 403 `insufficient_scope`)، وبحدّ معدّل لكل تثبيت. بيانات الزبائن في `commerce`/`carts` تُقنَّع تلقائياً لمن لا يملك `read_customers` (`util.seesPii`).
+- **`ctx.wallet` (استثناء مالي وحيد لقاعدة «لا استدعاء مباشر»)**: وحدة `wallet` تسجّل في `routes()` خدمة `ctx.wallet = { hold, release, refund, charge, payout, fee, unwind }` (الأربعة الأخيرة لتقاسم إيراد التطبيقات عبر الحساب الوسيط `app_clearing` الذي يعود صفراً بعد كل تسوية) (متاح→ضمان→رسوم المنصة، أو ضمان→متاح) ليشتري بها `agency` خدمات بالدينار **بشكل متزامن** (ردّ فوري «الرصيد غير كافٍ» بدل حدث غير متزامن). كل قيد مرجعه فريد (`svc:hold|rel|ref:<رقم الطلب>`) فلا يتكرر، والدفتر يبقى متوازناً؛ لا وحدة غير `wallet` تكتب جداول `wl_*`.
 - `adsoauth` يكتب `ad_accounts` (مملوك لـ`ads`) عند «الربط السريع»، ويستورد `MAX_ACCOUNTS` و`validateAccount` (دوال نقية بلا I/O) من `ads.js`؛ تحويله إلى حدث `ads.account_linked` مؤجَّل.
 
 ## 4) لماذا لم نعتمد PHP/Laravel (قرار)
@@ -53,6 +55,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | `payment.confirmed/failed/cancelled` | `payments` (Chargily موثَّق) | digital, sms, wallet |
 | `wallet.escrow_held/released`, `refund_due`, `withdrawal_*`, `deposit`, `ads_topup` | `wallet` | hooks (وأي مشترك خارجي) |
 | `agency.order_paid/processing/delivered/rejected/client_mailed` | `agency` | hooks (وأي مشترك خارجي؛ التسليم يحمل `invite_link`) |
+| `appstore.installed/uninstalled/suspended` | `appstore` | hooks، وتطبيق التثبيت نفسه (webhook دورة الحياة) |
 | `fraud.high_risk` | `antifraud` | hooks |
 | `ads.token_expiring/expired` | `adsoauth` | hooks |
 | `sms.credit_empty`, `digital.delivered`, `whatsapp.sent`, `order.customer_confirmed/cancelled` | sms/digital/whatsapp | hooks, sheets |

@@ -1,5 +1,5 @@
 import { HttpError, ok, paginate, clampLimit } from "../core.js";
-import { hmacHex, localPhone } from "../util.js";
+import { hmacHex, localPhone, maskPhone, maskName, seesPii } from "../util.js";
 
 const STATUSES = ["open", "contacted", "recovered", "dismissed"];
 const DAY = 86400;
@@ -28,7 +28,7 @@ export const carts = {
       const lim = clampLimit(req.query.limit), after = +req.query.after || 0, st = STATUSES.includes(req.query.status) ? req.query.status : "open", minAge = (req.query.minAge === undefined || req.query.minAge === "" || !Number.isFinite(+req.query.minAge) ? 15 : Math.min(1440, Math.max(0, Math.floor(+req.query.minAge)))) * 60;
       const a = [req.tenant.id, st, ctx.nowS() - minAge]; let q = "SELECT * FROM cr_carts WHERE tenant_id=? AND status=? AND updated_at<=?"; if (after) { q += " AND id<?"; a.push(after); }
       const pg = paginate(await db.all(q + " ORDER BY id DESC LIMIT ?", ...a, lim + 1), lim);
-      const out = []; for (const c of pg.items) out.push({ id: c.id, name: c.name, phone: await ctx.vault.decrypt(c.phone_enc, `cart:${req.tenant.id}`), items: JSON.parse(c.items), total: c.total, wilaya: c.wilaya, page: c.page, status: c.status, updated_at: c.updated_at, age_min: Math.floor((ctx.nowS() - c.updated_at) / 60) });
+      const out = []; for (const c of pg.items) out.push({ id: c.id, name: seesPii(req) ? c.name : maskName(c.name), phone: seesPii(req) ? await ctx.vault.decrypt(c.phone_enc, `cart:${req.tenant.id}`) : maskPhone(await ctx.vault.decrypt(c.phone_enc, `cart:${req.tenant.id}`)), items: JSON.parse(c.items), total: c.total, wilaya: c.wilaya, page: c.page, status: c.status, updated_at: c.updated_at, age_min: Math.floor((ctx.nowS() - c.updated_at) / 60) });
       return ok({ carts: out, next: pg.next });
     });
     r.patch("/v1/carts/:id", { scope: "carts:write", summary: "تغيير حالة سلة (contacted|recovered|dismissed|open)" }, async (req) => {

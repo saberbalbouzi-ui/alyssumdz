@@ -46,6 +46,12 @@ const ALLOW: [string, RegExp][] = [
   ["GET", /^\/v1\/agency\/(services|orders)$/],
   ["GET", /^\/v1\/agency\/orders\/\d{1,12}$/],
   ["POST", /^\/v1\/agency\/orders$/],
+  // متجر التطبيقات (للتاجر فقط): التصفح والتثبيت وإعادة الربط وإلغاء التثبيت. مسارات المطوّر /dev/* وOAuth وكل /admin/appstore/* ممنوعة هنا
+  ["GET", /^\/v1\/appstore\/apps(\/\d{1,12})?$/],
+  ["POST", /^\/v1\/appstore\/apps\/\d{1,12}\/install$/],
+  ["GET", /^\/v1\/appstore\/installations$/],
+  ["POST", /^\/v1\/appstore\/installations\/\d{1,12}\/authorize$/],
+  ["DELETE", /^\/v1\/appstore\/installations\/\d{1,12}$/],
 ];
 
 Deno.serve(async (req) => {

@@ -38,7 +38,7 @@ export const moduleOff = (settings, id) => !CORE_MODULES.includes(id) && Array.i
 export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn = fetch }) {
   if (!secret || String(secret).length < 16) throw new Error("PLATFORM_SECRET مطلوب (16 حرفاً فأكثر)");
   const db = new DB(d1), routes = [];
-  const ctx = { db, clock, fetchFn, secret, vault, files, config, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
+  const ctx = { authProviders: [], db, clock, fetchFn, secret, vault, files, config, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
     /** يضيف حدثاً لصندوق الأحداث. extId اختياري: نفس (مستأجر، extId) لا يُدرج مرتين ← يُرجع false */
     async emit(tenantId, type, data, extId = null) {
       try { await db.run("INSERT INTO pf_events (tenant_id,type,payload,ext_id,state,attempts,next_at,created_at) VALUES (?,?,?,?,?,0,?,?)", tenantId, type, JSON.stringify(data), extId, "pending", Math.floor(clock() / 1000), nowStr(clock())); return true; }
@@ -64,6 +64,15 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
 
   async function authTenant(hd, scope, ip) {
     const b = String(hd.authorization ?? ""), tok = /^bearer /i.test(b) ? b.slice(7).trim() : "";
+    /* رموز OAuth لتطبيقات الأطراف الثالثة: تحلّها وحدة مسجِّلة (ctx.authProviders)؛ لا تُقبل إلا على مسارات لها نطاق صريح داخل نطاقات الرمز */
+    const prov = ctx.authProviders.find((p) => tok.startsWith(p.prefix));
+    if (prov) {
+      const r = await prov.resolve(tok, ip);
+      if (!r) { const w = await ctx.window("bad:" + ip, 30, 60); if (w !== null) throw new HttpError(429, "rate_limited", "محاولات مصادقة فاشلة كثيرة", null, { "Retry-After": String(w) }); throw new HttpError(401, "invalid_token", "رمز الوصول غير صالح أو منتهٍ أو ملغى", null, { "WWW-Authenticate": 'Bearer error="invalid_token"' }); }
+      if (!scope || !r.scopes.includes(scope)) throw new HttpError(403, "insufficient_scope", `رمز التطبيق لا يملك النطاق ${scope || "(مسار غير متاح للتطبيقات)"}`, null, { "WWW-Authenticate": 'Bearer error="insufficient_scope"' });
+      const wl = await ctx.window(`app:${r.app.installation_id}`, r.rate ?? 300, 60); if (wl !== null) throw new HttpError(429, "rate_limited", "تجاوز التطبيق حدّ الطلبات", null, { "Retry-After": String(wl) });
+      return { tenant: r.tenant, key: { id: 0 }, pub: false, origin: null, mode: "live", app: r.app };
+    }
     const k = /^pk_(live|test|pub)_[0-9a-f]{40}$/.test(tok) ? await db.one("SELECT * FROM pf_keys WHERE key_hash=? AND revoked_at IS NULL", await sha256Hex(tok)) : null;
     const t = k ? await db.one("SELECT * FROM pf_tenants WHERE id=?", k.tenant_id) : null;
     if (!k || !t || t.status !== "active") {
@@ -110,7 +119,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       const req = { method: m, path: p, params: mm.groups ?? {}, query: q, headers: hd, ip, raw, json() { try { const j = JSON.parse(raw); if (j && typeof j === "object" && !Array.isArray(j)) return j; } catch { /* يسقط إلى الخطأ */ } throw new HttpError(400, "validation_error", "جسم الطلب يجب أن يكون JSON"); } };
       if (rt.opts.auth === "admin") req.actor = authAdmin(hd);
       else if (rt.opts.auth === "tenant") {
-        const a = await authTenant(hd, rt.opts.scope, ip); if (moduleOff(a.tenant.settings, rt.mod)) throw new HttpError(403, "module_disabled", `وحدة ${rt.mod} معطّلة لهذا المستأجر`); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin;
+        const a = await authTenant(hd, rt.opts.scope, ip); if (moduleOff(a.tenant.settings, rt.mod)) throw new HttpError(403, "module_disabled", `وحدة ${rt.mod} معطّلة لهذا المستأجر`); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin; req.app = a.app ?? null;
         const lim = rt.opts.limit; if (lim) { const wt = await ctx.window(`t${a.tenant.id}:${lim.key}`, lim.max, lim.win); if (wt !== null) throw new HttpError(429, "rate_limited", "تجاوزت الحدّ المسموح", null, { "Retry-After": String(wt) }); }
       }
       let res;

@@ -21,3 +21,7 @@ export function safeHttpsUrl(u) {
 export function e164(p) { const l = localPhone(p); return l ? "213" + l.slice(1) : null; }
 /** تهريب HTML للقوالب النصية (البريد) */
 export const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+/** إخفاء بيانات الزبون عن تطبيقات الأطراف الثالثة التي لا تملك read_customers: الهاتف يبقى آخر رقمين فقط، والاسم أول حرف */
+export const maskPhone = (p) => { const d = String(p ?? ""); return d.length > 2 ? "•".repeat(Math.min(8, d.length - 2)) + d.slice(-2) : "••"; };
+export const maskName = (n) => { const t = String(n ?? "").trim(); return t ? t[0] + "•••" : ""; };
+export const seesPii = (req) => !req.app || req.app.scopes.includes("read_customers");

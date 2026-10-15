@@ -179,3 +179,37 @@ CREATE TABLE IF NOT EXISTS agency_orders (
 CREATE INDEX IF NOT EXISTS ix_agency_orders_t ON agency_orders (tenant_id, id);
 CREATE INDEX IF NOT EXISTS ix_agency_orders_s ON agency_orders (status, id);
 CREATE TABLE IF NOT EXISTS agency_settings (id INTEGER PRIMARY KEY CHECK (id=1), config TEXT NOT NULL, secret_enc TEXT, updated_at INTEGER NOT NULL);
+
+-- ───────── متجر التطبيقات (وحدة appstore): OAuth 2.0 + سوق + فوترة بتقاسم الإيراد + webhooks صادرة ─────────
+CREATE TABLE IF NOT EXISTS app_developers (tenant_id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS apps (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, developer_id INTEGER NOT NULL, slug TEXT NOT NULL UNIQUE, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', icon_url TEXT,
+  price INTEGER NOT NULL DEFAULT 0, billing TEXT NOT NULL DEFAULT 'once', webhook_url TEXT, webhook_secret_enc TEXT, events TEXT NOT NULL DEFAULT '[]', scopes TEXT NOT NULL DEFAULT '[]',
+  redirect_uris TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT 'draft', approved_once INTEGER NOT NULL DEFAULT 0, review_note TEXT, created_at TEXT NOT NULL, updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_apps_dev ON apps (developer_id, id);
+CREATE TABLE IF NOT EXISTS oauth_clients (id INTEGER PRIMARY KEY AUTOINCREMENT, app_id INTEGER NOT NULL, client_id TEXT NOT NULL UNIQUE, secret_hash TEXT NOT NULL, created_at TEXT NOT NULL, revoked_at TEXT);
+CREATE INDEX IF NOT EXISTS ix_oauth_clients_app ON oauth_clients (app_id);
+CREATE TABLE IF NOT EXISTS app_installations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, app_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', scopes TEXT NOT NULL DEFAULT '[]',
+  price INTEGER NOT NULL DEFAULT 0, billing TEXT NOT NULL DEFAULT 'once', paid_once INTEGER NOT NULL DEFAULT 0, next_charge_at INTEGER, installed_at INTEGER, uninstalled_at INTEGER, UNIQUE (tenant_id, app_id)
+);
+CREATE INDEX IF NOT EXISTS ix_app_inst_due ON app_installations (status, next_charge_at);
+CREATE TABLE IF NOT EXISTS oauth_codes (code_hash TEXT PRIMARY KEY, installation_id INTEGER NOT NULL, client_id TEXT NOT NULL, redirect_uri TEXT NOT NULL, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0, family TEXT);
+CREATE TABLE IF NOT EXISTS oauth_access_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, installation_id INTEGER NOT NULL, client_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE, refresh_hash TEXT NOT NULL UNIQUE, family TEXT NOT NULL,
+  scopes TEXT NOT NULL, expires_at INTEGER NOT NULL, refresh_expires_at INTEGER NOT NULL, refresh_used INTEGER NOT NULL DEFAULT 0, revoked_at INTEGER, created_at INTEGER NOT NULL, last_used_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS ix_oauth_tok_inst ON oauth_access_tokens (installation_id);
+CREATE INDEX IF NOT EXISTS ix_oauth_tok_fam ON oauth_access_tokens (family);
+CREATE TABLE IF NOT EXISTS platform_revenues (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, installation_id INTEGER NOT NULL, app_id INTEGER NOT NULL, developer_id INTEGER NOT NULL, tenant_id INTEGER NOT NULL, period TEXT NOT NULL,
+  gross INTEGER NOT NULL, fee INTEGER NOT NULL, net INTEGER NOT NULL, ref TEXT NOT NULL UNIQUE, state TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, settled_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS ix_platform_rev_dev ON platform_revenues (developer_id, id);
+CREATE TABLE IF NOT EXISTS app_deliveries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, app_id INTEGER NOT NULL, installation_id INTEGER NOT NULL, tenant_id INTEGER NOT NULL, event_id INTEGER NOT NULL, type TEXT NOT NULL, payload TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, last_error TEXT, created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_app_deliv_due ON app_deliveries (state, next_at);
+CREATE TABLE IF NOT EXISTS app_settings (id INTEGER PRIMARY KEY CHECK (id=1), commission_pct INTEGER NOT NULL DEFAULT 20, updated_at INTEGER NOT NULL);
