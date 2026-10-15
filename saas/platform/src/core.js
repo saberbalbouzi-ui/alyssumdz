@@ -25,7 +25,7 @@ export class DB {
  * r.get/post/put/delete(pattern, { auth: "public" | "tenant" | "admin", scope?, limit?: {key,max,win} }, handler(req, ctx)).
  */
 /** المفاتيح العامة (pk_pub_) للمتصفح: نطاقات محصورة بهذه القائمة + أصل (Origin) مسموح من إعدادات المستأجر `origins` */
-export const PUBLIC_SCOPES = ["ab:assign", "ab:track", "fraud:check", "cart:capture", "order:create"];
+export const PUBLIC_SCOPES = ["ab:assign", "ab:track", "fraud:check", "cart:capture", "order:create", "payment:proof", "payment:init"];
 /** مساعد ترقيم بمؤشر: rows مرتبة تنازلياً بـid وطلب limit+1 ← { items, next } */
 export function paginate(rows, limit, idKey = "id") { const more = rows.length > limit, items = rows.slice(0, limit); return { items, next: more ? items[items.length - 1][idKey] : null }; }
 export const clampLimit = (v, def = 50, max = 100) => Math.max(1, Math.min(max, Math.floor(+v) || def));
@@ -138,22 +138,26 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
   }
 
   /** للـcron: ينفّذ cron كل وحدة ويوزّع الأحداث المستحقة على معالجات الوحدات (مع إعادة محاولة بتباعد) */
-  async function cron() {
-    const out = { events: 0, failed: 0 }, handlers = {}; for (const m of modules) for (const [t, h] of Object.entries(m.on ?? {})) (handlers[t] ??= []).push({ mod: m.id, fn: h });
-    const rows = await db.all("SELECT * FROM pf_events WHERE state='pending' AND next_at<=? ORDER BY id LIMIT 50", Math.floor(clock() / 1000)), offCache = new Map();
-    const offFor = async (tid) => { if (!offCache.has(tid)) offCache.set(tid, JSON.parse((await db.val("SELECT settings FROM pf_tenants WHERE id=?", tid)) || "{}")); return offCache.get(tid); };
-    for (const e of rows) {
-      // كل معالج مستقل: ما نجح لا يُعاد عند إعادة المحاولة (done)، وفشل وحدة لا يعطّل بقية الوحدات
-      const done = new Set(JSON.parse(e.done || "[]")); let err = null;
-      for (const h of [...(handlers[e.type] ?? []), ...(handlers["*"] ?? [])]) {
-        const key = h.mod + ":" + (handlers["*"]?.includes(h) ? "*" : e.type); if (done.has(key)) continue;
-        if (moduleOff(await offFor(e.tenant_id), h.mod)) { done.add(key); continue; }       // وحدة معطّلة لهذا المستأجر: لا تستقبل أحداثه (ولا تُعاد عند التفعيل لاحقاً)
-        try { await h.fn({ id: e.id, tenantId: e.tenant_id, type: e.type, data: JSON.parse(e.payload) }, ctx); done.add(key); } catch (x) { err ??= x; }
-      }
-      if (!err) { await db.run("UPDATE pf_events SET state='done', attempts=attempts+1, done=? WHERE id=?", JSON.stringify([...done]), e.id); out.events++; continue; }
-      out.failed++; const n = e.attempts + 1, back = [60, 300, 1800, 7200, 43200];
-      await db.run("UPDATE pf_events SET attempts=?, state=?, next_at=?, last_error=?, done=? WHERE id=?", n, n > back.length ? "failed" : "pending", Math.floor(clock() / 1000) + (back[n - 1] ?? 0), String(err?.message || err).slice(0, 180), JSON.stringify([...done]), e.id);
+  const handlersMap = () => { const h = {}; for (const m of modules) for (const [t, f] of Object.entries(m.on ?? {})) (h[t] ??= []).push({ mod: m.id, fn: f }); return h; };
+  /** معالجة حدث واحد: كل معالج مستقل (ما نجح لا يُعاد، وفشل وحدة لا يعطّل غيرها)؛ الفشل يُجدول بتباعد */
+  async function runEvent(e, handlers, offFor, out) {
+    const done = new Set(JSON.parse(e.done || "[]")); let err = null;
+    for (const h of [...(handlers[e.type] ?? []), ...(handlers["*"] ?? [])]) {
+      const key = h.mod + ":" + (handlers["*"]?.includes(h) ? "*" : e.type); if (done.has(key)) continue;
+      if (moduleOff(await offFor(e.tenant_id), h.mod)) { done.add(key); continue; }       // وحدة معطّلة لهذا المستأجر: لا تستقبل أحداثه (ولا تُعاد عند التفعيل لاحقاً)
+      try { await h.fn({ id: e.id, tenantId: e.tenant_id, type: e.type, data: JSON.parse(e.payload) }, ctx); done.add(key); } catch (x) { err ??= x; }
     }
+    if (!err) { await db.run("UPDATE pf_events SET state='done', attempts=attempts+1, done=? WHERE id=?", JSON.stringify([...done]), e.id); out.events++; return; }
+    out.failed++; const n = e.attempts + 1, back = [60, 300, 1800, 7200, 43200];
+    await db.run("UPDATE pf_events SET attempts=?, state=?, next_at=?, last_error=?, done=? WHERE id=?", n, n > back.length ? "failed" : "pending", Math.floor(clock() / 1000) + (back[n - 1] ?? 0), String(err?.message || err).slice(0, 180), JSON.stringify([...done]), e.id);
+  }
+  const offCacheFor = () => { const c = new Map(); return async (tid) => { if (!c.has(tid)) c.set(tid, JSON.parse((await db.val("SELECT settings FROM pf_tenants WHERE id=?", tid)) || "{}")); return c.get(tid); }; };
+  /** معالجة فورية لحدث معلّق بعينه (extId) بدل انتظار نبضة الـcron — لمسارات يحتاج الزبون نتيجتها حالاً (مثل تسجيل المبلغ المتوقع بعد إنشاء طلب رقمي) */
+  ctx.flush = async (tenantId, extId) => { const e = await db.one("SELECT * FROM pf_events WHERE tenant_id=? AND ext_id=? AND state='pending'", tenantId, extId); if (e) await runEvent(e, handlersMap(), offCacheFor(), { events: 0, failed: 0 }); };
+  async function cron() {
+    const out = { events: 0, failed: 0 }, handlers = handlersMap(), offFor = offCacheFor();
+    const rows = await db.all("SELECT * FROM pf_events WHERE state='pending' AND next_at<=? ORDER BY id LIMIT 50", Math.floor(clock() / 1000));
+    for (const e of rows) await runEvent(e, handlers, offFor, out);
     for (const m of modules) if (m.cron) Object.assign(out, { [m.id]: await m.cron(ctx) });
     return out;
   }

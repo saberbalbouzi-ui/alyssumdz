@@ -61,10 +61,10 @@ async function settle(ctx, tid, orderId, outcome) {
   } catch (e) { await ctx.db.run("UPDATE wl_escrow SET state='held' WHERE id=? AND state IN ('releasing','refunding')", esc.id); throw e; }
 }
 /** بوابة الشحن (extId «gw:…» عبر /admin/events فقط) هي المصدر الموثوق للتسليم؛ مع wallet.require_carrier لا يحرّر الضمان إلا هي (حدث التاجر من /v1/events لا يكفي) */
-const CARRIER_PREFIX = "gw:";
+const CARRIER_PREFIXES = ["gw:", "dg:"];       // gw: بوابة الشحن، dg: تسليم رقمي من وحدة digital (كلاهما لا يولّدهما /v1/events)
 const terminal = (outcome) => async (e, ctx) => {
   const oid = String(e.data?.order_id ?? "").slice(0, 80); if (!oid) return;
-  if (outcome === "delivered" && (await walletSettings(ctx, e.tenantId)).require_carrier) { const src = String((await ctx.db.val("SELECT ext_id FROM pf_events WHERE id=?", e.id)) ?? ""); if (!src.startsWith(CARRIER_PREFIX)) return; }
+  if (outcome === "delivered" && (await walletSettings(ctx, e.tenantId)).require_carrier) { const src = String((await ctx.db.val("SELECT ext_id FROM pf_events WHERE id=?", e.id)) ?? ""); if (!CARRIER_PREFIXES.some((p) => src.startsWith(p))) return; }
   await ctx.db.run("INSERT OR IGNORE INTO wl_orders (tenant_id,order_id,outcome,at) VALUES (?,?,?,?)", e.tenantId, oid, outcome, ctx.nowS());      // أول حالة نهائية تُعتمد
   const o = await ctx.db.val("SELECT outcome FROM wl_orders WHERE tenant_id=? AND order_id=?", e.tenantId, oid); await settle(ctx, e.tenantId, oid, o);
 };

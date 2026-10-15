@@ -58,7 +58,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 | `appstore.installed/uninstalled/suspended` | `appstore` | hooks، وتطبيق التثبيت نفسه (webhook دورة الحياة) |
 | `fraud.high_risk` | `antifraud` | hooks |
 | `ads.token_expiring/expired` | `adsoauth` | hooks |
-| `sms.credit_empty`, `digital.delivered`, `whatsapp.sent`, `order.customer_confirmed/cancelled` | sms/digital/whatsapp | hooks, sheets |
+| `sms.credit_empty`, `digital.delivered`, `digital.ready`, `digital.short`, `payment.proof_submitted`, `whatsapp.sent`, `order.customer_confirmed/cancelled` | sms/digital/whatsapp | hooks, sheets |
 
 `hooks` يستمع إلى `*` ويوزّع كل حدث على نقاط المشتركين الخارجيين.
 

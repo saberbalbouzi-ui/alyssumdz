@@ -73,7 +73,7 @@ ok("SQL: المالك مستثنى من حصر الأعمدة والمحفّز �
 
 /* كل قسم في القائمة له قرار صريح: مخصَّص بصلاحية أو للمالك فقط (يُضاف هنا عند أي قسم جديد) */
 const html = rd("admin.html"), tabs = [...new Set([...html.matchAll(/onclick="Admin\.tab\('(\w+)'/g)].map(m => m[1]))];
-const OWNER_ONLY = ["store", "setup", "agent", "analytics", "returns", "blacklist", "experts", "sources", "dispatch", "profit", "wallet", "agency", "appstore", "appdev"];   // إعدادات عامة، وأقسام بياناتها في تخزين المالك (قريباً)
+const OWNER_ONLY = ["store", "setup", "agent", "analytics", "returns", "blacklist", "experts", "sources", "dispatch", "profit", "wallet", "agency", "appstore", "appdev", "digital"];   // إعدادات عامة، وأقسام بياناتها في تخزين المالك (قريباً)
 const unmapped = tabs.filter(t => !R.TAB_PERM[t] && !["team", "admtheme"].includes(t));
 ok("أقسام القائمة: غير المسجَّلة هي المالك-فقط المعروفة", JSON.stringify(unmapped.sort()) === JSON.stringify(OWNER_ONLY.sort()), unmapped);
 ok("لا قسم مسجَّل بصلاحية مجهولة", Object.values(R.TAB_PERM).concat(Object.values(R.APP_PERM)).every(p => jsPerms.includes(p)));

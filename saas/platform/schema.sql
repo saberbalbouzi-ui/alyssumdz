@@ -63,6 +63,19 @@ CREATE TABLE IF NOT EXISTS dg_grants (
   order_ref TEXT NULL, email_h TEXT NULL, expires_at INTEGER NOT NULL, max_downloads INTEGER NOT NULL, downloads INTEGER NOT NULL DEFAULT 0, last_download_at INTEGER NULL,
   created_at TEXT NOT NULL, revoked_at TEXT NULL, UNIQUE (tenant_id, order_ref, asset_id)
 );
+-- مخزن المفاتيح/الحسابات الرقمية (خزنة): السرّ مشفّر، والبصمة تمنع التكرار؛ التخصيص ذرّي (available ← sold) ويُسلَّم لكل طلب مرة واحدة
+CREATE TABLE IF NOT EXISTS dg_keys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, sku TEXT NOT NULL, secret_enc TEXT NOT NULL, secret_h TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'available', order_ref TEXT NULL, claim TEXT NULL, sold_at INTEGER NULL, created_at INTEGER NOT NULL, UNIQUE (tenant_id, sku, secret_h)
+);
+CREATE INDEX IF NOT EXISTS ix_dg_keys ON dg_keys (tenant_id, sku, state, id);
+CREATE INDEX IF NOT EXISTS ix_dg_keys_order ON dg_keys (tenant_id, order_ref);
+-- طلبات تحوي منتجات رقمية: تُسجَّل عند order.created وتُسلَّم عند payment.confirmed (أي مزوّد: Chargily أو موافقة التاجر على دفع يدوي)
+CREATE TABLE IF NOT EXISTS dg_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, order_ref TEXT NOT NULL, items TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', email_enc TEXT NULL,
+  paid INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL DEFAULT 'awaiting', detail TEXT NULL, created_at INTEGER NOT NULL, delivered_at INTEGER NULL, UNIQUE (tenant_id, order_ref)
+);
+CREATE INDEX IF NOT EXISTS ix_dg_orders ON dg_orders (tenant_id, state, id);
 -- وحدة WhatsApp: ربط المستلم بالطلب لمطابقة ردّ «نعم/لا»، ونقطة استقبال لكل مستأجر
 CREATE TABLE IF NOT EXISTS wa_hooks (tenant_id INTEGER PRIMARY KEY REFERENCES pf_tenants(id) ON DELETE CASCADE, hook_id TEXT NOT NULL UNIQUE);
 CREATE TABLE IF NOT EXISTS wa_sent (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, to_h TEXT NOT NULL, order_id TEXT NOT NULL, at INTEGER NOT NULL);
@@ -224,3 +237,11 @@ CREATE TABLE IF NOT EXISTS app_refunds (
 CREATE TABLE IF NOT EXISTS app_flags (
   app_id INTEGER PRIMARY KEY, featured INTEGER NOT NULL DEFAULT 0, domain_host TEXT, domain_checked_at INTEGER
 );
+-- الدفع اليدوي (BaridiMob/CCP): المبلغ المتوقع يُسجَّل من order.created الموثَّق، والزبون يرفع إثباتاً (صورة مصغّرة) ثم يوافق التاجر يدوياً
+CREATE TABLE IF NOT EXISTS pay_expect (tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, order_id TEXT NOT NULL, amount INTEGER NOT NULL, method TEXT NOT NULL, verified INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, PRIMARY KEY (tenant_id, order_id));
+CREATE TABLE IF NOT EXISTS pay_manual (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, order_id TEXT NOT NULL, method TEXT NOT NULL, amount INTEGER NOT NULL, proof TEXT NULL, payer TEXT NOT NULL DEFAULT '',
+  state TEXT NOT NULL DEFAULT 'pending', note TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, decided_at INTEGER NULL, decided_by TEXT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_pay_manual ON pay_manual (tenant_id, state, id);
+CREATE INDEX IF NOT EXISTS ix_pay_manual_order ON pay_manual (tenant_id, order_id);
