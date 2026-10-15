@@ -7,7 +7,7 @@
 const AdminMarketplace = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const S = { v: "cat", cat: [], more: null, q: "", sort: "new", imps: [], mine: [], ord: [], aff: [], w: null, off: false, err: "", busy: false, timer: null, form: false, sync: 0 };
+  const S = { v: "cat", cat: [], more: null, q: "", seller: "", sort: "new", imps: [], mine: [], ord: [], aff: [], w: null, off: false, err: "", busy: false, timer: null, form: false, sync: 0 };
   const nf = n => Math.round(+n || 0).toLocaleString("fr-DZ");
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -34,7 +34,7 @@ const AdminMarketplace = (() => {
 
   /* ───── تحميل ───── */
   async function loadCat(more) {
-    const q = { limit: 24, sort: S.sort }; if (S.q) q.q = S.q; if (more && S.more) q.offset = S.more;
+    const q = { limit: 24, sort: S.sort }; if (S.q) q.q = S.q; if (S.seller) q.seller = S.seller; if (more && S.more) q.offset = S.more;
     const r = await call("GET", "/v1/marketplace/catalog", null, q);
     if (r.off) { S.off = true; return; } S.off = false; if (!r.ok) { S.err = errOf(r); return; } S.err = "";
     S.cat = more ? S.cat.concat(r.j.products || []) : r.j.products || []; S.more = r.j.next_offset || null;
@@ -111,12 +111,16 @@ const AdminMarketplace = (() => {
 <div class="mk-box mk-st"><small>طلبات تنتظر شحنك</small><b>${nf(sp.to_ship)}</b></div></div>
 <p class="mk-hint" style="margin:0">عند كل طلب على منتج مستورد تُحجز عمولته من رصيد المورّد وتُحرَّر لك عند التسليم فقط، وتعود للمورّد عند الإرجاع. اشحن رصيدك كمورّد من تبويب «المحفظة».</p>`;
   }
+  function sellerBadge(sl) {
+    if (!sl) return ""; const w = sl.kind === "wholesale", n = (+sl.delivered || 0) + (+sl.returned || 0);
+    return ` <span class="mk-chip" style="--c:${w ? "var(--g-amber-rgb)" : "var(--g-blue-rgb)"}">${w ? "🏭 جملة" : "🛍️ تجزئة"}</span>` + (n >= 5 && sl.rate != null ? ` <span class="mk-chip" title="نسبة التسليم من ${nf(n)} طلب">✓ ${nf(sl.rate)}%</span>` : "");
+  }
   function cardHtml(p) {
-    return `<div class="mk-p">${p.image ? `<img loading="lazy" src="${esc(p.image)}" alt="">` : ""}<div><h4>${esc(p.title)}</h4><small style="opacity:.75">${esc(p.supplier || "")}${p.category ? " · " + esc(p.category) : ""}</small>
+    return `<div class="mk-p">${p.image ? `<img loading="lazy" src="${esc(p.image)}" alt="">` : ""}<div><h4>${esc(p.title)}</h4><small style="opacity:.75">${esc(p.supplier || "")}${sellerBadge(p.seller)}${p.category ? " · " + esc(p.category) : ""}</small>
 <div class="mk-kv"><span>سعر المورّد</span><b>${nf(p.supplier_price)} دج</b></div><div class="mk-kv"><span>عمولتك</span><b>${nf(p.commission)} دج</b></div><div class="mk-kv"><span>السعر المقترح</span><span>${nf(p.rrp)} دج</span></div><div class="mk-kv"><span>المخزون</span><span>${p.stock == null ? "غير محدود" : nf(p.stock)}</span></div>
 ${p.imported ? '<span class="mk-chip" style="--c:var(--g-mint-rgb)">✓ مستورد في متجرك</span>' : `<label class="mk-row" style="display:grid;font-size:.8rem">سعر بيعك (دج)<input id="mk-pr-${p.id}" type="number" min="${p.supplier_price + p.commission}" value="${p.rrp}"></label><button class="mk-btn" data-mk="imp" data-id="${p.id}" ${S.busy ? "disabled" : ""}>استيراد بنقرة</button>`}</div></div>`;
   }
-  function vCat() { return `<div class="mk-box"><div class="mk-row"><label style="flex:1;min-width:180px">بحث<input id="mk-q" value="${esc(S.q)}" placeholder="اسم المنتج"></label><label>الترتيب<select id="mk-sort"><option value="new"${S.sort === "new" ? " selected" : ""}>الأحدث</option><option value="commission"${S.sort === "commission" ? " selected" : ""}>الأعلى عمولة</option><option value="price"${S.sort === "price" ? " selected" : ""}>الأرخص عند المورّد</option></select></label><button class="mk-btn" data-mk="search">بحث</button></div></div>
+  function vCat() { return `<div class="mk-box"><div class="mk-row"><label style="flex:1;min-width:180px">بحث<input id="mk-q" value="${esc(S.q)}" placeholder="اسم المنتج"></label><label>الترتيب<select id="mk-sort"><option value="new"${S.sort === "new" ? " selected" : ""}>الأحدث</option><option value="commission"${S.sort === "commission" ? " selected" : ""}>الأعلى عمولة</option><option value="price"${S.sort === "price" ? " selected" : ""}>الأرخص عند المورّد</option></select></label><label>البائع<select id="mk-seller"><option value="">الكل</option><option value="wholesale"${S.seller === "wholesale" ? " selected" : ""}>🏭 جملة</option><option value="retail"${S.seller === "retail" ? " selected" : ""}>🛍️ تجزئة</option></select></label><button class="mk-btn" data-mk="search">بحث</button></div></div>
 ${S.cat.length ? `<div class="mk-grid">${S.cat.map(cardHtml).join("")}</div>${S.more ? '<p><button class="mk-btn" data-mk="more">عرض المزيد</button></p>' : ""}` : '<div class="mk-box mk-off">لا منتجات في الكتالوج حالياً. عندما يعرض الموردون منتجاتهم تظهر هنا.</div>'}`; }
   function vImp() {
     return `<div class="mk-box"><div class="mk-row"><h3 style="margin:0">منتجاتي المستوردة</h3><button class="mk-btn o" data-mk="sync">⟳ مزامنة المخزون والأسعار مع متجري</button></div><p class="mk-hint">المخزون والإتاحة يتبعان المورّد: ينفد عنده ← يتوقف البيع عندك تلقائياً. تعديل السعر هنا ينعكس على متجرك.</p>
@@ -147,7 +151,7 @@ ${S.aff.length ? `<div class="mk-sc"><table class="mk-tbl"><thead><tr><th>الط
     const el = e.target.closest("[data-mk]"); if (!el) return; const a = el.dataset.mk, id = +el.dataset.id;
     if (a === "v") { S.v = el.dataset.v; draw(); }
     else if (a === "reload") { S.err = ""; await refresh(); }
-    else if (a === "search") { S.q = ($("mk-q") || {}).value || ""; S.sort = ($("mk-sort") || {}).value || "new"; await loadCat(false); draw(); }
+    else if (a === "search") { S.q = ($("mk-q") || {}).value || ""; S.sort = ($("mk-sort") || {}).value || "new"; S.seller = ($("mk-seller") || {}).value || ""; await loadCat(false); draw(); }
     else if (a === "more") { await loadCat(true); draw(); }
     else if (a === "imp") await doImport(id);
     else if (a === "sync") { await loadAll(); const n = await syncStore(true); if (n === -1) toast("تعذّر نشر التحديث"); draw(); }

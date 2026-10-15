@@ -57,6 +57,22 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     } };
   const compile = (p) => new RegExp("^" + p.replace(/:([a-z]+)/g, "(?<$1>[^/]+)") + "$");
   let curMod = "";
+  /** تجهيز مستأجر/مفتاح كخدمة نواة (استثناء موثّق): تستعملها وحدة السوق عند اعتماد مورّد من الخارج. المفتاح يظهر لمن يستدعيها مرة واحدة فقط */
+  ctx.provision = {
+    async createTenant({ name, settings = {}, actor = "system" }) {
+      const x = await db.run("INSERT INTO pf_tenants (name,site_ref,status,settings,created_at) VALUES (?,?,?,?,?)", String(name).slice(0, 120), null, "active", JSON.stringify(settings), ctx.now()); await ctx.audit(actor, "tenant.create", x.id, { via: "provision" }); return x.id;
+    },
+    async issueKey(tenantId, { scopes, label = "", actor = "system", revokeOthers = false }) {
+      if (!Array.isArray(scopes) || !scopes.length || !scopes.every((q) => /^[a-z]+:[a-z]+$/.test(q))) throw new HttpError(400, "validation_error", "scopes غير صالحة");
+      if (revokeOthers) await db.run("UPDATE pf_keys SET revoked_at=? WHERE tenant_id=? AND revoked_at IS NULL", ctx.now(), tenantId);
+      const key = `pk_live_${randHex(20)}`; await db.run("INSERT INTO pf_keys (tenant_id,prefix,key_hash,scopes,label,created_at) VALUES (?,?,?,?,?,?)", tenantId, key.slice(0, 12), await sha256Hex(key), scopes.join(","), String(label).slice(0, 60), ctx.now());
+      await ctx.audit(actor, "key.issue", tenantId, { scopes, via: "provision" }); return key;
+    },
+    async setStatus(tenantId, status, actor = "system") {
+      if (!["active", "suspended"].includes(status)) throw new HttpError(400, "validation_error", "status: active|suspended");
+      await db.run("UPDATE pf_tenants SET status=? WHERE id=?", status, tenantId); await ctx.audit(actor, "tenant.update", tenantId, { status, via: "provision" });
+    },
+  };
   const add = (method) => (pattern, opts, handler) => routes.push({ method, pattern, mod: curMod, re: compile(pattern), opts: { auth: "tenant", ...opts }, handler });
   const r = { get: add("GET"), post: add("POST"), put: add("PUT"), delete: add("DELETE"), patch: add("PATCH") };
   ctx.moduleIds = modules.map((m) => m.id);

@@ -1,11 +1,12 @@
 import { HttpError, ok, paginate, clampLimit } from "../core.js";
-import { localPhone, randHex, safeHttpsUrl } from "../util.js";
+import { hmacHex, localPhone, parseProof, randHex, safeHttpsUrl } from "../util.js";
 
 /** السوق المشترك — دروبشيبينغ محلي / شبكة أفلييت B2B فوق المنصة.
  *  المورّد (أي متجر) يدرج منتجه في كتالوج مركزي بثلاثة أرقام: سعر المورّد، السعر العام المقترح، وعمولة ثابتة للقطعة. الأفلييت (متجر آخر) يستورد المنتج بنقرة فيصير منتجاً في كتالوجه (علاقة mk_imports)
  *  بسعر بيعه، ويبقى مخزونه مرآة لمخزون المورّد. عند طلب على متجر الأفلييت: يتحقق «حارس الطلب» (ctx.orderGuards) أن المورّد يملك مخزوناً ورصيداً لدفع العمولة ثم يحجزها من متاحه إلى mk_escrow
  *  (وإلا يُرفض الطلب ويُنبَّه المورّد)، ويُوجَّه الطلب للمورّد ليشحنه ويحصّل ثمنه من الزبون (COD). عند «مُسلَّم» تُنقل العمولة من escrow المورّد إلى متاح الأفلييت، وعند «مرتجع» تعود لمتاح المورّد.
  *  المال لا يتحرك هنا: كل شيء عبر خدمات ctx.wallet (mkHold/mkOut/mkIn/mkBack) التي تقيّد في الدفتر المزدوج. حالة العمولة (mk_orders.state): pending ← available | returned | return_claimed(بانتظار المزوّد) | rejected. */
+const KINDS = ["wholesale", "retail"], SELLER_SCOPES = ["marketplace:read", "marketplace:write", "wallet:read", "wallet:write"];
 const SLUG = /^[A-Za-z0-9._-]{1,80}$/, MAX_PRICE = 100_000_000, REF_RE = /^MKO-(\d{1,12})$/;
 const txt = (v, n) => String(v ?? "").replace(/[<>\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, n);
 const int = (v) => { const n = Math.round(+v); return Number.isSafeInteger(n) ? n : NaN; };
@@ -134,13 +135,14 @@ export const marketplace = {
     });
 
     /* ═════════ الأفلييت: الكتالوج والاستيراد ═════════ */
-    r.get("/v1/marketplace/catalog", { scope: "marketplace:read", summary: "كتالوج السوق (منتجات نشطة من متاجر أخرى): ?q=&category=&sort=new|commission|price&limit=&after=" }, async (req) => {
+    r.get("/v1/marketplace/catalog", { scope: "marketplace:read", summary: "كتالوج السوق (منتجات نشطة من متاجر أخرى): ?q=&category=&seller=wholesale|retail&sort=new|commission|price&limit=&offset=" }, async (req) => {
       const lim = clampLimit(req.query.limit, 24, 60), a = [req.tenant.id], w = ["p.status='active'", "p.tenant_id<>?"];
       const q = txt(req.query.q, 60); if (q) { w.push("(p.title LIKE ? OR p.descr LIKE ?)"); a.push(`%${q}%`, `%${q}%`); }
       const cat = txt(req.query.category, 60); if (cat) { w.push("p.category=?"); a.push(cat); }
+      if (KINDS.includes(req.query.seller)) { w.push("COALESCE(s.kind,'retail')=?"); a.push(req.query.seller); }
       const sort = req.query.sort === "commission" ? "p.commission DESC, p.id DESC" : req.query.sort === "price" ? "p.supplier_price ASC, p.id DESC" : "p.id DESC", off = Math.max(0, Math.floor(+req.query.offset) || 0);
-      const rows = await db.all(`SELECT p.*, t.name supplier_name, (SELECT i.id FROM mk_imports i WHERE i.mp_id=p.id AND i.tenant_id=?) imported_id FROM mk_products p JOIN pf_tenants t ON t.id=p.tenant_id WHERE ${w.join(" AND ")} ORDER BY ${sort} LIMIT ? OFFSET ?`, req.tenant.id, ...a, lim + 1, off);
-      const more = rows.length > lim; return ok({ products: rows.slice(0, lim).map((p) => pubProduct(p, { supplier: p.supplier_name, imported: !!p.imported_id })), next_offset: more ? off + lim : null });
+      const rows = await db.all(`SELECT p.*, t.name supplier_name, COALESCE(s.kind,'retail') seller_kind, s.name seller_name, (SELECT COUNT(*) FROM mk_orders o WHERE o.supplier_id=p.tenant_id AND o.state='available') n_del, (SELECT COUNT(*) FROM mk_orders o WHERE o.supplier_id=p.tenant_id AND o.state='returned') n_ret, (SELECT i.id FROM mk_imports i WHERE i.mp_id=p.id AND i.tenant_id=?) imported_id FROM mk_products p JOIN pf_tenants t ON t.id=p.tenant_id LEFT JOIN mk_sellers s ON s.tenant_id=p.tenant_id AND s.status='approved' WHERE ${w.join(" AND ")} ORDER BY ${sort} LIMIT ? OFFSET ?`, req.tenant.id, ...a, lim + 1, off);
+      const more = rows.length > lim; return ok({ products: rows.slice(0, lim).map((p) => pubProduct(p, { supplier: p.seller_name || p.supplier_name, imported: !!p.imported_id, seller: { kind: p.seller_kind, delivered: p.n_del, returned: p.n_ret, rate: p.n_del + p.n_ret ? Math.round(100 * p.n_del / (p.n_del + p.n_ret)) : null } })), next_offset: more ? off + lim : null });
     });
     r.post("/v1/marketplace/imports", { scope: "marketplace:write", limit: { key: "mki", max: 60, win: 3600 }, summary: "استيراد منتج من الكتالوج بنقرة: { mp_id, price? (افتراضي السعر المقترح، ≥ الحد الأدنى), slug? }. يعيد بيانات المنتج لإنشائه في متجرك" }, async (req) => {
       const b = req.json(), tid = req.tenant.id, p = await db.one("SELECT * FROM mk_products WHERE id=? AND status='active'", int(b.mp_id)); if (!p) throw new HttpError(404, "not_found", "المنتج غير موجود أو غير متاح");
@@ -195,7 +197,95 @@ export const marketplace = {
         supplier: { rejected_for_funds: await db.val("SELECT COUNT(*) FROM mk_orders WHERE supplier_id=? AND state='rejected' AND detail='supplier_funds' AND created_at>?", tid, ctx.nowS() - 7 * 86400), to_ship: await db.val("SELECT COUNT(*) FROM mk_orders WHERE supplier_id=? AND state='pending' AND ship='new'", tid) } });
     });
 
+    /* ═════════ المورّد الخارجي: انضمام ببوابة، صور، ملف البائع (جملة/تجزئة)، إحصاءات المبيعات ═════════ */
+    r.post("/v1/marketplace/apply", { auth: "public", summary: "طلب انضمام مورّد من خارج المنصة (يراجعه المزوّد يدوياً): { kind: wholesale|retail, name, contact, phone, wilaya, reg_no (للجملة), about }" }, async (req) => {
+      const w = await ctx.window("mkapply", 30, 3600); if (w !== null) throw new HttpError(429, "rate_limited", "طلبات كثيرة، حاول لاحقاً", null, { "Retry-After": String(w) });
+      const b = req.json(); if (b.website) return ok({ ok: true, id: 0 }, 201);          // حقل فخّ للروبوتات
+      const kind = b.kind, name = txt(b.name, 80), contact = txt(b.contact, 60), wilaya = txt(b.wilaya, 40), reg = txt(b.reg_no, 40), about = txt(b.about, 500), phone = localPhone(b.phone);
+      const bad = (f, m) => { throw new HttpError(400, "validation_error", m, { [f]: m }); };
+      if (!KINDS.includes(kind)) bad("kind", "اختر: جملة أو تجزئة"); if (name.length < 3) bad("name", "اسم النشاط (3 أحرف على الأقل)"); if (contact.length < 3) bad("contact", "اسم المسؤول"); if (!phone) bad("phone", "رقم هاتف جزائري صالح");
+      if (wilaya.length < 2) bad("wilaya", "الولاية"); if (kind === "wholesale" && reg.length < 5) bad("reg_no", "رقم السجل التجاري مطلوب للجملة");
+      needVault(); const ph = await hmacHex(ctx.secret, "mks:" + phone);
+      if (await db.one("SELECT id FROM mk_sellers WHERE phone_h=? AND status IN ('pending','approved','suspended')", ph)) throw new HttpError(409, "already_applied", "هذا الرقم لديه طلب قائم أو حساب");
+      if ((await db.val("SELECT COUNT(*) FROM mk_sellers WHERE status='pending'")) >= 300) throw new HttpError(503, "busy", "طلبات كثيرة قيد المراجعة، حاول لاحقاً");
+      const now = ctx.nowS(), x = await db.run("INSERT INTO mk_sellers (kind,name,contact,phone_h,phone_enc,wilaya,reg_no,about,status,source,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'pending','portal',?,?)", kind, name, contact, ph, await ctx.vault.encrypt(phone, "mks:"), wilaya, reg, about, now, now);
+      return ok({ ok: true, id: x.id, status: "pending" }, 201);
+    });
+    const sellerOf = (tid) => db.one("SELECT * FROM mk_sellers WHERE tenant_id=? ORDER BY id DESC", tid);
+    r.get("/v1/marketplace/profile", { scope: "marketplace:read", summary: "ملف بائعي في السوق: النوع (جملة/تجزئة) والحالة" }, async (req) => {
+      const s0 = await sellerOf(req.tenant.id); return ok({ kind: s0?.kind ?? "retail", name: s0?.name ?? req.tenant.name, status: s0?.status ?? "approved", source: s0?.source ?? "internal", wilaya: s0?.wilaya ?? "", about: s0?.about ?? "", reg_no: s0?.reg_no ?? "" });
+    });
+    r.put("/v1/marketplace/profile", { scope: "marketplace:write", summary: "تحديث اسم البائع ونبذته وولايته (النوع جملة/تجزئة يحدّده المزوّد)" }, async (req) => {
+      const b = req.json(), name = txt(b.name, 80), about = txt(b.about, 500), wilaya = txt(b.wilaya, 40); if (name.length < 3) throw new HttpError(400, "validation_error", "اسم النشاط (3 أحرف على الأقل)", { name: "required" });
+      const cur = await sellerOf(req.tenant.id), now = ctx.nowS();
+      if (cur) await db.run("UPDATE mk_sellers SET name=?, about=?, wilaya=?, updated_at=? WHERE id=?", name, about, wilaya, now, cur.id);
+      else await db.run("INSERT INTO mk_sellers (tenant_id,kind,name,wilaya,about,status,source,created_at,updated_at) VALUES (?,?,?,?,?,'approved','internal',?,?)", req.tenant.id, "retail", name, wilaya, about, now, now);
+      return ok({ ok: true });
+    });
+    r.post("/v1/marketplace/images", { scope: "marketplace:write", limit: { key: "mkimg", max: 60, win: 3600 }, summary: "رفع صورة منتج (JPEG/PNG/WebP ≤240KB كـdata URL) ← { url } لاستعمالها في image/images" }, async (req) => {
+      const v = parseProof(req.json().image); if (!v) throw new HttpError(400, "validation_error", "صورة JPEG/PNG/WebP صالحة بحجم ≤240KB", { image: "invalid" });
+      if ((await db.val("SELECT COUNT(*) FROM mk_images WHERE tenant_id=?", req.tenant.id)) >= 400) throw new HttpError(402, "plan_limit", "حدّ 400 صورة");
+      const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(v), x = await db.run("INSERT INTO mk_images (tenant_id,mime,data,created_at) VALUES (?,?,?,?)", req.tenant.id, m[1], m[2], ctx.nowS());
+      return ok({ id: x.id, url: `${ctx.baseUrl}/v1/marketplace/img/${x.id}` }, 201);
+    });
+    r.get("/v1/marketplace/img/:id", { auth: "public", limit: { key: "mkimgget", max: 600, win: 60 }, summary: "صورة منتج مورّد (عامة، تُخزَّن مؤقتاً)" }, async (req) => {
+      const im = /^\d{1,12}$/.test(req.params.id) ? await db.one("SELECT mime,data FROM mk_images WHERE id=?", +req.params.id) : null; if (!im) throw new HttpError(404, "not_found", "الصورة غير موجودة");
+      const bin = Uint8Array.from(atob(im.data), (c) => c.charCodeAt(0));
+      return { status: 200, headers: { "Content-Type": im.mime, "Cache-Control": "public, max-age=86400", "X-Content-Type-Options": "nosniff", "Access-Control-Allow-Origin": "*" }, body: bin };
+    });
+    r.get("/v1/marketplace/stats", { scope: "marketplace:read", summary: "إحصاءات مبيعاتي كمورّد: ?days=30 ← طلبات، مسلَّمة، مرتجعة، قيمة المبيعات، العمولات، أفضل المنتجات" }, async (req) => {
+      const days = Math.max(1, Math.min(365, int(req.query.days) || 30)), since = ctx.nowS() - days * 86400, tid = req.tenant.id;
+      const rows = await db.all("SELECT state, COUNT(*) n, COALESCE(SUM(unit_price*qty),0) sales, COALESCE(SUM(commission),0) comm FROM mk_orders WHERE supplier_id=? AND created_at>=? GROUP BY state", tid, since), by = Object.fromEntries(rows.map((x) => [x.state, x]));
+      const g = (k, f) => Number(by[k]?.[f] ?? 0), del = g("available", "n"), ret = g("returned", "n"), top = await db.all("SELECT title, COUNT(*) orders, SUM(CASE WHEN state='available' THEN 1 ELSE 0 END) delivered FROM mk_orders WHERE supplier_id=? AND created_at>=? AND state<>'rejected' GROUP BY mp_id ORDER BY orders DESC LIMIT 5", tid, since);
+      return ok({ days, orders: rows.filter((x) => x.state !== "rejected").reduce((a, x) => a + Number(x.n), 0), pending: g("pending", "n"), delivered: del, returned: ret, disputed: g("return_claimed", "n"), rejected_for_funds: g("rejected", "n"),
+        sales: g("available", "sales"), commissions_paid: g("available", "comm"), commissions_held: g("pending", "comm"), delivery_rate: del + ret ? Math.round(100 * del / (del + ret)) : null, top });
+    });
+
     /* ═════════ إدارة المزوّد ═════════ */
+    /* ═════════ إدارة البائعين (المزوّد) ═════════ */
+    r.get("/admin/marketplace/sellers", { auth: "admin", summary: "طلبات انضمام الموردين وحساباتهم (?status=pending|approved|rejected|suspended) مع رقم الهاتف للتواصل" }, async (req) => {
+      const st = ["pending", "approved", "rejected", "suspended"].includes(req.query.status) ? req.query.status : "pending", out = [];
+      for (const x of await db.all("SELECT * FROM mk_sellers WHERE status=? ORDER BY id LIMIT 100", st)) {
+        let phone = ""; try { if (x.phone_enc && ctx.vault) phone = await ctx.vault.decrypt(x.phone_enc, "mks:"); } catch { /* مفتاح التشفير */ }
+        out.push({ id: x.id, tenant_id: x.tenant_id, kind: x.kind, name: x.name, contact: x.contact, phone, wilaya: x.wilaya, reg_no: x.reg_no, about: x.about, status: x.status, note: x.note, source: x.source, created_at: x.created_at,
+          products: x.tenant_id ? await db.val("SELECT COUNT(*) FROM mk_products WHERE tenant_id=?", x.tenant_id) : 0, delivered: x.tenant_id ? await db.val("SELECT COUNT(*) FROM mk_orders WHERE supplier_id=? AND state='available'", x.tenant_id) : 0, returned: x.tenant_id ? await db.val("SELECT COUNT(*) FROM mk_orders WHERE supplier_id=? AND state='returned'", x.tenant_id) : 0 });
+      }
+      return ok({ sellers: out });
+    });
+    const sellerById = async (id) => { const x = await db.one("SELECT * FROM mk_sellers WHERE id=?", +id); if (!x) throw new HttpError(404, "not_found", "غير موجود"); return x; };
+    const productsTo = async (tid, from, to) => { const ps = await db.all("SELECT * FROM mk_products WHERE tenant_id=? AND status IN (" + from.map(() => "?").join(",") + ")", tid, ...from); for (const p of ps) { await db.run("UPDATE mk_products SET status=?, updated_at=? WHERE id=?", to, ctx.nowS(), p.id); await broadcast({ ...p, status: to }); } return ps.length; };
+    r.post("/admin/marketplace/sellers/:id/approve", { auth: "admin", summary: "اعتماد مورّد: ينشئ حساباً (مستأجراً) بمفتاح محدود النطاق (سوق + محفظة) يُعرض مرة واحدة؛ { origin?: https://… أصل البوابة لروابط الدفع }" }, async (req) => {
+      const x = await sellerById(req.params.id), b = req.json(), now = ctx.nowS();
+      if (x.status === "approved") throw new HttpError(409, "bad_state", "معتمد سابقاً (استعمل إعادة إصدار المفتاح)");
+      if (x.tenant_id) {                                                                // موقوف ← إعادة تفعيل
+        await ctx.provision.setStatus(x.tenant_id, "active", req.actor); await db.run("UPDATE mk_sellers SET status='approved', note='', updated_at=? WHERE id=?", now, x.id);
+        await productsTo(x.tenant_id, ["suspended"], "paused"); await ctx.audit(req.actor, "marketplace.seller.reactivate", x.tenant_id, { id: x.id }); return ok({ ok: true, tenant_id: x.tenant_id });
+      }
+      const origin = safeHttpsUrl(String(b.origin ?? "")) ? new URL(b.origin).origin : null, tid = await ctx.provision.createTenant({ name: x.name, settings: origin ? { origins: [origin] } : {}, actor: req.actor });
+      const key = await ctx.provision.issueKey(tid, { scopes: SELLER_SCOPES, label: "supplier-portal", actor: req.actor });
+      await db.run("UPDATE mk_sellers SET tenant_id=?, status='approved', note='', updated_at=? WHERE id=?", tid, now, x.id); await ctx.audit(req.actor, "marketplace.seller.approve", tid, { id: x.id, kind: x.kind });
+      return ok({ ok: true, tenant_id: tid, key, note: "المفتاح يظهر مرة واحدة: أرسله للمورّد بواتساب" });
+    });
+    r.post("/admin/marketplace/sellers/:id/reject", { auth: "admin", summary: "رفض طلب انضمام: { note }" }, async (req) => {
+      const x = await sellerById(req.params.id); if (x.status !== "pending") throw new HttpError(409, "bad_state", "ليس قيد المراجعة");
+      await db.run("UPDATE mk_sellers SET status='rejected', note=?, updated_at=? WHERE id=?", txt(req.json().note, 200), ctx.nowS(), x.id); await ctx.audit(req.actor, "marketplace.seller.reject", x.tenant_id ?? 0, { id: x.id }); return ok({ ok: true });
+    });
+    r.post("/admin/marketplace/sellers/:id/suspend", { auth: "admin", summary: "إيقاف مورّد: يعطّل مفتاحه (الحساب) ويوقف كل منتجاته فيتوقف بيعها عند الأفلييت: { note }" }, async (req) => {
+      const x = await sellerById(req.params.id); if (x.status !== "approved" || !x.tenant_id) throw new HttpError(409, "bad_state", "ليس حساباً معتمداً");
+      await ctx.provision.setStatus(x.tenant_id, "suspended", req.actor); await db.run("UPDATE mk_sellers SET status='suspended', note=?, updated_at=? WHERE id=?", txt(req.json().note, 200), ctx.nowS(), x.id);
+      const n = await productsTo(x.tenant_id, ["active", "paused", "pending"], "suspended"); await ctx.audit(req.actor, "marketplace.seller.suspend", x.tenant_id, { id: x.id, products: n }); return ok({ ok: true, products: n });
+    });
+    r.post("/admin/marketplace/sellers/:id/rekey", { auth: "admin", summary: "إعادة إصدار مفتاح المورّد (يُبطل القديم؛ يظهر الجديد مرة واحدة)" }, async (req) => {
+      const x = await sellerById(req.params.id); if (!x.tenant_id || x.status !== "approved") throw new HttpError(409, "bad_state", "ليس حساباً معتمداً");
+      return ok({ ok: true, key: await ctx.provision.issueKey(x.tenant_id, { scopes: SELLER_SCOPES, label: "supplier-portal", actor: req.actor, revokeOthers: true }) });
+    });
+    r.put("/admin/marketplace/tenants/:tid/kind", { auth: "admin", summary: "تحديد نوع بائع (جملة/تجزئة) لأي مستأجر مورّد: { kind, name? }" }, async (req) => {
+      const tid = +req.params.tid, b = req.json(); if (!KINDS.includes(b.kind)) throw new HttpError(400, "validation_error", "kind: wholesale|retail"); const t = await db.one("SELECT id,name FROM pf_tenants WHERE id=?", tid); if (!t) throw new HttpError(404, "not_found", "مستأجر غير موجود");
+      const cur = await sellerOf(tid), now = ctx.nowS();
+      if (cur) await db.run("UPDATE mk_sellers SET kind=?, updated_at=? WHERE id=?", b.kind, now, cur.id); else await db.run("INSERT INTO mk_sellers (tenant_id,kind,name,status,source,created_at,updated_at) VALUES (?,?,?,'approved','internal',?,?)", tid, b.kind, txt(b.name, 80) || t.name, now, now);
+      await ctx.audit(req.actor, "marketplace.seller.kind", tid, { kind: b.kind }); return ok({ ok: true });
+    });
+
     r.get("/admin/marketplace/products", { auth: "admin", summary: "منتجات السوق للمراجعة (?status=pending|active|paused|rejected|suspended)" }, async (req) => {
       const st = ["pending", "active", "paused", "rejected", "suspended"].includes(req.query.status) ? req.query.status : "pending";
       return ok({ products: (await db.all("SELECT p.*, t.name supplier FROM mk_products p JOIN pf_tenants t ON t.id=p.tenant_id WHERE p.status=? ORDER BY p.id LIMIT 100", st)).map((p) => pubProduct(p, { tenant_id: p.tenant_id, supplier: p.supplier, note: p.note })) });

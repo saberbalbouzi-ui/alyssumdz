@@ -8,6 +8,7 @@ const ALLOW = [...ts.matchAll(/\["(GET|POST|PUT|PATCH)", (\/\^.*?\/)\]/g)].map(m
 ok("المزوّد: إيداعات CCP وصورتها واعتمادها", allowed("GET", "/admin/wallet/deposits/list?status=pending") && allowed("GET", "/admin/wallet/deposits/5/proof") && allowed("POST", "/admin/wallet/deposits/5/approve") && allowed("POST", "/admin/wallet/deposits/5/reject"));
 ok("المزوّد: منتجات السوق ونزاعاته وإعداداته", allowed("GET", "/admin/marketplace/products?status=pending") && allowed("POST", "/admin/marketplace/products/3/suspend") && allowed("GET", "/admin/marketplace/orders?state=return_claimed") && allowed("POST", "/admin/marketplace/orders/9/resolve") && allowed("PUT", "/admin/marketplace/settings"));
 ok("المزوّد: يرفض الخبيث", !allowed("POST", "/admin/wallet/deposits/x/approve") && !allowed("GET", "/admin/marketplace/products?status=a;drop") && !allowed("DELETE", "/admin/marketplace/products/3") && !allowed("POST", "/admin/marketplace/orders/9/delete"));
+ok("المزوّد: مراجعة البائعين", allowed("GET", "/admin/marketplace/sellers?status=pending") && allowed("POST", "/admin/marketplace/sellers/4/approve") && allowed("POST", "/admin/marketplace/sellers/4/rekey") && allowed("PUT", "/admin/marketplace/tenants/7/kind") && !allowed("POST", "/admin/marketplace/sellers/4/delete") && !allowed("PUT", "/admin/marketplace/tenants/x/kind"));
 const px = fs.readFileSync(path.join(root, "supabase/functions/platform-proxy/index.ts"), "utf8");
 const PA = [...px.matchAll(/\["(GET|POST|PUT|PATCH|DELETE)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]), pal = (m, p) => PA.some(([x, re]) => x === m && re.test(p));
 ok("وسيط التاجر: السوق والإيداع فقط", pal("GET", "/v1/marketplace/catalog") && pal("POST", "/v1/marketplace/imports") && pal("PATCH", "/v1/marketplace/products/4") && pal("POST", "/v1/marketplace/orders/4/status") && pal("GET", "/v1/marketplace/wallet") && pal("POST", "/v1/wallet/deposits") && pal("GET", "/v1/wallet/deposits"));
@@ -18,12 +19,16 @@ ok("وسيط التاجر: يمنع الإدارة وإشعار Chargily", !pal(
   const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD";
   let DEP = [{ id: 5, tenant_id: 2, amount: 5000, method: "ccp", status: "pending", payer: "<img src=x onerror=window.__x=1>", created_at: 1760000000 }];
   let PR = [{ id: 3, tenant_id: 2, supplier: "مورّد <b>x</b>", title: "سيروم", slug: "serum", image: "", supplier_price: 2000, commission: 400, rrp: 2800, stock: 5, status: "pending", note: "" }];
+  let SEL = [{ id: 11, tenant_id: null, kind: "wholesale", name: "مخزن <i>س</i>", contact: "a@b.dz", phone: "0661234567", wilaya: "16", reg_no: "RC-123", about: "<img src=x onerror=window.__y=1>", status: "pending", note: "", products: 0, delivered: 0, returned: 0 }];
   const OR = [{ id: 9, mko: "MKO-9", ref: "W1", supplier_id: 2, affiliate_id: 3, title: "سيروم", qty: 1, commission: 400, state: "return_claimed", updated_at: 1760000000 }];
   await page.route("**/functions/v1/platform-admin", async route => {
     const b = JSON.parse(route.request().postData() || "{}"); calls.push(b); let data = {}, status = 200;
     if (b.path.startsWith("/admin/wallet/deposits/list")) data = { deposits: DEP };
     else if (/deposits\/5\/proof/.test(b.path)) data = { proof: JPG };
     else if (/deposits\/5\/(approve|reject)/.test(b.path)) { DEP = []; data = { ok: true }; }
+    else if (b.path.startsWith("/admin/marketplace/sellers?")) data = { sellers: SEL };
+    else if (/sellers\/11\/approve/.test(b.path)) { SEL = []; data = { ok: true, tenant_id: 8, key: "pk_live_" + "a".repeat(40) }; }
+    else if (/tenants\/8\/kind/.test(b.path)) data = { ok: true };
     else if (b.path.startsWith("/admin/marketplace/products?")) data = { products: PR.filter(p => b.path.endsWith(p.status)) };
     else if (/products\/3\/approve/.test(b.path)) { PR[0].status = "active"; data = { ok: true }; }
     else if (b.path.startsWith("/admin/marketplace/orders")) data = { orders: OR };
@@ -51,5 +56,10 @@ ok("وسيط التاجر: يمنع الإدارة وإشعار Chargily", !pal(
   ok("اعتماد الإيداع بعد التحقق", calls.some(c => c.method === "POST" && c.path === "/admin/wallet/deposits/5/approve"));
   await page.fill("#mk-fee", "8"); await page.click('[data-mk="cfg"]'); await page.waitForTimeout(200);
   ok("حفظ رسم المنصة", calls.some(c => c.method === "PUT" && c.path === "/admin/marketplace/settings" && c.body.fee_pct === 8));
+  ok("البائعون: طلب انضمام بنوعه وهاتفه وسجله", /جملة/.test(txt) && /0661234567/.test(txt) && /RC-123/.test(txt));
+  ok("البائعون: لا XSS", (await page.evaluate(() => window.__y)) === undefined);
+  await page.click('[data-mk="sa"][data-a="approve"]'); await page.waitForSelector("text=يظهر مرة واحدة فقط");
+  ok("اعتماد بائع (بلا origin على أصل غير https) ويعرض المفتاح مرة واحدة", calls.some(c => c.path === "/admin/marketplace/sellers/11/approve" && !c.body.origin) && /pk_live_a{40}/.test(await page.innerText("#r")) && !!(await page.$('#r a[href^="https://wa.me/2136612"]')));
+  await page.click('[data-mk="hidekey"]'); ok("إخفاء المفتاح", !/pk_live_/.test(await page.innerText("#r")));
   await br.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })();
