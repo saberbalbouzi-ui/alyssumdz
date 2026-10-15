@@ -98,6 +98,7 @@ const Cart = {
   /* unitPrice = السعر الفعلي للقطعة (إجمالي العرض ÷ عدد القطع) — كان يُمرَّر إجمالي العرض فيُضرب في الكمية ويظهر مجموع السلة مضاعفاً */
   add(slug, qty, unitPrice, vid, vlabel){
     const p = PRODUCTS.find(p=>p.slug===slug);
+    if(p && p.digital){ toast("💾 المنتج الرقمي يُشترى مباشرة من صفحته (دفع مسبق وتسليم تلقائي)"); try{ if(!/\/p\/[^/]+\/?$/.test(location.pathname) || location.pathname.indexOf(slug)<0) location.href = productHref(p); }catch(e){} return }   // لا يدخل السلة: سلة التوصيل والدفع عند الاستلام لا تناسبه
     if(p && itemOut({slug, vid})){ toast("⚠️ نفدت كمية هذا المنتج حالياً"); return }
     const items = Cart.all();
     const ex = items.find(i => i.slug===slug && Math.abs(i.price-unitPrice) < 1e-6 && (i.vid||"")===(vid||""));
@@ -1104,9 +1105,9 @@ function initProduct(slug){
   const bumpAmt = ()=> bumpSel ? bumpSel.price * bumpSel.qty : 0;
   function update(){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
-    const sq = state.wilaya ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)) : null;
-    const fee = freeShip ? 0 : (sq ? sq.fee : null);
-    feeEl.textContent = freeShip ? "مجاني 🚚" : (sq && sq.blocked ? "غير متاح ⛔" : (sq && sq.free ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية")));
+    const sq = (state.wilaya && !p.digital) ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)) : null;
+    const fee = p.digital ? 0 : (freeShip ? 0 : (sq ? sq.fee : null));
+    feeEl.textContent = p.digital ? "—" : freeShip ? "مجاني 🚚" : (sq && sq.blocked ? "غير متاح ⛔" : (sq && sq.free ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية")));
     let sm = document.getElementById("ship-msg");
     if(!sm){ sm = document.createElement("div"); sm.id = "ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.88rem;margin:.4rem 0;font-weight:700"; const tb = feeEl.closest(".total-box"); if(tb) tb.parentNode.insertBefore(sm, tb); }
     sm.textContent = (!freeShip && sq) ? sq.msg : "";
@@ -1121,6 +1122,7 @@ function initProduct(slug){
     if(bt) bt.textContent = fmt(total);
     if(bumpCtl) bumpCtl.refresh();      // تغيّر العرض/الكمية قد يغيّر أهلية الـOrder Bump
   }
+  if(p.digital){ const __dm = ()=>{ try{ DigitalCheckout.mount(p); update(); }catch(e){} }; if(window.DigitalCheckout) __dm(); else document.addEventListener("digital:ready", __dm, { once:true }); }   // منتج رقمي: بلا توصيل، بريد + دفع مسبق (assets/js/digital-checkout.js)
   update();
   document.addEventListener("shipco:ready", ()=>{ try{ update(); }catch(e){} });
   // حقل كود الخصم — يُحقن ديناميكياً قبل مربع الإجمالي (لا حاجة لتعديل كل صفحة منتج يدوياً)
@@ -1148,9 +1150,9 @@ function initProduct(slug){
     if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); document.getElementById("phone").focus(); return }
     if(type==="variable" && !state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(type==="grouped" && !(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); const gb = document.getElementById("group-box"); if(gb) gb.scrollIntoView({behavior:"smooth", block:"center"}); return }
-    if(!state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
-    const __sq = shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)); if(__sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
-    if(state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
+    if(!p.digital && !state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
+    const __sq = p.digital ? { fee:0 } : shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)); if(!p.digital && __sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
+    if(!p.digital && state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     // جمع قيم الحقول الإضافية المخصّصة (لوحة التحكم ⟵ نموذج الطلب) — تُرفق في رسالة واتساب وفي الطلب المُسجَّل
     const extraValues = {};
     for(const f of extraFields){
@@ -1164,6 +1166,14 @@ function initProduct(slug){
     const discount = currentCouponDiscount(state.offer.price, [{slug:p.slug,cat:p.cat,qty:state.offer.qty,free:state.offer.free,amount:state.offer.price}]);
     const bumpPrice = bumpAmt();
     const total = Math.max(0, state.offer.price - discount) + bumpPrice + fee;
+    if(p.digital){       // مسار المنتج الرقمي: لا توصيل؛ طلب + دفع مسبق (BaridiMob/CCP/بطاقة) ثم تسليم تلقائي — assets/js/digital-checkout.js
+      if(!window.DigitalCheckout){ toast("حاول بعد لحظات"); return }
+      const __dOrder = { name, phone, wilaya:"رقمي", commune:"", dtype:"home", desk:"", items: orderItems(), subtotal: state.offer.price, fee:0, total: Math.max(0, state.offer.price - discount),
+        coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, extra: Object.assign({}, extraValues, { "📄 الصفحة": PageSrc || ("p/" + slug) }) };
+      try{ trackEvent("Lead", { slug: p.slug, title: p.title, qty: state.offer.qty, value: __dOrder.total }); }catch(e){}
+      Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
+      return DigitalCheckout.submit({ order: __dOrder, total: __dOrder.total });
+    }
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
     const __grp = (bumpSel || (window.Upsell && Upsell.hasType("post"))) ? Upsell.gid() : "";    // مجموعة الطلب: تربط طلب «بعد الشراء» بهذا الطلب ليُدمجا في شحنة واحدة
     // Enregistrement dans Google Sheets
@@ -2049,3 +2059,4 @@ const PhoneDZ = {
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=1'; s.async=true; document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} }); document.head.appendChild(s); }catch(e){} })();
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/digital-checkout.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();
