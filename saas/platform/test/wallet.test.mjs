@@ -120,5 +120,7 @@ const before = (await call("GET", "/v1/wallet", null, B.key))[0]; ok("مستأج
 await call("POST", "/v1/events", { type: "order.delivered", id: "OFF1", data: { order_id: "OFF1" } }, A.key); await cron();
 ok("المحفظة المعطّلة لا تستقبل أحداث المستأجر", sql("SELECT COUNT(*) n FROM wl_orders WHERE order_id='OFF1'").n === 0 && sql("SELECT state FROM pf_events WHERE ext_id='order.delivered:OFF1'").state === "done");
 await adm("PUT", `/admin/tenants/${A.id}/modules`, { off: [] }); [c] = await call("GET", "/v1/wallet", null, A.key); ok("إعادة التفعيل", c === 200);
+[c, b] = await adm("GET", "/admin/wallet/tenants"); ok("قائمة المستأجرين بأرصدتهم", c === 200 && Array.isArray(b.tenants) && b.tenants.some((t) => t.id === A.id && t.balances.available && "pending_withdrawals" in t), b);
+[c] = await call("GET", "/admin/wallet/tenants", null, A.key); ok("مفتاح التاجر لا يقرأ قائمة الإدارة", c === 401 || c === 403, c);
 ok("الدفتر متوازن في النهاية", invariant() && legsBalanced());
 done();
