@@ -213,7 +213,9 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     const stop = o.dtype === "stop"; let desk = null;
     if (stop) { const wc = Admin.wCo ? Admin.wCo(o.wilaya) : null, d = wc && (wc.desks || []).find(x => x.name === o.desk); desk = d ? String(d.id) : null; if (!desk) throw new Error("مكتب Stop Desk «" + (o.desk || "؟") + "» غير معروف — حوّل التوصيل إلى المنزل أو اختر مكتباً"); }
     const products = String(Admin.bordItems ? Admin.bordItems(o.items) : (o.items || "")).split(/\n/).map(l => l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250) || "منتجات";
-    const order = { reference: String(o.id).replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 64), recipient: { fullName: String(o.name || "").trim(), phone: String(o.phone || ""), wilayaCode: w.id, communeName: String(o.commune || ""), addressLine: String(o.address || "") },
+    /* مرجع المنصة (نفس order_id الذي تدفعه اللوحة/المتجر إلى ناقل الأحداث) كي تصدر البوابة تسليم الطرد بالمعرّف نفسه فيُحرَّر الضمان */
+    const pref = String((o.extra && typeof o.extra === "object" && o.extra["🔗 مرجع"]) || o.id || "").replace(/[^A-Za-z0-9._:-]/g, "-").slice(0, 60);
+    const order = { reference: String(o.id).replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 64), platformRef: pref, recipient: { fullName: String(o.name || "").trim(), phone: String(o.phone || ""), wilayaCode: w.id, communeName: String(o.commune || ""), addressLine: String(o.address || "") },
       deliveryType: stop ? "stopdesk" : "home", productList: products, codAmount: Math.max(0, Math.round(Number(o.total) || 0)), shippingFee: Math.max(0, Math.round(Number(o.fee) || 0)), notes: "" };
     if (desk) order.stopDeskId = desk; return { courier: code, order };
   }

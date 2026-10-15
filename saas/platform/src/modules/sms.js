@@ -57,6 +57,8 @@ export const sms = {
     if (!inWindow(ctx.clock(), integ.config.window_from ?? 8, integ.config.window_to ?? 21)) throw new Error("خارج نافذة الإرسال — تأجيل");
     const text = render(tpl, d), seg = segments(text); if (!seg) return;
     const toH = await hmacHex(ctx.secret, "sms:" + ph), now = ctx.nowS();
+    /* حدثان لنفس (النوع، الطلب) من مصدرين (لوحة التاجر + بوابة الشحن) لا يرسلان رسالتين: إن سبق إرسال ناجح (إرسالات − استردادات > 0) نتجاهل */
+    if (d.order_id !== undefined && d.order_id !== null && d.order_id !== "") { const net = await db.val("SELECT COALESCE(SUM(CASE reason WHEN 'send' THEN 1 WHEN 'refund' THEN -1 ELSE 0 END),0) FROM sms_ledger WHERE tenant_id=? AND ref=?", e.tenantId, `${t}:${d.order_id}`); if (net > 0) return; }
     // حجز فريد لكل (حدث، نوع): إعادة المحاولة لا ترسل ثانية
     const ins = await db.run("INSERT INTO sms_log (tenant_id,event_id,event_type,to_h,segments,status,at) VALUES (?,?,?,?,?,'sending',?) ON CONFLICT(tenant_id,event_id,event_type) DO NOTHING", e.tenantId, e.id, t, toH, seg, now);
     if (!ins.changes) { const ex = await db.val("SELECT status FROM sms_log WHERE tenant_id=? AND event_id=? AND event_type=?", e.tenantId, e.id, t); if (ex === "sending") throw new Error("إرسال سابق غير محسوم"); return; }

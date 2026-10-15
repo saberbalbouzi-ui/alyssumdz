@@ -81,3 +81,7 @@
 - معايرة أوزان التقييم تحتاج بيانات حقيقية (الأوزان الحالية تقديرية من قواعد خبرة)؛ يُنصح بتشغيلها أولاً بوضع «مراجعة» لا «حجب».
 - حدّ المعدّل على D1 مبدئي (نافذة بجدول)؛ يُستبدل بـDurable Objects/KV عند الحمل.
 - بصمة الجهاز تُحسب في المتصفح (ليست دليل هوية)، وقابلة للتحايل.
+
+
+## أحداث الشحن من البوابة إلى الناقل (v1.89.237)
+`saas/gateway` يخزّن عند كل انتقال حالة (`advance`) صفاً في `gw_bus` (فريد `(tenant, ext_id)` = `<status>:<platformRef>`) ويرسله في `cron()` عبر Service Binding إلى `POST /admin/events` في المنصة (الرمز الإداري `PLATFORM_ADMIN_TOKEN`، الفاعل `gateway`). المنصة تحوّل `site_ref` إلى مستأجر وتُصدر الحدث بـextId `gw:<id>` وبياناته `source:"carrier"`. مرجع الطلب: `order.platformRef` الذي تضعه اللوحة في `gwPayload` (`extra["🔗 مرجع"]` أو رقم الطلب) وإلا `reference`. إعادة المحاولة 60ث/5د/30د/2س/12س؛ 4xx (غير 429) نهائي. طرود `sandbox` ومستأجرو البوابة بلا `site_ref` لا يصدرون. المحفظة: `order.delivered` من البوابة يحرّر الضمان دائماً، ومن التاجر فقط إن لم يُفعَّل `require_carrier` (`PUT /admin/wallet/:tid/settings {require_carrier:true}`)؛ `order.returned` يسترد الضمان.

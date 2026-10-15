@@ -16,6 +16,18 @@ export function platformModule(providers) {
         const fresh = await ctx.emit(req.tenant.id, b.type, b.data, id ? `${b.type}:${id}` : null);
         return ok({ accepted: fresh, duplicate: !fresh }, fresh ? 202 : 200);
       });
+      /** مدخل موثوق لأحداث الشحن من بوابة الشحن (بالرمز الإداري عبر Service Binding): extId يبدأ بـ«gw:» فلا يستطيع تاجر انتحاله (/v1/events يولّد دائماً «نوع.حدث:»). */
+      r.post("/admin/events", { auth: "admin", summary: "حدث شحن من البوابة: { site_ref | tenant_id, type: order.shipped|out_for_delivery|delivered|returned, id, data{order_id,…} }" }, async (req) => {
+        const b = req.json(), CARRIER = ["order.shipped", "order.out_for_delivery", "order.delivered", "order.returned"];
+        if (!CARRIER.includes(b.type)) throw new HttpError(400, "validation_error", "نوع حدث شحن غير مسموح", { type: CARRIER });
+        const id = String(b.id ?? ""); if (!/^[A-Za-z0-9._:-]{1,80}$/.test(id)) throw new HttpError(400, "validation_error", "id مطلوب (أحرف وأرقام و . _ : -)");
+        if (!b.data || typeof b.data !== "object" || Array.isArray(b.data) || !String(b.data.order_id ?? "").trim()) throw new HttpError(400, "validation_error", "data.order_id مطلوب");
+        if (JSON.stringify(b.data).length > 8000) throw new HttpError(413, "payload_too_large", "data كبير");
+        const t = b.tenant_id ? await db.one("SELECT id FROM pf_tenants WHERE id=? AND status='active'", +b.tenant_id) : await db.one("SELECT id FROM pf_tenants WHERE site_ref=? AND status='active'", String(b.site_ref ?? "\u0000"));
+        if (!t) throw new HttpError(404, "not_found", "مستأجر غير موجود");
+        const fresh = await ctx.emit(t.id, b.type, { ...b.data, source: "carrier" }, `gw:${id}`);
+        return ok({ accepted: fresh, duplicate: !fresh }, fresh ? 202 : 200);
+      });
       r.get("/v1/events", { scope: "events:read", summary: "قراءة الأحداث (تصفّح بمؤشر after) — لمشغّلات Zapier/Make بالاستعلام الدوري" }, async (req) => {
         const lim = clampLimit(req.query.limit), after = +req.query.after || 0, args = [req.tenant.id]; let q = "SELECT id,type,payload,created_at FROM pf_events WHERE tenant_id=?";
         if (after > 0) { q += " AND id<?"; args.push(after); } if (req.query.type) { q += " AND type=?"; args.push(String(req.query.type)); }

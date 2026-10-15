@@ -12,8 +12,13 @@ function relayFetch(env) {
     return { status: j.status, text: async () => j.body ?? "" };
   };
 }
+/** إصدار حدث شحن إلى ناقل المنصة عبر Service Binding (الرمز الإداري) — يرجع رمز HTTP (0 = تعذّر الاتصال) */
+function platformEmit(env) {
+  if (!env.PLATFORM || !env.PLATFORM_ADMIN_TOKEN) return null;
+  return async (body) => (await env.PLATFORM.fetch("https://api.alyssumhub.fyi/admin/events", { method: "POST", headers: { Authorization: "Bearer " + env.PLATFORM_ADMIN_TOKEN, "Content-Type": "application/json", "X-Actor": "gateway" }, body: JSON.stringify(body) })).status;
+}
 function build(env) {
-  return createApp({ carrierFetch: relayFetch(env), d1: env.DB, vault: Vault.fromEnv(env), baseUrl: env.PUBLIC_URL || "", adminToken: env.ADMIN_TOKEN || "", docsHtml: DOCS });
+  return createApp({ carrierFetch: relayFetch(env), platformEmit: platformEmit(env), d1: env.DB, vault: Vault.fromEnv(env), baseUrl: env.PUBLIC_URL || "", adminToken: env.ADMIN_TOKEN || "", docsHtml: DOCS });
 }
 export default {
   async fetch(request, env) {
