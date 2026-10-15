@@ -22,6 +22,7 @@ import { adsOauth } from "../src/modules/adsoauth.js";
 import { wallet } from "../src/modules/wallet.js";
 import { agency } from "../src/modules/agency.js";
 import { appstore } from "../src/modules/appstore.js";
+import { marketplace } from "../src/modules/marketplace.js";
 import { platformModule } from "../src/modules/platform.js";
 
 const t = Tally();
@@ -30,12 +31,12 @@ const dir = new URL("../src/modules/", import.meta.url);
 const OWN = {
   "ab.js": ["ab_"], "ads.js": ["ad_"], "adsoauth.js": ["ad_oauth", "ad_accounts"], "ai.js": ["ai_"], "antifraud.js": ["fr_"], "capi.js": ["cp_"],
   "carts.js": ["cr_"], "commerce.js": ["cm_"], "digital.js": ["dg_"], "hooks.js": ["hk_"], "payments.js": ["pay_"], "platform.js": ["pf_events", "pf_integrations"],
-  "sheets.js": [], "sms.js": ["sms_"], "sources.js": ["src_"], "wallet.js": ["wl_"], "whatsapp.js": ["wa_"], "agency.js": ["marketing_services", "agency_"], "appstore.js": ["apps", "app_", "oauth_", "platform_revenues"],
+  "sheets.js": [], "sms.js": ["sms_"], "sources.js": ["src_"], "wallet.js": ["wl_"], "whatsapp.js": ["wa_"], "agency.js": ["marketing_services", "agency_"], "appstore.js": ["apps", "app_", "oauth_", "platform_revenues"], "marketplace.js": ["mk_"],
 };
 /* قراءة جداول الآخرين المسموحة صراحةً (SELECT فقط) — أي إضافة هنا قرار معماري موثّق في ARCHITECTURE.md */
 const READ_OK = {
   "*": ["pf_tenants", "pf_integrations"],          // هوية المستأجر وإعداداته وأسرار تكاملاته (عبر الخزنة)
-  "wallet.js": ["pf_events"],                        // التحقق من مصدر payment.confirmed
+  "wallet.js": ["pf_events"], "marketplace.js": ["pf_events"],                        // التحقق من مصدر payment.confirmed
   "adsoauth.js": ["ad_accounts"],                    // يربط حسابات الإعلان (ينسخ الرمز المشفّر لحساب مملوك لوحدة ads: استثناء موثّق)
 };
 const WRITE_OK = { "adsoauth.js": ["ad_accounts"] }; // استثناء موثّق: الربط السريع ينشئ صف ad_accounts بواجهته
@@ -69,7 +70,7 @@ for (const f of readdirSync(dir).filter((x) => x.endsWith(".js"))) {
 }
 
 /* كتالوج الأحداث: كل حدث تستمع إليه وحدة يجب أن يكون له مُصدِر معروف (وحدة أو مصدر خارجي موثّق) */
-const MODS = { admin: adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, payments, sms, commerce, sources, ads, adsOauth, wallet, agency, appstore, platform: platformModule([]) };
+const MODS = { admin: adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, payments, sms, commerce, sources, ads, adsOauth, wallet, agency, appstore, marketplace, platform: platformModule([]) };
 const EXTERNAL = new Set(["order.status_changed", "order.created", "order.confirmed", "order.shipped", "order.out_for_delivery", "order.delivered", "order.cancelled", "order.failed", "order.returned", "payment.confirmed", "payment.failed", "payment.cancelled"]); // تدفعها لوحة التاجر/البوابة عبر POST /v1/events
 const emitted = new Set(); // أحداث تُصدرها الوحدات حرفياً
 for (const f of readdirSync(dir).filter((x) => x.endsWith(".js"))) {

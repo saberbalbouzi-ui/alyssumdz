@@ -1,14 +1,8 @@
 import { HttpError, ok } from "../core.js";
-import { hmacHex, randHex, safeEq, safeHttpsUrl } from "../util.js";
+import { hmacHex, parseProof, randHex, safeEq, safeHttpsUrl } from "../util.js";
 
-const PROOF_MAX = 240_000, MANUAL_METHODS = ["baridimob", "ccp"];
-/** صورة إثبات الدفع: data URL لصورة jpeg/png/webp بحجم محدود وبصمة ملف صحيحة (لا يُقبل SVG ولا HTML) */
-export function parseProof(v) {
-  const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+\/=]+)$/.exec(String(v ?? "")); if (!m || v.length > PROOF_MAX) return null;
-  let head; try { head = atob(m[2].slice(0, 24)); } catch { return null; }
-  const ok = m[1] === "jpeg" ? head.startsWith("\xff\xd8\xff") : m[1] === "png" ? head.startsWith("\x89PNG") : head.startsWith("RIFF") && head.slice(8, 12) === "WEBP";
-  return ok ? String(v) : null;
-}
+const MANUAL_METHODS = ["baridimob", "ccp"];
+export { parseProof };
 
 /** Chargily Pay V2 (موثّق من dev.chargily.com): الاختبار https://pay.chargily.net/test/api/v2 والحيّ https://pay.chargily.net/api/v2،
  *  Authorization: Bearer <مفتاح سرّي>، التوقيع: ترويسة `signature` = HMAC-SHA256(المفتاح السرّي، الجسم الخام) hex. */

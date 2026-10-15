@@ -1,5 +1,5 @@
 import { DB, HttpError, ok, paginate, clampLimit } from "../core.js";
-import { randHex } from "../util.js";
+import { hmacHex, parseProof, randHex, safeEq, safeHttpsUrl } from "../util.js";
 
 /** المحفظة والدفتر (Wallet & Ledger) — قلب الأموال في المنصة.
  *  دفتر قيد مزدوج غير قابل للتعديل: كل معاملة `wl_tx` لها أرجل `wl_legs` مجموعها صفر لكل عملة، والأرصدة المخزَّنة نسخة محسوبة منها.
@@ -7,7 +7,7 @@ import { randHex } from "../util.js";
  *  ext_refunds · ext_ad_spend · fx_clearing · platform_fees. إشارة الرصيد: الرصيد الموجب لحساب المستأجر = ما تدين به المنصة له.
  *  الوحدات الأخرى لا تلمس الأموال أبداً: تُصدر أحداثاً (payment.confirmed / order.delivered…) وهذه الوحدة تستمع وتقيّد. المبالغ صحيحة بأصغر وحدة (دج، سنت). */
 export const MINOR = { DZD: 1, USD: 100, EUR: 100 };
-export const TENANT_ACCTS = ["available", "escrow", "withdraw_hold", "ads_credit"];
+export const TENANT_ACCTS = ["available", "escrow", "withdraw_hold", "ads_credit", "mk_escrow"];       // mk_escrow: عمولات السوق المشترك المحجوزة عند المورّد حتى «تسليم» الطلب
 /** بادئات extId للمزوّدين الداخليين الموثوقين (payments.js يولّد `chargily:<حدث>:<حالة>`) */
 export const TRUSTED_PAYMENT_SOURCES = ["chargily:"];
 const METHODS = ["ccp", "baridimob", "bank", "redotpay", "paypal"], MAX = 1_000_000_000;
@@ -84,6 +84,16 @@ export const wallet = {
       charge: svc("app_purchase", "available", "app_clearing"), payout: svc("app_revenue", "app_clearing", "available"), fee: svc("app_commission", "app_clearing", "platform_fees"), unwind: svc("app_refund", "app_clearing", "available"),
       /* استرداد ثمن تطبيق: clawback يسحب حصة المطوّر من متاحه (يفشل إن سحبها)، feeback يعيد عمولة المنصة، ثم unwind يردّ المجموع للمشتري */
       clawback: svc("app_clawback", "available", "app_clearing"), feeback: svc("app_commission_back", "platform_fees", "app_clearing") };
+    /* السوق المشترك (وحدة marketplace) — ضمان العمولات: المورّد يحجز العمولة من متاحه إلى mk_escrow عند الطلب، وتُحرَّر للأفلييت عند «مُسلَّم» أو تعود للمورّد عند «مرتجع».
+       الانتقال بين مستأجرَين يمرّ بحساب وسيط mk_clearing (نظام، قد يهبط تحت الصفر) في قيدين منفصلين لكل منهما مرجع فريد فيُعاد تنفيذه بأمان. */
+    const bal = async (tid, code) => Number(await db.val("SELECT balance FROM wl_accounts WHERE tenant_id=? AND code=? AND currency='DZD'", tid, code)) || 0;
+    Object.assign(ctx.wallet, {
+      balance: bal,
+      mkHold: svc("mk_hold", "available", "mk_escrow"), mkBack: svc("mk_back", "mk_escrow", "available"), mkOut: svc("mk_payout_out", "mk_escrow", "mk_clearing"),
+      mkIn: (tid, { ref, amount, fee = 0 }) => { const n = Math.round(+amount), f = Math.max(0, Math.min(n, Math.round(+fee) || 0)); if (!Number.isSafeInteger(n) || n < 1 || n > MAX) throw new HttpError(400, "validation_error", "مبلغ غير صالح");
+        const legs = [{ code: "mk_clearing", ccy: "DZD", amount: -n }]; if (n - f) legs.push({ code: "available", ccy: "DZD", amount: n - f }); if (f) legs.push({ code: "platform_fees", ccy: "DZD", amount: f });
+        return post(ctx, tid, { ref: String(ref), kind: "mk_commission", legs }); },
+    });
     const balances = async (tid) => { const out = {}; for (const a of await db.all("SELECT code,currency,balance FROM wl_accounts WHERE tenant_id=?", tid)) (out[a.code] ??= {})[a.currency] = a.balance; for (const c of TENANT_ACCTS) out[c] ??= {}; return out; };
 
     r.get("/v1/wallet", { scope: "wallet:read", summary: "أرصدة المحفظة: available · escrow · withdraw_hold · ads_credit لكل عملة (أصغر وحدة: دج، سنت)" }, async (req) => ok({ balances: await balances(req.tenant.id), settings: pickSettings(await walletSettings(ctx, req.tenant.id)) }));
@@ -124,6 +134,51 @@ export const wallet = {
       await ctx.emit(req.tenant.id, "wallet.ads_topup", { usd: q.cents / 100, dzd: q.dzd, rate: q.rate }, `wl:ads:${p.id}`); return ok({ ok: true, usd: q.cents / 100, dzd: q.dzd }, 201);
     });
 
+    // ── شحن المحفظة: Chargily (حساب المنصة) أو حوالة CCP بإثبات ──
+    const DEP_MIN = 500, DEP_MAX = 5_000_000, CHARGILY_BASE = { test: "https://pay.chargily.net/test/api/v2", live: "https://pay.chargily.net/api/v2" };
+    const depPub = (d) => ({ id: d.id, amount: d.amount, method: d.payment_method, status: d.status, has_proof: !!d.proof_image_path, checkout_url: d.status === "pending" ? d.checkout_url : null, note: d.note, created_at: d.created_at, updated_at: d.updated_at });
+    /** يعتمد إيداعاً pending ← approved ويقيّده في المتاح مرة واحدة (المرجع فريد والحالة تُحجز قبل القيد) */
+    const creditDeposit = async (dep, actor) => {
+      const claim = await db.run("UPDATE wl_deposits SET status='approved', updated_at=? WHERE id=? AND status='pending'", ctx.nowS(), dep.id); if (!claim.changes) return false;
+      try { await post(ctx, dep.tenant_id, { ref: `dep:wd:${dep.id}`, kind: "deposit", memo: `${dep.payment_method} #${dep.id}`, legs: [{ code: "ext_deposits", ccy: "DZD", amount: -dep.amount }, { code: "available", ccy: "DZD", amount: dep.amount }] }); }
+      catch (e) { await db.run("UPDATE wl_deposits SET status='pending' WHERE id=? AND status='approved'", dep.id); throw e; }
+      if (actor) await ctx.audit(actor, "wallet.deposit.approve", dep.tenant_id, { id: dep.id, amount: dep.amount, method: dep.payment_method });
+      await ctx.emit(dep.tenant_id, "wallet.deposit", { amount: dep.amount, currency: "DZD", ref: `wd:${dep.id}`, method: dep.payment_method }, `wl:dep:wd${dep.id}`); return true;
+    };
+    r.post("/v1/wallet/deposits", { scope: "wallet:write", idem: true, limit: { key: "wdep", max: 20, win: 3600 }, summary: "طلب شحن المحفظة: { amount (دج), method: chargily|ccp }؛ chargily ← يعيد checkout_url (حساب المنصة)، ccp ← proof صورة الوصل ويوافق عليها المزوّد" }, async (req) => {
+      const b = req.json(), tid = req.tenant.id, amount = Math.round(+b.amount), method = String(b.method ?? "");
+      if (!Number.isFinite(amount) || amount < DEP_MIN || amount > DEP_MAX) throw new HttpError(400, "validation_error", `amount بالدينار بين ${DEP_MIN} و${DEP_MAX}`); if (!["chargily", "ccp"].includes(method)) throw new HttpError(400, "validation_error", "method: chargily|ccp");
+      const now = ctx.nowS();
+      if (method === "ccp") {
+        const proof = parseProof(b.proof); if (!proof) throw new HttpError(400, "validation_error", "proof: صورة وصل JPEG/PNG/WebP بحجم صغير"); if (sandbox(req)) return ok({ id: 0, status: "pending", sandbox: true }, 201);
+        if ((await db.val("SELECT COUNT(*) FROM wl_deposits WHERE tenant_id=? AND payment_method='ccp' AND status='pending'", tid)) >= 3) throw new HttpError(429, "too_many_pending", "لديك 3 حوالات قيد المراجعة؛ انتظر قرار الإدارة");
+        const x = await db.run("INSERT INTO wl_deposits (tenant_id,amount,payment_method,status,proof_image_path,payer,created_at,updated_at) VALUES (?,?,'ccp','pending',?,?,?,?)", tid, amount, proof, String(b.payer ?? "").replace(/[<>]/g, "").slice(0, 80), now, now);
+        await ctx.emit(tid, "wallet.deposit_submitted", { id: x.id, amount, method: "ccp" }, `wl:depsub:${x.id}`); return ok({ id: x.id, status: "pending", amount }, 201);
+      }
+      const key = ctx.config.CHARGILY_SECRET_KEY; if (!key) throw new HttpError(503, "provider_not_configured", "الدفع بالبطاقة غير مفعّل بعد على المنصة — استعمل حوالة CCP");
+      const origins = req.tenant.settings?.origins ?? [], ret = safeHttpsUrl(b.return_url) ? String(b.return_url) : ""; let okUrl = false; try { okUrl = !!ret && (origins.includes(new URL(ret).origin) || !origins.length); } catch { }
+      if (!okUrl) throw new HttpError(400, "validation_error", "return_url: رابط https من أصول موقعك"); if (sandbox(req)) return ok({ id: 0, status: "pending", checkout_url: "https://pay.chargily.dz/test/sandbox/pay", sandbox: true }, 201);
+      const x = await db.run("INSERT INTO wl_deposits (tenant_id,amount,payment_method,status,created_at,updated_at) VALUES (?,?,'chargily','pending',?,?)", tid, amount, now, now);
+      const pm = ["edahabia", "cib"].includes(b.payment_method) ? b.payment_method : "edahabia", mode = ctx.config.CHARGILY_MODE === "live" ? "live" : "test";
+      const body = { amount, currency: "dzd", payment_method: pm, locale: "ar", success_url: ret, failure_url: ret, webhook_endpoint: `${ctx.baseUrl}/v1/wallet/chargily-webhook`, description: "شحن المحفظة", metadata: { deposit_id: x.id, tenant_id: tid } };
+      let res, j = {}; try { res = await ctx.fetchFn(CHARGILY_BASE[mode] + "/checkouts", { method: "POST", redirect: "manual", headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" }, body: JSON.stringify(body) }); j = JSON.parse(await res.text()); } catch { }
+      if (!res || res.status < 200 || res.status >= 300 || !j.id || !safeHttpsUrl(j.checkout_url)) { await db.run("UPDATE wl_deposits SET status='failed', updated_at=? WHERE id=?", ctx.nowS(), x.id); throw new HttpError(502, "provider_rejected", "تعذّر إنشاء جلسة الدفع"); }
+      try { await db.run("UPDATE wl_deposits SET chargily_checkout_id=?, checkout_url=? WHERE id=?", String(j.id), j.checkout_url, x.id); }
+      catch (e) { if (DB.isUnique(e)) { await db.run("UPDATE wl_deposits SET status='failed', updated_at=? WHERE id=?", ctx.nowS(), x.id); throw new HttpError(502, "provider_rejected", "تعذّر إنشاء جلسة الدفع"); } throw e; }
+      return ok({ id: x.id, status: "pending", checkout_url: j.checkout_url }, 201);
+    });
+    r.get("/v1/wallet/deposits", { scope: "wallet:read", summary: "طلبات شحن المحفظة (بلا صور الإثبات)" }, async (req) => ok({ deposits: (await db.all("SELECT * FROM wl_deposits WHERE tenant_id=? ORDER BY id DESC LIMIT 50", req.tenant.id)).map(depPub), min: DEP_MIN, chargily: !!ctx.config.CHARGILY_SECRET_KEY }));
+    // إشعار Chargily: التوقيع إلزامي (HMAC-SHA256 للجسم الخام) والمبلغ يطابق المسجَّل وإلا يُتجاهل؛ الاعتماد مرة واحدة
+    r.post("/v1/wallet/chargily-webhook", { auth: "public", limit: { key: "wdhook", max: 300, win: 60 }, summary: "إشعارات Chargily لشحن المحفظة (checkout.paid|failed|canceled)" }, async (req) => {
+      const secret = ctx.config.CHARGILY_WEBHOOK_SECRET || ctx.config.CHARGILY_SECRET_KEY; if (!secret) throw new HttpError(401, "unauthorized", "غير مضبوط");
+      const sig = req.headers["signature"]; if (!sig) throw new HttpError(400, "bad_request", "ترويسة signature مفقودة"); if (!safeEq(String(sig), await hmacHex(secret, req.raw))) throw new HttpError(403, "forbidden", "توقيع غير صالح");
+      const ev = req.json(), id = String(ev?.data?.id ?? ""); if (!id || !["checkout.paid", "checkout.failed", "checkout.canceled"].includes(ev.type)) return ok({ ok: true, ignored: true });
+      const dep = await db.one("SELECT * FROM wl_deposits WHERE chargily_checkout_id=?", id); if (!dep) return ok({ ok: true, ignored: "unknown_checkout" }); if (dep.status !== "pending") return ok({ ok: true, duplicate: true });
+      if (ev.type !== "checkout.paid") { await db.run("UPDATE wl_deposits SET status='failed', updated_at=? WHERE id=? AND status='pending'", ctx.nowS(), dep.id); return ok({ ok: true, status: "failed" }); }
+      if (Math.round(+ev.data.amount) !== dep.amount) { await ctx.emit(dep.tenant_id, "wallet.deposit_mismatch", { id: dep.id, expected: dep.amount, received: Math.round(+ev.data.amount) || 0 }, `wl:depmm:${dep.id}`); return ok({ ok: true, ignored: "amount_mismatch" }); }
+      await creditDeposit(dep, null); return ok({ ok: true, status: "approved" });
+    });
+
     // ───────── إدارة المزوّد ─────────
     const needTenant = async (id) => { const t = await db.one("SELECT id,name FROM pf_tenants WHERE id=?", +id); if (!t) throw new HttpError(404, "not_found", "مستأجر غير موجود"); return t; };
     const amountOf = (b, field = "amount") => { const n = Math.round(+b[field]); if (!Number.isFinite(n) || n < 1 || n > MAX) throw new HttpError(400, "validation_error", field + " صحيح موجب"); return n; };
@@ -158,6 +213,20 @@ export const wallet = {
       const tid = +req.params.tid; await needTenant(tid); const b = req.json(), cents = Math.round(+b.usd * 100), ref = refOf(b); if (!(cents >= 1 && cents <= 50_000_000)) throw new HttpError(400, "validation_error", "usd موجب");
       const p = await post(ctx, tid, { ref: "adspend:" + ref, kind: "ads_spend", memo: b.memo ?? "", legs: [{ code: "ads_credit", ccy: "USD", amount: -cents }, { code: "ext_ad_spend", ccy: "USD", amount: cents }] });
       if (!p.duplicate) await ctx.audit(req.actor, "wallet.ads_spend", tid, { usd: cents / 100, ref }); return ok({ ok: true, duplicate: !!p.duplicate });
+    });
+    r.get("/admin/wallet/deposits/list", { auth: "admin", summary: "طلبات الشحن (?status=pending|approved|rejected|failed&method=) بلا الصور" }, async (req) => {
+      const st = ["pending", "approved", "rejected", "failed"].includes(req.query.status) ? req.query.status : "pending", a = [st]; let q = "SELECT * FROM wl_deposits WHERE status=?"; if (["chargily", "ccp"].includes(req.query.method)) { q += " AND payment_method=?"; a.push(req.query.method); }
+      return ok({ deposits: (await db.all(q + " ORDER BY id LIMIT 100", ...a)).map((d) => ({ ...depPub(d), tenant_id: d.tenant_id, payer: d.payer })) });
+    });
+    r.get("/admin/wallet/deposits/:id/proof", { auth: "admin", summary: "صورة وصل CCP لإيداع" }, async (req) => { const d = await db.one("SELECT proof_image_path p FROM wl_deposits WHERE id=?", +req.params.id); if (!d) throw new HttpError(404, "not_found", "غير موجود"); return ok({ proof: d.p }); });
+    r.post("/admin/wallet/deposits/:id/approve", { auth: "admin", summary: "اعتماد إيداع CCP بعد التحقق من وصول الحوالة ← يُقيَّد في متاح المستأجر" }, async (req) => {
+      const d = await db.one("SELECT * FROM wl_deposits WHERE id=?", +req.params.id); if (!d) throw new HttpError(404, "not_found", "غير موجود"); if (d.payment_method !== "ccp") throw new HttpError(409, "bad_method", "إيداعات Chargily تُعتمد آلياً بالإشعار فقط");
+      if (!(await creditDeposit(d, req.actor))) throw new HttpError(409, "bad_state", "الحالة الحالية لا تسمح بالاعتماد"); return ok({ ok: true });
+    });
+    r.post("/admin/wallet/deposits/:id/reject", { auth: "admin", summary: "رفض إيداع CCP: { note }" }, async (req) => {
+      const d = await db.one("SELECT * FROM wl_deposits WHERE id=?", +req.params.id); if (!d) throw new HttpError(404, "not_found", "غير موجود");
+      const c = await db.run("UPDATE wl_deposits SET status='rejected', note=?, updated_at=? WHERE id=? AND status='pending' AND payment_method='ccp'", String(req.json().note ?? "").replace(/[<>]/g, "").slice(0, 200), ctx.nowS(), d.id); if (!c.changes) throw new HttpError(409, "bad_state", "الحالة الحالية لا تسمح بالرفض");
+      await ctx.audit(req.actor, "wallet.deposit.reject", d.tenant_id, { id: d.id }); await ctx.emit(d.tenant_id, "wallet.deposit_rejected", { id: d.id, amount: d.amount }, `wl:deprej:${d.id}`); return ok({ ok: true });
     });
     r.get("/admin/wallet/withdrawals/list", { auth: "admin", summary: "كل طلبات السحب (?status=)" }, async (req) => {
       const st = ["requested", "approved", "paid", "rejected", "cancelled"].includes(req.query.status) ? req.query.status : "requested", rows = await db.all("SELECT * FROM wl_withdrawals WHERE status=? ORDER BY id LIMIT 100", st), out = [];

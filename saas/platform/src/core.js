@@ -38,7 +38,7 @@ export const moduleOff = (settings, id) => !CORE_MODULES.includes(id) && Array.i
 export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn = fetch }) {
   if (!secret || String(secret).length < 16) throw new Error("PLATFORM_SECRET مطلوب (16 حرفاً فأكثر)");
   const db = new DB(d1), routes = [];
-  const ctx = { authProviders: [], db, clock, fetchFn, secret, vault, files, config, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
+  const ctx = { authProviders: [], orderGuards: [], db, clock, fetchFn, secret, vault, files, config, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
     /** يضيف حدثاً لصندوق الأحداث. extId اختياري: نفس (مستأجر، extId) لا يُدرج مرتين ← يُرجع false */
     async emit(tenantId, type, data, extId = null) {
       try { await db.run("INSERT INTO pf_events (tenant_id,type,payload,ext_id,state,attempts,next_at,created_at) VALUES (?,?,?,?,?,0,?,?)", tenantId, type, JSON.stringify(data), extId, "pending", Math.floor(clock() / 1000), nowStr(clock())); return true; }

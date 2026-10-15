@@ -90,6 +90,10 @@ export const commerce = {
       const { skus, offers } = await loadSkus(tid, [...new Set(lines.map((l) => l.slug))]);
       const couponRow = coupon ? await db.one("SELECT * FROM cm_coupons WHERE tenant_id=? AND code=?", tid, coupon) : null;
       const v = verifyOrder({ lines, skus, offers, subtotal, discount, fee, total, coupon, couponRow, maxFee, now: ctx.nowS() });
+      /* حرّاس الطلب (ctx.orderGuards: خطّاف نواة تسجّله وحدة كالسوق المشترك): يرفضون الطلب قبل أي حجز بـHttpError، وكل حارس قد يعيد دالة تراجع تُنفَّذ إن فشل ما بعدها */
+      const undos = []; try { for (const g of ctx.orderGuards) { const u = await g(tid, { ref, lines, customer: b.customer ?? {}, wilaya: clean(b.wilaya, 40), commune: clean(b.commune, 60), dtype: b.dtype === "stop" ? "stop" : "home", desk: clean(b.desk, 80), total, fee }); if (typeof u === "function") undos.push(u); } }
+      catch (e) { for (const u of undos.reverse()) { try { await u(); } catch { } } throw e; }
+      try {
       // المخزون: observe يعلّم فقط، enforce يحجز ذرّياً (خصم مشروط ثم تعويض عند فشل سطر)
       const short = []; for (const l of v.lines) if (l.sku.stock != null && l.sku.stock < l.qty) short.push(l.slug);
       if (short.length) for (const s of short) v.flags.push("stock_short:" + s);
@@ -112,6 +116,7 @@ export const commerce = {
       await ctx.emit(tid, "order.created", { order_id: ref, total, currency: "DZD", customer: { name: clean(b.customer?.name, 80), phone, city: clean(b.wilaya, 40), ...(email ? { email } : {}) }, ...(pay ? { pay } : {}), items: items.map((i) => ({ id: i.id, ...(i.vkey ? { vkey: i.vkey } : {}), title: i.title, qty: i.qty, price: i.price })), verified: v.flags.length === 0 }, `order.created:${ref}`);
       if (pay && pay !== "cod") { try { await ctx.flush(tid, `order.created:${ref}`); } catch { /* يُعاد في نبضة cron */ } }      // الدفع المسبق (رقمي): يلزم تسجيل المبلغ المتوقع قبل أن يرفع الزبون إثباتاً أو يبدأ الدفع
       return ok({ ok: true, ref, verified: v.flags.length === 0, mode }, 201);
+      } catch (e) { for (const u of undos.reverse()) { try { await u(); } catch { } } throw e; }
     });
     r.get("/v1/orders", { scope: "orders:read", summary: "الطلبات (flagged=1 للمخالفة فقط)" }, async (req) => {
       const lim = clampLimit(req.query.limit), after = +req.query.after || 0, a = [req.tenant.id]; let q = "SELECT * FROM cm_orders WHERE tenant_id=?";
@@ -125,7 +130,8 @@ export const commerce = {
       return ok({ orders: row.n, flagged: row.flagged ?? 0, value: row.value, mode: req.tenant.settings?.order_mode === "enforce" ? "enforce" : "observe" });
     });
   },
-  on: Object.fromEntries([["order.confirmed", "confirmee"], ["order.delivered", "livree"], ["order.failed", "echec"], ["order.cancelled", "annulee"]].map(([t, st]) => [t, async (e, ctx) => {
+  on: {
+    ...Object.fromEntries([["order.confirmed", "confirmee"], ["order.delivered", "livree"], ["order.failed", "echec"], ["order.returned", "echec"], ["order.cancelled", "annulee"]].map(([t, st]) => [t, async (e, ctx) => {
     const ref = String(e.data?.order_id ?? ""); if (!ref) return; const o = await ctx.db.one("SELECT id,reserved,items FROM cm_orders WHERE tenant_id=? AND ref=?", e.tenantId, ref); if (!o) return;
     await ctx.db.run("UPDATE cm_orders SET status=?, updated_at=? WHERE id=?", st, ctx.nowS(), o.id);
     if (st === "annulee" && o.reserved) {                                         // إلغاء: إعادة المحجوز مرة واحدة فقط
@@ -133,4 +139,15 @@ export const commerce = {
       if (x.changes) for (const i of JSON.parse(o.items)) await ctx.db.run("UPDATE cm_skus SET stock=stock+? WHERE tenant_id=? AND slug=? AND vkey=? AND stock IS NOT NULL", i.qty, e.tenantId, i.id, i.vkey ?? "");
     }
   }])),
+    /* السوق المشترك (وحدة marketplace): منتج مستورد يصل كتالوج المتجر كنسخة قابلة للبيع، ومخزونه مرآة لمخزون المورّد (يُحدَّث لحظياً بـmarketplace.stock) */
+    "marketplace.imported": async (e, ctx) => {
+      const d = e.data ?? {}, slug = String(d.slug ?? "").slice(0, 80); if (!/^[A-Za-z0-9._-]{1,80}$/.test(slug)) return; const price = Math.max(0, Math.round(+d.price) || 0), stock = d.stock == null ? null : Math.max(0, Math.round(+d.stock) || 0), now = ctx.nowS();
+      await ctx.db.run("INSERT INTO cm_products (tenant_id,slug,title,active,cat,free_ship,offers,updated_at) VALUES (?,?,?,1,?,0,'[]',?) ON CONFLICT(tenant_id,slug) DO UPDATE SET title=excluded.title,active=1,cat=excluded.cat,updated_at=excluded.updated_at", e.tenantId, slug, String(d.title ?? slug).slice(0, 200), String(d.category ?? "").slice(0, 60), now);
+      await ctx.db.run("INSERT INTO cm_skus (tenant_id,slug,vkey,label,price,stock,active) VALUES (?,?,'','',?,?,1) ON CONFLICT(tenant_id,slug,vkey) DO UPDATE SET price=excluded.price,stock=excluded.stock,active=1", e.tenantId, slug, price, stock);
+    },
+    "marketplace.stock": async (e, ctx) => {
+      const d = e.data ?? {}, slug = String(d.slug ?? "").slice(0, 80); if (!slug) return; const stock = d.stock == null ? null : Math.max(0, Math.round(+d.stock) || 0), active = d.active === false ? 0 : 1;
+      await ctx.db.run("UPDATE cm_skus SET stock=?, active=? WHERE tenant_id=? AND slug=? AND vkey=''", stock, active, e.tenantId, slug); await ctx.db.run("UPDATE cm_products SET active=?, updated_at=? WHERE tenant_id=? AND slug=?", active, ctx.nowS(), e.tenantId, slug);
+    },
+  },
 };

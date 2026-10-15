@@ -181,6 +181,41 @@ CREATE TABLE IF NOT EXISTS wl_withdrawals (
 );
 CREATE INDEX IF NOT EXISTS ix_wl_wd ON wl_withdrawals (tenant_id, id);
 
+-- شحن المحفظة (إيداعات): chargily = حساب المنصة نفسه (سرّ في Worker لا مفتاح التاجر) يُعتمد بالويب هوك الموقَّع وتطابق المبلغ؛ ccp = حوالة بإثبات صورة يوافق عليها المزوّد يدوياً.
+-- الحالات pending ← approved | rejected | failed (لا رجوع)؛ chargily_checkout_id فريد لمنع قيد مزدوج؛ proof صورة data URL لا تظهر في القوائم.
+CREATE TABLE IF NOT EXISTS wl_deposits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, amount INTEGER NOT NULL, payment_method TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending',
+  proof_image_path TEXT NULL, payer TEXT NOT NULL DEFAULT '', chargily_checkout_id TEXT NULL UNIQUE, checkout_url TEXT NULL, note TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_wl_dep ON wl_deposits (tenant_id, id);
+CREATE INDEX IF NOT EXISTS ix_wl_dep_st ON wl_deposits (status, id);
+
+-- ───────── السوق المشترك: دروبشيبينغ محلي / شبكة أفلييت B2B (وحدة marketplace) ─────────
+-- mk_products: كتالوج المورّدين (مستأجر = متجر). سعر المورّد supplier_price هو ما يحصّله المورّد من الزبون عند التسليم ناقصاً العمولة؛ rrp سعر عام مقترح؛ commission مبلغ ثابت للقطعة يدفعه المورّد للأفلييت عند «تسليم».
+--   الحالات: pending (بانتظار مراجعة المزوّد) | active | paused (أوقفه المورّد) | rejected | suspended (أوقفه المزوّد). stock NULL = غير محدود.
+CREATE TABLE IF NOT EXISTS mk_products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, slug TEXT NOT NULL, title TEXT NOT NULL, descr TEXT NOT NULL DEFAULT '', image TEXT NOT NULL DEFAULT '', images TEXT NOT NULL DEFAULT '[]', category TEXT NOT NULL DEFAULT '',
+  supplier_price INTEGER NOT NULL, rrp INTEGER NOT NULL, commission INTEGER NOT NULL, stock INTEGER NULL, status TEXT NOT NULL DEFAULT 'pending', note TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
+  UNIQUE (tenant_id, slug)
+);
+CREATE INDEX IF NOT EXISTS ix_mk_prod ON mk_products (status, id);
+-- mk_imports: علاقة الاستيراد (marketplace_product_id) بين منتج المورّد ومنتج متجر الأفلييت وسعر بيعه
+CREATE TABLE IF NOT EXISTS mk_imports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, mp_id INTEGER NOT NULL, slug TEXT NOT NULL, price INTEGER NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL,
+  UNIQUE (tenant_id, slug), UNIQUE (tenant_id, mp_id)
+);
+CREATE INDEX IF NOT EXISTS ix_mk_imp ON mk_imports (mp_id);
+-- mk_orders: سطر طلب موجَّه (مرجع طلب الأفلييت ref × منتج). state = حالة العمولة: pending (محجوزة في escrow المورّد) | available (حُرّرت للأفلييت عند «مُسلَّم») | returned (عادت للمورّد) | return_claimed (ادّعى المورّد إرجاعاً بلا تأكيد ناقل — ينتظر قرار المزوّد) | rejected (رُفض الطلب).
+CREATE TABLE IF NOT EXISTS mk_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, ref TEXT NOT NULL, affiliate_id INTEGER NOT NULL, supplier_id INTEGER NOT NULL, mp_id INTEGER NOT NULL, slug TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', qty INTEGER NOT NULL, unit_price INTEGER NOT NULL,
+  supplier_price INTEGER NOT NULL, commission INTEGER NOT NULL, fee INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL DEFAULT 'pending', ship TEXT NOT NULL DEFAULT 'new', detail TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL DEFAULT '', phone_enc TEXT NULL, wilaya TEXT NOT NULL DEFAULT '', commune TEXT NOT NULL DEFAULT '', dtype TEXT NOT NULL DEFAULT 'home', desk TEXT NOT NULL DEFAULT '', order_total INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE (affiliate_id, ref, mp_id)
+);
+CREATE INDEX IF NOT EXISTS ix_mk_ord_sup ON mk_orders (supplier_id, id);
+CREATE INDEX IF NOT EXISTS ix_mk_ord_aff ON mk_orders (affiliate_id, id);
+CREATE TABLE IF NOT EXISTS mk_config (k TEXT PRIMARY KEY, v TEXT NOT NULL);
+
 -- ───────── وكالة التسويق بعلامة بيضاء (وحدة agency) ─────────
 -- marketing_services: كتالوج المنصة (يديره المزوّد) بالدينار؛ agency_orders: طلبات التجار (السعر لقطة وقت الشراء). الحالات: pending ← processing ← delivered | rejected.
 CREATE TABLE IF NOT EXISTS marketing_services (

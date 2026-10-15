@@ -25,3 +25,12 @@ export const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":
 export const maskPhone = (p) => { const d = String(p ?? ""); return d.length > 2 ? "•".repeat(Math.min(8, d.length - 2)) + d.slice(-2) : "••"; };
 export const maskName = (n) => { const t = String(n ?? "").trim(); return t ? t[0] + "•••" : ""; };
 export const seesPii = (req) => !req.app || req.app.scopes.includes("read_customers");
+
+const PROOF_MAX = 240_000;
+/** صورة إثبات الدفع: data URL لصورة jpeg/png/webp بحجم محدود وبصمة ملف صحيحة (لا يُقبل SVG ولا HTML) */
+export function parseProof(v) {
+  const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+\/=]+)$/.exec(String(v ?? "")); if (!m || v.length > PROOF_MAX) return null;
+  let head; try { head = atob(m[2].slice(0, 24)); } catch { return null; }
+  const ok = m[1] === "jpeg" ? head.startsWith("\xff\xd8\xff") : m[1] === "png" ? head.startsWith("\x89PNG") : head.startsWith("RIFF") && head.slice(8, 12) === "WEBP";
+  return ok ? String(v) : null;
+}
