@@ -130,3 +130,12 @@ CREATE TABLE IF NOT EXISTS ad_spend (
   spend REAL NOT NULL DEFAULT 0, impressions INTEGER NOT NULL DEFAULT 0, clicks INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, day, campaign_id)
 );
 CREATE INDEX IF NOT EXISTS ix_ad_spend_t ON ad_spend (tenant_id, day);
+
+-- ربط Facebook بنقرة واحدة (OAuth): رمز مستخدم طويل الأمد مشفّر لكل اتصال + قائمة الحسابات الإعلانية التي يراها؛ الحسابات المربوطة تنسخ الرمز وتُجدَّد معه.
+CREATE TABLE IF NOT EXISTS ad_oauth (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, provider TEXT NOT NULL DEFAULT 'meta', nonce TEXT NOT NULL UNIQUE,
+  fb_user_id TEXT NOT NULL, fb_user_name TEXT NOT NULL DEFAULT '', token_enc TEXT NULL, expires_at INTEGER NOT NULL, accounts TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'active', last_refresh_at INTEGER NULL, last_error TEXT NULL, warned INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_ad_oauth_t ON ad_oauth (tenant_id);
+CREATE INDEX IF NOT EXISTS ix_ad_oauth_fb ON ad_oauth (fb_user_id);

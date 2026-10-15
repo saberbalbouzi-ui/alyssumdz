@@ -7,7 +7,8 @@ import { HttpError, ok } from "../core.js";
  * صيغ الواجهتين من وثائقهما العامة ولم تُجرَّب على حساب إعلاني حقيقي بعد.
  */
 export const PROVIDERS = ["meta", "tiktok"];
-const MAX_ACCOUNTS = 6, PAGES_PER_RUN = 6, DAY = 86400, FIRST_DAYS = 60, REFRESH_DAYS = 7;
+export const MAX_ACCOUNTS = 6;
+const PAGES_PER_RUN = 6, DAY = 86400, FIRST_DAYS = 60, REFRESH_DAYS = 7;
 const txt = (s, n) => String(s ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
 const ymd = (s) => new Date(s * 1000).toISOString().slice(0, 10);
@@ -46,7 +47,7 @@ export function validateAccount(provider, accountIn, cfgIn = {}, secIn = {}, exi
 async function getJson(ctx, url, init) {
   let r; try { r = await ctx.fetchFn(url, { ...init, signal: AbortSignal.timeout(20000) }); } catch (e) { throw new Error("تعذّر الاتصال بمنصة الإعلانات: " + String(e?.message || e).slice(0, 80)); }
   const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* غير JSON */ }
-  if (r.status < 200 || r.status >= 300) { const m = j?.error?.message || j?.message; const e = new Error(m ? "رفضت المنصة الطلب: " + String(m).slice(0, 140) : "ردّ غير متوقع من المنصة (" + r.status + ")"); e.status = r.status; throw e; }
+  if (r.status < 200 || r.status >= 300) { const m = j?.error?.message || j?.message; const e = new Error(m ? "رفضت المنصة الطلب: " + String(m).slice(0, 140) : "ردّ غير متوقع من المنصة (" + r.status + ")"); e.status = r.status; e.code = j?.error?.code ?? null; throw e; }
   if (j === null) throw new Error("ردّ غير صالح من منصة الإعلانات");
   return j;
 }
@@ -85,6 +86,7 @@ export async function syncAccount(ctx, acc) {
     return { ok: true, rows: rows.length };
   } catch (e) {
     const msg = String(e?.message || e).slice(0, 200); await db.run("UPDATE ad_accounts SET last_sync_at=?, last_error=? WHERE id=?", now, msg, acc.id);
+    if (e?.code === 190) { const oid = Number(JSON.parse(acc.config || "{}").oauth) || 0; if (oid) await db.run("UPDATE ad_oauth SET status='expired', last_error=? WHERE id=? AND status='active'", msg, oid).catch(() => {}); }   // رمز Facebook منتهٍ/مُبطَل ← يظهر «أعد الربط»
     return { ok: false, error: msg, status: e?.status ?? null };
   }
 }

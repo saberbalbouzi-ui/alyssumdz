@@ -1632,6 +1632,38 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الربح الحقيقي: حقل رقم الحساب الفارغ يعرض رسالة واضحة بلا إرسال، والمكتوب يبقى بعد إعادة الرسم، وBearer واللصق بأسطر وact_ تُنظَّف", pfT.msgEmpty && pfT.draft, pfT);
   ok("الربح الحقيقي: بعد الربط الإنفاق الفعلي يحل محل التقدير وتظهر الحملة بإنفاقها", pfT.hero1.trim() === pfT.expect1 && pfT.acc && pfT.camp && pfT.spendCell, pfT);
   ok("الربح الحقيقي: المصاريف الثابتة تُحفظ وتُطرح، والتبويب يختفي عند الخروج", pfT.fixedSaved && pfT.hero2 !== pfT.hero1 && pfT.hidden, pfT);
+  // ── الربح الحقيقي: ربط Facebook بنقرة واحدة (OAuth) ──
+  const foT = await p.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.refreshAlerts = async () => {}; const R = {};
+    const calls = []; const t0 = API.sb.token, u0 = API.sb.url, h0 = API.sb.headers, f0 = window.fetch;
+    API.sb.token = async () => "tok"; API.sb.url = q => "http://x" + q; API.sb.headers = () => ({});
+    let conf = false, linked = false, conns = [];
+    const mkConn = (status, days) => ({ id: 5, provider: "meta", fb_user_name: "Saber B", status, days_left: days, accounts: [{ account_id: "664829409857812", name: "alyssum dollars", currency: "USD", status: 1, linked }, { account_id: "1111100000", name: "حساب دينار", currency: "DZD", status: 1, linked: false }] });
+    window.fetch = async (u, o) => { if (!/platform-proxy/.test(String(u))) return f0(u, o); const b = JSON.parse(o.body); calls.push(b); const E = (d, st) => ({ ok: true, status: 200, json: async () => ({ ok: true, status: st || 200, data: d }) });
+      if (b.path === "/v1/ads/oauth" && b.method === "GET") return E({ configured: conf, connections: conns });
+      if (b.path === "/v1/ads/oauth/meta/start") return conf ? E({ url: "#fbstart" }) : E({ error: { code: "oauth_not_configured", message: "x" } }, 503);
+      if (/\/v1\/ads\/oauth\/5\/link$/.test(b.path)) { linked = true; conns = [mkConn("active", 59)]; return E({ ok: true, id: 9 }, 201); }
+      if (b.path === "/v1/ads/accounts" && b.method === "GET") return E({ accounts: [] });
+      if (/\/sync$/.test(b.path)) return E({ ok: true, rows: 1 });
+      if (b.path === "/v1/ads/spend") return E({ total_dzd: 0, spend: [] });
+      return E({}); };
+    Admin.tab("profit"); await wait(500); const host = () => document.getElementById("pf-app");
+    R.soon = /سيتوفر قريباً/.test(host().textContent) && !host().querySelector('[data-pf="fbconnect"]');
+    conf = true; await AdminProfit.refresh(); await wait(300); R.btn = !!host().querySelector('[data-pf="fbconnect"]');
+    host().querySelector('[data-pf="fbconnect"]').click(); await wait(300); const st = calls.find(c => c.path === "/v1/ads/oauth/meta/start"); R.startBody = st ? st.body.return_to === location.origin + location.pathname : false; R.hash = location.hash === "#fbstart";
+    history.replaceState(null, "", location.pathname + location.search);
+    conns = [mkConn("active", 59)]; await AdminProfit.refresh(); await wait(300);
+    R.rows = host().querySelectorAll('[data-pf="fblink"]').length; R.fxField = !!document.getElementById("pf-ofx-5-664829409857812") && !document.getElementById("pf-ofx-5-1111100000");
+    host().querySelector('[data-pf="fblink"][data-a="664829409857812"]').click(); await wait(300); R.noFx = !calls.some(c => /oauth\/5\/link/.test(c.path));
+    const fx = document.getElementById("pf-ofx-5-664829409857812"); fx.value = "245"; host().querySelector('[data-pf="fblink"][data-a="664829409857812"]').click(); await wait(700);
+    const lk = calls.find(c => /oauth\/5\/link/.test(c.path)); R.link = lk ? JSON.stringify(lk.body) : ""; R.synced = calls.some(c => /accounts\/9\/sync$/.test(c.path)); R.mark = [...host().querySelectorAll("span.pos")].some(x => /مربوط/.test(x.textContent));
+    conns = [mkConn("expired", 0)]; await AdminProfit.refresh(); await wait(300); R.expired = /انتهى ربط Facebook/.test(host().textContent) && !!host().querySelector('.pf-btn.o[data-pf="fbconnect"]');
+    conns = [mkConn("active", 4)]; await AdminProfit.refresh(); await wait(300); R.warn = /ينتهي الربط بعد 4 أيام/.test(host().textContent);
+    API.sb.token = t0; API.sb.url = u0; API.sb.headers = h0; window.fetch = f0; Admin.tab("orders"); await wait(100); return R;
+  });
+  ok("ربط Facebook: دون سرّي التطبيق تظهر «سيتوفر قريباً» بلا زر، ومعهما يظهر الزر ويبدأ التحويل بعنوان اللوحة", foT.soon && foT.btn && foT.startBody && foT.hash, foT);
+  ok("ربط Facebook: الحساب بالدولار يطلب سعر الصرف والدينار لا، ويُربط ثم يزامن ويُعلَّم «مربوط»", foT.rows === 2 && foT.fxField && foT.noFx && /"account_id":"664829409857812"/.test(foT.link) && /"fx":245/.test(foT.link) && foT.synced && foT.mark, foT);
+  ok("ربط Facebook: انتهاء الربط يعرض «إعادة الربط» برتقالياً، وقرب الانتهاء يحذّر بالأيام", foT.expired && foT.warn, foT);
   // ═══ جوال: دائرة خضراء تقع فوق الهدف ═══
   ({ p, errs } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }));
   await p.evaluate(() => localStorage.setItem("store_voice_enrolled", "1"));
