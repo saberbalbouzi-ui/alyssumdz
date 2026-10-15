@@ -7,9 +7,9 @@ const AdminProfit = (() => {
   const nf = n => Math.round(Number(n) || 0).toLocaleString("fr-DZ");
   const dz = n => (n < 0 ? "−" : "") + nf(Math.abs(n)) + " دج";
   const pct = (a, b) => (b > 0 ? Math.round(a / b * 1000) / 10 : 0);
-  const S = { days: 30, ads: [], spend: null, off: false, err: "", busy: false, form: null, tok: "", fixed: 0, loadedSet: false, tab: "ov" };
+  const S = { days: 30, ads: [], spend: null, off: false, err: "", busy: false, form: null, tok: "", oauth: { configured: false, conns: [] }, flash: "", fixed: 0, loadedSet: false, tab: "ov" };
   const PROV = { meta: { n: "Meta (فيسبوك وإنستغرام)", i: "🔵" }, tiktok: { n: "تيك توك", i: "⚫" } };
-  const ERR = { validation_error: "تحقق من الحقول المُدخلة", limit_reached: "وصلت الحد الأقصى من الحسابات", rate_limited: "طلبات كثيرة، أعد المحاولة بعد قليل", vault_unavailable: "الخدمة غير جاهزة لحفظ الأسرار — تواصل مع الدعم" };
+  const ERR = { validation_error: "تحقق من الحقول المُدخلة", limit_reached: "وصلت الحد الأقصى من الحسابات", rate_limited: "طلبات كثيرة، أعد المحاولة بعد قليل", vault_unavailable: "الخدمة غير جاهزة لحفظ الأسرار — تواصل مع الدعم", oauth_not_configured: "الربط عبر Facebook غير مفعّل بعد — استعمل الربط اليدوي", oauth_expired: "انتهى ربط Facebook — أعد الربط أولاً" };
   const ago = ts => { if (!ts) return "لم تُزامَن بعد"; const m = Math.max(0, Math.round((Date.now() / 1000 - ts) / 60)); return m < 1 ? "الآن" : m < 90 ? "منذ " + m + " د" : m < 2880 ? "منذ " + Math.round(m / 60) + " س" : "منذ " + Math.round(m / 1440) + " يوماً"; };
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const iso = d => { const x = d || new Date(); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
@@ -67,6 +67,7 @@ const AdminProfit = (() => {
   async function loadAds() {
     const r = await call("GET", "/v1/ads/accounts"); if (r.off) { S.off = true; S.ads = []; return; } if (!r.ok) { S.err = errOf(r); return; }
     S.ads = (r.j.accounts || []); S.off = false;
+    const o = await call("GET", "/v1/ads/oauth"); S.oauth = o.ok ? { configured: !!o.j.configured, conns: o.j.connections || [] } : { configured: false, conns: [] };
     if (S.ads.length) { const g = range(), q = await call("GET", "/v1/ads/spend", null, { since: g.since, until: g.until }); S.spend = q.ok ? q.j : null; } else S.spend = null;
   }
   async function loadSet() { if (S.loadedSet) return; S.loadedSet = true; try { const v = await Priv.get("profitset", {}); S.fixed = Math.max(0, +(v && v.fixed) || 0); } catch (e) {} }
@@ -100,10 +101,24 @@ const AdminProfit = (() => {
     const bars = vals.map((x, i) => { const hh = Math.abs(x.v) / mx * (z - 6), xx = 6 + i * (W - 12) / vals.length; return `<rect x="${xx.toFixed(1)}" y="${(x.v >= 0 ? z - hh : z).toFixed(1)}" width="${bw}" height="${Math.max(1, hh).toFixed(1)}" rx="2" fill="${x.v >= 0 ? "#22c55e" : "#f87171"}"><title>${x.k}: ${dz(x.v)}</title></rect>`; }).join("");
     return `<svg class="pf-chart" viewBox="0 0 ${W} ${Hh + 20}" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="${z}" y2="${z}" stroke="rgba(255,255,255,.3)"/>${bars}<text x="4" y="${Hh + 14}" fill="#fff" opacity=".7" font-size="11">${vals[0].k}</text><text x="${W - 4}" y="${Hh + 14}" fill="#fff" opacity=".7" font-size="11" text-anchor="end">${vals[vals.length - 1].k}</text></svg>`;
   }
+  /* ربط Facebook بنقرة واحدة: تسجيل دخول وموافقة على قراءة الإعلانات فقط، ثم اختيار الحسابات؛ الرمز لا يمرّ بالمتصفح */
+  function oauthCard() {
+    const o = S.oauth, flash = S.flash ? `<div class="pf-note">${esc(S.flash)}</div>` : "";
+    if (!o.configured) return `<div class="pf-card"><div class="pf-head"><h3>🔵 ربط سريع عبر Facebook</h3></div>${flash}<div class="pf-sub">سيتوفر قريباً. يمكنك الآن الربط اليدوي بالرمز أسفله.</div></div>`;
+    const conns = o.conns.map(c => {
+      const dead = c.status !== "active", warn = !dead && c.days_left <= 10;
+      const rows = (c.accounts || []).map(a => `<div class="pf-acc"><div><b>${esc(a.name)}</b><div class="pf-sub">${esc(a.account_id)} · ${esc(a.currency)}${a.status !== 1 ? " · الحساب غير نشط" : ""}</div></div>
+        <div class="pf-row">${a.linked ? '<span class="pos">✓ مربوط</span>' : dead ? '<span class="pf-mut">أعد الربط أولاً</span>' : `${a.currency !== "DZD" ? `<input class="pf-in" style="width:130px" id="pf-ofx-${c.id}-${esc(a.account_id)}" type="number" step="0.01" min="0" dir="ltr" placeholder="سعر الصرف إلى الدينار">` : ""}<button class="pf-btn" data-pf="fblink" data-id="${c.id}" data-a="${esc(a.account_id)}">ربط</button>`}</div></div>`).join("") || '<div class="pf-sub">لا توجد حسابات إعلانية ظاهرة لهذا الحساب. تأكد أنك مدير في مدير الإعلانات.</div>';
+      return `<div class="pf-card"><div class="pf-row" style="justify-content:space-between;align-items:center"><div><b>🔵 ${esc(c.fb_user_name || "Facebook")}</b><div class="${dead || warn ? "pf-err" : "pf-sub"}">${dead ? "انتهى ربط Facebook — أعد الربط ليستمر سحب الإنفاق" : warn ? "ينتهي الربط بعد " + c.days_left + " أيام وسيُجدَّد تلقائياً، وإن فشل التجديد أعد الربط" : "الربط فعّال · يُجدَّد تلقائياً"}</div></div>
+        <div class="pf-row"><button class="pf-btn ${dead || warn ? "o" : "g"}" data-pf="fbconnect">↻ إعادة الربط</button><button class="pf-btn r" data-pf="fbdel" data-id="${c.id}">فصل</button></div></div>${rows}</div>`;
+    }).join("");
+    return `<div class="pf-card"><div class="pf-head"><h3>🔵 ربط سريع عبر Facebook</h3>${o.conns.length ? "" : '<button class="pf-btn" data-pf="fbconnect">ربط عبر Facebook</button>'}</div>${flash}
+      ${o.conns.length ? "" : '<div class="pf-sub">تسجّل الدخول إلى Facebook وتوافق على صلاحية <b>قراءة الإعلانات</b> فقط (لا نغيّر شيئاً في حملاتك)، ثم تختار الحساب الإعلاني. لا حاجة لنسخ أي رمز.</div>'}${conns}</div>`;
+  }
   function accounts() {
     const list = S.ads.map(a => `<div class="pf-acc"><div><b>${(PROV[a.provider] || {}).i || ""} ${esc(a.name || a.account_id)}</b><div class="pf-sub">${esc((PROV[a.provider] || {}).n || a.provider)} · ${esc(a.account_id)} · ${esc(a.currency)}${a.currency !== "DZD" ? " × " + a.fx : ""} · ${ago(a.last_ok_at)}${a.status === "paused" ? " · موقوف" : ""}</div>${a.last_error ? `<div class="pf-err">${esc(a.last_error)}</div>` : ""}</div>
       <div class="pf-row"><button class="pf-btn" data-pf="sync" data-id="${a.id}">⟳ مزامنة</button><button class="pf-btn g" data-pf="edit" data-id="${a.id}">تعديل</button><button class="pf-btn o" data-pf="pause" data-id="${a.id}" data-p="${a.status === "paused" ? 0 : 1}">${a.status === "paused" ? "استئناف" : "إيقاف"}</button><button class="pf-btn r" data-pf="del" data-id="${a.id}">فصل</button></div></div>`).join("");
-    return `<div class="pf-card"><div class="pf-head"><h3>🔗 حسابات الإعلانات المربوطة</h3><button class="pf-btn" data-pf="add">＋ ربط حساب</button></div>${S.ads.length ? list : '<div class="pf-sub">لم تربط أي حساب بعد. اربط حساب Meta أو تيك توك ليُسحب الإنفاق الفعلي تلقائياً (قراءة فقط، لا نغيّر شيئاً في حملاتك).</div>'}${form()}</div>`;
+    return `${oauthCard()}<div class="pf-card"><div class="pf-head"><h3>🔗 حسابات الإعلانات المربوطة</h3><button class="pf-btn g" data-pf="add">＋ ربط يدوي بالرمز</button></div>${S.ads.length ? list : '<div class="pf-sub">لم تربط أي حساب بعد. اربط حساب Meta أو تيك توك ليُسحب الإنفاق الفعلي تلقائياً (قراءة فقط، لا نغيّر شيئاً في حملاتك).</div>'}${form()}</div>`;
   }
   function form() {
     const f = S.form; if (!f) return "";
@@ -180,26 +195,45 @@ const AdminProfit = (() => {
     finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = lab; } }
   }
   async function onClick(e) {
-    const t = e.target.closest("[data-pf]"); if (!t) return; const a = t.dataset.pf, id = +t.dataset.id;
+    const t = e.target.closest("[data-pf]"); if (!t) return; const a = t.dataset.pf, id = +t.dataset.id; if (S.flash && a !== "fbconnect") { S.flash = ""; }
     if (a === "days") { S.days = +t.dataset.d; await loadAds(); draw(); }
     else if (a === "refresh") refresh();
     else if (a === "add") { S.form = { provider: "meta", currency: "DZD", fx: 1 }; draw(); const f = $("pf-form"); if (f) f.scrollIntoView({ block: "nearest" }); }
     else if (a === "edit") { const x = S.ads.find(y => y.id === id); if (x) { S.form = { id: x.id, provider: x.provider, account_id: x.account_id, name: x.name, currency: x.currency, fx: x.fx }; draw(); } }
     else if (a === "cancel") { S.form = null; S.tok = ""; draw(); }
     else if (a === "save") save(t);
+    else if (a === "fbconnect") { t.disabled = true; const r = await call("POST", "/v1/ads/oauth/meta/start", { return_to: location.origin + location.pathname }); if (r.ok && r.j.url) { location.href = r.j.url; return; } t.disabled = false; toast(errOf(r)); }
+    else if (a === "fblink") {
+      const aid = t.dataset.a, fxEl = $(`pf-ofx-${id}-${aid}`), fx = fxEl ? +fxEl.value : 0; if (fxEl && !(fx > 0)) { toast("اكتب سعر الصرف إلى الدينار لهذا الحساب (ما تدفعه فعلاً مقابل العملة)"); return; }
+      t.disabled = true; t.textContent = "…"; const r = await call("POST", `/v1/ads/oauth/${id}/link`, fxEl ? { account_id: aid, fx } : { account_id: aid });
+      if (!r.ok) { t.disabled = false; t.textContent = "ربط"; toast(errOf(r)); return; }
+      const sy = await call("POST", `/v1/ads/accounts/${r.j.id}/sync`); await loadAds(); draw(); toast(sy.ok && !(sy.j && sy.j.ok === false) ? "تمّ الربط وسُحب الإنفاق ✓" : "تمّ الربط لكن تعذّرت المزامنة: " + ((sy.j && sy.j.error) || errOf(sy)));
+    }
+    else if (a === "fbdel") { if (!confirm("فصل ربط Facebook؟ تتوقف مزامنة حساباته ويبقى إنفاقها المخزَّن، ولا يتأثر حسابك الإعلاني.")) return; const r = await call("DELETE", `/v1/ads/oauth/${id}`); if (!r.ok) toast(errOf(r)); await loadAds(); draw(); }
     else if (a === "sync") { t.disabled = true; t.textContent = "…"; const r = await call("POST", `/v1/ads/accounts/${id}/sync`); await loadAds(); draw(); toast(r.ok && !(r.j && r.j.ok === false) ? "تمّت المزامنة ✓" : "تعذّرت المزامنة: " + ((r.j && r.j.error) || errOf(r))); }
     else if (a === "pause") { await call("POST", `/v1/ads/accounts/${id}/pause`, { paused: t.dataset.p === "1" }); await loadAds(); draw(); }
     else if (a === "del") { if (!confirm("فصل هذا الحساب وحذف إنفاقه المخزَّن هنا؟ (حسابك الإعلاني نفسه لا يتأثر)")) return; await call("DELETE", `/v1/ads/accounts/${id}`); await loadAds(); draw(); }
     else if (a === "fixed") { S.fixed = Math.max(0, +($("pf-fixed") || {}).value || 0); try { await Priv.set("profitset", { fixed: S.fixed }); } catch (er) {} draw(); toast("حُفظت المصاريف الثابتة"); }
   }
   function render() { css(); const host = $("profit-content"); if (!host) return; if (!$("pf-app")) { host.innerHTML = '<div id="pf-app"></div>'; $("pf-app").addEventListener("click", onClick); } refresh(); }
+  /* عودة من Facebook: #ads_oauth=ok|err — نفتح «الربح الحقيقي» بعد أن تستقر اللوحة (حارس الرئيسية ينتهي خلال 3 ثوانٍ) ثم نمسح الوسم من العنوان */
+  function oauthReturn() {
+    let h; try { h = new URLSearchParams(location.hash.replace(/^#/, "")); } catch (e) { return; } const st = h.get("ads_oauth"); if (st !== "ok" && st !== "err") return;
+    S.flash = st === "ok" ? "تمّ الربط مع Facebook ✓ — اختر الحساب الإعلاني الذي تريد سحب إنفاقه." + (h.get("n") === "0" ? " (لم نجد حسابات إعلانية ظاهرة لك)" : "") : "تعذّر الربط: " + (h.get("m") || "حاول مرة أخرى");
+    const t0 = Date.now(), iv = setInterval(() => {
+      if (Date.now() - t0 > 300000) return clearInterval(iv);
+      const app = $("app"); if (typeof Admin === "undefined" || !Admin.tab || !app || app.classList.contains("hidden") || !Array.isArray(Admin.orders)) return;
+      clearInterval(iv); setTimeout(() => { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'profit'")); if (b) Admin.tab("profit", b); try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }, 3500);
+    }, 500);
+  }
   function init() {
+    oauthReturn();
     const w = () => { if (typeof Admin === "undefined" || !Admin.tab || Admin._pfWrapped) return; const orig = Admin.tab;
       Admin.tab = function (t, btn) { const r = orig.call(this, t, btn), el = $("tab-profit"); if (el) el.classList.toggle("hidden", t !== "profit"); if (t === "profit") render(); return r; };
       Admin._pfWrapped = true; };
     w(); setTimeout(w, 500);
   }
   if (typeof document !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  return { render, refresh, S, calc, spendBy, campaigns, _t: { norm, pct } };
+  return { render, refresh, S, calc, oauthReturn, spendBy, campaigns, _t: { norm, pct } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = AdminProfit;

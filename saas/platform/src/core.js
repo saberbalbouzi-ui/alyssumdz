@@ -30,10 +30,10 @@ export const PUBLIC_SCOPES = ["ab:assign", "ab:track", "fraud:check", "cart:capt
 export function paginate(rows, limit, idKey = "id") { const more = rows.length > limit, items = rows.slice(0, limit); return { items, next: more ? items[items.length - 1][idKey] : null }; }
 export const clampLimit = (v, def = 50, max = 100) => Math.max(1, Math.min(max, Math.floor(+v) || def));
 
-export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", clock = () => Date.now(), fetchFn = fetch }) {
+export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn = fetch }) {
   if (!secret || String(secret).length < 16) throw new Error("PLATFORM_SECRET مطلوب (16 حرفاً فأكثر)");
   const db = new DB(d1), routes = [];
-  const ctx = { db, clock, fetchFn, secret, vault, files, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
+  const ctx = { db, clock, fetchFn, secret, vault, files, config, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
     /** يضيف حدثاً لصندوق الأحداث. extId اختياري: نفس (مستأجر، extId) لا يُدرج مرتين ← يُرجع false */
     async emit(tenantId, type, data, extId = null) {
       try { await db.run("INSERT INTO pf_events (tenant_id,type,payload,ext_id,state,attempts,next_at,created_at) VALUES (?,?,?,?,?,0,?,?)", tenantId, type, JSON.stringify(data), extId, "pending", Math.floor(clock() / 1000), nowStr(clock())); return true; }

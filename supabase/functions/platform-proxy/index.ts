@@ -33,6 +33,11 @@ const ALLOW: [string, RegExp][] = [
   ["PUT", /^\/v1\/ads\/accounts$/],
   ["POST", /^\/v1\/ads\/accounts\/\d{1,12}\/(sync|pause)$/],
   ["DELETE", /^\/v1\/ads\/accounts\/\d{1,12}$/],
+  // ربط Facebook بنقرة واحدة (OAuth): البدء/القائمة/ربط حساب/فصل — الرد من Facebook (callback) يصل المنصة مباشرة بلا وسيط
+  ["GET", /^\/v1\/ads\/oauth$/],
+  ["POST", /^\/v1\/ads\/oauth\/meta\/start$/],
+  ["POST", /^\/v1\/ads\/oauth\/\d{1,12}\/link$/],
+  ["DELETE", /^\/v1\/ads\/oauth\/\d{1,12}$/],
 ];
 
 Deno.serve(async (req) => {

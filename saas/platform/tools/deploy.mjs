@@ -44,7 +44,15 @@ async function stepRoute() {
   if (routes.some((r) => r.pattern === pattern)) { console.log("المسار موجود"); return; }
   await cf("POST", `/zones/${ZONE}/workers/routes`, { pattern, script: NAME }); console.log("المسار أُضيف:", pattern);
 }
-const args = process.argv.slice(2), save = args.includes("--save-secrets") ? args[args.indexOf("--save-secrets") + 1] : null, steps = args.filter((a) => ["db", "worker", "secrets", "route", "all"].includes(a));
+/** يضبط سرّي تطبيق Meta (ربط Facebook بنقرة واحدة) من متغيّرات البيئة META_APP_ID وMETA_APP_SECRET — لا يطبعهما ولا يكتبهما في ملف */
+async function stepMeta() {
+  const id = (process.env.META_APP_ID || "").trim(), sec = (process.env.META_APP_SECRET || "").trim();
+  if (!/^\d{8,20}$/.test(id) || sec.length < 16) { console.log("ضع META_APP_ID (أرقام) وMETA_APP_SECRET في بيئة التنفيذ ثم أعد: node saas/platform/tools/deploy.mjs meta"); process.exitCode = 2; return; }
+  for (const [k, v] of [["META_APP_ID", id], ["META_APP_SECRET", sec]]) { await cf("PUT", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/secrets`, { name: k, text: v, type: "secret_text" }); console.log(k, "ضُبط"); }
+  console.log("Redirect URI الواجب تسجيله في تطبيق Meta (Facebook Login ← Valid OAuth Redirect URIs): https://" + HOST + "/v1/ads/oauth/meta/callback");
+  console.log("Deauthorize Callback: https://" + HOST + "/v1/ads/oauth/meta/deauth  ·  Data Deletion Request URL: https://" + HOST + "/v1/ads/oauth/meta/deletion");
+}
+const args = process.argv.slice(2), save = args.includes("--save-secrets") ? args[args.indexOf("--save-secrets") + 1] : null, steps = args.filter((a) => ["db", "worker", "secrets", "route", "meta", "all"].includes(a));
 const run = steps.includes("all") ? ["db", "worker", "secrets", "route"] : steps;
-for (const s of run) { if (s === "db") await stepDb(); else if (s === "worker") await stepWorker(); else if (s === "secrets") await stepSecrets(save); else if (s === "route") await stepRoute(); }
-if (!run.length) console.log("الخطوات: db | worker | secrets [--save-secrets مسار] | route | all");
+for (const s of run) { if (s === "db") await stepDb(); else if (s === "worker") await stepWorker(); else if (s === "secrets") await stepSecrets(save); else if (s === "route") await stepRoute(); else if (s === "meta") await stepMeta(); }
+if (!run.length) console.log("الخطوات: db | worker | secrets [--save-secrets مسار] | route | meta | all");

@@ -13,7 +13,7 @@ export function makeEnv(extraModules = [], opts = {}) {
   const clock = { t: Date.parse("2026-10-12T10:00:00Z") }, fake = { calls: [], queue: [], handler: null };
   const fetchFn = async (url, init = {}) => { fake.calls.push({ url, init }); const r = fake.handler ? fake.handler(url, init) : fake.queue.shift() ?? [200, "{}"]; return { status: r[0], text: async () => (typeof r[1] === "string" ? r[1] : JSON.stringify(r[1])), headers: new Map(Object.entries(r[2] ?? {})), body: r[3] ?? null, json: async () => (typeof r[1] === "string" ? JSON.parse(r[1]) : r[1]) }; };
   const vault = opts.noVault ? null : new Vault({ k1: webcrypto.getRandomValues(new Uint8Array(32)) }, "k1");
-  const app = createPlatform({ d1, modules: [adminModule, platformModule(opts.providers ?? ["meta", "tiktok", "snapchat", "whatsapp", "sheets", "email", "llm"]), ...extraModules], secret: "unit-test-secret-0123456789", adminToken: "adm-tok", vault, baseUrl: "https://api.example", files: opts.files ?? null, clock: () => clock.t, fetchFn });
+  const app = createPlatform({ d1, modules: [adminModule, platformModule(opts.providers ?? ["meta", "tiktok", "snapchat", "whatsapp", "sheets", "email", "llm"]), ...extraModules], secret: "unit-test-secret-0123456789", adminToken: "adm-tok", vault, baseUrl: "https://api.example", files: opts.files ?? null, config: opts.config ?? {}, clock: () => clock.t, fetchFn });
   async function call(m, p, body = null, tok = null, q = {}, h = {}, ip = "9.9.9.9") {
     const r = await app.handle(m, p, q, { ...(tok ? { authorization: "Bearer " + tok } : {}), ...h }, body === null ? "" : (typeof body === "string" ? body : JSON.stringify(body)), ip);
     let j = {}; try { j = JSON.parse(r.body) ?? {}; } catch { } return [r.status, j, r.headers, r];
