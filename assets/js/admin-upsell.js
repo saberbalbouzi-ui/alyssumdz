@@ -1,7 +1,7 @@
 /* «العروض الإضافية» في لوحة التحكم: قواعد Order Bump (خانة قبل زر التأكيد) وUpsell بعد الشراء (بطاقة في صفحة الشكر)، إحصاؤها،
    ودمج الطلب المرتبط (عرض بعد الشراء) في الطلب الأصلي ليُشحنا طرداً واحداً. القواعد في assets/data/upsell.json (يقرؤها المتجر: assets/js/upsell.js). */
 const AdminUpsell = (() => {
-  const FILE = "assets/data/upsell.json", GK = "🧺 مجموعة", UP = "🔼 عرض بعد الشراء", BP = "➕ إضافة سريعة";
+  const FILE = "assets/data/upsell.json", GK = "🧺 مجموعة", UP = "🔼 عرض بعد الشراء", BP = "➕ إضافة سريعة", RID = "🆔 قاعدة العرض";
   const $ = id => document.getElementById(id), A = () => (typeof Admin !== "undefined" ? Admin : null);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const fmt = n => (Number(n) || 0).toLocaleString("fr-DZ") + " دج";
@@ -38,6 +38,21 @@ const AdminUpsell = (() => {
       aovBump: bump.length ? Math.round(sum(bump) / bump.length) : 0, aovPlain: (main.length - bump.length) > 0 ? Math.round((sum(main) - sum(bump)) / (main.length - bump.length)) : 0 };
   }
 
+
+  /* ربح كل قاعدة (آخر 30 يوماً): الطلبات الموسومة بمعرّفها؛ الإيراد المضاف = سطر المنتج المعروض (البمب) أو كامل الطلب المرتبط (بعد الشراء)، والربح = الإيراد − تكلفة الشراء (إن عُرفت) */
+  function ruleStats(orders, rls, now) {
+    const a = A(), from = (now || Date.now()) - 30 * 864e5, costs = (a && a.fin && a.fin.costs) || {};
+    const L = (orders || []).filter(o => new Date(o.date).getTime() >= from && o.status !== "annulee" && o.status !== "echec" && !o._trash);
+    return (rls || rules).map(r => {
+      const mine = L.filter(o => ex(o)[RID] === r.id); let rev = 0, cost = 0, units = 0, known = true;
+      mine.forEach(o => {
+        const lines = a && a.orderLines ? a.orderLines(o) : [];
+        lines.filter(l => l.p.slug === r.offer).forEach(l => { rev += l.total; units += l.qty; if (costs[l.p.slug] == null) known = false; else cost += (Number(costs[l.p.slug]) || 0) * l.qty; });
+      });
+      return { id: r.id, type: r.type, offer: r.offer, orders: mine.length, units, rev, cost: known ? cost : null, profit: known ? rev - cost : null };
+    });
+  }
+
   /* ── دمج الطلب المرتبط ── */
   function group(o, orders) {
     const g = ex(o)[GK]; if (!g) return null;
@@ -51,6 +66,11 @@ const AdminUpsell = (() => {
     if (g.keep.status !== "nouvelle" || g.drops.some(d => d.status !== "nouvelle")) return "الدمج متاح والطلبان «جديدان» (قبل التأكيد)";
     if (reg(g.keep) || g.drops.some(reg)) return "أحد الطلبين أُرسل إلى الشركة";
     return "";
+  }
+  /* مجموعات قابلة للدمج الآن (طلبان «جديدان» لم يُرسلا) — تغذّي بطاقة الرئيسية */
+  function mergeable(orders) {
+    const seen = {}, out = []; (orders || []).forEach(o => { const g = ex(o)[GK]; if (!g || seen[g] || o._trash) return; seen[g] = 1; const gr = group(o, orders); if (gr && !blocked(gr)) out.push(Object.assign({ gid: g }, gr)); });
+    return out;
   }
   function previewRow(o) {
     const g = group(o, (A() || {}).orders); if (!g) return "";
@@ -85,6 +105,10 @@ const AdminUpsell = (() => {
     const P = ((A() && A().products) || []).filter(p => p.active !== false && p.type !== "variable" && p.type !== "grouped" && p.slug !== "test");
     return '<option value="">— اختر المنتج —</option>' + P.map(p => '<option value="' + esc(p.slug) + '"' + (p.slug === sel ? " selected" : "") + '>' + esc(p.title) + " — " + fmt(p.price) + '</option>').join("");
   }
+  function ruleStat(r) {
+    const st = ruleStats((A() || {}).orders || [], [r])[0]; if (!st || !st.orders) return '<div style="margin-top:.3rem">لا طلبات بهذه القاعدة بعد (آخر 30 يوماً)</div>';
+    return '<div style="margin-top:.3rem">📈 آخر 30 يوماً: <b>' + st.orders + '</b> طلب · إيراد مضاف <b>' + fmt(st.rev) + '</b> · ' + (st.profit == null ? 'الربح غير محسوب (أضف سعر شراء المنتج)' : 'ربح تقديري <b style="color:' + (st.profit >= 0 ? "#86efac" : "#fca5a5") + '">' + fmt(st.profit) + '</b>') + '</div>';
+  }
   function ruleCard(r, i) {
     const P = ((A() && A().products) || []).filter(p => p.active !== false && p.slug !== "test"), cats = (A() && A().categories) || {}, f = (k, label, inner) => '<label class="fl"><span class="fl-t">' + label + '</span>' + inner + '</label>';
     const prod = P.find(p => p.slug === r.offer), base = prod ? Number(prod.price) || 0 : 0, price = r.mode === "price" ? Number(r.value) || 0 : Math.round(base * (1 - Math.min(100, Math.max(0, Number(r.value) || 0)) / 100));
@@ -98,7 +122,7 @@ const AdminUpsell = (() => {
       '<div class="grid2">' + f("slugs", "يظهر عند شراء هذه المنتجات (فارغ = الكل)", '<select multiple size="4" data-k="slugs">' + P.map(p => '<option value="' + esc(p.slug) + '"' + ((r.trigger.slugs || []).includes(p.slug) ? " selected" : "") + '>' + esc(p.title) + '</option>').join("") + '</select>') +
       f("cats", "أو هذه التصنيفات", '<select multiple size="4" data-k="cats">' + Object.keys(cats).map(k => '<option value="' + esc(k) + '"' + ((r.trigger.cats || []).includes(k) ? " selected" : "") + '>' + esc(cats[k]) + '</option>').join("") + '</select>') +
       f("min", "أدنى مبلغ للطلب (دج)", '<input type="number" min="0" data-k="min" value="' + esc(r.trigger.min || 0) + '">') + f("from", "من تاريخ", '<input type="date" data-k="from" value="' + esc(r.from) + '">') + f("to", "إلى تاريخ", '<input type="date" data-k="to" value="' + esc(r.to) + '">') + '</div>' +
-      '<div class="hint">' + (prod ? "السعر في الموقع: <b>" + fmt(price) + "</b> بدل " + fmt(base) + (price >= base ? " (لا تخفيض)" : "") : "اختر المنتج لمعاينة السعر") + '</div></div>';
+      '<div class="hint">' + (prod ? "السعر في الموقع: <b>" + fmt(price) + "</b> بدل " + fmt(base) + (price >= base ? " (لا تخفيض)" : "") : "اختر المنتج لمعاينة السعر") + ruleStat(r) + '</div></div>';
   }
   function draw() {
     const el = $("upsell-rules"); if (!el) return;
@@ -138,6 +162,6 @@ const AdminUpsell = (() => {
     dirty = true; if (e.type === "change") draw(); else { const s = $("upsell-save"); if (s) s.textContent = "💾 حفظ ونشر (تغييرات غير محفوظة)"; }
   }
   function init(hostId) { host = $(hostId || "tab-upsell"); if (!host) return false; load(); return true; }
-  return { init, load, stats, group, blocked, merge, mergeId, previewRow, ccLine, newRule, _rules: () => rules };
+  return { init, load, stats, ruleStats, mergeable, group, blocked, merge, mergeId, previewRow, ccLine, newRule, _rules: () => rules };
 })();
 document.addEventListener("DOMContentLoaded", () => { if (typeof Admin === "undefined" || Admin._upsellTabWrapped) return; const original = Admin.tab; Admin.tab = function (t, btn) { const r = original.call(this, t, btn), el = document.getElementById("tab-upsell"); if (el) el.classList.toggle("hidden", t !== "upsell"); if (t === "upsell") AdminUpsell.init("tab-upsell"); return r; }; Admin._upsellTabWrapped = true; });

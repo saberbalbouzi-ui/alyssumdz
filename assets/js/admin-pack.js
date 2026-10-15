@@ -17,6 +17,10 @@ const AdminPack = (() => {
     const m = new Map(); (rows || []).filter(r => !r.packed).forEach(r => parseItems(r.items).forEach(i => m.set(i.title, (m.get(i.title) || 0) + i.qty)));
     return [...m.entries()].map(([title, qty]) => ({ title, qty })).sort((a, b) => b.qty - a.qty || a.title.localeCompare(b.title));
   }
+
+  /* ── ماسح الباركود: رقم التتبع أو رقم الطلب (جهاز ماسح بلوحة مفاتيح أو كاميرا BarcodeDetector) ── */
+  const normScan = v => { let t = String(v == null ? "" : v).trim(); const m = t.match(/[A-Za-z0-9\-_]{5,}\s*$/); if (/[\/?=]/.test(t) && m) t = m[0]; return t.replace(/\s+/g, "").toUpperCase(); };
+  function findRow(rows, code) { const k = normScan(code); if (!k) return null; return (rows || []).find(r => normScan(r.tracking) === k || normScan(r.id) === k) || null; }
   function filter(rows, f, q) {
     q = String(q || "").trim().toLowerCase();
     return (rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q)));
@@ -58,6 +62,31 @@ const AdminPack = (() => {
     w.document.close();
   }
 
+
+  function beep(ok) { try { const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = ok ? 880 : 220; g.gain.value = .08; o.start(); setTimeout(() => { o.stop(); c.close(); }, ok ? 120 : 380); } catch (e) { } }
+  async function onScan(code) {
+    const k = normScan(code); if (!k) return; const r = findRow(S.rows, k); let st = "unknown";
+    if (!r) st = "unknown"; else if (r.packed) st = "dup"; else { const n = await mark([r.id], false); st = n ? "ok" : "fail"; }
+    S.last = { st, code: k, r, at: Date.now() }; beep(st === "ok"); draw(); const i = $("pk-scan"); if (i) i.focus();
+  }
+  function scanCard() {
+    const L = S.last, msg = !L ? "وجّه الماسح إلى باركود الوصل أو اكتب رقم التتبع/الطلب ثم Enter." :
+      L.st === "ok" ? '<b style="color:#86efac">✓ جُهِّز</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) + '<div class="hint">' + esc(parseItems(L.r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</div>' :
+      L.st === "dup" ? '<b style="color:#fbbf24">سبق تجهيزه</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) :
+      L.st === "fail" ? '<b style="color:#fca5a5">تعذّر الحفظ</b> — أعد المحاولة' : '<b style="color:#fca5a5">غير موجود في الطلبات المؤكَّدة/المرسَلة:</b> <span dir="ltr">' + esc(L.code) + "</span>";
+    return '<div class="card" id="pk-scan-card"><b>📷 ماسح التجهيز</b><div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><input id="pk-scan" type="text" inputmode="none" autocomplete="off" placeholder="امسح الباركود أو اكتب الرقم ثم Enter" dir="ltr" style="flex:1;min-width:200px"><button type="button" class="small" data-pk="cam">' + (S.cam ? "⏹ إيقاف الكاميرا" : "📷 الكاميرا") + '</button></div>' +
+      (S.cam ? '<video id="pk-cam" autoplay playsinline muted style="width:100%;max-height:220px;border-radius:12px;margin-top:.4rem;background:#000"></video>' : "") + '<div id="pk-scan-msg" style="margin-top:.5rem">' + msg + '</div></div>';
+  }
+  async function camToggle() {
+    if (S.cam) { clearInterval(S.cam.t); try { S.cam.stream.getTracks().forEach(t => t.stop()); } catch (e) { } S.cam = null; draw(); return; }
+    if (!("BarcodeDetector" in window)) { if (typeof toast === "function") toast("المتصفح لا يدعم قراءة الباركود بالكاميرا — استعمل جهاز الماسح أو اكتب الرقم"); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); S.cam = { stream, t: 0 }; draw();
+      const v = $("pk-cam"); if (v) v.srcObject = stream; const det = new BarcodeDetector({ formats: ["code_128", "code_39", "ean_13", "qr_code", "itf"] }); let last = "", lastAt = 0;
+      S.cam.t = setInterval(async () => { try { const r = await det.detect(v); if (r && r[0]) { const c = r[0].rawValue; if (c !== last || Date.now() - lastAt > 2500) { last = c; lastAt = Date.now(); onScan(c); } } } catch (e) { } }, 300);
+    } catch (e) { S.cam = null; if (typeof toast === "function") toast("تعذّر تشغيل الكاميرا — تحقق من الإذن"); draw(); }
+  }
+
   /* ── الواجهة ── */
   function css() {
     if ($("pk-css")) return; const st = document.createElement("style"); st.id = "pk-css";
@@ -70,7 +99,7 @@ const AdminPack = (() => {
     if (S.err) { h.innerHTML = '<div id="pk" class="card"><b>تجهيز الطلبات</b><p class="hint" style="color:#fca5a5">' + esc(S.err) + '</p><button type="button" data-pk="reload">إعادة المحاولة</button></div>'; bind(); return; }
     const todo = S.rows.filter(r => !r.packed).length, list = filter(S.rows, S.f, S.q), pl = pickList(S.rows), ids = list.map(r => r.id), nSel = ids.filter(i => S.sel[i]).length;
     const tab = (k, l, n) => '<button type="button" class="small ' + (S.f === k ? "" : "gray") + '" data-pk="f" data-f="' + k + '">' + l + ' (' + n + ')</button>';
-    h.innerHTML = '<div id="pk"><div class="card"><div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center"><h2 style="margin:0">📦 تجهيز الطلبات</h2><button type="button" class="small" data-pk="reload">تحديث</button></div>' +
+    h.innerHTML = '<div id="pk">' + scanCard() + '<div class="card"><div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center"><h2 style="margin:0">📦 تجهيز الطلبات</h2><button type="button" class="small" data-pk="reload">تحديث</button></div>' +
       '<p class="hint">الطلبات المؤكَّدة والمرسَلة فقط. جهِّز الطرد ثم اضغط «جُهِّز ✓»؛ يظهر ذلك لفريقك فوراً. لا تظهر هنا أرقام الهواتف ولا الأسعار.</p>' +
       (pl.length ? '<b>قائمة الجمع (ما لم يُجهَّز بعد)</b><div class="pl">' + pl.map(p => '<div><span>' + esc(p.title) + '</span><b>×' + p.qty + '</b></div>').join("") + '</div>' : '<p class="hint">🎉 لا شيء بانتظار التجهيز.</p>') + '</div>' +
       '<div class="card"><div class="action-bar" style="flex-wrap:wrap">' + tab("todo", "بانتظار التجهيز", todo) + tab("done", "جُهِّزت", S.rows.length - todo) + tab("all", "الكل", S.rows.length) +
@@ -80,7 +109,7 @@ const AdminPack = (() => {
       (list.length ? list.map(r => '<tr data-id="' + esc(r.id) + '"><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td><b dir="ltr">' + esc(r.id) + '</b><div class="hint">' + esc(r.name) + '</div></td><td>' + esc([r.wilaya, r.commune].filter(Boolean).join(" / ")) + '<div class="hint">' + (r.dtype === "stop" ? "مكتب" + (r.desk ? " " + esc(r.desk) : "") : "للمنزل") + '</div></td><td class="it">' + esc(r.items) + '</td><td>' +
         (r.tracking ? '<b dir="ltr">' + esc(r.tracking) + '</b><div class="hint">' + esc(CO[r.company] || r.company || "") + '</div>' : '<span class="chip td">لم يُرسل بعد</span>') + '<div class="hint">' + (ST[r.status] || r.status) + '</div></td><td>' +
         (r.packed ? '<span class="chip ok">جُهِّز ✓</span> <button type="button" class="small gray" data-pk="undo">تراجع</button>' : '<button type="button" class="small" data-pk="one">جُهِّز ✓</button>') + '</td></tr>').join("") : '<tr><td colspan="6" class="hint" style="text-align:center;padding:1.2rem">لا طلبات في هذا العرض</td></tr>') + '</tbody></table></div></div></div>';
-    bind();
+    bind(); if (S.cam) { const v = $("pk-cam"); if (v && v.srcObject !== S.cam.stream) { v.srcObject = S.cam.stream; v.play && v.play().catch(() => { }); } }
   }
   function bind() {
     const h = S.host; if (!h || h._pk) return; h._pk = 1;
@@ -92,11 +121,13 @@ const AdminPack = (() => {
       if (k === "one") { b.disabled = true; return void await mark([id], false); }
       if (k === "undo") { b.disabled = true; return void await mark([id], true); }
       if (k === "markSel") { const ids = list.filter(r => S.sel[r.id] && !r.packed).map(r => r.id); if (!ids.length) { if (typeof toast === "function") toast("لا طلبات غير مجهَّزة في التحديد"); return; } b.disabled = true; const n = await mark(ids, false); if (typeof toast === "function") toast("✓ جُهِّز " + n + " طلب"); return; }
+      if (k === "cam") return camToggle();
       if (k === "print") return printSlips(list.filter(r => S.sel[r.id]));
     });
+    h.addEventListener("keydown", e => { if (e.target && e.target.id === "pk-scan" && e.key === "Enter") { e.preventDefault(); const v = e.target.value; e.target.value = ""; onScan(v); } });
     h.addEventListener("input", e => { if (e.target.id === "pk-q") { S.q = e.target.value; const pos = e.target.selectionStart; draw(); const q = $("pk-q"); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } } });
   }
   function init(hostId) { S.host = $(hostId || "tab-pack"); if (!S.host) return false; S.host._pk = S.host._pk || 0; load(); return true; }
-  return { init, load, parseItems, pickList, filter, slip, _S: S };
+  return { init, load, parseItems, pickList, filter, slip, normScan, findRow, onScan, _S: S };
 })();
 document.addEventListener("DOMContentLoaded", () => { if (typeof Admin === "undefined" || Admin._packTabWrapped) return; const original = Admin.tab; Admin.tab = function (t, btn) { const r = original.call(this, t, btn), el = document.getElementById("tab-pack"); if (el) el.classList.toggle("hidden", t !== "pack"); if (t === "pack") AdminPack.init("tab-pack"); return r; }; Admin._packTabWrapped = true; });
