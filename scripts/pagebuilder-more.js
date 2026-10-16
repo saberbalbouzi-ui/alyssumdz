@@ -340,6 +340,9 @@ const PBBrand = (() => {
     if (style === "round") { g.fillStyle = col(0); if (g.roundRect) { g.beginPath(); g.roundRect(20, 100, W - 40, 300, 60); g.fill(); } else g.fillRect(20, 100, W - 40, 300); g.fillStyle = ac; g.fillRect(W / 2 - 60, 330, 120, 8); g.fillStyle = col(2); g.font = "900 110px " + ff; g.fillText(name || "", W / 2, 230, W - 120); return c; }
     g.fillStyle = col(0); g.font = "900 130px " + ff; g.fillText(name || "", W / 2, 140, W - 60); g.fillStyle = ac; g.fillRect(W / 2 - 130, 250, 260, 10); return c;
   }
+  /* أيقونة بالذكاء (AI Icon Maker): رمز بسيط لواجهة أو متجر (ليس شعاراً)، بنمط محدّد وألوان الهوية، على خلفية بيضاء نظيفة */
+  const ICON_STYLES = [["flat", "مسطح ملوّن", "flat vector style with solid colors and no gradients"], ["line", "خطي", "clean monoline outline style with uniform stroke width"], ["3d", "ثلاثي الأبعاد ناعم", "soft 3D rendered style with gentle lighting and rounded forms"], ["gradient", "متدرّج عصري", "modern glossy style with smooth gradients"]];
+  const iconPrompt = (desc, style, kit) => { const st = (ICON_STYLES.find(x => x[0] === style) || ICON_STYLES[0])[2]; return "DESIGN A SINGLE APP/WEB ICON of: " + String(desc).trim() + ". Style: " + st + ". Use this brand palette: " + (kit && kit.colors ? kit.colors.slice(0, 3).join(", ") : "teal and gold") + ". Centered on a plain pure-white background with generous padding, simple recognizable silhouette that stays readable at 48px, one object only. No text, no letters, no watermark, no border, no shadow box. Output the icon image."; };
   const logoPrompt = (name, kind, kit, style) => "DESIGN A BRAND LOGO for a business named \"" + String(name).trim() + "\"" + (kind ? " (" + String(kind).trim() + ")" : "") + ". Style: " + style + ". Use mainly these brand colors: " + kit.colors.slice(0, 3).map(hex).join(", ") + ". Flat vector-style logo, centered on a plain solid white background, simple memorable shape, clean edges, high contrast, readable at small sizes. Include the business name as clean, correctly spelled text only if it is short. No mockups, no photos, no gradients on the background, no watermark. Output only the logo image.";
   function openLogo() {
     if (!A().E || !A().E.page) return; const old = $("pbx-logo"); if (old) old.remove(); const kit = load();
@@ -348,6 +351,7 @@ const PBBrand = (() => {
 <div class="rt-g"><label>اسم العلامة <input type="text" id="pblg-n" value="${esc(kit.name)}" style="width:100%" placeholder="اسم متجرك"></label><label>المجال (للذكاء) <input type="text" id="pblg-k" style="width:100%" placeholder="مثال: عسل طبيعي وأعشاب"></label></div>
 <div class="ep-n"><b>① شعار نصي مجاني</b></div><div class="pbrt-row">${LSTYLES.map(x => `<button type="button" class="pbx-small" data-lg="${x[0]}">${x[1]}</button>`).join("")}<label class="pbx-small"><input type="checkbox" id="pblg-d"> خلفية بلون العلامة</label></div>
 <div class="ep-n"><b>② شعار بالذكاء الاصطناعي (Alyssum API)</b></div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-lg="ai">✨ ولّد شعاراً</button></div>
+<div class="ep-n"><b>③ أيقونة بالذكاء (للواجهة أو المتجر — ليست شعاراً)</b></div><div class="rt-g"><label>ماذا تمثّل الأيقونة؟ <input type="text" id="pblg-id" style="width:100%" placeholder="مثال: عبوة عسل، سلة تسوق، شحن سريع"></label><label>النمط <select id="pblg-is" class="pbx-small">${ICON_STYLES.map(x => `<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label></div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-lg="icon">🧩 ولّد أيقونة</button></div>
 <div id="pblg-m" class="ep-n" style="min-height:1.3em"></div><div id="pblg-o" style="margin:.4rem 0;text-align:center;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/16px 16px;border-radius:8px;min-height:60px"></div>
 <div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-lg="save">✔ اعتمده شعاراً للعلامة</button><button type="button" class="pbx-small" data-lg="add">＋ أضفه للصفحة</button><button type="button" class="pbx-small" data-lg="close">إغلاق</button></div></div>`;
     document.body.appendChild(bg); const R = { cv: null }, m = t => { const e = $("pblg-m"); if (e) e.textContent = t; };
@@ -356,6 +360,11 @@ const PBBrand = (() => {
       if (e.target === bg) { bg.remove(); return; } const b = e.target.closest("[data-lg]"); if (!b) return; const k = b.dataset.lg, name = ($("pblg-n").value || "").trim();
       if (k === "close") { bg.remove(); return; }
       if (["badge", "round", "plain", "mono"].includes(k)) { if (!name) { m("اكتب اسم العلامة أولاً"); return; } kit.name = name; save(); await loadFont(kit.font); show(logoCanvas(name, kit, k, $("pblg-d").checked ? "dark" : "light")); m("✅ جاهز — اعتمده أو غيّر النمط"); }
+      else if (k === "icon") {
+        const desc = ($("pblg-id").value || "").trim(); if (!desc) { m("اكتب ماذا تمثّل الأيقونة"); return; } if (typeof ImgGen === "undefined" || !ImgGen.edit) { m("مولّد الصور غير متاح"); return; }
+        try { m("⏳ جارٍ توليد الأيقونة…"); const r = await ImgGen.edit({ textOnly: true, prompt: iconPrompt(desc, $("pblg-is").value, kit), W: 512, H: 512, title: "أيقونة بالذكاء" }); if (!r) { m(""); return; } show(r.canvas); m("✅ تمّت — راجع الأيقونة ثم أضفها للصفحة (الخلفية بيضاء؛ لإزالتها استعمل «نزع الخلفية»)"); }
+        catch (x) { m(x && x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : x && x.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : "⚠️ " + (x.message || x)); }
+      }
       else if (k === "ai") {
         if (!name) { m("اكتب اسم العلامة أولاً"); return; } if (typeof ImgGen === "undefined" || !ImgGen.edit) { m("مولّد الصور غير متاح"); return; }
         try { m("⏳ جارٍ التوليد…"); const r = await ImgGen.edit({ textOnly: true, prompt: logoPrompt(name, $("pblg-k").value, kit, "modern, professional and minimal"), W: 1024, H: 1024, title: "منشئ الشعار" }); if (!r) { m(""); return; } show(r.canvas); m("✅ تمّ — راجع الشعار ثم اعتمده"); }
@@ -367,5 +376,5 @@ const PBBrand = (() => {
       }
     });
   }
-  return { panel, mount, apply, openLogo, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS, logoCanvas, logoPrompt, LSTYLES } };
+  return { panel, mount, apply, openLogo, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS, logoCanvas, logoPrompt, LSTYLES, iconPrompt, ICON_STYLES } };
 })();

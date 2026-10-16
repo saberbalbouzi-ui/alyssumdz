@@ -55,7 +55,7 @@ jobs:
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts payments sms commerce sources ads adsoauth wallet agency appstore logistics digital-vault boundaries; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments sms commerce sources ads adsoauth wallet agency appstore logistics digital-vault boundaries; do node --no-warnings platform/api/test/$t.test.mjs; done
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
@@ -78,6 +78,10 @@ jobs:
       - run: NODE_PATH=$PWD/node_modules node scripts/test-digital-ui.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-kind.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-assets.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-vgen.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-pagerater.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-fashion.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-digital-checkout.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js

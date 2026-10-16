@@ -348,6 +348,47 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
     return { blob: await blobOf(cv, o.fmt === "png" ? "png" : "webp"), canvas: cv, model: out.model, cost: est };
   }
+  /* ───────── توليد فيديو بالذكاء من صورة (1–4) ووصف أو قالب — عبر خدمة فيديو خارجية بمفتاح الاتصال الثاني (fal) ─────────
+     نفس ضوابط التكلفة: تأكيد قبل التنفيذ، حدّ إنفاق، لا إعادة محاولة تلقائية. النموذج والسعر قابلان للضبط (alyssum_vg_model / alyssum_vg_price)
+     لأن مواصفات الخدمة لم تُثبَّت بعد؛ الطلب يمرّ بطابور الخدمة: إرسال ← استعلام الحالة ← جلب الفيديو. o = {images:[blob], prompt, ratio:"9:16|1:1|16:9|4:5", dur, confirm} ← {blob, type, cost} أو null */
+  const vcfg = { model: () => (LS.get("alyssum_vg_model", "") || "fal-ai/kling-video/v2.1/standard/image-to-video").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_vg_price", "0.5")) || 0.5, dur: () => Math.max(3, Math.min(10, Number(LS.get("alyssum_vg_dur", "5")) || 5)) };
+  const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = (LS.get(FALKEY, "") || "").trim(); return { ok: !!key && !off, off, nokey: !key, price: vcfg.price(), model: vcfg.model() }; };
+  function videoBody(o, urls) {
+    const body = { prompt: String(o.prompt || "").trim(), aspect_ratio: o.ratio || "9:16", duration: String(o.dur || vcfg.dur()) };
+    if (urls.length === 1) body.image_url = urls[0]; else if (urls.length > 1) { body.image_url = urls[0]; body.image_urls = urls; }
+    return body;
+  }
+  async function video(o) {
+    const st = videoReady();
+    if (st.off) { const e = new Error("OFF"); e.code = "OFF"; throw e; }
+    if (st.nokey) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
+    if (!o || !o.prompt || !String(o.prompt).trim()) throw new Error("اكتب وصف الفيديو أو اختر قالباً");
+    const imgs = (o.images || []).filter(Boolean).slice(0, 4); if (!imgs.length) throw new Error("حدّد صورة منتج واحدة على الأقل");
+    const est = vcfg.price(), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
+    if (cfg.budget() && left < est) throw new Error("بلغتَ حدّ الإنفاق (" + money(est) + " مطلوب) — ارفعه من إعدادات مولّد الصور");
+    if (o.confirm !== false && !confirm((o.title || "توليد فيديو بالذكاء") + " بتكلفة تقريبية " + money(est) + "\nالنسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق. متابعة؟")) return null;
+    const key = LS.get(FALKEY, "").trim(), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
+    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
+    say("إرسال الطلب إلى خدمة الفيديو…");
+    const r = await fetch("https://queue.fal.run/" + m, { method: "POST", headers: H, body: JSON.stringify(videoBody(o, urls)) }), j = await r.json().catch(() => ({}));
+    if (!r.ok) { const d = j.detail; throw new Error("Alyssum API (فيديو) " + r.status + ": " + (typeof d === "string" ? d : Array.isArray(d) && d[0] ? (d[0].msg || JSON.stringify(d[0])) : (j.message || "خطأ")) + (r.status === 401 || r.status === 403 ? " — تحقق من المفتاح" : "")); }
+    const sUrl = j.status_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id + "/status"), rUrl = j.response_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id);
+    if (!j.request_id && !j.status_url && !j.video) throw new Error("لم تُرجع الخدمة رقم طلب — لم تُحتسب تكلفة غالباً.");
+    let res = j.video ? j : null; const t0 = Date.now(), gap = o.pollMs == null ? 4000 : o.pollMs, max = o.maxMs || 8 * 60 * 1000;
+    while (!res) {
+      if (Date.now() - t0 > max) throw new Error("استغرق التوليد أكثر من المتوقع — راجع حسابك لاحقاً قبل إعادة المحاولة كي لا تتكرر التكلفة.");
+      if (gap) await new Promise(x => setTimeout(x, gap));
+      const sr = await fetch(sUrl, { headers: H }), sj = await sr.json().catch(() => ({}));
+      if (!sr.ok) throw new Error("تعذّر قراءة حالة الفيديو (" + sr.status + ")");
+      const stt = String(sj.status || "").toUpperCase(); say(stt === "IN_QUEUE" ? "في الطابور" + (sj.queue_position != null ? " (" + sj.queue_position + ")" : "") + "…" : "جارٍ التوليد…");
+      if (stt === "COMPLETED") { const rr = await fetch(rUrl, { headers: H }), rj = await rr.json().catch(() => ({})); if (!rr.ok) throw new Error("تعذّر جلب نتيجة الفيديو (" + rr.status + ")"); res = rj; }
+      else if (stt === "FAILED" || stt === "ERROR" || sj.error) throw new Error("فشل التوليد: " + (sj.error || sj.detail || "رفضت الخدمة الطلب") + " — لم تُحتسب تكلفة غالباً.");
+    }
+    const u = ((res.video || (res.data && res.data.video) || {}).url); if (!u) throw new Error("لم تُرجع الخدمة فيديو — لم تُحتسب تكلفة غالباً.");
+    const vr = await fetch(u); if (!vr.ok) throw new Error("تعذّر تنزيل الفيديو الناتج"); const blob = await vr.blob();
+    LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1));
+    return { blob, type: blob.type || "video/mp4", cost: est, model: "fal:" + m };
+  }
   async function toLibrary(quiet) {
     if (!S.res) return null; const blob = await blobOf(S.res, fmtNow());
     try {
@@ -536,7 +577,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) LS.set(FALKEY, k.trim()); toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) LS.set(KEY, k); toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

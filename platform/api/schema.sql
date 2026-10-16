@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS ab_stats (exp_id INTEGER NOT NULL, vkey TEXT NOT NULL
 CREATE TABLE IF NOT EXISTS ab_seen (exp_id INTEGER NOT NULL, visitor_h TEXT NOT NULL, kind TEXT NOT NULL, PRIMARY KEY (exp_id, visitor_h, kind));
 -- وحدة الذكاء: حصة يومية لكل مستأجر
 CREATE TABLE IF NOT EXISTS ai_usage (tenant_id INTEGER NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, day));
+/* حصة التجربة الافتراضية للزبائن (عدّاد فقط — لا تُخزَّن الصور) */
+CREATE TABLE IF NOT EXISTS tr_usage (tenant_id INTEGER NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, day));
 -- وحدة السلال المتروكة: رقم الزبون مشفّر (يُعرض للتاجر فقط) + بصمة للمطابقة؛ تُمحى بعد 30 يوماً
 CREATE TABLE IF NOT EXISTS cr_carts (
   id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, phone_h TEXT NOT NULL, phone_enc TEXT NOT NULL,
