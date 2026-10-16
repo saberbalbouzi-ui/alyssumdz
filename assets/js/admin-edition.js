@@ -1,18 +1,18 @@
 /* نسخ لوحة الإدارة الثلاث (تُختار من «إعدادات الموقع ← نسخة لوحة الإدارة» وتُحفظ في store.json: edition):
    • pro  — «إيكومرس برو»: اللوحة الحالية كاملة بكل أقسامها.
-   • basic — «إيكومرس بازيك»: كل شيء ما عدا «ستوديو ديزاين».
+   • basic — «إيكومرس بازيك»: كل شيء ما عدا «ستوديو ديزاين» (ومولّد الصور الذي صار جزءاً منه).
    • design — «إنفوغراف ديزاين»: مطوّر الصفحات و«ستوديو ديزاين» فقط (يُخفى المتجر وكل إضافاته: الطلبات والمنتجات والشحن والمالية والعملاء… والإضافات الخاصة به)، مع بقاء ما يلزم لإدارة الحساب (إعدادات الموقع لتغيير النسخة، مظهر اللوحة، الفريق والأمان).
    الإخفاء بالأنماط على أزرار القائمة + حارس على Admin.tab فلا يُفتح قسم محجوب برمجياً أو بالبحث أو بالصوت. */
 const AdminEdition = (() => {
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const EDS = [
     ["pro", "إيكومرس برو", "اللوحة الكاملة بكل الأقسام: المتجر والطلبات والشحن والمالية والتسويق والأدوات وستوديو ديزاين."],
-    ["basic", "إيكومرس بازيك", "كل أقسام المتجر والأدوات ما عدا «ستوديو ديزاين»."],
+    ["basic", "إيكومرس بازيك", "كل أقسام المتجر والأدوات ما عدا «ستوديو ديزاين» ومولّد الصور (جزء منه)."],
     ["design", "إنفوغراف ديزاين", "مطوّر الصفحات و«ستوديو ديزاين» فقط للمصممين: بلا متجر ولا طلبات ولا شحن ولا إضافاته."]
   ];
   /* الأقسام المسموحة في نسخة المصمّم (Admin.tab) — الباقي محجوب. أقسام العمل الخفية لأدوات الصور تبقى لأن المطوّر يفتحها (دفعات/كتالوج) */
   const KEEP_DESIGN = ["builder", "studio", "store", "admtheme", "team", "imgtools", "imggen", "appcfg", "agent"];
-  const BASIC_HIDE = ["studio"];
+  const BASIC_HIDE = ["studio", "imggen"];      // مولّد الصور جزء من «ستوديو ديزاين»
   const D = () => (typeof AdminStores !== "undefined" && AdminStores.data && AdminStores.data()) || {};
   const owner = () => { try { const m = AdminRoles.state && AdminRoles.state.me; return !m || m.owner !== false; } catch (e) { return true; } };
   const edition = () => { const e = D().edition; return EDS.some(x => x[0] === e) ? e : "pro"; };
@@ -22,7 +22,7 @@ const AdminEdition = (() => {
   function keepBtn(ed, onclick) {
     const t = /Admin\.tab\('([a-z0-9]+)'/.exec(onclick || ""), a = /AdminNav\.app\('([a-z0-9]+)'/.exec(onclick || "");
     if (ed === "pro") return true;
-    if (ed === "basic") return !(t && BASIC_HIDE.includes(t[1]));
+    if (ed === "basic") return !((t && BASIC_HIDE.includes(t[1])) || (a && BASIC_HIDE.includes(a[1])));
     if (t) return KEEP_DESIGN.includes(t[1]) && !["imgtools", "imggen", "appcfg", "agent"].includes(t[1]);
     if (a) return a[1] === "builder";
     return false;
@@ -59,7 +59,7 @@ const AdminEdition = (() => {
   /* اختيار فوري: يُحفظ في إعدادات الموقع ويسري على اللوحة حالاً */
   function set(v) {
     if (!EDS.some(x => x[0] === v)) return; const S = typeof AdminStores !== "undefined" ? AdminStores : null; if (!S || !S.patch) return;
-    Promise.resolve(S.patch({ edition: v })).then(() => { apply(); try { toast("تم تفعيل نسخة «" + EDS.find(x => x[0] === v)[1] + "»"); } catch (e) { } if (v === "design") land(); }).catch(() => { apply(); });
+    Promise.resolve(S.patch({ edition: v })).then(() => { apply(); try { if (document.getElementById("rl") && typeof AdminRoles !== "undefined") AdminRoles.render(); } catch (e) { } try { toast("تم تفعيل نسخة «" + EDS.find(x => x[0] === v)[1] + "»"); } catch (e) { } if (v === "design") land(); }).catch(() => { apply(); });
     apply();
   }
   const picked = () => { const r = document.querySelector('input[name="stp-edition"]:checked'); return r ? r.value : null; };

@@ -25,7 +25,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   /* بازيك */
   await T(() => { window.__d = { edition: "basic" }; AdminEdition.apply(); });
   const bas = await T(() => ({ hid: [...document.querySelectorAll(".side-nav .nav-btn.ed-x")].map(b => (/Admin\.tab\('([a-z0-9]+)'/.exec(b.getAttribute("onclick") || "") || [0, "?"])[1]), cls: document.documentElement.classList.contains("ed-basic"), groups: getComputedStyle(document.getElementById("nav-groups")).display }));
-  ok("بازيك: يخفي ستوديو ديزاين وحده", bas.cls && bas.hid.join() === "studio", bas);
+  ok("بازيك: يخفي ستوديو ديزاين ومولّد الصور", bas.cls && bas.hid.includes("studio") && bas.hid.includes("imggen") && bas.hid.length === 3, bas);
   ok("بازيك: الحارس يرفض studio ويفتح الرئيسية", await T(() => { __tabs.length = 0; Admin.tab("studio"); const a = __tabs.join(); __tabs.length = 0; Admin.tab("orders"); return a === "home" && __tabs.join() === "orders" && /غير متاح/.test(__toast); }));
   /* ديزاين */
   await T(() => { window.__d = { edition: "design" }; AdminEdition.apply(); });
