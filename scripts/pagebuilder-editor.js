@@ -1422,6 +1422,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const inf = epInf(); if (!inf || !inf.set.src) { toast("حدّد صورة في الصفحة أولاً"); return; }
     if (k === "erase") { if (typeof PBSmart === "undefined") { toast("الممحاة غير متاحة"); return; } return PBSmart.eraser(inf); }
     if (k === "xp" || k === "ai" || k === "sl") { imgPick(k); return; }
+    if (k === "scene" && typeof PBAI !== "undefined" && PBAI.stage) { PBAI.stage(); imgPick("ps"); setTimeout(() => { const b = document.querySelector('#pbai [data-ai="pshoot"]'); if (b) b.click(); }, 400); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.quick) { toast("مولّد الصور غير متاح"); return; }
     try {
       const blob = await (await fetch(localize(String(inf.set.src)))).blob(), im = await createImageBitmap(blob), s = Math.min(1, 1600 / Math.max(im.width, im.height)), W = Math.round(im.width * s), H = Math.round(im.height * s);
