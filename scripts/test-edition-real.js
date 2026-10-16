@@ -60,6 +60,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => document.querySelector('input[name="stp-edition"][value="basic"]').click()); await p.waitForTimeout(1200);
   const bs = await vis(); console.log("basic:", JSON.stringify(bs).slice(0, 300));
   ok("basic: لا studio", !bs.nav.some(x => x.includes("'studio'") || x.includes("'imggen'")) && bs.groups === true);
+  await p.evaluate(() => Admin.tab("builder", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'builder'")))); await p.waitForTimeout(1200);
+  ok("basic: بطاقة اختيار (صفحة ويب/صور إشهارية) مخفية في الصفحات", await p.evaluate(() => { const m = document.getElementById("pb-modes"); return !m || m.offsetParent === null || getComputedStyle(m.parentElement).display === "none"; }));
+  await p.evaluate(() => PBAdmin.newPage({ title: "اختبار" })); await p.waitForSelector("#pbx-frame, .pbx-tabs", { timeout: 15000 }); await p.waitForTimeout(1500);
+  const bt = await p.evaluate(() => { const v = e => !!e && e.offsetParent !== null; const q = t => document.querySelector('.pbx-tabs button[data-lt="' + t + '"]'); return { add: v(q("add")), img: v(q("img")), stk: v(q("stk")), ast: v(q("ast")), pub: v(q("pub")), lay: v(q("lay")) }; });
+  ok("basic: المطوّر بلا تعديل الصورة والملصقات والمكتبة والنشر", bt.add && bt.lay && !bt.img && !bt.stk && !bt.ast && !bt.pub, bt);
+  await p.evaluate(() => { try { PBApp.ltoggle("img"); } catch (e) { } }); await p.waitForTimeout(300);
+  ok("basic: فتح تعديل الصورة برمجياً مرفوض", await p.evaluate(() => !document.querySelector('.pbx-tabs button[data-lt="img"].on') && !document.getElementById("pbx-ep")));
+  await p.evaluate(() => { try { PBApp.close(); } catch (e) { } }); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll("dialog,.modal-bg").forEach(x => x.remove()); });
+  await p.evaluate(() => Admin.tab("store", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'store'")))); await p.waitForTimeout(1000);
   await p.evaluate(() => document.querySelector('input[name="stp-edition"][value="pro"]').click()); await p.waitForTimeout(1200);
   const r = await vis(); ok("pro: كل شيء", r.cls.length === 0 && r.groups === true);
   ok("لا أخطاء JS", errs.length === 0, errs);

@@ -460,7 +460,9 @@ body{overflow-x:hidden;margin:0}`;
   const DEVIC = { d: ico("dev_d", 16), t: ico("dev_t", 16), m: ico("dev_m", 16) };
   /* ───────────────── اللوحة اليسرى ───────────────── */
   function ltab(t) { const pv = E.ltab; E.ltab = t === "tpl" ? "def" : t; if (pv === "img" && E.ltab !== "img" && $("pbx-ep")) epClose(); renderLeft(); }
-  function ltoggle(t) { if (t === "tpl") t = "def"; const pv = E.ltab; E.ltab = E.ltab === t ? "" : t; if (pv === "img" && E.ltab !== "img" && $("pbx-ep")) epClose(); renderLeft(); }
+  /* نسخة «إيكومرس بازيك»: أدوات ستوديو ديزاين (تعديل الصورة، الملصقات، المكتبة، النشر على المنصات، التصميم بمقاس) غير متاحة في المطوّر */
+  const EDB = () => typeof AdminEdition !== "undefined" && AdminEdition.edition() === "basic";
+  function ltoggle(t) { if (t === "tpl") t = "def"; if (EDB() && ["img", "stk", "ast", "pub"].includes(t)) { try { toast("هذه الأداة تابعة لـ«ستوديو ديزاين» وغير متاحة في نسخة إيكومرس بازيك"); } catch (e) { } return; } const pv = E.ltab; E.ltab = E.ltab === t ? "" : t; if (pv === "img" && E.ltab !== "img" && $("pbx-ep")) epClose(); renderLeft(); }
   const AD_OK = ["heading", "text", "image", "button", "shape", "iconbox", "bullets", "counter", "social", "divider"];      // عناصر لوحة الصور الإشهارية (بلا عناصر الويب)
   function renderLeft() {
     const pane = $("pbx-lpane"); if (!pane) return;
@@ -864,11 +866,11 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
       img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)],
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
-      img && canvas ? "-" : null, img && canvas ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null,
-      typeof PBMask !== "undefined" && canvas && PBMask.can(inf) ? "-" : null,
-      typeof PBMask !== "undefined" && canvas && PBMask.can(inf) ? [ico("mask", 16), img ? "ماسك: احذف العنصر الذي فوقها منها" : "ماسك: احذف هذا العنصر من الصورة التي تحته", () => PBMask.quick(inf, false)] : null,
-      typeof PBMask !== "undefined" && canvas && PBMask.can(inf) ? [ico("mask", 16), img ? "ماسك معكوس: أبقِ الصورة داخل العنصر الذي فوقها" : "ماسك معكوس: أبقِ الصورة داخل هذا العنصر", () => PBMask.quick(inf, true)] : null,
-      img && inf.set.clip ? [ico("x", 16), "إلغاء الماسك (الصورة كاملة)", () => PBMask.act("reset", inf)] : null].filter(Boolean);
+      img && canvas && !EDB() ? "-" : null, img && canvas && !EDB() ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null,
+      typeof PBMask !== "undefined" && canvas && !EDB() && PBMask.can(inf) ? "-" : null,
+      typeof PBMask !== "undefined" && canvas && !EDB() && PBMask.can(inf) ? [ico("mask", 16), img ? "ماسك: احذف العنصر الذي فوقها منها" : "ماسك: احذف هذا العنصر من الصورة التي تحته", () => PBMask.quick(inf, false)] : null,
+      typeof PBMask !== "undefined" && canvas && !EDB() && PBMask.can(inf) ? [ico("mask", 16), img ? "ماسك معكوس: أبقِ الصورة داخل العنصر الذي فوقها" : "ماسك معكوس: أبقِ الصورة داخل هذا العنصر", () => PBMask.quick(inf, true)] : null,
+      img && inf.set.clip && !EDB() ? [ico("x", 16), "إلغاء الماسك (الصورة كاملة)", () => PBMask.act("reset", inf)] : null].filter(Boolean);
     showMenu(items, x, y, anchor);
   }
   /* يعرض قائمة عائمة من عناصر [أيقونة، نص، دالة، اختصار، خطر، قائمة فرعية، معطّل] */
@@ -1336,7 +1338,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBBrand.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); PBVGen.reset(); PBVAd.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
-  function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
+  function epToggle() { if (EDB()) return; if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
   function epOpen() {
     if ($("pbx-ep")) return; if (!epInf()) return; closePop(); closePageImages();
     const p = document.createElement("div"); p.id = "pbx-ep"; p.className = "pbx-pop pbx-ep"; p.dir = "rtl"; document.body.appendChild(p);
@@ -3095,6 +3097,7 @@ ${this.quickImg(this.q.cover)}
   },
   openGen() { const b = document.getElementById("nav-pbgen"); if (b) b.click(); },
   mode(m) {
+    if (m === "ad" && typeof AdminEdition !== "undefined" && AdminEdition.edition() === "basic") m = "web";
     if (m !== "ad") m = "web"; try { localStorage.setItem("alyssum_pb_mode", m); } catch (e) { }
     document.querySelectorAll("#pb-modes [data-pbm]").forEach(b => b.classList.toggle("on", b.dataset.pbm === m));
     document.getElementById("pb-web").classList.toggle("hidden", m === "ad"); document.getElementById("pb-ad").classList.toggle("hidden", m !== "ad");
@@ -3156,7 +3159,7 @@ ${this.quickImg(this.q.cover)}
       if (mode === "web") { close(); PBAdmin.mkPage(t); return; }
       const w = Math.round(+$("np-w").value), h = Math.round(+$("np-h").value); if (!(w >= 50 && w <= 6000 && h >= 50 && h <= 6000)) { toast("المقاس بين 50 و6000 بكسل"); return; }
       if (typeof ImgGen === "undefined" || !ImgGen.openSized) { toast("أداة التصاميم غير متاحة"); return; }
-      const o = $("np-sel").selectedOptions[0]; close(); ImgGen.openSized({ W: w, H: h, id: o ? o.value : "custom", label: o && o.value !== "custom" ? o.textContent : "مخصّص " + w + "×" + h, name: t, textMode: "none", lang: "ar" });
+      const o = $("np-sel").selectedOptions[0]; close(); if (typeof AdminEdition !== "undefined" && AdminEdition.edition() === "basic") return; ImgGen.openSized({ W: w, H: h, id: o ? o.value : "custom", label: o && o.value !== "custom" ? o.textContent : "مخصّص " + w + "×" + h, name: t, textMode: "none", lang: "ar" });
     };
     bg.addEventListener("click", e => { if (e.target === bg) return close(); const b = e.target.closest("[data-np]"); if (!b) return; const a = b.dataset.np; if (a === "x") close(); else if (a === "go") go(); else setMode(a); });
     bg.addEventListener("keydown", e => { if (e.key === "Escape") close(); else if (e.key === "Enter" && e.target.id === "np-name") go(); });
