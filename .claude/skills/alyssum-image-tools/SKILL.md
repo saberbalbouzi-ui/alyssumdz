@@ -61,3 +61,7 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 - **تقييم صفحة المنتج:** `assets/js/admin-pagerater.js` (`PageRater.score` نقية)؛ يقيس أبعاد الصور فقط ولا يحكم على الإضاءة/الحدّة؛ اتساق العلامة لمنتجات المتجر فقط.
 - **استوديو الأزياء:** هيئة العارض + عارضون محفوظون (`alyssum_fa_models`) + إطلالة بعدة قطع؛ قاعدة الاحتشام ثابتة (امرأة بخمار، وجه ويدان فقط). المشهد الذكي = `PBAI.stage()` يخرج خيارين.
 - **أيقونة بالذكاء** في منشئ الشعار (`iconPrompt`). **«جرّب عليك» للزبائن:** `tryon-shopper.js` + وحدة المنصة `tryon.js` (الصور لا تُخزَّن؛ حصة يومية؛ تفعيل بمفتاح عام `tryon:render`).
+
+
+## Alyssum 3D Pack Studio و Box Designer (v1.89.293–294)
+- `assets/js/pack3d.js` (three.js محلي في `assets/js/vendor/`) و`assets/js/box-designer.js`؛ أداتان في «ستوديو ديزاين» (`pack3d`، `boxdesigner`). اختبار WebGL بـSwiftShader: `node scripts/test-pack3d.js` و`test-boxdesigner.js`. التفاصيل والحدود في CLAUDE.md. أي نوع علبة جديد: هندسة في `geom` وطيّ في `buildFold`.

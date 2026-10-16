@@ -214,6 +214,19 @@
         "fr": "Appliquez votre étiquette sur un packaging 3D et exportez des visuels pro",
         "en": "Apply your label to a 3D pack and export pro visuals"
       }
+    },
+    "boxdesigner": {
+      "icon": "17-box-designer",
+      "t": {
+        "ar": "Alyssum Box Designer",
+        "fr": "Alyssum Box Designer",
+        "en": "Alyssum Box Designer"
+      },
+      "d": {
+        "ar": "قالب طباعة العلبة بخطوط القص والثني والنزف من هوية الملصق",
+        "fr": "Gabarit d'impression de la boîte (coupe, pli, fond perdu) depuis votre étiquette",
+        "en": "Print-ready box dieline (cut, fold, bleed) from your label identity"
+      }
     }
   }
 }
