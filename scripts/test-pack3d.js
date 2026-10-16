@@ -50,6 +50,26 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   /* صورة العبوة الأصلية تلتقط الألوان */
   const col = await p.evaluate(async () => { const c = document.createElement("canvas"); c.width = 100; c.height = 200; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 100, 200); x.fillStyle = "#1e8449"; x.fillRect(30, 60, 40, 130); x.fillStyle = "#222"; x.fillRect(35, 20, 30, 40); return Pack3D._t.pickColors ? JSON.stringify(Pack3D._t.pickColors(c)) : "na"; });
   ok("pickColors يعيد ألواناً", /#[0-9a-f]{6}/i.test(col), col);
+  /* ═══ قارورة من صورة 2D + إرسال الزوايا إلى ستوديو ديزاين ═══ */
+  const bottleImg = (bg) => p.evaluate(bgc => { const c = document.createElement("canvas"); c.width = 400; c.height = 800; const x = c.getContext("2d"); if (bgc) { x.fillStyle = bgc; x.fillRect(0, 0, 400, 800); }
+    x.fillStyle = "#6b3e1a"; x.beginPath(); x.moveTo(170, 60); x.lineTo(230, 60); x.lineTo(230, 120); x.lineTo(228, 170); x.bezierCurveTo(300, 210, 320, 260, 320, 330); x.lineTo(320, 700); x.quadraticCurveTo(320, 760, 260, 760); x.lineTo(140, 760); x.quadraticCurveTo(80, 760, 80, 700); x.lineTo(80, 330); x.bezierCurveTo(80, 260, 100, 210, 172, 170); x.lineTo(170, 120); x.closePath(); x.fill();
+    x.fillStyle = "#222"; x.fillRect(165, 20, 70, 50); x.fillStyle = "#f5e6c8"; x.fillRect(80, 360, 240, 220); x.fillStyle = "#c0392b"; x.font = "bold 40px sans-serif"; x.fillText("OLD", 150, 480); return c.toDataURL("image/png"); }, bg);
+  for (const bg of [null, "#ffffff"]) {
+    const u = await bottleImg(bg);
+    const r = await p.evaluate(async u => { const im = new Image(); im.src = u; await im.decode(); try { Pack3D._t.setPhotoFromImage(im); return "ok"; } catch (e) { return e.message; } }, u);
+    ok("قارورة من صورة (" + (bg || "شفافة") + ")", r === "ok", r);
+  }
+  await p.evaluate(() => { const c = document.createElement("canvas"); c.width = 600; c.height = 400; const x = c.getContext("2d"); x.fillStyle = "#c0392b"; x.fillRect(0, 0, 600, 400); x.fillStyle = "#fff"; x.font = "bold 120px sans-serif"; x.fillText("NEW", 150, 230); Pack3D._t.setArt(c.toDataURL("image/png")); });
+  await p.evaluate(() => { const b = document.querySelector('[data-type="photo"]'); if (b) b.click(); }); await wait(1200);
+  ok("نوع photo مفعّل", await p.evaluate(() => Pack3D.S.type === "photo"));
+  ok("القارورة المحوّلة مرسومة", (await stat()) > 12);
+  if (shots) await p.screenshot({ path: path.join(shots, "photo.png") });
+  await p.evaluate(() => { const e = document.querySelector('[data-k="yaw"]'); e.value = 90; e.dispatchEvent(new Event("input", { bubbles: true })); }); await wait(400);
+  if (shots) await p.screenshot({ path: path.join(shots, "photo-side.png") });
+  /* إرسال إلى ستوديو ديزاين (محاكاة المطوّر) */
+  const sent = await p.evaluate(async () => { window.__up = []; window.__add = []; window.ImgGen = { openSized: async () => { window.PBApp.E = { page: {} }; } }; window.PBApp = { E: null, uploadBlob: async (b, n) => { window.__up.push([n, b.size, b.type]); return "assets/img/pages/" + n + ".png"; }, addPageImage: p => window.__add.push(p) }; await Pack3D._t.sendToStudio(); return { up: window.__up, add: window.__add }; });
+  ok("4 زوايا رُفعت إلى ستوديو ديزاين", sent.up.length === 4 && sent.up.every(u => u[1] > 3000 && u[2] === "image/png"), sent);
+  ok("الصورة الأمامية أُضيفت للصفحة", sent.add.length === 1, sent.add);
   ok("لا أخطاء صفحة", errs.length === 0, errs);
   await browser.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });
