@@ -160,6 +160,48 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("نزع الخلفية: متجانسة ← محلي (classic) بلا أي طلب ذكاء", bgk.m1 === "classic" && bgk.c1 === 0, bgk);
   ok("نزع الخلفية: معقدة + مفتاح ← طريقة key بطلب ذكاء واحد، والخلفية شفافة والمنتج معتم", bgk.m2 === "key" && bgk.c2 === 1 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
   ok("نزع الخلفية: بلا allowKey (دفعات/استوديو) لا يُستدعى الذكاء المدفوع", bgk.c3 === 1, bgk);
+  /* ── أدوات على نمط Photoroom: إضاءة، إزالة نص، استعادة، محسّن + درجة الجودة + ثقة نزع الخلفية ── */
+  const fxp = await T(() => { const F = PBAI._t; return { rl: F.fxPrompt("rl", { light: "golden", str: "high" }, ""), tr1: F.fxPrompt("tr", { what: "wm", keep: "1" }, ""), tr0: F.fxPrompt("tr", { what: "all", keep: "0" }, ""), uc: F.fxPrompt("uc", { what: "top" }, "امتداد"), bf: F.fxPrompt("bf", { kind: "food", str: "low" }, "") }; });
+  ok("إعادة الإضاءة: تعليمات الإضاءة والقوة مع حفظ المنتج", /RELIGHT/.test(fxp.rl) && /golden-hour/.test(fxp.rl) && /strong/.test(fxp.rl) && /EXACTLY the same/.test(fxp.rl), fxp.rl);
+  ok("إزالة النص: تحفظ النص المطبوع على المنتج افتراضياً وتزيله عند الطلب", /Do NOT touch the text/.test(fxp.tr1) && /watermark/.test(fxp.tr1) && !/Do NOT touch/.test(fxp.tr0) && /printed on the product surface/.test(fxp.tr0), [fxp.tr1, fxp.tr0]);
+  ok("استعادة المقطوع والمحسّن: تعليمات صحيحة وتحمل التوجيه الإضافي", /UNCROP/.test(fxp.uc) && /top edge/.test(fxp.uc) && /امتداد/.test(fxp.uc) && /food photo/.test(fxp.bf) && /subtle/.test(fxp.bf));
+  const qs = await T(() => {
+    const mkc = (w, h, f) => { const c = document.createElement("canvas"); c.width = w; c.height = h; f(c.getContext("2d"), w, h); return c; };
+    const sharp = mkc(1200, 1200, (g, w, h) => { for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) { g.fillStyle = ((x + y) / 4) % 2 ? "#505050" : "#b4b4b4"; g.fillRect(x, y, 4, 4); } });
+    const soft = mkc(1200, 1200, g => { const gr = g.createLinearGradient(0, 0, 1200, 0); gr.addColorStop(0, "#777"); gr.addColorStop(1, "#999"); g.fillStyle = gr; g.fillRect(0, 0, 1200, 1200); });
+    const dark = mkc(1200, 1200, (g, w, h) => { for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) { g.fillStyle = ((x + y) / 4) % 2 ? "#020202" : "#101010"; g.fillRect(x, y, 4, 4); } });
+    const small = mkc(200, 200, (g, w, h) => { for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) { g.fillStyle = ((x + y) / 4) % 2 ? "#505050" : "#b4b4b4"; g.fillRect(x, y, 4, 4); } });
+    const q = c => PBAI.qa(c); return { sharp: q(sharp), soft: q(soft), dark: q(dark), small: q(small), empty: q(mkc(50, 50, () => { })) };
+  });
+  ok("درجة الجودة: الحادة أعلى من الباهتة، وتُعلَّم المعتمة والمنخفضة الدقة", qs.sharp.score >= 85 && qs.sharp.score > qs.soft.score + 20 && qs.soft.notes.includes("الصورة غير حادة") && qs.dark.notes.includes("معتمة") && qs.small.notes.includes("دقة منخفضة") && qs.empty.score === 0, qs);
+  const cf = await T(() => {
+    const mkc = (w, h, f) => { const c = document.createElement("canvas"); c.width = w; c.height = h; f(c.getContext("2d")); return c; };
+    const clean = mkc(300, 300, g => { g.fillStyle = "#c33"; g.beginPath(); g.arc(150, 150, 100, 0, 7); g.fill(); });
+    const fuzzy = mkc(300, 300, g => { const gr = g.createRadialGradient(150, 150, 5, 150, 150, 110); gr.addColorStop(0, "rgba(200,50,50,1)"); gr.addColorStop(1, "rgba(200,50,50,0)"); g.fillStyle = gr; g.fillRect(0, 0, 300, 300); });
+    const full = mkc(300, 300, g => { g.fillStyle = "#369"; g.fillRect(0, 0, 300, 300); });
+    const blank = mkc(300, 300, () => { });
+    const frag = mkc(300, 300, g => { g.fillStyle = "#333"; for (let i = 0; i < 8; i++) g.fillRect(10 + (i % 4) * 70, 20 + Math.floor(i / 4) * 120, 40, 60); });
+    const c = x => PBBgRemove.confidence(x); return { clean: c(clean), fuzzy: c(fuzzy), full: c(full), blank: c(blank), frag: c(frag) };
+  });
+  ok("ثقة نزع الخلفية: القص النظيف عالٍ، والحواف الضبابية والصورة غير المقصوصة والقطع المتفرقة أقل، والفارغ صفر", cf.clean.score >= .85 && cf.fuzzy.score < cf.clean.score - .2 && cf.full.score < .6 && cf.frag.score < cf.clean.score && cf.blank.score === 0, cf);
+  const fl = await T(async () => {
+    const host = document.getElementById("host"); const node = { id: "w9", set: { src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8BQz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC" } }; window.__node = node; window.__live = null;
+    const inf = { node, set: node.set }; const calls = []; let mode = "flat";
+    window.ImgGen = { ready: () => ({ ok: true }), edit: async o => { calls.push(o); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d"); if (mode === "flat") { g.fillStyle = "#888"; g.fillRect(0, 0, o.W, o.H); } else { for (let y = 0; y < o.H; y += 2) for (let x = 0; x < o.W; x += 2) { g.fillStyle = ((x + y) / 2) % 2 ? "#505050" : "#b4b4b4"; g.fillRect(x, y, 2, 2); } } return { canvas: c, blob: null, model: "m" }; } };
+    const out = {}; const wait = ms => new Promise(r => setTimeout(r, ms));
+    host.innerHTML = PBAI.panel("rl"); PBAI.mount(host, inf, "rl"); out.hasSel = !!document.getElementById("pbai-fx-light") && !!document.getElementById("pbai-fxr");
+    document.getElementById("pbai-fx-light").value = "window"; document.getElementById("pbai-fxr").value = "2"; document.getElementById("pbai-fxr").dispatchEvent(new Event("change", { bubbles: true }));
+    document.querySelector('[data-ai="fx"]').click(); await wait(900); out.flatCalls = calls.length; out.lightPrompt = /natural window daylight/.test(calls[0].prompt); out.live = !!(window.__live && window.__live.cv); out.note = document.getElementById("pbai-res").textContent;
+    calls.length = 0; mode = "sharp"; window.__live = null; host.innerHTML = PBAI.panel("tr"); PBAI.mount(host, inf, "tr"); document.getElementById("pbai-fxr").value = "2"; document.getElementById("pbai-fxr").dispatchEvent(new Event("change", { bubbles: true })); document.querySelector('[data-ai="fx"]').click(); await wait(900); out.sharpCalls = calls.length; out.trPrompt = /REMOVE TEXT AND MARKS/.test(calls[0].prompt);
+    window.__live.h.apply(); await wait(500); out.applied = /^assets\/img\/pages\/ai-/.test(node.set.src);
+    window.__node.set.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8BQz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC"; window.__live = null; calls.length = 0; host.innerHTML = PBAI.panel("bf"); PBAI.mount(host, inf, "bf"); out.bflBtn = !!document.querySelector('[data-ai="bfl"]'); document.querySelector('[data-ai="bfl"]').click(); await wait(900); out.bflCalls = calls.length; out.bflLive = !!(window.__live && window.__live.cv);
+    window.ImgGen = { ready: () => ({ ok: false, nokey: true }), edit: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }; host.innerHTML = PBAI.panel("uc"); PBAI.mount(host, inf, "uc"); out.warn = /تحتاج تفعيل Alyssum API/.test(host.textContent); document.querySelector('[data-ai="fx"]').click(); await wait(500); out.nokey = document.getElementById("pbai-msg").textContent;
+    return out;
+  });
+  ok("أدوات فوتوروم: اللوحة تعرض خياراتها وتعيد المحاولة حتى 3 مرات حين تقصر الجودة عن الحد", fl.hasSel && fl.lightPrompt && fl.flatCalls === 3 && fl.live && /جودة تقديرية/.test(fl.note), fl);
+  ok("أدوات فوتوروم: نتيجة حادة تتوقف عند أول محاولة ويُطبَّق الناتج على الصورة", fl.sharpCalls === 1 && fl.trPrompt && fl.applied, fl);
+  ok("محسّن المنتج: التحسين السريع المجاني بلا أي طلب ذكاء ويعرض النتيجة", fl.bflBtn && fl.bflCalls === 0 && fl.bflLive, fl);
+  ok("أدوات فوتوروم: غياب المفتاح يُنبَّه إليه بوضوح", fl.warn && /مفتاح Alyssum API/.test(fl.nokey), fl);
   ok("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `\n✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);
 })();

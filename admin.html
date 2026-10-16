@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.296">
+<meta name="admin-version" content="1.89.297">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1100,6 +1100,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <div class="hint">أدوات سريعة تعمل في متصفحك بلا اشتراك ولا مفتاح: اختر صورة ثم انزع خلفيتها بالذكاء المحلي أو اضغطها وحوّلها إلى WebP. وبقية الأدوات المتقدمة (التقاط العناصر، الماسك، البازل، الممحاة) داخل مطوّر الصفحات: حدّد صورة ثم زر «تعديل».</div>
       <div class="action-bar" style="margin-top:.6rem"><label class="small gold" style="cursor:pointer;display:inline-flex;align-items:center;gap:.4rem">اختيار صورة<input type="file" accept="image/*" style="display:none" onchange="AdminNav.imgLoad(this)"></label>
         <button class="small" id="it-cut" disabled onclick="AdminNav.imgCut()">نزع الخلفية</button>
+        <select id="it-bg" disabled onchange="AdminNav.itShow()" title="الخلفية بعد النزع"><option value="transp">خلفية شفافة</option><option value="white">خلفية بيضاء</option><option value="color">خلفية بلون</option></select><input id="it-bgc" type="color" value="#f3efe6" style="display:none;width:40px;height:34px" oninput="AdminNav.itShow()" title="لون الخلفية">
+        <select id="it-fmt" disabled title="صيغة التنزيل"><option value="png">PNG</option><option value="webp">WebP</option><option value="jpeg">JPEG (بخلفية)</option></select>
         <span style="display:inline-flex;align-items:center;gap:.4rem"><button class="small gray" id="it-webp" disabled onclick="AdminNav.imgWebp()">ضغط وتحويل WebP</button><input id="it-q" type="range" min="40" max="100" value="82" style="width:110px" title="الجودة"></span>
         <button class="small" id="it-dl" disabled onclick="AdminNav.imgDl()">تنزيل النتيجة</button>
         <button class="small gray" onclick="AdminNav.openBuilder()">فتح مطوّر الصفحات</button></div>
@@ -1668,80 +1670,80 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.296"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.296"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.296"></script>
-<script src="assets/js/img-gen.js?v=1.89.296"></script>
+<script src="assets/js/ctl-help.js?v=1.89.297"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.297"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.297"></script>
+<script src="assets/js/img-gen.js?v=1.89.297"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.296"></script>
-<script src="assets/js/admin-coname.js?v=1.89.296"></script>
-<script src="assets/js/admin-tplsite.js?v=1.89.296"></script>
-<script src="assets/js/admin-theme.js?v=1.89.296"></script>
-<script src="assets/js/saas-client.js?v=1.89.296"></script>
-<script src="assets/js/hub.js?v=1.89.296"></script>
-<script src="assets/js/admin-stockcheck.js?v=1.89.296"></script>
-<script src="assets/js/admin-orderedit.js?v=1.89.296"></script>
-<script src="assets/js/admin-manualorder.js?v=1.89.296"></script>
-<script src="assets/js/admin-stores.js?v=1.89.296"></script>
+<script src="assets/js/admin-nav.js?v=1.89.297"></script>
+<script src="assets/js/admin-coname.js?v=1.89.297"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.297"></script>
+<script src="assets/js/admin-theme.js?v=1.89.297"></script>
+<script src="assets/js/saas-client.js?v=1.89.297"></script>
+<script src="assets/js/hub.js?v=1.89.297"></script>
+<script src="assets/js/admin-stockcheck.js?v=1.89.297"></script>
+<script src="assets/js/admin-orderedit.js?v=1.89.297"></script>
+<script src="assets/js/admin-manualorder.js?v=1.89.297"></script>
+<script src="assets/js/admin-stores.js?v=1.89.297"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
-<script src="assets/js/admin-float.js?v=1.89.296"></script>
-<script src="assets/js/admin-update.js?v=1.89.296"></script>
-<script src="assets/js/admin-search.js?v=1.89.296"></script>
-<script src="assets/js/admin-hand.js?v=1.89.296"></script>
-<script src="assets/js/admin-voice.js?v=1.89.296"></script>
-<script src="assets/js/admin-inventory.js?v=1.89.296"></script>
-<script src="assets/js/admin-social.js?v=1.89.296"></script>
-<script src="assets/js/admin-zones.js?v=1.89.296"></script>
-<script src="assets/js/admin-zones-io.js?v=1.89.296"></script>
-<script src="assets/js/admin-yalidine.js?v=1.89.296"></script>
-<script src="assets/js/admin-shoppages.js?v=1.89.296"></script>
-<script src="assets/js/admin-home.js?v=1.89.296"></script>
-<script src="assets/js/admin-tablesel.js?v=1.89.296"></script>
-<script src="assets/js/admin-orders-plus.js?v=1.89.296"></script>
-<script src="assets/js/admin-keys.js?v=1.89.296"></script>
-<script src="assets/js/admin-customers.js?v=1.89.296"></script>
-<script src="assets/js/admin-bulk-products.js?v=1.89.296"></script>
-<script src="assets/js/admin-reports.js?v=1.89.296"></script>
-<script src="assets/js/admin-audit.js?v=1.89.296"></script>
-<script src="assets/js/admin-returns.js?v=1.89.296"></script>
-<script src="assets/js/admin-payments.js?v=1.89.296"></script>
-<script src="assets/js/seo-box.js?v=1.89.296"></script>
-<script src="assets/js/admin-seo.js?v=1.89.296"></script>
-<script src="assets/js/admin-blog.js?v=1.89.296"></script>
-<script src="assets/js/admin-upsell.js?v=1.89.296"></script>
-<script src="assets/js/admin-pack.js?v=1.89.296"></script>
-<script src="assets/js/admin-insights.js?v=1.89.296"></script>
-<script src="assets/js/admin-confirm-svc.js?v=1.89.296"></script>
-<script src="assets/js/admin-carts.js?v=1.89.296"></script>
-<script src="assets/js/admin-paylink.js?v=1.89.296"></script>
-<script src="assets/js/admin-platform-sync.js?v=1.89.296"></script>
-<script src="assets/js/admin-callcenter.js?v=1.89.296"></script>
-<script src="assets/js/admin-callsync.js?v=1.89.296"></script>
-<script src="assets/js/admin-dispatch.js?v=1.89.296"></script>
-<script src="assets/js/admin-profit.js?v=1.89.296"></script>
-<script src="assets/js/admin-wallet.js?v=1.89.296"></script>
-<script src="assets/js/admin-studio.js?v=1.89.296"></script>
-<script src="assets/js/admin-agency.js?v=1.89.296"></script>
-<script src="assets/js/admin-digital.js?v=1.89.296"></script>
-<script src="assets/js/admin-marketplace.js?v=1.89.296"></script>
-<script src="assets/js/admin-edition.js?v=1.89.296"></script>
-<script src="assets/js/admin-kind.js?v=1.89.296"></script>
-<script src="assets/js/admin-appstore.js?v=1.89.296"></script>
-<script src="assets/js/admin-appdev.js?v=1.89.296"></script>
-<script src="assets/js/admin-wh.js?v=1.89.296"></script>
-<script src="assets/js/admin-experts.js?v=1.89.296"></script>
-<script src="assets/js/admin-sources.js?v=1.89.296"></script>
-<script src="assets/js/admin-roles.js?v=1.89.296"></script>
-<script src="assets/js/admin-shipagg.js?v=1.89.296"></script>
-<script src="assets/js/admin-order-docs.js?v=1.89.296"></script>
-<script src="assets/js/admin-imgbatch.js?v=1.89.296"></script>
-<script src="assets/js/barcode-tool.js?v=1.89.296"></script>
-<script src="assets/js/pack3d.js?v=1.89.296"></script>
-<script src="assets/js/box-designer.js?v=1.89.296"></script>
-<script src="assets/js/admin-imgqa.js?v=1.89.296"></script>
-<script src="assets/js/admin-pagerater.js?v=1.89.296"></script>
-<script src="assets/js/img-upscale.js?v=1.89.296"></script>
-<script src="assets/js/admin-copyset.js?v=1.89.296"></script>
+<script src="assets/js/admin-float.js?v=1.89.297"></script>
+<script src="assets/js/admin-update.js?v=1.89.297"></script>
+<script src="assets/js/admin-search.js?v=1.89.297"></script>
+<script src="assets/js/admin-hand.js?v=1.89.297"></script>
+<script src="assets/js/admin-voice.js?v=1.89.297"></script>
+<script src="assets/js/admin-inventory.js?v=1.89.297"></script>
+<script src="assets/js/admin-social.js?v=1.89.297"></script>
+<script src="assets/js/admin-zones.js?v=1.89.297"></script>
+<script src="assets/js/admin-zones-io.js?v=1.89.297"></script>
+<script src="assets/js/admin-yalidine.js?v=1.89.297"></script>
+<script src="assets/js/admin-shoppages.js?v=1.89.297"></script>
+<script src="assets/js/admin-home.js?v=1.89.297"></script>
+<script src="assets/js/admin-tablesel.js?v=1.89.297"></script>
+<script src="assets/js/admin-orders-plus.js?v=1.89.297"></script>
+<script src="assets/js/admin-keys.js?v=1.89.297"></script>
+<script src="assets/js/admin-customers.js?v=1.89.297"></script>
+<script src="assets/js/admin-bulk-products.js?v=1.89.297"></script>
+<script src="assets/js/admin-reports.js?v=1.89.297"></script>
+<script src="assets/js/admin-audit.js?v=1.89.297"></script>
+<script src="assets/js/admin-returns.js?v=1.89.297"></script>
+<script src="assets/js/admin-payments.js?v=1.89.297"></script>
+<script src="assets/js/seo-box.js?v=1.89.297"></script>
+<script src="assets/js/admin-seo.js?v=1.89.297"></script>
+<script src="assets/js/admin-blog.js?v=1.89.297"></script>
+<script src="assets/js/admin-upsell.js?v=1.89.297"></script>
+<script src="assets/js/admin-pack.js?v=1.89.297"></script>
+<script src="assets/js/admin-insights.js?v=1.89.297"></script>
+<script src="assets/js/admin-confirm-svc.js?v=1.89.297"></script>
+<script src="assets/js/admin-carts.js?v=1.89.297"></script>
+<script src="assets/js/admin-paylink.js?v=1.89.297"></script>
+<script src="assets/js/admin-platform-sync.js?v=1.89.297"></script>
+<script src="assets/js/admin-callcenter.js?v=1.89.297"></script>
+<script src="assets/js/admin-callsync.js?v=1.89.297"></script>
+<script src="assets/js/admin-dispatch.js?v=1.89.297"></script>
+<script src="assets/js/admin-profit.js?v=1.89.297"></script>
+<script src="assets/js/admin-wallet.js?v=1.89.297"></script>
+<script src="assets/js/admin-studio.js?v=1.89.297"></script>
+<script src="assets/js/admin-agency.js?v=1.89.297"></script>
+<script src="assets/js/admin-digital.js?v=1.89.297"></script>
+<script src="assets/js/admin-marketplace.js?v=1.89.297"></script>
+<script src="assets/js/admin-edition.js?v=1.89.297"></script>
+<script src="assets/js/admin-kind.js?v=1.89.297"></script>
+<script src="assets/js/admin-appstore.js?v=1.89.297"></script>
+<script src="assets/js/admin-appdev.js?v=1.89.297"></script>
+<script src="assets/js/admin-wh.js?v=1.89.297"></script>
+<script src="assets/js/admin-experts.js?v=1.89.297"></script>
+<script src="assets/js/admin-sources.js?v=1.89.297"></script>
+<script src="assets/js/admin-roles.js?v=1.89.297"></script>
+<script src="assets/js/admin-shipagg.js?v=1.89.297"></script>
+<script src="assets/js/admin-order-docs.js?v=1.89.297"></script>
+<script src="assets/js/admin-imgbatch.js?v=1.89.297"></script>
+<script src="assets/js/barcode-tool.js?v=1.89.297"></script>
+<script src="assets/js/pack3d.js?v=1.89.297"></script>
+<script src="assets/js/box-designer.js?v=1.89.297"></script>
+<script src="assets/js/admin-imgqa.js?v=1.89.297"></script>
+<script src="assets/js/admin-pagerater.js?v=1.89.297"></script>
+<script src="assets/js/img-upscale.js?v=1.89.297"></script>
+<script src="assets/js/admin-copyset.js?v=1.89.297"></script>
 <script src="assets/js/ai-vision.js?v=55"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
@@ -11671,7 +11673,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
-  const EP_TABS = [["up", "تحسين الجودة", "t_magic"], ["fa", "استوديو أزياء ذكي", "t_magic"], ["to", "تجربة افتراضية", "t_magic"], ["ps", "تصوير المنتج بالذكاء", "t_magic"], ["v3", "عرض 360°", "t_magic"], ["rc", "تلوين بالذكاء", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["br", "الهوية البصرية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "تحريك الصورة (مجاني)", "t_magic"], ["vg", "مولّد الفيديو بالذكاء", "t_magic"], ["vad", "إعلان فيديو بالذكاء (مخرج ذكي)", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
+  const EP_TABS = [["up", "تحسين الجودة", "t_magic"], ["fa", "استوديو أزياء ذكي", "t_magic"], ["to", "تجربة افتراضية", "t_magic"], ["ps", "تصوير المنتج بالذكاء", "t_magic"], ["v3", "عرض 360°", "t_magic"], ["rc", "تلوين بالذكاء", "t_magic"], ["rl", "إعادة الإضاءة", "t_magic"], ["tr", "إزالة النص والعلامات", "t_magic"], ["uc", "استعادة الجزء المقطوع", "t_magic"], ["bf", "محسّن المنتج", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["br", "الهوية البصرية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "تحريك الصورة (مجاني)", "t_magic"], ["vg", "مولّد الفيديو بالذكاء", "t_magic"], ["vad", "إعلان فيديو بالذكاء (مخرج ذكي)", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
   const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
   function epBody(inf) {
     const t = E.ept || "";
@@ -11688,7 +11690,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "vd") return PBVideo.panel();
     if (t === "vg") return PBVGen.panel();
     if (t === "vad") return PBVAd.panel();
-    if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to" || t === "ps" || t === "rc" || t === "v3") return PBAI.panel(t);
+    if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to" || t === "ps" || t === "rc" || t === "v3" || t === "rl" || t === "tr" || t === "uc" || t === "bf") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
     if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة: الخلفية الملونة المتجانسة والعنصر المعزول تُنزع داخل متصفحك مجاناً بلا ذكاء، والخلفية المعقدة تُنزع بالذكاء عبر مفتاح Alyssum API (تظهر التكلفة وتُطلب موافقتك قبل التنفيذ) وإلا تُجرَّب الطريقة المحلية.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
@@ -11761,11 +11763,15 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "vad") return imgPick("vad");
     if (k === "txt2img") return PBAI.openTx();
     if (k === "recolor") return imgPick("rc");
+    if (k === "relight") return imgPick("rl");
+    if (k === "textrm") return imgPick("tr");
+    if (k === "uncrop") return imgPick("uc");
+    if (k === "beautify") return imgPick("bf");
     if (k === "brand") return imgPick("br");
     if (k === "logo") return PBBrand.openLogo();
     toast("هذه الأداة قيد التطوير وستظهر هنا فور جاهزيتها");
   }
-  const ROW_IC = { vad: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/><path d="M7 21h10"/>', view360: '<path d="M12 4a8 4 0 1 0 8 4"/><path d="M17 3l3 1-1 3"/><rect x="8" y="9" width="8" height="10" rx="2"/>', resize: '<rect x="4" y="4" width="10" height="10" rx="1"/><path d="M14 20h6v-6M20 20l-7-7"/>', txt2img: '<path d="M4 6h10M4 11h7"/><rect x="13" y="10" width="8" height="10" rx="1.5"/><path d="M19 3v4M17 5h4"/>', brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
+  const ROW_IC = { relight: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>', textrm: '<path d="M4 6h10M4 11h6"/><path d="m14 14 6 6M20 14l-6 6"/>', uncrop: '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="8" y="8" width="8" height="8" rx="1" stroke-dasharray="2 2"/>', beautify: '<path d="m12 3 1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15v4M17 17h4"/>', vad: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/><path d="M7 21h10"/>', view360: '<path d="M12 4a8 4 0 1 0 8 4"/><path d="M17 3l3 1-1 3"/><rect x="8" y="9" width="8" height="10" rx="2"/>', resize: '<rect x="4" y="4" width="10" height="10" rx="1"/><path d="M14 20h6v-6M20 20l-7-7"/>', txt2img: '<path d="M4 6h10M4 11h7"/><rect x="13" y="10" width="8" height="10" rx="1.5"/><path d="M19 3v4M17 5h4"/>', brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
   /* أيقونات الأدوات (assets/img/tools/ic، بلا أي كتابة داخل الصورة) وعناوينها نصوص مستقلة قابلة للترجمة من assets/data/tool-titles.json */
   const TT = { data: null, lang: "ar" };
   const TT_ICON = { bg: "01-suppression-de-fond", gen: "02-generateur-d-images", pshoot: "03-photographie-produit-ia", fashion: "04-modele-virtuel", tryon: "05-essayage-virtuel", scene: "06-mise-en-scene-produit", vgen: "07-generateur-de-video", xp: "08-redimensionner-agrandir", resize: "08-redimensionner-agrandir", erase: "09-supprimer-des-objets", recolor: "10-recolorer-vetements", brand: "11-identite-visuelle", logo: "12-createur-de-logo", batch: "13-traitement-par-lots", catalog: "14-catalogue-de-produits" };
@@ -11783,7 +11789,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const grp = (title, keys, rows) => `<div class="pbx-cat">${title}</div><div class="pbx-ttg">${keys.map(k => { const t = IMG_TOOLS.find(x => x[0] === k); if (t) return tile(`data-imgt="${t[0]}"`, t[1], t[2], cur === t[0], "", t[0]); const m = IMG_SM.find(x => x[0] === k); return m ? tile(`data-imgm="${m[0]}"`, m[1], m[2], false, m[3] ? "" : "قريباً", m[0]) : ""; }).join("")}</div>${rows ? `<div class="pbx-trs">${rows}</div>` : ""}`;
     return `${inf ? "" : '<div class="pbx-tn">حدّد صورة في الصفحة ثم اختر الأداة</div>'}`
       + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "عدة مشاهد احترافية دفعة واحدة") + rowBtn("view360", "عرض 360° للمنتج", "دوران بسحب الزائر — بالذكاء أو بصورك") + rowBtn("txt2img", "صورة من وصف نصي", "اكتب فكرتك وتُولَّد صورة") + rowBtn("vgen", "مولّد الفيديو بالذكاء", "فيديو إعلاني من صورة ووصف أو قالب") + rowBtn("vad", "إعلان فيديو بالذكاء", "UGC وتيك توك ومنتج بصوت ولغات متعددة") + rowBtn("fashion", "استوديو أزياء ذكي", "عارض افتراضي ومانيكان غير مرئي") + rowBtn("tryon", "تجربة افتراضية", "شاهد القطعة على جسمك"))
-      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("resize", "تغيير المقاس والتوسيع", "أي منصة أو اتجاه، بلا إعادة تصوير") + rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "ألوان متعددة من صورة واحدة") + rowBtn("logo", "منشئ الشعار", "شعار مجاني أو بالذكاء بألوان علامتك"))
+      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("resize", "تغيير المقاس والتوسيع", "أي منصة أو اتجاه، بلا إعادة تصوير") + rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "ألوان متعددة من صورة واحدة") + rowBtn("relight", "إعادة الإضاءة", "صحّح الإضاءة الخاطئة") + rowBtn("textrm", "إزالة النص والعلامات", "علامات مائية وملصقات ولافتات") + rowBtn("uncrop", "استعادة الجزء المقطوع", "أكمل المنتج المقطوع عند الحافة") + rowBtn("beautify", "محسّن المنتج", "صورة ضعيفة ← احترافية، بذكاء أو مجاناً") + rowBtn("logo", "منشئ الشعار", "شعار مجاني أو بالذكاء بألوان علامتك"))
       + `<div class="pbx-cat">أتمتة وتوسّع</div><div class="pbx-trs">${rowBtn("batch", "معالجة الدفعات", "عدّل آلاف الصور دفعة واحدة") + rowBtn("catalog", "كتالوج المنتجات", "افحص وحدّث أغلفة كل متجرك")}</div>`
       + (cur === "st" ? `<div class="pbx-cat">أدوات استوديو المنتج</div><div class="pbx-ttg">${IMG_ST.map(([k, n, im]) => `<button type="button" class="pbx-tt${st === k ? " on" : ""}" data-imgs="${k}" title="${esc(n)}"><img src="assets/img/tools/${im}.webp" alt="" draggable="false"><span>${esc(n)}</span></button>`).join("")}</div>` : "")
       + `<p class="pbx-tn" style="margin-top:.5rem">الأدوات الذكية (توسيع، مشهد، أساليب، تعديل بالوصف، ممحاة) تحتاج مفتاح Alyssum API من إعدادات مولّد الصور، وتُحسب تكلفتها قبل كل تنفيذ.</p>`;
@@ -15707,6 +15713,21 @@ const PBBgRemove = (function () {
   function uniformBg(srcC) {
     try { const k = Math.min(1, LO / Math.max(srcC.width, srcC.height)), w = Math.max(8, Math.round(srcC.width * k)), h = Math.max(8, Math.round(srcC.height * k)), c = scaledCanvas(srcC, w, h), d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, w, h).data; let t = 0; for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] < 40) t++; if (t > w * h * .01) return false; return !!floodBg(rgbOf(c).rgb, w, h); } catch (e) { return false; }
   }
+  /* درجة ثقة تقديرية (0–1) لنتيجة نزع الخلفية، على نمط Uncertainty Score في Photoroom: تقدير هندسي من القناع (نسبة البكسلات نصف الشفافة، تجزّؤ الكتل، تغطية معقولة) لا احتمال صادر عن نموذج */
+  function confidence(cv) {
+    const k = Math.min(1, 384 / Math.max(cv.width, cv.height)), w = Math.max(8, Math.round(cv.width * k)), h = Math.max(8, Math.round(cv.height * k)), c = document.createElement("canvas"); c.width = w; c.height = h;
+    const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, N = w * h; let solid = 0, mid = 0;
+    const m = new Uint8Array(N); for (let i = 0; i < N; i++) { const a = d[i * 4 + 3]; if (a > 240) { solid++; m[i] = 1; } else if (a > 15) mid++; }
+    const cov = (solid + mid) / N; let u = 0; const notes = [];
+    if (!solid) return { score: 0, cov: 0, notes: ["لا عنصر ظاهر"] };
+    const midR = mid / (solid + mid); u += Math.min(.5, midR * 4); if (midR > .08) notes.push("حواف غير حاسمة");
+    // تجزّؤ: عدد الكتل المتصلة الكبيرة (≥1% من العنصر) — كثرتها غالباً بقايا خلفية أو تقطّع
+    const lab = new Int32Array(N); let comps = 0, big = 0; const st = new Int32Array(N);
+    for (let i = 0; i < N; i++) { if (!m[i] || lab[i]) continue; comps++; let sp = 0, sz = 0; st[sp++] = i; lab[i] = comps; while (sp) { const q = st[--sp]; sz++; const x = q % w, y = (q / w) | 0; if (x > 0 && m[q - 1] && !lab[q - 1]) { lab[q - 1] = comps; st[sp++] = q - 1; } if (x < w - 1 && m[q + 1] && !lab[q + 1]) { lab[q + 1] = comps; st[sp++] = q + 1; } if (y > 0 && m[q - w] && !lab[q - w]) { lab[q - w] = comps; st[sp++] = q - w; } if (y < h - 1 && m[q + w] && !lab[q + w]) { lab[q + w] = comps; st[sp++] = q + w; } } if (sz >= solid * .01) big++; }
+    if (big > 3) { u += Math.min(.25, (big - 3) * .05); notes.push("عدة قطع منفصلة"); }
+    if (cov < .06) { u += .4; notes.push("العنصر صغير جداً"); } else if (cov > .96) { u += .45; notes.push("الخلفية لم تُنزع غالباً"); }
+    u = Math.max(0, Math.min(1, u)); return { score: Math.round((1 - u) * 100) / 100, cov: Math.round(cov * 100) / 100, notes };
+  }
   async function autoCut(srcC, o) {
     o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
     const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), kOK = !!o.allowKey && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
@@ -15775,11 +15796,11 @@ const PBBgRemove = (function () {
       const all = (keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
       const r = await autoCut(LV.src, { methods, allowKey: true, onStep: m => chip(m, true) }); LV.res = r;
-      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)");
+      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); { let cf = ""; try { const q = confidence(r.canvas); cf = " · ثقة تقديرية " + Math.round(q.score * 100) + "%" + (q.notes.length ? " (" + q.notes[0] + ")" : ""); } catch (e) { } chip("✅ تمّ" + cf + " — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)"); }
     } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, live, autoCut, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, autoCut, confidence, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();
 
 /* استوديو المنتج (المرحلة 2 من platform/docs/photoroom-tools-report.md): صورة منتج ← صورة متجر احترافية بنقرات، داخل المتصفح وبلا API.
@@ -15791,7 +15812,7 @@ const PBStudio = (() => {
   const SCENES = [1, 2, 3, 4, 5, 6].map(i => ({ id: "sc" + i, src: "assets/img/tpl/alyssum-sc" + i + ".webp", floor: .76 }));
   const BADGES = [["-50%", "#e11d48", "#ffffff", "circle"], ["توصيل مجاني", "#16a34a", "#ffffff", "pill"], ["جديد", "#f59e0b", "#1f1300", "pill"], ["الأكثر مبيعاً", "#7c3aed", "#ffffff", "ribbon"], ["ضمان الجودة", "#0ea5e9", "#ffffff", "pill"], ["عرض خاص", "#111827", "#fde68a", "ribbon"]];
   const POS = ["أعلى يسار", "أعلى وسط", "أعلى يمين", "وسط يسار", "الوسط", "وسط يمين", "أسفل يسار", "أسفل وسط", "أسفل يمين"];
-  const DEF = { bg: "white", c1: "#ffffff", blur: 18, shadow: "contact", pad: .1, align: "center", size: "1000x1000", cw: 1000, ch: 1000, podium: false, rot: 0, flip: false, font: "", refl: 0, outW: 0, outC: "#ffffff", bri: 0, con: 0, sat: 0, tmp: 0, ov: [], logoPos: 8, logoSize: 16, logoOp: 90, fmt: "png", q: 92 };
+  const DEF = { bg: "white", c1: "#ffffff", blur: 18, shadow: "contact", shI: 100, shB: 100, shX: 0, shY: 100, pad: .1, align: "center", size: "1000x1000", cw: 1000, ch: 1000, podium: false, rot: 0, flip: false, font: "", refl: 0, outW: 0, outC: "#ffffff", bri: 0, con: 0, sat: 0, tmp: 0, ov: [], logoPos: 8, logoSize: 16, logoOp: 90, fmt: "png", q: 92 };
   const SITE_FF = "'Cairo','Segoe UI'", LSK = "pbx_studio";
   const S = { id: "", src: "", cut: null, bb: null, srcC: null, logo: null, opt: Object.assign({}, DEF), busy: false, msg: "", scenes: {}, tab: "bg", pv: "", pvUrl: "", off: false, dtok: 0, site: { ff: SITE_FF, url: "", loaded: false } };
   try { const o = JSON.parse(localStorage.getItem(LSK) || "null"); if (o && typeof o === "object") Object.assign(S.opt, o); } catch (e) { }
@@ -15868,7 +15889,8 @@ const PBStudio = (() => {
     let dy; if (floor !== null) dy = H * floor - dh; else dy = o.align === "bottom" ? H * (1 - pad) - dh : (H - dh) / 2; const dx = cx - dw / 2, foot = dy + dh;
     if (o.podium && !scene) drawPodium(g, cx, foot, Math.max(dw * .72, W * .22), W, H, o.podiumColor);
     if (o.shadow === "contact" || o.shadow === "contactStrong") {
-      const op = o.shadow === "contact" ? .34 : .55, rx = dw * .5, ry = Math.max(5, dw * .07); g.save(); g.translate(cx, foot - ry * .25); g.scale(1, ry / rx);
+      const sI = (o.shI == null ? 100 : o.shI) / 100, sB = (o.shB == null ? 100 : o.shB) / 100, sX = (o.shX || 0) / 100 * dw, sY = (o.shY == null ? 100 : o.shY) / 100;
+      const op = Math.min(1, (o.shadow === "contact" ? .34 : .55) * sI), rx = dw * .5 * (.6 + .4 * sB), ry = Math.max(5, dw * .07 * sB); g.save(); g.translate(cx + sX, foot - ry * .25 + (sY - 1) * ry * .8); g.scale(1, ry / rx);
       const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, "rgba(0,0,0," + op + ")"); gr.addColorStop(.6, "rgba(0,0,0," + op * .45 + ")"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.fill(); g.restore();
     }
     if (o.refl > 0) {      /* انعكاس على الأرضية: نسخة مقلوبة تتلاشى */
@@ -15879,7 +15901,7 @@ const PBStudio = (() => {
       const sil = mk(dw, dh), s = sil.getContext("2d"); s.drawImage(pcv, 0, 0); s.globalCompositeOperation = "source-in"; s.fillStyle = o.outC || "#fff"; s.fillRect(0, 0, dw, dh); const rr = Math.max(1, W * o.outW / 1000);
       for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 2; g.drawImage(sil, dx + Math.cos(t) * rr, dy + Math.sin(t) * rr); }
     }
-    g.save(); if (o.shadow === "soft" || o.shadow === "strong") { const k = o.shadow === "soft" ? 1 : 1.9; g.shadowColor = "rgba(0,0,0," + (.26 * Math.min(1.5, k)) + ")"; g.shadowBlur = dw * .05 * k; g.shadowOffsetY = dw * .03 * k; }
+    g.save(); if (o.shadow === "soft" || o.shadow === "strong") { const k = o.shadow === "soft" ? 1 : 1.9, sI = (o.shI == null ? 100 : o.shI) / 100, sB = (o.shB == null ? 100 : o.shB) / 100, sX = (o.shX || 0) / 100, sY = (o.shY == null ? 100 : o.shY) / 100; g.shadowColor = "rgba(0,0,0," + Math.min(1, .26 * Math.min(1.5, k) * sI) + ")"; g.shadowBlur = dw * .05 * k * sB; g.shadowOffsetY = dw * .03 * k * sY; g.shadowOffsetX = dw * .03 * k * sX * 3; }
     g.drawImage(pcv, dx, dy); g.restore();
     (o.ov || []).forEach(ov => drawBadge(g, W, H, ov, o));
     if (o.logo && o.logo.width) { const lw = W * (o.logoSize || 16) / 100, lh = lw * o.logo.height / o.logo.width, [lx, ly] = anchor(o.logoPos == null ? 8 : o.logoPos, W, H, lw, lh, W * .04); g.save(); g.globalAlpha = Math.max(.05, Math.min(1, (o.logoOp == null ? 90 : o.logoOp) / 100)); g.drawImage(o.logo, lx, ly, lw, lh); g.restore(); }
@@ -15946,6 +15968,7 @@ ${fontSel('data-ovk="font"', v.font || "", "حسب الخط العام")}
 <div id="pbst-blurbox" style="display:${o.bg === "blur" ? "block" : "none"}">${rg("blur", "قوة الطمس", 4, 60, 1, o.blur)}</div></div>
 <div ${pane("prod")}><div class="pbst-row"><div><label class="pbst-l">الظل</label><select id="pbst-sh"><option value="contact">ملامسة (الأنسب)</option><option value="contactStrong">ملامسة قوية</option><option value="soft">ناعم</option><option value="strong">قوي</option><option value="none">بدون</option></select></div>
 <div><label class="pbst-l">الموضع</label><select id="pbst-al"><option value="center">في الوسط</option><option value="bottom">على الأرض</option></select></div></div>
+<div class="pbst-sub" style="margin:.35rem 0 .1rem;font-size:.74rem;opacity:.8">ضبط الظل (شدة، نعومة، اتجاه)</div>${rg("shI", "شدة الظل %", 0, 200, 5, o.shI == null ? 100 : o.shI)}${rg("shB", "نعومة الظل %", 20, 300, 5, o.shB == null ? 100 : o.shB)}${rg("shX", "إزاحة أفقية", -100, 100, 5, o.shX || 0)}${rg("shY", "إزاحة رأسية %", 0, 250, 5, o.shY == null ? 100 : o.shY)}
 <div><label class="pbst-l">حجم المنتج <span id="pbst-pv-n"></span></label><input type="range" id="pbst-pad" min="2" max="35" step="1" value="${Math.round((1 - o.pad * 2) * 100) ? Math.round(o.pad * 100) : 10}"></div>
 <label class="pbst-ck"><input type="checkbox" id="pbst-pod" ${o.podium ? "checked" : ""}> منصة عرض تحت المنتج</label>
 ${rg("rot", "تدوير", -180, 180, 1, o.rot)}<label class="pbst-ck"><input type="checkbox" data-stk="flip" ${o.flip ? "checked" : ""}> قلب أفقي</label></div>
@@ -16339,7 +16362,7 @@ const PBAI = (() => {
 
   /* ── حالة اللوحات ── */
   const PLS = "pbx_tryon_person";      // صورة الشخص تُحفظ على هذا الجهاز فقط وبموافقة صريحة («تذكّر صورتي»)
-  const S = { rc: { item: "", sel: ["red", "navy"], custom: "#3366cc", useCustom: false }, ps: [0, 1, 2], v3: { n: 8, frames: null }, person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same", age: "any", body: "any", tone: "any", model: "", outfit: [], res: 0 }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const S = { fx: { rl: { light: "studio", str: "mid" }, tr: { what: "all", keep: "1" }, uc: { what: "auto" }, bf: { kind: "product", str: "mid" }, retries: 0, thr: 70 }, rc: { item: "", sel: ["red", "navy"], custom: "#3366cc", useCustom: false }, ps: [0, 1, 2], v3: { n: 8, frames: null }, person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same", age: "any", body: "any", tone: "any", model: "", outfit: [], res: 0 }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
   try { const d = localStorage.getItem(PLS); if (d) { const im = new Image(); im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0); S.person = { c, w: c.width, h: c.height }; S.remember = true; }; im.src = d; } } catch (e) { }
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
   /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
@@ -16424,6 +16447,38 @@ const PBAI = (() => {
   const recolorPrompt = (item, color) => "RECOLOR THE PRODUCT in this photo: change ONLY the color of " + (String(item || "").trim() ? "the " + String(item).trim() : "the main garment or product") + " to " + color + ". "
     + "Preserve the exact fabric/material texture, weave, stitching, folds, wrinkles, highlights, natural shading and shadows so the new color looks photographed, not painted over — do not flatten it with a flat overlay. "
     + "Keep everything else exactly the same: shape, proportions, patterns/prints/logos (only recolor them if they are part of the base color), background, lighting, framing and any person's skin, face and hair. No watermark, no added text. Output the edited image.";
+
+  /* أدوات على نمط Photoroom API: إعادة الإضاءة، إزالة النص والعلامات، استعادة الجزء المقطوع، محسّن المنتج (كلها تعديل صورة بالوصف مع حفظ المنتج كما هو) */
+  const FX_KEEP = " Keep the main subject/product EXACTLY the same: shape, proportions, colors, materials, labels and any printed text ON the product, framing and composition. Photorealistic, no new watermark, no added text, no borders. Output the edited image.";
+  const FXT = {
+    rl: { t: "إعادة الإضاءة", ic: "💡", intro: "صحّح الإضاءة الخاطئة (ظلال قاسية، صورة معتمة أو محروقة، إضاءة صفراء) دون تغيير المنتج أو الخلفية أو التكوين.", go: "💡 صحّح الإضاءة", lab: "إعادة إضاءة بالذكاء",
+      opts: [["light", "الإضاءة المطلوبة", [["studio", "استوديو ناعمة ومتساوية", "soft, even, diffused studio lighting from the front-left with gentle natural shadows"], ["window", "ضوء نافذة طبيعي", "soft natural window daylight coming from one side with smooth falloff"], ["golden", "دافئة ذهبية", "warm golden-hour light with soft warm highlights"], ["bright", "ساطعة ونقية", "bright clean high-key lighting with neutral white balance and lifted shadows"], ["dramatic", "جانبية درامية", "directional side lighting with soft contrast and shaped shadows"]]], ["str", "قوة التصحيح", [["low", "خفيفة", "subtle"], ["mid", "متوسطة", "moderate"], ["high", "قوية", "strong"]]]],
+      prompt: (v, h, L) => "RELIGHT this photo: fix wrong or poor lighting (harsh or blown highlights, muddy shadows, color cast, underexposure) using " + L.light + ". Correction strength: " + L.str + ". Make the light direction and shadows consistent across the subject and background and correct the white balance." + FX_KEEP + (h ? " Extra direction: " + h : "") },
+    tr: { t: "إزالة النص والعلامات", ic: "🧹", intro: "أزل العلامات المائية والملصقات واللافتات والنصوص الدخيلة من الصورة وأعد بناء ما تحتها بشكل طبيعي.", go: "🧹 أزل العلامات", lab: "إزالة نص وعلامات بالذكاء",
+      opts: [["what", "ما الذي تُزيله؟", [["all", "كل العلامات والنصوص الدخيلة", "every watermark, overlaid sticker, banner, promotional badge, caption and sign text"], ["wm", "العلامة المائية فقط", "the watermark(s) and logo overlays"], ["stk", "الملصقات والشارات", "overlaid stickers, price tags, badges and promotional banners"], ["sign", "اللافتات والنصوص في الخلفية", "signs and text in the background"]]], ["keep", "النص المطبوع على المنتج", [["1", "احتفظ به كما هو", "keep"], ["0", "أزله أيضاً", "remove"]]]],
+      prompt: (v, h, L) => "REMOVE TEXT AND MARKS from this photo: erase " + L.what + ", and reconstruct what is behind them (background, texture, edges, shadows) so no trace, blur or smear remains. " + (L.keep === "keep" ? "Do NOT touch the text, logo or label printed on the product itself — it must stay sharp and identical." : "Also remove text printed on the product surface.") + " Leave everything else untouched." + (h ? " Extra direction: " + h : "") + " Photorealistic. Output the edited image." },
+    uc: { t: "استعادة الجزء المقطوع", ic: "🧩", intro: "إن كان المنتج أو الشخص مقطوعاً عند حافة الصورة، يُكمل الذكاء الجزء الناقص بما يطابق الباقي ويوسّع الصورة عند اللزوم.", go: "🧩 أكمل المقطوع", lab: "استعادة جزء مقطوع بالذكاء",
+      opts: [["what", "أين الجزء المقطوع؟", [["auto", "تلقائي", "wherever it is cut off by the image border"], ["top", "الأعلى", "at the top edge"], ["bottom", "الأسفل", "at the bottom edge"], ["sides", "الجانبين", "at the left and/or right edges"]]]],
+      prompt: (v, h, L) => "UNCROP: the main subject in this photo is cut off by the image border " + L.what + ". Complete the missing parts naturally — extend the subject so it is whole and plausible, continuing its exact shape, material, pattern, color and lighting, and extend the background and shadows consistently (the canvas may be extended). Do not add extra objects or people, and keep the visible part of the subject unchanged." + (h ? " Extra direction: " + h : "") + " Photorealistic, no watermark, no text. Output the edited image." },
+    bf: { t: "محسّن المنتج", ic: "✨", intro: "حوّل صورة ضعيفة (هاتف، إضاءة رديئة، ألوان باهتة) إلى صورة منتج أو طعام نظيفة وحادة وجذابة، بذكاء أو بتحسين محلي مجاني.", go: "✨ حسّن بالذكاء", lab: "محسّن المنتج بالذكاء",
+      opts: [["kind", "نوع الصورة", [["product", "منتج", "product"], ["food", "طعام", "food"]]], ["str", "قوة التحسين", [["low", "خفيفة", "subtle"], ["mid", "متوسطة", "moderate"], ["high", "قوية", "strong"]]]],
+      prompt: (v, h, L) => "BEAUTIFY this " + (L.kind === "food" ? "food photo: make it look fresh and appetizing — rich natural colors, clean highlights, gentle depth, no oversaturation, " : "product photo: make it look like professional catalog photography — clean white balance, true vivid colors, crisp detail and edges, even soft lighting, gentle contrast, ") + "reduce noise and blur and remove small dust/blemishes on the background. Enhancement strength: " + L.str + "." + FX_KEEP + (h ? " Extra direction: " + h : "") }
+  };
+  function fxPrompt(kind, f, hint) { const T = FXT[kind]; if (!T) return ""; const L = {}; T.opts.forEach(([id,, list]) => { const sel = list.find(x => x[0] === (f && f[id])) || list[0]; L[id] = id === "keep" ? (sel[0] === "1" ? "keep" : "remove") : sel[2]; }); return T.prompt(0, hint || "", L); }
+  /* درجة جودة تقديرية محلية (0–100): حدّة (تباين لابلاس) + تعريض (متوسط الإضاءة وقصّ الظلال/الإضاءات) + دقة. تقدير هندسي لا حكم نموذج ذكي */
+  function qaScore(cv) {
+    const k = Math.min(1, 512 / Math.max(cv.width, cv.height)), w = Math.max(8, Math.round(cv.width * k)), h = Math.max(8, Math.round(cv.height * k)), c = mk(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h);
+    const d = g.getImageData(0, 0, w, h).data, L = new Float32Array(w * h), A = new Uint8Array(w * h); let n = 0, sum = 0, dark = 0, bright = 0;
+    for (let i = 0; i < w * h; i++) { const a = d[i * 4 + 3]; A[i] = a > 128 ? 1 : 0; const y = .299 * d[i * 4] + .587 * d[i * 4 + 1] + .114 * d[i * 4 + 2]; L[i] = y; if (A[i]) { n++; sum += y; if (y < 12) dark++; else if (y > 243) bright++; } }
+    if (n < 64) return { score: 0, sharp: 0, expo: 0, res: 0, notes: ["لا بكسلات مرئية"] };
+    let m = 0, m2 = 0, cnt = 0; for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) { const i = y * w + x; if (!A[i]) continue; const l = 4 * L[i] - L[i - 1] - L[i + 1] - L[i - w] - L[i + w]; m += l; m2 += l * l; cnt++; }
+    const v = cnt ? m2 / cnt - (m / cnt) * (m / cnt) : 0, sharp = Math.min(1, v / 140), mean = sum / n, fd = dark / n, fb = bright / n;
+    let expo = 1; if (mean < 70) expo -= (70 - mean) / 70; if (mean > 205) expo -= (mean - 205) / 50; expo -= Math.max(0, fd - .12) * 2 + Math.max(0, fb - .12) * 2; expo = Math.max(0, Math.min(1, expo));
+    const ms = Math.min(cv.width, cv.height), res = Math.min(1, ms / 1000), notes = [];
+    if (sharp < .45) notes.push("الصورة غير حادة"); if (mean < 70 || fd > .25) notes.push("معتمة"); if (mean > 205 || fb > .25) notes.push("محروقة الإضاءة"); if (ms < 800) notes.push("دقة منخفضة");
+    return { score: Math.round(100 * (.45 * sharp + .3 * expo + .25 * res)), sharp: Math.round(sharp * 100), expo: Math.round(expo * 100), res: Math.round(res * 100), notes };
+  }
+  const qaText = q => "جودة تقديرية: " + q.score + "/100" + (q.notes.length ? " — " + q.notes.join("، ") : " ✔");
   const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُطلب موافقتك قبل كل توليد، وتصلك تنبيهات عند اقتراب نفاد الرصيد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   const outfitPool = () => (typeof PBCollage !== "undefined" && PBCollage.poolOf ? PBCollage.poolOf(S.src || "") : []).filter(u => u && u !== S.src).slice(0, 20);
   function modelsHtml(f) {
@@ -16432,6 +16487,13 @@ const PBAI = (() => {
   }
   function panel(kind) {
     const o = S.opt;
+    if (FXT[kind]) { const T = FXT[kind], f = S.fx[kind];
+      return `<div class="pbx-pz" id="pbai"><p>${T.intro}</p>${stateBar()}
+<div class="rt-g">${T.opts.map(([id, lab, list]) => `<label>${lab} <select id="pbai-fx-${id}" class="pbx-small">${list.map(x => `<option value="${x[0]}"${f[id] === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label>`).join("")}</div>
+<div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: أبقِ الظل تحت المنتج">${esc(o.hint)}</textarea></label></div>
+<div class="rt-g"><label>إعادة المحاولة تلقائياً إن كانت الجودة التقديرية أقل من ${S.fx.thr} <select id="pbai-fxr" class="pbx-small">${[[0, "بلا إعادة"], [1, "حتى محاولة إضافية"], [2, "حتى محاولتين إضافيتين"]].map(x => `<option value="${x[0]}"${S.fx.retries === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="fx">${T.go}</button>${kind === "bf" ? '<button type="button" class="pbx-small" data-ai="bfl">⚡ تحسين سريع مجاني (بلا ذكاء)</button>' : ""}</div>
+<div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`; }
     if (kind === "rc") { const r = S.rc; return `<div class="pbx-pz" id="pbai"><p>أنشئ عدة ألوان من صورة واحدة بلا إعادة تصوير: يتغير اللون فقط ويبقى نسيج القماش والطيّات والظلال طبيعية.</p>${stateBar()}
 <div class="rt-g"><label>ما الذي تريد تلوينه؟ <input type="text" id="pbai-rci" value="${esc(r.item)}" placeholder="مثال: الفستان، الحقيبة، الغطاء" style="width:100%"></label></div>
 <div class="ep-n"><b>اختر حتى 4 ألوان</b></div>
@@ -16499,6 +16561,7 @@ const PBAI = (() => {
   const readForm = () => {
     const o = S.opt, v = id => ($(id) || {}).value; if ($("pbai-r")) o.ratio = +v("pbai-r") || o.ratio; if ($("pbai-a")) o.anchor = v("pbai-a") || o.anchor;
     if ($("pbai-rci")) { S.rc.item = v("pbai-rci"); S.rc.custom = v("pbai-rcc"); S.rc.useCustom = $("pbai-rcu").checked; }
+    if (FXT[S.kind]) { const f = S.fx[S.kind]; FXT[S.kind].opts.forEach(([id]) => { const e = $("pbai-fx-" + id); if (e) f[id] = e.value; }); if ($("pbai-fxr")) S.fx.retries = +v("pbai-fxr") || 0; }
     if ($("pbai-tpart")) S.tpart = v("pbai-tpart");
     if ($("pbai-trem")) { const r = $("pbai-trem").checked; if (r !== S.remember) { S.remember = r; keepPerson(); } }
     if ($("pbai-fw")) S.fa = Object.assign({}, S.fa, { who: v("pbai-fw"), pose: v("pbai-fp"), bg: v("pbai-fb"), ratio: v("pbai-fr"), age: v("pbai-fage") || "any", body: v("pbai-fbody") || "any", tone: v("pbai-ftone") || "any", res: +v("pbai-fres") || 0 });
@@ -16508,7 +16571,7 @@ const PBAI = (() => {
   };
   const errText = e => e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل هذه الأداة" : e && e.code === "OFF" ? "التوليد الذكي للصور معطّل من الإعدادات" : "⚠️ " + (e && e.message || e);
   function showRes(list, note) {
-    const r = $("pbai-res"); if (!r) return; list = Array.isArray(list) ? list : [list]; S.vars = list; S.res = list[0]; const many = list.length > 1;
+    const r = $("pbai-res"); if (!r) return; list = Array.isArray(list) ? list : [list]; try { note = (note ? note + " · " : "") + qaText(qaScore(list[0])); } catch (e) {} S.vars = list; S.res = list[0]; const many = list.length > 1;
     const card = (cv, i) => `<label style="display:block;cursor:pointer;border:2px solid ${i === 0 ? "#7c3aed" : "transparent"};border-radius:8px;padding:2px" data-vc="${i}"><div style="border-radius:6px;overflow:hidden;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px"><img src="${cv.toDataURL("image/webp", .85)}" alt="" style="max-width:100%;display:block;margin:auto"></div>${many ? `<div style="text-align:center;font-size:.8rem;margin-top:.2rem"><input type="radio" name="pbai-v" value="${i}"${i === 0 ? " checked" : ""}> الخيار ${i + 1}</div>` : ""}</label>`;
     if (S.kind !== "xp" && S.kind !== "ps" && S.kind !== "rc") { r.innerHTML = note ? '<div class="ep-n">' + esc(note) + '</div>' : ""; A().liveCanvas(S.id, S.res, { tab: S.kind, apply: () => apply({ node: { id: S.id } }), cancel: () => { S.res = null; S.vars = null; const r2 = $("pbai-res"); if (r2) r2.innerHTML = ""; say(""); } }); return; }      // النتيجة تظهر مباشرة على الصورة بـ«تنفيذ/إلغاء»
     r.innerHTML = `<div style="display:grid;grid-template-columns:${many ? "1fr 1fr" : "1fr"};gap:.4rem;margin:.4rem 0">${list.map(card).join("")}</div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="apply">✔ تطبيق ${many ? "الخيار المحدّد" : "على الصورة"}</button><button type="button" class="pbx-small" data-ai="discard">تجاهل</button></div>${note ? '<div class="ep-n">' + esc(note) + '</div>' : ""}`;
@@ -16531,6 +16594,12 @@ const PBAI = (() => {
   async function run(kind, inf) {
     if (S.busy) return; readForm(); S.id = inf.node.id; S.busy = true;
     try {
+      if (kind === "bfl") {      // تحسين سريع محلي مجاني: تحسين تلقائي + تقليل ضوضاء + حدّة
+        if (typeof PBRetouch === "undefined") throw new Error("أداة اللمسات غير محمّلة");
+        say("⏳ جارٍ التحسين…"); const im0 = await loadImg(inf.set.src), k1 = Math.min(1, 2400 / Math.max(im0.width, im0.height)), b0 = k1 < 1 ? (() => { const c = mk(im0.width * k1, im0.height * k1); c.getContext("2d").drawImage(im0, 0, 0, c.width, c.height); return c; })() : im0, st = ({ low: 60, mid: 85, high: 100 })[S.fx.bf.str] || 85;
+        const out = PBRetouch._t.run(b0, { auto: st, dn: 1, kv: 0, kh: 0, br: 0, ct: 0, sa: 0, wm: 0, sh: S.fx.bf.str === "high" ? 55 : 35, vg: 0, gr: 0, trim: false, pad: 4, recol: [] });
+        showRes(out, "تحسين محلي مجاني — الحجم " + out.width + "×" + out.height); say("✅ تمّ — راجع النتيجة ثم نفّذ"); S.busy = false; return;
+      }
       if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("مولّد الصور غير متاح");
       say("⏳ جارٍ تجهيز الصورة…"); const src0 = await loadImg(inf.set.src), k0 = Math.min(1, 1600 / Math.max(src0.width, src0.height)), src = k0 < 1 ? (() => { const c = mk(src0.width * k0, src0.height * k0); c.getContext("2d").drawImage(src0, 0, 0, c.width, c.height); return c; })() : src0;
       if (kind === "expand" || kind === "xlocal") {
@@ -16598,6 +16667,17 @@ const PBAI = (() => {
         }
         showRes(r.canvas, m[1] + " — " + r.canvas.width + "×" + r.canvas.height); say("✅ تمّ — راجع النتيجة ثم طبّقها");
         if (S.faMode === "model" && f.who !== "mannequin") { const rr = $("pbai-res"); if (rr) rr.insertAdjacentHTML("beforeend", '<div class="pbrt-row"><button type="button" class="pbx-small" data-ai="savemodel">💾 احفظ هذا العارض لاستعماله مع قطع أخرى</button></div>'); }
+      } else if (kind === "fx") {
+        const fk = S.kind, T = FXT[fk]; if (!T) { S.busy = false; return; } const tries = 1 + (S.fx.retries || 0), e = ImgGen.estimate ? ImgGen.estimate() : null;
+        if (e) { if (!(e.can ? e.can(tries) : e.left >= tries * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); } if (!confirm(T.t + " بالذكاء الاصطناعي" + (tries > 1 ? " (حتى " + tries + " محاولات إن لم تبلغ الجودة التقديرية " + S.fx.thr + ")" : "") + "\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        const blob = await blobOf(src, "image/png"), prompt = fxPrompt(fk, S.fx[fk], S.opt.hint.trim()); let best = null, bq = null;
+        for (let t = 0; t < tries; t++) {
+          say("⏳ " + T.t + (tries > 1 ? " — محاولة " + (t + 1) + " من " + tries : "") + "…");
+          const r = await ImgGen.edit({ blob, prompt, W: src.width, H: src.height, title: T.t, confirm: e ? false : undefined }); if (!r) break;
+          const q = qaScore(r.canvas); if (!best || q.score > bq.score) { best = r.canvas; bq = q; } if (q.score >= S.fx.thr) break;
+        }
+        if (!best) { say(""); S.busy = false; return; }
+        showRes(best, "الحجم الناتج " + best.width + "×" + best.height); say("✅ تمّ — راجع النتيجة ثم نفّذ" + (bq.score < S.fx.thr ? " (الجودة التقديرية أقل من الحد — جرّب إعادة المحاولة أو توجيهاً إضافياً)" : ""));
       } else if (kind === "shot") {
         const sh = SHOTS[S.shotI]; if (!sh) { S.busy = false; return; }
         const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: shotPrompt(sh[2], S.opt.hint.trim(), sh[3]), W: src.width, H: src.height, title: "إعادة تصوير المنتج — " + sh[1] }); if (!r) { say(""); S.busy = false; return; }
@@ -16612,7 +16692,7 @@ const PBAI = (() => {
   }
   async function apply(inf) {
     if (!S.res || S.busy) return; S.busy = true; say("⏳ جارٍ الرفع…");
-    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().liveClear(false); if (S.kind === "xp" && S.frame && A().xpApply) A().xpApply(q.node.id); S.frame = false; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : S.kind === "fa" ? "استوديو أزياء ذكي" : S.kind === "to" ? "تجربة افتراضية" : S.kind === "ps" ? "تصوير المنتج بالذكاء" : S.kind === "rc" ? "تلوين بالذكاء" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
+    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().liveClear(false); if (S.kind === "xp" && S.frame && A().xpApply) A().xpApply(q.node.id); S.frame = false; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : S.kind === "fa" ? "استوديو أزياء ذكي" : S.kind === "to" ? "تجربة افتراضية" : S.kind === "ps" ? "تصوير المنتج بالذكاء" : S.kind === "rc" ? "تلوين بالذكاء" : FXT[S.kind] ? FXT[S.kind].lab : S.kind === "bf" ? "تحسين المنتج" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
     catch (e) { say("⚠️ " + (e.message || e)); }
     S.busy = false;
   }
@@ -16626,7 +16706,7 @@ const PBAI = (() => {
     root.addEventListener("input", readForm);
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
-      if (k === "v360") run("v360", inf); else if (k === "v360add") { const fr = S.v3.frames; if (!fr || S.busy) return; S.busy = true; say("⏳ تحسين الإطارات ورفعها…"); Promise.all(fr.map(c => blobOf(c, "image/webp"))).then(bs => addView360(bs, "عرض 360° بالذكاء")).then(n => { say("✅ أُضيف عرض 360° (" + n + " إطاراً)"); S.v3.frames = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; }).catch(x => say("⚠️ " + (x.message || x))).then(() => { S.busy = false; }); } else if (k === "recolor") run("recolor", inf); else if (k === "pshoot") run("pshoot", inf); else if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "xlocal") run("xlocal", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
+      if (k === "v360") run("v360", inf); else if (k === "v360add") { const fr = S.v3.frames; if (!fr || S.busy) return; S.busy = true; say("⏳ تحسين الإطارات ورفعها…"); Promise.all(fr.map(c => blobOf(c, "image/webp"))).then(bs => addView360(bs, "عرض 360° بالذكاء")).then(n => { say("✅ أُضيف عرض 360° (" + n + " إطاراً)"); S.v3.frames = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; }).catch(x => say("⚠️ " + (x.message || x))).then(() => { S.busy = false; }); } else if (k === "fx") run("fx", inf); else if (k === "bfl") run("bfl", inf); else if (k === "recolor") run("recolor", inf); else if (k === "pshoot") run("pshoot", inf); else if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "xlocal") run("xlocal", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
       else if (k === "tpdel") { S.person = null; S.remember = false; keepPerson(); const n = $("pbai-tpn"); if (n) n.textContent = "حُذفت صورتك"; t.remove(); }
       else if (k === "outfit") { const u = outfitPool()[+t.dataset.i], l = S.fa.outfit, cap = loadModels().some(m => m.id === S.fa.model) ? 1 : 2; if (!u) return; const i = l.indexOf(u); if (i >= 0) l.splice(i, 1); else if (l.length < cap) l.push(u); else say("الحد الأقصى " + cap + " قطعة إضافية" + (cap === 1 ? " مع عارض محفوظ" : "")); t.style.outline = l.includes(u) ? "3px solid #7c3aed" : "none"; }
       else if (k === "usemodel") { S.fa.model = S.fa.model === t.dataset.id ? "" : t.dataset.id; if (S.fa.model && S.fa.outfit.length > 1) S.fa.outfit = S.fa.outfit.slice(0, 1); const h = $("pbai-fmods"); if (h) h.innerHTML = modelsHtml(S.fa); }
@@ -16639,7 +16719,7 @@ const PBAI = (() => {
   const reset = () => { S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
   /* «مشهد ذكي للمنتج» بنقرة: يضبط مشهدين من مشاهد الاستخدام اليومي (على طاولة، في اليد) فيخرج خياران للمقارنة بموافقة تكلفة واحدة (نفس مسار تصوير المنتج) */
   const stage = () => { const ids = ["table", "hand"]; S.ps = ids.map(id => SHOTS.findIndex(x => x[0] === id)).filter(i => i >= 0); return S.ps.slice(); };
-  return { stage, panel, mount, openTx, reset, xpChanged, state: S, _t: { FA_AGE, FA_BODY, FA_TONE, lookText, loadModels, saveModels, plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS, v360Prompt, polish, addView360 } };
+  return { stage, panel, mount, openTx, reset, xpChanged, qa: qaScore, state: S, _t: { FXT, fxPrompt, qaScore, qaText, FA_AGE, FA_BODY, FA_TONE, lookText, loadModels, saveModels, plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS, v360Prompt, polish, addView360 } };
 })();
 
 /* أدوات صور إضافية محلية (بلا API): ① كولاج (شبكات جاهزة من صور الصفحة) ② فيديو من الصورة (تقريب/تحريك Ken Burns بصيغة WebM/MP4) ③ إطار وهوية (حدّ، زوايا، بطاقة بظل، شعار محفوظ).

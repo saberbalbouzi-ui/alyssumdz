@@ -548,16 +548,24 @@ const AdminNav = (() => {
   }
   async function imgCut() {
     if (!IT.cv || IT.busy) return; if (typeof PBBgRemove === "undefined") return msg("أداة نزع الخلفية غير محمّلة"); IT.busy = true; msg("جارٍ نزع الخلفية…");
-    try { const r = await PBBgRemove.autoCut(IT.cv, { onStep: s => msg(s) }); IT.res = r.canvas; IT.mode = "png"; paint(r.canvas, "it-pv"); const h = $("it-pv"); if (h) h.style.background = "repeating-conic-gradient(rgba(255,255,255,.12) 0 25%,transparent 0 50%) 50%/18px 18px"; msg("تم نزع الخلفية"); const d = $("it-dl"); if (d) d.disabled = false; }
+    try { const r = await PBBgRemove.autoCut(IT.cv, { onStep: s => msg(s) }); IT.res = r.canvas; IT.mode = "cut"; IT.cut = r.canvas; itShow(); let cf = ""; try { const q = PBBgRemove.confidence(r.canvas); cf = " — ثقة تقديرية " + Math.round(q.score * 100) + "%" + (q.notes.length ? " (" + q.notes.join("، ") + ")" : ""); } catch (e) { } msg("تم نزع الخلفية" + cf); const d = $("it-dl"); if (d) d.disabled = false; ["it-bg", "it-fmt"].forEach(i => { const e = $(i); if (e) e.disabled = false; }); }
     catch (e) { msg("⚠️ " + (e && e.message || e)); } IT.busy = false;
   }
+  /* تركيب النتيجة على الخلفية المختارة: شفافة | بيضاء | لون (على نمط خيارات Background Remover) */
+  function itCompose() {
+    const c = IT.cut; if (!c) return null; const bg = ($("it-bg") || {}).value || "transp", col = bg === "white" ? "#ffffff" : bg === "color" ? (($("it-bgc") || {}).value || "#ffffff") : null; if (!col) return c;
+    const o = document.createElement("canvas"); o.width = c.width; o.height = c.height; const g = o.getContext("2d"); g.fillStyle = col; g.fillRect(0, 0, o.width, o.height); g.drawImage(c, 0, 0); return o;
+  }
+  function itShow() { const o = itCompose(); if (!o) return; IT.res = o; paint(o, "it-pv"); const h = $("it-pv"), t = !(($("it-bg") || {}).value) || ($("it-bg").value === "transp"); if (h) h.style.background = t ? "repeating-conic-gradient(rgba(255,255,255,.12) 0 25%,transparent 0 50%) 50%/18px 18px" : ""; const c = $("it-bgc"); if (c) c.style.display = ($("it-bg") || {}).value === "color" ? "" : "none"; const f = $("it-fmt"); if (f && f.value === "jpeg" && t) f.value = "png"; }
   async function imgWebp() {
     if (!IT.cv) return; const q = Number(($("it-q") || {}).value || 82) / 100; IT.res = IT.cv; IT.mode = "webp"; IT.q = q;
     const b = await new Promise(r => IT.cv.toBlob(r, "image/webp", q)); msg("WebP بجودة " + Math.round(q * 100) + "% — الحجم " + Math.round(b.size / 1024) + " ك.ب"); const d = $("it-dl"); if (d) d.disabled = false;
   }
   async function imgDl() {
-    if (!IT.res) return; const png = IT.mode === "png", b = await new Promise(r => IT.res.toBlob(r, png ? "image/png" : "image/webp", IT.q || .9)); if (!b) return;
-    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = IT.name + (png ? "-nobg.png" : ".webp"); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    if (!IT.res) return; const cut = IT.mode === "cut", fmt = cut ? (($("it-fmt") || {}).value || "png") : "webp", mime = fmt === "jpeg" ? "image/jpeg" : fmt === "webp" ? "image/webp" : "image/png";
+    let cv = IT.res; if (cut && fmt === "jpeg" && (($("it-bg") || {}).value || "transp") === "transp") { const o = document.createElement("canvas"); o.width = cv.width; o.height = cv.height; const g = o.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, o.width, o.height); g.drawImage(cv, 0, 0); cv = o; }
+    const b = await new Promise(r => cv.toBlob(r, mime, IT.q || .92)); if (!b) return;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = IT.name + (cut ? "-nobg" : "") + "." + (fmt === "jpeg" ? "jpg" : fmt); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
   /* «إعدادات الموقع» و«تجهيز المتجر» صفحتان في قسم واحد: شريط تبديل أعلى كلٍّ منهما، وزر القائمة الجانبية واحد */
   function seg() {
@@ -580,7 +588,7 @@ const AdminNav = (() => {
   }
   /* روابط عميقة من صفحات دليل الأدوات (saas/guide): admin.html#tool=<id> — أدوات القوائم المستقلة تُفتح مباشرة، وأدوات المحرّر تفتح مطوّر الصفحات على تبويب «تعديل الصورة» (ومنشئ الشعار والصورة من وصف تفتح نافذتها) */
   const DEEP_TAB = { gen: "imggen", batch: "imgtools", catalog: "imgtools" };
-  const DEEP_NAME = { boxdesigner: "Alyssum Box Designer", pack3d: "Alyssum 3D Pack Studio", barcode: "مولّد الباركود و QR", bg: "نزع الخلفية", scene: "مشهد ذكي للمنتج", st: "استوديو المنتج", vd: "تحريك الصورة", vgen: "مولّد الفيديو بالذكاء", vad: "إعلان فيديو بالذكاء", pshoot: "تصوير المنتج بالذكاء", v360: "عرض 360° للمنتج", fashion: "استوديو أزياء ذكي", tryon: "تجربة افتراضية", txt2img: "صورة من وصف نصي", mk: "ماسك", pz: "بازل", cap: "التقاط العناصر", rt: "لمسات وتصحيح", ff: "حواف ناعمة", fr: "إطار وهوية", bl: "دمج صور", cl: "كولاج", xp: "توسيع الخلفية بالذكاء", resize: "تغيير المقاس والتوسيع", sl: "أساليب تصوير ذكية", ai: "تعديل بالوصف", erase: "ممحاة ذكية", up: "تحسين الجودة", brand: "الهوية البصرية", recolor: "تلوين الملابس", logo: "منشئ الشعار", ast: "مكتبة الأصول", stk: "ملصقات" };
+  const DEEP_NAME = { boxdesigner: "Alyssum Box Designer", pack3d: "Alyssum 3D Pack Studio", barcode: "مولّد الباركود و QR", bg: "نزع الخلفية", scene: "مشهد ذكي للمنتج", st: "استوديو المنتج", vd: "تحريك الصورة", vgen: "مولّد الفيديو بالذكاء", vad: "إعلان فيديو بالذكاء", pshoot: "تصوير المنتج بالذكاء", v360: "عرض 360° للمنتج", fashion: "استوديو أزياء ذكي", tryon: "تجربة افتراضية", txt2img: "صورة من وصف نصي", mk: "ماسك", pz: "بازل", cap: "التقاط العناصر", rt: "لمسات وتصحيح", ff: "حواف ناعمة", fr: "إطار وهوية", bl: "دمج صور", cl: "كولاج", xp: "توسيع الخلفية بالذكاء", resize: "تغيير المقاس والتوسيع", sl: "أساليب تصوير ذكية", ai: "تعديل بالوصف", erase: "ممحاة ذكية", up: "تحسين الجودة", brand: "الهوية البصرية", recolor: "تلوين الملابس", relight: "إعادة الإضاءة", textrm: "إزالة النص والعلامات", uncrop: "استعادة الجزء المقطوع", beautify: "محسّن المنتج", logo: "منشئ الشعار", ast: "مكتبة الأصول", stk: "ملصقات" };
   async function deepTool(id) {
     id = String(id || (/[#&]tool=([a-z0-9]+)/i.exec(location.hash) || [])[1] || "").toLowerCase(); if (!id || !(DEEP_TAB[id] || DEEP_NAME[id])) return false;
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { }
@@ -606,5 +614,5 @@ const AdminNav = (() => {
   window.addEventListener("hashchange", () => { if (/[#&]tool=/.test(location.hash)) deepTool(); });
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", deepBoot) : deepBoot();
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { deepTool, toolGo, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { deepTool, toolGo, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, itShow, apply, off };
 })();

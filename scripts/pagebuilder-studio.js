@@ -7,7 +7,7 @@ const PBStudio = (() => {
   const SCENES = [1, 2, 3, 4, 5, 6].map(i => ({ id: "sc" + i, src: "assets/img/tpl/alyssum-sc" + i + ".webp", floor: .76 }));
   const BADGES = [["-50%", "#e11d48", "#ffffff", "circle"], ["توصيل مجاني", "#16a34a", "#ffffff", "pill"], ["جديد", "#f59e0b", "#1f1300", "pill"], ["الأكثر مبيعاً", "#7c3aed", "#ffffff", "ribbon"], ["ضمان الجودة", "#0ea5e9", "#ffffff", "pill"], ["عرض خاص", "#111827", "#fde68a", "ribbon"]];
   const POS = ["أعلى يسار", "أعلى وسط", "أعلى يمين", "وسط يسار", "الوسط", "وسط يمين", "أسفل يسار", "أسفل وسط", "أسفل يمين"];
-  const DEF = { bg: "white", c1: "#ffffff", blur: 18, shadow: "contact", pad: .1, align: "center", size: "1000x1000", cw: 1000, ch: 1000, podium: false, rot: 0, flip: false, font: "", refl: 0, outW: 0, outC: "#ffffff", bri: 0, con: 0, sat: 0, tmp: 0, ov: [], logoPos: 8, logoSize: 16, logoOp: 90, fmt: "png", q: 92 };
+  const DEF = { bg: "white", c1: "#ffffff", blur: 18, shadow: "contact", shI: 100, shB: 100, shX: 0, shY: 100, pad: .1, align: "center", size: "1000x1000", cw: 1000, ch: 1000, podium: false, rot: 0, flip: false, font: "", refl: 0, outW: 0, outC: "#ffffff", bri: 0, con: 0, sat: 0, tmp: 0, ov: [], logoPos: 8, logoSize: 16, logoOp: 90, fmt: "png", q: 92 };
   const SITE_FF = "'Cairo','Segoe UI'", LSK = "pbx_studio";
   const S = { id: "", src: "", cut: null, bb: null, srcC: null, logo: null, opt: Object.assign({}, DEF), busy: false, msg: "", scenes: {}, tab: "bg", pv: "", pvUrl: "", off: false, dtok: 0, site: { ff: SITE_FF, url: "", loaded: false } };
   try { const o = JSON.parse(localStorage.getItem(LSK) || "null"); if (o && typeof o === "object") Object.assign(S.opt, o); } catch (e) { }
@@ -84,7 +84,8 @@ const PBStudio = (() => {
     let dy; if (floor !== null) dy = H * floor - dh; else dy = o.align === "bottom" ? H * (1 - pad) - dh : (H - dh) / 2; const dx = cx - dw / 2, foot = dy + dh;
     if (o.podium && !scene) drawPodium(g, cx, foot, Math.max(dw * .72, W * .22), W, H, o.podiumColor);
     if (o.shadow === "contact" || o.shadow === "contactStrong") {
-      const op = o.shadow === "contact" ? .34 : .55, rx = dw * .5, ry = Math.max(5, dw * .07); g.save(); g.translate(cx, foot - ry * .25); g.scale(1, ry / rx);
+      const sI = (o.shI == null ? 100 : o.shI) / 100, sB = (o.shB == null ? 100 : o.shB) / 100, sX = (o.shX || 0) / 100 * dw, sY = (o.shY == null ? 100 : o.shY) / 100;
+      const op = Math.min(1, (o.shadow === "contact" ? .34 : .55) * sI), rx = dw * .5 * (.6 + .4 * sB), ry = Math.max(5, dw * .07 * sB); g.save(); g.translate(cx + sX, foot - ry * .25 + (sY - 1) * ry * .8); g.scale(1, ry / rx);
       const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, "rgba(0,0,0," + op + ")"); gr.addColorStop(.6, "rgba(0,0,0," + op * .45 + ")"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.fill(); g.restore();
     }
     if (o.refl > 0) {      /* انعكاس على الأرضية: نسخة مقلوبة تتلاشى */
@@ -95,7 +96,7 @@ const PBStudio = (() => {
       const sil = mk(dw, dh), s = sil.getContext("2d"); s.drawImage(pcv, 0, 0); s.globalCompositeOperation = "source-in"; s.fillStyle = o.outC || "#fff"; s.fillRect(0, 0, dw, dh); const rr = Math.max(1, W * o.outW / 1000);
       for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 2; g.drawImage(sil, dx + Math.cos(t) * rr, dy + Math.sin(t) * rr); }
     }
-    g.save(); if (o.shadow === "soft" || o.shadow === "strong") { const k = o.shadow === "soft" ? 1 : 1.9; g.shadowColor = "rgba(0,0,0," + (.26 * Math.min(1.5, k)) + ")"; g.shadowBlur = dw * .05 * k; g.shadowOffsetY = dw * .03 * k; }
+    g.save(); if (o.shadow === "soft" || o.shadow === "strong") { const k = o.shadow === "soft" ? 1 : 1.9, sI = (o.shI == null ? 100 : o.shI) / 100, sB = (o.shB == null ? 100 : o.shB) / 100, sX = (o.shX || 0) / 100, sY = (o.shY == null ? 100 : o.shY) / 100; g.shadowColor = "rgba(0,0,0," + Math.min(1, .26 * Math.min(1.5, k) * sI) + ")"; g.shadowBlur = dw * .05 * k * sB; g.shadowOffsetY = dw * .03 * k * sY; g.shadowOffsetX = dw * .03 * k * sX * 3; }
     g.drawImage(pcv, dx, dy); g.restore();
     (o.ov || []).forEach(ov => drawBadge(g, W, H, ov, o));
     if (o.logo && o.logo.width) { const lw = W * (o.logoSize || 16) / 100, lh = lw * o.logo.height / o.logo.width, [lx, ly] = anchor(o.logoPos == null ? 8 : o.logoPos, W, H, lw, lh, W * .04); g.save(); g.globalAlpha = Math.max(.05, Math.min(1, (o.logoOp == null ? 90 : o.logoOp) / 100)); g.drawImage(o.logo, lx, ly, lw, lh); g.restore(); }
@@ -162,6 +163,7 @@ ${fontSel('data-ovk="font"', v.font || "", "حسب الخط العام")}
 <div id="pbst-blurbox" style="display:${o.bg === "blur" ? "block" : "none"}">${rg("blur", "قوة الطمس", 4, 60, 1, o.blur)}</div></div>
 <div ${pane("prod")}><div class="pbst-row"><div><label class="pbst-l">الظل</label><select id="pbst-sh"><option value="contact">ملامسة (الأنسب)</option><option value="contactStrong">ملامسة قوية</option><option value="soft">ناعم</option><option value="strong">قوي</option><option value="none">بدون</option></select></div>
 <div><label class="pbst-l">الموضع</label><select id="pbst-al"><option value="center">في الوسط</option><option value="bottom">على الأرض</option></select></div></div>
+<div class="pbst-sub" style="margin:.35rem 0 .1rem;font-size:.74rem;opacity:.8">ضبط الظل (شدة، نعومة، اتجاه)</div>${rg("shI", "شدة الظل %", 0, 200, 5, o.shI == null ? 100 : o.shI)}${rg("shB", "نعومة الظل %", 20, 300, 5, o.shB == null ? 100 : o.shB)}${rg("shX", "إزاحة أفقية", -100, 100, 5, o.shX || 0)}${rg("shY", "إزاحة رأسية %", 0, 250, 5, o.shY == null ? 100 : o.shY)}
 <div><label class="pbst-l">حجم المنتج <span id="pbst-pv-n"></span></label><input type="range" id="pbst-pad" min="2" max="35" step="1" value="${Math.round((1 - o.pad * 2) * 100) ? Math.round(o.pad * 100) : 10}"></div>
 <label class="pbst-ck"><input type="checkbox" id="pbst-pod" ${o.podium ? "checked" : ""}> منصة عرض تحت المنتج</label>
 ${rg("rot", "تدوير", -180, 180, 1, o.rot)}<label class="pbst-ck"><input type="checkbox" data-stk="flip" ${o.flip ? "checked" : ""}> قلب أفقي</label></div>
