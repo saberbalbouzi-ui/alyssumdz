@@ -64,6 +64,7 @@
     "assets/js/admin-order-docs.js",
     "scripts/gen-blog.py",
     "assets/js/admin-imgbatch.js",
+    "assets/js/barcode-tool.js",
     "assets/js/admin-imgqa.js",
     "assets/js/tryon-shopper.js",
     "assets/js/admin-pagerater.js",

@@ -84,6 +84,7 @@ jobs:
       - run: node scripts/test-edition.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-edition-live.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-edition-real.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-barcode.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-fashion.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-digital-checkout.js

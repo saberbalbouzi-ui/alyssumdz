@@ -580,10 +580,11 @@ const AdminNav = (() => {
   }
   /* روابط عميقة من صفحات دليل الأدوات (saas/guide): admin.html#tool=<id> — أدوات القوائم المستقلة تُفتح مباشرة، وأدوات المحرّر تفتح مطوّر الصفحات على تبويب «تعديل الصورة» (ومنشئ الشعار والصورة من وصف تفتح نافذتها) */
   const DEEP_TAB = { gen: "imggen", batch: "imgtools", catalog: "imgtools" };
-  const DEEP_NAME = { bg: "نزع الخلفية", scene: "مشهد ذكي للمنتج", st: "استوديو المنتج", vd: "تحريك الصورة", vgen: "مولّد الفيديو بالذكاء", vad: "إعلان فيديو بالذكاء", pshoot: "تصوير المنتج بالذكاء", v360: "عرض 360° للمنتج", fashion: "استوديو أزياء ذكي", tryon: "تجربة افتراضية", txt2img: "صورة من وصف نصي", mk: "ماسك", pz: "بازل", cap: "التقاط العناصر", rt: "لمسات وتصحيح", ff: "حواف ناعمة", fr: "إطار وهوية", bl: "دمج صور", cl: "كولاج", xp: "توسيع الخلفية بالذكاء", resize: "تغيير المقاس والتوسيع", sl: "أساليب تصوير ذكية", ai: "تعديل بالوصف", erase: "ممحاة ذكية", up: "تحسين الجودة", brand: "الهوية البصرية", recolor: "تلوين الملابس", logo: "منشئ الشعار", ast: "مكتبة الأصول", stk: "ملصقات" };
+  const DEEP_NAME = { barcode: "مولّد الباركود و QR", bg: "نزع الخلفية", scene: "مشهد ذكي للمنتج", st: "استوديو المنتج", vd: "تحريك الصورة", vgen: "مولّد الفيديو بالذكاء", vad: "إعلان فيديو بالذكاء", pshoot: "تصوير المنتج بالذكاء", v360: "عرض 360° للمنتج", fashion: "استوديو أزياء ذكي", tryon: "تجربة افتراضية", txt2img: "صورة من وصف نصي", mk: "ماسك", pz: "بازل", cap: "التقاط العناصر", rt: "لمسات وتصحيح", ff: "حواف ناعمة", fr: "إطار وهوية", bl: "دمج صور", cl: "كولاج", xp: "توسيع الخلفية بالذكاء", resize: "تغيير المقاس والتوسيع", sl: "أساليب تصوير ذكية", ai: "تعديل بالوصف", erase: "ممحاة ذكية", up: "تحسين الجودة", brand: "الهوية البصرية", recolor: "تلوين الملابس", logo: "منشئ الشعار", ast: "مكتبة الأصول", stk: "ملصقات" };
   async function deepTool(id) {
     id = String(id || (/[#&]tool=([a-z0-9]+)/i.exec(location.hash) || [])[1] || "").toLowerCase(); if (!id || !(DEEP_TAB[id] || DEEP_NAME[id])) return false;
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { }
+    if (id === "barcode") { if (typeof BarcodeTool === "undefined") return false; BarcodeTool.open(); return true; }
     if (DEEP_TAB[id]) { try { Admin.tab(DEEP_TAB[id]); } catch (e) { } return true; }
     if (typeof PBAdmin === "undefined" || typeof PBApp === "undefined") return false;
     try { Admin.tab("builder"); } catch (e) { }
