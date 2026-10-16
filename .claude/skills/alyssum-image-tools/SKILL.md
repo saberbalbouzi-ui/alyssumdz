@@ -51,3 +51,4 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 
 
 - v1.89.271: صفحات التعريف كلها (14، ومنها remove-background) تُولَّد من `PAGES` في gen-landing.py؛ `CAP[slug]` = عناوين عربية بحسب ترتيب الصور حين لا يطابق اسم الملف محتواها. حزمة نزع الخلفية القديمة `remove_webp_and_template` حُذفت وحلّت محلها `alyssum_suppression_de_fond_webp`.
+- v1.89.272: صفحة التعريف الخامسة عشرة `object-capture` (أداة cap) من حزمة `alyssum_capture_magique_webp`؛ الأوصاف صادقة (نماذج محلية متفاوتة الدقة، ترميم محلي للمكان).
