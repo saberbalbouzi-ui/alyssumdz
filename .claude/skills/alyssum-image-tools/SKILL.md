@@ -65,3 +65,7 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 
 ## Alyssum 3D Pack Studio و Box Designer (v1.89.293–294)
 - `assets/js/pack3d.js` (three.js محلي في `assets/js/vendor/`) و`assets/js/box-designer.js`؛ أداتان في «ستوديو ديزاين» (`pack3d`، `boxdesigner`). اختبار WebGL بـSwiftShader: `node scripts/test-pack3d.js` و`test-boxdesigner.js`. التفاصيل والحدود في CLAUDE.md. أي نوع علبة جديد: هندسة في `geom` وطيّ في `buildFold`.
+
+
+## تكافؤ فوتوروم (v1.89.297)
+- المرجع `platform/docs/photoroom-parity.md`. أدوات `rl|tr|uc|bf` في `PBAI` بجدول `FXT` (لوحة موحّدة، `fxPrompt`)، ودرجة الجودة `PBAI.qa` والإعادة التلقائية (حد 70)، و`PBBgRemove.confidence`، وخيارات الإخراج في «أدوات تعديل الصور» (`AdminNav.itShow/imgDl`)، وظل الاستوديو (`shI/shB/shX/shY`). كل أداة ذكية جديدة: مدخل `FXT` أو kind مستقل + `saas/guide/tools.json` + `DEEP_NAME` + مقال في `admin-help.json` + اختبار في test-imgtools. نصوص الواجهة بلا أسماء مزوّدين وبلا مبالغ.

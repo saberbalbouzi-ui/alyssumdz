@@ -138,6 +138,14 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
   // ── تحسين الصورة (فلاتر/ظل/حدود) في إعدادات الصورة ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار صورة", ""); pg.slug = "img-fx"; const sec = PB.mkS([PB.mkC([PB.mkW("image", { src: "assets/img/favicon.png", hauto: true })])]); pg.sections = [sec]; window.__imgId = sec.cols[0].widgets[0].id; PBApp.open(pg, "", true); }); await p.waitForTimeout(1800);
+  const shd = await p.evaluate(() => {
+    const c = document.createElement("canvas"); c.width = 400; c.height = 300; const g = c.getContext("2d"); g.fillStyle = "#e11"; g.fillRect(100, 50, 200, 200);
+    const bb = PBStudio.bbox(c), run = o => { const out = PBStudio.compose(c, bb, Object.assign({ size: [600, 600], bg: { type: "color", c1: "#ffffff" }, pad: .15, align: "center", shadow: "contact", podium: false }, o)), d = out.getContext("2d"); const band = (x0, x1) => { let s = 0, n = 0; const im = d.getImageData(x0, 0, x1 - x0, 600).data; for (let y = 0; y < 600; y++) for (let x = 0; x < x1 - x0; x++) { const i = (y * (x1 - x0) + x) * 4; if (im[i] > 230 && im[i + 1] > 230) { s += 255 - im[i]; n++; } else if (im[i] < 235 && im[i + 1] > 100) { s += 255 - im[i]; n++; } } return s; }; return { l: band(0, 300), r: band(300, 600) }; };
+    const none = run({ shadow: "none" }), def = run({}), strong = run({ shI: 200 }), off = run({ shI: 0 }), right = run({ shX: 100 }), left = run({ shX: -100 });
+    return { none, def, strong, off, right, left };
+  });
+  ok("الاستوديو: شدة الظل قابلة للضبط (0 = بلا ظل، 200 أغمق من الافتراضي)", shd.off.l + shd.off.r <= shd.none.l + shd.none.r + 50 && shd.strong.l + shd.strong.r > shd.def.l + shd.def.r * 1.2 && shd.def.l + shd.def.r > shd.off.l + shd.off.r, shd);
+  ok("الاستوديو: إزاحة الظل أفقياً تغيّر اتجاهه", shd.right.r - shd.right.l > shd.left.r - shd.left.l + 20, shd);
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); }); await p.waitForTimeout(400);
   ok("إعدادات الصورة: مجموعة «تحسين الصورة» وفلتر جاهز وظل", await p.evaluate(() => { const t = (document.getElementById("pbx-insp") || {}).textContent || ""; return /تحسين الصورة/.test(t); }));
   ok("فلتر الصورة يُرسم في CSS", await p.evaluate(() => { const pg = JSON.parse(PBApp.pageJson()); const w = pg.sections[0].cols[0].widgets[0]; w.set.iprs = "vivid"; w.set.ish = "medium"; const h = PB.fullHtml(pg, { base: "./", site: {}, products: [], meta: { tabs: [], cats: {} } }); return /saturate\(135%\)/.test(h) && /drop-shadow\(0px 10px 18px/.test(h); }));
@@ -1390,7 +1398,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     ImgGen.edit = old; window.confirm = oc; B.S.cfg.ai = "none"; B.S.files = []; B.S.out = [];
     return { ok1, n: calls.length, noConf: calls.slice(0, 2).every(x => x.conf === false), askedCost: /رصيد Alyssum API/.test(asked) && !/[$]|تكلفة/.test(asked) && /2 صورة/.test(asked), noText, recolor: /navy blue/.test(pr), capped, modes: B.AI_MODES.length };
   });
-  ok("دفعة الصور بخطوة ذكاء: صورتان تُعالجان بموافقة تكلفة واحدة، والوصف الفارغ والحدّ 250 يمنعان التنفيذ", bt.ok1 === 2 && bt.n >= 2 && bt.noConf && bt.askedCost && bt.noText && bt.recolor && bt.capped && bt.modes === 8, bt);
+  ok("دفعة الصور بخطوة ذكاء: صورتان تُعالجان بموافقة تكلفة واحدة، والوصف الفارغ والحدّ 250 يمنعان التنفيذ", bt.ok1 === 2 && bt.n >= 2 && bt.noConf && bt.askedCost && bt.noText && bt.recolor && bt.capped && bt.modes === 11, bt);
   // ── روابط عميقة من دليل الأدوات ──
   const dpl = await p.evaluate(async () => {
     const bad = await AdminNav.deepTool("zzz"); location.hash = "#tool=gen"; const good = await AdminNav.deepTool(); const cleared = !/tool=/.test(location.hash);
@@ -1810,7 +1818,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     let go = ""; const og = AdminNav.toolGo; AdminNav.toolGo = id => { go = id; }; window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: fr.contentWindow })); window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: window })); AdminNav.toolGo = og; R.go2 = go;
     document.querySelector("[data-sdback]").click(); Admin.tab("home"); await w(200); R.hidden = !vis(); return R;
   });
-  ok("ستوديو ديزاين: لا تبويب «كل الأدوات»، كل الأدوات (36) بمرشحات وبحث، الأداة تفتح صفحتها مباشرة (إطار صفحة التعريف الغنية بارتفاع تلقائي وزرّها يفتح المحرّر)، وللأدوات بلا صفحة تعريف صفحة مختصرة بلا دليل", sdt.btn && sdt.noAll && sdt.vis && sdt.n === 36 && sdt.chips === 4 && sdt.icons >= 14 && sdt.f >= 1 && sdt.f < 30 && /studio=v360/.test(sdt.hash) && sdt.page === "عرض 360° للمنتج" && sdt.steps >= 3 && sdt.rel >= 1 && sdt.go && sdt.noGuide && sdt.back === 36 && /saas\/landing\/remove-background\/\?embed=1$/.test(sdt.frSrc) && sdt.noOld && sdt.h === "3210px" && sdt.go2 === "bg" && sdt.hidden, sdt);
+  ok("ستوديو ديزاين: لا تبويب «كل الأدوات»، كل الأدوات (40) بمرشحات وبحث، الأداة تفتح صفحتها مباشرة (إطار صفحة التعريف الغنية بارتفاع تلقائي وزرّها يفتح المحرّر)، وللأدوات بلا صفحة تعريف صفحة مختصرة بلا دليل", sdt.btn && sdt.noAll && sdt.vis && sdt.n === 40 && sdt.chips === 4 && sdt.icons >= 14 && sdt.f >= 1 && sdt.f < 30 && /studio=v360/.test(sdt.hash) && sdt.page === "عرض 360° للمنتج" && sdt.steps >= 3 && sdt.rel >= 1 && sdt.go && sdt.noGuide && sdt.back === 40 && /saas\/landing\/remove-background\/\?embed=1$/.test(sdt.frSrc) && sdt.noOld && sdt.h === "3210px" && sdt.go2 === "bg" && sdt.hidden, sdt);
   // ── تبويب «أدوات ذكية» محذوف من القائمة اليسرى (أدواته داخل «تعديل الصورة») ──
   const nsT = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; PBAdmin.mkPage("بلا ذكية"); await w(1500); const R = { smart: !!document.querySelector('.pbx-tabs [data-lt="smart"]'), img: !!document.querySelector('.pbx-tabs [data-lt="img"]'), tabs: [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt).join(",") }; PBApp.close(); await w(400); return R; });
   ok("القائمة اليسرى: لا تبويب «أدوات ذكية» (موجودة داخل «تعديل الصورة»)", !nsT.smart && nsT.img, nsT);

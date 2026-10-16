@@ -20,7 +20,7 @@ const AdminImgBatch = (() => {
   function target(c) { if (c.preset === "orig") return null; if (c.preset === "custom") return { aiPrompt, AI_MODES, w: Math.max(16, Math.min(6000, +c.w || 1000)), h: Math.max(16, Math.min(6000, +c.h || 1000)) }; const m = c.preset.split("x"); return { w: +m[0], h: +m[1] }; }
 
   /* خطوة ذكاء اصطناعي اختيارية لكل صورة قبل بقية المعالجة (Alyssum API): تهيئة مشهد، مانيكان غير مرئي، مسطح، عارض افتراضي، إزالة تجاعيد، تلوين، تعديل بوصف. موافقة تكلفة واحدة للدفعة (حتى 250 صورة) */
-  const AI_MODES = [["none", "بلا خطوة ذكاء"], ["stage", "تهيئة مشهد (Product Staging)"], ["ghost", "مانيكان غير مرئي"], ["flat", "تصوير مسطح"], ["model", "عارض افتراضي"], ["wrinkle", "إزالة التجاعيد"], ["recolor", "تلوين المنتج"], ["edit", "تعديل بوصف"]];
+  const AI_MODES = [["none", "بلا خطوة ذكاء"], ["stage", "تهيئة مشهد (Product Staging)"], ["ghost", "مانيكان غير مرئي"], ["flat", "تصوير مسطح"], ["model", "عارض افتراضي"], ["wrinkle", "إزالة التجاعيد"], ["recolor", "تلوين المنتج"], ["beautify", "محسّن المنتج"], ["relight", "إعادة الإضاءة (استوديو)"], ["textrm", "إزالة العلامات والنصوص الدخيلة"], ["edit", "تعديل بوصف"]];
   const AI_MAX = 250;
   function aiPrompt(c) {
     const T = typeof PBAI !== "undefined" ? PBAI._t : null; if (!T) return "";
@@ -28,6 +28,9 @@ const AdminImgBatch = (() => {
     if (c.ai === "ghost" || c.ai === "flat" || c.ai === "wrinkle") return T.fashionPrompt(c.ai, {});
     if (c.ai === "model") return T.fashionPrompt("model", { who: c.aiWho || "mannequin", pose: "stand", bg: "white" });
     if (c.ai === "recolor") { const k = (T.RC_COLORS || []).find(x => x[0] === c.aiColor) || (T.RC_COLORS || [])[0]; return T.recolorPrompt("", k ? k[3] : "red"); }
+    if (c.ai === "beautify") return T.fxPrompt("bf", {}, "");
+    if (c.ai === "relight") return T.fxPrompt("rl", {}, "");
+    if (c.ai === "textrm") return T.fxPrompt("tr", {}, "");
     if (c.ai === "edit") return String(c.aiText || "").trim() ? T.editPrompt(c.aiText) : "";
     return "";
   }

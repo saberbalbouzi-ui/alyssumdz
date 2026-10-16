@@ -303,6 +303,21 @@ const PBBgRemove = (function () {
   function uniformBg(srcC) {
     try { const k = Math.min(1, LO / Math.max(srcC.width, srcC.height)), w = Math.max(8, Math.round(srcC.width * k)), h = Math.max(8, Math.round(srcC.height * k)), c = scaledCanvas(srcC, w, h), d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, w, h).data; let t = 0; for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] < 40) t++; if (t > w * h * .01) return false; return !!floodBg(rgbOf(c).rgb, w, h); } catch (e) { return false; }
   }
+  /* درجة ثقة تقديرية (0–1) لنتيجة نزع الخلفية، على نمط Uncertainty Score في Photoroom: تقدير هندسي من القناع (نسبة البكسلات نصف الشفافة، تجزّؤ الكتل، تغطية معقولة) لا احتمال صادر عن نموذج */
+  function confidence(cv) {
+    const k = Math.min(1, 384 / Math.max(cv.width, cv.height)), w = Math.max(8, Math.round(cv.width * k)), h = Math.max(8, Math.round(cv.height * k)), c = document.createElement("canvas"); c.width = w; c.height = h;
+    const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, N = w * h; let solid = 0, mid = 0;
+    const m = new Uint8Array(N); for (let i = 0; i < N; i++) { const a = d[i * 4 + 3]; if (a > 240) { solid++; m[i] = 1; } else if (a > 15) mid++; }
+    const cov = (solid + mid) / N; let u = 0; const notes = [];
+    if (!solid) return { score: 0, cov: 0, notes: ["لا عنصر ظاهر"] };
+    const midR = mid / (solid + mid); u += Math.min(.5, midR * 4); if (midR > .08) notes.push("حواف غير حاسمة");
+    // تجزّؤ: عدد الكتل المتصلة الكبيرة (≥1% من العنصر) — كثرتها غالباً بقايا خلفية أو تقطّع
+    const lab = new Int32Array(N); let comps = 0, big = 0; const st = new Int32Array(N);
+    for (let i = 0; i < N; i++) { if (!m[i] || lab[i]) continue; comps++; let sp = 0, sz = 0; st[sp++] = i; lab[i] = comps; while (sp) { const q = st[--sp]; sz++; const x = q % w, y = (q / w) | 0; if (x > 0 && m[q - 1] && !lab[q - 1]) { lab[q - 1] = comps; st[sp++] = q - 1; } if (x < w - 1 && m[q + 1] && !lab[q + 1]) { lab[q + 1] = comps; st[sp++] = q + 1; } if (y > 0 && m[q - w] && !lab[q - w]) { lab[q - w] = comps; st[sp++] = q - w; } if (y < h - 1 && m[q + w] && !lab[q + w]) { lab[q + w] = comps; st[sp++] = q + w; } } if (sz >= solid * .01) big++; }
+    if (big > 3) { u += Math.min(.25, (big - 3) * .05); notes.push("عدة قطع منفصلة"); }
+    if (cov < .06) { u += .4; notes.push("العنصر صغير جداً"); } else if (cov > .96) { u += .45; notes.push("الخلفية لم تُنزع غالباً"); }
+    u = Math.max(0, Math.min(1, u)); return { score: Math.round((1 - u) * 100) / 100, cov: Math.round(cov * 100) / 100, notes };
+  }
   async function autoCut(srcC, o) {
     o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
     const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), kOK = !!o.allowKey && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
@@ -371,9 +386,9 @@ const PBBgRemove = (function () {
       const all = (keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
       const r = await autoCut(LV.src, { methods, allowKey: true, onStep: m => chip(m, true) }); LV.res = r;
-      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)");
+      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); { let cf = ""; try { const q = confidence(r.canvas); cf = " · ثقة تقديرية " + Math.round(q.score * 100) + "%" + (q.notes.length ? " (" + q.notes[0] + ")" : ""); } catch (e) { } chip("✅ تمّ" + cf + " — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)"); }
     } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, live, autoCut, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, autoCut, confidence, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();
