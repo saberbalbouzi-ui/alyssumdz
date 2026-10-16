@@ -67,6 +67,7 @@
     "assets/js/barcode-tool.js",
     "assets/js/pack3d.js",
     "assets/js/box-designer.js",
+    "assets/js/box-profiles.js",
     "assets/js/vendor/three.module.min.js",
     "assets/js/vendor/three.LICENSE.txt",
     "assets/js/admin-imgqa.js",
