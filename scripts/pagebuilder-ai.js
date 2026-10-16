@@ -43,7 +43,7 @@ const PBAI = (() => {
 
   /* ── حالة اللوحات ── */
   const PLS = "pbx_tryon_person";      // صورة الشخص تُحفظ على هذا الجهاز فقط وبموافقة صريحة («تذكّر صورتي»)
-  const S = { rc: { item: "", sel: ["red", "navy"], custom: "#3366cc", useCustom: false }, ps: [0, 1, 2], person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same" }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const S = { rc: { item: "", sel: ["red", "navy"], custom: "#3366cc", useCustom: false }, ps: [0, 1, 2], v3: { n: 8, frames: null }, person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same" }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
   /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
   const SHOTS = [["studio", "استوديو أبيض نظيف", "a clean seamless white studio with soft shadows"], ["marble", "رخام فاخر", "a luxurious white marble surface with soft gold accents and gentle window light"], ["nature", "أعشاب وطبيعة", "a natural setting with fresh green leaves and herbs, soft morning sunlight"], ["wood", "خشب ريفي دافئ", "a warm rustic wooden table with soft golden-hour light"], ["kitchen", "مطبخ عصري", "a bright modern kitchen counter with blurred background"], ["spa", "حمام وسبا", "a calm spa bathroom setting with towels, stones and soft steam"], ["gift", "هدية وتغليف", "a festive gift flat-lay with ribbons and tasteful wrapping paper"], ["beach", "صيف وشاطئ", "a sunny summer beach setting with sand and soft bokeh sea"], ["lantern", "أجواء رمضانية دافئة", "a warm festive evening mood with soft lantern light and elegant dark background"], ["neon", "نيون ليلي", "a dark stylish background with colorful neon rim lighting and reflections"], ["splash", "انتعاش وماء", "a fresh dynamic scene with water droplets and splashes, cool bright light"], ["pop", "لون صارخ بسيط", "a bold minimal solid color backdrop that contrasts with the product, hard shadow, pop-art feel"],
@@ -125,6 +125,13 @@ const PBAI = (() => {
 <div class="rt-g"><label>أو لون مخصص <input type="color" id="pbai-rcc" value="${r.custom || "#3366cc"}"></label><label><input type="checkbox" id="pbai-rcu" ${r.useCustom ? "checked" : ""}> استعمل اللون المخصص</label></div>
 <button type="button" class="pbx-small pz-go" data-ai="recolor">🎨 ولّد الألوان</button>
 <div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`; }
+    if (kind === "v3") return `<div class="pbx-pz" id="pbai"><p>اجعل منتجك يدور 360° بسحب الزائر: <b>يُنشئ الذكاء</b> زوايا متتالية للمنتج من صورة واحدة، أو <b>ارفع صورك الحقيقية</b> على قرص دوّار (الأدق، وبلا تكلفة). تُحسَّن جودة الإطارات تلقائياً قبل الاستعمال.</p>${stateBar()}
+<div class="rt-g"><label>عدد الإطارات <select id="pbai-v3n" class="pbx-small">${[6, 8, 12].map(n => `<option value="${n}"${S.v3.n === n ? " selected" : ""}>${n} (كل ${360 / n}°)</option>`).join("")}</select></label></div>
+<div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: العبوة أسطوانية بملصق أمامي">${esc(o.hint)}</textarea></label></div>
+<button type="button" class="pbx-small pz-go" data-ai="v360">🔄 ولّد الإطارات بالذكاء</button>
+<div class="ep-n"><b>أو بلا ذكاء:</b> اختر 6 صور فأكثر للمنتج من زوايا متتالية (تُرتَّب بأسماء الملفات).</div>
+<label class="pbx-small" style="cursor:pointer;display:block;text-align:center">📷 ارفع صور القرص الدوّار<input type="file" accept="image/*" multiple id="pbai-v3f" style="display:none"></label>
+<div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     if (kind === "ps") return `<div class="pbx-pz" id="pbai"><p>جلسة تصوير كاملة لمنتجك: اختر حتى <b>3 مشاهد</b> ويُصوَّر المنتج في كلٍّ منها بالذكاء الاصطناعي مع حفظ شكله وملصقاته، ثم تختار الأفضل. موافقة واحدة على التكلفة الإجمالية.</p>${stateBar()}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem">${SHOTS.map((x, i) => `<label style="border:1.5px solid rgba(128,128,128,.35);border-radius:8px;padding:.35rem .4rem;font-size:.78rem;cursor:pointer"><input type="checkbox" data-psk="${i}"${S.ps.includes(i) ? " checked" : ""}> ${x[1]}</label>`).join("")}</div>
 <div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
@@ -158,6 +165,17 @@ const PBAI = (() => {
   }
   const say = t => { S.msg = t; const e = $("pbai-msg"); if (e) e.textContent = t; };
   function loadImg(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
+  /* عرض 360°: تعليمات تدوير المنتج حول محوره الرأسي مع ثبات كل شيء آخر (الإطار الأول = الصورة الأصلية بزاوية 0) */
+  const v360Prompt = (deg, k, n, hint) => "Rotate the exact product in this photo by " + deg + " degrees around its vertical axis, like a product on a turntable (frame " + (k + 1) + " of " + n + "). Keep the SAME product: identical shape, proportions, colors, materials, labels and printed text as seen from the new angle. Keep the SAME background, lighting, shadows, camera height, framing and scale, with the product centered at the same position. Photorealistic. No people, no extra objects, no watermark, no added text." + (hint ? " Extra direction: " + hint : "");
+  /* تحسين جودة الصورة قبل استعمالها: تكبير هادئ ثم حدّة خفيفة بالمعالجة نفسها لكل الإطارات (بلا تحسين لوني مستقل فلا يومض الدوران) */
+  async function polish(blob, minSide) {
+    try { if (typeof ImgUpscale === "undefined") return blob; const im = await new Promise((ok, no) => { const u = URL.createObjectURL(blob), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); ok(i); }; i.onerror = no; i.src = u; }), side = Math.max(im.naturalWidth, im.naturalHeight), t = minSide || 1280; if (side >= t) return blob; const r = await ImgUpscale.run(blob, { scale: "w" + Math.round(im.naturalWidth * t / side), sharp: 35, fmt: "webp", q: 92 }); return r && r.blob ? r.blob : blob; } catch (e) { return blob; }
+  }
+  const natKey = f => f.name.replace(/[0-9]+/g, d => d.padStart(6, "0"));
+  async function addView360(blobs, label) {
+    const paths = []; for (const b of blobs) { const q = await polish(b, 1280), pth = await A().uploadBlob(q, "v360-" + Date.now().toString(36) + "-" + paths.length, { max: 2048, q: .92 }); if (!pth) throw new Error("تعذّر رفع إطار"); paths.push(pth); }
+    A().insertSections([PB.mkS([PB.mkC([PB.mkW("view360", { imgs: paths.join("\n") })])], { pad: { d: [20, 20, 20, 20], m: [14, 12, 14, 12] } })], label || "عرض 360°"); return paths.length;
+  }
   const blobOf = (c, type) => new Promise(r => c.toBlob(r, type || "image/webp", .93));
   const readForm = () => {
     const o = S.opt, v = id => ($(id) || {}).value; if ($("pbai-r")) o.ratio = +v("pbai-r") || o.ratio; if ($("pbai-a")) o.anchor = v("pbai-a") || o.anchor;
@@ -166,6 +184,7 @@ const PBAI = (() => {
     if ($("pbai-trem")) { const r = $("pbai-trem").checked; if (r !== S.remember) { S.remember = r; keepPerson(); } }
     if ($("pbai-fw")) S.fa = { who: v("pbai-fw"), pose: v("pbai-fp"), bg: v("pbai-fb"), ratio: v("pbai-fr") };
     if ($("pbai-sz")) { const z = v("pbai-sz"); if (z) { const [zw, zh] = z.split("x").map(Number); o.sz = { w: zw, h: zh }; } }
+    if ($("pbai-v3n")) S.v3.n = +v("pbai-v3n") || 8;
     if ($("pbai-hint")) o.hint = v("pbai-hint") || ""; if ($("pbai-text")) o.text = v("pbai-text") || "";
   };
   const errText = e => e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل هذه الأداة" : e && e.code === "OFF" ? "التوليد الذكي للصور معطّل من الإعدادات" : "⚠️ " + (e && e.message || e);
@@ -174,6 +193,9 @@ const PBAI = (() => {
     const card = (cv, i) => `<label style="display:block;cursor:pointer;border:2px solid ${i === 0 ? "#7c3aed" : "transparent"};border-radius:8px;padding:2px" data-vc="${i}"><div style="border-radius:6px;overflow:hidden;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px"><img src="${cv.toDataURL("image/webp", .85)}" alt="" style="max-width:100%;display:block;margin:auto"></div>${many ? `<div style="text-align:center;font-size:.8rem;margin-top:.2rem"><input type="radio" name="pbai-v" value="${i}"${i === 0 ? " checked" : ""}> الخيار ${i + 1}</div>` : ""}</label>`;
     if (S.kind !== "xp" && S.kind !== "ps" && S.kind !== "rc") { r.innerHTML = note ? '<div class="ep-n">' + esc(note) + '</div>' : ""; A().liveCanvas(S.id, S.res, { tab: S.kind, apply: () => apply({ node: { id: S.id } }), cancel: () => { S.res = null; S.vars = null; const r2 = $("pbai-res"); if (r2) r2.innerHTML = ""; say(""); } }); return; }      // النتيجة تظهر مباشرة على الصورة بـ«تنفيذ/إلغاء»
     r.innerHTML = `<div style="display:grid;grid-template-columns:${many ? "1fr 1fr" : "1fr"};gap:.4rem;margin:.4rem 0">${list.map(card).join("")}</div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="apply">✔ تطبيق ${many ? "الخيار المحدّد" : "على الصورة"}</button><button type="button" class="pbx-small" data-ai="discard">تجاهل</button></div>${note ? '<div class="ep-n">' + esc(note) + '</div>' : ""}`;
+  }
+  function v3Show(frames, note) {
+    const r = $("pbai-res"); if (!r) return; r.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin:.4rem 0">${frames.map((c, i) => `<img src="${c.toDataURL("image/webp", .6)}" alt="" title="${Math.round(360 * i / frames.length)}°" style="width:100%;display:block;border-radius:4px">`).join("")}</div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="v360add">✔ أضف عرض 360° للصفحة</button><button type="button" class="pbx-small" data-ai="discard">تجاهل</button></div>${note ? '<div class="ep-n">' + esc(note) + '</div>' : ""}`;
   }
   const pickVar = i => { if (!S.vars || !S.vars[i]) return; S.res = S.vars[i]; document.querySelectorAll("#pbai-res [data-vc]").forEach(e => { e.style.borderColor = +e.dataset.vc === i ? "#7c3aed" : "transparent"; }); };
   /* ملخص الإطار الموسَّع تحت اللوحة (يُحدَّث أثناء سحب المقابض) */
@@ -228,6 +250,17 @@ const PBAI = (() => {
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => r.value.canvas);
         if (!ok.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         showRes(ok, "نجح " + ok.length + " من " + idx.length + " — اختر الأفضل ثم طبّقه."); say("✅ جاهز — اختر أحد الخيارات");
+      } else if (kind === "v360") {
+        const n = S.v3.n, e = ImgGen.estimate ? ImgGen.estimate() : null, need = n - 1;
+        if (e) { if (e.left < need * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("عرض 360° بالذكاء الاصطناعي — " + need + " إطاراً جديداً\nالتكلفة التقريبية: " + e.fmt(need * e.cost) + "\nيُنفَّذ إطاراً بعد إطار ويمكن أن يستغرق دقائق. متابعة؟")) { say(""); S.busy = false; return; } }
+        const blob0 = await polish(await blobOf(src, "image/png"), 1024), frames = [src], rs = $("pbai-res");
+        for (let i = 1; i < n; i++) {
+          say("⏳ الإطار " + (i + 1) + " من " + n + "…");
+          try { const r = await ImgGen.edit({ blob: blob0, extra: i > 1 ? [await blobOf(frames[frames.length - 1], "image/png")] : undefined, prompt: v360Prompt(Math.round(360 * i / n), i, n, S.opt.hint.trim()), W: src.width, H: src.height, title: "360° — إطار " + (i + 1), confirm: e ? false : undefined }); if (!r || !r.canvas) break; frames.push(r.canvas); } catch (x) { if (frames.length < 2) throw x; break; }
+        }
+        if (frames.length < 2) { say(""); S.busy = false; return; }
+        S.v3.frames = frames; v3Show(frames, frames.length < n ? "اكتمل " + frames.length + " من " + n + " إطاراً فقط" : "");
+        say("✅ " + frames.length + " إطاراً — راجع التسلسل ثم أضفه للصفحة");
       } else if (kind === "tryon") {
         if (!S.person) { say("ارفع صورة الشخص أولاً"); S.busy = false; return; }
         const pc = S.person.c, k1 = Math.min(1, 1600 / Math.max(pc.width, pc.height)), W = Math.round(pc.width * k1), H = Math.round(pc.height * k1);
@@ -261,16 +294,17 @@ const PBAI = (() => {
     const root = host.querySelector("#pbai"); if (!root) return;
     root.addEventListener("change", e => { if (e.target.dataset.rck != null) { const k = e.target.dataset.rck; S.rc.sel = S.rc.sel.filter(x => x !== k); if (e.target.checked) { S.rc.sel.push(k); if (S.rc.sel.length > 4) { const f = S.rc.sel.shift(), b = root.querySelector('[data-rck="' + f + '"]'); if (b) b.checked = false; } } return; } if (e.target.dataset.psk != null) { const i = +e.target.dataset.psk; S.ps = S.ps.filter(x => x !== i); if (e.target.checked) { S.ps.push(i); if (S.ps.length > 3) { const first = S.ps.shift(); const b = root.querySelector('[data-psk="' + first + '"]'); if (b) b.checked = false; } } return; } readForm(); if (e.target.name === "pbai-v") pickVar(+e.target.value); else if (e.target.id === "pbai-r" || e.target.id === "pbai-a") { S.opt.sz = null; const zz = $("pbai-sz"); if (zz) zz.value = ""; frameFromRatio(); } else if (e.target.id === "pbai-sz") { if (S.opt.sz) { S.opt.ratio = S.opt.sz.w / S.opt.sz.h; frameFromRatio(); } } });
     xpChanged();
+    const vf = $("pbai-v3f"); if (vf) vf.onchange = async () => { const fl = Array.from(vf.files || []).filter(f => /^image\//.test(f.type)).sort((a, b) => natKey(a) < natKey(b) ? -1 : 1).slice(0, 36); if (fl.length < 6) { say("اختر 6 صور على الأقل (من زوايا متتالية)"); return; } if (S.busy) return; S.busy = true; say("⏳ تحسين " + fl.length + " صورة ورفعها…"); try { const n = await addView360(fl, "عرض 360° من صور حقيقية"); say("✅ أُضيف عرض 360° (" + n + " إطاراً)"); } catch (x) { say("⚠️ " + (x.message || x)); } S.busy = false; };
     const tp = $("pbai-tp"); if (tp) tp.onchange = () => { const f = tp.files[0]; if (!f) return; const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 2000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); S.person = { c, w: c.width, h: c.height }; keepPerson(); const n = $("pbai-tpn"); if (n) n.textContent = "✔ صورة الشخص جاهزة (" + c.width + "×" + c.height + ")"; }; im.onerror = () => say("تعذّر قراءة الصورة"); im.src = u; };
     root.addEventListener("input", readForm);
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
-      if (k === "recolor") run("recolor", inf); else if (k === "pshoot") run("pshoot", inf); else if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "xlocal") run("xlocal", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
+      if (k === "v360") run("v360", inf); else if (k === "v360add") { const fr = S.v3.frames; if (!fr || S.busy) return; S.busy = true; say("⏳ تحسين الإطارات ورفعها…"); Promise.all(fr.map(c => blobOf(c, "image/webp"))).then(bs => addView360(bs, "عرض 360° بالذكاء")).then(n => { say("✅ أُضيف عرض 360° (" + n + " إطاراً)"); S.v3.frames = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; }).catch(x => say("⚠️ " + (x.message || x))).then(() => { S.busy = false; }); } else if (k === "recolor") run("recolor", inf); else if (k === "pshoot") run("pshoot", inf); else if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "xlocal") run("xlocal", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
       else if (k === "tpdel") { S.person = null; S.remember = false; keepPerson(); const n = $("pbai-tpn"); if (n) n.textContent = "حُذفت صورتك"; t.remove(); }
       else if (k === "discard") { S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; say(""); }
       else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
     });
   }
   const reset = () => { S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
-  return { panel, mount, openTx, reset, xpChanged, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS } };
+  return { panel, mount, openTx, reset, xpChanged, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS, v360Prompt, polish, addView360 } };
 })();

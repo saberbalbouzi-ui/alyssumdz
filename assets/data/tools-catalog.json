@@ -62,6 +62,16 @@
    "landing": "landing/product-photography/"
   },
   {
+   "id": "v360",
+   "g": "إنشاء",
+   "name": "عرض 360° للمنتج",
+   "tag": "منتجك يدور بسحب الزائر",
+   "needs": "ai",
+   "ic": "",
+   "guide": "guide/v360.html",
+   "landing": ""
+  },
+  {
    "id": "fashion",
    "g": "إنشاء",
    "name": "استوديو أزياء ذكي",
