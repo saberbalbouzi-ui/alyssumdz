@@ -1222,7 +1222,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const msg = "قيد التطوير"; const anySoon = pane.querySelectorAll(".pbx-tr .tt-b2").length;
     PBApp.ltoggle("img"); return { heads, rows, cards, ics, soon: anySoon, msg };
   });
-  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 11 && tm.ics === 5 && tm.soon === 0, tm);
+  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 12 && tm.ics === 4 && tm.rows.includes("vgen") && tm.soon === 0, tm);
   // ── مكتبة الأصول (Pixabay/Iconify) داخل المطوّر الحقيقي ──
   const as = await p.evaluate(async () => {
     const real = window.fetch, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 2h2"/></svg>';
