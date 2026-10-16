@@ -4,6 +4,28 @@
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const KEY = Deno.env.get("PIXABAY_KEY") ?? "";
+const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";   // يحقنها Supabase في الدالة؛ لكاش البحث المركزي (جدول pixabay_cache) فقط
+const TTL = 24 * 3600 * 1000;                                  // شرط Pixabay: تخزين نتائج البحث 24 ساعة
+const MEM = new Map<string, { body: string; exp: number }>();  // طبقة ذاكرة داخل النسخة الحيّة للدالة
+const sbh = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
+async function sha(t: string) { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, "0")).join(""); }
+async function cacheGet(k: string): Promise<string | null> {
+  const m = MEM.get(k); if (m && m.exp > Date.now()) return m.body;
+  if (!SRK) return null;
+  try {
+    const r = await fetch(`${URL_}/rest/v1/pixabay_cache?k=eq.${k}&exp=gt.${encodeURIComponent(new Date().toISOString())}&select=body`, { headers: sbh, signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null; const a = await r.json(); if (!a[0]) return null;
+    MEM.set(k, { body: a[0].body, exp: Date.now() + 3600000 }); return a[0].body;
+  } catch { return null; }
+}
+async function cachePut(k: string, body: string) {
+  MEM.set(k, { body, exp: Date.now() + TTL }); if (MEM.size > 300) MEM.delete(MEM.keys().next().value as string);
+  if (!SRK) return;
+  try {
+    await fetch(`${URL_}/rest/v1/pixabay_cache?on_conflict=k`, { method: "POST", headers: { ...sbh, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ k, body, exp: new Date(Date.now() + TTL).toISOString() }), signal: AbortSignal.timeout(4000) });
+    if (Math.random() < 0.02) await fetch(`${URL_}/rest/v1/pixabay_cache?exp=lt.${encodeURIComponent(new Date().toISOString())}`, { method: "DELETE", headers: sbh, signal: AbortSignal.timeout(4000) });   // تنظيف انتهازي
+  } catch { /* الكاش اختياري */ }
+}
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -27,10 +49,13 @@ Deno.serve(async (req) => {
       const p = new URLSearchParams();
       for (const [k, v] of Object.entries(b.query ?? {})) if (PARAMS.has(k)) p.set(k, String(v).slice(0, 100));
       p.set("per_page", String(Math.min(60, Number(p.get("per_page")) || 30)));
+      p.sort(); const ck = await sha(kind + p.toString()), hit = await cacheGet(ck);
+      if (hit) return new Response(hit, { status: 200, headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "private, max-age=3600", "X-Cache": "HIT" } });
       const r = await fetch(`https://pixabay.com/api/${kind}?key=${encodeURIComponent(KEY)}&${p}`, { signal: AbortSignal.timeout(20000) });
       if (r.status === 429) return json({ error: "rate_limited" }, 429);
       if (!r.ok) return json({ error: "upstream", status: r.status }, 502);
-      return new Response(await r.text(), { status: 200, headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "private, max-age=3600" } });
+      const txt = await r.text(); await cachePut(ck, txt);
+      return new Response(txt, { status: 200, headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "private, max-age=3600", "X-Cache": "MISS" } });
     }
     if (b.op === "dl") {
       let u: URL; try { u = new URL(String(b.url)); } catch { return json({ error: "bad_url" }, 400); }
