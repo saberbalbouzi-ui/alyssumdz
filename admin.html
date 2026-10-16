@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.256">
+<meta name="admin-version" content="1.89.257">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1663,12 +1663,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.256"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.256"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.256"></script>
+<script src="assets/js/ctl-help.js?v=1.89.257"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.257"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.257"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.256"></script>
+<script src="assets/js/admin-nav.js?v=1.89.257"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1680,7 +1680,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.247"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.256"></script>
+<script src="assets/js/admin-update.js?v=1.89.257"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -11648,7 +11648,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
-  const EP_TABS = [["up", "تغيير المقاس والتكبير", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
+  const EP_TABS = [["up", "تحسين الجودة", "t_magic"], ["fa", "استوديو أزياء ذكي", "t_magic"], ["to", "تجربة افتراضية", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["br", "الهوية البصرية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
   const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
   function epBody(inf) {
     const t = E.ept || "";
@@ -11659,10 +11659,11 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "rt") return PBRetouch.panel();
     if (t === "ff") return PBFade.panel();
     if (t === "fr") return PBFrame.panel();
+    if (t === "br") return PBBrand.panel();
     if (t === "cl") return PBCollage.panel();
     if (t === "bl") return PBBlend.panel();
     if (t === "vd") return PBVideo.panel();
-    if (t === "xp" || t === "ai" || t === "sl") return PBAI.panel(t);
+    if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
     if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
@@ -11677,9 +11678,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (E.live && E.live.tab && E.live.tab !== cur) liveCancel(); if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); if (cur !== "ff" && typeof PBFade !== "undefined" && PBFade.state.url) PBFade.cancel();
     const tn = EP_TABS.find(x => x[0] === cur), sn = cur === "st" && typeof PBStudio !== "undefined" ? (IMG_ST.find(x => x[0] === PBStudio.tab()) || [])[1] : "";
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
-    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
+    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl" || cur === "fa" || cur === "to") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "br" && nb && nb.querySelector("#pbbr")) { try { PBBrand.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBBrand.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -11695,17 +11696,25 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   const IMG_TOOLS = [["mk", "ماسك", "mask.webp"], ["pz", "بازل", "puzzle.webp"], ["cap", "التقاط العناصر", "select-elements.webp"], ["bg", "نزع الخلفية", "remove-background.webp"], ["rt", "لمسات وتصحيح", "retouch.webp"], ["st", "استوديو المنتج", "product-studio.webp"], ["fr", "إطار وهوية", "frame-photo.webp"], ["ff", "حواف ناعمة", "soft-edges.webp"], ["bl", "دمج صور", "merge-images.webp"], ["cl", "كولاج", "collage.webp"], ["vd", "فيديو من الصورة", "image-to-video.webp"]];
   const IMG_ST = [["bg", "الخلفية", "st_bg"], ["prod", "المنتج", "st_prod"], ["fx", "تأثيرات", "st_fx"], ["txt", "ملصقات وشعار", "st_stk"], ["out", "المقاس والإخراج", "st_size"]];
   const IMG_SM = [["xp", "توسيع الخلفية بالذكاء", "expand-background.webp", true], ["scene", "مشهد ذكي للمنتج", "smart-scene.webp", true], ["sl", "أساليب تصوير ذكية", "smart-photo-styles.webp", true], ["ai", "تعديل بالوصف", "edit-by-prompt.webp", true], ["erase", "ممحاة ذكية بالفرشاة", "smart-brush-eraser.webp", ERASER_ON]];
-  /* تغيير المقاس والتكبير: تكبير بلا ذكاء (تكبير تدريجي + حدّة) عبر ImgUpscale؛ لا يخترع تفاصيل جديدة */
-  const UP = { scale: "2", sharp: 50 };
-  const UP_OPTS = [["2", "×2"], ["3", "×3"], ["4", "×4"], ["w1200", "عرض 1200px"], ["w1600", "عرض 1600px"], ["w2000", "عرض 2000px"]];
-  const upPanel = () => `<div class="pbx-pz"><p>كبّر الصورة بجودة عالية وحدّة محسوبة داخل متصفحك. لا يخترع تفاصيل جديدة، فالأنسب للصور المنخفضة قليلاً لا الضبابية جداً.</p><label class="ep-l">مقدار التكبير<select data-upk="scale">${UP_OPTS.map(([v, n]) => `<option value="${v}"${UP.scale === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="ep-l">الحدّة (${UP.sharp})<input type="range" min="0" max="100" value="${UP.sharp}" data-upk="sharp"></label><button type="button" class="pbx-small pz-go" data-upx="go">${ico("t_magic", 16)} تنفيذ</button></div>`;
+  /* تحسين الجودة: تكبير بلا ذكاء (تكبير تدريجي + حدّة) عبر ImgUpscale + تقليل ضجيج وتحسين تلقائي اختياريان؛ لا يخترع تفاصيل جديدة */
+  const UP = { scale: "2", sharp: 50, dn: 0, auto: 0 };
+  const UP_OPTS = [["1", "بلا تكبير (تحسين فقط)"], ["2", "×2"], ["3", "×3"], ["4", "×4"], ["w1200", "عرض 1200px"], ["w1600", "عرض 1600px"], ["w2000", "عرض 2000px"]];
+  const upPanel = () => `<div class="pbx-pz"><p>حسّن جودة الصورة داخل متصفحك: تكبير بحدّة محسوبة، وتقليل الضجيج، وتحسين تلقائي للألوان والتباين. لا يخترع تفاصيل جديدة، فالأنسب للصور المنخفضة قليلاً لا الضبابية جداً.</p><label class="ep-l">مقدار التكبير<select data-upk="scale">${UP_OPTS.map(([v, n]) => `<option value="${v}"${UP.scale === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="ep-l">الحدّة (${UP.sharp})<input type="range" min="0" max="100" value="${UP.sharp}" data-upk="sharp"></label><label class="ep-l">تقليل الضجيج (${UP.dn})<input type="range" min="0" max="100" value="${UP.dn}" data-upk="dn"></label><label class="ep-l">تحسين تلقائي للألوان (${UP.auto}%)<input type="range" min="0" max="100" value="${UP.auto}" data-upk="auto"></label><button type="button" class="pbx-small pz-go" data-upx="go">${ico("t_magic", 16)} تنفيذ</button></div>`;
   async function upGo(inf) {
-    if (typeof ImgUpscale === "undefined") { toast("أداة التكبير غير متاحة"); return; }
+    if (typeof ImgUpscale === "undefined") { toast("أداة تحسين الجودة غير متاحة"); return; }
     try {
-      toast("⏳ جارِ التكبير…"); const blob = await (await fetch(localize(String(inf.set.src)))).blob(), r = await ImgUpscale.run(blob, { scale: UP.scale, sharp: UP.sharp, fmt: "webp", q: 92 });
+      toast("⏳ جارٍ تحسين الجودة…"); let blob = await (await fetch(localize(String(inf.set.src)))).blob();
+      if ((UP.dn || UP.auto) && typeof PBRetouch !== "undefined" && PBRetouch._t) {
+        const im = await createImageBitmap(blob), cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; cv.getContext("2d").drawImage(im, 0, 0);
+        const P = { auto: UP.auto, dn: UP.dn, kv: 0, kh: 0, br: 0, ct: 0, sa: 0, wm: 0, sh: 0, vg: 0, gr: 0, trim: 0, recol: [] }, out = PBRetouch._t.run(cv, P);
+        blob = await new Promise(r => out.toBlob(r, "image/png"));
+      }
+      let r;
+      if (UP.scale === "1") { const im = await createImageBitmap(blob); r = { blob, w: im.width, h: im.height, from: [im.width, im.height] }; }
+      else r = await ImgUpscale.run(blob, { scale: UP.scale, sharp: UP.sharp, fmt: "webp", q: 92 });
       if (r.same) { toast("الصورة بهذا المقاس أو أكبر منه أصلاً (أو بلغت السقف الأقصى)"); return; }
       const path = await uploadBlob(r.blob, "up-" + Date.now().toString(36), { max: 8192, q: .92 });
-      if (path) { inf.set.src = path; delete inf.set.crop; E.nextLabel = "تكبير الصورة"; afterEdit(); toast("✅ " + r.from.join("×") + " ← " + r.w + "×" + r.h + (r.capped ? " (حدّ أقصى)" : "")); }
+      if (path) { inf.set.src = path; delete inf.set.crop; E.nextLabel = "تحسين جودة الصورة"; afterEdit(); toast("✅ " + r.from.join("×") + " ← " + r.w + "×" + r.h + (r.capped ? " (حدّ أقصى)" : "")); }
     } catch (e) { toast("⚠️ " + (e && e.message || e)); }
   }
   /* صفوف إضافية في قوائم «إنشاء/تعديل/أتمتة»: تنقّل لأدوات موجودة أو أدوات قيد التطوير */
@@ -11717,18 +11726,21 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "gen") return goAdmin("imggen");
     if (k === "batch" || k === "catalog") return goAdmin("imgtools");
     if (k === "up") return imgPick("up");
+    if (k === "fashion" || k === "model") return imgPick("fa");
+    if (k === "tryon") return imgPick("to");
     if (k === "recolor") return imgPick("rt");
+    if (k === "brand") return imgPick("br");
     toast("هذه الأداة قيد التطوير وستظهر هنا فور جاهزيتها");
   }
-  const ROW_IC = { gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
+  const ROW_IC = { brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
   const rowBtn = (k, n, d, soon) => `<button type="button" class="pbx-tr" data-imgx="${k}" title="${esc(n)}"><i><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ROW_IC[k] || ""}</svg></i><span><b>${esc(n)}</b><small>${esc(d)}</small></span>${soon ? '<em class="tt-b2">قريباً</em>' : ""}</button>`;
   function imgPane() {
     const inf = epInf(), open = !!$("pbx-ep"), cur = open ? (E.ept || "") : "", st = typeof PBStudio !== "undefined" ? PBStudio.tab() : "";
     const tile = (attr, label, img, on, badge) => `<button type="button" class="pbx-tt card${on ? " on" : ""}" ${attr} title="${esc(label)}" aria-label="${esc(label)}"><img src="assets/img/tools/${/\./.test(img) ? img : img + ".webp"}" alt="${esc(label)}" draggable="false">${badge ? `<i class="tt-b">${badge}</i>` : ""}</button>`;
     const grp = (title, keys, rows) => `<div class="pbx-cat">${title}</div><div class="pbx-ttg">${keys.map(k => { const t = IMG_TOOLS.find(x => x[0] === k); if (t) return tile(`data-imgt="${t[0]}"`, t[1], t[2], cur === t[0]); const m = IMG_SM.find(x => x[0] === k); return m ? tile(`data-imgm="${m[0]}"`, m[1], m[2], false, m[3] ? "" : "قريباً") : ""; }).join("")}</div>${rows ? `<div class="pbx-trs">${rows}</div>` : ""}`;
     return `${inf ? "" : '<div class="pbx-tn">حدّد صورة في الصفحة ثم اختر الأداة</div>'}`
-      + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "جلسات تصوير كاملة", 1) + rowBtn("model", "عارض افتراضي", "ألبس أي مانيكان", 1) + rowBtn("tryon", "تجربة افتراضية", "غرفة قياس افتراضية", 1))
-      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("up", "تغيير المقاس والتكبير", "أي مقاس، فوراً") + rowBtn("recolor", "تلوين الملابس", "غيّر لون العنصر بالنقر") + rowBtn("logo", "منشئ الشعار", "ولّد عناصر هوية العلامة", 1))
+      + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "جلسات تصوير كاملة", 1) + rowBtn("fashion", "استوديو أزياء ذكي", "عارض افتراضي ومانيكان غير مرئي") + rowBtn("tryon", "تجربة افتراضية", "شاهد القطعة على جسمك"))
+      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "غيّر لون العنصر بالنقر") + rowBtn("logo", "منشئ الشعار", "ولّد عناصر هوية العلامة", 1))
       + `<div class="pbx-cat">أتمتة وتوسّع</div><div class="pbx-trs">${rowBtn("batch", "معالجة الدفعات", "عدّل آلاف الصور دفعة واحدة") + rowBtn("catalog", "كتالوج المنتجات", "افحص وحدّث أغلفة كل متجرك")}</div>`
       + (cur === "st" ? `<div class="pbx-cat">أدوات استوديو المنتج</div><div class="pbx-ttg">${IMG_ST.map(([k, n, im]) => `<button type="button" class="pbx-tt${st === k ? " on" : ""}" data-imgs="${k}" title="${esc(n)}"><img src="assets/img/tools/${im}.webp" alt="" draggable="false"><span>${esc(n)}</span></button>`).join("")}</div>` : "")
       + `<p class="pbx-tn" style="margin-top:.5rem">الأدوات الذكية (توسيع، مشهد، أساليب، تعديل بالوصف، ممحاة) تحتاج مفتاح Alyssum API من إعدادات مولّد الصور، وتُحسب تكلفتها قبل كل تنفيذ.</p>`;
@@ -11764,7 +11776,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t.dataset.q === "smart-magic") { PBSmart.captureElements(); return; }
   }
   function epInput(e) {      // تحريك الأشرطة: معاينة حيّة بلا إعادة رسم اللوحة (حتى لا يُقطع السحب)
-    const t = e.target; if (t.dataset.upk) { UP[t.dataset.upk] = t.dataset.upk === "sharp" ? Number(t.value) : t.value; epDraw(); return; }
+    const t = e.target; if (t.dataset.upk) { UP[t.dataset.upk] = /^(sharp|dn|auto)$/.test(t.dataset.upk) ? Number(t.value) : t.value; epDraw(); return; }
     if (t.dataset.mkk) { const redraw = PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); if (t.type === "range") { const bb = t.parentNode.querySelector("b"); if (bb) bb.textContent = t.value; } if (redraw && t.type !== "range") epDraw(); else epFloat(); return; }
     if (t.dataset.pzk === "knob") PBPuzzle.opt("knob", t.value, false);
   }
@@ -16190,7 +16202,7 @@ const PBFade = (() => {
   return { panel, mount, cancel, reset, state: S, _t: { feather } };
 })();
 
-/* أدوات الصور الذكية (Alyssum API) داخل لوحة «تعديل الصورة»: ① توسيع الخلفية (Generative Expand) ② تعديل بالوصف (Magic Edit: لون المنتج، إضاءة، خلفية، إزالة…).
+/* أدوات الصور الذكية (Alyssum API) داخل لوحة «تعديل الصورة» (+ استوديو الأزياء الذكي): ① توسيع الخلفية (Generative Expand) ② تعديل بالوصف (Magic Edit: لون المنتج، إضاءة، خلفية، إزالة…).
    تستعمل خدمة التوليد نفسها وضوابط التكلفة (ImgGen.edit: تأكيد قبل كل طلب، حدّ إنفاق، لا إعادة محاولة تلقائية). تُحفظ الصورة الأصلية بعد التوليد كما هي:
    في التوسيع تُلصق المنطقة الأصلية فوق الناتج بحافة مُنعَّمة فلا يغيّر النموذج بكسلاً واحداً من المنتج. تعمل الأدوات المحلية (الممحاة، لمسات وتصحيح) بلا مفتاح. */
 const PBAI = (() => {
@@ -16232,14 +16244,49 @@ const PBAI = (() => {
     + "Keep the product's exact shape, proportions, label artwork, packaging text and logos unchanged unless the instruction explicitly says otherwise. Keep the same framing and composition, photorealistic result, natural lighting, no watermark, no added text unless requested, no borders. Output the edited image.";
 
   /* ── حالة اللوحات ── */
-  const S = { shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const S = { person: null, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same" }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
   /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
   const SHOTS = [["studio", "استوديو أبيض نظيف", "a clean seamless white studio with soft shadows"], ["marble", "رخام فاخر", "a luxurious white marble surface with soft gold accents and gentle window light"], ["nature", "أعشاب وطبيعة", "a natural setting with fresh green leaves and herbs, soft morning sunlight"], ["wood", "خشب ريفي دافئ", "a warm rustic wooden table with soft golden-hour light"], ["kitchen", "مطبخ عصري", "a bright modern kitchen counter with blurred background"], ["spa", "حمام وسبا", "a calm spa bathroom setting with towels, stones and soft steam"], ["gift", "هدية وتغليف", "a festive gift flat-lay with ribbons and tasteful wrapping paper"], ["beach", "صيف وشاطئ", "a sunny summer beach setting with sand and soft bokeh sea"], ["lantern", "أجواء رمضانية دافئة", "a warm festive evening mood with soft lantern light and elegant dark background"], ["neon", "نيون ليلي", "a dark stylish background with colorful neon rim lighting and reflections"], ["splash", "انتعاش وماء", "a fresh dynamic scene with water droplets and splashes, cool bright light"], ["pop", "لون صارخ بسيط", "a bold minimal solid color backdrop that contrasts with the product, hard shadow, pop-art feel"]];
   const shotPrompt = (desc, extra) => "RE-SHOOT THIS PRODUCT PHOTO. Keep the product exactly as it is — same shape, proportions, label artwork, packaging text, logos and colors — and place it in this scene: " + desc + ". " + (extra ? "Extra direction: " + extra + ". " : "") + "Photorealistic commercial photography, natural contact shadows and reflections, same camera angle, product centered and fully visible, no people, no extra text, no watermark. Output the new image.";
+  /* استوديو الأزياء الذكي: صورة قطعة ملابس ← عارض افتراضي | مانيكان غير مرئي | تصوير مسطح | إزالة تجاعيد. القواعد: القطعة كما هي تماماً، بلا وجه حقيقي افتراضياً، ولا جلد مكشوف خارج الوجه واليدين، والمرأة بخمار ولباس محتشم */
+  const FA_MODES = [["model", "عارض افتراضي", "ألبس القطعة على عارض"], ["ghost", "مانيكان غير مرئي", "القطعة بشكل ثلاثي الأبعاد بلا عارض"], ["flat", "تصوير مسطح", "القطعة مفرودة على خلفية نظيفة"], ["wrinkle", "إزالة التجاعيد", "كوي رقمي للقطعة"]];
+  const FA_WHO = [["mannequin", "مانيكان بلا وجه"], ["man", "رجل"], ["woman", "امرأة محجبة بلباس محتشم"]];
+  const FA_POSE = [["stand", "واقف أمامي"], ["walk", "يمشي"], ["side", "نصف جانبي"]];
+  const FA_BG = [["white", "استوديو أبيض نظيف"], ["grey", "رمادي ناعم"], ["street", "شارع عصري ضبابي"], ["home", "داخلي دافئ"]];
+  const FA_BGD = { white: "a clean seamless white studio background", grey: "a soft light-grey seamless studio background", street: "a softly blurred modern city street background with natural daylight", home: "a softly blurred warm bright interior background" };
+  const FA_KEEP = "Keep the garment EXACTLY as in the input photo: same cut, length, sleeves, collar, fabric texture, color, patterns, prints, embroidery, buttons, zippers, stitching, labels and logos — do not redesign, recolor, shorten or add details. ";
+  const FA_END = "Photorealistic professional e-commerce fashion photography, natural soft lighting with realistic shadows, sharp focus on the garment, no watermark, no extra text, no brand logos that are not on the garment, no borders. Output the final image.";
+  function fashionPrompt(mode, o) {
+    o = o || {}; const bg = FA_BGD[o.bg] || FA_BGD.white;
+    if (mode === "wrinkle") return "RETOUCH THIS GARMENT PHOTO: remove wrinkles, creases and folds from the fabric so it looks freshly steamed and smooth, while keeping the natural drape and fabric texture. " + FA_KEEP + "Keep the same framing, background and composition. " + FA_END;
+    if (mode === "ghost") return "Create a GHOST MANNEQUIN (invisible mannequin) product photo of the garment from the input photo: the garment appears filled out with natural 3D volume as if worn by an invisible person — show the inside back of the collar and neckline where visible — with NO mannequin, NO person, NO hanger visible. " + FA_KEEP + "Centered, front view, on " + bg + ". " + FA_END;
+    if (mode === "flat") return "Create a FLAT LAY product photo of the garment from the input photo: neatly laid flat, smoothed and symmetrical, photographed straight from above, no wrinkles, on " + bg + ", with a soft natural shadow. No person, no mannequin, no hanger, no props. " + FA_KEEP + FA_END;
+    const pose = { stand: "standing straight facing the camera in a relaxed natural pose", walk: "walking naturally with a confident stride", side: "turned slightly to the side in an elegant three-quarter pose" }[o.pose] || "standing straight facing the camera";
+    const who = o.who === "man" ? "a male fashion model with a natural, neutral expression, wearing the garment together with plain modest complementary clothing for the rest of the outfit (full-length trousers or matching neutral pieces)"
+      : o.who === "woman" ? "a female fashion model who wears a plain, tasteful hijab (headscarf) fully covering her hair and neck, and modest loose full-coverage clothing: long sleeves and full-length bottoms or the garment worn modestly over neutral layers — NO bare arms, NO bare legs, only face and hands visible"
+      : "a plain faceless white mannequin torso-to-feet form without any face or facial features";
+    return "Show the garment from the input photo being worn by " + who + ", " + pose + ", on " + bg + ". " + FA_KEEP + "The model must look natural and realistic, proportionate, with correct hands; do not show skin other than the face and hands. " + FA_END;
+  }
+  /* تجربة افتراضية: الصورة المحدّدة في الصفحة = القطعة، وصورة الشخص تُرفع من الجهاز (تبقى في الذاكرة فقط ولا تُحفظ). الصورة الأولى للنموذج = الشخص، والثانية = القطعة */
+  const tryOnPrompt = o => "VIRTUAL TRY-ON. Image 1 is a photo of a real person. Image 2 is a garment product photo. Dress the person from Image 1 in the garment from Image 2. "
+    + "STRICT RULES: keep the person's face, identity, skin tone, hair or hijab, body shape, pose, hands and the background EXACTLY as in Image 1; only the clothing changes. Replace only the clothing area the garment covers (" + ({ top: "upper body", bottom: "lower body", full: "full outfit / dress", auto: "whatever part of the body the garment is made for" }[o && o.part] || "whatever part of the body the garment is made for") + "). "
+    + "Keep the garment EXACTLY as in Image 2: same cut, length, sleeves, collar, fabric, color, patterns, prints, buttons and logos — fit it naturally to the person's body with realistic drape, folds, shadows and perspective. "
+    + "Do not expose any more skin than the original photo shows: no nudity, no tighter or more revealing result than the garment itself. No watermark, no added text, no borders. Output the final image at the same framing as Image 1.";
   const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُحسب التكلفة وتُطلب موافقتك قبل كل توليد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   function panel(kind) {
     const o = S.opt;
+    if (kind === "to") return `<div class="pbx-pz" id="pbai"><p>اختر صورة القطعة في الصفحة، ثم ارفع <b>صورة شخص واحدة</b> لترى القطعة عليه. تبقى ملامحه وجسمه ووضعيته وخلفيته كما هي ويتغير اللباس فقط.</p>${stateBar()}
+<div class="rt-g"><label class="pbx-small" style="cursor:pointer;display:block;text-align:center">📷 ارفع صورة الشخص<input type="file" accept="image/*" id="pbai-tp" style="display:none"></label><div class="ep-n" id="pbai-tpn">${S.person ? "✔ صورة الشخص جاهزة (" + S.person.w + "×" + S.person.h + ")" : "لم تُرفع صورة بعد"}</div><label>جزء الجسم <select id="pbai-tpart" class="pbx-small">${[["auto", "تلقائي"], ["top", "علوي"], ["bottom", "سفلي"], ["full", "إطلالة كاملة / فستان"]].map(x => `<option value="${x[0]}"${S.tpart === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label></div>
+<button type="button" class="pbx-small pz-go" data-ai="tryon">✨ جرّب القطعة عليه</button>
+<div class="ep-n">صورة الشخص تُعالج لحظياً ولا تُحفظ في المتجر. استعمل صوراً لك أو لمن وافق على ذلك.</div>
+<div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
+    if (kind === "fa") { const f = S.fa, sel = (id, list, v) => `<select id="${id}" class="pbx-small">${list.map(x => `<option value="${x[0]}"${v === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select>`;
+      return `<div class="pbx-pz" id="pbai"><p>ارفع صورة قطعة ملابس واحصل على صورة احترافية: على عارض افتراضي، أو بمانيكان غير مرئي، أو مفرودة، أو بعد إزالة التجاعيد. تبقى القطعة كما هي بقصّتها وألوانها ونقوشها.</p>${stateBar()}
+<div class="rt-g"><label>العارض ${sel("pbai-fw", FA_WHO, f.who)}</label><label>الوضعية ${sel("pbai-fp", FA_POSE, f.pose)}</label><label>الخلفية ${sel("pbai-fb", FA_BG, f.bg)}</label><label>المقاس <select id="pbai-fr" class="pbx-small"><option value="same"${f.ratio === "same" ? " selected" : ""}>نفس مقاس الصورة</option><option value="4:5"${f.ratio === "4:5" ? " selected" : ""}>4:5 (متجر)</option><option value="1:1"${f.ratio === "1:1" ? " selected" : ""}>1:1</option><option value="9:16"${f.ratio === "9:16" ? " selected" : ""}>9:16 (ستوري)</option></select></label></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem">${FA_MODES.map(x => `<button type="button" class="pbx-small" data-ai="fashion" data-m="${x[0]}" style="padding:.5rem .3rem;white-space:normal"><b>${x[1]}</b><br><small>${x[2]}</small></button>`).join("")}</div>
+<div class="ep-n">الاختيار الافتراضي مانيكان بلا وجه. العارض والوضعية تخصّ «عارض افتراضي» فقط.</div>
+<div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`; }
     if (kind === "sl") return `<div class="pbx-pz" id="pbai"><p>اختر أسلوب تصوير جاهزاً ويُعاد تصوير منتجك فيه بالذكاء الاصطناعي مع حفظ شكله وملصقاته.</p>${stateBar()}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem">${SHOTS.map((x, i) => `<button type="button" class="pbx-small" data-ai="shot" data-i="${i}" style="padding:.5rem .3rem;white-space:normal">${x[1]}</button>`).join("")}</div>
 <div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
@@ -16259,6 +16306,8 @@ const PBAI = (() => {
   const blobOf = (c, type) => new Promise(r => c.toBlob(r, type || "image/webp", .93));
   const readForm = () => {
     const o = S.opt, v = id => ($(id) || {}).value; if ($("pbai-r")) o.ratio = +v("pbai-r") || o.ratio; if ($("pbai-a")) o.anchor = v("pbai-a") || o.anchor;
+    if ($("pbai-tpart")) S.tpart = v("pbai-tpart");
+    if ($("pbai-fw")) S.fa = { who: v("pbai-fw"), pose: v("pbai-fp"), bg: v("pbai-fb"), ratio: v("pbai-fr") };
     if ($("pbai-hint")) o.hint = v("pbai-hint") || ""; if ($("pbai-text")) o.text = v("pbai-text") || "";
   };
   const errText = e => e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل هذه الأداة" : e && e.code === "OFF" ? "التوليد الذكي للصور معطّل من الإعدادات" : "⚠️ " + (e && e.message || e);
@@ -16298,6 +16347,16 @@ const PBAI = (() => {
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => restore(r.value.canvas, base, p));
         if (!ok.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         S.resP = p; S.frame = frame; showRes(ok, "الحجم الناتج " + p.W + "×" + p.H + " — الصورة الأصلية محفوظة كما هي" + (ok.length < 2 ? " (نجح خيار واحد فقط)" : "") + ". اختر الأفضل ثم طبّقه."); say("✅ جاهز — اختر أحد الخيارين");
+      } else if (kind === "tryon") {
+        if (!S.person) { say("ارفع صورة الشخص أولاً"); S.busy = false; return; }
+        const pc = S.person.c, k1 = Math.min(1, 1600 / Math.max(pc.width, pc.height)), W = Math.round(pc.width * k1), H = Math.round(pc.height * k1);
+        const r = await ImgGen.edit({ blob: await blobOf(pc, "image/png"), extra: [await blobOf(src, "image/png")], prompt: tryOnPrompt({ part: S.tpart }), W, H, title: "تجربة افتراضية للقطعة" }); if (!r) { say(""); S.busy = false; return; }
+        showRes(r.canvas, "تجربة افتراضية — " + W + "×" + H); say("✅ تمّ — راجع النتيجة ثم طبّقها");
+      } else if (kind === "fashion") {
+        const f = S.fa, m = FA_MODES.find(x => x[0] === S.faMode); if (!m) { S.busy = false; return; }
+        let W = src.width, H = src.height; if (f.ratio !== "same") { const [a, b] = f.ratio.split(":").map(Number), r = a / b, mx = 1600; if (r >= 1) { W = mx; H = Math.round(mx / r); } else { H = mx; W = Math.round(mx * r); } }
+        say("⏳ يعمل الاستوديو…"); const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: fashionPrompt(S.faMode, f), W, H, title: "استوديو أزياء ذكي — " + m[1] }); if (!r) { say(""); S.busy = false; return; }
+        showRes(r.canvas, m[1] + " — " + W + "×" + H); say("✅ تمّ — راجع النتيجة ثم طبّقها");
       } else if (kind === "shot") {
         const sh = SHOTS[S.shotI]; if (!sh) { S.busy = false; return; }
         const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: shotPrompt(sh[2], S.opt.hint.trim()), W: src.width, H: src.height, title: "إعادة تصوير المنتج — " + sh[1] }); if (!r) { say(""); S.busy = false; return; }
@@ -16312,7 +16371,7 @@ const PBAI = (() => {
   }
   async function apply(inf) {
     if (!S.res || S.busy) return; S.busy = true; say("⏳ جارٍ الرفع…");
-    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().liveClear(false); if (S.kind === "xp" && S.frame && A().xpApply) A().xpApply(q.node.id); S.frame = false; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
+    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().liveClear(false); if (S.kind === "xp" && S.frame && A().xpApply) A().xpApply(q.node.id); S.frame = false; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : S.kind === "fa" ? "استوديو أزياء ذكي" : S.kind === "to" ? "تجربة افتراضية" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
     catch (e) { say("⚠️ " + (e.message || e)); }
     S.busy = false;
   }
@@ -16321,16 +16380,17 @@ const PBAI = (() => {
     const root = host.querySelector("#pbai"); if (!root) return;
     root.addEventListener("change", e => { readForm(); if (e.target.name === "pbai-v") pickVar(+e.target.value); else if (e.target.id === "pbai-r" || e.target.id === "pbai-a") frameFromRatio(); });
     xpChanged();
+    const tp = $("pbai-tp"); if (tp) tp.onchange = () => { const f = tp.files[0]; if (!f) return; const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 2000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); S.person = { c, w: c.width, h: c.height }; const n = $("pbai-tpn"); if (n) n.textContent = "✔ صورة الشخص جاهزة (" + c.width + "×" + c.height + ")"; }; im.onerror = () => say("تعذّر قراءة الصورة"); im.src = u; };
     root.addEventListener("input", readForm);
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
-      if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
+      if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
       else if (k === "discard") { S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; say(""); }
       else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
     });
   }
-  const reset = () => { S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
-  return { panel, mount, reset, xpChanged, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS } };
+  const reset = () => { S.person = null; S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
+  return { panel, mount, reset, xpChanged, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt } };
 })();
 
 /* أدوات صور إضافية محلية (بلا API): ① كولاج (شبكات جاهزة من صور الصفحة) ② فيديو من الصورة (تقريب/تحريك Ken Burns بصيغة WebM/MP4) ③ إطار وهوية (حدّ، زوايا، بطاقة بظل، شعار محفوظ).
@@ -16542,6 +16602,108 @@ const PBBlend = (() => {
     try { const out = blend(S.base, S.over, S.o), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "bl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "دمج صورة داخل صورة"; S.base = out; S.over = null; S.overSrc = ""; A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ الدمج"); draw(); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
   }
   return { panel, mount, reset: () => { S.id = ""; S.base = null; S.over = null; S.overSrc = ""; S.msg = ""; }, state: S, _t: { blend, MODES } };
+})();
+
+/* الهوية البصرية (v1.89.257): ألوان العلامة + خطها + شعارها تُحفظ مرة واحدة (localStorage) وتُطبَّق على الصورة المحدّدة:
+   إطار/خلفية بلون من الألوان، ختم الشعار، واسم العلامة بخطّها. الافتراضي يُستورد من ألوان الموقع وخطه واسم المتجر (theme.json وstore.json). معاينة حيّة ثم «تنفيذ/إلغاء». */
+const PBBrand = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const LSK = "pbx_brand_kit", LSL = "pbx_brand_logo";
+  const SLOTS = ["الأساسي", "الثانوي", "الخلفية", "النص", "التمييز"];
+  const DEF = { colors: ["#173f35", "#c8a24b", "#fbf8f2", "#1c2420", "#d64545"], font: "Cairo", name: "" };
+  const S = { id: "", base: null, kit: null, logo: null, msg: "", busy: false, site: false, o: { border: 0, bcol: 1, pad: 0, bgc: 2, radius: 0, logo: false, lpos: "br", lsize: 16, lop: 90, txt: false, tpos: "bc", tsize: 6, tcol: 2, band: true } };
+  const load = () => { if (S.kit) return S.kit; let k = null; try { k = JSON.parse(localStorage.getItem(LSK) || "null"); } catch (e) { } S.kit = Object.assign({}, DEF, k && typeof k === "object" ? k : {}); if (!Array.isArray(S.kit.colors) || S.kit.colors.length < 5) S.kit.colors = DEF.colors.slice(); return S.kit; };
+  const save = () => { try { localStorage.setItem(LSK, JSON.stringify(S.kit)); } catch (e) { } };
+  try { const d = localStorage.getItem(LSL); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  const hex = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : "#000000";
+  const FONTS = () => (typeof PB !== "undefined" && PB.FONT_FAMS ? PB.FONT_FAMS.filter(x => !x[3]) : []).map(([n, w, l]) => [n, l === n ? n : l + " (" + n + ")"]);
+  async function loadFont(name) {
+    if (!document.getElementById("pbfonts-a") && typeof PB !== "undefined" && PB.fontsHref) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
+    if (document.fonts) await Promise.race([document.fonts.load("800 24px '" + name + "'", "أبجد Abc"), new Promise(r => setTimeout(r, 1500))]).catch(() => { });
+  }
+  /* نقية: تُرجع قماشاً بإطار/خلفية بألوان العلامة + شعار + اسم العلامة بخطها */
+  function render(src, kit, o, logo) {
+    const col = i => hex(kit.colors[i]), fo = { border: o.border, bcolor: col(o.bcol), radius: o.radius, pad: o.pad, bg: col(o.bgc), card: false, shadow: 0, logo: !!(o.logo && logo), lpos: o.lpos, lsize: o.lsize, lop: o.lop };
+    const c = (fo.border || fo.pad || fo.logo || fo.radius) ? PBFrame._t.frame(src, fo, logo) : (() => { const x = mk(src.width, src.height); x.getContext("2d").drawImage(src, 0, 0); return x; })();
+    if (o.txt && kit.name) {
+      const g = c.getContext("2d"), W = c.width, H = c.height, fs = Math.max(10, Math.round(Math.min(W, H) * o.tsize / 100)), p = o.tpos, ph = Math.round(fs * 1.9);
+      g.save(); g.direction = "rtl"; g.font = "800 " + fs + "px '" + kit.font + "', 'Cairo', sans-serif"; g.textBaseline = "middle"; g.textAlign = "center";
+      const y = p[0] === "t" ? ph / 2 : p[0] === "m" ? H / 2 : H - ph / 2, x = p[1] === "l" ? Math.min(W / 2, g.measureText(kit.name).width / 2 + fs) : p[1] === "r" ? Math.max(W / 2, W - g.measureText(kit.name).width / 2 - fs) : W / 2;
+      if (o.band) { g.fillStyle = col(0); g.globalAlpha = .88; g.fillRect(0, y - ph / 2, W, ph); g.globalAlpha = 1; }
+      g.fillStyle = col(o.tcol); g.fillText(kit.name, x, y); g.restore();
+    }
+    return c;
+  }
+  const sw = (i, v) => `<label class="pbbr-sw" title="${SLOTS[i]}"><input type="color" data-brc="${i}" value="${hex(v)}"><span>${SLOTS[i]}</span></label>`;
+  const pick = (k, v, kit) => `<select data-bro="${k}" class="pbx-small">${kit.colors.map((c, i) => `<option value="${i}"${+v === i ? " selected" : ""}>${SLOTS[i]} ${hex(c)}</option>`).join("")}</select>`;
+  function panel() {
+    const kit = load(), o = S.o, pos = (k, v) => `<select data-bro="${k}" class="pbx-small">${[["tl", "أعلى يسار"], ["tr", "أعلى يمين"], ["bl", "أسفل يسار"], ["br", "أسفل يمين"], ["mc", "الوسط"]].map(([a, t]) => `<option value="${a}"${v === a ? " selected" : ""}>${t}</option>`).join("")}</select>`;
+    const rg = (k, min, max, t, v) => `<label>${t} <input type="range" min="${min}" max="${max}" value="${v}" data-bro="${k}"></label>`;
+    return `<div class="pbx-pz" id="pbbr"><style>#pbbr .pbbr-sw{display:inline-flex;flex-direction:column;align-items:center;gap:2px;font-size:.7rem;margin:0 .15rem .3rem}#pbbr .pbbr-sw input{width:42px;height:34px;padding:0;border:1.5px solid rgba(128,128,128,.4);border-radius:8px;background:none;cursor:pointer}</style>
+<p>هويتك البصرية: <b>الألوان</b> و<b>الخط</b> و<b>الشعار</b> تُحفظ مرة واحدة وتُطبَّق على أي صورة: إطار وخلفية بألوان علامتك، ختم الشعار، واسم العلامة بخطها. المعاينة مباشرة على الصورة ثم «تنفيذ» أو «إلغاء».</p>
+<div class="ep-n"><b>① الألوان</b></div><div>${kit.colors.map((c, i) => sw(i, c)).join("")}</div>
+<div class="pbrt-row"><button type="button" class="pbx-small" data-brb="site">استيراد من ألوان الموقع</button><button type="button" class="pbx-small" data-brb="defaults">الألوان الافتراضية</button></div>
+<div class="ep-n"><b>② الخط والاسم</b></div>
+<div class="rt-g"><label>خط العلامة <select data-brk="font" class="pbx-small">${FONTS().map(([n, l]) => `<option value="${esc(n)}"${kit.font === n ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label><label>اسم العلامة <input type="text" data-brk="name" value="${esc(kit.name)}" placeholder="اسم متجرك" style="width:100%"></label></div>
+<div class="rt-g"><label><input type="checkbox" data-bro="txt" ${o.txt ? "checked" : ""}> كتابة اسم العلامة على الصورة</label><label>الموضع <select data-bro="tpos" class="pbx-small">${[["tc", "أعلى"], ["mc", "الوسط"], ["bc", "أسفل"]].map(([a, t]) => `<option value="${a}"${o.tpos === a ? " selected" : ""}>${t}</option>`).join("")}</select></label>${rg("tsize", 3, 14, "حجم الاسم", o.tsize)}<label>لون الاسم ${pick("tcol", o.tcol, kit)}</label><label><input type="checkbox" data-bro="band" ${o.band ? "checked" : ""}> شريط بلون العلامة خلف الاسم</label></div>
+<div class="ep-n"><b>③ الشعار</b></div>
+<div class="rt-g"><label><input type="checkbox" data-bro="logo" ${o.logo ? "checked" : ""}> ختم الشعار</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbbr-lf" style="display:none"></label><span class="ep-n">${S.logo ? "✔ الشعار محفوظ" : "لا يوجد شعار محفوظ بعد"}</span><label>الموضع ${pos("lpos", o.lpos)}</label>${rg("lsize", 6, 40, "الحجم", o.lsize)}${rg("lop", 20, 100, "الشفافية", o.lop)}</div>
+<div class="ep-n"><b>④ الإطار بألوان العلامة</b></div>
+<div class="rt-g">${rg("border", 0, 12, "سماكة الحدّ", o.border)}<label>لون الحدّ ${pick("bcol", o.bcol, kit)}</label>${rg("pad", 0, 20, "الهامش", o.pad)}<label>لون الهامش ${pick("bgc", o.bgc, kit)}</label>${rg("radius", 0, 40, "الزوايا", o.radius)}</div>
+<div class="pbrt-row"><button type="button" class="pbx-small" data-brb="reset">تصفير الصورة</button></div><div id="pbbr-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbbr-msg"); if (e) e.textContent = t; };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const k = Math.min(1, 3000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
+  const dirty = () => { const o = S.o; return !!(o.border || o.pad || o.radius || (o.logo && S.logo) || (o.txt && S.kit.name)); };
+  const reset = () => Object.assign(S.o, { border: 0, pad: 0, radius: 0, logo: false, txt: false });
+  let ft = 0;
+  function draw() {
+    if (!S.base) return; clearTimeout(ft); ft = setTimeout(async () => {
+      if (!dirty()) { A().liveClear(true); return; }
+      await loadFont(S.kit.font); const k = Math.min(1, 1100 / Math.max(S.base.width, S.base.height)), s = mk(S.base.width * k, S.base.height * k); s.getContext("2d").drawImage(S.base, 0, 0, s.width, s.height);
+      await A().liveCanvas(S.id, render(s, S.kit, S.o, S.logo), { tab: "br", apply, cancel: reset });
+    }, 70);
+  }
+  /* استيراد ألوان الموقع وخطه واسم المتجر (theme.json وstore.json) */
+  async function fromSite() {
+    try {
+      const t = await (await fetch("assets/data/theme.json?_=" + Date.now())).json(), c = t.colors || {}, kit = load();
+      kit.colors = [c.green || kit.colors[0], c.gold || kit.colors[1], c.bg || kit.colors[2], c.ink || kit.colors[3], c.red || kit.colors[4]].map(hex);
+      const f = String(t.fontFamily || "").split(",")[0].replace(/['"]/g, "").trim(); if (f && FONTS().some(x => x[0] === f)) kit.font = f;
+      try { const s = await (await fetch("assets/data/store.json?_=" + Date.now())).json(); if (s && s.name && !kit.name) kit.name = s.name; } catch (e) { }
+      save(); return true;
+    } catch (e) { return false; }
+  }
+  async function mount(host, inf) {
+    load(); const id = inf.node.id;
+    if (!S.site && !localStorage.getItem(LSK)) { S.site = true; if (await fromSite()) { host.innerHTML = panel(); } }
+    if (S.id !== id || !S.base) { S.id = id; try { S.base = await loadImg(inf.set.src); } catch (e) { say("⚠️ " + e.message); return; } }
+    const root = host.querySelector("#pbbr"); if (!root) return; draw();
+    const rerender = () => { host.innerHTML = panel(); mount(host, inf); };
+    const upd = e => {
+      const t = e.target; if (t.dataset.brc != null) { S.kit.colors[+t.dataset.brc] = t.value; save(); draw(); return; }
+      if (t.dataset.brk) { S.kit[t.dataset.brk] = t.value; save(); draw(); return; }
+      const k = t.dataset.bro; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : /^(bcol|bgc|tcol)$/.test(k) ? +t.value : t.value; draw();
+    };
+    root.addEventListener("input", upd); root.addEventListener("change", upd);
+    const lf = $("pbbr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { if (String(r.result).length < 600000) localStorage.setItem(LSL, String(r.result)); } catch (e) { } rerender(); }; im.src = String(r.result); }; r.readAsDataURL(f); };
+    root.addEventListener("click", async e => {
+      const t = e.target.closest("[data-brb]"); if (!t) return; const k = t.dataset.brb;
+      if (k === "site") { say("⏳ جارٍ الاستيراد…"); if (await fromSite()) rerender(); else say("تعذّر قراءة ألوان الموقع"); }
+      else if (k === "defaults") { S.kit.colors = DEF.colors.slice(); save(); rerender(); }
+      else if (k === "reset") { reset(); A().liveClear(true); rerender(); }
+    });
+  }
+  async function apply() {
+    if (S.busy || !S.base || !dirty()) return; S.busy = true; say("⏳ جارٍ التنفيذ…");
+    try {
+      await loadFont(S.kit.font); const out = render(S.base, S.kit, S.o, S.logo), alpha = !!S.o.radius, blob = await new Promise(r => out.toBlob(r, alpha ? "image/png" : "image/webp", .93)), path = await A().uploadBlob(blob, "br-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id);
+      if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "الهوية البصرية"; S.base = out; reset(); A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ"); }
+    } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+  }
+  return { panel, mount, apply, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS } };
 })();
 
 /* مكتبة الملصقات (v1.89.76): آلاف الملصقات الملوّنة بحث عربي/فرنسي/إنجليزي، تُضاف للصفحة بنقرة أو سحب.

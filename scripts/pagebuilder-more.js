@@ -208,3 +208,105 @@ const PBBlend = (() => {
   }
   return { panel, mount, reset: () => { S.id = ""; S.base = null; S.over = null; S.overSrc = ""; S.msg = ""; }, state: S, _t: { blend, MODES } };
 })();
+
+/* الهوية البصرية (v1.89.257): ألوان العلامة + خطها + شعارها تُحفظ مرة واحدة (localStorage) وتُطبَّق على الصورة المحدّدة:
+   إطار/خلفية بلون من الألوان، ختم الشعار، واسم العلامة بخطّها. الافتراضي يُستورد من ألوان الموقع وخطه واسم المتجر (theme.json وstore.json). معاينة حيّة ثم «تنفيذ/إلغاء». */
+const PBBrand = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const LSK = "pbx_brand_kit", LSL = "pbx_brand_logo";
+  const SLOTS = ["الأساسي", "الثانوي", "الخلفية", "النص", "التمييز"];
+  const DEF = { colors: ["#173f35", "#c8a24b", "#fbf8f2", "#1c2420", "#d64545"], font: "Cairo", name: "" };
+  const S = { id: "", base: null, kit: null, logo: null, msg: "", busy: false, site: false, o: { border: 0, bcol: 1, pad: 0, bgc: 2, radius: 0, logo: false, lpos: "br", lsize: 16, lop: 90, txt: false, tpos: "bc", tsize: 6, tcol: 2, band: true } };
+  const load = () => { if (S.kit) return S.kit; let k = null; try { k = JSON.parse(localStorage.getItem(LSK) || "null"); } catch (e) { } S.kit = Object.assign({}, DEF, k && typeof k === "object" ? k : {}); if (!Array.isArray(S.kit.colors) || S.kit.colors.length < 5) S.kit.colors = DEF.colors.slice(); return S.kit; };
+  const save = () => { try { localStorage.setItem(LSK, JSON.stringify(S.kit)); } catch (e) { } };
+  try { const d = localStorage.getItem(LSL); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  const hex = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : "#000000";
+  const FONTS = () => (typeof PB !== "undefined" && PB.FONT_FAMS ? PB.FONT_FAMS.filter(x => !x[3]) : []).map(([n, w, l]) => [n, l === n ? n : l + " (" + n + ")"]);
+  async function loadFont(name) {
+    if (!document.getElementById("pbfonts-a") && typeof PB !== "undefined" && PB.fontsHref) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
+    if (document.fonts) await Promise.race([document.fonts.load("800 24px '" + name + "'", "أبجد Abc"), new Promise(r => setTimeout(r, 1500))]).catch(() => { });
+  }
+  /* نقية: تُرجع قماشاً بإطار/خلفية بألوان العلامة + شعار + اسم العلامة بخطها */
+  function render(src, kit, o, logo) {
+    const col = i => hex(kit.colors[i]), fo = { border: o.border, bcolor: col(o.bcol), radius: o.radius, pad: o.pad, bg: col(o.bgc), card: false, shadow: 0, logo: !!(o.logo && logo), lpos: o.lpos, lsize: o.lsize, lop: o.lop };
+    const c = (fo.border || fo.pad || fo.logo || fo.radius) ? PBFrame._t.frame(src, fo, logo) : (() => { const x = mk(src.width, src.height); x.getContext("2d").drawImage(src, 0, 0); return x; })();
+    if (o.txt && kit.name) {
+      const g = c.getContext("2d"), W = c.width, H = c.height, fs = Math.max(10, Math.round(Math.min(W, H) * o.tsize / 100)), p = o.tpos, ph = Math.round(fs * 1.9);
+      g.save(); g.direction = "rtl"; g.font = "800 " + fs + "px '" + kit.font + "', 'Cairo', sans-serif"; g.textBaseline = "middle"; g.textAlign = "center";
+      const y = p[0] === "t" ? ph / 2 : p[0] === "m" ? H / 2 : H - ph / 2, x = p[1] === "l" ? Math.min(W / 2, g.measureText(kit.name).width / 2 + fs) : p[1] === "r" ? Math.max(W / 2, W - g.measureText(kit.name).width / 2 - fs) : W / 2;
+      if (o.band) { g.fillStyle = col(0); g.globalAlpha = .88; g.fillRect(0, y - ph / 2, W, ph); g.globalAlpha = 1; }
+      g.fillStyle = col(o.tcol); g.fillText(kit.name, x, y); g.restore();
+    }
+    return c;
+  }
+  const sw = (i, v) => `<label class="pbbr-sw" title="${SLOTS[i]}"><input type="color" data-brc="${i}" value="${hex(v)}"><span>${SLOTS[i]}</span></label>`;
+  const pick = (k, v, kit) => `<select data-bro="${k}" class="pbx-small">${kit.colors.map((c, i) => `<option value="${i}"${+v === i ? " selected" : ""}>${SLOTS[i]} ${hex(c)}</option>`).join("")}</select>`;
+  function panel() {
+    const kit = load(), o = S.o, pos = (k, v) => `<select data-bro="${k}" class="pbx-small">${[["tl", "أعلى يسار"], ["tr", "أعلى يمين"], ["bl", "أسفل يسار"], ["br", "أسفل يمين"], ["mc", "الوسط"]].map(([a, t]) => `<option value="${a}"${v === a ? " selected" : ""}>${t}</option>`).join("")}</select>`;
+    const rg = (k, min, max, t, v) => `<label>${t} <input type="range" min="${min}" max="${max}" value="${v}" data-bro="${k}"></label>`;
+    return `<div class="pbx-pz" id="pbbr"><style>#pbbr .pbbr-sw{display:inline-flex;flex-direction:column;align-items:center;gap:2px;font-size:.7rem;margin:0 .15rem .3rem}#pbbr .pbbr-sw input{width:42px;height:34px;padding:0;border:1.5px solid rgba(128,128,128,.4);border-radius:8px;background:none;cursor:pointer}</style>
+<p>هويتك البصرية: <b>الألوان</b> و<b>الخط</b> و<b>الشعار</b> تُحفظ مرة واحدة وتُطبَّق على أي صورة: إطار وخلفية بألوان علامتك، ختم الشعار، واسم العلامة بخطها. المعاينة مباشرة على الصورة ثم «تنفيذ» أو «إلغاء».</p>
+<div class="ep-n"><b>① الألوان</b></div><div>${kit.colors.map((c, i) => sw(i, c)).join("")}</div>
+<div class="pbrt-row"><button type="button" class="pbx-small" data-brb="site">استيراد من ألوان الموقع</button><button type="button" class="pbx-small" data-brb="defaults">الألوان الافتراضية</button></div>
+<div class="ep-n"><b>② الخط والاسم</b></div>
+<div class="rt-g"><label>خط العلامة <select data-brk="font" class="pbx-small">${FONTS().map(([n, l]) => `<option value="${esc(n)}"${kit.font === n ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label><label>اسم العلامة <input type="text" data-brk="name" value="${esc(kit.name)}" placeholder="اسم متجرك" style="width:100%"></label></div>
+<div class="rt-g"><label><input type="checkbox" data-bro="txt" ${o.txt ? "checked" : ""}> كتابة اسم العلامة على الصورة</label><label>الموضع <select data-bro="tpos" class="pbx-small">${[["tc", "أعلى"], ["mc", "الوسط"], ["bc", "أسفل"]].map(([a, t]) => `<option value="${a}"${o.tpos === a ? " selected" : ""}>${t}</option>`).join("")}</select></label>${rg("tsize", 3, 14, "حجم الاسم", o.tsize)}<label>لون الاسم ${pick("tcol", o.tcol, kit)}</label><label><input type="checkbox" data-bro="band" ${o.band ? "checked" : ""}> شريط بلون العلامة خلف الاسم</label></div>
+<div class="ep-n"><b>③ الشعار</b></div>
+<div class="rt-g"><label><input type="checkbox" data-bro="logo" ${o.logo ? "checked" : ""}> ختم الشعار</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbbr-lf" style="display:none"></label><span class="ep-n">${S.logo ? "✔ الشعار محفوظ" : "لا يوجد شعار محفوظ بعد"}</span><label>الموضع ${pos("lpos", o.lpos)}</label>${rg("lsize", 6, 40, "الحجم", o.lsize)}${rg("lop", 20, 100, "الشفافية", o.lop)}</div>
+<div class="ep-n"><b>④ الإطار بألوان العلامة</b></div>
+<div class="rt-g">${rg("border", 0, 12, "سماكة الحدّ", o.border)}<label>لون الحدّ ${pick("bcol", o.bcol, kit)}</label>${rg("pad", 0, 20, "الهامش", o.pad)}<label>لون الهامش ${pick("bgc", o.bgc, kit)}</label>${rg("radius", 0, 40, "الزوايا", o.radius)}</div>
+<div class="pbrt-row"><button type="button" class="pbx-small" data-brb="reset">تصفير الصورة</button></div><div id="pbbr-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbbr-msg"); if (e) e.textContent = t; };
+  const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const k = Math.min(1, 3000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
+  const dirty = () => { const o = S.o; return !!(o.border || o.pad || o.radius || (o.logo && S.logo) || (o.txt && S.kit.name)); };
+  const reset = () => Object.assign(S.o, { border: 0, pad: 0, radius: 0, logo: false, txt: false });
+  let ft = 0;
+  function draw() {
+    if (!S.base) return; clearTimeout(ft); ft = setTimeout(async () => {
+      if (!dirty()) { A().liveClear(true); return; }
+      await loadFont(S.kit.font); const k = Math.min(1, 1100 / Math.max(S.base.width, S.base.height)), s = mk(S.base.width * k, S.base.height * k); s.getContext("2d").drawImage(S.base, 0, 0, s.width, s.height);
+      await A().liveCanvas(S.id, render(s, S.kit, S.o, S.logo), { tab: "br", apply, cancel: reset });
+    }, 70);
+  }
+  /* استيراد ألوان الموقع وخطه واسم المتجر (theme.json وstore.json) */
+  async function fromSite() {
+    try {
+      const t = await (await fetch("assets/data/theme.json?_=" + Date.now())).json(), c = t.colors || {}, kit = load();
+      kit.colors = [c.green || kit.colors[0], c.gold || kit.colors[1], c.bg || kit.colors[2], c.ink || kit.colors[3], c.red || kit.colors[4]].map(hex);
+      const f = String(t.fontFamily || "").split(",")[0].replace(/['"]/g, "").trim(); if (f && FONTS().some(x => x[0] === f)) kit.font = f;
+      try { const s = await (await fetch("assets/data/store.json?_=" + Date.now())).json(); if (s && s.name && !kit.name) kit.name = s.name; } catch (e) { }
+      save(); return true;
+    } catch (e) { return false; }
+  }
+  async function mount(host, inf) {
+    load(); const id = inf.node.id;
+    if (!S.site && !localStorage.getItem(LSK)) { S.site = true; if (await fromSite()) { host.innerHTML = panel(); } }
+    if (S.id !== id || !S.base) { S.id = id; try { S.base = await loadImg(inf.set.src); } catch (e) { say("⚠️ " + e.message); return; } }
+    const root = host.querySelector("#pbbr"); if (!root) return; draw();
+    const rerender = () => { host.innerHTML = panel(); mount(host, inf); };
+    const upd = e => {
+      const t = e.target; if (t.dataset.brc != null) { S.kit.colors[+t.dataset.brc] = t.value; save(); draw(); return; }
+      if (t.dataset.brk) { S.kit[t.dataset.brk] = t.value; save(); draw(); return; }
+      const k = t.dataset.bro; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : /^(bcol|bgc|tcol)$/.test(k) ? +t.value : t.value; draw();
+    };
+    root.addEventListener("input", upd); root.addEventListener("change", upd);
+    const lf = $("pbbr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { if (String(r.result).length < 600000) localStorage.setItem(LSL, String(r.result)); } catch (e) { } rerender(); }; im.src = String(r.result); }; r.readAsDataURL(f); };
+    root.addEventListener("click", async e => {
+      const t = e.target.closest("[data-brb]"); if (!t) return; const k = t.dataset.brb;
+      if (k === "site") { say("⏳ جارٍ الاستيراد…"); if (await fromSite()) rerender(); else say("تعذّر قراءة ألوان الموقع"); }
+      else if (k === "defaults") { S.kit.colors = DEF.colors.slice(); save(); rerender(); }
+      else if (k === "reset") { reset(); A().liveClear(true); rerender(); }
+    });
+  }
+  async function apply() {
+    if (S.busy || !S.base || !dirty()) return; S.busy = true; say("⏳ جارٍ التنفيذ…");
+    try {
+      await loadFont(S.kit.font); const out = render(S.base, S.kit, S.o, S.logo), alpha = !!S.o.radius, blob = await new Promise(r => out.toBlob(r, alpha ? "image/png" : "image/webp", .93)), path = await A().uploadBlob(blob, "br-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id);
+      if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "الهوية البصرية"; S.base = out; reset(); A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ"); }
+    } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
+  }
+  return { panel, mount, apply, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS } };
+})();

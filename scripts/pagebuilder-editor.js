@@ -1299,7 +1299,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
-  const EP_TABS = [["up", "تغيير المقاس والتكبير", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
+  const EP_TABS = [["up", "تحسين الجودة", "t_magic"], ["fa", "استوديو أزياء ذكي", "t_magic"], ["to", "تجربة افتراضية", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["br", "الهوية البصرية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
   const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
   function epBody(inf) {
     const t = E.ept || "";
@@ -1310,10 +1310,11 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "rt") return PBRetouch.panel();
     if (t === "ff") return PBFade.panel();
     if (t === "fr") return PBFrame.panel();
+    if (t === "br") return PBBrand.panel();
     if (t === "cl") return PBCollage.panel();
     if (t === "bl") return PBBlend.panel();
     if (t === "vd") return PBVideo.panel();
-    if (t === "xp" || t === "ai" || t === "sl") return PBAI.panel(t);
+    if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
     if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
@@ -1328,9 +1329,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (E.live && E.live.tab && E.live.tab !== cur) liveCancel(); if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); if (cur !== "ff" && typeof PBFade !== "undefined" && PBFade.state.url) PBFade.cancel();
     const tn = EP_TABS.find(x => x[0] === cur), sn = cur === "st" && typeof PBStudio !== "undefined" ? (IMG_ST.find(x => x[0] === PBStudio.tab()) || [])[1] : "";
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
-    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
+    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl" || cur === "fa" || cur === "to") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "br" && nb && nb.querySelector("#pbbr")) { try { PBBrand.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBBrand.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -1346,17 +1347,25 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   const IMG_TOOLS = [["mk", "ماسك", "mask.webp"], ["pz", "بازل", "puzzle.webp"], ["cap", "التقاط العناصر", "select-elements.webp"], ["bg", "نزع الخلفية", "remove-background.webp"], ["rt", "لمسات وتصحيح", "retouch.webp"], ["st", "استوديو المنتج", "product-studio.webp"], ["fr", "إطار وهوية", "frame-photo.webp"], ["ff", "حواف ناعمة", "soft-edges.webp"], ["bl", "دمج صور", "merge-images.webp"], ["cl", "كولاج", "collage.webp"], ["vd", "فيديو من الصورة", "image-to-video.webp"]];
   const IMG_ST = [["bg", "الخلفية", "st_bg"], ["prod", "المنتج", "st_prod"], ["fx", "تأثيرات", "st_fx"], ["txt", "ملصقات وشعار", "st_stk"], ["out", "المقاس والإخراج", "st_size"]];
   const IMG_SM = [["xp", "توسيع الخلفية بالذكاء", "expand-background.webp", true], ["scene", "مشهد ذكي للمنتج", "smart-scene.webp", true], ["sl", "أساليب تصوير ذكية", "smart-photo-styles.webp", true], ["ai", "تعديل بالوصف", "edit-by-prompt.webp", true], ["erase", "ممحاة ذكية بالفرشاة", "smart-brush-eraser.webp", ERASER_ON]];
-  /* تغيير المقاس والتكبير: تكبير بلا ذكاء (تكبير تدريجي + حدّة) عبر ImgUpscale؛ لا يخترع تفاصيل جديدة */
-  const UP = { scale: "2", sharp: 50 };
-  const UP_OPTS = [["2", "×2"], ["3", "×3"], ["4", "×4"], ["w1200", "عرض 1200px"], ["w1600", "عرض 1600px"], ["w2000", "عرض 2000px"]];
-  const upPanel = () => `<div class="pbx-pz"><p>كبّر الصورة بجودة عالية وحدّة محسوبة داخل متصفحك. لا يخترع تفاصيل جديدة، فالأنسب للصور المنخفضة قليلاً لا الضبابية جداً.</p><label class="ep-l">مقدار التكبير<select data-upk="scale">${UP_OPTS.map(([v, n]) => `<option value="${v}"${UP.scale === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="ep-l">الحدّة (${UP.sharp})<input type="range" min="0" max="100" value="${UP.sharp}" data-upk="sharp"></label><button type="button" class="pbx-small pz-go" data-upx="go">${ico("t_magic", 16)} تنفيذ</button></div>`;
+  /* تحسين الجودة: تكبير بلا ذكاء (تكبير تدريجي + حدّة) عبر ImgUpscale + تقليل ضجيج وتحسين تلقائي اختياريان؛ لا يخترع تفاصيل جديدة */
+  const UP = { scale: "2", sharp: 50, dn: 0, auto: 0 };
+  const UP_OPTS = [["1", "بلا تكبير (تحسين فقط)"], ["2", "×2"], ["3", "×3"], ["4", "×4"], ["w1200", "عرض 1200px"], ["w1600", "عرض 1600px"], ["w2000", "عرض 2000px"]];
+  const upPanel = () => `<div class="pbx-pz"><p>حسّن جودة الصورة داخل متصفحك: تكبير بحدّة محسوبة، وتقليل الضجيج، وتحسين تلقائي للألوان والتباين. لا يخترع تفاصيل جديدة، فالأنسب للصور المنخفضة قليلاً لا الضبابية جداً.</p><label class="ep-l">مقدار التكبير<select data-upk="scale">${UP_OPTS.map(([v, n]) => `<option value="${v}"${UP.scale === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="ep-l">الحدّة (${UP.sharp})<input type="range" min="0" max="100" value="${UP.sharp}" data-upk="sharp"></label><label class="ep-l">تقليل الضجيج (${UP.dn})<input type="range" min="0" max="100" value="${UP.dn}" data-upk="dn"></label><label class="ep-l">تحسين تلقائي للألوان (${UP.auto}%)<input type="range" min="0" max="100" value="${UP.auto}" data-upk="auto"></label><button type="button" class="pbx-small pz-go" data-upx="go">${ico("t_magic", 16)} تنفيذ</button></div>`;
   async function upGo(inf) {
-    if (typeof ImgUpscale === "undefined") { toast("أداة التكبير غير متاحة"); return; }
+    if (typeof ImgUpscale === "undefined") { toast("أداة تحسين الجودة غير متاحة"); return; }
     try {
-      toast("⏳ جارِ التكبير…"); const blob = await (await fetch(localize(String(inf.set.src)))).blob(), r = await ImgUpscale.run(blob, { scale: UP.scale, sharp: UP.sharp, fmt: "webp", q: 92 });
+      toast("⏳ جارٍ تحسين الجودة…"); let blob = await (await fetch(localize(String(inf.set.src)))).blob();
+      if ((UP.dn || UP.auto) && typeof PBRetouch !== "undefined" && PBRetouch._t) {
+        const im = await createImageBitmap(blob), cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; cv.getContext("2d").drawImage(im, 0, 0);
+        const P = { auto: UP.auto, dn: UP.dn, kv: 0, kh: 0, br: 0, ct: 0, sa: 0, wm: 0, sh: 0, vg: 0, gr: 0, trim: 0, recol: [] }, out = PBRetouch._t.run(cv, P);
+        blob = await new Promise(r => out.toBlob(r, "image/png"));
+      }
+      let r;
+      if (UP.scale === "1") { const im = await createImageBitmap(blob); r = { blob, w: im.width, h: im.height, from: [im.width, im.height] }; }
+      else r = await ImgUpscale.run(blob, { scale: UP.scale, sharp: UP.sharp, fmt: "webp", q: 92 });
       if (r.same) { toast("الصورة بهذا المقاس أو أكبر منه أصلاً (أو بلغت السقف الأقصى)"); return; }
       const path = await uploadBlob(r.blob, "up-" + Date.now().toString(36), { max: 8192, q: .92 });
-      if (path) { inf.set.src = path; delete inf.set.crop; E.nextLabel = "تكبير الصورة"; afterEdit(); toast("✅ " + r.from.join("×") + " ← " + r.w + "×" + r.h + (r.capped ? " (حدّ أقصى)" : "")); }
+      if (path) { inf.set.src = path; delete inf.set.crop; E.nextLabel = "تحسين جودة الصورة"; afterEdit(); toast("✅ " + r.from.join("×") + " ← " + r.w + "×" + r.h + (r.capped ? " (حدّ أقصى)" : "")); }
     } catch (e) { toast("⚠️ " + (e && e.message || e)); }
   }
   /* صفوف إضافية في قوائم «إنشاء/تعديل/أتمتة»: تنقّل لأدوات موجودة أو أدوات قيد التطوير */
@@ -1368,18 +1377,21 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "gen") return goAdmin("imggen");
     if (k === "batch" || k === "catalog") return goAdmin("imgtools");
     if (k === "up") return imgPick("up");
+    if (k === "fashion" || k === "model") return imgPick("fa");
+    if (k === "tryon") return imgPick("to");
     if (k === "recolor") return imgPick("rt");
+    if (k === "brand") return imgPick("br");
     toast("هذه الأداة قيد التطوير وستظهر هنا فور جاهزيتها");
   }
-  const ROW_IC = { gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
+  const ROW_IC = { brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
   const rowBtn = (k, n, d, soon) => `<button type="button" class="pbx-tr" data-imgx="${k}" title="${esc(n)}"><i><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ROW_IC[k] || ""}</svg></i><span><b>${esc(n)}</b><small>${esc(d)}</small></span>${soon ? '<em class="tt-b2">قريباً</em>' : ""}</button>`;
   function imgPane() {
     const inf = epInf(), open = !!$("pbx-ep"), cur = open ? (E.ept || "") : "", st = typeof PBStudio !== "undefined" ? PBStudio.tab() : "";
     const tile = (attr, label, img, on, badge) => `<button type="button" class="pbx-tt card${on ? " on" : ""}" ${attr} title="${esc(label)}" aria-label="${esc(label)}"><img src="assets/img/tools/${/\./.test(img) ? img : img + ".webp"}" alt="${esc(label)}" draggable="false">${badge ? `<i class="tt-b">${badge}</i>` : ""}</button>`;
     const grp = (title, keys, rows) => `<div class="pbx-cat">${title}</div><div class="pbx-ttg">${keys.map(k => { const t = IMG_TOOLS.find(x => x[0] === k); if (t) return tile(`data-imgt="${t[0]}"`, t[1], t[2], cur === t[0]); const m = IMG_SM.find(x => x[0] === k); return m ? tile(`data-imgm="${m[0]}"`, m[1], m[2], false, m[3] ? "" : "قريباً") : ""; }).join("")}</div>${rows ? `<div class="pbx-trs">${rows}</div>` : ""}`;
     return `${inf ? "" : '<div class="pbx-tn">حدّد صورة في الصفحة ثم اختر الأداة</div>'}`
-      + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "جلسات تصوير كاملة", 1) + rowBtn("model", "عارض افتراضي", "ألبس أي مانيكان", 1) + rowBtn("tryon", "تجربة افتراضية", "غرفة قياس افتراضية", 1))
-      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("up", "تغيير المقاس والتكبير", "أي مقاس، فوراً") + rowBtn("recolor", "تلوين الملابس", "غيّر لون العنصر بالنقر") + rowBtn("logo", "منشئ الشعار", "ولّد عناصر هوية العلامة", 1))
+      + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "جلسات تصوير كاملة", 1) + rowBtn("fashion", "استوديو أزياء ذكي", "عارض افتراضي ومانيكان غير مرئي") + rowBtn("tryon", "تجربة افتراضية", "شاهد القطعة على جسمك"))
+      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "غيّر لون العنصر بالنقر") + rowBtn("logo", "منشئ الشعار", "ولّد عناصر هوية العلامة", 1))
       + `<div class="pbx-cat">أتمتة وتوسّع</div><div class="pbx-trs">${rowBtn("batch", "معالجة الدفعات", "عدّل آلاف الصور دفعة واحدة") + rowBtn("catalog", "كتالوج المنتجات", "افحص وحدّث أغلفة كل متجرك")}</div>`
       + (cur === "st" ? `<div class="pbx-cat">أدوات استوديو المنتج</div><div class="pbx-ttg">${IMG_ST.map(([k, n, im]) => `<button type="button" class="pbx-tt${st === k ? " on" : ""}" data-imgs="${k}" title="${esc(n)}"><img src="assets/img/tools/${im}.webp" alt="" draggable="false"><span>${esc(n)}</span></button>`).join("")}</div>` : "")
       + `<p class="pbx-tn" style="margin-top:.5rem">الأدوات الذكية (توسيع، مشهد، أساليب، تعديل بالوصف، ممحاة) تحتاج مفتاح Alyssum API من إعدادات مولّد الصور، وتُحسب تكلفتها قبل كل تنفيذ.</p>`;
@@ -1415,7 +1427,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t.dataset.q === "smart-magic") { PBSmart.captureElements(); return; }
   }
   function epInput(e) {      // تحريك الأشرطة: معاينة حيّة بلا إعادة رسم اللوحة (حتى لا يُقطع السحب)
-    const t = e.target; if (t.dataset.upk) { UP[t.dataset.upk] = t.dataset.upk === "sharp" ? Number(t.value) : t.value; epDraw(); return; }
+    const t = e.target; if (t.dataset.upk) { UP[t.dataset.upk] = /^(sharp|dn|auto)$/.test(t.dataset.upk) ? Number(t.value) : t.value; epDraw(); return; }
     if (t.dataset.mkk) { const redraw = PBMask.opt(t.dataset.mkk, t.type === "checkbox" ? t.checked : t.value); if (t.type === "range") { const bb = t.parentNode.querySelector("b"); if (bb) bb.textContent = t.value; } if (redraw && t.type !== "range") epDraw(); else epFloat(); return; }
     if (t.dataset.pzk === "knob") PBPuzzle.opt("knob", t.value, false);
   }
