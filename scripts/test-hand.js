@@ -1222,7 +1222,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     pane.querySelector('[data-imgx="logo"]').click(); await new Promise(r => setTimeout(r, 100)); const msg = (document.getElementById("pbx-msg") || {}).textContent || "";
     PBApp.ltoggle("img"); return { heads, rows, cards, soon, msg };
   });
-  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "model", "tryon", "up", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 16 && tm.soon === 1 && /قيد التطوير/.test(tm.msg), tm);
+  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 16 && tm.soon === 1 && /قيد التطوير/.test(tm.msg), tm);
   // ── مكتبة الأصول (Pixabay/Iconify) داخل المطوّر الحقيقي ──
   const as = await p.evaluate(async () => {
     const real = window.fetch, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 2h2"/></svg>';
@@ -1244,13 +1244,56 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("مكتبة الأصول: النقر على أيقونة يحفظها SVG ويضيفها عنصر صورة", as.icons && as.added, as);
   await p.screenshot({ path: "/tmp/stk-ui.png" });
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
-  // ── تغيير المقاس والتكبير (صفحة مستقلة كي لا يتأثر تدفّق الاختبارات الأخرى) ──
+  // ── تحسين الجودة (صفحة مستقلة كي لا يتأثر تدفّق الاختبارات الأخرى) ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار تكبير", ""); pg.slug = "up-t"; const sec = PB.mkS([PB.mkC([PB.mkW("image", { src: "assets/img/favicon.png", hauto: true })])]); pg.sections = [sec]; window.__upId = sec.cols[0].widgets[0].id; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => { PBApp.E.sel = window.__upId; PBApp.ltoggle("img"); }); await p.waitForTimeout(600);
   await p.evaluate(() => document.querySelector('[data-imgx="up"]').click()); await p.waitForTimeout(600);
-  ok("تغيير المقاس والتكبير: تفتح لوحته بخيارات التكبير والحدّة", await p.evaluate(() => !!document.querySelector('#pbx-ep [data-upk="scale"]') && !!document.querySelector('#pbx-ep [data-upk="sharp"]') && /تغيير المقاس والتكبير/.test(document.querySelector("#pbx-ep .ep-h").textContent)));
+  ok("تحسين الجودة: تفتح لوحته بخيارات التكبير والحدّة والضجيج والتحسين التلقائي", await p.evaluate(() => !!document.querySelector('#pbx-ep [data-upk="scale"]') && !!document.querySelector('#pbx-ep [data-upk="sharp"]') && !!document.querySelector('#pbx-ep [data-upk="dn"]') && !!document.querySelector('#pbx-ep [data-upk="auto"]') && /تحسين الجودة/.test(document.querySelector("#pbx-ep .ep-h").textContent)));
   await p.evaluate(() => { window.__preUp = PBApp.pageJson(); document.querySelector('#pbx-ep [data-upx="go"]').click(); }); await p.waitForTimeout(6000);
-  ok("تغيير المقاس والتكبير: التنفيذ يستبدل الصورة بنسخة أكبر محفوظة", await p.evaluate(() => { const j = PBApp.pageJson(); return j !== window.__preUp && /assets\/img\/pages\/gen-/.test(j); }));
+  ok("تحسين الجودة: التنفيذ يستبدل الصورة بنسخة أكبر محفوظة", await p.evaluate(() => { const j = PBApp.pageJson(); return j !== window.__preUp && /assets\/img\/pages\/gen-/.test(j); }));
+  // ── الهوية البصرية (ألوان + خط + شعار) ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-imgx="brand"]').click()); await p.waitForTimeout(1500);
+  const br = await p.evaluate(async () => {
+    const ep = document.querySelector("#pbx-ep"), head = ep && ep.querySelector(".ep-h") ? ep.querySelector(".ep-h").textContent : "";
+    const cols = document.querySelectorAll("#pbbr [data-brc]").length, font = !!document.querySelector('#pbbr [data-brk="font"]'), name = !!document.querySelector('#pbbr [data-brk="name"]'), logo = !!document.querySelector("#pbbr #pbbr-lf");
+    const kit = { colors: ["#ff0000", "#00ff00", "#0000ff", "#000000", "#ffffff"], font: "Cairo", name: "علامتي" }, src = document.createElement("canvas"); src.width = 200; src.height = 200; src.getContext("2d").fillStyle = "#888"; src.getContext("2d").fillRect(0, 0, 200, 200);
+    const out = PBBrand._t.render(src, kit, { border: 5, bcol: 0, pad: 0, bgc: 2, radius: 0, logo: false, txt: true, tpos: "bc", tsize: 8, tcol: 4, band: true }, null);
+    const g = out.getContext("2d"), edge = g.getImageData(2, 100, 1, 1).data, band = g.getImageData(10, out.height - 6, 1, 1).data;
+    const ni = document.querySelector('#pbbr [data-brk="name"]'); ni.value = "متجري"; ni.dispatchEvent(new Event("input", { bubbles: true }));
+    const cb = document.querySelector('#pbbr [data-bro="txt"]'); cb.checked = true; cb.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 900));
+    return { head, cols, font, name, logo, edgeRed: edge[0] > 200 && edge[1] < 60, bandRed: band[0] > 200 && band[1] < 60, saved: /متجري/.test(localStorage.getItem("pbx_brand_kit") || ""), live: !!(PBApp.liveOn && PBApp.liveOn()) };
+  });
+  ok("الهوية البصرية: لوحة بخمسة ألوان وخط واسم وشعار", /الهوية البصرية/.test(br.head) && br.cols === 5 && br.font && br.name && br.logo, br);
+  ok("الهوية البصرية: الحدّ والشريط يُرسمان بألوان العلامة، والإعدادات تُحفظ وتظهر معاينة حيّة", br.edgeRed && br.bandRed && br.saved && br.live, br);
+  // ── تجربة افتراضية (صورة الشخص + القطعة؛ محاكاة ImgGen.edit) ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-imgx="tryon"]').click()); await p.waitForTimeout(800);
+  const to = await p.evaluate(async () => {
+    const head = (document.querySelector("#pbx-ep .ep-h") || {}).textContent || "", file = !!document.querySelector("#pbx-ep #pbai-tp"), soon = !!document.querySelector('[data-imgx="tryon"] .tt-b2');
+    const T = PBAI._t.tryOnPrompt({ part: "top" }), calls = []; const old = ImgGen.edit; ImgGen.edit = async o => { calls.push({ extra: (o.extra || []).length, W: o.W, H: o.H, p: o.prompt }); const c = document.createElement("canvas"); c.width = 60; c.height = 80; c.getContext("2d").fillStyle = "#39c"; c.getContext("2d").fillRect(0, 0, 60, 80); return { canvas: c }; };
+    document.querySelector('#pbx-ep [data-ai="tryon"]').click(); await new Promise(r => setTimeout(r, 400)); const noPerson = (document.querySelector("#pbai-msg") || {}).textContent;
+    const pc = document.createElement("canvas"); pc.width = 100; pc.height = 150; PBAI.state.person = { c: pc, w: 100, h: 150 };
+    document.querySelector('#pbx-ep [data-ai="tryon"]').click(); await new Promise(r => setTimeout(r, 1500)); ImgGen.edit = old;
+    return { head, file, soon, noPerson, calls, keep: /EXACTLY/.test(T) && /no nudity/.test(T) && /Image 1/.test(T), live: !!(PBApp.liveOn && PBApp.liveOn()) };
+  });
+  ok("تجربة افتراضية: الصف مفعّل (بلا «قريباً») ويفتح لوحة برفع صورة الشخص", /تجربة افتراضية/.test(to.head) && to.file && !to.soon, to);
+  ok("تجربة افتراضية: بلا صورة شخص يُطلب رفعها، ومعها يُرسل الشخص والقطعة معاً بمقاس صورة الشخص ويظهر الناتج مباشرة", /ارفع صورة الشخص/.test(to.noPerson) && to.calls.length === 1 && to.calls[0].extra === 1 && to.calls[0].W === 100 && to.calls[0].H === 150 && to.keep && to.live, to);
+  // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);
+  const fa = await p.evaluate(async () => {
+    const ep = document.querySelector("#pbx-ep"), head = ep && ep.querySelector(".ep-h") ? ep.querySelector(".ep-h").textContent : "";
+    const modes = [...document.querySelectorAll('#pbx-ep [data-ai="fashion"]')].map(b => b.dataset.m), who = !!document.querySelector("#pbx-ep #pbai-fw");
+    const T = PBAI._t, pm = T.fashionPrompt("model", { who: "woman", pose: "stand", bg: "white" }), pg = T.fashionPrompt("ghost", {}), pf = T.fashionPrompt("flat", {}), pw = T.fashionPrompt("wrinkle", {}), pman = T.fashionPrompt("model", { who: "mannequin" });
+    const calls = []; const old = ImgGen.edit; ImgGen.edit = async o => { calls.push({ p: o.prompt, W: o.W, H: o.H }); const c = document.createElement("canvas"); c.width = 64; c.height = 80; const g = c.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(0, 0, 64, 80); return { canvas: c }; };
+    document.querySelector('#pbx-ep #pbai-fr').value = "4:5"; document.querySelector('#pbx-ep [data-ai="fashion"][data-m="ghost"]').click(); await new Promise(r => setTimeout(r, 1500));
+    const live = PBApp.liveOn && PBApp.liveOn(); ImgGen.edit = old;
+    return { head, modes, who, hijab: /hijab/.test(pm) && /NO bare arms/.test(pm), ghost: /GHOST MANNEQUIN/.test(pg), flat: /FLAT LAY/.test(pf), wr: /wrinkles/.test(pw) && /smooth/.test(pw), faceless: /faceless/.test(pman), keep: [pm, pg, pf, pw].every(x => /EXACTLY/.test(x)), calls, live };
+  });
+  ok("استوديو الأزياء: صف «استوديو أزياء ذكي» يفتح لوحته بأوضاعها الأربعة وخيارات العارض", /استوديو أزياء ذكي/.test(fa.head) && fa.modes.join() === "model,ghost,flat,wrinkle" && fa.who, fa);
+  ok("استوديو الأزياء: التعليمات محتشمة (خمار وبلا جلد مكشوف)، تحفظ القطعة، وتميّز الأوضاع", fa.hijab && fa.ghost && fa.flat && fa.wr && fa.faceless && fa.keep, fa);
+  ok("استوديو الأزياء: التنفيذ يستدعي التوليد بمقاس 4:5 ويعرض النتيجة على الصورة", fa.calls.length === 1 && fa.calls[0].W === 1280 && fa.calls[0].H === 1600 && /GHOST/.test(fa.calls[0].p) && !!fa.live, fa);
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
   // ── مسار المنتج الرئيسي من إعدادات الصفحة ──
   await p.evaluate(() => { if (window.__origPub) PBApp.publish = window.__origPub; });
