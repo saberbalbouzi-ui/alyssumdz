@@ -1,6 +1,6 @@
 ---
 name: alyssum-image-tools
-description: تطوير أدوات الصور في مطوّر الصفحات: تبويب «تعديل الصورة»، بازل/ماسك/نزع الخلفية/الالتقاط/استوديو المنتج، مولّد الصور والنشر متعدد المنصات، وصور الأدوات قبل/بعد. استعمله عند أي عمل على الصور أو الإعلانات أو الدفعات (مرجعه docs/photoroom-tools-report.md).
+description: تطوير أدوات الصور في مطوّر الصفحات: تبويب «تعديل الصورة»، بازل/ماسك/نزع الخلفية/الالتقاط/استوديو المنتج، مولّد الصور والنشر متعدد المنصات، وصور الأدوات قبل/بعد. استعمله عند أي عمل على الصور أو الإعلانات أو الدفعات (مرجعه platform/docs/photoroom-tools-report.md).
 ---
 # أدوات الصور
 
@@ -12,7 +12,7 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 - **نزع الخلفية:** `autoCut` — خلفية متجانسة ← `classic` أولاً (`uniformBg/floodBg`) وإلا `ai` (لا يُجرَّب في بيئة Claude).
 - **شريط الصورة العلوي** `qbarHtml`: «تعديل» (أخضر بلون المظهر، أبيض عند الفتح) + رجوع/عودة عند فتح اللوحة.
 - **لوحات الإعلان:** `page.ad={w,h,id,platform}`؛ `adResize` لتغيير المقاس؛ النشر على المنصات `ImgGen.pubPane/pubRun`.
-- **الذكاء:** Gemini/fal عبر `ImgGen.quick` فقط (بمفتاح المستخدم، تأكيد تكلفة، سقف إنفاق)؛ باقي الأدوات بلا AI. المرحلة التالية من الخارطة في `docs/photoroom-tools-report.md`.
+- **الذكاء:** Gemini/fal عبر `ImgGen.quick` فقط (بمفتاح المستخدم، تأكيد تكلفة، سقف إنفاق)؛ باقي الأدوات بلا AI. المرحلة التالية من الخارطة في `platform/docs/photoroom-tools-report.md`.
 
 ## أدوات المرحلة 3 (v1.89.161)
 - `scripts/pagebuilder-retouch.js` (`PBRetouch`، محلي بلا مفتاح: تحسين تلقائي/ضوضاء/منظور/تغيير لون بالنقر/قص/تعتيم/حبيبات؛ دوال نقية في `_t`) و`scripts/pagebuilder-ai.js` (`PBAI`: توسيع الخلفية + تعديل بالوصف عبر `ImgGen.edit`؛ التوسيع يلصق الأصل فوق الناتج بحافة مُنعَّمة فلا يمسّ المنتج). الأدوات الجديدة = أضفها لـ`EP_TABS`/`IMG_TOOLS`/`IMG_SM` في المحرّر + `epBody/epDraw` + صورة بطاقة في `gen-tool-thumbs.py`. الممحاة بالفرشاة (`PBSmart.eraser`) مفعَّلة (`ERASER_ON=true`) وتعمل محلياً. اختبار: `node scripts/test-imgtools.js` + حالات «الأدوات الذكية» في test-hand.
@@ -54,4 +54,4 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 - v1.89.272: صفحة التعريف الخامسة عشرة `object-capture` (أداة cap) من حزمة `alyssum_capture_magique_webp`؛ الأوصاف صادقة (نماذج محلية متفاوتة الدقة، ترميم محلي للمكان).
 - v1.89.273: حزمة أداة جديدة = `prep-pack-images.py <slug>` (قصّ الشرائح الدخيلة + رفع الدقة إلى `saas/landing/<slug>/gal/`) ثم `gen-landing.py`؛ لا تقصّ بقايا الأسهم بعتبة بيضاء.
 - v1.89.275: نزع الخلفية: متجانسة ← محلي، معقدة + مفتاح ← `key` (allowKey من `live` فقط)؛ الالتقاط بالمفتاح `keyCapture` (مستطيل + طلبان بموافقة واحدة)؛ لا تُمرّر `allowKey` من مسارات الدفعات. تدقيق الأدوات الـ15 وما بقي منه في CLAUDE.md.
-- **Pixabay مدمج (v1.89.277):** دالة Supabase `pixabay-proxy` (`supabase/functions/pixabay-proxy`، Verify JWT مطفأ، سرّ `PIXABAY_KEY` في الخادم لا في المستودع) تنفّذ `op:"search"` و`op:"dl"` (مقصور على نطاقات pixabay.com، ≤14MB) لمدير مسجَّل فقط؛ `PBAssets` يفضّلها (بحث + تنزيل مباشر بلا CORS) ويعود لمفتاح `alyssum_pixabay_key`/`CONFIG.PIXABAY_KEY` إن غابت (404/503/401). تدوير المفتاح: `POST /v1/projects/<ref>/secrets` باسم `PIXABAY_KEY`. اختبار: test-assets (25).
+- **Pixabay مدمج (v1.89.277):** دالة Supabase `pixabay-proxy` (`platform/supabase/functions/pixabay-proxy`، Verify JWT مطفأ، سرّ `PIXABAY_KEY` في الخادم لا في المستودع) تنفّذ `op:"search"` و`op:"dl"` (مقصور على نطاقات pixabay.com، ≤14MB) لمدير مسجَّل فقط؛ `PBAssets` يفضّلها (بحث + تنزيل مباشر بلا CORS) ويعود لمفتاح `alyssum_pixabay_key`/`CONFIG.PIXABAY_KEY` إن غابت (404/503/401). تدوير المفتاح: `POST /v1/projects/<ref>/secrets` باسم `PIXABAY_KEY`. اختبار: test-assets (25).

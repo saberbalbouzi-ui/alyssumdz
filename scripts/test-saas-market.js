@@ -3,13 +3,13 @@
 const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
 const root = path.join(__dirname, ".."); let fails = 0;
 const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x).slice(0, 300)); } else console.log("✓", n); };
-const ts = fs.readFileSync(path.join(root, "supabase/functions/platform-admin/index.ts"), "utf8");
+const ts = fs.readFileSync(path.join(root, "platform/supabase/functions/platform-admin/index.ts"), "utf8");
 const ALLOW = [...ts.matchAll(/\["(GET|POST|PUT|PATCH)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]), allowed = (m, p) => ALLOW.some(([x, re]) => x === m && re.test(p));
 ok("المزوّد: إيداعات CCP وصورتها واعتمادها", allowed("GET", "/admin/wallet/deposits/list?status=pending") && allowed("GET", "/admin/wallet/deposits/5/proof") && allowed("POST", "/admin/wallet/deposits/5/approve") && allowed("POST", "/admin/wallet/deposits/5/reject"));
 ok("المزوّد: منتجات السوق ونزاعاته وإعداداته", allowed("GET", "/admin/marketplace/products?status=pending") && allowed("POST", "/admin/marketplace/products/3/suspend") && allowed("GET", "/admin/marketplace/orders?state=return_claimed") && allowed("POST", "/admin/marketplace/orders/9/resolve") && allowed("PUT", "/admin/marketplace/settings"));
 ok("المزوّد: يرفض الخبيث", !allowed("POST", "/admin/wallet/deposits/x/approve") && !allowed("GET", "/admin/marketplace/products?status=a;drop") && !allowed("DELETE", "/admin/marketplace/products/3") && !allowed("POST", "/admin/marketplace/orders/9/delete"));
 ok("المزوّد: مراجعة البائعين", allowed("GET", "/admin/marketplace/sellers?status=pending") && allowed("POST", "/admin/marketplace/sellers/4/approve") && allowed("POST", "/admin/marketplace/sellers/4/rekey") && allowed("PUT", "/admin/marketplace/tenants/7/kind") && !allowed("POST", "/admin/marketplace/sellers/4/delete") && !allowed("PUT", "/admin/marketplace/tenants/x/kind"));
-const px = fs.readFileSync(path.join(root, "supabase/functions/platform-proxy/index.ts"), "utf8");
+const px = fs.readFileSync(path.join(root, "platform/supabase/functions/platform-proxy/index.ts"), "utf8");
 const PA = [...px.matchAll(/\["(GET|POST|PUT|PATCH|DELETE)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]), pal = (m, p) => PA.some(([x, re]) => x === m && re.test(p));
 ok("وسيط التاجر: السوق والإيداع فقط", pal("GET", "/v1/marketplace/catalog") && pal("POST", "/v1/marketplace/imports") && pal("PATCH", "/v1/marketplace/products/4") && pal("POST", "/v1/marketplace/orders/4/status") && pal("GET", "/v1/marketplace/wallet") && pal("POST", "/v1/wallet/deposits") && pal("GET", "/v1/wallet/deposits"));
 ok("وسيط التاجر: يمنع الإدارة وإشعار Chargily", !pal("POST", "/admin/marketplace/orders/4/resolve") && !pal("POST", "/admin/wallet/deposits/1/approve") && !pal("POST", "/v1/wallet/chargily-webhook") && !pal("DELETE", "/v1/marketplace/products/4") && !pal("PATCH", "/v1/marketplace/orders/4/status"));

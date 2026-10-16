@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.278">
+<meta name="admin-version" content="1.89.279">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1666,12 +1666,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.278"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.278"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.278"></script>
+<script src="assets/js/ctl-help.js?v=1.89.279"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.279"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.279"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.278"></script>
+<script src="assets/js/admin-nav.js?v=1.89.279"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1683,7 +1683,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.247"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.278"></script>
+<script src="assets/js/admin-update.js?v=1.89.279"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -5375,7 +5375,7 @@ const Admin = {
     try{ this.rcpMigrate(); }catch(e){ }
     this.reconcileStatusChanges();
   },
-  /* رابط الـ Webhook: نسخة PHP تستقبله مباشرة (api/index.php?r=webhook)، ونسخة Supabase عبر دالة Edge باسم yalidine-webhook (انظر supabase/README.md) */
+  /* رابط الـ Webhook: نسخة PHP تستقبله مباشرة (api/index.php?r=webhook)، ونسخة Supabase عبر دالة Edge باسم yalidine-webhook (انظر platform/supabase/README.md) */
   async genWebhook(){
     let sec = await Priv.get("webhook_secret", null);
     if(!sec || typeof sec !== "string"){ sec = Array.from(crypto.getRandomValues(new Uint8Array(18)), b=>b.toString(16).padStart(2,"0")).join(""); await Priv.set("webhook_secret", sec); }
@@ -15765,7 +15765,7 @@ const PBBgRemove = (function () {
   return { open, live, autoCut, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();
 
-/* استوديو المنتج (المرحلة 2 من docs/photoroom-tools-report.md): صورة منتج ← صورة متجر احترافية بنقرات، داخل المتصفح وبلا API.
+/* استوديو المنتج (المرحلة 2 من platform/docs/photoroom-tools-report.md): صورة منتج ← صورة متجر احترافية بنقرات، داخل المتصفح وبلا API.
    ① نزع الخلفية (PBBgRemove) ← ② خلفية (لون/تدرّج/شفاف/منصة/مشهد) ← ③ ظل (ملامسة/ناعم/قوي) ← ④ حجم المنتج وموضعه (حدود ألفا) ← ⑤ مقاس منصة ← تطبيق/تنزيل.
    الدوال compose/bbox/hasAlpha نقية على Canvas وقابلة للاختبار؛ الخيارات تُحفظ في localStorage pbx_studio (أساس «قوالب المعالجة» في محرر الدفعات). */
 const PBStudio = (() => {
@@ -16020,7 +16020,7 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
   return { panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
 })();
 
-/* «لمسات وتصحيح» (المرحلة 3 من docs/photoroom-tools-report.md): أدوات تحسين وتصحيح للصورة داخل المتصفح وبلا API ولا ذكاء اصطناعي:
+/* «لمسات وتصحيح» (المرحلة 3 من platform/docs/photoroom-tools-report.md): أدوات تحسين وتصحيح للصورة داخل المتصفح وبلا API ولا ذكاء اصطناعي:
    تحسين تلقائي (توازن مستويات + ألوان) · تقليل الضوضاء · تصحيح انحراف المنظور · تغيير لون جزء من المنتج (بالنقر عليه) · قص الحواف الفارغة · تعتيم الأطراف (vignette) · حبيبات.
    كل عملية دالة نقية على Canvas (قابلة للاختبار عبر PBRetouch._t) تُطبَّق على نسخة عمل داخل اللوحة ثم «تطبيق على الصورة» يرفعها ويستبدل مصدر العنصر. */
 const PBRetouch = (() => {
@@ -18907,7 +18907,7 @@ const PBClone = (function () {
    الحذف: تحديث assets/pages/media.json ثم commit واحد يحذف الملفات عبر Git Data API. لا يعمل مع نسخة PHP (لا مستودع). */
 const PBClean = (() => {
   const EXT = /\.(webp|png|jpe?g|gif|svg|avif)$/i, TXT = /\.(html|json|js|css|webmanifest|xml)$/i;
-  const SKIP = /^(admin\.html$|assets\/pages\/media\.json$|assets\/clone\/|assets\/ext\/|scripts\/|extension\/|\.github\/|saas\/|supabase\/|apps-script\/|php-edition\/|node_modules\/)/;
+  const SKIP = /^(admin\.html$|assets\/pages\/media\.json$|assets\/clone\/|assets\/ext\/|scripts\/|extension\/|platform\/|\.github\/|saas\/|supabase\/|apps-script\/|php-edition\/|node_modules\/)/;
   const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
   let M = null, S = null;

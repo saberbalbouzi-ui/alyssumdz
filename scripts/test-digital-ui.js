@@ -1,4 +1,4 @@
-/* واجهة «المنتجات الرقمية» في لوحة التاجر على متصفح حقيقي بوسيط مُحاكى (الخادم مختبَر في saas/platform/test/digital-vault.test.mjs):
+/* واجهة «المنتجات الرقمية» في لوحة التاجر على متصفح حقيقي بوسيط مُحاكى (الخادم مختبَر في platform/api/test/digital-vault.test.mjs):
    NODE_PATH=/opt/node-tools/node_modules node scripts/test-digital-ui.js */
 const http = require("http"), fs = require("fs"), path = require("path"); const { chromium } = require("playwright");
 const root = path.join(__dirname, ".."); let fails = 0;

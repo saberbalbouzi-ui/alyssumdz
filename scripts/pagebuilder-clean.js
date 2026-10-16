@@ -4,7 +4,7 @@
    الحذف: تحديث assets/pages/media.json ثم commit واحد يحذف الملفات عبر Git Data API. لا يعمل مع نسخة PHP (لا مستودع). */
 const PBClean = (() => {
   const EXT = /\.(webp|png|jpe?g|gif|svg|avif)$/i, TXT = /\.(html|json|js|css|webmanifest|xml)$/i;
-  const SKIP = /^(admin\.html$|assets\/pages\/media\.json$|assets\/clone\/|assets\/ext\/|scripts\/|extension\/|\.github\/|saas\/|supabase\/|apps-script\/|php-edition\/|node_modules\/)/;
+  const SKIP = /^(admin\.html$|assets\/pages\/media\.json$|assets\/clone\/|assets\/ext\/|scripts\/|extension\/|platform\/|\.github\/|saas\/|supabase\/|apps-script\/|php-edition\/|node_modules\/)/;
   const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
   let M = null, S = null;

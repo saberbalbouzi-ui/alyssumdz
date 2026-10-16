@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
-/* اختبار وحدة تجميع شركات التوصيل (php-edition/shipping): بلا شبكة ولا مفاتيح حقيقية.
+/* اختبار وحدة تجميع شركات التوصيل (platform/php-edition/shipping): بلا شبكة ولا مفاتيح حقيقية.
      php scripts/test-shipping.php            (يخرج بكود 1 عند أي إخفاق) */
-require __DIR__ . '/../php-edition/shipping/src/autoload.php';
+require __DIR__ . '/../platform/php-edition/shipping/src/autoload.php';
 
 use Alyssum\Shipping\{CarrierRegistry, ConnectionRepository, CredentialVault, CredentialsException, Parcel, ShippingFactory, ShippingService, Status, StatusMapper, UnsupportedCarrierException, WebhookProcessor};
 use Alyssum\Shipping\Adapters\{EcotrackAdapter, MaystroAdapter, NoestAdapter, YalidineAdapter, ZRExpressAdapter};
@@ -132,7 +132,7 @@ ok('HTTP: عنوان داخلي مرفوض', $cu->request('GET', 'https://127.0.
 
 /* ───── قاعدة البيانات والخدمة والـwebhook ───── */
 $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec(file_get_contents(__DIR__ . '/../php-edition/shipping/schema.sqlite.sql'));
+$pdo->exec(file_get_contents(__DIR__ . '/../platform/php-edition/shipping/schema.sqlite.sql'));
 $vault = new CredentialVault(['k1' => $k1], 'k1');
 $repo = new ConnectionRepository($pdo, $vault);
 $http = new FakeHttp(); $svc = new ShippingService($pdo, $repo, $http); $wh = new WebhookProcessor($repo, $svc);

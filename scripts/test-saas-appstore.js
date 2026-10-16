@@ -4,7 +4,7 @@ const fs = require("fs"), path = require("path"), { chromium } = require("playwr
 const root = path.join(__dirname, ".."); let fails = 0;
 const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x).slice(0, 300)); } else console.log("✓", n); };
 const lst = (f) => [...fs.readFileSync(path.join(root, f), "utf8").matchAll(/\["(GET|POST|PUT|PATCH|DELETE)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]);
-const AD = lst("supabase/functions/platform-admin/index.ts"), PX = lst("supabase/functions/platform-proxy/index.ts");
+const AD = lst("platform/supabase/functions/platform-admin/index.ts"), PX = lst("platform/supabase/functions/platform-proxy/index.ts");
 const ad = (m, p) => AD.some(([x, re]) => x === m && re.test(p)), px = (m, p) => PX.some(([x, re]) => x === m && re.test(p));
 ok("المزوّد: المراجعة والإعدادات والإيرادات والمطوّرون", ad("POST", "/admin/appstore/developers") && ad("GET", "/admin/appstore/apps?status=pending") && ad("POST", "/admin/appstore/apps/5/review") && ad("POST", "/admin/appstore/apps/5/feature") && ad("GET", "/admin/appstore/settings") && ad("PUT", "/admin/appstore/settings") && ad("GET", "/admin/appstore/revenues") && ad("GET", "/admin/appstore/installations") && ad("GET", "/admin/appstore/installations?app_id=3"));
 ok("المزوّد يرفض الخبيث", !ad("DELETE", "/admin/appstore/apps/5") && !ad("POST", "/admin/appstore/apps/x/review") && !ad("GET", "/admin/appstore/apps?status=a;drop") && !ad("GET", "/admin/appstore/../tenants") && !ad("PATCH", "/admin/appstore/settings"));

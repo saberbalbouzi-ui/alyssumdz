@@ -1,5 +1,5 @@
 /* ربط دومينات الزبائن من لوحة المزوّد: يستدعي دالة الحافة `domains` بجلسة المدير، ويبني نص الردّ للزبون.
-   لا أسرار هنا: رمز الربط يبقى في أسرار الدالة (saas/functions/domains). */
+   لا أسرار هنا: رمز الربط يبقى في أسرار الدالة (platform/functions/domains). */
 (function (root) {
   "use strict";
   const MAP = { not_configured: "الربط غير مُعدّ بعد (أسرار الدالة)", unauthorized: "ليست لديك صلاحية", bad_hostname: "صيغة الدومين غير صحيحة", already_linked: "الموقع مربوط بدومين مسبقاً", site_not_found: "الموقع غير موجود", not_linked: "لا دومين مربوطاً بهذا الموقع", no_fallback_origin: "عنوان التوجيه غير مضبوط", bad_action: "إجراء غير معروف" };

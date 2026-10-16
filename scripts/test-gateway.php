@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
-/* اختبار بوابة الشحن كخدمة (php-edition/shipping/gateway): بلا شبكة ولا حسابات حقيقية.   php scripts/test-gateway.php */
-require __DIR__ . '/../php-edition/shipping/gateway/src/autoload.php';
+/* اختبار بوابة الشحن كخدمة (platform/php-edition/shipping/gateway): بلا شبكة ولا حسابات حقيقية.   php scripts/test-gateway.php */
+require __DIR__ . '/../platform/php-edition/shipping/gateway/src/autoload.php';
 use Alyssum\Gateway\{Dispatcher, GatewayApp, Geo};
 use Alyssum\Shipping\CredentialVault;
 use Alyssum\Shipping\Http\{HttpClient, HttpResponse};
@@ -14,7 +14,7 @@ final class FakeHttp implements HttpClient {
     public function reply(int $s, array|string $b): static { $this->queue[] = new HttpResponse($s, is_array($b) ? json_encode($b) : $b); return $this; }
 }
 $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec('PRAGMA foreign_keys = ON'); $pdo->exec((string)file_get_contents(__DIR__ . '/../php-edition/shipping/schema.sqlite.sql')); $pdo->exec((string)file_get_contents(__DIR__ . '/../php-edition/shipping/gateway/schema.sqlite.sql'));
+$pdo->exec('PRAGMA foreign_keys = ON'); $pdo->exec((string)file_get_contents(__DIR__ . '/../platform/php-edition/shipping/schema.sqlite.sql')); $pdo->exec((string)file_get_contents(__DIR__ . '/../platform/php-edition/shipping/gateway/schema.sqlite.sql'));
 $http = new FakeHttp(); $app = new GatewayApp($pdo, new CredentialVault(['k1' => random_bytes(32)], 'k1'), $http, null, 'https://gw.example');
 $T = $app->tenants;
 $tA = $T->createTenant('Boutique A', 'a@x.dz', 'pro'); $kA = $T->issueKey($tA, 'live', 'prod'); $kAt = $T->issueKey($tA, 'test');

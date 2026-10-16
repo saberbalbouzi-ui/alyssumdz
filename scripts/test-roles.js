@@ -55,7 +55,7 @@ ok("ترتيب الفريق: بالتأكيدات ثم النسبة، ويستث
 ok("إحصاء فارغ", R.summarize([]).length === 0 && R.summarize(null).length === 0);
 
 /* اتساق القوائم عبر المنصات */
-const ts = rd("supabase/functions/staff-admin/index.ts"), php = rd("php-edition/api/index.php");
+const ts = rd("platform/supabase/functions/staff-admin/index.ts"), php = rd("platform/php-edition/api/index.php");
 const arr = (src, re) => { const m = re.exec(src); return m ? [...m[1].matchAll(/["']([\w.]+)["']/g)].map(x => x[1]) : null; };
 const jsPerms = R.PERMS.map(p => p.id);
 ok("PERMS = الدالة الخادمية", JSON.stringify(arr(ts, /const PERMS = \[([^\]]*)\]/)) === JSON.stringify(jsPerms), arr(ts, /const PERMS = \[([^\]]*)\]/));
@@ -67,7 +67,7 @@ for (const role of ["manager", "agent", "support", "accountant", "warehouse"]) {
   ok("دور " + role + ": كل صلاحية معروفة", R.ROLES[role].perms.every(x => jsPerms.includes(x)));
 }
 /* صلاحيات SQL المُستعملة يجب أن تكون ضمن القائمة */
-const sql = rd("supabase/roles.sql"), used = [...sql.matchAll(/has_perm\('([\w.]+)'\)/g)].map(m => m[1]);
+const sql = rd("platform/supabase/roles.sql"), used = [...sql.matchAll(/has_perm\('([\w.]+)'\)/g)].map(m => m[1]);
 ok("كل has_perm في SQL صلاحية معروفة", used.length >= 4 && used.every(x => jsPerms.includes(x)), used);
 ok("SQL: المالك مستثنى من حصر الأعمدة والمحفّز يدقّق الحالة والمكالمات", /orders_guard/.test(sql) && /order\.status/.test(sql) && /order\.call/.test(sql) && /_aal_ok/.test(sql));
 

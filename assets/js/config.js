@@ -22,7 +22,7 @@ const CONFIG = {
   /* مصدر الطلبات: "sheets" (الحالي) ← "both" (يكتب في الاثنين للتجربة) ← "supabase" (Supabase فقط + دخول المدير بالبريد) */
   ORDERS_BACKEND: "supabase",
   /* Supabase (الزيارات + المشاهدون الآن + أسئلة الوكيل). الرابط والمفتاح العام (anon / publishable) آمنان للنشر العلني
-     لأن الزوار لا يملكون إلا دوالّ محدودة (supabase/schema.sql). لا تضع هنا أبداً مفتاح service_role. */
+     لأن الزوار لا يملكون إلا دوالّ محدودة (platform/supabase/schema.sql). لا تضع هنا أبداً مفتاح service_role. */
   /* لوحة مزوّد المنصة: كل الطلبات (إنشاء موقع، دومين، حذف، دعم) تُرسل إليها بدل واتساب. المفتاح العام آمن للنشر. */
   SAAS_URL: "https://qvdaiundlkfbmjlummni.supabase.co",
   SAAS_KEY: "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h",
@@ -30,6 +30,6 @@ const CONFIG = {
   SUPABASE_ANON_KEY: "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h",             // ← الصق هنا المفتاح العام من Project Settings ← API Keys (anon / publishable)
   /* استعمال التقنية الذكية عبر API (توليد الصفحة بالصور، الكتابة السحرية «حرر»): معطّل افتراضياً. اجعلها true لتفعيله على هذا الموقع (يحتاج مفتاح Alyssum API). القوالب الجاهزة والإجابات المحفوظة تعمل دائماً بلا API. */
   AI_API: false,
-  /* النشر التلقائي: معرّف هذا المتجر في خدمة النشر (supabase/hub.sql). بلا قيمة = النشر القديم برمز الربط. */
+  /* النشر التلقائي: معرّف هذا المتجر في خدمة النشر (platform/supabase/hub.sql). بلا قيمة = النشر القديم برمز الربط. */
   HUB_SITE: "alyssum",
 };

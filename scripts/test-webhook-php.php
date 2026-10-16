@@ -4,7 +4,7 @@ declare(strict_types=1);
      php scripts/test-webhook-php.php */
 $total = 0; $fails = 0;
 function ok(string $n, bool $c, mixed $x = null): void { global $total, $fails; $total++; if (!$c) { $fails++; echo "✗ $n " . ($x === null ? '' : json_encode($x, JSON_UNESCAPED_UNICODE)) . "\n"; } }
-$src = (string)file_get_contents(__DIR__ . '/../php-edition/api/index.php');
+$src = (string)file_get_contents(__DIR__ . '/../platform/php-edition/api/index.php');
 $a = strpos($src, 'function ydRetPhase('); $b = strpos($src, '/* ── حماية الطلبات');
 eval(substr($src, $a, $b - $a));
 ok('مراحل: retour vers centre = transit', ydRetPhase('Retour vers centre') === 'transit' && ydRetPhase('Retourné au centre') === 'transit' && ydRetPhase('Echec livraison') === 'transit');
@@ -14,7 +14,7 @@ ok('مراحل: Livré/فارغ = لا شيء', ydRetPhase('Livré') === '' && y
 ok('وسم: يضيف ولا يتراجع', ydNoteWithPhase('x', 'transit') === 'x 🔁transit' && ydNoteWithPhase('x 🔁ready', 'transit') === null && ydNoteWithPhase('x 🔁transit', 'received') === 'x 🔁received' && ydNoteWithPhase('x', '') === null);
 
 $root = sys_get_temp_dir() . '/whsrv_' . bin2hex(random_bytes(4)); mkdir("$root/api", 0777, true);
-copy(__DIR__ . '/../php-edition/api/index.php', "$root/api/index.php");
+copy(__DIR__ . '/../platform/php-edition/api/index.php', "$root/api/index.php");
 file_put_contents("$root/api/config.php", "<?php return ['admin_hash' => " . var_export(password_hash('pw', PASSWORD_DEFAULT), true) . ", 'max_upload_mb' => 8];");
 $port = random_int(20000, 40000);
 $p = proc_open(['php', '-S', "127.0.0.1:$port", '-t', $root], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes); usleep(700000);

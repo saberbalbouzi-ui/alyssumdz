@@ -1,0 +1,18 @@
+# بوابة الشحن (Worker + D1). النشر الفعلي يتم بـ: node platform/gateway/tools/deploy.mjs (واجهة Cloudflare مباشرة)؛ هذا الملف مرجع لمن يفضّل wrangler.
+name = "alyssum-shipping-gateway"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+PUBLIC_URL = "https://shipping.alyssumhub.fyi"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "alyssum-shipping-gateway"
+database_id = "<يُملأ بعد الإنشاء>"
+
+[triggers]
+crons = ["* * * * *"]
+
+# أسرار (لا تُكتب هنا):  wrangler secret put APP_ENCRYPTION_KEY  /  ADMIN_TOKEN
+# المسار: shipping.alyssumhub.fyi/*  (أخصّ من */* الخاص بموزّع المستأجرين فيغلبه)

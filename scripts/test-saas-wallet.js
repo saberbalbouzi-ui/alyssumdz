@@ -5,7 +5,7 @@ const root = path.join(__dirname, ".."); let fails = 0;
 const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x).slice(0, 300)); } else console.log("✓", n); };
 
 /* (1) قائمة السماح في الدالة: تُستخرج من المصدر نفسه */
-const ts = fs.readFileSync(path.join(root, "supabase/functions/platform-admin/index.ts"), "utf8");
+const ts = fs.readFileSync(path.join(root, "platform/supabase/functions/platform-admin/index.ts"), "utf8");
 const ALLOW = [...ts.matchAll(/\["(GET|POST|PUT)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]);
 const allowed = (m, p) => ALLOW.some(([x, re]) => x === m && re.test(p));
 ok("قائمة السماح: قراءة الملخص والمستأجرين والسحوبات", allowed("GET", "/admin/wallet/summary") && allowed("GET", "/admin/wallet/tenants") && allowed("GET", "/admin/wallet/withdrawals/list?status=requested") && allowed("GET", "/admin/wallet/7"));

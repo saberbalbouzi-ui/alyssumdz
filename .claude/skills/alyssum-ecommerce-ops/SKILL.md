@@ -20,7 +20,7 @@ description: منطق المتجر والتشغيل في أليسوم: الطل�
 - التسوية: `AdminPayments.settle` (COD 0.75%، رسم الإرجاع 250، المرتجع يخسر الإرجاع فقط)؛ الأرباح لكل منتج في `#tab-finance`، التكلفة والوصفات في `#tab-costs`.
 
 ## معايرة حساب الشركة عند أول ربط (v1.89.158)
-- أي شركة جديدة أو محوّل جديد: أضف `discover()` (قراءة فقط) في المحوّل PHP وJS، ومحاكيه يعرض نقاط القراءة بكتالوج بتهجئة مخالفة، ثم اختبر بـ`php scripts/test-calibration.php` وأعد اللقطة الذهبية (`gen-carrier-golden.php`). المحوّل يستهلك الملف عبر `profileCommune` و`status_overrides` فقط — لا منطق موازياً. التفاصيل في `docs/carriers-reference.md` (قسم المعايرة).
+- أي شركة جديدة أو محوّل جديد: أضف `discover()` (قراءة فقط) في المحوّل PHP وJS، ومحاكيه يعرض نقاط القراءة بكتالوج بتهجئة مخالفة، ثم اختبر بـ`php scripts/test-calibration.php` وأعد اللقطة الذهبية (`gen-carrier-golden.php`). المحوّل يستهلك الملف عبر `profileCommune` و`status_overrides` فقط — لا منطق موازياً. التفاصيل في `platform/docs/carriers-reference.md` (قسم المعايرة).
 - لم تُجرَّب على ياليدين حقيقي بعد؛ التجربة الحية بـ`scripts/calibrate-live.php` (قراءة فقط) بمفاتيح صالحة، ولا تنشئ طرداً حقيقياً دون إذن.
 
 ## حدود لا تُنسَ

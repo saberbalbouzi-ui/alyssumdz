@@ -1,4 +1,4 @@
-/* واجهة «سوق التوريد» على متصفح حقيقي بوسيط مُحاكى (الخادم والدفتر مختبَران في saas/platform/test/marketplace.test.mjs):
+/* واجهة «سوق التوريد» على متصفح حقيقي بوسيط مُحاكى (الخادم والدفتر مختبَران في platform/api/test/marketplace.test.mjs):
    NODE_PATH=/opt/node-tools/node_modules node scripts/test-marketplace-ui.js */
 const http = require("http"), fs = require("fs"), path = require("path");
 const { chromium } = require("playwright");

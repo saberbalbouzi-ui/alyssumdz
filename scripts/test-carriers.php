@@ -3,7 +3,7 @@ declare(strict_types=1);
 /* اختبار المطابقة الموحَّد لمحوّلات شركات التوصيل: السيناريوهات نفسها تُجرى على كل شركة أمام محاكٍ صارم مبني على وثائقها
    (scripts/lib/carrier-sims.php). "إن نجح على ياليدين وجب أن ينجح على الباقي" — وأي مخالفة صيغة تُكشف هنا لا عند أول عميل.
      php scripts/test-carriers.php        (كود خروج 1 عند أي إخفاق) */
-require __DIR__ . '/../php-edition/shipping/src/autoload.php';
+require __DIR__ . '/../platform/php-edition/shipping/src/autoload.php';
 require __DIR__ . '/lib/carrier-sims.php';
 
 use Alyssum\Shipping\{CarrierApiException, Parcel, ShippingFactory, Status, StatusMapper};
@@ -20,7 +20,7 @@ $CARRIERS = [
     'maystro'   => ['sim' => fn() => new MaystroSim(),  'good' => ['apiKey' => 'TOK'], 'bad' => ['apiKey' => 'NOPE'], 'desk' => [], 'needsDesk' => false, 'resolver' => true,  'dupSim' => true,  'cancelAfter' => '50', 'pend' => '4'],
     'zrexpress' => ['sim' => fn() => new ZRSim(),       'good' => ['token' => 'TK', 'key' => 'KY'], 'bad' => ['token' => 'TK', 'key' => 'BAD'], 'desk' => [], 'needsDesk' => false, 'resolver' => false, 'dupSim' => true,  'cancelAfter' => null, 'pend' => 'En Preparation'],
 ];
-$dict = json_decode((string)file_get_contents(__DIR__ . '/../php-edition/shipping/data/status-dict.json'), true);
+$dict = json_decode((string)file_get_contents(__DIR__ . '/../platform/php-edition/shipping/data/status-dict.json'), true);
 $BASE = ['dhd' => 'https://dhd.ecotrack.dz'];
 
 function mk(string $code, Sim $sim, array $cred, array $extra = []): \Alyssum\Shipping\ShippingInterface
@@ -194,7 +194,7 @@ foreach (array_keys(array_filter($CARRIERS, fn($c, $k) => true, ARRAY_FILTER_USE
 
 /* ───── اللقطة الذهبية لبوابة JS يجب أن تكون حديثة (php scripts/gen-carrier-golden.php) ───── */
 require_once __DIR__ . '/lib/carrier-golden.php';
-$goldFile = __DIR__ . '/../saas/gateway/test/carrier-golden.json';
+$goldFile = __DIR__ . '/../platform/gateway/test/carrier-golden.json';
 $fresh = json_encode(carrier_golden(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "\n";
 ok('اللقطة الذهبية لبوابة JS حديثة (php scripts/gen-carrier-golden.php)', is_file($goldFile) && file_get_contents($goldFile) === $fresh);
 

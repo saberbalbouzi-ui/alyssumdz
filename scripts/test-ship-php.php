@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
-/* اختبار ربط وحدة الشحن بنسخة PHP (php-edition/shipping/integration.php + مسارات api/index.php): بلا شبكة ولا حسابات حقيقية.
+/* اختبار ربط وحدة الشحن بنسخة PHP (platform/php-edition/shipping/integration.php + مسارات api/index.php): بلا شبكة ولا حسابات حقيقية.
      php scripts/test-ship-php.php */
-require __DIR__ . '/../php-edition/shipping/integration.php';
+require __DIR__ . '/../platform/php-edition/shipping/integration.php';
 use Alyssum\Shipping\Http\{HttpClient, HttpResponse};
 
 $total = 0; $fails = 0;
@@ -83,7 +83,7 @@ ok('بعد فصل الشركة لا إرسال', $c === 200 && $c2 === 422);
 
 /* المعايرة عند أول ربط: ship_connect يلتقط الحساب، وship_calibrate يتابع/يعيد، وملخّصها يظهر في الكتالوج، والإرسال يستعمل الملف */
 require_once __DIR__ . '/lib/carrier-sims.php';
-$sim = new YalidineSim(); $geoAll = Alyssum\Shipping\OurGeo::load(__DIR__ . '/../php-edition/shipping/data/geo.json');
+$sim = new YalidineSim(); $geoAll = Alyssum\Shipping\OurGeo::load(__DIR__ . '/../platform/php-edition/shipping/data/geo.json');
 $sim->catalog = [16 => $geoAll->communes(16), 31 => $geoAll->communes(31)];
 $GLOBALS['SHIPX_HTTP'] = $sim; $GLOBALS['SHIPX_PAUSE'] = static function (int $ms): void {};
 [$c, $b] = $r('ship_connect', ['carrier' => 'yalidine', 'credentials' => ['apiId' => 'AID', 'apiToken' => 'TOK']]);
@@ -103,8 +103,8 @@ $GLOBALS['SHIPX_HTTP'] = $http;
 
 /* مسارات index.php عبر خادم PHP حقيقي: صلاحية المدير وCSRF وwebhook العام */
 $root = sys_get_temp_dir() . '/shipsrv_' . bin2hex(random_bytes(4)); mkdir("$root/api", 0777, true);
-copy(__DIR__ . '/../php-edition/api/index.php', "$root/api/index.php");
-$sh = "$root/api/shipping"; mkdir($sh); exec('cp -r ' . escapeshellarg(__DIR__ . '/../php-edition/shipping/src') . ' ' . escapeshellarg("$sh/src")); copy(__DIR__ . '/../php-edition/shipping/integration.php', "$sh/integration.php"); mkdir("$sh/data"); copy(__DIR__ . '/../php-edition/shipping/data/geo.json', "$sh/data/geo.json"); copy(__DIR__ . '/../php-edition/shipping/schema.sqlite.sql', "$sh/schema.sqlite.sql");
+copy(__DIR__ . '/../platform/php-edition/api/index.php', "$root/api/index.php");
+$sh = "$root/api/shipping"; mkdir($sh); exec('cp -r ' . escapeshellarg(__DIR__ . '/../platform/php-edition/shipping/src') . ' ' . escapeshellarg("$sh/src")); copy(__DIR__ . '/../platform/php-edition/shipping/integration.php', "$sh/integration.php"); mkdir("$sh/data"); copy(__DIR__ . '/../platform/php-edition/shipping/data/geo.json', "$sh/data/geo.json"); copy(__DIR__ . '/../platform/php-edition/shipping/schema.sqlite.sql', "$sh/schema.sqlite.sql");
 file_put_contents("$root/api/config.php", "<?php return ['admin_hash' => " . var_export(password_hash('pw', PASSWORD_DEFAULT), true) . ", 'max_upload_mb' => 8];");
 $port = random_int(20000, 40000);
 $p = proc_open(['php', '-S', "127.0.0.1:$port", '-t', $root], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);
