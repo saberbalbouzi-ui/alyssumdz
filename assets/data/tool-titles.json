@@ -85,19 +85,6 @@
     "en": "Place your product in a realistic scene"
    }
   },
-  "vd": {
-   "icon": "07-generateur-de-video",
-   "t": {
-    "ar": "فيديو من الصورة",
-    "fr": "Générateur de vidéo",
-    "en": "Video from image"
-   },
-   "d": {
-    "ar": "حوّل الصورة إلى فيديو قصير",
-    "fr": "Transformez l'image en courte vidéo",
-    "en": "Turn an image into a short video"
-   }
-  },
   "xp": {
    "icon": "08-redimensionner-agrandir",
    "t": {
@@ -187,6 +174,19 @@
     "ar": "افحص وحدّث أغلفة كل متجرك",
     "fr": "Vérifiez et mettez à jour tout votre catalogue",
     "en": "Check and update your whole catalog"
+   }
+  },
+  "vgen": {
+   "icon": "07-generateur-de-video",
+   "t": {
+    "ar": "مولّد الفيديو بالذكاء",
+    "fr": "Générateur de vidéo IA",
+    "en": "AI video generator"
+   },
+   "d": {
+    "ar": "فيديو إعلاني من صورة ووصف أو قالب",
+    "fr": "Vidéo publicitaire à partir d'une image et d'un prompt ou d'un modèle",
+    "en": "Ad video from an image and a prompt or template"
    }
   }
  }

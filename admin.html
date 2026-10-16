@@ -11660,7 +11660,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── لوحة «تعديل» الجانبية للصورة: بازل / ماسك / نزع الخلفية / التقاط العناصر ───────────────── */
-  const EP_TABS = [["up", "تحسين الجودة", "t_magic"], ["fa", "استوديو أزياء ذكي", "t_magic"], ["to", "تجربة افتراضية", "t_magic"], ["ps", "تصوير المنتج بالذكاء", "t_magic"], ["v3", "عرض 360°", "t_magic"], ["rc", "تلوين بالذكاء", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["br", "الهوية البصرية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "فيديو من الصورة", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
+  const EP_TABS = [["up", "تحسين الجودة", "t_magic"], ["fa", "استوديو أزياء ذكي", "t_magic"], ["to", "تجربة افتراضية", "t_magic"], ["ps", "تصوير المنتج بالذكاء", "t_magic"], ["v3", "عرض 360°", "t_magic"], ["rc", "تلوين بالذكاء", "t_magic"], ["pz", "بازل", "puzzle"], ["mk", "ماسك", "mask"], ["bg", "نزع الخلفية", "scissors"], ["cap", "التقاط العناصر", "cutout"], ["st", "استوديو المنتج", "t_magic"], ["rt", "لمسات وتصحيح", "t_magic"], ["ff", "حواف ناعمة (Contour fondu)", "t_magic"], ["fr", "إطار وهوية", "t_magic"], ["br", "الهوية البصرية", "t_magic"], ["cl", "كولاج", "t_magic"], ["bl", "دمج صورة داخل صورة", "t_magic"], ["vd", "تحريك الصورة (مجاني)", "t_magic"], ["vg", "مولّد الفيديو بالذكاء", "t_magic"], ["xp", "توسيع الخلفية الذكي", "t_magic"], ["ai", "تعديل بالوصف الذكي", "t_magic"], ["sl", "أساليب تصوير ذكية", "t_magic"]];
   const epInf = () => { const inf = selInfo(); return inf && inf.kind === "widget" && inf.node.type === "image" && !multiOn() ? inf : null; };
   function epBody(inf) {
     const t = E.ept || "";
@@ -11675,6 +11675,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "cl") return PBCollage.panel();
     if (t === "bl") return PBBlend.panel();
     if (t === "vd") return PBVideo.panel();
+    if (t === "vg") return PBVGen.panel();
     if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to" || t === "ps" || t === "rc" || t === "v3") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
@@ -11690,9 +11691,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const old = p.querySelector(".ep-b"), top = old ? old.scrollTop : 0, cur = E.ept || ""; if (E.live && E.live.tab && E.live.tab !== cur) liveCancel(); if (cur !== "st" && typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); if (cur !== "ff" && typeof PBFade !== "undefined" && PBFade.state.url) PBFade.cancel();
     const tn = EP_TABS.find(x => x[0] === cur), sn = cur === "st" && typeof PBStudio !== "undefined" ? (IMG_ST.find(x => x[0] === PBStudio.tab()) || [])[1] : "";
     p.innerHTML = `<button type="button" class="dk-x" data-ep="x" title="إغلاق">✕</button><div class="ep-h"><b>${ico(tn ? tn[2] : "image", 16)} ${tn ? tn[1] : "تعديل الصورة"}${sn ? ' ‹ ' + sn : ""}</b></div><div class="ep-b">${epBody(inf)}</div>`;
-    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl" || cur === "fa" || cur === "to" || cur === "ps" || cur === "rc" || cur === "v3") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "br" && nb && nb.querySelector("#pbbr")) { try { PBBrand.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
+    const nb = p.querySelector(".ep-b"); if (nb) nb.scrollTop = top; if (cur === "st" && nb && nb.querySelector("#pbst")) { try { PBStudio.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "ff" && nb && nb.querySelector("#pbff")) { try { PBFade.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "rt" && nb && nb.querySelector("#pbrt")) { try { PBRetouch.mount(nb, inf); } catch (x) { console.warn(x); } } if ((cur === "xp" || cur === "ai" || cur === "sl" || cur === "fa" || cur === "to" || cur === "ps" || cur === "rc" || cur === "v3") && nb && nb.querySelector("#pbai")) { try { PBAI.mount(nb, inf, cur); } catch (x) { console.warn(x); } } if (cur === "br" && nb && nb.querySelector("#pbbr")) { try { PBBrand.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "fr" && nb && nb.querySelector("#pbfr")) { try { PBFrame.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "bl" && nb && nb.querySelector("#pbbl")) { try { PBBlend.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "cl" && nb && nb.querySelector("#pbcl")) { try { PBCollage.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vd" && nb && nb.querySelector("#pbvd")) { try { PBVideo.mount(nb, inf); } catch (x) { console.warn(x); } } if (cur === "vg" && nb && nb.querySelector("#pbvg")) { try { PBVGen.mount(nb, inf); } catch (x) { console.warn(x); } } epPlace(p); epFloat();
   }
-  function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBBrand.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
+  function epClose() { if (E.live) { const L = E.live; liveClear(true); try { if (L.cancel) L.cancel(); } catch (x) { } } const p = $("pbx-ep"); if (p) p.remove(); E.xp = null; setTimeout(() => { try { positionOverlay(); } catch (x) { } }, 0); try { PBRetouch.reset(); PBAI.reset(); PBFade.reset(); PBFrame.reset(); PBBrand.reset(); PBCollage.reset(); PBBlend.reset(); PBVideo.reset(); PBVGen.reset(); } catch (x) { } const f = $("pbx-epf"); if (f) f.remove(); if (typeof PBMask !== "undefined") { PBMask.cancel(); } if (typeof PBPuzzle !== "undefined") PBPuzzle.cancelPrev(); if (typeof PBStudio !== "undefined" && PBStudio.pending()) PBStudio.cancel(); drawQbarSoon(); if (E.ltab === "img") renderLeft(); }
   const drawQbarSoon = () => setTimeout(() => { try { drawQbar(); } catch (x) { } }, 0);
   function epSync() { const p = $("pbx-ep"); if (!p) return; if (!epInf()) { epClose(); return; } epDraw(); }
   function epToggle() { if ($("pbx-ep")) { epClose(); return; } if (!epInf()) return; if (E.ltab !== "img") { E.ltab = "img"; renderLeft(); } epOpen(); }
@@ -11705,7 +11706,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   /* تبويب «تعديل الصورة» اليساري: بطاقات أدوات بصور حقيقية (نصفها قبل ونصفها بعد) */
   /* بطاقات أدوات الصورة (assets/econes ← assets/img/tools/*.webp): كل بطاقة صورة كاملة بعنوانها ووصفها؛ الأدوات المحلية والذكية (Alyssum API) في قائمة واحدة */
-  const IMG_TOOLS = [["mk", "ماسك", "mask.webp"], ["pz", "بازل", "puzzle.webp"], ["cap", "التقاط العناصر", "select-elements.webp"], ["bg", "نزع الخلفية", "remove-background.webp"], ["rt", "لمسات وتصحيح", "retouch.webp"], ["st", "استوديو المنتج", "product-studio.webp"], ["fr", "إطار وهوية", "frame-photo.webp"], ["ff", "حواف ناعمة", "soft-edges.webp"], ["bl", "دمج صور", "merge-images.webp"], ["cl", "كولاج", "collage.webp"], ["vd", "فيديو من الصورة", "image-to-video.webp"]];
+  const IMG_TOOLS = [["mk", "ماسك", "mask.webp"], ["pz", "بازل", "puzzle.webp"], ["cap", "التقاط العناصر", "select-elements.webp"], ["bg", "نزع الخلفية", "remove-background.webp"], ["rt", "لمسات وتصحيح", "retouch.webp"], ["st", "استوديو المنتج", "product-studio.webp"], ["fr", "إطار وهوية", "frame-photo.webp"], ["ff", "حواف ناعمة", "soft-edges.webp"], ["bl", "دمج صور", "merge-images.webp"], ["cl", "كولاج", "collage.webp"], ["vd", "تحريك الصورة (مجاني)", "image-to-video.webp"]];
   const IMG_ST = [["bg", "الخلفية", "st_bg"], ["prod", "المنتج", "st_prod"], ["fx", "تأثيرات", "st_fx"], ["txt", "ملصقات وشعار", "st_stk"], ["out", "المقاس والإخراج", "st_size"]];
   const IMG_SM = [["xp", "توسيع الخلفية بالذكاء", "expand-background.webp", true], ["scene", "مشهد ذكي للمنتج", "smart-scene.webp", true], ["sl", "أساليب تصوير ذكية", "smart-photo-styles.webp", true], ["ai", "تعديل بالوصف", "edit-by-prompt.webp", true], ["erase", "ممحاة ذكية بالفرشاة", "smart-brush-eraser.webp", ERASER_ON]];
   /* تحسين الجودة: تكبير بلا ذكاء (تكبير تدريجي + حدّة) عبر ImgUpscale + تقليل ضجيج وتحسين تلقائي اختياريان؛ لا يخترع تفاصيل جديدة */
@@ -11744,6 +11745,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "tryon") return imgPick("to");
     if (k === "pshoot") return imgPick("ps");
     if (k === "view360") return imgPick("v3");
+    if (k === "vgen") return imgPick("vg");
     if (k === "txt2img") return PBAI.openTx();
     if (k === "recolor") return imgPick("rc");
     if (k === "brand") return imgPick("br");
@@ -11753,7 +11755,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   const ROW_IC = { view360: '<path d="M12 4a8 4 0 1 0 8 4"/><path d="M17 3l3 1-1 3"/><rect x="8" y="9" width="8" height="10" rx="2"/>', resize: '<rect x="4" y="4" width="10" height="10" rx="1"/><path d="M14 20h6v-6M20 20l-7-7"/>', txt2img: '<path d="M4 6h10M4 11h7"/><rect x="13" y="10" width="8" height="10" rx="1.5"/><path d="M19 3v4M17 5h4"/>', brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
   /* أيقونات الأدوات (assets/img/tools/ic، بلا أي كتابة داخل الصورة) وعناوينها نصوص مستقلة قابلة للترجمة من assets/data/tool-titles.json */
   const TT = { data: null, lang: "ar" };
-  const TT_ICON = { bg: "01-suppression-de-fond", gen: "02-generateur-d-images", pshoot: "03-photographie-produit-ia", fashion: "04-modele-virtuel", tryon: "05-essayage-virtuel", scene: "06-mise-en-scene-produit", vd: "07-generateur-de-video", xp: "08-redimensionner-agrandir", resize: "08-redimensionner-agrandir", erase: "09-supprimer-des-objets", recolor: "10-recolorer-vetements", brand: "11-identite-visuelle", logo: "12-createur-de-logo", batch: "13-traitement-par-lots", catalog: "14-catalogue-de-produits" };
+  const TT_ICON = { bg: "01-suppression-de-fond", gen: "02-generateur-d-images", pshoot: "03-photographie-produit-ia", fashion: "04-modele-virtuel", tryon: "05-essayage-virtuel", scene: "06-mise-en-scene-produit", vgen: "07-generateur-de-video", xp: "08-redimensionner-agrandir", resize: "08-redimensionner-agrandir", erase: "09-supprimer-des-objets", recolor: "10-recolorer-vetements", brand: "11-identite-visuelle", logo: "12-createur-de-logo", batch: "13-traitement-par-lots", catalog: "14-catalogue-de-produits" };
   const ttLang = () => { try { return localStorage.getItem("alyssum_ui_lang") || "ar"; } catch (e) { return "ar"; } };
   const ttRec = k => TT.data && TT.data.tools && TT.data.tools[k === "resize" ? "xp" : k];
   const ttTitle = (k, fb) => { const t = ttRec(k); return (t && t.t && (t.t[ttLang()] || t.t.ar)) || fb; };
@@ -11767,7 +11769,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const tile = (attr, label, img, on, badge, key) => key && TT_ICON[key] ? `<button type="button" class="pbx-tt ic${on ? " on" : ""}" ${attr} title="${esc(ttTitle(key, label))}">${ttIcon(key)}<span>${esc(ttTitle(key, label))}</span>${badge ? `<i class="tt-b">${badge}</i>` : ""}</button>` : `<button type="button" class="pbx-tt card${on ? " on" : ""}" ${attr} title="${esc(label)}" aria-label="${esc(label)}"><img src="assets/img/tools/${/\./.test(img) ? img : img + ".webp"}" alt="${esc(label)}" draggable="false">${badge ? `<i class="tt-b">${badge}</i>` : ""}</button>`;
     const grp = (title, keys, rows) => `<div class="pbx-cat">${title}</div><div class="pbx-ttg">${keys.map(k => { const t = IMG_TOOLS.find(x => x[0] === k); if (t) return tile(`data-imgt="${t[0]}"`, t[1], t[2], cur === t[0], "", t[0]); const m = IMG_SM.find(x => x[0] === k); return m ? tile(`data-imgm="${m[0]}"`, m[1], m[2], false, m[3] ? "" : "قريباً", m[0]) : ""; }).join("")}</div>${rows ? `<div class="pbx-trs">${rows}</div>` : ""}`;
     return `${inf ? "" : '<div class="pbx-tn">حدّد صورة في الصفحة ثم اختر الأداة</div>'}`
-      + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "عدة مشاهد احترافية دفعة واحدة") + rowBtn("view360", "عرض 360° للمنتج", "دوران بسحب الزائر — بالذكاء أو بصورك") + rowBtn("txt2img", "صورة من وصف نصي", "اكتب فكرتك وتُولَّد صورة") + rowBtn("fashion", "استوديو أزياء ذكي", "عارض افتراضي ومانيكان غير مرئي") + rowBtn("tryon", "تجربة افتراضية", "شاهد القطعة على جسمك"))
+      + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "عدة مشاهد احترافية دفعة واحدة") + rowBtn("view360", "عرض 360° للمنتج", "دوران بسحب الزائر — بالذكاء أو بصورك") + rowBtn("txt2img", "صورة من وصف نصي", "اكتب فكرتك وتُولَّد صورة") + rowBtn("vgen", "مولّد الفيديو بالذكاء", "فيديو إعلاني من صورة ووصف أو قالب") + rowBtn("fashion", "استوديو أزياء ذكي", "عارض افتراضي ومانيكان غير مرئي") + rowBtn("tryon", "تجربة افتراضية", "شاهد القطعة على جسمك"))
       + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("resize", "تغيير المقاس والتوسيع", "أي منصة أو اتجاه، بلا إعادة تصوير") + rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "ألوان متعددة من صورة واحدة") + rowBtn("logo", "منشئ الشعار", "شعار مجاني أو بالذكاء بألوان علامتك"))
       + `<div class="pbx-cat">أتمتة وتوسّع</div><div class="pbx-trs">${rowBtn("batch", "معالجة الدفعات", "عدّل آلاف الصور دفعة واحدة") + rowBtn("catalog", "كتالوج المنتجات", "افحص وحدّث أغلفة كل متجرك")}</div>`
       + (cur === "st" ? `<div class="pbx-cat">أدوات استوديو المنتج</div><div class="pbx-ttg">${IMG_ST.map(([k, n, im]) => `<button type="button" class="pbx-tt${st === k ? " on" : ""}" data-imgs="${k}" title="${esc(n)}"><img src="assets/img/tools/${im}.webp" alt="" draggable="false"><span>${esc(n)}</span></button>`).join("")}</div>` : "")
@@ -16959,6 +16961,85 @@ const PBBrand = (() => {
     });
   }
   return { panel, mount, apply, openLogo, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS, logoCanvas, logoPrompt, LSTYLES } };
+})();
+
+/* مولّد الفيديو بالذكاء (Alyssum API): صورة منتج (1–4 صور) + قالب جاهز للتجارة الإلكترونية و/أو وصف حر + نسبة أبعاد ← فيديو MP4 قصير يُضاف للصفحة أو يُنزَّل.
+   منفصل عن «تحريك الصورة» (PBVideo: حركة كاميرا محلية مجانية بلا ذكاء). يستعمل ImgGen.video (تأكيد تكلفة، حدّ إنفاق، لا إعادة تلقائية). */
+const PBVGen = (() => {
+  const A = () => PBApp, $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  /* قوالب حركة للتجارة الإلكترونية: [المعرّف، الاسم، وصف الحركة بالإنجليزية للنموذج] */
+  const TPL = [
+    ["orbit", "دوران بطيء حول المنتج", "the camera slowly orbits around the product, smooth cinematic motion, soft studio light"],
+    ["zoom", "تقريب على التفاصيل", "slow push-in toward the product revealing fine texture and label details, shallow depth of field"],
+    ["shine", "لمعان يمرّ على المنتج", "a soft sweep of light glides across the product surface highlighting its shine and shape, elegant premium feel"],
+    ["float", "المنتج يطفو بلطف", "the product floats gently in the air with subtle rotation and soft shadows below, clean minimal background"],
+    ["splash", "رذاذ ماء وانتعاش", "fresh water droplets and splashes burst around the product in slow motion, cool bright light"],
+    ["steam", "بخار دافئ وأجواء مريحة", "warm gentle steam rises beside the product, cozy golden light, calm atmosphere"],
+    ["leaves", "أوراق وزهور تتطاير", "fresh green leaves and petals drift softly around the product in a light breeze, natural daylight"],
+    ["hand", "يد تلتقط المنتج", "a hand with a long sleeve (only the hand and forearm visible, no face) picks the product up and presents it to the camera, natural window light"],
+    ["reveal", "كشف المنتج بضوء", "the scene starts dim and light gradually reveals the product, dramatic yet tasteful reveal"],
+    ["sparkle", "بريق فاخر", "tiny golden sparkles glimmer around the product, luxurious dark elegant background, slow camera drift"],
+    ["turntable", "منصة دوّارة", "the product rotates slowly on a turntable platform, even lighting, clean e-commerce look"],
+    ["pop", "حركة إعلانية ديناميكية", "dynamic advertising motion: quick but smooth camera moves and punchy lighting changes that energize the product, social-media ad feel"]
+  ];
+  const RATIOS = [["9:16", "طولي 9:16 (ريلز/ستوري)"], ["1:1", "مربع 1:1"], ["4:5", "عمودي 4:5"], ["16:9", "عريض 16:9"]];
+  const GUARD = " Keep the product exactly as in the reference photo(s): same shape, proportions, colors, packaging and label artwork. Do not add text, subtitles, logos or watermarks. No distortion or morphing of the product. Realistic physics, smooth natural motion, no sound needed.";
+  /* نقية: تركّب التعليمات من القالب والوصف الحر */
+  function buildPrompt(tpl, text) {
+    const t = TPL.find(x => x[0] === tpl), parts = []; if (t) parts.push(t[2]); const u = String(text || "").trim(); if (u) parts.push(u);
+    if (!parts.length) return ""; return "Create a short product video from the reference photo(s): " + parts.join(". Additionally: ") + "." + GUARD;
+  }
+  const S = { id: "", src: "", pool: [], picks: [], tpl: "", text: "", ratio: "9:16", dur: 5, busy: false, msg: "", url: "", blob: null, type: "", ver: 0 };
+  const poolOf = src => (typeof PBCollage !== "undefined" && PBCollage.poolOf ? PBCollage.poolOf(src) : []).filter(u => u && u !== src);
+  const blobOfSrc = async src => { const r = await fetch(A().localize(String(src))); if (!r.ok) throw new Error("تعذّر قراءة الصورة"); return r.blob(); };
+  function panel() {
+    const rdy = typeof ImgGen !== "undefined" ? ImgGen.videoReady() : { ok: false, nokey: true, price: 0 };
+    return `<div class="pbx-pz" id="pbvg"><p>أنشئ فيديو إعلانياً من صورة منتجك بالذكاء: اختر قالباً جاهزاً أو اكتب وصف الحركة، وأضف حتى 4 صور للمنتج لدقة أفضل. (للتحريك المجاني بلا ذكاء استعمل «تحريك الصورة».)</p>
+<div class="ep-n"><b>قوالب الحركة</b></div><div class="pbrt-row">${TPL.map(x => `<button type="button" class="pbx-small${S.tpl === x[0] ? " pz-go" : ""}" data-vg="tpl" data-v="${x[0]}">${x[1]}</button>`).join("")}</div>
+<label class="fl" style="display:block;margin:.4rem 0">وصف الحركة (اختياري مع القالب، إلزامي بدونه)<textarea id="pbvg-t" rows="3" style="width:100%" placeholder="مثال: تقترب الكاميرا ببطء من العبوة بينما تتساقط بتلات وردية حولها">${esc(S.text)}</textarea></label>
+<div class="ep-n"><b>صور المنتج</b> (<span id="pbvg-n">${1 + S.picks.length}</span> من 4) — الصورة المحدّدة دائماً مضمَّنة</div>
+<div id="pbvg-pool" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:96px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-vg="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(u) ? "3px solid #7c3aed" : "none"}">`).join("") || '<span class="ep-n">لا صور أخرى في الصفحة</span>'}</div>
+<div class="pbrt-row"><select id="pbvg-r" class="pbx-small">${RATIOS.map(([k, t]) => `<option value="${k}"${S.ratio === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
+<div class="rt-g"><label>المدة (ثانية) <b id="pbvg-dv">${S.dur}</b><input type="range" id="pbvg-d" min="3" max="10" value="${S.dur}"></label></div>
+<div class="ep-n" id="pbvg-cost">${rdy.ok ? "التكلفة التقريبية للفيديو: $" + (Math.round(rdy.price * 100) / 100).toFixed(2) + " — تُعرض وتُؤكَّد قبل التنفيذ" : "تحتاج مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور"}</div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vg="go">🎬 أنشئ الفيديو بالذكاء</button></div>
+<div id="pbvg-out"></div><div id="pbvg-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
+  }
+  const say = t => { S.msg = t; const e = $("pbvg-msg"); if (e) e.textContent = t; };
+  function showOut() {
+    const out = $("pbvg-out"); if (!out || !S.url) return; const ext = /mp4/.test(S.type) ? "mp4" : "webm";
+    out.innerHTML = `<video src="${S.url}" controls loop muted playsinline style="max-width:100%;border-radius:6px"></video><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vg="add">＋ أضفه للصفحة</button><a class="pbx-small" href="${S.url}" download="alyssum-ai-video.${ext}" style="text-decoration:none;display:inline-block">⬇ تنزيل</a></div>`;
+  }
+  async function go() {
+    if (S.busy) return; const prompt = buildPrompt(S.tpl, S.text);
+    if (!prompt) { say("اختر قالباً أو اكتب وصف الحركة"); return; }
+    S.busy = true; const ver = ++S.ver; say("⏳ تجهيز الصور…");
+    try {
+      const imgs = [await blobOfSrc(S.src)]; for (const u of S.picks.slice(0, 3)) imgs.push(await blobOfSrc(u));
+      const r = await ImgGen.video({ images: imgs, prompt, ratio: S.ratio, dur: S.dur, title: "فيديو بالذكاء", onStatus: m => { if (ver === S.ver) say("⏳ " + m); } });
+      if (!r) { say("أُلغي"); return; }
+      if (S.url) URL.revokeObjectURL(S.url); S.blob = r.blob; S.type = r.type; S.url = URL.createObjectURL(r.blob); showOut(); say("✅ جاهز — راجع الفيديو (قد تتغير تفاصيل دقيقة) ثم أضفه للصفحة");
+    } catch (e) { say(e.code === "NOKEY" ? "⚠️ أضف مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور" : e.code === "OFF" ? "توليد الفيديو بالذكاء معطّل من الإعدادات" : "❌ " + e.message); }
+    finally { S.busy = false; }
+  }
+  async function add() {
+    if (!S.blob) return; try { const ext = /mp4/.test(S.type) ? "mp4" : "webm", f = new File([S.blob], "ai-video." + ext, { type: S.type || "video/mp4" }), p = await A().uploadVideo(f); if (!p) return; A().addVideoFile(p); say("✅ أُضيف الفيديو للصفحة"); } catch (e) { say("❌ " + e.message); }
+  }
+  async function mount(host, inf) {
+    const id = inf.node.id; if (S.id !== id) { S.id = id; S.picks = []; if (S.url) { URL.revokeObjectURL(S.url); } S.url = ""; S.blob = null; S.msg = ""; }
+    S.src = inf.set.src; S.pool = poolOf(S.src); host.innerHTML = panel(); showOut();
+    const root = host.querySelector("#pbvg"); if (!root) return;
+    root.addEventListener("input", e => { const t = e.target; if (t.id === "pbvg-t") S.text = t.value; else if (t.id === "pbvg-d") { S.dur = +t.value; const v = $("pbvg-dv"); if (v) v.textContent = S.dur; } });
+    root.addEventListener("change", e => { if (e.target.id === "pbvg-r") S.ratio = e.target.value; });
+    root.addEventListener("click", e => {
+      const t = e.target.closest("[data-vg]"); if (!t) return; const k = t.dataset.vg;
+      if (k === "tpl") { S.tpl = S.tpl === t.dataset.v ? "" : t.dataset.v; root.querySelectorAll('[data-vg="tpl"]').forEach(b => b.classList.toggle("pz-go", b.dataset.v === S.tpl)); }
+      else if (k === "pick") { const u = S.pool[+t.dataset.i]; if (!u) return; const i = S.picks.indexOf(u); if (i >= 0) S.picks.splice(i, 1); else if (S.picks.length < 3) S.picks.push(u); else say("الحد الأقصى 4 صور"); t.style.outline = S.picks.includes(u) ? "3px solid #7c3aed" : "none"; const n = $("pbvg-n"); if (n) n.textContent = 1 + S.picks.length; }
+      else if (k === "go") go(); else if (k === "add") add();
+    });
+  }
+  return { panel, mount, reset: () => { S.id = ""; if (S.url) URL.revokeObjectURL(S.url); S.url = ""; S.blob = null; S.msg = ""; S.ver++; }, state: S, _t: { buildPrompt, TPL, RATIOS } };
 })();
 
 /* مكتبة الملصقات (v1.89.76): آلاف الملصقات الملوّنة بحث عربي/فرنسي/إنجليزي، تُضاف للصفحة بنقرة أو سحب.
