@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""يولّد صفحات التعريف بأدوات المنصة (saas/landing/<slug>/index.html) من المحتوى المعرَّف هنا + saas/landing/landing.css|js.
+"""(قبل التوليد شغّل python3 scripts/prep-pack-images.py لتجهيز صور الحزم: قصّ الشرائح الدخيلة + رفع الدقة.)
+يولّد صفحات التعريف بأدوات المنصة (saas/landing/<slug>/index.html) من المحتوى المعرَّف هنا + saas/landing/landing.css|js.
 كل صفحات التعريف (ومنها نزع الخلفية) تُولَّد من PAGES. صفحة جديدة = أضف قاموساً إلى PAGES (صور في saas/landing/<slug>/img/)
 ثم أضف حقل landing في saas/guide/tools.json وشغّل scripts/gen-tool-pages.py. كل النصوص هنا عربية HTML (لا كتابة داخل الصور)، والاسم من saas/brand.json."""
 import html, pathlib
@@ -63,6 +64,8 @@ def gallery(slug, title="معرض الصور", sub="كل صور الأداة ف�
     r = pack_images(slug)
     if not r: return ""
     d, fs = r; rel = "../../../" + d.relative_to(root).as_posix()
+    g = L / slug / "gal"   # نسخ مقصوصة ومرفوعة الدقة من scripts/prep-pack-images.py (تُفضَّل على المصدر)
+    if g.is_dir() and all((g / f.name).exists() for f in fs): d, fs, rel = g, [g / f.name for f in fs], "gal"
     figs = []
     cl = CAP.get(slug)
     for i, f in enumerate(fs):
