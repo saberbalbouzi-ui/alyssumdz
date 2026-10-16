@@ -1763,6 +1763,15 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     R.fr = pane.querySelector('[data-imgt="bg"] span').textContent.trim(); ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.removeItem(k)); PBApp.close(); await w(300); return R;
   });
   ok("أيقونات الأدوات: كل الصور تُحمَّل، والعناوين نصوص HTML من ملف الترجمة (عربي افتراضي وفرنسي عند ضبط اللغة)", icn.imgs >= 10 && icn.imgs === icn.imgsN && icn.tileTitle === "نزع الخلفية" && icn.rowTitle === "الهوية البصرية" && icn.rowIc && icn.langs && icn.n === 14 && icn.fr === "Suppression de fond", icn);
+  const tcat = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; const btn = document.querySelector('.nav-btn[data-app="tools"]'); R.btn = !!btn; AdminNav.app("tools", btn); await w(1500);
+    R.n = document.querySelectorAll("#tc-list .tc-card").length; R.landN = document.querySelectorAll('#tc-list [onclick*="landing"]').length; R.bgLand = !!document.querySelector('[data-tool="bg"] [onclick*="landing"]');
+    R.icons = [...document.querySelectorAll("#tc-list .tc-h img")].filter(i => i.naturalWidth > 0).length;
+    const opened = []; window.open = u => { opened.push(u); }; AdminNav.toolPage("bg", "landing"); AdminNav.toolPage("bg", "guide"); R.opened = opened;
+    AdminNav.toolSearch("الخلفية"); R.f = document.querySelectorAll("#tc-list .tc-card").length; AdminNav.toolSearch("");
+    AdminNav.toolGo("bg"); await w(3500); const pb = document.getElementById("pb-app"); R.builder = !!(pb && pb.classList.contains("on")); R.ltab = PBApp.E.ltab; try { PBApp.close(); } catch (e) { } await w(300); return R;
+  });
+  ok("إعدادات التطبيقات ← كل الأدوات: 30 أداة بأيقوناتها، «صفحة التعريف» لنزع الخلفية فقط، فتح الصفحة والدليل، البحث، و«افتح في المحرّر» يفتح المطوّر على تبويب تعديل الصورة", tcat.btn && tcat.n === 30 && tcat.landN === 1 && tcat.bgLand && tcat.icons >= 14 && tcat.opened.length === 2 && /saas\/landing\/remove-background\/$/.test(tcat.opened[0]) && /saas\/guide\/bg\.html$/.test(tcat.opened[1]) && tcat.f >= 1 && tcat.f < 30 && tcat.builder && tcat.ltab === "img", tcat);
   // ── تبويب «أدوات ذكية» محذوف من القائمة اليسرى (أدواته داخل «تعديل الصورة») ──
   const nsT = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; PBAdmin.mkPage("بلا ذكية"); await w(1500); const R = { smart: !!document.querySelector('.pbx-tabs [data-lt="smart"]'), img: !!document.querySelector('.pbx-tabs [data-lt="img"]'), tabs: [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt).join(",") }; PBApp.close(); await w(400); return R; });
   ok("القائمة اليسرى: لا تبويب «أدوات ذكية» (موجودة داخل «تعديل الصورة»)", !nsT.smart && nsT.img, nsT);
