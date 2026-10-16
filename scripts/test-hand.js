@@ -1343,6 +1343,20 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { modal, shown, saved, mono: cv.width === 800 && cv.height === 800 && d[3] === 255, ai: calls.length === 1 && calls[0].t && /LOGO/.test(calls[0].p) && /عسل الجبل/.test(calls[0].p) && /عسل طبيعي/.test(calls[0].p), styles: T.LSTYLES.length };
   });
   ok("منشئ الشعار: يفتح من الصف ويولّد شعاراً نصياً مجانياً ويعتمده، والذكي يرسل وصفاً بلا صورة مرجعية", lg.modal && lg.shown && lg.saved && lg.mono && lg.ai && lg.styles === 4, lg);
+  // ── دفعة بخطوة ذكاء اصطناعي (حتى 250 صورة بموافقة واحدة) ──
+  const bt = await p.evaluate(async () => {
+    const B = AdminImgBatch, c0 = document.createElement("canvas"); c0.width = 60; c0.height = 40; c0.getContext("2d").fillRect(0, 0, 60, 40); const url = c0.toDataURL("image/png");
+    B.S.files = [{ name: "a", src: url, size: 1 }, { name: "b", src: url, size: 1 }]; B.S.cfg.ai = "stage"; B.S.cfg.aiScene = 5; B.S.cfg.preset = "orig"; B.S.cfg.pipe = false; B.S.cfg.wm = "none";
+    const calls = []; const old = ImgGen.edit, oc = window.confirm; let asked = ""; window.confirm = m => { asked = m; return true; };
+    ImgGen.edit = async o => { calls.push({ p: o.prompt, conf: o.confirm }); const c = document.createElement("canvas"); c.width = 60; c.height = 40; c.getContext("2d").fillRect(0, 0, 60, 40); return { blob: await new Promise(r => c.toBlob(r)), canvas: c }; };
+    await B.run(); const ok1 = B.S.out.filter(o => o.blob).length;
+    B.S.cfg.ai = "edit"; B.S.cfg.aiText = ""; const before = calls.length; await B.run(); const noText = calls.length === before;
+    B.S.cfg.ai = "recolor"; B.S.cfg.aiColor = "navy"; const pr = B.aiPrompt(B.S.cfg);
+    B.S.files = Array.from({ length: 251 }, (_, i) => ({ name: "x" + i, src: url, size: 1 })); B.S.cfg.ai = "ghost"; const b2 = calls.length; await B.run(); const capped = calls.length === b2;
+    ImgGen.edit = old; window.confirm = oc; B.S.cfg.ai = "none"; B.S.files = []; B.S.out = [];
+    return { ok1, n: calls.length, noConf: calls.slice(0, 2).every(x => x.conf === false), askedCost: /الإجمالية/.test(asked) && /2 صورة/.test(asked), noText, recolor: /navy blue/.test(pr), capped, modes: B.AI_MODES.length };
+  });
+  ok("دفعة الصور بخطوة ذكاء: صورتان تُعالجان بموافقة تكلفة واحدة، والوصف الفارغ والحدّ 250 يمنعان التنفيذ", bt.ok1 === 2 && bt.n >= 2 && bt.noConf && bt.askedCost && bt.noText && bt.recolor && bt.capped && bt.modes === 8, bt);
   // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);

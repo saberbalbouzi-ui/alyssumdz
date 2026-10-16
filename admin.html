@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.260">
+<meta name="admin-version" content="1.89.261">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1663,12 +1663,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.260"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.260"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.260"></script>
+<script src="assets/js/ctl-help.js?v=1.89.261"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.261"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.261"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.260"></script>
+<script src="assets/js/admin-nav.js?v=1.89.261"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1680,7 +1680,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.247"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.260"></script>
+<script src="assets/js/admin-update.js?v=1.89.261"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -10676,7 +10676,7 @@ body{overflow-x:hidden;margin:0}`;
   function closeFloating() {
     try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
-    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-ip", "pbs-modal", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-ip", "pbs-modal", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
@@ -11733,6 +11733,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "txt2img") return PBAI.openTx();
     if (k === "recolor") return imgPick("rc");
     if (k === "brand") return imgPick("br");
+    if (k === "logo") return PBBrand.openLogo();
     toast("هذه الأداة قيد التطوير وستظهر هنا فور جاهزيتها");
   }
   const ROW_IC = { resize: '<rect x="4" y="4" width="10" height="10" rx="1"/><path d="M14 20h6v-6M20 20l-7-7"/>', txt2img: '<path d="M4 6h10M4 11h7"/><rect x="13" y="10" width="8" height="10" rx="1.5"/><path d="M19 3v4M17 5h4"/>', brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
@@ -11743,7 +11744,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const grp = (title, keys, rows) => `<div class="pbx-cat">${title}</div><div class="pbx-ttg">${keys.map(k => { const t = IMG_TOOLS.find(x => x[0] === k); if (t) return tile(`data-imgt="${t[0]}"`, t[1], t[2], cur === t[0]); const m = IMG_SM.find(x => x[0] === k); return m ? tile(`data-imgm="${m[0]}"`, m[1], m[2], false, m[3] ? "" : "قريباً") : ""; }).join("")}</div>${rows ? `<div class="pbx-trs">${rows}</div>` : ""}`;
     return `${inf ? "" : '<div class="pbx-tn">حدّد صورة في الصفحة ثم اختر الأداة</div>'}`
       + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "عدة مشاهد احترافية دفعة واحدة") + rowBtn("txt2img", "صورة من وصف نصي", "اكتب فكرتك وتُولَّد صورة") + rowBtn("fashion", "استوديو أزياء ذكي", "عارض افتراضي ومانيكان غير مرئي") + rowBtn("tryon", "تجربة افتراضية", "شاهد القطعة على جسمك"))
-      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("resize", "تغيير المقاس والتوسيع", "أي منصة أو اتجاه، بلا إعادة تصوير") + rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "ألوان متعددة من صورة واحدة") + rowBtn("logo", "منشئ الشعار", "ولّد عناصر هوية العلامة", 1))
+      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("resize", "تغيير المقاس والتوسيع", "أي منصة أو اتجاه، بلا إعادة تصوير") + rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "ألوان متعددة من صورة واحدة") + rowBtn("logo", "منشئ الشعار", "شعار مجاني أو بالذكاء بألوان علامتك"))
       + `<div class="pbx-cat">أتمتة وتوسّع</div><div class="pbx-trs">${rowBtn("batch", "معالجة الدفعات", "عدّل آلاف الصور دفعة واحدة") + rowBtn("catalog", "كتالوج المنتجات", "افحص وحدّث أغلفة كل متجرك")}</div>`
       + (cur === "st" ? `<div class="pbx-cat">أدوات استوديو المنتج</div><div class="pbx-ttg">${IMG_ST.map(([k, n, im]) => `<button type="button" class="pbx-tt${st === k ? " on" : ""}" data-imgs="${k}" title="${esc(n)}"><img src="assets/img/tools/${im}.webp" alt="" draggable="false"><span>${esc(n)}</span></button>`).join("")}</div>` : "")
       + `<p class="pbx-tn" style="margin-top:.5rem">الأدوات الذكية (توسيع، مشهد، أساليب، تعديل بالوصف، ممحاة) تحتاج مفتاح Alyssum API من إعدادات مولّد الصور، وتُحسب تكلفتها قبل كل تنفيذ.</p>`;
@@ -16548,9 +16549,9 @@ const PBCollage = (() => {
 const PBFrame = (() => {
   const A = () => PBApp, $ = id => document.getElementById(id);
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
-  const LSK = "pbx_brand_logo";
+  const LSK = "alyssum_brand_logo";      // يتزامن مع حسابك عبر PrivSync (s_brand_logo)
   const S = { id: "", base: null, o: { border: 0, bcolor: "#ffffff", radius: 0, pad: 0, bg: "#ffffff", card: false, shadow: 0, logo: false, lpos: "br", lsize: 16, lop: 90 }, logo: null, msg: "", busy: false };
-  try { const d = localStorage.getItem(LSK); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  try { let d = localStorage.getItem(LSK); if (!d) { d = localStorage.getItem("pbx_brand_logo"); if (d) localStorage.setItem(LSK, d); } if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
   /* نقية: إطار (هامش بخلفية + حدّ + زوايا مدوّرة + ظل بطاقة) وختم شعار؛ تُرجع قماشاً جديداً أكبر قليلاً عند وجود هامش/ظل */
   function frame(src, o, logo) {
     const w = src.width, h = src.height, m = Math.min(w, h), pad = Math.round(m * (o.pad || 0) / 100), bw = Math.round(m * (o.border || 0) / 100), sh = Math.round(m * (o.shadow || 0) / 100), rad = Math.round(m * (o.radius || 0) / 100), ext = sh * 2 + (sh ? Math.round(sh * .3) : 0);
@@ -16717,13 +16718,13 @@ const PBBrand = (() => {
   const A = () => PBApp, $ = id => document.getElementById(id);
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const LSK = "pbx_brand_kit", LSL = "pbx_brand_logo";
+  const LSK = "alyssum_brand_kit", LSL = "alyssum_brand_logo";      // تتزامن بين أجهزتك عبر PrivSync (s_brand_kit / s_brand_logo)
   const SLOTS = ["الأساسي", "الثانوي", "الخلفية", "النص", "التمييز"];
   const DEF = { colors: ["#173f35", "#c8a24b", "#fbf8f2", "#1c2420", "#d64545"], font: "Cairo", name: "" };
   const S = { id: "", base: null, kit: null, logo: null, msg: "", busy: false, site: false, o: { border: 0, bcol: 1, pad: 0, bgc: 2, radius: 0, logo: false, lpos: "br", lsize: 16, lop: 90, txt: false, tpos: "bc", tsize: 6, tcol: 2, band: true } };
-  const load = () => { if (S.kit) return S.kit; let k = null; try { k = JSON.parse(localStorage.getItem(LSK) || "null"); } catch (e) { } S.kit = Object.assign({}, DEF, k && typeof k === "object" ? k : {}); if (!Array.isArray(S.kit.colors) || S.kit.colors.length < 5) S.kit.colors = DEF.colors.slice(); return S.kit; };
+  const load = () => { if (S.kit) return S.kit; let k = null; try { const raw = localStorage.getItem(LSK) || localStorage.getItem("pbx_brand_kit"); k = JSON.parse(raw || "null"); } catch (e) { } S.kit = Object.assign({}, DEF, k && typeof k === "object" ? k : {}); if (!Array.isArray(S.kit.colors) || S.kit.colors.length < 5) S.kit.colors = DEF.colors.slice(); return S.kit; };
   const save = () => { try { localStorage.setItem(LSK, JSON.stringify(S.kit)); } catch (e) { } };
-  try { const d = localStorage.getItem(LSL); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  try { const d = localStorage.getItem(LSL) || localStorage.getItem("pbx_brand_logo"); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
   const hex = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : "#000000";
   const FONTS = () => (typeof PB !== "undefined" && PB.FONT_FAMS ? PB.FONT_FAMS.filter(x => !x[3]) : []).map(([n, w, l]) => [n, l === n ? n : l + " (" + n + ")"]);
   async function loadFont(name) {
@@ -16785,7 +16786,7 @@ const PBBrand = (() => {
   }
   async function mount(host, inf) {
     load(); const id = inf.node.id;
-    if (!S.site && !localStorage.getItem(LSK)) { S.site = true; if (await fromSite()) { host.innerHTML = panel(); } }
+    if (!S.site && !localStorage.getItem(LSK) && !localStorage.getItem("pbx_brand_kit")) { S.site = true; if (await fromSite()) { host.innerHTML = panel(); } }
     if (S.id !== id || !S.base) { S.id = id; try { S.base = await loadImg(inf.set.src); } catch (e) { say("⚠️ " + e.message); return; } }
     const root = host.querySelector("#pbbr"); if (!root) return; draw();
     const rerender = () => { host.innerHTML = panel(); mount(host, inf); };
@@ -16810,7 +16811,45 @@ const PBBrand = (() => {
       if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "الهوية البصرية"; S.base = out; reset(); A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ"); }
     } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
   }
-  return { panel, mount, apply, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS } };
+  /* منشئ الشعار: ① شعار نصي مجاني (مونوغرام + اسم بألوان وخط الهوية) على Canvas ② شعار بالذكاء (Alyssum API) من وصف؛ الناتج يُحفظ شعاراً للعلامة ويمكن إضافته للصفحة */
+  const LSTYLES = [["badge", "شارة دائرية"], ["round", "مستطيل مدوّر"], ["plain", "نص بخط تحتي"], ["mono", "مونوغرام فقط"]];
+  function logoCanvas(name, kit, style, scheme) {
+    const W = 800, H = style === "mono" ? 800 : style === "plain" ? 360 : 500, c = mk(W, H), g = c.getContext("2d"), col = i => hex(kit.colors[i]), dark = scheme === "dark", bg = dark ? col(0) : "transparent", fg = dark ? col(2) : col(0), ac = col(1), ff = "'" + (kit.font || "Cairo") + "','Cairo',sans-serif";
+    const words = String(name || "").trim().split(/\s+/).filter(Boolean), ini = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "A").slice(0, 2)).toUpperCase();
+    g.direction = "rtl"; g.textAlign = "center"; g.textBaseline = "middle";
+    if (style === "mono") { g.fillStyle = col(0); g.beginPath(); g.arc(W / 2, H / 2, 340, 0, 7); g.fill(); g.lineWidth = 14; g.strokeStyle = ac; g.beginPath(); g.arc(W / 2, H / 2, 314, 0, 7); g.stroke(); g.fillStyle = col(2); g.font = "900 300px " + ff; g.fillText(ini, W / 2, H / 2 + 10); return c; }
+    if (style === "badge") { g.fillStyle = col(0); g.beginPath(); g.arc(150, H / 2, 120, 0, 7); g.fill(); g.lineWidth = 8; g.strokeStyle = ac; g.beginPath(); g.arc(150, H / 2, 104, 0, 7); g.stroke(); g.fillStyle = col(2); g.font = "900 110px " + ff; g.fillText(ini, 150, H / 2 + 6); g.fillStyle = col(0); g.textAlign = "left"; g.direction = "ltr"; g.font = "800 84px " + ff; g.fillText(name || "", 300, H / 2, W - 320); return c; }
+    if (style === "round") { g.fillStyle = col(0); if (g.roundRect) { g.beginPath(); g.roundRect(20, 100, W - 40, 300, 60); g.fill(); } else g.fillRect(20, 100, W - 40, 300); g.fillStyle = ac; g.fillRect(W / 2 - 60, 330, 120, 8); g.fillStyle = col(2); g.font = "900 110px " + ff; g.fillText(name || "", W / 2, 230, W - 120); return c; }
+    g.fillStyle = col(0); g.font = "900 130px " + ff; g.fillText(name || "", W / 2, 140, W - 60); g.fillStyle = ac; g.fillRect(W / 2 - 130, 250, 260, 10); return c;
+  }
+  const logoPrompt = (name, kind, kit, style) => "DESIGN A BRAND LOGO for a business named \"" + String(name).trim() + "\"" + (kind ? " (" + String(kind).trim() + ")" : "") + ". Style: " + style + ". Use mainly these brand colors: " + kit.colors.slice(0, 3).map(hex).join(", ") + ". Flat vector-style logo, centered on a plain solid white background, simple memorable shape, clean edges, high contrast, readable at small sizes. Include the business name as clean, correctly spelled text only if it is short. No mockups, no photos, no gradients on the background, no watermark. Output only the logo image.";
+  function openLogo() {
+    if (!A().E || !A().E.page) return; const old = $("pbx-logo"); if (old) old.remove(); const kit = load();
+    const bg = document.createElement("div"); bg.id = "pbx-logo"; bg.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem");
+    bg.innerHTML = `<div style="background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(198,254,23,.35);border-radius:16px;max-width:540px;width:100%;max-height:92vh;overflow:auto;padding:1rem" dir="rtl"><b>🏷️ منشئ الشعار</b><p class="ep-n">يستعمل ألوان وخط هويتك البصرية. اختر شعاراً نصياً مجانياً، أو ولّد شعاراً بالذكاء الاصطناعي من وصف.</p>
+<div class="rt-g"><label>اسم العلامة <input type="text" id="pblg-n" value="${esc(kit.name)}" style="width:100%" placeholder="اسم متجرك"></label><label>المجال (للذكاء) <input type="text" id="pblg-k" style="width:100%" placeholder="مثال: عسل طبيعي وأعشاب"></label></div>
+<div class="ep-n"><b>① شعار نصي مجاني</b></div><div class="pbrt-row">${LSTYLES.map(x => `<button type="button" class="pbx-small" data-lg="${x[0]}">${x[1]}</button>`).join("")}<label class="pbx-small"><input type="checkbox" id="pblg-d"> خلفية بلون العلامة</label></div>
+<div class="ep-n"><b>② شعار بالذكاء الاصطناعي (Alyssum API)</b></div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-lg="ai">✨ ولّد شعاراً</button></div>
+<div id="pblg-m" class="ep-n" style="min-height:1.3em"></div><div id="pblg-o" style="margin:.4rem 0;text-align:center;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/16px 16px;border-radius:8px;min-height:60px"></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-lg="save">✔ اعتمده شعاراً للعلامة</button><button type="button" class="pbx-small" data-lg="add">＋ أضفه للصفحة</button><button type="button" class="pbx-small" data-lg="close">إغلاق</button></div></div>`;
+    document.body.appendChild(bg); const R = { cv: null }, m = t => { const e = $("pblg-m"); if (e) e.textContent = t; };
+    const show = cv => { R.cv = cv; const o = $("pblg-o"); o.innerHTML = ""; const im = new Image(); im.src = cv.toDataURL("image/png"); im.style.cssText = "max-width:100%;max-height:220px"; o.appendChild(im); };
+    bg.addEventListener("click", async e => {
+      if (e.target === bg) { bg.remove(); return; } const b = e.target.closest("[data-lg]"); if (!b) return; const k = b.dataset.lg, name = ($("pblg-n").value || "").trim();
+      if (k === "close") { bg.remove(); return; }
+      if (["badge", "round", "plain", "mono"].includes(k)) { if (!name) { m("اكتب اسم العلامة أولاً"); return; } kit.name = name; save(); await loadFont(kit.font); show(logoCanvas(name, kit, k, $("pblg-d").checked ? "dark" : "light")); m("✅ جاهز — اعتمده أو غيّر النمط"); }
+      else if (k === "ai") {
+        if (!name) { m("اكتب اسم العلامة أولاً"); return; } if (typeof ImgGen === "undefined" || !ImgGen.edit) { m("مولّد الصور غير متاح"); return; }
+        try { m("⏳ جارٍ التوليد…"); const r = await ImgGen.edit({ textOnly: true, prompt: logoPrompt(name, $("pblg-k").value, kit, "modern, professional and minimal"), W: 1024, H: 1024, title: "منشئ الشعار" }); if (!r) { m(""); return; } show(r.canvas); m("✅ تمّ — راجع الشعار ثم اعتمده"); }
+        catch (x) { m(x && x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : x && x.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : "⚠️ " + (x.message || x)); }
+      } else if (k === "save" && R.cv) {
+        try { const d = R.cv.toDataURL("image/png"); if (d.length < 900000) localStorage.setItem(LSL, d); const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; kit.name = name || kit.name; save(); m("✅ اعتُمد شعاراً للعلامة — يظهر في «الهوية البصرية» و«إطار وهوية»"); } catch (x) { m("⚠️ تعذّر الحفظ: " + (x.message || x)); }
+      } else if (k === "add" && R.cv) {
+        try { m("⏳ جارٍ الرفع…"); const blob = await new Promise(r => R.cv.toBlob(r, "image/png")), path = await A().uploadBlob(blob, "logo-" + Date.now().toString(36), { max: 2048, q: .95 }); if (path && typeof PB !== "undefined") { A().insertSections([PB.mkS([PB.mkC([PB.mkW("image", { src: path, alt: kit.name || "", hauto: true })])], { pad: { d: [20, 20, 20, 20], m: [14, 12, 14, 12] } })], "شعار"); bg.remove(); } } catch (x) { m("⚠️ " + (x.message || x)); }
+      }
+    });
+  }
+  return { panel, mount, apply, openLogo, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS, logoCanvas, logoPrompt, LSTYLES } };
 })();
 
 /* مكتبة الملصقات (v1.89.76): آلاف الملصقات الملوّنة بحث عربي/فرنسي/إنجليزي، تُضاف للصفحة بنقرة أو سحب.

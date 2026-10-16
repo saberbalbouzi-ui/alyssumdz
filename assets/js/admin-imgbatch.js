@@ -6,7 +6,7 @@ const AdminImgBatch = (() => {
   const KEY = "alyssum_imgbatch";
   const PRESETS = [["orig", "المقاس الأصلي (بدون قص)"], ["1000x1000", "منتج مربع 1000×1000"], ["1080x1080", "مربع 1080×1080 (فيسبوك/إنستغرام)"], ["1080x1350", "عمودي 4:5 — 1080×1350 (إنستغرام)"], ["1080x1920", "قصة 9:16 — 1080×1920 (تيك توك/ريلز)"], ["1920x1080", "أفقي 16:9 — 1920×1080 (يوتيوب)"], ["1200x628", "بانر إعلان 1200×628"], ["1200x400", "غلاف عريض 1200×400"], ["custom", "مخصص…"]];
   const POS = [["tl", "↖"], ["tc", "↑"], ["tr", "↗"], ["ml", "←"], ["mc", "•"], ["mr", "→"], ["bl", "↙"], ["bc", "↓"], ["br", "↘"]];
-  const D = { preset: "orig", w: 1000, h: 1000, maxw: 1600, fit: "cover", bg: "#ffffff", fmt: "webp", q: 85, wm: "none", wmText: "", wmColor: "#ffffff", wmSize: 5, wmOp: 60, wmPos: "br", wmMar: 3, wmLogo: "", pipe: false, pbg: true, penh: true };
+  const D = { preset: "orig", w: 1000, h: 1000, maxw: 1600, fit: "cover", bg: "#ffffff", fmt: "webp", q: 85, wm: "none", wmText: "", wmColor: "#ffffff", wmSize: 5, wmOp: 60, wmPos: "br", wmMar: 3, wmLogo: "", pipe: false, pbg: true, penh: true, ai: "none", aiScene: 0, aiWho: "mannequin", aiColor: "red", aiText: "" };
   const S = Object.assign({ files: [], out: [], busy: false, prod: "" }, { cfg: Object.assign({}, D) });
   try { Object.assign(S.cfg, JSON.parse(localStorage.getItem(KEY) || "{}")); S.cfg.wmLogo = ""; } catch (e) { }
   const save = () => { try { const c = Object.assign({}, S.cfg); delete c.wmLogo; localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) { } };
@@ -17,8 +17,24 @@ const AdminImgBatch = (() => {
   const fileUrl = f => (f instanceof Blob ? URL.createObjectURL(f) : f.url);
 
   /* هدف المقاس: {w,h} أو null للأصلي (مع حدّ العرض الأقصى) */
-  function target(c) { if (c.preset === "orig") return null; if (c.preset === "custom") return { w: Math.max(16, Math.min(6000, +c.w || 1000)), h: Math.max(16, Math.min(6000, +c.h || 1000)) }; const m = c.preset.split("x"); return { w: +m[0], h: +m[1] }; }
+  function target(c) { if (c.preset === "orig") return null; if (c.preset === "custom") return { aiPrompt, AI_MODES, w: Math.max(16, Math.min(6000, +c.w || 1000)), h: Math.max(16, Math.min(6000, +c.h || 1000)) }; const m = c.preset.split("x"); return { w: +m[0], h: +m[1] }; }
 
+  /* خطوة ذكاء اصطناعي اختيارية لكل صورة قبل بقية المعالجة (Alyssum API): تهيئة مشهد، مانيكان غير مرئي، مسطح، عارض افتراضي، إزالة تجاعيد، تلوين، تعديل بوصف. موافقة تكلفة واحدة للدفعة (حتى 250 صورة) */
+  const AI_MODES = [["none", "بلا خطوة ذكاء"], ["stage", "تهيئة مشهد (Product Staging)"], ["ghost", "مانيكان غير مرئي"], ["flat", "تصوير مسطح"], ["model", "عارض افتراضي"], ["wrinkle", "إزالة التجاعيد"], ["recolor", "تلوين المنتج"], ["edit", "تعديل بوصف"]];
+  const AI_MAX = 250;
+  function aiPrompt(c) {
+    const T = typeof PBAI !== "undefined" ? PBAI._t : null; if (!T) return "";
+    if (c.ai === "stage") { const sh = T.SHOTS[c.aiScene] || T.SHOTS[0]; return T.shotPrompt(sh[2], "", sh[3]); }
+    if (c.ai === "ghost" || c.ai === "flat" || c.ai === "wrinkle") return T.fashionPrompt(c.ai, {});
+    if (c.ai === "model") return T.fashionPrompt("model", { who: c.aiWho || "mannequin", pose: "stand", bg: "white" });
+    if (c.ai === "recolor") { const k = (T.RC_COLORS || []).find(x => x[0] === c.aiColor) || (T.RC_COLORS || [])[0]; return T.recolorPrompt("", k ? k[3] : "red"); }
+    if (c.ai === "edit") return String(c.aiText || "").trim() ? T.editPrompt(c.aiText) : "";
+    return "";
+  }
+  async function aiStep(item, c) {
+    const blob = await (await fetch(item.src)).blob(), im = await createImageBitmap(blob), k = Math.min(1, 1600 / Math.max(im.width, im.height)), W = Math.round(im.width * k), H = Math.round(im.height * k);
+    const r = await ImgGen.edit({ blob, prompt: aiPrompt(c), W, H, title: "دفعة — " + item.name, confirm: false }); return Object.assign({}, item, { src: URL.createObjectURL(r.blob) });
+  }
   async function render(item, c) {
     let im = await loadImg(item.src); let tg = target(c); let W, H;
     if (c.pipe && typeof AdminImgQA !== "undefined") {      // قالب المعالجة: نزع خلفية ← تحسين ← نمط استوديو المنتج المحفوظ (مقاسه يحلّ محلّ المقاس هنا)
@@ -78,10 +94,18 @@ const AdminImgBatch = (() => {
     list.forEach((u, i) => S.files.push({ name: slug + "-" + (i + 1), src: (typeof REL !== "undefined" ? REL : "") + u, size: 0 })); S.out = []; draw();
   }
   async function run() {
-    if (S.busy || !S.files.length) return; S.busy = true; S.out = []; const c = Object.assign({}, S.cfg), used = new Set(); status("⏳ 0 / " + S.files.length);
+    if (S.busy || !S.files.length) return; const c = Object.assign({}, S.cfg), used = new Set();
+    if (c.ai !== "none") {
+      if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { status("المولّد الذكي غير متاح"); return; }
+      if (!aiPrompt(c)) { status("اكتب وصف التعديل أولاً"); return; }
+      if (S.files.length > AI_MAX) { status("الحدّ الأقصى للدفعة الذكية " + AI_MAX + " صورة — احذف الزائد"); return; }
+      const e = ImgGen.estimate ? ImgGen.estimate() : null; if (e) { if (e.left < S.files.length * e.cost) { status("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); return; } if (!confirm("خطوة ذكاء اصطناعي لـ" + S.files.length + " صورة\nالتكلفة التقريبية الإجمالية: " + e.fmt(S.files.length * e.cost) + "\nمتابعة؟")) return; }
+    }
+    S.busy = true; S.out = []; status("⏳ 0 / " + S.files.length);
     for (let i = 0; i < S.files.length; i++) {
-      const it = S.files[i];
-      try { const r = await render(it, c); S.out.push({ name: uniq(it.name + (c.wm !== "none" ? "-wm" : "") + "." + extOf(c.fmt), used), blob: r.blob, w: r.w, h: r.h, before: it.size, url: URL.createObjectURL(r.blob) }); }
+      let it = S.files[i];
+      try { if (c.ai !== "none") { try { it = await aiStep(it, c); } catch (x) { if (x && (x.code === "NOKEY" || x.code === "OFF")) { S.out.push({ name: it.name, err: x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد الذكي معطّل من الإعدادات" }); break; } throw x; } }
+        const r = await render(it, c); S.out.push({ name: uniq(it.name + (c.wm !== "none" ? "-wm" : "") + "." + extOf(c.fmt), used), blob: r.blob, w: r.w, h: r.h, before: it.size, url: URL.createObjectURL(r.blob) }); }
       catch (e) { S.out.push({ name: it.name, err: e.message || String(e) }); }
       status("⏳ " + (i + 1) + " / " + S.files.length); await new Promise(r => setTimeout(r, 0));
     }
@@ -109,6 +133,11 @@ ${tg && g.fit === "contain" ? `<label>لون الخلفية<input id="ib-bg" typ
 <label>الصيغة${sel("ib-fmt", [["webp", "WebP (الأخف)"], ["jpeg", "JPEG"], ["png", "PNG (شفافية)"]], g.fmt)}</label>
 <label>الجودة ${g.q}%<input id="ib-q" type="range" min="40" max="100" value="${g.q}"></label></div>
 <div class="ib-g"><label style="grid-column:1/-1"><span><input type="checkbox" id="ib-pipe" ${g.pipe ? "checked" : ""}> طبّق نمط المتجر (استوديو المنتج) قبل المقاس — ينزع الخلفية ويركّب الخلفية والظل المحفوظين</span></label>${g.pipe ? `<label><span><input type="checkbox" id="ib-pbg" ${g.pbg ? "checked" : ""}> نزع الخلفية</span></label><label><span><input type="checkbox" id="ib-penh" ${g.penh ? "checked" : ""}> تحسين تلقائي</span></label><div class="hint" style="grid-column:1/-1">يُستعمل مقاس النمط المحفوظ في استوديو المنتج بدل «المقاس» أعلاه.</div>` : ""}</div>
+<div class="ib-g"><label style="grid-column:1/-1">خطوة ذكاء اصطناعي قبل المعالجة (Alyssum API — حتى ${AI_MAX} صورة بموافقة تكلفة واحدة)${sel("ib-ai", AI_MODES, g.ai)}</label>
+${g.ai === "stage" ? `<label>المشهد${sel("ib-aisc", (typeof PBAI !== "undefined" ? PBAI._t.SHOTS : []).map((x, i) => [i, x[1]]), g.aiScene)}</label>` : ""}
+${g.ai === "model" ? `<label>العارض${sel("ib-aiwho", [["mannequin", "مانيكان بلا وجه"], ["man", "رجل"], ["woman", "امرأة محجبة بلباس محتشم"]], g.aiWho)}</label>` : ""}
+${g.ai === "recolor" ? `<label>اللون${sel("ib-aicol", (typeof PBAI !== "undefined" ? PBAI._t.RC_COLORS : []).map(x => [x[0], x[1]]), g.aiColor)}</label>` : ""}
+${g.ai === "edit" ? `<label style="grid-column:1/-1">وصف التعديل<input id="ib-aitx" maxlength="300" placeholder="مثال: أزل الظل واجعل الإضاءة دافئة" value="${esc(g.aiText)}"></label>` : ""}</div>
 <div class="ib-g"><label>العلامة المائية${sel("ib-wm", [["none", "بلا علامة"], ["text", "نص"], ["logo", "شعار (صورة)"]], g.wm)}</label>
 ${g.wm === "text" ? `<label>النص<input id="ib-wmt" maxlength="60" placeholder="اسم متجرك أو موقعك" value="${esc(g.wmText)}"></label><label>لون النص<input id="ib-wmc" type="color" value="${esc(g.wmColor)}"></label>` : ""}
 ${g.wm === "logo" ? `<label class="small" style="cursor:pointer">اختيار الشعار<input id="ib-logo" type="file" accept="image/*" style="display:none"></label><div class="hint" style="margin:0">${logoImg ? "✅ تم اختيار الشعار" : "لم يُختر شعار"}</div>` : ""}
@@ -124,7 +153,7 @@ ${g.wm !== "none" ? `<label>الحجم ${g.wmSize}%<input id="ib-wms" type="rang
     on("ib-clear", "onclick", () => { S.files = []; S.out = []; draw(); });
     const bind = (id, k, num, redraw) => on(id, "onchange", e => { g[k] = num ? +e.target.value : e.target.value; save(); S.out = []; if (redraw) draw(); });
     bind("ib-preset", "preset", false, true); bind("ib-w", "w", true); bind("ib-h", "h", true); bind("ib-maxw", "maxw", true); bind("ib-fit", "fit", false, true); bind("ib-bg", "bg", false); bind("ib-fmt", "fmt", false, true);
-    bind("ib-wm", "wm", false, true); bind("ib-wmt", "wmText", false); bind("ib-wmc", "wmColor", false);
+    bind("ib-wm", "wm", false, true); bind("ib-ai", "ai", false, true); bind("ib-aisc", "aiScene", true); bind("ib-aiwho", "aiWho", false); bind("ib-aicol", "aiColor", false); bind("ib-aitx", "aiText", false); bind("ib-wmt", "wmText", false); bind("ib-wmc", "wmColor", false);
     [["ib-q", "q"], ["ib-wms", "wmSize"], ["ib-wmo", "wmOp"], ["ib-wmm", "wmMar"]].forEach(([id, k]) => on(id, "oninput", e => { g[k] = +e.target.value; save(); const l = e.target.parentNode.firstChild; if (l && l.nodeType === 3) l.nodeValue = l.nodeValue.replace(/\d+%$/, g[k] + "%"); }));
     on("ib-logo", "onchange", async e => { const f = e.target.files[0]; if (!f) return; try { logoImg = await loadImg(URL.createObjectURL(f)); } catch (x) { logoImg = null; } S.out = []; draw(); });
     document.querySelectorAll("#ib-card [data-pos]").forEach(b => b.onclick = () => { g.wmPos = b.dataset.pos; save(); draw(); });
@@ -134,5 +163,5 @@ ${g.wm !== "none" ? `<label>الحجم ${g.wmSize}%<input id="ib-wms" type="rang
   }
   function init() { if (!$("tab-imgtools")) return setTimeout(init, 300); draw(); const a = typeof Admin !== "undefined" ? Admin : null; if (a && !a.__ibWrapped && a.tab) { a.__ibWrapped = true; const o = a.tab.bind(a); a.tab = function (t) { const r = o.apply(a, arguments); if (t === "imgtools") draw(); return r; }; } }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
-  return { addFiles, addProduct, run, draw, zip, render, S, setLogo: im => { logoImg = im; } };
+  return { aiPrompt, AI_MODES, addFiles, addProduct, run, draw, zip, render, S, setLogo: im => { logoImg = im; } };
 })();
